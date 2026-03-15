@@ -9,6 +9,9 @@ import { RedisClient } from '../../../infra/redis/redis-client'
 import { MinioClient } from '../../../infra/storage/minio-client'
 import { UserRepository } from '../../../infra/orm/repositories/user.repository'
 import { UserDomain } from '../../../domain/user/user.domain'
+import { RefreshTokenRepository } from '../../../infra/redis/refresh-token.repository'
+import { OAuthAccountRepository } from '../../../infra/orm/repositories/oauth-account.repository'
+import { AuthDomain } from '../../../domain/auth/auth.domain'
 import { FastifyHttpServer } from '../../../interfaces/http/fastify/fastify-http-server'
 import type { Config } from '../../../types/application/config'
 import type { IocContainer } from '../../../types/application/ioc'
@@ -39,6 +42,9 @@ class AwilixIocContainer {
     this.#reg('jwtService', asClass(JwtService).singleton())
     this.#reg('userRepository', asClass(UserRepository).singleton())
     this.#reg('userDomain', asClass(UserDomain).singleton())
+    this.#reg('refreshTokenRepository', asClass(RefreshTokenRepository).singleton())
+    this.#reg('oauthAccountRepository', asClass(OAuthAccountRepository).singleton())
+    this.#reg('authDomain', asClass(AuthDomain).singleton())
     logger.info('IoC container initialized.')
   }
 
