@@ -51,12 +51,9 @@ const cookiePlugin: FastifyPluginAsync = fastifyPlugin(
   async (fastify: FastifyInstance) => {
     const { iocContainer, log } = fastify
     const { config } = iocContainer
-    const { cookieSecret } = config
-    if (!cookieSecret) {
-      throw new Error('missing cookieSecret in config')
-    }
+    const { jwtSecret } = config
     log.trace('Registering cookie plugin')
-    const secret = hashSecret(cookieSecret)
+    const secret = hashSecret(jwtSecret)
     const cookieOptions: FastifyCookieOptions = {
       secret,
       hook: 'onRequest',

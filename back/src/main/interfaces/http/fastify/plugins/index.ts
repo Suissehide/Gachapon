@@ -17,19 +17,10 @@ const plugins: FastifyPluginAsync = fastifyPlugin(
     log.info('Registering plugins')
     const shutdownOptions = { timeout: 5000 }
     if (process.env.CI) {
-      await registerPlugin(
-        fastify,
-        'gracefulShutdown',
-        fastifyGracefulShutdown,
-        shutdownOptions,
-      )
+      await registerPlugin(fastify, 'gracefulShutdown', fastifyGracefulShutdown, shutdownOptions)
     }
-    if (config.cookieSecret) {
-      await registerPlugin(fastify, 'cookie', cookiePlugin)
-    }
-    if (config.jwtSecret) {
-      await registerPlugin(fastify, 'jwt', jwtPlugin)
-    }
+    await registerPlugin(fastify, 'cookie', cookiePlugin)
+    await registerPlugin(fastify, 'jwt', jwtPlugin)
     await registerPlugin<FastifyCorsOptions>(fastify, 'cors', fastifyCors, {
       origin: config.corsOrigin,
       credentials: true,

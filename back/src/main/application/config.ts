@@ -1,8 +1,6 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { config as configDotenv } from 'dotenv'
-import type { SignOptions } from 'jsonwebtoken'
-import { levels } from 'pino'
 import { z } from 'zod/v4'
 
 import baseDir from '../base-dir'
@@ -14,69 +12,58 @@ const isTestRunning = process.env.JEST_RUNNING === 'true'
 const envLocalPath = join(baseDir, '.env.local')
 const envLocalExists = existsSync(envLocalPath)
 if (envLocalExists) {
-  configDotenv({
-    debug: isDevelopment,
-    encoding: 'utf8',
-    path: envLocalPath,
-  })
+  configDotenv({ debug: isDevelopment, encoding: 'utf8', path: envLocalPath })
 }
-configDotenv({
-  debug: isDevelopment,
-  encoding: 'utf8',
-  path: join(baseDir, '.env'),
-})
+configDotenv({ debug: isDevelopment, encoding: 'utf8', path: join(baseDir, '.env') })
+
 const configSchema = z.object({
   baseDir: z.string(),
   isDevelopment: z.boolean(),
-  host: z.string().optional(),
-  corsOrigin: z.string().optional(),
-  frontUrl: z.string(),
-
-  jwtSecret: z.string().default('medisync-jwt'),
-  jwtRefreshSecret: z.string().default('medisync-refresh'),
-  jwtExpiresIn: z.custom<SignOptions['expiresIn']>().default('60m'),
-  jwtRefreshExpiresIn: z.custom<SignOptions['expiresIn']>().default('180d'),
-
-  cookieSecret: z.string().default('medisync-cookie'),
-
-  logLevel: z.enum(['silent', ...Object.values(levels.labels)]).default('info'),
-  port: z
-    .string()
-    .default('0')
-    .transform((val) => Number.parseInt(val, 10)),
-  mockServerPort: z
-    .string()
-    .default('4000')
-    .transform((val) => Number.parseInt(val, 10)),
   isTestRunning: z.boolean().default(false),
+
+  host: z.string().optional(),
+  port: z.string().default('3000').transform((v) => Number.parseInt(v, 10)),
+  corsOrigin: z.string().optional(),
+  frontUrl: z.string().default('http://localhost:5173'),
+  logLevel: z.string().default('info'),
+
+  databaseUrl: z.string(),
+  redisUrl: z.string().default('redis://localhost:6379'),
+
+  minioEndpoint: z.string().default('http://localhost:9000'),
+  minioAccessKey: z.string().default('minioadmin'),
+  minioSecretKey: z.string().default('minioadmin'),
+  minioBucket: z.string().default('gachapon'),
+
+  jwtSecret: z.string().min(32, 'JWT_SECRET must be at least 32 chars'),
+  jwtRefreshSecret: z.string().min(32, 'JWT_REFRESH_SECRET must be at least 32 chars'),
+
+  googleClientId: z.string().default(''),
+  googleClientSecret: z.string().default(''),
+  googleRedirectUri: z.string().default('http://localhost:3000/auth/oauth/google/callback'),
+
+  discordClientId: z.string().default(''),
+  discordClientSecret: z.string().default(''),
+  discordRedirectUri: z.string().default('http://localhost:3000/auth/oauth/discord/callback'),
+
+  tokenRegenIntervalHours: z.string().default('4').transform((v) => Number.parseInt(v, 10)),
 })
+
+export type Config = z.infer<typeof configSchema>
+
 const envVarNames = [
-  'CORS_ORIGIN',
-  'HOST',
-  'FRONT_URL',
-  'JWT_SECRET',
-  'JWT_REFRESH_SECRET',
-  'JWT_EXPIRES_IN',
-  'JWT_REFRESH_EXPIRES_IN',
-  'COOKIE_SECRET',
-  'LOG_LEVEL',
-  'PORT',
-  'MOCK_SERVER_PORT',
+  'HOST', 'PORT', 'CORS_ORIGIN', 'FRONT_URL', 'LOG_LEVEL',
+  'DATABASE_URL', 'REDIS_URL',
+  'MINIO_ENDPOINT', 'MINIO_ACCESS_KEY', 'MINIO_SECRET_KEY', 'MINIO_BUCKET',
+  'JWT_SECRET', 'JWT_REFRESH_SECRET',
+  'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_REDIRECT_URI',
+  'DISCORD_CLIENT_ID', 'DISCORD_CLIENT_SECRET', 'DISCORD_REDIRECT_URI',
+  'TOKEN_REGEN_INTERVAL_HOURS',
 ]
 
 const loadConfig = () => {
-  const envConfig = pickFromDict<ConfigEnvVars>(
-    process.env,
-    envVarNames,
-    toCamelCase,
-  )
-  envConfig.logLevel = envConfig.logLevel.toLowerCase()
-  const configData = {
-    ...envConfig,
-    baseDir,
-    isDevelopment,
-    isTestRunning,
-  }
+  const envConfig = pickFromDict<ConfigEnvVars>(process.env, envVarNames, toCamelCase)
+  const configData = { ...envConfig, baseDir, isDevelopment, isTestRunning }
   return configSchema.parse(configData)
 }
 
