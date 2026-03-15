@@ -97,6 +97,8 @@ model ApiKey {
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   lastUsedAt DateTime?
   createdAt  DateTime  @default(now())
+
+  @@index([userId])
 }
 
 model Team {
@@ -111,6 +113,8 @@ model Team {
 
   members     TeamMember[]
   invitations Invitation[]
+
+  @@index([ownerId])
 }
 
 model TeamMember {
@@ -123,6 +127,7 @@ model TeamMember {
   joinedAt DateTime       @default(now())
 
   @@unique([teamId, userId])
+  @@index([userId])
 }
 
 model Invitation {
@@ -190,6 +195,7 @@ model GachaPull {
 
   @@index([userId])
   @@index([pulledAt])
+  @@index([cardId])
 }
 
 model ShopItem {
@@ -215,6 +221,7 @@ model Purchase {
   purchasedAt DateTime @default(now())
 
   @@index([purchasedAt])
+  @@index([userId])
 }
 
 model Achievement {
