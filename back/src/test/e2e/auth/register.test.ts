@@ -19,8 +19,12 @@ describe('POST /auth/register', () => {
     expect(body).toHaveProperty('id')
     expect(body).toHaveProperty('username', `testuser${suffix}`)
     expect(body).not.toHaveProperty('passwordHash')
-    expect(res.cookies.find((c: any) => c.name === 'access_token')).toBeDefined()
-    expect(res.cookies.find((c: any) => c.name === 'refresh_token')).toBeDefined()
+    const accessTokenCookie = res.cookies.find((c: any) => c.name === 'access_token')
+    const refreshTokenCookie = res.cookies.find((c: any) => c.name === 'refresh_token')
+    expect(accessTokenCookie).toBeDefined()
+    expect(refreshTokenCookie).toBeDefined()
+    expect(accessTokenCookie.httpOnly).toBe(true)
+    expect(refreshTokenCookie.httpOnly).toBe(true)
   })
 
   it('returns 409 if email already taken', async () => {

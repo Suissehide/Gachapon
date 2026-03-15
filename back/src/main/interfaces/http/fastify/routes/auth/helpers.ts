@@ -2,7 +2,7 @@ import type { FastifyReply } from 'fastify'
 import type { TokenPair } from '../../../../../types/domain/auth/auth.types.js'
 import type { UserEntity } from '../../../../../types/domain/user/user.types.js'
 
-const COOKIE_OPTS = {
+export const COOKIE_OPTS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'lax' as const,

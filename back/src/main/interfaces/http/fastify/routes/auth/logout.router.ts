@@ -1,5 +1,6 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import Boom from '@hapi/boom'
+import { COOKIE_OPTS } from './helpers.js'
 
 export const logoutRouter: FastifyPluginAsyncZod = async (fastify) => {
   const { authDomain } = fastify.iocContainer
@@ -11,8 +12,8 @@ export const logoutRouter: FastifyPluginAsyncZod = async (fastify) => {
     if (!refreshToken) throw Boom.badRequest('No refresh token')
     await authDomain.logout(request.user.userID, refreshToken)
     reply
-      .clearCookie('access_token', { path: '/' })
-      .clearCookie('refresh_token', { path: '/' })
+      .clearCookie('access_token', { ...COOKIE_OPTS })
+      .clearCookie('refresh_token', { ...COOKIE_OPTS })
     return reply.status(204).send()
   })
 }

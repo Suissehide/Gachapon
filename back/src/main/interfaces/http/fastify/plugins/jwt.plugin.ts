@@ -1,13 +1,13 @@
 import fp from 'fastify-plugin'
 import Boom from '@hapi/boom'
-import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
+import type { FastifyInstance, FastifyRequest } from 'fastify'
 
 declare module 'fastify' {
   interface FastifyRequest {
     user: { userID: string; role: string }
   }
   interface FastifyInstance {
-    verifySessionCookie: (request: FastifyRequest, reply: FastifyReply) => Promise<void>
+    verifySessionCookie: (request: FastifyRequest) => Promise<void>
   }
 }
 
