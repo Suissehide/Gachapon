@@ -44,7 +44,7 @@ export class AuthDomain implements AuthDomainInterface {
     const user = await this.#userRepository.findByEmail(input.email)
     if (!user || !user.passwordHash) {
       // Constant-time comparison to prevent timing attacks
-      await bcrypt.compare(input.password, '$2b$12$invalidhashfortimingsafety00000000000')
+      await bcrypt.compare(input.password, '$2b$12$invalidhashfortimingsafety.00000000000000000000000000U')
       throw Boom.unauthorized('Invalid credentials')
     }
     const valid = await this.verifyPassword(input.password, user.passwordHash)
