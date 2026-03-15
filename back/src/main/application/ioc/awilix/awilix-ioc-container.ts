@@ -4,6 +4,8 @@ import type { Resolver } from 'awilix/lib/resolvers'
 import { HttpClient } from '../../../infra/http/http-client'
 import { PinoLogger } from '../../../infra/logger/pino/pino-logger'
 import { PostgresOrm } from '../../../infra/orm/postgres-client'
+import { RedisClient } from '../../../infra/redis/redis-client'
+import { MinioClient } from '../../../infra/storage/minio-client'
 import { FastifyHttpServer } from '../../../interfaces/http/fastify/fastify-http-server'
 import type { Config } from '../../../types/application/config'
 import type { IocContainer } from '../../../types/application/ioc'
@@ -29,6 +31,8 @@ class AwilixIocContainer {
     this.#reg('httpServer', asClass(FastifyHttpServer).singleton())
     this.#reg('httpClient', asClass(HttpClient).singleton())
     this.#reg('errorHandler', asClass(ErrorHandler).singleton())
+    this.#reg('redisClient', asClass(RedisClient).singleton())
+    this.#reg('minioClient', asClass(MinioClient).singleton())
     logger.info('IoC container initialized.')
   }
 

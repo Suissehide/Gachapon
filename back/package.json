@@ -399,6 +399,8 @@
     "npm": "11.8.0"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1009.0",
+    "@aws-sdk/s3-request-presigner": "3.1009.0",
     "@fastify/accepts": "5.0.4",
     "@fastify/awilix": "8.2.0",
     "@fastify/cookie": "11.0.2",
@@ -420,6 +422,7 @@
     "fastify-type-provider-zod": "6.1.0",
     "find-root": "1.1.0",
     "http-status-codes": "2.3.0",
+    "ioredis": "5.10.0",
     "jsonwebtoken": "9.0.3",
     "per-env": "1.0.2",
     "pg": "8.19.0",
