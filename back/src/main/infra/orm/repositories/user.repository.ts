@@ -15,7 +15,7 @@ export class UserRepository implements UserRepositoryInterface {
   }
 
   findByEmail(email: string): Promise<UserEntity | null> {
-    return this.#prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } })
+    return this.#prisma.user.findUnique({ where: { email } })
   }
 
   findByUsername(username: string): Promise<UserEntity | null> {
@@ -26,7 +26,7 @@ export class UserRepository implements UserRepositoryInterface {
     return this.#prisma.user.create({
       data: {
         username: input.username,
-        email: input.email.toLowerCase().trim(),
+        email: input.email,
         passwordHash: input.passwordHash,
       },
     })
