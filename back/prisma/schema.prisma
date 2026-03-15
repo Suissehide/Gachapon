@@ -7,19 +7,261 @@ generator client {
   output   = "../src/generated"
 }
 
-enum Role {
-  NONE
+enum GlobalRole {
   USER
+  SUPER_ADMIN
+}
+
+enum OAuthProvider {
+  GOOGLE
+  DISCORD
+}
+
+enum TeamMemberRole {
+  MEMBER
   ADMIN
+  OWNER
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum CardRarity {
+  COMMON
+  UNCOMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+enum CardVariant {
+  BRILLIANT
+  HOLOGRAPHIC
+}
+
+enum ShopItemType {
+  TOKEN_PACK
+  BOOST
+  COSMETIC
 }
 
 model User {
-  id        String  @id @default(cuid())
-  email     String  @unique
-  password  String
-  salt      String
-  firstName String?
-  lastName  String?
-  role      Role    @default(NONE)
+  id            String     @id @default(uuid())
+  username      String     @unique
+  email         String     @unique
+  passwordHash  String?
+  avatar        String?
+  banner        String?
+  role          GlobalRole @default(USER)
+  tokens        Int        @default(0)
+  dust          Int        @default(0)
+  lastTokenAt   DateTime?
+  xp            Int        @default(0)
+  level         Int        @default(1)
+  pityCurrent   Int        @default(0)
+  streakDays    Int        @default(0)
+  lastLoginAt   DateTime?
+  createdAt     DateTime   @default(now())
+
+  oauthAccounts       OAuthAccount[]
+  apiKeys             ApiKey[]
+  ownedTeams          Team[]            @relation("TeamOwner")
+  teamMemberships     TeamMember[]
+  sentInvitations     Invitation[]      @relation("InvitedByUser")
+  receivedInvitations Invitation[]      @relation("InvitedUser")
+  userCards           UserCard[]
+  gachaPulls          GachaPull[]
+  purchases           Purchase[]
+  achievements        UserAchievement[]
+  userQuests          UserQuest[]
 }
 
+model OAuthAccount {
+  id                String        @id @default(uuid())
+  provider          OAuthProvider
+  providerAccountId String
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model ApiKey {
+  id         String    @id @default(uuid())
+  key        String    @unique
+  name       String
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+}
+
+model Team {
+  id          String     @id @default(uuid())
+  name        String
+  slug        String     @unique
+  description String?
+  avatar      String?
+  ownerId     String
+  owner       User       @relation("TeamOwner", fields: [ownerId], references: [id])
+  createdAt   DateTime   @default(now())
+
+  members     TeamMember[]
+  invitations Invitation[]
+}
+
+model TeamMember {
+  id       String         @id @default(uuid())
+  teamId   String
+  team     Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role     TeamMemberRole @default(MEMBER)
+  joinedAt DateTime       @default(now())
+
+  @@unique([teamId, userId])
+}
+
+model Invitation {
+  id            String           @id @default(uuid())
+  teamId        String
+  team          Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  invitedEmail  String?
+  invitedUserId String?
+  invitedUser   User?            @relation("InvitedUser", fields: [invitedUserId], references: [id])
+  invitedById   String?
+  invitedBy     User?            @relation("InvitedByUser", fields: [invitedById], references: [id])
+  token         String           @unique @default(uuid())
+  status        InvitationStatus @default(PENDING)
+  expiresAt     DateTime
+  createdAt     DateTime         @default(now())
+}
+
+model CardSet {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  coverImage  String?
+  isActive    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  cards Card[]
+}
+
+model Card {
+  id         String       @id @default(uuid())
+  setId      String
+  set        CardSet      @relation(fields: [setId], references: [id], onDelete: Cascade)
+  name       String
+  imageUrl   String
+  rarity     CardRarity
+  variant    CardVariant?
+  dropWeight Float        @default(1.0)
+  createdAt  DateTime     @default(now())
+
+  userCards  UserCard[]
+  gachaPulls GachaPull[]
+}
+
+model UserCard {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cardId     String
+  card       Card     @relation(fields: [cardId], references: [id])
+  quantity   Int      @default(1)
+  obtainedAt DateTime @default(now())
+
+  @@unique([userId, cardId])
+}
+
+model GachaPull {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cardId       String
+  card         Card     @relation(fields: [cardId], references: [id])
+  wasDuplicate Boolean  @default(false)
+  dustEarned   Int      @default(0)
+  pulledAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([pulledAt])
+}
+
+model ShopItem {
+  id          String       @id @default(uuid())
+  name        String
+  description String
+  type        ShopItemType
+  dustCost    Int
+  value       Json
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+
+  purchases Purchase[]
+}
+
+model Purchase {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shopItemId  String
+  shopItem    ShopItem @relation(fields: [shopItemId], references: [id])
+  dustSpent   Int
+  purchasedAt DateTime @default(now())
+
+  @@index([purchasedAt])
+}
+
+model Achievement {
+  id           String @id @default(uuid())
+  key          String @unique
+  name         String
+  description  String
+  rewardTokens Int    @default(0)
+  rewardDust   Int    @default(0)
+
+  userAchievements UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(uuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  unlockedAt    DateTime    @default(now())
+
+  @@unique([userId, achievementId])
+}
+
+model Quest {
+  id           String  @id @default(uuid())
+  key          String  @unique
+  name         String
+  description  String
+  criterion    Json
+  rewardTokens Int     @default(0)
+  rewardDust   Int     @default(0)
+  isActive     Boolean @default(true)
+
+  userQuests UserQuest[]
+}
+
+model UserQuest {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questId     String
+  quest       Quest     @relation(fields: [questId], references: [id])
+  date        DateTime  @db.Date
+  progress    Int       @default(0)
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+
+  @@unique([userId, questId, date])
+}
