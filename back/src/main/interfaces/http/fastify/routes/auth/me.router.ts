@@ -7,7 +7,7 @@ export const meRouter: FastifyPluginAsyncZod = async (fastify) => {
   const { userDomain } = fastify.iocContainer
 
   fastify.get('/', {
-    onRequest: [fastify.verifySessionCookie],
+    preHandler: [fastify.verifySessionCookie],
     schema: { response: { 200: userResponseSchema } },
   }, async (request) => {
     const user = await userDomain.findById(request.user.userID)
