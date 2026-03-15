@@ -2,10 +2,13 @@ import { type Cradle, diContainer } from '@fastify/awilix'
 import { type AwilixContainer, asClass, asValue } from 'awilix'
 import type { Resolver } from 'awilix/lib/resolvers'
 import { HttpClient } from '../../../infra/http/http-client'
+import { JwtService } from '../../../infra/auth/jwt.service'
 import { PinoLogger } from '../../../infra/logger/pino/pino-logger'
 import { PostgresOrm } from '../../../infra/orm/postgres-client'
 import { RedisClient } from '../../../infra/redis/redis-client'
 import { MinioClient } from '../../../infra/storage/minio-client'
+import { UserRepository } from '../../../infra/orm/repositories/user.repository'
+import { UserDomain } from '../../../domain/user/user.domain'
 import { FastifyHttpServer } from '../../../interfaces/http/fastify/fastify-http-server'
 import type { Config } from '../../../types/application/config'
 import type { IocContainer } from '../../../types/application/ioc'
@@ -33,6 +36,9 @@ class AwilixIocContainer {
     this.#reg('errorHandler', asClass(ErrorHandler).singleton())
     this.#reg('redisClient', asClass(RedisClient).singleton())
     this.#reg('minioClient', asClass(MinioClient).singleton())
+    this.#reg('jwtService', asClass(JwtService).singleton())
+    this.#reg('userRepository', asClass(UserRepository).singleton())
+    this.#reg('userDomain', asClass(UserDomain).singleton())
     logger.info('IoC container initialized.')
   }
 
