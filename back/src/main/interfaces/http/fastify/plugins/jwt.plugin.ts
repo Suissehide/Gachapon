@@ -1,59 +1,24 @@
-import type { FastifyJWTOptions, VerifyPayloadType } from '@fastify/jwt'
-import fastifyJwt from '@fastify/jwt'
+import fp from 'fastify-plugin'
 import Boom from '@hapi/boom'
-import type {
-  FastifyInstance,
-  FastifyRequest,
-  preHandlerAsyncHookHandler,
-} from 'fastify'
-import fastifyPlugin from 'fastify-plugin'
-import type { FastifyPluginAsync } from 'fastify/types/plugin'
-
-import type { JwtPayload } from '../../../../types/interfaces/http/fastify/plugins/jwt.plugin'
-import { hashSecret } from '../../../../utils/auth-helper'
-
-declare module '@fastify/jwt' {
-  export interface FastifyJWT {
-    payload: JwtPayload
-  }
-}
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 
 declare module 'fastify' {
-  export interface FastifyInstance {
-    verifyJWT: preHandlerAsyncHookHandler
+  interface FastifyRequest {
+    user: { userID: string; role: string }
+  }
+  interface FastifyInstance {
+    verifySessionCookie: (request: FastifyRequest, reply: FastifyReply) => Promise<void>
   }
 }
 
-const jwtPreHandler: preHandlerAsyncHookHandler = async function (
-  this: FastifyInstance,
-  request: FastifyRequest,
-): Promise<VerifyPayloadType> {
-  try {
-    const jwtPayload = await request.jwtVerify<JwtPayload>()
-    this.log.trace({ jwtPayload }, 'JWT payload in jwtPreHandler')
-    return jwtPayload
-  } catch {
-    throw Boom.unauthorized()
-  }
-}
+export const jwtPlugin = fp(async (fastify: FastifyInstance) => {
+  fastify.decorate('verifySessionCookie', async (request: FastifyRequest) => {
+    const { jwtService } = fastify.iocContainer
 
-const jwtPlugin: FastifyPluginAsync = fastifyPlugin(
-  async (fastify: FastifyInstance) => {
-    const { iocContainer, log } = fastify
-    const { config } = iocContainer
-    const { jwtSecret } = config
-    if (!jwtSecret) {
-      throw new Error('missing jwtSecret in config')
-    }
-    log.trace('Registering jwt plugin')
-    const secret = hashSecret(jwtSecret)
-    const jwtOptions: FastifyJWTOptions = {
-      secret,
-    }
-    await fastify.register(fastifyJwt, jwtOptions)
-    fastify.decorate('verifyJWT', jwtPreHandler)
-    log.debug('Jwt plugin successfully registered')
-  },
-)
-
-export { jwtPlugin }
+    // JWT cookie only — X-API-Key support will be added in Task 9
+    const token = request.cookies.access_token
+    if (!token) throw Boom.unauthorized('No access token')
+    const payload = jwtService.verify<{ sub: string; role: string }>(token)
+    request.user = { userID: payload.sub, role: payload.role }
+  })
+})

@@ -23,7 +23,7 @@ const plugins: FastifyPluginAsync = fastifyPlugin(
     await registerPlugin(fastify, 'cookie', cookiePlugin)
     await registerPlugin(fastify, 'jwt', jwtPlugin)
     await registerPlugin<FastifyCorsOptions>(fastify, 'cors', fastifyCors, {
-      origin: config.corsOrigin,
+      origin: config.corsOrigin ?? false,
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     })
