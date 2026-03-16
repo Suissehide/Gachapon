@@ -21,13 +21,23 @@ class WsManager {
 
   register(userId: string, ws: WebSocket): void {
     this.#connections.set(userId, ws)
-    ws.on('close', () => this.#connections.delete(userId))
+    // Only evict this userId if the closing socket is still the current one
+    // (prevents a stale close event from evicting a newer reconnection)
+    ws.on('close', () => {
+      if (this.#connections.get(userId) === ws) {
+        this.#connections.delete(userId)
+      }
+    })
   }
 
   notify(userId: string, event: WsEvent): void {
     const ws = this.#connections.get(userId)
     if (ws?.readyState === 1 /* OPEN */) {
-      ws.send(JSON.stringify(event))
+      try {
+        ws.send(JSON.stringify(event))
+      } catch {
+        // Best-effort push — swallow send errors to avoid failing the HTTP caller
+      }
     }
   }
 
