@@ -1,8 +1,6 @@
-export type TokenState = {
-  tokens: number
-  newLastTokenAt: Date | null
-  nextTokenAt: Date | null
-}
+export type { TokenState } from '../../types/domain/economy/economy.types'
+
+import type { TokenState } from '../../types/domain/economy/economy.types'
 
 /**
  * Calcul lazy des tokens accumulés depuis lastTokenAt.
