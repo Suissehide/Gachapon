@@ -1,7 +1,8 @@
+import fastifyCookie, { type FastifyCookieOptions } from '@fastify/cookie'
+import type { FastifyInstance } from 'fastify'
 import type { FastifyPluginAsync } from 'fastify/types/plugin'
 import fastifyPlugin from 'fastify-plugin'
-import type { FastifyInstance } from 'fastify'
-import fastifyCookie, { type FastifyCookieOptions } from '@fastify/cookie'
+
 import { hashSecret } from '../../../../utils/auth-helper'
 
 const cookiePlugin: FastifyPluginAsync = fastifyPlugin(

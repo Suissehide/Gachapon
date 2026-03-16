@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+
 import { api } from '../lib/api.js'
 
 export type AuthUser = {
@@ -37,7 +38,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: async () => {
-    try { await api.post('/auth/logout') } catch { /* ignore */ }
+    try {
+      await api.post('/auth/logout')
+    } catch {
+      /* ignore */
+    }
     set({ user: null, isAuthenticated: false })
     window.location.href = '/login'
   },

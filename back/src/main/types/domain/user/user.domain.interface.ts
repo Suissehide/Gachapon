@@ -1,4 +1,4 @@
-import type { UserEntity, UpdateUserInput } from './user.types.js'
+import type { UpdateUserInput, UserEntity } from './user.types'
 
 export interface UserDomainInterface {
   findById(id: string): Promise<UserEntity | null>

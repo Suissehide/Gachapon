@@ -5,26 +5,25 @@ import React from 'react'
 import { cn } from '../../libs/utils'
 
 const buttonVariants = cva(
-  'inline-flex gap-1.5 items-center justify-center rounded-md text-sm font-bold cursor-pointer duration-150 transition-colors ' +
-    'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex gap-1.5 items-center justify-center rounded-md text-sm font-semibold cursor-pointer duration-200 transition-all ' +
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-40',
   {
     variants: {
       variant: {
         default:
-          'bg-primary text-primary-foreground shadow hover:bg-primary/70',
+          'bg-primary text-primary-foreground shadow-sm hover:bg-primary/85 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)]',
         destructive:
-          'bg-destructive text-white shadow-sm hover:bg-destructive/70',
+          'bg-destructive text-white shadow-sm hover:bg-destructive/80',
         outline:
-          'border border-border bg-transparent hover:bg-card hover:text-text-light',
-        secondary: 'bg-secondary text-text shadow-sm hover:bg-border',
-        ghost:
-          'bg-card border border-muted hover:text-primary hover:border-primary/20',
+          'border border-border bg-transparent hover:bg-muted hover:text-text',
+        secondary: 'bg-muted text-text border border-border hover:bg-border',
+        ghost: 'bg-transparent hover:bg-muted hover:text-primary',
         link: 'text-primary underline-offset-4 hover:underline',
-        none: 'text-primary bg-transparent border-none shadow-none p-0 hover:bg-primary/20',
+        none: 'text-primary bg-transparent border-none shadow-none p-0 hover:bg-primary/10',
         transparent:
           'text-primary bg-transparent border-none shadow-none p-0 focus-visible:ring-0',
         absolute:
-          'absolute right-2 text-primary bg-transparent border-none shadow-none p-0 hover:bg-primary/20',
+          'absolute right-2 text-primary bg-transparent border-none shadow-none p-0 hover:bg-primary/10',
       },
       size: {
         default: 'h-9 px-4 py-2',

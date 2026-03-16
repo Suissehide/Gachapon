@@ -1,6 +1,7 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { Lock } from 'lucide-react'
+import { Clock } from 'lucide-react'
 
+import { Button } from '../components/ui/button.tsx'
 import { useAuthStore } from '../stores/auth.store.js'
 
 export const Route = createFileRoute('/pending')({
@@ -13,36 +14,45 @@ export const Route = createFileRoute('/pending')({
 })
 
 function Pending() {
-  const logout = useAuthStore(s => s.logout)
+  const logout = useAuthStore((s) => s.logout)
 
   return (
-    <div className="overflow-hidden w-full h-screen flex relative bg-gray-950 text-white">
-      <div className="absolute top-6 left-2">
-        <h1 className="px-2 text-3xl font-bold text-purple-400">Gachapon</h1>
+    <div className="relative overflow-hidden w-full h-screen flex items-center justify-center bg-background text-foreground">
+      {/* Ambient orbs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute left-[-15%] top-[-10%] h-[500px] w-[500px] rounded-full bg-primary/8 blur-[130px]" />
+        <div className="absolute right-[-10%] bottom-[-5%] h-[400px] w-[400px] rounded-full bg-secondary/8 blur-[110px]" />
       </div>
 
-      <div className="flex-1 flex justify-end">
-        <div className="z-10 w-[450px] top-1/2 -translate-y-1/2 bg-gray-900/45 flex flex-col px-12 py-8 rounded-2xl border border-gray-700 backdrop-blur-sm absolute right-8">
-          <div className="mb-6 flex justify-start">
-            <Lock className="w-8 h-8" />
-          </div>
-          <h1 className="w-full text-2xl font-bold mb-6">
-            Compte en attente d'approbation
-          </h1>
-          <p className="mb-6 text-gray-400">
-            Votre compte a été créé mais n'a pas encore été activé. Veuillez
-            contacter un administrateur pour obtenir l'accès au reste du site.
-          </p>
-          <div className="flex">
-            <button
-              type="button"
-              onClick={() => void logout()}
-              className="rounded-lg bg-purple-600 px-6 py-2 font-semibold text-white hover:bg-purple-700"
-            >
-              Se déconnecter
-            </button>
-          </div>
+      {/* Logo */}
+      <div className="absolute top-6 left-6 z-10">
+        <span className="text-2xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+          Gachapon
+        </span>
+      </div>
+
+      {/* Card */}
+      <div className="relative z-10 w-full max-w-[420px] mx-6 bg-card/60 flex flex-col px-10 py-10 rounded-2xl border border-border backdrop-blur-xl shadow-2xl shadow-black/30">
+        <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 border border-primary/20">
+          <Clock className="h-6 w-6 text-primary" />
         </div>
+
+        <h1 className="w-full text-2xl font-black mb-3 text-foreground">
+          Compte en attente
+        </h1>
+        <p className="mb-8 text-sm leading-relaxed text-text-light">
+          Votre compte a été créé mais n'a pas encore été activé. Veuillez
+          contacter un administrateur pour obtenir l'accès au reste du site.
+        </p>
+
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => void logout()}
+          className="w-fit"
+        >
+          Se déconnecter
+        </Button>
       </div>
     </div>
   )

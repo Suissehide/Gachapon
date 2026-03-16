@@ -1,7 +1,8 @@
 import { randomBytes } from 'node:crypto'
-import type { IocContainer } from '../../../types/application/ioc.js'
-import type { PostgresPrismaClient } from '../postgres-client.js'
-import type { ApiKey } from '../../../generated/client.js'
+
+import type { ApiKey } from '../../../../generated/client'
+import type { IocContainer } from '../../../types/application/ioc'
+import type { PostgresPrismaClient } from '../postgres-client'
 
 export class ApiKeyRepository {
   readonly #prisma: PostgresPrismaClient
@@ -15,7 +16,9 @@ export class ApiKeyRepository {
   }
 
   create(userId: string, name: string): Promise<ApiKey> {
-    return this.#prisma.apiKey.create({ data: { key: this.#generate(), name, userId } })
+    return this.#prisma.apiKey.create({
+      data: { key: this.#generate(), name, userId },
+    })
   }
 
   findByKey(key: string): Promise<ApiKey | null> {
@@ -23,7 +26,10 @@ export class ApiKeyRepository {
   }
 
   findByUser(userId: string): Promise<ApiKey[]> {
-    return this.#prisma.apiKey.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } })
+    return this.#prisma.apiKey.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    })
   }
 
   async delete(id: string, userId: string): Promise<void> {
@@ -31,6 +37,9 @@ export class ApiKeyRepository {
   }
 
   updateLastUsed(id: string): Promise<ApiKey> {
-    return this.#prisma.apiKey.update({ where: { id }, data: { lastUsedAt: new Date() } })
+    return this.#prisma.apiKey.update({
+      where: { id },
+      data: { lastUsedAt: new Date() },
+    })
   }
 }

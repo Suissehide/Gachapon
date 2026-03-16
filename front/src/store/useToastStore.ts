@@ -1,8 +1,9 @@
-import { create } from 'zustand'
-import type { ToastActionElement, ToastProps } from '../components/ui/toast.tsx'
 import type React from 'react'
-import type { ToastSeverity } from '../constants/ui.constant.ts'
+import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
+
+import type { ToastActionElement, ToastProps } from '../components/ui/toast.tsx'
+import type { ToastSeverity } from '../constants/ui.constant.ts'
 
 const TOAST_LIMIT = 5
 const TOAST_REMOVE_DELAY = 5000

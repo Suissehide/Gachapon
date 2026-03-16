@@ -1,5 +1,9 @@
 @layer base {
   :root {
-    --radius-md: 0.3rem;
+    --radius-sm: 0.25rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    --radius-2xl: 1.5rem;
   }
 }

@@ -1,6 +1,7 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
-import { googleOAuthRouter } from './google.router.js'
-import { discordOAuthRouter } from './discord.router.js'
+
+import { discordOAuthRouter } from './discord.router'
+import { googleOAuthRouter } from './google.router'
 
 export const oauthRouter: FastifyPluginAsyncZod = async (fastify) => {
   await fastify.register(googleOAuthRouter, { prefix: '/google' })

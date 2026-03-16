@@ -1,6 +1,7 @@
 import type { FastifyReply } from 'fastify'
-import type { TokenPair } from '../../../../../types/domain/auth/auth.types.js'
-import type { UserEntity } from '../../../../../types/domain/user/user.types.js'
+
+import type { TokenPair } from '../../../../../types/domain/auth/auth.types'
+import type { UserEntity } from '../../../../../types/domain/user/user.types'
 
 export const COOKIE_OPTS = {
   httpOnly: true,
@@ -9,13 +10,21 @@ export const COOKIE_OPTS = {
   path: '/',
 }
 
-export function setTokenCookies(reply: FastifyReply, { accessToken, refreshToken }: TokenPair): void {
+export function setTokenCookies(
+  reply: FastifyReply,
+  { accessToken, refreshToken }: TokenPair,
+): void {
   reply
     .setCookie('access_token', accessToken, { ...COOKIE_OPTS, maxAge: 15 * 60 })
-    .setCookie('refresh_token', refreshToken, { ...COOKIE_OPTS, maxAge: 7 * 24 * 60 * 60 })
+    .setCookie('refresh_token', refreshToken, {
+      ...COOKIE_OPTS,
+      maxAge: 7 * 24 * 60 * 60,
+    })
 }
 
-export function sanitizeUser(user: UserEntity): Omit<UserEntity, 'passwordHash'> {
+export function sanitizeUser(
+  user: UserEntity,
+): Omit<UserEntity, 'passwordHash'> {
   const { passwordHash: _pw, ...safe } = user
   return safe
 }

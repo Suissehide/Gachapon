@@ -1,8 +1,13 @@
-const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:3000'
+const BASE_URL =
+  (import.meta.env.VITE_API_URL as string | undefined) ??
+  'http://localhost:3000'
 
 type RequestOptions = RequestInit & { skipRefresh?: boolean }
 
-async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+async function request<T>(
+  path: string,
+  options: RequestOptions = {},
+): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
     credentials: 'include',
@@ -22,18 +27,25 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   }
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: res.statusText })) as { message: string }
+    const err = (await res
+      .json()
+      .catch(() => ({ message: res.statusText }))) as { message: string }
     throw new Error(err.message ?? 'Request failed')
   }
 
-  if (res.status === 204) return undefined as T
-  return res.json() as Promise<T>
+  if (res.status === 204) {
+    return undefined as T
+  }
+  return (await res.json()) as Promise<T>
 }
 
 export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body?: unknown) =>
-    request<T>(path, { method: 'POST', body: body != null ? JSON.stringify(body) : undefined }),
+    request<T>(path, {
+      method: 'POST',
+      body: body != null ? JSON.stringify(body) : undefined,
+    }),
   patch: <T>(path: string, body: unknown) =>
     request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),

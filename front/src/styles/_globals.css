@@ -43,10 +43,9 @@
 
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
-}
 
-@theme .dark {
-  --background: #020817;
+  --font-display: 'Syne', system-ui, sans-serif;
+  --font-body: 'Figtree', system-ui, sans-serif;
 }
 
 * {
@@ -56,9 +55,20 @@
 body {
   background-color: var(--background);
   color: var(--foreground);
+  font-family: 'Figtree', system-ui, -apple-system, sans-serif;
 }
 
-/* ANIMATION */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Syne', system-ui, -apple-system, sans-serif;
+}
+
+/* ANIMATIONS */
+
 @keyframes subtleBounce {
   0%,
   100% {
@@ -69,8 +79,60 @@ body {
   }
 }
 
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(var(--float-rotate, 0deg));
+  }
+  50% {
+    transform: translateY(-18px) rotate(var(--float-rotate, 0deg));
+  }
+}
+
+@keyframes glowPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(245, 158, 11, 0.55), 0 0 56px rgba(245, 158, 11, 0.15);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .subtle-bounce {
   animation: subtleBounce 5s ease-in-out infinite;
+}
+
+.float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.glow-pulse {
+  animation: glowPulse 3s ease-in-out infinite;
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.5s ease-out forwards;
 }
 
 .select-content {
@@ -139,46 +201,42 @@ body {
 }
 
 .fc-timeGridWeek-view .fc-timegrid-now-indicator-container {
-    overflow: visible;
+  overflow: visible;
 }
 .fc-timeGridWeek-view .fc-timegrid-now-indicator-line {
-    width: calc(700% + 6px);
+  width: calc(700% + 6px);
 }
 
 .fc-timeGridWeek-view .fc-day:nth-child(2) .fc-timegrid-now-indicator-line {
-    --fc-now-indicator-shift: 0%;
+  --fc-now-indicator-shift: 0%;
 }
 .fc-timeGridWeek-view .fc-day:nth-child(3) .fc-timegrid-now-indicator-line {
-    --fc-now-indicator-shift: 14.29%;
+  --fc-now-indicator-shift: 14.29%;
 }
 .fc-timeGridWeek-view .fc-day:nth-child(4) .fc-timegrid-now-indicator-line {
-    --fc-now-indicator-shift: 28.57%;
+  --fc-now-indicator-shift: 28.57%;
 }
 .fc-timeGridWeek-view .fc-day:nth-child(5) .fc-timegrid-now-indicator-line {
-    --fc-now-indicator-shift: 42.86%;
+  --fc-now-indicator-shift: 42.86%;
 }
 .fc-timeGridWeek-view .fc-day:nth-child(6) .fc-timegrid-now-indicator-line {
-    --fc-now-indicator-shift: 57.14%;
+  --fc-now-indicator-shift: 57.14%;
 }
 
 .fc-timeGridWeek-view .fc-day .fc-timegrid-now-indicator-line {
-    transform: translateX(calc(-1 * var(--fc-now-indicator-shift)));
+  transform: translateX(calc(-1 * var(--fc-now-indicator-shift)));
 }
 .fc .fc-timegrid-now-indicator-line {
-    border-color: var(--color-secondary);
+  border-color: var(--color-secondary);
 }
 
 .fc .fc-timegrid-now-indicator-arrow {
-    margin-top: -4px;
-    border: none;
-    background: var(--color-secondary);
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    left: auto;
-    right: -4px;
+  margin-top: -4px;
+  border: none;
+  background: var(--color-secondary);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  left: auto;
+  right: -4px;
 }
-
-/*.fc-scroller {*/
-/*    overflow: auto !important;*/
-/*}*/

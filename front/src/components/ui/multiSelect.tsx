@@ -1,5 +1,5 @@
-import { Popover } from 'radix-ui'
 import { Check, ChevronDown } from 'lucide-react'
+import { Popover } from 'radix-ui'
 import { useState } from 'react'
 
 type Option = { value: string; label: string }

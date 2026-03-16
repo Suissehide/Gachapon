@@ -1,6 +1,6 @@
-import type { OAuthProvider, OAuthAccount } from '../../../../generated/client.js'
-import type { IocContainer } from '../../../types/application/ioc.js'
-import type { PostgresPrismaClient } from '../postgres-client.js'
+import type { OAuthAccount, OAuthProvider } from '../../../../generated/client'
+import type { IocContainer } from '../../../types/application/ioc'
+import type { PostgresPrismaClient } from '../postgres-client'
 
 export class OAuthAccountRepository {
   readonly #prisma: PostgresPrismaClient
@@ -9,13 +9,22 @@ export class OAuthAccountRepository {
     this.#prisma = postgresOrm.prisma
   }
 
-  findByProvider(provider: OAuthProvider, providerAccountId: string): Promise<OAuthAccount | null> {
+  findByProvider(
+    provider: OAuthProvider,
+    providerAccountId: string,
+  ): Promise<OAuthAccount | null> {
     return this.#prisma.oAuthAccount.findUnique({
       where: { provider_providerAccountId: { provider, providerAccountId } },
     })
   }
 
-  create(userId: string, provider: OAuthProvider, providerAccountId: string): Promise<OAuthAccount> {
-    return this.#prisma.oAuthAccount.create({ data: { userId, provider, providerAccountId } })
+  create(
+    userId: string,
+    provider: OAuthProvider,
+    providerAccountId: string,
+  ): Promise<OAuthAccount> {
+    return this.#prisma.oAuthAccount.create({
+      data: { userId, provider, providerAccountId },
+    })
   }
 }

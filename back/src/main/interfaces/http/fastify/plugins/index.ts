@@ -18,7 +18,12 @@ const plugins: FastifyPluginAsync = fastifyPlugin(
     log.info('Registering plugins')
     const shutdownOptions = { timeout: 5000 }
     if (process.env.CI) {
-      await registerPlugin(fastify, 'gracefulShutdown', fastifyGracefulShutdown, shutdownOptions)
+      await registerPlugin(
+        fastify,
+        'gracefulShutdown',
+        fastifyGracefulShutdown,
+        shutdownOptions,
+      )
     }
     await registerPlugin(fastify, 'cookie', cookiePlugin)
     await registerPlugin(fastify, 'jwt', jwtPlugin)

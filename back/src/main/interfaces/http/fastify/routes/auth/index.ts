@@ -1,10 +1,11 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
-import { registerRouter } from './register.router.js'
-import { loginRouter } from './login.router.js'
-import { logoutRouter } from './logout.router.js'
-import { refreshRouter } from './refresh.router.js'
-import { meRouter } from './me.router.js'
-import { oauthRouter } from './oauth/index.js'
+
+import { loginRouter } from './login.router'
+import { logoutRouter } from './logout.router'
+import { meRouter } from './me.router'
+import { oauthRouter } from './oauth'
+import { refreshRouter } from './refresh.router'
+import { registerRouter } from './register.router'
 
 export const authRouter: FastifyPluginAsyncZod = async (fastify) => {
   await fastify.register(registerRouter, { prefix: '/register' })

@@ -1,7 +1,11 @@
 import { z } from 'zod/v4'
 
 export const registerBodySchema = z.object({
-  username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9_]+$/),
+  username: z
+    .string()
+    .min(3)
+    .max(30)
+    .regex(/^[a-zA-Z0-9_]+$/),
   email: z.email(),
   password: z.string().min(8).max(100),
 })

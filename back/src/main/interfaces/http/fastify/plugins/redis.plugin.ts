@@ -1,7 +1,7 @@
-import fp from 'fastify-plugin'
 import type { FastifyInstance } from 'fastify'
+import fp from 'fastify-plugin'
 
-export const redisPlugin = fp(async (fastify: FastifyInstance) => {
+export const redisPlugin = fp((fastify: FastifyInstance) => {
   const { redisClient, logger } = fastify.iocContainer
 
   fastify.addHook('onReady', async () => {

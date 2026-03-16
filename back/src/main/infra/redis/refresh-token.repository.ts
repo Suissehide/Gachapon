@@ -1,7 +1,7 @@
-import type { IocContainer } from '../../types/application/ioc.js'
-import type { RedisClientInterface } from '../../types/infra/redis/redis-client.js'
+import type { IocContainer } from '../../types/application/ioc'
+import type { RedisClientInterface } from '../../types/infra/redis/redis-client'
 
-const TTL = 7 * 24 * 60 * 60  // 7 days in seconds
+const TTL = 7 * 24 * 60 * 60 // 7 days in seconds
 
 export class RefreshTokenRepository {
   readonly #redis: RedisClientInterface
@@ -28,6 +28,8 @@ export class RefreshTokenRepository {
 
   async revokeAll(userId: string): Promise<void> {
     const keys = await this.#redis.client.keys(`refresh:${userId}:*`)
-    if (keys.length > 0) await this.#redis.client.del(...keys)
+    if (keys.length > 0) {
+      await this.#redis.client.del(...keys)
+    }
   }
 }

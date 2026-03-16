@@ -1,4 +1,5 @@
 import type { Boom } from '@hapi/boom'
+
 import {
   formatZodErrorFromBoomError,
   isZodError,

@@ -18,8 +18,10 @@ export interface SelectProps extends RadixUiSelect.SelectProps {
 interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 
 export const inputVariants = cva(
-  'flex h-9 w-full rounded-md border border-border bg-background px-3 py-1 mb-0 text-sm transition-colors ' +
-    'file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
+  'flex h-9 w-full rounded-md border border-border bg-input px-3 py-1 mb-0 text-sm text-text transition-colors ' +
+    'file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-text-light ' +
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring ' +
+    'disabled:cursor-not-allowed disabled:opacity-50',
 )
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
@@ -80,17 +82,17 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
           <RadixUiSelect.Trigger
             ref={ref}
             className={cn(
-              'inline-flex w-full h-[36px] items-center justify-between rounded-md border border-border bg-white px-3 py-2 text-sm ' +
-                'focus:outline-none focus:ring-1 focus:ring-ring',
+              'inline-flex w-full h-[36px] items-center justify-between rounded-md border border-border bg-input px-3 py-2 text-sm text-text ' +
+                'focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors',
               props.disabled
-                ? 'bg-gray-200 text-gray-300'
-                : 'cursor-pointer text-text',
+                ? 'opacity-50 cursor-not-allowed'
+                : 'cursor-pointer',
               className,
             )}
           >
             <RadixUiSelect.Value placeholder={placeholder} />
             <RadixUiSelect.Icon asChild>
-              <ChevronDown className="ml-2 h-4 w-4 text-gray-500" />
+              <ChevronDown className="ml-2 h-4 w-4 text-text-light" />
             </RadixUiSelect.Icon>
           </RadixUiSelect.Trigger>
 
@@ -98,14 +100,14 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
             <RadixUiSelect.Content
               id={id}
               position="popper"
-              className="select-content z-150 rounded-md border border-border bg-white shadow-md"
+              className="select-content z-150 rounded-md border border-border bg-popover shadow-lg shadow-black/20"
             >
               <RadixUiSelect.Viewport className="p-1">
                 {options.map((option) => (
                   <RadixUiSelect.Item
                     key={option.value}
                     value={option.value.toString()}
-                    className="relative flex cursor-pointer select-none items-center rounded px-2 py-1.5 text-sm text-text hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                    className="relative flex cursor-pointer select-none items-center rounded px-2 py-1.5 text-sm text-text hover:bg-muted focus:bg-muted focus:outline-none"
                   >
                     <RadixUiSelect.ItemText>
                       {option.label}
@@ -124,7 +126,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
           <button
             type={'button'}
             onClick={handleClear}
-            className="absolute right-9 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+            className="absolute right-9 top-1/2 -translate-y-1/2 text-text-light hover:text-text cursor-pointer transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
@@ -142,13 +144,14 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
         <input type="checkbox" ref={ref} className="peer sr-only" {...props} />
         <div
           className={cn(
-            'h-5 w-5 flex items-center justify-center rounded border border-border bg-background  transition-colors',
+            'h-5 w-5 flex items-center justify-center rounded border border-border bg-input transition-colors',
+            'peer-checked:border-primary peer-checked:bg-primary/10',
             ' peer-checked:[&>svg]:opacity-100',
             className,
           )}
           aria-hidden="true"
         >
-          <Check className="h-5 w-5 text-primary opacity-0 transition-opacity pointer-events-none" />
+          <Check className="h-4 w-4 text-primary opacity-0 transition-opacity pointer-events-none" />
         </div>
       </label>
     )

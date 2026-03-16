@@ -1,19 +1,20 @@
 import { type Cradle, diContainer } from '@fastify/awilix'
 import { type AwilixContainer, asClass, asValue } from 'awilix'
 import type { Resolver } from 'awilix/lib/resolvers'
-import { HttpClient } from '../../../infra/http/http-client'
-import { JwtService } from '../../../infra/auth/jwt.service'
-import { PinoLogger } from '../../../infra/logger/pino/pino-logger'
-import { PostgresOrm } from '../../../infra/orm/postgres-client'
-import { RedisClient } from '../../../infra/redis/redis-client'
-import { MinioClient } from '../../../infra/storage/minio-client'
-import { UserRepository } from '../../../infra/orm/repositories/user.repository'
-import { UserDomain } from '../../../domain/user/user.domain'
-import { RefreshTokenRepository } from '../../../infra/redis/refresh-token.repository'
-import { OAuthAccountRepository } from '../../../infra/orm/repositories/oauth-account.repository'
-import { ApiKeyRepository } from '../../../infra/orm/repositories/api-key.repository'
+
 import { AuthDomain } from '../../../domain/auth/auth.domain'
 import { OAuthDomain } from '../../../domain/auth/oauth.domain'
+import { UserDomain } from '../../../domain/user/user.domain'
+import { JwtService } from '../../../infra/auth/jwt.service'
+import { HttpClient } from '../../../infra/http/http-client'
+import { PinoLogger } from '../../../infra/logger/pino/pino-logger'
+import { PostgresOrm } from '../../../infra/orm/postgres-client'
+import { ApiKeyRepository } from '../../../infra/orm/repositories/api-key.repository'
+import { OAuthAccountRepository } from '../../../infra/orm/repositories/oauth-account.repository'
+import { UserRepository } from '../../../infra/orm/repositories/user.repository'
+import { RedisClient } from '../../../infra/redis/redis-client'
+import { RefreshTokenRepository } from '../../../infra/redis/refresh-token.repository'
+import { MinioClient } from '../../../infra/storage/minio-client'
 import { FastifyHttpServer } from '../../../interfaces/http/fastify/fastify-http-server'
 import type { Config } from '../../../types/application/config'
 import type { IocContainer } from '../../../types/application/ioc'
@@ -44,15 +45,24 @@ class AwilixIocContainer {
     this.#reg('jwtService', asClass(JwtService).singleton())
     this.#reg('userRepository', asClass(UserRepository).singleton())
     this.#reg('userDomain', asClass(UserDomain).singleton())
-    this.#reg('refreshTokenRepository', asClass(RefreshTokenRepository).singleton())
-    this.#reg('oauthAccountRepository', asClass(OAuthAccountRepository).singleton())
+    this.#reg(
+      'refreshTokenRepository',
+      asClass(RefreshTokenRepository).singleton(),
+    )
+    this.#reg(
+      'oauthAccountRepository',
+      asClass(OAuthAccountRepository).singleton(),
+    )
     this.#reg('apiKeyRepository', asClass(ApiKeyRepository).singleton())
     this.#reg('authDomain', asClass(AuthDomain).singleton())
     this.#reg('oauthDomain', asClass(OAuthDomain).singleton())
     logger.info('IoC container initialized.')
   }
 
-  #reg<T>(key: keyof IocContainer, resolver: Resolver<T>): AwilixContainer<Cradle> {
+  #reg<T>(
+    key: keyof IocContainer,
+    resolver: Resolver<T>,
+  ): AwilixContainer<Cradle> {
     return diContainer.register(key as string, resolver)
   }
 }

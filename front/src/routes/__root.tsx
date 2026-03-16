@@ -1,5 +1,6 @@
+import { createRootRoute, Outlet } from '@tanstack/react-router'
 import { useEffect } from 'react'
-import { Outlet, createRootRoute } from '@tanstack/react-router'
+
 import { useAuthStore } from '../stores/auth.store.js'
 
 export const Route = createRootRoute({
@@ -9,7 +10,9 @@ export const Route = createRootRoute({
 function RootComponent() {
   const { fetchMe, isLoading } = useAuthStore()
 
-  useEffect(() => { void fetchMe() }, [fetchMe])
+  useEffect(() => {
+    void fetchMe()
+  }, [fetchMe])
 
   if (isLoading) {
     return (

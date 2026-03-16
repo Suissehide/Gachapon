@@ -1,7 +1,11 @@
-import type { PostgresPrismaClient } from '../postgres-client.js'
-import type { IocContainer } from '../../../types/application/ioc.js'
-import type { UserRepositoryInterface } from '../../../types/infra/orm/repositories/user.repository.interface.js'
-import type { CreateUserInput, UpdateUserInput, UserEntity } from '../../../types/domain/user/user.types.js'
+import type { IocContainer } from '../../../types/application/ioc'
+import type {
+  CreateUserInput,
+  UpdateUserInput,
+  UserEntity,
+} from '../../../types/domain/user/user.types'
+import type { UserRepositoryInterface } from '../../../types/infra/orm/repositories/user.repository.interface'
+import type { PostgresPrismaClient } from '../postgres-client'
 
 export class UserRepository implements UserRepositoryInterface {
   readonly #prisma: PostgresPrismaClient

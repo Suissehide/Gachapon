@@ -1,7 +1,8 @@
-import jwt, { type SignOptions } from 'jsonwebtoken'
 import Boom from '@hapi/boom'
-import type { IocContainer } from '../../types/application/ioc.js'
-import type { JwtServiceInterface } from '../../types/infra/auth/jwt.service.js'
+import jwt, { type SignOptions } from 'jsonwebtoken'
+
+import type { IocContainer } from '../../types/application/ioc'
+import type { JwtServiceInterface } from '../../types/infra/auth/jwt.service'
 
 export class JwtService implements JwtServiceInterface {
   readonly #secret: string
@@ -12,11 +13,17 @@ export class JwtService implements JwtServiceInterface {
     this.#refreshSecret = config.jwtRefreshSecret
   }
 
-  sign(payload: Record<string, unknown>, options: { expiresIn: string }): string {
+  sign(
+    payload: Record<string, unknown>,
+    options: { expiresIn: string },
+  ): string {
     return jwt.sign(payload, this.#secret, options as SignOptions)
   }
 
-  signRefresh(payload: Record<string, unknown>, options: { expiresIn: string }): string {
+  signRefresh(
+    payload: Record<string, unknown>,
+    options: { expiresIn: string },
+  ): string {
     return jwt.sign(payload, this.#refreshSecret, options as SignOptions)
   }
 
