@@ -12,6 +12,7 @@ import type { UserDomainInterface } from '../domain/user/user.domain.interface'
 import type { JwtServiceInterface } from '../infra/auth/jwt.service'
 import type { HttpClientInterface } from '../infra/http/http-client'
 import type { UserRepositoryInterface } from '../infra/orm/repositories/user.repository.interface'
+import type { ConfigServiceInterface } from '../infra/config/config.service.interface'
 import type { RedisClientInterface } from '../infra/redis/redis-client'
 import type { MinioClientInterface } from '../infra/storage/minio-client'
 import type { HttpServer } from '../interfaces/http/server'
@@ -26,6 +27,7 @@ export interface IocContainer {
   readonly logger: Logger
   readonly errorHandler: ErrorHandlerInterface
   readonly postgresOrm: PostgresOrm
+  readonly configService: ConfigServiceInterface
   readonly redisClient: RedisClientInterface
   readonly minioClient: MinioClientInterface
   readonly jwtService: JwtServiceInterface

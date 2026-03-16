@@ -12,9 +12,10 @@ const startIocContainer = (config: Config): AwilixIocContainer => {
 const startApp = async (): Promise<IocContainer> => {
   const config = loadConfig()
   const iocContainer = startIocContainer(config)
-  const { httpServer } = iocContainer.instances
+  const { httpServer, configService } = iocContainer.instances
 
   await httpServer.configure()
+  await configService.bootstrap()
   await httpServer.start()
 
   return iocContainer.instances
