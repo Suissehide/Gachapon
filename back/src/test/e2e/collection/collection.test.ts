@@ -101,6 +101,9 @@ describe('Collection routes', () => {
       headers: { cookie: cookies },
       payload: { cardId },
     })
-    expect([200, 400]).toContain(res.statusCode)
+    expect(res.statusCode).toBe(200)
+    const recycleBody = res.json()
+    expect(recycleBody).toHaveProperty('dustEarned')
+    expect(recycleBody).toHaveProperty('newDustTotal')
   })
 })
