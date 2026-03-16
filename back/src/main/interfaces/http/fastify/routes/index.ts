@@ -1,5 +1,6 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 
+import { adminRouter } from './admin'
 import { apiKeysRouter } from './api-keys'
 import { authRouter } from './auth'
 import { collectionRouter } from './collection'
@@ -17,4 +18,5 @@ export const routes: FastifyPluginAsyncZod = async (fastify) => {
   await fastify.register(gachaRouter)
   await fastify.register(collectionRouter)
   await fastify.register(wsRouter)
+  await fastify.register(adminRouter, { prefix: '/admin' })
 }
