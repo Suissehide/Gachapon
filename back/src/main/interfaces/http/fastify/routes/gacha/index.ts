@@ -1,3 +1,4 @@
+import Boom from '@hapi/boom'
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
@@ -5,7 +6,8 @@ import { calculateTokens } from '../../../../../domain/economy/economy.domain'
 
 // biome-ignore lint/suspicious/useAwait: fastify plugin pattern
 export const gachaRouter: FastifyPluginAsyncZod = async (fastify) => {
-  const { gachaDomain, userRepository, config, gachaPullRepository } = fastify.iocContainer
+  const { gachaDomain, userRepository, config, gachaPullRepository } =
+    fastify.iocContainer
 
   // POST /pulls — consommer 1 token et tirer une carte
   fastify.post(
@@ -40,7 +42,9 @@ export const gachaRouter: FastifyPluginAsyncZod = async (fastify) => {
     { onRequest: [fastify.verifySessionCookie] },
     async (request) => {
       const user = await userRepository.findById(request.user.userID)
-      if (!user) { throw new Error('User not found') }
+      if (!user) {
+        throw Boom.notFound('User not found')
+      }
 
       const { tokens, nextTokenAt } = calculateTokens(
         user.lastTokenAt,
@@ -63,7 +67,9 @@ export const gachaRouter: FastifyPluginAsyncZod = async (fastify) => {
     { onRequest: [fastify.verifySessionCookie] },
     async (request) => {
       const user = await userRepository.findById(request.user.userID)
-      if (!user) { throw new Error('User not found') }
+      if (!user) {
+        throw Boom.notFound('User not found')
+      }
 
       const { tokens, nextTokenAt } = calculateTokens(
         user.lastTokenAt,
@@ -86,8 +92,8 @@ export const gachaRouter: FastifyPluginAsyncZod = async (fastify) => {
       onRequest: [fastify.verifySessionCookie],
       schema: {
         querystring: z.object({
-          page: z.string().optional().default('1').transform(Number),
-          limit: z.string().optional().default('20').transform(Number),
+          page: z.coerce.number().int().min(1).default(1),
+          limit: z.coerce.number().int().min(1).max(100).default(20),
         }),
       },
     },
