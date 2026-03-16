@@ -70,7 +70,8 @@ const configSchema = z.object({
   pityThreshold: z
     .string()
     .default('100')
-    .transform((v) => Number.parseInt(v, 10)),
+    .transform((v) => Number.parseInt(v, 10))
+    .pipe(z.number().int().min(1)),
 })
 
 export type Config = z.infer<typeof configSchema>
