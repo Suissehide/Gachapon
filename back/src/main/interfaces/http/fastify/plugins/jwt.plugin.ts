@@ -13,9 +13,21 @@ declare module 'fastify' {
 
 export const jwtPlugin = fp(async (fastify: FastifyInstance) => {
   fastify.decorate('verifySessionCookie', async (request: FastifyRequest) => {
-    const { jwtService } = fastify.iocContainer
+    const { jwtService, apiKeyRepository, userRepository } = fastify.iocContainer
 
-    // JWT cookie only — X-API-Key support will be added in Task 9
+    // X-API-Key takes priority
+    const apiKey = request.headers['x-api-key'] as string | undefined
+    if (apiKey) {
+      const keyRecord = await apiKeyRepository.findByKey(apiKey)
+      if (!keyRecord) throw Boom.unauthorized('Invalid API key')
+      const user = await userRepository.findById(keyRecord.userId)
+      if (!user) throw Boom.unauthorized('User not found')
+      request.user = { userID: user.id, role: user.role }
+      void apiKeyRepository.updateLastUsed(keyRecord.id)
+      return
+    }
+
+    // JWT cookie fallback
     const token = request.cookies.access_token
     if (!token) throw Boom.unauthorized('No access token')
     const payload = jwtService.verify<{ sub: string; role: string }>(token)

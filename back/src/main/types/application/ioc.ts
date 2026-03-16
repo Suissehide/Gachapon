@@ -9,6 +9,7 @@ import type { AuthDomainInterface } from '../domain/auth/auth.domain.interface'
 import type { OAuthDomainInterface } from '../domain/auth/oauth.domain.interface'
 import type { RefreshTokenRepository } from '../../infra/redis/refresh-token.repository'
 import type { OAuthAccountRepository } from '../../infra/orm/repositories/oauth-account.repository'
+import type { ApiKeyRepository } from '../../infra/orm/repositories/api-key.repository'
 import type { HttpServer } from '../interfaces/http/server'
 import type { ErrorHandlerInterface } from '../utils/error-handler'
 import type { Logger } from '../utils/logger'
@@ -30,4 +31,5 @@ export interface IocContainer {
   readonly oauthDomain: OAuthDomainInterface
   readonly refreshTokenRepository: RefreshTokenRepository
   readonly oauthAccountRepository: OAuthAccountRepository
+  readonly apiKeyRepository: ApiKeyRepository
 }
