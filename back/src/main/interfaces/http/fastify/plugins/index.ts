@@ -9,6 +9,7 @@ import { awilixPlugin } from './awilix.plugin'
 import { cookiePlugin } from './cookie.plugin'
 import { jwtPlugin } from './jwt.plugin'
 import { ormPlugin } from './orm.plugin'
+import { rolePlugin } from './role.plugin'
 import { redisPlugin } from './redis.plugin'
 import { websocketPlugin } from './websocket.plugin'
 
@@ -28,6 +29,7 @@ const plugins: FastifyPluginAsync = fastifyPlugin(
     }
     await registerPlugin(fastify, 'cookie', cookiePlugin)
     await registerPlugin(fastify, 'jwt', jwtPlugin)
+    await registerPlugin(fastify, 'role', rolePlugin)
     await registerPlugin<FastifyCorsOptions>(fastify, 'cors', fastifyCors, {
       origin: config.corsOrigin ?? false,
       credentials: true,
