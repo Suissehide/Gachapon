@@ -53,11 +53,7 @@ export const numberRangeFilterFn = <T>(
     return false
   }
 
-  if (max !== undefined && value > max) {
-    return false
-  }
-
-  return true
+  return !(max !== undefined && value > max)
 }
 
 export const dateFilterFn = <T>(
@@ -76,11 +72,7 @@ export const dateFilterFn = <T>(
     return false
   }
 
-  if (end && date.isAfter(dayjs(end), 'day')) {
-    return false
-  }
-
-  return true
+  return !(end && date.isAfter(dayjs(end), 'day'))
 }
 
 export const dateRangeFilterFn = <T>(

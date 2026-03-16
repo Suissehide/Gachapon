@@ -2,8 +2,8 @@ import { loadConfig } from './config'
 import { AwilixIocContainer } from './ioc/awilix/awilix-ioc-container'
 import '../utils/date'
 
-import type { Config } from '../types/application/config'
 import type { IocContainer } from '../types/application/ioc'
+import type { Config } from './config'
 
 const startIocContainer = (config: Config): AwilixIocContainer => {
   return new AwilixIocContainer(config)

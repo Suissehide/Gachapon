@@ -16,10 +16,10 @@ import { RedisClient } from '../../../infra/redis/redis-client'
 import { RefreshTokenRepository } from '../../../infra/redis/refresh-token.repository'
 import { MinioClient } from '../../../infra/storage/minio-client'
 import { FastifyHttpServer } from '../../../interfaces/http/fastify/fastify-http-server'
-import type { Config } from '../../../types/application/config'
 import type { IocContainer } from '../../../types/application/ioc'
 import { ErrorHandler } from '../../../utils/error-handler'
 import { recordToString } from '../../../utils/helper'
+import type { Config } from '../../config'
 
 declare module '@fastify/awilix' {
   interface Cradle extends IocContainer {}

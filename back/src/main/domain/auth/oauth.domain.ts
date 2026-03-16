@@ -1,8 +1,8 @@
 import Boom from '@hapi/boom'
 
-import { OAuthProvider } from '../../../generated/client'
+import { OAuthProvider } from '../../../generated/enums'
+import type { Config } from '../../application/config'
 import type { OAuthAccountRepository } from '../../infra/orm/repositories/oauth-account.repository'
-import type { Config } from '../../types/application/config'
 import type { IocContainer } from '../../types/application/ioc'
 import type { AuthDomainInterface } from '../../types/domain/auth/auth.domain.interface'
 import type { TokenPair } from '../../types/domain/auth/auth.types'
