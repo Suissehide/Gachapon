@@ -1,9 +1,13 @@
 // ESM-compatible wrapper for jsonwebtoken (CJS module)
-// We import it as default (CJS modules get wrapped as default exports in ESM)
-// Using a path that bypasses the moduleNameMapper to avoid circular dependency
-import jwtDefault from '/Users/couffinhal/.config/superpowers/worktrees/Gachapon/plan1-foundation/back/node_modules/jsonwebtoken/index.js'
+// Resolves the real jsonwebtoken path relative to this file, bypassing Jest's moduleNameMapper
+import { fileURLToPath } from 'url'
+import path from 'path'
 
-const jwt = jwtDefault as any
+// From back/src/test/__mocks__/ go up 3 levels to back/, then into node_modules
+const mockDir = path.dirname(fileURLToPath(import.meta.url))
+const jwtPath = path.resolve(mockDir, '../../../node_modules/jsonwebtoken/index.js')
+const jwt = (await import(jwtPath)).default ?? (await import(jwtPath))
+
 export const sign = (...args: any[]) => jwt.sign(...args)
 export const verify = (...args: any[]) => jwt.verify(...args)
 export const decode = (...args: any[]) => jwt.decode(...args)
