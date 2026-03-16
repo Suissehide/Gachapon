@@ -4,8 +4,8 @@ import type { UserEntity } from '../../../../../types/domain/user/user.types.js'
 
 export const COOKIE_OPTS = {
   httpOnly: true,
-  secure: true,
-  sameSite: 'strict' as const,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
   path: '/',
 }
 

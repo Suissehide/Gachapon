@@ -6,7 +6,7 @@ export const logoutRouter: FastifyPluginAsyncZod = async (fastify) => {
   const { authDomain } = fastify.iocContainer
 
   fastify.post('/', {
-    preHandler: [fastify.verifySessionCookie],
+    onRequest: [fastify.verifySessionCookie],
   }, async (request, reply) => {
     const refreshToken = request.cookies.refresh_token
     if (!refreshToken) throw Boom.badRequest('No refresh token')
