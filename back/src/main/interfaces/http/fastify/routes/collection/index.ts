@@ -3,7 +3,6 @@ import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
 import type { CardRarity } from '../../../../../types/domain/gacha/gacha.types'
-import { DUST_BY_RARITY } from '../../../../../types/domain/gacha/gacha.types'
 
 // biome-ignore lint/suspicious/useAwait: fastify plugin pattern
 export const collectionRouter: FastifyPluginAsyncZod = async (fastify) => {
@@ -112,7 +111,7 @@ export const collectionRouter: FastifyPluginAsyncZod = async (fastify) => {
       const userId = request.user.userID
       const { cardId } = request.body
 
-      const { postgresOrm } = fastify.iocContainer
+      const { postgresOrm, configService } = fastify.iocContainer
 
       // First verify card exists (outside tx is fine for read-only catalog data)
       const card = await cardRepository.findById(cardId)
@@ -120,7 +119,8 @@ export const collectionRouter: FastifyPluginAsyncZod = async (fastify) => {
         throw Boom.notFound('Card not found')
       }
 
-      const dustEarned = DUST_BY_RARITY[card.rarity]
+      const dustKey = `dust${card.rarity.charAt(0) + card.rarity.slice(1).toLowerCase()}`
+      const dustEarned = await configService.get(dustKey)
 
       const result = await postgresOrm.executeWithTransactionClient(
         async (tx) => {
