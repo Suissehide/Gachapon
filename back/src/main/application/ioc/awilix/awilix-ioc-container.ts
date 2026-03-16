@@ -4,14 +4,18 @@ import type { Resolver } from 'awilix/lib/resolvers'
 
 import { AuthDomain } from '../../../domain/auth/auth.domain'
 import { OAuthDomain } from '../../../domain/auth/oauth.domain'
+import { GachaDomain } from '../../../domain/gacha/gacha.domain'
 import { UserDomain } from '../../../domain/user/user.domain'
 import { JwtService } from '../../../infra/auth/jwt.service'
 import { HttpClient } from '../../../infra/http/http-client'
 import { PinoLogger } from '../../../infra/logger/pino/pino-logger'
 import { PostgresOrm } from '../../../infra/orm/postgres-client'
 import { ApiKeyRepository } from '../../../infra/orm/repositories/api-key.repository'
+import { CardRepository } from '../../../infra/orm/repositories/card.repository'
+import { GachaPullRepository } from '../../../infra/orm/repositories/gacha-pull.repository'
 import { OAuthAccountRepository } from '../../../infra/orm/repositories/oauth-account.repository'
 import { UserRepository } from '../../../infra/orm/repositories/user.repository'
+import { UserCardRepository } from '../../../infra/orm/repositories/user-card.repository'
 import { RedisClient } from '../../../infra/redis/redis-client'
 import { RefreshTokenRepository } from '../../../infra/redis/refresh-token.repository'
 import { MinioClient } from '../../../infra/storage/minio-client'
@@ -56,6 +60,10 @@ class AwilixIocContainer {
     this.#reg('apiKeyRepository', asClass(ApiKeyRepository).singleton())
     this.#reg('authDomain', asClass(AuthDomain).singleton())
     this.#reg('oauthDomain', asClass(OAuthDomain).singleton())
+    this.#reg('cardRepository', asClass(CardRepository).singleton())
+    this.#reg('userCardRepository', asClass(UserCardRepository).singleton())
+    this.#reg('gachaPullRepository', asClass(GachaPullRepository).singleton())
+    this.#reg('gachaDomain', asClass(GachaDomain).singleton())
     logger.info('IoC container initialized.')
   }
 
