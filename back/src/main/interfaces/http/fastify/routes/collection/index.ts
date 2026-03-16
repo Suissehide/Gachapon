@@ -7,7 +7,8 @@ import { DUST_BY_RARITY } from '../../../../../types/domain/gacha/gacha.types'
 
 // biome-ignore lint/suspicious/useAwait: fastify plugin pattern
 export const collectionRouter: FastifyPluginAsyncZod = async (fastify) => {
-  const { cardRepository, userCardRepository, userRepository } = fastify.iocContainer
+  const { cardRepository, userCardRepository, userRepository } =
+    fastify.iocContainer
 
   // GET /sets — liste les sets (actifs)
   fastify.get(
@@ -43,7 +44,6 @@ export const collectionRouter: FastifyPluginAsyncZod = async (fastify) => {
           imageUrl: c.imageUrl,
           rarity: c.rarity,
           variant: c.variant,
-          dropWeight: c.dropWeight,
           set: { id: c.set.id, name: c.set.name },
         })),
       }
@@ -59,7 +59,9 @@ export const collectionRouter: FastifyPluginAsyncZod = async (fastify) => {
     },
     async (request) => {
       const card = await cardRepository.findById(request.params.id)
-      if (!card) { throw Boom.notFound('Card not found') }
+      if (!card) {
+        throw Boom.notFound('Card not found')
+      }
       return card
     },
   )
@@ -72,8 +74,14 @@ export const collectionRouter: FastifyPluginAsyncZod = async (fastify) => {
       schema: { params: z.object({ id: z.string().uuid() }) },
     },
     async (request) => {
+      if (request.params.id !== request.user.userID) {
+        throw Boom.forbidden("Cannot view another user's collection")
+      }
+
       const user = await userRepository.findById(request.params.id)
-      if (!user) { throw Boom.notFound('User not found') }
+      if (!user) {
+        throw Boom.notFound('User not found')
+      }
 
       const userCards = await userCardRepository.findByUser(request.params.id)
       return {
@@ -104,26 +112,50 @@ export const collectionRouter: FastifyPluginAsyncZod = async (fastify) => {
       const userId = request.user.userID
       const { cardId } = request.body
 
-      const card = await cardRepository.findById(cardId)
-      if (!card) { throw Boom.notFound('Card not found') }
+      const { postgresOrm } = fastify.iocContainer
 
-      const userCard = await userCardRepository.findByUser(userId)
-      const owned = userCard.find((uc) => uc.card.id === cardId)
-      if (!owned || owned.quantity < 1) {
-        throw Boom.badRequest('You do not own this card')
+      // First verify card exists (outside tx is fine for read-only catalog data)
+      const card = await cardRepository.findById(cardId)
+      if (!card) {
+        throw Boom.notFound('Card not found')
       }
 
       const dustEarned = DUST_BY_RARITY[card.rarity]
-      await userCardRepository.decrementOrDelete(userId, cardId)
 
-      // Incrémenter dust atomiquement
-      const { postgresOrm } = fastify.iocContainer
-      const user = await postgresOrm.prisma.user.update({
-        where: { id: userId },
-        data: { dust: { increment: dustEarned } },
-      })
+      const result = await postgresOrm.executeWithTransactionClient(
+        async (tx) => {
+          // Re-read ownership inside the transaction to prevent TOCTOU
+          const uc = await tx.userCard.findUnique({
+            where: { userId_cardId: { userId, cardId } },
+          })
+          if (!uc || uc.quantity < 1) {
+            throw Boom.badRequest('You do not own this card')
+          }
 
-      return { dustEarned, newDustTotal: user.dust }
+          // Decrement or delete
+          if (uc.quantity <= 1) {
+            await tx.userCard.delete({
+              where: { userId_cardId: { userId, cardId } },
+            })
+          } else {
+            await tx.userCard.update({
+              where: { userId_cardId: { userId, cardId } },
+              data: { quantity: { decrement: 1 } },
+            })
+          }
+
+          // Increment dust atomically
+          const user = await tx.user.update({
+            where: { id: userId },
+            data: { dust: { increment: dustEarned } },
+          })
+
+          return { dustEarned, newDustTotal: user.dust }
+        },
+        { isolationLevel: 'Serializable', maxWait: 5000, timeout: 10000 },
+      )
+
+      return result
     },
   )
 }
