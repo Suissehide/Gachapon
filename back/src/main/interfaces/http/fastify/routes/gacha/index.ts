@@ -3,6 +3,7 @@ import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
 import { calculateTokens } from '../../../../../domain/economy/economy.domain'
+import { wsManager } from '../../../../ws/ws-manager'
 
 // biome-ignore lint/suspicious/useAwait: fastify plugin pattern
 export const gachaRouter: FastifyPluginAsyncZod = async (fastify) => {
@@ -16,8 +17,21 @@ export const gachaRouter: FastifyPluginAsyncZod = async (fastify) => {
     async (request, reply) => {
       const result = await gachaDomain.pull(request.user.userID)
 
-      // TODO Task 8: notifier le WS ici
-      // wsManager.notify(request.user.userID, { type: 'pull:result', ...result })
+      wsManager.notify(request.user.userID, {
+        type: 'pull:result',
+        card: {
+          id: result.card.id,
+          name: result.card.name,
+          imageUrl: result.card.imageUrl,
+          rarity: result.card.rarity,
+          variant: result.card.variant,
+          set: { id: result.card.set.id, name: result.card.set.name },
+        },
+        wasDuplicate: result.wasDuplicate,
+        dustEarned: result.dustEarned,
+        tokensRemaining: result.tokensRemaining,
+        pityCurrent: result.pityCurrent,
+      })
 
       return reply.status(201).send({
         card: {

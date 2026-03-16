@@ -4,6 +4,7 @@ import { apiKeysRouter } from './api-keys'
 import { authRouter } from './auth'
 import { collectionRouter } from './collection'
 import { gachaRouter } from './gacha'
+import { wsRouter } from './ws'
 
 export const routes: FastifyPluginAsyncZod = async (fastify) => {
   fastify.get('/', async () => ({
@@ -15,4 +16,5 @@ export const routes: FastifyPluginAsyncZod = async (fastify) => {
   await fastify.register(apiKeysRouter, { prefix: '/api-keys' })
   await fastify.register(gachaRouter)
   await fastify.register(collectionRouter)
+  await fastify.register(wsRouter)
 }

@@ -10,6 +10,7 @@ import { cookiePlugin } from './cookie.plugin'
 import { jwtPlugin } from './jwt.plugin'
 import { ormPlugin } from './orm.plugin'
 import { redisPlugin } from './redis.plugin'
+import { websocketPlugin } from './websocket.plugin'
 
 const plugins: FastifyPluginAsync = fastifyPlugin(
   async (fastify: FastifyInstance) => {
@@ -36,6 +37,7 @@ const plugins: FastifyPluginAsync = fastifyPlugin(
     await registerPlugin(fastify, 'awilix', awilixPlugin)
     await registerPlugin(fastify, 'orm', ormPlugin)
     await registerPlugin(fastify, 'redis', redisPlugin)
+    await registerPlugin(fastify, 'websocket', websocketPlugin)
 
     log.info('All plugins registered')
   },
