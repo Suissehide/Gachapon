@@ -1,61 +1,133 @@
-services:
-  frontend:
-    build:
-      context: ../front
-      dockerfile: Dockerfile
-    ports:
-      - "80:80"
-    depends_on:
-      - backend
-    profiles:
-      - prod
+networks:
+  proxy:
+    name: proxy
+    external: true
 
-  backend:
+services:
+  back:
     build:
       context: ../back
-      dockerfile: Dockerfile
+      dockerfile: deploy/Dockerfile
+      args:
+        DATABASE_URL: ${DATABASE_URL}
+        NODE_VERSION: ${NODE_VERSION}
+        NPM_VERSION: ${NPM_VERSION}
+      target: app
+    image: "${CONTAINER_REGISTRY_PREFIX}${APP_IMAGE_NAME}-back:${VERSION:-latest}"
+    container_name: "${APP_IMAGE_NAME}-back"
     ports:
-      - "3000:3000"
-    env_file:
-      - .env
+      - '${PORT}:${PORT}'
+    profiles:
+      - backend
+    healthcheck:
+      test: node -e "require('http').get({hostname:'localhost', port:${PORT}, path:'/health', timeout:3000})"
+      retries: 3
+      timeout: 3s
+    environment:
+      - CORS_ORIGIN
+      - DATABASE_URL
+      - DISCORD_CLIENT_ID
+      - DISCORD_CLIENT_SECRET
+      - DISCORD_REDIRECT_URI
+      - FRONT_URL
+      - GOOGLE_CLIENT_ID
+      - GOOGLE_CLIENT_SECRET
+      - GOOGLE_REDIRECT_URI
+      - HOST
+      - JWT_REFRESH_SECRET
+      - JWT_SECRET
+      - LOG_LEVEL
+      - MINIO_ACCESS_KEY
+      - MINIO_BUCKET
+      - MINIO_ENDPOINT
+      - MINIO_SECRET_KEY
+      - NODE_CLUSTER
+      - NODE_ENV=production
+      - NODE_TLS_REJECT_UNAUTHORIZED
+      - PITY_THRESHOLD
+      - PORT
+      - REDIS_URL
+      - TOKEN_MAX_STOCK
+      - TOKEN_REGEN_INTERVAL_HOURS
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${APP_IMAGE_NAME}-back.rule=Host(`${TRAEFIK_BACK_HOST}`)"
+      - "traefik.http.routers.${APP_IMAGE_NAME}-back.entrypoints=https"
+      - "traefik.http.routers.${APP_IMAGE_NAME}-back.tls=true"
+      - "traefik.http.routers.${APP_IMAGE_NAME}-back.tls.certresolver=ovh"
+      - "traefik.http.services.${APP_IMAGE_NAME}-back.loadbalancer.server.port=${PORT}"
+    networks:
+      - proxy
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+    restart: unless-stopped
+
+  front:
+    build:
+      context: ../front
+      dockerfile: deploy/Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_API_URL: ${VITE_API_URL}
+        NODE_VERSION: ${NODE_VERSION}
+        NPM_VERSION: ${NPM_VERSION}
+    image: "${CONTAINER_REGISTRY_PREFIX}${APP_IMAGE_NAME}-front:${VERSION:-latest}"
+    container_name: "${APP_IMAGE_NAME}-front"
     profiles:
-      - prod
+      - frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.${APP_IMAGE_NAME}-front.rule=Host(`${TRAEFIK_FRONT_HOST}`)"
+      - "traefik.http.routers.${APP_IMAGE_NAME}-front.entrypoints=https"
+      - "traefik.http.routers.${APP_IMAGE_NAME}-front.tls=true"
+      - "traefik.http.routers.${APP_IMAGE_NAME}-front.tls.certresolver=ovh"
+      - "traefik.http.services.${APP_IMAGE_NAME}-front.loadbalancer.server.port=80"
+    networks:
+      - proxy
+    restart: unless-stopped
 
   postgres:
+    container_name: "${APP_IMAGE_NAME}-postgres"
     image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-gachapon}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gachapon}
-      POSTGRES_DB: ${POSTGRES_DB:-gachapon}
-    volumes:
-      - pg_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-gachapon}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
     profiles:
       - db
-      - prod
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}"]
+      retries: 3
+      timeout: 3s
+    networks:
+      - proxy
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres:/var/lib/postgresql/data
 
   redis:
+    container_name: "${APP_IMAGE_NAME}-redis"
     image: redis:7-alpine
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
     profiles:
       - db
-      - prod
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      retries: 3
+      timeout: 3s
+    networks:
+      - proxy
+    restart: always
+    volumes:
+      - redis_data:/data
 
 volumes:
-  pg_data:
+  postgres:
+    driver: local
   redis_data:
+    driver: local
