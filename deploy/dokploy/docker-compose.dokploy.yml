@@ -1,0 +1,91 @@
+services:
+  back:
+    build:
+      context: ../../back
+      dockerfile: deploy/Dockerfile
+      target: app
+      args:
+        DATABASE_URL: ${DATABASE_URL}
+        NODE_VERSION: ${NODE_VERSION}
+        NPM_VERSION: ${NPM_VERSION}
+    image: ${APP_IMAGE_NAME}-back:${VERSION:-latest}
+    environment:
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - DATABASE_URL=${DATABASE_URL}
+      - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
+      - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET}
+      - DISCORD_REDIRECT_URI=${DISCORD_REDIRECT_URI}
+      - FRONT_URL=${FRONT_URL}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
+      - HOST=${HOST}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_BUCKET=${MINIO_BUCKET}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - NODE_CLUSTER=${NODE_CLUSTER}
+      - NODE_ENV=production
+      - NODE_TLS_REJECT_UNAUTHORIZED=${NODE_TLS_REJECT_UNAUTHORIZED}
+      - PITY_THRESHOLD=${PITY_THRESHOLD}
+      - PORT=${PORT}
+      - REDIS_URL=${REDIS_URL}
+      - TOKEN_MAX_STOCK=${TOKEN_MAX_STOCK}
+      - TOKEN_REGEN_INTERVAL_HOURS=${TOKEN_REGEN_INTERVAL_HOURS}
+    healthcheck:
+      test: node -e "require('http').get({hostname:'localhost', port:${PORT}, path:'/health', timeout:3000})"
+      retries: 3
+      timeout: 3s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  front:
+    build:
+      context: ../../front
+      dockerfile: deploy/Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_API_URL: ${VITE_API_URL}
+        NODE_VERSION: ${NODE_VERSION}
+        NPM_VERSION: ${NPM_VERSION}
+    image: ${APP_IMAGE_NAME}-front:${VERSION:-latest}
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL}
+      - VITE_API_URL=${VITE_API_URL}
+      - VITE_ENVIRONMENT=${VITE_ENVIRONMENT}
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}"]
+      retries: 3
+      timeout: 3s
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      retries: 3
+      timeout: 3s
+
+volumes:
+  postgres:
+  redis_data:
