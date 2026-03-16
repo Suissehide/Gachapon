@@ -38,12 +38,14 @@ export function Navbar() {
               {user.username[0]?.toUpperCase()}
             </Link>
           )}
-          <button
-            onClick={() => void logout()}
-            className="text-sm text-gray-400 hover:text-white"
-          >
-            Déconnexion
-          </button>
+          {user && (
+            <button
+              onClick={() => void logout()}
+              className="text-sm text-gray-400 hover:text-white"
+            >
+              Déconnexion
+            </button>
+          )}
         </div>
       </div>
     </nav>
