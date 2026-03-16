@@ -63,6 +63,14 @@ const configSchema = z.object({
     .string()
     .default('4')
     .transform((v) => Number.parseInt(v, 10)),
+  tokenMaxStock: z
+    .string()
+    .default('5')
+    .transform((v) => Number.parseInt(v, 10)),
+  pityThreshold: z
+    .string()
+    .default('100')
+    .transform((v) => Number.parseInt(v, 10)),
 })
 
 export type Config = z.infer<typeof configSchema>
@@ -88,6 +96,8 @@ const envVarNames = [
   'DISCORD_CLIENT_SECRET',
   'DISCORD_REDIRECT_URI',
   'TOKEN_REGEN_INTERVAL_HOURS',
+  'TOKEN_MAX_STOCK',
+  'PITY_THRESHOLD',
 ]
 
 const loadConfig = () => {
