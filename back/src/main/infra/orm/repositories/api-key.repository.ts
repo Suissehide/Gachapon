@@ -10,12 +10,12 @@ export class ApiKeyRepository {
     this.#prisma = postgresOrm.prisma
   }
 
-  generate(): string {
+  #generate(): string {
     return `gp_${randomBytes(32).toString('hex')}`
   }
 
   create(userId: string, name: string): Promise<ApiKey> {
-    return this.#prisma.apiKey.create({ data: { key: this.generate(), name, userId } })
+    return this.#prisma.apiKey.create({ data: { key: this.#generate(), name, userId } })
   }
 
   findByKey(key: string): Promise<ApiKey | null> {

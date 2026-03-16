@@ -16,7 +16,8 @@ export const jwtPlugin = fp(async (fastify: FastifyInstance) => {
     const { jwtService, apiKeyRepository, userRepository } = fastify.iocContainer
 
     // X-API-Key takes priority
-    const apiKey = request.headers['x-api-key'] as string | undefined
+    const rawKey = request.headers['x-api-key']
+    const apiKey = Array.isArray(rawKey) ? rawKey[0] : rawKey
     if (apiKey) {
       const keyRecord = await apiKeyRepository.findByKey(apiKey)
       if (!keyRecord) throw Boom.unauthorized('Invalid API key')
