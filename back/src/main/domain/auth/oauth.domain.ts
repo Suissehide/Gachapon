@@ -90,10 +90,16 @@ export class OAuthDomain implements OAuthDomainInterface {
         grant_type: 'authorization_code',
       }),
     })
+    if (!tokenRes.ok) {
+      throw Boom.badGateway('OAuth provider token exchange failed')
+    }
     const tokenData = await tokenRes.json() as { access_token: string }
     const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     })
+    if (!userRes.ok) {
+      throw Boom.badGateway('OAuth provider userinfo fetch failed')
+    }
     const u = await userRes.json() as { id: string; email: string; name: string }
     return { id: u.id, email: u.email, username: u.name.replace(/\s+/g, '_').toLowerCase() }
   }
@@ -110,19 +116,26 @@ export class OAuthDomain implements OAuthDomainInterface {
         grant_type: 'authorization_code',
       }),
     })
+    if (!tokenRes.ok) {
+      throw Boom.badGateway('OAuth provider token exchange failed')
+    }
     const tokenData = await tokenRes.json() as { access_token: string }
     const userRes = await fetch('https://discord.com/api/users/@me', {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     })
+    if (!userRes.ok) {
+      throw Boom.badGateway('OAuth provider userinfo fetch failed')
+    }
     const u = await userRes.json() as { id: string; email: string; username: string }
     return { id: u.id, email: u.email, username: u.username }
   }
 
   async #availableUsername(base: string): Promise<string> {
-    let username = base.replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 28)
+    const sanitized = base.replace(/[^a-zA-Z0-9_]/g, '_')
+    let username = sanitized.slice(0, 28)
     let i = 1
     while (await this.#userRepository.findByUsername(username)) {
-      username = `${base.slice(0, 25)}_${i++}`
+      username = `${sanitized.slice(0, 25)}_${i++}`
     }
     return username
   }

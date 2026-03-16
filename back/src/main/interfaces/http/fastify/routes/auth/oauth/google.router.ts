@@ -9,7 +9,7 @@ export const googleOAuthRouter: FastifyPluginAsyncZod = async (fastify) => {
 
   fastify.get('/authorize', {}, async (request, reply) => {
     const state = randomBytes(16).toString('hex')
-    reply.setCookie('oauth_state', state, { httpOnly: true, maxAge: 600, path: '/', sameSite: 'lax' })
+    reply.setCookie('oauth_state', state, { httpOnly: true, secure: true, maxAge: 600, path: '/', sameSite: 'lax' })
     return reply.redirect(oauthDomain.getAuthorizationUrl('google', state))
   })
 
