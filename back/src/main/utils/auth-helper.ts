@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto'
+import jwt from 'jsonwebtoken'
 import type { SignOptions } from 'jsonwebtoken'
-import { sign, verify } from 'jsonwebtoken'
+
+const { sign, verify } = jwt
 
 type JwtOptions = SignOptions
 type JwtPayload = string | Buffer | object
