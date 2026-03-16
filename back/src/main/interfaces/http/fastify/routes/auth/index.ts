@@ -4,6 +4,7 @@ import { loginRouter } from './login.router.js'
 import { logoutRouter } from './logout.router.js'
 import { refreshRouter } from './refresh.router.js'
 import { meRouter } from './me.router.js'
+import { oauthRouter } from './oauth/index.js'
 
 export const authRouter: FastifyPluginAsyncZod = async (fastify) => {
   await fastify.register(registerRouter, { prefix: '/register' })
@@ -11,4 +12,5 @@ export const authRouter: FastifyPluginAsyncZod = async (fastify) => {
   await fastify.register(logoutRouter, { prefix: '/logout' })
   await fastify.register(refreshRouter, { prefix: '/refresh' })
   await fastify.register(meRouter, { prefix: '/me' })
+  await fastify.register(oauthRouter, { prefix: '/oauth' })
 }

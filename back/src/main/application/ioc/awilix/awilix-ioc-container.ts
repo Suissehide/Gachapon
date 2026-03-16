@@ -12,6 +12,7 @@ import { UserDomain } from '../../../domain/user/user.domain'
 import { RefreshTokenRepository } from '../../../infra/redis/refresh-token.repository'
 import { OAuthAccountRepository } from '../../../infra/orm/repositories/oauth-account.repository'
 import { AuthDomain } from '../../../domain/auth/auth.domain'
+import { OAuthDomain } from '../../../domain/auth/oauth.domain'
 import { FastifyHttpServer } from '../../../interfaces/http/fastify/fastify-http-server'
 import type { Config } from '../../../types/application/config'
 import type { IocContainer } from '../../../types/application/ioc'
@@ -45,6 +46,7 @@ class AwilixIocContainer {
     this.#reg('refreshTokenRepository', asClass(RefreshTokenRepository).singleton())
     this.#reg('oauthAccountRepository', asClass(OAuthAccountRepository).singleton())
     this.#reg('authDomain', asClass(AuthDomain).singleton())
+    this.#reg('oauthDomain', asClass(OAuthDomain).singleton())
     logger.info('IoC container initialized.')
   }
 
