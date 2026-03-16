@@ -46,35 +46,39 @@ const CARDS = [
 async function main() {
   console.log('Seeding database…')
 
-  // Nettoyage (ordre respectant les FK)
-  await prisma.gachaPull.deleteMany()
-  await prisma.userCard.deleteMany()
-  await prisma.card.deleteMany()
-  await prisma.cardSet.deleteMany()
+  await prisma.$transaction(async (tx) => {
+    // Nettoyage (ordre respectant les FK)
+    console.warn('Clearing GachaPull, UserCard, Card, CardSet tables…')
+    await tx.gachaPull.deleteMany()
+    await tx.userCard.deleteMany()
+    await tx.card.deleteMany()
+    await tx.cardSet.deleteMany()
 
-  const set = await prisma.cardSet.create({
-    data: {
-      name: 'Alpha Warriors',
-      description: 'Le premier set du Gachapon. 21 guerriers à collectionner, dont des variantes rares.',
-      isActive: true,
-    },
-  })
-  console.log(`Created CardSet: ${set.name} (${set.id})`)
-
-  for (const card of CARDS) {
-    const slug = card.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
-    await prisma.card.create({
+    const set = await tx.cardSet.create({
       data: {
-        setId: set.id,
-        name: card.name,
-        imageUrl: `/placeholder/${slug}.jpg`,
-        rarity: card.rarity,
-        variant: card.variant ?? null,
-        dropWeight: card.dropWeight,
+        name: 'Alpha Warriors',
+        description: 'Le premier set du Gachapon. 21 guerriers à collectionner, dont des variantes rares.',
+        isActive: true,
       },
     })
-  }
-  console.log(`Created ${CARDS.length} cards.`)
+    console.log(`Created CardSet: ${set.name} (${set.id})`)
+
+    for (const card of CARDS) {
+      const slug = card.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
+      await tx.card.create({
+        data: {
+          setId: set.id,
+          name: card.name,
+          imageUrl: `/placeholder/${slug}.jpg`,
+          rarity: card.rarity,
+          variant: card.variant ?? null,
+          dropWeight: card.dropWeight,
+        },
+      })
+    }
+    console.log(`Created ${CARDS.length} cards.`)
+  })
+
   console.log('Seed done.')
 }
 
