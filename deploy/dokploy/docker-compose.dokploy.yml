@@ -6,6 +6,7 @@ services:
       target: app
       args:
         DATABASE_URL: ${DATABASE_URL}
+        MIRROR_URL: ${MIRROR_URL}
         NODE_VERSION: ${NODE_VERSION}
         NPM_VERSION: ${NPM_VERSION}
     image: ${APP_IMAGE_NAME}-back:${VERSION:-latest}
@@ -39,6 +40,7 @@ services:
       test: node -e "require('http').get({hostname:'localhost', port:${PORT}, path:'/health', timeout:3000})"
       retries: 3
       timeout: 3s
+      interval: 5s
     depends_on:
       postgres:
         condition: service_healthy
@@ -51,12 +53,16 @@ services:
       context: ../../front
       dockerfile: deploy/Dockerfile
       args:
+        MIRROR_URL: ${MIRROR_URL}
         VITE_API_BASE_URL: ${VITE_API_BASE_URL}
         VITE_API_URL: ${VITE_API_URL}
+        VITE_ENVIRONMENT: ${VITE_ENVIRONMENT}
         NODE_VERSION: ${NODE_VERSION}
         NPM_VERSION: ${NPM_VERSION}
     image: ${APP_IMAGE_NAME}-front:${VERSION:-latest}
     environment:
+      # Note: VITE_* vars are baked into the SPA at build time, not injected at runtime.
+      # They appear here as documentation of what was passed at build time.
       - VITE_API_BASE_URL=${VITE_API_BASE_URL}
       - VITE_API_URL=${VITE_API_URL}
       - VITE_ENVIRONMENT=${VITE_ENVIRONMENT}
@@ -75,6 +81,7 @@ services:
       test: ["CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}"]
       retries: 3
       timeout: 3s
+      interval: 5s
 
   redis:
     image: redis:7-alpine
@@ -85,6 +92,7 @@ services:
       test: ["CMD", "redis-cli", "ping"]
       retries: 3
       timeout: 3s
+      interval: 5s
 
 volumes:
   postgres:

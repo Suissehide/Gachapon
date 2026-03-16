@@ -40,4 +40,5 @@ COPY --chown=node:node prisma.config.ts ./
 ENV NODE_ENV production
 EXPOSE 3000
 
+USER node
 CMD ["dumb-init", "npm", "run", "start:migrate:production"]
