@@ -9,18 +9,36 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RegisterRouteImport } from './routes/register'
 import { Route as PendingRouteImport } from './routes/pending'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthIndexRouteImport } from './routes/auth/index'
-import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedPlayRouteImport } from './routes/_authenticated/play'
 
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PendingRoute = PendingRouteImport.update({
   id: '/pending',
   path: '/pending',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthIndexRoute = AuthIndexRouteImport.update({
@@ -28,55 +46,84 @@ const AuthIndexRoute = AuthIndexRouteImport.update({
   path: '/auth/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthenticatedPlayRoute = AuthenticatedPlayRouteImport.update({
+  id: '/play',
+  path: '/play',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AuthenticatedIndexRoute
+  '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/pending': typeof PendingRoute
+  '/register': typeof RegisterRoute
+  '/play': typeof AuthenticatedPlayRoute
   '/auth/': typeof AuthIndexRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/pending': typeof PendingRoute
-  '/': typeof AuthenticatedIndexRoute
+  '/register': typeof RegisterRoute
+  '/play': typeof AuthenticatedPlayRoute
   '/auth': typeof AuthIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/login': typeof LoginRoute
   '/pending': typeof PendingRoute
-  '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/register': typeof RegisterRoute
+  '/_authenticated/play': typeof AuthenticatedPlayRoute
   '/auth/': typeof AuthIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/pending' | '/auth/'
+  fullPaths: '/' | '/login' | '/pending' | '/register' | '/play' | '/auth/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/pending' | '/' | '/auth'
+  to: '/' | '/login' | '/pending' | '/register' | '/play' | '/auth'
   id:
     | '__root__'
+    | '/'
     | '/_authenticated'
+    | '/login'
     | '/pending'
-    | '/_authenticated/'
+    | '/register'
+    | '/_authenticated/play'
     | '/auth/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  LoginRoute: typeof LoginRoute
   PendingRoute: typeof PendingRoute
+  RegisterRoute: typeof RegisterRoute
   AuthIndexRoute: typeof AuthIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pending': {
       id: '/pending'
       path: '/pending'
       fullPath: '/pending'
       preLoaderRoute: typeof PendingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -86,6 +133,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/': {
       id: '/auth/'
       path: '/auth'
@@ -93,22 +147,22 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/': {
-      id: '/_authenticated/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+    '/_authenticated/play': {
+      id: '/_authenticated/play'
+      path: '/play'
+      fullPath: '/play'
+      preLoaderRoute: typeof AuthenticatedPlayRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
   }
 }
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedPlayRoute: typeof AuthenticatedPlayRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedPlayRoute: AuthenticatedPlayRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -116,8 +170,11 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  LoginRoute: LoginRoute,
   PendingRoute: PendingRoute,
+  RegisterRoute: RegisterRoute,
   AuthIndexRoute: AuthIndexRoute,
 }
 export const routeTree = rootRouteImport

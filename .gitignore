@@ -4,4 +4,4 @@ node_modules/
 .superpowers/
 .idea/
 dist/
-lib/
+back/lib/
