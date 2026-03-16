@@ -682,7 +682,8 @@ cd front && npx biome check --write src/routes/_authenticated/settings.tsx 2>&1 
 - [ ] **Step 4 : Commit**
 
 ```bash
-git add front/src/routes/_authenticated/settings.tsx
+git add front/src/routes/_authenticated/settings.tsx \
+        front/src/routeTree.gen.ts
 git commit -m "feat: page paramètres — infos compte + gestion API Keys"
 ```
 

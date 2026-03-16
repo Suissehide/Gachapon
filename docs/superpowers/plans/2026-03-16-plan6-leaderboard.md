@@ -563,7 +563,8 @@ cd front && npx biome check --write src/routes/_authenticated/leaderboard.tsx 2>
 - [ ] **Step 4 : Commit**
 
 ```bash
-git add front/src/routes/_authenticated/leaderboard.tsx
+git add front/src/routes/_authenticated/leaderboard.tsx \
+        front/src/routeTree.gen.ts
 git commit -m "feat: page classement /leaderboard — collectionneurs, légendaires, équipes"
 ```
 
@@ -746,6 +747,7 @@ Expected : tous les tests passent.
 ```bash
 git add front/src/routes/_authenticated/quests.tsx \
         front/src/queries/useLeaderboard.ts \
+        front/src/routeTree.gen.ts \
         back/src/main/interfaces/http/fastify/routes/leaderboard/index.ts \
         back/src/test/e2e/leaderboard/leaderboard.test.ts
 git commit -m "feat: page quêtes /quests + GET /quests (lecture seule)"
