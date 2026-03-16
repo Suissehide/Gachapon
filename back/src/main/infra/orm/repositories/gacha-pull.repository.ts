@@ -10,7 +10,7 @@ export class GachaPullRepository implements IGachaPullRepository {
     this.#prisma = postgresOrm.prisma
   }
 
-  async create(data: {
+  create(data: {
     userId: string
     cardId: string
     wasDuplicate: boolean

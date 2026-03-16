@@ -1,5 +1,9 @@
 import type { IocContainer } from '../../../types/application/ioc'
-import type { CardWithSet, CardSetEntity } from '../../../types/domain/gacha/gacha.types'
+import type {
+  CardRarity,
+  CardSetEntity,
+  CardWithSet,
+} from '../../../types/domain/gacha/gacha.types'
 import type { ICardRepository } from '../../../types/infra/orm/repositories/card.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
 
@@ -13,7 +17,10 @@ export class CardRepository implements ICardRepository {
   }
 
   findById(id: string): Promise<CardWithSet | null> {
-    return this.#prisma.card.findUnique({ where: { id }, include: WITH_SET }) as Promise<CardWithSet | null>
+    return this.#prisma.card.findUnique({
+      where: { id },
+      include: WITH_SET,
+    }) as Promise<CardWithSet | null>
   }
 
   findAllActive(): Promise<CardWithSet[]> {
@@ -23,11 +30,14 @@ export class CardRepository implements ICardRepository {
     }) as Promise<CardWithSet[]>
   }
 
-  findAll(filter?: { setId?: string; rarity?: string }): Promise<CardWithSet[]> {
+  findAll(filter?: {
+    setId?: string
+    rarity?: CardRarity
+  }): Promise<CardWithSet[]> {
     return this.#prisma.card.findMany({
       where: {
         ...(filter?.setId ? { setId: filter.setId } : {}),
-        ...(filter?.rarity ? { rarity: filter.rarity as any } : {}),
+        ...(filter?.rarity ? { rarity: filter.rarity } : {}),
       },
       include: WITH_SET,
       orderBy: [{ rarity: 'desc' }, { name: 'asc' }],
@@ -35,7 +45,10 @@ export class CardRepository implements ICardRepository {
   }
 
   findActiveSets(): Promise<CardSetEntity[]> {
-    return this.#prisma.cardSet.findMany({ where: { isActive: true } })
+    return this.#prisma.cardSet.findMany({
+      where: { isActive: true },
+      orderBy: { name: 'asc' },
+    })
   }
 
   findAllSets(): Promise<CardSetEntity[]> {

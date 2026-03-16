@@ -6,7 +6,12 @@ export interface IGachaPullRepository {
     cardId: string
     wasDuplicate: boolean
     dustEarned: number
-  }): Promise<{ id: string; pulledAt: Date; wasDuplicate: boolean; dustEarned: number }>
+  }): Promise<{
+    id: string
+    pulledAt: Date
+    wasDuplicate: boolean
+    dustEarned: number
+  }>
 
   findByUser(
     userId: string,

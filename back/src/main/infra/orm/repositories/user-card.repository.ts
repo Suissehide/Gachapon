@@ -18,7 +18,11 @@ export class UserCardRepository implements IUserCardRepository {
     }) as Promise<UserCardWithCard[]>
   }
 
-  async upsert(userId: string, cardId: string): Promise<{ wasDuplicate: boolean }> {
+  /** Must be called inside a SERIALIZABLE transaction — non-atomic read-then-write. */
+  async upsert(
+    userId: string,
+    cardId: string,
+  ): Promise<{ wasDuplicate: boolean }> {
     const existing = await this.#prisma.userCard.findUnique({
       where: { userId_cardId: { userId, cardId } },
     })
@@ -35,12 +39,18 @@ export class UserCardRepository implements IUserCardRepository {
     return { wasDuplicate: false }
   }
 
-  async decrementOrDelete(userId: string, cardId: string): Promise<{ quantityLeft: number }> {
+  /** Must be called inside a SERIALIZABLE transaction — non-atomic read-then-write. */
+  async decrementOrDelete(
+    userId: string,
+    cardId: string,
+  ): Promise<{ quantityLeft: number }> {
     const uc = await this.#prisma.userCard.findUniqueOrThrow({
       where: { userId_cardId: { userId, cardId } },
     })
     if (uc.quantity <= 1) {
-      await this.#prisma.userCard.delete({ where: { userId_cardId: { userId, cardId } } })
+      await this.#prisma.userCard.delete({
+        where: { userId_cardId: { userId, cardId } },
+      })
       return { quantityLeft: 0 }
     }
     const updated = await this.#prisma.userCard.update({

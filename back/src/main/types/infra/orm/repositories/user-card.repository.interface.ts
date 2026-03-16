@@ -5,5 +5,8 @@ export interface IUserCardRepository {
   /** Incrémente quantity (ou crée). Retourne si c'était un doublon. */
   upsert(userId: string, cardId: string): Promise<{ wasDuplicate: boolean }>
   /** Décrémente quantity. Supprime si quantity devient 0. */
-  decrementOrDelete(userId: string, cardId: string): Promise<{ quantityLeft: number }>
+  decrementOrDelete(
+    userId: string,
+    cardId: string,
+  ): Promise<{ quantityLeft: number }>
 }
