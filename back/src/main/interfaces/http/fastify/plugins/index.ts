@@ -1,5 +1,6 @@
 import fastifyAccepts from '@fastify/accepts'
 import fastifyCors, { type FastifyCorsOptions } from '@fastify/cors'
+import fastifyMultipart from '@fastify/multipart'
 import type { FastifyInstance, FastifyPluginAsync } from 'fastify'
 import fastifyGracefulShutdown from 'fastify-graceful-shutdown'
 import fastifyPlugin from 'fastify-plugin'
@@ -36,6 +37,10 @@ const plugins: FastifyPluginAsync = fastifyPlugin(
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     })
     await registerPlugin(fastify, 'accepts', fastifyAccepts)
+    await registerPlugin(fastify, 'multipart', fastifyMultipart, {
+      attachFieldsToBody: false, // streaming manuel vers MinIO
+      limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB max
+    })
     await registerPlugin(fastify, 'awilix', awilixPlugin)
     await registerPlugin(fastify, 'orm', ormPlugin)
     await registerPlugin(fastify, 'redis', redisPlugin)
