@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { ArrowLeft, Crown, Send, Shield, User, UserMinus } from 'lucide-react'
 import { useState } from 'react'
 
@@ -23,6 +23,7 @@ const ROLE_ICON: Record<string, React.ReactNode> = {
 
 function TeamDetailPage() {
   const { id } = Route.useParams()
+  const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const { data: team, isLoading, isError } = useTeam(id)
   const { mutate: invite, isPending: inviting } = useInviteMember(id)
@@ -103,7 +104,12 @@ function TeamDetailPage() {
               <input
                 type="text"
                 value={inviteInput}
-                onChange={(e) => setInviteInput(e.target.value)}
+                onChange={(e) => {
+                  setInviteInput(e.target.value)
+                  if (inviteError) {
+                    setInviteError('')
+                  }
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     handleInvite()
@@ -139,7 +145,15 @@ function TeamDetailPage() {
                 canManage={canManage}
                 isOwner={isOwner}
                 isMe={member.userId === user?.id}
-                onRemove={() => remove(member.userId)}
+                onRemove={() => {
+                  if (
+                    window.confirm(
+                      `Exclure @${member.user.username} de l'équipe ?`,
+                    )
+                  ) {
+                    remove(member.userId)
+                  }
+                }}
               />
             ))}
           </ul>
@@ -155,7 +169,9 @@ function TeamDetailPage() {
               type="button"
               onClick={() => {
                 if (window.confirm('Supprimer cette équipe définitivement ?')) {
-                  deleteTeam(id)
+                  deleteTeam(id, {
+                    onSuccess: () => navigate({ to: '/teams' }),
+                  })
                 }
               }}
               className="rounded-lg border border-destructive/50 px-4 py-2 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
