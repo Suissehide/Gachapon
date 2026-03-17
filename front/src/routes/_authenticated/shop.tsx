@@ -33,6 +33,7 @@ const TYPE_CONFIG: Record<
 
 function ShopPage() {
   const user = useAuthStore((s) => s.user)
+  const setUser = useAuthStore((s) => s.setUser)
   const { data, isLoading } = useShopItems()
   const { mutate: buy, isPending: buying } = useBuyItem()
   const [buyingId, setBuyingId] = useState<string | null>(null)
@@ -45,6 +46,9 @@ function ShopPage() {
     setBuyingId(item.id)
     buy(item.id, {
       onSuccess: (result) => {
+        if (user) {
+          setUser({ ...user, dust: result.newDustTotal })
+        }
         setNotification(`✓ ${item.name} acheté ! −${result.dustSpent} ✨ dust`)
         setTimeout(() => setNotification(null), 3000)
         setBuyingId(null)
