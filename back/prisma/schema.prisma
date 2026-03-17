@@ -65,6 +65,7 @@ model User {
   streakDays    Int        @default(0)
   lastLoginAt   DateTime?
   createdAt     DateTime   @default(now())
+  suspended     Boolean    @default(false)
 
   oauthAccounts       OAuthAccount[]
   apiKeys             ApiKey[]
@@ -271,4 +272,10 @@ model UserQuest {
   completedAt DateTime?
 
   @@unique([userId, questId, date])
+}
+
+model GlobalConfig {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
 }

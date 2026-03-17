@@ -1,5 +1,6 @@
 import fastifyAccepts from '@fastify/accepts'
 import fastifyCors, { type FastifyCorsOptions } from '@fastify/cors'
+import fastifyMultipart from '@fastify/multipart'
 import type { FastifyInstance, FastifyPluginAsync } from 'fastify'
 import fastifyGracefulShutdown from 'fastify-graceful-shutdown'
 import fastifyPlugin from 'fastify-plugin'
@@ -9,6 +10,7 @@ import { awilixPlugin } from './awilix.plugin'
 import { cookiePlugin } from './cookie.plugin'
 import { jwtPlugin } from './jwt.plugin'
 import { ormPlugin } from './orm.plugin'
+import { rolePlugin } from './role.plugin'
 import { redisPlugin } from './redis.plugin'
 import { websocketPlugin } from './websocket.plugin'
 
@@ -28,12 +30,17 @@ const plugins: FastifyPluginAsync = fastifyPlugin(
     }
     await registerPlugin(fastify, 'cookie', cookiePlugin)
     await registerPlugin(fastify, 'jwt', jwtPlugin)
+    await registerPlugin(fastify, 'role', rolePlugin)
     await registerPlugin<FastifyCorsOptions>(fastify, 'cors', fastifyCors, {
       origin: config.corsOrigin ?? config.frontUrl,
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     })
     await registerPlugin(fastify, 'accepts', fastifyAccepts)
+    await registerPlugin(fastify, 'multipart', fastifyMultipart, {
+      attachFieldsToBody: false, // streaming manuel vers MinIO
+      limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB max
+    })
     await registerPlugin(fastify, 'awilix', awilixPlugin)
     await registerPlugin(fastify, 'orm', ormPlugin)
     await registerPlugin(fastify, 'redis', redisPlugin)

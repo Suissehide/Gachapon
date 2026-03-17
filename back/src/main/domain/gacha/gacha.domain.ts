@@ -1,11 +1,10 @@
 import Boom from '@hapi/boom'
 
 import { calculateTokens } from '../economy/economy.domain'
-import type { Config } from '../../application/config'
 import type { IocContainer } from '../../types/application/ioc'
 import type { GachaDomainInterface } from '../../types/domain/gacha/gacha.domain.interface'
-import { DUST_BY_RARITY } from '../../types/domain/gacha/gacha.types'
 import type { CardWithSet, PullResult } from '../../types/domain/gacha/gacha.types'
+import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
 import type { PostgresORMInterface, PrimaTransactionClient } from '../../types/infra/orm/client'
 
 export function pickWeightedRandom(cards: CardWithSet[]): CardWithSet {
@@ -30,16 +29,23 @@ function isPrismaSerializationError(err: unknown): boolean {
   )
 }
 
+type PullCfg = {
+  tokenRegenIntervalHours: number
+  tokenMaxStock: number
+  pityThreshold: number
+  dustByRarity: Record<string, number>
+}
+
 export class GachaDomain implements GachaDomainInterface {
   readonly #postgresOrm: PostgresORMInterface
-  readonly #config: Config
+  readonly #configService: ConfigServiceInterface
 
-  constructor({ postgresOrm, config }: IocContainer) {
+  constructor({ postgresOrm, configService }: IocContainer) {
     this.#postgresOrm = postgresOrm
-    this.#config = config
+    this.#configService = configService
   }
 
-  async #executePullTx(tx: PrimaTransactionClient, userId: string): Promise<PullResult> {
+  async #executePullTx(tx: PrimaTransactionClient, userId: string, cfg: PullCfg): Promise<PullResult> {
     // 1. Lire l'utilisateur
     const user = await tx.user.findUniqueOrThrow({ where: { id: userId } })
 
@@ -47,8 +53,8 @@ export class GachaDomain implements GachaDomainInterface {
     const { tokens, newLastTokenAt } = calculateTokens(
       user.lastTokenAt,
       user.tokens,
-      this.#config.tokenRegenIntervalHours,
-      this.#config.tokenMaxStock,
+      cfg.tokenRegenIntervalHours,
+      cfg.tokenMaxStock,
     )
 
     if (tokens < 1) {
@@ -59,7 +65,7 @@ export class GachaDomain implements GachaDomainInterface {
     const activeCards = await tx.card.findMany({
       where: {
         set: { isActive: true },
-        ...(user.pityCurrent >= this.#config.pityThreshold
+        ...(user.pityCurrent >= cfg.pityThreshold
           ? { rarity: 'LEGENDARY' }
           : {}),
       },
@@ -78,7 +84,7 @@ export class GachaDomain implements GachaDomainInterface {
       where: { userId_cardId: { userId, cardId: card.id } },
     })
     const wasDuplicate = existing !== null
-    const dustEarned = wasDuplicate ? DUST_BY_RARITY[card.rarity] : 0
+    const dustEarned = wasDuplicate ? (cfg.dustByRarity[card.rarity] ?? 0) : 0
 
     // 6. Upsert UserCard
     if (existing) {
@@ -121,11 +127,36 @@ export class GachaDomain implements GachaDomainInterface {
   }
 
   pull(userId: string): Promise<PullResult> {
-    const attempt = (): Promise<PullResult> =>
-      this.#postgresOrm.executeWithTransactionClient(
-        (tx) => this.#executePullTx(tx, userId),
+    const attempt = async (): Promise<PullResult> => {
+      // Lire la config AVANT la transaction (pas d'I/O async dans le tx serializable)
+      const [tokenRegenIntervalHours, tokenMaxStock, pityThreshold,
+             dustCommon, dustUncommon, dustRare, dustEpic, dustLegendary] = await Promise.all([
+        this.#configService.get('tokenRegenIntervalHours'),
+        this.#configService.get('tokenMaxStock'),
+        this.#configService.get('pityThreshold'),
+        this.#configService.get('dustCommon'),
+        this.#configService.get('dustUncommon'),
+        this.#configService.get('dustRare'),
+        this.#configService.get('dustEpic'),
+        this.#configService.get('dustLegendary'),
+      ])
+      const cfg: PullCfg = {
+        tokenRegenIntervalHours,
+        tokenMaxStock,
+        pityThreshold,
+        dustByRarity: {
+          COMMON: dustCommon,
+          UNCOMMON: dustUncommon,
+          RARE: dustRare,
+          EPIC: dustEpic,
+          LEGENDARY: dustLegendary,
+        },
+      }
+      return this.#postgresOrm.executeWithTransactionClient(
+        (tx) => this.#executePullTx(tx, userId, cfg),
         { isolationLevel: 'Serializable', maxWait: 5000, timeout: 10000 },
       )
+    }
 
     const MAX_RETRIES = 3
     const run = async (retriesLeft: number): Promise<PullResult> => {

@@ -18,6 +18,7 @@ import { UserRepository } from '../../../infra/orm/repositories/user.repository'
 import { UserCardRepository } from '../../../infra/orm/repositories/user-card.repository'
 import { RedisClient } from '../../../infra/redis/redis-client'
 import { RefreshTokenRepository } from '../../../infra/redis/refresh-token.repository'
+import { ConfigService } from '../../../infra/config/config.service'
 import { MinioClient } from '../../../infra/storage/minio-client'
 import { FastifyHttpServer } from '../../../interfaces/http/fastify/fastify-http-server'
 import type { IocContainer } from '../../../types/application/ioc'
@@ -45,6 +46,7 @@ class AwilixIocContainer {
     this.#reg('httpClient', asClass(HttpClient).singleton())
     this.#reg('errorHandler', asClass(ErrorHandler).singleton())
     this.#reg('redisClient', asClass(RedisClient).singleton())
+    this.#reg('configService', asClass(ConfigService).singleton())
     this.#reg('minioClient', asClass(MinioClient).singleton())
     this.#reg('jwtService', asClass(JwtService).singleton())
     this.#reg('userRepository', asClass(UserRepository).singleton())
