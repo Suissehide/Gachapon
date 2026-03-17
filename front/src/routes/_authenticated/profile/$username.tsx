@@ -43,7 +43,7 @@ function ProfilePage() {
       {/* Banner */}
       <div className="h-32 w-full bg-gradient-to-r from-primary/30 via-secondary/20 to-primary/10" />
 
-      <div className="mx-auto max-w-3xl px-4 pb-12">
+      <div className="mx-auto max-w-4xl px-4 pb-12">
         {/* Avatar + infos principales */}
         <div className="-mt-12 flex items-end gap-4 pb-4">
           <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-secondary text-3xl font-black text-white ring-4 ring-background">

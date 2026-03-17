@@ -86,7 +86,7 @@ function Collection() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-4xl">
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-black text-text">Ma Collection</h1>

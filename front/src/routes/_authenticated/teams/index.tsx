@@ -18,7 +18,7 @@ function TeamsPage() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto max-w-4xl">
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-black text-text">Mes Équipes</h1>

@@ -39,7 +39,7 @@ function LeaderboardPage() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
-      <div className="mx-auto max-w-2xl">
+      <div className="mx-auto max-w-4xl">
         <h1 className="mb-6 text-2xl font-black text-text">Classement</h1>
 
         {/* Tabs */}

@@ -1,11 +1,10 @@
 import { Environment } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { createFileRoute } from '@tanstack/react-router'
-import { Ticket } from 'lucide-react'
+import { ChevronsRight, Ticket } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import { Button } from '../../components/ui/button.tsx'
-
 import { CardReveal } from '../../components/machine/CardReveal'
 import type { ClawMachineHandle } from '../../components/machine/ClawMachine'
 import { ClawMachine } from '../../components/machine/ClawMachine'
