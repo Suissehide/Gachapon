@@ -54,7 +54,6 @@ services:
       dockerfile: deploy/Dockerfile
       args:
         MIRROR_URL: ${MIRROR_URL}
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
         VITE_API_URL: ${VITE_API_URL}
         VITE_ENVIRONMENT: ${VITE_ENVIRONMENT}
         NODE_VERSION: ${NODE_VERSION}
@@ -63,7 +62,6 @@ services:
     environment:
       # Note: VITE_* vars are baked into the SPA at build time, not injected at runtime.
       # They appear here as documentation of what was passed at build time.
-      - VITE_API_BASE_URL=${VITE_API_BASE_URL}
       - VITE_API_URL=${VITE_API_URL}
       - VITE_ENVIRONMENT=${VITE_ENVIRONMENT}
     restart: unless-stopped

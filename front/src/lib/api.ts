@@ -1,6 +1,6 @@
-const BASE_URL =
-  (import.meta.env.VITE_API_URL as string | undefined) ??
-  'http://localhost:3000'
+import { apiUrl } from '../constants/config.constant.ts'
+
+const BASE_URL = apiUrl
 
 type RequestOptions = RequestInit & { skipRefresh?: boolean }
 

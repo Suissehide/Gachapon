@@ -13,9 +13,7 @@ import { wsClient } from '../../lib/ws'
 import type { PullResult } from '../../queries/useGacha'
 import { usePull, useTokenBalance } from '../../queries/useGacha'
 
-const API_URL =
-  (import.meta.env.VITE_API_URL as string | undefined) ??
-  'http://localhost:3000'
+import { apiUrl as API_URL } from '../../constants/config.constant.ts'
 
 export const Route = createFileRoute('/_authenticated/play')({
   component: Play,

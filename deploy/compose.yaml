@@ -71,7 +71,6 @@ services:
       dockerfile: deploy/Dockerfile
       args:
         MIRROR_URL: ${MIRROR_URL}
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
         VITE_API_URL: ${VITE_API_URL}
         VITE_ENVIRONMENT: ${VITE_ENVIRONMENT}
         NODE_VERSION: ${NODE_VERSION}

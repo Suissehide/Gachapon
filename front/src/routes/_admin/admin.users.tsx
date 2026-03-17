@@ -1,5 +1,6 @@
 // front/src/routes/_admin/admin.users.tsx
 import { createFileRoute } from '@tanstack/react-router'
+import { apiUrl } from '../../constants/config.constant.ts'
 import { useState } from 'react'
 
 import { AdminDrawer } from '../../components/admin/AdminDrawer'
@@ -129,7 +130,7 @@ function AdminUsers() {
             </div>
 
             <a
-              href={`${(import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:3000'}/admin/users/${selected.id}/collection`}
+              href={`${apiUrl}/admin/users/${selected.id}/collection`}
               target="_blank"
               rel="noreferrer"
               className="block w-full rounded-lg border border-border bg-surface px-3 py-2 text-center text-sm text-text-light transition-colors hover:text-text"
