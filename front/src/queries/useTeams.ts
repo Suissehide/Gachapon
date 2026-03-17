@@ -1,46 +1,24 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { api } from '../lib/api'
+import { TeamsApi } from '../api/teams.api.ts'
 
-export type TeamMember = {
-  id: string
-  userId: string
-  role: 'MEMBER' | 'ADMIN' | 'OWNER'
-  joinedAt: string
-  user: { id: string; username: string; avatar: string | null }
-}
-
-export type Team = {
-  id: string
-  name: string
-  slug: string
-  description: string | null
-  avatar: string | null
-  ownerId: string
-  createdAt: string
-  members: TeamMember[]
-}
-
-export type TeamSummary = Team & { memberCount: number }
-
-export type Invitation = {
-  id: string
-  token: string
-  teamId: string
-  status: string
-  expiresAt: string
-}
+export type {
+  Invitation,
+  Team,
+  TeamMember,
+  TeamSummary,
+} from '../api/teams.api.ts'
 
 export const useMyTeams = () =>
   useQuery({
     queryKey: ['teams'],
-    queryFn: () => api.get<{ teams: TeamSummary[] }>('/teams'),
+    queryFn: () => TeamsApi.getMyTeams(),
   })
 
 export const useTeam = (teamId: string | undefined) =>
   useQuery({
     queryKey: ['teams', teamId],
-    queryFn: () => api.get<Team>(`/teams/${teamId}`),
+    queryFn: () => TeamsApi.getTeam(teamId ?? ''),
     enabled: !!teamId,
   })
 
@@ -48,7 +26,7 @@ export const useCreateTeam = () => {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: { name: string; description?: string }) =>
-      api.post<Team>('/teams', data),
+      TeamsApi.createTeam(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['teams'] })
     },
@@ -58,7 +36,7 @@ export const useCreateTeam = () => {
 export const useDeleteTeam = () => {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (teamId: string) => api.delete<void>(`/teams/${teamId}`),
+    mutationFn: (teamId: string) => TeamsApi.deleteTeam(teamId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['teams'] })
     },
@@ -69,7 +47,7 @@ export const useInviteMember = (teamId: string) => {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: { username?: string; email?: string }) =>
-      api.post<Invitation>(`/teams/${teamId}/invite`, data),
+      TeamsApi.inviteMember(teamId, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['teams', teamId] })
     },
@@ -79,8 +57,7 @@ export const useInviteMember = (teamId: string) => {
 export const useRemoveMember = (teamId: string) => {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (userId: string) =>
-      api.post<void>(`/teams/${teamId}/members/${userId}/remove`),
+    mutationFn: (userId: string) => TeamsApi.removeMember(teamId, userId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['teams', teamId] })
     },
@@ -90,7 +67,7 @@ export const useRemoveMember = (teamId: string) => {
 export const useLeaveTeam = () => {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (teamId: string) => api.post<void>(`/teams/${teamId}/leave`),
+    mutationFn: (teamId: string) => TeamsApi.leaveTeam(teamId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['teams'] })
     },
@@ -100,18 +77,16 @@ export const useLeaveTeam = () => {
 export const useInvitation = (token: string | undefined) =>
   useQuery({
     queryKey: ['invitation', token],
-    queryFn: () => api.get<Invitation>(`/invitations/${token}`),
+    queryFn: () => TeamsApi.getInvitation(token ?? ''),
     enabled: !!token,
   })
 
 export const useAcceptInvitation = () =>
   useMutation({
-    mutationFn: (token: string) =>
-      api.post<{ accepted: boolean }>(`/invitations/${token}/accept`),
+    mutationFn: (token: string) => TeamsApi.acceptInvitation(token),
   })
 
 export const useDeclineInvitation = () =>
   useMutation({
-    mutationFn: (token: string) =>
-      api.post<{ declined: boolean }>(`/invitations/${token}/decline`),
+    mutationFn: (token: string) => TeamsApi.declineInvitation(token),
   })

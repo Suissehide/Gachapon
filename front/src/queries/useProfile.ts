@@ -1,51 +1,26 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { api } from '../lib/api'
+import { ProfileApi } from '../api/profile.api.ts'
 
-export type UserProfile = {
-  id: string
-  username: string
-  avatar: string | null
-  banner: string | null
-  level: number
-  xp: number
-  dust: number
-  createdAt: string
-  stats: {
-    totalPulls: number
-    ownedCards: number
-    legendaryCount: number
-    dustGenerated: number
-  }
-}
-
-export type ApiKey = {
-  id: string
-  name: string
-  lastUsedAt: string | null
-  createdAt: string
-}
-
-export type ApiKeyCreated = ApiKey & { key: string }
+export type { ApiKey, ApiKeyCreated, UserProfile } from '../api/profile.api.ts'
 
 export const useUserProfile = (username: string) =>
   useQuery({
     queryKey: ['profile', username],
-    queryFn: () => api.get<UserProfile>(`/users/${username}/profile`),
+    queryFn: () => ProfileApi.getUserProfile(username),
     enabled: !!username,
   })
 
 export const useApiKeys = () =>
   useQuery({
     queryKey: ['api-keys'],
-    queryFn: () => api.get<ApiKey[]>('/api-keys'),
+    queryFn: () => ProfileApi.getApiKeys(),
   })
 
 export const useCreateApiKey = () => {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (name: string) =>
-      api.post<ApiKeyCreated>('/api-keys', { name }),
+    mutationFn: (name: string) => ProfileApi.createApiKey(name),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['api-keys'] })
     },
@@ -55,7 +30,7 @@ export const useCreateApiKey = () => {
 export const useDeleteApiKey = () => {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.delete<void>(`/api-keys/${id}`),
+    mutationFn: (id: string) => ProfileApi.deleteApiKey(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['api-keys'] })
     },
