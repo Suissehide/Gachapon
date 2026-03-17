@@ -4,6 +4,8 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Ticket } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
+import { Button } from '../../components/ui/button.tsx'
+
 import { CardReveal } from '../../components/machine/CardReveal'
 import type { ClawMachineHandle } from '../../components/machine/ClawMachine'
 import { ClawMachine } from '../../components/machine/ClawMachine'
@@ -102,25 +104,17 @@ function Play() {
       </div>
 
       {/* Bouton Jouer */}
-      <button
-        type="button"
+      <Button
         onClick={handlePull}
         disabled={!canPull}
-        className={`
-          relative z-10 mt-6 rounded-full px-10 py-4 text-lg font-black tracking-wide transition-all duration-200
-          ${
-            canPull
-              ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-lg shadow-primary/30 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/40 active:translate-y-0'
-              : 'cursor-not-allowed bg-muted text-text-light'
-          }
-        `}
+        className="relative z-10 mt-6 rounded-full px-10 h-auto py-4 text-lg font-black tracking-wide bg-gradient-to-r from-primary to-secondary shadow-lg shadow-primary/30 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/40 active:translate-y-0"
       >
         {isPulling
           ? 'Tirage…'
           : tokens < 1
             ? 'Pas de tokens'
             : 'Jouer (1 token)'}
-      </button>
+      </Button>
 
       {/* Overlay révélation carte */}
       <CardReveal result={pullResult} onClose={() => setPullResult(null)} />

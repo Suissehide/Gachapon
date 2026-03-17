@@ -1,6 +1,9 @@
 import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 
+import { Button } from '../ui/button.tsx'
+import { Card } from '../ui/card.tsx'
+
 export function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4">
@@ -25,9 +28,9 @@ export function AuthLayout({ children }: { children: ReactNode }) {
 
 export function AuthCard({ children }: { children: ReactNode }) {
   return (
-    <div className="relative z-10 w-full max-w-[420px] bg-card/70 backdrop-blur-2xl rounded-2xl border border-border shadow-2xl shadow-black/40 p-8 fade-in-down">
+    <Card className="relative z-10 w-full max-w-[420px] bg-card/70 backdrop-blur-2xl rounded-2xl shadow-2xl shadow-black/40 p-8 animate-in fade-in-0 slide-in-from-bottom-6 duration-500 fill-mode-both">
       {children}
-    </div>
+    </Card>
   )
 }
 
@@ -53,12 +56,15 @@ export function OAuthButton({
   className: string
 }) {
   return (
-    <a
-      href={href}
-      className={`flex cursor-pointer items-center justify-center gap-2.5 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 hover:-translate-y-0.5 ${className}`}
+    <Button
+      asChild
+      variant="ghost"
+      className={`rounded-xl px-4 h-auto py-2.5 gap-2.5 ${className}`}
     >
-      {icon}
-      {label}
-    </a>
+      <a href={href}>
+        {icon}
+        {label}
+      </a>
+    </Button>
   )
 }

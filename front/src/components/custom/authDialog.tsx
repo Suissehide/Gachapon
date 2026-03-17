@@ -31,48 +31,58 @@ export function AuthDialog({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-card/90 shadow-2xl shadow-black/60 backdrop-blur-2xl p-8 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=open]:slide-in-from-left-1/2 data-[state=closed]:slide-out-to-top-[44%] data-[state=open]:slide-in-from-top-[44%]">
-          <Dialog.Title className="sr-only">
-            {tab === 'login' ? 'Se connecter' : "S'inscrire"}
-          </Dialog.Title>
-          <Dialog.Description className="sr-only">
-            {tab === 'login' ? 'Connectez-vous à votre compte Gachapon' : 'Créez votre compte Gachapon'}
-          </Dialog.Description>
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-[440px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-card shadow-2xl shadow-black/20 overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 duration-200">
 
-          <Dialog.Close className="absolute right-4 top-4 cursor-pointer rounded-full p-1.5 text-text-light transition-all hover:bg-muted hover:text-text">
-            <X className="h-4 w-4" />
-          </Dialog.Close>
+          {/* Header */}
+          <div className="px-8 pt-7 pb-0">
+            <Dialog.Close asChild>
+              <Button variant="ghost" size="icon-sm" className="absolute right-4 top-4 rounded-full text-text-light hover:text-text">
+                <X className="h-4 w-4" />
+              </Button>
+            </Dialog.Close>
 
-          <div className="flex rounded-xl bg-muted p-1 mb-7">
-            <button
-              type="button"
-              onClick={() => setTab('login')}
-              className={`flex-1 cursor-pointer rounded-lg py-2 text-sm font-semibold transition-all ${
-                tab === 'login'
-                  ? 'bg-card text-foreground shadow-sm'
-                  : 'text-text-light hover:text-text'
-              }`}
-            >
-              Se connecter
-            </button>
-            <button
-              type="button"
-              onClick={() => setTab('register')}
-              className={`flex-1 cursor-pointer rounded-lg py-2 text-sm font-semibold transition-all ${
-                tab === 'register'
-                  ? 'bg-card text-foreground shadow-sm'
-                  : 'text-text-light hover:text-text'
-              }`}
-            >
-              S'inscrire
-            </button>
+            <p className="text-[11px] font-black tracking-[0.15em] text-primary uppercase mb-3">
+              Gachapon
+            </p>
+            <Dialog.Title className="text-xl font-black text-foreground">
+              {tab === 'login' ? 'Bon retour' : 'Créer un compte'}
+            </Dialog.Title>
+            <Dialog.Description className="text-sm text-text-light mt-1">
+              {tab === 'login'
+                ? 'Connecte-toi pour reprendre ta collection.'
+                : 'Rejoins des milliers de collectionneurs.'}
+            </Dialog.Description>
+
+            {/* Underline tabs */}
+            <div className="flex border-b border-border mt-5">
+              {(['login', 'register'] as AuthTab[]).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setTab(t)}
+                  className={`flex-1 pb-3 text-sm font-semibold transition-colors relative ${
+                    tab === t
+                      ? 'text-foreground'
+                      : 'text-text-light hover:text-text'
+                  }`}
+                >
+                  {t === 'login' ? 'Se connecter' : "S'inscrire"}
+                  {tab === t && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {tab === 'login' ? (
-            <LoginForm onSuccess={() => onOpenChange(false)} />
-          ) : (
-            <RegisterForm onSuccess={() => onOpenChange(false)} />
-          )}
+          {/* Form */}
+          <div className="px-8 py-6">
+            {tab === 'login' ? (
+              <LoginForm onSuccess={() => onOpenChange(false)} />
+            ) : (
+              <RegisterForm onSuccess={() => onOpenChange(false)} />
+            )}
+          </div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
@@ -154,9 +164,8 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
 
   const form = useAppForm({
     defaultValues: {
+      username: '',
       email: '',
-      firstName: '',
-      lastName: '',
       password: '',
       confirmPassword: '',
     },
@@ -179,9 +188,8 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
     onSubmit: ({ value }) => {
       registerMutation(
         {
+          username: value.username,
           email: value.email,
-          firstName: value.firstName,
-          lastName: value.lastName,
           password: value.password,
         },
         {
@@ -202,18 +210,13 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
       }}
       className="flex flex-col gap-3"
     >
+      <form.AppField name="username">
+        {(field) => <field.Input label="Nom d'utilisateur" />}
+      </form.AppField>
+
       <form.AppField name="email">
         {(field) => <field.Input type="email" label="Email" />}
       </form.AppField>
-
-      <div className="grid grid-cols-2 gap-3">
-        <form.AppField name="firstName">
-          {(field) => <field.Input label="Prénom" />}
-        </form.AppField>
-        <form.AppField name="lastName">
-          {(field) => <field.Input label="Nom" />}
-        </form.AppField>
-      </div>
 
       <form.AppField name="password">
         {(field) => <field.Password label="Mot de passe" />}
@@ -271,7 +274,7 @@ function OAuthButton({
   return (
     <a
       href={href}
-      className={`flex items-center justify-center gap-2.5 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 hover:-translate-y-0.5 ${className}`}
+      className={`flex items-center justify-center gap-2.5 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors duration-150 ${className}`}
     >
       {icon}
       {label}

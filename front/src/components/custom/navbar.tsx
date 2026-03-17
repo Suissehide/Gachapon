@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { LogOut, Ticket } from 'lucide-react'
 
 import { useAuthStore } from '../../stores/auth.store'
+import { Button } from '../ui/button.tsx'
 
 const navItems = [
   { to: '/play', label: 'Jouer' },
@@ -53,14 +54,15 @@ export function Navbar() {
             </Link>
           )}
           {user && (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => void logout()}
-              className="flex items-center justify-center h-8 w-8 text-text-light hover:text-destructive transition-colors rounded-lg hover:bg-destructive/10"
               title="Déconnexion"
+              className="text-text-light hover:text-destructive hover:bg-destructive/10"
             >
               <LogOut className="h-4 w-4" />
-            </button>
+            </Button>
           )}
         </div>
       </div>

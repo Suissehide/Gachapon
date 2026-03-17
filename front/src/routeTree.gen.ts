@@ -16,6 +16,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthIndexRouteImport } from './routes/auth/index'
 import { Route as AuthenticatedPlayRouteImport } from './routes/_authenticated/play'
+import { Route as AuthenticatedCollectionRouteImport } from './routes/_authenticated/collection'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -51,12 +52,18 @@ const AuthenticatedPlayRoute = AuthenticatedPlayRouteImport.update({
   path: '/play',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedCollectionRoute = AuthenticatedCollectionRouteImport.update({
+  id: '/collection',
+  path: '/collection',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/pending': typeof PendingRoute
   '/register': typeof RegisterRoute
+  '/collection': typeof AuthenticatedCollectionRoute
   '/play': typeof AuthenticatedPlayRoute
   '/auth/': typeof AuthIndexRoute
 }
@@ -65,6 +72,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/pending': typeof PendingRoute
   '/register': typeof RegisterRoute
+  '/collection': typeof AuthenticatedCollectionRoute
   '/play': typeof AuthenticatedPlayRoute
   '/auth': typeof AuthIndexRoute
 }
@@ -75,14 +83,29 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/pending': typeof PendingRoute
   '/register': typeof RegisterRoute
+  '/_authenticated/collection': typeof AuthenticatedCollectionRoute
   '/_authenticated/play': typeof AuthenticatedPlayRoute
   '/auth/': typeof AuthIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/pending' | '/register' | '/play' | '/auth/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/pending'
+    | '/register'
+    | '/collection'
+    | '/play'
+    | '/auth/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/pending' | '/register' | '/play' | '/auth'
+  to:
+    | '/'
+    | '/login'
+    | '/pending'
+    | '/register'
+    | '/collection'
+    | '/play'
+    | '/auth'
   id:
     | '__root__'
     | '/'
@@ -90,6 +113,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/pending'
     | '/register'
+    | '/_authenticated/collection'
     | '/_authenticated/play'
     | '/auth/'
   fileRoutesById: FileRoutesById
@@ -154,14 +178,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlayRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/collection': {
+      id: '/_authenticated/collection'
+      path: '/collection'
+      fullPath: '/collection'
+      preLoaderRoute: typeof AuthenticatedCollectionRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedCollectionRoute: typeof AuthenticatedCollectionRoute
   AuthenticatedPlayRoute: typeof AuthenticatedPlayRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedCollectionRoute: AuthenticatedCollectionRoute,
   AuthenticatedPlayRoute: AuthenticatedPlayRoute,
 }
 
