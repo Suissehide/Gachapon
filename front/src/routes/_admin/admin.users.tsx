@@ -127,6 +127,15 @@ function AdminUsers() {
                 {selected.suspended ? 'Réactiver' : 'Suspendre'}
               </Button>
             </div>
+
+            <a
+              href={`${(import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:3000'}/admin/users/${selected.id}/collection`}
+              target="_blank"
+              rel="noreferrer"
+              className="block w-full rounded-lg border border-border bg-surface px-3 py-2 text-center text-sm text-text-light transition-colors hover:text-text"
+            >
+              Voir collection →
+            </a>
           </div>
         )}
       </AdminDrawer>

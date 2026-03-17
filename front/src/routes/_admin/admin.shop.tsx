@@ -24,6 +24,7 @@ function AdminShop() {
   const deleteItem = useAdminDeleteShopItem()
   const createItem = useAdminCreateShopItem()
   const [showCreate, setShowCreate] = useState(false)
+  const [editItem, setEditItem] = useState<AdminShopItem | null>(null)
 
   const [form, setForm] = useState({ name: '', description: '', type: 'TOKEN_PACK', dustCost: 0, value: '{}', isActive: true })
 
@@ -51,7 +52,7 @@ function AdminShop() {
         <h1 className="text-2xl font-black text-text">Boutique</h1>
         <Button size="sm" onClick={() => setShowCreate(true)}><Plus className="mr-1 h-4 w-4" />Nouvel item</Button>
       </div>
-      <AdminTable columns={columns} rows={data?.items ?? []} isLoading={isLoading} />
+      <AdminTable columns={columns} rows={data?.items ?? []} isLoading={isLoading} onRowClick={(item) => setEditItem(item)} />
 
       <AdminDrawer open={showCreate} onClose={() => setShowCreate(false)} title="Créer un item">
         <div className="space-y-3">
@@ -75,6 +76,36 @@ function AdminShop() {
             setShowCreate(false)
           }}>Créer</Button>
         </div>
+      </AdminDrawer>
+
+      <AdminDrawer open={!!editItem} onClose={() => setEditItem(null)} title={editItem?.name ?? ''}>
+        {editItem && (
+          <div className="space-y-3">
+            <input placeholder="Nom" defaultValue={editItem.name}
+              onChange={(e) => setEditItem(s => s ? { ...s, name: e.target.value } : s)}
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text" />
+            <input placeholder="Description" defaultValue={editItem.description}
+              onChange={(e) => setEditItem(s => s ? { ...s, description: e.target.value } : s)}
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text" />
+            <select value={editItem.type} onChange={(e) => setEditItem(s => s ? { ...s, type: e.target.value } : s)}
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text">
+              {['TOKEN_PACK','BOOST','COSMETIC'].map((t) => <option key={t}>{t}</option>)}
+            </select>
+            <input type="number" value={editItem.dustCost}
+              onChange={(e) => setEditItem(s => s ? { ...s, dustCost: Number(e.target.value) } : s)}
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text" />
+            <div className="flex gap-2">
+              <Button className="flex-1" onClick={() => {
+                updateItem.mutate({ id: editItem.id, name: editItem.name, description: editItem.description, type: editItem.type, dustCost: editItem.dustCost })
+                setEditItem(null)
+              }}>Sauvegarder</Button>
+              <Button variant="ghost" className="flex-1 border border-red-500/30 text-red-400"
+                onClick={() => { deleteItem.mutate(editItem.id); setEditItem(null) }}>
+                Supprimer
+              </Button>
+            </div>
+          </div>
+        )}
       </AdminDrawer>
     </div>
   )

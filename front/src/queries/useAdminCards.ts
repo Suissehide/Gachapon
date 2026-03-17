@@ -82,6 +82,22 @@ export function useAdminCreateCard() {
   })
 }
 
+export function useAdminUpdateCard() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; name?: string; rarity?: string; dropWeight?: number }) => {
+      const res = await fetch(`${API_URL}/admin/cards/${id}`, {
+        method: 'PATCH', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) throw new Error('Failed to update card')
+      return res.json()
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'cards'] }),
+  })
+}
+
 export function useAdminDeleteCard() {
   const qc = useQueryClient()
   return useMutation({

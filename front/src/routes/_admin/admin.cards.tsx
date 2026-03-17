@@ -1,16 +1,18 @@
 // front/src/routes/_admin/admin.cards.tsx
 import { createFileRoute } from '@tanstack/react-router'
-import { ChevronDown, ChevronRight, Plus, Trash2 } from 'lucide-react'
+import { ChevronDown, ChevronRight, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 
 import { Button } from '../../components/ui/button'
 import {
+  type AdminCard,
   useAdminCards,
   useAdminCreateCard,
   useAdminCreateSet,
   useAdminDeleteCard,
   useAdminDeleteSet,
   useAdminSets,
+  useAdminUpdateCard,
   useAdminUpdateSet,
 } from '../../queries/useAdminCards'
 
@@ -25,11 +27,13 @@ function AdminCards() {
   const updateSet = useAdminUpdateSet()
   const deleteSet = useAdminDeleteSet()
   const createCard = useAdminCreateCard()
+  const updateCard = useAdminUpdateCard()
   const deleteCard = useAdminDeleteCard()
 
   const [expandedSetId, setExpandedSetId] = useState<string | null>(null)
   const [newSetName, setNewSetName] = useState('')
   const [showNewSetForm, setShowNewSetForm] = useState(false)
+  const [editingCard, setEditingCard] = useState<AdminCard | null>(null)
 
   const sets = setsData?.sets ?? []
   const cards = cardsData?.cards ?? []
@@ -89,10 +93,16 @@ function AdminCards() {
                         <div className="absolute inset-0 flex items-end rounded-lg bg-gradient-to-t from-black/80 to-transparent p-1 opacity-0 transition-opacity group-hover:opacity-100">
                           <p className="w-full truncate text-center text-xs font-bold text-white">{card.name}</p>
                         </div>
-                        <button onClick={() => deleteCard.mutate(card.id)}
-                          className="absolute right-1 top-1 hidden rounded bg-red-500 p-0.5 group-hover:block">
-                          <Trash2 className="h-3 w-3 text-white" />
-                        </button>
+                        <div className="absolute right-1 top-1 hidden flex-col gap-0.5 group-hover:flex">
+                          <button onClick={() => setEditingCard(card)}
+                            className="rounded bg-primary p-0.5">
+                            <Pencil className="h-3 w-3 text-white" />
+                          </button>
+                          <button onClick={() => deleteCard.mutate(card.id)}
+                            className="rounded bg-red-500 p-0.5">
+                            <Trash2 className="h-3 w-3 text-white" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -102,6 +112,44 @@ function AdminCards() {
             </div>
           )
         })}
+      </div>
+
+      {editingCard && (
+        <CardEditForm
+          card={editingCard}
+          onSave={(data) => { updateCard.mutate({ id: editingCard.id, ...data }); setEditingCard(null) }}
+          onCancel={() => setEditingCard(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+function CardEditForm({ card, onSave, onCancel }: {
+  card: AdminCard
+  onSave: (data: { name?: string; rarity?: string; dropWeight?: number }) => void
+  onCancel: () => void
+}) {
+  const [name, setName] = useState(card.name)
+  const [rarity, setRarity] = useState(card.rarity)
+  const [dropWeight, setDropWeight] = useState(String(card.dropWeight))
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+      <div className="w-80 rounded-xl border border-border bg-card p-6 space-y-4">
+        <h2 className="font-bold text-text">Modifier la carte</h2>
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom"
+          className="w-full rounded border border-border bg-surface px-3 py-2 text-sm text-text" />
+        <select value={rarity} onChange={(e) => setRarity(e.target.value)}
+          className="w-full rounded border border-border bg-surface px-3 py-2 text-sm text-text">
+          {['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY'].map((r) => <option key={r}>{r}</option>)}
+        </select>
+        <input type="number" value={dropWeight} onChange={(e) => setDropWeight(e.target.value)} placeholder="Poids"
+          className="w-full rounded border border-border bg-surface px-3 py-2 text-sm text-text" />
+        <div className="flex gap-2">
+          <Button className="flex-1" onClick={() => onSave({ name, rarity, dropWeight: Number(dropWeight) })}>Sauvegarder</Button>
+          <Button variant="ghost" className="flex-1" onClick={onCancel}>Annuler</Button>
+        </div>
       </div>
     </div>
   )
