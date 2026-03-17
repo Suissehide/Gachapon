@@ -40,4 +40,20 @@ describe('Leaderboard route', () => {
     const res = await app.inject({ method: 'GET', url: '/leaderboard' })
     expect(res.statusCode).toBe(401)
   })
+
+  it('GET /quests — retourne la liste des quêtes', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/quests',
+      headers: { cookie: cookies },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(Array.isArray(body.quests)).toBe(true)
+  })
+
+  it('GET /quests — 401 sans auth', async () => {
+    const res = await app.inject({ method: 'GET', url: '/quests' })
+    expect(res.statusCode).toBe(401)
+  })
 })

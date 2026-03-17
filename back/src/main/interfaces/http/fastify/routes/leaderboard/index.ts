@@ -135,4 +135,26 @@ export const leaderboardRouter: FastifyPluginAsyncZod = async (fastify) => {
       return { collectors, legendaries, bestTeams }
     },
   )
+
+  // GET /quests — quêtes actives
+  fastify.get(
+    '/quests',
+    { onRequest: [fastify.verifySessionCookie] },
+    async () => {
+      const quests = await prisma.quest.findMany({
+        where: { isActive: true },
+        orderBy: { name: 'asc' },
+      })
+      return {
+        quests: quests.map((q) => ({
+          id: q.id,
+          key: q.key,
+          name: q.name,
+          description: q.description,
+          rewardTokens: q.rewardTokens,
+          rewardDust: q.rewardDust,
+        })),
+      }
+    },
+  )
 }
