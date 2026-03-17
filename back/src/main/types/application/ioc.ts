@@ -2,12 +2,16 @@ import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { ApiKeyRepository } from '../../infra/orm/repositories/api-key.repository'
 import type { CardRepository } from '../../infra/orm/repositories/card.repository'
 import type { GachaPullRepository } from '../../infra/orm/repositories/gacha-pull.repository'
+import type { InvitationRepository } from '../../infra/orm/repositories/invitation.repository'
 import type { OAuthAccountRepository } from '../../infra/orm/repositories/oauth-account.repository'
+import type { TeamRepository } from '../../infra/orm/repositories/team.repository'
+import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
 import type { UserCardRepository } from '../../infra/orm/repositories/user-card.repository'
 import type { RefreshTokenRepository } from '../../infra/redis/refresh-token.repository'
 import type { AuthDomainInterface } from '../domain/auth/auth.domain.interface'
 import type { OAuthDomainInterface } from '../domain/auth/oauth.domain.interface'
 import type { GachaDomainInterface } from '../domain/gacha/gacha.domain.interface'
+import type { TeamDomainInterface } from '../domain/team/team.domain.interface'
 import type { UserDomainInterface } from '../domain/user/user.domain.interface'
 import type { JwtServiceInterface } from '../infra/auth/jwt.service'
 import type { HttpClientInterface } from '../infra/http/http-client'
@@ -42,4 +46,8 @@ export interface IocContainer {
   readonly userCardRepository: UserCardRepository
   readonly gachaPullRepository: GachaPullRepository
   readonly gachaDomain: GachaDomainInterface
+  readonly teamRepository: TeamRepository
+  readonly teamMemberRepository: TeamMemberRepository
+  readonly invitationRepository: InvitationRepository
+  readonly teamDomain: TeamDomainInterface
 }
