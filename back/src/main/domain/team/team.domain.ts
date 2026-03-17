@@ -247,12 +247,20 @@ export class TeamDomain implements TeamDomainInterface {
       throw Boom.notFound('New owner must be a member of the team')
     }
 
-    await this.#postgresOrm.prisma.team.update({
-      where: { id: teamId },
-      data: { ownerId: newOwnerId },
-    })
-    await this.#memberRepo.updateRole(teamId, ownerId, 'MEMBER')
-    await this.#memberRepo.updateRole(teamId, newOwnerId, 'OWNER')
+    await this.#postgresOrm.prisma.$transaction([
+      this.#postgresOrm.prisma.team.update({
+        where: { id: teamId },
+        data: { ownerId: newOwnerId },
+      }),
+      this.#postgresOrm.prisma.teamMember.update({
+        where: { teamId_userId: { teamId, userId: ownerId } },
+        data: { role: 'MEMBER' },
+      }),
+      this.#postgresOrm.prisma.teamMember.update({
+        where: { teamId_userId: { teamId, userId: newOwnerId } },
+        data: { role: 'OWNER' },
+      }),
+    ])
   }
 
   async deleteTeam(teamId: string, userId: string): Promise<void> {
