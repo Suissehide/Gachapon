@@ -2,14 +2,14 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { ArrowLeft, Crown, Send, Shield, User, UserMinus } from 'lucide-react'
 import { useState } from 'react'
 
-import type { TeamMember } from '../../queries/useTeams'
+import type { TeamMember } from '../../../queries/useTeams.ts'
 import {
   useDeleteTeam,
   useInviteMember,
   useRemoveMember,
   useTeam,
-} from '../../queries/useTeams'
-import { useAuthStore } from '../../stores/auth.store'
+} from '../../../queries/useTeams.ts'
+import { useAuthStore } from '../../../stores/auth.store.ts'
 
 export const Route = createFileRoute('/_authenticated/teams/$id')({
   component: TeamDetailPage,

@@ -2,9 +2,9 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { Plus, Users, X } from 'lucide-react'
 import { useState } from 'react'
 
-import type { TeamSummary } from '../../queries/useTeams'
-import { useCreateTeam, useLeaveTeam, useMyTeams } from '../../queries/useTeams'
-import { useAuthStore } from '../../stores/auth.store'
+import type { TeamSummary } from '../../../queries/useTeams.ts'
+import { useCreateTeam, useLeaveTeam, useMyTeams } from '../../../queries/useTeams.ts'
+import { useAuthStore } from '../../../stores/auth.store.ts'
 
 export const Route = createFileRoute('/_authenticated/teams/')({
   component: TeamsPage,

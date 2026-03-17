@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Calendar, Layers, Sparkles, Star, Zap } from 'lucide-react'
 
-import { useUserProfile } from '../../queries/useProfile'
-import { useAuthStore } from '../../stores/auth.store'
+import { useUserProfile } from '../../../queries/useProfile.ts'
+import { useAuthStore } from '../../../stores/auth.store.ts'
 
 export const Route = createFileRoute('/_authenticated/profile/$username')({
   component: ProfilePage,

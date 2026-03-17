@@ -13,17 +13,24 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as PendingRouteImport } from './routes/pending'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthIndexRouteImport } from './routes/auth/index'
-import { Route as AuthenticatedTeamsRouteImport } from './routes/_authenticated/teams'
 import { Route as AuthenticatedShopRouteImport } from './routes/_authenticated/shop'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedQuestsRouteImport } from './routes/_authenticated/quests'
 import { Route as AuthenticatedPlayRouteImport } from './routes/_authenticated/play'
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
 import { Route as AuthenticatedCollectionRouteImport } from './routes/_authenticated/collection'
-import { Route as AuthenticatedTeamsIdRouteImport } from './routes/_authenticated/teams.$id'
-import { Route as AuthenticatedProfileUsernameRouteImport } from './routes/_authenticated/profile.$username'
+import { Route as AdminAdminRouteImport } from './routes/_admin/admin'
+import { Route as AuthenticatedTeamsIndexRouteImport } from './routes/_authenticated/teams/index'
+import { Route as AuthenticatedTeamsIdRouteImport } from './routes/_authenticated/teams/$id'
+import { Route as AuthenticatedProfileUsernameRouteImport } from './routes/_authenticated/profile/$username'
+import { Route as AdminAdminUsersRouteImport } from './routes/_admin/admin.users'
+import { Route as AdminAdminStatsRouteImport } from './routes/_admin/admin.stats'
+import { Route as AdminAdminShopRouteImport } from './routes/_admin/admin.shop'
+import { Route as AdminAdminConfigRouteImport } from './routes/_admin/admin.config'
+import { Route as AdminAdminCardsRouteImport } from './routes/_admin/admin.cards'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -44,6 +51,10 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/_admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -53,11 +64,6 @@ const AuthIndexRoute = AuthIndexRouteImport.update({
   id: '/auth/',
   path: '/auth/',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedTeamsRoute = AuthenticatedTeamsRouteImport.update({
-  id: '/teams',
-  path: '/teams',
-  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedShopRoute = AuthenticatedShopRouteImport.update({
   id: '/shop',
@@ -90,10 +96,20 @@ const AuthenticatedCollectionRoute = AuthenticatedCollectionRouteImport.update({
   path: '/collection',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AdminAdminRoute = AdminAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AuthenticatedTeamsIndexRoute = AuthenticatedTeamsIndexRouteImport.update({
+  id: '/teams/',
+  path: '/teams/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedTeamsIdRoute = AuthenticatedTeamsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AuthenticatedTeamsRoute,
+  id: '/teams/$id',
+  path: '/teams/$id',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedProfileUsernameRoute =
   AuthenticatedProfileUsernameRouteImport.update({
@@ -101,56 +117,100 @@ const AuthenticatedProfileUsernameRoute =
     path: '/profile/$username',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AdminAdminUsersRoute = AdminAdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminAdminRoute,
+} as any)
+const AdminAdminStatsRoute = AdminAdminStatsRouteImport.update({
+  id: '/stats',
+  path: '/stats',
+  getParentRoute: () => AdminAdminRoute,
+} as any)
+const AdminAdminShopRoute = AdminAdminShopRouteImport.update({
+  id: '/shop',
+  path: '/shop',
+  getParentRoute: () => AdminAdminRoute,
+} as any)
+const AdminAdminConfigRoute = AdminAdminConfigRouteImport.update({
+  id: '/config',
+  path: '/config',
+  getParentRoute: () => AdminAdminRoute,
+} as any)
+const AdminAdminCardsRoute = AdminAdminCardsRouteImport.update({
+  id: '/cards',
+  path: '/cards',
+  getParentRoute: () => AdminAdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/pending': typeof PendingRoute
   '/register': typeof RegisterRoute
+  '/admin': typeof AdminAdminRouteWithChildren
   '/collection': typeof AuthenticatedCollectionRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/play': typeof AuthenticatedPlayRoute
   '/quests': typeof AuthenticatedQuestsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/shop': typeof AuthenticatedShopRoute
-  '/teams': typeof AuthenticatedTeamsRouteWithChildren
   '/auth/': typeof AuthIndexRoute
+  '/admin/cards': typeof AdminAdminCardsRoute
+  '/admin/config': typeof AdminAdminConfigRoute
+  '/admin/shop': typeof AdminAdminShopRoute
+  '/admin/stats': typeof AdminAdminStatsRoute
+  '/admin/users': typeof AdminAdminUsersRoute
   '/profile/$username': typeof AuthenticatedProfileUsernameRoute
   '/teams/$id': typeof AuthenticatedTeamsIdRoute
+  '/teams/': typeof AuthenticatedTeamsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/pending': typeof PendingRoute
   '/register': typeof RegisterRoute
+  '/admin': typeof AdminAdminRouteWithChildren
   '/collection': typeof AuthenticatedCollectionRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/play': typeof AuthenticatedPlayRoute
   '/quests': typeof AuthenticatedQuestsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/shop': typeof AuthenticatedShopRoute
-  '/teams': typeof AuthenticatedTeamsRouteWithChildren
   '/auth': typeof AuthIndexRoute
+  '/admin/cards': typeof AdminAdminCardsRoute
+  '/admin/config': typeof AdminAdminConfigRoute
+  '/admin/shop': typeof AdminAdminShopRoute
+  '/admin/stats': typeof AdminAdminStatsRoute
+  '/admin/users': typeof AdminAdminUsersRoute
   '/profile/$username': typeof AuthenticatedProfileUsernameRoute
   '/teams/$id': typeof AuthenticatedTeamsIdRoute
+  '/teams': typeof AuthenticatedTeamsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_admin': typeof AdminRouteWithChildren
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/pending': typeof PendingRoute
   '/register': typeof RegisterRoute
+  '/_admin/admin': typeof AdminAdminRouteWithChildren
   '/_authenticated/collection': typeof AuthenticatedCollectionRoute
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/_authenticated/play': typeof AuthenticatedPlayRoute
   '/_authenticated/quests': typeof AuthenticatedQuestsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/shop': typeof AuthenticatedShopRoute
-  '/_authenticated/teams': typeof AuthenticatedTeamsRouteWithChildren
   '/auth/': typeof AuthIndexRoute
+  '/_admin/admin/cards': typeof AdminAdminCardsRoute
+  '/_admin/admin/config': typeof AdminAdminConfigRoute
+  '/_admin/admin/shop': typeof AdminAdminShopRoute
+  '/_admin/admin/stats': typeof AdminAdminStatsRoute
+  '/_admin/admin/users': typeof AdminAdminUsersRoute
   '/_authenticated/profile/$username': typeof AuthenticatedProfileUsernameRoute
   '/_authenticated/teams/$id': typeof AuthenticatedTeamsIdRoute
+  '/_authenticated/teams/': typeof AuthenticatedTeamsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -159,53 +219,73 @@ export interface FileRouteTypes {
     | '/login'
     | '/pending'
     | '/register'
+    | '/admin'
     | '/collection'
     | '/leaderboard'
     | '/play'
     | '/quests'
     | '/settings'
     | '/shop'
-    | '/teams'
     | '/auth/'
+    | '/admin/cards'
+    | '/admin/config'
+    | '/admin/shop'
+    | '/admin/stats'
+    | '/admin/users'
     | '/profile/$username'
     | '/teams/$id'
+    | '/teams/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
     | '/pending'
     | '/register'
+    | '/admin'
     | '/collection'
     | '/leaderboard'
     | '/play'
     | '/quests'
     | '/settings'
     | '/shop'
-    | '/teams'
     | '/auth'
+    | '/admin/cards'
+    | '/admin/config'
+    | '/admin/shop'
+    | '/admin/stats'
+    | '/admin/users'
     | '/profile/$username'
     | '/teams/$id'
+    | '/teams'
   id:
     | '__root__'
     | '/'
+    | '/_admin'
     | '/_authenticated'
     | '/login'
     | '/pending'
     | '/register'
+    | '/_admin/admin'
     | '/_authenticated/collection'
     | '/_authenticated/leaderboard'
     | '/_authenticated/play'
     | '/_authenticated/quests'
     | '/_authenticated/settings'
     | '/_authenticated/shop'
-    | '/_authenticated/teams'
     | '/auth/'
+    | '/_admin/admin/cards'
+    | '/_admin/admin/config'
+    | '/_admin/admin/shop'
+    | '/_admin/admin/stats'
+    | '/_admin/admin/users'
     | '/_authenticated/profile/$username'
     | '/_authenticated/teams/$id'
+    | '/_authenticated/teams/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
   PendingRoute: typeof PendingRoute
@@ -243,6 +323,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_admin': {
+      id: '/_admin'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -256,13 +343,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/'
       preLoaderRoute: typeof AuthIndexRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/teams': {
-      id: '/_authenticated/teams'
-      path: '/teams'
-      fullPath: '/teams'
-      preLoaderRoute: typeof AuthenticatedTeamsRouteImport
-      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/shop': {
       id: '/_authenticated/shop'
@@ -306,12 +386,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCollectionRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_admin/admin': {
+      id: '/_admin/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminAdminRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_authenticated/teams/': {
+      id: '/_authenticated/teams/'
+      path: '/teams'
+      fullPath: '/teams/'
+      preLoaderRoute: typeof AuthenticatedTeamsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/teams/$id': {
       id: '/_authenticated/teams/$id'
-      path: '/$id'
+      path: '/teams/$id'
       fullPath: '/teams/$id'
       preLoaderRoute: typeof AuthenticatedTeamsIdRouteImport
-      parentRoute: typeof AuthenticatedTeamsRoute
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/profile/$username': {
       id: '/_authenticated/profile/$username'
@@ -320,19 +414,73 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProfileUsernameRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_admin/admin/users': {
+      id: '/_admin/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminAdminUsersRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
+    '/_admin/admin/stats': {
+      id: '/_admin/admin/stats'
+      path: '/stats'
+      fullPath: '/admin/stats'
+      preLoaderRoute: typeof AdminAdminStatsRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
+    '/_admin/admin/shop': {
+      id: '/_admin/admin/shop'
+      path: '/shop'
+      fullPath: '/admin/shop'
+      preLoaderRoute: typeof AdminAdminShopRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
+    '/_admin/admin/config': {
+      id: '/_admin/admin/config'
+      path: '/config'
+      fullPath: '/admin/config'
+      preLoaderRoute: typeof AdminAdminConfigRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
+    '/_admin/admin/cards': {
+      id: '/_admin/admin/cards'
+      path: '/cards'
+      fullPath: '/admin/cards'
+      preLoaderRoute: typeof AdminAdminCardsRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
   }
 }
 
-interface AuthenticatedTeamsRouteChildren {
-  AuthenticatedTeamsIdRoute: typeof AuthenticatedTeamsIdRoute
+interface AdminAdminRouteChildren {
+  AdminAdminCardsRoute: typeof AdminAdminCardsRoute
+  AdminAdminConfigRoute: typeof AdminAdminConfigRoute
+  AdminAdminShopRoute: typeof AdminAdminShopRoute
+  AdminAdminStatsRoute: typeof AdminAdminStatsRoute
+  AdminAdminUsersRoute: typeof AdminAdminUsersRoute
 }
 
-const AuthenticatedTeamsRouteChildren: AuthenticatedTeamsRouteChildren = {
-  AuthenticatedTeamsIdRoute: AuthenticatedTeamsIdRoute,
+const AdminAdminRouteChildren: AdminAdminRouteChildren = {
+  AdminAdminCardsRoute: AdminAdminCardsRoute,
+  AdminAdminConfigRoute: AdminAdminConfigRoute,
+  AdminAdminShopRoute: AdminAdminShopRoute,
+  AdminAdminStatsRoute: AdminAdminStatsRoute,
+  AdminAdminUsersRoute: AdminAdminUsersRoute,
 }
 
-const AuthenticatedTeamsRouteWithChildren =
-  AuthenticatedTeamsRoute._addFileChildren(AuthenticatedTeamsRouteChildren)
+const AdminAdminRouteWithChildren = AdminAdminRoute._addFileChildren(
+  AdminAdminRouteChildren,
+)
+
+interface AdminRouteChildren {
+  AdminAdminRoute: typeof AdminAdminRouteWithChildren
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAdminRoute: AdminAdminRouteWithChildren,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface AuthenticatedRouteChildren {
   AuthenticatedCollectionRoute: typeof AuthenticatedCollectionRoute
@@ -341,8 +489,9 @@ interface AuthenticatedRouteChildren {
   AuthenticatedQuestsRoute: typeof AuthenticatedQuestsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedShopRoute: typeof AuthenticatedShopRoute
-  AuthenticatedTeamsRoute: typeof AuthenticatedTeamsRouteWithChildren
   AuthenticatedProfileUsernameRoute: typeof AuthenticatedProfileUsernameRoute
+  AuthenticatedTeamsIdRoute: typeof AuthenticatedTeamsIdRoute
+  AuthenticatedTeamsIndexRoute: typeof AuthenticatedTeamsIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -352,8 +501,9 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedQuestsRoute: AuthenticatedQuestsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedShopRoute: AuthenticatedShopRoute,
-  AuthenticatedTeamsRoute: AuthenticatedTeamsRouteWithChildren,
   AuthenticatedProfileUsernameRoute: AuthenticatedProfileUsernameRoute,
+  AuthenticatedTeamsIdRoute: AuthenticatedTeamsIdRoute,
+  AuthenticatedTeamsIndexRoute: AuthenticatedTeamsIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -362,6 +512,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
   PendingRoute: PendingRoute,
