@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, redirect, useRouterState } from '@tanstack/react-router'
+import { Link, createFileRoute, Outlet, redirect, useRouterState } from '@tanstack/react-router'
 import {
   BarChart2, ChevronRight, LayoutDashboard, Package, Settings, ShoppingBag, Users,
 } from 'lucide-react'
@@ -40,9 +40,9 @@ function AdminLayout() {
           {NAV_ITEMS.map(({ to, label, icon: Icon, exact }) => {
             const active = exact ? pathname === to : pathname.startsWith(to)
             return (
-              <a
+              <Link
                 key={to}
-                href={to}
+                to={to}
                 className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                   active ? 'bg-primary/20 text-primary' : 'text-text-light hover:bg-surface hover:text-text'
                 }`}
@@ -50,7 +50,7 @@ function AdminLayout() {
                 <Icon className="h-4 w-4" />
                 {label}
                 {active && <ChevronRight className="ml-auto h-3 w-3" />}
-              </a>
+              </Link>
             )
           })}
         </nav>
