@@ -238,7 +238,7 @@ function LandingPage() {
       />
 
       {/* ── HERO ──────────────────────────────────────────────────── */}
-      <section className="relative z-10 flex flex-col items-center text-center px-6 pt-36 pb-8 lg:pt-52">
+      <section className="relative z-10 h-screen flex flex-col items-center text-center px-6 pt-32 pb-8">
         {/* Floating balls */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           {FLOATING_BALLS.map((b) => (
@@ -263,43 +263,49 @@ function LandingPage() {
           ))}
         </div>
 
-        <p
-          className="text-[11px] font-semibold text-text-light/50 uppercase tracking-[0.2em] mb-6 animate-in fade-in-0 duration-700 fill-mode-both"
-          style={{ animationDelay: '100ms' }}
-        >
-          Attrape. Collectionne. Échange.
-        </p>
+        <div className="h-full flex flex-col justify-between">
+          <div className="flex flex-col items-center">
+            <p
+              className="text-[11px] font-semibold text-text-light/50 uppercase tracking-[0.2em] mb-6 animate-in fade-in-0 duration-700 fill-mode-both"
+              style={{ animationDelay: '100ms' }}
+            >
+              Attrape. Collectionne. Échange.
+            </p>
 
-        <h1
-          className="mb-6 max-w-3xl font-black leading-[0.95] tracking-tight text-[clamp(3.2rem,8vw,6rem)] animate-in fade-in-0 slide-in-from-bottom-6 duration-700 fill-mode-both"
-          style={{ animationDelay: '220ms' }}
-        >
-          Une nouvelle manière
-          <br />
-          <span className="bg-linear-to-r from-primary via-yellow-500 to-primary-light bg-clip-text text-transparent">
-            de collectionner.
-          </span>
-        </h1>
+            <h1
+              className="mb-6 max-w-3xl font-black leading-[0.95] tracking-tight text-[clamp(3.2rem,8vw,6rem)] animate-in fade-in-0 slide-in-from-bottom-6 duration-700 fill-mode-both"
+              style={{ animationDelay: '220ms' }}
+            >
+              Une nouvelle manière
+              <br />
+              <span className="bg-linear-to-r from-primary via-yellow-500 to-primary-light bg-clip-text text-transparent">
+                de collectionner.
+              </span>
+            </h1>
 
-        <p
-          className="mb-10 max-w-md text-base lg:text-lg leading-relaxed text-text-light animate-in fade-in-0 slide-in-from-bottom-6 duration-700 fill-mode-both"
-          style={{ animationDelay: '380ms' }}
-        >
-          Gachapon transforme le plaisir de collection en une expérience
-          élégante, immersive et profondément sociale. Chaque tirage, mémorable.
-        </p>
+            <p
+              className="mb-10 max-w-md text-base lg:text-lg leading-relaxed text-text-light animate-in fade-in-0 slide-in-from-bottom-6 duration-700 fill-mode-both"
+              style={{ animationDelay: '380ms' }}
+            >
+              Gachapon transforme le plaisir de collection en une expérience
+              élégante, immersive et profondément sociale. Chaque tirage,
+              mémorable.
+            </p>
 
-        <div
-          className="flex flex-col items-center gap-6 animate-in fade-in-0 slide-in-from-bottom-6 duration-700 fill-mode-both"
-          style={{ animationDelay: '520ms' }}
-        >
-          <Button
-            size="lg"
-            onClick={openRegister}
-            className="rounded-full px-8 shadow-lg shadow-primary/20"
-          >
-            Rejoindre Gachapon
-          </Button>
+            <div
+              className="flex flex-col items-center gap-6 animate-in fade-in-0 slide-in-from-bottom-6 duration-700 fill-mode-both"
+              style={{ animationDelay: '520ms' }}
+            >
+              <Button
+                size="lg"
+                onClick={openRegister}
+                className="rounded-full px-8 shadow-lg shadow-primary/20"
+              >
+                Rejoindre Gachapon
+              </Button>
+            </div>
+          </div>
+
           <a
             href="#experience"
             className="flex flex-col items-center gap-1.5 text-xs text-text-light/50 hover:text-text-light transition-colors"
