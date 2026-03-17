@@ -188,6 +188,61 @@ describe('Teams routes', () => {
     await app.inject({ method: 'DELETE', url: `/teams/${team3Id}`, headers: { cookie: cookiesA } })
   })
 
+  it('POST /teams/:id/members/:userId/remove — exclure un membre', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    // Créer une équipe temporaire pour ce test
+    const resTeam4 = await app.inject({
+      method: 'POST',
+      url: '/teams',
+      headers: { cookie: cookiesA },
+      payload: { name: `Team4${suffix}` },
+    })
+    const team4Id = resTeam4.json().id
+
+    // Inviter B
+    const resInv = await app.inject({
+      method: 'POST',
+      url: `/teams/${team4Id}/invite`,
+      headers: { cookie: cookiesA },
+      payload: { username: `teamB${suffix}` },
+    })
+    const invToken = resInv.json().token
+
+    // B accepte
+    await app.inject({
+      method: 'POST',
+      url: `/invitations/${invToken}/accept`,
+      headers: { cookie: cookiesB },
+    })
+
+    // Récupérer l'ID de B
+    const memberB = await postgresOrm.prisma.teamMember.findFirst({
+      where: { teamId: team4Id, user: { username: `teamB${suffix}` } },
+    })
+    expect(memberB).not.toBeNull()
+
+    // A exclut B
+    const res = await app.inject({
+      method: 'POST',
+      url: `/teams/${team4Id}/members/${memberB!.userId}/remove`,
+      headers: { cookie: cookiesA },
+    })
+    expect(res.statusCode).toBe(204)
+
+    // Vérifier que B n'est plus membre
+    const teamDetail = await app.inject({
+      method: 'GET',
+      url: `/teams/${team4Id}`,
+      headers: { cookie: cookiesA },
+    })
+    const members = teamDetail.json().members as { userId: string }[]
+    expect(members.some((m) => m.userId === memberB!.userId)).toBe(false)
+
+    // Nettoyer
+    await app.inject({ method: 'DELETE', url: `/teams/${team4Id}`, headers: { cookie: cookiesA } })
+  })
+
   it('POST /teams/:id/transfer — transférer la propriété', async () => {
     const { postgresOrm } = (app as any).iocContainer
     const memberB = await postgresOrm.prisma.teamMember.findFirst({
