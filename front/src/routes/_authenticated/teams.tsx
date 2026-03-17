@@ -147,7 +147,7 @@ function TeamCard({
       </div>
       <div className="min-w-0 flex-1">
         <Link
-          to={'/teams/$id' as any}
+          to="/teams/$id"
           params={{ id: team.id }}
           className="block truncate font-semibold text-text transition-colors hover:text-primary"
         >
