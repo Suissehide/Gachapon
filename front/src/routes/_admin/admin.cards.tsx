@@ -160,6 +160,7 @@ function CardUploadForm({ setId, onUpload }: { setId: string; onUpload: (fd: For
   const [rarity, setRarity] = useState('COMMON')
   const [dropWeight, setDropWeight] = useState('10')
   const [file, setFile] = useState<File | null>(null)
+  const [fileKey, setFileKey] = useState(0)
 
   const submit = () => {
     if (!name || !file) return
@@ -170,7 +171,7 @@ function CardUploadForm({ setId, onUpload }: { setId: string; onUpload: (fd: For
     fd.append('dropWeight', dropWeight)
     fd.append('image', file)
     onUpload(fd)
-    setName(''); setFile(null)
+    setName(''); setFile(null); setFileKey(k => k + 1)
   }
 
   return (
@@ -183,7 +184,7 @@ function CardUploadForm({ setId, onUpload }: { setId: string; onUpload: (fd: For
       </select>
       <input type="number" value={dropWeight} onChange={(e) => setDropWeight(e.target.value)}
         placeholder="Poids" className="rounded border border-border bg-surface px-2 py-1 text-xs text-text w-20" />
-      <input type="file" accept="image/jpeg,image/png,image/webp"
+      <input key={fileKey} type="file" accept="image/jpeg,image/png,image/webp"
         onChange={(e) => setFile(e.target.files?.[0] ?? null)}
         className="text-xs text-text-light" />
       <Button size="sm" onClick={submit} disabled={!name || !file}>Ajouter</Button>

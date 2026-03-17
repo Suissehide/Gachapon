@@ -25,6 +25,7 @@ function AdminShop() {
   const createItem = useAdminCreateShopItem()
   const [showCreate, setShowCreate] = useState(false)
   const [editItem, setEditItem] = useState<AdminShopItem | null>(null)
+  const [jsonError, setJsonError] = useState('')
 
   const [form, setForm] = useState({ name: '', description: '', type: 'TOKEN_PACK', dustCost: 0, value: '{}', isActive: true })
 
@@ -69,10 +70,18 @@ function AdminShop() {
             onChange={(e) => setForm(f => ({ ...f, dustCost: Number(e.target.value) }))}
             className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text" />
           <textarea placeholder='Value JSON ex: {"tokens":3}' value={form.value}
-            onChange={(e) => setForm(f => ({ ...f, value: e.target.value }))}
+            onChange={(e) => { setForm(f => ({ ...f, value: e.target.value })); setJsonError('') }}
             className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text font-mono" rows={3} />
+          {jsonError && <p className="text-xs text-red-400">{jsonError}</p>}
           <Button className="w-full" onClick={() => {
-            createItem.mutate({ ...form, value: JSON.parse(form.value) })
+            let parsed: unknown
+            try {
+              parsed = JSON.parse(form.value)
+            } catch {
+              setJsonError('JSON invalide — vérifiez la syntaxe')
+              return
+            }
+            createItem.mutate({ ...form, value: parsed })
             setShowCreate(false)
           }}>Créer</Button>
         </div>
