@@ -1,5 +1,5 @@
 import { cva, type VariantProps } from 'class-variance-authority'
-import { FilePlus, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { Dialog } from 'radix-ui'
 import React from 'react'
 
@@ -7,14 +7,19 @@ import { cn } from '../../libs/utils.ts'
 import { type ButtonProps, buttonVariants } from './button.tsx'
 
 const popupVariants = cva(
-  `fixed z-100 p-6 top-[20%] left-[50%] translate-x-[-50%] translate-y-[-20%] gap-4 bg-primary-foreground border border-border 
-  rounded-md shadow-xl transition ease-in-out`,
+  'fixed z-100 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ' +
+    'bg-card border border-primary/20 rounded-xl shadow-[0_0_60px_rgba(245,158,11,0.08),0_24px_48px_rgba(0,0,0,0.4)] ' +
+    'data-[state=open]:animate-in data-[state=closed]:animate-out ' +
+    'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 ' +
+    'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-100 ' +
+    'data-[state=open]:slide-in-from-top-3 data-[state=closed]:slide-out-to-top-2 ' +
+    'duration-200',
   {
     variants: {
       size: {
-        default: 'min-w-[400px]',
-        lg: 'min-w-[50%]',
-        xl: 'min-w-[80%]',
+        default: 'w-[440px] max-w-[calc(100vw-2rem)]',
+        lg: 'w-[600px] max-w-[calc(100vw-2rem)]',
+        xl: 'w-[80vw] max-w-[900px]',
       },
     },
     defaultVariants: {
@@ -30,6 +35,11 @@ interface PopupTriggerProps
 interface PopupContentProps
   extends React.ComponentPropsWithoutRef<typeof Dialog.Content>,
     VariantProps<typeof popupVariants> {}
+
+interface PopupTitleProps
+  extends React.ComponentPropsWithoutRef<typeof Dialog.Title> {
+  icon?: React.ReactNode
+}
 
 const Popup = Dialog.Root
 const PopupClose = Dialog.Close
@@ -48,9 +58,9 @@ const PopupContent = React.forwardRef<
       {...props}
     >
       {children}
-      <PopupClose className="absolute right-4 top-4 rounded-full text-foreground bg-foreground/0 p-1 cursor-pointer ring-offset-background transition duration-300 hover:bg-primary/20 hover:text-primary focus:outline-none disabled:pointer-events-none data-[state=open]:bg-secondary">
-        <X className="h-5 w-5" />
-        <span className="sr-only">Close</span>
+      <PopupClose className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-lg text-text-light ring-offset-background transition-all duration-200 hover:bg-primary/10 hover:text-primary focus:outline-none disabled:pointer-events-none">
+        <X className="h-4 w-4" />
+        <span className="sr-only">Fermer</span>
       </PopupClose>
     </Dialog.Content>
   </PopupPortal>
@@ -63,7 +73,7 @@ const PopupOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <Dialog.Overlay
     className={cn(
-      'fixed inset-0 z-50 cursor-pointer bg-background/1 backdrop-blur-xs data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+      'fixed inset-0 z-50 bg-black/55 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 duration-200',
       className,
     )}
     {...props}
@@ -90,7 +100,7 @@ const PopupHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn('pb-4 border-b border-border', className)}
+    className={cn('px-6 pt-6 pb-4 border-b border-border/60', className)}
     {...props}
   />
 ))
@@ -98,23 +108,18 @@ PopupHeader.displayName = 'PopupHeader'
 
 const PopupTitle = React.forwardRef<
   React.ComponentRef<typeof Dialog.Title>,
-  React.ComponentPropsWithoutRef<typeof Dialog.Title>
->(({ className, children, ...props }, ref) => (
+  PopupTitleProps
+>(({ className, children, icon, ...props }, ref) => (
   <Dialog.Title
     ref={ref}
-    className={cn(
-      'flex gap-5 items-center text-lg font-semibold m-0',
-      className,
-    )}
+    className={cn('flex items-center gap-3 text-base font-semibold text-text m-0', className)}
     {...props}
   >
-    <div className="pl-2 relative flex justify-center items-center before:z-[-1] before:absolute before:bg-primary/30 before:rounded-full before:w-6.5 before:h-6.5 after:z-[-1] after:absolute after:bg-primary/10 after:rounded-full after:w-9.5 after:h-9.5">
-      <FilePlus
-        fill="#2563eb"
-        strokeWidth={1}
-        className="h-4 w-4 text-card z-1"
-      />
-    </div>
+    {icon && (
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 border border-primary/25 text-primary">
+        {icon}
+      </span>
+    )}
     {children}
   </Dialog.Title>
 ))
@@ -126,7 +131,7 @@ const PopupDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <Dialog.Description
     ref={ref}
-    className={cn('text-sm text-gray-600', className)}
+    className={cn('sr-only', className)}
     {...props}
   />
 ))
@@ -136,7 +141,7 @@ const PopupBody = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn('h-full py-4', className)} {...props} />
+  <div ref={ref} className={cn('px-6 py-4', className)} {...props} />
 ))
 PopupBody.displayName = 'PopupBody'
 
@@ -147,7 +152,7 @@ const PopupFooter = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      'flex justify-between gap-2 pt-4 border-t border-border',
+      'flex justify-end gap-2 px-6 py-4 border-t border-border/60',
       className,
     )}
     {...props}

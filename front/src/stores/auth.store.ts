@@ -44,7 +44,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       /* ignore */
     }
     set({ user: null, isAuthenticated: false })
-    window.location.href = '/login'
   },
 
   setUser: (user) => set({ user, isAuthenticated: true, isLoading: false }),

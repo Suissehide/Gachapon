@@ -9,9 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as RegisterRouteImport } from './routes/register'
 import { Route as PendingRouteImport } from './routes/pending'
-import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -32,19 +30,9 @@ import { Route as AdminAdminShopRouteImport } from './routes/_admin/admin.shop'
 import { Route as AdminAdminConfigRouteImport } from './routes/_admin/admin.config'
 import { Route as AdminAdminCardsRouteImport } from './routes/_admin/admin.cards'
 
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const PendingRoute = PendingRouteImport.update({
   id: '/pending',
   path: '/pending',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -145,9 +133,7 @@ const AdminAdminCardsRoute = AdminAdminCardsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/login': typeof LoginRoute
   '/pending': typeof PendingRoute
-  '/register': typeof RegisterRoute
   '/admin': typeof AdminAdminRouteWithChildren
   '/collection': typeof AuthenticatedCollectionRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
@@ -167,9 +153,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/login': typeof LoginRoute
   '/pending': typeof PendingRoute
-  '/register': typeof RegisterRoute
   '/admin': typeof AdminAdminRouteWithChildren
   '/collection': typeof AuthenticatedCollectionRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
@@ -192,9 +176,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_admin': typeof AdminRouteWithChildren
   '/_authenticated': typeof AuthenticatedRouteWithChildren
-  '/login': typeof LoginRoute
   '/pending': typeof PendingRoute
-  '/register': typeof RegisterRoute
   '/_admin/admin': typeof AdminAdminRouteWithChildren
   '/_authenticated/collection': typeof AuthenticatedCollectionRoute
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
@@ -216,9 +198,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/login'
     | '/pending'
-    | '/register'
     | '/admin'
     | '/collection'
     | '/leaderboard'
@@ -238,9 +218,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/login'
     | '/pending'
-    | '/register'
     | '/admin'
     | '/collection'
     | '/leaderboard'
@@ -262,9 +240,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_admin'
     | '/_authenticated'
-    | '/login'
     | '/pending'
-    | '/register'
     | '/_admin/admin'
     | '/_authenticated/collection'
     | '/_authenticated/leaderboard'
@@ -287,33 +263,17 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
-  LoginRoute: typeof LoginRoute
   PendingRoute: typeof PendingRoute
-  RegisterRoute: typeof RegisterRoute
   AuthIndexRoute: typeof AuthIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/pending': {
       id: '/pending'
       path: '/pending'
       fullPath: '/pending'
       preLoaderRoute: typeof PendingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -514,9 +474,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
-  LoginRoute: LoginRoute,
   PendingRoute: PendingRoute,
-  RegisterRoute: RegisterRoute,
   AuthIndexRoute: AuthIndexRoute,
 }
 export const routeTree = rootRouteImport

@@ -1,7 +1,19 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { Check, Copy, Eye, EyeOff, Key, Plus, Trash2 } from 'lucide-react'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import {
+  ArrowLeft,
+  Check,
+  Copy,
+  Eye,
+  EyeOff,
+  Key,
+  Plus,
+  Trash2,
+} from 'lucide-react'
 import { useState } from 'react'
 
+import { ConfirmPopup } from '../../components/team'
+import { Button } from '../../components/ui/button.tsx'
+import { Input } from '../../components/ui/input.tsx'
 import type { ApiKeyCreated } from '../../queries/useProfile'
 import {
   useApiKeys,
@@ -24,6 +36,10 @@ function Settings() {
   const [createdKey, setCreatedKey] = useState<ApiKeyCreated | null>(null)
   const [visible, setVisible] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string
+    name: string
+  } | null>(null)
 
   const handleCreate = () => {
     const name = newKeyName.trim()
@@ -33,8 +49,8 @@ function Settings() {
     createKey(name, {
       onSuccess: (key) => {
         setCreatedKey(key)
-        setNewKeyName('')
         setVisible(true)
+        setNewKeyName('')
       },
     })
   }
@@ -51,66 +67,75 @@ function Settings() {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
       <div className="mx-auto max-w-2xl space-y-8">
-        <h1 className="text-2xl font-black text-text">Paramètres</h1>
+        <div>
+          <Link
+            to="/profile/$username"
+            params={{ username: user?.username ?? '' }}
+            className="mb-4 flex w-fit items-center gap-1.5 text-sm text-text-light transition-colors hover:text-text"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Mon profil
+          </Link>
+          <h1 className="text-2xl font-black text-text">Paramètres</h1>
+        </div>
 
         {/* Infos compte */}
         <section className="rounded-xl border border-border bg-card p-6">
-          <h2 className="mb-4 text-sm font-bold text-text-light uppercase tracking-wide">
+          <h2 className="mb-5 text-sm font-bold uppercase tracking-wide text-text-light">
             Compte
           </h2>
-          <div className="space-y-3">
-            <InfoRow label="Pseudo" value={user ? `@${user.username}` : '—'} />
-            <InfoRow label="Email" value={user?.email ?? '—'} />
-            <InfoRow label="Rôle" value={user?.role ?? '—'} />
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-primary/30 to-secondary/30 text-xl font-black text-primary">
+              {user?.username[0]?.toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-text">@{user?.username}</p>
+              <p className="text-sm text-text-light">{user?.email}</p>
+            </div>
           </div>
         </section>
 
         {/* API Keys */}
         <section className="rounded-xl border border-border bg-card p-6">
-          <h2 className="mb-1 text-sm font-bold text-text-light uppercase tracking-wide">
+          <h2 className="mb-1 text-sm font-bold uppercase tracking-wide text-text-light">
             Clés API
           </h2>
-          <p className="mb-4 text-xs text-text-light">
+          <p className="mb-5 text-xs text-text-light">
             Utilisées pour accéder à l'API publique. La clé n'est affichée
             qu'une seule fois à la création.
           </p>
 
           {/* Formulaire création */}
-          <div className="mb-6 flex gap-2">
-            <input
-              type="text"
+          <div className="mb-5 flex gap-2">
+            <Input
               value={newKeyName}
               onChange={(e) => setNewKeyName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') { handleCreate() }
+              }}
               placeholder="Nom de la clé (ex: bot-discord)"
               maxLength={50}
-              className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-text placeholder-text-light focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
-            <button
-              type="button"
-              onClick={handleCreate}
-              disabled={creating || !newKeyName.trim()}
-              className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white disabled:opacity-50 hover:bg-primary/80 transition-colors"
-            >
+            <Button onClick={handleCreate} disabled={creating || !newKeyName.trim()}>
               <Plus className="h-4 w-4" />
               Créer
-            </button>
+            </Button>
           </div>
 
           {/* Nouvelle clé affichée une fois */}
           {createdKey && (
-            <div className="mb-4 rounded-lg border border-primary/30 bg-primary/5 p-4">
-              <p className="mb-2 text-xs font-semibold text-primary">
+            <div className="mb-5 rounded-lg border border-primary/30 bg-primary/5 p-4">
+              <p className="mb-3 text-xs font-semibold text-primary">
                 ⚠️ Copiez cette clé maintenant — elle ne sera plus affichée.
               </p>
               <div className="flex items-center gap-2">
                 <code className="flex-1 overflow-hidden text-ellipsis rounded bg-background px-2 py-1.5 font-mono text-xs text-text">
                   {visible ? createdKey.key : '•'.repeat(40)}
                 </code>
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={() => setVisible((v) => !v)}
-                  className="rounded p-1.5 text-text-light hover:text-text transition-colors"
                   title={visible ? 'Masquer' : 'Afficher'}
                 >
                   {visible ? (
@@ -118,11 +143,11 @@ function Settings() {
                   ) : (
                     <Eye className="h-4 w-4" />
                   )}
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={handleCopy}
-                  className="rounded p-1.5 text-text-light hover:text-primary transition-colors"
                   title="Copier"
                 >
                   {copied ? (
@@ -130,7 +155,7 @@ function Settings() {
                   ) : (
                     <Copy className="h-4 w-4" />
                   )}
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -148,7 +173,7 @@ function Settings() {
                   className="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2"
                 >
                   <Key className="h-4 w-4 shrink-0 text-text-light" />
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-text">
                       {k.name}
                     </p>
@@ -159,40 +184,50 @@ function Settings() {
                         ` · Utilisée le ${new Date(k.lastUsedAt).toLocaleDateString('fr-FR')}`}
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!window.confirm(`Supprimer la clé "${k.name}" ?`)) {
-                        return
-                      }
-                      deleteKey(k.id, {
-                        onSuccess: () => {
-                          if (createdKey?.id === k.id) {
-                            setCreatedKey(null)
-                          }
-                        },
-                      })
-                    }}
-                    className="rounded p-1.5 text-text-light hover:text-destructive hover:bg-destructive/10 transition-colors"
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => setDeleteTarget({ id: k.id, name: k.name })}
                     title="Supprimer"
+                    className="text-text-light hover:bg-destructive/10 hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />
-                  </button>
+                  </Button>
                 </li>
               ))}
             </ul>
           )}
         </section>
       </div>
-    </div>
-  )
-}
 
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between rounded-lg bg-background px-3 py-2">
-      <span className="text-xs text-text-light">{label}</span>
-      <span className="text-sm font-medium text-text">{value}</span>
+      <ConfirmPopup
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteTarget(null)
+          }
+        }}
+        icon={<Trash2 className="h-4 w-4" />}
+        title="Supprimer la clé"
+        description={
+          deleteTarget
+            ? `Supprimer la clé "${deleteTarget.name}" ? Cette action est irréversible.`
+            : ''
+        }
+        confirmLabel="Supprimer"
+        onConfirm={() => {
+          if (!deleteTarget) {
+            return
+          }
+          deleteKey(deleteTarget.id, {
+            onSuccess: () => {
+              if (createdKey?.id === deleteTarget.id) {
+                setCreatedKey(null)
+              }
+            },
+          })
+        }}
+      />
     </div>
   )
 }

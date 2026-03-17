@@ -6,7 +6,7 @@ import { useAuthStore } from '../stores/auth.store.js'
 export const Route = createFileRoute('/_authenticated')({
   beforeLoad: () => {
     if (!useAuthStore.getState().isAuthenticated) {
-      throw redirect({ to: '/login' })
+      throw redirect({ to: '/' })
     }
   },
   component: AuthenticatedLayout,

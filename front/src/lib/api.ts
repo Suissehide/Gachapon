@@ -22,7 +22,6 @@ async function request<T>(
     if (refreshRes.ok) {
       return request<T>(path, { ...options, skipRefresh: true })
     }
-    window.location.href = '/login'
     throw new Error('Session expired')
   }
 

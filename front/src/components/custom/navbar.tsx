@@ -1,5 +1,5 @@
-import { Link } from '@tanstack/react-router'
-import { LogOut, Ticket } from 'lucide-react'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { LogOut, Sparkles, Ticket } from 'lucide-react'
 
 import { useAuthStore } from '../../stores/auth.store'
 import { Button } from '../ui/button.tsx'
@@ -15,11 +15,17 @@ const navItems = [
 export function Navbar() {
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
+  const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    await logout()
+    await navigate({ to: '/' })
+  }
 
   return (
     <nav className="fixed top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-        <Link to="/play" className="flex items-center gap-2 shrink-0">
+        <Link to="/" className="flex items-center gap-2 shrink-0">
           <span className="text-xl font-black bg-gradient-to-r from-primary via-primary-light to-secondary bg-clip-text text-transparent">
             Gachapon
           </span>
@@ -39,11 +45,18 @@ export function Navbar() {
 
         <div className="flex items-center gap-3">
           {user && (
-            <span className="flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
-              <Ticket className="h-3.5 w-3.5" />
-              {user.tokens}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
+                <Ticket className="h-3.5 w-3.5" />
+                {user.tokens}
+              </span>
+              <span className="flex items-center gap-1.5 rounded-full border border-accent/25 bg-accent/10 px-3 py-1 text-sm font-semibold text-accent">
+                <Sparkles className="h-3.5 w-3.5" />
+                {user.dust}
+              </span>
+            </div>
           )}
+          {user && <div className="h-5 w-px bg-border" />}
           {user && (
             <Link
               to={'/profile/$username'}
@@ -57,7 +70,7 @@ export function Navbar() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => void logout()}
+              onClick={() => void handleLogout()}
               title="Déconnexion"
               className="text-text-light hover:text-destructive hover:bg-destructive/10"
             >

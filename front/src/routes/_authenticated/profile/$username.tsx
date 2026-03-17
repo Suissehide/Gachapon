@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { Calendar, Layers, Sparkles, Star, Zap } from 'lucide-react'
+import { Calendar, Layers, Settings, Sparkles, Star, Zap } from 'lucide-react'
+import type { ReactNode } from 'react'
 
+import { Button } from '../../../components/ui/button.tsx'
 import { useUserProfile } from '../../../queries/useProfile.ts'
 import { useAuthStore } from '../../../stores/auth.store.ts'
 
@@ -47,7 +49,7 @@ function ProfilePage() {
           <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-secondary text-3xl font-black text-white ring-4 ring-background">
             {initials}
           </div>
-          <div className="pb-2">
+          <div>
             <h1 className="text-xl font-black text-text">
               @{profile.username}
             </h1>
@@ -63,12 +65,12 @@ function ProfilePage() {
             </div>
           </div>
           {isOwnProfile && (
-            <Link
-              to="/settings"
-              className="ml-auto rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-text-light hover:border-primary/40 hover:text-text transition-colors"
-            >
-              Modifier
-            </Link>
+            <Button asChild variant="outline" size="sm" className="ml-auto">
+              <Link to="/settings">
+                <Settings className="h-3.5 w-3.5" />
+                Paramètres
+              </Link>
+            </Button>
           )}
         </div>
 
@@ -100,12 +102,12 @@ function ProfilePage() {
         {isOwnProfile && (
           <div className="mt-8 rounded-xl border border-border bg-card p-4">
             <h2 className="mb-3 text-sm font-bold text-text">Ma collection</h2>
-            <Link
-              to="/collection"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary/10 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/20 transition-colors"
-            >
-              Voir ma collection →
-            </Link>
+            <Button asChild variant="default">
+              <Link to="/collection">
+                <Layers className="h-4 w-4" />
+                Voir ma collection →
+              </Link>
+            </Button>
           </div>
         )}
       </div>
@@ -118,7 +120,7 @@ function StatCard({
   label,
   value,
 }: {
-  icon: React.ReactNode
+  icon: ReactNode
   label: string
   value: number
 }) {

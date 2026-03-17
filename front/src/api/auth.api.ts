@@ -4,7 +4,7 @@ import type { RegisterInput, User } from '../types/auth.ts'
 
 export const AuthApi = {
   login: async (email: string, password: string): Promise<User> => {
-    const response = await fetch(`${apiUrl}/auth/sign-in`, {
+    const response = await fetch(`${apiUrl}/auth/login`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -30,7 +30,7 @@ export const AuthApi = {
   },
 
   logout: async (): Promise<void> => {
-    const response = await fetch(`${apiUrl}/auth/sign-out`, {
+    const response = await fetch(`${apiUrl}/auth/logout`, {
       method: 'POST',
     })
     if (!response.ok) {
