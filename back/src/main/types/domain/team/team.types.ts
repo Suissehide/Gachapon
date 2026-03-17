@@ -1,5 +1,12 @@
-export type TeamMemberRole = 'MEMBER' | 'ADMIN' | 'OWNER'
-export type InvitationStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED'
+import type {
+  InvitationStatus,
+  TeamMemberRole,
+} from '../../../../generated/client'
+
+export type {
+  InvitationStatus,
+  TeamMemberRole,
+} from '../../../../generated/client'
 
 export type TeamMemberEntity = {
   id: string
@@ -18,7 +25,6 @@ export type TeamEntity = {
   avatar: string | null
   ownerId: string
   createdAt: Date
-  updatedAt: Date
 }
 
 export type TeamWithMembers = TeamEntity & {
