@@ -64,7 +64,7 @@ function ProfilePage() {
           </div>
           {isOwnProfile && (
             <Link
-              to={'/settings' as any}
+              to="/settings"
               className="ml-auto rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-text-light hover:border-primary/40 hover:text-text transition-colors"
             >
               Modifier
