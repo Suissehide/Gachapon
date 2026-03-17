@@ -9,7 +9,6 @@ import { adminShopRouter } from './shop.router'
 import { adminStatsRouter } from './stats.router'
 import { adminUsersRouter } from './users.router'
 
-// biome-ignore lint/suspicious/useAwait: fastify plugin pattern
 export const adminRouter: FastifyPluginAsyncZod = async (fastify) => {
   await fastify.register(adminUsersRouter, { prefix: '/users' })
   await fastify.register(adminConfigRouter, { prefix: '/config' })
