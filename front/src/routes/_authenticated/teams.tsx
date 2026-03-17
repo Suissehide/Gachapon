@@ -19,12 +19,14 @@ function TeamsPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [newName, setNewName] = useState('')
   const [newDesc, setNewDesc] = useState('')
+  const [createError, setCreateError] = useState('')
 
   const handleCreate = () => {
     const name = newName.trim()
     if (!name) {
       return
     }
+    setCreateError('')
     createTeam(
       { name, description: newDesc.trim() || undefined },
       {
@@ -32,7 +34,9 @@ function TeamsPage() {
           setShowCreate(false)
           setNewName('')
           setNewDesc('')
+          setCreateError('')
         },
+        onError: (err) => setCreateError(err.message),
       },
     )
   }
@@ -84,6 +88,9 @@ function TeamsPage() {
                 maxLength={200}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-text placeholder-text-light focus:outline-none focus:ring-2 focus:ring-primary/40"
               />
+              {createError && (
+                <p className="text-xs text-destructive">{createError}</p>
+              )}
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -121,7 +128,11 @@ function TeamsPage() {
                 key={team.id}
                 team={team}
                 isOwner={team.ownerId === user?.id}
-                onLeave={() => leaveTeam(team.id)}
+                onLeave={() => {
+                  if (window.confirm(`Quitter l'équipe "${team.name}" ?`)) {
+                    leaveTeam(team.id)
+                  }
+                }}
               />
             ))}
           </div>
