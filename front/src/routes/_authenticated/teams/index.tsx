@@ -6,7 +6,7 @@ import type { TeamSummary } from '../../queries/useTeams'
 import { useCreateTeam, useLeaveTeam, useMyTeams } from '../../queries/useTeams'
 import { useAuthStore } from '../../stores/auth.store'
 
-export const Route = createFileRoute('/_authenticated/teams')({
+export const Route = createFileRoute('/_authenticated/teams/')({
   component: TeamsPage,
 })
 
