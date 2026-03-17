@@ -24,7 +24,8 @@ export const adminQuestsRouter: FastifyPluginAsyncZod = async (fastify) => {
   })
 
   fastify.post('/', { onRequest: auth, schema: { body: questSchema } }, async (request, reply) => {
-    const quest = await prisma().quest.create({ data: request.body })
+    // biome-ignore lint/suspicious/noExplicitAny: Prisma JSON field requires cast
+    const quest = await prisma().quest.create({ data: request.body as any })
     return reply.status(201).send(quest)
   })
 
@@ -33,8 +34,9 @@ export const adminQuestsRouter: FastifyPluginAsyncZod = async (fastify) => {
     { onRequest: auth, schema: { params: z.object({ id: z.string().uuid() }), body: questSchema.partial() } },
     async (request) => {
       const quest = await prisma().quest.findUnique({ where: { id: request.params.id } })
-      if (!quest) throw Boom.notFound('Quest not found')
-      return prisma().quest.update({ where: { id: request.params.id }, data: request.body })
+      if (!quest) { throw Boom.notFound('Quest not found') }
+      // biome-ignore lint/suspicious/noExplicitAny: Prisma JSON field requires cast
+      return prisma().quest.update({ where: { id: request.params.id }, data: request.body as any })
     },
   )
 
@@ -43,7 +45,7 @@ export const adminQuestsRouter: FastifyPluginAsyncZod = async (fastify) => {
     { onRequest: auth, schema: { params: z.object({ id: z.string().uuid() }) } },
     async (request, reply) => {
       const quest = await prisma().quest.findUnique({ where: { id: request.params.id } })
-      if (!quest) throw Boom.notFound('Quest not found')
+      if (!quest) { throw Boom.notFound('Quest not found') }
       await prisma().quest.delete({ where: { id: request.params.id } })
       return reply.status(204).send()
     },

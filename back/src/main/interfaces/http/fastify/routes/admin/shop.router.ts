@@ -23,7 +23,8 @@ export const adminShopRouter: FastifyPluginAsyncZod = async (fastify) => {
   })
 
   fastify.post('/', { onRequest: auth, schema: { body: shopItemSchema } }, async (request, reply) => {
-    const item = await prisma().shopItem.create({ data: request.body })
+    // biome-ignore lint/suspicious/noExplicitAny: Prisma JSON field requires cast
+    const item = await prisma().shopItem.create({ data: request.body as any })
     return reply.status(201).send(item)
   })
 
@@ -32,8 +33,9 @@ export const adminShopRouter: FastifyPluginAsyncZod = async (fastify) => {
     { onRequest: auth, schema: { params: z.object({ id: z.string().uuid() }), body: shopItemSchema.partial() } },
     async (request) => {
       const item = await prisma().shopItem.findUnique({ where: { id: request.params.id } })
-      if (!item) throw Boom.notFound('Shop item not found')
-      return prisma().shopItem.update({ where: { id: request.params.id }, data: request.body })
+      if (!item) { throw Boom.notFound('Shop item not found') }
+      // biome-ignore lint/suspicious/noExplicitAny: Prisma JSON field requires cast
+      return prisma().shopItem.update({ where: { id: request.params.id }, data: request.body as any })
     },
   )
 
@@ -42,7 +44,7 @@ export const adminShopRouter: FastifyPluginAsyncZod = async (fastify) => {
     { onRequest: auth, schema: { params: z.object({ id: z.string().uuid() }) } },
     async (request, reply) => {
       const item = await prisma().shopItem.findUnique({ where: { id: request.params.id } })
-      if (!item) throw Boom.notFound('Shop item not found')
+      if (!item) { throw Boom.notFound('Shop item not found') }
       await prisma().shopItem.delete({ where: { id: request.params.id } })
       return reply.status(204).send()
     },
