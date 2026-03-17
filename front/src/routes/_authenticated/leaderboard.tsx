@@ -8,6 +8,7 @@ import type {
   TeamEntry,
 } from '../../queries/useLeaderboard'
 import { useLeaderboard } from '../../queries/useLeaderboard'
+import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
 import { useAuthStore } from '../../stores/auth.store'
 
 export const Route = createFileRoute('/_authenticated/leaderboard')({
@@ -16,18 +17,10 @@ export const Route = createFileRoute('/_authenticated/leaderboard')({
 
 type Tab = 'collectors' | 'legendaries' | 'teams'
 
-const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
-  {
-    id: 'collectors',
-    label: 'Collectionneurs',
-    icon: <Trophy className="h-4 w-4" />,
-  },
-  {
-    id: 'legendaries',
-    label: 'Légendaires',
-    icon: <Star className="h-4 w-4" />,
-  },
-  { id: 'teams', label: 'Équipes', icon: <Users className="h-4 w-4" /> },
+const TABS = [
+  { value: 'collectors' as const, label: 'Collectionneurs', icon: <Trophy className="h-3.5 w-3.5" /> },
+  { value: 'legendaries' as const, label: 'Légendaires', icon: <Star className="h-3.5 w-3.5" /> },
+  { value: 'teams' as const, label: 'Équipes', icon: <Users className="h-3.5 w-3.5" /> },
 ]
 
 const RANK_STYLES = ['text-yellow-400', 'text-gray-300', 'text-amber-600']
@@ -42,24 +35,13 @@ function LeaderboardPage() {
       <div className="mx-auto max-w-4xl">
         <h1 className="mb-6 text-2xl font-black text-text">Classement</h1>
 
-        {/* Tabs */}
-        <div className="mb-6 flex gap-1 rounded-xl border border-border bg-muted p-1">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-colors ${
-                activeTab === tab.id
-                  ? 'bg-card text-text shadow-sm'
-                  : 'text-text-light hover:text-text'
-              }`}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          options={TABS}
+          value={activeTab}
+          onChange={setActiveTab}
+          stretch
+          className="mb-6 w-full"
+        />
 
         {isLoading ? (
           <div className="flex h-48 items-center justify-center">

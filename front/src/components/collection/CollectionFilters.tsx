@@ -1,6 +1,5 @@
 import type { Card } from '../../api/collection.api.ts'
-import { cn } from '../../libs/utils.ts'
-import { Button } from '../ui/button.tsx'
+import { SegmentedControl } from '../ui/segmentedControl.tsx'
 import {
   RARITY_CHIP_ACTIVE,
   RARITY_CHIP_INACTIVE,
@@ -11,6 +10,11 @@ import { FilterChip } from './FilterChip.tsx'
 
 type Rarity = Card['rarity']
 type Variant = 'BRILLIANT' | 'HOLOGRAPHIC'
+
+const DISPLAY_MODE_OPTIONS = [
+  { value: 'rarity' as const, label: 'Par rareté' },
+  { value: 'set' as const, label: 'Par set' },
+]
 
 interface CollectionFiltersProps {
   displayMode: 'rarity' | 'set'
@@ -31,31 +35,11 @@ export function CollectionFilters({
 }: CollectionFiltersProps) {
   return (
     <div className="flex flex-col items-end gap-3">
-      {/* Toggle Par rareté / Par set */}
-      <div className="flex border border-border rounded-lg overflow-hidden">
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => onDisplayModeChange('rarity')}
-          className={cn(
-            'rounded-none h-auto px-3 py-1.5 text-xs font-semibold border-r border-border',
-            displayMode === 'rarity' && 'bg-muted text-text',
-          )}
-        >
-          Par rareté
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => onDisplayModeChange('set')}
-          className={cn(
-            'rounded-none h-auto px-3 py-1.5 text-xs font-semibold',
-            displayMode === 'set' && 'bg-muted text-text',
-          )}
-        >
-          Par set
-        </Button>
-      </div>
+      <SegmentedControl
+        options={DISPLAY_MODE_OPTIONS}
+        value={displayMode}
+        onChange={onDisplayModeChange}
+      />
 
       {/* Filtres rareté + variante — masqués en mode Par set */}
       {displayMode === 'rarity' && (
