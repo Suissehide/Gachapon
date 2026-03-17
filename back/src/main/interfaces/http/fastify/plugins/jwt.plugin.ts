@@ -52,7 +52,7 @@ async function verifyJwtCookie(
   if (user.suspended) {
     throw Boom.forbidden('Account suspended')
   }
-  request.user = { userID: payload.sub, role: payload.role }
+  request.user = { userID: user.id, role: user.role }
 }
 
 export const jwtPlugin = fp((fastify: FastifyInstance) => {

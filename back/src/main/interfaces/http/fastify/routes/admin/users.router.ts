@@ -136,6 +136,9 @@ export const adminUsersRouter: FastifyPluginAsyncZod = async (fastify) => {
       schema: { params: z.object({ id: z.string().uuid() }), body: z.object({ role: z.enum(['USER', 'SUPER_ADMIN']) }) },
     },
     async (request) => {
+      if (request.params.id === request.user.userID) {
+        throw Boom.forbidden('Cannot change your own role')
+      }
       const { postgresOrm } = fastify.iocContainer
       const user = await postgresOrm.prisma.user.findUnique({ where: { id: request.params.id } })
       if (!user) { throw Boom.notFound('User not found') }
@@ -155,6 +158,9 @@ export const adminUsersRouter: FastifyPluginAsyncZod = async (fastify) => {
       schema: { params: z.object({ id: z.string().uuid() }), body: z.object({ suspended: z.boolean() }) },
     },
     async (request) => {
+      if (request.params.id === request.user.userID) {
+        throw Boom.forbidden('Cannot suspend your own account')
+      }
       const { postgresOrm } = fastify.iocContainer
       const user = await postgresOrm.prisma.user.findUnique({ where: { id: request.params.id } })
       if (!user) { throw Boom.notFound('User not found') }
