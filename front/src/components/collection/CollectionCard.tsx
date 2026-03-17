@@ -1,6 +1,6 @@
 import { RefreshCw } from 'lucide-react'
 
-import type { Card } from '../../queries/useCollection'
+import type { Card } from '../../api/collection.api.ts'
 
 export const RARITY_ORDER = [
   'COMMON',
@@ -24,6 +24,22 @@ export const RARITY_LABELS: Record<string, string> = {
   RARE: 'Rare',
   EPIC: 'Épique',
   LEGENDARY: 'Légendaire',
+}
+
+export const RARITY_CHIP_INACTIVE: Record<string, string> = {
+  COMMON: 'border-border/60 text-text-light/60',
+  UNCOMMON: 'border-green-500/40 text-green-400/60',
+  RARE: 'border-accent/40 text-accent/60',
+  EPIC: 'border-secondary/40 text-secondary/60',
+  LEGENDARY: 'border-primary/40 text-primary/60',
+}
+
+export const RARITY_CHIP_ACTIVE: Record<string, string> = {
+  COMMON: 'border-border text-text-light bg-border/20',
+  UNCOMMON: 'border-green-500 text-green-400 bg-green-500/10',
+  RARE: 'border-accent text-accent bg-accent/10',
+  EPIC: 'border-secondary text-secondary bg-secondary/10',
+  LEGENDARY: 'border-primary text-primary bg-primary/10',
 }
 
 export function CollectionCard({

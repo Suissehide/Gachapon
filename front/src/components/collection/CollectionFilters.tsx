@@ -1,0 +1,112 @@
+import type { Card } from '../../api/collection.api.ts'
+import { cn } from '../../libs/utils.ts'
+import { Button } from '../ui/button.tsx'
+import {
+  RARITY_CHIP_ACTIVE,
+  RARITY_CHIP_INACTIVE,
+  RARITY_LABELS,
+  RARITY_ORDER,
+} from './CollectionCard.tsx'
+import { FilterChip } from './FilterChip.tsx'
+
+type Rarity = Card['rarity']
+type Variant = 'BRILLIANT' | 'HOLOGRAPHIC'
+
+interface CollectionFiltersProps {
+  displayMode: 'rarity' | 'set'
+  onDisplayModeChange: (mode: 'rarity' | 'set') => void
+  selectedRarity: Rarity | null
+  onRarityChange: (rarity: Rarity | null) => void
+  selectedVariant: Variant | null
+  onVariantChange: (variant: Variant | null) => void
+}
+
+export function CollectionFilters({
+  displayMode,
+  onDisplayModeChange,
+  selectedRarity,
+  onRarityChange,
+  selectedVariant,
+  onVariantChange,
+}: CollectionFiltersProps) {
+  return (
+    <div className="flex flex-col items-end gap-3">
+      {/* Toggle Par rareté / Par set */}
+      <div className="flex border border-border rounded-lg overflow-hidden">
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => onDisplayModeChange('rarity')}
+          className={cn(
+            'rounded-none h-auto px-3 py-1.5 text-xs font-semibold border-r border-border',
+            displayMode === 'rarity' && 'bg-muted text-text',
+          )}
+        >
+          Par rareté
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => onDisplayModeChange('set')}
+          className={cn(
+            'rounded-none h-auto px-3 py-1.5 text-xs font-semibold',
+            displayMode === 'set' && 'bg-muted text-text',
+          )}
+        >
+          Par set
+        </Button>
+      </div>
+
+      {/* Filtres rareté + variante — masqués en mode Par set */}
+      {displayMode === 'rarity' && (
+        <>
+          {/* Groupe Rareté */}
+          <div>
+            <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-widest text-text-light/50">
+              Rareté
+            </p>
+            <div className="flex flex-wrap justify-end gap-2">
+              {RARITY_ORDER.map((r) => (
+                <FilterChip
+                  key={r}
+                  label={RARITY_LABELS[r]}
+                  isActive={selectedRarity === r}
+                  activeClass={RARITY_CHIP_ACTIVE[r]}
+                  inactiveClass={RARITY_CHIP_INACTIVE[r]}
+                  onClick={() => onRarityChange(selectedRarity === r ? null : r)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Groupe Variante */}
+          <div>
+            <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-widest text-text-light/50">
+              Variante
+            </p>
+            <div className="flex flex-wrap justify-end gap-2">
+              <FilterChip
+                label="✨ Brillante"
+                isActive={selectedVariant === 'BRILLIANT'}
+                activeClass="border-yellow-400 text-yellow-300 bg-yellow-400/10"
+                inactiveClass="border-yellow-400/40 text-yellow-300/60"
+                onClick={() =>
+                  onVariantChange(selectedVariant === 'BRILLIANT' ? null : 'BRILLIANT')
+                }
+              />
+              <FilterChip
+                label="🌈 Holographique"
+                isActive={selectedVariant === 'HOLOGRAPHIC'}
+                activeClass="border-indigo-400 text-indigo-300 bg-indigo-400/10"
+                inactiveClass="border-indigo-400/40 text-indigo-300/60"
+                onClick={() =>
+                  onVariantChange(selectedVariant === 'HOLOGRAPHIC' ? null : 'HOLOGRAPHIC')
+                }
+              />
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
