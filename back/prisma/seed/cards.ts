@@ -37,11 +37,6 @@ const CARDS = [
 export async function seedCards(
   tx: Parameters<Parameters<PrismaClient['$transaction']>[0]>[0],
 ) {
-  await tx.gachaPull.deleteMany()
-  await tx.userCard.deleteMany()
-  await tx.card.deleteMany()
-  await tx.cardSet.deleteMany()
-  console.log('  Cleared GachaPull, UserCard, Card, CardSet')
 
   const set = await tx.cardSet.create({
     data: {

@@ -58,9 +58,6 @@ const SHOP_ITEMS = [
 export async function seedShop(
   tx: Parameters<Parameters<PrismaClient['$transaction']>[0]>[0],
 ) {
-  await tx.purchase.deleteMany()
-  await tx.shopItem.deleteMany()
-  console.log('  Cleared Purchase, ShopItem')
 
   for (const item of SHOP_ITEMS) {
     await tx.shopItem.create({ data: item })

@@ -13,8 +13,6 @@ const CONFIG: Record<string, string> = {
 export async function seedGlobalConfig(
   tx: Parameters<Parameters<PrismaClient['$transaction']>[0]>[0],
 ) {
-  await tx.globalConfig.deleteMany()
-  console.log('  Cleared GlobalConfig')
 
   for (const [key, value] of Object.entries(CONFIG)) {
     await tx.globalConfig.create({ data: { key, value } })

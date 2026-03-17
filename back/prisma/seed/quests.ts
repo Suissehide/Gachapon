@@ -62,9 +62,6 @@ const QUESTS = [
 export async function seedQuests(
   tx: Parameters<Parameters<PrismaClient['$transaction']>[0]>[0],
 ) {
-  await tx.userQuest.deleteMany()
-  await tx.quest.deleteMany()
-  console.log('  Cleared UserQuest, Quest')
 
   for (const quest of QUESTS) {
     await tx.quest.create({ data: quest })

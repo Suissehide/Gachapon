@@ -48,9 +48,6 @@ const ACHIEVEMENTS = [
 export async function seedAchievements(
   tx: Parameters<Parameters<PrismaClient['$transaction']>[0]>[0],
 ) {
-  await tx.userAchievement.deleteMany()
-  await tx.achievement.deleteMany()
-  console.log('  Cleared UserAchievement, Achievement')
 
   for (const achievement of ACHIEVEMENTS) {
     await tx.achievement.create({ data: achievement })
