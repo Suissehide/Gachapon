@@ -10,7 +10,6 @@ const DEV_PASSWORD = 'Password123!'
 export async function seedUsers(
   tx: Parameters<Parameters<PrismaClient['$transaction']>[0]>[0],
 ) {
-
   const hash = await bcrypt.hash(DEV_PASSWORD, SALT_ROUNDS)
 
   // Super admin
@@ -72,7 +71,7 @@ export async function seedUsers(
     data: {
       name: 'Les Pionniers',
       slug: 'les-pionniers',
-      description: 'L\'équipe fondatrice du Gachapon.',
+      description: "L'équipe fondatrice du Gachapon.",
       ownerId: owner.id,
     },
   })
@@ -85,7 +84,9 @@ export async function seedUsers(
     ],
   })
 
-  console.log(`  Équipe "${team.name}" créée avec 3 membres (captain, alice, bob)`)
+  console.log(
+    `  Équipe "${team.name}" créée avec 3 membres (captain, alice, bob)`,
+  )
   console.log(`  Identifiants dev : login=<username> password=${DEV_PASSWORD}`)
 
   return { admin, owner, alice, bob }

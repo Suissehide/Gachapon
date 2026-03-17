@@ -126,6 +126,8 @@ services:
       interval: 5s
     networks:
       - proxy
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
     restart: always
     volumes:
       - redis_data:/data
