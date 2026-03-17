@@ -59,7 +59,7 @@ function Settings() {
             Compte
           </h2>
           <div className="space-y-3">
-            <InfoRow label="Pseudo" value={`@${user?.username}`} />
+            <InfoRow label="Pseudo" value={user ? `@${user.username}` : '—'} />
             <InfoRow label="Email" value={user?.email ?? '—'} />
             <InfoRow label="Rôle" value={user?.role ?? '—'} />
           </div>
@@ -161,7 +161,18 @@ function Settings() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => deleteKey(k.id)}
+                    onClick={() => {
+                      if (!window.confirm(`Supprimer la clé "${k.name}" ?`)) {
+                        return
+                      }
+                      deleteKey(k.id, {
+                        onSuccess: () => {
+                          if (createdKey?.id === k.id) {
+                            setCreatedKey(null)
+                          }
+                        },
+                      })
+                    }}
                     className="rounded p-1.5 text-text-light hover:text-destructive hover:bg-destructive/10 transition-colors"
                     title="Supprimer"
                   >
