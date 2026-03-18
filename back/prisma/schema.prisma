@@ -185,14 +185,15 @@ model UserCard {
 }
 
 model GachaPull {
-  id           String   @id @default(uuid())
+  id           String       @id @default(uuid())
   userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   cardId       String
-  card         Card     @relation(fields: [cardId], references: [id])
-  wasDuplicate Boolean  @default(false)
-  dustEarned   Int      @default(0)
-  pulledAt     DateTime @default(now())
+  card         Card         @relation(fields: [cardId], references: [id])
+  variant      CardVariant?
+  wasDuplicate Boolean      @default(false)
+  dustEarned   Int          @default(0)
+  pulledAt     DateTime     @default(now())
 
   @@index([userId])
   @@index([pulledAt])
