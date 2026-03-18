@@ -130,7 +130,7 @@ export const gachaRouter: FastifyPluginAsyncZod = async (fastify) => {
             name: p.card.name,
             imageUrl: p.card.imageUrl,
             rarity: p.card.rarity,
-            variant: p.card.variant,
+            variant: p.variant,
           },
         })),
         total,

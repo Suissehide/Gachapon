@@ -14,5 +14,5 @@ export const RARITY_COLORS: Record<string, string> = {
   LEGENDARY: 'bg-amber-500/20 text-amber-400',
 }
 
-// Utilisé par HoloConfigPanel pour itérer les 3 champs
+// Utilisé par CardVariantPanel pour itérer les 3 champs
 export const HOLO_ELIGIBLE_RARITIES = ['RARE', 'EPIC', 'LEGENDARY'] as const
