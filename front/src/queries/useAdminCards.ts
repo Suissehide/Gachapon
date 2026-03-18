@@ -49,10 +49,12 @@ export function useAdminDeleteSet() {
 
 export function useAdminCards(
   params: { setId?: string; rarity?: string } = {},
+  options?: { enabled?: boolean },
 ) {
   return useQuery({
     queryKey: ['admin', 'cards', params],
     queryFn: () => AdminCardsApi.getCards(params),
+    enabled: options?.enabled,
   })
 }
 

@@ -11,6 +11,9 @@ export type AdminConfig = {
   dustRare: number
   dustEpic: number
   dustLegendary: number
+  holoRateRare?: number
+  holoRateEpic?: number
+  holoRateLegendary?: number
 }
 
 export const AdminConfigApi = {
