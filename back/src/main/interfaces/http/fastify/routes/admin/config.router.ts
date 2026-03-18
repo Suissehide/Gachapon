@@ -2,7 +2,7 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
-const CONFIG_KEYS = ['tokenRegenIntervalHours', 'tokenMaxStock', 'pityThreshold', 'dustCommon', 'dustUncommon', 'dustRare', 'dustEpic', 'dustLegendary', 'holoRateRare', 'holoRateEpic', 'holoRateLegendary'] as const
+const CONFIG_KEYS = ['tokenRegenIntervalHours', 'tokenMaxStock', 'pityThreshold', 'dustCommon', 'dustUncommon', 'dustRare', 'dustEpic', 'dustLegendary', 'holoRateRare', 'holoRateEpic', 'holoRateLegendary', 'brilliantRateRare', 'brilliantRateEpic', 'brilliantRateLegendary'] as const
 
 // biome-ignore lint/suspicious/useAwait: fastify plugin pattern
 export const adminConfigRouter: FastifyPluginAsyncZod = async (fastify) => {
@@ -39,6 +39,9 @@ export const adminConfigRouter: FastifyPluginAsyncZod = async (fastify) => {
           holoRateRare: z.number().min(0).max(100).optional(),
           holoRateEpic: z.number().min(0).max(100).optional(),
           holoRateLegendary: z.number().min(0).max(100).optional(),
+          brilliantRateRare: z.number().min(0).max(100).optional(),
+          brilliantRateEpic: z.number().min(0).max(100).optional(),
+          brilliantRateLegendary: z.number().min(0).max(100).optional(),
         }),
       },
     },
