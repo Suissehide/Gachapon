@@ -52,6 +52,8 @@ const RATES = {
 }
 
 describe('pickVariant', () => {
+  afterEach(() => jest.restoreAllMocks())
+
   it('retourne null pour COMMON', () => {
     expect(pickVariant('COMMON', RATES)).toBeNull()
   })
@@ -63,13 +65,11 @@ describe('pickVariant', () => {
   it('retourne BRILLIANT si roll < brilliantRate', () => {
     jest.spyOn(Math, 'random').mockReturnValue(0.01) // roll = 1 < 2
     expect(pickVariant('RARE', RATES)).toBe('BRILLIANT')
-    jest.restoreAllMocks()
   })
 
   it('retourne HOLOGRAPHIC si brilliantRate <= roll < brilliantRate + holoRate', () => {
     jest.spyOn(Math, 'random').mockReturnValue(0.04) // roll = 4, 2<=4<7
     expect(pickVariant('RARE', RATES)).toBe('HOLOGRAPHIC')
-    jest.restoreAllMocks()
   })
 
   it('retourne null si roll >= brilliantRate + holoRate', () => {
@@ -80,6 +80,5 @@ describe('pickVariant', () => {
   it('utilise les bons taux selon la rareté (LEGENDARY)', () => {
     jest.spyOn(Math, 'random').mockReturnValue(0.04) // roll=4, brilliantLegendary=5 → BRILLIANT
     expect(pickVariant('LEGENDARY', RATES)).toBe('BRILLIANT')
-    jest.restoreAllMocks()
   })
 })
