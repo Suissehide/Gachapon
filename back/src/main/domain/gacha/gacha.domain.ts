@@ -20,6 +20,34 @@ export function pickWeightedRandom(cards: CardWithSet[]): CardWithSet {
   return cards[cards.length - 1]!
 }
 
+type VariantRates = {
+  brilliantRateRare: number
+  brilliantRateEpic: number
+  brilliantRateLegendary: number
+  holoRateRare: number
+  holoRateEpic: number
+  holoRateLegendary: number
+}
+
+const VARIANT_ELIGIBLE = ['RARE', 'EPIC', 'LEGENDARY'] as const
+type VariantEligibleRarity = (typeof VARIANT_ELIGIBLE)[number]
+
+function rarityKey(rarity: VariantEligibleRarity): 'Rare' | 'Epic' | 'Legendary' {
+  const map = { RARE: 'Rare', EPIC: 'Epic', LEGENDARY: 'Legendary' } as const
+  return map[rarity]
+}
+
+export function pickVariant(rarity: string, rates: VariantRates): 'BRILLIANT' | 'HOLOGRAPHIC' | null {
+  if (!(VARIANT_ELIGIBLE as readonly string[]).includes(rarity)) return null
+  const key = rarityKey(rarity as VariantEligibleRarity)
+  const brilliantRate = rates[`brilliantRate${key}`] ?? 0
+  const holoRate = rates[`holoRate${key}`] ?? 0
+  const roll = Math.random() * 100
+  if (roll < brilliantRate) return 'BRILLIANT'
+  if (roll < brilliantRate + holoRate) return 'HOLOGRAPHIC'
+  return null
+}
+
 function isPrismaSerializationError(err: unknown): boolean {
   return (
     typeof err === 'object' &&
@@ -34,6 +62,7 @@ type PullCfg = {
   tokenMaxStock: number
   pityThreshold: number
   dustByRarity: Record<string, number>
+  variantRates: VariantRates
 }
 
 export class GachaDomain implements GachaDomainInterface {
@@ -79,6 +108,9 @@ export class GachaDomain implements GachaDomainInterface {
     // 4. Tirage pondéré
     const card = pickWeightedRandom(activeCards)
 
+    // 4b. Roll variant
+    const rolledVariant = pickVariant(card.rarity, cfg.variantRates)
+
     // 5. Doublon ?
     const existing = await tx.userCard.findUnique({
       where: { userId_cardId: { userId, cardId: card.id } },
@@ -100,7 +132,7 @@ export class GachaDomain implements GachaDomainInterface {
 
     // 7. Créer GachaPull
     const pull = await tx.gachaPull.create({
-      data: { userId, cardId: card.id, wasDuplicate, dustEarned },
+      data: { userId, cardId: card.id, variant: rolledVariant, wasDuplicate, dustEarned },
     })
 
     // 8. Mettre à jour l'utilisateur
@@ -129,8 +161,12 @@ export class GachaDomain implements GachaDomainInterface {
   pull(userId: string): Promise<PullResult> {
     const attempt = async (): Promise<PullResult> => {
       // Lire la config AVANT la transaction (pas d'I/O async dans le tx serializable)
-      const [tokenRegenIntervalHours, tokenMaxStock, pityThreshold,
-             dustCommon, dustUncommon, dustRare, dustEpic, dustLegendary] = await Promise.all([
+      const [
+        tokenRegenIntervalHours, tokenMaxStock, pityThreshold,
+        dustCommon, dustUncommon, dustRare, dustEpic, dustLegendary,
+        brilliantRateRare, brilliantRateEpic, brilliantRateLegendary,
+        holoRateRare, holoRateEpic, holoRateLegendary,
+      ] = await Promise.all([
         this.#configService.get('tokenRegenIntervalHours'),
         this.#configService.get('tokenMaxStock'),
         this.#configService.get('pityThreshold'),
@@ -139,17 +175,21 @@ export class GachaDomain implements GachaDomainInterface {
         this.#configService.get('dustRare'),
         this.#configService.get('dustEpic'),
         this.#configService.get('dustLegendary'),
+        this.#configService.get('brilliantRateRare'),
+        this.#configService.get('brilliantRateEpic'),
+        this.#configService.get('brilliantRateLegendary'),
+        this.#configService.get('holoRateRare'),
+        this.#configService.get('holoRateEpic'),
+        this.#configService.get('holoRateLegendary'),
       ])
       const cfg: PullCfg = {
         tokenRegenIntervalHours,
         tokenMaxStock,
         pityThreshold,
-        dustByRarity: {
-          COMMON: dustCommon,
-          UNCOMMON: dustUncommon,
-          RARE: dustRare,
-          EPIC: dustEpic,
-          LEGENDARY: dustLegendary,
+        dustByRarity: { COMMON: dustCommon, UNCOMMON: dustUncommon, RARE: dustRare, EPIC: dustEpic, LEGENDARY: dustLegendary },
+        variantRates: {
+          brilliantRateRare, brilliantRateEpic, brilliantRateLegendary,
+          holoRateRare, holoRateEpic, holoRateLegendary,
         },
       }
       return this.#postgresOrm.executeWithTransactionClient(

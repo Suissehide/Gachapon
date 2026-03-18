@@ -1,5 +1,5 @@
-import { describe, expect, it } from '@jest/globals'
-import { pickWeightedRandom } from '../../main/domain/gacha/gacha.domain'
+import { describe, expect, it, jest } from '@jest/globals'
+import { pickWeightedRandom, pickVariant } from '../../main/domain/gacha/gacha.domain'
 import type { CardWithSet } from '../../main/types/domain/gacha/gacha.types'
 
 function makeCard(name: string, weight: number, rarity = 'COMMON'): CardWithSet {
@@ -43,5 +43,43 @@ describe('pickWeightedRandom', () => {
 
   it('throw si liste vide', () => {
     expect(() => pickWeightedRandom([])).toThrow()
+  })
+})
+
+const RATES = {
+  brilliantRateRare: 2, brilliantRateEpic: 3, brilliantRateLegendary: 5,
+  holoRateRare: 5, holoRateEpic: 8, holoRateLegendary: 10,
+}
+
+describe('pickVariant', () => {
+  it('retourne null pour COMMON', () => {
+    expect(pickVariant('COMMON', RATES)).toBeNull()
+  })
+
+  it('retourne null pour UNCOMMON', () => {
+    expect(pickVariant('UNCOMMON', RATES)).toBeNull()
+  })
+
+  it('retourne BRILLIANT si roll < brilliantRate', () => {
+    jest.spyOn(Math, 'random').mockReturnValue(0.01) // roll = 1 < 2
+    expect(pickVariant('RARE', RATES)).toBe('BRILLIANT')
+    jest.restoreAllMocks()
+  })
+
+  it('retourne HOLOGRAPHIC si brilliantRate <= roll < brilliantRate + holoRate', () => {
+    jest.spyOn(Math, 'random').mockReturnValue(0.04) // roll = 4, 2<=4<7
+    expect(pickVariant('RARE', RATES)).toBe('HOLOGRAPHIC')
+    jest.restoreAllMocks()
+  })
+
+  it('retourne null si roll >= brilliantRate + holoRate', () => {
+    jest.spyOn(Math, 'random').mockReturnValue(0.10) // roll = 10 >= 7
+    expect(pickVariant('RARE', RATES)).toBeNull()
+  })
+
+  it('utilise les bons taux selon la rareté (LEGENDARY)', () => {
+    jest.spyOn(Math, 'random').mockReturnValue(0.04) // roll=4, brilliantLegendary=5 → BRILLIANT
+    expect(pickVariant('LEGENDARY', RATES)).toBe('BRILLIANT')
+    jest.restoreAllMocks()
   })
 })
