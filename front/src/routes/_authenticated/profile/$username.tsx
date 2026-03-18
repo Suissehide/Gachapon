@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { Calendar, Layers, Settings, Sparkles, Star, Zap } from 'lucide-react'
+import { Calendar, LayoutDashboard, Layers, Settings, Sparkles, Star, Zap } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import { Button } from '../../../components/ui/button.tsx'
@@ -35,6 +35,7 @@ function ProfilePage() {
   }
 
   const isOwnProfile = currentUser?.username === username
+  const isAdmin = currentUser?.role === 'SUPER_ADMIN'
   const initials = profile.username[0]?.toUpperCase() ?? '?'
   const joinedYear = new Date(profile.createdAt).getFullYear()
 
@@ -65,12 +66,22 @@ function ProfilePage() {
             </div>
           </div>
           {isOwnProfile && (
-            <Button asChild variant="outline" size="sm" className="ml-auto">
-              <Link to="/settings">
-                <Settings className="h-3.5 w-3.5" />
-                Paramètres
-              </Link>
-            </Button>
+            <div className="ml-auto flex items-center gap-2">
+              {isAdmin && (
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/admin">
+                    <LayoutDashboard className="h-3.5 w-3.5" />
+                    Admin
+                  </Link>
+                </Button>
+              )}
+              <Button asChild variant="outline" size="sm">
+                <Link to="/settings">
+                  <Settings className="h-3.5 w-3.5" />
+                  Paramètres
+                </Link>
+              </Button>
+            </div>
           )}
         </div>
 
