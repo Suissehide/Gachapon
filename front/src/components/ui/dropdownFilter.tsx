@@ -7,9 +7,11 @@ import { Button } from './button'
 const DropdownFilter = ({
   filters,
   onFilterChange,
+  label = 'Filtres',
 }: {
   filters: { id: string; label: string; checked: boolean }[]
   onFilterChange: (id: string, checked: boolean) => void
+  label?: string
 }) => {
   return (
     <DropdownMenu.Root>
@@ -20,7 +22,7 @@ const DropdownFilter = ({
           className="font-normal rounded-lg"
         >
           <Filter size={16} />
-          Filtres
+          {label}
         </Button>
       </DropdownMenu.Trigger>
 

@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import type { ColumnDef } from '@tanstack/react-table'
 import { LayoutGrid, List, Plus } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import {
   CardVariantPanel,
@@ -13,6 +13,9 @@ import {
 } from '../../components/admin/cards'
 import { ReactTable } from '../../components/table/reactTable'
 import { Button } from '../../components/ui/button'
+import DropdownFilter from '../../components/ui/dropdownFilter'
+import { Input } from '../../components/ui/input'
+import { RARITY_OPTIONS } from '../../constants/card.constant'
 import {
   type AdminCard,
   useAdminCards,
@@ -31,6 +34,16 @@ function AdminCards() {
   const [selectedSetId, setSelectedSetId] = useState<string | null>(null)
   const [showCreate, setShowCreate] = useState(false)
   const [editCard, setEditCard] = useState<AdminCard | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedRarities, setSelectedRarities] = useState<string[]>([])
+  const [selectedSetIds, setSelectedSetIds] = useState<string[]>([])
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset filters when view changes
+  useEffect(() => {
+    setSearchQuery('')
+    setSelectedRarities([])
+    setSelectedSetIds([])
+  }, [view])
 
   const { data: setsData } = useAdminSets()
   const { data: cardsData, isLoading } = useAdminCards(
@@ -51,6 +64,13 @@ function AdminCards() {
   const columnsAll = useCardColumnsAll(setEditCard, (id) =>
     deleteCard.mutate(id),
   )
+
+  const filteredCards = cards.filter((card) => {
+    if (searchQuery && !card.name.toLowerCase().includes(searchQuery.toLowerCase())) { return false }
+    if (selectedRarities.length > 0 && !selectedRarities.includes(card.rarity)) { return false }
+    if (view === 'all' && selectedSetIds.length > 0 && !selectedSetIds.includes(card.set.id)) { return false }
+    return true
+  })
 
   return (
     <div className="flex h-screen flex-col p-8">
@@ -96,6 +116,44 @@ function AdminCards() {
 
       <CardVariantPanel />
 
+      {/* Filter bar */}
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <Input
+          placeholder="Rechercher une carte…"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="h-8 w-52 text-sm"
+        />
+        <DropdownFilter
+          label="Rareté"
+          filters={RARITY_OPTIONS.map((r) => ({
+            id: r.value,
+            label: r.label,
+            checked: selectedRarities.includes(r.value),
+          }))}
+          onFilterChange={(id, checked) =>
+            setSelectedRarities((prev) =>
+              checked ? [...prev, id] : prev.filter((r) => r !== id),
+            )
+          }
+        />
+        {view === 'all' && (
+          <DropdownFilter
+            label="Set"
+            filters={sets.map((s) => ({
+              id: s.id,
+              label: s.name,
+              checked: selectedSetIds.includes(s.id),
+            }))}
+            onFilterChange={(id, checked) =>
+              setSelectedSetIds((prev) =>
+                checked ? [...prev, id] : prev.filter((sid) => sid !== id),
+              )
+            }
+          />
+        )}
+      </div>
+
       <div className="mt-4 flex min-h-0 flex-1 gap-4 overflow-hidden">
         {view === 'sets' && (
           <SetSidebar
@@ -109,7 +167,7 @@ function AdminCards() {
           selectedSetId={selectedSetId}
           isLoading={isLoading}
           columns={view === 'sets' ? columns : columnsAll}
-          cards={cards}
+          cards={filteredCards}
         />
       </div>
 
