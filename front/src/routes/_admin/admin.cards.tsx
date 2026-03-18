@@ -66,9 +66,25 @@ function AdminCards() {
   )
 
   const filteredCards = cards.filter((card) => {
-    if (searchQuery && !card.name.toLowerCase().includes(searchQuery.toLowerCase())) { return false }
-    if (selectedRarities.length > 0 && !selectedRarities.includes(card.rarity)) { return false }
-    if (view === 'all' && selectedSetIds.length > 0 && !selectedSetIds.includes(card.set.id)) { return false }
+    if (
+      searchQuery &&
+      !card.name.toLowerCase().includes(searchQuery.toLowerCase())
+    ) {
+      return false
+    }
+    if (
+      selectedRarities.length > 0 &&
+      !selectedRarities.includes(card.rarity)
+    ) {
+      return false
+    }
+    if (
+      view === 'all' &&
+      selectedSetIds.length > 0 &&
+      !selectedSetIds.includes(card.set.id)
+    ) {
+      return false
+    }
     return true
   })
 
