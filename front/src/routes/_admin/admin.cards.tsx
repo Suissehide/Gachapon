@@ -4,9 +4,9 @@ import { LayoutGrid, List, Plus } from 'lucide-react'
 import { useState } from 'react'
 
 import {
+  CardVariantPanel,
   CreateCardSheet,
   EditCardSheet,
-  HoloConfigPanel,
   SetSidebar,
   useCardColumns,
   useCardColumnsAll,
@@ -94,7 +94,7 @@ function AdminCards() {
         </div>
       </div>
 
-      <HoloConfigPanel />
+      <CardVariantPanel />
 
       <div className="mt-4 flex min-h-0 flex-1 gap-4 overflow-hidden">
         {view === 'sets' && (
