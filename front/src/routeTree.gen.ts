@@ -22,6 +22,7 @@ import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenti
 import { Route as AuthenticatedCollectionRouteImport } from './routes/_authenticated/collection'
 import { Route as AdminAdminRouteImport } from './routes/_admin/admin'
 import { Route as AuthenticatedTeamsIndexRouteImport } from './routes/_authenticated/teams/index'
+import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin.index'
 import { Route as AuthenticatedTeamsIdRouteImport } from './routes/_authenticated/teams/$id'
 import { Route as AuthenticatedProfileUsernameRouteImport } from './routes/_authenticated/profile/$username'
 import { Route as AdminAdminUsersRouteImport } from './routes/_admin/admin.users'
@@ -94,6 +95,11 @@ const AuthenticatedTeamsIndexRoute = AuthenticatedTeamsIndexRouteImport.update({
   path: '/teams/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AdminAdminIndexRoute = AdminAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminAdminRoute,
+} as any)
 const AuthenticatedTeamsIdRoute = AuthenticatedTeamsIdRouteImport.update({
   id: '/teams/$id',
   path: '/teams/$id',
@@ -149,12 +155,12 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminAdminUsersRoute
   '/profile/$username': typeof AuthenticatedProfileUsernameRoute
   '/teams/$id': typeof AuthenticatedTeamsIdRoute
+  '/admin/': typeof AdminAdminIndexRoute
   '/teams/': typeof AuthenticatedTeamsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/pending': typeof PendingRoute
-  '/admin': typeof AdminAdminRouteWithChildren
   '/collection': typeof AuthenticatedCollectionRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/play': typeof AuthenticatedPlayRoute
@@ -169,6 +175,7 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminAdminUsersRoute
   '/profile/$username': typeof AuthenticatedProfileUsernameRoute
   '/teams/$id': typeof AuthenticatedTeamsIdRoute
+  '/admin': typeof AdminAdminIndexRoute
   '/teams': typeof AuthenticatedTeamsIndexRoute
 }
 export interface FileRoutesById {
@@ -192,6 +199,7 @@ export interface FileRoutesById {
   '/_admin/admin/users': typeof AdminAdminUsersRoute
   '/_authenticated/profile/$username': typeof AuthenticatedProfileUsernameRoute
   '/_authenticated/teams/$id': typeof AuthenticatedTeamsIdRoute
+  '/_admin/admin/': typeof AdminAdminIndexRoute
   '/_authenticated/teams/': typeof AuthenticatedTeamsIndexRoute
 }
 export interface FileRouteTypes {
@@ -214,12 +222,12 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/profile/$username'
     | '/teams/$id'
+    | '/admin/'
     | '/teams/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/pending'
-    | '/admin'
     | '/collection'
     | '/leaderboard'
     | '/play'
@@ -234,6 +242,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/profile/$username'
     | '/teams/$id'
+    | '/admin'
     | '/teams'
   id:
     | '__root__'
@@ -256,6 +265,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/users'
     | '/_authenticated/profile/$username'
     | '/_authenticated/teams/$id'
+    | '/_admin/admin/'
     | '/_authenticated/teams/'
   fileRoutesById: FileRoutesById
 }
@@ -360,6 +370,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTeamsIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_admin/admin/': {
+      id: '/_admin/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminAdminIndexRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
     '/_authenticated/teams/$id': {
       id: '/_authenticated/teams/$id'
       path: '/teams/$id'
@@ -418,6 +435,7 @@ interface AdminAdminRouteChildren {
   AdminAdminShopRoute: typeof AdminAdminShopRoute
   AdminAdminStatsRoute: typeof AdminAdminStatsRoute
   AdminAdminUsersRoute: typeof AdminAdminUsersRoute
+  AdminAdminIndexRoute: typeof AdminAdminIndexRoute
 }
 
 const AdminAdminRouteChildren: AdminAdminRouteChildren = {
@@ -426,6 +444,7 @@ const AdminAdminRouteChildren: AdminAdminRouteChildren = {
   AdminAdminShopRoute: AdminAdminShopRoute,
   AdminAdminStatsRoute: AdminAdminStatsRoute,
   AdminAdminUsersRoute: AdminAdminUsersRoute,
+  AdminAdminIndexRoute: AdminAdminIndexRoute,
 }
 
 const AdminAdminRouteWithChildren = AdminAdminRoute._addFileChildren(

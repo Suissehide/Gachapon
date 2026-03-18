@@ -1,9 +1,9 @@
 import { useNavigate } from '@tanstack/react-router'
 
-import { Button } from '../ui/button.tsx'
 import { useAppForm } from '../../hooks/formConfig.tsx'
 import { useRegister } from '../../queries/useAuth.ts'
-import { OAuthButtons, OAuthDivider } from './oauth-section.tsx'
+import { Button } from '../ui/button.tsx'
+import { OAuthButtons, OAuthDivider } from './oauthSection.tsx'
 
 export function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
   const navigate = useNavigate()
@@ -21,12 +21,16 @@ export function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
         if (value.password !== value.confirmPassword) {
           return {
             form: 'Les mots de passe ne correspondent pas',
-            fields: { confirmPassword: 'Les mots de passe ne correspondent pas' },
+            fields: {
+              confirmPassword: 'Les mots de passe ne correspondent pas',
+            },
           }
         }
         if (value.password.length < 8) {
           return {
-            fields: { password: 'Le mot de passe doit contenir au moins 8 caractères' },
+            fields: {
+              password: 'Le mot de passe doit contenir au moins 8 caractères',
+            },
           }
         }
         return undefined
@@ -34,7 +38,11 @@ export function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
     },
     onSubmit: ({ value }) => {
       registerMutation(
-        { username: value.username, email: value.email, password: value.password },
+        {
+          username: value.username,
+          email: value.email,
+          password: value.password,
+        },
         {
           onSuccess: async () => {
             onSuccess()

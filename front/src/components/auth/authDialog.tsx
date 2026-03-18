@@ -1,10 +1,10 @@
+import { X } from 'lucide-react'
 import { Dialog } from 'radix-ui'
 import { useEffect, useState } from 'react'
-import { X } from 'lucide-react'
 
 import { Button } from '../ui/button.tsx'
-import { LoginForm } from './login-form.tsx'
-import { RegisterForm } from './register-form.tsx'
+import { LoginForm } from './loginForm.tsx'
+import { RegisterForm } from './registerForm.tsx'
 
 export type AuthTab = 'login' | 'register'
 
@@ -28,11 +28,14 @@ export function AuthDialog({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-[440px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-card shadow-2xl shadow-black/20 overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 duration-200">
-
           {/* Header */}
           <div className="px-8 pt-7 pb-0">
             <Dialog.Close asChild>
-              <Button variant="ghost" size="icon-sm" className="absolute right-4 top-4 rounded-full text-text-light hover:text-text">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="absolute right-4 top-4 rounded-full text-text-light hover:text-text"
+              >
                 <X className="h-4 w-4" />
               </Button>
             </Dialog.Close>
@@ -57,7 +60,9 @@ export function AuthDialog({
                   type="button"
                   onClick={() => setTab(t)}
                   className={`flex-1 pb-3 text-sm font-semibold transition-colors relative ${
-                    tab === t ? 'text-foreground' : 'text-text-light hover:text-text'
+                    tab === t
+                      ? 'text-foreground'
+                      : 'text-text-light hover:text-text'
                   }`}
                 >
                   {t === 'login' ? 'Se connecter' : "S'inscrire"}

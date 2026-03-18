@@ -58,7 +58,6 @@ export const GachaApi = {
   pull: async (): Promise<PullResult> => {
     const res = await fetchWithAuth(`${apiUrl}/pulls`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
     })
     if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors du tirage')

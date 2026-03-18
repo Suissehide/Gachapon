@@ -1,9 +1,9 @@
 import { useNavigate } from '@tanstack/react-router'
 
-import { Button } from '../ui/button.tsx'
 import { useAppForm } from '../../hooks/formConfig.tsx'
 import { useLogin } from '../../queries/useAuth.ts'
-import { OAuthButtons, OAuthDivider } from './oauth-section.tsx'
+import { Button } from '../ui/button.tsx'
+import { OAuthButtons, OAuthDivider } from './oauthSection.tsx'
 
 export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
   const navigate = useNavigate()
@@ -17,7 +17,9 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
         {
           onSuccess: async () => {
             onSuccess()
-            const redirectTo = new URLSearchParams(window.location.search).get('redirect')
+            const redirectTo = new URLSearchParams(window.location.search).get(
+              'redirect',
+            )
             await navigate({ to: redirectTo || '/play' })
           },
         },

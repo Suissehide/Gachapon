@@ -48,8 +48,13 @@ export function VirtualizedBodyTable<TData>({
   if (rowCount === 0) {
     return (
       <tbody>
-        <tr className="h-[20em] bg-primary-foreground text-sm border-b border-border text-center">
-          <td colSpan={table.getAllLeafColumns().length}>Pas de données</td>
+        <tr>
+          <td
+            colSpan={table.getAllLeafColumns().length}
+            className="py-16 text-center"
+          >
+            <p className="text-sm text-text-light">Aucune donnée</p>
+          </td>
         </tr>
       </tbody>
     )
@@ -68,14 +73,13 @@ export function VirtualizedBodyTable<TData>({
 
         return (
           <tr
-            data-index={virtualRow.index} // needed for dynamic row height measurement
+            data-index={virtualRow.index}
             ref={(node) => {
-              if (node) {
-                rowVirtualizer.measureElement(node)
-              }
-            }} // measure dynamic row height
+              if (node) rowVirtualizer.measureElement(node)
+            }}
             key={row.id}
             style={{ height: rowHeight }}
+            className="group border-b border-border/40 transition-colors duration-100 last:border-0 hover:bg-primary/[0.04]"
           >
             {row.getVisibleCells().map((cell) => {
               const { column } = cell
@@ -85,7 +89,7 @@ export function VirtualizedBodyTable<TData>({
               return (
                 <td
                   key={cell.id}
-                  className="px-4 py-2 border-b border-border text-sm"
+                  className="px-4 py-2 text-sm text-text"
                   style={{
                     ...getCommonPinningStyles(column),
                     width: grow ? 'auto' : column.getSize(),

@@ -1,6 +1,6 @@
 import { Link, createFileRoute, Outlet, redirect, useRouterState } from '@tanstack/react-router'
 import {
-  BarChart2, ChevronRight, LayoutDashboard, Package, Settings, ShoppingBag, Users,
+  ArrowLeft, BarChart2, ChevronRight, LayoutDashboard, Package, Settings, ShoppingBag, Users,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -42,7 +42,7 @@ function AdminLayout() {
             return (
               <Link
                 key={to}
-                to={to}
+                to={to as '/admin'}
                 className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                   active ? 'bg-primary/20 text-primary' : 'text-text-light hover:bg-surface hover:text-text'
                 }`}
@@ -54,6 +54,15 @@ function AdminLayout() {
             )
           })}
         </nav>
+        <div className="mt-auto border-t border-border p-3">
+          <Link
+            to="/"
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-text-light transition-colors hover:bg-surface hover:text-text"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Retour au site
+          </Link>
+        </div>
       </aside>
 
       <main className="flex-1 overflow-y-auto">

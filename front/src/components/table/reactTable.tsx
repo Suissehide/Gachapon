@@ -125,7 +125,6 @@ export function ReactTable<TData extends { id: string }>({
     enableRowSelection: true,
     enableColumnPinning: true,
     autoResetPageIndex: false,
-    //
     debugTable: false,
     debugHeaders: false,
     debugColumns: false,
@@ -152,7 +151,7 @@ export function ReactTable<TData extends { id: string }>({
       right: isPinned === 'right' ? `${column.getAfter('right')}px` : undefined,
       position: isPinned ? 'sticky' : 'relative',
       zIndex: isPinned ? 1 : 0,
-      backgroundColor: isPinned ? 'var(--color-bg)' : 'transparent',
+      backgroundColor: isPinned ? 'var(--color-card)' : 'transparent',
     }
   }
 
@@ -170,28 +169,20 @@ export function ReactTable<TData extends { id: string }>({
   const tableContainerRef = useRef(null)
 
   return (
-    <div className="flex flex-col h-full">
-      {title && <div className="px-4 mb-4 text-2xl font-bold">{title}</div>}
+    <div className="flex h-full flex-col">
+      {title && (
+        <div className="px-5 py-4 text-base font-bold text-text">{title}</div>
+      )}
 
-      <div className="react-table__filter">
-        <div className="above-table__container">
-          {/*<ColumnVisibilityMenu*/}
-          {/*  table={table}*/}
-          {/*  initialColumnVisibility={initialColumnVisibility}*/}
-          {/*/>*/}
-        </div>
+      {customHeader?.(table.getRowModel().rows)}
 
-        {customHeader?.(table.getRowModel().rows)}
-      </div>
-
-      <div className="flex-1 relative overflow-hidden">
+      <div className="relative min-h-0 flex-1 overflow-hidden">
         <div className="h-full w-full overflow-auto" ref={tableContainerRef}>
-          <table className="layout-table table table-fixed w-full border-collapse mb-2">
+          <table className="w-full border-collapse">
             <HeaderTable
               table={table}
               getCommonPinningStyles={getCommonPinningStyles}
             />
-
             <VirtualizedBodyTable
               table={table}
               getCommonPinningStyles={getCommonPinningStyles}
@@ -202,11 +193,14 @@ export function ReactTable<TData extends { id: string }>({
         </div>
       </div>
 
-      <div className="w-full flex justify-end py-3 px-3">
-        <div className="text-sm text-text-light">
-          {table.getRowCount().toLocaleString()}{' '}
+      <div className="flex items-center justify-end border-t border-border/40 px-4 py-2">
+        <span className="text-xs text-text-light">
+          <span className="font-semibold text-primary">
+            {totalRows.toLocaleString('fr-FR')}
+          </span>
+          {' '}
           {totalRows > 1 ? 'résultats' : 'résultat'}
-        </div>
+        </span>
       </div>
     </div>
   )
