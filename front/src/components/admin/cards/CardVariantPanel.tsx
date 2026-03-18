@@ -19,13 +19,13 @@ const HOLO_FIELDS = [
   { key: 'holoRateRare' as const, label: HOLO_ELIGIBLE_RARITIES[0] },
   { key: 'holoRateEpic' as const, label: HOLO_ELIGIBLE_RARITIES[1] },
   { key: 'holoRateLegendary' as const, label: HOLO_ELIGIBLE_RARITIES[2] },
-]
+] satisfies { key: keyof VariantRates; label: string }[]
 
 const BRILLIANT_FIELDS = [
   { key: 'brilliantRateRare' as const, label: HOLO_ELIGIBLE_RARITIES[0] },
   { key: 'brilliantRateEpic' as const, label: HOLO_ELIGIBLE_RARITIES[1] },
   { key: 'brilliantRateLegendary' as const, label: HOLO_ELIGIBLE_RARITIES[2] },
-]
+] satisfies { key: keyof VariantRates; label: string }[]
 
 export function CardVariantPanel() {
   const { data, isLoading } = useAdminConfig()
