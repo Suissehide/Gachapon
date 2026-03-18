@@ -54,7 +54,7 @@ export function useAdminCards(
   return useQuery({
     queryKey: ['admin', 'cards', params],
     queryFn: () => AdminCardsApi.getCards(params),
-    enabled: options?.enabled,
+    enabled: options?.enabled ?? true,
   })
 }
 

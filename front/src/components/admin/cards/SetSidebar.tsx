@@ -35,9 +35,10 @@ export function SetSidebar({ selectedSetId, onSelect }: SetSidebarProps) {
     <div className="flex w-52 flex-shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card">
       <div className="flex-1 space-y-1 overflow-y-auto p-2">
         {sets.map((set) => (
-          <div
+          <button
             key={set.id}
-            className={`group flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 transition-colors ${
+            type="button"
+            className={`group flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors ${
               selectedSetId === set.id
                 ? 'border border-primary/30 bg-primary/10'
                 : 'hover:bg-surface'
@@ -67,16 +68,14 @@ export function SetSidebar({ selectedSetId, onSelect }: SetSidebarProps) {
                 </span>
               </div>
             </div>
-            <div
-              className="flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100"
-              onClick={(e) => e.stopPropagation()}
-            >
+            <div className="flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
               <Button
                 size="icon-sm"
                 variant="ghost"
-                onClick={() =>
+                onClick={(e) => {
+                  e.stopPropagation()
                   updateSet.mutate({ id: set.id, isActive: !set.isActive })
-                }
+                }}
                 title="Toggle actif"
               >
                 <Power className="h-3 w-3" />
@@ -84,7 +83,10 @@ export function SetSidebar({ selectedSetId, onSelect }: SetSidebarProps) {
               <Button
                 size="icon-sm"
                 variant="ghost"
-                onClick={() => setEditSet(set)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setEditSet(set)
+                }}
                 title="Modifier"
               >
                 <Pencil className="h-3 w-3" />
@@ -93,13 +95,16 @@ export function SetSidebar({ selectedSetId, onSelect }: SetSidebarProps) {
                 size="icon-sm"
                 variant="ghost"
                 className="text-red-400 hover:text-red-400"
-                onClick={() => deleteSet.mutate(set.id)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  deleteSet.mutate(set.id)
+                }}
                 title="Supprimer"
               >
                 <Trash2 className="h-3 w-3" />
               </Button>
             </div>
-          </div>
+          </button>
         ))}
       </div>
 
