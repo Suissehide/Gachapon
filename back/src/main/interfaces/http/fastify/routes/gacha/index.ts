@@ -1,14 +1,15 @@
 import Boom from '@hapi/boom'
-import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
 import { calculateTokens } from '../../../../../domain/economy/economy.domain'
+import { getUserUpgradeEffects } from '../../../../../domain/economy/upgrade.domain'
 import { wsManager } from '../../../../ws/ws-manager'
 
-// biome-ignore lint/suspicious/useAwait: fastify plugin pattern
-export const gachaRouter: FastifyPluginAsyncZod = async (fastify) => {
-  const { gachaDomain, userRepository, config, gachaPullRepository } =
+export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
+  const { gachaDomain, userRepository, config, gachaPullRepository, postgresOrm } =
     fastify.iocContainer
+  const prisma = postgresOrm.prisma
 
   // POST /pulls — consommer 1 token et tirer une carte
   fastify.post(
@@ -60,16 +61,20 @@ export const gachaRouter: FastifyPluginAsyncZod = async (fastify) => {
         throw Boom.notFound('User not found')
       }
 
+      const upgrades = await getUserUpgradeEffects(request.user.userID, prisma)
+      const effectiveInterval = Math.max(1, config.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes)
+      const effectiveMaxStock = config.tokenMaxStock + upgrades.tokenVaultBonus
+
       const { tokens, nextTokenAt } = calculateTokens(
         user.lastTokenAt,
         user.tokens,
-        config.tokenRegenIntervalHours,
-        config.tokenMaxStock,
+        effectiveInterval,
+        effectiveMaxStock,
       )
 
       return {
         tokens,
-        maxStock: config.tokenMaxStock,
+        maxStock: effectiveMaxStock,
         nextTokenAt: nextTokenAt?.toISOString() ?? null,
       }
     },
@@ -85,11 +90,15 @@ export const gachaRouter: FastifyPluginAsyncZod = async (fastify) => {
         throw Boom.notFound('User not found')
       }
 
+      const upgrades = await getUserUpgradeEffects(request.user.userID, prisma)
+      const effectiveInterval = Math.max(1, config.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes)
+      const effectiveMaxStock = config.tokenMaxStock + upgrades.tokenVaultBonus
+
       const { tokens, nextTokenAt } = calculateTokens(
         user.lastTokenAt,
         user.tokens,
-        config.tokenRegenIntervalHours,
-        config.tokenMaxStock,
+        effectiveInterval,
+        effectiveMaxStock,
       )
 
       return {
