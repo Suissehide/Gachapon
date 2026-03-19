@@ -1,14 +1,9 @@
 import { useState } from 'react'
 
-import { Button } from '../../ui/button'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '../../ui/sheet'
 import { ITEM_TYPE_OPTIONS } from '../../../constants/shop.constant'
 import { useAppForm } from '../../../hooks/formConfig'
+import { Button } from '../../ui/button'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../../ui/sheet'
 
 export type CreateShopItemPayload = {
   name: string
@@ -44,7 +39,11 @@ export function CreateShopItemSheet({
   )
 }
 
-function CreateShopItemForm({ onCreate }: { onCreate: (item: CreateShopItemPayload) => void }) {
+function CreateShopItemForm({
+  onCreate,
+}: {
+  onCreate: (item: CreateShopItemPayload) => void
+}) {
   const [jsonError, setJsonError] = useState('')
 
   const form = useAppForm({
@@ -93,7 +92,9 @@ function CreateShopItemForm({ onCreate }: { onCreate: (item: CreateShopItemPaylo
         {(field) => <field.TextArea label='Valeur JSON (ex: {"tokens":3})' />}
       </form.AppField>
       <form.AppField name="isActive">
-        {(field) => <field.Toggle label="Statut" options={['Actif', 'Inactif']} />}
+        {(field) => (
+          <field.Toggle label="Statut" options={['Actif', 'Inactif']} />
+        )}
       </form.AppField>
       {jsonError && <p className="text-xs text-red-400">{jsonError}</p>}
       <Button type="submit" className="w-full">

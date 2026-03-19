@@ -111,12 +111,17 @@ function Settings() {
               value={newKeyName}
               onChange={(e) => setNewKeyName(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') { handleCreate() }
+                if (e.key === 'Enter') {
+                  handleCreate()
+                }
               }}
               placeholder="Nom de la clé (ex: bot-discord)"
               maxLength={50}
             />
-            <Button onClick={handleCreate} disabled={creating || !newKeyName.trim()}>
+            <Button
+              onClick={handleCreate}
+              disabled={creating || !newKeyName.trim()}
+            >
               <Plus className="h-4 w-4" />
               Créer
             </Button>

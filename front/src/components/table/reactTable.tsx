@@ -197,8 +197,7 @@ export function ReactTable<TData extends { id: string }>({
         <span className="text-xs text-text-light">
           <span className="font-semibold text-primary">
             {totalRows.toLocaleString('fr-FR')}
-          </span>
-          {' '}
+          </span>{' '}
           {totalRows > 1 ? 'résultats' : 'résultat'}
         </span>
       </div>

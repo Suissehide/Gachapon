@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Users } from 'lucide-react'
 
 import { CreateTeamPopup, TeamCard } from '../../../components/team/index.ts'
-import { useMyTeams, useLeaveTeam } from '../../../queries/useTeams.ts'
+import { useLeaveTeam, useMyTeams } from '../../../queries/useTeams.ts'
 import { useAuthStore } from '../../../stores/auth.store.ts'
 
 export const Route = createFileRoute('/_authenticated/teams/')({
@@ -22,7 +22,9 @@ function TeamsPage() {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-black text-text">Mes Équipes</h1>
-            <p className="text-sm text-text-light">{teams.length} / 5 équipes</p>
+            <p className="text-sm text-text-light">
+              {teams.length} / 5 équipes
+            </p>
           </div>
           {teams.length < 5 && <CreateTeamPopup />}
         </div>

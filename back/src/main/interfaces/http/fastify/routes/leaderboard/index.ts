@@ -1,7 +1,6 @@
-import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
-// biome-ignore lint/suspicious/useAwait: fastify plugin pattern
-export const leaderboardRouter: FastifyPluginAsyncZod = async (fastify) => {
+export const leaderboardRouter: FastifyPluginCallbackZod = (fastify) => {
   const { postgresOrm } = fastify.iocContainer
   const prisma = postgresOrm.prisma
 

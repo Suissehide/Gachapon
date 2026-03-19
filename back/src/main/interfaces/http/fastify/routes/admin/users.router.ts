@@ -1,10 +1,9 @@
 // back/src/main/interfaces/http/fastify/routes/admin/users.router.ts
 import Boom from '@hapi/boom'
-import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
-// biome-ignore lint/suspicious/useAwait: fastify plugin pattern
-export const adminUsersRouter: FastifyPluginAsyncZod = async (fastify) => {
+export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
   const auth = [fastify.verifySessionCookie, fastify.requireRole('SUPER_ADMIN')]
 
   // GET /admin/users — liste paginée
@@ -24,7 +23,12 @@ export const adminUsersRouter: FastifyPluginAsyncZod = async (fastify) => {
       const { postgresOrm } = fastify.iocContainer
       const { page, limit, search } = request.query
       const where = search
-        ? { OR: [{ username: { contains: search, mode: 'insensitive' as const } }, { email: { contains: search, mode: 'insensitive' as const } }] }
+        ? {
+            OR: [
+              { username: { contains: search, mode: 'insensitive' as const } },
+              { email: { contains: search, mode: 'insensitive' as const } },
+            ],
+          }
         : {}
       const [users, total] = await Promise.all([
         postgresOrm.prisma.user.findMany({
@@ -32,7 +36,16 @@ export const adminUsersRouter: FastifyPluginAsyncZod = async (fastify) => {
           skip: (page - 1) * limit,
           take: limit,
           orderBy: { createdAt: 'desc' },
-          select: { id: true, username: true, email: true, role: true, tokens: true, dust: true, suspended: true, createdAt: true },
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            role: true,
+            tokens: true,
+            dust: true,
+            suspended: true,
+            createdAt: true,
+          },
         }),
         postgresOrm.prisma.user.count({ where }),
       ])
@@ -51,15 +64,33 @@ export const adminUsersRouter: FastifyPluginAsyncZod = async (fastify) => {
       const { postgresOrm } = fastify.iocContainer
       const { id } = request.params
       const user = await postgresOrm.prisma.user.findUnique({ where: { id } })
-      if (!user) { throw Boom.notFound('User not found') }
+      if (!user) {
+        throw Boom.notFound('User not found')
+      }
       const [pullsTotal, dustGenerated, cardsOwned] = await Promise.all([
         postgresOrm.prisma.gachaPull.count({ where: { userId: id } }),
-        postgresOrm.prisma.gachaPull.aggregate({ where: { userId: id }, _sum: { dustEarned: true } }),
+        postgresOrm.prisma.gachaPull.aggregate({
+          where: { userId: id },
+          _sum: { dustEarned: true },
+        }),
         postgresOrm.prisma.userCard.count({ where: { userId: id } }),
       ])
       return {
-        user: { id: user.id, username: user.username, email: user.email, role: user.role, tokens: user.tokens, dust: user.dust, suspended: user.suspended, createdAt: user.createdAt },
-        stats: { pullsTotal, dustGenerated: dustGenerated._sum.dustEarned ?? 0, cardsOwned },
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+          tokens: user.tokens,
+          dust: user.dust,
+          suspended: user.suspended,
+          createdAt: user.createdAt,
+        },
+        stats: {
+          pullsTotal,
+          dustGenerated: dustGenerated._sum.dustEarned ?? 0,
+          cardsOwned,
+        },
       }
     },
   )
@@ -73,8 +104,12 @@ export const adminUsersRouter: FastifyPluginAsyncZod = async (fastify) => {
     },
     async (request) => {
       const { postgresOrm } = fastify.iocContainer
-      const user = await postgresOrm.prisma.user.findUnique({ where: { id: request.params.id } })
-      if (!user) { throw Boom.notFound('User not found') }
+      const user = await postgresOrm.prisma.user.findUnique({
+        where: { id: request.params.id },
+      })
+      if (!user) {
+        throw Boom.notFound('User not found')
+      }
       const userCards = await postgresOrm.prisma.userCard.findMany({
         where: { userId: request.params.id },
         include: { card: { include: { set: true } } },
@@ -82,7 +117,14 @@ export const adminUsersRouter: FastifyPluginAsyncZod = async (fastify) => {
       })
       return {
         cards: userCards.map((uc) => ({
-          card: { id: uc.card.id, name: uc.card.name, imageUrl: uc.card.imageUrl, rarity: uc.card.rarity, variant: uc.card.variant, set: { id: uc.card.set.id, name: uc.card.set.name } },
+          card: {
+            id: uc.card.id,
+            name: uc.card.name,
+            imageUrl: uc.card.imageUrl,
+            rarity: uc.card.rarity,
+            variant: uc.card.variant,
+            set: { id: uc.card.set.id, name: uc.card.set.name },
+          },
           quantity: uc.quantity,
           obtainedAt: uc.obtainedAt.toISOString(),
         })),
@@ -95,12 +137,19 @@ export const adminUsersRouter: FastifyPluginAsyncZod = async (fastify) => {
     '/:id/tokens',
     {
       onRequest: auth,
-      schema: { params: z.object({ id: z.string().uuid() }), body: z.object({ amount: z.number().int() }) },
+      schema: {
+        params: z.object({ id: z.string().uuid() }),
+        body: z.object({ amount: z.number().int() }),
+      },
     },
     async (request) => {
       const { postgresOrm } = fastify.iocContainer
-      const user = await postgresOrm.prisma.user.findUnique({ where: { id: request.params.id } })
-      if (!user) { throw Boom.notFound('User not found') }
+      const user = await postgresOrm.prisma.user.findUnique({
+        where: { id: request.params.id },
+      })
+      if (!user) {
+        throw Boom.notFound('User not found')
+      }
       const updated = await postgresOrm.prisma.user.update({
         where: { id: request.params.id },
         data: { tokens: { increment: request.body.amount } },
@@ -114,12 +163,19 @@ export const adminUsersRouter: FastifyPluginAsyncZod = async (fastify) => {
     '/:id/dust',
     {
       onRequest: auth,
-      schema: { params: z.object({ id: z.string().uuid() }), body: z.object({ amount: z.number().int() }) },
+      schema: {
+        params: z.object({ id: z.string().uuid() }),
+        body: z.object({ amount: z.number().int() }),
+      },
     },
     async (request) => {
       const { postgresOrm } = fastify.iocContainer
-      const user = await postgresOrm.prisma.user.findUnique({ where: { id: request.params.id } })
-      if (!user) { throw Boom.notFound('User not found') }
+      const user = await postgresOrm.prisma.user.findUnique({
+        where: { id: request.params.id },
+      })
+      if (!user) {
+        throw Boom.notFound('User not found')
+      }
       const updated = await postgresOrm.prisma.user.update({
         where: { id: request.params.id },
         data: { dust: { increment: request.body.amount } },
@@ -133,15 +189,22 @@ export const adminUsersRouter: FastifyPluginAsyncZod = async (fastify) => {
     '/:id/role',
     {
       onRequest: auth,
-      schema: { params: z.object({ id: z.string().uuid() }), body: z.object({ role: z.enum(['USER', 'SUPER_ADMIN']) }) },
+      schema: {
+        params: z.object({ id: z.string().uuid() }),
+        body: z.object({ role: z.enum(['USER', 'SUPER_ADMIN']) }),
+      },
     },
     async (request) => {
       if (request.params.id === request.user.userID) {
         throw Boom.forbidden('Cannot change your own role')
       }
       const { postgresOrm } = fastify.iocContainer
-      const user = await postgresOrm.prisma.user.findUnique({ where: { id: request.params.id } })
-      if (!user) { throw Boom.notFound('User not found') }
+      const user = await postgresOrm.prisma.user.findUnique({
+        where: { id: request.params.id },
+      })
+      if (!user) {
+        throw Boom.notFound('User not found')
+      }
       const updated = await postgresOrm.prisma.user.update({
         where: { id: request.params.id },
         data: { role: request.body.role },
@@ -155,15 +218,22 @@ export const adminUsersRouter: FastifyPluginAsyncZod = async (fastify) => {
     '/:id/suspend',
     {
       onRequest: auth,
-      schema: { params: z.object({ id: z.string().uuid() }), body: z.object({ suspended: z.boolean() }) },
+      schema: {
+        params: z.object({ id: z.string().uuid() }),
+        body: z.object({ suspended: z.boolean() }),
+      },
     },
     async (request) => {
       if (request.params.id === request.user.userID) {
         throw Boom.forbidden('Cannot suspend your own account')
       }
       const { postgresOrm } = fastify.iocContainer
-      const user = await postgresOrm.prisma.user.findUnique({ where: { id: request.params.id } })
-      if (!user) { throw Boom.notFound('User not found') }
+      const user = await postgresOrm.prisma.user.findUnique({
+        where: { id: request.params.id },
+      })
+      if (!user) {
+        throw Boom.notFound('User not found')
+      }
       const updated = await postgresOrm.prisma.user.update({
         where: { id: request.params.id },
         data: { suspended: request.body.suspended },

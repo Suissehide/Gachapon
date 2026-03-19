@@ -10,8 +10,8 @@ import { awilixPlugin } from './awilix.plugin'
 import { cookiePlugin } from './cookie.plugin'
 import { jwtPlugin } from './jwt.plugin'
 import { ormPlugin } from './orm.plugin'
-import { rolePlugin } from './role.plugin'
 import { redisPlugin } from './redis.plugin'
+import { rolePlugin } from './role.plugin'
 import { websocketPlugin } from './websocket.plugin'
 
 const plugins: FastifyPluginAsync = fastifyPlugin(

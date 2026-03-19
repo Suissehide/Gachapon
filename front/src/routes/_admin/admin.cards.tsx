@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import type { ColumnDef } from '@tanstack/react-table'
-import { LayoutGrid, List, Plus } from 'lucide-react'
+import { LayoutGrid, List, Plus, Search, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import {
@@ -15,6 +15,7 @@ import { ReactTable } from '../../components/table/reactTable'
 import { Button } from '../../components/ui/button'
 import DropdownFilter from '../../components/ui/dropdownFilter'
 import { Input } from '../../components/ui/input'
+import { SegmentedControl } from '../../components/ui/segmentedControl'
 import { RARITY_OPTIONS } from '../../constants/card.constant'
 import {
   type AdminCard,
@@ -46,6 +47,12 @@ function AdminCards() {
   }, [view])
 
   const { data: setsData } = useAdminSets()
+
+  useEffect(() => {
+    if (selectedSetId === null && setsData?.sets?.[0]) {
+      setSelectedSetId(setsData.sets[0].id)
+    }
+  }, [setsData, selectedSetId])
   const { data: cardsData, isLoading } = useAdminCards(
     view === 'sets' ? { setId: selectedSetId ?? undefined } : {},
     { enabled: view === 'all' || !!selectedSetId },
@@ -92,38 +99,26 @@ function AdminCards() {
     <div className="flex h-screen flex-col p-8">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-black text-text">Cartes & Sets</h1>
+
         <div className="flex items-center gap-2">
-          <div className="flex overflow-hidden rounded-lg border border-border">
-            <button
-              type="button"
-              className={`px-3 py-1.5 text-sm transition-colors ${
-                view === 'sets'
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-text-light hover:text-text'
-              }`}
-              onClick={() => setView('sets')}
-              title="Vue par sets"
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              className={`px-3 py-1.5 text-sm transition-colors ${
-                view === 'all'
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-text-light hover:text-text'
-              }`}
-              onClick={() => setView('all')}
-              title="Toutes les cartes"
-            >
-              <List className="h-4 w-4" />
-            </button>
-          </div>
-          <Button
-            size="sm"
-            onClick={() => setShowCreate(true)}
-            disabled={view === 'sets' && !selectedSetId}
-          >
+          <SegmentedControl
+            value={view}
+            onChange={setView}
+            options={[
+              {
+                value: 'sets',
+                label: 'Sets',
+                icon: <LayoutGrid className="h-3.5 w-3.5" />,
+              },
+              {
+                value: 'all',
+                label: 'Toutes',
+                icon: <List className="h-3.5 w-3.5" />,
+              },
+            ]}
+          />
+
+          <Button size="sm" onClick={() => setShowCreate(true)}>
             <Plus className="h-4 w-4" />
             Nouvelle carte
           </Button>
@@ -134,12 +129,24 @@ function AdminCards() {
 
       {/* Filter bar */}
       <div className="mt-4 flex flex-wrap items-center gap-2">
-        <Input
-          placeholder="Rechercher une carte…"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="h-8 w-52 text-sm"
-        />
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-light/50" />
+          <Input
+            placeholder="Rechercher une carte…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-8 w-52 pl-8 pr-7 text-sm"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 text-text-light/50 hover:text-text transition-colors"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
         <DropdownFilter
           label="Rareté"
           filters={RARITY_OPTIONS.map((r) => ({
@@ -152,6 +159,7 @@ function AdminCards() {
               checked ? [...prev, id] : prev.filter((r) => r !== id),
             )
           }
+          onClear={() => setSelectedRarities([])}
         />
         {view === 'all' && (
           <DropdownFilter
@@ -166,6 +174,7 @@ function AdminCards() {
                 checked ? [...prev, id] : prev.filter((sid) => sid !== id),
               )
             }
+            onClear={() => setSelectedSetIds([])}
           />
         )}
       </div>

@@ -75,7 +75,9 @@ export function VirtualizedBodyTable<TData>({
           <tr
             data-index={virtualRow.index}
             ref={(node) => {
-              if (node) rowVirtualizer.measureElement(node)
+              if (node) {
+                rowVirtualizer.measureElement(node)
+              }
             }}
             key={row.id}
             style={{ height: rowHeight }}

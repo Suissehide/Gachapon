@@ -20,7 +20,9 @@ export function AuthDialog({
   const [tab, setTab] = useState<AuthTab>(defaultTab)
 
   useEffect(() => {
-    if (open) setTab(defaultTab)
+    if (open) {
+      setTab(defaultTab)
+    }
   }, [open, defaultTab])
 
   return (

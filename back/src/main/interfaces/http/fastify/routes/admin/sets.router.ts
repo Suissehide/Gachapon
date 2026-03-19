@@ -1,17 +1,18 @@
 // back/src/main/interfaces/http/fastify/routes/admin/sets.router.ts
 import Boom from '@hapi/boom'
-import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
-// biome-ignore lint/suspicious/useAwait: fastify plugin pattern
-export const adminSetsRouter: FastifyPluginAsyncZod = async (fastify) => {
+export const adminSetsRouter: FastifyPluginCallbackZod = (fastify) => {
   const auth = [fastify.verifySessionCookie, fastify.requireRole('SUPER_ADMIN')]
 
   fastify.get('/', { onRequest: auth }, async () => {
-    const sets = await fastify.iocContainer.postgresOrm.prisma.cardSet.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: { _count: { select: { cards: true } } },
-    })
+    const sets = await fastify.iocContainer.postgresOrm.prisma.cardSet.findMany(
+      {
+        orderBy: { createdAt: 'desc' },
+        include: { _count: { select: { cards: true } } },
+      },
+    )
     return { sets }
   })
 
@@ -28,7 +29,9 @@ export const adminSetsRouter: FastifyPluginAsyncZod = async (fastify) => {
       },
     },
     async (request, reply) => {
-      const set = await fastify.iocContainer.postgresOrm.prisma.cardSet.create({ data: request.body })
+      const set = await fastify.iocContainer.postgresOrm.prisma.cardSet.create({
+        data: request.body,
+      })
       return reply.status(201).send(set)
     },
   )
@@ -47,8 +50,13 @@ export const adminSetsRouter: FastifyPluginAsyncZod = async (fastify) => {
       },
     },
     async (request) => {
-      const set = await fastify.iocContainer.postgresOrm.prisma.cardSet.findUnique({ where: { id: request.params.id } })
-      if (!set) { throw Boom.notFound('Set not found') }
+      const set =
+        await fastify.iocContainer.postgresOrm.prisma.cardSet.findUnique({
+          where: { id: request.params.id },
+        })
+      if (!set) {
+        throw Boom.notFound('Set not found')
+      }
       return fastify.iocContainer.postgresOrm.prisma.cardSet.update({
         where: { id: request.params.id },
         data: request.body,
@@ -58,11 +66,21 @@ export const adminSetsRouter: FastifyPluginAsyncZod = async (fastify) => {
 
   fastify.delete(
     '/:id',
-    { onRequest: auth, schema: { params: z.object({ id: z.string().uuid() }) } },
+    {
+      onRequest: auth,
+      schema: { params: z.object({ id: z.string().uuid() }) },
+    },
     async (request, reply) => {
-      const set = await fastify.iocContainer.postgresOrm.prisma.cardSet.findUnique({ where: { id: request.params.id } })
-      if (!set) { throw Boom.notFound('Set not found') }
-      await fastify.iocContainer.postgresOrm.prisma.cardSet.delete({ where: { id: request.params.id } })
+      const set =
+        await fastify.iocContainer.postgresOrm.prisma.cardSet.findUnique({
+          where: { id: request.params.id },
+        })
+      if (!set) {
+        throw Boom.notFound('Set not found')
+      }
+      await fastify.iocContainer.postgresOrm.prisma.cardSet.delete({
+        where: { id: request.params.id },
+      })
       return reply.status(204).send()
     },
   )

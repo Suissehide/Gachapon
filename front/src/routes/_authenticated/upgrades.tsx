@@ -1,14 +1,27 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Sparkles, Ticket, TrendingUp, Zap } from 'lucide-react'
-import { useBuyUpgrade, useUpgrades, type UpgradeStatus } from '../../queries/useUpgrades'
-import { useAuthStore } from '../../stores/auth.store'
+
 import type { UpgradeType } from '../../api/upgrades.api'
+import {
+  type UpgradeStatus,
+  useBuyUpgrade,
+  useUpgrades,
+} from '../../queries/useUpgrades'
+import { useAuthStore } from '../../stores/auth.store'
 
 export const Route = createFileRoute('/_authenticated/upgrades')({
   component: UpgradesPage,
 })
 
-const UPGRADE_META: Record<UpgradeType, { icon: React.ReactNode; label: string; description: string; formatEffect: (v: number) => string }> = {
+const UPGRADE_META: Record<
+  UpgradeType,
+  {
+    icon: React.ReactNode
+    label: string
+    description: string
+    formatEffect: (v: number) => string
+  }
+> = {
   REGEN: {
     icon: <Zap className="h-5 w-5" />,
     label: 'Accélération',
@@ -35,8 +48,6 @@ const UPGRADE_META: Record<UpgradeType, { icon: React.ReactNode; label: string; 
   },
 }
 
-const MAX_LEVEL = 4
-
 function UpgradesPage() {
   const { data, isLoading } = useUpgrades()
   const { mutate: buy, isPending, variables: buyingType } = useBuyUpgrade()
@@ -54,9 +65,12 @@ function UpgradesPage() {
     <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
       <div className="mx-auto max-w-4xl">
         <div className="mb-8">
-          <h1 className="text-2xl font-black text-text">Améliorations permanentes</h1>
+          <h1 className="text-2xl font-black text-text">
+            Améliorations permanentes
+          </h1>
           <p className="text-sm text-text-light">
-            Dépensez votre poussière pour améliorer vos statistiques définitivement.
+            Dépensez votre poussière pour améliorer vos statistiques
+            définitivement.
           </p>
         </div>
 
@@ -78,6 +92,7 @@ function UpgradesPage() {
 
 function UpgradeCard({
   upgrade,
+  // biome-ignore lint/correctness/noUnusedFunctionParameters: kept for potential future use (e.g. tooltip showing available dust)
   dust,
   buying,
   onBuy,
@@ -90,10 +105,14 @@ function UpgradeCard({
   const meta = UPGRADE_META[upgrade.type]
 
   return (
-    <div className={`rounded-xl border bg-card p-5 ${upgrade.isMaxed ? 'border-warning/40 bg-warning/5' : 'border-border'}`}>
+    <div
+      className={`rounded-xl border bg-card p-5 ${upgrade.isMaxed ? 'border-warning/40 bg-warning/5' : 'border-border'}`}
+    >
       {/* Header */}
       <div className="mb-4 flex items-center gap-3">
-        <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${upgrade.isMaxed ? 'bg-warning/15 text-warning' : 'bg-primary/10 text-primary'}`}>
+        <div
+          className={`flex h-10 w-10 items-center justify-center rounded-lg ${upgrade.isMaxed ? 'bg-warning/15 text-warning' : 'bg-primary/10 text-primary'}`}
+        >
           {meta.icon}
         </div>
         <div>
@@ -104,12 +123,14 @@ function UpgradeCard({
 
       {/* Progress bar */}
       <div className="mb-4 flex gap-1.5">
-        {Array.from({ length: MAX_LEVEL }).map((_, i) => (
+        {(['l1', 'l2', 'l3', 'l4'] as const).map((id, i) => (
           <div
-            key={i}
+            key={id}
             className={`h-1.5 flex-1 rounded-full transition-colors ${
               i < upgrade.currentLevel
-                ? upgrade.isMaxed ? 'bg-warning' : 'bg-primary'
+                ? upgrade.isMaxed
+                  ? 'bg-warning'
+                  : 'bg-primary'
                 : 'bg-border'
             }`}
           />
@@ -123,14 +144,17 @@ function UpgradeCard({
           <span className="font-semibold text-text">
             {upgrade.currentLevel === 0
               ? 'Aucun'
-              : `${['I','II','III','IV'][upgrade.currentLevel - 1]} — ${meta.formatEffect(upgrade.currentEffect!)}`}
+              : // biome-ignore lint/style/noNonNullAssertion: currentEffect is non-null when currentLevel > 0
+                `${['I', 'II', 'III', 'IV'][upgrade.currentLevel - 1]} — ${meta.formatEffect(upgrade.currentEffect!)}`}
           </span>
         </div>
         {!upgrade.isMaxed && upgrade.nextEffect !== null && (
           <div className="flex justify-between text-sm">
             <span className="text-text-light">Prochain niveau</span>
             <span className="font-semibold text-primary">
-              {['I','II','III','IV'][upgrade.nextLevel! - 1]} — {meta.formatEffect(upgrade.nextEffect)}
+              {/* biome-ignore lint/style/noNonNullAssertion: nextLevel is non-null when !isMaxed */}
+              {['I', 'II', 'III', 'IV'][upgrade.nextLevel! - 1]} —{' '}
+              {meta.formatEffect(upgrade.nextEffect)}
             </span>
           </div>
         )}
@@ -155,8 +179,8 @@ function UpgradeCard({
           {buying
             ? '…'
             : upgrade.canAfford
-            ? `Améliorer · ${upgrade.nextCost!.toLocaleString('fr-FR')} dust`
-            : `Fonds insuffisants · ${upgrade.nextCost!.toLocaleString('fr-FR')} dust`}
+              ? `Améliorer · ${upgrade.nextCost?.toLocaleString('fr-FR')} dust`
+              : `Fonds insuffisants · ${upgrade.nextCost?.toLocaleString('fr-FR')} dust`}
         </button>
       )}
     </div>

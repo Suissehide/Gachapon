@@ -41,7 +41,9 @@ export function MemberRow({
         <div className="min-w-0 flex-1">
           <span className="truncate text-sm font-medium text-text">
             @{member.user.username}
-            {isMe && <span className="ml-1 text-xs text-text-light">(moi)</span>}
+            {isMe && (
+              <span className="ml-1 text-xs text-text-light">(moi)</span>
+            )}
           </span>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-text-light">

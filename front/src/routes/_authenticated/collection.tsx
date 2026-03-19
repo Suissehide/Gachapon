@@ -6,7 +6,11 @@ import { RARITY_LABELS } from '../../components/collection/CollectionCard.tsx'
 import { CollectionFilters } from '../../components/collection/CollectionFilters.tsx'
 import { CollectionGrid } from '../../components/collection/CollectionGrid.tsx'
 import { CollectionSetGroup } from '../../components/collection/CollectionSetGroup.tsx'
-import { useCards, useRecycle, useUserCollection } from '../../queries/useCollection'
+import {
+  useCards,
+  useRecycle,
+  useUserCollection,
+} from '../../queries/useCollection'
 import { useAuthStore } from '../../stores/auth.store'
 
 export const Route = createFileRoute('/_authenticated/collection')({
@@ -52,15 +56,26 @@ function Collection() {
       return `${cards.filter((c) => owned.has(c.id)).length} / ${cards.length} cartes · ${setCount} set${setCount > 1 ? 's' : ''}`
     }
     const base = `${filteredCards.filter((c) => owned.has(c.id)).length} / ${filteredCards.length} cartes`
-    const rarityLabel = selectedRarity ? ` · ${RARITY_LABELS[selectedRarity]}` : ''
+    const rarityLabel = selectedRarity
+      ? ` · ${RARITY_LABELS[selectedRarity]}`
+      : ''
     const variantLabel = selectedVariant
       ? ` · ${selectedVariant === 'BRILLIANT' ? '✨ Brillante' : '🌈 Holographique'}`
       : ''
     return base + rarityLabel + variantLabel
-  }, [displayMode, cards, filteredCards, owned, selectedRarity, selectedVariant])
+  }, [
+    displayMode,
+    cards,
+    filteredCards,
+    owned,
+    selectedRarity,
+    selectedVariant,
+  ])
 
   const setGroups = useMemo(() => {
-    if (displayMode !== 'set') return []
+    if (displayMode !== 'set') {
+      return []
+    }
     const order: string[] = []
     const groups = new Map<string, { name: string; cards: Card[] }>()
     for (const card of cards) {
@@ -68,7 +83,7 @@ function Collection() {
         order.push(card.set.id)
         groups.set(card.set.id, { name: card.set.name, cards: [] })
       }
-      groups.get(card.set.id)!.cards.push(card)
+      groups.get(card.set.id)?.cards.push(card)
     }
     return order.map((id) => ({ id, ...groups.get(id)! }))
   }, [displayMode, cards])

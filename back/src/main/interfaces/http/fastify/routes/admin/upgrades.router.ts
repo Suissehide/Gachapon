@@ -15,7 +15,7 @@ export const adminUpgradesRouter: FastifyPluginCallbackZod = (fastify) => {
 
   // GET /admin/upgrades
   fastify.get('/', { onRequest: auth }, async () => {
-    return prisma.upgradeConfig.findMany({
+    return await prisma.upgradeConfig.findMany({
       orderBy: [{ type: 'asc' }, { level: 'asc' }],
     })
   })

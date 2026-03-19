@@ -25,13 +25,23 @@ export type BuyUpgradeResult = {
 export const UpgradesApi = {
   getUpgrades: async (): Promise<UpgradeStatus[]> => {
     const res = await fetchWithAuth(`${apiUrl}/upgrades`)
-    if (!res.ok) handleHttpError(res, {}, 'Erreur lors de la récupération des améliorations')
+    if (!res.ok) {
+      handleHttpError(
+        res,
+        {},
+        'Erreur lors de la récupération des améliorations',
+      )
+    }
     return res.json()
   },
 
   buyUpgrade: async (type: UpgradeType): Promise<BuyUpgradeResult> => {
-    const res = await fetchWithAuth(`${apiUrl}/upgrades/${type}/buy`, { method: 'POST' })
-    if (!res.ok) handleHttpError(res, {}, "Erreur lors de l'achat")
+    const res = await fetchWithAuth(`${apiUrl}/upgrades/${type}/buy`, {
+      method: 'POST',
+    })
+    if (!res.ok) {
+      handleHttpError(res, {}, "Erreur lors de l'achat")
+    }
     return res.json()
   },
 }

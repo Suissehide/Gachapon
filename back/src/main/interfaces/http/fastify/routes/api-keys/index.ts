@@ -1,8 +1,7 @@
-import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
-// biome-ignore lint/suspicious/useAwait: fastify plugin pattern
-export const apiKeysRouter: FastifyPluginAsyncZod = async (fastify) => {
+export const apiKeysRouter: FastifyPluginCallbackZod = (fastify) => {
   const { apiKeyRepository } = fastify.iocContainer
 
   fastify.post(

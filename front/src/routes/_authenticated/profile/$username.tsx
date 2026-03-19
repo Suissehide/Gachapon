@@ -1,5 +1,13 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { Calendar, LayoutDashboard, Layers, Settings, Sparkles, Star, Zap } from 'lucide-react'
+import {
+  Calendar,
+  Layers,
+  LayoutDashboard,
+  Settings,
+  Sparkles,
+  Star,
+  Zap,
+} from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import { Button } from '../../../components/ui/button.tsx'

@@ -1,38 +1,62 @@
 import Boom from '@hapi/boom'
 
-import { calculateTokens } from '../economy/economy.domain'
-import { getUserUpgradeEffects, type UserUpgradeEffects } from '../economy/upgrade.domain'
 import type { IocContainer } from '../../types/application/ioc'
 import type { GachaDomainInterface } from '../../types/domain/gacha/gacha.domain.interface'
-import type { CardWithSet, PullResult } from '../../types/domain/gacha/gacha.types'
+import type {
+  CardWithSet,
+  PullResult,
+} from '../../types/domain/gacha/gacha.types'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
-import type { PostgresORMInterface, PrimaTransactionClient } from '../../types/infra/orm/client'
+import type {
+  PostgresORMInterface,
+  PrimaTransactionClient,
+} from '../../types/infra/orm/client'
+import { calculateTokens } from '../economy/economy.domain'
+import {
+  getUserUpgradeEffects,
+  type UserUpgradeEffects,
+} from '../economy/upgrade.domain'
 
 export function pickWeightedRandom(cards: CardWithSet[]): CardWithSet {
-  if (cards.length === 0) { throw new Error('No cards to pick from') }
+  if (cards.length === 0) {
+    throw new Error('No cards to pick from')
+  }
   const total = cards.reduce((sum, c) => sum + c.dropWeight, 0)
-  if (total === 0) { throw new Error('All cards have zero weight') }
+  if (total === 0) {
+    throw new Error('All cards have zero weight')
+  }
   let roll = Math.random() * total
   for (const card of cards) {
     roll -= card.dropWeight
-    if (roll <= 0) { return card }
+    if (roll <= 0) {
+      return card
+    }
   }
   // biome-ignore lint/style/noNonNullAssertion: cards.length > 0 is guaranteed by the guard above
   return cards[cards.length - 1]!
 }
 
-export function pickWeightedRandomWithLuck(cards: CardWithSet[], luckMultiplier: number): CardWithSet {
-  if (cards.length === 0) { throw new Error('No cards to pick from') }
+export function pickWeightedRandomWithLuck(
+  cards: CardWithSet[],
+  luckMultiplier: number,
+): CardWithSet {
+  if (cards.length === 0) {
+    throw new Error('No cards to pick from')
+  }
   const LUCK_RARITIES = new Set(['RARE', 'EPIC', 'LEGENDARY'])
   const weights = cards.map((c) =>
-    LUCK_RARITIES.has(c.rarity) ? c.dropWeight * luckMultiplier : c.dropWeight
+    LUCK_RARITIES.has(c.rarity) ? c.dropWeight * luckMultiplier : c.dropWeight,
   )
   const total = weights.reduce((sum, w) => sum + w, 0)
-  if (total === 0) { throw new Error('All cards have zero weight') }
+  if (total === 0) {
+    throw new Error('All cards have zero weight')
+  }
   let roll = Math.random() * total
   for (let i = 0; i < cards.length; i++) {
     roll -= weights[i]!
-    if (roll <= 0) { return cards[i]! }
+    if (roll <= 0) {
+      return cards[i]!
+    }
   }
   return cards[cards.length - 1]!
 }
@@ -49,19 +73,30 @@ type VariantRates = {
 const VARIANT_ELIGIBLE = ['RARE', 'EPIC', 'LEGENDARY'] as const
 type VariantEligibleRarity = (typeof VARIANT_ELIGIBLE)[number]
 
-function rarityKey(rarity: VariantEligibleRarity): 'Rare' | 'Epic' | 'Legendary' {
+function rarityKey(
+  rarity: VariantEligibleRarity,
+): 'Rare' | 'Epic' | 'Legendary' {
   const map = { RARE: 'Rare', EPIC: 'Epic', LEGENDARY: 'Legendary' } as const
   return map[rarity]
 }
 
-export function pickVariant(rarity: string, rates: VariantRates): 'BRILLIANT' | 'HOLOGRAPHIC' | null {
-  if (!(VARIANT_ELIGIBLE as readonly string[]).includes(rarity)) return null
+export function pickVariant(
+  rarity: string,
+  rates: VariantRates,
+): 'BRILLIANT' | 'HOLOGRAPHIC' | null {
+  if (!(VARIANT_ELIGIBLE as readonly string[]).includes(rarity)) {
+    return null
+  }
   const key = rarityKey(rarity as VariantEligibleRarity)
   const brilliantRate = rates[`brilliantRate${key}`] ?? 0
   const holoRate = rates[`holoRate${key}`] ?? 0
   const roll = Math.random() * 100
-  if (roll < brilliantRate) return 'BRILLIANT'
-  if (roll < brilliantRate + holoRate) return 'HOLOGRAPHIC'
+  if (roll < brilliantRate) {
+    return 'BRILLIANT'
+  }
+  if (roll < brilliantRate + holoRate) {
+    return 'HOLOGRAPHIC'
+  }
   return null
 }
 
@@ -92,12 +127,19 @@ export class GachaDomain implements GachaDomainInterface {
     this.#configService = configService
   }
 
-  async #executePullTx(tx: PrimaTransactionClient, userId: string, cfg: PullCfg): Promise<PullResult> {
+  async #executePullTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+    cfg: PullCfg,
+  ): Promise<PullResult> {
     // 1. Lire l'utilisateur
     const user = await tx.user.findUniqueOrThrow({ where: { id: userId } })
 
     // 2. Calculer les tokens
-    const effectiveInterval = Math.max(1, cfg.tokenRegenIntervalMinutes - cfg.upgrades.regenReductionMinutes)
+    const effectiveInterval = Math.max(
+      1,
+      cfg.tokenRegenIntervalMinutes - cfg.upgrades.regenReductionMinutes,
+    )
     const effectiveMaxStock = cfg.tokenMaxStock + cfg.upgrades.tokenVaultBonus
     const { tokens, newLastTokenAt } = calculateTokens(
       user.lastTokenAt,
@@ -111,7 +153,7 @@ export class GachaDomain implements GachaDomainInterface {
     }
 
     // 3. Charger les cartes (pity : forcer LEGENDARY si seuil atteint)
-    const activeCards = await tx.card.findMany({
+    const activeCards = (await tx.card.findMany({
       where: {
         set: { isActive: true },
         ...(user.pityCurrent >= cfg.pityThreshold
@@ -119,16 +161,17 @@ export class GachaDomain implements GachaDomainInterface {
           : {}),
       },
       include: { set: true },
-    }) as CardWithSet[]
+    })) as CardWithSet[]
 
     if (activeCards.length === 0) {
       throw Boom.internal('No active cards in any set')
     }
 
     // 4. Tirage pondéré
-    const card = cfg.upgrades.luckMultiplier === 1.0
-      ? pickWeightedRandom(activeCards)
-      : pickWeightedRandomWithLuck(activeCards, cfg.upgrades.luckMultiplier)
+    const card =
+      cfg.upgrades.luckMultiplier === 1.0
+        ? pickWeightedRandom(activeCards)
+        : pickWeightedRandomWithLuck(activeCards, cfg.upgrades.luckMultiplier)
 
     // 4b. Roll variant
     const rolledVariant = pickVariant(card.rarity, cfg.variantRates)
@@ -139,7 +182,10 @@ export class GachaDomain implements GachaDomainInterface {
     })
     const wasDuplicate = existing !== null
     const dustEarned = wasDuplicate
-      ? Math.round((cfg.dustByRarity[card.rarity] ?? 0) * cfg.upgrades.dustHarvestMultiplier)
+      ? Math.round(
+          (cfg.dustByRarity[card.rarity] ?? 0) *
+            cfg.upgrades.dustHarvestMultiplier,
+        )
       : 0
 
     // 6. Upsert UserCard
@@ -156,7 +202,13 @@ export class GachaDomain implements GachaDomainInterface {
 
     // 7. Créer GachaPull
     const pull = await tx.gachaPull.create({
-      data: { userId, cardId: card.id, variant: rolledVariant, wasDuplicate, dustEarned },
+      data: {
+        userId,
+        cardId: card.id,
+        variant: rolledVariant,
+        wasDuplicate,
+        dustEarned,
+      },
     })
 
     // 8. Mettre à jour l'utilisateur
@@ -186,10 +238,20 @@ export class GachaDomain implements GachaDomainInterface {
     const attempt = async (): Promise<PullResult> => {
       // Lire la config AVANT la transaction (pas d'I/O async dans le tx serializable)
       const [
-        tokenRegenIntervalMinutes, tokenMaxStock, pityThreshold,
-        dustCommon, dustUncommon, dustRare, dustEpic, dustLegendary,
-        brilliantRateRare, brilliantRateEpic, brilliantRateLegendary,
-        holoRateRare, holoRateEpic, holoRateLegendary,
+        tokenRegenIntervalMinutes,
+        tokenMaxStock,
+        pityThreshold,
+        dustCommon,
+        dustUncommon,
+        dustRare,
+        dustEpic,
+        dustLegendary,
+        brilliantRateRare,
+        brilliantRateEpic,
+        brilliantRateLegendary,
+        holoRateRare,
+        holoRateEpic,
+        holoRateLegendary,
       ] = await Promise.all([
         this.#configService.get('tokenRegenIntervalMinutes'),
         this.#configService.get('tokenMaxStock'),
@@ -206,15 +268,28 @@ export class GachaDomain implements GachaDomainInterface {
         this.#configService.get('holoRateEpic'),
         this.#configService.get('holoRateLegendary'),
       ])
-      const upgrades = await getUserUpgradeEffects(userId, this.#postgresOrm.prisma)
+      const upgrades = await getUserUpgradeEffects(
+        userId,
+        this.#postgresOrm.prisma,
+      )
       const cfg: PullCfg = {
         tokenRegenIntervalMinutes,
         tokenMaxStock,
         pityThreshold,
-        dustByRarity: { COMMON: dustCommon, UNCOMMON: dustUncommon, RARE: dustRare, EPIC: dustEpic, LEGENDARY: dustLegendary },
+        dustByRarity: {
+          COMMON: dustCommon,
+          UNCOMMON: dustUncommon,
+          RARE: dustRare,
+          EPIC: dustEpic,
+          LEGENDARY: dustLegendary,
+        },
         variantRates: {
-          brilliantRateRare, brilliantRateEpic, brilliantRateLegendary,
-          holoRateRare, holoRateEpic, holoRateLegendary,
+          brilliantRateRare,
+          brilliantRateEpic,
+          brilliantRateLegendary,
+          holoRateRare,
+          holoRateEpic,
+          holoRateLegendary,
         },
         upgrades,
       }

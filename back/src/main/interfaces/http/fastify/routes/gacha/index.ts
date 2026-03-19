@@ -7,8 +7,13 @@ import { getUserUpgradeEffects } from '../../../../../domain/economy/upgrade.dom
 import { wsManager } from '../../../../ws/ws-manager'
 
 export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { gachaDomain, userRepository, config, gachaPullRepository, postgresOrm } =
-    fastify.iocContainer
+  const {
+    gachaDomain,
+    userRepository,
+    config,
+    gachaPullRepository,
+    postgresOrm,
+  } = fastify.iocContainer
   const prisma = postgresOrm.prisma
 
   // POST /pulls — consommer 1 token et tirer une carte
@@ -62,7 +67,10 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
       }
 
       const upgrades = await getUserUpgradeEffects(request.user.userID, prisma)
-      const effectiveInterval = Math.max(1, config.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes)
+      const effectiveInterval = Math.max(
+        1,
+        config.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes,
+      )
       const effectiveMaxStock = config.tokenMaxStock + upgrades.tokenVaultBonus
 
       const { tokens, nextTokenAt } = calculateTokens(
@@ -91,7 +99,10 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
       }
 
       const upgrades = await getUserUpgradeEffects(request.user.userID, prisma)
-      const effectiveInterval = Math.max(1, config.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes)
+      const effectiveInterval = Math.max(
+        1,
+        config.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes,
+      )
       const effectiveMaxStock = config.tokenMaxStock + upgrades.tokenVaultBonus
 
       const { tokens, nextTokenAt } = calculateTokens(

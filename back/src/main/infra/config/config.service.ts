@@ -38,7 +38,9 @@ export class ConfigService implements ConfigServiceInterface {
 
     // 1. Redis cache
     const cached = await this.#redis.get(redisKey)
-    if (cached !== null) { return Number(cached) }
+    if (cached !== null) {
+      return Number(cached)
+    }
 
     // 2. DB
     const row = await this.#prisma.globalConfig.findUnique({ where: { key } })
@@ -70,28 +72,35 @@ export class ConfigService implements ConfigServiceInterface {
       })
     }
 
-    const upgradeDefaults: Array<{ type: string; level: number; effect: number; dustCost: number }> = [
-      { type: 'REGEN',        level: 1, effect: 15,   dustCost: 1000  },
-      { type: 'REGEN',        level: 2, effect: 30,   dustCost: 5000  },
-      { type: 'REGEN',        level: 3, effect: 60,   dustCost: 20000 },
-      { type: 'REGEN',        level: 4, effect: 90,   dustCost: 80000 },
-      { type: 'LUCK',         level: 1, effect: 1.05, dustCost: 2000  },
-      { type: 'LUCK',         level: 2, effect: 1.10, dustCost: 8000  },
-      { type: 'LUCK',         level: 3, effect: 1.17, dustCost: 30000 },
-      { type: 'LUCK',         level: 4, effect: 1.25, dustCost: 100000},
-      { type: 'DUST_HARVEST', level: 1, effect: 1.25, dustCost: 1500  },
-      { type: 'DUST_HARVEST', level: 2, effect: 1.50, dustCost: 6000  },
-      { type: 'DUST_HARVEST', level: 3, effect: 2.00, dustCost: 25000 },
-      { type: 'DUST_HARVEST', level: 4, effect: 3.00, dustCost: 75000 },
-      { type: 'TOKEN_VAULT',  level: 1, effect: 5,    dustCost: 800   },
-      { type: 'TOKEN_VAULT',  level: 2, effect: 10,   dustCost: 4000  },
-      { type: 'TOKEN_VAULT',  level: 3, effect: 15,   dustCost: 15000 },
-      { type: 'TOKEN_VAULT',  level: 4, effect: 25,   dustCost: 50000 },
+    const upgradeDefaults: Array<{
+      type: string
+      level: number
+      effect: number
+      dustCost: number
+    }> = [
+      { type: 'REGEN', level: 1, effect: 15, dustCost: 1000 },
+      { type: 'REGEN', level: 2, effect: 30, dustCost: 5000 },
+      { type: 'REGEN', level: 3, effect: 60, dustCost: 20000 },
+      { type: 'REGEN', level: 4, effect: 90, dustCost: 80000 },
+      { type: 'LUCK', level: 1, effect: 1.05, dustCost: 2000 },
+      { type: 'LUCK', level: 2, effect: 1.1, dustCost: 8000 },
+      { type: 'LUCK', level: 3, effect: 1.17, dustCost: 30000 },
+      { type: 'LUCK', level: 4, effect: 1.25, dustCost: 100000 },
+      { type: 'DUST_HARVEST', level: 1, effect: 1.25, dustCost: 1500 },
+      { type: 'DUST_HARVEST', level: 2, effect: 1.5, dustCost: 6000 },
+      { type: 'DUST_HARVEST', level: 3, effect: 2.0, dustCost: 25000 },
+      { type: 'DUST_HARVEST', level: 4, effect: 3.0, dustCost: 75000 },
+      { type: 'TOKEN_VAULT', level: 1, effect: 5, dustCost: 800 },
+      { type: 'TOKEN_VAULT', level: 2, effect: 10, dustCost: 4000 },
+      { type: 'TOKEN_VAULT', level: 3, effect: 15, dustCost: 15000 },
+      { type: 'TOKEN_VAULT', level: 4, effect: 25, dustCost: 50000 },
     ]
 
     for (const row of upgradeDefaults) {
       await this.#prisma.upgradeConfig.upsert({
+        // biome-ignore lint/suspicious/noExplicitAny: Prisma enum cast required for seeded string values
         where: { type_level: { type: row.type as any, level: row.level } },
+        // biome-ignore lint/suspicious/noExplicitAny: Prisma create shape mismatch with seeded object type
         create: row as any,
         update: {}, // ne pas écraser les valeurs configurées par l'admin
       })

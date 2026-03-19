@@ -10,25 +10,29 @@ import type { TokenState } from '../../types/domain/economy/economy.types'
 export function calculateTokens(
   lastTokenAt: Date | null,
   currentTokens: number,
-  regenIntervalHours: number,
+  regenIntervalMinutes: number,
   maxStock: number,
 ): TokenState {
-  // Déjà au max → pas de regen, pas de nextTokenAt
+  // Déjà au max (ou au-dessus) → pas de regen, pas de nextTokenAt
   if (currentTokens >= maxStock) {
-    return { tokens: maxStock, newLastTokenAt: lastTokenAt, nextTokenAt: null }
+    return {
+      tokens: currentTokens,
+      newLastTokenAt: lastTokenAt,
+      nextTokenAt: null,
+    }
   }
 
   // Null = premier accès, on démarre le clock maintenant
   const ref = lastTokenAt ?? new Date()
   if (!lastTokenAt) {
     const nextTokenAt = new Date(
-      ref.getTime() + regenIntervalHours * 3600 * 1000,
+      ref.getTime() + regenIntervalMinutes * 60 * 1000,
     )
     return { tokens: currentTokens, newLastTokenAt: ref, nextTokenAt }
   }
 
   const now = Date.now()
-  const msPerToken = regenIntervalHours * 3600 * 1000
+  const msPerToken = regenIntervalMinutes * 60 * 1000
   const elapsed = now - ref.getTime()
   const gained = Math.floor(elapsed / msPerToken)
 

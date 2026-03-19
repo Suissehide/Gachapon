@@ -54,9 +54,7 @@ export function useCardColumns(
         size: 130,
         cell: ({ row }) => {
           const pct =
-            totalWeight > 0
-              ? (row.original.dropWeight / totalWeight) * 100
-              : 0
+            totalWeight > 0 ? (row.original.dropWeight / totalWeight) * 100 : 0
           return (
             <div>
               <div className="mb-1 flex justify-between text-xs">

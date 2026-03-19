@@ -7,7 +7,9 @@ import type { GlobalRole } from '../../../../../generated/client'
 
 declare module 'fastify' {
   interface FastifyInstance {
-    requireRole: (role: GlobalRole) => (request: FastifyRequest) => Promise<void>
+    requireRole: (
+      role: GlobalRole,
+    ) => (request: FastifyRequest) => Promise<void>
   }
 }
 

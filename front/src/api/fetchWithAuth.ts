@@ -28,12 +28,12 @@ export const fetchWithAuth = async (
       if (refreshResponse?.ok) {
         response = await makeRequest()
       } else {
-        window.location.href = '/auth'
+        window.location.href = '/'
         return Promise.reject(new Error('Session expired'))
       }
     } catch {
       isRefreshing = false
-      window.location.href = '/auth'
+      window.location.href = '/'
       return Promise.reject(new Error('Session expired'))
     }
   }

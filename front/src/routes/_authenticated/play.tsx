@@ -16,7 +16,7 @@ export const Route = createFileRoute('/_authenticated/play')({
   component: Play,
 })
 
-type Phase = 'idle' | 'pulling' | 'ball' | 'opening' | 'revealed'
+type Phase = 'idle' | 'pulling' | 'ball' | 'opening' | 'open' | 'revealed'
 
 function Play() {
   const [phase, setPhase] = useState<Phase>('idle')
@@ -69,12 +69,21 @@ function Play() {
     })
   }
 
-  // User clicks the ball → open it with flash then reveal
+  // User clicks the ball → open it, wait for animation, then show open state
   const handleBallClick = () => {
     if (phase !== 'ball') {
       return
     }
     setPhase('opening')
+    setTimeout(() => setPhase('open'), 1600)
+  }
+
+  // User clicks "Récupérer" → flash then reveal card
+  const handleReveal = () => {
+    if (phase !== 'open') {
+      return
+    }
+    setPhase('opening') // reuse flash
     setTimeout(() => {
       setPullResult(pendingResult.current)
       setPhase('revealed')
@@ -87,7 +96,11 @@ function Play() {
     setPhase('idle')
   }
 
-  const showCanvas = phase === 'ball' || phase === 'opening'
+  const showCanvas =
+    phase === 'ball' ||
+    phase === 'opening' ||
+    phase === 'open' ||
+    phase === 'revealed'
   const showFlash = phase === 'opening'
 
   return (
@@ -116,9 +129,9 @@ function Play() {
         )}
       </div>
 
-      {/* 3D Canvas — only when ball is visible */}
+      {/* 3D Canvas — mounted for all ball phases to avoid GachaBall re-mount */}
       {showCanvas ? (
-        <div className="relative z-10 h-[320px] w-[320px]">
+        <div className="relative z-10 h-[320px] w-[320px] animate-in zoom-in-75 duration-300">
           <Canvas
             camera={{ position: [0, 0.3, 4], fov: 45 }}
             shadows
@@ -134,7 +147,7 @@ function Play() {
             <pointLight position={[-3, 3, 3]} intensity={0.6} color="#f59e0b" />
             <GachaBall
               interactive={phase === 'ball'}
-              isOpening={phase === 'opening'}
+              isOpening={phase === 'opening' || phase === 'open'}
               onOpen={handleBallClick}
             />
             <Environment preset="city" />
@@ -146,9 +159,17 @@ function Play() {
               Clique sur la boule pour l'ouvrir
             </p>
           )}
+
+          {/* Open state — reveal button */}
+          {phase === 'open' && (
+            <div className="absolute bottom-2 left-0 right-0 flex justify-center animate-in fade-in-0 duration-500">
+              <Button onClick={handleReveal} className="rounded-full px-6">
+                Récupérer la carte ✨
+              </Button>
+            </div>
+          )}
         </div>
       ) : (
-        /* Placeholder space when ball is not shown */
         <div className="h-[320px] w-[320px]" />
       )}
 

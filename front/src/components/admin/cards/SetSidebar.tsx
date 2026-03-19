@@ -1,21 +1,16 @@
-import { Pencil, Power, Trash2 } from 'lucide-react'
+import { Pencil, Power, Search, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 
-import { useAppForm } from '../../../hooks/formConfig'
 import type { AdminCardSet } from '../../../queries/useAdminCards'
 import {
-  useAdminCreateSet,
   useAdminDeleteSet,
   useAdminSets,
   useAdminUpdateSet,
 } from '../../../queries/useAdminCards'
 import { Button } from '../../ui/button'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '../../ui/sheet'
+import { Input } from '../../ui/input'
+import { CreateSetSheet } from './CreateSetSheet'
+import { EditSetSheet } from './EditSetSheet'
 
 interface SetSidebarProps {
   selectedSetId: string | null
@@ -28,17 +23,32 @@ export function SetSidebar({ selectedSetId, onSelect }: SetSidebarProps) {
   const deleteSet = useAdminDeleteSet()
   const [showCreate, setShowCreate] = useState(false)
   const [editSet, setEditSet] = useState<AdminCardSet | null>(null)
+  const [search, setSearch] = useState('')
 
   const sets = data?.sets ?? []
+  const filteredSets = search
+    ? sets.filter((s) => s.name.toLowerCase().includes(search.toLowerCase()))
+    : sets
 
   return (
-    <div className="flex w-52 flex-shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card">
+    <div className="flex w-58 shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card">
+      <div className="border-b border-border p-2">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-text-light/50" />
+          <Input
+            placeholder="Rechercher…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-7 pl-6 text-xs"
+          />
+        </div>
+      </div>
       <div className="flex-1 space-y-1 overflow-y-auto p-2">
-        {sets.map((set) => (
+        {filteredSets.map((set) => (
           <button
             key={set.id}
             type="button"
-            className={`group flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors ${
+            className={`group flex w-full cursor-pointer items-start gap-2 rounded-lg px-3 py-2 text-left transition-colors ${
               selectedSetId === set.id
                 ? 'border border-primary/30 bg-primary/10'
                 : 'hover:bg-surface'
@@ -60,7 +70,7 @@ export function SetSidebar({ selectedSetId, onSelect }: SetSidebarProps) {
                 <span
                   className={`rounded-full px-1.5 py-0 text-[10px] font-bold ${
                     set.isActive
-                      ? 'bg-green-500/20 text-green-400'
+                      ? 'bg-green-500/20 text-green-800'
                       : 'bg-border text-text-light'
                   }`}
                 >
@@ -128,133 +138,5 @@ export function SetSidebar({ selectedSetId, onSelect }: SetSidebarProps) {
         onOpenChange={(o) => !o && setEditSet(null)}
       />
     </div>
-  )
-}
-
-function CreateSetSheet({
-  open,
-  onOpenChange,
-}: {
-  open: boolean
-  onOpenChange: (o: boolean) => void
-}) {
-  const createSet = useAdminCreateSet()
-
-  const form = useAppForm({
-    defaultValues: { name: '', description: '' },
-    onSubmit: ({ value }) => {
-      createSet.mutate({
-        name: value.name,
-        description: value.description || undefined,
-        isActive: false,
-      })
-      onOpenChange(false)
-    },
-  })
-
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent>
-        <SheetHeader>
-          <SheetTitle>Nouveau set</SheetTitle>
-        </SheetHeader>
-        <div className="mt-6 px-6">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              form.handleSubmit()
-            }}
-            className="space-y-3"
-          >
-            <form.AppField name="name">
-              {(f) => <f.Input label="Nom" />}
-            </form.AppField>
-            <form.AppField name="description">
-              {(f) => <f.Input label="Description (optionnelle)" />}
-            </form.AppField>
-            <Button type="submit" className="w-full">
-              Créer
-            </Button>
-          </form>
-        </div>
-      </SheetContent>
-    </Sheet>
-  )
-}
-
-function EditSetSheet({
-  set,
-  onOpenChange,
-}: {
-  set: AdminCardSet | null
-  onOpenChange: (o: boolean) => void
-}) {
-  return (
-    <Sheet open={!!set} onOpenChange={onOpenChange}>
-      <SheetContent>
-        <SheetHeader>
-          <SheetTitle>{set?.name ?? ''}</SheetTitle>
-        </SheetHeader>
-        {set && (
-          <div className="mt-6 px-6">
-            <EditSetForm
-              key={set.id}
-              set={set}
-              onClose={() => onOpenChange(false)}
-            />
-          </div>
-        )}
-      </SheetContent>
-    </Sheet>
-  )
-}
-
-function EditSetForm({
-  set,
-  onClose,
-}: {
-  set: AdminCardSet
-  onClose: () => void
-}) {
-  const updateSet = useAdminUpdateSet()
-
-  const form = useAppForm({
-    defaultValues: {
-      name: set.name,
-      description: set.description ?? '',
-      isActive: set.isActive,
-    },
-    onSubmit: ({ value }) => {
-      updateSet.mutate({
-        id: set.id,
-        name: value.name,
-        description: value.description || undefined,
-        isActive: value.isActive,
-      })
-      onClose()
-    },
-  })
-
-  return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault()
-        form.handleSubmit()
-      }}
-      className="space-y-3"
-    >
-      <form.AppField name="isActive">
-        {(f) => <f.Toggle label="Statut" options={['Actif', 'Inactif']} />}
-      </form.AppField>
-      <form.AppField name="name">
-        {(f) => <f.Input label="Nom" />}
-      </form.AppField>
-      <form.AppField name="description">
-        {(f) => <f.Input label="Description" />}
-      </form.AppField>
-      <Button type="submit" className="w-full">
-        Sauvegarder
-      </Button>
-    </form>
   )
 }

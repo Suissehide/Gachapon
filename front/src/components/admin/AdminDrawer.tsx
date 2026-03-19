@@ -16,7 +16,9 @@ export function AdminDrawer({
   title,
   children,
 }: AdminDrawerProps) {
-  if (!open) return null
+  if (!open) {
+    return null
+  }
   return (
     <>
       <div className="fixed inset-0 z-40 bg-black/50" onClick={onClose} />

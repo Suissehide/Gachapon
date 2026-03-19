@@ -1,9 +1,8 @@
-import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import { wsManager } from '../../../../ws/ws-manager'
 
-// biome-ignore lint/suspicious/useAwait: fastify plugin pattern
-export const wsRouter: FastifyPluginAsyncZod = async (fastify) => {
+export const wsRouter: FastifyPluginCallbackZod = (fastify) => {
   fastify.get('/ws', { websocket: true }, async (socket, request) => {
     try {
       await fastify.verifySessionCookie(request)

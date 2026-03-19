@@ -19,7 +19,9 @@ const NEUTRAL_EFFECTS: UserUpgradeEffects = {
   tokenVaultBonus: 0,
 }
 
-export function getUpgradeEffectsFromRows(rows: UpgradeRow[]): UserUpgradeEffects {
+export function getUpgradeEffectsFromRows(
+  rows: UpgradeRow[],
+): UserUpgradeEffects {
   const result = { ...NEUTRAL_EFFECTS }
   for (const row of rows) {
     switch (row.type) {
@@ -47,7 +49,9 @@ export function getUpgradeEffectsFromRows(rows: UpgradeRow[]): UserUpgradeEffect
 export async function getUserUpgradeEffects(
   userId: string,
   prisma: {
+    // biome-ignore lint/complexity/noBannedTypes: Prisma delegate shape is not statically importable in domain layer
     userUpgrade: { findMany: Function }
+    // biome-ignore lint/complexity/noBannedTypes: Prisma delegate shape is not statically importable in domain layer
     upgradeConfig: { findMany: Function }
   },
 ): Promise<UserUpgradeEffects> {

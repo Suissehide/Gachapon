@@ -57,7 +57,9 @@ export function CollectionFilters({
                   isActive={selectedRarity === r}
                   activeClass={RARITY_CHIP_ACTIVE[r]}
                   inactiveClass={RARITY_CHIP_INACTIVE[r]}
-                  onClick={() => onRarityChange(selectedRarity === r ? null : r)}
+                  onClick={() =>
+                    onRarityChange(selectedRarity === r ? null : r)
+                  }
                 />
               ))}
             </div>
@@ -75,7 +77,9 @@ export function CollectionFilters({
                 activeClass="border-yellow-400 text-yellow-300 bg-yellow-400/10"
                 inactiveClass="border-yellow-400/40 text-yellow-300/60"
                 onClick={() =>
-                  onVariantChange(selectedVariant === 'BRILLIANT' ? null : 'BRILLIANT')
+                  onVariantChange(
+                    selectedVariant === 'BRILLIANT' ? null : 'BRILLIANT',
+                  )
                 }
               />
               <FilterChip
@@ -84,7 +88,9 @@ export function CollectionFilters({
                 activeClass="border-indigo-400 text-indigo-300 bg-indigo-400/10"
                 inactiveClass="border-indigo-400/40 text-indigo-300/60"
                 onClick={() =>
-                  onVariantChange(selectedVariant === 'HOLOGRAPHIC' ? null : 'HOLOGRAPHIC')
+                  onVariantChange(
+                    selectedVariant === 'HOLOGRAPHIC' ? null : 'HOLOGRAPHIC',
+                  )
                 }
               />
             </div>

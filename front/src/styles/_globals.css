@@ -299,7 +299,8 @@ h6 {
 }
 
 .particle {
-  animation: particleFloat var(--duration, 2s) ease-out var(--delay, 0s) infinite;
+  animation: particleFloat var(--duration, 2s) ease-out var(--delay, 0s)
+    infinite;
 }
 
 @keyframes legendaryFlash {
@@ -469,7 +470,7 @@ h6 {
 }
 
 .card-light-sweep::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   width: 40%;
@@ -497,7 +498,7 @@ h6 {
 
 .MuiPickersSectionList-root {
   width: auto;
-  min-width: 0 !important;
+  min-width: 0;
 }
 
 .MuiButtonBase-root {
@@ -513,7 +514,7 @@ h6 {
 
 .fc-timegrid-event-harness:hover {
   transition: ease 0.2s;
-  left: 0 !important;
+  left: 0;
 }
 
 .fc-event.fc-event-draggable {
@@ -535,7 +536,7 @@ h6 {
 }
 
 .fc-slot {
-  opacity: 100 !important;
+  opacity: 100;
 }
 
 .edit-mode .fc-view-harness::before {

@@ -13,17 +13,23 @@ export type UpgradeConfigRow = {
 export const AdminUpgradesApi = {
   getUpgrades: async (): Promise<UpgradeConfigRow[]> => {
     const res = await fetchWithAuth(`${apiUrl}/admin/upgrades`)
-    if (!res.ok) handleHttpError(res, {}, 'Erreur lors de la récupération')
+    if (!res.ok) {
+      handleHttpError(res, {}, 'Erreur lors de la récupération')
+    }
     return res.json()
   },
 
-  saveUpgrades: async (upgrades: UpgradeConfigRow[]): Promise<{ updated: number }> => {
+  saveUpgrades: async (
+    upgrades: UpgradeConfigRow[],
+  ): Promise<{ updated: number }> => {
     const res = await fetchWithAuth(`${apiUrl}/admin/upgrades`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ upgrades }),
     })
-    if (!res.ok) handleHttpError(res, {}, 'Erreur lors de la sauvegarde')
+    if (!res.ok) {
+      handleHttpError(res, {}, 'Erreur lors de la sauvegarde')
+    }
     return res.json()
   },
 }

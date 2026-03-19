@@ -2,7 +2,7 @@ import { createFormHook } from '@tanstack/react-form'
 import { Github } from '@uiw/react-color'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, ImageIcon, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { Button } from '../components/ui/button.tsx'
@@ -35,6 +35,10 @@ interface SelectFieldProps extends FieldComponentProps {
 
 interface ToggleFieldProps extends FieldComponentProps {
   options: string[]
+}
+
+interface FileFieldProps extends FieldComponentProps {
+  accept?: string
 }
 
 const TextField = ({ label, type, disabled, className }: InputFieldProps) => {
@@ -341,6 +345,107 @@ function ToggleField({ label, className, options }: ToggleFieldProps) {
   )
 }
 
+function FileField({
+  label,
+  className,
+  accept = 'image/jpeg,image/png,image/webp',
+}: FileFieldProps) {
+  const field = useFieldContext<File | null>()
+  const file = field.state.value ?? null
+  const [preview, setPreview] = useState<string | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!file) {
+      setPreview(null)
+      return
+    }
+    const url = URL.createObjectURL(file)
+    setPreview(url)
+    return () => URL.revokeObjectURL(url)
+  }, [file])
+
+  const clear = () => {
+    field.handleChange(null)
+    if (inputRef.current) {
+      inputRef.current.value = ''
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+    const dropped = e.dataTransfer.files?.[0]
+    if (dropped) {
+      field.handleChange(dropped)
+    }
+  }
+
+  return (
+    <div className={cn('flex flex-col gap-1', className)}>
+      {label && <Label>{label}</Label>}
+      {preview ? (
+        <div className="group relative rounded-md border border-border overflow-hidden bg-black/20">
+          <img
+            src={preview}
+            alt="Aperçu"
+            className="w-full object-contain max-h-40"
+          />
+          <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/40">
+            <button
+              type="button"
+              onClick={clear}
+              className="rounded-full bg-destructive/90 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          {file && (
+            <div className="absolute bottom-0 left-0 right-0 truncate bg-black/50 px-2 py-1 text-[10px] text-white/70 opacity-0 transition-opacity group-hover:opacity-100">
+              {file.name}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div
+          className={cn(
+            'relative flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-border bg-input/30 px-4 py-6 transition-colors',
+            isDragging
+              ? 'border-primary bg-primary/5'
+              : 'hover:border-primary/60 hover:bg-primary/5',
+          )}
+          onDragOver={(e) => {
+            e.preventDefault()
+            setIsDragging(true)
+          }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={handleDrop}
+          onClick={() => inputRef.current?.click()}
+        >
+          <ImageIcon className="h-6 w-6 text-text-light/40" />
+          <div className="text-center">
+            <p className="text-xs font-medium text-text-light">
+              Déposer ou <span className="text-primary">parcourir</span>
+            </p>
+            <p className="mt-0.5 text-[10px] text-text-light/50">
+              JPEG · PNG · WEBP
+            </p>
+          </div>
+          <input
+            ref={inputRef}
+            type="file"
+            accept={accept}
+            onChange={(e) => field.handleChange(e.target.files?.[0] ?? null)}
+            className="sr-only"
+          />
+        </div>
+      )}
+      <FieldInfo field={field} />
+    </div>
+  )
+}
+
 // Composants de formulaire génériques
 function SubmitButton({
   label,
@@ -380,6 +485,7 @@ export const { useAppForm, withForm } = createFormHook({
     TextArea: TextAreaField,
     ColorPicker: ColorPickerField,
     Toggle: ToggleField,
+    FileInput: FileField,
   },
   formComponents: {
     SubmitButton,

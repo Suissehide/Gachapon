@@ -47,7 +47,11 @@ function AdminShop() {
             Chargement…
           </div>
         ) : (
-          <ReactTable columns={columns} data={data?.items ?? []} filterId="admin-shop" />
+          <ReactTable
+            columns={columns}
+            data={data?.items ?? []}
+            filterId="admin-shop"
+          />
         )}
       </div>
 
@@ -65,7 +69,11 @@ function AdminShop() {
         onOpenChange={(o) => !o && setEditItem(null)}
         onSave={(fields) => {
           if (editItem) {
-            updateItem.mutate({ id: editItem.id, ...fields, dustCost: fields.dustCost ?? 0 })
+            updateItem.mutate({
+              id: editItem.id,
+              ...fields,
+              dustCost: fields.dustCost ?? 0,
+            })
           }
           setEditItem(null)
         }}

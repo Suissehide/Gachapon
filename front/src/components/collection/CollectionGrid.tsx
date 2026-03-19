@@ -17,7 +17,9 @@ export function CollectionGrid({
   if (cards.length === 0) {
     return (
       <div className="flex h-48 items-center justify-center">
-        <p className="text-text-light">Aucune carte ne correspond à ces filtres.</p>
+        <p className="text-text-light">
+          Aucune carte ne correspond à ces filtres.
+        </p>
       </div>
     )
   }

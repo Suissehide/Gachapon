@@ -3,7 +3,7 @@ import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
 export type AdminConfig = {
-  tokenRegenIntervalHours: number
+  tokenRegenIntervalMinutes: number
   tokenMaxStock: number
   pityThreshold: number
   dustCommon: number

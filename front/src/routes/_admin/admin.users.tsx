@@ -138,30 +138,6 @@ function AdminUsers() {
         )}
       </div>
 
-      {data && (
-        <div className="mt-4 flex items-center justify-between text-sm text-text-light">
-          <span>{data.total} utilisateurs</span>
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="ghost"
-              disabled={page === 1}
-              onClick={() => setPage((p) => p - 1)}
-            >
-              Précédent
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              disabled={page * 20 >= data.total}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Suivant
-            </Button>
-          </div>
-        </div>
-      )}
-
       <AdminDrawer
         open={!!selected}
         onClose={() => setSelected(null)}
@@ -280,7 +256,7 @@ function AdminUsers() {
               rel="noreferrer"
               className="block w-full rounded-lg border border-border bg-surface px-3 py-2 text-center text-sm text-text-light transition-colors hover:text-text"
             >
-              Voir collection →
+              on →
             </a>
           </div>
         )}

@@ -112,7 +112,10 @@ const PopupTitle = React.forwardRef<
 >(({ className, children, icon, ...props }, ref) => (
   <Dialog.Title
     ref={ref}
-    className={cn('flex items-center gap-3 text-base font-semibold text-text m-0', className)}
+    className={cn(
+      'flex items-center gap-3 text-base font-semibold text-text m-0',
+      className,
+    )}
     {...props}
   >
     {icon && (

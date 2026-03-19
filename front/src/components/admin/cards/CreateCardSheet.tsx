@@ -1,16 +1,8 @@
-import { useState } from 'react'
-
-import { Button } from '../../ui/button'
-import { Label } from '../../ui/label'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '../../ui/sheet'
 import { RARITY_OPTIONS } from '../../../constants/card.constant'
 import { useAppForm } from '../../../hooks/formConfig'
 import type { AdminCardSet } from '../../../queries/useAdminCards'
+import { Button } from '../../ui/button'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../../ui/sheet'
 
 interface CreateCardSheetProps {
   open: boolean
@@ -58,20 +50,18 @@ function CreateCardForm({
   defaultSetId?: string | null
   onCreate: (fd: FormData) => void
 }) {
-  const [file, setFile] = useState<File | null>(null)
-  const [fileKey, setFileKey] = useState(0)
-
   const setOptions = sets.map((s) => ({ value: s.id, label: s.name }))
 
   const form = useAppForm({
     defaultValues: {
       name: '',
-      setId: defaultSetId ?? (sets[0]?.id ?? ''),
+      setId: defaultSetId ?? sets[0]?.id ?? '',
       rarity: 'COMMON',
       dropWeight: 1 as number | undefined,
+      image: null as File | null,
     },
     onSubmit: ({ value }) => {
-      if (!file) {
+      if (!value.image) {
         return
       }
       const fd = new FormData()
@@ -79,10 +69,8 @@ function CreateCardForm({
       fd.append('setId', value.setId)
       fd.append('rarity', value.rarity)
       fd.append('dropWeight', String(value.dropWeight ?? 1))
-      fd.append('image', file)
+      fd.append('image', value.image)
       onCreate(fd)
-      setFile(null)
-      setFileKey((k) => k + 1)
     },
   })
 
@@ -106,19 +94,16 @@ function CreateCardForm({
       <form.AppField name="dropWeight">
         {(f) => <f.Number label="Poids de drop" />}
       </form.AppField>
-      <div className="flex flex-col gap-1">
-        <Label>Image (jpeg/png/webp)</Label>
-        <input
-          key={fileKey}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          className="text-sm text-text-light"
-        />
-      </div>
-      <Button type="submit" className="w-full" disabled={!file}>
-        Créer
-      </Button>
+      <form.AppField name="image">
+        {(f) => <f.FileInput label="Image (jpeg/png/webp)" />}
+      </form.AppField>
+      <form.Subscribe selector={(s) => s.values.image}>
+        {(image) => (
+          <Button type="submit" className="w-full" disabled={!image}>
+            Créer
+          </Button>
+        )}
+      </form.Subscribe>
     </form>
   )
 }

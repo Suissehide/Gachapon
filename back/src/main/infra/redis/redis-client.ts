@@ -21,7 +21,11 @@ export class RedisClient implements RedisClientInterface {
     return this.client.get(key)
   }
 
-  async set(key: string, value: string | number, ttlSeconds: number): Promise<void> {
+  async set(
+    key: string,
+    value: string | number,
+    ttlSeconds: number,
+  ): Promise<void> {
     await this.client.set(String(key), String(value), 'EX', ttlSeconds)
   }
 

@@ -29,25 +29,6 @@ export const AuthApi = {
     return response.json()
   },
 
-  logout: async (): Promise<void> => {
-    const response = await fetch(`${apiUrl}/auth/logout`, {
-      method: 'POST',
-    })
-    if (!response.ok) {
-      handleHttpError(
-        response,
-        {
-          401: {
-            title: 'Session expirée',
-            message: 'Vous devez être connecté pour vous déconnecter',
-          },
-        },
-        'Erreur lors de la déconnexion',
-      )
-    }
-    return
-  },
-
   refresh: async (): Promise<Response> => {
     const response = await fetch(`${apiUrl}/auth/refresh`, {
       method: 'POST',

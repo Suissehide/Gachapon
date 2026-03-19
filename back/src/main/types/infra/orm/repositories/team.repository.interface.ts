@@ -1,4 +1,7 @@
-import type { TeamSummary, TeamWithMembers } from '../../../domain/team/team.types'
+import type {
+  TeamSummary,
+  TeamWithMembers,
+} from '../../../domain/team/team.types'
 
 export interface ITeamRepository {
   findById(id: string): Promise<TeamWithMembers | null>

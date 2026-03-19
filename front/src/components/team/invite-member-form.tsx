@@ -12,7 +12,9 @@ export function InviteMemberForm({ teamId }: { teamId: string }) {
 
   const handleInvite = () => {
     const value = input.trim()
-    if (!value) return
+    if (!value) {
+      return
+    }
     setError('')
     const isEmail = value.includes('@')
     invite(isEmail ? { email: value } : { username: value }, {
@@ -29,10 +31,14 @@ export function InviteMemberForm({ teamId }: { teamId: string }) {
           value={input}
           onChange={(e) => {
             setInput(e.target.value)
-            if (error) setError('')
+            if (error) {
+              setError('')
+            }
           }}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') handleInvite()
+            if (e.key === 'Enter') {
+              handleInvite()
+            }
           }}
           placeholder="@pseudo ou email"
         />

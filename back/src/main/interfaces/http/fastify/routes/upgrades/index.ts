@@ -18,21 +18,31 @@ export const upgradesRouter: FastifyPluginCallbackZod = (fastify) => {
 
       const [userUpgrades, allConfigs] = await Promise.all([
         prisma.userUpgrade.findMany({ where: { userId } }),
-        prisma.upgradeConfig.findMany({ orderBy: [{ type: 'asc' }, { level: 'asc' }] }),
+        prisma.upgradeConfig.findMany({
+          orderBy: [{ type: 'asc' }, { level: 'asc' }],
+        }),
       ])
 
       const levelByType = Object.fromEntries(
-        userUpgrades.map((u) => [u.type, u.level])
+        userUpgrades.map((u) => [u.type, u.level]),
       ) as Record<string, number>
 
-      const user = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { dust: true } })
+      const user = await prisma.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { dust: true },
+      })
 
       return UPGRADE_TYPES.map((type) => {
         const currentLevel = levelByType[type] ?? 0
-        const currentConfig = allConfigs.find((c) => c.type === type && c.level === currentLevel)
-        const nextConfig = currentLevel < MAX_LEVEL
-          ? allConfigs.find((c) => c.type === type && c.level === currentLevel + 1)
-          : null
+        const currentConfig = allConfigs.find(
+          (c) => c.type === type && c.level === currentLevel,
+        )
+        const nextConfig =
+          currentLevel < MAX_LEVEL
+            ? allConfigs.find(
+                (c) => c.type === type && c.level === currentLevel + 1,
+              )
+            : null
 
         return {
           type,
@@ -82,7 +92,9 @@ export const upgradesRouter: FastifyPluginCallbackZod = (fastify) => {
 
       const result = await postgresOrm.executeWithTransactionClient(
         async (tx) => {
-          const user = await tx.user.findUniqueOrThrow({ where: { id: userId } })
+          const user = await tx.user.findUniqueOrThrow({
+            where: { id: userId },
+          })
 
           if (user.dust < config.dustCost) {
             throw Boom.paymentRequired('Not enough dust')

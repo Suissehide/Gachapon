@@ -59,9 +59,9 @@ const configSchema = z.object({
     .string()
     .default('http://localhost:3000/auth/oauth/discord/callback'),
 
-  tokenRegenIntervalHours: z
+  tokenRegenIntervalMinutes: z
     .string()
-    .default('4')
+    .default('240')
     .transform((v) => Number.parseInt(v, 10)),
   tokenMaxStock: z
     .string()

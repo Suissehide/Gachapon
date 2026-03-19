@@ -19,7 +19,10 @@ export function HeaderTable<TData>({
         <tr key={headerGroup.id}>
           {headerGroup.headers.map((header) => {
             const { column } = header
-            const meta = header.column.columnDef.meta as CustomMeta<TData, unknown>
+            const meta = header.column.columnDef.meta as CustomMeta<
+              TData,
+              unknown
+            >
             const headerClass = meta?.headerClass ?? ''
             const grow = meta?.grow
             const filter = meta?.filter
@@ -51,18 +54,27 @@ export function HeaderTable<TData>({
                       type="button"
                       onClick={column.getToggleSortingHandler()}
                       className={`group flex w-full items-center gap-2 px-4 py-3 ${
-                        column.getCanSort() ? 'cursor-pointer' : 'cursor-default'
+                        column.getCanSort()
+                          ? 'cursor-pointer'
+                          : 'cursor-default'
                       }`}
                     >
                       <span
                         className={`text-[10px] font-semibold uppercase tracking-[0.1em] transition-colors ${
-                          sortState ? 'text-primary' : `text-text-light ${headerClass}`
+                          sortState
+                            ? 'text-primary'
+                            : `text-text-light ${headerClass}`
                         }`}
                       >
-                        {flexRender(column.columnDef.header, header.getContext())}
+                        {flexRender(
+                          column.columnDef.header,
+                          header.getContext(),
+                        )}
                       </span>
                       {column.getCanSort() && (
-                        <span className="ml-auto flex-shrink-0">{SortIcon}</span>
+                        <span className="ml-auto flex-shrink-0">
+                          {SortIcon}
+                        </span>
                       )}
                     </button>
 

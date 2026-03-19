@@ -7,7 +7,7 @@ import { useAuthStore } from '../stores/auth.store.js'
 export const Route = createFileRoute('/pending')({
   beforeLoad: () => {
     if (!useAuthStore.getState().isAuthenticated) {
-      throw redirect({ to: '/login' })
+      throw redirect({ to: '/' })
     }
   },
   component: Pending,

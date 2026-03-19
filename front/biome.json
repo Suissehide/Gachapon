@@ -19,6 +19,9 @@
       }
     }
   },
+  "files": {
+    "includes": ["src/**", "!src/routeTree.gen.ts"]
+  },
   "formatter": {
     "indentStyle": "space"
   },

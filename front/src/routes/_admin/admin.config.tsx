@@ -19,10 +19,10 @@ const CONFIG_GROUPS = [
     title: 'Tokens',
     fields: [
       {
-        key: 'tokenRegenIntervalHours',
-        label: 'Régénération (heures)',
-        min: 0.5,
-        step: 0.5,
+        key: 'tokenRegenIntervalMinutes',
+        label: 'Régénération (minutes)',
+        min: 1,
+        step: 1,
       },
       { key: 'tokenMaxStock', label: 'Stock maximum', min: 1, step: 1 },
     ],

@@ -2,13 +2,13 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { Star, Trophy, Users } from 'lucide-react'
 import { useState } from 'react'
 
+import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
 import type {
   CollectorEntry,
   LegendaryEntry,
   TeamEntry,
 } from '../../queries/useLeaderboard'
 import { useLeaderboard } from '../../queries/useLeaderboard'
-import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
 import { useAuthStore } from '../../stores/auth.store'
 
 export const Route = createFileRoute('/_authenticated/leaderboard')({
@@ -18,9 +18,21 @@ export const Route = createFileRoute('/_authenticated/leaderboard')({
 type Tab = 'collectors' | 'legendaries' | 'teams'
 
 const TABS = [
-  { value: 'collectors' as const, label: 'Collectionneurs', icon: <Trophy className="h-3.5 w-3.5" /> },
-  { value: 'legendaries' as const, label: 'Légendaires', icon: <Star className="h-3.5 w-3.5" /> },
-  { value: 'teams' as const, label: 'Équipes', icon: <Users className="h-3.5 w-3.5" /> },
+  {
+    value: 'collectors' as const,
+    label: 'Collectionneurs',
+    icon: <Trophy className="h-3.5 w-3.5" />,
+  },
+  {
+    value: 'legendaries' as const,
+    label: 'Légendaires',
+    icon: <Star className="h-3.5 w-3.5" />,
+  },
+  {
+    value: 'teams' as const,
+    label: 'Équipes',
+    icon: <Users className="h-3.5 w-3.5" />,
+  },
 ]
 
 const RANK_STYLES = ['text-yellow-400', 'text-gray-300', 'text-amber-600']

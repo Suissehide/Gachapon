@@ -1,5 +1,5 @@
 import Boom from '@hapi/boom'
-import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
 const userProfileResponseSchema = z.object({
@@ -19,8 +19,7 @@ const userProfileResponseSchema = z.object({
   }),
 })
 
-// biome-ignore lint/suspicious/useAwait: fastify plugin pattern
-export const usersRouter: FastifyPluginAsyncZod = async (fastify) => {
+export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
   const { userRepository, postgresOrm } = fastify.iocContainer
   const prisma = postgresOrm.prisma
 

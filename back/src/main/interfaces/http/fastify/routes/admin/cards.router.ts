@@ -1,6 +1,6 @@
 // back/src/main/interfaces/http/fastify/routes/admin/cards.router.ts
 import Boom from '@hapi/boom'
-import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp'])
@@ -13,7 +13,9 @@ const cardFieldsSchema = z.object({
   dropWeight: z.coerce.number().positive(),
 })
 
-async function parseMultipartCard(request: { parts: () => AsyncIterable<any> }): Promise<{
+async function parseMultipartCard(request: {
+  parts: () => AsyncIterable<any>
+}): Promise<{
   fields: Record<string, string>
   imageBuffer: Buffer
   imageMime: string
@@ -42,12 +44,13 @@ async function parseMultipartCard(request: { parts: () => AsyncIterable<any> }):
     }
   }
 
-  if (!imageBuffer) { throw Boom.badRequest('Image file is required') }
+  if (!imageBuffer) {
+    throw Boom.badRequest('Image file is required')
+  }
   return { fields, imageBuffer, imageMime }
 }
 
-// biome-ignore lint/suspicious/useAwait: fastify plugin pattern
-export const adminCardsRouter: FastifyPluginAsyncZod = async (fastify) => {
+export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
   const auth = [fastify.verifySessionCookie, fastify.requireRole('SUPER_ADMIN')]
 
   fastify.get(
@@ -57,48 +60,50 @@ export const adminCardsRouter: FastifyPluginAsyncZod = async (fastify) => {
       schema: {
         querystring: z.object({
           setId: z.string().uuid().optional(),
-          rarity: z.enum(['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY']).optional(),
+          rarity: z
+            .enum(['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY'])
+            .optional(),
         }),
       },
     },
     async (request) => {
-      const cards = await fastify.iocContainer.postgresOrm.prisma.card.findMany({
-        where: {
-          ...(request.query.setId ? { setId: request.query.setId } : {}),
-          ...(request.query.rarity ? { rarity: request.query.rarity } : {}),
+      const cards = await fastify.iocContainer.postgresOrm.prisma.card.findMany(
+        {
+          where: {
+            ...(request.query.setId ? { setId: request.query.setId } : {}),
+            ...(request.query.rarity ? { rarity: request.query.rarity } : {}),
+          },
+          include: { set: true },
+          orderBy: [{ rarity: 'desc' }, { name: 'asc' }],
         },
-        include: { set: true },
-        orderBy: [{ rarity: 'desc' }, { name: 'asc' }],
-      })
+      )
       return { cards }
     },
   )
 
   // POST /admin/cards — multipart/form-data
-  fastify.post(
-    '/',
-    { onRequest: auth },
-    async (request, reply) => {
-      const { minioClient, postgresOrm } = fastify.iocContainer
+  fastify.post('/', { onRequest: auth }, async (request, reply) => {
+    const { minioClient, postgresOrm } = fastify.iocContainer
 
-      const { fields, imageBuffer, imageMime } = await parseMultipartCard(request)
+    const { fields, imageBuffer, imageMime } = await parseMultipartCard(request)
 
-      const parsed = cardFieldsSchema.safeParse(fields)
-      if (!parsed.success) { throw Boom.badRequest(parsed.error.toString()) }
+    const parsed = cardFieldsSchema.safeParse(fields)
+    if (!parsed.success) {
+      throw Boom.badRequest(parsed.error.toString())
+    }
 
-      const ext = imageMime.split('/')[1]
-      const key = `cards/${Date.now()}-${parsed.data.name.replace(/\s+/g, '-').toLowerCase()}.${ext}`
-      await minioClient.upload(key, imageBuffer, imageMime)
-      const imageUrl = minioClient.publicUrl(key)
+    const ext = imageMime.split('/')[1]
+    const key = `cards/${Date.now()}-${parsed.data.name.replace(/\s+/g, '-').toLowerCase()}.${ext}`
+    await minioClient.upload(key, imageBuffer, imageMime)
+    const imageUrl = minioClient.publicUrl(key)
 
-      const card = await postgresOrm.prisma.card.create({
-        data: { ...parsed.data, imageUrl },
-        include: { set: true },
-      })
+    const card = await postgresOrm.prisma.card.create({
+      data: { ...parsed.data, imageUrl },
+      include: { set: true },
+    })
 
-      return reply.status(201).send(card)
-    },
-  )
+    return reply.status(201).send(card)
+  })
 
   // PATCH /admin/cards/:id — JSON only
   fastify.patch(
@@ -109,7 +114,9 @@ export const adminCardsRouter: FastifyPluginAsyncZod = async (fastify) => {
         params: z.object({ id: z.string().uuid() }),
         body: z.object({
           name: z.string().min(1).optional(),
-          rarity: z.enum(['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY']).optional(),
+          rarity: z
+            .enum(['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY'])
+            .optional(),
           variant: z.enum(['BRILLIANT', 'HOLOGRAPHIC']).nullable().optional(),
           dropWeight: z.number().positive().optional(),
           setId: z.string().uuid().optional(),
@@ -118,8 +125,12 @@ export const adminCardsRouter: FastifyPluginAsyncZod = async (fastify) => {
     },
     async (request) => {
       const { postgresOrm } = fastify.iocContainer
-      const card = await postgresOrm.prisma.card.findUnique({ where: { id: request.params.id } })
-      if (!card) { throw Boom.notFound('Card not found') }
+      const card = await postgresOrm.prisma.card.findUnique({
+        where: { id: request.params.id },
+      })
+      if (!card) {
+        throw Boom.notFound('Card not found')
+      }
       return postgresOrm.prisma.card.update({
         where: { id: request.params.id },
         data: request.body,
@@ -130,11 +141,18 @@ export const adminCardsRouter: FastifyPluginAsyncZod = async (fastify) => {
 
   fastify.delete(
     '/:id',
-    { onRequest: auth, schema: { params: z.object({ id: z.string().uuid() }) } },
+    {
+      onRequest: auth,
+      schema: { params: z.object({ id: z.string().uuid() }) },
+    },
     async (request, reply) => {
       const { postgresOrm } = fastify.iocContainer
-      const card = await postgresOrm.prisma.card.findUnique({ where: { id: request.params.id } })
-      if (!card) { throw Boom.notFound('Card not found') }
+      const card = await postgresOrm.prisma.card.findUnique({
+        where: { id: request.params.id },
+      })
+      if (!card) {
+        throw Boom.notFound('Card not found')
+      }
       await postgresOrm.prisma.card.delete({ where: { id: request.params.id } })
       return reply.status(204).send()
     },

@@ -1,13 +1,8 @@
-import { Button } from '../../ui/button'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '../../ui/sheet'
 import { ITEM_TYPE_OPTIONS } from '../../../constants/shop.constant'
 import { useAppForm } from '../../../hooks/formConfig'
 import type { AdminShopItem } from '../../../queries/useAdminShop'
+import { Button } from '../../ui/button'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../../ui/sheet'
 
 export type EditShopItemPayload = {
   name: string
@@ -82,7 +77,9 @@ function EditShopItemForm({
       className="space-y-3"
     >
       <form.AppField name="isActive">
-        {(field) => <field.Toggle label="Statut" options={['Actif', 'Inactif']} />}
+        {(field) => (
+          <field.Toggle label="Statut" options={['Actif', 'Inactif']} />
+        )}
       </form.AppField>
       <form.AppField name="name">
         {(field) => <field.Input label="Nom" />}

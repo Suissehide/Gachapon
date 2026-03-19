@@ -41,7 +41,11 @@ const CardDescription = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <p ref={ref} className={cn('text-sm text-text-light', className)} {...props} />
+  <p
+    ref={ref}
+    className={cn('text-sm text-text-light', className)}
+    {...props}
+  />
 ))
 CardDescription.displayName = 'CardDescription'
 

@@ -20,7 +20,7 @@ interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 export const inputVariants = cva(
   'flex h-9 w-full rounded-md border border-border bg-input px-3 py-1 mb-0 text-sm text-text transition-colors ' +
     'file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-text-light ' +
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring ' +
+    'focus-visible:outline-none focus-visible:ring-0.5 focus-visible:ring-ring focus-visible:border-ring ' +
     'disabled:cursor-not-allowed disabled:opacity-50',
 )
 

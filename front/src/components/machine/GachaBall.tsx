@@ -1,7 +1,18 @@
 import { animated, useSpring } from '@react-spring/three'
 import { useFrame } from '@react-three/fiber'
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
+
+const BALL_COLORS = [
+  '#e63946', // rouge
+  '#1d88c4', // bleu
+  '#2a9d8f', // teal
+  '#f4a261', // orange
+  '#7b2d8b', // violet
+  '#74b816', // vert
+  '#e91e8c', // rose
+  '#00b4d8', // cyan
+]
 
 type Props = {
   interactive: boolean
@@ -13,119 +24,130 @@ export function GachaBall({ interactive, isOpening, onOpen }: Props) {
   const groupRef = useRef<THREE.Group>(null)
   const time = useRef(0)
 
-  // Entry spring: scale 0 → 1
-  const [entrySpring, entryApi] = useSpring(() => ({
-    scale: 0,
-    config: { tension: 180, friction: 14 },
-  }))
+  const bottomColor = useMemo(
+    () => BALL_COLORS[Math.floor(Math.random() * BALL_COLORS.length)],
+    [],
+  )
 
-  // Lid spring: chest-style — hinge at back, front edge rises toward viewer (~105°)
+  // Lid spring: snappy overshoot, less linear
   const [lidSpring, lidApi] = useSpring(() => ({
     rx: 0,
-    config: { tension: 55, friction: 20 }, // heavy, deliberate
+    config: { tension: 55, friction: 10 },
   }))
-
-  useEffect(() => {
-    entryApi.start({ scale: 1 })
-  }, [entryApi])
 
   useEffect(() => {
     if (isOpening) {
-      // ~105° — lid tips toward the viewer and leans slightly back, like an open chest
-      lidApi.start({ rx: -Math.PI * 0.58 })
+      // Ouverture : overshoot
+      lidApi.start({
+        rx: -Math.PI * 0.58,
+        config: { tension: 55, friction: 10 },
+      })
+    } else {
+      // Fermeture : linéaire, sans dépassement
+      lidApi.start({ rx: 0, config: { tension: 80, friction: 28 } })
     }
   }, [isOpening, lidApi])
 
-  // Idle float + slow rotation
+  // Idle float + slow rotation — when opening, lerp back to center facing camera
   useFrame((_, delta) => {
-    if (!groupRef.current || isOpening) {
+    if (!groupRef.current) {
+      return
+    }
+    if (isOpening) {
+      // Lerp agressif vers l'origine
+      groupRef.current.position.x = THREE.MathUtils.lerp(
+        groupRef.current.position.x,
+        0,
+        0.12,
+      )
+      groupRef.current.position.y = THREE.MathUtils.lerp(
+        groupRef.current.position.y,
+        0,
+        0.12,
+      )
+      groupRef.current.position.z = THREE.MathUtils.lerp(
+        groupRef.current.position.z,
+        0,
+        0.12,
+      )
+      groupRef.current.rotation.y = THREE.MathUtils.lerp(
+        groupRef.current.rotation.y,
+        0,
+        0.12,
+      )
       return
     }
     time.current += delta
-    groupRef.current.position.y = Math.sin(time.current * 1.4) * 0.08
+    const t = time.current
+    groupRef.current.position.y =
+      Math.sin(t * 1.4) * 0.08 + Math.sin(t * 0.7) * 0.03
+    groupRef.current.position.x =
+      Math.sin(t * 0.9 + 1.2) * 0.05 + Math.sin(t * 1.7 + 0.4) * 0.02
+    groupRef.current.position.z =
+      Math.sin(t * 1.1 + 2.5) * 0.04 + Math.sin(t * 0.6 + 1.8) * 0.02
     groupRef.current.rotation.y += delta * 0.4
   })
 
   return (
-    // @ts-expect-error animated.group scale
-    <animated.group scale={entrySpring.scale}>
-      <group ref={groupRef}>
-        {/* ── LID (top hemisphere) — pivots like pizza-box lid ── */}
-        {/* Hinge anchor at the back of the ball (z = -0.85) */}
-        <group position={[0, 0, -0.85]}>
-          {/* @ts-expect-error animated.group rotation-x */}
-          <animated.group rotation-x={lidSpring.rx}>
-            {/* Offset forward so the mesh sits at world origin when rx=0 */}
-            <group position={[0, 0, 0.85]}>
-              <mesh>
-                <sphereGeometry
-                  args={[0.85, 48, 48, 0, Math.PI * 2, 0, Math.PI / 2]}
-                />
-                <meshStandardMaterial
-                  color="#e63535"
-                  roughness={0.18}
-                  metalness={0.35}
-                  envMapIntensity={1.2}
-                />
-              </mesh>
-              {/* Inner flat cap (visible from below when lid opens) */}
-              <mesh rotation-x={Math.PI / 2}>
-                <circleGeometry args={[0.849, 48]} />
-                <meshStandardMaterial
-                  color="#c02020"
-                  roughness={0.55}
-                  side={THREE.BackSide}
-                />
-              </mesh>
-            </group>
-          </animated.group>
-        </group>
+    <group ref={groupRef}>
+      {/* ── LID (top) — plastique transparent bleu cartoon ── */}
+      <group position={[0, 0, -0.85]}>
+        <animated.group rotation-x={lidSpring.rx}>
+          <group position={[0, 0, 0.85]}>
+            <mesh renderOrder={1}>
+              <sphereGeometry
+                args={[0.85, 64, 64, 0, Math.PI * 2, 0, Math.PI / 2]}
+              />
+              <meshPhysicalMaterial
+                color="#7ec8e3"
+                roughness={0.2}
+                metalness={0}
+                opacity={0.58}
+                clearcoat={0.5}
+                clearcoatRoughness={0.25}
+                side={THREE.DoubleSide}
+              />
+            </mesh>
+          </group>
+        </animated.group>
+      </group>
 
-        {/* ── BOTTOM hemisphere (stays fixed) ── */}
-        <group>
-          <mesh>
-            <sphereGeometry
-              args={[0.85, 48, 48, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]}
-            />
-            <meshStandardMaterial
-              color="#f0f0f0"
-              roughness={0.22}
-              metalness={0.2}
-              envMapIntensity={0.9}
-            />
-          </mesh>
-          {/* Inner cap facing up */}
-          <mesh rotation-x={-Math.PI / 2}>
-            <circleGeometry args={[0.849, 48]} />
-            <meshStandardMaterial
-              color="#d4d4d4"
-              roughness={0.55}
-              side={THREE.BackSide}
-            />
-          </mesh>
-        </group>
-
-        {/* ── Seam ring ── */}
-        <mesh rotation-x={Math.PI / 2}>
-          <torusGeometry args={[0.86, 0.028, 8, 64]} />
+      {/* ── BOTTOM hemisphere — couleur aléatoire, style cartoon ── */}
+      <group>
+        <mesh>
+          <sphereGeometry
+            args={[0.85, 64, 64, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]}
+          />
           <meshStandardMaterial
-            color="#c48a28"
-            roughness={0.3}
-            metalness={0.7}
+            color={bottomColor}
+            roughness={0.85}
+            metalness={0}
+            side={THREE.DoubleSide}
           />
         </mesh>
-
-        {/* Invisible hit sphere for click */}
-        {interactive && (
-          <>
-            {/* biome-ignore lint/a11y/noStaticElementInteractions: R3F mesh, not a DOM element */}
-            <mesh onClick={onOpen}>
-              <sphereGeometry args={[0.9, 16, 16]} />
-              <meshStandardMaterial transparent opacity={0} />
-            </mesh>
-          </>
-        )}
       </group>
-    </animated.group>
+
+      {/* ── Seam — bande cylindrique plate, même couleur que le bas ── */}
+      <mesh>
+        <cylinderGeometry args={[0.862, 0.862, 0.12, 64, 1, true]} />
+        <meshStandardMaterial
+          color={bottomColor}
+          roughness={0.7}
+          metalness={0}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+
+      {/* Invisible hit sphere for click */}
+      {interactive && (
+        <>
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: R3F mesh, not a DOM element */}
+          <mesh onClick={onOpen}>
+            <sphereGeometry args={[0.9, 16, 16]} />
+            <meshStandardMaterial transparent opacity={0} />
+          </mesh>
+        </>
+      )}
+    </group>
   )
 }

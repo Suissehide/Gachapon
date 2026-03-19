@@ -43,7 +43,9 @@ function AdminStats() {
 
   if (isLoading || !data) {
     return (
-      <div className="flex h-64 items-center justify-center text-text-light">Chargement…</div>
+      <div className="flex h-64 items-center justify-center text-text-light">
+        Chargement…
+      </div>
     )
   }
 
@@ -70,7 +72,10 @@ function AdminStats() {
                 outerRadius={80}
               >
                 {data.rarityDistribution.map((entry) => (
-                  <Cell key={entry.rarity} fill={RARITY_COLORS[entry.rarity] ?? '#6b7280'} />
+                  <Cell
+                    key={entry.rarity}
+                    fill={RARITY_COLORS[entry.rarity] ?? '#6b7280'}
+                  />
                 ))}
               </Pie>
               <Tooltip

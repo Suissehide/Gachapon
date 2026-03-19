@@ -23,7 +23,9 @@ export function CreateTeamPopup() {
     defaultValues: { name: '', description: '' },
     onSubmit: ({ value }) => {
       const name = value.name.trim()
-      if (!name) return
+      if (!name) {
+        return
+      }
       setError('')
       createTeam(
         { name, description: value.description.trim() || undefined },
@@ -53,7 +55,9 @@ export function CreateTeamPopup() {
       </PopupTrigger>
       <PopupContent>
         <PopupHeader>
-          <PopupTitle icon={<Users className="h-4 w-4" />}>Nouvelle équipe</PopupTitle>
+          <PopupTitle icon={<Users className="h-4 w-4" />}>
+            Nouvelle équipe
+          </PopupTitle>
         </PopupHeader>
         <form
           onSubmit={async (e) => {
