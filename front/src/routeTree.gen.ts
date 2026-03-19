@@ -13,7 +13,7 @@ import { Route as PendingRouteImport } from './routes/pending'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthIndexRouteImport } from './routes/auth/index'
+import { Route as AuthenticatedUpgradesRouteImport } from './routes/_authenticated/upgrades'
 import { Route as AuthenticatedShopRouteImport } from './routes/_authenticated/shop'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedQuestsRouteImport } from './routes/_authenticated/quests'
@@ -49,10 +49,10 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthIndexRoute = AuthIndexRouteImport.update({
-  id: '/auth/',
-  path: '/auth/',
-  getParentRoute: () => rootRouteImport,
+const AuthenticatedUpgradesRoute = AuthenticatedUpgradesRouteImport.update({
+  id: '/upgrades',
+  path: '/upgrades',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedShopRoute = AuthenticatedShopRouteImport.update({
   id: '/shop',
@@ -147,7 +147,7 @@ export interface FileRoutesByFullPath {
   '/quests': typeof AuthenticatedQuestsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/shop': typeof AuthenticatedShopRoute
-  '/auth/': typeof AuthIndexRoute
+  '/upgrades': typeof AuthenticatedUpgradesRoute
   '/admin/cards': typeof AdminAdminCardsRoute
   '/admin/config': typeof AdminAdminConfigRoute
   '/admin/shop': typeof AdminAdminShopRoute
@@ -167,7 +167,7 @@ export interface FileRoutesByTo {
   '/quests': typeof AuthenticatedQuestsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/shop': typeof AuthenticatedShopRoute
-  '/auth': typeof AuthIndexRoute
+  '/upgrades': typeof AuthenticatedUpgradesRoute
   '/admin/cards': typeof AdminAdminCardsRoute
   '/admin/config': typeof AdminAdminConfigRoute
   '/admin/shop': typeof AdminAdminShopRoute
@@ -191,7 +191,7 @@ export interface FileRoutesById {
   '/_authenticated/quests': typeof AuthenticatedQuestsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/shop': typeof AuthenticatedShopRoute
-  '/auth/': typeof AuthIndexRoute
+  '/_authenticated/upgrades': typeof AuthenticatedUpgradesRoute
   '/_admin/admin/cards': typeof AdminAdminCardsRoute
   '/_admin/admin/config': typeof AdminAdminConfigRoute
   '/_admin/admin/shop': typeof AdminAdminShopRoute
@@ -214,7 +214,7 @@ export interface FileRouteTypes {
     | '/quests'
     | '/settings'
     | '/shop'
-    | '/auth/'
+    | '/upgrades'
     | '/admin/cards'
     | '/admin/config'
     | '/admin/shop'
@@ -234,7 +234,7 @@ export interface FileRouteTypes {
     | '/quests'
     | '/settings'
     | '/shop'
-    | '/auth'
+    | '/upgrades'
     | '/admin/cards'
     | '/admin/config'
     | '/admin/shop'
@@ -257,7 +257,7 @@ export interface FileRouteTypes {
     | '/_authenticated/quests'
     | '/_authenticated/settings'
     | '/_authenticated/shop'
-    | '/auth/'
+    | '/_authenticated/upgrades'
     | '/_admin/admin/cards'
     | '/_admin/admin/config'
     | '/_admin/admin/shop'
@@ -274,7 +274,6 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   PendingRoute: typeof PendingRoute
-  AuthIndexRoute: typeof AuthIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -307,12 +306,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/': {
-      id: '/auth/'
-      path: '/auth'
-      fullPath: '/auth/'
-      preLoaderRoute: typeof AuthIndexRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/upgrades': {
+      id: '/_authenticated/upgrades'
+      path: '/upgrades'
+      fullPath: '/upgrades'
+      preLoaderRoute: typeof AuthenticatedUpgradesRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/shop': {
       id: '/_authenticated/shop'
@@ -468,6 +467,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedQuestsRoute: typeof AuthenticatedQuestsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedShopRoute: typeof AuthenticatedShopRoute
+  AuthenticatedUpgradesRoute: typeof AuthenticatedUpgradesRoute
   AuthenticatedProfileUsernameRoute: typeof AuthenticatedProfileUsernameRoute
   AuthenticatedTeamsIdRoute: typeof AuthenticatedTeamsIdRoute
   AuthenticatedTeamsIndexRoute: typeof AuthenticatedTeamsIndexRoute
@@ -480,6 +480,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedQuestsRoute: AuthenticatedQuestsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedShopRoute: AuthenticatedShopRoute,
+  AuthenticatedUpgradesRoute: AuthenticatedUpgradesRoute,
   AuthenticatedProfileUsernameRoute: AuthenticatedProfileUsernameRoute,
   AuthenticatedTeamsIdRoute: AuthenticatedTeamsIdRoute,
   AuthenticatedTeamsIndexRoute: AuthenticatedTeamsIndexRoute,
@@ -494,7 +495,6 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   PendingRoute: PendingRoute,
-  AuthIndexRoute: AuthIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
