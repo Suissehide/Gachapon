@@ -7,6 +7,7 @@ import { adminQuestsRouter } from './quests.router'
 import { adminSetsRouter } from './sets.router'
 import { adminShopRouter } from './shop.router'
 import { adminStatsRouter } from './stats.router'
+import { adminUpgradesRouter } from './upgrades.router'
 import { adminUsersRouter } from './users.router'
 
 export const adminRouter: FastifyPluginAsyncZod = async (fastify) => {
@@ -18,4 +19,5 @@ export const adminRouter: FastifyPluginAsyncZod = async (fastify) => {
   await fastify.register(adminShopRouter, { prefix: '/shop-items' })
   await fastify.register(adminQuestsRouter, { prefix: '/quests' })
   await fastify.register(adminAchievementsRouter, { prefix: '/achievements' })
+  await fastify.register(adminUpgradesRouter, { prefix: '/upgrades' })
 }
