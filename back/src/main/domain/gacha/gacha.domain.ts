@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { calculateTokens } from '../economy/economy.domain'
+import { getUserUpgradeEffects, type UserUpgradeEffects } from '../economy/upgrade.domain'
 import type { IocContainer } from '../../types/application/ioc'
 import type { GachaDomainInterface } from '../../types/domain/gacha/gacha.domain.interface'
 import type { CardWithSet, PullResult } from '../../types/domain/gacha/gacha.types'
@@ -17,6 +18,22 @@ export function pickWeightedRandom(cards: CardWithSet[]): CardWithSet {
     if (roll <= 0) { return card }
   }
   // biome-ignore lint/style/noNonNullAssertion: cards.length > 0 is guaranteed by the guard above
+  return cards[cards.length - 1]!
+}
+
+export function pickWeightedRandomWithLuck(cards: CardWithSet[], luckMultiplier: number): CardWithSet {
+  if (cards.length === 0) { throw new Error('No cards to pick from') }
+  const LUCK_RARITIES = new Set(['RARE', 'EPIC', 'LEGENDARY'])
+  const weights = cards.map((c) =>
+    LUCK_RARITIES.has(c.rarity) ? c.dropWeight * luckMultiplier : c.dropWeight
+  )
+  const total = weights.reduce((sum, w) => sum + w, 0)
+  if (total === 0) { throw new Error('All cards have zero weight') }
+  let roll = Math.random() * total
+  for (let i = 0; i < cards.length; i++) {
+    roll -= weights[i]!
+    if (roll <= 0) { return cards[i]! }
+  }
   return cards[cards.length - 1]!
 }
 
@@ -58,11 +75,12 @@ function isPrismaSerializationError(err: unknown): boolean {
 }
 
 type PullCfg = {
-  tokenRegenIntervalHours: number
+  tokenRegenIntervalMinutes: number
   tokenMaxStock: number
   pityThreshold: number
   dustByRarity: Record<string, number>
   variantRates: VariantRates
+  upgrades: UserUpgradeEffects
 }
 
 export class GachaDomain implements GachaDomainInterface {
@@ -79,11 +97,13 @@ export class GachaDomain implements GachaDomainInterface {
     const user = await tx.user.findUniqueOrThrow({ where: { id: userId } })
 
     // 2. Calculer les tokens
+    const effectiveInterval = Math.max(1, cfg.tokenRegenIntervalMinutes - cfg.upgrades.regenReductionMinutes)
+    const effectiveMaxStock = cfg.tokenMaxStock + cfg.upgrades.tokenVaultBonus
     const { tokens, newLastTokenAt } = calculateTokens(
       user.lastTokenAt,
       user.tokens,
-      cfg.tokenRegenIntervalHours,
-      cfg.tokenMaxStock,
+      effectiveInterval,
+      effectiveMaxStock,
     )
 
     if (tokens < 1) {
@@ -106,7 +126,9 @@ export class GachaDomain implements GachaDomainInterface {
     }
 
     // 4. Tirage pondéré
-    const card = pickWeightedRandom(activeCards)
+    const card = cfg.upgrades.luckMultiplier === 1.0
+      ? pickWeightedRandom(activeCards)
+      : pickWeightedRandomWithLuck(activeCards, cfg.upgrades.luckMultiplier)
 
     // 4b. Roll variant
     const rolledVariant = pickVariant(card.rarity, cfg.variantRates)
@@ -116,7 +138,9 @@ export class GachaDomain implements GachaDomainInterface {
       where: { userId_cardId: { userId, cardId: card.id } },
     })
     const wasDuplicate = existing !== null
-    const dustEarned = wasDuplicate ? (cfg.dustByRarity[card.rarity] ?? 0) : 0
+    const dustEarned = wasDuplicate
+      ? Math.round((cfg.dustByRarity[card.rarity] ?? 0) * cfg.upgrades.dustHarvestMultiplier)
+      : 0
 
     // 6. Upsert UserCard
     if (existing) {
@@ -162,12 +186,12 @@ export class GachaDomain implements GachaDomainInterface {
     const attempt = async (): Promise<PullResult> => {
       // Lire la config AVANT la transaction (pas d'I/O async dans le tx serializable)
       const [
-        tokenRegenIntervalHours, tokenMaxStock, pityThreshold,
+        tokenRegenIntervalMinutes, tokenMaxStock, pityThreshold,
         dustCommon, dustUncommon, dustRare, dustEpic, dustLegendary,
         brilliantRateRare, brilliantRateEpic, brilliantRateLegendary,
         holoRateRare, holoRateEpic, holoRateLegendary,
       ] = await Promise.all([
-        this.#configService.get('tokenRegenIntervalHours'),
+        this.#configService.get('tokenRegenIntervalMinutes'),
         this.#configService.get('tokenMaxStock'),
         this.#configService.get('pityThreshold'),
         this.#configService.get('dustCommon'),
@@ -182,8 +206,9 @@ export class GachaDomain implements GachaDomainInterface {
         this.#configService.get('holoRateEpic'),
         this.#configService.get('holoRateLegendary'),
       ])
+      const upgrades = await getUserUpgradeEffects(userId, this.#postgresOrm.prisma)
       const cfg: PullCfg = {
-        tokenRegenIntervalHours,
+        tokenRegenIntervalMinutes,
         tokenMaxStock,
         pityThreshold,
         dustByRarity: { COMMON: dustCommon, UNCOMMON: dustUncommon, RARE: dustRare, EPIC: dustEpic, LEGENDARY: dustLegendary },
@@ -191,6 +216,7 @@ export class GachaDomain implements GachaDomainInterface {
           brilliantRateRare, brilliantRateEpic, brilliantRateLegendary,
           holoRateRare, holoRateEpic, holoRateLegendary,
         },
+        upgrades,
       }
       return this.#postgresOrm.executeWithTransactionClient(
         (tx) => this.#executePullTx(tx, userId, cfg),
