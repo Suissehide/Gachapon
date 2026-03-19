@@ -48,6 +48,13 @@ enum ShopItemType {
   COSMETIC
 }
 
+enum UpgradeType {
+  REGEN
+  LUCK
+  DUST_HARVEST
+  TOKEN_VAULT
+}
+
 model User {
   id            String     @id @default(uuid())
   username      String     @unique
@@ -78,6 +85,7 @@ model User {
   purchases           Purchase[]
   achievements        UserAchievement[]
   userQuests          UserQuest[]
+  upgrades            UserUpgrade[]
 }
 
 model OAuthAccount {
@@ -279,4 +287,23 @@ model GlobalConfig {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+}
+
+model UpgradeConfig {
+  type     UpgradeType
+  level    Int
+  effect   Float
+  dustCost Int
+
+  @@id([type, level])
+}
+
+model UserUpgrade {
+  userId String
+  type   UpgradeType
+  level  Int
+
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, type])
 }
