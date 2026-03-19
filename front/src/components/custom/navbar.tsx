@@ -9,6 +9,7 @@ const navItems = [
   { to: '/collection', label: 'Collection' },
   { to: '/teams', label: 'Équipes' },
   { to: '/shop', label: 'Boutique' },
+  { to: '/upgrades', label: 'Améliorations' },
   { to: '/leaderboard', label: 'Classement' },
 ]
 
@@ -48,11 +49,11 @@ export function Navbar() {
             <div className="flex items-center gap-2">
               <span className="flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
                 <Ticket className="h-3.5 w-3.5" />
-                {user.tokens}
+                {user.tokens.toLocaleString('fr-FR')}
               </span>
               <span className="flex items-center gap-1.5 rounded-full border border-accent/25 bg-accent/10 px-3 py-1 text-sm font-semibold text-accent">
                 <Sparkles className="h-3.5 w-3.5" />
-                {user.dust}
+                {user.dust.toLocaleString('fr-FR')}
               </span>
             </div>
           )}

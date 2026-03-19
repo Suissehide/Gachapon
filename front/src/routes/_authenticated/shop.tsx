@@ -71,17 +71,9 @@ function ShopPage() {
     <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
       <div className="mx-auto max-w-4xl">
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-black text-text">Boutique</h1>
-            <p className="text-sm text-text-light">Dépense ta poussière</p>
-          </div>
-          <div className="flex items-center gap-2 rounded-full border border-secondary/25 bg-secondary/10 px-4 py-2">
-            <Sparkles className="h-4 w-4 text-secondary" />
-            <span className="text-sm font-bold text-secondary">
-              {dust.toLocaleString('fr-FR')} dust
-            </span>
-          </div>
+        <div className="mb-8">
+          <h1 className="text-2xl font-black text-text">Boutique</h1>
+          <p className="text-sm text-text-light">Dépense ta poussière</p>
         </div>
 
         {/* Notification */}
