@@ -20,7 +20,7 @@ export function MediaGallery({
   onSelect,
 }: MediaGalleryProps) {
   return (
-    <div className="grid grid-cols-5 gap-2">
+    <div className="grid grid-cols-5 gap-x-2 gap-y-0.5">
       {items.map((item) => {
         const isActive = activeKey === item.key
         const isChecked = selected.has(item.key)
@@ -46,7 +46,7 @@ export function MediaGallery({
             <img
               src={item.url}
               alt={item.key}
-              className="h-full w-full object-contain p-1"
+              className="h-full w-full object-contain px-1 py-3"
               onError={(e) => {
                 ;(e.target as HTMLImageElement).style.display = 'none'
               }}
