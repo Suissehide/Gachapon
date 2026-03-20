@@ -97,7 +97,7 @@ export const AdminCardsApi = {
 
   updateCard: async (
     id: string,
-    data: { name?: string; rarity?: string; dropWeight?: number },
+    data: { name?: string; rarity?: string; dropWeight?: number; imageUrl?: string },
   ): Promise<unknown> => {
     const res = await fetchWithAuth(`${apiUrl}/admin/cards/${id}`, {
       method: 'PATCH',
