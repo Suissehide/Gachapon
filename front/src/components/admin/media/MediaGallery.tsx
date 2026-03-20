@@ -46,7 +46,7 @@ export function MediaGallery({
             <img
               src={item.url}
               alt={item.key}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-contain p-1"
               onError={(e) => {
                 ;(e.target as HTMLImageElement).style.display = 'none'
               }}
