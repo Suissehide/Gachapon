@@ -79,7 +79,7 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
 
   // POST /admin/cards — multipart/form-data
   fastify.post('/', async (request, reply) => {
-    const { minioClient, postgresOrm } = fastify.iocContainer
+    const { storageClient, postgresOrm } = fastify.iocContainer
 
     const { fields, imageBuffer, imageMime } = await parseMultipartCard(request)
 
@@ -90,8 +90,8 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
 
     const ext = imageMime.split('/')[1]
     const key = `cards/${Date.now()}-${parsed.data.name.replace(/\s+/g, '-').toLowerCase()}.${ext}`
-    await minioClient.upload(key, imageBuffer, imageMime)
-    const imageUrl = minioClient.publicUrl(key)
+    await storageClient.upload(key, imageBuffer, imageMime)
+    const imageUrl = storageClient.publicUrl(key)
 
     const card = await postgresOrm.prisma.card.create({
       data: { ...parsed.data, imageUrl },

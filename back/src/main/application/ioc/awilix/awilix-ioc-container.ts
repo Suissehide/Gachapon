@@ -52,7 +52,7 @@ class AwilixIocContainer {
     this.#reg('errorHandler', asClass(ErrorHandler).singleton())
     this.#reg('redisClient', asClass(RedisClient).singleton())
     this.#reg('configService', asClass(ConfigService).singleton())
-    this.#reg('minioClient', asClass(MinioClient).singleton())
+    this.#reg('storageClient', asClass(MinioClient).singleton())
     this.#reg('jwtService', asClass(JwtService).singleton())
     this.#reg('userRepository', asClass(UserRepository).singleton())
     this.#reg('userDomain', asClass(UserDomain).singleton())
