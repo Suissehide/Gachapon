@@ -1,0 +1,17 @@
+[    1986ms] [WARNING] Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key. @ https://21st.dev/_next/static/chunks/39645-c444f5370daa6b28.js:5
+[    2612ms] [WARNING] [PostHog.js] You have already initialized PostHog! Re-initializing is a no-op @ https://21st.dev/_next/static/chunks/2d2d3c67-4d6f2c780fa8c97c.js:0
+[    3479ms] [WARNING] An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing. @ https://do.featurebase.app/js/sdk.js:234
+[   20173ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://pbs.twimg.com/profile_images/1906333072863182848/-A67KlMP_400x400.jpg:0
+[   27911ms] [WARNING] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. @ https://21st.dev/_next/static/chunks/4888-45da081dc81f7531.js:110
+[   28382ms] [WARNING] Tooltip is changing from controlled to uncontrolled. Components should not switch from controlled to uncontrolled (or vice versa). Decide between using a controlled or uncontrolled value for the lifetime of the component. @ https://21st.dev/_next/static/chunks/8329-76be832bb4512cf8.js:0
+[  116739ms] TypeError: Failed to execute 'contains' on 'Node': parameter 1 is not of type 'Node'.
+    at onMouseLeave (https://21st.dev/_next/static/chunks/21734-b186fbce412468ab.js:4:22068)
+    at s0 (https://21st.dev/_next/static/chunks/2624f00b-c991669fecab1cdb.js:1:151990)
+    at https://21st.dev/_next/static/chunks/2624f00b-c991669fecab1cdb.js:1:157878
+    at nU (https://21st.dev/_next/static/chunks/2624f00b-c991669fecab1cdb.js:1:20181)
+    at s5 (https://21st.dev/_next/static/chunks/2624f00b-c991669fecab1cdb.js:1:153223)
+    at fL (https://21st.dev/_next/static/chunks/2624f00b-c991669fecab1cdb.js:1:189200)
+    at f_ (https://21st.dev/_next/static/chunks/2624f00b-c991669fecab1cdb.js:1:189115)
+[  126021ms] [WARNING] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}. @ https://21st.dev/_next/static/chunks/4888-45da081dc81f7531.js:110
+[  126501ms] [WARNING] Tooltip is changing from controlled to uncontrolled. Components should not switch from controlled to uncontrolled (or vice versa). Decide between using a controlled or uncontrolled value for the lifetime of the component. @ https://21st.dev/_next/static/chunks/8329-76be832bb4512cf8.js:0
+[  141037ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://pbs.twimg.com/profile_images/1854916060807675904/KtBJsyWr_400x400.jpg:0
