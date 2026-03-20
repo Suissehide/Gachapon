@@ -120,7 +120,7 @@ function EditCardForm({
         <div className="flex gap-1 rounded-md border border-border p-1 bg-surface">
           <button
             type="button"
-            onClick={() => setImageMode('upload')}
+            onClick={() => { setImageMode('upload'); setPickedImageUrl(null) }}
             className={`flex-1 rounded px-3 py-1 text-sm font-medium transition-colors ${
               imageMode === 'upload'
                 ? 'bg-card text-text'
@@ -131,7 +131,7 @@ function EditCardForm({
           </button>
           <button
             type="button"
-            onClick={() => setImageMode('pick')}
+            onClick={() => { setImageMode('pick'); setUploadedFile(null) }}
             className={`flex-1 rounded px-3 py-1 text-sm font-medium transition-colors ${
               imageMode === 'pick'
                 ? 'bg-card text-text'

@@ -211,11 +211,10 @@ function AdminCards() {
         onOpenChange={(o) => !o && setEditCard(null)}
         onSave={(fields) => {
           if (!editCard) return
-          if (fields.imageFile) {
-            updateCardImage.mutate({ id: editCard.id, file: fields.imageFile })
-          } else {
-            const { imageFile: _, ...rest } = fields
-            updateCard.mutate({ id: editCard.id, ...rest })
+          const { imageFile, ...rest } = fields
+          updateCard.mutate({ id: editCard.id, ...rest })
+          if (imageFile) {
+            updateCardImage.mutate({ id: editCard.id, file: imageFile })
           }
           setEditCard(null)
         }}
