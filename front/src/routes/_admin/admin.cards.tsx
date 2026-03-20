@@ -24,6 +24,7 @@ import {
   useAdminDeleteCard,
   useAdminSets,
   useAdminUpdateCard,
+  useAdminUpdateCardImage,
 } from '../../queries/useAdminCards'
 
 export const Route = createFileRoute('/_admin/admin/cards')({
@@ -60,6 +61,7 @@ function AdminCards() {
 
   const createCard = useAdminCreateCard()
   const updateCard = useAdminUpdateCard()
+  const updateCardImage = useAdminUpdateCardImage()
   const deleteCard = useAdminDeleteCard()
 
   const sets = setsData?.sets ?? []
@@ -208,8 +210,12 @@ function AdminCards() {
         item={editCard}
         onOpenChange={(o) => !o && setEditCard(null)}
         onSave={(fields) => {
-          if (editCard) {
-            updateCard.mutate({ id: editCard.id, ...fields })
+          if (!editCard) return
+          if (fields.imageFile) {
+            updateCardImage.mutate({ id: editCard.id, file: fields.imageFile })
+          } else {
+            const { imageFile: _, ...rest } = fields
+            updateCard.mutate({ id: editCard.id, ...rest })
           }
           setEditCard(null)
         }}

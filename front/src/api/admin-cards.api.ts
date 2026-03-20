@@ -110,6 +110,19 @@ export const AdminCardsApi = {
     return res.json()
   },
 
+  updateCardImage: async (id: string, file: File): Promise<unknown> => {
+    const form = new FormData()
+    form.append('image', file)
+    const res = await fetchWithAuth(`${apiUrl}/admin/cards/${id}/image`, {
+      method: 'POST',
+      body: form,
+    })
+    if (!res.ok) {
+      handleHttpError(res, {}, "Erreur lors du changement d'image")
+    }
+    return res.json()
+  },
+
   deleteCard: async (id: string): Promise<void> => {
     const res = await fetchWithAuth(`${apiUrl}/admin/cards/${id}`, {
       method: 'DELETE',

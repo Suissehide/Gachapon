@@ -89,3 +89,12 @@ export function useAdminDeleteCard() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'cards'] }),
   })
 }
+
+export function useAdminUpdateCardImage() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, file }: { id: string; file: File }) =>
+      AdminCardsApi.updateCardImage(id, file),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'cards'] }),
+  })
+}
