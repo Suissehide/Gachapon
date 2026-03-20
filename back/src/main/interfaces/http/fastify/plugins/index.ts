@@ -39,7 +39,8 @@ const plugins: FastifyPluginAsync = fastifyPlugin(
     await registerPlugin(fastify, 'accepts', fastifyAccepts)
     await registerPlugin(fastify, 'multipart', fastifyMultipart, {
       attachFieldsToBody: false, // streaming manuel vers MinIO
-      limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB max
+      limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB max — sets truncated=true, handler accumulates errors
+      throwFileSizeLimit: false,
     })
     await registerPlugin(fastify, 'awilix', awilixPlugin)
     await registerPlugin(fastify, 'orm', ormPlugin)
