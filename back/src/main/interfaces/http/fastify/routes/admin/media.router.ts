@@ -64,7 +64,7 @@ export const adminMediaRouter: FastifyPluginCallbackZod = (fastify) => {
       }
       const buffer = Buffer.concat(chunks)
 
-      if (buffer.length > 5 * 1024 * 1024) {
+      if (part.file.truncated || buffer.length > 5 * 1024 * 1024) {
         errors.push({ filename, reason: 'Fichier trop grand (max 5 MB)' })
         continue
       }
@@ -123,10 +123,16 @@ export const adminMediaRouter: FastifyPluginCallbackZod = (fastify) => {
         throw Boom.badRequest(`Image(s) utilisée(s) par : ${names}`)
       }
 
-      // Supprimer
-      await Promise.all(keys.map((k) => storageClient.delete(k)))
+      // Supprimer — utiliser allSettled pour éviter une suppression partielle silencieuse
+      const results = await Promise.allSettled(keys.map((k) => storageClient.delete(k)))
+      const deleted = keys.filter((_, i) => results[i]?.status === 'fulfilled')
+      const failed = keys.filter((_, i) => results[i]?.status === 'rejected')
 
-      return { deleted: keys }
+      if (failed.length > 0) {
+        throw Boom.internal(`Échec de suppression pour : ${failed.join(', ')}`)
+      }
+
+      return { deleted }
     },
   )
 }
