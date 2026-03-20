@@ -138,7 +138,7 @@ function AdminMediaPage() {
           Glisser-déposer des images ici, ou{' '}
           <button
             type="button"
-            className="text-primary underline"
+            className="cursor-pointer text-primary underline"
             onClick={() => fileInputRef.current?.click()}
           >
             parcourir
@@ -172,7 +172,7 @@ function AdminMediaPage() {
             key={f}
             type="button"
             onClick={() => setFilter(f)}
-            className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
+            className={`cursor-pointer rounded-md px-3 py-1 text-sm font-medium transition-colors ${
               filter === f
                 ? 'bg-primary/20 text-primary'
                 : 'text-text-light hover:bg-surface'
@@ -245,14 +245,22 @@ function AdminMediaPage() {
         <div
           className={`grid gap-4 ${activeItem ? 'grid-cols-[1fr_200px]' : 'grid-cols-1'}`}
         >
-          <MediaGallery
-            items={filtered}
-            selectable
-            selected={selected}
-            onToggleSelect={handleToggleSelect}
-            activeKey={activeItem?.key}
-            onActivate={setActiveItem}
-          />
+          {filtered.length === 0 ? (
+            <div className="flex h-48 items-center justify-center text-sm text-text-light">
+              {items.length === 0
+                ? 'Aucune image. Glissez des fichiers dans la zone ci-dessus pour commencer.'
+                : 'Aucune image pour ce filtre.'}
+            </div>
+          ) : (
+            <MediaGallery
+              items={filtered}
+              selectable
+              selected={selected}
+              onToggleSelect={handleToggleSelect}
+              activeKey={activeItem?.key}
+              onActivate={setActiveItem}
+            />
+          )}
 
           {activeItem && (
             <MediaDetailPanel
