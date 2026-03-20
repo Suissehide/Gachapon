@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+
 import { AdminMediaApi, type MediaItem } from '../api/admin-media.api.ts'
 
 export type { MediaItem } from '../api/admin-media.api.ts'
@@ -18,7 +19,7 @@ export function useUploadMedia() {
     mutationFn: (files: File[]) => AdminMediaApi.uploadMedia(files),
     onSuccess: (data) => {
       qc.setQueryData<MediaItem[]>(MEDIA_QUERY_KEY, (prev) => [
-        ...(data.created as MediaItem[]),
+        ...data.created,
         ...(prev ?? []),
       ])
     },

@@ -1,5 +1,6 @@
-import { useState } from 'react'
 import { Check, Copy, Trash2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+
 import type { MediaItem } from '../../../queries/useAdminMedia'
 import { Button } from '../../ui/button'
 
@@ -9,14 +10,25 @@ interface MediaDetailPanelProps {
   isDeleting?: boolean
 }
 
-export function MediaDetailPanel({ item, onDelete, isDeleting }: MediaDetailPanelProps) {
+export function MediaDetailPanel({
+  item,
+  onDelete,
+  isDeleting,
+}: MediaDetailPanelProps) {
   const [copied, setCopied] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: item.key is the intentional trigger
+  useEffect(() => {
+    setConfirmDelete(false)
+  }, [item.key])
 
   const filename = item.key.split('/').pop() ?? item.key
   const sizeKb = (item.size / 1024).toFixed(0)
   const date = new Date(item.lastModified).toLocaleDateString('fr-FR', {
-    day: 'numeric', month: 'short', year: 'numeric',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
   })
 
   const handleCopy = () => {
@@ -40,12 +52,21 @@ export function MediaDetailPanel({ item, onDelete, isDeleting }: MediaDetailPane
         src={item.url}
         alt={filename}
         className="aspect-[3/4] w-full rounded object-cover"
-        onError={(e) => { ;(e.target as HTMLImageElement).style.opacity = '0.3' }}
+        onError={(e) => {
+          ;(e.target as HTMLImageElement).style.opacity = '0.3'
+        }}
       />
 
       <div>
-        <p className="truncate text-sm font-semibold text-text" title={filename}>{filename}</p>
-        <p className="truncate text-xs text-text-light" title={item.key}>{item.key}</p>
+        <p
+          className="truncate text-sm font-semibold text-text"
+          title={filename}
+        >
+          {filename}
+        </p>
+        <p className="truncate text-xs text-text-light" title={item.key}>
+          {item.key}
+        </p>
       </div>
 
       <div className="flex items-center gap-2">
@@ -62,7 +83,9 @@ export function MediaDetailPanel({ item, onDelete, isDeleting }: MediaDetailPane
 
       {!item.orphan && item.card && (
         <div className="rounded-md bg-surface p-2 text-xs">
-          <p className="mb-0.5 text-text-light uppercase tracking-wide text-[10px]">Carte associée</p>
+          <p className="mb-0.5 text-text-light uppercase tracking-wide text-[10px]">
+            Carte associée
+          </p>
           <p className="font-medium text-violet-400">
             {item.card.name}
             {item.card.variant && ` — ${item.card.variant}`}
@@ -71,9 +94,16 @@ export function MediaDetailPanel({ item, onDelete, isDeleting }: MediaDetailPane
         </div>
       )}
 
-      <p className="text-xs text-text-light">{sizeKb} Ko · {date}</p>
+      <p className="text-xs text-text-light">
+        {sizeKb} Ko · {date}
+      </p>
 
-      <Button variant="outline" size="sm" onClick={handleCopy} className="gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleCopy}
+        className="gap-2"
+      >
         {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
         {copied ? 'Copié !' : "Copier l'URL"}
       </Button>
@@ -89,7 +119,11 @@ export function MediaDetailPanel({ item, onDelete, isDeleting }: MediaDetailPane
           >
             Confirmer
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setConfirmDelete(false)}
+          >
             Annuler
           </Button>
         </div>

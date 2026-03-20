@@ -24,7 +24,9 @@ export type UploadMediaResult = {
 export const AdminMediaApi = {
   getMedia: async (): Promise<MediaItem[]> => {
     const res = await fetchWithAuth(`${apiUrl}/admin/media`)
-    if (!res.ok) handleHttpError(res, {}, 'Erreur lors de la récupération des médias')
+    if (!res.ok) {
+      handleHttpError(res, {}, 'Erreur lors de la récupération des médias')
+    }
     return res.json()
   },
 
@@ -37,7 +39,9 @@ export const AdminMediaApi = {
       method: 'POST',
       body: form,
     })
-    if (!res.ok) handleHttpError(res, {}, "Erreur lors de l'upload")
+    if (!res.ok) {
+      handleHttpError(res, {}, "Erreur lors de l'upload")
+    }
     return res.json()
   },
 
@@ -47,7 +51,9 @@ export const AdminMediaApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ keys }),
     })
-    if (!res.ok) handleHttpError(res, {}, 'Erreur lors de la suppression')
+    if (!res.ok) {
+      handleHttpError(res, {}, 'Erreur lors de la suppression')
+    }
     return res.json()
   },
 }
