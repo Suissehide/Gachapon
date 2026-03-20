@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { MediaDetailPanel } from '../../components/admin/media/MediaDetailPanel'
 import { MediaGallery } from '../../components/admin/media/MediaGallery'
 import { Button } from '../../components/ui/button'
+import { SegmentedControl } from '../../components/ui/segmentedControl'
 import {
   type MediaItem,
   useAdminMedia,
@@ -167,26 +168,15 @@ function AdminMediaPage() {
 
       {/* Toolbar */}
       <div className="mb-4 flex items-center gap-3 flex-wrap">
-        {(['all', 'used', 'orphan'] as Filter[]).map((f) => (
-          <button
-            key={f}
-            type="button"
-            onClick={() => setFilter(f)}
-            className={`cursor-pointer rounded-md px-3 py-1 text-sm font-medium transition-colors ${
-              filter === f
-                ? 'bg-primary/20 text-primary'
-                : 'text-text-light hover:bg-surface'
-            }`}
-          >
-            {f === 'all' && `Toutes (${counts.all})`}
-            {f === 'used' && `Utilisées (${counts.used})`}
-            {f === 'orphan' && (
-              <span className={filter === 'orphan' ? '' : 'text-red-400'}>
-                Orphelines ({counts.orphan})
-              </span>
-            )}
-          </button>
-        ))}
+        <SegmentedControl
+          value={filter}
+          onChange={setFilter}
+          options={[
+            { value: 'all', label: `Toutes (${counts.all})` },
+            { value: 'used', label: `Utilisées (${counts.used})` },
+            { value: 'orphan', label: `Orphelines (${counts.orphan})` },
+          ]}
+        />
 
         {selected.size > 0 && (
           <div className="ml-auto flex items-center gap-3">
