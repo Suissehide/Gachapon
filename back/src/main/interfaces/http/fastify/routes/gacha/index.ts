@@ -3,7 +3,6 @@ import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
 import { calculateTokens } from '../../../../../domain/economy/economy.domain'
-import { getUserUpgradeEffects } from '../../../../../domain/economy/upgrade.domain'
 import { wsManager } from '../../../../ws/ws-manager'
 
 export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
@@ -12,9 +11,8 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     userRepository,
     config,
     gachaPullRepository,
-    postgresOrm,
+    upgradeRepository,
   } = fastify.iocContainer
-  const prisma = postgresOrm.prisma
 
   // POST /pulls — consommer 1 token et tirer une carte
   fastify.post(
@@ -66,7 +64,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         throw Boom.notFound('User not found')
       }
 
-      const upgrades = await getUserUpgradeEffects(request.user.userID, prisma)
+      const upgrades = await upgradeRepository.getEffectsForUser(request.user.userID)
       const effectiveInterval = Math.max(
         1,
         config.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes,
@@ -98,7 +96,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         throw Boom.notFound('User not found')
       }
 
-      const upgrades = await getUserUpgradeEffects(request.user.userID, prisma)
+      const upgrades = await upgradeRepository.getEffectsForUser(request.user.userID)
       const effectiveInterval = Math.max(
         1,
         config.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes,

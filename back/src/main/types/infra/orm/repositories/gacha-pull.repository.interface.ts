@@ -1,18 +1,21 @@
-import type { GachaPullWithCard } from '../../../domain/gacha/gacha.types'
+import type { GachaPullEntity, GachaPullWithCard } from '../../../domain/gacha/gacha.types'
+import type { PrimaTransactionClient } from '../client'
+import type { CardVariant } from '../../../domain/gacha/gacha.types'
+
+export type CreateGachaPullInput = {
+  userId: string
+  cardId: string
+  variant: CardVariant | null
+  wasDuplicate: boolean
+  dustEarned: number
+}
 
 export interface IGachaPullRepository {
-  create(data: {
-    userId: string
-    cardId: string
-    wasDuplicate: boolean
-    dustEarned: number
-  }): Promise<{
-    id: string
-    pulledAt: Date
-    wasDuplicate: boolean
-    dustEarned: number
-  }>
-
+  create(data: CreateGachaPullInput): Promise<GachaPullEntity>
+  createInTx(
+    tx: PrimaTransactionClient,
+    data: CreateGachaPullInput,
+  ): Promise<GachaPullEntity>
   findByUser(
     userId: string,
     pagination: { skip: number; take: number },

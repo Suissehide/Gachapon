@@ -1,4 +1,5 @@
 import type { UserCardWithCard } from '../../../domain/gacha/gacha.types'
+import type { PrimaTransactionClient } from '../client'
 
 export interface IUserCardRepository {
   findByUser(userId: string): Promise<UserCardWithCard[]>
@@ -9,4 +10,10 @@ export interface IUserCardRepository {
     userId: string,
     cardId: string,
   ): Promise<{ quantityLeft: number }>
+  /** Must be called inside a SERIALIZABLE transaction. */
+  upsertInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+    cardId: string,
+  ): Promise<{ wasDuplicate: boolean }>
 }

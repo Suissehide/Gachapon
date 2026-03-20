@@ -4,6 +4,7 @@ import type { Prisma } from '../../../../generated/client'
 import type { PostgresPrismaClient } from '../../../infra/orm/postgres-client'
 
 export interface PostgresORMInterface extends Orm {
+  readonly prisma: PostgresPrismaClient
   executeWithTransactionClient: <T>(
     functionWithTransactionClient: (
       transaction: PrimaTransactionClient,

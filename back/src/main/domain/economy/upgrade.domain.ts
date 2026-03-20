@@ -1,9 +1,6 @@
-export type UserUpgradeEffects = {
-  regenReductionMinutes: number
-  luckMultiplier: number
-  dustHarvestMultiplier: number
-  tokenVaultBonus: number
-}
+import type { UserUpgradeEffects } from '../../types/domain/economy/economy.types'
+
+export type { UserUpgradeEffects }
 
 type UpgradeRow = {
   type: string
@@ -40,37 +37,4 @@ export function getUpgradeEffectsFromRows(
     }
   }
   return result
-}
-
-/**
- * Fetches upgrade effects for a user from the DB.
- * Missing UserUpgrade rows = level 0 = neutral defaults.
- */
-export async function getUserUpgradeEffects(
-  userId: string,
-  prisma: {
-    // biome-ignore lint/complexity/noBannedTypes: Prisma delegate shape is not statically importable in domain layer
-    userUpgrade: { findMany: Function }
-    // biome-ignore lint/complexity/noBannedTypes: Prisma delegate shape is not statically importable in domain layer
-    upgradeConfig: { findMany: Function }
-  },
-): Promise<UserUpgradeEffects> {
-  const userUpgrades = await prisma.userUpgrade.findMany({
-    where: { userId },
-  })
-
-  if (userUpgrades.length === 0) {
-    return { ...NEUTRAL_EFFECTS }
-  }
-
-  const configs = await prisma.upgradeConfig.findMany({
-    where: {
-      OR: userUpgrades.map((u: { type: string; level: number }) => ({
-        type: u.type,
-        level: u.level,
-      })),
-    },
-  })
-
-  return getUpgradeEffectsFromRows(configs)
 }

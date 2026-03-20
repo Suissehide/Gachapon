@@ -4,7 +4,11 @@ import type {
   UpdateUserInput,
   UserEntity,
 } from '../../../types/domain/user/user.types'
-import type { UserRepositoryInterface } from '../../../types/infra/orm/repositories/user.repository.interface'
+import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
+import type {
+  PullUpdateInput,
+  UserRepositoryInterface,
+} from '../../../types/infra/orm/repositories/user.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 export class UserRepository implements UserRepositoryInterface {
@@ -42,5 +46,28 @@ export class UserRepository implements UserRepositoryInterface {
 
   async delete(id: string): Promise<void> {
     await this.#prisma.user.delete({ where: { id } })
+  }
+
+  findByIdOrThrowInTx(
+    tx: PrimaTransactionClient,
+    id: string,
+  ): Promise<UserEntity> {
+    return tx.user.findUniqueOrThrow({ where: { id } })
+  }
+
+  async updateAfterPullInTx(
+    tx: PrimaTransactionClient,
+    id: string,
+    data: PullUpdateInput,
+  ): Promise<void> {
+    await tx.user.update({
+      where: { id },
+      data: {
+        tokens: data.tokens,
+        dust: { increment: data.dustIncrement },
+        pityCurrent: data.pityCurrent,
+        lastTokenAt: data.lastTokenAt,
+      },
+    })
   }
 }

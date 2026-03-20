@@ -3,6 +3,7 @@ import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
 import type { CardRarity } from '../../../../../types/domain/gacha/gacha.types'
+import type { ConfigKey } from '../../../../../types/infra/config/config.service.interface'
 
 export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
   const { cardRepository, userCardRepository, userRepository } =
@@ -118,7 +119,7 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
         throw Boom.notFound('Card not found')
       }
 
-      const dustKey = `dust${card.rarity.charAt(0) + card.rarity.slice(1).toLowerCase()}`
+      const dustKey = `dust${card.rarity.charAt(0) + card.rarity.slice(1).toLowerCase()}` as ConfigKey
       const dustEarned = await configService.get(dustKey)
 
       const result = await postgresOrm.executeWithTransactionClient(

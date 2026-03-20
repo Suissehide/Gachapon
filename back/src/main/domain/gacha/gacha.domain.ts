@@ -3,6 +3,7 @@ import Boom from '@hapi/boom'
 import type { IocContainer } from '../../types/application/ioc'
 import type { GachaDomainInterface } from '../../types/domain/gacha/gacha.domain.interface'
 import type {
+  CardVariant,
   CardWithSet,
   PullResult,
 } from '../../types/domain/gacha/gacha.types'
@@ -11,11 +12,13 @@ import type {
   PostgresORMInterface,
   PrimaTransactionClient,
 } from '../../types/infra/orm/client'
+import type { ICardRepository } from '../../types/infra/orm/repositories/card.repository.interface'
+import type { IGachaPullRepository } from '../../types/infra/orm/repositories/gacha-pull.repository.interface'
+import type { IUpgradeRepository } from '../../types/infra/orm/repositories/upgrade.repository.interface'
+import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
+import type { IUserCardRepository } from '../../types/infra/orm/repositories/user-card.repository.interface'
 import { calculateTokens } from '../economy/economy.domain'
-import {
-  getUserUpgradeEffects,
-  type UserUpgradeEffects,
-} from '../economy/upgrade.domain'
+import type { UserUpgradeEffects } from '../economy/upgrade.domain'
 
 export function pickWeightedRandom(cards: CardWithSet[]): CardWithSet {
   if (cards.length === 0) {
@@ -83,7 +86,7 @@ function rarityKey(
 export function pickVariant(
   rarity: string,
   rates: VariantRates,
-): 'BRILLIANT' | 'HOLOGRAPHIC' | null {
+): CardVariant | null {
   if (!(VARIANT_ELIGIBLE as readonly string[]).includes(rarity)) {
     return null
   }
@@ -92,10 +95,10 @@ export function pickVariant(
   const holoRate = rates[`holoRate${key}`] ?? 0
   const roll = Math.random() * 100
   if (roll < brilliantRate) {
-    return 'BRILLIANT'
+    return 'BRILLIANT' as CardVariant
   }
   if (roll < brilliantRate + holoRate) {
-    return 'HOLOGRAPHIC'
+    return 'HOLOGRAPHIC' as CardVariant
   }
   return null
 }
@@ -121,10 +124,28 @@ type PullCfg = {
 export class GachaDomain implements GachaDomainInterface {
   readonly #postgresOrm: PostgresORMInterface
   readonly #configService: ConfigServiceInterface
+  readonly #userRepository: UserRepositoryInterface
+  readonly #cardRepository: ICardRepository
+  readonly #userCardRepository: IUserCardRepository
+  readonly #gachaPullRepository: IGachaPullRepository
+  readonly #upgradeRepository: IUpgradeRepository
 
-  constructor({ postgresOrm, configService }: IocContainer) {
+  constructor({
+    postgresOrm,
+    configService,
+    userRepository,
+    cardRepository,
+    userCardRepository,
+    gachaPullRepository,
+    upgradeRepository,
+  }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#configService = configService
+    this.#userRepository = userRepository
+    this.#cardRepository = cardRepository
+    this.#userCardRepository = userCardRepository
+    this.#gachaPullRepository = gachaPullRepository
+    this.#upgradeRepository = upgradeRepository
   }
 
   async #executePullTx(
@@ -133,7 +154,7 @@ export class GachaDomain implements GachaDomainInterface {
     cfg: PullCfg,
   ): Promise<PullResult> {
     // 1. Lire l'utilisateur
-    const user = await tx.user.findUniqueOrThrow({ where: { id: userId } })
+    const user = await this.#userRepository.findByIdOrThrowInTx(tx, userId)
 
     // 2. Calculer les tokens
     const effectiveInterval = Math.max(
@@ -153,15 +174,10 @@ export class GachaDomain implements GachaDomainInterface {
     }
 
     // 3. Charger les cartes (pity : forcer LEGENDARY si seuil atteint)
-    const activeCards = (await tx.card.findMany({
-      where: {
-        set: { isActive: true },
-        ...(user.pityCurrent >= cfg.pityThreshold
-          ? { rarity: 'LEGENDARY' }
-          : {}),
-      },
-      include: { set: true },
-    })) as CardWithSet[]
+    const activeCards = await this.#cardRepository.findActiveForPullInTx(
+      tx,
+      user.pityCurrent >= cfg.pityThreshold,
+    )
 
     if (activeCards.length === 0) {
       throw Boom.internal('No active cards in any set')
@@ -176,11 +192,12 @@ export class GachaDomain implements GachaDomainInterface {
     // 4b. Roll variant
     const rolledVariant = pickVariant(card.rarity, cfg.variantRates)
 
-    // 5. Doublon ?
-    const existing = await tx.userCard.findUnique({
-      where: { userId_cardId: { userId, cardId: card.id } },
-    })
-    const wasDuplicate = existing !== null
+    // 5 & 6. Upsert UserCard (doublon ?)
+    const { wasDuplicate } = await this.#userCardRepository.upsertInTx(
+      tx,
+      userId,
+      card.id,
+    )
     const dustEarned = wasDuplicate
       ? Math.round(
           (cfg.dustByRarity[card.rarity] ?? 0) *
@@ -188,40 +205,23 @@ export class GachaDomain implements GachaDomainInterface {
         )
       : 0
 
-    // 6. Upsert UserCard
-    if (existing) {
-      await tx.userCard.update({
-        where: { userId_cardId: { userId, cardId: card.id } },
-        data: { quantity: { increment: 1 } },
-      })
-    } else {
-      await tx.userCard.create({
-        data: { userId, cardId: card.id, quantity: 1, obtainedAt: new Date() },
-      })
-    }
-
     // 7. Créer GachaPull
-    const pull = await tx.gachaPull.create({
-      data: {
-        userId,
-        cardId: card.id,
-        variant: rolledVariant,
-        wasDuplicate,
-        dustEarned,
-      },
+    const pull = await this.#gachaPullRepository.createInTx(tx, {
+      userId,
+      cardId: card.id,
+      variant: rolledVariant,
+      wasDuplicate,
+      dustEarned,
     })
 
     // 8. Mettre à jour l'utilisateur
     const isLegendary = card.rarity === 'LEGENDARY'
     const newPityCurrent = isLegendary ? 0 : user.pityCurrent + 1
-    await tx.user.update({
-      where: { id: userId },
-      data: {
-        tokens: tokens - 1,
-        dust: { increment: dustEarned },
-        pityCurrent: newPityCurrent,
-        lastTokenAt: newLastTokenAt,
-      },
+    await this.#userRepository.updateAfterPullInTx(tx, userId, {
+      tokens: tokens - 1,
+      dustIncrement: dustEarned,
+      pityCurrent: newPityCurrent,
+      lastTokenAt: newLastTokenAt,
     })
 
     return {
@@ -237,59 +237,43 @@ export class GachaDomain implements GachaDomainInterface {
   pull(userId: string): Promise<PullResult> {
     const attempt = async (): Promise<PullResult> => {
       // Lire la config AVANT la transaction (pas d'I/O async dans le tx serializable)
-      const [
-        tokenRegenIntervalMinutes,
-        tokenMaxStock,
-        pityThreshold,
-        dustCommon,
-        dustUncommon,
-        dustRare,
-        dustEpic,
-        dustLegendary,
-        brilliantRateRare,
-        brilliantRateEpic,
-        brilliantRateLegendary,
-        holoRateRare,
-        holoRateEpic,
-        holoRateLegendary,
-      ] = await Promise.all([
-        this.#configService.get('tokenRegenIntervalMinutes'),
-        this.#configService.get('tokenMaxStock'),
-        this.#configService.get('pityThreshold'),
-        this.#configService.get('dustCommon'),
-        this.#configService.get('dustUncommon'),
-        this.#configService.get('dustRare'),
-        this.#configService.get('dustEpic'),
-        this.#configService.get('dustLegendary'),
-        this.#configService.get('brilliantRateRare'),
-        this.#configService.get('brilliantRateEpic'),
-        this.#configService.get('brilliantRateLegendary'),
-        this.#configService.get('holoRateRare'),
-        this.#configService.get('holoRateEpic'),
-        this.#configService.get('holoRateLegendary'),
+      const [c, upgrades] = await Promise.all([
+        this.#configService.getMany(
+          'tokenRegenIntervalMinutes',
+          'tokenMaxStock',
+          'pityThreshold',
+          'dustCommon',
+          'dustUncommon',
+          'dustRare',
+          'dustEpic',
+          'dustLegendary',
+          'brilliantRateRare',
+          'brilliantRateEpic',
+          'brilliantRateLegendary',
+          'holoRateRare',
+          'holoRateEpic',
+          'holoRateLegendary',
+        ),
+        this.#upgradeRepository.getEffectsForUser(userId),
       ])
-      const upgrades = await getUserUpgradeEffects(
-        userId,
-        this.#postgresOrm.prisma,
-      )
       const cfg: PullCfg = {
-        tokenRegenIntervalMinutes,
-        tokenMaxStock,
-        pityThreshold,
+        tokenRegenIntervalMinutes: c.tokenRegenIntervalMinutes,
+        tokenMaxStock: c.tokenMaxStock,
+        pityThreshold: c.pityThreshold,
         dustByRarity: {
-          COMMON: dustCommon,
-          UNCOMMON: dustUncommon,
-          RARE: dustRare,
-          EPIC: dustEpic,
-          LEGENDARY: dustLegendary,
+          COMMON: c.dustCommon,
+          UNCOMMON: c.dustUncommon,
+          RARE: c.dustRare,
+          EPIC: c.dustEpic,
+          LEGENDARY: c.dustLegendary,
         },
         variantRates: {
-          brilliantRateRare,
-          brilliantRateEpic,
-          brilliantRateLegendary,
-          holoRateRare,
-          holoRateEpic,
-          holoRateLegendary,
+          brilliantRateRare: c.brilliantRateRare,
+          brilliantRateEpic: c.brilliantRateEpic,
+          brilliantRateLegendary: c.brilliantRateLegendary,
+          holoRateRare: c.holoRateRare,
+          holoRateEpic: c.holoRateEpic,
+          holoRateLegendary: c.holoRateLegendary,
         },
         upgrades,
       }

@@ -5,7 +5,7 @@ import type {
   UserCard,
 } from '../../../../generated/client'
 
-export type { CardRarity } from '../../../../generated/client'
+export type { CardRarity, CardVariant } from '../../../../generated/client'
 
 export type CardEntity = Card
 export type CardSetEntity = CardSet

@@ -3,6 +3,14 @@ import type {
   UpdateUserInput,
   UserEntity,
 } from '../../../domain/user/user.types'
+import type { PrimaTransactionClient } from '../client'
+
+export type PullUpdateInput = {
+  tokens: number
+  dustIncrement: number
+  pityCurrent: number
+  lastTokenAt: Date | null
+}
 
 export interface UserRepositoryInterface {
   findById(id: string): Promise<UserEntity | null>
@@ -11,4 +19,13 @@ export interface UserRepositoryInterface {
   create(input: CreateUserInput): Promise<UserEntity>
   update(id: string, input: UpdateUserInput): Promise<UserEntity>
   delete(id: string): Promise<void>
+  findByIdOrThrowInTx(
+    tx: PrimaTransactionClient,
+    id: string,
+  ): Promise<UserEntity>
+  updateAfterPullInTx(
+    tx: PrimaTransactionClient,
+    id: string,
+    data: PullUpdateInput,
+  ): Promise<void>
 }

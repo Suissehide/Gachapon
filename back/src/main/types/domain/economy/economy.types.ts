@@ -3,3 +3,10 @@ export type TokenState = {
   newLastTokenAt: Date | null
   nextTokenAt: Date | null
 }
+
+export type UserUpgradeEffects = {
+  regenReductionMinutes: number
+  luckMultiplier: number
+  dustHarvestMultiplier: number
+  tokenVaultBonus: number
+}

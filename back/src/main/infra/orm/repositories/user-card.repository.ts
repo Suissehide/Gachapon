@@ -1,5 +1,6 @@
 import type { IocContainer } from '../../../types/application/ioc'
 import type { UserCardWithCard } from '../../../types/domain/gacha/gacha.types'
+import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type { IUserCardRepository } from '../../../types/infra/orm/repositories/user-card.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
 
@@ -34,6 +35,28 @@ export class UserCardRepository implements IUserCardRepository {
       return { wasDuplicate: true }
     }
     await this.#prisma.userCard.create({
+      data: { userId, cardId, quantity: 1, obtainedAt: new Date() },
+    })
+    return { wasDuplicate: false }
+  }
+
+  /** Must be called inside a SERIALIZABLE transaction. */
+  async upsertInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+    cardId: string,
+  ): Promise<{ wasDuplicate: boolean }> {
+    const existing = await tx.userCard.findUnique({
+      where: { userId_cardId: { userId, cardId } },
+    })
+    if (existing) {
+      await tx.userCard.update({
+        where: { userId_cardId: { userId, cardId } },
+        data: { quantity: { increment: 1 } },
+      })
+      return { wasDuplicate: true }
+    }
+    await tx.userCard.create({
       data: { userId, cardId, quantity: 1, obtainedAt: new Date() },
     })
     return { wasDuplicate: false }

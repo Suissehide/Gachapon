@@ -1,43 +1,22 @@
-// back/src/main/interfaces/http/fastify/routes/admin/config.router.ts
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
-const CONFIG_KEYS = [
-  'tokenRegenIntervalMinutes',
-  'tokenMaxStock',
-  'pityThreshold',
-  'dustCommon',
-  'dustUncommon',
-  'dustRare',
-  'dustEpic',
-  'dustLegendary',
-  'holoRateRare',
-  'holoRateEpic',
-  'holoRateLegendary',
-  'brilliantRateRare',
-  'brilliantRateEpic',
-  'brilliantRateLegendary',
-] as const
+import {
+  CONFIG_KEYS,
+  type ConfigKey,
+} from '../../../../../types/infra/config/config.service.interface'
 
 export const adminConfigRouter: FastifyPluginCallbackZod = (fastify) => {
-  const auth = [fastify.verifySessionCookie, fastify.requireRole('SUPER_ADMIN')]
-
   // GET /admin/config
-  fastify.get('/', { onRequest: auth }, async () => {
+  fastify.get('/', async () => {
     const { configService } = fastify.iocContainer
-    const entries = await Promise.all(
-      CONFIG_KEYS.map(
-        async (key) => [key, await configService.get(key)] as const,
-      ),
-    )
-    return Object.fromEntries(entries)
+    return configService.getMany(...CONFIG_KEYS)
   })
 
   // PUT /admin/config
   fastify.put(
     '/',
     {
-      onRequest: auth,
       schema: {
         body: z.object({
           tokenRegenIntervalMinutes: z.number().int().positive().optional(),
@@ -61,7 +40,7 @@ export const adminConfigRouter: FastifyPluginCallbackZod = (fastify) => {
       const { configService } = fastify.iocContainer
       const updates = Object.entries(request.body).filter(
         ([, v]) => v !== undefined,
-      ) as [string, number][]
+      ) as [ConfigKey, number][]
       await Promise.all(
         updates.map(([key, value]) => configService.set(key, value)),
       )

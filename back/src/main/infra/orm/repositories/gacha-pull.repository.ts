@@ -1,6 +1,13 @@
 import type { IocContainer } from '../../../types/application/ioc'
-import type { GachaPullWithCard } from '../../../types/domain/gacha/gacha.types'
-import type { IGachaPullRepository } from '../../../types/infra/orm/repositories/gacha-pull.repository.interface'
+import type {
+  GachaPullEntity,
+  GachaPullWithCard,
+} from '../../../types/domain/gacha/gacha.types'
+import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
+import type {
+  CreateGachaPullInput,
+  IGachaPullRepository,
+} from '../../../types/infra/orm/repositories/gacha-pull.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 export class GachaPullRepository implements IGachaPullRepository {
@@ -10,13 +17,15 @@ export class GachaPullRepository implements IGachaPullRepository {
     this.#prisma = postgresOrm.prisma
   }
 
-  create(data: {
-    userId: string
-    cardId: string
-    wasDuplicate: boolean
-    dustEarned: number
-  }) {
+  create(data: CreateGachaPullInput): Promise<GachaPullEntity> {
     return this.#prisma.gachaPull.create({ data })
+  }
+
+  createInTx(
+    tx: PrimaTransactionClient,
+    data: CreateGachaPullInput,
+  ): Promise<GachaPullEntity> {
+    return tx.gachaPull.create({ data })
   }
 
   async findByUser(userId: string, pagination: { skip: number; take: number }) {

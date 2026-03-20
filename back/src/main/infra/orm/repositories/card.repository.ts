@@ -4,6 +4,7 @@ import type {
   CardSetEntity,
   CardWithSet,
 } from '../../../types/domain/gacha/gacha.types'
+import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type { ICardRepository } from '../../../types/infra/orm/repositories/card.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
 
@@ -57,5 +58,18 @@ export class CardRepository implements ICardRepository {
 
   findSetById(id: string): Promise<CardSetEntity | null> {
     return this.#prisma.cardSet.findUnique({ where: { id } })
+  }
+
+  findActiveForPullInTx(
+    tx: PrimaTransactionClient,
+    forceLegendary: boolean,
+  ): Promise<CardWithSet[]> {
+    return tx.card.findMany({
+      where: {
+        set: { isActive: true },
+        ...(forceLegendary ? { rarity: 'LEGENDARY' } : {}),
+      },
+      include: { set: true },
+    }) as Promise<CardWithSet[]>
   }
 }
