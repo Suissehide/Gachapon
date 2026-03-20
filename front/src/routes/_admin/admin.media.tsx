@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Upload } from 'lucide-react'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { MediaDetailPanel } from '../../components/admin/media/MediaDetailPanel'
 import { MediaGallery } from '../../components/admin/media/MediaGallery'
@@ -28,7 +28,14 @@ function AdminMediaPage() {
   const [activeItem, setActiveItem] = useState<MediaItem | null>(null)
   const [dragging, setDragging] = useState(false)
   const [confirmBulk, setConfirmBulk] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (selected.size === 0) {
+      setConfirmBulk(false)
+    }
+  }, [selected.size])
 
   const filtered = items.filter((item) => {
     if (filter === 'used') {
@@ -73,23 +80,38 @@ function AdminMediaPage() {
   }
 
   const handleBulkDelete = async () => {
+    setErrorMessage(null)
     if (!confirmBulk) {
       setConfirmBulk(true)
       return
     }
     const keys = Array.from(selected)
-    await deleteMutation.mutateAsync(keys)
-    setSelected(new Set())
-    setConfirmBulk(false)
-    if (activeItem && keys.includes(activeItem.key)) {
-      setActiveItem(null)
+    try {
+      await deleteMutation.mutateAsync(keys)
+      setSelected(new Set())
+      setConfirmBulk(false)
+      if (activeItem && keys.includes(activeItem.key)) {
+        setActiveItem(null)
+      }
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error ? err.message : 'Erreur lors de la suppression',
+      )
+      setConfirmBulk(false)
     }
   }
 
   const handleSingleDelete = async (key: string) => {
-    await deleteMutation.mutateAsync([key])
-    if (activeItem?.key === key) {
-      setActiveItem(null)
+    setErrorMessage(null)
+    try {
+      await deleteMutation.mutateAsync([key])
+      if (activeItem?.key === key) {
+        setActiveItem(null)
+      }
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error ? err.message : 'Erreur lors de la suppression',
+      )
     }
   }
 
@@ -199,6 +221,9 @@ function AdminMediaPage() {
               </Button>
             )}
           </div>
+        )}
+        {errorMessage && (
+          <p className="mt-2 text-xs text-red-400">{errorMessage}</p>
         )}
       </div>
 
