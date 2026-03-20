@@ -51,7 +51,7 @@ export function MediaDetailPanel({
       <img
         src={item.url}
         alt={filename}
-        className="aspect-[3/4] w-full rounded object-cover"
+        className="aspect-[3/4] w-full rounded object-contain p-1"
         onError={(e) => {
           ;(e.target as HTMLImageElement).style.opacity = '0.3'
         }}
@@ -73,8 +73,8 @@ export function MediaDetailPanel({
         <span
           className={`rounded-full px-2 py-0.5 text-xs font-medium ${
             item.orphan
-              ? 'bg-amber-900/40 text-amber-400'
-              : 'bg-green-900/40 text-green-400'
+              ? 'bg-red-500/10 text-red-500 border border-red-500/40'
+              : 'bg-green-500/10 text-green-500 border border-green-500/40'
           }`}
         >
           {item.orphan ? 'Orpheline' : 'Utilisée'}

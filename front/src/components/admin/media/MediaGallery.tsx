@@ -28,7 +28,7 @@ export function MediaGallery({
         return (
           <div
             key={item.key}
-            className={`relative aspect-[3/4] cursor-pointer overflow-hidden rounded-md border-2 transition-all ${
+            className={`relative aspect-square cursor-pointer overflow-hidden rounded-md border-2 transition-all ${
               isChecked
                 ? 'border-red-500 bg-red-950/40'
                 : isActive
