@@ -95,4 +95,24 @@ describe('Admin cards routes', () => {
       expect(res.json()).toHaveProperty('imageUrl')
     }
   })
+
+  it('PATCH /admin/cards/:id — accepte imageUrl dans le schéma (400 ou 404 acceptable)', async () => {
+    // Test uniquement la validation du schéma PATCH avec imageUrl
+    const res = await app.inject({
+      method: 'PATCH', url: `/admin/cards/00000000-0000-0000-0000-000000000000`,
+      headers: { cookie: adminCookies, 'content-type': 'application/json' },
+      payload: { imageUrl: 'http://localhost:9000/gachapon/cards/test.png' },
+    })
+    // 404 carte inexistante — valide que le schéma accepte le champ imageUrl
+    expect(res.statusCode).toBe(404)
+  })
+
+  it('PATCH /admin/cards/:id — rejette imageUrl hors domaine storage', async () => {
+    const res = await app.inject({
+      method: 'PATCH', url: `/admin/cards/00000000-0000-0000-0000-000000000000`,
+      headers: { cookie: adminCookies, 'content-type': 'application/json' },
+      payload: { imageUrl: 'https://evil.com/hack.png' },
+    })
+    expect(res.statusCode).toBe(400)
+  })
 })

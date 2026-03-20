@@ -109,28 +109,63 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
         params: z.object({ id: z.string().uuid() }),
         body: z.object({
           name: z.string().min(1).optional(),
-          rarity: z
-            .enum(['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY'])
-            .optional(),
+          rarity: z.enum(['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY']).optional(),
           variant: z.enum(['BRILLIANT', 'HOLOGRAPHIC']).nullable().optional(),
           dropWeight: z.number().positive().optional(),
           setId: z.string().uuid().optional(),
+          imageUrl: z.string().url().optional(),
         }),
       },
     },
     async (request) => {
-      const { postgresOrm } = fastify.iocContainer
+      const { storageClient, postgresOrm } = fastify.iocContainer
+
+      // Valider que imageUrl appartient bien au stockage configuré
+      if (request.body.imageUrl) {
+        const storagePrefix = storageClient.publicUrl('')
+        if (!request.body.imageUrl.startsWith(storagePrefix)) {
+          throw Boom.badRequest('imageUrl must point to the configured storage')
+        }
+      }
+
       const card = await postgresOrm.prisma.card.findUnique({
         where: { id: request.params.id },
       })
-      if (!card) {
-        throw Boom.notFound('Card not found')
-      }
+      if (!card) throw Boom.notFound('Card not found')
+
       return postgresOrm.prisma.card.update({
         where: { id: request.params.id },
         data: request.body,
         include: { set: true },
       })
+    },
+  )
+
+  // POST /admin/cards/:id/image — remplace l'image par upload multipart
+  fastify.post(
+    '/:id/image',
+    { schema: { params: z.object({ id: z.string().uuid() }) } },
+    async (request, reply) => {
+      const { storageClient, postgresOrm } = fastify.iocContainer
+
+      const card = await postgresOrm.prisma.card.findUnique({
+        where: { id: request.params.id },
+      })
+      if (!card) throw Boom.notFound('Card not found')
+
+      const { fields: _fields, imageBuffer, imageMime } = await parseMultipartCard(request)
+      const ext = imageMime.split('/')[1]
+      const base = card.name.replace(/[^a-zA-Z0-9\-\.]/g, '-').toLowerCase()
+      const key = `cards/${Date.now()}-${base}.${ext}`
+      await storageClient.upload(key, imageBuffer, imageMime)
+      const imageUrl = storageClient.publicUrl(key)
+
+      const updated = await postgresOrm.prisma.card.update({
+        where: { id: request.params.id },
+        data: { imageUrl },
+        include: { set: true },
+      })
+      return reply.status(200).send(updated)
     },
   )
 
