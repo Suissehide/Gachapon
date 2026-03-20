@@ -1,4 +1,3 @@
-// back/src/main/interfaces/http/fastify/routes/admin/index.ts
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 
 import { adminAchievementsRouter } from './achievements.router'
@@ -12,6 +11,10 @@ import { adminUpgradesRouter } from './upgrades.router'
 import { adminUsersRouter } from './users.router'
 
 export const adminRouter: FastifyPluginAsyncZod = async (fastify) => {
+  // Auth appliquée au scope entier : toutes les routes /admin/* sont protégées
+  fastify.addHook('onRequest', fastify.verifySessionCookie)
+  fastify.addHook('onRequest', fastify.requireRole('SUPER_ADMIN'))
+
   await fastify.register(adminUsersRouter, { prefix: '/users' })
   await fastify.register(adminConfigRouter, { prefix: '/config' })
   await fastify.register(adminStatsRouter)

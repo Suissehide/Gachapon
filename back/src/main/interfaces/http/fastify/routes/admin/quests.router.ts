@@ -1,4 +1,3 @@
-// back/src/main/interfaces/http/fastify/routes/admin/quests.router.ts
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
@@ -14,17 +13,16 @@ const questSchema = z.object({
 })
 
 export const adminQuestsRouter: FastifyPluginCallbackZod = (fastify) => {
-  const auth = [fastify.verifySessionCookie, fastify.requireRole('SUPER_ADMIN')]
   const prisma = () => fastify.iocContainer.postgresOrm.prisma
 
-  fastify.get('/', { onRequest: auth }, async () => {
+  fastify.get('/', async () => {
     const quests = await prisma().quest.findMany({ orderBy: { name: 'asc' } })
     return { quests }
   })
 
   fastify.post(
     '/',
-    { onRequest: auth, schema: { body: questSchema } },
+    { schema: { body: questSchema } },
     async (request, reply) => {
       // biome-ignore lint/suspicious/noExplicitAny: Prisma JSON field requires cast
       const quest = await prisma().quest.create({ data: request.body as any })
@@ -35,7 +33,6 @@ export const adminQuestsRouter: FastifyPluginCallbackZod = (fastify) => {
   fastify.patch(
     '/:id',
     {
-      onRequest: auth,
       schema: {
         params: z.object({ id: z.string().uuid() }),
         body: questSchema.partial(),
@@ -58,10 +55,7 @@ export const adminQuestsRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.delete(
     '/:id',
-    {
-      onRequest: auth,
-      schema: { params: z.object({ id: z.string().uuid() }) },
-    },
+    { schema: { params: z.object({ id: z.string().uuid() }) } },
     async (request, reply) => {
       const quest = await prisma().quest.findUnique({
         where: { id: request.params.id },

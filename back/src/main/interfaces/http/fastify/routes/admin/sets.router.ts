@@ -1,12 +1,9 @@
-// back/src/main/interfaces/http/fastify/routes/admin/sets.router.ts
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
 export const adminSetsRouter: FastifyPluginCallbackZod = (fastify) => {
-  const auth = [fastify.verifySessionCookie, fastify.requireRole('SUPER_ADMIN')]
-
-  fastify.get('/', { onRequest: auth }, async () => {
+  fastify.get('/', async () => {
     const sets = await fastify.iocContainer.postgresOrm.prisma.cardSet.findMany(
       {
         orderBy: { createdAt: 'desc' },
@@ -19,7 +16,6 @@ export const adminSetsRouter: FastifyPluginCallbackZod = (fastify) => {
   fastify.post(
     '/',
     {
-      onRequest: auth,
       schema: {
         body: z.object({
           name: z.string().min(1),
@@ -39,7 +35,6 @@ export const adminSetsRouter: FastifyPluginCallbackZod = (fastify) => {
   fastify.patch(
     '/:id',
     {
-      onRequest: auth,
       schema: {
         params: z.object({ id: z.string().uuid() }),
         body: z.object({
@@ -66,10 +61,7 @@ export const adminSetsRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.delete(
     '/:id',
-    {
-      onRequest: auth,
-      schema: { params: z.object({ id: z.string().uuid() }) },
-    },
+    { schema: { params: z.object({ id: z.string().uuid() }) } },
     async (request, reply) => {
       const set =
         await fastify.iocContainer.postgresOrm.prisma.cardSet.findUnique({

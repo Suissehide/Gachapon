@@ -1,16 +1,12 @@
-// back/src/main/interfaces/http/fastify/routes/admin/users.router.ts
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
 export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
-  const auth = [fastify.verifySessionCookie, fastify.requireRole('SUPER_ADMIN')]
-
   // GET /admin/users — liste paginée
   fastify.get(
     '/',
     {
-      onRequest: auth,
       schema: {
         querystring: z.object({
           page: z.coerce.number().int().min(1).default(1),
@@ -56,10 +52,7 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
   // GET /admin/users/:id — détail + stats
   fastify.get(
     '/:id',
-    {
-      onRequest: auth,
-      schema: { params: z.object({ id: z.string().uuid() }) },
-    },
+    { schema: { params: z.object({ id: z.string().uuid() }) } },
     async (request) => {
       const { postgresOrm } = fastify.iocContainer
       const { id } = request.params
@@ -98,10 +91,7 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
   // GET /admin/users/:id/collection — bypass ownership check
   fastify.get(
     '/:id/collection',
-    {
-      onRequest: auth,
-      schema: { params: z.object({ id: z.string().uuid() }) },
-    },
+    { schema: { params: z.object({ id: z.string().uuid() }) } },
     async (request) => {
       const { postgresOrm } = fastify.iocContainer
       const user = await postgresOrm.prisma.user.findUnique({
@@ -136,7 +126,6 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
   fastify.patch(
     '/:id/tokens',
     {
-      onRequest: auth,
       schema: {
         params: z.object({ id: z.string().uuid() }),
         body: z.object({ amount: z.number().int() }),
@@ -162,7 +151,6 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
   fastify.patch(
     '/:id/dust',
     {
-      onRequest: auth,
       schema: {
         params: z.object({ id: z.string().uuid() }),
         body: z.object({ amount: z.number().int() }),
@@ -188,7 +176,6 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
   fastify.patch(
     '/:id/role',
     {
-      onRequest: auth,
       schema: {
         params: z.object({ id: z.string().uuid() }),
         body: z.object({ role: z.enum(['USER', 'SUPER_ADMIN']) }),
@@ -217,7 +204,6 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
   fastify.patch(
     '/:id/suspend',
     {
-      onRequest: auth,
       schema: {
         params: z.object({ id: z.string().uuid() }),
         body: z.object({ suspended: z.boolean() }),

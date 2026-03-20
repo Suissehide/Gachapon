@@ -9,12 +9,11 @@ const upgradeEntrySchema = z.object({
 })
 
 export const adminUpgradesRouter: FastifyPluginCallbackZod = (fastify) => {
-  const auth = [fastify.verifySessionCookie, fastify.requireRole('SUPER_ADMIN')]
   const { postgresOrm } = fastify.iocContainer
   const prisma = postgresOrm.prisma
 
   // GET /admin/upgrades
-  fastify.get('/', { onRequest: auth }, async () => {
+  fastify.get('/', async () => {
     return await prisma.upgradeConfig.findMany({
       orderBy: [{ type: 'asc' }, { level: 'asc' }],
     })
@@ -24,7 +23,6 @@ export const adminUpgradesRouter: FastifyPluginCallbackZod = (fastify) => {
   fastify.put(
     '/',
     {
-      onRequest: auth,
       schema: { body: z.object({ upgrades: z.array(upgradeEntrySchema) }) },
     },
     async (request) => {

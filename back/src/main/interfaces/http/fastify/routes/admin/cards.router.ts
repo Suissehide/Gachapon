@@ -1,4 +1,3 @@
-// back/src/main/interfaces/http/fastify/routes/admin/cards.router.ts
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
@@ -51,12 +50,9 @@ async function parseMultipartCard(request: {
 }
 
 export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
-  const auth = [fastify.verifySessionCookie, fastify.requireRole('SUPER_ADMIN')]
-
   fastify.get(
     '/',
     {
-      onRequest: auth,
       schema: {
         querystring: z.object({
           setId: z.string().uuid().optional(),
@@ -82,7 +78,7 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
   )
 
   // POST /admin/cards — multipart/form-data
-  fastify.post('/', { onRequest: auth }, async (request, reply) => {
+  fastify.post('/', async (request, reply) => {
     const { minioClient, postgresOrm } = fastify.iocContainer
 
     const { fields, imageBuffer, imageMime } = await parseMultipartCard(request)
@@ -109,7 +105,6 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
   fastify.patch(
     '/:id',
     {
-      onRequest: auth,
       schema: {
         params: z.object({ id: z.string().uuid() }),
         body: z.object({
@@ -141,10 +136,7 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.delete(
     '/:id',
-    {
-      onRequest: auth,
-      schema: { params: z.object({ id: z.string().uuid() }) },
-    },
+    { schema: { params: z.object({ id: z.string().uuid() }) } },
     async (request, reply) => {
       const { postgresOrm } = fastify.iocContainer
       const card = await postgresOrm.prisma.card.findUnique({

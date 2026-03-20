@@ -1,4 +1,3 @@
-// back/src/main/interfaces/http/fastify/routes/admin/shop.router.ts
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
@@ -13,10 +12,9 @@ const shopItemSchema = z.object({
 })
 
 export const adminShopRouter: FastifyPluginCallbackZod = (fastify) => {
-  const auth = [fastify.verifySessionCookie, fastify.requireRole('SUPER_ADMIN')]
   const prisma = () => fastify.iocContainer.postgresOrm.prisma
 
-  fastify.get('/', { onRequest: auth }, async () => {
+  fastify.get('/', async () => {
     const items = await prisma().shopItem.findMany({
       orderBy: { createdAt: 'desc' },
     })
@@ -25,7 +23,7 @@ export const adminShopRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.post(
     '/',
-    { onRequest: auth, schema: { body: shopItemSchema } },
+    { schema: { body: shopItemSchema } },
     async (request, reply) => {
       // biome-ignore lint/suspicious/noExplicitAny: Prisma JSON field requires cast
       const item = await prisma().shopItem.create({ data: request.body as any })
@@ -36,7 +34,6 @@ export const adminShopRouter: FastifyPluginCallbackZod = (fastify) => {
   fastify.patch(
     '/:id',
     {
-      onRequest: auth,
       schema: {
         params: z.object({ id: z.string().uuid() }),
         body: shopItemSchema.partial(),
@@ -59,10 +56,7 @@ export const adminShopRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.delete(
     '/:id',
-    {
-      onRequest: auth,
-      schema: { params: z.object({ id: z.string().uuid() }) },
-    },
+    { schema: { params: z.object({ id: z.string().uuid() }) } },
     async (request, reply) => {
       const item = await prisma().shopItem.findUnique({
         where: { id: request.params.id },

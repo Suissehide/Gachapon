@@ -1,11 +1,8 @@
-// back/src/main/interfaces/http/fastify/routes/admin/stats.router.ts
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 export const adminStatsRouter: FastifyPluginCallbackZod = (fastify) => {
-  const auth = [fastify.verifySessionCookie, fastify.requireRole('SUPER_ADMIN')]
-
   // GET /admin/dashboard — KPIs + séries temporelles
-  fastify.get('/dashboard', { onRequest: auth }, async () => {
+  fastify.get('/dashboard', async () => {
     const { postgresOrm } = fastify.iocContainer
     const prisma = postgresOrm.prisma
 
@@ -49,7 +46,7 @@ export const adminStatsRouter: FastifyPluginCallbackZod = (fastify) => {
   })
 
   // GET /admin/stats — statistiques détaillées
-  fastify.get('/stats', { onRequest: auth }, async () => {
+  fastify.get('/stats', async () => {
     const { postgresOrm } = fastify.iocContainer
     const prisma = postgresOrm.prisma
 

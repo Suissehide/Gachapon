@@ -1,4 +1,3 @@
-// back/src/main/interfaces/http/fastify/routes/admin/achievements.router.ts
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
@@ -12,10 +11,9 @@ const achievementSchema = z.object({
 })
 
 export const adminAchievementsRouter: FastifyPluginCallbackZod = (fastify) => {
-  const auth = [fastify.verifySessionCookie, fastify.requireRole('SUPER_ADMIN')]
   const prisma = () => fastify.iocContainer.postgresOrm.prisma
 
-  fastify.get('/', { onRequest: auth }, async () => {
+  fastify.get('/', async () => {
     const achievements = await prisma().achievement.findMany({
       orderBy: { name: 'asc' },
     })
@@ -24,7 +22,7 @@ export const adminAchievementsRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.post(
     '/',
-    { onRequest: auth, schema: { body: achievementSchema } },
+    { schema: { body: achievementSchema } },
     async (request, reply) => {
       const achievement = await prisma().achievement.create({
         data: request.body,
@@ -36,7 +34,6 @@ export const adminAchievementsRouter: FastifyPluginCallbackZod = (fastify) => {
   fastify.patch(
     '/:id',
     {
-      onRequest: auth,
       schema: {
         params: z.object({ id: z.string().uuid() }),
         body: achievementSchema.partial(),
@@ -58,10 +55,7 @@ export const adminAchievementsRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.delete(
     '/:id',
-    {
-      onRequest: auth,
-      schema: { params: z.object({ id: z.string().uuid() }) },
-    },
+    { schema: { params: z.object({ id: z.string().uuid() }) } },
     async (request, reply) => {
       const achievement = await prisma().achievement.findUnique({
         where: { id: request.params.id },
