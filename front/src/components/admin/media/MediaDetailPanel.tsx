@@ -73,7 +73,7 @@ export function MediaDetailPanel({
         <span
           className={`rounded-full px-2 py-0.5 text-xs font-medium ${
             item.orphan
-              ? 'bg-red-900/40 text-red-400'
+              ? 'bg-amber-900/40 text-amber-400'
               : 'bg-green-900/40 text-green-400'
           }`}
         >

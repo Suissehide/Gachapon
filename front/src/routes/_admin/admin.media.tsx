@@ -27,6 +27,12 @@ function AdminMediaPage() {
   const [filter, setFilter] = useState<Filter>('all')
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [activeItem, setActiveItem] = useState<MediaItem | null>(null)
+
+  useEffect(() => {
+    if (items.length > 0 && activeItem === null) {
+      setActiveItem(items[0])
+    }
+  }, [items, activeItem])
   const [dragging, setDragging] = useState(false)
   const [confirmBulk, setConfirmBulk] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
