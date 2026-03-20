@@ -6,7 +6,7 @@ const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp'])
 const SAFE_KEY_RE = /^cards\/[^/]+$/
 
 function sanitizeFilename(name: string): string {
-  return name.replace(/[^\w\-\.]/g, '-').toLowerCase()
+  return name.replace(/[^a-zA-Z0-9\-\.]/g, '-').toLowerCase()
 }
 
 export const adminMediaRouter: FastifyPluginCallbackZod = (fastify) => {

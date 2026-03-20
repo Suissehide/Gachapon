@@ -74,4 +74,63 @@ describe('Admin media routes', () => {
       expect(res.statusCode).toBe(400)
     }
   })
+
+  it('DELETE /admin/media — 400 si keys est vide', async () => {
+    const res = await app.inject({
+      method: 'DELETE', url: '/admin/media',
+      headers: { cookie: adminCookies, 'content-type': 'application/json' },
+      payload: { keys: [] },
+    })
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('DELETE /admin/media — 400 si une clé est utilisée par une carte', async () => {
+    // Créer un set + une carte avec une fausse imageUrl
+    const setRes = await app.inject({
+      method: 'POST', url: '/admin/sets',
+      headers: { cookie: adminCookies },
+      payload: { name: `MediaSet${suffix}`, isActive: false },
+    })
+    const setId = setRes.json().id
+
+    // Insérer directement en DB une carte avec imageUrl connue (pas besoin de vrai Minio)
+    const fakeUrl = `http://localhost:9000/gachapon/cards/used-image-${suffix}.png`
+    await (app as any).iocContainer.postgresOrm.prisma.card.create({
+      data: {
+        name: `MediaCard${suffix}`,
+        setId,
+        rarity: 'COMMON',
+        dropWeight: 1,
+        imageUrl: fakeUrl,
+      },
+    })
+
+    // Essayer de supprimer la clé correspondante
+    const res = await app.inject({
+      method: 'DELETE', url: '/admin/media',
+      headers: { cookie: adminCookies, 'content-type': 'application/json' },
+      payload: { keys: [`cards/used-image-${suffix}.png`] },
+    })
+    expect(res.statusCode).toBe(400)
+    expect(res.json().message).toMatch(/utilisée/i)
+  })
+
+  it('POST /admin/media/upload — erreur accumulée pour fichier trop grand', async () => {
+    const FormData = (await import('form-data')).default
+    const form = new FormData()
+    // Créer un buffer > 5MB
+    const bigBuffer = Buffer.alloc(6 * 1024 * 1024, 0)
+    form.append('images[]', bigBuffer, { filename: 'big.png', contentType: 'image/png' })
+    const res = await app.inject({
+      method: 'POST', url: '/admin/media/upload',
+      headers: { ...form.getHeaders(), cookie: adminCookies },
+      payload: form.getBuffer(),
+    })
+    // Should return 200 with errors (not throw)
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.errors).toBeDefined()
+    expect(body.errors.length).toBeGreaterThan(0)
+    expect(body.errors[0].reason).toMatch(/trop grand/i)
+  })
 })
