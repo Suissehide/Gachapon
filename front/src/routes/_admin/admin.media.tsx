@@ -19,7 +19,7 @@ export const Route = createFileRoute('/_admin/admin/media')({
 type Filter = 'all' | 'used' | 'orphan'
 
 function AdminMediaPage() {
-  const { data: items = [], isLoading } = useAdminMedia()
+  const { data: items = [], isLoading, isError } = useAdminMedia()
   const uploadMutation = useUploadMedia()
   const deleteMutation = useDeleteMedia()
 
@@ -231,6 +231,15 @@ function AdminMediaPage() {
       {isLoading ? (
         <div className="flex h-64 items-center justify-center text-text-light">
           Chargement…
+        </div>
+      ) : isError ? (
+        <div className="flex h-64 flex-col items-center justify-center gap-2 rounded-lg border border-red-500/30 bg-red-500/5 text-center">
+          <p className="text-sm font-medium text-red-400">
+            Impossible de charger les médias
+          </p>
+          <p className="text-xs text-text-light">
+            Le service de stockage est peut-être inaccessible.
+          </p>
         </div>
       ) : (
         <div
