@@ -38,6 +38,7 @@ enum CardRarity {
 }
 
 enum CardVariant {
+  NORMAL
   BRILLIANT
   HOLOGRAPHIC
 }
@@ -166,30 +167,30 @@ model CardSet {
 }
 
 model Card {
-  id         String       @id @default(uuid())
+  id         String     @id @default(uuid())
   setId      String
-  set        CardSet      @relation(fields: [setId], references: [id], onDelete: Cascade)
+  set        CardSet    @relation(fields: [setId], references: [id], onDelete: Cascade)
   name       String
   imageUrl   String?
   rarity     CardRarity
-  variant    CardVariant?
-  dropWeight Float        @default(1.0)
-  createdAt  DateTime     @default(now())
+  dropWeight Float      @default(1.0)
+  createdAt  DateTime   @default(now())
 
   userCards  UserCard[]
   gachaPulls GachaPull[]
 }
 
 model UserCard {
-  id         String   @id @default(uuid())
+  id         String      @id @default(uuid())
   userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   cardId     String
-  card       Card     @relation(fields: [cardId], references: [id])
-  quantity   Int      @default(1)
-  obtainedAt DateTime @default(now())
+  card       Card        @relation(fields: [cardId], references: [id])
+  variant    CardVariant @default(NORMAL)
+  quantity   Int         @default(1)
+  obtainedAt DateTime    @default(now())
 
-  @@unique([userId, cardId])
+  @@unique([userId, cardId, variant])
 }
 
 model GachaPull {
@@ -198,7 +199,7 @@ model GachaPull {
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   cardId       String
   card         Card         @relation(fields: [cardId], references: [id])
-  variant      CardVariant?
+  variant      CardVariant  @default(NORMAL)
   wasDuplicate Boolean      @default(false)
   dustEarned   Int          @default(0)
   pulledAt     DateTime     @default(now())
