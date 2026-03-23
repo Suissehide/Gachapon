@@ -72,6 +72,14 @@ const configSchema = z.object({
     .default('100')
     .transform((v) => Number.parseInt(v, 10))
     .pipe(z.number().int().min(1)),
+  rateLimitMax: z
+    .string()
+    .default('100')
+    .transform((v) => Number.parseInt(v, 10)),
+  rateLimitTimeWindow: z
+    .string()
+    .default('60000')
+    .transform((v) => Number.parseInt(v, 10)),
 })
 
 export type Config = z.infer<typeof configSchema>
@@ -99,6 +107,8 @@ const envVarNames = [
   'TOKEN_REGEN_INTERVAL_MINUTES',
   'TOKEN_MAX_STOCK',
   'PITY_THRESHOLD',
+  'RATE_LIMIT_MAX',
+  'RATE_LIMIT_TIME_WINDOW',
 ]
 
 const loadConfig = () => {

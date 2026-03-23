@@ -36,6 +36,8 @@ services:
       - REDIS_URL=${REDIS_URL}
       - TOKEN_MAX_STOCK=${TOKEN_MAX_STOCK}
       - TOKEN_REGEN_INTERVAL_MINUTES=${TOKEN_REGEN_INTERVAL_MINUTES}
+      - RATE_LIMIT_MAX=${RATE_LIMIT_MAX}
+      - RATE_LIMIT_TIME_WINDOW=${RATE_LIMIT_TIME_WINDOW}
     healthcheck:
       test: node -e "require('http').get({hostname:'localhost', port:${PORT}, path:'/health', timeout:3000})"
       retries: 3
