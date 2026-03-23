@@ -35,6 +35,8 @@ const plugins: FastifyPluginAsync = fastifyPlugin(
       origin: config.corsOrigin ?? config.frontUrl,
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-API-Key'],
+      exposedHeaders: ['Set-Cookie'],
     })
     await registerPlugin(fastify, 'accepts', fastifyAccepts)
     await registerPlugin(fastify, 'multipart', fastifyMultipart, {

@@ -2,7 +2,7 @@ import type React from 'react'
 import { useEffect, useRef, useState } from 'react'
 
 import cardBackImg from '../../assets/data/card-back/black.png'
-import placeholderImg from '../../assets/data/temp.png'
+import placeholderImg from '../../assets/data/not-found.png'
 import type { PullResult } from '../../queries/useGacha'
 import { Button } from '../ui/button.tsx'
 

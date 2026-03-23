@@ -30,7 +30,7 @@ const configSchema = z.object({
     .string()
     .default('3000')
     .transform((v) => Number.parseInt(v, 10)),
-  corsOrigin: z.string().optional(),
+  corsOrigin: z.string().trim().optional(),
   frontUrl: z.string().default('http://localhost:5173'),
   logLevel: z.string().default('info'),
 

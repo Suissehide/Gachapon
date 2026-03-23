@@ -45,7 +45,7 @@
     "prisma:migrate:deploy:test": "npm run with:dotenv -- -e .env.test prisma migrate deploy",
     "prisma:migrate:reset": "npm run with:dotenv -- -e .env -e .env.local prisma migrate reset",
     "prisma:migrate:reset:test": "npm run with:dotenv -- -e .env.test prisma migrate reset",
-    "db:seed": "tsx prisma/seed.ts",
+    "db:seed": "prisma db seed",
     "prisma:seed": "prisma db seed",
     "prisma:seed:test": "npm run with:dotenv -- -e .env.test prisma db seed",
     "prisma:studio": "prisma studio",
@@ -454,8 +454,5 @@
     "tsx": "4.21.0",
     "typescript": "5.9.3",
     "wireit": "0.14.12"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
   }
 }
