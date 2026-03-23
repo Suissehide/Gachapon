@@ -8,7 +8,7 @@ const rateLimitPlugin = fastifyPlugin(async (fastify: FastifyInstance) => {
     max: config.rateLimitMax,
     timeWindow: config.rateLimitTimeWindow,
     allowList: (request) => {
-      const url = request.url.split('?')[0]
+      const url = request.url.split('?')[0] ?? request.url
       return url === '/' || url === '/health' || url.startsWith('/api-docs')
     },
   })
