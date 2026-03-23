@@ -67,11 +67,12 @@ export const CollectionApi = {
 
   recycle: async (
     cardId: string,
+    quantity: number,
   ): Promise<{ dustEarned: number; newDustTotal: number }> => {
     const res = await fetchWithAuth(`${apiUrl}/collection/recycle`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cardId }),
+      body: JSON.stringify({ cardId, quantity }),
     })
     if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors du recyclage')

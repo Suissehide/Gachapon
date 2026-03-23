@@ -26,7 +26,8 @@ export const useUserCollection = (userId: string | undefined) =>
 export const useRecycle = () => {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (cardId: string) => CollectionApi.recycle(cardId),
+    mutationFn: ({ cardId, quantity }: { cardId: string; quantity: number }) =>
+      CollectionApi.recycle(cardId, quantity),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['collection'] })
     },
