@@ -1,6 +1,3 @@
--- AlterEnum: Add NORMAL value to CardVariant (must come before any ALTER TABLE using it)
-ALTER TYPE "CardVariant" ADD VALUE 'NORMAL';
-
 -- AlterTable: Remove variant from Card
 ALTER TABLE "Card" DROP COLUMN "variant";
 
