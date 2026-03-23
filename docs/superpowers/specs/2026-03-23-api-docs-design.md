@@ -32,20 +32,30 @@ Three new production dependencies (survive `npm prune --omit=dev`):
 ### Modified files
 
 - `plugins/index.ts` — register the three new plugins (rate-limit before routes, swagger + scalar before routes)
-- `routes/admin/index.ts` — add `onRoute` hook to set `hide: true` on all admin routes
-- `routes/auth/` — add `onRoute` hook in the auth plugin scope to inject `security: [{ cookieAuth: [] }]` on protected routes
-- `back/src/main/application/config.ts` — add `RATE_LIMIT_MAX` env var (default `100`)
-- `deploy/dokploy/docker-compose.dokploy.yml` — add `RATE_LIMIT_MAX` env var
+- `routes/admin/index.ts` — add `onRoute` hook to hide all admin routes from the spec
+- `routes/index.ts` — add a root-scope `onRoute` hook to annotate protected routes with `security`
+- `back/src/main/application/config.ts` — add `RATE_LIMIT_MAX` and `RATE_LIMIT_TIME_WINDOW` to both `configSchema` and `envVarNames`:
+  ```ts
+  // configSchema:
+  rateLimitMax: z.string().default('100').transform((v) => Number.parseInt(v, 10)),
+  rateLimitTimeWindow: z.string().default('60000').transform((v) => Number.parseInt(v, 10)),
+  // envVarNames:
+  'RATE_LIMIT_MAX',
+  'RATE_LIMIT_TIME_WINDOW',
+  ```
+- `deploy/dokploy/docker-compose.dokploy.yml` — add `RATE_LIMIT_MAX` and `RATE_LIMIT_TIME_WINDOW` env vars
 
 ---
 
 ## Rate Limiting
 
 - Plugin: `@fastify/rate-limit`
-- Default: **100 requests / minute per IP**
+- Default: **100 requests / 60 seconds per IP**
 - Response on exceed: HTTP `429` with `Retry-After` header
-- Exempt routes: `/health`, `/api-docs`, `/openapi.json`
-- Configurable via `RATE_LIMIT_MAX` env var
+- Exempt routes: `GET /`, `/health`, `/api-docs` — the root route and health route are polled by Dokploy/Traefik infrastructure checks (Docker healthcheck is configured on `/health`); exempting both avoids false 429s from infrastructure. `/openapi.json` is **not** exempt (it is large and pollable; a single Scalar page load fetches it once, which is within budget)
+- Both axes configurable via env vars:
+  - `RATE_LIMIT_MAX` — max requests (default `100`)
+  - `RATE_LIMIT_TIME_WINDOW` — window in milliseconds (default `60000`)
 
 ---
 
@@ -54,31 +64,52 @@ Three new production dependencies (survive `npm prune --omit=dev`):
 - Version: OpenAPI 3.1
 - Served at: `GET /openapi.json`
 - Info: title `Gachapon API`, version from `package.json`
-- Security scheme:
+- Security schemes — `verifySessionCookie` accepts both a session cookie and an `X-API-Key` header; both are reflected in the spec:
 
 ```yaml
 securitySchemes:
   cookieAuth:
     type: apiKey
     in: cookie
-    name: token
+    name: access_token
+  apiKeyAuth:
+    type: apiKey
+    in: header
+    name: X-API-Key
 ```
+
+Annotated routes use `security: [{ cookieAuth: [] }, { apiKeyAuth: [] }]` (either scheme is sufficient).
 
 ### Admin route exclusion
 
-In `routes/admin/index.ts`, an `onRoute` hook hides all child routes from the spec:
+In `routes/admin/index.ts`, an `onRoute` hook sets `hide` at the **route options** level (not inside `schema`):
 
 ```ts
 fastify.addHook('onRoute', (route) => {
-  route.schema = { ...route.schema, hide: true }
+  route.hide = true
 })
 ```
 
-This is added alongside the existing `verifySessionCookie` and `requireRole` hooks, so no admin route can accidentally appear in the public spec.
+This runs for every route registered within the admin plugin scope, including all sub-routers.
 
 ### Auth annotation
 
-Routes requiring authentication are annotated with `security: [{ cookieAuth: [] }]` in their schema. This is applied via an `onRoute` hook in the scoped auth plugin (rather than per-route) to avoid repetition.
+Protected routes are spread across ~10 routers (`gacha`, `collection`, `teams`, `upgrades`, `users`, `shop`, `leaderboard`, `api-keys`, `auth/me`, `auth/logout`). Annotating them per-route would be repetitive and error-prone.
+
+**Strategy:** A single `onRoute` hook registered at the root application scope (in `routes/index.ts`) inspects each route's `onRequest` array. If it contains the `fastify.verifySessionCookie` function reference, it injects `security: [{ cookieAuth: [] }]` into the route schema:
+
+```ts
+fastify.addHook('onRoute', (route) => {
+  const onRequest = Array.isArray(route.onRequest) ? route.onRequest : route.onRequest ? [route.onRequest] : []
+  if (onRequest.includes(fastify.verifySessionCookie)) {
+    route.schema = { ...route.schema, security: [{ cookieAuth: [] }, { apiKeyAuth: [] }] }
+  }
+})
+```
+
+This is zero-maintenance: any new protected route automatically gets annotated as long as it uses `verifySessionCookie` in its **route options** `onRequest` array.
+
+> **Constraint:** This identity check only detects `verifySessionCookie` when it is passed directly in route options. Routes that inherit it via `fastify.addHook('onRequest', ...)` at plugin scope (e.g., the admin plugin) are NOT detected — which is acceptable because admin routes are already hidden. Any future plugin that scopes `verifySessionCookie` via `addHook` must annotate routes explicitly or set `route.hide = true`.
 
 ---
 
@@ -87,8 +118,9 @@ Routes requiring authentication are annotated with `security: [{ cookieAuth: [] 
 - Route: `GET /api-docs`
 - References: `/openapi.json`
 - Theme: Scalar default
-- Authorize button: pre-configured for `cookieAuth` scheme, allowing users to set their session cookie and test authenticated endpoints directly from the doc
+- Authorize button: pre-configured for `cookieAuth` scheme — allows users to set their `access_token` session cookie and test authenticated endpoints directly from the doc
 - No authentication required to access `/api-docs`
+- **Intentionally public in all environments** (dev and prod) — the API surface is not sensitive and the doc is a feature for integrators
 
 ---
 
@@ -96,7 +128,9 @@ Routes requiring authentication are annotated with `security: [{ cookieAuth: [] 
 
 No Dockerfile changes required. The three packages are in `dependencies`, so they are included in the production image after `npm prune --omit=dev`.
 
-`RATE_LIMIT_MAX` is added to `docker-compose.dokploy.yml` with a default of `100`.
+Two new env vars added to `docker-compose.dokploy.yml`:
+- `RATE_LIMIT_MAX` (default `100`)
+- `RATE_LIMIT_TIME_WINDOW` (default `60000`, milliseconds)
 
 ---
 
