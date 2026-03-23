@@ -2,7 +2,7 @@ import { Trash2 } from 'lucide-react'
 import { useState } from 'react'
 
 import { Button } from '../ui/button.tsx'
-import { ConfirmPopup } from './confirm-popup.tsx'
+import { ConfirmPopup } from './ConfirmPopup.tsx'
 
 export function DangerZone({ onDelete }: { onDelete: () => void }) {
   const [confirmOpen, setConfirmOpen] = useState(false)

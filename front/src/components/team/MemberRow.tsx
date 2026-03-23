@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 import type { TeamMember } from '../../queries/useTeams.ts'
 import { Button } from '../ui/button.tsx'
-import { ConfirmPopup } from './confirm-popup.tsx'
+import { ConfirmPopup } from './ConfirmPopup.tsx'
 
 const ROLE_ICON: Record<string, React.ReactNode> = {
   OWNER: <Crown className="h-3.5 w-3.5 text-yellow-400" />,

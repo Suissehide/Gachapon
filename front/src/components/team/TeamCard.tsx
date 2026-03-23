@@ -4,7 +4,7 @@ import { useState } from 'react'
 
 import type { TeamSummary } from '../../queries/useTeams.ts'
 import { Button } from '../ui/button.tsx'
-import { ConfirmPopup } from './confirm-popup.tsx'
+import { ConfirmPopup } from './ConfirmPopup.tsx'
 
 export function TeamCard({
   team,
