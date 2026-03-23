@@ -20,9 +20,23 @@ export const AdminStatsApi = {
   },
 
   getStats: async (): Promise<{
-    rarityDistribution: { rarity: string; count: number }[]
-    topCards: { cardId: string; name: string; rarity: string; count: number }[]
-    topUsers: { userId: string; username: string; count: number }[]
+    rarityDrift: {
+      rarity: string
+      realCount: number
+      realPct: number
+      theoreticalPct: number
+    }[]
+    neverPulledCards: {
+      id: string
+      name: string
+      rarity: string
+      setName: string
+    }[]
+    activeUsers: { sevenDays: number; thirtyDays: number }
+    upgradeDistribution: {
+      type: string
+      levels: { level: number; count: number }[]
+    }[]
   }> => {
     const res = await fetchWithAuth(`${apiUrl}/admin/stats`)
     if (!res.ok) {

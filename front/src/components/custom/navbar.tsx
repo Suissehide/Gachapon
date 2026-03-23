@@ -27,7 +27,7 @@ export function Navbar() {
     <nav className="fixed top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         <Link to="/" className="flex items-center gap-2 shrink-0">
-          <span className="text-xl font-black bg-gradient-to-r from-primary via-primary-light to-secondary bg-clip-text text-transparent">
+          <span className="text-xl font-black bg-linear-to-r from-primary via-primary-light to-secondary bg-clip-text text-transparent">
             Gachapon
           </span>
         </Link>
@@ -62,7 +62,7 @@ export function Navbar() {
             <Link
               to={'/profile/$username'}
               params={{ username: user.username }}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary text-xs font-bold text-white ring-2 ring-primary/20 hover:ring-primary/50 transition-all"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary text-xs font-bold text-white ring-2 ring-primary/20 hover:ring-primary/50 transition-all"
             >
               {user.username[0]?.toUpperCase()}
             </Link>

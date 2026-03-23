@@ -50,50 +50,114 @@ export const adminStatsRouter: FastifyPluginCallbackZod = (fastify) => {
     const { postgresOrm } = fastify.iocContainer
     const prisma = postgresOrm.prisma
 
-    const [rarityDistribution, topCards, topUsers] = await Promise.all([
+    const now = new Date()
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+
+    const [
+      rarityReal,
+      theoreticalWeights,
+      neverPulledCards,
+      activeUsers7d,
+      activeUsers30d,
+      upgradeRows,
+      totalUsers,
+    ] = await Promise.all([
+      // Distribution réelle des pulls par rareté
       prisma.$queryRaw<{ rarity: string; count: bigint }[]>`
         SELECT c.rarity, COUNT(*) AS count
         FROM "GachaPull" gp
         JOIN "Card" c ON c.id = gp."cardId"
         GROUP BY c.rarity
-        ORDER BY count DESC
       `,
-      prisma.$queryRaw<
-        { cardId: string; name: string; rarity: string; count: bigint }[]
-      >`
-        SELECT gp."cardId", c.name, c.rarity, COUNT(*) AS count
-        FROM "GachaPull" gp
-        JOIN "Card" c ON c.id = gp."cardId"
-        GROUP BY gp."cardId", c.name, c.rarity
-        ORDER BY count DESC
-        LIMIT 10
+      // Poids théoriques par rareté (somme des dropWeight)
+      prisma.$queryRaw<{ rarity: string; weight: number }[]>`
+        SELECT rarity, SUM("dropWeight") AS weight
+        FROM "Card"
+        GROUP BY rarity
       `,
-      prisma.$queryRaw<{ userId: string; username: string; count: bigint }[]>`
-        SELECT gp."userId", u.username, COUNT(*) AS count
-        FROM "GachaPull" gp
-        JOIN "User" u ON u.id = gp."userId"
-        GROUP BY gp."userId", u.username
-        ORDER BY count DESC
-        LIMIT 10
+      // Cartes jamais tirées
+      prisma.card.findMany({
+        where: { gachaPulls: { none: {} } },
+        select: {
+          id: true,
+          name: true,
+          rarity: true,
+          set: { select: { name: true } },
+        },
+        orderBy: [{ rarity: 'asc' }, { name: 'asc' }],
+      }),
+      // Joueurs actifs 7 jours
+      prisma.$queryRaw<{ count: bigint }[]>`
+        SELECT COUNT(DISTINCT "userId") AS count
+        FROM "GachaPull"
+        WHERE "pulledAt" >= ${sevenDaysAgo}
       `,
+      // Joueurs actifs 30 jours
+      prisma.$queryRaw<{ count: bigint }[]>`
+        SELECT COUNT(DISTINCT "userId") AS count
+        FROM "GachaPull"
+        WHERE "pulledAt" >= ${thirtyDaysAgo}
+      `,
+      // Distribution des niveaux d'upgrade
+      prisma.$queryRaw<{ type: string; level: number; count: bigint }[]>`
+        SELECT type, level, COUNT(*) AS count
+        FROM "UserUpgrade"
+        GROUP BY type, level
+        ORDER BY type, level
+      `,
+      // Nombre total d'utilisateurs (pour calculer niveau 0)
+      prisma.user.count(),
     ])
 
+    // Calcul de la dérive rareté (réel vs théorique)
+    const totalRealPulls = rarityReal.reduce((s, r) => s + Number(r.count), 0)
+    const totalWeight = theoreticalWeights.reduce(
+      (s, r) => s + Number(r.weight),
+      0,
+    )
+    const RARITIES = ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY']
+    const rarityDrift = RARITIES.map((rarity) => {
+      const real = rarityReal.find((r) => r.rarity === rarity)
+      const theoretical = theoreticalWeights.find((r) => r.rarity === rarity)
+      const realCount = real ? Number(real.count) : 0
+      const realPct =
+        totalRealPulls > 0 ? (realCount / totalRealPulls) * 100 : 0
+      const theoreticalPct =
+        totalWeight > 0 && theoretical
+          ? (Number(theoretical.weight) / totalWeight) * 100
+          : 0
+      return { rarity, realCount, realPct, theoreticalPct }
+    })
+
+    // Distribution des upgrades avec niveau 0
+    const UPGRADE_TYPES = ['REGEN', 'LUCK', 'DUST_HARVEST', 'TOKEN_VAULT']
+    const upgradeDistribution = UPGRADE_TYPES.map((type) => {
+      const rows = upgradeRows.filter((r) => r.type === type)
+      const countAtLevels = rows.reduce(
+        (s, r) => s + Number(r.count),
+        0,
+      )
+      const levels = [
+        { level: 0, count: totalUsers - countAtLevels },
+        ...rows.map((r) => ({ level: r.level, count: Number(r.count) })),
+      ]
+      return { type, levels }
+    })
+
     return {
-      rarityDistribution: rarityDistribution.map((r) => ({
-        rarity: r.rarity,
-        count: Number(r.count),
+      rarityDrift,
+      neverPulledCards: neverPulledCards.map((c) => ({
+        id: c.id,
+        name: c.name,
+        rarity: c.rarity,
+        setName: c.set.name,
       })),
-      topCards: topCards.map((r) => ({
-        cardId: r.cardId,
-        name: r.name,
-        rarity: r.rarity,
-        count: Number(r.count),
-      })),
-      topUsers: topUsers.map((r) => ({
-        userId: r.userId,
-        username: r.username,
-        count: Number(r.count),
-      })),
+      activeUsers: {
+        sevenDays: Number(activeUsers7d[0]?.count ?? 0),
+        thirtyDays: Number(activeUsers30d[0]?.count ?? 0),
+      },
+      upgradeDistribution,
     }
   })
 }

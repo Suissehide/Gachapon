@@ -4,10 +4,9 @@ import { type CSSProperties, useState } from 'react'
 
 import type { AuthTab } from '../components/auth/index.ts'
 import { AuthDialog } from '../components/auth/index.ts'
-import { Navbar } from '../components/custom/navbar.tsx'
+import { LandingNavbar } from '../components/custom/landing-navbar.tsx'
 import { Button } from '../components/ui/button.tsx'
 import { Card } from '../components/ui/card.tsx'
-import { useAuthStore } from '../stores/auth.store.js'
 
 export const Route = createFileRoute('/')({
   component: LandingPage,
@@ -164,7 +163,6 @@ const FLOATING_BALLS: Array<{
 // ── Component ─────────────────────────────────────────────────────────────────
 
 function LandingPage() {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [defaultTab, setDefaultTab] = useState<AuthTab>('login')
 
@@ -197,48 +195,12 @@ function LandingPage() {
         <div className="absolute left-[20%] bottom-[-10%] h-125 w-125 rounded-full bg-accent/5 blur-[120px]" />
       </div>
 
-      {isAuthenticated ? (
-        <Navbar />
-      ) : (
-        <>
-          {/* ── HEADER ────────────────────────────────────────────────── */}
-          <header className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-6 lg:px-10 py-4 bg-background/80 backdrop-blur-xl border-b border-border/40 animate-in fade-in-0 slide-in-from-top-2 duration-500 fill-mode-both">
-            <div className="flex items-center gap-2">
-              <div
-                className="h-5 w-5 rounded-full"
-                style={{
-                  background: BALLS.amber.bg,
-                  boxShadow: BALLS.amber.shadow,
-                }}
-              />
-              <span className="text-base font-black tracking-tight text-foreground select-none">
-                Gachapon
-              </span>
-            </div>
-            <nav className="flex items-center gap-5">
-              <Button
-                variant="ghost"
-                onClick={openLogin}
-                className="text-sm text-text-light hidden sm:flex"
-              >
-                Se connecter
-              </Button>
-              <Button
-                onClick={openRegister}
-                className="rounded-full h-9 text-sm px-5"
-              >
-                Rejoindre
-              </Button>
-            </nav>
-          </header>
-
-          <AuthDialog
-            open={dialogOpen}
-            onOpenChange={setDialogOpen}
-            defaultTab={defaultTab}
-          />
-        </>
-      )}
+      <LandingNavbar onOpenLogin={openLogin} onOpenRegister={openRegister} />
+      <AuthDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        defaultTab={defaultTab}
+      />
 
       {/* ── HERO ──────────────────────────────────────────────────── */}
       <section className="relative z-10 h-screen flex flex-col items-center text-center px-6 pt-32 pb-8">

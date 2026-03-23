@@ -15,13 +15,13 @@ type PullsChartProps = {
 export function PullsChart({ data }: PullsChartProps) {
   return (
     <div className="rounded-xl border border-border bg-card p-5">
-      <p className="mb-4 text-sm font-semibold text-text-light uppercase tracking-widest">
+      <p className="mb-4 text-xs font-semibold text-text-light uppercase">
         Pulls / jour (30 derniers jours)
       </p>
       <ResponsiveContainer width="100%" height={200}>
         <BarChart
           data={data}
-          margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
+          margin={{ top: 0, right: 0, left: -50, bottom: -20 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis

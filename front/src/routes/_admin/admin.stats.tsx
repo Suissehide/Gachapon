@@ -1,9 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
-import type { ColumnDef } from '@tanstack/react-table'
-import { useMemo } from 'react'
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
+import { AlertTriangle, Users } from 'lucide-react'
 
-import { ReactTable } from '../../components/table/reactTable'
+import { Card, CardContent } from '../../components/ui/card.tsx'
 import { useAdminStats } from '../../queries/useAdminStats'
 
 export const Route = createFileRoute('/_admin/admin/stats')({
@@ -18,28 +16,23 @@ const RARITY_COLORS: Record<string, string> = {
   LEGENDARY: '#fbbf24',
 }
 
-type TopCard = { id: string; name: string; rarity: string; count: number }
-type TopUser = { id: string; username: string; count: number }
+const RARITY_LABELS: Record<string, string> = {
+  COMMON: 'Commun',
+  UNCOMMON: 'Peu commun',
+  RARE: 'Rare',
+  EPIC: 'Épique',
+  LEGENDARY: 'Légendaire',
+}
+
+const UPGRADE_LABELS: Record<string, string> = {
+  REGEN: 'Accélération',
+  LUCK: 'Chance',
+  DUST_HARVEST: 'Récolteur',
+  TOKEN_VAULT: 'Réserve',
+}
 
 function AdminStats() {
   const { data, isLoading } = useAdminStats()
-
-  const cardColumns = useMemo<ColumnDef<TopCard>[]>(
-    () => [
-      { accessorKey: 'name', header: 'Carte', meta: { grow: true } },
-      { accessorKey: 'rarity', header: 'Rareté', size: 110 },
-      { accessorKey: 'count', header: 'Tirages', size: 90 },
-    ],
-    [],
-  )
-
-  const userColumns = useMemo<ColumnDef<TopUser>[]>(
-    () => [
-      { accessorKey: 'username', header: 'Joueur', meta: { grow: true } },
-      { accessorKey: 'count', header: 'Pulls', size: 90 },
-    ],
-    [],
-  )
 
   if (isLoading || !data) {
     return (
@@ -49,75 +42,231 @@ function AdminStats() {
     )
   }
 
-  const topCards: TopCard[] = data.topCards.map((c) => ({ ...c, id: c.cardId }))
-  const topUsers: TopUser[] = data.topUsers.map((u) => ({ ...u, id: u.userId }))
+  const totalUsers =
+    data.upgradeDistribution[0]?.levels.reduce((s, l) => s + l.count, 0) ?? 0
 
   return (
     <div className="p-8">
       <h1 className="mb-6 text-2xl font-black text-text">Statistiques</h1>
 
-      <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="rounded-xl border border-border bg-card p-5">
+      {/* Row 1 — Joueurs actifs + Distribution raretés */}
+      <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Joueurs actifs */}
+        <Card>
+          <CardContent className="p-5">
+            <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-text-light">
+              Joueurs actifs
+            </p>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="rounded-lg bg-primary/8 p-4 text-center">
+                <div className="mb-1 flex items-center justify-center gap-1.5">
+                  <Users className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-xs font-semibold text-primary">
+                    7 jours
+                  </span>
+                </div>
+                <p className="text-3xl font-black text-text">
+                  {data.activeUsers.sevenDays.toLocaleString('fr-FR')}
+                </p>
+                {totalUsers > 0 && (
+                  <p className="mt-1 text-xs text-text-light">
+                    {((data.activeUsers.sevenDays / totalUsers) * 100).toFixed(
+                      1,
+                    )}
+                    % des joueurs
+                  </p>
+                )}
+              </div>
+              <div className="rounded-lg bg-secondary/8 p-4 text-center">
+                <div className="mb-1 flex items-center justify-center gap-1.5">
+                  <Users className="h-3.5 w-3.5 text-secondary" />
+                  <span className="text-xs font-semibold text-secondary">
+                    30 jours
+                  </span>
+                </div>
+                <p className="text-3xl font-black text-text">
+                  {data.activeUsers.thirtyDays.toLocaleString('fr-FR')}
+                </p>
+                {totalUsers > 0 && (
+                  <p className="mt-1 text-xs text-text-light">
+                    {((data.activeUsers.thirtyDays / totalUsers) * 100).toFixed(
+                      1,
+                    )}
+                    % des joueurs
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Dérive rareté */}
+        <Card>
+          <CardContent className="p-5">
+            <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-text-light">
+              Dérive drop rates — réel vs théorique
+            </p>
+            <div className="space-y-2.5">
+              {data.rarityDrift.map(
+                ({ rarity, realCount, realPct, theoreticalPct }) => {
+                  const drift = realPct - theoreticalPct
+                  const color = RARITY_COLORS[rarity] ?? '#6b7280'
+                  return (
+                    <div key={rarity}>
+                      <div className="mb-1 flex items-center justify-between text-xs">
+                        <span className="font-semibold" style={{ color }}>
+                          {RARITY_LABELS[rarity] ?? rarity}
+                        </span>
+                        <div className="flex items-center gap-3 text-text-light">
+                          <span>
+                            théo.{' '}
+                            <span className="font-mono text-text">
+                              {theoreticalPct.toFixed(2)}%
+                            </span>
+                          </span>
+                          <span>
+                            réel{' '}
+                            <span className="font-mono text-text">
+                              {realPct.toFixed(2)}%
+                            </span>{' '}
+                            <span className="text-xs text-text-light">
+                              ({realCount.toLocaleString('fr-FR')})
+                            </span>
+                          </span>
+                          <span
+                            className={`font-mono font-bold ${Math.abs(drift) > 2 ? 'text-destructive' : 'text-text-light'}`}
+                          >
+                            {drift >= 0 ? '+' : ''}
+                            {drift.toFixed(2)}%
+                          </span>
+                        </div>
+                      </div>
+                      <div className="relative h-1.5 overflow-hidden rounded-full bg-border">
+                        {theoreticalPct > 0 && (
+                          <div
+                            className="absolute h-full rounded-full opacity-30"
+                            style={{
+                              width: `${Math.min(theoreticalPct, 100)}%`,
+                              backgroundColor: color,
+                            }}
+                          />
+                        )}
+                        {realPct > 0 && (
+                          <div
+                            className="absolute h-full rounded-full"
+                            style={{
+                              width: `${Math.min(realPct, 100)}%`,
+                              backgroundColor: color,
+                            }}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  )
+                },
+              )}
+            </div>
+            {data.rarityDrift.every((r) => r.realCount === 0) && (
+              <p className="mt-3 text-center text-xs text-text-light">
+                Aucun pull enregistré
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Row 2 — Distribution upgrades */}
+      <Card className="mb-6">
+        <CardContent className="p-5">
           <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-text-light">
-            Distribution raretés
+            Distribution des améliorations
           </p>
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
-              <Pie
-                data={data.rarityDistribution}
-                dataKey="count"
-                nameKey="rarity"
-                cx="50%"
-                cy="50%"
-                outerRadius={80}
-              >
-                {data.rarityDistribution.map((entry) => (
-                  <Cell
-                    key={entry.rarity}
-                    fill={RARITY_COLORS[entry.rarity] ?? '#6b7280'}
-                  />
-                ))}
-              </Pie>
-              <Tooltip
-                formatter={(v, n) => [v, n]}
-                contentStyle={{
-                  background: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: 8,
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="flex h-72 flex-col rounded-xl border border-border bg-card p-5">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-text-light">
-            Top 10 cartes
-          </p>
-          <div className="min-h-0 flex-1 overflow-hidden">
-            <ReactTable
-              columns={cardColumns}
-              data={topCards}
-              filterId="admin-stats-cards"
-              infiniteScroll={false}
-            />
+          <div className="grid grid-cols-2 gap-6 lg:grid-cols-4">
+            {data.upgradeDistribution.map(({ type, levels }) => {
+              const total = levels.reduce((s, l) => s + l.count, 0)
+              return (
+                <div key={type}>
+                  <p className="mb-3 text-sm font-bold text-text">
+                    {UPGRADE_LABELS[type] ?? type}
+                  </p>
+                  <div className="space-y-1.5">
+                    {levels.map(({ level, count }) => {
+                      const pct = total > 0 ? (count / total) * 100 : 0
+                      return (
+                        <div key={level} className="flex items-center gap-2">
+                          <span className="w-12 text-right text-xs font-mono text-text-light">
+                            {level === 0 ? 'Niv. 0' : `Niv. ${level}`}
+                          </span>
+                          <div className="flex-1 overflow-hidden rounded-full bg-border">
+                            <div
+                              className="h-1.5 rounded-full transition-all"
+                              style={{
+                                width: `${pct}%`,
+                                backgroundColor:
+                                  level === 0
+                                    ? 'hsl(var(--border-dark))'
+                                    : `hsl(var(--primary))`,
+                                opacity: level === 0 ? 1 : 0.4 + level * 0.15,
+                              }}
+                            />
+                          </div>
+                          <span className="w-8 text-right text-xs font-mono text-text-light">
+                            {count}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      <div className="flex h-80 flex-col rounded-xl border border-border bg-card p-5">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-text-light">
-          Top 10 joueurs
-        </p>
-        <div className="min-h-0 flex-1 overflow-hidden">
-          <ReactTable
-            columns={userColumns}
-            data={topUsers}
-            filterId="admin-stats-users"
-            infiniteScroll={false}
-          />
-        </div>
-      </div>
+      {/* Row 3 — Cartes jamais tirées */}
+      <Card>
+        <CardContent className="p-5">
+          <div className="mb-4 flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+            <p className="text-xs font-semibold uppercase tracking-widest text-text-light">
+              Cartes jamais tirées
+              {data.neverPulledCards.length > 0 && (
+                <span className="ml-2 rounded-full bg-destructive/15 px-2 py-0.5 text-destructive">
+                  {data.neverPulledCards.length}
+                </span>
+              )}
+            </p>
+          </div>
+          {data.neverPulledCards.length === 0 ? (
+            <p className="text-sm text-text-light">
+              Toutes les cartes ont été tirées au moins une fois.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
+              {data.neverPulledCards.map((card) => (
+                <div
+                  key={card.id}
+                  className="flex items-center gap-2.5 rounded-lg border border-border bg-background px-3 py-2"
+                >
+                  <div
+                    className="h-2 w-2 flex-shrink-0 rounded-full"
+                    style={{
+                      backgroundColor: RARITY_COLORS[card.rarity] ?? '#6b7280',
+                    }}
+                  />
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-text">
+                    {card.name}
+                  </span>
+                  <span className="flex-shrink-0 text-xs text-text-light">
+                    {card.setName}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
