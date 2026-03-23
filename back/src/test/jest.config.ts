@@ -31,10 +31,11 @@ const sharedConfig = {
   },
   testEnvironment: 'node',
   setupFiles: ['<rootDir>/setup.ts'],
-  transformIgnorePatterns: ['/node_modules/(?!(@prisma)/)'],
+  transformIgnorePatterns: ['/node_modules/(?!(@prisma|@scalar|leven)/)'],
 }
 
 const config: Config = {
+  globalSetup: '<rootDir>/globalSetup.ts',
   projects: [
     {
       displayName: 'e2e',

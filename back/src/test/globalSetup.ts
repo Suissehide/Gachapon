@@ -6,12 +6,12 @@ import { PrismaClient } from '../generated/client'
 
 export default async function globalSetup() {
   // Load .env.test — overrides DATABASE_URL to point at gachapon_test
-  loadEnv({ path: resolve(__dirname, '../../../.env.test'), override: true })
+  loadEnv({ path: resolve(__dirname, '../../.env.test'), override: true })
 
   // Apply any pending migrations to the test database
   execFileSync('npx', ['prisma', 'migrate', 'deploy'], {
     stdio: 'inherit',
-    cwd: resolve(__dirname, '../../..'),
+    cwd: resolve(__dirname, '../..'),
   })
 
   // Truncate all tables so each run starts clean
