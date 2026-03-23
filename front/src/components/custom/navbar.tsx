@@ -37,7 +37,7 @@ export function Navbar() {
             <Link
               key={item.label}
               to={item.to}
-              className="px-4 py-2 text-sm font-medium text-text-light rounded-lg transition-colors hover:text-text hover:bg-muted [&.active]:text-primary [&.active]:font-semibold"
+              className="px-3 py-2 text-sm font-medium text-text-light rounded-lg transition-colors hover:text-text hover:bg-muted [&.active]:text-primary [&.active]:font-semibold"
             >
               {item.label}
             </Link>

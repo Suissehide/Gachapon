@@ -22,7 +22,7 @@ export function useCardColumns(
       {
         id: 'image',
         header: '',
-        size: 44,
+        size: 60,
         cell: ({ row }) => (
           <img
             src={row.original.imageUrl || notFoundImg}

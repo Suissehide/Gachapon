@@ -2,14 +2,18 @@ import Boom from '@hapi/boom'
 
 import type { StorageClientInterface } from '../../../../../types/infra/storage/storage-client'
 
-export const ALLOWED_IMAGE_MIME = new Set(['image/jpeg', 'image/png', 'image/webp'])
+export const ALLOWED_IMAGE_MIME = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+])
 export const MAX_IMAGE_SIZE = 5 * 1024 * 1024
 
 function sanitizeName(name: string): string {
   return name
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
-    .replace(/[^a-zA-Z0-9\-\.]/g, '-')
+    .replace(/[^a-zA-Z0-9\-.]/g, '-')
     .toLowerCase()
 }
 

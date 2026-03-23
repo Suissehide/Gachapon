@@ -1,7 +1,11 @@
+import { Minus, Plus, RefreshCw, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 
 import type { Card } from '../../api/collection.api.ts'
 import { useRecycle } from '../../queries/useCollection.ts'
+import { Button } from '../ui/button.tsx'
+import { Input } from '../ui/input.tsx'
+import { Label } from '../ui/label.tsx'
 import {
   Popup,
   PopupBody,
@@ -10,6 +14,7 @@ import {
   PopupHeader,
   PopupTitle,
 } from '../ui/popup.tsx'
+import { RARITY_COLORS, RARITY_LABELS } from './CollectionCard.tsx'
 
 const DUST_BY_RARITY: Record<string, number> = {
   COMMON: 5,
@@ -26,17 +31,24 @@ interface RecycleModalProps {
 }
 
 export function RecycleModal({ open, onOpenChange, card }: RecycleModalProps) {
-  const [inputValue, setInputValue] = useState('1')
+  const [quantity, setQuantity] = useState(1)
   const { mutate: recycle, isPending } = useRecycle()
 
-  const maxRecyclable = card.quantity
-  const parsed = parseInt(inputValue, 10)
-  const quantity = Number.isNaN(parsed) ? 0 : parsed
-  const isValid = quantity >= 1 && quantity <= maxRecyclable
-  const dustPreview = isValid ? quantity * (DUST_BY_RARITY[card.rarity] ?? 0) : 0
+  const maxRecyclable = card.quantity - 1
+  const dustPerCard = DUST_BY_RARITY[card.rarity] ?? 0
+  const dustTotal = quantity * dustPerCard
+  const rarityText = RARITY_COLORS[card.rarity]?.split(' ')[1] ?? 'text-text-light'
+
+  const clamp = (v: number) => Math.max(1, Math.min(maxRecyclable, v))
+
+  const handleInputChange = (e: { target: HTMLInputElement }): void => {
+    const parsed = parseInt(e.target.value, 10)
+    if (!Number.isNaN(parsed)) {
+      setQuantity(clamp(parsed))
+    }
+  }
 
   const handleRecycle = () => {
-    if (!isValid) return
     recycle(
       { cardId: card.id, quantity },
       { onSuccess: () => onOpenChange(false) },
@@ -47,87 +59,111 @@ export function RecycleModal({ open, onOpenChange, card }: RecycleModalProps) {
     <Popup open={open} onOpenChange={onOpenChange}>
       <PopupContent>
         <PopupHeader>
-          <PopupTitle>Recycler des cartes</PopupTitle>
+          <PopupTitle icon={<RefreshCw className="h-4 w-4" />}>
+            Recycler des cartes
+          </PopupTitle>
         </PopupHeader>
 
-        <PopupBody className="space-y-4">
+        <PopupBody className="space-y-5">
           {/* Card info */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4 rounded-xl border border-border/40 bg-muted/30 p-3">
             {card.imageUrl && (
-              <img
-                src={card.imageUrl}
-                alt={card.name}
-                className="h-14 w-10 rounded-lg object-contain border border-border/40"
-              />
+              <div className="shrink-0 rounded-lg overflow-hidden border border-border/40 bg-black/30 w-12 h-16">
+                <img
+                  src={card.imageUrl}
+                  alt={card.name}
+                  className="h-full w-full object-contain"
+                />
+              </div>
             )}
-            <div>
-              <p className="font-semibold text-text">{card.name}</p>
-              <p className="text-xs text-text-light">
-                {card.rarity} · {DUST_BY_RARITY[card.rarity] ?? 0} 💎 / copie
+            <div className="min-w-0">
+              <p className="font-semibold text-text truncate">{card.name}</p>
+              <p className={`text-xs font-medium ${rarityText}`}>
+                {RARITY_LABELS[card.rarity]}
               </p>
-              <p className="text-xs text-text-light">
-                Tu possèdes{' '}
-                <span className="font-semibold text-text">{card.quantity}</span> exemplaire
-                {card.quantity > 1 ? 's' : ''}
+              <p className="mt-1 flex items-center gap-1 text-xs text-text-light">
+                {dustPerCard} <Sparkles className="h-3 w-3 text-primary" /> par copie ·{' '}
+                <span className="font-semibold text-text">{maxRecyclable}</span> exemplaire{maxRecyclable > 1 ? 's' : ''}
               </p>
             </div>
           </div>
 
-          {/* Quantity input */}
-          <div className="space-y-1">
-            <label className="text-xs text-text-light">Quantité à recycler</label>
+          {/* Quantity stepper */}
+          <div className="space-y-2">
+            <Label className="text-xs text-text-light">Quantité à recycler</Label>
             <div className="flex items-center gap-2">
-              <input
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                onClick={() => setQuantity(clamp(quantity - 1))}
+                disabled={quantity <= 1}
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <Input
                 type="number"
                 min={1}
                 max={maxRecyclable}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                className="w-24 rounded-lg border border-border bg-muted px-3 py-1.5 text-sm text-text focus:border-primary focus:outline-none"
+                value={quantity}
+                onChange={handleInputChange}
+                className="w-16 text-center"
               />
-              <button
+              <Button
                 type="button"
-                onClick={() => setInputValue(String(maxRecyclable))}
-                className="rounded-lg border border-border px-3 py-1.5 text-xs text-text-light hover:border-primary hover:text-primary transition-colors"
+                variant="secondary"
+                size="icon"
+                onClick={() => setQuantity(clamp(quantity + 1))}
+                disabled={quantity >= maxRecyclable}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setQuantity(maxRecyclable)}
+                disabled={quantity === maxRecyclable}
+                className="ml-1"
               >
                 Tout ({maxRecyclable})
-              </button>
+              </Button>
             </div>
-            <p className="text-[10px] text-text-light/60">
-              Min 1 · Max {maxRecyclable}
-            </p>
           </div>
 
           {/* Dust preview */}
-          {isValid && (
-            <div className="rounded-lg bg-muted/60 p-3 text-center">
-              <p className="text-xs text-text-light">Tu obtiendras (hors bonus)</p>
-              <p className="text-lg font-bold text-yellow-400">
-                {dustPreview.toLocaleString()} 💎
-              </p>
-              <p className="text-[10px] text-text-light/60">
-                {quantity} × {DUST_BY_RARITY[card.rarity] ?? 0} dust
-              </p>
-            </div>
-          )}
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-center">
+            <p className="text-[11px] uppercase tracking-widest text-text-light/60 mb-1">
+              Tu obtiendras
+            </p>
+            <p className="text-3xl font-black text-primary tabular-nums">
+              {dustTotal.toLocaleString('fr-FR')}
+              <Sparkles className="ml-1.5 inline h-6 w-6 text-primary" />
+            </p>
+            <p className="mt-1 text-[11px] text-text-light/50">
+              {quantity} × {dustPerCard} dust · hors bonus multiplicateur
+            </p>
+          </div>
         </PopupBody>
 
         <PopupFooter>
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={() => onOpenChange(false)}
-            className="flex-1 rounded-lg border border-border px-4 py-2 text-sm text-text-light hover:border-primary hover:text-primary transition-colors"
           >
             Annuler
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={handleRecycle}
-            disabled={!isValid || isPending}
-            className="flex-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-background disabled:opacity-50 hover:bg-primary/90 transition-colors"
+            disabled={isPending}
           >
-            {isPending ? 'Recyclage…' : `Recycler ${isValid ? quantity : ''} carte${quantity > 1 ? 's' : ''}`}
-          </button>
+            <RefreshCw className="h-3.5 w-3.5" />
+            {isPending
+              ? 'Recyclage…'
+              : `Recycler ${quantity} carte${quantity > 1 ? 's' : ''}`}
+          </Button>
         </PopupFooter>
       </PopupContent>
     </Popup>

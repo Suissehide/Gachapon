@@ -2,36 +2,37 @@ import type { PrismaClient } from '../../src/generated/client'
 
 const CARDS = [
   // COMMON — dropWeight 40 chacune
-  { name: 'Gobelin', rarity: 'COMMON', dropWeight: 40 },
-  { name: 'Rat', rarity: 'COMMON', dropWeight: 40 },
-  { name: 'Champignon', rarity: 'COMMON', dropWeight: 40 },
-  { name: 'Squelette', rarity: 'COMMON', dropWeight: 40 },
-  { name: 'Slime', rarity: 'COMMON', dropWeight: 40 },
-  { name: 'Chauve-Souris', rarity: 'COMMON', dropWeight: 40 },
-  { name: 'Lézard', rarity: 'COMMON', dropWeight: 40 },
-  { name: 'Crabe', rarity: 'COMMON', dropWeight: 40 },
-  { name: 'Guêpe', rarity: 'COMMON', dropWeight: 40 },
-  { name: 'Escargot', rarity: 'COMMON', dropWeight: 40 },
+  { name: 'Gobelin', rarity: 'COMMON', dropWeight: 40, imageKey: 'gobelin.png' },
+  { name: 'Rat', rarity: 'COMMON', dropWeight: 40, imageKey: 'rat.png' },
+  { name: 'Champignon', rarity: 'COMMON', dropWeight: 40, imageKey: 'champignon.png' },
+  { name: 'Squelette', rarity: 'COMMON', dropWeight: 40, imageKey: 'squelette.png' },
+  { name: 'Slime', rarity: 'COMMON', dropWeight: 40, imageKey: 'slime.png' },
+  { name: 'Chauve-Souris', rarity: 'COMMON', dropWeight: 40, imageKey: 'chauve-souris.png' },
+  { name: 'Lézard', rarity: 'COMMON', dropWeight: 40, imageKey: 'lezard.png' },
+  { name: 'Crabe', rarity: 'COMMON', dropWeight: 40, imageKey: 'crabe.png' },
+  { name: 'Guêpe', rarity: 'COMMON', dropWeight: 40, imageKey: 'guepe.png' },
+  { name: 'Escargot', rarity: 'COMMON', dropWeight: 40, imageKey: 'escargot.png' },
   // UNCOMMON — dropWeight 20 chacune
-  { name: 'Chevalier', rarity: 'UNCOMMON', dropWeight: 20 },
-  { name: 'Mage', rarity: 'UNCOMMON', dropWeight: 20 },
-  { name: 'Archer', rarity: 'UNCOMMON', dropWeight: 20 },
-  { name: 'Druide', rarity: 'UNCOMMON', dropWeight: 20 },
-  { name: 'Paladin', rarity: 'UNCOMMON', dropWeight: 20 },
+  { name: 'Chevalier', rarity: 'UNCOMMON', dropWeight: 20, imageKey: 'chevalier.png' },
+  { name: 'Mage', rarity: 'UNCOMMON', dropWeight: 20, imageKey: 'mage.png' },
+  { name: 'Archer', rarity: 'UNCOMMON', dropWeight: 20, imageKey: 'archer.png' },
+  { name: 'Druide', rarity: 'UNCOMMON', dropWeight: 20, imageKey: 'druide.png' },
+  { name: 'Paladin', rarity: 'UNCOMMON', dropWeight: 20, imageKey: 'paladin.png' },
   // RARE — dropWeight 8 chacune
-  { name: 'Dragon Vert', rarity: 'RARE', dropWeight: 8 },
-  { name: 'Phénix', rarity: 'RARE', dropWeight: 8 },
-  { name: 'Liche', rarity: 'RARE', dropWeight: 8 },
+  { name: 'Dragon Vert', rarity: 'RARE', dropWeight: 8, imageKey: 'dragon-vert.png' },
+  { name: 'Phénix', rarity: 'RARE', dropWeight: 8, imageKey: 'phenix.png' },
+  { name: 'Liche', rarity: 'RARE', dropWeight: 8, imageKey: 'liche.png' },
   // EPIC — dropWeight 3 chacune
-  { name: 'Dragon Rouge', rarity: 'EPIC', dropWeight: 3 },
-  { name: 'Titan de Fer', rarity: 'EPIC', dropWeight: 3 },
+  { name: 'Dragon Rouge', rarity: 'EPIC', dropWeight: 3, imageKey: 'dragon--rouge.png' },
+  { name: 'Titan de Fer', rarity: 'EPIC', dropWeight: 3, imageKey: 'titan-de-fer.png' },
   // LEGENDARY — dropWeight 1
-  { name: 'Azéros, Dieu-Guerrier', rarity: 'LEGENDARY', dropWeight: 1 },
+  { name: 'Azéros, Dieu-Guerrier', rarity: 'LEGENDARY', dropWeight: 1, imageKey: 'azeros-dieu-guerrier.png' },
 ] as const
 
 export async function seedCards(
   tx: Parameters<Parameters<PrismaClient['$transaction']>[0]>[0],
 ) {
+  const baseUrl = `${process.env.MINIO_ENDPOINT}/${process.env.MINIO_BUCKET}/cards`
 
   const set = await tx.cardSet.create({
     data: {
@@ -43,12 +44,11 @@ export async function seedCards(
   })
 
   for (const card of CARDS) {
-    const slug = card.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
     await tx.card.create({
       data: {
         setId: set.id,
         name: card.name,
-        imageUrl: `/placeholder/${slug}.jpg`,
+        imageUrl: `${baseUrl}/${card.imageKey}`,
         rarity: card.rarity,
         dropWeight: card.dropWeight,
       },

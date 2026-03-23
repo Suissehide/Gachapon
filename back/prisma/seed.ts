@@ -11,7 +11,7 @@ import { seedUsers } from './seed/users'
 
 // Load .env then .env.local (local overrides)
 config()
-config({ path: '.env.local' })
+config({ path: '.env.local', override: true })
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
 const prisma = new PrismaClient({ adapter })
