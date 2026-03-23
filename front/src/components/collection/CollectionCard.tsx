@@ -66,7 +66,7 @@ export function CollectionCard({
       >
         {isOwned ? (
           <img
-            src={card.imageUrl}
+            src={card.imageUrl ?? undefined}
             alt={card.name}
             className="h-full w-full object-cover"
             onError={(e) => {
