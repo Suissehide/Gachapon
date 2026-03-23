@@ -5,7 +5,7 @@ import type { CardVariant } from '../../../domain/gacha/gacha.types'
 export type CreateGachaPullInput = {
   userId: string
   cardId: string
-  variant: CardVariant | null
+  variant: CardVariant
   wasDuplicate: boolean
   dustEarned: number
 }
