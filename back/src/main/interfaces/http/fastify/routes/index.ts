@@ -19,6 +19,28 @@ export const routes: FastifyPluginAsyncZod = async (fastify) => {
     version: '1.0.0',
   }))
   fastify.get('/health', async () => ({ status: 'ok' }))
+
+  // Annotate protected routes with security schemes in the OpenAPI spec.
+  // Only detects verifySessionCookie when passed directly in route onRequest options.
+  fastify.addHook('onRoute', (route) => {
+    const onRequest = Array.isArray(route.onRequest)
+      ? route.onRequest
+      : route.onRequest
+        ? [route.onRequest]
+        : []
+    if (onRequest.includes(fastify.verifySessionCookie)) {
+      route.schema = {
+        ...route.schema,
+        security: [{ cookieAuth: [] }, { apiKeyAuth: [] }],
+      }
+    }
+  })
+
+  // Serve OpenAPI spec — hidden from the spec itself
+  fastify.get('/openapi.json', { schema: { hide: true } }, async () => {
+    return fastify.swagger()
+  })
+
   await fastify.register(authRouter, { prefix: '/auth' })
   await fastify.register(apiKeysRouter, { prefix: '/api-keys' })
   await fastify.register(gachaRouter)

@@ -13,6 +13,7 @@ import { ormPlugin } from './orm.plugin'
 import { redisPlugin } from './redis.plugin'
 import { rateLimitPlugin } from './rate-limit.plugin'
 import { rolePlugin } from './role.plugin'
+import { swaggerPlugin } from './swagger.plugin'
 import { websocketPlugin } from './websocket.plugin'
 
 const plugins: FastifyPluginAsync = fastifyPlugin(
@@ -46,6 +47,7 @@ const plugins: FastifyPluginAsync = fastifyPlugin(
       limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB max — sets truncated=true, handler accumulates errors
       throwFileSizeLimit: false,
     })
+    await registerPlugin(fastify, 'swagger', swaggerPlugin)
     await registerPlugin(fastify, 'awilix', awilixPlugin)
     await registerPlugin(fastify, 'orm', ormPlugin)
     await registerPlugin(fastify, 'redis', redisPlugin)

@@ -16,6 +16,14 @@ export const adminRouter: FastifyPluginAsyncZod = async (fastify) => {
   fastify.addHook('onRequest', fastify.verifySessionCookie)
   fastify.addHook('onRequest', fastify.requireRole('SUPER_ADMIN'))
 
+  // Hide all admin routes from the public OpenAPI spec
+  fastify.addHook('onRoute', (route) => {
+    route.schema = {
+      ...route.schema,
+      hide: true,
+    }
+  })
+
   await fastify.register(adminUsersRouter, { prefix: '/users' })
   await fastify.register(adminConfigRouter, { prefix: '/config' })
   await fastify.register(adminStatsRouter)
