@@ -4,7 +4,7 @@ import { type CSSProperties, useState } from 'react'
 
 import type { AuthTab } from '../components/auth/index.ts'
 import { AuthDialog } from '../components/auth/index.ts'
-import { LandingNavbar } from '../components/custom/landing-navbar.tsx'
+import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
 import { Button } from '../components/ui/button.tsx'
 import { Card } from '../components/ui/card.tsx'
 

@@ -1,6 +1,7 @@
 import { RefreshCw } from 'lucide-react'
 
 import type { Card, CardVariant } from '../../api/collection.api.ts'
+import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
 import { Button } from '../ui/button.tsx'
 
 export const RARITY_ORDER = [
@@ -17,14 +18,6 @@ export const RARITY_COLORS: Record<string, string> = {
   RARE: 'border-accent/40 text-accent',
   EPIC: 'border-secondary/40 text-secondary',
   LEGENDARY: 'border-primary/50 text-primary',
-}
-
-export const RARITY_BG: Record<string, string> = {
-  COMMON: 'from-border/10 to-transparent',
-  UNCOMMON: 'from-green-500/10 to-transparent',
-  RARE: 'from-accent/10 to-transparent',
-  EPIC: 'from-secondary/10 to-transparent',
-  LEGENDARY: 'from-primary/15 to-transparent',
 }
 
 export const RARITY_LABELS: Record<string, string> = {
@@ -64,104 +57,35 @@ export function CollectionCard({
   isOwned: boolean
   onRecycle: () => void
 }) {
-  const borderColor = isOwned
-    ? (RARITY_COLORS[card.rarity]?.split(' ')[0] ?? 'border-border')
-    : 'border-border/40'
-  const rarityText = isOwned
-    ? (RARITY_COLORS[card.rarity]?.split(' ')[1] ?? 'text-text-light')
-    : 'text-text-light/30'
-  const bg = isOwned
-    ? (RARITY_BG[card.rarity] ?? 'from-border/10 to-transparent')
-    : 'from-border/5 to-transparent'
-
   return (
     <div className="group relative">
+      {/* aspect-3/4 wrapper positions TcgCardFace via absolute inset-0 */}
       <div
-        className={`relative flex flex-col rounded-xl border-2 ${borderColor} overflow-hidden bg-gradient-to-b ${bg} bg-muted/20 transition-all duration-200 group-hover:-translate-y-1 group-hover:shadow-lg ${isOwned ? '' : 'opacity-50'}`}
+        className="relative aspect-3/4 transition-all duration-200 group-hover:-translate-y-1 group-hover:shadow-lg"
+        style={{ borderRadius: 10 }}
       >
-        {/* Badges */}
-        <div className="absolute top-1.5 right-1.5 z-10 flex gap-1">
-          {quantity > 1 && (
+        <TcgCardFace
+          rarity={card.rarity}
+          name={card.name}
+          setName={card.set.name}
+          imageUrl={card.imageUrl}
+          variant={variant}
+          isOwned={isOwned}
+          compact
+        />
+
+        {/* Quantity badge */}
+        {quantity > 1 && (
+          <div className="absolute right-1.5 top-1.5 z-20">
             <span className="rounded-full bg-black/70 px-1.5 py-0.5 text-[9px] font-bold text-white backdrop-blur-sm">
               ×{quantity}
             </span>
-          )}
-        </div>
-        {variant !== 'NORMAL' && isOwned && (
-          <div className="absolute top-1.5 left-1.5 z-10 text-xs leading-none">
-            {variant === 'BRILLIANT' ? '✨' : '🌈'}
           </div>
         )}
 
-        {/* Image avec padding — effet fenêtre de carte */}
-        <div className="">
-          <div className="relative aspect-3/4 w-full overflow-hidden bg-black/30 ring-1 ring-white/5">
-            {isOwned ? (
-              <img
-                src={card.imageUrl ?? undefined}
-                alt={card.name}
-                className="h-full w-full object-contain"
-                onError={(e) => {
-                  ;(e.target as HTMLImageElement).style.display = 'none'
-                }}
-              />
-            ) : (
-              <div className="h-full w-full flex items-center justify-center">
-                <div
-                  className="h-full w-full opacity-15"
-                  style={{
-                    backgroundImage: `url(${card.imageUrl})`,
-                    backgroundSize: 'contain',
-                    backgroundPosition: 'center',
-                    backgroundRepeat: 'no-repeat',
-                    filter: 'brightness(0)',
-                  }}
-                />
-              </div>
-            )}
-
-            {variant === 'HOLOGRAPHIC' && (
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(99,102,241,0.25) 0%, rgba(168,85,247,0.2) 25%, rgba(59,130,246,0.25) 50%, rgba(16,185,129,0.2) 75%, rgba(99,102,241,0.25) 100%)',
-                  backgroundSize: '200% 200%',
-                  animation: 'holographic-shift 3s ease infinite',
-                  mixBlendMode: 'color-dodge',
-                }}
-              />
-            )}
-            {variant === 'BRILLIANT' && (
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(251,191,36,0.3) 0%, rgba(245,158,11,0.15) 40%, rgba(252,211,77,0.35) 70%, rgba(251,191,36,0.3) 100%)',
-                  backgroundSize: '200% 200%',
-                  animation: 'brilliant-shift 2s ease infinite',
-                  mixBlendMode: 'color-dodge',
-                }}
-              />
-            )}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="px-2.5 py-2.5">
-          <p
-            className={`truncate text-[10px] font-bold tracking-wide ${rarityText}`}
-          >
-            {isOwned ? card.name : '???'}
-          </p>
-          <p
-            className={`text-[8px] font-semibold uppercase tracking-widest ${rarityText} opacity-70`}
-          >
-            {isOwned ? RARITY_LABELS[card.rarity] : '·····'}
-          </p>
-        </div>
-
-        {/* Hover — bouton recycler */}
+        {/* Hover — recycle button */}
         {quantity > 1 && (
-          <div className="absolute bottom-0 left-0 right-0 hidden group-hover:flex justify-center pb-2">
+          <div className="absolute inset-x-0 bottom-0 z-20 hidden justify-center pb-2 group-hover:flex">
             <Button
               type="button"
               size="sm"

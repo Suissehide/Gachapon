@@ -2,78 +2,10 @@ import type React from 'react'
 import { useEffect, useRef, useState } from 'react'
 
 import cardBackImg from '../../assets/data/card-back/black.png'
-import placeholderImg from '../../assets/data/not-found.png'
 import type { PullResult } from '../../queries/useGacha'
+import { RARITY_TCG_CONFIG } from '../shared/tcg-card/config.ts'
+import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
 import { Button } from '../ui/button.tsx'
-
-// ── Rarity config ─────────────────────────────────────────────────────────────
-
-const RARITY_CONFIG = {
-  COMMON: {
-    border: '#4b5563',
-    glow: '',
-    backdropColor: '',
-    hasSweep: false,
-    label: 'Commun',
-    labelColor: '#9ca3af',
-    labelBg: 'rgba(75,85,99,0.3)',
-    nameClass: 'text-text',
-  },
-  UNCOMMON: {
-    border: '#22c55e88',
-    glow: '0 0 18px rgba(34,197,94,0.5), 0 0 40px rgba(34,197,94,0.2)',
-    backdropColor: '',
-    hasSweep: false,
-    label: 'Peu commun',
-    labelColor: '#4ade80',
-    labelBg: 'rgba(34,197,94,0.15)',
-    nameClass: 'text-green-400',
-  },
-  RARE: {
-    border: '#06b6d4aa',
-    glow: '0 0 22px rgba(6,182,212,0.6), 0 0 50px rgba(6,182,212,0.22)',
-    backdropColor:
-      'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(6,182,212,0.09) 0%, transparent 70%)',
-    hasSweep: true,
-    label: 'Rare',
-    labelColor: '#22d3ee',
-    labelBg: 'rgba(6,182,212,0.15)',
-    nameClass: 'text-cyan-400',
-  },
-  EPIC: {
-    border: '#8b5cf6aa',
-    glow: '0 0 26px rgba(139,92,246,0.65), 0 0 60px rgba(139,92,246,0.25)',
-    backdropColor:
-      'radial-gradient(ellipse 65% 55% at 50% 50%, rgba(139,92,246,0.11) 0%, transparent 70%)',
-    hasSweep: true,
-    label: 'Épique',
-    labelColor: '#a78bfa',
-    labelBg: 'rgba(139,92,246,0.15)',
-    nameClass: 'text-violet-400',
-  },
-  LEGENDARY: {
-    border: '#f59e0bbb',
-    glow: '0 0 30px rgba(245,158,11,0.75), 0 0 70px rgba(245,158,11,0.3), 0 0 120px rgba(245,158,11,0.12)',
-    backdropColor:
-      'radial-gradient(ellipse 65% 55% at 50% 50%, rgba(245,158,11,0.12) 0%, transparent 70%)',
-    hasSweep: true,
-    label: '✦ Légendaire ✦',
-    labelColor: '#fbbf24',
-    labelBg: 'rgba(245,158,11,0.18)',
-    nameClass: 'legendary-text',
-  },
-} as const
-
-const VARIANT_CONFIG = {
-  BRILLIANT: {
-    label: '✨ Brillant',
-    className: 'bg-amber-500/10 border border-amber-500/30 text-amber-400',
-  },
-  HOLOGRAPHIC: {
-    label: '🌈 Holographique',
-    className: 'bg-purple-500/10 border border-purple-500/30 text-purple-300',
-  },
-} as const
 
 // Fixed particle positions for LEGENDARY
 const LEGENDARY_PARTICLES = [
@@ -109,9 +41,7 @@ export function CardReveal({ result, onClose }: Props) {
       setShowSweep(false)
       return
     }
-    // Short delay then flip to front
     const flipTimer = setTimeout(() => setRotY(0), 120)
-    // Light sweep after flip completes (~120 + 800ms transition)
     const sweepTimer = setTimeout(() => setShowSweep(true), 950)
     return () => {
       clearTimeout(flipTimer)
@@ -140,14 +70,10 @@ export function CardReveal({ result, onClose }: Props) {
     return null
   }
 
-  const rarity = result.card.rarity as keyof typeof RARITY_CONFIG
-  const config = RARITY_CONFIG[rarity] ?? RARITY_CONFIG.COMMON
+  const rarity = result.card.rarity
+  const config = RARITY_TCG_CONFIG[rarity] ?? RARITY_TCG_CONFIG.COMMON
   const isLegendary = rarity === 'LEGENDARY'
-
-  // Front-face darkness: show text only when card is showing front (~rotY within ±90°)
-  const showingFront =
-    Math.abs(((rotY % 360) + 360) % 360) < 90 ||
-    Math.abs(((rotY % 360) + 360) % 360) > 270
+  const variant = result.card.variant ?? null
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: backdrop click-to-close
@@ -226,60 +152,23 @@ export function CardReveal({ result, onClose }: Props) {
                 : 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
-            {/* ── FRONT face ── */}
-            <div
-              className="absolute inset-0 rounded-2xl overflow-hidden"
-              style={{
-                backfaceVisibility: 'hidden',
-                border: `2px solid ${config.border}`,
-                boxShadow: config.glow,
-              }}
-            >
-              {/* Card image */}
-              <img
-                src={result.card.imageUrl || placeholderImg}
-                alt={result.card.name}
-                className="absolute inset-0 h-full w-full object-cover"
-                onError={(e) => {
-                  ;(e.target as HTMLImageElement).src = placeholderImg
-                }}
-              />
-
-              {/* Gradient overlay for text legibility */}
-              <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/15 to-transparent" />
-
-              {/* Light sweep (RARE / EPIC / LEGENDARY) */}
-              {showSweep && config.hasSweep && (
-                <div className="card-sweep-inner" />
-              )}
-
-              {/* Bottom info overlay */}
-              {showingFront && (
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <span
-                    className="inline-block rounded-full px-2.5 py-0.5 text-xs font-bold mb-2"
-                    style={{
-                      color: config.labelColor,
-                      background: config.labelBg,
-                    }}
-                  >
-                    {config.label}
-                  </span>
-                  <h2
-                    className={`text-lg font-black leading-tight ${config.nameClass}`}
-                  >
-                    {result.card.name}
-                  </h2>
-                </div>
-              )}
-            </div>
+            {/* ── FRONT face — TCG layout ── */}
+            <TcgCardFace
+              rarity={rarity}
+              name={result.card.name}
+              setName={result.card.set.name}
+              imageUrl={result.card.imageUrl}
+              variant={variant}
+              showSweep={showSweep}
+            />
 
             {/* ── BACK face ── */}
             <div
-              className="absolute inset-0 rounded-2xl overflow-hidden border border-border/40"
+              className="absolute inset-0 overflow-hidden border border-border/40"
               style={{
                 backfaceVisibility: 'hidden',
                 transform: 'rotateY(180deg)',
+                borderRadius: 16,
               }}
             >
               <img
@@ -291,30 +180,8 @@ export function CardReveal({ result, onClose }: Props) {
           </div>
         </div>
 
-        {/* ── Info section below card ── */}
-        <div className="w-60 rounded-2xl border border-border/60 bg-card/90 backdrop-blur-sm p-4 space-y-3">
-          {/* Set name */}
-          <p className="text-center text-xs font-medium text-text-light">
-            {result.card.set.name}
-          </p>
-
-          {/* Variant */}
-          {result.card.variant && (
-            <span
-              className={`block text-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                VARIANT_CONFIG[
-                  result.card.variant as keyof typeof VARIANT_CONFIG
-                ]?.className ?? ''
-              }`}
-            >
-              {
-                VARIANT_CONFIG[
-                  result.card.variant as keyof typeof VARIANT_CONFIG
-                ]?.label
-              }
-            </span>
-          )}
-
+        {/* ── Info panel below card ── */}
+        <div className="w-60 space-y-2.5 rounded-2xl border border-border/60 bg-card/90 p-4 backdrop-blur-sm">
           {/* Duplicate / dust */}
           {result.wasDuplicate && (
             <div className="rounded-lg border border-amber-500/30 bg-amber-500/8 px-3 py-2">

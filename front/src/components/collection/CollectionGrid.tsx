@@ -1,13 +1,13 @@
-import type { UserCard } from '../../api/collection.api.ts'
+import type { DisplayEntry } from '../../routes/_authenticated/collection.tsx'
 import { CollectionCard } from './CollectionCard.tsx'
 
 interface CollectionGridProps {
-  userCards: UserCard[]
-  onRecycle: (userCard: UserCard) => void
+  entries: DisplayEntry[]
+  onRecycle: (entry: DisplayEntry) => void
 }
 
-export function CollectionGrid({ userCards, onRecycle }: CollectionGridProps) {
-  if (userCards.length === 0) {
+export function CollectionGrid({ entries, onRecycle }: CollectionGridProps) {
+  if (entries.length === 0) {
     return (
       <div className="flex h-48 items-center justify-center">
         <p className="text-text-light">
@@ -19,14 +19,14 @@ export function CollectionGrid({ userCards, onRecycle }: CollectionGridProps) {
 
   return (
     <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
-      {userCards.map((uc) => (
+      {entries.map((entry) => (
         <CollectionCard
-          key={`${uc.card.id}-${uc.variant}`}
-          card={uc.card}
-          variant={uc.variant}
-          quantity={uc.quantity}
-          isOwned={true}
-          onRecycle={() => onRecycle(uc)}
+          key={entry.key}
+          card={entry.card}
+          variant={entry.variant}
+          quantity={entry.quantity}
+          isOwned={entry.isOwned}
+          onRecycle={() => onRecycle(entry)}
         />
       ))}
     </div>

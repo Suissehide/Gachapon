@@ -9,7 +9,7 @@ import {
 import { FilterChip } from './FilterChip.tsx'
 
 type Rarity = Card['rarity']
-type Variant = 'BRILLIANT' | 'HOLOGRAPHIC'
+type Variant = 'NORMAL' | 'BRILLIANT' | 'HOLOGRAPHIC'
 
 const DISPLAY_MODE_OPTIONS = [
   { value: 'rarity' as const, label: 'Par rareté' },
@@ -71,6 +71,17 @@ export function CollectionFilters({
               Variante
             </p>
             <div className="flex flex-wrap justify-end gap-2">
+              <FilterChip
+                label="Normal"
+                isActive={selectedVariant === 'NORMAL'}
+                activeClass="border-border text-text bg-border/20"
+                inactiveClass="border-border/60 text-text-light/60"
+                onClick={() =>
+                  onVariantChange(
+                    selectedVariant === 'NORMAL' ? null : 'NORMAL',
+                  )
+                }
+              />
               <FilterChip
                 label="✨ Brillante"
                 isActive={selectedVariant === 'BRILLIANT'}

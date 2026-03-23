@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import type { AuthTab } from '../components/auth/index.ts'
 import { AuthDialog } from '../components/auth/index.ts'
-import { LandingNavbar } from '../components/custom/landing-navbar'
+import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
 import { apiUrl } from '../constants/config.constant'
 
 export const Route = createFileRoute('/stats')({
@@ -30,7 +30,7 @@ function useCountUp(target: number, duration = 1800) {
       const elapsed = now - start
       const progress = Math.min(elapsed / duration, 1)
       // Ease out cubic
-      const eased = 1 - Math.pow(1 - progress, 3)
+      const eased = 1 - (1 - progress) ** 3
       setValue(Math.round(eased * target))
       if (progress < 1) rafRef.current = requestAnimationFrame(animate)
     }
@@ -46,14 +46,16 @@ function StatCard({
   label,
   value,
   suffix = '',
-  color,
+  bgColor,
+  iconColor,
   delay = 0,
 }: {
-  icon: React.ElementType
+  icon: React.ComponentType<{ className?: string }>
   label: string
   value: number
   suffix?: string
-  color: string
+  bgColor: string
+  iconColor: string
   delay?: number
 }) {
   const [visible, setVisible] = useState(false)
@@ -68,14 +70,14 @@ function StatCard({
     <div className="relative group rounded-2xl border border-border/50 bg-card p-8 overflow-hidden transition-all duration-300 hover:border-border hover:shadow-xl hover:-translate-y-0.5">
       {/* Glow */}
       <div
-        className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${color} blur-3xl`}
+        className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${bgColor} blur-3xl`}
         style={{ transform: 'scale(0.8)' }}
       />
       <div className="relative">
         <div
-          className={`inline-flex items-center justify-center h-12 w-12 rounded-xl mb-5 ${color.replace('bg-', 'bg-').replace('/5', '/10')}`}
+          className={`inline-flex items-center justify-center h-12 w-12 rounded-xl mb-5 ${bgColor}`}
         >
-          <Icon className={`h-6 w-6 ${color.replace('bg-', 'text-').replace('/10', '')}`} />
+          <Icon className={`h-6 w-6 ${iconColor}`} />
         </div>
         <p className="text-4xl font-black tracking-tight text-foreground tabular-nums">
           {count.toLocaleString('fr-FR')}
@@ -92,8 +94,14 @@ function StatsPage() {
   const [defaultTab, setDefaultTab] = useState<AuthTab>('login')
   const [stats, setStats] = useState<PublicStats | null>(null)
 
-  const openLogin = () => { setDefaultTab('login'); setDialogOpen(true) }
-  const openRegister = () => { setDefaultTab('register'); setDialogOpen(true) }
+  const openLogin = () => {
+    setDefaultTab('login')
+    setDialogOpen(true)
+  }
+  const openRegister = () => {
+    setDefaultTab('register')
+    setDialogOpen(true)
+  }
 
   useEffect(() => {
     fetch(`${apiUrl ?? ''}/stats`)
@@ -115,7 +123,11 @@ function StatsPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <LandingNavbar onOpenLogin={openLogin} onOpenRegister={openRegister} />
-      <AuthDialog open={dialogOpen} onOpenChange={setDialogOpen} defaultTab={defaultTab} />
+      <AuthDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        defaultTab={defaultTab}
+      />
 
       <main className="pt-32 pb-24 px-6 lg:px-10 max-w-4xl mx-auto">
         {/* Header */}
@@ -127,8 +139,8 @@ function StatsPage() {
             En chiffres
           </h1>
           <p className="text-base text-text-light leading-relaxed max-w-lg">
-            Des milliers de joueurs, des millions de capsules, des cartes légendaires
-            qui changent de mains chaque jour.
+            Des milliers de joueurs, des millions de capsules, des cartes
+            légendaires qui changent de mains chaque jour.
           </p>
         </div>
 
@@ -138,41 +150,46 @@ function StatsPage() {
             icon={Users}
             label="Joueurs inscrits"
             value={s.totalUsers}
-            color="bg-primary/5"
+            bgColor="bg-primary/10"
+            iconColor="text-primary"
             delay={0}
           />
           <StatCard
             icon={Zap}
             label="Capsules ouvertes"
             value={s.totalPulls}
-            color="bg-secondary/5"
+            bgColor="bg-secondary/10"
+            iconColor="text-secondary"
             delay={100}
           />
           <StatCard
             icon={Sparkles}
             label="Joueurs actifs cette semaine"
             value={s.activeUsers}
-            color="bg-accent/5"
+            bgColor="bg-accent/10"
+            iconColor="text-accent"
             delay={200}
           />
           <StatCard
             icon={Star}
             label="Cartes disponibles"
             value={s.totalCards}
-            color="bg-primary/5"
+            bgColor="bg-primary/10"
+            iconColor="text-primary"
             delay={300}
           />
           <StatCard
             icon={Trophy}
             label="Cartes légendaires obtenues"
             value={s.legendaryPulls}
-            color="bg-amber-500/5"
+            bgColor="bg-amber-500/10"
+            iconColor="text-amber-500"
             delay={400}
           />
         </div>
 
         {/* CTA */}
-        <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5 p-10 text-center">
+        <div className="rounded-2xl border border-primary/20 bg-linear-to-br from-primary/5 to-secondary/5 p-10 text-center">
           <p className="text-xs font-semibold text-primary/60 uppercase tracking-widest mb-3">
             Rejoins l'aventure
           </p>
@@ -180,7 +197,8 @@ function StatsPage() {
             Ta prochaine légendaire t'attend
           </h2>
           <p className="text-text-light text-sm mb-8 max-w-sm mx-auto">
-            Construis ta collection, monte en niveau et affronte les meilleurs joueurs.
+            Construis ta collection, monte en niveau et affronte les meilleurs
+            joueurs.
           </p>
           <button
             type="button"
