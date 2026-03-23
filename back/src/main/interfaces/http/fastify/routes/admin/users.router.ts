@@ -112,7 +112,7 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
             name: uc.card.name,
             imageUrl: uc.card.imageUrl,
             rarity: uc.card.rarity,
-            variant: uc.card.variant,
+            variant: uc.variant,
             set: { id: uc.card.set.id, name: uc.card.set.name },
           },
           quantity: uc.quantity,

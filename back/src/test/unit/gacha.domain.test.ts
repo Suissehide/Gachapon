@@ -8,7 +8,6 @@ function makeCard(name: string, weight: number, rarity = 'COMMON'): CardWithSet 
     name,
     rarity: rarity as any,
     dropWeight: weight,
-    variant: null,
     imageUrl: '',
     setId: 'set1',
     createdAt: new Date(),
