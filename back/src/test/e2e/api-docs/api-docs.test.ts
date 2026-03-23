@@ -89,3 +89,26 @@ describe('API docs — rate limit', () => {
     expect(response.headers['x-ratelimit-limit']).toBeDefined()
   })
 })
+
+describe('API docs — Scalar UI', () => {
+  let app: Awaited<ReturnType<typeof buildTestApp>>
+
+  beforeAll(async () => {
+    app = await buildTestApp()
+  })
+
+  afterAll(async () => {
+    await app.close()
+  })
+
+  it('should serve Scalar UI at /api-docs', async () => {
+    const response = await app.inject({ method: 'GET', url: '/api-docs/' })
+    expect(response.statusCode).toBe(200)
+    expect(response.headers['content-type']).toMatch(/text\/html/)
+  })
+
+  it('should not be rate-limited', async () => {
+    const response = await app.inject({ method: 'GET', url: '/api-docs/' })
+    expect(response.headers['x-ratelimit-limit']).toBeUndefined()
+  })
+})

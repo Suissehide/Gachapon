@@ -14,6 +14,7 @@ import { redisPlugin } from './redis.plugin'
 import { rateLimitPlugin } from './rate-limit.plugin'
 import { rolePlugin } from './role.plugin'
 import { swaggerPlugin } from './swagger.plugin'
+import { scalarPlugin } from './scalar.plugin'
 import { websocketPlugin } from './websocket.plugin'
 
 const plugins: FastifyPluginAsync = fastifyPlugin(
@@ -48,6 +49,7 @@ const plugins: FastifyPluginAsync = fastifyPlugin(
       throwFileSizeLimit: false,
     })
     await registerPlugin(fastify, 'swagger', swaggerPlugin)
+    await registerPlugin(fastify, 'scalar', scalarPlugin)
     await registerPlugin(fastify, 'awilix', awilixPlugin)
     await registerPlugin(fastify, 'orm', ormPlugin)
     await registerPlugin(fastify, 'redis', redisPlugin)

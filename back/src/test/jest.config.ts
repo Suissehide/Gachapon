@@ -31,7 +31,7 @@ const sharedConfig = {
   },
   testEnvironment: 'node',
   setupFiles: ['<rootDir>/setup.ts'],
-  transformIgnorePatterns: ['/node_modules/(?!(@prisma|@scalar|leven)/)'],
+  transformIgnorePatterns: ['/node_modules/(?!(@prisma|@scalar|leven|github-slugger)/)'],
 }
 
 const config: Config = {
