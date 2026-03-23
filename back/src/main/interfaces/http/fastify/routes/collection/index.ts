@@ -42,7 +42,6 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
           name: c.name,
           imageUrl: c.imageUrl,
           rarity: c.rarity,
-          variant: c.variant,
           set: { id: c.set.id, name: c.set.name },
         })),
       }
@@ -90,9 +89,9 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
             name: uc.card.name,
             imageUrl: uc.card.imageUrl,
             rarity: uc.card.rarity,
-            variant: uc.card.variant,
             set: { id: uc.card.set.id, name: uc.card.set.name },
           },
+          variant: uc.variant,
           quantity: uc.quantity,
           obtainedAt: uc.obtainedAt.toISOString(),
         })),
@@ -105,11 +104,17 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
     '/collection/recycle',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { body: z.object({ cardId: z.string().uuid(), quantity: z.number().int().min(1).default(1) }) },
+      schema: {
+        body: z.object({
+          cardId: z.string().uuid(),
+          quantity: z.number().int().min(1).default(1),
+          variant: z.enum(['NORMAL', 'BRILLIANT', 'HOLOGRAPHIC']).default('NORMAL'),
+        }),
+      },
     },
     async (request) => {
       const userId = request.user.userID
-      const { cardId, quantity } = request.body
+      const { cardId, quantity, variant } = request.body
 
       const { postgresOrm, configService } = fastify.iocContainer
 
@@ -123,13 +128,24 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
       const baseDust = await configService.get(dustKey)
 
       const upgrades = await upgradeRepository.getEffectsForUser(userId)
-      const dustEarned = Math.round(baseDust * upgrades.dustHarvestMultiplier * quantity)
+
+      const [variantMultiplierHolo, variantMultiplierBrilliant] = await Promise.all([
+        configService.get('variantMultiplierHolo'),
+        configService.get('variantMultiplierBrilliant'),
+      ])
+
+      const variantMultiplier =
+        variant === 'BRILLIANT' ? variantMultiplierBrilliant :
+        variant === 'HOLOGRAPHIC' ? variantMultiplierHolo :
+        1
+
+      const dustEarned = Math.round(baseDust * variantMultiplier * upgrades.dustHarvestMultiplier * quantity)
 
       const result = await postgresOrm.executeWithTransactionClient(
         async (tx) => {
           // Re-read ownership inside the transaction to prevent TOCTOU
           const uc = await tx.userCard.findUnique({
-            where: { userId_cardId: { userId, cardId } },
+            where: { userId_cardId_variant: { userId, cardId, variant } },
           })
           if (!uc || uc.quantity < quantity) {
             throw Boom.badRequest('You do not own this card')
@@ -138,11 +154,11 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
           // Decrement or delete
           if (uc.quantity - quantity <= 0) {
             await tx.userCard.delete({
-              where: { userId_cardId: { userId, cardId } },
+              where: { userId_cardId_variant: { userId, cardId, variant } },
             })
           } else {
             await tx.userCard.update({
-              where: { userId_cardId: { userId, cardId } },
+              where: { userId_cardId_variant: { userId, cardId, variant } },
               data: { quantity: { decrement: quantity } },
             })
           }
