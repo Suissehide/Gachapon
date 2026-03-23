@@ -1,6 +1,6 @@
 import { RefreshCw } from 'lucide-react'
 
-import type { Card } from '../../api/collection.api.ts'
+import type { Card, CardVariant } from '../../api/collection.api.ts'
 
 export const RARITY_ORDER = [
   'COMMON',
@@ -44,14 +44,16 @@ export const RARITY_CHIP_ACTIVE: Record<string, string> = {
 
 export function CollectionCard({
   card,
+  variant,
   quantity,
   isOwned,
   onRecycle,
 }: {
   card: Card
+  variant: CardVariant
   quantity: number
   isOwned: boolean
-  onRecycle: (card: Card, quantity: number) => void
+  onRecycle: () => void
 }) {
   return (
     <div className="group relative">
@@ -85,15 +87,38 @@ export function CollectionCard({
           </div>
         )}
 
+        {variant === 'HOLOGRAPHIC' && (
+          <div
+            className="absolute inset-0 pointer-events-none rounded-lg"
+            style={{
+              background: 'linear-gradient(135deg, rgba(99,102,241,0.25) 0%, rgba(168,85,247,0.2) 25%, rgba(59,130,246,0.25) 50%, rgba(16,185,129,0.2) 75%, rgba(99,102,241,0.25) 100%)',
+              backgroundSize: '200% 200%',
+              animation: 'holographic-shift 3s ease infinite',
+              mixBlendMode: 'color-dodge',
+            }}
+          />
+        )}
+        {variant === 'BRILLIANT' && (
+          <div
+            className="absolute inset-0 pointer-events-none rounded-lg"
+            style={{
+              background: 'linear-gradient(135deg, rgba(251,191,36,0.3) 0%, rgba(245,158,11,0.15) 40%, rgba(252,211,77,0.35) 70%, rgba(251,191,36,0.3) 100%)',
+              backgroundSize: '200% 200%',
+              animation: 'brilliant-shift 2s ease infinite',
+              mixBlendMode: 'color-dodge',
+            }}
+          />
+        )}
+
         {quantity > 1 && (
           <div className="absolute top-1 right-1 rounded-full bg-black/70 px-1.5 py-0.5 text-[10px] font-bold text-white">
             ×{quantity}
           </div>
         )}
 
-        {card.variant && isOwned && (
+        {variant !== 'NORMAL' && isOwned && (
           <div className="absolute top-1 left-1 text-xs">
-            {card.variant === 'BRILLIANT' ? '✨' : '🌈'}
+            {variant === 'BRILLIANT' ? '✨' : '🌈'}
           </div>
         )}
       </div>
@@ -107,7 +132,7 @@ export function CollectionCard({
       {quantity > 1 && (
         <button
           type="button"
-          onClick={() => onRecycle(card, quantity)}
+          onClick={() => onRecycle()}
           className="absolute bottom-6 left-1/2 -translate-x-1/2 hidden group-hover:flex items-center gap-1 rounded-full bg-black/80 px-2 py-0.5 text-[10px] text-yellow-400 hover:bg-black transition-colors"
         >
           <RefreshCw className="h-2.5 w-2.5" />
