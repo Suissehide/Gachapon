@@ -6,11 +6,8 @@ import { RARITY_LABELS } from '../../components/collection/CollectionCard.tsx'
 import { CollectionFilters } from '../../components/collection/CollectionFilters.tsx'
 import { CollectionGrid } from '../../components/collection/CollectionGrid.tsx'
 import { CollectionSetGroup } from '../../components/collection/CollectionSetGroup.tsx'
-import {
-  useCards,
-  useRecycle,
-  useUserCollection,
-} from '../../queries/useCollection'
+import { RecycleModal } from '../../components/collection/RecycleModal.tsx'
+import { useCards, useUserCollection } from '../../queries/useCollection'
 import { useAuthStore } from '../../stores/auth.store'
 
 export const Route = createFileRoute('/_authenticated/collection')({
@@ -26,11 +23,10 @@ function Collection() {
   const [displayMode, setDisplayMode] = useState<DisplayMode>('rarity')
   const [selectedRarity, setSelectedRarity] = useState<Rarity | null>(null)
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null)
-  const [recyclingId, setRecyclingId] = useState<string | null>(null)
+  const [recycleTarget, setRecycleTarget] = useState<(Card & { quantity: number }) | null>(null)
 
   const { data: allCards, isLoading: cardsLoading } = useCards()
   const { data: userColl } = useUserCollection(user?.id)
-  const { mutate: recycle } = useRecycle()
 
   const owned = useMemo(() => {
     const map = new Map<string, number>()
@@ -88,9 +84,8 @@ function Collection() {
     return order.map((id) => ({ id, ...groups.get(id)! }))
   }, [displayMode, cards])
 
-  const handleRecycle = (cardId: string) => {
-    setRecyclingId(cardId)
-    recycle(cardId, { onSettled: () => setRecyclingId(null) })
+  const handleRecycle = (card: Card, quantity: number) => {
+    setRecycleTarget({ ...card, quantity })
   }
 
   const handleDisplayModeChange = (mode: DisplayMode) => {
@@ -130,7 +125,6 @@ function Collection() {
               cards={group.cards}
               owned={owned}
               onRecycle={handleRecycle}
-              recyclingId={recyclingId}
             />
           ))
         ) : (
@@ -138,10 +132,16 @@ function Collection() {
             cards={filteredCards}
             owned={owned}
             onRecycle={handleRecycle}
-            recyclingId={recyclingId}
           />
         )}
       </div>
+      {recycleTarget && (
+        <RecycleModal
+          open={!!recycleTarget}
+          onOpenChange={(open) => { if (!open) setRecycleTarget(null) }}
+          card={recycleTarget}
+        />
+      )}
     </div>
   )
 }
