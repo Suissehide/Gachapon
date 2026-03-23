@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { CollectionApi } from '../api/collection.api.ts'
+import { useAuthStore } from '../stores/auth.store.ts'
 
 export type { Card, CardSet, UserCard } from '../api/collection.api.ts'
 
@@ -25,11 +26,16 @@ export const useUserCollection = (userId: string | undefined) =>
 
 export const useRecycle = () => {
   const qc = useQueryClient()
+  const setUser = useAuthStore((s) => s.setUser)
+  const user = useAuthStore((s) => s.user)
   return useMutation({
     mutationFn: ({ cardId, quantity }: { cardId: string; quantity: number }) =>
       CollectionApi.recycle(cardId, quantity),
-    onSuccess: () => {
+    onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ['collection'] })
+      if (user) {
+        setUser({ ...user, dust: data.newDustTotal })
+      }
     },
   })
 }
