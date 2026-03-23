@@ -13,7 +13,7 @@ export type CardSet = {
 export type Card = {
   id: string
   name: string
-  imageUrl: string
+  imageUrl: string | null
   rarity: 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
   variant: 'BRILLIANT' | 'HOLOGRAPHIC' | null
   set: { id: string; name: string }

@@ -6,7 +6,7 @@ export type PullResult = {
   card: {
     id: string
     name: string
-    imageUrl: string
+    imageUrl: string | null
     rarity: string
     variant: string | null
     set: { id: string; name: string }
@@ -32,7 +32,7 @@ export type PullHistory = {
     card: {
       id: string
       name: string
-      imageUrl: string
+      imageUrl: string | null
       rarity: string
       variant: string | null
     }

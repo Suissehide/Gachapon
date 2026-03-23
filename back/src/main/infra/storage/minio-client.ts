@@ -14,12 +14,10 @@ export class MinioClient implements StorageClientInterface {
   readonly #s3: S3Client
   readonly #bucket: string
   readonly #endpoint: string
-  readonly #publicBase: string
 
   constructor({ config }: IocContainer) {
     this.#bucket = config.minioBucket
     this.#endpoint = config.minioEndpoint
-    this.#publicBase = config.minioPublicUrl ?? config.minioEndpoint
     this.#s3 = new S3Client({
       endpoint: config.minioEndpoint,
       region: 'us-east-1',
@@ -58,7 +56,7 @@ export class MinioClient implements StorageClientInterface {
   }
 
   publicUrl(key: string): string {
-    return `${this.#publicBase}/${this.#bucket}/${key}`
+    return `${this.#endpoint}/${this.#bucket}/${key}`
   }
 
   async listObjects(prefix: string): Promise<StorageObject[]> {

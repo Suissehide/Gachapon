@@ -2,10 +2,18 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Upload } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { CreateCardSheet } from '../../components/admin/cards/CreateCardSheet'
 import { MediaDetailPanel } from '../../components/admin/media/MediaDetailPanel'
 import { MediaGallery } from '../../components/admin/media/MediaGallery'
 import { Button } from '../../components/ui/button'
 import { SegmentedControl } from '../../components/ui/segmentedControl'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '../../components/ui/sheet'
+import { useAdminCreateCard, useAdminSets } from '../../queries/useAdminCards'
 import {
   type MediaItem,
   useAdminMedia,
@@ -28,11 +36,10 @@ function AdminMediaPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [activeItem, setActiveItem] = useState<MediaItem | null>(null)
 
-  useEffect(() => {
-    if (items.length > 0 && activeItem === null) {
-      setActiveItem(items[0])
-    }
-  }, [items, activeItem])
+  const [createCardOpen, setCreateCardOpen] = useState(false)
+  const createCardMutation = useAdminCreateCard()
+  const { data: setsData } = useAdminSets()
+
   const [dragging, setDragging] = useState(false)
   const [confirmBulk, setConfirmBulk] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -238,9 +245,7 @@ function AdminMediaPage() {
           </p>
         </div>
       ) : (
-        <div
-          className={`grid gap-4 ${activeItem ? 'grid-cols-[1fr_200px]' : 'grid-cols-1'}`}
-        >
+        <>
           {filtered.length === 0 ? (
             <div className="flex h-48 items-center justify-center text-sm text-text-light">
               {items.length === 0
@@ -258,15 +263,40 @@ function AdminMediaPage() {
             />
           )}
 
-          {activeItem && (
-            <MediaDetailPanel
-              key={activeItem.key}
-              item={activeItem}
-              onDelete={handleSingleDelete}
-              isDeleting={deleteMutation.isPending}
-            />
-          )}
-        </div>
+          <Sheet
+            open={!!activeItem}
+            onOpenChange={(open) => {
+              if (!open) {
+                setActiveItem(null)
+              }
+            }}
+          >
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Détail du média</SheetTitle>
+              </SheetHeader>
+              {activeItem && (
+                <div className="mt-6 px-6">
+                  <MediaDetailPanel
+                    key={activeItem.key}
+                    item={activeItem}
+                    onDelete={handleSingleDelete}
+                    isDeleting={deleteMutation.isPending}
+                    onCreateCard={() => setCreateCardOpen(true)}
+                  />
+                </div>
+              )}
+            </SheetContent>
+          </Sheet>
+
+          <CreateCardSheet
+            open={createCardOpen}
+            onOpenChange={setCreateCardOpen}
+            sets={setsData?.sets ?? []}
+            defaultImageUrl={activeItem?.orphan ? activeItem.url : undefined}
+            onCreate={(fd) => createCardMutation.mutate(fd)}
+          />
+        </>
       )}
     </div>
   )

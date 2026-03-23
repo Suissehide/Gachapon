@@ -408,9 +408,10 @@ function FileField({
           )}
         </div>
       ) : (
-        <div
+        <button
+          type="button"
           className={cn(
-            'relative flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-border bg-input/30 px-4 py-6 transition-colors',
+            'relative flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-border bg-input/30 px-4 py-6 transition-colors',
             isDragging
               ? 'border-primary bg-primary/5'
               : 'hover:border-primary/60 hover:bg-primary/5',
@@ -439,7 +440,7 @@ function FileField({
             onChange={(e) => field.handleChange(e.target.files?.[0] ?? null)}
             className="sr-only"
           />
-        </div>
+        </button>
       )}
       <FieldInfo field={field} />
     </div>

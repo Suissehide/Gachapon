@@ -1,4 +1,4 @@
-import { Images } from 'lucide-react'
+import { Images, X } from 'lucide-react'
 import { useState } from 'react'
 
 import { RARITY_OPTIONS } from '../../../constants/card.constant'
@@ -6,6 +6,7 @@ import { useAppForm } from '../../../hooks/formConfig'
 import type { AdminCard } from '../../../queries/useAdminCards'
 import type { MediaItem } from '../../../queries/useAdminMedia'
 import { Button } from '../../ui/button'
+import { SegmentedControl } from '../../ui/segmentedControl'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../../ui/sheet'
 import { MediaPickerModal } from '../media/MediaPickerModal'
 
@@ -13,7 +14,7 @@ export type EditCardPayload = {
   name: string
   rarity: string
   dropWeight: number
-  imageUrl?: string
+  imageUrl?: string | null
   imageFile?: File
 }
 
@@ -62,7 +63,7 @@ function EditCardForm({
 }) {
   const [imageMode, setImageMode] = useState<'upload' | 'pick'>('upload')
   const [pickedImageUrl, setPickedImageUrl] = useState<string | null>(null)
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const [imageRemoved, setImageRemoved] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
 
   const form = useAppForm({
@@ -70,19 +71,25 @@ function EditCardForm({
       name: item.name,
       rarity: item.rarity,
       dropWeight: item.dropWeight as number | undefined,
+      image: null as File | null,
     },
     onSubmit: ({ value }) => {
       onSave({
         name: value.name,
         rarity: value.rarity,
         dropWeight: value.dropWeight ?? 1,
-        imageUrl: pickedImageUrl ?? undefined,
-        imageFile: uploadedFile ?? undefined,
+        imageUrl: imageRemoved
+          ? null
+          : imageMode === 'pick'
+            ? (pickedImageUrl ?? undefined)
+            : undefined,
+        imageFile:
+          !imageRemoved && imageMode === 'upload' ? (value.image ?? undefined) : undefined,
       })
     },
   })
 
-  const previewUrl = pickedImageUrl ?? item.imageUrl
+  const previewUrl = imageRemoved ? null : (pickedImageUrl ?? item.imageUrl)
 
   return (
     <form
@@ -106,56 +113,62 @@ function EditCardForm({
       <div className="space-y-2">
         <p className="text-sm font-medium text-text-light">Image</p>
 
-        {previewUrl && (
-          <div className="overflow-hidden rounded-md border border-border">
+        {previewUrl ? (
+          <div className="group relative overflow-hidden rounded-md border border-border">
             <img
               src={previewUrl}
               alt="Aperçu"
               className="h-32 w-full object-contain bg-surface"
             />
+            <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/40">
+              <button
+                type="button"
+                onClick={() => {
+                  if (pickedImageUrl) {
+                    setPickedImageUrl(null)
+                  } else {
+                    setImageRemoved(true)
+                  }
+                }}
+                className="cursor-pointer rounded-full bg-destructive/90 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
-        )}
+        ) : imageRemoved ? (
+          <div className="flex items-center justify-between rounded-md border border-dashed border-border px-3 py-2 text-xs text-text-light">
+            <span>Aucune image</span>
+            <button
+              type="button"
+              onClick={() => setImageRemoved(false)}
+              className="cursor-pointer text-primary hover:underline"
+            >
+              Annuler
+            </button>
+          </div>
+        ) : null}
 
-        {/* Tab buttons */}
-        <div className="flex gap-1 rounded-md border border-border p-1 bg-surface">
-          <button
-            type="button"
-            onClick={() => { setImageMode('upload'); setPickedImageUrl(null) }}
-            className={`flex-1 rounded px-3 py-1 text-sm font-medium transition-colors ${
-              imageMode === 'upload'
-                ? 'bg-card text-text'
-                : 'text-text-light hover:text-text'
-            }`}
-          >
-            Uploader
-          </button>
-          <button
-            type="button"
-            onClick={() => { setImageMode('pick'); setUploadedFile(null) }}
-            className={`flex-1 rounded px-3 py-1 text-sm font-medium transition-colors ${
-              imageMode === 'pick'
-                ? 'bg-card text-text'
-                : 'text-text-light hover:text-text'
-            }`}
-          >
-            Bibliothèque
-          </button>
-        </div>
+        <SegmentedControl
+          value={imageMode}
+          onChange={(mode) => {
+            setImageMode(mode)
+            if (mode === 'upload') {
+              setPickedImageUrl(null)
+            }
+          }}
+          options={[
+            { value: 'upload', label: 'Upload' },
+            { value: 'pick', label: 'Bibliothèque' },
+          ]}
+          stretch
+        />
 
-        {imageMode === 'upload' && (
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            className="w-full text-sm text-text-light file:mr-3 file:rounded file:border-0 file:bg-surface file:px-3 file:py-1 file:text-sm file:text-text file:cursor-pointer"
-            onChange={(e) => {
-              const file = e.target.files?.[0] ?? null
-              setUploadedFile(file)
-              if (file) setPickedImageUrl(null)
-            }}
-          />
-        )}
-
-        {imageMode === 'pick' && (
+        {imageMode === 'upload' ? (
+          <form.AppField name="image">
+            {(f) => <f.FileInput label="" />}
+          </form.AppField>
+        ) : (
           <Button
             type="button"
             variant="ghost"
@@ -163,7 +176,9 @@ function EditCardForm({
             onClick={() => setPickerOpen(true)}
           >
             <Images className="h-4 w-4" />
-            {pickedImageUrl ? 'Changer l'image' : 'Choisir depuis la bibliothèque'}
+            {pickedImageUrl
+              ? "Changer l'image"
+              : 'Choisir depuis la bibliothèque'}
           </Button>
         )}
       </div>
@@ -173,7 +188,8 @@ function EditCardForm({
         onOpenChange={setPickerOpen}
         onPick={(picked: MediaItem) => {
           setPickedImageUrl(picked.url)
-          setUploadedFile(null)
+          setImageRemoved(false)
+          setPickerOpen(false)
         }}
       />
 

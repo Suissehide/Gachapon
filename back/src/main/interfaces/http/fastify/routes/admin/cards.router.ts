@@ -2,7 +2,7 @@ import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
-const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp'])
+import { ALLOWED_IMAGE_MIME, uploadCardImage } from './card-image.helpers'
 
 const cardFieldsSchema = z.object({
   name: z.string().min(1),
@@ -16,7 +16,7 @@ async function parseMultipartCard(request: {
   parts: () => AsyncIterable<any>
 }): Promise<{
   fields: Record<string, string>
-  imageBuffer: Buffer
+  imageBuffer: Buffer | null
   imageMime: string
 }> {
   const parts = request.parts()
@@ -26,7 +26,7 @@ async function parseMultipartCard(request: {
 
   for await (const part of parts) {
     if (part.type === 'file') {
-      if (!ALLOWED_MIME.has(part.mimetype)) {
+      if (!ALLOWED_IMAGE_MIME.has(part.mimetype)) {
         throw Boom.badRequest('Image must be jpeg, png or webp')
       }
       imageMime = part.mimetype
@@ -43,9 +43,6 @@ async function parseMultipartCard(request: {
     }
   }
 
-  if (!imageBuffer) {
-    throw Boom.badRequest('Image file is required')
-  }
   return { fields, imageBuffer, imageMime }
 }
 
@@ -77,7 +74,7 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
     },
   )
 
-  // POST /admin/cards — multipart/form-data
+  // POST /admin/cards — multipart/form-data (image file ou imageUrl)
   fastify.post('/', async (request, reply) => {
     const { storageClient, postgresOrm } = fastify.iocContainer
 
@@ -88,10 +85,18 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
       throw Boom.badRequest(parsed.error.toString())
     }
 
-    const ext = imageMime.split('/')[1]
-    const key = `cards/${Date.now()}-${parsed.data.name.replace(/\s+/g, '-').toLowerCase()}.${ext}`
-    await storageClient.upload(key, imageBuffer, imageMime)
-    const imageUrl = storageClient.publicUrl(key)
+    let imageUrl: string
+    if (imageBuffer) {
+      imageUrl = (await uploadCardImage(storageClient, parsed.data.name, imageBuffer, imageMime)).url
+    } else if (fields.imageUrl) {
+      const storagePrefix = storageClient.publicUrl('')
+      if (!fields.imageUrl.startsWith(storagePrefix)) {
+        throw Boom.badRequest('imageUrl must point to the configured storage')
+      }
+      imageUrl = fields.imageUrl
+    } else {
+      throw Boom.badRequest('Either an image file or imageUrl is required')
+    }
 
     const card = await postgresOrm.prisma.card.create({
       data: { ...parsed.data, imageUrl },
@@ -113,7 +118,7 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
           variant: z.enum(['BRILLIANT', 'HOLOGRAPHIC']).nullable().optional(),
           dropWeight: z.number().positive().optional(),
           setId: z.string().uuid().optional(),
-          imageUrl: z.string().url().optional(),
+          imageUrl: z.string().url().nullable().optional(),
         }),
       },
     },
@@ -154,11 +159,7 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
       if (!card) throw Boom.notFound('Card not found')
 
       const { fields: _fields, imageBuffer, imageMime } = await parseMultipartCard(request)
-      const ext = imageMime.split('/')[1]
-      const base = card.name.replace(/[^a-zA-Z0-9\-\.]/g, '-').toLowerCase()
-      const key = `cards/${Date.now()}-${base}.${ext}`
-      await storageClient.upload(key, imageBuffer, imageMime)
-      const imageUrl = storageClient.publicUrl(key)
+      const { url: imageUrl } = await uploadCardImage(storageClient, card.name, imageBuffer!, imageMime)
 
       const updated = await postgresOrm.prisma.card.update({
         where: { id: request.params.id },

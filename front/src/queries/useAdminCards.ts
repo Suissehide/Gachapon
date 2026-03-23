@@ -77,7 +77,7 @@ export function useAdminUpdateCard() {
       name?: string
       rarity?: string
       dropWeight?: number
-      imageUrl?: string
+      imageUrl?: string | null
     }) => AdminCardsApi.updateCard(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'cards'] }),
   })

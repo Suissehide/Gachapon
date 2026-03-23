@@ -14,7 +14,7 @@ export type AdminCardSet = {
 export type AdminCard = {
   id: string
   name: string
-  imageUrl: string
+  imageUrl: string | null
   rarity: string
   variant?: string
   dropWeight: number
@@ -97,7 +97,7 @@ export const AdminCardsApi = {
 
   updateCard: async (
     id: string,
-    data: { name?: string; rarity?: string; dropWeight?: number; imageUrl?: string },
+    data: { name?: string; rarity?: string; dropWeight?: number; imageUrl?: string | null },
   ): Promise<unknown> => {
     const res = await fetchWithAuth(`${apiUrl}/admin/cards/${id}`, {
       method: 'PATCH',

@@ -3,7 +3,6 @@ import { useMutation } from '@tanstack/react-query'
 import { AuthApi } from '../api/auth.api.ts'
 import { AUTH_MESSAGES } from '../constants/message.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
-import { useAuthStore } from '../stores/auth.store.ts'
 import type { LoginInput, RegisterInput } from '../types/auth.ts'
 
 // * QUERIES
@@ -11,8 +10,6 @@ import type { LoginInput, RegisterInput } from '../types/auth.ts'
 // * MUTATIONS
 
 export const useLogin = () => {
-  const fetchMe = useAuthStore((state) => state.fetchMe)
-
   const {
     mutate: loginMutation,
     data: credentials,
@@ -22,9 +19,6 @@ export const useLogin = () => {
   } = useMutation({
     mutationFn: async ({ email, password }: LoginInput) => {
       return await AuthApi.login(email, password)
-    },
-    onSuccess: async () => {
-      await fetchMe()
     },
     retry: 0,
   })

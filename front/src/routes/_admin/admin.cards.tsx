@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import type { ColumnDef } from '@tanstack/react-table'
 import { LayoutGrid, List, Plus, Search, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import {
   CardVariantPanel,
@@ -67,35 +67,44 @@ function AdminCards() {
   const sets = setsData?.sets ?? []
   const cards = cardsData?.cards ?? []
 
-  const columns = useCardColumns(cards, setEditCard, (id) =>
-    deleteCard.mutate(id),
-  )
-  const columnsAll = useCardColumnsAll(setEditCard, (id) =>
-    deleteCard.mutate(id),
+  // deleteCard.mutate is stable across renders (TanStack Query guarantees this)
+  // Use a ref so handleDeleteCard has an empty dep array and stays stable
+  const deleteCardMutateRef = useRef(deleteCard.mutate)
+  deleteCardMutateRef.current = deleteCard.mutate
+  const handleDeleteCard = useCallback(
+    (id: string) => deleteCardMutateRef.current(id),
+    [],
   )
 
-  const filteredCards = cards.filter((card) => {
-    if (
-      searchQuery &&
-      !card.name.toLowerCase().includes(searchQuery.toLowerCase())
-    ) {
-      return false
-    }
-    if (
-      selectedRarities.length > 0 &&
-      !selectedRarities.includes(card.rarity)
-    ) {
-      return false
-    }
-    if (
-      view === 'all' &&
-      selectedSetIds.length > 0 &&
-      !selectedSetIds.includes(card.set.id)
-    ) {
-      return false
-    }
-    return true
-  })
+  const columns = useCardColumns(cards, setEditCard, handleDeleteCard)
+  const columnsAll = useCardColumnsAll(setEditCard, handleDeleteCard)
+
+  const filteredCards = useMemo(
+    () =>
+      cards.filter((card) => {
+        if (
+          searchQuery &&
+          !card.name.toLowerCase().includes(searchQuery.toLowerCase())
+        ) {
+          return false
+        }
+        if (
+          selectedRarities.length > 0 &&
+          !selectedRarities.includes(card.rarity)
+        ) {
+          return false
+        }
+        if (
+          view === 'all' &&
+          selectedSetIds.length > 0 &&
+          !selectedSetIds.includes(card.set.id)
+        ) {
+          return false
+        }
+        return true
+      }),
+    [cards, searchQuery, selectedRarities, selectedSetIds, view],
+  )
 
   return (
     <div className="flex h-screen flex-col p-8">
@@ -210,7 +219,9 @@ function AdminCards() {
         item={editCard}
         onOpenChange={(o) => !o && setEditCard(null)}
         onSave={(fields) => {
-          if (!editCard) return
+          if (!editCard) {
+            return
+          }
           const { imageFile, ...rest } = fields
           updateCard.mutate({ id: editCard.id, ...rest })
           if (imageFile) {
@@ -229,7 +240,7 @@ function AdminCards() {
   )
 }
 
-function CardTableArea({
+const CardTableArea = memo(function CardTableArea({
   view,
   selectedSetId,
   isLoading,
@@ -269,4 +280,4 @@ function CardTableArea({
       />
     </div>
   )
-}
+})

@@ -38,7 +38,6 @@ const configSchema = z.object({
   redisUrl: z.string().default('redis://localhost:6379'),
 
   minioEndpoint: z.string().default('http://localhost:9000'),
-  minioPublicUrl: z.string().optional(), // URL publique accessible par le navigateur (si différente de minioEndpoint)
   minioAccessKey: z.string().default('minioadmin'),
   minioSecretKey: z.string().default('minioadmin'),
   minioBucket: z.string().default('gachapon'),
@@ -86,7 +85,6 @@ const envVarNames = [
   'DATABASE_URL',
   'REDIS_URL',
   'MINIO_ENDPOINT',
-  'MINIO_PUBLIC_URL',
   'MINIO_ACCESS_KEY',
   'MINIO_SECRET_KEY',
   'MINIO_BUCKET',

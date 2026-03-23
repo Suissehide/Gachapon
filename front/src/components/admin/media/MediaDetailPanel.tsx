@@ -1,4 +1,4 @@
-import { Check, Copy, Trash2 } from 'lucide-react'
+import { Check, Copy, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import type { MediaItem } from '../../../queries/useAdminMedia'
@@ -8,20 +8,21 @@ interface MediaDetailPanelProps {
   item: MediaItem
   onDelete: (key: string) => void
   isDeleting?: boolean
+  onCreateCard?: () => void
 }
 
 export function MediaDetailPanel({
   item,
   onDelete,
   isDeleting,
+  onCreateCard,
 }: MediaDetailPanelProps) {
   const [copied, setCopied] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: item.key is the intentional trigger
   useEffect(() => {
     setConfirmDelete(false)
-  }, [item.key])
+  }, [])
 
   const filename = item.key.split('/').pop() ?? item.key
   const sizeKb = (item.size / 1024).toFixed(0)
@@ -97,6 +98,18 @@ export function MediaDetailPanel({
       <p className="text-xs text-text-light">
         {sizeKb} Ko · {date}
       </p>
+
+      {item.orphan && onCreateCard && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onCreateCard}
+          className="gap-2 border-violet-500/40 text-violet-400 hover:text-violet-400"
+        >
+          <Plus className="h-3 w-3" />
+          Créer une carte
+        </Button>
+      )}
 
       <Button
         variant="outline"

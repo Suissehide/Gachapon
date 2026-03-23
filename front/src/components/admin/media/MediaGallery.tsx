@@ -26,9 +26,10 @@ export function MediaGallery({
         const isChecked = selected.has(item.key)
 
         return (
-          <div
+          <button
             key={item.key}
-            className={`relative aspect-square cursor-pointer overflow-hidden rounded-md border-2 transition-all ${
+            type="button"
+            className={`relative w-full cursor-pointer overflow-hidden rounded-md border-2 transition-all ${
               isChecked
                 ? 'border-red-500 bg-red-950/40'
                 : isActive
@@ -46,7 +47,7 @@ export function MediaGallery({
             <img
               src={item.url}
               alt={item.key}
-              className="h-full w-full object-contain px-1 py-3"
+              className="h-full w-full object-contain p-4"
               onError={(e) => {
                 ;(e.target as HTMLImageElement).style.display = 'none'
               }}
@@ -67,7 +68,12 @@ export function MediaGallery({
               >
                 {isChecked && (
                   <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-                    <path d="M1 4L3 6L7 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    <path
+                      d="M1 4L3 6L7 2"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
                   </svg>
                 )}
               </button>
@@ -78,7 +84,7 @@ export function MediaGallery({
                 item.orphan ? 'bg-red-500' : 'bg-green-600'
               }`}
             />
-          </div>
+          </button>
         )
       })}
     </div>

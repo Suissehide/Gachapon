@@ -8,6 +8,7 @@ import {
   PopupHeader,
   PopupTitle,
 } from '../../ui/popup'
+import { SegmentedControl } from '../../ui/segmentedControl'
 import { MediaGallery } from './MediaGallery'
 
 type Filter = 'all' | 'used' | 'orphan'
@@ -49,34 +50,28 @@ export function MediaPickerModal({
         </PopupHeader>
 
         <PopupBody>
-          <div className="mb-3 flex gap-2">
-            {(['all', 'used', 'orphan'] as Filter[]).map((f) => (
-              <button
-                key={f}
-                type="button"
-                onClick={() => setFilter(f)}
-                className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
-                  filter === f
-                    ? 'bg-primary/20 text-primary'
-                    : 'text-text-light hover:bg-surface'
-                }`}
-              >
-                {f === 'all' && 'Toutes'}
-                {f === 'used' && 'Utilisées'}
-                {f === 'orphan' && 'Orphelines'}
-              </button>
-            ))}
-          </div>
+          <div className="flex flex-col gap-3 h-[60vh]">
+            <SegmentedControl
+              value={filter}
+              onChange={setFilter}
+              options={[
+                { value: 'all', label: 'Toutes' },
+                { value: 'used', label: 'Utilisées' },
+                { value: 'orphan', label: 'Orphelines' },
+              ]}
+              stretch
+            />
 
-          {isLoading ? (
-            <div className="flex h-48 items-center justify-center text-text-light">
-              Chargement…
-            </div>
-          ) : (
-            <div className="max-h-[60vh] overflow-y-auto">
-              <MediaGallery items={filtered} onSelect={handleSelect} />
-            </div>
-          )}
+            {isLoading ? (
+              <div className="flex flex-1 items-center justify-center text-text-light">
+                Chargement…
+              </div>
+            ) : (
+              <div className="flex-1 overflow-y-auto">
+                <MediaGallery items={filtered} onSelect={handleSelect} />
+              </div>
+            )}
+          </div>
         </PopupBody>
       </PopupContent>
     </Popup>

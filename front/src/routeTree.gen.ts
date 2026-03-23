@@ -29,6 +29,7 @@ import { Route as AdminAdminUsersRouteImport } from './routes/_admin/admin.users
 import { Route as AdminAdminUpgradesRouteImport } from './routes/_admin/admin.upgrades'
 import { Route as AdminAdminStatsRouteImport } from './routes/_admin/admin.stats'
 import { Route as AdminAdminShopRouteImport } from './routes/_admin/admin.shop'
+import { Route as AdminAdminMediaRouteImport } from './routes/_admin/admin.media'
 import { Route as AdminAdminConfigRouteImport } from './routes/_admin/admin.config'
 import { Route as AdminAdminCardsRouteImport } from './routes/_admin/admin.cards'
 
@@ -132,6 +133,11 @@ const AdminAdminShopRoute = AdminAdminShopRouteImport.update({
   path: '/shop',
   getParentRoute: () => AdminAdminRoute,
 } as any)
+const AdminAdminMediaRoute = AdminAdminMediaRouteImport.update({
+  id: '/media',
+  path: '/media',
+  getParentRoute: () => AdminAdminRoute,
+} as any)
 const AdminAdminConfigRoute = AdminAdminConfigRouteImport.update({
   id: '/config',
   path: '/config',
@@ -156,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/upgrades': typeof AuthenticatedUpgradesRoute
   '/admin/cards': typeof AdminAdminCardsRoute
   '/admin/config': typeof AdminAdminConfigRoute
+  '/admin/media': typeof AdminAdminMediaRoute
   '/admin/shop': typeof AdminAdminShopRoute
   '/admin/stats': typeof AdminAdminStatsRoute
   '/admin/upgrades': typeof AdminAdminUpgradesRoute
@@ -177,6 +184,7 @@ export interface FileRoutesByTo {
   '/upgrades': typeof AuthenticatedUpgradesRoute
   '/admin/cards': typeof AdminAdminCardsRoute
   '/admin/config': typeof AdminAdminConfigRoute
+  '/admin/media': typeof AdminAdminMediaRoute
   '/admin/shop': typeof AdminAdminShopRoute
   '/admin/stats': typeof AdminAdminStatsRoute
   '/admin/upgrades': typeof AdminAdminUpgradesRoute
@@ -202,6 +210,7 @@ export interface FileRoutesById {
   '/_authenticated/upgrades': typeof AuthenticatedUpgradesRoute
   '/_admin/admin/cards': typeof AdminAdminCardsRoute
   '/_admin/admin/config': typeof AdminAdminConfigRoute
+  '/_admin/admin/media': typeof AdminAdminMediaRoute
   '/_admin/admin/shop': typeof AdminAdminShopRoute
   '/_admin/admin/stats': typeof AdminAdminStatsRoute
   '/_admin/admin/upgrades': typeof AdminAdminUpgradesRoute
@@ -226,6 +235,7 @@ export interface FileRouteTypes {
     | '/upgrades'
     | '/admin/cards'
     | '/admin/config'
+    | '/admin/media'
     | '/admin/shop'
     | '/admin/stats'
     | '/admin/upgrades'
@@ -247,6 +257,7 @@ export interface FileRouteTypes {
     | '/upgrades'
     | '/admin/cards'
     | '/admin/config'
+    | '/admin/media'
     | '/admin/shop'
     | '/admin/stats'
     | '/admin/upgrades'
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/_authenticated/upgrades'
     | '/_admin/admin/cards'
     | '/_admin/admin/config'
+    | '/_admin/admin/media'
     | '/_admin/admin/shop'
     | '/_admin/admin/stats'
     | '/_admin/admin/upgrades'
@@ -430,6 +442,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminShopRouteImport
       parentRoute: typeof AdminAdminRoute
     }
+    '/_admin/admin/media': {
+      id: '/_admin/admin/media'
+      path: '/media'
+      fullPath: '/admin/media'
+      preLoaderRoute: typeof AdminAdminMediaRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
     '/_admin/admin/config': {
       id: '/_admin/admin/config'
       path: '/config'
@@ -450,6 +469,7 @@ declare module '@tanstack/react-router' {
 interface AdminAdminRouteChildren {
   AdminAdminCardsRoute: typeof AdminAdminCardsRoute
   AdminAdminConfigRoute: typeof AdminAdminConfigRoute
+  AdminAdminMediaRoute: typeof AdminAdminMediaRoute
   AdminAdminShopRoute: typeof AdminAdminShopRoute
   AdminAdminStatsRoute: typeof AdminAdminStatsRoute
   AdminAdminUpgradesRoute: typeof AdminAdminUpgradesRoute
@@ -460,6 +480,7 @@ interface AdminAdminRouteChildren {
 const AdminAdminRouteChildren: AdminAdminRouteChildren = {
   AdminAdminCardsRoute: AdminAdminCardsRoute,
   AdminAdminConfigRoute: AdminAdminConfigRoute,
+  AdminAdminMediaRoute: AdminAdminMediaRoute,
   AdminAdminShopRoute: AdminAdminShopRoute,
   AdminAdminStatsRoute: AdminAdminStatsRoute,
   AdminAdminUpgradesRoute: AdminAdminUpgradesRoute,

@@ -5,7 +5,7 @@ type WsEvent = {
   card: {
     id: string
     name: string
-    imageUrl: string
+    imageUrl: string | null
     rarity: string
     variant: string | null
     set: { id: string; name: string }

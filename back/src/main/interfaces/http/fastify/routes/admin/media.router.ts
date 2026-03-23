@@ -2,12 +2,9 @@ import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
-const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp'])
-const SAFE_KEY_RE = /^cards\/[^/]+$/
+import { ALLOWED_IMAGE_MIME, MAX_IMAGE_SIZE, uploadCardImage } from './card-image.helpers'
 
-function sanitizeFilename(name: string): string {
-  return name.replace(/[^a-zA-Z0-9\-\.]/g, '-').toLowerCase()
-}
+const SAFE_KEY_RE = /^cards\/[^/]+$/
 
 export const adminMediaRouter: FastifyPluginCallbackZod = (fastify) => {
   // GET /admin/media — liste tous les objets + cross-ref DB
@@ -51,7 +48,7 @@ export const adminMediaRouter: FastifyPluginCallbackZod = (fastify) => {
 
       const filename = part.filename ?? 'upload'
 
-      if (!ALLOWED_MIME.has(part.mimetype)) {
+      if (!ALLOWED_IMAGE_MIME.has(part.mimetype)) {
         // Drain the stream
         for await (const _ of part.file) {}
         errors.push({ filename, reason: 'Format non supporté (jpeg, png, webp uniquement)' })
@@ -64,18 +61,15 @@ export const adminMediaRouter: FastifyPluginCallbackZod = (fastify) => {
       }
       const buffer = Buffer.concat(chunks)
 
-      if (part.file.truncated || buffer.length > 5 * 1024 * 1024) {
+      if (part.file.truncated || buffer.length > MAX_IMAGE_SIZE) {
         errors.push({ filename, reason: 'Fichier trop grand (max 5 MB)' })
         continue
       }
 
-      const ext = part.mimetype.split('/')[1]
-      const base = sanitizeFilename(filename.replace(/\.[^.]+$/, ''))
-      const key = `cards/${Date.now()}-${base}.${ext}`
+      const name = filename.replace(/\.[^.]+$/, '')
 
       try {
-        await storageClient.upload(key, buffer, part.mimetype)
-        const url = storageClient.publicUrl(key)
+        const { key, url } = await uploadCardImage(storageClient, name, buffer, part.mimetype)
         created.push({
           key,
           url,

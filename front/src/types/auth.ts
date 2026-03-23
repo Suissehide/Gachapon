@@ -1,8 +1,7 @@
 export type User = {
   id: string
+  username: string
   email: string
-  firstName?: string
-  lastName?: string
   role: Role
 }
 
@@ -13,7 +12,9 @@ export type AuthState = {
   user: User | null
 }
 
-export type RegisterInput = Pick<User, 'email' | 'firstName' | 'lastName'> & {
+export type RegisterInput = {
+  username: string
+  email: string
   password: string
 }
 
@@ -24,8 +25,7 @@ export type LoginInput = {
 
 export type UpdateUserParams = {
   id: string
+  username?: string
   email?: string
-  firstName?: string
-  lastName?: string
   role?: Role
 }

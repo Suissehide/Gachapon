@@ -170,7 +170,7 @@ model Card {
   setId      String
   set        CardSet      @relation(fields: [setId], references: [id], onDelete: Cascade)
   name       String
-  imageUrl   String
+  imageUrl   String?
   rarity     CardRarity
   variant    CardVariant?
   dropWeight Float        @default(1.0)

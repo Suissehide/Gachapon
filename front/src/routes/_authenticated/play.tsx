@@ -179,7 +179,7 @@ function Play() {
           {/* Play button */}
           <Button
             onClick={handlePull}
-            disabled={!canPull || phase === 'pulling'}
+            disabled={!canPull}
             className="relative mt-6 rounded-full px-8 h-auto py-2 text-md font-semibold tracking-wide bg-linear-to-r from-primary to-secondary shadow-lg shadow-primary/30 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/40 active:translate-y-0"
           >
             {phase === 'pulling'
@@ -194,7 +194,7 @@ function Play() {
             variant="ghost"
             size="sm"
             onClick={handleSkip}
-            disabled={!canPull || phase === 'pulling'}
+            disabled={!canPull}
             className="relative z-10 mt-4 text-xs text-text-light/50 hover:text-text-light"
           >
             Passer l'animation

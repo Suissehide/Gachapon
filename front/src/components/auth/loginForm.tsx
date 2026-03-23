@@ -2,12 +2,14 @@ import { useNavigate } from '@tanstack/react-router'
 
 import { useAppForm } from '../../hooks/formConfig.tsx'
 import { useLogin } from '../../queries/useAuth.ts'
+import { useAuthStore } from '../../stores/auth.store.ts'
 import { Button } from '../ui/button.tsx'
 import { OAuthButtons, OAuthDivider } from './oauthSection.tsx'
 
 export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
   const navigate = useNavigate()
-  const { loginMutation, isPending } = useLogin()
+  const { loginMutation, isPending, error } = useLogin()
+  const fetchMe = useAuthStore((state) => state.fetchMe)
 
   const form = useAppForm({
     defaultValues: { email: '', password: '' },
@@ -16,6 +18,7 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
         { email: value.email, password: value.password },
         {
           onSuccess: async () => {
+            await fetchMe()
             onSuccess()
             const redirectTo = new URLSearchParams(window.location.search).get(
               'redirect',
@@ -51,6 +54,10 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
           Mot de passe oublié ?
         </button>
       </div>
+
+      {error && (
+        <p className="text-sm text-red-500 text-center -mb-1">{error.message}</p>
+      )}
 
       <Button type="submit" className="w-full mt-1" disabled={isPending}>
         {isPending ? 'Connexion...' : 'Se connecter'}
