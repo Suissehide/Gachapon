@@ -18,6 +18,7 @@ export const routes: FastifyPluginAsyncZod = async (fastify) => {
     status: 'running',
     version: '1.0.0',
   }))
+  fastify.get('/health', async () => ({ status: 'ok' }))
   await fastify.register(authRouter, { prefix: '/auth' })
   await fastify.register(apiKeysRouter, { prefix: '/api-keys' })
   await fastify.register(gachaRouter)
