@@ -86,9 +86,9 @@ function rarityKey(
 export function pickVariant(
   rarity: string,
   rates: VariantRates,
-): CardVariant | null {
+): CardVariant {
   if (!(VARIANT_ELIGIBLE as readonly string[]).includes(rarity)) {
-    return null
+    return 'NORMAL' as CardVariant
   }
   const key = rarityKey(rarity as VariantEligibleRarity)
   const brilliantRate = rates[`brilliantRate${key}`] ?? 0
@@ -100,7 +100,7 @@ export function pickVariant(
   if (roll < brilliantRate + holoRate) {
     return 'HOLOGRAPHIC' as CardVariant
   }
-  return null
+  return 'NORMAL' as CardVariant
 }
 
 function isPrismaSerializationError(err: unknown): boolean {
@@ -197,6 +197,7 @@ export class GachaDomain implements GachaDomainInterface {
       tx,
       userId,
       card.id,
+      rolledVariant,
     )
     const dustEarned = wasDuplicate
       ? Math.round(

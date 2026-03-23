@@ -7,7 +7,7 @@ import { CollectionFilters } from '../../components/collection/CollectionFilters
 import { CollectionGrid } from '../../components/collection/CollectionGrid.tsx'
 import { CollectionSetGroup } from '../../components/collection/CollectionSetGroup.tsx'
 import { RecycleModal } from '../../components/collection/RecycleModal.tsx'
-import { useCards, useUserCollection } from '../../queries/useCollection'
+import { useUserCollection, type UserCard } from '../../queries/useCollection'
 import { useAuthStore } from '../../stores/auth.store'
 
 export const Route = createFileRoute('/_authenticated/collection')({
@@ -16,54 +16,44 @@ export const Route = createFileRoute('/_authenticated/collection')({
 
 type DisplayMode = 'rarity' | 'set'
 type Rarity = Card['rarity']
-type Variant = 'BRILLIANT' | 'HOLOGRAPHIC'
+type Variant = 'NORMAL' | 'BRILLIANT' | 'HOLOGRAPHIC'
 
 function Collection() {
   const user = useAuthStore((s) => s.user)
   const [displayMode, setDisplayMode] = useState<DisplayMode>('rarity')
   const [selectedRarity, setSelectedRarity] = useState<Rarity | null>(null)
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null)
-  const [recycleTarget, setRecycleTarget] = useState<(Card & { quantity: number }) | null>(null)
+  const [recycleTarget, setRecycleTarget] = useState<UserCard | null>(null)
 
-  const { data: allCards, isLoading: cardsLoading } = useCards()
   const { data: userColl } = useUserCollection(user?.id)
 
-  const owned = useMemo(() => {
-    const map = new Map<string, number>()
-    for (const uc of userColl?.cards ?? []) {
-      map.set(uc.card.id, uc.quantity)
-    }
-    return map
-  }, [userColl])
+  const userCards = userColl?.cards ?? []
 
-  const cards = allCards?.cards ?? []
-
-  const filteredCards = useMemo(
+  const filteredUserCards = useMemo(
     () =>
-      (allCards?.cards ?? [])
-        .filter((c) => !selectedRarity || c.rarity === selectedRarity)
-        .filter((c) => !selectedVariant || c.variant === selectedVariant),
-    [allCards, selectedRarity, selectedVariant],
+      userCards
+        .filter((uc) => !selectedRarity || uc.card.rarity === selectedRarity)
+        .filter((uc) => !selectedVariant || uc.variant === selectedVariant),
+    [userCards, selectedRarity, selectedVariant],
   )
 
   const subtitle = useMemo(() => {
     if (displayMode === 'set') {
-      const setCount = new Set(cards.map((c) => c.set.id)).size
-      return `${cards.filter((c) => owned.has(c.id)).length} / ${cards.length} cartes · ${setCount} set${setCount > 1 ? 's' : ''}`
+      const setCount = new Set(userCards.map((uc) => uc.card.set.id)).size
+      return `${userCards.length} variante${userCards.length > 1 ? 's' : ''} · ${setCount} set${setCount > 1 ? 's' : ''}`
     }
-    const base = `${filteredCards.filter((c) => owned.has(c.id)).length} / ${filteredCards.length} cartes`
+    const base = `${filteredUserCards.length} variante${filteredUserCards.length > 1 ? 's' : ''}`
     const rarityLabel = selectedRarity
       ? ` · ${RARITY_LABELS[selectedRarity]}`
       : ''
     const variantLabel = selectedVariant
-      ? ` · ${selectedVariant === 'BRILLIANT' ? '✨ Brillante' : '🌈 Holographique'}`
+      ? ` · ${selectedVariant === 'BRILLIANT' ? '✨ Brillante' : selectedVariant === 'HOLOGRAPHIC' ? '🌈 Holographique' : 'Normal'}`
       : ''
     return base + rarityLabel + variantLabel
   }, [
     displayMode,
-    cards,
-    filteredCards,
-    owned,
+    userCards,
+    filteredUserCards,
     selectedRarity,
     selectedVariant,
   ])
@@ -73,19 +63,20 @@ function Collection() {
       return []
     }
     const order: string[] = []
-    const groups = new Map<string, { name: string; cards: Card[] }>()
-    for (const card of cards) {
-      if (!groups.has(card.set.id)) {
-        order.push(card.set.id)
-        groups.set(card.set.id, { name: card.set.name, cards: [] })
+    const groups = new Map<string, { name: string; userCards: UserCard[] }>()
+    for (const uc of userCards) {
+      const setId = uc.card.set.id
+      if (!groups.has(setId)) {
+        order.push(setId)
+        groups.set(setId, { name: uc.card.set.name, userCards: [] })
       }
-      groups.get(card.set.id)?.cards.push(card)
+      groups.get(setId)?.userCards.push(uc)
     }
     return order.map((id) => ({ id, ...groups.get(id)! }))
-  }, [displayMode, cards])
+  }, [displayMode, userCards])
 
-  const handleRecycle = (card: Card, quantity: number) => {
-    setRecycleTarget({ ...card, quantity })
+  const handleRecycle = (userCard: UserCard) => {
+    setRecycleTarget(userCard)
   }
 
   const handleDisplayModeChange = (mode: DisplayMode) => {
@@ -113,24 +104,18 @@ function Collection() {
           />
         </div>
 
-        {cardsLoading ? (
-          <div className="flex h-48 items-center justify-center">
-            <p className="text-text-light">Chargement…</p>
-          </div>
-        ) : displayMode === 'set' ? (
+        {displayMode === 'set' ? (
           setGroups.map((group) => (
             <CollectionSetGroup
               key={group.id}
               setName={group.name}
-              cards={group.cards}
-              owned={owned}
+              userCards={group.userCards}
               onRecycle={handleRecycle}
             />
           ))
         ) : (
           <CollectionGrid
-            cards={filteredCards}
-            owned={owned}
+            userCards={filteredUserCards}
             onRecycle={handleRecycle}
           />
         )}
@@ -139,7 +124,8 @@ function Collection() {
         <RecycleModal
           open={!!recycleTarget}
           onOpenChange={(open) => { if (!open) setRecycleTarget(null) }}
-          card={recycleTarget}
+          card={{ ...recycleTarget.card, quantity: recycleTarget.quantity }}
+          variant={recycleTarget.variant}
         />
       )}
     </div>

@@ -8,7 +8,6 @@ const cardFieldsSchema = z.object({
   name: z.string().min(1),
   setId: z.string().uuid(),
   rarity: z.enum(['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY']),
-  variant: z.enum(['BRILLIANT', 'HOLOGRAPHIC']).optional(),
   dropWeight: z.coerce.number().positive(),
 })
 
@@ -115,7 +114,6 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
         body: z.object({
           name: z.string().min(1).optional(),
           rarity: z.enum(['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY']).optional(),
-          variant: z.enum(['BRILLIANT', 'HOLOGRAPHIC']).nullable().optional(),
           dropWeight: z.number().positive().optional(),
           setId: z.string().uuid().optional(),
           imageUrl: z.string().url().nullable().optional(),

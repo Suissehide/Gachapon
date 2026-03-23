@@ -1,6 +1,6 @@
 import { RefreshCw } from 'lucide-react'
 
-import type { Card } from '../../api/collection.api.ts'
+import type { Card, CardVariant } from '../../api/collection.api.ts'
 import { Button } from '../ui/button.tsx'
 
 export const RARITY_ORDER = [
@@ -53,14 +53,16 @@ export const RARITY_CHIP_ACTIVE: Record<string, string> = {
 
 export function CollectionCard({
   card,
+  variant,
   quantity,
   isOwned,
   onRecycle,
 }: {
   card: Card
+  variant: CardVariant
   quantity: number
   isOwned: boolean
-  onRecycle: (card: Card, quantity: number) => void
+  onRecycle: () => void
 }) {
   const borderColor = isOwned
     ? (RARITY_COLORS[card.rarity]?.split(' ')[0] ?? 'border-border')
@@ -85,9 +87,9 @@ export function CollectionCard({
             </span>
           )}
         </div>
-        {card.variant && isOwned && (
+        {variant !== 'NORMAL' && isOwned && (
           <div className="absolute top-1.5 left-1.5 z-10 text-xs leading-none">
-            {card.variant === 'BRILLIANT' ? '✨' : '🌈'}
+            {variant === 'BRILLIANT' ? '✨' : '🌈'}
           </div>
         )}
 
@@ -117,6 +119,29 @@ export function CollectionCard({
                 />
               </div>
             )}
+
+            {variant === 'HOLOGRAPHIC' && (
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(99,102,241,0.25) 0%, rgba(168,85,247,0.2) 25%, rgba(59,130,246,0.25) 50%, rgba(16,185,129,0.2) 75%, rgba(99,102,241,0.25) 100%)',
+                  backgroundSize: '200% 200%',
+                  animation: 'holographic-shift 3s ease infinite',
+                  mixBlendMode: 'color-dodge',
+                }}
+              />
+            )}
+            {variant === 'BRILLIANT' && (
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(251,191,36,0.3) 0%, rgba(245,158,11,0.15) 40%, rgba(252,211,77,0.35) 70%, rgba(251,191,36,0.3) 100%)',
+                  backgroundSize: '200% 200%',
+                  animation: 'brilliant-shift 2s ease infinite',
+                  mixBlendMode: 'color-dodge',
+                }}
+              />
+            )}
           </div>
         </div>
 
@@ -141,7 +166,7 @@ export function CollectionCard({
               type="button"
               size="sm"
               variant="default"
-              onClick={() => onRecycle(card, quantity)}
+              onClick={() => onRecycle()}
               className="gap-1.5 shadow-lg"
             >
               <RefreshCw className="h-3.5 w-3.5" />

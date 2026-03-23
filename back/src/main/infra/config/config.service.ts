@@ -24,6 +24,8 @@ const DEFAULTS: Record<ConfigKey, number> = {
   brilliantRateRare: 0,
   brilliantRateEpic: 0,
   brilliantRateLegendary: 0,
+  variantMultiplierHolo: 2,
+  variantMultiplierBrilliant: 3,
 }
 
 type UpgradeDefault = {

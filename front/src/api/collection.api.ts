@@ -10,17 +10,19 @@ export type CardSet = {
   isActive: boolean
 }
 
+export type CardVariant = 'NORMAL' | 'BRILLIANT' | 'HOLOGRAPHIC'
+
 export type Card = {
   id: string
   name: string
   imageUrl: string | null
   rarity: 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
-  variant: 'BRILLIANT' | 'HOLOGRAPHIC' | null
   set: { id: string; name: string }
 }
 
 export type UserCard = {
   card: Card
+  variant: CardVariant
   quantity: number
   obtainedAt: string
 }
@@ -68,11 +70,12 @@ export const CollectionApi = {
   recycle: async (
     cardId: string,
     quantity: number,
+    variant: CardVariant,
   ): Promise<{ dustEarned: number; newDustTotal: number }> => {
     const res = await fetchWithAuth(`${apiUrl}/collection/recycle`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cardId, quantity }),
+      body: JSON.stringify({ cardId, quantity, variant }),
     })
     if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors du recyclage')

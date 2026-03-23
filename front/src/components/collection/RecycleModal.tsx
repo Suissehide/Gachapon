@@ -1,7 +1,7 @@
 import { Minus, Plus, RefreshCw, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 
-import type { Card } from '../../api/collection.api.ts'
+import type { Card, CardVariant } from '../../api/collection.api.ts'
 import { useRecycle } from '../../queries/useCollection.ts'
 import { Button } from '../ui/button.tsx'
 import { Input } from '../ui/input.tsx'
@@ -28,9 +28,10 @@ interface RecycleModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   card: Card & { quantity: number }
+  variant: CardVariant
 }
 
-export function RecycleModal({ open, onOpenChange, card }: RecycleModalProps) {
+export function RecycleModal({ open, onOpenChange, card, variant }: RecycleModalProps) {
   const [quantity, setQuantity] = useState(1)
   const { mutate: recycle, isPending } = useRecycle()
 
@@ -50,7 +51,7 @@ export function RecycleModal({ open, onOpenChange, card }: RecycleModalProps) {
 
   const handleRecycle = () => {
     recycle(
-      { cardId: card.id, quantity },
+      { cardId: card.id, quantity, variant },
       { onSuccess: () => onOpenChange(false) },
     )
   }
@@ -81,6 +82,11 @@ export function RecycleModal({ open, onOpenChange, card }: RecycleModalProps) {
               <p className={`text-xs font-medium ${rarityText}`}>
                 {RARITY_LABELS[card.rarity]}
               </p>
+              {variant !== 'NORMAL' && (
+                <p className="mt-0.5 text-xs font-semibold">
+                  {variant === 'HOLOGRAPHIC' ? '🌈 Holographique' : '✨ Brillante'}
+                </p>
+              )}
               <p className="mt-1 flex items-center gap-1 text-xs text-text-light">
                 {dustPerCard} <Sparkles className="h-3 w-3 text-primary" /> par copie ·{' '}
                 <span className="font-semibold text-text">{maxRecyclable}</span> exemplaire{maxRecyclable > 1 ? 's' : ''}

@@ -14,7 +14,7 @@ export const adminMediaRouter: FastifyPluginCallbackZod = (fastify) => {
     const [objects, cards] = await Promise.all([
       storageClient.listObjects('cards/'),
       postgresOrm.prisma.card.findMany({
-        select: { imageUrl: true, id: true, name: true, rarity: true, variant: true },
+        select: { imageUrl: true, id: true, name: true, rarity: true },
       }),
     ])
 
@@ -30,7 +30,7 @@ export const adminMediaRouter: FastifyPluginCallbackZod = (fastify) => {
         lastModified: obj.lastModified,
         orphan: card === null,
         card: card
-          ? { id: card.id, name: card.name, rarity: card.rarity, variant: card.variant }
+          ? { id: card.id, name: card.name, rarity: card.rarity }
           : null,
       }
     })

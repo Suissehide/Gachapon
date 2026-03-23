@@ -33,6 +33,8 @@ export const adminConfigRouter: FastifyPluginCallbackZod = (fastify) => {
           brilliantRateRare: z.number().min(0).max(100).optional(),
           brilliantRateEpic: z.number().min(0).max(100).optional(),
           brilliantRateLegendary: z.number().min(0).max(100).optional(),
+          variantMultiplierHolo: z.number().min(1).optional(),
+          variantMultiplierBrilliant: z.number().min(1).optional(),
         }),
       },
     },

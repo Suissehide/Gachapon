@@ -14,6 +14,8 @@ type VariantRates = {
   brilliantRateRare: number
   brilliantRateEpic: number
   brilliantRateLegendary: number
+  variantMultiplierHolo: number
+  variantMultiplierBrilliant: number
 }
 
 const HOLO_FIELDS = [
@@ -51,6 +53,8 @@ export function CardVariantPanel() {
     brilliantRateRare: data.brilliantRateRare ?? 0,
     brilliantRateEpic: data.brilliantRateEpic ?? 0,
     brilliantRateLegendary: data.brilliantRateLegendary ?? 0,
+    variantMultiplierHolo: data.variantMultiplierHolo ?? 2,
+    variantMultiplierBrilliant: data.variantMultiplierBrilliant ?? 3,
   }
 
   // key ensures the form remounts with fresh defaultValues after a save + refetch
@@ -173,6 +177,38 @@ function CardVariantForm({
                       className="h-8 w-20 text-center tabular-nums"
                     />
                     <span className="text-xs text-text-light">%</span>
+                  </div>
+                )}
+              </form.AppField>
+            ))}
+          </div>
+        </div>
+
+        {/* Recyclage multipliers */}
+        <div className="flex items-center gap-6">
+          <span className="w-32 shrink-0 text-xs font-semibold text-text-light">
+            Recyclage ×
+          </span>
+          <div className="flex items-center gap-8">
+            {([
+              { key: 'variantMultiplierHolo' as const, label: '🌈 Holo' },
+              { key: 'variantMultiplierBrilliant' as const, label: '✨ Brillant' },
+            ] satisfies { key: keyof VariantRates; label: string }[]).map(({ key, label }) => (
+              <form.AppField key={key} name={key}>
+                {(field) => (
+                  <div className="flex items-center gap-1.5">
+                    <Label htmlFor={key} className="text-xs">{label}</Label>
+                    <Input
+                      id={key}
+                      type="number"
+                      min={1}
+                      step={0.1}
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(Number(e.target.value))}
+                      onBlur={field.handleBlur}
+                      className="h-8 w-20 text-center tabular-nums"
+                    />
+                    <span className="text-xs text-text-light">×</span>
                   </div>
                 )}
               </form.AppField>
