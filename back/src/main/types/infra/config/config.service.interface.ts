@@ -13,6 +13,8 @@ export const CONFIG_KEYS = [
   'brilliantRateRare',
   'brilliantRateEpic',
   'brilliantRateLegendary',
+  'variantMultiplierHolo',
+  'variantMultiplierBrilliant',
 ] as const
 
 export type ConfigKey = (typeof CONFIG_KEYS)[number]
