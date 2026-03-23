@@ -1,9 +1,25 @@
-.worktrees/
+# Dependencies
 node_modules/
+.npm/
+
+# Environment
 .env
 .env.local
-.superpowers/
-.idea/
+
+# Build output
 dist/
 back/lib/
-.npm/
+*.tsbuildinfo
+
+# Logs
+*.log
+.playwright-mcp/
+
+# IDE & OS
+.idea/
+.DS_Store
+
+# Tooling
+.worktrees/
+.superpowers/
+docs/

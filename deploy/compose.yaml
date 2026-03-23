@@ -48,7 +48,7 @@ services:
       - PORT
       - REDIS_URL
       - TOKEN_MAX_STOCK
-      - TOKEN_REGEN_INTERVAL_HOURS
+      - TOKEN_REGEN_INTERVAL_MINUTES
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${APP_IMAGE_NAME}-back.rule=Host(`${TRAEFIK_BACK_HOST}`)"
