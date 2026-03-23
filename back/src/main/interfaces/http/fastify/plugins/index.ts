@@ -11,6 +11,7 @@ import { cookiePlugin } from './cookie.plugin'
 import { jwtPlugin } from './jwt.plugin'
 import { ormPlugin } from './orm.plugin'
 import { redisPlugin } from './redis.plugin'
+import { rateLimitPlugin } from './rate-limit.plugin'
 import { rolePlugin } from './role.plugin'
 import { websocketPlugin } from './websocket.plugin'
 
@@ -38,6 +39,7 @@ const plugins: FastifyPluginAsync = fastifyPlugin(
       allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-API-Key'],
       exposedHeaders: ['Set-Cookie'],
     })
+    await registerPlugin(fastify, 'rate-limit', rateLimitPlugin)
     await registerPlugin(fastify, 'accepts', fastifyAccepts)
     await registerPlugin(fastify, 'multipart', fastifyMultipart, {
       attachFieldsToBody: false, // streaming manuel vers MinIO
