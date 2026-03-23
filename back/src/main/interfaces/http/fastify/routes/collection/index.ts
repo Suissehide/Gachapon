@@ -6,7 +6,7 @@ import type { CardRarity } from '../../../../../types/domain/gacha/gacha.types'
 import type { ConfigKey } from '../../../../../types/infra/config/config.service.interface'
 
 export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { cardRepository, userCardRepository, userRepository } =
+  const { cardRepository, userCardRepository, userRepository, upgradeRepository } =
     fastify.iocContainer
 
   // GET /sets — liste les sets (actifs)
@@ -105,11 +105,11 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
     '/collection/recycle',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { body: z.object({ cardId: z.string().uuid() }) },
+      schema: { body: z.object({ cardId: z.string().uuid(), quantity: z.number().int().min(1).default(1) }) },
     },
     async (request) => {
       const userId = request.user.userID
-      const { cardId } = request.body
+      const { cardId, quantity } = request.body
 
       const { postgresOrm, configService } = fastify.iocContainer
 
@@ -120,7 +120,10 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
       }
 
       const dustKey = `dust${card.rarity.charAt(0) + card.rarity.slice(1).toLowerCase()}` as ConfigKey
-      const dustEarned = await configService.get(dustKey)
+      const baseDust = await configService.get(dustKey)
+
+      const upgrades = await upgradeRepository.getEffectsForUser(userId)
+      const dustEarned = Math.round(baseDust * upgrades.dustHarvestMultiplier * quantity)
 
       const result = await postgresOrm.executeWithTransactionClient(
         async (tx) => {
@@ -128,19 +131,19 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
           const uc = await tx.userCard.findUnique({
             where: { userId_cardId: { userId, cardId } },
           })
-          if (!uc || uc.quantity < 1) {
+          if (!uc || uc.quantity < quantity) {
             throw Boom.badRequest('You do not own this card')
           }
 
           // Decrement or delete
-          if (uc.quantity <= 1) {
+          if (uc.quantity - quantity <= 0) {
             await tx.userCard.delete({
               where: { userId_cardId: { userId, cardId } },
             })
           } else {
             await tx.userCard.update({
               where: { userId_cardId: { userId, cardId } },
-              data: { quantity: { decrement: 1 } },
+              data: { quantity: { decrement: quantity } },
             })
           }
 
