@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-import type { Card } from '../../api/collection.api.ts'
+import type { Card, CardVariant } from '../../api/collection.api.ts'
 import { useRecycle } from '../../queries/useCollection.ts'
 import {
   Popup,
@@ -23,9 +23,10 @@ interface RecycleModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   card: Card & { quantity: number }
+  variant: CardVariant
 }
 
-export function RecycleModal({ open, onOpenChange, card }: RecycleModalProps) {
+export function RecycleModal({ open, onOpenChange, card, variant }: RecycleModalProps) {
   const [inputValue, setInputValue] = useState('1')
   const { mutate: recycle, isPending } = useRecycle()
 
@@ -38,7 +39,7 @@ export function RecycleModal({ open, onOpenChange, card }: RecycleModalProps) {
   const handleRecycle = () => {
     if (!isValid) return
     recycle(
-      { cardId: card.id, quantity },
+      { cardId: card.id, quantity, variant },
       { onSuccess: () => onOpenChange(false) },
     )
   }
@@ -65,6 +66,11 @@ export function RecycleModal({ open, onOpenChange, card }: RecycleModalProps) {
               <p className="text-xs text-text-light">
                 {card.rarity} · {DUST_BY_RARITY[card.rarity] ?? 0} 💎 / copie
               </p>
+              {variant !== 'NORMAL' && (
+                <p className="mt-0.5 text-xs font-semibold">
+                  {variant === 'HOLOGRAPHIC' ? '🌈 Holographique' : '✨ Brillante'}
+                </p>
+              )}
               <p className="text-xs text-text-light">
                 Tu possèdes{' '}
                 <span className="font-semibold text-text">{card.quantity}</span> exemplaire
