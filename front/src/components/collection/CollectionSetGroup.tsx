@@ -5,17 +5,10 @@ interface CollectionSetGroupProps {
   setName: string
   cards: Card[]
   owned: Map<string, number>
-  onRecycle: (cardId: string) => void
-  recyclingId: string | null
+  onRecycle: (card: Card, quantity: number) => void
 }
 
-export function CollectionSetGroup({
-  setName,
-  cards,
-  owned,
-  onRecycle,
-  recyclingId,
-}: CollectionSetGroupProps) {
+export function CollectionSetGroup({ setName, cards, owned, onRecycle }: CollectionSetGroupProps) {
   const ownedCount = cards.filter((c) => owned.has(c.id)).length
 
   return (
@@ -36,8 +29,7 @@ export function CollectionSetGroup({
               card={card}
               quantity={qty}
               isOwned={qty > 0}
-              onRecycle={() => onRecycle(card.id)}
-              recycling={recyclingId === card.id}
+              onRecycle={onRecycle}
             />
           )
         })}

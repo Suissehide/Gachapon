@@ -47,13 +47,11 @@ export function CollectionCard({
   quantity,
   isOwned,
   onRecycle,
-  recycling,
 }: {
   card: Card
   quantity: number
   isOwned: boolean
-  onRecycle: () => void
-  recycling: boolean
+  onRecycle: (card: Card, quantity: number) => void
 }) {
   return (
     <div className="group relative">
@@ -109,8 +107,7 @@ export function CollectionCard({
       {quantity > 1 && (
         <button
           type="button"
-          onClick={onRecycle}
-          disabled={recycling}
+          onClick={() => onRecycle(card, quantity)}
           className="absolute bottom-6 left-1/2 -translate-x-1/2 hidden group-hover:flex items-center gap-1 rounded-full bg-black/80 px-2 py-0.5 text-[10px] text-yellow-400 hover:bg-black transition-colors"
         >
           <RefreshCw className="h-2.5 w-2.5" />

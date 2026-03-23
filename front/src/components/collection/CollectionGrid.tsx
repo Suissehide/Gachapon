@@ -4,16 +4,10 @@ import { CollectionCard } from './CollectionCard.tsx'
 interface CollectionGridProps {
   cards: Card[]
   owned: Map<string, number>
-  onRecycle: (cardId: string) => void
-  recyclingId: string | null
+  onRecycle: (card: Card, quantity: number) => void
 }
 
-export function CollectionGrid({
-  cards,
-  owned,
-  onRecycle,
-  recyclingId,
-}: CollectionGridProps) {
+export function CollectionGrid({ cards, owned, onRecycle }: CollectionGridProps) {
   if (cards.length === 0) {
     return (
       <div className="flex h-48 items-center justify-center">
@@ -34,8 +28,7 @@ export function CollectionGrid({
             card={card}
             quantity={qty}
             isOwned={qty > 0}
-            onRecycle={() => onRecycle(card.id)}
-            recycling={recyclingId === card.id}
+            onRecycle={onRecycle}
           />
         )
       })}
