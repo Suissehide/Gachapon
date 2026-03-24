@@ -1,6 +1,12 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 
 import { TeamsApi } from '../api/teams.api.ts'
+import type { TeamRankingPage } from '../api/teams.api.ts'
 
 export type {
   Invitation,
@@ -89,4 +95,14 @@ export const useAcceptInvitation = () =>
 export const useDeclineInvitation = () =>
   useMutation({
     mutationFn: (token: string) => TeamsApi.declineInvitation(token),
+  })
+
+export const useTeamRanking = (teamId: string) =>
+  useInfiniteQuery({
+    queryKey: ['teamRanking', teamId],
+    queryFn: ({ pageParam }) => TeamsApi.getTeamRanking(teamId, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage: TeamRankingPage) =>
+      lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
+    enabled: !!teamId,
   })
