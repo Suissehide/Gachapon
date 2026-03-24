@@ -46,29 +46,36 @@ export function TcgCardFace({
     '--tcg-sep': config.separatorColor,
     '--tcg-name-bg': config.namePlateBg,
     '--tcg-card-bg': config.cardBg,
+    '--tcg-texture': config.cardTexture,
     '--tcg-strip-bg': config.bottomStripBg,
     '--tcg-accent': config.accentColor,
-    '--tcg-name-c': isOwned ? config.nameColor : '#4b5563',
-    '--tcg-set-c': isOwned ? config.setColor : '#374151',
-    '--tcg-label-c': isOwned ? config.labelColor : '#4b5563',
-    '--tcg-inner-border': isOwned ? config.frameInnerBorder : '#374151',
+    '--tcg-name-c': isOwned ? config.nameColor : '#9ca3af',
+    '--tcg-set-c': isOwned ? config.setColor : '#d1d5db',
+    '--tcg-label-c': isOwned ? config.labelColor : '#9ca3af',
   } as React.CSSProperties
 
+  const cornerOffset = `${sz.framePad + 2}px`
+
   return (
+    // Outer wrapper = gradient frame via background + padding technique
     <div
-      className={`absolute inset-0 flex flex-col overflow-hidden [backface-visibility:hidden] ${sz.outerRadius}`}
+      className={`absolute inset-0 [backface-visibility:hidden] ${sz.outerRadius} ${isOwned ? config.glowClass : ''}`}
       style={{
         ...cssVars,
-        border: `${sz.borderWidth}px solid ${isOwned ? config.frameBorder : '#374151'}`,
-        boxShadow: isOwned
-          ? `inset 0 0 0 1px ${config.frameInnerBorder}88, ${config.glow}`
-          : 'none',
-        background: config.cardBg,
+        background: isOwned
+          ? config.frameGradient
+          : 'linear-gradient(145deg, #d1d5db 0%, #e5e7eb 50%, #d1d5db 100%)',
+        padding: sz.framePad,
+        boxShadow: isOwned ? config.glow : '0 2px 8px rgba(0,0,0,0.08)',
       }}
     >
-      {/* Inner inset frame */}
+      {/* Inner card body */}
       <div
-        className={`border border-[color:var(--tcg-inner-border)] overflow-hidden flex-1 flex flex-col ${sz.innerMargin} ${sz.innerRadius}`}
+        className={`relative h-full flex flex-col overflow-hidden ${sz.innerRadius}`}
+        style={{
+          background: config.cardBg,
+          boxShadow: `inset 0 0 0 1px ${isOwned ? config.innerRing : 'rgba(156,163,175,0.3)'}`,
+        }}
       >
         <NamePlate name={name} setName={setName} isOwned={isOwned} sz={sz} />
         <ArtArea
@@ -83,6 +90,24 @@ export function TcgCardFace({
         />
         <RarityStrip config={config} isOwned={isOwned} sz={sz} />
       </div>
+
+      {/* Corner L-bracket ornaments over the gradient frame */}
+      <span
+        className={`pointer-events-none absolute ${sz.cornerSize} border-t-[1.5px] border-l-[1.5px] border-black/20 rounded-tl-[2px]`}
+        style={{ top: cornerOffset, left: cornerOffset }}
+      />
+      <span
+        className={`pointer-events-none absolute ${sz.cornerSize} border-t-[1.5px] border-r-[1.5px] border-black/20 rounded-tr-[2px]`}
+        style={{ top: cornerOffset, right: cornerOffset }}
+      />
+      <span
+        className={`pointer-events-none absolute ${sz.cornerSize} border-b-[1.5px] border-l-[1.5px] border-black/20 rounded-bl-[2px]`}
+        style={{ bottom: cornerOffset, left: cornerOffset }}
+      />
+      <span
+        className={`pointer-events-none absolute ${sz.cornerSize} border-b-[1.5px] border-r-[1.5px] border-black/20 rounded-br-[2px]`}
+        style={{ bottom: cornerOffset, right: cornerOffset }}
+      />
     </div>
   )
 }

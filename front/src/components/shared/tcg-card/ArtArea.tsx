@@ -1,8 +1,6 @@
 import placeholderImg from '../../../assets/data/not-found.png'
 import type { SizePreset, VariantInfo } from './config.ts'
 
-// Reads CSS var set by TcgCardFace: --tcg-card-bg
-
 type Props = {
   variantInfo: VariantInfo | null
   imageUrl?: string | null
@@ -25,15 +23,13 @@ export function ArtArea({
   sz,
 }: Props) {
   return (
-    <div className="relative flex-1 [background:var(--tcg-card-bg)]">
-      {/* Art mat — image inset from the edges */}
-      <div className={`absolute ${sz.matInset} overflow-hidden rounded-[4px]`}>
+    <div className="relative flex-1">
+      {/* Art mat — inset image with vignette */}
+      <div className={`absolute ${sz.matInset} overflow-hidden rounded-[3px]`}>
         <img
-          src={
-            isOwned ? imageUrl || placeholderImg : imageUrl || placeholderImg
-          }
+          src={imageUrl || placeholderImg}
           alt={isOwned ? name : ''}
-          className={`absolute inset-0 h-full w-full object-cover ${isOwned ? '' : 'brightness-0 opacity-50'}`}
+          className={`absolute inset-0 h-full w-full object-cover ${isOwned ? '' : 'brightness-0 opacity-60'}`}
           onError={(e) => {
             ;(e.target as HTMLImageElement).src = placeholderImg
           }}
@@ -59,9 +55,11 @@ export function ArtArea({
       {isOwned && variantInfo && (
         <div className="absolute right-1.5 top-1.5 z-10">
           <span
-            className={`flex items-center gap-0.5 rounded-full font-semibold backdrop-blur-sm ${compact ? 'px-1 py-px text-[8px]' : 'px-2 py-0.5 text-[10px]'} ${variantInfo.className}`}
+            className={`flex items-center gap-0.5 rounded-full font-semibold backdrop-blur-sm ${compact ? 'px-1 py-px text-[7px]' : 'px-1.5 py-0.5 text-[9px]'} ${variantInfo.className}`}
           >
-            <variantInfo.icon className={compact ? 'h-2 w-2' : 'h-2.5 w-2.5'} />
+            <variantInfo.icon
+              className={compact ? 'h-1.5 w-1.5' : 'h-2.5 w-2.5'}
+            />
             {!compact && variantInfo.label}
           </span>
         </div>

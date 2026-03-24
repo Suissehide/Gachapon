@@ -4,111 +4,153 @@ import type React from 'react'
 // ── Rarity config ─────────────────────────────────────────────────────────────
 
 export type RarityConfig = {
+  // Visual frame — gradient background acts as the border via padding technique
+  frameGradient: string
+  // Keep for CardReveal backdrop and CSS var fallbacks
   frameBorder: string
-  frameInnerBorder: string
-  glow: string
   backdropColor: string
+  glow: string
   hasSweep: boolean
+  // Card body
   cardBg: string
+  cardTexture: string
+  innerRing: string
+  // Name plate
   namePlateBg: string
   separatorColor: string
+  // Bottom strip
   bottomStripBg: string
+  // Colors (also set as CSS vars for sub-components)
   nameColor: string
   setColor: string
   accentColor: string
   label: string
   labelColor: string
+  gemLabel: string
   shimmer: boolean
+  // Animated glow class to apply on the outer wrapper
+  glowClass: string
 }
 
 export const RARITY_TCG_CONFIG: Record<string, RarityConfig> = {
   COMMON: {
-    frameBorder: '#6b7280',
-    frameInnerBorder: '#374151',
-    glow: '',
+    frameGradient:
+      'linear-gradient(145deg, #9ca3af 0%, #d1d5db 30%, #f9fafb 50%, #d1d5db 70%, #9ca3af 100%)',
+    frameBorder: '#9ca3af',
     backdropColor: '',
+    glow: '0 2px 12px rgba(0,0,0,0.12)',
     hasSweep: false,
-    cardBg: 'linear-gradient(170deg, #1e2433 0%, #0f1520 100%)',
-    namePlateBg: 'linear-gradient(135deg, #2d3748 0%, #1a2234 100%)',
-    separatorColor: 'rgba(107,114,128,0.4)',
-    bottomStripBg: 'linear-gradient(0deg, #0d1117 0%, #161d2d 100%)',
-    nameColor: '#d1d5db',
+    cardBg: 'linear-gradient(170deg, #fafafa 0%, #f3f4f6 100%)',
+    cardTexture:
+      'repeating-linear-gradient(45deg, rgba(0,0,0,0.018) 0px, rgba(0,0,0,0.018) 1px, transparent 1px, transparent 6px)',
+    innerRing: 'rgba(156,163,175,0.35)',
+    namePlateBg: 'linear-gradient(180deg, #f3f4f6 0%, #fafafa 100%)',
+    separatorColor: 'rgba(107,114,128,0.35)',
+    bottomStripBg: 'linear-gradient(0deg, #e5e7eb 0%, #f3f4f6 100%)',
+    nameColor: '#1f2937',
     setColor: '#6b7280',
     accentColor: '#9ca3af',
     label: 'Commun',
-    labelColor: '#9ca3af',
+    labelColor: '#6b7280',
+    gemLabel: '·',
     shimmer: false,
+    glowClass: '',
   },
   UNCOMMON: {
+    frameGradient:
+      'linear-gradient(145deg, #15803d 0%, #4ade80 30%, #bbf7d0 50%, #4ade80 70%, #15803d 100%)',
     frameBorder: '#16a34a',
-    frameInnerBorder: '#14532d',
-    glow: '0 0 18px rgba(34,197,94,0.4), 0 0 40px rgba(34,197,94,0.15)',
-    backdropColor: '',
+    backdropColor:
+      'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(34,197,94,0.08) 0%, transparent 70%)',
+    glow: '0 4px 20px rgba(34,197,94,0.3), 0 1px 8px rgba(0,0,0,0.1)',
     hasSweep: false,
-    cardBg: 'linear-gradient(170deg, #0a1f15 0%, #050f0a 100%)',
-    namePlateBg: 'linear-gradient(135deg, #14532d 0%, #0a1f15 100%)',
-    separatorColor: 'rgba(34,197,94,0.35)',
-    bottomStripBg: 'linear-gradient(0deg, #050f0a 0%, #0a1f15 100%)',
-    nameColor: '#bbf7d0',
-    setColor: '#4ade80',
-    accentColor: '#4ade80',
+    cardBg: 'linear-gradient(170deg, #f0fdf4 0%, #dcfce7 100%)',
+    cardTexture:
+      'repeating-linear-gradient(45deg, rgba(34,197,94,0.04) 0px, rgba(34,197,94,0.04) 1px, transparent 1px, transparent 6px)',
+    innerRing: 'rgba(34,197,94,0.25)',
+    namePlateBg: 'linear-gradient(180deg, #bbf7d0 0%, #f0fdf4 100%)',
+    separatorColor: 'rgba(34,197,94,0.4)',
+    bottomStripBg: 'linear-gradient(0deg, #bbf7d0 0%, #dcfce7 100%)',
+    nameColor: '#14532d',
+    setColor: '#15803d',
+    accentColor: '#22c55e',
     label: 'Peu commun',
-    labelColor: '#4ade80',
+    labelColor: '#15803d',
+    gemLabel: '◆',
     shimmer: false,
+    glowClass: 'uncommon-glow',
   },
   RARE: {
+    frameGradient:
+      'linear-gradient(145deg, #0369a1 0%, #38bdf8 30%, #bae6fd 50%, #38bdf8 70%, #0369a1 100%)',
     frameBorder: '#0891b2',
-    frameInnerBorder: '#164e63',
-    glow: '0 0 22px rgba(6,182,212,0.55), 0 0 50px rgba(6,182,212,0.2)',
     backdropColor:
-      'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(6,182,212,0.09) 0%, transparent 70%)',
+      'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(6,182,212,0.08) 0%, transparent 70%)',
+    glow: '0 4px 22px rgba(6,182,212,0.35), 0 1px 8px rgba(0,0,0,0.1)',
     hasSweep: true,
-    cardBg: 'linear-gradient(170deg, #0c1e3a 0%, #060c1a 100%)',
-    namePlateBg: 'linear-gradient(135deg, #164e63 0%, #0c1e3a 100%)',
-    separatorColor: 'rgba(6,182,212,0.35)',
-    bottomStripBg: 'linear-gradient(0deg, #060c1a 0%, #0c1e3a 100%)',
-    nameColor: '#bae6fd',
-    setColor: '#22d3ee',
-    accentColor: '#22d3ee',
+    cardBg: 'linear-gradient(170deg, #f0f9ff 0%, #e0f2fe 100%)',
+    cardTexture:
+      'repeating-linear-gradient(45deg, rgba(14,165,233,0.04) 0px, rgba(14,165,233,0.04) 1px, transparent 1px, transparent 6px)',
+    innerRing: 'rgba(6,182,212,0.3)',
+    namePlateBg: 'linear-gradient(180deg, #bae6fd 0%, #f0f9ff 100%)',
+    separatorColor: 'rgba(6,182,212,0.4)',
+    bottomStripBg: 'linear-gradient(0deg, #bae6fd 0%, #e0f2fe 100%)',
+    nameColor: '#0c4a6e',
+    setColor: '#0369a1',
+    accentColor: '#0ea5e9',
     label: 'Rare',
-    labelColor: '#22d3ee',
+    labelColor: '#0369a1',
+    gemLabel: '◆◆',
     shimmer: false,
+    glowClass: 'rare-glow',
   },
   EPIC: {
+    frameGradient:
+      'linear-gradient(145deg, #6d28d9 0%, #a78bfa 30%, #ede9fe 50%, #a78bfa 70%, #6d28d9 100%)',
     frameBorder: '#7c3aed',
-    frameInnerBorder: '#4c1d95',
-    glow: '0 0 26px rgba(139,92,246,0.6), 0 0 60px rgba(139,92,246,0.22)',
     backdropColor:
-      'radial-gradient(ellipse 65% 55% at 50% 50%, rgba(139,92,246,0.11) 0%, transparent 70%)',
+      'radial-gradient(ellipse 65% 55% at 50% 50%, rgba(139,92,246,0.1) 0%, transparent 70%)',
+    glow: '0 4px 26px rgba(139,92,246,0.4), 0 1px 8px rgba(0,0,0,0.1)',
     hasSweep: true,
-    cardBg: 'linear-gradient(170deg, #150d3a 0%, #080514 100%)',
-    namePlateBg: 'linear-gradient(135deg, #4c1d95 0%, #150d3a 100%)',
-    separatorColor: 'rgba(139,92,246,0.35)',
-    bottomStripBg: 'linear-gradient(0deg, #080514 0%, #150d3a 100%)',
-    nameColor: '#ddd6fe',
-    setColor: '#a78bfa',
+    cardBg: 'linear-gradient(170deg, #faf5ff 0%, #ede9fe 100%)',
+    cardTexture:
+      'repeating-linear-gradient(45deg, rgba(167,139,250,0.05) 0px, rgba(167,139,250,0.05) 1px, transparent 1px, transparent 6px)',
+    innerRing: 'rgba(139,92,246,0.3)',
+    namePlateBg: 'linear-gradient(180deg, #ddd6fe 0%, #faf5ff 100%)',
+    separatorColor: 'rgba(139,92,246,0.4)',
+    bottomStripBg: 'linear-gradient(0deg, #ddd6fe 0%, #ede9fe 100%)',
+    nameColor: '#3b0764',
+    setColor: '#6d28d9',
     accentColor: '#a78bfa',
     label: 'Épique',
-    labelColor: '#a78bfa',
+    labelColor: '#6d28d9',
+    gemLabel: '◆◆◆',
     shimmer: false,
+    glowClass: 'epic-glow',
   },
   LEGENDARY: {
+    frameGradient:
+      'linear-gradient(145deg, #92400e 0%, #d97706 20%, #fbbf24 35%, #fde68a 48%, #fffbeb 50%, #fde68a 52%, #fbbf24 65%, #d97706 80%, #92400e 100%)',
     frameBorder: '#d97706',
-    frameInnerBorder: '#92400e',
-    glow: '0 0 30px rgba(245,158,11,0.7), 0 0 70px rgba(245,158,11,0.28), 0 0 120px rgba(245,158,11,0.1)',
     backdropColor:
       'radial-gradient(ellipse 65% 55% at 50% 50%, rgba(245,158,11,0.12) 0%, transparent 70%)',
+    glow: '0 6px 30px rgba(245,158,11,0.5), 0 2px 10px rgba(180,83,9,0.3)',
     hasSweep: true,
-    cardBg: 'linear-gradient(170deg, #1a0e00 0%, #0a0700 100%)',
-    namePlateBg: 'linear-gradient(135deg, #78350f 0%, #1a0e00 100%)',
-    separatorColor: 'rgba(245,158,11,0.45)',
-    bottomStripBg: 'linear-gradient(0deg, #0a0700 0%, #1a0e00 100%)',
-    nameColor: '#fde68a',
-    setColor: '#fbbf24',
+    cardBg: 'linear-gradient(170deg, #fffbeb 0%, #fef3c7 100%)',
+    cardTexture:
+      'repeating-linear-gradient(45deg, rgba(245,158,11,0.06) 0px, rgba(245,158,11,0.06) 1px, transparent 1px, transparent 6px)',
+    innerRing: 'rgba(245,158,11,0.4)',
+    namePlateBg: 'linear-gradient(180deg, #fde68a 0%, #fffbeb 100%)',
+    separatorColor: 'rgba(245,158,11,0.5)',
+    bottomStripBg: 'linear-gradient(0deg, #fde68a 0%, #fef3c7 100%)',
+    nameColor: '#451a03',
+    setColor: '#92400e',
     accentColor: '#f59e0b',
-    label: '✦ Légendaire ✦',
-    labelColor: '#f59e0b',
+    label: 'Légendaire',
+    labelColor: '#92400e',
+    gemLabel: '✦✦✦',
     shimmer: true,
+    glowClass: 'legendary-glow',
   },
 }
 
@@ -126,15 +168,15 @@ export const VARIANT_TCG_CONFIG: Record<string, VariantInfo> = {
   BRILLIANT: {
     icon: Sparkles,
     label: 'Brillant',
-    className: 'bg-amber-500/15 border border-amber-500/40 text-amber-300',
+    className: 'bg-amber-500/20 border border-amber-600/50 text-amber-700',
     overlayBg:
-      'linear-gradient(135deg, rgba(251,191,36,0.3) 0%, rgba(245,158,11,0.15) 40%, rgba(252,211,77,0.35) 70%, rgba(251,191,36,0.3) 100%)',
+      'linear-gradient(135deg, rgba(251,191,36,0.35) 0%, rgba(245,158,11,0.18) 40%, rgba(252,211,77,0.4) 70%, rgba(251,191,36,0.35) 100%)',
     overlayAnimation: 'brilliant-shift 2s ease infinite',
   },
   HOLOGRAPHIC: {
     icon: Gem,
     label: 'Holographique',
-    className: 'bg-purple-500/15 border border-purple-500/40 text-purple-300',
+    className: 'bg-purple-500/15 border border-purple-600/40 text-purple-700',
     overlayBg:
       'linear-gradient(135deg, rgba(99,102,241,0.25) 0%, rgba(168,85,247,0.2) 25%, rgba(59,130,246,0.25) 50%, rgba(16,185,129,0.2) 75%, rgba(99,102,241,0.25) 100%)',
     overlayAnimation: 'holographic-shift 3s ease infinite',
@@ -145,8 +187,7 @@ export const VARIANT_TCG_CONFIG: Record<string, VariantInfo> = {
 
 export type SizePreset = {
   outerRadius: string
-  borderWidth: number
-  innerMargin: string
+  framePad: number // padding on outer wrapper = frame thickness
   innerRadius: string
   namepadX: string
   namepadY: string
@@ -155,38 +196,39 @@ export type SizePreset = {
   raritypadX: string
   raritypadY: string
   rarityFontSize: string
+  gemFontSize: string
   matInset: string
-  diamondFontSize: string
+  cornerSize: string // Tailwind w/h class for corner brackets
 }
 
 export const SIZE_FULL: SizePreset = {
-  outerRadius: 'rounded-2xl',
-  borderWidth: 3,
-  innerMargin: 'm-1',
-  innerRadius: 'rounded-xl',
-  namepadX: 'px-3.5',
+  outerRadius: 'rounded-[18px]',
+  framePad: 3,
+  innerRadius: 'rounded-[15px]',
+  namepadX: 'px-4',
   namepadY: 'py-2',
-  nameFontSize: 'text-[14px]',
+  nameFontSize: 'text-[16px]',
   setFontSize: 'text-[10px]',
-  raritypadX: 'px-3.5',
-  raritypadY: 'py-1.5',
+  raritypadX: 'px-3',
+  raritypadY: 'py-[5px]',
   rarityFontSize: 'text-[10px]',
-  matInset: 'inset-[7px]',
-  diamondFontSize: 'text-[8px]',
+  gemFontSize: 'text-[8px]',
+  matInset: 'inset-[26px]',
+  cornerSize: 'w-[9px] h-[9px]',
 }
 
 export const SIZE_COMPACT: SizePreset = {
-  outerRadius: 'rounded-[10px]',
-  borderWidth: 2,
-  innerMargin: 'm-0.5',
-  innerRadius: 'rounded-[7px]',
+  outerRadius: 'rounded-[11px]',
+  framePad: 2,
+  innerRadius: 'rounded-[9px]',
   namepadX: 'px-2',
-  namepadY: 'py-1',
+  namepadY: 'py-[3px]',
   nameFontSize: 'text-[9px]',
   setFontSize: 'text-[7px]',
-  raritypadX: 'px-2',
-  raritypadY: 'py-[3px]',
+  raritypadX: 'px-1.5',
+  raritypadY: 'py-[2px]',
   rarityFontSize: 'text-[7px]',
-  matInset: 'inset-[4px]',
-  diamondFontSize: 'text-[5px]',
+  gemFontSize: 'text-[6px]',
+  matInset: 'inset-[13px]',
+  cornerSize: 'w-[5px] h-[5px]',
 }
