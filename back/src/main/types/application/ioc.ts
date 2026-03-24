@@ -6,6 +6,7 @@ import type { InvitationRepository } from '../../infra/orm/repositories/invitati
 import type { OAuthAccountRepository } from '../../infra/orm/repositories/oauth-account.repository'
 import type { TeamRepository } from '../../infra/orm/repositories/team.repository'
 import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
+import type { ScoringConfigRepository } from '../../infra/orm/repositories/scoring-config.repository'
 import type { UpgradeRepository } from '../../infra/orm/repositories/upgrade.repository'
 import type { UserCardRepository } from '../../infra/orm/repositories/user-card.repository'
 import type { RefreshTokenRepository } from '../../infra/redis/refresh-token.repository'
@@ -47,6 +48,7 @@ export interface IocContainer {
   readonly userCardRepository: UserCardRepository
   readonly gachaPullRepository: GachaPullRepository
   readonly upgradeRepository: UpgradeRepository
+  readonly scoringConfigRepository: ScoringConfigRepository
   readonly gachaDomain: GachaDomainInterface
   readonly teamRepository: TeamRepository
   readonly teamMemberRepository: TeamMemberRepository

@@ -20,6 +20,7 @@ import { OAuthAccountRepository } from '../../../infra/orm/repositories/oauth-ac
 import { TeamRepository } from '../../../infra/orm/repositories/team.repository'
 import { TeamMemberRepository } from '../../../infra/orm/repositories/team-member.repository'
 import { UserRepository } from '../../../infra/orm/repositories/user.repository'
+import { ScoringConfigRepository } from '../../../infra/orm/repositories/scoring-config.repository'
 import { UpgradeRepository } from '../../../infra/orm/repositories/upgrade.repository'
 import { UserCardRepository } from '../../../infra/orm/repositories/user-card.repository'
 import { RedisClient } from '../../../infra/redis/redis-client'
@@ -71,6 +72,7 @@ class AwilixIocContainer {
     this.#reg('userCardRepository', asClass(UserCardRepository).singleton())
     this.#reg('gachaPullRepository', asClass(GachaPullRepository).singleton())
     this.#reg('upgradeRepository', asClass(UpgradeRepository).singleton())
+    this.#reg('scoringConfigRepository', asClass(ScoringConfigRepository).singleton())
     this.#reg('gachaDomain', asClass(GachaDomain).singleton())
     this.#reg('teamRepository', asClass(TeamRepository).singleton())
     this.#reg('teamMemberRepository', asClass(TeamMemberRepository).singleton())
