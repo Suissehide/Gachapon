@@ -31,6 +31,20 @@ export type Invitation = {
   expiresAt: string
 }
 
+export type RankedMember = {
+  rank: number
+  user: { id: string; username: string; avatar: string | null }
+  role: 'OWNER' | 'ADMIN' | 'MEMBER'
+  score: number
+}
+
+export type TeamRankingPage = {
+  members: RankedMember[]
+  total: number
+  page: number
+  totalPages: number
+}
+
 export const TeamsApi = {
   getMyTeams: async (): Promise<{ teams: TeamSummary[] }> => {
     const res = await fetchWithAuth(`${apiUrl}/teams`)
@@ -136,6 +150,20 @@ export const TeamsApi = {
     })
     if (!res.ok) {
       handleHttpError(res, {}, "Erreur lors du refus de l'invitation")
+    }
+    return res.json()
+  },
+
+  getTeamRanking: async (
+    teamId: string,
+    page: number,
+    limit = 20,
+  ): Promise<TeamRankingPage> => {
+    const res = await fetchWithAuth(
+      `${apiUrl}/teams/${teamId}/ranking?page=${page}&limit=${limit}`,
+    )
+    if (!res.ok) {
+      handleHttpError(res, {}, 'Erreur lors de la récupération du classement')
     }
     return res.json()
   },
