@@ -198,7 +198,7 @@ function TeamRow({
           {entry.team.memberCount} membres
         </span>
       </div>
-      <p className="text-sm font-bold text-text">{entry.avgPercentage}%</p>
+      <p className="text-sm font-bold text-text">{entry.avgScore.toLocaleString()} pts</p>
     </div>
   )
 }

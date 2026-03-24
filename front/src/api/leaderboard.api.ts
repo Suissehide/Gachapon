@@ -18,7 +18,7 @@ export type LegendaryEntry = {
 export type TeamEntry = {
   rank: number
   team: { id: string; name: string; slug: string; memberCount: number }
-  avgPercentage: number
+  avgScore: number
 }
 
 export type Leaderboard = {
