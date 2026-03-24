@@ -19,6 +19,7 @@ export const useUpdateScoringConfig = () => {
       qc.invalidateQueries({ queryKey: ['admin', 'scoringConfig'] })
       // Scoring config changes affect leaderboard team scores
       qc.invalidateQueries({ queryKey: ['leaderboard'] })
+      qc.invalidateQueries({ queryKey: ['teamRanking'] })
     },
   })
 }

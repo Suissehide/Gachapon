@@ -117,6 +117,24 @@ describe('Admin scoring-config routes', () => {
     expect(res.statusCode).toBe(400)
   })
 
+  it('PUT /admin/scoring-config — rejects missing field', async () => {
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/admin/scoring-config',
+      headers: { cookie: adminCookies },
+      payload: {
+        commonPoints: 1,
+        // uncommonPoints is intentionally missing
+        rarePoints: 8,
+        epicPoints: 20,
+        legendaryPoints: 50,
+        brilliantMultiplier: 1.5,
+        holographicMultiplier: 2.0,
+      },
+    })
+    expect(res.statusCode).toBe(400)
+  })
+
   it('GET /admin/scoring-config — returns 401 without auth', async () => {
     const res = await app.inject({ method: 'GET', url: '/admin/scoring-config' })
     expect(res.statusCode).toBe(401)
