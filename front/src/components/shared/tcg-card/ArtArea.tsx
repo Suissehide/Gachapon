@@ -1,3 +1,5 @@
+import type React from 'react'
+
 import placeholderImg from '../../../assets/data/not-found.png'
 import type { SizePreset, VariantInfo } from './config.ts'
 
@@ -24,7 +26,7 @@ export function ArtArea({
 }: Props) {
   return (
     <div className="relative flex-1">
-      {/* Art mat — inset image with vignette */}
+      {/* Art mat — inset image */}
       <div className={`absolute ${sz.matInset} overflow-hidden rounded-[3px]`}>
         <img
           src={imageUrl || placeholderImg}
@@ -34,22 +36,27 @@ export function ArtArea({
             ;(e.target as HTMLImageElement).src = placeholderImg
           }}
         />
-
-        {/* Variant shimmer overlay */}
-        {isOwned && variantInfo && (
-          <div
-            className="pointer-events-none absolute inset-0 mix-blend-color-dodge [background-size:200%_200%]"
-            style={{
-              background: variantInfo.overlayBg,
-              animation: variantInfo.overlayAnimation,
-            }}
-          />
-        )}
-
         {showSweep && hasSweep && isOwned && (
           <div className="card-sweep-inner" />
         )}
       </div>
+
+      {/* Variant overlay layers — cover full art area (outside mat padding) */}
+      {isOwned &&
+        variantInfo?.layers.map((layer) => (
+          <div
+            key={layer.id}
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background: layer.bg,
+              backgroundSize: layer.bgSize,
+              animation: layer.animation,
+              mixBlendMode:
+                layer.blendMode as React.CSSProperties['mixBlendMode'],
+              opacity: layer.opacity,
+            }}
+          />
+        ))}
 
       {/* Variant badge */}
       {isOwned && variantInfo && (

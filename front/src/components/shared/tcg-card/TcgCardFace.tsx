@@ -77,6 +77,9 @@ export function TcgCardFace({
           boxShadow: `inset 0 0 0 1px ${isOwned ? config.innerRing : 'rgba(156,163,175,0.3)'}`,
         }}
       >
+        {!isOwned && (
+          <div className="pointer-events-none absolute inset-0 z-10 bg-black/30" />
+        )}
         <NamePlate name={name} setName={setName} isOwned={isOwned} sz={sz} />
         <ArtArea
           variantInfo={variantInfo}

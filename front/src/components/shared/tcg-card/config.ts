@@ -1,4 +1,4 @@
-import { Gem, Sparkles } from 'lucide-react'
+import { Sun, Waves } from 'lucide-react'
 import type React from 'react'
 
 // ── Rarity config ─────────────────────────────────────────────────────────────
@@ -62,7 +62,7 @@ export const RARITY_TCG_CONFIG: Record<string, RarityConfig> = {
     frameBorder: '#16a34a',
     backdropColor:
       'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(34,197,94,0.08) 0%, transparent 70%)',
-    glow: '0 4px 20px rgba(34,197,94,0.3), 0 1px 8px rgba(0,0,0,0.1)',
+    glow: '0 2px 10px rgba(34,197,94,0.18), 0 1px 4px rgba(0,0,0,0.08)',
     hasSweep: false,
     cardBg: 'linear-gradient(170deg, #f0fdf4 0%, #dcfce7 100%)',
     cardTexture:
@@ -86,7 +86,7 @@ export const RARITY_TCG_CONFIG: Record<string, RarityConfig> = {
     frameBorder: '#0891b2',
     backdropColor:
       'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(6,182,212,0.08) 0%, transparent 70%)',
-    glow: '0 4px 22px rgba(6,182,212,0.35), 0 1px 8px rgba(0,0,0,0.1)',
+    glow: '0 2px 12px rgba(6,182,212,0.2), 0 1px 4px rgba(0,0,0,0.08)',
     hasSweep: true,
     cardBg: 'linear-gradient(170deg, #f0f9ff 0%, #e0f2fe 100%)',
     cardTexture:
@@ -110,7 +110,7 @@ export const RARITY_TCG_CONFIG: Record<string, RarityConfig> = {
     frameBorder: '#7c3aed',
     backdropColor:
       'radial-gradient(ellipse 65% 55% at 50% 50%, rgba(139,92,246,0.1) 0%, transparent 70%)',
-    glow: '0 4px 26px rgba(139,92,246,0.4), 0 1px 8px rgba(0,0,0,0.1)',
+    glow: '0 2px 14px rgba(139,92,246,0.22), 0 1px 4px rgba(0,0,0,0.08)',
     hasSweep: true,
     cardBg: 'linear-gradient(170deg, #faf5ff 0%, #ede9fe 100%)',
     cardTexture:
@@ -134,7 +134,7 @@ export const RARITY_TCG_CONFIG: Record<string, RarityConfig> = {
     frameBorder: '#d97706',
     backdropColor:
       'radial-gradient(ellipse 65% 55% at 50% 50%, rgba(245,158,11,0.12) 0%, transparent 70%)',
-    glow: '0 6px 30px rgba(245,158,11,0.5), 0 2px 10px rgba(180,83,9,0.3)',
+    glow: '0 2px 16px rgba(245,158,11,0.28), 0 1px 6px rgba(180,83,9,0.15)',
     hasSweep: true,
     cardBg: 'linear-gradient(170deg, #fffbeb 0%, #fef3c7 100%)',
     cardTexture:
@@ -156,30 +156,72 @@ export const RARITY_TCG_CONFIG: Record<string, RarityConfig> = {
 
 // ── Variant config ─────────────────────────────────────────────────────────────
 
+export type VariantOverlayLayer = {
+  id: string
+  bg: string
+  bgSize: string
+  animation: string
+  blendMode: string
+  opacity: number
+}
+
 export type VariantInfo = {
   icon: React.ComponentType<{ className?: string }>
   label: string
   className: string
-  overlayBg: string
-  overlayAnimation: string
+  layers: VariantOverlayLayer[]
 }
 
 export const VARIANT_TCG_CONFIG: Record<string, VariantInfo> = {
   BRILLIANT: {
-    icon: Sparkles,
+    icon: Sun,
     label: 'Brillant',
-    className: 'bg-amber-500/20 border border-amber-600/50 text-amber-700',
-    overlayBg:
-      'linear-gradient(135deg, rgba(251,191,36,0.35) 0%, rgba(245,158,11,0.18) 40%, rgba(252,211,77,0.4) 70%, rgba(251,191,36,0.35) 100%)',
-    overlayAnimation: 'brilliant-shift 2s ease infinite',
+    className: 'bg-amber-400/25 border border-amber-500/50 text-amber-700',
+    layers: [
+      {
+        // Persistent golden filter — strong warm amber cast over the entire image
+        id: 'brilliant-tint',
+        bg: 'linear-gradient(160deg, rgba(255,195,0,0.7) 0%, rgba(255,155,0,0.6) 45%, rgba(210,90,0,0.4) 100%)',
+        bgSize: '100% 100%',
+        animation: 'none',
+        blendMode: 'color',
+        opacity: 1,
+      },
+      {
+        // Golden glow — warm luminous aura pulsing from center
+        id: 'brilliant-glow',
+        bg: 'radial-gradient(ellipse at 50% 45%, rgba(255,230,60,0.95) 0%, rgba(255,180,0,0.65) 35%, rgba(255,130,0,0.3) 65%, transparent 100%)',
+        bgSize: '100% 100%',
+        animation: 'brilliant-pulse 2.5s ease-in-out infinite alternate',
+        blendMode: 'screen',
+        opacity: 1,
+      },
+    ],
   },
   HOLOGRAPHIC: {
-    icon: Gem,
+    icon: Waves,
     label: 'Holographique',
-    className: 'bg-purple-500/15 border border-purple-600/40 text-purple-700',
-    overlayBg:
-      'linear-gradient(135deg, rgba(99,102,241,0.25) 0%, rgba(168,85,247,0.2) 25%, rgba(59,130,246,0.25) 50%, rgba(16,185,129,0.2) 75%, rgba(99,102,241,0.25) 100%)',
-    overlayAnimation: 'holographic-shift 3s ease infinite',
+    className: 'bg-cyan-400/20 border border-cyan-500/40 text-cyan-700',
+    layers: [
+      {
+        // Fixed rainbow gradient — hue-rotate cycles all colors seamlessly (360° = no jump)
+        id: 'holo-rainbow',
+        bg: 'linear-gradient(115deg, #ff007f 0%, #ff6600 20%, #ffff00 40%, #00ff44 60%, #00ccff 80%, #8800ff 100%)',
+        bgSize: '100% 100%',
+        animation: 'holo-rotate 4s linear infinite',
+        blendMode: 'color',
+        opacity: 0.6,
+      },
+      {
+        // Perpendicular rainbow rotating the opposite direction — interference pattern
+        id: 'holo-interference',
+        bg: 'linear-gradient(205deg, #8800ff 0%, #00ccff 25%, #00ff44 50%, #ffff00 75%, #ff6600 100%)',
+        bgSize: '100% 100%',
+        animation: 'holo-rotate-slow 7s linear infinite',
+        blendMode: 'overlay',
+        opacity: 0.25,
+      },
+    ],
   },
 }
 
