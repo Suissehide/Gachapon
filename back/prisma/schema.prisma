@@ -308,3 +308,15 @@ model UserUpgrade {
 
   @@id([userId, type])
 }
+
+model ScoringConfig {
+  id                    String   @id @default("singleton")
+  commonPoints          Int      @default(1)
+  uncommonPoints        Int      @default(3)
+  rarePoints            Int      @default(8)
+  epicPoints            Int      @default(20)
+  legendaryPoints       Int      @default(50)
+  brilliantMultiplier   Float    @default(1.5)
+  holographicMultiplier Float    @default(2.0)
+  updatedAt             DateTime @updatedAt
+}
