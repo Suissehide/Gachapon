@@ -1,7 +1,8 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
+import { calculateUserScore } from '../../../../../domain/scoring/scoring.domain'
 
 export const leaderboardRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { postgresOrm } = fastify.iocContainer
+  const { postgresOrm, scoringConfigRepository } = fastify.iocContainer
   const prisma = postgresOrm.prisma
 
   // GET /leaderboard — 3 classements : collectionneurs, légendaires, meilleures équipes
@@ -9,6 +10,8 @@ export const leaderboardRouter: FastifyPluginCallbackZod = (fastify) => {
     '/leaderboard',
     { onRequest: [fastify.verifySessionCookie] },
     async () => {
+      const config = await scoringConfigRepository.get()
+
       // Nombre total de cartes dans les sets actifs
       const totalCards = await prisma.card.count({
         where: { set: { isActive: true } },
@@ -83,42 +86,40 @@ export const leaderboardRouter: FastifyPluginCallbackZod = (fastify) => {
         take: 20,
       })
 
-      // Pré-fetch des IDs de cartes actives (groupBy ne supporte pas les filtres relationnels)
-      const activeCardIds = (
-        await prisma.card.findMany({
-          where: { set: { isActive: true } },
-          select: { id: true },
-        })
-      ).map((c) => c.id)
+      // Bulk fetch all user cards for all team members at once (avoids N+1)
+      const allMemberIds = [...new Set(teams.flatMap((t) => t.members.map((m) => m.userId)))]
+      const allUserCards = await prisma.userCard.findMany({
+        where: { userId: { in: allMemberIds } },
+        select: {
+          userId: true,
+          variant: true,
+          quantity: true,
+          card: { select: { rarity: true } },
+        },
+      })
+      const cardsByUser = new Map<string, typeof allUserCards>()
+      for (const uc of allUserCards) {
+        const list = cardsByUser.get(uc.userId) ?? []
+        list.push(uc)
+        cardsByUser.set(uc.userId, list)
+      }
 
-      // Pour chaque équipe, calculer le % moyen de collection de ses membres
-      const teamScores = await Promise.all(
-        teams.map(async (team) => {
-          if (team.members.length === 0) {
-            return { team, avgPercentage: 0 }
-          }
-          const memberIds = team.members.map((m) => m.userId)
-          const ownedPerMember = await prisma.userCard.groupBy({
-            by: ['userId'],
-            where: { userId: { in: memberIds }, cardId: { in: activeCardIds } },
-            _count: { cardId: true },
-          })
-          const ownedMap = new Map(
-            ownedPerMember.map((r) => [r.userId, r._count.cardId]),
-          )
-          const totalPct = memberIds.reduce((sum, uid) => {
-            const owned = ownedMap.get(uid) ?? 0
-            return sum + (totalCards > 0 ? owned / totalCards : 0)
-          }, 0)
-          return {
-            team,
-            avgPercentage: Math.round((totalPct / memberIds.length) * 100),
-          }
-        }),
-      )
+      const teamScores = teams.map((team) => {
+        const memberIds = team.members.map((m) => m.userId)
+        const avgScore =
+          memberIds.length > 0
+            ? Math.round(
+                memberIds.reduce(
+                  (sum, uid) => sum + calculateUserScore(cardsByUser.get(uid) ?? [], config),
+                  0,
+                ) / memberIds.length,
+              )
+            : 0
+        return { team, avgScore }
+      })
 
       const bestTeams = teamScores
-        .sort((a, b) => b.avgPercentage - a.avgPercentage)
+        .sort((a, b) => b.avgScore - a.avgScore)
         .slice(0, 10)
         .map((entry, i) => ({
           rank: i + 1,
@@ -128,7 +129,7 @@ export const leaderboardRouter: FastifyPluginCallbackZod = (fastify) => {
             slug: entry.team.slug,
             memberCount: entry.team._count.members,
           },
-          avgPercentage: entry.avgPercentage,
+          avgScore: entry.avgScore,
         }))
 
       return { collectors, legendaries, bestTeams }
