@@ -1,9 +1,11 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
+import { calculateUserScore } from '../../../../../domain/scoring/scoring.domain'
 
 export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { teamDomain } = fastify.iocContainer
+  const { teamDomain, scoringConfigRepository } = fastify.iocContainer
+  const prisma = fastify.iocContainer.postgresOrm.prisma
 
   // GET /teams — mes équipes
   fastify.get(
@@ -201,6 +203,80 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
         request.body.newOwnerId,
       )
       return reply.status(204).send()
+    },
+  )
+
+  // GET /teams/:id/ranking — classement des membres
+  fastify.get(
+    '/teams/:id/ranking',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        params: z.object({ id: z.string().uuid() }),
+        querystring: z.object({
+          page: z.coerce.number().int().min(1).default(1),
+          limit: z.coerce.number().int().min(1).max(100).default(20),
+        }),
+      },
+    },
+    async (request) => {
+      const { id } = request.params
+      const { page, limit } = request.query
+
+      // teamDomain.getTeam throws Boom.forbidden (403) if requester is not a member
+      const team = await teamDomain.getTeam(id, request.user.userID)
+      const config = await scoringConfigRepository.get()
+
+      const memberIds = team.members.map((m) => m.userId)
+
+      // Single bulk fetch — avoids N+1
+      const allUserCards = await prisma.userCard.findMany({
+        where: { userId: { in: memberIds } },
+        select: {
+          userId: true,
+          variant: true,
+          quantity: true,
+          card: { select: { rarity: true } },
+        },
+      })
+
+      // Partition by userId in memory
+      const cardsByUser = new Map<string, typeof allUserCards>()
+      for (const uc of allUserCards) {
+        const list = cardsByUser.get(uc.userId) ?? []
+        list.push(uc)
+        cardsByUser.set(uc.userId, list)
+      }
+
+      // Score + sort (desc score, then asc username for stable pagination)
+      const scored = team.members
+        .map((m) => ({
+          member: m,
+          score: calculateUserScore(cardsByUser.get(m.userId) ?? [], config),
+        }))
+        .sort((a, b) => {
+          if (b.score !== a.score) return b.score - a.score
+          return (a.member.user?.username ?? '').localeCompare(b.member.user?.username ?? '')
+        })
+
+      const total = scored.length
+      const totalPages = Math.ceil(total / limit)
+      const offset = (page - 1) * limit
+      const paginated = scored.slice(offset, offset + limit)
+
+      return {
+        members: paginated.map((entry, i) => ({
+          rank: offset + i + 1,
+          user: entry.member.user
+            ? { id: entry.member.user.id, username: entry.member.user.username, avatar: entry.member.user.avatar }
+            : { id: entry.member.userId, username: 'Unknown', avatar: null },
+          role: entry.member.role,
+          score: entry.score,
+        })),
+        total,
+        page,
+        totalPages,
+      }
     },
   )
 }
