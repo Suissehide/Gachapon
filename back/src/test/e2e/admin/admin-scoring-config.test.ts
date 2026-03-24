@@ -23,6 +23,21 @@ describe('Admin scoring-config routes', () => {
       payload: { email: `scoring${suffix}@test.com`, password: 'Password123!' },
     })
     adminCookies = loginRes.headers['set-cookie'] as string
+    // Reset scoring config to defaults before tests
+    await app.inject({
+      method: 'PUT',
+      url: '/admin/scoring-config',
+      headers: { cookie: adminCookies },
+      payload: {
+        commonPoints: 1,
+        uncommonPoints: 3,
+        rarePoints: 8,
+        epicPoints: 20,
+        legendaryPoints: 50,
+        brilliantMultiplier: 1.5,
+        holographicMultiplier: 2.0,
+      },
+    })
   })
 
   afterAll(async () => { await app.close() })
