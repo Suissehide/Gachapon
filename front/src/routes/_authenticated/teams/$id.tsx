@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { ArrowLeft } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 
 import {
   DangerZone,
@@ -10,6 +11,7 @@ import {
   useDeleteTeam,
   useRemoveMember,
   useTeam,
+  useTeamRanking,
 } from '../../../queries/useTeams.ts'
 import { useAuthStore } from '../../../stores/auth.store.ts'
 
@@ -24,6 +26,25 @@ function TeamDetailPage() {
   const { data: team, isLoading, isError } = useTeam(id)
   const { mutate: remove } = useRemoveMember(id)
   const { mutate: deleteTeam } = useDeleteTeam()
+  const { data: rankingPages, fetchNextPage, hasNextPage, isFetchingNextPage } = useTeamRanking(id)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage()
+        }
+      },
+      { threshold: 0.1 },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
+
+  const rankedMembers = rankingPages?.pages.flatMap((p) => p.members) ?? []
 
   if (isLoading) {
     return (
@@ -88,6 +109,41 @@ function TeamDetailPage() {
               />
             ))}
           </ul>
+        </div>
+
+        <div className="rounded-xl border border-border bg-card p-4">
+          <h2 className="mb-3 text-sm font-bold text-text">Classement</h2>
+          {rankedMembers.length === 0 ? (
+            <p className="text-sm text-text-light">Aucun score pour l'instant.</p>
+          ) : (
+            <ul className="space-y-1">
+              {rankedMembers.map((entry) => (
+                <li
+                  key={`${entry.rank}-${entry.user.id}`}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-background"
+                >
+                  <span className="w-6 text-center text-xs font-black text-text-light">
+                    {entry.rank <= 3 ? ['🥇', '🥈', '🥉'][entry.rank - 1] : entry.rank}
+                  </span>
+                  <div className="flex-1 text-sm font-semibold text-text">
+                    {entry.user.username}
+                  </div>
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                    {entry.role}
+                  </span>
+                  <span className="text-sm font-bold text-text">
+                    {entry.score.toLocaleString()} pts
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div ref={sentinelRef} className="h-1" />
+          {isFetchingNextPage && (
+            <div className="flex justify-center py-2">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            </div>
+          )}
         </div>
 
         {isOwner && (
