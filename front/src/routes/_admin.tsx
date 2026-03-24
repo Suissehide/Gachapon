@@ -15,6 +15,7 @@ import {
   Package,
   Settings,
   ShoppingBag,
+  Trophy,
   Users,
   Zap,
 } from 'lucide-react'
@@ -40,6 +41,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/admin/media', label: 'Médias', icon: Images },
   { to: '/admin/shop', label: 'Boutique', icon: ShoppingBag },
   { to: '/admin/upgrades', label: 'Améliorations', icon: Zap },
+  { to: '/admin/scoring', label: 'Scoring', icon: Trophy },
   { to: '/admin/config', label: 'Config', icon: Settings },
   { to: '/admin/stats', label: 'Stats', icon: BarChart2 },
 ]
