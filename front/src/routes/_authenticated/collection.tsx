@@ -30,8 +30,8 @@ type Variant = 'NORMAL' | 'BRILLIANT' | 'HOLOGRAPHIC'
 function Collection() {
   const user = useAuthStore((s) => s.user)
   const [displayMode, setDisplayMode] = useState<DisplayMode>('rarity')
-  const [selectedRarity, setSelectedRarity] = useState<Rarity | null>(null)
-  const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null)
+  const [selectedRarities, setSelectedRarities] = useState<Rarity[]>([])
+  const [selectedVariants, setSelectedVariants] = useState<Variant[]>([])
   const [recycleTarget, setRecycleTarget] = useState<UserCard | null>(null)
 
   const { data: catalogData } = useCards()
@@ -40,7 +40,6 @@ function Collection() {
   const allCards = catalogData?.cards ?? []
   const userCards = userColl?.cards ?? []
 
-  // Build merged display list: every catalog card appears (unowned NORMAL) + owned variants on top
   const displayEntries = useMemo((): DisplayEntry[] => {
     const ownedByCardId = new Map<string, UserCard[]>()
     for (const uc of userCards) {
@@ -63,12 +62,12 @@ function Collection() {
     return entries
   }, [allCards, userCards])
 
-  const filteredUserCards = useMemo(
+  const filteredEntries = useMemo(
     () =>
       displayEntries
-        .filter((e) => !selectedRarity || e.card.rarity === selectedRarity)
-        .filter((e) => !selectedVariant || e.variant === selectedVariant),
-    [displayEntries, selectedRarity, selectedVariant],
+        .filter((e) => selectedRarities.length === 0 || selectedRarities.includes(e.card.rarity))
+        .filter((e) => selectedVariants.length === 0 || selectedVariants.includes(e.variant)),
+    [displayEntries, selectedRarities, selectedVariants],
   )
 
   const subtitle = useMemo(() => {
@@ -77,28 +76,20 @@ function Collection() {
       const totalCount = displayEntries.length
       return `${ownedCount} / ${totalCount} carte${totalCount > 1 ? 's' : ''}`
     }
-    const ownedCount = filteredUserCards.filter((e) => e.isOwned).length
-    const totalCount = filteredUserCards.length
+    const ownedCount = filteredEntries.filter((e) => e.isOwned).length
+    const totalCount = filteredEntries.length
     const base = `${ownedCount} / ${totalCount} carte${totalCount > 1 ? 's' : ''}`
-    const rarityLabel = selectedRarity
-      ? ` · ${RARITY_LABELS[selectedRarity]}`
+    const rarityLabel = selectedRarities.length > 0
+      ? ` · ${selectedRarities.map((r) => RARITY_LABELS[r]).join(', ')}`
       : ''
-    const variantLabel = selectedVariant
-      ? ` · ${selectedVariant === 'BRILLIANT' ? '✨ Brillante' : selectedVariant === 'HOLOGRAPHIC' ? '🌈 Holographique' : 'Normal'}`
+    const variantLabel = selectedVariants.length > 0
+      ? ` · ${selectedVariants.map((v) => v === 'BRILLIANT' ? 'Brillante' : v === 'HOLOGRAPHIC' ? 'Holographique' : 'Normal').join(', ')}`
       : ''
     return base + rarityLabel + variantLabel
-  }, [
-    displayMode,
-    userCards,
-    filteredUserCards,
-    selectedRarity,
-    selectedVariant,
-  ])
+  }, [displayMode, userCards, filteredEntries, selectedRarities, selectedVariants, displayEntries.length])
 
   const setGroups = useMemo(() => {
-    if (displayMode !== 'set') {
-      return []
-    }
+    if (displayMode !== 'set') return []
     const order: string[] = []
     const groups = new Map<string, { name: string; entries: DisplayEntry[] }>()
     for (const entry of displayEntries) {
@@ -117,29 +108,27 @@ function Collection() {
   }
 
   const handleDisplayModeChange = (mode: DisplayMode) => {
-    setSelectedRarity(null)
-    setSelectedVariant(null)
+    setSelectedRarities([])
+    setSelectedVariants([])
     setDisplayMode(mode)
   }
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
       <div className="mx-auto max-w-4xl">
-        <div className="mb-6 flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-black text-text">Ma Collection</h1>
-            <p className="text-sm text-text-light">{subtitle}</p>
-          </div>
-
-          <CollectionFilters
-            displayMode={displayMode}
-            onDisplayModeChange={handleDisplayModeChange}
-            selectedRarity={selectedRarity}
-            onRarityChange={setSelectedRarity}
-            selectedVariant={selectedVariant}
-            onVariantChange={setSelectedVariant}
-          />
+        <div className="mb-5">
+          <h1 className="text-2xl font-black text-text">Ma Collection</h1>
+          <p className="text-sm text-text-light">{subtitle}</p>
         </div>
+
+        <CollectionFilters
+          displayMode={displayMode}
+          onDisplayModeChange={handleDisplayModeChange}
+          selectedRarities={selectedRarities}
+          onRaritiesChange={setSelectedRarities}
+          selectedVariants={selectedVariants}
+          onVariantsChange={setSelectedVariants}
+        />
 
         {displayMode === 'set' ? (
           setGroups.map((group) => (
@@ -151,10 +140,7 @@ function Collection() {
             />
           ))
         ) : (
-          <CollectionGrid
-            entries={filteredUserCards}
-            onRecycle={handleRecycle}
-          />
+          <CollectionGrid entries={filteredEntries} onRecycle={handleRecycle} />
         )}
       </div>
       {recycleTarget && (

@@ -47,14 +47,14 @@ export function Navbar() {
         <div className="flex items-center gap-3">
           {user && (
             <div className="flex items-center gap-2">
-              <span className="flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">
+              <Link to="/shop" className="flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-sm font-semibold text-primary hover:bg-primary/20 transition-colors">
                 <Ticket className="h-3.5 w-3.5" />
                 {user.tokens.toLocaleString('fr-FR')}
-              </span>
-              <span className="flex items-center gap-1.5 rounded-full border border-accent/25 bg-accent/10 px-3 py-1 text-sm font-semibold text-accent">
+              </Link>
+              <Link to="/shop" className="flex items-center gap-1.5 rounded-full border border-accent/25 bg-accent/10 px-3 py-1 text-sm font-semibold text-accent hover:bg-accent/20 transition-colors">
                 <Sparkles className="h-3.5 w-3.5" />
                 {user.dust.toLocaleString('fr-FR')}
-              </span>
+              </Link>
             </div>
           )}
           {user && <div className="h-5 w-px bg-border" />}

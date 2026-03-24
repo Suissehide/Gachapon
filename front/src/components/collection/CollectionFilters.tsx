@@ -1,12 +1,9 @@
+import { Gem, Layers, Sparkles } from 'lucide-react'
+
 import type { Card } from '../../api/collection.api.ts'
+import DropdownFilter from '../ui/dropdownFilter.tsx'
 import { SegmentedControl } from '../ui/segmentedControl.tsx'
-import {
-  RARITY_CHIP_ACTIVE,
-  RARITY_CHIP_INACTIVE,
-  RARITY_LABELS,
-  RARITY_ORDER,
-} from './CollectionCard.tsx'
-import { FilterChip } from './FilterChip.tsx'
+import { RARITY_LABELS, RARITY_ORDER } from './CollectionCard.tsx'
 
 type Rarity = Card['rarity']
 type Variant = 'NORMAL' | 'BRILLIANT' | 'HOLOGRAPHIC'
@@ -16,96 +13,108 @@ const DISPLAY_MODE_OPTIONS = [
   { value: 'set' as const, label: 'Par set' },
 ]
 
+const RARITY_COLOR: Record<string, string> = {
+  COMMON:    'text-text-light',
+  UNCOMMON:  'text-green-400',
+  RARE:      'text-accent',
+  EPIC:      'text-secondary',
+  LEGENDARY: 'text-primary',
+}
+
+const VARIANT_OPTIONS = [
+  {
+    id: 'NORMAL' as Variant,
+    label: 'Normal',
+    icon: <Layers className="h-3.5 w-3.5" />,
+    colorClass: 'text-text-light',
+  },
+  {
+    id: 'BRILLIANT' as Variant,
+    label: 'Brillante',
+    icon: <Sparkles className="h-3.5 w-3.5" />,
+    colorClass: 'text-yellow-400',
+  },
+  {
+    id: 'HOLOGRAPHIC' as Variant,
+    label: 'Holographique',
+    icon: <Gem className="h-3.5 w-3.5" />,
+    colorClass: 'text-indigo-400',
+  },
+]
+
 interface CollectionFiltersProps {
   displayMode: 'rarity' | 'set'
   onDisplayModeChange: (mode: 'rarity' | 'set') => void
-  selectedRarity: Rarity | null
-  onRarityChange: (rarity: Rarity | null) => void
-  selectedVariant: Variant | null
-  onVariantChange: (variant: Variant | null) => void
+  selectedRarities: Rarity[]
+  onRaritiesChange: (rarities: Rarity[]) => void
+  selectedVariants: Variant[]
+  onVariantsChange: (variants: Variant[]) => void
 }
 
 export function CollectionFilters({
   displayMode,
   onDisplayModeChange,
-  selectedRarity,
-  onRarityChange,
-  selectedVariant,
-  onVariantChange,
+  selectedRarities,
+  onRaritiesChange,
+  selectedVariants,
+  onVariantsChange,
 }: CollectionFiltersProps) {
+  const rarityFilters = RARITY_ORDER.map((r) => ({
+    id: r,
+    label: RARITY_LABELS[r],
+    checked: selectedRarities.includes(r),
+    colorClass: RARITY_COLOR[r],
+  }))
+
+  const variantFilters = VARIANT_OPTIONS.map((v) => ({
+    id: v.id,
+    label: v.label,
+    checked: selectedVariants.includes(v.id),
+    icon: v.icon,
+    colorClass: v.colorClass,
+  }))
+
+  const handleRarityChange = (id: string, checked: boolean) => {
+    const rarity = id as Rarity
+    onRaritiesChange(
+      checked
+        ? [...selectedRarities, rarity]
+        : selectedRarities.filter((r) => r !== rarity),
+    )
+  }
+
+  const handleVariantChange = (id: string, checked: boolean) => {
+    const variant = id as Variant
+    onVariantsChange(
+      checked
+        ? [...selectedVariants, variant]
+        : selectedVariants.filter((v) => v !== variant),
+    )
+  }
+
   return (
-    <div className="flex flex-col items-end gap-3">
+    <div className="flex items-center gap-3 flex-wrap pb-5 mb-2 border-b border-border/40">
       <SegmentedControl
         options={DISPLAY_MODE_OPTIONS}
         value={displayMode}
         onChange={onDisplayModeChange}
       />
 
-      {/* Filtres rareté + variante — masqués en mode Par set */}
       {displayMode === 'rarity' && (
         <>
-          {/* Groupe Rareté */}
-          <div>
-            <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-widest text-text-light/50">
-              Rareté
-            </p>
-            <div className="flex flex-wrap justify-end gap-2">
-              {RARITY_ORDER.map((r) => (
-                <FilterChip
-                  key={r}
-                  label={RARITY_LABELS[r]}
-                  isActive={selectedRarity === r}
-                  activeClass={RARITY_CHIP_ACTIVE[r]}
-                  inactiveClass={RARITY_CHIP_INACTIVE[r]}
-                  onClick={() =>
-                    onRarityChange(selectedRarity === r ? null : r)
-                  }
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Groupe Variante */}
-          <div>
-            <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-widest text-text-light/50">
-              Variante
-            </p>
-            <div className="flex flex-wrap justify-end gap-2">
-              <FilterChip
-                label="Normal"
-                isActive={selectedVariant === 'NORMAL'}
-                activeClass="border-border text-text bg-border/20"
-                inactiveClass="border-border/60 text-text-light/60"
-                onClick={() =>
-                  onVariantChange(
-                    selectedVariant === 'NORMAL' ? null : 'NORMAL',
-                  )
-                }
-              />
-              <FilterChip
-                label="✨ Brillante"
-                isActive={selectedVariant === 'BRILLIANT'}
-                activeClass="border-yellow-400 text-yellow-300 bg-yellow-400/10"
-                inactiveClass="border-yellow-400/40 text-yellow-300/60"
-                onClick={() =>
-                  onVariantChange(
-                    selectedVariant === 'BRILLIANT' ? null : 'BRILLIANT',
-                  )
-                }
-              />
-              <FilterChip
-                label="🌈 Holographique"
-                isActive={selectedVariant === 'HOLOGRAPHIC'}
-                activeClass="border-indigo-400 text-indigo-300 bg-indigo-400/10"
-                inactiveClass="border-indigo-400/40 text-indigo-300/60"
-                onClick={() =>
-                  onVariantChange(
-                    selectedVariant === 'HOLOGRAPHIC' ? null : 'HOLOGRAPHIC',
-                  )
-                }
-              />
-            </div>
-          </div>
+          <div className="h-5 w-px bg-border/60" />
+          <DropdownFilter
+            label="Rareté"
+            filters={rarityFilters}
+            onFilterChange={handleRarityChange}
+            onClear={() => onRaritiesChange([])}
+          />
+          <DropdownFilter
+            label="Variante"
+            filters={variantFilters}
+            onFilterChange={handleVariantChange}
+            onClear={() => onVariantsChange([])}
+          />
         </>
       )}
     </div>
