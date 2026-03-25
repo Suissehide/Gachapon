@@ -79,14 +79,13 @@ export class InvitationRepository implements IInvitationRepository {
     })
   }
 
-  async cancelById(id: string): Promise<void> {
-    await this.#prisma.invitation.update({
-      where: { id },
-      data: { status: 'CANCELLED' },
-    })
+  cancelById(id: string): Promise<void> {
+    return this.#prisma.invitation
+      .update({ where: { id }, data: { status: 'CANCELLED' } })
+      .then(() => undefined)
   }
 
-  async deleteById(id: string): Promise<void> {
-    await this.#prisma.invitation.delete({ where: { id } })
+  deleteById(id: string): Promise<void> {
+    return this.#prisma.invitation.delete({ where: { id } }).then(() => undefined)
   }
 }
