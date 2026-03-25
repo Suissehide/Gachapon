@@ -206,7 +206,7 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     },
   )
 
-  // GET /teams/:id/invitations — liste des invitations en attente
+  // GET /teams/:id/invitations — liste de TOUTES les invitations
   fastify.get(
     '/teams/:id/invitations',
     {
@@ -225,7 +225,8 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
         throw Boom.forbidden('Only ADMIN or OWNER')
       }
 
-      const invitations = await invitationRepo.findPendingByTeam(request.params.id)
+      const now = new Date()
+      const invitations = await invitationRepo.findAllByTeam(request.params.id)
       return {
         invitations: invitations.map((inv) => ({
           id: inv.id,
@@ -234,6 +235,8 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
           invitedUsername: inv.invitedUser?.username ?? null,
           createdAt: inv.createdAt,
           emailSentAt: inv.emailSentAt,
+          expiresAt: inv.expiresAt,
+          status: inv.status === 'PENDING' && inv.expiresAt < now ? 'EXPIRED' : inv.status,
         })),
       }
     },
