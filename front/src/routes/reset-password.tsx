@@ -40,7 +40,7 @@ function ResetPasswordPage() {
   if (done) {
     return (
       <div className="min-h-screen bg-background text-foreground">
-        <LandingNavbar onOpenLogin={() => {}} onOpenRegister={() => {}} />
+        <LandingNavbar />
         <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
           <div className="text-center">
             <h1 className="mb-3 text-2xl font-black text-text">Mot de passe mis à jour</h1>
@@ -54,7 +54,7 @@ function ResetPasswordPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <LandingNavbar onOpenLogin={() => {}} onOpenRegister={() => {}} />
+      <LandingNavbar />
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
         <div className="w-full max-w-sm">
           <h1 className="mb-2 text-2xl font-black text-text">Nouveau mot de passe</h1>

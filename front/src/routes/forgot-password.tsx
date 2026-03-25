@@ -13,7 +13,6 @@ function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const { mutate: forgotPassword, isPending, error } = useForgotPassword()
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     forgotPassword(email, { onSuccess: () => setSent(true) })
@@ -21,7 +20,7 @@ function ForgotPasswordPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <LandingNavbar onOpenLogin={() => {}} onOpenRegister={() => {}} />
+      <LandingNavbar />
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
         <div className="w-full max-w-sm">
           {sent ? (

@@ -11,11 +11,10 @@ import {
   Users,
   Zap,
 } from 'lucide-react'
-import { type ComponentType, type ReactNode, useState } from 'react'
+import { type ComponentType, type ReactNode } from 'react'
 
-import type { AuthTab } from '../components/auth'
-import { AuthDialog } from '../components/auth'
 import { LandingNavbar } from '../components/custom/LandingNavbar'
+import { useAuthDialogStore } from '../stores/authDialog.store'
 
 export const Route = createFileRoute('/guide')({
   component: GuidePage,
@@ -97,26 +96,11 @@ function TipBox({ children }: { children: ReactNode }) {
 }
 
 function GuidePage() {
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [defaultTab, setDefaultTab] = useState<AuthTab>('login')
-
-  const openLogin = () => {
-    setDefaultTab('login')
-    setDialogOpen(true)
-  }
-  const openRegister = () => {
-    setDefaultTab('register')
-    setDialogOpen(true)
-  }
+  const { openRegister } = useAuthDialogStore()
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <LandingNavbar onOpenLogin={openLogin} onOpenRegister={openRegister} />
-      <AuthDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        defaultTab={defaultTab}
-      />
+      <LandingNavbar />
 
       <div className="pt-32 pb-24 px-6 lg:px-10 max-w-4xl mx-auto">
         {/* Header */}

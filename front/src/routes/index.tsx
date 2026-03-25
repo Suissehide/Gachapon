@@ -1,10 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { ChevronDown, Package, Sparkles, User, Users } from 'lucide-react'
-import { type CSSProperties, useState } from 'react'
+import { type CSSProperties } from 'react'
 
-import type { AuthTab } from '../components/auth/index.ts'
-import { AuthDialog } from '../components/auth/index.ts'
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
+import { useAuthDialogStore } from '../stores/authDialog.store'
 import { Button } from '../components/ui/button.tsx'
 import { Card } from '../components/ui/card.tsx'
 
@@ -163,17 +162,7 @@ const FLOATING_BALLS: Array<{
 // ── Component ─────────────────────────────────────────────────────────────────
 
 function LandingPage() {
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [defaultTab, setDefaultTab] = useState<AuthTab>('login')
-
-  const openLogin = () => {
-    setDefaultTab('login')
-    setDialogOpen(true)
-  }
-  const openRegister = () => {
-    setDefaultTab('register')
-    setDialogOpen(true)
-  }
+  const { openLogin, openRegister } = useAuthDialogStore()
 
   return (
     <div className="relative flex flex-col min-h-screen bg-background text-foreground overflow-x-hidden">
@@ -195,12 +184,7 @@ function LandingPage() {
         <div className="absolute left-[20%] bottom-[-10%] h-125 w-125 rounded-full bg-accent/5 blur-[120px]" />
       </div>
 
-      <LandingNavbar onOpenLogin={openLogin} onOpenRegister={openRegister} />
-      <AuthDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        defaultTab={defaultTab}
-      />
+      <LandingNavbar />
 
       {/* ── HERO ──────────────────────────────────────────────────── */}
       <section className="relative z-10 h-screen flex flex-col items-center text-center px-6 pt-32 pb-8">

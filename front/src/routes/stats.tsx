@@ -2,9 +2,8 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Sparkles, Star, Trophy, Users, Zap } from 'lucide-react'
 import { type ComponentType, useEffect, useRef, useState } from 'react'
 
-import type { AuthTab } from '../components/auth/index.ts'
-import { AuthDialog } from '../components/auth/index.ts'
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
+import { useAuthDialogStore } from '../stores/authDialog.store'
 import { type PublicStats, StatsApi } from '../api/stats.api.ts'
 
 export const Route = createFileRoute('/stats')({
@@ -86,18 +85,8 @@ function StatCard({
 }
 
 function StatsPage() {
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [defaultTab, setDefaultTab] = useState<AuthTab>('login')
+  const { openRegister } = useAuthDialogStore()
   const [stats, setStats] = useState<PublicStats | null>(null)
-
-  const openLogin = () => {
-    setDefaultTab('login')
-    setDialogOpen(true)
-  }
-  const openRegister = () => {
-    setDefaultTab('register')
-    setDialogOpen(true)
-  }
 
   useEffect(() => {
     StatsApi.getPublicStats().then(setStats)
@@ -115,12 +104,7 @@ function StatsPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <LandingNavbar onOpenLogin={openLogin} onOpenRegister={openRegister} />
-      <AuthDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        defaultTab={defaultTab}
-      />
+      <LandingNavbar />
 
       <main className="pt-32 pb-24 px-6 lg:px-10 max-w-4xl mx-auto">
         {/* Header */}

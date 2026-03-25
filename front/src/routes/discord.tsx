@@ -1,8 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState } from 'react'
 
-import type { AuthTab } from '../components/auth/index.ts'
-import { AuthDialog } from '../components/auth/index.ts'
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
 import { apiUrl } from '../constants/config.constant'
 
@@ -69,28 +67,11 @@ function Step({
 }
 
 function DiscordIntegrationPage() {
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [defaultTab, setDefaultTab] = useState<AuthTab>('login')
-
-  const openLogin = () => {
-    setDefaultTab('login')
-    setDialogOpen(true)
-  }
-  const openRegister = () => {
-    setDefaultTab('register')
-    setDialogOpen(true)
-  }
-
   const baseUrl = apiUrl ?? 'https://api.gachapon.app'
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <LandingNavbar onOpenLogin={openLogin} onOpenRegister={openRegister} />
-      <AuthDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        defaultTab={defaultTab}
-      />
+      <LandingNavbar />
 
       <div className="pt-32 pb-24 px-6 lg:px-10 max-w-4xl mx-auto">
         {/* Header */}

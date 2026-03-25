@@ -41,7 +41,7 @@ function VerifyEmailPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <LandingNavbar onOpenLogin={() => {}} onOpenRegister={() => {}} />
+      <LandingNavbar />
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
         <div className="w-full max-w-md text-center">
           {state === 'loading' && (
