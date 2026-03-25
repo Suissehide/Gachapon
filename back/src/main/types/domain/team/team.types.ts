@@ -45,4 +45,5 @@ export type InvitationEntity = {
   status: InvitationStatus
   expiresAt: Date
   createdAt: Date
+  emailSentAt: Date | null
 }

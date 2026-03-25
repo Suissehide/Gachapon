@@ -47,4 +47,21 @@ export class InvitationRepository implements IInvitationRepository {
       .update({ where: { id }, data: { status } })
       .then(() => undefined)
   }
+
+  findPendingByTeam(teamId: string): Promise<(InvitationEntity & {
+    invitedUser: { username: string } | null
+  })[]> {
+    return this.#prisma.invitation.findMany({
+      where: { teamId, status: 'PENDING' },
+      include: { invitedUser: { select: { username: true } } },
+      orderBy: { createdAt: 'desc' },
+    })
+  }
+
+  async updateEmailSentAt(id: string, sentAt: Date): Promise<void> {
+    await this.#prisma.invitation.update({
+      where: { id },
+      data: { emailSentAt: sentAt },
+    })
+  }
 }

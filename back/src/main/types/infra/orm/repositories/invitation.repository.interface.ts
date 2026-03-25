@@ -18,4 +18,8 @@ export interface IInvitationRepository {
     expiresAt: Date
   }): Promise<InvitationEntity>
   updateStatus(id: string, status: 'ACCEPTED' | 'DECLINED'): Promise<void>
+  findPendingByTeam(teamId: string): Promise<(InvitationEntity & {
+    invitedUser: { username: string } | null
+  })[]>
+  updateEmailSentAt(id: string, sentAt: Date): Promise<void>
 }
