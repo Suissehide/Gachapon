@@ -72,10 +72,6 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
       schema: { params: z.object({ id: z.string().uuid() }) },
     },
     async (request) => {
-      if (request.params.id !== request.user.userID) {
-        throw Boom.forbidden("Cannot view another user's collection")
-      }
-
       const user = await userRepository.findById(request.params.id)
       if (!user) {
         throw Boom.notFound('User not found')

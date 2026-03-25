@@ -35,9 +35,11 @@ import { Route as AdminAdminUsersRouteImport } from './routes/_admin/admin.users
 import { Route as AdminAdminUpgradesRouteImport } from './routes/_admin/admin.upgrades'
 import { Route as AdminAdminStatsRouteImport } from './routes/_admin/admin.stats'
 import { Route as AdminAdminShopRouteImport } from './routes/_admin/admin.shop'
+import { Route as AdminAdminScoringRouteImport } from './routes/_admin/admin.scoring'
 import { Route as AdminAdminMediaRouteImport } from './routes/_admin/admin.media'
 import { Route as AdminAdminConfigRouteImport } from './routes/_admin/admin.config'
 import { Route as AdminAdminCardsRouteImport } from './routes/_admin/admin.cards'
+import { Route as AuthenticatedProfileUsernameCollectionRouteImport } from './routes/_authenticated/profile/$username_.collection'
 
 const StatsRoute = StatsRouteImport.update({
   id: '/stats',
@@ -169,6 +171,11 @@ const AdminAdminShopRoute = AdminAdminShopRouteImport.update({
   path: '/shop',
   getParentRoute: () => AdminAdminRoute,
 } as any)
+const AdminAdminScoringRoute = AdminAdminScoringRouteImport.update({
+  id: '/scoring',
+  path: '/scoring',
+  getParentRoute: () => AdminAdminRoute,
+} as any)
 const AdminAdminMediaRoute = AdminAdminMediaRouteImport.update({
   id: '/media',
   path: '/media',
@@ -184,6 +191,12 @@ const AdminAdminCardsRoute = AdminAdminCardsRouteImport.update({
   path: '/cards',
   getParentRoute: () => AdminAdminRoute,
 } as any)
+const AuthenticatedProfileUsernameCollectionRoute =
+  AuthenticatedProfileUsernameCollectionRouteImport.update({
+    id: '/profile/$username_/collection',
+    path: '/profile/$username/collection',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -205,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/admin/cards': typeof AdminAdminCardsRoute
   '/admin/config': typeof AdminAdminConfigRoute
   '/admin/media': typeof AdminAdminMediaRoute
+  '/admin/scoring': typeof AdminAdminScoringRoute
   '/admin/shop': typeof AdminAdminShopRoute
   '/admin/stats': typeof AdminAdminStatsRoute
   '/admin/upgrades': typeof AdminAdminUpgradesRoute
@@ -213,6 +227,7 @@ export interface FileRoutesByFullPath {
   '/teams/$id': typeof AuthenticatedTeamsIdRoute
   '/admin/': typeof AdminAdminIndexRoute
   '/teams/': typeof AuthenticatedTeamsIndexRoute
+  '/profile/$username/collection': typeof AuthenticatedProfileUsernameCollectionRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -233,6 +248,7 @@ export interface FileRoutesByTo {
   '/admin/cards': typeof AdminAdminCardsRoute
   '/admin/config': typeof AdminAdminConfigRoute
   '/admin/media': typeof AdminAdminMediaRoute
+  '/admin/scoring': typeof AdminAdminScoringRoute
   '/admin/shop': typeof AdminAdminShopRoute
   '/admin/stats': typeof AdminAdminStatsRoute
   '/admin/upgrades': typeof AdminAdminUpgradesRoute
@@ -241,6 +257,7 @@ export interface FileRoutesByTo {
   '/teams/$id': typeof AuthenticatedTeamsIdRoute
   '/admin': typeof AdminAdminIndexRoute
   '/teams': typeof AuthenticatedTeamsIndexRoute
+  '/profile/$username/collection': typeof AuthenticatedProfileUsernameCollectionRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -265,6 +282,7 @@ export interface FileRoutesById {
   '/_admin/admin/cards': typeof AdminAdminCardsRoute
   '/_admin/admin/config': typeof AdminAdminConfigRoute
   '/_admin/admin/media': typeof AdminAdminMediaRoute
+  '/_admin/admin/scoring': typeof AdminAdminScoringRoute
   '/_admin/admin/shop': typeof AdminAdminShopRoute
   '/_admin/admin/stats': typeof AdminAdminStatsRoute
   '/_admin/admin/upgrades': typeof AdminAdminUpgradesRoute
@@ -273,6 +291,7 @@ export interface FileRoutesById {
   '/_authenticated/teams/$id': typeof AuthenticatedTeamsIdRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
   '/_authenticated/teams/': typeof AuthenticatedTeamsIndexRoute
+  '/_authenticated/profile/$username_/collection': typeof AuthenticatedProfileUsernameCollectionRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -296,6 +315,7 @@ export interface FileRouteTypes {
     | '/admin/cards'
     | '/admin/config'
     | '/admin/media'
+    | '/admin/scoring'
     | '/admin/shop'
     | '/admin/stats'
     | '/admin/upgrades'
@@ -304,6 +324,7 @@ export interface FileRouteTypes {
     | '/teams/$id'
     | '/admin/'
     | '/teams/'
+    | '/profile/$username/collection'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -324,6 +345,7 @@ export interface FileRouteTypes {
     | '/admin/cards'
     | '/admin/config'
     | '/admin/media'
+    | '/admin/scoring'
     | '/admin/shop'
     | '/admin/stats'
     | '/admin/upgrades'
@@ -332,6 +354,7 @@ export interface FileRouteTypes {
     | '/teams/$id'
     | '/admin'
     | '/teams'
+    | '/profile/$username/collection'
   id:
     | '__root__'
     | '/'
@@ -355,6 +378,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/cards'
     | '/_admin/admin/config'
     | '/_admin/admin/media'
+    | '/_admin/admin/scoring'
     | '/_admin/admin/shop'
     | '/_admin/admin/stats'
     | '/_admin/admin/upgrades'
@@ -363,6 +387,7 @@ export interface FileRouteTypes {
     | '/_authenticated/teams/$id'
     | '/_admin/admin/'
     | '/_authenticated/teams/'
+    | '/_authenticated/profile/$username_/collection'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -562,6 +587,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminShopRouteImport
       parentRoute: typeof AdminAdminRoute
     }
+    '/_admin/admin/scoring': {
+      id: '/_admin/admin/scoring'
+      path: '/scoring'
+      fullPath: '/admin/scoring'
+      preLoaderRoute: typeof AdminAdminScoringRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
     '/_admin/admin/media': {
       id: '/_admin/admin/media'
       path: '/media'
@@ -583,6 +615,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminCardsRouteImport
       parentRoute: typeof AdminAdminRoute
     }
+    '/_authenticated/profile/$username_/collection': {
+      id: '/_authenticated/profile/$username_/collection'
+      path: '/profile/$username/collection'
+      fullPath: '/profile/$username/collection'
+      preLoaderRoute: typeof AuthenticatedProfileUsernameCollectionRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
@@ -590,6 +629,7 @@ interface AdminAdminRouteChildren {
   AdminAdminCardsRoute: typeof AdminAdminCardsRoute
   AdminAdminConfigRoute: typeof AdminAdminConfigRoute
   AdminAdminMediaRoute: typeof AdminAdminMediaRoute
+  AdminAdminScoringRoute: typeof AdminAdminScoringRoute
   AdminAdminShopRoute: typeof AdminAdminShopRoute
   AdminAdminStatsRoute: typeof AdminAdminStatsRoute
   AdminAdminUpgradesRoute: typeof AdminAdminUpgradesRoute
@@ -601,6 +641,7 @@ const AdminAdminRouteChildren: AdminAdminRouteChildren = {
   AdminAdminCardsRoute: AdminAdminCardsRoute,
   AdminAdminConfigRoute: AdminAdminConfigRoute,
   AdminAdminMediaRoute: AdminAdminMediaRoute,
+  AdminAdminScoringRoute: AdminAdminScoringRoute,
   AdminAdminShopRoute: AdminAdminShopRoute,
   AdminAdminStatsRoute: AdminAdminStatsRoute,
   AdminAdminUpgradesRoute: AdminAdminUpgradesRoute,
@@ -633,6 +674,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedProfileUsernameRoute: typeof AuthenticatedProfileUsernameRoute
   AuthenticatedTeamsIdRoute: typeof AuthenticatedTeamsIdRoute
   AuthenticatedTeamsIndexRoute: typeof AuthenticatedTeamsIndexRoute
+  AuthenticatedProfileUsernameCollectionRoute: typeof AuthenticatedProfileUsernameCollectionRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -646,6 +688,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedProfileUsernameRoute: AuthenticatedProfileUsernameRoute,
   AuthenticatedTeamsIdRoute: AuthenticatedTeamsIdRoute,
   AuthenticatedTeamsIndexRoute: AuthenticatedTeamsIndexRoute,
+  AuthenticatedProfileUsernameCollectionRoute:
+    AuthenticatedProfileUsernameCollectionRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

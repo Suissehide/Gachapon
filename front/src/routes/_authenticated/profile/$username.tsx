@@ -118,17 +118,24 @@ function ProfilePage() {
         </div>
 
         {/* Lien collection */}
-        {isOwnProfile && (
-          <div className="mt-8 rounded-xl border border-border bg-card p-4">
-            <h2 className="mb-3 text-sm font-bold text-text">Ma collection</h2>
-            <Button asChild variant="default">
+        <div className="mt-8 rounded-xl border border-border bg-card p-4">
+          <h2 className="mb-3 text-sm font-bold text-text">
+            {isOwnProfile ? 'Ma collection' : `Collection de @${username}`}
+          </h2>
+          <Button asChild variant="default">
+            {isOwnProfile ? (
               <Link to="/collection">
                 <Layers className="h-4 w-4" />
                 Voir ma collection →
               </Link>
-            </Button>
-          </div>
-        )}
+            ) : (
+              <Link to="/profile/$username/collection" params={{ username }}>
+                <Layers className="h-4 w-4" />
+                Voir la collection →
+              </Link>
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   )

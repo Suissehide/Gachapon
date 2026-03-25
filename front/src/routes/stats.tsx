@@ -1,30 +1,24 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Sparkles, Star, Trophy, Users, Zap } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { type ComponentType, useEffect, useRef, useState } from 'react'
 
 import type { AuthTab } from '../components/auth/index.ts'
 import { AuthDialog } from '../components/auth/index.ts'
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
-import { apiUrl } from '../constants/config.constant'
+import { type PublicStats, StatsApi } from '../api/stats.api.ts'
 
 export const Route = createFileRoute('/stats')({
   component: StatsPage,
 })
-
-interface PublicStats {
-  totalUsers: number
-  totalPulls: number
-  totalCards: number
-  activeUsers: number
-  legendaryPulls: number
-}
 
 function useCountUp(target: number, duration = 1800) {
   const [value, setValue] = useState(0)
   const rafRef = useRef<number>(0)
 
   useEffect(() => {
-    if (target === 0) return
+    if (target === 0) {
+      return
+    }
     const start = performance.now()
     const animate = (now: number) => {
       const elapsed = now - start
@@ -32,7 +26,9 @@ function useCountUp(target: number, duration = 1800) {
       // Ease out cubic
       const eased = 1 - (1 - progress) ** 3
       setValue(Math.round(eased * target))
-      if (progress < 1) rafRef.current = requestAnimationFrame(animate)
+      if (progress < 1) {
+        rafRef.current = requestAnimationFrame(animate)
+      }
     }
     rafRef.current = requestAnimationFrame(animate)
     return () => cancelAnimationFrame(rafRef.current)
@@ -50,7 +46,7 @@ function StatCard({
   iconColor,
   delay = 0,
 }: {
-  icon: React.ComponentType<{ className?: string }>
+  icon: ComponentType<{ className?: string }>
   label: string
   value: number
   suffix?: string
@@ -104,10 +100,7 @@ function StatsPage() {
   }
 
   useEffect(() => {
-    fetch(`${apiUrl ?? ''}/stats`)
-      .then((r) => r.json())
-      .then((data: PublicStats) => setStats(data))
-      .catch(() => {})
+    StatsApi.getPublicStats().then(setStats)
   }, [])
 
   const fallback: PublicStats = {

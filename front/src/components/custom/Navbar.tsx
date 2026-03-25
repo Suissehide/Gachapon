@@ -44,21 +44,26 @@ export function Navbar() {
           ))}
         </div>
 
-        <div className="flex items-center gap-3">
-          {user && (
+        {user && (
+          <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <Link to="/shop" className="flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-sm font-semibold text-primary hover:bg-primary/20 transition-colors">
+              <Link
+                to="/shop"
+                className="flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-sm font-semibold text-primary hover:bg-primary/20 transition-colors"
+              >
                 <Ticket className="h-3.5 w-3.5" />
                 {user.tokens.toLocaleString('fr-FR')}
               </Link>
-              <Link to="/shop" className="flex items-center gap-1.5 rounded-full border border-accent/25 bg-accent/10 px-3 py-1 text-sm font-semibold text-accent hover:bg-accent/20 transition-colors">
+              <Link
+                to="/shop"
+                className="flex items-center gap-1.5 rounded-full border border-accent/25 bg-accent/10 px-3 py-1 text-sm font-semibold text-accent hover:bg-accent/20 transition-colors"
+              >
                 <Sparkles className="h-3.5 w-3.5" />
                 {user.dust.toLocaleString('fr-FR')}
               </Link>
             </div>
-          )}
-          {user && <div className="h-5 w-px bg-border" />}
-          {user && (
+            <div className="h-5 w-px bg-border" />
+
             <Link
               to={'/profile/$username'}
               params={{ username: user.username }}
@@ -66,8 +71,7 @@ export function Navbar() {
             >
               {user.username[0]?.toUpperCase()}
             </Link>
-          )}
-          {user && (
+
             <Button
               variant="ghost"
               size="icon"
@@ -77,8 +81,8 @@ export function Navbar() {
             >
               <LogOut className="h-4 w-4" />
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </nav>
   )
