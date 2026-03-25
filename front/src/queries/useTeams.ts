@@ -118,3 +118,21 @@ export const useTeamRanking = (teamId: string) =>
       lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
     enabled: !!teamId,
   })
+
+export const useTeamInvitations = (teamId: string | undefined) =>
+  useQuery({
+    queryKey: ['teams', teamId, 'invitations'],
+    queryFn: () => TeamsApi.getTeamInvitations(teamId ?? ''),
+    enabled: !!teamId,
+  })
+
+export const useResendInvitation = (teamId: string) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (token: string) => TeamsApi.resendInvitation(token),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['teams', teamId, 'invitations'] })
+    },
+    retry: 0,
+  })
+}

@@ -65,3 +65,28 @@ export const useRegister = () => {
 
   return { registerMutation, isPending, error, errorMessageText }
 }
+
+export const useVerifyEmail = () =>
+  useMutation({
+    mutationFn: (token: string) => AuthApi.verifyEmail(token),
+    retry: 0,
+  })
+
+export const useResendVerification = () =>
+  useMutation({
+    mutationFn: (email: string) => AuthApi.resendVerification(email),
+    retry: 0,
+  })
+
+export const useForgotPassword = () =>
+  useMutation({
+    mutationFn: (email: string) => AuthApi.forgotPassword(email),
+    retry: 0,
+  })
+
+export const useResetPassword = () =>
+  useMutation({
+    mutationFn: ({ token, newPassword }: { token: string; newPassword: string }) =>
+      AuthApi.resetPassword(token, newPassword),
+    retry: 0,
+  })

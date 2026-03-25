@@ -182,4 +182,32 @@ export const TeamsApi = {
     }
     return res.json()
   },
+
+  getTeamInvitations: async (teamId: string): Promise<{
+    invitations: {
+      id: string
+      token: string
+      invitedEmail: string | null
+      invitedUsername: string | null
+      createdAt: string
+      emailSentAt: string | null
+    }[]
+  }> => {
+    const res = await fetchWithAuth(`${apiUrl}/teams/${teamId}/invitations`)
+    if (!res.ok) handleHttpError(res, {}, 'Erreur lors du chargement des invitations')
+    return res.json()
+  },
+
+  resendInvitation: async (token: string): Promise<void> => {
+    const res = await fetchWithAuth(`${apiUrl}/invitations/${token}/resend`, {
+      method: 'POST',
+    })
+    if (!res.ok) {
+      handleHttpError(
+        res,
+        { 429: { title: 'Trop tôt', message: 'Attends 5 minutes avant de renvoyer.' } },
+        'Erreur lors du renvoi',
+      )
+    }
+  },
 }
