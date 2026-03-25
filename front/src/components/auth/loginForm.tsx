@@ -1,5 +1,6 @@
-import { useNavigate } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 
+import { EmailNotVerifiedError } from '../../api/auth.api.ts'
 import { useAppForm } from '../../hooks/formConfig.tsx'
 import { useLogin } from '../../queries/useAuth.ts'
 import { useAuthStore } from '../../stores/auth.store.ts'
@@ -25,6 +26,15 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
             )
             await navigate({ to: redirectTo || '/play' })
           },
+          onError: async (err) => {
+            if (err instanceof EmailNotVerifiedError) {
+              await navigate({
+                to: '/pending',
+                search: { reason: 'email', email: err.email },
+              })
+              return
+            }
+          },
         },
       )
     },
@@ -47,12 +57,12 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
       </form.AppField>
 
       <div className="text-right -mt-1">
-        <button
-          type="button"
-          className="text-xs text-text-light hover:text-primary transition-colors cursor-pointer"
+        <Link
+          to="/forgot-password"
+          className="text-xs text-text-light hover:text-primary transition-colors"
         >
           Mot de passe oublié ?
-        </button>
+        </Link>
       </div>
 
       {error && (

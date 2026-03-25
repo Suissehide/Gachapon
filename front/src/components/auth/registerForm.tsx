@@ -46,7 +46,10 @@ export function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
         {
           onSuccess: async () => {
             onSuccess()
-            await navigate({ to: '/pending' })
+            await navigate({
+              to: '/pending',
+              search: { reason: 'email', email: value.email },
+            })
           },
         },
       )
