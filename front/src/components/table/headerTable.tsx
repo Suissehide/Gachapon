@@ -14,7 +14,7 @@ export function HeaderTable<TData>({
   getCommonPinningStyles,
 }: HeaderTableProps<TData>) {
   return (
-    <thead className="sticky top-0 z-10">
+    <thead className="sticky top-0 z-10 bg-card">
       {table.getHeaderGroups().map((headerGroup) => (
         <tr key={headerGroup.id}>
           {headerGroup.headers.map((header) => {
@@ -34,7 +34,7 @@ export function HeaderTable<TData>({
               ) : sortState === 'desc' ? (
                 <ChevronDown className="h-3 w-3 text-primary" />
               ) : (
-                <ChevronsUpDown className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-50" />
+                <ChevronsUpDown className="h-3 w-3 text-slate-300 opacity-0 transition-opacity group-hover:opacity-100" />
               )
 
             return (
@@ -46,7 +46,7 @@ export function HeaderTable<TData>({
                   width: grow ? 'auto' : header.getSize(),
                   minWidth: header.getSize(),
                 }}
-                className="border-b border-border/60 bg-card/95 backdrop-blur-sm"
+                className="border-b-2 border-primary/20 bg-muted/70 backdrop-blur-sm [&:not(:last-child)]:border-r [&:not(:last-child)]:border-r-border/20"
               >
                 {header.isPlaceholder ? null : (
                   <>
@@ -60,10 +60,10 @@ export function HeaderTable<TData>({
                       }`}
                     >
                       <span
-                        className={`text-[10px] font-semibold uppercase tracking-[0.1em] transition-colors ${
+                        className={`text-[10px] font-bold uppercase tracking-[0.12em] transition-colors ${
                           sortState
                             ? 'text-primary'
-                            : `text-text-light ${headerClass}`
+                            : `text-text-light/70 ${headerClass}`
                         }`}
                       >
                         {flexRender(

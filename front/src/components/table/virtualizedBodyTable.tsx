@@ -49,13 +49,20 @@ export function VirtualizedBodyTable<TData>({
 
   if (rowCount === 0) {
     return (
-      <tbody>
+      <tbody className="bg-background">
         <tr>
           <td
             colSpan={table.getAllLeafColumns().length}
             className="py-16 text-center"
           >
-            <p className="text-sm text-text-light">Aucune donnée</p>
+            <div className="flex flex-col items-center gap-1.5">
+              <p className="text-sm font-medium text-text-light">
+                Aucune donnée
+              </p>
+              <p className="text-xs text-text-light/50">
+                Aucun résultat à afficher
+              </p>
+            </div>
           </td>
         </tr>
       </tbody>
@@ -63,7 +70,7 @@ export function VirtualizedBodyTable<TData>({
   }
 
   return (
-    <tbody>
+    <tbody className="bg-background">
       {paddingTop > 0 && (
         <tr style={{ height: paddingTop }}>
           <td colSpan={table.getAllLeafColumns().length} />
@@ -83,7 +90,11 @@ export function VirtualizedBodyTable<TData>({
             }}
             key={row.id}
             style={{ height: rowHeight }}
-            className={`group border-b border-border/40 transition-colors duration-100 last:border-0 hover:bg-primary/[0.04] ${onRowClick ? 'cursor-pointer' : ''}`}
+            className={`group border-b border-border/30 transition-[background-color,box-shadow] duration-150 ${
+              onRowClick
+                ? 'cursor-pointer hover:bg-amber-50/60 dark:hover:bg-primary/6'
+                : 'hover:bg-muted/40'
+            }`}
             onClick={onRowClick ? () => onRowClick(row) : undefined}
           >
             {row.getVisibleCells().map((cell) => {

@@ -173,13 +173,21 @@ export function ReactTable<TData extends { id: string }>({
   return (
     <div className="flex h-full flex-col">
       {title && (
-        <div className="px-5 py-4 text-base font-bold text-text">{title}</div>
+        <div className="flex items-center gap-2.5 border-b border-border/40 px-5 py-3.5">
+          <span className="h-4 w-[3px] shrink-0 rounded-full bg-primary" />
+          <span className="font-display text-sm font-black uppercase tracking-wide text-text">
+            {title}
+          </span>
+        </div>
       )}
 
       {customHeader?.(table.getRowModel().rows)}
 
       <div className="relative min-h-0 flex-1 overflow-hidden">
-        <div className="h-full w-full overflow-auto" ref={tableContainerRef}>
+        <div
+          className="h-full w-full overflow-auto bg-background"
+          ref={tableContainerRef}
+        >
           <table className="w-full border-collapse">
             <HeaderTable
               table={table}
@@ -196,11 +204,11 @@ export function ReactTable<TData extends { id: string }>({
         </div>
       </div>
 
-      <div className="flex items-center justify-end border-t border-border/40 px-4 py-2">
-        <span className="text-xs text-text-light">
-          <span className="font-semibold text-primary">
-            {totalRows.toLocaleString('fr-FR')}
-          </span>{' '}
+      <div className="flex items-center justify-end gap-1.5 border-t border-border/40 px-5 py-2">
+        <span className="text-[11px] font-bold tabular-nums text-primary">
+          {totalRows.toLocaleString('fr-FR')}
+        </span>
+        <span className="text-[11px] text-text-light">
           {totalRows > 1 ? 'résultats' : 'résultat'}
         </span>
       </div>

@@ -1,6 +1,14 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import type { ColumnDef } from '@tanstack/react-table'
-import { ArrowLeft, Crown, Search, Shield, User, UserMinus, UserX } from 'lucide-react'
+import {
+  ArrowLeft,
+  Crown,
+  Search,
+  Shield,
+  User,
+  UserMinus,
+  UserX,
+} from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import type { RankedMember } from '../../../api/teams.api.ts'
@@ -150,8 +158,8 @@ function TeamDetailPage() {
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 text-xs font-bold text-primary">
                 {u.username[0]?.toUpperCase()}
               </div>
-              <span className="text-sm font-medium text-text">
-                @{u.username}
+              <span className="text-sm text-text">
+                {u.username}
                 {u.id === user?.id && (
                   <span className="ml-1 text-xs text-text-light">(moi)</span>
                 )}
@@ -181,7 +189,7 @@ function TeamDetailPage() {
         accessorKey: 'score',
         size: 110,
         cell: ({ getValue }) => (
-          <span className="text-sm font-bold text-text">
+          <span className="text-sm text-text">
             {getValue<number>().toLocaleString()} pts
           </span>
         ),
@@ -267,12 +275,11 @@ function TeamDetailPage() {
           />
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-border bg-card">
+        <div className="overflow-hidden rounded-md border border-border bg-card">
           <div className="h-[min(80vh,600px)]">
             <ReactTable
               columns={columns}
               data={rankedMembers}
-              title="Classement"
               filterId={`team-ranking-${id}`}
               onRowClick={(row) =>
                 navigate({
