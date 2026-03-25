@@ -42,7 +42,7 @@ export class InvitationRepository implements IInvitationRepository {
     return this.#prisma.invitation.create({ data })
   }
 
-  updateStatus(id: string, status: 'ACCEPTED' | 'DECLINED'): Promise<void> {
+  updateStatus(id: string, status: 'ACCEPTED' | 'DECLINED' | 'CANCELLED'): Promise<void> {
     return this.#prisma.invitation
       .update({ where: { id }, data: { status } })
       .then(() => undefined)
@@ -63,5 +63,30 @@ export class InvitationRepository implements IInvitationRepository {
       where: { id },
       data: { emailSentAt: sentAt },
     })
+  }
+
+  findById(id: string): Promise<InvitationEntity | null> {
+    return this.#prisma.invitation.findUnique({ where: { id } })
+  }
+
+  findAllByTeam(teamId: string): Promise<(InvitationEntity & {
+    invitedUser: { username: string } | null
+  })[]> {
+    return this.#prisma.invitation.findMany({
+      where: { teamId },
+      include: { invitedUser: { select: { username: true } } },
+      orderBy: { createdAt: 'desc' },
+    })
+  }
+
+  async cancelById(id: string): Promise<void> {
+    await this.#prisma.invitation.update({
+      where: { id },
+      data: { status: 'CANCELLED' },
+    })
+  }
+
+  async deleteById(id: string): Promise<void> {
+    await this.#prisma.invitation.delete({ where: { id } })
   }
 }
