@@ -31,13 +31,16 @@ services:
       - NODE_CLUSTER=${NODE_CLUSTER}
       - NODE_ENV=production
       - NODE_TLS_REJECT_UNAUTHORIZED=${NODE_TLS_REJECT_UNAUTHORIZED}
-      - PITY_THRESHOLD=${PITY_THRESHOLD}
       - PORT=${PORT}
       - REDIS_URL=${REDIS_URL}
-      - TOKEN_MAX_STOCK=${TOKEN_MAX_STOCK}
-      - TOKEN_REGEN_INTERVAL_MINUTES=${TOKEN_REGEN_INTERVAL_MINUTES}
       - RATE_LIMIT_MAX=${RATE_LIMIT_MAX}
       - RATE_LIMIT_TIME_WINDOW=${RATE_LIMIT_TIME_WINDOW}
+      - SMTP_HOST=${SMTP_HOST:-mailpit}
+      - SMTP_PORT=${SMTP_PORT:-1025}
+      - SMTP_SECURE=${SMTP_SECURE:-false}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - SMTP_FROM=${SMTP_FROM:-Gachapon <noreply@gachapon.app>}
     healthcheck:
       test: node -e "require('http').get({hostname:'localhost', port:${PORT}, path:'/health', timeout:3000})"
       retries: 3
@@ -48,6 +51,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     restart: unless-stopped
 
   front:
@@ -93,6 +98,14 @@ services:
       retries: 3
       timeout: 3s
       interval: 5s
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+    environment:
+      - MP_MAX_MESSAGES=500
 
 volumes:
   postgres:

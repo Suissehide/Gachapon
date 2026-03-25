@@ -62,12 +62,7 @@ export class ConfigService implements ConfigServiceInterface {
   constructor({ postgresOrm, redisClient, config }: IocContainer) {
     this.#prisma = postgresOrm.prisma
     this.#redis = redisClient
-    this.#envDefaults = {
-      ...DEFAULTS,
-      tokenRegenIntervalMinutes: config.tokenRegenIntervalMinutes,
-      tokenMaxStock: config.tokenMaxStock,
-      pityThreshold: config.pityThreshold,
-    }
+    this.#envDefaults = { ...DEFAULTS }
   }
 
   async get(key: ConfigKey): Promise<number> {

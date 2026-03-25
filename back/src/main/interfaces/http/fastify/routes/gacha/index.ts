@@ -9,7 +9,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
   const {
     gachaDomain,
     userRepository,
-    config,
+    configService,
     gachaPullRepository,
     upgradeRepository,
   } = fastify.iocContainer
@@ -64,12 +64,15 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         throw Boom.notFound('User not found')
       }
 
-      const upgrades = await upgradeRepository.getEffectsForUser(request.user.userID)
+      const [upgrades, cfg] = await Promise.all([
+        upgradeRepository.getEffectsForUser(request.user.userID),
+        configService.getMany('tokenRegenIntervalMinutes', 'tokenMaxStock'),
+      ])
       const effectiveInterval = Math.max(
         1,
-        config.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes,
+        cfg.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes,
       )
-      const effectiveMaxStock = config.tokenMaxStock + upgrades.tokenVaultBonus
+      const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
 
       const { tokens, nextTokenAt } = calculateTokens(
         user.lastTokenAt,
@@ -96,12 +99,15 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         throw Boom.notFound('User not found')
       }
 
-      const upgrades = await upgradeRepository.getEffectsForUser(request.user.userID)
+      const [upgrades, cfg] = await Promise.all([
+        upgradeRepository.getEffectsForUser(request.user.userID),
+        configService.getMany('tokenRegenIntervalMinutes', 'tokenMaxStock'),
+      ])
       const effectiveInterval = Math.max(
         1,
-        config.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes,
+        cfg.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes,
       )
-      const effectiveMaxStock = config.tokenMaxStock + upgrades.tokenVaultBonus
+      const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
 
       const { tokens, nextTokenAt } = calculateTokens(
         user.lastTokenAt,

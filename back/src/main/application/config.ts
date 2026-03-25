@@ -59,19 +59,6 @@ const configSchema = z.object({
     .string()
     .default('http://localhost:3000/auth/oauth/discord/callback'),
 
-  tokenRegenIntervalMinutes: z
-    .string()
-    .default('240')
-    .transform((v) => Number.parseInt(v, 10)),
-  tokenMaxStock: z
-    .string()
-    .default('5')
-    .transform((v) => Number.parseInt(v, 10)),
-  pityThreshold: z
-    .string()
-    .default('100')
-    .transform((v) => Number.parseInt(v, 10))
-    .pipe(z.number().int().min(1)),
   rateLimitMax: z
     .string()
     .default('100')
@@ -117,9 +104,6 @@ const envVarNames = [
   'DISCORD_CLIENT_ID',
   'DISCORD_CLIENT_SECRET',
   'DISCORD_REDIRECT_URI',
-  'TOKEN_REGEN_INTERVAL_MINUTES',
-  'TOKEN_MAX_STOCK',
-  'PITY_THRESHOLD',
   'RATE_LIMIT_MAX',
   'RATE_LIMIT_TIME_WINDOW',
   'SMTP_HOST',
