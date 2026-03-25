@@ -1,6 +1,9 @@
 import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import nodemailer from 'nodemailer'
+
+const _dirname = dirname(fileURLToPath(import.meta.url))
 
 import type { IocContainer } from '../../types/application/ioc'
 import type { IMailService } from '../../types/infra/mail/mail.service.interface'
@@ -25,7 +28,7 @@ export class MailService implements IMailService {
   }
 
   #render(templateName: string, vars: Record<string, string>): string {
-    const path = join(__dirname, 'templates', templateName)
+    const path = join(_dirname, 'templates', templateName)
     let html = readFileSync(path, 'utf-8')
     for (const [key, value] of Object.entries(vars)) {
       html = html.replaceAll(`{{${key}}}`, value)
