@@ -73,7 +73,12 @@ model User {
   streakDays    Int        @default(0)
   lastLoginAt   DateTime?
   createdAt     DateTime   @default(now())
-  suspended     Boolean    @default(false)
+  suspended                       Boolean    @default(false)
+  emailVerifiedAt                 DateTime?
+  emailVerificationToken          String?   @unique
+  emailVerificationTokenExpiresAt DateTime?
+  passwordResetToken              String?   @unique
+  passwordResetTokenExpiresAt     DateTime?
 
   oauthAccounts       OAuthAccount[]
   apiKeys             ApiKey[]
@@ -153,6 +158,7 @@ model Invitation {
   status        InvitationStatus @default(PENDING)
   expiresAt     DateTime
   createdAt     DateTime         @default(now())
+  emailSentAt   DateTime?
 }
 
 model CardSet {
