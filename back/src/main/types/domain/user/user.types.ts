@@ -23,5 +23,11 @@ export type UpdateUserInput = Partial<
     | 'streakDays'
     | 'lastLoginAt'
     | 'role'
+    | 'emailVerifiedAt'
+    | 'emailVerificationToken'
+    | 'emailVerificationTokenExpiresAt'
+    | 'passwordResetToken'
+    | 'passwordResetTokenExpiresAt'
+    | 'passwordHash'
   >
 >

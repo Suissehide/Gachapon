@@ -70,4 +70,18 @@ export class UserRepository implements UserRepositoryInterface {
       },
     })
   }
+
+  findByEmailVerificationToken(token: string): Promise<UserEntity | null> {
+    return this.#prisma.user.findUnique({ where: { emailVerificationToken: token } })
+  }
+
+  findByPasswordResetToken(token: string): Promise<UserEntity | null> {
+    return this.#prisma.user.findUnique({ where: { passwordResetToken: token } })
+  }
+
+  async deleteUnverifiedByEmail(email: string): Promise<void> {
+    await this.#prisma.user.deleteMany({
+      where: { email, emailVerifiedAt: null },
+    })
+  }
 }

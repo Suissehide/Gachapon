@@ -28,4 +28,7 @@ export interface UserRepositoryInterface {
     id: string,
     data: PullUpdateInput,
   ): Promise<void>
+  findByEmailVerificationToken(token: string): Promise<UserEntity | null>
+  findByPasswordResetToken(token: string): Promise<UserEntity | null>
+  deleteUnverifiedByEmail(email: string): Promise<void>
 }
