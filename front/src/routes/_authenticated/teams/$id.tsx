@@ -1,12 +1,14 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { ArrowLeft } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import type { ColumnDef } from '@tanstack/react-table'
+import { ArrowLeft, Crown, Shield, User, UserMinus, UserX } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link } from '@tanstack/react-router'
 
-import {
-  DangerZone,
-  InviteMemberForm,
-  MemberRow,
-} from '../../../components/team/index.ts'
+import type { RankedMember } from '../../../api/teams.api.ts'
+import { ReactTable } from '../../../components/table/reactTable.tsx'
+import { ConfirmPopup } from '../../../components/team/ConfirmPopup.tsx'
+import { DangerZone, InviteMemberForm } from '../../../components/team/index.ts'
+import { Button } from '../../../components/ui/button.tsx'
 import {
   useDeleteTeam,
   useRemoveMember,
@@ -19,6 +21,53 @@ export const Route = createFileRoute('/_authenticated/teams/$id')({
   component: TeamDetailPage,
 })
 
+type RankedMemberRow = RankedMember & { id: string }
+
+const ROLE_ICON: Record<string, React.ReactNode> = {
+  OWNER: <Crown className="h-3.5 w-3.5 text-yellow-400" />,
+  ADMIN: <Shield className="h-3.5 w-3.5 text-accent" />,
+  MEMBER: <User className="h-3.5 w-3.5 text-text-light" />,
+}
+
+const ROLE_LABEL: Record<string, string> = {
+  OWNER: 'Owner',
+  ADMIN: 'Admin',
+  MEMBER: 'Membre',
+}
+
+function ExcludeCell({
+  username,
+  userId,
+  onRemove,
+}: {
+  username: string
+  userId: string
+  onRemove: (userId: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={() => setOpen(true)}
+        title={`Exclure @${username}`}
+      >
+        <UserMinus className="h-4 w-4 text-destructive" />
+      </Button>
+      <ConfirmPopup
+        open={open}
+        onOpenChange={setOpen}
+        icon={<UserX className="h-4 w-4" />}
+        title="Exclure le membre"
+        description={`Êtes-vous sûr de vouloir exclure @${username} de l'équipe ?`}
+        confirmLabel="Exclure"
+        onConfirm={() => onRemove(userId)}
+      />
+    </>
+  )
+}
+
 function TeamDetailPage() {
   const { id } = Route.useParams()
   const navigate = useNavigate()
@@ -26,7 +75,12 @@ function TeamDetailPage() {
   const { data: team, isLoading, isError } = useTeam(id)
   const { mutate: remove } = useRemoveMember(id)
   const { mutate: deleteTeam } = useDeleteTeam()
-  const { data: rankingPages, fetchNextPage, hasNextPage, isFetchingNextPage } = useTeamRanking(id)
+  const {
+    data: rankingPages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useTeamRanking(id)
   const sentinelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -44,7 +98,108 @@ function TeamDetailPage() {
     return () => observer.disconnect()
   }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
-  const rankedMembers = rankingPages?.pages.flatMap((p) => p.members) ?? []
+  const isOwner = team?.ownerId === user?.id
+  const myMember = team?.members.find((m) => m.userId === user?.id)
+  const canManage = myMember?.role === 'OWNER' || myMember?.role === 'ADMIN'
+
+  const rankedMembers = useMemo<RankedMemberRow[]>(
+    () =>
+      (rankingPages?.pages.flatMap((p) => p.members) ?? []).map((m) => ({
+        ...m,
+        id: m.user.id,
+      })),
+    [rankingPages],
+  )
+
+  const columns = useMemo<ColumnDef<RankedMemberRow>[]>(
+    () => [
+      {
+        id: 'rank',
+        header: '#',
+        accessorKey: 'rank',
+        size: 52,
+        enableSorting: false,
+        cell: ({ getValue }) => {
+          const rank = getValue<number>()
+          return (
+            <span className="inline-block w-full text-center text-sm font-black leading-none">
+              {rank <= 3 ? (['🥇', '🥈', '🥉'] as const)[rank - 1] : rank}
+            </span>
+          )
+        },
+      },
+      {
+        id: 'username',
+        header: 'Joueur',
+        accessorFn: (row) => row.user.username,
+        cell: ({ row }) => {
+          const { user: u } = row.original
+          return (
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 text-xs font-bold text-primary">
+                {u.username[0]?.toUpperCase()}
+              </div>
+              <span className="text-sm font-medium text-text">
+                @{u.username}
+                {u.id === user?.id && (
+                  <span className="ml-1 text-xs text-text-light">(moi)</span>
+                )}
+              </span>
+            </div>
+          )
+        },
+      },
+      {
+        id: 'role',
+        header: 'Rôle',
+        accessorKey: 'role',
+        size: 110,
+        cell: ({ getValue }) => {
+          const role = getValue<string>()
+          return (
+            <div className="flex items-center gap-1.5 text-xs text-text-light">
+              {ROLE_ICON[role]}
+              {ROLE_LABEL[role] ?? role}
+            </div>
+          )
+        },
+      },
+      {
+        id: 'score',
+        header: 'Score',
+        accessorKey: 'score',
+        size: 110,
+        cell: ({ getValue }) => (
+          <span className="text-sm font-bold text-text">
+            {getValue<number>().toLocaleString()} pts
+          </span>
+        ),
+      },
+      ...(isOwner
+        ? ([
+            {
+              id: 'actions',
+              header: '',
+              size: 52,
+              enableSorting: false,
+              cell: ({ row }) => {
+                const entry = row.original
+                if (entry.user.id === user?.id || entry.role === 'OWNER')
+                  return null
+                return (
+                  <ExcludeCell
+                    username={entry.user.username}
+                    userId={entry.user.id}
+                    onRemove={remove}
+                  />
+                )
+              },
+            },
+          ] as ColumnDef<RankedMemberRow>[])
+        : []),
+    ],
+    [isOwner, user?.id, remove],
+  )
 
   if (isLoading) {
     return (
@@ -61,10 +216,6 @@ function TeamDetailPage() {
       </div>
     )
   }
-
-  const myMember = team.members.find((m) => m.userId === user?.id)
-  const isOwner = team.ownerId === user?.id
-  const canManage = myMember?.role === 'OWNER' || myMember?.role === 'ADMIN'
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
@@ -95,52 +246,18 @@ function TeamDetailPage() {
 
         {canManage && <InviteMemberForm teamId={id} />}
 
-        <div className="rounded-xl border border-border bg-card p-4">
-          <h2 className="mb-3 text-sm font-bold text-text">Membres</h2>
-          <ul className="space-y-2">
-            {team.members.map((member) => (
-              <MemberRow
-                key={member.id}
-                member={member}
-                canManage={canManage}
-                isOwner={isOwner}
-                isMe={member.userId === user?.id}
-                onRemove={() => remove(member.userId)}
-              />
-            ))}
-          </ul>
-        </div>
-
-        <div className="rounded-xl border border-border bg-card p-4">
-          <h2 className="mb-3 text-sm font-bold text-text">Classement</h2>
-          {rankedMembers.length === 0 ? (
-            <p className="text-sm text-text-light">Aucun score pour l'instant.</p>
-          ) : (
-            <ul className="space-y-1">
-              {rankedMembers.map((entry) => (
-                <li
-                  key={`${entry.rank}-${entry.user.id}`}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-background"
-                >
-                  <span className="w-6 text-center text-xs font-black text-text-light">
-                    {entry.rank <= 3 ? ['🥇', '🥈', '🥉'][entry.rank - 1] : entry.rank}
-                  </span>
-                  <div className="flex-1 text-sm font-semibold text-text">
-                    {entry.user.username}
-                  </div>
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
-                    {entry.role}
-                  </span>
-                  <span className="text-sm font-bold text-text">
-                    {entry.score.toLocaleString()} pts
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
+        <div className="overflow-hidden rounded-xl border border-border bg-card">
+          <div className="h-[min(80vh,600px)]">
+            <ReactTable
+              columns={columns}
+              data={rankedMembers}
+              title="Classement"
+              filterId={`team-ranking-${id}`}
+            />
+          </div>
           <div ref={sentinelRef} className="h-1" />
           {isFetchingNextPage && (
-            <div className="flex justify-center py-2">
+            <div className="flex justify-center py-3">
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
             </div>
           )}
