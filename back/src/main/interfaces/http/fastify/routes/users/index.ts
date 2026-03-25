@@ -23,6 +23,31 @@ export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
   const { userRepository, postgresOrm } = fastify.iocContainer
   const prisma = postgresOrm.prisma
 
+  // GET /users/search?q= — recherche d'utilisateurs par username (autocomplete)
+  fastify.get(
+    '/users/search',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        querystring: z.object({ q: z.string().min(2).max(30) }),
+      },
+    },
+    async (request) => {
+      const { postgresOrm } = fastify.iocContainer
+      const { q } = request.query
+      const users = await postgresOrm.prisma.user.findMany({
+        where: {
+          username: { contains: q, mode: 'insensitive' },
+          id: { not: request.user.userID },
+        },
+        select: { id: true, username: true, avatar: true },
+        take: 5,
+        orderBy: { username: 'asc' },
+      })
+      return { users }
+    },
+  )
+
   fastify.get(
     '/users/:username/profile',
     {
