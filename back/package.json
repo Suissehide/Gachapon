@@ -96,11 +96,12 @@
       "output": []
     },
     "build:transpile": {
-      "command": "swc -s --strip-leading-paths -d lib src",
+      "command": "swc -s --strip-leading-paths -d lib src && cp -r src/main/infra/mail/templates lib/main/infra/mail/",
       "files": [
         "tsconfig.json",
         "src/tsconfig.json",
-        "src/**/*.ts"
+        "src/**/*.ts",
+        "src/**/*.html"
       ],
       "dependencies": [
         "prisma:generate"
