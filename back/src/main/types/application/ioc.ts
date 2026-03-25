@@ -21,6 +21,7 @@ import type { HttpClientInterface } from '../infra/http/http-client'
 import type { UserRepositoryInterface } from '../infra/orm/repositories/user.repository.interface'
 import type { RedisClientInterface } from '../infra/redis/redis-client'
 import type { StorageClientInterface } from '../infra/storage/storage-client'
+import type { IMailService } from '../infra/mail/mail.service.interface'
 import type { HttpServer } from '../interfaces/http/server'
 import type { ErrorHandlerInterface } from '../utils/error-handler'
 import type { Logger } from '../utils/logger'
@@ -54,4 +55,5 @@ export interface IocContainer {
   readonly teamMemberRepository: TeamMemberRepository
   readonly invitationRepository: InvitationRepository
   readonly teamDomain: TeamDomainInterface
+  readonly mailService: IMailService
 }

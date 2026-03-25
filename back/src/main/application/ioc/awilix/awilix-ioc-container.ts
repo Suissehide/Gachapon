@@ -7,6 +7,7 @@ import { OAuthDomain } from '../../../domain/auth/oauth.domain'
 import { GachaDomain } from '../../../domain/gacha/gacha.domain'
 import { TeamDomain } from '../../../domain/team/team.domain'
 import { UserDomain } from '../../../domain/user/user.domain'
+import { MailService } from '../../../infra/mail/mail.service'
 import { JwtService } from '../../../infra/auth/jwt.service'
 import { ConfigService } from '../../../infra/config/config.service'
 import { HttpClient } from '../../../infra/http/http-client'
@@ -66,6 +67,7 @@ class AwilixIocContainer {
       asClass(OAuthAccountRepository).singleton(),
     )
     this.#reg('apiKeyRepository', asClass(ApiKeyRepository).singleton())
+    this.#reg('mailService', asClass(MailService).singleton())
     this.#reg('authDomain', asClass(AuthDomain).singleton())
     this.#reg('oauthDomain', asClass(OAuthDomain).singleton())
     this.#reg('cardRepository', asClass(CardRepository).singleton())
