@@ -44,11 +44,16 @@ services:
       - NODE_CLUSTER
       - NODE_ENV=production
       - NODE_TLS_REJECT_UNAUTHORIZED
-      - PITY_THRESHOLD
       - PORT
       - REDIS_URL
-      - TOKEN_MAX_STOCK
-      - TOKEN_REGEN_INTERVAL_MINUTES
+      - RATE_LIMIT_MAX
+      - RATE_LIMIT_TIME_WINDOW
+      - SMTP_HOST
+      - SMTP_PORT
+      - SMTP_SECURE
+      - SMTP_USER
+      - SMTP_PASS
+      - SMTP_FROM
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${APP_IMAGE_NAME}-back.rule=Host(`${TRAEFIK_BACK_HOST}`)"
@@ -63,6 +68,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     restart: unless-stopped
 
   front:
@@ -130,6 +137,19 @@ services:
     restart: always
     volumes:
       - redis_data:/data
+
+  mailpit:
+    container_name: "${APP_IMAGE_NAME}-mailpit"
+    image: axllent/mailpit:latest
+    profiles:
+      - dev
+    networks:
+      - proxy
+    ports:
+      - "8025:8025"
+    environment:
+      - MP_MAX_MESSAGES=500
+    restart: unless-stopped
 
 volumes:
   postgres:
