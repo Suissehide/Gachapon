@@ -276,7 +276,7 @@ function AdminMediaPage() {
                 <SheetTitle>Détail du média</SheetTitle>
               </SheetHeader>
               {activeItem && (
-                <div className="mt-6 px-6">
+                <div className="mt-4 overflow-y-auto px-6 pb-6">
                   <MediaDetailPanel
                     key={activeItem.key}
                     item={activeItem}

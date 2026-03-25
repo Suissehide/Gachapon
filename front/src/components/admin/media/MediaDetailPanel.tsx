@@ -1,14 +1,30 @@
-import { Check, Copy, Plus, Trash2 } from 'lucide-react'
+import {
+  Check,
+  Copy,
+  ExternalLink,
+  FileImage,
+  Plus,
+  Trash2,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import type { MediaItem } from '../../../queries/useAdminMedia'
 import { Button } from '../../ui/button'
+import { Card } from '../../ui/card'
 
 interface MediaDetailPanelProps {
   item: MediaItem
   onDelete: (key: string) => void
   isDeleting?: boolean
   onCreateCard?: () => void
+}
+
+const RARITY_COLORS: Record<string, string> = {
+  COMMON: 'text-text-light',
+  UNCOMMON: 'text-green-400',
+  RARE: 'text-accent',
+  EPIC: 'text-secondary',
+  LEGENDARY: 'text-primary',
 }
 
 export function MediaDetailPanel({
@@ -22,7 +38,7 @@ export function MediaDetailPanel({
 
   useEffect(() => {
     setConfirmDelete(false)
-  }, [])
+  }, [item.key])
 
   const filename = item.key.split('/').pop() ?? item.key
   const sizeKb = (item.size / 1024).toFixed(0)
@@ -48,110 +64,161 @@ export function MediaDetailPanel({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
-      <img
-        src={item.url}
-        alt={filename}
-        className="aspect-[3/4] w-full rounded object-contain p-1"
-        onError={(e) => {
-          ;(e.target as HTMLImageElement).style.opacity = '0.3'
+    <div className="flex flex-col gap-3">
+      {/* Preview */}
+      <div
+        className="relative flex h-48 items-center justify-center overflow-hidden rounded-lg border border-border"
+        style={{
+          backgroundImage:
+            'repeating-conic-gradient(hsl(var(--muted)) 0% 25%, transparent 0% 50%)',
+          backgroundSize: '16px 16px',
         }}
-      />
+      >
+        <img
+          src={item.url}
+          alt={filename}
+          className="max-h-full max-w-full object-contain p-3 drop-shadow-md"
+          onError={(e) => {
+            ;(e.target as HTMLImageElement).style.opacity = '0.3'
+          }}
+        />
+        <a
+          href={item.url}
+          target="_blank"
+          rel="noreferrer"
+          className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-md bg-black/50 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+          title="Ouvrir l'image"
+        >
+          <ExternalLink className="h-3 w-3" />
+        </a>
+        <div
+          className={`absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+            item.orphan
+              ? 'bg-red-500/80 text-white'
+              : 'bg-green-600/80 text-white'
+          }`}
+        >
+          {item.orphan ? 'Orpheline' : 'Utilisée'}
+        </div>
+      </div>
 
-      <div>
+      {/* Metadata */}
+      <Card className="p-3 shadow-none">
+        <div className="mb-2 flex items-center gap-1.5">
+          <FileImage className="h-3 w-3 text-text-light" />
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-text-light">
+            Fichier
+          </span>
+        </div>
         <p
           className="truncate text-sm font-semibold text-text"
           title={filename}
         >
           {filename}
         </p>
-        <p className="truncate text-xs text-text-light" title={item.key}>
+        <p
+          className="mt-0.5 truncate text-[11px] text-text-light/70"
+          title={item.key}
+        >
           {item.key}
         </p>
-      </div>
+        <div className="mt-2 flex items-center gap-3 text-[11px] text-text-light">
+          <span>{sizeKb} Ko</span>
+          <span className="h-1 w-1 rounded-full bg-border" />
+          <span>{date}</span>
+        </div>
+      </Card>
 
-      <div className="flex items-center gap-2">
-        <span
-          className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-            item.orphan
-              ? 'bg-red-500/10 text-red-500 border border-red-500/40'
-              : 'bg-green-500/10 text-green-500 border border-green-500/40'
-          }`}
-        >
-          {item.orphan ? 'Orpheline' : 'Utilisée'}
-        </span>
-      </div>
-
+      {/* Associated card */}
       {!item.orphan && item.card && (
-        <div className="rounded-md bg-surface p-2 text-xs">
-          <p className="mb-0.5 text-text-light uppercase tracking-wide text-[10px]">
+        <Card className="p-3 shadow-none">
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-text-light">
             Carte associée
           </p>
-          <p className="font-medium text-violet-400">
+          <p
+            className={`text-sm font-semibold ${RARITY_COLORS[item.card.rarity] ?? 'text-text'}`}
+          >
             {item.card.name}
-            {item.card.variant && ` — ${item.card.variant}`}
+            {item.card.variant && (
+              <span className="ml-1.5 text-xs font-normal text-text-light">
+                {item.card.variant}
+              </span>
+            )}
           </p>
-          <p className="text-text-light">{item.card.rarity}</p>
-        </div>
+          <p className="mt-0.5 text-[11px] text-text-light">
+            {item.card.rarity}
+          </p>
+        </Card>
       )}
 
-      <p className="text-xs text-text-light">
-        {sizeKb} Ko · {date}
-      </p>
+      {/* Actions */}
+      <div className="flex flex-col gap-2">
+        {item.orphan && onCreateCard && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onCreateCard}
+            className="w-full gap-2 border-secondary/40 text-secondary hover:border-secondary/60 hover:text-secondary"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Créer une carte depuis ce média
+          </Button>
+        )}
 
-      {item.orphan && onCreateCard && (
         <Button
           variant="outline"
           size="sm"
-          onClick={onCreateCard}
-          className="gap-2 border-violet-500/40 text-violet-400 hover:text-violet-400"
+          onClick={handleCopy}
+          className="w-full gap-2"
         >
-          <Plus className="h-3 w-3" />
-          Créer une carte
+          {copied ? (
+            <Check className="h-3.5 w-3.5 text-green-400" />
+          ) : (
+            <Copy className="h-3.5 w-3.5" />
+          )}
+          {copied ? 'URL copiée !' : "Copier l'URL"}
         </Button>
-      )}
 
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleCopy}
-        className="gap-2"
-      >
-        {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-        {copied ? 'Copié !' : "Copier l'URL"}
-      </Button>
-
-      {confirmDelete ? (
-        <div className="flex gap-2">
-          <Button
-            variant="destructive"
-            size="sm"
-            className="flex-1"
-            onClick={handleDelete}
-            disabled={isDeleting}
-          >
-            Confirmer
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setConfirmDelete(false)}
-          >
-            Annuler
-          </Button>
+        <div className="mt-1 border-t border-border pt-2">
+          {confirmDelete ? (
+            <div className="flex gap-2">
+              <Button
+                variant="destructive"
+                size="sm"
+                className="flex-1"
+                onClick={handleDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Suppression…' : 'Confirmer la suppression'}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setConfirmDelete(false)}
+              >
+                Annuler
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={!item.orphan || isDeleting}
+              onClick={handleDelete}
+              className={`w-full gap-2 ${
+                item.orphan
+                  ? 'border border-red-500/20 text-red-400 hover:border-red-500/40 hover:bg-red-500/5 hover:text-red-400'
+                  : 'cursor-not-allowed opacity-40'
+              }`}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              {item.orphan
+                ? 'Supprimer ce média'
+                : 'Média utilisé — non supprimable'}
+            </Button>
+          )}
         </div>
-      ) : (
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={!item.orphan || isDeleting}
-          onClick={handleDelete}
-          className={`gap-2 ${item.orphan ? 'border border-red-500/30 text-red-400 hover:text-red-400' : 'cursor-not-allowed opacity-40'}`}
-        >
-          <Trash2 className="h-3 w-3" />
-          Supprimer
-        </Button>
-      )}
+      </div>
     </div>
   )
 }

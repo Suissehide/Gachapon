@@ -1,4 +1,5 @@
 import type { MediaItem } from '../../../queries/useAdminMedia'
+import { Checkbox } from '../../ui/input'
 
 interface MediaGalleryProps {
   items: MediaItem[]
@@ -20,7 +21,7 @@ export function MediaGallery({
   onSelect,
 }: MediaGalleryProps) {
   return (
-    <div className="grid grid-cols-5 gap-x-2 gap-y-0.5">
+    <div className="grid gap-2 grid-cols-[repeat(auto-fill,minmax(6rem,1fr))]">
       {items.map((item) => {
         const isActive = activeKey === item.key
         const isChecked = selected.has(item.key)
@@ -29,7 +30,7 @@ export function MediaGallery({
           <button
             key={item.key}
             type="button"
-            className={`relative w-full cursor-pointer overflow-hidden rounded-md border-2 transition-all ${
+            className={`relative aspect-square w-full cursor-pointer overflow-hidden rounded-md border-2 transition-all ${
               isChecked
                 ? 'border-red-500 bg-red-950/40'
                 : isActive
@@ -47,40 +48,28 @@ export function MediaGallery({
             <img
               src={item.url}
               alt={item.key}
-              className="h-full w-full object-contain p-4"
+              className="h-full w-full object-contain p-2"
               onError={(e) => {
                 ;(e.target as HTMLImageElement).style.display = 'none'
               }}
             />
 
             {selectable && item.orphan && (
-              <button
-                type="button"
-                className={`absolute left-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded border transition-colors ${
-                  isChecked
-                    ? 'border-red-500 bg-red-500 text-white'
-                    : 'border-border bg-background/80'
-                }`}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onToggleSelect?.(item.key)
-                }}
-              >
-                {isChecked && (
-                  <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-                    <path
-                      d="M1 4L3 6L7 2"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                )}
-              </button>
+              <div className="absolute left-1 top-1">
+                <Checkbox
+                  checked={isChecked}
+                  onChange={(e) => {
+                    e.stopPropagation()
+                    onToggleSelect?.(item.key)
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  className={isChecked ? 'border-red-500 bg-red-500/10' : ''}
+                />
+              </div>
             )}
 
             <div
-              className={`absolute bottom-1.5 right-1.5 h-2 w-2 rounded-full ${
+              className={`absolute bottom-1 right-1 h-2 w-2 rounded-full ${
                 item.orphan ? 'bg-red-500' : 'bg-green-600'
               }`}
             />
