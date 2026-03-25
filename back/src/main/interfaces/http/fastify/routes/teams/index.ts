@@ -301,7 +301,8 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
       const actor = team.members.find((m) => m.userId === request.user.userID)
       if (!actor || actor.role !== 'OWNER') throw Boom.forbidden('Only OWNER can delete an invitation')
 
-      if (inv.status === 'PENDING') throw Boom.conflict('Cancel the invitation before deleting it')
+      const isExpired = inv.status === 'PENDING' && inv.expiresAt < new Date()
+      if (inv.status === 'PENDING' && !isExpired) throw Boom.conflict('Cancel the invitation before deleting it')
 
       await invitationRepository.deleteById(inv.id)
       return reply.status(204).send()

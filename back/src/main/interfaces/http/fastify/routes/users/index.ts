@@ -33,9 +33,8 @@ export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
       },
     },
     async (request) => {
-      const { postgresOrm } = fastify.iocContainer
       const { q } = request.query
-      const users = await postgresOrm.prisma.user.findMany({
+      const users = await prisma.user.findMany({
         where: {
           username: { contains: q, mode: 'insensitive' },
           id: { not: request.user.userID },
