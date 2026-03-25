@@ -146,7 +146,7 @@ services:
     networks:
       - proxy
     ports:
-      - "8025:8025"
+      - "${MAILPIT_PORT:-8025}:8025"
     environment:
       - MP_MAX_MESSAGES=500
     restart: unless-stopped
