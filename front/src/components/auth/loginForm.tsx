@@ -60,6 +60,12 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
         <Link
           to="/forgot-password"
           className="text-xs text-text-light hover:text-primary transition-colors"
+          onClick={(e) => {
+            if (window.location.pathname === '/forgot-password') {
+              e.preventDefault()
+              window.location.reload()
+            }
+          }}
         >
           Mot de passe oublié ?
         </Link>

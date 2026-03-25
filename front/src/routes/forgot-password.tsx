@@ -29,6 +29,13 @@ function ForgotPasswordPage() {
               <p className="text-sm text-text-light">
                 Si cette adresse est associée à un compte, tu recevras un email avec un lien de réinitialisation.
               </p>
+              <Button
+                variant="outline"
+                className="mt-6"
+                onClick={() => { setSent(false); setEmail('') }}
+              >
+                Retour
+              </Button>
             </div>
           ) : (
             <>

@@ -67,7 +67,7 @@ export function MemberRow({
         onOpenChange={setConfirmOpen}
         icon={<UserX className="h-4 w-4" />}
         title="Exclure le membre"
-        description={`Êtes-vous sûr de vouloir exclure @${member.user.username} de l'équipe ?`}
+        description={`Êtes-vous sûr de vouloir exclure ${member.user.username} de l'équipe ?`}
         confirmLabel="Exclure"
         onConfirm={onRemove}
       />

@@ -9,9 +9,12 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as StatsRouteImport } from './routes/stats'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PendingRouteImport } from './routes/pending'
 import { Route as GuideRouteImport } from './routes/guide'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DiscordRouteImport } from './routes/discord'
 import { Route as ChangelogRouteImport } from './routes/changelog'
 import { Route as ApiDocsRouteImport } from './routes/api-docs'
@@ -42,9 +45,19 @@ import { Route as AdminAdminCardsRouteImport } from './routes/_admin/admin.cards
 import { Route as AuthenticatedTeamIdSettingsRouteImport } from './routes/_authenticated/team/$id_.settings'
 import { Route as AuthenticatedProfileUsernameCollectionRouteImport } from './routes/_authenticated/profile/$username_.collection'
 
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StatsRoute = StatsRouteImport.update({
   id: '/stats',
   path: '/stats',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PendingRoute = PendingRouteImport.update({
@@ -55,6 +68,11 @@ const PendingRoute = PendingRouteImport.update({
 const GuideRoute = GuideRouteImport.update({
   id: '/guide',
   path: '/guide',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DiscordRoute = DiscordRouteImport.update({
@@ -211,9 +229,12 @@ export interface FileRoutesByFullPath {
   '/api-docs': typeof ApiDocsRoute
   '/changelog': typeof ChangelogRoute
   '/discord': typeof DiscordRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/guide': typeof GuideRoute
   '/pending': typeof PendingRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/stats': typeof StatsRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/admin': typeof AdminAdminRouteWithChildren
   '/collection': typeof AuthenticatedCollectionRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
@@ -243,9 +264,12 @@ export interface FileRoutesByTo {
   '/api-docs': typeof ApiDocsRoute
   '/changelog': typeof ChangelogRoute
   '/discord': typeof DiscordRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/guide': typeof GuideRoute
   '/pending': typeof PendingRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/stats': typeof StatsRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/collection': typeof AuthenticatedCollectionRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/play': typeof AuthenticatedPlayRoute
@@ -277,9 +301,12 @@ export interface FileRoutesById {
   '/api-docs': typeof ApiDocsRoute
   '/changelog': typeof ChangelogRoute
   '/discord': typeof DiscordRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/guide': typeof GuideRoute
   '/pending': typeof PendingRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/stats': typeof StatsRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/_admin/admin': typeof AdminAdminRouteWithChildren
   '/_authenticated/collection': typeof AuthenticatedCollectionRoute
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
@@ -311,9 +338,12 @@ export interface FileRouteTypes {
     | '/api-docs'
     | '/changelog'
     | '/discord'
+    | '/forgot-password'
     | '/guide'
     | '/pending'
+    | '/reset-password'
     | '/stats'
+    | '/verify-email'
     | '/admin'
     | '/collection'
     | '/leaderboard'
@@ -343,9 +373,12 @@ export interface FileRouteTypes {
     | '/api-docs'
     | '/changelog'
     | '/discord'
+    | '/forgot-password'
     | '/guide'
     | '/pending'
+    | '/reset-password'
     | '/stats'
+    | '/verify-email'
     | '/collection'
     | '/leaderboard'
     | '/play'
@@ -376,9 +409,12 @@ export interface FileRouteTypes {
     | '/api-docs'
     | '/changelog'
     | '/discord'
+    | '/forgot-password'
     | '/guide'
     | '/pending'
+    | '/reset-password'
     | '/stats'
+    | '/verify-email'
     | '/_admin/admin'
     | '/_authenticated/collection'
     | '/_authenticated/leaderboard'
@@ -411,18 +447,35 @@ export interface RootRouteChildren {
   ApiDocsRoute: typeof ApiDocsRoute
   ChangelogRoute: typeof ChangelogRoute
   DiscordRoute: typeof DiscordRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   GuideRoute: typeof GuideRoute
   PendingRoute: typeof PendingRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   StatsRoute: typeof StatsRoute
+  VerifyEmailRoute: typeof VerifyEmailRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/stats': {
       id: '/stats'
       path: '/stats'
       fullPath: '/stats'
       preLoaderRoute: typeof StatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pending': {
@@ -437,6 +490,13 @@ declare module '@tanstack/react-router' {
       path: '/guide'
       fullPath: '/guide'
       preLoaderRoute: typeof GuideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/discord': {
@@ -726,9 +786,12 @@ const rootRouteChildren: RootRouteChildren = {
   ApiDocsRoute: ApiDocsRoute,
   ChangelogRoute: ChangelogRoute,
   DiscordRoute: DiscordRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   GuideRoute: GuideRoute,
   PendingRoute: PendingRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   StatsRoute: StatsRoute,
+  VerifyEmailRoute: VerifyEmailRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

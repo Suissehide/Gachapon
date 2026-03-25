@@ -120,7 +120,7 @@ function ProfilePage() {
         {/* Lien collection */}
         <div className="mt-8 rounded-xl border border-border bg-card p-4">
           <h2 className="mb-3 text-sm font-bold text-text">
-            {isOwnProfile ? 'Ma collection' : `Collection de @${username}`}
+            {isOwnProfile ? 'Ma collection' : `Collection de ${username}`}
           </h2>
           <Button asChild variant="default">
             {isOwnProfile ? (

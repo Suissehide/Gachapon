@@ -11,7 +11,10 @@ async function request<T>(
   const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...options.headers },
+    headers: {
+      ...(options.body != null ? { 'Content-Type': 'application/json' } : {}),
+      ...options.headers,
+    },
   })
 
   if (res.status === 401 && !options.skipRefresh) {
