@@ -80,6 +80,19 @@ const configSchema = z.object({
     .string()
     .default('60000')
     .transform((v) => Number.parseInt(v, 10)),
+
+  smtpHost: z.string().default('localhost'),
+  smtpPort: z
+    .string()
+    .default('587')
+    .transform((v) => Number.parseInt(v, 10)),
+  smtpSecure: z
+    .string()
+    .default('false')
+    .transform((v) => v === 'true'),
+  smtpUser: z.string().default(''),
+  smtpPass: z.string().default(''),
+  smtpFrom: z.string().default('Gachapon <noreply@gachapon.app>'),
 })
 
 export type Config = z.infer<typeof configSchema>
@@ -109,6 +122,12 @@ const envVarNames = [
   'PITY_THRESHOLD',
   'RATE_LIMIT_MAX',
   'RATE_LIMIT_TIME_WINDOW',
+  'SMTP_HOST',
+  'SMTP_PORT',
+  'SMTP_SECURE',
+  'SMTP_USER',
+  'SMTP_PASS',
+  'SMTP_FROM',
 ]
 
 const loadConfig = () => {
