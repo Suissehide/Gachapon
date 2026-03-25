@@ -27,7 +27,8 @@ function Pending() {
   const { reason, email } = Route.useSearch()
   const isEmailReason = reason === 'email'
   const { mutate: resend, isPending: isResending } = useResendVerification()
-  const [cooldown, setCooldown] = useState(0)
+  // Email vient d'être envoyé à l'arrivée sur la page — cooldown immédiat
+  const [cooldown, setCooldown] = useState(isEmailReason ? 120 : 0)
   const [resendSuccess, setResendSuccess] = useState(false)
 
   useEffect(() => {

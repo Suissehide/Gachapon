@@ -117,8 +117,12 @@ export const AuthApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
     })
-    if (!res.ok && res.status !== 429) {
-      handleHttpError(res, {}, 'Erreur lors de la demande')
+    if (!res.ok) {
+      handleHttpError(
+        res,
+        { 429: { title: 'Trop de tentatives', message: 'Attends 2 minutes avant de réessayer.' } },
+        'Erreur lors de la demande',
+      )
     }
   },
 
