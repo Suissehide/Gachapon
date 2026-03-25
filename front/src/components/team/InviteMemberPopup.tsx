@@ -1,7 +1,8 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { RefreshCw, Send, Trash2, UserPlus, X } from 'lucide-react'
-import { useMemo, useRef, useState } from 'react'
+import { RefreshCw, Send, Trash2, UserPlus } from 'lucide-react'
+import { type SyntheticEvent, useMemo, useRef, useState } from 'react'
 
+import type { TeamInvitation } from '../../queries/useTeams.ts'
 import {
   useCancelInvitation,
   useDeleteInvitation,
@@ -10,7 +11,6 @@ import {
   useTeamInvitations,
   useUserSearch,
 } from '../../queries/useTeams.ts'
-import type { TeamInvitation } from '../../queries/useTeams.ts'
 import { ReactTable } from '../table/reactTable.tsx'
 import { Button } from '../ui/button.tsx'
 import { Input } from '../ui/input.tsx'
@@ -65,14 +65,20 @@ export function InviteMemberPopup({ teamId, userRole }: Props) {
   const [showDropdown, setShowDropdown] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const isEmailMode = identifier.includes('@')
-  const { data: searchData } = useUserSearch(isEmailMode ? '' : identifier.trim())
-  const searchResults = searchData?.users ?? []
+  const [activeIndex, setActiveIndex] = useState(-1)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const isEmailMode = identifier.includes('@')
+  const { data: searchData } = useUserSearch(
+    isEmailMode ? '' : identifier.trim(),
+  )
+  const searchResults = (searchData?.users ?? []).slice(0, 5)
+
+  const handleSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
     const trimmed = identifier.trim()
-    if (!trimmed) return
+    if (!trimmed) {
+      return
+    }
     setError('')
     setShowDropdown(false)
     const isEmail = trimmed.includes('@')
@@ -87,6 +93,7 @@ export function InviteMemberPopup({ teamId, userRole }: Props) {
       setIdentifier('')
       setError('')
       setShowDropdown(false)
+      setActiveIndex(-1)
     }
     setOpen(value)
   }
@@ -114,10 +121,10 @@ export function InviteMemberPopup({ teamId, userRole }: Props) {
         header: 'Destinataire',
         accessorFn: (row) =>
           row.invitedUsername
-            ? `@${row.invitedUsername}`
+            ? `${row.invitedUsername}`
             : (row.invitedEmail ?? '—'),
         cell: ({ getValue }) => (
-          <span className="font-medium text-text">{getValue<string>()}</span>
+          <span className="text-text">{getValue<string>()}</span>
         ),
       },
       {
@@ -180,12 +187,11 @@ export function InviteMemberPopup({ teamId, userRole }: Props) {
                 <Button
                   type="button"
                   variant="ghost"
-                  size="sm"
+                  size="icon"
                   className="h-6 px-2 text-xs text-destructive hover:text-destructive"
                   onClick={() => cancel(inv.token)}
                 >
-                  <X className="h-3 w-3" />
-                  Annuler
+                  <Trash2 className="h-3 w-3" />
                 </Button>
               )}
               {canDelete && (
@@ -232,22 +238,50 @@ export function InviteMemberPopup({ teamId, userRole }: Props) {
                   ref={inputRef}
                   id="invite-identifier"
                   value={identifier}
+                  autoComplete="off"
                   onChange={(e) => {
                     setIdentifier(e.target.value)
+                    setActiveIndex(-1)
                     setShowDropdown(
                       !e.target.value.includes('@') &&
                         e.target.value.trim().length >= 2,
                     )
                   }}
-                  onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
+                  onKeyDown={(e) => {
+                    if (!showDropdown || searchResults.length === 0) {
+                      return
+                    }
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault()
+                      setActiveIndex((i) =>
+                        Math.min(i + 1, searchResults.length - 1),
+                      )
+                    } else if (e.key === 'ArrowUp') {
+                      e.preventDefault()
+                      setActiveIndex((i) => Math.max(i - 1, 0))
+                    } else if (e.key === 'Enter' && activeIndex >= 0) {
+                      e.preventDefault()
+                      handleSelectUser(searchResults[activeIndex].username)
+                    } else if (e.key === 'Escape') {
+                      setShowDropdown(false)
+                      setActiveIndex(-1)
+                    }
+                  }}
+                  onBlur={() =>
+                    setTimeout(() => {
+                      setShowDropdown(false)
+                      setActiveIndex(-1)
+                    }, 150)
+                  }
                 />
                 {showDropdown && searchResults.length > 0 && (
                   <ul className="absolute top-full z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-card shadow-lg">
-                    {searchResults.map((user) => (
+                    {searchResults.map((user, idx) => (
                       <li key={user.id}>
                         <button
                           type="button"
-                          className="flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-muted text-left"
+                          className={`flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors text-left ${idx === activeIndex ? 'bg-primary/10 text-primary' : 'hover:bg-muted'}`}
+                          onMouseEnter={() => setActiveIndex(idx)}
                           onMouseDown={() => handleSelectUser(user.username)}
                         >
                           {user.avatar ? (
@@ -261,7 +295,13 @@ export function InviteMemberPopup({ teamId, userRole }: Props) {
                               {user.username[0].toUpperCase()}
                             </span>
                           )}
-                          <span className="text-text">@{user.username}</span>
+                          <span
+                            className={
+                              idx === activeIndex ? 'text-primary' : 'text-text'
+                            }
+                          >
+                            {user.username}
+                          </span>
                         </button>
                       </li>
                     ))}
