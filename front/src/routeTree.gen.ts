@@ -39,6 +39,7 @@ import { Route as AdminAdminScoringRouteImport } from './routes/_admin/admin.sco
 import { Route as AdminAdminMediaRouteImport } from './routes/_admin/admin.media'
 import { Route as AdminAdminConfigRouteImport } from './routes/_admin/admin.config'
 import { Route as AdminAdminCardsRouteImport } from './routes/_admin/admin.cards'
+import { Route as AuthenticatedTeamIdSettingsRouteImport } from './routes/_authenticated/team/$id_.settings'
 import { Route as AuthenticatedProfileUsernameCollectionRouteImport } from './routes/_authenticated/profile/$username_.collection'
 
 const StatsRoute = StatsRouteImport.update({
@@ -191,6 +192,12 @@ const AdminAdminCardsRoute = AdminAdminCardsRouteImport.update({
   path: '/cards',
   getParentRoute: () => AdminAdminRoute,
 } as any)
+const AuthenticatedTeamIdSettingsRoute =
+  AuthenticatedTeamIdSettingsRouteImport.update({
+    id: '/team/$id_/settings',
+    path: '/team/$id/settings',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedProfileUsernameCollectionRoute =
   AuthenticatedProfileUsernameCollectionRouteImport.update({
     id: '/profile/$username_/collection',
@@ -228,6 +235,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminAdminIndexRoute
   '/team/': typeof AuthenticatedTeamIndexRoute
   '/profile/$username/collection': typeof AuthenticatedProfileUsernameCollectionRoute
+  '/team/$id/settings': typeof AuthenticatedTeamIdSettingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -258,6 +266,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminAdminIndexRoute
   '/team': typeof AuthenticatedTeamIndexRoute
   '/profile/$username/collection': typeof AuthenticatedProfileUsernameCollectionRoute
+  '/team/$id/settings': typeof AuthenticatedTeamIdSettingsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -292,6 +301,7 @@ export interface FileRoutesById {
   '/_admin/admin/': typeof AdminAdminIndexRoute
   '/_authenticated/team/': typeof AuthenticatedTeamIndexRoute
   '/_authenticated/profile/$username_/collection': typeof AuthenticatedProfileUsernameCollectionRoute
+  '/_authenticated/team/$id_/settings': typeof AuthenticatedTeamIdSettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -325,6 +335,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/team/'
     | '/profile/$username/collection'
+    | '/team/$id/settings'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -355,6 +366,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/team'
     | '/profile/$username/collection'
+    | '/team/$id/settings'
   id:
     | '__root__'
     | '/'
@@ -388,6 +400,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/'
     | '/_authenticated/team/'
     | '/_authenticated/profile/$username_/collection'
+    | '/_authenticated/team/$id_/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -615,6 +628,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminCardsRouteImport
       parentRoute: typeof AdminAdminRoute
     }
+    '/_authenticated/team/$id_/settings': {
+      id: '/_authenticated/team/$id_/settings'
+      path: '/team/$id/settings'
+      fullPath: '/team/$id/settings'
+      preLoaderRoute: typeof AuthenticatedTeamIdSettingsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/profile/$username_/collection': {
       id: '/_authenticated/profile/$username_/collection'
       path: '/profile/$username/collection'
@@ -675,6 +695,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedTeamIdRoute: typeof AuthenticatedTeamIdRoute
   AuthenticatedTeamIndexRoute: typeof AuthenticatedTeamIndexRoute
   AuthenticatedProfileUsernameCollectionRoute: typeof AuthenticatedProfileUsernameCollectionRoute
+  AuthenticatedTeamIdSettingsRoute: typeof AuthenticatedTeamIdSettingsRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -690,6 +711,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedTeamIndexRoute: AuthenticatedTeamIndexRoute,
   AuthenticatedProfileUsernameCollectionRoute:
     AuthenticatedProfileUsernameCollectionRoute,
+  AuthenticatedTeamIdSettingsRoute: AuthenticatedTeamIdSettingsRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

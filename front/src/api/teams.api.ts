@@ -77,6 +77,21 @@ export const TeamsApi = {
     return res.json()
   },
 
+  updateTeam: async (
+    teamId: string,
+    data: { name: string; description?: string },
+  ): Promise<Team> => {
+    const res = await fetchWithAuth(`${apiUrl}/teams/${teamId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+    if (!res.ok) {
+      handleHttpError(res, {}, "Erreur lors de la mise à jour de l'équipe")
+    }
+    return res.json()
+  },
+
   deleteTeam: async (teamId: string): Promise<void> => {
     const res = await fetchWithAuth(`${apiUrl}/teams/${teamId}`, {
       method: 'DELETE',

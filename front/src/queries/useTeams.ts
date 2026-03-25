@@ -39,6 +39,18 @@ export const useCreateTeam = () => {
   })
 }
 
+export const useUpdateTeam = (teamId: string) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: { name: string; description?: string }) =>
+      TeamsApi.updateTeam(teamId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['teams', teamId] })
+      qc.invalidateQueries({ queryKey: ['teams'] })
+    },
+  })
+}
+
 export const useDeleteTeam = () => {
   const qc = useQueryClient()
   return useMutation({

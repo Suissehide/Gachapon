@@ -4,24 +4,23 @@ import {
   ArrowLeft,
   Crown,
   Search,
+  Settings,
   Shield,
   User,
   UserMinus,
   UserX,
 } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { RankedMember } from '../../../api/teams.api.ts'
 import { ReactTable } from '../../../components/table/reactTable.tsx'
-import { ConfirmPopup } from '../../../components/team/ConfirmPopup.tsx'
 import {
-  DangerZone,
+  ConfirmPopup,
   InviteMemberPopup,
-} from '../../../components/team/index.ts'
+} from '../../../components/team'
 import { Button } from '../../../components/ui/button.tsx'
 import { Input } from '../../../components/ui/input.tsx'
 import {
-  useDeleteTeam,
   useRemoveMember,
   useTeam,
   useTeamRanking,
@@ -34,7 +33,7 @@ export const Route = createFileRoute('/_authenticated/team/$id')({
 
 type RankedMemberRow = RankedMember & { id: string }
 
-const ROLE_ICON: Record<string, React.ReactNode> = {
+const ROLE_ICON: Record<string, ReactNode> = {
   OWNER: <Crown className="h-3.5 w-3.5 text-yellow-400" />,
   ADMIN: <Shield className="h-3.5 w-3.5 text-accent" />,
   MEMBER: <User className="h-3.5 w-3.5 text-text-light" />,
@@ -65,7 +64,7 @@ function ExcludeCell({
           e.stopPropagation()
           setOpen(true)
         }}
-        title={`Exclure @${username}`}
+        title={`Exclure ${username}`}
       >
         <UserMinus className="h-4 w-4 text-destructive" />
       </Button>
@@ -74,7 +73,7 @@ function ExcludeCell({
         onOpenChange={setOpen}
         icon={<UserX className="h-4 w-4" />}
         title="Exclure le membre"
-        description={`Êtes-vous sûr de vouloir exclure @${username} de l'équipe ?`}
+        description={`Êtes-vous sûr de vouloir exclure ${username} de l'équipe ?`}
         confirmLabel="Exclure"
         onConfirm={() => onRemove(userId)}
       />
@@ -88,7 +87,6 @@ function TeamDetailPage() {
   const user = useAuthStore((s) => s.user)
   const { data: team, isLoading, isError } = useTeam(id)
   const { mutate: remove } = useRemoveMember(id)
-  const { mutate: deleteTeam } = useDeleteTeam()
   const {
     data: rankingPages,
     fetchNextPage,
@@ -240,13 +238,17 @@ function TeamDetailPage() {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
       <div className="mx-auto max-w-4xl">
-        <Link
-          to="/team"
-          className="mb-6 flex items-center gap-1.5 text-sm text-text-light transition-colors hover:text-text"
+        <Button
+          variant="ghost"
+          size="sm"
+          asChild
+          className="mb-6 -ml-2 text-text-light hover:text-text"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Mes équipes
-        </Link>
+          <Link to="/team">
+            <ArrowLeft className="h-4 w-4" />
+            Mes équipes
+          </Link>
+        </Button>
 
         <div className="mb-6 flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/30 to-secondary/30 text-xl font-black text-primary">
@@ -262,7 +264,16 @@ function TeamDetailPage() {
               {team.members.length !== 1 ? 's' : ''}
             </p>
           </div>
-          {canManage && <InviteMemberPopup teamId={id} />}
+          <div className="flex items-center gap-2">
+            {canManage && <InviteMemberPopup teamId={id} />}
+            {isOwner && (
+              <Button variant="ghost" size="icon" asChild title="Réglages">
+                <Link to="/team/$id/settings" params={{ id }}>
+                  <Settings className="h-4 w-4 text-text-light" />
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="relative mb-4">
@@ -297,15 +308,7 @@ function TeamDetailPage() {
           )}
         </div>
 
-        {isOwner && (
-          <DangerZone
-            onDelete={() =>
-              deleteTeam(id, {
-                onSuccess: () => navigate({ to: '/team' }),
-              })
-            }
-          />
-        )}
+
       </div>
     </div>
   )
