@@ -11,6 +11,7 @@ import type { TeamRankingPage } from '../api/teams.api.ts'
 export type {
   Invitation,
   Team,
+  TeamInvitation,
   TeamMember,
   TeamSummary,
 } from '../api/teams.api.ts'
@@ -134,5 +135,33 @@ export const useResendInvitation = (teamId: string) => {
       void qc.invalidateQueries({ queryKey: ['teams', teamId, 'invitations'] })
     },
     retry: 0,
+  })
+}
+
+export const useUserSearch = (q: string) =>
+  useQuery({
+    queryKey: ['users', 'search', q],
+    queryFn: () => TeamsApi.searchUsers(q),
+    enabled: q.trim().length >= 2,
+    staleTime: 30_000,
+  })
+
+export const useCancelInvitation = (teamId: string) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (token: string) => TeamsApi.cancelInvitation(token),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['teams', teamId, 'invitations'] })
+    },
+  })
+}
+
+export const useDeleteInvitation = (teamId: string) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => TeamsApi.deleteInvitation(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['teams', teamId, 'invitations'] })
+    },
   })
 }

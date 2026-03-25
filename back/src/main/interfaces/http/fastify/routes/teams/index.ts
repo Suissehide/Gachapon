@@ -206,7 +206,7 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     },
   )
 
-  // GET /teams/:id/invitations — liste des invitations en attente
+  // GET /teams/:id/invitations — liste de TOUTES les invitations
   fastify.get(
     '/teams/:id/invitations',
     {
@@ -225,7 +225,8 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
         throw Boom.forbidden('Only ADMIN or OWNER')
       }
 
-      const invitations = await invitationRepo.findPendingByTeam(request.params.id)
+      const now = new Date()
+      const invitations = await invitationRepo.findAllByTeam(request.params.id)
       return {
         invitations: invitations.map((inv) => ({
           id: inv.id,
@@ -234,6 +235,8 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
           invitedUsername: inv.invitedUser?.username ?? null,
           createdAt: inv.createdAt,
           emailSentAt: inv.emailSentAt,
+          expiresAt: inv.expiresAt,
+          status: inv.status === 'PENDING' && inv.expiresAt < now ? 'EXPIRED' : inv.status,
         })),
       }
     },
@@ -251,6 +254,57 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request, reply) => {
       const { teamDomain } = fastify.iocContainer
       await teamDomain.resendInvitationEmail(request.params.token, request.user.userID)
+      return reply.status(204).send()
+    },
+  )
+
+  // POST /invitations/:token/cancel — annuler une invitation (OWNER seulement)
+  fastify.post(
+    '/invitations/:token/cancel',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: { params: z.object({ token: z.string().uuid() }) },
+    },
+    async (request, reply) => {
+      const { invitationRepository, teamRepository } = fastify.iocContainer
+      const inv = await invitationRepository.findByToken(request.params.token)
+      if (!inv) throw Boom.notFound('Invitation not found')
+
+      const team = await teamRepository.findById(inv.teamId)
+      if (!team) throw Boom.notFound('Team not found')
+
+      const actor = team.members.find((m) => m.userId === request.user.userID)
+      if (!actor || actor.role !== 'OWNER') throw Boom.forbidden('Only OWNER can cancel an invitation')
+
+      if (inv.status !== 'PENDING') throw Boom.conflict('Invitation is not PENDING')
+
+      await invitationRepository.cancelById(inv.id)
+      return reply.status(204).send()
+    },
+  )
+
+  // DELETE /invitations/:id — suppression physique (OWNER seulement, pas pour PENDING)
+  fastify.delete(
+    '/invitations/:id',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: { params: z.object({ id: z.string().uuid() }) },
+    },
+    async (request, reply) => {
+      const { invitationRepository, teamRepository } = fastify.iocContainer
+      const inv = await invitationRepository.findById(request.params.id)
+      if (!inv) throw Boom.notFound('Invitation not found')
+
+      const team = await teamRepository.findById(inv.teamId)
+      if (!team) throw Boom.notFound('Team not found')
+
+      const actor = team.members.find((m) => m.userId === request.user.userID)
+      if (!actor || actor.role !== 'OWNER') throw Boom.forbidden('Only OWNER can delete an invitation')
+
+      const isExpired = inv.status === 'PENDING' && inv.expiresAt < new Date()
+      if (inv.status === 'PENDING' && !isExpired) throw Boom.conflict('Cancel the invitation before deleting it')
+
+      await invitationRepository.deleteById(inv.id)
       return reply.status(204).send()
     },
   )
