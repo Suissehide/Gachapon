@@ -56,6 +56,7 @@ type ReactTableProps<TData extends { id: string }> = {
   customHeader?: (rows: Row<TData>[]) => ReactNode
   filterId?: string
   infiniteScroll?: boolean
+  onRowClick?: (row: Row<TData>) => void
 }
 
 export function ReactTable<TData extends { id: string }>({
@@ -65,6 +66,7 @@ export function ReactTable<TData extends { id: string }>({
   customHeader,
   filterId = 'default',
   infiniteScroll = true,
+  onRowClick,
 }: ReactTableProps<TData>) {
   const initialColumnFilters = safeParse(
     localStorage.getItem(`filters/${filterId}`),
@@ -188,6 +190,7 @@ export function ReactTable<TData extends { id: string }>({
               getCommonPinningStyles={getCommonPinningStyles}
               parentRef={tableContainerRef}
               rowHeight={40}
+              onRowClick={onRowClick}
             />
           </table>
         </div>

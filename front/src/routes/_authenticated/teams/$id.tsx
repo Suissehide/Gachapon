@@ -7,7 +7,7 @@ import { Link } from '@tanstack/react-router'
 import type { RankedMember } from '../../../api/teams.api.ts'
 import { ReactTable } from '../../../components/table/reactTable.tsx'
 import { ConfirmPopup } from '../../../components/team/ConfirmPopup.tsx'
-import { DangerZone, InviteMemberForm } from '../../../components/team/index.ts'
+import { DangerZone, InviteMemberPopup } from '../../../components/team/index.ts'
 import { Button } from '../../../components/ui/button.tsx'
 import {
   useDeleteTeam,
@@ -50,7 +50,7 @@ function ExcludeCell({
       <Button
         variant="ghost"
         size="icon-sm"
-        onClick={() => setOpen(true)}
+        onClick={(e) => { e.stopPropagation(); setOpen(true) }}
         title={`Exclure @${username}`}
       >
         <UserMinus className="h-4 w-4 text-destructive" />
@@ -244,7 +244,11 @@ function TeamDetailPage() {
           </div>
         </div>
 
-        {canManage && <InviteMemberForm teamId={id} />}
+        {canManage && (
+          <div className="mb-6 flex justify-end">
+            <InviteMemberPopup teamId={id} />
+          </div>
+        )}
 
         <div className="overflow-hidden rounded-xl border border-border bg-card">
           <div className="h-[min(80vh,600px)]">
@@ -253,6 +257,12 @@ function TeamDetailPage() {
               data={rankedMembers}
               title="Classement"
               filterId={`team-ranking-${id}`}
+              onRowClick={(row) =>
+                navigate({
+                  to: '/profile/$username',
+                  params: { username: row.original.user.username },
+                })
+              }
             />
           </div>
           <div ref={sentinelRef} className="h-1" />

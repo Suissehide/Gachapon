@@ -15,6 +15,7 @@ type VirtualizedBodyTableProps<TData> = {
   getCommonPinningStyles: (column: Column<TData>) => React.CSSProperties
   rowHeight: number
   parentRef: RefObject<HTMLElement | null>
+  onRowClick?: (row: Row<TData>) => void
 }
 
 export function VirtualizedBodyTable<TData>({
@@ -22,6 +23,7 @@ export function VirtualizedBodyTable<TData>({
   getCommonPinningStyles,
   rowHeight,
   parentRef,
+  onRowClick,
 }: VirtualizedBodyTableProps<TData>) {
   const rows = table.getRowModel().rows
   const rowCount = rows.length
@@ -81,7 +83,8 @@ export function VirtualizedBodyTable<TData>({
             }}
             key={row.id}
             style={{ height: rowHeight }}
-            className="group border-b border-border/40 transition-colors duration-100 last:border-0 hover:bg-primary/[0.04]"
+            className={`group border-b border-border/40 transition-colors duration-100 last:border-0 hover:bg-primary/[0.04] ${onRowClick ? 'cursor-pointer' : ''}`}
+            onClick={onRowClick ? () => onRowClick(row) : undefined}
           >
             {row.getVisibleCells().map((cell) => {
               const { column } = cell
