@@ -12,6 +12,7 @@ import type { IInvitationRepository } from '../../types/infra/orm/repositories/i
 import type { ITeamRepository } from '../../types/infra/orm/repositories/team.repository.interface'
 import type { ITeamMemberRepository } from '../../types/infra/orm/repositories/team-member.repository.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
+import type { IMailService } from '../../types/infra/mail/mail.service.interface'
 
 const MAX_TEAMS_PER_USER = 5
 const MAX_MEMBERS_PER_TEAM = 100
@@ -23,6 +24,7 @@ export class TeamDomain implements TeamDomainInterface {
   readonly #invitationRepo: IInvitationRepository
   readonly #userRepo: UserRepositoryInterface
   readonly #postgresOrm: IocContainer['postgresOrm']
+  readonly #mailService: IMailService
 
   constructor({
     teamRepository,
@@ -30,12 +32,14 @@ export class TeamDomain implements TeamDomainInterface {
     invitationRepository,
     userRepository,
     postgresOrm,
+    mailService,
   }: IocContainer) {
     this.#teamRepo = teamRepository
     this.#memberRepo = teamMemberRepository
     this.#invitationRepo = invitationRepository
     this.#userRepo = userRepository
     this.#postgresOrm = postgresOrm
+    this.#mailService = mailService
   }
 
   async createTeam(
@@ -125,13 +129,36 @@ export class TeamDomain implements TeamDomainInterface {
       target,
     )
 
-    return this.#invitationRepo.create({
+    const invitation = await this.#invitationRepo.create({
       teamId,
       invitedById: actorId,
       invitedEmail: targetEmail,
       invitedUserId: targetUserId,
       expiresAt: new Date(Date.now() + INVITATION_TTL_MS),
     })
+
+    // Send invitation email (non-fatal)
+    const inviterUser = await this.#userRepo.findById(actorId)
+    const recipientEmail = invitation.invitedEmail
+      ?? (invitation.invitedUserId
+        ? (await this.#userRepo.findById(invitation.invitedUserId))?.email ?? null
+        : null)
+
+    if (recipientEmail && inviterUser) {
+      try {
+        await this.#mailService.sendTeamInvitationEmail({
+          to: recipientEmail,
+          teamName: team.name,
+          inviterName: inviterUser.username,
+          token: invitation.token,
+        })
+        await this.#invitationRepo.updateEmailSentAt(invitation.id, new Date())
+      } catch {
+        // Email failure is non-fatal
+      }
+    }
+
+    return invitation
   }
 
   async acceptInvitation(token: string, userId: string): Promise<void> {
@@ -288,5 +315,49 @@ export class TeamDomain implements TeamDomainInterface {
       throw Boom.forbidden('Not a member of this team')
     }
     return team
+  }
+
+  async resendInvitationEmail(token: string, actorId: string): Promise<void> {
+    const invitation = await this.#invitationRepo.findByToken(token)
+    if (!invitation || invitation.status !== 'PENDING') {
+      throw Boom.notFound('Invitation not found or not pending')
+    }
+
+    const team = await this.#teamRepo.findById(invitation.teamId)
+    if (!team) throw Boom.internal('Team not found')
+
+    const actor = team.members.find((m) => m.userId === actorId)
+    if (!actor || actor.role === 'MEMBER') {
+      throw Boom.forbidden('Only ADMIN or OWNER can resend invitations')
+    }
+
+    // Cooldown: 5 minutes since last emailSentAt
+    if (invitation.emailSentAt) {
+      const elapsed = Date.now() - invitation.emailSentAt.getTime()
+      if (elapsed < 5 * 60 * 1000) {
+        const retryAfterSeconds = Math.ceil((5 * 60 * 1000 - elapsed) / 1000)
+        throw Boom.tooManyRequests('Cooldown actif', { retryAfterSeconds })
+      }
+    }
+
+    const recipientEmail = invitation.invitedEmail
+      ?? (invitation.invitedUserId
+        ? (await this.#userRepo.findById(invitation.invitedUserId))?.email ?? null
+        : null)
+
+    if (!recipientEmail) throw Boom.badRequest('No recipient email found')
+
+    const inviter = invitation.invitedById
+      ? await this.#userRepo.findById(invitation.invitedById)
+      : null
+
+    await this.#mailService.sendTeamInvitationEmail({
+      to: recipientEmail,
+      teamName: team.name,
+      inviterName: inviter?.username ?? 'Quelqu\'un',
+      token: invitation.token,
+    })
+
+    await this.#invitationRepo.updateEmailSentAt(invitation.id, new Date())
   }
 }

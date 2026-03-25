@@ -206,6 +206,55 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     },
   )
 
+  // GET /teams/:id/invitations — liste des invitations en attente
+  fastify.get(
+    '/teams/:id/invitations',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        params: z.object({ id: z.string().uuid() }),
+      },
+    },
+    async (request) => {
+      const teamRepo = fastify.iocContainer.teamRepository
+      const invitationRepo = fastify.iocContainer.invitationRepository
+      const team = await teamRepo.findById(request.params.id)
+      if (!team) throw Boom.notFound('Team not found')
+      const actor = team.members.find((m) => m.userId === request.user.userID)
+      if (!actor || actor.role === 'MEMBER') {
+        throw Boom.forbidden('Only ADMIN or OWNER')
+      }
+
+      const invitations = await invitationRepo.findPendingByTeam(request.params.id)
+      return {
+        invitations: invitations.map((inv) => ({
+          id: inv.id,
+          token: inv.token,
+          invitedEmail: inv.invitedEmail,
+          invitedUsername: inv.invitedUser?.username ?? null,
+          createdAt: inv.createdAt,
+          emailSentAt: inv.emailSentAt,
+        })),
+      }
+    },
+  )
+
+  // POST /invitations/:token/resend — renvoyer une invitation
+  fastify.post(
+    '/invitations/:token/resend',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        params: z.object({ token: z.string().uuid() }),
+      },
+    },
+    async (request, reply) => {
+      const { teamDomain } = fastify.iocContainer
+      await teamDomain.resendInvitationEmail(request.params.token, request.user.userID)
+      return reply.status(204).send()
+    },
+  )
+
   // GET /teams/:id/ranking — classement des membres
   fastify.get(
     '/teams/:id/ranking',

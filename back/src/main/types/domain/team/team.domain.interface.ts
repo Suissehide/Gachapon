@@ -30,4 +30,5 @@ export interface TeamDomainInterface {
   deleteTeam(teamId: string, userId: string): Promise<void>
   getMyTeams(userId: string): Promise<TeamSummary[]>
   getTeam(teamId: string, userId: string): Promise<TeamWithMembers>
+  resendInvitationEmail(token: string, actorId: string): Promise<void>
 }
