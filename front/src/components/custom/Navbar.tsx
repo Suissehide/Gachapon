@@ -7,7 +7,7 @@ import { Button } from '../ui/button.tsx'
 const navItems = [
   { to: '/play', label: 'Jouer' },
   { to: '/collection', label: 'Collection' },
-  { to: '/teams', label: 'Équipes' },
+  { to: '/team', label: 'Équipes' },
   { to: '/shop', label: 'Boutique' },
   { to: '/upgrades', label: 'Améliorations' },
   { to: '/leaderboard', label: 'Classement' },

@@ -1,14 +1,17 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import type { ColumnDef } from '@tanstack/react-table'
-import { ArrowLeft, Crown, Shield, User, UserMinus, UserX } from 'lucide-react'
+import { ArrowLeft, Crown, Search, Shield, User, UserMinus, UserX } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from '@tanstack/react-router'
 
 import type { RankedMember } from '../../../api/teams.api.ts'
 import { ReactTable } from '../../../components/table/reactTable.tsx'
 import { ConfirmPopup } from '../../../components/team/ConfirmPopup.tsx'
-import { DangerZone, InviteMemberPopup } from '../../../components/team/index.ts'
+import {
+  DangerZone,
+  InviteMemberPopup,
+} from '../../../components/team/index.ts'
 import { Button } from '../../../components/ui/button.tsx'
+import { Input } from '../../../components/ui/input.tsx'
 import {
   useDeleteTeam,
   useRemoveMember,
@@ -17,7 +20,7 @@ import {
 } from '../../../queries/useTeams.ts'
 import { useAuthStore } from '../../../stores/auth.store.ts'
 
-export const Route = createFileRoute('/_authenticated/teams/$id')({
+export const Route = createFileRoute('/_authenticated/team/$id')({
   component: TeamDetailPage,
 })
 
@@ -50,7 +53,10 @@ function ExcludeCell({
       <Button
         variant="ghost"
         size="icon-sm"
-        onClick={(e) => { e.stopPropagation(); setOpen(true) }}
+        onClick={(e) => {
+          e.stopPropagation()
+          setOpen(true)
+        }}
         title={`Exclure @${username}`}
       >
         <UserMinus className="h-4 w-4 text-destructive" />
@@ -85,7 +91,9 @@ function TeamDetailPage() {
 
   useEffect(() => {
     const el = sentinelRef.current
-    if (!el) return
+    if (!el) {
+      return
+    }
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
@@ -98,18 +106,21 @@ function TeamDetailPage() {
     return () => observer.disconnect()
   }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
+  const [search, setSearch] = useState('')
+
   const isOwner = team?.ownerId === user?.id
   const myMember = team?.members.find((m) => m.userId === user?.id)
   const canManage = myMember?.role === 'OWNER' || myMember?.role === 'ADMIN'
 
-  const rankedMembers = useMemo<RankedMemberRow[]>(
-    () =>
-      (rankingPages?.pages.flatMap((p) => p.members) ?? []).map((m) => ({
-        ...m,
-        id: m.user.id,
-      })),
-    [rankingPages],
-  )
+  const rankedMembers = useMemo<RankedMemberRow[]>(() => {
+    const all = (rankingPages?.pages.flatMap((p) => p.members) ?? []).map(
+      (m) => ({ ...m, id: m.user.id }),
+    )
+    const q = search.trim().toLowerCase()
+    return q
+      ? all.filter((m) => m.user.username.toLowerCase().includes(q))
+      : all
+  }, [rankingPages, search])
 
   const columns = useMemo<ColumnDef<RankedMemberRow>[]>(
     () => [
@@ -184,8 +195,9 @@ function TeamDetailPage() {
               enableSorting: false,
               cell: ({ row }) => {
                 const entry = row.original
-                if (entry.user.id === user?.id || entry.role === 'OWNER')
+                if (entry.user.id === user?.id || entry.role === 'OWNER') {
                   return null
+                }
                 return (
                   <ExcludeCell
                     username={entry.user.username}
@@ -221,7 +233,7 @@ function TeamDetailPage() {
     <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
       <div className="mx-auto max-w-4xl">
         <Link
-          to="/teams"
+          to="/team"
           className="mb-6 flex items-center gap-1.5 text-sm text-text-light transition-colors hover:text-text"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -229,10 +241,10 @@ function TeamDetailPage() {
         </Link>
 
         <div className="mb-6 flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-primary/30 to-secondary/30 text-xl font-black text-primary">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/30 to-secondary/30 text-xl font-black text-primary">
             {team.name[0]?.toUpperCase()}
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl font-black text-text">{team.name}</h1>
             {team.description && (
               <p className="text-sm text-text-light">{team.description}</p>
@@ -242,13 +254,18 @@ function TeamDetailPage() {
               {team.members.length !== 1 ? 's' : ''}
             </p>
           </div>
+          {canManage && <InviteMemberPopup teamId={id} />}
         </div>
 
-        {canManage && (
-          <div className="mb-6 flex justify-end">
-            <InviteMemberPopup teamId={id} />
-          </div>
-        )}
+        <div className="relative mb-4">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Rechercher un joueur…"
+            className="pl-9"
+          />
+        </div>
 
         <div className="overflow-hidden rounded-xl border border-border bg-card">
           <div className="h-[min(80vh,600px)]">
@@ -277,7 +294,7 @@ function TeamDetailPage() {
           <DangerZone
             onDelete={() =>
               deleteTeam(id, {
-                onSuccess: () => navigate({ to: '/teams' }),
+                onSuccess: () => navigate({ to: '/team' }),
               })
             }
           />

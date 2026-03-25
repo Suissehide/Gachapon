@@ -5,7 +5,7 @@ import { CreateTeamPopup, TeamCard } from '../../../components/team/index.ts'
 import { useLeaveTeam, useMyTeams } from '../../../queries/useTeams.ts'
 import { useAuthStore } from '../../../stores/auth.store.ts'
 
-export const Route = createFileRoute('/_authenticated/teams/')({
+export const Route = createFileRoute('/_authenticated/team/')({
   component: TeamsPage,
 })
 

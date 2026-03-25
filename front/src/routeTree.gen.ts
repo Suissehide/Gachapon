@@ -27,9 +27,9 @@ import { Route as AuthenticatedPlayRouteImport } from './routes/_authenticated/p
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
 import { Route as AuthenticatedCollectionRouteImport } from './routes/_authenticated/collection'
 import { Route as AdminAdminRouteImport } from './routes/_admin/admin'
-import { Route as AuthenticatedTeamsIndexRouteImport } from './routes/_authenticated/teams/index'
+import { Route as AuthenticatedTeamIndexRouteImport } from './routes/_authenticated/team/index'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin.index'
-import { Route as AuthenticatedTeamsIdRouteImport } from './routes/_authenticated/teams/$id'
+import { Route as AuthenticatedTeamIdRouteImport } from './routes/_authenticated/team/$id'
 import { Route as AuthenticatedProfileUsernameRouteImport } from './routes/_authenticated/profile/$username'
 import { Route as AdminAdminUsersRouteImport } from './routes/_admin/admin.users'
 import { Route as AdminAdminUpgradesRouteImport } from './routes/_admin/admin.upgrades'
@@ -130,9 +130,9 @@ const AdminAdminRoute = AdminAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AdminRoute,
 } as any)
-const AuthenticatedTeamsIndexRoute = AuthenticatedTeamsIndexRouteImport.update({
-  id: '/teams/',
-  path: '/teams/',
+const AuthenticatedTeamIndexRoute = AuthenticatedTeamIndexRouteImport.update({
+  id: '/team/',
+  path: '/team/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AdminAdminIndexRoute = AdminAdminIndexRouteImport.update({
@@ -140,9 +140,9 @@ const AdminAdminIndexRoute = AdminAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminAdminRoute,
 } as any)
-const AuthenticatedTeamsIdRoute = AuthenticatedTeamsIdRouteImport.update({
-  id: '/teams/$id',
-  path: '/teams/$id',
+const AuthenticatedTeamIdRoute = AuthenticatedTeamIdRouteImport.update({
+  id: '/team/$id',
+  path: '/team/$id',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedProfileUsernameRoute =
@@ -224,9 +224,9 @@ export interface FileRoutesByFullPath {
   '/admin/upgrades': typeof AdminAdminUpgradesRoute
   '/admin/users': typeof AdminAdminUsersRoute
   '/profile/$username': typeof AuthenticatedProfileUsernameRoute
-  '/teams/$id': typeof AuthenticatedTeamsIdRoute
+  '/team/$id': typeof AuthenticatedTeamIdRoute
   '/admin/': typeof AdminAdminIndexRoute
-  '/teams/': typeof AuthenticatedTeamsIndexRoute
+  '/team/': typeof AuthenticatedTeamIndexRoute
   '/profile/$username/collection': typeof AuthenticatedProfileUsernameCollectionRoute
 }
 export interface FileRoutesByTo {
@@ -254,9 +254,9 @@ export interface FileRoutesByTo {
   '/admin/upgrades': typeof AdminAdminUpgradesRoute
   '/admin/users': typeof AdminAdminUsersRoute
   '/profile/$username': typeof AuthenticatedProfileUsernameRoute
-  '/teams/$id': typeof AuthenticatedTeamsIdRoute
+  '/team/$id': typeof AuthenticatedTeamIdRoute
   '/admin': typeof AdminAdminIndexRoute
-  '/teams': typeof AuthenticatedTeamsIndexRoute
+  '/team': typeof AuthenticatedTeamIndexRoute
   '/profile/$username/collection': typeof AuthenticatedProfileUsernameCollectionRoute
 }
 export interface FileRoutesById {
@@ -288,9 +288,9 @@ export interface FileRoutesById {
   '/_admin/admin/upgrades': typeof AdminAdminUpgradesRoute
   '/_admin/admin/users': typeof AdminAdminUsersRoute
   '/_authenticated/profile/$username': typeof AuthenticatedProfileUsernameRoute
-  '/_authenticated/teams/$id': typeof AuthenticatedTeamsIdRoute
+  '/_authenticated/team/$id': typeof AuthenticatedTeamIdRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
-  '/_authenticated/teams/': typeof AuthenticatedTeamsIndexRoute
+  '/_authenticated/team/': typeof AuthenticatedTeamIndexRoute
   '/_authenticated/profile/$username_/collection': typeof AuthenticatedProfileUsernameCollectionRoute
 }
 export interface FileRouteTypes {
@@ -321,9 +321,9 @@ export interface FileRouteTypes {
     | '/admin/upgrades'
     | '/admin/users'
     | '/profile/$username'
-    | '/teams/$id'
+    | '/team/$id'
     | '/admin/'
-    | '/teams/'
+    | '/team/'
     | '/profile/$username/collection'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -351,9 +351,9 @@ export interface FileRouteTypes {
     | '/admin/upgrades'
     | '/admin/users'
     | '/profile/$username'
-    | '/teams/$id'
+    | '/team/$id'
     | '/admin'
-    | '/teams'
+    | '/team'
     | '/profile/$username/collection'
   id:
     | '__root__'
@@ -384,9 +384,9 @@ export interface FileRouteTypes {
     | '/_admin/admin/upgrades'
     | '/_admin/admin/users'
     | '/_authenticated/profile/$username'
-    | '/_authenticated/teams/$id'
+    | '/_authenticated/team/$id'
     | '/_admin/admin/'
-    | '/_authenticated/teams/'
+    | '/_authenticated/team/'
     | '/_authenticated/profile/$username_/collection'
   fileRoutesById: FileRoutesById
 }
@@ -531,11 +531,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/_authenticated/teams/': {
-      id: '/_authenticated/teams/'
-      path: '/teams'
-      fullPath: '/teams/'
-      preLoaderRoute: typeof AuthenticatedTeamsIndexRouteImport
+    '/_authenticated/team/': {
+      id: '/_authenticated/team/'
+      path: '/team'
+      fullPath: '/team/'
+      preLoaderRoute: typeof AuthenticatedTeamIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_admin/admin/': {
@@ -545,11 +545,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminIndexRouteImport
       parentRoute: typeof AdminAdminRoute
     }
-    '/_authenticated/teams/$id': {
-      id: '/_authenticated/teams/$id'
-      path: '/teams/$id'
-      fullPath: '/teams/$id'
-      preLoaderRoute: typeof AuthenticatedTeamsIdRouteImport
+    '/_authenticated/team/$id': {
+      id: '/_authenticated/team/$id'
+      path: '/team/$id'
+      fullPath: '/team/$id'
+      preLoaderRoute: typeof AuthenticatedTeamIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/profile/$username': {
@@ -672,8 +672,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedShopRoute: typeof AuthenticatedShopRoute
   AuthenticatedUpgradesRoute: typeof AuthenticatedUpgradesRoute
   AuthenticatedProfileUsernameRoute: typeof AuthenticatedProfileUsernameRoute
-  AuthenticatedTeamsIdRoute: typeof AuthenticatedTeamsIdRoute
-  AuthenticatedTeamsIndexRoute: typeof AuthenticatedTeamsIndexRoute
+  AuthenticatedTeamIdRoute: typeof AuthenticatedTeamIdRoute
+  AuthenticatedTeamIndexRoute: typeof AuthenticatedTeamIndexRoute
   AuthenticatedProfileUsernameCollectionRoute: typeof AuthenticatedProfileUsernameCollectionRoute
 }
 
@@ -686,8 +686,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedShopRoute: AuthenticatedShopRoute,
   AuthenticatedUpgradesRoute: AuthenticatedUpgradesRoute,
   AuthenticatedProfileUsernameRoute: AuthenticatedProfileUsernameRoute,
-  AuthenticatedTeamsIdRoute: AuthenticatedTeamsIdRoute,
-  AuthenticatedTeamsIndexRoute: AuthenticatedTeamsIndexRoute,
+  AuthenticatedTeamIdRoute: AuthenticatedTeamIdRoute,
+  AuthenticatedTeamIndexRoute: AuthenticatedTeamIndexRoute,
   AuthenticatedProfileUsernameCollectionRoute:
     AuthenticatedProfileUsernameCollectionRoute,
 }

@@ -1,9 +1,8 @@
 import { Send, UserPlus } from 'lucide-react'
 import { useState } from 'react'
 
+import { useAppForm } from '../../hooks/formConfig.tsx'
 import { useInviteMember } from '../../queries/useTeams.ts'
-import { Button } from '../ui/button.tsx'
-import { Input } from '../ui/input.tsx'
 import {
   Popup,
   PopupBody,
@@ -13,29 +12,39 @@ import {
   PopupTitle,
   PopupTrigger,
 } from '../ui/popup.tsx'
+import { Button } from '../ui/button.tsx'
 
 export function InviteMemberPopup({ teamId }: { teamId: string }) {
   const { mutate: invite, isPending } = useInviteMember(teamId)
-  const [input, setInput] = useState('')
-  const [error, setError] = useState('')
   const [open, setOpen] = useState(false)
+  const [error, setError] = useState('')
 
-  const handleInvite = () => {
-    const value = input.trim()
-    if (!value) return
-    setError('')
-    const isEmail = value.includes('@')
-    invite(isEmail ? { email: value } : { username: value }, {
-      onSuccess: () => {
-        setInput('')
-        setOpen(false)
-      },
-      onError: (err) => setError(err.message),
-    })
+  const form = useAppForm({
+    defaultValues: { identifier: '' },
+    onSubmit: ({ value }) => {
+      const identifier = value.identifier.trim()
+      if (!identifier) {
+        return
+      }
+      setError('')
+      const isEmail = identifier.includes('@')
+      invite(isEmail ? { email: identifier } : { username: identifier }, {
+        onSuccess: () => handleOpenChange(false),
+        onError: (err) => setError(err.message),
+      })
+    },
+  })
+
+  const handleOpenChange = (value: boolean) => {
+    if (!value) {
+      form.reset()
+      setError('')
+    }
+    setOpen(value)
   }
 
   return (
-    <Popup open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setInput(''); setError('') } }}>
+    <Popup open={open} onOpenChange={handleOpenChange}>
       <PopupTrigger variant="outline" size="sm">
         <UserPlus className="h-4 w-4" />
         Inviter un membre
@@ -46,33 +55,28 @@ export function InviteMemberPopup({ teamId }: { teamId: string }) {
             Inviter un membre
           </PopupTitle>
         </PopupHeader>
-        <PopupBody>
-          <p className="mb-3 text-sm text-text-light">
-            Entrez le pseudo ou l'adresse e-mail du joueur à inviter.
-          </p>
-          <Input
-            value={input}
-            onChange={(e) => {
-              setInput(e.target.value)
-              if (error) setError('')
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleInvite()
-            }}
-            placeholder="@pseudo ou email"
-            autoFocus
-          />
-          {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
-        </PopupBody>
-        <PopupFooter>
-          <Button
-            onClick={handleInvite}
-            disabled={isPending || !input.trim()}
-          >
-            <Send className="h-4 w-4" />
-            {isPending ? 'Envoi…' : 'Envoyer l'invitation'}
-          </Button>
-        </PopupFooter>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault()
+            await form.handleSubmit()
+          }}
+        >
+          <PopupBody className="flex flex-col gap-3">
+            <p className="text-sm text-text-light">
+              Entrez le pseudo ou l'adresse e-mail du joueur à inviter.
+            </p>
+            <form.AppField name="identifier">
+              {(field) => <field.Input label="Pseudo ou e-mail" />}
+            </form.AppField>
+            {error && <p className="text-xs text-destructive">{error}</p>}
+          </PopupBody>
+          <PopupFooter>
+            <Button type="submit" disabled={isPending}>
+              <Send className="h-4 w-4" />
+              {isPending ? 'Envoi…' : "Envoyer l'invitation"}
+            </Button>
+          </PopupFooter>
+        </form>
       </PopupContent>
     </Popup>
   )

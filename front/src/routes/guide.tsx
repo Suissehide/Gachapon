@@ -464,7 +464,7 @@ function GuidePage() {
                 permettent de jouer avec tes amis. Tu peux créer ou rejoindre
                 une équipe via la page{' '}
                 <Link
-                  to="/teams"
+                  to="/team"
                   className="text-primary underline underline-offset-2"
                 >
                   Équipes
