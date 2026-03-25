@@ -258,6 +258,56 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     },
   )
 
+  // POST /invitations/:token/cancel — annuler une invitation (OWNER seulement)
+  fastify.post(
+    '/invitations/:token/cancel',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: { params: z.object({ token: z.string().uuid() }) },
+    },
+    async (request, reply) => {
+      const { invitationRepository, teamRepository } = fastify.iocContainer
+      const inv = await invitationRepository.findByToken(request.params.token)
+      if (!inv) throw Boom.notFound('Invitation not found')
+
+      const team = await teamRepository.findById(inv.teamId)
+      if (!team) throw Boom.notFound('Team not found')
+
+      const actor = team.members.find((m) => m.userId === request.user.userID)
+      if (!actor || actor.role !== 'OWNER') throw Boom.forbidden('Only OWNER can cancel an invitation')
+
+      if (inv.status !== 'PENDING') throw Boom.conflict('Invitation is not PENDING')
+
+      await invitationRepository.cancelById(inv.id)
+      return reply.status(204).send()
+    },
+  )
+
+  // DELETE /invitations/:id — suppression physique (OWNER seulement, pas pour PENDING)
+  fastify.delete(
+    '/invitations/:id',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: { params: z.object({ id: z.string().uuid() }) },
+    },
+    async (request, reply) => {
+      const { invitationRepository, teamRepository } = fastify.iocContainer
+      const inv = await invitationRepository.findById(request.params.id)
+      if (!inv) throw Boom.notFound('Invitation not found')
+
+      const team = await teamRepository.findById(inv.teamId)
+      if (!team) throw Boom.notFound('Team not found')
+
+      const actor = team.members.find((m) => m.userId === request.user.userID)
+      if (!actor || actor.role !== 'OWNER') throw Boom.forbidden('Only OWNER can delete an invitation')
+
+      if (inv.status === 'PENDING') throw Boom.conflict('Cancel the invitation before deleting it')
+
+      await invitationRepository.deleteById(inv.id)
+      return reply.status(204).send()
+    },
+  )
+
   // GET /teams/:id/ranking — classement des membres
   fastify.get(
     '/teams/:id/ranking',
