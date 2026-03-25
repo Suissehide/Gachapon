@@ -1,4 +1,9 @@
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  Link,
+  redirect,
+  useNavigate,
+} from '@tanstack/react-router'
 import { Clock, Mail } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { z } from 'zod'
@@ -24,6 +29,9 @@ export const Route = createFileRoute('/pending')({
 
 function Pending() {
   const logout = useAuthStore((s) => s.logout)
+  const fetchMe = useAuthStore((s) => s.fetchMe)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const navigate = useNavigate()
   const { reason, email } = Route.useSearch()
   const isEmailReason = reason === 'email'
   const { mutate: resend, isPending: isResending } = useResendVerification()
@@ -36,6 +44,21 @@ function Pending() {
     const t = setInterval(() => setCooldown((c) => c - 1), 1000)
     return () => clearInterval(t)
   }, [cooldown])
+
+  // Polling : détecte la vérification email dans un autre onglet
+  useEffect(() => {
+    if (!isEmailReason) return
+    const t = setInterval(async () => {
+      await fetchMe()
+    }, 4000)
+    return () => clearInterval(t)
+  }, [isEmailReason, fetchMe])
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      void navigate({ to: '/play' })
+    }
+  }, [isAuthenticated, navigate])
 
   const handleResend = () => {
     if (!email) return
@@ -58,17 +81,21 @@ function Pending() {
       </div>
 
       <div className="absolute top-6 left-6 z-10">
-        <span className="text-2xl font-black bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
+        <Link
+          to="/"
+          className="text-2xl font-black bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent"
+        >
           Gachapon
-        </span>
+        </Link>
       </div>
 
       <div className="relative z-10 w-full max-w-[420px] mx-6 bg-card/60 flex flex-col px-10 py-10 rounded-2xl border border-border backdrop-blur-xl shadow-2xl shadow-black/30">
         <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 border border-primary/20">
-          {isEmailReason
-            ? <Mail className="h-6 w-6 text-primary" />
-            : <Clock className="h-6 w-6 text-primary" />
-          }
+          {isEmailReason ? (
+            <Mail className="h-6 w-6 text-primary" />
+          ) : (
+            <Clock className="h-6 w-6 text-primary" />
+          )}
         </div>
 
         {isEmailReason ? (
@@ -78,8 +105,8 @@ function Pending() {
             </h1>
             <p className="mb-2 text-sm leading-relaxed text-text-light">
               Un lien de confirmation a été envoyé à{' '}
-              {email && <strong className="text-text">{email}</strong>}.
-              Clique dessus pour activer ton compte.
+              {email && <strong className="text-text">{email}</strong>}. Clique
+              dessus pour activer ton compte.
             </p>
             <p className="mb-6 text-xs text-text-light">
               Le lien est valable 24 heures. Vérifie aussi tes spams.
@@ -97,7 +124,9 @@ function Pending() {
               >
                 {cooldown > 0
                   ? `Renvoyer (${cooldown}s)`
-                  : isResending ? 'Envoi…' : "Renvoyer l'email"}
+                  : isResending
+                    ? 'Envoi…'
+                    : "Renvoyer l'email"}
               </Button>
             </div>
           </>
