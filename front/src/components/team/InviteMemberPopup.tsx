@@ -60,7 +60,7 @@ export function InviteMemberPopup({ teamId, userRole }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const isEmailMode = identifier.includes('@')
-  const { data: searchData } = useUserSearch(isEmailMode ? '' : identifier)
+  const { data: searchData } = useUserSearch(isEmailMode ? '' : identifier.trim())
   const searchResults = searchData?.users ?? []
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -86,9 +86,13 @@ export function InviteMemberPopup({ teamId, userRole }: Props) {
   }
 
   const handleSelectUser = (username: string) => {
-    setIdentifier(username)
     setShowDropdown(false)
-    inputRef.current?.focus()
+    setIdentifier('')
+    setError('')
+    invite({ username }, {
+      onSuccess: () => setIdentifier(''),
+      onError: (err) => setError(err.message),
+    })
   }
 
   const invitations = invitationsData?.invitations ?? []
