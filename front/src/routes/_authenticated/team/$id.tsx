@@ -265,7 +265,12 @@ function TeamDetailPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {canManage && <InviteMemberPopup teamId={id} />}
+            {canManage && myMember && (
+              <InviteMemberPopup
+                teamId={id}
+                userRole={myMember.role}
+              />
+            )}
             {isOwner && (
               <Button variant="ghost" size="icon" asChild title="Réglages">
                 <Link to="/team/$id/settings" params={{ id }}>
