@@ -87,7 +87,7 @@ export function PullsChart({ data }: PullsChartProps) {
         </div>
       </div>
 
-      <div className="[&_.recharts-layer]:outline-hidden [&_.recharts-surface]:outline-hidden">
+      <div className="**:outline-none">
         <ResponsiveContainer width="100%" height={200}>
           <BarChart
             data={data}

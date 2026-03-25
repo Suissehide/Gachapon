@@ -18,7 +18,7 @@ export function CollectionGrid({ entries, onRecycle }: CollectionGridProps) {
   }
 
   return (
-    <div className="isolate grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+    <div className="isolate flex flex-wrap gap-3 *:w-[calc((100%-4*0.75rem)/5)] md:*:w-[calc((100%-5*0.75rem)/6)] lg:*:w-[calc((100%-6*0.75rem)/7)]">
       {entries.map((entry) => (
         <CollectionCard
           key={entry.key}
