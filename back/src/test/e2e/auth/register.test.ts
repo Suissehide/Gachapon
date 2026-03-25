@@ -13,31 +13,21 @@ describe('POST /auth/register', () => {
     await app.close()
   })
 
-  it('returns 201 with user and sets cookies', async () => {
+  it('returns 201 with verification email sent message', async () => {
+    const email = `test${suffix}@example.com`
     const res = await app.inject({
       method: 'POST',
       url: '/auth/register',
       payload: {
         username: `testuser${suffix}`,
-        email: `test${suffix}@example.com`,
+        email,
         password: 'Password123!',
       },
     })
     expect(res.statusCode).toBe(201)
     const body = res.json()
-    expect(body).toHaveProperty('id')
-    expect(body).toHaveProperty('username', `testuser${suffix}`)
-    expect(body).not.toHaveProperty('passwordHash')
-    const accessTokenCookie = res.cookies.find(
-      (c: any) => c.name === 'access_token',
-    )
-    const refreshTokenCookie = res.cookies.find(
-      (c: any) => c.name === 'refresh_token',
-    )
-    expect(accessTokenCookie).toBeDefined()
-    expect(refreshTokenCookie).toBeDefined()
-    expect(accessTokenCookie.httpOnly).toBe(true)
-    expect(refreshTokenCookie.httpOnly).toBe(true)
+    expect(body).toHaveProperty('message', 'VERIFICATION_EMAIL_SENT')
+    expect(body).toHaveProperty('email', email)
   })
 
   it('returns 409 if email already taken', async () => {
