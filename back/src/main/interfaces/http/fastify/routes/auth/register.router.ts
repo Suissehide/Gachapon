@@ -1,7 +1,11 @@
+import { z } from 'zod/v4'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
-import { sanitizeUser, setTokenCookies } from './helpers'
-import { registerBodySchema, userResponseSchema } from './schemas'
+import { registerBodySchema } from './schemas'
+
+const registerResponseSchema = z.object({
+  email: z.string(),
+})
 
 export const registerRouter: FastifyPluginCallbackZod = (fastify) => {
   const { authDomain } = fastify.iocContainer
@@ -11,13 +15,12 @@ export const registerRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       schema: {
         body: registerBodySchema,
-        response: { 201: userResponseSchema },
+        response: { 202: registerResponseSchema },
       },
     },
     async (request, reply) => {
-      const { user, tokens } = await authDomain.register(request.body)
-      setTokenCookies(reply, tokens)
-      return reply.status(201).send(sanitizeUser(user))
+      const result = await authDomain.register(request.body)
+      return reply.status(202).send(result)
     },
   )
 }
