@@ -27,6 +27,7 @@ enum InvitationStatus {
   PENDING
   ACCEPTED
   DECLINED
+  CANCELLED
 }
 
 enum CardRarity {
