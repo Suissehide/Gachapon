@@ -31,6 +31,17 @@ export type Invitation = {
   expiresAt: string
 }
 
+export type TeamInvitation = {
+  id: string
+  token: string
+  invitedEmail: string | null
+  invitedUsername: string | null
+  createdAt: string
+  emailSentAt: string | null
+  status: 'PENDING' | 'EXPIRED' | 'ACCEPTED' | 'DECLINED' | 'CANCELLED'
+  expiresAt: string
+}
+
 export type RankedMember = {
   rank: number
   user: { id: string; username: string; avatar: string | null }
@@ -183,16 +194,7 @@ export const TeamsApi = {
     return res.json()
   },
 
-  getTeamInvitations: async (teamId: string): Promise<{
-    invitations: {
-      id: string
-      token: string
-      invitedEmail: string | null
-      invitedUsername: string | null
-      createdAt: string
-      emailSentAt: string | null
-    }[]
-  }> => {
+  getTeamInvitations: async (teamId: string): Promise<{ invitations: TeamInvitation[] }> => {
     const res = await fetchWithAuth(`${apiUrl}/teams/${teamId}/invitations`)
     if (!res.ok) handleHttpError(res, {}, 'Erreur lors du chargement des invitations')
     return res.json()
@@ -209,5 +211,29 @@ export const TeamsApi = {
         'Erreur lors du renvoi',
       )
     }
+  },
+
+  cancelInvitation: async (token: string): Promise<void> => {
+    const res = await fetchWithAuth(`${apiUrl}/invitations/${token}/cancel`, {
+      method: 'POST',
+    })
+    if (!res.ok) {
+      handleHttpError(res, { 409: { title: 'Impossible', message: "L'invitation n'est plus en attente." } }, "Erreur lors de l'annulation")
+    }
+  },
+
+  deleteInvitation: async (id: string): Promise<void> => {
+    const res = await fetchWithAuth(`${apiUrl}/invitations/${id}`, {
+      method: 'DELETE',
+    })
+    if (!res.ok) {
+      handleHttpError(res, { 409: { title: 'Impossible', message: "Annulez d'abord l'invitation." } }, 'Erreur lors de la suppression')
+    }
+  },
+
+  searchUsers: async (q: string): Promise<{ users: { id: string; username: string; avatar: string | null }[] }> => {
+    const res = await fetchWithAuth(`${apiUrl}/users/search?q=${encodeURIComponent(q)}`)
+    if (!res.ok) handleHttpError(res, {}, 'Erreur lors de la recherche')
+    return res.json()
   },
 }
