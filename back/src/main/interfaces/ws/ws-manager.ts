@@ -7,7 +7,7 @@ type PullResultEvent = {
     name: string
     imageUrl: string | null
     rarity: string
-    variant: string | null
+    variant: string
     set: { id: string; name: string }
   }
   wasDuplicate: boolean
