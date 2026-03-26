@@ -46,18 +46,13 @@ export class UserRewardRepository implements UserRewardRepositoryInterface {
     }))
   }
 
-  async findByIdAndUser(id: string, userId: string): Promise<PendingUserReward | null> {
+  async findByIdAndUser(id: string, userId: string): Promise<UserRewardWithReward | null> {
     // No claimedAt filter — caller checks claimedAt to distinguish 404 vs 409
     const row = await this.#prisma.userReward.findFirst({
       where: { id, userId },
       include: { reward: true },
     })
-    if (!row) return null
-    const milestone =
-      row.source === 'STREAK' && row.sourceId
-        ? await this.#prisma.streakMilestone.findUnique({ where: { id: row.sourceId } })
-        : null
-    return { ...row, streakMilestone: milestone }
+    return row ?? null
   }
 
   countPendingByUser(userId: string): Promise<number> {

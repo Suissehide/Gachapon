@@ -32,7 +32,7 @@ describe('Admin config routes', () => {
     const res = await app.inject({ method: 'GET', url: '/admin/config', headers: { cookie: adminCookies } })
     expect(res.statusCode).toBe(200)
     const body = res.json()
-    expect(body).toHaveProperty('tokenRegenIntervalHours')
+    expect(body).toHaveProperty('tokenRegenIntervalMinutes')
     expect(body).toHaveProperty('pityThreshold')
     expect(body).toHaveProperty('dustCommon')
   })

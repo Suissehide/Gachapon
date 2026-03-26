@@ -15,7 +15,7 @@ export interface UserRewardRepositoryInterface {
   ): Promise<UserReward>
   findPendingByUser(userId: string): Promise<PendingUserReward[]>
   /** Finds a reward by id + userId with no claimedAt filter — for 404 vs 409 distinction */
-  findByIdAndUser(id: string, userId: string): Promise<PendingUserReward | null>
+  findByIdAndUser(id: string, userId: string): Promise<UserRewardWithReward | null>
   countPendingByUser(userId: string): Promise<number>
   markClaimedInTx(tx: PrimaTransactionClient, id: string): Promise<void>
   markAllClaimedInTx(tx: PrimaTransactionClient, userId: string): Promise<void>

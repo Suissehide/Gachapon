@@ -6,5 +6,6 @@ export async function buildTestApp() {
   const ioc = new AwilixIocContainer(config)
   const server = ioc.instances.httpServer as any
   await server.configure()
+  await (ioc.instances.configService as any).bootstrap()
   return server.fastify
 }
