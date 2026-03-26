@@ -1,3 +1,4 @@
+import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
@@ -25,13 +26,11 @@ export const streakRouter: FastifyPluginCallbackZod = (fastify) => {
       schema: { response: { 200: summarySchema } },
     },
     async (request) => {
-      const { postgresOrm, streakMilestoneRepository } = fastify.iocContainer
+      const { userRepository, streakMilestoneRepository } = fastify.iocContainer
       const userId = request.user.userID
 
-      const user = await postgresOrm.prisma.user.findUniqueOrThrow({
-        where: { id: userId },
-        select: { streakDays: true, bestStreak: true },
-      })
+      const user = await userRepository.findById(userId)
+      if (!user) throw Boom.notFound('User not found')
 
       const [defaultMilestone, activeMilestones] = await Promise.all([
         streakMilestoneRepository.findDefault(),
