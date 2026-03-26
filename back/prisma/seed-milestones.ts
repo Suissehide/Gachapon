@@ -24,18 +24,21 @@ const MILESTONES = [
 
 async function main() {
   for (const m of MILESTONES) {
+    const existing = await prisma.streakMilestone.findUnique({ where: { day: m.day } })
+    if (existing) {
+      console.log(`Day ${m.day} already seeded, skipping`)
+      continue
+    }
     const reward = await prisma.reward.create({
       data: { tokens: m.tokens, dust: m.dust, xp: m.xp },
     })
-    await prisma.streakMilestone.upsert({
-      where: { day: m.day },
-      update: { isMilestone: m.isMilestone, rewardId: reward.id, isActive: true },
-      create: { day: m.day, isMilestone: m.isMilestone, rewardId: reward.id },
+    await prisma.streakMilestone.create({
+      data: { day: m.day, isMilestone: m.isMilestone, rewardId: reward.id },
     })
     console.log(`Seeded day ${m.day}`)
   }
 }
 
 main()
-  .catch(console.error)
+  .catch((e) => { console.error(e); process.exit(1) })
   .finally(() => prisma.$disconnect())
