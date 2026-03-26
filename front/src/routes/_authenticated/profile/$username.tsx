@@ -28,6 +28,8 @@ function ProfilePage() {
   const { data: profile, isLoading, isError } = useUserProfile(username)
   const currentUser = useAuthStore((s) => s.user)
 
+  const [streakModalOpen, setStreakModalOpen] = useState(false)
+
   if (isLoading) {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
@@ -48,7 +50,6 @@ function ProfilePage() {
   }
 
   const isOwnProfile = currentUser?.username === username
-  const [streakModalOpen, setStreakModalOpen] = useState(false)
   const isAdmin = currentUser?.role === 'SUPER_ADMIN'
   const initials = profile.username[0]?.toUpperCase() ?? '?'
   const joinedYear = new Date(profile.createdAt).getFullYear()
