@@ -1,6 +1,5 @@
-import type { GachaPullEntity, GachaPullWithCard } from '../../../domain/gacha/gacha.types'
+import type { GachaPullEntity, GachaPullWithCard, CardRarity, CardVariant } from '../../../domain/gacha/gacha.types'
 import type { PrimaTransactionClient } from '../client'
-import type { CardVariant } from '../../../domain/gacha/gacha.types'
 
 export type CreateGachaPullInput = {
   userId: string
@@ -13,8 +12,8 @@ export type CreateGachaPullInput = {
 export type RecentPullEntry = {
   username: string
   cardName: string
-  rarity: string
-  variant: string
+  rarity: CardRarity
+  variant: CardVariant
   cardId: string
   imageUrl: string | null
   setName: string
