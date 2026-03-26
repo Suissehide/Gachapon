@@ -18,6 +18,7 @@ import {
   type MediaItem,
   useAdminMedia,
   useDeleteMedia,
+  useRenameMedia,
   useUploadMedia,
 } from '../../queries/useAdminMedia'
 
@@ -31,6 +32,12 @@ function AdminMediaPage() {
   const { data: items = [], isLoading, isError } = useAdminMedia()
   const uploadMutation = useUploadMedia()
   const deleteMutation = useDeleteMedia()
+  const renameMutation = useRenameMedia()
+
+  const handleRename = async (from: string, newName: string) => {
+    const result = await renameMutation.mutateAsync({ from, newName })
+    setActiveItem((prev) => (prev ? { ...prev, key: result.key, url: result.url } : prev))
+  }
 
   const [filter, setFilter] = useState<Filter>('all')
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -283,6 +290,8 @@ function AdminMediaPage() {
                     onDelete={handleSingleDelete}
                     isDeleting={deleteMutation.isPending}
                     onCreateCard={() => setCreateCardOpen(true)}
+                    onRename={handleRename}
+                    isRenaming={renameMutation.isPending}
                   />
                 </div>
               )}
