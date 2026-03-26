@@ -1,6 +1,6 @@
 import type { WebSocket } from '@fastify/websocket'
 
-type WsEvent = {
+type PullResultEvent = {
   type: 'pull:result'
   card: {
     id: string
@@ -16,13 +16,25 @@ type WsEvent = {
   pityCurrent: number
 }
 
-class WsManager {
+export type FeedPullEvent = {
+  type: 'feed:pull'
+  username: string
+  cardName: string
+  rarity: string
+  variant: string
+  cardId: string
+  imageUrl: string | null
+  setName: string
+  pulledAt: string
+}
+
+type WsEvent = PullResultEvent | FeedPullEvent
+
+export class WsManager {
   readonly #connections = new Map<string, WebSocket>()
 
   register(userId: string, ws: WebSocket): void {
     this.#connections.set(userId, ws)
-    // Only evict this userId if the closing socket is still the current one
-    // (prevents a stale close event from evicting a newer reconnection)
     ws.on('close', () => {
       if (this.#connections.get(userId) === ws) {
         this.#connections.delete(userId)
@@ -37,6 +49,19 @@ class WsManager {
         ws.send(JSON.stringify(event))
       } catch {
         // Best-effort push — swallow send errors to avoid failing the HTTP caller
+      }
+    }
+  }
+
+  broadcast(event: FeedPullEvent): void {
+    const json = JSON.stringify(event)
+    for (const ws of this.#connections.values()) {
+      if (ws.readyState === 1 /* OPEN */) {
+        try {
+          ws.send(json)
+        } catch {
+          // Best-effort push
+        }
       }
     }
   }
