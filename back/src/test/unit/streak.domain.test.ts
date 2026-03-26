@@ -1,5 +1,5 @@
-import { describe, expect, it } from '@jest/globals'
-import { calculateStreakUpdate } from '../../main/domain/streak/streak.domain'
+import { beforeEach, describe, expect, it, jest } from '@jest/globals'
+import { calculateStreakUpdate, StreakDomain } from '../../main/domain/streak/streak.domain'
 
 const DAY = 24 * 60 * 60 * 1000
 
@@ -45,9 +45,6 @@ describe('calculateStreakUpdate', () => {
     expect(result.newBestStreak).toBe(8)
   })
 })
-
-import { jest } from '@jest/globals'
-import { StreakDomain } from '../../main/domain/streak/streak.domain'
 
 describe('StreakDomain.updateStreak', () => {
   const mockUserRepo = {
