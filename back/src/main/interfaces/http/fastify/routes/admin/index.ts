@@ -11,6 +11,7 @@ import { adminMediaRouter } from './media.router'
 import { adminScoringConfigRouter } from './scoring-config.router'
 import { adminUpgradesRouter } from './upgrades.router'
 import { adminUsersRouter } from './users.router'
+import { adminStreakRouter } from './streak.router'
 
 export const adminRouter: FastifyPluginAsyncZod = async (fastify) => {
   // Auth appliquée au scope entier : toutes les routes /admin/* sont protégées
@@ -36,4 +37,5 @@ export const adminRouter: FastifyPluginAsyncZod = async (fastify) => {
   await fastify.register(adminUpgradesRouter, { prefix: '/upgrades' })
   await fastify.register(adminScoringConfigRouter, { prefix: '/scoring-config' })
   await fastify.register(adminMediaRouter, { prefix: '/media' })
+  await fastify.register(adminStreakRouter, { prefix: '/streak' })
 }
