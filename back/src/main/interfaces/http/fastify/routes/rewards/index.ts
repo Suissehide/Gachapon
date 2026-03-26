@@ -1,13 +1,45 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
+const claimResultSchema = z.object({
+  tokens: z.number().int(),
+  dust: z.number().int(),
+  xp: z.number().int(),
+  level: z.number().int(),
+  pendingRewardsCount: z.number().int().nonnegative(),
+})
+
+const pendingRewardSchema = z.object({
+  id: z.string().uuid(),
+  source: z.enum(['STREAK', 'ACHIEVEMENT', 'QUEST']),
+  sourceId: z.string().uuid().nullable(),
+  claimedAt: z.date().nullable(),
+  createdAt: z.date(),
+  reward: z.object({ tokens: z.number().int(), dust: z.number().int(), xp: z.number().int() }),
+  streakMilestone: z.object({ day: z.number().int(), isMilestone: z.boolean() }).nullable(),
+})
+
+const historyItemSchema = z.object({
+  id: z.string().uuid(),
+  source: z.enum(['STREAK', 'ACHIEVEMENT', 'QUEST']),
+  sourceId: z.string().uuid().nullable(),
+  claimedAt: z.date().nullable(),
+  createdAt: z.date(),
+  reward: z.object({ tokens: z.number().int(), dust: z.number().int(), xp: z.number().int() }),
+})
+
 export const rewardsRouter: FastifyPluginCallbackZod = (fastify) => {
   const { rewardsDomain } = fastify.iocContainer
 
   // GET /rewards/pending — list unclaimed rewards for the current user
   fastify.get(
     '/pending',
-    { onRequest: [fastify.verifySessionCookie] },
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        response: { 200: z.array(pendingRewardSchema) },
+      },
+    },
     async (request) => {
       return rewardsDomain.getPending(request.user.userID)
     },
@@ -19,7 +51,8 @@ export const rewardsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        params: z.object({ id: z.string() }),
+        params: z.object({ id: z.string().uuid() }),
+        response: { 200: claimResultSchema },
       },
     },
     async (request) => {
@@ -30,11 +63,17 @@ export const rewardsRouter: FastifyPluginCallbackZod = (fastify) => {
   // POST /rewards/claim-all — claim all pending rewards
   fastify.post(
     '/claim-all',
-    { onRequest: [fastify.verifySessionCookie] },
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        response: { 200: claimResultSchema },
+      },
+    },
     async (request, reply) => {
       const result = await rewardsDomain.claimAll(request.user.userID)
       if (result === null) {
-        return reply.status(204).send()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (reply as any).status(204).send()
       }
       return result
     },
@@ -50,6 +89,14 @@ export const rewardsRouter: FastifyPluginCallbackZod = (fastify) => {
           page: z.coerce.number().int().min(1).default(1),
           limit: z.coerce.number().int().min(1).max(100).default(20),
         }),
+        response: {
+          200: z.object({
+            data: z.array(historyItemSchema),
+            total: z.number().int(),
+            page: z.number().int(),
+            limit: z.number().int(),
+          }),
+        },
       },
     },
     async (request) => {
