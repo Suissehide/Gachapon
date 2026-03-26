@@ -1,22 +1,20 @@
-import {
-  Check,
-  Copy,
-  ExternalLink,
-  FileImage,
-  Plus,
-  Trash2,
-} from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Check, Copy, ExternalLink, FileImage, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { useState } from 'react'
+import { isApiError } from '../../../libs/httpErrorHandler'
+import { useToast } from '../../../hooks/useToast'
 
 import type { MediaItem } from '../../../queries/useAdminMedia'
 import { Button } from '../../ui/button'
 import { Card } from '../../ui/card'
+import { Input } from '../../ui/input'
 
 interface MediaDetailPanelProps {
   item: MediaItem
   onDelete: (key: string) => void
   isDeleting?: boolean
   onCreateCard?: () => void
+  onRename: (from: string, newName: string) => Promise<void>
+  isRenaming?: boolean
 }
 
 const RARITY_COLORS: Record<string, string> = {
@@ -32,15 +30,55 @@ export function MediaDetailPanel({
   onDelete,
   isDeleting,
   onCreateCard,
+  onRename,
+  isRenaming,
 }: MediaDetailPanelProps) {
   const [copied, setCopied] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
-  useEffect(() => {
-    setConfirmDelete(false)
-  }, [item.key])
-
   const filename = item.key.split('/').pop() ?? item.key
+
+  const { toast } = useToast()
+  const [isEditing, setIsEditing] = useState(false)
+  const [renameValue, setRenameValue] = useState('')
+  const [renameError, setRenameError] = useState<string | null>(null)
+
+  const nameWithoutExt = filename.replace(/\.[^.]+$/, '')
+
+  const handleStartEdit = () => {
+    setRenameValue(nameWithoutExt)
+    setRenameError(null)
+    setIsEditing(true)
+  }
+
+  const handleCancelEdit = () => {
+    setIsEditing(false)
+    setRenameError(null)
+  }
+
+  const handleSubmitRename = async () => {
+    const trimmed = renameValue.trim()
+    if (!trimmed || trimmed === nameWithoutExt) {
+      handleCancelEdit()
+      return
+    }
+    try {
+      await onRename(item.key, trimmed)
+      setIsEditing(false)
+      setRenameError(null)
+    } catch (err) {
+      if (isApiError(err) && err.status === 409) {
+        setRenameError('Ce nom est déjà utilisé')
+      } else {
+        setIsEditing(false)
+        toast({
+          title: 'Erreur',
+          message: err instanceof Error ? err.message : 'Erreur lors du renommage',
+          severity: 'error',
+        })
+      }
+    }
+  }
   const sizeKb = (item.size / 1024).toFixed(0)
   const date = new Date(item.lastModified).toLocaleDateString('fr-FR', {
     day: 'numeric',
@@ -48,8 +86,8 @@ export function MediaDetailPanel({
     year: 'numeric',
   })
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(item.url)
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(item.url)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -110,12 +148,59 @@ export function MediaDetailPanel({
             Fichier
           </span>
         </div>
-        <p
-          className="truncate text-sm font-semibold text-text"
-          title={filename}
-        >
-          {filename}
-        </p>
+        {isEditing ? (
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center gap-1.5">
+              <Input
+                value={renameValue}
+                onChange={(e) => {
+                  setRenameValue(e.target.value)
+                  setRenameError(null)
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSubmitRename()
+                  if (e.key === 'Escape') handleCancelEdit()
+                }}
+                disabled={isRenaming}
+                className="h-7 text-sm"
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={handleSubmitRename}
+                disabled={isRenaming}
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-green-400 hover:bg-green-400/10 disabled:opacity-50"
+              >
+                <Check className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                disabled={isRenaming}
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-text-light hover:bg-muted disabled:opacity-50"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            {renameError && (
+              <p className="text-[11px] text-red-400">{renameError}</p>
+            )}
+          </div>
+        ) : (
+          <div className="group flex items-center gap-1.5">
+            <p className="truncate text-sm font-semibold text-text" title={filename}>
+              {filename}
+            </p>
+            <button
+              type="button"
+              onClick={handleStartEdit}
+              className="shrink-0 text-text-light opacity-0 transition-opacity hover:text-text group-hover:opacity-100"
+              title="Renommer"
+            >
+              <Pencil className="h-3 w-3" />
+            </button>
+          </div>
+        )}
         <p
           className="mt-0.5 truncate text-[11px] text-text-light/70"
           title={item.key}
