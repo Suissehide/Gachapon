@@ -129,7 +129,7 @@ export function RewardCard({ reward, onClaim, isLoading }: RewardCardProps) {
           onClick={() => onClaim(reward.id)}
           disabled={isLoading}
           className={cn(
-            'ml-auto shrink-0',
+            'ml-auto shrink-0 self-center',
             isMilestone && 'shadow-[0_0_12px_rgba(245,158,11,0.3)]',
           )}
         >
