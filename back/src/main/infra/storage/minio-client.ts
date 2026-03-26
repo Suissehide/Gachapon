@@ -6,6 +6,7 @@ import {
   ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
+  S3ServiceException,
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
@@ -62,10 +63,7 @@ export class MinioClient implements StorageClientInterface {
       await this.#s3.send(new HeadObjectCommand({ Bucket: this.#bucket, Key: key }))
       return true
     } catch (err) {
-      if (
-        err instanceof Error &&
-        (err as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode === 404
-      ) {
+      if (err instanceof S3ServiceException && err.$metadata.httpStatusCode === 404) {
         return false
       }
       throw err
@@ -73,13 +71,16 @@ export class MinioClient implements StorageClientInterface {
   }
 
   async copy(sourceKey: string, destKey: string): Promise<void> {
-    await this.#s3.send(
+    const response = await this.#s3.send(
       new CopyObjectCommand({
         Bucket: this.#bucket,
         CopySource: `${this.#bucket}/${sourceKey}`,
         Key: destKey,
       }),
     )
+    if (!response.CopyObjectResult?.ETag) {
+      throw new Error(`Copy failed: no CopyObjectResult returned for source key "${sourceKey}"`)
+    }
   }
 
   publicUrl(key: string): string {
