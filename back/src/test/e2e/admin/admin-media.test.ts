@@ -13,7 +13,7 @@ describe('Admin media routes', () => {
       payload: { username: `mediaadmin${suffix}`, email: `mediaadmin${suffix}@test.com`, password: 'Password123!' },
     })
     await (app as any).iocContainer.postgresOrm.prisma.user.update({
-      where: { email: `mediaadmin${suffix}@test.com` }, data: { role: 'SUPER_ADMIN' },
+      where: { email: `mediaadmin${suffix}@test.com` }, data: { role: 'SUPER_ADMIN', emailVerifiedAt: new Date() },
     })
     const loginRes = await app.inject({
       method: 'POST', url: '/auth/login',

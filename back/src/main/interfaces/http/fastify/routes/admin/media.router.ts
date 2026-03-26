@@ -2,7 +2,7 @@ import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
-import { ALLOWED_IMAGE_MIME, MAX_IMAGE_SIZE, uploadCardImage } from './card-image.helpers'
+import { ALLOWED_IMAGE_MIME, MAX_IMAGE_SIZE, sanitizeName, uploadCardImage } from './card-image.helpers'
 
 const SAFE_KEY_RE = /^cards\/[^/]+$/
 
@@ -127,6 +127,75 @@ export const adminMediaRouter: FastifyPluginCallbackZod = (fastify) => {
       }
 
       return { deleted }
+    },
+  )
+
+  // PATCH /admin/media/rename — renomme un objet storage + met à jour la carte liée
+  fastify.patch(
+    '/rename',
+    {
+      schema: {
+        body: z.object({ from: z.string(), newName: z.string() }),
+      },
+    },
+    async (request) => {
+      const { storageClient, postgresOrm } = fastify.iocContainer
+      const { from, newName } = request.body
+
+      // 1. Valider format de `from`
+      if (!SAFE_KEY_RE.test(from)) {
+        throw Boom.badRequest('Clé invalide')
+      }
+
+      // 2. Rejeter les points dans newName (évite double extension)
+      if (newName.includes('.')) {
+        throw Boom.badRequest('Le nom ne peut pas contenir de point')
+      }
+
+      // 3. Sanitize
+      const sanitized = sanitizeName(newName)
+      if (!sanitized || sanitized.replace(/-/g, '').length === 0) {
+        throw Boom.badRequest('Nom invalide')
+      }
+
+      // 4. Reconstruire la clé destination
+      const ext = from.split('.').pop()
+      const to = `cards/${sanitized}.${ext}`
+
+      // 5. No-op
+      if (to === from) {
+        throw Boom.badRequest('Le nom est identique')
+      }
+
+      // 6. Vérifier que la source existe
+      if (!(await storageClient.exists(from))) {
+        throw Boom.notFound('Média introuvable')
+      }
+
+      // 7. Vérifier que la destination est libre
+      if (await storageClient.exists(to)) {
+        throw Boom.conflict('Ce nom est déjà utilisé')
+      }
+
+      // 8. Copier
+      await storageClient.copy(from, to)
+
+      // 9. Supprimer la source (best-effort — un orphelin est acceptable)
+      try {
+        await storageClient.delete(from)
+      } catch (deleteErr) {
+        request.log.warn({ err: deleteErr, key: from }, 'Failed to delete source after copy — key becomes orphaned')
+      }
+
+      // 10. Mettre à jour la carte liée si présente
+      const oldUrl = storageClient.publicUrl(from)
+      const newUrl = storageClient.publicUrl(to)
+      await postgresOrm.prisma.card.updateMany({
+        where: { imageUrl: oldUrl },
+        data: { imageUrl: newUrl },
+      })
+
+      return { key: to, url: newUrl }
     },
   )
 }
