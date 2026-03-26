@@ -82,54 +82,56 @@ export function RewardCard({ reward, onClaim, isLoading }: RewardCardProps) {
         ],
       )}
     >
-      {/* Source row */}
-      <div className="flex items-center justify-between px-3 pt-2.5 pb-0">
-        <div className="flex items-center gap-1.5">
-          {cfg.icon}
-          <span className="text-[10px] font-bold uppercase tracking-widest text-text-light/70">
-            {sourceLabel(reward)}
-          </span>
-        </div>
-        {isMilestone && (
-          <span className="flex items-center gap-1 rounded-full border border-yellow-400/30 bg-yellow-400/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-yellow-400">
-            <Trophy className="h-2.5 w-2.5" />
-            Jalon
-          </span>
-        )}
-      </div>
+      <div className="flex items-center gap-12 px-3 py-2.5">
+        {/* Left: source + amounts */}
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          {/* Source row */}
+          <div className="flex items-center gap-1.5">
+            {cfg.icon}
+            <span className="text-[10px] font-bold uppercase tracking-widest text-text-light/70">
+              {sourceLabel(reward)}
+            </span>
+            {isMilestone && (
+              <span className="flex items-center gap-1 rounded-full border border-yellow-400/30 bg-yellow-400/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-yellow-400">
+                <Trophy className="h-2.5 w-2.5" />
+                Jalon
+              </span>
+            )}
+          </div>
 
-      {/* Reward amounts + claim */}
-      <div className="flex items-center gap-3 px-3 py-2.5">
-        <div className="flex items-center gap-4">
-          {reward.reward.tokens > 0 && (
-            <Stat
-              icon={<Ticket className="h-3.5 w-3.5 text-primary" />}
-              value={reward.reward.tokens}
-              label="ticket"
-            />
-          )}
-          {reward.reward.dust > 0 && (
-            <Stat
-              icon={<Sparkles className="h-3.5 w-3.5 text-accent" />}
-              value={reward.reward.dust}
-              label="poussière"
-            />
-          )}
-          {reward.reward.xp > 0 && (
-            <Stat
-              icon={<Star className="h-3.5 w-3.5 text-yellow-400" />}
-              value={reward.reward.xp}
-              label="XP"
-            />
-          )}
+          {/* Amounts */}
+          <div className="flex items-center gap-4">
+            {reward.reward.tokens > 0 && (
+              <Stat
+                icon={<Ticket className="h-3.5 w-3.5 text-primary" />}
+                value={reward.reward.tokens}
+                label="ticket"
+              />
+            )}
+            {reward.reward.dust > 0 && (
+              <Stat
+                icon={<Sparkles className="h-3.5 w-3.5 text-accent" />}
+                value={reward.reward.dust}
+                label="poussière"
+              />
+            )}
+            {reward.reward.xp > 0 && (
+              <Stat
+                icon={<Star className="h-3.5 w-3.5 text-yellow-400" />}
+                value={reward.reward.xp}
+                label="XP"
+              />
+            )}
+          </div>
         </div>
 
+        {/* Right: claim button — centré verticalement sur toute la hauteur */}
         <Button
           size="sm"
           onClick={() => onClaim(reward.id)}
           disabled={isLoading}
           className={cn(
-            'ml-auto shrink-0 self-center',
+            'shrink-0',
             isMilestone && 'shadow-[0_0_12px_rgba(245,158,11,0.3)]',
           )}
         >

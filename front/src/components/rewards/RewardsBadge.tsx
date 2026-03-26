@@ -18,11 +18,14 @@ export function RewardsBadge({ pendingRewardsCount }: RewardsBadgeProps) {
         setIsOpen(false)
       }
     }
-    if (isOpen) document.addEventListener('mousedown', handleClickOutside)
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isOpen])
 
-  const displayCount = pendingRewardsCount > 9 ? '9+' : String(pendingRewardsCount)
+  const displayCount =
+    pendingRewardsCount > 9 ? '9+' : String(pendingRewardsCount)
 
   return (
     <div ref={ref} className="relative">
@@ -37,7 +40,7 @@ export function RewardsBadge({ pendingRewardsCount }: RewardsBadgeProps) {
       </Button>
 
       {pendingRewardsCount > 0 && (
-        <div className="pointer-events-none absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+        <div className="pointer-events-none absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-400 text-[10px] font-bold text-white">
           {displayCount}
         </div>
       )}
