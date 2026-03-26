@@ -71,6 +71,14 @@ export class UserRepository implements UserRepositoryInterface {
     })
   }
 
+  async updateStreakInTx(
+    tx: PrimaTransactionClient,
+    id: string,
+    data: { streakDays: number; bestStreak: number; lastLoginAt: Date },
+  ): Promise<void> {
+    await tx.user.update({ where: { id }, data })
+  }
+
   findByEmailVerificationToken(token: string): Promise<UserEntity | null> {
     return this.#prisma.user.findUnique({ where: { emailVerificationToken: token } })
   }

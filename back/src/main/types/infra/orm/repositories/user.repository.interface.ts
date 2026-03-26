@@ -28,6 +28,11 @@ export interface UserRepositoryInterface {
     id: string,
     data: PullUpdateInput,
   ): Promise<void>
+  updateStreakInTx(
+    tx: PrimaTransactionClient,
+    id: string,
+    data: { streakDays: number; bestStreak: number; lastLoginAt: Date },
+  ): Promise<void>
   findByEmailVerificationToken(token: string): Promise<UserEntity | null>
   findByPasswordResetToken(token: string): Promise<UserEntity | null>
   deleteUnverifiedByEmail(email: string): Promise<void>

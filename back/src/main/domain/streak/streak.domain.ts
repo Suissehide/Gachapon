@@ -81,9 +81,10 @@ export class StreakDomain {
 
     if (shouldSkip) return
 
-    await tx.user.update({
-      where: { id: userId },
-      data: { streakDays: newStreakDays, bestStreak: newBestStreak, lastLoginAt: new Date() },
+    await this.#userRepository.updateStreakInTx(tx, userId, {
+      streakDays: newStreakDays,
+      bestStreak: newBestStreak,
+      lastLoginAt: new Date(),
     })
 
     const milestone = await this.#streakMilestoneRepository.findBestForDay(newStreakDays)
