@@ -79,6 +79,14 @@ export class UserRepository implements UserRepositoryInterface {
     await tx.user.update({ where: { id }, data })
   }
 
+  async updateAfterClaimInTx(
+    tx: PrimaTransactionClient,
+    id: string,
+    data: { tokens: number; dust: number; xp: number; level: number },
+  ): Promise<void> {
+    await tx.user.update({ where: { id }, data })
+  }
+
   findByEmailVerificationToken(token: string): Promise<UserEntity | null> {
     return this.#prisma.user.findUnique({ where: { emailVerificationToken: token } })
   }
