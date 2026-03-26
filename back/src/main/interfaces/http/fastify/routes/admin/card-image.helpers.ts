@@ -9,7 +9,7 @@ export const ALLOWED_IMAGE_MIME = new Set([
 ])
 export const MAX_IMAGE_SIZE = 5 * 1024 * 1024
 
-function sanitizeName(name: string): string {
+export function sanitizeName(name: string): string {
   return name
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')

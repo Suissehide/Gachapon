@@ -4,6 +4,8 @@ export interface StorageClientInterface {
   delete(key: string): Promise<void>
   publicUrl(key: string): string
   listObjects(prefix: string): Promise<StorageObject[]>
+  exists(key: string): Promise<boolean>
+  copy(sourceKey: string, destKey: string): Promise<void>
 }
 
 export type StorageObject = {

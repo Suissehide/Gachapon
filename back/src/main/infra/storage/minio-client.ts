@@ -1,6 +1,8 @@
 import {
+  CopyObjectCommand,
   DeleteObjectCommand,
   GetObjectCommand,
+  HeadObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
@@ -52,6 +54,31 @@ export class MinioClient implements StorageClientInterface {
   async delete(key: string): Promise<void> {
     await this.#s3.send(
       new DeleteObjectCommand({ Bucket: this.#bucket, Key: key }),
+    )
+  }
+
+  async exists(key: string): Promise<boolean> {
+    try {
+      await this.#s3.send(new HeadObjectCommand({ Bucket: this.#bucket, Key: key }))
+      return true
+    } catch (err) {
+      if (
+        err instanceof Error &&
+        (err as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode === 404
+      ) {
+        return false
+      }
+      throw err
+    }
+  }
+
+  async copy(sourceKey: string, destKey: string): Promise<void> {
+    await this.#s3.send(
+      new CopyObjectCommand({
+        Bucket: this.#bucket,
+        CopySource: `${this.#bucket}/${sourceKey}`,
+        Key: destKey,
+      }),
     )
   }
 
