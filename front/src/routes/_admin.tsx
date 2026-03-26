@@ -10,6 +10,7 @@ import {
   ArrowLeft,
   BarChart2,
   ChevronRight,
+  Flame,
   Images,
   LayoutDashboard,
   Package,
@@ -43,6 +44,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/admin/upgrades', label: 'Améliorations', icon: Zap },
   { to: '/admin/scoring', label: 'Scoring', icon: Trophy },
   { to: '/admin/config', label: 'Config', icon: Settings },
+  { to: '/admin/streak', label: 'Streak', icon: Flame },
   { to: '/admin/stats', label: 'Stats', icon: BarChart2 },
 ]
 
