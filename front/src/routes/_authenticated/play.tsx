@@ -6,6 +6,7 @@ import { type CSSProperties, useEffect, useRef, useState } from 'react'
 
 import { CardReveal } from '../../components/machine/CardReveal'
 import { GachaBall } from '../../components/machine/GachaBall'
+import { LiveFeed } from '../../components/play/LiveFeed'
 import { Button } from '../../components/ui/button.tsx'
 import { apiUrl as API_URL } from '../../constants/config.constant.ts'
 import { wsClient } from '../../lib/ws'
@@ -297,6 +298,9 @@ function Play() {
 
       {/* Card reveal overlay */}
       <CardReveal result={pullResult} onClose={handleClose} />
+
+      {/* Live feed sidebar */}
+      <LiveFeed />
     </div>
   )
 }
