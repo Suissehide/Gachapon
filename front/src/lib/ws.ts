@@ -1,3 +1,5 @@
+import type { FeedEntry } from '../types/feed'
+
 type WsEvent =
   | { type: 'connected'; userId: string }
   | {
@@ -15,6 +17,7 @@ type WsEvent =
       tokensRemaining: number
       pityCurrent: number
     }
+  | ({ type: 'feed:pull' } & FeedEntry)
   | { type: 'error'; message: string }
 
 type WsEventListener = (event: WsEvent) => void

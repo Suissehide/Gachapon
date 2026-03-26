@@ -1,6 +1,7 @@
 import { apiUrl } from '../constants/config.constant.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
+import type { FeedEntry } from '../types/feed'
 
 export type PullResult = {
   card: {
@@ -69,6 +70,14 @@ export const GachaApi = {
     const res = await fetchWithAuth(`${apiUrl}/pulls/history?page=${page}`)
     if (!res.ok) {
       handleHttpError(res, {}, "Erreur lors de la récupération de l'historique")
+    }
+    return res.json()
+  },
+
+  getRecentPulls: async (limit = 20): Promise<FeedEntry[]> => {
+    const res = await fetchWithAuth(`${apiUrl}/pulls/recent?limit=${limit}`)
+    if (!res.ok) {
+      handleHttpError(res, {}, 'Erreur lors du chargement du fil')
     }
     return res.json()
   },

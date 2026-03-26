@@ -14,5 +14,13 @@ export const RARITY_COLORS: Record<string, string> = {
   LEGENDARY: 'bg-amber-500/20 text-amber-400',
 }
 
+export const RARITY_TEXT_COLORS: Record<string, string> = {
+  COMMON: 'text-green-400',
+  UNCOMMON: 'text-blue-400',
+  RARE: 'text-violet-400',
+  EPIC: 'text-pink-400',
+  LEGENDARY: 'text-amber-400',
+}
+
 // Utilisé par CardVariantPanel pour itérer les 3 champs
 export const HOLO_ELIGIBLE_RARITIES = ['RARE', 'EPIC', 'LEGENDARY'] as const
