@@ -14,13 +14,19 @@ describe('GET /teams/:id/ranking', () => {
     app = await buildTestApp()
     const prisma = (app as any).iocContainer.postgresOrm.prisma
 
+    const loginUser = async (email: string, password: string) => {
+      const res = await app.inject({ method: 'POST', url: '/auth/login', payload: { email, password } })
+      return res.headers['set-cookie'] as string
+    }
+
     // Register owner
     const ownerReg = await app.inject({
       method: 'POST', url: '/auth/register',
       payload: { username: `rankowner${suffix}`, email: `rankowner${suffix}@test.com`, password: 'Password123!' },
     })
     expect(ownerReg.statusCode).toBe(201)
-    ownerCookies = ownerReg.headers['set-cookie'] as string
+    await prisma.user.update({ where: { email: `rankowner${suffix}@test.com` }, data: { emailVerifiedAt: new Date() } })
+    ownerCookies = await loginUser(`rankowner${suffix}@test.com`, 'Password123!')
 
     // Register member
     const memberReg = await app.inject({
@@ -28,7 +34,8 @@ describe('GET /teams/:id/ranking', () => {
       payload: { username: `rankmember${suffix}`, email: `rankmember${suffix}@test.com`, password: 'Password123!' },
     })
     expect(memberReg.statusCode).toBe(201)
-    memberCookies = memberReg.headers['set-cookie'] as string
+    await prisma.user.update({ where: { email: `rankmember${suffix}@test.com` }, data: { emailVerifiedAt: new Date() } })
+    memberCookies = await loginUser(`rankmember${suffix}@test.com`, 'Password123!')
 
     // Register outsider (not in team)
     const outsiderReg = await app.inject({
@@ -36,7 +43,8 @@ describe('GET /teams/:id/ranking', () => {
       payload: { username: `rankout${suffix}`, email: `rankout${suffix}@test.com`, password: 'Password123!' },
     })
     expect(outsiderReg.statusCode).toBe(201)
-    outsiderCookies = outsiderReg.headers['set-cookie'] as string
+    await prisma.user.update({ where: { email: `rankout${suffix}@test.com` }, data: { emailVerifiedAt: new Date() } })
+    outsiderCookies = await loginUser(`rankout${suffix}@test.com`, 'Password123!')
 
     // Create team as owner
     const teamRes = await app.inject({

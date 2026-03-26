@@ -20,7 +20,7 @@ export type ClaimResult = {
 }
 
 export const RewardsApi = {
-  getPendingRewards: async (): Promise<{ rewards: PendingReward[] }> => {
+  getPendingRewards: async (): Promise<PendingReward[]> => {
     const res = await fetchWithAuth(`${apiUrl}/rewards/pending`)
     if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors de la récupération des récompenses')

@@ -12,19 +12,37 @@ describe('Teams routes', () => {
   beforeAll(async () => {
     app = await buildTestApp()
 
-    const resA = await app.inject({
+    const { postgresOrm } = (app as any).iocContainer
+
+    await app.inject({
       method: 'POST',
       url: '/auth/register',
       payload: { username: `teamA${suffix}`, email: `teamA${suffix}@test.com`, password: 'Password123!' },
     })
-    cookiesA = resA.headers['set-cookie'] as string
+    await postgresOrm.prisma.user.update({
+      where: { email: `teamA${suffix}@test.com` },
+      data: { emailVerifiedAt: new Date() },
+    })
+    const loginA = await app.inject({
+      method: 'POST', url: '/auth/login',
+      payload: { email: `teamA${suffix}@test.com`, password: 'Password123!' },
+    })
+    cookiesA = loginA.headers['set-cookie'] as string
 
-    const resB = await app.inject({
+    await app.inject({
       method: 'POST',
       url: '/auth/register',
       payload: { username: `teamB${suffix}`, email: `teamB${suffix}@test.com`, password: 'Password123!' },
     })
-    cookiesB = resB.headers['set-cookie'] as string
+    await postgresOrm.prisma.user.update({
+      where: { email: `teamB${suffix}@test.com` },
+      data: { emailVerifiedAt: new Date() },
+    })
+    const loginB = await app.inject({
+      method: 'POST', url: '/auth/login',
+      payload: { email: `teamB${suffix}@test.com`, password: 'Password123!' },
+    })
+    cookiesB = loginB.headers['set-cookie'] as string
   })
 
   afterAll(() => app.close())

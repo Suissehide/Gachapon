@@ -12,24 +12,34 @@ describe('Admin guard', () => {
   beforeAll(async () => {
     app = await buildTestApp()
 
+    const { postgresOrm } = (app as any).iocContainer
+
     // Créer un user normal
-    const userRes = await app.inject({
+    await app.inject({
       method: 'POST',
       url: '/auth/register',
       payload: { username: `user${suffix}`, email: `user${suffix}@test.com`, password: 'Password123!' },
     })
-    userCookies = userRes.headers['set-cookie'] as string
+    await postgresOrm.prisma.user.update({
+      where: { email: `user${suffix}@test.com` },
+      data: { emailVerifiedAt: new Date() },
+    })
+    const userLoginRes = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email: `user${suffix}@test.com`, password: 'Password123!' },
+    })
+    userCookies = userLoginRes.headers['set-cookie'] as string
 
     // Créer un admin
-    const adminRes = await app.inject({
+    await app.inject({
       method: 'POST',
       url: '/auth/register',
       payload: { username: `admin${suffix}`, email: `admin${suffix}@test.com`, password: 'Password123!' },
     })
-    const { postgresOrm } = (app as any).iocContainer
     await postgresOrm.prisma.user.update({
       where: { email: `admin${suffix}@test.com` },
-      data: { role: 'SUPER_ADMIN' },
+      data: { role: 'SUPER_ADMIN', emailVerifiedAt: new Date() },
     })
     // Re-login after role promotion to get a JWT with the updated role
     const adminLoginRes = await app.inject({

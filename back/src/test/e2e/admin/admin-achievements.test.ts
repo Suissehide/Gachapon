@@ -16,7 +16,7 @@ describe('Admin achievements routes', () => {
     })
     adminCookies = res.headers['set-cookie'] as string
     await (app as any).iocContainer.postgresOrm.prisma.user.update({
-      where: { email: `achadmin${suffix}@test.com` }, data: { role: 'SUPER_ADMIN' },
+      where: { email: `achadmin${suffix}@test.com` }, data: { role: 'SUPER_ADMIN', emailVerifiedAt: new Date() },
     })
     const loginRes = await app.inject({
       method: 'POST', url: '/auth/login',

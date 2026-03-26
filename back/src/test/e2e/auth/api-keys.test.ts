@@ -8,17 +8,29 @@ describe('API Keys', () => {
 
   beforeAll(async () => {
     app = await buildTestApp()
-    const res = await app.inject({
+    const suffix = Date.now()
+    const email = `apikey_${suffix}@example.com`
+    await app.inject({
       method: 'POST',
       url: '/auth/register',
       payload: {
-        username: `apikeyuser_${Date.now()}`,
-        email: `apikey_${Date.now()}@example.com`,
+        username: `apikeyuser_${suffix}`,
+        email,
         password: 'Password123!',
       },
     })
+    const { postgresOrm } = app.iocContainer
+    await postgresOrm.prisma.user.update({
+      where: { email },
+      data: { emailVerifiedAt: new Date() },
+    })
+    const loginRes = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email, password: 'Password123!' },
+    })
     accessCookie =
-      res.cookies.find((c: any) => c.name === 'access_token')?.value ?? ''
+      loginRes.cookies.find((c: any) => c.name === 'access_token')?.value ?? ''
   })
   afterAll(async () => {
     await app.close()

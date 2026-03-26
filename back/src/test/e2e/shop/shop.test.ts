@@ -10,7 +10,7 @@ describe('Shop routes', () => {
 
   beforeAll(async () => {
     app = await buildTestApp()
-    const res = await app.inject({
+    await app.inject({
       method: 'POST',
       url: '/auth/register',
       payload: {
@@ -19,8 +19,18 @@ describe('Shop routes', () => {
         password: 'Password123!',
       },
     })
-    cookies = res.headers['set-cookie'] as string
-    userId = res.json().id
+    const { postgresOrm } = (app as any).iocContainer
+    const user = await postgresOrm.prisma.user.update({
+      where: { email: `shop${suffix}@test.com` },
+      data: { emailVerifiedAt: new Date() },
+    })
+    userId = user.id
+    const loginRes = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email: `shop${suffix}@test.com`, password: 'Password123!' },
+    })
+    cookies = loginRes.headers['set-cookie'] as string
   })
 
   afterAll(() => app.close())

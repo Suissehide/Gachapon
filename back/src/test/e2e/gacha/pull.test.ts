@@ -13,21 +13,26 @@ describe('Gacha routes', () => {
   beforeAll(async () => {
     app = await buildTestApp()
 
-    // Register + get cookies
+    // Register + verify + login
     const res = await app.inject({
       method: 'POST',
       url: '/auth/register',
       payload: { username, email, password },
     })
     expect(res.statusCode).toBe(201)
-    cookies = res.headers['set-cookie'] as string
 
-    // Give the user 3 tokens directly via DB
     const { postgresOrm } = (app as any).iocContainer
     await postgresOrm.prisma.user.update({
       where: { email },
-      data: { tokens: 3, lastTokenAt: new Date() },
+      data: { emailVerifiedAt: new Date(), tokens: 3, lastTokenAt: new Date() },
     })
+
+    const loginRes = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email, password },
+    })
+    cookies = loginRes.headers['set-cookie'] as string
   })
 
   afterAll(async () => {

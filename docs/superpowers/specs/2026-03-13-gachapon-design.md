@@ -515,7 +515,7 @@ front/src/
 │   ├── play.tsx
 │   ├── collection.tsx
 │   ├── shop.tsx
-│   ├── teams.tsx
+│   ├── index.tsx
 │   ├── admin/
 │   └── ...
 ├── components/

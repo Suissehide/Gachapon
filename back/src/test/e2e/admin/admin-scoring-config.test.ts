@@ -15,7 +15,7 @@ describe('Admin scoring-config routes', () => {
     })
     adminCookies = res.headers['set-cookie'] as string
     await (app as any).iocContainer.postgresOrm.prisma.user.update({
-      where: { email: `scoring${suffix}@test.com` }, data: { role: 'SUPER_ADMIN' },
+      where: { email: `scoring${suffix}@test.com` }, data: { role: 'SUPER_ADMIN', emailVerifiedAt: new Date() },
     })
     // Re-login to get JWT with SUPER_ADMIN role
     const loginRes = await app.inject({

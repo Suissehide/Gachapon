@@ -10,7 +10,7 @@ describe('Collection routes', () => {
 
   beforeAll(async () => {
     app = await buildTestApp()
-    const res = await app.inject({
+    await app.inject({
       method: 'POST',
       url: '/auth/register',
       payload: {
@@ -19,15 +19,21 @@ describe('Collection routes', () => {
         password: 'Password123!',
       },
     })
-    cookies = res.headers['set-cookie'] as string
-    userId = res.json().id
 
     // Donner 5 tokens pour pouvoir tirer
     const { postgresOrm } = (app as any).iocContainer
-    await postgresOrm.prisma.user.update({
-      where: { id: userId },
-      data: { tokens: 5, lastTokenAt: new Date() },
+    const user = await postgresOrm.prisma.user.update({
+      where: { email: `coll${suffix}@test.com` },
+      data: { emailVerifiedAt: new Date(), tokens: 5, lastTokenAt: new Date() },
     })
+    userId = user.id
+
+    const loginRes = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email: `coll${suffix}@test.com`, password: 'Password123!' },
+    })
+    cookies = loginRes.headers['set-cookie'] as string
   })
 
   afterAll(() => app.close())

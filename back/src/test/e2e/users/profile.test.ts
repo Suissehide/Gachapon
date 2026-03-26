@@ -11,7 +11,7 @@ describe('User profile route', () => {
   beforeAll(async () => {
     app = await buildTestApp()
     username = `prof${suffix}`
-    const res = await app.inject({
+    await app.inject({
       method: 'POST',
       url: '/auth/register',
       payload: {
@@ -20,7 +20,17 @@ describe('User profile route', () => {
         password: 'Password123!',
       },
     })
-    cookies = res.headers['set-cookie'] as string
+    const { postgresOrm } = (app as any).iocContainer
+    await postgresOrm.prisma.user.update({
+      where: { email: `prof${suffix}@test.com` },
+      data: { emailVerifiedAt: new Date() },
+    })
+    const loginRes = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email: `prof${suffix}@test.com`, password: 'Password123!' },
+    })
+    cookies = loginRes.headers['set-cookie'] as string
   })
 
   afterAll(() => app.close())

@@ -53,12 +53,12 @@ const RATES = {
 describe('pickVariant', () => {
   afterEach(() => jest.restoreAllMocks())
 
-  it('retourne null pour COMMON', () => {
-    expect(pickVariant('COMMON', RATES)).toBeNull()
+  it('retourne NORMAL pour COMMON (non éligible aux variantes)', () => {
+    expect(pickVariant('COMMON', RATES)).toBe('NORMAL')
   })
 
-  it('retourne null pour UNCOMMON', () => {
-    expect(pickVariant('UNCOMMON', RATES)).toBeNull()
+  it('retourne NORMAL pour UNCOMMON (non éligible aux variantes)', () => {
+    expect(pickVariant('UNCOMMON', RATES)).toBe('NORMAL')
   })
 
   it('retourne BRILLIANT si roll < brilliantRate', () => {
@@ -71,9 +71,9 @@ describe('pickVariant', () => {
     expect(pickVariant('RARE', RATES)).toBe('HOLOGRAPHIC')
   })
 
-  it('retourne null si roll >= brilliantRate + holoRate', () => {
+  it('retourne NORMAL si roll >= brilliantRate + holoRate', () => {
     jest.spyOn(Math, 'random').mockReturnValue(0.10) // roll = 10 >= 7
-    expect(pickVariant('RARE', RATES)).toBeNull()
+    expect(pickVariant('RARE', RATES)).toBe('NORMAL')
   })
 
   it('utilise les bons taux selon la rareté (LEGENDARY)', () => {

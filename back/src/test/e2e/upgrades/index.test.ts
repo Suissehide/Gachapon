@@ -20,14 +20,20 @@ describe('Upgrades routes', () => {
       payload: { username, email, password },
     })
     expect(res.statusCode).toBe(201)
-    cookies = res.headers['set-cookie'] as string
 
     const { postgresOrm } = (app as any).iocContainer
     const user = await postgresOrm.prisma.user.update({
       where: { email },
-      data: { dust: 500000 },
+      data: { emailVerifiedAt: new Date(), dust: 500000 },
     })
     userId = user.id
+
+    const loginRes = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email, password },
+    })
+    cookies = loginRes.headers['set-cookie'] as string
   })
 
   afterAll(async () => {

@@ -891,7 +891,7 @@ export class JwtService implements JwtServiceInterface {
 `back/src/main/types/domain/user/user.types.ts` :
 
 ```typescript
-import type { User } from '../../../../generated/client.js'
+import type { User } from '../../../../generated/client'
 
 export type UserEntity = User
 
@@ -1159,7 +1159,7 @@ export class RefreshTokenRepository {
 ```typescript
 import type { IocContainer } from '../../../types/application/ioc.js'
 import type { PostgresPrismaClient } from '../postgres-client.js'
-import type { OAuthProvider, OAuthAccount } from '../../../generated/client.js'
+import type { OAuthProvider, OAuthAccount } from '../../../generated/client'
 
 export class OAuthAccountRepository {
   readonly #prisma: PostgresPrismaClient
@@ -1685,7 +1685,7 @@ export interface OAuthDomainInterface {
 
 ```typescript
 import Boom from '@hapi/boom'
-import { OAuthProvider } from '../../../generated/client.js'
+import { OAuthProvider } from '../../../generated/client'
 import type { IocContainer } from '../../types/application/ioc.js'
 import type { OAuthDomainInterface, OAuthProviderName } from '../../types/domain/auth/oauth.domain.interface.js'
 import type { UserEntity } from '../../types/domain/user/user.types.js'
@@ -2011,7 +2011,7 @@ cd back && npm run test:e2e -- --testPathPattern=api-keys
 import { randomBytes } from 'node:crypto'
 import type { IocContainer } from '../../../types/application/ioc.js'
 import type { PostgresPrismaClient } from '../postgres-client.js'
-import type { ApiKey } from '../../../generated/client.js'
+import type { ApiKey } from '../../../generated/client'
 
 export class ApiKeyRepository {
   readonly #prisma: PostgresPrismaClient
@@ -2310,7 +2310,7 @@ git commit -m "feat(frontend): add API client and auth store"
 - Create: `front/src/routes/login.tsx`
 - Create: `front/src/routes/register.tsx`
 - Create: `front/src/routes/_authenticated.tsx`
-- Create: `front/src/components/layout/Navbar.tsx`
+- Create: `front/src/components/layout/navbar.tsx`
 
 - [ ] **Step 1: Landing page**
 
@@ -2585,7 +2585,7 @@ function RegisterPage() {
 
 - [ ] **Step 4: Navbar**
 
-`front/src/components/layout/Navbar.tsx` :
+`front/src/components/layout/navbar.tsx` :
 
 ```typescript
 import { Link } from '@tanstack/react-router'

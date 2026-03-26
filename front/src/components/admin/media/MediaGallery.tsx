@@ -37,7 +37,8 @@ export function MediaGallery({
                   ? 'border-violet-500 bg-card'
                   : 'border-transparent bg-card hover:border-border'
             }`}
-            onClick={() => {
+            onClick={(e) => {
+              if ((e.target as HTMLElement).closest('[data-checkbox-wrap]')) return
               if (onSelect) {
                 onSelect(item)
               } else if (onActivate) {
@@ -55,15 +56,14 @@ export function MediaGallery({
             />
 
             {selectable && item.orphan && (
-              <div className="absolute left-1 top-1">
+              <div
+                className="absolute left-1 top-1"
+                data-checkbox-wrap
+              >
                 <Checkbox
                   checked={isChecked}
-                  onChange={(e) => {
-                    e.stopPropagation()
-                    onToggleSelect?.(item.key)
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                  className={isChecked ? 'border-red-500 bg-red-500/10' : ''}
+                  onChange={() => onToggleSelect?.(item.key)}
+                  className={`bg-white ${isChecked ? '!border-violet-500 [&>svg]:!text-violet-500' : 'border-border/60'}`}
                 />
               </div>
             )}

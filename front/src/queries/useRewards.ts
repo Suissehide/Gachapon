@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { RewardsApi } from '../api/rewards.ts'
-import type { ClaimResult, PendingReward } from '../api/rewards.ts'
+import { RewardsApi } from '../api/rewards.api.ts'
+import type { ClaimResult, PendingReward } from '../api/rewards.api.ts'
 
-export type { ClaimResult, PendingReward } from '../api/rewards.ts'
+export type { ClaimResult, PendingReward } from '../api/rewards.api.ts'
 
 export const usePendingRewards = () =>
   useQuery({

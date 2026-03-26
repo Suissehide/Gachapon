@@ -315,11 +315,11 @@ git commit -m "feat: useProfile + useApiKeys queries"
 ### Task 3 : Page Profil (`/profile/$username`)
 
 **Files:**
-- Create: `front/src/routes/_authenticated/profile.$username.tsx`
+- Create: `front/src/routes/_authenticated/$username.tsx`
 
 TanStack Router utilise le `$` comme préfixe pour les paramètres dynamiques dans les noms de fichier. La route générée sera `/_authenticated/profile/$username`.
 
-- [ ] **Step 1 : Créer `front/src/routes/_authenticated/profile.$username.tsx`**
+- [ ] **Step 1 : Créer `front/src/routes/_authenticated/$username.tsx`**
 
 ```tsx
 import { createFileRoute, Link } from '@tanstack/react-router'
