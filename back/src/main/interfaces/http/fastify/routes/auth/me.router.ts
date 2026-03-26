@@ -5,7 +5,7 @@ import { sanitizeUser } from './helpers'
 import { userResponseSchema } from './schemas'
 
 export const meRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { userDomain } = fastify.iocContainer
+  const { userDomain, userRewardRepository } = fastify.iocContainer
 
   fastify.get(
     '/',
@@ -18,7 +18,8 @@ export const meRouter: FastifyPluginCallbackZod = (fastify) => {
       if (!user) {
         throw Boom.notFound('User not found')
       }
-      return sanitizeUser(user)
+      const pendingRewardsCount = await userRewardRepository.countPendingByUser(user.id)
+      return { ...sanitizeUser(user), pendingRewardsCount }
     },
   )
 }

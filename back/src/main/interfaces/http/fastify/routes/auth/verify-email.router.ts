@@ -5,7 +5,7 @@ import { sanitizeUser, setTokenCookies } from './helpers'
 import { userResponseSchema } from './schemas'
 
 export const verifyEmailRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { authDomain } = fastify.iocContainer
+  const { authDomain, userRewardRepository } = fastify.iocContainer
 
   fastify.post(
     '/',
@@ -19,7 +19,8 @@ export const verifyEmailRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request, reply) => {
       const { user, tokens } = await authDomain.verifyEmail(request.body.token)
       setTokenCookies(reply, tokens)
-      return sanitizeUser(user)
+      const pendingRewardsCount = await userRewardRepository.countPendingByUser(user.id)
+      return { ...sanitizeUser(user), pendingRewardsCount }
     },
   )
 }

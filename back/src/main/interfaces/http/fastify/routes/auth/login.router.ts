@@ -5,7 +5,7 @@ import { sanitizeUser, setTokenCookies } from './helpers'
 import { loginBodySchema, userResponseSchema } from './schemas'
 
 export const loginRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { authDomain } = fastify.iocContainer
+  const { authDomain, userRewardRepository } = fastify.iocContainer
 
   fastify.post(
     '/',
@@ -21,7 +21,8 @@ export const loginRouter: FastifyPluginCallbackZod = (fastify) => {
       try {
         const { user, tokens } = await authDomain.login(request.body)
         setTokenCookies(reply, tokens)
-        return sanitizeUser(user)
+        const pendingRewardsCount = await userRewardRepository.countPendingByUser(user.id)
+        return { ...sanitizeUser(user), pendingRewardsCount }
       } catch (err: unknown) {
         // Boom 403 with EMAIL_NOT_VERIFIED — expose email to client
         if (

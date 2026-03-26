@@ -25,4 +25,5 @@ export const userResponseSchema = z.object({
   avatar: z.string().nullable(),
   banner: z.string().nullable(),
   createdAt: z.date(),
+  pendingRewardsCount: z.number().int().nonnegative(),
 })
