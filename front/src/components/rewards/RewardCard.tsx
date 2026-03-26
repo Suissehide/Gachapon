@@ -1,4 +1,5 @@
-import { Flame, Sparkles, Star, Ticket, Trophy } from 'lucide-react'
+import { Flame, Sparkles, Star, Ticket, Trophy, Zap } from 'lucide-react'
+import type { ReactNode } from 'react'
 
 import type { PendingReward } from '../../api/rewards.api.ts'
 import { cn } from '../../libs/utils.ts'
@@ -14,82 +15,127 @@ function sourceLabel(reward: PendingReward): string {
   if (reward.source === 'STREAK' && reward.streakMilestone) {
     return `Streak — Jour ${reward.streakMilestone.day}`
   }
-  if (reward.source === 'ACHIEVEMENT') return 'Achievement'
-  if (reward.source === 'QUEST') return 'Quête'
+  if (reward.source === 'ACHIEVEMENT') {
+    return 'Achievement'
+  }
+  if (reward.source === 'QUEST') {
+    return 'Quête'
+  }
   return 'Récompense'
 }
 
-function SourceIcon({ reward }: { reward: PendingReward }) {
-  if (reward.source === 'STREAK') return <Flame className="h-4 w-4 text-orange-500" />
-  if (reward.source === 'ACHIEVEMENT') return <Trophy className="h-4 w-4 text-yellow-400" />
-  return <Star className="h-4 w-4 text-primary" />
+const SOURCE_CONFIG = {
+  STREAK: {
+    icon: <Flame className="h-3.5 w-3.5 text-orange-400" />,
+    gradientFrom:
+      '[background-image:linear-gradient(135deg,rgba(249,115,22,0.06)_0%,transparent_60%)]',
+  },
+  ACHIEVEMENT: {
+    icon: <Trophy className="h-3.5 w-3.5 text-yellow-400" />,
+    gradientFrom:
+      '[background-image:linear-gradient(135deg,rgba(250,204,21,0.06)_0%,transparent_60%)]',
+  },
+  QUEST: {
+    icon: <Zap className="h-3.5 w-3.5 text-purple-400" />,
+    gradientFrom:
+      '[background-image:linear-gradient(135deg,rgba(168,85,247,0.07)_0%,transparent_60%)]',
+  },
+} as const
+
+function Stat({
+  icon,
+  value,
+  label,
+}: {
+  icon: ReactNode
+  value: number
+  label: string
+}) {
+  return (
+    <div className="flex flex-col items-center gap-px">
+      <div className="flex items-center gap-1">
+        {icon}
+        <span className="text-[15px] font-black tabular-nums leading-none text-text">
+          {value}
+        </span>
+      </div>
+      <span className="text-[9px] font-semibold uppercase tracking-widest text-text-light/50">
+        {label}
+      </span>
+    </div>
+  )
 }
 
 export function RewardCard({ reward, onClaim, isLoading }: RewardCardProps) {
   const isMilestone = reward.streakMilestone?.isMilestone ?? false
+  const cfg = SOURCE_CONFIG[reward.source] ?? SOURCE_CONFIG.STREAK
 
   return (
     <div
       className={cn(
-        'flex items-center gap-3 rounded-xl border p-3 transition-colors',
-        isMilestone
-          ? 'border-yellow-500/40 bg-yellow-500/5'
-          : 'border-border bg-card',
+        'overflow-hidden rounded-md border border-border transition-all duration-200',
+        cfg.gradientFrom,
+        isMilestone && [
+          '[border-left-color:theme(colors.yellow.400)]',
+          '[background-image:linear-gradient(135deg,rgba(245,158,11,0.10)_0%,transparent_55%)]',
+          'shadow-[0_0_18px_rgba(245,158,11,0.14)]',
+        ],
       )}
     >
-      {/* Source icon */}
-      <div
-        className={cn(
-          'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg',
-          isMilestone ? 'bg-yellow-500/15' : 'bg-muted',
+      {/* Source row */}
+      <div className="flex items-center justify-between px-3 pt-2.5 pb-0">
+        <div className="flex items-center gap-1.5">
+          {cfg.icon}
+          <span className="text-[10px] font-bold uppercase tracking-widest text-text-light/70">
+            {sourceLabel(reward)}
+          </span>
+        </div>
+        {isMilestone && (
+          <span className="flex items-center gap-1 rounded-full border border-yellow-400/30 bg-yellow-400/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-yellow-400">
+            <Trophy className="h-2.5 w-2.5" />
+            Jalon
+          </span>
         )}
-      >
-        <SourceIcon reward={reward} />
       </div>
 
-      {/* Source label + amounts */}
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-semibold text-text">{sourceLabel(reward)}</span>
-          {isMilestone && (
-            <span className="flex items-center gap-0.5 rounded-full bg-yellow-500/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-yellow-500">
-              <Trophy className="h-2.5 w-2.5" />
-              Jalon
-            </span>
-          )}
-        </div>
-        <div className="mt-1 flex items-center gap-3">
+      {/* Reward amounts + claim */}
+      <div className="flex items-center gap-3 px-3 py-2.5">
+        <div className="flex items-center gap-4">
           {reward.reward.tokens > 0 && (
-            <span className="flex items-center gap-1 text-xs font-semibold text-text">
-              <Ticket className="h-3 w-3 text-primary" />
-              {reward.reward.tokens}
-            </span>
+            <Stat
+              icon={<Ticket className="h-3.5 w-3.5 text-primary" />}
+              value={reward.reward.tokens}
+              label="ticket"
+            />
           )}
           {reward.reward.dust > 0 && (
-            <span className="flex items-center gap-1 text-xs font-semibold text-text">
-              <Sparkles className="h-3 w-3 text-accent" />
-              {reward.reward.dust}
-            </span>
+            <Stat
+              icon={<Sparkles className="h-3.5 w-3.5 text-accent" />}
+              value={reward.reward.dust}
+              label="poussière"
+            />
           )}
           {reward.reward.xp > 0 && (
-            <span className="flex items-center gap-1 text-xs font-semibold text-text">
-              <Star className="h-3 w-3 text-yellow-400" />
-              {reward.reward.xp} XP
-            </span>
+            <Stat
+              icon={<Star className="h-3.5 w-3.5 text-yellow-400" />}
+              value={reward.reward.xp}
+              label="XP"
+            />
           )}
         </div>
-      </div>
 
-      {/* Claim */}
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={() => onClaim(reward.id)}
-        disabled={isLoading}
-        className="shrink-0"
-      >
-        Réclamer
-      </Button>
+        <Button
+          size="sm"
+          onClick={() => onClaim(reward.id)}
+          disabled={isLoading}
+          className={cn(
+            'ml-auto shrink-0',
+            isMilestone && 'shadow-[0_0_12px_rgba(245,158,11,0.3)]',
+          )}
+        >
+          Réclamer
+        </Button>
+      </div>
     </div>
   )
 }
