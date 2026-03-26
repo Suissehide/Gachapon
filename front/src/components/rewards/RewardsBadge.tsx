@@ -1,6 +1,7 @@
 import { Gift } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
+import { Button } from '../ui/button.tsx'
 import { RewardsPopup } from './RewardsPopup.tsx'
 
 interface RewardsBadgeProps {
@@ -33,13 +34,15 @@ export function RewardsBadge({ pendingRewardsCount }: RewardsBadgeProps) {
 
   return (
     <div ref={ref} className="relative">
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-center rounded-lg p-2 text-lg hover:bg-muted transition-colors"
         aria-label="Récompenses"
+        className="text-text-light hover:text-text"
       >
         <Gift className="h-4 w-4" />
-      </button>
+      </Button>
 
       {pendingRewardsCount > 0 && (
         <div className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
