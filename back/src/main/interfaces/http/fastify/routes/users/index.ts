@@ -17,6 +17,8 @@ const userProfileResponseSchema = z.object({
     legendaryCount: z.number().int(),
     dustGenerated: z.number().int(),
   }),
+  streakDays: z.number().int(),
+  bestStreak: z.number().int(),
 })
 
 export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
@@ -92,6 +94,8 @@ export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
           legendaryCount,
           dustGenerated: dustAgg._sum.dustEarned ?? 0,
         },
+        streakDays: user.streakDays,
+        bestStreak: user.bestStreak,
       }
     },
   )

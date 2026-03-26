@@ -11,6 +11,7 @@ export type AuthUser = {
   dust: number
   avatar: string | null
   banner: string | null
+  pendingRewardsCount: number
 }
 
 type AuthState = {

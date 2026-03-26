@@ -17,6 +17,8 @@ export type UserProfile = {
     legendaryCount: number
     dustGenerated: number
   }
+  streakDays: number
+  bestStreak: number
 }
 
 export type ApiKey = {

@@ -117,6 +117,18 @@ function ProfilePage() {
           />
         </div>
 
+        {/* Streak */}
+        <div className="mt-4 flex gap-6">
+          <div className="text-center">
+            <p className="text-2xl font-bold">🔥 {profile.streakDays}</p>
+            <p className="text-xs text-text-light">Streak actuel</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold">{profile.bestStreak}</p>
+            <p className="text-xs text-text-light">Meilleur streak</p>
+          </div>
+        </div>
+
         {/* Lien collection */}
         <div className="mt-8 rounded-xl border border-border bg-card p-4">
           <h2 className="mb-3 text-sm font-bold text-text">
