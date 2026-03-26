@@ -10,6 +10,17 @@ export type CreateGachaPullInput = {
   dustEarned: number
 }
 
+export type RecentPullEntry = {
+  username: string
+  cardName: string
+  rarity: string
+  variant: string
+  cardId: string
+  imageUrl: string | null
+  setName: string
+  pulledAt: Date
+}
+
 export interface IGachaPullRepository {
   create(data: CreateGachaPullInput): Promise<GachaPullEntity>
   createInTx(
@@ -20,4 +31,5 @@ export interface IGachaPullRepository {
     userId: string,
     pagination: { skip: number; take: number },
   ): Promise<{ pulls: GachaPullWithCard[]; total: number }>
+  findRecent(limit: number): Promise<RecentPullEntry[]>
 }

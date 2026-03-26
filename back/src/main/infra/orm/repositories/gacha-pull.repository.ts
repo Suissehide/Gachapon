@@ -7,6 +7,7 @@ import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type {
   CreateGachaPullInput,
   IGachaPullRepository,
+  RecentPullEntry,
 } from '../../../types/infra/orm/repositories/gacha-pull.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
 
@@ -40,5 +41,26 @@ export class GachaPullRepository implements IGachaPullRepository {
       this.#prisma.gachaPull.count({ where: { userId } }),
     ])
     return { pulls: pulls as GachaPullWithCard[], total }
+  }
+
+  async findRecent(limit: number): Promise<RecentPullEntry[]> {
+    const pulls = await this.#prisma.gachaPull.findMany({
+      take: limit,
+      orderBy: { pulledAt: 'desc' },
+      include: {
+        card: { include: { set: true } },
+        user: { select: { username: true } },
+      },
+    })
+    return pulls.map((p) => ({
+      username: p.user.username,
+      cardName: p.card.name,
+      rarity: p.card.rarity,
+      variant: p.variant,
+      cardId: p.card.id,
+      imageUrl: p.card.imageUrl,
+      setName: p.card.set.name,
+      pulledAt: p.pulledAt,
+    }))
   }
 }
