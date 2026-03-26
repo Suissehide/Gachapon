@@ -329,7 +329,7 @@ model StreakMilestone {
 model UserReward {
   id        String       @id @default(uuid())
   userId    String
-  user      User         @relation(fields: [userId], references: [id])
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   rewardId  String
   reward    Reward       @relation(fields: [rewardId], references: [id])
   source    RewardSource
