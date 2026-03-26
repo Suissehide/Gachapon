@@ -2,8 +2,8 @@ import Boom from '@hapi/boom'
 
 import { OAuthProvider } from '../../../generated/enums'
 import type { Config } from '../../application/config'
-import type { OAuthAccountRepository } from '../../infra/orm/repositories/oauth-account.repository'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
+import type { OAuthAccountRepository } from '../../infra/orm/repositories/oauth-account.repository'
 import type { IocContainer } from '../../types/application/ioc'
 import type { AuthDomainInterface } from '../../types/domain/auth/auth.domain.interface'
 import type { TokenPair } from '../../types/domain/auth/auth.types'
@@ -11,9 +11,9 @@ import type {
   OAuthDomainInterface,
   OAuthProviderName,
 } from '../../types/domain/auth/oauth.domain.interface'
+import type { StreakDomainInterface } from '../../types/domain/streak/streak.domain.interface'
 import type { UserEntity } from '../../types/domain/user/user.types'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
-import type { StreakDomainInterface } from '../../types/domain/streak/streak.domain.interface'
 
 type OAuthUserInfo = { id: string; email: string; username: string }
 

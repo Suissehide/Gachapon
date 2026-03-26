@@ -47,21 +47,28 @@ export function pickWeightedRandomWithLuck(
     throw new Error('No cards to pick from')
   }
   const LUCK_RARITIES = new Set(['RARE', 'EPIC', 'LEGENDARY'])
-  const weights = cards.map((c) =>
-    LUCK_RARITIES.has(c.rarity) ? c.dropWeight * luckMultiplier : c.dropWeight,
-  )
-  const total = weights.reduce((sum, w) => sum + w, 0)
+  const weighted = cards.map((card) => ({
+    card,
+    weight: LUCK_RARITIES.has(card.rarity)
+      ? card.dropWeight * luckMultiplier
+      : card.dropWeight,
+  }))
+  const total = weighted.reduce((sum, { weight }) => sum + weight, 0)
   if (total === 0) {
     throw new Error('All cards have zero weight')
   }
   let roll = Math.random() * total
-  for (let i = 0; i < cards.length; i++) {
-    roll -= weights[i]!
+  for (const { card, weight } of weighted) {
+    roll -= weight
     if (roll <= 0) {
-      return cards[i]!
+      return card
     }
   }
-  return cards[cards.length - 1]!
+  const last = weighted.at(-1)
+  if (!last) {
+    throw new Error('No cards to pick from')
+  }
+  return last.card
 }
 
 type VariantRates = {
@@ -83,10 +90,7 @@ function rarityKey(
   return map[rarity]
 }
 
-export function pickVariant(
-  rarity: string,
-  rates: VariantRates,
-): CardVariant {
+export function pickVariant(rarity: string, rates: VariantRates): CardVariant {
   if (!(VARIANT_ELIGIBLE as readonly string[]).includes(rarity)) {
     return 'NORMAL' as CardVariant
   }

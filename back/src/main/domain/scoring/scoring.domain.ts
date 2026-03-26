@@ -1,7 +1,15 @@
-import type { CardRarity, CardVariant, ScoringConfig } from '../../../generated/client'
+import type {
+  CardRarity,
+  CardVariant,
+  ScoringConfig,
+} from '../../../generated/client'
 
 export function calculateUserScore(
-  userCards: Array<{ card: { rarity: CardRarity }; variant: CardVariant; quantity: number }>,
+  userCards: Array<{
+    card: { rarity: CardRarity }
+    variant: CardVariant
+    quantity: number
+  }>,
   config: ScoringConfig,
 ): number {
   const rarityPoints: Record<CardRarity, number> = {

@@ -1,11 +1,17 @@
 import Boom from '@hapi/boom'
 
-import type { IocContainer } from '../../types/application/ioc'
-import type { ClaimResult, RewardsDomainInterface } from '../../types/domain/rewards/rewards.domain.interface'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
+import type { IocContainer } from '../../types/application/ioc'
+import type {
+  ClaimResult,
+  RewardsDomainInterface,
+} from '../../types/domain/rewards/rewards.domain.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
-import type { UserRewardRepositoryInterface } from '../../types/infra/orm/repositories/user-reward.repository.interface'
-import type { PendingUserReward, UserRewardWithReward } from '../../types/infra/orm/repositories/user-reward.repository.interface'
+import type {
+  PendingUserReward,
+  UserRewardRepositoryInterface,
+  UserRewardWithReward,
+} from '../../types/infra/orm/repositories/user-reward.repository.interface'
 import { calculateLevel } from '../shared/xp'
 
 export class RewardsDomain implements RewardsDomainInterface {
@@ -13,7 +19,11 @@ export class RewardsDomain implements RewardsDomainInterface {
   readonly #userRepository: UserRepositoryInterface
   readonly #postgresOrm: PostgresOrm
 
-  constructor({ userRewardRepository, userRepository, postgresOrm }: IocContainer) {
+  constructor({
+    userRewardRepository,
+    userRepository,
+    postgresOrm,
+  }: IocContainer) {
     this.#userRewardRepository = userRewardRepository
     this.#userRepository = userRepository
     this.#postgresOrm = postgresOrm
@@ -23,7 +33,7 @@ export class RewardsDomain implements RewardsDomainInterface {
     return this.#userRewardRepository.findPendingByUser(userId)
   }
 
-  async getHistory(
+  getHistory(
     userId: string,
     page: number,
     limit: number,
@@ -34,73 +44,109 @@ export class RewardsDomain implements RewardsDomainInterface {
 
   async claimOne(rewardId: string, userId: string): Promise<ClaimResult> {
     // Pre-check: clean 404/409 for happy path before opening tx
-    const preCheck = await this.#userRewardRepository.findByIdAndUser(rewardId, userId)
-    if (!preCheck) throw Boom.notFound('Reward not found')
-    if (preCheck.claimedAt !== null) throw Boom.conflict('Reward already claimed')
+    const preCheck = await this.#userRewardRepository.findByIdAndUser(
+      rewardId,
+      userId,
+    )
+    if (!preCheck) {
+      throw Boom.notFound('Reward not found')
+    }
+    if (preCheck.claimedAt !== null) {
+      throw Boom.conflict('Reward already claimed')
+    }
 
-    return this.#postgresOrm.executeWithTransactionClient(async (tx) => {
-      // Re-read inside tx to close TOCTOU window
-      const userReward = await tx.userReward.findUnique({
-        where: { id: rewardId },
-        include: { reward: true },
-      })
-      if (!userReward || userReward.userId !== userId) throw Boom.notFound('Reward not found')
-      if (userReward.claimedAt !== null) throw Boom.conflict('Reward already claimed')
+    return this.#postgresOrm.executeWithTransactionClient(
+      async (tx) => {
+        // Re-read inside tx to close TOCTOU window
+        const userReward = await tx.userReward.findUnique({
+          where: { id: rewardId },
+          include: { reward: true },
+        })
+        if (!userReward || userReward.userId !== userId) {
+          throw Boom.notFound('Reward not found')
+        }
+        if (userReward.claimedAt !== null) {
+          throw Boom.conflict('Reward already claimed')
+        }
 
-      const user = await this.#userRepository.findByIdOrThrowInTx(tx, userId)
-      const { tokens, dust, xp } = userReward.reward
+        const user = await this.#userRepository.findByIdOrThrowInTx(tx, userId)
+        const { tokens, dust, xp } = userReward.reward
 
-      const newTokens = user.tokens + tokens
-      const newDust = user.dust + dust
-      const newXp = user.xp + xp
-      const newLevel = calculateLevel(newXp)
+        const newTokens = user.tokens + tokens
+        const newDust = user.dust + dust
+        const newXp = user.xp + xp
+        const newLevel = calculateLevel(newXp)
 
-      await this.#userRepository.updateAfterClaimInTx(tx, userId, {
-        tokens: newTokens,
-        dust: newDust,
-        xp: newXp,
-        level: newLevel,
-      })
-      await this.#userRewardRepository.markClaimedInTx(tx, userReward.id)
-      // Count INSIDE tx so it reflects the just-committed mark
-      const pendingRewardsCount = await tx.userReward.count({ where: { userId, claimedAt: null } })
+        await this.#userRepository.updateAfterClaimInTx(tx, userId, {
+          tokens: newTokens,
+          dust: newDust,
+          xp: newXp,
+          level: newLevel,
+        })
+        await this.#userRewardRepository.markClaimedInTx(tx, userReward.id)
+        // Count INSIDE tx so it reflects the just-committed mark
+        const pendingRewardsCount = await tx.userReward.count({
+          where: { userId, claimedAt: null },
+        })
 
-      return { tokens: newTokens, dust: newDust, xp: newXp, level: newLevel, pendingRewardsCount }
-    }, { isolationLevel: 'Serializable' })
+        return {
+          tokens: newTokens,
+          dust: newDust,
+          xp: newXp,
+          level: newLevel,
+          pendingRewardsCount,
+        }
+      },
+      { isolationLevel: 'Serializable' },
+    )
   }
 
   async claimAll(userId: string): Promise<ClaimResult | null> {
     // Optimistic early-exit
     const count = await this.#userRewardRepository.countPendingByUser(userId)
-    if (count === 0) return null
+    if (count === 0) {
+      return null
+    }
 
-    return this.#postgresOrm.executeWithTransactionClient(async (tx) => {
-      // Authoritative read inside tx
-      const pending = await tx.userReward.findMany({
-        where: { userId, claimedAt: null },
-        include: { reward: true },
-      })
-      if (pending.length === 0) return null
+    return this.#postgresOrm.executeWithTransactionClient(
+      async (tx) => {
+        // Authoritative read inside tx
+        const pending = await tx.userReward.findMany({
+          where: { userId, claimedAt: null },
+          include: { reward: true },
+        })
 
-      const user = await this.#userRepository.findByIdOrThrowInTx(tx, userId)
-      const totalTokens = pending.reduce((sum, r) => sum + r.reward.tokens, 0)
-      const totalDust = pending.reduce((sum, r) => sum + r.reward.dust, 0)
-      const totalXp = pending.reduce((sum, r) => sum + r.reward.xp, 0)
+        if (pending.length === 0) {
+          return null
+        }
 
-      const newTokens = user.tokens + totalTokens
-      const newDust = user.dust + totalDust
-      const newXp = user.xp + totalXp
-      const newLevel = calculateLevel(newXp)
+        const user = await this.#userRepository.findByIdOrThrowInTx(tx, userId)
+        const totalTokens = pending.reduce((sum, r) => sum + r.reward.tokens, 0)
+        const totalDust = pending.reduce((sum, r) => sum + r.reward.dust, 0)
+        const totalXp = pending.reduce((sum, r) => sum + r.reward.xp, 0)
 
-      await this.#userRepository.updateAfterClaimInTx(tx, userId, {
-        tokens: newTokens,
-        dust: newDust,
-        xp: newXp,
-        level: newLevel,
-      })
-      await this.#userRewardRepository.markAllClaimedInTx(tx, userId)
+        const newTokens = user.tokens + totalTokens
+        const newDust = user.dust + totalDust
+        const newXp = user.xp + totalXp
+        const newLevel = calculateLevel(newXp)
 
-      return { tokens: newTokens, dust: newDust, xp: newXp, level: newLevel, pendingRewardsCount: 0 }
-    }, { isolationLevel: 'Serializable' })
+        await this.#userRepository.updateAfterClaimInTx(tx, userId, {
+          tokens: newTokens,
+          dust: newDust,
+          xp: newXp,
+          level: newLevel,
+        })
+        await this.#userRewardRepository.markAllClaimedInTx(tx, userId)
+
+        return {
+          tokens: newTokens,
+          dust: newDust,
+          xp: newXp,
+          level: newLevel,
+          pendingRewardsCount: 0,
+        }
+      },
+      { isolationLevel: 'Serializable' },
+    )
   }
 }

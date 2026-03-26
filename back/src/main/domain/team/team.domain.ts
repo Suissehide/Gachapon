@@ -8,11 +8,11 @@ import type {
   TeamSummary,
   TeamWithMembers,
 } from '../../types/domain/team/team.types'
+import type { IMailService } from '../../types/infra/mail/mail.service.interface'
 import type { IInvitationRepository } from '../../types/infra/orm/repositories/invitation.repository.interface'
 import type { ITeamRepository } from '../../types/infra/orm/repositories/team.repository.interface'
 import type { ITeamMemberRepository } from '../../types/infra/orm/repositories/team-member.repository.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
-import type { IMailService } from '../../types/infra/mail/mail.service.interface'
 
 const MAX_TEAMS_PER_USER = 5
 const MAX_MEMBERS_PER_TEAM = 100
@@ -139,9 +139,11 @@ export class TeamDomain implements TeamDomainInterface {
 
     // Send invitation email (non-fatal)
     const inviterUser = await this.#userRepo.findById(actorId)
-    const recipientEmail = invitation.invitedEmail
-      ?? (invitation.invitedUserId
-        ? (await this.#userRepo.findById(invitation.invitedUserId))?.email ?? null
+    const recipientEmail =
+      invitation.invitedEmail ??
+      (invitation.invitedUserId
+        ? ((await this.#userRepo.findById(invitation.invitedUserId))?.email ??
+          null)
         : null)
 
     if (recipientEmail && inviterUser) {
@@ -324,7 +326,9 @@ export class TeamDomain implements TeamDomainInterface {
     }
 
     const team = await this.#teamRepo.findById(invitation.teamId)
-    if (!team) throw Boom.internal('Team not found')
+    if (!team) {
+      throw Boom.internal('Team not found')
+    }
 
     const actor = team.members.find((m) => m.userId === actorId)
     if (!actor || actor.role === 'MEMBER') {
@@ -340,12 +344,16 @@ export class TeamDomain implements TeamDomainInterface {
       }
     }
 
-    const recipientEmail = invitation.invitedEmail
-      ?? (invitation.invitedUserId
-        ? (await this.#userRepo.findById(invitation.invitedUserId))?.email ?? null
+    const recipientEmail =
+      invitation.invitedEmail ??
+      (invitation.invitedUserId
+        ? ((await this.#userRepo.findById(invitation.invitedUserId))?.email ??
+          null)
         : null)
 
-    if (!recipientEmail) throw Boom.badRequest('No recipient email found')
+    if (!recipientEmail) {
+      throw Boom.badRequest('No recipient email found')
+    }
 
     const inviter = invitation.invitedById
       ? await this.#userRepo.findById(invitation.invitedById)
@@ -354,7 +362,7 @@ export class TeamDomain implements TeamDomainInterface {
     await this.#mailService.sendTeamInvitationEmail({
       to: recipientEmail,
       teamName: team.name,
-      inviterName: inviter?.username ?? 'Quelqu\'un',
+      inviterName: inviter?.username ?? "Quelqu'un",
       token: invitation.token,
     })
 

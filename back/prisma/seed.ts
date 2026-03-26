@@ -5,6 +5,7 @@ import { PrismaClient } from '../src/generated/client'
 import { seedAchievements } from './seed/achievements'
 import { seedCards } from './seed/cards'
 import { seedGlobalConfig } from './seed/global-config'
+import { seedMilestones } from './seed/milestones'
 import { seedQuests } from './seed/quests'
 import { seedShop } from './seed/shop'
 import { seedUsers } from './seed/users'
@@ -34,8 +35,11 @@ async function main() {
     await tx.card.deleteMany()
     await tx.cardSet.deleteMany()
     await tx.shopItem.deleteMany()
+    await tx.userReward.deleteMany()
+    await tx.streakMilestone.deleteMany()
     await tx.quest.deleteMany()
     await tx.achievement.deleteMany()
+    await tx.reward.deleteMany()
     await tx.globalConfig.deleteMany()
     console.log('Toutes les tables vidées.')
 
@@ -44,6 +48,7 @@ async function main() {
     await seedShop(tx)
     await seedQuests(tx)
     await seedAchievements(tx)
+    await seedMilestones(tx)
     await seedGlobalConfig(tx)
 
     // Utilisateurs + équipe (en dernier, peut référencer le catalogue)

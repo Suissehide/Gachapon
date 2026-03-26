@@ -18,15 +18,25 @@ export function calculateStreakUpdate(input: StreakInput): StreakUpdateResult {
   const { lastLoginAt, streakDays, bestStreak } = input
 
   if (lastLoginAt === null) {
-    return { shouldSkip: false, newStreakDays: 1, newBestStreak: Math.max(bestStreak, 1) }
+    return {
+      shouldSkip: false,
+      newStreakDays: 1,
+      newBestStreak: Math.max(bestStreak, 1),
+    }
   }
 
   const nowDay = utcDayStart(new Date())
   const lastDay = utcDayStart(lastLoginAt)
-  const dayGap = Math.round((nowDay.getTime() - lastDay.getTime()) / (24 * 60 * 60 * 1000))
+  const dayGap = Math.round(
+    (nowDay.getTime() - lastDay.getTime()) / (24 * 60 * 60 * 1000),
+  )
 
   if (dayGap === 0) {
-    return { shouldSkip: true, newStreakDays: streakDays, newBestStreak: bestStreak }
+    return {
+      shouldSkip: true,
+      newStreakDays: streakDays,
+      newBestStreak: bestStreak,
+    }
   }
 
   let newStreakDays: number
@@ -58,14 +68,20 @@ export class StreakDomain {
     userRepository,
     streakMilestoneRepository,
     userRewardRepository,
-  }: Pick<IocContainer, 'userRepository' | 'streakMilestoneRepository' | 'userRewardRepository'>) {
+  }: Pick<
+    IocContainer,
+    'userRepository' | 'streakMilestoneRepository' | 'userRewardRepository'
+  >) {
     this.#userRepository = userRepository
     this.#streakMilestoneRepository = streakMilestoneRepository
     this.#userRewardRepository = userRewardRepository
   }
 
   /** Call this inside an existing transaction after successful auth. */
-  async updateStreak(userId: string, tx: PrimaTransactionClient): Promise<void> {
+  async updateStreak(
+    userId: string,
+    tx: PrimaTransactionClient,
+  ): Promise<void> {
     const user = await this.#userRepository.findByIdOrThrowInTx(tx, userId)
     const { shouldSkip, newStreakDays, newBestStreak } = calculateStreakUpdate({
       lastLoginAt: user.lastLoginAt,
@@ -73,7 +89,9 @@ export class StreakDomain {
       bestStreak: user.bestStreak,
     })
 
-    if (shouldSkip) return
+    if (shouldSkip) {
+      return
+    }
 
     await this.#userRepository.updateStreakInTx(tx, userId, {
       streakDays: newStreakDays,
@@ -81,8 +99,11 @@ export class StreakDomain {
       lastLoginAt: new Date(),
     })
 
-    const milestone = await this.#streakMilestoneRepository.findBestForDay(newStreakDays)
-    if (!milestone) return
+    const milestone =
+      await this.#streakMilestoneRepository.findBestForDay(newStreakDays)
+    if (!milestone) {
+      return
+    }
 
     await this.#userRewardRepository.upsertInTx(tx, {
       userId,

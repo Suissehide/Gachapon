@@ -1,6 +1,6 @@
 import { Link, useNavigate } from '@tanstack/react-router'
 import { LogOut, Sparkles, Ticket } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { useAuthStore } from '../../stores/auth.store'
 import { RewardsBadge } from '../rewards/RewardsBadge.tsx'
@@ -51,7 +51,7 @@ export function Navbar() {
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
 
-  const closeMenu = () => setMenuOpen(false)
+  const closeMenu = useCallback(() => setMenuOpen(false), [])
 
   const handleLogout = async () => {
     await logout()
@@ -69,7 +69,7 @@ export function Navbar() {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [menuOpen])
+  }, [menuOpen, closeMenu])
 
   useEffect(() => {
     const handler = () => {
@@ -79,7 +79,7 @@ export function Navbar() {
     }
     window.addEventListener('resize', handler)
     return () => window.removeEventListener('resize', handler)
-  }, [])
+  }, [closeMenu])
 
   return (
     <>

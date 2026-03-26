@@ -1,7 +1,8 @@
+import { randomUUID } from 'node:crypto'
 import Boom from '@hapi/boom'
 import bcrypt from 'bcrypt'
-import { randomUUID } from 'node:crypto'
 
+import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { RefreshTokenRepository } from '../../infra/redis/refresh-token.repository'
 import type { IocContainer } from '../../types/application/ioc'
 import type { AuthDomainInterface } from '../../types/domain/auth/auth.domain.interface'
@@ -11,12 +12,11 @@ import type {
   RegisterInput,
   TokenPair,
 } from '../../types/domain/auth/auth.types'
+import type { StreakDomainInterface } from '../../types/domain/streak/streak.domain.interface'
 import type { UserEntity } from '../../types/domain/user/user.types'
 import type { JwtServiceInterface } from '../../types/infra/auth/jwt.service'
-import type { PostgresOrm } from '../../infra/orm/postgres-client'
-import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 import type { IMailService } from '../../types/infra/mail/mail.service.interface'
-import type { StreakDomainInterface } from '../../types/domain/streak/streak.domain.interface'
+import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 
 const SALT_ROUNDS = 12
 const VERIFICATION_TOKEN_TTL_MS = 24 * 60 * 60 * 1000 // 24h
@@ -162,7 +162,9 @@ export class AuthDomain implements AuthDomainInterface {
 
   async resendVerification(email: string): Promise<void> {
     const user = await this.#userRepository.findByEmail(email)
-    if (!user || user.emailVerifiedAt) return // silent: don't leak info
+    if (!user || user.emailVerifiedAt) {
+      return // silent: don't leak info
+    }
 
     // Cooldown: check if token was generated less than 2 min ago
     if (user.emailVerificationTokenExpiresAt) {
@@ -195,7 +197,9 @@ export class AuthDomain implements AuthDomainInterface {
   async forgotPassword(email: string): Promise<void> {
     const user = await this.#userRepository.findByEmail(email)
     // Always return silently — don't leak if email exists or is OAuth-only
-    if (!user || !user.passwordHash) return
+    if (!user || !user.passwordHash) {
+      return
+    }
 
     // Cooldown
     if (user.passwordResetTokenExpiresAt) {
