@@ -16,6 +16,7 @@ import type { GachaDomainInterface } from '../domain/gacha/gacha.domain.interfac
 import type { TeamDomainInterface } from '../domain/team/team.domain.interface'
 import type { UserDomainInterface } from '../domain/user/user.domain.interface'
 import type { StreakDomainInterface } from '../domain/streak/streak.domain.interface'
+import type { RewardsDomainInterface } from '../domain/rewards/rewards.domain.interface'
 import type { JwtServiceInterface } from '../infra/auth/jwt.service'
 import type { ConfigServiceInterface } from '../infra/config/config.service.interface'
 import type { HttpClientInterface } from '../infra/http/http-client'
@@ -64,4 +65,5 @@ export interface IocContainer {
   readonly streakMilestoneRepository: StreakMilestoneRepositoryInterface
   readonly userRewardRepository: UserRewardRepositoryInterface
   readonly streakDomain: StreakDomainInterface
+  readonly rewardsDomain: RewardsDomainInterface
 }

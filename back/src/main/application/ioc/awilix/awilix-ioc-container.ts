@@ -6,6 +6,7 @@ import { AuthDomain } from '../../../domain/auth/auth.domain'
 import { OAuthDomain } from '../../../domain/auth/oauth.domain'
 import { GachaDomain } from '../../../domain/gacha/gacha.domain'
 import { StreakDomain } from '../../../domain/streak/streak.domain'
+import { RewardsDomain } from '../../../domain/rewards/rewards.domain'
 import { TeamDomain } from '../../../domain/team/team.domain'
 import { UserDomain } from '../../../domain/user/user.domain'
 import { MailService } from '../../../infra/mail/mail.service'
@@ -88,6 +89,7 @@ class AwilixIocContainer {
     this.#reg('streakMilestoneRepository', asClass(StreakMilestoneRepository).singleton())
     this.#reg('userRewardRepository', asClass(UserRewardRepository).singleton())
     this.#reg('streakDomain', asClass(StreakDomain).singleton())
+    this.#reg('rewardsDomain', asClass(RewardsDomain).singleton())
     logger.info('IoC container initialized.')
   }
 
