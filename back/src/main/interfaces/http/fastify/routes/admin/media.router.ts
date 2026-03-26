@@ -160,7 +160,13 @@ export const adminMediaRouter: FastifyPluginCallbackZod = (fastify) => {
 
       // 4. Reconstruire la clé destination
       const ext = from.split('.').pop()
+      if (!ext || ext.includes('/')) {
+        throw Boom.badRequest('Clé source sans extension valide')
+      }
       const to = `cards/${sanitized}.${ext}`
+      if (!SAFE_KEY_RE.test(to)) {
+        throw Boom.badRequest('Clé destination invalide')
+      }
 
       // 5. No-op
       if (to === from) {
