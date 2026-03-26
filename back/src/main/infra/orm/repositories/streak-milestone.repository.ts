@@ -21,7 +21,7 @@ export class StreakMilestoneRepository implements StreakMilestoneRepositoryInter
 
   findDefault(): Promise<StreakMilestoneWithReward | null> {
     return this.#prisma.streakMilestone.findFirst({
-      where: { day: 0 },
+      where: { day: 0, isActive: true },
       include: { reward: true },
     })
   }
