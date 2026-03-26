@@ -144,6 +144,7 @@ export const leaderboardRouter: FastifyPluginCallbackZod = (fastify) => {
       const quests = await prisma.quest.findMany({
         where: { isActive: true },
         orderBy: { name: 'asc' },
+        include: { reward: true },
       })
       return {
         quests: quests.map((q) => ({
@@ -151,8 +152,8 @@ export const leaderboardRouter: FastifyPluginCallbackZod = (fastify) => {
           key: q.key,
           name: q.name,
           description: q.description,
-          rewardTokens: q.rewardTokens,
-          rewardDust: q.rewardDust,
+          rewardTokens: q.reward?.tokens ?? 0,
+          rewardDust: q.reward?.dust ?? 0,
         })),
       }
     },
