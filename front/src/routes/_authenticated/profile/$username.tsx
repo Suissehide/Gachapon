@@ -119,39 +119,63 @@ function ProfilePage() {
           />
         </div>
 
-        {/* Streak */}
-        <div className="mt-4 flex gap-6">
-          <div className="text-center">
-            <p className="flex items-center justify-center gap-1 text-2xl font-bold">
-              <Flame className="h-6 w-6 text-orange-500" />
-              {profile.streakDays}
-            </p>
-            <p className="text-xs text-text-light">Streak actuel</p>
+        {/* Streak + Collection */}
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          {/* Streak card */}
+          <div className="rounded-xl border border-border bg-card p-4">
+            <div className="mb-3 flex items-center gap-1.5 text-xs font-medium text-text-light">
+              <Flame className="h-3.5 w-3.5 text-orange-500" />
+              Streak de connexion
+            </div>
+            <div className="flex items-end gap-5">
+              <div>
+                <p className="text-2xl font-black text-text">{profile.streakDays}</p>
+                <p className="mt-0.5 text-xs text-text-light">Actuel</p>
+              </div>
+              <div className="mb-0.5 h-7 w-px bg-border" />
+              <div>
+                <div className="flex items-center gap-1">
+                  <Trophy className="h-3.5 w-3.5 text-yellow-400" />
+                  <p className="text-2xl font-black text-text">{profile.bestStreak}</p>
+                </div>
+                <p className="mt-0.5 text-xs text-text-light">Record</p>
+              </div>
+            </div>
           </div>
-          <div className="text-center">
-            <p className="flex items-center justify-center gap-1 text-2xl font-bold">
-              <Trophy className="h-6 w-6 text-yellow-400" />
-              {profile.bestStreak}
-            </p>
-            <p className="text-xs text-text-light">Meilleur streak</p>
-          </div>
-        </div>
 
-        {/* Lien collection */}
-        <div className="mt-8 rounded-xl border border-border bg-card p-4">
-          <h2 className="mb-3 text-sm font-bold text-text">
-            {isOwnProfile ? 'Ma collection' : `Collection de ${username}`}
-          </h2>
-          <Button asChild variant="default">
+          {/* Collection card */}
+          <Button
+            asChild
+            variant="outline"
+            className="h-auto w-full justify-between rounded-xl border-border bg-card p-4 text-left hover:border-primary/40 hover:bg-primary/5"
+          >
             {isOwnProfile ? (
               <Link to="/collection">
-                <Layers className="h-4 w-4" />
-                Voir ma collection →
+                <div>
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-text-light">
+                    <Layers className="h-3.5 w-3.5 text-accent" />
+                    Ma collection
+                  </div>
+                  <p className="mt-1 text-2xl font-black text-text">
+                    {profile.stats.ownedCards.toLocaleString('fr-FR')}
+                    <span className="ml-1 text-sm font-medium text-text-light">cartes</span>
+                  </p>
+                </div>
+                <Layers className="h-5 w-5 shrink-0 text-text-light" />
               </Link>
             ) : (
               <Link to="/profile/$username/collection" params={{ username }}>
-                <Layers className="h-4 w-4" />
-                Voir la collection →
+                <div>
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-text-light">
+                    <Layers className="h-3.5 w-3.5 text-accent" />
+                    Collection de {username}
+                  </div>
+                  <p className="mt-1 text-2xl font-black text-text">
+                    {profile.stats.ownedCards.toLocaleString('fr-FR')}
+                    <span className="ml-1 text-sm font-medium text-text-light">cartes</span>
+                  </p>
+                </div>
+                <Layers className="h-5 w-5 shrink-0 text-text-light" />
               </Link>
             )}
           </Button>
