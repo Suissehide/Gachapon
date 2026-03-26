@@ -133,4 +133,49 @@ describe('Admin media routes', () => {
     expect(body.errors.length).toBeGreaterThan(0)
     expect(body.errors[0].reason).toMatch(/trop grand/i)
   })
+
+  it('PATCH /admin/media/rename — 401 sans cookie', async () => {
+    const res = await app.inject({
+      method: 'PATCH', url: '/admin/media/rename',
+      headers: { 'content-type': 'application/json' },
+      payload: { from: 'cards/foo.png', newName: 'bar' },
+    })
+    expect(res.statusCode).toBe(401)
+  })
+
+  it('PATCH /admin/media/rename — 400 si from a un chemin invalide', async () => {
+    const res = await app.inject({
+      method: 'PATCH', url: '/admin/media/rename',
+      headers: { cookie: adminCookies, 'content-type': 'application/json' },
+      payload: { from: '../../etc/passwd', newName: 'bar' },
+    })
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('PATCH /admin/media/rename — 400 si newName contient un point', async () => {
+    const res = await app.inject({
+      method: 'PATCH', url: '/admin/media/rename',
+      headers: { cookie: adminCookies, 'content-type': 'application/json' },
+      payload: { from: 'cards/foo.png', newName: 'my.file' },
+    })
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('PATCH /admin/media/rename — 400 si newName vide après sanitization', async () => {
+    const res = await app.inject({
+      method: 'PATCH', url: '/admin/media/rename',
+      headers: { cookie: adminCookies, 'content-type': 'application/json' },
+      payload: { from: 'cards/foo.png', newName: '---' },
+    })
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('PATCH /admin/media/rename — 400 si le nom est identique', async () => {
+    const res = await app.inject({
+      method: 'PATCH', url: '/admin/media/rename',
+      headers: { cookie: adminCookies, 'content-type': 'application/json' },
+      payload: { from: 'cards/foo.png', newName: 'foo' },
+    })
+    expect(res.statusCode).toBe(400)
+  })
 })
