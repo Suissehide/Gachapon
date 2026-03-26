@@ -15,10 +15,14 @@ import type { OAuthDomainInterface } from '../domain/auth/oauth.domain.interface
 import type { GachaDomainInterface } from '../domain/gacha/gacha.domain.interface'
 import type { TeamDomainInterface } from '../domain/team/team.domain.interface'
 import type { UserDomainInterface } from '../domain/user/user.domain.interface'
+import type { StreakDomain } from '../../domain/streak/streak.domain'
 import type { JwtServiceInterface } from '../infra/auth/jwt.service'
 import type { ConfigServiceInterface } from '../infra/config/config.service.interface'
 import type { HttpClientInterface } from '../infra/http/http-client'
 import type { UserRepositoryInterface } from '../infra/orm/repositories/user.repository.interface'
+import type { RewardRepositoryInterface } from '../infra/orm/repositories/reward.repository.interface'
+import type { StreakMilestoneRepositoryInterface } from '../infra/orm/repositories/streak-milestone.repository.interface'
+import type { UserRewardRepositoryInterface } from '../infra/orm/repositories/user-reward.repository.interface'
 import type { RedisClientInterface } from '../infra/redis/redis-client'
 import type { StorageClientInterface } from '../infra/storage/storage-client'
 import type { IMailService } from '../infra/mail/mail.service.interface'
@@ -56,4 +60,8 @@ export interface IocContainer {
   readonly invitationRepository: InvitationRepository
   readonly teamDomain: TeamDomainInterface
   readonly mailService: IMailService
+  readonly rewardRepository: RewardRepositoryInterface
+  readonly streakMilestoneRepository: StreakMilestoneRepositoryInterface
+  readonly userRewardRepository: UserRewardRepositoryInterface
+  readonly streakDomain: StreakDomain
 }

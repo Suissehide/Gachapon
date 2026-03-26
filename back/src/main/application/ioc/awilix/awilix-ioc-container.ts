@@ -5,6 +5,7 @@ import type { Resolver } from 'awilix/lib/resolvers'
 import { AuthDomain } from '../../../domain/auth/auth.domain'
 import { OAuthDomain } from '../../../domain/auth/oauth.domain'
 import { GachaDomain } from '../../../domain/gacha/gacha.domain'
+import { StreakDomain } from '../../../domain/streak/streak.domain'
 import { TeamDomain } from '../../../domain/team/team.domain'
 import { UserDomain } from '../../../domain/user/user.domain'
 import { MailService } from '../../../infra/mail/mail.service'
@@ -18,9 +19,12 @@ import { CardRepository } from '../../../infra/orm/repositories/card.repository'
 import { GachaPullRepository } from '../../../infra/orm/repositories/gacha-pull.repository'
 import { InvitationRepository } from '../../../infra/orm/repositories/invitation.repository'
 import { OAuthAccountRepository } from '../../../infra/orm/repositories/oauth-account.repository'
+import { RewardRepository } from '../../../infra/orm/repositories/reward.repository'
+import { StreakMilestoneRepository } from '../../../infra/orm/repositories/streak-milestone.repository'
 import { TeamRepository } from '../../../infra/orm/repositories/team.repository'
 import { TeamMemberRepository } from '../../../infra/orm/repositories/team-member.repository'
 import { UserRepository } from '../../../infra/orm/repositories/user.repository'
+import { UserRewardRepository } from '../../../infra/orm/repositories/user-reward.repository'
 import { ScoringConfigRepository } from '../../../infra/orm/repositories/scoring-config.repository'
 import { UpgradeRepository } from '../../../infra/orm/repositories/upgrade.repository'
 import { UserCardRepository } from '../../../infra/orm/repositories/user-card.repository'
@@ -80,6 +84,10 @@ class AwilixIocContainer {
     this.#reg('teamMemberRepository', asClass(TeamMemberRepository).singleton())
     this.#reg('invitationRepository', asClass(InvitationRepository).singleton())
     this.#reg('teamDomain', asClass(TeamDomain).singleton())
+    this.#reg('rewardRepository', asClass(RewardRepository).singleton())
+    this.#reg('streakMilestoneRepository', asClass(StreakMilestoneRepository).singleton())
+    this.#reg('userRewardRepository', asClass(UserRewardRepository).singleton())
+    this.#reg('streakDomain', asClass(StreakDomain).singleton())
     logger.info('IoC container initialized.')
   }
 

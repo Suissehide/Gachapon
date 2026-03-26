@@ -1,7 +1,5 @@
+import type { IocContainer } from '../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
-import type { StreakMilestoneRepositoryInterface } from '../../types/infra/orm/repositories/streak-milestone.repository.interface'
-import type { UserRewardRepositoryInterface } from '../../types/infra/orm/repositories/user-reward.repository.interface'
-import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 
 type StreakInput = {
   lastLoginAt: Date | null
@@ -52,19 +50,15 @@ function utcDayStart(date: Date): Date {
 }
 
 export class StreakDomain {
-  readonly #userRepository: UserRepositoryInterface
-  readonly #streakMilestoneRepository: StreakMilestoneRepositoryInterface
-  readonly #userRewardRepository: UserRewardRepositoryInterface
+  readonly #userRepository: IocContainer['userRepository']
+  readonly #streakMilestoneRepository: IocContainer['streakMilestoneRepository']
+  readonly #userRewardRepository: IocContainer['userRewardRepository']
 
   constructor({
     userRepository,
     streakMilestoneRepository,
     userRewardRepository,
-  }: {
-    userRepository: UserRepositoryInterface
-    streakMilestoneRepository: StreakMilestoneRepositoryInterface
-    userRewardRepository: UserRewardRepositoryInterface
-  }) {
+  }: Pick<IocContainer, 'userRepository' | 'streakMilestoneRepository' | 'userRewardRepository'>) {
     this.#userRepository = userRepository
     this.#streakMilestoneRepository = streakMilestoneRepository
     this.#userRewardRepository = userRewardRepository
