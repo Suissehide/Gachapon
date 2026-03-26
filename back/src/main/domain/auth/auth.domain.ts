@@ -16,7 +16,7 @@ import type { JwtServiceInterface } from '../../types/infra/auth/jwt.service'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 import type { IMailService } from '../../types/infra/mail/mail.service.interface'
-import type { StreakDomain } from '../../domain/streak/streak.domain'
+import type { StreakDomainInterface } from '../../types/domain/streak/streak.domain.interface'
 
 const SALT_ROUNDS = 12
 const VERIFICATION_TOKEN_TTL_MS = 24 * 60 * 60 * 1000 // 24h
@@ -29,7 +29,7 @@ export class AuthDomain implements AuthDomainInterface {
   readonly #jwtService: JwtServiceInterface
   readonly #mailService: IMailService
   readonly #postgresOrm: PostgresOrm
-  readonly #streakDomain: StreakDomain
+  readonly #streakDomain: StreakDomainInterface
 
   constructor({
     userRepository,
@@ -117,9 +117,13 @@ export class AuthDomain implements AuthDomainInterface {
     if (!user.emailVerifiedAt) {
       throw Boom.forbidden('EMAIL_NOT_VERIFIED')
     }
-    await this.#postgresOrm.executeWithTransactionClient(async (tx) => {
-      await this.#streakDomain.updateStreak(user.id, tx)
-    })
+    try {
+      await this.#postgresOrm.executeWithTransactionClient(async (tx) => {
+        await this.#streakDomain.updateStreak(user.id, tx)
+      })
+    } catch (err) {
+      console.error('[StreakDomain] updateStreak failed:', err)
+    }
     const tokens = await this.generateTokenPair(user)
     return { user, tokens }
   }
@@ -144,9 +148,13 @@ export class AuthDomain implements AuthDomainInterface {
       emailVerificationTokenExpiresAt: null,
     })
 
-    await this.#postgresOrm.executeWithTransactionClient(async (tx) => {
-      await this.#streakDomain.updateStreak(verified.id, tx)
-    })
+    try {
+      await this.#postgresOrm.executeWithTransactionClient(async (tx) => {
+        await this.#streakDomain.updateStreak(verified.id, tx)
+      })
+    } catch (err) {
+      console.error('[StreakDomain] updateStreak failed:', err)
+    }
 
     const tokens = await this.generateTokenPair(verified)
     return { user: verified, tokens }

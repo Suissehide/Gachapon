@@ -13,7 +13,7 @@ import type {
 } from '../../types/domain/auth/oauth.domain.interface'
 import type { UserEntity } from '../../types/domain/user/user.types'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
-import type { StreakDomain } from '../../domain/streak/streak.domain'
+import type { StreakDomainInterface } from '../../types/domain/streak/streak.domain.interface'
 
 type OAuthUserInfo = { id: string; email: string; username: string }
 
@@ -23,7 +23,7 @@ export class OAuthDomain implements OAuthDomainInterface {
   readonly #oauthAccountRepository: OAuthAccountRepository
   readonly #authDomain: AuthDomainInterface
   readonly #postgresOrm: PostgresOrm
-  readonly #streakDomain: StreakDomain
+  readonly #streakDomain: StreakDomainInterface
 
   constructor({
     config,
@@ -86,9 +86,13 @@ export class OAuthDomain implements OAuthDomainInterface {
       if (!user) {
         throw Boom.notFound('User not found')
       }
-      await this.#postgresOrm.executeWithTransactionClient(async (tx) => {
-        await this.#streakDomain.updateStreak(user.id, tx)
-      })
+      try {
+        await this.#postgresOrm.executeWithTransactionClient(async (tx) => {
+          await this.#streakDomain.updateStreak(user.id, tx)
+        })
+      } catch (err) {
+        console.error('[StreakDomain] updateStreak failed:', err)
+      }
       const tokens = await this.#authDomain.generateTokenPair(user)
       return { user, tokens, isNew: false }
     }
@@ -105,16 +109,22 @@ export class OAuthDomain implements OAuthDomainInterface {
       isNew = true
     }
 
+    const resolvedUser = user
+
     await this.#oauthAccountRepository.create(
-      user.id,
+      resolvedUser.id,
       prismaProvider,
       userInfo.id,
     )
-    await this.#postgresOrm.executeWithTransactionClient(async (tx) => {
-      await this.#streakDomain.updateStreak(user!.id, tx)
-    })
-    const tokens = await this.#authDomain.generateTokenPair(user)
-    return { user, tokens, isNew }
+    try {
+      await this.#postgresOrm.executeWithTransactionClient(async (tx) => {
+        await this.#streakDomain.updateStreak(resolvedUser.id, tx)
+      })
+    } catch (err) {
+      console.error('[StreakDomain] updateStreak failed:', err)
+    }
+    const tokens = await this.#authDomain.generateTokenPair(resolvedUser)
+    return { user: resolvedUser, tokens, isNew }
   }
 
   async #fetchGoogleUser(code: string): Promise<OAuthUserInfo> {
