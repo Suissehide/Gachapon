@@ -20,6 +20,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     { onRequest: [fastify.verifySessionCookie] },
     async (request, reply) => {
       const result = await gachaDomain.pull(request.user.userID)
+      const user = await userRepository.findById(request.user.userID)
 
       wsManager.notify(request.user.userID, {
         type: 'pull:result',
@@ -36,6 +37,20 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         tokensRemaining: result.tokensRemaining,
         pityCurrent: result.pityCurrent,
       })
+
+      if (user) {
+        wsManager.broadcast({
+          type: 'feed:pull',
+          username: user.username,
+          cardName: result.card.name,
+          rarity: result.card.rarity,
+          variant: result.pull.variant,
+          cardId: result.card.id,
+          imageUrl: result.card.imageUrl,
+          setName: result.card.set.name,
+          pulledAt: result.pull.pulledAt.toISOString(),
+        })
+      }
 
       return reply.status(201).send({
         card: {
@@ -161,6 +176,33 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         page,
         limit,
       }
+    },
+  )
+
+  // GET /pulls/recent — N derniers tirages (feed live)
+  fastify.get(
+    '/pulls/recent',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        querystring: z.object({
+          limit: z.coerce.number().int().min(1).max(50).default(20),
+        }),
+      },
+    },
+    async (request) => {
+      const { limit } = request.query
+      const pulls = await gachaPullRepository.findRecent(limit)
+      return pulls.map((p) => ({
+        username: p.username,
+        cardName: p.cardName,
+        rarity: p.rarity,
+        variant: p.variant,
+        cardId: p.cardId,
+        imageUrl: p.imageUrl,
+        setName: p.setName,
+        pulledAt: p.pulledAt.toISOString(),
+      }))
     },
   )
 }
