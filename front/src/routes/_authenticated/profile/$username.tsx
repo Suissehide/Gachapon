@@ -11,9 +11,11 @@ import {
   Trophy,
   Zap,
 } from 'lucide-react'
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 
 import { Button } from '../../../components/ui/button.tsx'
+import { StreakSummaryModal } from '../../../components/streak/StreakSummaryModal.tsx'
 import { useUserProfile } from '../../../queries/useProfile.ts'
 import { useAuthStore } from '../../../stores/auth.store.ts'
 
@@ -46,6 +48,7 @@ function ProfilePage() {
   }
 
   const isOwnProfile = currentUser?.username === username
+  const [streakModalOpen, setStreakModalOpen] = useState(false)
   const isAdmin = currentUser?.role === 'SUPER_ADMIN'
   const initials = profile.username[0]?.toUpperCase() ?? '?'
   const joinedYear = new Date(profile.createdAt).getFullYear()
@@ -133,10 +136,19 @@ function ProfilePage() {
           </div>
 
           {/* Streak card */}
-          <div className="rounded-xl border border-border bg-card p-4">
-            <div className="mb-3 flex items-center gap-1.5 text-xs font-medium text-text-light">
-              <Flame className="h-3.5 w-3.5 text-orange-500" />
-              Streak de connexion
+          <div
+            className={`rounded-xl border border-border bg-card p-4 ${isOwnProfile ? 'cursor-pointer hover:border-primary/40 transition-colors' : ''}`}
+            onClick={() => { if (isOwnProfile) setStreakModalOpen(true) }}
+            title={isOwnProfile ? 'Voir le récapitulatif streak' : undefined}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-text-light">
+                <Flame className="h-3.5 w-3.5 text-orange-500" />
+                Streak de connexion
+              </div>
+              {isOwnProfile && (
+                <ChevronRight className="h-3.5 w-3.5 text-text-light/50" />
+              )}
             </div>
             <div className="flex items-end gap-5">
               <div>
@@ -210,6 +222,12 @@ function ProfilePage() {
           </div>
         </Link>
       </div>
+      {isOwnProfile && (
+        <StreakSummaryModal
+          open={streakModalOpen}
+          onClose={() => setStreakModalOpen(false)}
+        />
+      )}
     </div>
   )
 }
