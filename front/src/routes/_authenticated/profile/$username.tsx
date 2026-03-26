@@ -1,11 +1,13 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   Calendar,
+  Flame,
   Layers,
   LayoutDashboard,
   Settings,
   Sparkles,
   Star,
+  Trophy,
   Zap,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
@@ -120,11 +122,17 @@ function ProfilePage() {
         {/* Streak */}
         <div className="mt-4 flex gap-6">
           <div className="text-center">
-            <p className="text-2xl font-bold">🔥 {profile.streakDays}</p>
+            <p className="flex items-center justify-center gap-1 text-2xl font-bold">
+              <Flame className="h-6 w-6 text-orange-500" />
+              {profile.streakDays}
+            </p>
             <p className="text-xs text-text-light">Streak actuel</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold">{profile.bestStreak}</p>
+            <p className="flex items-center justify-center gap-1 text-2xl font-bold">
+              <Trophy className="h-6 w-6 text-yellow-400" />
+              {profile.bestStreak}
+            </p>
             <p className="text-xs text-text-light">Meilleur streak</p>
           </div>
         </div>

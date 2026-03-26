@@ -1,3 +1,4 @@
+import { Gift } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import { RewardsPopup } from './RewardsPopup.tsx'
@@ -37,7 +38,7 @@ export function RewardsBadge({ pendingRewardsCount }: RewardsBadgeProps) {
         className="flex items-center justify-center rounded-lg p-2 text-lg hover:bg-muted transition-colors"
         aria-label="Récompenses"
       >
-        🎁
+        <Gift className="h-4 w-4" />
       </button>
 
       {pendingRewardsCount > 0 && (

@@ -1,3 +1,5 @@
+import { Sparkles, Star, Ticket } from 'lucide-react'
+
 import type { PendingReward } from '../../api/rewards.api.ts'
 import { Button } from '../ui/button.tsx'
 
@@ -36,18 +38,21 @@ export function RewardCard({ reward, onClaim, isLoading }: RewardCardProps) {
 
       <div className="mb-3 flex flex-col gap-1">
         {reward.reward.tokens > 0 && (
-          <div className="text-xs text-text-light">
-            🎫 {reward.reward.tokens} tokens
+          <div className="flex items-center gap-1 text-xs text-text-light">
+            <Ticket className="h-3 w-3 text-primary" />
+            {reward.reward.tokens} tokens
           </div>
         )}
         {reward.reward.dust > 0 && (
-          <div className="text-xs text-text-light">
-            ✨ {reward.reward.dust} dust
+          <div className="flex items-center gap-1 text-xs text-text-light">
+            <Sparkles className="h-3 w-3 text-accent" />
+            {reward.reward.dust} dust
           </div>
         )}
         {reward.reward.xp > 0 && (
-          <div className="text-xs text-text-light">
-            ⭐ {reward.reward.xp} XP
+          <div className="flex items-center gap-1 text-xs text-text-light">
+            <Star className="h-3 w-3 text-yellow-400" />
+            {reward.reward.xp} XP
           </div>
         )}
       </div>
