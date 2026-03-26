@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   Calendar,
+  ChevronRight,
   Flame,
   Layers,
   LayoutDashboard,
@@ -144,41 +145,23 @@ function ProfilePage() {
           </div>
 
           {/* Collection card */}
-          <Button
-            asChild
-            variant="outline"
-            className="h-auto w-full justify-between rounded-xl border-border bg-card p-4 text-left hover:border-primary/40 hover:bg-primary/5"
+          <Link
+            to={isOwnProfile ? '/collection' : '/profile/$username/collection'}
+            params={isOwnProfile ? undefined : { username }}
+            className="group flex items-center justify-between rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/50 hover:bg-primary/5"
           >
-            {isOwnProfile ? (
-              <Link to="/collection">
-                <div>
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-text-light">
-                    <Layers className="h-3.5 w-3.5 text-accent" />
-                    Ma collection
-                  </div>
-                  <p className="mt-1 text-2xl font-black text-text">
-                    {profile.stats.ownedCards.toLocaleString('fr-FR')}
-                    <span className="ml-1 text-sm font-medium text-text-light">cartes</span>
-                  </p>
-                </div>
-                <Layers className="h-5 w-5 shrink-0 text-text-light" />
-              </Link>
-            ) : (
-              <Link to="/profile/$username/collection" params={{ username }}>
-                <div>
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-text-light">
-                    <Layers className="h-3.5 w-3.5 text-accent" />
-                    Collection de {username}
-                  </div>
-                  <p className="mt-1 text-2xl font-black text-text">
-                    {profile.stats.ownedCards.toLocaleString('fr-FR')}
-                    <span className="ml-1 text-sm font-medium text-text-light">cartes</span>
-                  </p>
-                </div>
-                <Layers className="h-5 w-5 shrink-0 text-text-light" />
-              </Link>
-            )}
-          </Button>
+            <div>
+              <div className="flex items-center gap-1.5 text-xs font-medium text-text-light">
+                <Layers className="h-3.5 w-3.5 text-accent" />
+                {isOwnProfile ? 'Ma collection' : `Collection de ${username}`}
+              </div>
+              <p className="mt-1 text-2xl font-black text-text">
+                {profile.stats.ownedCards.toLocaleString('fr-FR')}
+                <span className="ml-1 text-sm font-medium text-text-light">cartes</span>
+              </p>
+            </div>
+            <ChevronRight className="h-5 w-5 shrink-0 text-text-light transition-transform group-hover:translate-x-1 group-hover:text-primary" />
+          </Link>
         </div>
       </div>
     </div>
