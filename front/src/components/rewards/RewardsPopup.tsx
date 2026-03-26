@@ -1,72 +1,73 @@
-import { Button } from '../ui/button.tsx'
+import { Gift } from 'lucide-react'
+
 import {
   useClaimAllRewards,
   useClaimReward,
   usePendingRewards,
 } from '../../queries/useRewards.ts'
+import { Button } from '../ui/button.tsx'
+import {
+  PopupBody,
+  PopupContent,
+  PopupFooter,
+  PopupHeader,
+  PopupTitle,
+} from '../ui/popup.tsx'
 import { RewardCard } from './RewardCard.tsx'
 
-interface RewardsPopupProps {
-  onClose: () => void
-}
-
-export function RewardsPopup({ onClose }: RewardsPopupProps) {
+export function RewardsPopup() {
   const { data: rewards = [], isLoading } = usePendingRewards()
   const claimReward = useClaimReward()
   const claimAll = useClaimAllRewards()
 
-  const handleClaim = (rewardId: string) => {
-    claimReward.mutate(rewardId)
-  }
-
-  const handleClaimAll = () => {
-    claimAll.mutate(undefined, {
-      onSuccess: () => {
-        onClose()
-      },
-    })
-  }
-
   return (
-    <div className="absolute right-0 top-8 z-50 w-72 rounded-xl border border-border bg-background shadow-lg p-4">
-      {/* Header with title and "Claim All" button */}
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-text">
-          Récompenses disponibles
-        </h2>
-        {rewards.length > 1 && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleClaimAll}
-            disabled={claimAll.isPending}
-          >
-            Tout réclamer
-          </Button>
-        )}
-      </div>
+    <PopupContent>
+      <PopupHeader>
+        <PopupTitle icon={<Gift className="h-4 w-4" />}>
+          Récompenses
+          {rewards.length > 0 && (
+            <span className="ml-1.5 rounded-full bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary">
+              {rewards.length}
+            </span>
+          )}
+        </PopupTitle>
+      </PopupHeader>
 
-      {/* Content */}
-      {isLoading ? (
-        <div className="py-4 text-center text-sm text-text-light">
-          Chargement…
-        </div>
-      ) : rewards.length === 0 ? (
-        <div className="py-4 text-center text-sm text-text-light">
-          Aucune récompense en attente.
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2 max-h-80 overflow-y-auto">
-          {rewards.map((reward) => (
-            <RewardCard
-              key={reward.id}
-              reward={reward}
-              onClaim={handleClaim}
-              isLoading={claimReward.isPending || claimAll.isPending}
-            />
-          ))}
-        </div>
+      <PopupBody>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          </div>
+        ) : rewards.length === 0 ? (
+          <div className="py-8 text-center">
+            <Gift className="mx-auto mb-3 h-8 w-8 text-text-light/30" />
+            <p className="text-sm font-medium text-text-light">Aucune récompense en attente.</p>
+          </div>
+        ) : (
+          <div className="flex max-h-[55vh] flex-col gap-2 overflow-y-auto">
+            {rewards.map((reward) => (
+              <RewardCard
+                key={reward.id}
+                reward={reward}
+                onClaim={(id) => claimReward.mutate(id)}
+                isLoading={claimReward.isPending || claimAll.isPending}
+              />
+            ))}
+          </div>
+        )}
+      </PopupBody>
+
+      {rewards.length > 1 && (
+        <PopupFooter>
+          <Button
+            onClick={() => claimAll.mutate(undefined)}
+            disabled={claimAll.isPending}
+            className="w-full"
+          >
+            Tout réclamer ({rewards.length})
+          </Button>
+        </PopupFooter>
       )}
-    </div>
+    </PopupContent>
   )
 }
