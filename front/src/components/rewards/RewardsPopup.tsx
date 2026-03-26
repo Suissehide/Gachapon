@@ -30,23 +30,21 @@ export function RewardsPopup({ onClose }: RewardsPopupProps) {
   return (
     <div className="absolute right-0 top-8 z-50 w-72 rounded-xl border border-border bg-background shadow-lg p-4">
       {/* Header with title and "Claim All" button */}
-      {rewards.length > 0 && (
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-text">
-            Récompenses disponibles
-          </h2>
-          {rewards.length > 1 && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleClaimAll}
-              disabled={claimAll.isPending}
-            >
-              Tout réclamer
-            </Button>
-          )}
-        </div>
-      )}
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-text">
+          Récompenses disponibles
+        </h2>
+        {rewards.length > 1 && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleClaimAll}
+            disabled={claimAll.isPending}
+          >
+            Tout réclamer
+          </Button>
+        )}
+      </div>
 
       {/* Content */}
       {isLoading ? (
@@ -64,7 +62,7 @@ export function RewardsPopup({ onClose }: RewardsPopupProps) {
               key={reward.id}
               reward={reward}
               onClaim={handleClaim}
-              isLoading={claimReward.isPending}
+              isLoading={claimReward.isPending || claimAll.isPending}
             />
           ))}
         </div>

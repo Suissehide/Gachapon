@@ -1,6 +1,4 @@
-import type React from 'react'
-
-import type { PendingReward } from '../../queries/useRewards.ts'
+import type { PendingReward } from '../../api/rewards.api.ts'
 import { Button } from '../ui/button.tsx'
 
 interface RewardCardProps {
