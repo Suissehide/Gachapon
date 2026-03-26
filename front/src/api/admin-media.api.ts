@@ -56,4 +56,16 @@ export const AdminMediaApi = {
     }
     return res.json()
   },
+
+  renameMedia: async (from: string, newName: string): Promise<{ key: string; url: string }> => {
+    const res = await fetchWithAuth(`${apiUrl}/admin/media/rename`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from, newName }),
+    })
+    if (!res.ok) {
+      handleHttpError(res, {}, 'Erreur lors du renommage')
+    }
+    return res.json()
+  },
 }

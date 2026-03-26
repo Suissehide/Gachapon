@@ -37,3 +37,14 @@ export function useDeleteMedia() {
     },
   })
 }
+
+export function useRenameMedia() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ from, newName }: { from: string; newName: string }) =>
+      AdminMediaApi.renameMedia(from, newName),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: MEDIA_QUERY_KEY })
+    },
+  })
+}
