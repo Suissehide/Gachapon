@@ -12,8 +12,9 @@ describe('Streak routes', () => {
     const prisma = (app as any).iocContainer.postgresOrm.prisma
 
     // Clean up streak data from previous runs and seed fresh data
+    await prisma.userReward.deleteMany({ where: { source: 'STREAK' } })
     await prisma.streakMilestone.deleteMany({})
-    await prisma.reward.deleteMany({ where: { streakMilestones: { some: {} } } })
+    await prisma.reward.deleteMany({ where: { streakMilestones: { none: {} } } })
 
     // Seed: day=0 default reward (tokens=2, dust=3, xp=5)
     const defaultReward = await prisma.reward.create({ data: { tokens: 2, dust: 3, xp: 5 } })
@@ -78,6 +79,7 @@ describe('Streak routes', () => {
       expect(body).toHaveProperty('bestStreak')
       expect(body).toHaveProperty('default')
       expect(body.default).toHaveProperty('tokens')
+      expect(body).toHaveProperty('days')
       expect(body.days).toHaveLength(30)
     })
 
@@ -131,7 +133,7 @@ describe('Streak routes', () => {
   })
 
   describe('PATCH /admin/streak/default', () => {
-    it('updates the default reward', async () => {
+    it('updates the default reward and summary reflects the change', async () => {
       const res = await app.inject({
         method: 'PATCH', url: '/admin/streak/default',
         headers: { cookie: adminCookies },
@@ -146,6 +148,22 @@ describe('Streak routes', () => {
         headers: { cookie: userCookies },
       })
       expect(summaryRes.json().default.tokens).toBe(3)
+
+      // Restore original value to keep tests hermetic
+      await app.inject({
+        method: 'PATCH', url: '/admin/streak/default',
+        headers: { cookie: adminCookies },
+        payload: { tokens: 2 },
+      })
+    })
+
+    it('returns 403 for non-admin', async () => {
+      const res = await app.inject({
+        method: 'PATCH', url: '/admin/streak/default',
+        headers: { cookie: userCookies },
+        payload: { tokens: 99 },
+      })
+      expect(res.statusCode).toBe(403)
     })
   })
 
