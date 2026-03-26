@@ -6,6 +6,8 @@ export type PendingUserReward = UserReward & {
   streakMilestone: StreakMilestone | null
 }
 
+export type UserRewardWithReward = UserReward & { reward: Reward }
+
 export interface UserRewardRepositoryInterface {
   upsertInTx(
     tx: PrimaTransactionClient,
@@ -17,5 +19,5 @@ export interface UserRewardRepositoryInterface {
   countPendingByUser(userId: string): Promise<number>
   markClaimedInTx(tx: PrimaTransactionClient, id: string): Promise<void>
   markAllClaimedInTx(tx: PrimaTransactionClient, userId: string): Promise<void>
-  findHistoryByUser(userId: string, page: number, limit: number): Promise<{ data: UserReward[]; total: number }>
+  findHistoryByUser(userId: string, page: number, limit: number): Promise<{ data: UserRewardWithReward[]; total: number }>
 }

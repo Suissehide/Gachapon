@@ -31,7 +31,7 @@ describe('Admin achievements routes', () => {
     const res = await app.inject({
       method: 'POST', url: '/admin/achievements',
       headers: { cookie: adminCookies },
-      payload: { key: `ach_${suffix}`, name: 'Test Achievement', description: 'desc', rewardTokens: 0, rewardDust: 50 },
+      payload: { key: `ach_${suffix}`, name: 'Test Achievement', description: 'desc' },
     })
     expect(res.statusCode).toBe(201)
     achievementId = res.json().id
@@ -47,10 +47,10 @@ describe('Admin achievements routes', () => {
     const res = await app.inject({
       method: 'PATCH', url: `/admin/achievements/${achievementId}`,
       headers: { cookie: adminCookies },
-      payload: { rewardDust: 100 },
+      payload: { name: 'Updated Achievement' },
     })
     expect(res.statusCode).toBe(200)
-    expect(res.json().rewardDust).toBe(100)
+    expect(res.json().name).toBe('Updated Achievement')
   })
 
   it('DELETE /admin/achievements/:id — supprime un succès', async () => {

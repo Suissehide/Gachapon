@@ -7,8 +7,6 @@ const questSchema = z.object({
   name: z.string().min(1),
   description: z.string().min(1),
   criterion: z.record(z.string(), z.unknown()),
-  rewardTokens: z.number().int().min(0).default(0),
-  rewardDust: z.number().int().min(0).default(0),
   isActive: z.boolean().default(true),
 })
 

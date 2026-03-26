@@ -6,8 +6,6 @@ const achievementSchema = z.object({
   key: z.string().min(1),
   name: z.string().min(1),
   description: z.string().min(1),
-  rewardTokens: z.number().int().min(0).default(0),
-  rewardDust: z.number().int().min(0).default(0),
 })
 
 export const adminAchievementsRouter: FastifyPluginCallbackZod = (fastify) => {

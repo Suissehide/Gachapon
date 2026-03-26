@@ -4,6 +4,7 @@ import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type {
   PendingUserReward,
   UserRewardRepositoryInterface,
+  UserRewardWithReward,
 } from '../../../types/infra/orm/repositories/user-reward.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
 
@@ -41,7 +42,7 @@ export class UserRewardRepository implements UserRewardRepositoryInterface {
     const milestoneMap = new Map(milestones.map((m) => [m.id, m]))
     return rows.map((r) => ({
       ...r,
-      streakMilestone: r.sourceId ? (milestoneMap.get(r.sourceId) ?? null) : null,
+      streakMilestone: r.source === 'STREAK' && r.sourceId ? (milestoneMap.get(r.sourceId) ?? null) : null,
     }))
   }
 
@@ -78,7 +79,7 @@ export class UserRewardRepository implements UserRewardRepositoryInterface {
     userId: string,
     page: number,
     limit: number,
-  ): Promise<{ data: UserReward[]; total: number }> {
+  ): Promise<{ data: UserRewardWithReward[]; total: number }> {
     const skip = (page - 1) * limit
     const [data, total] = await Promise.all([
       this.#prisma.userReward.findMany({

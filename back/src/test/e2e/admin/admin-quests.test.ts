@@ -31,7 +31,7 @@ describe('Admin quests routes', () => {
     const res = await app.inject({
       method: 'POST', url: '/admin/quests',
       headers: { cookie: adminCookies },
-      payload: { key: `quest_${suffix}`, name: 'Test Quest', description: 'desc', criterion: { type: 'pulls', count: 5 }, rewardTokens: 1, rewardDust: 10 },
+      payload: { key: `quest_${suffix}`, name: 'Test Quest', description: 'desc', criterion: { type: 'pulls', count: 5 } },
     })
     expect(res.statusCode).toBe(201)
     questId = res.json().id
@@ -47,10 +47,10 @@ describe('Admin quests routes', () => {
     const res = await app.inject({
       method: 'PATCH', url: `/admin/quests/${questId}`,
       headers: { cookie: adminCookies },
-      payload: { rewardDust: 50 },
+      payload: { name: 'Updated Quest' },
     })
     expect(res.statusCode).toBe(200)
-    expect(res.json().rewardDust).toBe(50)
+    expect(res.json().name).toBe('Updated Quest')
   })
 
   it('DELETE /admin/quests/:id — supprime une quête', async () => {
