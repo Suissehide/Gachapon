@@ -57,6 +57,12 @@ enum UpgradeType {
   TOKEN_VAULT
 }
 
+enum RewardSource {
+  STREAK
+  ACHIEVEMENT
+  QUEST
+}
+
 model User {
   id            String     @id @default(uuid())
   username      String     @unique
@@ -81,6 +87,8 @@ model User {
   passwordResetToken              String?   @unique
   passwordResetTokenExpiresAt     DateTime?
 
+  bestStreak    Int        @default(0)
+
   oauthAccounts       OAuthAccount[]
   apiKeys             ApiKey[]
   ownedTeams          Team[]            @relation("TeamOwner")
@@ -93,6 +101,7 @@ model User {
   achievements        UserAchievement[]
   userQuests          UserQuest[]
   upgrades            UserUpgrade[]
+  userRewards         UserReward[]
 }
 
 model OAuthAccount {
@@ -243,12 +252,12 @@ model Purchase {
 }
 
 model Achievement {
-  id           String @id @default(uuid())
-  key          String @unique
-  name         String
-  description  String
-  rewardTokens Int    @default(0)
-  rewardDust   Int    @default(0)
+  id          String  @id @default(uuid())
+  key         String  @unique
+  name        String
+  description String
+  rewardId    String?
+  reward      Reward? @relation(fields: [rewardId], references: [id])
 
   userAchievements UserAchievement[]
 }
@@ -265,14 +274,14 @@ model UserAchievement {
 }
 
 model Quest {
-  id           String  @id @default(uuid())
-  key          String  @unique
-  name         String
-  description  String
-  criterion    Json
-  rewardTokens Int     @default(0)
-  rewardDust   Int     @default(0)
-  isActive     Boolean @default(true)
+  id          String  @id @default(uuid())
+  key         String  @unique
+  name        String
+  description String
+  criterion   Json
+  rewardId    String?
+  reward      Reward? @relation(fields: [rewardId], references: [id])
+  isActive    Boolean @default(true)
 
   userQuests UserQuest[]
 }
@@ -289,6 +298,49 @@ model UserQuest {
   completedAt DateTime?
 
   @@unique([userId, questId, date])
+}
+
+model Reward {
+  id        String   @id @default(uuid())
+  tokens    Int      @default(0)
+  dust      Int      @default(0)
+  xp        Int      @default(0)
+  createdAt DateTime @default(now())
+
+  streakMilestones StreakMilestone[]
+  achievements     Achievement[]
+  quests           Quest[]
+  userRewards      UserReward[]
+
+  @@map("rewards")
+}
+
+model StreakMilestone {
+  id          String  @id @default(uuid())
+  day         Int     @unique
+  isMilestone Boolean @default(false)
+  isActive    Boolean @default(true)
+  rewardId    String
+  reward      Reward  @relation(fields: [rewardId], references: [id])
+
+  @@map("streak_milestones")
+}
+
+model UserReward {
+  id        String       @id @default(uuid())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id])
+  rewardId  String
+  reward    Reward       @relation(fields: [rewardId], references: [id])
+  source    RewardSource
+  sourceId  String?
+  claimedAt DateTime?
+  createdAt DateTime     @default(now())
+
+  @@index([userId, claimedAt])
+  @@index([sourceId])
+  @@unique([userId, source, sourceId])
+  @@map("user_rewards")
 }
 
 model GlobalConfig {
