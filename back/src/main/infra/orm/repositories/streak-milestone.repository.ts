@@ -12,11 +12,25 @@ export class StreakMilestoneRepository implements StreakMilestoneRepositoryInter
     this.#prisma = postgresOrm.prisma
   }
 
-  findBestForDay(targetDay: number): Promise<StreakMilestoneWithReward | null> {
+  findExactMilestoneForDay(targetDay: number): Promise<StreakMilestoneWithReward | null> {
     return this.#prisma.streakMilestone.findFirst({
-      where: { isActive: true, day: { lte: targetDay } },
-      orderBy: { day: 'desc' },
+      where: { day: targetDay, isMilestone: true, isActive: true },
       include: { reward: true },
+    })
+  }
+
+  findDefault(): Promise<StreakMilestoneWithReward | null> {
+    return this.#prisma.streakMilestone.findFirst({
+      where: { day: 0 },
+      include: { reward: true },
+    })
+  }
+
+  findAllActive(): Promise<StreakMilestoneWithReward[]> {
+    return this.#prisma.streakMilestone.findMany({
+      where: { isActive: true, day: { gt: 0 } },
+      include: { reward: true },
+      orderBy: { day: 'asc' },
     })
   }
 }
