@@ -50,6 +50,13 @@ function ProfilePage() {
   const initials = profile.username[0]?.toUpperCase() ?? '?'
   const joinedYear = new Date(profile.createdAt).getFullYear()
 
+  // XP progression — mirrors back/src/main/domain/shared/xp.ts
+  const isMaxLevel = profile.level >= 100
+  const xpForLevel = (n: number) => (n - 1) ** 2 * 100
+  const xpInLevel = profile.xp - xpForLevel(profile.level)
+  const xpNeeded = xpForLevel(profile.level + 1) - xpForLevel(profile.level)
+  const xpPercent = isMaxLevel ? 100 : Math.min((xpInLevel / xpNeeded) * 100, 100)
+
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background">
       {/* Banner */}
@@ -62,17 +69,11 @@ function ProfilePage() {
             {initials}
           </div>
           <div>
-            <h1 className="text-xl font-black text-text">
-              @{profile.username}
-            </h1>
+            <h1 className="text-xl font-black text-text">@{profile.username}</h1>
             <div className="flex items-center gap-3 text-xs text-text-light">
               <span className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
                 Membre depuis {joinedYear}
-              </span>
-              <span className="flex items-center gap-1">
-                <Zap className="h-3 w-3 text-primary" />
-                Niv. {profile.level}
               </span>
             </div>
           </div>
@@ -96,8 +97,72 @@ function ProfilePage() {
           )}
         </div>
 
+        {/* Niveau + XP + Streak */}
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          {/* Level + XP card */}
+          <div className="rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center gap-4">
+              <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/25">
+                <span className="text-[9px] font-bold uppercase tracking-widest text-primary/60">NIV.</span>
+                <span className="text-xl font-black leading-tight text-primary">{profile.level}</span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="mb-1.5 flex items-baseline justify-between">
+                  <span className="text-xs font-semibold text-text">Expérience</span>
+                  {isMaxLevel ? (
+                    <span className="text-xs font-bold text-primary">MAX</span>
+                  ) : (
+                    <span className="text-[11px] tabular-nums text-text-light">
+                      {xpInLevel.toLocaleString('fr-FR')} / {xpNeeded.toLocaleString('fr-FR')} XP
+                    </span>
+                  )}
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-primary to-secondary transition-all duration-700"
+                    style={{ width: `${xpPercent}%` }}
+                  />
+                </div>
+                {!isMaxLevel && (
+                  <p className="mt-1.5 text-[10px] text-text-light">
+                    encore {(xpNeeded - xpInLevel).toLocaleString('fr-FR')} XP avant le niveau {profile.level + 1}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Streak card */}
+          <div className="rounded-xl border border-border bg-card p-4">
+            <div className="mb-3 flex items-center gap-1.5 text-xs font-medium text-text-light">
+              <Flame className="h-3.5 w-3.5 text-orange-500" />
+              Streak de connexion
+            </div>
+            <div className="flex items-end gap-5">
+              <div>
+                <p className="text-2xl font-black text-text">
+                  {profile.streakDays}
+                  <span className="ml-1 text-sm font-medium text-text-light">j</span>
+                </p>
+                <p className="mt-0.5 text-xs text-text-light">Actuel</p>
+              </div>
+              <div className="mb-0.5 h-7 w-px bg-border" />
+              <div>
+                <div className="flex items-center gap-1">
+                  <Trophy className="h-3.5 w-3.5 text-yellow-400" />
+                  <p className="text-2xl font-black text-text">
+                    {profile.bestStreak}
+                    <span className="ml-1 text-sm font-medium text-text-light">j</span>
+                  </p>
+                </div>
+                <p className="mt-0.5 text-xs text-text-light">Record</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Stats */}
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <StatCard
             icon={<Star className="h-4 w-4 text-yellow-400" />}
             label="Tirages"
@@ -120,49 +185,30 @@ function ProfilePage() {
           />
         </div>
 
-        {/* Streak + Collection */}
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          {/* Streak card */}
-          <div className="rounded-xl border border-border bg-card p-4">
-            <div className="mb-3 flex items-center gap-1.5 text-xs font-medium text-text-light">
-              <Flame className="h-3.5 w-3.5 text-orange-500" />
-              Streak de connexion
-            </div>
-            <div className="flex items-end gap-5">
-              <div>
-                <p className="text-2xl font-black text-text">{profile.streakDays}</p>
-                <p className="mt-0.5 text-xs text-text-light">Actuel</p>
-              </div>
-              <div className="mb-0.5 h-7 w-px bg-border" />
-              <div>
-                <div className="flex items-center gap-1">
-                  <Trophy className="h-3.5 w-3.5 text-yellow-400" />
-                  <p className="text-2xl font-black text-text">{profile.bestStreak}</p>
-                </div>
-                <p className="mt-0.5 text-xs text-text-light">Record</p>
-              </div>
-            </div>
+        {/* Collection CTA */}
+        <Link
+          to={isOwnProfile ? '/collection' : '/profile/$username/collection'}
+          params={isOwnProfile ? undefined : { username }}
+          className="group mt-3 flex items-center justify-between overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-r from-primary/10 via-card to-card p-5 transition-colors hover:border-primary/35 hover:from-primary/15"
+        >
+          <div>
+            <p className="text-xs font-medium text-text-light">
+              {isOwnProfile ? 'Ma collection' : `Collection de ${username}`}
+            </p>
+            <p className="mt-0.5 text-lg font-black text-text">
+              {profile.stats.ownedCards.toLocaleString('fr-FR')} cartes
+              {profile.stats.legendaryCount > 0 && (
+                <span className="ml-2 text-sm font-semibold text-primary">
+                  · {profile.stats.legendaryCount} légendaires
+                </span>
+              )}
+            </p>
           </div>
-
-          {/* Collection card */}
-          <Link
-            to={isOwnProfile ? '/collection' : '/profile/$username/collection'}
-            params={isOwnProfile ? undefined : { username }}
-            className="group flex items-center justify-between rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/50 hover:bg-primary/5"
-          >
-            <div>
-              <div className="flex items-center gap-1.5 text-xs font-medium text-text-light">
-                <Layers className="h-3.5 w-3.5 text-accent" />
-                {isOwnProfile ? 'Ma collection' : `Collection de ${username}`}
-              </div>
-              <p className="mt-1 text-2xl font-black text-text">
-                {profile.stats.ownedCards.toLocaleString('fr-FR')}
-                <span className="ml-1 text-sm font-medium text-text-light">cartes</span>
-              </p>
-            </div>
-            <ChevronRight className="h-5 w-5 shrink-0 text-text-light transition-transform group-hover:translate-x-1 group-hover:text-primary" />
-          </Link>
-        </div>
+          <div className="flex shrink-0 items-center gap-1 text-sm font-semibold text-primary">
+            {isOwnProfile ? 'Voir ma collection' : 'Explorer'}
+            <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </div>
+        </Link>
       </div>
     </div>
   )
