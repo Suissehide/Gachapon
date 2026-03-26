@@ -13,8 +13,10 @@ import type {
 } from '../../types/domain/auth/auth.types'
 import type { UserEntity } from '../../types/domain/user/user.types'
 import type { JwtServiceInterface } from '../../types/infra/auth/jwt.service'
+import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 import type { IMailService } from '../../types/infra/mail/mail.service.interface'
+import type { StreakDomain } from '../../domain/streak/streak.domain'
 
 const SALT_ROUNDS = 12
 const VERIFICATION_TOKEN_TTL_MS = 24 * 60 * 60 * 1000 // 24h
@@ -26,17 +28,23 @@ export class AuthDomain implements AuthDomainInterface {
   readonly #refreshTokenRepository: RefreshTokenRepository
   readonly #jwtService: JwtServiceInterface
   readonly #mailService: IMailService
+  readonly #postgresOrm: PostgresOrm
+  readonly #streakDomain: StreakDomain
 
   constructor({
     userRepository,
     refreshTokenRepository,
     jwtService,
     mailService,
+    postgresOrm,
+    streakDomain,
   }: IocContainer) {
     this.#userRepository = userRepository
     this.#refreshTokenRepository = refreshTokenRepository
     this.#jwtService = jwtService
     this.#mailService = mailService
+    this.#postgresOrm = postgresOrm
+    this.#streakDomain = streakDomain
   }
 
   hashPassword(password: string): Promise<string> {
@@ -109,6 +117,9 @@ export class AuthDomain implements AuthDomainInterface {
     if (!user.emailVerifiedAt) {
       throw Boom.forbidden('EMAIL_NOT_VERIFIED')
     }
+    await this.#postgresOrm.executeWithTransactionClient(async (tx) => {
+      await this.#streakDomain.updateStreak(user.id, tx)
+    })
     const tokens = await this.generateTokenPair(user)
     return { user, tokens }
   }
@@ -131,6 +142,10 @@ export class AuthDomain implements AuthDomainInterface {
       emailVerifiedAt: new Date(),
       emailVerificationToken: null,
       emailVerificationTokenExpiresAt: null,
+    })
+
+    await this.#postgresOrm.executeWithTransactionClient(async (tx) => {
+      await this.#streakDomain.updateStreak(verified.id, tx)
     })
 
     const tokens = await this.generateTokenPair(verified)

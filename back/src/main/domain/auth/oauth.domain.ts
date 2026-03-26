@@ -3,6 +3,7 @@ import Boom from '@hapi/boom'
 import { OAuthProvider } from '../../../generated/enums'
 import type { Config } from '../../application/config'
 import type { OAuthAccountRepository } from '../../infra/orm/repositories/oauth-account.repository'
+import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
 import type { AuthDomainInterface } from '../../types/domain/auth/auth.domain.interface'
 import type { TokenPair } from '../../types/domain/auth/auth.types'
@@ -12,6 +13,7 @@ import type {
 } from '../../types/domain/auth/oauth.domain.interface'
 import type { UserEntity } from '../../types/domain/user/user.types'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
+import type { StreakDomain } from '../../domain/streak/streak.domain'
 
 type OAuthUserInfo = { id: string; email: string; username: string }
 
@@ -20,17 +22,23 @@ export class OAuthDomain implements OAuthDomainInterface {
   readonly #userRepository: UserRepositoryInterface
   readonly #oauthAccountRepository: OAuthAccountRepository
   readonly #authDomain: AuthDomainInterface
+  readonly #postgresOrm: PostgresOrm
+  readonly #streakDomain: StreakDomain
 
   constructor({
     config,
     userRepository,
     oauthAccountRepository,
     authDomain,
+    postgresOrm,
+    streakDomain,
   }: IocContainer) {
     this.#config = config
     this.#userRepository = userRepository
     this.#oauthAccountRepository = oauthAccountRepository
     this.#authDomain = authDomain
+    this.#postgresOrm = postgresOrm
+    this.#streakDomain = streakDomain
   }
 
   getAuthorizationUrl(provider: OAuthProviderName, state: string): string {
@@ -78,6 +86,9 @@ export class OAuthDomain implements OAuthDomainInterface {
       if (!user) {
         throw Boom.notFound('User not found')
       }
+      await this.#postgresOrm.executeWithTransactionClient(async (tx) => {
+        await this.#streakDomain.updateStreak(user.id, tx)
+      })
       const tokens = await this.#authDomain.generateTokenPair(user)
       return { user, tokens, isNew: false }
     }
@@ -99,6 +110,9 @@ export class OAuthDomain implements OAuthDomainInterface {
       prismaProvider,
       userInfo.id,
     )
+    await this.#postgresOrm.executeWithTransactionClient(async (tx) => {
+      await this.#streakDomain.updateStreak(user!.id, tx)
+    })
     const tokens = await this.#authDomain.generateTokenPair(user)
     return { user, tokens, isNew }
   }
