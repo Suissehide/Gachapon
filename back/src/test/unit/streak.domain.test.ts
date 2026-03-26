@@ -45,3 +45,79 @@ describe('calculateStreakUpdate', () => {
     expect(result.newBestStreak).toBe(8)
   })
 })
+
+import { jest } from '@jest/globals'
+import { StreakDomain } from '../../main/domain/streak/streak.domain'
+
+describe('StreakDomain.updateStreak', () => {
+  const mockUserRepo = {
+    findByIdOrThrowInTx: jest.fn<(...args: any[]) => Promise<any>>(),
+    updateStreakInTx: jest.fn<(...args: any[]) => Promise<void>>(),
+  }
+  const mockMilestoneRepo = {
+    findExactMilestoneForDay: jest.fn<(...args: any[]) => Promise<any>>(),
+    findDefault: jest.fn<(...args: any[]) => Promise<any>>(),
+    findAllActive: jest.fn<(...args: any[]) => Promise<any[]>>(),
+  }
+  const mockUserRewardRepo = {
+    upsertInTx: jest.fn<(...args: any[]) => Promise<void>>(),
+  }
+  const domain = new StreakDomain({
+    userRepository: mockUserRepo as any,
+    streakMilestoneRepository: mockMilestoneRepo as any,
+    userRewardRepository: mockUserRewardRepo as any,
+  })
+  const fakeTx = {} as any
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockUserRepo.updateStreakInTx.mockResolvedValue(undefined)
+    mockUserRewardRepo.upsertInTx.mockResolvedValue(undefined)
+  })
+
+  it('grants exact milestone reward when day matches a milestone', async () => {
+    mockUserRepo.findByIdOrThrowInTx.mockResolvedValue({
+      lastLoginAt: null, streakDays: 0, bestStreak: 0,
+    })
+    const milestone = { id: 'ms-1', rewardId: 'rw-1', reward: { tokens: 5, dust: 8, xp: 15 } }
+    mockMilestoneRepo.findExactMilestoneForDay.mockResolvedValue(milestone)
+
+    await domain.updateStreak('user-1', fakeTx)
+
+    expect(mockMilestoneRepo.findExactMilestoneForDay).toHaveBeenCalledWith(1)
+    expect(mockMilestoneRepo.findDefault).not.toHaveBeenCalled()
+    expect(mockUserRewardRepo.upsertInTx).toHaveBeenCalledWith(fakeTx, expect.objectContaining({
+      rewardId: 'rw-1', source: 'STREAK', sourceId: 'ms-1',
+    }))
+  })
+
+  it('grants default reward when day has no milestone', async () => {
+    mockUserRepo.findByIdOrThrowInTx.mockResolvedValue({
+      lastLoginAt: null, streakDays: 0, bestStreak: 0,
+    })
+    const defaultMilestone = { id: 'ms-0', rewardId: 'rw-0', reward: { tokens: 2, dust: 3, xp: 5 } }
+    mockMilestoneRepo.findExactMilestoneForDay.mockResolvedValue(null)
+    mockMilestoneRepo.findDefault.mockResolvedValue(defaultMilestone)
+
+    await domain.updateStreak('user-1', fakeTx)
+
+    expect(mockMilestoneRepo.findExactMilestoneForDay).toHaveBeenCalledWith(1)
+    expect(mockMilestoneRepo.findDefault).toHaveBeenCalled()
+    expect(mockUserRewardRepo.upsertInTx).toHaveBeenCalledWith(fakeTx, expect.objectContaining({
+      rewardId: 'rw-0', source: 'STREAK', sourceId: 'ms-0',
+    }))
+  })
+
+  it('skips reward grant when same-day login', async () => {
+    const today = new Date()
+    today.setUTCHours(0, 0, 0, 0)
+    mockUserRepo.findByIdOrThrowInTx.mockResolvedValue({
+      lastLoginAt: today, streakDays: 3, bestStreak: 3,
+    })
+
+    await domain.updateStreak('user-1', fakeTx)
+
+    expect(mockMilestoneRepo.findExactMilestoneForDay).not.toHaveBeenCalled()
+    expect(mockUserRewardRepo.upsertInTx).not.toHaveBeenCalled()
+  })
+})

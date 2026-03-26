@@ -99,8 +99,11 @@ export class StreakDomain {
       lastLoginAt: new Date(),
     })
 
+    // Check for an exact milestone match first, then fall back to the daily default
     const milestone =
-      await this.#streakMilestoneRepository.findBestForDay(newStreakDays)
+      await this.#streakMilestoneRepository.findExactMilestoneForDay(newStreakDays)
+        ?? await this.#streakMilestoneRepository.findDefault()
+
     if (!milestone) {
       return
     }
