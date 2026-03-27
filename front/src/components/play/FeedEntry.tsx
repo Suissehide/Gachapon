@@ -1,8 +1,8 @@
 import { HoverCard } from 'radix-ui'
 
 import { RARITY_TEXT_COLORS } from '../../constants/card.constant'
-import { TcgCardFace } from '../shared/tcg-card/TcgCardFace'
 import type { FeedEntry } from '../../types/feed'
+import { TcgCardFace } from '../shared/tcg-card/TcgCardFace'
 
 const VARIANT_LABELS: Record<string, string> = {
   BRILLIANT: '✦',
@@ -15,7 +15,8 @@ type Props = {
 
 export function FeedEntryRow({ entry }: Props) {
   const rarityClass = RARITY_TEXT_COLORS[entry.rarity] ?? 'text-white'
-  const variantLabel = entry.variant !== 'NORMAL' ? VARIANT_LABELS[entry.variant] : null
+  const variantLabel =
+    entry.variant !== 'NORMAL' ? VARIANT_LABELS[entry.variant] : null
 
   return (
     <HoverCard.Root openDelay={200} closeDelay={100}>
@@ -28,7 +29,9 @@ export function FeedEntryRow({ entry }: Props) {
             {entry.cardName}
           </span>
           {variantLabel && (
-            <span className="shrink-0 text-[9px] text-sky-300">{variantLabel}</span>
+            <span className="shrink-0 text-[9px] text-sky-300">
+              {variantLabel}
+            </span>
           )}
         </div>
       </HoverCard.Trigger>

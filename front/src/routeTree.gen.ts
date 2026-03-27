@@ -36,6 +36,7 @@ import { Route as AuthenticatedTeamIdRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedProfileUsernameRouteImport } from './routes/_authenticated/profile/$username'
 import { Route as AdminAdminUsersRouteImport } from './routes/_admin/admin.users'
 import { Route as AdminAdminUpgradesRouteImport } from './routes/_admin/admin.upgrades'
+import { Route as AdminAdminStreakRouteImport } from './routes/_admin/admin.streak'
 import { Route as AdminAdminStatsRouteImport } from './routes/_admin/admin.stats'
 import { Route as AdminAdminShopRouteImport } from './routes/_admin/admin.shop'
 import { Route as AdminAdminScoringRouteImport } from './routes/_admin/admin.scoring'
@@ -180,6 +181,11 @@ const AdminAdminUpgradesRoute = AdminAdminUpgradesRouteImport.update({
   path: '/upgrades',
   getParentRoute: () => AdminAdminRoute,
 } as any)
+const AdminAdminStreakRoute = AdminAdminStreakRouteImport.update({
+  id: '/streak',
+  path: '/streak',
+  getParentRoute: () => AdminAdminRoute,
+} as any)
 const AdminAdminStatsRoute = AdminAdminStatsRouteImport.update({
   id: '/stats',
   path: '/stats',
@@ -249,6 +255,7 @@ export interface FileRoutesByFullPath {
   '/admin/scoring': typeof AdminAdminScoringRoute
   '/admin/shop': typeof AdminAdminShopRoute
   '/admin/stats': typeof AdminAdminStatsRoute
+  '/admin/streak': typeof AdminAdminStreakRoute
   '/admin/upgrades': typeof AdminAdminUpgradesRoute
   '/admin/users': typeof AdminAdminUsersRoute
   '/profile/$username': typeof AuthenticatedProfileUsernameRoute
@@ -283,6 +290,7 @@ export interface FileRoutesByTo {
   '/admin/scoring': typeof AdminAdminScoringRoute
   '/admin/shop': typeof AdminAdminShopRoute
   '/admin/stats': typeof AdminAdminStatsRoute
+  '/admin/streak': typeof AdminAdminStreakRoute
   '/admin/upgrades': typeof AdminAdminUpgradesRoute
   '/admin/users': typeof AdminAdminUsersRoute
   '/profile/$username': typeof AuthenticatedProfileUsernameRoute
@@ -321,6 +329,7 @@ export interface FileRoutesById {
   '/_admin/admin/scoring': typeof AdminAdminScoringRoute
   '/_admin/admin/shop': typeof AdminAdminShopRoute
   '/_admin/admin/stats': typeof AdminAdminStatsRoute
+  '/_admin/admin/streak': typeof AdminAdminStreakRoute
   '/_admin/admin/upgrades': typeof AdminAdminUpgradesRoute
   '/_admin/admin/users': typeof AdminAdminUsersRoute
   '/_authenticated/profile/$username': typeof AuthenticatedProfileUsernameRoute
@@ -358,6 +367,7 @@ export interface FileRouteTypes {
     | '/admin/scoring'
     | '/admin/shop'
     | '/admin/stats'
+    | '/admin/streak'
     | '/admin/upgrades'
     | '/admin/users'
     | '/profile/$username'
@@ -392,6 +402,7 @@ export interface FileRouteTypes {
     | '/admin/scoring'
     | '/admin/shop'
     | '/admin/stats'
+    | '/admin/streak'
     | '/admin/upgrades'
     | '/admin/users'
     | '/profile/$username'
@@ -429,6 +440,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/scoring'
     | '/_admin/admin/shop'
     | '/_admin/admin/stats'
+    | '/_admin/admin/streak'
     | '/_admin/admin/upgrades'
     | '/_admin/admin/users'
     | '/_authenticated/profile/$username'
@@ -646,6 +658,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminUpgradesRouteImport
       parentRoute: typeof AdminAdminRoute
     }
+    '/_admin/admin/streak': {
+      id: '/_admin/admin/streak'
+      path: '/streak'
+      fullPath: '/admin/streak'
+      preLoaderRoute: typeof AdminAdminStreakRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
     '/_admin/admin/stats': {
       id: '/_admin/admin/stats'
       path: '/stats'
@@ -712,6 +731,7 @@ interface AdminAdminRouteChildren {
   AdminAdminScoringRoute: typeof AdminAdminScoringRoute
   AdminAdminShopRoute: typeof AdminAdminShopRoute
   AdminAdminStatsRoute: typeof AdminAdminStatsRoute
+  AdminAdminStreakRoute: typeof AdminAdminStreakRoute
   AdminAdminUpgradesRoute: typeof AdminAdminUpgradesRoute
   AdminAdminUsersRoute: typeof AdminAdminUsersRoute
   AdminAdminIndexRoute: typeof AdminAdminIndexRoute
@@ -724,6 +744,7 @@ const AdminAdminRouteChildren: AdminAdminRouteChildren = {
   AdminAdminScoringRoute: AdminAdminScoringRoute,
   AdminAdminShopRoute: AdminAdminShopRoute,
   AdminAdminStatsRoute: AdminAdminStatsRoute,
+  AdminAdminStreakRoute: AdminAdminStreakRoute,
   AdminAdminUpgradesRoute: AdminAdminUpgradesRoute,
   AdminAdminUsersRoute: AdminAdminUsersRoute,
   AdminAdminIndexRoute: AdminAdminIndexRoute,

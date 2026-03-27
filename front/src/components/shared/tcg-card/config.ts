@@ -244,9 +244,9 @@ export type SizePreset = {
 }
 
 export const SIZE_FULL: SizePreset = {
-  outerRadius: 'rounded-[18px]',
+  outerRadius: 'rounded-[7px]',
   framePad: 3,
-  innerRadius: 'rounded-[15px]',
+  innerRadius: 'rounded-[4px]',
   namepadX: 'px-4',
   namepadY: 'py-2',
   nameFontSize: 'text-[16px]',
@@ -260,9 +260,9 @@ export const SIZE_FULL: SizePreset = {
 }
 
 export const SIZE_COMPACT: SizePreset = {
-  outerRadius: 'rounded-[11px]',
+  outerRadius: 'rounded-[5px]',
   framePad: 2,
-  innerRadius: 'rounded-[9px]',
+  innerRadius: 'rounded-[2px]',
   namepadX: 'px-2',
   namepadY: 'py-[3px]',
   nameFontSize: 'text-[9px]',

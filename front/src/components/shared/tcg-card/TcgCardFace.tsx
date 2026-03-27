@@ -96,19 +96,19 @@ export function TcgCardFace({
 
       {/* Corner L-bracket ornaments over the gradient frame */}
       <span
-        className={`pointer-events-none absolute ${sz.cornerSize} border-t-[1.5px] border-l-[1.5px] border-black/20 rounded-tl-[2px]`}
+        className={`pointer-events-none absolute ${sz.cornerSize} border-t-[1.5px] border-l-[1.5px] border-black/20`}
         style={{ top: cornerOffset, left: cornerOffset }}
       />
       <span
-        className={`pointer-events-none absolute ${sz.cornerSize} border-t-[1.5px] border-r-[1.5px] border-black/20 rounded-tr-[2px]`}
+        className={`pointer-events-none absolute ${sz.cornerSize} border-t-[1.5px] border-r-[1.5px] border-black/20`}
         style={{ top: cornerOffset, right: cornerOffset }}
       />
       <span
-        className={`pointer-events-none absolute ${sz.cornerSize} border-b-[1.5px] border-l-[1.5px] border-black/20 rounded-bl-[2px]`}
+        className={`pointer-events-none absolute ${sz.cornerSize} border-b-[1.5px] border-l-[1.5px] border-black/20`}
         style={{ bottom: cornerOffset, left: cornerOffset }}
       />
       <span
-        className={`pointer-events-none absolute ${sz.cornerSize} border-b-[1.5px] border-r-[1.5px] border-black/20 rounded-br-[2px]`}
+        className={`pointer-events-none absolute ${sz.cornerSize} border-b-[1.5px] border-r-[1.5px] border-black/20`}
         style={{ bottom: cornerOffset, right: cornerOffset }}
       />
     </div>
