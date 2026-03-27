@@ -1,26 +1,14 @@
 import { apiUrl } from '../constants/config.constant.ts'
+import type { PurchaseResult, ShopItem } from '../constants/shop.constant.ts'
+import { SHOP_ROUTES } from '../constants/shop.constant.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
-export type ShopItem = {
-  id: string
-  name: string
-  description: string
-  type: 'TOKEN_PACK' | 'BOOST' | 'COSMETIC'
-  dustCost: number
-  value: unknown
-}
-
-export type PurchaseResult = {
-  purchaseId: string
-  dustSpent: number
-  newDustTotal: number
-  item: { id: string; name: string; type: string; value: unknown }
-}
+export type { ShopItem, PurchaseResult }
 
 export const ShopApi = {
   getItems: async (): Promise<{ items: ShopItem[] }> => {
-    const res = await fetchWithAuth(`${apiUrl}/shop`)
+    const res = await fetchWithAuth(`${apiUrl}${SHOP_ROUTES.items}`)
     if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors de la récupération des articles')
     }
@@ -28,7 +16,7 @@ export const ShopApi = {
   },
 
   buyItem: async (itemId: string): Promise<PurchaseResult> => {
-    const res = await fetchWithAuth(`${apiUrl}/shop/${itemId}/buy`, {
+    const res = await fetchWithAuth(`${apiUrl}${SHOP_ROUTES.buy(itemId)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     })

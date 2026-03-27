@@ -1,35 +1,19 @@
+import type {
+  Card,
+  CardSet,
+  CardVariant,
+  UserCard,
+} from '../constants/card.constant.ts'
+import { CARD_ROUTES } from '../constants/card.constant.ts'
 import { apiUrl } from '../constants/config.constant.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
-export type CardSet = {
-  id: string
-  name: string
-  description: string | null
-  coverImage: string | null
-  isActive: boolean
-}
-
-export type CardVariant = 'NORMAL' | 'BRILLIANT' | 'HOLOGRAPHIC'
-
-export type Card = {
-  id: string
-  name: string
-  imageUrl: string | null
-  rarity: 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
-  set: { id: string; name: string }
-}
-
-export type UserCard = {
-  card: Card
-  variant: CardVariant
-  quantity: number
-  obtainedAt: string
-}
+export type { CardSet, CardVariant, Card, UserCard }
 
 export const CollectionApi = {
   getSets: async (): Promise<{ sets: CardSet[] }> => {
-    const res = await fetchWithAuth(`${apiUrl}/sets`)
+    const res = await fetchWithAuth(`${apiUrl}${CARD_ROUTES.sets}`)
     if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors de la récupération des sets')
     }
@@ -48,7 +32,9 @@ export const CollectionApi = {
       params.set('rarity', filter.rarity)
     }
     const qs = params.toString()
-    const res = await fetchWithAuth(`${apiUrl}/cards${qs ? `?${qs}` : ''}`)
+    const res = await fetchWithAuth(
+      `${apiUrl}${CARD_ROUTES.cards}${qs ? `?${qs}` : ''}`,
+    )
     if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors de la récupération des cartes')
     }
@@ -56,7 +42,9 @@ export const CollectionApi = {
   },
 
   getUserCollection: async (userId: string): Promise<{ cards: UserCard[] }> => {
-    const res = await fetchWithAuth(`${apiUrl}/users/${userId}/collection`)
+    const res = await fetchWithAuth(
+      `${apiUrl}${CARD_ROUTES.collection(userId)}`,
+    )
     if (!res.ok) {
       handleHttpError(
         res,
@@ -72,7 +60,7 @@ export const CollectionApi = {
     quantity: number,
     variant: CardVariant,
   ): Promise<{ dustEarned: number; newDustTotal: number }> => {
-    const res = await fetchWithAuth(`${apiUrl}/collection/recycle`, {
+    const res = await fetchWithAuth(`${apiUrl}${CARD_ROUTES.recycle}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cardId, quantity, variant }),

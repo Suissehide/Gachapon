@@ -1,29 +1,14 @@
+import type { AdminCard, AdminCardSet } from '../constants/card.constant.ts'
+import { CARD_ROUTES } from '../constants/card.constant.ts'
 import { apiUrl } from '../constants/config.constant.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
-export type AdminCardSet = {
-  id: string
-  name: string
-  description?: string
-  isActive: boolean
-  createdAt: string
-  _count: { cards: number }
-}
-
-export type AdminCard = {
-  id: string
-  name: string
-  imageUrl: string | null
-  rarity: string
-  variant?: string
-  dropWeight: number
-  set: { id: string; name: string }
-}
+export type { AdminCardSet, AdminCard }
 
 export const AdminCardsApi = {
   getSets: async (): Promise<{ sets: AdminCardSet[] }> => {
-    const res = await fetchWithAuth(`${apiUrl}/admin/sets`)
+    const res = await fetchWithAuth(`${apiUrl}${CARD_ROUTES.admin.sets}`)
     if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors de la récupération des sets')
     }
@@ -35,7 +20,7 @@ export const AdminCardsApi = {
     description?: string
     isActive: boolean
   }): Promise<unknown> => {
-    const res = await fetchWithAuth(`${apiUrl}/admin/sets`, {
+    const res = await fetchWithAuth(`${apiUrl}${CARD_ROUTES.admin.sets}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -50,7 +35,7 @@ export const AdminCardsApi = {
     id: string,
     data: { name?: string; description?: string; isActive?: boolean },
   ): Promise<unknown> => {
-    const res = await fetchWithAuth(`${apiUrl}/admin/sets/${id}`, {
+    const res = await fetchWithAuth(`${apiUrl}${CARD_ROUTES.admin.set(id)}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -62,7 +47,7 @@ export const AdminCardsApi = {
   },
 
   deleteSet: async (id: string): Promise<void> => {
-    const res = await fetchWithAuth(`${apiUrl}/admin/sets/${id}`, {
+    const res = await fetchWithAuth(`${apiUrl}${CARD_ROUTES.admin.set(id)}`, {
       method: 'DELETE',
     })
     if (!res.ok) {
@@ -77,7 +62,7 @@ export const AdminCardsApi = {
     const qs = new URLSearchParams(
       Object.entries(params ?? {}).filter(([, v]) => v) as [string, string][],
     )
-    const res = await fetchWithAuth(`${apiUrl}/admin/cards?${qs}`)
+    const res = await fetchWithAuth(`${apiUrl}${CARD_ROUTES.admin.cards}?${qs}`)
     if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors de la récupération des cartes')
     }
@@ -85,7 +70,7 @@ export const AdminCardsApi = {
   },
 
   createCard: async (formData: FormData): Promise<unknown> => {
-    const res = await fetchWithAuth(`${apiUrl}/admin/cards`, {
+    const res = await fetchWithAuth(`${apiUrl}${CARD_ROUTES.admin.cards}`, {
       method: 'POST',
       body: formData,
     })
@@ -97,9 +82,14 @@ export const AdminCardsApi = {
 
   updateCard: async (
     id: string,
-    data: { name?: string; rarity?: string; dropWeight?: number; imageUrl?: string | null },
+    data: {
+      name?: string
+      rarity?: string
+      dropWeight?: number
+      imageUrl?: string | null
+    },
   ): Promise<unknown> => {
-    const res = await fetchWithAuth(`${apiUrl}/admin/cards/${id}`, {
+    const res = await fetchWithAuth(`${apiUrl}${CARD_ROUTES.admin.card(id)}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -113,10 +103,13 @@ export const AdminCardsApi = {
   updateCardImage: async (id: string, file: File): Promise<unknown> => {
     const form = new FormData()
     form.append('image', file)
-    const res = await fetchWithAuth(`${apiUrl}/admin/cards/${id}/image`, {
-      method: 'POST',
-      body: form,
-    })
+    const res = await fetchWithAuth(
+      `${apiUrl}${CARD_ROUTES.admin.cardImage(id)}`,
+      {
+        method: 'POST',
+        body: form,
+      },
+    )
     if (!res.ok) {
       handleHttpError(res, {}, "Erreur lors du changement d'image")
     }
@@ -124,7 +117,7 @@ export const AdminCardsApi = {
   },
 
   deleteCard: async (id: string): Promise<void> => {
-    const res = await fetchWithAuth(`${apiUrl}/admin/cards/${id}`, {
+    const res = await fetchWithAuth(`${apiUrl}${CARD_ROUTES.admin.card(id)}`, {
       method: 'DELETE',
     })
     if (!res.ok) {

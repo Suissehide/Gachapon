@@ -1,64 +1,31 @@
 import { apiUrl } from '../constants/config.constant.ts'
+import type {
+  Invitation,
+  RankedMember,
+  Team,
+  TeamInvitation,
+  TeamMember,
+  TeamRankingPage,
+  TeamSummary,
+} from '../constants/teams.constant.ts'
+import { TEAM_ROUTES } from '../constants/teams.constant.ts'
+import { USER_ROUTES } from '../constants/user.constant.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
-export type TeamMember = {
-  id: string
-  userId: string
-  role: 'MEMBER' | 'ADMIN' | 'OWNER'
-  joinedAt: string
-  user: { id: string; username: string; avatar: string | null }
-}
-
-export type Team = {
-  id: string
-  name: string
-  slug: string
-  description: string | null
-  avatar: string | null
-  ownerId: string
-  createdAt: string
-  members: TeamMember[]
-}
-
-export type TeamSummary = Team & { memberCount: number }
-
-export type Invitation = {
-  id: string
-  token: string
-  teamId: string
-  status: string
-  expiresAt: string
-}
-
-export type TeamInvitation = {
-  id: string
-  token: string
-  invitedEmail: string | null
-  invitedUsername: string | null
-  createdAt: string
-  emailSentAt: string | null
-  status: 'PENDING' | 'EXPIRED' | 'ACCEPTED' | 'DECLINED' | 'CANCELLED'
-  expiresAt: string
-}
-
-export type RankedMember = {
-  rank: number
-  user: { id: string; username: string; avatar: string | null }
-  role: 'OWNER' | 'ADMIN' | 'MEMBER'
-  score: number
-}
-
-export type TeamRankingPage = {
-  members: RankedMember[]
-  total: number
-  page: number
-  totalPages: number
+export type {
+  TeamMember,
+  Team,
+  TeamSummary,
+  Invitation,
+  TeamInvitation,
+  RankedMember,
+  TeamRankingPage,
 }
 
 export const TeamsApi = {
   getMyTeams: async (): Promise<{ teams: TeamSummary[] }> => {
-    const res = await fetchWithAuth(`${apiUrl}/teams`)
+    const res = await fetchWithAuth(`${apiUrl}${TEAM_ROUTES.teams}`)
     if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors de la récupération des équipes')
     }
@@ -66,7 +33,7 @@ export const TeamsApi = {
   },
 
   getTeam: async (teamId: string): Promise<Team> => {
-    const res = await fetchWithAuth(`${apiUrl}/teams/${teamId}`)
+    const res = await fetchWithAuth(`${apiUrl}${TEAM_ROUTES.team(teamId)}`)
     if (!res.ok) {
       handleHttpError(res, {}, "Erreur lors de la récupération de l'équipe")
     }
@@ -77,7 +44,7 @@ export const TeamsApi = {
     name: string
     description?: string
   }): Promise<Team> => {
-    const res = await fetchWithAuth(`${apiUrl}/teams`, {
+    const res = await fetchWithAuth(`${apiUrl}${TEAM_ROUTES.teams}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -92,7 +59,7 @@ export const TeamsApi = {
     teamId: string,
     data: { name: string; description?: string },
   ): Promise<Team> => {
-    const res = await fetchWithAuth(`${apiUrl}/teams/${teamId}`, {
+    const res = await fetchWithAuth(`${apiUrl}${TEAM_ROUTES.team(teamId)}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -104,7 +71,7 @@ export const TeamsApi = {
   },
 
   deleteTeam: async (teamId: string): Promise<void> => {
-    const res = await fetchWithAuth(`${apiUrl}/teams/${teamId}`, {
+    const res = await fetchWithAuth(`${apiUrl}${TEAM_ROUTES.team(teamId)}`, {
       method: 'DELETE',
     })
     if (!res.ok) {
@@ -116,7 +83,7 @@ export const TeamsApi = {
     teamId: string,
     data: { username?: string; email?: string },
   ): Promise<Invitation> => {
-    const res = await fetchWithAuth(`${apiUrl}/teams/${teamId}/invite`, {
+    const res = await fetchWithAuth(`${apiUrl}${TEAM_ROUTES.invite(teamId)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -129,7 +96,7 @@ export const TeamsApi = {
 
   removeMember: async (teamId: string, userId: string): Promise<void> => {
     const res = await fetchWithAuth(
-      `${apiUrl}/teams/${teamId}/members/${userId}/remove`,
+      `${apiUrl}${TEAM_ROUTES.removeMember(teamId, userId)}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -141,7 +108,7 @@ export const TeamsApi = {
   },
 
   leaveTeam: async (teamId: string): Promise<void> => {
-    const res = await fetchWithAuth(`${apiUrl}/teams/${teamId}/leave`, {
+    const res = await fetchWithAuth(`${apiUrl}${TEAM_ROUTES.leave(teamId)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     })
@@ -151,7 +118,7 @@ export const TeamsApi = {
   },
 
   getInvitation: async (token: string): Promise<Invitation> => {
-    const res = await fetchWithAuth(`${apiUrl}/invitations/${token}`)
+    const res = await fetchWithAuth(`${apiUrl}${TEAM_ROUTES.invitation(token)}`)
     if (!res.ok) {
       handleHttpError(res, {}, "Erreur lors de la récupération de l'invitation")
     }
@@ -159,10 +126,13 @@ export const TeamsApi = {
   },
 
   acceptInvitation: async (token: string): Promise<{ accepted: boolean }> => {
-    const res = await fetchWithAuth(`${apiUrl}/invitations/${token}/accept`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    })
+    const res = await fetchWithAuth(
+      `${apiUrl}${TEAM_ROUTES.acceptInvitation(token)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      },
+    )
     if (!res.ok) {
       handleHttpError(res, {}, "Erreur lors de l'acceptation de l'invitation")
     }
@@ -170,10 +140,13 @@ export const TeamsApi = {
   },
 
   declineInvitation: async (token: string): Promise<{ declined: boolean }> => {
-    const res = await fetchWithAuth(`${apiUrl}/invitations/${token}/decline`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    })
+    const res = await fetchWithAuth(
+      `${apiUrl}${TEAM_ROUTES.declineInvitation(token)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      },
+    )
     if (!res.ok) {
       handleHttpError(res, {}, "Erreur lors du refus de l'invitation")
     }
@@ -186,7 +159,7 @@ export const TeamsApi = {
     limit = 20,
   ): Promise<TeamRankingPage> => {
     const res = await fetchWithAuth(
-      `${apiUrl}/teams/${teamId}/ranking?page=${page}&limit=${limit}`,
+      `${apiUrl}${TEAM_ROUTES.ranking(teamId, page, limit)}`,
     )
     if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors de la récupération du classement')
@@ -194,46 +167,90 @@ export const TeamsApi = {
     return res.json()
   },
 
-  getTeamInvitations: async (teamId: string): Promise<{ invitations: TeamInvitation[] }> => {
-    const res = await fetchWithAuth(`${apiUrl}/teams/${teamId}/invitations`)
-    if (!res.ok) handleHttpError(res, {}, 'Erreur lors du chargement des invitations')
+  getTeamInvitations: async (
+    teamId: string,
+  ): Promise<{ invitations: TeamInvitation[] }> => {
+    const res = await fetchWithAuth(
+      `${apiUrl}${TEAM_ROUTES.invitations(teamId)}`,
+    )
+    if (!res.ok) {
+      handleHttpError(res, {}, 'Erreur lors du chargement des invitations')
+    }
     return res.json()
   },
 
   resendInvitation: async (token: string): Promise<void> => {
-    const res = await fetchWithAuth(`${apiUrl}/invitations/${token}/resend`, {
-      method: 'POST',
-    })
+    const res = await fetchWithAuth(
+      `${apiUrl}${TEAM_ROUTES.resendInvitation(token)}`,
+      {
+        method: 'POST',
+      },
+    )
     if (!res.ok) {
       handleHttpError(
         res,
-        { 429: { title: 'Trop tôt', message: 'Attends 5 minutes avant de renvoyer.' } },
+        {
+          429: {
+            title: 'Trop tôt',
+            message: 'Attends 5 minutes avant de renvoyer.',
+          },
+        },
         'Erreur lors du renvoi',
       )
     }
   },
 
   cancelInvitation: async (token: string): Promise<void> => {
-    const res = await fetchWithAuth(`${apiUrl}/invitations/${token}/cancel`, {
-      method: 'POST',
-    })
+    const res = await fetchWithAuth(
+      `${apiUrl}${TEAM_ROUTES.cancelInvitation(token)}`,
+      {
+        method: 'POST',
+      },
+    )
     if (!res.ok) {
-      handleHttpError(res, { 409: { title: 'Impossible', message: "L'invitation n'est plus en attente." } }, "Erreur lors de l'annulation")
+      handleHttpError(
+        res,
+        {
+          409: {
+            title: 'Impossible',
+            message: "L'invitation n'est plus en attente.",
+          },
+        },
+        "Erreur lors de l'annulation",
+      )
     }
   },
 
   deleteInvitation: async (id: string): Promise<void> => {
-    const res = await fetchWithAuth(`${apiUrl}/invitations/${id}`, {
-      method: 'DELETE',
-    })
+    const res = await fetchWithAuth(
+      `${apiUrl}${TEAM_ROUTES.invitationById(id)}`,
+      {
+        method: 'DELETE',
+      },
+    )
     if (!res.ok) {
-      handleHttpError(res, { 409: { title: 'Impossible', message: "Annulez d'abord l'invitation." } }, 'Erreur lors de la suppression')
+      handleHttpError(
+        res,
+        {
+          409: {
+            title: 'Impossible',
+            message: "Annulez d'abord l'invitation.",
+          },
+        },
+        'Erreur lors de la suppression',
+      )
     }
   },
 
-  searchUsers: async (q: string): Promise<{ users: { id: string; username: string; avatar: string | null }[] }> => {
-    const res = await fetchWithAuth(`${apiUrl}/users/search?q=${encodeURIComponent(q)}`)
-    if (!res.ok) handleHttpError(res, {}, 'Erreur lors de la recherche')
+  searchUsers: async (
+    q: string,
+  ): Promise<{
+    users: { id: string; username: string; avatar: string | null }[]
+  }> => {
+    const res = await fetchWithAuth(`${apiUrl}${USER_ROUTES.search(q)}`)
+    if (!res.ok) {
+      handleHttpError(res, {}, 'Erreur lors de la recherche')
+    }
     return res.json()
   },
 }

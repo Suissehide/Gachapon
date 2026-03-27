@@ -1,27 +1,17 @@
 import { apiUrl } from '../constants/config.constant.ts'
+import type {
+  ClaimResult,
+  PendingReward,
+} from '../constants/rewards.constant.ts'
+import { REWARD_ROUTES } from '../constants/rewards.constant.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
-export type PendingReward = {
-  id: string
-  source: 'STREAK' | 'ACHIEVEMENT' | 'QUEST'
-  sourceId: string | null
-  createdAt: string
-  reward: { tokens: number; dust: number; xp: number }
-  streakMilestone: { day: number; isMilestone: boolean } | null
-}
-
-export type ClaimResult = {
-  tokens: number
-  dust: number
-  xp: number
-  level: number
-  pendingRewardsCount: number
-}
+export type { PendingReward, ClaimResult }
 
 export const RewardsApi = {
   getPendingRewards: async (): Promise<PendingReward[]> => {
-    const res = await fetchWithAuth(`${apiUrl}/rewards/pending`)
+    const res = await fetchWithAuth(`${apiUrl}${REWARD_ROUTES.pending}`)
     if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors de la récupération des récompenses')
     }
@@ -29,10 +19,13 @@ export const RewardsApi = {
   },
 
   claimReward: async (rewardId: string): Promise<ClaimResult> => {
-    const res = await fetchWithAuth(`${apiUrl}/rewards/${rewardId}/claim`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    })
+    const res = await fetchWithAuth(
+      `${apiUrl}${REWARD_ROUTES.claim(rewardId)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      },
+    )
     if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors de la réclamation de la récompense')
     }
@@ -40,12 +33,16 @@ export const RewardsApi = {
   },
 
   claimAllRewards: async (): Promise<ClaimResult | null> => {
-    const res = await fetchWithAuth(`${apiUrl}/rewards/claim-all`, {
+    const res = await fetchWithAuth(`${apiUrl}${REWARD_ROUTES.claimAll}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la réclamation de toutes les récompenses')
+      handleHttpError(
+        res,
+        {},
+        'Erreur lors de la réclamation de toutes les récompenses',
+      )
     }
     // 204 No Content means no pending rewards, return null
     if (res.status === 204) {

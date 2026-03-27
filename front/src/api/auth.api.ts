@@ -1,3 +1,4 @@
+import { AUTH_ROUTES } from '../constants/auth.constant.ts'
 import { apiUrl } from '../constants/config.constant.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import type { RegisterInput, User } from '../types/auth.ts'
@@ -13,7 +14,7 @@ export class EmailNotVerifiedError extends Error {
 
 export const AuthApi = {
   login: async (email: string, password: string): Promise<User> => {
-    const response = await fetch(`${apiUrl}/auth/login`, {
+    const response = await fetch(`${apiUrl}${AUTH_ROUTES.login}`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -45,7 +46,7 @@ export const AuthApi = {
   },
 
   refresh: async (): Promise<Response> => {
-    const response = await fetch(`${apiUrl}/auth/refresh`, {
+    const response = await fetch(`${apiUrl}${AUTH_ROUTES.refresh}`, {
       method: 'POST',
       credentials: 'include',
     })
@@ -56,7 +57,7 @@ export const AuthApi = {
   },
 
   register: async (registerInput: RegisterInput): Promise<Response> => {
-    const response = await fetch(`${apiUrl}/auth/register`, {
+    const response = await fetch(`${apiUrl}${AUTH_ROUTES.register}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(registerInput),
@@ -81,7 +82,7 @@ export const AuthApi = {
   },
 
   verifyEmail: async (token: string): Promise<void> => {
-    const res = await fetch(`${apiUrl}/auth/verify-email`, {
+    const res = await fetch(`${apiUrl}${AUTH_ROUTES.verifyEmail}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -90,14 +91,19 @@ export const AuthApi = {
     if (!res.ok) {
       handleHttpError(
         res,
-        { 400: { title: 'Lien invalide', message: 'Ce lien est invalide ou a expiré.' } },
+        {
+          400: {
+            title: 'Lien invalide',
+            message: 'Ce lien est invalide ou a expiré.',
+          },
+        },
         'Erreur de vérification',
       )
     }
   },
 
   resendVerification: async (email: string): Promise<void> => {
-    const res = await fetch(`${apiUrl}/auth/resend-verification`, {
+    const res = await fetch(`${apiUrl}${AUTH_ROUTES.resendVerification}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
@@ -105,14 +111,19 @@ export const AuthApi = {
     if (!res.ok) {
       handleHttpError(
         res,
-        { 429: { title: 'Trop de tentatives', message: 'Attends avant de renvoyer un email.' } },
+        {
+          429: {
+            title: 'Trop de tentatives',
+            message: 'Attends avant de renvoyer un email.',
+          },
+        },
         'Erreur lors du renvoi',
       )
     }
   },
 
   forgotPassword: async (email: string): Promise<void> => {
-    const res = await fetch(`${apiUrl}/auth/forgot-password`, {
+    const res = await fetch(`${apiUrl}${AUTH_ROUTES.forgotPassword}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
@@ -120,14 +131,19 @@ export const AuthApi = {
     if (!res.ok) {
       handleHttpError(
         res,
-        { 429: { title: 'Trop de tentatives', message: 'Attends 2 minutes avant de réessayer.' } },
+        {
+          429: {
+            title: 'Trop de tentatives',
+            message: 'Attends 2 minutes avant de réessayer.',
+          },
+        },
         'Erreur lors de la demande',
       )
     }
   },
 
   resetPassword: async (token: string, newPassword: string): Promise<void> => {
-    const res = await fetch(`${apiUrl}/auth/reset-password`, {
+    const res = await fetch(`${apiUrl}${AUTH_ROUTES.resetPassword}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token, newPassword }),
@@ -135,7 +151,12 @@ export const AuthApi = {
     if (!res.ok) {
       handleHttpError(
         res,
-        { 400: { title: 'Lien invalide', message: 'Ce lien est invalide ou a expiré.' } },
+        {
+          400: {
+            title: 'Lien invalide',
+            message: 'Ce lien est invalide ou a expiré.',
+          },
+        },
         'Erreur lors de la réinitialisation',
       )
     }

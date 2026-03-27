@@ -1,30 +1,18 @@
 import { apiUrl } from '../constants/config.constant.ts'
+import type {
+  BuyUpgradeResult,
+  UpgradeStatus,
+  UpgradeType,
+} from '../constants/upgrades.constant.ts'
+import { UPGRADE_ROUTES } from '../constants/upgrades.constant.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
-export type UpgradeType = 'REGEN' | 'LUCK' | 'DUST_HARVEST' | 'TOKEN_VAULT'
-
-export type UpgradeStatus = {
-  type: UpgradeType
-  currentLevel: number
-  currentEffect: number | null
-  nextLevel: number | null
-  nextEffect: number | null
-  nextCost: number | null
-  canAfford: boolean
-  isMaxed: boolean
-}
-
-export type BuyUpgradeResult = {
-  type: UpgradeType
-  newLevel: number
-  effect: number
-  newDustTotal: number
-}
+export type { UpgradeType, UpgradeStatus, BuyUpgradeResult }
 
 export const UpgradesApi = {
   getUpgrades: async (): Promise<UpgradeStatus[]> => {
-    const res = await fetchWithAuth(`${apiUrl}/upgrades`)
+    const res = await fetchWithAuth(`${apiUrl}${UPGRADE_ROUTES.upgrades}`)
     if (!res.ok) {
       handleHttpError(
         res,
@@ -36,7 +24,7 @@ export const UpgradesApi = {
   },
 
   buyUpgrade: async (type: UpgradeType): Promise<BuyUpgradeResult> => {
-    const res = await fetchWithAuth(`${apiUrl}/upgrades/${type}/buy`, {
+    const res = await fetchWithAuth(`${apiUrl}${UPGRADE_ROUTES.buy(type)}`, {
       method: 'POST',
     })
     if (!res.ok) {

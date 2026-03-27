@@ -1,23 +1,10 @@
 import { apiUrl } from '../constants/config.constant.ts'
+import type { AdminUser, UserStats } from '../constants/user.constant.ts'
+import { USER_ROUTES } from '../constants/user.constant.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
-export type AdminUser = {
-  id: string
-  username: string
-  email: string
-  role: string
-  tokens: number
-  dust: number
-  suspended: boolean
-  createdAt: string
-}
-
-export type UserStats = {
-  pullsTotal: number
-  dustGenerated: number
-  cardsOwned: number
-}
+export type { AdminUser, UserStats }
 
 export const AdminUsersApi = {
   getUsers: async (
@@ -34,7 +21,7 @@ export const AdminUsersApi = {
       limit: String(limit),
       ...(search ? { search } : {}),
     })
-    const res = await fetchWithAuth(`${apiUrl}/admin/users?${qs}`)
+    const res = await fetchWithAuth(`${apiUrl}${USER_ROUTES.admin.users}?${qs}`)
     if (!res.ok) {
       handleHttpError(
         res,
@@ -48,7 +35,7 @@ export const AdminUsersApi = {
   getUser: async (
     id: string,
   ): Promise<{ user: AdminUser; stats: UserStats }> => {
-    const res = await fetchWithAuth(`${apiUrl}/admin/users/${id}`)
+    const res = await fetchWithAuth(`${apiUrl}${USER_ROUTES.admin.user(id)}`)
     if (!res.ok) {
       handleHttpError(
         res,
@@ -60,11 +47,14 @@ export const AdminUsersApi = {
   },
 
   updateTokens: async (id: string, amount: number): Promise<unknown> => {
-    const res = await fetchWithAuth(`${apiUrl}/admin/users/${id}/tokens`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount }),
-    })
+    const res = await fetchWithAuth(
+      `${apiUrl}${USER_ROUTES.admin.tokens(id)}`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount }),
+      },
+    )
     if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors de la mise à jour des tokens')
     }
@@ -72,7 +62,7 @@ export const AdminUsersApi = {
   },
 
   updateDust: async (id: string, amount: number): Promise<unknown> => {
-    const res = await fetchWithAuth(`${apiUrl}/admin/users/${id}/dust`, {
+    const res = await fetchWithAuth(`${apiUrl}${USER_ROUTES.admin.dust(id)}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ amount }),
@@ -87,7 +77,7 @@ export const AdminUsersApi = {
     id: string,
     role: 'USER' | 'SUPER_ADMIN',
   ): Promise<unknown> => {
-    const res = await fetchWithAuth(`${apiUrl}/admin/users/${id}/role`, {
+    const res = await fetchWithAuth(`${apiUrl}${USER_ROUTES.admin.role(id)}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ role }),
@@ -99,11 +89,14 @@ export const AdminUsersApi = {
   },
 
   suspendUser: async (id: string, suspended: boolean): Promise<unknown> => {
-    const res = await fetchWithAuth(`${apiUrl}/admin/users/${id}/suspend`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ suspended }),
-    })
+    const res = await fetchWithAuth(
+      `${apiUrl}${USER_ROUTES.admin.suspend(id)}`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ suspended }),
+      },
+    )
     if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors de la mise à jour de la suspension')
     }

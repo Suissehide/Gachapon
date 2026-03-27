@@ -1,4 +1,4 @@
-import { apiUrl } from '../constants/config.constant.ts'
+import { apiUrl, CONFIG_ROUTES } from '../constants/config.constant.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
@@ -12,7 +12,7 @@ export const AdminStatsApi = {
     }
     pullsSeries: { day: string; count: number }[]
   }> => {
-    const res = await fetchWithAuth(`${apiUrl}/admin/dashboard`)
+    const res = await fetchWithAuth(`${apiUrl}${CONFIG_ROUTES.admin.dashboard}`)
     if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors de la récupération du dashboard')
     }
@@ -38,7 +38,7 @@ export const AdminStatsApi = {
       levels: { level: number; count: number }[]
     }[]
   }> => {
-    const res = await fetchWithAuth(`${apiUrl}/admin/stats`)
+    const res = await fetchWithAuth(`${apiUrl}${CONFIG_ROUTES.admin.stats}`)
     if (!res.ok) {
       handleHttpError(
         res,

@@ -1,51 +1,19 @@
 import { apiUrl } from '../constants/config.constant.ts'
+import type {
+  PullHistory,
+  PullResult,
+  TokenBalance,
+} from '../constants/gacha.constant.ts'
+import { GACHA_ROUTES } from '../constants/gacha.constant.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
-import { fetchWithAuth } from './fetchWithAuth.ts'
 import type { FeedEntry } from '../types/feed'
+import { fetchWithAuth } from './fetchWithAuth.ts'
 
-export type PullResult = {
-  card: {
-    id: string
-    name: string
-    imageUrl: string | null
-    rarity: string
-    variant: string | null
-    set: { id: string; name: string }
-  }
-  wasDuplicate: boolean
-  dustEarned: number
-  tokensRemaining: number
-  pityCurrent: number
-}
-
-export type TokenBalance = {
-  tokens: number
-  maxStock: number
-  nextTokenAt: string | null
-}
-
-export type PullHistory = {
-  pulls: Array<{
-    id: string
-    pulledAt: string
-    wasDuplicate: boolean
-    dustEarned: number
-    card: {
-      id: string
-      name: string
-      imageUrl: string | null
-      rarity: string
-      variant: string | null
-    }
-  }>
-  total: number
-  page: number
-  limit: number
-}
+export type { PullResult, TokenBalance, PullHistory }
 
 export const GachaApi = {
   getTokenBalance: async (): Promise<TokenBalance> => {
-    const res = await fetchWithAuth(`${apiUrl}/tokens/balance`)
+    const res = await fetchWithAuth(`${apiUrl}${GACHA_ROUTES.tokenBalance}`)
     if (!res.ok) {
       handleHttpError(
         res,
@@ -57,7 +25,7 @@ export const GachaApi = {
   },
 
   pull: async (): Promise<PullResult> => {
-    const res = await fetchWithAuth(`${apiUrl}/pulls`, {
+    const res = await fetchWithAuth(`${apiUrl}${GACHA_ROUTES.pull}`, {
       method: 'POST',
     })
     if (!res.ok) {
@@ -67,7 +35,7 @@ export const GachaApi = {
   },
 
   getPullHistory: async (page: number): Promise<PullHistory> => {
-    const res = await fetchWithAuth(`${apiUrl}/pulls/history?page=${page}`)
+    const res = await fetchWithAuth(`${apiUrl}${GACHA_ROUTES.history(page)}`)
     if (!res.ok) {
       handleHttpError(res, {}, "Erreur lors de la récupération de l'historique")
     }
@@ -75,7 +43,7 @@ export const GachaApi = {
   },
 
   getRecentPulls: async (limit = 20): Promise<FeedEntry[]> => {
-    const res = await fetchWithAuth(`${apiUrl}/pulls/recent?limit=${limit}`)
+    const res = await fetchWithAuth(`${apiUrl}${GACHA_ROUTES.recent(limit)}`)
     if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors du chargement du fil')
     }
