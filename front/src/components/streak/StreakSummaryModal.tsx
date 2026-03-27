@@ -1,4 +1,4 @@
-import { Flame, Lock, Trophy } from 'lucide-react'
+import { Coins, Flame, Lock, Sparkles, Trophy, Zap } from 'lucide-react'
 
 import { useStreakSummary } from '../../queries/useStreak.ts'
 import {
@@ -47,13 +47,19 @@ export function StreakSummaryModal({ open, onClose }: Props) {
                   </div>
                   <p className="text-[11px] text-text-light">Record</p>
                 </div>
-                <div className="ml-auto text-right text-xs text-text-light">
-                  <p>
-                    Par défaut :{' '}
-                    <span className="font-semibold text-text">
-                      {data.default.tokens} 🎫 · {data.default.dust} ✨ · {data.default.xp} XP
+                <div className="ml-auto text-xs">
+                  <p className="text-text-light">Par défaut</p>
+                  <div className="mt-0.5 flex items-center gap-2 font-semibold text-text">
+                    <span className="flex items-center gap-0.5">
+                      <Coins className="h-3 w-3 text-yellow-400" />{data.default.tokens}
                     </span>
-                  </p>
+                    <span className="flex items-center gap-0.5">
+                      <Sparkles className="h-3 w-3 text-sky-400" />{data.default.dust}
+                    </span>
+                    <span className="flex items-center gap-0.5">
+                      <Zap className="h-3 w-3 text-purple-400" />{data.default.xp}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -90,8 +96,8 @@ export function StreakSummaryModal({ open, onClose }: Props) {
                       >
                         {entry.day}
                       </span>
-                      <span className="mt-0.5 text-[9px] text-text-light leading-none">
-                        {entry.tokens}🎫
+                      <span className="mt-0.5 flex items-center gap-0.5 text-[9px] text-text-light leading-none">
+                        <Coins className="h-2 w-2 text-yellow-400/80" />{entry.tokens}
                       </span>
                     </div>
                   )
