@@ -64,7 +64,13 @@ export async function seedQuests(
 ) {
 
   for (const quest of QUESTS) {
-    await tx.quest.create({ data: quest })
+    const { rewardTokens, rewardDust, ...questData } = quest as typeof quest & { rewardTokens: number; rewardDust: number }
+    await tx.quest.create({
+      data: {
+        ...questData,
+        reward: { create: { tokens: rewardTokens, dust: rewardDust } },
+      },
+    })
   }
 
   console.log(`  ${QUESTS.length} quêtes créées`)
