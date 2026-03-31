@@ -347,21 +347,33 @@ h6 {
   animation: legendaryFlash 0.5s ease-out forwards;
 }
 
-/* ── Card slide-in from bottom ───────────────────────────────────────────── */
+/* ── Card spiral rise from bottom ────────────────────────────────────────── */
 
-@keyframes cardSlideIn {
-  from {
+@keyframes cardSpiralRise {
+  0% {
     opacity: 0;
-    transform: translateY(60px) scale(0.97);
+    transform: translateY(110vh) rotateY(900deg) scale(0.45);
+    filter: blur(8px);
   }
-  to {
+  10% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+  80% {
+    transform: translateY(-16px) rotateY(12deg) scale(1.04);
+  }
+  90% {
+    transform: translateY(4px) rotateY(-3deg) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotateY(0deg) scale(1);
+    filter: blur(0);
   }
 }
 
-.card-slide-in {
-  animation: cardSlideIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+.card-spiral-rise {
+  animation: cardSpiralRise 1.6s cubic-bezier(0.15, 0, 0.08, 1) forwards;
 }
 
 /* Light sweep for rare/epic/legendary (inner div) */

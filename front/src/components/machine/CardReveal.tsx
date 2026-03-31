@@ -29,42 +29,51 @@ type Props = {
 }
 
 export function CardReveal({ result, onClose }: Props) {
-  const [rotY, setRotY] = useState(180) // starts showing back
-  const [isDragging, setIsDragging] = useState(false)
+  const [animKey, setAnimKey] = useState(0)
+  const [animDone, setAnimDone] = useState(false)
   const [showSweep, setShowSweep] = useState(false)
-  const dragRef = useRef({ startX: 0, startRotY: 180 })
-  const containerRef = useRef<HTMLDivElement>(null)
+  const [showInfo, setShowInfo] = useState(false)
+  const [tilt, setTilt] = useState({ x: 0, y: 0 })
+  const [shine, setShine] = useState({ x: 50, y: 50 })
+  const cardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!result) {
-      setRotY(180)
+      setAnimDone(false)
       setShowSweep(false)
+      setShowInfo(false)
       return
     }
-    const flipTimer = setTimeout(() => setRotY(0), 120)
-    const sweepTimer = setTimeout(() => setShowSweep(true), 950)
+    setAnimKey((k) => k + 1)
+    setAnimDone(false)
+    setShowSweep(false)
+    setShowInfo(false)
+    const sweepTimer = setTimeout(() => setShowSweep(true), 1800)
+    const infoTimer = setTimeout(() => setShowInfo(true), 2000)
     return () => {
-      clearTimeout(flipTimer)
       clearTimeout(sweepTimer)
+      clearTimeout(infoTimer)
     }
   }, [result])
 
-  // ── Drag handlers ──────────────────────────────────────────────────────────
+  // ── Hover tilt (active after spiral animation ends) ────────────────────────
 
-  const startDrag = (clientX: number) => {
-    setIsDragging(true)
-    dragRef.current = { startX: clientX, startRotY: rotY }
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!animDone || !cardRef.current) return
+    const rect = cardRef.current.getBoundingClientRect()
+    const dx = (e.clientX - (rect.left + rect.width / 2)) / (rect.width / 2)
+    const dy = (e.clientY - (rect.top + rect.height / 2)) / (rect.height / 2)
+    setTilt({ x: -dy * 14, y: dx * 14 })
+    setShine({
+      x: ((e.clientX - rect.left) / rect.width) * 100,
+      y: ((e.clientY - rect.top) / rect.height) * 100,
+    })
   }
 
-  const moveDrag = (clientX: number) => {
-    if (!isDragging) {
-      return
-    }
-    const delta = (clientX - dragRef.current.startX) * 0.55
-    setRotY(dragRef.current.startRotY - delta)
+  const handleMouseLeave = () => {
+    setTilt({ x: 0, y: 0 })
+    setShine({ x: 50, y: 50 })
   }
-
-  const endDrag = () => setIsDragging(false)
 
   if (!result) {
     return null
@@ -120,93 +129,105 @@ export function CardReveal({ result, onClose }: Props) {
           />
         ))}
 
-      {/* ── Slide-in container ── */}
+      {/* ── Content container ── */}
       {/* biome-ignore lint/a11y/noStaticElementInteractions: stop propagation */}
       <div
-        ref={containerRef}
-        className="card-slide-in flex flex-col items-center gap-5 px-4 py-8"
+        className="flex flex-col items-center gap-5 px-4 py-8"
+        style={{ perspective: '900px' }}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >
-        {/* ── 3D Card ── */}
-        {/* biome-ignore lint/a11y/noStaticElementInteractions: drag handler */}
+        {/* ── 3D Card — spiral rise, then hover tilt ── */}
         <div
-          className="select-none cursor-grab active:cursor-grabbing"
-          style={{ perspective: '900px', width: '240px', height: '360px' }}
-          onMouseDown={(e) => startDrag(e.clientX)}
-          onMouseMove={(e) => moveDrag(e.clientX)}
-          onMouseUp={endDrag}
-          onMouseLeave={endDrag}
-          onTouchStart={(e) => startDrag(e.touches[0].clientX)}
-          onTouchMove={(e) => moveDrag(e.touches[0].clientX)}
-          onTouchEnd={endDrag}
+          key={animKey}
+          ref={cardRef}
+          className={animDone ? undefined : 'card-spiral-rise'}
+          style={{
+            width: '240px',
+            height: '360px',
+            transformStyle: 'preserve-3d',
+            cursor: animDone ? 'default' : 'default',
+            ...(animDone && {
+              transform: `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
+              transition: 'transform 0.18s ease-out',
+            }),
+          }}
+          onAnimationEnd={() => setAnimDone(true)}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
         >
+          {/* ── FRONT face — TCG layout ── */}
+          <TcgCardFace
+            rarity={rarity}
+            name={result.card.name}
+            setName={result.card.set.name}
+            imageUrl={result.card.imageUrl}
+            variant={variant}
+            showSweep={showSweep}
+          />
+
+          {/* Hover sheen — only visible after animation */}
+          {animDone && (
+            <div
+              className="pointer-events-none absolute inset-0 z-10"
+              style={{
+                borderRadius: 7,
+                background: `radial-gradient(circle at ${shine.x}% ${shine.y}%, rgba(255,255,255,0.18) 0%, transparent 55%)`,
+                backfaceVisibility: 'hidden',
+              }}
+            />
+          )}
+
+          {/* ── BACK face ── */}
           <div
+            className="absolute inset-0 overflow-hidden border border-border/40"
             style={{
-              width: '100%',
-              height: '100%',
-              transformStyle: 'preserve-3d',
-              transform: `rotateY(${rotY}deg)`,
-              transition: isDragging
-                ? 'none'
-                : 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+              backfaceVisibility: 'hidden',
+              transform: 'rotateY(180deg)',
+              borderRadius: 16,
             }}
           >
-            {/* ── FRONT face — TCG layout ── */}
-            <TcgCardFace
-              rarity={rarity}
-              name={result.card.name}
-              setName={result.card.set.name}
-              imageUrl={result.card.imageUrl}
-              variant={variant}
-              showSweep={showSweep}
+            <img
+              src={cardBackImg}
+              alt="dos de carte"
+              className="h-full w-full object-cover"
             />
-
-            {/* ── BACK face ── */}
-            <div
-              className="absolute inset-0 overflow-hidden border border-border/40"
-              style={{
-                backfaceVisibility: 'hidden',
-                transform: 'rotateY(180deg)',
-                borderRadius: 16,
-              }}
-            >
-              <img
-                src={cardBackImg}
-                alt="dos de carte"
-                className="h-full w-full object-cover"
-              />
-            </div>
           </div>
         </div>
 
-        {/* ── Info panel below card ── */}
-        <div className="w-60 space-y-2.5 rounded-2xl border border-border/60 bg-card/90 p-4 backdrop-blur-sm">
+        {/* ── Info panel ── */}
+        <div
+          className="w-60 space-y-2.5 rounded-2xl border border-border/60 bg-card/90 p-4 backdrop-blur-sm"
+          style={{
+            opacity: showInfo ? 1 : 0,
+            transform: showInfo ? 'translateY(0)' : 'translateY(12px)',
+            transition: 'opacity 0.5s ease-out, transform 0.5s ease-out',
+            pointerEvents: showInfo ? 'auto' : 'none',
+          }}
+        >
           {/* Duplicate / dust */}
           {result.wasDuplicate && (
-            <div className="rounded-lg border border-amber-500/30 bg-amber-500/8 px-3 py-2">
-              <p className="text-center text-xs font-semibold text-amber-400">
-                Doublon — +{result.dustEarned} ✨ poussière
+            <div className="flex items-center justify-center gap-2 rounded-xl border border-amber-500/25 bg-amber-500/8 px-3 py-2.5">
+              <span className="text-sm">✨</span>
+              <p className="text-xs font-semibold text-amber-400">
+                Doublon · +{result.dustEarned} poussière
               </p>
             </div>
           )}
 
           {/* Tokens remaining */}
-          <p className="text-center text-xs text-text-light/60">
-            {result.tokensRemaining} token
-            {result.tokensRemaining !== 1 ? 's' : ''} restant
+          <p className="text-center text-xs text-text-light/50">
+            <span className="font-semibold text-text-light/80">
+              {result.tokensRemaining}
+            </span>{' '}
+            token{result.tokensRemaining !== 1 ? 's' : ''} restant
             {result.tokensRemaining !== 1 ? 's' : ''}
           </p>
 
           <Button className="w-full" onClick={onClose}>
-            Continuer
+            Nouveau tirage
           </Button>
         </div>
-
-        {/* Hint */}
-        <p className="text-xs text-text-light/35">
-          Glisse la carte pour la faire pivoter
-        </p>
       </div>
     </div>
   )
