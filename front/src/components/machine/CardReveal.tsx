@@ -1,3 +1,4 @@
+import { Coins, Sparkles } from 'lucide-react'
 import type React from 'react'
 import { useEffect, useRef, useState } from 'react'
 
@@ -59,11 +60,13 @@ export function CardReveal({ result, onClose }: Props) {
   // ── Hover tilt (active after spiral animation ends) ────────────────────────
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!animDone || !cardRef.current) return
+    if (!animDone || !cardRef.current) {
+      return
+    }
     const rect = cardRef.current.getBoundingClientRect()
     const dx = (e.clientX - (rect.left + rect.width / 2)) / (rect.width / 2)
     const dy = (e.clientY - (rect.top + rect.height / 2)) / (rect.height / 2)
-    setTilt({ x: -dy * 14, y: dx * 14 })
+    setTilt({ x: dy * 14, y: dx * 14 })
     setShine({
       x: ((e.clientX - rect.left) / rect.width) * 100,
       y: ((e.clientY - rect.top) / rect.height) * 100,
@@ -96,7 +99,7 @@ export function CardReveal({ result, onClose }: Props) {
         }
       }}
     >
-      {/* Rarity backdrop glow */}
+      {/* Rarity backdrop glow — dynamic gradient, must stay inline */}
       {config.backdropColor && (
         <div
           className="pointer-events-none absolute inset-0"
@@ -133,100 +136,110 @@ export function CardReveal({ result, onClose }: Props) {
       {/* biome-ignore lint/a11y/noStaticElementInteractions: stop propagation */}
       <div
         className="flex flex-col items-center gap-5 px-4 py-8"
-        style={{ perspective: '900px' }}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >
-        {/* ── 3D Card — spiral rise, then hover tilt ── */}
+        {/* Extended hitbox — prevents stagger when a tilted corner drifts outside the card bounds */}
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: extended mouse capture area */}
         <div
-          key={animKey}
-          ref={cardRef}
-          className={animDone ? undefined : 'card-spiral-rise'}
-          style={{
-            width: '240px',
-            height: '360px',
-            transformStyle: 'preserve-3d',
-            cursor: animDone ? 'default' : 'default',
-            ...(animDone && {
-              transform: `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
-              transition: 'transform 0.18s ease-out',
-            }),
-          }}
-          onAnimationEnd={() => setAnimDone(true)}
+          className="relative -m-10 p-10"
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
-          {/* ── FRONT face — TCG layout ── */}
-          <TcgCardFace
-            rarity={rarity}
-            name={result.card.name}
-            setName={result.card.set.name}
-            imageUrl={result.card.imageUrl}
-            variant={variant}
-            showSweep={showSweep}
-          />
-
-          {/* Hover sheen — only visible after animation */}
-          {animDone && (
+          {/* Perspective scoped to card size so the vanishing point is exactly at card center */}
+          <div className="h-90 w-60 perspective-[900px]">
+            {/* 3D card — spiral rise animation, then hover tilt via inline transform */}
             <div
-              className="pointer-events-none absolute inset-0 z-10"
-              style={{
-                borderRadius: 7,
-                background: `radial-gradient(circle at ${shine.x}% ${shine.y}%, rgba(255,255,255,0.18) 0%, transparent 55%)`,
-                backfaceVisibility: 'hidden',
-              }}
-            />
-          )}
+              key={animKey}
+              ref={cardRef}
+              className={`w-full h-full transform-3d ${animDone ? 'transition-transform duration-200 ease-out' : 'card-spiral-rise'}`}
+              style={
+                animDone
+                  ? { transform: `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)` }
+                  : undefined
+              }
+              onAnimationEnd={() => setAnimDone(true)}
+            >
+              {/* ── FRONT face ── */}
+              <div className="card-face absolute inset-0">
+                <TcgCardFace
+                  rarity={rarity}
+                  name={result.card.name}
+                  setName={result.card.set.name}
+                  imageUrl={result.card.imageUrl}
+                  variant={variant}
+                  showSweep={showSweep}
+                />
 
-          {/* ── BACK face ── */}
-          <div
-            className="absolute inset-0 overflow-hidden border border-border/40"
-            style={{
-              backfaceVisibility: 'hidden',
-              transform: 'rotateY(180deg)',
-              borderRadius: 16,
-            }}
-          >
-            <img
-              src={cardBackImg}
-              alt="dos de carte"
-              className="h-full w-full object-cover"
-            />
+                {/* Hover sheen — dynamic position, must stay inline */}
+                {animDone && (
+                  <div
+                    className="pointer-events-none absolute inset-0 z-10 rounded-[7px]"
+                    style={{
+                      background: `radial-gradient(circle at ${shine.x}% ${shine.y}%, rgba(255,255,255,0.18) 0%, transparent 55%)`,
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* ── BACK face ── */}
+              <div className="card-face-back absolute inset-0 rounded-2xl border border-border/40">
+                <img
+                  src={cardBackImg}
+                  alt="dos de carte"
+                  className="h-full w-full rounded-2xl object-cover"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
         {/* ── Info panel ── */}
         <div
-          className="w-60 space-y-2.5 rounded-2xl border border-border/60 bg-card/90 p-4 backdrop-blur-sm"
-          style={{
-            opacity: showInfo ? 1 : 0,
-            transform: showInfo ? 'translateY(0)' : 'translateY(12px)',
-            transition: 'opacity 0.5s ease-out, transform 0.5s ease-out',
-            pointerEvents: showInfo ? 'auto' : 'none',
-          }}
+          className={`w-64 overflow-hidden rounded-2xl border border-white/9 bg-[rgba(6,6,12,0.78)] shadow-[0_12px_40px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.07)] backdrop-blur-[20px] transition-[opacity,transform] duration-550 ease-out ${
+            showInfo
+              ? 'pointer-events-auto translate-y-0 opacity-100'
+              : 'pointer-events-none translate-y-3.5 opacity-0'
+          }`}
         >
           {/* Duplicate / dust */}
           {result.wasDuplicate && (
-            <div className="flex items-center justify-center gap-2 rounded-xl border border-amber-500/25 bg-amber-500/8 px-3 py-2.5">
-              <span className="text-sm">✨</span>
-              <p className="text-xs font-semibold text-amber-400">
-                Doublon · +{result.dustEarned} poussière
-              </p>
+            <div className="border-b border-amber-600/30 bg-[linear-gradient(135deg,rgba(217,119,6,0.28)_0%,rgba(251,191,36,0.14)_100%)] px-4 py-2.75">
+              <div className="flex items-center gap-3">
+                <Sparkles
+                  size={16}
+                  className="shrink-0 text-amber-400"
+                  aria-hidden
+                />
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-amber-300/65">
+                    Doublon
+                  </p>
+                  <p className="text-sm font-bold text-amber-300">
+                    +{result.dustEarned} poussière
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
           {/* Tokens remaining */}
-          <p className="text-center text-xs text-text-light/50">
-            <span className="font-semibold text-text-light/80">
+          <div className="flex items-center justify-between border-b border-white/6 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <Coins size={14} className="text-white/35" aria-hidden />
+              <span className="text-xs text-white/45">Tokens restants</span>
+            </div>
+            <span className="font-display text-base font-bold text-white/90">
               {result.tokensRemaining}
-            </span>{' '}
-            token{result.tokensRemaining !== 1 ? 's' : ''} restant
-            {result.tokensRemaining !== 1 ? 's' : ''}
-          </p>
+            </span>
+          </div>
 
-          <Button className="w-full" onClick={onClose}>
-            Nouveau tirage
-          </Button>
+          {/* CTA */}
+          <div className="p-3">
+            <Button className="w-full" onClick={onClose}>
+              Nouveau tirage
+            </Button>
+          </div>
         </div>
       </div>
     </div>

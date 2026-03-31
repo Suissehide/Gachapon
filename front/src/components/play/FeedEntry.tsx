@@ -11,25 +11,35 @@ const VARIANT_LABELS: Record<string, { symbol: string; cls: string }> = {
 
 type Props = {
   entry: FeedEntry
+  index?: number
 }
 
-export function FeedEntryRow({ entry }: Props) {
+export function FeedEntryRow({ entry, index = 0 }: Props) {
   const rarityText = RARITY_TEXT_COLORS[entry.rarity] ?? 'text-text'
-  const variant = entry.variant !== 'NORMAL' ? VARIANT_LABELS[entry.variant] : null
+  const variant =
+    entry.variant !== 'NORMAL' ? VARIANT_LABELS[entry.variant] : null
   const isLegendary = entry.rarity === 'LEGENDARY'
 
   return (
     <HoverCard.Root openDelay={200} closeDelay={100}>
       <HoverCard.Trigger asChild>
-        <div className="flex items-baseline gap-1 px-2.5 py-[5px] rounded hover:bg-black/5 cursor-default select-none transition-colors duration-150 animate-in slide-in-from-bottom-2 fade-in duration-300 fill-mode-both">
+        <div
+          className="flex items-baseline gap-1 px-2.5 py-[5px] rounded hover:bg-black/5 cursor-default select-none transition-colors duration-150"
+          style={{
+            animation: 'fadeIn 0.04s ease-out both',
+            animationDelay: `${Math.min(index * 30, 600)}ms`,
+          }}
+        >
           <span className="shrink-0 max-w-[44px] truncate text-[9px] font-medium text-text-light/60 leading-none">
             {entry.username}
           </span>
 
-          <span className="shrink-0 text-text-light/40 text-[9px] italic">a obtenu</span>
+          <span className="shrink-0 text-text-light/40 text-[9px] italic">
+            a obtenu
+          </span>
 
           <span
-            className={`text-[11px] font-semibold truncate leading-none animate-in fade-in slide-in-from-bottom-1 duration-300 delay-75 fill-mode-both ${
+            className={`text-[11px] font-semibold truncate leading-none ${
               isLegendary ? 'legendary-text' : rarityText
             }`}
           >

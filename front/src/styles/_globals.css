@@ -152,6 +152,17 @@ h6 {
   }
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -350,14 +361,10 @@ h6 {
 /* ── Card spiral rise from bottom ────────────────────────────────────────── */
 
 @keyframes cardSpiralRise {
+  /* Pas d'opacity ici : opacity < 1 crée un stacking context qui aplatit preserve-3d */
+  /* La carte commence hors écran (translateY 110vh) donc invisible naturellement */
   0% {
-    opacity: 0;
     transform: translateY(110vh) rotateY(900deg) scale(0.45);
-    filter: blur(8px);
-  }
-  10% {
-    opacity: 1;
-    filter: blur(0);
   }
   80% {
     transform: translateY(-16px) rotateY(12deg) scale(1.04);
@@ -366,14 +373,27 @@ h6 {
     transform: translateY(4px) rotateY(-3deg) scale(0.99);
   }
   100% {
-    opacity: 1;
     transform: translateY(0) rotateY(0deg) scale(1);
-    filter: blur(0);
   }
 }
 
 .card-spiral-rise {
   animation: cardSpiralRise 1.6s cubic-bezier(0.15, 0, 0.08, 1) forwards;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+}
+
+/* 3D card faces — vendor-prefixed, no Tailwind transform system interference */
+.card-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.card-face-back {
+  transform: rotateY(180deg);
+  -webkit-transform: rotateY(180deg);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 /* Light sweep for rare/epic/legendary (inner div) */

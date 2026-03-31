@@ -39,10 +39,11 @@ export function LiveFeed() {
                 Aucun tirage récent…
               </p>
             ) : (
-              entries.map((entry) => (
+              entries.map((entry, i) => (
                 <FeedEntryRow
                   key={`${entry.cardId}-${entry.pulledAt}`}
                   entry={entry}
+                  index={i}
                 />
               ))
             )}

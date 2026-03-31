@@ -21,10 +21,7 @@ export const RewardsApi = {
   claimReward: async (rewardId: string): Promise<ClaimResult> => {
     const res = await fetchWithAuth(
       `${apiUrl}${REWARD_ROUTES.claim(rewardId)}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      },
+      { method: 'POST' },
     )
     if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors de la réclamation de la récompense')
@@ -35,7 +32,6 @@ export const RewardsApi = {
   claimAllRewards: async (): Promise<ClaimResult | null> => {
     const res = await fetchWithAuth(`${apiUrl}${REWARD_ROUTES.claimAll}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
     })
     if (!res.ok) {
       handleHttpError(
