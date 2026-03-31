@@ -13,6 +13,9 @@ interface RewardCardProps {
 
 function sourceLabel(reward: PendingReward): string {
   if (reward.source === 'STREAK' && reward.streakMilestone) {
+    if (reward.streakMilestone.day === 0) {
+      return 'Streak — Connexion quotidienne'
+    }
     return `Streak — Jour ${reward.streakMilestone.day}`
   }
   if (reward.source === 'ACHIEVEMENT') {

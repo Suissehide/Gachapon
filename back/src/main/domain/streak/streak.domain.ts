@@ -1,5 +1,6 @@
 import type { IocContainer } from '../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
+import { encodeDailySourceId } from './streak-source-id'
 
 type StreakInput = {
   lastLoginAt: Date | null
@@ -108,11 +109,21 @@ export class StreakDomain {
       return
     }
 
+    // sourceId uniqueness drives upsert idempotency. Milestones use their UUID (earned once);
+    // daily defaults encode the streak day so each login accumulates a separate reward.
+    const sourceId = milestone.day === 0 ? encodeDailySourceId(newStreakDays) : milestone.id
+
+    // TODO(remove after 2026-06-01): cleans up rewards written before the "day:N" format,
+    // where all default rewards shared the milestone UUID as sourceId, causing upsert collisions.
+    if (milestone.day === 0) {
+      await this.#userRewardRepository.deleteLegacyDefaultStreakRewardInTx(tx, userId, milestone.id)
+    }
+
     await this.#userRewardRepository.upsertInTx(tx, {
       userId,
       rewardId: milestone.rewardId,
       source: 'STREAK',
-      sourceId: milestone.id,
+      sourceId,
     })
   }
 }
