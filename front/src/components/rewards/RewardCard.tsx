@@ -1,5 +1,5 @@
 import { Flame, Sparkles, Star, Ticket, Trophy, Zap } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { type ReactNode, useState } from 'react'
 
 import type { PendingReward } from '../../api/rewards.api.ts'
 import { cn } from '../../libs/utils.ts'
@@ -72,17 +72,25 @@ function Stat({
 export function RewardCard({ reward, onClaim, isLoading }: RewardCardProps) {
   const isMilestone = reward.streakMilestone?.isMilestone ?? false
   const cfg = SOURCE_CONFIG[reward.source] ?? SOURCE_CONFIG.STREAK
+  const [claiming, setClaiming] = useState(false)
+
+  const handleClaim = () => {
+    setClaiming(true)
+    onClaim(reward.id)
+  }
 
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-md border border-border transition-all duration-200',
+        'overflow-hidden rounded-md border border-border',
+        'transition-[transform,opacity] duration-300 ease-in',
         cfg.gradientFrom,
         isMilestone && [
           '[border-left-color:theme(colors.yellow.400)]',
           '[background-image:linear-gradient(135deg,rgba(245,158,11,0.10)_0%,transparent_55%)]',
           'shadow-[0_0_18px_rgba(245,158,11,0.14)]',
         ],
+        claiming && 'translate-x-[110%] opacity-0',
       )}
     >
       <div className="flex items-center gap-12 px-3 py-2.5">
@@ -131,8 +139,8 @@ export function RewardCard({ reward, onClaim, isLoading }: RewardCardProps) {
         {/* Right: claim button — centré verticalement sur toute la hauteur */}
         <Button
           size="sm"
-          onClick={() => onClaim(reward.id)}
-          disabled={isLoading}
+          onClick={handleClaim}
+          disabled={isLoading || claiming}
           className={cn(
             'shrink-0',
             isMilestone && 'shadow-[0_0_12px_rgba(245,158,11,0.3)]',

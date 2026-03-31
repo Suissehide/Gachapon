@@ -57,7 +57,7 @@ export function RewardsPopup({ onClose: _ }: RewardsPopupProps) {
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-1.5 overflow-y-auto">
+          <div className="flex flex-col gap-1.5 overflow-x-hidden overflow-y-auto">
             {rewards.map((reward) => (
               <RewardCard
                 key={reward.id}
