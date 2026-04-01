@@ -127,7 +127,7 @@ export function LiveFeed() {
             ) : (
               entries.map((entry, i) => (
                 <FeedEntryRow
-                  key={`${entry.cardId}-${entry.pulledAt}`}
+                  key={`${entry.username}-${entry.cardId}-${entry.pulledAt}`}
                   entry={entry}
                   index={i}
                 />

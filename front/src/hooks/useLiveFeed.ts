@@ -79,7 +79,7 @@ export function useLiveFeed(opts?: { teamId?: string }) {
   const historicalEntries = data?.pages.flatMap((p) => p.entries) ?? []
   const seen = new Set<string>()
   const entries = [...liveEntries, ...historicalEntries].filter((e) => {
-    const key = `${e.cardId}-${e.pulledAt}`
+    const key = `${e.username}-${e.cardId}-${e.pulledAt}`
     if (seen.has(key)) return false
     seen.add(key)
     return true
