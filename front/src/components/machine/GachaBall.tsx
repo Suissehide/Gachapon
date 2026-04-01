@@ -105,7 +105,7 @@ export function GachaBall({ interactive, isOpening, onOpen }: Props) {
                 opacity={0.58}
                 clearcoat={0.5}
                 clearcoatRoughness={0.25}
-                side={THREE.DoubleSide}
+                side={THREE.FrontSide}
               />
             </mesh>
           </group>
