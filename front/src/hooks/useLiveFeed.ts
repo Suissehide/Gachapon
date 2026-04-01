@@ -1,34 +1,64 @@
-import { useEffect, useRef, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 
 import { GachaApi } from '../api/gacha.api'
+import { TeamsApi } from '../api/teams.api'
 import { wsClient } from '../lib/ws'
 import type { FeedEntry } from '../types/feed'
 
 export type { FeedEntry }
 
-export function useLiveFeed() {
-  const [entries, setEntries] = useState<FeedEntry[]>([])
-  const seeded = useRef(false)
+const LIMIT = 20
 
-  const { data: seedEntries } = useQuery({
-    queryKey: ['pulls', 'recent'],
-    queryFn: () => GachaApi.getRecentPulls(20),
+export function useLiveFeed(opts?: { teamId?: string }) {
+  const teamId = opts?.teamId
+  const [liveEntries, setLiveEntries] = useState<FeedEntry[]>([])
+  const prevTeamId = useRef(teamId)
+
+  // Réinitialiser les entrées live quand le filtre change
+  useEffect(() => {
+    if (prevTeamId.current !== teamId) {
+      setLiveEntries([])
+      prevTeamId.current = teamId
+    }
+  }, [teamId])
+
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+    queryKey: ['pulls', 'recent', teamId ?? 'global'],
+    queryFn: ({ pageParam }: { pageParam: string | undefined }) =>
+      GachaApi.getRecentPulls({ limit: LIMIT, before: pageParam, teamId }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.entries.at(-1)?.pulledAt : undefined,
     staleTime: 60_000,
   })
 
-  // Initialiser avec les données DB une seule fois
-  useEffect(() => {
-    if (seedEntries && !seeded.current) {
-      setEntries(seedEntries)
-      seeded.current = true
-    }
-  }, [seedEntries])
+  // Membres de la team pour filtrer les events WS
+  const { data: teamData } = useQuery({
+    queryKey: ['team', teamId],
+    queryFn: () => TeamsApi.getTeam(teamId!),
+    enabled: !!teamId,
+    staleTime: 5 * 60_000,
+  })
 
-  // Souscrire aux events WS live
+  const teamUsernames = useMemo(
+    () =>
+      teamId
+        ? new Set(teamData?.members.map((m) => m.user.username) ?? [])
+        : null,
+    [teamId, teamData],
+  )
+
+  // Ref pour accéder à teamUsernames sans re-souscrire au WS
+  const teamUsernamesRef = useRef<Set<string> | null>(null)
+  teamUsernamesRef.current = teamUsernames
+
   useEffect(() => {
     return wsClient.on((event) => {
       if (event.type !== 'feed:pull') return
+      const names = teamUsernamesRef.current
+      // Si filtre actif et membres chargés : exclure les non-membres
+      if (names !== null && names.size > 0 && !names.has(event.username)) return
       const entry: FeedEntry = {
         username: event.username,
         cardName: event.cardName,
@@ -39,9 +69,12 @@ export function useLiveFeed() {
         setName: event.setName,
         pulledAt: event.pulledAt,
       }
-      setEntries((prev) => [entry, ...prev].slice(0, 50))
+      setLiveEntries((prev) => [entry, ...prev])
     })
   }, [])
 
-  return { entries }
+  const historicalEntries = data?.pages.flatMap((p) => p.entries) ?? []
+  const entries = [...liveEntries, ...historicalEntries]
+
+  return { entries, fetchNextPage, hasNextPage, isFetchingNextPage }
 }
