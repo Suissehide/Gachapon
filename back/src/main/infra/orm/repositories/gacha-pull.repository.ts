@@ -47,7 +47,7 @@ export class GachaPullRepository implements IGachaPullRepository {
 
   async findRecent(limit: number, opts?: FindRecentOpts): Promise<RecentPullPage> {
     const pulls = await this.#prisma.gachaPull.findMany({
-      take: limit,
+      take: limit + 1,
       where: {
         ...(opts?.before && { pulledAt: { lt: opts.before } }),
         ...(opts?.teamId && {
@@ -60,8 +60,9 @@ export class GachaPullRepository implements IGachaPullRepository {
         user: { select: { username: true } },
       },
     })
+    const hasMore = pulls.length > limit
     return {
-      entries: pulls.map((p) => ({
+      entries: pulls.slice(0, limit).map((p) => ({
         username: p.user.username,
         cardName: p.card.name,
         rarity: p.card.rarity,
@@ -71,7 +72,7 @@ export class GachaPullRepository implements IGachaPullRepository {
         setName: p.card.set.name,
         pulledAt: p.pulledAt,
       })),
-      hasMore: pulls.length === limit,
+      hasMore,
     }
   }
 }
