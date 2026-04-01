@@ -117,6 +117,7 @@ describe('Gacha routes', () => {
     expect(body).toHaveProperty('hasMore')
     expect(Array.isArray(body.entries)).toBe(true)
     expect(typeof body.hasMore).toBe('boolean')
+    expect(body.entries.length).toBeGreaterThanOrEqual(1)
     const entry = body.entries[0] as Record<string, unknown>
     expect(entry).toHaveProperty('username')
     expect(entry).toHaveProperty('cardName')
