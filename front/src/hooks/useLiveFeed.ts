@@ -29,7 +29,7 @@ export function useLiveFeed(opts?: { teamId?: string }) {
       GachaApi.getRecentPulls({ limit: LIMIT, before: pageParam, teamId }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? lastPage.entries.at(-1)?.pulledAt : undefined,
+      lastPage.hasMore ? lastPage.entries[lastPage.entries.length - 1]?.pulledAt : undefined,
     staleTime: 60_000,
   })
 
