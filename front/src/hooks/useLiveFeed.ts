@@ -53,12 +53,15 @@ export function useLiveFeed(opts?: { teamId?: string }) {
   const teamUsernamesRef = useRef<Set<string> | null>(null)
   teamUsernamesRef.current = teamUsernames
 
+  const teamDataLoadedRef = useRef(false)
+  teamDataLoadedRef.current = !!teamData
+
   useEffect(() => {
     return wsClient.on((event) => {
       if (event.type !== 'feed:pull') return
       const names = teamUsernamesRef.current
       // Si filtre actif et membres chargés : exclure les non-membres
-      if (names !== null && names.size > 0 && !names.has(event.username)) return
+      if (names !== null && (!teamDataLoadedRef.current || !names.has(event.username))) return
       const entry: FeedEntry = {
         username: event.username,
         cardName: event.cardName,
@@ -74,7 +77,13 @@ export function useLiveFeed(opts?: { teamId?: string }) {
   }, [])
 
   const historicalEntries = data?.pages.flatMap((p) => p.entries) ?? []
-  const entries = [...liveEntries, ...historicalEntries]
+  const seen = new Set<string>()
+  const entries = [...liveEntries, ...historicalEntries].filter((e) => {
+    const key = `${e.cardId}-${e.pulledAt}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 
   return { entries, fetchNextPage, hasNextPage, isFetchingNextPage }
 }
