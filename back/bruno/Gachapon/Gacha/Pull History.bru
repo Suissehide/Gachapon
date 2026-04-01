@@ -1,0 +1,16 @@
+meta {
+  name: Pull History
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{BASE_URL}}/pulls/history
+  body: none
+  auth: none
+}
+
+params:query {
+  page: 1
+  limit: 20
+}

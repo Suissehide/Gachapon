@@ -1,0 +1,16 @@
+meta {
+  name: Get History
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{BASE_URL}}/rewards/history
+  body: none
+  auth: none
+}
+
+params:query {
+  page: 1
+  limit: 20
+}

@@ -1,0 +1,19 @@
+meta {
+  name: Update Default
+  type: http
+  seq: 2
+}
+
+patch {
+  url: {{BASE_URL}}/admin/streak/default
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "tokens": 1,
+    "dust": 0,
+    "xp": 50
+  }
+}

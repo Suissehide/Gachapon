@@ -16,6 +16,10 @@ export class UserRewardRepository implements UserRewardRepositoryInterface {
     this.#prisma = postgresOrm.prisma
   }
 
+  create(data: { userId: string; rewardId: string; source: RewardSource; sourceId: string }): Promise<UserReward> {
+    return this.#prisma.userReward.create({ data })
+  }
+
   upsertInTx(
     tx: PrimaTransactionClient,
     data: { userId: string; rewardId: string; source: RewardSource; sourceId: string },

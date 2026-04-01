@@ -1,9 +1,10 @@
 import { Flame, Sparkles, Star, Ticket, Trophy, Zap } from 'lucide-react'
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useRef, useState } from 'react'
 
 import type { PendingReward } from '../../api/rewards.api.ts'
 import { cn } from '../../libs/utils.ts'
 import { Button } from '../ui/button.tsx'
+import { ClaimParticles } from './ClaimParticles.tsx'
 
 interface RewardCardProps {
   reward: PendingReward
@@ -72,25 +73,32 @@ function Stat({
 export function RewardCard({ reward, onClaim, isLoading }: RewardCardProps) {
   const isMilestone = reward.streakMilestone?.isMilestone ?? false
   const cfg = SOURCE_CONFIG[reward.source] ?? SOURCE_CONFIG.STREAK
+  const [burst, setBurst] = useState(false)
   const [claiming, setClaiming] = useState(false)
+  const [burstOrigin, setBurstOrigin] = useState({ x: 0, y: 0 })
+  const buttonRef = useRef<HTMLDivElement>(null)
 
   const handleClaim = () => {
-    setClaiming(true)
-    setTimeout(() => onClaim(reward.id), 300)
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setBurstOrigin({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 })
+    }
+    setBurst(true)
+    setTimeout(() => setClaiming(true), 400)
+    setTimeout(() => onClaim(reward.id), 400 + 300)
   }
 
   return (
     <div
       className={cn(
         'overflow-hidden rounded-md border border-border',
-        'transition-[transform,opacity] duration-300 ease-in',
         cfg.gradientFrom,
         isMilestone && [
           '[border-left-color:theme(colors.yellow.400)]',
           '[background-image:linear-gradient(135deg,rgba(245,158,11,0.10)_0%,transparent_55%)]',
           'shadow-[0_0_18px_rgba(245,158,11,0.14)]',
         ],
-        claiming && 'translate-x-[110%] opacity-0',
+        claiming && 'reward-claim',
       )}
     >
       <div className="flex items-center gap-12 px-3 py-2.5">
@@ -136,18 +144,25 @@ export function RewardCard({ reward, onClaim, isLoading }: RewardCardProps) {
           </div>
         </div>
 
-        {/* Right: claim button — centré verticalement sur toute la hauteur */}
-        <Button
-          size="sm"
-          onClick={handleClaim}
-          disabled={isLoading || claiming}
-          className={cn(
-            'shrink-0',
-            isMilestone && 'shadow-[0_0_12px_rgba(245,158,11,0.3)]',
-          )}
-        >
-          Réclamer
-        </Button>
+        {/* Right: claim button */}
+        <div ref={buttonRef} className="shrink-0">
+          <ClaimParticles
+            burst={burst}
+            originX={burstOrigin.x}
+            originY={burstOrigin.y}
+            hasTokens={reward.reward.tokens > 0}
+            hasDust={reward.reward.dust > 0}
+            hasXp={reward.reward.xp > 0}
+          />
+          <Button
+            size="sm"
+            onClick={handleClaim}
+            disabled={isLoading || burst}
+            className={cn(isMilestone && 'shadow-[0_0_12px_rgba(245,158,11,0.3)]')}
+          >
+            Réclamer
+          </Button>
+        </div>
       </div>
     </div>
   )

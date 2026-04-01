@@ -11,6 +11,7 @@ export type PendingUserReward = UserReward & {
 export type UserRewardWithReward = UserReward & { reward: Reward }
 
 export interface UserRewardRepositoryInterface {
+  create(data: { userId: string; rewardId: string; source: RewardSource; sourceId: string }): Promise<UserReward>
   upsertInTx(
     tx: PrimaTransactionClient,
     data: { userId: string; rewardId: string; source: RewardSource; sourceId: string },

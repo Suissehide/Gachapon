@@ -1,0 +1,15 @@
+meta {
+  name: Claim One
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{BASE_URL}}/rewards/:id/claim
+  body: none
+  auth: none
+}
+
+params:path {
+  id: <reward-uuid>
+}

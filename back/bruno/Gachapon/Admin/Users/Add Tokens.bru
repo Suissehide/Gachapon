@@ -1,0 +1,21 @@
+meta {
+  name: Add Tokens
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{BASE_URL}}/admin/users/:id/tokens
+  body: json
+  auth: none
+}
+
+params:path {
+  id: <user-uuid>
+}
+
+body:json {
+  {
+    "amount": 10
+  }
+}
