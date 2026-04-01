@@ -1,50 +1,19 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
-import { z } from 'zod/v4'
 
-const userProfileResponseSchema = z.object({
-  id: z.string(),
-  username: z.string(),
-  avatar: z.string().nullable(),
-  banner: z.string().nullable(),
-  level: z.number().int(),
-  xp: z.number().int(),
-  dust: z.number().int(),
-  createdAt: z.date(),
-  stats: z.object({
-    totalPulls: z.number().int(),
-    ownedCards: z.number().int(),
-    legendaryCount: z.number().int(),
-    dustGenerated: z.number().int(),
-  }),
-  streakDays: z.number().int(),
-  bestStreak: z.number().int(),
-})
+import { userProfileResponseSchema, usersProfileParamSchema, usersSearchQuerySchema } from '../../schemas/users.schema'
 
 export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { userRepository, postgresOrm } = fastify.iocContainer
-  const prisma = postgresOrm.prisma
+  const { userRepository, gachaPullRepository, userCardRepository } = fastify.iocContainer
 
-  // GET /users/search?q= — recherche d'utilisateurs par username (autocomplete)
   fastify.get(
     '/users/search',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: {
-        querystring: z.object({ q: z.string().min(2).max(30) }),
-      },
+      schema: { querystring: usersSearchQuerySchema },
     },
     async (request) => {
-      const { q } = request.query
-      const users = await prisma.user.findMany({
-        where: {
-          username: { contains: q, mode: 'insensitive' },
-          id: { not: request.user.userID },
-        },
-        select: { id: true, username: true, avatar: true },
-        take: 5,
-        orderBy: { username: 'asc' },
-      })
+      const users = await userRepository.searchByUsername(request.query.q, request.user.userID)
       return { users }
     },
   )
@@ -54,30 +23,20 @@ export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        params: z.object({ username: z.string().min(1).max(30) }),
+        params: usersProfileParamSchema,
         response: { 200: userProfileResponseSchema },
       },
     },
     async (request) => {
-      const { username } = request.params
+      const user = await userRepository.findByUsername(request.params.username)
+      if (!user) throw Boom.notFound('User not found')
 
-      const user = await userRepository.findByUsername(username)
-      if (!user) {
-        throw Boom.notFound('User not found')
-      }
-
-      const [totalPulls, ownedCards, legendaryCount, dustAgg] =
-        await Promise.all([
-          prisma.gachaPull.count({ where: { userId: user.id } }),
-          prisma.userCard.count({ where: { userId: user.id } }),
-          prisma.userCard.count({
-            where: { userId: user.id, card: { rarity: 'LEGENDARY' } },
-          }),
-          prisma.gachaPull.aggregate({
-            where: { userId: user.id },
-            _sum: { dustEarned: true },
-          }),
-        ])
+      const [totalPulls, ownedCards, legendaryCount, dustGenerated] = await Promise.all([
+        gachaPullRepository.countByUser(user.id),
+        userCardRepository.countByUser(user.id),
+        userCardRepository.countLegendaryByUser(user.id),
+        gachaPullRepository.sumDustEarnedByUser(user.id),
+      ])
 
       return {
         id: user.id,
@@ -88,12 +47,7 @@ export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
         xp: user.xp,
         dust: user.dust,
         createdAt: user.createdAt,
-        stats: {
-          totalPulls,
-          ownedCards,
-          legendaryCount,
-          dustGenerated: dustAgg._sum.dustEarned ?? 0,
-        },
+        stats: { totalPulls, ownedCards, legendaryCount, dustGenerated },
         streakDays: user.streakDays,
         bestStreak: user.bestStreak,
       }

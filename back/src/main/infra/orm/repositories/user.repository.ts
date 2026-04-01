@@ -101,4 +101,79 @@ export class UserRepository implements UserRepositoryInterface {
       where: { email, emailVerifiedAt: null },
     })
   }
+
+  async findAllPaginated(params: { page: number; limit: number; search?: string }) {
+    const where = params.search
+      ? {
+          OR: [
+            { username: { contains: params.search, mode: 'insensitive' as const } },
+            { email: { contains: params.search, mode: 'insensitive' as const } },
+          ],
+        }
+      : {}
+    const [users, total] = await Promise.all([
+      this.#prisma.user.findMany({
+        where,
+        skip: (params.page - 1) * params.limit,
+        take: params.limit,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          role: true,
+          tokens: true,
+          dust: true,
+          suspended: true,
+          createdAt: true,
+        },
+      }),
+      this.#prisma.user.count({ where }),
+    ])
+    return { users, total }
+  }
+
+  searchByUsername(q: string, excludeId: string) {
+    return this.#prisma.user.findMany({
+      where: {
+        username: { contains: q, mode: 'insensitive' },
+        id: { not: excludeId },
+      },
+      select: { id: true, username: true, avatar: true },
+      take: 5,
+      orderBy: { username: 'asc' },
+    })
+  }
+
+  async incrementTokens(id: string, amount: number): Promise<{ tokens: number }> {
+    const updated = await this.#prisma.user.update({
+      where: { id },
+      data: { tokens: { increment: amount } },
+    })
+    return { tokens: updated.tokens }
+  }
+
+  async incrementDust(id: string, amount: number): Promise<{ dust: number }> {
+    const updated = await this.#prisma.user.update({
+      where: { id },
+      data: { dust: { increment: amount } },
+    })
+    return { dust: updated.dust }
+  }
+
+  async updateRole(id: string, role: 'USER' | 'SUPER_ADMIN'): Promise<{ role: string }> {
+    const updated = await this.#prisma.user.update({
+      where: { id },
+      data: { role },
+    })
+    return { role: updated.role }
+  }
+
+  async updateSuspended(id: string, suspended: boolean): Promise<{ suspended: boolean }> {
+    const updated = await this.#prisma.user.update({
+      where: { id },
+      data: { suspended },
+    })
+    return { suspended: updated.suspended }
+  }
 }

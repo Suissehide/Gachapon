@@ -9,6 +9,9 @@ import { StreakDomain } from '../../../domain/streak/streak.domain'
 import { RewardsDomain } from '../../../domain/rewards/rewards.domain'
 import { TeamDomain } from '../../../domain/team/team.domain'
 import { UserDomain } from '../../../domain/user/user.domain'
+import { CollectionDomain } from '../../../domain/collection/collection.domain'
+import { ShopDomain } from '../../../domain/shop/shop.domain'
+import { UpgradePurchaseDomain } from '../../../domain/economy/upgrade-purchase.domain'
 import { MailService } from '../../../infra/mail/mail.service'
 import { JwtService } from '../../../infra/auth/jwt.service'
 import { ConfigService } from '../../../infra/config/config.service'
@@ -29,6 +32,12 @@ import { UserRewardRepository } from '../../../infra/orm/repositories/user-rewar
 import { ScoringConfigRepository } from '../../../infra/orm/repositories/scoring-config.repository'
 import { UpgradeRepository } from '../../../infra/orm/repositories/upgrade.repository'
 import { UserCardRepository } from '../../../infra/orm/repositories/user-card.repository'
+import { QuestRepository } from '../../../infra/orm/repositories/quest.repository'
+import { AchievementRepository } from '../../../infra/orm/repositories/achievement.repository'
+import { ShopItemRepository } from '../../../infra/orm/repositories/shop-item.repository'
+import { LeaderboardRepository } from '../../../infra/orm/repositories/leaderboard.repository'
+import { StatsRepository } from '../../../infra/orm/repositories/stats.repository'
+import { AdminStatsRepository } from '../../../infra/orm/repositories/admin-stats.repository'
 import { RedisClient } from '../../../infra/redis/redis-client'
 import { RefreshTokenRepository } from '../../../infra/redis/refresh-token.repository'
 import { MinioClient } from '../../../infra/storage/minio-client'
@@ -90,6 +99,15 @@ class AwilixIocContainer {
     this.#reg('userRewardRepository', asClass(UserRewardRepository).singleton())
     this.#reg('streakDomain', asClass(StreakDomain).singleton())
     this.#reg('rewardsDomain', asClass(RewardsDomain).singleton())
+    this.#reg('questRepository', asClass(QuestRepository).singleton())
+    this.#reg('achievementRepository', asClass(AchievementRepository).singleton())
+    this.#reg('shopItemRepository', asClass(ShopItemRepository).singleton())
+    this.#reg('leaderboardRepository', asClass(LeaderboardRepository).singleton())
+    this.#reg('statsRepository', asClass(StatsRepository).singleton())
+    this.#reg('adminStatsRepository', asClass(AdminStatsRepository).singleton())
+    this.#reg('collectionDomain', asClass(CollectionDomain).singleton())
+    this.#reg('shopDomain', asClass(ShopDomain).singleton())
+    this.#reg('upgradePurchaseDomain', asClass(UpgradePurchaseDomain).singleton())
     logger.info('IoC container initialized.')
   }
 

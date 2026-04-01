@@ -31,4 +31,6 @@ export interface IGachaPullRepository {
     pagination: { skip: number; take: number },
   ): Promise<{ pulls: GachaPullWithCard[]; total: number }>
   findRecent(limit: number): Promise<RecentPullEntry[]>
+  countByUser(userId: string): Promise<number>
+  sumDustEarnedByUser(userId: string): Promise<number>
 }

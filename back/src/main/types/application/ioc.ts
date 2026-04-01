@@ -24,6 +24,15 @@ import type { UserRepositoryInterface } from '../infra/orm/repositories/user.rep
 import type { RewardRepositoryInterface } from '../infra/orm/repositories/reward.repository.interface'
 import type { StreakMilestoneRepositoryInterface } from '../infra/orm/repositories/streak-milestone.repository.interface'
 import type { UserRewardRepositoryInterface } from '../infra/orm/repositories/user-reward.repository.interface'
+import type { IQuestRepository } from '../infra/orm/repositories/quest.repository.interface'
+import type { IAchievementRepository } from '../infra/orm/repositories/achievement.repository.interface'
+import type { IShopItemRepository } from '../infra/orm/repositories/shop-item.repository.interface'
+import type { ILeaderboardRepository } from '../infra/orm/repositories/leaderboard.repository.interface'
+import type { IStatsRepository } from '../infra/orm/repositories/stats.repository.interface'
+import type { IAdminStatsRepository } from '../infra/orm/repositories/admin-stats.repository.interface'
+import type { ICollectionDomain } from '../domain/collection/collection.domain.interface'
+import type { IShopDomain } from '../domain/shop/shop.domain.interface'
+import type { IUpgradePurchaseDomain } from '../domain/economy/upgrade-purchase.domain.interface'
 import type { RedisClientInterface } from '../infra/redis/redis-client'
 import type { StorageClientInterface } from '../infra/storage/storage-client'
 import type { IMailService } from '../infra/mail/mail.service.interface'
@@ -66,4 +75,13 @@ export interface IocContainer {
   readonly userRewardRepository: UserRewardRepositoryInterface
   readonly streakDomain: StreakDomainInterface
   readonly rewardsDomain: RewardsDomainInterface
+  readonly questRepository: IQuestRepository
+  readonly achievementRepository: IAchievementRepository
+  readonly shopItemRepository: IShopItemRepository
+  readonly leaderboardRepository: ILeaderboardRepository
+  readonly statsRepository: IStatsRepository
+  readonly adminStatsRepository: IAdminStatsRepository
+  readonly collectionDomain: ICollectionDomain
+  readonly shopDomain: IShopDomain
+  readonly upgradePurchaseDomain: IUpgradePurchaseDomain
 }

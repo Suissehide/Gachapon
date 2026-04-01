@@ -1,15 +1,18 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
-import { z } from 'zod/v4'
 
 import type { CardRarity } from '../../../../../types/domain/gacha/gacha.types'
-import type { ConfigKey } from '../../../../../types/infra/config/config.service.interface'
+import {
+  collectionCardIdParamSchema,
+  collectionCardsQuerySchema,
+  collectionRecycleBodySchema,
+  collectionUserIdParamSchema,
+} from '../../schemas/collection.schema'
 
 export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { cardRepository, userCardRepository, userRepository, upgradeRepository } =
+  const { cardRepository, userCardRepository, userRepository, collectionDomain } =
     fastify.iocContainer
 
-  // GET /sets — liste les sets (actifs)
   fastify.get(
     '/sets',
     { onRequest: [fastify.verifySessionCookie] },
@@ -19,17 +22,11 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
     },
   )
 
-  // GET /cards — liste toutes les cartes (filtrables)
   fastify.get(
     '/cards',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: {
-        querystring: z.object({
-          setId: z.string().optional(),
-          rarity: z.string().optional(),
-        }),
-      },
+      schema: { querystring: collectionCardsQuerySchema },
     },
     async (request) => {
       const cards = await cardRepository.findAll({
@@ -48,34 +45,28 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
     },
   )
 
-  // GET /cards/:id — détail d'une carte
   fastify.get(
     '/cards/:id',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: z.object({ id: z.string().uuid() }) },
+      schema: { params: collectionCardIdParamSchema },
     },
     async (request) => {
       const card = await cardRepository.findById(request.params.id)
-      if (!card) {
-        throw Boom.notFound('Card not found')
-      }
+      if (!card) throw Boom.notFound('Card not found')
       return card
     },
   )
 
-  // GET /users/:id/collection — collection d'un utilisateur
   fastify.get(
     '/users/:id/collection',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: z.object({ id: z.string().uuid() }) },
+      schema: { params: collectionUserIdParamSchema },
     },
     async (request) => {
       const user = await userRepository.findById(request.params.id)
-      if (!user) {
-        throw Boom.notFound('User not found')
-      }
+      if (!user) throw Boom.notFound('User not found')
 
       const userCards = await userCardRepository.findByUser(request.params.id)
       return {
@@ -95,82 +86,14 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
     },
   )
 
-  // POST /collection/recycle — recycler une carte en dust
   fastify.post(
     '/collection/recycle',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: {
-        body: z.object({
-          cardId: z.string().uuid(),
-          quantity: z.number().int().min(1).default(1),
-          variant: z.enum(['NORMAL', 'BRILLIANT', 'HOLOGRAPHIC']).default('NORMAL'),
-        }),
-      },
+      schema: { body: collectionRecycleBodySchema },
     },
     async (request) => {
-      const userId = request.user.userID
-      const { cardId, quantity, variant } = request.body
-
-      const { postgresOrm, configService } = fastify.iocContainer
-
-      // First verify card exists (outside tx is fine for read-only catalog data)
-      const card = await cardRepository.findById(cardId)
-      if (!card) {
-        throw Boom.notFound('Card not found')
-      }
-
-      const dustKey = `dust${card.rarity.charAt(0) + card.rarity.slice(1).toLowerCase()}` as ConfigKey
-      const baseDust = await configService.get(dustKey)
-
-      const upgrades = await upgradeRepository.getEffectsForUser(userId)
-
-      const [variantMultiplierHolo, variantMultiplierBrilliant] = await Promise.all([
-        configService.get('variantMultiplierHolo'),
-        configService.get('variantMultiplierBrilliant'),
-      ])
-
-      const variantMultiplier =
-        variant === 'BRILLIANT' ? variantMultiplierBrilliant :
-        variant === 'HOLOGRAPHIC' ? variantMultiplierHolo :
-        1
-
-      const dustEarned = Math.round(baseDust * variantMultiplier * upgrades.dustHarvestMultiplier * quantity)
-
-      const result = await postgresOrm.executeWithTransactionClient(
-        async (tx) => {
-          // Re-read ownership inside the transaction to prevent TOCTOU
-          const uc = await tx.userCard.findUnique({
-            where: { userId_cardId_variant: { userId, cardId, variant } },
-          })
-          if (!uc || uc.quantity < quantity) {
-            throw Boom.badRequest('You do not own this card')
-          }
-
-          // Decrement or delete
-          if (uc.quantity - quantity <= 0) {
-            await tx.userCard.delete({
-              where: { userId_cardId_variant: { userId, cardId, variant } },
-            })
-          } else {
-            await tx.userCard.update({
-              where: { userId_cardId_variant: { userId, cardId, variant } },
-              data: { quantity: { decrement: quantity } },
-            })
-          }
-
-          // Increment dust atomically
-          const user = await tx.user.update({
-            where: { id: userId },
-            data: { dust: { increment: dustEarned } },
-          })
-
-          return { dustEarned, newDustTotal: user.dust }
-        },
-        { isolationLevel: 'Serializable', maxWait: 5000, timeout: 10000 },
-      )
-
-      return result
+      return collectionDomain.recycleCard(request.user.userID, request.body)
     },
   )
 }

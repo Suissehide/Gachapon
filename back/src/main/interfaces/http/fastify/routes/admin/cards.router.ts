@@ -1,15 +1,13 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
-import { z } from 'zod/v4'
 
 import { ALLOWED_IMAGE_MIME, uploadCardImage } from './card-image.helpers'
-
-const cardFieldsSchema = z.object({
-  name: z.string().min(1),
-  setId: z.string().uuid(),
-  rarity: z.enum(['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY']),
-  dropWeight: z.coerce.number().positive(),
-})
+import {
+  adminCardFieldsSchema,
+  adminCardIdParamSchema,
+  adminCardUpdateBodySchema,
+  adminCardsQuerySchema,
+} from '../../schemas/admin-cards.schema'
 
 async function parseMultipartCard(request: {
   parts: () => AsyncIterable<any>
@@ -46,40 +44,24 @@ async function parseMultipartCard(request: {
 }
 
 export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
+  const { cardRepository, storageClient } = fastify.iocContainer
+
   fastify.get(
     '/',
-    {
-      schema: {
-        querystring: z.object({
-          setId: z.string().uuid().optional(),
-          rarity: z
-            .enum(['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY'])
-            .optional(),
-        }),
-      },
-    },
+    { schema: { querystring: adminCardsQuerySchema } },
     async (request) => {
-      const cards = await fastify.iocContainer.postgresOrm.prisma.card.findMany(
-        {
-          where: {
-            ...(request.query.setId ? { setId: request.query.setId } : {}),
-            ...(request.query.rarity ? { rarity: request.query.rarity } : {}),
-          },
-          include: { set: true },
-          orderBy: [{ rarity: 'desc' }, { name: 'asc' }],
-        },
-      )
+      const cards = await cardRepository.findAll({
+        setId: request.query.setId,
+        rarity: request.query.rarity as any,
+      })
       return { cards }
     },
   )
 
-  // POST /admin/cards — multipart/form-data (image file ou imageUrl)
   fastify.post('/', async (request, reply) => {
-    const { storageClient, postgresOrm } = fastify.iocContainer
-
     const { fields, imageBuffer, imageMime } = await parseMultipartCard(request)
 
-    const parsed = cardFieldsSchema.safeParse(fields)
+    const parsed = adminCardFieldsSchema.safeParse(fields)
     if (!parsed.success) {
       throw Boom.badRequest(parsed.error.toString())
     }
@@ -97,33 +79,14 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
       throw Boom.badRequest('Either an image file or imageUrl is required')
     }
 
-    const card = await postgresOrm.prisma.card.create({
-      data: { ...parsed.data, imageUrl },
-      include: { set: true },
-    })
-
+    const card = await cardRepository.create({ ...parsed.data, imageUrl })
     return reply.status(201).send(card)
   })
 
-  // PATCH /admin/cards/:id — JSON only
   fastify.patch(
     '/:id',
-    {
-      schema: {
-        params: z.object({ id: z.string().uuid() }),
-        body: z.object({
-          name: z.string().min(1).optional(),
-          rarity: z.enum(['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY']).optional(),
-          dropWeight: z.number().positive().optional(),
-          setId: z.string().uuid().optional(),
-          imageUrl: z.string().url().nullable().optional(),
-        }),
-      },
-    },
+    { schema: { params: adminCardIdParamSchema, body: adminCardUpdateBodySchema } },
     async (request) => {
-      const { storageClient, postgresOrm } = fastify.iocContainer
-
-      // Valider que imageUrl appartient bien au stockage configuré
       if (request.body.imageUrl) {
         const storagePrefix = storageClient.publicUrl('')
         if (!request.body.imageUrl.startsWith(storagePrefix)) {
@@ -131,55 +94,35 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
         }
       }
 
-      const card = await postgresOrm.prisma.card.findUnique({
-        where: { id: request.params.id },
-      })
+      const card = await cardRepository.findById(request.params.id)
       if (!card) throw Boom.notFound('Card not found')
 
-      return postgresOrm.prisma.card.update({
-        where: { id: request.params.id },
-        data: request.body,
-        include: { set: true },
-      })
+      return cardRepository.update(request.params.id, request.body)
     },
   )
 
-  // POST /admin/cards/:id/image — remplace l'image par upload multipart
   fastify.post(
     '/:id/image',
-    { schema: { params: z.object({ id: z.string().uuid() }) } },
+    { schema: { params: adminCardIdParamSchema } },
     async (request, reply) => {
-      const { storageClient, postgresOrm } = fastify.iocContainer
-
-      const card = await postgresOrm.prisma.card.findUnique({
-        where: { id: request.params.id },
-      })
+      const card = await cardRepository.findById(request.params.id)
       if (!card) throw Boom.notFound('Card not found')
 
-      const { fields: _fields, imageBuffer, imageMime } = await parseMultipartCard(request)
+      const { imageBuffer, imageMime } = await parseMultipartCard(request)
       const { url: imageUrl } = await uploadCardImage(storageClient, card.name, imageBuffer!, imageMime)
 
-      const updated = await postgresOrm.prisma.card.update({
-        where: { id: request.params.id },
-        data: { imageUrl },
-        include: { set: true },
-      })
+      const updated = await cardRepository.update(request.params.id, { imageUrl })
       return reply.status(200).send(updated)
     },
   )
 
   fastify.delete(
     '/:id',
-    { schema: { params: z.object({ id: z.string().uuid() }) } },
+    { schema: { params: adminCardIdParamSchema } },
     async (request, reply) => {
-      const { postgresOrm } = fastify.iocContainer
-      const card = await postgresOrm.prisma.card.findUnique({
-        where: { id: request.params.id },
-      })
-      if (!card) {
-        throw Boom.notFound('Card not found')
-      }
-      await postgresOrm.prisma.card.delete({ where: { id: request.params.id } })
+      const card = await cardRepository.findById(request.params.id)
+      if (!card) throw Boom.notFound('Card not found')
+      await cardRepository.delete(request.params.id)
       return reply.status(204).send()
     },
   )

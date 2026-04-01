@@ -43,6 +43,18 @@ export class GachaPullRepository implements IGachaPullRepository {
     return { pulls: pulls as GachaPullWithCard[], total }
   }
 
+  countByUser(userId: string): Promise<number> {
+    return this.#prisma.gachaPull.count({ where: { userId } })
+  }
+
+  async sumDustEarnedByUser(userId: string): Promise<number> {
+    const agg = await this.#prisma.gachaPull.aggregate({
+      where: { userId },
+      _sum: { dustEarned: true },
+    })
+    return agg._sum.dustEarned ?? 0
+  }
+
   async findRecent(limit: number): Promise<RecentPullEntry[]> {
     const pulls = await this.#prisma.gachaPull.findMany({
       take: limit,

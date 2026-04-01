@@ -9,4 +9,8 @@ export interface StreakMilestoneRepositoryInterface {
   findDefault(): Promise<StreakMilestoneWithReward | null>
   /** Returns all active milestones (day > 0) ordered by day asc */
   findAllActive(): Promise<StreakMilestoneWithReward[]>
+  findByDay(day: number): Promise<StreakMilestone | null>
+  findByIdWithReward(id: string): Promise<StreakMilestoneWithReward | null>
+  create(data: { day: number; isMilestone: boolean; isActive: boolean; rewardId: string }): Promise<StreakMilestoneWithReward>
+  update(id: string, data: Partial<{ isActive: boolean }>): Promise<void>
 }
