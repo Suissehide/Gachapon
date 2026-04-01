@@ -13,6 +13,7 @@ import type {
 } from '../../types/domain/auth/oauth.domain.interface'
 import type { StreakDomainInterface } from '../../types/domain/streak/streak.domain.interface'
 import type { UserEntity } from '../../types/domain/user/user.types'
+import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 
 type OAuthUserInfo = { id: string; email: string; username: string }
@@ -24,6 +25,7 @@ export class OAuthDomain implements OAuthDomainInterface {
   readonly #authDomain: AuthDomainInterface
   readonly #postgresOrm: PostgresOrm
   readonly #streakDomain: StreakDomainInterface
+  readonly #configService: ConfigServiceInterface
 
   constructor({
     config,
@@ -32,6 +34,7 @@ export class OAuthDomain implements OAuthDomainInterface {
     authDomain,
     postgresOrm,
     streakDomain,
+    configService,
   }: IocContainer) {
     this.#config = config
     this.#userRepository = userRepository
@@ -39,6 +42,7 @@ export class OAuthDomain implements OAuthDomainInterface {
     this.#authDomain = authDomain
     this.#postgresOrm = postgresOrm
     this.#streakDomain = streakDomain
+    this.#configService = configService
   }
 
   getAuthorizationUrl(provider: OAuthProviderName, state: string): string {
@@ -102,9 +106,11 @@ export class OAuthDomain implements OAuthDomainInterface {
 
     if (!user) {
       const username = await this.#availableUsername(userInfo.username)
+      const tokenMaxStock = await this.#configService.get('tokenMaxStock')
       user = await this.#userRepository.create({
         username,
         email: userInfo.email,
+        tokens: tokenMaxStock,
       })
       isNew = true
     }

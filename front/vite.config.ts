@@ -9,6 +9,9 @@ export default defineConfig({
   base: '/',
   server: {
     port: 4269,
+    proxy: {
+      '/auth': 'http://localhost:3001',
+    },
   },
   plugins: [
     TanStackRouterVite({ target: 'react', autoCodeSplitting: true }),

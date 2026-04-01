@@ -15,6 +15,7 @@ import type {
 import type { StreakDomainInterface } from '../../types/domain/streak/streak.domain.interface'
 import type { UserEntity } from '../../types/domain/user/user.types'
 import type { JwtServiceInterface } from '../../types/infra/auth/jwt.service'
+import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
 import type { IMailService } from '../../types/infra/mail/mail.service.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 
@@ -30,6 +31,7 @@ export class AuthDomain implements AuthDomainInterface {
   readonly #mailService: IMailService
   readonly #postgresOrm: PostgresOrm
   readonly #streakDomain: StreakDomainInterface
+  readonly #configService: ConfigServiceInterface
 
   constructor({
     userRepository,
@@ -38,6 +40,7 @@ export class AuthDomain implements AuthDomainInterface {
     mailService,
     postgresOrm,
     streakDomain,
+    configService,
   }: IocContainer) {
     this.#userRepository = userRepository
     this.#refreshTokenRepository = refreshTokenRepository
@@ -45,6 +48,7 @@ export class AuthDomain implements AuthDomainInterface {
     this.#mailService = mailService
     this.#postgresOrm = postgresOrm
     this.#streakDomain = streakDomain
+    this.#configService = configService
   }
 
   hashPassword(password: string): Promise<string> {
@@ -83,10 +87,12 @@ export class AuthDomain implements AuthDomainInterface {
     const token = randomUUID()
     const expiresAt = new Date(Date.now() + VERIFICATION_TOKEN_TTL_MS)
 
+    const tokenMaxStock = await this.#configService.get('tokenMaxStock')
     const user = await this.#userRepository.create({
       username: input.username,
       email: input.email,
       passwordHash,
+      tokens: tokenMaxStock,
     })
 
     await this.#userRepository.update(user.id, {
