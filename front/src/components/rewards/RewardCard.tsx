@@ -76,7 +76,7 @@ export function RewardCard({ reward, onClaim, isLoading }: RewardCardProps) {
 
   const handleClaim = () => {
     setClaiming(true)
-    onClaim(reward.id)
+    setTimeout(() => onClaim(reward.id), 300)
   }
 
   return (

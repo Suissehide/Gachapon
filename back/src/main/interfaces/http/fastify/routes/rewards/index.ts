@@ -12,7 +12,7 @@ const claimResultSchema = z.object({
 const pendingRewardSchema = z.object({
   id: z.string().uuid(),
   source: z.enum(['STREAK', 'ACHIEVEMENT', 'QUEST']),
-  sourceId: z.string().uuid().nullable(),
+  sourceId: z.string().nullable(),
   claimedAt: z.date().nullable(),
   createdAt: z.date(),
   reward: z.object({ tokens: z.number().int(), dust: z.number().int(), xp: z.number().int() }),
@@ -22,7 +22,7 @@ const pendingRewardSchema = z.object({
 const historyItemSchema = z.object({
   id: z.string().uuid(),
   source: z.enum(['STREAK', 'ACHIEVEMENT', 'QUEST']),
-  sourceId: z.string().uuid().nullable(),
+  sourceId: z.string().nullable(),
   claimedAt: z.date().nullable(),
   createdAt: z.date(),
   reward: z.object({ tokens: z.number().int(), dust: z.number().int(), xp: z.number().int() }),
