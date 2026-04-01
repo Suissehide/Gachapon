@@ -45,15 +45,17 @@ export const streakRouter: FastifyPluginCallbackZod = (fastify) => {
       )
 
       const { streakDays } = user
+      // Rewards cycle every 30 days — map absolute streak to position within current cycle
+      const cycleDay = streakDays === 0 ? 0 : ((streakDays - 1) % 30) + 1
       const days = Array.from({ length: 30 }, (_, i) => {
         const day = i + 1
         const isMilestone = milestoneMap.has(day)
         const reward = milestoneMap.get(day) ?? defaultReward
 
         let status: 'past' | 'current' | 'future'
-        if (streakDays === 0 || day > streakDays) {
+        if (cycleDay === 0 || day > cycleDay) {
           status = 'future'
-        } else if (day === streakDays) {
+        } else if (day === cycleDay) {
           status = 'current'
         } else {
           status = 'past'
