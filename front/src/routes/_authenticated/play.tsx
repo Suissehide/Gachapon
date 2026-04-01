@@ -83,23 +83,23 @@ function Play() {
     })
   }
 
+  // Quand la boule est ouverte : révélation de la carte après le lerp
+  useEffect(() => {
+    if (phase !== 'opening') {
+      return
+    }
+    const timer = setTimeout(() => {
+      setPullResult(pendingResult.current)
+      setPhase('revealed')
+    }, 700)
+    return () => clearTimeout(timer)
+  }, [phase])
+
   const handleBallClick = () => {
     if (phase !== 'ball') {
       return
     }
     setPhase('opening')
-    setTimeout(() => setPhase('open'), 1600)
-  }
-
-  const handleReveal = () => {
-    if (phase !== 'open') {
-      return
-    }
-    setPhase('opening')
-    setTimeout(() => {
-      setPullResult(pendingResult.current)
-      setPhase('revealed')
-    }, 650)
   }
 
   const handleClose = () => {
@@ -113,7 +113,6 @@ function Play() {
     phase === 'opening' ||
     phase === 'open' ||
     phase === 'revealed'
-  const showFlash = phase === 'opening'
   const isIdle = phase === 'idle' || phase === 'pulling'
 
   const timeLeft =
@@ -151,11 +150,6 @@ function Play() {
           />
         ))}
       </div>
-
-      {/* Ball open flash overlay */}
-      {showFlash && (
-        <div className="ball-open-flash fixed inset-0 z-30 bg-white/60" />
-      )}
 
       {/* ── TOKEN COUNTER ── */}
       <div className="relative z-10 mb-2 flex flex-col items-center">
@@ -198,7 +192,7 @@ function Play() {
       {/* ── CENTER STAGE ── */}
       <div className="relative z-10 my-2">
         {showCanvas ? (
-          <div className="relative h-[320px] w-[320px] animate-in zoom-in-75 duration-300">
+          <div className="relative h-[320px] w-[320px] animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
             <Canvas
               camera={{ position: [0, 0.3, 4], fov: 45 }}
               shadows
@@ -218,7 +212,11 @@ function Play() {
               />
               <GachaBall
                 interactive={phase === 'ball'}
-                isOpening={phase === 'opening' || phase === 'open'}
+                isOpening={
+                  phase === 'opening' ||
+                  phase === 'open' ||
+                  phase === 'revealed'
+                }
                 onOpen={handleBallClick}
               />
               <Environment preset="city" />
@@ -228,14 +226,6 @@ function Play() {
               <p className="absolute bottom-2 left-0 right-0 text-center text-xs text-text-light/50 animate-in fade-in-0 duration-500">
                 Clique sur la boule pour l'ouvrir
               </p>
-            )}
-
-            {phase === 'open' && (
-              <div className="absolute bottom-2 left-0 right-0 flex justify-center animate-in fade-in-0 duration-500">
-                <Button onClick={handleReveal} className="rounded-full px-6">
-                  Récupérer la carte ✨
-                </Button>
-              </div>
             )}
           </div>
         ) : (
