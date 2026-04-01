@@ -192,17 +192,20 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     },
     async (request) => {
       const { limit } = request.query
-      const pulls = await gachaPullRepository.findRecent(limit)
-      return pulls.map((p) => ({
-        username: p.username,
-        cardName: p.cardName,
-        rarity: p.rarity,
-        variant: p.variant,
-        cardId: p.cardId,
-        imageUrl: p.imageUrl,
-        setName: p.setName,
-        pulledAt: p.pulledAt.toISOString(),
-      }))
+      const pullsPage = await gachaPullRepository.findRecent(limit)
+      return {
+        entries: pullsPage.entries.map((p) => ({
+          username: p.username,
+          cardName: p.cardName,
+          rarity: p.rarity,
+          variant: p.variant,
+          cardId: p.cardId,
+          imageUrl: p.imageUrl,
+          setName: p.setName,
+          pulledAt: p.pulledAt.toISOString(),
+        })),
+        hasMore: pullsPage.hasMore,
+      }
     },
   )
 }
