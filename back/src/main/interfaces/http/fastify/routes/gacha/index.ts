@@ -187,14 +187,19 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
       schema: {
         querystring: z.object({
           limit: z.coerce.number().int().min(1).max(50).default(20),
+          before: z.string().datetime().optional(),
+          teamId: z.string().uuid().optional(),
         }),
       },
     },
     async (request) => {
-      const { limit } = request.query
-      const pullsPage = await gachaPullRepository.findRecent(limit)
+      const { limit, before, teamId } = request.query
+      const page = await gachaPullRepository.findRecent(limit, {
+        before: before ? new Date(before) : undefined,
+        teamId,
+      })
       return {
-        entries: pullsPage.entries.map((p) => ({
+        entries: page.entries.map((p) => ({
           username: p.username,
           cardName: p.cardName,
           rarity: p.rarity,
@@ -204,7 +209,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
           setName: p.setName,
           pulledAt: p.pulledAt.toISOString(),
         })),
-        hasMore: pullsPage.hasMore,
+        hasMore: page.hasMore,
       }
     },
   )
