@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+
+const LIVE_ENTRIES_CAP = 50
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 
 import { GachaApi } from '../api/gacha.api'
@@ -13,14 +15,10 @@ const LIMIT = 20
 export function useLiveFeed(opts?: { teamId?: string }) {
   const teamId = opts?.teamId
   const [liveEntries, setLiveEntries] = useState<FeedEntry[]>([])
-  const prevTeamId = useRef(teamId)
 
   // Réinitialiser les entrées live quand le filtre change
   useEffect(() => {
-    if (prevTeamId.current !== teamId) {
-      setLiveEntries([])
-      prevTeamId.current = teamId
-    }
+    setLiveEntries([])
   }, [teamId])
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
@@ -72,7 +70,7 @@ export function useLiveFeed(opts?: { teamId?: string }) {
         setName: event.setName,
         pulledAt: event.pulledAt,
       }
-      setLiveEntries((prev) => [entry, ...prev])
+      setLiveEntries((prev) => [entry, ...prev].slice(0, LIVE_ENTRIES_CAP))
     })
   }, [])
 
