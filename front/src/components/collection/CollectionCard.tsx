@@ -28,14 +28,6 @@ export const RARITY_LABELS: Record<string, string> = {
   LEGENDARY: 'Légendaire',
 }
 
-export const RARITY_CHIP_INACTIVE: Record<string, string> = {
-  COMMON: 'border-border/60 text-text-light/60',
-  UNCOMMON: 'border-green-500/40 text-green-400/60',
-  RARE: 'border-accent/40 text-accent/60',
-  EPIC: 'border-secondary/40 text-secondary/60',
-  LEGENDARY: 'border-primary/40 text-primary/60',
-}
-
 export const RARITY_CHIP_ACTIVE: Record<string, string> = {
   COMMON: 'border-border text-text-light bg-border/20',
   UNCOMMON: 'border-green-500 text-green-400 bg-green-500/10',
@@ -50,15 +42,17 @@ export function CollectionCard({
   quantity,
   isOwned,
   onRecycle,
+  onClick,
 }: {
   card: Card
   variant: CardVariant
   quantity: number
   isOwned: boolean
   onRecycle: () => void
+  onClick: () => void
 }) {
   return (
-    <div className="group relative">
+    <div className="group relative cursor-pointer" onClick={onClick}>
       {/* aspect-3/4 wrapper positions TcgCardFace via absolute inset-0 */}
       <div
         className="relative aspect-3/4 transition-all duration-200 group-hover:-translate-y-1 group-hover:shadow-lg"
@@ -90,7 +84,10 @@ export function CollectionCard({
               type="button"
               size="sm"
               variant="default"
-              onClick={() => onRecycle()}
+              onClick={(e) => {
+                e.stopPropagation()
+                onRecycle()
+              }}
               className="gap-1.5 shadow-lg"
             >
               <RefreshCw className="h-3.5 w-3.5" />

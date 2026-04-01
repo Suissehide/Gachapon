@@ -179,7 +179,7 @@ export const VARIANT_TCG_CONFIG: Record<string, VariantInfo> = {
     className: 'bg-amber-400/25 border border-amber-500/50 text-amber-700',
     layers: [
       {
-        // Persistent golden filter — strong warm amber cast over the entire image
+        // 1. Gold color cast — warm amber over the entire artwork
         id: 'brilliant-tint',
         bg: 'linear-gradient(160deg, rgba(255,195,0,0.7) 0%, rgba(255,155,0,0.6) 45%, rgba(210,90,0,0.4) 100%)',
         bgSize: '100% 100%',
@@ -188,13 +188,40 @@ export const VARIANT_TCG_CONFIG: Record<string, VariantInfo> = {
         opacity: 1,
       },
       {
-        // Golden glow — warm luminous aura pulsing from center
-        id: 'brilliant-glow',
-        bg: 'radial-gradient(ellipse at 50% 45%, rgba(255,230,60,0.95) 0%, rgba(255,180,0,0.65) 35%, rgba(255,130,0,0.3) 65%, transparent 100%)',
-        bgSize: '100% 100%',
-        animation: 'brilliant-pulse 2.5s ease-in-out infinite alternate',
-        blendMode: 'screen',
+        // 2. Engraved diamond cuts — coarser ±45° crosshatch, wider pitch (5px).
+        //    Warm gold ridges at +45° + dark shadow valleys at -45°.
+        //    Creates the hammered/engraved look of Secret Rare Gold surfaces.
+        //    Deliberately coarser and warmer than the holo scan-lines.
+        id: 'brilliant-etch',
+        bg: [
+          'repeating-linear-gradient( 45deg, transparent 0px, transparent 5px, rgba(255,215,60,0.32) 5px, rgba(255,215,60,0.32) 7px)',
+          'repeating-linear-gradient(-45deg, transparent 0px, transparent 5px, rgba(0,0,0,0.26)     5px, rgba(0,0,0,0.26)     7px)',
+        ].join(', '),
+        bgSize: 'auto',
+        animation: 'none',
+        blendMode: 'overlay',
         opacity: 1,
+      },
+      {
+        // 3. Prismatic foil shimmer — cycling rainbow sliding across the textured gold,
+        //    like Secret Rare cards under changing light
+        id: 'brilliant-foil',
+        bg: 'linear-gradient(125deg, rgba(255,50,0,0.5) 0%, rgba(255,190,0,0.55) 20%, rgba(255,255,80,0.35) 40%, rgba(80,255,180,0.4) 60%, rgba(0,140,255,0.5) 80%, rgba(180,50,255,0.45) 100%)',
+        bgSize: '300% 300%',
+        animation: 'holoColor 5s linear infinite, holoDrift 18s linear infinite',
+        blendMode: 'color-dodge',
+        opacity: 0.38,
+      },
+      {
+        // 4. Diagonal gold light — sharp angled beam sweeping the card surface,
+        //    like direct light catching a polished gold ingot at an angle.
+        //    holoDrift moves the beam in a slow circular path for organic motion.
+        id: 'brilliant-diagonal',
+        bg: 'linear-gradient(125deg, transparent 10%, transparent 30%, rgba(255,245,100,0.55) 43%, rgba(255,255,200,0.80) 50%, rgba(255,245,100,0.55) 57%, transparent 70%, transparent 90%)',
+        bgSize: '280% 280%',
+        animation: 'holoDrift 8s ease-in-out infinite',
+        blendMode: 'screen',
+        opacity: 0.9,
       },
     ],
   },
@@ -204,22 +231,20 @@ export const VARIANT_TCG_CONFIG: Record<string, VariantInfo> = {
     className: 'bg-cyan-400/20 border border-cyan-500/40 text-cyan-700',
     layers: [
       {
-        // Fixed rainbow gradient — hue-rotate cycles all colors seamlessly (360° = no jump)
-        id: 'holo-rainbow',
-        bg: 'linear-gradient(115deg, #ff007f 0%, #ff6600 20%, #ffff00 40%, #00ff44 60%, #00ccff 80%, #8800ff 100%)',
-        bgSize: '100% 100%',
-        animation: 'holo-rotate 4s linear infinite',
-        blendMode: 'color',
-        opacity: 0.6,
-      },
-      {
-        // Perpendicular rainbow rotating the opposite direction — interference pattern
-        id: 'holo-interference',
-        bg: 'linear-gradient(205deg, #8800ff 0%, #00ccff 25%, #00ff44 50%, #ffff00 75%, #ff6600 100%)',
-        bgSize: '100% 100%',
-        animation: 'holo-rotate-slow 7s linear infinite',
+        // Horizontal diffraction scan-lines — the characteristic parallel line structure
+        // of real holographic foil that splits light into rainbow.
+        // Tight 2px pitch (1px line / 1px gap), cool blue-white.
+        // A faint perpendicular set adds the secondary grating axis (less dominant).
+        // Completely different from the BRILLIANT diagonal diamond cuts.
+        id: 'holographic-scanlines',
+        bg: [
+          'repeating-linear-gradient(  0deg, transparent 0px, transparent 3px, rgba(210,235,255,0.26) 3px, rgba(210,235,255,0.26) 4px)',
+          'repeating-linear-gradient( 90deg, transparent 0px, transparent 7px, rgba(210,235,255,0.10) 7px, rgba(210,235,255,0.10) 8px)',
+        ].join(', '),
+        bgSize: 'auto',
+        animation: 'none',
         blendMode: 'overlay',
-        opacity: 0.25,
+        opacity: 1,
       },
     ],
   },

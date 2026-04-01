@@ -4,9 +4,10 @@ import { CollectionCard } from './CollectionCard.tsx'
 interface CollectionGridProps {
   entries: DisplayEntry[]
   onRecycle: (entry: DisplayEntry) => void
+  onDetail: (entry: DisplayEntry) => void
 }
 
-export function CollectionGrid({ entries, onRecycle }: CollectionGridProps) {
+export function CollectionGrid({ entries, onRecycle, onDetail }: CollectionGridProps) {
   if (entries.length === 0) {
     return (
       <div className="flex h-48 items-center justify-center">
@@ -27,6 +28,7 @@ export function CollectionGrid({ entries, onRecycle }: CollectionGridProps) {
           quantity={entry.quantity}
           isOwned={entry.isOwned}
           onRecycle={() => onRecycle(entry)}
+          onClick={() => onDetail(entry)}
         />
       ))}
     </div>

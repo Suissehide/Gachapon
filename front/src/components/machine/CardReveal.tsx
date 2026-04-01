@@ -1,11 +1,11 @@
 import { Coins, Sparkles } from 'lucide-react'
 import type React from 'react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import cardBackImg from '../../assets/data/card-back/black.png'
 import type { PullResult } from '../../queries/useGacha'
 import { RARITY_TCG_CONFIG } from '../shared/tcg-card/config.ts'
-import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
+import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
 import { Button } from '../ui/button.tsx'
 
 // Fixed particle positions for LEGENDARY
@@ -34,9 +34,6 @@ export function CardReveal({ result, onClose }: Props) {
   const [animDone, setAnimDone] = useState(false)
   const [showSweep, setShowSweep] = useState(false)
   const [showInfo, setShowInfo] = useState(false)
-  const [tilt, setTilt] = useState({ x: 0, y: 0 })
-  const [shine, setShine] = useState({ x: 50, y: 50 })
-  const cardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!result) {
@@ -56,27 +53,6 @@ export function CardReveal({ result, onClose }: Props) {
       clearTimeout(infoTimer)
     }
   }, [result])
-
-  // ── Hover tilt (active after spiral animation ends) ────────────────────────
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!animDone || !cardRef.current) {
-      return
-    }
-    const rect = cardRef.current.getBoundingClientRect()
-    const dx = (e.clientX - (rect.left + rect.width / 2)) / (rect.width / 2)
-    const dy = (e.clientY - (rect.top + rect.height / 2)) / (rect.height / 2)
-    setTilt({ x: dy * 14, y: dx * 14 })
-    setShine({
-      x: ((e.clientX - rect.left) / rect.width) * 100,
-      y: ((e.clientY - rect.top) / rect.height) * 100,
-    })
-  }
-
-  const handleMouseLeave = () => {
-    setTilt({ x: 0, y: 0 })
-    setShine({ x: 50, y: 50 })
-  }
 
   if (!result) {
     return null
@@ -139,60 +115,25 @@ export function CardReveal({ result, onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >
-        {/* Extended hitbox — prevents stagger when a tilted corner drifts outside the card bounds */}
-        {/* biome-ignore lint/a11y/noStaticElementInteractions: extended mouse capture area */}
-        <div
-          className="relative -m-10 p-10"
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-        >
-          {/* Perspective scoped to card size so the vanishing point is exactly at card center */}
-          <div className="h-90 w-60 perspective-[900px]">
-            {/* 3D card — spiral rise animation, then hover tilt via inline transform */}
-            <div
-              key={animKey}
-              ref={cardRef}
-              className={`w-full h-full transform-3d ${animDone ? 'transition-transform duration-200 ease-out' : 'card-spiral-rise'}`}
-              style={
-                animDone
-                  ? { transform: `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)` }
-                  : undefined
-              }
-              onAnimationEnd={() => setAnimDone(true)}
-            >
-              {/* ── FRONT face ── */}
-              <div className="card-face absolute inset-0">
-                <TcgCardFace
-                  rarity={rarity}
-                  name={result.card.name}
-                  setName={result.card.set.name}
-                  imageUrl={result.card.imageUrl}
-                  variant={variant}
-                  showSweep={showSweep}
-                />
-
-                {/* Hover sheen — dynamic position, must stay inline */}
-                {animDone && (
-                  <div
-                    className="pointer-events-none absolute inset-0 z-10 rounded-[7px]"
-                    style={{
-                      background: `radial-gradient(circle at ${shine.x}% ${shine.y}%, rgba(255,255,255,0.18) 0%, transparent 55%)`,
-                    }}
-                  />
-                )}
-              </div>
-
-              {/* ── BACK face ── */}
-              <div className="card-face-back absolute inset-0 rounded-2xl border border-border/40">
-                <img
-                  src={cardBackImg}
-                  alt="dos de carte"
-                  className="h-full w-full rounded-2xl object-cover"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+        <CardDisplay
+          rarity={rarity}
+          name={result.card.name}
+          setName={result.card.set.name}
+          imageUrl={result.card.imageUrl}
+          variant={variant}
+          showSweep={showSweep}
+          interactive={animDone}
+          animKey={animKey}
+          animClass={animDone ? '' : 'card-spiral-rise'}
+          onAnimationEnd={() => setAnimDone(true)}
+          backFace={
+            <img
+              src={cardBackImg}
+              alt="dos de carte"
+              className="h-full w-full rounded-2xl object-cover"
+            />
+          }
+        />
 
         {/* ── Info panel ── */}
         <div

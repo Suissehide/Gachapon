@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 
 import type { Card, CardVariant } from '../../api/collection.api.ts'
 import { RARITY_LABELS } from '../../components/collection/CollectionCard.tsx'
+import { CardViewModal } from '../../components/collection/CardViewModal.tsx'
 import { CollectionFilters } from '../../components/collection/CollectionFilters.tsx'
 import { CollectionGrid } from '../../components/collection/CollectionGrid.tsx'
 import { CollectionSetGroup } from '../../components/collection/CollectionSetGroup.tsx'
@@ -33,6 +34,7 @@ function Collection() {
   const [selectedRarities, setSelectedRarities] = useState<Rarity[]>([])
   const [selectedVariants, setSelectedVariants] = useState<Variant[]>([])
   const [recycleTarget, setRecycleTarget] = useState<UserCard | null>(null)
+  const [detailTarget, setDetailTarget] = useState<DisplayEntry | null>(null)
 
   const { data: catalogData } = useCards()
   const { data: userColl } = useUserCollection(user?.id)
@@ -107,6 +109,15 @@ function Collection() {
     if (entry.userCard) setRecycleTarget(entry.userCard)
   }
 
+  const handleDetail = (entry: DisplayEntry) => setDetailTarget(entry)
+
+  const handleRecycleFromDetail = () => {
+    if (detailTarget?.userCard) {
+      setRecycleTarget(detailTarget.userCard)
+      setDetailTarget(null)
+    }
+  }
+
   const handleDisplayModeChange = (mode: DisplayMode) => {
     setSelectedRarities([])
     setSelectedVariants([])
@@ -137,12 +148,18 @@ function Collection() {
               setName={group.name}
               entries={group.entries}
               onRecycle={handleRecycle}
+              onDetail={handleDetail}
             />
           ))
         ) : (
-          <CollectionGrid entries={filteredEntries} onRecycle={handleRecycle} />
+          <CollectionGrid entries={filteredEntries} onRecycle={handleRecycle} onDetail={handleDetail} />
         )}
       </div>
+      <CardViewModal
+        entry={detailTarget}
+        onClose={() => setDetailTarget(null)}
+        onRecycle={handleRecycleFromDetail}
+      />
       {recycleTarget && (
         <RecycleModal
           open={!!recycleTarget}
