@@ -6,8 +6,10 @@ import type {
 import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type {
   CreateGachaPullInput,
+  FindRecentOpts,
   IGachaPullRepository,
   RecentPullEntry,
+  RecentPullPage,
 } from '../../../types/infra/orm/repositories/gacha-pull.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
 
@@ -55,24 +57,34 @@ export class GachaPullRepository implements IGachaPullRepository {
     return agg._sum.dustEarned ?? 0
   }
 
-  async findRecent(limit: number): Promise<RecentPullEntry[]> {
+  async findRecent(limit: number, opts?: FindRecentOpts): Promise<RecentPullPage> {
     const pulls = await this.#prisma.gachaPull.findMany({
-      take: limit,
+      take: limit + 1,
+      where: {
+        ...(opts?.before && { pulledAt: { lt: opts.before } }),
+        ...(opts?.teamId && {
+          user: { teamMemberships: { some: { teamId: opts.teamId } } },
+        }),
+      },
       orderBy: { pulledAt: 'desc' },
       include: {
         card: { include: { set: true } },
         user: { select: { username: true } },
       },
     })
-    return pulls.map((p) => ({
-      username: p.user.username,
-      cardName: p.card.name,
-      rarity: p.card.rarity,
-      variant: p.variant,
-      cardId: p.card.id,
-      imageUrl: p.card.imageUrl,
-      setName: p.card.set.name,
-      pulledAt: p.pulledAt,
-    }))
+    const hasMore = pulls.length > limit
+    return {
+      entries: pulls.slice(0, limit).map((p) => ({
+        username: p.user.username,
+        cardName: p.card.name,
+        rarity: p.card.rarity,
+        variant: p.variant,
+        cardId: p.card.id,
+        imageUrl: p.card.imageUrl,
+        setName: p.card.set.name,
+        pulledAt: p.pulledAt,
+      })),
+      hasMore,
+    }
   }
 }

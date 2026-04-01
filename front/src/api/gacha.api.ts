@@ -42,8 +42,12 @@ export const GachaApi = {
     return res.json()
   },
 
-  getRecentPulls: async (limit = 20): Promise<FeedEntry[]> => {
-    const res = await fetchWithAuth(`${apiUrl}${GACHA_ROUTES.recent(limit)}`)
+  getRecentPulls: async (opts?: {
+    limit?: number
+    before?: string
+    teamId?: string
+  }): Promise<{ entries: FeedEntry[]; hasMore: boolean }> => {
+    const res = await fetchWithAuth(`${apiUrl}${GACHA_ROUTES.recent(opts)}`)
     if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors du chargement du fil')
     }
