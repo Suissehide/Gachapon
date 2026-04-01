@@ -45,11 +45,12 @@ function Play() {
     return () => wsClient.disconnect()
   }, [])
 
-  // Live timer tick
+  // Live timer tick — only when a token is regenerating
   useEffect(() => {
+    if (!balance?.nextTokenAt || (balance.tokens ?? 0) >= (balance.maxStock ?? 5)) return
     const id = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(id)
-  }, [])
+  }, [balance?.nextTokenAt, balance?.tokens, balance?.maxStock])
 
   const tokens = balance?.tokens ?? 0
   const maxStock = balance?.maxStock ?? 5
