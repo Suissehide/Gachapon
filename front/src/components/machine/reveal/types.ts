@@ -15,6 +15,7 @@ export type WaveState = {
   w:      number   // initial line width
   spd:    number   // base speed px/frame
   active: boolean
+  ghost:  boolean
 }
 
 export type ParticleState = {

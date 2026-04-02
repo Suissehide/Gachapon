@@ -25,18 +25,20 @@ export function drawWaves(
 
     ctx.lineWidth = thick
 
-    // Red ghost
-    ctx.globalAlpha = 0.5
-    ctx.strokeStyle = '#ff0055'
-    ctx.beginPath()
-    ctx.arc(cx - 3, cy - 2, wave.r, 0, Math.PI * 2)
-    ctx.stroke()
+    if (wave.ghost) {
+      // Red ghost at offset (cx-3, cy-2)
+      ctx.globalAlpha = 0.5
+      ctx.strokeStyle = '#ff0055'
+      ctx.beginPath()
+      ctx.arc(cx - 3, cy - 2, wave.r, 0, Math.PI * 2)
+      ctx.stroke()
 
-    // Cyan ghost
-    ctx.strokeStyle = '#00cfff'
-    ctx.beginPath()
-    ctx.arc(cx + 2, cy + 2, wave.r, 0, Math.PI * 2)
-    ctx.stroke()
+      // Cyan ghost at offset (cx+2, cy+2)
+      ctx.strokeStyle = '#00cfff'
+      ctx.beginPath()
+      ctx.arc(cx + 2, cy + 2, wave.r, 0, Math.PI * 2)
+      ctx.stroke()
+    }
 
     // Main ring
     ctx.globalAlpha = 1
@@ -159,7 +161,7 @@ export function drawInkBlots(
     }
 
     // Red misprint blob at (+3, +3)
-    ctx.globalAlpha = a * 0.6
+    ctx.globalAlpha = a * 0.2
     buildPath(3, 3)
     ctx.fillStyle = '#ff0055'
     ctx.fill()
@@ -217,6 +219,7 @@ export function drawSpeedLines(
   }
 
   state.life -= SPEED_LINE_DECAY
+  ctx.globalAlpha = 1
 }
 
 // ── Ben-Day halftone burst ─────────────────────────────────────────────────────
