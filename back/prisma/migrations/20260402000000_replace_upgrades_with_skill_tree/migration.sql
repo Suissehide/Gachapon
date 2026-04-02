@@ -1,3 +1,7 @@
+-- Intentional breaking migration: existing UserUpgrade and UpgradeConfig data is
+-- permanently deleted. Users will receive fresh skill points equal to their current
+-- level (handled in seed). No data migration from the old upgrade system.
+
 -- DropForeignKey
 ALTER TABLE "UserUpgrade" DROP CONSTRAINT "UserUpgrade_userId_fkey";
 
@@ -11,8 +15,7 @@ DROP TABLE "UpgradeConfig";
 DROP TYPE "UpgradeType";
 
 -- AlterTable
-ALTER TABLE "User" DROP COLUMN IF EXISTS "upgrades",
-ADD COLUMN "skillPoints" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "User" ADD COLUMN "skillPoints" INTEGER NOT NULL DEFAULT 0;
 
 -- CreateEnum
 CREATE TYPE "SkillEffectType" AS ENUM ('REGEN', 'LUCK', 'DUST_HARVEST', 'TOKEN_VAULT', 'FREE_PULL_CHANCE', 'MULTI_TOKEN_CHANCE', 'GOLDEN_BALL_CHANCE', 'SHOP_DISCOUNT');

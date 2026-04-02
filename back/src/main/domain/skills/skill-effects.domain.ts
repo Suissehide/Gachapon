@@ -1,7 +1,8 @@
+import type { SkillEffectType } from '../../../generated/client'
 import type { UserUpgradeEffects } from '../../types/domain/economy/economy.types'
 
 type SkillEffectRow = {
-  effectType: string
+  effectType: SkillEffectType
   effect: number
 }
 
