@@ -71,7 +71,7 @@ export const discordOAuthRouter: FastifyPluginCallbackZod = (fastify) => {
       const { tokens } = await oauthDomain.handleCallback('discord', code)
       setTokenCookies(reply, tokens)
       reply.clearCookie('oauth_state', { path: '/' })
-      return reply.redirect(`${config.frontUrl}/play`)
+      return reply.redirect(`${config.frontUrl}/oauth-callback`)
     },
   )
 }
