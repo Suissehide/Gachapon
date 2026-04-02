@@ -156,7 +156,7 @@ export function LandingNavbar() {
               <>
                 <Button
                   onClick={() => void navigate({ to: '/play' })}
-                  className="hidden lg:flex rounded-full h-9 text-sm px-5 shadow-sm shadow-primary/20"
+                  className="flex rounded-full h-9 text-sm px-4 lg:px-5 shadow-sm shadow-primary/20"
                 >
                   Jouer →
                 </Button>
@@ -185,13 +185,13 @@ export function LandingNavbar() {
                 <Button
                   variant="ghost"
                   onClick={openLogin}
-                  className="text-sm text-text-light hidden lg:flex"
+                  className="text-sm text-text-light flex"
                 >
                   Se connecter
                 </Button>
                 <Button
                   onClick={openRegister}
-                  className="hidden lg:flex rounded-full h-9 text-sm px-5 shadow-sm shadow-primary/20"
+                  className="flex rounded-full h-9 text-sm px-4 lg:px-5 shadow-sm shadow-primary/20"
                 >
                   S'inscrire →
                 </Button>
@@ -244,68 +244,33 @@ export function LandingNavbar() {
           onClick={closeMenu}
         />
 
-        {/* Auth section */}
-        <div
-          className={`mt-1 pt-1 border-t border-border/60 flex items-center justify-between transition-opacity duration-300 ${menuOpen ? 'opacity-100' : 'opacity-0'}`}
-          style={{ transitionDelay: '350ms' }}
-        >
-          {isAuthenticated && user ? (
-            <>
-              <Link
-                to="/profile/$username"
-                params={{ username: user.username }}
-                className="px-2 py-3 text-3xl font-semibold uppercase tracking-wide text-text-light hover:text-text transition-colors"
-                onClick={closeMenu}
-              >
-                {user.username}
-              </Link>
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={() => {
-                    void navigate({ to: '/play' })
-                    closeMenu()
-                  }}
-                  className="rounded-full h-9 text-sm px-5 shadow-sm shadow-primary/20"
-                >
-                  Jouer →
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    void logout().then(() => navigate({ to: '/' }))
-                    closeMenu()
-                  }}
-                  title="Déconnexion"
-                  className="p-2 rounded-full hover:text-destructive hover:bg-destructive/10 transition-colors"
-                >
-                  <LogOut className="font-semibold text-text-light h-7 w-7" />
-                </Button>
-              </div>
-            </>
-          ) : (
-            <div className="flex w-full items-center gap-3 px-2 py-2">
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  openLogin()
-                  closeMenu()
-                }}
-                className="flex-1 text-sm"
-              >
-                Se connecter
-              </Button>
-              <Button
-                onClick={() => {
-                  openRegister()
-                  closeMenu()
-                }}
-                className="flex-1 rounded-full text-sm shadow-sm shadow-primary/20"
-              >
-                S'inscrire →
-              </Button>
-            </div>
-          )}
-        </div>
+        {/* Auth section — authenticated only */}
+        {isAuthenticated && user && (
+          <div
+            className={`mt-1 pt-1 border-t border-border/60 flex items-center justify-between transition-opacity duration-300 ${menuOpen ? 'opacity-100' : 'opacity-0'}`}
+            style={{ transitionDelay: '350ms' }}
+          >
+            <Link
+              to="/profile/$username"
+              params={{ username: user.username }}
+              className="px-2 py-3 text-3xl font-semibold uppercase tracking-wide text-text-light hover:text-text transition-colors"
+              onClick={closeMenu}
+            >
+              {user.username}
+            </Link>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                void logout().then(() => navigate({ to: '/' }))
+                closeMenu()
+              }}
+              title="Déconnexion"
+              className="p-2 rounded-full hover:text-destructive hover:bg-destructive/10 transition-colors"
+            >
+              <LogOut className="font-semibold text-text-light h-7 w-7" />
+            </Button>
+          </div>
+        )}
       </MobileMenuShell>
 
       <AuthDialog
