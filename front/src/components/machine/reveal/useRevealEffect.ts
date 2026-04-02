@@ -47,12 +47,12 @@ function spawnParticles(
 
   const spawnOne = (type: ParticleState['type'], size: number): void => {
     const angle = Math.random() * Math.PI * 2
-    const speed = Math.random() * 5 + 2
+    const speed = Math.random() * 12 + 5
     s.particles.push({
       x: cx,
       y: cy,
       vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed - 3,
+      vy: Math.sin(angle) * speed - 1,
       col: colors[Math.floor(Math.random() * colors.length)],
       size,
       life: 1,
@@ -61,13 +61,13 @@ function spawnParticles(
   }
 
   for (let i = 0; i < nSquares; i++) {
-    spawnOne('square', Math.random() * 6 + 4)
+    spawnOne('square', Math.random() * 14 + 8)
   }
   for (let i = 0; i < nStreaks; i++) {
-    spawnOne('streak', Math.random() * 3 + 2)
+    spawnOne('streak', Math.random() * 6 + 4)
   }
   for (let i = 0; i < nDots; i++) {
-    spawnOne('dot', Math.random() * 5 + 3)
+    spawnOne('dot', Math.random() * 9 + 5)
   }
 }
 
@@ -109,15 +109,16 @@ function triggerFlash(color: string): void {
     'inset:0',
     `background:${color}`,
     'pointer-events:none',
-    'z-index:75',
+    'z-index:200',
     'opacity:1',
-    'transition:opacity 200ms ease-out',
   ].join(';')
   document.body.appendChild(div)
-  requestAnimationFrame(() => {
+  // Hold briefly so the flash registers visually, then fade
+  setTimeout(() => {
+    div.style.transition = 'opacity 200ms ease-out'
     div.style.opacity = '0'
-    setTimeout(() => div.remove(), 300)
-  })
+    setTimeout(() => div.remove(), 250)
+  }, 50)
 }
 
 // ── Canvas draw tick (extracted to reduce hook complexity) ─────────────────────
@@ -212,6 +213,11 @@ function applyShake(
   addTimer(() => {
     modal.style.animation = ''
   }, config.shakeDuration + 50)
+
+  // Card tilt/zoom at impact
+  container.style.setProperty('--impact-dur', `${config.shakeDuration + 50}ms`)
+  container.classList.add('card-impact')
+  addTimer(() => container.classList.remove('card-impact'), config.shakeDuration + 100)
 }
 
 function applyFlashes(
@@ -220,9 +226,9 @@ function applyFlashes(
 ): void {
   if (config.triFlash) {
     const triColors = [
-      'rgba(255,0,85,0.6)',
-      'rgba(255,230,0,0.5)',
-      'rgba(0,207,255,0.5)',
+      'rgba(255,0,85,0.85)',
+      'rgba(255,230,0,0.82)',
+      'rgba(0,207,255,0.82)',
     ]
     for (let i = 0; i < triColors.length; i++) {
       const col = triColors[i]
@@ -255,6 +261,9 @@ function scheduleWaves(
   }
 }
 
+// FLASH_DONE: delay (ms) after which flash is visually gone — spawn canvas effects here
+const FLASH_DONE = 260
+
 function scheduleHalftoneAndChrom(
   s: EffectState,
   config: RarityEffectConfig,
@@ -262,8 +271,10 @@ function scheduleHalftoneAndChrom(
   ensureRAF: () => void,
 ): void {
   if (config.halftone) {
-    s.halftones.push({ life: 1 } satisfies HalftoneState)
-    ensureRAF()
+    addTimer(() => {
+      s.halftones.push({ life: 1 } satisfies HalftoneState)
+      ensureRAF()
+    }, FLASH_DONE)
     addTimer(() => {
       s.halftones.push({ life: 1 } satisfies HalftoneState)
       ensureRAF()
@@ -271,9 +282,10 @@ function scheduleHalftoneAndChrom(
   }
 
   if (config.chromaticAberration) {
-    const ch: ChromState = { life: 1 }
-    s.chrom = ch
-    ensureRAF()
+    addTimer(() => {
+      s.chrom = { life: 1 }
+      ensureRAF()
+    }, FLASH_DONE)
     addTimer(() => {
       if (s.chrom) {
         s.chrom.life = Math.max(s.chrom.life, 0.6)
@@ -421,37 +433,34 @@ export function useRevealEffect(rarity: CardRarity): {
     applyFlashes(config, addTimer)
     scheduleWaves(s, config, addTimer, ensureRAF)
 
-    // Speed lines
+    // Speed lines, ink blots: spawn after flash fades so they're visible immediately
     if (config.speedLines) {
-      const sl: SpeedLineState = { life: 1, count: config.speedLineCount }
-      s.speedLine = sl
-      ensureRAF()
+      addTimer(() => {
+        s.speedLine = { life: 1, count: config.speedLineCount }
+        ensureRAF()
+      }, FLASH_DONE)
     }
 
-    // Ink blots
     if (config.inkBlots) {
-      spawnInkBlots(s, config, s.cx, s.cy)
-      ensureRAF()
+      addTimer(() => {
+        spawnInkBlots(s, config, s.cx, s.cy)
+        ensureRAF()
+      }, FLASH_DONE)
     }
 
     scheduleHalftoneAndChrom(s, config, addTimer, ensureRAF)
 
-    // Particles at t=300ms
+    // Particles at t=500ms (after flash + initial wave burst)
     if (config.particleSet !== 'none') {
       addTimer(() => {
         spawnParticles(s, config, s.cx, s.cy)
         ensureRAF()
-      }, 300)
+      }, 500)
     }
 
-    // Impact word: appear t=650, disappear after pop(200) + hold(350) + fade(150) = 700ms
-    addTimer(() => setImpactVisible(true), 650)
-    addTimer(() => setImpactVisible(false), 650 + 550 + 150)
-
-    // Scanline at t=1200ms
-    if (config.scanlineColor) {
-      addTimer(() => setScanlineVisible(true), 1200)
-    }
+    // Impact word: appear with particles at t=500ms, hold 600ms then fade
+    addTimer(() => setImpactVisible(true), 500)
+    addTimer(() => setImpactVisible(false), 500 + 600 + 150)
 
     ensureRAF()
   }, [rarity])

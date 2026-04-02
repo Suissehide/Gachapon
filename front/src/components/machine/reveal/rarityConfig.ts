@@ -8,7 +8,7 @@ export interface WaveConfig {
   col: string
   w: number
   spd: number
-  delay: number
+  delay: number // ms RELATIVE TO BLAST time (not to triggerReveal)
   ghost: boolean
 }
 
@@ -19,8 +19,8 @@ export interface RarityEffectConfig {
   impactStroke: string
   impactExtraShadow?: string
 
-  shake: number // px amplitude
-  shakeDuration: number // ms
+  shake: number
+  shakeDuration: number
   flashColor: string | null
   triFlash: boolean
   scanlineColor: string | null
@@ -45,12 +45,12 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
 
     shake: 1,
     shakeDuration: 200,
-    flashColor: 'rgba(200,200,200,0.2)',
+    flashColor: 'rgba(255,255,255,0.75)',
     triFlash: false,
     scanlineColor: null,
 
     waves: [
-      { col: 'rgba(200,200,200,0.35)', w: 3, spd: 5.5, delay: 0, ghost: false },
+      { col: 'rgba(160,160,160,0.5)', w: 2.5, spd: 5, delay: 0, ghost: false },
     ],
     particleSet: 'none',
     inkBlots: false,
@@ -70,9 +70,9 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
 
     shake: 2,
     shakeDuration: 300,
-    flashColor: 'rgba(34,197,94,0.4)',
+    flashColor: 'rgba(34,197,94,0.92)',
     triFlash: false,
-    scanlineColor: '#22c55e',
+    scanlineColor: null,
 
     waves: [
       { col: 'rgb(34,197,94)', w: 4, spd: 6, delay: 0, ghost: false },
@@ -96,9 +96,9 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
 
     shake: 5,
     shakeDuration: 350,
-    flashColor: 'rgba(59,130,246,0.55)',
+    flashColor: 'rgba(59,130,246,0.92)',
     triFlash: false,
-    scanlineColor: '#3b82f6',
+    scanlineColor: null,
 
     waves: [
       { col: 'rgb(0,0,0)', w: 6, spd: 8, delay: 0, ghost: false },
@@ -123,9 +123,9 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
 
     shake: 9,
     shakeDuration: 380,
-    flashColor: 'rgba(139,92,246,0.65)',
+    flashColor: 'rgba(139,92,246,0.94)',
     triFlash: false,
-    scanlineColor: '#8b5cf6',
+    scanlineColor: null,
 
     waves: [
       { col: 'rgb(0,0,0)', w: 7, spd: 9, delay: 0, ghost: false },
@@ -134,7 +134,7 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
       { col: 'rgb(167,139,250)', w: 2, spd: 5, delay: 280, ghost: false },
     ],
     particleSet: 'epic',
-    inkBlots: true,
+    inkBlots: false,
     inkColors: ['#8b5cf6', '#a78bfa', '#c4b5fd', '#000', '#7c3aed'],
     speedLines: true,
     speedLineCount: 22,
@@ -154,7 +154,7 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
     shakeDuration: 420,
     flashColor: null,
     triFlash: true,
-    scanlineColor: '#ff0055',
+    scanlineColor: null,
 
     waves: [
       { col: 'rgb(0,0,0)', w: 8, spd: 9, delay: 0, ghost: false },
@@ -165,7 +165,7 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
       { col: 'rgb(255,0,85)', w: 1.5, spd: 3.5, delay: 480, ghost: false },
     ],
     particleSet: 'legendary',
-    inkBlots: true,
+    inkBlots: false,
     inkColors: ['#ff0055', '#ffe600', '#00cfff', '#000', '#ff7700'],
     speedLines: true,
     speedLineCount: 28,
@@ -185,8 +185,8 @@ export const PARTICLE_COLORS: Record<ParticleSetKey, string[]> = {
 // [squares, streaks, dots]
 export const PARTICLE_COUNTS: Record<ParticleSetKey, [number, number, number]> =
   {
-    uncommon: [12, 18, 8],
-    rare: [20, 30, 14],
-    epic: [30, 45, 21],
-    legendary: [50, 75, 35],
+    uncommon: [22, 35, 16],
+    rare: [38, 58, 26],
+    epic: [60, 90, 40],
+    legendary: [90, 140, 65],
   }

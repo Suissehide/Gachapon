@@ -35,9 +35,18 @@ function ImpactWord({
   const [fading, setFading] = useState(false)
 
   useEffect(() => {
-    const id = setTimeout(() => setFading(true), 550)
+    const id = setTimeout(() => setFading(true), 600)
     return () => clearTimeout(id)
   }, [])
+
+  const shadow =
+    impactExtraShadow ??
+    [
+      `3px 3px 0 ${impactStroke}`,
+      `6px 6px 0 ${impactStroke}`,
+      `9px 9px 0 rgba(0,0,0,0.2)`,
+      `-1px -1px 0 ${impactStroke}`,
+    ].join(', ')
 
   return (
     <div
@@ -45,54 +54,26 @@ function ImpactWord({
         {
           position: 'fixed',
           left: pos.x,
-          top: pos.y - 80,
-          transform: 'translateX(-50%)',
+          top: pos.y - 110,
           fontFamily: 'Impact, Arial Black, sans-serif',
           fontSize: impactSize,
           color: impactColor,
-          WebkitTextStroke: `2px ${impactStroke}`,
-          textShadow: impactExtraShadow ?? `3px 3px 0 ${impactStroke}`,
-          letterSpacing: '0.05em',
+          WebkitTextStroke: `3px ${impactStroke}`,
+          textShadow: shadow,
+          letterSpacing: '0.04em',
           textTransform: 'uppercase',
           zIndex: 80,
           pointerEvents: 'none',
           userSelect: 'none',
           whiteSpace: 'nowrap',
           animation: fading
-            ? 'impactFade 150ms ease-in forwards'
-            : 'impactPop 200ms cubic-bezier(0.34,1.4,0.64,1) forwards',
+            ? 'impactFade 180ms ease-in forwards'
+            : 'impactPop 250ms cubic-bezier(0.34,1.56,0.64,1) forwards',
         } as React.CSSProperties
       }
     >
       {text}
     </div>
-  )
-}
-
-// ── ScanlineSweep ──────────────────────────────────────────────────────────────
-
-function ScanlineSweep({
-  color,
-  onDone,
-}: {
-  color: string
-  onDone: () => void
-}) {
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: 3,
-        background: color,
-        zIndex: 80,
-        pointerEvents: 'none',
-        animation: 'scanlineSweep 600ms linear forwards',
-      }}
-      onAnimationEnd={onDone}
-    />
   )
 }
 
@@ -116,8 +97,6 @@ export function CardReveal({ result, onClose }: Props) {
     canvasRefs,
     impactVisible,
     impactPos,
-    scanlineVisible,
-    hideScanline,
     triggerReveal,
     reset,
   } = useRevealEffect(rarity)
@@ -185,14 +164,6 @@ export function CardReveal({ result, onClose }: Props) {
           impactStroke={effectConfig.impactStroke}
           impactSize={effectConfig.impactSize}
           impactExtraShadow={effectConfig.impactExtraShadow}
-        />
-      )}
-
-      {/* Scanline sweep */}
-      {scanlineVisible && effectConfig.scanlineColor && (
-        <ScanlineSweep
-          color={effectConfig.scanlineColor}
-          onDone={hideScanline}
         />
       )}
 
