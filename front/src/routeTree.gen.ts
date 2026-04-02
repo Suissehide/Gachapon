@@ -22,6 +22,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as OauthSuccessRouteImport } from './routes/oauth.success'
 import { Route as AuthenticatedUpgradesRouteImport } from './routes/_authenticated/upgrades'
 import { Route as AuthenticatedShopRouteImport } from './routes/_authenticated/shop'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
@@ -107,6 +108,11 @@ const AdminRoute = AdminRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OauthSuccessRoute = OauthSuccessRouteImport.update({
+  id: '/oauth/success',
+  path: '/oauth/success',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedUpgradesRoute = AuthenticatedUpgradesRouteImport.update({
@@ -249,6 +255,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/shop': typeof AuthenticatedShopRoute
   '/upgrades': typeof AuthenticatedUpgradesRoute
+  '/oauth/success': typeof OauthSuccessRoute
   '/admin/cards': typeof AdminAdminCardsRoute
   '/admin/config': typeof AdminAdminConfigRoute
   '/admin/media': typeof AdminAdminMediaRoute
@@ -284,6 +291,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/shop': typeof AuthenticatedShopRoute
   '/upgrades': typeof AuthenticatedUpgradesRoute
+  '/oauth/success': typeof OauthSuccessRoute
   '/admin/cards': typeof AdminAdminCardsRoute
   '/admin/config': typeof AdminAdminConfigRoute
   '/admin/media': typeof AdminAdminMediaRoute
@@ -323,6 +331,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/shop': typeof AuthenticatedShopRoute
   '/_authenticated/upgrades': typeof AuthenticatedUpgradesRoute
+  '/oauth/success': typeof OauthSuccessRoute
   '/_admin/admin/cards': typeof AdminAdminCardsRoute
   '/_admin/admin/config': typeof AdminAdminConfigRoute
   '/_admin/admin/media': typeof AdminAdminMediaRoute
@@ -361,6 +370,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/shop'
     | '/upgrades'
+    | '/oauth/success'
     | '/admin/cards'
     | '/admin/config'
     | '/admin/media'
@@ -396,6 +406,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/shop'
     | '/upgrades'
+    | '/oauth/success'
     | '/admin/cards'
     | '/admin/config'
     | '/admin/media'
@@ -434,6 +445,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/shop'
     | '/_authenticated/upgrades'
+    | '/oauth/success'
     | '/_admin/admin/cards'
     | '/_admin/admin/config'
     | '/_admin/admin/media'
@@ -465,6 +477,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   StatsRoute: typeof StatsRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
+  OauthSuccessRoute: typeof OauthSuccessRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -558,6 +571,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/oauth/success': {
+      id: '/oauth/success'
+      path: '/oauth/success'
+      fullPath: '/oauth/success'
+      preLoaderRoute: typeof OauthSuccessRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/upgrades': {
@@ -813,6 +833,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   StatsRoute: StatsRoute,
   VerifyEmailRoute: VerifyEmailRoute,
+  OauthSuccessRoute: OauthSuccessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
