@@ -1,10 +1,11 @@
+import { useQuery } from '@tanstack/react-query'
 import { PanelRightClose, PanelRightOpen } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
 
 import { TeamsApi } from '../../api/teams.api'
 import { useLiveFeed } from '../../hooks/useLiveFeed'
 import { Button } from '../ui/button'
+import { Select } from '../ui/input'
 import { FeedEntryRow } from './FeedEntry'
 
 type Tab = 'global' | 'team'
@@ -25,7 +26,7 @@ export function LiveFeed() {
   // Sélectionner la première team au chargement
   useEffect(() => {
     if (teams.length > 0 && !selectedTeamId) {
-      setSelectedTeamId(teams[0]!.id)
+      setSelectedTeamId(teams[0]?.id)
     }
   }, [teams, selectedTeamId])
 
@@ -36,7 +37,9 @@ export function LiveFeed() {
   // IntersectionObserver — charge la page suivante quand le sentinel est visible
   useEffect(() => {
     const sentinel = sentinelRef.current
-    if (!sentinel) return
+    if (!sentinel) {
+      return
+    }
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry?.isIntersecting && hasNextPage && !isFetchingNextPage) {
@@ -78,7 +81,8 @@ export function LiveFeed() {
               <>
                 <div className="flex border-t border-border">
                   <button
-                    className={`flex-1 py-1.5 text-[8px] font-bold uppercase tracking-[0.18em] transition-colors ${
+                    type="button"
+                    className={`cursor-pointer flex-1 py-1.5 text-[8px] font-bold uppercase tracking-[0.18em] transition-colors ${
                       tab === 'global'
                         ? 'border-b-2 border-text text-text'
                         : 'text-text-light/50 hover:text-text-light'
@@ -88,7 +92,8 @@ export function LiveFeed() {
                     Tous
                   </button>
                   <button
-                    className={`flex-1 py-1.5 text-[8px] font-bold uppercase tracking-[0.18em] transition-colors ${
+                    type="button"
+                    className={`cursor-pointer flex-1 py-1.5 text-[8px] font-bold uppercase tracking-[0.18em] transition-colors ${
                       tab === 'team'
                         ? 'border-b-2 border-text text-text'
                         : 'text-text-light/50 hover:text-text-light'
@@ -101,17 +106,17 @@ export function LiveFeed() {
 
                 {tab === 'team' && (
                   <div className="px-2.5 py-1.5 border-t border-border">
-                    <select
-                      className="w-full text-[9px] px-1.5 py-1 border border-border rounded-md bg-white text-text cursor-pointer"
-                      value={selectedTeamId}
-                      onChange={(e) => setSelectedTeamId(e.target.value)}
-                    >
-                      {teams.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.name}
-                        </option>
-                      ))}
-                    </select>
+                    <Select
+                      id="live-feed-team-select"
+                      options={teams.map((t) => ({
+                        value: t.id,
+                        label: t.name,
+                      }))}
+                      value={selectedTeamId ?? ''}
+                      onValueChange={(v) => setSelectedTeamId(v || undefined)}
+                      clearable={false}
+                      className="h-7 text-[9px]"
+                    />
                   </div>
                 )}
               </>
