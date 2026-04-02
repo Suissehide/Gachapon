@@ -5,12 +5,12 @@ import type { CanvasRefs } from './types'
 
 const CANVAS_KEYS = ['dots', 'speed', 'ink', 'wave', 'pt', 'chrom'] as const
 const Z_INDEXES: Record<(typeof CANVAS_KEYS)[number], number> = {
-  dots: 51,
-  speed: 52,
-  ink: 54,
-  wave: 56,
-  pt: 59,
-  chrom: 70,
+  dots: 1,
+  speed: 2,
+  ink: 3,
+  wave: 4,
+  pt: 5,
+  chrom: 6,
 }
 
 type Props = { refs: CanvasRefs }

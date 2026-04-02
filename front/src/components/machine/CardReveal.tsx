@@ -135,13 +135,15 @@ export function CardReveal({ result, onClose }: Props) {
     setShowSweep(false)
     setShowInfo(false)
     reset()
+    const revealTimer = setTimeout(() => triggerReveal(), 1200)
     const sweepTimer = setTimeout(() => setShowSweep(true), 1800)
     const infoTimer = setTimeout(() => setShowInfo(true), 2000)
     return () => {
+      clearTimeout(revealTimer)
       clearTimeout(sweepTimer)
       clearTimeout(infoTimer)
     }
-  }, [result, reset])
+  }, [result, reset, triggerReveal])
 
   if (!result) {
     return null
@@ -198,7 +200,7 @@ export function CardReveal({ result, onClose }: Props) {
       {/* biome-ignore lint/a11y/noStaticElementInteractions: stop propagation */}
       <div
         data-reveal-modal
-        className="flex flex-col items-center gap-5 px-4 py-8"
+        className="relative z-10 flex flex-col items-center gap-5 px-4 py-8"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >
@@ -213,10 +215,7 @@ export function CardReveal({ result, onClose }: Props) {
             interactive={animDone}
             animKey={animKey}
             animClass={animDone ? '' : 'card-spiral-rise'}
-            onAnimationEnd={() => {
-              setAnimDone(true)
-              triggerReveal()
-            }}
+            onAnimationEnd={() => setAnimDone(true)}
             backFace={
               <img
                 src={cardBackImg}
@@ -272,6 +271,23 @@ export function CardReveal({ result, onClose }: Props) {
           </div>
         </div>
       </div>
+
+      {/* ── Dev: replay button ── */}
+      {import.meta.env.DEV && (
+        <button
+          type="button"
+          className="fixed bottom-4 right-4 z-[100] rounded bg-black/70 px-3 py-1.5 text-xs text-white/80 hover:text-white"
+          onClick={(e) => {
+            e.stopPropagation()
+            reset()
+            setAnimDone(false)
+            setAnimKey((k) => k + 1)
+            setTimeout(() => triggerReveal(), 1200)
+          }}
+        >
+          ↺ replay
+        </button>
+      )}
     </div>
   )
 }
