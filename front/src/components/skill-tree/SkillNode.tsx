@@ -10,6 +10,7 @@ export type SkillNodeData = {
   isLocked: boolean
   missingPrereqs: string[]
   onInvest?: (nodeId: string) => void
+  isAdmin?: boolean
 }
 
 function LucideIcon({ name, size = 16 }: { name: string; size?: number }) {
@@ -18,7 +19,7 @@ function LucideIcon({ name, size = 16 }: { name: string; size?: number }) {
 }
 
 export function SkillNodeComponent({ data }: NodeProps) {
-  const { node, userLevel, branchColor, canInvest, isLocked, missingPrereqs, onInvest } =
+  const { node, userLevel, branchColor, canInvest, isLocked, missingPrereqs, onInvest, isAdmin } =
     data as SkillNodeData
 
   const dots = Array.from({ length: node.maxLevel }, (_, i) => (
@@ -50,8 +51,16 @@ export function SkillNodeComponent({ data }: NodeProps) {
             : 'none',
       }}
     >
-      <Handle type="target" position={Position.Left} className="!opacity-0" />
-      <Handle type="source" position={Position.Right} className="!opacity-0" />
+      <Handle
+        type="target"
+        position={Position.Left}
+        className={isAdmin ? 'h-3 w-3 border-2 border-white/60 bg-gray-700 hover:bg-white/80' : '!opacity-0'}
+      />
+      <Handle
+        type="source"
+        position={Position.Right}
+        className={isAdmin ? 'h-3 w-3 border-2 border-white/60 bg-gray-700 hover:bg-white/80' : '!opacity-0'}
+      />
 
       <div style={{ color: isLocked ? '#6b7280' : branchColor }}>
         <LucideIcon name={node.icon} size={18} />

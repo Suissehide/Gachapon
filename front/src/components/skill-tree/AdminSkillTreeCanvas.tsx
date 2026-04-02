@@ -67,6 +67,7 @@ export function AdminSkillTreeCanvas({ branches, onNodeSelect }: Props) {
             canInvest: false,
             isLocked: false,
             missingPrereqs: [],
+            isAdmin: true,
           },
           draggable: true,
         })
@@ -156,6 +157,7 @@ export function AdminSkillTreeCanvas({ branches, onNodeSelect }: Props) {
       onEdgeDoubleClick={onEdgeDoubleClick}
       onNodeClick={(_, node) => onNodeSelect(node.id === 'center' ? null : node.id)}
       fitView
+      proOptions={{ hideAttribution: true }}
     >
       <Background color="#1f2937" gap={24} />
       <Controls />
