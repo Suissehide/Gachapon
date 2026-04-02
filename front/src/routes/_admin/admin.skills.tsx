@@ -1,7 +1,19 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { HelpCircle, Plus, Settings } from 'lucide-react'
+import {
+  GitBranch,
+  GripVertical,
+  HelpCircle,
+  Link2,
+  MousePointer2,
+  Pencil,
+  Plus,
+  PlusCircle,
+  Scissors,
+  Settings,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { useState } from 'react'
-import type { SkillNode } from '../../api/skills.api.ts'
+import type { SkillConfig, SkillNode } from '../../api/skills.api.ts'
 import { AdminSkillTreeCanvas } from '../../components/skill-tree/AdminSkillTreeCanvas.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import {
@@ -10,6 +22,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '../../components/ui/sheet.tsx'
+import { useAppForm } from '../../hooks/formConfig.tsx'
 import {
   useAdminCreateNode,
   useAdminDeleteNode,
@@ -46,7 +59,6 @@ function AdminSkillsPage() {
 
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [sheetMode, setSheetMode] = useState<SheetMode>(null)
-  const [resetCost, setResetCost] = useState<number | null>(null)
 
   const [newNode, setNewNode] = useState<{
     name: string
@@ -126,50 +138,42 @@ function AdminSkillsPage() {
                 <SheetTitle>Utilisation du graphe</SheetTitle>
               </SheetHeader>
               <div className="space-y-4 p-4 text-sm text-text-light">
-                <HelpItem icon="🖱️" title="Naviguer">
+                <HelpItem icon={MousePointer2} title="Naviguer">
                   Scroll pour zoomer. Cliquer-glisser sur le fond pour déplacer la vue.
                 </HelpItem>
-                <HelpItem icon="✋" title="Déplacer un nœud">
+                <HelpItem icon={GripVertical} title="Déplacer un nœud">
                   Glisser un nœud sur le canvas pour le repositionner. La position est sauvegardée automatiquement.
                 </HelpItem>
-                <HelpItem icon="🔗" title="Créer une connexion">
+                <HelpItem icon={Link2} title="Créer une connexion">
                   Survoler un nœud pour faire apparaître ses ports (ronds sur les côtés). Glisser depuis le port droit <strong className="text-text">source</strong> vers le port gauche <strong className="text-text">cible</strong> d'un autre nœud. Pas de limite de connexions par nœud.
                 </HelpItem>
-                <HelpItem icon="✂️" title="Supprimer une connexion">
+                <HelpItem icon={Scissors} title="Supprimer une connexion">
                   Double-cliquer sur une connexion pour la supprimer (confirmation requise).
                 </HelpItem>
-                <HelpItem icon="✏️" title="Éditer un nœud">
+                <HelpItem icon={Pencil} title="Éditer un nœud">
                   Cliquer sur un nœud pour ouvrir ce panneau et modifier ses valeurs par niveau.
                 </HelpItem>
-                <HelpItem icon="➕" title="Créer un nœud">
+                <HelpItem icon={PlusCircle} title="Créer un nœud">
                   Utiliser le bouton <strong className="text-text">Créer un nœud</strong> dans la toolbar. Le nœud apparaît en (0, 0) — glisse-le pour le positionner.
+                </HelpItem>
+                <HelpItem icon={GitBranch} title="Structure">
+                  Les nœuds sans parent sont connectés automatiquement au nœud central. Les connexions entre nœuds définissent les prérequis pour les joueurs.
                 </HelpItem>
               </div>
             </>
           )}
 
           {/* CONFIG */}
-          {sheetMode === 'config' && (
+          {sheetMode === 'config' && config && (
             <>
               <SheetHeader>
                 <SheetTitle>Configuration globale</SheetTitle>
               </SheetHeader>
               <div className="p-4">
-                <p className="mb-2 text-xs font-semibold uppercase text-text-light">Coût reset (dust / point)</p>
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    className="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-text"
-                    defaultValue={config?.resetCostPerPoint}
-                    onChange={(e) => setResetCost(Number(e.target.value))}
-                  />
-                  <Button
-                    size="sm"
-                    onClick={() => { if (resetCost !== null) { updateConfig.mutate({ resetCostPerPoint: resetCost }) } }}
-                  >
-                    OK
-                  </Button>
-                </div>
+                <ConfigForm
+                  config={config}
+                  onSubmit={(values) => updateConfig.mutate({ resetCostPerPoint: values.resetCostPerPoint })}
+                />
               </div>
             </>
           )}
@@ -293,6 +297,36 @@ function AdminSkillsPage() {
   )
 }
 
+function ConfigForm({
+  config,
+  onSubmit,
+}: {
+  config: SkillConfig
+  onSubmit: (values: { resetCostPerPoint: number }) => void
+}) {
+  const form = useAppForm({
+    defaultValues: { resetCostPerPoint: config.resetCostPerPoint },
+    onSubmit: ({ value }) => { onSubmit(value) },
+  })
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault()
+        form.handleSubmit()
+      }}
+      className="space-y-4"
+    >
+      <form.AppField name="resetCostPerPoint">
+        {(f) => <f.Number label="Coût reset (dust / point)" />}
+      </form.AppField>
+      <Button type="submit" className="w-full">
+        Enregistrer
+      </Button>
+    </form>
+  )
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
@@ -302,10 +336,18 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-function HelpItem({ icon, title, children }: { icon: string; title: string; children: React.ReactNode }) {
+function HelpItem({
+  icon: Icon,
+  title,
+  children,
+}: {
+  icon: LucideIcon
+  title: string
+  children: React.ReactNode
+}) {
   return (
     <div className="flex gap-3">
-      <span className="mt-0.5 text-base leading-none">{icon}</span>
+      <Icon size={16} className="mt-0.5 shrink-0 text-primary" />
       <div>
         <p className="mb-0.5 font-semibold text-text">{title}</p>
         <p className="leading-relaxed">{children}</p>
