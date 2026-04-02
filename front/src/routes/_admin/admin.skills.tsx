@@ -1,8 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Plus, Settings } from 'lucide-react'
+import { HelpCircle, Plus, Settings } from 'lucide-react'
 import { useState } from 'react'
 import type { SkillNode } from '../../api/skills.api.ts'
 import { AdminSkillTreeCanvas } from '../../components/skill-tree/AdminSkillTreeCanvas.tsx'
+import { Button } from '../../components/ui/button.tsx'
 import {
   Sheet,
   SheetContent,
@@ -33,7 +34,7 @@ const EFFECT_TYPES = [
   'SHOP_DISCOUNT',
 ] as const
 
-type SheetMode = 'edit' | 'create' | 'config' | null
+type SheetMode = 'edit' | 'create' | 'config' | 'help' | null
 
 function AdminSkillsPage() {
   const { data: branches, isLoading } = useAdminSkillTree()
@@ -47,7 +48,6 @@ function AdminSkillsPage() {
   const [sheetMode, setSheetMode] = useState<SheetMode>(null)
   const [resetCost, setResetCost] = useState<number | null>(null)
 
-  // Create form state
   const [newNode, setNewNode] = useState<{
     name: string
     description: string
@@ -78,54 +78,75 @@ function AdminSkillsPage() {
       effect: 0,
     }))
     createNode.mutate(
-      {
-        ...newNode,
-        posX: 0,
-        posY: 0,
-        levels,
-      } as Omit<SkillNode, 'id' | 'edgesFrom' | 'edgesTo'>,
-      {
-        onSuccess: () => setSheetMode(null),
-      },
+      { ...newNode, posX: 0, posY: 0, levels } as Omit<SkillNode, 'id' | 'edgesFrom' | 'edgesTo'>,
+      { onSuccess: () => { setSheetMode(null) } },
     )
   }
-
-  const sheetOpen = sheetMode !== null
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* Toolbar */}
-      <div className="flex shrink-0 items-center gap-2 border-b border-gray-800 bg-gray-950 px-4 py-2">
-        <span className="text-sm font-semibold text-gray-300">Arbre de compétences</span>
+      <div className="flex shrink-0 items-center gap-2 border-b border-border bg-card px-4 py-2">
+        <span className="text-sm font-semibold text-text">Arbre de compétences</span>
         <div className="ml-auto flex gap-2">
-          <button
-            onClick={() => setSheetMode('config')}
-            className="flex items-center gap-1.5 rounded border border-gray-700 px-3 py-1.5 text-xs text-gray-400 hover:border-gray-500 hover:text-gray-200"
-          >
+          <Button variant="outline" size="sm" onClick={() => setSheetMode('help')}>
+            <HelpCircle size={13} />
+            Aide
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setSheetMode('config')}>
             <Settings size={13} />
             Config
-          </button>
-          <button
+          </Button>
+          <Button
+            size="sm"
             onClick={() => {
               setNewNode({ name: '', description: '', branchId: branches[0]?.id ?? '', icon: 'Star', effectType: 'LUCK', maxLevel: 3 })
               setSheetMode('create')
             }}
-            className="flex items-center gap-1.5 rounded bg-purple-600 px-3 py-1.5 text-xs text-white hover:bg-purple-700"
           >
             <Plus size={13} />
             Créer un nœud
-          </button>
+          </Button>
         </div>
       </div>
 
-      {/* Canvas — prend tout l'espace restant */}
+      {/* Canvas */}
       <div className="flex-1 overflow-hidden">
         <AdminSkillTreeCanvas branches={branches} onNodeSelect={handleNodeSelect} />
       </div>
 
-      {/* Sheet latéral */}
-      <Sheet open={sheetOpen} onOpenChange={(open) => !open && setSheetMode(null)}>
+      {/* Sheet */}
+      <Sheet open={sheetMode !== null} onOpenChange={(open) => !open && setSheetMode(null)}>
         <SheetContent side="right" className="w-80 overflow-y-auto p-0">
+
+          {/* AIDE */}
+          {sheetMode === 'help' && (
+            <>
+              <SheetHeader>
+                <SheetTitle>Utilisation du graphe</SheetTitle>
+              </SheetHeader>
+              <div className="space-y-4 p-4 text-sm text-text-light">
+                <HelpItem icon="🖱️" title="Naviguer">
+                  Scroll pour zoomer. Cliquer-glisser sur le fond pour déplacer la vue.
+                </HelpItem>
+                <HelpItem icon="✋" title="Déplacer un nœud">
+                  Glisser un nœud sur le canvas pour le repositionner. La position est sauvegardée automatiquement.
+                </HelpItem>
+                <HelpItem icon="🔗" title="Créer une connexion">
+                  Survoler un nœud pour faire apparaître ses ports (ronds sur les côtés). Glisser depuis le port droit <strong className="text-text">source</strong> vers le port gauche <strong className="text-text">cible</strong> d'un autre nœud. Pas de limite de connexions par nœud.
+                </HelpItem>
+                <HelpItem icon="✂️" title="Supprimer une connexion">
+                  Double-cliquer sur une connexion pour la supprimer (confirmation requise).
+                </HelpItem>
+                <HelpItem icon="✏️" title="Éditer un nœud">
+                  Cliquer sur un nœud pour ouvrir ce panneau et modifier ses valeurs par niveau.
+                </HelpItem>
+                <HelpItem icon="➕" title="Créer un nœud">
+                  Utiliser le bouton <strong className="text-text">Créer un nœud</strong> dans la toolbar. Le nœud apparaît en (0, 0) — glisse-le pour le positionner.
+                </HelpItem>
+              </div>
+            </>
+          )}
 
           {/* CONFIG */}
           {sheetMode === 'config' && (
@@ -134,22 +155,20 @@ function AdminSkillsPage() {
                 <SheetTitle>Configuration globale</SheetTitle>
               </SheetHeader>
               <div className="p-4">
-                <p className="mb-2 text-xs font-semibold uppercase text-gray-400">Coût reset (dust/point)</p>
+                <p className="mb-2 text-xs font-semibold uppercase text-text-light">Coût reset (dust / point)</p>
                 <div className="flex gap-2">
                   <input
                     type="number"
-                    className="w-full rounded border border-gray-700 bg-gray-900 px-2 py-1 text-sm text-white"
+                    className="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-text"
                     defaultValue={config?.resetCostPerPoint}
                     onChange={(e) => setResetCost(Number(e.target.value))}
                   />
-                  <button
-                    onClick={() => {
-                      if (resetCost !== null) updateConfig.mutate({ resetCostPerPoint: resetCost })
-                    }}
-                    className="rounded bg-purple-600 px-3 py-1 text-xs text-white hover:bg-purple-700"
+                  <Button
+                    size="sm"
+                    onClick={() => { if (resetCost !== null) { updateConfig.mutate({ resetCostPerPoint: resetCost }) } }}
                   >
                     OK
-                  </button>
+                  </Button>
                 </div>
               </div>
             </>
@@ -164,64 +183,62 @@ function AdminSkillsPage() {
               <div className="space-y-3 p-4">
                 <Field label="Branche">
                   <select
-                    className="w-full rounded border border-gray-700 bg-gray-900 px-2 py-1 text-sm text-white"
+                    className="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-text"
                     value={newNode.branchId}
                     onChange={(e) => setNewNode((n) => ({ ...n, branchId: e.target.value }))}
                   >
-                    {branches.map((b) => (
-                      <option key={b.id} value={b.id}>{b.name}</option>
-                    ))}
+                    {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
                   </select>
                 </Field>
                 <Field label="Nom">
                   <input
-                    className="w-full rounded border border-gray-700 bg-gray-900 px-2 py-1 text-sm text-white"
+                    className="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-text"
                     value={newNode.name}
                     onChange={(e) => setNewNode((n) => ({ ...n, name: e.target.value }))}
                   />
                 </Field>
                 <Field label="Description">
                   <input
-                    className="w-full rounded border border-gray-700 bg-gray-900 px-2 py-1 text-sm text-white"
+                    className="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-text"
                     value={newNode.description}
                     onChange={(e) => setNewNode((n) => ({ ...n, description: e.target.value }))}
                   />
                 </Field>
                 <Field label="Icône Lucide">
                   <input
-                    className="w-full rounded border border-gray-700 bg-gray-900 px-2 py-1 text-sm text-white"
+                    className="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-text"
                     value={newNode.icon}
                     onChange={(e) => setNewNode((n) => ({ ...n, icon: e.target.value }))}
-                    placeholder="ex: Star, Flame, Trophy…"
+                    placeholder="ex : Star, Flame, Trophy…"
                   />
                 </Field>
                 <Field label="Effet">
                   <select
-                    className="w-full rounded border border-gray-700 bg-gray-900 px-2 py-1 text-sm text-white"
+                    className="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-text"
                     value={newNode.effectType}
                     onChange={(e) => setNewNode((n) => ({ ...n, effectType: e.target.value }))}
                   >
                     {EFFECT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </Field>
-                <Field label="Niveaux max (1-5)">
+                <Field label="Niveaux max (1–5)">
                   <input
                     type="number"
                     min={1}
                     max={5}
-                    className="w-full rounded border border-gray-700 bg-gray-900 px-2 py-1 text-sm text-white"
+                    className="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-text"
                     value={newNode.maxLevel}
                     onChange={(e) => setNewNode((n) => ({ ...n, maxLevel: Math.min(5, Math.max(1, Number(e.target.value))) }))}
                   />
                 </Field>
-                <p className="text-xs text-gray-500">Le nœud sera créé en (0, 0). Glisse-le ensuite sur le canvas pour le positionner.</p>
-                <button
+                <p className="text-xs text-text-light">Le nœud sera créé en (0, 0). Glisse-le ensuite sur le canvas pour le positionner.</p>
+                <Button
+                  className="w-full"
                   disabled={!newNode.name || !newNode.branchId || createNode.isPending}
                   onClick={handleCreateSubmit}
-                  className="mt-2 w-full rounded bg-purple-600 py-2 text-sm text-white hover:bg-purple-700 disabled:opacity-50"
                 >
                   {createNode.isPending ? 'Création…' : 'Créer'}
-                </button>
+                </Button>
               </div>
             </>
           )}
@@ -233,18 +250,18 @@ function AdminSkillsPage() {
                 <SheetTitle>{selectedNode.name}</SheetTitle>
               </SheetHeader>
               <div className="space-y-2 p-4">
-                <p className="text-xs text-gray-400">Branche : <span className="text-white">{selectedBranch.name}</span></p>
-                <p className="text-xs text-gray-400">Effet : <span className="text-white">{selectedNode.effectType}</span></p>
-                <p className="text-xs text-gray-400">Max niveau : <span className="text-white">{selectedNode.maxLevel}</span></p>
-                <p className="mt-4 text-xs font-semibold uppercase text-gray-400">Valeurs par niveau</p>
+                <p className="text-xs text-text-light">Branche : <span className="text-text">{selectedBranch.name}</span></p>
+                <p className="text-xs text-text-light">Effet : <span className="text-text">{selectedNode.effectType}</span></p>
+                <p className="text-xs text-text-light">Max niveau : <span className="text-text">{selectedNode.maxLevel}</span></p>
+                <p className="mt-4 text-xs font-semibold uppercase text-text-light">Valeurs par niveau</p>
                 {selectedNode.levels.map((l) => (
                   <div key={l.level} className="flex items-center gap-2">
-                    <span className="w-10 text-xs text-gray-500">Niv.{l.level}</span>
+                    <span className="w-10 text-xs text-text-light">Niv.{l.level}</span>
                     <input
                       type="number"
                       step="0.01"
                       defaultValue={l.effect}
-                      className="w-full rounded border border-gray-700 bg-gray-900 px-2 py-0.5 text-xs text-white"
+                      className="w-full rounded border border-border bg-surface px-2 py-0.5 text-xs text-text"
                       onBlur={(e) => {
                         const newEffect = Number(e.target.value)
                         const newLevels = selectedNode.levels.map((lvl) =>
@@ -255,17 +272,18 @@ function AdminSkillsPage() {
                     />
                   </div>
                 ))}
-                <button
+                <Button
+                  variant="destructive"
+                  className="mt-4 w-full"
                   onClick={() => {
                     if (!window.confirm(`Supprimer le nœud "${selectedNode.name}" ?`)) return
                     deleteNode.mutate(selectedNode.id)
                     setSheetMode(null)
                     setSelectedNodeId(null)
                   }}
-                  className="mt-4 w-full rounded border border-red-700 py-1.5 text-xs text-red-400 hover:bg-red-900/20"
                 >
                   Supprimer ce nœud
-                </button>
+                </Button>
               </div>
             </>
           )}
@@ -278,8 +296,20 @@ function AdminSkillsPage() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="mb-1 text-xs text-gray-400">{label}</p>
+      <p className="mb-1 text-xs text-text-light">{label}</p>
       {children}
+    </div>
+  )
+}
+
+function HelpItem({ icon, title, children }: { icon: string; title: string; children: React.ReactNode }) {
+  return (
+    <div className="flex gap-3">
+      <span className="mt-0.5 text-base leading-none">{icon}</span>
+      <div>
+        <p className="mb-0.5 font-semibold text-text">{title}</p>
+        <p className="leading-relaxed">{children}</p>
+      </div>
     </div>
   )
 }
