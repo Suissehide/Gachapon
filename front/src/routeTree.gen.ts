@@ -23,7 +23,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OauthSuccessRouteImport } from './routes/oauth.success'
-import { Route as AuthenticatedUpgradesRouteImport } from './routes/_authenticated/upgrades'
+import { Route as AuthenticatedSkillsRouteImport } from './routes/_authenticated/skills'
 import { Route as AuthenticatedShopRouteImport } from './routes/_authenticated/shop'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedQuestsRouteImport } from './routes/_authenticated/quests'
@@ -36,9 +36,9 @@ import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin.index
 import { Route as AuthenticatedTeamIdRouteImport } from './routes/_authenticated/team/$id'
 import { Route as AuthenticatedProfileUsernameRouteImport } from './routes/_authenticated/profile/$username'
 import { Route as AdminAdminUsersRouteImport } from './routes/_admin/admin.users'
-import { Route as AdminAdminUpgradesRouteImport } from './routes/_admin/admin.upgrades'
 import { Route as AdminAdminStreakRouteImport } from './routes/_admin/admin.streak'
 import { Route as AdminAdminStatsRouteImport } from './routes/_admin/admin.stats'
+import { Route as AdminAdminSkillsRouteImport } from './routes/_admin/admin.skills'
 import { Route as AdminAdminShopRouteImport } from './routes/_admin/admin.shop'
 import { Route as AdminAdminScoringRouteImport } from './routes/_admin/admin.scoring'
 import { Route as AdminAdminMediaRouteImport } from './routes/_admin/admin.media'
@@ -115,9 +115,9 @@ const OauthSuccessRoute = OauthSuccessRouteImport.update({
   path: '/oauth/success',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedUpgradesRoute = AuthenticatedUpgradesRouteImport.update({
-  id: '/upgrades',
-  path: '/upgrades',
+const AuthenticatedSkillsRoute = AuthenticatedSkillsRouteImport.update({
+  id: '/skills',
+  path: '/skills',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedShopRoute = AuthenticatedShopRouteImport.update({
@@ -182,11 +182,6 @@ const AdminAdminUsersRoute = AdminAdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AdminAdminRoute,
 } as any)
-const AdminAdminUpgradesRoute = AdminAdminUpgradesRouteImport.update({
-  id: '/upgrades',
-  path: '/upgrades',
-  getParentRoute: () => AdminAdminRoute,
-} as any)
 const AdminAdminStreakRoute = AdminAdminStreakRouteImport.update({
   id: '/streak',
   path: '/streak',
@@ -195,6 +190,11 @@ const AdminAdminStreakRoute = AdminAdminStreakRouteImport.update({
 const AdminAdminStatsRoute = AdminAdminStatsRouteImport.update({
   id: '/stats',
   path: '/stats',
+  getParentRoute: () => AdminAdminRoute,
+} as any)
+const AdminAdminSkillsRoute = AdminAdminSkillsRouteImport.update({
+  id: '/skills',
+  path: '/skills',
   getParentRoute: () => AdminAdminRoute,
 } as any)
 const AdminAdminShopRoute = AdminAdminShopRouteImport.update({
@@ -254,16 +254,16 @@ export interface FileRoutesByFullPath {
   '/quests': typeof AuthenticatedQuestsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/shop': typeof AuthenticatedShopRoute
-  '/upgrades': typeof AuthenticatedUpgradesRoute
+  '/skills': typeof AuthenticatedSkillsRoute
   '/oauth/success': typeof OauthSuccessRoute
   '/admin/cards': typeof AdminAdminCardsRoute
   '/admin/config': typeof AdminAdminConfigRoute
   '/admin/media': typeof AdminAdminMediaRoute
   '/admin/scoring': typeof AdminAdminScoringRoute
   '/admin/shop': typeof AdminAdminShopRoute
+  '/admin/skills': typeof AdminAdminSkillsRoute
   '/admin/stats': typeof AdminAdminStatsRoute
   '/admin/streak': typeof AdminAdminStreakRoute
-  '/admin/upgrades': typeof AdminAdminUpgradesRoute
   '/admin/users': typeof AdminAdminUsersRoute
   '/profile/$username': typeof AuthenticatedProfileUsernameRoute
   '/team/$id': typeof AuthenticatedTeamIdRoute
@@ -290,16 +290,16 @@ export interface FileRoutesByTo {
   '/quests': typeof AuthenticatedQuestsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/shop': typeof AuthenticatedShopRoute
-  '/upgrades': typeof AuthenticatedUpgradesRoute
+  '/skills': typeof AuthenticatedSkillsRoute
   '/oauth/success': typeof OauthSuccessRoute
   '/admin/cards': typeof AdminAdminCardsRoute
   '/admin/config': typeof AdminAdminConfigRoute
   '/admin/media': typeof AdminAdminMediaRoute
   '/admin/scoring': typeof AdminAdminScoringRoute
   '/admin/shop': typeof AdminAdminShopRoute
+  '/admin/skills': typeof AdminAdminSkillsRoute
   '/admin/stats': typeof AdminAdminStatsRoute
   '/admin/streak': typeof AdminAdminStreakRoute
-  '/admin/upgrades': typeof AdminAdminUpgradesRoute
   '/admin/users': typeof AdminAdminUsersRoute
   '/profile/$username': typeof AuthenticatedProfileUsernameRoute
   '/team/$id': typeof AuthenticatedTeamIdRoute
@@ -330,16 +330,16 @@ export interface FileRoutesById {
   '/_authenticated/quests': typeof AuthenticatedQuestsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/shop': typeof AuthenticatedShopRoute
-  '/_authenticated/upgrades': typeof AuthenticatedUpgradesRoute
+  '/_authenticated/skills': typeof AuthenticatedSkillsRoute
   '/oauth/success': typeof OauthSuccessRoute
   '/_admin/admin/cards': typeof AdminAdminCardsRoute
   '/_admin/admin/config': typeof AdminAdminConfigRoute
   '/_admin/admin/media': typeof AdminAdminMediaRoute
   '/_admin/admin/scoring': typeof AdminAdminScoringRoute
   '/_admin/admin/shop': typeof AdminAdminShopRoute
+  '/_admin/admin/skills': typeof AdminAdminSkillsRoute
   '/_admin/admin/stats': typeof AdminAdminStatsRoute
   '/_admin/admin/streak': typeof AdminAdminStreakRoute
-  '/_admin/admin/upgrades': typeof AdminAdminUpgradesRoute
   '/_admin/admin/users': typeof AdminAdminUsersRoute
   '/_authenticated/profile/$username': typeof AuthenticatedProfileUsernameRoute
   '/_authenticated/team/$id': typeof AuthenticatedTeamIdRoute
@@ -369,16 +369,16 @@ export interface FileRouteTypes {
     | '/quests'
     | '/settings'
     | '/shop'
-    | '/upgrades'
+    | '/skills'
     | '/oauth/success'
     | '/admin/cards'
     | '/admin/config'
     | '/admin/media'
     | '/admin/scoring'
     | '/admin/shop'
+    | '/admin/skills'
     | '/admin/stats'
     | '/admin/streak'
-    | '/admin/upgrades'
     | '/admin/users'
     | '/profile/$username'
     | '/team/$id'
@@ -405,16 +405,16 @@ export interface FileRouteTypes {
     | '/quests'
     | '/settings'
     | '/shop'
-    | '/upgrades'
+    | '/skills'
     | '/oauth/success'
     | '/admin/cards'
     | '/admin/config'
     | '/admin/media'
     | '/admin/scoring'
     | '/admin/shop'
+    | '/admin/skills'
     | '/admin/stats'
     | '/admin/streak'
-    | '/admin/upgrades'
     | '/admin/users'
     | '/profile/$username'
     | '/team/$id'
@@ -444,16 +444,16 @@ export interface FileRouteTypes {
     | '/_authenticated/quests'
     | '/_authenticated/settings'
     | '/_authenticated/shop'
-    | '/_authenticated/upgrades'
+    | '/_authenticated/skills'
     | '/oauth/success'
     | '/_admin/admin/cards'
     | '/_admin/admin/config'
     | '/_admin/admin/media'
     | '/_admin/admin/scoring'
     | '/_admin/admin/shop'
+    | '/_admin/admin/skills'
     | '/_admin/admin/stats'
     | '/_admin/admin/streak'
-    | '/_admin/admin/upgrades'
     | '/_admin/admin/users'
     | '/_authenticated/profile/$username'
     | '/_authenticated/team/$id'
@@ -580,11 +580,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OauthSuccessRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/upgrades': {
-      id: '/_authenticated/upgrades'
-      path: '/upgrades'
-      fullPath: '/upgrades'
-      preLoaderRoute: typeof AuthenticatedUpgradesRouteImport
+    '/_authenticated/skills': {
+      id: '/_authenticated/skills'
+      path: '/skills'
+      fullPath: '/skills'
+      preLoaderRoute: typeof AuthenticatedSkillsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/shop': {
@@ -671,13 +671,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminUsersRouteImport
       parentRoute: typeof AdminAdminRoute
     }
-    '/_admin/admin/upgrades': {
-      id: '/_admin/admin/upgrades'
-      path: '/upgrades'
-      fullPath: '/admin/upgrades'
-      preLoaderRoute: typeof AdminAdminUpgradesRouteImport
-      parentRoute: typeof AdminAdminRoute
-    }
     '/_admin/admin/streak': {
       id: '/_admin/admin/streak'
       path: '/streak'
@@ -690,6 +683,13 @@ declare module '@tanstack/react-router' {
       path: '/stats'
       fullPath: '/admin/stats'
       preLoaderRoute: typeof AdminAdminStatsRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
+    '/_admin/admin/skills': {
+      id: '/_admin/admin/skills'
+      path: '/skills'
+      fullPath: '/admin/skills'
+      preLoaderRoute: typeof AdminAdminSkillsRouteImport
       parentRoute: typeof AdminAdminRoute
     }
     '/_admin/admin/shop': {
@@ -750,9 +750,9 @@ interface AdminAdminRouteChildren {
   AdminAdminMediaRoute: typeof AdminAdminMediaRoute
   AdminAdminScoringRoute: typeof AdminAdminScoringRoute
   AdminAdminShopRoute: typeof AdminAdminShopRoute
+  AdminAdminSkillsRoute: typeof AdminAdminSkillsRoute
   AdminAdminStatsRoute: typeof AdminAdminStatsRoute
   AdminAdminStreakRoute: typeof AdminAdminStreakRoute
-  AdminAdminUpgradesRoute: typeof AdminAdminUpgradesRoute
   AdminAdminUsersRoute: typeof AdminAdminUsersRoute
   AdminAdminIndexRoute: typeof AdminAdminIndexRoute
 }
@@ -763,9 +763,9 @@ const AdminAdminRouteChildren: AdminAdminRouteChildren = {
   AdminAdminMediaRoute: AdminAdminMediaRoute,
   AdminAdminScoringRoute: AdminAdminScoringRoute,
   AdminAdminShopRoute: AdminAdminShopRoute,
+  AdminAdminSkillsRoute: AdminAdminSkillsRoute,
   AdminAdminStatsRoute: AdminAdminStatsRoute,
   AdminAdminStreakRoute: AdminAdminStreakRoute,
-  AdminAdminUpgradesRoute: AdminAdminUpgradesRoute,
   AdminAdminUsersRoute: AdminAdminUsersRoute,
   AdminAdminIndexRoute: AdminAdminIndexRoute,
 }
@@ -791,7 +791,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedQuestsRoute: typeof AuthenticatedQuestsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedShopRoute: typeof AuthenticatedShopRoute
-  AuthenticatedUpgradesRoute: typeof AuthenticatedUpgradesRoute
+  AuthenticatedSkillsRoute: typeof AuthenticatedSkillsRoute
   AuthenticatedProfileUsernameRoute: typeof AuthenticatedProfileUsernameRoute
   AuthenticatedTeamIdRoute: typeof AuthenticatedTeamIdRoute
   AuthenticatedTeamIndexRoute: typeof AuthenticatedTeamIndexRoute
@@ -806,7 +806,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedQuestsRoute: AuthenticatedQuestsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedShopRoute: AuthenticatedShopRoute,
-  AuthenticatedUpgradesRoute: AuthenticatedUpgradesRoute,
+  AuthenticatedSkillsRoute: AuthenticatedSkillsRoute,
   AuthenticatedProfileUsernameRoute: AuthenticatedProfileUsernameRoute,
   AuthenticatedTeamIdRoute: AuthenticatedTeamIdRoute,
   AuthenticatedTeamIndexRoute: AuthenticatedTeamIndexRoute,

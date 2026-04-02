@@ -5,6 +5,7 @@ import { PrismaClient } from '../src/generated/client'
 import { seedAchievements } from './seed/achievements'
 import { seedCards } from './seed/cards'
 import { seedGlobalConfig } from './seed/global-config'
+import { seedSkills } from './seed/skills'
 import { seedMilestones } from './seed/milestones'
 import { seedQuests } from './seed/quests'
 import { seedShop } from './seed/shop'
@@ -22,6 +23,12 @@ async function main() {
 
   await prisma.$transaction(async (tx) => {
     // Cleanup — ordre respectant les FK (feuilles d'abord)
+    await tx.userSkill.deleteMany()
+    await tx.skillEdge.deleteMany()
+    await tx.skillNodeLevel.deleteMany()
+    await tx.skillNode.deleteMany()
+    await tx.skillBranch.deleteMany()
+    await tx.skillConfig.deleteMany()
     await tx.gachaPull.deleteMany()
     await tx.userCard.deleteMany()
     await tx.purchase.deleteMany()
@@ -50,6 +57,7 @@ async function main() {
     await seedAchievements(tx)
     await seedMilestones(tx)
     await seedGlobalConfig(tx)
+    await seedSkills(tx)
 
     // Utilisateurs + équipe (en dernier, peut référencer le catalogue)
     await seedUsers(tx)

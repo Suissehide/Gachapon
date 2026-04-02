@@ -12,22 +12,22 @@ import type {
   ConfigServiceInterface,
 } from '../../types/infra/config/config.service.interface'
 import type { ICardRepository } from '../../types/infra/orm/repositories/card.repository.interface'
-import type { IUpgradeRepository } from '../../types/infra/orm/repositories/upgrade.repository.interface'
+import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 
 export class CollectionDomain implements ICollectionDomain {
   readonly #cardRepository: ICardRepository
-  readonly #upgradeRepository: IUpgradeRepository
+  readonly #skillTreeRepository: ISkillTreeRepository
   readonly #configService: ConfigServiceInterface
   readonly #postgresOrm: PostgresOrm
 
   constructor({
     cardRepository,
-    upgradeRepository,
+    skillTreeRepository,
     configService,
     postgresOrm,
   }: IocContainer) {
     this.#cardRepository = cardRepository
-    this.#upgradeRepository = upgradeRepository
+    this.#skillTreeRepository = skillTreeRepository
     this.#configService = configService
     this.#postgresOrm = postgresOrm
   }
@@ -47,7 +47,7 @@ export class CollectionDomain implements ICollectionDomain {
       `dust${card.rarity.charAt(0) + card.rarity.slice(1).toLowerCase()}` as ConfigKey
     const baseDust = await this.#configService.get(dustKey)
 
-    const upgrades = await this.#upgradeRepository.getEffectsForUser(userId)
+    const upgrades = await this.#skillTreeRepository.getEffectsForUser(userId)
 
     const [variantMultiplierHolo, variantMultiplierBrilliant] =
       await Promise.all([

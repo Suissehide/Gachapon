@@ -22,16 +22,17 @@ export type NeverPulledCard = {
   setName: string
 }
 
-export type UpgradeDistributionEntry = {
-  type: string
-  levels: { level: number; count: number }[]
+export type SkillDistributionEntry = {
+  nodeId: string
+  level: number
+  count: number
 }
 
 export type DetailedStats = {
   rarityDrift: RarityDriftEntry[]
   neverPulledCards: NeverPulledCard[]
   activeUsers: { sevenDays: number; thirtyDays: number }
-  upgradeDistribution: UpgradeDistributionEntry[]
+  skillDistribution: SkillDistributionEntry[]
 }
 
 export interface IAdminStatsRepository {

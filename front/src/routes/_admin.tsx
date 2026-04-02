@@ -41,7 +41,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/admin/cards', label: 'Cartes', icon: Package },
   { to: '/admin/media', label: 'Médias', icon: Images },
   { to: '/admin/shop', label: 'Boutique', icon: ShoppingBag },
-  { to: '/admin/upgrades', label: 'Améliorations', icon: Zap },
+  { to: '/admin/skills', label: 'Compétences', icon: Zap },
   { to: '/admin/scoring', label: 'Scoring', icon: Trophy },
   { to: '/admin/config', label: 'Config', icon: Settings },
   { to: '/admin/streak', label: 'Streak', icon: Flame },

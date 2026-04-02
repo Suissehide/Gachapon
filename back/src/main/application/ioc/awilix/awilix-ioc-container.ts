@@ -5,7 +5,10 @@ import type { Resolver } from 'awilix/lib/resolvers'
 import { AuthDomain } from '../../../domain/auth/auth.domain'
 import { OAuthDomain } from '../../../domain/auth/oauth.domain'
 import { CollectionDomain } from '../../../domain/collection/collection.domain'
-import { UpgradePurchaseDomain } from '../../../domain/economy/upgrade-purchase.domain'
+import { SkillTreeDomain } from '../../../domain/skills/skill-tree.domain'
+import { SkillInvestDomain } from '../../../domain/skills/skill-invest.domain'
+import { SkillResetDomain } from '../../../domain/skills/skill-reset.domain'
+import { AdminSkillTreeDomain } from '../../../domain/skills/admin-skill-tree.domain'
 import { GachaDomain } from '../../../domain/gacha/gacha.domain'
 import { RewardsDomain } from '../../../domain/rewards/rewards.domain'
 import { ShopDomain } from '../../../domain/shop/shop.domain'
@@ -34,7 +37,7 @@ import { StatsRepository } from '../../../infra/orm/repositories/stats.repositor
 import { StreakMilestoneRepository } from '../../../infra/orm/repositories/streak-milestone.repository'
 import { TeamRepository } from '../../../infra/orm/repositories/team.repository'
 import { TeamMemberRepository } from '../../../infra/orm/repositories/team-member.repository'
-import { UpgradeRepository } from '../../../infra/orm/repositories/upgrade.repository'
+import { SkillTreeRepository } from '../../../infra/orm/repositories/skill-tree.repository'
 import { UserRepository } from '../../../infra/orm/repositories/user.repository'
 import { UserCardRepository } from '../../../infra/orm/repositories/user-card.repository'
 import { UserRewardRepository } from '../../../infra/orm/repositories/user-reward.repository'
@@ -87,7 +90,7 @@ class AwilixIocContainer {
     this.#reg('cardRepository', asClass(CardRepository).singleton())
     this.#reg('userCardRepository', asClass(UserCardRepository).singleton())
     this.#reg('gachaPullRepository', asClass(GachaPullRepository).singleton())
-    this.#reg('upgradeRepository', asClass(UpgradeRepository).singleton())
+    this.#reg('skillTreeRepository', asClass(SkillTreeRepository).singleton())
     this.#reg(
       'scoringConfigRepository',
       asClass(ScoringConfigRepository).singleton(),
@@ -119,10 +122,10 @@ class AwilixIocContainer {
     this.#reg('adminStatsRepository', asClass(AdminStatsRepository).singleton())
     this.#reg('collectionDomain', asClass(CollectionDomain).singleton())
     this.#reg('shopDomain', asClass(ShopDomain).singleton())
-    this.#reg(
-      'upgradePurchaseDomain',
-      asClass(UpgradePurchaseDomain).singleton(),
-    )
+    this.#reg('skillTreeDomain', asClass(SkillTreeDomain).singleton())
+    this.#reg('skillInvestDomain', asClass(SkillInvestDomain).singleton())
+    this.#reg('skillResetDomain', asClass(SkillResetDomain).singleton())
+    this.#reg('adminSkillTreeDomain', asClass(AdminSkillTreeDomain).singleton())
     logger.info('IoC container initialized.')
   }
 
