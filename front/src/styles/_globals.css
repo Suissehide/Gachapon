@@ -1,6 +1,6 @@
 /* Registered custom property — enables CSS transitions on --shine-o */
 @property --shine-o {
-  syntax: '<number>';
+  syntax: "<number>";
   inherits: true;
   initial-value: 0;
 }
@@ -109,7 +109,6 @@ h6 {
   animation: rewardClaim 300ms ease-in forwards;
 }
 
-
 /* BRILLIANT — Golden glow pulse */
 @keyframes brilliant-pulse {
   from {
@@ -124,28 +123,56 @@ h6 {
 
 /* Color cycling: hue-rotate(0→360) is mathematically seamless (no loop jump) */
 @keyframes holoColor {
-  from { filter: hue-rotate(0deg)   brightness(0.8) contrast(1.3); }
-  to   { filter: hue-rotate(360deg) brightness(0.8) contrast(1.3); }
+  from {
+    filter: hue-rotate(0deg) brightness(0.8) contrast(1.3);
+  }
+  to {
+    filter: hue-rotate(360deg) brightness(0.8) contrast(1.3);
+  }
 }
 @keyframes holoColorReverse {
-  from { filter: hue-rotate(180deg) brightness(1.3) contrast(1.2); }
-  to   { filter: hue-rotate(540deg) brightness(1.3) contrast(1.2); }
+  from {
+    filter: hue-rotate(180deg) brightness(1.3) contrast(1.2);
+  }
+  to {
+    filter: hue-rotate(540deg) brightness(1.3) contrast(1.2);
+  }
 }
 
 /* Spatial movement: circular path (start = end → seamless loop) */
 @keyframes holoDrift {
-  0%   { background-position: 50%  0%;   }
-  25%  { background-position: 100% 50%;  }
-  50%  { background-position: 50%  100%; }
-  75%  { background-position: 0%   50%;  }
-  100% { background-position: 50%  0%;   }
+  0% {
+    background-position: 50% 0%;
+  }
+  25% {
+    background-position: 100% 50%;
+  }
+  50% {
+    background-position: 50% 100%;
+  }
+  75% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 50% 0%;
+  }
 }
 @keyframes holoSweep {
-  0%   { background-position: 50%  100%; }
-  25%  { background-position: 0%   50%;  }
-  50%  { background-position: 50%  0%;   }
-  75%  { background-position: 100% 50%;  }
-  100% { background-position: 50%  100%; }
+  0% {
+    background-position: 50% 100%;
+  }
+  25% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 50% 0%;
+  }
+  75% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 50% 100%;
+  }
 }
 
 @keyframes marquee {
@@ -489,14 +516,31 @@ h6 {
 }
 
 @keyframes screenShake {
-  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
-  12%  { transform: translate3d(-7px, 3px, 0) rotate(-0.4deg); }
-  24%  { transform: translate3d(7px, -3px, 0) rotate(0.4deg); }
-  36%  { transform: translate3d(-5px, 4px, 0) rotate(-0.3deg); }
-  48%  { transform: translate3d(6px, -2px, 0) rotate(0.3deg); }
-  60%  { transform: translate3d(-4px, 2px, 0) rotate(-0.2deg); }
-  72%  { transform: translate3d(3px, -2px, 0) rotate(0.2deg); }
-  84%  { transform: translate3d(-2px, 1px, 0) rotate(-0.1deg); }
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  12% {
+    transform: translate3d(-7px, 3px, 0) rotate(-0.4deg);
+  }
+  24% {
+    transform: translate3d(7px, -3px, 0) rotate(0.4deg);
+  }
+  36% {
+    transform: translate3d(-5px, 4px, 0) rotate(-0.3deg);
+  }
+  48% {
+    transform: translate3d(6px, -2px, 0) rotate(0.3deg);
+  }
+  60% {
+    transform: translate3d(-4px, 2px, 0) rotate(-0.2deg);
+  }
+  72% {
+    transform: translate3d(3px, -2px, 0) rotate(0.2deg);
+  }
+  84% {
+    transform: translate3d(-2px, 1px, 0) rotate(-0.1deg);
+  }
 }
 
 .screen-shake {
