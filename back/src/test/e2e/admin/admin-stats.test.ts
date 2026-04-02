@@ -38,13 +38,13 @@ describe('Admin stats routes', () => {
     expect(Array.isArray(body.pullsSeries)).toBe(true)
   })
 
-  it('GET /admin/stats — retourne rarityDrift + neverPulledCards + activeUsers + upgradeDistribution', async () => {
+  it('GET /admin/stats — retourne rarityDrift + neverPulledCards + activeUsers + skillDistribution', async () => {
     const res = await app.inject({ method: 'GET', url: '/admin/stats', headers: { cookie: adminCookies } })
     expect(res.statusCode).toBe(200)
     const body = res.json()
     expect(body).toHaveProperty('rarityDrift')
     expect(body).toHaveProperty('neverPulledCards')
     expect(body).toHaveProperty('activeUsers')
-    expect(body).toHaveProperty('upgradeDistribution')
+    expect(body).toHaveProperty('skillDistribution')
   })
 })
