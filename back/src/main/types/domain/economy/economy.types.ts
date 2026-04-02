@@ -9,4 +9,8 @@ export type UserUpgradeEffects = {
   luckMultiplier: number
   dustHarvestMultiplier: number
   tokenVaultBonus: number
+  freePullChance: number
+  multiTokenChance: number
+  goldenBallChance: number
+  shopDiscount: number
 }
