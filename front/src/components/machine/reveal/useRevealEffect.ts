@@ -408,6 +408,8 @@ export function useRevealEffect(rarity: CardRarity): {
       return
     }
 
+    clearAll()
+
     const config = RARITY_CONFIG[rarity]
 
     const rect = container.getBoundingClientRect()
