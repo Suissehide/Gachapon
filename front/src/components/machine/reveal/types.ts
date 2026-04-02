@@ -1,12 +1,12 @@
 import type React from 'react'
 
 export type CanvasRefs = {
-  dots:  React.RefObject<HTMLCanvasElement | null>
-  speed: React.RefObject<HTMLCanvasElement | null>
-  ink:   React.RefObject<HTMLCanvasElement | null>
-  wave:  React.RefObject<HTMLCanvasElement | null>
-  pt:    React.RefObject<HTMLCanvasElement | null>
-  chrom: React.RefObject<HTMLCanvasElement | null>
+  dots:  React.RefObject<HTMLCanvasElement | null>   // halftone
+  speed: React.RefObject<HTMLCanvasElement | null>   // speed lines
+  ink:   React.RefObject<HTMLCanvasElement | null>   // ink blots
+  wave:  React.RefObject<HTMLCanvasElement | null>   // shockwaves
+  pt:    React.RefObject<HTMLCanvasElement | null>   // particles
+  chrom: React.RefObject<HTMLCanvasElement | null>   // chromatic aberration
 }
 
 export type WaveState = {

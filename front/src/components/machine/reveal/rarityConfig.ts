@@ -2,6 +2,8 @@ import type { CardRarity } from '../../../constants/card.constant'
 
 export type { CardRarity as Rarity }
 
+export type ParticleSetKey = 'uncommon' | 'rare' | 'epic' | 'legendary'
+
 export interface WaveConfig {
   col:   string
   w:     number
@@ -171,7 +173,7 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
   },
 }
 
-export const PARTICLE_COLORS: Record<string, string[]> = {
+export const PARTICLE_COLORS: Record<ParticleSetKey, string[]> = {
   uncommon:  ['#22c55e', '#86efac', '#000', '#fff'],
   rare:      ['#3b82f6', '#93c5fd', '#000', '#fff', '#60a5fa'],
   epic:      ['#8b5cf6', '#a78bfa', '#000', '#c4b5fd', '#7c3aed'],
@@ -179,7 +181,7 @@ export const PARTICLE_COLORS: Record<string, string[]> = {
 }
 
 // [squares, streaks, dots]
-export const PARTICLE_COUNTS: Record<string, [number, number, number]> = {
+export const PARTICLE_COUNTS: Record<ParticleSetKey, [number, number, number]> = {
   uncommon:  [12, 18,  8],
   rare:      [20, 30, 14],
   epic:      [30, 45, 21],
