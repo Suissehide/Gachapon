@@ -2,10 +2,23 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { Bot, ChevronDown, LogOut, Plug, ScrollText } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
-import { AuthDialog } from '../auth/index.ts'
 import { useAuthStore } from '../../stores/auth.store'
 import { useAuthDialogStore } from '../../stores/authDialog.store'
+import { AuthDialog } from '../auth'
 import { Button } from '../ui/button'
+import {
+  CapsuleIcon,
+  MobileMenuShell,
+  MobileNavAnchor,
+  MobileNavLink,
+  useMobileMenu,
+} from './MobileMenu.tsx'
+
+const NAV_ITEMS = [
+  { to: '/guide' as const, label: 'Guide du joueur' },
+  { to: '/stats' as const, label: 'Statistiques' },
+  { to: '/about' as const, label: 'À propos' },
+]
 
 const RESSOURCES_ITEMS = [
   {
@@ -28,6 +41,8 @@ const RESSOURCES_ITEMS = [
   },
 ]
 
+const ALL_MOBILE_ITEMS_COUNT = NAV_ITEMS.length + RESSOURCES_ITEMS.length
+
 export function LandingNavbar() {
   const user = useAuthStore((s) => s.user)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -35,7 +50,15 @@ export function LandingNavbar() {
   const navigate = useNavigate()
   const [ressourcesOpen, setRessourcesOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const { open: dialogOpen, tab: defaultTab, openLogin, openRegister, setOpen: setDialogOpen } = useAuthDialogStore()
+  const {
+    open: dialogOpen,
+    tab: defaultTab,
+    openLogin,
+    openRegister,
+    setOpen: setDialogOpen,
+  } = useAuthDialogStore()
+
+  const { menuOpen, setMenuOpen, closeMenu } = useMobileMenu()
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -62,7 +85,7 @@ export function LandingNavbar() {
           </Link>
 
           {/* Center: nav */}
-          <nav className="hidden items-center gap-1 md:flex">
+          <nav className="hidden items-center gap-1 lg:flex">
             <Link
               to="/guide"
               className="px-3 py-2 text-sm font-medium text-text-light rounded-lg transition-colors hover:text-text hover:bg-muted [&.active]:text-primary [&.active]:font-semibold"
@@ -101,9 +124,7 @@ export function LandingNavbar() {
                     >
                       <Icon className="h-4 w-4 mt-0.5 text-text-light group-hover:text-primary transition-colors shrink-0" />
                       <div>
-                        <p className="text-sm font-semibold text-foreground">
-                          {label}
-                        </p>
+                        <p className="text-sm font-semibold text-foreground">{label}</p>
                         <p className="text-xs text-text-light mt-0.5">{desc}</p>
                       </div>
                     </Link>
@@ -135,12 +156,12 @@ export function LandingNavbar() {
               <>
                 <Button
                   onClick={() => void navigate({ to: '/play' })}
-                  className="rounded-full h-9 text-sm px-5 shadow-sm shadow-primary/20"
+                  className="hidden lg:flex rounded-full h-9 text-sm px-5 shadow-sm shadow-primary/20"
                 >
                   Jouer →
                 </Button>
-                <div className="h-5 w-px bg-border" />
-                <div className="flex items-center gap-3">
+                <div className="hidden lg:block h-5 w-px bg-border" />
+                <div className="hidden lg:flex items-center gap-3">
                   <Link
                     to="/profile/$username"
                     params={{ username: user.username }}
@@ -151,9 +172,7 @@ export function LandingNavbar() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() =>
-                      void logout().then(() => navigate({ to: '/' }))
-                    }
+                    onClick={() => void logout().then(() => navigate({ to: '/' }))}
                     title="Déconnexion"
                     className="text-text-light hover:text-destructive hover:bg-destructive/10"
                   >
@@ -166,21 +185,128 @@ export function LandingNavbar() {
                 <Button
                   variant="ghost"
                   onClick={openLogin}
-                  className="text-sm text-text-light hidden sm:flex"
+                  className="text-sm text-text-light hidden lg:flex"
                 >
                   Se connecter
                 </Button>
                 <Button
                   onClick={openRegister}
-                  className="rounded-full h-9 text-sm px-5 shadow-sm shadow-primary/20"
+                  className="hidden lg:flex rounded-full h-9 text-sm px-5 shadow-sm shadow-primary/20"
                 >
                   S'inscrire →
                 </Button>
               </>
             )}
+
+            {/* Capsule burger — mobile only */}
+            <button
+              type="button"
+              aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+              aria-expanded={menuOpen}
+              aria-controls="landing-mobile-menu"
+              className="relative lg:hidden flex items-center justify-center w-9 h-9 rounded-full hover:bg-muted transition-colors"
+              onClick={() => setMenuOpen((o) => !o)}
+            >
+              <CapsuleIcon open={menuOpen} />
+            </button>
           </div>
         </div>
       </header>
+
+      <MobileMenuShell id="landing-mobile-menu" open={menuOpen} onClose={closeMenu}>
+        {NAV_ITEMS.map((item, i) => (
+          <MobileNavLink
+            key={item.to}
+            to={item.to}
+            label={item.label}
+            index={i}
+            open={menuOpen}
+            onClick={closeMenu}
+          />
+        ))}
+
+        {RESSOURCES_ITEMS.map(({ label, to }, i) => (
+          <MobileNavLink
+            key={label}
+            to={to}
+            label={label}
+            index={NAV_ITEMS.length + i}
+            open={menuOpen}
+            onClick={closeMenu}
+          />
+        ))}
+
+        <MobileNavAnchor
+          href="https://discord.gg/my-gachapon"
+          label="Communauté"
+          index={ALL_MOBILE_ITEMS_COUNT}
+          open={menuOpen}
+          onClick={closeMenu}
+        />
+
+        {/* Auth section */}
+        <div
+          className={`mt-1 pt-1 border-t border-border/60 flex items-center justify-between transition-opacity duration-300 ${menuOpen ? 'opacity-100' : 'opacity-0'}`}
+          style={{ transitionDelay: '350ms' }}
+        >
+          {isAuthenticated && user ? (
+            <>
+              <Link
+                to="/profile/$username"
+                params={{ username: user.username }}
+                className="px-2 py-3 text-3xl font-semibold uppercase tracking-wide text-text-light hover:text-text transition-colors"
+                onClick={closeMenu}
+              >
+                {user.username}
+              </Link>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => {
+                    void navigate({ to: '/play' })
+                    closeMenu()
+                  }}
+                  className="rounded-full h-9 text-sm px-5 shadow-sm shadow-primary/20"
+                >
+                  Jouer →
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    void logout().then(() => navigate({ to: '/' }))
+                    closeMenu()
+                  }}
+                  title="Déconnexion"
+                  className="p-2 rounded-full hover:text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  <LogOut className="font-semibold text-text-light h-7 w-7" />
+                </Button>
+              </div>
+            </>
+          ) : (
+            <div className="flex w-full items-center gap-3 px-2 py-2">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  openLogin()
+                  closeMenu()
+                }}
+                className="flex-1 text-sm"
+              >
+                Se connecter
+              </Button>
+              <Button
+                onClick={() => {
+                  openRegister()
+                  closeMenu()
+                }}
+                className="flex-1 rounded-full text-sm shadow-sm shadow-primary/20"
+              >
+                S'inscrire →
+              </Button>
+            </div>
+          )}
+        </div>
+      </MobileMenuShell>
 
       <AuthDialog
         open={dialogOpen}
