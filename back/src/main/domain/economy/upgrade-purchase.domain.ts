@@ -1,11 +1,22 @@
 import Boom from '@hapi/boom'
+
+import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
-import type { IUpgradePurchaseDomain, UserUpgradeInfo, BuyUpgradeResult, UpgradeType } from '../../types/domain/economy/upgrade-purchase.domain.interface'
+import type {
+  BuyUpgradeResult,
+  IUpgradePurchaseDomain,
+  UpgradeType,
+  UserUpgradeInfo,
+} from '../../types/domain/economy/upgrade-purchase.domain.interface'
 import type { IUpgradeRepository } from '../../types/infra/orm/repositories/upgrade.repository.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
-import type { PostgresOrm } from '../../infra/orm/postgres-client'
 
-const UPGRADE_TYPES: UpgradeType[] = ['REGEN', 'LUCK', 'DUST_HARVEST', 'TOKEN_VAULT']
+const UPGRADE_TYPES: UpgradeType[] = [
+  'REGEN',
+  'LUCK',
+  'DUST_HARVEST',
+  'TOKEN_VAULT',
+]
 const MAX_LEVEL = 4
 
 export class UpgradePurchaseDomain implements IUpgradePurchaseDomain {
@@ -13,7 +24,11 @@ export class UpgradePurchaseDomain implements IUpgradePurchaseDomain {
   readonly #userRepository: UserRepositoryInterface
   readonly #postgresOrm: PostgresOrm
 
-  constructor({ upgradeRepository, userRepository, postgresOrm }: IocContainer) {
+  constructor({
+    upgradeRepository,
+    userRepository,
+    postgresOrm,
+  }: IocContainer) {
     this.#upgradeRepository = upgradeRepository
     this.#userRepository = userRepository
     this.#postgresOrm = postgresOrm
@@ -34,10 +49,14 @@ export class UpgradePurchaseDomain implements IUpgradePurchaseDomain {
 
     return UPGRADE_TYPES.map((type) => {
       const currentLevel = levelByType[type] ?? 0
-      const currentConfig = allConfigs.find((c) => c.type === type && c.level === currentLevel)
+      const currentConfig = allConfigs.find(
+        (c) => c.type === type && c.level === currentLevel,
+      )
       const nextConfig =
         currentLevel < MAX_LEVEL
-          ? allConfigs.find((c) => c.type === type && c.level === currentLevel + 1)
+          ? allConfigs.find(
+              (c) => c.type === type && c.level === currentLevel + 1,
+            )
           : null
 
       return {
@@ -54,7 +73,10 @@ export class UpgradePurchaseDomain implements IUpgradePurchaseDomain {
   }
 
   async buy(userId: string, type: UpgradeType): Promise<BuyUpgradeResult> {
-    const existing = await this.#upgradeRepository.findUserUpgradeByType(userId, type)
+    const existing = await this.#upgradeRepository.findUserUpgradeByType(
+      userId,
+      type,
+    )
     const currentLevel = existing?.level ?? 0
 
     if (currentLevel >= MAX_LEVEL) {
@@ -62,7 +84,10 @@ export class UpgradePurchaseDomain implements IUpgradePurchaseDomain {
     }
 
     const nextLevel = currentLevel + 1
-    const config = await this.#upgradeRepository.findConfigByTypeLevel(type, nextLevel)
+    const config = await this.#upgradeRepository.findConfigByTypeLevel(
+      type,
+      nextLevel,
+    )
     if (!config) {
       throw Boom.internal('Upgrade config not found')
     }
@@ -75,8 +100,8 @@ export class UpgradePurchaseDomain implements IUpgradePurchaseDomain {
         }
 
         const upgrade = await tx.userUpgrade.upsert({
-          where: { userId_type: { userId, type: type as any } },
-          create: { userId, type: type as any, level: nextLevel },
+          where: { userId_type: { userId, type: type as UpgradeType } },
+          create: { userId, type: type as UpgradeType, level: nextLevel },
           update: { level: nextLevel },
         })
 

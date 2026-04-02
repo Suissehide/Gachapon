@@ -1,5 +1,8 @@
 import type { IocContainer } from '../../../types/application/ioc'
-import type { IStatsRepository, PublicStats } from '../../../types/infra/orm/repositories/stats.repository.interface'
+import type {
+  IStatsRepository,
+  PublicStats,
+} from '../../../types/infra/orm/repositories/stats.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 export class StatsRepository implements IStatsRepository {
@@ -22,7 +25,9 @@ export class StatsRepository implements IStatsRepository {
           FROM "GachaPull"
           WHERE "pulledAt" >= ${sevenDaysAgo}
         `,
-        this.#prisma.gachaPull.count({ where: { card: { rarity: 'LEGENDARY' } } }),
+        this.#prisma.gachaPull.count({
+          where: { card: { rarity: 'LEGENDARY' } },
+        }),
       ])
 
     return {

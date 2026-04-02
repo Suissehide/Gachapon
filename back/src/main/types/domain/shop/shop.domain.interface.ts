@@ -1,5 +1,3 @@
-import type { ShopItem } from '../../../../generated/client'
-
 export type BuyShopItemResult = {
   purchaseId: string
   dustSpent: number

@@ -14,7 +14,10 @@ export class RewardRepository implements RewardRepositoryInterface {
     return this.#prisma.reward.create({ data })
   }
 
-  update(id: string, data: Partial<{ tokens: number; dust: number; xp: number }>): Promise<Reward> {
+  update(
+    id: string,
+    data: Partial<{ tokens: number; dust: number; xp: number }>,
+  ): Promise<Reward> {
     return this.#prisma.reward.update({ where: { id }, data })
   }
 }

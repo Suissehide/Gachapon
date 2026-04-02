@@ -1,6 +1,10 @@
-import type { IocContainer } from '../../../types/application/ioc'
 import type { Achievement } from '../../../../generated/client'
-import type { IAchievementRepository, CreateAchievementInput, UpdateAchievementInput } from '../../../types/infra/orm/repositories/achievement.repository.interface'
+import type { IocContainer } from '../../../types/application/ioc'
+import type {
+  CreateAchievementInput,
+  IAchievementRepository,
+  UpdateAchievementInput,
+} from '../../../types/infra/orm/repositories/achievement.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 export class AchievementRepository implements IAchievementRepository {

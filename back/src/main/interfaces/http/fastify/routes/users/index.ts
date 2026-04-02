@@ -1,10 +1,15 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
-import { userProfileResponseSchema, usersProfileParamSchema, usersSearchQuerySchema } from '../../schemas/users.schema'
+import {
+  userProfileResponseSchema,
+  usersProfileParamSchema,
+  usersSearchQuerySchema,
+} from '../../schemas/users.schema'
 
 export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { userRepository, gachaPullRepository, userCardRepository } = fastify.iocContainer
+  const { userRepository, gachaPullRepository, userCardRepository } =
+    fastify.iocContainer
 
   fastify.get(
     '/users/search',
@@ -13,7 +18,10 @@ export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
       schema: { querystring: usersSearchQuerySchema },
     },
     async (request) => {
-      const users = await userRepository.searchByUsername(request.query.q, request.user.userID)
+      const users = await userRepository.searchByUsername(
+        request.query.q,
+        request.user.userID,
+      )
       return { users }
     },
   )
@@ -29,14 +37,17 @@ export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
     },
     async (request) => {
       const user = await userRepository.findByUsername(request.params.username)
-      if (!user) throw Boom.notFound('User not found')
+      if (!user) {
+        throw Boom.notFound('User not found')
+      }
 
-      const [totalPulls, ownedCards, legendaryCount, dustGenerated] = await Promise.all([
-        gachaPullRepository.countByUser(user.id),
-        userCardRepository.countByUser(user.id),
-        userCardRepository.countLegendaryByUser(user.id),
-        gachaPullRepository.sumDustEarnedByUser(user.id),
-      ])
+      const [totalPulls, ownedCards, legendaryCount, dustGenerated] =
+        await Promise.all([
+          gachaPullRepository.countByUser(user.id),
+          userCardRepository.countByUser(user.id),
+          userCardRepository.countLegendaryByUser(user.id),
+          gachaPullRepository.sumDustEarnedByUser(user.id),
+        ])
 
       return {
         id: user.id,

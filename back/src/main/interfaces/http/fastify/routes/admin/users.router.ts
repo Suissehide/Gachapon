@@ -7,18 +7,22 @@ import {
   adminUserRewardBodySchema,
   adminUserRoleBodySchema,
   adminUserSuspendBodySchema,
-  adminUserTokensBodySchema,
   adminUsersQuerySchema,
+  adminUserTokensBodySchema,
 } from '../../schemas/admin-users.schema'
 
 export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { userRepository, gachaPullRepository, userCardRepository, rewardsDomain } =
-    fastify.iocContainer
+  const {
+    userRepository,
+    gachaPullRepository,
+    userCardRepository,
+    rewardsDomain,
+  } = fastify.iocContainer
 
   fastify.get(
     '/',
     { schema: { querystring: adminUsersQuerySchema } },
-    async (request) => {
+    (request) => {
       const { page, limit, search } = request.query
       return userRepository.findAllPaginated({ page, limit, search })
     },
@@ -30,7 +34,9 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request) => {
       const { id } = request.params
       const user = await userRepository.findById(id)
-      if (!user) throw Boom.notFound('User not found')
+      if (!user) {
+        throw Boom.notFound('User not found')
+      }
 
       const [pullsTotal, dustGenerated, cardsOwned] = await Promise.all([
         gachaPullRepository.countByUser(id),
@@ -59,7 +65,9 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
     { schema: { params: adminUserIdParamSchema } },
     async (request) => {
       const user = await userRepository.findById(request.params.id)
-      if (!user) throw Boom.notFound('User not found')
+      if (!user) {
+        throw Boom.notFound('User not found')
+      }
 
       const userCards = await userCardRepository.findByUser(request.params.id)
       return {
@@ -81,33 +89,54 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.patch(
     '/:id/tokens',
-    { schema: { params: adminUserIdParamSchema, body: adminUserTokensBodySchema } },
+    {
+      schema: {
+        params: adminUserIdParamSchema,
+        body: adminUserTokensBodySchema,
+      },
+    },
     async (request) => {
       const user = await userRepository.findById(request.params.id)
-      if (!user) throw Boom.notFound('User not found')
-      return userRepository.incrementTokens(request.params.id, request.body.amount)
+      if (!user) {
+        throw Boom.notFound('User not found')
+      }
+      return userRepository.incrementTokens(
+        request.params.id,
+        request.body.amount,
+      )
     },
   )
 
   fastify.patch(
     '/:id/dust',
-    { schema: { params: adminUserIdParamSchema, body: adminUserDustBodySchema } },
+    {
+      schema: { params: adminUserIdParamSchema, body: adminUserDustBodySchema },
+    },
     async (request) => {
       const user = await userRepository.findById(request.params.id)
-      if (!user) throw Boom.notFound('User not found')
-      return userRepository.incrementDust(request.params.id, request.body.amount)
+      if (!user) {
+        throw Boom.notFound('User not found')
+      }
+      return userRepository.incrementDust(
+        request.params.id,
+        request.body.amount,
+      )
     },
   )
 
   fastify.patch(
     '/:id/role',
-    { schema: { params: adminUserIdParamSchema, body: adminUserRoleBodySchema } },
+    {
+      schema: { params: adminUserIdParamSchema, body: adminUserRoleBodySchema },
+    },
     async (request) => {
       if (request.params.id === request.user.userID) {
         throw Boom.forbidden('Cannot change your own role')
       }
       const user = await userRepository.findById(request.params.id)
-      if (!user) throw Boom.notFound('User not found')
+      if (!user) {
+        throw Boom.notFound('User not found')
+      }
       return userRepository.updateRole(request.params.id, request.body.role)
     },
   )
@@ -118,25 +147,40 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
       schema: {
         params: adminUserIdParamSchema,
         body: adminUserRewardBodySchema,
-        response: { 201: { type: 'object', properties: { id: { type: 'string' } } } },
+        response: {
+          201: { type: 'object', properties: { id: { type: 'string' } } },
+        },
       },
     },
     async (request, reply) => {
-      const userReward = await rewardsDomain.addRewardToUser(request.params.id, request.body)
+      const userReward = await rewardsDomain.addRewardToUser(
+        request.params.id,
+        request.body,
+      )
       return reply.status(201).send({ id: userReward.id })
     },
   )
 
   fastify.patch(
     '/:id/suspend',
-    { schema: { params: adminUserIdParamSchema, body: adminUserSuspendBodySchema } },
+    {
+      schema: {
+        params: adminUserIdParamSchema,
+        body: adminUserSuspendBodySchema,
+      },
+    },
     async (request) => {
       if (request.params.id === request.user.userID) {
         throw Boom.forbidden('Cannot suspend your own account')
       }
       const user = await userRepository.findById(request.params.id)
-      if (!user) throw Boom.notFound('User not found')
-      return userRepository.updateSuspended(request.params.id, request.body.suspended)
+      if (!user) {
+        throw Boom.notFound('User not found')
+      }
+      return userRepository.updateSuspended(
+        request.params.id,
+        request.body.suspended,
+      )
     },
   )
 }

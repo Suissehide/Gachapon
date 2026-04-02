@@ -10,7 +10,7 @@ export class ScoringConfigRepository implements IScoringConfigRepository {
     this.#prisma = postgresOrm.prisma
   }
 
-  async get(): Promise<ScoringConfig> {
+  get(): Promise<ScoringConfig> {
     return this.#prisma.scoringConfig.upsert({
       where: { id: 'singleton' },
       update: {},
@@ -18,7 +18,9 @@ export class ScoringConfigRepository implements IScoringConfigRepository {
     })
   }
 
-  async upsert(data: Partial<Omit<ScoringConfig, 'id' | 'updatedAt'>>): Promise<ScoringConfig> {
+  upsert(
+    data: Partial<Omit<ScoringConfig, 'id' | 'updatedAt'>>,
+  ): Promise<ScoringConfig> {
     return this.#prisma.scoringConfig.upsert({
       where: { id: 'singleton' },
       update: data,

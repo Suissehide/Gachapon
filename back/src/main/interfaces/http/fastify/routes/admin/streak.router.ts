@@ -35,9 +35,14 @@ export const adminStreakRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request) => {
       const defaultMilestone = await streakMilestoneRepository.findDefault()
       if (!defaultMilestone) {
-        throw Boom.notFound('Default streak milestone not found. Run the migration first.')
+        throw Boom.notFound(
+          'Default streak milestone not found. Run the migration first.',
+        )
       }
-      const updated = await rewardRepository.update(defaultMilestone.rewardId, request.body)
+      const updated = await rewardRepository.update(
+        defaultMilestone.rewardId,
+        request.body,
+      )
       return { tokens: updated.tokens, dust: updated.dust, xp: updated.xp }
     },
   )
@@ -73,12 +78,24 @@ export const adminStreakRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.patch(
     '/milestones/:id',
-    { schema: { params: adminStreakMilestoneParamSchema, body: adminStreakUpdateMilestoneBodySchema } },
+    {
+      schema: {
+        params: adminStreakMilestoneParamSchema,
+        body: adminStreakUpdateMilestoneBodySchema,
+      },
+    },
     async (request) => {
-      const milestone = await streakMilestoneRepository.findByIdWithReward(request.params.id)
-      if (!milestone) throw Boom.notFound('Milestone not found')
+      const milestone = await streakMilestoneRepository.findByIdWithReward(
+        request.params.id,
+      )
+      if (!milestone) {
+        throw Boom.notFound('Milestone not found')
+      }
 
-      const updated = await rewardRepository.update(milestone.rewardId, request.body)
+      const updated = await rewardRepository.update(
+        milestone.rewardId,
+        request.body,
+      )
       return {
         id: milestone.id,
         day: milestone.day,
@@ -93,11 +110,19 @@ export const adminStreakRouter: FastifyPluginCallbackZod = (fastify) => {
     '/milestones/:id',
     { schema: { params: adminStreakMilestoneParamSchema } },
     async (request, reply) => {
-      const milestone = await streakMilestoneRepository.findByIdWithReward(request.params.id)
-      if (!milestone) throw Boom.notFound('Milestone not found')
-      if (milestone.day === 0) throw Boom.forbidden('Cannot delete the default daily milestone.')
+      const milestone = await streakMilestoneRepository.findByIdWithReward(
+        request.params.id,
+      )
+      if (!milestone) {
+        throw Boom.notFound('Milestone not found')
+      }
+      if (milestone.day === 0) {
+        throw Boom.forbidden('Cannot delete the default daily milestone.')
+      }
 
-      await streakMilestoneRepository.update(request.params.id, { isActive: false })
+      await streakMilestoneRepository.update(request.params.id, {
+        isActive: false,
+      })
       return reply.status(204).send()
     },
   )

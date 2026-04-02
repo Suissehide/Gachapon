@@ -1,10 +1,13 @@
 import Boom from '@hapi/boom'
+
 import type { IocContainer } from '../../../types/application/ioc'
-import type { UserCardWithCard } from '../../../types/domain/gacha/gacha.types'
+import type {
+  CardVariant,
+  UserCardWithCard,
+} from '../../../types/domain/gacha/gacha.types'
 import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type { IUserCardRepository } from '../../../types/infra/orm/repositories/user-card.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
-import type { CardVariant } from '../../../types/domain/gacha/gacha.types'
 
 export class UserCardRepository implements IUserCardRepository {
   readonly #prisma: PostgresPrismaClient
@@ -21,7 +24,11 @@ export class UserCardRepository implements IUserCardRepository {
     }) as Promise<UserCardWithCard[]>
   }
 
-  async upsert(userId: string, cardId: string, variant: CardVariant): Promise<{ wasDuplicate: boolean }> {
+  async upsert(
+    userId: string,
+    cardId: string,
+    variant: CardVariant,
+  ): Promise<{ wasDuplicate: boolean }> {
     const existing = await this.#prisma.userCard.findUnique({
       where: { userId_cardId_variant: { userId, cardId, variant } },
     })
@@ -39,7 +46,12 @@ export class UserCardRepository implements IUserCardRepository {
   }
 
   /** Must be called inside a SERIALIZABLE transaction. */
-  async upsertInTx(tx: PrimaTransactionClient, userId: string, cardId: string, variant: CardVariant): Promise<{ wasDuplicate: boolean }> {
+  async upsertInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+    cardId: string,
+    variant: CardVariant,
+  ): Promise<{ wasDuplicate: boolean }> {
     const existing = await tx.userCard.findUnique({
       where: { userId_cardId_variant: { userId, cardId, variant } },
     })
@@ -56,7 +68,11 @@ export class UserCardRepository implements IUserCardRepository {
     return { wasDuplicate: false }
   }
 
-  async decrementOrDelete(userId: string, cardId: string, variant: CardVariant): Promise<{ quantityLeft: number }> {
+  async decrementOrDelete(
+    userId: string,
+    cardId: string,
+    variant: CardVariant,
+  ): Promise<{ quantityLeft: number }> {
     const uc = await this.#prisma.userCard.findUniqueOrThrow({
       where: { userId_cardId_variant: { userId, cardId, variant } },
     })
@@ -95,7 +111,13 @@ export class UserCardRepository implements IUserCardRepository {
     })
   }
 
-  async recycleInTx(tx: PrimaTransactionClient, userId: string, cardId: string, variant: CardVariant, quantity: number): Promise<void> {
+  async recycleInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+    cardId: string,
+    variant: CardVariant,
+    quantity: number,
+  ): Promise<void> {
     const uc = await tx.userCard.findUnique({
       where: { userId_cardId_variant: { userId, cardId, variant } },
     })

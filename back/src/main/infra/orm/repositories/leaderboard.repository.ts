@@ -1,12 +1,12 @@
 import type { IocContainer } from '../../../types/application/ioc'
 import type {
-  ILeaderboardRepository,
   CollectorRow,
+  ILeaderboardRepository,
   LeaderboardUser,
   LegendaryRow,
+  QuestWithReward,
   TeamWithMembers,
   UserCardForScoring,
-  QuestWithReward,
 } from '../../../types/infra/orm/repositories/leaderboard.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
 
@@ -88,7 +88,9 @@ export class LeaderboardRepository implements ILeaderboardRepository {
       key: q.key,
       name: q.name,
       description: q.description,
-      reward: q.reward ? { tokens: q.reward.tokens, dust: q.reward.dust } : null,
+      reward: q.reward
+        ? { tokens: q.reward.tokens, dust: q.reward.dust }
+        : null,
     }))
   }
 }

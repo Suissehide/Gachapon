@@ -10,8 +10,12 @@ import {
 } from '../../schemas/collection.schema'
 
 export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { cardRepository, userCardRepository, userRepository, collectionDomain } =
-    fastify.iocContainer
+  const {
+    cardRepository,
+    userCardRepository,
+    userRepository,
+    collectionDomain,
+  } = fastify.iocContainer
 
   fastify.get(
     '/sets',
@@ -53,7 +57,9 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
     },
     async (request) => {
       const card = await cardRepository.findById(request.params.id)
-      if (!card) throw Boom.notFound('Card not found')
+      if (!card) {
+        throw Boom.notFound('Card not found')
+      }
       return card
     },
   )
@@ -66,7 +72,9 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
     },
     async (request) => {
       const user = await userRepository.findById(request.params.id)
-      if (!user) throw Boom.notFound('User not found')
+      if (!user) {
+        throw Boom.notFound('User not found')
+      }
 
       const userCards = await userCardRepository.findByUser(request.params.id)
       return {
@@ -92,7 +100,7 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
       onRequest: [fastify.verifySessionCookie],
       schema: { body: collectionRecycleBodySchema },
     },
-    async (request) => {
+    (request) => {
       return collectionDomain.recycleCard(request.user.userID, request.body)
     },
   )

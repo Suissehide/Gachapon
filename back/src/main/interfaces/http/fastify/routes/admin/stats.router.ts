@@ -3,11 +3,11 @@ import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 export const adminStatsRouter: FastifyPluginCallbackZod = (fastify) => {
   const { adminStatsRepository } = fastify.iocContainer
 
-  fastify.get('/dashboard', async () => {
+  fastify.get('/dashboard', () => {
     return adminStatsRepository.getDashboard()
   })
 
-  fastify.get('/stats', async () => {
+  fastify.get('/stats', () => {
     return adminStatsRepository.getDetailedStats()
   })
 }

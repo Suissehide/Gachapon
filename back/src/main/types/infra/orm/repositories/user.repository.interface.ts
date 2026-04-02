@@ -41,13 +41,36 @@ export interface UserRepositoryInterface {
   findByEmailVerificationToken(token: string): Promise<UserEntity | null>
   findByPasswordResetToken(token: string): Promise<UserEntity | null>
   deleteUnverifiedByEmail(email: string): Promise<void>
-  findAllPaginated(params: { page: number; limit: number; search?: string }): Promise<{
-    users: Pick<UserEntity, 'id' | 'username' | 'email' | 'role' | 'tokens' | 'dust' | 'suspended' | 'createdAt'>[]
+  findAllPaginated(params: {
+    page: number
+    limit: number
+    search?: string
+  }): Promise<{
+    users: Pick<
+      UserEntity,
+      | 'id'
+      | 'username'
+      | 'email'
+      | 'role'
+      | 'tokens'
+      | 'dust'
+      | 'suspended'
+      | 'createdAt'
+    >[]
     total: number
   }>
-  searchByUsername(q: string, excludeId: string): Promise<Pick<UserEntity, 'id' | 'username' | 'avatar'>[]>
+  searchByUsername(
+    q: string,
+    excludeId: string,
+  ): Promise<Pick<UserEntity, 'id' | 'username' | 'avatar'>[]>
   incrementTokens(id: string, amount: number): Promise<{ tokens: number }>
   incrementDust(id: string, amount: number): Promise<{ dust: number }>
-  updateRole(id: string, role: 'USER' | 'SUPER_ADMIN'): Promise<{ role: string }>
-  updateSuspended(id: string, suspended: boolean): Promise<{ suspended: boolean }>
+  updateRole(
+    id: string,
+    role: 'USER' | 'SUPER_ADMIN',
+  ): Promise<{ role: string }>
+  updateSuspended(
+    id: string,
+    suspended: boolean,
+  ): Promise<{ suspended: boolean }>
 }

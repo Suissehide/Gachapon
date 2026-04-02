@@ -2,7 +2,9 @@ import { z } from 'zod/v4'
 
 export const usersSearchQuerySchema = z.object({ q: z.string().min(2).max(30) })
 
-export const usersProfileParamSchema = z.object({ username: z.string().min(1).max(30) })
+export const usersProfileParamSchema = z.object({
+  username: z.string().min(1).max(30),
+})
 
 export const userProfileResponseSchema = z.object({
   id: z.string(),

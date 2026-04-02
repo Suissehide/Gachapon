@@ -18,7 +18,9 @@ export const meRouter: FastifyPluginCallbackZod = (fastify) => {
       if (!user) {
         throw Boom.notFound('User not found')
       }
-      const pendingRewardsCount = await userRewardRepository.countPendingByUser(user.id)
+      const pendingRewardsCount = await userRewardRepository.countPendingByUser(
+        user.id,
+      )
       return { ...sanitizeUser(user), pendingRewardsCount }
     },
   )

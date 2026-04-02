@@ -5,7 +5,7 @@ import { adminUpgradesBulkBodySchema } from '../../schemas/admin-upgrades.schema
 export const adminUpgradesRouter: FastifyPluginCallbackZod = (fastify) => {
   const { upgradeRepository } = fastify.iocContainer
 
-  fastify.get('/', async () => {
+  fastify.get('/', () => {
     return upgradeRepository.findAllConfigs()
   })
 

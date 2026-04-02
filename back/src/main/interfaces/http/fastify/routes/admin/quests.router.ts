@@ -26,10 +26,17 @@ export const adminQuestsRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.patch(
     '/:id',
-    { schema: { params: adminQuestIdParamSchema, body: adminQuestUpdateBodySchema } },
+    {
+      schema: {
+        params: adminQuestIdParamSchema,
+        body: adminQuestUpdateBodySchema,
+      },
+    },
     async (request) => {
       const quest = await questRepository.findById(request.params.id)
-      if (!quest) throw Boom.notFound('Quest not found')
+      if (!quest) {
+        throw Boom.notFound('Quest not found')
+      }
       return questRepository.update(request.params.id, request.body)
     },
   )
@@ -39,7 +46,9 @@ export const adminQuestsRouter: FastifyPluginCallbackZod = (fastify) => {
     { schema: { params: adminQuestIdParamSchema } },
     async (request, reply) => {
       const quest = await questRepository.findById(request.params.id)
-      if (!quest) throw Boom.notFound('Quest not found')
+      if (!quest) {
+        throw Boom.notFound('Quest not found')
+      }
       await questRepository.delete(request.params.id)
       return reply.status(204).send()
     },

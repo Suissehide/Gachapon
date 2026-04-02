@@ -12,6 +12,8 @@ export const adminStreakCreateMilestoneBodySchema = rewardSchema.extend({
   day: z.number().int().min(1),
 })
 
-export const adminStreakMilestoneParamSchema = z.object({ id: z.string().uuid() })
+export const adminStreakMilestoneParamSchema = z.object({
+  id: z.string().uuid(),
+})
 
 export const adminStreakUpdateMilestoneBodySchema = rewardSchema.partial()

@@ -1,8 +1,8 @@
 import type { IocContainer } from '../../../types/application/ioc'
 import type {
-  IAdminStatsRepository,
   DashboardData,
   DetailedStats,
+  IAdminStatsRepository,
 } from '../../../types/infra/orm/repositories/admin-stats.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
 
@@ -18,17 +18,29 @@ export class AdminStatsRepository implements IAdminStatsRepository {
 
   async getDashboard(): Promise<DashboardData> {
     const now = new Date()
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    )
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
-    const [totalUsers, pullsToday, dustAgg, legendaryCount] = await Promise.all([
-      this.#prisma.user.count(),
-      this.#prisma.gachaPull.count({ where: { pulledAt: { gte: startOfToday } } }),
-      this.#prisma.gachaPull.aggregate({ _sum: { dustEarned: true } }),
-      this.#prisma.gachaPull.count({ where: { card: { rarity: 'LEGENDARY' } } }),
-    ])
+    const [totalUsers, pullsToday, dustAgg, legendaryCount] = await Promise.all(
+      [
+        this.#prisma.user.count(),
+        this.#prisma.gachaPull.count({
+          where: { pulledAt: { gte: startOfToday } },
+        }),
+        this.#prisma.gachaPull.aggregate({ _sum: { dustEarned: true } }),
+        this.#prisma.gachaPull.count({
+          where: { card: { rarity: 'LEGENDARY' } },
+        }),
+      ],
+    )
 
-    const pullsSeries = await this.#prisma.$queryRaw<{ day: Date; count: bigint }[]>`
+    const pullsSeries = await this.#prisma.$queryRaw<
+      { day: Date; count: bigint }[]
+    >`
       SELECT DATE_TRUNC('day', "pulledAt") AS day, COUNT(*) AS count
       FROM "GachaPull"
       WHERE "pulledAt" >= ${thirtyDaysAgo}
@@ -105,12 +117,16 @@ export class AdminStatsRepository implements IAdminStatsRepository {
     ])
 
     const totalRealPulls = rarityReal.reduce((s, r) => s + Number(r.count), 0)
-    const totalWeight = theoreticalWeights.reduce((s, r) => s + Number(r.weight), 0)
+    const totalWeight = theoreticalWeights.reduce(
+      (s, r) => s + Number(r.weight),
+      0,
+    )
     const rarityDrift = RARITIES.map((rarity) => {
       const real = rarityReal.find((r) => r.rarity === rarity)
       const theoretical = theoreticalWeights.find((r) => r.rarity === rarity)
       const realCount = real ? Number(real.count) : 0
-      const realPct = totalRealPulls > 0 ? (realCount / totalRealPulls) * 100 : 0
+      const realPct =
+        totalRealPulls > 0 ? (realCount / totalRealPulls) * 100 : 0
       const theoreticalPct =
         totalWeight > 0 && theoretical
           ? (Number(theoretical.weight) / totalWeight) * 100

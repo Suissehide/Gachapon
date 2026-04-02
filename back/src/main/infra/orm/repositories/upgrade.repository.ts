@@ -1,9 +1,10 @@
+import type { UpgradeConfig, UserUpgrade } from '../../../../generated/client'
+import type { UpgradeType } from '../../../../generated/enums'
 import {
   getUpgradeEffectsFromRows,
   type UserUpgradeEffects,
 } from '../../../domain/economy/upgrade.domain'
 import type { IocContainer } from '../../../types/application/ioc'
-import type { UpgradeConfig, UserUpgrade } from '../../../../generated/client'
 import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type { IUpgradeRepository } from '../../../types/infra/orm/repositories/upgrade.repository.interface'
 import type { PostgresOrm, PostgresPrismaClient } from '../postgres-client'
@@ -50,20 +51,31 @@ export class UpgradeRepository implements IUpgradeRepository {
     return this.#prisma.userUpgrade.findMany({ where: { userId } })
   }
 
-  findUserUpgradeByType(userId: string, type: string): Promise<UserUpgrade | null> {
+  findUserUpgradeByType(
+    userId: string,
+    type: string,
+  ): Promise<UserUpgrade | null> {
     return this.#prisma.userUpgrade.findUnique({
-      where: { userId_type: { userId, type: type as any } },
+      where: { userId_type: { userId, type: type as UpgradeType } },
     })
   }
 
-  findConfigByTypeLevel(type: string, level: number): Promise<UpgradeConfig | null> {
+  findConfigByTypeLevel(
+    type: string,
+    level: number,
+  ): Promise<UpgradeConfig | null> {
     return this.#prisma.upgradeConfig.findUnique({
-      where: { type_level: { type: type as any, level } },
+      where: { type_level: { type: type as UpgradeType, level } },
     })
   }
 
   async bulkUpdateConfigs(
-    upgrades: { type: string; level: number; effect: number; dustCost: number }[],
+    upgrades: {
+      type: string
+      level: number
+      effect: number
+      dustCost: number
+    }[],
   ): Promise<void> {
     await this.#postgresOrm.executeWithTransactionClient(
       (tx) => this.bulkUpdateConfigsInTx(tx, upgrades),
@@ -73,25 +85,32 @@ export class UpgradeRepository implements IUpgradeRepository {
 
   async bulkUpdateConfigsInTx(
     tx: PrimaTransactionClient,
-    upgrades: { type: string; level: number; effect: number; dustCost: number }[],
+    upgrades: {
+      type: string
+      level: number
+      effect: number
+      dustCost: number
+    }[],
   ): Promise<void> {
     for (const row of upgrades) {
       await tx.upgradeConfig.update({
-        where: { type_level: { type: row.type as any, level: row.level } },
+        where: {
+          type_level: { type: row.type as UpgradeType, level: row.level },
+        },
         data: { effect: row.effect, dustCost: row.dustCost },
       })
     }
   }
 
-  async upsertUserUpgradeInTx(
+  upsertUserUpgradeInTx(
     tx: PrimaTransactionClient,
     userId: string,
     type: string,
     level: number,
   ): Promise<UserUpgrade> {
     return tx.userUpgrade.upsert({
-      where: { userId_type: { userId, type: type as any } },
-      create: { userId, type: type as any, level },
+      where: { userId_type: { userId, type: type as UpgradeType } },
+      create: { userId, type: type as UpgradeType, level },
       update: { level },
     })
   }

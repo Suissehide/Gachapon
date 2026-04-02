@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto'
-
 import Boom from '@hapi/boom'
 
 import type { UserReward } from '../../../generated/client'
@@ -27,7 +26,10 @@ export class RewardsDomain implements RewardsDomainInterface {
     userRewardRepository,
     userRepository,
     postgresOrm,
-  }: Pick<IocContainer, 'userRewardRepository' | 'userRepository' | 'postgresOrm'>) {
+  }: Pick<
+    IocContainer,
+    'userRewardRepository' | 'userRepository' | 'postgresOrm'
+  >) {
     this.#userRewardRepository = userRewardRepository
     this.#userRepository = userRepository
     this.#postgresOrm = postgresOrm
@@ -105,9 +107,14 @@ export class RewardsDomain implements RewardsDomainInterface {
     )
   }
 
-  async addRewardToUser(userId: string, input: AddRewardInput): Promise<UserReward> {
+  async addRewardToUser(
+    userId: string,
+    input: AddRewardInput,
+  ): Promise<UserReward> {
     const user = await this.#userRepository.findById(userId)
-    if (!user) throw Boom.notFound('User not found')
+    if (!user) {
+      throw Boom.notFound('User not found')
+    }
 
     return this.#userRewardRepository.create({
       userId,

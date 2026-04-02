@@ -89,11 +89,15 @@ export class UserRepository implements UserRepositoryInterface {
   }
 
   findByEmailVerificationToken(token: string): Promise<UserEntity | null> {
-    return this.#prisma.user.findUnique({ where: { emailVerificationToken: token } })
+    return this.#prisma.user.findUnique({
+      where: { emailVerificationToken: token },
+    })
   }
 
   findByPasswordResetToken(token: string): Promise<UserEntity | null> {
-    return this.#prisma.user.findUnique({ where: { passwordResetToken: token } })
+    return this.#prisma.user.findUnique({
+      where: { passwordResetToken: token },
+    })
   }
 
   async deleteUnverifiedByEmail(email: string): Promise<void> {
@@ -102,12 +106,23 @@ export class UserRepository implements UserRepositoryInterface {
     })
   }
 
-  async findAllPaginated(params: { page: number; limit: number; search?: string }) {
+  async findAllPaginated(params: {
+    page: number
+    limit: number
+    search?: string
+  }) {
     const where = params.search
       ? {
           OR: [
-            { username: { contains: params.search, mode: 'insensitive' as const } },
-            { email: { contains: params.search, mode: 'insensitive' as const } },
+            {
+              username: {
+                contains: params.search,
+                mode: 'insensitive' as const,
+              },
+            },
+            {
+              email: { contains: params.search, mode: 'insensitive' as const },
+            },
           ],
         }
       : {}
@@ -145,7 +160,10 @@ export class UserRepository implements UserRepositoryInterface {
     })
   }
 
-  async incrementTokens(id: string, amount: number): Promise<{ tokens: number }> {
+  async incrementTokens(
+    id: string,
+    amount: number,
+  ): Promise<{ tokens: number }> {
     const updated = await this.#prisma.user.update({
       where: { id },
       data: { tokens: { increment: amount } },
@@ -161,7 +179,10 @@ export class UserRepository implements UserRepositoryInterface {
     return { dust: updated.dust }
   }
 
-  async updateRole(id: string, role: 'USER' | 'SUPER_ADMIN'): Promise<{ role: string }> {
+  async updateRole(
+    id: string,
+    role: 'USER' | 'SUPER_ADMIN',
+  ): Promise<{ role: string }> {
     const updated = await this.#prisma.user.update({
       where: { id },
       data: { role },
@@ -169,7 +190,10 @@ export class UserRepository implements UserRepositoryInterface {
     return { role: updated.role }
   }
 
-  async updateSuspended(id: string, suspended: boolean): Promise<{ suspended: boolean }> {
+  async updateSuspended(
+    id: string,
+    suspended: boolean,
+  ): Promise<{ suspended: boolean }> {
     const updated = await this.#prisma.user.update({
       where: { id },
       data: { suspended },

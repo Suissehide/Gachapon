@@ -26,10 +26,14 @@ export const adminSetsRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.patch(
     '/:id',
-    { schema: { params: adminSetIdParamSchema, body: adminSetUpdateBodySchema } },
+    {
+      schema: { params: adminSetIdParamSchema, body: adminSetUpdateBodySchema },
+    },
     async (request) => {
       const set = await cardRepository.findSetById(request.params.id)
-      if (!set) throw Boom.notFound('Set not found')
+      if (!set) {
+        throw Boom.notFound('Set not found')
+      }
       return cardRepository.updateSet(request.params.id, request.body)
     },
   )
@@ -39,7 +43,9 @@ export const adminSetsRouter: FastifyPluginCallbackZod = (fastify) => {
     { schema: { params: adminSetIdParamSchema } },
     async (request, reply) => {
       const set = await cardRepository.findSetById(request.params.id)
-      if (!set) throw Boom.notFound('Set not found')
+      if (!set) {
+        throw Boom.notFound('Set not found')
+      }
       await cardRepository.deleteSet(request.params.id)
       return reply.status(204).send()
     },

@@ -1,6 +1,10 @@
-import type { IocContainer } from '../../../types/application/ioc'
 import type { ShopItem } from '../../../../generated/client'
-import type { IShopItemRepository, CreateShopItemInput, UpdateShopItemInput } from '../../../types/infra/orm/repositories/shop-item.repository.interface'
+import type { IocContainer } from '../../../types/application/ioc'
+import type {
+  CreateShopItemInput,
+  IShopItemRepository,
+  UpdateShopItemInput,
+} from '../../../types/infra/orm/repositories/shop-item.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 export class ShopItemRepository implements IShopItemRepository {

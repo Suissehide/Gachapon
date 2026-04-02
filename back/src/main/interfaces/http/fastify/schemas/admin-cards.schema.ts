@@ -1,6 +1,12 @@
 import { z } from 'zod/v4'
 
-export const cardRarityEnum = z.enum(['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY'])
+export const cardRarityEnum = z.enum([
+  'COMMON',
+  'UNCOMMON',
+  'RARE',
+  'EPIC',
+  'LEGENDARY',
+])
 
 export const adminCardsQuerySchema = z.object({
   setId: z.string().uuid().optional(),

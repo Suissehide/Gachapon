@@ -1,16 +1,18 @@
+import type { Multipart } from '@fastify/multipart'
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
-import { ALLOWED_IMAGE_MIME, uploadCardImage } from './card-image.helpers'
+import type { CardRarity } from '../../../../../../generated/enums'
 import {
   adminCardFieldsSchema,
   adminCardIdParamSchema,
-  adminCardUpdateBodySchema,
   adminCardsQuerySchema,
+  adminCardUpdateBodySchema,
 } from '../../schemas/admin-cards.schema'
+import { ALLOWED_IMAGE_MIME, uploadCardImage } from './card-image.helpers'
 
 async function parseMultipartCard(request: {
-  parts: () => AsyncIterable<any>
+  parts: () => AsyncIterableIterator<Multipart>
 }): Promise<{
   fields: Record<string, string>
   imageBuffer: Buffer | null
@@ -52,7 +54,7 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request) => {
       const cards = await cardRepository.findAll({
         setId: request.query.setId,
-        rarity: request.query.rarity as any,
+        rarity: request.query.rarity as CardRarity,
       })
       return { cards }
     },
@@ -68,7 +70,14 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
 
     let imageUrl: string
     if (imageBuffer) {
-      imageUrl = (await uploadCardImage(storageClient, parsed.data.name, imageBuffer, imageMime)).url
+      imageUrl = (
+        await uploadCardImage(
+          storageClient,
+          parsed.data.name,
+          imageBuffer,
+          imageMime,
+        )
+      ).url
     } else if (fields.imageUrl) {
       const storagePrefix = storageClient.publicUrl('')
       if (!fields.imageUrl.startsWith(storagePrefix)) {
@@ -85,7 +94,12 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.patch(
     '/:id',
-    { schema: { params: adminCardIdParamSchema, body: adminCardUpdateBodySchema } },
+    {
+      schema: {
+        params: adminCardIdParamSchema,
+        body: adminCardUpdateBodySchema,
+      },
+    },
     async (request) => {
       if (request.body.imageUrl) {
         const storagePrefix = storageClient.publicUrl('')
@@ -95,7 +109,9 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
       }
 
       const card = await cardRepository.findById(request.params.id)
-      if (!card) throw Boom.notFound('Card not found')
+      if (!card) {
+        throw Boom.notFound('Card not found')
+      }
 
       return cardRepository.update(request.params.id, request.body)
     },
@@ -106,12 +122,24 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
     { schema: { params: adminCardIdParamSchema } },
     async (request, reply) => {
       const card = await cardRepository.findById(request.params.id)
-      if (!card) throw Boom.notFound('Card not found')
+      if (!card) {
+        throw Boom.notFound('Card not found')
+      }
 
       const { imageBuffer, imageMime } = await parseMultipartCard(request)
-      const { url: imageUrl } = await uploadCardImage(storageClient, card.name, imageBuffer!, imageMime)
+      if (!imageBuffer) {
+        throw Boom.badRequest('No image provided')
+      }
+      const { url: imageUrl } = await uploadCardImage(
+        storageClient,
+        card.name,
+        imageBuffer,
+        imageMime,
+      )
 
-      const updated = await cardRepository.update(request.params.id, { imageUrl })
+      const updated = await cardRepository.update(request.params.id, {
+        imageUrl,
+      })
       return reply.status(200).send(updated)
     },
   )
@@ -121,7 +149,9 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
     { schema: { params: adminCardIdParamSchema } },
     async (request, reply) => {
       const card = await cardRepository.findById(request.params.id)
-      if (!card) throw Boom.notFound('Card not found')
+      if (!card) {
+        throw Boom.notFound('Card not found')
+      }
       await cardRepository.delete(request.params.id)
       return reply.status(204).send()
     },

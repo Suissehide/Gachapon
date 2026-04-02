@@ -1,7 +1,7 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
-import { calculateUserScore } from '../../../../../domain/scoring/scoring.domain'
 
+import { calculateUserScore } from '../../../../../domain/scoring/scoring.domain'
 import {
   teamCreateBodySchema,
   teamIdParamSchema,
@@ -14,7 +14,8 @@ import {
 } from '../../schemas/teams.schema'
 
 export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { teamDomain, scoringConfigRepository, userCardRepository } = fastify.iocContainer
+  const { teamDomain, scoringConfigRepository, userCardRepository } =
+    fastify.iocContainer
 
   fastify.get(
     '/teams',
@@ -32,7 +33,10 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
       schema: { body: teamCreateBodySchema },
     },
     async (request, reply) => {
-      const team = await teamDomain.createTeam(request.user.userID, request.body)
+      const team = await teamDomain.createTeam(
+        request.user.userID,
+        request.body,
+      )
       return reply.status(201).send(formatTeam(team))
     },
   )
@@ -44,7 +48,10 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
       schema: { params: teamIdParamSchema },
     },
     async (request) => {
-      const team = await teamDomain.getTeam(request.params.id, request.user.userID)
+      const team = await teamDomain.getTeam(
+        request.params.id,
+        request.user.userID,
+      )
       return formatTeam(team)
     },
   )
@@ -91,7 +98,9 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request) => {
       const { invitationRepository } = fastify.iocContainer
       const inv = await invitationRepository.findByToken(request.params.token)
-      if (!inv) throw Boom.notFound('Invitation not found')
+      if (!inv) {
+        throw Boom.notFound('Invitation not found')
+      }
       return {
         id: inv.id,
         token: inv.token,
@@ -109,7 +118,10 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
       schema: { params: teamTokenParamSchema },
     },
     async (request) => {
-      await teamDomain.acceptInvitation(request.params.token, request.user.userID)
+      await teamDomain.acceptInvitation(
+        request.params.token,
+        request.user.userID,
+      )
       return { accepted: true }
     },
   )
@@ -121,7 +133,10 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
       schema: { params: teamTokenParamSchema },
     },
     async (request) => {
-      await teamDomain.declineInvitation(request.params.token, request.user.userID)
+      await teamDomain.declineInvitation(
+        request.params.token,
+        request.user.userID,
+      )
       return { declined: true }
     },
   )
@@ -133,7 +148,11 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
       schema: { params: teamUserIdParamSchema },
     },
     async (request, reply) => {
-      await teamDomain.removeMember(request.params.id, request.user.userID, request.params.userId)
+      await teamDomain.removeMember(
+        request.params.id,
+        request.user.userID,
+        request.params.userId,
+      )
       return reply.status(204).send()
     },
   )
@@ -176,9 +195,13 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
       const teamRepo = fastify.iocContainer.teamRepository
       const invitationRepo = fastify.iocContainer.invitationRepository
       const team = await teamRepo.findById(request.params.id)
-      if (!team) throw Boom.notFound('Team not found')
+      if (!team) {
+        throw Boom.notFound('Team not found')
+      }
       const actor = team.members.find((m) => m.userId === request.user.userID)
-      if (!actor || actor.role === 'MEMBER') throw Boom.forbidden('Only ADMIN or OWNER')
+      if (!actor || actor.role === 'MEMBER') {
+        throw Boom.forbidden('Only ADMIN or OWNER')
+      }
 
       const now = new Date()
       const invitations = await invitationRepo.findAllByTeam(request.params.id)
@@ -191,7 +214,10 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
           createdAt: inv.createdAt,
           emailSentAt: inv.emailSentAt,
           expiresAt: inv.expiresAt,
-          status: inv.status === 'PENDING' && inv.expiresAt < now ? 'EXPIRED' : inv.status,
+          status:
+            inv.status === 'PENDING' && inv.expiresAt < now
+              ? 'EXPIRED'
+              : inv.status,
         })),
       }
     },
@@ -204,7 +230,10 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
       schema: { params: teamTokenParamSchema },
     },
     async (request, reply) => {
-      await teamDomain.resendInvitationEmail(request.params.token, request.user.userID)
+      await teamDomain.resendInvitationEmail(
+        request.params.token,
+        request.user.userID,
+      )
       return reply.status(204).send()
     },
   )
@@ -218,14 +247,22 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request, reply) => {
       const { invitationRepository, teamRepository } = fastify.iocContainer
       const inv = await invitationRepository.findByToken(request.params.token)
-      if (!inv) throw Boom.notFound('Invitation not found')
+      if (!inv) {
+        throw Boom.notFound('Invitation not found')
+      }
 
       const team = await teamRepository.findById(inv.teamId)
-      if (!team) throw Boom.notFound('Team not found')
+      if (!team) {
+        throw Boom.notFound('Team not found')
+      }
 
       const actor = team.members.find((m) => m.userId === request.user.userID)
-      if (!actor || actor.role !== 'OWNER') throw Boom.forbidden('Only OWNER can cancel an invitation')
-      if (inv.status !== 'PENDING') throw Boom.conflict('Invitation is not PENDING')
+      if (!actor || actor.role !== 'OWNER') {
+        throw Boom.forbidden('Only OWNER can cancel an invitation')
+      }
+      if (inv.status !== 'PENDING') {
+        throw Boom.conflict('Invitation is not PENDING')
+      }
 
       await invitationRepository.cancelById(inv.id)
       return reply.status(204).send()
@@ -241,16 +278,24 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request, reply) => {
       const { invitationRepository, teamRepository } = fastify.iocContainer
       const inv = await invitationRepository.findById(request.params.id)
-      if (!inv) throw Boom.notFound('Invitation not found')
+      if (!inv) {
+        throw Boom.notFound('Invitation not found')
+      }
 
       const team = await teamRepository.findById(inv.teamId)
-      if (!team) throw Boom.notFound('Team not found')
+      if (!team) {
+        throw Boom.notFound('Team not found')
+      }
 
       const actor = team.members.find((m) => m.userId === request.user.userID)
-      if (!actor || actor.role !== 'OWNER') throw Boom.forbidden('Only OWNER can delete an invitation')
+      if (!actor || actor.role !== 'OWNER') {
+        throw Boom.forbidden('Only OWNER can delete an invitation')
+      }
 
       const isExpired = inv.status === 'PENDING' && inv.expiresAt < new Date()
-      if (inv.status === 'PENDING' && !isExpired) throw Boom.conflict('Cancel the invitation before deleting it')
+      if (inv.status === 'PENDING' && !isExpired) {
+        throw Boom.conflict('Cancel the invitation before deleting it')
+      }
 
       await invitationRepository.deleteById(request.params.id)
       return reply.status(204).send()
@@ -261,7 +306,10 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/teams/:id/ranking',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: teamIdParamSchema, querystring: teamRankingQuerySchema },
+      schema: {
+        params: teamIdParamSchema,
+        querystring: teamRankingQuerySchema,
+      },
     },
     async (request) => {
       const { id } = request.params
@@ -286,8 +334,12 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
           score: calculateUserScore(cardsByUser.get(m.userId) ?? [], config),
         }))
         .sort((a, b) => {
-          if (b.score !== a.score) return b.score - a.score
-          return (a.member.user?.username ?? '').localeCompare(b.member.user?.username ?? '')
+          if (b.score !== a.score) {
+            return b.score - a.score
+          }
+          return (a.member.user?.username ?? '').localeCompare(
+            b.member.user?.username ?? '',
+          )
         })
 
       const total = scored.length
@@ -299,7 +351,11 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
         members: paginated.map((entry, i) => ({
           rank: offset + i + 1,
           user: entry.member.user
-            ? { id: entry.member.user.id, username: entry.member.user.username, avatar: entry.member.user.avatar }
+            ? {
+                id: entry.member.user.id,
+                username: entry.member.user.username,
+                avatar: entry.member.user.avatar,
+              }
             : { id: entry.member.userId, username: 'Unknown', avatar: null },
           role: entry.member.role,
           score: entry.score,
@@ -312,7 +368,27 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
   )
 }
 
-function formatMember(m: any) {
+interface RawMember {
+  id: string
+  userId: string
+  role: string
+  joinedAt: Date
+  user?: { id: string; username: string; avatar: string | null } | null
+}
+
+interface RawTeam {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  avatar: string | null
+  ownerId: string
+  createdAt: Date
+  members?: RawMember[]
+  _count?: { members: number }
+}
+
+function formatMember(m: RawMember) {
   return {
     id: m.id,
     userId: m.userId,
@@ -324,7 +400,7 @@ function formatMember(m: any) {
   }
 }
 
-function formatTeam(team: any) {
+function formatTeam(team: RawTeam) {
   return {
     id: team.id,
     name: team.name,
@@ -337,7 +413,7 @@ function formatTeam(team: any) {
   }
 }
 
-function formatTeamSummary(team: any) {
+function formatTeamSummary(team: RawTeam) {
   return {
     ...formatTeam(team),
     memberCount: team._count?.members ?? team.members?.length ?? 0,

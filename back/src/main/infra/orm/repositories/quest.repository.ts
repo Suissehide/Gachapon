@@ -1,6 +1,10 @@
-import type { IocContainer } from '../../../types/application/ioc'
 import type { Quest } from '../../../../generated/client'
-import type { IQuestRepository, CreateQuestInput, UpdateQuestInput } from '../../../types/infra/orm/repositories/quest.repository.interface'
+import type { IocContainer } from '../../../types/application/ioc'
+import type {
+  CreateQuestInput,
+  IQuestRepository,
+  UpdateQuestInput,
+} from '../../../types/infra/orm/repositories/quest.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 export class QuestRepository implements IQuestRepository {

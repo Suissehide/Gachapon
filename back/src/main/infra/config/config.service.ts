@@ -59,7 +59,7 @@ export class ConfigService implements ConfigServiceInterface {
   readonly #redis: RedisClientInterface
   readonly #envDefaults: Record<ConfigKey, number>
 
-  constructor({ postgresOrm, redisClient, config }: IocContainer) {
+  constructor({ postgresOrm, redisClient }: IocContainer) {
     this.#prisma = postgresOrm.prisma
     this.#redis = redisClient
     this.#envDefaults = { ...DEFAULTS }

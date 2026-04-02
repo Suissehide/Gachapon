@@ -17,7 +17,9 @@ export const registerRouter: FastifyPluginCallbackZod = (fastify) => {
     },
     async (request, reply) => {
       const { email } = await authDomain.register(request.body)
-      return reply.status(201).send({ message: 'VERIFICATION_EMAIL_SENT', email })
+      return reply
+        .status(201)
+        .send({ message: 'VERIFICATION_EMAIL_SENT', email })
     },
   )
 }

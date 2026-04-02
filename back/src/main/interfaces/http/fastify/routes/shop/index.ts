@@ -29,7 +29,7 @@ export const shopRouter: FastifyPluginCallbackZod = (fastify) => {
       onRequest: [fastify.verifySessionCookie],
       schema: { params: shopItemIdParamSchema },
     },
-    async (request) => {
+    (request) => {
       return shopDomain.buy(request.user.userID, request.params.id)
     },
   )

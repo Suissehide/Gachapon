@@ -1,8 +1,12 @@
 import Boom from '@hapi/boom'
-import type { IocContainer } from '../../types/application/ioc'
-import type { IShopDomain, BuyShopItemResult } from '../../types/domain/shop/shop.domain.interface'
-import type { IShopItemRepository } from '../../types/infra/orm/repositories/shop-item.repository.interface'
+
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
+import type { IocContainer } from '../../types/application/ioc'
+import type {
+  BuyShopItemResult,
+  IShopDomain,
+} from '../../types/domain/shop/shop.domain.interface'
+import type { IShopItemRepository } from '../../types/infra/orm/repositories/shop-item.repository.interface'
 
 export class ShopDomain implements IShopDomain {
   readonly #shopItemRepository: IShopItemRepository

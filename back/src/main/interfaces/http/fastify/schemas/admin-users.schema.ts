@@ -12,7 +12,9 @@ export const adminUserTokensBodySchema = z.object({ amount: z.number().int() })
 
 export const adminUserDustBodySchema = z.object({ amount: z.number().int() })
 
-export const adminUserRoleBodySchema = z.object({ role: z.enum(['USER', 'SUPER_ADMIN']) })
+export const adminUserRoleBodySchema = z.object({
+  role: z.enum(['USER', 'SUPER_ADMIN']),
+})
 
 export const adminUserSuspendBodySchema = z.object({ suspended: z.boolean() })
 

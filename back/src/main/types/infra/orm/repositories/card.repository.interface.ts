@@ -19,14 +19,42 @@ export interface ICardRepository {
     tx: PrimaTransactionClient,
     forceLegendary: boolean,
   ): Promise<CardWithSet[]>
-  create(data: { name: string; setId: string; rarity: CardRarity; dropWeight: number; imageUrl: string }): Promise<CardWithSet>
-  update(id: string, data: Partial<{ name: string; rarity: CardRarity; dropWeight: number; setId: string; imageUrl: string | null }>): Promise<CardWithSet>
+  create(data: {
+    name: string
+    setId: string
+    rarity: CardRarity
+    dropWeight: number
+    imageUrl: string
+  }): Promise<CardWithSet>
+  update(
+    id: string,
+    data: Partial<{
+      name: string
+      rarity: CardRarity
+      dropWeight: number
+      setId: string
+      imageUrl: string | null
+    }>,
+  ): Promise<CardWithSet>
   delete(id: string): Promise<void>
-  createSet(data: { name: string; description?: string; isActive?: boolean }): Promise<CardSetEntity>
-  updateSet(id: string, data: { name?: string; description?: string; isActive?: boolean }): Promise<CardSetEntity>
+  createSet(data: {
+    name: string
+    description?: string
+    isActive?: boolean
+  }): Promise<CardSetEntity>
+  updateSet(
+    id: string,
+    data: { name?: string; description?: string; isActive?: boolean },
+  ): Promise<CardSetEntity>
   deleteSet(id: string): Promise<void>
-  findAllSetsWithCount(): Promise<(CardSetEntity & { _count: { cards: number } })[]>
-  findAllForMedia(): Promise<{ imageUrl: string | null; id: string; name: string; rarity: CardRarity }[]>
-  findByImageUrls(urls: string[]): Promise<{ name: string; imageUrl: string | null }[]>
+  findAllSetsWithCount(): Promise<
+    (CardSetEntity & { _count: { cards: number } })[]
+  >
+  findAllForMedia(): Promise<
+    { imageUrl: string | null; id: string; name: string; rarity: CardRarity }[]
+  >
+  findByImageUrls(
+    urls: string[],
+  ): Promise<{ name: string; imageUrl: string | null }[]>
   updateManyImageUrl(oldUrl: string, newUrl: string): Promise<void>
 }

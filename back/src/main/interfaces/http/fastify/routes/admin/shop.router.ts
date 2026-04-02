@@ -26,10 +26,17 @@ export const adminShopRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.patch(
     '/:id',
-    { schema: { params: adminShopItemIdParamSchema, body: adminShopUpdateBodySchema } },
+    {
+      schema: {
+        params: adminShopItemIdParamSchema,
+        body: adminShopUpdateBodySchema,
+      },
+    },
     async (request) => {
       const item = await shopItemRepository.findById(request.params.id)
-      if (!item) throw Boom.notFound('Shop item not found')
+      if (!item) {
+        throw Boom.notFound('Shop item not found')
+      }
       return shopItemRepository.update(request.params.id, request.body)
     },
   )
@@ -39,7 +46,9 @@ export const adminShopRouter: FastifyPluginCallbackZod = (fastify) => {
     { schema: { params: adminShopItemIdParamSchema } },
     async (request, reply) => {
       const item = await shopItemRepository.findById(request.params.id)
-      if (!item) throw Boom.notFound('Shop item not found')
+      if (!item) {
+        throw Boom.notFound('Shop item not found')
+      }
       await shopItemRepository.delete(request.params.id)
       return reply.status(204).send()
     },

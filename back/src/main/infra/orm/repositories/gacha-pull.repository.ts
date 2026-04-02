@@ -8,7 +8,6 @@ import type {
   CreateGachaPullInput,
   FindRecentOpts,
   IGachaPullRepository,
-  RecentPullEntry,
   RecentPullPage,
 } from '../../../types/infra/orm/repositories/gacha-pull.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
@@ -57,7 +56,10 @@ export class GachaPullRepository implements IGachaPullRepository {
     return agg._sum.dustEarned ?? 0
   }
 
-  async findRecent(limit: number, opts?: FindRecentOpts): Promise<RecentPullPage> {
+  async findRecent(
+    limit: number,
+    opts?: FindRecentOpts,
+  ): Promise<RecentPullPage> {
     const pulls = await this.#prisma.gachaPull.findMany({
       take: limit + 1,
       where: {

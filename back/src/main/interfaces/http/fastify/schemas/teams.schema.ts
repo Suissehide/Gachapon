@@ -25,7 +25,9 @@ export const teamInviteBodySchema = z
     message: 'Provide username or email',
   })
 
-export const teamTransferBodySchema = z.object({ newOwnerId: z.string().uuid() })
+export const teamTransferBodySchema = z.object({
+  newOwnerId: z.string().uuid(),
+})
 
 export const teamRankingQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),

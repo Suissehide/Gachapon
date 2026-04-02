@@ -42,15 +42,20 @@ export class InvitationRepository implements IInvitationRepository {
     return this.#prisma.invitation.create({ data })
   }
 
-  updateStatus(id: string, status: 'ACCEPTED' | 'DECLINED' | 'CANCELLED'): Promise<void> {
+  updateStatus(
+    id: string,
+    status: 'ACCEPTED' | 'DECLINED' | 'CANCELLED',
+  ): Promise<void> {
     return this.#prisma.invitation
       .update({ where: { id }, data: { status } })
       .then(() => undefined)
   }
 
-  findPendingByTeam(teamId: string): Promise<(InvitationEntity & {
-    invitedUser: { username: string } | null
-  })[]> {
+  findPendingByTeam(teamId: string): Promise<
+    (InvitationEntity & {
+      invitedUser: { username: string } | null
+    })[]
+  > {
     return this.#prisma.invitation.findMany({
       where: { teamId, status: 'PENDING' },
       include: { invitedUser: { select: { username: true } } },
@@ -69,9 +74,11 @@ export class InvitationRepository implements IInvitationRepository {
     return this.#prisma.invitation.findUnique({ where: { id } })
   }
 
-  findAllByTeam(teamId: string): Promise<(InvitationEntity & {
-    invitedUser: { username: string } | null
-  })[]> {
+  findAllByTeam(teamId: string): Promise<
+    (InvitationEntity & {
+      invitedUser: { username: string } | null
+    })[]
+  > {
     return this.#prisma.invitation.findMany({
       where: { teamId },
       include: { invitedUser: { select: { username: true } } },
@@ -86,6 +93,8 @@ export class InvitationRepository implements IInvitationRepository {
   }
 
   deleteById(id: string): Promise<void> {
-    return this.#prisma.invitation.delete({ where: { id } }).then(() => undefined)
+    return this.#prisma.invitation
+      .delete({ where: { id } })
+      .then(() => undefined)
   }
 }

@@ -8,7 +8,7 @@ import {
 
 export const adminConfigRouter: FastifyPluginCallbackZod = (fastify) => {
   // GET /admin/config
-  fastify.get('/', async () => {
+  fastify.get('/', () => {
     const { configService } = fastify.iocContainer
     return configService.getMany(...CONFIG_KEYS)
   })

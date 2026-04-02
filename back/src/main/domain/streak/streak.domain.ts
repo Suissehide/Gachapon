@@ -102,8 +102,9 @@ export class StreakDomain {
 
     // Check for an exact milestone match first, then fall back to the daily default
     const milestone =
-      await this.#streakMilestoneRepository.findExactMilestoneForDay(newStreakDays)
-        ?? await this.#streakMilestoneRepository.findDefault()
+      (await this.#streakMilestoneRepository.findExactMilestoneForDay(
+        newStreakDays,
+      )) ?? (await this.#streakMilestoneRepository.findDefault())
 
     if (!milestone) {
       return
@@ -111,12 +112,17 @@ export class StreakDomain {
 
     // sourceId uniqueness drives upsert idempotency. Milestones use their UUID (earned once);
     // daily defaults encode the streak day so each login accumulates a separate reward.
-    const sourceId = milestone.day === 0 ? encodeDailySourceId(newStreakDays) : milestone.id
+    const sourceId =
+      milestone.day === 0 ? encodeDailySourceId(newStreakDays) : milestone.id
 
     // TODO(remove after 2026-06-01): cleans up rewards written before the "day:N" format,
     // where all default rewards shared the milestone UUID as sourceId, causing upsert collisions.
     if (milestone.day === 0) {
-      await this.#userRewardRepository.deleteLegacyDefaultStreakRewardInTx(tx, userId, milestone.id)
+      await this.#userRewardRepository.deleteLegacyDefaultStreakRewardInTx(
+        tx,
+        userId,
+        milestone.id,
+      )
     }
 
     await this.#userRewardRepository.upsertInTx(tx, {

@@ -1,10 +1,18 @@
 import Boom from '@hapi/boom'
+
+import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
-import type { ICollectionDomain, RecycleInput, RecycleResult } from '../../types/domain/collection/collection.domain.interface'
+import type {
+  ICollectionDomain,
+  RecycleInput,
+  RecycleResult,
+} from '../../types/domain/collection/collection.domain.interface'
+import type {
+  ConfigKey,
+  ConfigServiceInterface,
+} from '../../types/infra/config/config.service.interface'
 import type { ICardRepository } from '../../types/infra/orm/repositories/card.repository.interface'
 import type { IUpgradeRepository } from '../../types/infra/orm/repositories/upgrade.repository.interface'
-import type { ConfigServiceInterface, ConfigKey } from '../../types/infra/config/config.service.interface'
-import type { PostgresOrm } from '../../infra/orm/postgres-client'
 
 export class CollectionDomain implements ICollectionDomain {
   readonly #cardRepository: ICardRepository
@@ -12,14 +20,22 @@ export class CollectionDomain implements ICollectionDomain {
   readonly #configService: ConfigServiceInterface
   readonly #postgresOrm: PostgresOrm
 
-  constructor({ cardRepository, upgradeRepository, configService, postgresOrm }: IocContainer) {
+  constructor({
+    cardRepository,
+    upgradeRepository,
+    configService,
+    postgresOrm,
+  }: IocContainer) {
     this.#cardRepository = cardRepository
     this.#upgradeRepository = upgradeRepository
     this.#configService = configService
     this.#postgresOrm = postgresOrm
   }
 
-  async recycleCard(userId: string, input: RecycleInput): Promise<RecycleResult> {
+  async recycleCard(
+    userId: string,
+    input: RecycleInput,
+  ): Promise<RecycleResult> {
     const { cardId, quantity, variant } = input
 
     const card = await this.#cardRepository.findById(cardId)
@@ -27,22 +43,28 @@ export class CollectionDomain implements ICollectionDomain {
       throw Boom.notFound('Card not found')
     }
 
-    const dustKey = `dust${card.rarity.charAt(0) + card.rarity.slice(1).toLowerCase()}` as ConfigKey
+    const dustKey =
+      `dust${card.rarity.charAt(0) + card.rarity.slice(1).toLowerCase()}` as ConfigKey
     const baseDust = await this.#configService.get(dustKey)
 
     const upgrades = await this.#upgradeRepository.getEffectsForUser(userId)
 
-    const [variantMultiplierHolo, variantMultiplierBrilliant] = await Promise.all([
-      this.#configService.get('variantMultiplierHolo'),
-      this.#configService.get('variantMultiplierBrilliant'),
-    ])
+    const [variantMultiplierHolo, variantMultiplierBrilliant] =
+      await Promise.all([
+        this.#configService.get('variantMultiplierHolo'),
+        this.#configService.get('variantMultiplierBrilliant'),
+      ])
 
     const variantMultiplier =
-      variant === 'BRILLIANT' ? variantMultiplierBrilliant :
-      variant === 'HOLOGRAPHIC' ? variantMultiplierHolo :
-      1
+      variant === 'BRILLIANT'
+        ? variantMultiplierBrilliant
+        : variant === 'HOLOGRAPHIC'
+          ? variantMultiplierHolo
+          : 1
 
-    const dustEarned = Math.round(baseDust * variantMultiplier * upgrades.dustHarvestMultiplier * quantity)
+    const dustEarned = Math.round(
+      baseDust * variantMultiplier * upgrades.dustHarvestMultiplier * quantity,
+    )
 
     const result = await this.#postgresOrm.executeWithTransactionClient(
       async (tx) => {
