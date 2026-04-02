@@ -575,10 +575,10 @@ h6 {
 
 @keyframes scanlineSweep {
   from {
-    top: -4px;
+    transform: translateY(-4px);
   }
   to {
-    top: 100vh;
+    transform: translateY(100vh);
   }
 }
 
