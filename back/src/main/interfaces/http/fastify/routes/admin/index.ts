@@ -9,6 +9,7 @@ import { adminScoringConfigRouter } from './scoring-config.router'
 import { adminSetsRouter } from './sets.router'
 import { adminShopRouter } from './shop.router'
 import { adminStatsRouter } from './stats.router'
+import { adminSkillsRouter } from './skills.router'
 import { adminStreakRouter } from './streak.router'
 import { adminUsersRouter } from './users.router'
 
@@ -38,4 +39,5 @@ export const adminRouter: FastifyPluginAsyncZod = async (fastify) => {
   })
   await fastify.register(adminMediaRouter, { prefix: '/media' })
   await fastify.register(adminStreakRouter, { prefix: '/streak' })
+  await fastify.register(adminSkillsRouter)
 }
