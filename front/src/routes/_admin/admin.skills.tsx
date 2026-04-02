@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import type { LucideIcon } from 'lucide-react'
 import {
   GitBranch,
   GripVertical,
@@ -11,10 +12,15 @@ import {
   Scissors,
   Settings,
 } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
 import { useState } from 'react'
-import type { SkillConfig, SkillNode } from '../../api/skills.api.ts'
+
+import type {
+  SkillBranch,
+  SkillConfig,
+  SkillNode,
+} from '../../api/skills.api.ts'
 import { AdminSkillTreeCanvas } from '../../components/skill-tree/AdminSkillTreeCanvas.tsx'
+import { EditNodeSheet } from '../../components/skill-tree/EditNodeSheet.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import {
   Sheet,
@@ -25,11 +31,9 @@ import {
 import { useAppForm } from '../../hooks/formConfig.tsx'
 import {
   useAdminCreateNode,
-  useAdminDeleteNode,
   useAdminSkillConfig,
   useAdminSkillTree,
   useAdminUpdateConfig,
-  useAdminUpdateNode,
 } from '../../queries/useSkills.ts'
 
 export const Route = createFileRoute('/_admin/admin/skills')({
@@ -52,28 +56,21 @@ type SheetMode = 'edit' | 'create' | 'config' | 'help' | null
 function AdminSkillsPage() {
   const { data: branches, isLoading } = useAdminSkillTree()
   const { data: config } = useAdminSkillConfig()
-  const updateConfig = useAdminUpdateConfig()
-  const updateNode = useAdminUpdateNode()
-  const deleteNode = useAdminDeleteNode()
-  const createNode = useAdminCreateNode()
 
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [sheetMode, setSheetMode] = useState<SheetMode>(null)
 
-  const [newNode, setNewNode] = useState<{
-    name: string
-    description: string
-    branchId: string
-    icon: string
-    effectType: string
-    maxLevel: number
-  }>({ name: '', description: '', branchId: '', icon: 'Star', effectType: 'LUCK', maxLevel: 3 })
-
   if (isLoading || !branches) {
-    return <div className="flex h-64 items-center justify-center text-gray-400">Chargement…</div>
+    return (
+      <div className="flex h-64 items-center justify-center text-gray-400">
+        Chargement…
+      </div>
+    )
   }
 
-  const selectedNode = branches.flatMap((b) => b.nodes).find((n) => n.id === selectedNodeId)
+  const selectedNode = branches
+    .flatMap((b) => b.nodes)
+    .find((n) => n.id === selectedNodeId)
   const selectedBranch = selectedNode
     ? branches.find((b) => b.nodes.some((n) => n.id === selectedNodeId))
     : null
@@ -83,39 +80,31 @@ function AdminSkillsPage() {
     setSheetMode(nodeId ? 'edit' : null)
   }
 
-  const handleCreateSubmit = () => {
-    const levels = Array.from({ length: newNode.maxLevel }, (_, i) => ({
-      nodeId: '',
-      level: i + 1,
-      effect: 0,
-    }))
-    createNode.mutate(
-      { ...newNode, posX: 0, posY: 0, levels } as Omit<SkillNode, 'id' | 'edgesFrom' | 'edgesTo'>,
-      { onSuccess: () => { setSheetMode(null) } },
-    )
-  }
-
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* Toolbar */}
       <div className="flex shrink-0 items-center gap-2 border-b border-border bg-card px-4 py-2">
-        <span className="text-sm font-semibold text-text">Arbre de compétences</span>
+        <span className="text-sm font-semibold text-text">
+          Arbre de compétences
+        </span>
         <div className="ml-auto flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setSheetMode('help')}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSheetMode('help')}
+          >
             <HelpCircle size={13} />
             Aide
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setSheetMode('config')}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSheetMode('config')}
+          >
             <Settings size={13} />
             Config
           </Button>
-          <Button
-            size="sm"
-            onClick={() => {
-              setNewNode({ name: '', description: '', branchId: branches[0]?.id ?? '', icon: 'Star', effectType: 'LUCK', maxLevel: 3 })
-              setSheetMode('create')
-            }}
-          >
+          <Button size="sm" onClick={() => setSheetMode('create')}>
             <Plus size={13} />
             Créer un nœud
           </Button>
@@ -124,172 +113,41 @@ function AdminSkillsPage() {
 
       {/* Canvas */}
       <div className="flex-1 overflow-hidden">
-        <AdminSkillTreeCanvas branches={branches} onNodeSelect={handleNodeSelect} />
+        <AdminSkillTreeCanvas
+          branches={branches}
+          onNodeSelect={handleNodeSelect}
+        />
       </div>
 
       {/* Sheet */}
-      <Sheet open={sheetMode !== null} onOpenChange={(open) => !open && setSheetMode(null)}>
+      <Sheet
+        open={sheetMode !== null}
+        onOpenChange={(open) => !open && setSheetMode(null)}
+      >
         <SheetContent side="right" className="w-80 overflow-y-auto p-0">
+          {sheetMode === 'help' && <HelpSheetContent />}
 
-          {/* AIDE */}
-          {sheetMode === 'help' && (
-            <>
-              <SheetHeader>
-                <SheetTitle>Utilisation du graphe</SheetTitle>
-              </SheetHeader>
-              <div className="space-y-4 p-4 text-sm text-text-light">
-                <HelpItem icon={MousePointer2} title="Naviguer">
-                  Scroll pour zoomer. Cliquer-glisser sur le fond pour déplacer la vue.
-                </HelpItem>
-                <HelpItem icon={GripVertical} title="Déplacer un nœud">
-                  Glisser un nœud sur le canvas pour le repositionner. La position est sauvegardée automatiquement.
-                </HelpItem>
-                <HelpItem icon={Link2} title="Créer une connexion">
-                  Survoler un nœud pour faire apparaître ses ports (ronds sur les côtés). Glisser depuis le port droit <strong className="text-text">source</strong> vers le port gauche <strong className="text-text">cible</strong> d'un autre nœud. Pas de limite de connexions par nœud.
-                </HelpItem>
-                <HelpItem icon={Scissors} title="Supprimer une connexion">
-                  Double-cliquer sur une connexion pour la supprimer (confirmation requise).
-                </HelpItem>
-                <HelpItem icon={Pencil} title="Éditer un nœud">
-                  Cliquer sur un nœud pour ouvrir ce panneau et modifier ses valeurs par niveau.
-                </HelpItem>
-                <HelpItem icon={PlusCircle} title="Créer un nœud">
-                  Utiliser le bouton <strong className="text-text">Créer un nœud</strong> dans la toolbar. Le nœud apparaît en (0, 0) — glisse-le pour le positionner.
-                </HelpItem>
-                <HelpItem icon={GitBranch} title="Structure">
-                  Les nœuds sans parent sont connectés automatiquement au nœud central. Les connexions entre nœuds définissent les prérequis pour les joueurs.
-                </HelpItem>
-              </div>
-            </>
-          )}
-
-          {/* CONFIG */}
           {sheetMode === 'config' && config && (
-            <>
-              <SheetHeader>
-                <SheetTitle>Configuration globale</SheetTitle>
-              </SheetHeader>
-              <div className="p-4">
-                <ConfigForm
-                  config={config}
-                  onSubmit={(values) => updateConfig.mutate({ resetCostPerPoint: values.resetCostPerPoint })}
-                />
-              </div>
-            </>
+            <ConfigSheetContent config={config} />
           )}
 
-          {/* CREATE NODE */}
           {sheetMode === 'create' && (
-            <>
-              <SheetHeader>
-                <SheetTitle>Créer un nœud</SheetTitle>
-              </SheetHeader>
-              <div className="space-y-3 p-4">
-                <Field label="Branche">
-                  <select
-                    className="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-text"
-                    value={newNode.branchId}
-                    onChange={(e) => setNewNode((n) => ({ ...n, branchId: e.target.value }))}
-                  >
-                    {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-                  </select>
-                </Field>
-                <Field label="Nom">
-                  <input
-                    className="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-text"
-                    value={newNode.name}
-                    onChange={(e) => setNewNode((n) => ({ ...n, name: e.target.value }))}
-                  />
-                </Field>
-                <Field label="Description">
-                  <input
-                    className="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-text"
-                    value={newNode.description}
-                    onChange={(e) => setNewNode((n) => ({ ...n, description: e.target.value }))}
-                  />
-                </Field>
-                <Field label="Icône Lucide">
-                  <input
-                    className="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-text"
-                    value={newNode.icon}
-                    onChange={(e) => setNewNode((n) => ({ ...n, icon: e.target.value }))}
-                    placeholder="ex : Star, Flame, Trophy…"
-                  />
-                </Field>
-                <Field label="Effet">
-                  <select
-                    className="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-text"
-                    value={newNode.effectType}
-                    onChange={(e) => setNewNode((n) => ({ ...n, effectType: e.target.value }))}
-                  >
-                    {EFFECT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </Field>
-                <Field label="Niveaux max (1–5)">
-                  <input
-                    type="number"
-                    min={1}
-                    max={5}
-                    className="w-full rounded border border-border bg-surface px-2 py-1 text-sm text-text"
-                    value={newNode.maxLevel}
-                    onChange={(e) => setNewNode((n) => ({ ...n, maxLevel: Math.min(5, Math.max(1, Number(e.target.value))) }))}
-                  />
-                </Field>
-                <p className="text-xs text-text-light">Le nœud sera créé en (0, 0). Glisse-le ensuite sur le canvas pour le positionner.</p>
-                <Button
-                  className="w-full"
-                  disabled={!newNode.name || !newNode.branchId || createNode.isPending}
-                  onClick={handleCreateSubmit}
-                >
-                  {createNode.isPending ? 'Création…' : 'Créer'}
-                </Button>
-              </div>
-            </>
+            <CreateNodeSheetContent
+              branches={branches}
+              onClose={() => setSheetMode(null)}
+            />
           )}
 
-          {/* EDIT NODE */}
           {sheetMode === 'edit' && selectedNode && selectedBranch && (
-            <>
-              <SheetHeader>
-                <SheetTitle>{selectedNode.name}</SheetTitle>
-              </SheetHeader>
-              <div className="space-y-2 p-4">
-                <p className="text-xs text-text-light">Branche : <span className="text-text">{selectedBranch.name}</span></p>
-                <p className="text-xs text-text-light">Effet : <span className="text-text">{selectedNode.effectType}</span></p>
-                <p className="text-xs text-text-light">Max niveau : <span className="text-text">{selectedNode.maxLevel}</span></p>
-                <p className="mt-4 text-xs font-semibold uppercase text-text-light">Valeurs par niveau</p>
-                {selectedNode.levels.map((l) => (
-                  <div key={l.level} className="flex items-center gap-2">
-                    <span className="w-10 text-xs text-text-light">Niv.{l.level}</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      defaultValue={l.effect}
-                      className="w-full rounded border border-border bg-surface px-2 py-0.5 text-xs text-text"
-                      onBlur={(e) => {
-                        const newEffect = Number(e.target.value)
-                        const newLevels = selectedNode.levels.map((lvl) =>
-                          lvl.level === l.level ? { ...lvl, effect: newEffect } : lvl,
-                        )
-                        updateNode.mutate({ id: selectedNode.id, data: { levels: newLevels } })
-                      }}
-                    />
-                  </div>
-                ))}
-                <Button
-                  variant="destructive"
-                  className="mt-4 w-full"
-                  onClick={() => {
-                    if (!window.confirm(`Supprimer le nœud "${selectedNode.name}" ?`)) return
-                    deleteNode.mutate(selectedNode.id)
-                    setSheetMode(null)
-                    setSelectedNodeId(null)
-                  }}
-                >
-                  Supprimer ce nœud
-                </Button>
-              </div>
-            </>
+            <EditNodeSheet
+              key={selectedNode.id}
+              node={selectedNode}
+              branch={selectedBranch}
+              onClose={() => {
+                setSheetMode(null)
+                setSelectedNodeId(null)
+              }}
+            />
           )}
         </SheetContent>
       </Sheet>
@@ -297,44 +155,180 @@ function AdminSkillsPage() {
   )
 }
 
-function ConfigForm({
-  config,
-  onSubmit,
-}: {
-  config: SkillConfig
-  onSubmit: (values: { resetCostPerPoint: number }) => void
-}) {
+// ─── Help ──────────────────────────────────────────────────────────────────────
+
+function HelpSheetContent() {
+  return (
+    <>
+      <SheetHeader>
+        <SheetTitle>Utilisation du graphe</SheetTitle>
+      </SheetHeader>
+      <div className="space-y-4 p-4 text-sm text-text-light">
+        <HelpItem icon={MousePointer2} title="Naviguer">
+          Scroll pour zoomer. Cliquer-glisser sur le fond pour déplacer la vue.
+        </HelpItem>
+        <HelpItem icon={GripVertical} title="Déplacer un nœud">
+          Glisser un nœud sur le canvas pour le repositionner. La position est
+          sauvegardée automatiquement.
+        </HelpItem>
+        <HelpItem icon={Link2} title="Créer une connexion">
+          Survoler un nœud pour faire apparaître ses ports (ronds sur les
+          côtés). Glisser depuis le port droit{' '}
+          <strong className="text-text">source</strong> vers le port gauche{' '}
+          <strong className="text-text">cible</strong> d'un autre nœud. Pas de
+          limite de connexions par nœud.
+        </HelpItem>
+        <HelpItem icon={Scissors} title="Supprimer une connexion">
+          Double-cliquer sur une connexion pour la supprimer (confirmation
+          requise).
+        </HelpItem>
+        <HelpItem icon={Pencil} title="Éditer un nœud">
+          Cliquer sur un nœud pour ouvrir ce panneau et modifier ses valeurs par
+          niveau.
+        </HelpItem>
+        <HelpItem icon={PlusCircle} title="Créer un nœud">
+          Utiliser le bouton{' '}
+          <strong className="text-text">Créer un nœud</strong> dans la toolbar.
+          Le nœud apparaît en (0, 0) — glisse-le pour le positionner.
+        </HelpItem>
+        <HelpItem icon={GitBranch} title="Structure">
+          Les nœuds sans parent sont connectés automatiquement au nœud central.
+          Les connexions entre nœuds définissent les prérequis pour les joueurs.
+        </HelpItem>
+      </div>
+    </>
+  )
+}
+
+// ─── Config ────────────────────────────────────────────────────────────────────
+
+function ConfigSheetContent({ config }: { config: SkillConfig }) {
+  const updateConfig = useAdminUpdateConfig()
+
   const form = useAppForm({
     defaultValues: { resetCostPerPoint: config.resetCostPerPoint },
-    onSubmit: ({ value }) => { onSubmit(value) },
+    onSubmit: ({ value }) => {
+      updateConfig.mutate({ resetCostPerPoint: value.resetCostPerPoint })
+    },
   })
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault()
-        form.handleSubmit()
-      }}
-      className="space-y-4"
-    >
-      <form.AppField name="resetCostPerPoint">
-        {(f) => <f.Number label="Coût reset (dust / point)" />}
-      </form.AppField>
-      <Button type="submit" className="w-full">
-        Enregistrer
-      </Button>
-    </form>
+    <>
+      <SheetHeader>
+        <SheetTitle>Configuration globale</SheetTitle>
+      </SheetHeader>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          form.handleSubmit()
+        }}
+        className="space-y-4 p-4"
+      >
+        <form.AppField name="resetCostPerPoint">
+          {(f) => <f.Number label="Coût reset (dust / point)" />}
+        </form.AppField>
+        <Button type="submit" className="w-full">
+          Enregistrer
+        </Button>
+      </form>
+    </>
   )
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+// ─── Create node ───────────────────────────────────────────────────────────────
+
+function CreateNodeSheetContent({
+  branches,
+  onClose,
+}: {
+  branches: SkillBranch[]
+  onClose: () => void
+}) {
+  const createNode = useAdminCreateNode()
+
+  const branchOptions = branches.map((b) => ({ value: b.id, label: b.name }))
+  const effectOptions = EFFECT_TYPES.map((t) => ({ value: t, label: t }))
+
+  const form = useAppForm({
+    defaultValues: {
+      branchId: branches[0]?.id ?? '',
+      name: '',
+      description: '',
+      icon: 'Star',
+      effectType: 'LUCK' as string,
+      maxLevel: 3 as number | undefined,
+    },
+    onSubmit: ({ value }) => {
+      const max = value.maxLevel ?? 3
+      const levels = Array.from({ length: max }, (_, i) => ({
+        nodeId: '',
+        level: i + 1,
+        effect: 0,
+      }))
+      createNode.mutate(
+        {
+          ...value,
+          effectType: value.effectType,
+          posX: 0,
+          posY: 0,
+          levels,
+        } as Omit<SkillNode, 'id' | 'edgesFrom' | 'edgesTo'>,
+        { onSuccess: onClose },
+      )
+    },
+  })
+
   return (
-    <div>
-      <p className="mb-1 text-xs text-text-light">{label}</p>
-      {children}
-    </div>
+    <>
+      <SheetHeader>
+        <SheetTitle>Créer un nœud</SheetTitle>
+      </SheetHeader>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          form.handleSubmit()
+        }}
+        className="space-y-3 p-4"
+      >
+        <form.AppField name="branchId">
+          {(f) => <f.Select label="Branche" options={branchOptions} />}
+        </form.AppField>
+        <form.AppField name="name">
+          {(f) => <f.Input label="Nom" />}
+        </form.AppField>
+        <form.AppField name="description">
+          {(f) => <f.Input label="Description" />}
+        </form.AppField>
+        <form.AppField name="icon">
+          {(f) => <f.Input label="Icône Lucide" />}
+        </form.AppField>
+        <form.AppField name="effectType">
+          {(f) => <f.Select label="Effet" options={effectOptions} />}
+        </form.AppField>
+        <form.AppField name="maxLevel">
+          {(f) => <f.Number label="Niveaux max (1–5)" />}
+        </form.AppField>
+        <p className="text-xs text-text-light">
+          Le nœud sera créé en (0, 0). Glisse-le ensuite sur le canvas pour le
+          positionner.
+        </p>
+        <form.Subscribe
+          selector={(s) =>
+            !s.values.name || !s.values.branchId || createNode.isPending
+          }
+        >
+          {(disabled) => (
+            <Button type="submit" className="w-full" disabled={disabled}>
+              {createNode.isPending ? 'Création…' : 'Créer'}
+            </Button>
+          )}
+        </form.Subscribe>
+      </form>
+    </>
   )
 }
+
+// ─── Shared ────────────────────────────────────────────────────────────────────
 
 function HelpItem({
   icon: Icon,
