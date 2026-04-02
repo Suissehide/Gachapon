@@ -1,28 +1,102 @@
+// front/src/components/machine/CardReveal.tsx
 import { Coins, Sparkles } from 'lucide-react'
 import type React from 'react'
 import { useEffect, useState } from 'react'
 
 import cardBackImg from '../../assets/data/card-back/black.png'
+import type { CardRarity } from '../../constants/card.constant'
 import type { PullResult } from '../../queries/useGacha'
-import { RARITY_TCG_CONFIG } from '../shared/tcg-card/config.ts'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
+import { RARITY_TCG_CONFIG } from '../shared/tcg-card/config.ts'
 import { Button } from '../ui/button.tsx'
+import { RevealCanvases } from './reveal/RevealCanvases.tsx'
+import { RARITY_CONFIG } from './reveal/rarityConfig.ts'
+import { useRevealEffect } from './reveal/useRevealEffect.ts'
 
-// Fixed particle positions for LEGENDARY
-const LEGENDARY_PARTICLES = [
-  { left: '8%', top: '20%', size: 4, delay: '0s', duration: '2.1s' },
-  { left: '88%', top: '12%', size: 3, delay: '0.35s', duration: '1.8s' },
-  { left: '75%', top: '78%', size: 5, delay: '0.7s', duration: '2.3s' },
-  { left: '18%', top: '68%', size: 3, delay: '0.15s', duration: '1.6s' },
-  { left: '48%', top: '5%', size: 4, delay: '0.9s', duration: '2s' },
-  { left: '92%', top: '48%', size: 3, delay: '0.5s', duration: '1.75s' },
-  { left: '12%', top: '88%', size: 5, delay: '1.1s', duration: '2.15s' },
-  { left: '62%', top: '22%', size: 3, delay: '0.25s', duration: '1.65s' },
-  { left: '33%', top: '90%', size: 4, delay: '0.8s', duration: '1.9s' },
-  { left: '82%', top: '62%', size: 3, delay: '0.45s', duration: '2.05s' },
-]
+// ── ImpactWord ─────────────────────────────────────────────────────────────────
 
-// ── Component ─────────────────────────────────────────────────────────────────
+type ImpactWordProps = {
+  text: string
+  pos: { x: number; y: number }
+  impactColor: string
+  impactStroke: string
+  impactSize: string
+  impactExtraShadow?: string
+}
+
+function ImpactWord({
+  text,
+  pos,
+  impactColor,
+  impactStroke,
+  impactSize,
+  impactExtraShadow,
+}: ImpactWordProps) {
+  const [fading, setFading] = useState(false)
+
+  useEffect(() => {
+    const id = setTimeout(() => setFading(true), 550)
+    return () => clearTimeout(id)
+  }, [])
+
+  return (
+    <div
+      style={
+        {
+          position: 'fixed',
+          left: pos.x,
+          top: pos.y - 80,
+          transform: 'translateX(-50%)',
+          fontFamily: 'Impact, Arial Black, sans-serif',
+          fontSize: impactSize,
+          color: impactColor,
+          WebkitTextStroke: `2px ${impactStroke}`,
+          textShadow: impactExtraShadow ?? `3px 3px 0 ${impactStroke}`,
+          letterSpacing: '0.05em',
+          textTransform: 'uppercase',
+          zIndex: 80,
+          pointerEvents: 'none',
+          userSelect: 'none',
+          whiteSpace: 'nowrap',
+          animation: fading
+            ? 'impactFade 150ms ease-in forwards'
+            : 'impactPop 200ms cubic-bezier(0.34,1.4,0.64,1) forwards',
+        } as React.CSSProperties
+      }
+    >
+      {text}
+    </div>
+  )
+}
+
+// ── ScanlineSweep ──────────────────────────────────────────────────────────────
+
+function ScanlineSweep({
+  color,
+  onDone,
+}: {
+  color: string
+  onDone: () => void
+}) {
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 3,
+        background: color,
+        zIndex: 80,
+        pointerEvents: 'none',
+        animation: 'scanlineSweep 600ms linear forwards',
+      }}
+      onAnimationEnd={onDone}
+    />
+  )
+}
+
+// ── CardReveal ─────────────────────────────────────────────────────────────────
 
 type Props = {
   result: PullResult | null
@@ -35,32 +109,46 @@ export function CardReveal({ result, onClose }: Props) {
   const [showSweep, setShowSweep] = useState(false)
   const [showInfo, setShowInfo] = useState(false)
 
+  const rarity = (result?.card.rarity ?? 'COMMON') as CardRarity
+
+  const {
+    containerRef,
+    canvasRefs,
+    impactVisible,
+    impactPos,
+    scanlineVisible,
+    hideScanline,
+    triggerReveal,
+    reset,
+  } = useRevealEffect(rarity)
+
   useEffect(() => {
     if (!result) {
       setAnimDone(false)
       setShowSweep(false)
       setShowInfo(false)
+      reset()
       return
     }
     setAnimKey((k) => k + 1)
     setAnimDone(false)
     setShowSweep(false)
     setShowInfo(false)
+    reset()
     const sweepTimer = setTimeout(() => setShowSweep(true), 1800)
     const infoTimer = setTimeout(() => setShowInfo(true), 2000)
     return () => {
       clearTimeout(sweepTimer)
       clearTimeout(infoTimer)
     }
-  }, [result])
+  }, [result, reset])
 
   if (!result) {
     return null
   }
 
-  const rarity = result.card.rarity
-  const config = RARITY_TCG_CONFIG[rarity] ?? RARITY_TCG_CONFIG.COMMON
-  const isLegendary = rarity === 'LEGENDARY'
+  const tcgConfig = RARITY_TCG_CONFIG[rarity] ?? RARITY_TCG_CONFIG.COMMON
+  const effectConfig = RARITY_CONFIG[rarity]
   const variant = result.card.variant ?? null
 
   return (
@@ -75,65 +163,69 @@ export function CardReveal({ result, onClose }: Props) {
         }
       }}
     >
-      {/* Rarity backdrop glow — dynamic gradient, must stay inline */}
-      {config.backdropColor && (
+      {/* Rarity backdrop glow */}
+      {tcgConfig.backdropColor && (
         <div
           className="pointer-events-none absolute inset-0"
-          style={{ background: config.backdropColor }}
+          style={{ background: tcgConfig.backdropColor }}
         />
       )}
 
-      {/* LEGENDARY flash */}
-      {isLegendary && (
-        <div className="legendary-flash pointer-events-none absolute inset-0 bg-primary/15" />
+      {/* Canvas effect layers (fixed, above modal) */}
+      <RevealCanvases refs={canvasRefs} />
+
+      {/* Impact word */}
+      {impactVisible && impactPos && effectConfig.impactText && (
+        <ImpactWord
+          text={effectConfig.impactText}
+          pos={impactPos}
+          impactColor={effectConfig.impactColor}
+          impactStroke={effectConfig.impactStroke}
+          impactSize={effectConfig.impactSize}
+          impactExtraShadow={effectConfig.impactExtraShadow}
+        />
       )}
 
-      {/* LEGENDARY particles */}
-      {isLegendary &&
-        LEGENDARY_PARTICLES.map((p, i) => (
-          <span
-            // biome-ignore lint/suspicious/noArrayIndexKey: static fixed array
-            key={i}
-            className="particle pointer-events-none absolute rounded-full bg-primary"
-            style={
-              {
-                width: p.size,
-                height: p.size,
-                left: p.left,
-                top: p.top,
-                '--delay': p.delay,
-                '--duration': p.duration,
-              } as React.CSSProperties
-            }
-          />
-        ))}
+      {/* Scanline sweep */}
+      {scanlineVisible && effectConfig.scanlineColor && (
+        <ScanlineSweep
+          color={effectConfig.scanlineColor}
+          onDone={hideScanline}
+        />
+      )}
 
       {/* ── Content container ── */}
       {/* biome-ignore lint/a11y/noStaticElementInteractions: stop propagation */}
       <div
+        data-reveal-modal
         className="flex flex-col items-center gap-5 px-4 py-8"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >
-        <CardDisplay
-          rarity={rarity}
-          name={result.card.name}
-          setName={result.card.set.name}
-          imageUrl={result.card.imageUrl}
-          variant={variant}
-          showSweep={showSweep}
-          interactive={animDone}
-          animKey={animKey}
-          animClass={animDone ? '' : 'card-spiral-rise'}
-          onAnimationEnd={() => setAnimDone(true)}
-          backFace={
-            <img
-              src={cardBackImg}
-              alt="dos de carte"
-              className="h-full w-full rounded-2xl object-cover"
-            />
-          }
-        />
+        <div ref={containerRef}>
+          <CardDisplay
+            rarity={rarity}
+            name={result.card.name}
+            setName={result.card.set.name}
+            imageUrl={result.card.imageUrl}
+            variant={variant}
+            showSweep={showSweep}
+            interactive={animDone}
+            animKey={animKey}
+            animClass={animDone ? '' : 'card-spiral-rise'}
+            onAnimationEnd={() => {
+              setAnimDone(true)
+              triggerReveal()
+            }}
+            backFace={
+              <img
+                src={cardBackImg}
+                alt="dos de carte"
+                className="h-full w-full rounded-2xl object-cover"
+              />
+            }
+          />
+        </div>
 
         {/* ── Info panel ── */}
         <div
@@ -143,7 +235,6 @@ export function CardReveal({ result, onClose }: Props) {
               : 'pointer-events-none translate-y-3.5 opacity-0'
           }`}
         >
-          {/* Duplicate / dust */}
           {result.wasDuplicate && (
             <div className="border-b border-amber-600/30 bg-[linear-gradient(135deg,rgba(217,119,6,0.28)_0%,rgba(251,191,36,0.14)_100%)] px-4 py-2.75">
               <div className="flex items-center gap-3">
@@ -164,7 +255,6 @@ export function CardReveal({ result, onClose }: Props) {
             </div>
           )}
 
-          {/* Tokens remaining */}
           <div className="flex items-center justify-between border-b border-white/6 px-4 py-3">
             <div className="flex items-center gap-2">
               <Coins size={14} className="text-white/35" aria-hidden />
@@ -175,7 +265,6 @@ export function CardReveal({ result, onClose }: Props) {
             </span>
           </div>
 
-          {/* CTA */}
           <div className="p-3">
             <Button className="w-full" onClick={onClose}>
               Nouveau tirage
