@@ -521,30 +521,65 @@ h6 {
     transform: translate3d(0, 0, 0) rotate(0deg);
   }
   12% {
-    transform: translate3d(-7px, 3px, 0) rotate(-0.4deg);
+    transform: translate3d(calc(var(--shake-amp, 7px) * -1), calc(var(--shake-amp, 7px) * 0.43), 0) rotate(-0.4deg);
   }
   24% {
-    transform: translate3d(7px, -3px, 0) rotate(0.4deg);
+    transform: translate3d(var(--shake-amp, 7px), calc(var(--shake-amp, 7px) * -0.43), 0) rotate(0.4deg);
   }
   36% {
-    transform: translate3d(-5px, 4px, 0) rotate(-0.3deg);
+    transform: translate3d(calc(var(--shake-amp, 7px) * -0.71), calc(var(--shake-amp, 7px) * 0.57), 0) rotate(-0.3deg);
   }
   48% {
-    transform: translate3d(6px, -2px, 0) rotate(0.3deg);
+    transform: translate3d(calc(var(--shake-amp, 7px) * 0.86), calc(var(--shake-amp, 7px) * -0.29), 0) rotate(0.3deg);
   }
   60% {
-    transform: translate3d(-4px, 2px, 0) rotate(-0.2deg);
+    transform: translate3d(calc(var(--shake-amp, 7px) * -0.57), calc(var(--shake-amp, 7px) * 0.29), 0) rotate(-0.2deg);
   }
   72% {
-    transform: translate3d(3px, -2px, 0) rotate(0.2deg);
+    transform: translate3d(calc(var(--shake-amp, 7px) * 0.43), calc(var(--shake-amp, 7px) * -0.29), 0) rotate(0.2deg);
   }
   84% {
-    transform: translate3d(-2px, 1px, 0) rotate(-0.1deg);
+    transform: translate3d(calc(var(--shake-amp, 7px) * -0.29), calc(var(--shake-amp, 7px) * 0.14), 0) rotate(-0.1deg);
   }
 }
 
 .screen-shake {
   animation: screenShake 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+/* ── Card reveal canvas effects ──────────────────────────────────────── */
+
+@keyframes impactPop {
+  0% {
+    transform: translateX(-50%) scale(0.4);
+    opacity: 0;
+  }
+  60% {
+    transform: translateX(-50%) scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes impactFade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes scanlineSweep {
+  from {
+    top: -4px;
+  }
+  to {
+    top: 100vh;
+  }
 }
 
 /* ── Rarity card entrances ────────────────────────────────────────────────── */
