@@ -18,7 +18,7 @@ export function setTokenCookies(
     .setCookie('access_token', accessToken, { ...COOKIE_OPTS, maxAge: 15 * 60 })
     .setCookie('refresh_token', refreshToken, {
       ...COOKIE_OPTS,
-      maxAge: 7 * 24 * 60 * 60,
+      maxAge: 30 * 24 * 60 * 60,
     })
 }
 

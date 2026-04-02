@@ -64,6 +64,7 @@ export class OAuthDomain implements OAuthDomainInterface {
         response_type: 'code',
         scope: 'identify email',
         state,
+        prompt: 'none',
       })}`
     }
     throw Boom.badRequest('Unknown provider')

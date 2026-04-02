@@ -280,7 +280,7 @@ export class AuthDomain implements AuthDomainInterface {
     const payload: JwtPayload = { sub: user.id, role: user.role }
     const accessToken = this.#jwtService.sign(payload, { expiresIn: '15m' })
     const refreshToken = this.#jwtService.signRefresh(payload, {
-      expiresIn: '7d',
+      expiresIn: '30d',
     })
     await this.#refreshTokenRepository.store(user.id, refreshToken)
     return { accessToken, refreshToken }

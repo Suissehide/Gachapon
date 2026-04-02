@@ -24,11 +24,44 @@ export const discordOAuthRouter: FastifyPluginCallbackZod = (fastify) => {
     '/callback',
     {
       schema: {
-        querystring: z.object({ code: z.string(), state: z.string() }),
+        querystring: z.object({
+          code: z.string().optional(),
+          state: z.string().optional(),
+          error: z.string().optional(),
+        }),
       },
     },
     async (request, reply) => {
-      const { code, state } = request.query
+      const { code, state, error } = request.query
+
+      // Discord returns error=access_denied when prompt=none but user hasn't authorized yet.
+      // Fall back to the full consent flow.
+      if (error) {
+        reply.clearCookie('oauth_state', { path: '/' })
+        const fallbackState = randomBytes(16).toString('hex')
+        reply.setCookie('oauth_state', fallbackState, {
+          httpOnly: true,
+          secure: true,
+          maxAge: 600,
+          path: '/',
+          sameSite: 'lax',
+        })
+        const consentUrl = `https://discord.com/api/oauth2/authorize?${new URLSearchParams(
+          {
+            client_id: config.discordClientId,
+            redirect_uri: config.discordRedirectUri,
+            response_type: 'code',
+            scope: 'identify email',
+            state: fallbackState,
+            prompt: 'consent',
+          },
+        )}`
+        return reply.redirect(consentUrl)
+      }
+
+      if (!code || !state) {
+        throw Boom.badRequest('Missing code or state')
+      }
       if (
         !request.cookies.oauth_state ||
         request.cookies.oauth_state !== state
