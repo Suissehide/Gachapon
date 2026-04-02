@@ -7,7 +7,6 @@ import type {
 import type { PostgresPrismaClient } from '../postgres-client'
 
 const RARITIES = ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY']
-const UPGRADE_TYPES = ['REGEN', 'LUCK', 'DUST_HARVEST', 'TOKEN_VAULT']
 
 export class AdminStatsRepository implements IAdminStatsRepository {
   readonly #prisma: PostgresPrismaClient
@@ -73,8 +72,7 @@ export class AdminStatsRepository implements IAdminStatsRepository {
       neverPulledCards,
       activeUsers7d,
       activeUsers30d,
-      upgradeRows,
-      totalUsers,
+      skillRows,
     ] = await Promise.all([
       this.#prisma.$queryRaw<{ rarity: string; count: bigint }[]>`
         SELECT c.rarity, COUNT(*) AS count
@@ -107,13 +105,12 @@ export class AdminStatsRepository implements IAdminStatsRepository {
         FROM "GachaPull"
         WHERE "pulledAt" >= ${thirtyDaysAgo}
       `,
-      this.#prisma.$queryRaw<{ type: string; level: number; count: bigint }[]>`
-        SELECT type, level, COUNT(*) AS count
-        FROM "UserUpgrade"
-        GROUP BY type, level
-        ORDER BY type, level
+      this.#prisma.$queryRaw<{ nodeId: string; level: number; count: bigint }[]>`
+        SELECT "nodeId", level, COUNT(*) AS count
+        FROM "UserSkill"
+        GROUP BY "nodeId", level
+        ORDER BY "nodeId", level
       `,
-      this.#prisma.user.count(),
     ])
 
     const totalRealPulls = rarityReal.reduce((s, r) => s + Number(r.count), 0)
@@ -134,15 +131,11 @@ export class AdminStatsRepository implements IAdminStatsRepository {
       return { rarity, realCount, realPct, theoreticalPct }
     })
 
-    const upgradeDistribution = UPGRADE_TYPES.map((type) => {
-      const rows = upgradeRows.filter((r) => r.type === type)
-      const countAtLevels = rows.reduce((s, r) => s + Number(r.count), 0)
-      const levels = [
-        { level: 0, count: totalUsers - countAtLevels },
-        ...rows.map((r) => ({ level: r.level, count: Number(r.count) })),
-      ]
-      return { type, levels }
-    })
+    const skillDistribution = skillRows.map((r) => ({
+      nodeId: String(r.nodeId),
+      level: Number(r.level),
+      count: Number(r.count),
+    }))
 
     return {
       rarityDrift,
@@ -156,7 +149,7 @@ export class AdminStatsRepository implements IAdminStatsRepository {
         sevenDays: Number(activeUsers7d[0]?.count ?? 0),
         thirtyDays: Number(activeUsers30d[0]?.count ?? 0),
       },
-      upgradeDistribution,
+      skillDistribution,
     }
   }
 }

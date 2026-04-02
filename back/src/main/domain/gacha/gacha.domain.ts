@@ -14,11 +14,11 @@ import type {
 } from '../../types/infra/orm/client'
 import type { ICardRepository } from '../../types/infra/orm/repositories/card.repository.interface'
 import type { IGachaPullRepository } from '../../types/infra/orm/repositories/gacha-pull.repository.interface'
-import type { IUpgradeRepository } from '../../types/infra/orm/repositories/upgrade.repository.interface'
+import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 import type { IUserCardRepository } from '../../types/infra/orm/repositories/user-card.repository.interface'
 import { calculateTokens } from '../economy/economy.domain'
-import type { UserUpgradeEffects } from '../economy/upgrade.domain'
+import type { UserUpgradeEffects } from '../../types/domain/economy/economy.types'
 
 export function pickWeightedRandom(cards: CardWithSet[]): CardWithSet {
   if (cards.length === 0) {
@@ -132,7 +132,7 @@ export class GachaDomain implements GachaDomainInterface {
   readonly #cardRepository: ICardRepository
   readonly #userCardRepository: IUserCardRepository
   readonly #gachaPullRepository: IGachaPullRepository
-  readonly #upgradeRepository: IUpgradeRepository
+  readonly #skillTreeRepository: ISkillTreeRepository
 
   constructor({
     postgresOrm,
@@ -141,7 +141,7 @@ export class GachaDomain implements GachaDomainInterface {
     cardRepository,
     userCardRepository,
     gachaPullRepository,
-    upgradeRepository,
+    skillTreeRepository,
   }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#configService = configService
@@ -149,7 +149,7 @@ export class GachaDomain implements GachaDomainInterface {
     this.#cardRepository = cardRepository
     this.#userCardRepository = userCardRepository
     this.#gachaPullRepository = gachaPullRepository
-    this.#upgradeRepository = upgradeRepository
+    this.#skillTreeRepository = skillTreeRepository
   }
 
   async #executePullTx(
@@ -259,7 +259,7 @@ export class GachaDomain implements GachaDomainInterface {
           'holoRateEpic',
           'holoRateLegendary',
         ),
-        this.#upgradeRepository.getEffectsForUser(userId),
+        this.#skillTreeRepository.getEffectsForUser(userId),
       ])
       const cfg: PullCfg = {
         tokenRegenIntervalMinutes: c.tokenRegenIntervalMinutes,

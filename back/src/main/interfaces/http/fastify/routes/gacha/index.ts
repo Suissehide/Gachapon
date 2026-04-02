@@ -11,7 +11,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     userRepository,
     configService,
     gachaPullRepository,
-    upgradeRepository,
+    skillTreeRepository,
   } = fastify.iocContainer
 
   // POST /pulls — consommer 1 token et tirer une carte
@@ -80,7 +80,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
       }
 
       const [upgrades, cfg] = await Promise.all([
-        upgradeRepository.getEffectsForUser(request.user.userID),
+        skillTreeRepository.getEffectsForUser(request.user.userID),
         configService.getMany('tokenRegenIntervalMinutes', 'tokenMaxStock'),
       ])
       const effectiveInterval = Math.max(
@@ -115,7 +115,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
       }
 
       const [upgrades, cfg] = await Promise.all([
-        upgradeRepository.getEffectsForUser(request.user.userID),
+        skillTreeRepository.getEffectsForUser(request.user.userID),
         configService.getMany('tokenRegenIntervalMinutes', 'tokenMaxStock'),
       ])
       const effectiveInterval = Math.max(

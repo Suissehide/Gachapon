@@ -6,13 +6,14 @@ import type { InvitationRepository } from '../../infra/orm/repositories/invitati
 import type { OAuthAccountRepository } from '../../infra/orm/repositories/oauth-account.repository'
 import type { TeamRepository } from '../../infra/orm/repositories/team.repository'
 import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
-import type { UpgradeRepository } from '../../infra/orm/repositories/upgrade.repository'
+import type { SkillTreeRepository } from '../../infra/orm/repositories/skill-tree.repository'
 import type { UserCardRepository } from '../../infra/orm/repositories/user-card.repository'
 import type { RefreshTokenRepository } from '../../infra/redis/refresh-token.repository'
 import type { AuthDomainInterface } from '../domain/auth/auth.domain.interface'
 import type { OAuthDomainInterface } from '../domain/auth/oauth.domain.interface'
 import type { ICollectionDomain } from '../domain/collection/collection.domain.interface'
-import type { IUpgradePurchaseDomain } from '../domain/economy/upgrade-purchase.domain.interface'
+import type { AdminSkillTreeDomain } from '../../domain/skills/admin-skill-tree.domain'
+import type { ISkillTreeDomain, ISkillInvestDomain, ISkillResetDomain } from '../domain/skills/skill-tree.domain.interface'
 import type { GachaDomainInterface } from '../domain/gacha/gacha.domain.interface'
 import type { RewardsDomainInterface } from '../domain/rewards/rewards.domain.interface'
 import type { IShopDomain } from '../domain/shop/shop.domain.interface'
@@ -62,7 +63,7 @@ export interface IocContainer {
   readonly cardRepository: CardRepository
   readonly userCardRepository: UserCardRepository
   readonly gachaPullRepository: GachaPullRepository
-  readonly upgradeRepository: UpgradeRepository
+  readonly skillTreeRepository: SkillTreeRepository
   readonly scoringConfigRepository: IScoringConfigRepository
   readonly gachaDomain: GachaDomainInterface
   readonly teamRepository: TeamRepository
@@ -83,5 +84,8 @@ export interface IocContainer {
   readonly adminStatsRepository: IAdminStatsRepository
   readonly collectionDomain: ICollectionDomain
   readonly shopDomain: IShopDomain
-  readonly upgradePurchaseDomain: IUpgradePurchaseDomain
+  readonly skillTreeDomain: ISkillTreeDomain
+  readonly skillInvestDomain: ISkillInvestDomain
+  readonly skillResetDomain: ISkillResetDomain
+  readonly adminSkillTreeDomain: AdminSkillTreeDomain
 }
