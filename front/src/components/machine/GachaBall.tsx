@@ -1,6 +1,5 @@
-import { animated, useSpring } from '@react-spring/three'
 import { useFrame } from '@react-three/fiber'
-import { useEffect, useMemo, useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 
 const BALL_COLORS = [
@@ -14,6 +13,8 @@ const BALL_COLORS = [
   '#00b4d8', // cyan
 ]
 
+const LID_OPEN_ANGLE = -Math.PI * 0.58
+
 type Props = {
   interactive: boolean
   isOpening: boolean
@@ -22,6 +23,7 @@ type Props = {
 
 export function GachaBall({ interactive, isOpening, onOpen }: Props) {
   const groupRef = useRef<THREE.Group>(null)
+  const lidRef = useRef<THREE.Group>(null)
   const time = useRef(0)
 
   const bottomColor = useMemo(
@@ -29,32 +31,19 @@ export function GachaBall({ interactive, isOpening, onOpen }: Props) {
     [],
   )
 
-  // Lid spring: snappy overshoot, less linear
-  const [lidSpring, lidApi] = useSpring(() => ({
-    rx: 0,
-    config: { tension: 55, friction: 10 },
-  }))
-
-  useEffect(() => {
-    if (isOpening) {
-      // Ouverture : overshoot
-      lidApi.start({
-        rx: -Math.PI * 0.58,
-        config: { tension: 55, friction: 10 },
-      })
-    } else {
-      // Fermeture : linéaire, sans dépassement
-      lidApi.start({ rx: 0, config: { tension: 80, friction: 28 } })
-    }
-  }, [isOpening, lidApi])
-
-  // Idle float + slow rotation — when opening, lerp back to center facing camera
   useFrame((_, delta) => {
-    if (!groupRef.current) {
+    if (!groupRef.current || !lidRef.current) {
       return
     }
+
+    // Lid — lerp vers l'angle cible, jamais en arrière une fois ouvert
+    const target = isOpening ? LID_OPEN_ANGLE : 0
+    const current = lidRef.current.rotation.x
+    const next = THREE.MathUtils.lerp(current, target, delta * 4)
+    lidRef.current.rotation.x = isOpening ? Math.min(current, next) : next
+
     if (isOpening) {
-      // Lerp agressif vers l'origine
+      // Recentrage de la boule vers l'origine
       groupRef.current.position.x = THREE.MathUtils.lerp(
         groupRef.current.position.x,
         0,
@@ -77,6 +66,7 @@ export function GachaBall({ interactive, isOpening, onOpen }: Props) {
       )
       return
     }
+
     time.current += delta
     const t = time.current
     groupRef.current.position.y =
@@ -90,9 +80,9 @@ export function GachaBall({ interactive, isOpening, onOpen }: Props) {
 
   return (
     <group ref={groupRef}>
-      {/* ── LID (top) — plastique transparent bleu cartoon ── */}
+      {/* ── LID (top) ── */}
       <group position={[0, 0, -0.85]}>
-        <animated.group rotation-x={lidSpring.rx}>
+        <group ref={lidRef}>
           <group position={[0, 0, 0.85]}>
             <mesh renderOrder={1}>
               <sphereGeometry
@@ -102,32 +92,30 @@ export function GachaBall({ interactive, isOpening, onOpen }: Props) {
                 color="#7ec8e3"
                 roughness={0.2}
                 metalness={0}
-                opacity={0.58}
+                opacity={0.38}
                 clearcoat={0.5}
                 clearcoatRoughness={0.25}
                 side={THREE.DoubleSide}
               />
             </mesh>
           </group>
-        </animated.group>
+        </group>
       </group>
 
-      {/* ── BOTTOM hemisphere — couleur aléatoire, style cartoon ── */}
-      <group>
-        <mesh>
-          <sphereGeometry
-            args={[0.85, 64, 64, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]}
-          />
-          <meshStandardMaterial
-            color={bottomColor}
-            roughness={0.85}
-            metalness={0}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-      </group>
+      {/* ── BOTTOM hemisphere ── */}
+      <mesh>
+        <sphereGeometry
+          args={[0.85, 64, 64, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]}
+        />
+        <meshStandardMaterial
+          color={bottomColor}
+          roughness={0.85}
+          metalness={0}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
 
-      {/* ── Seam — bande cylindrique plate, même couleur que le bas ── */}
+      {/* ── Seam ── */}
       <mesh>
         <cylinderGeometry args={[0.862, 0.862, 0.12, 64, 1, true]} />
         <meshStandardMaterial

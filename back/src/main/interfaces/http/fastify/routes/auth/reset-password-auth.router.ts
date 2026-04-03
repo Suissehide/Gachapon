@@ -16,7 +16,10 @@ export const resetPasswordAuthRouter: FastifyPluginCallbackZod = (fastify) => {
       },
     },
     async (request, reply) => {
-      await authDomain.resetPassword(request.body.token, request.body.newPassword)
+      await authDomain.resetPassword(
+        request.body.token,
+        request.body.newPassword,
+      )
       return reply.status(204).send()
     },
   )

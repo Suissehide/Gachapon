@@ -17,15 +17,22 @@ export interface IInvitationRepository {
     invitedEmail?: string
     expiresAt: Date
   }): Promise<InvitationEntity>
-  updateStatus(id: string, status: 'ACCEPTED' | 'DECLINED' | 'CANCELLED'): Promise<void>
-  findPendingByTeam(teamId: string): Promise<(InvitationEntity & {
-    invitedUser: { username: string } | null
-  })[]>
+  updateStatus(
+    id: string,
+    status: 'ACCEPTED' | 'DECLINED' | 'CANCELLED',
+  ): Promise<void>
+  findPendingByTeam(teamId: string): Promise<
+    (InvitationEntity & {
+      invitedUser: { username: string } | null
+    })[]
+  >
   updateEmailSentAt(id: string, sentAt: Date): Promise<void>
   findById(id: string): Promise<InvitationEntity | null>
-  findAllByTeam(teamId: string): Promise<(InvitationEntity & {
-    invitedUser: { username: string } | null
-  })[]>
+  findAllByTeam(teamId: string): Promise<
+    (InvitationEntity & {
+      invitedUser: { username: string } | null
+    })[]
+  >
   cancelById(id: string): Promise<void>
   deleteById(id: string): Promise<void>
 }

@@ -1,4 +1,5 @@
 import type React from 'react'
+import { useRef, useState } from 'react'
 
 import { ArtArea } from './ArtArea.tsx'
 import {
@@ -7,6 +8,7 @@ import {
   SIZE_FULL,
   VARIANT_TCG_CONFIG,
 } from './config.ts'
+import { HoloOverlay } from './HoloOverlay.tsx'
 import { NamePlate } from './NamePlate.tsx'
 import { RarityStrip } from './RarityStrip.tsx'
 
@@ -39,6 +41,38 @@ export function TcgCardFace({
   const variantInfo =
     variant && variant !== 'NORMAL' ? VARIANT_TCG_CONFIG[variant] : null
   const sz = compact ? SIZE_COMPACT : SIZE_FULL
+  const isHolo = variant === 'HOLOGRAPHIC' && isOwned
+
+  // Only `active` boolean drives re-renders; position values go directly to DOM via CSS vars
+  const [holoActive, setHoloActive] = useState(false)
+  const outerRef = useRef<HTMLDivElement>(null)
+
+  const handleHoloMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const px = Math.abs(
+      Math.floor((100 / rect.width) * (e.clientX - rect.left)) - 100,
+    )
+    const py = Math.abs(
+      Math.floor((100 / rect.height) * (e.clientY - rect.top)) - 100,
+    )
+    const pa = 50 - px + (50 - py)
+    if (!holoActive) {
+      setHoloActive(true)
+    }
+    const el = outerRef.current
+    if (el) {
+      el.style.setProperty('--holo-lp', String(50 + (px - 50) / 1.5))
+      el.style.setProperty('--holo-tp', String(50 + (py - 50) / 1.5))
+      el.style.setProperty('--holo-px', String(50 + (px - 50) / 7))
+      el.style.setProperty('--holo-py', String(50 + (py - 50) / 7))
+      el.style.setProperty(
+        '--holo-opc',
+        String((20 + Math.abs(pa) * 1.5) / 100),
+      )
+    }
+  }
+
+  const handleHoloMouseLeave = () => setHoloActive(false)
 
   // All config-derived color/gradient values are exposed as CSS custom properties
   // so sub-components can reference them via Tailwind arbitrary values (var(--tcg-*))
@@ -59,6 +93,7 @@ export function TcgCardFace({
   return (
     // Outer wrapper = gradient frame via background + padding technique
     <div
+      ref={outerRef}
       className={`absolute inset-0 [backface-visibility:hidden] ${sz.outerRadius} ${isOwned ? config.glowClass : ''}`}
       style={{
         ...cssVars,
@@ -68,10 +103,12 @@ export function TcgCardFace({
         padding: sz.framePad,
         boxShadow: isOwned ? config.glow : '0 2px 8px rgba(0,0,0,0.08)',
       }}
+      onMouseMove={isHolo ? handleHoloMouseMove : undefined}
+      onMouseLeave={isHolo ? handleHoloMouseLeave : undefined}
     >
       {/* Inner card body */}
       <div
-        className={`relative h-full flex flex-col overflow-hidden ${sz.innerRadius}`}
+        className={`relative h-full flex flex-col overflow-hidden [isolation:isolate] ${sz.innerRadius}`}
         style={{
           background: config.cardBg,
           boxShadow: `inset 0 0 0 1px ${isOwned ? config.innerRing : 'rgba(156,163,175,0.3)'}`,
@@ -92,6 +129,7 @@ export function TcgCardFace({
           sz={sz}
         />
         <RarityStrip config={config} isOwned={isOwned} sz={sz} />
+        {isHolo && <HoloOverlay active={holoActive} />}
       </div>
 
       {/* Corner L-bracket ornaments over the gradient frame */}

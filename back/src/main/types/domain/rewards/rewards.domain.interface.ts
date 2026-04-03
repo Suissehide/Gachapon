@@ -1,3 +1,4 @@
+import type { RewardSource, UserReward } from '../../../../generated/client'
 import type {
   PendingUserReward,
   UserRewardWithReward,
@@ -11,6 +12,11 @@ export type ClaimResult = {
   pendingRewardsCount: number
 }
 
+export type AddRewardInput = {
+  rewardId: string
+  source: RewardSource
+}
+
 export interface RewardsDomainInterface {
   getPending(userId: string): Promise<PendingUserReward[]>
   getHistory(
@@ -20,4 +26,5 @@ export interface RewardsDomainInterface {
   ): Promise<{ data: UserRewardWithReward[]; total: number }>
   claimOne(rewardId: string, userId: string): Promise<ClaimResult>
   claimAll(userId: string): Promise<ClaimResult | null>
+  addRewardToUser(userId: string, input: AddRewardInput): Promise<UserReward>
 }

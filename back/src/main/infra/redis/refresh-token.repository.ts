@@ -1,7 +1,7 @@
 import type { IocContainer } from '../../types/application/ioc'
 import type { RedisClientInterface } from '../../types/infra/redis/redis-client'
 
-const TTL = 7 * 24 * 60 * 60 // 7 days in seconds
+const TTL = 30 * 24 * 60 * 60 // 30 days in seconds
 
 export class RefreshTokenRepository {
   readonly #redis: RedisClientInterface

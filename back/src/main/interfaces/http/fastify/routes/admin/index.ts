@@ -3,15 +3,15 @@ import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { adminAchievementsRouter } from './achievements.router'
 import { adminCardsRouter } from './cards.router'
 import { adminConfigRouter } from './config.router'
+import { adminMediaRouter } from './media.router'
 import { adminQuestsRouter } from './quests.router'
+import { adminScoringConfigRouter } from './scoring-config.router'
 import { adminSetsRouter } from './sets.router'
 import { adminShopRouter } from './shop.router'
 import { adminStatsRouter } from './stats.router'
-import { adminMediaRouter } from './media.router'
-import { adminScoringConfigRouter } from './scoring-config.router'
-import { adminUpgradesRouter } from './upgrades.router'
-import { adminUsersRouter } from './users.router'
+import { adminSkillsRouter } from './skills.router'
 import { adminStreakRouter } from './streak.router'
+import { adminUsersRouter } from './users.router'
 
 export const adminRouter: FastifyPluginAsyncZod = async (fastify) => {
   // Auth appliquée au scope entier : toutes les routes /admin/* sont protégées
@@ -34,8 +34,10 @@ export const adminRouter: FastifyPluginAsyncZod = async (fastify) => {
   await fastify.register(adminShopRouter, { prefix: '/shop-items' })
   await fastify.register(adminQuestsRouter, { prefix: '/quests' })
   await fastify.register(adminAchievementsRouter, { prefix: '/achievements' })
-  await fastify.register(adminUpgradesRouter, { prefix: '/upgrades' })
-  await fastify.register(adminScoringConfigRouter, { prefix: '/scoring-config' })
+  await fastify.register(adminScoringConfigRouter, {
+    prefix: '/scoring-config',
+  })
   await fastify.register(adminMediaRouter, { prefix: '/media' })
   await fastify.register(adminStreakRouter, { prefix: '/streak' })
+  await fastify.register(adminSkillsRouter)
 }

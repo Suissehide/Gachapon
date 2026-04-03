@@ -24,6 +24,7 @@ export async function seedUsers(
       dust: 99999,
       level: 99,
       xp: 999999,
+      skillPoints: 99,
     },
   })
 
@@ -38,6 +39,7 @@ export async function seedUsers(
       dust: 1200,
       level: 5,
       xp: 4200,
+      skillPoints: 5,
     },
   })
 
@@ -52,6 +54,7 @@ export async function seedUsers(
       dust: 300,
       level: 2,
       xp: 800,
+      skillPoints: 2,
     },
   })
 
@@ -65,6 +68,7 @@ export async function seedUsers(
       dust: 150,
       level: 1,
       xp: 200,
+      skillPoints: 1,
     },
   })
 

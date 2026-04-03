@@ -133,10 +133,11 @@ function UserCollectionPage() {
               setName={group.name}
               entries={group.entries}
               onRecycle={() => {}}
+              onDetail={() => {}}
             />
           ))
         ) : (
-          <CollectionGrid entries={filteredEntries} onRecycle={() => {}} />
+          <CollectionGrid entries={filteredEntries} onRecycle={() => {}} onDetail={() => {}} />
         )}
       </div>
     </div>

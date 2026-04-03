@@ -1,4 +1,9 @@
-import type { GachaPullEntity, GachaPullWithCard, CardRarity, CardVariant } from '../../../domain/gacha/gacha.types'
+import type {
+  CardRarity,
+  CardVariant,
+  GachaPullEntity,
+  GachaPullWithCard,
+} from '../../../domain/gacha/gacha.types'
 import type { PrimaTransactionClient } from '../client'
 
 export type CreateGachaPullInput = {
@@ -20,6 +25,16 @@ export type RecentPullEntry = {
   pulledAt: Date
 }
 
+export type FindRecentOpts = {
+  before?: Date
+  teamId?: string
+}
+
+export type RecentPullPage = {
+  entries: RecentPullEntry[]
+  hasMore: boolean
+}
+
 export interface IGachaPullRepository {
   create(data: CreateGachaPullInput): Promise<GachaPullEntity>
   createInTx(
@@ -30,5 +45,7 @@ export interface IGachaPullRepository {
     userId: string,
     pagination: { skip: number; take: number },
   ): Promise<{ pulls: GachaPullWithCard[]; total: number }>
-  findRecent(limit: number): Promise<RecentPullEntry[]>
+  findRecent(limit: number, opts?: FindRecentOpts): Promise<RecentPullPage>
+  countByUser(userId: string): Promise<number>
+  sumDustEarnedByUser(userId: string): Promise<number>
 }

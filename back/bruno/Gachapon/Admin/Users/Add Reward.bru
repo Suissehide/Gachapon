@@ -1,0 +1,27 @@
+meta {
+  name: Add Reward
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{BASE_URL}}/admin/users/:id/rewards
+  body: json
+  auth: none
+}
+
+params:path {
+  id: {{user-uuid}}
+}
+
+body:json {
+  {
+    "rewardId": "{{reward-uuid}}",
+    "source": "STREAK"
+  }
+}
+
+vars:pre-request {
+  reward-uuid: 76ded432-6f25-45d7-a35e-7d9d38aec8e3
+  user-uuid: e852c662-da03-4a7f-ac60-360bff8d3cfa
+}

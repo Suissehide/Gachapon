@@ -1,85 +1,35 @@
 import { Link, useNavigate } from '@tanstack/react-router'
 import { LogOut, Sparkles, Ticket } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
 
 import { useAuthStore } from '../../stores/auth.store'
 import { RewardsBadge } from '../rewards/RewardsBadge.tsx'
 import { Button } from '../ui/button.tsx'
+import {
+  CapsuleIcon,
+  MobileMenuShell,
+  MobileNavLink,
+  useMobileMenu,
+} from './MobileMenu.tsx'
 
 const navItems = [
   { to: '/play', label: 'Jouer' },
   { to: '/collection', label: 'Collection' },
   { to: '/team', label: 'Équipes' },
   { to: '/shop', label: 'Boutique' },
-  { to: '/upgrades', label: 'Améliorations' },
+  { to: '/skills', label: 'Compétences' },
   { to: '/leaderboard', label: 'Classement' },
 ]
-
-// Static delay strings for Tailwind JIT detection
-const itemDelays = ['80ms', '125ms', '170ms', '215ms', '260ms', '305ms']
-
-// Dot gradient per-item rotation
-const dotGradients = [
-  'from-primary-light to-primary',
-  'from-secondary to-accent',
-  'from-primary to-secondary',
-]
-
-// Capsule gachapon icon: two rounded halves that morph into ✕
-function CapsuleIcon({ open }: { open: boolean }) {
-  return (
-    <div className="cursor-pointer relative w-6 h-6" aria-hidden="true">
-      {/* Top half → top diagonal of ✕ */}
-      <span
-        className={`absolute inset-x-0 h-3 bg-linear-to-r from-primary-light to-primary
-          transition-[top,transform,border-radius] duration-300 ease-spring
-          ${open ? 'top-2 rotate-45 rounded-sm' : 'top-px rotate-0 rounded-t-full rounded-b-none'}`}
-      />
-      {/* Bottom half → bottom diagonal of ✕ */}
-      <span
-        className={`absolute inset-x-0 h-3 bg-linear-to-r from-secondary to-accent
-          transition-[top,transform,border-radius] duration-300 ease-spring
-          ${open ? 'top-2 -rotate-45 rounded-sm' : 'top-3.5 rotate-0 rounded-b-full rounded-t-none'}`}
-      />
-    </div>
-  )
-}
 
 export function Navbar() {
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
   const navigate = useNavigate()
-  const [menuOpen, setMenuOpen] = useState(false)
-
-  const closeMenu = useCallback(() => setMenuOpen(false), [])
+  const { menuOpen, setMenuOpen, closeMenu } = useMobileMenu()
 
   const handleLogout = async () => {
     await logout()
     await navigate({ to: '/' })
   }
-
-  useEffect(() => {
-    if (!menuOpen) {
-      return
-    }
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        closeMenu()
-      }
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [menuOpen, closeMenu])
-
-  useEffect(() => {
-    const handler = () => {
-      if (window.innerWidth >= 1024) {
-        closeMenu()
-      }
-    }
-    window.addEventListener('resize', handler)
-    return () => window.removeEventListener('resize', handler)
-  }, [closeMenu])
 
   return (
     <>
@@ -127,9 +77,7 @@ export function Navbar() {
                     {user.dust.toLocaleString('fr-FR')}
                   </Link>
                 </div>
-                <RewardsBadge
-                  pendingRewardsCount={user.pendingRewardsCount ?? 0}
-                />
+                <RewardsBadge pendingRewardsCount={user.pendingRewardsCount ?? 0} />
                 <div className="h-5 w-px bg-border hidden lg:block" />
                 <Link
                   to={'/profile/$username'}
@@ -165,77 +113,45 @@ export function Navbar() {
         </div>
       </nav>
 
-      {/* Backdrop */}
-      <div
-        aria-hidden="true"
-        className={`fixed inset-0 z-40 lg:hidden bg-black/35 backdrop-blur-sm transition-opacity duration-300 ease-in ${
-          menuOpen
-            ? 'opacity-100 pointer-events-auto'
-            : 'opacity-0 pointer-events-none'
-        }`}
-        onClick={closeMenu}
-      />
+      <MobileMenuShell id="mobile-menu" open={menuOpen} onClose={closeMenu}>
+        {navItems.map((item, i) => (
+          <MobileNavLink
+            key={item.to}
+            to={item.to}
+            label={item.label}
+            index={i}
+            open={menuOpen}
+            onClick={closeMenu}
+          />
+        ))}
 
-      {/* Mobile menu — grid-rows trick for smooth height animation */}
-      <div
-        id="mobile-menu"
-        className={`fixed top-16 left-0 right-0 z-40 lg:hidden grid transition-[grid-template-rows] duration-[420ms] ease-spring-soft ${
-          menuOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
-        }`}
-      >
-        <div className="overflow-hidden">
-          <div className="bg-background/95 backdrop-blur-xl border-b border-border shadow-[0_8px_32px_rgba(0,0,0,0.1)]">
-            <div className="mx-auto max-w-7xl px-6 py-3 flex flex-col gap-0.5">
-              {navItems.map((item, i) => (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  onClick={closeMenu}
-                  className={`flex items-center gap-4 px-2 py-3 rounded-xl text-text-light hover:text-text
-                    transition-[opacity,transform] duration-300 ease-spring-pop
-                    [&.active]:text-primary [&.active]:font-semibold
-                    ${menuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-3'}`}
-                  style={{ transitionDelay: itemDelays[i] }}
-                >
-                  <span
-                    className={`w-4 h-4 rounded-full shrink-0 bg-linear-to-br ${dotGradients[i % 3]}`}
-                  />
-                  <span className="text-3xl font-semibold uppercase tracking-wide">
-                    {item.label}
-                  </span>
-                </Link>
-              ))}
-
-              {user && (
-                <div
-                  className={`mt-1 pt-1 border-t border-border/60 flex items-center justify-between transition-opacity duration-300 ${menuOpen ? 'opacity-100' : 'opacity-0'}`}
-                  style={{ transitionDelay: `${navItems.length * 45 + 120}ms` }}
-                >
-                  <Link
-                    to={'/profile/$username'}
-                    params={{ username: user.username }}
-                    className="px-2 py-3 text-3xl font-semibold uppercase tracking-wide text-text-light hover:text-text transition-colors"
-                    onClick={closeMenu}
-                  >
-                    {user.username}
-                  </Link>
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      void handleLogout()
-                      closeMenu()
-                    }}
-                    title="Déconnexion"
-                    className="p-2 rounded-full hover:text-destructive hover:bg-destructive/10 transition-colors"
-                  >
-                    <LogOut className="font-semibold text-text-light h-7 w-7" />
-                  </Button>
-                </div>
-              )}
-            </div>
+        {user && (
+          <div
+            className={`mt-1 pt-1 border-t border-border/60 flex items-center justify-between transition-opacity duration-300 ${menuOpen ? 'opacity-100' : 'opacity-0'}`}
+            style={{ transitionDelay: `${navItems.length * 45 + 120}ms` }}
+          >
+            <Link
+              to={'/profile/$username'}
+              params={{ username: user.username }}
+              className="px-2 py-3 text-3xl font-semibold uppercase tracking-wide text-text-light hover:text-text transition-colors"
+              onClick={closeMenu}
+            >
+              {user.username}
+            </Link>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                void handleLogout()
+                closeMenu()
+              }}
+              title="Déconnexion"
+              className="p-2 rounded-full hover:text-destructive hover:bg-destructive/10 transition-colors"
+            >
+              <LogOut className="font-semibold text-text-light h-7 w-7" />
+            </Button>
           </div>
-        </div>
-      </div>
+        )}
+      </MobileMenuShell>
     </>
   )
 }

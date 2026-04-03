@@ -33,9 +33,10 @@ export const AdminStatsApi = {
       setName: string
     }[]
     activeUsers: { sevenDays: number; thirtyDays: number }
-    upgradeDistribution: {
-      type: string
-      levels: { level: number; count: number }[]
+    skillDistribution: {
+      nodeId: string
+      level: number
+      count: number
     }[]
   }> => {
     const res = await fetchWithAuth(`${apiUrl}${CONFIG_ROUTES.admin.stats}`)

@@ -6,6 +6,7 @@ export type CreateUserInput = {
   username: string
   email: string
   passwordHash?: string
+  tokens?: number
 }
 
 export type UpdateUserInput = Partial<

@@ -11,7 +11,10 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
 import type { IocContainer } from '../../types/application/ioc'
-import type { StorageClientInterface, StorageObject } from '../../types/infra/storage/storage-client'
+import type {
+  StorageClientInterface,
+  StorageObject,
+} from '../../types/infra/storage/storage-client'
 
 export class MinioClient implements StorageClientInterface {
   readonly #s3: S3Client
@@ -32,7 +35,11 @@ export class MinioClient implements StorageClientInterface {
     })
   }
 
-  async upload(key: string, body: Buffer, contentType: string): Promise<string> {
+  async upload(
+    key: string,
+    body: Buffer,
+    contentType: string,
+  ): Promise<string> {
     await this.#s3.send(
       new PutObjectCommand({
         Bucket: this.#bucket,
@@ -60,10 +67,15 @@ export class MinioClient implements StorageClientInterface {
 
   async exists(key: string): Promise<boolean> {
     try {
-      await this.#s3.send(new HeadObjectCommand({ Bucket: this.#bucket, Key: key }))
+      await this.#s3.send(
+        new HeadObjectCommand({ Bucket: this.#bucket, Key: key }),
+      )
       return true
     } catch (err) {
-      if (err instanceof S3ServiceException && err.$metadata.httpStatusCode === 404) {
+      if (
+        err instanceof S3ServiceException &&
+        err.$metadata.httpStatusCode === 404
+      ) {
         return false
       }
       throw err
@@ -79,7 +91,9 @@ export class MinioClient implements StorageClientInterface {
       }),
     )
     if (!response.CopyObjectResult?.ETag) {
-      throw new Error(`Copy failed: no CopyObjectResult returned for source key "${sourceKey}"`)
+      throw new Error(
+        `Copy failed: no CopyObjectResult returned for source key "${sourceKey}"`,
+      )
     }
   }
 
@@ -108,7 +122,9 @@ export class MinioClient implements StorageClientInterface {
           })
         }
       }
-      continuationToken = response.IsTruncated ? response.NextContinuationToken : undefined
+      continuationToken = response.IsTruncated
+        ? response.NextContinuationToken
+        : undefined
     } while (continuationToken)
 
     return results

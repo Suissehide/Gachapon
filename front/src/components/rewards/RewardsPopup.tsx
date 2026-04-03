@@ -18,7 +18,7 @@ export function RewardsPopup({ onClose: _ }: RewardsPopupProps) {
   const claimAll = useClaimAllRewards()
 
   return (
-    <div className="absolute right-0 top-10 z-50 rounded-xl border border-border bg-background shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+    <div className="absolute right-0 top-10 z-50 min-w-64 overflow-hidden rounded-xl border border-border bg-background shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
         <div className="flex items-center gap-2">
@@ -57,7 +57,7 @@ export function RewardsPopup({ onClose: _ }: RewardsPopupProps) {
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-1.5 overflow-y-auto">
+          <div className="flex flex-col gap-1.5">
             {rewards.map((reward) => (
               <RewardCard
                 key={reward.id}

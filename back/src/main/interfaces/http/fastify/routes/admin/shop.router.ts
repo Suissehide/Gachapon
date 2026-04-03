@@ -1,32 +1,25 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
-import { z } from 'zod/v4'
 
-const shopItemSchema = z.object({
-  name: z.string().min(1),
-  description: z.string().min(1),
-  type: z.enum(['TOKEN_PACK', 'BOOST', 'COSMETIC']),
-  dustCost: z.number().int().min(0),
-  value: z.record(z.string(), z.unknown()),
-  isActive: z.boolean().default(true),
-})
+import {
+  adminShopCreateBodySchema,
+  adminShopItemIdParamSchema,
+  adminShopUpdateBodySchema,
+} from '../../schemas/admin-shop.schema'
 
 export const adminShopRouter: FastifyPluginCallbackZod = (fastify) => {
-  const prisma = () => fastify.iocContainer.postgresOrm.prisma
+  const { shopItemRepository } = fastify.iocContainer
 
   fastify.get('/', async () => {
-    const items = await prisma().shopItem.findMany({
-      orderBy: { createdAt: 'desc' },
-    })
+    const items = await shopItemRepository.findAll()
     return { items }
   })
 
   fastify.post(
     '/',
-    { schema: { body: shopItemSchema } },
+    { schema: { body: adminShopCreateBodySchema } },
     async (request, reply) => {
-      // biome-ignore lint/suspicious/noExplicitAny: Prisma JSON field requires cast
-      const item = await prisma().shopItem.create({ data: request.body as any })
+      const item = await shopItemRepository.create(request.body)
       return reply.status(201).send(item)
     },
   )
@@ -35,36 +28,28 @@ export const adminShopRouter: FastifyPluginCallbackZod = (fastify) => {
     '/:id',
     {
       schema: {
-        params: z.object({ id: z.string().uuid() }),
-        body: shopItemSchema.partial(),
+        params: adminShopItemIdParamSchema,
+        body: adminShopUpdateBodySchema,
       },
     },
     async (request) => {
-      const item = await prisma().shopItem.findUnique({
-        where: { id: request.params.id },
-      })
+      const item = await shopItemRepository.findById(request.params.id)
       if (!item) {
         throw Boom.notFound('Shop item not found')
       }
-      // biome-ignore lint/suspicious/noExplicitAny: Prisma JSON field requires cast
-      return prisma().shopItem.update({
-        where: { id: request.params.id },
-        data: request.body as any,
-      })
+      return shopItemRepository.update(request.params.id, request.body)
     },
   )
 
   fastify.delete(
     '/:id',
-    { schema: { params: z.object({ id: z.string().uuid() }) } },
+    { schema: { params: adminShopItemIdParamSchema } },
     async (request, reply) => {
-      const item = await prisma().shopItem.findUnique({
-        where: { id: request.params.id },
-      })
+      const item = await shopItemRepository.findById(request.params.id)
       if (!item) {
         throw Boom.notFound('Shop item not found')
       }
-      await prisma().shopItem.delete({ where: { id: request.params.id } })
+      await shopItemRepository.delete(request.params.id)
       return reply.status(204).send()
     },
   )

@@ -1,0 +1,20 @@
+meta {
+  name: Create Milestone
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{BASE_URL}}/admin/streak/milestones
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "day": 7,
+    "tokens": 5,
+    "dust": 100,
+    "xp": 200
+  }
+}

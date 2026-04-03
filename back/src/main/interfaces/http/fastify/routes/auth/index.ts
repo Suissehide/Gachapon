@@ -19,7 +19,9 @@ export const authRouter: FastifyPluginAsyncZod = async (fastify) => {
   await fastify.register(meRouter, { prefix: '/me' })
   await fastify.register(oauthRouter, { prefix: '/oauth' })
   await fastify.register(verifyEmailRouter, { prefix: '/verify-email' })
-  await fastify.register(resendVerificationRouter, { prefix: '/resend-verification' })
+  await fastify.register(resendVerificationRouter, {
+    prefix: '/resend-verification',
+  })
   await fastify.register(forgotPasswordRouter, { prefix: '/forgot-password' })
   await fastify.register(resetPasswordAuthRouter, { prefix: '/reset-password' })
 }

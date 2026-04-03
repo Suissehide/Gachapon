@@ -19,7 +19,9 @@ export const verifyEmailRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request, reply) => {
       const { user, tokens } = await authDomain.verifyEmail(request.body.token)
       setTokenCookies(reply, tokens)
-      const pendingRewardsCount = await userRewardRepository.countPendingByUser(user.id)
+      const pendingRewardsCount = await userRewardRepository.countPendingByUser(
+        user.id,
+      )
       return { ...sanitizeUser(user), pendingRewardsCount }
     },
   )

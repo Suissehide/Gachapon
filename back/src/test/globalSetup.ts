@@ -22,12 +22,13 @@ export default async function globalSetup() {
   try {
     await prisma.$executeRawUnsafe(`
       TRUNCATE TABLE
-        "UserUpgrade", "UserQuest", "UserAchievement", "UserCard", "GachaPull", "Purchase",
+        "UserSkill", "UserQuest", "UserAchievement", "UserCard", "GachaPull", "Purchase",
         "Invitation", "TeamMember", "Team",
         "OAuthAccount", "ApiKey", "User",
         "Card", "CardSet",
         "ShopItem", "Achievement", "Quest",
-        "GlobalConfig", "UpgradeConfig"
+        "GlobalConfig",
+        "SkillEdge", "SkillNodeLevel", "SkillNode", "SkillBranch", "SkillConfig"
       RESTART IDENTITY CASCADE;
     `)
   } finally {

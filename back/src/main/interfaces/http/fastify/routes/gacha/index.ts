@@ -11,7 +11,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     userRepository,
     configService,
     gachaPullRepository,
-    upgradeRepository,
+    skillTreeRepository,
   } = fastify.iocContainer
 
   // POST /pulls — consommer 1 token et tirer une carte
@@ -80,7 +80,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
       }
 
       const [upgrades, cfg] = await Promise.all([
-        upgradeRepository.getEffectsForUser(request.user.userID),
+        skillTreeRepository.getEffectsForUser(request.user.userID),
         configService.getMany('tokenRegenIntervalMinutes', 'tokenMaxStock'),
       ])
       const effectiveInterval = Math.max(
@@ -115,7 +115,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
       }
 
       const [upgrades, cfg] = await Promise.all([
-        upgradeRepository.getEffectsForUser(request.user.userID),
+        skillTreeRepository.getEffectsForUser(request.user.userID),
         configService.getMany('tokenRegenIntervalMinutes', 'tokenMaxStock'),
       ])
       const effectiveInterval = Math.max(
@@ -187,22 +187,30 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
       schema: {
         querystring: z.object({
           limit: z.coerce.number().int().min(1).max(50).default(20),
+          before: z.string().datetime().optional(),
+          teamId: z.string().uuid().optional(),
         }),
       },
     },
     async (request) => {
-      const { limit } = request.query
-      const pulls = await gachaPullRepository.findRecent(limit)
-      return pulls.map((p) => ({
-        username: p.username,
-        cardName: p.cardName,
-        rarity: p.rarity,
-        variant: p.variant,
-        cardId: p.cardId,
-        imageUrl: p.imageUrl,
-        setName: p.setName,
-        pulledAt: p.pulledAt.toISOString(),
-      }))
+      const { limit, before, teamId } = request.query
+      const page = await gachaPullRepository.findRecent(limit, {
+        before: before ? new Date(before) : undefined,
+        teamId,
+      })
+      return {
+        entries: page.entries.map((p) => ({
+          username: p.username,
+          cardName: p.cardName,
+          rarity: p.rarity,
+          variant: p.variant,
+          cardId: p.cardId,
+          imageUrl: p.imageUrl,
+          setName: p.setName,
+          pulledAt: p.pulledAt.toISOString(),
+        })),
+        hasMore: page.hasMore,
+      }
     },
   )
 }

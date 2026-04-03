@@ -105,27 +105,20 @@ describe('Gacha routes', () => {
     expect(Array.isArray(body.pulls)).toBe(true)
   })
 
-  it('GET /pulls/recent — retourne les tirages récents', async () => {
+  it('GET /pulls/recent — retourne { entries, hasMore }', async () => {
     const res = await app.inject({
       method: 'GET',
       url: '/pulls/recent',
       headers: { cookie: cookies },
     })
     expect(res.statusCode).toBe(200)
-    const body = res.json() as Array<{
-      username: string
-      cardName: string
-      rarity: string
-      variant: string
-      cardId: string
-      imageUrl: string | null
-      setName: string
-      pulledAt: string
-    }>
-    expect(Array.isArray(body)).toBe(true)
-    // At least 1 entry — the pull done in the earlier test
-    expect(body.length).toBeGreaterThanOrEqual(1)
-    const entry = body[0]!
+    const body = res.json() as { entries: unknown[]; hasMore: boolean }
+    expect(body).toHaveProperty('entries')
+    expect(body).toHaveProperty('hasMore')
+    expect(Array.isArray(body.entries)).toBe(true)
+    expect(typeof body.hasMore).toBe('boolean')
+    expect(body.entries.length).toBeGreaterThanOrEqual(1)
+    const entry = body.entries[0] as Record<string, unknown>
     expect(entry).toHaveProperty('username')
     expect(entry).toHaveProperty('cardName')
     expect(entry).toHaveProperty('rarity')
@@ -143,8 +136,32 @@ describe('Gacha routes', () => {
       headers: { cookie: cookies },
     })
     expect(res.statusCode).toBe(200)
-    const body = res.json() as unknown[]
-    expect(body.length).toBeLessThanOrEqual(1)
+    const body = res.json() as { entries: unknown[]; hasMore: boolean }
+    expect(body.entries.length).toBeLessThanOrEqual(1)
+  })
+
+  it('GET /pulls/recent?before=<cursor> — cursor pagination', async () => {
+    // Fetch first page
+    const first = await app.inject({
+      method: 'GET',
+      url: '/pulls/recent?limit=1',
+      headers: { cookie: cookies },
+    })
+    const firstBody = first.json() as { entries: Array<{ pulledAt: string }>; hasMore: boolean }
+    const cursor = firstBody.entries[0]?.pulledAt
+    if (!cursor) return // skip if no pulls
+
+    // Fetch with before cursor — should return older entries
+    const res = await app.inject({
+      method: 'GET',
+      url: `/pulls/recent?limit=1&before=${encodeURIComponent(cursor)}`,
+      headers: { cookie: cookies },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json() as { entries: Array<{ pulledAt: string }>; hasMore: boolean }
+    if (body.entries.length > 0) {
+      expect(new Date(body.entries[0]!.pulledAt) < new Date(cursor)).toBe(true)
+    }
   })
 
   it('GET /pulls/recent — 401 sans cookie', async () => {

@@ -1,4 +1,5 @@
 import type { RewardSource, UserReward } from '../../../../generated/client'
+import { parseDailySourceId } from '../../../domain/streak/streak-source-id'
 import type { IocContainer } from '../../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type {
@@ -15,12 +16,32 @@ export class UserRewardRepository implements UserRewardRepositoryInterface {
     this.#prisma = postgresOrm.prisma
   }
 
+  create(data: {
+    userId: string
+    rewardId: string
+    source: RewardSource
+    sourceId: string
+  }): Promise<UserReward> {
+    return this.#prisma.userReward.create({ data })
+  }
+
   upsertInTx(
     tx: PrimaTransactionClient,
-    data: { userId: string; rewardId: string; source: RewardSource; sourceId: string },
+    data: {
+      userId: string
+      rewardId: string
+      source: RewardSource
+      sourceId: string
+    },
   ): Promise<UserReward> {
     return tx.userReward.upsert({
-      where: { userId_source_sourceId: { userId: data.userId, source: data.source, sourceId: data.sourceId } },
+      where: {
+        userId_source_sourceId: {
+          userId: data.userId,
+          source: data.source,
+          sourceId: data.sourceId,
+        },
+      },
       create: data,
       update: {}, // Already exists — no-op (idempotent on retry)
     })
@@ -32,21 +53,38 @@ export class UserRewardRepository implements UserRewardRepositoryInterface {
       include: { reward: true },
       orderBy: { createdAt: 'asc' },
     })
-    // Attach streakMilestone data for STREAK source rows
-    const streakIds = rows
-      .filter((r) => r.source === 'STREAK' && r.sourceId)
-      .map((r) => r.sourceId!)
-    const milestones = streakIds.length
-      ? await this.#prisma.streakMilestone.findMany({ where: { id: { in: streakIds } } })
+    const milestoneUuids = rows
+      .filter(
+        (r): r is typeof r & { sourceId: string } =>
+          r.source === 'STREAK' &&
+          r.sourceId != null &&
+          parseDailySourceId(r.sourceId) === null,
+      )
+      .map((r) => r.sourceId)
+    const milestones = milestoneUuids.length
+      ? await this.#prisma.streakMilestone.findMany({
+          where: { id: { in: milestoneUuids } },
+        })
       : []
-    const milestoneMap = new Map(milestones.map((m) => [m.id, m]))
-    return rows.map((r) => ({
-      ...r,
-      streakMilestone: r.source === 'STREAK' && r.sourceId ? (milestoneMap.get(r.sourceId) ?? null) : null,
-    }))
+    const milestoneMap = new Map(
+      milestones.map((m) => [m.id, { day: m.day, isMilestone: m.isMilestone }]),
+    )
+    return rows.map((r) => {
+      if (r.source !== 'STREAK' || !r.sourceId) {
+        return { ...r, streakMilestone: null }
+      }
+      const dailyDay = parseDailySourceId(r.sourceId)
+      if (dailyDay !== null) {
+        return { ...r, streakMilestone: { day: dailyDay, isMilestone: false } }
+      }
+      return { ...r, streakMilestone: milestoneMap.get(r.sourceId) ?? null }
+    })
   }
 
-  async findByIdAndUser(id: string, userId: string): Promise<UserRewardWithReward | null> {
+  async findByIdAndUser(
+    id: string,
+    userId: string,
+  ): Promise<UserRewardWithReward | null> {
     // No claimedAt filter — caller checks claimedAt to distinguish 404 vs 409
     const row = await this.#prisma.userReward.findFirst({
       where: { id, userId },
@@ -60,10 +98,31 @@ export class UserRewardRepository implements UserRewardRepositoryInterface {
   }
 
   async markClaimedInTx(tx: PrimaTransactionClient, id: string): Promise<void> {
-    await tx.userReward.update({ where: { id }, data: { claimedAt: new Date() } })
+    await tx.userReward.update({
+      where: { id },
+      data: { claimedAt: new Date() },
+    })
   }
 
-  async markAllClaimedInTx(tx: PrimaTransactionClient, userId: string): Promise<void> {
+  async deleteLegacyDefaultStreakRewardInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+    legacySourceId: string,
+  ): Promise<void> {
+    await tx.userReward.deleteMany({
+      where: {
+        userId,
+        source: 'STREAK',
+        sourceId: legacySourceId,
+        claimedAt: null,
+      },
+    })
+  }
+
+  async markAllClaimedInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+  ): Promise<void> {
     await tx.userReward.updateMany({
       where: { userId, claimedAt: null },
       data: { claimedAt: new Date() },
@@ -84,7 +143,9 @@ export class UserRewardRepository implements UserRewardRepositoryInterface {
         skip,
         take: limit,
       }),
-      this.#prisma.userReward.count({ where: { userId, claimedAt: { not: null } } }),
+      this.#prisma.userReward.count({
+        where: { userId, claimedAt: { not: null } },
+      }),
     ])
     return { data, total }
   }

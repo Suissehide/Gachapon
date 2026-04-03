@@ -20,10 +20,9 @@ export class MailService implements IMailService {
       host: config.smtpHost,
       port: config.smtpPort,
       secure: config.smtpSecure,
-      auth:
-        config.smtpUser
-          ? { user: config.smtpUser, pass: config.smtpPass }
-          : undefined,
+      auth: config.smtpUser
+        ? { user: config.smtpUser, pass: config.smtpPass }
+        : undefined,
     })
   }
 

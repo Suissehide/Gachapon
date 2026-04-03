@@ -1,27 +1,83 @@
+// front/src/components/machine/CardReveal.tsx
+import { Coins, Sparkles } from 'lucide-react'
 import type React from 'react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import cardBackImg from '../../assets/data/card-back/black.png'
+import type { CardRarity } from '../../constants/card.constant'
 import type { PullResult } from '../../queries/useGacha'
+import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
 import { RARITY_TCG_CONFIG } from '../shared/tcg-card/config.ts'
-import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
 import { Button } from '../ui/button.tsx'
+import { RevealCanvases } from './reveal/RevealCanvases.tsx'
+import { RARITY_CONFIG } from './reveal/rarityConfig.ts'
+import { useRevealEffect } from './reveal/useRevealEffect.ts'
 
-// Fixed particle positions for LEGENDARY
-const LEGENDARY_PARTICLES = [
-  { left: '8%', top: '20%', size: 4, delay: '0s', duration: '2.1s' },
-  { left: '88%', top: '12%', size: 3, delay: '0.35s', duration: '1.8s' },
-  { left: '75%', top: '78%', size: 5, delay: '0.7s', duration: '2.3s' },
-  { left: '18%', top: '68%', size: 3, delay: '0.15s', duration: '1.6s' },
-  { left: '48%', top: '5%', size: 4, delay: '0.9s', duration: '2s' },
-  { left: '92%', top: '48%', size: 3, delay: '0.5s', duration: '1.75s' },
-  { left: '12%', top: '88%', size: 5, delay: '1.1s', duration: '2.15s' },
-  { left: '62%', top: '22%', size: 3, delay: '0.25s', duration: '1.65s' },
-  { left: '33%', top: '90%', size: 4, delay: '0.8s', duration: '1.9s' },
-  { left: '82%', top: '62%', size: 3, delay: '0.45s', duration: '2.05s' },
-]
+// ── ImpactWord ─────────────────────────────────────────────────────────────────
 
-// ── Component ─────────────────────────────────────────────────────────────────
+type ImpactWordProps = {
+  text: string
+  pos: { x: number; y: number }
+  impactColor: string
+  impactStroke: string
+  impactSize: string
+  impactExtraShadow?: string
+}
+
+function ImpactWord({
+  text,
+  pos,
+  impactColor,
+  impactStroke,
+  impactSize,
+  impactExtraShadow,
+}: ImpactWordProps) {
+  const [fading, setFading] = useState(false)
+
+  useEffect(() => {
+    const id = setTimeout(() => setFading(true), 600)
+    return () => clearTimeout(id)
+  }, [])
+
+  const shadow =
+    impactExtraShadow ??
+    [
+      `3px 3px 0 ${impactStroke}`,
+      `6px 6px 0 ${impactStroke}`,
+      `9px 9px 0 rgba(0,0,0,0.2)`,
+      `-1px -1px 0 ${impactStroke}`,
+    ].join(', ')
+
+  return (
+    <div
+      style={
+        {
+          position: 'fixed',
+          left: pos.x,
+          top: pos.y - 110,
+          fontFamily: 'Impact, Arial Black, sans-serif',
+          fontSize: impactSize,
+          color: impactColor,
+          WebkitTextStroke: `3px ${impactStroke}`,
+          textShadow: shadow,
+          letterSpacing: '0.04em',
+          textTransform: 'uppercase',
+          zIndex: 80,
+          pointerEvents: 'none',
+          userSelect: 'none',
+          whiteSpace: 'nowrap',
+          animation: fading
+            ? 'impactFade 180ms ease-in forwards'
+            : 'impactPop 250ms cubic-bezier(0.34,1.56,0.64,1) forwards',
+        } as React.CSSProperties
+      }
+    >
+      {text}
+    </div>
+  )
+}
+
+// ── CardReveal ─────────────────────────────────────────────────────────────────
 
 type Props = {
   result: PullResult | null
@@ -29,50 +85,51 @@ type Props = {
 }
 
 export function CardReveal({ result, onClose }: Props) {
-  const [rotY, setRotY] = useState(180) // starts showing back
-  const [isDragging, setIsDragging] = useState(false)
+  const [animKey, setAnimKey] = useState(0)
+  const [animDone, setAnimDone] = useState(false)
   const [showSweep, setShowSweep] = useState(false)
-  const dragRef = useRef({ startX: 0, startRotY: 180 })
-  const containerRef = useRef<HTMLDivElement>(null)
+  const [showInfo, setShowInfo] = useState(false)
+
+  const rarity = (result?.card.rarity ?? 'COMMON') as CardRarity
+
+  const {
+    containerRef,
+    canvasRefs,
+    impactVisible,
+    impactPos,
+    triggerReveal,
+    reset,
+  } = useRevealEffect(rarity)
 
   useEffect(() => {
     if (!result) {
-      setRotY(180)
+      setAnimDone(false)
       setShowSweep(false)
+      setShowInfo(false)
+      reset()
       return
     }
-    const flipTimer = setTimeout(() => setRotY(0), 120)
-    const sweepTimer = setTimeout(() => setShowSweep(true), 950)
+    setAnimKey((k) => k + 1)
+    setAnimDone(false)
+    setShowSweep(false)
+    setShowInfo(false)
+    reset()
+    const revealTimer = setTimeout(() => triggerReveal(), 1200)
+    const sweepTimer = setTimeout(() => setShowSweep(true), 1800)
+    const infoTimer = setTimeout(() => setShowInfo(true), 2000)
     return () => {
-      clearTimeout(flipTimer)
+      clearTimeout(revealTimer)
       clearTimeout(sweepTimer)
+      clearTimeout(infoTimer)
     }
-  }, [result])
-
-  // ── Drag handlers ──────────────────────────────────────────────────────────
-
-  const startDrag = (clientX: number) => {
-    setIsDragging(true)
-    dragRef.current = { startX: clientX, startRotY: rotY }
-  }
-
-  const moveDrag = (clientX: number) => {
-    if (!isDragging) {
-      return
-    }
-    const delta = (clientX - dragRef.current.startX) * 0.55
-    setRotY(dragRef.current.startRotY - delta)
-  }
-
-  const endDrag = () => setIsDragging(false)
+  }, [result, reset, triggerReveal])
 
   if (!result) {
     return null
   }
 
-  const rarity = result.card.rarity
-  const config = RARITY_TCG_CONFIG[rarity] ?? RARITY_TCG_CONFIG.COMMON
-  const isLegendary = rarity === 'LEGENDARY'
+  const tcgConfig = RARITY_TCG_CONFIG[rarity] ?? RARITY_TCG_CONFIG.COMMON
+  const effectConfig = RARITY_CONFIG[rarity]
   const variant = result.card.variant ?? null
 
   return (
@@ -88,126 +145,120 @@ export function CardReveal({ result, onClose }: Props) {
       }}
     >
       {/* Rarity backdrop glow */}
-      {config.backdropColor && (
+      {tcgConfig.backdropColor && (
         <div
           className="pointer-events-none absolute inset-0"
-          style={{ background: config.backdropColor }}
+          style={{ background: tcgConfig.backdropColor }}
         />
       )}
 
-      {/* LEGENDARY flash */}
-      {isLegendary && (
-        <div className="legendary-flash pointer-events-none absolute inset-0 bg-primary/15" />
+      {/* Canvas effect layers (fixed, above modal) */}
+      <RevealCanvases refs={canvasRefs} />
+
+      {/* Impact word */}
+      {impactVisible && impactPos && effectConfig.impactText && (
+        <ImpactWord
+          text={effectConfig.impactText}
+          pos={impactPos}
+          impactColor={effectConfig.impactColor}
+          impactStroke={effectConfig.impactStroke}
+          impactSize={effectConfig.impactSize}
+          impactExtraShadow={effectConfig.impactExtraShadow}
+        />
       )}
 
-      {/* LEGENDARY particles */}
-      {isLegendary &&
-        LEGENDARY_PARTICLES.map((p, i) => (
-          <span
-            // biome-ignore lint/suspicious/noArrayIndexKey: static fixed array
-            key={i}
-            className="particle pointer-events-none absolute rounded-full bg-primary"
-            style={
-              {
-                width: p.size,
-                height: p.size,
-                left: p.left,
-                top: p.top,
-                '--delay': p.delay,
-                '--duration': p.duration,
-              } as React.CSSProperties
-            }
-          />
-        ))}
-
-      {/* ── Slide-in container ── */}
+      {/* ── Content container ── */}
       {/* biome-ignore lint/a11y/noStaticElementInteractions: stop propagation */}
       <div
-        ref={containerRef}
-        className="card-slide-in flex flex-col items-center gap-5 px-4 py-8"
+        data-reveal-modal
+        className="relative z-10 flex flex-col items-center gap-5 px-4 py-8"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >
-        {/* ── 3D Card ── */}
-        {/* biome-ignore lint/a11y/noStaticElementInteractions: drag handler */}
-        <div
-          className="select-none cursor-grab active:cursor-grabbing"
-          style={{ perspective: '900px', width: '240px', height: '360px' }}
-          onMouseDown={(e) => startDrag(e.clientX)}
-          onMouseMove={(e) => moveDrag(e.clientX)}
-          onMouseUp={endDrag}
-          onMouseLeave={endDrag}
-          onTouchStart={(e) => startDrag(e.touches[0].clientX)}
-          onTouchMove={(e) => moveDrag(e.touches[0].clientX)}
-          onTouchEnd={endDrag}
-        >
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              transformStyle: 'preserve-3d',
-              transform: `rotateY(${rotY}deg)`,
-              transition: isDragging
-                ? 'none'
-                : 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
-          >
-            {/* ── FRONT face — TCG layout ── */}
-            <TcgCardFace
-              rarity={rarity}
-              name={result.card.name}
-              setName={result.card.set.name}
-              imageUrl={result.card.imageUrl}
-              variant={variant}
-              showSweep={showSweep}
-            />
-
-            {/* ── BACK face ── */}
-            <div
-              className="absolute inset-0 overflow-hidden border border-border/40"
-              style={{
-                backfaceVisibility: 'hidden',
-                transform: 'rotateY(180deg)',
-                borderRadius: 16,
-              }}
-            >
+        <div ref={containerRef}>
+          <CardDisplay
+            rarity={rarity}
+            name={result.card.name}
+            setName={result.card.set.name}
+            imageUrl={result.card.imageUrl}
+            variant={variant}
+            showSweep={showSweep}
+            interactive={animDone}
+            animKey={animKey}
+            animClass={animDone ? '' : 'card-spiral-rise'}
+            onAnimationEnd={() => setAnimDone(true)}
+            backFace={
               <img
                 src={cardBackImg}
                 alt="dos de carte"
-                className="h-full w-full object-cover"
+                className="h-full w-full rounded-2xl object-cover"
               />
-            </div>
-          </div>
+            }
+          />
         </div>
 
-        {/* ── Info panel below card ── */}
-        <div className="w-60 space-y-2.5 rounded-2xl border border-border/60 bg-card/90 p-4 backdrop-blur-sm">
-          {/* Duplicate / dust */}
+        {/* ── Info panel ── */}
+        <div
+          className={`w-64 overflow-hidden rounded-2xl border border-white/9 bg-[rgba(6,6,12,0.78)] shadow-[0_12px_40px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.07)] backdrop-blur-[20px] transition-[opacity,transform] duration-550 ease-out ${
+            showInfo
+              ? 'pointer-events-auto translate-y-0 opacity-100'
+              : 'pointer-events-none translate-y-3.5 opacity-0'
+          }`}
+        >
           {result.wasDuplicate && (
-            <div className="rounded-lg border border-amber-500/30 bg-amber-500/8 px-3 py-2">
-              <p className="text-center text-xs font-semibold text-amber-400">
-                Doublon — +{result.dustEarned} ✨ poussière
-              </p>
+            <div className="border-b border-amber-600/30 bg-[linear-gradient(135deg,rgba(217,119,6,0.28)_0%,rgba(251,191,36,0.14)_100%)] px-4 py-2.75">
+              <div className="flex items-center gap-3">
+                <Sparkles
+                  size={16}
+                  className="shrink-0 text-amber-400"
+                  aria-hidden
+                />
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-amber-300/65">
+                    Doublon
+                  </p>
+                  <p className="text-sm font-bold text-amber-300">
+                    +{result.dustEarned} poussière
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
-          {/* Tokens remaining */}
-          <p className="text-center text-xs text-text-light/60">
-            {result.tokensRemaining} token
-            {result.tokensRemaining !== 1 ? 's' : ''} restant
-            {result.tokensRemaining !== 1 ? 's' : ''}
-          </p>
+          <div className="flex items-center justify-between border-b border-white/6 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <Coins size={14} className="text-white/35" aria-hidden />
+              <span className="text-xs text-white/45">Tokens restants</span>
+            </div>
+            <span className="font-display text-base font-bold text-white/90">
+              {result.tokensRemaining}
+            </span>
+          </div>
 
-          <Button className="w-full" onClick={onClose}>
-            Continuer
-          </Button>
+          <div className="p-3">
+            <Button className="w-full" onClick={onClose}>
+              Nouveau tirage
+            </Button>
+          </div>
         </div>
-
-        {/* Hint */}
-        <p className="text-xs text-text-light/35">
-          Glisse la carte pour la faire pivoter
-        </p>
       </div>
+
+      {/* ── Dev: replay button ── */}
+      {import.meta.env.DEV && (
+        <button
+          type="button"
+          className="fixed bottom-4 right-4 z-[100] rounded bg-black/70 px-3 py-1.5 text-xs text-white/80 hover:text-white"
+          onClick={(e) => {
+            e.stopPropagation()
+            reset()
+            setAnimDone(false)
+            setAnimKey((k) => k + 1)
+            setTimeout(() => triggerReveal(), 1200)
+          }}
+        >
+          ↺ replay
+        </button>
+      )}
     </div>
   )
 }

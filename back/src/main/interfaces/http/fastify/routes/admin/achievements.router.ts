@@ -1,30 +1,25 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
-import { z } from 'zod/v4'
 
-const achievementSchema = z.object({
-  key: z.string().min(1),
-  name: z.string().min(1),
-  description: z.string().min(1),
-})
+import {
+  adminAchievementCreateBodySchema,
+  adminAchievementIdParamSchema,
+  adminAchievementUpdateBodySchema,
+} from '../../schemas/admin-achievements.schema'
 
 export const adminAchievementsRouter: FastifyPluginCallbackZod = (fastify) => {
-  const prisma = () => fastify.iocContainer.postgresOrm.prisma
+  const { achievementRepository } = fastify.iocContainer
 
   fastify.get('/', async () => {
-    const achievements = await prisma().achievement.findMany({
-      orderBy: { name: 'asc' },
-    })
+    const achievements = await achievementRepository.findAll()
     return { achievements }
   })
 
   fastify.post(
     '/',
-    { schema: { body: achievementSchema } },
+    { schema: { body: adminAchievementCreateBodySchema } },
     async (request, reply) => {
-      const achievement = await prisma().achievement.create({
-        data: request.body,
-      })
+      const achievement = await achievementRepository.create(request.body)
       return reply.status(201).send(achievement)
     },
   )
@@ -33,35 +28,32 @@ export const adminAchievementsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/:id',
     {
       schema: {
-        params: z.object({ id: z.string().uuid() }),
-        body: achievementSchema.partial(),
+        params: adminAchievementIdParamSchema,
+        body: adminAchievementUpdateBodySchema,
       },
     },
     async (request) => {
-      const achievement = await prisma().achievement.findUnique({
-        where: { id: request.params.id },
-      })
+      const achievement = await achievementRepository.findById(
+        request.params.id,
+      )
       if (!achievement) {
         throw Boom.notFound('Achievement not found')
       }
-      return prisma().achievement.update({
-        where: { id: request.params.id },
-        data: request.body,
-      })
+      return achievementRepository.update(request.params.id, request.body)
     },
   )
 
   fastify.delete(
     '/:id',
-    { schema: { params: z.object({ id: z.string().uuid() }) } },
+    { schema: { params: adminAchievementIdParamSchema } },
     async (request, reply) => {
-      const achievement = await prisma().achievement.findUnique({
-        where: { id: request.params.id },
-      })
+      const achievement = await achievementRepository.findById(
+        request.params.id,
+      )
       if (!achievement) {
         throw Boom.notFound('Achievement not found')
       }
-      await prisma().achievement.delete({ where: { id: request.params.id } })
+      await achievementRepository.delete(request.params.id)
       return reply.status(204).send()
     },
   )

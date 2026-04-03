@@ -50,11 +50,15 @@ enum ShopItemType {
   COSMETIC
 }
 
-enum UpgradeType {
+enum SkillEffectType {
   REGEN
   LUCK
   DUST_HARVEST
   TOKEN_VAULT
+  FREE_PULL_CHANCE
+  MULTI_TOKEN_CHANCE
+  GOLDEN_BALL_CHANCE
+  SHOP_DISCOUNT
 }
 
 enum RewardSource {
@@ -100,7 +104,8 @@ model User {
   purchases           Purchase[]
   achievements        UserAchievement[]
   userQuests          UserQuest[]
-  upgrades            UserUpgrade[]
+  skillPoints         Int        @default(0)
+  skills              UserSkill[]
   userRewards         UserReward[]
 }
 
@@ -349,23 +354,65 @@ model GlobalConfig {
   updatedAt DateTime @updatedAt
 }
 
-model UpgradeConfig {
-  type     UpgradeType
-  level    Int
-  effect   Float
-  dustCost Int
-
-  @@id([type, level])
+model SkillConfig {
+  id                Int @id @default(1)
+  resetCostPerPoint Int @default(50)
 }
 
-model UserUpgrade {
-  userId String
-  type   UpgradeType
+model SkillBranch {
+  id          String      @id @default(cuid())
+  name        String
+  description String
+  icon        String
+  color       String
+  order       Int
+  nodes       SkillNode[]
+}
+
+model SkillNode {
+  id          String           @id @default(cuid())
+  branchId    String
+  branch      SkillBranch      @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  name        String
+  description String
+  icon        String
+  maxLevel    Int
+  effectType  SkillEffectType
+  posX        Int
+  posY        Int
+  levels      SkillNodeLevel[]
+  edgesFrom   SkillEdge[]      @relation("EdgeFrom")
+  edgesTo     SkillEdge[]      @relation("EdgeTo")
+  userSkills  UserSkill[]
+}
+
+model SkillNodeLevel {
+  nodeId String
   level  Int
+  effect Float
+  node   SkillNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
 
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@id([nodeId, level])
+}
 
-  @@id([userId, type])
+model SkillEdge {
+  fromNodeId String
+  toNodeId   String
+  minLevel   Int       @default(1)
+  fromNode   SkillNode @relation("EdgeFrom", fields: [fromNodeId], references: [id], onDelete: Cascade)
+  toNode     SkillNode @relation("EdgeTo",   fields: [toNodeId],   references: [id], onDelete: Cascade)
+
+  @@id([fromNodeId, toNodeId])
+}
+
+model UserSkill {
+  userId String
+  nodeId String
+  level  Int
+  user   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  node   SkillNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, nodeId])
 }
 
 model ScoringConfig {

@@ -5,9 +5,10 @@ interface CollectionSetGroupProps {
   setName: string
   entries: DisplayEntry[]
   onRecycle: (entry: DisplayEntry) => void
+  onDetail: (entry: DisplayEntry) => void
 }
 
-export function CollectionSetGroup({ setName, entries, onRecycle }: CollectionSetGroupProps) {
+export function CollectionSetGroup({ setName, entries, onRecycle, onDetail }: CollectionSetGroupProps) {
   const ownedCount = entries.filter((e) => e.isOwned).length
   return (
     <div className="mb-8">
@@ -27,6 +28,7 @@ export function CollectionSetGroup({ setName, entries, onRecycle }: CollectionSe
             quantity={entry.quantity}
             isOwned={entry.isOwned}
             onRecycle={() => onRecycle(entry)}
+            onClick={() => onDetail(entry)}
           />
         ))}
       </div>

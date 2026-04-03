@@ -1,0 +1,21 @@
+meta {
+  name: Add Dust
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{BASE_URL}}/admin/users/:id/dust
+  body: json
+  auth: none
+}
+
+params:path {
+  id: <user-uuid>
+}
+
+body:json {
+  {
+    "amount": 500
+  }
+}

@@ -12,20 +12,30 @@ const claimResultSchema = z.object({
 const pendingRewardSchema = z.object({
   id: z.string().uuid(),
   source: z.enum(['STREAK', 'ACHIEVEMENT', 'QUEST']),
-  sourceId: z.string().uuid().nullable(),
+  sourceId: z.string().nullable(),
   claimedAt: z.date().nullable(),
   createdAt: z.date(),
-  reward: z.object({ tokens: z.number().int(), dust: z.number().int(), xp: z.number().int() }),
-  streakMilestone: z.object({ day: z.number().int(), isMilestone: z.boolean() }).nullable(),
+  reward: z.object({
+    tokens: z.number().int(),
+    dust: z.number().int(),
+    xp: z.number().int(),
+  }),
+  streakMilestone: z
+    .object({ day: z.number().int(), isMilestone: z.boolean() })
+    .nullable(),
 })
 
 const historyItemSchema = z.object({
   id: z.string().uuid(),
   source: z.enum(['STREAK', 'ACHIEVEMENT', 'QUEST']),
-  sourceId: z.string().uuid().nullable(),
+  sourceId: z.string().nullable(),
   claimedAt: z.date().nullable(),
   createdAt: z.date(),
-  reward: z.object({ tokens: z.number().int(), dust: z.number().int(), xp: z.number().int() }),
+  reward: z.object({
+    tokens: z.number().int(),
+    dust: z.number().int(),
+    xp: z.number().int(),
+  }),
 })
 
 export const rewardsRouter: FastifyPluginCallbackZod = (fastify) => {
@@ -40,7 +50,7 @@ export const rewardsRouter: FastifyPluginCallbackZod = (fastify) => {
         response: { 200: z.array(pendingRewardSchema) },
       },
     },
-    async (request) => {
+    (request) => {
       return rewardsDomain.getPending(request.user.userID)
     },
   )
@@ -55,7 +65,7 @@ export const rewardsRouter: FastifyPluginCallbackZod = (fastify) => {
         response: { 200: claimResultSchema },
       },
     },
-    async (request) => {
+    (request) => {
       return rewardsDomain.claimOne(request.params.id, request.user.userID)
     },
   )
@@ -66,14 +76,13 @@ export const rewardsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        response: { 200: claimResultSchema },
+        response: { 200: claimResultSchema, 204: z.null() },
       },
     },
     async (request, reply) => {
       const result = await rewardsDomain.claimAll(request.user.userID)
       if (result === null) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return (reply as any).status(204).send()
+        return reply.status(204).send(null)
       }
       return result
     },

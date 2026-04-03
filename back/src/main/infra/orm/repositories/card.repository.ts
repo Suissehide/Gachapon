@@ -72,4 +72,97 @@ export class CardRepository implements ICardRepository {
       include: { set: true },
     }) as Promise<CardWithSet[]>
   }
+
+  create(data: {
+    name: string
+    setId: string
+    rarity: CardRarity
+    dropWeight: number
+    imageUrl: string
+  }): Promise<CardWithSet> {
+    return this.#prisma.card.create({
+      data,
+      include: WITH_SET,
+    }) as Promise<CardWithSet>
+  }
+
+  update(
+    id: string,
+    data: Partial<{
+      name: string
+      rarity: CardRarity
+      dropWeight: number
+      setId: string
+      imageUrl: string | null
+    }>,
+  ): Promise<CardWithSet> {
+    return this.#prisma.card.update({
+      where: { id },
+      data,
+      include: WITH_SET,
+    }) as Promise<CardWithSet>
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.#prisma.card.delete({ where: { id } })
+  }
+
+  createSet(data: {
+    name: string
+    description?: string
+    isActive?: boolean
+  }): Promise<CardSetEntity> {
+    return this.#prisma.cardSet.create({ data })
+  }
+
+  updateSet(
+    id: string,
+    data: { name?: string; description?: string; isActive?: boolean },
+  ): Promise<CardSetEntity> {
+    return this.#prisma.cardSet.update({ where: { id }, data })
+  }
+
+  async deleteSet(id: string): Promise<void> {
+    await this.#prisma.cardSet.delete({ where: { id } })
+  }
+
+  findAllSetsWithCount(): Promise<
+    (CardSetEntity & { _count: { cards: number } })[]
+  > {
+    return this.#prisma.cardSet.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { _count: { select: { cards: true } } },
+    }) as Promise<(CardSetEntity & { _count: { cards: number } })[]>
+  }
+
+  findAllForMedia(): Promise<
+    { imageUrl: string | null; id: string; name: string; rarity: CardRarity }[]
+  > {
+    return this.#prisma.card.findMany({
+      select: { imageUrl: true, id: true, name: true, rarity: true },
+    }) as Promise<
+      {
+        imageUrl: string | null
+        id: string
+        name: string
+        rarity: CardRarity
+      }[]
+    >
+  }
+
+  findByImageUrls(
+    urls: string[],
+  ): Promise<{ name: string; imageUrl: string | null }[]> {
+    return this.#prisma.card.findMany({
+      where: { imageUrl: { in: urls } },
+      select: { name: true, imageUrl: true },
+    })
+  }
+
+  async updateManyImageUrl(oldUrl: string, newUrl: string): Promise<void> {
+    await this.#prisma.card.updateMany({
+      where: { imageUrl: oldUrl },
+      data: { imageUrl: newUrl },
+    })
+  }
 }

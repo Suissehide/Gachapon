@@ -4,31 +4,43 @@ import type { Resolver } from 'awilix/lib/resolvers'
 
 import { AuthDomain } from '../../../domain/auth/auth.domain'
 import { OAuthDomain } from '../../../domain/auth/oauth.domain'
+import { CollectionDomain } from '../../../domain/collection/collection.domain'
+import { SkillTreeDomain } from '../../../domain/skills/skill-tree.domain'
+import { SkillInvestDomain } from '../../../domain/skills/skill-invest.domain'
+import { SkillResetDomain } from '../../../domain/skills/skill-reset.domain'
+import { AdminSkillTreeDomain } from '../../../domain/skills/admin-skill-tree.domain'
 import { GachaDomain } from '../../../domain/gacha/gacha.domain'
-import { StreakDomain } from '../../../domain/streak/streak.domain'
 import { RewardsDomain } from '../../../domain/rewards/rewards.domain'
+import { ShopDomain } from '../../../domain/shop/shop.domain'
+import { StreakDomain } from '../../../domain/streak/streak.domain'
 import { TeamDomain } from '../../../domain/team/team.domain'
 import { UserDomain } from '../../../domain/user/user.domain'
-import { MailService } from '../../../infra/mail/mail.service'
 import { JwtService } from '../../../infra/auth/jwt.service'
 import { ConfigService } from '../../../infra/config/config.service'
 import { HttpClient } from '../../../infra/http/http-client'
 import { PinoLogger } from '../../../infra/logger/pino/pino-logger'
+import { MailService } from '../../../infra/mail/mail.service'
 import { PostgresOrm } from '../../../infra/orm/postgres-client'
+import { AchievementRepository } from '../../../infra/orm/repositories/achievement.repository'
+import { AdminStatsRepository } from '../../../infra/orm/repositories/admin-stats.repository'
 import { ApiKeyRepository } from '../../../infra/orm/repositories/api-key.repository'
 import { CardRepository } from '../../../infra/orm/repositories/card.repository'
 import { GachaPullRepository } from '../../../infra/orm/repositories/gacha-pull.repository'
 import { InvitationRepository } from '../../../infra/orm/repositories/invitation.repository'
+import { LeaderboardRepository } from '../../../infra/orm/repositories/leaderboard.repository'
 import { OAuthAccountRepository } from '../../../infra/orm/repositories/oauth-account.repository'
+import { QuestRepository } from '../../../infra/orm/repositories/quest.repository'
 import { RewardRepository } from '../../../infra/orm/repositories/reward.repository'
+import { ScoringConfigRepository } from '../../../infra/orm/repositories/scoring-config.repository'
+import { ShopItemRepository } from '../../../infra/orm/repositories/shop-item.repository'
+import { StatsRepository } from '../../../infra/orm/repositories/stats.repository'
 import { StreakMilestoneRepository } from '../../../infra/orm/repositories/streak-milestone.repository'
 import { TeamRepository } from '../../../infra/orm/repositories/team.repository'
 import { TeamMemberRepository } from '../../../infra/orm/repositories/team-member.repository'
+import { SkillTreeRepository } from '../../../infra/orm/repositories/skill-tree.repository'
 import { UserRepository } from '../../../infra/orm/repositories/user.repository'
-import { UserRewardRepository } from '../../../infra/orm/repositories/user-reward.repository'
-import { ScoringConfigRepository } from '../../../infra/orm/repositories/scoring-config.repository'
-import { UpgradeRepository } from '../../../infra/orm/repositories/upgrade.repository'
 import { UserCardRepository } from '../../../infra/orm/repositories/user-card.repository'
+import { UserRewardRepository } from '../../../infra/orm/repositories/user-reward.repository'
 import { RedisClient } from '../../../infra/redis/redis-client'
 import { RefreshTokenRepository } from '../../../infra/redis/refresh-token.repository'
 import { MinioClient } from '../../../infra/storage/minio-client'
@@ -78,18 +90,42 @@ class AwilixIocContainer {
     this.#reg('cardRepository', asClass(CardRepository).singleton())
     this.#reg('userCardRepository', asClass(UserCardRepository).singleton())
     this.#reg('gachaPullRepository', asClass(GachaPullRepository).singleton())
-    this.#reg('upgradeRepository', asClass(UpgradeRepository).singleton())
-    this.#reg('scoringConfigRepository', asClass(ScoringConfigRepository).singleton())
+    this.#reg('skillTreeRepository', asClass(SkillTreeRepository).singleton())
+    this.#reg(
+      'scoringConfigRepository',
+      asClass(ScoringConfigRepository).singleton(),
+    )
     this.#reg('gachaDomain', asClass(GachaDomain).singleton())
     this.#reg('teamRepository', asClass(TeamRepository).singleton())
     this.#reg('teamMemberRepository', asClass(TeamMemberRepository).singleton())
     this.#reg('invitationRepository', asClass(InvitationRepository).singleton())
     this.#reg('teamDomain', asClass(TeamDomain).singleton())
     this.#reg('rewardRepository', asClass(RewardRepository).singleton())
-    this.#reg('streakMilestoneRepository', asClass(StreakMilestoneRepository).singleton())
+    this.#reg(
+      'streakMilestoneRepository',
+      asClass(StreakMilestoneRepository).singleton(),
+    )
     this.#reg('userRewardRepository', asClass(UserRewardRepository).singleton())
     this.#reg('streakDomain', asClass(StreakDomain).singleton())
     this.#reg('rewardsDomain', asClass(RewardsDomain).singleton())
+    this.#reg('questRepository', asClass(QuestRepository).singleton())
+    this.#reg(
+      'achievementRepository',
+      asClass(AchievementRepository).singleton(),
+    )
+    this.#reg('shopItemRepository', asClass(ShopItemRepository).singleton())
+    this.#reg(
+      'leaderboardRepository',
+      asClass(LeaderboardRepository).singleton(),
+    )
+    this.#reg('statsRepository', asClass(StatsRepository).singleton())
+    this.#reg('adminStatsRepository', asClass(AdminStatsRepository).singleton())
+    this.#reg('collectionDomain', asClass(CollectionDomain).singleton())
+    this.#reg('shopDomain', asClass(ShopDomain).singleton())
+    this.#reg('skillTreeDomain', asClass(SkillTreeDomain).singleton())
+    this.#reg('skillInvestDomain', asClass(SkillInvestDomain).singleton())
+    this.#reg('skillResetDomain', asClass(SkillResetDomain).singleton())
+    this.#reg('adminSkillTreeDomain', asClass(AdminSkillTreeDomain).singleton())
     logger.info('IoC container initialized.')
   }
 

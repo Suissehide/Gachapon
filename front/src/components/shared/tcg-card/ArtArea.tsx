@@ -58,6 +58,24 @@ export function ArtArea({
           />
         ))}
 
+      {/*
+       * Cursor spotlight — only visible when --shine-o is set (CardDisplay hover).
+       * Lives inside ArtArea so it blends directly with the texture layers above,
+       * before isolation:isolate flattens them. Uses the simeydotme glare formula:
+       * bright white center + dark edges → high contrast with mix-blend-mode overlay
+       * makes etch/grating patterns pop sharply under the cursor.
+       */}
+      {isOwned && variantInfo && (
+        <div
+          className="pointer-events-none absolute inset-0 mix-blend-overlay"
+          style={{
+            opacity: 'var(--shine-o, 0)' as unknown as React.CSSProperties['opacity'],
+            background:
+              'radial-gradient(farthest-corner circle at var(--shine-x, 50%) var(--shine-y, 50%), hsla(0,0%,100%,0.7) 10%, hsla(0,0%,100%,0.5) 22%, hsla(0,0%,0%,0.45) 90%)',
+          }}
+        />
+      )}
+
       {/* Variant badge */}
       {isOwned && variantInfo && (
         <div className="absolute right-1.5 top-1.5 z-10">

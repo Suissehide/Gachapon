@@ -24,12 +24,6 @@ const RARITY_LABELS: Record<string, string> = {
   LEGENDARY: 'Légendaire',
 }
 
-const UPGRADE_LABELS: Record<string, string> = {
-  REGEN: 'Accélération',
-  LUCK: 'Chance',
-  DUST_HARVEST: 'Récolteur',
-  TOKEN_VAULT: 'Réserve',
-}
 
 function AdminStats() {
   const { data, isLoading } = useAdminStats()
@@ -43,7 +37,7 @@ function AdminStats() {
   }
 
   const totalUsers =
-    data.upgradeDistribution[0]?.levels.reduce((s, l) => s + l.count, 0) ?? 0
+    data.skillDistribution.reduce((s, d) => s + d.count, 0)
 
   return (
     <div className="p-8">
@@ -175,52 +169,25 @@ function AdminStats() {
         </Card>
       </div>
 
-      {/* Row 2 — Distribution upgrades */}
+      {/* Row 2 — Distribution compétences */}
       <Card className="mb-6">
         <CardContent className="p-5">
           <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-text-light">
-            Distribution des améliorations
+            Distribution des compétences
           </p>
-          <div className="grid grid-cols-2 gap-6 lg:grid-cols-4">
-            {data.upgradeDistribution.map(({ type, levels }) => {
-              const total = levels.reduce((s, l) => s + l.count, 0)
-              return (
-                <div key={type}>
-                  <p className="mb-3 text-sm font-bold text-text">
-                    {UPGRADE_LABELS[type] ?? type}
-                  </p>
-                  <div className="space-y-1.5">
-                    {levels.map(({ level, count }) => {
-                      const pct = total > 0 ? (count / total) * 100 : 0
-                      return (
-                        <div key={level} className="flex items-center gap-2">
-                          <span className="w-12 text-right text-xs font-mono text-text-light">
-                            {level === 0 ? 'Niv. 0' : `Niv. ${level}`}
-                          </span>
-                          <div className="flex-1 overflow-hidden rounded-full bg-border">
-                            <div
-                              className="h-1.5 rounded-full transition-all"
-                              style={{
-                                width: `${pct}%`,
-                                backgroundColor:
-                                  level === 0
-                                    ? 'hsl(var(--border-dark))'
-                                    : `hsl(var(--primary))`,
-                                opacity: level === 0 ? 1 : 0.4 + level * 0.15,
-                              }}
-                            />
-                          </div>
-                          <span className="w-8 text-right text-xs font-mono text-text-light">
-                            {count}
-                          </span>
-                        </div>
-                      )
-                    })}
-                  </div>
+          {data.skillDistribution.length === 0 ? (
+            <p className="text-center text-xs text-text-light">Aucune compétence investie</p>
+          ) : (
+            <div className="space-y-1.5">
+              {data.skillDistribution.map(({ nodeId, level, count }) => (
+                <div key={`${nodeId}-${level}`} className="flex items-center gap-2">
+                  <span className="w-40 truncate text-xs font-mono text-text-light">{nodeId}</span>
+                  <span className="w-12 text-right text-xs font-mono text-text-light">Niv.{level}</span>
+                  <span className="w-10 text-right text-xs font-mono text-text">{count}</span>
                 </div>
-              )
-            })}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
