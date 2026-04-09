@@ -1,3 +1,5 @@
+name: gachapon
+
 networks:
   proxy:
     name: proxy

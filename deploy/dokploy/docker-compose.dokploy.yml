@@ -1,3 +1,5 @@
+name: gachapon
+
 services:
   back:
     build:
