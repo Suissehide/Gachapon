@@ -27,7 +27,7 @@ export async function uploadCardImage(
   name: string,
   buffer: Buffer,
   mimetype: string,
-): Promise<{ key: string; url: string }> {
+): Promise<{ key: string }> {
   if (!ALLOWED_IMAGE_MIME.has(mimetype)) {
     throw Boom.badRequest('Image must be jpeg, png or webp')
   }
@@ -37,5 +37,5 @@ export async function uploadCardImage(
   const ext = mimetype.split('/')[1]
   const key = `cards/${sanitizeName(name)}.${ext}`
   await storageClient.upload(key, buffer, mimetype)
-  return { key, url: storageClient.publicUrl(key) }
+  return { key }
 }

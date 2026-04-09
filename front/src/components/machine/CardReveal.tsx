@@ -1,5 +1,5 @@
 // front/src/components/machine/CardReveal.tsx
-import { Coins, Sparkles } from 'lucide-react'
+import { Coins, Sparkles, X } from 'lucide-react'
 import type React from 'react'
 import { useEffect, useState } from 'react'
 
@@ -82,9 +82,10 @@ function ImpactWord({
 type Props = {
   result: PullResult | null
   onClose: () => void
+  onNewPull: () => void
 }
 
-export function CardReveal({ result, onClose }: Props) {
+export function CardReveal({ result, onClose, onNewPull }: Props) {
   const [animKey, setAnimKey] = useState(0)
   const [animDone, setAnimDone] = useState(false)
   const [showSweep, setShowSweep] = useState(false)
@@ -116,7 +117,7 @@ export function CardReveal({ result, onClose }: Props) {
     reset()
     const revealTimer = setTimeout(() => triggerReveal(), 1200)
     const sweepTimer = setTimeout(() => setShowSweep(true), 1800)
-    const infoTimer = setTimeout(() => setShowInfo(true), 2000)
+    const infoTimer = setTimeout(() => setShowInfo(true), 2500)
     return () => {
       clearTimeout(revealTimer)
       clearTimeout(sweepTimer)
@@ -199,10 +200,10 @@ export function CardReveal({ result, onClose }: Props) {
 
         {/* ── Info panel ── */}
         <div
-          className={`w-64 overflow-hidden rounded-2xl border border-white/9 bg-[rgba(6,6,12,0.78)] shadow-[0_12px_40px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.07)] backdrop-blur-[20px] transition-[opacity,transform] duration-550 ease-out ${
+          className={`w-64 overflow-hidden rounded-2xl border border-white/9 bg-[rgba(6,6,12,0.78)] shadow-[0_12px_40px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.07)] backdrop-blur-[20px] ${
             showInfo
-              ? 'pointer-events-auto translate-y-0 opacity-100'
-              : 'pointer-events-none translate-y-3.5 opacity-0'
+              ? 'animate-[fadeInUp_550ms_ease-out_forwards]'
+              : 'translate-y-[calc(50vh+100%)] transition-transform duration-300 ease-in'
           }`}
         >
           {result.wasDuplicate && (
@@ -235,8 +236,20 @@ export function CardReveal({ result, onClose }: Props) {
             </span>
           </div>
 
-          <div className="p-3">
-            <Button className="w-full" onClick={onClose}>
+          <div className="flex items-center gap-2 p-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="shrink-0 border border-white/10 text-white/60 hover:bg-white/10 hover:text-white"
+              onClick={onClose}
+            >
+              <X size={16} />
+            </Button>
+            <Button
+              className="flex-1"
+              disabled={result.tokensRemaining <= 0}
+              onClick={onNewPull}
+            >
               Nouveau tirage
             </Button>
           </div>

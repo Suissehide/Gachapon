@@ -27,11 +27,12 @@ const DUST_BY_RARITY: Record<string, number> = {
 interface RecycleModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onRecycled?: () => void
   card: Card & { quantity: number }
   variant: CardVariant
 }
 
-export function RecycleModal({ open, onOpenChange, card, variant }: RecycleModalProps) {
+export function RecycleModal({ open, onOpenChange, onRecycled, card, variant }: RecycleModalProps) {
   const [quantity, setQuantity] = useState(1)
   const { mutate: recycle, isPending } = useRecycle()
 
@@ -52,7 +53,7 @@ export function RecycleModal({ open, onOpenChange, card, variant }: RecycleModal
   const handleRecycle = () => {
     recycle(
       { cardId: card.id, quantity, variant },
-      { onSuccess: () => onOpenChange(false) },
+      { onSuccess: () => { onOpenChange(false); onRecycled?.() } },
     )
   }
 
@@ -152,7 +153,7 @@ export function RecycleModal({ open, onOpenChange, card, variant }: RecycleModal
           </div>
         </PopupBody>
 
-        <PopupFooter>
+        <PopupFooter className="flex justify-between">
           <Button
             type="button"
             variant="secondary"

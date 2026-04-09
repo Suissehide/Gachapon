@@ -12,7 +12,11 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     configService,
     gachaPullRepository,
     skillTreeRepository,
+    storageClient,
   } = fastify.iocContainer
+
+  const resolveUrl = (key: string | null) =>
+    key ? storageClient.publicUrl(key) : null
 
   // POST /pulls — consommer 1 token et tirer une carte
   fastify.post(
@@ -27,7 +31,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         card: {
           id: result.card.id,
           name: result.card.name,
-          imageUrl: result.card.imageUrl,
+          imageUrl: resolveUrl(result.card.imageUrl),
           rarity: result.card.rarity,
           variant: result.pull.variant,
           set: { id: result.card.set.id, name: result.card.set.name },
@@ -46,7 +50,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
           rarity: result.card.rarity,
           variant: result.pull.variant,
           cardId: result.card.id,
-          imageUrl: result.card.imageUrl,
+          imageUrl: resolveUrl(result.card.imageUrl),
           setName: result.card.set.name,
           pulledAt: result.pull.pulledAt.toISOString(),
         })
@@ -56,7 +60,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         card: {
           id: result.card.id,
           name: result.card.name,
-          imageUrl: result.card.imageUrl,
+          imageUrl: resolveUrl(result.card.imageUrl),
           rarity: result.card.rarity,
           variant: result.pull.variant,
           set: { id: result.card.set.id, name: result.card.set.name },
@@ -167,7 +171,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
           card: {
             id: p.card.id,
             name: p.card.name,
-            imageUrl: p.card.imageUrl,
+            imageUrl: resolveUrl(p.card.imageUrl),
             rarity: p.card.rarity,
             variant: p.variant,
           },
@@ -205,7 +209,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
           rarity: p.rarity,
           variant: p.variant,
           cardId: p.cardId,
-          imageUrl: p.imageUrl,
+          imageUrl: resolveUrl(p.imageUrl),
           setName: p.setName,
           pulledAt: p.pulledAt.toISOString(),
         })),

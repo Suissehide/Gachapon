@@ -114,7 +114,6 @@ function Collection() {
   const handleRecycleFromDetail = () => {
     if (detailTarget?.userCard) {
       setRecycleTarget(detailTarget.userCard)
-      setDetailTarget(null)
     }
   }
 
@@ -164,6 +163,7 @@ function Collection() {
         <RecycleModal
           open={!!recycleTarget}
           onOpenChange={(open) => { if (!open) setRecycleTarget(null) }}
+          onRecycled={() => { setRecycleTarget(null); setDetailTarget(null) }}
           card={{ ...recycleTarget.card, quantity: recycleTarget.quantity }}
           variant={recycleTarget.variant}
         />

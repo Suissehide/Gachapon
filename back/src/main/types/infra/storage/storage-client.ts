@@ -3,6 +3,7 @@ export interface StorageClientInterface {
   getSignedUrl(key: string, expiresIn?: number): Promise<string>
   delete(key: string): Promise<void>
   publicUrl(key: string): string
+  toKey(urlOrKey: string): string
   listObjects(prefix: string): Promise<StorageObject[]>
   exists(key: string): Promise<boolean>
   copy(sourceKey: string, destKey: string): Promise<void>

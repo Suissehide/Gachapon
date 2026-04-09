@@ -15,7 +15,11 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
     userCardRepository,
     userRepository,
     collectionDomain,
+    storageClient,
   } = fastify.iocContainer
+
+  const resolveUrl = (key: string | null) =>
+    key ? storageClient.publicUrl(key) : null
 
   fastify.get(
     '/sets',
@@ -41,7 +45,7 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
         cards: cards.map((c) => ({
           id: c.id,
           name: c.name,
-          imageUrl: c.imageUrl,
+          imageUrl: resolveUrl(c.imageUrl),
           rarity: c.rarity,
           set: { id: c.set.id, name: c.set.name },
         })),
@@ -60,7 +64,7 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
       if (!card) {
         throw Boom.notFound('Card not found')
       }
-      return card
+      return { ...card, imageUrl: resolveUrl(card.imageUrl) }
     },
   )
 
@@ -82,7 +86,7 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
           card: {
             id: uc.card.id,
             name: uc.card.name,
-            imageUrl: uc.card.imageUrl,
+            imageUrl: resolveUrl(uc.card.imageUrl),
             rarity: uc.card.rarity,
             set: { id: uc.card.set.id, name: uc.card.set.name },
           },

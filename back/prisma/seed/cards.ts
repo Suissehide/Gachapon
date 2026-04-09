@@ -32,8 +32,6 @@ const CARDS = [
 export async function seedCards(
   tx: Parameters<Parameters<PrismaClient['$transaction']>[0]>[0],
 ) {
-  const baseUrl = `${process.env.MINIO_ENDPOINT}/${process.env.MINIO_BUCKET}/cards`
-
   const set = await tx.cardSet.create({
     data: {
       name: 'Alpha Warriors',
@@ -48,7 +46,7 @@ export async function seedCards(
       data: {
         setId: set.id,
         name: card.name,
-        imageUrl: `${baseUrl}/${card.imageKey}`,
+        imageUrl: `cards/${card.imageKey}`,
         rarity: card.rarity,
         dropWeight: card.dropWeight,
       },

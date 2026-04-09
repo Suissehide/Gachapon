@@ -48,6 +48,14 @@ async function parseMultipartCard(request: {
 export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
   const { cardRepository, storageClient } = fastify.iocContainer
 
+  const resolve = (imageUrl: string | null) =>
+    imageUrl ? storageClient.publicUrl(imageUrl) : null
+
+  const resolveCard = <T extends { imageUrl: string | null }>(card: T) => ({
+    ...card,
+    imageUrl: resolve(card.imageUrl),
+  })
+
   fastify.get(
     '/',
     { schema: { querystring: adminCardsQuerySchema } },
@@ -56,7 +64,7 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
         setId: request.query.setId,
         rarity: request.query.rarity as CardRarity,
       })
-      return { cards }
+      return { cards: cards.map(resolveCard) }
     },
   )
 
@@ -68,28 +76,24 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
       throw Boom.badRequest(parsed.error.toString())
     }
 
-    let imageUrl: string
+    let imageKey: string
     if (imageBuffer) {
-      imageUrl = (
+      imageKey = (
         await uploadCardImage(
           storageClient,
           parsed.data.name,
           imageBuffer,
           imageMime,
         )
-      ).url
+      ).key
     } else if (fields.imageUrl) {
-      const storagePrefix = storageClient.publicUrl('')
-      if (!fields.imageUrl.startsWith(storagePrefix)) {
-        throw Boom.badRequest('imageUrl must point to the configured storage')
-      }
-      imageUrl = fields.imageUrl
+      imageKey = storageClient.toKey(fields.imageUrl)
     } else {
       throw Boom.badRequest('Either an image file or imageUrl is required')
     }
 
-    const card = await cardRepository.create({ ...parsed.data, imageUrl })
-    return reply.status(201).send(card)
+    const card = await cardRepository.create({ ...parsed.data, imageUrl: imageKey })
+    return reply.status(201).send(resolveCard(card))
   })
 
   fastify.patch(
@@ -101,19 +105,17 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
       },
     },
     async (request) => {
-      if (request.body.imageUrl) {
-        const storagePrefix = storageClient.publicUrl('')
-        if (!request.body.imageUrl.startsWith(storagePrefix)) {
-          throw Boom.badRequest('imageUrl must point to the configured storage')
-        }
-      }
-
       const card = await cardRepository.findById(request.params.id)
       if (!card) {
         throw Boom.notFound('Card not found')
       }
 
-      return cardRepository.update(request.params.id, request.body)
+      const data = { ...request.body }
+      if (data.imageUrl) {
+        data.imageUrl = storageClient.toKey(data.imageUrl)
+      }
+
+      return resolveCard(await cardRepository.update(request.params.id, data))
     },
   )
 
@@ -130,7 +132,7 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
       if (!imageBuffer) {
         throw Boom.badRequest('No image provided')
       }
-      const { url: imageUrl } = await uploadCardImage(
+      const { key: imageKey } = await uploadCardImage(
         storageClient,
         card.name,
         imageBuffer,
@@ -138,9 +140,9 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
       )
 
       const updated = await cardRepository.update(request.params.id, {
-        imageUrl,
+        imageUrl: imageKey,
       })
-      return reply.status(200).send(updated)
+      return reply.status(200).send(resolveCard(updated))
     },
   )
 

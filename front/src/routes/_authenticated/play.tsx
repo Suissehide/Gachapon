@@ -289,7 +289,19 @@ function Play() {
       )}
 
       {/* Card reveal overlay */}
-      <CardReveal result={pullResult} onClose={handleClose} />
+      <CardReveal
+        result={pullResult}
+        onClose={handleClose}
+        onNewPull={() => {
+          pullMutation(undefined, {
+            onSuccess: (result) => {
+              setPullResult(result)
+              setPhase('revealed')
+            },
+            onError: () => setPhase('revealed'),
+          })
+        }}
+      />
 
       {/* HUD — streak / level / quests */}
       <PlayHud />

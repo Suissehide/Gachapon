@@ -44,7 +44,7 @@ async function processUploadPart(
   const name = filename.replace(/\.[^.]+$/, '')
 
   try {
-    const { key, url } = await uploadCardImage(
+    const { key } = await uploadCardImage(
       storageClient,
       name,
       buffer,
@@ -54,7 +54,7 @@ async function processUploadPart(
       ok: true,
       entry: {
         key,
-        url,
+        url: storageClient.publicUrl(key),
         size: buffer.length,
         lastModified: new Date(),
         orphan: true,
@@ -125,14 +125,13 @@ export const adminMediaRouter: FastifyPluginCallbackZod = (fastify) => {
       cardRepository.findAllForMedia(),
     ])
 
-    const urlToCard = new Map(cards.map((c) => [c.imageUrl, c]))
+    const keyToCard = new Map(cards.map((c) => [c.imageUrl, c]))
 
     return objects.map((obj) => {
-      const url = storageClient.publicUrl(obj.key)
-      const card = urlToCard.get(url) ?? null
+      const card = keyToCard.get(obj.key) ?? null
       return {
         key: obj.key,
-        url,
+        url: storageClient.publicUrl(obj.key),
         size: obj.size,
         lastModified: obj.lastModified,
         orphan: card === null,
@@ -176,8 +175,7 @@ export const adminMediaRouter: FastifyPluginCallbackZod = (fastify) => {
         }
       }
 
-      const urls = keys.map((k) => storageClient.publicUrl(k))
-      const usedCards = await cardRepository.findByImageUrls(urls)
+      const usedCards = await cardRepository.findByImageUrls(keys)
 
       if (usedCards.length > 0) {
         const names = usedCards.map((c) => c.name).join(', ')
@@ -223,10 +221,7 @@ export const adminMediaRouter: FastifyPluginCallbackZod = (fastify) => {
         )
       }
 
-      await cardRepository.updateManyImageUrl(
-        storageClient.publicUrl(from),
-        storageClient.publicUrl(to),
-      )
+      await cardRepository.updateManyImageUrl(from, to)
 
       return { key: to, url: storageClient.publicUrl(to) }
     },

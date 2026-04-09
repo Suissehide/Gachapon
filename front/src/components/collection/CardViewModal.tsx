@@ -107,7 +107,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 gap-1.5"
+                className="flex-1 gap-1.5 border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
                 onClick={onRecycle}
               >
                 <RefreshCw className="h-3.5 w-3.5" />
