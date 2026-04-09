@@ -23,6 +23,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OauthSuccessRouteImport } from './routes/oauth.success'
+import { Route as InvitationsTokenRouteImport } from './routes/invitations.$token'
 import { Route as AuthenticatedSkillsRouteImport } from './routes/_authenticated/skills'
 import { Route as AuthenticatedShopRouteImport } from './routes/_authenticated/shop'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
@@ -113,6 +114,11 @@ const IndexRoute = IndexRouteImport.update({
 const OauthSuccessRoute = OauthSuccessRouteImport.update({
   id: '/oauth/success',
   path: '/oauth/success',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvitationsTokenRoute = InvitationsTokenRouteImport.update({
+  id: '/invitations/$token',
+  path: '/invitations/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedSkillsRoute = AuthenticatedSkillsRouteImport.update({
@@ -255,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/shop': typeof AuthenticatedShopRoute
   '/skills': typeof AuthenticatedSkillsRoute
+  '/invitations/$token': typeof InvitationsTokenRoute
   '/oauth/success': typeof OauthSuccessRoute
   '/admin/cards': typeof AdminAdminCardsRoute
   '/admin/config': typeof AdminAdminConfigRoute
@@ -291,6 +298,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/shop': typeof AuthenticatedShopRoute
   '/skills': typeof AuthenticatedSkillsRoute
+  '/invitations/$token': typeof InvitationsTokenRoute
   '/oauth/success': typeof OauthSuccessRoute
   '/admin/cards': typeof AdminAdminCardsRoute
   '/admin/config': typeof AdminAdminConfigRoute
@@ -331,6 +339,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/shop': typeof AuthenticatedShopRoute
   '/_authenticated/skills': typeof AuthenticatedSkillsRoute
+  '/invitations/$token': typeof InvitationsTokenRoute
   '/oauth/success': typeof OauthSuccessRoute
   '/_admin/admin/cards': typeof AdminAdminCardsRoute
   '/_admin/admin/config': typeof AdminAdminConfigRoute
@@ -370,6 +379,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/shop'
     | '/skills'
+    | '/invitations/$token'
     | '/oauth/success'
     | '/admin/cards'
     | '/admin/config'
@@ -406,6 +416,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/shop'
     | '/skills'
+    | '/invitations/$token'
     | '/oauth/success'
     | '/admin/cards'
     | '/admin/config'
@@ -445,6 +456,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/shop'
     | '/_authenticated/skills'
+    | '/invitations/$token'
     | '/oauth/success'
     | '/_admin/admin/cards'
     | '/_admin/admin/config'
@@ -477,6 +489,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   StatsRoute: typeof StatsRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
+  InvitationsTokenRoute: typeof InvitationsTokenRoute
   OauthSuccessRoute: typeof OauthSuccessRoute
 }
 
@@ -578,6 +591,13 @@ declare module '@tanstack/react-router' {
       path: '/oauth/success'
       fullPath: '/oauth/success'
       preLoaderRoute: typeof OauthSuccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invitations/$token': {
+      id: '/invitations/$token'
+      path: '/invitations/$token'
+      fullPath: '/invitations/$token'
+      preLoaderRoute: typeof InvitationsTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/skills': {
@@ -833,6 +853,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   StatsRoute: StatsRoute,
   VerifyEmailRoute: VerifyEmailRoute,
+  InvitationsTokenRoute: InvitationsTokenRoute,
   OauthSuccessRoute: OauthSuccessRoute,
 }
 export const routeTree = rootRouteImport

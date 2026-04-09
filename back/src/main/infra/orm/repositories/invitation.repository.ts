@@ -1,6 +1,9 @@
 import type { IocContainer } from '../../../types/application/ioc'
 import type { InvitationEntity } from '../../../types/domain/team/team.types'
-import type { IInvitationRepository } from '../../../types/infra/orm/repositories/invitation.repository.interface'
+import type {
+  IInvitationRepository,
+  InvitationWithDetails,
+} from '../../../types/infra/orm/repositories/invitation.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 export class InvitationRepository implements IInvitationRepository {
@@ -12,6 +15,36 @@ export class InvitationRepository implements IInvitationRepository {
 
   findByToken(token: string): Promise<InvitationEntity | null> {
     return this.#prisma.invitation.findUnique({ where: { token } })
+  }
+
+  findByTokenWithDetails(
+    token: string,
+  ): Promise<InvitationWithDetails | null> {
+    return this.#prisma.invitation.findUnique({
+      where: { token },
+      include: {
+        team: { select: { id: true, name: true, slug: true, avatar: true } },
+        invitedBy: { select: { id: true, username: true, avatar: true } },
+      },
+    })
+  }
+
+  findPendingForUser(
+    userId: string,
+    email: string,
+  ): Promise<InvitationWithDetails[]> {
+    return this.#prisma.invitation.findMany({
+      where: {
+        status: 'PENDING',
+        expiresAt: { gt: new Date() },
+        OR: [{ invitedUserId: userId }, { invitedEmail: email }],
+      },
+      include: {
+        team: { select: { id: true, name: true, slug: true, avatar: true } },
+        invitedBy: { select: { id: true, username: true, avatar: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
   }
 
   findPendingByTeamAndUser(

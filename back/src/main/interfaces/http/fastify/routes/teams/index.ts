@@ -97,16 +97,51 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     },
     async (request) => {
       const { invitationRepository } = fastify.iocContainer
-      const inv = await invitationRepository.findByToken(request.params.token)
+      const inv = await invitationRepository.findByTokenWithDetails(
+        request.params.token,
+      )
       if (!inv) {
         throw Boom.notFound('Invitation not found')
       }
+      const now = new Date()
+      const status =
+        inv.status === 'PENDING' && inv.expiresAt < now ? 'EXPIRED' : inv.status
       return {
         id: inv.id,
         token: inv.token,
         teamId: inv.teamId,
-        status: inv.status,
+        status,
         expiresAt: inv.expiresAt,
+        team: inv.team,
+        invitedBy: inv.invitedBy,
+      }
+    },
+  )
+
+  fastify.get(
+    '/me/invitations',
+    { onRequest: [fastify.verifySessionCookie] },
+    async (request) => {
+      const { invitationRepository, userRepository } = fastify.iocContainer
+      const me = await userRepository.findById(request.user.userID)
+      if (!me) {
+        throw Boom.notFound('User not found')
+      }
+      const invitations = await invitationRepository.findPendingForUser(
+        me.id,
+        me.email,
+      )
+      return {
+        invitations: invitations.map((inv) => ({
+          id: inv.id,
+          token: inv.token,
+          teamId: inv.teamId,
+          status: inv.status,
+          expiresAt: inv.expiresAt,
+          createdAt: inv.createdAt,
+          team: inv.team,
+          invitedBy: inv.invitedBy,
+        })),
       }
     },
   )

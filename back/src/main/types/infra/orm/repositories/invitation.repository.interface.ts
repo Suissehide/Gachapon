@@ -1,7 +1,17 @@
 import type { InvitationEntity } from '../../../domain/team/team.types'
 
+export type InvitationWithDetails = InvitationEntity & {
+  team: { id: string; name: string; slug: string; avatar: string | null }
+  invitedBy: { id: string; username: string; avatar: string | null } | null
+}
+
 export interface IInvitationRepository {
   findByToken(token: string): Promise<InvitationEntity | null>
+  findByTokenWithDetails(token: string): Promise<InvitationWithDetails | null>
+  findPendingForUser(
+    userId: string,
+    email: string,
+  ): Promise<InvitationWithDetails[]>
   findPendingByTeamAndUser(
     teamId: string,
     userId: string,

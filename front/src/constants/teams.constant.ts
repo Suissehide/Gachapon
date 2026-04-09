@@ -24,8 +24,21 @@ export type Invitation = {
   id: string
   token: string
   teamId: string
-  status: string
+  status: 'PENDING' | 'EXPIRED' | 'ACCEPTED' | 'DECLINED' | 'CANCELLED'
   expiresAt: string
+  team?: { id: string; name: string; slug: string; avatar: string | null }
+  invitedBy?: { id: string; username: string; avatar: string | null } | null
+}
+
+export type MyInvitation = {
+  id: string
+  token: string
+  teamId: string
+  status: 'PENDING'
+  expiresAt: string
+  createdAt: string
+  team: { id: string; name: string; slug: string; avatar: string | null }
+  invitedBy: { id: string; username: string; avatar: string | null } | null
 }
 
 export type TeamInvitation = {
@@ -62,6 +75,7 @@ export const TEAM_ROUTES = {
   ranking: (teamId: string, page: number, limit: number) =>
     `/teams/${teamId}/ranking?page=${page}&limit=${limit}`,
   invitations: (teamId: string) => `/teams/${teamId}/invitations`,
+  myInvitations: '/me/invitations',
   removeMember: (teamId: string, userId: string) =>
     `/teams/${teamId}/members/${userId}/remove`,
   invitation: (token: string) => `/invitations/${token}`,

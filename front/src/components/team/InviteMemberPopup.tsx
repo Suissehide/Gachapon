@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { RefreshCw, Send, Trash2, UserPlus } from 'lucide-react'
+import { RefreshCw, Send, Trash2, UserPlus, X } from 'lucide-react'
 import { type SyntheticEvent, useMemo, useRef, useState } from 'react'
 
 import type { TeamInvitation } from '../../queries/useTeams.ts'
@@ -48,8 +48,12 @@ type Props = {
   userRole: 'OWNER' | 'ADMIN' | 'MEMBER'
 }
 
+type SelectedTarget =
+  | { type: 'username'; value: string }
+  | { type: 'email'; value: string }
+
 export function InviteMemberPopup({ teamId, userRole }: Props) {
-  const { mutate: invite, isPending } = useInviteMember(teamId)
+  const { mutateAsync: invite, isPending } = useInviteMember(teamId)
   const { data: invitationsData } = useTeamInvitations(teamId)
   const {
     mutate: resend,
@@ -63,6 +67,7 @@ export function InviteMemberPopup({ teamId, userRole }: Props) {
   const [error, setError] = useState('')
   const [identifier, setIdentifier] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
+  const [selected, setSelected] = useState<SelectedTarget[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
 
   const [activeIndex, setActiveIndex] = useState(-1)
@@ -73,19 +78,77 @@ export function InviteMemberPopup({ teamId, userRole }: Props) {
   )
   const searchResults = (searchData?.users ?? []).slice(0, 5)
 
-  const handleSubmit = (e: SyntheticEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const trimmed = identifier.trim()
-    if (!trimmed) {
+  const isAlreadySelected = (target: SelectedTarget) =>
+    selected.some(
+      (s) => s.type === target.type && s.value === target.value,
+    )
+
+  const addTarget = (target: SelectedTarget) => {
+    setError('')
+    if (isAlreadySelected(target)) {
       return
     }
+    setSelected((prev) => [...prev, target])
+  }
+
+  const removeTarget = (target: SelectedTarget) => {
+    setSelected((prev) =>
+      prev.filter((s) => !(s.type === target.type && s.value === target.value)),
+    )
+  }
+
+  const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
+    e.preventDefault()
+
+    // If user typed something but didn't add it as a chip, try to add it.
+    const pending = identifier.trim()
+    const targets: SelectedTarget[] = [...selected]
+    if (pending) {
+      const target: SelectedTarget = pending.includes('@')
+        ? { type: 'email', value: pending }
+        : { type: 'username', value: pending }
+      if (
+        !targets.some((t) => t.type === target.type && t.value === target.value)
+      ) {
+        targets.push(target)
+      }
+    }
+
+    if (targets.length === 0) {
+      return
+    }
+
     setError('')
     setShowDropdown(false)
-    const isEmail = trimmed.includes('@')
-    invite(isEmail ? { email: trimmed } : { username: trimmed }, {
-      onSuccess: () => setIdentifier(''),
-      onError: (err) => setError(err.message),
-    })
+
+    const errors: string[] = []
+    for (const target of targets) {
+      try {
+        await invite(
+          target.type === 'email'
+            ? { email: target.value }
+            : { username: target.value },
+        )
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Erreur'
+        errors.push(`${target.value}: ${message}`)
+      }
+    }
+
+    if (errors.length === targets.length) {
+      setError(errors.join(' • '))
+      return
+    }
+
+    setSelected(
+      errors.length > 0
+        ? targets.filter((t) => errors.some((e) => e.startsWith(`${t.value}:`)))
+        : [],
+    )
+    setIdentifier('')
+    if (errors.length > 0) {
+      setError(errors.join(' • '))
+    }
   }
 
   const handleOpenChange = (value: boolean) => {
@@ -94,21 +157,32 @@ export function InviteMemberPopup({ teamId, userRole }: Props) {
       setError('')
       setShowDropdown(false)
       setActiveIndex(-1)
+      setSelected([])
     }
     setOpen(value)
   }
 
   const handleSelectUser = (username: string) => {
+    addTarget({ type: 'username', value: username })
     setShowDropdown(false)
     setIdentifier('')
-    setError('')
-    invite(
-      { username },
-      {
-        onSuccess: () => setIdentifier(''),
-        onError: (err) => setError(err.message),
-      },
+    setActiveIndex(-1)
+    inputRef.current?.focus()
+  }
+
+  const handleAddCurrentInput = () => {
+    const trimmed = identifier.trim()
+    if (!trimmed) {
+      return
+    }
+    addTarget(
+      trimmed.includes('@')
+        ? { type: 'email', value: trimmed }
+        : { type: 'username', value: trimmed },
     )
+    setIdentifier('')
+    setActiveIndex(-1)
+    setShowDropdown(false)
   }
 
   const invitations = invitationsData?.invitations ?? []
@@ -226,7 +300,7 @@ export function InviteMemberPopup({ teamId, userRole }: Props) {
             Inviter un membre
           </PopupTitle>
         </PopupHeader>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={(e) => void handleSubmit(e)}>
           <PopupBody className="flex flex-col gap-4">
             <div className="flex flex-col gap-3">
               <p className="text-sm text-text-light">
@@ -248,23 +322,42 @@ export function InviteMemberPopup({ teamId, userRole }: Props) {
                     )
                   }}
                   onKeyDown={(e) => {
-                    if (!showDropdown || searchResults.length === 0) {
+                    if (
+                      e.key === 'Backspace' &&
+                      identifier === '' &&
+                      selected.length > 0
+                    ) {
+                      e.preventDefault()
+                      setSelected((prev) => prev.slice(0, -1))
                       return
                     }
-                    if (e.key === 'ArrowDown') {
+                    if (showDropdown && searchResults.length > 0) {
+                      if (e.key === 'ArrowDown') {
+                        e.preventDefault()
+                        setActiveIndex((i) =>
+                          Math.min(i + 1, searchResults.length - 1),
+                        )
+                        return
+                      }
+                      if (e.key === 'ArrowUp') {
+                        e.preventDefault()
+                        setActiveIndex((i) => Math.max(i - 1, 0))
+                        return
+                      }
+                      if (e.key === 'Enter' && activeIndex >= 0) {
+                        e.preventDefault()
+                        handleSelectUser(searchResults[activeIndex].username)
+                        return
+                      }
+                      if (e.key === 'Escape') {
+                        setShowDropdown(false)
+                        setActiveIndex(-1)
+                        return
+                      }
+                    }
+                    if (e.key === 'Enter' && identifier.trim()) {
                       e.preventDefault()
-                      setActiveIndex((i) =>
-                        Math.min(i + 1, searchResults.length - 1),
-                      )
-                    } else if (e.key === 'ArrowUp') {
-                      e.preventDefault()
-                      setActiveIndex((i) => Math.max(i - 1, 0))
-                    } else if (e.key === 'Enter' && activeIndex >= 0) {
-                      e.preventDefault()
-                      handleSelectUser(searchResults[activeIndex].username)
-                    } else if (e.key === 'Escape') {
-                      setShowDropdown(false)
-                      setActiveIndex(-1)
+                      handleAddCurrentInput()
                     }
                   }}
                   onBlur={() =>
@@ -308,6 +401,26 @@ export function InviteMemberPopup({ teamId, userRole }: Props) {
                   </ul>
                 )}
               </div>
+              {selected.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {selected.map((target) => (
+                    <span
+                      key={`${target.type}:${target.value}`}
+                      className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
+                    >
+                      {target.type === 'email' ? target.value : `@${target.value}`}
+                      <button
+                        type="button"
+                        aria-label="Retirer"
+                        className="rounded-full hover:bg-primary/20"
+                        onClick={() => removeTarget(target)}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
               {error && <p className="text-xs text-destructive">{error}</p>}
             </div>
 
@@ -328,9 +441,19 @@ export function InviteMemberPopup({ teamId, userRole }: Props) {
             )}
           </PopupBody>
           <PopupFooter>
-            <Button type="submit" disabled={isPending}>
+            <Button
+              type="submit"
+              disabled={
+                isPending ||
+                (selected.length === 0 && identifier.trim().length === 0)
+              }
+            >
               <Send className="h-4 w-4" />
-              {isPending ? 'Envoi…' : "Envoyer l'invitation"}
+              {isPending
+                ? 'Envoi…'
+                : selected.length > 1
+                  ? `Envoyer ${selected.length} invitations`
+                  : "Envoyer l'invitation"}
             </Button>
           </PopupFooter>
         </form>

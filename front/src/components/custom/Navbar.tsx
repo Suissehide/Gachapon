@@ -2,6 +2,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { LogOut, Sparkles, Ticket } from 'lucide-react'
 
 import { useAuthStore } from '../../stores/auth.store'
+import { InvitationsBadge } from '../notifications/InvitationsBadge.tsx'
 import { RewardsBadge } from '../rewards/RewardsBadge.tsx'
 import { Button } from '../ui/button.tsx'
 import {
@@ -77,6 +78,7 @@ export function Navbar() {
                     {user.dust.toLocaleString('fr-FR')}
                   </Link>
                 </div>
+                <InvitationsBadge />
                 <RewardsBadge pendingRewardsCount={user.pendingRewardsCount ?? 0} />
                 <div className="h-5 w-px bg-border hidden lg:block" />
                 <Link

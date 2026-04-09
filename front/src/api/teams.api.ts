@@ -1,6 +1,7 @@
 import { apiUrl } from '../constants/config.constant.ts'
 import type {
   Invitation,
+  MyInvitation,
   RankedMember,
   Team,
   TeamInvitation,
@@ -18,6 +19,7 @@ export type {
   Team,
   TeamSummary,
   Invitation,
+  MyInvitation,
   TeamInvitation,
   RankedMember,
   TeamRankingPage,
@@ -115,6 +117,14 @@ export const TeamsApi = {
     if (!res.ok) {
       handleHttpError(res, {}, "Erreur lors du départ de l'équipe")
     }
+  },
+
+  getMyInvitations: async (): Promise<{ invitations: MyInvitation[] }> => {
+    const res = await fetchWithAuth(`${apiUrl}${TEAM_ROUTES.myInvitations}`)
+    if (!res.ok) {
+      handleHttpError(res, {}, 'Erreur lors du chargement des invitations')
+    }
+    return res.json()
   },
 
   getInvitation: async (token: string): Promise<Invitation> => {

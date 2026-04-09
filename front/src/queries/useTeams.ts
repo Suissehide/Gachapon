@@ -10,6 +10,7 @@ import type { TeamRankingPage } from '../api/teams.api.ts'
 
 export type {
   Invitation,
+  MyInvitation,
   Team,
   TeamInvitation,
   TeamMember,
@@ -98,17 +99,38 @@ export const useInvitation = (token: string | undefined) =>
     queryKey: ['invitation', token],
     queryFn: () => TeamsApi.getInvitation(token ?? ''),
     enabled: !!token,
+    retry: false,
   })
 
-export const useAcceptInvitation = () =>
-  useMutation({
+export const useMyInvitations = (enabled = true) =>
+  useQuery({
+    queryKey: ['invitations', 'me'],
+    queryFn: () => TeamsApi.getMyInvitations(),
+    enabled,
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
+  })
+
+export const useAcceptInvitation = () => {
+  const qc = useQueryClient()
+  return useMutation({
     mutationFn: (token: string) => TeamsApi.acceptInvitation(token),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['invitations', 'me'] })
+      void qc.invalidateQueries({ queryKey: ['teams'] })
+    },
   })
+}
 
-export const useDeclineInvitation = () =>
-  useMutation({
+export const useDeclineInvitation = () => {
+  const qc = useQueryClient()
+  return useMutation({
     mutationFn: (token: string) => TeamsApi.declineInvitation(token),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['invitations', 'me'] })
+    },
   })
+}
 
 export const useTeamRanking = (teamId: string) =>
   useInfiniteQuery({
