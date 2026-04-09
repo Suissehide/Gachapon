@@ -37,6 +37,14 @@ export const useAdminUpdateConfig = () => {
   })
 }
 
+export const useAdminCreateBranch = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: SkillsApi.adminCreateBranch,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ADMIN_SKILLS_KEY }),
+  })
+}
+
 export const useAdminCreateNode = () => {
   const qc = useQueryClient()
   return useMutation({

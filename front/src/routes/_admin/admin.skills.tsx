@@ -14,12 +14,9 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 
-import type {
-  SkillBranch,
-  SkillConfig,
-  SkillNode,
-} from '../../api/skills.api.ts'
 import { AdminSkillTreeCanvas } from '../../components/skill-tree/AdminSkillTreeCanvas.tsx'
+import { ConfigSheet } from '../../components/skill-tree/ConfigSheet.tsx'
+import { CreateNodeSheet } from '../../components/skill-tree/CreateNodeSheet.tsx'
 import { EditNodeSheet } from '../../components/skill-tree/EditNodeSheet.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import {
@@ -28,28 +25,14 @@ import {
   SheetHeader,
   SheetTitle,
 } from '../../components/ui/sheet.tsx'
-import { useAppForm } from '../../hooks/formConfig.tsx'
 import {
-  useAdminCreateNode,
   useAdminSkillConfig,
   useAdminSkillTree,
-  useAdminUpdateConfig,
 } from '../../queries/useSkills.ts'
 
 export const Route = createFileRoute('/_admin/admin/skills')({
   component: AdminSkillsPage,
 })
-
-const EFFECT_TYPES = [
-  'REGEN',
-  'LUCK',
-  'DUST_HARVEST',
-  'TOKEN_VAULT',
-  'FREE_PULL_CHANCE',
-  'MULTI_TOKEN_CHANCE',
-  'GOLDEN_BALL_CHANCE',
-  'SHOP_DISCOUNT',
-] as const
 
 type SheetMode = 'edit' | 'create' | 'config' | 'help' | null
 
@@ -128,11 +111,11 @@ function AdminSkillsPage() {
           {sheetMode === 'help' && <HelpSheetContent />}
 
           {sheetMode === 'config' && config && (
-            <ConfigSheetContent config={config} />
+            <ConfigSheet config={config} />
           )}
 
           {sheetMode === 'create' && (
-            <CreateNodeSheetContent
+            <CreateNodeSheet
               branches={branches}
               onClose={() => setSheetMode(null)}
             />
@@ -163,7 +146,7 @@ function HelpSheetContent() {
       <SheetHeader>
         <SheetTitle>Utilisation du graphe</SheetTitle>
       </SheetHeader>
-      <div className="space-y-4 p-4 text-sm text-text-light">
+      <div className="flex-1 overflow-y-auto space-y-4 p-4 text-sm text-text-light">
         <HelpItem icon={MousePointer2} title="Naviguer">
           Scroll pour zoomer. Cliquer-glisser sur le fond pour déplacer la vue.
         </HelpItem>
@@ -196,134 +179,6 @@ function HelpSheetContent() {
           Les connexions entre nœuds définissent les prérequis pour les joueurs.
         </HelpItem>
       </div>
-    </>
-  )
-}
-
-// ─── Config ────────────────────────────────────────────────────────────────────
-
-function ConfigSheetContent({ config }: { config: SkillConfig }) {
-  const updateConfig = useAdminUpdateConfig()
-
-  const form = useAppForm({
-    defaultValues: { resetCostPerPoint: config.resetCostPerPoint },
-    onSubmit: ({ value }) => {
-      updateConfig.mutate({ resetCostPerPoint: value.resetCostPerPoint })
-    },
-  })
-
-  return (
-    <>
-      <SheetHeader>
-        <SheetTitle>Configuration globale</SheetTitle>
-      </SheetHeader>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          form.handleSubmit()
-        }}
-        className="space-y-4 p-4"
-      >
-        <form.AppField name="resetCostPerPoint">
-          {(f) => <f.Number label="Coût reset (dust / point)" />}
-        </form.AppField>
-        <Button type="submit" className="w-full">
-          Enregistrer
-        </Button>
-      </form>
-    </>
-  )
-}
-
-// ─── Create node ───────────────────────────────────────────────────────────────
-
-function CreateNodeSheetContent({
-  branches,
-  onClose,
-}: {
-  branches: SkillBranch[]
-  onClose: () => void
-}) {
-  const createNode = useAdminCreateNode()
-
-  const branchOptions = branches.map((b) => ({ value: b.id, label: b.name }))
-  const effectOptions = EFFECT_TYPES.map((t) => ({ value: t, label: t }))
-
-  const form = useAppForm({
-    defaultValues: {
-      branchId: branches[0]?.id ?? '',
-      name: '',
-      description: '',
-      icon: 'Star',
-      effectType: 'LUCK' as string,
-      maxLevel: 3 as number | undefined,
-    },
-    onSubmit: ({ value }) => {
-      const max = value.maxLevel ?? 3
-      const levels = Array.from({ length: max }, (_, i) => ({
-        nodeId: '',
-        level: i + 1,
-        effect: 0,
-      }))
-      createNode.mutate(
-        {
-          ...value,
-          effectType: value.effectType,
-          posX: 0,
-          posY: 0,
-          levels,
-        } as Omit<SkillNode, 'id' | 'edgesFrom' | 'edgesTo'>,
-        { onSuccess: onClose },
-      )
-    },
-  })
-
-  return (
-    <>
-      <SheetHeader>
-        <SheetTitle>Créer un nœud</SheetTitle>
-      </SheetHeader>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          form.handleSubmit()
-        }}
-        className="space-y-3 p-4"
-      >
-        <form.AppField name="branchId">
-          {(f) => <f.Select label="Branche" options={branchOptions} />}
-        </form.AppField>
-        <form.AppField name="name">
-          {(f) => <f.Input label="Nom" />}
-        </form.AppField>
-        <form.AppField name="description">
-          {(f) => <f.Input label="Description" />}
-        </form.AppField>
-        <form.AppField name="icon">
-          {(f) => <f.Input label="Icône Lucide" />}
-        </form.AppField>
-        <form.AppField name="effectType">
-          {(f) => <f.Select label="Effet" options={effectOptions} />}
-        </form.AppField>
-        <form.AppField name="maxLevel">
-          {(f) => <f.Number label="Niveaux max (1–5)" />}
-        </form.AppField>
-        <p className="text-xs text-text-light">
-          Le nœud sera créé en (0, 0). Glisse-le ensuite sur le canvas pour le
-          positionner.
-        </p>
-        <form.Subscribe
-          selector={(s) =>
-            !s.values.name || !s.values.branchId || createNode.isPending
-          }
-        >
-          {(disabled) => (
-            <Button type="submit" className="w-full" disabled={disabled}>
-              {createNode.isPending ? 'Création…' : 'Créer'}
-            </Button>
-          )}
-        </form.Subscribe>
-      </form>
     </>
   )
 }

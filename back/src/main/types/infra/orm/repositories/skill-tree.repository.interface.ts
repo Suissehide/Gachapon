@@ -24,7 +24,7 @@ export interface ISkillTreeRepository {
   updateBranch(id: string, data: Partial<{ name: string; description: string; icon: string; color: string; order: number }>): Promise<SkillBranch>
   deleteBranch(id: string): Promise<void>
   createNode(data: { branchId: string; name: string; description: string; icon: string; maxLevel: number; effectType: string; posX: number; posY: number; levels: { level: number; effect: number }[] }): Promise<SkillNode>
-  updateNode(id: string, data: Partial<{ name: string; description: string; icon: string; maxLevel: number; effectType: string; posX: number; posY: number; levels: { level: number; effect: number }[] }>): Promise<SkillNode>
+  updateNode(id: string, data: Partial<{ branchId: string; name: string; description: string; icon: string; maxLevel: number; effectType: string; posX: number; posY: number; levels: { level: number; effect: number }[] }>): Promise<SkillNode>
   deleteNode(id: string): Promise<void>
   createEdge(fromNodeId: string, toNodeId: string, minLevel: number): Promise<SkillEdge>
   deleteEdge(fromNodeId: string, toNodeId: string): Promise<void>

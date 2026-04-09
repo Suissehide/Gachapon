@@ -61,6 +61,7 @@ export function EditNodeSheet({ node, branch, onClose }: Props) {
       <SheetHeader>
         <SheetTitle>{node.name}</SheetTitle>
       </SheetHeader>
+      <div className="flex-1 overflow-y-auto">
       <form
         onSubmit={(e) => { e.preventDefault(); form.handleSubmit() }}
         className="space-y-3 p-4"
@@ -107,6 +108,7 @@ export function EditNodeSheet({ node, branch, onClose }: Props) {
         >
           Supprimer ce nœud
         </Button>
+      </div>
       </div>
     </>
   )

@@ -49,8 +49,18 @@ export async function seedAchievements(
   tx: Parameters<Parameters<PrismaClient['$transaction']>[0]>[0],
 ) {
 
-  for (const achievement of ACHIEVEMENTS) {
-    await tx.achievement.create({ data: achievement })
+  for (const { rewardTokens, rewardDust, ...achievement } of ACHIEVEMENTS) {
+    await tx.achievement.create({
+      data: {
+        ...achievement,
+        reward: {
+          create: {
+            tokens: rewardTokens,
+            dust: rewardDust,
+          },
+        },
+      },
+    })
   }
 
   console.log(`  ${ACHIEVEMENTS.length} succès créés`)

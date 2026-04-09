@@ -26,7 +26,7 @@ export function SkillNodeComponent({ data }: NodeProps) {
     <div
       key={i}
       className="h-1.5 w-1.5 rounded-full"
-      style={{ background: i < userLevel ? branchColor : '#374151' }}
+      style={{ background: i < userLevel ? branchColor : '#d1d5db' }}
     />
   ))
 
@@ -43,7 +43,7 @@ export function SkillNodeComponent({ data }: NodeProps) {
       className="group relative flex min-w-[80px] cursor-pointer flex-col items-center gap-1 rounded-lg border-2 px-3 py-2 text-center transition-all"
       style={{
         borderColor: isLocked ? '#374151' : branchColor,
-        background: '#111827',
+        background: '#ffffff',
         opacity: isLocked ? 0.45 : 1,
         boxShadow:
           !isLocked && canInvest && userLevel < node.maxLevel
@@ -54,18 +54,51 @@ export function SkillNodeComponent({ data }: NodeProps) {
       <Handle
         type="target"
         position={Position.Left}
-        className={isAdmin ? 'h-3 w-3 border-2 border-white/60 bg-gray-700 hover:bg-white/80' : '!opacity-0'}
-      />
+        style={
+          isAdmin
+            ? {
+                width: 16,
+                height: 16,
+                background: '#fff',
+                border: `2px solid ${branchColor}`,
+              }
+            : { opacity: 0, pointerEvents: 'none' }
+        }
+      >
+        {isAdmin && (
+          <Icons.ArrowRight
+            size={10}
+            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+            style={{ color: branchColor }}
+          />
+        )}
+      </Handle>
       <Handle
         type="source"
         position={Position.Right}
-        className={isAdmin ? 'h-3 w-3 border-2 border-white/60 bg-gray-700 hover:bg-white/80' : '!opacity-0'}
-      />
+        style={
+          isAdmin
+            ? {
+                width: 16,
+                height: 16,
+                background: branchColor,
+                border: '2px solid #fff',
+              }
+            : { opacity: 0, pointerEvents: 'none' }
+        }
+      >
+        {isAdmin && (
+          <Icons.ArrowRight
+            size={10}
+            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white"
+          />
+        )}
+      </Handle>
 
       <div style={{ color: isLocked ? '#6b7280' : branchColor }}>
         <LucideIcon name={node.icon} size={18} />
       </div>
-      <span className="text-xs font-semibold text-white">{node.name}</span>
+      <span className="text-xs font-semibold text-gray-900">{node.name}</span>
       <div className="flex gap-0.5">{dots}</div>
       {isLocked && (
         <Icons.Lock size={10} className="absolute right-1 top-1 text-gray-500" />

@@ -81,7 +81,7 @@ const SheetContent = React.forwardRef<
       <SheetDescription />
       <Dialog.Content
         ref={ref}
-        className={cn(sheetVariants({ side }), className)}
+        className={cn(sheetVariants({ side }), 'flex flex-col overflow-hidden', className)}
         {...props}
       >
         {/* Amber accent line */}

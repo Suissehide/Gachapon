@@ -90,7 +90,7 @@ export class SkillTreeRepository implements ISkillTreeRepository {
     })
   }
 
-  async updateNode(id: string, data: Partial<{ name: string; description: string; icon: string; maxLevel: number; effectType: string; posX: number; posY: number; levels: { level: number; effect: number }[] }>) {
+  async updateNode(id: string, data: Partial<{ branchId: string; name: string; description: string; icon: string; maxLevel: number; effectType: string; posX: number; posY: number; levels: { level: number; effect: number }[] }>) {
     const { levels, ...rest } = data
     if (levels !== undefined) {
       await this.#prisma.skillNodeLevel.deleteMany({ where: { nodeId: id } })
