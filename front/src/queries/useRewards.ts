@@ -19,6 +19,7 @@ export const useClaimReward = () => {
     mutationFn: (rewardId: string) => RewardsApi.claimReward(rewardId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['rewards', 'pending'] })
+      qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
       void fetchMe()
     },
   })
@@ -31,6 +32,7 @@ export const useClaimAllRewards = () => {
     mutationFn: () => RewardsApi.claimAllRewards(),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['rewards', 'pending'] })
+      qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
       void fetchMe()
     },
   })
