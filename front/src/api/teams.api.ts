@@ -29,7 +29,16 @@ export const TeamsApi = {
   getMyTeams: async (): Promise<{ teams: TeamSummary[] }> => {
     const res = await fetchWithAuth(`${apiUrl}${TEAM_ROUTES.teams}`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la récupération des équipes')
+      handleHttpError(
+        res,
+        {
+          404: {
+            title: 'Équipes introuvables',
+            message: 'Impossible de charger tes équipes.',
+          },
+        },
+        'Chargement des équipes',
+      )
     }
     return res.json()
   },
@@ -37,7 +46,20 @@ export const TeamsApi = {
   getTeam: async (teamId: string): Promise<Team> => {
     const res = await fetchWithAuth(`${apiUrl}${TEAM_ROUTES.team(teamId)}`)
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors de la récupération de l'équipe")
+      handleHttpError(
+        res,
+        {
+          404: {
+            title: 'Équipe introuvable',
+            message: "Cette équipe n'existe pas ou a été supprimée.",
+          },
+          403: {
+            title: 'Accès refusé',
+            message: "Tu ne fais pas partie de cette équipe.",
+          },
+        },
+        "Chargement de l'équipe",
+      )
     }
     return res.json()
   },
@@ -52,7 +74,20 @@ export const TeamsApi = {
       body: JSON.stringify(data),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors de la création de l'équipe")
+      handleHttpError(
+        res,
+        {
+          400: {
+            title: 'Nom invalide',
+            message: 'Vérifie le nom de ton équipe.',
+          },
+          409: {
+            title: 'Nom déjà pris',
+            message: 'Une équipe avec ce nom existe déjà.',
+          },
+        },
+        "Création de l'équipe",
+      )
     }
     return res.json()
   },
@@ -67,7 +102,24 @@ export const TeamsApi = {
       body: JSON.stringify(data),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors de la mise à jour de l'équipe")
+      handleHttpError(
+        res,
+        {
+          400: {
+            title: 'Données invalides',
+            message: 'Vérifie les informations saisies.',
+          },
+          403: {
+            title: 'Action non autorisée',
+            message: "Seul le créateur peut modifier l'équipe.",
+          },
+          409: {
+            title: 'Nom déjà pris',
+            message: 'Une équipe avec ce nom existe déjà.',
+          },
+        },
+        "Modification de l'équipe",
+      )
     }
     return res.json()
   },
@@ -77,7 +129,20 @@ export const TeamsApi = {
       method: 'DELETE',
     })
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors de la suppression de l'équipe")
+      handleHttpError(
+        res,
+        {
+          403: {
+            title: 'Action non autorisée',
+            message: "Seul le créateur peut supprimer l'équipe.",
+          },
+          404: {
+            title: 'Équipe introuvable',
+            message: "Cette équipe n'existe plus.",
+          },
+        },
+        "Suppression de l'équipe",
+      )
     }
   },
 
@@ -91,7 +156,28 @@ export const TeamsApi = {
       body: JSON.stringify(data),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors de l'invitation")
+      handleHttpError(
+        res,
+        {
+          400: {
+            title: 'Utilisateur introuvable',
+            message: "Aucun compte ne correspond à cette recherche.",
+          },
+          403: {
+            title: 'Action non autorisée',
+            message: "Tu n'as pas la permission d'inviter des membres.",
+          },
+          404: {
+            title: 'Utilisateur introuvable',
+            message: "Aucun compte ne correspond à ce nom d'utilisateur.",
+          },
+          409: {
+            title: 'Déjà invité',
+            message: 'Cette personne a déjà une invitation en attente ou fait déjà partie de l\'équipe.',
+          },
+        },
+        'Invitation',
+      )
     }
     return res.json()
   },
@@ -105,7 +191,20 @@ export const TeamsApi = {
       },
     )
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la suppression du membre')
+      handleHttpError(
+        res,
+        {
+          403: {
+            title: 'Action non autorisée',
+            message: 'Seul le créateur peut exclure des membres.',
+          },
+          404: {
+            title: 'Membre introuvable',
+            message: "Ce membre ne fait plus partie de l'équipe.",
+          },
+        },
+        'Exclusion du membre',
+      )
     }
   },
 
@@ -115,14 +214,27 @@ export const TeamsApi = {
       headers: { 'Content-Type': 'application/json' },
     })
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors du départ de l'équipe")
+      handleHttpError(
+        res,
+        {
+          403: {
+            title: 'Impossible de quitter',
+            message: "Le créateur ne peut pas quitter son équipe. Supprime-la à la place.",
+          },
+          404: {
+            title: 'Équipe introuvable',
+            message: "Cette équipe n'existe plus.",
+          },
+        },
+        "Départ de l'équipe",
+      )
     }
   },
 
   getMyInvitations: async (): Promise<{ invitations: MyInvitation[] }> => {
     const res = await fetchWithAuth(`${apiUrl}${TEAM_ROUTES.myInvitations}`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors du chargement des invitations')
+      handleHttpError(res, {}, 'Chargement des invitations')
     }
     return res.json()
   },
@@ -130,7 +242,20 @@ export const TeamsApi = {
   getInvitation: async (token: string): Promise<Invitation> => {
     const res = await fetchWithAuth(`${apiUrl}${TEAM_ROUTES.invitation(token)}`)
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors de la récupération de l'invitation")
+      handleHttpError(
+        res,
+        {
+          404: {
+            title: 'Invitation introuvable',
+            message: "Ce lien d'invitation est invalide ou a expiré.",
+          },
+          410: {
+            title: 'Invitation expirée',
+            message: "Cette invitation n'est plus valide.",
+          },
+        },
+        "Chargement de l'invitation",
+      )
     }
     return res.json()
   },
@@ -144,7 +269,24 @@ export const TeamsApi = {
       },
     )
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors de l'acceptation de l'invitation")
+      handleHttpError(
+        res,
+        {
+          404: {
+            title: 'Invitation introuvable',
+            message: "Ce lien d'invitation est invalide ou a expiré.",
+          },
+          409: {
+            title: 'Déjà membre',
+            message: 'Tu fais déjà partie de cette équipe.',
+          },
+          410: {
+            title: 'Invitation expirée',
+            message: "Cette invitation n'est plus valide.",
+          },
+        },
+        "Acceptation de l'invitation",
+      )
     }
     return res.json()
   },
@@ -158,7 +300,20 @@ export const TeamsApi = {
       },
     )
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors du refus de l'invitation")
+      handleHttpError(
+        res,
+        {
+          404: {
+            title: 'Invitation introuvable',
+            message: "Cette invitation n'existe plus.",
+          },
+          409: {
+            title: 'Déjà traitée',
+            message: 'Cette invitation a déjà été acceptée ou refusée.',
+          },
+        },
+        "Refus de l'invitation",
+      )
     }
     return res.json()
   },
@@ -259,7 +414,16 @@ export const TeamsApi = {
   }> => {
     const res = await fetchWithAuth(`${apiUrl}${USER_ROUTES.search(q)}`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la recherche')
+      handleHttpError(
+        res,
+        {
+          400: {
+            title: 'Recherche invalide',
+            message: 'Le terme de recherche est trop court ou invalide.',
+          },
+        },
+        'Recherche d\'utilisateurs',
+      )
     }
     return res.json()
   },

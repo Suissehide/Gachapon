@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { RefreshCw, Send, Trash2, UserPlus, X } from 'lucide-react'
+import { Ban, RefreshCw, Send, Trash2, UserPlus, X } from 'lucide-react'
 import { type SyntheticEvent, useMemo, useRef, useState } from 'react'
 
 import type { TeamInvitation } from '../../queries/useTeams.ts'
@@ -64,7 +64,7 @@ export function InviteMemberPopup({ teamId, userRole }: Props) {
   const { mutate: deleteInv } = useDeleteInvitation(teamId)
 
   const [open, setOpen] = useState(false)
-  const [error, setError] = useState('')
+  const [errors, setErrors] = useState<string[]>([])
   const [identifier, setIdentifier] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
   const [selected, setSelected] = useState<SelectedTarget[]>([])
@@ -84,7 +84,7 @@ export function InviteMemberPopup({ teamId, userRole }: Props) {
     )
 
   const addTarget = (target: SelectedTarget) => {
-    setError('')
+    setErrors([])
     if (isAlreadySelected(target)) {
       return
     }
@@ -118,10 +118,10 @@ export function InviteMemberPopup({ teamId, userRole }: Props) {
       return
     }
 
-    setError('')
+    setErrors([])
     setShowDropdown(false)
 
-    const errors: string[] = []
+    const errs: string[] = []
     for (const target of targets) {
       try {
         await invite(
@@ -131,33 +131,36 @@ export function InviteMemberPopup({ teamId, userRole }: Props) {
         )
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Erreur'
-        errors.push(`${target.value}: ${message}`)
+        errs.push(`${target.value}: ${message}`)
       }
     }
 
-    if (errors.length === targets.length) {
-      setError(errors.join(' • '))
+    if (errs.length === targets.length) {
+      setErrors(errs)
+      setIdentifier('')
+      setShowDropdown(false)
       return
     }
 
     setSelected(
-      errors.length > 0
-        ? targets.filter((t) => errors.some((e) => e.startsWith(`${t.value}:`)))
+      errs.length > 0
+        ? targets.filter((t) => errs.some((e) => e.startsWith(`${t.value}:`)))
         : [],
     )
     setIdentifier('')
-    if (errors.length > 0) {
-      setError(errors.join(' • '))
+    if (errs.length > 0) {
+      setErrors(errs)
     }
   }
 
   const handleOpenChange = (value: boolean) => {
     if (!value) {
       setIdentifier('')
-      setError('')
+      setErrors([])
       setShowDropdown(false)
       setActiveIndex(-1)
       setSelected([])
+
     }
     setOpen(value)
   }
@@ -261,11 +264,12 @@ export function InviteMemberPopup({ teamId, userRole }: Props) {
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon"
+                  size="sm"
                   className="h-6 px-2 text-xs text-destructive hover:text-destructive"
                   onClick={() => cancel(inv.token)}
                 >
-                  <Trash2 className="h-3 w-3" />
+                  <Ban className="h-3 w-3" />
+                  Annuler
                 </Button>
               )}
               {canDelete && (
@@ -296,16 +300,16 @@ export function InviteMemberPopup({ teamId, userRole }: Props) {
       </PopupTrigger>
       <PopupContent size="xl">
         <PopupHeader>
-          <PopupTitle icon={<UserPlus className="h-4 w-4" />}>
+          <PopupTitle
+            icon={<UserPlus className="h-4 w-4" />}
+            subtitle="Entrez le pseudo ou l'adresse e-mail du joueur à inviter."
+          >
             Inviter un membre
           </PopupTitle>
         </PopupHeader>
         <form onSubmit={(e) => void handleSubmit(e)}>
           <PopupBody className="flex flex-col gap-4">
             <div className="flex flex-col gap-3">
-              <p className="text-sm text-text-light">
-                Entrez le pseudo ou l'adresse e-mail du joueur à inviter.
-              </p>
               <div className="relative flex flex-col gap-1">
                 <Label htmlFor="invite-identifier">Pseudo ou e-mail</Label>
                 <Input
@@ -421,7 +425,15 @@ export function InviteMemberPopup({ teamId, userRole }: Props) {
                   ))}
                 </div>
               )}
-              {error && <p className="text-xs text-destructive">{error}</p>}
+              {errors.length > 0 && (
+                <ul className="flex flex-col gap-1">
+                  {errors.map((err) => (
+                    <li key={err} className="text-xs text-destructive">
+                      {err}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
 
             {invitations.length > 0 && (

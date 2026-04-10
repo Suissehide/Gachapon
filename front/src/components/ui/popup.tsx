@@ -39,6 +39,7 @@ interface PopupContentProps
 interface PopupTitleProps
   extends React.ComponentPropsWithoutRef<typeof Dialog.Title> {
   icon?: React.ReactNode
+  subtitle?: React.ReactNode
 }
 
 const Popup = Dialog.Root
@@ -58,7 +59,7 @@ const PopupContent = React.forwardRef<
       {...props}
     >
       {children}
-      <PopupClose className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-lg text-text-light ring-offset-background transition-all duration-200 hover:bg-primary/10 hover:text-primary focus:outline-none disabled:pointer-events-none">
+      <PopupClose className="cursor-pointer absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-lg text-text-light ring-offset-background transition-all duration-200 hover:bg-primary/10 hover:text-primary focus:outline-none disabled:pointer-events-none">
         <X className="h-4 w-4" />
         <span className="sr-only">Fermer</span>
       </PopupClose>
@@ -109,22 +110,29 @@ PopupHeader.displayName = 'PopupHeader'
 const PopupTitle = React.forwardRef<
   React.ComponentRef<typeof Dialog.Title>,
   PopupTitleProps
->(({ className, children, icon, ...props }, ref) => (
-  <Dialog.Title
-    ref={ref}
-    className={cn(
-      'flex items-center gap-3 text-base font-semibold text-text m-0',
-      className,
-    )}
-    {...props}
-  >
+>(({ className, children, icon, subtitle, ...props }, ref) => (
+  <div className={`flex ${subtitle ? 'items-center' : 'items-start'} gap-3`}>
     {icon && (
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 border border-primary/25 text-primary">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 border border-primary/25 text-primary mt-0.5">
         {icon}
       </span>
     )}
-    {children}
-  </Dialog.Title>
+    <div className="flex flex-col">
+      <Dialog.Title
+        ref={ref}
+        className={cn(
+          'text-base font-semibold text-text m-0',
+          className,
+        )}
+        {...props}
+      >
+        {children}
+      </Dialog.Title>
+      {subtitle && (
+        <p className="text-sm text-text-light m-0">{subtitle}</p>
+      )}
+    </div>
+  </div>
 ))
 PopupTitle.displayName = 'PopupTitle'
 

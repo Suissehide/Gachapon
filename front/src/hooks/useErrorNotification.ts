@@ -19,8 +19,7 @@ export const useErrorNotification = (
       if (errorShownRef.current !== errorId) {
         errorShownRef.current = errorId
 
-        const errorTitle = isApiError(error) ? error.title : 'Erreur inconnue'
-        const title = errorMessage ?? errorTitle
+        const title = isApiError(error) ? error.title : (errorMessage ?? 'Erreur inconnue')
         const message = error.message
 
         toast({

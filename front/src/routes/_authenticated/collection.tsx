@@ -126,7 +126,7 @@ function Collection() {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
       <div className="mx-auto max-w-4xl">
-        <div className="mb-5">
+        <div className="mb-4">
           <h1 className="text-2xl font-black text-text">Ma Collection</h1>
           <p className="text-sm text-text-light">{subtitle}</p>
         </div>

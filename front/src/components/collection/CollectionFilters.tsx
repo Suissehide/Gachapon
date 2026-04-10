@@ -93,7 +93,7 @@ export function CollectionFilters({
   }
 
   return (
-    <div className="flex items-center gap-3 flex-wrap pb-5 mb-2 border-b border-border/40">
+    <div className="flex items-center gap-3 flex-wrap mb-4">
       <SegmentedControl
         options={DISPLAY_MODE_OPTIONS}
         value={displayMode}

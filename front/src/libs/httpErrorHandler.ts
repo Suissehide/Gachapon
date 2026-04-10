@@ -71,7 +71,7 @@ export class ApiError extends Error {
       case 404:
         return {
           title: 'Introuvable',
-          message: 'La ressource demandée est introuvable.',
+          message: "L'élément demandé n'existe pas ou a été supprimé.",
         }
       case 500:
         return {
