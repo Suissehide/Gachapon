@@ -79,7 +79,7 @@ export function AuthDialog({
           {/* Form */}
           <div className="px-8 py-6">
             {tab === 'login' ? (
-              <LoginForm onSuccess={() => onOpenChange(false)} />
+              <LoginForm onSuccess={() => onOpenChange(false)} onClose={() => onOpenChange(false)} />
             ) : (
               <RegisterForm onSuccess={() => onOpenChange(false)} />
             )}

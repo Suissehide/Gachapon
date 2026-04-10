@@ -1,9 +1,10 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
 import { Button } from '../components/ui/button.tsx'
 import { useForgotPassword } from '../queries/useAuth.ts'
+import { useAuthDialogStore } from '../stores/authDialog.store.ts'
 
 export const Route = createFileRoute('/forgot-password')({
   component: ForgotPasswordPage,
@@ -13,6 +14,8 @@ function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const { mutate: forgotPassword, isPending, error } = useForgotPassword()
+  const navigate = useNavigate()
+  const openLogin = useAuthDialogStore((s) => s.openLogin)
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     forgotPassword(email, { onSuccess: () => setSent(true) })
@@ -29,13 +32,19 @@ function ForgotPasswordPage() {
               <p className="text-sm text-text-light">
                 Si cette adresse est associée à un compte, tu recevras un email avec un lien de réinitialisation.
               </p>
-              <Button
-                variant="outline"
-                className="mt-6"
-                onClick={() => { setSent(false); setEmail('') }}
-              >
-                Retour
-              </Button>
+              <div className="mt-6 flex gap-3 justify-center">
+                <Button
+                  variant="outline"
+                  onClick={() => navigate({ to: '/' })}
+                >
+                  Retour
+                </Button>
+                <Button
+                  onClick={() => { navigate({ to: '/' }); openLogin() }}
+                >
+                  Se connecter
+                </Button>
+              </div>
             </div>
           ) : (
             <>
