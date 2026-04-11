@@ -54,6 +54,7 @@ export function MemberRow({
           <Button
             variant="ghost"
             size="icon-sm"
+            className="border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20"
             onClick={() => setConfirmOpen(true)}
             title="Exclure"
           >

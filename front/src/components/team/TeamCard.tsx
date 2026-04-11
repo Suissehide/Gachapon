@@ -40,6 +40,7 @@ export function TeamCard({
           <Button
             variant="ghost"
             size="icon-sm"
+            className="border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20"
             onClick={(e) => {
               e.preventDefault()
               e.stopPropagation()

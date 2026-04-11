@@ -265,7 +265,6 @@ export const TeamsApi = {
       `${apiUrl}${TEAM_ROUTES.acceptInvitation(token)}`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
       },
     )
     if (!res.ok) {
@@ -296,7 +295,6 @@ export const TeamsApi = {
       `${apiUrl}${TEAM_ROUTES.declineInvitation(token)}`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
       },
     )
     if (!res.ok) {

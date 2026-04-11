@@ -3,6 +3,7 @@ import type { ColumnDef } from '@tanstack/react-table'
 import {
   ArrowLeft,
   Crown,
+  LogOut,
   Search,
   Settings,
   Shield,
@@ -21,6 +22,7 @@ import {
 import { Button } from '../../../components/ui/button.tsx'
 import { Input } from '../../../components/ui/input.tsx'
 import {
+  useLeaveTeam,
   useRemoveMember,
   useTeam,
   useTeamRanking,
@@ -60,13 +62,14 @@ function ExcludeCell({
       <Button
         variant="ghost"
         size="icon-sm"
+        className="rounded-md border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20"
         onClick={(e) => {
           e.stopPropagation()
           setOpen(true)
         }}
         title={`Exclure ${username}`}
       >
-        <UserMinus className="h-4 w-4 text-destructive" />
+        <UserMinus className="h-4 w-4" />
       </Button>
       <ConfirmPopup
         open={open}
@@ -87,6 +90,8 @@ function TeamDetailPage() {
   const user = useAuthStore((s) => s.user)
   const { data: team, isLoading, isError } = useTeam(id)
   const { mutate: remove } = useRemoveMember(id)
+  const { mutate: leave } = useLeaveTeam()
+  const [leaveOpen, setLeaveOpen] = useState(false)
   const {
     data: rankingPages,
     fetchNextPage,
@@ -126,7 +131,7 @@ function TeamDetailPage() {
     return q
       ? all.filter((m) => m.user.username.toLowerCase().includes(q))
       : all
-  }, [rankingPages, search])
+  }, [search, rankingPages?.pages])
 
   const columns = useMemo<ColumnDef<RankedMemberRow>[]>(
     () => [
@@ -192,7 +197,7 @@ function TeamDetailPage() {
           </span>
         ),
       },
-      ...(isOwner
+      ...(team?.ownerId === user?.id
         ? ([
             {
               id: 'actions',
@@ -216,7 +221,7 @@ function TeamDetailPage() {
           ] as ColumnDef<RankedMemberRow>[])
         : []),
     ],
-    [isOwner, user?.id, remove],
+    [user?.id, remove, team?.ownerId],
   )
 
   if (isLoading) {
@@ -277,6 +282,30 @@ function TeamDetailPage() {
                   <Settings className="h-4 w-4 text-text-light" />
                 </Link>
               </Button>
+            )}
+            {!isOwner && myMember && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  onClick={() => setLeaveOpen(true)}
+                >
+                  <LogOut className="h-4 w-4" />
+                  Quitter
+                </Button>
+                <ConfirmPopup
+                  open={leaveOpen}
+                  onOpenChange={setLeaveOpen}
+                  icon={<LogOut className="h-4 w-4" />}
+                  title="Quitter l'équipe"
+                  description={`Êtes-vous sûr de vouloir quitter ${team.name} ?`}
+                  confirmLabel="Quitter"
+                  onConfirm={() =>
+                    leave(id, { onSuccess: () => navigate({ to: '/team' }) })
+                  }
+                />
+              </>
             )}
           </div>
         </div>
