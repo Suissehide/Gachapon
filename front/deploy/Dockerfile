@@ -23,6 +23,7 @@ RUN npm ci --prefer-offline --include=dev --ignore-scripts --loglevel verbose
 COPY deploy/conf/nginx.conf ./
 COPY vite.config.ts ./
 COPY tsconfig.json tsconfig.app.json tsconfig.node.json ./
+COPY public ./public
 COPY src ./src
 COPY index.html ./
 RUN npm run build
