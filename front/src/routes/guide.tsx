@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { Helmet } from 'react-helmet-async'
 import {
   BookOpen,
   ChevronRight,
@@ -100,6 +101,14 @@ function GuidePage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <Helmet>
+        <title>Guide du joueur — Gachapon</title>
+        <meta name="description" content="Tout ce qu'il faut savoir pour débuter sur Gachapon : tokens, tirages, raretés, variantes, système de pitié, améliorations, équipes et API." />
+        <link rel="canonical" href="https://gachapon.qwetle.fr/guide" />
+        <meta property="og:title" content="Guide du joueur — Gachapon" />
+        <meta property="og:description" content="Tout ce qu'il faut savoir pour débuter sur Gachapon : tokens, tirages, raretés, variantes, système de pitié, améliorations, équipes et API." />
+        <meta property="og:url" content="https://gachapon.qwetle.fr/guide" />
+      </Helmet>
       <LandingNavbar />
 
       <div className="pt-32 pb-24 px-6 lg:px-10 max-w-4xl mx-auto">

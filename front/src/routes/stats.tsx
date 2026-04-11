@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Sparkles, Star, Trophy, Users, Zap } from 'lucide-react'
 import { type ComponentType, useEffect, useRef, useState } from 'react'
+import { Helmet } from 'react-helmet-async'
 
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
 import { useAuthDialogStore } from '../stores/authDialog.store'
@@ -104,6 +105,14 @@ function StatsPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <Helmet>
+        <title>Statistiques — Gachapon</title>
+        <meta name="description" content="Les chiffres de Gachapon en temps réel : joueurs inscrits, capsules ouvertes, cartes disponibles et légendaires obtenues." />
+        <link rel="canonical" href="https://gachapon.qwetle.fr/stats" />
+        <meta property="og:title" content="Statistiques — Gachapon" />
+        <meta property="og:description" content="Les chiffres de Gachapon en temps réel : joueurs inscrits, capsules ouvertes, cartes disponibles et légendaires obtenues." />
+        <meta property="og:url" content="https://gachapon.qwetle.fr/stats" />
+      </Helmet>
       <LandingNavbar />
 
       <main className="pt-32 pb-24 px-6 lg:px-10 max-w-4xl mx-auto">

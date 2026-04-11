@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://gachapon.qwetle.fr/sitemap.xml
