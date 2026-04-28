@@ -406,7 +406,7 @@ volumes:
 - [ ] **Step 2: Commit**
 
 ```bash
-git add deploy/compose.yaml
+git add deploy/docker-compose.yml
 git commit -m "feat: rewrite compose.yaml — Traefik labels, Redis, proper profiles and env vars"
 ```
 
@@ -538,7 +538,7 @@ From the repo root:
 cd deploy
 cp .env.example .env
 # Edit .env: set at minimum APP_IMAGE_NAME=gachapon, NODE_VERSION=20, NPM_VERSION=10
-docker compose -f compose.yaml --profile backend --profile frontend --profile db config
+docker compose -f docker-compose.yml --profile backend --profile frontend --profile db config
 ```
 
 Expected: Full YAML output with interpolated values, no errors.

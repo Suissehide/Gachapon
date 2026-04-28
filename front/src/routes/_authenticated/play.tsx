@@ -13,6 +13,7 @@ import { apiUrl as API_URL } from '../../constants/config.constant.ts'
 import { wsClient } from '../../lib/ws'
 import type { PullResult } from '../../queries/useGacha'
 import { usePull, useTokenBalance } from '../../queries/useGacha'
+import { useAuthStore } from '../../stores/auth.store'
 
 export const Route = createFileRoute('/_authenticated/play')({
   component: Play,
@@ -39,6 +40,15 @@ function Play() {
 
   const { data: balance, isLoading: balanceLoading } = useTokenBalance()
   const { mutate: pullMutation, isPending: pullPending } = usePull()
+  const setUser = useAuthStore((s) => s.setUser)
+  const user = useAuthStore((s) => s.user)
+
+  // Sync auth store (topbar) with token balance query
+  useEffect(() => {
+    if (balance && user && user.tokens !== balance.tokens) {
+      setUser({ ...user, tokens: balance.tokens })
+    }
+  }, [balance?.tokens])
 
   useEffect(() => {
     wsClient.connect(API_URL)
@@ -292,6 +302,7 @@ function Play() {
       <CardReveal
         result={pullResult}
         onClose={handleClose}
+        isPulling={pullPending}
         onNewPull={() => {
           pullMutation(undefined, {
             onSuccess: (result) => {

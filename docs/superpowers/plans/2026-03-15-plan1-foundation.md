@@ -2834,6 +2834,6 @@ Expected : serveur Fastify démarre sur port 3000 sans erreur de connexion.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add deploy/compose.yaml deploy/.env.example
+git add deploy/docker-compose.yml deploy/.env.example
 git commit -m "chore: update Docker Compose for Gachapon, add .env.example"
 ```

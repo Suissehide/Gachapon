@@ -83,9 +83,10 @@ type Props = {
   result: PullResult | null
   onClose: () => void
   onNewPull: () => void
+  isPulling?: boolean
 }
 
-export function CardReveal({ result, onClose, onNewPull }: Props) {
+export function CardReveal({ result, onClose, onNewPull, isPulling }: Props) {
   const [animKey, setAnimKey] = useState(0)
   const [animDone, setAnimDone] = useState(false)
   const [showSweep, setShowSweep] = useState(false)
@@ -229,7 +230,7 @@ export function CardReveal({ result, onClose, onNewPull }: Props) {
           <div className="flex items-center justify-between border-b border-white/6 px-4 py-3">
             <div className="flex items-center gap-2">
               <Coins size={14} className="text-white/35" aria-hidden />
-              <span className="text-xs text-white/45">Tokens restants</span>
+              <span className="text-xs text-white/45">Tickets restants</span>
             </div>
             <span className="font-display text-base font-bold text-white/90">
               {result.tokensRemaining}
@@ -247,10 +248,10 @@ export function CardReveal({ result, onClose, onNewPull }: Props) {
             </Button>
             <Button
               className="flex-1"
-              disabled={result.tokensRemaining <= 0}
+              disabled={result.tokensRemaining <= 0 || isPulling}
               onClick={onNewPull}
             >
-              Nouveau tirage
+              {isPulling ? 'Tirage en cours…' : 'Nouveau tirage'}
             </Button>
           </div>
         </div>
