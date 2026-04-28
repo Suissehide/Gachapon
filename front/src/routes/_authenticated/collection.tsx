@@ -2,13 +2,17 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 
 import type { Card, CardVariant } from '../../api/collection.api.ts'
-import { RARITY_LABELS } from '../../components/collection/CollectionCard.tsx'
 import { CardViewModal } from '../../components/collection/CardViewModal.tsx'
+import { RARITY_LABELS } from '../../components/collection/CollectionCard.tsx'
 import { CollectionFilters } from '../../components/collection/CollectionFilters.tsx'
 import { CollectionGrid } from '../../components/collection/CollectionGrid.tsx'
 import { CollectionSetGroup } from '../../components/collection/CollectionSetGroup.tsx'
 import { RecycleModal } from '../../components/collection/RecycleModal.tsx'
-import { useCards, useUserCollection, type UserCard } from '../../queries/useCollection'
+import {
+  type UserCard,
+  useCards,
+  useUserCollection,
+} from '../../queries/useCollection'
 import { useAuthStore } from '../../stores/auth.store'
 
 export type DisplayEntry = {
@@ -39,8 +43,8 @@ function Collection() {
   const { data: catalogData } = useCards()
   const { data: userColl } = useUserCollection(user?.id)
 
-  const allCards = catalogData?.cards ?? []
-  const userCards = userColl?.cards ?? []
+  const allCards = useMemo(() => catalogData?.cards ?? [], [catalogData?.cards])
+  const userCards = useMemo(() => userColl?.cards ?? [], [userColl?.cards])
 
   const displayEntries = useMemo((): DisplayEntry[] => {
     const ownedByCardId = new Map<string, UserCard[]>()
@@ -54,10 +58,24 @@ function Collection() {
     for (const card of allCards) {
       const owned = ownedByCardId.get(card.id) ?? []
       if (owned.length === 0) {
-        entries.push({ key: `${card.id}-NORMAL`, card, variant: 'NORMAL', quantity: 0, isOwned: false, userCard: null })
+        entries.push({
+          key: `${card.id}-NORMAL`,
+          card,
+          variant: 'NORMAL',
+          quantity: 0,
+          isOwned: false,
+          userCard: null,
+        })
       } else {
         for (const uc of owned) {
-          entries.push({ key: `${card.id}-${uc.variant}`, card: uc.card, variant: uc.variant, quantity: uc.quantity, isOwned: true, userCard: uc })
+          entries.push({
+            key: `${card.id}-${uc.variant}`,
+            card: uc.card,
+            variant: uc.variant,
+            quantity: uc.quantity,
+            isOwned: true,
+            userCard: uc,
+          })
         }
       }
     }
@@ -67,31 +85,51 @@ function Collection() {
   const filteredEntries = useMemo(
     () =>
       displayEntries
-        .filter((e) => selectedRarities.length === 0 || selectedRarities.includes(e.card.rarity))
-        .filter((e) => selectedVariants.length === 0 || selectedVariants.includes(e.variant)),
+        .filter(
+          (e) =>
+            selectedRarities.length === 0 ||
+            selectedRarities.includes(e.card.rarity),
+        )
+        .filter(
+          (e) =>
+            selectedVariants.length === 0 ||
+            selectedVariants.includes(e.variant),
+        ),
     [displayEntries, selectedRarities, selectedVariants],
   )
 
+  const userCardsCount = userCards.length
+  const displayEntriesCount = displayEntries.length
+
   const subtitle = useMemo(() => {
     if (displayMode === 'set') {
-      const ownedCount = userCards.length
-      const totalCount = displayEntries.length
-      return `${ownedCount} / ${totalCount} carte${totalCount > 1 ? 's' : ''}`
+      return `${userCardsCount} / ${displayEntriesCount} carte${displayEntriesCount > 1 ? 's' : ''}`
     }
     const ownedCount = filteredEntries.filter((e) => e.isOwned).length
     const totalCount = filteredEntries.length
     const base = `${ownedCount} / ${totalCount} carte${totalCount > 1 ? 's' : ''}`
-    const rarityLabel = selectedRarities.length > 0
-      ? ` · ${selectedRarities.map((r) => RARITY_LABELS[r]).join(', ')}`
-      : ''
-    const variantLabel = selectedVariants.length > 0
-      ? ` · ${selectedVariants.map((v) => v === 'BRILLIANT' ? 'Brillante' : v === 'HOLOGRAPHIC' ? 'Holographique' : 'Normal').join(', ')}`
-      : ''
+    const rarityLabel =
+      selectedRarities.length > 0
+        ? ` · ${selectedRarities.map((r) => RARITY_LABELS[r]).join(', ')}`
+        : ''
+    const variantLabel =
+      selectedVariants.length > 0
+        ? ` · ${selectedVariants.map((v) => (v === 'BRILLIANT' ? 'Brillante' : v === 'HOLOGRAPHIC' ? 'Holographique' : 'Normal')).join(', ')}`
+        : ''
     return base + rarityLabel + variantLabel
-  }, [displayMode, userCards, filteredEntries, selectedRarities, selectedVariants, displayEntries.length])
+  }, [
+    displayMode,
+    userCardsCount,
+    displayEntriesCount,
+    filteredEntries,
+    selectedRarities,
+    selectedVariants,
+  ])
 
   const setGroups = useMemo(() => {
-    if (displayMode !== 'set') return []
+    if (displayMode !== 'set') {
+      return []
+    }
     const order: string[] = []
     const groups = new Map<string, { name: string; entries: DisplayEntry[] }>()
     for (const entry of displayEntries) {
@@ -102,11 +140,19 @@ function Collection() {
       }
       groups.get(setId)?.entries.push(entry)
     }
-    return order.map((id) => ({ id, ...groups.get(id)! }))
+    return order.map((id) => {
+      const group = groups.get(id)
+      if (!group) {
+        return { id, name: '', entries: [] as DisplayEntry[] }
+      }
+      return { id, ...group }
+    })
   }, [displayMode, displayEntries])
 
   const handleRecycle = (entry: DisplayEntry) => {
-    if (entry.userCard) setRecycleTarget(entry.userCard)
+    if (entry.userCard) {
+      setRecycleTarget(entry.userCard)
+    }
   }
 
   const handleDetail = (entry: DisplayEntry) => setDetailTarget(entry)
@@ -151,7 +197,11 @@ function Collection() {
             />
           ))
         ) : (
-          <CollectionGrid entries={filteredEntries} onRecycle={handleRecycle} onDetail={handleDetail} />
+          <CollectionGrid
+            entries={filteredEntries}
+            onRecycle={handleRecycle}
+            onDetail={handleDetail}
+          />
         )}
       </div>
       <CardViewModal
@@ -162,8 +212,15 @@ function Collection() {
       {recycleTarget && (
         <RecycleModal
           open={!!recycleTarget}
-          onOpenChange={(open) => { if (!open) setRecycleTarget(null) }}
-          onRecycled={() => { setRecycleTarget(null); setDetailTarget(null) }}
+          onOpenChange={(open) => {
+            if (!open) {
+              setRecycleTarget(null)
+            }
+          }}
+          onRecycled={() => {
+            setRecycleTarget(null)
+            setDetailTarget(null)
+          }}
           card={{ ...recycleTarget.card, quantity: recycleTarget.quantity }}
           variant={recycleTarget.variant}
         />
