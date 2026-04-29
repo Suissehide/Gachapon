@@ -107,6 +107,7 @@ model User {
   skillPoints         Int        @default(0)
   skills              UserSkill[]
   userRewards         UserReward[]
+  dailyShops          DailyShop[]
 }
 
 model OAuthAccount {
@@ -197,8 +198,9 @@ model Card {
   dropWeight Float      @default(1.0)
   createdAt  DateTime   @default(now())
 
-  userCards  UserCard[]
-  gachaPulls GachaPull[]
+  userCards      UserCard[]
+  gachaPulls     GachaPull[]
+  dailyShopItems DailyShopItem[]
 }
 
 model UserCard {
@@ -254,6 +256,30 @@ model Purchase {
 
   @@index([purchasedAt])
   @@index([userId])
+}
+
+model DailyShop {
+  id          String          @id @default(uuid())
+  userId      String
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date        DateTime        @db.Date
+  generatedAt DateTime        @default(now())
+
+  items DailyShopItem[]
+
+  @@unique([userId, date])
+  @@index([userId])
+}
+
+model DailyShopItem {
+  id          String    @id @default(uuid())
+  dailyShopId String
+  dailyShop   DailyShop @relation(fields: [dailyShopId], references: [id], onDelete: Cascade)
+  cardId      String
+  card        Card      @relation(fields: [cardId], references: [id])
+  dustPrice   Int
+  purchased   Boolean   @default(false)
+  purchasedAt DateTime?
 }
 
 model Achievement {
