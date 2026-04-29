@@ -102,27 +102,46 @@ export class DailyShopDomain implements IDailyShopDomain {
       pool = pool.filter((c) => c.id !== card.id)
     }
 
-    const shop = await prisma.dailyShop.create({
-      data: {
-        userId,
-        date,
-        items: {
-          create: picked.map((card) => ({
-            cardId: card.id,
-            dustPrice: prices[RARITY_PRICE_KEYS[card.rarity as keyof typeof RARITY_PRICE_KEYS]] ?? 50,
-          })),
+    try {
+      const shop = await prisma.dailyShop.create({
+        data: {
+          userId,
+          date,
+          items: {
+            create: picked.map((card) => ({
+              cardId: card.id,
+              dustPrice: prices[RARITY_PRICE_KEYS[card.rarity as keyof typeof RARITY_PRICE_KEYS]] ?? 50,
+            })),
+          },
         },
-      },
-      include: {
-        items: {
-          include: { card: { include: { set: true } } },
+        include: {
+          items: {
+            include: { card: { include: { set: true } } },
+          },
         },
-      },
-    })
+      })
 
-    return {
-      date: shop.date.toISOString(),
-      items: shop.items.map(formatItem),
+      return {
+        date: shop.date.toISOString(),
+        items: shop.items.map(formatItem),
+      }
+    } catch (err: unknown) {
+      // Race condition: another request already created the shop for this (userId, date)
+      if (typeof err === 'object' && err !== null && 'code' in err && (err as { code: string }).code === 'P2002') {
+        const existing = await prisma.dailyShop.findUniqueOrThrow({
+          where: { userId_date: { userId, date } },
+          include: {
+            items: {
+              include: { card: { include: { set: true } } },
+            },
+          },
+        })
+        return {
+          date: existing.date.toISOString(),
+          items: existing.items.map(formatItem),
+        }
+      }
+      throw err
     }
   }
 
