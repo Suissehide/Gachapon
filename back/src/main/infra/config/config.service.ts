@@ -25,6 +25,11 @@ const DEFAULTS: Record<ConfigKey, number> = {
   brilliantRateLegendary: 0,
   variantMultiplierHolo: 2,
   variantMultiplierBrilliant: 3,
+  dailyShopPriceCommon: 50,
+  dailyShopPriceUncommon: 150,
+  dailyShopPriceRare: 500,
+  dailyShopPriceEpic: 1500,
+  dailyShopPriceLegendary: 5000,
 }
 
 
