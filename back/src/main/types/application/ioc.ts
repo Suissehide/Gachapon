@@ -16,6 +16,7 @@ import type { AdminSkillTreeDomain } from '../../domain/skills/admin-skill-tree.
 import type { ISkillTreeDomain, ISkillInvestDomain, ISkillResetDomain } from '../domain/skills/skill-tree.domain.interface'
 import type { GachaDomainInterface } from '../domain/gacha/gacha.domain.interface'
 import type { RewardsDomainInterface } from '../domain/rewards/rewards.domain.interface'
+import type { IDailyShopDomain } from '../domain/daily-shop/daily-shop.domain.interface'
 import type { IShopDomain } from '../domain/shop/shop.domain.interface'
 import type { StreakDomainInterface } from '../domain/streak/streak.domain.interface'
 import type { TeamDomainInterface } from '../domain/team/team.domain.interface'
@@ -84,6 +85,7 @@ export interface IocContainer {
   readonly adminStatsRepository: IAdminStatsRepository
   readonly collectionDomain: ICollectionDomain
   readonly shopDomain: IShopDomain
+  readonly dailyShopDomain: IDailyShopDomain
   readonly skillTreeDomain: ISkillTreeDomain
   readonly skillInvestDomain: ISkillInvestDomain
   readonly skillResetDomain: ISkillResetDomain
