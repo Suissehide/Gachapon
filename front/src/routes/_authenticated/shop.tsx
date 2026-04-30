@@ -3,6 +3,7 @@ import { Package, Sparkles, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { CardDisplay } from '../../components/shared/tcg-card/CardDisplay'
+import { Button } from '../../components/ui/button'
 import type { DailyShopItem } from '../../constants/daily-shop.constant'
 import { useBuyDailyShopItem, useDailyShop } from '../../queries/useDailyShop'
 import type { ShopItem } from '../../queries/useShop'
@@ -94,7 +95,9 @@ function ShopPage() {
     setBuyingShopId(item.id)
     buyShop(item.id, {
       onSuccess: (result) => {
-        if (user) setUser({ ...user, dust: result.newDustTotal })
+        if (user) {
+          setUser({ ...user, dust: result.newDustTotal })
+        }
         notify(`✓ ${item.name} acheté ! −${result.dustSpent} ✨ dust`)
         setBuyingShopId(null)
       },
@@ -109,7 +112,9 @@ function ShopPage() {
     setBuyingDailyId(item.id)
     buyDaily(item.id, {
       onSuccess: (result) => {
-        if (user) setUser({ ...user, dust: result.newDustBalance })
+        if (user) {
+          setUser({ ...user, dust: result.newDustBalance })
+        }
         notify(`✓ ${result.card.name} obtenue ! −${result.dustSpent} poussière`)
         setBuyingDailyId(null)
       },
@@ -249,39 +254,32 @@ function DailyShopCard({
         />
       </div>
       {item.purchased ? (
-        <button
-          type="button"
-          disabled
-          className="w-full rounded-lg bg-green-500/10 px-3 py-2 text-sm font-bold text-green-400"
-        >
+        <Button variant="ghost" size="sm" disabled className="w-full text-green-400">
           Achetée
-        </button>
+        </Button>
       ) : (
-        <button
-          type="button"
-          onClick={onBuy}
+        <Button
+          size="sm"
           disabled={buying || !canAfford}
-          className={`w-full rounded-lg px-3 py-2 text-sm font-bold transition-colors ${
-            canAfford
-              ? 'bg-primary text-white hover:bg-primary/80'
-              : 'cursor-not-allowed bg-muted text-text-light'
-          }`}
+          onClick={onBuy}
+          variant={canAfford ? 'default' : 'secondary'}
+          className="w-full"
         >
           {buying ? (
             '…'
           ) : (
-            <span className="flex items-center justify-center gap-1.5">
+            <>
               <Sparkles className="h-3.5 w-3.5" />
               {item.dustPrice.toLocaleString('fr-FR')}
-            </span>
+            </>
           )}
-        </button>
+        </Button>
       )}
     </div>
   )
 }
 
-// ── Static shop card (unchanged) ────────────────────────────────────────────
+// ── Static shop card ────────────────────────────────────────────────────────
 
 function StaticShopCard({
   item,
@@ -311,18 +309,14 @@ function StaticShopCard({
           <Sparkles className="h-3.5 w-3.5" />
           {item.dustCost.toLocaleString('fr-FR')}
         </span>
-        <button
-          type="button"
-          onClick={onBuy}
+        <Button
+          size="sm"
           disabled={buying || !canAfford}
-          className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
-            canAfford
-              ? 'bg-primary text-white hover:bg-primary/80'
-              : 'cursor-not-allowed bg-muted text-text-light'
-          }`}
+          onClick={onBuy}
+          variant={canAfford ? 'default' : 'secondary'}
         >
           {buying ? '…' : canAfford ? 'Acheter' : 'Insuffisant'}
-        </button>
+        </Button>
       </div>
     </div>
   )

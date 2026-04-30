@@ -168,7 +168,7 @@ export function CardDisplay({
   }
 
   const sizeClass = compact ? 'w-full aspect-[2/3]' : 'h-90 w-60'
-  const hitboxClass = compact ? 'relative -m-4 p-4' : 'relative -m-10 p-10'
+  const hitboxClass = compact ? 'relative' : 'relative -m-10 p-10'
 
   return (
     // Extended hitbox — prevents mouseleave firing when a tilted corner drifts outside card bounds
