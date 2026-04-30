@@ -65,6 +65,7 @@ export class DailyShopDomain implements IDailyShopDomain {
       include: {
         items: {
           include: { card: { include: { set: true } } },
+          orderBy: { id: 'asc' },
         },
       },
     })
