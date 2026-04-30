@@ -34,12 +34,20 @@ export class ShopDomain implements IShopDomain {
           data: { userId, shopItemId, dustSpent: item.dustCost },
         })
 
+        const updateData: Record<string, unknown> = {
+          dust: { decrement: item.dustCost },
+        }
+        if (item.type === 'TOKEN_PACK') {
+          const value = item.value as { tokens: number }
+          updateData.tokens = { increment: value.tokens }
+        }
+
         const updated = await tx.user.update({
           where: { id: userId },
-          data: { dust: { decrement: item.dustCost } },
+          data: updateData,
         })
 
-        return { purchase, newDustTotal: updated.dust }
+        return { purchase, newDustTotal: updated.dust, newTokenTotal: updated.tokens }
       },
       { isolationLevel: 'Serializable', maxWait: 5000, timeout: 10000 },
     )
@@ -48,6 +56,7 @@ export class ShopDomain implements IShopDomain {
       purchaseId: result.purchase.id,
       dustSpent: item.dustCost,
       newDustTotal: result.newDustTotal,
+      newTokenTotal: result.newTokenTotal,
       item: {
         id: item.id,
         name: item.name,

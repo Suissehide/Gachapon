@@ -18,6 +18,7 @@ export type PurchaseResult = {
   purchaseId: string
   dustSpent: number
   newDustTotal: number
+  newTokenTotal: number
   item: { id: string; name: string; type: string; value: unknown }
 }
 

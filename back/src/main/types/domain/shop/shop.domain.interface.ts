@@ -2,6 +2,7 @@ export type BuyShopItemResult = {
   purchaseId: string
   dustSpent: number
   newDustTotal: number
+  newTokenTotal: number
   item: {
     id: string
     name: string

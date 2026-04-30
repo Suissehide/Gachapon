@@ -101,7 +101,7 @@ function ShopPage() {
     buyShop(item.id, {
       onSuccess: (result) => {
         if (user) {
-          setUser({ ...user, dust: result.newDustTotal })
+          setUser({ ...user, dust: result.newDustTotal, tokens: result.newTokenTotal })
         }
         notifySuccess(item.name, `Acheté ! −${result.dustSpent} poussière`)
         setBuyingShopId(null)
@@ -296,6 +296,7 @@ function StaticShopCard({
   onBuy: () => void
 }) {
   const canAfford = dust >= item.dustCost
+  const supported = item.type === 'TOKEN_PACK'
 
   return (
     <div className={`rounded-xl border p-4 ${colorClass} flex flex-col gap-3`}>
@@ -312,11 +313,13 @@ function StaticShopCard({
         </span>
         <Button
           size="sm"
-          disabled={buying || !canAfford}
+          disabled={!supported || buying || !canAfford}
           onClick={onBuy}
-          variant={canAfford ? 'default' : 'secondary'}
+          variant={supported && canAfford ? 'default' : 'secondary'}
         >
-          {buying ? '…' : canAfford ? 'Acheter' : 'Insuffisant'}
+          {supported
+            ? buying ? '…' : canAfford ? 'Acheter' : 'Insuffisant'
+            : 'Bientôt'}
         </Button>
       </div>
     </div>
