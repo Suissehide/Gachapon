@@ -252,7 +252,7 @@ function DailyShopCard({
         />
       </div>
       {item.purchased ? (
-        <Button variant="ghost" size="sm" disabled className="w-full text-green-400">
+        <Button variant="secondary" size="sm" disabled className="w-full">
           Achetée
         </Button>
       ) : (
