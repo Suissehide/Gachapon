@@ -1,7 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Package, Sparkles, Zap } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
+import { CardDisplay } from '../../components/shared/tcg-card/CardDisplay'
+import type { DailyShopItem } from '../../constants/daily-shop.constant'
+import { useBuyDailyShopItem, useDailyShop } from '../../queries/useDailyShop'
 import type { ShopItem } from '../../queries/useShop'
 import { useBuyItem, useShopItems } from '../../queries/useShop'
 import { useAuthStore } from '../../stores/auth.store'
@@ -9,6 +12,35 @@ import { useAuthStore } from '../../stores/auth.store'
 export const Route = createFileRoute('/_authenticated/shop')({
   component: ShopPage,
 })
+
+// ── Countdown hook ──────────────────────────────────────────────────────────
+
+function useCountdown() {
+  const [timeLeft, setTimeLeft] = useState('')
+
+  useEffect(() => {
+    const update = () => {
+      const now = new Date()
+      const midnight = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() + 1,
+      ))
+      const diff = midnight.getTime() - now.getTime()
+      const h = Math.floor(diff / 3_600_000)
+      const m = Math.floor((diff % 3_600_000) / 60_000)
+      const s = Math.floor((diff % 60_000) / 1000)
+      setTimeLeft(`${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`)
+    }
+    update()
+    const id = setInterval(update, 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  return timeLeft
+}
+
+// ── Shop item type config ───────────────────────────────────────────────────
 
 const TYPE_CONFIG: Record<
   string,
@@ -31,32 +63,59 @@ const TYPE_CONFIG: Record<
   },
 }
 
+// ── Main page ───────────────────────────────────────────────────────────────
+
 function ShopPage() {
   const user = useAuthStore((s) => s.user)
   const setUser = useAuthStore((s) => s.setUser)
-  const { data, isLoading } = useShopItems()
-  const { mutate: buy, isPending: buying } = useBuyItem()
-  const [buyingId, setBuyingId] = useState<string | null>(null)
   const [notification, setNotification] = useState<string | null>(null)
 
-  const items = data?.items ?? []
-  const dust = user?.dust ?? 0
+  // Static shop
+  const { data: shopData, isLoading: shopLoading } = useShopItems()
+  const { mutate: buyShop, isPending: buyingShop } = useBuyItem()
+  const [buyingShopId, setBuyingShopId] = useState<string | null>(null)
 
-  const handleBuy = (item: ShopItem) => {
-    setBuyingId(item.id)
-    buy(item.id, {
+  // Daily shop
+  const { data: dailyData, isLoading: dailyLoading } = useDailyShop()
+  const { mutate: buyDaily, isPending: buyingDaily } = useBuyDailyShopItem()
+  const [buyingDailyId, setBuyingDailyId] = useState<string | null>(null)
+  const timeLeft = useCountdown()
+
+  const dust = user?.dust ?? 0
+  const shopItems = shopData?.items ?? []
+  const dailyItems = dailyData?.items ?? []
+
+  const notify = (msg: string) => {
+    setNotification(msg)
+    setTimeout(() => setNotification(null), 3000)
+  }
+
+  const handleBuyShop = (item: ShopItem) => {
+    setBuyingShopId(item.id)
+    buyShop(item.id, {
       onSuccess: (result) => {
-        if (user) {
-          setUser({ ...user, dust: result.newDustTotal })
-        }
-        setNotification(`✓ ${item.name} acheté ! −${result.dustSpent} ✨ dust`)
-        setTimeout(() => setNotification(null), 3000)
-        setBuyingId(null)
+        if (user) setUser({ ...user, dust: result.newDustTotal })
+        notify(`✓ ${item.name} acheté ! −${result.dustSpent} ✨ dust`)
+        setBuyingShopId(null)
       },
       onError: (err) => {
-        setNotification(`✗ ${err.message}`)
-        setTimeout(() => setNotification(null), 3000)
-        setBuyingId(null)
+        notify(`✗ ${err.message}`)
+        setBuyingShopId(null)
+      },
+    })
+  }
+
+  const handleBuyDaily = (item: DailyShopItem) => {
+    setBuyingDailyId(item.id)
+    buyDaily(item.id, {
+      onSuccess: (result) => {
+        if (user) setUser({ ...user, dust: result.newDustBalance })
+        notify(`✓ ${result.card.name} obtenue ! −${result.dustSpent} poussière`)
+        setBuyingDailyId(null)
+      },
+      onError: (err) => {
+        notify(`✗ ${err.message}`)
+        setBuyingDailyId(null)
       },
     })
   }
@@ -64,7 +123,7 @@ function ShopPage() {
   const grouped = Object.entries(TYPE_CONFIG).map(([type, config]) => ({
     type,
     config,
-    items: items.filter((i) => i.type === type),
+    items: shopItems.filter((i) => i.type === type),
   }))
 
   return (
@@ -83,11 +142,45 @@ function ShopPage() {
           </div>
         )}
 
-        {isLoading ? (
+        {/* ── Daily Shop Section ─────────────────────────────────── */}
+        <section className="mb-10">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-sm font-bold text-text">Boutique du Jour</h2>
+            <div className="flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-text-light">
+              <span>Nouveau tirage dans</span>
+              <span className="font-bold tabular-nums text-accent">{timeLeft}</span>
+            </div>
+          </div>
+
+          {dailyLoading ? (
+            <div className="flex h-32 items-center justify-center">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            </div>
+          ) : dailyItems.length === 0 ? (
+            <div className="flex h-32 items-center justify-center rounded-xl border border-dashed border-border">
+              <p className="text-text-light">Aucune carte disponible.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {dailyItems.map((item) => (
+                <DailyShopCard
+                  key={item.id}
+                  item={item}
+                  dust={dust}
+                  buying={buyingDailyId === item.id && buyingDaily}
+                  onBuy={() => handleBuyDaily(item)}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* ── Static Shop Section ────────────────────────────────── */}
+        {shopLoading ? (
           <div className="flex h-48 items-center justify-center">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
-        ) : items.length === 0 ? (
+        ) : shopItems.length === 0 ? (
           <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-border">
             <p className="text-text-light">
               Aucun article disponible pour l'instant.
@@ -107,13 +200,13 @@ function ShopPage() {
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {typeItems.map((item) => (
-                      <ShopCard
+                      <StaticShopCard
                         key={item.id}
                         item={item}
                         dust={dust}
                         colorClass={config.color}
-                        buying={buyingId === item.id && buying}
-                        onBuy={() => handleBuy(item)}
+                        buying={buyingShopId === item.id && buyingShop}
+                        onBuy={() => handleBuyShop(item)}
                       />
                     ))}
                   </div>
@@ -126,7 +219,75 @@ function ShopPage() {
   )
 }
 
-function ShopCard({
+// ── Daily shop card (with scaled-down CardDisplay) ──────────────────────────
+
+function DailyShopCard({
+  item,
+  dust,
+  buying,
+  onBuy,
+}: {
+  item: DailyShopItem
+  dust: number
+  buying: boolean
+  onBuy: () => void
+}) {
+  const canAfford = dust >= item.dustPrice
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      {/* Scale wrapper: CardDisplay is 240x360 fixed, we shrink it to fit the grid */}
+      <div className={`relative w-full overflow-hidden ${item.purchased ? 'opacity-40' : ''}`}>
+        <div className="mx-auto w-fit origin-top scale-[0.55] sm:scale-[0.6] lg:scale-[0.65]">
+          <CardDisplay
+            rarity={item.card.rarity}
+            name={item.card.name}
+            setName={item.card.set.name}
+            imageUrl={item.card.imageUrl}
+            variant={null}
+            isOwned
+            interactive={!item.purchased}
+          />
+        </div>
+        {/* Collapse the extra height created by the unscaled element */}
+        <div className="mt-[-35%] sm:mt-[-32%] lg:mt-[-28%]" />
+      </div>
+      {item.purchased ? (
+        <button
+          type="button"
+          disabled
+          className="w-full rounded-lg bg-green-500/10 px-3 py-2 text-sm font-bold text-green-400"
+        >
+          Achetée
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={onBuy}
+          disabled={buying || !canAfford}
+          className={`relative z-10 w-full rounded-lg px-3 py-2 text-sm font-bold transition-colors ${
+            canAfford
+              ? 'bg-primary text-white hover:bg-primary/80'
+              : 'cursor-not-allowed bg-muted text-text-light'
+          }`}
+        >
+          {buying ? (
+            '…'
+          ) : (
+            <span className="flex items-center justify-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5" />
+              {item.dustPrice.toLocaleString('fr-FR')}
+            </span>
+          )}
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ── Static shop card (unchanged) ────────────────────────────────────────────
+
+function StaticShopCard({
   item,
   dust,
   colorClass,

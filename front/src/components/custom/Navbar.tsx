@@ -17,7 +17,6 @@ const navItems = [
   { to: '/collection', label: 'Collection' },
   { to: '/team', label: 'Équipes' },
   { to: '/shop', label: 'Boutique' },
-  { to: '/daily-shop', label: 'Boutique du Jour' },
   { to: '/skills', label: 'Compétences' },
   { to: '/leaderboard', label: 'Classement' },
 ]
