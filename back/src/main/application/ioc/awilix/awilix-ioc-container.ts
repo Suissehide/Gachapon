@@ -11,6 +11,7 @@ import { SkillResetDomain } from '../../../domain/skills/skill-reset.domain'
 import { AdminSkillTreeDomain } from '../../../domain/skills/admin-skill-tree.domain'
 import { GachaDomain } from '../../../domain/gacha/gacha.domain'
 import { RewardsDomain } from '../../../domain/rewards/rewards.domain'
+import { DailyShopDomain } from '../../../domain/daily-shop/daily-shop.domain'
 import { ShopDomain } from '../../../domain/shop/shop.domain'
 import { StreakDomain } from '../../../domain/streak/streak.domain'
 import { TeamDomain } from '../../../domain/team/team.domain'
@@ -122,6 +123,7 @@ class AwilixIocContainer {
     this.#reg('adminStatsRepository', asClass(AdminStatsRepository).singleton())
     this.#reg('collectionDomain', asClass(CollectionDomain).singleton())
     this.#reg('shopDomain', asClass(ShopDomain).singleton())
+    this.#reg('dailyShopDomain', asClass(DailyShopDomain).singleton())
     this.#reg('skillTreeDomain', asClass(SkillTreeDomain).singleton())
     this.#reg('skillInvestDomain', asClass(SkillInvestDomain).singleton())
     this.#reg('skillResetDomain', asClass(SkillResetDomain).singleton())

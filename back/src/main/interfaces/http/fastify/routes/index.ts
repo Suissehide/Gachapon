@@ -4,6 +4,7 @@ import { adminRouter } from './admin'
 import { apiKeysRouter } from './api-keys'
 import { authRouter } from './auth'
 import { collectionRouter } from './collection'
+import { dailyShopRouter } from './daily-shop'
 import { gachaRouter } from './gacha'
 import { leaderboardRouter } from './leaderboard'
 import { rewardsRouter } from './rewards'
@@ -50,6 +51,7 @@ export const routes: FastifyPluginAsyncZod = async (fastify) => {
   await fastify.register(collectionRouter)
   await fastify.register(leaderboardRouter)
   await fastify.register(shopRouter)
+  await fastify.register(dailyShopRouter)
   await fastify.register(skillsRouter)
   await fastify.register(wsRouter)
   await fastify.register(usersRouter)

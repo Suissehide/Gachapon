@@ -15,6 +15,11 @@ export const CONFIG_KEYS = [
   'brilliantRateLegendary',
   'variantMultiplierHolo',
   'variantMultiplierBrilliant',
+  'dailyShopPriceCommon',
+  'dailyShopPriceUncommon',
+  'dailyShopPriceRare',
+  'dailyShopPriceEpic',
+  'dailyShopPriceLegendary',
 ] as const
 
 export type ConfigKey = (typeof CONFIG_KEYS)[number]
