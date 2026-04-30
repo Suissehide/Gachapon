@@ -711,6 +711,33 @@ h6 {
   pointer-events: none;
 }
 
+/* ── 404 Not Found page ─────────────────────────────────────────────────── */
+
+@keyframes notfound-capsule-rise {
+  0%   { transform: translateX(0) translateY(0) rotate(0deg); opacity: 0; }
+  10%  { opacity: 0.3; }
+  90%  { opacity: 0.3; }
+  100% { transform: translateX(var(--capsule-drift, 30px)) translateY(-110vh) rotate(360deg); opacity: 0; }
+}
+
+@keyframes notfound-glitch-top {
+  0%, 100% { transform: translate(0); }
+  25%      { transform: translate(-3px, -1px); }
+  50%      { transform: translate(3px, 1px); }
+  75%      { transform: translate(-1px, 2px); }
+}
+
+@keyframes notfound-glitch-bottom {
+  0%, 100% { transform: translate(0); }
+  33%      { transform: translate(2px, 1px); }
+  66%      { transform: translate(-2px, -1px); }
+}
+
+@keyframes notfound-fade-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .select-content {
   width: var(--radix-select-trigger-width);
 }
