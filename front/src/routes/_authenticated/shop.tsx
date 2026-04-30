@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Package, Sparkles, Zap } from 'lucide-react'
+import { CalendarClock, Package, Sparkles, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { CardDisplay } from '../../components/shared/tcg-card/CardDisplay'
@@ -148,7 +148,10 @@ function ShopPage() {
         {/* ── Daily Shop Section ─────────────────────────────────── */}
         <section className="mb-10">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-bold text-text">Boutique du Jour</h2>
+            <div className="flex items-center gap-2">
+              <CalendarClock className="h-5 w-5 text-accent" />
+              <h2 className="text-sm font-bold text-text">Boutique du Jour</h2>
+            </div>
             <div className="flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-text-light">
               <span>Nouveau tirage dans</span>
               <span className="font-bold tabular-nums text-accent">{timeLeft}</span>
