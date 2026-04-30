@@ -219,7 +219,7 @@ function ShopPage() {
   )
 }
 
-// ── Daily shop card (with scaled-down CardDisplay) ──────────────────────────
+// ── Daily shop card ──────────────────────────────────────────────────────────
 
 function DailyShopCard({
   item,
@@ -236,21 +236,17 @@ function DailyShopCard({
 
   return (
     <div className="flex flex-col items-center gap-2">
-      {/* Scale wrapper: CardDisplay is 240x360 fixed, we shrink it to fit the grid */}
-      <div className={`relative w-full overflow-hidden ${item.purchased ? 'opacity-40' : ''}`}>
-        <div className="mx-auto w-fit origin-top scale-[0.55] sm:scale-[0.6] lg:scale-[0.65]">
-          <CardDisplay
-            rarity={item.card.rarity}
-            name={item.card.name}
-            setName={item.card.set.name}
-            imageUrl={item.card.imageUrl}
-            variant={null}
-            isOwned
-            interactive={!item.purchased}
-          />
-        </div>
-        {/* Collapse the extra height created by the unscaled element */}
-        <div className="mt-[-35%] sm:mt-[-32%] lg:mt-[-28%]" />
+      <div className={`w-full ${item.purchased ? 'opacity-40' : ''}`}>
+        <CardDisplay
+          rarity={item.card.rarity}
+          name={item.card.name}
+          setName={item.card.set.name}
+          imageUrl={item.card.imageUrl}
+          variant={null}
+          isOwned
+          interactive={!item.purchased}
+          compact
+        />
       </div>
       {item.purchased ? (
         <button
@@ -265,7 +261,7 @@ function DailyShopCard({
           type="button"
           onClick={onBuy}
           disabled={buying || !canAfford}
-          className={`relative z-10 w-full rounded-lg px-3 py-2 text-sm font-bold transition-colors ${
+          className={`w-full rounded-lg px-3 py-2 text-sm font-bold transition-colors ${
             canAfford
               ? 'bg-primary text-white hover:bg-primary/80'
               : 'cursor-not-allowed bg-muted text-text-light'

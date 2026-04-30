@@ -41,6 +41,8 @@ type Props = {
   showSweep?: boolean
   /** Enables mouse tilt + cursor light. Keep false while a CSS entrance animation is running. */
   interactive?: boolean
+  /** Use compact sizing — card fills its parent width with 3/4 aspect ratio instead of fixed 240×360. */
+  compact?: boolean
   /** CSS class for entrance animation (e.g. 'card-spiral-rise'). Pass empty string when done. */
   animClass?: string
   /** Changing this value remounts the card and restarts the animation. */
@@ -61,6 +63,7 @@ export function CardDisplay({
   isOwned = true,
   showSweep = false,
   interactive = false,
+  compact = false,
   animClass,
   animKey,
   onAnimationEnd,
@@ -164,14 +167,17 @@ export function CardDisplay({
     cardRef.current?.style.setProperty('--shine-o', '0')
   }
 
+  const sizeClass = compact ? 'w-full aspect-[2/3]' : 'h-90 w-60'
+  const hitboxClass = compact ? 'relative -m-4 p-4' : 'relative -m-10 p-10'
+
   return (
     // Extended hitbox — prevents mouseleave firing when a tilted corner drifts outside card bounds
     <div
-      className="relative -m-10 p-10"
+      className={hitboxClass}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
-      <div className="h-90 w-60 perspective-[900px]">
+      <div className={`${sizeClass} perspective-[900px]`}>
         <div
           key={animKey}
           ref={cardRef}
@@ -192,30 +198,21 @@ export function CardDisplay({
               variant={variant}
               isOwned={isOwned}
               showSweep={showSweep}
+              compact={compact}
             />
 
             {interactive && (
               <>
-                {/*
-                 * Glare — exact simeydotme technique:
-                 *   bright white center (0.8) → white ring (0.65) → dark edges (black 0.5 at 90%)
-                 *   + mix-blend-mode: overlay
-                 * The dark edge/bright center contrast is what makes the effect visible and dramatic.
-                 * White areas brightens the card, black areas darkens it → clear flashlight look.
-                 */}
                 <div
-                  className="pointer-events-none absolute inset-0 z-[6] rounded-[7px] mix-blend-overlay"
+                  className={`pointer-events-none absolute inset-0 z-[6] ${compact ? 'rounded-[5px]' : 'rounded-[7px]'} mix-blend-overlay`}
                   style={{
                     opacity: 'var(--shine-o, 0)' as unknown as number,
                     background:
                       'radial-gradient(farthest-corner circle at var(--shine-x, 50%) var(--shine-y, 50%), hsla(0,0%,100%,0.8) 10%, hsla(0,0%,100%,0.65) 20%, hsla(0,0%,0%,0.5) 90%)',
                   }}
                 />
-                {/*
-                 * Subtle screen glow on top — adds a soft warm halo around cursor.
-                 */}
                 <div
-                  className="pointer-events-none absolute inset-0 z-[7] rounded-[7px] mix-blend-screen"
+                  className={`pointer-events-none absolute inset-0 z-[7] ${compact ? 'rounded-[5px]' : 'rounded-[7px]'} mix-blend-screen`}
                   style={{
                     opacity: 'var(--shine-o, 0)' as unknown as number,
                     background:
