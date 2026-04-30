@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Package, Sparkles, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
-import { TcgCardFace } from '../../components/shared/tcg-card/TcgCardFace'
+import { CardDisplay } from '../../components/shared/tcg-card/CardDisplay'
 import { Button } from '../../components/ui/button'
 import type { DailyShopItem } from '../../constants/daily-shop.constant'
 import { useBuyDailyShopItem, useDailyShop } from '../../queries/useDailyShop'
@@ -245,7 +245,7 @@ function DailyShopCard({
         className={`relative w-full aspect-3/4 ${item.purchased ? 'opacity-40' : ''}`}
         style={{ borderRadius: 10 }}
       >
-        <TcgCardFace
+        <CardDisplay
           rarity={item.card.rarity}
           name={item.card.name}
           setName={item.card.set.name}
