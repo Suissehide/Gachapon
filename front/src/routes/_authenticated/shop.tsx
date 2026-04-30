@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Package, Sparkles, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
-import { CardDisplay } from '../../components/shared/tcg-card/CardDisplay'
+import { TcgCardFace } from '../../components/shared/tcg-card/TcgCardFace'
 import { Button } from '../../components/ui/button'
 import type { DailyShopItem } from '../../constants/daily-shop.constant'
 import { useBuyDailyShopItem, useDailyShop } from '../../queries/useDailyShop'
@@ -241,15 +241,17 @@ function DailyShopCard({
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <div className={`w-full ${item.purchased ? 'opacity-40' : ''}`}>
-        <CardDisplay
+      <div
+        className={`relative w-full aspect-3/4 ${item.purchased ? 'opacity-40' : ''}`}
+        style={{ borderRadius: 10 }}
+      >
+        <TcgCardFace
           rarity={item.card.rarity}
           name={item.card.name}
           setName={item.card.set.name}
           imageUrl={item.card.imageUrl}
           variant={null}
           isOwned
-          interactive={!item.purchased}
           compact
         />
       </div>

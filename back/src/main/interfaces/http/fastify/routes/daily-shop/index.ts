@@ -1,15 +1,28 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
+import type { DailyShopItemResult } from '../../../../../types/domain/daily-shop/daily-shop.domain.interface'
 import { dailyShopItemIdParamSchema } from '../../schemas/daily-shop.schema'
 
 export const dailyShopRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { dailyShopDomain } = fastify.iocContainer
+  const { dailyShopDomain, storageClient } = fastify.iocContainer
+
+  const resolveUrl = (key: string | null) =>
+    key ? storageClient.publicUrl(key) : null
+
+  const resolveItem = (item: DailyShopItemResult) => ({
+    ...item,
+    card: { ...item.card, imageUrl: resolveUrl(item.card.imageUrl) },
+  })
 
   fastify.get(
     '/daily-shop',
     { onRequest: [fastify.verifySessionCookie] },
-    (request) => {
-      return dailyShopDomain.getOrGenerate(request.user.userID)
+    async (request) => {
+      const result = await dailyShopDomain.getOrGenerate(request.user.userID)
+      return {
+        ...result,
+        items: result.items.map(resolveItem),
+      }
     },
   )
 
@@ -19,8 +32,12 @@ export const dailyShopRouter: FastifyPluginCallbackZod = (fastify) => {
       onRequest: [fastify.verifySessionCookie],
       schema: { params: dailyShopItemIdParamSchema },
     },
-    (request) => {
-      return dailyShopDomain.buy(request.user.userID, request.params.itemId)
+    async (request) => {
+      const result = await dailyShopDomain.buy(request.user.userID, request.params.itemId)
+      return {
+        ...result,
+        card: { ...result.card, imageUrl: resolveUrl(result.card.imageUrl) },
+      }
     },
   )
 }
