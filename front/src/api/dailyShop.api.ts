@@ -16,7 +16,6 @@ export const DailyShopApi = {
   buyItem: async (itemId: string): Promise<BuyDailyShopResult> => {
     const res = await fetchWithAuth(`${apiUrl}${DAILY_SHOP_ROUTES.buy(itemId)}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
     })
     if (!res.ok) {
       handleHttpError(res, {}, "Erreur lors de l'achat")

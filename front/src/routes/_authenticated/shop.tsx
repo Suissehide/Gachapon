@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react'
 import { CardDisplay } from '../../components/shared/tcg-card/CardDisplay'
 import { Button } from '../../components/ui/button'
 import type { DailyShopItem } from '../../constants/daily-shop.constant'
+import { TOAST_SEVERITY } from '../../constants/ui.constant'
+import { useToast } from '../../hooks/useToast'
 import { useBuyDailyShopItem, useDailyShop } from '../../queries/useDailyShop'
 import type { ShopItem } from '../../queries/useShop'
 import { useBuyItem, useShopItems } from '../../queries/useShop'
@@ -69,7 +71,7 @@ const TYPE_CONFIG: Record<
 function ShopPage() {
   const user = useAuthStore((s) => s.user)
   const setUser = useAuthStore((s) => s.setUser)
-  const [notification, setNotification] = useState<string | null>(null)
+  const { toast } = useToast()
 
   // Static shop
   const { data: shopData, isLoading: shopLoading } = useShopItems()
@@ -86,9 +88,12 @@ function ShopPage() {
   const shopItems = shopData?.items ?? []
   const dailyItems = dailyData?.items ?? []
 
-  const notify = (msg: string) => {
-    setNotification(msg)
-    setTimeout(() => setNotification(null), 3000)
+  const notifySuccess = (title: string, message: string) => {
+    toast({ title, message, severity: TOAST_SEVERITY.SUCCESS })
+  }
+
+  const notifyError = (message: string) => {
+    toast({ title: 'Erreur', message, severity: TOAST_SEVERITY.ERROR })
   }
 
   const handleBuyShop = (item: ShopItem) => {
@@ -98,11 +103,11 @@ function ShopPage() {
         if (user) {
           setUser({ ...user, dust: result.newDustTotal })
         }
-        notify(`✓ ${item.name} acheté ! −${result.dustSpent} ✨ dust`)
+        notifySuccess(item.name, `Acheté ! −${result.dustSpent} poussière`)
         setBuyingShopId(null)
       },
       onError: (err) => {
-        notify(`✗ ${err.message}`)
+        notifyError(err.message)
         setBuyingShopId(null)
       },
     })
@@ -115,11 +120,11 @@ function ShopPage() {
         if (user) {
           setUser({ ...user, dust: result.newDustBalance })
         }
-        notify(`✓ ${result.card.name} obtenue ! −${result.dustSpent} poussière`)
+        notifySuccess(result.card.name, `Obtenue ! −${result.dustSpent} poussière`)
         setBuyingDailyId(null)
       },
       onError: (err) => {
-        notify(`✗ ${err.message}`)
+        notifyError(err.message)
         setBuyingDailyId(null)
       },
     })
@@ -139,13 +144,6 @@ function ShopPage() {
           <h1 className="text-2xl font-black text-text">Boutique</h1>
           <p className="text-sm text-text-light">Dépense ta poussière</p>
         </div>
-
-        {/* Notification */}
-        {notification && (
-          <div className="mb-4 rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 text-sm text-primary">
-            {notification}
-          </div>
-        )}
 
         {/* ── Daily Shop Section ─────────────────────────────────── */}
         <section className="mb-10">
@@ -241,10 +239,7 @@ function DailyShopCard({
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <div
-        className={`relative w-full aspect-3/4 ${item.purchased ? 'opacity-40' : ''}`}
-        style={{ borderRadius: 10 }}
-      >
+      <div className={`w-full ${item.purchased ? 'opacity-40' : ''}`}>
         <CardDisplay
           rarity={item.card.rarity}
           name={item.card.name}
@@ -252,6 +247,7 @@ function DailyShopCard({
           imageUrl={item.card.imageUrl}
           variant={null}
           isOwned
+          interactive={!item.purchased}
           compact
         />
       </div>
