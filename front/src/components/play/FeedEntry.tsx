@@ -58,10 +58,10 @@ export function FeedEntryRow({ entry, index = 0 }: Props) {
         <HoverCard.Content
           side="left"
           sideOffset={10}
-          className="z-50 rounded-xl overflow-hidden"
+          className="z-50"
           style={{ filter: 'drop-shadow(0 12px 40px rgba(0,0,0,0.3))' }}
         >
-          <div className="relative" style={{ width: 120, height: 180 }}>
+          <div className="relative w-[120px] aspect-[2/3]">
             <TcgCardFace
               rarity={entry.rarity}
               name={entry.cardName}
