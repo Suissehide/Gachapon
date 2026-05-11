@@ -1,5 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import * as Icons from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+
+const iconMap = Icons as unknown as Record<string, LucideIcon>
 import { SkillTreeCanvas } from '../../components/skill-tree/SkillTreeCanvas.tsx'
 import {
   useInvestSkill,
@@ -68,8 +71,7 @@ function SkillsPage() {
       <div className="flex gap-6 border-t border-gray-800 px-6 py-2">
         {state.branches.map((b) => {
           const Icon =
-            (Icons as Record<string, React.FC<{ size?: number }>>)[b.icon] ??
-            Icons.Zap
+            iconMap[b.icon] ?? Icons.Zap
           return (
             <div
               key={b.id}
