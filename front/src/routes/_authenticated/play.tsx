@@ -70,14 +70,7 @@ function Play() {
     if (!canPull) {
       return
     }
-    setPhase('pulling')
-    pullMutation(undefined, {
-      onSuccess: (result) => {
-        pendingResult.current = result
-        setPhase('ball')
-      },
-      onError: () => setPhase('idle'),
-    })
+    setPhase('ball')
   }
 
   const handleSkip = () => {
@@ -107,10 +100,16 @@ function Play() {
   }, [phase])
 
   const handleBallClick = () => {
-    if (phase !== 'ball') {
+    if (phase !== 'ball' || pullPending) {
       return
     }
-    setPhase('opening')
+    pullMutation(undefined, {
+      onSuccess: (result) => {
+        pendingResult.current = result
+        setPhase('opening')
+      },
+      onError: () => setPhase('idle'),
+    })
   }
 
   const handleClose = () => {
