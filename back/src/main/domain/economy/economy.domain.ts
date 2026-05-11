@@ -46,7 +46,12 @@ export function calculateTokens(
 
   const newTokens = Math.min(currentTokens + gained, maxStock)
   const actualGained = newTokens - currentTokens
-  const newLastTokenAt = new Date(ref.getTime() + actualGained * msPerToken)
+  // Si la regen amène au max, reset le clock à maintenant pour éviter
+  // qu'un elapsed résiduel ne régénère instantanément un futur token consommé.
+  const newLastTokenAt =
+    newTokens >= maxStock
+      ? new Date()
+      : new Date(ref.getTime() + actualGained * msPerToken)
 
   const nextTokenAt =
     newTokens >= maxStock

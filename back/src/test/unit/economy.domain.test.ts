@@ -71,6 +71,25 @@ describe('calculateTokens', () => {
     expect(balanceCalc.tokens).toBe(4)
   })
 
+  it('ne régénère pas un token après un pull quand la regen a amené au max', () => {
+    // DB: tokens=4, lastTokenAt=10h ago (d'un pull précédent avec ancien code)
+    const staleLastTokenAt = new Date(Date.now() - 10 * 60 * 60 * 1000)
+    // Le pull recalcule : gained=2, tokens=min(4+2,5)=5 → au max → lastTokenAt reset
+    const pullCalc = calculateTokens(staleLastTokenAt, 4, INTERVAL, MAX)
+    expect(pullCalc.tokens).toBe(5)
+
+    // Simule ce que le pull sauvegarde en DB
+    const savedTokens = pullCalc.tokens - 1 // 4
+    const savedLastTokenAt = pullCalc.newLastTokenAt!
+
+    // lastTokenAt doit être ~maintenant, pas dans le passé
+    expect(savedLastTokenAt.getTime()).toBeGreaterThanOrEqual(Date.now() - 50)
+
+    // Balance refetch : ne doit PAS régénérer
+    const balanceCalc = calculateTokens(savedLastTokenAt, savedTokens, INTERVAL, MAX)
+    expect(balanceCalc.tokens).toBe(4)
+  })
+
   it('ne modifie pas lastTokenAt si aucun token gagné', () => {
     const lastTokenAt = new Date(Date.now() - 60 * 60 * 1000) // 1h < 4h
     const result = calculateTokens(lastTokenAt, 2, INTERVAL, MAX)
