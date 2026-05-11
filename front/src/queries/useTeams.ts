@@ -7,6 +7,8 @@ import {
 
 import { TeamsApi } from '../api/teams.api.ts'
 import type { TeamRankingPage } from '../api/teams.api.ts'
+import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
+import { useToast } from '../hooks/useToast.ts'
 
 export type {
   Invitation,
@@ -43,12 +45,25 @@ export const useCreateTeam = () => {
 
 export const useUpdateTeam = (teamId: string) => {
   const qc = useQueryClient()
+  const { toast } = useToast()
   return useMutation({
     mutationFn: (data: { name: string; description?: string }) =>
       TeamsApi.updateTeam(teamId, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['teams', teamId] })
       qc.invalidateQueries({ queryKey: ['teams'] })
+      toast({
+        title: 'Équipe mise à jour',
+        message: 'Les modifications ont été enregistrées.',
+        severity: TOAST_SEVERITY.SUCCESS,
+      })
+    },
+    onError: (err) => {
+      toast({
+        title: 'Erreur',
+        message: err.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
     },
   })
 }

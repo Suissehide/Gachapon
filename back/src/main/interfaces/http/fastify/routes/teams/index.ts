@@ -10,6 +10,7 @@ import {
   teamRankingQuerySchema,
   teamTokenParamSchema,
   teamTransferBodySchema,
+  teamUpdateBodySchema,
   teamUserIdParamSchema,
 } from '../../schemas/teams.schema'
 
@@ -51,6 +52,22 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
       const team = await teamDomain.getTeam(
         request.params.id,
         request.user.userID,
+      )
+      return formatTeam(team)
+    },
+  )
+
+  fastify.patch(
+    '/teams/:id',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: { params: teamIdParamSchema, body: teamUpdateBodySchema },
+    },
+    async (request) => {
+      const team = await teamDomain.updateTeam(
+        request.params.id,
+        request.user.userID,
+        request.body,
       )
       return formatTeam(team)
     },

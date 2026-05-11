@@ -292,6 +292,27 @@ export class TeamDomain implements TeamDomainInterface {
     ])
   }
 
+  async updateTeam(
+    teamId: string,
+    userId: string,
+    data: { name: string; description?: string },
+  ): Promise<TeamWithMembers> {
+    const team = await this.#teamRepo.findById(teamId)
+    if (!team) {
+      throw Boom.notFound('Team not found')
+    }
+    if (team.ownerId !== userId) {
+      throw Boom.forbidden('Only the owner can update the team')
+    }
+
+    const slug = slugify(data.name, { lower: true, strict: true })
+    return this.#teamRepo.update(teamId, {
+      name: data.name,
+      slug,
+      description: data.description,
+    })
+  }
+
   async deleteTeam(teamId: string, userId: string): Promise<void> {
     const team = await this.#teamRepo.findById(teamId)
     if (!team) {

@@ -1,6 +1,5 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { ArrowLeft, Settings } from 'lucide-react'
-import { useState } from 'react'
 
 import { DangerZone } from '../../../components/team'
 import { Button } from '../../../components/ui/button.tsx'
@@ -23,8 +22,6 @@ function TeamSettingsPage() {
   const { data: team, isLoading, isError } = useTeam(id)
   const { mutate: updateTeam, isPending: isUpdating } = useUpdateTeam(id)
   const { mutate: deleteTeam } = useDeleteTeam()
-  const [saveError, setSaveError] = useState('')
-  const [saved, setSaved] = useState(false)
 
   const form = useAppForm({
     defaultValues: {
@@ -34,15 +31,7 @@ function TeamSettingsPage() {
     onSubmit: ({ value }) => {
       const name = value.name.trim()
       if (!name) return
-      setSaveError('')
-      setSaved(false)
-      updateTeam(
-        { name, description: value.description.trim() || undefined },
-        {
-          onSuccess: () => setSaved(true),
-          onError: (err) => setSaveError(err.message),
-        },
-      )
+      updateTeam({ name, description: value.description.trim() || undefined })
     },
   })
 
@@ -114,14 +103,6 @@ function TeamSettingsPage() {
                 <field.Input label="Description (optionnel)" />
               )}
             </form.AppField>
-            {saveError && (
-              <p className="text-xs text-destructive">{saveError}</p>
-            )}
-            {saved && (
-              <p className="text-xs text-green-600">
-                Modifications enregistrées.
-              </p>
-            )}
             <div className="flex justify-end">
               <Button type="submit" disabled={isUpdating}>
                 {isUpdating ? 'Enregistrement…' : 'Enregistrer'}

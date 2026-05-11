@@ -11,5 +11,9 @@ export interface ITeamRepository {
     ownerId: string,
     data: { name: string; slug: string; description?: string },
   ): Promise<TeamWithMembers>
+  update(
+    id: string,
+    data: { name: string; slug: string; description?: string },
+  ): Promise<TeamWithMembers>
   delete(id: string): Promise<void>
 }

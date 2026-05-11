@@ -62,6 +62,23 @@ export class TeamRepository implements ITeamRepository {
     }) as unknown as Promise<TeamWithMembers>
   }
 
+  update(
+    id: string,
+    data: { name: string; slug: string; description?: string },
+  ): Promise<TeamWithMembers> {
+    return this.#prisma.team.update({
+      where: { id },
+      data,
+      include: {
+        members: {
+          include: {
+            user: { select: { id: true, username: true, avatar: true } },
+          },
+        },
+      },
+    }) as unknown as Promise<TeamWithMembers>
+  }
+
   delete(id: string): Promise<void> {
     return this.#prisma.team.delete({ where: { id } }).then(() => undefined)
   }

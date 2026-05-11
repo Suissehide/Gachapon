@@ -27,6 +27,11 @@ export interface TeamDomainInterface {
     ownerId: string,
     newOwnerId: string,
   ): Promise<void>
+  updateTeam(
+    teamId: string,
+    userId: string,
+    data: { name: string; description?: string },
+  ): Promise<TeamWithMembers>
   deleteTeam(teamId: string, userId: string): Promise<void>
   getMyTeams(userId: string): Promise<TeamSummary[]>
   getTeam(teamId: string, userId: string): Promise<TeamWithMembers>
