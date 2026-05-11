@@ -1,5 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+
 import { AdminStreakApi } from '../api/admin-streak.api.ts'
+import type {
+  CreateMilestoneInput,
+  RewardPatch,
+} from '../api/admin-streak.api.ts'
 
 export type { AdminStreakConfig, AdminMilestone } from '../api/admin-streak.api.ts'
 
@@ -12,8 +17,7 @@ export function useAdminStreak() {
 export function useAdminPatchStreakDefault() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (data: Parameters<typeof AdminStreakApi.patchDefault>[0]) =>
-      AdminStreakApi.patchDefault(data),
+    mutationFn: (data: RewardPatch) => AdminStreakApi.patchDefault(data),
     onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
   })
 }
@@ -21,7 +25,7 @@ export function useAdminPatchStreakDefault() {
 export function useAdminCreateMilestone() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (data: Parameters<typeof AdminStreakApi.createMilestone>[0]) =>
+    mutationFn: (data: CreateMilestoneInput) =>
       AdminStreakApi.createMilestone(data),
     onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
   })
@@ -30,7 +34,7 @@ export function useAdminCreateMilestone() {
 export function useAdminPatchMilestone() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof AdminStreakApi.patchMilestone>[1] }) =>
+    mutationFn: ({ id, data }: { id: string; data: RewardPatch }) =>
       AdminStreakApi.patchMilestone(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
   })

@@ -2,12 +2,21 @@ import { apiUrl } from '../constants/config.constant.ts'
 import type {
   AdminMilestone,
   AdminStreakConfig,
+  StreakReward,
 } from '../constants/streak.constant.ts'
 import { STREAK_ROUTES } from '../constants/streak.constant.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
 export type { AdminMilestone, AdminStreakConfig }
+
+// Partial reward payload: any field may be omitted (PATCH semantics).
+// `cardRarity: null` clears the card reward; omitted = leave unchanged.
+export type RewardPatch = Partial<StreakReward>
+
+export type CreateMilestoneInput = RewardPatch & {
+  day: number
+}
 
 export const AdminStreakApi = {
   getConfig: async (): Promise<AdminStreakConfig> => {
@@ -22,9 +31,7 @@ export const AdminStreakApi = {
     return response.json()
   },
 
-  patchDefault: async (
-    data: Partial<{ tokens: number; dust: number; xp: number }>,
-  ) => {
+  patchDefault: async (data: RewardPatch) => {
     const response = await fetchWithAuth(
       `${apiUrl}${STREAK_ROUTES.admin.default}`,
       {
@@ -43,12 +50,7 @@ export const AdminStreakApi = {
     return response.json()
   },
 
-  createMilestone: async (data: {
-    day: number
-    tokens: number
-    dust: number
-    xp: number
-  }) => {
+  createMilestone: async (data: CreateMilestoneInput) => {
     const response = await fetchWithAuth(
       `${apiUrl}${STREAK_ROUTES.admin.milestones}`,
       {
@@ -72,10 +74,7 @@ export const AdminStreakApi = {
     return response.json()
   },
 
-  patchMilestone: async (
-    id: string,
-    data: Partial<{ tokens: number; dust: number; xp: number }>,
-  ) => {
+  patchMilestone: async (id: string, data: RewardPatch) => {
     const response = await fetchWithAuth(
       `${apiUrl}${STREAK_ROUTES.admin.milestone(id)}`,
       {

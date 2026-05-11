@@ -27,8 +27,8 @@ export class AdminSkillTreeDomain {
   }
   deleteNode(id: string) { return this.#repo.deleteNode(id) }
 
-  createEdge(fromNodeId: string, toNodeId: string, minLevel: number) {
-    return this.#repo.createEdge(fromNodeId, toNodeId, minLevel)
+  createEdge(fromNodeId: string, toNodeId: string, minLevel: number, sourceHandle?: string, targetHandle?: string) {
+    return this.#repo.createEdge(fromNodeId, toNodeId, minLevel, sourceHandle, targetHandle)
   }
   deleteEdge(fromNodeId: string, toNodeId: string) {
     return this.#repo.deleteEdge(fromNodeId, toNodeId)

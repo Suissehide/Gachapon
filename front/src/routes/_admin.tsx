@@ -54,7 +54,7 @@ function AdminLayout() {
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
       <aside className="flex h-full w-56 flex-col border-r border-border bg-card">
-        <div className="border-b border-border px-5 py-4">
+        <div className="h-14 border-b border-border px-5 py-4">
           <span className="text-xs font-black uppercase tracking-widest text-primary">
             Admin
           </span>

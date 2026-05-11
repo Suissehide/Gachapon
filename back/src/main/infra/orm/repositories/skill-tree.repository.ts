@@ -100,11 +100,23 @@ export class SkillTreeRepository implements ISkillTreeRepository {
   }
 
   async deleteNode(id: string): Promise<void> {
+    // Refund skill points to all users who invested in this node
+    const investedSkills = await this.#prisma.userSkill.findMany({ where: { nodeId: id } })
+    if (investedSkills.length > 0) {
+      await Promise.all(
+        investedSkills.map((s) =>
+          this.#prisma.user.update({
+            where: { id: s.userId },
+            data: { skillPoints: { increment: s.level } },
+          }),
+        ),
+      )
+    }
     await this.#prisma.skillNode.delete({ where: { id } })
   }
 
-  createEdge(fromNodeId: string, toNodeId: string, minLevel: number) {
-    return this.#prisma.skillEdge.create({ data: { fromNodeId, toNodeId, minLevel } })
+  createEdge(fromNodeId: string, toNodeId: string, minLevel: number, sourceHandle?: string, targetHandle?: string) {
+    return this.#prisma.skillEdge.create({ data: { fromNodeId, toNodeId, minLevel, sourceHandle, targetHandle } })
   }
 
   async deleteEdge(fromNodeId: string, toNodeId: string): Promise<void> {

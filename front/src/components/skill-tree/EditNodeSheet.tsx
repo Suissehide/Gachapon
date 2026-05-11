@@ -1,24 +1,15 @@
-import { SheetHeader, SheetTitle } from '../ui/sheet.tsx'
-import { Button } from '../ui/button.tsx'
+import type { SkillBranch, SkillNode } from '../../api/skills.api.ts'
+import {
+  EFFECT_DESCRIPTIONS,
+  EFFECT_OPTIONS,
+} from '../../constants/skills.constant.ts'
 import { useAppForm } from '../../hooks/formConfig.tsx'
 import {
   useAdminDeleteNode,
   useAdminUpdateNode,
 } from '../../queries/useSkills.ts'
-import type { SkillBranch, SkillNode } from '../../api/skills.api.ts'
-
-const EFFECT_TYPES = [
-  'REGEN',
-  'LUCK',
-  'DUST_HARVEST',
-  'TOKEN_VAULT',
-  'FREE_PULL_CHANCE',
-  'MULTI_TOKEN_CHANCE',
-  'GOLDEN_BALL_CHANCE',
-  'SHOP_DISCOUNT',
-] as const
-
-const effectOptions = EFFECT_TYPES.map((t) => ({ value: t, label: t }))
+import { Button } from '../ui/button.tsx'
+import { SheetHeader, SheetTitle } from '../ui/sheet.tsx'
 
 type Props = {
   node: SkillNode
@@ -36,23 +27,34 @@ export function EditNodeSheet({ node, branch, onClose }: Props) {
       description: node.description,
       icon: node.icon,
       effectType: node.effectType,
-      levels: node.levels.map((l) => ({ level: l.level, effect: l.effect as number | undefined })),
+      maxLevel: node.maxLevel,
+      levels: Array.from({ length: node.maxLevel }, (_, i) => ({
+        level: i + 1,
+        effect: (node.levels.find((l) => l.level === i + 1)?.effect ?? 0) as
+          | number
+          | undefined,
+      })),
     },
     onSubmit: ({ value }) => {
-      const levels = value.levels.map((l, i) => ({
-        ...node.levels[i],
+      const levels = value.levels.slice(0, value.maxLevel).map((l, i) => ({
+        nodeId: node.id,
+        level: i + 1,
         effect: l.effect ?? 0,
       }))
-      updateNode.mutate({
-        id: node.id,
-        data: {
-          name: value.name,
-          description: value.description,
-          icon: value.icon,
-          effectType: value.effectType,
-          levels,
+      updateNode.mutate(
+        {
+          id: node.id,
+          data: {
+            name: value.name,
+            description: value.description,
+            icon: value.icon,
+            effectType: value.effectType,
+            maxLevel: value.maxLevel,
+            levels,
+          },
         },
-      })
+        { onSuccess: onClose },
+      )
     },
   })
 
@@ -61,55 +63,85 @@ export function EditNodeSheet({ node, branch, onClose }: Props) {
       <SheetHeader>
         <SheetTitle>{node.name}</SheetTitle>
       </SheetHeader>
-      <div className="flex-1 overflow-y-auto">
+
       <form
-        onSubmit={(e) => { e.preventDefault(); form.handleSubmit() }}
-        className="space-y-3 p-4"
+        onSubmit={(e) => {
+          e.preventDefault()
+          form.handleSubmit()
+        }}
+        className="flex flex-1 flex-col overflow-hidden"
       >
-        <p className="text-xs text-text-light">
-          Branche : <span className="text-text">{branch.name}</span>
-          <span className="ml-3 text-text-light">Max niveau : <span className="text-text">{node.maxLevel}</span></span>
-        </p>
+        <div className="flex-1 space-y-3 overflow-y-auto p-4">
+          <p className="text-xs text-text-light">
+            Branche : <span className="text-text">{branch.name}</span>
+          </p>
 
-        <form.AppField name="name">
-          {(f) => <f.Input label="Nom" />}
-        </form.AppField>
-        <form.AppField name="description">
-          {(f) => <f.Input label="Description" />}
-        </form.AppField>
-        <form.AppField name="icon">
-          {(f) => <f.Input label="Icône Lucide" />}
-        </form.AppField>
-        <form.AppField name="effectType">
-          {(f) => <f.Select label="Effet" options={effectOptions} />}
-        </form.AppField>
-
-        <p className="pt-2 text-xs font-semibold uppercase text-text-light">Valeurs par niveau</p>
-        {node.levels.map((_, i) => (
-          <form.AppField key={i} name={`levels[${i}].effect`}>
-            {(f) => <f.Number label={`Niveau ${i + 1}`} />}
+          <form.AppField name="name">
+            {(f) => <f.Input label="Nom" />}
           </form.AppField>
-        ))}
+          <form.AppField name="description">
+            {(f) => <f.Input label="Description" />}
+          </form.AppField>
+          <form.AppField name="icon">
+            {(f) => <f.Input label="Icône Lucide" />}
+          </form.AppField>
+          <form.AppField name="effectType">
+            {(f) => <f.Select label="Effet" options={EFFECT_OPTIONS} />}
+          </form.AppField>
+          <form.Subscribe selector={(s) => s.values.effectType}>
+            {(effectType) => (
+              <p className="-mt-2 text-xs text-text-light">
+                {EFFECT_DESCRIPTIONS[effectType] ?? ''}
+              </p>
+            )}
+          </form.Subscribe>
+          <form.AppField name="maxLevel">
+            {(f) => <f.Number label="Nombre de niveaux" />}
+          </form.AppField>
 
-        <Button type="submit" className="mt-2 w-full" disabled={updateNode.isPending}>
-          {updateNode.isPending ? 'Enregistrement…' : 'Enregistrer'}
-        </Button>
+          <form.Subscribe selector={(s) => s.values.maxLevel}>
+            {(maxLevel) => (
+              <>
+                <p className="pt-2 text-xs font-semibold uppercase text-text-light">
+                  Valeurs par niveau
+                </p>
+                {Array.from({ length: maxLevel }, (_, i) => (
+                  <form.AppField key={i} name={`levels[${i}].effect`}>
+                    {(f) => <f.Number label={`Niveau ${i + 1}`} />}
+                  </form.AppField>
+                ))}
+              </>
+            )}
+          </form.Subscribe>
+        </div>
+
+        <div className="w-full border-t border-border" />
+        <div className="flex shrink-0 justify-between gap-4 px-4 py-4">
+          <div>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => {
+                if (!window.confirm(`Supprimer le nœud "${node.name}" ?`)) {
+                  return
+                }
+                deleteNode.mutate(node.id)
+                onClose()
+              }}
+            >
+              Supprimer
+            </Button>
+          </div>
+          <div className="flex gap-4">
+            <Button type="submit" disabled={updateNode.isPending}>
+              {updateNode.isPending ? 'Mise à jour…' : 'Mettre à jour'}
+            </Button>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Annuler
+            </Button>
+          </div>
+        </div>
       </form>
-
-      <div className="px-4 pb-4">
-        <Button
-          variant="destructive"
-          className="w-full"
-          onClick={() => {
-            if (!window.confirm(`Supprimer le nœud "${node.name}" ?`)) return
-            deleteNode.mutate(node.id)
-            onClose()
-          }}
-        >
-          Supprimer ce nœud
-        </Button>
-      </div>
-      </div>
     </>
   )
 }

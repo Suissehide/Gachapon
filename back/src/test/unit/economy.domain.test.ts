@@ -45,6 +45,32 @@ describe('calculateTokens', () => {
     expect(result.nextTokenAt).toBeNull()
   })
 
+  it('reset lastTokenAt à maintenant quand tokens >= maxStock (évite regen fantôme après pull)', () => {
+    const staleLastTokenAt = new Date(Date.now() - 10 * 60 * 60 * 1000) // 10h ago
+    const before = Date.now()
+    const result = calculateTokens(staleLastTokenAt, 5, INTERVAL, MAX)
+    const after = Date.now()
+    expect(result.tokens).toBe(5)
+    // lastTokenAt doit être reset à ~maintenant, pas rester stale
+    expect(result.newLastTokenAt!.getTime()).toBeGreaterThanOrEqual(before)
+    expect(result.newLastTokenAt!.getTime()).toBeLessThanOrEqual(after)
+  })
+
+  it('ne régénère pas immédiatement un token après un pull depuis maxStock', () => {
+    // Simule : user était à 5/5 avec lastTokenAt stale (10h ago)
+    // Le pull appelle calculateTokens → sauve newLastTokenAt (= now) et tokens-1
+    const staleLastTokenAt = new Date(Date.now() - 10 * 60 * 60 * 1000)
+    const pullCalc = calculateTokens(staleLastTokenAt, 5, INTERVAL, MAX)
+    // Simule ce que le pull sauvegarde en DB
+    const savedTokens = pullCalc.tokens - 1 // 4
+    const savedLastTokenAt = pullCalc.newLastTokenAt!
+
+    // Simule le refetch balance (quelques ms plus tard)
+    const balanceCalc = calculateTokens(savedLastTokenAt, savedTokens, INTERVAL, MAX)
+    // Le token NE doit PAS être régénéré immédiatement
+    expect(balanceCalc.tokens).toBe(4)
+  })
+
   it('ne modifie pas lastTokenAt si aucun token gagné', () => {
     const lastTokenAt = new Date(Date.now() - 60 * 60 * 1000) // 1h < 4h
     const result = calculateTokens(lastTokenAt, 2, INTERVAL, MAX)

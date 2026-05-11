@@ -14,10 +14,13 @@ export function calculateTokens(
   maxStock: number,
 ): TokenState {
   // Déjà au max (ou au-dessus) → pas de regen, pas de nextTokenAt
+  // On reset lastTokenAt à maintenant pour que le clock de regen reparte
+  // de zéro si un token est ensuite consommé (sinon le calcul lazy
+  // re-crédite immédiatement le token perdu à cause du elapsed stale).
   if (currentTokens >= maxStock) {
     return {
       tokens: currentTokens,
-      newLastTokenAt: lastTokenAt,
+      newLastTokenAt: new Date(),
       nextTokenAt: null,
     }
   }

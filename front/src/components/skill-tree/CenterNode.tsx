@@ -1,14 +1,96 @@
-import { Handle, Position } from '@xyflow/react'
+import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { Hexagon } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 
-const SOURCE_HANDLES = [
-  { id: 's-top', position: Position.Top },
-  { id: 's-right', position: Position.Right },
-  { id: 's-bottom', position: Position.Bottom },
-  { id: 's-left', position: Position.Left },
+type BranchInfo = { id: string; name: string; color: string }
+
+export type CenterNodeData = {
+  branchByHandle: Record<string, BranchInfo | undefined>
+  onRenameBranch?: (branchId: string, newName: string) => void
+}
+
+const HANDLES = [
+  {
+    key: 'top',
+    position: Position.Top,
+    label: { bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: 6 } as const,
+  },
+  {
+    key: 'right',
+    position: Position.Right,
+    label: { left: '100%', top: '50%', transform: 'translateY(-50%)', marginLeft: 6 } as const,
+  },
+  {
+    key: 'bottom',
+    position: Position.Bottom,
+    label: { top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: 6 } as const,
+  },
+  {
+    key: 'left',
+    position: Position.Left,
+    label: { right: '100%', top: '50%', transform: 'translateY(-50%)', marginRight: 6 } as const,
+  },
 ] as const
 
-export function CenterNode() {
+function BranchLabel({
+  branch,
+  onRename,
+}: {
+  branch?: BranchInfo
+  onRename?: (id: string, name: string) => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [value, setValue] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (editing) inputRef.current?.select()
+  }, [editing])
+
+  if (!branch) return null
+
+  const save = () => {
+    setEditing(false)
+    const trimmed = value.trim()
+    if (trimmed && trimmed !== branch.name) onRename?.(branch.id, trimmed)
+  }
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={save}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') save()
+          if (e.key === 'Escape') setEditing(false)
+        }}
+        onMouseDown={(e) => e.stopPropagation()}
+        className="nodrag w-20 rounded border bg-white px-1 text-center text-xs"
+        style={{ borderColor: branch.color, color: branch.color }}
+      />
+    )
+  }
+
+  return (
+    <span
+      onClick={(e) => {
+        e.stopPropagation()
+        setValue(branch.name)
+        setEditing(true)
+      }}
+      className="nodrag nopan cursor-text whitespace-nowrap rounded bg-white px-2 py-0.5 text-xs font-semibold shadow-sm hover:underline"
+      style={{ color: branch.color, border: `1px solid ${branch.color}22` }}
+    >
+      {branch.name}
+    </span>
+  )
+}
+
+export function CenterNode({ data }: NodeProps) {
+  const { branchByHandle, onRenameBranch } = (data ?? {}) as CenterNodeData
+
   return (
     <div
       className="relative flex items-center justify-center rounded-full text-white shadow-lg"
@@ -21,52 +103,65 @@ export function CenterNode() {
     >
       <Hexagon size={28} className="pointer-events-none" />
 
-      {/* Full-cover invisible target handle: drop a wire anywhere on the
-          center node to register it as the target. */}
-      <Handle
-        id="t-center"
-        type="target"
-        position={Position.Left}
-        style={{
-          width: '100%',
-          height: '100%',
-          top: 0,
-          left: 0,
-          transform: 'none',
-          background: 'transparent',
-          border: 'none',
-          borderRadius: '50%',
-        }}
-      />
-
-      {/* Visible source handles fan out on each side. */}
-      {SOURCE_HANDLES.map(({ id, position }) => (
-        <Handle
-          key={id}
-          id={id}
-          type="source"
-          position={position}
-          style={{
-            width: 14,
-            height: 14,
-            background: '#fff',
-            border: '2px solid #6c47ff',
-            zIndex: 1,
-          }}
-        />
-      ))}
+      {HANDLES.map(({ key, position, label }) => {
+        const branch = branchByHandle?.[key]
+        const color = branch?.color ?? '#6c47ff'
+        return (
+          <span key={key}>
+            <Handle
+              id={`t-${key}`}
+              type="target"
+              position={position}
+              style={{ width: 14, height: 14, background: 'transparent', border: 'none', zIndex: 0 }}
+            />
+            <Handle
+              id={`s-${key}`}
+              type="source"
+              position={position}
+              style={{
+                width: 14,
+                height: 14,
+                background: '#fff',
+                border: `2px solid ${color}`,
+                zIndex: 1,
+              }}
+            />
+            <div style={{ position: 'absolute', ...label, pointerEvents: 'all' }}>
+              <BranchLabel branch={branch} onRename={onRenameBranch} />
+            </div>
+          </span>
+        )
+      })}
     </div>
   )
 }
 
-// Pick which side of the center node a child should hang off, based on its
-// position relative to (0, 0). Used so the auto-rendered "center → child"
-// edges fan out from the four sides instead of all stacking on one point.
-export function pickCenterSourceHandle(posX: number, posY: number): string {
-  const angle = Math.atan2(posY, posX) // -PI..PI
-  const PI_4 = Math.PI / 4
-  if (angle >= -PI_4 && angle < PI_4) return 's-right'
-  if (angle >= PI_4 && angle < 3 * PI_4) return 's-bottom'
-  if (angle >= -3 * PI_4 && angle < -PI_4) return 's-top'
-  return 's-left'
+const ORDER_TO_HANDLE: Record<number, string> = { 1: 'top', 2: 'right', 3: 'bottom', 4: 'left' }
+const HANDLE_TO_ORDER: Record<string, number> = { top: 1, right: 2, bottom: 3, left: 4 }
+
+export function handleKeyForBranchOrder(order: number): string | undefined {
+  return ORDER_TO_HANDLE[order]
+}
+
+export function branchOrderForHandleKey(key: string): number | undefined {
+  return HANDLE_TO_ORDER[key]
+}
+
+// Pick the best source/target handle pair for an edge between two nodes.
+export function pickHandles(
+  fromX: number,
+  fromY: number,
+  toX: number,
+  toY: number,
+): { sourceHandle: string; targetHandle: string } {
+  const dx = toX - fromX
+  const dy = toY - fromY
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    return dx >= 0
+      ? { sourceHandle: 's-right', targetHandle: 't-left' }
+      : { sourceHandle: 's-left', targetHandle: 't-right' }
+  }
+  return dy >= 0
+    ? { sourceHandle: 's-bottom', targetHandle: 't-top' }
+    : { sourceHandle: 's-top', targetHandle: 't-bottom' }
 }

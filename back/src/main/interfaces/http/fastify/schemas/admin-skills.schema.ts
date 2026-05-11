@@ -41,6 +41,8 @@ export const createEdgeSchema = z.object({
   fromNodeId: z.string().min(1),
   toNodeId: z.string().min(1),
   minLevel: z.int().min(1).default(1),
+  sourceHandle: z.string().optional(),
+  targetHandle: z.string().optional(),
 })
 
 export const edgeParamSchema = z.object({

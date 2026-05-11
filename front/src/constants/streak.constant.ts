@@ -1,9 +1,15 @@
+import type { CardRarity } from './card.constant.ts'
+
 // Types
-export type StreakDayEntry = {
-  day: number
+export type StreakReward = {
   tokens: number
   dust: number
   xp: number
+  cardRarity: CardRarity | null
+}
+
+export type StreakDayEntry = StreakReward & {
+  day: number
   isMilestone: boolean
   status: 'past' | 'current' | 'future'
 }
@@ -11,8 +17,10 @@ export type StreakDayEntry = {
 export type StreakSummary = {
   streakDays: number
   bestStreak: number
-  default: { tokens: number; dust: number; xp: number }
+  default: StreakReward
   days: StreakDayEntry[]
+  /** Next milestone the user will reach in the current 30-day cycle (or null). */
+  nextMilestone: StreakDayEntry | null
 }
 
 export type AdminMilestone = {
@@ -21,10 +29,11 @@ export type AdminMilestone = {
   tokens: number
   dust: number
   xp: number
+  cardRarity: CardRarity | null
 }
 
 export type AdminStreakConfig = {
-  default: { tokens: number; dust: number; xp: number } | null
+  default: StreakReward | null
   defaultMilestoneId: string | null
   milestones: AdminMilestone[]
 }

@@ -3,7 +3,7 @@ import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
 export type SkillNodeLevel = { nodeId: string; level: number; effect: number }
-export type SkillEdge = { fromNodeId: string; toNodeId: string; minLevel: number }
+export type SkillEdge = { fromNodeId: string; toNodeId: string; minLevel: number; sourceHandle?: string; targetHandle?: string }
 export type SkillNode = {
   id: string
   branchId: string

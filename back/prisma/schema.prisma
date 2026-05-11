@@ -332,11 +332,12 @@ model UserQuest {
 }
 
 model Reward {
-  id        String   @id @default(uuid())
-  tokens    Int      @default(0)
-  dust      Int      @default(0)
-  xp        Int      @default(0)
-  createdAt DateTime @default(now())
+  id         String      @id @default(uuid())
+  tokens     Int         @default(0)
+  dust       Int         @default(0)
+  xp         Int         @default(0)
+  cardRarity CardRarity?
+  createdAt  DateTime    @default(now())
 
   streakMilestones StreakMilestone[]
   achievements     Achievement[]
@@ -422,11 +423,13 @@ model SkillNodeLevel {
 }
 
 model SkillEdge {
-  fromNodeId String
-  toNodeId   String
-  minLevel   Int       @default(1)
-  fromNode   SkillNode @relation("EdgeFrom", fields: [fromNodeId], references: [id], onDelete: Cascade)
-  toNode     SkillNode @relation("EdgeTo",   fields: [toNodeId],   references: [id], onDelete: Cascade)
+  fromNodeId   String
+  toNodeId     String
+  minLevel     Int       @default(1)
+  sourceHandle String?
+  targetHandle String?
+  fromNode     SkillNode @relation("EdgeFrom", fields: [fromNodeId], references: [id], onDelete: Cascade)
+  toNode       SkillNode @relation("EdgeTo",   fields: [toNodeId],   references: [id], onDelete: Cascade)
 
   @@id([fromNodeId, toNodeId])
 }

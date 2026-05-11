@@ -1,36 +1,33 @@
 import {
   Background,
+  type Connection,
   Controls,
+  type Edge,
   MiniMap,
+  type Node,
   ReactFlow,
-  addEdge,
+  reconnectEdge,
   useEdgesState,
   useNodesState,
-  type Connection,
-  type Edge,
-  type Node,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
+
 import type { SkillBranch } from '../../api/skills.api.ts'
+import { BRANCH_PALETTE } from '../../constants/skills.constant.ts'
 import {
   useAdminCreateBranch,
   useAdminCreateEdge,
   useAdminDeleteEdge,
+  useAdminUpdateBranch,
   useAdminUpdateNode,
 } from '../../queries/useSkills.ts'
-import { Button } from '../ui/button.tsx'
-import { Input } from '../ui/input.tsx'
-import { Label } from '../ui/label.tsx'
 import {
-  Popup,
-  PopupBody,
-  PopupContent,
-  PopupFooter,
-  PopupHeader,
-  PopupTitle,
-} from '../ui/popup.tsx'
-import { CenterNode, pickCenterSourceHandle } from './CenterNode.tsx'
+  branchOrderForHandleKey,
+  CenterNode,
+  handleKeyForBranchOrder,
+  pickHandles,
+} from './CenterNode.tsx'
 import { SkillNodeComponent } from './SkillNode.tsx'
 
 const nodeTypes = { skillNode: SkillNodeComponent, centerNode: CenterNode }
@@ -40,27 +37,41 @@ type Props = {
   onNodeSelect: (nodeId: string | null) => void
 }
 
-const BRANCH_PALETTE = [
-  '#6c47ff',
-  '#f59e0b',
-  '#10b981',
-  '#ef4444',
-  '#3b82f6',
-  '#ec4899',
-  '#14b8a6',
-  '#a855f7',
-]
-
 export function AdminSkillTreeCanvas({ branches, onNodeSelect }: Props) {
   const createEdge = useAdminCreateEdge()
   const deleteEdge = useAdminDeleteEdge()
   const updateNode = useAdminUpdateNode()
   const createBranch = useAdminCreateBranch()
+  const updateBranch = useAdminUpdateBranch()
+
+  // Map branches to center handles by order (1=top, 2=right, 3=bottom, 4=left)
+  const branchByHandle = useMemo(() => {
+    const map: Record<string, { id: string; name: string; color: string }> = {}
+    for (const b of branches) {
+      const key = handleKeyForBranchOrder(b.order)
+      if (key) {
+        map[key] = { id: b.id, name: b.name, color: b.color }
+      }
+    }
+    return map
+  }, [branches])
+
+  const handleRenameBranch = useCallback(
+    (branchId: string, newName: string) => {
+      updateBranch.mutate({ id: branchId, data: { name: newName } })
+    },
+    [updateBranch],
+  )
+
+  // Keep a stable ref so the center node data doesn't trigger re-renders
+  const renameBranchRef = useRef(handleRenameBranch)
+  renameBranchRef.current = handleRenameBranch
+  const stableRenameBranch = useCallback(
+    (id: string, name: string) => renameBranchRef.current(id, name),
+    [],
+  )
 
   // Walk parent edges (edgesTo) up to a root and use the root's branch color.
-  // A "root" is a node with no incoming edges (= virtually connected to the
-  // center node). New nodes default to whichever branch but their displayed
-  // color follows the parent chain.
   const colorByNodeId = useMemo(() => {
     const allNodes = branches.flatMap((b) =>
       b.nodes.map((n) => ({ node: n, branchColor: b.color })),
@@ -69,11 +80,17 @@ export function AdminSkillTreeCanvas({ branches, onNodeSelect }: Props) {
     const cache = new Map<string, string>()
 
     const resolve = (id: string, seen: Set<string>): string => {
-      if (cache.has(id)) return cache.get(id)!
-      if (seen.has(id)) return byId.get(id)?.branchColor ?? '#6c47ff'
+      if (cache.has(id)) {
+        return cache.get(id) ?? '#6c47ff'
+      }
+      if (seen.has(id)) {
+        return byId.get(id)?.branchColor ?? '#6c47ff'
+      }
       seen.add(id)
       const entry = byId.get(id)
-      if (!entry) return '#6c47ff'
+      if (!entry) {
+        return '#6c47ff'
+      }
       if (entry.node.edgesTo.length === 0) {
         cache.set(id, entry.branchColor)
         return entry.branchColor
@@ -85,7 +102,9 @@ export function AdminSkillTreeCanvas({ branches, onNodeSelect }: Props) {
     }
 
     const map = new Map<string, string>()
-    for (const { node } of allNodes) map.set(node.id, resolve(node.id, new Set()))
+    for (const { node } of allNodes) {
+      map.set(node.id, resolve(node.id, new Set()))
+    }
     return map
   }, [branches])
 
@@ -95,7 +114,7 @@ export function AdminSkillTreeCanvas({ branches, onNodeSelect }: Props) {
         id: 'center',
         type: 'centerNode',
         position: { x: -36, y: -36 },
-        data: {},
+        data: { branchByHandle, onRenameBranch: stableRenameBranch },
         draggable: false,
         selectable: false,
       },
@@ -122,147 +141,262 @@ export function AdminSkillTreeCanvas({ branches, onNodeSelect }: Props) {
     }
 
     return result
-  }, [branches, colorByNodeId])
+  }, [branches, colorByNodeId, branchByHandle, stableRenameBranch])
+
+  const nodePositions = useMemo(() => {
+    const map = new Map<string, { x: number; y: number }>()
+    map.set('center', { x: 0, y: 0 })
+    for (const branch of branches) {
+      for (const node of branch.nodes) {
+        map.set(node.id, { x: node.posX, y: node.posY })
+      }
+    }
+    return map
+  }, [branches])
 
   const initialEdges: Edge[] = useMemo(() => {
     const result: Edge[] = []
     for (const branch of branches) {
+      const handleKey = handleKeyForBranchOrder(branch.order)
       for (const node of branch.nodes) {
         const color = colorByNodeId.get(node.id) ?? branch.color
-        if (node.edgesTo.length === 0) {
+        // Root nodes → visual link to center via their branch handle
+        if (node.edgesTo.length === 0 && handleKey) {
           result.push({
             id: `center-${node.id}`,
             source: 'center',
-            sourceHandle: pickCenterSourceHandle(node.posX, node.posY),
+            sourceHandle: `s-${handleKey}`,
             target: node.id,
+            targetHandle: pickHandles(0, 0, node.posX, node.posY).targetHandle,
             style: { stroke: color },
+            reconnectable: false,
           })
         }
         for (const edge of node.edgesFrom) {
           const childColor = colorByNodeId.get(edge.toNodeId) ?? color
+          // Use DB-stored handles if available, otherwise compute from position
+          let { sourceHandle, targetHandle } = edge
+          if (!sourceHandle || !targetHandle) {
+            const fromPos = nodePositions.get(edge.fromNodeId) ?? { x: 0, y: 0 }
+            const toPos = nodePositions.get(edge.toNodeId) ?? { x: 0, y: 0 }
+            const computed = pickHandles(fromPos.x, fromPos.y, toPos.x, toPos.y)
+            sourceHandle = sourceHandle ?? computed.sourceHandle
+            targetHandle = targetHandle ?? computed.targetHandle
+          }
           result.push({
             id: `${edge.fromNodeId}-${edge.toNodeId}`,
             source: edge.fromNodeId,
             target: edge.toNodeId,
+            sourceHandle,
+            targetHandle,
             style: { stroke: childColor },
+            reconnectable: 'target' as const,
           })
         }
       }
     }
     return result
-  }, [branches, colorByNodeId])
+  }, [branches, colorByNodeId, nodePositions])
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
 
   useEffect(() => {
     setNodes(initialNodes)
-  }, [initialNodes])
+  }, [initialNodes, setNodes])
+
+  // Sync edges from backend — block new center edges that weren't already local
   useEffect(() => {
-    setEdges(initialEdges)
-  }, [initialEdges])
+    setEdges((currentEdges) => {
+      const currentById = new Map(currentEdges.map((e) => [e.id, e]))
+      return initialEdges.filter((edge) => {
+        if (edge.id.startsWith('center-')) {
+          return currentById.has(edge.id)
+        }
+        return true
+      })
+    })
+  }, [initialEdges, setEdges])
 
-  const [pendingBranchNodeId, setPendingBranchNodeId] = useState<string | null>(
-    null,
-  )
-  const [branchName, setBranchName] = useState('')
-
-  const detachFromParents = useCallback(
-    async (nodeId: string) => {
-      const targetNode = branches
-        .flatMap((b) => b.nodes)
-        .find((n) => n.id === nodeId)
-      if (!targetNode) return
-      for (const edge of targetNode.edgesTo) {
-        await deleteEdge.mutateAsync({
-          fromNodeId: edge.fromNodeId,
-          toNodeId: edge.toNodeId,
-        })
-      }
-    },
-    [branches, deleteEdge],
-  )
-
-  const handleConnectToCenter = useCallback(
-    (nodeId: string) => {
-      const targetNode = branches
-        .flatMap((b) => b.nodes)
-        .find((n) => n.id === nodeId)
-      if (!targetNode) return
-
-      const hasAnyConnection =
-        targetNode.edgesTo.length > 0 || targetNode.edgesFrom.length > 0
-
-      if (hasAnyConnection) {
-        // Already linked somewhere → keep its existing branch, just detach
-        // from its parents so it becomes a root.
-        detachFromParents(nodeId)
+  // Connect a node to a center handle → assign its branch, detach from parents
+  const handleCenterConnection = useCallback(
+    async (nodeId: string, handleKey: string) => {
+      const order = branchOrderForHandleKey(handleKey)
+      if (!order) {
         return
       }
 
-      // Brand new isolated node → ask the user to name a new main branch.
-      setBranchName('')
-      setPendingBranchNodeId(nodeId)
+      let branch = branches.find((b) => b.order === order)
+
+      if (!branch) {
+        branch = await createBranch.mutateAsync({
+          name: `Branche ${order}`,
+          description: '',
+          icon: 'Star',
+          color: BRANCH_PALETTE[(order - 1) % BRANCH_PALETTE.length],
+          order,
+        })
+      }
+
+      // Detach from existing parents
+      const node = branches.flatMap((b) => b.nodes).find((n) => n.id === nodeId)
+      if (node) {
+        for (const edge of node.edgesTo) {
+          await deleteEdge.mutateAsync({
+            fromNodeId: edge.fromNodeId,
+            toNodeId: edge.toNodeId,
+          })
+        }
+      }
+
+      // Assign branch
+      await updateNode.mutateAsync({
+        id: nodeId,
+        data: { branchId: branch.id },
+      })
     },
-    [branches, detachFromParents],
+    [branches, createBranch, deleteEdge, updateNode],
   )
-
-  const submitNewBranch = useCallback(async () => {
-    const nodeId = pendingBranchNodeId
-    const name = branchName.trim()
-    if (!nodeId || !name) return
-
-    const branch = await createBranch.mutateAsync({
-      name,
-      description: '',
-      icon: 'Star',
-      color: BRANCH_PALETTE[branches.length % BRANCH_PALETTE.length],
-      order: branches.length + 1,
-    })
-    await updateNode.mutateAsync({
-      id: nodeId,
-      data: { branchId: branch.id },
-    })
-    setPendingBranchNodeId(null)
-    setBranchName('')
-  }, [pendingBranchNodeId, branchName, branches.length, createBranch, updateNode])
 
   const onConnect = useCallback(
     (connection: Connection) => {
-      if (!connection.source || !connection.target) return
-      if (connection.source === connection.target) return
-
-      if (connection.source === 'center' || connection.target === 'center') {
-        const otherId =
-          connection.source === 'center' ? connection.target : connection.source
-        if (otherId && otherId !== 'center') handleConnectToCenter(otherId)
+      const { source, target } = connection
+      if (!source || !target) {
+        return
+      }
+      if (source === target) {
         return
       }
 
+      // Center connection → assign branch + show edge immediately
+      if (source === 'center' || target === 'center') {
+        const isCenterSource = source === 'center'
+        const nodeId = isCenterSource ? target : source
+        const handleId = isCenterSource
+          ? connection.sourceHandle
+          : connection.targetHandle
+        const handleKey = handleId?.replace(/^[st]-/, '')
+        if (nodeId !== 'center' && handleKey) {
+          const branch = branchByHandle[handleKey]
+          setEdges((eds) => {
+            const filtered = eds.filter((e) => e.id !== `center-${nodeId}`)
+            return [
+              ...filtered,
+              {
+                id: `center-${nodeId}`,
+                source: 'center',
+                sourceHandle: `s-${handleKey}`,
+                target: nodeId,
+                targetHandle:
+                  connection.targetHandle ??
+                  connection.sourceHandle ??
+                  undefined,
+                style: { stroke: branch?.color ?? '#6c47ff' },
+                reconnectable: false,
+              },
+            ]
+          })
+          handleCenterConnection(nodeId, handleKey)
+        }
+        return
+      }
+
+      // Node-to-node connection
       createEdge.mutate({
-        fromNodeId: connection.source,
-        toNodeId: connection.target,
+        fromNodeId: source,
+        toNodeId: target,
         minLevel: 1,
+        sourceHandle: connection.sourceHandle ?? undefined,
+        targetHandle: connection.targetHandle ?? undefined,
       })
-      setEdges((eds) => addEdge(connection, eds))
+      setEdges((eds) => [
+        ...eds,
+        {
+          id: `${source}-${target}`,
+          source,
+          target,
+          sourceHandle: connection.sourceHandle ?? undefined,
+          targetHandle: connection.targetHandle ?? undefined,
+          style: { stroke: colorByNodeId.get(target) ?? '#6c47ff' },
+          reconnectable: 'target' as const,
+        },
+      ])
     },
-    [createEdge, setEdges, handleConnectToCenter],
+    [
+      createEdge,
+      setEdges,
+      handleCenterConnection,
+      colorByNodeId,
+      branchByHandle,
+    ],
   )
 
   const onNodeDragStop = useCallback(
-    (_: any, node: Node) => {
-      if (node.id === 'center') return
+    (_: React.MouseEvent, node: Node) => {
+      if (node.id === 'center') {
+        return
+      }
       updateNode.mutate({
         id: node.id,
-        data: { posX: Math.round(node.position.x), posY: Math.round(node.position.y) },
+        data: {
+          posX: Math.round(node.position.x),
+          posY: Math.round(node.position.y),
+        },
       })
     },
     [updateNode],
   )
 
+  const reconnectSucceeded = useRef(false)
+
+  const onReconnectStart = useCallback(() => {
+    reconnectSucceeded.current = false
+  }, [])
+
+  const onReconnect = useCallback(
+    (oldEdge: Edge, newConnection: Connection) => {
+      if (
+        oldEdge.source === 'center' ||
+        !newConnection.source ||
+        !newConnection.target
+      ) {
+        return
+      }
+      if (newConnection.source === newConnection.target) {
+        return
+      }
+
+      reconnectSucceeded.current = true
+      deleteEdge.mutate({
+        fromNodeId: oldEdge.source,
+        toNodeId: oldEdge.target,
+      })
+      createEdge.mutate({
+        fromNodeId: newConnection.source,
+        toNodeId: newConnection.target,
+        minLevel: 1,
+        sourceHandle: newConnection.sourceHandle ?? undefined,
+        targetHandle: newConnection.targetHandle ?? undefined,
+      })
+      setEdges((eds) => reconnectEdge(oldEdge, newConnection, eds))
+    },
+    [deleteEdge, createEdge, setEdges],
+  )
+
+  const onReconnectEnd = useCallback(
+    (_: MouseEvent | TouchEvent, _edge: Edge) => {
+      if (!reconnectSucceeded.current) {
+        setEdges(initialEdges)
+      }
+    },
+    [setEdges, initialEdges],
+  )
+
   const onEdgeDoubleClick = useCallback(
-    (_: any, edge: Edge) => {
-      if (edge.source === 'center') return
+    (_: React.MouseEvent, edge: Edge) => {
+      if (edge.source === 'center') {
+        return
+      }
       deleteEdge.mutate({ fromNodeId: edge.source, toNodeId: edge.target })
       setEdges((eds) => eds.filter((e) => e.id !== edge.id))
     },
@@ -270,78 +404,30 @@ export function AdminSkillTreeCanvas({ branches, onNodeSelect }: Props) {
   )
 
   return (
-    <>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onNodeDragStop={onNodeDragStop}
-        onEdgeDoubleClick={onEdgeDoubleClick}
-        onNodeClick={(_, node) => onNodeSelect(node.id === 'center' ? null : node.id)}
-        connectionRadius={60}
-        snapToGrid
-        snapGrid={[24, 24]}
-        fitView
-        proOptions={{ hideAttribution: true }}
-      >
-        <Background color="#1f2937" gap={24} />
-        <Controls />
-        <MiniMap />
-      </ReactFlow>
-
-      <Popup
-        open={pendingBranchNodeId !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setPendingBranchNodeId(null)
-            setBranchName('')
-          }
-        }}
-      >
-        <PopupContent>
-          <PopupHeader>
-            <PopupTitle>Nouvelle branche principale</PopupTitle>
-          </PopupHeader>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              submitNewBranch()
-            }}
-          >
-            <PopupBody className="space-y-3">
-              <Label htmlFor="new-branch-name">Nom de la branche</Label>
-              <Input
-                id="new-branch-name"
-                autoFocus
-                value={branchName}
-                onChange={(e) => setBranchName(e.target.value)}
-                placeholder="Ex. Fortune"
-              />
-            </PopupBody>
-            <PopupFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setPendingBranchNodeId(null)
-                  setBranchName('')
-                }}
-              >
-                Annuler
-              </Button>
-              <Button
-                type="submit"
-                disabled={!branchName.trim() || createBranch.isPending}
-              >
-                {createBranch.isPending ? 'Création…' : 'Créer'}
-              </Button>
-            </PopupFooter>
-          </form>
-        </PopupContent>
-      </Popup>
-    </>
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      nodeTypes={nodeTypes}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onConnect={onConnect}
+      onReconnectStart={onReconnectStart}
+      onReconnect={onReconnect}
+      onReconnectEnd={onReconnectEnd}
+      onNodeDragStop={onNodeDragStop}
+      onEdgeDoubleClick={onEdgeDoubleClick}
+      onNodeClick={(_, node) =>
+        onNodeSelect(node.id === 'center' ? null : node.id)
+      }
+      connectionRadius={60}
+      snapToGrid
+      snapGrid={[24, 24]}
+      fitView
+      proOptions={{ hideAttribution: true }}
+    >
+      <Background color="#1f2937" gap={24} />
+      <Controls />
+      <MiniMap />
+    </ReactFlow>
   )
 }

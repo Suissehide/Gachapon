@@ -1,12 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router'
 import type { ColumnDef } from '@tanstack/react-table'
-import { Flame, Plus, Trash2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { Coins, Crown, Flame, Gem, Plus, Sparkles, Star, Trash2 } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { ReactTable } from '../../components/table/reactTable.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import { Input } from '../../components/ui/input.tsx'
 import { Label } from '../../components/ui/label.tsx'
+import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
 import {
   Sheet,
   SheetContent,
@@ -14,7 +15,17 @@ import {
   SheetTitle,
 } from '../../components/ui/sheet.tsx'
 import {
-  type AdminMilestone,
+  RARITY_OPTIONS,
+  type CardRarity,
+} from '../../constants/card.constant.ts'
+import type {
+  RewardPatch,
+} from '../../api/admin-streak.api.ts'
+import type {
+  AdminMilestone,
+  StreakReward,
+} from '../../constants/streak.constant.ts'
+import {
   useAdminCreateMilestone,
   useAdminDeleteMilestone,
   useAdminPatchMilestone,
@@ -31,6 +42,209 @@ type DrawerMode =
   | { type: 'create' }
   | null
 
+// ── Reward editor ─────────────────────────────────────────────────────────
+// Used in both the default-reward section and the milestone create/edit drawer.
+// Drives a controlled subset of reward fields ("mode") so admins can choose
+// between a single reward type or several at once.
+
+type RewardMode = 'tokens' | 'dust' | 'xp' | 'card' | 'mixed'
+
+const REWARD_MODE_OPTIONS: { value: RewardMode; label: string }[] = [
+  { value: 'tokens', label: 'Jetons' },
+  { value: 'dust', label: 'Dust' },
+  { value: 'xp', label: 'XP' },
+  { value: 'card', label: 'Carte' },
+  { value: 'mixed', label: 'Mixte' },
+]
+
+function detectMode(reward: Partial<StreakReward>): RewardMode {
+  const fields = [
+    (reward.tokens ?? 0) > 0 ? 'tokens' : null,
+    (reward.dust ?? 0) > 0 ? 'dust' : null,
+    (reward.xp ?? 0) > 0 ? 'xp' : null,
+    reward.cardRarity ? 'card' : null,
+  ].filter(Boolean)
+  if (fields.length === 0) return 'tokens'
+  if (fields.length === 1) return fields[0] as RewardMode
+  return 'mixed'
+}
+
+type RewardDraft = {
+  mode: RewardMode
+  tokens: string
+  dust: string
+  xp: string
+  cardRarity: CardRarity | null
+}
+
+function emptyDraft(seed?: Partial<StreakReward>): RewardDraft {
+  const mode = seed ? detectMode(seed) : 'tokens'
+  return {
+    mode,
+    tokens: String(seed?.tokens ?? 0),
+    dust: String(seed?.dust ?? 0),
+    xp: String(seed?.xp ?? 0),
+    cardRarity: seed?.cardRarity ?? null,
+  }
+}
+
+// Build the partial payload to send to PATCH/POST.
+// Fields outside the active "mode" are zeroed (or nulled for cardRarity) so
+// switching modes properly clears the previous reward type on the server.
+function draftToPayload(draft: RewardDraft): RewardPatch {
+  const tokens = Number(draft.tokens) || 0
+  const dust = Number(draft.dust) || 0
+  const xp = Number(draft.xp) || 0
+  const cardRarity = draft.cardRarity
+
+  switch (draft.mode) {
+    case 'tokens':
+      return { tokens, dust: 0, xp: 0, cardRarity: null }
+    case 'dust':
+      return { tokens: 0, dust, xp: 0, cardRarity: null }
+    case 'xp':
+      return { tokens: 0, dust: 0, xp, cardRarity: null }
+    case 'card':
+      return { tokens: 0, dust: 0, xp: 0, cardRarity }
+    case 'mixed':
+      return { tokens, dust, xp, cardRarity }
+  }
+}
+
+const rarityIcon = (rarity: CardRarity) => {
+  switch (rarity) {
+    case 'EPIC':
+      return <Star className="h-3.5 w-3.5" />
+    case 'LEGENDARY':
+      return <Crown className="h-3.5 w-3.5" />
+    default:
+      return <Gem className="h-3.5 w-3.5" />
+  }
+}
+
+function RewardEditor({
+  draft,
+  onChange,
+}: {
+  draft: RewardDraft
+  onChange: (next: RewardDraft) => void
+}) {
+  const updateMode = (mode: RewardMode) => onChange({ ...draft, mode })
+
+  return (
+    <div className="space-y-3">
+      <div className="space-y-1.5">
+        <Label>Type de récompense</Label>
+        <SegmentedControl<RewardMode>
+          options={REWARD_MODE_OPTIONS}
+          value={draft.mode}
+          onChange={updateMode}
+        />
+      </div>
+
+      {(draft.mode === 'tokens' || draft.mode === 'mixed') && (
+        <NumberField
+          label="Jetons"
+          icon={<Coins className="h-3.5 w-3.5 text-yellow-400" />}
+          value={draft.tokens}
+          onChange={(tokens) => onChange({ ...draft, tokens })}
+        />
+      )}
+      {(draft.mode === 'dust' || draft.mode === 'mixed') && (
+        <NumberField
+          label="Dust"
+          icon={<Sparkles className="h-3.5 w-3.5 text-sky-400" />}
+          value={draft.dust}
+          onChange={(dust) => onChange({ ...draft, dust })}
+        />
+      )}
+      {(draft.mode === 'xp' || draft.mode === 'mixed') && (
+        <NumberField
+          label="XP"
+          icon={<Star className="h-3.5 w-3.5 text-purple-400" />}
+          value={draft.xp}
+          onChange={(xp) => onChange({ ...draft, xp })}
+        />
+      )}
+      {(draft.mode === 'card' || draft.mode === 'mixed') && (
+        <RarityField
+          value={draft.cardRarity}
+          onChange={(cardRarity) => onChange({ ...draft, cardRarity })}
+        />
+      )}
+    </div>
+  )
+}
+
+function NumberField({
+  label,
+  icon,
+  value,
+  onChange,
+}: {
+  label: string
+  icon: React.ReactNode
+  value: string
+  onChange: (next: string) => void
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="flex items-center gap-1.5">
+        {icon}
+        {label}
+      </Label>
+      <Input
+        type="number"
+        min={0}
+        step={1}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="0"
+      />
+    </div>
+  )
+}
+
+function RarityField({
+  value,
+  onChange,
+}: {
+  value: CardRarity | null
+  onChange: (next: CardRarity | null) => void
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="flex items-center gap-1.5">
+        <Gem className="h-3.5 w-3.5 text-violet-400" />
+        Rareté de la carte
+      </Label>
+      <div className="flex flex-wrap gap-1">
+        {RARITY_OPTIONS.map((opt) => {
+          const rarity = opt.value as CardRarity
+          const active = value === rarity
+          return (
+            <button
+              key={rarity}
+              type="button"
+              onClick={() => onChange(active ? null : rarity)}
+              className={[
+                'cursor-pointer flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold transition-all',
+                active
+                  ? 'border-primary bg-primary/10 text-text'
+                  : 'border-border bg-card text-text-light hover:text-text',
+              ].join(' ')}
+            >
+              {rarityIcon(rarity)}
+              {opt.label}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────
 function AdminStreakPage() {
   const { data, isLoading } = useAdminStreak()
   const patchDefault = useAdminPatchStreakDefault()
@@ -38,55 +252,41 @@ function AdminStreakPage() {
   const patchMilestone = useAdminPatchMilestone()
   const deleteMilestone = useAdminDeleteMilestone()
 
-  const [defaultDraft, setDefaultDraft] = useState<{
-    tokens?: number
-    dust?: number
-    xp?: number
-  }>({})
+  // Default reward editor — initialised from server data.
+  const [defaultDraft, setDefaultDraft] = useState<RewardDraft>(() => emptyDraft())
+  useEffect(() => {
+    if (data?.default) {
+      setDefaultDraft(emptyDraft(data.default))
+    }
+  }, [data?.default])
+
   const [drawer, setDrawer] = useState<DrawerMode>(null)
-  const [draft, setDraft] = useState({ day: '', tokens: '', dust: '', xp: '' })
+  const [draft, setDraft] = useState<RewardDraft & { day: string }>(() => ({
+    ...emptyDraft(),
+    day: '',
+  }))
 
   const openCreate = () => {
-    setDraft({ day: '', tokens: '', dust: '', xp: '' })
+    setDraft({ ...emptyDraft(), day: '' })
     setDrawer({ type: 'create' })
   }
 
   const openEdit = (m: AdminMilestone) => {
-    setDraft({
-      day: String(m.day),
-      tokens: String(m.tokens),
-      dust: String(m.dust),
-      xp: String(m.xp),
-    })
+    setDraft({ ...emptyDraft(m), day: String(m.day) })
     setDrawer({ type: 'edit', milestone: m })
   }
 
   const closeDrawer = () => setDrawer(null)
 
   const handleSaveDrawer = () => {
-    const { day, tokens, dust, xp } = draft
-    if (!tokens || !dust || !xp) {
-      return
-    }
+    const payload = draftToPayload(draft)
     if (drawer?.type === 'create') {
-      if (!day) {
-        return
-      }
-      createMilestone.mutate(
-        {
-          day: Number(day),
-          tokens: Number(tokens),
-          dust: Number(dust),
-          xp: Number(xp),
-        },
-        { onSuccess: closeDrawer },
-      )
+      const day = Number(draft.day)
+      if (!day) return
+      createMilestone.mutate({ day, ...payload }, { onSuccess: closeDrawer })
     } else if (drawer?.type === 'edit') {
       patchMilestone.mutate(
-        {
-          id: drawer.milestone.id,
-          data: { tokens: Number(tokens), dust: Number(dust), xp: Number(xp) },
-        },
+        { id: drawer.milestone.id, data: payload },
         { onSuccess: closeDrawer },
       )
     }
@@ -105,28 +305,9 @@ function AdminStreakPage() {
         ),
       },
       {
-        accessorKey: 'tokens',
-        header: 'Tokens',
-        size: 100,
-        cell: ({ row }) => (
-          <span className="tabular-nums text-text">{row.original.tokens}</span>
-        ),
-      },
-      {
-        accessorKey: 'dust',
-        header: 'Dust',
-        size: 100,
-        cell: ({ row }) => (
-          <span className="tabular-nums text-text">{row.original.dust}</span>
-        ),
-      },
-      {
-        accessorKey: 'xp',
-        header: 'XP',
-        size: 100,
-        cell: ({ row }) => (
-          <span className="tabular-nums text-text">{row.original.xp}</span>
-        ),
+        id: 'reward',
+        header: 'Récompense',
+        cell: ({ row }) => <MilestoneRewardSummary milestone={row.original} />,
       },
       {
         id: 'actions',
@@ -159,8 +340,6 @@ function AdminStreakPage() {
     )
   }
 
-  const currentDefault = { ...data.default, ...defaultDraft }
-
   return (
     <div className="flex h-full flex-col gap-6 p-8">
       {/* Header */}
@@ -177,38 +356,15 @@ function AdminStreakPage() {
           </h3>
           <div className="flex-1 border-b border-border" />
         </div>
-        <div className="flex justify-between rounded-md border border-border bg-card p-4">
-          <div className="flex gap-4">
-            {(['tokens', 'dust', 'xp'] as const).map((field) => (
-              <div key={field} className="flex flex-col justify-between gap-1">
-                <Label className="capitalize text-text">{field}</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={currentDefault?.[field] ?? ''}
-                  onChange={(e) =>
-                    setDefaultDraft((d) => ({
-                      ...d,
-                      [field]: Number(e.target.value),
-                    }))
-                  }
-                  className="w-28 text-right"
-                />
-              </div>
-            ))}
-          </div>
+        <div className="space-y-4 rounded-md border border-border bg-card p-4">
+          <RewardEditor draft={defaultDraft} onChange={setDefaultDraft} />
 
-          <div className="mt-4 flex justify-end">
+          <div className="flex justify-end">
             <Button
-              onClick={() => {
-                patchDefault.mutate(defaultDraft, {
-                  onSuccess: () => setDefaultDraft({}),
-                })
-              }}
-              disabled={
-                Object.keys(defaultDraft).length === 0 || patchDefault.isPending
+              onClick={() =>
+                patchDefault.mutate(draftToPayload(defaultDraft))
               }
+              disabled={patchDefault.isPending}
             >
               Sauvegarder
             </Button>
@@ -265,20 +421,10 @@ function AdminStreakPage() {
                 />
               </div>
             )}
-            {(['tokens', 'dust', 'xp'] as const).map((field) => (
-              <div key={field} className="space-y-1.5">
-                <Label className="capitalize">{field}</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={draft[field]}
-                  onChange={(e) =>
-                    setDraft((d) => ({ ...d, [field]: e.target.value }))
-                  }
-                  placeholder="0"
-                />
-              </div>
-            ))}
+            <RewardEditor
+              draft={draft}
+              onChange={(next) => setDraft((d) => ({ ...next, day: d.day }))}
+            />
             <div className="flex gap-2 pt-2">
               <Button
                 className="flex-1"
@@ -295,5 +441,73 @@ function AdminStreakPage() {
         </SheetContent>
       </Sheet>
     </div>
+  )
+}
+
+// Compact, multi-type summary for the milestone table — mirrors how the user
+// modal collapses several reward types into a single row of badges.
+function MilestoneRewardSummary({ milestone }: { milestone: AdminMilestone }) {
+  const badges: React.ReactNode[] = []
+  if (milestone.cardRarity) {
+    badges.push(
+      <Badge key="card" tone="violet">
+        {rarityIcon(milestone.cardRarity)}
+        Carte {milestone.cardRarity.toLowerCase()}
+      </Badge>,
+    )
+  }
+  if (milestone.tokens > 0) {
+    badges.push(
+      <Badge key="tokens" tone="yellow">
+        <Coins className="h-3 w-3" />
+        {milestone.tokens}
+      </Badge>,
+    )
+  }
+  if (milestone.dust > 0) {
+    badges.push(
+      <Badge key="dust" tone="sky">
+        <Sparkles className="h-3 w-3" />
+        {milestone.dust}
+      </Badge>,
+    )
+  }
+  if (milestone.xp > 0) {
+    badges.push(
+      <Badge key="xp" tone="purple">
+        <Star className="h-3 w-3" />
+        {milestone.xp} XP
+      </Badge>,
+    )
+  }
+
+  if (badges.length === 0) {
+    return <span className="text-text-light/40">—</span>
+  }
+  return <div className="flex flex-wrap items-center gap-1.5">{badges}</div>
+}
+
+const TONE: Record<string, string> = {
+  yellow: 'bg-yellow-400/10 text-yellow-400 border-yellow-400/30',
+  sky: 'bg-sky-400/10 text-sky-400 border-sky-400/30',
+  purple: 'bg-purple-400/10 text-purple-400 border-purple-400/30',
+  violet: 'bg-violet-400/10 text-violet-400 border-violet-400/30',
+}
+function Badge({
+  tone,
+  children,
+}: {
+  tone: keyof typeof TONE
+  children: React.ReactNode
+}) {
+  return (
+    <span
+      className={[
+        'inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-semibold tabular-nums',
+        TONE[tone],
+      ].join(' ')}
+    >
+      {children}
+    </span>
   )
 }

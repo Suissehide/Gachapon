@@ -12,7 +12,7 @@ import {
   Scissors,
   Settings,
 } from 'lucide-react'
-import { useState } from 'react'
+import { type ReactNode, useState } from 'react'
 
 import { AdminSkillTreeCanvas } from '../../components/skill-tree/AdminSkillTreeCanvas.tsx'
 import { ConfigSheet } from '../../components/skill-tree/ConfigSheet.tsx'
@@ -66,7 +66,7 @@ function AdminSkillsPage() {
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* Toolbar */}
-      <div className="flex shrink-0 items-center gap-2 border-b border-border bg-card px-4 py-2">
+      <div className="h-14 flex shrink-0 items-center gap-2 border-b border-border bg-card px-4 py-2">
         <span className="text-sm font-semibold text-text">
           Arbre de compétences
         </span>
@@ -107,11 +107,14 @@ function AdminSkillsPage() {
         open={sheetMode !== null}
         onOpenChange={(open) => !open && setSheetMode(null)}
       >
-        <SheetContent side="right" className="w-80 overflow-y-auto p-0">
+        <SheetContent
+          side="right"
+          className="flex w-120 flex-col overflow-hidden p-0"
+        >
           {sheetMode === 'help' && <HelpSheetContent />}
 
           {sheetMode === 'config' && config && (
-            <ConfigSheet config={config} />
+            <ConfigSheet config={config} onClose={() => setSheetMode(null)} />
           )}
 
           {sheetMode === 'create' && (
@@ -162,8 +165,7 @@ function HelpSheetContent() {
           limite de connexions par nœud.
         </HelpItem>
         <HelpItem icon={Scissors} title="Supprimer une connexion">
-          Double-cliquer sur une connexion pour la supprimer (confirmation
-          requise).
+          Double-cliquer sur une connexion pour la supprimer.
         </HelpItem>
         <HelpItem icon={Pencil} title="Éditer un nœud">
           Cliquer sur un nœud pour ouvrir ce panneau et modifier ses valeurs par
@@ -192,7 +194,7 @@ function HelpItem({
 }: {
   icon: LucideIcon
   title: string
-  children: React.ReactNode
+  children: ReactNode
 }) {
   return (
     <div className="flex gap-3">

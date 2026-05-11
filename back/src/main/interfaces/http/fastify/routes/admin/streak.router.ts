@@ -17,7 +17,14 @@ export const adminStreakRouter: FastifyPluginCallbackZod = (fastify) => {
       streakMilestoneRepository.findAllActive(),
     ])
     return {
-      default: defaultMilestone?.reward ?? null,
+      default: defaultMilestone
+        ? {
+            tokens: defaultMilestone.reward.tokens,
+            dust: defaultMilestone.reward.dust,
+            xp: defaultMilestone.reward.xp,
+            cardRarity: defaultMilestone.reward.cardRarity,
+          }
+        : null,
       defaultMilestoneId: defaultMilestone?.id ?? null,
       milestones: milestones.map((m) => ({
         id: m.id,
@@ -25,6 +32,7 @@ export const adminStreakRouter: FastifyPluginCallbackZod = (fastify) => {
         tokens: m.reward.tokens,
         dust: m.reward.dust,
         xp: m.reward.xp,
+        cardRarity: m.reward.cardRarity,
       })),
     }
   })
@@ -43,7 +51,12 @@ export const adminStreakRouter: FastifyPluginCallbackZod = (fastify) => {
         defaultMilestone.rewardId,
         request.body,
       )
-      return { tokens: updated.tokens, dust: updated.dust, xp: updated.xp }
+      return {
+        tokens: updated.tokens,
+        dust: updated.dust,
+        xp: updated.xp,
+        cardRarity: updated.cardRarity,
+      }
     },
   )
 
@@ -51,14 +64,19 @@ export const adminStreakRouter: FastifyPluginCallbackZod = (fastify) => {
     '/milestones',
     { schema: { body: adminStreakCreateMilestoneBodySchema } },
     async (request, reply) => {
-      const { day, tokens, dust, xp } = request.body
+      const { day, tokens, dust, xp, cardRarity } = request.body
 
       const existing = await streakMilestoneRepository.findByDay(day)
       if (existing) {
         throw Boom.conflict(`A milestone for day ${day} already exists.`)
       }
 
-      const reward = await rewardRepository.create({ tokens, dust, xp })
+      const reward = await rewardRepository.create({
+        tokens,
+        dust,
+        xp,
+        cardRarity,
+      })
       const milestone = await streakMilestoneRepository.create({
         day,
         isMilestone: true,
@@ -72,6 +90,7 @@ export const adminStreakRouter: FastifyPluginCallbackZod = (fastify) => {
         tokens: milestone.reward.tokens,
         dust: milestone.reward.dust,
         xp: milestone.reward.xp,
+        cardRarity: milestone.reward.cardRarity,
       })
     },
   )
@@ -102,6 +121,7 @@ export const adminStreakRouter: FastifyPluginCallbackZod = (fastify) => {
         tokens: updated.tokens,
         dust: updated.dust,
         xp: updated.xp,
+        cardRarity: updated.cardRarity,
       }
     },
   )

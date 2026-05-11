@@ -1,6 +1,9 @@
 import type { Reward } from '../../../../generated/client'
 import type { IocContainer } from '../../../types/application/ioc'
-import type { RewardRepositoryInterface } from '../../../types/infra/orm/repositories/reward.repository.interface'
+import type {
+  RewardRepositoryInterface,
+  RewardWriteData,
+} from '../../../types/infra/orm/repositories/reward.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 export class RewardRepository implements RewardRepositoryInterface {
@@ -10,14 +13,11 @@ export class RewardRepository implements RewardRepositoryInterface {
     this.#prisma = postgresOrm.prisma
   }
 
-  create(data: { tokens: number; dust: number; xp: number }): Promise<Reward> {
+  create(data: RewardWriteData): Promise<Reward> {
     return this.#prisma.reward.create({ data })
   }
 
-  update(
-    id: string,
-    data: Partial<{ tokens: number; dust: number; xp: number }>,
-  ): Promise<Reward> {
+  update(id: string, data: Partial<RewardWriteData>): Promise<Reward> {
     return this.#prisma.reward.update({ where: { id }, data })
   }
 }

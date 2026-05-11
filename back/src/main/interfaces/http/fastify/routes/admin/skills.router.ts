@@ -38,7 +38,7 @@ export const adminSkillsRouter: FastifyPluginCallbackZod = (fastify) => {
 
   // Edges
   fastify.post('/skills/edges', { schema: { body: createEdgeSchema } }, (req) =>
-    adminSkillTreeDomain.createEdge(req.body.fromNodeId, req.body.toNodeId, req.body.minLevel))
+    adminSkillTreeDomain.createEdge(req.body.fromNodeId, req.body.toNodeId, req.body.minLevel, req.body.sourceHandle, req.body.targetHandle))
   fastify.delete('/skills/edges/:fromNodeId/:toNodeId', { schema: { params: edgeParamSchema } }, (req) =>
     adminSkillTreeDomain.deleteEdge(req.params.fromNodeId, req.params.toNodeId))
 }
