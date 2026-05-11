@@ -318,7 +318,9 @@ function Play() {
       <PlayHud />
 
       {/* Live feed sidebar — hidden during pull to avoid spoilers */}
-      {isIdle && <LiveFeed />}
+      <div className={isIdle ? '' : 'invisible pointer-events-none'}>
+        <LiveFeed />
+      </div>
     </div>
   )
 }

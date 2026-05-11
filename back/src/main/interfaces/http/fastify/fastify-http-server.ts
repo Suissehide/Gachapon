@@ -77,6 +77,10 @@ class FastifyHttpServer implements HttpServer {
       )
       return Promise.resolve()
     })
+    fastify.addHook('onSend', (_request, reply, payload, done) => {
+      reply.header('Cache-Control', 'no-store')
+      done(null, payload)
+    })
     fastify.addHook('onResponse', (request, reply) => {
       const { elapsedTime } = reply
       const time = Math.round(elapsedTime)
