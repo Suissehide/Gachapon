@@ -100,23 +100,19 @@ export function CollectionFilters({
         onChange={onDisplayModeChange}
       />
 
-      {displayMode === 'rarity' && (
-        <>
-          <div className="h-5 w-px bg-border/60" />
-          <DropdownFilter
-            label="Rareté"
-            filters={rarityFilters}
-            onFilterChange={handleRarityChange}
-            onClear={() => onRaritiesChange([])}
-          />
-          <DropdownFilter
-            label="Variante"
-            filters={variantFilters}
-            onFilterChange={handleVariantChange}
-            onClear={() => onVariantsChange([])}
-          />
-        </>
-      )}
+      <div className="h-5 w-px bg-border/60" />
+      <DropdownFilter
+        label="Rareté"
+        filters={rarityFilters}
+        onFilterChange={handleRarityChange}
+        onClear={() => onRaritiesChange([])}
+      />
+      <DropdownFilter
+        label="Variante"
+        filters={variantFilters}
+        onFilterChange={handleVariantChange}
+        onClear={() => onVariantsChange([])}
+      />
     </div>
   )
 }

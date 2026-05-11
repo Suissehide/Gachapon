@@ -132,7 +132,7 @@ function Collection() {
     }
     const order: string[] = []
     const groups = new Map<string, { name: string; entries: DisplayEntry[] }>()
-    for (const entry of displayEntries) {
+    for (const entry of filteredEntries) {
       const setId = entry.card.set.id
       if (!groups.has(setId)) {
         order.push(setId)
@@ -147,7 +147,7 @@ function Collection() {
       }
       return { id, ...group }
     })
-  }, [displayMode, displayEntries])
+  }, [displayMode, filteredEntries])
 
   const handleRecycle = (entry: DisplayEntry) => {
     if (entry.userCard) {
@@ -164,8 +164,6 @@ function Collection() {
   }
 
   const handleDisplayModeChange = (mode: DisplayMode) => {
-    setSelectedRarities([])
-    setSelectedVariants([])
     setDisplayMode(mode)
   }
 

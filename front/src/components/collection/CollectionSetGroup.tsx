@@ -19,7 +19,7 @@ export function CollectionSetGroup({ setName, entries, onRecycle, onDetail }: Co
         </span>
         <span className="h-px flex-1 bg-border/40" />
       </div>
-      <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+      <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7">
         {entries.map((entry) => (
           <CollectionCard
             key={entry.key}
