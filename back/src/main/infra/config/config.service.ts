@@ -30,6 +30,7 @@ const DEFAULTS: Record<ConfigKey, number> = {
   dailyShopPriceRare: 500,
   dailyShopPriceEpic: 1500,
   dailyShopPriceLegendary: 5000,
+  xpPerPull: 10,
 }
 
 

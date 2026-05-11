@@ -317,8 +317,8 @@ function Play() {
       {/* HUD — streak / level / quests */}
       <PlayHud />
 
-      {/* Live feed sidebar */}
-      <LiveFeed />
+      {/* Live feed sidebar — hidden during pull to avoid spoilers */}
+      {isIdle && <LiveFeed />}
     </div>
   )
 }

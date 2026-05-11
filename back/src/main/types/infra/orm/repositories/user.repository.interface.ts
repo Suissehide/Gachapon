@@ -10,6 +10,8 @@ export type PullUpdateInput = {
   dustIncrement: number
   pityCurrent: number
   lastTokenAt: Date | null
+  xpIncrement: number
+  newLevel: number
 }
 
 export interface UserRepositoryInterface {

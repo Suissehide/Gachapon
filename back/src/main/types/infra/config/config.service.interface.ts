@@ -20,6 +20,7 @@ export const CONFIG_KEYS = [
   'dailyShopPriceRare',
   'dailyShopPriceEpic',
   'dailyShopPriceLegendary',
+  'xpPerPull',
 ] as const
 
 export type ConfigKey = (typeof CONFIG_KEYS)[number]

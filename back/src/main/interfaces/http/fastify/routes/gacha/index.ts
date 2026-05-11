@@ -40,6 +40,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         dustEarned: result.dustEarned,
         tokensRemaining: result.tokensRemaining,
         pityCurrent: result.pityCurrent,
+        xpGained: result.xpGained,
       })
 
       if (user) {
@@ -69,6 +70,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         dustEarned: result.dustEarned,
         tokensRemaining: result.tokensRemaining,
         pityCurrent: result.pityCurrent,
+        xpGained: result.xpGained,
       })
     },
   )

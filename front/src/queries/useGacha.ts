@@ -29,6 +29,7 @@ export const usePull = () => {
       }
       qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
       qc.invalidateQueries({ queryKey: ['collection'] })
+      qc.invalidateQueries({ queryKey: ['profile'] })
     },
   })
 }

@@ -91,6 +91,7 @@ export function CardReveal({ result, onClose, onNewPull, isPulling }: Props) {
   const [animDone, setAnimDone] = useState(false)
   const [showSweep, setShowSweep] = useState(false)
   const [showInfo, setShowInfo] = useState(false)
+  const [showBackdrop, setShowBackdrop] = useState(false)
 
   const rarity = (result?.card.rarity ?? 'COMMON') as CardRarity
 
@@ -108,6 +109,7 @@ export function CardReveal({ result, onClose, onNewPull, isPulling }: Props) {
       setAnimDone(false)
       setShowSweep(false)
       setShowInfo(false)
+      setShowBackdrop(false)
       reset()
       return
     }
@@ -115,12 +117,15 @@ export function CardReveal({ result, onClose, onNewPull, isPulling }: Props) {
     setAnimDone(false)
     setShowSweep(false)
     setShowInfo(false)
+    setShowBackdrop(false)
     reset()
     const revealTimer = setTimeout(() => triggerReveal(), 1200)
+    const backdropTimer = setTimeout(() => setShowBackdrop(true), 1200)
     const sweepTimer = setTimeout(() => setShowSweep(true), 1800)
     const infoTimer = setTimeout(() => setShowInfo(true), 2500)
     return () => {
       clearTimeout(revealTimer)
+      clearTimeout(backdropTimer)
       clearTimeout(sweepTimer)
       clearTimeout(infoTimer)
     }
@@ -146,10 +151,10 @@ export function CardReveal({ result, onClose, onNewPull, isPulling }: Props) {
         }
       }}
     >
-      {/* Rarity backdrop glow */}
-      {tcgConfig.backdropColor && (
+      {/* Rarity backdrop glow — delayed to avoid spoiling rarity */}
+      {showBackdrop && tcgConfig.backdropColor && (
         <div
-          className="pointer-events-none absolute inset-0"
+          className="pointer-events-none absolute inset-0 animate-in fade-in-0 duration-500"
           style={{ background: tcgConfig.backdropColor }}
         />
       )}
@@ -266,8 +271,12 @@ export function CardReveal({ result, onClose, onNewPull, isPulling }: Props) {
             e.stopPropagation()
             reset()
             setAnimDone(false)
+            setShowBackdrop(false)
             setAnimKey((k) => k + 1)
-            setTimeout(() => triggerReveal(), 1200)
+            setTimeout(() => {
+              triggerReveal()
+              setShowBackdrop(true)
+            }, 1200)
           }}
         >
           ↺ replay

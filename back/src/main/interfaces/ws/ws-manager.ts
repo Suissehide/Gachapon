@@ -14,6 +14,7 @@ type PullResultEvent = {
   dustEarned: number
   tokensRemaining: number
   pityCurrent: number
+  xpGained: number
 }
 
 export type FeedPullEvent = {

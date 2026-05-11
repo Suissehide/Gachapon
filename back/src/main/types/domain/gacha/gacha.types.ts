@@ -23,4 +23,5 @@ export type PullResult = {
   dustEarned: number
   tokensRemaining: number
   pityCurrent: number
+  xpGained: number
 }

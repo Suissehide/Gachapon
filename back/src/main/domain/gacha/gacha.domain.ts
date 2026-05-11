@@ -18,6 +18,7 @@ import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/sk
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 import type { IUserCardRepository } from '../../types/infra/orm/repositories/user-card.repository.interface'
 import { calculateTokens } from '../economy/economy.domain'
+import { calculateLevel } from '../shared/xp'
 import type { UserUpgradeEffects } from '../../types/domain/economy/economy.types'
 
 export function pickWeightedRandom(cards: CardWithSet[]): CardWithSet {
@@ -123,6 +124,7 @@ type PullCfg = {
   dustByRarity: Record<string, number>
   variantRates: VariantRates
   upgrades: UserUpgradeEffects
+  xpPerPull: number
 }
 
 export class GachaDomain implements GachaDomainInterface {
@@ -219,12 +221,16 @@ export class GachaDomain implements GachaDomainInterface {
       dustEarned,
     })
 
-    // 8. Mettre à jour l'utilisateur
+    // 8. Mettre à jour l'utilisateur (tokens, dust, xp, pity)
     const isLegendary = card.rarity === 'LEGENDARY'
     const newPityCurrent = isLegendary ? 0 : user.pityCurrent + 1
+    const xpGained = cfg.xpPerPull
+    const newLevel = calculateLevel(user.xp + xpGained)
     await this.#userRepository.updateAfterPullInTx(tx, userId, {
       tokens: tokens - 1,
       dustIncrement: dustEarned,
+      xpIncrement: xpGained,
+      newLevel,
       pityCurrent: newPityCurrent,
       lastTokenAt: newLastTokenAt,
     })
@@ -236,6 +242,7 @@ export class GachaDomain implements GachaDomainInterface {
       dustEarned,
       tokensRemaining: tokens - 1,
       pityCurrent: newPityCurrent,
+      xpGained,
     }
   }
 
@@ -258,6 +265,7 @@ export class GachaDomain implements GachaDomainInterface {
           'holoRateRare',
           'holoRateEpic',
           'holoRateLegendary',
+          'xpPerPull',
         ),
         this.#skillTreeRepository.getEffectsForUser(userId),
       ])
@@ -280,6 +288,7 @@ export class GachaDomain implements GachaDomainInterface {
           holoRateEpic: c.holoRateEpic,
           holoRateLegendary: c.holoRateLegendary,
         },
+        xpPerPull: c.xpPerPull,
         upgrades,
       }
       return this.#postgresOrm.executeWithTransactionClient(
