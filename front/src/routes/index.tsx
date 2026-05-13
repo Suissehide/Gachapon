@@ -1,12 +1,12 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { ChevronDown, Package, Sparkles, User, Users } from 'lucide-react'
-import { type CSSProperties } from 'react'
+import type { CSSProperties } from 'react'
 import { Helmet } from 'react-helmet-async'
 
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
-import { useAuthDialogStore } from '../stores/authDialog.store'
 import { Button } from '../components/ui/button.tsx'
 import { Card } from '../components/ui/card.tsx'
+import { useAuthDialogStore } from '../stores/authDialog.store'
 
 export const Route = createFileRoute('/')({
   component: LandingPage,
@@ -160,6 +160,40 @@ const FLOATING_BALLS: Array<{
   },
 ]
 
+// ── FAQ content ───────────────────────────────────────────────────────────
+// Kept module-level so it can be reused for the FAQPage JSON-LD without
+// duplicating strings.
+const FAQ_ITEMS = [
+  {
+    q: "Qu'est-ce que Gachapon ?",
+    a: 'Gachapon est un jeu de cartes à collectionner en ligne gratuit, inspiré des distributeurs automatiques de capsules japonaises (gashapon). Tu utilises des jetons quotidiens pour tirer des capsules et obtenir des cartes de rareté variable, que tu rassembles dans ta collection personnelle.',
+  },
+  {
+    q: 'Comment obtenir des jetons pour tirer ?',
+    a: "Chaque joueur reçoit des jetons régénérés automatiquement au fil du temps. Tu peux également gagner des jetons supplémentaires via les récompenses de connexion quotidienne (streak), les jalons spéciaux et certaines compétences débloquées dans l'arbre de compétences.",
+  },
+  {
+    q: 'Quelles sont les raretés disponibles ?',
+    a: 'Cinq niveaux de rareté existent : commune, peu commune, rare, épique et légendaire. Chaque carte peut aussi apparaître en trois variantes visuelles : standard, brillante (à partir des raretés rare) et holographique. Les variantes brillantes et holographiques sont les plus convoitées.',
+  },
+  {
+    q: 'Que faire des doublons ?',
+    a: "Les doublons sont automatiquement convertibles en poussière, une ressource secondaire qui permet d'acheter des cartes ciblées dans la boutique quotidienne, d'investir dans l'arbre de compétences ou de débloquer certaines variantes. Aucune carte n'est jamais perdue.",
+  },
+  {
+    q: "Qu'est-ce que le système de pitié ?",
+    a: "Le système de pitié garantit qu'une suite de tirages malchanceux ne dure pas indéfiniment. Plus tu enchaînes de pulls sans obtenir une carte rare, plus la probabilité d'en obtenir une augmente, jusqu'à un seuil garanti.",
+  },
+  {
+    q: 'Peut-on jouer avec ses amis ?',
+    a: 'Oui. Tu peux créer ou rejoindre une équipe, comparer vos collections, votre progression et vos cartes les plus rares. Une API publique et un bot Discord permettent également de partager tes tirages en dehors du site.',
+  },
+  {
+    q: 'Gachapon est-il gratuit ?',
+    a: "Oui. L'accès est entièrement gratuit, sans téléchargement ni microtransaction. Tout le contenu est accessible via le jeu lui-même.",
+  },
+] as const
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 function LandingPage() {
@@ -169,10 +203,19 @@ function LandingPage() {
     <div className="relative flex flex-col min-h-screen bg-background text-foreground overflow-x-hidden">
       <Helmet>
         <title>Gachapon — Attrape. Collectionne. Échange.</title>
-        <meta name="description" content="Gachapon transforme le plaisir de collection en une expérience élégante, immersive et sociale. Tire des capsules, découvre des cartes rares et construis ta collection." />
+        <meta
+          name="description"
+          content="Gachapon transforme le plaisir de collection en une expérience élégante, immersive et sociale. Tire des capsules, découvre des cartes rares et construis ta collection."
+        />
         <link rel="canonical" href="https://gachapon.qwetle.fr/" />
-        <meta property="og:title" content="Gachapon — Attrape. Collectionne. Échange." />
-        <meta property="og:description" content="Gachapon transforme le plaisir de collection en une expérience élégante, immersive et sociale. Tire des capsules, découvre des cartes rares et construis ta collection." />
+        <meta
+          property="og:title"
+          content="Gachapon — Attrape. Collectionne. Échange."
+        />
+        <meta
+          property="og:description"
+          content="Gachapon transforme le plaisir de collection en une expérience élégante, immersive et sociale. Tire des capsules, découvre des cartes rares et construis ta collection."
+        />
         <meta property="og:url" content="https://gachapon.qwetle.fr/" />
       </Helmet>
       {/* Dot grid */}
@@ -498,6 +541,122 @@ function LandingPage() {
 
       {/* ── MARQUEE 3 ─────────────────────────────────────────────── */}
       <MarqueeStrip words={['GACHAPON', 'GACHAPON', 'GACHAPON']} speed={20} />
+
+      {/* ── EXPLAINER (SEO content) ───────────────────────────────────
+          Texte dense, indexable sans JS d'app (servi tel quel dans le
+          HTML initial). Cible les requêtes "gachapon en ligne",
+          "jeu de cartes collection", "tirage capsule virtuelle". */}
+      <section
+        id="comment-ca-marche"
+        className="relative z-10 px-6 lg:px-10 py-16"
+      >
+        <div className="max-w-3xl mx-auto">
+          <p className="text-[11px] font-semibold text-text-light/50 uppercase tracking-[0.15em] mb-4">
+            Comment ça marche
+          </p>
+          <h2 className="font-black leading-[0.95] tracking-tight text-[clamp(2.4rem,5vw,4rem)] text-foreground mb-8">
+            Un jeu de collection inspiré des capsules japonaises.
+          </h2>
+
+          <div className="space-y-6 text-sm lg:text-base text-text-light leading-relaxed">
+            <p>
+              <strong className="text-foreground">Gachapon</strong> est un jeu
+              de cartes à collectionner gratuit, jouable directement dans le
+              navigateur. Inspiré des distributeurs automatiques de capsules
+              ("gashapon") populaires au Japon, il transpose la mécanique de
+              tirage aléatoire dans une expérience numérique : tu reçois des
+              jetons chaque jour, tu les utilises pour tirer une capsule, et tu
+              découvres ce qu'elle contient — une carte commune, peu commune,
+              rare, épique ou légendaire.
+            </p>
+            <p>
+              Plus tu joues, plus ta collection grandit. Les doublons se
+              transforment en{' '}
+              <strong className="text-foreground">poussière</strong>, une
+              ressource secondaire qui te permet d'acheter des cartes
+              spécifiques dans la boutique quotidienne, d'améliorer ton arbre de
+              compétences, ou de convertir certaines variantes. Le système de{' '}
+              <em>pitié</em> garantit qu'aucune série de tirages malchanceux ne
+              dure éternellement : plus tu tires sans obtenir de carte rare,
+              plus la prochaine pull garantit un palier de rareté.
+            </p>
+            <p>
+              Trois variantes visuelles existent — <em>standard</em>,{' '}
+              <em>brillante</em> et <em>holographique</em> — chacune avec ses
+              propres effets de révélation. Les cartes holographiques et
+              brillantes sont disponibles uniquement à partir des raretés
+              élevées, ce qui en fait les pièces les plus recherchées des
+              collections.
+            </p>
+            <p>
+              Gachapon est aussi pensé pour être joué en groupe : tu peux
+              rejoindre une équipe, comparer tes progrès, et accéder à une API
+              publique ainsi qu'à un bot Discord pour suivre tes tirages depuis
+              l'extérieur du site. L'accès est immédiat, sans téléchargement, et
+              entièrement gratuit.
+            </p>
+
+            <div className="pt-4">
+              <Link
+                to="/guide"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary-light transition-colors"
+              >
+                Lire le guide complet
+                <ChevronDown className="h-4 w-4 -rotate-90" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FAQ (SEO + utilisateur) ──────────────────────────────────
+          <details>/<summary> = accessible, expansible, et lisible
+          par Google. Le JSON-LD FAQPage en bas double l'indice. */}
+      <section className="relative z-10 px-6 lg:px-10 pb-16">
+        <div className="max-w-3xl mx-auto">
+          <p className="text-[11px] font-semibold text-text-light/50 uppercase tracking-[0.15em] mb-4">
+            FAQ
+          </p>
+          <h2 className="font-black leading-[0.95] tracking-tight text-[clamp(2.4rem,5vw,4rem)] text-foreground mb-10">
+            Les questions fréquentes.
+          </h2>
+
+          <div className="divide-y divide-border/40 border-y border-border/40">
+            {FAQ_ITEMS.map((item) => (
+              <details
+                key={item.q}
+                className="group py-5 [&_summary::-webkit-details-marker]:hidden"
+              >
+                <summary className="flex cursor-pointer items-center justify-between gap-4 list-none">
+                  <h3 className="text-base font-bold text-foreground">
+                    {item.q}
+                  </h3>
+                  <ChevronDown className="h-4 w-4 shrink-0 text-text-light transition-transform group-open:rotate-180" />
+                </summary>
+                <p className="mt-3 text-sm text-text-light leading-relaxed">
+                  {item.a}
+                </p>
+              </details>
+            ))}
+          </div>
+
+          {/* Structured FAQ — duplicate cue for Google */}
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'FAQPage',
+                mainEntity: FAQ_ITEMS.map((item) => ({
+                  '@type': 'Question',
+                  name: item.q,
+                  acceptedAnswer: { '@type': 'Answer', text: item.a },
+                })),
+              }),
+            }}
+          />
+        </div>
+      </section>
 
       {/* ── CTA ───────────────────────────────────────────────────── */}
       <section className="relative z-10 px-6 py-8">

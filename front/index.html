@@ -22,6 +22,49 @@
     <meta name="twitter:title" content="Gachapon" />
     <meta name="twitter:description" content="Gachapon est un jeu de cartes à collectionner en ligne inspiré des capsules japonaises. Tire des capsules, découvre des cartes rares et construis ta collection." />
 
+    <!-- Structured data — lisible par Google sans exécution du JS de l'app -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://gachapon.qwetle.fr/#organization",
+          "name": "Gachapon",
+          "url": "https://gachapon.qwetle.fr/",
+          "logo": "https://gachapon.qwetle.fr/og-image.png",
+          "sameAs": [
+            "https://discord.gg/gachapon"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://gachapon.qwetle.fr/#website",
+          "url": "https://gachapon.qwetle.fr/",
+          "name": "Gachapon",
+          "description": "Jeu de cartes à collectionner en ligne inspiré des capsules japonaises.",
+          "inLanguage": "fr-FR",
+          "publisher": { "@id": "https://gachapon.qwetle.fr/#organization" }
+        },
+        {
+          "@type": "VideoGame",
+          "name": "Gachapon",
+          "url": "https://gachapon.qwetle.fr/",
+          "applicationCategory": "Game",
+          "operatingSystem": "Web",
+          "inLanguage": "fr-FR",
+          "genre": ["Jeu de cartes", "Collection", "Gacha"],
+          "publisher": { "@id": "https://gachapon.qwetle.fr/#organization" },
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "EUR"
+          }
+        }
+      ]
+    }
+    </script>
+
     <script defer src="https://umami.qwetle.fr/script.js" data-website-id="b78a77d2-2dcc-4000-9cc1-1d04b0ffdd30" data-domains="gachapon.qwetle.fr"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
