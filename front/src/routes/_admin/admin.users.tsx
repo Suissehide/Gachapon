@@ -98,9 +98,9 @@ function AdminUsers() {
               e.stopPropagation()
               setSelected(row.original)
             }}
-            className="rounded p-1 text-text-light transition-colors hover:bg-muted hover:text-text"
+            title="Voir"
           >
-            <Eye className="h-4 w-4" />
+            <Eye className="h-3.5 w-3.5" />
           </Button>
         ),
       },

@@ -1,13 +1,23 @@
 import { createFileRoute } from '@tanstack/react-router'
 import type { ColumnDef } from '@tanstack/react-table'
-import { Coins, Crown, Flame, Gem, Plus, Sparkles, Star, Trash2 } from 'lucide-react'
+import {
+  Coins,
+  Crown,
+  Flame,
+  Pencil,
+  Plus,
+  RectangleVertical,
+  Sparkles,
+  Star,
+  Trash2,
+} from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
+import type { RewardPatch } from '../../api/admin-streak.api.ts'
 import { ReactTable } from '../../components/table/reactTable.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import { Input } from '../../components/ui/input.tsx'
 import { Label } from '../../components/ui/label.tsx'
-import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
 import {
   Sheet,
   SheetContent,
@@ -15,12 +25,9 @@ import {
   SheetTitle,
 } from '../../components/ui/sheet.tsx'
 import {
-  RARITY_OPTIONS,
   type CardRarity,
+  RARITY_OPTIONS,
 } from '../../constants/card.constant.ts'
-import type {
-  RewardPatch,
-} from '../../api/admin-streak.api.ts'
 import type {
   AdminMilestone,
   StreakReward,
@@ -43,34 +50,8 @@ type DrawerMode =
   | null
 
 // ── Reward editor ─────────────────────────────────────────────────────────
-// Used in both the default-reward section and the milestone create/edit drawer.
-// Drives a controlled subset of reward fields ("mode") so admins can choose
-// between a single reward type or several at once.
-
-type RewardMode = 'tokens' | 'dust' | 'xp' | 'card' | 'mixed'
-
-const REWARD_MODE_OPTIONS: { value: RewardMode; label: string }[] = [
-  { value: 'tokens', label: 'Jetons' },
-  { value: 'dust', label: 'Dust' },
-  { value: 'xp', label: 'XP' },
-  { value: 'card', label: 'Carte' },
-  { value: 'mixed', label: 'Mixte' },
-]
-
-function detectMode(reward: Partial<StreakReward>): RewardMode {
-  const fields = [
-    (reward.tokens ?? 0) > 0 ? 'tokens' : null,
-    (reward.dust ?? 0) > 0 ? 'dust' : null,
-    (reward.xp ?? 0) > 0 ? 'xp' : null,
-    reward.cardRarity ? 'card' : null,
-  ].filter(Boolean)
-  if (fields.length === 0) return 'tokens'
-  if (fields.length === 1) return fields[0] as RewardMode
-  return 'mixed'
-}
 
 type RewardDraft = {
-  mode: RewardMode
   tokens: string
   dust: string
   xp: string
@@ -78,9 +59,7 @@ type RewardDraft = {
 }
 
 function emptyDraft(seed?: Partial<StreakReward>): RewardDraft {
-  const mode = seed ? detectMode(seed) : 'tokens'
   return {
-    mode,
     tokens: String(seed?.tokens ?? 0),
     dust: String(seed?.dust ?? 0),
     xp: String(seed?.xp ?? 0),
@@ -88,26 +67,12 @@ function emptyDraft(seed?: Partial<StreakReward>): RewardDraft {
   }
 }
 
-// Build the partial payload to send to PATCH/POST.
-// Fields outside the active "mode" are zeroed (or nulled for cardRarity) so
-// switching modes properly clears the previous reward type on the server.
 function draftToPayload(draft: RewardDraft): RewardPatch {
-  const tokens = Number(draft.tokens) || 0
-  const dust = Number(draft.dust) || 0
-  const xp = Number(draft.xp) || 0
-  const cardRarity = draft.cardRarity
-
-  switch (draft.mode) {
-    case 'tokens':
-      return { tokens, dust: 0, xp: 0, cardRarity: null }
-    case 'dust':
-      return { tokens: 0, dust, xp: 0, cardRarity: null }
-    case 'xp':
-      return { tokens: 0, dust: 0, xp, cardRarity: null }
-    case 'card':
-      return { tokens: 0, dust: 0, xp: 0, cardRarity }
-    case 'mixed':
-      return { tokens, dust, xp, cardRarity }
+  return {
+    tokens: Number(draft.tokens) || 0,
+    dust: Number(draft.dust) || 0,
+    xp: Number(draft.xp) || 0,
+    cardRarity: draft.cardRarity,
   }
 }
 
@@ -118,7 +83,7 @@ const rarityIcon = (rarity: CardRarity) => {
     case 'LEGENDARY':
       return <Crown className="h-3.5 w-3.5" />
     default:
-      return <Gem className="h-3.5 w-3.5" />
+      return <RectangleVertical className="h-3.5 w-3.5" />
   }
 }
 
@@ -129,49 +94,30 @@ function RewardEditor({
   draft: RewardDraft
   onChange: (next: RewardDraft) => void
 }) {
-  const updateMode = (mode: RewardMode) => onChange({ ...draft, mode })
-
   return (
     <div className="space-y-3">
-      <div className="space-y-1.5">
-        <Label>Type de récompense</Label>
-        <SegmentedControl<RewardMode>
-          options={REWARD_MODE_OPTIONS}
-          value={draft.mode}
-          onChange={updateMode}
-        />
-      </div>
-
-      {(draft.mode === 'tokens' || draft.mode === 'mixed') && (
-        <NumberField
-          label="Jetons"
-          icon={<Coins className="h-3.5 w-3.5 text-yellow-400" />}
-          value={draft.tokens}
-          onChange={(tokens) => onChange({ ...draft, tokens })}
-        />
-      )}
-      {(draft.mode === 'dust' || draft.mode === 'mixed') && (
-        <NumberField
-          label="Dust"
-          icon={<Sparkles className="h-3.5 w-3.5 text-sky-400" />}
-          value={draft.dust}
-          onChange={(dust) => onChange({ ...draft, dust })}
-        />
-      )}
-      {(draft.mode === 'xp' || draft.mode === 'mixed') && (
-        <NumberField
-          label="XP"
-          icon={<Star className="h-3.5 w-3.5 text-purple-400" />}
-          value={draft.xp}
-          onChange={(xp) => onChange({ ...draft, xp })}
-        />
-      )}
-      {(draft.mode === 'card' || draft.mode === 'mixed') && (
-        <RarityField
-          value={draft.cardRarity}
-          onChange={(cardRarity) => onChange({ ...draft, cardRarity })}
-        />
-      )}
+      <NumberField
+        label="Jetons"
+        icon={<Coins className="h-3.5 w-3.5 text-yellow-400" />}
+        value={draft.tokens}
+        onChange={(tokens) => onChange({ ...draft, tokens })}
+      />
+      <NumberField
+        label="Dust"
+        icon={<Sparkles className="h-3.5 w-3.5 text-sky-400" />}
+        value={draft.dust}
+        onChange={(dust) => onChange({ ...draft, dust })}
+      />
+      <NumberField
+        label="XP"
+        icon={<Star className="h-3.5 w-3.5 text-purple-400" />}
+        value={draft.xp}
+        onChange={(xp) => onChange({ ...draft, xp })}
+      />
+      <RarityField
+        value={draft.cardRarity}
+        onChange={(cardRarity) => onChange({ ...draft, cardRarity })}
+      />
     </div>
   )
 }
@@ -215,7 +161,7 @@ function RarityField({
   return (
     <div className="space-y-1.5">
       <Label className="flex items-center gap-1.5">
-        <Gem className="h-3.5 w-3.5 text-violet-400" />
+        <RectangleVertical className="h-3.5 w-3.5 text-violet-400" />
         Rareté de la carte
       </Label>
       <div className="flex flex-wrap gap-1">
@@ -253,7 +199,9 @@ function AdminStreakPage() {
   const deleteMilestone = useAdminDeleteMilestone()
 
   // Default reward editor — initialised from server data.
-  const [defaultDraft, setDefaultDraft] = useState<RewardDraft>(() => emptyDraft())
+  const [defaultDraft, setDefaultDraft] = useState<RewardDraft>(() =>
+    emptyDraft(),
+  )
   useEffect(() => {
     if (data?.default) {
       setDefaultDraft(emptyDraft(data.default))
@@ -282,7 +230,9 @@ function AdminStreakPage() {
     const payload = draftToPayload(draft)
     if (drawer?.type === 'create') {
       const day = Number(draft.day)
-      if (!day) return
+      if (!day) {
+        return
+      }
       createMilestone.mutate({ day, ...payload }, { onSuccess: closeDrawer })
     } else if (drawer?.type === 'edit') {
       patchMilestone.mutate(
@@ -311,21 +261,39 @@ function AdminStreakPage() {
       },
       {
         id: 'actions',
-        size: 60,
+        header: '',
+        size: 80,
         cell: ({ row }) => (
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7 text-text-light hover:text-destructive"
-            onClick={(e) => {
-              e.stopPropagation()
-              if (confirm(`Supprimer le jalon du jour ${row.original.day} ?`)) {
-                deleteMilestone.mutate(row.original.id)
-              }
-            }}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation()
+                const m = row.original
+                setDraft({ ...emptyDraft(m), day: String(m.day) })
+                setDrawer({ type: 'edit', milestone: m })
+              }}
+              title="Modifier"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation()
+                if (
+                  confirm(`Supprimer le jalon du jour ${row.original.day} ?`)
+                ) {
+                  deleteMilestone.mutate(row.original.id)
+                }
+              }}
+              title="Supprimer"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         ),
       },
     ],
@@ -361,9 +329,7 @@ function AdminStreakPage() {
 
           <div className="flex justify-end">
             <Button
-              onClick={() =>
-                patchDefault.mutate(draftToPayload(defaultDraft))
-              }
+              onClick={() => patchDefault.mutate(draftToPayload(defaultDraft))}
               disabled={patchDefault.isPending}
             >
               Sauvegarder

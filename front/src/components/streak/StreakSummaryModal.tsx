@@ -1,12 +1,4 @@
-import {
-  Check,
-  Coins,
-  Crown,
-  Flame,
-  Gem,
-  Sparkles,
-  Star,
-} from 'lucide-react'
+import { Check, Coins, Crown, Flame, Gem, Sparkles, Star } from 'lucide-react'
 import type { ComponentType, SVGProps } from 'react'
 
 import type { CardRarity } from '../../constants/card.constant.ts'
@@ -121,29 +113,40 @@ function getDisplayRewards(
 // original mock-up, but inlined wherever the milestone actually lands.
 const WINDOW_SIZE = 7
 
-function buildWindow(summary: StreakSummary): { day: number; entry: StreakDayEntry; label: string }[] {
-  const cycleDay = summary.streakDays === 0
-    ? 1
-    : ((summary.streakDays - 1) % 30) + 1
+function buildWindow(
+  summary: StreakSummary,
+): { day: number; entry: StreakDayEntry; label: string }[] {
+  const cycleDay =
+    summary.streakDays === 0 ? 1 : ((summary.streakDays - 1) % 30) + 1
 
   // Centre on today, then clamp so we never overshoot the 30-day cycle.
   let start = cycleDay - 2
-  if (start < 1) start = 1
-  if (start > 30 - WINDOW_SIZE + 1) start = 30 - WINDOW_SIZE + 1
+  if (start < 1) {
+    start = 1
+  }
+  if (start > 30 - WINDOW_SIZE + 1) {
+    start = 30 - WINDOW_SIZE + 1
+  }
 
   const slots: { day: number; entry: StreakDayEntry; label: string }[] = []
   for (let offset = 0; offset < WINDOW_SIZE; offset++) {
     const day = start + offset
     const entry = summary.days[day - 1]
-    if (!entry) continue
+    if (!entry) {
+      continue
+    }
     slots.push({ day, entry, label: labelForDay(day, cycleDay) })
   }
   return slots
 }
 
 function labelForDay(day: number, cycleDay: number): string {
-  if (day === cycleDay) return "AUJOURD'HUI"
-  if (day === cycleDay + 1) return 'DEMAIN'
+  if (day === cycleDay) {
+    return "AUJOURD'HUI"
+  }
+  if (day === cycleDay + 1) {
+    return 'DEMAIN'
+  }
   return `JOUR ${day}`
 }
 
@@ -152,7 +155,14 @@ export function StreakSummaryModal({ open, onClose }: Props) {
   const { data, isLoading } = useStreakSummary()
 
   return (
-    <Popup open={open} onOpenChange={(v) => { if (!v) onClose() }}>
+    <Popup
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) {
+          onClose()
+        }
+      }}
+    >
       {/* overflow-hidden — keeps PopupBody's bg from spilling past the
           rounded corners of PopupContent. */}
       <PopupContent size="xl" className="overflow-hidden">
@@ -181,9 +191,8 @@ export function StreakSummaryModal({ open, onClose }: Props) {
 
 function StreakBody({ summary }: { summary: StreakSummary }) {
   const slots = buildWindow(summary)
-  const cycleDay = summary.streakDays === 0
-    ? 0
-    : ((summary.streakDays - 1) % 30) + 1
+  const cycleDay =
+    summary.streakDays === 0 ? 0 : ((summary.streakDays - 1) % 30) + 1
   const daysToNextMilestone = summary.nextMilestone
     ? Math.max(0, summary.nextMilestone.day - cycleDay)
     : null
@@ -228,20 +237,20 @@ function StreakBody({ summary }: { summary: StreakSummary }) {
 // ── Tile renderer ─────────────────────────────────────────────────────────
 // Status + isMilestone produce 6 visual variants. We model them as an enum-ish
 // "kind" so the styling tables below stay readable.
-type TileKind = 'past' | 'past-milestone' | 'current' | 'current-milestone' | 'future' | 'future-milestone'
+type TileKind =
+  | 'past'
+  | 'past-milestone'
+  | 'current'
+  | 'current-milestone'
+  | 'future'
+  | 'future-milestone'
 
 function tileKind(entry: StreakDayEntry): TileKind {
   const base = entry.status
   return entry.isMilestone ? (`${base}-milestone` as TileKind) : base
 }
 
-function DayTile({
-  entry,
-  label,
-}: {
-  entry: StreakDayEntry
-  label: string
-}) {
+function DayTile({ entry, label }: { entry: StreakDayEntry; label: string }) {
   const rewards = getDisplayRewards(entry)
   const primary = rewards[0]
   const kind = tileKind(entry)
@@ -285,6 +294,7 @@ function DayTile({
       className={[
         'relative flex min-w-0 flex-col items-center gap-1.5 rounded-xl border px-1.5 py-2.5 text-center transition-colors',
         wrapClass,
+        isPast ? 'opacity-50' : '',
       ].join(' ')}
     >
       {/* Milestone badge in the corner — clear visual cue independent of label */}
@@ -316,7 +326,10 @@ function DayTile({
       {rewards.length > 1 && (
         <div className="flex gap-0.5">
           {rewards.slice(1).map((r, i) => (
-            <r.icon key={i} className={['h-2.5 w-2.5', r.iconClass].join(' ')} />
+            <r.icon
+              key={i}
+              className={['h-2.5 w-2.5', r.iconClass].join(' ')}
+            />
           ))}
         </div>
       )}
@@ -346,22 +359,33 @@ function RewardOrb({
     switch (kind) {
       case 'current':
         return {
-          orbClass: 'bg-primary text-primary-foreground shadow-[0_6px_20px_-6px_rgba(99,102,241,0.7)]',
+          orbClass:
+            'bg-primary text-primary-foreground shadow-[0_6px_20px_-6px_rgba(99,102,241,0.7)]',
           useBubbleFg: true,
         }
       case 'current-milestone':
         return {
-          orbClass: 'bg-amber-500 text-amber-50 shadow-[0_8px_22px_-6px_rgba(245,158,11,0.7)]',
+          orbClass:
+            'bg-amber-500 text-amber-50 shadow-[0_8px_22px_-6px_rgba(245,158,11,0.7)]',
           useBubbleFg: true,
         }
       case 'past':
         return { orbClass: 'bg-primary/15 text-primary/70', useBubbleFg: false }
       case 'past-milestone':
-        return { orbClass: 'bg-amber-500/20 text-amber-500/80', useBubbleFg: false }
+        return {
+          orbClass: 'bg-amber-500/20 text-amber-500/80',
+          useBubbleFg: false,
+        }
       case 'future':
-        return { orbClass: 'bg-card-foreground/5 text-text-light/60', useBubbleFg: false }
+        return {
+          orbClass: 'bg-card-foreground/5 text-text-light/60',
+          useBubbleFg: false,
+        }
       case 'future-milestone':
-        return { orbClass: 'bg-amber-500/15 text-amber-500', useBubbleFg: false }
+        return {
+          orbClass: 'bg-amber-500/15 text-amber-500',
+          useBubbleFg: false,
+        }
     }
   })()
 
