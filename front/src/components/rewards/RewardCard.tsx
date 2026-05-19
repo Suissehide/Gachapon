@@ -110,12 +110,6 @@ export function RewardCard({ reward, onClaim, isLoading }: RewardCardProps) {
             <span className="text-[10px] font-bold uppercase tracking-widest text-text-light/70">
               {sourceLabel(reward)}
             </span>
-            {isMilestone && (
-              <span className="flex items-center gap-1 rounded-full border border-yellow-400/30 bg-yellow-400/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-yellow-400">
-                <Trophy className="h-2.5 w-2.5" />
-                Jalon
-              </span>
-            )}
           </div>
 
           {/* Amounts */}

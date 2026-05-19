@@ -5,7 +5,8 @@ import { sanitizeUser } from './helpers'
 import { userResponseSchema } from './schemas'
 
 export const meRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { userDomain, userRewardRepository } = fastify.iocContainer
+  const { userDomain, userRewardRepository, streakDomain, postgresOrm } =
+    fastify.iocContainer
 
   fastify.get(
     '/',
@@ -14,7 +15,17 @@ export const meRouter: FastifyPluginCallbackZod = (fastify) => {
       schema: { response: { 200: userResponseSchema } },
     },
     async (request) => {
-      const user = await userDomain.findById(request.user.userID)
+      const userId = request.user.userID
+
+      try {
+        await postgresOrm.executeWithTransactionClient(async (tx) => {
+          await streakDomain.updateStreak(userId, tx)
+        })
+      } catch (err) {
+        console.error('[StreakDomain] updateStreak failed:', err)
+      }
+
+      const user = await userDomain.findById(userId)
       if (!user) {
         throw Boom.notFound('User not found')
       }

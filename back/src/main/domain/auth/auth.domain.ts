@@ -268,13 +268,6 @@ export class AuthDomain implements AuthDomainInterface {
     if (!user) {
       throw Boom.unauthorized('User not found')
     }
-    try {
-      await this.#postgresOrm.executeWithTransactionClient(async (tx) => {
-        await this.#streakDomain.updateStreak(user.id, tx)
-      })
-    } catch (err) {
-      console.error('[StreakDomain] updateStreak failed:', err)
-    }
     await this.#refreshTokenRepository.revoke(payload.sub, refreshToken)
     return this.generateTokenPair(user)
   }
