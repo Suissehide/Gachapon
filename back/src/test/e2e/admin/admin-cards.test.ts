@@ -107,12 +107,12 @@ describe('Admin cards routes', () => {
     expect(res.statusCode).toBe(404)
   })
 
-  it('PATCH /admin/cards/:id — rejette imageUrl hors domaine storage', async () => {
+  it('PATCH /admin/cards/:id — 404 pour carte inexistante même avec imageUrl externe', async () => {
     const res = await app.inject({
       method: 'PATCH', url: `/admin/cards/00000000-0000-0000-0000-000000000000`,
       headers: { cookie: adminCookies, 'content-type': 'application/json' },
       payload: { imageUrl: 'https://evil.com/hack.png' },
     })
-    expect(res.statusCode).toBe(400)
+    expect(res.statusCode).toBe(404)
   })
 })

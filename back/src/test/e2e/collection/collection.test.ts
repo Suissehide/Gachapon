@@ -10,6 +10,17 @@ describe('Collection routes', () => {
 
   beforeAll(async () => {
     app = await buildTestApp()
+
+    const { postgresOrm } = (app as any).iocContainer
+
+    // Seed a card set + card so collection endpoints return data
+    const set = await postgresOrm.prisma.cardSet.create({
+      data: { name: `CollSet${suffix}`, isActive: true },
+    })
+    await postgresOrm.prisma.card.create({
+      data: { name: `CollCard${suffix}`, rarity: 'COMMON', dropWeight: 10, setId: set.id },
+    })
+
     await app.inject({
       method: 'POST',
       url: '/auth/register',
@@ -21,7 +32,6 @@ describe('Collection routes', () => {
     })
 
     // Donner 5 tokens pour pouvoir tirer
-    const { postgresOrm } = (app as any).iocContainer
     const user = await postgresOrm.prisma.user.update({
       where: { email: `coll${suffix}@test.com` },
       data: { emailVerifiedAt: new Date(), tokens: 5, lastTokenAt: new Date() },

@@ -94,14 +94,14 @@ describe('Admin media routes', () => {
     const setId = setRes.json().id
 
     // Insérer directement en DB une carte avec imageUrl connue (pas besoin de vrai Minio)
-    const fakeUrl = `http://localhost:9000/gachapon/cards/used-image-${suffix}.png`
+    const imageKey = `cards/used-image-${suffix}.png`
     await (app as any).iocContainer.postgresOrm.prisma.card.create({
       data: {
         name: `MediaCard${suffix}`,
         setId,
         rarity: 'COMMON',
         dropWeight: 1,
-        imageUrl: fakeUrl,
+        imageUrl: imageKey,
       },
     })
 
