@@ -3,7 +3,7 @@ import * as Icons from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 const iconMap = Icons as unknown as Record<string, LucideIcon>
-import { SkillTreeCanvas } from '../../components/skill-tree/SkillTreeCanvas.tsx'
+import { SkillTreeCanvas } from '../../components/skill-tree/index.ts'
 import {
   useInvestSkill,
   useResetSkills,

@@ -1,10 +1,10 @@
-import type { SkillBranch, SkillNode } from '../../api/skills.api.ts'
-import { Button } from '../ui/button.tsx'
-import { SheetHeader, SheetTitle } from '../ui/sheet.tsx'
-import { useAppForm } from '../../hooks/formConfig.tsx'
-import { useAdminCreateNode } from '../../queries/useSkills.ts'
+import type { SkillBranch, SkillNode } from '../../../api/skills.api.ts'
+import { Button } from '../../ui/button.tsx'
+import { SheetHeader, SheetTitle } from '../../ui/sheet.tsx'
+import { useAppForm } from '../../../hooks/formConfig.tsx'
+import { useAdminCreateNode } from '../../../queries/useSkills.ts'
 
-import { EFFECT_DESCRIPTIONS, EFFECT_OPTIONS } from '../../constants/skills.constant.ts'
+import { EFFECT_DESCRIPTIONS, EFFECT_OPTIONS } from '../../../constants/skills.constant.ts'
 
 export function CreateNodeSheet({
   branches,

@@ -1,8 +1,8 @@
-import type { SkillConfig } from '../../api/skills.api.ts'
-import { Button } from '../ui/button.tsx'
-import { SheetHeader, SheetTitle } from '../ui/sheet.tsx'
-import { useAppForm } from '../../hooks/formConfig.tsx'
-import { useAdminUpdateConfig } from '../../queries/useSkills.ts'
+import type { SkillConfig } from '../../../api/skills.api.ts'
+import { Button } from '../../ui/button.tsx'
+import { SheetHeader, SheetTitle } from '../../ui/sheet.tsx'
+import { useAppForm } from '../../../hooks/formConfig.tsx'
+import { useAdminUpdateConfig } from '../../../queries/useSkills.ts'
 
 export function ConfigSheet({ config, onClose }: { config: SkillConfig; onClose: () => void }) {
   const updateConfig = useAdminUpdateConfig()

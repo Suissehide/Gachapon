@@ -33,7 +33,7 @@ export const useAdminUpdateConfig = () => {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: SkillsApi.adminUpdateConfig,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ADMIN_SKILLS_KEY }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ADMIN_SKILLS_KEY }); qc.invalidateQueries({ queryKey: SKILLS_KEY }) },
   })
 }
 
@@ -41,7 +41,15 @@ export const useAdminCreateBranch = () => {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: SkillsApi.adminCreateBranch,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ADMIN_SKILLS_KEY }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ADMIN_SKILLS_KEY }); qc.invalidateQueries({ queryKey: SKILLS_KEY }) },
+  })
+}
+
+export const useAdminDeleteBranch = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: SkillsApi.adminDeleteBranch,
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ADMIN_SKILLS_KEY }); qc.invalidateQueries({ queryKey: SKILLS_KEY }) },
   })
 }
 
@@ -50,7 +58,7 @@ export const useAdminUpdateBranch = () => {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Parameters<typeof SkillsApi.adminUpdateBranch>[1] }) =>
       SkillsApi.adminUpdateBranch(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ADMIN_SKILLS_KEY }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ADMIN_SKILLS_KEY }); qc.invalidateQueries({ queryKey: SKILLS_KEY }) },
   })
 }
 
@@ -58,7 +66,7 @@ export const useAdminCreateNode = () => {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: SkillsApi.adminCreateNode,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ADMIN_SKILLS_KEY }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ADMIN_SKILLS_KEY }); qc.invalidateQueries({ queryKey: SKILLS_KEY }) },
   })
 }
 
@@ -67,7 +75,7 @@ export const useAdminUpdateNode = () => {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Parameters<typeof SkillsApi.adminUpdateNode>[1] }) =>
       SkillsApi.adminUpdateNode(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ADMIN_SKILLS_KEY }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ADMIN_SKILLS_KEY }); qc.invalidateQueries({ queryKey: SKILLS_KEY }) },
   })
 }
 
@@ -75,7 +83,7 @@ export const useAdminDeleteNode = () => {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: SkillsApi.adminDeleteNode,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ADMIN_SKILLS_KEY }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ADMIN_SKILLS_KEY }); qc.invalidateQueries({ queryKey: SKILLS_KEY }) },
   })
 }
 
@@ -83,7 +91,7 @@ export const useAdminCreateEdge = () => {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: SkillsApi.adminCreateEdge,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ADMIN_SKILLS_KEY }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ADMIN_SKILLS_KEY }); qc.invalidateQueries({ queryKey: SKILLS_KEY }) },
   })
 }
 
@@ -92,6 +100,6 @@ export const useAdminDeleteEdge = () => {
   return useMutation({
     mutationFn: ({ fromNodeId, toNodeId }: { fromNodeId: string; toNodeId: string }) =>
       SkillsApi.adminDeleteEdge(fromNodeId, toNodeId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ADMIN_SKILLS_KEY }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ADMIN_SKILLS_KEY }); qc.invalidateQueries({ queryKey: SKILLS_KEY }) },
   })
 }
