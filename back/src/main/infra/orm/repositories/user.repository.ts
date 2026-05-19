@@ -85,7 +85,7 @@ export class UserRepository implements UserRepositoryInterface {
   async updateAfterClaimInTx(
     tx: PrimaTransactionClient,
     id: string,
-    data: { tokens: number; dust: number; xp: number; level: number },
+    data: { tokens: number; dust: number; xp: number; level: number; lastTokenAt?: Date },
   ): Promise<void> {
     await tx.user.update({ where: { id }, data })
   }

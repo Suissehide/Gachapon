@@ -9,30 +9,39 @@ import type {
   ClaimResult,
   RewardsDomainInterface,
 } from '../../types/domain/rewards/rewards.domain.interface'
+import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
+import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type {
   PendingUserReward,
   UserRewardRepositoryInterface,
   UserRewardWithReward,
 } from '../../types/infra/orm/repositories/user-reward.repository.interface'
+import { calculateTokens } from '../economy/economy.domain'
 import { calculateLevel } from '../shared/xp'
 
 export class RewardsDomain implements RewardsDomainInterface {
   readonly #userRewardRepository: UserRewardRepositoryInterface
   readonly #userRepository: UserRepositoryInterface
   readonly #postgresOrm: PostgresOrm
+  readonly #configService: ConfigServiceInterface
+  readonly #skillTreeRepository: ISkillTreeRepository
 
   constructor({
     userRewardRepository,
     userRepository,
     postgresOrm,
+    configService,
+    skillTreeRepository,
   }: Pick<
     IocContainer,
-    'userRewardRepository' | 'userRepository' | 'postgresOrm'
+    'userRewardRepository' | 'userRepository' | 'postgresOrm' | 'configService' | 'skillTreeRepository'
   >) {
     this.#userRewardRepository = userRewardRepository
     this.#userRepository = userRepository
     this.#postgresOrm = postgresOrm
+    this.#configService = configService
+    this.#skillTreeRepository = skillTreeRepository
   }
 
   getPending(userId: string): Promise<PendingUserReward[]> {
@@ -76,9 +85,25 @@ export class RewardsDomain implements RewardsDomainInterface {
         }
 
         const user = await this.#userRepository.findByIdOrThrowInTx(tx, userId)
-        const { tokens, dust, xp } = userReward.reward
+        const { tokens: rewardTokens, dust, xp } = userReward.reward
 
-        const newTokens = user.tokens + tokens
+        const [upgrades, cfg] = await Promise.all([
+          this.#skillTreeRepository.getEffectsForUser(userId),
+          this.#configService.getMany('tokenRegenIntervalMinutes', 'tokenMaxStock'),
+        ])
+        const effectiveInterval = Math.max(
+          1,
+          cfg.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes,
+        )
+        const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
+        const { tokens: regenTokens, newLastTokenAt } = calculateTokens(
+          user.lastTokenAt,
+          user.tokens,
+          effectiveInterval,
+          effectiveMaxStock,
+        )
+
+        const newTokens = regenTokens + rewardTokens
         const newDust = user.dust + dust
         const newXp = user.xp + xp
         const newLevel = calculateLevel(newXp)
@@ -88,6 +113,7 @@ export class RewardsDomain implements RewardsDomainInterface {
           dust: newDust,
           xp: newXp,
           level: newLevel,
+          lastTokenAt: newLastTokenAt ?? undefined,
         })
         await this.#userRewardRepository.markClaimedInTx(tx, userReward.id)
         // Count INSIDE tx so it reflects the just-committed mark
@@ -148,7 +174,23 @@ export class RewardsDomain implements RewardsDomainInterface {
         const totalDust = pending.reduce((sum, r) => sum + r.reward.dust, 0)
         const totalXp = pending.reduce((sum, r) => sum + r.reward.xp, 0)
 
-        const newTokens = user.tokens + totalTokens
+        const [upgrades, cfg] = await Promise.all([
+          this.#skillTreeRepository.getEffectsForUser(userId),
+          this.#configService.getMany('tokenRegenIntervalMinutes', 'tokenMaxStock'),
+        ])
+        const effectiveInterval = Math.max(
+          1,
+          cfg.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes,
+        )
+        const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
+        const { tokens: regenTokens, newLastTokenAt } = calculateTokens(
+          user.lastTokenAt,
+          user.tokens,
+          effectiveInterval,
+          effectiveMaxStock,
+        )
+
+        const newTokens = regenTokens + totalTokens
         const newDust = user.dust + totalDust
         const newXp = user.xp + totalXp
         const newLevel = calculateLevel(newXp)
@@ -158,6 +200,7 @@ export class RewardsDomain implements RewardsDomainInterface {
           dust: newDust,
           xp: newXp,
           level: newLevel,
+          lastTokenAt: newLastTokenAt ?? undefined,
         })
         await this.#userRewardRepository.markAllClaimedInTx(tx, userId)
 

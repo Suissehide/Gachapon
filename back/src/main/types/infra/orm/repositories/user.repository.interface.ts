@@ -38,7 +38,7 @@ export interface UserRepositoryInterface {
   updateAfterClaimInTx(
     tx: PrimaTransactionClient,
     id: string,
-    data: { tokens: number; dust: number; xp: number; level: number },
+    data: { tokens: number; dust: number; xp: number; level: number; lastTokenAt?: Date },
   ): Promise<void>
   findByEmailVerificationToken(token: string): Promise<UserEntity | null>
   findByPasswordResetToken(token: string): Promise<UserEntity | null>
