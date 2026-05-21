@@ -164,7 +164,10 @@ function Collection() {
         <div className="mb-4">
           <h1 className="text-2xl font-black text-text">Ma Collection</h1>
           <p className="text-sm text-text-light">
-            Cartes : {collectionStats.distinctCards}/{collectionStats.totalCards} · Variantes : {collectionStats.totalOwnedVariants}/{collectionStats.totalPossibleVariants}
+            Cartes : {collectionStats.distinctCards}/
+            {collectionStats.totalCards} - Variantes :{' '}
+            {collectionStats.totalOwnedVariants}/
+            {collectionStats.totalPossibleVariants}
           </p>
         </div>
 

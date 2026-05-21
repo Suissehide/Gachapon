@@ -8,8 +8,15 @@ interface CollectionSetGroupProps {
   onDetail: (entry: DisplayEntry) => void
 }
 
-export function CollectionSetGroup({ setName, entries, onRecycle, onDetail }: CollectionSetGroupProps) {
-  const distinctCardIds = new Set(entries.filter((e) => e.isOwned).map((e) => e.card.id))
+export function CollectionSetGroup({
+  setName,
+  entries,
+  onRecycle,
+  onDetail,
+}: CollectionSetGroupProps) {
+  const distinctCardIds = new Set(
+    entries.filter((e) => e.isOwned).map((e) => e.card.id),
+  )
   const distinctCards = distinctCardIds.size
   const totalCards = new Set(entries.map((e) => e.card.id)).size
   const ownedVariants = entries.filter((e) => e.isOwned).length
@@ -19,7 +26,11 @@ export function CollectionSetGroup({ setName, entries, onRecycle, onDetail }: Co
       <div className="flex items-center gap-3 mb-3">
         <span className="h-px flex-1 bg-border/40" />
         <span className="text-[10px] font-bold uppercase tracking-widest text-text-light">
-          {setName} · Cartes : {distinctCards}/{totalCards} · Variantes : {ownedVariants}/{totalVariants}
+          {setName}
+        </span>
+        <span className="text-[10px] tracking-widest text-text-light">
+          Cartes : {distinctCards}/{totalCards} - Variantes : {ownedVariants}/
+          {totalVariants}
         </span>
         <span className="h-px flex-1 bg-border/40" />
       </div>

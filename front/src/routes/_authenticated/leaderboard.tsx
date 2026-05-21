@@ -3,10 +3,7 @@ import { Trophy, Users } from 'lucide-react'
 import { useState } from 'react'
 
 import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
-import type {
-  CollectorEntry,
-  TeamEntry,
-} from '../../queries/useLeaderboard'
+import type { CollectorEntry, TeamEntry } from '../../queries/useLeaderboard'
 import { useLeaderboard } from '../../queries/useLeaderboard'
 import { useAuthStore } from '../../stores/auth.store'
 
@@ -122,7 +119,8 @@ function CollectorRow({
       </Link>
       <div className="text-right">
         <p className="text-xs text-text-light">
-          Cartes : {entry.cardPercentage}% · Variantes : {entry.variantPercentage}%
+          Cartes : {entry.cardPercentage}% - Variantes :{' '}
+          {entry.variantPercentage}%
         </p>
       </div>
     </div>
@@ -147,7 +145,9 @@ function TeamRow({
           {entry.team.memberCount} membres
         </span>
       </div>
-      <p className="text-sm font-bold text-text">{entry.avgScore.toLocaleString()} pts</p>
+      <p className="text-xs text-text-light">
+        {entry.avgScore.toLocaleString()} pts
+      </p>
     </div>
   )
 }
