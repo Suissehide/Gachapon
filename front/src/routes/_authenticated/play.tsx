@@ -23,7 +23,7 @@ export const Route = createFileRoute('/_authenticated/play')({
   component: Play,
 })
 
-type Phase = 'idle' | 'machine-anim' | 'pulling' | 'ball' | 'opening' | 'open' | 'revealed'
+type Phase = 'idle' | 'machine-anim' | 'pulling' | 'ball' | 'opening' | 'revealed'
 
 const PARTICLES = [
   { top: '15%', left: '12%', delay: '0s', duration: '3.2s', size: 4 },
@@ -133,7 +133,6 @@ function Play() {
   const showCanvas =
     phase === 'ball' ||
     phase === 'opening' ||
-    phase === 'open' ||
     phase === 'revealed'
   const showCarousel = phase === 'idle' || phase === 'machine-anim' || phase === 'pulling'
   const isIdle = phase === 'idle' || phase === 'pulling'
@@ -237,7 +236,6 @@ function Play() {
                 interactive={phase === 'ball'}
                 isOpening={
                   phase === 'opening' ||
-                  phase === 'open' ||
                   phase === 'revealed'
                 }
                 onOpen={handleBallClick}
