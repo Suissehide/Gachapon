@@ -3,7 +3,6 @@ import { useMemo, useState } from 'react'
 
 import type { Card, CardVariant } from '../../api/collection.api.ts'
 import { CardViewModal } from '../../components/collection/CardViewModal.tsx'
-import { RARITY_LABELS } from '../../components/collection/CollectionCard.tsx'
 import { CollectionFilters } from '../../components/collection/CollectionFilters.tsx'
 import { CollectionGrid } from '../../components/collection/CollectionGrid.tsx'
 import { CollectionSetGroup } from '../../components/collection/CollectionSetGroup.tsx'
@@ -98,33 +97,34 @@ function Collection() {
     [displayEntries, selectedRarities, selectedVariants],
   )
 
-  const userCardsCount = userCards.length
-  const displayEntriesCount = displayEntries.length
+  const collectionStats = useMemo(() => {
+    const distinctCardIds = new Set(userCards.map((uc) => uc.card.id))
+    const distinctCards = distinctCardIds.size
+    const totalOwnedVariants = userCards.length
 
-  const subtitle = useMemo(() => {
-    if (displayMode === 'set') {
-      return `${userCardsCount} / ${displayEntriesCount} carte${displayEntriesCount > 1 ? 's' : ''}`
+    const totalCards = allCards.length
+    const variantEligible = allCards.filter((c) =>
+      ['RARE', 'EPIC', 'LEGENDARY'].includes(c.rarity),
+    ).length
+    const totalPossibleVariants =
+      totalCards - variantEligible + variantEligible * 3
+
+    const cardPercentage =
+      totalCards > 0 ? Math.round((distinctCards / totalCards) * 100) : 0
+    const variantPercentage =
+      totalPossibleVariants > 0
+        ? Math.round((totalOwnedVariants / totalPossibleVariants) * 100)
+        : 0
+
+    return {
+      distinctCards,
+      totalCards,
+      cardPercentage,
+      totalOwnedVariants,
+      totalPossibleVariants,
+      variantPercentage,
     }
-    const ownedCount = filteredEntries.filter((e) => e.isOwned).length
-    const totalCount = filteredEntries.length
-    const base = `${ownedCount} / ${totalCount} carte${totalCount > 1 ? 's' : ''}`
-    const rarityLabel =
-      selectedRarities.length > 0
-        ? ` · ${selectedRarities.map((r) => RARITY_LABELS[r]).join(', ')}`
-        : ''
-    const variantLabel =
-      selectedVariants.length > 0
-        ? ` · ${selectedVariants.map((v) => (v === 'BRILLIANT' ? 'Brillante' : v === 'HOLOGRAPHIC' ? 'Holographique' : 'Normal')).join(', ')}`
-        : ''
-    return base + rarityLabel + variantLabel
-  }, [
-    displayMode,
-    userCardsCount,
-    displayEntriesCount,
-    filteredEntries,
-    selectedRarities,
-    selectedVariants,
-  ])
+  }, [allCards, userCards])
 
   const setGroups = useMemo(() => {
     if (displayMode !== 'set') {
@@ -172,7 +172,9 @@ function Collection() {
       <div className="mx-auto max-w-4xl">
         <div className="mb-4">
           <h1 className="text-2xl font-black text-text">Ma Collection</h1>
-          <p className="text-sm text-text-light">{subtitle}</p>
+          <p className="text-sm text-text-light">
+            Cartes : {collectionStats.distinctCards}/{collectionStats.totalCards} ({collectionStats.cardPercentage}%) · Variantes : {collectionStats.totalOwnedVariants}/{collectionStats.totalPossibleVariants} ({collectionStats.variantPercentage}%)
+          </p>
         </div>
 
         <CollectionFilters
