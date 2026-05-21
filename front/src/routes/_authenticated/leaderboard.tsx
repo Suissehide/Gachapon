@@ -121,9 +121,8 @@ function CollectorRow({
         {isMe && <span className="ml-1 text-xs text-primary">(moi)</span>}
       </Link>
       <div className="text-right">
-        <p className="text-sm font-bold text-text">{entry.variantPercentage}%</p>
         <p className="text-xs text-text-light">
-          {entry.cardPercentage}% cartes · {entry.totalVariants} variantes
+          Cartes : {entry.cardPercentage}% · Variantes : {entry.variantPercentage}%
         </p>
       </div>
     </div>

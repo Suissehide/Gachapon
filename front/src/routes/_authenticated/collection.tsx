@@ -109,20 +109,11 @@ function Collection() {
     const totalPossibleVariants =
       totalCards - variantEligible + variantEligible * 3
 
-    const cardPercentage =
-      totalCards > 0 ? Math.round((distinctCards / totalCards) * 100) : 0
-    const variantPercentage =
-      totalPossibleVariants > 0
-        ? Math.round((totalOwnedVariants / totalPossibleVariants) * 100)
-        : 0
-
     return {
       distinctCards,
       totalCards,
-      cardPercentage,
       totalOwnedVariants,
       totalPossibleVariants,
-      variantPercentage,
     }
   }, [allCards, userCards])
 
@@ -173,7 +164,7 @@ function Collection() {
         <div className="mb-4">
           <h1 className="text-2xl font-black text-text">Ma Collection</h1>
           <p className="text-sm text-text-light">
-            Cartes : {collectionStats.distinctCards}/{collectionStats.totalCards} ({collectionStats.cardPercentage}%) · Variantes : {collectionStats.totalOwnedVariants}/{collectionStats.totalPossibleVariants} ({collectionStats.variantPercentage}%)
+            Cartes : {collectionStats.distinctCards}/{collectionStats.totalCards} · Variantes : {collectionStats.totalOwnedVariants}/{collectionStats.totalPossibleVariants}
           </p>
         </div>
 
