@@ -6,6 +6,9 @@ import { type CSSProperties, useEffect, useRef, useState } from 'react'
 
 import { CardReveal } from '../../components/machine/CardReveal'
 import { GachaBall } from '../../components/machine/GachaBall'
+import { MachineCarousel } from '../../components/machine/MachineCarousel'
+import type { CarouselHandle } from '../../components/machine/MachineCarousel'
+import { NoMachine } from '../../components/machine/type/NoMachine'
 import { LiveFeed } from '../../components/play/LiveFeed'
 import { PlayHud } from '../../components/play/PlayHud'
 import { Button } from '../../components/ui/button.tsx'
@@ -13,13 +16,14 @@ import { apiUrl as API_URL } from '../../constants/config.constant.ts'
 import { wsClient } from '../../lib/ws'
 import type { PullResult } from '../../queries/useGacha'
 import { usePull, useTokenBalance } from '../../queries/useGacha'
+import { useOwnedMachines } from '../../queries/useShop'
 import { useAuthStore } from '../../stores/auth.store'
 
 export const Route = createFileRoute('/_authenticated/play')({
   component: Play,
 })
 
-type Phase = 'idle' | 'pulling' | 'ball' | 'opening' | 'open' | 'revealed'
+type Phase = 'idle' | 'machine-anim' | 'pulling' | 'ball' | 'opening' | 'open' | 'revealed'
 
 const PARTICLES = [
   { top: '15%', left: '12%', delay: '0s', duration: '3.2s', size: 4 },
@@ -37,11 +41,16 @@ function Play() {
   const [pullResult, setPullResult] = useState<PullResult | null>(null)
   const pendingResult = useRef<PullResult | null>(null)
   const [now, setNow] = useState(Date.now())
+  const carouselRef = useRef<CarouselHandle>(null)
 
   const { data: balance, isLoading: balanceLoading } = useTokenBalance()
   const { mutate: pullMutation, isPending: pullPending } = usePull()
+  const { data: machinesData } = useOwnedMachines()
   const setUser = useAuthStore((s) => s.setUser)
   const user = useAuthStore((s) => s.user)
+
+  const ownedMachineIds = machinesData?.machineIds ?? []
+  const hasMachines = ownedMachineIds.length > 0
 
   // Sync auth store (topbar) with token balance query
   useEffect(() => {
@@ -57,35 +66,15 @@ function Play() {
 
   // Live timer tick — only when a token is regenerating
   useEffect(() => {
-    if (!balance?.nextTokenAt || (balance.tokens ?? 0) >= (balance.maxStock ?? 5)) return
+    if (
+      !balance?.nextTokenAt ||
+      (balance.tokens ?? 0) >= (balance.maxStock ?? 5)
+    ) {
+      return
+    }
     const id = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(id)
   }, [balance?.nextTokenAt, balance?.tokens, balance?.maxStock])
-
-  const tokens = balance?.tokens ?? 0
-  const maxStock = balance?.maxStock ?? 5
-  const canPull = tokens > 0 && phase === 'idle' && !pullPending
-
-  const handlePull = () => {
-    if (!canPull) {
-      return
-    }
-    setPhase('ball')
-  }
-
-  const handleSkip = () => {
-    if (!canPull) {
-      return
-    }
-    setPhase('pulling')
-    pullMutation(undefined, {
-      onSuccess: (result) => {
-        setPullResult(result)
-        setPhase('revealed')
-      },
-      onError: () => setPhase('idle'),
-    })
-  }
 
   // Quand la boule est ouverte : révélation de la carte après le lerp
   useEffect(() => {
@@ -99,10 +88,33 @@ function Play() {
     return () => clearTimeout(timer)
   }, [phase])
 
+  const tokens = balance?.tokens ?? 0
+  const maxStock = balance?.maxStock ?? 5
+  const carouselOwned = carouselRef.current?.isOwned ?? false
+  const canPull = tokens > 0 && phase === 'idle' && !pullPending && hasMachines && carouselOwned
+
+  const handlePull = async () => {
+    if (!canPull || !carouselRef.current) return
+
+    setPhase('machine-anim')
+    await carouselRef.current.startAnimation()
+    setPhase('ball')
+  }
+
+  const handleSkip = () => {
+    if (!canPull) return
+    setPhase('pulling')
+    pullMutation(undefined, {
+      onSuccess: (result) => {
+        setPullResult(result)
+        setPhase('revealed')
+      },
+      onError: () => setPhase('idle'),
+    })
+  }
+
   const handleBallClick = () => {
-    if (phase !== 'ball' || pullPending) {
-      return
-    }
+    if (phase !== 'ball' || pullPending) return
     pullMutation(undefined, {
       onSuccess: (result) => {
         pendingResult.current = result
@@ -123,6 +135,7 @@ function Play() {
     phase === 'opening' ||
     phase === 'open' ||
     phase === 'revealed'
+  const showCarousel = phase === 'idle' || phase === 'machine-anim' || phase === 'pulling'
   const isIdle = phase === 'idle' || phase === 'pulling'
 
   const timeLeft =
@@ -238,31 +251,17 @@ function Play() {
               </p>
             )}
           </div>
-        ) : (
-          /* Idle decoration — rotating rings + mystery orb */
-          <div className="relative flex h-[320px] w-[320px] items-center justify-center">
-            {/* Rings */}
-            <div className="absolute h-36 w-36 rounded-full border-2 border-primary/10 [animation:spin_25s_linear_infinite]" />
-            <div className="absolute h-56 w-56 rounded-full border border-primary/7 [animation:spin_40s_linear_infinite_reverse]" />
-            <div className="absolute h-72 w-72 rounded-full border border-secondary/5 [animation:spin_60s_linear_infinite]" />
-            {/* Subtle dashes on outer ring */}
-            <div
-              className="absolute h-[300px] w-[300px] rounded-full"
-              style={{
-                border: '1px dashed',
-                borderColor:
-                  'color-mix(in srgb, var(--primary) 8%, transparent)',
-                animation: 'spin 80s linear infinite reverse',
-              }}
+        ) : showCarousel ? (
+          hasMachines ? (
+            <MachineCarousel
+              ref={carouselRef}
+              ownedMachineIds={ownedMachineIds}
+              hideNav={phase === 'machine-anim'}
             />
-            {/* Central mystery orb */}
-            <div className="glow-pulse relative flex h-28 w-28 items-center justify-center rounded-full border border-primary/15 bg-linear-to-br from-primary/8 to-secondary/8">
-              <span className="font-display text-5xl font-black text-primary/20 select-none">
-                ?
-              </span>
-            </div>
-          </div>
-        )}
+          ) : (
+            <NoMachine />
+          )
+        ) : null}
       </div>
 
       {/* ── ACTIONS (idle / pulling) ── */}
@@ -281,19 +280,25 @@ function Play() {
               ? 'Tirage en cours…'
               : tokens < 1
                 ? 'Plus de tickets'
-                : '✦ Lancer (1 ticket)'}
+                : !hasMachines
+                  ? 'Aucune machine'
+                  : !carouselOwned
+                    ? 'Machine verrouillée'
+                    : '✦ Lancer (1 ticket)'}
           </Button>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleSkip}
-            disabled={!canPull}
-            className="text-xs text-text-light/40 hover:text-text-light"
-          >
-            Passer l'animation
-            <ChevronsRight className="h-3.5 w-3.5" />
-          </Button>
+          {canPull && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSkip}
+              disabled={!canPull}
+              className="text-xs text-text-light/40 hover:text-text-light"
+            >
+              Passer l'animation
+              <ChevronsRight className="h-3.5 w-3.5" />
+            </Button>
+          )}
         </div>
       )}
 
