@@ -132,4 +132,17 @@ describe('Shop routes', () => {
     })
     expect(res2.statusCode).toBe(409)
   })
+
+  it('GET /shop/machines — liste les machines possédées', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/shop/machines',
+      headers: { cookie: cookies },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(Array.isArray(body.machineIds)).toBe(true)
+    // From the previous test, user bought a gashapon machine
+    expect(body.machineIds).toContain('gashapon')
+  })
 })

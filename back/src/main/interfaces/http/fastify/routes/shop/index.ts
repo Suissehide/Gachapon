@@ -23,6 +23,23 @@ export const shopRouter: FastifyPluginCallbackZod = (fastify) => {
     },
   )
 
+  fastify.get(
+    '/shop/machines',
+    { onRequest: [fastify.verifySessionCookie] },
+    async (request) => {
+      const purchases = await fastify.iocContainer.postgresOrm.prisma.purchase.findMany({
+        where: {
+          userId: request.user.userID,
+          shopItem: { type: 'MACHINE' },
+        },
+        include: { shopItem: true },
+      })
+      return {
+        machineIds: purchases.map((p) => (p.shopItem.value as { machineId: string }).machineId),
+      }
+    },
+  )
+
   fastify.post(
     '/shop/:id/buy',
     {
