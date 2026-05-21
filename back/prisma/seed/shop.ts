@@ -38,6 +38,21 @@ const SHOP_ITEMS = [
     dustCost: 500,
     value: { guaranteedRarity: 'EPIC', pulls: 5 },
   },
+  // Machines
+  {
+    name: 'Gashapon',
+    description: 'La machine à capsules classique japonaise. Tourne la manivelle et récupère ta capsule !',
+    type: 'MACHINE' as const,
+    dustCost: 500,
+    value: { machineId: 'gashapon' },
+  },
+  {
+    name: 'Claw Machine',
+    description: 'La pince à grappins arcade. Attrape ta capsule avec précision !',
+    type: 'MACHINE' as const,
+    dustCost: 1500,
+    value: { machineId: 'claw' },
+  },
   // Cosmétiques
   {
     name: 'Cadre Doré',
