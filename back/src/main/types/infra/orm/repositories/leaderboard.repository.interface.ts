@@ -1,19 +1,20 @@
 import type { CardRarity, CardVariant } from '../../../../../generated/client'
 
-export type CollectorRow = {
+export type CollectorRankingRow = {
   userId: string
-  _count: { cardId: number }
+  distinctCards: bigint
+  totalVariants: bigint
+}
+
+export type ActiveCardCounts = {
+  total: number
+  variantEligible: number
 }
 
 export type LeaderboardUser = {
   id: string
   username: string
   avatar: string | null
-}
-
-export type LegendaryRow = {
-  userId: string
-  _count: { cardId: number }
 }
 
 export type TeamWithMembers = {
@@ -40,11 +41,9 @@ export type QuestWithReward = {
 }
 
 export interface ILeaderboardRepository {
-  countActiveCards(): Promise<number>
-  getCollectorRows(limit: number): Promise<CollectorRow[]>
+  countActiveCards(): Promise<ActiveCardCounts>
+  getCollectorRanking(limit: number): Promise<CollectorRankingRow[]>
   getUsersByIds(ids: string[]): Promise<LeaderboardUser[]>
-  getLegendaryCardIds(): Promise<string[]>
-  getLegendaryRows(cardIds: string[], limit: number): Promise<LegendaryRow[]>
   getTeamsWithMembers(limit: number): Promise<TeamWithMembers[]>
   getUserCardsByUserIds(userIds: string[]): Promise<UserCardForScoring[]>
   getActiveQuests(): Promise<QuestWithReward[]>
