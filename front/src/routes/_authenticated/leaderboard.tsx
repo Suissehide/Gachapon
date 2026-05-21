@@ -1,11 +1,10 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { Star, Trophy, Users } from 'lucide-react'
+import { Trophy, Users } from 'lucide-react'
 import { useState } from 'react'
 
 import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
 import type {
   CollectorEntry,
-  LegendaryEntry,
   TeamEntry,
 } from '../../queries/useLeaderboard'
 import { useLeaderboard } from '../../queries/useLeaderboard'
@@ -15,18 +14,13 @@ export const Route = createFileRoute('/_authenticated/leaderboard')({
   component: LeaderboardPage,
 })
 
-type Tab = 'collectors' | 'legendaries' | 'teams'
+type Tab = 'collectors' | 'teams'
 
 const TABS = [
   {
     value: 'collectors' as const,
     label: 'Collectionneurs',
     icon: <Trophy className="h-3.5 w-3.5" />,
-  },
-  {
-    value: 'legendaries' as const,
-    label: 'Légendaires',
-    icon: <Star className="h-3.5 w-3.5" />,
   },
   {
     value: 'teams' as const,
@@ -67,20 +61,6 @@ function LeaderboardPage() {
               ) : (
                 data?.collectors.map((entry) => (
                   <CollectorRow
-                    key={entry.user.id}
-                    entry={entry}
-                    rankStyle={RANK_STYLES[entry.rank - 1] ?? 'text-text-light'}
-                    isMe={currentUser?.id === entry.user.id}
-                  />
-                ))
-              ))}
-
-            {activeTab === 'legendaries' &&
-              (data?.legendaries.length === 0 ? (
-                <EmptyState />
-              ) : (
-                data?.legendaries.map((entry) => (
-                  <LegendaryRow
                     key={entry.user.id}
                     entry={entry}
                     rankStyle={RANK_STYLES[entry.rank - 1] ?? 'text-text-light'}
@@ -141,40 +121,10 @@ function CollectorRow({
         {isMe && <span className="ml-1 text-xs text-primary">(moi)</span>}
       </Link>
       <div className="text-right">
-        <p className="text-sm font-bold text-text">{entry.percentage}%</p>
-        <p className="text-xs text-text-light">{entry.ownedCards} cartes</p>
-      </div>
-    </div>
-  )
-}
-
-function LegendaryRow({
-  entry,
-  rankStyle,
-  isMe,
-}: {
-  entry: LegendaryEntry
-  rankStyle: string
-  isMe: boolean
-}) {
-  return (
-    <div
-      className={`flex items-center gap-4 border-b border-border px-4 py-3 last:border-0 ${isMe ? 'bg-primary/5' : ''}`}
-    >
-      <span className={`w-6 text-center text-sm font-black ${rankStyle}`}>
-        {entry.rank <= 3 ? ['🥇', '🥈', '🥉'][entry.rank - 1] : entry.rank}
-      </span>
-      <Link
-        to="/profile/$username"
-        params={{ username: entry.user.username }}
-        className="flex-1 text-sm font-semibold text-text transition-colors hover:text-primary"
-      >
-        @{entry.user.username}
-        {isMe && <span className="ml-1 text-xs text-primary">(moi)</span>}
-      </Link>
-      <div className="flex items-center gap-1 text-sm font-bold text-yellow-400">
-        <Star className="h-3.5 w-3.5" />
-        {entry.legendaryCount}
+        <p className="text-sm font-bold text-text">{entry.variantPercentage}%</p>
+        <p className="text-xs text-text-light">
+          {entry.cardPercentage}% cartes · {entry.totalVariants} variantes
+        </p>
       </div>
     </div>
   )
