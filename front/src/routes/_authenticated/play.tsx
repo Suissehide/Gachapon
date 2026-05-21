@@ -2,7 +2,7 @@ import { Environment } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { createFileRoute } from '@tanstack/react-router'
 import { ChevronsRight, Ticket } from 'lucide-react'
-import { type CSSProperties, useEffect, useRef, useState } from 'react'
+import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react'
 
 import { CardReveal } from '../../components/machine/CardReveal'
 import { GachaBall } from '../../components/machine/GachaBall'
@@ -41,6 +41,7 @@ function Play() {
   const [pullResult, setPullResult] = useState<PullResult | null>(null)
   const pendingResult = useRef<PullResult | null>(null)
   const [now, setNow] = useState(Date.now())
+  const [selectedMachineOwned, setSelectedMachineOwned] = useState(false)
   const carouselRef = useRef<CarouselHandle>(null)
 
   const { data: balance, isLoading: balanceLoading } = useTokenBalance()
@@ -51,6 +52,10 @@ function Play() {
 
   const ownedMachineIds = machinesData?.machineIds ?? []
   const hasMachines = ownedMachineIds.length > 0
+
+  const handleSelectionChange = useCallback((isOwned: boolean) => {
+    setSelectedMachineOwned(isOwned)
+  }, [])
 
   // Sync auth store (topbar) with token balance query
   useEffect(() => {
@@ -90,8 +95,7 @@ function Play() {
 
   const tokens = balance?.tokens ?? 0
   const maxStock = balance?.maxStock ?? 5
-  const carouselOwned = carouselRef.current?.isOwned ?? false
-  const canPull = tokens > 0 && phase === 'idle' && !pullPending && hasMachines && carouselOwned
+  const canPull = tokens > 0 && phase === 'idle' && !pullPending && hasMachines && selectedMachineOwned
 
   const handlePull = async () => {
     if (!canPull || !carouselRef.current) return
@@ -255,6 +259,7 @@ function Play() {
               ref={carouselRef}
               ownedMachineIds={ownedMachineIds}
               hideNav={phase === 'machine-anim'}
+              onSelectionChange={handleSelectionChange}
             />
           ) : (
             <NoMachine />
@@ -280,7 +285,7 @@ function Play() {
                 ? 'Plus de tickets'
                 : !hasMachines
                   ? 'Aucune machine'
-                  : !carouselOwned
+                  : !selectedMachineOwned
                     ? 'Machine verrouillée'
                     : '✦ Lancer (1 ticket)'}
           </Button>
