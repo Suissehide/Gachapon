@@ -1,9 +1,9 @@
 import type { IocContainer } from '../../../types/application/ioc'
 import type {
-  CollectorRow,
+  ActiveCardCounts,
+  CollectorRankingRow,
   ILeaderboardRepository,
   LeaderboardUser,
-  LegendaryRow,
   QuestWithReward,
   TeamWithMembers,
   UserCardForScoring,
@@ -17,41 +17,36 @@ export class LeaderboardRepository implements ILeaderboardRepository {
     this.#prisma = postgresOrm.prisma
   }
 
-  countActiveCards(): Promise<number> {
-    return this.#prisma.card.count({ where: { set: { isActive: true } } })
+  async countActiveCards(): Promise<ActiveCardCounts> {
+    const [total, variantEligible] = await Promise.all([
+      this.#prisma.card.count({ where: { set: { isActive: true } } }),
+      this.#prisma.card.count({
+        where: {
+          set: { isActive: true },
+          rarity: { in: ['RARE', 'EPIC', 'LEGENDARY'] },
+        },
+      }),
+    ])
+    return { total, variantEligible }
   }
 
-  getCollectorRows(limit: number): Promise<CollectorRow[]> {
-    return this.#prisma.userCard.groupBy({
-      by: ['userId'],
-      _count: { cardId: true },
-      orderBy: { _count: { cardId: 'desc' } },
-      take: limit,
-    })
+  getCollectorRanking(limit: number): Promise<CollectorRankingRow[]> {
+    return this.#prisma.$queryRaw<CollectorRankingRow[]>`
+      SELECT
+        "userId",
+        COUNT(DISTINCT "cardId") AS "distinctCards",
+        COUNT(*) AS "totalVariants"
+      FROM "UserCard"
+      GROUP BY "userId"
+      ORDER BY "totalVariants" DESC, COUNT(DISTINCT "cardId") DESC
+      LIMIT ${limit}
+    `
   }
 
   getUsersByIds(ids: string[]): Promise<LeaderboardUser[]> {
     return this.#prisma.user.findMany({
       where: { id: { in: ids } },
       select: { id: true, username: true, avatar: true },
-    })
-  }
-
-  async getLegendaryCardIds(): Promise<string[]> {
-    const cards = await this.#prisma.card.findMany({
-      where: { rarity: 'LEGENDARY' },
-      select: { id: true },
-    })
-    return cards.map((c) => c.id)
-  }
-
-  getLegendaryRows(cardIds: string[], limit: number): Promise<LegendaryRow[]> {
-    return this.#prisma.userCard.groupBy({
-      by: ['userId'],
-      where: { cardId: { in: cardIds } },
-      _count: { cardId: true },
-      orderBy: { _count: { cardId: 'desc' } },
-      take: limit,
     })
   }
 
