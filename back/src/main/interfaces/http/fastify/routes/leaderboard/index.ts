@@ -11,9 +11,13 @@ export const leaderboardRouter: FastifyPluginCallbackZod = (fastify) => {
     { onRequest: [fastify.verifySessionCookie] },
     async () => {
       const config = await scoringConfigRepository.get()
-      const totalCards = await leaderboardRepository.countActiveCards()
+      const { total, variantEligible } =
+        await leaderboardRepository.countActiveCards()
+      const totalPossibleVariants =
+        total - variantEligible + variantEligible * 3
 
-      const collectorRows = await leaderboardRepository.getCollectorRows(10)
+      const collectorRows =
+        await leaderboardRepository.getCollectorRanking(10)
       const collectorIds = collectorRows.map((r) => r.userId)
       const collectorUsers =
         await leaderboardRepository.getUsersByIds(collectorIds)
@@ -26,29 +30,18 @@ export const leaderboardRouter: FastifyPluginCallbackZod = (fastify) => {
           username: 'Unknown',
           avatar: null,
         },
-        ownedCards: r._count.cardId,
-        percentage:
-          totalCards > 0 ? Math.round((r._count.cardId / totalCards) * 100) : 0,
-      }))
-
-      const legendaryCardIds = await leaderboardRepository.getLegendaryCardIds()
-      const legendaryRows = await leaderboardRepository.getLegendaryRows(
-        legendaryCardIds,
-        10,
-      )
-      const legendaryIds = legendaryRows.map((r) => r.userId)
-      const legendaryUsers =
-        await leaderboardRepository.getUsersByIds(legendaryIds)
-      const legendaryUserMap = new Map(legendaryUsers.map((u) => [u.id, u]))
-
-      const legendaries = legendaryRows.map((r, i) => ({
-        rank: i + 1,
-        user: legendaryUserMap.get(r.userId) ?? {
-          id: r.userId,
-          username: 'Unknown',
-          avatar: null,
-        },
-        legendaryCount: r._count.cardId,
+        distinctCards: Number(r.distinctCards),
+        cardPercentage:
+          total > 0
+            ? Math.round((Number(r.distinctCards) / total) * 100)
+            : 0,
+        totalVariants: Number(r.totalVariants),
+        variantPercentage:
+          totalPossibleVariants > 0
+            ? Math.round(
+                (Number(r.totalVariants) / totalPossibleVariants) * 100,
+              )
+            : 0,
       }))
 
       const teams = await leaderboardRepository.getTeamsWithMembers(20)
@@ -94,7 +87,7 @@ export const leaderboardRouter: FastifyPluginCallbackZod = (fastify) => {
           avgScore: entry.avgScore,
         }))
 
-      return { collectors, legendaries, bestTeams }
+      return { collectors, bestTeams }
     },
   )
 
