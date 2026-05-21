@@ -30,6 +30,16 @@ export class ShopDomain implements IShopDomain {
           throw Boom.paymentRequired('Not enough dust')
         }
 
+        // Prevent buying the same MACHINE twice
+        if (item.type === 'MACHINE') {
+          const existing = await tx.purchase.findFirst({
+            where: { userId, shopItemId },
+          })
+          if (existing) {
+            throw Boom.conflict('Machine already owned')
+          }
+        }
+
         const purchase = await tx.purchase.create({
           data: { userId, shopItemId, dustSpent: item.dustCost },
         })

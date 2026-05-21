@@ -94,4 +94,42 @@ describe('Shop routes', () => {
     })
     expect(res.statusCode).toBe(404)
   })
+
+  it('POST /shop/:id/buy — 409 si machine déjà possédée', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    // Create a MACHINE shop item
+    const machineItem = await postgresOrm.prisma.shopItem.create({
+      data: {
+        name: 'Gashapon',
+        description: 'Machine Gashapon',
+        type: 'MACHINE',
+        dustCost: 500,
+        value: { machineId: 'gashapon' },
+        isActive: true,
+      },
+    })
+
+    // Give dust
+    await postgresOrm.prisma.user.update({
+      where: { id: userId },
+      data: { dust: 5000 },
+    })
+
+    // First purchase — should succeed
+    const res1 = await app.inject({
+      method: 'POST',
+      url: `/shop/${machineItem.id}/buy`,
+      headers: { cookie: cookies },
+    })
+    expect(res1.statusCode).toBe(200)
+
+    // Second purchase — should fail with 409
+    const res2 = await app.inject({
+      method: 'POST',
+      url: `/shop/${machineItem.id}/buy`,
+      headers: { cookie: cookies },
+    })
+    expect(res2.statusCode).toBe(409)
+  })
 })
