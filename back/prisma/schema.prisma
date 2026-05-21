@@ -48,6 +48,7 @@ enum ShopItemType {
   TOKEN_PACK
   BOOST
   COSMETIC
+  MACHINE
 }
 
 enum SkillEffectType {

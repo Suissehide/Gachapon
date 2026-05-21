@@ -3,7 +3,7 @@ import { z } from 'zod/v4'
 export const shopItemSchema = z.object({
   name: z.string().min(1),
   description: z.string().min(1),
-  type: z.enum(['TOKEN_PACK', 'BOOST', 'COSMETIC']),
+  type: z.enum(['TOKEN_PACK', 'BOOST', 'COSMETIC', 'MACHINE']),
   dustCost: z.number().int().min(0),
   value: z.record(z.string(), z.unknown()),
   isActive: z.boolean().default(true),
