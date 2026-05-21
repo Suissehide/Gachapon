@@ -33,7 +33,7 @@ describe('Leaderboard route', () => {
 
   afterAll(() => app.close())
 
-  it('GET /leaderboard — retourne les 3 classements', async () => {
+  it('GET /leaderboard — retourne collectors et bestTeams', async () => {
     const res = await app.inject({
       method: 'GET',
       url: '/leaderboard',
@@ -42,7 +42,7 @@ describe('Leaderboard route', () => {
     expect(res.statusCode).toBe(200)
     const body = res.json()
     expect(Array.isArray(body.collectors)).toBe(true)
-    expect(Array.isArray(body.legendaries)).toBe(true)
+    expect(body.legendaries).toBeUndefined()
     expect(Array.isArray(body.bestTeams)).toBe(true)
   })
 
