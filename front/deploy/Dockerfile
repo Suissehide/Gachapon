@@ -24,6 +24,7 @@ COPY deploy/conf/nginx.conf ./
 COPY vite.config.ts ./
 COPY tsconfig.json tsconfig.app.json tsconfig.node.json ./
 COPY public ./public
+COPY scripts ./scripts
 COPY src ./src
 COPY index.html ./
 RUN npm run build
