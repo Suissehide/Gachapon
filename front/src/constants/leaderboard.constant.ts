@@ -2,14 +2,10 @@
 export type CollectorEntry = {
   rank: number
   user: { id: string; username: string; avatar: string | null }
-  ownedCards: number
-  percentage: number
-}
-
-export type LegendaryEntry = {
-  rank: number
-  user: { id: string; username: string; avatar: string | null }
-  legendaryCount: number
+  distinctCards: number
+  cardPercentage: number
+  totalVariants: number
+  variantPercentage: number
 }
 
 export type TeamEntry = {
@@ -20,7 +16,6 @@ export type TeamEntry = {
 
 export type Leaderboard = {
   collectors: CollectorEntry[]
-  legendaries: LegendaryEntry[]
   bestTeams: TeamEntry[]
 }
 

@@ -2,7 +2,6 @@ import { apiUrl } from '../constants/config.constant.ts'
 import type {
   CollectorEntry,
   Leaderboard,
-  LegendaryEntry,
   Quest,
   TeamEntry,
 } from '../constants/leaderboard.constant.ts'
@@ -10,7 +9,7 @@ import { LEADERBOARD_ROUTES } from '../constants/leaderboard.constant.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
-export type { CollectorEntry, LegendaryEntry, TeamEntry, Leaderboard, Quest }
+export type { CollectorEntry, TeamEntry, Leaderboard, Quest }
 
 export const LeaderboardApi = {
   getLeaderboard: async (): Promise<Leaderboard> => {

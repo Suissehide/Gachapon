@@ -5,7 +5,6 @@ import { LeaderboardApi } from '../api/leaderboard.api.ts'
 export type {
   CollectorEntry,
   Leaderboard,
-  LegendaryEntry,
   Quest,
   TeamEntry,
 } from '../api/leaderboard.api.ts'
