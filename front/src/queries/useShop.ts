@@ -16,6 +16,13 @@ export const useBuyItem = () => {
     mutationFn: (itemId: string) => ShopApi.buyItem(itemId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
+      qc.invalidateQueries({ queryKey: ['shop', 'machines'] })
     },
   })
 }
+
+export const useOwnedMachines = () =>
+  useQuery({
+    queryKey: ['shop', 'machines'],
+    queryFn: () => ShopApi.getOwnedMachines(),
+  })

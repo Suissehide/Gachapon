@@ -24,4 +24,12 @@ export const ShopApi = {
     }
     return res.json()
   },
+
+  getOwnedMachines: async (): Promise<{ machineIds: string[] }> => {
+    const res = await fetchWithAuth(`${apiUrl}/shop/machines`)
+    if (!res.ok) {
+      handleHttpError(res, {}, 'Erreur lors de la récupération des machines')
+    }
+    return res.json()
+  },
 }

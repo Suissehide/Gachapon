@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { CalendarClock, Package, Sparkles, Zap } from 'lucide-react'
+import { CalendarClock, Cog, Package, Sparkles, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { CardDisplay } from '../../components/shared/tcg-card/CardDisplay'
@@ -63,6 +63,11 @@ const TYPE_CONFIG: Record<
     label: 'Cosmétiques',
     icon: <Package className="h-5 w-5 text-accent" />,
     color: 'border-accent/30 bg-accent/5',
+  },
+  MACHINE: {
+    label: 'Machines',
+    icon: <Cog className="h-5 w-5 text-primary" />,
+    color: 'border-primary/30 bg-primary/5',
   },
 }
 
@@ -296,7 +301,7 @@ function StaticShopCard({
   onBuy: () => void
 }) {
   const canAfford = dust >= item.dustCost
-  const supported = item.type === 'TOKEN_PACK'
+  const supported = item.type === 'TOKEN_PACK' || item.type === 'MACHINE'
 
   return (
     <div className={`rounded-xl border p-4 ${colorClass} flex flex-col gap-3`}>
