@@ -1,4 +1,4 @@
-import { Environment } from '@react-three/drei'
+import { Environment, OrbitControls } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { ChevronLeft, ChevronRight, Lock } from 'lucide-react'
 import {
@@ -33,7 +33,9 @@ export const MachineCarousel = forwardRef<CarouselHandle, Props>(
       const saved = localStorage.getItem(SELECTED_MACHINE_KEY)
       if (saved) {
         const idx = machines.findIndex((m) => m.id === saved)
-        if (idx >= 0) return idx
+        if (idx >= 0) {
+          return idx
+        }
       }
       const firstOwned = machines.findIndex((m) =>
         ownedMachineIds.includes(m.id),
@@ -66,7 +68,9 @@ export const MachineCarousel = forwardRef<CarouselHandle, Props>(
 
     useImperativeHandle(ref, () => ({
       async startAnimation() {
-        if (!machineRef.current || !isOwned) return
+        if (!machineRef.current || !isOwned) {
+          return
+        }
         await machineRef.current.startAnimation()
       },
     }))
@@ -74,118 +78,79 @@ export const MachineCarousel = forwardRef<CarouselHandle, Props>(
     const MachineComponent = current.component
 
     return (
-      <div className="relative flex flex-col items-center">
-        {/* Fixed-height stage area */}
-        <div className="relative flex h-[320px] w-[320px] items-center justify-center">
-          {/* Navigation arrows */}
-          {!hideNav && machines.length > 1 && (
-            <>
-              <button
-                type="button"
-                onClick={() => navigate(-1)}
-                className="absolute left-1 top-1/2 z-20 -translate-y-1/2 rounded-full bg-surface/60 p-1.5 text-text-light/60 backdrop-blur transition hover:bg-surface hover:text-text"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate(1)}
-                className="absolute right-1 top-1/2 z-20 -translate-y-1/2 rounded-full bg-surface/60 p-1.5 text-text-light/60 backdrop-blur transition hover:bg-surface hover:text-text"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-            </>
-          )}
-
-          {/* Machine content — always same height */}
-          <div
-            className="h-full w-full transition-opacity duration-150"
-            style={{ opacity: fade ? 1 : 0 }}
-          >
-            {isOwned ? (
-              <Canvas
-                camera={{ position: [0, 0.3, 3.5], fov: 45 }}
-                shadows
-                gl={{ antialias: true }}
-                style={{ pointerEvents: 'none' }}
-              >
-                <ambientLight intensity={0.5} />
-                <directionalLight
-                  position={[5, 10, 5]}
-                  intensity={1}
-                  castShadow
-                />
-                <pointLight
-                  position={[-3, 3, 3]}
-                  intensity={0.6}
-                  color="#f59e0b"
-                />
-                <MachineComponent ref={machineRef} />
-                <Environment preset="city" />
-              </Canvas>
-            ) : (
-              <div className="flex h-full w-full flex-col items-center justify-center gap-3">
-                <div className="relative flex h-44 w-44 items-center justify-center rounded-2xl bg-surface/50 backdrop-blur">
-                  <div className="flex h-28 w-20 items-center justify-center rounded-xl bg-muted/60">
-                    <current.icon className="h-10 w-10 text-text-light/20" />
-                  </div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Lock className="h-8 w-8 text-text-light/40" />
-                  </div>
-                </div>
-                <p className="text-sm font-bold text-text-light/60">
-                  {current.name}
-                </p>
-                {onBuyMachine && (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => onBuyMachine(current)}
-                    className="text-xs"
-                  >
-                    Acheter — {current.price.toLocaleString('fr-FR')} dust
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Pagination dots — fixed position below the stage */}
+      <div className="relative h-full w-full">
+        {/* Navigation arrows */}
         {!hideNav && machines.length > 1 && (
-          <div className="mt-1 flex gap-2">
-            {machines.map((m, i) => {
-              const owned = ownedMachineIds.includes(m.id)
-              const active = i === index
-              return (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => {
-                    if (i !== index) {
-                      setFade(false)
-                      setTimeout(() => {
-                        setIndex(i)
-                        setFade(true)
-                      }, 150)
-                    }
-                  }}
-                  className={`flex h-3 w-3 items-center justify-center rounded-full transition ${
-                    active
-                      ? 'bg-primary'
-                      : owned
-                        ? 'bg-text-light/30'
-                        : 'bg-text-light/10'
-                  }`}
-                >
-                  {!owned && (
-                    <Lock className="h-1.5 w-1.5 text-text-light/40" />
-                  )}
-                </button>
-              )
-            })}
-          </div>
+          <>
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="absolute cursor-pointer left-[calc(50%-160px)] top-1/2 z-20 -translate-y-1/2 rounded-full bg-surface/60 p-1.5 text-text-light/60 backdrop-blur transition hover:bg-surface hover:text-text"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate(1)}
+              className="absolute cursor-pointer right-[calc(50%-160px)] top-1/2 z-20 -translate-y-1/2 rounded-full bg-surface/60 p-1.5 text-text-light/60 backdrop-blur transition hover:bg-surface hover:text-text"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </>
         )}
+
+        {/* Machine content */}
+        <div
+          className="absolute inset-0 transition-opacity duration-150"
+          style={{ opacity: fade ? 1 : 0 }}
+        >
+          {isOwned ? (
+            <Canvas
+              camera={{ position: [0, 0.3, 6.5], fov: 45 }}
+              shadows
+              gl={{ antialias: true }}
+            >
+              <ambientLight intensity={0.5} />
+              <directionalLight
+                position={[5, 10, 5]}
+                intensity={1}
+                castShadow
+              />
+              <pointLight
+                position={[-3, 3, 3]}
+                intensity={0.6}
+                color="#f59e0b"
+              />
+              <MachineComponent ref={machineRef} />
+              <OrbitControls
+                enableZoom={false}
+                enablePan={false}
+                minPolarAngle={Math.PI * 0.3}
+                maxPolarAngle={Math.PI * 0.7}
+              />
+              <Environment preset="city" />
+            </Canvas>
+          ) : (
+            <div className="flex h-full w-full flex-col items-center justify-center gap-3">
+              <div className="flex h-44 w-44 items-center justify-center rounded-2xl bg-surface/50 backdrop-blur">
+                <Lock className="h-10 w-10 text-text-light/30" />
+              </div>
+              <p className="text-sm font-bold text-text-light/60">
+                {current.name}
+              </p>
+              {onBuyMachine && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => onBuyMachine(current)}
+                  className="text-xs"
+                >
+                  Acheter — {current.price.toLocaleString('fr-FR')} dust
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     )
   },

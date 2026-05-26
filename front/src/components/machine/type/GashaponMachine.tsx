@@ -1,5 +1,11 @@
-import { animated, useSpring } from '@react-spring/three'
 import { useFrame } from '@react-three/fiber'
+import {
+  BallCollider,
+  CuboidCollider,
+  Physics,
+  type RapierRigidBody,
+  RigidBody,
+} from '@react-three/rapier'
 import {
   forwardRef,
   useImperativeHandle,
@@ -14,234 +20,403 @@ export type GashaponMachineHandle = {
 }
 
 const BALL_COLORS = [
-  '#e63946', '#1d88c4', '#2a9d8f', '#f4a261',
-  '#7b2d8b', '#74b816', '#e91e8c', '#00b4d8',
+  '#e63946',
+  '#1d88c4',
+  '#2a9d8f',
+  '#f4a261',
+  '#7b2d8b',
+  '#74b816',
+  '#e91e8c',
+  '#00b4d8',
 ]
 
-// Mini gacha capsule — bicolor like the real GachaBall (top transparent, bottom colored)
-function MiniCapsule({
-  position,
-  color,
-  meshRef,
-}: {
-  position: [number, number, number]
-  color: string
-  meshRef: (el: THREE.Group | null) => void
-}) {
-  const radius = 0.08
+const CAPSULE_RADIUS = 0.11
+
+// Globe center Y in world space
+const GLOBE_Y = 0.55
+
+// Mini gacha capsule visual — same structure as GachaBall.tsx
+function MiniCapsuleVisual({ color }: { color: string }) {
+  const r = CAPSULE_RADIUS
   return (
-    <group ref={meshRef} position={position}>
-      {/* Top hemisphere — transparent */}
-      <mesh>
-        <sphereGeometry args={[radius, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
+    <group>
+      <mesh renderOrder={1}>
+        <sphereGeometry args={[r, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
         <meshPhysicalMaterial
           color="#7ec8e3"
           roughness={0.2}
-          opacity={0.4}
-          transparent
+          metalness={0}
+          opacity={0.38}
           clearcoat={0.5}
+          clearcoatRoughness={0.25}
           side={THREE.DoubleSide}
         />
       </mesh>
-      {/* Bottom hemisphere — colored */}
       <mesh>
-        <sphereGeometry args={[radius, 16, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]} />
-        <meshStandardMaterial color={color} roughness={0.6} side={THREE.DoubleSide} />
+        <sphereGeometry
+          args={[r, 16, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]}
+        />
+        <meshStandardMaterial
+          color={color}
+          roughness={0.85}
+          metalness={0}
+          side={THREE.DoubleSide}
+        />
       </mesh>
-      {/* Seam ring */}
       <mesh>
-        <cylinderGeometry args={[radius * 1.02, radius * 1.02, 0.012, 16, 1, true]} />
-        <meshStandardMaterial color={color} roughness={0.5} side={THREE.DoubleSide} />
+        <cylinderGeometry
+          args={[r * 1.015, r * 1.015, r * 0.14, 16, 1, true]}
+        />
+        <meshStandardMaterial
+          color={color}
+          roughness={0.7}
+          metalness={0}
+          side={THREE.DoubleSide}
+        />
       </mesh>
     </group>
   )
 }
 
-// Capsules sitting at the bottom of the globe
-function Capsules({ agitate }: { agitate: boolean }) {
-  const capsules = useMemo(
-    () =>
-      Array.from({ length: 8 }, (_, i) => ({
-        // Positioned at the bottom of the globe (y around -0.1 to 0.1), within radius
-        pos: [
-          (Math.random() - 0.5) * 0.5,
-          -0.15 + Math.random() * 0.2,
-          (Math.random() - 0.5) * 0.5,
-        ] as [number, number, number],
-        color: BALL_COLORS[i % BALL_COLORS.length],
-        speed: 0.3 + Math.random() * 0.4,
-        offset: Math.random() * Math.PI * 2,
-      })),
+// Physics-driven capsule with ref for jiggle impulses
+function PhysicsCapsule({
+  color,
+  startPos,
+  rigidBodyRef,
+}: {
+  color: string
+  startPos: [number, number, number]
+  rigidBodyRef: (el: RapierRigidBody | null) => void
+}) {
+  const rotation: [number, number, number] = useMemo(
+    () => [
+      Math.random() * Math.PI * 2,
+      Math.random() * Math.PI * 2,
+      Math.random() * Math.PI * 2,
+    ],
     [],
   )
 
-  const refs = useRef<(THREE.Group | null)[]>([])
+  return (
+    <RigidBody
+      ref={rigidBodyRef}
+      type="dynamic"
+      position={startPos}
+      rotation={rotation}
+      colliders={false}
+      restitution={0.2}
+      friction={0.8}
+      linearDamping={2}
+      angularDamping={2}
+      lockRotations={true}
+    >
+      <BallCollider args={[CAPSULE_RADIUS]} />
+      <MiniCapsuleVisual color={color} />
+    </RigidBody>
+  )
+}
 
-  useFrame(() => {
-    for (let i = 0; i < capsules.length; i++) {
-      const group = refs.current[i]
-      if (!group) continue
-      const c = capsules[i]
-      const amplitude = agitate ? 0.06 : 0.008
-      const speed = agitate ? c.speed * 4 : c.speed
-      const t = Date.now() * 0.001
-      group.position.x = c.pos[0] + Math.sin(t * speed + c.offset) * amplitude
-      group.position.y = c.pos[1] + Math.sin(t * speed * 1.3 + c.offset) * amplitude * 0.5
-      group.position.z = c.pos[2] + Math.cos(t * speed * 0.7 + c.offset) * amplitude
+// Floor collider at the bottom of the globe
+function GlobeFloorCollider() {
+  return (
+    <RigidBody type="fixed" position={[0, GLOBE_Y - 0.44, 0]}>
+      <CuboidCollider args={[0.5, 0.02, 0.5]} />
+    </RigidBody>
+  )
+}
+
+// Dispensed capsule — a real physics ball that spawns at the hole and rolls out
+function DispensedPhysicsCapsule({ visible }: { visible: boolean }) {
+  if (!visible) {
+    return null
+  }
+
+  // Spawn position: at the dispensing hole, on the ramp
+  return (
+    <RigidBody
+      type="dynamic"
+      position={[-0.2, -0.45, 0.5]}
+      colliders={false}
+      restitution={0.3}
+      friction={0.5}
+      linearDamping={0.5}
+      angularDamping={0.5}
+    >
+      <BallCollider args={[CAPSULE_RADIUS]} />
+      <MiniCapsuleVisual color="#f4a261" />
+    </RigidBody>
+  )
+}
+
+// Invisible ramp collider at the dispensing hole — tilted so the ball rolls forward and falls
+function DispensingRampCollider() {
+  return (
+    <RigidBody
+      type="fixed"
+      position={[-0.2, -0.58, 0.6]}
+      rotation={[0.35, 0, 0]}
+    >
+      <CuboidCollider args={[0.1, 0.01, 0.12]} />
+    </RigidBody>
+  )
+}
+
+// Detects camera rotation and jiggles capsules
+function CameraJiggle({
+  bodies,
+}: {
+  bodies: React.RefObject<(RapierRigidBody | null)[]>
+}) {
+  const prevAzimuth = useRef(0)
+
+  useFrame(({ camera }) => {
+    const azimuth = Math.atan2(camera.position.x, camera.position.z)
+    const delta = azimuth - prevAzimuth.current
+    prevAzimuth.current = azimuth
+
+    // Clamp velocities + force balls inside globe
+    const maxSpeed = 1.5
+    const globeR = 0.42 // max distance from globe center
+    for (const body of bodies.current ?? []) {
+      if (!body) {
+        continue
+      }
+
+      // Clamp speed
+      const vel = body.linvel()
+      const speed = Math.sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z)
+      if (speed > maxSpeed) {
+        const s = maxSpeed / speed
+        body.setLinvel({ x: vel.x * s, y: vel.y * s, z: vel.z * s }, true)
+      }
+
+      // Force back inside globe if escaped
+      const pos = body.translation()
+      const rx = pos.x
+      const ry = pos.y - GLOBE_Y
+      const rz = pos.z
+      const dist = Math.sqrt(rx * rx + ry * ry + rz * rz)
+      if (dist > globeR) {
+        const s = globeR / dist
+        body.setTranslation({ x: rx * s, y: ry * s + GLOBE_Y, z: rz * s }, true)
+        body.setLinvel({ x: 0, y: 0, z: 0 }, true)
+      }
+    }
+
+    // Apply jiggle
+    if (Math.abs(delta) > 0.005) {
+      const strength = Math.min(Math.abs(delta) * 0.3, 0.015)
+      for (const body of bodies.current ?? []) {
+        if (!body) {
+          continue
+        }
+        const vel = body.linvel()
+        const speed = Math.sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z)
+        if (speed > 1.0) {
+          continue // skip if already moving fast
+        }
+        body.applyImpulse(
+          {
+            x: (Math.random() - 0.5) * strength,
+            y: 0,
+            z: (Math.random() - 0.5) * strength,
+          },
+          true,
+        )
+      }
     }
   })
 
+  return null
+}
+
+// All physics content in a single Physics context
+function PhysicsWorld({
+  capsules,
+  showDispensed,
+}: {
+  capsules: { pos: [number, number, number]; color: string }[]
+  showDispensed: boolean
+}) {
+  const bodiesRef = useRef<(RapierRigidBody | null)[]>([])
+
   return (
-    <group position={[0, 0.45, 0]}>
+    <Physics gravity={[0, -9.81, 0]}>
+      <GlobeFloorCollider />
+      <DispensingRampCollider />
       {capsules.map((c, i) => (
-        <MiniCapsule
+        <PhysicsCapsule
           key={i}
-          meshRef={(el) => { refs.current[i] = el }}
-          position={c.pos}
           color={c.color}
+          startPos={c.pos}
+          rigidBodyRef={(el) => {
+            bodiesRef.current[i] = el
+          }}
         />
       ))}
-    </group>
+      <DispensedPhysicsCapsule visible={showDispensed} />
+      <CameraJiggle bodies={bodiesRef} />
+    </Physics>
   )
 }
 
-// Crank handle — attached to the body via a visible axle
-function Crank({ rotation }: { rotation: ReturnType<typeof useSpring>[0][string] }) {
-  return (
-    <group position={[0.55, -0.15, 0]}>
-      {/* Axle going through the body wall */}
-      <mesh rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.03, 0.03, 0.35, 8]} />
-        <meshStandardMaterial color="#aaa" metalness={0.8} roughness={0.2} />
-      </mesh>
-      {/* Rotating part */}
-      <animated.group position={[0.15, 0, 0]} rotation-x={rotation}>
-        {/* Arm */}
-        <mesh position={[0, -0.12, 0]}>
-          <cylinderGeometry args={[0.025, 0.025, 0.24, 8]} />
-          <meshStandardMaterial color="#888" metalness={0.8} roughness={0.2} />
-        </mesh>
-        {/* Handle knob */}
-        <mesh position={[0, -0.26, 0]}>
-          <sphereGeometry args={[0.055, 12, 12]} />
-          <meshStandardMaterial color="#e63946" metalness={0.5} roughness={0.3} />
-        </mesh>
-      </animated.group>
-    </group>
-  )
-}
+// Oven-knob style dial + coin slot + push button
+function Dial({ speed }: { speed: number }) {
+  const knobRef = useRef<THREE.Group>(null)
 
-// Dispensed capsule that drops and grows
-function DispensedCapsule({
-  visible,
-  yPos,
-  scaleVal,
-}: {
-  visible: boolean
-  yPos: ReturnType<typeof useSpring>[0][string]
-  scaleVal: ReturnType<typeof useSpring>[0][string]
-}) {
-  if (!visible) return null
+  useFrame((_, delta) => {
+    if (!knobRef.current) {
+      return
+    }
+    knobRef.current.rotation.z += speed * delta
+  })
+
   return (
-    <animated.group position-y={yPos} scale={scaleVal}>
-      {/* Top hemisphere */}
-      <mesh>
-        <sphereGeometry args={[0.08, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshPhysicalMaterial
-          color="#7ec8e3"
-          roughness={0.2}
-          opacity={0.4}
-          transparent
-          clearcoat={0.5}
-          side={THREE.DoubleSide}
-        />
+    <group position={[0, -0.25, 0.46]}>
+      {/* Dial base plate */}
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.12, 0.12, 0.02, 32]} />
+        <meshStandardMaterial color="#8b1a1a" roughness={0.5} />
       </mesh>
-      {/* Bottom hemisphere */}
-      <mesh>
-        <sphereGeometry args={[0.08, 16, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]} />
-        <meshStandardMaterial color="#f4a261" roughness={0.6} side={THREE.DoubleSide} />
-      </mesh>
-    </animated.group>
+
+      {/* Rotating knob */}
+      <group ref={knobRef}>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.09, 0.09, 0.04, 32]} />
+          <meshStandardMaterial color="#ddd" metalness={0.7} roughness={0.2} />
+        </mesh>
+        <mesh position={[0, 0, 0.025]}>
+          <boxGeometry args={[0.14, 0.035, 0.05]} />
+          <meshStandardMaterial color="#aaa" metalness={0.6} roughness={0.3} />
+        </mesh>
+      </group>
+
+      {/* Coin slot */}
+      <group position={[0.22, 0.1, 0.01]}>
+        <mesh>
+          <torusGeometry args={[0.065, 0.006, 12, 32]} />
+          <meshStandardMaterial color="#aaa" metalness={0.7} roughness={0.3} />
+        </mesh>
+        <mesh>
+          <boxGeometry args={[0.018, 0.085, 0.005]} />
+          <meshStandardMaterial color="#0a0a1a" />
+        </mesh>
+      </group>
+
+      {/* Push button */}
+      <group position={[0.18, -0.12, 0]}>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.025, 0.025, 0.03, 16]} />
+          <meshStandardMaterial color="#ccc" metalness={0.6} roughness={0.3} />
+        </mesh>
+        <mesh position={[0, 0, 0.016]}>
+          <circleGeometry args={[0.02, 16]} />
+          <meshStandardMaterial
+            color="#e0e0e0"
+            metalness={0.5}
+            roughness={0.2}
+          />
+        </mesh>
+      </group>
+    </group>
   )
 }
 
 export const GashaponMachine = forwardRef<GashaponMachineHandle>((_, ref) => {
   const [agitate, setAgitate] = useState(false)
   const [showDispensed, setShowDispensed] = useState(false)
+  const [dialSpeed, setDialSpeed] = useState(0)
 
-  const [crankSpring, crankApi] = useSpring(() => ({ rotation: 0 }))
-  const [capsuleSpring, capsuleApi] = useSpring(() => ({ y: -0.6, scale: 1 }))
+  const capsules = useMemo(() => {
+    const items: { pos: [number, number, number]; color: string }[] = []
+    for (let i = 0; i < 24; i++) {
+      const angle = Math.random() * Math.PI * 2
+      const dist = Math.random() * 0.2
+      items.push({
+        pos: [
+          Math.cos(angle) * dist,
+          GLOBE_Y + 0.1 + i * 0.06,
+          Math.sin(angle) * dist,
+        ],
+        color: BALL_COLORS[i % BALL_COLORS.length],
+      })
+    }
+    return items
+  }, [])
+
+  void agitate
 
   useImperativeHandle(ref, () => ({
     async startAnimation() {
-      // 1. Crank rotates (800ms)
-      await crankApi.start({
-        rotation: Math.PI * 2,
-        config: { duration: 800 },
-      })[0]
+      // 1. Dial spins fast
+      setDialSpeed(12)
+      await new Promise((r) => setTimeout(r, 300))
 
-      // 2. Capsules agitate (400ms)
+      // 2. Capsules agitate + dial slows down
       setAgitate(true)
+      setDialSpeed(0)
       await new Promise((r) => setTimeout(r, 400))
 
-      // 3. One capsule descends to slot (600ms)
+      // 3. Spawn dispensed capsule — it has physics, will roll on ramp and fall
       setShowDispensed(true)
-      capsuleApi.set({ y: 0.1, scale: 1 })
-      await capsuleApi.start({
-        y: -0.8,
-        config: { duration: 600 },
-      })[0]
       setAgitate(false)
+      setDialSpeed(0)
 
-      // 4. Capsule exits and grows to center (500ms)
-      await capsuleApi.start({
-        y: 0,
-        scale: 4,
-        config: { duration: 500 },
-      })[0]
+      // 4. Wait for the ball to roll out and fall
+      await new Promise((r) => setTimeout(r, 1000))
 
       // Reset
-      crankApi.set({ rotation: 0 })
-      capsuleApi.set({ y: -0.6, scale: 1 })
       setShowDispensed(false)
     },
   }))
 
   return (
     <group>
-      {/* ── BODY (red cylinder) ── */}
+      {/* ── BODY (square) ── */}
       <mesh position={[0, -0.35, 0]}>
-        <cylinderGeometry args={[0.5, 0.55, 0.7, 24]} />
+        <boxGeometry args={[0.9, 0.7, 0.9]} />
         <meshStandardMaterial color="#cc2936" roughness={0.4} />
       </mesh>
 
-      {/* Body band / label area */}
-      <mesh position={[0, -0.2, 0.51]}>
-        <boxGeometry args={[0.35, 0.12, 0.02]} />
-        <meshStandardMaterial color="#f4a261" roughness={0.5} />
-      </mesh>
-
-      {/* ── BASE PLATE ── */}
+      {/* ── BASE PLATE (square, slightly larger) ── */}
       <mesh position={[0, -0.74, 0]}>
-        <cylinderGeometry args={[0.58, 0.58, 0.08, 24]} />
+        <boxGeometry args={[1.0, 0.08, 1.0]} />
         <meshStandardMaterial color="#8b1a1a" roughness={0.5} />
       </mesh>
 
-      {/* ── DISPENSING SLOT ── */}
-      <mesh position={[0, -0.58, 0.48]}>
-        <boxGeometry args={[0.22, 0.2, 0.12]} />
-        <meshStandardMaterial color="#1a1a2e" />
-      </mesh>
+      {/* ── DISPENSING HOLE (aligned with flat front face) ── */}
+      <group position={[-0.2, -0.5, 0.46]}>
+        <mesh>
+          <planeGeometry args={[0.24, 0.2]} />
+          <meshStandardMaterial color="#0a0a1a" side={THREE.DoubleSide} />
+        </mesh>
+        <mesh position={[0, 0.105, 0.005]}>
+          <boxGeometry args={[0.26, 0.015, 0.02]} />
+          <meshStandardMaterial color="#8b1a1a" roughness={0.5} />
+        </mesh>
+        <mesh position={[0, -0.105, 0.005]}>
+          <boxGeometry args={[0.26, 0.015, 0.02]} />
+          <meshStandardMaterial color="#8b1a1a" roughness={0.5} />
+        </mesh>
+        <mesh position={[-0.125, 0, 0.005]}>
+          <boxGeometry args={[0.015, 0.22, 0.02]} />
+          <meshStandardMaterial color="#8b1a1a" roughness={0.5} />
+        </mesh>
+        <mesh position={[0.125, 0, 0.005]}>
+          <boxGeometry args={[0.015, 0.22, 0.02]} />
+          <meshStandardMaterial color="#8b1a1a" roughness={0.5} />
+        </mesh>
+      </group>
 
-      {/* ── NECK (connects body to globe) ── */}
-      <mesh position={[0, 0.08, 0]}>
-        <cylinderGeometry args={[0.42, 0.48, 0.12, 24]} />
+      {/* ── NECK (square transition to globe) ── */}
+      <mesh position={[0, 0.06, 0]}>
+        <boxGeometry args={[0.75, 0.12, 0.75]} />
         <meshStandardMaterial color="#cc2936" roughness={0.4} />
       </mesh>
 
-      {/* ── GLOBE (transparent sphere) ── */}
+      {/* ── GLOBE ── */}
       <mesh position={[0, 0.55, 0]}>
-        <sphereGeometry args={[0.48, 32, 32]} />
+        <sphereGeometry args={[0.52, 32, 32]} />
         <meshPhysicalMaterial
           color="#ffffff"
           transparent
@@ -259,24 +434,16 @@ export const GashaponMachine = forwardRef<GashaponMachineHandle>((_, ref) => {
         <cylinderGeometry args={[0.15, 0.3, 0.1, 24]} />
         <meshStandardMaterial color="#cc2936" roughness={0.4} />
       </mesh>
-      {/* Top knob */}
       <mesh position={[0, 1.15, 0]}>
         <sphereGeometry args={[0.08, 12, 12]} />
         <meshStandardMaterial color="#cc2936" roughness={0.4} />
       </mesh>
 
-      {/* ── CAPSULES INSIDE GLOBE ── */}
-      <Capsules agitate={agitate} />
+      {/* ── ALL PHYSICS (globe capsules + dispensed capsule + ramp) ── */}
+      <PhysicsWorld capsules={capsules} showDispensed={showDispensed} />
 
-      {/* ── CRANK (attached to body) ── */}
-      <Crank rotation={crankSpring.rotation} />
-
-      {/* ── DISPENSED CAPSULE (animated, hidden by default) ── */}
-      <DispensedCapsule
-        visible={showDispensed}
-        yPos={capsuleSpring.y}
-        scaleVal={capsuleSpring.scale}
-      />
+      {/* ── DIAL + COIN SLOT ── */}
+      <Dial speed={dialSpeed} />
 
       {/* ── INTERNAL LIGHT ── */}
       <pointLight
