@@ -43,6 +43,7 @@ export class MailService implements IMailService {
       to,
       subject: 'Confirme ton adresse — Gachapon',
       html,
+      text: `Confirme ton adresse email Gachapon en ouvrant ce lien : ${verifyUrl}`,
     })
   }
 
@@ -54,6 +55,7 @@ export class MailService implements IMailService {
       to,
       subject: 'Réinitialisation de ton mot de passe — Gachapon',
       html,
+      text: `Réinitialise ton mot de passe Gachapon en ouvrant ce lien : ${resetUrl}\n\nCe lien est valable 1 heure. Si tu n'as pas fait cette demande, ignore ce message.`,
     })
   }
 
@@ -74,6 +76,7 @@ export class MailService implements IMailService {
       to: opts.to,
       subject: `@${opts.inviterName} t'invite à rejoindre ${opts.teamName} — Gachapon`,
       html,
+      text: `@${opts.inviterName} t'invite à rejoindre ${opts.teamName} sur Gachapon.\n\nAccepte l'invitation ici : ${inviteUrl}`,
     })
   }
 }
