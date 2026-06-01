@@ -7,16 +7,14 @@ interface UseDataFetchingParams {
   isPending: boolean
   isError: boolean
   error: Error | ApiError | null
-  errorMessage?: string
 }
 
 export const useDataFetching = ({
   isPending,
   isError,
   error,
-  errorMessage,
 }: UseDataFetchingParams) => {
   const { setIsLoading } = useLoaderStore()
-  useErrorNotification(isError, error, errorMessage)
+  useErrorNotification(isError, error)
   useLoading(isPending, setIsLoading)
 }

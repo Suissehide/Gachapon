@@ -1,8 +1,8 @@
 import { useMutation } from '@tanstack/react-query'
 
 import { AuthApi } from '../api/auth.api.ts'
-import { AUTH_MESSAGES } from '../constants/message.constant.ts'
-import { useDataFetching } from '../hooks/useDataFetching.ts'
+import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
+import { useToast } from '../hooks/useToast.ts'
 import type { LoginInput, RegisterInput } from '../types/auth.ts'
 
 // * QUERIES
@@ -10,60 +10,48 @@ import type { LoginInput, RegisterInput } from '../types/auth.ts'
 // * MUTATIONS
 
 export const useLogin = () => {
+  const { toast } = useToast()
+
   const {
     mutate: loginMutation,
     data: credentials,
     isPending,
     error,
-    isError,
   } = useMutation({
     mutationFn: async ({ email, password }: LoginInput) => {
       return await AuthApi.login(email, password)
     },
-    retry: 0,
-  })
-
-  const errorMessageText =
-    isError && error instanceof Error
-      ? error.message
-      : AUTH_MESSAGES.ERROR_FETCHING
-
-  useDataFetching({
-    isPending,
-    isError,
-    error,
-    errorMessage: errorMessageText,
-  })
-
-  return { loginMutation, credentials, isPending, error, errorMessageText }
-}
-
-export const useRegister = () => {
-  const {
-    mutate: registerMutation,
-    isPending,
-    error,
-    isError,
-  } = useMutation({
-    mutationFn: async (registerInput: RegisterInput) => {
-      return await AuthApi.register(registerInput)
+    onError: (error) => {
+      toast({
+        title: 'Erreur de connexion',
+        message: error.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
     },
     retry: 0,
   })
 
-  const errorMessageText =
-    isError && error instanceof Error
-      ? error.message
-      : AUTH_MESSAGES.ERROR_FETCHING
+  return { loginMutation, credentials, isPending, error }
+}
 
-  useDataFetching({
-    isPending,
-    isError,
-    error,
-    errorMessage: errorMessageText,
+export const useRegister = () => {
+  const { toast } = useToast()
+
+  const { mutate: registerMutation, isPending } = useMutation({
+    mutationFn: async (registerInput: RegisterInput) => {
+      return await AuthApi.register(registerInput)
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur lors de l'inscription",
+        message: error.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
+    },
+    retry: 0,
   })
 
-  return { registerMutation, isPending, error, errorMessageText }
+  return { registerMutation, isPending }
 }
 
 export const useVerifyEmail = () =>
@@ -86,7 +74,12 @@ export const useForgotPassword = () =>
 
 export const useResetPassword = () =>
   useMutation({
-    mutationFn: ({ token, newPassword }: { token: string; newPassword: string }) =>
-      AuthApi.resetPassword(token, newPassword),
+    mutationFn: ({
+      token,
+      newPassword,
+    }: {
+      token: string
+      newPassword: string
+    }) => AuthApi.resetPassword(token, newPassword),
     retry: 0,
   })

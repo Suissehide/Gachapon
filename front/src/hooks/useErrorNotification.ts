@@ -7,7 +7,6 @@ import { useToast } from './useToast.ts'
 export const useErrorNotification = (
   isError: boolean,
   error: Error | ApiError | null,
-  errorMessage?: string,
 ) => {
   const { toast } = useToast()
   const errorShownRef = useRef<string | null>(null)
@@ -19,7 +18,7 @@ export const useErrorNotification = (
       if (errorShownRef.current !== errorId) {
         errorShownRef.current = errorId
 
-        const title = isApiError(error) ? error.title : (errorMessage ?? 'Erreur inconnue')
+        const title = isApiError(error) ? error.title : 'Erreur inconnue'
         const message = error.message
 
         toast({
@@ -33,5 +32,5 @@ export const useErrorNotification = (
     if (!isError) {
       errorShownRef.current = null
     }
-  }, [isError, error, errorMessage, toast])
+  }, [isError, error, toast])
 }
