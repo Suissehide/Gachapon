@@ -458,6 +458,34 @@ export const ClawMachine = forwardRef<ClawMachineHandle>((_, ref) => {
   // Input state
   const keysRef = useRef(new Set<string>())
   const resolveRef = useRef<(() => void) | null>(null)
+  const triggerDropRef = useRef<(() => void) | null>(null)
+
+  // Drop sequence
+  triggerDropRef.current = () => {
+    ;(async () => {
+      setPhase('dropping')
+      clawTargetYRef.current = CLAW_BOTTOM_Y
+      await new Promise((r) => setTimeout(r, 1200))
+
+      setPhase('grabbing')
+      setClawOpen(false)
+      await new Promise((r) => setTimeout(r, 500))
+
+      setPhase('ascending')
+      clawTargetYRef.current = CLAW_TOP_Y
+      await new Promise((r) => setTimeout(r, 1200))
+
+      setClawOpen(true)
+      setPhase('dispensing')
+      setShowDispensed(true)
+      await new Promise((r) => setTimeout(r, 1500))
+
+      setShowDispensed(false)
+      setPhase('idle')
+      resolveRef.current?.()
+      resolveRef.current = null
+    })()
+  }
 
   // Keyboard listeners
   useEffect(() => {
@@ -465,7 +493,7 @@ export const ClawMachine = forwardRef<ClawMachineHandle>((_, ref) => {
       keysRef.current.add(e.key.toLowerCase())
       if ((e.key === ' ' || e.key === 'Enter') && phase === 'positioning') {
         e.preventDefault()
-        triggerDrop()
+        triggerDropRef.current?.()
       }
     }
     const onUp = (e: KeyboardEvent) => {
@@ -477,31 +505,7 @@ export const ClawMachine = forwardRef<ClawMachineHandle>((_, ref) => {
       window.removeEventListener('keydown', onDown)
       window.removeEventListener('keyup', onUp)
     }
-  }, [phase, triggerDrop])
-
-  const triggerDrop = async () => {
-    setPhase('dropping')
-    clawTargetYRef.current = CLAW_BOTTOM_Y
-    await new Promise((r) => setTimeout(r, 1200))
-
-    setPhase('grabbing')
-    setClawOpen(false)
-    await new Promise((r) => setTimeout(r, 500))
-
-    setPhase('ascending')
-    clawTargetYRef.current = CLAW_TOP_Y
-    await new Promise((r) => setTimeout(r, 1200))
-
-    setClawOpen(true)
-    setPhase('dispensing')
-    setShowDispensed(true)
-    await new Promise((r) => setTimeout(r, 1500))
-
-    setShowDispensed(false)
-    setPhase('idle')
-    resolveRef.current?.()
-    resolveRef.current = null
-  }
+  }, [phase])
 
   // Move claw with keyboard + lerp Y
   useFrame((_, delta) => {
@@ -573,7 +577,7 @@ export const ClawMachine = forwardRef<ClawMachineHandle>((_, ref) => {
   }, [])
 
   useImperativeHandle(ref, () => ({
-    async startAnimation() {
+    startAnimation() {
       // Enter positioning mode — player controls the claw
       setClawOpen(true)
       clawTargetYRef.current = CLAW_TOP_Y
