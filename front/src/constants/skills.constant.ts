@@ -1,10 +1,10 @@
 export const EFFECT_DESCRIPTIONS: Record<string, string> = {
-  REGEN: 'Réduit le temps de régénération des tickets (en minutes)',
+  REGEN: 'Réduit le temps de régénération des jetons (en minutes)',
   LUCK: 'Multiplie la chance de base lors des tirages',
   DUST_HARVEST: 'Multiplie la quantité de dust obtenue',
-  TOKEN_VAULT: 'Augmente la capacité max de tickets',
+  TOKEN_VAULT: 'Augmente la capacité max de jetons',
   FREE_PULL_CHANCE: "Chance d'obtenir un tirage gratuit",
-  MULTI_TOKEN_CHANCE: 'Chance de gagner plusieurs tickets à la fois',
+  MULTI_TOKEN_CHANCE: 'Chance de gagner plusieurs jetons à la fois',
   GOLDEN_BALL_CHANCE: "Chance d'obtenir une boule dorée (rareté garantie)",
   SHOP_DISCOUNT: 'Réduction sur les prix de la boutique',
 }

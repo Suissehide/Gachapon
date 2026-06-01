@@ -1,4 +1,4 @@
-import { Sparkles, Star, Ticket } from 'lucide-react'
+import { Coins, Sparkles, Star } from 'lucide-react'
 import { type CSSProperties, type ReactNode, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 
@@ -40,7 +40,7 @@ function buildParticles(types: Array<'token' | 'dust' | 'xp'>): Particle[] {
 }
 
 const ICON: Record<Particle['type'], ReactNode> = {
-  token: <Ticket className="h-3 w-3 text-primary" />,
+  token: <Coins className="h-3 w-3 text-primary" />,
   dust: <Sparkles className="h-3 w-3 text-accent" />,
   xp: <Star className="h-3 w-3 text-yellow-400" />,
 }

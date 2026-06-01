@@ -5,9 +5,10 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 
-import { TeamsApi } from '../api/teams.api.ts'
 import type { TeamRankingPage } from '../api/teams.api.ts'
+import { TeamsApi } from '../api/teams.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
+import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
 
 export type {
@@ -19,26 +20,56 @@ export type {
   TeamSummary,
 } from '../api/teams.api.ts'
 
-export const useMyTeams = () =>
-  useQuery({
+export const useMyTeams = () => {
+  const query = useQuery({
     queryKey: ['teams'],
     queryFn: () => TeamsApi.getMyTeams(),
   })
 
-export const useTeam = (teamId: string | undefined) =>
-  useQuery({
+  useDataFetching({
+    isPending: query.isPending,
+    isError: query.isError,
+    error: query.error,
+  })
+
+  return query
+}
+
+export const useTeam = (teamId: string | undefined) => {
+  const query = useQuery({
     queryKey: ['teams', teamId],
     queryFn: () => TeamsApi.getTeam(teamId ?? ''),
     enabled: !!teamId,
   })
 
+  useDataFetching({
+    isPending: query.isPending,
+    isError: query.isError,
+    error: query.error,
+  })
+
+  return query
+}
+
 export const useCreateTeam = () => {
   const qc = useQueryClient()
+  const { toast } = useToast()
   return useMutation({
     mutationFn: (data: { name: string; description?: string }) =>
       TeamsApi.createTeam(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['teams'] })
+      toast({
+        title: 'Équipe créée',
+        severity: TOAST_SEVERITY.SUCCESS,
+      })
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur lors de la création de l'équipe",
+        message: error.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
     },
   })
 }
@@ -58,10 +89,10 @@ export const useUpdateTeam = (teamId: string) => {
         severity: TOAST_SEVERITY.SUCCESS,
       })
     },
-    onError: (err) => {
+    onError: (error) => {
       toast({
         title: 'Erreur',
-        message: err.message,
+        message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
     },
@@ -70,55 +101,96 @@ export const useUpdateTeam = (teamId: string) => {
 
 export const useDeleteTeam = () => {
   const qc = useQueryClient()
+  const { toast } = useToast()
   return useMutation({
     mutationFn: (teamId: string) => TeamsApi.deleteTeam(teamId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['teams'] })
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur lors de la suppression de l'équipe",
+        message: error.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
     },
   })
 }
 
 export const useInviteMember = (teamId: string) => {
   const qc = useQueryClient()
+  const { toast } = useToast()
   return useMutation({
     mutationFn: (data: { username?: string; email?: string }) =>
       TeamsApi.inviteMember(teamId, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['teams', teamId] })
     },
+    onError: (error) => {
+      toast({
+        title: "Erreur lors de l'invitation",
+        message: error.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
+    },
   })
 }
 
 export const useRemoveMember = (teamId: string) => {
   const qc = useQueryClient()
+  const { toast } = useToast()
   return useMutation({
     mutationFn: (userId: string) => TeamsApi.removeMember(teamId, userId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['teams', teamId] })
+    },
+    onError: (error) => {
+      toast({
+        title: 'Erreur lors du retrait du membre',
+        message: error.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
     },
   })
 }
 
 export const useLeaveTeam = () => {
   const qc = useQueryClient()
+  const { toast } = useToast()
   return useMutation({
     mutationFn: (teamId: string) => TeamsApi.leaveTeam(teamId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['teams'] })
     },
+    onError: (error) => {
+      toast({
+        title: "Erreur lors du départ de l'équipe",
+        message: error.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
+    },
   })
 }
 
-export const useInvitation = (token: string | undefined) =>
-  useQuery({
+export const useInvitation = (token: string | undefined) => {
+  const query = useQuery({
     queryKey: ['invitation', token],
     queryFn: () => TeamsApi.getInvitation(token ?? ''),
     enabled: !!token,
     retry: false,
   })
 
-export const useMyInvitations = (enabled = true) =>
-  useQuery({
+  useDataFetching({
+    isPending: query.isPending,
+    isError: query.isError,
+    error: query.error,
+  })
+
+  return query
+}
+
+export const useMyInvitations = (enabled = true) => {
+  const query = useQuery({
     queryKey: ['invitations', 'me'],
     queryFn: () => TeamsApi.getMyInvitations(),
     enabled,
@@ -126,23 +198,48 @@ export const useMyInvitations = (enabled = true) =>
     refetchOnWindowFocus: true,
   })
 
+  useDataFetching({
+    isPending: query.isPending,
+    isError: query.isError,
+    error: query.error,
+  })
+
+  return query
+}
+
 export const useAcceptInvitation = () => {
   const qc = useQueryClient()
+  const { toast } = useToast()
   return useMutation({
     mutationFn: (token: string) => TeamsApi.acceptInvitation(token),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['invitations', 'me'] })
       void qc.invalidateQueries({ queryKey: ['teams'] })
     },
+    onError: (error) => {
+      toast({
+        title: "Erreur lors de l'acceptation",
+        message: error.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
+    },
   })
 }
 
 export const useDeclineInvitation = () => {
   const qc = useQueryClient()
+  const { toast } = useToast()
   return useMutation({
     mutationFn: (token: string) => TeamsApi.declineInvitation(token),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['invitations', 'me'] })
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur lors du refus de l'invitation",
+        message: error.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
     },
   })
 }
@@ -157,48 +254,90 @@ export const useTeamRanking = (teamId: string) =>
     enabled: !!teamId,
   })
 
-export const useTeamInvitations = (teamId: string | undefined) =>
-  useQuery({
+export const useTeamInvitations = (teamId: string | undefined) => {
+  const query = useQuery({
     queryKey: ['teams', teamId, 'invitations'],
     queryFn: () => TeamsApi.getTeamInvitations(teamId ?? ''),
     enabled: !!teamId,
   })
 
+  useDataFetching({
+    isPending: query.isPending,
+    isError: query.isError,
+    error: query.error,
+  })
+
+  return query
+}
+
 export const useResendInvitation = (teamId: string) => {
   const qc = useQueryClient()
+  const { toast } = useToast()
   return useMutation({
     mutationFn: (token: string) => TeamsApi.resendInvitation(token),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['teams', teamId, 'invitations'] })
     },
+    onError: (error) => {
+      toast({
+        title: "Erreur lors du renvoi de l'invitation",
+        message: error.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
+    },
     retry: 0,
   })
 }
 
-export const useUserSearch = (q: string) =>
-  useQuery({
+export const useUserSearch = (q: string) => {
+  const query = useQuery({
     queryKey: ['users', 'search', q],
     queryFn: () => TeamsApi.searchUsers(q),
     enabled: q.trim().length >= 2,
     staleTime: 30_000,
   })
 
+  useDataFetching({
+    isPending: query.isPending,
+    isError: query.isError,
+    error: query.error,
+  })
+
+  return query
+}
+
 export const useCancelInvitation = (teamId: string) => {
   const qc = useQueryClient()
+  const { toast } = useToast()
   return useMutation({
     mutationFn: (token: string) => TeamsApi.cancelInvitation(token),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['teams', teamId, 'invitations'] })
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur lors de l'annulation",
+        message: error.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
     },
   })
 }
 
 export const useDeleteInvitation = (teamId: string) => {
   const qc = useQueryClient()
+  const { toast } = useToast()
   return useMutation({
     mutationFn: (id: string) => TeamsApi.deleteInvitation(id),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['teams', teamId, 'invitations'] })
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur lors de la suppression de l'invitation",
+        message: error.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
     },
   })
 }

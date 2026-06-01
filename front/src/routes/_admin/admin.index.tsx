@@ -3,7 +3,7 @@ import {
   BarChart2,
   Crown,
   Sparkles,
-  Ticket,
+  Coins,
   TrendingUp,
   Users,
 } from 'lucide-react'
@@ -29,7 +29,7 @@ const KPI_META = [
   {
     key: 'pullsToday' as const,
     label: "Pulls aujourd'hui",
-    icon: Ticket,
+    icon: Coins,
     color: 'text-primary',
     bg: 'bg-primary/10',
     sub: 'tirages du jour',

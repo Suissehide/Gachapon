@@ -18,7 +18,7 @@ export const GachaApi = {
       handleHttpError(
         res,
         {},
-        'Erreur lors de la récupération du solde de tickets',
+        'Erreur lors de la récupération du solde de jetons',
       )
     }
     return res.json()

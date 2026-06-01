@@ -235,7 +235,7 @@ export function CardReveal({ result, onClose, onNewPull, isPulling }: Props) {
           <div className="flex items-center justify-between border-b border-white/6 px-4 py-3">
             <div className="flex items-center gap-2">
               <Coins size={14} className="text-white/35" aria-hidden />
-              <span className="text-xs text-white/45">Tickets restants</span>
+              <span className="text-xs text-white/45">Jetons restants</span>
             </div>
             <span className="font-display text-base font-bold text-white/90">
               {result.tokensRemaining}

@@ -1,7 +1,7 @@
 import { Environment } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { createFileRoute } from '@tanstack/react-router'
-import { ChevronsRight, Ticket } from 'lucide-react'
+import { ChevronsRight, Coins } from 'lucide-react'
 import {
   type CSSProperties,
   useCallback,
@@ -14,7 +14,6 @@ import { CardReveal } from '../../components/machine/CardReveal'
 import { GachaBall } from '../../components/machine/GachaBall'
 import type { CarouselHandle } from '../../components/machine/MachineCarousel'
 import { MachineCarousel } from '../../components/machine/MachineCarousel'
-import { NoMachine } from '../../components/machine/type/NoMachine'
 import { LiveFeed } from '../../components/play/LiveFeed'
 import { PlayHud } from '../../components/play/PlayHud'
 import { Button } from '../../components/ui/button.tsx'
@@ -54,6 +53,7 @@ function Play() {
   const pendingResult = useRef<PullResult | null>(null)
   const [now, setNow] = useState(Date.now())
   const [selectedMachineOwned, setSelectedMachineOwned] = useState(false)
+  const [selectedIsNoMachine, setSelectedIsNoMachine] = useState(false)
   const carouselRef = useRef<CarouselHandle>(null)
 
   const { data: balance, isLoading: balanceLoading } = useTokenBalance()
@@ -63,11 +63,14 @@ function Play() {
   const user = useAuthStore((s) => s.user)
 
   const ownedMachineIds = machinesData?.machineIds ?? []
-  const hasMachines = ownedMachineIds.length > 0
 
-  const handleSelectionChange = useCallback((isOwned: boolean) => {
-    setSelectedMachineOwned(isOwned)
-  }, [])
+  const handleSelectionChange = useCallback(
+    (isOwned: boolean, isNoMachine: boolean) => {
+      setSelectedMachineOwned(isOwned)
+      setSelectedIsNoMachine(isNoMachine)
+    },
+    [],
+  )
 
   // Sync auth store (topbar) with token balance query
   useEffect(() => {
@@ -108,24 +111,28 @@ function Play() {
   const tokens = balance?.tokens ?? 0
   const maxStock = balance?.maxStock ?? 5
   const canPull =
-    tokens > 0 &&
-    phase === 'idle' &&
-    !pullPending &&
-    hasMachines &&
-    selectedMachineOwned
+    tokens > 0 && phase === 'idle' && !pullPending && selectedMachineOwned
 
   const handlePull = async () => {
-    if (!canPull || !carouselRef.current) return
+    if (!canPull || !carouselRef.current) {
+      return
+    }
 
-    setPhase('machine-anim')
-    await carouselRef.current.startAnimation()
-    // Pause after machine animation before showing GachaBall
-    await new Promise((r) => setTimeout(r, 600))
-    setPhase('ball')
+    if (selectedIsNoMachine) {
+      // No machine — skip straight to ball
+      setPhase('ball')
+    } else {
+      setPhase('machine-anim')
+      await carouselRef.current.startAnimation()
+      await new Promise((r) => setTimeout(r, 600))
+      setPhase('ball')
+    }
   }
 
   const handleSkip = () => {
-    if (!canPull) return
+    if (!canPull) {
+      return
+    }
     setPhase('pulling')
     pullMutation(undefined, {
       onSuccess: (result) => {
@@ -137,7 +144,9 @@ function Play() {
   }
 
   const handleBallClick = () => {
-    if (phase !== 'ball' || pullPending) return
+    if (phase !== 'ball' || pullPending) {
+      return
+    }
     pullMutation(undefined, {
       onSuccess: (result) => {
         pendingResult.current = result
@@ -175,10 +184,10 @@ function Play() {
       {/* Ambient background — radial spotlight on stage */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {/* Stage spotlight */}
-        <div className="absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/6 blur-[120px]" />
+        <div className="absolute left-1/2 top-1/2 h-125 w-125 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/6 blur-[120px]" />
         {/* Corner glows */}
-        <div className="absolute -left-16 -top-16 h-[320px] w-[320px] rounded-full bg-primary/5 blur-[100px]" />
-        <div className="absolute -bottom-8 -right-16 h-[280px] w-[280px] rounded-full bg-secondary/4 blur-[90px]" />
+        <div className="absolute -left-16 -top-16 h-80 w-80 rounded-full bg-primary/5 blur-[100px]" />
+        <div className="absolute -bottom-8 -right-16 h-70 w-70 rounded-full bg-secondary/4 blur-[90px]" />
       </div>
 
       {/* Floating ambient particles */}
@@ -208,18 +217,12 @@ function Play() {
           <div
             className={`absolute inset-0 transition-opacity duration-300 ${showBall ? 'opacity-30 pointer-events-none' : ''}`}
           >
-            {hasMachines ? (
-              <MachineCarousel
-                ref={carouselRef}
-                ownedMachineIds={ownedMachineIds}
-                hideNav={phase !== 'idle'}
-                onSelectionChange={handleSelectionChange}
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center">
-                <NoMachine />
-              </div>
-            )}
+            <MachineCarousel
+              ref={carouselRef}
+              ownedMachineIds={ownedMachineIds}
+              hideNav={phase !== 'idle'}
+              onSelectionChange={handleSelectionChange}
+            />
           </div>
         )}
 
@@ -264,12 +267,12 @@ function Play() {
       {/* ── TOKEN COUNTER (top) ── */}
       <div className="relative z-10 pt-10 flex flex-col items-center">
         <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.3em] text-text-light/40">
-          Tickets
+          Jetons
         </p>
 
         {/* Large number */}
         <div className="flex items-baseline gap-2">
-          <Ticket className="mb-1 h-7 w-7 text-primary" />
+          <Coins className="mb-1 h-7 w-7 text-primary" />
           <span
             className={`font-display text-8xl font-black leading-none tabular-nums transition-colors duration-300 ${
               tokens > 0 ? 'text-primary' : 'text-text-light/30'
@@ -293,7 +296,7 @@ function Play() {
             </p>
           ) : tokens >= maxStock ? (
             <p className="text-xs font-medium text-primary/50">
-              Tickets au maximum
+              Jetons au maximum
             </p>
           ) : null}
         </div>
@@ -316,12 +319,10 @@ function Play() {
               : phase === 'pulling'
                 ? 'Tirage en cours…'
                 : tokens < 1
-                  ? 'Plus de tickets'
-                  : hasMachines
-                    ? selectedMachineOwned
-                      ? '✦ Lancer (1 ticket)'
-                      : 'Machine verrouillée'
-                    : 'Aucune machine'}
+                  ? 'Plus de jetons'
+                  : selectedMachineOwned
+                    ? '✦ Insérer (1 jeton)'
+                    : 'Machine verrouillée'}
           </Button>
 
           <Button

@@ -18,21 +18,26 @@ export function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
     },
     validators: {
       onSubmit: ({ value }) => {
+        const fields: Record<string, string> = {}
+
+        if (!/^[a-zA-Z0-9_]+$/.test(value.username)) {
+          fields.username =
+            "Le nom d'utilisateur ne peut contenir que des lettres, chiffres et underscores"
+        }
+
         if (value.password !== value.confirmPassword) {
-          return {
-            form: 'Les mots de passe ne correspondent pas',
-            fields: {
-              confirmPassword: 'Les mots de passe ne correspondent pas',
-            },
-          }
+          fields.confirmPassword = 'Les mots de passe ne correspondent pas'
         }
+
         if (value.password.length < 8) {
-          return {
-            fields: {
-              password: 'Le mot de passe doit contenir au moins 8 caractères',
-            },
-          }
+          fields.password =
+            'Le mot de passe doit contenir au moins 8 caractères'
         }
+
+        if (Object.keys(fields).length > 0) {
+          return { fields, form: Object.values(fields)[0] }
+        }
+
         return undefined
       },
     },

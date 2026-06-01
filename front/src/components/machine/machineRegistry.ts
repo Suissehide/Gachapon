@@ -1,6 +1,6 @@
 import type { ForwardRefExoticComponent, RefAttributes } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { Cog, GripVertical } from 'lucide-react'
+import { CircleOff, Cog, GripVertical } from 'lucide-react'
 
 import { ClawMachine } from './type/ClawMachine'
 import type { ClawMachineHandle } from './type/ClawMachine'
@@ -14,13 +14,22 @@ export type MachineHandle = {
 export type MachineDefinition = {
   id: string
   name: string
-  component: ForwardRefExoticComponent<RefAttributes<MachineHandle>>
+  component: ForwardRefExoticComponent<RefAttributes<MachineHandle>> | null
   price: number
   icon: LucideIcon
   description: string
 }
 
+// 'none' is always available (free), no animation
 export const MACHINE_REGISTRY: MachineDefinition[] = [
+  {
+    id: 'none',
+    name: 'Sans machine',
+    component: null,
+    price: 0,
+    icon: CircleOff,
+    description: 'Tirage direct sans animation',
+  },
   {
     id: 'gashapon',
     name: 'Gashapon',
