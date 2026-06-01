@@ -2,10 +2,19 @@ import { Environment } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { createFileRoute } from '@tanstack/react-router'
 import { ChevronsRight, Ticket } from 'lucide-react'
-import { type CSSProperties, useEffect, useRef, useState } from 'react'
+import {
+  type CSSProperties,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 
 import { CardReveal } from '../../components/machine/CardReveal'
 import { GachaBall } from '../../components/machine/GachaBall'
+import type { CarouselHandle } from '../../components/machine/MachineCarousel'
+import { MachineCarousel } from '../../components/machine/MachineCarousel'
+import { NoMachine } from '../../components/machine/type/NoMachine'
 import { LiveFeed } from '../../components/play/LiveFeed'
 import { PlayHud } from '../../components/play/PlayHud'
 import { Button } from '../../components/ui/button.tsx'
@@ -13,13 +22,20 @@ import { apiUrl as API_URL } from '../../constants/config.constant.ts'
 import { wsClient } from '../../lib/ws'
 import type { PullResult } from '../../queries/useGacha'
 import { usePull, useTokenBalance } from '../../queries/useGacha'
+import { useOwnedMachines } from '../../queries/useShop'
 import { useAuthStore } from '../../stores/auth.store'
 
 export const Route = createFileRoute('/_authenticated/play')({
   component: Play,
 })
 
-type Phase = 'idle' | 'pulling' | 'ball' | 'opening' | 'open' | 'revealed'
+type Phase =
+  | 'idle'
+  | 'machine-anim'
+  | 'pulling'
+  | 'ball'
+  | 'opening'
+  | 'revealed'
 
 const PARTICLES = [
   { top: '15%', left: '12%', delay: '0s', duration: '3.2s', size: 4 },
@@ -37,11 +53,21 @@ function Play() {
   const [pullResult, setPullResult] = useState<PullResult | null>(null)
   const pendingResult = useRef<PullResult | null>(null)
   const [now, setNow] = useState(Date.now())
+  const [selectedMachineOwned, setSelectedMachineOwned] = useState(false)
+  const carouselRef = useRef<CarouselHandle>(null)
 
   const { data: balance, isLoading: balanceLoading } = useTokenBalance()
   const { mutate: pullMutation, isPending: pullPending } = usePull()
+  const { data: machinesData } = useOwnedMachines()
   const setUser = useAuthStore((s) => s.setUser)
   const user = useAuthStore((s) => s.user)
+
+  const ownedMachineIds = machinesData?.machineIds ?? []
+  const hasMachines = ownedMachineIds.length > 0
+
+  const handleSelectionChange = useCallback((isOwned: boolean) => {
+    setSelectedMachineOwned(isOwned)
+  }, [])
 
   // Sync auth store (topbar) with token balance query
   useEffect(() => {
@@ -57,35 +83,15 @@ function Play() {
 
   // Live timer tick — only when a token is regenerating
   useEffect(() => {
-    if (!balance?.nextTokenAt || (balance.tokens ?? 0) >= (balance.maxStock ?? 5)) return
+    if (
+      !balance?.nextTokenAt ||
+      (balance.tokens ?? 0) >= (balance.maxStock ?? 5)
+    ) {
+      return
+    }
     const id = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(id)
   }, [balance?.nextTokenAt, balance?.tokens, balance?.maxStock])
-
-  const tokens = balance?.tokens ?? 0
-  const maxStock = balance?.maxStock ?? 5
-  const canPull = tokens > 0 && phase === 'idle' && !pullPending
-
-  const handlePull = () => {
-    if (!canPull) {
-      return
-    }
-    setPhase('ball')
-  }
-
-  const handleSkip = () => {
-    if (!canPull) {
-      return
-    }
-    setPhase('pulling')
-    pullMutation(undefined, {
-      onSuccess: (result) => {
-        setPullResult(result)
-        setPhase('revealed')
-      },
-      onError: () => setPhase('idle'),
-    })
-  }
 
   // Quand la boule est ouverte : révélation de la carte après le lerp
   useEffect(() => {
@@ -99,10 +105,39 @@ function Play() {
     return () => clearTimeout(timer)
   }, [phase])
 
+  const tokens = balance?.tokens ?? 0
+  const maxStock = balance?.maxStock ?? 5
+  const canPull =
+    tokens > 0 &&
+    phase === 'idle' &&
+    !pullPending &&
+    hasMachines &&
+    selectedMachineOwned
+
+  const handlePull = async () => {
+    if (!canPull || !carouselRef.current) return
+
+    setPhase('machine-anim')
+    await carouselRef.current.startAnimation()
+    // Pause after machine animation before showing GachaBall
+    await new Promise((r) => setTimeout(r, 600))
+    setPhase('ball')
+  }
+
+  const handleSkip = () => {
+    if (!canPull) return
+    setPhase('pulling')
+    pullMutation(undefined, {
+      onSuccess: (result) => {
+        setPullResult(result)
+        setPhase('revealed')
+      },
+      onError: () => setPhase('idle'),
+    })
+  }
+
   const handleBallClick = () => {
-    if (phase !== 'ball' || pullPending) {
-      return
-    }
+    if (phase !== 'ball' || pullPending) return
     pullMutation(undefined, {
       onSuccess: (result) => {
         pendingResult.current = result
@@ -118,12 +153,17 @@ function Play() {
     setPhase('idle')
   }
 
-  const showCanvas =
+  const showBall =
+    phase === 'ball' || phase === 'opening' || phase === 'revealed'
+  // Machine stays visible during ball/opening phases (behind the GachaBall)
+  const showMachine =
+    phase === 'idle' ||
+    phase === 'machine-anim' ||
+    phase === 'pulling' ||
     phase === 'ball' ||
-    phase === 'opening' ||
-    phase === 'open' ||
-    phase === 'revealed'
+    phase === 'opening'
   const isIdle = phase === 'idle' || phase === 'pulling'
+  const showActions = phase !== 'revealed'
 
   const timeLeft =
     balance?.nextTokenAt && tokens < maxStock
@@ -131,7 +171,7 @@ function Play() {
       : null
 
   return (
-    <div className="relative flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center overflow-hidden bg-background">
+    <div className="relative h-[calc(100vh-4rem)] overflow-hidden bg-background">
       {/* Ambient background — radial spotlight on stage */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {/* Stage spotlight */}
@@ -161,8 +201,68 @@ function Play() {
         ))}
       </div>
 
-      {/* ── TOKEN COUNTER ── */}
-      <div className="relative z-10 mb-2 flex flex-col items-center">
+      {/* ── CENTER STAGE (full page behind everything) ── */}
+      <div className="absolute inset-0">
+        {/* Machine layer */}
+        {showMachine && (
+          <div
+            className={`absolute inset-0 transition-opacity duration-300 ${showBall ? 'opacity-30 pointer-events-none' : ''}`}
+          >
+            {hasMachines ? (
+              <MachineCarousel
+                ref={carouselRef}
+                ownedMachineIds={ownedMachineIds}
+                hideNav={phase !== 'idle'}
+                onSelectionChange={handleSelectionChange}
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center">
+                <NoMachine />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* GachaBall layer */}
+        {showBall && (
+          <div className="absolute inset-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
+            <Canvas
+              camera={{ position: [0, 0.3, 8], fov: 45 }}
+              shadows
+              gl={{ antialias: true, alpha: true }}
+              style={{ background: 'transparent' }}
+            >
+              <ambientLight intensity={0.5} />
+              <directionalLight
+                position={[5, 10, 5]}
+                intensity={1}
+                castShadow
+                shadow-mapSize={[1024, 1024] as [number, number]}
+              />
+              <pointLight
+                position={[-3, 3, 3]}
+                intensity={0.6}
+                color="#f59e0b"
+              />
+              <GachaBall
+                interactive={phase === 'ball'}
+                isOpening={phase === 'opening' || phase === 'revealed'}
+                onOpen={handleBallClick}
+              />
+              <Environment preset="city" />
+            </Canvas>
+
+            {phase === 'ball' && (
+              <p className="absolute bottom-52 left-0 right-0 text-center text-xs text-text-light/50 animate-in fade-in-0 duration-500">
+                Clique sur la boule pour l'ouvrir
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── TOKEN COUNTER (top) ── */}
+      <div className="relative z-10 pt-10 flex flex-col items-center">
         <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.3em] text-text-light/40">
           Tickets
         </p>
@@ -199,75 +299,9 @@ function Play() {
         </div>
       </div>
 
-      {/* ── CENTER STAGE ── */}
-      <div className="relative z-10 my-2">
-        {showCanvas ? (
-          <div className="relative h-[320px] w-[320px] animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
-            <Canvas
-              camera={{ position: [0, 0.3, 4], fov: 45 }}
-              shadows
-              gl={{ antialias: true }}
-            >
-              <ambientLight intensity={0.5} />
-              <directionalLight
-                position={[5, 10, 5]}
-                intensity={1}
-                castShadow
-                shadow-mapSize={[1024, 1024] as [number, number]}
-              />
-              <pointLight
-                position={[-3, 3, 3]}
-                intensity={0.6}
-                color="#f59e0b"
-              />
-              <GachaBall
-                interactive={phase === 'ball'}
-                isOpening={
-                  phase === 'opening' ||
-                  phase === 'open' ||
-                  phase === 'revealed'
-                }
-                onOpen={handleBallClick}
-              />
-              <Environment preset="city" />
-            </Canvas>
-
-            {phase === 'ball' && (
-              <p className="absolute bottom-2 left-0 right-0 text-center text-xs text-text-light/50 animate-in fade-in-0 duration-500">
-                Clique sur la boule pour l'ouvrir
-              </p>
-            )}
-          </div>
-        ) : (
-          /* Idle decoration — rotating rings + mystery orb */
-          <div className="relative flex h-[320px] w-[320px] items-center justify-center">
-            {/* Rings */}
-            <div className="absolute h-36 w-36 rounded-full border-2 border-primary/10 [animation:spin_25s_linear_infinite]" />
-            <div className="absolute h-56 w-56 rounded-full border border-primary/7 [animation:spin_40s_linear_infinite_reverse]" />
-            <div className="absolute h-72 w-72 rounded-full border border-secondary/5 [animation:spin_60s_linear_infinite]" />
-            {/* Subtle dashes on outer ring */}
-            <div
-              className="absolute h-[300px] w-[300px] rounded-full"
-              style={{
-                border: '1px dashed',
-                borderColor:
-                  'color-mix(in srgb, var(--primary) 8%, transparent)',
-                animation: 'spin 80s linear infinite reverse',
-              }}
-            />
-            {/* Central mystery orb */}
-            <div className="glow-pulse relative flex h-28 w-28 items-center justify-center rounded-full border border-primary/15 bg-linear-to-br from-primary/8 to-secondary/8">
-              <span className="font-display text-5xl font-black text-primary/20 select-none">
-                ?
-              </span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ── ACTIONS (idle / pulling) ── */}
-      {isIdle && (
-        <div className="relative z-10 flex flex-col items-center gap-3">
+      {/* ── ACTIONS (bottom) ── */}
+      {showActions && (
+        <div className="absolute bottom-24 left-0 right-0 z-10 flex flex-col items-center gap-3">
           <Button
             onClick={handlePull}
             disabled={!canPull}
@@ -277,11 +311,17 @@ function Play() {
                 : 'bg-muted text-text-light'
             }`}
           >
-            {phase === 'pulling'
+            {phase === 'machine-anim' || phase === 'ball' || phase === 'opening'
               ? 'Tirage en cours…'
-              : tokens < 1
-                ? 'Plus de tickets'
-                : '✦ Lancer (1 ticket)'}
+              : phase === 'pulling'
+                ? 'Tirage en cours…'
+                : tokens < 1
+                  ? 'Plus de tickets'
+                  : hasMachines
+                    ? selectedMachineOwned
+                      ? '✦ Lancer (1 ticket)'
+                      : 'Machine verrouillée'
+                    : 'Aucune machine'}
           </Button>
 
           <Button
@@ -289,7 +329,7 @@ function Play() {
             size="sm"
             onClick={handleSkip}
             disabled={!canPull}
-            className="text-xs text-text-light/40 hover:text-text-light"
+            className={`text-xs text-text-light/40 hover:text-text-light ${canPull ? '' : 'invisible'}`}
           >
             Passer l'animation
             <ChevronsRight className="h-3.5 w-3.5" />
@@ -313,7 +353,7 @@ function Play() {
         }}
       />
 
-      {/* HUD — streak / level / quests */}
+      {/* HUD — always visible */}
       <PlayHud />
 
       {/* Live feed sidebar — hidden during pull to avoid spoilers */}

@@ -2,6 +2,7 @@ export const ITEM_TYPE_OPTIONS = [
   { value: 'TOKEN_PACK', label: 'Token Pack' },
   { value: 'BOOST', label: 'Boost' },
   { value: 'COSMETIC', label: 'Cosmétique' },
+  { value: 'MACHINE', label: 'Machine' },
 ]
 
 // Types
@@ -9,7 +10,7 @@ export type ShopItem = {
   id: string
   name: string
   description: string
-  type: 'TOKEN_PACK' | 'BOOST' | 'COSMETIC'
+  type: 'TOKEN_PACK' | 'BOOST' | 'COSMETIC' | 'MACHINE'
   dustCost: number
   value: unknown
 }

@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { CalendarClock, Package, Sparkles, Zap } from 'lucide-react'
+import { CalendarClock, Cog, Package, Sparkles, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { CardDisplay } from '../../components/shared/tcg-card/CardDisplay'
@@ -9,7 +9,7 @@ import { TOAST_SEVERITY } from '../../constants/ui.constant'
 import { useToast } from '../../hooks/useToast'
 import { useBuyDailyShopItem, useDailyShop } from '../../queries/useDailyShop'
 import type { ShopItem } from '../../queries/useShop'
-import { useBuyItem, useShopItems } from '../../queries/useShop'
+import { useBuyItem, useOwnedMachines, useShopItems } from '../../queries/useShop'
 import { useAuthStore } from '../../stores/auth.store'
 
 export const Route = createFileRoute('/_authenticated/shop')({
@@ -64,6 +64,11 @@ const TYPE_CONFIG: Record<
     icon: <Package className="h-5 w-5 text-accent" />,
     color: 'border-accent/30 bg-accent/5',
   },
+  MACHINE: {
+    label: 'Machines',
+    icon: <Cog className="h-5 w-5 text-primary" />,
+    color: 'border-primary/30 bg-primary/5',
+  },
 }
 
 // ── Main page ───────────────────────────────────────────────────────────────
@@ -77,6 +82,8 @@ function ShopPage() {
   const { data: shopData, isLoading: shopLoading } = useShopItems()
   const { mutate: buyShop, isPending: buyingShop } = useBuyItem()
   const [buyingShopId, setBuyingShopId] = useState<string | null>(null)
+  const { data: machinesData } = useOwnedMachines()
+  const ownedMachineIds = machinesData?.machineIds ?? []
 
   // Daily shop
   const { data: dailyData, isLoading: dailyLoading } = useDailyShop()
@@ -205,16 +212,21 @@ function ShopPage() {
                     </h2>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {typeItems.map((item) => (
-                      <StaticShopCard
-                        key={item.id}
-                        item={item}
-                        dust={dust}
-                        colorClass={config.color}
-                        buying={buyingShopId === item.id && buyingShop}
-                        onBuy={() => handleBuyShop(item)}
-                      />
-                    ))}
+                    {typeItems.map((item) => {
+                      const machineId = item.type === 'MACHINE' ? (item.value as { machineId?: string })?.machineId : undefined
+                      const owned = machineId ? ownedMachineIds.includes(machineId) : false
+                      return (
+                        <StaticShopCard
+                          key={item.id}
+                          item={item}
+                          dust={dust}
+                          colorClass={config.color}
+                          buying={buyingShopId === item.id && buyingShop}
+                          owned={owned}
+                          onBuy={() => handleBuyShop(item)}
+                        />
+                      )
+                    })}
                   </div>
                 </section>
               ))}
@@ -287,16 +299,18 @@ function StaticShopCard({
   dust,
   colorClass,
   buying,
+  owned,
   onBuy,
 }: {
   item: ShopItem
   dust: number
   colorClass: string
   buying: boolean
+  owned?: boolean
   onBuy: () => void
 }) {
   const canAfford = dust >= item.dustCost
-  const supported = item.type === 'TOKEN_PACK'
+  const supported = item.type === 'TOKEN_PACK' || item.type === 'MACHINE'
 
   return (
     <div className={`rounded-xl border p-4 ${colorClass} flex flex-col gap-3`}>
@@ -311,16 +325,22 @@ function StaticShopCard({
           <Sparkles className="h-3.5 w-3.5" />
           {item.dustCost.toLocaleString('fr-FR')}
         </span>
-        <Button
-          size="sm"
-          disabled={!supported || buying || !canAfford}
-          onClick={onBuy}
-          variant={supported && canAfford ? 'default' : 'secondary'}
-        >
-          {supported
-            ? buying ? '…' : canAfford ? 'Acheter' : 'Insuffisant'
-            : 'Bientôt'}
-        </Button>
+        {owned ? (
+          <Button size="sm" variant="secondary" disabled>
+            Possédée
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            disabled={!supported || buying || !canAfford}
+            onClick={onBuy}
+            variant={supported && canAfford ? 'default' : 'secondary'}
+          >
+            {supported
+              ? buying ? '…' : canAfford ? 'Acheter' : 'Insuffisant'
+              : 'Bientôt'}
+          </Button>
+        )}
       </div>
     </div>
   )
