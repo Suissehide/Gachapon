@@ -6,7 +6,7 @@ import {
   Layers,
   Sparkles,
   Star,
-  Ticket,
+  Coins,
   TrendingUp,
   Trophy,
   Users,
@@ -152,7 +152,7 @@ function GuidePage() {
           {/* Content */}
           <main className="flex-1 min-w-0">
             {/* Tokens */}
-            <Section id="tokens" icon={Ticket} title="Tokens & régénération">
+            <Section id="tokens" icon={Coins} title="Jetons & régénération">
               <p>
                 Les <strong className="text-foreground">tokens</strong> sont la
                 monnaie d'action du jeu — chaque tirage de capsule en consomme

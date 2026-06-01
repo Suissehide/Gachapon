@@ -12,6 +12,7 @@ import {
 import { Button } from '../ui/button'
 import type { MachineDefinition, MachineHandle } from './machineRegistry'
 import { MACHINE_REGISTRY } from './machineRegistry'
+import { NoMachine } from './type/NoMachine'
 
 const SELECTED_MACHINE_KEY = 'gachapon:selectedMachine'
 
@@ -19,11 +20,12 @@ type Props = {
   ownedMachineIds: string[]
   hideNav?: boolean
   onBuyMachine?: (machine: MachineDefinition) => void
-  onSelectionChange?: (isOwned: boolean) => void
+  onSelectionChange?: (isOwned: boolean, isNoMachine: boolean) => void
 }
 
 export type CarouselHandle = {
   startAnimation: () => Promise<void>
+  isNoMachine: boolean
 }
 
 export const MachineCarousel = forwardRef<CarouselHandle, Props>(
@@ -37,8 +39,9 @@ export const MachineCarousel = forwardRef<CarouselHandle, Props>(
           return idx
         }
       }
-      const firstOwned = machines.findIndex((m) =>
-        ownedMachineIds.includes(m.id),
+      // Default to first owned machine (not 'none')
+      const firstOwned = machines.findIndex(
+        (m) => m.id !== 'none' && ownedMachineIds.includes(m.id),
       )
       return firstOwned >= 0 ? firstOwned : 0
     })
@@ -46,12 +49,15 @@ export const MachineCarousel = forwardRef<CarouselHandle, Props>(
     const machineRef = useRef<MachineHandle>(null)
 
     const current = machines[index]
-    const isOwned = ownedMachineIds.includes(current.id)
+    // 'none' is always owned
+    const isOwned =
+      current.id === 'none' || ownedMachineIds.includes(current.id)
+    const isNoMachine = current.id === 'none'
 
     // Notify parent of selection changes
     useEffect(() => {
-      onSelectionChange?.(isOwned)
-    }, [isOwned, onSelectionChange])
+      onSelectionChange?.(isOwned, isNoMachine)
+    }, [isOwned, isNoMachine, onSelectionChange])
 
     // Save selection to localStorage
     useEffect(() => {
@@ -68,11 +74,16 @@ export const MachineCarousel = forwardRef<CarouselHandle, Props>(
 
     useImperativeHandle(ref, () => ({
       async startAnimation() {
+        // No animation for 'none' mode
+        if (isNoMachine) {
+          return
+        }
         if (!machineRef.current || !isOwned) {
           return
         }
         await machineRef.current.startAnimation()
       },
+      isNoMachine,
     }))
 
     const MachineComponent = current.component
@@ -104,7 +115,12 @@ export const MachineCarousel = forwardRef<CarouselHandle, Props>(
           className="absolute inset-0 transition-opacity duration-150"
           style={{ opacity: fade ? 1 : 0 }}
         >
-          {isOwned ? (
+          {isNoMachine ? (
+            /* No machine — show idle animation */
+            <div className="flex h-full w-full items-center justify-center">
+              <NoMachine />
+            </div>
+          ) : isOwned && MachineComponent ? (
             <Canvas
               camera={{ position: [0, 0.3, 6.5], fov: 45 }}
               shadows
@@ -131,6 +147,7 @@ export const MachineCarousel = forwardRef<CarouselHandle, Props>(
               <Environment preset="city" />
             </Canvas>
           ) : (
+            /* Locked machine */
             <div className="flex h-full w-full flex-col items-center justify-center gap-3">
               <div className="flex h-44 w-44 items-center justify-center rounded-2xl bg-surface/50 backdrop-blur">
                 <Lock className="h-10 w-10 text-text-light/30" />

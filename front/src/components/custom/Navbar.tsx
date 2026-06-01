@@ -1,5 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router'
-import { LogOut, Sparkles, Ticket } from 'lucide-react'
+import { Coins, LogOut, Sparkles } from 'lucide-react'
 
 import { useAuthStore } from '../../stores/auth.store'
 import { InvitationsBadge } from '../notifications/InvitationsBadge.tsx'
@@ -67,7 +67,7 @@ export function Navbar() {
                     to="/shop"
                     className="flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-sm font-semibold text-primary hover:bg-primary/20 transition-colors"
                   >
-                    <Ticket className="h-3.5 w-3.5" />
+                    <Coins className="h-3.5 w-3.5" />
                     {user.tokens.toLocaleString('fr-FR')}
                   </Link>
                   <Link

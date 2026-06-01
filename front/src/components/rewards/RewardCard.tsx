@@ -1,4 +1,4 @@
-import { Flame, Sparkles, Star, Ticket, Trophy, Zap } from 'lucide-react'
+import { Coins, Flame, Sparkles, Star, Trophy, Zap } from 'lucide-react'
 import { type ReactNode, useRef, useState } from 'react'
 
 import type { PendingReward } from '../../api/rewards.api.ts'
@@ -116,9 +116,9 @@ export function RewardCard({ reward, onClaim, isLoading }: RewardCardProps) {
           <div className="flex items-center gap-4">
             {reward.reward.tokens > 0 && (
               <Stat
-                icon={<Ticket className="h-3.5 w-3.5 text-primary" />}
+                icon={<Coins className="h-3.5 w-3.5 text-primary" />}
                 value={reward.reward.tokens}
-                label="ticket"
+                label="jeton"
               />
             )}
             {reward.reward.dust > 0 && (
