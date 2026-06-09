@@ -18,7 +18,7 @@ export function RewardsPopup({ onClose: _ }: RewardsPopupProps) {
   const claimAll = useClaimAllRewards()
 
   return (
-    <div className="absolute right-0 top-10 z-50 min-w-64 overflow-hidden rounded-xl border border-border bg-background shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+    <div className="absolute right-0 top-10 z-50 min-w-64 max-h-[70vh] flex flex-col overflow-hidden rounded-xl border border-border bg-background shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
         <div className="flex items-center gap-2">
@@ -44,7 +44,7 @@ export function RewardsPopup({ onClose: _ }: RewardsPopupProps) {
       </div>
 
       {/* Content */}
-      <div className="p-3">
+      <div className="flex-1 min-h-0 overflow-y-auto p-3">
         {isLoading ? (
           <div className="flex items-center justify-center py-6">
             <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
