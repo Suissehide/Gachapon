@@ -15,7 +15,7 @@ import { StreakSummaryModal } from '../streak/StreakSummaryModal.tsx'
 import { Button } from '../ui/button.tsx'
 
 export function PlayHud() {
-  const [visible, setVisible] = useState(true)
+  const [visible, setVisible] = useState(() => window.innerWidth >= 768)
   const [streakModalOpen, setStreakModalOpen] = useState(false)
   const username = useAuthStore((s) => s.user?.username ?? '')
 

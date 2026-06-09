@@ -11,7 +11,7 @@ import { FeedEntryRow } from './FeedEntry'
 type Tab = 'global' | 'team'
 
 export function LiveFeed() {
-  const [visible, setVisible] = useState(true)
+  const [visible, setVisible] = useState(() => window.innerWidth >= 768)
   const [tab, setTab] = useState<Tab>('global')
   const [selectedTeamId, setSelectedTeamId] = useState<string | undefined>()
   const sentinelRef = useRef<HTMLDivElement>(null)
