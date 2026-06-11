@@ -13,6 +13,7 @@
 @import "tailwindcss";
 @import "./_colors.css";
 @import "./_variables.css";
+@import "./_arcade.css";
 
 @plugin "tailwindcss-animate";
 

@@ -1,0 +1,56 @@
+/* front/src/styles/_arcade.css
+ * Scoped tokens for the "Arcade clair" theme. Activated by wrapping content
+ * in <div className="arcade-theme">. Designed to be promotable to :root
+ * in a future global-theme-migration project.
+ */
+.arcade-theme {
+  --arcade-bg: #fbf8f3;
+  --arcade-surface: #ffffff;
+  --arcade-surface-2: #fafaf7;
+  --arcade-surface-3: #f4f0eb;
+  --arcade-text: #1b1726;
+  --arcade-text-muted: rgba(27, 23, 38, 0.55);
+  --arcade-border: rgba(27, 23, 38, 0.08);
+  --arcade-border-strong: rgba(27, 23, 38, 0.12);
+  --arcade-amber: #f59e0b;
+  --arcade-amber-light: #fbbf24;
+  --arcade-amber-deep: #d97706;
+  --arcade-amber-soft: #fde68a;
+
+  --rarity-common: #22c55e;
+  --rarity-uncommon: #3b82f6;
+  --rarity-rare: #8b5cf6;
+  --rarity-epic: #ec4899;
+  --rarity-legendary: #f59e0b;
+
+  --shadow-card:
+    0 2px 0 rgba(27, 23, 38, 0.04),
+    0 12px 30px -12px rgba(27, 23, 38, 0.08);
+
+  background-color: var(--arcade-bg);
+  color: var(--arcade-text);
+  font-family: "DM Sans", system-ui, -apple-system, sans-serif;
+}
+
+.arcade-theme .font-display {
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.arcade-theme .font-mono {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
+@keyframes foilSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arcade-theme *,
+  .arcade-theme *::before,
+  .arcade-theme *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
