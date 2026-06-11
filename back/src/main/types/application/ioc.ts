@@ -18,6 +18,7 @@ import type { GachaDomainInterface } from '../domain/gacha/gacha.domain.interfac
 import type { RewardsDomainInterface } from '../domain/rewards/rewards.domain.interface'
 import type { IDailyShopDomain } from '../domain/daily-shop/daily-shop.domain.interface'
 import type { IShopDomain } from '../domain/shop/shop.domain.interface'
+import type { AchievementsDomainInterface } from '../../domain/achievements/achievements.domain.interface'
 import type { StreakDomainInterface } from '../domain/streak/streak.domain.interface'
 import type { TeamDomainInterface } from '../domain/team/team.domain.interface'
 import type { UserDomainInterface } from '../domain/user/user.domain.interface'
@@ -92,4 +93,5 @@ export interface IocContainer {
   readonly skillInvestDomain: ISkillInvestDomain
   readonly skillResetDomain: ISkillResetDomain
   readonly adminSkillTreeDomain: AdminSkillTreeDomain
+  readonly achievementsDomain: AchievementsDomainInterface
 }

@@ -9,6 +9,7 @@ import { SkillTreeDomain } from '../../../domain/skills/skill-tree.domain'
 import { SkillInvestDomain } from '../../../domain/skills/skill-invest.domain'
 import { SkillResetDomain } from '../../../domain/skills/skill-reset.domain'
 import { AdminSkillTreeDomain } from '../../../domain/skills/admin-skill-tree.domain'
+import { AchievementsDomain } from '../../../domain/achievements/achievements.domain'
 import { GachaDomain } from '../../../domain/gacha/gacha.domain'
 import { RewardsDomain } from '../../../domain/rewards/rewards.domain'
 import { DailyShopDomain } from '../../../domain/daily-shop/daily-shop.domain'
@@ -133,6 +134,7 @@ class AwilixIocContainer {
     this.#reg('skillInvestDomain', asClass(SkillInvestDomain).singleton())
     this.#reg('skillResetDomain', asClass(SkillResetDomain).singleton())
     this.#reg('adminSkillTreeDomain', asClass(AdminSkillTreeDomain).singleton())
+    this.#reg('achievementsDomain', asClass(AchievementsDomain).singleton())
     logger.info('IoC container initialized.')
   }
 
