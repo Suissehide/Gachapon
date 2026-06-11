@@ -19,13 +19,7 @@ export function pickTopByRarity<T extends OwnedCardLike>(ownedCards: T[]): T[] {
   if (ownedCards.length === 0) {
     return []
   }
-  const byRarity = new Map<string, T[]>()
-  for (const card of ownedCards) {
-    const arr = byRarity.get(card.rarity) ?? []
-    arr.push(card)
-    byRarity.set(card.rarity, arr)
-  }
-  const picked: T[] = []
+  const byRarity = groupByRarity(ownedCards)
   const usedIndex = new Map<string, number>()
   const takeNext = (rarity: string): T | undefined => {
     const arr = byRarity.get(rarity)
@@ -39,19 +33,12 @@ export function pickTopByRarity<T extends OwnedCardLike>(ownedCards: T[]): T[] {
     usedIndex.set(rarity, start + 1)
     return arr[start]
   }
-  for (let i = 0; i < RARITY_ORDER.length; i += 1) {
-    const rarity = RARITY_ORDER[i]!
-    let card = takeNext(rarity)
-    if (!card) {
-      for (let j = i - 1; j >= 0 && !card; j -= 1) {
-        card = takeNext(RARITY_ORDER[j]!)
-      }
-    }
-    if (!card) {
-      for (let j = i + 1; j < RARITY_ORDER.length && !card; j += 1) {
-        card = takeNext(RARITY_ORDER[j]!)
-      }
-    }
+  const picked: T[] = []
+  for (const [i, rarity] of RARITY_ORDER.entries()) {
+    const card =
+      takeNext(rarity) ??
+      findInRarerTiers(i, takeNext) ??
+      findInLessRareTiers(i, takeNext)
     if (card) {
       picked.push(card)
     }
@@ -60,6 +47,50 @@ export function pickTopByRarity<T extends OwnedCardLike>(ownedCards: T[]): T[] {
     }
   }
   return picked
+}
+
+function groupByRarity<T extends OwnedCardLike>(cards: T[]): Map<string, T[]> {
+  const byRarity = new Map<string, T[]>()
+  for (const card of cards) {
+    const arr = byRarity.get(card.rarity) ?? []
+    arr.push(card)
+    byRarity.set(card.rarity, arr)
+  }
+  return byRarity
+}
+
+function findInRarerTiers<T>(
+  currentIndex: number,
+  take: (rarity: string) => T | undefined,
+): T | undefined {
+  for (let j = currentIndex - 1; j >= 0; j -= 1) {
+    const rarity = RARITY_ORDER[j]
+    if (rarity === undefined) {
+      continue
+    }
+    const card = take(rarity)
+    if (card) {
+      return card
+    }
+  }
+  return undefined
+}
+
+function findInLessRareTiers<T>(
+  currentIndex: number,
+  take: (rarity: string) => T | undefined,
+): T | undefined {
+  for (let j = currentIndex + 1; j < RARITY_ORDER.length; j += 1) {
+    const rarity = RARITY_ORDER[j]
+    if (rarity === undefined) {
+      continue
+    }
+    const card = take(rarity)
+    if (card) {
+      return card
+    }
+  }
+  return undefined
 }
 
 /** Returns the user's featured cards, falling back to pickTopByRarity when
