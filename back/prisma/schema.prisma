@@ -93,6 +93,7 @@ model User {
   passwordResetTokenExpiresAt     DateTime?
 
   bestStreak    Int        @default(0)
+  featuredCardIds String[]   @default([])
 
   oauthAccounts       OAuthAccount[]
   apiKeys             ApiKey[]
@@ -185,6 +186,7 @@ model CardSet {
   coverImage  String?
   isActive    Boolean  @default(false)
   createdAt   DateTime @default(now())
+  hue Int?
 
   cards Card[]
 }
