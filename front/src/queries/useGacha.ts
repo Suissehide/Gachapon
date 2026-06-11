@@ -5,6 +5,8 @@ import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
+import { useLevelUpStore } from '../stores/levelUp.store.ts'
+import { computeLevel } from '../utils/level.ts'
 
 export type { PullHistory, PullResult, TokenBalance } from '../api/gacha.api.ts'
 
@@ -29,9 +31,20 @@ export const usePull = () => {
   const { toast } = useToast()
   const setUser = useAuthStore((s) => s.setUser)
   const user = useAuthStore((s) => s.user)
+  const username = useAuthStore((s) => s.user?.username ?? '')
+  const triggerLevelUp = useLevelUpStore((s) => s.triggerLevelUp)
   return useMutation({
     mutationFn: () => GachaApi.pull(),
     onSuccess: (result) => {
+      // Level-up detection
+      const cached = qc.getQueryData<{ xp?: number }>(['profile', username])
+      const oldXp = cached?.xp ?? 0
+      const oldLevel = computeLevel(oldXp)
+      const newLevel = computeLevel(oldXp + result.xpGained)
+      if (newLevel > oldLevel) {
+        triggerLevelUp(newLevel)
+      }
+
       if (user) {
         setUser({
           ...user,

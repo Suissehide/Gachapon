@@ -843,3 +843,45 @@ h6 {
   left: auto;
   right: -4px;
 }
+
+/* ── Level-up overlay ── */
+@keyframes levelUpBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes levelUpStarBounce {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.15); opacity: 1; }
+  70% { transform: scale(0.95); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes levelUpTextPop {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.2); opacity: 1; }
+  80% { transform: scale(0.95); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes levelUpFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes levelUpParticle {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  60% { opacity: 1; }
+  100% {
+    transform:
+      translate(
+        calc(cos(var(--angle)) * var(--dist)),
+        calc(sin(var(--angle)) * var(--dist))
+      )
+      scale(0);
+    opacity: 0;
+  }
+}

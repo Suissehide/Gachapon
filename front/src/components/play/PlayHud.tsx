@@ -11,6 +11,7 @@ import { useState } from 'react'
 import { useUserProfile } from '../../queries/useProfile.ts'
 import { useStreakSummary } from '../../queries/useStreak.ts'
 import { useAuthStore } from '../../stores/auth.store.ts'
+import { computeLevel } from '../../utils/level.ts'
 import { StreakSummaryModal } from '../streak/StreakSummaryModal.tsx'
 import { Button } from '../ui/button.tsx'
 
@@ -28,7 +29,7 @@ export function PlayHud() {
 
   // XP progress within current level
   const xp = profile?.xp ?? 0
-  const level = Math.min(Math.floor(Math.sqrt(xp / 100)) + 1, 100)
+  const level = computeLevel(xp)
   const isMaxLevel = level >= 100
   const xpStart = (level - 1) ** 2 * 100
   const xpNext = level ** 2 * 100
