@@ -52,3 +52,22 @@ export function pickTopByRarity<T extends OwnedCardLike>(ownedCards: T[]): T[] {
   }
   return picked
 }
+
+/** Returns the user's featured cards, falling back to pickTopByRarity when
+ *  the manual selection is empty or all selected ids have been recycled. */
+export function resolveFeaturedCards<T extends OwnedCardLike>(
+  featuredIds: string[],
+  ownedCards: T[],
+): T[] {
+  if (featuredIds.length === 0) {
+    return pickTopByRarity(ownedCards)
+  }
+  const byId = new Map(ownedCards.map((c) => [c.id, c]))
+  const resolved = featuredIds
+    .map((id) => byId.get(id))
+    .filter((c): c is T => c !== undefined)
+  if (resolved.length === 0) {
+    return pickTopByRarity(ownedCards)
+  }
+  return resolved
+}
