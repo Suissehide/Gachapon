@@ -290,11 +290,13 @@ function ClawArm({
   posX,
   posY,
   posZ,
+  showBall,
 }: {
   open: boolean
   posX: number
   posY: number
   posZ: number
+  showBall: boolean
 }) {
   const armAngle = open ? 0.55 : 0.05
   const cableLen = BOX_Y + BOX_H / 2 - posY + 0.05
@@ -383,6 +385,12 @@ function ClawArm({
           </group>
         )
       })}
+      {/* Grabbed ball — visible when claw is holding a capsule */}
+      {showBall && (
+        <group position={[0, -0.28, 0]}>
+          <MiniCapsuleVisual color="#f4a261" />
+        </group>
+      )}
     </group>
   )
 }
@@ -443,6 +451,7 @@ type ClawPhase =
 
 export const ClawMachine = forwardRef<ClawMachineHandle>((_, ref) => {
   const [showDispensed, setShowDispensed] = useState(false)
+  const [showGrabbedBall, setShowGrabbedBall] = useState(false)
   const [clawOpen, setClawOpen] = useState(true)
   const [phase, setPhase] = useState<ClawPhase>('idle')
 
@@ -454,28 +463,44 @@ export const ClawMachine = forwardRef<ClawMachineHandle>((_, ref) => {
   })
   const [clawPos, setClawPos] = useState(clawPosRef.current)
   const clawTargetYRef = useRef(CLAW_TOP_Y)
+  const clawTargetXRef = useRef(CLAW_MAX_X - 0.05)
+  const clawTargetZRef = useRef(CLAW_MAX_Z - 0.05)
 
   // Input state
   const keysRef = useRef(new Set<string>())
   const resolveRef = useRef<(() => void) | null>(null)
   const triggerDropRef = useRef<(() => void) | null>(null)
 
+  // Drop zone position (front-right corner, where dispensing hole is)
+  const dropZone = { x: CLAW_MAX_X - 0.05, z: CLAW_MAX_Z - 0.05 }
+
   // Drop sequence
   triggerDropRef.current = () => {
     ;(async () => {
+      // 1. Descend
       setPhase('dropping')
       clawTargetYRef.current = CLAW_BOTTOM_Y
       await new Promise((r) => setTimeout(r, 1200))
 
+      // 2. Grab — close prongs + show ball in claw
       setPhase('grabbing')
       setClawOpen(false)
+      setShowGrabbedBall(true)
       await new Promise((r) => setTimeout(r, 500))
 
+      // 3. Ascend with ball
       setPhase('ascending')
       clawTargetYRef.current = CLAW_TOP_Y
       await new Promise((r) => setTimeout(r, 1200))
 
+      // 4. Slide to drop zone (smooth via targets)
+      clawTargetXRef.current = dropZone.x
+      clawTargetZRef.current = dropZone.z
+      await new Promise((r) => setTimeout(r, 1000))
+
+      // 5. Release — open prongs, drop ball
       setClawOpen(true)
+      setShowGrabbedBall(false)
       setPhase('dispensing')
       setShowDispensed(true)
       await new Promise((r) => setTimeout(r, 1500))
@@ -507,10 +532,11 @@ export const ClawMachine = forwardRef<ClawMachineHandle>((_, ref) => {
     }
   }, [phase])
 
-  // Move claw with keyboard + lerp Y
+  // Move claw with keyboard + lerp all axes
   useFrame((_, delta) => {
     const pos = clawPosRef.current
     if (phase === 'positioning') {
+      // Player controls X/Z directly
       const keys = keysRef.current
       let dx = 0,
         dz = 0
@@ -537,9 +563,16 @@ export const ClawMachine = forwardRef<ClawMachineHandle>((_, ref) => {
         CLAW_MIN_Z,
         CLAW_MAX_Z,
       )
+      // Keep targets in sync during positioning
+      clawTargetXRef.current = pos.x
+      clawTargetZRef.current = pos.z
+    } else {
+      // Smooth lerp X/Z toward target (for return-to-drop-zone)
+      pos.x = THREE.MathUtils.lerp(pos.x, clawTargetXRef.current, delta * 3)
+      pos.z = THREE.MathUtils.lerp(pos.z, clawTargetZRef.current, delta * 3)
     }
 
-    // Smooth Y
+    // Smooth Y always
     pos.y = THREE.MathUtils.lerp(pos.y, clawTargetYRef.current, delta * 3)
     setClawPos({ ...pos })
   })
@@ -718,6 +751,7 @@ export const ClawMachine = forwardRef<ClawMachineHandle>((_, ref) => {
         posX={clawPos.x}
         posY={clawPos.y}
         posZ={clawPos.z}
+        showBall={showGrabbedBall}
       />
 
       {/* ── Positioning indicator ── */}
