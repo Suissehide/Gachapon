@@ -23,6 +23,7 @@ export interface IUserCardRepository {
     variant: CardVariant,
   ): Promise<{ wasDuplicate: boolean }>
   countByUser(userId: string): Promise<number>
+  countUniqueBySet(userId: string): Promise<Map<string, number>>
   countLegendaryByUser(userId: string): Promise<number>
   findForScoring(userIds: string[]): Promise<
     {

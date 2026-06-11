@@ -93,6 +93,22 @@ export class UserCardRepository implements IUserCardRepository {
     return this.#prisma.userCard.count({ where: { userId } })
   }
 
+  async countUniqueBySet(userId: string): Promise<Map<string, number>> {
+    // Returns the count of UNIQUE cards (by cardId, ignoring variants and quantity)
+    // owned by `userId`, grouped by setId. Used by the profile page's sets-progression.
+    const rows = await this.#prisma.userCard.findMany({
+      where: { userId },
+      select: { card: { select: { setId: true, id: true } } },
+      distinct: ['cardId'],
+    })
+    const counts = new Map<string, number>()
+    for (const row of rows) {
+      const setId = row.card.setId
+      counts.set(setId, (counts.get(setId) ?? 0) + 1)
+    }
+    return counts
+  }
+
   countLegendaryByUser(userId: string): Promise<number> {
     return this.#prisma.userCard.count({
       where: { userId, card: { rarity: 'LEGENDARY' } },
