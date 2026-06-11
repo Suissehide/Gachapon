@@ -11,7 +11,7 @@ import { AchievementCriterionSchema, type AchievementCriterion } from './criteri
 import { computeDelta } from './counter-dispatcher'
 import { computeStateProgress, type UserAchievementState } from './state-dispatcher'
 import { getCustomHandler } from './custom-handlers'
-import { counterTypesFor, stateTypesFor } from './dispatch'
+import { counterTypesFor, stateTypesFor, isCounterCriterion, isStateCriterion } from './dispatch'
 import type { AchievementEvent, UnlockedAchievement } from './events.types'
 
 type AchievementWithReward = Achievement & {
@@ -32,7 +32,6 @@ interface EvaluateResult {
 }
 
 export class AchievementsDomain implements AchievementsDomainInterface {
-  // biome-ignore lint/correctness/noUnusedPrivateClassMembers: used in listForUser (Task 9)
   readonly #postgresOrm: PostgresOrm
 
   constructor({ postgresOrm }: Pick<IocContainer, 'postgresOrm'>) {
@@ -67,19 +66,119 @@ export class AchievementsDomain implements AchievementsDomainInterface {
     return unlocked
   }
 
-  listForUser(_userId: string): Promise<AchievementWithProgress[]> {
-    return Promise.reject(new Error('not implemented yet — Task 9'))
+  listForUser(userId: string): Promise<AchievementWithProgress[]> {
+    return this.#listForUserImpl(userId)
   }
 
-  listFamilies(
-    _userId: string,
-  ): Promise<Array<{ family: string; total: number; unlocked: number }>> {
-    return Promise.reject(new Error('not implemented yet — Task 9'))
+  async #listForUserImpl(userId: string): Promise<AchievementWithProgress[]> {
+    const [achievements, unlocked, progressRows, state] = await Promise.all([
+      this.#postgresOrm.prisma.achievement.findMany({
+        where: { isActive: true },
+        include: { reward: true },
+        orderBy: [{ family: 'asc' }, { tier: 'asc' }, { sortOrder: 'asc' }],
+      }),
+      this.#postgresOrm.prisma.userAchievement.findMany({ where: { userId } }),
+      this.#postgresOrm.prisma.userAchievementProgress.findMany({ where: { userId } }),
+      this.#postgresOrm.executeWithTransactionClient(
+        (tx) => this.#loadUserState(tx, userId),
+        { isolationLevel: 'ReadCommitted' },
+      ),
+    ])
+
+    const unlockedMap = new Map(unlocked.map((u) => [u.achievementId, u.unlockedAt]))
+    const progressMap = new Map(progressRows.map((p) => [p.achievementId, p.progress]))
+
+    return achievements.map((a) => {
+      let criterion: AchievementCriterion
+      try {
+        criterion = AchievementCriterionSchema.parse(a.criterion)
+      } catch {
+        return this.#maskedEntry(a, 0, 1, false, null)
+      }
+
+      const unlockedAt = unlockedMap.get(a.id) ?? null
+      let progress = 0
+      let threshold = 1
+
+      if (isCounterCriterion(criterion)) {
+        progress = progressMap.get(a.id) ?? 0
+        threshold = (criterion as { threshold: number }).threshold
+      } else if (isStateCriterion(criterion)) {
+        const result = computeStateProgress(criterion, state)
+        progress = result.progress
+        threshold = result.threshold
+      } else {
+        threshold = 1
+        progress = unlockedAt ? 1 : 0
+      }
+
+      return this.#maskedEntry(a, progress, threshold, !!unlockedAt, unlockedAt)
+    })
+  }
+
+  async listFamilies(userId: string): Promise<Array<{ family: string; total: number; unlocked: number }>> {
+    const [achievements, userUnlocked] = await Promise.all([
+      this.#postgresOrm.prisma.achievement.findMany({
+        where: { isActive: true, family: { not: null } },
+        select: { id: true, family: true },
+      }),
+      this.#postgresOrm.prisma.userAchievement.findMany({
+        where: { userId },
+        select: { achievementId: true },
+      }),
+    ])
+
+    const unlockedSet = new Set(userUnlocked.map((u) => u.achievementId))
+    const totals = new Map<string, { total: number; unlocked: number }>()
+    for (const a of achievements) {
+      if (!a.family) {
+        continue
+      }
+      const entry = totals.get(a.family) ?? { total: 0, unlocked: 0 }
+      entry.total += 1
+      if (unlockedSet.has(a.id)) {
+        entry.unlocked += 1
+      }
+      totals.set(a.family, entry)
+    }
+    return [...totals.entries()].map(([family, v]) => ({ family, ...v }))
   }
 
   // -------------------------------------------------------------------------
   // Private helpers
   // -------------------------------------------------------------------------
+
+  #maskedEntry(
+    a: AchievementWithReward,
+    progress: number,
+    threshold: number,
+    unlocked: boolean,
+    unlockedAt: Date | null,
+  ): AchievementWithProgress {
+    const masked = a.hidden && !unlocked
+    return {
+      key: a.key,
+      name: masked ? '???' : a.name,
+      description: masked ? '???' : a.description,
+      family: a.family,
+      tier: a.tier,
+      hidden: a.hidden,
+      iconKey: masked ? null : a.iconKey,
+      sortOrder: a.sortOrder,
+      progress,
+      threshold,
+      unlocked,
+      unlockedAt,
+      reward: a.reward
+        ? {
+            tokens: a.reward.tokens,
+            dust: a.reward.dust,
+            xp: a.reward.xp,
+            cardRarity: a.reward.cardRarity,
+          }
+        : null,
+    }
+  }
 
   async #loadCandidates(
     tx: PrimaTransactionClient,
