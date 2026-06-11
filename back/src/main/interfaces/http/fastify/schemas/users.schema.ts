@@ -15,6 +15,7 @@ export const userProfileResponseSchema = z.object({
   xp: z.number().int(),
   dust: z.number().int(),
   createdAt: z.date(),
+  lastLoginAt: z.date().nullable(),
   stats: z.object({
     totalPulls: z.number().int(),
     ownedCards: z.number().int(),

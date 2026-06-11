@@ -58,6 +58,7 @@ export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
         xp: user.xp,
         dust: user.dust,
         createdAt: user.createdAt,
+        lastLoginAt: user.lastLoginAt,
         stats: { totalPulls, ownedCards, legendaryCount, dustGenerated },
         streakDays: user.streakDays,
         bestStreak: user.bestStreak,
