@@ -1,10 +1,12 @@
 import { z } from 'zod/v4'
 
+import { AchievementCriterionSchema } from '../../../../domain/achievements/criterion.types'
+
 export const achievementSchema = z.object({
   key: z.string().min(1),
   name: z.string().min(1),
   description: z.string().min(1),
-  criterion: z.record(z.string(), z.unknown()),
+  criterion: AchievementCriterionSchema,
   family: z.string().nullish(),
   tier: z.number().int().optional(),
   hidden: z.boolean().optional(),

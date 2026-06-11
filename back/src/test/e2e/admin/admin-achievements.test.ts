@@ -31,7 +31,7 @@ describe('Admin achievements routes', () => {
     const res = await app.inject({
       method: 'POST', url: '/admin/achievements',
       headers: { cookie: adminCookies },
-      payload: { key: `ach_${suffix}`, name: 'Test Achievement', description: 'desc' },
+      payload: { key: `ach_${suffix}`, name: 'Test Achievement', description: 'desc', criterion: { type: 'PULL_COUNT', threshold: 10 } },
     })
     expect(res.statusCode).toBe(201)
     achievementId = res.json().id
