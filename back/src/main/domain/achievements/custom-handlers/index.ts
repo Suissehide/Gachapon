@@ -33,3 +33,6 @@ customHandlers.dust_balance_10k = dustBalance10kHandler
 
 import { ownAllMachinesHandler } from './own-all-machines'
 customHandlers.own_all_machines = ownAllMachinesHandler
+
+import { sameCardTwoVariantsHandler } from './same-card-two-variants'
+customHandlers.same_card_two_variants = sameCardTwoVariantsHandler
