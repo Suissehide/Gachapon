@@ -4,6 +4,7 @@ import type {
   GachaPull,
   UserCard,
 } from '../../../../generated/client'
+import type { UnlockedAchievement } from '../../../domain/achievements/events.types'
 
 export type { CardRarity, CardVariant } from '../../../../generated/client'
 
@@ -24,4 +25,5 @@ export type PullResult = {
   tokensRemaining: number
   pityCurrent: number
   xpGained: number
+  unlockedAchievements: UnlockedAchievement[]
 }

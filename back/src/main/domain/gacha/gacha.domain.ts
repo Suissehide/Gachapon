@@ -20,6 +20,7 @@ import type { IUserCardRepository } from '../../types/infra/orm/repositories/use
 import { calculateTokens } from '../economy/economy.domain'
 import { calculateLevel } from '../shared/xp'
 import type { UserUpgradeEffects } from '../../types/domain/economy/economy.types'
+import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 
 export function pickWeightedRandom(cards: CardWithSet[]): CardWithSet {
   if (cards.length === 0) {
@@ -135,6 +136,7 @@ export class GachaDomain implements GachaDomainInterface {
   readonly #userCardRepository: IUserCardRepository
   readonly #gachaPullRepository: IGachaPullRepository
   readonly #skillTreeRepository: ISkillTreeRepository
+  readonly #achievementsDomain: AchievementsDomainInterface
 
   constructor({
     postgresOrm,
@@ -144,6 +146,7 @@ export class GachaDomain implements GachaDomainInterface {
     userCardRepository,
     gachaPullRepository,
     skillTreeRepository,
+    achievementsDomain,
   }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#configService = configService
@@ -152,6 +155,7 @@ export class GachaDomain implements GachaDomainInterface {
     this.#userCardRepository = userCardRepository
     this.#gachaPullRepository = gachaPullRepository
     this.#skillTreeRepository = skillTreeRepository
+    this.#achievementsDomain = achievementsDomain
   }
 
   async #executePullTx(
@@ -225,6 +229,7 @@ export class GachaDomain implements GachaDomainInterface {
     const isLegendary = card.rarity === 'LEGENDARY'
     const newPityCurrent = isLegendary ? 0 : user.pityCurrent + 1
     const xpGained = cfg.xpPerPull
+    const oldLevel = calculateLevel(user.xp)
     const newLevel = calculateLevel(user.xp + xpGained)
     await this.#userRepository.updateAfterPullInTx(tx, userId, {
       tokens: tokens - 1,
@@ -235,6 +240,27 @@ export class GachaDomain implements GachaDomainInterface {
       lastTokenAt: newLastTokenAt,
     })
 
+    // 9. Tracker les achievements
+    const [pullUnlocks, spentUnlocks] = await Promise.all([
+      this.#achievementsDomain.track(tx, userId, {
+        kind: 'PULL_COMPLETED',
+        cardId: card.id,
+        rarity: card.rarity,
+        variant: rolledVariant,
+      }),
+      this.#achievementsDomain.track(tx, userId, {
+        kind: 'TOKENS_SPENT',
+        amount: 1,
+      }),
+    ])
+    const levelUnlocks =
+      newLevel > oldLevel
+        ? await this.#achievementsDomain.track(tx, userId, {
+            kind: 'LEVEL_UP',
+            newLevel,
+          })
+        : []
+
     return {
       pull,
       card,
@@ -243,6 +269,7 @@ export class GachaDomain implements GachaDomainInterface {
       tokensRemaining: tokens - 1,
       pityCurrent: newPityCurrent,
       xpGained,
+      unlockedAchievements: [...pullUnlocks, ...spentUnlocks, ...levelUnlocks],
     }
   }
 
