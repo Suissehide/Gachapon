@@ -23,6 +23,7 @@ import { PinoLogger } from '../../../infra/logger/pino/pino-logger'
 import { MailService } from '../../../infra/mail/mail.service'
 import { PostgresOrm } from '../../../infra/orm/postgres-client'
 import { AchievementRepository } from '../../../infra/orm/repositories/achievement.repository'
+import { UserAchievementProgressRepository } from '../../../infra/orm/repositories/user-achievement-progress.repository'
 import { AdminStatsRepository } from '../../../infra/orm/repositories/admin-stats.repository'
 import { ApiKeyRepository } from '../../../infra/orm/repositories/api-key.repository'
 import { CardRepository } from '../../../infra/orm/repositories/card.repository'
@@ -113,6 +114,10 @@ class AwilixIocContainer {
     this.#reg(
       'achievementRepository',
       asClass(AchievementRepository).singleton(),
+    )
+    this.#reg(
+      'userAchievementProgressRepository',
+      asClass(UserAchievementProgressRepository).singleton(),
     )
     this.#reg('shopItemRepository', asClass(ShopItemRepository).singleton())
     this.#reg(
