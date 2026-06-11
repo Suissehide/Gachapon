@@ -1,4 +1,5 @@
 import type { RewardSource, UserReward } from '../../../../generated/client'
+import type { UnlockedAchievement } from '../../../domain/achievements/events.types'
 import type {
   PendingUserReward,
   UserRewardWithReward,
@@ -10,6 +11,7 @@ export type ClaimResult = {
   xp: number
   level: number
   pendingRewardsCount: number
+  unlockedAchievements: UnlockedAchievement[]
 }
 
 export type AddRewardInput = {

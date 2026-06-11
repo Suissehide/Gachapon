@@ -17,6 +17,8 @@ import type {
   UserRewardRepositoryInterface,
   UserRewardWithReward,
 } from '../../types/infra/orm/repositories/user-reward.repository.interface'
+import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
+import type { UnlockedAchievement } from '../achievements/events.types'
 import { calculateTokens } from '../economy/economy.domain'
 import { calculateLevel } from '../shared/xp'
 
@@ -26,6 +28,7 @@ export class RewardsDomain implements RewardsDomainInterface {
   readonly #postgresOrm: PostgresOrm
   readonly #configService: ConfigServiceInterface
   readonly #skillTreeRepository: ISkillTreeRepository
+  readonly #achievementsDomain: AchievementsDomainInterface
 
   constructor({
     userRewardRepository,
@@ -33,15 +36,17 @@ export class RewardsDomain implements RewardsDomainInterface {
     postgresOrm,
     configService,
     skillTreeRepository,
+    achievementsDomain,
   }: Pick<
     IocContainer,
-    'userRewardRepository' | 'userRepository' | 'postgresOrm' | 'configService' | 'skillTreeRepository'
+    'userRewardRepository' | 'userRepository' | 'postgresOrm' | 'configService' | 'skillTreeRepository' | 'achievementsDomain'
   >) {
     this.#userRewardRepository = userRewardRepository
     this.#userRepository = userRepository
     this.#postgresOrm = postgresOrm
     this.#configService = configService
     this.#skillTreeRepository = skillTreeRepository
+    this.#achievementsDomain = achievementsDomain
   }
 
   getPending(userId: string): Promise<PendingUserReward[]> {
@@ -121,12 +126,26 @@ export class RewardsDomain implements RewardsDomainInterface {
           where: { userId, claimedAt: null },
         })
 
+        const claimUnlocks = await this.#achievementsDomain.track(tx, userId, {
+          kind: 'REWARD_CLAIMED',
+          rewardId: userReward.rewardId,
+          source: userReward.source,
+        })
+        const levelUnlocks =
+          newLevel > user.level
+            ? await this.#achievementsDomain.track(tx, userId, {
+                kind: 'LEVEL_UP',
+                newLevel,
+              })
+            : []
+
         return {
           tokens: newTokens,
           dust: newDust,
           xp: newXp,
           level: newLevel,
           pendingRewardsCount,
+          unlockedAchievements: [...claimUnlocks, ...levelUnlocks],
         }
       },
       { isolationLevel: 'Serializable' },
@@ -204,12 +223,31 @@ export class RewardsDomain implements RewardsDomainInterface {
         })
         await this.#userRewardRepository.markAllClaimedInTx(tx, userId)
 
+        const initialLevel = user.level
+        const allUnlocks: UnlockedAchievement[] = []
+        for (const ur of pending) {
+          const unlocks = await this.#achievementsDomain.track(tx, userId, {
+            kind: 'REWARD_CLAIMED',
+            rewardId: ur.rewardId,
+            source: ur.source,
+          })
+          allUnlocks.push(...unlocks)
+        }
+        if (newLevel > initialLevel) {
+          const levelUnlocks = await this.#achievementsDomain.track(tx, userId, {
+            kind: 'LEVEL_UP',
+            newLevel,
+          })
+          allUnlocks.push(...levelUnlocks)
+        }
+
         return {
           tokens: newTokens,
           dust: newDust,
           xp: newXp,
           level: newLevel,
           pendingRewardsCount: 0,
+          unlockedAchievements: allUnlocks,
         }
       },
       { isolationLevel: 'Serializable' },

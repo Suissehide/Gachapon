@@ -1,12 +1,15 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
+import { unlockedAchievementSchema } from '../../schemas/achievements.schemas'
+
 const claimResultSchema = z.object({
   tokens: z.number().int(),
   dust: z.number().int(),
   xp: z.number().int(),
   level: z.number().int(),
   pendingRewardsCount: z.number().int().nonnegative(),
+  unlockedAchievements: z.array(unlockedAchievementSchema).optional(),
 })
 
 const pendingRewardSchema = z.object({
