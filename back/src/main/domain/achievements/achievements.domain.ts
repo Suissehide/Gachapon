@@ -32,6 +32,7 @@ interface EvaluateResult {
 }
 
 export class AchievementsDomain implements AchievementsDomainInterface {
+  // biome-ignore lint/correctness/noUnusedPrivateClassMembers: used in listForUser (Task 9)
   readonly #postgresOrm: PostgresOrm
 
   constructor({ postgresOrm }: Pick<IocContainer, 'postgresOrm'>) {
@@ -66,14 +67,14 @@ export class AchievementsDomain implements AchievementsDomainInterface {
     return unlocked
   }
 
-  async listForUser(_userId: string): Promise<AchievementWithProgress[]> {
-    throw new Error('not implemented yet — Task 9')
+  listForUser(_userId: string): Promise<AchievementWithProgress[]> {
+    return Promise.reject(new Error('not implemented yet — Task 9'))
   }
 
-  async listFamilies(
+  listFamilies(
     _userId: string,
   ): Promise<Array<{ family: string; total: number; unlocked: number }>> {
-    throw new Error('not implemented yet — Task 9')
+    return Promise.reject(new Error('not implemented yet — Task 9'))
   }
 
   // -------------------------------------------------------------------------
@@ -215,7 +216,7 @@ export class AchievementsDomain implements AchievementsDomainInterface {
   }
 
   async #countMachinesOwned(tx: PrimaTransactionClient, userId: string): Promise<number> {
-    return tx.purchase.count({
+    return await tx.purchase.count({
       where: {
         userId,
         shopItem: { type: 'MACHINE' },
