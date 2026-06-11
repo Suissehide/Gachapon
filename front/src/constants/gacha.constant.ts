@@ -1,3 +1,5 @@
+import type { UnlockedAchievement } from './achievements.constant'
+
 // Types
 export type PullResult = {
   card: {
@@ -13,6 +15,7 @@ export type PullResult = {
   tokensRemaining: number
   pityCurrent: number
   xpGained: number
+  unlockedAchievements?: UnlockedAchievement[]
 }
 
 export type TokenBalance = {

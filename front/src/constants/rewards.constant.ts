@@ -1,3 +1,5 @@
+import type { UnlockedAchievement } from './achievements.constant'
+
 // Types
 export type PendingReward = {
   id: string
@@ -14,6 +16,7 @@ export type ClaimResult = {
   xp: number
   level: number
   pendingRewardsCount: number
+  unlockedAchievements?: UnlockedAchievement[]
 }
 
 // Routes
