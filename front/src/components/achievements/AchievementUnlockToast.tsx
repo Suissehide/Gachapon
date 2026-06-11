@@ -9,16 +9,21 @@ export function AchievementUnlockToast() {
   const dismiss = useAchievementUnlockStore((s) => s.dismiss)
 
   useEffect(() => {
-    if (!current) return
+    if (!current) {
+      return
+    }
     const t = setTimeout(dismiss, DISPLAY_MS)
     return () => clearTimeout(t)
   }, [current, dismiss])
 
-  if (!current) return null
+  if (!current) {
+    return null
+  }
 
   return (
-    <div
-      className="fixed left-1/2 top-6 z-50 -translate-x-1/2"
+    <button
+      type="button"
+      className="fixed left-1/2 top-6 z-50 -translate-x-1/2 cursor-pointer border-0 bg-transparent p-0"
       style={{ animation: 'achievementToastIn 250ms cubic-bezier(0.34, 1.56, 0.64, 1) both' }}
       onClick={dismiss}
     >
@@ -35,6 +40,6 @@ export function AchievementUnlockToast() {
           </span>
         </div>
       </div>
-    </div>
+    </button>
   )
 }
