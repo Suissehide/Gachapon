@@ -71,3 +71,24 @@ export function resolveFeaturedCards<T extends OwnedCardLike>(
   }
   return resolved
 }
+
+/** Stable hue 0–359 derived from a string (FNV-1a). */
+export function hashHue(input: string): number {
+  let h = 2166136261
+  for (let i = 0; i < input.length; i++) {
+    h ^= input.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  return Math.abs(h) % 360
+}
+
+/** First 3 letters of the first word, ASCII-folded and uppercase. */
+export function deriveShort(name: string): string {
+  const folded = name
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-zA-Z]/g, ' ')
+    .trim()
+    .split(/\s+/)[0] ?? ''
+  return folded.slice(0, 3).toUpperCase()
+}

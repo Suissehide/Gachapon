@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals'
 
-import { pickTopByRarity, resolveFeaturedCards } from '../../main/domain/profile/profile.domain'
+import { deriveShort, hashHue, pickTopByRarity, resolveFeaturedCards } from '../../main/domain/profile/profile.domain'
 
 type Card = { id: string; name: string; rarity: string; setId: string; setName: string; imageUrl: string | null; variant: string }
 const card = (over: Partial<Card>): Card => ({
@@ -82,5 +82,32 @@ describe('resolveFeaturedCards', () => {
     const result = resolveFeaturedCards(['gone1', 'gone2'], owned)
     expect(result).toHaveLength(5)
     expect(result[0]!.id).toBe('leg')
+  })
+})
+
+describe('hashHue', () => {
+  it('returns 0–359', () => {
+    expect(hashHue('Aube Primordiale')).toBeGreaterThanOrEqual(0)
+    expect(hashHue('Aube Primordiale')).toBeLessThan(360)
+  })
+
+  it('is deterministic', () => {
+    expect(hashHue('Crépuscule')).toBe(hashHue('Crépuscule'))
+  })
+
+  it('differs across distinct inputs', () => {
+    expect(hashHue('A')).not.toBe(hashHue('B'))
+  })
+})
+
+describe('deriveShort', () => {
+  it('returns 3 uppercase letters from the first word', () => {
+    expect(deriveShort('Aube Primordiale')).toBe('AUB')
+    expect(deriveShort('Échos d\'Étoiles')).toBe('ECH')
+    expect(deriveShort('Crépuscule')).toBe('CRE')
+  })
+
+  it('handles short single-word names', () => {
+    expect(deriveShort('Ab')).toBe('AB')
   })
 })
