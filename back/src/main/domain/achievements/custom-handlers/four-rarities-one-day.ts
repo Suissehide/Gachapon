@@ -6,7 +6,7 @@ export const fourRaritiesOneDayHandler: CustomHandler = {
   listensTo: ['PULL_COMPLETED'],
   async evaluate(tx, userId, _event) {
     const startOfDay = new Date()
-    startOfDay.setHours(0, 0, 0, 0)
+    startOfDay.setUTCHours(0, 0, 0, 0)
     const cardsToday = await tx.userCard.findMany({
       where: {
         userId,

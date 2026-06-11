@@ -4,6 +4,7 @@ import { type CardVariant, CollectionApi } from '../api/collection.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
+import { useAchievementUnlockStore } from '../stores/achievementUnlock.store.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 
 export type {
@@ -64,6 +65,7 @@ export const useRecycle = () => {
   const { toast } = useToast()
   const setUser = useAuthStore((s) => s.setUser)
   const user = useAuthStore((s) => s.user)
+  const enqueueAchievementUnlock = useAchievementUnlockStore((s) => s.enqueue)
   return useMutation({
     mutationFn: ({
       cardId,
@@ -78,6 +80,10 @@ export const useRecycle = () => {
       qc.invalidateQueries({ queryKey: ['collection'] })
       if (user) {
         setUser({ ...user, dust: data.newDustTotal })
+      }
+      if (data.unlockedAchievements?.length) {
+        enqueueAchievementUnlock(data.unlockedAchievements)
+        qc.invalidateQueries({ queryKey: ['achievements'] })
       }
     },
     onError: (error) => {
