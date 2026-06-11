@@ -25,3 +25,42 @@ export const userProfileResponseSchema = z.object({
   streakDays: z.number().int(),
   bestStreak: z.number().int(),
 })
+
+const rarityEnum = z.enum(['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY'])
+const variantEnum = z.enum(['NORMAL', 'BRILLIANT', 'HOLOGRAPHIC'])
+
+export const featuredCardDtoSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  imageUrl: z.string().nullable(),
+  rarity: rarityEnum,
+  variant: variantEnum,
+  setId: z.string(),
+  setName: z.string(),
+})
+
+export const featuredCardsResponseSchema = z.object({
+  cards: z.array(featuredCardDtoSchema),
+})
+
+export const setProgressionDtoSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  short: z.string(),
+  hue: z.number().int().min(0).max(360),
+  owned: z.number().int().min(0),
+  total: z.number().int().min(0),
+  percent: z.number().min(0).max(100),
+})
+
+export const setsProgressionResponseSchema = z.object({
+  sets: z.array(setProgressionDtoSchema),
+})
+
+export const setFeaturedCardsBodySchema = z.object({
+  cardIds: z.array(z.uuid()).max(5),
+})
+
+export const setFeaturedCardsResponseSchema = z.object({
+  cardIds: z.array(z.string()),
+})
