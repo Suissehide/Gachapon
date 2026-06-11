@@ -21,3 +21,6 @@ export const listCustomHandlerKeys = (): string[] => Object.keys(customHandlers)
 
 export const getCustomHandler = (key: string): CustomHandler | undefined =>
   customHandlers[key]
+
+import { firstPullEverHandler } from './first-pull-ever'
+customHandlers.first_pull_ever = firstPullEverHandler
