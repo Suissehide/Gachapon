@@ -24,3 +24,6 @@ export const getCustomHandler = (key: string): CustomHandler | undefined =>
 
 import { firstPullEverHandler } from './first-pull-ever'
 customHandlers.first_pull_ever = firstPullEverHandler
+
+import { fourRaritiesOneDayHandler } from './four-rarities-one-day'
+customHandlers.four_rarities_one_day = fourRaritiesOneDayHandler
