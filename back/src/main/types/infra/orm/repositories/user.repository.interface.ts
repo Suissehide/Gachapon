@@ -20,6 +20,7 @@ export interface UserRepositoryInterface {
   findByUsername(username: string): Promise<UserEntity | null>
   create(input: CreateUserInput): Promise<UserEntity>
   update(id: string, input: UpdateUserInput): Promise<UserEntity>
+  updateFeaturedCardIds(userId: string, cardIds: string[]): Promise<void>
   delete(id: string): Promise<void>
   findByIdOrThrowInTx(
     tx: PrimaTransactionClient,
