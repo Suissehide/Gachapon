@@ -1,4 +1,5 @@
 import Boom from '@hapi/boom'
+import { z } from 'zod/v4'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import type { CardRarity } from '../../../../../types/domain/gacha/gacha.types'
@@ -8,6 +9,7 @@ import {
   collectionRecycleBodySchema,
   collectionUserIdParamSchema,
 } from '../../schemas/collection.schema'
+import { unlockedAchievementSchema } from '../../schemas/achievements.schemas'
 
 export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
   const {
@@ -98,11 +100,17 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
     },
   )
 
+  const collectionRecycleResponseSchema = z.object({
+    dustEarned: z.number().int(),
+    newDustTotal: z.number().int(),
+    unlockedAchievements: z.array(unlockedAchievementSchema).optional(),
+  })
+
   fastify.post(
     '/collection/recycle',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { body: collectionRecycleBodySchema },
+      schema: { body: collectionRecycleBodySchema, response: { 200: collectionRecycleResponseSchema } },
     },
     (request) => {
       return collectionDomain.recycleCard(request.user.userID, request.body)
