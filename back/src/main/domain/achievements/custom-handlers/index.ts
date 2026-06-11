@@ -27,3 +27,6 @@ customHandlers.first_pull_ever = firstPullEverHandler
 
 import { fourRaritiesOneDayHandler } from './four-rarities-one-day'
 customHandlers.four_rarities_one_day = fourRaritiesOneDayHandler
+
+import { dustBalance10kHandler } from './dust-balance-10k'
+customHandlers.dust_balance_10k = dustBalance10kHandler
