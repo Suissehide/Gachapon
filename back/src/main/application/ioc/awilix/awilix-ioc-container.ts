@@ -109,7 +109,6 @@ class AwilixIocContainer {
       asClass(StreakMilestoneRepository).singleton(),
     )
     this.#reg('userRewardRepository', asClass(UserRewardRepository).singleton())
-    this.#reg('streakDomain', asClass(StreakDomain).singleton())
     this.#reg('rewardsDomain', asClass(RewardsDomain).singleton())
     this.#reg('questRepository', asClass(QuestRepository).singleton())
     this.#reg(
@@ -135,6 +134,8 @@ class AwilixIocContainer {
     this.#reg('skillResetDomain', asClass(SkillResetDomain).singleton())
     this.#reg('adminSkillTreeDomain', asClass(AdminSkillTreeDomain).singleton())
     this.#reg('achievementsDomain', asClass(AchievementsDomain).singleton())
+    // streakDomain depends on achievementsDomain — must be registered after it
+    this.#reg('streakDomain', asClass(StreakDomain).singleton())
     logger.info('IoC container initialized.')
   }
 

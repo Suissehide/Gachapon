@@ -15,6 +15,20 @@ export const loginBodySchema = z.object({
   password: z.string(),
 })
 
+export const unlockedAchievementSchema = z.object({
+  key: z.string(),
+  name: z.string(),
+  iconKey: z.string().nullable(),
+  reward: z
+    .object({
+      tokens: z.number(),
+      dust: z.number(),
+      xp: z.number(),
+      cardRarity: z.string().nullable(),
+    })
+    .nullable(),
+})
+
 export const userResponseSchema = z.object({
   id: z.string(),
   username: z.string(),
@@ -26,4 +40,5 @@ export const userResponseSchema = z.object({
   banner: z.string().nullable(),
   createdAt: z.date(),
   pendingRewardsCount: z.number().int().nonnegative(),
+  unlockedAchievements: z.array(unlockedAchievementSchema).default([]),
 })

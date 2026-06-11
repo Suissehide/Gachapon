@@ -58,11 +58,18 @@ describe('StreakDomain.updateStreak', () => {
   }
   const mockUserRewardRepo = {
     upsertInTx: jest.fn<(...args: any[]) => Promise<void>>(),
+    deleteLegacyDefaultStreakRewardInTx: jest.fn<(...args: any[]) => Promise<void>>(),
+  }
+  const mockAchievementsDomain = {
+    track: jest.fn<(...args: any[]) => Promise<any[]>>(),
+    listForUser: jest.fn<(...args: any[]) => Promise<any[]>>(),
+    listFamilies: jest.fn<(...args: any[]) => Promise<any[]>>(),
   }
   const domain = new StreakDomain({
     userRepository: mockUserRepo as any,
     streakMilestoneRepository: mockMilestoneRepo as any,
     userRewardRepository: mockUserRewardRepo as any,
+    achievementsDomain: mockAchievementsDomain as any,
   })
   const fakeTx = {} as any
 
@@ -70,6 +77,8 @@ describe('StreakDomain.updateStreak', () => {
     jest.clearAllMocks()
     mockUserRepo.updateStreakInTx.mockResolvedValue(undefined)
     mockUserRewardRepo.upsertInTx.mockResolvedValue(undefined)
+    mockUserRewardRepo.deleteLegacyDefaultStreakRewardInTx.mockResolvedValue(undefined)
+    mockAchievementsDomain.track.mockResolvedValue([])
   })
 
   it('grants exact milestone reward when day matches a milestone', async () => {
