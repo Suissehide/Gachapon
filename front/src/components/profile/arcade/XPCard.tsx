@@ -34,10 +34,10 @@ export function XPCard({ profile }: Props) {
             boxShadow: '0 0 20px rgba(245, 158, 11, 0.35)',
           }}
         />
-        {/* biome-ignore lint/suspicious/noArrayIndexKey: static decorative segments, no reorder */}
         <div className="absolute inset-0 flex">
           {Array.from({ length: 20 }).map((_, i) => (
             <span
+              // biome-ignore lint/suspicious/noArrayIndexKey: static decorative segments, no reorder
               key={i}
               className="flex-1 border-r border-white/45 last:border-r-0"
             />
