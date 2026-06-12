@@ -1,4 +1,5 @@
 import type { SetProgression } from '../../../api/profile.api'
+import { Card, CardTitle } from '../../ui/card'
 
 type Props = { sets: SetProgression[] }
 
@@ -7,13 +8,10 @@ export function SetsProgressionCard({ sets }: Props) {
   const totalCards = sets.reduce((acc, s) => acc + s.total, 0)
 
   return (
-    <div
-      className="rounded-2xl bg-[var(--arcade-surface)] border border-[var(--arcade-border)] p-6"
-      style={{ boxShadow: 'var(--shadow-card)' }}
-    >
+    <Card className="p-6">
       <div className="flex items-baseline justify-between mb-5">
-        <h3 className="font-display text-sm font-bold uppercase tracking-wider">Progression par extension</h3>
-        <span className="font-mono text-[11px] text-[var(--arcade-text-muted)]">
+        <CardTitle className="text-sm uppercase tracking-wider">Progression par extension</CardTitle>
+        <span className="font-mono text-[11px] text-text-light">
           {sets.length} SETS · {totalOwned} / {totalCards}
         </span>
       </div>
@@ -35,8 +33,8 @@ export function SetsProgressionCard({ sets }: Props) {
                 {s.short}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="font-display font-bold text-[var(--arcade-text)] truncate">{s.name}</div>
-                <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--arcade-text-muted)]">
+                <div className="font-display font-bold text-text truncate">{s.name}</div>
+                <div className="font-mono text-[10px] uppercase tracking-wider text-text-light">
                   {s.owned} / {s.total} CARTES
                 </div>
               </div>
@@ -59,6 +57,6 @@ export function SetsProgressionCard({ sets }: Props) {
           </div>
         ))}
       </div>
-    </div>
+    </Card>
   )
 }
