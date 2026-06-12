@@ -90,7 +90,7 @@ function InfoBox({ children }: { children: ReactNode }) {
 
 function TipBox({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs text-amber-600 dark:text-amber-400 leading-relaxed">
+    <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs text-amber-600 leading-relaxed">
       {children}
     </div>
   )

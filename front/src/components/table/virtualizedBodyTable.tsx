@@ -92,7 +92,7 @@ export function VirtualizedBodyTable<TData>({
             style={{ height: rowHeight }}
             className={`group border-b border-border/30 transition-[background-color,box-shadow] duration-150 ${
               onRowClick
-                ? 'cursor-pointer hover:bg-amber-50/60 dark:hover:bg-primary/6'
+                ? 'cursor-pointer hover:bg-amber-50/60'
                 : 'hover:bg-muted/40'
             }`}
             onClick={onRowClick ? () => onRowClick(row) : undefined}

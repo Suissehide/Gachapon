@@ -313,7 +313,7 @@ function DayTile({ entry, label }: { entry: StreakDayEntry; label: string }) {
           className={[
             'text-[10.5px] font-semibold leading-tight line-clamp-2',
             isFuture && !isMilestone ? 'text-text-light/60' : 'text-text',
-            isMilestone && !isPast ? 'text-amber-600 dark:text-amber-400' : '',
+            isMilestone && !isPast ? 'text-amber-600' : '',
           ].join(' ')}
         >
           {primary.label}
