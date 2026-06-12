@@ -1,6 +1,8 @@
 import { Link } from '@tanstack/react-router'
 import { LayoutDashboard, Settings } from 'lucide-react'
 
+import { Button } from '../../ui/button'
+
 type Props = {
   isOwnProfile: boolean
   isAdmin: boolean
@@ -15,23 +17,19 @@ export function ArcadeTopbar({ isOwnProfile, isAdmin }: Props) {
       {isOwnProfile && (
         <div className="flex gap-2">
           {isAdmin && (
-            <Link
-              to="/admin"
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--arcade-surface)] border border-[var(--arcade-border)] font-mono text-[13px] font-semibold hover:-translate-y-px hover:border-[var(--arcade-border-strong)] transition-transform"
-              style={{ boxShadow: 'var(--shadow-card)' }}
-            >
-              <LayoutDashboard size={14} />
-              Admin
-            </Link>
+            <Button asChild variant="pill" size="pill">
+              <Link to="/admin">
+                <LayoutDashboard size={14} />
+                Admin
+              </Link>
+            </Button>
           )}
-          <Link
-            to="/settings"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--arcade-surface)] border border-[var(--arcade-border)] font-mono text-[13px] font-semibold hover:-translate-y-px hover:border-[var(--arcade-border-strong)] transition-transform"
-            style={{ boxShadow: 'var(--shadow-card)' }}
-          >
-            <Settings size={14} />
-            Paramètres
-          </Link>
+          <Button asChild variant="pill" size="pill">
+            <Link to="/settings">
+              <Settings size={14} />
+              Paramètres
+            </Link>
+          </Button>
         </div>
       )}
     </div>
