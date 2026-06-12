@@ -1,9 +1,7 @@
-// front/src/components/profile/arcade/FeaturedCardsFan.tsx
 import { useState } from 'react'
 
 import type { FeaturedCard } from '../../../api/profile.api'
-import { CardArt } from './cardArt'
-import type { ArcadeRarity } from './utils'
+import { CardDisplay } from '../../shared/tcg-card/CardDisplay'
 
 type Props = {
   cards: FeaturedCard[]
@@ -14,7 +12,7 @@ export function FeaturedCardsFan({ cards }: Props) {
 
   if (cards.length === 0) {
     return (
-      <div className="flex items-center justify-center p-8 rounded-2xl border border-dashed border-[var(--arcade-border)] text-[var(--arcade-text-muted)] font-mono text-sm">
+      <div className="flex items-center justify-center p-8 rounded-2xl border border-dashed border-border text-text-light font-mono text-sm">
         Aucune carte encore — fais ton premier tirage.
       </div>
     )
@@ -28,10 +26,11 @@ export function FeaturedCardsFan({ cards }: Props) {
         const isHovered = hovered === i
         const isDimmed = hovered !== null && hovered !== i
         return (
-          <button
+          // biome-ignore lint/a11y/noStaticElementInteractions: hover-only decorative fan, keyboard nav not required
+          // biome-ignore lint/a11y/useAriaPropsSupportedByRole: aria-label kept for screen readers describing the hovered card
+          <div
             key={card.id}
-            type="button"
-            className="w-[170px] transition-all duration-[350ms] text-left bg-transparent border-0 p-0"
+            className="w-[170px] transition-all duration-[350ms]"
             style={{
               transform: isHovered
                 ? 'translateY(-26px) rotate(0deg) scale(1.06)'
@@ -46,17 +45,18 @@ export function FeaturedCardsFan({ cards }: Props) {
             }}
             onMouseEnter={() => setHovered(i)}
             onMouseLeave={() => setHovered(null)}
-            onFocus={() => setHovered(i)}
-            onBlur={() => setHovered(null)}
             aria-label={`${card.name} — ${card.rarity}`}
           >
-            <CardArt
-              rarity={card.rarity as ArcadeRarity}
+            <CardDisplay
+              rarity={card.rarity}
               name={card.name}
               setName={card.setName}
               imageUrl={card.imageUrl}
+              variant={card.variant}
+              interactive={false}
+              compact
             />
-          </button>
+          </div>
         )
       })}
     </div>
