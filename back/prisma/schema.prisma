@@ -83,8 +83,9 @@ model User {
   level         Int        @default(1)
   pityCurrent   Int        @default(0)
   streakDays    Int        @default(0)
-  lastLoginAt   DateTime?
-  createdAt     DateTime   @default(now())
+  lastLoginAt     DateTime?
+  createdAt       DateTime   @default(now())
+  featuredCardIds String[]   @default([])
   suspended                       Boolean    @default(false)
   emailVerifiedAt                 DateTime?
   emailVerificationToken          String?   @unique
@@ -93,7 +94,6 @@ model User {
   passwordResetTokenExpiresAt     DateTime?
 
   bestStreak    Int        @default(0)
-  featuredCardIds String[]   @default([])
 
   oauthAccounts       OAuthAccount[]
   apiKeys             ApiKey[]
@@ -104,8 +104,9 @@ model User {
   userCards           UserCard[]
   gachaPulls          GachaPull[]
   purchases           Purchase[]
-  achievements        UserAchievement[]
-  userQuests          UserQuest[]
+  achievements             UserAchievement[]
+  achievementProgress      UserAchievementProgress[]
+  userQuests               UserQuest[]
   skillPoints         Int        @default(0)
   skills              UserSkill[]
   userRewards         UserReward[]
@@ -184,9 +185,9 @@ model CardSet {
   name        String
   description String?
   coverImage  String?
+  hue         Int?
   isActive    Boolean  @default(false)
   createdAt   DateTime @default(now())
-  hue Int?
 
   cards Card[]
 }
@@ -286,14 +287,25 @@ model DailyShopItem {
 }
 
 model Achievement {
-  id          String  @id @default(uuid())
-  key         String  @unique
+  id          String   @id @default(uuid())
+  key         String   @unique
   name        String
   description String
+  family      String?
+  tier        Int      @default(0)
+  hidden      Boolean  @default(false)
+  iconKey     String?
+  criterion   Json
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
   rewardId    String?
-  reward      Reward? @relation(fields: [rewardId], references: [id])
+  reward      Reward?  @relation(fields: [rewardId], references: [id])
 
   userAchievements UserAchievement[]
+  progress         UserAchievementProgress[]
+
+  @@index([family, tier])
+  @@index([isActive])
 }
 
 model UserAchievement {
@@ -305,6 +317,19 @@ model UserAchievement {
   unlockedAt    DateTime    @default(now())
 
   @@unique([userId, achievementId])
+}
+
+model UserAchievementProgress {
+  id            String      @id @default(uuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  progress      Int         @default(0)
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([userId, achievementId])
+  @@index([userId])
 }
 
 model Quest {

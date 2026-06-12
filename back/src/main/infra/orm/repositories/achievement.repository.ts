@@ -23,11 +23,13 @@ export class AchievementRepository implements IAchievementRepository {
   }
 
   create(data: CreateAchievementInput): Promise<Achievement> {
-    return this.#prisma.achievement.create({ data })
+    // biome-ignore lint/suspicious/noExplicitAny: Prisma JSON field requires cast
+    return this.#prisma.achievement.create({ data: data as any })
   }
 
   update(id: string, data: UpdateAchievementInput): Promise<Achievement> {
-    return this.#prisma.achievement.update({ where: { id }, data })
+    // biome-ignore lint/suspicious/noExplicitAny: Prisma JSON field requires cast
+    return this.#prisma.achievement.update({ where: { id }, data: data as any })
   }
 
   async delete(id: string): Promise<void> {

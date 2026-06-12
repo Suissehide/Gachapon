@@ -19,6 +19,7 @@ import type { RewardsDomainInterface } from '../domain/rewards/rewards.domain.in
 import type { IDailyShopDomain } from '../domain/daily-shop/daily-shop.domain.interface'
 import type { ProfileDomainInterface } from '../domain/profile/profile.domain.interface'
 import type { IShopDomain } from '../domain/shop/shop.domain.interface'
+import type { AchievementsDomainInterface } from '../../domain/achievements/achievements.domain.interface'
 import type { StreakDomainInterface } from '../domain/streak/streak.domain.interface'
 import type { TeamDomainInterface } from '../domain/team/team.domain.interface'
 import type { UserDomainInterface } from '../domain/user/user.domain.interface'
@@ -27,6 +28,7 @@ import type { ConfigServiceInterface } from '../infra/config/config.service.inte
 import type { HttpClientInterface } from '../infra/http/http-client'
 import type { IMailService } from '../infra/mail/mail.service.interface'
 import type { IAchievementRepository } from '../infra/orm/repositories/achievement.repository.interface'
+import type { UserAchievementProgressRepositoryInterface } from '../infra/orm/repositories/user-achievement-progress.repository.interface'
 import type { IAdminStatsRepository } from '../infra/orm/repositories/admin-stats.repository.interface'
 import type { ILeaderboardRepository } from '../infra/orm/repositories/leaderboard.repository.interface'
 import type { IQuestRepository } from '../infra/orm/repositories/quest.repository.interface'
@@ -80,6 +82,7 @@ export interface IocContainer {
   readonly rewardsDomain: RewardsDomainInterface
   readonly questRepository: IQuestRepository
   readonly achievementRepository: IAchievementRepository
+  readonly userAchievementProgressRepository: UserAchievementProgressRepositoryInterface
   readonly shopItemRepository: IShopItemRepository
   readonly leaderboardRepository: ILeaderboardRepository
   readonly statsRepository: IStatsRepository
@@ -92,4 +95,5 @@ export interface IocContainer {
   readonly skillInvestDomain: ISkillInvestDomain
   readonly skillResetDomain: ISkillResetDomain
   readonly adminSkillTreeDomain: AdminSkillTreeDomain
+  readonly achievementsDomain: AchievementsDomainInterface
 }

@@ -11,7 +11,7 @@ function makeCard(name: string, weight: number, rarity = 'COMMON'): CardWithSet 
     imageUrl: '',
     setId: 'set1',
     createdAt: new Date(),
-    set: { id: 'set1', name: 'Test', description: null, coverImage: null, isActive: true, createdAt: new Date() },
+    set: { id: 'set1', name: 'Test', description: null, coverImage: null, isActive: true, createdAt: new Date(), hue: null },
   }
 }
 

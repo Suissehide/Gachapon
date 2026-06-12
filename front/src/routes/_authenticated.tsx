@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 
+import { AchievementUnlockToast } from '../components/achievements/AchievementUnlockToast.tsx'
 import { LevelUpOverlay } from '../components/level/LevelUpOverlay.tsx'
 import { Navbar } from '../components/custom/Navbar.tsx'
 import { useAuthStore } from '../stores/auth.store.js'
@@ -21,6 +22,7 @@ function AuthenticatedLayout() {
         <Outlet />
       </main>
       <LevelUpOverlay />
+      <AchievementUnlockToast />
     </div>
   )
 }

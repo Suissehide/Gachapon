@@ -4,6 +4,7 @@ import { GachaApi } from '../api/gacha.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
+import { useAchievementUnlockStore } from '../stores/achievementUnlock.store.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 import { useLevelUpStore } from '../stores/levelUp.store.ts'
 import { computeLevel } from '../utils/level.ts'
@@ -33,6 +34,7 @@ export const usePull = () => {
   const user = useAuthStore((s) => s.user)
   const username = useAuthStore((s) => s.user?.username ?? '')
   const triggerLevelUp = useLevelUpStore((s) => s.triggerLevelUp)
+  const enqueueAchievementUnlock = useAchievementUnlockStore((s) => s.enqueue)
   return useMutation({
     mutationFn: () => GachaApi.pull(),
     onSuccess: (result) => {
@@ -55,6 +57,10 @@ export const usePull = () => {
       qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
       qc.invalidateQueries({ queryKey: ['collection'] })
       qc.invalidateQueries({ queryKey: ['profile'] })
+      if (result.unlockedAchievements?.length) {
+        enqueueAchievementUnlock(result.unlockedAchievements)
+        qc.invalidateQueries({ queryKey: ['achievements'] })
+      }
     },
     onError: (error) => {
       toast({

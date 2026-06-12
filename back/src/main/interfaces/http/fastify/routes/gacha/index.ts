@@ -4,6 +4,7 @@ import { z } from 'zod/v4'
 
 import { calculateTokens } from '../../../../../domain/economy/economy.domain'
 import { wsManager } from '../../../../ws/ws-manager'
+import { unlockedAchievementSchema } from '../../schemas/achievements.schemas'
 
 export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
   const {
@@ -21,7 +22,29 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
   // POST /pulls — consommer 1 token et tirer une carte
   fastify.post(
     '/pulls',
-    { onRequest: [fastify.verifySessionCookie] },
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        response: {
+          201: z.object({
+            card: z.object({
+              id: z.string(),
+              name: z.string(),
+              imageUrl: z.string().nullable(),
+              rarity: z.string(),
+              variant: z.string(),
+              set: z.object({ id: z.string(), name: z.string() }),
+            }),
+            wasDuplicate: z.boolean(),
+            dustEarned: z.number().int(),
+            tokensRemaining: z.number().int(),
+            pityCurrent: z.number().int(),
+            xpGained: z.number().int(),
+            unlockedAchievements: z.array(unlockedAchievementSchema).optional(),
+          }),
+        },
+      },
+    },
     async (request, reply) => {
       const result = await gachaDomain.pull(request.user.userID)
       const user = await userRepository.findById(request.user.userID)
@@ -71,6 +94,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         tokensRemaining: result.tokensRemaining,
         pityCurrent: result.pityCurrent,
         xpGained: result.xpGained,
+        unlockedAchievements: result.unlockedAchievements,
       })
     },
   )

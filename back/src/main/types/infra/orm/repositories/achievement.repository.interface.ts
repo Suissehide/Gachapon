@@ -4,6 +4,14 @@ export type CreateAchievementInput = {
   key: string
   name: string
   description: string
+  criterion: Record<string, unknown>
+  family?: string | null
+  tier?: number
+  hidden?: boolean
+  iconKey?: string | null
+  sortOrder?: number
+  isActive?: boolean
+  rewardId?: string | null
 }
 
 export type UpdateAchievementInput = Partial<CreateAchievementInput>

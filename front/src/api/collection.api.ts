@@ -6,6 +6,7 @@ import type {
 } from '../constants/card.constant.ts'
 import { CARD_ROUTES } from '../constants/card.constant.ts'
 import { apiUrl } from '../constants/config.constant.ts'
+import type { UnlockedAchievement } from '../constants/achievements.constant.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
@@ -59,7 +60,7 @@ export const CollectionApi = {
     cardId: string,
     quantity: number,
     variant: CardVariant,
-  ): Promise<{ dustEarned: number; newDustTotal: number }> => {
+  ): Promise<{ dustEarned: number; newDustTotal: number; unlockedAchievements?: UnlockedAchievement[] }> => {
     const res = await fetchWithAuth(`${apiUrl}${CARD_ROUTES.recycle}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

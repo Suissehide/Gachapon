@@ -1,3 +1,5 @@
+import type { UnlockedAchievement } from './achievements.constant.ts'
+
 export const ITEM_TYPE_OPTIONS = [
   { value: 'TOKEN_PACK', label: 'Token Pack' },
   { value: 'BOOST', label: 'Boost' },
@@ -21,6 +23,7 @@ export type PurchaseResult = {
   newDustTotal: number
   newTokenTotal: number
   item: { id: string; name: string; type: string; value: unknown }
+  unlockedAchievements?: UnlockedAchievement[]
 }
 
 export type AdminShopItem = {

@@ -31,6 +31,7 @@ import { Route as AuthenticatedQuestsRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedPlayRouteImport } from './routes/_authenticated/play'
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
 import { Route as AuthenticatedCollectionRouteImport } from './routes/_authenticated/collection'
+import { Route as AuthenticatedAchievementsRouteImport } from './routes/_authenticated/achievements'
 import { Route as AdminAdminRouteImport } from './routes/_admin/admin'
 import { Route as AuthenticatedTeamIndexRouteImport } from './routes/_authenticated/team/index'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin.index'
@@ -157,6 +158,12 @@ const AuthenticatedCollectionRoute = AuthenticatedCollectionRouteImport.update({
   path: '/collection',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAchievementsRoute =
+  AuthenticatedAchievementsRouteImport.update({
+    id: '/achievements',
+    path: '/achievements',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AdminAdminRoute = AdminAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -254,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/stats': typeof StatsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/admin': typeof AdminAdminRouteWithChildren
+  '/achievements': typeof AuthenticatedAchievementsRoute
   '/collection': typeof AuthenticatedCollectionRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/play': typeof AuthenticatedPlayRoute
@@ -291,6 +299,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/stats': typeof StatsRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/achievements': typeof AuthenticatedAchievementsRoute
   '/collection': typeof AuthenticatedCollectionRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/play': typeof AuthenticatedPlayRoute
@@ -332,6 +341,7 @@ export interface FileRoutesById {
   '/stats': typeof StatsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/_admin/admin': typeof AdminAdminRouteWithChildren
+  '/_authenticated/achievements': typeof AuthenticatedAchievementsRoute
   '/_authenticated/collection': typeof AuthenticatedCollectionRoute
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/_authenticated/play': typeof AuthenticatedPlayRoute
@@ -372,6 +382,7 @@ export interface FileRouteTypes {
     | '/stats'
     | '/verify-email'
     | '/admin'
+    | '/achievements'
     | '/collection'
     | '/leaderboard'
     | '/play'
@@ -409,6 +420,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/stats'
     | '/verify-email'
+    | '/achievements'
     | '/collection'
     | '/leaderboard'
     | '/play'
@@ -449,6 +461,7 @@ export interface FileRouteTypes {
     | '/stats'
     | '/verify-email'
     | '/_admin/admin'
+    | '/_authenticated/achievements'
     | '/_authenticated/collection'
     | '/_authenticated/leaderboard'
     | '/_authenticated/play'
@@ -649,6 +662,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCollectionRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/achievements': {
+      id: '/_authenticated/achievements'
+      path: '/achievements'
+      fullPath: '/achievements'
+      preLoaderRoute: typeof AuthenticatedAchievementsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_admin/admin': {
       id: '/_admin/admin'
       path: '/admin'
@@ -805,6 +825,7 @@ const AdminRouteChildren: AdminRouteChildren = {
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedAchievementsRoute: typeof AuthenticatedAchievementsRoute
   AuthenticatedCollectionRoute: typeof AuthenticatedCollectionRoute
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
   AuthenticatedPlayRoute: typeof AuthenticatedPlayRoute
@@ -820,6 +841,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAchievementsRoute: AuthenticatedAchievementsRoute,
   AuthenticatedCollectionRoute: AuthenticatedCollectionRoute,
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
   AuthenticatedPlayRoute: AuthenticatedPlayRoute,

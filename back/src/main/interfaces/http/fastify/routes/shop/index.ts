@@ -1,6 +1,8 @@
+import { z } from 'zod/v4'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import { shopItemIdParamSchema } from '../../schemas/shop.schema'
+import { unlockedAchievementSchema } from '../../schemas/achievements.schemas'
 
 export const shopRouter: FastifyPluginCallbackZod = (fastify) => {
   const { shopItemRepository, shopDomain } = fastify.iocContainer
@@ -44,7 +46,24 @@ export const shopRouter: FastifyPluginCallbackZod = (fastify) => {
     '/shop/:id/buy',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: shopItemIdParamSchema },
+      schema: {
+        params: shopItemIdParamSchema,
+        response: {
+          200: z.object({
+            purchaseId: z.string(),
+            dustSpent: z.number(),
+            newDustTotal: z.number(),
+            newTokenTotal: z.number(),
+            unlockedAchievements: z.array(unlockedAchievementSchema).optional(),
+            item: z.object({
+              id: z.string(),
+              name: z.string(),
+              type: z.string(),
+              value: z.unknown(),
+            }),
+          }),
+        },
+      },
     },
     (request) => {
       return shopDomain.buy(request.user.userID, request.params.id)

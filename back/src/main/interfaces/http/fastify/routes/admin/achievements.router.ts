@@ -1,6 +1,8 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
+import { z } from 'zod/v4'
 
+import { listCustomHandlerKeys } from '../../../../../domain/achievements/custom-handlers/index'
 import {
   adminAchievementCreateBodySchema,
   adminAchievementIdParamSchema,
@@ -56,5 +58,11 @@ export const adminAchievementsRouter: FastifyPluginCallbackZod = (fastify) => {
       await achievementRepository.delete(request.params.id)
       return reply.status(204).send()
     },
+  )
+
+  fastify.get(
+    '/custom-handlers',
+    { schema: { response: { 200: z.array(z.string()) } } },
+    () => listCustomHandlerKeys(),
   )
 }

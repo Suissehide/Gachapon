@@ -7,6 +7,7 @@ import type {
   RecycleInput,
   RecycleResult,
 } from '../../types/domain/collection/collection.domain.interface'
+import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import type {
   ConfigKey,
   ConfigServiceInterface,
@@ -19,17 +20,27 @@ export class CollectionDomain implements ICollectionDomain {
   readonly #skillTreeRepository: ISkillTreeRepository
   readonly #configService: ConfigServiceInterface
   readonly #postgresOrm: PostgresOrm
+  readonly #achievementsDomain: AchievementsDomainInterface
 
   constructor({
     cardRepository,
     skillTreeRepository,
     configService,
     postgresOrm,
-  }: IocContainer) {
+    achievementsDomain,
+  }: Pick<
+    IocContainer,
+    | 'cardRepository'
+    | 'skillTreeRepository'
+    | 'configService'
+    | 'postgresOrm'
+    | 'achievementsDomain'
+  >) {
     this.#cardRepository = cardRepository
     this.#skillTreeRepository = skillTreeRepository
     this.#configService = configService
     this.#postgresOrm = postgresOrm
+    this.#achievementsDomain = achievementsDomain
   }
 
   async recycleCard(
@@ -91,7 +102,12 @@ export class CollectionDomain implements ICollectionDomain {
           data: { dust: { increment: dustEarned } },
         })
 
-        return { dustEarned, newDustTotal: user.dust }
+        const recycleUnlocks = await this.#achievementsDomain.track(tx, userId, {
+          kind: 'CARD_RECYCLED',
+          amount: quantity,
+        })
+
+        return { dustEarned, newDustTotal: user.dust, unlockedAchievements: recycleUnlocks }
       },
       { isolationLevel: 'Serializable', maxWait: 5000, timeout: 10000 },
     )
