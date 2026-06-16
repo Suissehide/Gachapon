@@ -1,8 +1,9 @@
-// front/src/components/profile/arcade/ArcadeHero.tsx
 import { Pencil } from 'lucide-react'
 import { useState } from 'react'
 
-import type { FeaturedCard, UserProfile } from '../../../api/profile.api'
+import type { UserProfile, FeaturedCard } from '../../../api/profile.api'
+import { Button } from '../../ui/button'
+import { Card, CardTitle } from '../../ui/card'
 import { FeaturedCardsEditorModal } from './FeaturedCardsEditorModal'
 import { FeaturedCardsFan } from './FeaturedCardsFan'
 import { FoilAvatar } from './FoilAvatar'
@@ -20,19 +21,16 @@ export function ArcadeHero({ profile, featuredCards, isOwnProfile }: Props) {
   const joinedYear = new Date(profile.createdAt).getFullYear()
 
   return (
-    <section
-      className="relative rounded-3xl bg-[var(--arcade-surface)] border border-[var(--arcade-border)] p-8"
-      style={{ boxShadow: 'var(--shadow-card)' }}
-    >
+    <Card className="rounded-3xl p-8 overflow-visible">
       <div className="grid gap-8" style={{ gridTemplateColumns: '360px 1fr' }}>
         {/* Identity column */}
         <div className="flex flex-col gap-5">
           <FoilAvatar initials={initials} isMax={isMax} />
           <div>
-            <div className="font-mono text-[11px] uppercase tracking-[.2em] text-[var(--arcade-amber-light)]">
+            <div className="font-mono text-[11px] uppercase tracking-[.2em] text-primary-light">
               {isMax ? `NIV. MAX · MEMBRE ${joinedYear}` : `NIV. ${profile.level} · MEMBRE ${joinedYear}`}
             </div>
-            <h1 className="font-display text-[52px] font-extrabold leading-none text-[var(--arcade-text)] mt-1">
+            <h1 className="font-display text-[52px] font-extrabold leading-none text-text mt-1">
               @{profile.username}
             </h1>
             <div className="flex gap-2 mt-3 flex-wrap">
@@ -47,11 +45,11 @@ export function ArcadeHero({ profile, featuredCards, isOwnProfile }: Props) {
                   LV. MAX
                 </span>
               ) : (
-                <span className="font-mono text-[10px] px-2 py-1 rounded-full bg-[var(--arcade-surface-2)]">
+                <span className="font-mono text-[10px] px-2 py-1 rounded-full bg-muted">
                   LV. {profile.level}
                 </span>
               )}
-              <span className="font-mono text-[10px] px-2 py-1 rounded-full bg-[var(--arcade-surface-2)]">
+              <span className="font-mono text-[10px] px-2 py-1 rounded-full bg-muted">
                 {profile.stats.ownedCards} cartes
               </span>
             </div>
@@ -61,20 +59,16 @@ export function ArcadeHero({ profile, featuredCards, isOwnProfile }: Props) {
         {/* Featured cards column */}
         <div className="relative">
           <div className="flex items-baseline justify-between mb-4">
-            <h2 className="font-display text-sm font-bold uppercase tracking-wider">Cartes vedettes</h2>
+            <CardTitle className="text-sm uppercase tracking-wider">Cartes vedettes</CardTitle>
             <div className="flex items-center gap-3">
-              <span className="font-mono text-[11px] text-[var(--arcade-text-muted)]">
+              <span className="font-mono text-[11px] text-text-light">
                 TOP {featuredCards.length} · PAR RARETÉ
               </span>
               {isOwnProfile && (
-                <button
-                  type="button"
-                  onClick={() => setEditorOpen(true)}
-                  className="font-mono text-[11px] px-2 py-1 rounded-full flex items-center gap-1 hover:bg-[var(--arcade-surface-2)]"
-                >
+                <Button variant="pill" size="pill" onClick={() => setEditorOpen(true)}>
                   <Pencil size={12} />
                   Éditer
-                </button>
+                </Button>
               )}
             </div>
           </div>
@@ -89,6 +83,6 @@ export function ArcadeHero({ profile, featuredCards, isOwnProfile }: Props) {
           onClose={() => setEditorOpen(false)}
         />
       )}
-    </section>
+    </Card>
   )
 }

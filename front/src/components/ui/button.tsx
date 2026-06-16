@@ -24,6 +24,10 @@ const buttonVariants = cva(
           'text-primary bg-transparent border-none shadow-none p-0 focus-visible:ring-0',
         absolute:
           'absolute right-2 text-primary bg-transparent border-none shadow-none p-0 hover:bg-primary/10',
+        gradient:
+          'text-white font-bold shadow-[0_8px_24px_rgba(236,72,153,0.35)] bg-gradient-to-br from-primary to-secondary hover:brightness-105',
+        pill:
+          'bg-card border border-border font-mono font-semibold shadow-[0_2px_0_rgba(27,23,38,0.04),0_12px_30px_-12px_rgba(27,23,38,0.08)] hover:-translate-y-px hover:border-border-dark transition-transform',
       },
       size: {
         default: 'h-9 px-4 py-2',
@@ -31,6 +35,7 @@ const buttonVariants = cva(
         lg: 'h-10 rounded-md px-8',
         icon: 'h-9 w-9 rounded-lg',
         'icon-sm': 'h-6 w-6 p-1 rounded-lg',
+        pill: 'h-8 px-3 rounded-full text-[13px]',
       },
     },
     defaultVariants: {

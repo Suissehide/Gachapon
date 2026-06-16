@@ -1,79 +1,54 @@
 :root {
-  --primary-light: #fcd34d;
-  --primary: #d97706;
-  --primary-dark: #b45309;
+  --primary: #f59e0b;
+  --primary-light: #fbbf24;
+  --primary-dark: #d97706;
   --primary-foreground: #ffffff;
 
-  --fc-event-bg-color: #d97706;
-  --fc-event-border-color: #d97706;
+  --fc-event-bg-color: #f59e0b;
+  --fc-event-border-color: #f59e0b;
 
-  --secondary: #7c3aed;
+  --secondary: #ec4899;
   --secondary-foreground: #ffffff;
 
-  --accent: #0891b2;
+  --accent: #8b5cf6;
   --accent-foreground: #ffffff;
 
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
+  --muted: #fafaf7;
+  --muted-foreground: rgba(27, 23, 38, 0.55);
 
-  --border: #e2e8f0;
-  --border-dark: #cbd5e1;
-  --input: #f8fafc;
-  --ring: #d97706;
+  --border: rgba(27, 23, 38, 0.08);
+  --border-dark: rgba(27, 23, 38, 0.12);
+  --input: #ffffff;
+  --ring: #f59e0b;
 
-  --background: #fafbff;
-  --foreground: #0a0c18;
+  --background: #fbf8f3;
+  --foreground: #1b1726;
 
-  --card: #f0f3fa;
-  --card-foreground: #0a0c18;
+  --card: #ffffff;
+  --card-foreground: #1b1726;
 
   --popover: #ffffff;
-  --popover-foreground: #0a0c18;
+  --popover-foreground: #1b1726;
 
-  --text: #1e293b;
-  --text-light: #64748b;
+  --text: #1b1726;
+  --text-light: rgba(27, 23, 38, 0.55);
 
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-}
 
-@layer base {
-  .dark {
-    --primary-light: #fcd34d;
-    --primary: #f59e0b;
-    --primary-dark: #d97706;
-    --primary-foreground: #09090d;
+  /* Promus depuis l'ancien scope .arcade-theme */
+  --surface-2: #fafaf7;
+  --surface-3: #f4f0eb;
+  --amber-soft: #fde68a;
+  --amber-deep: #d97706;
 
-    --fc-event-bg-color: #f59e0b;
-    --fc-event-border-color: #f59e0b;
+  --rarity-common: #22c55e;
+  --rarity-uncommon: #3b82f6;
+  --rarity-rare: #8b5cf6;
+  --rarity-epic: #ec4899;
+  --rarity-legendary: #f59e0b;
 
-    --secondary: #8b5cf6;
-    --secondary-foreground: #f5f3ff;
-
-    --accent: #06b6d4;
-    --accent-foreground: #09090d;
-
-    --muted: #131624;
-    --muted-foreground: #5a6280;
-
-    --border: #1a1f33;
-    --border-dark: #252b45;
-    --input: #0d0f1c;
-    --ring: #f59e0b;
-
-    --background: #08080f;
-    --foreground: #e8ecf5;
-
-    --card: #0d0f1c;
-    --card-foreground: #e8ecf5;
-
-    --popover: #131624;
-    --popover-foreground: #e8ecf5;
-
-    --text: #c8d0e8;
-    --text-light: #5a6280;
-
-    --destructive: #ef4444;
-    --destructive-foreground: #fef2f2;
-  }
+  --shadow-card:
+    0 2px 0 rgba(27, 23, 38, 0.04),
+    0 12px 30px -12px rgba(27, 23, 38, 0.08);
 }

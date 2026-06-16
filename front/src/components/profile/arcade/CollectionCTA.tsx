@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 
 import type { UserProfile, SetProgression } from '../../../api/profile.api'
+import { Button } from '../../ui/button'
 
 type Props = {
   profile: UserProfile
@@ -21,24 +22,21 @@ export function CollectionCTA({ profile, sets, username, isOwnProfile }: Props) 
       }}
     >
       <div>
-        <div className="font-mono text-[11px] uppercase tracking-wider text-[var(--arcade-text-muted)]">
+        <div className="font-mono text-[11px] uppercase tracking-wider text-text-light">
           {isOwnProfile ? 'Ma collection' : `Collection de ${username}`}
         </div>
-        <div className="font-display text-[36px] font-extrabold mt-1">
+        <div className="font-display text-[36px] font-extrabold mt-1 text-text">
           {profile.stats.ownedCards} cartes · {exploredSets} sets
         </div>
       </div>
-      <Link
-        to={isOwnProfile ? '/collection' : '/profile/$username/collection'}
-        params={isOwnProfile ? undefined : ({ username } as any)}
-        className="px-5 py-3 rounded-xl text-white font-bold"
-        style={{
-          background: 'linear-gradient(135deg, #f59e0b, #ec4899)',
-          boxShadow: '0 8px 24px rgba(236, 72, 153, 0.35)',
-        }}
-      >
-        {isOwnProfile ? 'Voir ma collection' : 'Explorer'}
-      </Link>
+      <Button asChild variant="gradient" size="lg">
+        <Link
+          to={isOwnProfile ? '/collection' : '/profile/$username/collection'}
+          params={isOwnProfile ? undefined : ({ username } as any)}
+        >
+          {isOwnProfile ? 'Voir ma collection' : 'Explorer'}
+        </Link>
+      </Button>
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import type { UserProfile } from '../../../api/profile.api'
+import { Card, CardTitle } from '../../ui/card'
 
 type Props = { profile: UserProfile }
 
@@ -10,22 +11,19 @@ export function XPCard({ profile }: Props) {
   const percent = isMax ? 100 : Math.min((xpInLevel / xpNeeded) * 100, 100)
 
   return (
-    <div
-      className="rounded-2xl bg-[var(--arcade-surface)] border border-[var(--arcade-border)] p-6"
-      style={{ boxShadow: 'var(--shadow-card)' }}
-    >
+    <Card className="p-6">
       <div className="flex items-baseline justify-between mb-4">
-        <h3 className="font-display text-sm font-bold uppercase tracking-wider">Expérience</h3>
+        <CardTitle className="text-sm uppercase tracking-wider">Expérience</CardTitle>
         <span
           className="font-mono text-[11px] font-bold uppercase"
           style={{
-            color: isMax ? 'var(--arcade-amber)' : 'var(--arcade-text-muted)',
+            color: isMax ? 'var(--primary)' : 'var(--text-light)',
           }}
         >
           {isMax ? `LV. ${profile.level} · MAX` : `LV. ${profile.level}`}
         </span>
       </div>
-      <div className="relative h-[22px] rounded-full bg-[var(--arcade-surface-2)] overflow-hidden">
+      <div className="relative h-[22px] rounded-full bg-muted overflow-hidden">
         <div
           className="h-full rounded-full"
           style={{
@@ -39,7 +37,7 @@ export function XPCard({ profile }: Props) {
         <div className="absolute inset-0 flex">
           {Array.from({ length: 20 }).map((_, i) => (
             <span
-              // biome-ignore lint/suspicious/noArrayIndexKey: static decorative segments
+              // biome-ignore lint/suspicious/noArrayIndexKey: static decorative segments, no reorder
               key={i}
               className="flex-1 border-r border-white/45 last:border-r-0"
             />
@@ -47,11 +45,11 @@ export function XPCard({ profile }: Props) {
         </div>
       </div>
       <div className="flex justify-between font-mono text-[11px] mt-3">
-        <span className="text-[var(--arcade-text-muted)]">
+        <span className="text-text-light">
           {isMax ? '00 / MAX' : `${xpInLevel.toLocaleString('fr-FR')} / ${xpNeeded.toLocaleString('fr-FR')}`}
         </span>
-        <span style={{ color: 'var(--arcade-amber)' }}>+ Prestige bientôt</span>
+        <span style={{ color: 'var(--primary)' }}>+ Prestige bientôt</span>
       </div>
-    </div>
+    </Card>
   )
 }

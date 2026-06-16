@@ -1,12 +1,18 @@
-// front/src/components/profile/arcade/FeaturedCardsEditorModal.tsx
-import { X } from 'lucide-react'
 import { useState } from 'react'
 
-import { useUserCollection } from '../../../queries/useCollection'
 import { useSetFeaturedCardsMutation } from '../../../queries/useProfile'
+import { useUserCollection } from '../../../queries/useCollection'
 import { useAuthStore } from '../../../stores/auth.store'
-import { CardArt } from './cardArt'
-import type { ArcadeRarity } from './utils'
+import { CardDisplay } from '../../shared/tcg-card/CardDisplay'
+import { Button } from '../../ui/button'
+import {
+  Popup,
+  PopupBody,
+  PopupContent,
+  PopupFooter,
+  PopupHeader,
+  PopupTitle,
+} from '../../ui/popup'
 
 type Props = {
   open: boolean
@@ -17,34 +23,38 @@ type Props = {
 
 const RARITY_ORDER = ['LEGENDARY', 'EPIC', 'RARE', 'UNCOMMON', 'COMMON'] as const
 
+type OwnedDisplay = {
+  id: string
+  name: string
+  rarity: string
+  setName: string
+  imageUrl: string | null
+  variant: string
+}
+
 export function FeaturedCardsEditorModal({ open, initialIds, onClose, onSaved }: Props) {
   const userId = useAuthStore((s) => s.user?.id)
   const { data: collection } = useUserCollection(userId)
   const mutation = useSetFeaturedCardsMutation()
   const [selected, setSelected] = useState<string[]>(initialIds.slice(0, 5))
 
-  if (!open) {
-    return null
-  }
-
-  // Dedupe by cardId — featured uses cardId (the same card across variants counts once).
-  const ownedById = new Map<
-    string,
-    { id: string; name: string; rarity: ArcadeRarity; setName: string; imageUrl: string | null }
-  >()
+  const ownedById = new Map<string, OwnedDisplay>()
   for (const uc of collection?.cards ?? []) {
     if (!ownedById.has(uc.card.id)) {
       ownedById.set(uc.card.id, {
         id: uc.card.id,
         name: uc.card.name,
-        rarity: uc.card.rarity as ArcadeRarity,
+        rarity: uc.card.rarity,
         setName: uc.card.set.name,
         imageUrl: uc.card.imageUrl,
+        variant: uc.variant ?? 'NORMAL',
       })
     }
   }
   const owned = Array.from(ownedById.values()).sort(
-    (a, b) => RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity),
+    (a, b) =>
+      RARITY_ORDER.indexOf(a.rarity as (typeof RARITY_ORDER)[number]) -
+      RARITY_ORDER.indexOf(b.rarity as (typeof RARITY_ORDER)[number]),
   )
 
   const toggle = (id: string) => {
@@ -66,85 +76,57 @@ export function FeaturedCardsEditorModal({ open, initialIds, onClose, onSaved }:
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-      onClick={onClose}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') {
-          onClose()
-        }
-      }}
-      role="dialog"
-      aria-modal="true"
-      tabIndex={-1}
-    >
-      <div
-        className="arcade-theme max-w-4xl w-[92%] max-h-[85vh] rounded-2xl bg-[var(--arcade-surface)] shadow-2xl flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
-        role="document"
-      >
-        <div className="flex items-center justify-between p-5 border-b border-[var(--arcade-border)]">
-          <div>
-            <h2 className="font-display text-xl font-extrabold">Cartes vedettes</h2>
-            <p className="font-mono text-xs text-[var(--arcade-text-muted)]">
-              {selected.length} / 5 sélectionnées · clique pour ajouter / retirer
-            </p>
+    <Popup open={open} onOpenChange={(o) => !o && onClose()}>
+      <PopupContent size="xl">
+        <PopupHeader>
+          <PopupTitle subtitle={`${selected.length} / 5 sélectionnées · clique pour ajouter / retirer`}>
+            Cartes vedettes
+          </PopupTitle>
+        </PopupHeader>
+        <PopupBody className="max-h-[60vh] overflow-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            {owned.map((c) => {
+              const isSelected = selected.includes(c.id)
+              const order = selected.indexOf(c.id)
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => toggle(c.id)}
+                  className={`relative text-left rounded-xl focus:outline-none focus:ring-2 focus:ring-primary ${
+                    isSelected ? 'ring-2 ring-primary' : ''
+                  }`}
+                  style={{ opacity: !isSelected && selected.length >= 5 ? 0.4 : 1 }}
+                  disabled={!isSelected && selected.length >= 5}
+                >
+                  <CardDisplay
+                    rarity={c.rarity}
+                    name={c.name}
+                    setName={c.setName}
+                    imageUrl={c.imageUrl}
+                    variant={c.variant}
+                    compact
+                    interactive={false}
+                  />
+                  {isSelected && (
+                    <span className="absolute top-1 right-1 w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center font-mono">
+                      {order + 1}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 rounded-full hover:bg-[var(--arcade-surface-2)]"
-            aria-label="Fermer"
-          >
-            <X size={18} />
-          </button>
-        </div>
-        <div className="flex-1 overflow-auto p-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-          {owned.map((c) => {
-            const isSelected = selected.includes(c.id)
-            const order = selected.indexOf(c.id)
-            return (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => toggle(c.id)}
-                className={`relative text-left ${isSelected ? 'ring-2 ring-[var(--arcade-amber)] rounded-xl' : ''}`}
-                style={{ opacity: !isSelected && selected.length >= 5 ? 0.4 : 1 }}
-                disabled={!isSelected && selected.length >= 5}
-              >
-                <CardArt rarity={c.rarity} name={c.name} setName={c.setName} imageUrl={c.imageUrl} />
-                {isSelected && (
-                  <div className="absolute top-1 right-1 w-6 h-6 rounded-full bg-[var(--arcade-amber)] text-white text-xs font-bold flex items-center justify-center font-mono">
-                    {order + 1}
-                  </div>
-                )}
-              </button>
-            )
-          })}
-        </div>
-        <div className="flex justify-end gap-2 p-5 border-t border-[var(--arcade-border)]">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-lg border border-[var(--arcade-border-strong)] font-medium"
-          >
+        </PopupBody>
+        <PopupFooter>
+          <Button variant="outline" onClick={onClose}>
             Annuler
-          </button>
-          <button
-            type="button"
-            onClick={save}
-            disabled={mutation.isPending}
-            className="px-4 py-2 rounded-lg text-white font-semibold"
-            style={{
-              background: 'linear-gradient(135deg, var(--arcade-amber), #ec4899)',
-              boxShadow: '0 4px 14px rgba(236, 72, 153, 0.35)',
-            }}
-          >
+          </Button>
+          <Button variant="gradient" onClick={save} disabled={mutation.isPending}>
             {mutation.isPending ? 'Enregistrement…' : 'Enregistrer'}
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </PopupFooter>
+      </PopupContent>
+    </Popup>
   )
 }

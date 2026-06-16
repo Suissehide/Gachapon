@@ -1,5 +1,9 @@
-// front/src/components/profile/arcade/ArcadeBackground.tsx
-export function ArcadeBackground() {
+// front/src/components/shared/decorations/AuroraGrid.tsx
+// Decorative background — three soft radials (aurora) + a faint masked grid.
+// Use inside any container as `position: relative`. The component itself is
+// absolutely-positioned and pointer-events-none.
+
+export function AuroraGrid() {
   return (
     <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden>
       <div

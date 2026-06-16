@@ -181,7 +181,7 @@ function DiscordIntegrationPage() {
               </code>{' '}
               de chaque requête.
             </p>
-            <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs text-amber-600 dark:text-amber-400">
+            <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs text-amber-600">
               ⚠ Stocke ta clé dans une variable d'environnement, jamais en clair
               dans le code.
             </div>
