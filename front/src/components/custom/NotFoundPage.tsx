@@ -2,9 +2,8 @@ import { Link } from '@tanstack/react-router'
 import { Home, Search } from 'lucide-react'
 import { type CSSProperties, useEffect, useMemo, useState } from 'react'
 
+import { AuroraGrid } from '../shared/decorations/AuroraGrid.tsx'
 import { Button } from '../ui/button.tsx'
-
-/* ─── Floating capsule ball ─────────────────────────────────────────────────── */
 
 const CAPSULE_COLORS = [
   {
@@ -32,9 +31,9 @@ const CAPSULE_COLORS = [
 function FloatingCapsule({ index }: { index: number }) {
   const style = useMemo(() => {
     const color = CAPSULE_COLORS[index % CAPSULE_COLORS.length]
-    const size = 12 + Math.random() * 20
+    const size = 10 + Math.random() * 22
     const left = 5 + Math.random() * 90
-    const duration = 14 + Math.random() * 18
+    const duration = 16 + Math.random() * 18
     const delay = Math.random() * -20
     const drift = -40 + Math.random() * 80
 
@@ -50,7 +49,7 @@ function FloatingCapsule({ index }: { index: number }) {
     } as CSSProperties
   }, [index])
 
-  return <div className="absolute rounded-full opacity-20" style={style} />
+  return <div className="absolute rounded-full opacity-30" style={style} />
 }
 
 /* ─── Open capsule SVG ──────────────────────────────────────────────────────── */
@@ -58,14 +57,9 @@ function FloatingCapsule({ index }: { index: number }) {
 function OpenCapsule() {
   return (
     <svg viewBox="0 0 200 160" className="h-40 w-52 drop-shadow-md" fill="none">
-      {/* ── Ground shadow ──────────────────────────────────────── */}
       <ellipse cx="100" cy="148" rx="60" ry="6" className="fill-text/[0.04]" />
-
-      {/* ── Bottom half — amber, sitting upright ───────────────── */}
       <g>
-        {/* Bowl body — perfect semicircle */}
         <path d="M60 82 A40 40 0 0 0 140 82" fill="url(#bottomGrad)" />
-        {/* Rim / band */}
         <ellipse cx="100" cy="82" rx="40" ry="7" fill="url(#bandGrad)" />
         <ellipse
           cx="100"
@@ -77,17 +71,11 @@ function OpenCapsule() {
           strokeOpacity="0.3"
           fill="none"
         />
-        {/* Inner depth shadow */}
         <ellipse cx="100" cy="88" rx="28" ry="10" fill="black" opacity="0.05" />
-        {/* Bottom highlight */}
         <ellipse cx="90" cy="110" rx="12" ry="6" fill="white" opacity="0.1" />
       </g>
-
-      {/* ── Top half — blue plastic, fallen to the side ────────── */}
       <g transform="translate(24, -18) rotate(-30, 72, 68)">
-        {/* Dome body — perfect semicircle */}
         <path d="M32 68 A40 40 0 0 1 112 68" fill="url(#topGrad)" />
-        {/* Rim / band */}
         <ellipse cx="72" cy="68" rx="40" ry="7" fill="url(#topBandGrad)" />
         <ellipse
           cx="72"
@@ -99,7 +87,6 @@ function OpenCapsule() {
           strokeOpacity="0.3"
           fill="none"
         />
-        {/* Specular highlights */}
         <ellipse cx="58" cy="40" rx="12" ry="9" fill="white" opacity="0.3" />
         <ellipse cx="55" cy="36" rx="6" ry="4" fill="white" opacity="0.45" />
         <path
@@ -110,8 +97,6 @@ function OpenCapsule() {
           opacity="0.2"
         />
       </g>
-
-      {/* ── Sparkles escaping from open capsule ────────────────── */}
       <g>
         <circle cx="78" cy="70" r="3" fill="#f59e0b" opacity="0.6">
           <animate
@@ -158,9 +143,7 @@ function OpenCapsule() {
           />
         </circle>
       </g>
-
       <defs>
-        {/* Bottom = amber/gold */}
         <radialGradient
           id="bottomGrad"
           cx="100"
@@ -172,8 +155,6 @@ function OpenCapsule() {
           <stop offset="50%" stopColor="#f59e0b" />
           <stop offset="100%" stopColor="#b45309" />
         </radialGradient>
-
-        {/* Band */}
         <linearGradient
           id="bandGrad"
           x1="60"
@@ -186,8 +167,6 @@ function OpenCapsule() {
           <stop offset="50%" stopColor="#fbbf24" />
           <stop offset="100%" stopColor="#b45309" />
         </linearGradient>
-
-        {/* Top = light blue plastic */}
         <linearGradient
           id="topGrad"
           x1="32"
@@ -200,8 +179,6 @@ function OpenCapsule() {
           <stop offset="40%" stopColor="#7dd3fc" />
           <stop offset="100%" stopColor="#38bdf8" />
         </linearGradient>
-
-        {/* Top band */}
         <linearGradient
           id="topBandGrad"
           x1="32"
@@ -219,101 +196,83 @@ function OpenCapsule() {
   )
 }
 
-/* ─── Glitch text ───────────────────────────────────────────────────────────── */
-
-function GlitchText({ children }: { children: string }) {
-  return (
-    <span className="relative inline-block">
-      <span
-        className="absolute inset-0 text-primary [clip-path:polygon(0_0,100%_0,100%_45%,0_45%)] animate-[notfound-glitch-top_3s_steps(2)_infinite]"
-        aria-hidden
-      >
-        {children}
-      </span>
-      <span className="relative">{children}</span>
-      <span
-        className="absolute inset-0 text-secondary [clip-path:polygon(0_55%,100%_55%,100%_100%,0_100%)] animate-[notfound-glitch-bottom_3s_steps(3)_infinite]"
-        aria-hidden
-      >
-        {children}
-      </span>
-    </span>
-  )
-}
-
-/* ─── 404 page ──────────────────────────────────────────────────────────────── */
-
 export function NotFoundPage() {
-  const [showContent, setShowContent] = useState(false)
+  const [show, setShow] = useState(false)
 
   useEffect(() => {
-    const t = setTimeout(() => setShowContent(true), 100)
+    const t = setTimeout(() => setShow(true), 60)
     return () => clearTimeout(t)
   }, [])
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
-      {/* Subtle radial gradient backdrop */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(ellipse 60% 50% at 50% 40%, rgba(217,119,6,0.05) 0%, transparent 70%), ' +
-            'radial-gradient(ellipse 40% 30% at 70% 60%, rgba(124,58,237,0.04) 0%, transparent 60%)',
-        }}
-      />
+      <AuroraGrid />
 
       {/* Floating capsules */}
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-        {Array.from({ length: 10 }).map((_, i) => (
+        {Array.from({ length: 14 }).map((_, i) => (
           <FloatingCapsule key={i} index={i} />
         ))}
       </div>
 
-      {/* Main content */}
-      <div
-        className={`relative z-20 flex min-h-screen flex-col items-center justify-center px-6 ${showContent ? 'animate-[notfound-fade-up_0.8s_var(--ease-spring)_forwards]' : 'opacity-0'}`}
-      >
-        {/* Open capsule */}
-        <div className="mb-6">
-          <OpenCapsule />
+      <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6">
+        <div
+          className={`flex flex-col items-center text-center transition-all duration-500 ${
+            show ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'
+          }`}
+        >
+          {/* Open capsule visual */}
+          <div className="mt-4">
+            <OpenCapsule />
+          </div>
+
+          {/* Big number — diagonal gradient */}
+          <h1
+            className="mt-3 font-display text-[160px] font-black leading-none tracking-tight sm:text-[200px]"
+            style={{
+              background:
+                'linear-gradient(135deg, #fbbf24 0%, #f59e0b 30%, #ec4899 65%, #8b5cf6 100%)',
+              WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              filter: 'drop-shadow(0 8px 28px rgba(245, 158, 11, 0.22))',
+            }}
+          >
+            404
+          </h1>
+
+          {/* Title */}
+          <p className="mt-2 font-display text-2xl font-extrabold tracking-tight text-text sm:text-3xl">
+            Cette page n'existe pas
+          </p>
+
+          {/* Description */}
+          <p className="mt-4 max-w-md font-body text-sm leading-relaxed text-text-light">
+            La capsule que tu cherches s'est peut-être perdue en route, ou la
+            machine ne l'a jamais distribuée.
+          </p>
+
+          {/* Actions */}
+          <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+            <Button asChild variant="gradient" size="lg">
+              <Link to="/">
+                <Home size={16} />
+                Retour à l'accueil
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link to="/collection">
+                <Search size={16} />
+                Explorer la collection
+              </Link>
+            </Button>
+          </div>
+
+          {/* Footer code */}
+          <p className="mt-12 font-mono text-[10px] uppercase tracking-[0.3em] text-text-light/40">
+            ERR::CAPSULE_NOT_FOUND — 0x194
+          </p>
         </div>
-
-        {/* 404 */}
-        <h1 className="mb-3 font-display text-8xl font-black tracking-tight text-text sm:text-9xl">
-          <GlitchText>404</GlitchText>
-        </h1>
-
-        {/* Subtitle */}
-        <p className="mb-2 bg-gradient-to-br from-primary-dark to-primary bg-clip-text font-display text-xl font-bold tracking-wide text-transparent sm:text-2xl">
-          Capsule introuvable
-        </p>
-        <p className="mb-10 max-w-md text-center font-body text-sm leading-relaxed text-muted-foreground">
-          Cette page n'existe pas ou a été retirée de la machine.
-          <br />
-          La capsule que tu cherches s'est peut-être perdue en route...
-        </p>
-
-        {/* Actions */}
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Button asChild>
-            <Link to="/">
-              <Home size={16} />
-              Retour à l'accueil
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link to="/">
-              <Search size={16} />
-              Explorer les cartes
-            </Link>
-          </Button>
-        </div>
-
-        {/* Error code footer */}
-        <p className="mt-16 font-body text-xs tracking-widest text-muted-foreground/40">
-          ERR::CAPSULE_NOT_FOUND — 0x194
-        </p>
       </div>
     </div>
   )
