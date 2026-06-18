@@ -168,7 +168,7 @@ export class AchievementsDomain implements AchievementsDomainInterface {
       progress,
       threshold,
       unlocked,
-      unlockedAt,
+      unlockedAt: unlockedAt?.toISOString() ?? null,
       reward: a.reward
         ? {
             tokens: a.reward.tokens,

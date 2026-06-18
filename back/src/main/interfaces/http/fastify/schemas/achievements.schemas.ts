@@ -21,9 +21,10 @@ export const unlockedAchievementSchema = z.object({
 })
 
 // ── User-facing achievements list ────────────────────────────────────────
-// `z.coerce.date()` accepts both Date objects (from the domain layer) and
-// ISO strings (after JSON serialisation), so the response schema validates
-// in both directions without false negatives.
+// The domain layer converts `unlockedAt` to an ISO string before returning,
+// so the wire format is plain JSON (no Date objects). This avoids the
+// FST_ERR_RESPONSE_SERIALIZATION error fast-json-stringify raises on Date
+// instances in the response.
 export const achievementWithProgressSchema = z.object({
   key: z.string(),
   name: z.string(),
@@ -36,7 +37,7 @@ export const achievementWithProgressSchema = z.object({
   progress: z.number().int(),
   threshold: z.number().int(),
   unlocked: z.boolean(),
-  unlockedAt: z.coerce.date().nullable(),
+  unlockedAt: z.string().datetime().nullable(),
   reward: z
     .object({
       tokens: z.number().int(),

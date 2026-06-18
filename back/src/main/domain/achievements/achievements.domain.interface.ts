@@ -28,7 +28,8 @@ export interface AchievementWithProgress {
   progress: number
   threshold: number
   unlocked: boolean
-  unlockedAt: Date | null
+  /** ISO-8601 timestamp; serialised plain so fast-json-stringify can ship it. */
+  unlockedAt: string | null
   reward: {
     tokens: number
     dust: number
