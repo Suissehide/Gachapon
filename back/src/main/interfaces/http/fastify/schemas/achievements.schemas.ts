@@ -24,7 +24,10 @@ export const unlockedAchievementSchema = z.object({
 // The domain layer converts `unlockedAt` to an ISO string before returning,
 // so the wire format is plain JSON (no Date objects). This avoids the
 // FST_ERR_RESPONSE_SERIALIZATION error fast-json-stringify raises on Date
-// instances in the response.
+// instances in the response. `cardRarity` stays a loose string here —
+// fastify-type-provider-zod's zod→JSON-schema conversion of nullable
+// `z.enum` has been the source of intermittent serialiser failures, and
+// the domain already constrains the value.
 export const achievementWithProgressSchema = z.object({
   key: z.string(),
   name: z.string(),
@@ -37,13 +40,13 @@ export const achievementWithProgressSchema = z.object({
   progress: z.number().int(),
   threshold: z.number().int(),
   unlocked: z.boolean(),
-  unlockedAt: z.string().datetime().nullable(),
+  unlockedAt: z.string().nullable(),
   reward: z
     .object({
       tokens: z.number().int(),
       dust: z.number().int(),
       xp: z.number().int(),
-      cardRarity: cardRarityEnum.nullable(),
+      cardRarity: z.string().nullable(),
     })
     .nullable(),
 })
