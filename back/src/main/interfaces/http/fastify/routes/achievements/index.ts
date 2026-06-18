@@ -1,34 +1,9 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
-import { z } from 'zod/v4'
 
-const achievementSchema = z.object({
-  key: z.string(),
-  name: z.string(),
-  description: z.string(),
-  family: z.string().nullable(),
-  tier: z.number().int(),
-  hidden: z.boolean(),
-  iconKey: z.string().nullable(),
-  sortOrder: z.number().int(),
-  progress: z.number().int(),
-  threshold: z.number().int(),
-  unlocked: z.boolean(),
-  unlockedAt: z.date().nullable(),
-  reward: z
-    .object({
-      tokens: z.number().int(),
-      dust: z.number().int(),
-      xp: z.number().int(),
-      cardRarity: z.string().nullable(),
-    })
-    .nullable(),
-})
-
-const familySummarySchema = z.object({
-  family: z.string(),
-  total: z.number().int(),
-  unlocked: z.number().int(),
-})
+import {
+  achievementsFamiliesResponseSchema,
+  achievementsListResponseSchema,
+} from '../../schemas/achievements.schemas'
 
 export const achievementsRouter: FastifyPluginCallbackZod = (fastify) => {
   const { achievementsDomain } = fastify.iocContainer
@@ -38,7 +13,7 @@ export const achievementsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { response: { 200: z.array(achievementSchema) } },
+      schema: { response: { 200: achievementsListResponseSchema } },
     },
     (request) => achievementsDomain.listForUser(request.user.userID),
   )
@@ -48,7 +23,7 @@ export const achievementsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/families',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { response: { 200: z.array(familySummarySchema) } },
+      schema: { response: { 200: achievementsFamiliesResponseSchema } },
     },
     (request) => achievementsDomain.listFamilies(request.user.userID),
   )

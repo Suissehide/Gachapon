@@ -1,3 +1,4 @@
+import type { CardRarity } from '../../../generated/enums'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import type { AchievementEvent, UnlockedAchievement } from './events.types'
 
@@ -32,6 +33,6 @@ export interface AchievementWithProgress {
     tokens: number
     dust: number
     xp: number
-    cardRarity: string | null
+    cardRarity: CardRarity | null
   } | null
 }
