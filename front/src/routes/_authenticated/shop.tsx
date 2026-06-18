@@ -1,9 +1,18 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { CalendarClock, Cog, Package, Sparkles, Zap } from 'lucide-react'
+import {
+  CalendarClock,
+  Check,
+  Cog,
+  Lock,
+  Package,
+  Sparkles,
+  Zap,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { CardDisplay } from '../../components/shared/tcg-card/CardDisplay'
 import { Button } from '../../components/ui/button'
+import { Card, CardTitle } from '../../components/ui/card'
 import type { DailyShopItem } from '../../constants/daily-shop.constant'
 import { TOAST_SEVERITY } from '../../constants/ui.constant'
 import { useToast } from '../../hooks/useToast'
@@ -15,6 +24,10 @@ import { useAuthStore } from '../../stores/auth.store'
 export const Route = createFileRoute('/_authenticated/shop')({
   component: ShopPage,
 })
+
+// Minimum visible spinner before showing "Achat réussi", and success display duration.
+const MIN_SPIN_MS = 500
+const SUCCESS_MS = 1500
 
 // ── Countdown hook ──────────────────────────────────────────────────────────
 
@@ -51,22 +64,22 @@ const TYPE_CONFIG: Record<
 > = {
   TOKEN_PACK: {
     label: 'Packs de tokens',
-    icon: <Zap className="h-5 w-5 text-primary" />,
+    icon: <Zap className="h-4 w-4 text-primary" />,
     color: 'border-primary/30 bg-primary/5',
   },
   BOOST: {
     label: 'Boosts',
-    icon: <Sparkles className="h-5 w-5 text-secondary" />,
+    icon: <Sparkles className="h-4 w-4 text-secondary" />,
     color: 'border-secondary/30 bg-secondary/5',
   },
   COSMETIC: {
     label: 'Cosmétiques',
-    icon: <Package className="h-5 w-5 text-accent" />,
+    icon: <Package className="h-4 w-4 text-accent" />,
     color: 'border-accent/30 bg-accent/5',
   },
   MACHINE: {
     label: 'Machines',
-    icon: <Cog className="h-5 w-5 text-primary" />,
+    icon: <Cog className="h-4 w-4 text-primary" />,
     color: 'border-primary/30 bg-primary/5',
   },
 }
@@ -80,14 +93,15 @@ function ShopPage() {
 
   // Static shop
   const { data: shopData, isLoading: shopLoading } = useShopItems()
-  const { mutate: buyShop, isPending: buyingShop } = useBuyItem()
+  const { mutate: buyShop } = useBuyItem()
   const [buyingShopId, setBuyingShopId] = useState<string | null>(null)
+  const [justBoughtShopId, setJustBoughtShopId] = useState<string | null>(null)
   const { data: machinesData } = useOwnedMachines()
   const ownedMachineIds = machinesData?.machineIds ?? []
 
   // Daily shop
   const { data: dailyData, isLoading: dailyLoading } = useDailyShop()
-  const { mutate: buyDaily, isPending: buyingDaily } = useBuyDailyShopItem()
+  const { mutate: buyDaily } = useBuyDailyShopItem()
   const [buyingDailyId, setBuyingDailyId] = useState<string | null>(null)
   const timeLeft = useCountdown()
 
@@ -105,13 +119,21 @@ function ShopPage() {
 
   const handleBuyShop = (item: ShopItem) => {
     setBuyingShopId(item.id)
+    const clickedAt = Date.now()
     buyShop(item.id, {
       onSuccess: (result) => {
         if (user) {
           setUser({ ...user, dust: result.newDustTotal, tokens: result.newTokenTotal })
         }
         notifySuccess(item.name, `Acheté ! −${result.dustSpent} poussière`)
-        setBuyingShopId(null)
+        const remaining = Math.max(0, MIN_SPIN_MS - (Date.now() - clickedAt))
+        setTimeout(() => {
+          setBuyingShopId((id) => (id === item.id ? null : id))
+          setJustBoughtShopId(item.id)
+          setTimeout(() => {
+            setJustBoughtShopId((id) => (id === item.id ? null : id))
+          }, SUCCESS_MS)
+        }, remaining)
       },
       onError: (err) => {
         notifyError(err.message)
@@ -122,13 +144,17 @@ function ShopPage() {
 
   const handleBuyDaily = (item: DailyShopItem) => {
     setBuyingDailyId(item.id)
+    const clickedAt = Date.now()
     buyDaily(item.id, {
       onSuccess: (result) => {
         if (user) {
           setUser({ ...user, dust: result.newDustBalance })
         }
         notifySuccess(result.card.name, `Obtenue ! −${result.dustSpent} poussière`)
-        setBuyingDailyId(null)
+        const remaining = Math.max(0, MIN_SPIN_MS - (Date.now() - clickedAt))
+        setTimeout(() => {
+          setBuyingDailyId((id) => (id === item.id ? null : id))
+        }, remaining)
       },
       onError: (err) => {
         notifyError(err.message)
@@ -145,23 +171,31 @@ function ShopPage() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-auto flex max-w-5xl flex-col gap-4">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-black text-text">Boutique</h1>
-          <p className="text-sm text-text-light">Dépense ta poussière</p>
+        <div>
+          <span className="font-mono text-[11px] font-bold uppercase tracking-[0.25em] text-text-light">
+            Boutique
+          </span>
+          <h1 className="font-display text-3xl font-extrabold tracking-tight text-text">
+            Dépense ta poussière
+          </h1>
         </div>
 
         {/* ── Daily Shop Section ─────────────────────────────────── */}
-        <section className="mb-10">
-          <div className="mb-4 flex items-center justify-between">
+        <Card className="p-6">
+          <div className="mb-4 flex items-baseline justify-between gap-3">
             <div className="flex items-center gap-2">
-              <CalendarClock className="h-5 w-5 text-accent" />
-              <h2 className="text-sm font-bold text-text">Boutique du Jour</h2>
+              <CalendarClock className="h-4 w-4 text-accent" />
+              <CardTitle className="text-sm uppercase tracking-wider">
+                Boutique du jour
+              </CardTitle>
             </div>
-            <div className="flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-text-light">
+            <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-text-light">
               <span>Nouveau tirage dans</span>
-              <span className="font-bold tabular-nums text-accent">{timeLeft}</span>
+              <span className="font-bold tabular-nums text-accent">
+                {timeLeft}
+              </span>
             </div>
           </div>
 
@@ -171,66 +205,81 @@ function ShopPage() {
             </div>
           ) : dailyItems.length === 0 ? (
             <div className="flex h-32 items-center justify-center rounded-xl border border-dashed border-border">
-              <p className="text-text-light">Aucune carte disponible.</p>
+              <p className="font-mono text-xs uppercase tracking-wider text-text-light">
+                Aucune carte disponible
+              </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div className="flex flex-wrap justify-center gap-4">
               {dailyItems.map((item) => (
-                <DailyShopCard
+                <div
                   key={item.id}
-                  item={item}
-                  dust={dust}
-                  buying={buyingDailyId === item.id && buyingDaily}
-                  onBuy={() => handleBuyDaily(item)}
-                />
+                  className="w-[120px] sm:w-[130px] md:w-[140px]"
+                >
+                  <DailyShopCard
+                    item={item}
+                    dust={dust}
+                    buying={buyingDailyId === item.id}
+                    onBuy={() => handleBuyDaily(item)}
+                  />
+                </div>
               ))}
             </div>
           )}
-        </section>
+        </Card>
 
         {/* ── Static Shop Section ────────────────────────────────── */}
         {shopLoading ? (
-          <div className="flex h-48 items-center justify-center">
+          <Card className="flex h-48 items-center justify-center p-6">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          </div>
+          </Card>
         ) : shopItems.length === 0 ? (
-          <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-border">
-            <p className="text-text-light">
-              Aucun article disponible pour l'instant.
+          <Card className="flex h-48 items-center justify-center p-6">
+            <p className="font-mono text-xs uppercase tracking-wider text-text-light">
+              Aucun article disponible pour l'instant
             </p>
-          </div>
+          </Card>
         ) : (
-          <div className="space-y-8">
-            {grouped
-              .filter((g) => g.items.length > 0)
-              .map(({ type, config, items: typeItems }) => (
-                <section key={type}>
-                  <div className="mb-3 flex items-center gap-2">
+          grouped
+            .filter((g) => g.items.length > 0)
+            .map(({ type, config, items: typeItems }) => (
+              <Card key={type} className="p-6">
+                <div className="mb-4 flex items-baseline justify-between">
+                  <div className="flex items-center gap-2">
                     {config.icon}
-                    <h2 className="text-sm font-bold text-text">
+                    <CardTitle className="text-sm uppercase tracking-wider">
                       {config.label}
-                    </h2>
+                    </CardTitle>
                   </div>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {typeItems.map((item) => {
-                      const machineId = item.type === 'MACHINE' ? (item.value as { machineId?: string })?.machineId : undefined
-                      const owned = machineId ? ownedMachineIds.includes(machineId) : false
-                      return (
-                        <StaticShopCard
-                          key={item.id}
-                          item={item}
-                          dust={dust}
-                          colorClass={config.color}
-                          buying={buyingShopId === item.id && buyingShop}
-                          owned={owned}
-                          onBuy={() => handleBuyShop(item)}
-                        />
-                      )
-                    })}
-                  </div>
-                </section>
-              ))}
-          </div>
+                  <span className="font-mono text-[11px] text-text-light">
+                    {typeItems.length} ARTICLE{typeItems.length > 1 ? 'S' : ''}
+                  </span>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {typeItems.map((item) => {
+                    const machineId =
+                      item.type === 'MACHINE'
+                        ? (item.value as { machineId?: string })?.machineId
+                        : undefined
+                    const owned = machineId
+                      ? ownedMachineIds.includes(machineId)
+                      : false
+                    return (
+                      <StaticShopCard
+                        key={item.id}
+                        item={item}
+                        dust={dust}
+                        colorClass={config.color}
+                        buying={buyingShopId === item.id}
+                        justBought={justBoughtShopId === item.id}
+                        owned={owned}
+                        onBuy={() => handleBuyShop(item)}
+                      />
+                    )
+                  })}
+                </div>
+              </Card>
+            ))
         )}
       </div>
     </div>
@@ -253,7 +302,7 @@ function DailyShopCard({
   const canAfford = dust >= item.dustPrice
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center gap-2.5">
       <div className={`w-full ${item.purchased ? 'opacity-40' : ''}`}>
         <CardDisplay
           rarity={item.card.rarity}
@@ -266,26 +315,43 @@ function DailyShopCard({
           compact
         />
       </div>
-      {item.purchased ? (
-        <Button variant="secondary" size="sm" disabled className="w-full">
+      {buying ? (
+        <Button size="sm" disabled className="w-full">
+          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        </Button>
+      ) : item.purchased ? (
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled
+          className="w-full gap-1.5"
+        >
+          <Check className="h-3.5 w-3.5" />
           Achetée
+        </Button>
+      ) : !canAfford ? (
+        <Button
+          size="sm"
+          disabled
+          variant="outline"
+          className="w-full gap-1 text-text-light/70"
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          <span className="tabular-nums">
+            {item.dustPrice.toLocaleString('fr-FR')}
+          </span>
         </Button>
       ) : (
         <Button
           size="sm"
-          disabled={buying || !canAfford}
           onClick={onBuy}
-          variant={canAfford ? 'default' : 'secondary'}
-          className="w-full"
+          variant="gradient"
+          className="w-full gap-1"
         >
-          {buying ? (
-            '…'
-          ) : (
-            <>
-              <Sparkles className="h-3.5 w-3.5" />
-              {item.dustPrice.toLocaleString('fr-FR')}
-            </>
-          )}
+          <Sparkles className="h-3.5 w-3.5" />
+          <span className="tabular-nums">
+            {item.dustPrice.toLocaleString('fr-FR')}
+          </span>
         </Button>
       )}
     </div>
@@ -299,6 +365,7 @@ function StaticShopCard({
   dust,
   colorClass,
   buying,
+  justBought,
   owned,
   onBuy,
 }: {
@@ -306,6 +373,7 @@ function StaticShopCard({
   dust: number
   colorClass: string
   buying: boolean
+  justBought: boolean
   owned?: boolean
   onBuy: () => void
 }) {
@@ -323,22 +391,41 @@ function StaticShopCard({
       <div className="mt-auto flex items-center justify-between">
         <span className="flex items-center gap-1 text-sm font-bold text-secondary">
           <Sparkles className="h-3.5 w-3.5" />
-          {item.dustCost.toLocaleString('fr-FR')}
+          <span className="tabular-nums">
+            {item.dustCost.toLocaleString('fr-FR')}
+          </span>
         </span>
-        {owned ? (
-          <Button size="sm" variant="secondary" disabled>
-            Possédée
-          </Button>
-        ) : (
+        {justBought ? (
           <Button
             size="sm"
-            disabled={!supported || buying || !canAfford}
-            onClick={onBuy}
-            variant={supported && canAfford ? 'default' : 'secondary'}
+            disabled
+            variant="gradient"
+            className="gap-1.5 animate-[shop-success-pop_0.4s_var(--ease-spring)]"
           >
-            {supported
-              ? buying ? '…' : canAfford ? 'Acheter' : 'Insuffisant'
-              : 'Bientôt'}
+            <Check className="h-3.5 w-3.5" />
+            Achat réussi
+          </Button>
+        ) : owned ? (
+          <Button size="sm" variant="secondary" disabled className="gap-1.5">
+            <Check className="h-3.5 w-3.5" />
+            Possédée
+          </Button>
+        ) : !supported ? (
+          <Button size="sm" variant="secondary" disabled className="gap-1.5">
+            <Lock className="h-3.5 w-3.5" />
+            Bientôt
+          </Button>
+        ) : buying ? (
+          <Button size="sm" disabled>
+            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          </Button>
+        ) : !canAfford ? (
+          <Button size="sm" disabled variant="outline" className="text-text-light/70">
+            Insuffisant
+          </Button>
+        ) : (
+          <Button size="sm" variant="gradient" onClick={onBuy}>
+            Acheter
           </Button>
         )}
       </div>
