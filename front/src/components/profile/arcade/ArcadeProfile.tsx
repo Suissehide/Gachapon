@@ -5,6 +5,7 @@ import {
 } from '../../../queries/useProfile'
 import { useAuthStore } from '../../../stores/auth.store'
 import { AuroraGrid } from '../../shared/decorations/AuroraGrid'
+import { AchievementsCard } from './AchievementsCard'
 import { ArcadeHero } from './ArcadeHero'
 import { ArcadeTopbar } from './ArcadeTopbar'
 import { CollectionCTA } from './CollectionCTA'
@@ -68,6 +69,8 @@ export function ArcadeProfile({ username }: Props) {
         </div>
 
         <SetsProgressionCard sets={progression.data?.sets ?? []} />
+
+        {isOwnProfile && <AchievementsCard />}
 
         <CollectionCTA
           profile={profile}
