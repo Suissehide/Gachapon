@@ -31,7 +31,7 @@ export function ArcadeHero({ profile, featuredCards, isOwnProfile }: Props) {
               {isMax ? `NIV. MAX · MEMBRE ${joinedYear}` : `NIV. ${profile.level} · MEMBRE ${joinedYear}`}
             </div>
             <h1 className="font-display text-[52px] font-extrabold leading-none text-text mt-1">
-              @{profile.username}
+              {profile.username}
             </h1>
             <div className="flex gap-2 mt-3 flex-wrap">
               {isMax ? (

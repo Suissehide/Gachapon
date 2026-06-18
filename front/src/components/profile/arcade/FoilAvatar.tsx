@@ -16,7 +16,6 @@ export function FoilAvatar({ initials, isMax = false, size = 112, className }: P
         style={{
           background:
             'conic-gradient(from 0deg, #f59e0b, #ec4899, #8b5cf6, #3b82f6, #22c55e, #f59e0b)',
-          animation: 'foilSpin 6s linear infinite',
           padding: 6,
           filter: isMax ? 'drop-shadow(0 0 14px rgba(245,158,11,.55))' : undefined,
         }}

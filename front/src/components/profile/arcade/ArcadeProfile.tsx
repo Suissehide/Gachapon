@@ -38,7 +38,7 @@ export function ArcadeProfile({ username }: Props) {
         <div className="text-center">
           <p className="font-display text-2xl font-extrabold">Joueur introuvable</p>
           <p className="font-mono text-sm text-text-light mt-2">
-            @{username} n'existe pas.
+            {username} n'existe pas.
           </p>
         </div>
       </div>
