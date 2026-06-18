@@ -24,7 +24,10 @@ const computeOwnRarityCount = (
     return state.ownedByRarityVariant[`${criterion.rarity}_${criterion.variant}`] ?? 0
   }
   if (criterion.rarity) {
-    return state.ownedByRarity[criterion.rarity]
+    // `ownedByRarity` is built sparsely (only keys the user owns), so missing
+    // rarities resolve to `undefined`. Coalesce to 0 so the response schema
+    // never sees an undefined progress value.
+    return state.ownedByRarity[criterion.rarity] ?? 0
   }
   const suffix = `_${criterion.variant}`
   let count = 0
