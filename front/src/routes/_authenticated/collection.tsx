@@ -161,7 +161,7 @@ function Collection() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
-      <div className="mx-auto flex max-w-4xl flex-col gap-4">
+      <div className="mx-auto flex max-w-5xl flex-col gap-4">
         <PageHeader
           breadcrumbs={[
             { label: 'Gachapon', to: '/play' },

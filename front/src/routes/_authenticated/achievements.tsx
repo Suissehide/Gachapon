@@ -22,7 +22,7 @@ function AchievementsPage() {
   return (
     <div className="relative min-h-[calc(100vh-4rem)]">
       <AuroraGrid />
-      <div className="relative z-10 mx-auto flex max-w-5xl flex-col gap-4 px-8 py-7">
+      <div className="relative z-10 mx-auto flex max-w-5xl flex-col gap-4 px-4 py-8">
         <PageHeader
           breadcrumbs={[
             { label: 'Gachapon', to: '/play' },

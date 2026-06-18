@@ -48,7 +48,7 @@ export function ArcadeProfile({ username }: Props) {
   return (
     <div className="relative min-h-[calc(100vh-4rem)]">
       <AuroraGrid />
-      <div className="relative max-w-[1280px] mx-auto px-8 py-7 flex flex-col gap-4 z-10">
+      <div className="relative mx-auto flex max-w-5xl flex-col gap-4 px-4 py-8 z-10">
         <ArcadeTopbar isOwnProfile={!!isOwnProfile} isAdmin={!!isAdmin} />
 
         <ArcadeHero
