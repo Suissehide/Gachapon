@@ -2,7 +2,7 @@ import type { FastifyReply } from 'fastify'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import { sanitizeUser, setTokenCookies } from './helpers'
-import { loginBodySchema, userResponseSchema } from './schemas'
+import { loginBodySchema, userResponseSchema } from '../../schemas/auth.schemas'
 
 export const loginRouter: FastifyPluginCallbackZod = (fastify) => {
   const { authDomain, userRewardRepository } = fastify.iocContainer

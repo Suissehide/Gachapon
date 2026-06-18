@@ -1,10 +1,13 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
-import { z } from 'zod/v4'
 
 import { calculateTokens } from '../../../../../domain/economy/economy.domain'
 import { wsManager } from '../../../../ws/ws-manager'
-import { unlockedAchievementSchema } from '../../schemas/achievements.schemas'
+import {
+  pullResponseSchema,
+  pullsHistoryQuerySchema,
+  pullsRecentQuerySchema,
+} from '../../schemas/gacha.schemas'
 
 export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
   const {
@@ -24,26 +27,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     '/pulls',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: {
-        response: {
-          201: z.object({
-            card: z.object({
-              id: z.string(),
-              name: z.string(),
-              imageUrl: z.string().nullable(),
-              rarity: z.string(),
-              variant: z.string(),
-              set: z.object({ id: z.string(), name: z.string() }),
-            }),
-            wasDuplicate: z.boolean(),
-            dustEarned: z.number().int(),
-            tokensRemaining: z.number().int(),
-            pityCurrent: z.number().int(),
-            xpGained: z.number().int(),
-            unlockedAchievements: z.array(unlockedAchievementSchema).optional(),
-          }),
-        },
-      },
+      schema: { response: { 201: pullResponseSchema } },
     },
     async (request, reply) => {
       const result = await gachaDomain.pull(request.user.userID)
@@ -173,12 +157,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     '/pulls/history',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: {
-        querystring: z.object({
-          page: z.coerce.number().int().min(1).default(1),
-          limit: z.coerce.number().int().min(1).max(100).default(20),
-        }),
-      },
+      schema: { querystring: pullsHistoryQuerySchema },
     },
     async (request) => {
       const { page, limit } = request.query
@@ -214,13 +193,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     '/pulls/recent',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: {
-        querystring: z.object({
-          limit: z.coerce.number().int().min(1).max(50).default(20),
-          before: z.string().datetime().optional(),
-          teamId: z.string().uuid().optional(),
-        }),
-      },
+      schema: { querystring: pullsRecentQuerySchema },
     },
     async (request) => {
       const { limit, before, teamId } = request.query

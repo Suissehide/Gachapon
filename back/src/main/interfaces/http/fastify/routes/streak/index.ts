@@ -1,42 +1,14 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
-import { z } from 'zod/v4'
 
-import { CardRarity } from '../../../../../../generated/client'
-
-const cardRaritySchema = z.enum(
-  Object.values(CardRarity) as [CardRarity, ...CardRarity[]],
-)
-
-const rewardSchema = z.object({
-  tokens: z.number().int(),
-  dust: z.number().int(),
-  xp: z.number().int(),
-  cardRarity: cardRaritySchema.nullable(),
-})
-
-const dayEntrySchema = rewardSchema.extend({
-  day: z.number().int(),
-  isMilestone: z.boolean(),
-  status: z.enum(['past', 'current', 'future']),
-})
-
-const summarySchema = z.object({
-  streakDays: z.number().int(),
-  bestStreak: z.number().int(),
-  default: rewardSchema,
-  days: z.array(dayEntrySchema),
-  // The next milestone the user will reach in their current 30-day cycle.
-  // null if no upcoming milestone exists. Used by the UI to render a "Final" preview card.
-  nextMilestone: dayEntrySchema.nullable(),
-})
+import { streakSummaryResponseSchema } from '../../schemas/streak.schemas'
 
 export const streakRouter: FastifyPluginCallbackZod = (fastify) => {
   fastify.get(
     '/summary',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { response: { 200: summarySchema } },
+      schema: { response: { 200: streakSummaryResponseSchema } },
     },
     async (request) => {
       const { userRepository, streakMilestoneRepository } = fastify.iocContainer

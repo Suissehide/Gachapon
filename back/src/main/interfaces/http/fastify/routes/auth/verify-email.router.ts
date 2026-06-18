@@ -1,8 +1,10 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
-import { z } from 'zod/v4'
 
 import { sanitizeUser, setTokenCookies } from './helpers'
-import { userResponseSchema } from './schemas'
+import {
+  userResponseSchema,
+  verifyEmailBodySchema,
+} from '../../schemas/auth.schemas'
 
 export const verifyEmailRouter: FastifyPluginCallbackZod = (fastify) => {
   const { authDomain, userRewardRepository } = fastify.iocContainer
@@ -12,7 +14,7 @@ export const verifyEmailRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       config: { rateLimit: { max: 10, timeWindow: 15 * 60 * 1000 } },
       schema: {
-        body: z.object({ token: z.string().uuid() }),
+        body: verifyEmailBodySchema,
         response: { 200: userResponseSchema },
       },
     },

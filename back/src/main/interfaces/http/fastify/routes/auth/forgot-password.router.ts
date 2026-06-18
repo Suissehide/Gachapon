@@ -1,5 +1,6 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
-import { z } from 'zod/v4'
+
+import { forgotPasswordBodySchema } from '../../schemas/auth.schemas'
 
 export const forgotPasswordRouter: FastifyPluginCallbackZod = (fastify) => {
   const { authDomain } = fastify.iocContainer
@@ -8,7 +9,7 @@ export const forgotPasswordRouter: FastifyPluginCallbackZod = (fastify) => {
     '/',
     {
       config: { rateLimit: { max: 5, timeWindow: 15 * 60 * 1000 } },
-      schema: { body: z.object({ email: z.email() }) },
+      schema: { body: forgotPasswordBodySchema },
     },
     async (request, reply) => {
       await authDomain.forgotPassword(request.body.email)

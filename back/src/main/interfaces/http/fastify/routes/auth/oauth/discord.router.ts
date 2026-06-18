@@ -1,8 +1,8 @@
 import { randomBytes } from 'node:crypto'
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
-import { z } from 'zod/v4'
 
+import { discordOAuthCallbackQuerySchema } from '../../../schemas/auth.schemas'
 import { setTokenCookies } from '../helpers'
 
 export const discordOAuthRouter: FastifyPluginCallbackZod = (fastify) => {
@@ -23,13 +23,7 @@ export const discordOAuthRouter: FastifyPluginCallbackZod = (fastify) => {
   fastify.get(
     '/callback',
     {
-      schema: {
-        querystring: z.object({
-          code: z.string().optional(),
-          state: z.string().optional(),
-          error: z.string().optional(),
-        }),
-      },
+      schema: { querystring: discordOAuthCallbackQuerySchema },
     },
     async (request, reply) => {
       const { code, state, error } = request.query

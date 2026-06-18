@@ -1,5 +1,9 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
-import { z } from 'zod/v4'
+
+import {
+  apiKeyIdParamSchema,
+  createApiKeyBodySchema,
+} from '../../schemas/api-keys.schemas'
 
 export const apiKeysRouter: FastifyPluginCallbackZod = (fastify) => {
   const { apiKeyRepository } = fastify.iocContainer
@@ -8,7 +12,7 @@ export const apiKeysRouter: FastifyPluginCallbackZod = (fastify) => {
     '/',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { body: z.object({ name: z.string().min(1).max(50) }) },
+      schema: { body: createApiKeyBodySchema },
     },
     async (request, reply) => {
       const key = await apiKeyRepository.create(
@@ -44,7 +48,7 @@ export const apiKeysRouter: FastifyPluginCallbackZod = (fastify) => {
     '/:id',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: z.object({ id: z.string().uuid() }) },
+      schema: { params: apiKeyIdParamSchema },
     },
     async (request, reply) => {
       await apiKeyRepository.delete(request.params.id, request.user.userID)

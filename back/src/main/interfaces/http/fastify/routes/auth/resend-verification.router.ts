@@ -1,5 +1,6 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
-import { z } from 'zod/v4'
+
+import { resendVerificationBodySchema } from '../../schemas/auth.schemas'
 
 export const resendVerificationRouter: FastifyPluginCallbackZod = (fastify) => {
   const { authDomain } = fastify.iocContainer
@@ -8,7 +9,7 @@ export const resendVerificationRouter: FastifyPluginCallbackZod = (fastify) => {
     '/',
     {
       config: { rateLimit: { max: 5, timeWindow: 15 * 60 * 1000 } },
-      schema: { body: z.object({ email: z.email() }) },
+      schema: { body: resendVerificationBodySchema },
     },
     async (request, reply) => {
       await authDomain.resendVerification(request.body.email)

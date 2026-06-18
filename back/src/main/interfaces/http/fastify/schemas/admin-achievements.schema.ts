@@ -21,3 +21,5 @@ export const adminAchievementIdParamSchema = z.object({ id: z.string().uuid() })
 export const adminAchievementCreateBodySchema = achievementSchema
 
 export const adminAchievementUpdateBodySchema = achievementSchema.partial()
+
+export const adminAchievementsCustomHandlersResponseSchema = z.array(z.string())

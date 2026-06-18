@@ -3,7 +3,7 @@ import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import type { UnlockedAchievement } from '../../../../../domain/achievements/events.types'
 
 import { sanitizeUser } from './helpers'
-import { userResponseSchema } from './schemas'
+import { userResponseSchema } from '../../schemas/auth.schemas'
 
 export const meRouter: FastifyPluginCallbackZod = (fastify) => {
   const { userDomain, userRewardRepository, streakDomain, postgresOrm } =
