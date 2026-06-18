@@ -4,6 +4,7 @@ import { Sparkles, Target, Zap } from 'lucide-react'
 import { PageHeader } from '../../components/shared/PageHeader'
 import type { Quest } from '../../queries/useLeaderboard'
 import { useQuests } from '../../queries/useLeaderboard'
+import { useAuthStore } from '../../stores/auth.store'
 
 export const Route = createFileRoute('/_authenticated/quests')({
   component: QuestsPage,
@@ -12,12 +13,21 @@ export const Route = createFileRoute('/_authenticated/quests')({
 function QuestsPage() {
   const { data, isLoading } = useQuests()
   const quests = data?.quests ?? []
+  const username = useAuthStore((s) => s.user?.username ?? '')
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
       <div className="mx-auto flex max-w-2xl flex-col gap-4">
         <PageHeader
-          tag="Profil · Quêtes"
+          breadcrumbs={[
+            { label: 'Gachapon', to: '/play' },
+            {
+              label: 'Profil',
+              to: '/profile/$username',
+              params: { username },
+            },
+            { label: 'Quêtes' },
+          ]}
           title="Quêtes du jour"
           subtitle="Se réinitialisent à minuit UTC"
         />

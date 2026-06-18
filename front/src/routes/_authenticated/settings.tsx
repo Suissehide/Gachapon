@@ -1,6 +1,5 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import {
-  ArrowLeft,
   Check,
   Copy,
   Eye,
@@ -68,17 +67,18 @@ function Settings() {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
       <div className="mx-auto flex max-w-4xl flex-col gap-6">
-        <div>
-          <Link
-            to="/profile/$username"
-            params={{ username: user?.username ?? '' }}
-            className="mb-2 flex w-fit items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-text-light transition-colors hover:text-text"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Mon profil
-          </Link>
-          <PageHeader tag="Compte" title="Paramètres" />
-        </div>
+        <PageHeader
+          breadcrumbs={[
+            { label: 'Gachapon', to: '/play' },
+            {
+              label: 'Profil',
+              to: '/profile/$username',
+              params: { username: user?.username ?? '' },
+            },
+            { label: 'Paramètres' },
+          ]}
+          title="Paramètres"
+        />
 
         {/* Infos compte */}
         <section className="rounded-xl border border-border bg-card p-6">

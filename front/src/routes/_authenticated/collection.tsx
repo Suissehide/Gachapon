@@ -163,7 +163,15 @@ function Collection() {
     <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
       <div className="mx-auto flex max-w-4xl flex-col gap-4">
         <PageHeader
-          tag="Profil · Collection"
+          breadcrumbs={[
+            { label: 'Gachapon', to: '/play' },
+            {
+              label: 'Profil',
+              to: '/profile/$username',
+              params: { username: user?.username ?? '' },
+            },
+            { label: 'Collection' },
+          ]}
           title="Ma collection"
           subtitle={
             <>

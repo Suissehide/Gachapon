@@ -4,6 +4,7 @@ import { AchievementGrid } from '../../components/achievements/AchievementGrid'
 import { PageHeader } from '../../components/shared/PageHeader'
 import { AuroraGrid } from '../../components/shared/decorations/AuroraGrid'
 import { useAchievements } from '../../queries/useAchievements'
+import { useAuthStore } from '../../stores/auth.store'
 
 export const Route = createFileRoute('/_authenticated/achievements')({
   component: AchievementsPage,
@@ -11,6 +12,7 @@ export const Route = createFileRoute('/_authenticated/achievements')({
 
 function AchievementsPage() {
   const { data, isLoading } = useAchievements()
+  const username = useAuthStore((s) => s.user?.username ?? '')
 
   const achievements = data ?? []
   const totalUnlocked = achievements.filter((a) => a.unlocked).length
@@ -22,7 +24,15 @@ function AchievementsPage() {
       <AuroraGrid />
       <div className="relative z-10 mx-auto flex max-w-5xl flex-col gap-4 px-8 py-7">
         <PageHeader
-          tag="Profil · Succès"
+          breadcrumbs={[
+            { label: 'Gachapon', to: '/play' },
+            {
+              label: 'Profil',
+              to: '/profile/$username',
+              params: { username },
+            },
+            { label: 'Succès' },
+          ]}
           title="Galerie des succès"
           right={
             <>

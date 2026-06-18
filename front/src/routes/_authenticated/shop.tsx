@@ -173,7 +173,13 @@ function ShopPage() {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
       <div className="mx-auto flex max-w-5xl flex-col gap-4">
-        <PageHeader tag="Boutique" title="Dépense ta poussière" />
+        <PageHeader
+          breadcrumbs={[
+            { label: 'Gachapon', to: '/play' },
+            { label: 'Boutique' },
+          ]}
+          title="Dépense ta poussière"
+        />
 
         {/* ── Daily Shop Section ─────────────────────────────────── */}
         <Card className="p-6">

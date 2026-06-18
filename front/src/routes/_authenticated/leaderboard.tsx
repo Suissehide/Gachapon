@@ -37,7 +37,13 @@ function LeaderboardPage() {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
       <div className="mx-auto flex max-w-4xl flex-col gap-4">
-        <PageHeader tag="Communauté" title="Classement" />
+        <PageHeader
+          breadcrumbs={[
+            { label: 'Gachapon', to: '/play' },
+            { label: 'Classement' },
+          ]}
+          title="Classement"
+        />
 
         <SegmentedControl
           options={TABS}

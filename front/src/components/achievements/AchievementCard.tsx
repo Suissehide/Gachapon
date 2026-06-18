@@ -38,7 +38,7 @@ export function AchievementCard({ achievement }: Props) {
     >
       <div className="flex items-start gap-3">
         <div
-          className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[10px] text-white"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] text-white"
           style={
             achievement.unlocked
               ? {
@@ -52,17 +52,17 @@ export function AchievementCard({ achievement }: Props) {
           }
         >
           {achievement.unlocked || inProgress ? (
-            <Award className="h-5 w-5" />
+            <Award className="h-4 w-4" />
           ) : (
-            <Lock className="h-4 w-4" />
+            <Lock className="h-3.5 w-3.5" />
           )}
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="truncate font-display font-bold text-text">
+          <div className="font-display text-[13px] font-bold leading-tight text-text line-clamp-2">
             {achievement.name}
           </div>
-          <div className="font-mono text-[10px] uppercase tracking-wider text-text-light">
+          <div className="mt-0.5 font-mono text-[9.5px] uppercase tracking-wider text-text-light">
             {achievement.unlocked
               ? 'Débloqué'
               : inProgress
@@ -72,7 +72,7 @@ export function AchievementCard({ achievement }: Props) {
         </div>
 
         <div
-          className="font-display text-[24px] font-extrabold leading-none tabular-nums"
+          className="font-display text-[18px] font-extrabold leading-none tabular-nums"
           style={{
             color: achievement.unlocked
               ? '#b45309'
