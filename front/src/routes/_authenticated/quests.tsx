@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Sparkles, Target, Zap } from 'lucide-react'
 
+import { PageHeader } from '../../components/shared/PageHeader'
 import type { Quest } from '../../queries/useLeaderboard'
 import { useQuests } from '../../queries/useLeaderboard'
 
@@ -14,13 +15,12 @@ function QuestsPage() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
-      <div className="mx-auto max-w-2xl">
-        <div className="mb-6">
-          <h1 className="text-2xl font-black text-text">Quêtes</h1>
-          <p className="text-sm text-text-light">
-            Quêtes quotidiennes — se réinitialisent à minuit UTC
-          </p>
-        </div>
+      <div className="mx-auto flex max-w-2xl flex-col gap-4">
+        <PageHeader
+          tag="Profil · Quêtes"
+          title="Quêtes du jour"
+          subtitle="Se réinitialisent à minuit UTC"
+        />
 
         {isLoading ? (
           <div className="flex h-48 items-center justify-center">

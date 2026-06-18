@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 
 import { AchievementGrid } from '../../components/achievements/AchievementGrid'
+import { PageHeader } from '../../components/shared/PageHeader'
 import { AuroraGrid } from '../../components/shared/decorations/AuroraGrid'
 import { useAchievements } from '../../queries/useAchievements'
 
@@ -20,26 +21,21 @@ function AchievementsPage() {
     <div className="relative min-h-[calc(100vh-4rem)]">
       <AuroraGrid />
       <div className="relative z-10 mx-auto flex max-w-5xl flex-col gap-4 px-8 py-7">
-        {/* Header */}
-        <div className="flex items-end justify-between gap-6">
-          <div>
-            <span className="font-mono text-[11px] font-bold uppercase tracking-[0.25em] text-text-light">
-              Profil · Succès
-            </span>
-            <h1 className="font-display text-3xl font-extrabold tracking-tight text-text">
-              Galerie des succès
-            </h1>
-          </div>
-          <div className="text-right">
-            <div className="font-display text-3xl font-extrabold tabular-nums leading-none text-text">
-              {totalUnlocked}
-              <span className="text-text-light/50"> / {total}</span>
-            </div>
-            <div className="font-mono text-[10px] uppercase tracking-wider text-text-light mt-1">
-              Débloqués · {pct}%
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          tag="Profil · Succès"
+          title="Galerie des succès"
+          right={
+            <>
+              <div className="font-display text-3xl font-extrabold tabular-nums leading-none text-text">
+                {totalUnlocked}
+                <span className="text-text-light/50"> / {total}</span>
+              </div>
+              <div className="font-mono text-[10px] uppercase tracking-wider text-text-light mt-1">
+                Débloqués · {pct}%
+              </div>
+            </>
+          }
+        />
 
         {/* Global progress bar */}
         {total > 0 && (

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 
+import { PageHeader } from '../../components/shared/PageHeader'
 import { ConfirmPopup } from '../../components/team'
 import { Button } from '../../components/ui/button.tsx'
 import { Input } from '../../components/ui/input.tsx'
@@ -66,17 +67,17 @@ function Settings() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
-      <div className="mx-auto max-w-4xl space-y-8">
+      <div className="mx-auto flex max-w-4xl flex-col gap-6">
         <div>
           <Link
             to="/profile/$username"
             params={{ username: user?.username ?? '' }}
-            className="mb-4 flex w-fit items-center gap-1.5 text-sm text-text-light transition-colors hover:text-text"
+            className="mb-2 flex w-fit items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-text-light transition-colors hover:text-text"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-3.5 w-3.5" />
             Mon profil
           </Link>
-          <h1 className="text-2xl font-black text-text">Paramètres</h1>
+          <PageHeader tag="Compte" title="Paramètres" />
         </div>
 
         {/* Infos compte */}

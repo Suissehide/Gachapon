@@ -7,6 +7,7 @@ import { CollectionFilters } from '../../components/collection/CollectionFilters
 import { CollectionGrid } from '../../components/collection/CollectionGrid.tsx'
 import { CollectionSetGroup } from '../../components/collection/CollectionSetGroup.tsx'
 import { RecycleModal } from '../../components/collection/RecycleModal.tsx'
+import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import {
   type UserCard,
   useCards,
@@ -160,16 +161,19 @@ function Collection() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
-      <div className="mx-auto max-w-4xl">
-        <div className="mb-4">
-          <h1 className="text-2xl font-black text-text">Ma Collection</h1>
-          <p className="text-sm text-text-light">
-            Cartes : {collectionStats.distinctCards}/
-            {collectionStats.totalCards} - Variantes :{' '}
-            {collectionStats.totalOwnedVariants}/
-            {collectionStats.totalPossibleVariants}
-          </p>
-        </div>
+      <div className="mx-auto flex max-w-4xl flex-col gap-4">
+        <PageHeader
+          tag="Profil · Collection"
+          title="Ma collection"
+          subtitle={
+            <>
+              Cartes : {collectionStats.distinctCards}/
+              {collectionStats.totalCards} · Variantes :{' '}
+              {collectionStats.totalOwnedVariants}/
+              {collectionStats.totalPossibleVariants}
+            </>
+          }
+        />
 
         <CollectionFilters
           displayMode={displayMode}

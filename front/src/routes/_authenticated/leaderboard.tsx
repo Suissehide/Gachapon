@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { Trophy, Users } from 'lucide-react'
 import { useState } from 'react'
 
+import { PageHeader } from '../../components/shared/PageHeader'
 import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
 import type { CollectorEntry, TeamEntry } from '../../queries/useLeaderboard'
 import { useLeaderboard } from '../../queries/useLeaderboard'
@@ -35,15 +36,15 @@ function LeaderboardPage() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
-      <div className="mx-auto max-w-4xl">
-        <h1 className="mb-6 text-2xl font-black text-text">Classement</h1>
+      <div className="mx-auto flex max-w-4xl flex-col gap-4">
+        <PageHeader tag="Communauté" title="Classement" />
 
         <SegmentedControl
           options={TABS}
           value={activeTab}
           onChange={setActiveTab}
           stretch
-          className="mb-6 w-full"
+          className="w-full"
         />
 
         {isLoading ? (

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
+import { PageHeader } from '../../components/shared/PageHeader'
 import { CardDisplay } from '../../components/shared/tcg-card/CardDisplay'
 import { Button } from '../../components/ui/button'
 import { Card, CardTitle } from '../../components/ui/card'
@@ -172,15 +173,7 @@ function ShopPage() {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
       <div className="mx-auto flex max-w-5xl flex-col gap-4">
-        {/* Header */}
-        <div>
-          <span className="font-mono text-[11px] font-bold uppercase tracking-[0.25em] text-text-light">
-            Boutique
-          </span>
-          <h1 className="font-display text-3xl font-extrabold tracking-tight text-text">
-            Dépense ta poussière
-          </h1>
-        </div>
+        <PageHeader tag="Boutique" title="Dépense ta poussière" />
 
         {/* ── Daily Shop Section ─────────────────────────────────── */}
         <Card className="p-6">
