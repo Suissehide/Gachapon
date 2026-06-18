@@ -27,8 +27,8 @@ export const pendingRewardSchema = z.object({
   id: z.string().uuid(),
   source: rewardSourceEnum,
   sourceId: z.string().nullable(),
-  claimedAt: z.coerce.date().nullable(),
-  createdAt: z.coerce.date(),
+  claimedAt: z.date().nullable(),
+  createdAt: z.date(),
   reward: rewardAmountsSchema,
   streakMilestone: z
     .object({ day: z.number().int(), isMilestone: z.boolean() })
@@ -47,8 +47,8 @@ export const rewardHistoryItemSchema = z.object({
   id: z.string().uuid(),
   source: rewardSourceEnum,
   sourceId: z.string().nullable(),
-  claimedAt: z.coerce.date().nullable(),
-  createdAt: z.coerce.date(),
+  claimedAt: z.date().nullable(),
+  createdAt: z.date(),
   reward: rewardAmountsSchema,
 })
 
