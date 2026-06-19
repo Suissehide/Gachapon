@@ -24,8 +24,9 @@ export function AchievementUnlockToast() {
   const reward = current.reward
 
   return (
-    // Overlay positions the card dead-center over the viewport.
-    <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center px-4">
+    // Overlay centres the card horizontally and anchors it near the top so
+    // the toast doesn't sit over the gameplay area.
+    <div className="pointer-events-none fixed inset-x-0 top-6 z-50 flex justify-center px-4">
       <button
         type="button"
         onClick={dismiss}
@@ -33,7 +34,7 @@ export function AchievementUnlockToast() {
         className="pointer-events-auto relative w-full max-w-md cursor-pointer border-0 bg-transparent p-0 text-left"
         style={{
           animation:
-            'achievementToastIn 400ms cubic-bezier(0.34, 1.56, 0.64, 1) both',
+            'achievementToastDrop 450ms cubic-bezier(0.34, 1.4, 0.64, 1) both',
         }}
       >
         <div

@@ -87,6 +87,13 @@ h6 {
   to   { opacity: 1; transform: translate(-50%, 0); }
 }
 
+/* Drops the unlock toast from above the viewport down to its rest
+   position (handled by the flex layout — translate works in % of self). */
+@keyframes achievementToastDrop {
+  from { opacity: 0; transform: translateY(-120%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes claimParticle {
   0% {
     transform: translate(0, 0) scale(1);
