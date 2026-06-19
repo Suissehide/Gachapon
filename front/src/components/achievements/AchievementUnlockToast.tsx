@@ -108,12 +108,12 @@ export function AchievementUnlockToast() {
           />
 
           {/* Close affordance — the parent button captures the click; the
-              chip rotates / brightens on hover for feedback. */}
+              chip subtly brightens on hover for feedback. */}
           <span
-            className="pointer-events-none absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/0 text-white/70 transition-all duration-150 group-hover:bg-white/20 group-hover:text-white group-hover:scale-110"
+            className="pointer-events-none absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/0 text-white/70 transition-colors duration-200 group-hover:bg-white/15 group-hover:text-white"
             aria-hidden
           >
-            <X className="h-3.5 w-3.5 transition-transform duration-150 group-hover:rotate-90" />
+            <X className="h-3.5 w-3.5" />
           </span>
 
           <div className="relative flex items-center gap-4">
