@@ -3,7 +3,9 @@ import { createFileRoute } from '@tanstack/react-router'
 import { AchievementGrid } from '../../components/achievements/AchievementGrid'
 import { PageHeader } from '../../components/shared/PageHeader'
 import { AuroraGrid } from '../../components/shared/decorations/AuroraGrid'
+import { Button } from '../../components/ui/button'
 import { useAchievements } from '../../queries/useAchievements'
+import { useAchievementUnlockStore } from '../../stores/achievementUnlock.store'
 import { useAuthStore } from '../../stores/auth.store'
 
 export const Route = createFileRoute('/_authenticated/achievements')({
@@ -13,11 +15,33 @@ export const Route = createFileRoute('/_authenticated/achievements')({
 function AchievementsPage() {
   const { data, isLoading } = useAchievements()
   const username = useAuthStore((s) => s.user?.username ?? '')
+  const enqueueUnlock = useAchievementUnlockStore((s) => s.enqueue)
 
   const achievements = data ?? []
   const totalUnlocked = achievements.filter((a) => a.unlocked).length
   const total = achievements.length
   const pct = total > 0 ? Math.round((totalUnlocked / total) * 100) : 0
+
+  // Dev-only helper: pick the first non-hidden achievement and fire the
+  // unlock toast with its data so designers can iterate on the popup
+  // without having to actually earn a success.
+  const triggerTestUnlock = () => {
+    const sample =
+      achievements.find((a) => !a.hidden && a.reward) ??
+      achievements.find((a) => !a.hidden) ??
+      achievements[0]
+    if (!sample) {
+      return
+    }
+    enqueueUnlock([
+      {
+        key: sample.key,
+        name: sample.name,
+        iconKey: sample.iconKey,
+        reward: sample.reward,
+      },
+    ])
+  }
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)]">
@@ -35,15 +59,27 @@ function AchievementsPage() {
           ]}
           title="Galerie des succès"
           right={
-            <>
-              <div className="font-display text-3xl font-extrabold tabular-nums leading-none text-text">
-                {totalUnlocked}
-                <span className="text-text-light/50"> / {total}</span>
+            <div className="flex items-end gap-3">
+              {import.meta.env.DEV && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={triggerTestUnlock}
+                  className="font-mono text-[10px] uppercase tracking-wider"
+                >
+                  Test unlock
+                </Button>
+              )}
+              <div>
+                <div className="font-display text-3xl font-extrabold tabular-nums leading-none text-text">
+                  {totalUnlocked}
+                  <span className="text-text-light/50"> / {total}</span>
+                </div>
+                <div className="font-mono text-[10px] uppercase tracking-wider text-text-light mt-1">
+                  Débloqués · {pct}%
+                </div>
               </div>
-              <div className="font-mono text-[10px] uppercase tracking-wider text-text-light mt-1">
-                Débloqués · {pct}%
-              </div>
-            </>
+            </div>
           }
         />
 
