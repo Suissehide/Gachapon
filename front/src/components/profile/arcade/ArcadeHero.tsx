@@ -33,26 +33,6 @@ export function ArcadeHero({ profile, featuredCards, isOwnProfile }: Props) {
             <h1 className="font-display text-[52px] font-extrabold leading-none text-text mt-1">
               {profile.username}
             </h1>
-            <div className="flex gap-2 mt-3 flex-wrap">
-              {isMax ? (
-                <span
-                  className="font-mono text-[10px] px-2 py-1 rounded-full font-bold"
-                  style={{
-                    background: 'linear-gradient(135deg, #fde68a, #fbbf24)',
-                    color: '#6b3a00',
-                  }}
-                >
-                  LV. MAX
-                </span>
-              ) : (
-                <span className="font-mono text-[10px] px-2 py-1 rounded-full bg-muted">
-                  LV. {profile.level}
-                </span>
-              )}
-              <span className="font-mono text-[10px] px-2 py-1 rounded-full bg-muted">
-                {profile.stats.ownedCards} cartes
-              </span>
-            </div>
           </div>
         </div>
 

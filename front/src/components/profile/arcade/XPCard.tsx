@@ -44,11 +44,10 @@ export function XPCard({ profile }: Props) {
           ))}
         </div>
       </div>
-      <div className="flex justify-between font-mono text-[11px] mt-3">
-        <span className="text-text-light">
-          {isMax ? '00 / MAX' : `${xpInLevel.toLocaleString('fr-FR')} / ${xpNeeded.toLocaleString('fr-FR')}`}
-        </span>
-        <span style={{ color: 'var(--primary)' }}>+ Prestige bientôt</span>
+      <div className="font-mono text-[11px] mt-3 text-text-light">
+        {isMax
+          ? '00 / MAX'
+          : `${xpInLevel.toLocaleString('fr-FR')} / ${xpNeeded.toLocaleString('fr-FR')}`}
       </div>
     </Card>
   )

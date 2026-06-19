@@ -56,14 +56,12 @@ function HighlightRow({ achievement }: { achievement: AchievementWithProgress })
         <div className="truncate font-display text-sm font-bold text-text">
           {achievement.name}
         </div>
-
-        {achievement.unlocked ? (
-          <div className="font-mono text-[10px] uppercase tracking-wider text-amber-600">
-            Débloqué
-          </div>
-        ) : inProgress ? (
+        <div className="line-clamp-2 font-body text-[11px] leading-snug text-text-light">
+          {achievement.description}
+        </div>
+        {inProgress && (
           <div className="mt-1 flex items-center gap-2">
-            <div className="h-[5px] flex-1 overflow-hidden rounded-full bg-muted">
+            <div className="h-[4px] flex-1 overflow-hidden rounded-full bg-muted">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-amber-400 to-amber-500 transition-[width] duration-500"
                 style={{ width: `${pct}%` }}
@@ -72,10 +70,6 @@ function HighlightRow({ achievement }: { achievement: AchievementWithProgress })
             <span className="font-mono text-[10px] tabular-nums text-text-light">
               {achievement.progress} / {achievement.threshold}
             </span>
-          </div>
-        ) : (
-          <div className="font-mono text-[10px] uppercase tracking-wider text-text-light/60">
-            À débloquer
           </div>
         )}
       </div>
