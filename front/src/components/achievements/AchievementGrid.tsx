@@ -1,5 +1,11 @@
-import type { AchievementWithProgress } from '../../constants/achievements.constant'
-import { Card, CardTitle } from '../ui/card'
+import { Coins, Cog, Flame, Gem, HelpCircle, Layers, Sparkles, Zap } from 'lucide-react'
+import type { ComponentType, SVGProps } from 'react'
+
+import {
+  type AchievementWithProgress,
+  FAMILY_VISUAL,
+  HIDDEN_FAMILY_VISUAL,
+} from '../../constants/achievements.constant'
 import { AchievementCard } from './AchievementCard'
 import { HiddenAchievementCard } from './HiddenAchievementCard'
 
@@ -9,14 +15,18 @@ interface Props {
 
 const HIDDEN_FAMILY = '__hidden__'
 
-const FAMILY_LABELS: Record<string, string> = {
-  pulls: 'Tirages',
-  dust: 'Économie',
-  collection_rarity: 'Collection — raretés',
-  collection_variants: 'Collection — variantes',
-  collection_complete: 'Complétion',
-  streak: 'Fidélité',
-  machines: 'Machines',
+const ICON_MAP: Record<
+  string,
+  ComponentType<SVGProps<SVGSVGElement> & { size?: number }>
+> = {
+  Sparkles,
+  Gem,
+  Zap,
+  Coins,
+  Flame,
+  Cog,
+  Layers,
+  HelpCircle,
 }
 
 const FAMILY_ORDER = [
@@ -29,6 +39,19 @@ const FAMILY_ORDER = [
   'dust',
 ]
 
+function getVisual(family: string) {
+  if (family === HIDDEN_FAMILY) {
+    return HIDDEN_FAMILY_VISUAL
+  }
+  return (
+    FAMILY_VISUAL[family] ?? {
+      hue: 35,
+      label: family,
+      icon: 'Sparkles' as const,
+    }
+  )
+}
+
 export function AchievementGrid({ achievements }: Props) {
   const grouped = new Map<string, AchievementWithProgress[]>()
   for (const a of achievements) {
@@ -36,14 +59,9 @@ export function AchievementGrid({ achievements }: Props) {
     if (!grouped.has(key)) {
       grouped.set(key, [])
     }
-    const list = grouped.get(key)
-    if (list) {
-      list.push(a)
-    }
+    grouped.get(key)?.push(a)
   }
 
-  // Stable, intentional order: known families first (by FAMILY_ORDER),
-  // unknown families next (alphabetical), hidden last.
   const orderedKeys = [
     ...FAMILY_ORDER.filter((k) => grouped.has(k)),
     ...[...grouped.keys()]
@@ -53,25 +71,54 @@ export function AchievementGrid({ achievements }: Props) {
   ]
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-[22px]">
       {orderedKeys.map((family) => {
         const items = grouped.get(family) ?? []
         const total = items.length
         const unlocked = items.filter((a) => a.unlocked).length
         const isHidden = family === HIDDEN_FAMILY
+        const visual = getVisual(family)
+        const Icon = ICON_MAP[visual.icon] ?? Sparkles
 
         return (
-          <Card key={family} className="p-6">
-            <div className="mb-4 flex items-baseline justify-between gap-3">
-              <CardTitle className="text-sm uppercase tracking-wider">
-                {isHidden ? 'Succès cachés' : (FAMILY_LABELS[family] ?? family)}
-              </CardTitle>
-              <span className="font-mono text-[11px] tabular-nums text-text-light">
-                {unlocked} / {total}
-                <span className="hidden sm:inline"> DÉBLOQUÉS</span>
+          <section
+            key={family}
+            className="rounded-[22px] border p-[26px_28px_28px]"
+            style={{
+              background: '#fff',
+              borderColor: 'rgba(27,23,38,.06)',
+              boxShadow:
+                '0 2px 0 rgba(27,23,38,.03), 0 16px 36px -20px rgba(27,23,38,.12)',
+            }}
+          >
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span
+                  className="inline-flex h-[34px] w-[34px] items-center justify-center rounded-[10px] border"
+                  style={{
+                    background: `hsl(${visual.hue}, 70%, 95%)`,
+                    borderColor: `hsl(${visual.hue}, 60%, 84%)`,
+                    color: `hsl(${visual.hue}, 65%, 42%)`,
+                  }}
+                >
+                  <Icon width={16} height={16} />
+                </span>
+                <h2
+                  className="font-display text-[22px] font-extrabold tracking-tight"
+                  style={{ color: '#1b1726' }}
+                >
+                  {visual.label}
+                </h2>
+              </div>
+              <span
+                className="font-mono text-[11px] uppercase tracking-[0.15em]"
+                style={{ color: 'rgba(27,23,38,.5)' }}
+              >
+                {unlocked} / {total} DÉBLOQUÉS
               </span>
             </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {items.map((a) =>
                 isHidden && !a.unlocked ? (
                   <HiddenAchievementCard key={a.key} />
@@ -80,7 +127,7 @@ export function AchievementGrid({ achievements }: Props) {
                 ),
               )}
             </div>
-          </Card>
+          </section>
         )
       })}
     </div>

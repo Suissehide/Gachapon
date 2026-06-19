@@ -1,39 +1,54 @@
-import { HelpCircle } from 'lucide-react'
+import { Lock } from 'lucide-react'
 
 export function HiddenAchievementCard() {
   return (
     <div
-      className="relative overflow-hidden rounded-xl border border-dashed p-4"
+      className="flex flex-col rounded-2xl border border-dashed p-[18px]"
       style={{
-        background: 'rgba(0, 0, 0, 0.015)',
-        borderColor: 'var(--border)',
+        background: '#fafaf7',
+        borderColor: 'rgba(27,23,38,.12)',
       }}
     >
       <div className="flex items-start gap-3">
         <div
-          className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[10px]"
+          className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[10px] border"
           style={{
-            background: 'var(--muted)',
-            color: 'var(--text-light)',
+            background: '#f1efe9',
+            color: 'rgba(27,23,38,.4)',
+            borderColor: 'rgba(27,23,38,.05)',
           }}
         >
-          <HelpCircle className="h-5 w-5 opacity-60" />
+          <Lock className="h-4 w-4" />
         </div>
 
-        <div className="min-w-0 flex-1">
-          <div className="font-display font-bold text-text-light">???</div>
-          <div className="font-mono text-[10px] uppercase tracking-wider text-text-light/60">
+        <div className="min-w-0 flex-1 pt-px">
+          <div
+            className="font-display text-[15px] font-bold leading-tight"
+            style={{ color: 'rgba(27,23,38,.45)' }}
+          >
+            ???
+          </div>
+          <div
+            className="mt-1 font-mono text-[9.5px] uppercase tracking-[0.14em]"
+            style={{ color: 'rgba(27,23,38,.45)' }}
+          >
             Succès caché
           </div>
         </div>
 
-        <div className="font-display text-[18px] font-extrabold leading-none text-text-light/40">
+        <div
+          className="shrink-0 font-display text-[30px] font-extrabold leading-none"
+          style={{ color: 'rgba(27,23,38,.18)' }}
+        >
           ???
         </div>
       </div>
 
-      <p className="mt-3 font-mono text-[10px] uppercase tracking-wider text-text-light/50">
-        Débloque pour révéler
+      <p
+        className="mt-3.5 text-[13px] leading-[1.45] [min-height:38px]"
+        style={{ color: 'rgba(27,23,38,.45)' }}
+      >
+        Débloque pour révéler la description et les récompenses.
       </p>
     </div>
   )

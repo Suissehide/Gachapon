@@ -1,7 +1,6 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 
 import { AchievementGrid } from '../../components/achievements/AchievementGrid'
-import { PageHeader } from '../../components/shared/PageHeader'
 import { AuroraGrid } from '../../components/shared/decorations/AuroraGrid'
 import { Button } from '../../components/ui/button'
 import { useAchievements } from '../../queries/useAchievements'
@@ -44,70 +43,113 @@ function AchievementsPage() {
   }
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)]">
+    <div
+      className="relative min-h-[calc(100vh-4rem)]"
+      style={{ background: '#fbf8f3', color: '#1b1726' }}
+    >
       <AuroraGrid />
-      <div className="relative z-10 mx-auto flex max-w-5xl flex-col gap-4 px-4 py-8">
-        <PageHeader
-          breadcrumbs={[
-            { label: 'Gachapon', to: '/play' },
-            {
-              label: 'Profil',
-              to: '/profile/$username',
-              params: { username },
-            },
-            { label: 'Succès' },
-          ]}
-          title="Galerie des succès"
-          right={
-            <div className="flex items-end gap-3">
-              {import.meta.env.DEV && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={triggerTestUnlock}
-                  className="font-mono text-[10px] uppercase tracking-wider"
-                >
-                  Test unlock
-                </Button>
-              )}
-              <div>
-                <div className="font-display text-3xl font-extrabold tabular-nums leading-none text-text">
-                  {totalUnlocked}
-                  <span className="text-text-light/50"> / {total}</span>
-                </div>
-                <div className="font-mono text-[10px] uppercase tracking-wider text-text-light mt-1">
-                  Débloqués · {pct}%
-                </div>
+      <div className="relative z-10 mx-auto flex max-w-5xl flex-col gap-[22px] px-4 py-8">
+        {/* Hero header */}
+        <header className="flex flex-wrap items-start justify-between gap-6">
+          <div className="min-w-0">
+            <nav
+              aria-label="Fil d'Ariane"
+              className="flex flex-wrap items-center gap-x-1.5 gap-y-1"
+            >
+              <Link
+                to="/play"
+                className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] transition-colors"
+                style={{ color: 'rgba(27,23,38,.5)' }}
+              >
+                GACHAPON
+              </Link>
+              <span
+                className="font-mono text-[11px] font-bold uppercase tracking-[0.22em]"
+                style={{ color: 'rgba(27,23,38,.3)' }}
+                aria-hidden
+              >
+                /
+              </span>
+              <Link
+                to="/profile/$username"
+                params={{ username }}
+                className="font-mono text-[11px] font-bold uppercase tracking-[0.22em]"
+                style={{ color: 'rgba(27,23,38,.5)' }}
+              >
+                PROFIL
+              </Link>
+              <span
+                className="font-mono text-[11px] font-bold uppercase tracking-[0.22em]"
+                style={{ color: 'rgba(27,23,38,.3)' }}
+                aria-hidden
+              >
+                /
+              </span>
+              <span
+                className="font-mono text-[11px] font-bold uppercase tracking-[0.22em]"
+                style={{ color: 'rgba(27,23,38,.5)' }}
+                aria-current="page"
+              >
+                SUCCÈS
+              </span>
+            </nav>
+            <h1
+              className="mt-2 font-display text-[48px] font-extrabold leading-none tracking-[-0.03em]"
+              style={{ color: '#1b1726' }}
+            >
+              Galerie des succès
+            </h1>
+          </div>
+
+          <div className="flex items-end gap-3">
+            {import.meta.env.DEV && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={triggerTestUnlock}
+                className="font-mono text-[10px] uppercase tracking-wider"
+              >
+                Test unlock
+              </Button>
+            )}
+            <div className="text-right">
+              <div className="font-display text-[44px] font-extrabold leading-none tabular-nums">
+                <span style={{ color: '#f59e0b' }}>{totalUnlocked}</span>
+                <span style={{ color: 'rgba(27,23,38,.25)' }}> / </span>
+                <span style={{ color: 'rgba(27,23,38,.35)' }}>{total}</span>
+              </div>
+              <div
+                className="mt-1.5 font-mono text-[11px] uppercase tracking-[0.15em]"
+                style={{ color: 'rgba(27,23,38,.5)' }}
+              >
+                DÉBLOQUÉS · {pct}%
               </div>
             </div>
-          }
-        />
-
-        {/* Global progress bar */}
-        {total > 0 && (
-          <div className="h-[6px] overflow-hidden rounded-full bg-muted/40">
-            <div
-              className="h-full rounded-full transition-[width] duration-700"
-              style={{
-                width: `${pct}%`,
-                background:
-                  'linear-gradient(90deg, #fbbf24, #f59e0b, #ec4899, #8b5cf6)',
-                boxShadow: '0 0 12px rgba(245, 158, 11, 0.3)',
-              }}
-            />
           </div>
-        )}
+        </header>
 
         {isLoading ? (
           <div className="flex h-48 items-center justify-center">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
         ) : achievements.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-card/40 px-6 py-12 text-center">
-            <p className="font-display text-lg font-bold text-text-light">
+          <div
+            className="rounded-[22px] border border-dashed px-6 py-12 text-center"
+            style={{
+              background: '#fff',
+              borderColor: 'rgba(27,23,38,.12)',
+            }}
+          >
+            <p
+              className="font-display text-lg font-bold"
+              style={{ color: 'rgba(27,23,38,.5)' }}
+            >
               Aucun succès disponible
             </p>
-            <p className="mt-1 font-mono text-[11px] uppercase tracking-wider text-text-light/60">
+            <p
+              className="mt-1 font-mono text-[11px] uppercase tracking-wider"
+              style={{ color: 'rgba(27,23,38,.4)' }}
+            >
               Reviens plus tard
             </p>
           </div>
