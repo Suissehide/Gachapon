@@ -3,6 +3,7 @@ import { Trophy, Users } from 'lucide-react'
 import { useState } from 'react'
 
 import { PageHeader } from '../../components/shared/PageHeader'
+import { PageShell } from '../../components/shared/PageShell'
 import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
 import type { CollectorEntry, TeamEntry } from '../../queries/useLeaderboard'
 import { useLeaderboard } from '../../queries/useLeaderboard'
@@ -35,17 +36,16 @@ function LeaderboardPage() {
   const currentUser = useAuthStore((s) => s.user)
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
-      <div className="mx-auto flex max-w-5xl flex-col gap-4">
-        <PageHeader
-          breadcrumbs={[
-            { label: 'Gachapon', to: '/play' },
-            { label: 'Classement' },
-          ]}
-          title="Classement"
-        />
+    <PageShell>
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Gachapon', to: '/play' },
+          { label: 'Classement' },
+        ]}
+        title="Classement"
+      />
 
-        <SegmentedControl
+      <SegmentedControl
           options={TABS}
           value={activeTab}
           onChange={setActiveTab}
@@ -85,10 +85,9 @@ function LeaderboardPage() {
                   />
                 ))
               ))}
-          </div>
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+    </PageShell>
   )
 }
 

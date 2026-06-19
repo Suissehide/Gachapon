@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 
 import { AchievementGrid } from '../../components/achievements/AchievementGrid'
-import { AuroraGrid } from '../../components/shared/decorations/AuroraGrid'
+import { PageShell } from '../../components/shared/PageShell'
 import { Button } from '../../components/ui/button'
 import { useAchievements } from '../../queries/useAchievements'
 import { useAchievementUnlockStore } from '../../stores/achievementUnlock.store'
@@ -43,14 +43,9 @@ function AchievementsPage() {
   }
 
   return (
-    <div
-      className="relative min-h-[calc(100vh-4rem)]"
-      style={{ background: '#fbf8f3', color: '#1b1726' }}
-    >
-      <AuroraGrid />
-      <div className="relative z-10 mx-auto flex max-w-5xl flex-col gap-[22px] px-4 py-8">
-        {/* Hero header */}
-        <header className="flex flex-wrap items-start justify-between gap-6">
+    <PageShell>
+      {/* Hero header */}
+      <header className="flex flex-wrap items-start justify-between gap-6">
           <div className="min-w-0">
             <nav
               aria-label="Fil d'Ariane"
@@ -153,10 +148,9 @@ function AchievementsPage() {
               Reviens plus tard
             </p>
           </div>
-        ) : (
-          <AchievementGrid achievements={achievements} />
-        )}
-      </div>
-    </div>
+      ) : (
+        <AchievementGrid achievements={achievements} />
+      )}
+    </PageShell>
   )
 }

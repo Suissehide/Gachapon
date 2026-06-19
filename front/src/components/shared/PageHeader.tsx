@@ -39,7 +39,10 @@ export function PageHeader({ breadcrumbs, title, subtitle, right }: Props) {
             {breadcrumbs.map((crumb, i) => {
               const isLast = i === breadcrumbs.length - 1
               return (
-                <span key={`${crumb.label}-${i}`} className="flex items-center gap-x-1.5">
+                <span
+                  key={`${crumb.label}-${i}`}
+                  className="flex items-center gap-x-1.5"
+                >
                   {i > 0 && (
                     <span
                       className={`${baseChip} text-text-light/40`}
@@ -70,7 +73,7 @@ export function PageHeader({ breadcrumbs, title, subtitle, right }: Props) {
             })}
           </nav>
         )}
-        <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight text-text leading-tight">
+        <h1 className="mt-2 font-display text-[32px] font-extrabold leading-none tracking-[-0.03em] text-text sm:text-[44px] md:text-[48px]">
           {title}
         </h1>
         {subtitle && (

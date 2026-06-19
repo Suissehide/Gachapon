@@ -8,6 +8,7 @@ import { CollectionGrid } from '../../components/collection/CollectionGrid.tsx'
 import { CollectionSetGroup } from '../../components/collection/CollectionSetGroup.tsx'
 import { RecycleModal } from '../../components/collection/RecycleModal.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
+import { PageShell } from '../../components/shared/PageShell.tsx'
 import {
   type UserCard,
   useCards,
@@ -160,9 +161,8 @@ function Collection() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
-      <div className="mx-auto flex max-w-5xl flex-col gap-4">
-        <PageHeader
+    <PageShell>
+      <PageHeader
           breadcrumbs={[
             { label: 'Gachapon', to: '/play' },
             {
@@ -209,7 +209,6 @@ function Collection() {
             onDetail={handleDetail}
           />
         )}
-      </div>
       <CardViewModal
         entry={detailTarget}
         onClose={() => setDetailTarget(null)}
@@ -231,6 +230,6 @@ function Collection() {
           variant={recycleTarget.variant}
         />
       )}
-    </div>
+    </PageShell>
   )
 }

@@ -11,6 +11,7 @@ import {
 import { useState } from 'react'
 
 import { PageHeader } from '../../components/shared/PageHeader'
+import { PageShell } from '../../components/shared/PageShell'
 import { ConfirmPopup } from '../../components/team'
 import { Button } from '../../components/ui/button.tsx'
 import { Input } from '../../components/ui/input.tsx'
@@ -65,20 +66,19 @@ function Settings() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
-      <div className="mx-auto flex max-w-5xl flex-col gap-6">
-        <PageHeader
-          breadcrumbs={[
-            { label: 'Gachapon', to: '/play' },
-            {
-              label: 'Profil',
-              to: '/profile/$username',
-              params: { username: user?.username ?? '' },
-            },
-            { label: 'Paramètres' },
-          ]}
-          title="Paramètres"
-        />
+    <PageShell>
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Gachapon', to: '/play' },
+          {
+            label: 'Profil',
+            to: '/profile/$username',
+            params: { username: user?.username ?? '' },
+          },
+          { label: 'Paramètres' },
+        ]}
+        title="Paramètres"
+      />
 
         {/* Infos compte */}
         <section className="rounded-xl border border-border bg-card p-6">
@@ -203,8 +203,7 @@ function Settings() {
               ))}
             </ul>
           )}
-        </section>
-      </div>
+      </section>
 
       <ConfirmPopup
         open={deleteTarget !== null}
@@ -234,6 +233,6 @@ function Settings() {
           })
         }}
       />
-    </div>
+    </PageShell>
   )
 }

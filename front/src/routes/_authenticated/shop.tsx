@@ -11,6 +11,7 @@ import {
 import { useEffect, useState } from 'react'
 
 import { PageHeader } from '../../components/shared/PageHeader'
+import { PageShell } from '../../components/shared/PageShell'
 import { CardDisplay } from '../../components/shared/tcg-card/CardDisplay'
 import { Button } from '../../components/ui/button'
 import { Card, CardTitle } from '../../components/ui/card'
@@ -171,15 +172,14 @@ function ShopPage() {
   }))
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
-      <div className="mx-auto flex max-w-5xl flex-col gap-4">
-        <PageHeader
-          breadcrumbs={[
-            { label: 'Gachapon', to: '/play' },
-            { label: 'Boutique' },
-          ]}
-          title="Dépense ta poussière"
-        />
+    <PageShell>
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Gachapon', to: '/play' },
+          { label: 'Boutique' },
+        ]}
+        title="Dépense ta poussière"
+      />
 
         {/* ── Daily Shop Section ─────────────────────────────────── */}
         <Card className="p-6">
@@ -277,11 +277,10 @@ function ShopPage() {
                     )
                   })}
                 </div>
-              </Card>
-            ))
-        )}
-      </div>
-    </div>
+            </Card>
+          ))
+      )}
+    </PageShell>
   )
 }
 
