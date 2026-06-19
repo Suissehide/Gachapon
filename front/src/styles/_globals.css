@@ -94,6 +94,12 @@ h6 {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* Mirror of …Drop for the exit phase — the toast lifts back up off-screen. */
+@keyframes achievementToastLift {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-120%); }
+}
+
 @keyframes claimParticle {
   0% {
     transform: translate(0, 0) scale(1);

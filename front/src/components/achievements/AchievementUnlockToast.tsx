@@ -1,40 +1,94 @@
 import { Award, Coins, Sparkles, Star, X } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
+import type { UnlockedAchievement } from '../../constants/achievements.constant'
 import { useAchievementUnlockStore } from '../../stores/achievementUnlock.store'
 
 const DISPLAY_MS = 5000
+const EXIT_MS = 350
 
 export function AchievementUnlockToast() {
   const current = useAchievementUnlockStore((s) => s.queue[0])
-  const dismiss = useAchievementUnlockStore((s) => s.dismiss)
+  const popQueue = useAchievementUnlockStore((s) => s.dismiss)
 
-  useEffect(() => {
-    if (!current) {
+  // `pending` holds the achievement currently rendered. We keep it after the
+  // store has been popped so the exit animation can finish — only then do we
+  // null it out and let the next item (if any) flow in.
+  const [pending, setPending] = useState<UnlockedAchievement | null>(
+    current ?? null,
+  )
+  const [phase, setPhase] = useState<'in' | 'out'>('in')
+  const autoHideTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const removeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const startExit = () => {
+    if (phase === 'out') {
       return
     }
-    const t = setTimeout(dismiss, DISPLAY_MS)
-    return () => clearTimeout(t)
-  }, [current, dismiss])
+    setPhase('out')
+    if (autoHideTimer.current) {
+      clearTimeout(autoHideTimer.current)
+      autoHideTimer.current = null
+    }
+    removeTimer.current = setTimeout(() => {
+      popQueue()
+      setPending(null)
+      setPhase('in')
+    }, EXIT_MS)
+  }
 
-  if (!current) {
+  // When a new unlock arrives and nothing is on screen, swap it in.
+  useEffect(() => {
+    if (current && !pending) {
+      setPending(current)
+      setPhase('in')
+    }
+  }, [current, pending])
+
+  // Auto-dismiss after DISPLAY_MS (resets on each fresh item).
+  useEffect(() => {
+    if (!pending || phase !== 'in') {
+      return
+    }
+    autoHideTimer.current = setTimeout(startExit, DISPLAY_MS)
+    return () => {
+      if (autoHideTimer.current) {
+        clearTimeout(autoHideTimer.current)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pending, phase])
+
+  // Cleanup on unmount.
+  useEffect(() => {
+    return () => {
+      if (autoHideTimer.current) {
+        clearTimeout(autoHideTimer.current)
+      }
+      if (removeTimer.current) {
+        clearTimeout(removeTimer.current)
+      }
+    }
+  }, [])
+
+  if (!pending) {
     return null
   }
 
-  const reward = current.reward
+  const reward = pending.reward
 
   return (
-    // Overlay centres the card horizontally and anchors it near the top so
-    // the toast doesn't sit over the gameplay area.
     <div className="pointer-events-none fixed inset-x-0 top-6 z-50 flex justify-center px-4">
       <button
         type="button"
-        onClick={dismiss}
+        onClick={startExit}
         aria-label="Fermer"
-        className="pointer-events-auto relative w-full max-w-md cursor-pointer border-0 bg-transparent p-0 text-left"
+        className="group pointer-events-auto relative w-full max-w-md cursor-pointer border-0 bg-transparent p-0 text-left"
         style={{
           animation:
-            'achievementToastDrop 450ms cubic-bezier(0.34, 1.4, 0.64, 1) both',
+            phase === 'in'
+              ? 'achievementToastDrop 450ms cubic-bezier(0.34, 1.4, 0.64, 1) both'
+              : `achievementToastLift ${EXIT_MS}ms cubic-bezier(0.4, 0.0, 0.7, 0.3) forwards`,
         }}
       >
         <div
@@ -52,7 +106,15 @@ export function AchievementUnlockToast() {
                 'radial-gradient(circle, rgba(253, 230, 138, 0.7), transparent 70%)',
             }}
           />
-          <X className="absolute right-3 top-3 h-4 w-4 text-white/60" />
+
+          {/* Close affordance — the parent button captures the click; the
+              chip rotates / brightens on hover for feedback. */}
+          <span
+            className="pointer-events-none absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/0 text-white/70 transition-all duration-150 group-hover:bg-white/20 group-hover:text-white group-hover:scale-110"
+            aria-hidden
+          >
+            <X className="h-3.5 w-3.5 transition-transform duration-150 group-hover:rotate-90" />
+          </span>
 
           <div className="relative flex items-center gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm">
@@ -63,7 +125,7 @@ export function AchievementUnlockToast() {
                 Succès débloqué
               </div>
               <div className="mt-1 font-display text-xl font-black leading-tight text-white drop-shadow">
-                {current.name}
+                {pending.name}
               </div>
             </div>
           </div>
