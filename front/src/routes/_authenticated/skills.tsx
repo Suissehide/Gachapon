@@ -5,6 +5,7 @@ import type { LucideIcon } from 'lucide-react'
 const iconMap = Icons as unknown as Record<string, LucideIcon>
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { SkillTreeCanvas } from '../../components/skill-tree/index.ts'
+import { Button } from '../../components/ui/button.tsx'
 import {
   useInvestSkill,
   useResetSkills,
@@ -65,19 +66,14 @@ function SkillsPage() {
                 points
               </span>
               {state.totalInvested > 0 && (
-                <button
-                  type="button"
+                <Button
+                  variant="destructive"
+                  size="sm"
                   onClick={handleReset}
                   disabled={reset.isPending}
-                  className="rounded border px-3 py-1 font-mono text-[11px] uppercase tracking-wider transition disabled:opacity-50"
-                  style={{
-                    borderColor: '#ef4444',
-                    color: '#ef4444',
-                    background: 'rgba(239,68,68,0.06)',
-                  }}
                 >
                   Reset · {state.resetCost} dust
-                </button>
+                </Button>
               )}
             </div>
           }

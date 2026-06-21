@@ -19,7 +19,13 @@ export function FeaturedCardsFan({ cards }: Props) {
   }
 
   return (
-    <div className="relative flex justify-center items-end" style={{ minHeight: 280, paddingLeft: 40 }}>
+    <div
+      className="relative flex items-end justify-center"
+      // Sized to fit inside an ArcadeHero with a 320px identity column
+      // and 32px gap inside max-w-5xl (≈ 568px available). 5 cards × 130px
+      // overlapping by 38px + small left pad → ~520px wide.
+      style={{ minHeight: 240, paddingLeft: 28 }}
+    >
       {cards.map((card, i) => {
         const rotation = (i - 2) * 5
         const offset = Math.abs(i - 2) * 10
@@ -30,13 +36,13 @@ export function FeaturedCardsFan({ cards }: Props) {
           // biome-ignore lint/a11y/useAriaPropsSupportedByRole: aria-label kept for screen readers describing the hovered card
           <div
             key={card.id}
-            className="w-[170px] transition-all duration-[350ms]"
+            className="w-[130px] transition-all duration-[350ms]"
             style={{
               transform: isHovered
                 ? 'translateY(-26px) rotate(0deg) scale(1.06)'
                 : `translateY(${offset}px) rotate(${rotation}deg)`,
               transformOrigin: '50% 100%',
-              marginLeft: i === 0 ? 0 : -38,
+              marginLeft: i === 0 ? 0 : -34,
               filter: isDimmed
                 ? 'brightness(.65) saturate(.7)'
                 : 'drop-shadow(0 14px 24px rgba(27,23,38,.18))',

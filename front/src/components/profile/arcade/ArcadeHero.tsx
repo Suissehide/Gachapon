@@ -22,26 +22,29 @@ export function ArcadeHero({ profile, featuredCards, isOwnProfile }: Props) {
 
   return (
     <Card className="rounded-3xl p-8 overflow-visible">
-      <div className="grid gap-8" style={{ gridTemplateColumns: '360px 1fr' }}>
+      <div
+        className="grid gap-8"
+        style={{ gridTemplateColumns: 'minmax(0, 320px) minmax(0, 1fr)' }}
+      >
         {/* Identity column */}
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-5 min-w-0">
           <FoilAvatar initials={initials} isMax={isMax} />
-          <div>
+          <div className="min-w-0">
             <div className="font-mono text-[11px] uppercase tracking-[.2em] text-primary-light">
               {isMax ? `NIV. MAX · MEMBRE ${joinedYear}` : `NIV. ${profile.level} · MEMBRE ${joinedYear}`}
             </div>
-            <h1 className="font-display text-[52px] font-extrabold leading-none text-text mt-1">
+            <h1 className="font-display text-[44px] font-extrabold leading-none text-text mt-1 truncate">
               {profile.username}
             </h1>
           </div>
         </div>
 
         {/* Featured cards column */}
-        <div className="relative">
-          <div className="flex items-baseline justify-between mb-4">
+        <div className="relative min-w-0">
+          <div className="flex items-baseline justify-between mb-4 gap-2">
             <CardTitle className="text-sm uppercase tracking-wider">Cartes vedettes</CardTitle>
             <div className="flex items-center gap-3">
-              <span className="font-mono text-[11px] text-text-light">
+              <span className="font-mono text-[11px] text-text-light hidden md:inline">
                 TOP {featuredCards.length} · PAR RARETÉ
               </span>
               {isOwnProfile && (
