@@ -1,7 +1,6 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import type { ColumnDef } from '@tanstack/react-table'
 import {
-  ArrowLeft,
   Crown,
   LogOut,
   Search,
@@ -14,6 +13,9 @@ import {
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { RankedMember } from '../../../api/teams.api.ts'
+import { ArcadeCard } from '../../../components/shared/ArcadeCard.tsx'
+import { PageHeader } from '../../../components/shared/PageHeader.tsx'
+import { PageShell } from '../../../components/shared/PageShell.tsx'
 import { ReactTable } from '../../../components/table/reactTable.tsx'
 import {
   ConfirmPopup,
@@ -241,40 +243,24 @@ function TeamDetailPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
-      <div className="mx-auto max-w-5xl">
-        <Button
-          variant="ghost"
-          size="sm"
-          asChild
-          className="mb-6 -ml-2 text-text-light hover:text-text"
-        >
-          <Link to="/team">
-            <ArrowLeft className="h-4 w-4" />
-            Mes équipes
-          </Link>
-        </Button>
-
-        <div className="mb-6 flex items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/30 to-secondary/30 text-xl font-black text-primary">
-            {team.name[0]?.toUpperCase()}
-          </div>
-          <div className="flex-1">
-            <h1 className="text-2xl font-black text-text">{team.name}</h1>
-            {team.description && (
-              <p className="text-sm text-text-light">{team.description}</p>
-            )}
-            <p className="text-xs text-text-light">
-              {team.members.length} membre
-              {team.members.length !== 1 ? 's' : ''}
-            </p>
-          </div>
+    <PageShell>
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Gachapon', to: '/play' },
+          { label: 'Équipes', to: '/team' },
+          { label: team.name },
+        ]}
+        title={team.name}
+        subtitle={
+          <>
+            {team.description ? `${team.description} · ` : ''}
+            {team.members.length} membre{team.members.length !== 1 ? 's' : ''}
+          </>
+        }
+        right={
           <div className="flex items-center gap-2">
             {canManage && myMember && (
-              <InviteMemberPopup
-                teamId={id}
-                userRole={myMember.role}
-              />
+              <InviteMemberPopup teamId={id} userRole={myMember.role} />
             )}
             {isOwner && (
               <Button variant="ghost" size="icon" asChild title="Réglages">
@@ -308,8 +294,10 @@ function TeamDetailPage() {
               </>
             )}
           </div>
-        </div>
+        }
+      />
 
+      <ArcadeCard>
         <div className="relative mb-4">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light" />
           <Input
@@ -320,7 +308,10 @@ function TeamDetailPage() {
           />
         </div>
 
-        <div className="overflow-hidden rounded-md border border-border bg-card">
+        <div
+          className="overflow-hidden rounded-xl border"
+          style={{ borderColor: 'rgba(27,23,38,.07)' }}
+        >
           <div className="h-[min(80vh,600px)]">
             <ReactTable
               columns={columns}
@@ -341,9 +332,7 @@ function TeamDetailPage() {
             </div>
           )}
         </div>
-
-
-      </div>
-    </div>
+      </ArcadeCard>
+    </PageShell>
   )
 }

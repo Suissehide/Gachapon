@@ -1,6 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Users } from 'lucide-react'
 
+import { ArcadeCard } from '../../../components/shared/ArcadeCard.tsx'
+import { PageHeader } from '../../../components/shared/PageHeader.tsx'
+import { PageShell } from '../../../components/shared/PageShell.tsx'
 import { CreateTeamPopup, TeamCard } from '../../../components/team/index.ts'
 import { useLeaveTeam, useMyTeams } from '../../../queries/useTeams.ts'
 import { useAuthStore } from '../../../stores/auth.store.ts'
@@ -17,24 +20,27 @@ function TeamsPage() {
   const teams = data?.teams ?? []
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-black text-text">Mes Équipes</h1>
-            <p className="text-sm text-text-light">
-              {teams.length} / 5 équipes
-            </p>
-          </div>
-          {teams.length < 5 && <CreateTeamPopup />}
-        </div>
+    <PageShell>
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Gachapon', to: '/play' },
+          { label: 'Équipes' },
+        ]}
+        title="Mes équipes"
+        subtitle={`${teams.length} / 5 équipes`}
+        right={teams.length < 5 ? <CreateTeamPopup /> : undefined}
+      />
 
+      <ArcadeCard>
         {isLoading ? (
           <div className="flex h-32 items-center justify-center">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
         ) : teams.length === 0 ? (
-          <div className="flex h-48 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border">
+          <div
+            className="flex h-48 flex-col items-center justify-center gap-3 rounded-xl border border-dashed"
+            style={{ borderColor: 'rgba(27,23,38,.12)' }}
+          >
             <Users className="h-10 w-10 text-text-light" />
             <p className="text-text-light">Aucune équipe. Créez-en une !</p>
           </div>
@@ -50,7 +56,7 @@ function TeamsPage() {
             ))}
           </div>
         )}
-      </div>
-    </div>
+      </ArcadeCard>
+    </PageShell>
   )
 }

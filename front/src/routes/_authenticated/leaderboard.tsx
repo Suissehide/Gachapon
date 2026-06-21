@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { Trophy, Users } from 'lucide-react'
 import { useState } from 'react'
 
+import { ArcadeCard } from '../../components/shared/ArcadeCard'
 import { PageHeader } from '../../components/shared/PageHeader'
 import { PageShell } from '../../components/shared/PageShell'
 import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
@@ -45,12 +46,13 @@ function LeaderboardPage() {
         title="Classement"
       />
 
-      <SegmentedControl
+      <ArcadeCard className="p-0 sm:p-0">
+        <SegmentedControl
           options={TABS}
           value={activeTab}
           onChange={setActiveTab}
           stretch
-          className="w-full"
+          className="w-full rounded-t-[22px] rounded-b-none"
         />
 
         {isLoading ? (
@@ -58,7 +60,7 @@ function LeaderboardPage() {
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-border bg-card">
+          <div className="overflow-hidden">
             {activeTab === 'collectors' &&
               (data?.collectors.length === 0 ? (
                 <EmptyState />
@@ -85,8 +87,9 @@ function LeaderboardPage() {
                   />
                 ))
               ))}
-        </div>
-      )}
+          </div>
+        )}
+      </ArcadeCard>
     </PageShell>
   )
 }
