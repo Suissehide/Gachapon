@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import * as Icons from 'lucide-react'
-import { RotateCcw } from 'lucide-react'
+import { RotateCcw, Sparkles, TriangleAlert, Zap } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 
@@ -110,7 +110,47 @@ function SkillsPage() {
         onOpenChange={setResetOpen}
         icon={<RotateCcw className="h-4 w-4" />}
         title="Réinitialiser l'arbre"
-        description={`Coût : ${state.resetCost} dust. Tous les points investis seront rendus.`}
+        description={
+          <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-xl border border-border bg-muted/40 p-3">
+                <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-text-light">
+                  <Sparkles className="h-3 w-3 text-violet-400" />
+                  Coût
+                </div>
+                <div className="mt-1 flex items-baseline gap-1">
+                  <span className="font-display text-2xl font-extrabold tabular-nums text-text">
+                    {state.resetCost}
+                  </span>
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-text-light">
+                    dust
+                  </span>
+                </div>
+              </div>
+              <div className="rounded-xl border border-border bg-muted/40 p-3">
+                <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-text-light">
+                  <Zap className="h-3 w-3 text-amber-400" />
+                  Points rendus
+                </div>
+                <div className="mt-1 flex items-baseline gap-1">
+                  <span className="font-display text-2xl font-extrabold tabular-nums text-text">
+                    {state.totalInvested}
+                  </span>
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-text-light">
+                    points
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-text">
+              <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+              <p className="leading-snug">
+                Tous tes points investis seront redistribués. Cette action est
+                définitive.
+              </p>
+            </div>
+          </div>
+        }
         confirmLabel="Réinitialiser"
         onConfirm={() => reset.mutate()}
       />

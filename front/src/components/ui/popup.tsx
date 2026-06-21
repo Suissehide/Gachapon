@@ -111,9 +111,9 @@ const PopupTitle = React.forwardRef<
   React.ComponentRef<typeof Dialog.Title>,
   PopupTitleProps
 >(({ className, children, icon, subtitle, ...props }, ref) => (
-  <div className={`flex ${subtitle ? 'items-center' : 'items-start'} gap-3`}>
+  <div className="flex items-center gap-3">
     {icon && (
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 border border-primary/25 text-primary mt-0.5">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 border border-primary/25 text-primary">
         {icon}
       </span>
     )}
