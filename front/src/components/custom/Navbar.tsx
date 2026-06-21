@@ -15,10 +15,10 @@ import {
 const navItems = [
   { to: '/play', label: 'Jouer' },
   { to: '/collection', label: 'Collection' },
-  { to: '/team', label: 'Équipes' },
-  { to: '/shop', label: 'Boutique' },
   { to: '/skills', label: 'Compétences' },
+  { to: '/shop', label: 'Boutique' },
   { to: '/leaderboard', label: 'Classement' },
+  { to: '/team', label: 'Équipes' },
 ]
 
 export function Navbar() {
@@ -79,7 +79,9 @@ export function Navbar() {
                   </Link>
                 </div>
                 <InvitationsBadge />
-                <RewardsBadge pendingRewardsCount={user.pendingRewardsCount ?? 0} />
+                <RewardsBadge
+                  pendingRewardsCount={user.pendingRewardsCount ?? 0}
+                />
                 <div className="h-5 w-px bg-border hidden lg:block" />
                 <Link
                   to={'/profile/$username'}
