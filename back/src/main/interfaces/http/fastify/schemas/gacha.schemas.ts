@@ -30,8 +30,30 @@ export const pullsHistoryQuerySchema = z.object({
 
 // ── GET /pulls/recent ───────────────────────────────────────────────────────
 
+const cardRarityEnum = z.enum([
+  'COMMON',
+  'UNCOMMON',
+  'RARE',
+  'EPIC',
+  'LEGENDARY',
+])
+
+// Comma-separated list (e.g. ?rarities=EPIC,LEGENDARY). Parsed into an
+// array on the server side because Fastify only ships strings in querystrings.
+const raritiesCsvSchema = z
+  .string()
+  .transform((raw) =>
+    raw
+      .split(',')
+      .map((s) => s.trim().toUpperCase())
+      .filter((s) => s.length > 0),
+  )
+  .pipe(z.array(cardRarityEnum))
+  .optional()
+
 export const pullsRecentQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
   before: z.string().datetime().optional(),
   teamId: z.string().uuid().optional(),
+  rarities: raritiesCsvSchema,
 })

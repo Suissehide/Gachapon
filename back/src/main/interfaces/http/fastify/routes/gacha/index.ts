@@ -196,10 +196,11 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
       schema: { querystring: pullsRecentQuerySchema },
     },
     async (request) => {
-      const { limit, before, teamId } = request.query
+      const { limit, before, teamId, rarities } = request.query
       const page = await gachaPullRepository.findRecent(limit, {
         before: before ? new Date(before) : undefined,
         teamId,
+        rarities,
       })
       return {
         entries: page.entries.map((p) => ({

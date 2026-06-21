@@ -28,6 +28,9 @@ export type RecentPullEntry = {
 export type FindRecentOpts = {
   before?: Date
   teamId?: string
+  // Restrict the feed to a subset of rarities (used to surface only
+  // EPIC/LEGENDARY pulls in the live feed without flooding it).
+  rarities?: CardRarity[]
 }
 
 export type RecentPullPage = {

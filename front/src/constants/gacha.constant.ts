@@ -48,11 +48,19 @@ export const GACHA_ROUTES = {
   tokenBalance: '/tokens/balance',
   pull: '/pulls',
   history: (page: number) => `/pulls/history?page=${page}`,
-  recent: (opts?: { limit?: number; before?: string; teamId?: string }) => {
+  recent: (opts?: {
+    limit?: number
+    before?: string
+    teamId?: string
+    rarities?: string[]
+  }) => {
     const params = new URLSearchParams()
     params.set('limit', String(opts?.limit ?? 20))
     if (opts?.before) params.set('before', opts.before)
     if (opts?.teamId) params.set('teamId', opts.teamId)
+    if (opts?.rarities && opts.rarities.length > 0) {
+      params.set('rarities', opts.rarities.join(','))
+    }
     return `/pulls/recent?${params.toString()}`
   },
 } as const

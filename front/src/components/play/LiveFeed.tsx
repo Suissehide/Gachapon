@@ -31,8 +31,11 @@ export function LiveFeed() {
   }, [teams, selectedTeamId])
 
   const teamId = tab === 'team' ? selectedTeamId : undefined
+  // Restrict the public feed to high-rarity pulls so common drops don't
+  // drown the truly exciting ones (EPIC / LEGENDARY only).
+  const RARITY_FILTER = ['EPIC', 'LEGENDARY']
   const { entries, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useLiveFeed({ teamId })
+    useLiveFeed({ teamId, rarities: RARITY_FILTER })
 
   // IntersectionObserver — charge la page suivante quand le sentinel est visible
   useEffect(() => {
@@ -72,7 +75,10 @@ export function LiveFeed() {
             <div className="flex items-center gap-2 px-3 py-2.5">
               <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse shrink-0" />
               <span className="text-[9px] font-bold uppercase tracking-[0.22em] text-text-light">
-                Tirages récents
+                Tirages rares
+              </span>
+              <span className="ml-auto rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.15em] text-amber-600">
+                Épique+
               </span>
             </div>
 
