@@ -4,7 +4,7 @@ import {
   useUserSetsProgression,
 } from '../../../queries/useProfile'
 import { useAuthStore } from '../../../stores/auth.store'
-import { AuroraGrid } from '../../shared/decorations/AuroraGrid'
+import { PageShell } from '../../shared/PageShell'
 import { AchievementsCard } from './AchievementsCard'
 import { ArcadeHero } from './ArcadeHero'
 import { ArcadeTopbar } from './ArcadeTopbar'
@@ -46,39 +46,36 @@ export function ArcadeProfile({ username }: Props) {
   }
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)]">
-      <AuroraGrid />
-      <div className="relative mx-auto flex max-w-5xl flex-col gap-4 px-4 py-8 z-10">
-        <ArcadeTopbar isOwnProfile={!!isOwnProfile} isAdmin={!!isAdmin} />
+    <PageShell>
+      <ArcadeTopbar isOwnProfile={!!isOwnProfile} isAdmin={!!isAdmin} />
 
-        <ArcadeHero
+      <ArcadeHero
+        profile={profile}
+        featuredCards={featured.data?.cards ?? []}
+        isOwnProfile={!!isOwnProfile}
+      />
+
+      <StatGrid profile={profile} />
+
+      <div className="grid gap-[22px]" style={{ gridTemplateColumns: '1.4fr 1fr' }}>
+        <XPCard profile={profile} />
+        <StreakCard
           profile={profile}
-          featuredCards={featured.data?.cards ?? []}
-          isOwnProfile={!!isOwnProfile}
-        />
-
-        <StatGrid profile={profile} />
-
-        <div className="grid gap-4" style={{ gridTemplateColumns: '1.4fr 1fr' }}>
-          <XPCard profile={profile} />
-          <StreakCard
-            profile={profile}
-            lastLoginAt={profile.lastLoginAt}
-            isOwnProfile={!!isOwnProfile}
-          />
-        </div>
-
-        <SetsProgressionCard sets={progression.data?.sets ?? []} />
-
-        {isOwnProfile && <AchievementsCard />}
-
-        <CollectionCTA
-          profile={profile}
-          sets={progression.data?.sets ?? []}
-          username={username}
+          lastLoginAt={profile.lastLoginAt}
           isOwnProfile={!!isOwnProfile}
         />
       </div>
-    </div>
+
+      <SetsProgressionCard sets={progression.data?.sets ?? []} />
+
+      {isOwnProfile && <AchievementsCard />}
+
+      <CollectionCTA
+        profile={profile}
+        sets={progression.data?.sets ?? []}
+        username={username}
+        isOwnProfile={!!isOwnProfile}
+      />
+    </PageShell>
   )
 }
