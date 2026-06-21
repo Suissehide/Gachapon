@@ -106,18 +106,19 @@ export function InvitationsBadge() {
                   return (
                     <li
                       key={inv.id}
-                      className="flex items-start gap-3 rounded-lg border border-border/60 bg-muted/30 p-3"
+                      className="flex items-start gap-3 rounded-lg border border-border/60 bg-muted/30 p-3 transition-colors hover:bg-muted/60"
                     >
                       <button
                         type="button"
                         onClick={goToTeam}
-                        className="flex min-w-0 flex-1 items-start gap-3 text-left transition-colors hover:opacity-90"
+                        title="Voir l'équipe"
+                        className="group flex min-w-0 flex-1 cursor-pointer items-start gap-3 text-left"
                       >
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary text-white">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary text-white transition-transform group-hover:scale-105">
                           <Users className="h-4 w-4" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate font-display text-sm font-bold text-text">
+                          <p className="truncate font-display text-sm font-bold text-text transition-colors group-hover:text-primary">
                             {inv.team.name}
                           </p>
                           <p className="truncate text-xs text-text-light">
