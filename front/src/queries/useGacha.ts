@@ -57,6 +57,11 @@ export const usePull = () => {
       qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
       qc.invalidateQueries({ queryKey: ['collection'] })
       qc.invalidateQueries({ queryKey: ['profile'] })
+      // Belt-and-braces: the WebSocket pushes 'feed:pull' to the LiveFeed
+      // for instant updates, but if the socket is reconnecting or the
+      // event is dropped we still want the rare pull to land in the
+      // panel — invalidate the query so it refetches from the server.
+      qc.invalidateQueries({ queryKey: ['pulls', 'recent'] })
       if (result.unlockedAchievements?.length) {
         enqueueAchievementUnlock(result.unlockedAchievements)
         qc.invalidateQueries({ queryKey: ['achievements'] })
