@@ -1,6 +1,7 @@
 import { Gift } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
+import { NotificationDot } from '../notifications/NotificationDot.tsx'
 import { Button } from '../ui/button.tsx'
 import { RewardsPopup } from './RewardsPopup.tsx'
 
@@ -24,9 +25,6 @@ export function RewardsBadge({ pendingRewardsCount }: RewardsBadgeProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isOpen])
 
-  const displayCount =
-    pendingRewardsCount > 9 ? '9+' : String(pendingRewardsCount)
-
   return (
     <div ref={ref} className="relative">
       <Button
@@ -39,11 +37,7 @@ export function RewardsBadge({ pendingRewardsCount }: RewardsBadgeProps) {
         <Gift className="h-4 w-4" />
       </Button>
 
-      {pendingRewardsCount > 0 && (
-        <div className="pointer-events-none absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-400 text-[10px] font-bold text-white">
-          {displayCount}
-        </div>
-      )}
+      <NotificationDot count={pendingRewardsCount} />
 
       {isOpen && <RewardsPopup onClose={() => setIsOpen(false)} />}
     </div>
