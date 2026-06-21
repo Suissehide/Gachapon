@@ -1,10 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router'
 import * as Icons from 'lucide-react'
+import { RotateCcw } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import { useState } from 'react'
 
 const iconMap = Icons as unknown as Record<string, LucideIcon>
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { SkillTreeCanvas } from '../../components/skill-tree/index.ts'
+import { ConfirmPopup } from '../../components/team/ConfirmPopup.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import {
   useInvestSkill,
@@ -20,6 +23,7 @@ function SkillsPage() {
   const { data: state, isLoading } = useSkillTree()
   const invest = useInvestSkill()
   const reset = useResetSkills()
+  const [resetOpen, setResetOpen] = useState(false)
 
   if (isLoading || !state) {
     return (
@@ -27,15 +31,6 @@ function SkillsPage() {
         Chargement…
       </div>
     )
-  }
-
-  const handleReset = () => {
-    if (
-      !window.confirm(`Réinitialiser l'arbre ? Coût : ${state.resetCost} dust`)
-    ) {
-      return
-    }
-    reset.mutate()
   }
 
   return (
@@ -69,7 +64,7 @@ function SkillsPage() {
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={handleReset}
+                  onClick={() => setResetOpen(true)}
                   disabled={reset.isPending}
                 >
                   Reset · {state.resetCost} dust
@@ -109,6 +104,16 @@ function SkillsPage() {
           })}
         </div>
       </div>
+
+      <ConfirmPopup
+        open={resetOpen}
+        onOpenChange={setResetOpen}
+        icon={<RotateCcw className="h-4 w-4" />}
+        title="Réinitialiser l'arbre"
+        description={`Coût : ${state.resetCost} dust. Tous les points investis seront rendus.`}
+        confirmLabel="Réinitialiser"
+        onConfirm={() => reset.mutate()}
+      />
     </div>
   )
 }
