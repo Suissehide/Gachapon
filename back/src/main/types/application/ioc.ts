@@ -14,6 +14,7 @@ import type { OAuthDomainInterface } from '../domain/auth/oauth.domain.interface
 import type { ICollectionDomain } from '../domain/collection/collection.domain.interface'
 import type { AdminSkillTreeDomain } from '../../domain/skills/admin-skill-tree.domain'
 import type { ISkillTreeDomain, ISkillInvestDomain, ISkillResetDomain } from '../domain/skills/skill-tree.domain.interface'
+import type { CardDustConversionDomain } from '../../domain/card-dust-conversion/card-dust-conversion.domain'
 import type { GachaDomainInterface } from '../domain/gacha/gacha.domain.interface'
 import type { RewardsDomainInterface } from '../domain/rewards/rewards.domain.interface'
 import type { IDailyShopDomain } from '../domain/daily-shop/daily-shop.domain.interface'
@@ -70,6 +71,7 @@ export interface IocContainer {
   readonly skillTreeRepository: SkillTreeRepository
   readonly scoringConfigRepository: IScoringConfigRepository
   readonly gachaDomain: GachaDomainInterface
+  readonly cardDustConversionDomain: CardDustConversionDomain
   readonly teamRepository: TeamRepository
   readonly teamMemberRepository: TeamMemberRepository
   readonly invitationRepository: InvitationRepository

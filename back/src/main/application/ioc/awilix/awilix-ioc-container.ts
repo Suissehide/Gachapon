@@ -10,6 +10,7 @@ import { SkillInvestDomain } from '../../../domain/skills/skill-invest.domain'
 import { SkillResetDomain } from '../../../domain/skills/skill-reset.domain'
 import { AdminSkillTreeDomain } from '../../../domain/skills/admin-skill-tree.domain'
 import { AchievementsDomain } from '../../../domain/achievements/achievements.domain'
+import { CardDustConversionDomain } from '../../../domain/card-dust-conversion/card-dust-conversion.domain'
 import { GachaDomain } from '../../../domain/gacha/gacha.domain'
 import { RewardsDomain } from '../../../domain/rewards/rewards.domain'
 import { DailyShopDomain } from '../../../domain/daily-shop/daily-shop.domain'
@@ -100,6 +101,10 @@ class AwilixIocContainer {
       asClass(ScoringConfigRepository).singleton(),
     )
     this.#reg('gachaDomain', asClass(GachaDomain).singleton())
+    this.#reg(
+      'cardDustConversionDomain',
+      asClass(CardDustConversionDomain).singleton(),
+    )
     this.#reg('teamRepository', asClass(TeamRepository).singleton())
     this.#reg('teamMemberRepository', asClass(TeamMemberRepository).singleton())
     this.#reg('invitationRepository', asClass(InvitationRepository).singleton())
