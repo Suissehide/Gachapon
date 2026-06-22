@@ -222,10 +222,10 @@ export function CardReveal({ result, onClose, onNewPull, isPulling }: Props) {
                 />
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-widest text-amber-300/65">
-                    Doublon
+                    Doublon obtenu
                   </p>
                   <p className="text-sm font-bold text-amber-300">
-                    +{result.dustEarned} poussière
+                    Convertis-le en poussière depuis ta collection
                   </p>
                 </div>
               </div>
