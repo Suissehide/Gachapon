@@ -19,7 +19,7 @@ export const cardsRouter: FastifyPluginCallbackZod = (fastify) => {
         response: { 200: cardDustConvertResponseSchema },
       },
     },
-    async (request) => {
+    (request) => {
       const { userCardId } = request.params
       const { amount } = request.body
       return cardDustConversionDomain.convert(

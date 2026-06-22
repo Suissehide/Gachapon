@@ -20,13 +20,13 @@ export class CardDustConversionDomain {
     this.#postgresOrm = postgresOrm
   }
 
-  async convert(
+  convert(
     userId: string,
     userCardId: string,
     amount: number,
   ): Promise<{ dustEarned: number; remainingQuantity: number }> {
     if (amount < 1) {
-      throw Boom.badRequest('amount must be at least 1')
+      return Promise.reject(Boom.badRequest('amount must be at least 1'))
     }
 
     return this.#postgresOrm.executeWithTransactionClient(
