@@ -6,6 +6,7 @@ import {
   collectionCardIdParamSchema,
   collectionCardsQuerySchema,
   collectionRecycleBodySchema,
+  collectionRecycleResponseSchema,
   collectionUserIdParamSchema,
 } from '../../schemas/collection.schema'
 
@@ -102,7 +103,7 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
     '/collection/recycle',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { body: collectionRecycleBodySchema },
+      schema: { body: collectionRecycleBodySchema, response: { 200: collectionRecycleResponseSchema } },
     },
     (request) => {
       return collectionDomain.recycleCard(request.user.userID, request.body)

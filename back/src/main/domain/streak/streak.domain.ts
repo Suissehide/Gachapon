@@ -1,3 +1,5 @@
+import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
+import type { UnlockedAchievement } from '../achievements/events.types'
 import type { IocContainer } from '../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import { encodeDailySourceId } from './streak-source-id'
@@ -64,26 +66,33 @@ export class StreakDomain {
   readonly #userRepository: IocContainer['userRepository']
   readonly #streakMilestoneRepository: IocContainer['streakMilestoneRepository']
   readonly #userRewardRepository: IocContainer['userRewardRepository']
+  readonly #achievementsDomain: AchievementsDomainInterface
 
   constructor({
     userRepository,
     streakMilestoneRepository,
     userRewardRepository,
+    achievementsDomain,
   }: Pick<
     IocContainer,
-    'userRepository' | 'streakMilestoneRepository' | 'userRewardRepository'
+    | 'userRepository'
+    | 'streakMilestoneRepository'
+    | 'userRewardRepository'
+    | 'achievementsDomain'
   >) {
     this.#userRepository = userRepository
     this.#streakMilestoneRepository = streakMilestoneRepository
     this.#userRewardRepository = userRewardRepository
+    this.#achievementsDomain = achievementsDomain
   }
 
   /** Call this inside an existing transaction after successful auth. */
   async updateStreak(
     userId: string,
     tx: PrimaTransactionClient,
-  ): Promise<void> {
+  ): Promise<UnlockedAchievement[]> {
     const user = await this.#userRepository.findByIdOrThrowInTx(tx, userId)
+    const existingStreakDays = user.streakDays
     const { shouldSkip, newStreakDays, newBestStreak } = calculateStreakUpdate({
       lastLoginAt: user.lastLoginAt,
       streakDays: user.streakDays,
@@ -91,7 +100,7 @@ export class StreakDomain {
     })
 
     if (shouldSkip) {
-      return
+      return []
     }
 
     await this.#userRepository.updateStreakInTx(tx, userId, {
@@ -107,7 +116,7 @@ export class StreakDomain {
       )) ?? (await this.#streakMilestoneRepository.findDefault())
 
     if (!milestone) {
-      return
+      return []
     }
 
     // sourceId uniqueness drives upsert idempotency. Milestones use their UUID (earned once);
@@ -131,5 +140,15 @@ export class StreakDomain {
       source: 'STREAK',
       sourceId,
     })
+
+    const unlocks =
+      newStreakDays > existingStreakDays
+        ? await this.#achievementsDomain.track(tx, userId, {
+            kind: 'STREAK_UPDATED',
+            days: newStreakDays,
+          })
+        : []
+
+    return unlocks
   }
 }

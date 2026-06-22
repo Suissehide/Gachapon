@@ -165,10 +165,10 @@ function Play() {
   const showBall =
     phase === 'ball' || phase === 'opening' || phase === 'revealed'
   // Machine stays visible during ball/opening phases (behind the GachaBall)
+  // Hidden during 'pulling' (skip animation) to avoid heavy rendering
   const showMachine =
     phase === 'idle' ||
     phase === 'machine-anim' ||
-    phase === 'pulling' ||
     phase === 'ball' ||
     phase === 'opening'
   const isIdle = phase === 'idle' || phase === 'pulling'

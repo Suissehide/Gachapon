@@ -1,6 +1,5 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import {
-  ArrowLeft,
   Check,
   Copy,
   Eye,
@@ -11,6 +10,8 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 
+import { PageHeader } from '../../components/shared/PageHeader'
+import { PageShell } from '../../components/shared/PageShell'
 import { ConfirmPopup } from '../../components/team'
 import { Button } from '../../components/ui/button.tsx'
 import { Input } from '../../components/ui/input.tsx'
@@ -65,19 +66,19 @@ function Settings() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
-      <div className="mx-auto max-w-4xl space-y-8">
-        <div>
-          <Link
-            to="/profile/$username"
-            params={{ username: user?.username ?? '' }}
-            className="mb-4 flex w-fit items-center gap-1.5 text-sm text-text-light transition-colors hover:text-text"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Mon profil
-          </Link>
-          <h1 className="text-2xl font-black text-text">Paramètres</h1>
-        </div>
+    <PageShell>
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Gachapon', to: '/play' },
+          {
+            label: 'Profil',
+            to: '/profile/$username',
+            params: { username: user?.username ?? '' },
+          },
+          { label: 'Paramètres' },
+        ]}
+        title="Paramètres"
+      />
 
         {/* Infos compte */}
         <section className="rounded-xl border border-border bg-card p-6">
@@ -202,8 +203,7 @@ function Settings() {
               ))}
             </ul>
           )}
-        </section>
-      </div>
+      </section>
 
       <ConfirmPopup
         open={deleteTarget !== null}
@@ -233,6 +233,6 @@ function Settings() {
           })
         }}
       />
-    </div>
+    </PageShell>
   )
 }

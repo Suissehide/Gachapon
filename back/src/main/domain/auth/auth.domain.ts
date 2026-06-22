@@ -12,6 +12,7 @@ import type {
   RegisterInput,
   TokenPair,
 } from '../../types/domain/auth/auth.types'
+import type { UnlockedAchievement } from '../achievements/events.types'
 import type { StreakDomainInterface } from '../../types/domain/streak/streak.domain.interface'
 import type { UserEntity } from '../../types/domain/user/user.types'
 import type { JwtServiceInterface } from '../../types/infra/auth/jwt.service'
@@ -107,7 +108,11 @@ export class AuthDomain implements AuthDomainInterface {
 
   async login(
     input: LoginInput,
-  ): Promise<{ user: UserEntity; tokens: TokenPair }> {
+  ): Promise<{
+    user: UserEntity
+    tokens: TokenPair
+    unlockedAchievements: UnlockedAchievement[]
+  }> {
     const user = await this.#userRepository.findByEmail(input.email)
     if (!user || !user.passwordHash) {
       await bcrypt.compare(
@@ -123,20 +128,25 @@ export class AuthDomain implements AuthDomainInterface {
     if (!user.emailVerifiedAt) {
       throw Boom.forbidden('EMAIL_NOT_VERIFIED')
     }
+    let unlockedAchievements: UnlockedAchievement[] = []
     try {
       await this.#postgresOrm.executeWithTransactionClient(async (tx) => {
-        await this.#streakDomain.updateStreak(user.id, tx)
+        unlockedAchievements = await this.#streakDomain.updateStreak(user.id, tx)
       })
     } catch (err) {
       console.error('[StreakDomain] updateStreak failed:', err)
     }
     const tokens = await this.generateTokenPair(user)
-    return { user, tokens }
+    return { user, tokens, unlockedAchievements }
   }
 
   async verifyEmail(
     token: string,
-  ): Promise<{ user: UserEntity; tokens: TokenPair }> {
+  ): Promise<{
+    user: UserEntity
+    tokens: TokenPair
+    unlockedAchievements: UnlockedAchievement[]
+  }> {
     const user = await this.#userRepository.findByEmailVerificationToken(token)
     if (!user) {
       throw Boom.badRequest('Token invalide ou expiré')
@@ -154,16 +164,20 @@ export class AuthDomain implements AuthDomainInterface {
       emailVerificationTokenExpiresAt: null,
     })
 
+    let unlockedAchievements: UnlockedAchievement[] = []
     try {
       await this.#postgresOrm.executeWithTransactionClient(async (tx) => {
-        await this.#streakDomain.updateStreak(verified.id, tx)
+        unlockedAchievements = await this.#streakDomain.updateStreak(
+          verified.id,
+          tx,
+        )
       })
     } catch (err) {
       console.error('[StreakDomain] updateStreak failed:', err)
     }
 
     const tokens = await this.generateTokenPair(verified)
-    return { user: verified, tokens }
+    return { user: verified, tokens, unlockedAchievements }
   }
 
   async resendVerification(email: string): Promise<void> {

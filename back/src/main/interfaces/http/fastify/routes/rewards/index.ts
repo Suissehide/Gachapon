@@ -1,42 +1,13 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
-import { z } from 'zod/v4'
 
-const claimResultSchema = z.object({
-  tokens: z.number().int(),
-  dust: z.number().int(),
-  xp: z.number().int(),
-  level: z.number().int(),
-  pendingRewardsCount: z.number().int().nonnegative(),
-})
-
-const pendingRewardSchema = z.object({
-  id: z.string().uuid(),
-  source: z.enum(['STREAK', 'ACHIEVEMENT', 'QUEST']),
-  sourceId: z.string().nullable(),
-  claimedAt: z.date().nullable(),
-  createdAt: z.date(),
-  reward: z.object({
-    tokens: z.number().int(),
-    dust: z.number().int(),
-    xp: z.number().int(),
-  }),
-  streakMilestone: z
-    .object({ day: z.number().int(), isMilestone: z.boolean() })
-    .nullable(),
-})
-
-const historyItemSchema = z.object({
-  id: z.string().uuid(),
-  source: z.enum(['STREAK', 'ACHIEVEMENT', 'QUEST']),
-  sourceId: z.string().nullable(),
-  claimedAt: z.date().nullable(),
-  createdAt: z.date(),
-  reward: z.object({
-    tokens: z.number().int(),
-    dust: z.number().int(),
-    xp: z.number().int(),
-  }),
-})
+import {
+  claimRewardParamsSchema,
+  claimResultSchema,
+  noBodySchema,
+  pendingRewardsResponseSchema,
+  rewardsHistoryQuerySchema,
+  rewardsHistoryResponseSchema,
+} from '../../schemas/rewards.schemas'
 
 export const rewardsRouter: FastifyPluginCallbackZod = (fastify) => {
   const { rewardsDomain } = fastify.iocContainer
@@ -46,9 +17,7 @@ export const rewardsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/pending',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: {
-        response: { 200: z.array(pendingRewardSchema) },
-      },
+      schema: { response: { 200: pendingRewardsResponseSchema } },
     },
     (request) => {
       return rewardsDomain.getPending(request.user.userID)
@@ -61,7 +30,7 @@ export const rewardsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        params: z.object({ id: z.string().uuid() }),
+        params: claimRewardParamsSchema,
         response: { 200: claimResultSchema },
       },
     },
@@ -75,9 +44,7 @@ export const rewardsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/claim-all',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: {
-        response: { 200: claimResultSchema, 204: z.null() },
-      },
+      schema: { response: { 200: claimResultSchema, 204: noBodySchema } },
     },
     async (request, reply) => {
       const result = await rewardsDomain.claimAll(request.user.userID)
@@ -94,18 +61,8 @@ export const rewardsRouter: FastifyPluginCallbackZod = (fastify) => {
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
-        querystring: z.object({
-          page: z.coerce.number().int().min(1).default(1),
-          limit: z.coerce.number().int().min(1).max(100).default(20),
-        }),
-        response: {
-          200: z.object({
-            data: z.array(historyItemSchema),
-            total: z.number().int(),
-            page: z.number().int(),
-            limit: z.number().int(),
-          }),
-        },
+        querystring: rewardsHistoryQuerySchema,
+        response: { 200: rewardsHistoryResponseSchema },
       },
     },
     async (request) => {

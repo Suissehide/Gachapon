@@ -185,7 +185,7 @@ export function ReactTable<TData extends { id: string }>({
 
       <div className="relative min-h-0 flex-1 overflow-hidden">
         <div
-          className="h-full w-full overflow-auto bg-background"
+          className="h-full w-full overflow-auto bg-card"
           ref={tableContainerRef}
         >
           <table className="w-full border-collapse">

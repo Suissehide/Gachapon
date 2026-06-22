@@ -7,14 +7,18 @@ import type {
   IShopDomain,
 } from '../../types/domain/shop/shop.domain.interface'
 import type { IShopItemRepository } from '../../types/infra/orm/repositories/shop-item.repository.interface'
+import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
+import type { AchievementEvent, UnlockedAchievement } from '../achievements/events.types'
 
 export class ShopDomain implements IShopDomain {
   readonly #shopItemRepository: IShopItemRepository
   readonly #postgresOrm: PostgresOrm
+  readonly #achievementsDomain: AchievementsDomainInterface
 
-  constructor({ shopItemRepository, postgresOrm }: IocContainer) {
+  constructor({ shopItemRepository, postgresOrm, achievementsDomain }: IocContainer) {
     this.#shopItemRepository = shopItemRepository
     this.#postgresOrm = postgresOrm
+    this.#achievementsDomain = achievementsDomain
   }
 
   async buy(userId: string, shopItemId: string): Promise<BuyShopItemResult> {
@@ -57,7 +61,26 @@ export class ShopDomain implements IShopDomain {
           data: updateData,
         })
 
-        return { purchase, newDustTotal: updated.dust, newTokenTotal: updated.tokens }
+        // Track achievement events
+        const events: AchievementEvent[] = []
+        if (item.type === 'MACHINE') {
+          const value = item.value as { machineId: string }
+          events.push({ kind: 'MACHINE_PURCHASED', machineId: value.machineId })
+        }
+        events.push({ kind: 'DUST_SPENT', amount: item.dustCost })
+
+        const allUnlocks: UnlockedAchievement[] = []
+        for (const e of events) {
+          const unlocks = await this.#achievementsDomain.track(tx, userId, e)
+          allUnlocks.push(...unlocks)
+        }
+
+        return {
+          purchase,
+          newDustTotal: updated.dust,
+          newTokenTotal: updated.tokens,
+          unlockedAchievements: allUnlocks,
+        }
       },
       { isolationLevel: 'Serializable', maxWait: 5000, timeout: 10000 },
     )
@@ -67,6 +90,7 @@ export class ShopDomain implements IShopDomain {
       dustSpent: item.dustCost,
       newDustTotal: result.newDustTotal,
       newTokenTotal: result.newTokenTotal,
+      unlockedAchievements: result.unlockedAchievements,
       item: {
         id: item.id,
         name: item.name,

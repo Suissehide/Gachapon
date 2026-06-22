@@ -1,3 +1,5 @@
+import type { UnlockedAchievement } from './achievements.constant'
+
 // Types
 export type PullResult = {
   card: {
@@ -13,6 +15,7 @@ export type PullResult = {
   tokensRemaining: number
   pityCurrent: number
   xpGained: number
+  unlockedAchievements?: UnlockedAchievement[]
 }
 
 export type TokenBalance = {
@@ -45,11 +48,19 @@ export const GACHA_ROUTES = {
   tokenBalance: '/tokens/balance',
   pull: '/pulls',
   history: (page: number) => `/pulls/history?page=${page}`,
-  recent: (opts?: { limit?: number; before?: string; teamId?: string }) => {
+  recent: (opts?: {
+    limit?: number
+    before?: string
+    teamId?: string
+    rarities?: string[]
+  }) => {
     const params = new URLSearchParams()
     params.set('limit', String(opts?.limit ?? 20))
     if (opts?.before) params.set('before', opts.before)
     if (opts?.teamId) params.set('teamId', opts.teamId)
+    if (opts?.rarities && opts.rarities.length > 0) {
+      params.set('rarities', opts.rarities.join(','))
+    }
     return `/pulls/recent?${params.toString()}`
   },
 } as const

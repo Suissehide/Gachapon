@@ -1,8 +1,9 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
+import type { UnlockedAchievement } from '../../../../../domain/achievements/events.types'
 
 import { sanitizeUser } from './helpers'
-import { userResponseSchema } from './schemas'
+import { userResponseSchema } from '../../schemas/auth.schemas'
 
 export const meRouter: FastifyPluginCallbackZod = (fastify) => {
   const { userDomain, userRewardRepository, streakDomain, postgresOrm } =
@@ -17,9 +18,10 @@ export const meRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request) => {
       const userId = request.user.userID
 
+      let unlockedAchievements: UnlockedAchievement[] = []
       try {
         await postgresOrm.executeWithTransactionClient(async (tx) => {
-          await streakDomain.updateStreak(userId, tx)
+          unlockedAchievements = await streakDomain.updateStreak(userId, tx)
         })
       } catch (err) {
         console.error('[StreakDomain] updateStreak failed:', err)
@@ -32,7 +34,7 @@ export const meRouter: FastifyPluginCallbackZod = (fastify) => {
       const pendingRewardsCount = await userRewardRepository.countPendingByUser(
         user.id,
       )
-      return { ...sanitizeUser(user), pendingRewardsCount }
+      return { ...sanitizeUser(user), pendingRewardsCount, unlockedAchievements }
     },
   )
 }

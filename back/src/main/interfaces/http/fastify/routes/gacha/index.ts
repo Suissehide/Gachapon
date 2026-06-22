@@ -1,9 +1,13 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
-import { z } from 'zod/v4'
 
 import { calculateTokens } from '../../../../../domain/economy/economy.domain'
 import { wsManager } from '../../../../ws/ws-manager'
+import {
+  pullResponseSchema,
+  pullsHistoryQuerySchema,
+  pullsRecentQuerySchema,
+} from '../../schemas/gacha.schemas'
 
 export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
   const {
@@ -21,7 +25,10 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
   // POST /pulls — consommer 1 token et tirer une carte
   fastify.post(
     '/pulls',
-    { onRequest: [fastify.verifySessionCookie] },
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: { response: { 201: pullResponseSchema } },
+    },
     async (request, reply) => {
       const result = await gachaDomain.pull(request.user.userID)
       const user = await userRepository.findById(request.user.userID)
@@ -71,6 +78,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         tokensRemaining: result.tokensRemaining,
         pityCurrent: result.pityCurrent,
         xpGained: result.xpGained,
+        unlockedAchievements: result.unlockedAchievements,
       })
     },
   )
@@ -149,12 +157,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     '/pulls/history',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: {
-        querystring: z.object({
-          page: z.coerce.number().int().min(1).default(1),
-          limit: z.coerce.number().int().min(1).max(100).default(20),
-        }),
-      },
+      schema: { querystring: pullsHistoryQuerySchema },
     },
     async (request) => {
       const { page, limit } = request.query
@@ -190,19 +193,14 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     '/pulls/recent',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: {
-        querystring: z.object({
-          limit: z.coerce.number().int().min(1).max(50).default(20),
-          before: z.string().datetime().optional(),
-          teamId: z.string().uuid().optional(),
-        }),
-      },
+      schema: { querystring: pullsRecentQuerySchema },
     },
     async (request) => {
-      const { limit, before, teamId } = request.query
+      const { limit, before, teamId, rarities } = request.query
       const page = await gachaPullRepository.findRecent(limit, {
         before: before ? new Date(before) : undefined,
         teamId,
+        rarities,
       })
       return {
         entries: page.entries.map((p) => ({

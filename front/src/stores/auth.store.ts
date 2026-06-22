@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 
 import { api } from '../lib/api.js'
+import type { UnlockedAchievement } from '../constants/achievements.constant.ts'
+import { useAchievementUnlockStore } from './achievementUnlock.store.ts'
 
 export type AuthUser = {
   id: string
@@ -12,6 +14,10 @@ export type AuthUser = {
   avatar: string | null
   banner: string | null
   pendingRewardsCount: number
+}
+
+type MeResponse = AuthUser & {
+  unlockedAchievements?: UnlockedAchievement[]
 }
 
 type AuthState = {
@@ -31,8 +37,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   fetchMe: async () => {
     set({ isLoading: true })
     try {
-      const user = await api.get<AuthUser>('/auth/me')
+      const response = await api.get<MeResponse>('/auth/me')
+      const { unlockedAchievements, ...user } = response
       set({ user, isAuthenticated: true, isLoading: false })
+      if (unlockedAchievements?.length) {
+        useAchievementUnlockStore.getState().enqueue(unlockedAchievements)
+      }
     } catch {
       set({ user: null, isAuthenticated: false, isLoading: false })
     }

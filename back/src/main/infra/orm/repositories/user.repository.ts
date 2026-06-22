@@ -45,6 +45,13 @@ export class UserRepository implements UserRepositoryInterface {
     return this.#prisma.user.update({ where: { id }, data: input })
   }
 
+  async updateFeaturedCardIds(userId: string, cardIds: string[]): Promise<void> {
+    await this.#prisma.user.update({
+      where: { id: userId },
+      data: { featuredCardIds: cardIds },
+    })
+  }
+
   async delete(id: string): Promise<void> {
     await this.#prisma.user.delete({ where: { id } })
   }

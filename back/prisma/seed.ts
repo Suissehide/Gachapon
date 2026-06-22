@@ -32,6 +32,7 @@ async function main() {
     await tx.gachaPull.deleteMany()
     await tx.userCard.deleteMany()
     await tx.purchase.deleteMany()
+    await tx.userAchievementProgress.deleteMany()
     await tx.userAchievement.deleteMany()
     await tx.userQuest.deleteMany()
     await tx.teamMember.deleteMany()

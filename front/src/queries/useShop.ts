@@ -4,6 +4,7 @@ import { ShopApi } from '../api/shop.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
+import { useAchievementUnlockStore } from '../stores/achievementUnlock.store.ts'
 
 export type { PurchaseResult, ShopItem } from '../api/shop.api.ts'
 
@@ -25,11 +26,16 @@ export const useShopItems = () => {
 export const useBuyItem = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const enqueueAchievementUnlock = useAchievementUnlockStore((s) => s.enqueue)
   return useMutation({
     mutationFn: (itemId: string) => ShopApi.buyItem(itemId),
-    onSuccess: () => {
+    onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
       qc.invalidateQueries({ queryKey: ['shop', 'machines'] })
+      if (result.unlockedAchievements?.length) {
+        enqueueAchievementUnlock(result.unlockedAchievements)
+        qc.invalidateQueries({ queryKey: ['achievements'] })
+      }
     },
     onError: (error) => {
       toast({

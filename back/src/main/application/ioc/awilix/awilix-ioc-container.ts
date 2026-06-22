@@ -9,9 +9,11 @@ import { SkillTreeDomain } from '../../../domain/skills/skill-tree.domain'
 import { SkillInvestDomain } from '../../../domain/skills/skill-invest.domain'
 import { SkillResetDomain } from '../../../domain/skills/skill-reset.domain'
 import { AdminSkillTreeDomain } from '../../../domain/skills/admin-skill-tree.domain'
+import { AchievementsDomain } from '../../../domain/achievements/achievements.domain'
 import { GachaDomain } from '../../../domain/gacha/gacha.domain'
 import { RewardsDomain } from '../../../domain/rewards/rewards.domain'
 import { DailyShopDomain } from '../../../domain/daily-shop/daily-shop.domain'
+import { ProfileDomain } from '../../../domain/profile/profile.domain'
 import { ShopDomain } from '../../../domain/shop/shop.domain'
 import { StreakDomain } from '../../../domain/streak/streak.domain'
 import { TeamDomain } from '../../../domain/team/team.domain'
@@ -23,6 +25,7 @@ import { PinoLogger } from '../../../infra/logger/pino/pino-logger'
 import { MailService } from '../../../infra/mail/mail.service'
 import { PostgresOrm } from '../../../infra/orm/postgres-client'
 import { AchievementRepository } from '../../../infra/orm/repositories/achievement.repository'
+import { UserAchievementProgressRepository } from '../../../infra/orm/repositories/user-achievement-progress.repository'
 import { AdminStatsRepository } from '../../../infra/orm/repositories/admin-stats.repository'
 import { ApiKeyRepository } from '../../../infra/orm/repositories/api-key.repository'
 import { CardRepository } from '../../../infra/orm/repositories/card.repository'
@@ -107,12 +110,15 @@ class AwilixIocContainer {
       asClass(StreakMilestoneRepository).singleton(),
     )
     this.#reg('userRewardRepository', asClass(UserRewardRepository).singleton())
-    this.#reg('streakDomain', asClass(StreakDomain).singleton())
     this.#reg('rewardsDomain', asClass(RewardsDomain).singleton())
     this.#reg('questRepository', asClass(QuestRepository).singleton())
     this.#reg(
       'achievementRepository',
       asClass(AchievementRepository).singleton(),
+    )
+    this.#reg(
+      'userAchievementProgressRepository',
+      asClass(UserAchievementProgressRepository).singleton(),
     )
     this.#reg('shopItemRepository', asClass(ShopItemRepository).singleton())
     this.#reg(
@@ -122,12 +128,16 @@ class AwilixIocContainer {
     this.#reg('statsRepository', asClass(StatsRepository).singleton())
     this.#reg('adminStatsRepository', asClass(AdminStatsRepository).singleton())
     this.#reg('collectionDomain', asClass(CollectionDomain).singleton())
+    this.#reg('profileDomain', asClass(ProfileDomain).singleton())
     this.#reg('shopDomain', asClass(ShopDomain).singleton())
     this.#reg('dailyShopDomain', asClass(DailyShopDomain).singleton())
     this.#reg('skillTreeDomain', asClass(SkillTreeDomain).singleton())
     this.#reg('skillInvestDomain', asClass(SkillInvestDomain).singleton())
     this.#reg('skillResetDomain', asClass(SkillResetDomain).singleton())
     this.#reg('adminSkillTreeDomain', asClass(AdminSkillTreeDomain).singleton())
+    this.#reg('achievementsDomain', asClass(AchievementsDomain).singleton())
+    // streakDomain depends on achievementsDomain — must be registered after it
+    this.#reg('streakDomain', asClass(StreakDomain).singleton())
     logger.info('IoC container initialized.')
   }
 

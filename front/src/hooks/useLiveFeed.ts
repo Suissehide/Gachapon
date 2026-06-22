@@ -12,19 +12,33 @@ export type { FeedEntry }
 
 const LIMIT = 20
 
-export function useLiveFeed(opts?: { teamId?: string }) {
+export function useLiveFeed(opts?: { teamId?: string; rarities?: string[] }) {
   const teamId = opts?.teamId
+  const rarities = opts?.rarities
+  const raritiesKey =
+    rarities && rarities.length > 0 ? rarities.join(',') : ''
   const [liveEntries, setLiveEntries] = useState<FeedEntry[]>([])
 
   // Réinitialiser les entrées live quand le filtre change
   useEffect(() => {
     setLiveEntries([])
-  }, [teamId])
+  }, [teamId, raritiesKey])
+
+  // Stable ref so the WS subscription doesn't re-bind on every render just
+  // because the rarities array reference changes.
+  const raritiesSetRef = useRef<Set<string> | null>(null)
+  raritiesSetRef.current =
+    rarities && rarities.length > 0 ? new Set(rarities) : null
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: ['pulls', 'recent', teamId ?? 'global'],
+    queryKey: ['pulls', 'recent', teamId ?? 'global', raritiesKey],
     queryFn: ({ pageParam }: { pageParam: string | undefined }) =>
-      GachaApi.getRecentPulls({ limit: LIMIT, before: pageParam, teamId }),
+      GachaApi.getRecentPulls({
+        limit: LIMIT,
+        before: pageParam,
+        teamId,
+        rarities,
+      }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? lastPage.entries[lastPage.entries.length - 1]?.pulledAt : undefined,
@@ -60,6 +74,9 @@ export function useLiveFeed(opts?: { teamId?: string }) {
       const names = teamUsernamesRef.current
       // Si filtre actif et membres chargés : exclure les non-membres
       if (names !== null && (!teamDataLoadedRef.current || !names.has(event.username))) return
+      // Si filtre par rareté actif : exclure les autres raretés
+      const allowedRarities = raritiesSetRef.current
+      if (allowedRarities !== null && !allowedRarities.has(event.rarity)) return
       const entry: FeedEntry = {
         username: event.username,
         cardName: event.cardName,

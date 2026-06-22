@@ -1,3 +1,5 @@
+import type { UnlockedAchievement } from '../../../domain/achievements/events.types'
+
 export type RecycleInput = {
   cardId: string
   quantity: number
@@ -7,6 +9,7 @@ export type RecycleInput = {
 export type RecycleResult = {
   dustEarned: number
   newDustTotal: number
+  unlockedAchievements: UnlockedAchievement[]
 }
 
 export interface ICollectionDomain {

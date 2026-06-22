@@ -1,8 +1,8 @@
 import { randomBytes } from 'node:crypto'
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
-import { z } from 'zod/v4'
 
+import { oauthCallbackQuerySchema } from '../../../schemas/auth.schemas'
 import { setTokenCookies } from '../helpers'
 
 export const googleOAuthRouter: FastifyPluginCallbackZod = (fastify) => {
@@ -23,9 +23,7 @@ export const googleOAuthRouter: FastifyPluginCallbackZod = (fastify) => {
   fastify.get(
     '/callback',
     {
-      schema: {
-        querystring: z.object({ code: z.string(), state: z.string() }),
-      },
+      schema: { querystring: oauthCallbackQuerySchema },
     },
     async (request, reply) => {
       const { code, state } = request.query

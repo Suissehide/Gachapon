@@ -67,6 +67,10 @@ export class GachaPullRepository implements IGachaPullRepository {
         ...(opts?.teamId && {
           user: { teamMemberships: { some: { teamId: opts.teamId } } },
         }),
+        ...(opts?.rarities &&
+          opts.rarities.length > 0 && {
+            card: { rarity: { in: opts.rarities } },
+          }),
       },
       orderBy: { pulledAt: 'desc' },
       include: {

@@ -4,7 +4,10 @@ import { GachaApi } from '../api/gacha.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
+import { useAchievementUnlockStore } from '../stores/achievementUnlock.store.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
+import { useLevelUpStore } from '../stores/levelUp.store.ts'
+import { computeLevel } from '../utils/level.ts'
 
 export type { PullHistory, PullResult, TokenBalance } from '../api/gacha.api.ts'
 
@@ -29,9 +32,21 @@ export const usePull = () => {
   const { toast } = useToast()
   const setUser = useAuthStore((s) => s.setUser)
   const user = useAuthStore((s) => s.user)
+  const username = useAuthStore((s) => s.user?.username ?? '')
+  const triggerLevelUp = useLevelUpStore((s) => s.triggerLevelUp)
+  const enqueueAchievementUnlock = useAchievementUnlockStore((s) => s.enqueue)
   return useMutation({
     mutationFn: () => GachaApi.pull(),
     onSuccess: (result) => {
+      // Level-up detection
+      const cached = qc.getQueryData<{ xp?: number }>(['profile', username])
+      const oldXp = cached?.xp ?? 0
+      const oldLevel = computeLevel(oldXp)
+      const newLevel = computeLevel(oldXp + result.xpGained)
+      if (newLevel > oldLevel) {
+        triggerLevelUp(newLevel)
+      }
+
       if (user) {
         setUser({
           ...user,
@@ -42,6 +57,15 @@ export const usePull = () => {
       qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
       qc.invalidateQueries({ queryKey: ['collection'] })
       qc.invalidateQueries({ queryKey: ['profile'] })
+      // Belt-and-braces: the WebSocket pushes 'feed:pull' to the LiveFeed
+      // for instant updates, but if the socket is reconnecting or the
+      // event is dropped we still want the rare pull to land in the
+      // panel — invalidate the query so it refetches from the server.
+      qc.invalidateQueries({ queryKey: ['pulls', 'recent'] })
+      if (result.unlockedAchievements?.length) {
+        enqueueAchievementUnlock(result.unlockedAchievements)
+        qc.invalidateQueries({ queryKey: ['achievements'] })
+      }
     },
     onError: (error) => {
       toast({

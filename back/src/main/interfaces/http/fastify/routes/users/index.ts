@@ -2,14 +2,21 @@ import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import {
+  featuredCardsResponseSchema,
+  setsProgressionResponseSchema,
+  setFeaturedCardsBodySchema,
+  setFeaturedCardsResponseSchema,
   userProfileResponseSchema,
   usersProfileParamSchema,
   usersSearchQuerySchema,
 } from '../../schemas/users.schema'
 
 export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { userRepository, gachaPullRepository, userCardRepository } =
+  const { userRepository, gachaPullRepository, userCardRepository, profileDomain, storageClient } =
     fastify.iocContainer
+
+  const resolveUrl = (key: string | null) =>
+    key ? storageClient.publicUrl(key) : null
 
   fastify.get(
     '/users/search',
@@ -58,10 +65,61 @@ export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
         xp: user.xp,
         dust: user.dust,
         createdAt: user.createdAt,
+        lastLoginAt: user.lastLoginAt,
         stats: { totalPulls, ownedCards, legendaryCount, dustGenerated },
         streakDays: user.streakDays,
         bestStreak: user.bestStreak,
       }
+    },
+  )
+
+  fastify.get(
+    '/users/:username/profile/featured-cards',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        params: usersProfileParamSchema,
+        response: { 200: featuredCardsResponseSchema },
+      },
+    },
+    async (request) => {
+      const cards = await profileDomain.getFeaturedCards(request.params.username)
+      return {
+        cards: cards.map((c) => ({ ...c, imageUrl: resolveUrl(c.imageUrl) })),
+      }
+    },
+  )
+
+  fastify.get(
+    '/users/:username/profile/sets-progression',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        params: usersProfileParamSchema,
+        response: { 200: setsProgressionResponseSchema },
+      },
+    },
+    async (request) => {
+      const sets = await profileDomain.getSetsProgression(request.params.username)
+      return { sets }
+    },
+  )
+
+  fastify.put(
+    '/users/me/featured-cards',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        body: setFeaturedCardsBodySchema,
+        response: { 200: setFeaturedCardsResponseSchema },
+      },
+    },
+    async (request) => {
+      const cardIds = await profileDomain.setFeaturedCards(
+        request.user.userID,
+        request.body.cardIds,
+      )
+      return { cardIds }
     },
   )
 }

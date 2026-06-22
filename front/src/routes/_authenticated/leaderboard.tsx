@@ -2,6 +2,9 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { Trophy, Users } from 'lucide-react'
 import { useState } from 'react'
 
+import { ArcadeCard } from '../../components/shared/ArcadeCard'
+import { PageHeader } from '../../components/shared/PageHeader'
+import { PageShell } from '../../components/shared/PageShell'
 import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
 import type { CollectorEntry, TeamEntry } from '../../queries/useLeaderboard'
 import { useLeaderboard } from '../../queries/useLeaderboard'
@@ -34,16 +37,22 @@ function LeaderboardPage() {
   const currentUser = useAuthStore((s) => s.user)
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
-      <div className="mx-auto max-w-4xl">
-        <h1 className="mb-6 text-2xl font-black text-text">Classement</h1>
+    <PageShell>
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Gachapon', to: '/play' },
+          { label: 'Classement' },
+        ]}
+        title="Classement"
+      />
 
+      <ArcadeCard className="p-0 sm:p-0">
         <SegmentedControl
           options={TABS}
           value={activeTab}
           onChange={setActiveTab}
           stretch
-          className="mb-6 w-full"
+          className="w-full rounded-t-[22px] rounded-b-none"
         />
 
         {isLoading ? (
@@ -51,7 +60,7 @@ function LeaderboardPage() {
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-border bg-card">
+          <div className="overflow-hidden">
             {activeTab === 'collectors' &&
               (data?.collectors.length === 0 ? (
                 <EmptyState />
@@ -80,8 +89,8 @@ function LeaderboardPage() {
               ))}
           </div>
         )}
-      </div>
-    </div>
+      </ArcadeCard>
+    </PageShell>
   )
 }
 

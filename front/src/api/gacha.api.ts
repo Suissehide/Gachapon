@@ -46,6 +46,7 @@ export const GachaApi = {
     limit?: number
     before?: string
     teamId?: string
+    rarities?: string[]
   }): Promise<{ entries: FeedEntry[]; hasMore: boolean }> => {
     const res = await fetchWithAuth(`${apiUrl}${GACHA_ROUTES.recent(opts)}`)
     if (!res.ok) {

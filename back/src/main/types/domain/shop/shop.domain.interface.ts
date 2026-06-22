@@ -1,8 +1,11 @@
+import type { UnlockedAchievement } from '../../../domain/achievements/events.types'
+
 export type BuyShopItemResult = {
   purchaseId: string
   dustSpent: number
   newDustTotal: number
   newTokenTotal: number
+  unlockedAchievements: UnlockedAchievement[]
   item: {
     id: string
     name: string

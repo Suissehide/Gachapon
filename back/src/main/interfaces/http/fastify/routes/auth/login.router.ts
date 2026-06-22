@@ -2,7 +2,7 @@ import type { FastifyReply } from 'fastify'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import { sanitizeUser, setTokenCookies } from './helpers'
-import { loginBodySchema, userResponseSchema } from './schemas'
+import { loginBodySchema, userResponseSchema } from '../../schemas/auth.schemas'
 
 export const loginRouter: FastifyPluginCallbackZod = (fastify) => {
   const { authDomain, userRewardRepository } = fastify.iocContainer
@@ -19,11 +19,12 @@ export const loginRouter: FastifyPluginCallbackZod = (fastify) => {
     },
     async (request, reply) => {
       try {
-        const { user, tokens } = await authDomain.login(request.body)
+        const { user, tokens, unlockedAchievements } =
+          await authDomain.login(request.body)
         setTokenCookies(reply, tokens)
         const pendingRewardsCount =
           await userRewardRepository.countPendingByUser(user.id)
-        return { ...sanitizeUser(user), pendingRewardsCount }
+        return { ...sanitizeUser(user), pendingRewardsCount, unlockedAchievements }
       } catch (err: unknown) {
         // Boom 403 with EMAIL_NOT_VERIFIED — expose email to client
         if (

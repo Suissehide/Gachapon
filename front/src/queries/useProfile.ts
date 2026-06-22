@@ -4,6 +4,7 @@ import { ProfileApi } from '../api/profile.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
+import { useAuthStore } from '../stores/auth.store.ts'
 
 export type { ApiKey, ApiKeyCreated, UserProfile } from '../api/profile.api.ts'
 
@@ -74,6 +75,33 @@ export const useDeleteApiKey = () => {
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
+    },
+  })
+}
+
+export function useUserFeaturedCards(username: string) {
+  return useQuery({
+    queryKey: ['profile', username, 'featured-cards'],
+    queryFn: () => ProfileApi.getFeaturedCards(username),
+  })
+}
+
+export function useUserSetsProgression(username: string) {
+  return useQuery({
+    queryKey: ['profile', username, 'sets-progression'],
+    queryFn: () => ProfileApi.getSetsProgression(username),
+  })
+}
+
+export function useSetFeaturedCardsMutation() {
+  const qc = useQueryClient()
+  const me = useAuthStore((s) => s.user?.username)
+  return useMutation({
+    mutationFn: (cardIds: string[]) => ProfileApi.setFeaturedCards(cardIds),
+    onSuccess: () => {
+      if (me) {
+        qc.invalidateQueries({ queryKey: ['profile', me, 'featured-cards'] })
+      }
     },
   })
 }

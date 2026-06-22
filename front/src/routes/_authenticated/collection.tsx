@@ -7,6 +7,9 @@ import { CollectionFilters } from '../../components/collection/CollectionFilters
 import { CollectionGrid } from '../../components/collection/CollectionGrid.tsx'
 import { CollectionSetGroup } from '../../components/collection/CollectionSetGroup.tsx'
 import { RecycleModal } from '../../components/collection/RecycleModal.tsx'
+import { ArcadeCard } from '../../components/shared/ArcadeCard.tsx'
+import { PageHeader } from '../../components/shared/PageHeader.tsx'
+import { PageShell } from '../../components/shared/PageShell.tsx'
 import {
   type UserCard,
   useCards,
@@ -159,18 +162,29 @@ function Collection() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
-      <div className="mx-auto max-w-4xl">
-        <div className="mb-4">
-          <h1 className="text-2xl font-black text-text">Ma Collection</h1>
-          <p className="text-sm text-text-light">
+    <PageShell>
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Gachapon', to: '/play' },
+          {
+            label: 'Profil',
+            to: '/profile/$username',
+            params: { username: user?.username ?? '' },
+          },
+          { label: 'Collection' },
+        ]}
+        title="Ma collection"
+        subtitle={
+          <>
             Cartes : {collectionStats.distinctCards}/
-            {collectionStats.totalCards} - Variantes :{' '}
+            {collectionStats.totalCards} · Variantes :{' '}
             {collectionStats.totalOwnedVariants}/
             {collectionStats.totalPossibleVariants}
-          </p>
-        </div>
+          </>
+        }
+      />
 
+      <ArcadeCard>
         <CollectionFilters
           displayMode={displayMode}
           onDisplayModeChange={handleDisplayModeChange}
@@ -180,24 +194,26 @@ function Collection() {
           onVariantsChange={setSelectedVariants}
         />
 
-        {displayMode === 'set' ? (
-          setGroups.map((group) => (
-            <CollectionSetGroup
-              key={group.id}
-              setName={group.name}
-              entries={group.entries}
+        <div className="mt-6">
+          {displayMode === 'set' ? (
+            setGroups.map((group) => (
+              <CollectionSetGroup
+                key={group.id}
+                setName={group.name}
+                entries={group.entries}
+                onRecycle={handleRecycle}
+                onDetail={handleDetail}
+              />
+            ))
+          ) : (
+            <CollectionGrid
+              entries={filteredEntries}
               onRecycle={handleRecycle}
               onDetail={handleDetail}
             />
-          ))
-        ) : (
-          <CollectionGrid
-            entries={filteredEntries}
-            onRecycle={handleRecycle}
-            onDetail={handleDetail}
-          />
-        )}
-      </div>
+          )}
+        </div>
+      </ArcadeCard>
       <CardViewModal
         entry={detailTarget}
         onClose={() => setDetailTarget(null)}
@@ -219,6 +235,6 @@ function Collection() {
           variant={recycleTarget.variant}
         />
       )}
-    </div>
+    </PageShell>
   )
 }

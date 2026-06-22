@@ -1,6 +1,9 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
-import { shopItemIdParamSchema } from '../../schemas/shop.schema'
+import {
+  buyShopItemResponseSchema,
+  shopItemIdParamSchema,
+} from '../../schemas/shop.schema'
 
 export const shopRouter: FastifyPluginCallbackZod = (fastify) => {
   const { shopItemRepository, shopDomain } = fastify.iocContainer
@@ -44,7 +47,10 @@ export const shopRouter: FastifyPluginCallbackZod = (fastify) => {
     '/shop/:id/buy',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: shopItemIdParamSchema },
+      schema: {
+        params: shopItemIdParamSchema,
+        response: { 200: buyShopItemResponseSchema },
+      },
     },
     (request) => {
       return shopDomain.buy(request.user.userID, request.params.id)

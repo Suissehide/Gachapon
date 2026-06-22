@@ -14,7 +14,9 @@ interface ConfirmPopupProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   title: string
-  description: string
+  // ReactNode so callers can pass formatted blocks (chips, lists, icons),
+  // not just plain text.
+  description: React.ReactNode
   icon?: React.ReactNode
   confirmLabel?: string
   onConfirm: () => void
@@ -36,7 +38,11 @@ export function ConfirmPopup({
           <PopupTitle icon={icon}>{title}</PopupTitle>
         </PopupHeader>
         <PopupBody>
-          <p className="text-sm text-text-light">{description}</p>
+          {typeof description === 'string' ? (
+            <p className="text-sm text-text-light">{description}</p>
+          ) : (
+            description
+          )}
         </PopupBody>
         <PopupFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>

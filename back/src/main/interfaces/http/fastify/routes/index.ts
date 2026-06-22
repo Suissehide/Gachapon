@@ -1,5 +1,6 @@
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 
+import { achievementsRouter } from './achievements'
 import { adminRouter } from './admin'
 import { apiKeysRouter } from './api-keys'
 import { authRouter } from './auth'
@@ -58,6 +59,7 @@ export const routes: FastifyPluginAsyncZod = async (fastify) => {
   await fastify.register(teamsRouter)
   await fastify.register(statsRouter)
   await fastify.register(rewardsRouter, { prefix: '/rewards' })
+  await fastify.register(achievementsRouter, { prefix: '/achievements' })
   await fastify.register(streakRouter, { prefix: '/streak' })
   await fastify.register(adminRouter, { prefix: '/admin' })
 }
