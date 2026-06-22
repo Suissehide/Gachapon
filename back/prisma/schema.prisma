@@ -260,7 +260,7 @@ model UserEquipment {
   equipmentId  String
   equipment    Equipment @relation(fields: [equipmentId], references: [id])
   equippedOnId String?
-  equippedOn   UserCard? @relation(fields: [equippedOnId], references: [id])
+  equippedOn   UserCard? @relation(fields: [equippedOnId], references: [id], onDelete: SetNull)
   obtainedAt   DateTime  @default(now())
 
   @@index([userId])
