@@ -71,4 +71,19 @@ export const CollectionApi = {
     }
     return res.json()
   },
+
+  convertDoublonsToDust: async (
+    userCardId: string,
+    amount: number,
+  ): Promise<{ dustEarned: number; remainingQuantity: number }> => {
+    const res = await fetchWithAuth(`${apiUrl}/cards/${userCardId}/dust`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount }),
+    })
+    if (!res.ok) {
+      handleHttpError(res, {}, 'Erreur lors de la conversion en poussière')
+    }
+    return res.json()
+  },
 }
