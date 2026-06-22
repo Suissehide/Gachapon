@@ -1,7 +1,10 @@
 import { Award, Coins, Sparkles, Star, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
-import type { UnlockedAchievement } from '../../constants/achievements.constant'
+import {
+  RARITY_FR,
+  type UnlockedAchievement,
+} from '../../constants/achievements.constant'
 import { useAchievementUnlockStore } from '../../stores/achievementUnlock.store'
 
 const DISPLAY_MS = 5000
@@ -158,7 +161,7 @@ export function AchievementUnlockToast() {
               )}
               {reward.cardRarity && (
                 <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-100">
-                  + carte {reward.cardRarity}
+                  + carte {RARITY_FR[reward.cardRarity] ?? reward.cardRarity}
                 </span>
               )}
             </div>

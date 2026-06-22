@@ -61,7 +61,7 @@ export function AchievementCard({ achievement }: Props) {
 
         <div className="min-w-0 flex-1 pt-px">
           <div
-            className="truncate font-display text-[15px] font-bold leading-tight"
+            className="line-clamp-2 font-display text-[15px] font-bold leading-tight"
             style={{ color: '#1b1726' }}
             title={achievement.name}
           >
