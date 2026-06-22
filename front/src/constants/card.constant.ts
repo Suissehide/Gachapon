@@ -69,6 +69,11 @@ export type AdminCard = {
   rarity: string
   variant?: string
   dropWeight: number
+  baseHp: number
+  baseAtk: number
+  baseDef: number
+  baseSpd: number
+  passiveKey: string | null
   set: { id: string; name: string }
 }
 

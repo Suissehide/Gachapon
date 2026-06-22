@@ -1,5 +1,6 @@
+import { useStore } from '@tanstack/react-form'
 import { Images, X } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { RARITY_OPTIONS } from '../../../constants/card.constant'
 import { useAppForm } from '../../../hooks/formConfig'
@@ -9,6 +10,20 @@ import { Button } from '../../ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../../ui/sheet'
 import { SegmentedControl } from '../../ui/segmentedControl'
 import { MediaPickerModal } from '../media/MediaPickerModal'
+
+const STATS_BY_RARITY: Record<
+  string,
+  { baseHp: number; baseAtk: number; baseDef: number; baseSpd: number }
+> = {
+  COMMON: { baseHp: 100, baseAtk: 10, baseDef: 5, baseSpd: 90 },
+  UNCOMMON: { baseHp: 140, baseAtk: 14, baseDef: 7, baseSpd: 95 },
+  RARE: { baseHp: 200, baseAtk: 20, baseDef: 10, baseSpd: 100 },
+  EPIC: { baseHp: 320, baseAtk: 32, baseDef: 16, baseSpd: 105 },
+  LEGENDARY: { baseHp: 500, baseAtk: 50, baseDef: 25, baseSpd: 110 },
+}
+
+const DEFAULT_RARITY = 'COMMON'
+const DEFAULT_STATS = STATS_BY_RARITY[DEFAULT_RARITY]
 
 interface CreateCardSheetProps {
   open: boolean
@@ -66,6 +81,7 @@ function CreateCardForm({
   )
   const [pickedUrl, setPickedUrl] = useState<string | null>(defaultImageUrl ?? null)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const userTouchedStatsRef = useRef(false)
 
   const setOptions = sets.map((s) => ({ value: s.id, label: s.name }))
 
@@ -73,8 +89,13 @@ function CreateCardForm({
     defaultValues: {
       name: '',
       setId: defaultSetId ?? sets[0]?.id ?? '',
-      rarity: 'COMMON',
+      rarity: DEFAULT_RARITY,
       dropWeight: 1 as number | undefined,
+      baseHp: DEFAULT_STATS.baseHp as number | undefined,
+      baseAtk: DEFAULT_STATS.baseAtk as number | undefined,
+      baseDef: DEFAULT_STATS.baseDef as number | undefined,
+      baseSpd: DEFAULT_STATS.baseSpd as number | undefined,
+      passiveKey: '',
       image: null as File | null,
     },
     onSubmit: ({ value }) => {
@@ -86,6 +107,13 @@ function CreateCardForm({
       fd.append('setId', value.setId)
       fd.append('rarity', value.rarity)
       fd.append('dropWeight', String(value.dropWeight ?? 1))
+      fd.append('baseHp', String(value.baseHp ?? DEFAULT_STATS.baseHp))
+      fd.append('baseAtk', String(value.baseAtk ?? DEFAULT_STATS.baseAtk))
+      fd.append('baseDef', String(value.baseDef ?? DEFAULT_STATS.baseDef))
+      fd.append('baseSpd', String(value.baseSpd ?? DEFAULT_STATS.baseSpd))
+      if (value.passiveKey.trim()) {
+        fd.append('passiveKey', value.passiveKey.trim())
+      }
       if (imageMode === 'upload' && value.image) {
         fd.append('image', value.image)
       } else if (pickedUrl) {
@@ -94,6 +122,22 @@ function CreateCardForm({
       onCreate(fd)
     },
   })
+
+  // Watch rarity changes to pre-fill stats — only when user hasn't manually edited them.
+  const rarity = useStore(form.store, (s) => s.values.rarity)
+  useEffect(() => {
+    if (userTouchedStatsRef.current) return
+    const preset = STATS_BY_RARITY[rarity]
+    if (!preset) return
+    form.setFieldValue('baseHp', preset.baseHp)
+    form.setFieldValue('baseAtk', preset.baseAtk)
+    form.setFieldValue('baseDef', preset.baseDef)
+    form.setFieldValue('baseSpd', preset.baseSpd)
+  }, [rarity, form])
+
+  const markStatsTouched = () => {
+    userTouchedStatsRef.current = true
+  }
 
   return (
     <form
@@ -114,6 +158,25 @@ function CreateCardForm({
       </form.AppField>
       <form.AppField name="dropWeight">
         {(f) => <f.Number label="Poids de drop" />}
+      </form.AppField>
+
+      <div className="grid grid-cols-2 gap-3" onInput={markStatsTouched}>
+        <form.AppField name="baseHp">
+          {(f) => <f.Number label="HP" />}
+        </form.AppField>
+        <form.AppField name="baseAtk">
+          {(f) => <f.Number label="ATK" />}
+        </form.AppField>
+        <form.AppField name="baseDef">
+          {(f) => <f.Number label="DEF" />}
+        </form.AppField>
+        <form.AppField name="baseSpd">
+          {(f) => <f.Number label="SPD" />}
+        </form.AppField>
+      </div>
+
+      <form.AppField name="passiveKey">
+        {(f) => <f.Input label="Passif (clé, optionnel)" />}
       </form.AppField>
 
       <div className="space-y-2">

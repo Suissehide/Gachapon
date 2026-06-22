@@ -87,6 +87,11 @@ export const AdminCardsApi = {
       rarity?: string
       dropWeight?: number
       imageUrl?: string | null
+      baseHp?: number
+      baseAtk?: number
+      baseDef?: number
+      baseSpd?: number
+      passiveKey?: string | null
     },
   ): Promise<unknown> => {
     const res = await fetchWithAuth(`${apiUrl}${CARD_ROUTES.admin.card(id)}`, {

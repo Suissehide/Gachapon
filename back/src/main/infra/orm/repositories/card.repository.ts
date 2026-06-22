@@ -79,6 +79,11 @@ export class CardRepository implements ICardRepository {
     rarity: CardRarity
     dropWeight: number
     imageUrl: string
+    baseHp: number
+    baseAtk: number
+    baseDef: number
+    baseSpd: number
+    passiveKey?: string | null
   }): Promise<CardWithSet> {
     return this.#prisma.card.create({
       data,
@@ -94,6 +99,11 @@ export class CardRepository implements ICardRepository {
       dropWeight: number
       setId: string
       imageUrl: string | null
+      baseHp: number
+      baseAtk: number
+      baseDef: number
+      baseSpd: number
+      passiveKey: string | null
     }>,
   ): Promise<CardWithSet> {
     return this.#prisma.card.update({
