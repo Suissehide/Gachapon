@@ -17,7 +17,7 @@ describe('POST /cards/:userCardId/dust', () => {
     const { postgresOrm } = (app as any).iocContainer
 
     const set = await postgresOrm.prisma.cardSet.create({
-      data: { name: `DustSet${suffix}`, isActive: true },
+      data: { name: `DustSet${suffix}`, isActive: false },
     })
     const card = await postgresOrm.prisma.card.create({
       data: {

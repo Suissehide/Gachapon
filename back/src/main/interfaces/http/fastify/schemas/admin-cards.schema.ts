@@ -20,10 +20,10 @@ export const adminCardFieldsSchema = z.object({
   setId: z.string().uuid(),
   rarity: cardRarityEnum,
   dropWeight: z.coerce.number().positive(),
-  baseHp: z.coerce.number().int().positive(),
-  baseAtk: z.coerce.number().int().nonnegative(),
-  baseDef: z.coerce.number().int().nonnegative(),
-  baseSpd: z.coerce.number().int().nonnegative(),
+  baseHp: z.coerce.number().int().positive().optional(),
+  baseAtk: z.coerce.number().int().nonnegative().optional(),
+  baseDef: z.coerce.number().int().nonnegative().optional(),
+  baseSpd: z.coerce.number().int().nonnegative().optional(),
   passiveKey: z.string().min(1).nullable().optional(),
 })
 

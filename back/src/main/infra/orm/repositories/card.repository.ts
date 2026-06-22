@@ -79,10 +79,10 @@ export class CardRepository implements ICardRepository {
     rarity: CardRarity
     dropWeight: number
     imageUrl: string
-    baseHp: number
-    baseAtk: number
-    baseDef: number
-    baseSpd: number
+    baseHp?: number
+    baseAtk?: number
+    baseDef?: number
+    baseSpd?: number
     passiveKey?: string | null
   }): Promise<CardWithSet> {
     return this.#prisma.card.create({
