@@ -135,15 +135,13 @@ export class CampaignDomain {
           status = 'cleared'
         } else if (chapter > progress.highestChapter) {
           status = 'locked'
-        } else {
-          if (s.index <= progress.highestIndex) {
+        } else if (s.index <= progress.highestIndex) {
             status = 'cleared'
           } else if (s.index === progress.highestIndex + 1) {
             status = 'current'
           } else {
             status = 'locked'
           }
-        }
         return {
           id: s.id,
           chapter: s.chapter,
