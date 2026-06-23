@@ -49,10 +49,24 @@ export const battleRewardsSchema = z.object({
     .nullable(),
 })
 
+const simulatorUnitSchema = z.object({
+  id: z.string(),
+  name: z.string().optional(),
+  hp: z.number().int(),
+  atk: z.number().int(),
+  def: z.number().int(),
+  spd: z.number().int(),
+  attackPattern: z.string(),
+  passiveKey: z.string().nullable(),
+  palier: z.number().int(),
+})
+
 export const battleResponseSchema = z.object({
   won: z.boolean(),
   log: z.array(z.unknown()),
   rewards: battleRewardsSchema.nullable(),
+  teamA: z.array(simulatorUnitSchema),
+  teamB: z.array(simulatorUnitSchema),
 })
 
 export const sweepBodySchema = z.object({

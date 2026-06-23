@@ -1,5 +1,6 @@
 import { apiUrl } from '../constants/config.constant.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
+import type { SimulatorUnit } from './combat.api.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
 export type StageStatus = 'cleared' | 'current' | 'locked'
@@ -49,6 +50,8 @@ export type BattleResult = {
   won: boolean
   log: BattleLogEntry[]
   rewards: BattleRewards | null
+  teamA: SimulatorUnit[]
+  teamB: SimulatorUnit[]
 }
 
 export type SweepResult = {

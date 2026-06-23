@@ -170,7 +170,13 @@ export class CampaignDomain {
   async attackStage(
     userId: string,
     stageId: string,
-  ): Promise<{ won: boolean; log: unknown[]; rewards: BattleRewards | null }> {
+  ): Promise<{
+    won: boolean
+    log: unknown[]
+    rewards: BattleRewards | null
+    teamA: SimulatorUnit[]
+    teamB: SimulatorUnit[]
+  }> {
     return this.#postgresOrm.executeWithTransactionClient(
       async (tx) => {
         const stage = await tx.campaignStage.findUnique({
@@ -259,7 +265,13 @@ export class CampaignDomain {
           },
         })
 
-        return { won, log: sim.log, rewards }
+        return {
+          won,
+          log: sim.log,
+          rewards,
+          teamA: teamUnits,
+          teamB: enemyUnits,
+        }
       },
       { isolationLevel: 'Serializable' },
     )

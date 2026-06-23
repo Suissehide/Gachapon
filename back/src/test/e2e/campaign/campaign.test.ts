@@ -200,12 +200,18 @@ describe('Campaign routes', () => {
     const body = res.json() as {
       won: boolean
       rewards: { isFirstClear: boolean; gold: number; dust: number; xp: number } | null
+      teamA: unknown[]
+      teamB: unknown[]
     }
     expect(body.won).toBe(true)
     expect(body.rewards?.isFirstClear).toBe(true)
     expect(body.rewards?.gold).toBe(200)
     expect(body.rewards?.dust).toBe(50)
     expect(body.rewards?.xp).toBe(30)
+    expect(Array.isArray(body.teamA)).toBe(true)
+    expect(Array.isArray(body.teamB)).toBe(true)
+    expect(body.teamA.length).toBe(1)
+    expect(body.teamB.length).toBe(1)
   })
 
   it('GET /campaign after first clear — stage marked cleared', async () => {
