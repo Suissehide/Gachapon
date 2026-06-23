@@ -5,6 +5,7 @@ import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
 import { RARITY_TCG_CONFIG, VARIANT_TCG_CONFIG } from '../shared/tcg-card/config.ts'
 import { Button } from '../ui/button.tsx'
 import { CombatPanel } from './CombatPanel.tsx'
+import { EquipmentSlotsPanel } from './EquipmentSlotsPanel.tsx'
 import {
   RARITY_CHIP_ACTIVE,
   RARITY_LABELS,
@@ -17,7 +18,7 @@ type Props = {
 }
 
 export function CardViewModal({ entry, onClose, onRecycle }: Props) {
-  if (!entry) return null
+  if (!entry) { return null }
 
   const { card, variant, quantity, isOwned } = entry
   const config = RARITY_TCG_CONFIG[card.rarity] ?? RARITY_TCG_CONFIG.COMMON
@@ -30,7 +31,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
       role="presentation"
       onClick={onClose}
       onKeyDown={(e) => {
-        if (e.key === 'Escape') onClose()
+        if (e.key === 'Escape') { onClose() }
       }}
     >
       {/* Rarity backdrop glow */}
@@ -112,6 +113,11 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
               level={entry.userCard.level}
               palier={entry.userCard.palier}
             />
+          )}
+
+          {/* Equipment slots */}
+          {isOwned && entry.userCard && (
+            <EquipmentSlotsPanel userCardId={entry.userCard.id} />
           )}
 
           {/* Actions */}
