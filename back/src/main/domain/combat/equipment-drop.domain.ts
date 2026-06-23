@@ -46,10 +46,10 @@ export function rollFarmCardDrop(loot: FarmLoot, prng: PRNG): boolean {
  * Picks uniformly among rarities >= minRarity.
  */
 export function rollFirstClearEquipmentRarity(firstClear: FirstClearLoot, prng: PRNG): Rarity | null {
-  if (!firstClear.guaranteedEquipment) return null
+  if (!firstClear.guaranteedEquipment) { return null }
   const min = firstClear.guaranteedEquipment.minRarity
   const allowed = RARITY_ORDER.slice(RARITY_ORDER.indexOf(min))
-  if (allowed.length === 0) return null
+  if (allowed.length === 0) { return null }
   const idx = Math.floor(prng() * allowed.length)
   return allowed[Math.min(idx, allowed.length - 1)]!
 }
@@ -58,10 +58,10 @@ export function rollFirstClearEquipmentRarity(firstClear: FirstClearLoot, prng: 
  * Same idea for first-clear card.
  */
 export function rollFirstClearCardRarity(firstClear: FirstClearLoot, prng: PRNG): Rarity | null {
-  if (!firstClear.guaranteedCard) return null
+  if (!firstClear.guaranteedCard) { return null }
   const min = firstClear.guaranteedCard.minRarity
   const allowed = RARITY_ORDER.slice(RARITY_ORDER.indexOf(min))
-  if (allowed.length === 0) return null
+  if (allowed.length === 0) { return null }
   const idx = Math.floor(prng() * allowed.length)
   return allowed[Math.min(idx, allowed.length - 1)]!
 }
@@ -76,13 +76,13 @@ export function pickEquipmentForRarity<T extends { id: string; dropWeight: numbe
   prng: PRNG,
 ): T | null {
   const matching = candidates.filter((c) => c.rarity === rarity)
-  if (matching.length === 0) return null
+  if (matching.length === 0) { return null }
   const totalWeight = matching.reduce((acc, c) => acc + c.dropWeight, 0)
-  if (totalWeight <= 0) return null
+  if (totalWeight <= 0) { return null }
   let r = prng() * totalWeight
   for (const c of matching) {
     r -= c.dropWeight
-    if (r <= 0) return c
+    if (r <= 0) { return c }
   }
   return matching[matching.length - 1]!
 }
@@ -97,9 +97,9 @@ function pickWeightedRarity(weights: Partial<Record<Rarity, number>>, prng: PRNG
   let r = prng() * total
   for (const [rar, w] of entries) {
     r -= w
-    if (r <= 0) return rar
+    if (r <= 0) { return rar }
   }
-  return entries[entries.length - 1]![0]
+  return entries[entries.length - 1]?.[0]
 }
 
 export const __test__ = { pickWeightedRarity }
