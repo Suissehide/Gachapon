@@ -20,6 +20,7 @@ import type { CardLevelingTx } from '../../domain/card-leveling/card-leveling.tx
 import type { CardAscensionTx } from '../../domain/card-ascension/card-ascension.tx'
 import type { CombatTeamTx } from '../../domain/combat/combat-team.tx'
 import type { CombatDebugDomain } from '../../domain/combat/combat-debug.domain'
+import type { CombatPointsTx } from '../../domain/combat-points/combat-points.tx'
 import type { EquipmentDomain } from '../../domain/equipment/equipment.domain'
 import type { GachaDomainInterface } from '../domain/gacha/gacha.domain.interface'
 import type { RewardsDomainInterface } from '../domain/rewards/rewards.domain.interface'
@@ -82,6 +83,7 @@ export interface IocContainer {
   readonly cardAscensionTx: CardAscensionTx
   readonly combatTeamTx: CombatTeamTx
   readonly combatDebugDomain: CombatDebugDomain
+  readonly combatPointsTx: CombatPointsTx
   readonly campaignDomain: CampaignDomain
   readonly equipmentDomain: EquipmentDomain
   readonly teamRepository: TeamRepository

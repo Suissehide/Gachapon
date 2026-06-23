@@ -16,6 +16,7 @@ import { CardLevelingTx } from '../../../domain/card-leveling/card-leveling.tx'
 import { CardAscensionTx } from '../../../domain/card-ascension/card-ascension.tx'
 import { CombatTeamTx } from '../../../domain/combat/combat-team.tx'
 import { CombatDebugDomain } from '../../../domain/combat/combat-debug.domain'
+import { CombatPointsTx } from '../../../domain/combat-points/combat-points.tx'
 import { EquipmentDomain } from '../../../domain/equipment/equipment.domain'
 import { GachaDomain } from '../../../domain/gacha/gacha.domain'
 import { RewardsDomain } from '../../../domain/rewards/rewards.domain'
@@ -115,6 +116,7 @@ class AwilixIocContainer {
     this.#reg('cardAscensionTx', asClass(CardAscensionTx).singleton())
     this.#reg('combatTeamTx', asClass(CombatTeamTx).singleton())
     this.#reg('combatDebugDomain', asClass(CombatDebugDomain).singleton())
+    this.#reg('combatPointsTx', asClass(CombatPointsTx).singleton())
     this.#reg('campaignDomain', asClass(CampaignDomain).singleton())
     this.#reg('equipmentDomain', asClass(EquipmentDomain).singleton())
     this.#reg('teamRepository', asClass(TeamRepository).singleton())

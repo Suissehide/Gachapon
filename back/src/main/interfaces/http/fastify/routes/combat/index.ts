@@ -3,12 +3,23 @@ import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import {
   combatDebugBattleBodySchema,
   combatDebugBattleResponseSchema,
+  combatPointsResponseSchema,
   combatTeamPutBodySchema,
   combatTeamResponseSchema,
 } from '../../schemas/combat.schema'
 
 export const combatRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { combatTeamTx, combatDebugDomain } = fastify.iocContainer
+  const { combatTeamTx, combatDebugDomain, combatPointsTx } =
+    fastify.iocContainer
+
+  fastify.get(
+    '/combat/points',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: { response: { 200: combatPointsResponseSchema } },
+    },
+    (request) => combatPointsTx.getView(request.user.userID),
+  )
 
   fastify.get(
     '/combat/team',

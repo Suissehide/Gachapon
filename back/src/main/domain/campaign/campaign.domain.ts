@@ -104,9 +104,11 @@ interface CardCatalogEntry {
 
 export class CampaignDomain {
   readonly #postgresOrm
+  readonly #combatPointsTx
 
-  constructor({ postgresOrm }: IocContainer) {
+  constructor({ postgresOrm, combatPointsTx }: IocContainer) {
     this.#postgresOrm = postgresOrm
+    this.#combatPointsTx = combatPointsTx
   }
 
   /**
@@ -183,6 +185,9 @@ export class CampaignDomain {
         if (!stage) {
           throw Boom.notFound('Stage not found')
         }
+
+        // Debit 6 PC for the battle (after stage existence check, before doing work)
+        await this.#combatPointsTx.debitInTx(tx, userId, 6)
 
         const user = await tx.user.findUnique({ where: { id: userId } })
         if (!user) {
@@ -303,6 +308,9 @@ export class CampaignDomain {
         if (!stage) {
           throw Boom.notFound('Stage not found')
         }
+
+        // Debit 6 PC per run for the sweep
+        await this.#combatPointsTx.debitInTx(tx, userId, 6 * runs)
 
         const progress = await tx.userCampaignProgress.findUnique({
           where: { userId },

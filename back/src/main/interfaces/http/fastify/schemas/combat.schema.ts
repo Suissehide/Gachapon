@@ -4,6 +4,13 @@ export const combatTeamPutBodySchema = z.object({
   userCardIds: z.array(z.string().uuid()).min(1).max(3),
 })
 
+export const combatPointsResponseSchema = z.object({
+  combatPoints: z.number().int(),
+  maxStock: z.number().int(),
+  regenSeconds: z.number().int(),
+  nextCombatPointAt: z.date().nullable(),
+})
+
 export const teamUnitSchema = z.object({
   userCardId: z.string(),
   cardId: z.string(),
