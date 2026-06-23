@@ -1,5 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router'
-import { Coins, LogOut, Sparkles } from 'lucide-react'
+import { CircleDollarSign, Coins, LogOut, Sparkles } from 'lucide-react'
 
 import { useAuthStore } from '../../stores/auth.store'
 import { InvitationsBadge } from '../notifications/InvitationsBadge.tsx'
@@ -69,6 +69,13 @@ export function Navbar() {
                   >
                     <Coins className="h-3.5 w-3.5" />
                     {user.tokens.toLocaleString('fr-FR')}
+                  </Link>
+                  <Link
+                    to="/shop"
+                    className="flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-sm font-semibold text-emerald-500 hover:bg-emerald-500/20 transition-colors"
+                  >
+                    <CircleDollarSign className="h-3.5 w-3.5" />
+                    {user.gold.toLocaleString('fr-FR')}
                   </Link>
                   <Link
                     to="/shop"
