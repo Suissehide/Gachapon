@@ -14,7 +14,7 @@ export function statAtLevel(baseStat: number, level: number): number {
 }
 
 export function palierMultiplier(palier: number): number {
-  return Math.pow(1 + ASCENSION_STAT_BONUS, palier - 1)
+  return (1 + ASCENSION_STAT_BONUS) ** (palier - 1)
 }
 
 export function finalStat(
@@ -35,11 +35,11 @@ const RARITY_MULT: Record<CardRarity, number> = {
 }
 
 export function goldCostNextLevel(currentLevel: number, rarity: CardRarity): number {
-  return Math.round(5 * Math.pow(currentLevel, 1.6) * RARITY_MULT[rarity])
+  return Math.round(5 * currentLevel ** 1.6 * RARITY_MULT[rarity])
 }
 
 export function dustCostNextLevel(currentLevel: number, rarity: CardRarity): number {
-  return Math.round(8 * Math.pow(currentLevel, 1.4) * RARITY_MULT[rarity])
+  return Math.round(8 * currentLevel ** 1.4 * RARITY_MULT[rarity])
 }
 
 export function maxLevelInPalier(palier: number): number {
