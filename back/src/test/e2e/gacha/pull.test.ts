@@ -175,6 +175,14 @@ describe('Gacha routes', () => {
   it('POST /pulls — un doublon ne crédite plus de poussière auto', async () => {
     const { postgresOrm } = (app as any).iocContainer
 
+    // Isolate this test: only GachaSet should be active, so both pulls land
+    // on the same card (and the 2nd is guaranteed to be a duplicate). Other
+    // e2e tests may have left active sets behind.
+    await postgresOrm.prisma.cardSet.updateMany({
+      where: { name: { not: `GachaSet${suffix}` } },
+      data: { isActive: false },
+    })
+
     // Top up tokens to ensure pulls go through
     await postgresOrm.prisma.user.update({
       where: { email },
