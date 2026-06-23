@@ -3,6 +3,7 @@ import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { adminAchievementsRouter } from './achievements.router'
 import { adminCardsRouter } from './cards.router'
 import { adminConfigRouter } from './config.router'
+import { adminEquipmentRouter } from './equipment.router'
 import { adminMediaRouter } from './media.router'
 import { adminQuestsRouter } from './quests.router'
 import { adminScoringConfigRouter } from './scoring-config.router'
@@ -40,4 +41,5 @@ export const adminRouter: FastifyPluginAsyncZod = async (fastify) => {
   await fastify.register(adminMediaRouter, { prefix: '/media' })
   await fastify.register(adminStreakRouter, { prefix: '/streak' })
   await fastify.register(adminSkillsRouter)
+  await fastify.register(adminEquipmentRouter)
 }
