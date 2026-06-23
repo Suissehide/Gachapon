@@ -16,6 +16,7 @@ import {
   Package,
   Settings,
   ShoppingBag,
+  Swords,
   Trophy,
   Users,
   Zap,
@@ -46,6 +47,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/admin/config', label: 'Config', icon: Settings },
   { to: '/admin/streak', label: 'Streak', icon: Flame },
   { to: '/admin/stats', label: 'Stats', icon: BarChart2 },
+  { to: '/admin/combat-debug', label: 'Combat — Debug', icon: Swords },
 ]
 
 function AdminLayout() {
