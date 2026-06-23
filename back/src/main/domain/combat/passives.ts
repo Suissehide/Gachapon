@@ -29,8 +29,8 @@ export interface PassiveDefinition {
 }
 
 function clampPalier(palier: number): number {
-  if (palier < 1) return 1
-  if (palier > 6) return 6
+  if (palier < 1) { return 1 }
+  if (palier > 6) { return 6 }
   return palier
 }
 
@@ -113,6 +113,6 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
  * Returns the passive definition for a key, or null if unknown.
  */
 export function getPassive(key: string | null | undefined): PassiveDefinition | null {
-  if (!key) return null
+  if (!key) { return null }
   return PASSIVES[key as PassiveKey] ?? null
 }
