@@ -4,6 +4,7 @@ import type { DisplayEntry } from '../../routes/_authenticated/collection.tsx'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
 import { RARITY_TCG_CONFIG, VARIANT_TCG_CONFIG } from '../shared/tcg-card/config.ts'
 import { Button } from '../ui/button.tsx'
+import { CombatPanel } from './CombatPanel.tsx'
 import {
   RARITY_CHIP_ACTIVE,
   RARITY_LABELS,
@@ -99,6 +100,18 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
                 ×{quantity}
               </span>
             </div>
+          )}
+
+          {/* Combat (stats, level/palier, level-up, ascend, passive) */}
+          {isOwned && entry.userCard && (
+            <CombatPanel
+              userCardId={entry.userCard.id}
+              card={card}
+              variant={variant}
+              quantity={quantity}
+              level={entry.userCard.level}
+              palier={entry.userCard.palier}
+            />
           )}
 
           {/* Actions */}

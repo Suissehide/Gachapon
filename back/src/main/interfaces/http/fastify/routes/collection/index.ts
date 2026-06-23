@@ -84,15 +84,23 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
       const userCards = await userCardRepository.findByUser(request.params.id)
       return {
         cards: userCards.map((uc) => ({
+          id: uc.id,
           card: {
             id: uc.card.id,
             name: uc.card.name,
             imageUrl: resolveUrl(uc.card.imageUrl),
             rarity: uc.card.rarity,
             set: { id: uc.card.set.id, name: uc.card.set.name },
+            baseHp: uc.card.baseHp,
+            baseAtk: uc.card.baseAtk,
+            baseDef: uc.card.baseDef,
+            baseSpd: uc.card.baseSpd,
+            passiveKey: uc.card.passiveKey,
           },
           variant: uc.variant,
           quantity: uc.quantity,
+          level: uc.level,
+          palier: uc.palier,
           obtainedAt: uc.obtainedAt.toISOString(),
         })),
       }
