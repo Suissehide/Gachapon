@@ -1,5 +1,14 @@
+import { FloatingNumber } from './FloatingNumber'
+import { PassiveBadge } from './PassiveBadge'
 import { UnitPortrait } from './UnitPortrait'
 import type { SceneUnit } from './types'
+
+type FloatItem = {
+  key: number
+  value: number | string
+  kind: 'damage' | 'heal' | 'dodge'
+}
+type BadgeItem = { key: number; passiveKey: string }
 
 type Props = {
   units: SceneUnit[]
@@ -9,21 +18,41 @@ type Props = {
   attackingUnitId: string | null
   /** Boss layout: 1 unit centered + enlarged */
   isBoss?: boolean
+  floatsByUnit: Record<string, FloatItem[]>
+  badgesByUnit: Record<string, BadgeItem[]>
 }
 
-export function TeamLane({ units, side, attackingUnitId, isBoss }: Props) {
+export function TeamLane({
+  units,
+  side,
+  attackingUnitId,
+  isBoss,
+  floatsByUnit,
+  badgesByUnit,
+}: Props) {
+  const renderUnit = (u: SceneUnit, enlarged?: boolean) => (
+    <div key={u.id} className="relative">
+      <UnitPortrait
+        unit={u}
+        attackingDirection={
+          attackingUnitId === u.id ? (side === 'A' ? 'right' : 'left') : null
+        }
+        enlarged={enlarged}
+      />
+      {(floatsByUnit[u.id] ?? []).map((f) => (
+        <FloatingNumber key={f.key} value={f.value} kind={f.kind} />
+      ))}
+      {(badgesByUnit[u.id] ?? []).map((b) => (
+        <PassiveBadge key={b.key} passiveKey={b.passiveKey} />
+      ))}
+    </div>
+  )
+
   // Boss: only 1 unit, enlarged, centered
   if (isBoss && units.length === 1) {
-    const unit = units[0]
     return (
       <div className="flex h-full items-center justify-center">
-        <UnitPortrait
-          unit={unit}
-          attackingDirection={
-            attackingUnitId === unit.id ? (side === 'A' ? 'right' : 'left') : null
-          }
-          enlarged
-        />
+        {renderUnit(units[0], true)}
       </div>
     )
   }
@@ -31,15 +60,7 @@ export function TeamLane({ units, side, attackingUnitId, isBoss }: Props) {
   // Standard lane: row of portraits
   return (
     <div className="flex h-full items-center justify-center gap-4">
-      {units.map((u) => (
-        <UnitPortrait
-          key={u.id}
-          unit={u}
-          attackingDirection={
-            attackingUnitId === u.id ? (side === 'A' ? 'right' : 'left') : null
-          }
-        />
-      ))}
+      {units.map((u) => renderUnit(u))}
     </div>
   )
 }

@@ -287,6 +287,21 @@ h6 {
   }
 }
 
+@keyframes floatUp {
+  0% {
+    transform: translate(-50%, 0);
+    opacity: 0;
+  }
+  20% {
+    transform: translate(-50%, -8px);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -36px);
+    opacity: 0;
+  }
+}
+
 .subtle-bounce {
   animation: subtleBounce 5s ease-in-out infinite;
 }
