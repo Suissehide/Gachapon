@@ -8,6 +8,7 @@ import type {
   DebugBattleResult,
   SimulatorUnit,
 } from '../../api/combat.api'
+import { BattleScene } from '../../components/battle/BattleScene'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { useDebugBattle } from '../../queries/useDebugBattle'
@@ -88,10 +89,17 @@ function DebugBattlePage() {
   const [teamB, setTeamB] = useState<SimulatorUnit[]>(DEFAULT_TEAM_B)
   const [seed, setSeed] = useState('debug-seed')
   const [timeoutTurns, setTimeoutTurns] = useState(30)
+  const [submittedTeams, setSubmittedTeams] = useState<{
+    teamA: SimulatorUnit[]
+    teamB: SimulatorUnit[]
+  } | null>(null)
+  const [view, setView] = useState<'scene' | 'log'>('scene')
 
   const debugBattle = useDebugBattle()
 
   const onRun = () => {
+    setSubmittedTeams({ teamA, teamB })
+    setView('scene')
     debugBattle.mutate({ teamA, teamB, seed, timeoutTurns })
   }
 
@@ -159,7 +167,14 @@ function DebugBattlePage() {
         </div>
       )}
 
-      {debugBattle.data && <ResultPanel result={debugBattle.data} />}
+      {debugBattle.data && submittedTeams && (
+        <ResultPanel
+          result={debugBattle.data}
+          submittedTeams={submittedTeams}
+          view={view}
+          onViewChange={setView}
+        />
+      )}
     </div>
   )
 }
@@ -347,7 +362,17 @@ function NumInput({
   )
 }
 
-function ResultPanel({ result }: { result: DebugBattleResult }) {
+function ResultPanel({
+  result,
+  submittedTeams,
+  view,
+  onViewChange,
+}: {
+  result: DebugBattleResult
+  submittedTeams: { teamA: SimulatorUnit[]; teamB: SimulatorUnit[] }
+  view: 'scene' | 'log'
+  onViewChange: (v: 'scene' | 'log') => void
+}) {
   const wonLabel =
     result.won === 'A'
       ? 'Équipe A gagne'
@@ -361,16 +386,51 @@ function ResultPanel({ result }: { result: DebugBattleResult }) {
 
   return (
     <div className="mt-4 rounded-2xl border border-border bg-muted/20 p-4">
-      <div className="flex items-center justify-between mb-3">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className={`font-bold ${wonColor}`}>{wonLabel}</h2>
-        <span className="text-xs text-text-light/60">{result.turns} tours</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-text-light/60">{result.turns} tours</span>
+          <div className="flex rounded-full border border-border bg-background/40 p-0.5">
+            <button
+              type="button"
+              onClick={() => onViewChange('scene')}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                view === 'scene'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-text-light hover:text-text'
+              }`}
+            >
+              Animation
+            </button>
+            <button
+              type="button"
+              onClick={() => onViewChange('log')}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                view === 'log'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-text-light hover:text-text'
+              }`}
+            >
+              Log JSON
+            </button>
+          </div>
+        </div>
       </div>
-      <pre className="text-xs font-mono whitespace-pre-wrap max-h-[60vh] overflow-y-auto">
-        {result.log.map((entry, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: log is immutable result data
-          <LogLine key={i} entry={entry} />
-        ))}
-      </pre>
+
+      {view === 'scene' ? (
+        <BattleScene
+          teamA={submittedTeams.teamA}
+          teamB={submittedTeams.teamB}
+          log={result.log}
+        />
+      ) : (
+        <pre className="text-xs font-mono whitespace-pre-wrap max-h-[60vh] overflow-y-auto">
+          {result.log.map((entry, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: log is immutable result data
+            <LogLine key={i} entry={entry} />
+          ))}
+        </pre>
+      )}
     </div>
   )
 }
