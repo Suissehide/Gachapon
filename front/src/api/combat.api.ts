@@ -43,7 +43,22 @@ export type DebugBattleResult = {
   turns: number
 }
 
+export type CombatPointsView = {
+  combatPoints: number
+  maxStock: number
+  regenSeconds: number
+  nextCombatPointAt: string | null
+}
+
 export const CombatApi = {
+  getPoints: async (): Promise<CombatPointsView> => {
+    const res = await fetchWithAuth(`${apiUrl}/combat/points`)
+    if (!res.ok) {
+      handleHttpError(res, {}, 'Erreur lors du chargement des points de combat')
+    }
+    return res.json()
+  },
+
   getTeam: async (): Promise<{ team: TeamUnit[] }> => {
     const res = await fetchWithAuth(`${apiUrl}/combat/team`)
     if (!res.ok) {
