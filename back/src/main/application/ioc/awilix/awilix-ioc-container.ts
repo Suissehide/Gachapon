@@ -11,6 +11,7 @@ import { SkillResetDomain } from '../../../domain/skills/skill-reset.domain'
 import { AdminSkillTreeDomain } from '../../../domain/skills/admin-skill-tree.domain'
 import { AchievementsDomain } from '../../../domain/achievements/achievements.domain'
 import { CardDustConversionDomain } from '../../../domain/card-dust-conversion/card-dust-conversion.domain'
+import { CampaignDomain } from '../../../domain/campaign/campaign.domain'
 import { CardLevelingTx } from '../../../domain/card-leveling/card-leveling.tx'
 import { CardAscensionTx } from '../../../domain/card-ascension/card-ascension.tx'
 import { CombatTeamTx } from '../../../domain/combat/combat-team.tx'
@@ -114,6 +115,7 @@ class AwilixIocContainer {
     this.#reg('cardAscensionTx', asClass(CardAscensionTx).singleton())
     this.#reg('combatTeamTx', asClass(CombatTeamTx).singleton())
     this.#reg('combatDebugDomain', asClass(CombatDebugDomain).singleton())
+    this.#reg('campaignDomain', asClass(CampaignDomain).singleton())
     this.#reg('equipmentDomain', asClass(EquipmentDomain).singleton())
     this.#reg('teamRepository', asClass(TeamRepository).singleton())
     this.#reg('teamMemberRepository', asClass(TeamMemberRepository).singleton())

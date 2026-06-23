@@ -99,7 +99,7 @@ function pickWeightedRarity(weights: Partial<Record<Rarity, number>>, prng: PRNG
     r -= w
     if (r <= 0) { return rar }
   }
-  return entries[entries.length - 1]?.[0]
+  return entries[entries.length - 1]![0]
 }
 
 export const __test__ = { pickWeightedRarity }

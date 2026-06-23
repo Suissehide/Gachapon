@@ -15,6 +15,7 @@ import type { ICollectionDomain } from '../domain/collection/collection.domain.i
 import type { AdminSkillTreeDomain } from '../../domain/skills/admin-skill-tree.domain'
 import type { ISkillTreeDomain, ISkillInvestDomain, ISkillResetDomain } from '../domain/skills/skill-tree.domain.interface'
 import type { CardDustConversionDomain } from '../../domain/card-dust-conversion/card-dust-conversion.domain'
+import type { CampaignDomain } from '../../domain/campaign/campaign.domain'
 import type { CardLevelingTx } from '../../domain/card-leveling/card-leveling.tx'
 import type { CardAscensionTx } from '../../domain/card-ascension/card-ascension.tx'
 import type { CombatTeamTx } from '../../domain/combat/combat-team.tx'
@@ -81,6 +82,7 @@ export interface IocContainer {
   readonly cardAscensionTx: CardAscensionTx
   readonly combatTeamTx: CombatTeamTx
   readonly combatDebugDomain: CombatDebugDomain
+  readonly campaignDomain: CampaignDomain
   readonly equipmentDomain: EquipmentDomain
   readonly teamRepository: TeamRepository
   readonly teamMemberRepository: TeamMemberRepository
