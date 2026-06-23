@@ -60,7 +60,7 @@ function CombatPage() {
     isDirty
 
   const handlePick = (userCardId: string) => {
-    if (pickerSlot === null) return
+    if (pickerSlot === null) { return }
     // Don't allow duplicates
     if (selectedIds.includes(userCardId)) {
       setPickerSlot(null)
@@ -94,12 +94,12 @@ function CombatPage() {
 
       {/* Slots row */}
       <div className="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {Array.from({ length: MAX_TEAM_SIZE }, (_, i) => {
+        {(['slot-0', 'slot-1', 'slot-2'] as const).map((slotKey, i) => {
           const id = selectedIds[i] ?? null
           const uc = id ? cardsById.get(id) ?? null : null
           return (
             <SlotCard
-              key={i}
+              key={slotKey}
               index={i}
               userCard={uc}
               onAdd={() => setPickerSlot(i)}
@@ -134,7 +134,7 @@ function CombatPage() {
         <Popup
           open
           onOpenChange={(v) => {
-            if (!v) setPickerSlot(null)
+            if (!v) { setPickerSlot(null) }
           }}
         >
           <PopupContent size="xl">
@@ -261,7 +261,7 @@ function TeamSummary({
   // Show only the cards currently in the edited list. Stats come from the
   // server-computed team so we don't have to redo formula work in the front.
   const inEdit = team.filter((u) => editedIds.includes(u.userCardId))
-  if (inEdit.length === 0) return null
+  if (inEdit.length === 0) { return null }
 
   const totals = inEdit.reduce(
     (acc, u) => ({
