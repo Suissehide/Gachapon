@@ -86,4 +86,43 @@ export const CollectionApi = {
     }
     return res.json()
   },
+
+  levelUpCard: async (
+    userCardId: string,
+    targetLevel: number,
+  ): Promise<{
+    newLevel: number
+    goldSpent: number
+    dustSpent: number
+    newGold: number
+    newDust: number
+  }> => {
+    const res = await fetchWithAuth(`${apiUrl}/cards/${userCardId}/level-up`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetLevel }),
+    })
+    if (!res.ok) {
+      handleHttpError(res, {}, 'Erreur lors du level up')
+    }
+    return res.json()
+  },
+
+  ascendCard: async (
+    userCardId: string,
+  ): Promise<{
+    newPalier: number
+    doublonsSpent: number
+    remainingQuantity: number
+  }> => {
+    const res = await fetchWithAuth(`${apiUrl}/cards/${userCardId}/ascend`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    })
+    if (!res.ok) {
+      handleHttpError(res, {}, "Erreur lors de l'ascension")
+    }
+    return res.json()
+  },
 }
