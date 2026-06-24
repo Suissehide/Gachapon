@@ -23,8 +23,13 @@ export class CombatPointsTx {
   }
 
   /**
-   * Read user's PC (lazily applying regen since lastCombatPointAt and
-   * persisting the new state if it changed).
+   * Read user's PC (lazily applying regen since lastCombatPointAt).
+   *
+   * Pure read — does NOT persist the recomputed state. Persistence happens
+   * only inside #debitInTx, which is the single writer for combatPoints.
+   * Avoids a race where a polling /combat/points call reads the pre-debit
+   * state, then writes back the regenerated PC after a concurrent debit,
+   * effectively refunding the spent PC.
    */
   async getView(userId: string): Promise<CombatPointsView> {
     const cfg = await this.#loadConfig()
@@ -40,20 +45,6 @@ export class CombatPointsTx {
       cfg.regenSeconds,
       cfg.maxStock,
     )
-
-    const previousMs = user.lastCombatPointAt?.getTime() ?? null
-    const newMs = state.newLastCombatPointAt.getTime()
-    const changed =
-      state.combatPoints !== user.combatPoints || previousMs !== newMs
-    if (changed) {
-      await this.#postgresOrm.prisma.user.update({
-        where: { id: userId },
-        data: {
-          combatPoints: state.combatPoints,
-          lastCombatPointAt: state.newLastCombatPointAt,
-        },
-      })
-    }
 
     return {
       combatPoints: state.combatPoints,
@@ -100,13 +91,15 @@ export class CombatPointsTx {
     }
 
     const after = state.combatPoints - cost
+    // Preserve the regen clock returned by calculateCombatPoints: it already
+    // advances by N intervals for the PCs gained (so the partial window
+    // toward the next PC is kept). Resetting to "now" here would discard
+    // any sub-interval regen progress on every battle/sweep.
     await tx.user.update({
       where: { id: userId },
       data: {
         combatPoints: after,
-        // Reset the regen clock to "now" — mirrors token regen behavior so
-        // a stale elapsed window cannot instantly refund the PC we just spent.
-        lastCombatPointAt: new Date(),
+        lastCombatPointAt: state.newLastCombatPointAt,
       },
     })
     return { combatPointsAfter: after }

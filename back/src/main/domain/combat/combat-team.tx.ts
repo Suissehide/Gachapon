@@ -2,7 +2,11 @@ import Boom from '@hapi/boom'
 
 import type { IocContainer } from '../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
-import { computeFinalStats } from './combat-stats.domain'
+import { retryOnSerialization } from '../shared/retry-serialization'
+import {
+  computeFinalStats,
+  type EquipmentBonuses,
+} from './combat-stats.domain'
 import { getPassive } from './passives'
 
 const MAX_TEAM_SIZE = 3
@@ -49,25 +53,27 @@ export class CombatTeamTx {
       throw Boom.badRequest('Team cards must be distinct')
     }
 
-    return this.#postgresOrm.executeWithTransactionClient(
-      async (tx) => {
-        const owned = await tx.userCard.findMany({
-          where: { id: { in: userCardIds }, userId },
-          select: { id: true },
-        })
-        if (owned.length !== userCardIds.length) {
-          throw Boom.badRequest('One or more cards are not owned by the user')
-        }
+    return retryOnSerialization(() =>
+      this.#postgresOrm.executeWithTransactionClient(
+        async (tx) => {
+          const owned = await tx.userCard.findMany({
+            where: { id: { in: userCardIds }, userId },
+            select: { id: true },
+          })
+          if (owned.length !== userCardIds.length) {
+            throw Boom.badRequest('One or more cards are not owned by the user')
+          }
 
-        await tx.user.update({
-          where: { id: userId },
-          data: { combatTeam: userCardIds },
-        })
+          await tx.user.update({
+            where: { id: userId },
+            data: { combatTeam: userCardIds },
+          })
 
-        const team = await this.#buildTeamView(tx, userId)
-        return { team }
-      },
-      { isolationLevel: 'Serializable' },
+          const team = await this.#buildTeamView(tx, userId)
+          return { team }
+        },
+        { isolationLevel: 'Serializable' },
+      ),
     )
   }
 
@@ -83,15 +89,23 @@ export class CombatTeamTx {
     if (userCardIds.length === 0) {
       return []
     }
+    // Include equipped UserEquipment so the preview matches what the campaign
+    // simulator actually sees (otherwise the UI underreports gear bonuses).
     const userCards = await tx.userCard.findMany({
       where: { id: { in: userCardIds }, userId },
-      include: { card: true },
+      include: {
+        card: true,
+        equipment: { include: { equipment: true } },
+      },
     })
     const byId = new Map(userCards.map((uc) => [uc.id, uc]))
     return userCardIds
       .map((id) => byId.get(id))
       .filter((uc): uc is NonNullable<typeof uc> => uc != null)
       .map((uc) => {
+        const equipmentBonuses: EquipmentBonuses[] = uc.equipment.map(
+          (ue) => (ue.equipment.bonuses ?? {}) as EquipmentBonuses,
+        )
         const stats = computeFinalStats({
           baseHp: uc.card.baseHp,
           baseAtk: uc.card.baseAtk,
@@ -100,6 +114,7 @@ export class CombatTeamTx {
           level: uc.level,
           palier: uc.palier,
           variant: uc.variant,
+          equipment: equipmentBonuses,
         })
         const passive = getPassive(uc.card.passiveKey)
         return {

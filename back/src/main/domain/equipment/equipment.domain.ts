@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
+import { retryOnSerialization } from '../shared/retry-serialization'
 
 export interface EquipmentInstanceView {
   id: string // UserEquipment.id
@@ -63,49 +64,50 @@ export class EquipmentDomain {
     userEquipmentId: string,
     targetUserCardId: string,
   ): Promise<{ equippedOnId: string; previouslyEquippedId: string | null }> {
-    return this.#postgresOrm.executeWithTransactionClient(
-      async (tx) => {
-        const ue = await tx.userEquipment.findUnique({
-          where: { id: userEquipmentId },
-          include: { equipment: true },
-        })
-        if (!ue || ue.userId !== userId) {
-          throw Boom.notFound('UserEquipment not found')
-        }
-        const card = await tx.userCard.findUnique({
-          where: { id: targetUserCardId },
-        })
-        if (!card || card.userId !== userId) {
-          throw Boom.notFound('UserCard not found')
-        }
-
-        // Find any other UserEquipment already equipped on (card, same slot)
-        const occupant = await tx.userEquipment.findFirst({
-          where: {
-            userId,
-            equippedOnId: targetUserCardId,
-            equipment: { slot: ue.equipment.slot },
-            NOT: { id: ue.id },
-          },
-        })
-        if (occupant) {
-          await tx.userEquipment.update({
-            where: { id: occupant.id },
-            data: { equippedOnId: null },
+    return retryOnSerialization(() =>
+      this.#postgresOrm.executeWithTransactionClient(
+        async (tx) => {
+          const ue = await tx.userEquipment.findUnique({
+            where: { id: userEquipmentId },
+            include: { equipment: true },
           })
-        }
+          if (!ue || ue.userId !== userId) {
+            throw Boom.notFound('UserEquipment not found')
+          }
+          const card = await tx.userCard.findUnique({
+            where: { id: targetUserCardId },
+          })
+          if (!card || card.userId !== userId) {
+            throw Boom.notFound('UserCard not found')
+          }
 
-        await tx.userEquipment.update({
-          where: { id: ue.id },
-          data: { equippedOnId: targetUserCardId },
-        })
+          const occupant = await tx.userEquipment.findFirst({
+            where: {
+              userId,
+              equippedOnId: targetUserCardId,
+              equipment: { slot: ue.equipment.slot },
+              NOT: { id: ue.id },
+            },
+          })
+          if (occupant) {
+            await tx.userEquipment.update({
+              where: { id: occupant.id },
+              data: { equippedOnId: null },
+            })
+          }
 
-        return {
-          equippedOnId: targetUserCardId,
-          previouslyEquippedId: occupant?.id ?? null,
-        }
-      },
-      { isolationLevel: 'Serializable' },
+          await tx.userEquipment.update({
+            where: { id: ue.id },
+            data: { equippedOnId: targetUserCardId },
+          })
+
+          return {
+            equippedOnId: targetUserCardId,
+            previouslyEquippedId: occupant?.id ?? null,
+          }
+        },
+        { isolationLevel: 'Serializable' },
+      ),
     )
   }
 
@@ -116,24 +118,26 @@ export class EquipmentDomain {
     userId: string,
     userEquipmentId: string,
   ): Promise<{ unequipped: boolean }> {
-    return this.#postgresOrm.executeWithTransactionClient(
-      async (tx) => {
-        const ue = await tx.userEquipment.findUnique({
-          where: { id: userEquipmentId },
-        })
-        if (!ue || ue.userId !== userId) {
-          throw Boom.notFound('UserEquipment not found')
-        }
-        if (ue.equippedOnId === null) {
-          return { unequipped: false }
-        }
-        await tx.userEquipment.update({
-          where: { id: ue.id },
-          data: { equippedOnId: null },
-        })
-        return { unequipped: true }
-      },
-      { isolationLevel: 'Serializable' },
+    return retryOnSerialization(() =>
+      this.#postgresOrm.executeWithTransactionClient(
+        async (tx) => {
+          const ue = await tx.userEquipment.findUnique({
+            where: { id: userEquipmentId },
+          })
+          if (!ue || ue.userId !== userId) {
+            throw Boom.notFound('UserEquipment not found')
+          }
+          if (ue.equippedOnId === null) {
+            return { unequipped: false }
+          }
+          await tx.userEquipment.update({
+            where: { id: ue.id },
+            data: { equippedOnId: null },
+          })
+          return { unequipped: true }
+        },
+        { isolationLevel: 'Serializable' },
+      ),
     )
   }
 

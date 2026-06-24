@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import type { IocContainer } from '../../types/application/ioc'
+import { retryOnSerialization } from '../shared/retry-serialization'
 import {
   isAtTopOfPalier,
   maxLevelInPalier,
@@ -26,71 +27,73 @@ export class CardLevelingTx {
     newGold: number
     newDust: number
   }> {
-    return this.#postgresOrm.executeWithTransactionClient(
-      async (tx) => {
-        const userCard = await tx.userCard.findUnique({
-          where: { id: userCardId },
-          include: { card: true },
-        })
-        if (!userCard || userCard.userId !== userId) {
-          throw Boom.notFound('UserCard not found')
-        }
+    return retryOnSerialization(() =>
+      this.#postgresOrm.executeWithTransactionClient(
+        async (tx) => {
+          const userCard = await tx.userCard.findUnique({
+            where: { id: userCardId },
+            include: { card: true },
+          })
+          if (!userCard || userCard.userId !== userId) {
+            throw Boom.notFound('UserCard not found')
+          }
 
-        const currentLevel = userCard.level
-        const palier = userCard.palier
-        const palierMax = maxLevelInPalier(palier)
+          const currentLevel = userCard.level
+          const palier = userCard.palier
+          const palierMax = maxLevelInPalier(palier)
 
-        if (targetLevel <= currentLevel) {
-          throw Boom.badRequest(
-            `targetLevel (${targetLevel}) must be greater than current level (${currentLevel})`,
-          )
-        }
-        if (targetLevel > palierMax) {
-          throw Boom.badRequest(
-            `targetLevel (${targetLevel}) exceeds palier cap (${palierMax}) — ascend the card to unlock the next palier`,
-          )
-        }
+          if (targetLevel <= currentLevel) {
+            throw Boom.badRequest(
+              `targetLevel (${targetLevel}) must be greater than current level (${currentLevel})`,
+            )
+          }
+          if (targetLevel > palierMax) {
+            throw Boom.badRequest(
+              `targetLevel (${targetLevel}) exceeds palier cap (${palierMax}) — ascend the card to unlock the next palier`,
+            )
+          }
 
-        const rarity = userCard.card.rarity
-        const goldCost = totalGoldCost(currentLevel, targetLevel, rarity)
-        const dustCost = totalDustCost(currentLevel, targetLevel, rarity)
+          const rarity = userCard.card.rarity
+          const goldCost = totalGoldCost(currentLevel, targetLevel, rarity)
+          const dustCost = totalDustCost(currentLevel, targetLevel, rarity)
 
-        const user = await tx.user.findUnique({ where: { id: userId } })
-        if (!user) {
-          throw Boom.notFound('User not found')
-        }
-        if (user.gold < goldCost) {
-          throw Boom.paymentRequired(
-            `Not enough gold (need ${goldCost}, have ${user.gold})`,
-          )
-        }
-        if (user.dust < dustCost) {
-          throw Boom.paymentRequired(
-            `Not enough dust (need ${dustCost}, have ${user.dust})`,
-          )
-        }
+          const user = await tx.user.findUnique({ where: { id: userId } })
+          if (!user) {
+            throw Boom.notFound('User not found')
+          }
+          if (user.gold < goldCost) {
+            throw Boom.paymentRequired(
+              `Not enough gold (need ${goldCost}, have ${user.gold})`,
+            )
+          }
+          if (user.dust < dustCost) {
+            throw Boom.paymentRequired(
+              `Not enough dust (need ${dustCost}, have ${user.dust})`,
+            )
+          }
 
-        const updatedUser = await tx.user.update({
-          where: { id: userId },
-          data: {
-            gold: { decrement: goldCost },
-            dust: { decrement: dustCost },
-          },
-        })
-        await tx.userCard.update({
-          where: { id: userCardId },
-          data: { level: targetLevel },
-        })
+          const updatedUser = await tx.user.update({
+            where: { id: userId },
+            data: {
+              gold: { decrement: goldCost },
+              dust: { decrement: dustCost },
+            },
+          })
+          await tx.userCard.update({
+            where: { id: userCardId },
+            data: { level: targetLevel },
+          })
 
-        return {
-          newLevel: targetLevel,
-          goldSpent: goldCost,
-          dustSpent: dustCost,
-          newGold: updatedUser.gold,
-          newDust: updatedUser.dust,
-        }
-      },
-      { isolationLevel: 'Serializable' },
+          return {
+            newLevel: targetLevel,
+            goldSpent: goldCost,
+            dustSpent: dustCost,
+            newGold: updatedUser.gold,
+            newDust: updatedUser.dust,
+          }
+        },
+        { isolationLevel: 'Serializable' },
+      ),
     )
   }
 }

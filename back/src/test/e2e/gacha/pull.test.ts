@@ -175,11 +175,16 @@ describe('Gacha routes', () => {
   it('POST /pulls — un doublon ne crédite plus de poussière auto', async () => {
     const { postgresOrm } = (app as any).iocContainer
 
-    // Isolate this test: only GachaSet should be active, so both pulls land
-    // on the same card (and the 2nd is guaranteed to be a duplicate). Other
-    // e2e tests may have left active sets behind.
+    // Isolate this test: snapshot which sets are currently active, deactivate
+    // them all except GachaSet so both pulls land on the same card, and
+    // restore the snapshot at the end so later e2e files see the same active
+    // sets they would have without this test.
+    const otherActive = await postgresOrm.prisma.cardSet.findMany({
+      where: { isActive: true, name: { not: `GachaSet${suffix}` } },
+      select: { id: true },
+    })
     await postgresOrm.prisma.cardSet.updateMany({
-      where: { name: { not: `GachaSet${suffix}` } },
+      where: { id: { in: otherActive.map((s: { id: string }) => s.id) } },
       data: { isActive: false },
     })
 
@@ -206,5 +211,12 @@ describe('Gacha routes', () => {
     const body = second.json()
     expect(body.wasDuplicate).toBe(true)
     expect(body.dustEarned).toBe(0)
+
+    // Restore the previously-active sets so later e2e files keep their
+    // expected fixture state.
+    await postgresOrm.prisma.cardSet.updateMany({
+      where: { id: { in: otherActive.map((s: { id: string }) => s.id) } },
+      data: { isActive: true },
+    })
   })
 })

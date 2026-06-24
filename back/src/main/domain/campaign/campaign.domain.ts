@@ -1,6 +1,8 @@
 import Boom from '@hapi/boom'
 
 import type { IocContainer } from '../../types/application/ioc'
+import { calculateLevel } from '../shared/xp'
+import { retryOnSerialization } from '../shared/retry-serialization'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import {
   type AttackPattern,
@@ -20,6 +22,14 @@ import {
 } from '../combat/equipment-drop.domain'
 
 type Rarity = 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
+
+const RARITY_ORDER: Rarity[] = [
+  'COMMON',
+  'UNCOMMON',
+  'RARE',
+  'EPIC',
+  'LEGENDARY',
+]
 
 interface EnemySpec {
   baseHp: number
@@ -105,10 +115,19 @@ interface CardCatalogEntry {
 export class CampaignDomain {
   readonly #postgresOrm
   readonly #combatPointsTx
+  readonly #configService
+  readonly #achievementsDomain
 
-  constructor({ postgresOrm, combatPointsTx }: IocContainer) {
+  constructor({
+    postgresOrm,
+    combatPointsTx,
+    configService,
+    achievementsDomain,
+  }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#combatPointsTx = combatPointsTx
+    this.#configService = configService
+    this.#achievementsDomain = achievementsDomain
   }
 
   /**
@@ -129,21 +148,41 @@ export class CampaignDomain {
       byChapter.set(s.chapter, arr)
     }
 
+    // The previous chapter is fully cleared iff highestIndex reached the last
+    // stage of that chapter (which is the boss). Used to unlock stage 1 of
+    // chapter N+1 — must stay consistent with attackStage.
+    const prevChapterStages = byChapter.get(progress.highestChapter) ?? []
+    const prevChapterMaxIndex = prevChapterStages.reduce(
+      (max, s) => (s.index > max ? s.index : max),
+      0,
+    )
+    const previousChapterCleared =
+      prevChapterMaxIndex > 0 &&
+      progress.highestIndex >= prevChapterMaxIndex
+
     const chapters: CampaignView['chapters'] = []
     for (const [chapter, ss] of byChapter) {
       const stageViews = ss.map((s): CampaignStageView => {
         let status: CampaignStageView['status']
         if (chapter < progress.highestChapter) {
           status = 'cleared'
-        } else if (chapter > progress.highestChapter) {
-          status = 'locked'
-        } else if (s.index <= progress.highestIndex) {
-            status = 'cleared'
-          } else if (s.index === progress.highestIndex + 1) {
+        } else if (chapter === progress.highestChapter + 1) {
+          // Next chapter: only stage 1 unlocks, and only if the previous
+          // chapter's boss was cleared.
+          if (s.index === 1 && previousChapterCleared) {
             status = 'current'
           } else {
             status = 'locked'
           }
+        } else if (chapter > progress.highestChapter) {
+          status = 'locked'
+        } else if (s.index <= progress.highestIndex) {
+          status = 'cleared'
+        } else if (s.index === progress.highestIndex + 1) {
+          status = 'current'
+        } else {
+          status = 'locked'
+        }
         return {
           id: s.id,
           chapter: s.chapter,
@@ -177,7 +216,8 @@ export class CampaignDomain {
     teamA: SimulatorUnit[]
     teamB: SimulatorUnit[]
   }> {
-    return this.#postgresOrm.executeWithTransactionClient(
+    return retryOnSerialization(() =>
+    this.#postgresOrm.executeWithTransactionClient(
       async (tx) => {
         const stage = await tx.campaignStage.findUnique({
           where: { id: stageId },
@@ -186,8 +226,9 @@ export class CampaignDomain {
           throw Boom.notFound('Stage not found')
         }
 
-        // Debit 6 PC for the battle (after stage existence check, before doing work)
-        await this.#combatPointsTx.debitInTx(tx, userId, 6)
+        // Debit PC (cost from GlobalConfig, falls back to 6 if missing)
+        const battleCost = await this.#configService.get('combat.battleCost')
+        await this.#combatPointsTx.debitInTx(tx, userId, battleCost)
 
         const user = await tx.user.findUnique({ where: { id: userId } })
         if (!user) {
@@ -207,8 +248,24 @@ export class CampaignDomain {
           (isInActiveChapter && stage.index <= progress.highestIndex)
         const isCurrent =
           isInActiveChapter && stage.index === progress.highestIndex + 1
-        const isNewChapterFirst =
-          stage.chapter === progress.highestChapter + 1 && stage.index === 1
+        // Cross-chapter unlock requires the previous chapter to be fully
+        // cleared (i.e. highestIndex reached the last stage of that chapter,
+        // which is the boss). Otherwise a player could clear stage 1-1 then
+        // jump straight to 2-1, bypassing the boss gate.
+        let isNewChapterFirst = false
+        if (
+          stage.chapter === progress.highestChapter + 1 &&
+          stage.index === 1
+        ) {
+          const prevChapterMax = await tx.campaignStage.aggregate({
+            where: { chapter: progress.highestChapter },
+            _max: { index: true },
+          })
+          const prevMaxIndex = prevChapterMax._max.index ?? 0
+          if (prevMaxIndex > 0 && progress.highestIndex >= prevMaxIndex) {
+            isNewChapterFirst = true
+          }
+        }
         if (!isAlreadyCleared && !isCurrent && !isNewChapterFirst) {
           throw Boom.forbidden('Stage is locked')
         }
@@ -277,6 +334,7 @@ export class CampaignDomain {
         }
       },
       { isolationLevel: 'Serializable' },
+    ),
     )
   }
 
@@ -300,7 +358,8 @@ export class CampaignDomain {
       throw Boom.badRequest('Sweep runs must be 1-10')
     }
 
-    return this.#postgresOrm.executeWithTransactionClient(
+    return retryOnSerialization(() =>
+    this.#postgresOrm.executeWithTransactionClient(
       async (tx) => {
         const stage = await tx.campaignStage.findUnique({
           where: { id: stageId },
@@ -309,8 +368,9 @@ export class CampaignDomain {
           throw Boom.notFound('Stage not found')
         }
 
-        // Debit 6 PC per run for the sweep
-        await this.#combatPointsTx.debitInTx(tx, userId, 6 * runs)
+        // Debit PC per run (cost from GlobalConfig, falls back to 6 if missing)
+        const sweepCost = await this.#configService.get('combat.sweepCost')
+        await this.#combatPointsTx.debitInTx(tx, userId, sweepCost * runs)
 
         const progress = await tx.userCampaignProgress.findUnique({
           where: { userId },
@@ -398,14 +458,29 @@ export class CampaignDomain {
           }
         }
 
+        // Bump XP and recompute level (parity with applyRewards / gacha).
+        const userBefore = await tx.user.findUnique({
+          where: { id: userId },
+          select: { xp: true, level: true },
+        })
+        const oldLevel = userBefore?.level ?? 1
+        const newXp = (userBefore?.xp ?? 0) + totalXp
+        const newLevel = calculateLevel(newXp)
         await tx.user.update({
           where: { id: userId },
           data: {
             gold: { increment: totalGold },
             dust: { increment: totalDust },
-            xp: { increment: totalXp },
+            xp: newXp,
+            level: newLevel,
           },
         })
+        if (newLevel > oldLevel) {
+          await this.#achievementsDomain.track(tx, userId, {
+            kind: 'LEVEL_UP',
+            newLevel,
+          })
+        }
 
         return {
           runs,
@@ -417,6 +492,7 @@ export class CampaignDomain {
         }
       },
       { isolationLevel: 'Serializable' },
+    ),
     )
   }
 
@@ -438,11 +514,17 @@ export class CampaignDomain {
       dust = fc.dust
       xp = fc.xp
 
-      // Guaranteed equipment
-      const fcEquipRarity = rollFirstClearEquipmentRarity(fc, Math.random)
-      if (fcEquipRarity) {
+      // Guaranteed equipment — broaden to any rarity >= minRarity if the
+      // rolled rarity has no candidates, so a partial catalog never silently
+      // drops the promised drop.
+      if (fc.guaranteedEquipment) {
+        const fcEquipRarity = rollFirstClearEquipmentRarity(fc, Math.random)
+        const minRarity =
+          fc.guaranteedEquipment.minRarity ?? fcEquipRarity ?? 'COMMON'
+        const minIdx = RARITY_ORDER.indexOf(minRarity)
+        const allowedRarities = RARITY_ORDER.slice(minIdx)
         const catalogRaw = await tx.equipment.findMany({
-          where: { rarity: fcEquipRarity },
+          where: { rarity: { in: allowedRarities as Rarity[] } },
           select: { id: true, name: true, rarity: true, dropWeight: true },
         })
         const catalog: EquipmentCatalogEntry[] = catalogRaw.map((e) => ({
@@ -451,11 +533,13 @@ export class CampaignDomain {
           rarity: e.rarity as Rarity,
           dropWeight: e.dropWeight,
         }))
-        const picked = pickEquipmentForRarity(
-          catalog,
-          fcEquipRarity,
-          Math.random,
-        )
+        // Prefer the rolled rarity; fall back to any allowed rarity if empty.
+        let picked = fcEquipRarity
+          ? pickEquipmentForRarity(catalog, fcEquipRarity, Math.random)
+          : null
+        if (!picked && catalog.length > 0) {
+          picked = this.#pickWeighted(catalog, Math.random)
+        }
         if (picked) {
           const ue = await tx.userEquipment.create({
             data: { userId, equipmentId: picked.id },
@@ -464,26 +548,56 @@ export class CampaignDomain {
             userEquipmentId: ue.id,
             equipmentId: picked.id,
             name: picked.name,
-            rarity: fcEquipRarity,
+            rarity: picked.rarity,
           }
         }
       }
 
-      // Guaranteed card
-      const fcCardRarity = rollFirstClearCardRarity(fc, Math.random)
-      if (fcCardRarity) {
-        const cardsRaw = await tx.card.findMany({
-          where: { rarity: fcCardRarity, set: { isActive: true } },
-          select: { id: true, name: true, rarity: true, dropWeight: true },
-        })
+      // Guaranteed card — same fallback.
+      if (fc.guaranteedCard) {
+        const fcCardRarity = rollFirstClearCardRarity(fc, Math.random)
+        const minRarity =
+          fc.guaranteedCard.minRarity ?? fcCardRarity ?? 'COMMON'
+        const minIdx = RARITY_ORDER.indexOf(minRarity)
+        const allowedRarities = RARITY_ORDER.slice(minIdx)
+        // Prefer the rolled rarity; fall back to any allowed.
+        let cardsRaw = fcCardRarity
+          ? await tx.card.findMany({
+              where: {
+                rarity: fcCardRarity,
+                set: { isActive: true },
+              },
+              select: {
+                id: true,
+                name: true,
+                rarity: true,
+                dropWeight: true,
+              },
+            })
+          : []
+        if (cardsRaw.length === 0) {
+          cardsRaw = await tx.card.findMany({
+            where: {
+              rarity: { in: allowedRarities as Rarity[] },
+              set: { isActive: true },
+            },
+            select: {
+              id: true,
+              name: true,
+              rarity: true,
+              dropWeight: true,
+            },
+          })
+        }
         if (cardsRaw.length > 0) {
-          const idx = Math.floor(Math.random() * cardsRaw.length)
-          const c = cardsRaw[Math.min(idx, cardsRaw.length - 1)]!
-          const { wasDuplicate } = await this.#grantCard(tx, userId, c.id)
+          const picked =
+            this.#pickWeighted(cardsRaw, Math.random) ??
+            cardsRaw[cardsRaw.length - 1]!
+          const { wasDuplicate } = await this.#grantCard(tx, userId, picked.id)
           cardDrop = {
-            cardId: c.id,
-            name: c.name,
-            rarity: c.rarity as Rarity,
+            cardId: picked.id,
+            name: picked.name,
+            rarity: picked.rarity as Rarity,
             wasDuplicate,
           }
         }
@@ -554,14 +668,31 @@ export class CampaignDomain {
       }
     }
 
+    // Increment XP, then recompute User.level so threshold crossings actually
+    // bump the level (parity with gacha.domain). Without this, campaign XP
+    // would never trigger level-ups or LEVEL_UP achievements.
+    const userBefore = await tx.user.findUnique({
+      where: { id: userId },
+      select: { xp: true, level: true },
+    })
+    const oldLevel = userBefore?.level ?? 1
+    const newXp = (userBefore?.xp ?? 0) + xp
+    const newLevel = calculateLevel(newXp)
     await tx.user.update({
       where: { id: userId },
       data: {
         gold: { increment: gold },
         dust: { increment: dust },
-        xp: { increment: xp },
+        xp: newXp,
+        level: newLevel,
       },
     })
+    if (newLevel > oldLevel) {
+      await this.#achievementsDomain.track(tx, userId, {
+        kind: 'LEVEL_UP',
+        newLevel,
+      })
+    }
 
     return { gold, dust, xp, isFirstClear, equipmentDrop, cardDrop }
   }
