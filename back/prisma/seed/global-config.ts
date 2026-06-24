@@ -9,8 +9,9 @@ const CONFIG: Record<string, string> = {
   recycle_dust_epic: '150',
   recycle_dust_legendary: '500',
 
-  // Combat — stamina (PC)
-  'combat.pointsMax': '60',
+  // Combat — stamina (PC). Cap intentionally low; a Phase 2 skill node
+  // (COMBAT_PC_MAX) will let players invest skill points to raise it.
+  'combat.pointsMax': '20',
   'combat.regenSeconds': '360',
   'combat.battleCost': '6',
   'combat.sweepCost': '6',

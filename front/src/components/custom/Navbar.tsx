@@ -15,6 +15,7 @@ import {
 
 const navItems = [
   { to: '/play', label: 'Jouer' },
+  { to: '/campaign', label: 'Campagne' },
   { to: '/collection', label: 'Collection' },
   { to: '/skills', label: 'Compétences' },
   { to: '/shop', label: 'Boutique' },
@@ -63,27 +64,35 @@ export function Navbar() {
           <div className="flex items-center gap-3">
             {user && (
               <>
-                <div className="flex items-center gap-2">
+                {/* Resources cluster — compact pills grouped by domain. Icons
+                    only on tablet, full numbers on desktop. */}
+                <div className="flex items-center gap-1">
+                  {/* Gacha group */}
                   <Link
                     to="/shop"
-                    className="flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-sm font-semibold text-primary hover:bg-primary/20 transition-colors"
+                    title={`${user.tokens.toLocaleString('fr-FR')} jetons`}
+                    className="flex items-center gap-1 rounded-full border border-primary/25 bg-primary/10 px-2 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary/20"
                   >
                     <Coins className="h-3.5 w-3.5" />
-                    {user.tokens.toLocaleString('fr-FR')}
+                    <span className="tabular-nums">{user.tokens}</span>
                   </Link>
                   <Link
                     to="/shop"
-                    className="flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-sm font-semibold text-emerald-500 hover:bg-emerald-500/20 transition-colors"
-                  >
-                    <CircleDollarSign className="h-3.5 w-3.5" />
-                    {user.gold.toLocaleString('fr-FR')}
-                  </Link>
-                  <Link
-                    to="/shop"
-                    className="flex items-center gap-1.5 rounded-full border border-accent/25 bg-accent/10 px-3 py-1 text-sm font-semibold text-accent hover:bg-accent/20 transition-colors"
+                    title={`${user.dust.toLocaleString('fr-FR')} poussière`}
+                    className="flex items-center gap-1 rounded-full border border-accent/25 bg-accent/10 px-2 py-1 text-xs font-semibold text-accent transition-colors hover:bg-accent/20"
                   >
                     <Sparkles className="h-3.5 w-3.5" />
-                    {user.dust.toLocaleString('fr-FR')}
+                    <span className="tabular-nums">{user.dust}</span>
+                  </Link>
+                  <span className="mx-1 h-4 w-px bg-border" aria-hidden />
+                  {/* Combat group */}
+                  <Link
+                    to="/shop"
+                    title={`${user.gold.toLocaleString('fr-FR')} or`}
+                    className="flex items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-1 text-xs font-semibold text-emerald-500 transition-colors hover:bg-emerald-500/20"
+                  >
+                    <CircleDollarSign className="h-3.5 w-3.5" />
+                    <span className="tabular-nums">{user.gold}</span>
                   </Link>
                   <CombatPointsPill />
                 </div>
@@ -189,13 +198,13 @@ function CombatPointsPill() {
   return (
     <Link
       to="/campaign"
-      className="flex items-center gap-1.5 rounded-full border border-violet-400/30 bg-violet-500/10 px-3 py-1 text-sm font-semibold text-violet-300 transition-colors hover:bg-violet-500/20"
+      className="flex items-center gap-1 rounded-full border border-violet-400/30 bg-violet-500/10 px-2 py-1 text-xs font-semibold text-violet-300 transition-colors hover:bg-violet-500/20"
       title={`Points de combat — ${data.combatPoints} / ${data.maxStock}${countdown ? ` — prochain dans ${countdown}` : ''}`}
     >
       <Zap className="h-3.5 w-3.5" />
-      {data.combatPoints}/{data.maxStock}
+      <span className="tabular-nums">{data.combatPoints}/{data.maxStock}</span>
       {countdown && (
-        <span className="ml-1 font-mono text-[10px] text-violet-300/60">
+        <span className="ml-1 hidden font-mono text-[10px] text-violet-300/60 lg:inline">
           {countdown}
         </span>
       )}

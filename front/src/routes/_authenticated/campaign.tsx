@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import {
   ArrowRight,
   Crown,
@@ -14,6 +14,7 @@ import type {
   StageStatus,
   SweepResult,
 } from '../../api/campaign.api.ts'
+import { ArcadeCard } from '../../components/shared/ArcadeCard.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { Button } from '../../components/ui/button.tsx'
@@ -28,6 +29,7 @@ import {
   useCampaign,
   useSweepStage,
 } from '../../queries/useCampaign.ts'
+import { useCombatTeam } from '../../queries/useCombatTeam.ts'
 
 export const Route = createFileRoute('/_authenticated/campaign')({
   component: CampaignPage,
@@ -36,9 +38,12 @@ export const Route = createFileRoute('/_authenticated/campaign')({
 function CampaignPage() {
   const navigate = useNavigate()
   const campaign = useCampaign()
+  const team = useCombatTeam()
   const sweep = useSweepStage()
   const [sweepResult, setSweepResult] = useState<SweepResult | null>(null)
   const [sweepStageId, setSweepStageId] = useState<string | null>(null)
+
+  const hasTeam = (team.data?.team.length ?? 0) >= 1
 
   if (campaign.isLoading) {
     return (
@@ -84,10 +89,30 @@ function CampaignPage() {
         subtitle="Progresse à travers les chapitres pour débloquer drops et puissance"
       />
 
-      <div className="mt-6 space-y-8">
+      {!hasTeam && !team.isLoading && (
+        <ArcadeCard className="mt-6">
+          <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:text-left">
+            <Swords className="h-8 w-8 shrink-0 text-text-light/40" />
+            <div className="flex-1">
+              <p className="font-display text-base font-bold text-text">
+                Configure ton équipe avant de combattre
+              </p>
+              <p className="text-sm text-text-light">
+                Sélectionne jusqu'à 3 cartes dans la page Combat. Sans
+                équipe, le combat échoue.
+              </p>
+            </div>
+            <Link to="/combat">
+              <Button>Configurer mon équipe</Button>
+            </Link>
+          </div>
+        </ArcadeCard>
+      )}
+
+      <div className="mt-6 space-y-6">
         {data.chapters.map((chapter) => (
-          <section key={chapter.chapter}>
-            <h2 className="mb-3 font-display text-xl font-bold text-text">
+          <ArcadeCard key={chapter.chapter}>
+            <h2 className="mb-4 font-display text-xl font-bold text-text">
               Chapitre {chapter.chapter}
             </h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -103,7 +128,7 @@ function CampaignPage() {
                 />
               ))}
             </div>
-          </section>
+          </ArcadeCard>
         ))}
       </div>
 
