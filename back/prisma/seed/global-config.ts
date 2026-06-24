@@ -11,10 +11,10 @@ const CONFIG: Record<string, string> = {
 
   // Combat — stamina (PC). Cap intentionally low; a Phase 2 skill node
   // (COMBAT_PC_MAX) will let players invest skill points to raise it.
-  'combat.pointsMax': '20',
+  'combat.pointsMax': '10',
   'combat.regenSeconds': '360',
-  'combat.battleCost': '6',
-  'combat.sweepCost': '6',
+  'combat.battleCost': '1',
+  'combat.sweepCost': '1',
   'combat.timeoutTurns': '30',
   'combat.teamSize': '3',
 

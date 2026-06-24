@@ -36,10 +36,14 @@ describe('Combat points routes & debit', () => {
 
     // Override combat config for this test. configService.set() also
     // invalidates the Redis cache so subsequent reads see the new value
-    // (a direct prisma upsert would leave stale cache entries).
+    // (a direct prisma upsert would leave stale cache entries). Battle and
+    // sweep costs are pinned to 6 so the arithmetic assertions below stay
+    // stable even if the global defaults change.
     const { configService } = (app as any).iocContainer
     await configService.set('combat.pointsMax', 60)
     await configService.set('combat.regenSeconds', 360)
+    await configService.set('combat.battleCost', 6)
+    await configService.set('combat.sweepCost', 6)
 
     // globalSetup does not TRUNCATE CampaignStage/BattleResult/
     // UserCampaignProgress — clear any leftovers so this test's fixed-name
