@@ -10,6 +10,7 @@ import {
   Popup,
   PopupBody,
   PopupContent,
+  PopupFooter,
   PopupHeader,
   PopupTitle,
 } from '../../components/ui/popup.tsx'
@@ -146,13 +147,13 @@ function CombatPage() {
                 Choisir une carte
               </PopupTitle>
             </PopupHeader>
-            <PopupBody className="max-h-[60vh] overflow-auto">
+            <PopupBody className="flex flex-col gap-4">
               {(collection.data?.cards ?? []).length === 0 ? (
                 <p className="py-8 text-center text-sm text-text-light">
                   Tu n'as encore aucune carte dans ta collection.
                 </p>
               ) : (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                <div className="grid max-h-[55vh] grid-cols-2 gap-3 overflow-y-auto pr-1 sm:grid-cols-3 md:grid-cols-4">
                   {(collection.data?.cards ?? []).map((uc) => {
                     const isAlreadySelected = selectedIds.includes(uc.id)
                     return (
@@ -187,6 +188,11 @@ function CombatPage() {
                 </div>
               )}
             </PopupBody>
+            <PopupFooter>
+              <Button variant="outline" onClick={() => setPickerSlot(null)}>
+                Annuler
+              </Button>
+            </PopupFooter>
           </PopupContent>
         </Popup>
       )}

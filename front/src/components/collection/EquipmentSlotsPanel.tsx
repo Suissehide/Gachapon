@@ -15,6 +15,7 @@ import {
   Popup,
   PopupBody,
   PopupContent,
+  PopupFooter,
   PopupHeader,
   PopupTitle,
 } from '../ui/popup.tsx'
@@ -120,19 +121,22 @@ export function EquipmentSlotsPanel({ userCardId }: Props) {
 
       {pickerSlot !== null && (
         <Popup open onOpenChange={(v) => !v && setPickerSlot(null)}>
-          <PopupContent>
+          <PopupContent size="lg">
             <PopupHeader>
-              <PopupTitle icon={<Sword className="h-4 w-4" />}>
+              <PopupTitle
+                icon={<Sword className="h-4 w-4" />}
+                subtitle="Sélectionne une pièce disponible dans ton inventaire."
+              >
                 Choisir un(e) {SLOT_LABELS[pickerSlot].toLowerCase()}
               </PopupTitle>
             </PopupHeader>
-            <PopupBody>
+            <PopupBody className="flex flex-col gap-4">
               {pickerCandidates.length === 0 ? (
                 <p className="py-6 text-center text-sm text-text-light">
                   Aucune pièce non équipée disponible pour ce slot.
                 </p>
               ) : (
-                <div className="grid max-h-[60vh] grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2">
+                <div className="grid max-h-[55vh] grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
                   {pickerCandidates.map((item) => (
                     <button
                       key={item.id}
@@ -162,16 +166,15 @@ export function EquipmentSlotsPanel({ userCardId }: Props) {
                   ))}
                 </div>
               )}
-              <div className="mt-3 flex justify-end">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPickerSlot(null)}
-                >
-                  Annuler
-                </Button>
-              </div>
             </PopupBody>
+            <PopupFooter>
+              <Button
+                variant="outline"
+                onClick={() => setPickerSlot(null)}
+              >
+                Annuler
+              </Button>
+            </PopupFooter>
           </PopupContent>
         </Popup>
       )}
