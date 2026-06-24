@@ -10,6 +10,8 @@ export interface CombatPointsView {
   combatPoints: number
   maxStock: number
   regenSeconds: number
+  battleCost: number
+  sweepCost: number
   nextCombatPointAt: Date | null
 }
 
@@ -50,6 +52,8 @@ export class CombatPointsTx {
       combatPoints: state.combatPoints,
       maxStock: cfg.maxStock,
       regenSeconds: cfg.regenSeconds,
+      battleCost: cfg.battleCost,
+      sweepCost: cfg.sweepCost,
       nextCombatPointAt: state.nextCombatPointAt,
     }
   }
@@ -105,14 +109,23 @@ export class CombatPointsTx {
     return { combatPointsAfter: after }
   }
 
-  async #loadConfig(): Promise<{ maxStock: number; regenSeconds: number }> {
+  async #loadConfig(): Promise<{
+    maxStock: number
+    regenSeconds: number
+    battleCost: number
+    sweepCost: number
+  }> {
     const cfg = await this.#configService.getMany(
       'combat.pointsMax',
       'combat.regenSeconds',
+      'combat.battleCost',
+      'combat.sweepCost',
     )
     return {
       maxStock: cfg['combat.pointsMax'],
       regenSeconds: cfg['combat.regenSeconds'],
+      battleCost: cfg['combat.battleCost'],
+      sweepCost: cfg['combat.sweepCost'],
     }
   }
 }

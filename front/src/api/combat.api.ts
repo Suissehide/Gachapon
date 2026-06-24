@@ -47,6 +47,8 @@ export type CombatPointsView = {
   combatPoints: number
   maxStock: number
   regenSeconds: number
+  battleCost: number
+  sweepCost: number
   nextCombatPointAt: string | null
 }
 

@@ -15,6 +15,7 @@ import { BattleScene } from '../../components/battle/BattleScene.tsx'
 import { ArcadeCard } from '../../components/shared/ArcadeCard.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { Button } from '../../components/ui/button.tsx'
+import { isApiError } from '../../libs/httpErrorHandler.ts'
 import { useAttackStage } from '../../queries/useCampaign.ts'
 import { useCombatTeam } from '../../queries/useCombatTeam.ts'
 
@@ -82,9 +83,13 @@ function BattlePage() {
       {teamReady && attack.isError && (
         <ArcadeCard className="text-center">
           <AlertTriangle className="mx-auto mb-2 h-8 w-8 text-rose-500" />
-          <p className="font-bold text-rose-500">Erreur</p>
+          <p className="font-bold text-rose-500">
+            {isApiError(attack.error) ? attack.error.title : 'Erreur'}
+          </p>
           <p className="mt-1 text-sm text-text-light">
-            {String(attack.error)}
+            {isApiError(attack.error)
+              ? attack.error.message
+              : String(attack.error)}
           </p>
           <Link to="/campaign">
             <Button variant="outline" className="mt-3">
