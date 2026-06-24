@@ -1,5 +1,24 @@
 import type { PrismaClient } from '../../src/generated/client'
 
+const STATS_BY_RARITY: Record<
+  'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY',
+  { baseHp: number; baseAtk: number; baseDef: number; baseSpd: number }
+> = {
+  COMMON: { baseHp: 100, baseAtk: 10, baseDef: 5, baseSpd: 90 },
+  UNCOMMON: { baseHp: 140, baseAtk: 14, baseDef: 7, baseSpd: 95 },
+  RARE: { baseHp: 200, baseAtk: 20, baseDef: 10, baseSpd: 100 },
+  EPIC: { baseHp: 320, baseAtk: 32, baseDef: 16, baseSpd: 105 },
+  LEGENDARY: { baseHp: 500, baseAtk: 50, baseDef: 25, baseSpd: 110 },
+}
+
+const PASSIVE_BY_CARD: Record<string, string | null> = {
+  // EPIC cards
+  'Dragon Rouge': 'EXECUTION',
+  'Titan de Fer': 'AEGIS',
+  // LEGENDARY cards
+  'Azéros, Dieu-Guerrier': 'REBIRTH',
+}
+
 const CARDS = [
   // COMMON — dropWeight 40 chacune
   { name: 'Gobelin', rarity: 'COMMON', dropWeight: 40, imageKey: 'gobelin.png' },
@@ -42,6 +61,7 @@ export async function seedCards(
   })
 
   for (const card of CARDS) {
+    const stats = STATS_BY_RARITY[card.rarity]
     await tx.card.create({
       data: {
         setId: set.id,
@@ -49,6 +69,11 @@ export async function seedCards(
         imageUrl: `cards/${card.imageKey}`,
         rarity: card.rarity,
         dropWeight: card.dropWeight,
+        baseHp: stats.baseHp,
+        baseAtk: stats.baseAtk,
+        baseDef: stats.baseDef,
+        baseSpd: stats.baseSpd,
+        passiveKey: PASSIVE_BY_CARD[card.name] ?? null,
       },
     })
   }

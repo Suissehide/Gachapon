@@ -10,6 +10,14 @@ import { SkillInvestDomain } from '../../../domain/skills/skill-invest.domain'
 import { SkillResetDomain } from '../../../domain/skills/skill-reset.domain'
 import { AdminSkillTreeDomain } from '../../../domain/skills/admin-skill-tree.domain'
 import { AchievementsDomain } from '../../../domain/achievements/achievements.domain'
+import { CardDustConversionDomain } from '../../../domain/card-dust-conversion/card-dust-conversion.domain'
+import { CampaignDomain } from '../../../domain/campaign/campaign.domain'
+import { CardLevelingTx } from '../../../domain/card-leveling/card-leveling.tx'
+import { CardAscensionTx } from '../../../domain/card-ascension/card-ascension.tx'
+import { CombatTeamTx } from '../../../domain/combat/combat-team.tx'
+import { CombatDebugDomain } from '../../../domain/combat/combat-debug.domain'
+import { CombatPointsTx } from '../../../domain/combat-points/combat-points.tx'
+import { EquipmentDomain } from '../../../domain/equipment/equipment.domain'
 import { GachaDomain } from '../../../domain/gacha/gacha.domain'
 import { RewardsDomain } from '../../../domain/rewards/rewards.domain'
 import { DailyShopDomain } from '../../../domain/daily-shop/daily-shop.domain'
@@ -100,6 +108,17 @@ class AwilixIocContainer {
       asClass(ScoringConfigRepository).singleton(),
     )
     this.#reg('gachaDomain', asClass(GachaDomain).singleton())
+    this.#reg(
+      'cardDustConversionDomain',
+      asClass(CardDustConversionDomain).singleton(),
+    )
+    this.#reg('cardLevelingTx', asClass(CardLevelingTx).singleton())
+    this.#reg('cardAscensionTx', asClass(CardAscensionTx).singleton())
+    this.#reg('combatTeamTx', asClass(CombatTeamTx).singleton())
+    this.#reg('combatDebugDomain', asClass(CombatDebugDomain).singleton())
+    this.#reg('combatPointsTx', asClass(CombatPointsTx).singleton())
+    this.#reg('campaignDomain', asClass(CampaignDomain).singleton())
+    this.#reg('equipmentDomain', asClass(EquipmentDomain).singleton())
     this.#reg('teamRepository', asClass(TeamRepository).singleton())
     this.#reg('teamMemberRepository', asClass(TeamMemberRepository).singleton())
     this.#reg('invitationRepository', asClass(InvitationRepository).singleton())

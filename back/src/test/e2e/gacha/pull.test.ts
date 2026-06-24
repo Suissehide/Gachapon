@@ -171,4 +171,52 @@ describe('Gacha routes', () => {
     })
     expect(res.statusCode).toBe(401)
   })
+
+  it('POST /pulls — un doublon ne crédite plus de poussière auto', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    // Isolate this test: snapshot which sets are currently active, deactivate
+    // them all except GachaSet so both pulls land on the same card, and
+    // restore the snapshot at the end so later e2e files see the same active
+    // sets they would have without this test.
+    const otherActive = await postgresOrm.prisma.cardSet.findMany({
+      where: { isActive: true, name: { not: `GachaSet${suffix}` } },
+      select: { id: true },
+    })
+    await postgresOrm.prisma.cardSet.updateMany({
+      where: { id: { in: otherActive.map((s: { id: string }) => s.id) } },
+      data: { isActive: false },
+    })
+
+    // Top up tokens to ensure pulls go through
+    await postgresOrm.prisma.user.update({
+      where: { email },
+      data: { tokens: 5 },
+    })
+
+    // Pull twice — second pull on a 1-card set guarantees a duplicate
+    const first = await app.inject({
+      method: 'POST',
+      url: '/pulls',
+      headers: { cookie: cookies },
+    })
+    expect(first.statusCode).toBe(201)
+
+    const second = await app.inject({
+      method: 'POST',
+      url: '/pulls',
+      headers: { cookie: cookies },
+    })
+    expect(second.statusCode).toBe(201)
+    const body = second.json()
+    expect(body.wasDuplicate).toBe(true)
+    expect(body.dustEarned).toBe(0)
+
+    // Restore the previously-active sets so later e2e files keep their
+    // expected fixture state.
+    await postgresOrm.prisma.cardSet.updateMany({
+      where: { id: { in: otherActive.map((s: { id: string }) => s.id) } },
+      data: { isActive: true },
+    })
+  })
 })

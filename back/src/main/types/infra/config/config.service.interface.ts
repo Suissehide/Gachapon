@@ -21,6 +21,10 @@ export const CONFIG_KEYS = [
   'dailyShopPriceEpic',
   'dailyShopPriceLegendary',
   'xpPerPull',
+  'combat.pointsMax',
+  'combat.regenSeconds',
+  'combat.battleCost',
+  'combat.sweepCost',
 ] as const
 
 export type ConfigKey = (typeof CONFIG_KEYS)[number]

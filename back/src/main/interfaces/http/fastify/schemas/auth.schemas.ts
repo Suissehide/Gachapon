@@ -24,6 +24,7 @@ export const userResponseSchema = z.object({
   role: z.string(),
   tokens: z.number(),
   dust: z.number(),
+  gold: z.number(),
   avatar: z.string().nullable(),
   banner: z.string().nullable(),
   createdAt: z.date(),

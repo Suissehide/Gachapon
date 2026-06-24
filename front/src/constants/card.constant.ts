@@ -44,12 +44,20 @@ export type Card = {
   imageUrl: string | null
   rarity: CardRarity
   set: { id: string; name: string }
+  baseHp: number
+  baseAtk: number
+  baseDef: number
+  baseSpd: number
+  passiveKey: string | null
 }
 
 export type UserCard = {
+  id: string
   card: Card
   variant: CardVariant
   quantity: number
+  level: number
+  palier: number
   obtainedAt: string
 }
 
@@ -69,6 +77,11 @@ export type AdminCard = {
   rarity: string
   variant?: string
   dropWeight: number
+  baseHp: number
+  baseAtk: number
+  baseDef: number
+  baseSpd: number
+  passiveKey: string | null
   set: { id: string; name: string }
 }
 

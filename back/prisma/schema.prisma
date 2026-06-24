@@ -68,6 +68,12 @@ enum RewardSource {
   QUEST
 }
 
+enum EquipmentSlot {
+  WEAPON
+  ARMOR
+  ACCESSORY
+}
+
 model User {
   id            String     @id @default(uuid())
   username      String     @unique
@@ -95,6 +101,11 @@ model User {
 
   bestStreak    Int        @default(0)
 
+  gold              Int       @default(0)
+  combatPoints      Int       @default(60)
+  lastCombatPointAt DateTime?
+  combatTeam        String[]  @default([])
+
   oauthAccounts       OAuthAccount[]
   apiKeys             ApiKey[]
   ownedTeams          Team[]            @relation("TeamOwner")
@@ -111,6 +122,10 @@ model User {
   skills              UserSkill[]
   userRewards         UserReward[]
   dailyShops          DailyShop[]
+
+  userEquipment        UserEquipment[]
+  campaignProgress     UserCampaignProgress?
+  battleResults        BattleResult[]
 }
 
 model OAuthAccount {
@@ -202,6 +217,12 @@ model Card {
   dropWeight Float      @default(1.0)
   createdAt  DateTime   @default(now())
 
+  baseHp     Int     @default(100)
+  baseAtk    Int     @default(10)
+  baseDef    Int     @default(5)
+  baseSpd    Int     @default(100)
+  passiveKey String?
+
   userCards      UserCard[]
   gachaPulls     GachaPull[]
   dailyShopItems DailyShopItem[]
@@ -217,7 +238,36 @@ model UserCard {
   quantity   Int         @default(1)
   obtainedAt DateTime    @default(now())
 
+  level     Int @default(1)
+  palier    Int @default(1)
+  equipment UserEquipment[]
+
   @@unique([userId, cardId, variant])
+}
+
+model Equipment {
+  id         String          @id @default(uuid())
+  name       String
+  slot       EquipmentSlot
+  rarity     CardRarity
+  imageUrl   String?
+  bonuses    Json
+  dropWeight Float           @default(1.0)
+  userItems  UserEquipment[]
+}
+
+model UserEquipment {
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  equipmentId  String
+  equipment    Equipment @relation(fields: [equipmentId], references: [id])
+  equippedOnId String?
+  equippedOn   UserCard? @relation(fields: [equippedOnId], references: [id], onDelete: SetNull)
+  obtainedAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([equippedOnId])
 }
 
 model GachaPull {
@@ -482,4 +532,39 @@ model ScoringConfig {
   brilliantMultiplier   Float    @default(1.5)
   holographicMultiplier Float    @default(2.0)
   updatedAt             DateTime @updatedAt
+}
+
+model CampaignStage {
+  id        String  @id @default(uuid())
+  chapter   Int
+  index     Int
+  label     String
+  isBoss    Boolean @default(false)
+  enemyTeam Json
+  lootTable Json
+  order     Int
+
+  @@unique([chapter, index])
+}
+
+model UserCampaignProgress {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  highestChapter Int      @default(1)
+  highestIndex   Int      @default(0)
+  updatedAt      DateTime @updatedAt
+}
+
+model BattleResult {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stageId   String?
+  seed      String
+  won       Boolean
+  log       Json
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
