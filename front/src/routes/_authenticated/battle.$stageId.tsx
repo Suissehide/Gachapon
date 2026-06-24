@@ -27,9 +27,15 @@ function BattlePage() {
   const { stageId } = Route.useParams()
   const team = useCombatTeam()
   const attack = useAttackStage()
-  const [result, setResult] = useState<BattleResult | null>(null)
   const [sceneDone, setSceneDone] = useState(false)
   const hasFiredRef = useRef(false)
+
+  // Read directly from the mutation's cached data — React Query keeps
+  // the success state across StrictMode's double-invocation and across
+  // re-renders. Using a local state + onSuccess setter caused races where
+  // the setter fired on a temporarily-unmounted instance and the result
+  // never reached the render.
+  const result = attack.data ?? null
 
   const teamReady =
     !team.isLoading && (team.data?.team.length ?? 0) >= 1
@@ -38,8 +44,6 @@ function BattlePage() {
     if (hasFiredRef.current) {
       return
     }
-    // Only fire the attack once the team is loaded AND non-empty. Otherwise
-    // the page renders the "no team" notice and never auto-attacks.
     if (team.isLoading) {
       return
     }
@@ -47,9 +51,7 @@ function BattlePage() {
       return
     }
     hasFiredRef.current = true
-    attack.mutate(stageId, {
-      onSuccess: (data) => setResult(data),
-    })
+    attack.mutate(stageId)
   }, [stageId, attack, team.isLoading, teamReady])
 
   return (
