@@ -35,7 +35,9 @@ export function TeamLane({
       <UnitPortrait
         unit={u}
         attackingDirection={
-          attackingUnitId === u.id ? (side === 'A' ? 'right' : 'left') : null
+          // Player team (side 'A') is on the bottom — attacking means hopping UP.
+          // Enemy team (side 'B') is on top — attacking means hopping DOWN.
+          attackingUnitId === u.id ? (side === 'A' ? 'up' : 'down') : null
         }
         enlarged={enlarged}
       />

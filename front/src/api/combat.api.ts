@@ -26,6 +26,7 @@ export type AttackPattern =
 export type SimulatorUnit = {
   id: string
   name?: string
+  imageUrl?: string | null
   hp: number
   atk: number
   def: number

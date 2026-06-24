@@ -117,17 +117,20 @@ export class CampaignDomain {
   readonly #combatPointsTx
   readonly #configService
   readonly #achievementsDomain
+  readonly #storageClient
 
   constructor({
     postgresOrm,
     combatPointsTx,
     configService,
     achievementsDomain,
+    storageClient,
   }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#combatPointsTx = combatPointsTx
     this.#configService = configService
     this.#achievementsDomain = achievementsDomain
+    this.#storageClient = storageClient
   }
 
   /**
@@ -769,6 +772,9 @@ export class CampaignDomain {
         return {
           id: `A${idx}`,
           name: u.card.name,
+          imageUrl: u.card.imageUrl
+            ? this.#storageClient.publicUrl(u.card.imageUrl)
+            : null,
           hp: stats.hp,
           atk: stats.atk,
           def: stats.def,
@@ -794,6 +800,7 @@ export class CampaignDomain {
       return {
         id: `B${idx}`,
         name: `Ennemi ${idx + 1}`,
+        imageUrl: null,
         hp: stats.hp,
         atk: stats.atk,
         def: stats.def,
