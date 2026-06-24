@@ -45,11 +45,6 @@ const ENTRIES: SeedEntry[] = [
   // streak
   { key: 'streak_30', name: 'Mois complet', description: 'Atteindre 30 jours de série.', family: 'streak', tier: 0, hidden: false, sortOrder: 1, criterion: { type: 'STREAK_REACHED', threshold: 30 }, reward: { tokens: 200, dust: 500, xp: 0 } },
 
-  // machines
-  { key: 'machines_own_1',    name: 'Première machine', description: 'Posséder 1 machine.',           family: 'machines', tier: 0, hidden: false, sortOrder: 1, criterion: { type: 'MACHINES_OWNED', threshold: 1 },                       reward: { tokens: 10, dust: 0, xp: 0 } },
-  { key: 'machines_own_2',    name: "Salle d'arcade",   description: 'Posséder 2 machines.',          family: 'machines', tier: 1, hidden: false, sortOrder: 2, criterion: { type: 'MACHINES_OWNED', threshold: 2 },                       reward: { tokens: 20, dust: 0, xp: 0 } },
-  { key: 'machines_own_all',  name: "Tout l'arcade",    description: 'Posséder toutes les machines.', family: 'machines', tier: 2, hidden: false, sortOrder: 3, criterion: { type: 'CUSTOM_EVENT', handlerKey: 'own_all_machines' },     reward: { tokens: 100, dust: 500, xp: 0 } },
-
   // cachés
   { key: 'first_pull',    name: 'Bienvenue',   description: 'Réaliser votre tout premier tirage.', family: null, tier: 0, hidden: true, sortOrder: 0, criterion: { type: 'CUSTOM_EVENT', handlerKey: 'first_pull_ever' },         reward: { tokens: 20, dust: 0, xp: 0 } },
   { key: 'rainbow_day',   name: 'Arc-en-ciel', description: '???',                                  family: null, tier: 0, hidden: true, sortOrder: 0, criterion: { type: 'CUSTOM_EVENT', handlerKey: 'four_rarities_one_day' }, reward: { tokens: 0, dust: 0, xp: 0, cardRarity: 'EPIC' } },
