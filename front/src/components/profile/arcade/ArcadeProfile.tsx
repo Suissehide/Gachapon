@@ -47,7 +47,11 @@ export function ArcadeProfile({ username }: Props) {
 
   return (
     <PageShell>
-      <ArcadeTopbar isOwnProfile={!!isOwnProfile} isAdmin={!!isAdmin} />
+      <ArcadeTopbar
+        isOwnProfile={!!isOwnProfile}
+        isAdmin={!!isAdmin}
+        currentLevel={profile.level}
+      />
 
       <ArcadeHero
         profile={profile}
