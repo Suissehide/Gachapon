@@ -1,15 +1,14 @@
-import { RefreshCw, X } from 'lucide-react'
+import { Recycle, X } from 'lucide-react'
+import type { CSSProperties } from 'react'
 
 import type { DisplayEntry } from '../../routes/_authenticated/collection.tsx'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
-import { RARITY_TCG_CONFIG, VARIANT_TCG_CONFIG } from '../shared/tcg-card/config.ts'
+import { VARIANT_TCG_CONFIG } from '../shared/tcg-card/config.ts'
 import { Button } from '../ui/button.tsx'
+import { Card } from '../ui/card.tsx'
+import { RARITY_LABELS } from './CollectionCard.tsx'
 import { CombatPanel } from './CombatPanel.tsx'
 import { EquipmentSlotsPanel } from './EquipmentSlotsPanel.tsx'
-import {
-  RARITY_CHIP_ACTIVE,
-  RARITY_LABELS,
-} from './CollectionCard.tsx'
 
 type Props = {
   entry: DisplayEntry | null
@@ -17,43 +16,40 @@ type Props = {
   onRecycle: () => void
 }
 
+const RARITY_HEX: Record<string, string> = {
+  COMMON: '#22c55e',
+  UNCOMMON: '#3b82f6',
+  RARE: '#8b5cf6',
+  EPIC: '#ec4899',
+  LEGENDARY: '#f59e0b',
+}
+
 export function CardViewModal({ entry, onClose, onRecycle }: Props) {
-  if (!entry) { return null }
+  if (!entry) {
+    return null
+  }
 
   const { card, variant, quantity, isOwned } = entry
-  const config = RARITY_TCG_CONFIG[card.rarity] ?? RARITY_TCG_CONFIG.COMMON
+  const rarityHex = RARITY_HEX[card.rarity] ?? RARITY_HEX.COMMON
   const variantInfo = variant !== 'NORMAL' ? VARIANT_TCG_CONFIG[variant] : null
+
+  const panelStyle = { '--rar': rarityHex } as CSSProperties
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: backdrop click-to-close
     <div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-y-auto bg-black/85 backdrop-blur-md"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/55 px-4 py-10 backdrop-blur-md"
       role="presentation"
       onClick={onClose}
       onKeyDown={(e) => {
-        if (e.key === 'Escape') { onClose() }
+        if (e.key === 'Escape') {
+          onClose()
+        }
       }}
     >
-      {/* Rarity backdrop glow */}
-      {config.backdropColor && (
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{ background: config.backdropColor }}
-        />
-      )}
-
-      {/* Close button */}
-      <button
-        type="button"
-        onClick={onClose}
-        className="absolute right-4 top-4 z-10 rounded-full p-2 text-white/50 transition-colors hover:bg-white/10 hover:text-white"
-      >
-        <X className="h-5 w-5" />
-      </button>
-
       {/* biome-ignore lint/a11y/noStaticElementInteractions: stop propagation */}
       <div
-        className="flex flex-col items-center gap-5 px-4 py-8 animate-in fade-in-0 zoom-in-95 duration-300"
+        className="flex flex-wrap items-center justify-center gap-8 animate-in fade-in-0 zoom-in-95 duration-300 md:gap-10"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >
@@ -67,39 +63,72 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
           interactive
         />
 
-        {/* Info panel */}
-        <div className="w-64 overflow-hidden rounded-2xl border border-white/9 bg-[rgba(6,6,12,0.78)] shadow-[0_12px_40px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.07)] backdrop-blur-[20px]">
-          {/* Name + set */}
-          <div className="border-b border-white/6 px-4 py-3">
-            <p className="text-base font-bold leading-tight text-white">
-              {card.name}
-            </p>
-            <p className="mt-0.5 text-xs text-white/40">{card.set.name}</p>
-          </div>
-
-          {/* Rarity + variant badges */}
-          <div className="flex flex-wrap gap-1.5 border-b border-white/6 px-4 py-2.5">
-            <span
-              className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${RARITY_CHIP_ACTIVE[card.rarity] ?? ''}`}
+        <Card
+          className="flex w-full max-w-[400px] flex-col rounded-[22px] border-[rgba(27,23,38,0.06)] p-6 shadow-[0_2px_0_rgba(27,23,38,0.03),0_30px_60px_-28px_rgba(27,23,38,0.4)] md:w-[400px]"
+          style={panelStyle}
+        >
+          {/* Header */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 flex-col items-start gap-1">
+              <h2 className="font-display text-2xl font-extrabold leading-none -tracking-[0.02em] text-text">
+                {card.name}
+              </h2>
+              <p className="text-[13px] leading-tight text-text-light">
+                {card.set.name}
+              </p>
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                <span
+                  className="whitespace-nowrap rounded-full border px-2.75 py-1.25 font-mono text-[10px] font-bold uppercase tracking-[0.12em]"
+                  style={{
+                    color: rarityHex,
+                    backgroundColor: `color-mix(in oklab, ${rarityHex} 14%, white)`,
+                    borderColor: `color-mix(in oklab, ${rarityHex} 45%, transparent)`,
+                  }}
+                >
+                  {RARITY_LABELS[card.rarity]}
+                </span>
+                {variantInfo && (
+                  <span
+                    className={`whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${variantInfo.className}`}
+                  >
+                    {variantInfo.label}
+                  </span>
+                )}
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              aria-label="Fermer"
+              className="shrink-0 rounded-[10px] bg-[rgba(27,23,38,0.06)] text-[rgba(27,23,38,0.55)] hover:bg-[rgba(27,23,38,0.12)] hover:text-text"
             >
-              {RARITY_LABELS[card.rarity]}
-            </span>
-            {variantInfo && (
-              <span
-                className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${variantInfo.className}`}
-              >
-                {variantInfo.label}
-              </span>
-            )}
+              <X className="h-4 w-4" />
+            </Button>
           </div>
 
-          {/* Quantity */}
+          {/* Meta — Owned + inline recycle */}
           {isOwned && (
-            <div className="flex items-center justify-between border-b border-white/6 px-4 py-2.5">
-              <span className="text-xs text-white/45">Possédées</span>
-              <span className="font-display text-base font-bold text-white/90">
-                ×{quantity}
-              </span>
+            <div className="mt-[14px] flex items-center justify-between border-y border-[rgba(27,23,38,0.08)] py-4">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-[13px] text-text-light">
+                  Possédées
+                </span>
+                <b className="font-display text-xl font-extrabold tabular-nums text-text">
+                  ×{quantity}
+                </b>
+              </div>
+              {quantity > 1 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onRecycle}
+                  className="h-auto rounded-[11px] border-[rgba(27,23,38,0.14)] bg-card px-[15px] py-[9px] text-[13.5px] font-semibold text-[rgba(27,23,38,0.7)] hover:bg-surface-2 hover:text-text"
+                >
+                  <Recycle className="h-[15px] w-[15px]" />
+                  Recycler
+                </Button>
+              )}
             </div>
           )}
 
@@ -117,31 +146,12 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
 
           {/* Equipment slots */}
           {isOwned && entry.userCard && (
-            <EquipmentSlotsPanel userCardId={entry.userCard.id} />
+            <EquipmentSlotsPanel
+              userCardId={entry.userCard.id}
+              rarityHex={rarityHex}
+            />
           )}
-
-          {/* Actions */}
-          <div className="flex gap-2 p-3">
-            {isOwned && quantity > 1 && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 gap-1.5 border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
-                onClick={onRecycle}
-              >
-                <RefreshCw className="h-3.5 w-3.5" />
-                Recycler
-              </Button>
-            )}
-            <Button
-              size="sm"
-              className={isOwned && quantity > 1 ? 'flex-1' : 'w-full'}
-              onClick={onClose}
-            >
-              Fermer
-            </Button>
-          </div>
-        </div>
+        </Card>
       </div>
     </div>
   )
