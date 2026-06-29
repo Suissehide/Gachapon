@@ -7,7 +7,7 @@ import cardBackImg from '../../assets/data/card-back/black.png'
 import type { CardRarity } from '../../constants/card.constant'
 import type { PullResult } from '../../queries/useGacha'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
-import { RARITY_TCG_CONFIG } from '../shared/tcg-card/config.ts'
+import { getRarityTone } from '../shared/tcg-card/config.ts'
 import { Button } from '../ui/button.tsx'
 import { RevealCanvases } from './reveal/RevealCanvases.tsx'
 import { RARITY_CONFIG } from './reveal/rarityConfig.ts'
@@ -89,7 +89,6 @@ type Props = {
 export function CardReveal({ result, onClose, onNewPull, isPulling }: Props) {
   const [animKey, setAnimKey] = useState(0)
   const [animDone, setAnimDone] = useState(false)
-  const [showSweep, setShowSweep] = useState(false)
   const [showInfo, setShowInfo] = useState(false)
   const [showBackdrop, setShowBackdrop] = useState(false)
 
@@ -107,7 +106,6 @@ export function CardReveal({ result, onClose, onNewPull, isPulling }: Props) {
   useEffect(() => {
     if (!result) {
       setAnimDone(false)
-      setShowSweep(false)
       setShowInfo(false)
       setShowBackdrop(false)
       reset()
@@ -115,18 +113,15 @@ export function CardReveal({ result, onClose, onNewPull, isPulling }: Props) {
     }
     setAnimKey((k) => k + 1)
     setAnimDone(false)
-    setShowSweep(false)
     setShowInfo(false)
     setShowBackdrop(false)
     reset()
     const revealTimer = setTimeout(() => triggerReveal(), 1200)
     const backdropTimer = setTimeout(() => setShowBackdrop(true), 1200)
-    const sweepTimer = setTimeout(() => setShowSweep(true), 1800)
     const infoTimer = setTimeout(() => setShowInfo(true), 2500)
     return () => {
       clearTimeout(revealTimer)
       clearTimeout(backdropTimer)
-      clearTimeout(sweepTimer)
       clearTimeout(infoTimer)
     }
   }, [result, reset, triggerReveal])
@@ -135,7 +130,8 @@ export function CardReveal({ result, onClose, onNewPull, isPulling }: Props) {
     return null
   }
 
-  const tcgConfig = RARITY_TCG_CONFIG[rarity] ?? RARITY_TCG_CONFIG.COMMON
+  const tone = getRarityTone(rarity)
+  const backdrop = `radial-gradient(ellipse 60% 50% at 50% 50%, color-mix(in oklab, ${tone.hex} 18%, transparent) 0%, transparent 70%)`
   const effectConfig = RARITY_CONFIG[rarity]
   const variant = result.card.variant ?? null
 
@@ -152,10 +148,10 @@ export function CardReveal({ result, onClose, onNewPull, isPulling }: Props) {
       }}
     >
       {/* Rarity backdrop glow — delayed to avoid spoiling rarity */}
-      {showBackdrop && tcgConfig.backdropColor && (
+      {showBackdrop && (
         <div
           className="pointer-events-none absolute inset-0 animate-in fade-in-0 duration-500"
-          style={{ background: tcgConfig.backdropColor }}
+          style={{ background: backdrop }}
         />
       )}
 
@@ -189,7 +185,6 @@ export function CardReveal({ result, onClose, onNewPull, isPulling }: Props) {
             setName={result.card.set.name}
             imageUrl={result.card.imageUrl}
             variant={variant}
-            showSweep={showSweep}
             interactive={animDone}
             animKey={animKey}
             animClass={animDone ? '' : 'card-spiral-rise'}

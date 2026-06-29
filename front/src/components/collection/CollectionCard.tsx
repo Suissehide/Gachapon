@@ -1,8 +1,8 @@
-import { RefreshCw } from 'lucide-react'
-
 import type { Card, CardVariant } from '../../api/collection.api.ts'
+import { describePassive } from '../../constants/passives.constant.ts'
+import { finalStat } from '../../utils/cardStats.ts'
+import type { CardStats } from '../shared/tcg-card/TcgCardFace.tsx'
 import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
-import { Button } from '../ui/button.tsx'
 
 export const RARITY_ORDER = [
   'COMMON',
@@ -41,23 +41,34 @@ export function CollectionCard({
   variant,
   quantity,
   isOwned,
-  onRecycle,
+  level,
+  palier,
   onClick,
 }: {
   card: Card
   variant: CardVariant
   quantity: number
   isOwned: boolean
-  onRecycle: () => void
+  level?: number | null
+  palier?: number | null
   onClick: () => void
 }) {
+  const stats: CardStats | null =
+    isOwned && level && palier
+      ? {
+          pv: Math.round(finalStat(card.baseHp, level, variant, palier)),
+          atq: Math.round(finalStat(card.baseAtk, level, variant, palier)),
+          def: Math.round(finalStat(card.baseDef, level, variant, palier)),
+          vit: Math.round(finalStat(card.baseSpd, level, variant, palier)),
+        }
+      : null
+
+  const description =
+    isOwned && palier ? describePassive(card.passiveKey, palier) : null
+
   return (
     <div className="group relative cursor-pointer" onClick={onClick}>
-      {/* aspect-3/4 wrapper positions TcgCardFace via absolute inset-0 */}
-      <div
-        className="relative aspect-3/4 transition-all duration-200 group-hover:-translate-y-1 group-hover:shadow-lg"
-        style={{ borderRadius: 10 }}
-      >
+      <div className="relative aspect-3/4 transition-all duration-200 group-hover:-translate-y-1 group-hover:shadow-lg">
         <TcgCardFace
           rarity={card.rarity}
           name={card.name}
@@ -66,33 +77,17 @@ export function CollectionCard({
           variant={variant}
           isOwned={isOwned}
           compact
+          level={level ?? null}
+          stats={stats}
+          description={description}
         />
 
         {/* Quantity badge */}
         {quantity > 1 && (
-          <div className="absolute right-1.5 top-1.5 z-20">
+          <div className="absolute right-1.5 top-1.5 z-30">
             <span className="rounded-full bg-black/70 px-1.5 py-0.5 text-[9px] font-bold text-white backdrop-blur-sm">
               ×{quantity}
             </span>
-          </div>
-        )}
-
-        {/* Hover — recycle button */}
-        {quantity > 1 && (
-          <div className="absolute inset-x-0 bottom-0 z-20 hidden justify-center pb-2 group-hover:flex">
-            <Button
-              type="button"
-              size="sm"
-              variant="default"
-              onClick={(e) => {
-                e.stopPropagation()
-                onRecycle()
-              }}
-              className="gap-1.5 shadow-lg"
-            >
-              <RefreshCw className="h-3.5 w-3.5" />
-              Recycler
-            </Button>
           </div>
         )}
       </div>

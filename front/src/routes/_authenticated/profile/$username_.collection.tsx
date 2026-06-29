@@ -83,7 +83,7 @@ function UserCollectionPage() {
 
   if (profileLoading) {
     return (
-      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+      <div className="flex min-h-[calc(100vh-var(--topbar-h))] items-center justify-center">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     )
@@ -91,14 +91,14 @@ function UserCollectionPage() {
 
   if (!profile) {
     return (
-      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+      <div className="flex min-h-[calc(100vh-var(--topbar-h))] items-center justify-center">
         <p className="text-text-light">Joueur introuvable.</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
+    <div className="min-h-[calc(100vh-var(--topbar-h))] bg-background px-4 py-8">
       <div className="mx-auto max-w-4xl">
         <div className="mb-5">
           <Link
@@ -132,12 +132,11 @@ function UserCollectionPage() {
               key={group.id}
               setName={group.name}
               entries={group.entries}
-              onRecycle={() => {}}
               onDetail={() => {}}
             />
           ))
         ) : (
-          <CollectionGrid entries={filteredEntries} onRecycle={() => {}} onDetail={() => {}} />
+          <CollectionGrid entries={filteredEntries} onDetail={() => {}} />
         )}
       </div>
     </div>

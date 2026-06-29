@@ -13,6 +13,7 @@ import type { ReactNode } from 'react'
 import { useState } from 'react'
 
 import type { Card, CardVariant } from '../../constants/card.constant'
+import { PASSIVE_LABELS } from '../../constants/passives.constant'
 import { useAscendCard } from '../../queries/useAscendCard'
 import { useLevelUpCard } from '../../queries/useLevelUpCard'
 import { useAuthStore } from '../../stores/auth.store'
@@ -26,36 +27,6 @@ import {
 import { Button } from '../ui/button'
 
 const MAX_PALIER = 6
-
-const PASSIVE_LABELS: Record<
-  string,
-  { name: string; describe: (palier: number) => string }
-> = {
-  VAMPIRISM: {
-    name: 'Vampirisme',
-    describe: (p) => `Soigne ${10 + 5 * p} % des dégâts infligés`,
-  },
-  AEGIS: {
-    name: 'Égide',
-    describe: (p) => `${5 + 2 * p} % de chance d'ignorer une attaque`,
-  },
-  BANNER: {
-    name: 'Bannière',
-    describe: (p) => `+${6 + 3 * p} % d'ATQ à toute l'équipe`,
-  },
-  RIPOSTE: {
-    name: 'Riposte',
-    describe: (p) => `Renvoie ${8 + 4 * p} % des dégâts subis`,
-  },
-  REBIRTH: {
-    name: 'Renaissance',
-    describe: (p) => `Ressuscite une fois à ${20 + 5 * p} % de PV`,
-  },
-  EXECUTION: {
-    name: 'Exécution',
-    describe: (p) => `+${20 + 5 * p} % de dégâts sous 30 % de PV cible`,
-  },
-}
 
 type Props = {
   userCardId: string

@@ -4,14 +4,12 @@ import { CollectionCard } from './CollectionCard.tsx'
 interface CollectionSetGroupProps {
   setName: string
   entries: DisplayEntry[]
-  onRecycle: (entry: DisplayEntry) => void
   onDetail: (entry: DisplayEntry) => void
 }
 
 export function CollectionSetGroup({
   setName,
   entries,
-  onRecycle,
   onDetail,
 }: CollectionSetGroupProps) {
   const distinctCardIds = new Set(
@@ -42,7 +40,8 @@ export function CollectionSetGroup({
             variant={entry.variant}
             quantity={entry.quantity}
             isOwned={entry.isOwned}
-            onRecycle={() => onRecycle(entry)}
+            level={entry.userCard?.level ?? null}
+            palier={entry.userCard?.palier ?? null}
             onClick={() => onDetail(entry)}
           />
         ))}

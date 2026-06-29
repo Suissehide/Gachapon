@@ -143,12 +143,6 @@ function Collection() {
     })
   }, [displayMode, filteredEntries])
 
-  const handleRecycle = (entry: DisplayEntry) => {
-    if (entry.userCard) {
-      setRecycleTarget(entry.userCard)
-    }
-  }
-
   const handleDetail = (entry: DisplayEntry) => setDetailTarget(entry)
 
   const handleRecycleFromDetail = () => {
@@ -201,14 +195,12 @@ function Collection() {
                 key={group.id}
                 setName={group.name}
                 entries={group.entries}
-                onRecycle={handleRecycle}
                 onDetail={handleDetail}
               />
             ))
           ) : (
             <CollectionGrid
               entries={filteredEntries}
-              onRecycle={handleRecycle}
               onDetail={handleDetail}
             />
           )}
