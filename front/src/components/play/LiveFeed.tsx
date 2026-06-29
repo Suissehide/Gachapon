@@ -56,7 +56,7 @@ export function LiveFeed() {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
   return (
-    <div className="fixed right-3 top-20 bottom-4 z-20 flex flex-col items-end gap-2 pointer-events-none">
+    <div className="fixed right-3 top-[calc(var(--topbar-h)+1rem)] bottom-4 z-20 flex flex-col items-end gap-2 pointer-events-none">
       <Button
         variant="outline"
         size="icon-sm"
@@ -75,7 +75,7 @@ export function LiveFeed() {
             <div className="flex items-center gap-2 px-3 py-2.5">
               <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse shrink-0" />
               <span className="text-[9px] font-bold uppercase tracking-[0.22em] text-text-light">
-                Tirages rares
+                Tirages récents
               </span>
               <span className="ml-auto rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.15em] text-amber-600">
                 Épique+

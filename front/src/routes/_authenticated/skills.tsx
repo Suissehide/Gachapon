@@ -35,7 +35,7 @@ function SkillsPage() {
 
   return (
     <div
-      className="flex h-[calc(100vh-4rem)] flex-col"
+      className="flex h-[calc(100vh-var(--topbar-h))] flex-col"
       style={{ background: '#fbf8f3', color: '#1b1726' }}
     >
       {/* Header — same container shape as PageShell (max-w-5xl px-4 py-8) */}

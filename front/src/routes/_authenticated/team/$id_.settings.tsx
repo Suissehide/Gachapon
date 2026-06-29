@@ -37,7 +37,7 @@ function TeamSettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+      <div className="flex min-h-[calc(100vh-var(--topbar-h))] items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     )
@@ -45,7 +45,7 @@ function TeamSettingsPage() {
 
   if (isError || !team) {
     return (
-      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+      <div className="flex min-h-[calc(100vh-var(--topbar-h))] items-center justify-center">
         <p className="text-text-light">Équipe introuvable ou accès refusé.</p>
       </div>
     )
@@ -53,14 +53,14 @@ function TeamSettingsPage() {
 
   if (team.ownerId !== user?.id) {
     return (
-      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+      <div className="flex min-h-[calc(100vh-var(--topbar-h))] items-center justify-center">
         <p className="text-text-light">Accès réservé au propriétaire.</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-background px-4 py-8">
+    <div className="min-h-[calc(100vh-var(--topbar-h))] bg-background px-4 py-8">
       <div className="mx-auto max-w-2xl">
         <Button
           variant="ghost"

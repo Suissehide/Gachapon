@@ -32,9 +32,9 @@ export function RewardsBadge({ pendingRewardsCount }: RewardsBadgeProps) {
         size="icon"
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Récompenses"
-        className="text-text-light hover:text-text"
+        className="h-10 w-10 rounded-[11px] text-text-light/60 hover:bg-text/[0.06] hover:text-text"
       >
-        <Gift className="h-4 w-4" />
+        <Gift className="h-5 w-5" />
       </Button>
 
       <NotificationDot count={pendingRewardsCount} />

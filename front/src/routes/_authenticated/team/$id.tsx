@@ -228,7 +228,7 @@ function TeamDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+      <div className="flex min-h-[calc(100vh-var(--topbar-h))] items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     )
@@ -236,7 +236,7 @@ function TeamDetailPage() {
 
   if (isError || !team) {
     return (
-      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+      <div className="flex min-h-[calc(100vh-var(--topbar-h))] items-center justify-center">
         <p className="text-text-light">Équipe introuvable ou accès refusé.</p>
       </div>
     )

@@ -153,7 +153,7 @@ function Play() {
       : null
 
   return (
-    <div className="relative h-[calc(100vh-4rem)] overflow-hidden bg-background">
+    <div className="relative h-[calc(100vh-var(--topbar-h))] overflow-hidden bg-background">
       {/* Ambient background — radial spotlight on stage */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {/* Stage spotlight */}

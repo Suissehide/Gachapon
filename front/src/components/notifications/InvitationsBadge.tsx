@@ -53,9 +53,9 @@ export function InvitationsBadge() {
         size="icon"
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Notifications"
-        className="text-text-light hover:text-text"
+        className="h-10 w-10 rounded-[11px] text-text-light/60 hover:bg-text/[0.06] hover:text-text"
       >
-        <Bell className="h-4 w-4" />
+        <Bell className="h-5 w-5" />
       </Button>
 
       <NotificationDot count={count} />

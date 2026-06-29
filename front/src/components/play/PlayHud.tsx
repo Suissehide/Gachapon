@@ -44,7 +44,7 @@ export function PlayHud() {
 
   return (
     <>
-      <div className="fixed left-3 top-20 bottom-4 z-20 flex flex-col items-start gap-2 pointer-events-none">
+      <div className="fixed left-3 top-[calc(var(--topbar-h)+1rem)] bottom-4 z-20 flex flex-col items-start gap-2 pointer-events-none">
         <Button
           variant="outline"
           size="icon-sm"
