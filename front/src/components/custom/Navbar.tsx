@@ -1,6 +1,7 @@
 import { Link, useNavigate } from '@tanstack/react-router'
-import { Coins, LogOut, Sparkles } from 'lucide-react'
+import { CircleDollarSign, Coins, LogOut, Sparkles, Zap } from 'lucide-react'
 
+import { useCombatPoints } from '../../queries/useCombatPoints.ts'
 import { useAuthStore } from '../../stores/auth.store'
 import { InvitationsBadge } from '../notifications/InvitationsBadge.tsx'
 import { RewardsBadge } from '../rewards/RewardsBadge.tsx'
@@ -72,11 +73,19 @@ export function Navbar() {
                   </Link>
                   <Link
                     to="/shop"
+                    className="flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-sm font-semibold text-emerald-500 hover:bg-emerald-500/20 transition-colors"
+                  >
+                    <CircleDollarSign className="h-3.5 w-3.5" />
+                    {user.gold.toLocaleString('fr-FR')}
+                  </Link>
+                  <Link
+                    to="/shop"
                     className="flex items-center gap-1.5 rounded-full border border-accent/25 bg-accent/10 px-3 py-1 text-sm font-semibold text-accent hover:bg-accent/20 transition-colors"
                   >
                     <Sparkles className="h-3.5 w-3.5" />
                     {user.dust.toLocaleString('fr-FR')}
                   </Link>
+                  <CombatPointsPill />
                 </div>
                 <InvitationsBadge />
                 <RewardsBadge
@@ -157,5 +166,39 @@ export function Navbar() {
         )}
       </MobileMenuShell>
     </>
+  )
+}
+
+function CombatPointsPill() {
+  const points = useCombatPoints()
+  const data = points.data
+  if (!data) { return null }
+
+  const isFull = data.combatPoints >= data.maxStock
+  const next = data.nextCombatPointAt
+    ? new Date(data.nextCombatPointAt)
+    : null
+  const secondsLeft = next ? Math.max(0, Math.round((next.getTime() - Date.now()) / 1000)) : 0
+  const min = Math.floor(secondsLeft / 60)
+  const sec = secondsLeft % 60
+  const countdown =
+    !isFull && secondsLeft > 0
+      ? `${min}:${sec.toString().padStart(2, '0')}`
+      : null
+
+  return (
+    <Link
+      to="/campaign"
+      className="flex items-center gap-1.5 rounded-full border border-violet-400/30 bg-violet-500/10 px-3 py-1 text-sm font-semibold text-violet-300 transition-colors hover:bg-violet-500/20"
+      title={`Points de combat — ${data.combatPoints} / ${data.maxStock}${countdown ? ` — prochain dans ${countdown}` : ''}`}
+    >
+      <Zap className="h-3.5 w-3.5" />
+      {data.combatPoints}/{data.maxStock}
+      {countdown && (
+        <span className="ml-1 font-mono text-[10px] text-violet-300/60">
+          {countdown}
+        </span>
+      )}
+    </Link>
   )
 }

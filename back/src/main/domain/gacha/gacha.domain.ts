@@ -209,12 +209,7 @@ export class GachaDomain implements GachaDomainInterface {
       card.id,
       rolledVariant,
     )
-    const dustEarned = wasDuplicate
-      ? Math.round(
-          (cfg.dustByRarity[card.rarity] ?? 0) *
-            cfg.upgrades.dustHarvestMultiplier,
-        )
-      : 0
+    const dustEarned = 0
 
     // 7. Créer GachaPull
     const pull = await this.#gachaPullRepository.createInTx(tx, {

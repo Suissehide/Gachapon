@@ -31,6 +31,10 @@ const DEFAULTS: Record<ConfigKey, number> = {
   dailyShopPriceEpic: 1500,
   dailyShopPriceLegendary: 5000,
   xpPerPull: 10,
+  'combat.pointsMax': 60,
+  'combat.regenSeconds': 360,
+  'combat.battleCost': 6,
+  'combat.sweepCost': 6,
 }
 
 

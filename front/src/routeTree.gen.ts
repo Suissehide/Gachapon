@@ -30,13 +30,17 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedQuestsRouteImport } from './routes/_authenticated/quests'
 import { Route as AuthenticatedPlayRouteImport } from './routes/_authenticated/play'
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
+import { Route as AuthenticatedEquipmentRouteImport } from './routes/_authenticated/equipment'
+import { Route as AuthenticatedCombatRouteImport } from './routes/_authenticated/combat'
 import { Route as AuthenticatedCollectionRouteImport } from './routes/_authenticated/collection'
+import { Route as AuthenticatedCampaignRouteImport } from './routes/_authenticated/campaign'
 import { Route as AuthenticatedAchievementsRouteImport } from './routes/_authenticated/achievements'
 import { Route as AdminAdminRouteImport } from './routes/_admin/admin'
 import { Route as AuthenticatedTeamIndexRouteImport } from './routes/_authenticated/team/index'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin.index'
 import { Route as AuthenticatedTeamIdRouteImport } from './routes/_authenticated/team/$id'
 import { Route as AuthenticatedProfileUsernameRouteImport } from './routes/_authenticated/profile/$username'
+import { Route as AuthenticatedBattleStageIdRouteImport } from './routes/_authenticated/battle.$stageId'
 import { Route as AdminAdminUsersRouteImport } from './routes/_admin/admin.users'
 import { Route as AdminAdminStreakRouteImport } from './routes/_admin/admin.streak'
 import { Route as AdminAdminStatsRouteImport } from './routes/_admin/admin.stats'
@@ -45,6 +49,7 @@ import { Route as AdminAdminShopRouteImport } from './routes/_admin/admin.shop'
 import { Route as AdminAdminScoringRouteImport } from './routes/_admin/admin.scoring'
 import { Route as AdminAdminMediaRouteImport } from './routes/_admin/admin.media'
 import { Route as AdminAdminConfigRouteImport } from './routes/_admin/admin.config'
+import { Route as AdminAdminCombatDebugRouteImport } from './routes/_admin/admin.combat-debug'
 import { Route as AdminAdminCardsRouteImport } from './routes/_admin/admin.cards'
 import { Route as AuthenticatedTeamIdSettingsRouteImport } from './routes/_authenticated/team/$id_.settings'
 import { Route as AuthenticatedProfileUsernameCollectionRouteImport } from './routes/_authenticated/profile/$username_.collection'
@@ -153,9 +158,24 @@ const AuthenticatedLeaderboardRoute =
     path: '/leaderboard',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedEquipmentRoute = AuthenticatedEquipmentRouteImport.update({
+  id: '/equipment',
+  path: '/equipment',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedCombatRoute = AuthenticatedCombatRouteImport.update({
+  id: '/combat',
+  path: '/combat',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedCollectionRoute = AuthenticatedCollectionRouteImport.update({
   id: '/collection',
   path: '/collection',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedCampaignRoute = AuthenticatedCampaignRouteImport.update({
+  id: '/campaign',
+  path: '/campaign',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedAchievementsRoute =
@@ -188,6 +208,12 @@ const AuthenticatedProfileUsernameRoute =
   AuthenticatedProfileUsernameRouteImport.update({
     id: '/profile/$username',
     path: '/profile/$username',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedBattleStageIdRoute =
+  AuthenticatedBattleStageIdRouteImport.update({
+    id: '/battle/$stageId',
+    path: '/battle/$stageId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AdminAdminUsersRoute = AdminAdminUsersRouteImport.update({
@@ -230,6 +256,11 @@ const AdminAdminConfigRoute = AdminAdminConfigRouteImport.update({
   path: '/config',
   getParentRoute: () => AdminAdminRoute,
 } as any)
+const AdminAdminCombatDebugRoute = AdminAdminCombatDebugRouteImport.update({
+  id: '/combat-debug',
+  path: '/combat-debug',
+  getParentRoute: () => AdminAdminRoute,
+} as any)
 const AdminAdminCardsRoute = AdminAdminCardsRouteImport.update({
   id: '/cards',
   path: '/cards',
@@ -262,7 +293,10 @@ export interface FileRoutesByFullPath {
   '/verify-email': typeof VerifyEmailRoute
   '/admin': typeof AdminAdminRouteWithChildren
   '/achievements': typeof AuthenticatedAchievementsRoute
+  '/campaign': typeof AuthenticatedCampaignRoute
   '/collection': typeof AuthenticatedCollectionRoute
+  '/combat': typeof AuthenticatedCombatRoute
+  '/equipment': typeof AuthenticatedEquipmentRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/play': typeof AuthenticatedPlayRoute
   '/quests': typeof AuthenticatedQuestsRoute
@@ -272,6 +306,7 @@ export interface FileRoutesByFullPath {
   '/invitations/$token': typeof InvitationsTokenRoute
   '/oauth/success': typeof OauthSuccessRoute
   '/admin/cards': typeof AdminAdminCardsRoute
+  '/admin/combat-debug': typeof AdminAdminCombatDebugRoute
   '/admin/config': typeof AdminAdminConfigRoute
   '/admin/media': typeof AdminAdminMediaRoute
   '/admin/scoring': typeof AdminAdminScoringRoute
@@ -280,6 +315,7 @@ export interface FileRoutesByFullPath {
   '/admin/stats': typeof AdminAdminStatsRoute
   '/admin/streak': typeof AdminAdminStreakRoute
   '/admin/users': typeof AdminAdminUsersRoute
+  '/battle/$stageId': typeof AuthenticatedBattleStageIdRoute
   '/profile/$username': typeof AuthenticatedProfileUsernameRoute
   '/team/$id': typeof AuthenticatedTeamIdRoute
   '/admin/': typeof AdminAdminIndexRoute
@@ -300,7 +336,10 @@ export interface FileRoutesByTo {
   '/stats': typeof StatsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/achievements': typeof AuthenticatedAchievementsRoute
+  '/campaign': typeof AuthenticatedCampaignRoute
   '/collection': typeof AuthenticatedCollectionRoute
+  '/combat': typeof AuthenticatedCombatRoute
+  '/equipment': typeof AuthenticatedEquipmentRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/play': typeof AuthenticatedPlayRoute
   '/quests': typeof AuthenticatedQuestsRoute
@@ -310,6 +349,7 @@ export interface FileRoutesByTo {
   '/invitations/$token': typeof InvitationsTokenRoute
   '/oauth/success': typeof OauthSuccessRoute
   '/admin/cards': typeof AdminAdminCardsRoute
+  '/admin/combat-debug': typeof AdminAdminCombatDebugRoute
   '/admin/config': typeof AdminAdminConfigRoute
   '/admin/media': typeof AdminAdminMediaRoute
   '/admin/scoring': typeof AdminAdminScoringRoute
@@ -318,6 +358,7 @@ export interface FileRoutesByTo {
   '/admin/stats': typeof AdminAdminStatsRoute
   '/admin/streak': typeof AdminAdminStreakRoute
   '/admin/users': typeof AdminAdminUsersRoute
+  '/battle/$stageId': typeof AuthenticatedBattleStageIdRoute
   '/profile/$username': typeof AuthenticatedProfileUsernameRoute
   '/team/$id': typeof AuthenticatedTeamIdRoute
   '/admin': typeof AdminAdminIndexRoute
@@ -342,7 +383,10 @@ export interface FileRoutesById {
   '/verify-email': typeof VerifyEmailRoute
   '/_admin/admin': typeof AdminAdminRouteWithChildren
   '/_authenticated/achievements': typeof AuthenticatedAchievementsRoute
+  '/_authenticated/campaign': typeof AuthenticatedCampaignRoute
   '/_authenticated/collection': typeof AuthenticatedCollectionRoute
+  '/_authenticated/combat': typeof AuthenticatedCombatRoute
+  '/_authenticated/equipment': typeof AuthenticatedEquipmentRoute
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/_authenticated/play': typeof AuthenticatedPlayRoute
   '/_authenticated/quests': typeof AuthenticatedQuestsRoute
@@ -352,6 +396,7 @@ export interface FileRoutesById {
   '/invitations/$token': typeof InvitationsTokenRoute
   '/oauth/success': typeof OauthSuccessRoute
   '/_admin/admin/cards': typeof AdminAdminCardsRoute
+  '/_admin/admin/combat-debug': typeof AdminAdminCombatDebugRoute
   '/_admin/admin/config': typeof AdminAdminConfigRoute
   '/_admin/admin/media': typeof AdminAdminMediaRoute
   '/_admin/admin/scoring': typeof AdminAdminScoringRoute
@@ -360,6 +405,7 @@ export interface FileRoutesById {
   '/_admin/admin/stats': typeof AdminAdminStatsRoute
   '/_admin/admin/streak': typeof AdminAdminStreakRoute
   '/_admin/admin/users': typeof AdminAdminUsersRoute
+  '/_authenticated/battle/$stageId': typeof AuthenticatedBattleStageIdRoute
   '/_authenticated/profile/$username': typeof AuthenticatedProfileUsernameRoute
   '/_authenticated/team/$id': typeof AuthenticatedTeamIdRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
@@ -383,7 +429,10 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/admin'
     | '/achievements'
+    | '/campaign'
     | '/collection'
+    | '/combat'
+    | '/equipment'
     | '/leaderboard'
     | '/play'
     | '/quests'
@@ -393,6 +442,7 @@ export interface FileRouteTypes {
     | '/invitations/$token'
     | '/oauth/success'
     | '/admin/cards'
+    | '/admin/combat-debug'
     | '/admin/config'
     | '/admin/media'
     | '/admin/scoring'
@@ -401,6 +451,7 @@ export interface FileRouteTypes {
     | '/admin/stats'
     | '/admin/streak'
     | '/admin/users'
+    | '/battle/$stageId'
     | '/profile/$username'
     | '/team/$id'
     | '/admin/'
@@ -421,7 +472,10 @@ export interface FileRouteTypes {
     | '/stats'
     | '/verify-email'
     | '/achievements'
+    | '/campaign'
     | '/collection'
+    | '/combat'
+    | '/equipment'
     | '/leaderboard'
     | '/play'
     | '/quests'
@@ -431,6 +485,7 @@ export interface FileRouteTypes {
     | '/invitations/$token'
     | '/oauth/success'
     | '/admin/cards'
+    | '/admin/combat-debug'
     | '/admin/config'
     | '/admin/media'
     | '/admin/scoring'
@@ -439,6 +494,7 @@ export interface FileRouteTypes {
     | '/admin/stats'
     | '/admin/streak'
     | '/admin/users'
+    | '/battle/$stageId'
     | '/profile/$username'
     | '/team/$id'
     | '/admin'
@@ -462,7 +518,10 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/_admin/admin'
     | '/_authenticated/achievements'
+    | '/_authenticated/campaign'
     | '/_authenticated/collection'
+    | '/_authenticated/combat'
+    | '/_authenticated/equipment'
     | '/_authenticated/leaderboard'
     | '/_authenticated/play'
     | '/_authenticated/quests'
@@ -472,6 +531,7 @@ export interface FileRouteTypes {
     | '/invitations/$token'
     | '/oauth/success'
     | '/_admin/admin/cards'
+    | '/_admin/admin/combat-debug'
     | '/_admin/admin/config'
     | '/_admin/admin/media'
     | '/_admin/admin/scoring'
@@ -480,6 +540,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/stats'
     | '/_admin/admin/streak'
     | '/_admin/admin/users'
+    | '/_authenticated/battle/$stageId'
     | '/_authenticated/profile/$username'
     | '/_authenticated/team/$id'
     | '/_admin/admin/'
@@ -655,11 +716,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLeaderboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/equipment': {
+      id: '/_authenticated/equipment'
+      path: '/equipment'
+      fullPath: '/equipment'
+      preLoaderRoute: typeof AuthenticatedEquipmentRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/combat': {
+      id: '/_authenticated/combat'
+      path: '/combat'
+      fullPath: '/combat'
+      preLoaderRoute: typeof AuthenticatedCombatRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/collection': {
       id: '/_authenticated/collection'
       path: '/collection'
       fullPath: '/collection'
       preLoaderRoute: typeof AuthenticatedCollectionRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/campaign': {
+      id: '/_authenticated/campaign'
+      path: '/campaign'
+      fullPath: '/campaign'
+      preLoaderRoute: typeof AuthenticatedCampaignRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/achievements': {
@@ -702,6 +784,13 @@ declare module '@tanstack/react-router' {
       path: '/profile/$username'
       fullPath: '/profile/$username'
       preLoaderRoute: typeof AuthenticatedProfileUsernameRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/battle/$stageId': {
+      id: '/_authenticated/battle/$stageId'
+      path: '/battle/$stageId'
+      fullPath: '/battle/$stageId'
+      preLoaderRoute: typeof AuthenticatedBattleStageIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_admin/admin/users': {
@@ -760,6 +849,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminConfigRouteImport
       parentRoute: typeof AdminAdminRoute
     }
+    '/_admin/admin/combat-debug': {
+      id: '/_admin/admin/combat-debug'
+      path: '/combat-debug'
+      fullPath: '/admin/combat-debug'
+      preLoaderRoute: typeof AdminAdminCombatDebugRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
     '/_admin/admin/cards': {
       id: '/_admin/admin/cards'
       path: '/cards'
@@ -786,6 +882,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminAdminRouteChildren {
   AdminAdminCardsRoute: typeof AdminAdminCardsRoute
+  AdminAdminCombatDebugRoute: typeof AdminAdminCombatDebugRoute
   AdminAdminConfigRoute: typeof AdminAdminConfigRoute
   AdminAdminMediaRoute: typeof AdminAdminMediaRoute
   AdminAdminScoringRoute: typeof AdminAdminScoringRoute
@@ -799,6 +896,7 @@ interface AdminAdminRouteChildren {
 
 const AdminAdminRouteChildren: AdminAdminRouteChildren = {
   AdminAdminCardsRoute: AdminAdminCardsRoute,
+  AdminAdminCombatDebugRoute: AdminAdminCombatDebugRoute,
   AdminAdminConfigRoute: AdminAdminConfigRoute,
   AdminAdminMediaRoute: AdminAdminMediaRoute,
   AdminAdminScoringRoute: AdminAdminScoringRoute,
@@ -826,13 +924,17 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAchievementsRoute: typeof AuthenticatedAchievementsRoute
+  AuthenticatedCampaignRoute: typeof AuthenticatedCampaignRoute
   AuthenticatedCollectionRoute: typeof AuthenticatedCollectionRoute
+  AuthenticatedCombatRoute: typeof AuthenticatedCombatRoute
+  AuthenticatedEquipmentRoute: typeof AuthenticatedEquipmentRoute
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
   AuthenticatedPlayRoute: typeof AuthenticatedPlayRoute
   AuthenticatedQuestsRoute: typeof AuthenticatedQuestsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedShopRoute: typeof AuthenticatedShopRoute
   AuthenticatedSkillsRoute: typeof AuthenticatedSkillsRoute
+  AuthenticatedBattleStageIdRoute: typeof AuthenticatedBattleStageIdRoute
   AuthenticatedProfileUsernameRoute: typeof AuthenticatedProfileUsernameRoute
   AuthenticatedTeamIdRoute: typeof AuthenticatedTeamIdRoute
   AuthenticatedTeamIndexRoute: typeof AuthenticatedTeamIndexRoute
@@ -842,13 +944,17 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAchievementsRoute: AuthenticatedAchievementsRoute,
+  AuthenticatedCampaignRoute: AuthenticatedCampaignRoute,
   AuthenticatedCollectionRoute: AuthenticatedCollectionRoute,
+  AuthenticatedCombatRoute: AuthenticatedCombatRoute,
+  AuthenticatedEquipmentRoute: AuthenticatedEquipmentRoute,
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
   AuthenticatedPlayRoute: AuthenticatedPlayRoute,
   AuthenticatedQuestsRoute: AuthenticatedQuestsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedShopRoute: AuthenticatedShopRoute,
   AuthenticatedSkillsRoute: AuthenticatedSkillsRoute,
+  AuthenticatedBattleStageIdRoute: AuthenticatedBattleStageIdRoute,
   AuthenticatedProfileUsernameRoute: AuthenticatedProfileUsernameRoute,
   AuthenticatedTeamIdRoute: AuthenticatedTeamIdRoute,
   AuthenticatedTeamIndexRoute: AuthenticatedTeamIndexRoute,

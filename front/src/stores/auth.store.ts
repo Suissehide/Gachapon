@@ -11,6 +11,7 @@ export type AuthUser = {
   role: string
   tokens: number
   dust: number
+  gold: number
   avatar: string | null
   banner: string | null
   pendingRewardsCount: number

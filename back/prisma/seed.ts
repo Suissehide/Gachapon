@@ -3,7 +3,9 @@ import { config } from 'dotenv'
 
 import { PrismaClient } from '../src/generated/client'
 import { seedAchievements } from './seed/achievements'
+import { seedCampaign } from './seed/campaign'
 import { seedCards } from './seed/cards'
+import { seedEquipment } from './seed/equipment'
 import { seedGlobalConfig } from './seed/global-config'
 import { seedSkills } from './seed/skills'
 import { seedMilestones } from './seed/milestones'
@@ -23,6 +25,10 @@ async function main() {
 
   await prisma.$transaction(async (tx) => {
     // Cleanup — ordre respectant les FK (feuilles d'abord)
+    // Combat (combat tables reference User/UserCard/Equipment — delete first)
+    await tx.battleResult.deleteMany()
+    await tx.userCampaignProgress.deleteMany()
+    await tx.userEquipment.deleteMany()
     await tx.userSkill.deleteMany()
     await tx.skillEdge.deleteMany()
     await tx.skillNodeLevel.deleteMany()
@@ -42,6 +48,8 @@ async function main() {
     await tx.user.deleteMany()
     await tx.card.deleteMany()
     await tx.cardSet.deleteMany()
+    await tx.equipment.deleteMany()
+    await tx.campaignStage.deleteMany()
     await tx.shopItem.deleteMany()
     await tx.userReward.deleteMany()
     await tx.streakMilestone.deleteMany()
@@ -59,6 +67,8 @@ async function main() {
     await seedMilestones(tx)
     await seedGlobalConfig(tx)
     await seedSkills(tx)
+    await seedEquipment(tx)
+    await seedCampaign(tx)
 
     // Utilisateurs + équipe (en dernier, peut référencer le catalogue)
     await seedUsers(tx)

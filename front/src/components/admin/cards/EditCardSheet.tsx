@@ -14,6 +14,11 @@ export type EditCardPayload = {
   name: string
   rarity: string
   dropWeight: number
+  baseHp: number
+  baseAtk: number
+  baseDef: number
+  baseSpd: number
+  passiveKey: string | null
   imageUrl?: string | null
   imageFile?: File
 }
@@ -71,13 +76,24 @@ function EditCardForm({
       name: item.name,
       rarity: item.rarity,
       dropWeight: item.dropWeight as number | undefined,
+      baseHp: item.baseHp as number | undefined,
+      baseAtk: item.baseAtk as number | undefined,
+      baseDef: item.baseDef as number | undefined,
+      baseSpd: item.baseSpd as number | undefined,
+      passiveKey: item.passiveKey ?? '',
       image: null as File | null,
     },
     onSubmit: ({ value }) => {
+      const trimmedPassive = value.passiveKey.trim()
       onSave({
         name: value.name,
         rarity: value.rarity,
         dropWeight: value.dropWeight ?? 1,
+        baseHp: value.baseHp ?? item.baseHp,
+        baseAtk: value.baseAtk ?? item.baseAtk,
+        baseDef: value.baseDef ?? item.baseDef,
+        baseSpd: value.baseSpd ?? item.baseSpd,
+        passiveKey: trimmedPassive === '' ? null : trimmedPassive,
         imageUrl: imageRemoved
           ? null
           : imageMode === 'pick'
@@ -107,6 +123,25 @@ function EditCardForm({
       </form.AppField>
       <form.AppField name="dropWeight">
         {(f) => <f.Number label="Poids de drop" />}
+      </form.AppField>
+
+      <div className="grid grid-cols-2 gap-3">
+        <form.AppField name="baseHp">
+          {(f) => <f.Number label="HP" />}
+        </form.AppField>
+        <form.AppField name="baseAtk">
+          {(f) => <f.Number label="ATK" />}
+        </form.AppField>
+        <form.AppField name="baseDef">
+          {(f) => <f.Number label="DEF" />}
+        </form.AppField>
+        <form.AppField name="baseSpd">
+          {(f) => <f.Number label="SPD" />}
+        </form.AppField>
+      </div>
+
+      <form.AppField name="passiveKey">
+        {(f) => <f.Input label="Passif (clé, optionnel)" />}
       </form.AppField>
 
       {/* Image section */}
