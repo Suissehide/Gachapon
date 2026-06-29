@@ -26,7 +26,7 @@ export function ArcadeProfile({ username }: Props) {
 
   if (isLoading) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+      <div className="min-h-[calc(100vh-var(--topbar-h))] flex items-center justify-center">
         <div className="h-10 w-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
       </div>
     )
@@ -34,7 +34,7 @@ export function ArcadeProfile({ username }: Props) {
 
   if (isError || !profile) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+      <div className="min-h-[calc(100vh-var(--topbar-h))] flex items-center justify-center">
         <div className="text-center">
           <p className="font-display text-2xl font-extrabold">Joueur introuvable</p>
           <p className="font-mono text-sm text-text-light mt-2">
@@ -47,7 +47,11 @@ export function ArcadeProfile({ username }: Props) {
 
   return (
     <PageShell>
-      <ArcadeTopbar isOwnProfile={!!isOwnProfile} isAdmin={!!isAdmin} />
+      <ArcadeTopbar
+        isOwnProfile={!!isOwnProfile}
+        isAdmin={!!isAdmin}
+        currentLevel={profile.level}
+      />
 
       <ArcadeHero
         profile={profile}

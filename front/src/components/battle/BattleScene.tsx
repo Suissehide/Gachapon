@@ -275,28 +275,37 @@ export function BattleScene({
 
   return (
     <div>
-      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 via-slate-950 to-black p-8">
-        <div className="grid min-h-[280px] grid-cols-2 gap-8">
-          <TeamLane
-            units={teamAUnits}
-            side="A"
-            attackingUnitId={attackingId}
-            isBoss={isBossOnA}
-            floatsByUnit={floatsByUnit}
-            badgesByUnit={badgesByUnit}
-          />
-          <TeamLane
-            units={teamBUnits}
-            side="B"
-            attackingUnitId={attackingId}
-            isBoss={isBossOnB}
-            floatsByUnit={floatsByUnit}
-            badgesByUnit={badgesByUnit}
-          />
-        </div>
-        {/* Turn counter (small, bottom right) */}
-        <div className="absolute right-3 bottom-2 font-mono text-[10px] text-white/30">
-          log {logIndex}/{log.length}
+      <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-b from-white via-[#fdfaf3] to-[#f6f1e6] p-6 sm:p-8">
+        {/* Enemy team on top, player team on bottom. The thin divider in the
+            middle hints at the "vs" axis and gives a stable visual anchor for
+            the attack hops (up = player attacks, down = enemy attacks). */}
+        <div className="flex flex-col gap-6">
+          <div className="flex min-h-[140px] items-center justify-center">
+            <TeamLane
+              units={teamBUnits}
+              side="B"
+              attackingUnitId={attackingId}
+              isBoss={isBossOnB}
+              floatsByUnit={floatsByUnit}
+              badgesByUnit={badgesByUnit}
+            />
+          </div>
+          <div className="relative flex items-center justify-center">
+            <span className="absolute inset-x-0 top-1/2 h-px bg-border" aria-hidden />
+            <span className="relative bg-white px-3 font-display text-xs font-bold uppercase tracking-widest text-text-light/70">
+              vs
+            </span>
+          </div>
+          <div className="flex min-h-[140px] items-center justify-center">
+            <TeamLane
+              units={teamAUnits}
+              side="A"
+              attackingUnitId={attackingId}
+              isBoss={isBossOnA}
+              floatsByUnit={floatsByUnit}
+              badgesByUnit={badgesByUnit}
+            />
+          </div>
         </div>
       </div>
       {controls && (

@@ -134,7 +134,10 @@ describe('Campaign routes', () => {
     expect(reg.statusCode).toBe(201)
     const user = await postgresOrm.prisma.user.update({
       where: { email },
-      data: { emailVerifiedAt: new Date() },
+      // Bump combatPoints to a high value so battle + sweep×3 never trips
+      // the stamina gate, regardless of how the global combat.battleCost /
+      // combat.sweepCost configuration evolves.
+      data: { emailVerifiedAt: new Date(), combatPoints: 100 },
     })
 
     const uc = await postgresOrm.prisma.userCard.create({

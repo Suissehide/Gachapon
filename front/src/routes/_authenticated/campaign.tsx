@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import {
   ArrowRight,
   Crown,
@@ -14,6 +14,7 @@ import type {
   StageStatus,
   SweepResult,
 } from '../../api/campaign.api.ts'
+import { ArcadeCard } from '../../components/shared/ArcadeCard.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { Button } from '../../components/ui/button.tsx'
@@ -28,6 +29,8 @@ import {
   useCampaign,
   useSweepStage,
 } from '../../queries/useCampaign.ts'
+import { useCombatPoints } from '../../queries/useCombatPoints.ts'
+import { useCombatTeam } from '../../queries/useCombatTeam.ts'
 
 export const Route = createFileRoute('/_authenticated/campaign')({
   component: CampaignPage,
@@ -36,9 +39,19 @@ export const Route = createFileRoute('/_authenticated/campaign')({
 function CampaignPage() {
   const navigate = useNavigate()
   const campaign = useCampaign()
+  const team = useCombatTeam()
+  const points = useCombatPoints()
   const sweep = useSweepStage()
   const [sweepResult, setSweepResult] = useState<SweepResult | null>(null)
   const [sweepStageId, setSweepStageId] = useState<string | null>(null)
+
+  const hasTeam = (team.data?.team.length ?? 0) >= 1
+  const currentPC = points.data?.combatPoints ?? 0
+  const battleCost = points.data?.battleCost ?? 1
+  const sweepCost = points.data?.sweepCost ?? 1
+  const sweepRuns = 3
+  const canBattle = currentPC >= battleCost
+  const canSweep = currentPC >= sweepCost * sweepRuns
 
   if (campaign.isLoading) {
     return (
@@ -84,10 +97,30 @@ function CampaignPage() {
         subtitle="Progresse à travers les chapitres pour débloquer drops et puissance"
       />
 
-      <div className="mt-6 space-y-8">
+      {!hasTeam && !team.isLoading && (
+        <ArcadeCard className="mt-6">
+          <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:text-left">
+            <Swords className="h-8 w-8 shrink-0 text-text-light/40" />
+            <div className="flex-1">
+              <p className="font-display text-base font-bold text-text">
+                Configure ton équipe avant de combattre
+              </p>
+              <p className="text-sm text-text-light">
+                Sélectionne jusqu'à 3 cartes dans la page Combat. Sans
+                équipe, le combat échoue.
+              </p>
+            </div>
+            <Link to="/combat">
+              <Button>Configurer mon équipe</Button>
+            </Link>
+          </div>
+        </ArcadeCard>
+      )}
+
+      <div className="mt-6 space-y-6">
         {data.chapters.map((chapter) => (
-          <section key={chapter.chapter}>
-            <h2 className="mb-3 font-display text-xl font-bold text-text">
+          <ArcadeCard key={chapter.chapter}>
+            <h2 className="mb-4 font-display text-xl font-bold text-text">
               Chapitre {chapter.chapter}
             </h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -96,14 +129,18 @@ function CampaignPage() {
                   key={stage.id}
                   stage={stage}
                   onBattle={() => handleBattle(stage.id)}
-                  onSweep={() => handleSweep(stage.id, 3)}
+                  onSweep={() => handleSweep(stage.id, sweepRuns)}
                   sweepPending={
                     sweep.isPending && sweepStageId === stage.id
                   }
+                  canBattle={canBattle && hasTeam}
+                  canSweep={canSweep && hasTeam}
+                  battleCost={battleCost}
+                  sweepCost={sweepCost * sweepRuns}
                 />
               ))}
             </div>
-          </section>
+          </ArcadeCard>
         ))}
       </div>
 
@@ -181,15 +218,25 @@ function StageCard({
   onBattle,
   onSweep,
   sweepPending,
+  canBattle,
+  canSweep,
+  battleCost,
+  sweepCost,
 }: {
   stage: CampaignStage
   onBattle: () => void
   onSweep: () => void
   sweepPending: boolean
+  canBattle: boolean
+  canSweep: boolean
+  battleCost: number
+  sweepCost: number
 }) {
   const Icon = stage.isBoss ? Crown : stage.status === 'locked' ? Lock : Star
   const isLocked = stage.status === 'locked'
   const isCleared = stage.status === 'cleared'
+  const battleDisabled = !canBattle
+  const sweepDisabled = !canSweep || sweepPending
 
   return (
     <div
@@ -230,9 +277,19 @@ function StageCard({
             variant={isCleared ? 'outline' : 'default'}
             onClick={onBattle}
             className="flex-1 gap-1.5"
+            disabled={battleDisabled}
+            title={
+              battleDisabled
+                ? `Pas assez d'énergie (besoin de ${battleCost} PC)`
+                : `Coût : ${battleCost} PC`
+            }
           >
             <Swords className="h-3.5 w-3.5" />
             {isCleared ? 'Rejouer' : 'Combattre'}
+            <span className="ml-1 inline-flex items-center gap-0.5 rounded-full bg-black/15 px-1.5 py-0.5 text-[10px] font-bold tabular-nums">
+              <Zap className="h-2.5 w-2.5" />
+              {battleCost}
+            </span>
             <ArrowRight className="h-3 w-3" />
           </Button>
         )}
@@ -241,12 +298,19 @@ function StageCard({
             size="sm"
             variant="outline"
             onClick={onSweep}
-            disabled={sweepPending}
+            disabled={sweepDisabled}
             className="gap-1.5"
-            title="Farm rapide × 3"
+            title={
+              !canSweep
+                ? `Pas assez d'énergie (besoin de ${sweepCost} PC)`
+                : `Farm rapide × 3 — coût ${sweepCost} PC`
+            }
           >
             <Zap className="h-3.5 w-3.5" />
             ×3
+            <span className="ml-0.5 rounded-full bg-black/10 px-1 py-0.5 text-[10px] font-bold tabular-nums">
+              {sweepCost}
+            </span>
           </Button>
         )}
       </div>

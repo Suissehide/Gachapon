@@ -8,6 +8,8 @@ export const combatPointsResponseSchema = z.object({
   combatPoints: z.number().int(),
   maxStock: z.number().int(),
   regenSeconds: z.number().int(),
+  battleCost: z.number().int(),
+  sweepCost: z.number().int(),
   nextCombatPointAt: z.date().nullable(),
 })
 

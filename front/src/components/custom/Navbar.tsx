@@ -1,7 +1,17 @@
 import { Link, useNavigate } from '@tanstack/react-router'
-import { CircleDollarSign, Coins, LogOut, Sparkles, Zap } from 'lucide-react'
+import {
+  ArrowRight,
+  Coins,
+  Layers,
+  LogOut,
+  Sparkles,
+  Zap,
+} from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
+import { useTokenBalance } from '../../queries/useGacha.ts'
+import type { AuthUser } from '../../stores/auth.store'
 import { useAuthStore } from '../../stores/auth.store'
 import { InvitationsBadge } from '../notifications/InvitationsBadge.tsx'
 import { RewardsBadge } from '../rewards/RewardsBadge.tsx'
@@ -13,14 +23,23 @@ import {
   useMobileMenu,
 } from './MobileMenu.tsx'
 
-const navItems = [
+const navItemsBeforeProfile = [
   { to: '/play', label: 'Jouer' },
+  { to: '/campaign', label: 'Campagne' },
   { to: '/collection', label: 'Collection' },
   { to: '/skills', label: 'Compétences' },
+] as const
+
+const navItemsAfterProfile = [
   { to: '/shop', label: 'Boutique' },
   { to: '/leaderboard', label: 'Classement' },
   { to: '/team', label: 'Équipes' },
-]
+] as const
+
+const navItems = [...navItemsBeforeProfile, ...navItemsAfterProfile]
+
+const tabClass =
+  'relative whitespace-nowrap px-[18px] pt-[15px] pb-[14px] text-[15.5px] font-semibold text-text-light/70 transition-colors hover:text-text [&.active]:text-primary-dark [&.active>span]:bg-linear-to-r [&.active>span]:from-primary [&.active>span]:to-secondary'
 
 export function Navbar() {
   const user = useAuthStore((s) => s.user)
@@ -35,93 +54,106 @@ export function Navbar() {
 
   return (
     <>
-      <nav className="fixed top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-          <Link
-            to="/"
-            className="flex items-center gap-2 shrink-0"
-            onClick={closeMenu}
-          >
-            <span className="text-xl font-black bg-linear-to-r from-primary via-primary-light to-secondary bg-clip-text text-transparent">
-              Gachapon
-            </span>
-          </Link>
-
-          {/* Desktop nav */}
-          <div className="hidden items-center lg:flex">
-            {navItems.map((item) => (
-              <Link
-                key={item.label}
-                to={item.to}
-                className="px-3 py-2 text-sm font-medium text-text-light rounded-lg transition-colors hover:text-text hover:bg-muted [&.active]:text-primary [&.active]:font-semibold"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-3">
+      <nav className="fixed top-0 z-50 w-full border-b border-border bg-background">
+        {/* Mobile / tablet bar — single compact row */}
+        <div className="flex h-16 items-center justify-between gap-3 px-6 lg:hidden">
+          <BrandLink onClick={closeMenu} compact />
+          <div className="flex items-center gap-2">
             {user && (
               <>
-                <div className="flex items-center gap-2">
-                  <Link
-                    to="/shop"
-                    className="flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-sm font-semibold text-primary hover:bg-primary/20 transition-colors"
-                  >
-                    <Coins className="h-3.5 w-3.5" />
-                    {user.tokens.toLocaleString('fr-FR')}
-                  </Link>
-                  <Link
-                    to="/shop"
-                    className="flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-sm font-semibold text-emerald-500 hover:bg-emerald-500/20 transition-colors"
-                  >
-                    <CircleDollarSign className="h-3.5 w-3.5" />
-                    {user.gold.toLocaleString('fr-FR')}
-                  </Link>
-                  <Link
-                    to="/shop"
-                    className="flex items-center gap-1.5 rounded-full border border-accent/25 bg-accent/10 px-3 py-1 text-sm font-semibold text-accent hover:bg-accent/20 transition-colors"
-                  >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    {user.dust.toLocaleString('fr-FR')}
-                  </Link>
-                  <CombatPointsPill />
-                </div>
                 <InvitationsBadge />
                 <RewardsBadge
                   pendingRewardsCount={user.pendingRewardsCount ?? 0}
                 />
-                <div className="h-5 w-px bg-border hidden lg:block" />
-                <Link
-                  to={'/profile/$username'}
-                  params={{ username: user.username }}
-                  className="hidden lg:flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary text-xs font-bold text-white ring-2 ring-primary/20 hover:ring-primary/50 transition-all"
-                >
-                  {user.username[0]?.toUpperCase()}
-                </Link>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => void handleLogout()}
-                  title="Déconnexion"
-                  className="hidden lg:flex text-text-light hover:text-destructive hover:bg-destructive/10"
-                >
-                  <LogOut className="h-4 w-4" />
-                </Button>
               </>
             )}
-
-            {/* Capsule burger — mobile/tablet only */}
             <button
               type="button"
               aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
               aria-expanded={menuOpen}
               aria-controls="mobile-menu"
-              className="relative lg:hidden flex items-center justify-center w-9 h-9 rounded-full hover:bg-muted transition-colors"
+              className="relative flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted"
               onClick={() => setMenuOpen((o) => !o)}
             >
               <CapsuleIcon open={menuOpen} />
             </button>
+          </div>
+        </div>
+
+        {/* Desktop — two-row design */}
+        <div className="hidden lg:flex lg:flex-col">
+          {/* Row 1 — brand · resources · divider · account */}
+          <div className="flex h-[60px] items-center gap-[22px] px-[26px]">
+            <BrandLink />
+            <div className="flex-1" />
+            {user && (
+              <>
+                <div className="flex items-center gap-2">
+                  <TokensPill />
+                  <Wallet user={user} />
+                  <Energy />
+                </div>
+                <span
+                  aria-hidden
+                  className="h-[30px] w-px bg-text/[0.12]"
+                />
+                <div className="flex items-center gap-2">
+                  <InvitationsBadge />
+                  <RewardsBadge
+                    pendingRewardsCount={user.pendingRewardsCount ?? 0}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Row 2 — navigation tabs + logout */}
+          <div className="flex items-stretch justify-between border-t border-text/[0.07] px-[26px]">
+            <nav className="flex items-stretch gap-[2px]">
+              {navItemsBeforeProfile.map((item) => (
+                <Link key={item.label} to={item.to} className={tabClass}>
+                  {item.label}
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute right-3 bottom-0 left-3 h-[3px] rounded-t-[3px] bg-transparent"
+                  />
+                </Link>
+              ))}
+              {user && (
+                <Link
+                  to="/profile/$username"
+                  params={{ username: user.username }}
+                  className={tabClass}
+                >
+                  Mon profil
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute right-3 bottom-0 left-3 h-[3px] rounded-t-[3px] bg-transparent"
+                  />
+                </Link>
+              )}
+              {navItemsAfterProfile.map((item) => (
+                <Link key={item.label} to={item.to} className={tabClass}>
+                  {item.label}
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute right-3 bottom-0 left-3 h-[3px] rounded-t-[3px] bg-transparent"
+                  />
+                </Link>
+              ))}
+            </nav>
+            {user && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => void handleLogout()}
+                aria-label="Déconnexion"
+                title="Déconnexion"
+                className="my-2 h-10 w-10 self-center rounded-[11px] text-text-light/40 hover:bg-text/[0.06] hover:text-destructive"
+              >
+                <LogOut className="h-[19px] w-[19px]" />
+              </Button>
+            )}
           </div>
         </div>
       </nav>
@@ -140,13 +172,13 @@ export function Navbar() {
 
         {user && (
           <div
-            className={`mt-1 pt-1 border-t border-border/60 flex items-center justify-between transition-opacity duration-300 ${menuOpen ? 'opacity-100' : 'opacity-0'}`}
+            className={`mt-1 flex items-center justify-between border-t border-border/60 pt-1 transition-opacity duration-300 ${menuOpen ? 'opacity-100' : 'opacity-0'}`}
             style={{ transitionDelay: `${navItems.length * 45 + 120}ms` }}
           >
             <Link
-              to={'/profile/$username'}
+              to="/profile/$username"
               params={{ username: user.username }}
-              className="px-2 py-3 text-3xl font-semibold uppercase tracking-wide text-text-light hover:text-text transition-colors"
+              className="px-2 py-3 text-3xl font-semibold uppercase tracking-wide text-text-light transition-colors hover:text-text"
               onClick={closeMenu}
             >
               {user.username}
@@ -158,9 +190,9 @@ export function Navbar() {
                 closeMenu()
               }}
               title="Déconnexion"
-              className="p-2 rounded-full hover:text-destructive hover:bg-destructive/10 transition-colors"
+              className="rounded-full p-2 hover:bg-destructive/10 hover:text-destructive"
             >
-              <LogOut className="font-semibold text-text-light h-7 w-7" />
+              <LogOut className="h-7 w-7 font-semibold text-text-light" />
             </Button>
           </div>
         )}
@@ -169,19 +201,166 @@ export function Navbar() {
   )
 }
 
-function CombatPointsPill() {
+function BrandLink({
+  onClick,
+  compact = false,
+}: {
+  onClick?: () => void
+  compact?: boolean
+}) {
+  return (
+    <Link
+      to="/"
+      onClick={onClick}
+      className={`flex shrink-0 items-center font-display font-extrabold tracking-[-0.02em] whitespace-nowrap ${
+        compact ? 'text-xl' : 'text-[24px]'
+      }`}
+    >
+      <span className="text-primary">Gach</span>
+      <span className="bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
+        apon
+      </span>
+    </Link>
+  )
+}
+
+function Wallet({ user }: { user: AuthUser }) {
+  const fmt = (n: number) => n.toLocaleString('fr-FR')
+  return (
+    <div className="flex items-center gap-2">
+      <CoinPill
+        title={`${fmt(user.dust)} poussière`}
+        icon={<Sparkles size={15} strokeWidth={1.8} />}
+        value={fmt(user.dust)}
+        bgClassName="bg-[#e0f2fe]"
+        borderClassName="border-[#7dd3fc]"
+        iconColorClassName="text-[#0284c7]"
+        textColorClassName="text-[#075985]"
+        shadowClassName="shadow-[0_2px_6px_rgba(2,132,199,0.1)]"
+      />
+      <CoinPill
+        title={`${fmt(user.gold)} or`}
+        icon={<Coins size={15} strokeWidth={1.8} />}
+        value={fmt(user.gold)}
+        bgClassName="bg-[#fef9c3]"
+        borderClassName="border-[#fde047]"
+        iconColorClassName="text-[#ca8a04]"
+        textColorClassName="text-[#854d0e]"
+        shadowClassName="shadow-[0_2px_6px_rgba(202,138,4,0.1)]"
+      />
+    </div>
+  )
+}
+
+function TokensPill() {
+  const balance = useTokenBalance()
+  // 1s tick for live regen countdown
+  const [, setNow] = useState(0)
+  useEffect(() => {
+    const id = window.setInterval(() => setNow((t) => t + 1), 1000)
+    return () => window.clearInterval(id)
+  }, [])
+
+  const data = balance.data
+  if (!data) {
+    return null
+  }
+
+  const isFull = data.tokens >= data.maxStock
+  const next = data.nextTokenAt ? new Date(data.nextTokenAt) : null
+  const secondsLeft = next
+    ? Math.max(0, Math.round((next.getTime() - Date.now()) / 1000))
+    : 0
+  const min = Math.floor(secondsLeft / 60)
+  const sec = secondsLeft % 60
+  const timer =
+    !isFull && secondsLeft > 0
+      ? `${min}:${sec.toString().padStart(2, '0')}`
+      : null
+
+  return (
+    <Link
+      to="/play"
+      title={`Jetons gacha — ${data.tokens}/${data.maxStock}${timer ? ` · prochain dans ${timer}` : ''}`}
+      className="relative inline-flex items-center gap-2 whitespace-nowrap rounded-[13px] border border-[#fdba74] bg-[#ffedd5] py-2 pr-3 pl-[11px] shadow-[0_2px_6px_rgba(234,88,12,0.1)]"
+    >
+      <span className="flex text-[#ea580c]">
+        <Layers size={15} strokeWidth={1.8} />
+      </span>
+      <span className="font-display text-[15px] font-extrabold tabular-nums text-[#9a3412]">
+        {data.tokens}
+        <span className="text-[12px] font-bold text-[#9a3412]/50">
+          /{data.maxStock}
+        </span>
+      </span>
+      {timer && (
+        <span className="font-mono text-[11px] tracking-[0.04em] text-[#9a3412]/60">
+          {timer}
+        </span>
+      )}
+    </Link>
+  )
+}
+
+function CoinPill({
+  icon,
+  value,
+  title,
+  bgClassName,
+  borderClassName,
+  iconColorClassName,
+  textColorClassName,
+  shadowClassName,
+}: {
+  icon: React.ReactNode
+  value: string
+  title: string
+  bgClassName: string
+  borderClassName: string
+  iconColorClassName: string
+  textColorClassName: string
+  shadowClassName: string
+}) {
+  return (
+    <Link
+      to="/shop"
+      title={title}
+      className={`inline-flex items-center gap-2 whitespace-nowrap rounded-[13px] border px-3 py-2 ${bgClassName} ${borderClassName} ${shadowClassName}`}
+    >
+      <span className={`flex ${iconColorClassName}`}>{icon}</span>
+      <b
+        className={`font-display text-[15px] font-extrabold tabular-nums ${textColorClassName}`}
+      >
+        {value}
+      </b>
+    </Link>
+  )
+}
+
+function Energy() {
   const points = useCombatPoints()
+  // 1s tick to keep the regen countdown live
+  const [, setNow] = useState(0)
+  useEffect(() => {
+    const id = window.setInterval(() => setNow((t) => t + 1), 1000)
+    return () => window.clearInterval(id)
+  }, [])
+
   const data = points.data
-  if (!data) { return null }
+  if (!data) {
+    return null
+  }
 
   const isFull = data.combatPoints >= data.maxStock
   const next = data.nextCombatPointAt
     ? new Date(data.nextCombatPointAt)
     : null
-  const secondsLeft = next ? Math.max(0, Math.round((next.getTime() - Date.now()) / 1000)) : 0
+  const secondsLeft = next
+    ? Math.max(0, Math.round((next.getTime() - Date.now()) / 1000))
+    : 0
   const min = Math.floor(secondsLeft / 60)
   const sec = secondsLeft % 60
-  const countdown =
+  const timer =
     !isFull && secondsLeft > 0
       ? `${min}:${sec.toString().padStart(2, '0')}`
       : null
@@ -189,16 +368,29 @@ function CombatPointsPill() {
   return (
     <Link
       to="/campaign"
-      className="flex items-center gap-1.5 rounded-full border border-violet-400/30 bg-violet-500/10 px-3 py-1 text-sm font-semibold text-violet-300 transition-colors hover:bg-violet-500/20"
-      title={`Points de combat — ${data.combatPoints} / ${data.maxStock}${countdown ? ` — prochain dans ${countdown}` : ''}`}
+      title={`Points de combat — ${data.combatPoints}/${data.maxStock}${timer ? ` · prochain dans ${timer}` : ''}`}
+      className="relative inline-flex items-center gap-2 whitespace-nowrap rounded-[13px] border border-[#ddd0ff] bg-[#f3efff] py-2 pr-3 pl-[11px] shadow-[0_2px_6px_rgba(139,92,246,0.1)]"
     >
-      <Zap className="h-3.5 w-3.5" />
-      {data.combatPoints}/{data.maxStock}
-      {countdown && (
-        <span className="ml-1 font-mono text-[10px] text-violet-300/60">
-          {countdown}
+      <span className="flex text-[#7c3aed]">
+        <Zap size={15} strokeWidth={1.8} />
+      </span>
+      <span className="font-display text-[15px] font-extrabold tabular-nums text-[#5b21b6]">
+        {data.combatPoints}
+        <span className="text-[12px] font-bold text-[#5b21b6]/50">
+          /{data.maxStock}
+        </span>
+      </span>
+      {timer && (
+        <span className="font-mono text-[11px] tracking-[0.04em] text-[#5b21b6]/60">
+          {timer}
         </span>
       )}
+      <span
+        aria-hidden
+        className="ml-[2px] flex h-5 w-5 items-center justify-center rounded-[7px] bg-linear-to-br from-accent to-[#7c3aed] text-white"
+      >
+        <ArrowRight size={14} strokeWidth={2.5} />
+      </span>
     </Link>
   )
 }

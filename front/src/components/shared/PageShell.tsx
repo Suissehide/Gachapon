@@ -21,7 +21,7 @@ type Props = {
 export function PageShell({ children }: Props) {
   return (
     <div
-      className="relative min-h-[calc(100vh-4rem)]"
+      className="relative min-h-[calc(100vh-var(--topbar-h))]"
       style={{ background: '#fbf8f3', color: '#1b1726' }}
     >
       <AuroraGrid />

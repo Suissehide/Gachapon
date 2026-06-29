@@ -14,6 +14,8 @@ export interface SimulatorUnit {
   id: string
   /** Display name (optional, for readability) */
   name?: string
+  /** Public URL of the unit's portrait (front consumes this for animation). Null when no asset. */
+  imageUrl?: string | null
   hp: number
   atk: number
   def: number

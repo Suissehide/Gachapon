@@ -2,18 +2,12 @@ import { Environment } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { createFileRoute } from '@tanstack/react-router'
 import { ChevronsRight, Coins } from 'lucide-react'
-import {
-  type CSSProperties,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react'
+import { type CSSProperties, useEffect, useRef, useState } from 'react'
 
 import { CardReveal } from '../../components/machine/CardReveal'
 import { GachaBall } from '../../components/machine/GachaBall'
-import type { CarouselHandle } from '../../components/machine/MachineCarousel'
-import { MachineCarousel } from '../../components/machine/MachineCarousel'
+import type { MachineStageHandle } from '../../components/machine/MachineStage'
+import { MachineStage } from '../../components/machine/MachineStage'
 import { LiveFeed } from '../../components/play/LiveFeed'
 import { PlayHud } from '../../components/play/PlayHud'
 import { Button } from '../../components/ui/button.tsx'
@@ -21,7 +15,6 @@ import { apiUrl as API_URL } from '../../constants/config.constant.ts'
 import { wsClient } from '../../lib/ws'
 import type { PullResult } from '../../queries/useGacha'
 import { usePull, useTokenBalance } from '../../queries/useGacha'
-import { useOwnedMachines } from '../../queries/useShop'
 import { useAuthStore } from '../../stores/auth.store'
 
 export const Route = createFileRoute('/_authenticated/play')({
@@ -52,25 +45,12 @@ function Play() {
   const [pullResult, setPullResult] = useState<PullResult | null>(null)
   const pendingResult = useRef<PullResult | null>(null)
   const [now, setNow] = useState(Date.now())
-  const [selectedMachineOwned, setSelectedMachineOwned] = useState(false)
-  const [selectedIsNoMachine, setSelectedIsNoMachine] = useState(false)
-  const carouselRef = useRef<CarouselHandle>(null)
+  const machineRef = useRef<MachineStageHandle>(null)
 
   const { data: balance, isLoading: balanceLoading } = useTokenBalance()
   const { mutate: pullMutation, isPending: pullPending } = usePull()
-  const { data: machinesData } = useOwnedMachines()
   const setUser = useAuthStore((s) => s.setUser)
   const user = useAuthStore((s) => s.user)
-
-  const ownedMachineIds = machinesData?.machineIds ?? []
-
-  const handleSelectionChange = useCallback(
-    (isOwned: boolean, isNoMachine: boolean) => {
-      setSelectedMachineOwned(isOwned)
-      setSelectedIsNoMachine(isNoMachine)
-    },
-    [],
-  )
 
   // Sync auth store (topbar) with token balance query
   useEffect(() => {
@@ -110,23 +90,16 @@ function Play() {
 
   const tokens = balance?.tokens ?? 0
   const maxStock = balance?.maxStock ?? 5
-  const canPull =
-    tokens > 0 && phase === 'idle' && !pullPending && selectedMachineOwned
+  const canPull = tokens > 0 && phase === 'idle' && !pullPending
 
   const handlePull = async () => {
-    if (!canPull || !carouselRef.current) {
+    if (!canPull || !machineRef.current) {
       return
     }
-
-    if (selectedIsNoMachine) {
-      // No machine — skip straight to ball
-      setPhase('ball')
-    } else {
-      setPhase('machine-anim')
-      await carouselRef.current.startAnimation()
-      await new Promise((r) => setTimeout(r, 600))
-      setPhase('ball')
-    }
+    setPhase('machine-anim')
+    await machineRef.current.startAnimation()
+    await new Promise((r) => setTimeout(r, 600))
+    setPhase('ball')
   }
 
   const handleSkip = () => {
@@ -180,7 +153,7 @@ function Play() {
       : null
 
   return (
-    <div className="relative h-[calc(100vh-4rem)] overflow-hidden bg-background">
+    <div className="relative h-[calc(100vh-var(--topbar-h))] overflow-hidden bg-background">
       {/* Ambient background — radial spotlight on stage */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {/* Stage spotlight */}
@@ -217,12 +190,7 @@ function Play() {
           <div
             className={`absolute inset-0 transition-opacity duration-300 ${showBall ? 'opacity-30 pointer-events-none' : ''}`}
           >
-            <MachineCarousel
-              ref={carouselRef}
-              ownedMachineIds={ownedMachineIds}
-              hideNav={phase !== 'idle'}
-              onSelectionChange={handleSelectionChange}
-            />
+            <MachineStage ref={machineRef} />
           </div>
         )}
 
@@ -314,15 +282,14 @@ function Play() {
                 : 'bg-muted text-text-light'
             }`}
           >
-            {phase === 'machine-anim' || phase === 'ball' || phase === 'opening'
+            {phase === 'machine-anim' ||
+            phase === 'ball' ||
+            phase === 'opening' ||
+            phase === 'pulling'
               ? 'Tirage en cours…'
-              : phase === 'pulling'
-                ? 'Tirage en cours…'
-                : tokens < 1
-                  ? 'Plus de jetons'
-                  : selectedMachineOwned
-                    ? '✦ Insérer (1 jeton)'
-                    : 'Machine verrouillée'}
+              : tokens < 1
+                ? 'Plus de jetons'
+                : '✦ Insérer (1 jeton)'}
           </Button>
 
           <Button

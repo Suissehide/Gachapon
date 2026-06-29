@@ -22,6 +22,7 @@ import {
   Popup,
   PopupBody,
   PopupContent,
+  PopupFooter,
   PopupHeader,
   PopupTitle,
 } from '../../components/ui/popup.tsx'
@@ -156,14 +157,17 @@ function EquipmentPage() {
 
       {pickerFor && (
         <Popup open onOpenChange={(v) => !v && setPickerFor(null)}>
-          <PopupContent>
+          <PopupContent size="xl">
             <PopupHeader>
-              <PopupTitle icon={<Sword className="h-4 w-4" />}>
+              <PopupTitle
+                icon={<Sword className="h-4 w-4" />}
+                subtitle="Sélectionne la carte qui recevra cette pièce."
+              >
                 Équiper "{pickerFor.name}" sur…
               </PopupTitle>
             </PopupHeader>
-            <PopupBody>
-              <div className="grid max-h-[60vh] grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3 lg:grid-cols-4">
+            <PopupBody className="flex flex-col gap-4">
+              <div className="grid max-h-[55vh] grid-cols-2 gap-3 overflow-y-auto pr-1 sm:grid-cols-3 lg:grid-cols-4">
                 {(collection.data?.cards ?? []).map((uc) => (
                   <button
                     key={uc.id}
@@ -188,6 +192,11 @@ function EquipmentPage() {
                 ))}
               </div>
             </PopupBody>
+            <PopupFooter>
+              <Button variant="outline" onClick={() => setPickerFor(null)}>
+                Annuler
+              </Button>
+            </PopupFooter>
           </PopupContent>
         </Popup>
       )}

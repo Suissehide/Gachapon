@@ -26,6 +26,7 @@ export type AttackPattern =
 export type SimulatorUnit = {
   id: string
   name?: string
+  imageUrl?: string | null
   hp: number
   atk: number
   def: number
@@ -47,6 +48,8 @@ export type CombatPointsView = {
   combatPoints: number
   maxStock: number
   regenSeconds: number
+  battleCost: number
+  sweepCost: number
   nextCombatPointAt: string | null
 }
 

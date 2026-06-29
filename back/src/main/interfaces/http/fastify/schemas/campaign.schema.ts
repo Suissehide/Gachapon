@@ -52,6 +52,7 @@ export const battleRewardsSchema = z.object({
 const simulatorUnitSchema = z.object({
   id: z.string(),
   name: z.string().optional(),
+  imageUrl: z.string().nullable().optional(),
   hp: z.number().int(),
   atk: z.number().int(),
   def: z.number().int(),

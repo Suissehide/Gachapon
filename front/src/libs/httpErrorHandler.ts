@@ -68,6 +68,12 @@ export class ApiError extends Error {
           title: 'Accès interdit',
           message: 'Vous n’avez pas les permissions nécessaires.',
         }
+      case 402:
+        return {
+          title: 'Paiement requis',
+          message:
+            'Ressources insuffisantes pour cette action (or, poussière, jetons ou points de combat).',
+        }
       case 404:
         return {
           title: 'Introuvable',

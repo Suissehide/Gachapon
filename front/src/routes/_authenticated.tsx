@@ -18,7 +18,7 @@ function AuthenticatedLayout() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
-      <main className="pt-16">
+      <main className="pt-[var(--topbar-h)]">
         <Outlet />
       </main>
       <LevelUpOverlay />

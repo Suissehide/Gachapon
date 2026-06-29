@@ -34,17 +34,23 @@ describe('Combat points routes & debit', () => {
       },
     })
 
-    // Required combat config keys (no-op if seeded already)
-    for (const [key, value] of [
-      ['combat.pointsMax', '60'],
-      ['combat.regenSeconds', '360'],
-    ] as const) {
-      await postgresOrm.prisma.globalConfig.upsert({
-        where: { key },
-        create: { key, value },
-        update: { value },
-      })
-    }
+    // Override combat config for this test. configService.set() also
+    // invalidates the Redis cache so subsequent reads see the new value
+    // (a direct prisma upsert would leave stale cache entries). Battle and
+    // sweep costs are pinned to 6 so the arithmetic assertions below stay
+    // stable even if the global defaults change.
+    const { configService } = (app as any).iocContainer
+    await configService.set('combat.pointsMax', 60)
+    await configService.set('combat.regenSeconds', 360)
+    await configService.set('combat.battleCost', 6)
+    await configService.set('combat.sweepCost', 6)
+
+    // globalSetup does not TRUNCATE CampaignStage/BattleResult/
+    // UserCampaignProgress — clear any leftovers so this test's fixed-name
+    // stage can be inserted without colliding with prior runs.
+    await postgresOrm.prisma.battleResult.deleteMany()
+    await postgresOrm.prisma.userCampaignProgress.deleteMany()
+    await postgresOrm.prisma.campaignStage.deleteMany()
 
     // Weak stage with easy-to-win enemy + minimal loot table
     const stage = await postgresOrm.prisma.campaignStage.create({
@@ -73,7 +79,10 @@ describe('Combat points routes & debit', () => {
     expect(reg.statusCode).toBe(201)
     const user = await postgresOrm.prisma.user.update({
       where: { email },
-      data: { emailVerifiedAt: new Date() },
+      // Explicitly set combatPoints to the configured max (60 for this test)
+      // so the assertions don't depend on the User schema default — which
+      // may evolve as the global combat.pointsMax config moves.
+      data: { emailVerifiedAt: new Date(), combatPoints: 60 },
     })
     userId = user.id
 
