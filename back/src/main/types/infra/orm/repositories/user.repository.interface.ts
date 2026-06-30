@@ -76,4 +76,5 @@ export interface UserRepositoryInterface {
     id: string,
     suspended: boolean,
   ): Promise<{ suspended: boolean }>
+  findManyByIds(ids: string[]): Promise<{ id: string; username: string; level: number; avatar: string | null }[]>
 }
