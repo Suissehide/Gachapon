@@ -103,7 +103,11 @@ export class LeaderboardDomain implements ILeaderboardDomain {
     currentUserId: string,
   ): Promise<LeaderboardResponse<TeamEntry>> {
     const teams = await this.#leaderboardRepository.getTeamsForRanking()
-    if (teams.length === 0) { return { entries: [], currentUserEntry: null } }
+    const myTeamId =
+      await this.#leaderboardRepository.getTeamIdForUser(currentUserId)
+    if (teams.length === 0) {
+      return { entries: [], currentUserEntry: null, currentUserTeamId: myTeamId }
+    }
 
     const { total, variantEligible } =
       await this.#leaderboardRepository.countActiveCards()
@@ -178,8 +182,6 @@ export class LeaderboardDomain implements ILeaderboardDomain {
       }))
 
     let currentUserEntry: TeamEntry | null = null
-    const myTeamId =
-      await this.#leaderboardRepository.getTeamIdForUser(currentUserId)
     if (myTeamId && !entries.find((e) => e.team.id === myTeamId)) {
       const myIndex = scored.findIndex((s) => s.team.id === myTeamId)
       const myScored = myIndex >= 0 ? scored[myIndex] : undefined
