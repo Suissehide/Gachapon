@@ -36,15 +36,21 @@ function refAbove<E extends { rank: number }>(
   entry: E,
   entries: E[],
 ): E | null {
-  if (entry.rank <= 1) return null
+  if (entry.rank <= 1) {
+    return null
+  }
   const above = entries.find((e) => e.rank === entry.rank - 1)
-  if (above) return above
+  if (above) {
+    return above
+  }
   return entries[entries.length - 1] ?? null
 }
 
 export function YouBar(props: Props) {
   const { mode, entry, entries, total } = props
-  if (entry.rank === 1) return null
+  if (entry.rank === 1) {
+    return null
+  }
 
   const above = refAbove(entry, entries)
   const aboveRank = above?.rank ?? entry.rank - 1
