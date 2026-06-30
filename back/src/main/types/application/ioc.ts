@@ -12,6 +12,7 @@ import type { RefreshTokenRepository } from '../../infra/redis/refresh-token.rep
 import type { AuthDomainInterface } from '../domain/auth/auth.domain.interface'
 import type { OAuthDomainInterface } from '../domain/auth/oauth.domain.interface'
 import type { ICollectionDomain } from '../domain/collection/collection.domain.interface'
+import type { ILeaderboardDomain } from '../domain/leaderboard/leaderboard.domain.interface'
 import type { AdminSkillTreeDomain } from '../../domain/skills/admin-skill-tree.domain'
 import type { ISkillTreeDomain, ISkillInvestDomain, ISkillResetDomain } from '../domain/skills/skill-tree.domain.interface'
 import type { CardDustConversionDomain } from '../../domain/card-dust-conversion/card-dust-conversion.domain'
@@ -101,6 +102,7 @@ export interface IocContainer {
   readonly userAchievementProgressRepository: UserAchievementProgressRepositoryInterface
   readonly shopItemRepository: IShopItemRepository
   readonly leaderboardRepository: ILeaderboardRepository
+  readonly leaderboardDomain: ILeaderboardDomain
   readonly statsRepository: IStatsRepository
   readonly adminStatsRepository: IAdminStatsRepository
   readonly collectionDomain: ICollectionDomain

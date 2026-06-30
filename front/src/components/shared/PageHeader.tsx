@@ -19,6 +19,7 @@ export type Crumb =
 
 type Props = {
   breadcrumbs?: Crumb[]
+  eyebrow?: string
   title: string
   subtitle?: ReactNode
   right?: ReactNode
@@ -27,10 +28,15 @@ type Props = {
 const baseChip =
   'font-mono text-[11px] font-bold uppercase tracking-[0.25em] transition-colors'
 
-export function PageHeader({ breadcrumbs, title, subtitle, right }: Props) {
+export function PageHeader({ breadcrumbs, eyebrow, title, subtitle, right }: Props) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
+        {eyebrow && (
+          <div className="font-mono text-[11px] font-bold tracking-[0.25em] text-[#f59e0b]">
+            {eyebrow}
+          </div>
+        )}
         {breadcrumbs && breadcrumbs.length > 0 && (
           <nav
             aria-label="Fil d'Ariane"
