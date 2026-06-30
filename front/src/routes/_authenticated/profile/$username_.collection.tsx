@@ -2,29 +2,42 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 import { ArrowLeft } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
-import type { Card, CardVariant } from '../../../api/collection.api.ts'
-import { CollectionFilters } from '../../../components/collection/CollectionFilters.tsx'
-import { CollectionGrid } from '../../../components/collection/CollectionGrid.tsx'
-import { CollectionSetGroup } from '../../../components/collection/CollectionSetGroup.tsx'
-import { useCards, useUserCollection, type UserCard } from '../../../queries/useCollection.ts'
+import type { CardVariant } from '../../../api/collection.api.ts'
+import {
+  CollectionFilters,
+  type GroupMode,
+  type RarityFilter,
+  type VariantFilter,
+} from '../../../components/collection/CollectionFilters.tsx'
+import {
+  RARITY_LABELS,
+  RARITY_ORDER,
+} from '../../../components/collection/CollectionCard.tsx'
+import { CollectionSection } from '../../../components/collection/CollectionSection.tsx'
+import { ArcadeCard } from '../../../components/shared/ArcadeCard.tsx'
+import { PageHeader } from '../../../components/shared/PageHeader.tsx'
+import { PageShell } from '../../../components/shared/PageShell.tsx'
+import {
+  type UserCard,
+  useCards,
+  useUserCollection,
+} from '../../../queries/useCollection.ts'
 import { useUserProfile } from '../../../queries/useProfile.ts'
 import type { DisplayEntry } from '../collection.tsx'
 
-export const Route = createFileRoute('/_authenticated/profile/$username_/collection')({
+export const Route = createFileRoute(
+  '/_authenticated/profile/$username_/collection',
+)({
   component: UserCollectionPage,
 })
-
-type DisplayMode = 'rarity' | 'set'
-type Rarity = Card['rarity']
-type Variant = 'NORMAL' | 'BRILLIANT' | 'HOLOGRAPHIC'
 
 function UserCollectionPage() {
   const { username } = Route.useParams()
   const { data: profile, isLoading: profileLoading } = useUserProfile(username)
 
-  const [displayMode, setDisplayMode] = useState<DisplayMode>('rarity')
-  const [selectedRarities, setSelectedRarities] = useState<Rarity[]>([])
-  const [selectedVariants, setSelectedVariants] = useState<Variant[]>([])
+  const [group, setGroup] = useState<GroupMode>('rarity')
+  const [rarity, setRarity] = useState<RarityFilter>('all')
+  const [variant, setVariant] = useState<VariantFilter>('all')
 
   const { data: catalogData } = useCards()
   const { data: userColl } = useUserCollection(profile?.id)
@@ -44,10 +57,24 @@ function UserCollectionPage() {
     for (const card of allCards) {
       const owned = ownedByCardId.get(card.id) ?? []
       if (owned.length === 0) {
-        entries.push({ key: `${card.id}-NORMAL`, card, variant: 'NORMAL', quantity: 0, isOwned: false, userCard: null })
+        entries.push({
+          key: `${card.id}-NORMAL`,
+          card,
+          variant: 'NORMAL',
+          quantity: 0,
+          isOwned: false,
+          userCard: null,
+        })
       } else {
         for (const uc of owned) {
-          entries.push({ key: `${card.id}-${uc.variant}`, card: uc.card, variant: uc.variant as CardVariant, quantity: uc.quantity, isOwned: true, userCard: uc })
+          entries.push({
+            key: `${card.id}-${uc.variant}`,
+            card: uc.card,
+            variant: uc.variant as CardVariant,
+            quantity: uc.quantity,
+            isOwned: true,
+            userCard: uc,
+          })
         }
       }
     }
@@ -57,29 +84,40 @@ function UserCollectionPage() {
   const filteredEntries = useMemo(
     () =>
       displayEntries
-        .filter((e) => selectedRarities.length === 0 || selectedRarities.includes(e.card.rarity))
-        .filter((e) => selectedVariants.length === 0 || selectedVariants.includes(e.variant)),
-    [displayEntries, selectedRarities, selectedVariants],
+        .filter((e) => rarity === 'all' || e.card.rarity === rarity)
+        .filter((e) => variant === 'all' || e.variant === variant),
+    [displayEntries, rarity, variant],
   )
 
-  const setGroups = useMemo(() => {
-    if (displayMode !== 'set') return []
-    const order: string[] = []
-    const groups = new Map<string, { name: string; entries: DisplayEntry[] }>()
-    for (const entry of displayEntries) {
-      const setId = entry.card.set.id
-      if (!groups.has(setId)) {
-        order.push(setId)
-        groups.set(setId, { name: entry.card.set.name, entries: [] })
-      }
-      groups.get(setId)?.entries.push(entry)
+  const sections = useMemo(() => {
+    if (group === 'rarity') {
+      return [...RARITY_ORDER]
+        .reverse()
+        .map((r) => ({
+          key: r,
+          title: RARITY_LABELS[r],
+          entries: filteredEntries.filter((e) => e.card.rarity === r),
+        }))
+        .filter((g) => g.entries.length > 0)
     }
-    return order.map((id) => ({ id, ...groups.get(id)! }))
-  }, [displayMode, displayEntries])
+    const order: string[] = []
+    const byId = new Map<string, { name: string; entries: DisplayEntry[] }>()
+    for (const entry of filteredEntries) {
+      const setId = entry.card.set.id
+      if (!byId.has(setId)) {
+        order.push(setId)
+        byId.set(setId, { name: entry.card.set.name, entries: [] })
+      }
+      byId.get(setId)?.entries.push(entry)
+    }
+    return order.map((id) => {
+      const g = byId.get(id)
+      return { key: id, title: g?.name ?? '', entries: g?.entries ?? [] }
+    })
+  }, [group, filteredEntries])
 
   const ownedCount = userCards.length
   const totalCount = displayEntries.length
-  const subtitle = `${ownedCount} / ${totalCount} carte${totalCount > 1 ? 's' : ''}`
 
   if (profileLoading) {
     return (
@@ -98,47 +136,62 @@ function UserCollectionPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-var(--topbar-h))] bg-background px-4 py-8">
-      <div className="mx-auto max-w-4xl">
-        <div className="mb-5">
+    <PageShell>
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Gachapon', to: '/play' },
+          {
+            label: `@${username}`,
+            to: '/profile/$username',
+            params: { username },
+          },
+          { label: 'Collection' },
+        ]}
+        title={`Collection de @${username}`}
+        subtitle={
+          <span className="font-mono">
+            {ownedCount} / {totalCount} carte{totalCount > 1 ? 's' : ''}
+          </span>
+        }
+        right={
           <Link
             to="/profile/$username"
             params={{ username }}
-            className="mb-3 inline-flex items-center gap-1.5 text-xs text-text-light hover:text-text transition-colors"
+            className="inline-flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-text-light/70 hover:text-text"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            @{username}
+            Profil
           </Link>
-          <h1 className="text-2xl font-black text-text">Collection de @{username}</h1>
-          <p className="text-sm text-text-light">{subtitle}</p>
-        </div>
+        }
+      />
 
+      <ArcadeCard>
         <CollectionFilters
-          displayMode={displayMode}
-          onDisplayModeChange={(mode) => {
-            setSelectedRarities([])
-            setSelectedVariants([])
-            setDisplayMode(mode)
-          }}
-          selectedRarities={selectedRarities}
-          onRaritiesChange={setSelectedRarities}
-          selectedVariants={selectedVariants}
-          onVariantsChange={setSelectedVariants}
+          group={group}
+          onGroupChange={setGroup}
+          rarity={rarity}
+          onRarityChange={setRarity}
+          variant={variant}
+          onVariantChange={setVariant}
         />
+      </ArcadeCard>
 
-        {displayMode === 'set' ? (
-          setGroups.map((group) => (
-            <CollectionSetGroup
-              key={group.id}
-              setName={group.name}
-              entries={group.entries}
-              onDetail={() => {}}
-            />
-          ))
-        ) : (
-          <CollectionGrid entries={filteredEntries} onDetail={() => {}} />
-        )}
-      </div>
-    </div>
+      {sections.length === 0 ? (
+        <ArcadeCard>
+          <p className="py-14 text-center font-mono text-sm tracking-[0.04em] text-text-light/60">
+            Aucune carte ne correspond à ces filtres.
+          </p>
+        </ArcadeCard>
+      ) : (
+        sections.map((section) => (
+          <CollectionSection
+            key={section.key}
+            title={section.title}
+            entries={section.entries}
+            onDetail={() => {}}
+          />
+        ))
+      )}
+    </PageShell>
   )
 }

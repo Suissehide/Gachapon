@@ -1,118 +1,166 @@
-import { Gem, Layers, Sparkles } from 'lucide-react'
-
-import type { Card } from '../../api/collection.api.ts'
-import DropdownFilter from '../ui/dropdownFilter.tsx'
+import type { Card, CardVariant } from '../../api/collection.api.ts'
+import { Button } from '../ui/button.tsx'
 import { SegmentedControl } from '../ui/segmentedControl.tsx'
 import { RARITY_LABELS, RARITY_ORDER } from './CollectionCard.tsx'
 
 type Rarity = Card['rarity']
-type Variant = 'NORMAL' | 'BRILLIANT' | 'HOLOGRAPHIC'
+export type RarityFilter = Rarity | 'all'
+export type VariantFilter = CardVariant | 'all'
+export type GroupMode = 'rarity' | 'set'
 
-const DISPLAY_MODE_OPTIONS = [
+const RARITY_HEX: Record<string, string> = {
+  COMMON: '#22c55e',
+  UNCOMMON: '#3b82f6',
+  RARE: '#8b5cf6',
+  EPIC: '#ec4899',
+  LEGENDARY: '#f59e0b',
+}
+
+const GROUP_OPTIONS = [
   { value: 'rarity' as const, label: 'Par rareté' },
   { value: 'set' as const, label: 'Par set' },
 ]
 
-const RARITY_COLOR: Record<string, string> = {
-  COMMON:    'text-text-light',
-  UNCOMMON:  'text-green-400',
-  RARE:      'text-accent',
-  EPIC:      'text-secondary',
-  LEGENDARY: 'text-primary',
-}
-
 const VARIANT_OPTIONS = [
+  { value: 'all' as const, label: 'Toutes' },
+  { value: 'NORMAL' as const, label: 'Normal' },
   {
-    id: 'NORMAL' as Variant,
-    label: 'Normal',
-    icon: <Layers className="h-3.5 w-3.5" />,
-    colorClass: 'text-text-light',
+    value: 'HOLOGRAPHIC' as const,
+    label: 'Holo',
+    icon: <Swatch kind="holo" />,
   },
   {
-    id: 'BRILLIANT' as Variant,
-    label: 'Brillante',
-    icon: <Sparkles className="h-3.5 w-3.5" />,
-    colorClass: 'text-yellow-400',
-  },
-  {
-    id: 'HOLOGRAPHIC' as Variant,
-    label: 'Holographique',
-    icon: <Gem className="h-3.5 w-3.5" />,
-    colorClass: 'text-indigo-400',
+    value: 'BRILLIANT' as const,
+    label: 'Doré',
+    icon: <Swatch kind="dore" />,
   },
 ]
 
-interface CollectionFiltersProps {
-  displayMode: 'rarity' | 'set'
-  onDisplayModeChange: (mode: 'rarity' | 'set') => void
-  selectedRarities: Rarity[]
-  onRaritiesChange: (rarities: Rarity[]) => void
-  selectedVariants: Variant[]
-  onVariantsChange: (variants: Variant[]) => void
+interface Props {
+  group: GroupMode
+  onGroupChange: (mode: GroupMode) => void
+  rarity: RarityFilter
+  onRarityChange: (r: RarityFilter) => void
+  variant: VariantFilter
+  onVariantChange: (v: VariantFilter) => void
 }
 
 export function CollectionFilters({
-  displayMode,
-  onDisplayModeChange,
-  selectedRarities,
-  onRaritiesChange,
-  selectedVariants,
-  onVariantsChange,
-}: CollectionFiltersProps) {
-  const rarityFilters = RARITY_ORDER.map((r) => ({
-    id: r,
-    label: RARITY_LABELS[r],
-    checked: selectedRarities.includes(r),
-    colorClass: RARITY_COLOR[r],
-  }))
+  group,
+  onGroupChange,
+  rarity,
+  onRarityChange,
+  variant,
+  onVariantChange,
+}: Props) {
+  return (
+    <div className="flex flex-col gap-3">
+      {/* Row 1 — Grouping + Variant */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+        <SegmentedControl
+          options={GROUP_OPTIONS}
+          value={group}
+          onChange={onGroupChange}
+        />
+        <Divider />
+        <SegmentedControl
+          options={VARIANT_OPTIONS}
+          value={variant}
+          onChange={onVariantChange}
+        />
+      </div>
 
-  const variantFilters = VARIANT_OPTIONS.map((v) => ({
-    id: v.id,
-    label: v.label,
-    checked: selectedVariants.includes(v.id),
-    icon: v.icon,
-    colorClass: v.colorClass,
-  }))
+      {/* Row 2 — Rarity chips */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <RarityChip
+          label="Toutes"
+          active={rarity === 'all'}
+          onClick={() => onRarityChange('all')}
+        />
+        {RARITY_ORDER.map((r) => (
+          <RarityChip
+            key={r}
+            label={RARITY_LABELS[r]}
+            color={RARITY_HEX[r]}
+            active={rarity === r}
+            onClick={() => onRarityChange(r)}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
 
-  const handleRarityChange = (id: string, checked: boolean) => {
-    const rarity = id as Rarity
-    onRaritiesChange(
-      checked
-        ? [...selectedRarities, rarity]
-        : selectedRarities.filter((r) => r !== rarity),
-    )
-  }
+// ── Sub-components ────────────────────────────────────────────────────────────
 
-  const handleVariantChange = (id: string, checked: boolean) => {
-    const variant = id as Variant
-    onVariantsChange(
-      checked
-        ? [...selectedVariants, variant]
-        : selectedVariants.filter((v) => v !== variant),
-    )
-  }
+function Divider() {
+  return (
+    <span
+      aria-hidden
+      className="h-7 w-px bg-[rgba(27,23,38,0.12)]"
+    />
+  )
+}
+
+function Swatch({ kind }: { kind: 'holo' | 'dore' }) {
+  const bg =
+    kind === 'holo'
+      ? 'linear-gradient(115deg, #f9a8d4, #93c5fd, #86efac, #fcd34d)'
+      : 'linear-gradient(135deg, #fde68a, #f59e0b)'
+  return (
+    <span
+      aria-hidden
+      className="inline-block h-3 w-3 shrink-0 rounded-full shadow-[inset_0_0_0_1px_rgba(255,255,255,0.6),0_0_0_1px_rgba(27,23,38,0.08)]"
+      style={{ background: bg }}
+    />
+  )
+}
+
+function RarityChip({
+  label,
+  color,
+  active,
+  onClick,
+}: {
+  label: string
+  color?: string
+  active: boolean
+  onClick: () => void
+}) {
+  const activeColored = active && color
+  const activeNeutral = active && !color
 
   return (
-    <div className="flex items-center gap-3 flex-wrap mb-4">
-      <SegmentedControl
-        options={DISPLAY_MODE_OPTIONS}
-        value={displayMode}
-        onChange={onDisplayModeChange}
-      />
-
-      <div className="h-5 w-px bg-border/60" />
-      <DropdownFilter
-        label="Rareté"
-        filters={rarityFilters}
-        onFilterChange={handleRarityChange}
-        onClear={() => onRaritiesChange([])}
-      />
-      <DropdownFilter
-        label="Variante"
-        filters={variantFilters}
-        onFilterChange={handleVariantChange}
-        onClear={() => onVariantsChange([])}
-      />
-    </div>
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={onClick}
+      className={`h-auto gap-1.5 rounded-full border px-3 py-[5px] font-body text-[12px] font-semibold transition-all duration-200 ${
+        activeColored
+          ? 'text-text shadow-[0_1px_3px_rgba(27,23,38,0.08)]'
+          : activeNeutral
+            ? 'border-[#1b1726] bg-[#1b1726] text-white hover:bg-[#1b1726] hover:text-white'
+            : 'border-[rgba(27,23,38,0.12)] bg-card text-text-light/70 hover:border-[rgba(27,23,38,0.24)] hover:bg-card hover:text-text'
+      }`}
+      style={
+        activeColored
+          ? {
+              backgroundColor: `color-mix(in oklab, ${color} 14%, white)`,
+              borderColor: `color-mix(in oklab, ${color} 65%, transparent)`,
+            }
+          : undefined
+      }
+    >
+      {color && (
+        <span
+          aria-hidden
+          className={`h-2 w-2 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)] transition-opacity duration-150 ${
+            active ? 'opacity-100' : 'opacity-70'
+          }`}
+          style={{ background: color }}
+        />
+      )}
+      {label}
+    </Button>
   )
 }

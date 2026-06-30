@@ -1,17 +1,14 @@
 import type { DisplayEntry } from '../../routes/_authenticated/collection.tsx'
+import { ArcadeCard } from '../shared/ArcadeCard.tsx'
 import { CollectionCard } from './CollectionCard.tsx'
 
-interface CollectionSetGroupProps {
-  setName: string
+type Props = {
+  title: string
   entries: DisplayEntry[]
   onDetail: (entry: DisplayEntry) => void
 }
 
-export function CollectionSetGroup({
-  setName,
-  entries,
-  onDetail,
-}: CollectionSetGroupProps) {
+export function CollectionSection({ title, entries, onDetail }: Props) {
   const distinctCardIds = new Set(
     entries.filter((e) => e.isOwned).map((e) => e.card.id),
   )
@@ -19,20 +16,21 @@ export function CollectionSetGroup({
   const totalCards = new Set(entries.map((e) => e.card.id)).size
   const ownedVariants = entries.filter((e) => e.isOwned).length
   const totalVariants = entries.length
+
   return (
-    <div className="mb-8">
-      <div className="flex items-center gap-3 mb-3">
-        <span className="h-px flex-1 bg-border/40" />
-        <span className="text-[10px] font-bold uppercase tracking-widest text-text-light">
-          {setName}
-        </span>
-        <span className="text-[10px] tracking-widest text-text-light">
-          Cartes : {distinctCards}/{totalCards} - Variantes : {ownedVariants}/
+    <ArcadeCard>
+      <div className="mb-5 flex items-center gap-3">
+        <h2 className="font-mono text-[13px] font-bold uppercase tracking-[0.18em] text-text/70">
+          {title}
+        </h2>
+        <span className="font-mono text-[11px] tracking-[0.08em] text-text-light/60 whitespace-nowrap">
+          CARTES {distinctCards}/{totalCards} · VARIANTES {ownedVariants}/
           {totalVariants}
         </span>
-        <span className="h-px flex-1 bg-border/40" />
+        <span className="h-px flex-1 bg-[rgba(27,23,38,0.12)]" />
       </div>
-      <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7">
+
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
         {entries.map((entry) => (
           <CollectionCard
             key={entry.key}
@@ -46,6 +44,6 @@ export function CollectionSetGroup({
           />
         ))}
       </div>
-    </div>
+    </ArcadeCard>
   )
 }

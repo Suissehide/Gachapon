@@ -3,9 +3,13 @@ import { useMemo, useState } from 'react'
 
 import type { Card, CardVariant } from '../../api/collection.api.ts'
 import { CardViewModal } from '../../components/collection/CardViewModal.tsx'
-import { CollectionFilters } from '../../components/collection/CollectionFilters.tsx'
-import { CollectionGrid } from '../../components/collection/CollectionGrid.tsx'
-import { CollectionSetGroup } from '../../components/collection/CollectionSetGroup.tsx'
+import {
+  CollectionFilters,
+  type GroupMode,
+  type RarityFilter,
+  type VariantFilter,
+} from '../../components/collection/CollectionFilters.tsx'
+import { CollectionSection } from '../../components/collection/CollectionSection.tsx'
 import { RecycleModal } from '../../components/collection/RecycleModal.tsx'
 import { ArcadeCard } from '../../components/shared/ArcadeCard.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
@@ -16,6 +20,7 @@ import {
   useUserCollection,
 } from '../../queries/useCollection'
 import { useAuthStore } from '../../stores/auth.store'
+import { RARITY_LABELS, RARITY_ORDER } from '../../components/collection/CollectionCard.tsx'
 
 export type DisplayEntry = {
   key: string
@@ -30,15 +35,11 @@ export const Route = createFileRoute('/_authenticated/collection')({
   component: Collection,
 })
 
-type DisplayMode = 'rarity' | 'set'
-type Rarity = Card['rarity']
-type Variant = 'NORMAL' | 'BRILLIANT' | 'HOLOGRAPHIC'
-
 function Collection() {
   const user = useAuthStore((s) => s.user)
-  const [displayMode, setDisplayMode] = useState<DisplayMode>('rarity')
-  const [selectedRarities, setSelectedRarities] = useState<Rarity[]>([])
-  const [selectedVariants, setSelectedVariants] = useState<Variant[]>([])
+  const [group, setGroup] = useState<GroupMode>('rarity')
+  const [rarity, setRarity] = useState<RarityFilter>('all')
+  const [variant, setVariant] = useState<VariantFilter>('all')
   const [recycleTarget, setRecycleTarget] = useState<UserCard | null>(null)
   const [detailTarget, setDetailTarget] = useState<DisplayEntry | null>(null)
 
@@ -84,21 +85,11 @@ function Collection() {
     return entries
   }, [allCards, userCards])
 
-  const filteredEntries = useMemo(
-    () =>
-      displayEntries
-        .filter(
-          (e) =>
-            selectedRarities.length === 0 ||
-            selectedRarities.includes(e.card.rarity),
-        )
-        .filter(
-          (e) =>
-            selectedVariants.length === 0 ||
-            selectedVariants.includes(e.variant),
-        ),
-    [displayEntries, selectedRarities, selectedVariants],
-  )
+  const filteredEntries = useMemo(() => {
+    return displayEntries
+      .filter((e) => rarity === 'all' || e.card.rarity === rarity)
+      .filter((e) => variant === 'all' || e.variant === variant)
+  }, [displayEntries, rarity, variant])
 
   const collectionStats = useMemo(() => {
     const distinctCardIds = new Set(userCards.map((uc) => uc.card.id))
@@ -120,28 +111,38 @@ function Collection() {
     }
   }, [allCards, userCards])
 
-  const setGroups = useMemo(() => {
-    if (displayMode !== 'set') {
-      return []
+  const sections = useMemo(() => {
+    if (group === 'rarity') {
+      // Most rare → least rare (LEGENDARY first, COMMON last).
+      return [...RARITY_ORDER]
+        .reverse()
+        .map((r) => ({
+          key: r,
+          title: RARITY_LABELS[r],
+          entries: filteredEntries.filter((e) => e.card.rarity === r),
+        }))
+        .filter((g) => g.entries.length > 0)
     }
+    // group === 'set'
     const order: string[] = []
-    const groups = new Map<string, { name: string; entries: DisplayEntry[] }>()
+    const byId = new Map<string, { name: string; entries: DisplayEntry[] }>()
     for (const entry of filteredEntries) {
       const setId = entry.card.set.id
-      if (!groups.has(setId)) {
+      if (!byId.has(setId)) {
         order.push(setId)
-        groups.set(setId, { name: entry.card.set.name, entries: [] })
+        byId.set(setId, { name: entry.card.set.name, entries: [] })
       }
-      groups.get(setId)?.entries.push(entry)
+      byId.get(setId)?.entries.push(entry)
     }
     return order.map((id) => {
-      const group = groups.get(id)
-      if (!group) {
-        return { id, name: '', entries: [] as DisplayEntry[] }
+      const group = byId.get(id)
+      return {
+        key: id,
+        title: group?.name ?? '',
+        entries: group?.entries ?? [],
       }
-      return { id, ...group }
     })
-  }, [displayMode, filteredEntries])
+  }, [group, filteredEntries])
 
   const handleDetail = (entry: DisplayEntry) => setDetailTarget(entry)
 
@@ -149,10 +150,6 @@ function Collection() {
     if (detailTarget?.userCard) {
       setRecycleTarget(detailTarget.userCard)
     }
-  }
-
-  const handleDisplayModeChange = (mode: DisplayMode) => {
-    setDisplayMode(mode)
   }
 
   return (
@@ -169,43 +166,48 @@ function Collection() {
         ]}
         title="Ma collection"
         subtitle={
-          <>
-            Cartes : {collectionStats.distinctCards}/
-            {collectionStats.totalCards} · Variantes :{' '}
-            {collectionStats.totalOwnedVariants}/
-            {collectionStats.totalPossibleVariants}
-          </>
+          <span className="font-mono">
+            Cartes :{' '}
+            <b className="font-bold text-text">
+              {collectionStats.distinctCards}/{collectionStats.totalCards}
+            </b>{' '}
+            · Variantes :{' '}
+            <b className="font-bold text-text">
+              {collectionStats.totalOwnedVariants}/
+              {collectionStats.totalPossibleVariants}
+            </b>
+          </span>
         }
       />
 
       <ArcadeCard>
         <CollectionFilters
-          displayMode={displayMode}
-          onDisplayModeChange={handleDisplayModeChange}
-          selectedRarities={selectedRarities}
-          onRaritiesChange={setSelectedRarities}
-          selectedVariants={selectedVariants}
-          onVariantsChange={setSelectedVariants}
+          group={group}
+          onGroupChange={setGroup}
+          rarity={rarity}
+          onRarityChange={setRarity}
+          variant={variant}
+          onVariantChange={setVariant}
         />
-
-        <div className="mt-6">
-          {displayMode === 'set' ? (
-            setGroups.map((group) => (
-              <CollectionSetGroup
-                key={group.id}
-                setName={group.name}
-                entries={group.entries}
-                onDetail={handleDetail}
-              />
-            ))
-          ) : (
-            <CollectionGrid
-              entries={filteredEntries}
-              onDetail={handleDetail}
-            />
-          )}
-        </div>
       </ArcadeCard>
+
+      {sections.length === 0 ? (
+        <ArcadeCard>
+          <p className="py-14 text-center font-mono text-sm tracking-[0.04em] text-text-light/60">
+            Aucune carte ne correspond à ces filtres.
+          </p>
+        </ArcadeCard>
+      ) : (
+        sections.map((section) => (
+          <CollectionSection
+            key={section.key}
+            title={section.title}
+            entries={section.entries}
+            onDetail={handleDetail}
+          />
+        ))
+      )}
+
       <CardViewModal
         entry={detailTarget}
         onClose={() => setDetailTarget(null)}
