@@ -5,16 +5,51 @@ import { useDataFetching } from '../hooks/useDataFetching.ts'
 
 export type {
   CollectorEntry,
-  Leaderboard,
+  CombatEntry,
+  LeaderboardResponse,
   Quest,
   TeamEntry,
 } from '../api/leaderboard.api.ts'
 
-export const useLeaderboard = () => {
+const STALE = 5 * 60 * 1000
+
+export const useCollectorsLeaderboard = () => {
   const query = useQuery({
-    queryKey: ['leaderboard'],
-    queryFn: () => LeaderboardApi.getLeaderboard(),
-    staleTime: 5 * 60 * 1000,
+    queryKey: ['leaderboard', 'collectors'],
+    queryFn: LeaderboardApi.getCollectors,
+    staleTime: STALE,
+  })
+
+  useDataFetching({
+    isPending: query.isPending,
+    isError: query.isError,
+    error: query.error,
+  })
+
+  return query
+}
+
+export const useTeamsLeaderboard = () => {
+  const query = useQuery({
+    queryKey: ['leaderboard', 'teams'],
+    queryFn: LeaderboardApi.getTeams,
+    staleTime: STALE,
+  })
+
+  useDataFetching({
+    isPending: query.isPending,
+    isError: query.isError,
+    error: query.error,
+  })
+
+  return query
+}
+
+export const useCombatLeaderboard = () => {
+  const query = useQuery({
+    queryKey: ['leaderboard', 'combat'],
+    queryFn: LeaderboardApi.getCombat,
+    staleTime: STALE,
   })
 
   useDataFetching({
@@ -29,7 +64,7 @@ export const useLeaderboard = () => {
 export const useQuests = () => {
   const query = useQuery({
     queryKey: ['quests'],
-    queryFn: () => LeaderboardApi.getQuests(),
+    queryFn: LeaderboardApi.getQuests,
   })
 
   useDataFetching({

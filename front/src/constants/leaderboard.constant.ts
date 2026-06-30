@@ -1,22 +1,42 @@
-// Types
+export const LEADERBOARD_TOP_N = 10
+
+export type LeaderboardUserMini = {
+  id: string
+  username: string
+  level: number
+  avatar: string | null
+}
+
 export type CollectorEntry = {
   rank: number
-  user: { id: string; username: string; avatar: string | null }
-  distinctCards: number
+  user: LeaderboardUserMini
   cardPercentage: number
-  totalVariants: number
   variantPercentage: number
+  pulls: number
+  legendaries: number
 }
 
 export type TeamEntry = {
   rank: number
   team: { id: string; name: string; slug: string; memberCount: number }
-  avgScore: number
+  cardPercentage: number
+  variantPercentage: number
+  pullsTotal: number
 }
 
-export type Leaderboard = {
-  collectors: CollectorEntry[]
-  bestTeams: TeamEntry[]
+export type CombatEntry = {
+  rank: number
+  user: LeaderboardUserMini
+  palier: number
+  maxPalier: number
+  combatPower: number
+}
+
+export type LeaderboardResponse<E> = {
+  entries: E[]
+  currentUserEntry: E | null
+  /** Set only by the teams endpoint. */
+  currentUserTeamId?: string | null
 }
 
 export type Quest = {
@@ -28,8 +48,9 @@ export type Quest = {
   rewardDust: number
 }
 
-// Routes
 export const LEADERBOARD_ROUTES = {
-  leaderboard: '/leaderboard',
+  collectors: '/leaderboard/collectors',
+  teams: '/leaderboard/teams',
+  combat: '/leaderboard/combat',
   quests: '/quests',
 } as const
