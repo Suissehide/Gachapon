@@ -422,7 +422,7 @@ model Reward {
   quests           Quest[]
   userRewards      UserReward[]
 
-  @@map("rewards")
+  @@map("Rewards")
 }
 
 model StreakMilestone {
@@ -433,7 +433,7 @@ model StreakMilestone {
   rewardId    String
   reward      Reward  @relation(fields: [rewardId], references: [id])
 
-  @@map("streak_milestones")
+  @@map("StreakMilestones")
 }
 
 model UserReward {
@@ -450,7 +450,7 @@ model UserReward {
   @@index([userId, claimedAt])
   @@index([sourceId])
   @@unique([userId, source, sourceId])
-  @@map("user_rewards")
+  @@map("UserRewards")
 }
 
 model GlobalConfig {
