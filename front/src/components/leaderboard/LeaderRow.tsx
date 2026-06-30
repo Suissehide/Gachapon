@@ -7,7 +7,7 @@ import type {
   CombatEntry,
   TeamEntry,
 } from '../../constants/leaderboard.constant'
-import { ProgressBar } from './Bars'
+import { ProgressBar } from './ProgressBar'
 import { LevelChip } from './LevelChip'
 import { MedalRank } from './MedalRank'
 

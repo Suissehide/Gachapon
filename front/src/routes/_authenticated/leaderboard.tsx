@@ -53,19 +53,6 @@ function totalKnown<E>(data: LeaderboardResponse<E> | undefined): number {
   return data.entries.length + (data.currentUserEntry ? 1 : 0)
 }
 
-function totalKnownUnion(
-  data:
-    | LeaderboardResponse<CollectorEntry>
-    | LeaderboardResponse<TeamEntry>
-    | LeaderboardResponse<CombatEntry>
-    | undefined,
-): number {
-  if (!data) {
-    return 0
-  }
-  return data.entries.length + (data.currentUserEntry ? 1 : 0)
-}
-
 function LeaderboardPage() {
   const [activeTab, setActiveTab] = useState<Tab>('collectors')
   const me = useAuthStore((s) => s.user)
@@ -221,7 +208,7 @@ function LeaderboardPage() {
               active={activeTab === mode}
               onSelect={() => setActiveTab(mode)}
               title={TAB_TITLE[mode]}
-              count={s.data ? totalKnownUnion(s.data) : 0}
+              count={s.data ? totalKnown(s.data as LeaderboardResponse<unknown>) : 0}
               countLabel={COUNT_LABEL[mode]}
               leaderName={s.leader?.name ?? null}
               leaderMetric={s.leader?.metric ?? null}

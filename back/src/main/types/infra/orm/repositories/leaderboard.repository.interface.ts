@@ -1,11 +1,5 @@
 import type { CardRarity, CardVariant } from '../../../../../generated/client'
 
-export type CollectorRankingRow = {
-  userId: string
-  distinctCards: bigint
-  totalVariants: bigint
-}
-
 export type CollectorRankingRowWithLevel = {
   userId: string
   distinctCards: bigint
@@ -16,20 +10,6 @@ export type CollectorRankingRowWithLevel = {
 export type ActiveCardCounts = {
   total: number
   variantEligible: number
-}
-
-export type LeaderboardUser = {
-  id: string
-  username: string
-  avatar: string | null
-}
-
-export type TeamWithMembers = {
-  id: string
-  name: string
-  slug: string
-  members: { userId: string }[]
-  _count: { members: number }
 }
 
 export type TeamForRanking = {
@@ -67,15 +47,11 @@ export type CombatTeamCardForPower = {
 
 export interface ILeaderboardRepository {
   countActiveCards(): Promise<ActiveCardCounts>
-  getCollectorRanking(limit: number): Promise<CollectorRankingRow[]>
   getCollectorRankingWithLevel(limit: number): Promise<CollectorRankingRowWithLevel[]>
   getCurrentUserCollectorRow(userId: string): Promise<CollectorRankingRowWithLevel | null>
   countCollectorsAhead(userId: string, distinctCards: number, totalVariants: number): Promise<number>
-  countCollectors(): Promise<number>
   countPullsByUsers(userIds: string[]): Promise<Map<string, number>>
   countLegendariesByUsers(userIds: string[]): Promise<Map<string, number>>
-  getUsersByIds(ids: string[]): Promise<LeaderboardUser[]>
-  getTeamsWithMembers(limit: number): Promise<TeamWithMembers[]>
   getTeamsForRanking(): Promise<TeamForRanking[]>
   getTeamIdForUser(userId: string): Promise<string | null>
   getUserCardsByUserIds(userIds: string[]): Promise<UserCardForScoring[]>

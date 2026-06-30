@@ -1,14 +1,11 @@
 import type { IocContainer } from '../../../types/application/ioc'
 import type {
   ActiveCardCounts,
-  CollectorRankingRow,
   CollectorRankingRowWithLevel,
   CombatTeamCardForPower,
   ILeaderboardRepository,
-  LeaderboardUser,
   QuestWithReward,
   TeamForRanking,
-  TeamWithMembers,
   UserCardForScoring,
 } from '../../../types/infra/orm/repositories/leaderboard.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
@@ -31,36 +28,6 @@ export class LeaderboardRepository implements ILeaderboardRepository {
       }),
     ])
     return { total, variantEligible }
-  }
-
-  getCollectorRanking(limit: number): Promise<CollectorRankingRow[]> {
-    return this.#prisma.$queryRaw<CollectorRankingRow[]>`
-      SELECT
-        "userId",
-        COUNT(DISTINCT "cardId") AS "distinctCards",
-        COUNT(*) AS "totalVariants"
-      FROM "UserCard"
-      GROUP BY "userId"
-      ORDER BY "totalVariants" DESC, COUNT(DISTINCT "cardId") DESC
-      LIMIT ${limit}
-    `
-  }
-
-  getUsersByIds(ids: string[]): Promise<LeaderboardUser[]> {
-    return this.#prisma.user.findMany({
-      where: { id: { in: ids } },
-      select: { id: true, username: true, avatar: true },
-    })
-  }
-
-  getTeamsWithMembers(limit: number): Promise<TeamWithMembers[]> {
-    return this.#prisma.team.findMany({
-      include: {
-        members: { select: { userId: true } },
-        _count: { select: { members: true } },
-      },
-      take: limit,
-    }) as Promise<TeamWithMembers[]>
   }
 
   getUserCardsByUserIds(userIds: string[]): Promise<UserCardForScoring[]> {
@@ -147,13 +114,6 @@ export class LeaderboardRepository implements ILeaderboardRepository {
           sub."d" > ${distinctCards}
           OR (sub."d" = ${distinctCards} AND sub."v" > ${totalVariants})
         )
-    `
-    return Number(rows[0]?.count ?? 0)
-  }
-
-  async countCollectors(): Promise<number> {
-    const rows = await this.#prisma.$queryRaw<{ count: bigint }[]>`
-      SELECT COUNT(DISTINCT "userId")::bigint AS count FROM "UserCard"
     `
     return Number(rows[0]?.count ?? 0)
   }
@@ -251,7 +211,7 @@ export class LeaderboardRepository implements ILeaderboardRepository {
   }
 
   async getActiveUserIds(): Promise<string[]> {
-    // Users with at least one combat-team slot OR at least one UserCard.
+    // Users with at least one combat-team slot.
     // The combat leaderboard only makes sense for users who can fight.
     const rows = await this.#prisma.user.findMany({
       where: { combatTeam: { isEmpty: false } },
