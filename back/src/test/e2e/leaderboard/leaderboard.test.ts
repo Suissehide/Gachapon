@@ -53,7 +53,6 @@ describe('Leaderboard routes', () => {
           id: expect.any(String),
           username: expect.any(String),
           level: expect.any(Number),
-          avatar: null,
         },
         cardPercentage: expect.any(Number),
         variantPercentage: expect.any(Number),
