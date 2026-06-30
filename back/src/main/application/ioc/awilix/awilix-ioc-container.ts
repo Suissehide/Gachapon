@@ -5,6 +5,7 @@ import type { Resolver } from 'awilix/lib/resolvers'
 import { AuthDomain } from '../../../domain/auth/auth.domain'
 import { OAuthDomain } from '../../../domain/auth/oauth.domain'
 import { CollectionDomain } from '../../../domain/collection/collection.domain'
+import { LeaderboardDomain } from '../../../domain/leaderboard/leaderboard.domain'
 import { SkillTreeDomain } from '../../../domain/skills/skill-tree.domain'
 import { SkillInvestDomain } from '../../../domain/skills/skill-invest.domain'
 import { SkillResetDomain } from '../../../domain/skills/skill-reset.domain'
@@ -144,6 +145,7 @@ class AwilixIocContainer {
       'leaderboardRepository',
       asClass(LeaderboardRepository).singleton(),
     )
+    this.#reg('leaderboardDomain', asClass(LeaderboardDomain).singleton())
     this.#reg('statsRepository', asClass(StatsRepository).singleton())
     this.#reg('adminStatsRepository', asClass(AdminStatsRepository).singleton())
     this.#reg('collectionDomain', asClass(CollectionDomain).singleton())
