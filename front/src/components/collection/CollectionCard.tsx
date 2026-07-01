@@ -5,7 +5,6 @@ import { describePassive } from '../../constants/passives.constant.ts'
 import { finalStat } from '../../utils/cardStats.ts'
 import type { CardStats } from '../shared/tcg-card/TcgCardFace.tsx'
 import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
-import { LockedCard } from './LockedCard.tsx'
 
 export const RARITY_ORDER = [
   'COMMON',
@@ -95,26 +94,18 @@ export function CollectionCard({
       onClick={onClick}
     >
       <div className="relative aspect-[2/3]">
-        {isOwned ? (
-          <TcgCardFace
-            rarity={card.rarity}
-            name={card.name}
-            setName={card.set.name}
-            imageUrl={card.imageUrl}
-            variant={variant}
-            isOwned
-            compact
-            level={level ?? null}
-            stats={stats}
-            description={description}
-          />
-        ) : (
-          <LockedCard
-            rarity={card.rarity}
-            name={card.name}
-            imageUrl={card.imageUrl}
-          />
-        )}
+        <TcgCardFace
+          rarity={card.rarity}
+          name={card.name}
+          setName={card.set.name}
+          imageUrl={card.imageUrl}
+          variant={variant}
+          isOwned={isOwned}
+          compact
+          level={isOwned ? (level ?? null) : null}
+          stats={isOwned ? stats : null}
+          description={isOwned ? description : null}
+        />
 
         {/* Overlays for owned cards */}
         {isOwned && variantTag && (

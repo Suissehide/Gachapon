@@ -83,28 +83,33 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
       }}
     >
       <div className="flex min-h-full items-center justify-center px-4 py-10">
-        <div
-          className="flex flex-wrap items-center justify-center gap-8 animate-in fade-in-0 zoom-in-95 duration-300 md:gap-10"
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
-        >
-          <CardDisplay
-            rarity={card.rarity}
-            name={card.name}
-            setName={card.set.name}
-            imageUrl={card.imageUrl}
-            variant={variant}
-            isOwned={isOwned}
-            interactive
-            large
-            level={userCard?.level ?? null}
-            stats={stats}
-            description={description}
-          />
+        <div className="flex flex-wrap items-center justify-center gap-8 animate-in fade-in-0 zoom-in-95 duration-300 md:gap-10">
+          {/* Card column — only the card area itself swallows the click; empty
+            * flex padding around it stays inert so the backdrop close fires. */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <CardDisplay
+              rarity={card.rarity}
+              name={card.name}
+              setName={card.set.name}
+              imageUrl={card.imageUrl}
+              variant={variant}
+              isOwned={isOwned}
+              interactive
+              large
+              level={userCard?.level ?? null}
+              stats={stats}
+              description={description}
+            />
+          </div>
 
           <Card
             className="flex w-full max-w-[400px] flex-col rounded-[22px] border-[rgba(27,23,38,0.06)] p-6 shadow-[0_2px_0_rgba(27,23,38,0.03),0_30px_60px_-28px_rgba(27,23,38,0.4)] md:w-[400px]"
             style={panelStyle}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div className="flex items-start justify-between gap-3">

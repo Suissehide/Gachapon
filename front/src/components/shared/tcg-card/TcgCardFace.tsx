@@ -43,6 +43,8 @@ type Props = {
   description?: string | null
   /** CSS `object-position` for the art image (e.g. `'50% 18%'`). */
   artPosition?: string
+  /** Hide the family tag + name band + description stack (art-only mode). */
+  showName?: boolean
 }
 
 // Trapezoidal tag: straight left edge, right edge slanted toward the right
@@ -63,6 +65,7 @@ export function TcgCardFace({
   element,
   description,
   artPosition,
+  showName = true,
 }: Props) {
   const tone = getRarityTone(rarity)
   const elementDef = element ? ELEMENTS[element] : null
@@ -84,16 +87,13 @@ export function TcgCardFace({
     >
       <img
         src={imageUrl || placeholderImg}
-        alt={isOwned ? name : ''}
-        className={`absolute inset-0 h-full w-full object-cover ${isOwned ? '' : 'opacity-50 grayscale'}`}
+        alt={name}
+        className={`absolute inset-0 h-full w-full object-cover ${isOwned ? '' : 'grayscale'}`}
         style={{ objectPosition: artPosition ?? '50% 20%' }}
         onError={(e) => {
           ;(e.target as HTMLImageElement).src = placeholderImg
         }}
       />
-      {!isOwned && (
-        <div className="pointer-events-none absolute inset-0 z-100 bg-black/40" />
-      )}
 
       {/* Internal stylized frame — double outline + corner accents */}
       <InternalFrame compact={compact} />
@@ -126,22 +126,26 @@ export function TcgCardFace({
           </div>
         )}
 
-        <FamilyHeader
-          setName={setName}
-          elementDef={elementDef}
-          compact={compact}
-          frameInset={frameInset}
-        />
-        <Band
-          name={name}
-          tone={tone}
-          compact={compact}
-          frameInset={frameInset}
-        />
-        <Description
-          text={isOwned ? (description ?? null) : null}
-          compact={compact}
-        />
+        {showName && (
+          <>
+            <FamilyHeader
+              setName={setName}
+              elementDef={elementDef}
+              compact={compact}
+              frameInset={frameInset}
+            />
+            <Band
+              name={name}
+              tone={tone}
+              compact={compact}
+              frameInset={frameInset}
+            />
+            <Description
+              text={isOwned ? (description ?? null) : null}
+              compact={compact}
+            />
+          </>
+        )}
       </div>
     </div>
   )

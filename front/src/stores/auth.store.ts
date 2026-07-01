@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 
 import { api } from '../lib/api.js'
+import { queryClient } from '../lib/queryClient.ts'
 import type { UnlockedAchievement } from '../constants/achievements.constant.ts'
 import { useAchievementUnlockStore } from './achievementUnlock.store.ts'
 
@@ -55,6 +56,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch {
       /* ignore */
     }
+    // Wipe every cached query so the next account never sees the previous
+    // user's collection / shop / combat / etc. data on first paint.
+    queryClient.clear()
     set({ user: null, isAuthenticated: false })
   },
 
