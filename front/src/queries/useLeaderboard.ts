@@ -11,13 +11,18 @@ export type {
   TeamEntry,
 } from '../api/leaderboard.api.ts'
 
+// Cache stays fresh for snappy re-renders during the same session, but every
+// page mount also refetches in the background so the data the user sees after
+// navigating back is never older than the round-trip.
 const STALE = 5 * 60 * 1000
+const REFETCH_ON_MOUNT = 'always' as const
 
 export const useCollectorsLeaderboard = () => {
   const query = useQuery({
     queryKey: ['leaderboard', 'collectors'],
     queryFn: LeaderboardApi.getCollectors,
     staleTime: STALE,
+    refetchOnMount: REFETCH_ON_MOUNT,
   })
 
   useDataFetching({
@@ -34,6 +39,7 @@ export const useTeamsLeaderboard = () => {
     queryKey: ['leaderboard', 'teams'],
     queryFn: LeaderboardApi.getTeams,
     staleTime: STALE,
+    refetchOnMount: REFETCH_ON_MOUNT,
   })
 
   useDataFetching({
@@ -50,6 +56,7 @@ export const useCombatLeaderboard = () => {
     queryKey: ['leaderboard', 'combat'],
     queryFn: LeaderboardApi.getCombat,
     staleTime: STALE,
+    refetchOnMount: REFETCH_ON_MOUNT,
   })
 
   useDataFetching({

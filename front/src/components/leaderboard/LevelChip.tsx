@@ -7,7 +7,7 @@ export function LevelChip({ level }: Props) {
   if (isMax) {
     return (
       <span
-        className="inline-flex items-center whitespace-nowrap rounded-full border border-[#f59e0b] px-[9px] py-[3px] font-mono text-[10px] font-bold tracking-[0.1em] text-[#6b3a00]"
+        className="inline-flex w-fit items-center self-start whitespace-nowrap rounded-full border border-[#f59e0b] px-[7px] py-[1px] font-mono text-[9px] font-bold tracking-[0.1em] text-[#6b3a00]"
         style={{
           background: 'linear-gradient(135deg, #fde68a, #fbbf24)',
           boxShadow: '0 2px 6px rgba(245,158,11,.22)',
@@ -18,7 +18,7 @@ export function LevelChip({ level }: Props) {
     )
   }
   return (
-    <span className="inline-flex items-center whitespace-nowrap rounded-full border border-[rgba(27,23,38,0.08)] bg-[#fafaf7] px-[9px] py-[3px] font-mono text-[10px] font-bold tracking-[0.1em] text-[rgba(27,23,38,0.6)]">
+    <span className="inline-flex w-fit items-center self-start whitespace-nowrap rounded-full border border-[rgba(27,23,38,0.08)] bg-[#fafaf7] px-[7px] py-[1px] font-mono text-[9px] font-bold tracking-[0.1em] text-[rgba(27,23,38,0.6)]">
       NIV. {level}
     </span>
   )

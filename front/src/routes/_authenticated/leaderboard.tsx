@@ -31,11 +31,20 @@ const HEAD_RIGHT: Record<Tab, string> = {
   combat: 'PROGRESSION EN COMBAT',
 }
 
-const COUNT_LABEL: Record<Tab, string> = {
+const COUNT_LABEL_SINGULAR: Record<Tab, string> = {
+  collectors: 'joueur classé',
+  teams: 'équipe en lice',
+  combat: 'combattant',
+}
+
+const COUNT_LABEL_PLURAL: Record<Tab, string> = {
   collectors: 'joueurs classés',
   teams: 'équipes en lice',
   combat: 'combattants',
 }
+
+const countLabelFor = (mode: Tab, count: number) =>
+  count === 1 ? COUNT_LABEL_SINGULAR[mode] : COUNT_LABEL_PLURAL[mode]
 
 const TAB_TITLE: Record<Tab, string> = {
   collectors: 'Collectionneurs',
@@ -209,7 +218,10 @@ function LeaderboardPage() {
               onSelect={() => setActiveTab(mode)}
               title={TAB_TITLE[mode]}
               count={s.data ? totalKnown(s.data as LeaderboardResponse<unknown>) : 0}
-              countLabel={COUNT_LABEL[mode]}
+              countLabel={countLabelFor(
+                mode,
+                s.data ? totalKnown(s.data as LeaderboardResponse<unknown>) : 0,
+              )}
               leaderName={s.leader?.name ?? null}
               leaderMetric={s.leader?.metric ?? null}
               mineRank={s.mine?.rank ?? null}

@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router'
 import { Zap } from 'lucide-react'
 
 import { FoilAvatar } from '../profile/arcade/FoilAvatar'
@@ -24,18 +25,19 @@ export function LeaderRow(props: Props) {
     mode === 'teams' ? entry.team.name : entry.user.username
   const initials = displayName.slice(0, 1).toUpperCase()
 
-  return (
-    <div
-      className={cn(
-        // 4-col grid on desktop, stacked on small screens.
-        'grid items-center gap-x-5 gap-y-3 rounded-[16px] border p-4 transition-[transform,box-shadow,border-color] duration-200 sm:p-[16px_22px]',
-        'grid-cols-[48px_1fr] sm:grid-cols-[48px_minmax(190px,1.1fr)_2fr_auto]',
-        'hover:-translate-y-[1px] motion-reduce:transform-none motion-reduce:transition-none',
-        isMe
-          ? 'border-[#fcd34d] bg-[linear-gradient(135deg,#fff7ed,#fffdf9)] shadow-[0_2px_0_rgba(245,158,11,0.1),0_14px_30px_-16px_rgba(245,158,11,0.3)]'
-          : 'border-[rgba(27,23,38,0.06)] bg-white shadow-[0_2px_0_rgba(27,23,38,0.03),0_10px_24px_-16px_rgba(27,23,38,0.1)] hover:border-[rgba(27,23,38,0.12)]',
-      )}
-    >
+  const rowClasses = cn(
+    // 4-col grid on desktop, stacked on small screens.
+    'grid items-center gap-x-5 gap-y-3 rounded-[16px] border p-4 transition-[transform,box-shadow,border-color] duration-200 sm:p-[16px_22px]',
+    'grid-cols-[48px_1fr] sm:grid-cols-[48px_minmax(190px,1.1fr)_2fr_auto]',
+    'hover:-translate-y-[1px] motion-reduce:transform-none motion-reduce:transition-none',
+    'cursor-pointer no-underline',
+    isMe
+      ? 'border-[#fcd34d] bg-[linear-gradient(135deg,#fff7ed,#fffdf9)] shadow-[0_2px_0_rgba(245,158,11,0.1),0_14px_30px_-16px_rgba(245,158,11,0.3)]'
+      : 'border-[rgba(27,23,38,0.06)] bg-white shadow-[0_2px_0_rgba(27,23,38,0.03),0_10px_24px_-16px_rgba(27,23,38,0.1)] hover:border-[rgba(27,23,38,0.12)]',
+  )
+
+  const inner = (
+    <>
       {/* Rank */}
       <div className="flex justify-center">
         <MedalRank rank={entry.rank} />
@@ -44,7 +46,7 @@ export function LeaderRow(props: Props) {
       {/* Identity */}
       <div className="flex min-w-0 items-center gap-[14px]">
         <FoilAvatar initials={initials} size={42} />
-        <div className="flex min-w-0 flex-col gap-[2px]">
+        <div className="flex min-w-0 flex-col gap-[3px]">
           <span className="inline-flex items-center gap-2 truncate text-[16px] font-bold text-[#1b1726]">
             {displayName}
             {isMe && (
@@ -53,15 +55,13 @@ export function LeaderRow(props: Props) {
               </span>
             )}
           </span>
-          <div className="mt-[3px]">
-            {mode === 'teams' ? (
-              <span className="font-mono text-[11px] tracking-[0.04em] text-[rgba(27,23,38,0.5)]">
-                {entry.team.memberCount} membres
-              </span>
-            ) : (
-              <LevelChip level={entry.user.level} />
-            )}
-          </div>
+          {mode === 'teams' ? (
+            <span className="font-mono text-[11px] tracking-[0.04em] text-[rgba(27,23,38,0.5)]">
+              {entry.team.memberCount} membres
+            </span>
+          ) : (
+            <LevelChip level={entry.user.level} />
+          )}
         </div>
       </div>
 
@@ -131,6 +131,27 @@ export function LeaderRow(props: Props) {
           </>
         )}
       </div>
-    </div>
+    </>
+  )
+
+  if (mode === 'teams') {
+    return (
+      <Link
+        to="/team/$id"
+        params={{ id: entry.team.id }}
+        className={rowClasses}
+      >
+        {inner}
+      </Link>
+    )
+  }
+  return (
+    <Link
+      to="/profile/$username"
+      params={{ username: entry.user.username }}
+      className={rowClasses}
+    >
+      {inner}
+    </Link>
   )
 }
