@@ -25,6 +25,19 @@ export const CONFIG_KEYS = [
   'combat.regenSeconds',
   'combat.battleCost',
   'combat.sweepCost',
+  'gacha.pullTokenCost',
+  'xp.base',
+  'xp.slope',
+  'xp.levelCap',
+  'card.goldCostBase',
+  'card.goldCostExp',
+  'card.dustCostBase',
+  'card.dustCostExp',
+  'card.rarityMultCommon',
+  'card.rarityMultUncommon',
+  'card.rarityMultRare',
+  'card.rarityMultEpic',
+  'card.rarityMultLegendary',
 ] as const
 
 export type ConfigKey = (typeof CONFIG_KEYS)[number]
