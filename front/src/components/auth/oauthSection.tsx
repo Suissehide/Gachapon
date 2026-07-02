@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import DiscordIcon from '../../assets/icons/discord.svg?react'
 import GoogleIcon from '../../assets/icons/google.svg?react'
+import { apiUrl } from '../../constants/config.constant.ts'
 import { useAuthStore } from '../../stores/auth.store'
 import { Button } from '../ui/button.tsx'
 
@@ -48,16 +49,18 @@ export function OAuthButtons({ action }: { action: 'login' | 'register' }) {
   const navigate = useNavigate()
   const fetchMe = useAuthStore((s) => s.fetchMe)
 
+  const discordAuthorizeUrl = `${apiUrl}/auth/oauth/discord/authorize`
+
   const handleDiscordClick = (e: React.MouseEvent) => {
     e.preventDefault()
     const popup = window.open(
-      '/auth/oauth/discord/authorize',
+      discordAuthorizeUrl,
       'discord-oauth',
       'width=500,height=700,left=200,top=100',
     )
     if (!popup) {
       // Popup blocked (common on mobile) — fall back to full redirect
-      window.location.href = '/auth/oauth/discord/authorize'
+      window.location.href = discordAuthorizeUrl
       return
     }
     const listener = (event: MessageEvent) => {
@@ -74,7 +77,7 @@ export function OAuthButtons({ action }: { action: 'login' | 'register' }) {
   return (
     <div className="flex flex-col gap-2.5">
       <OAuthButton
-        href="/auth/oauth/google/authorize"
+        href={`${apiUrl}/auth/oauth/google/authorize`}
         icon={<GoogleIcon />}
         label={`${prefix} avec Google`}
         className="bg-white text-gray-900 border border-gray-200 hover:bg-gray-50"
