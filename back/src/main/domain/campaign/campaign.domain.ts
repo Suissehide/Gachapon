@@ -68,6 +68,10 @@ export interface BattleRewards {
   gold: number
   dust: number
   xp: number
+  /** User's total XP right before this battle's rewards were applied. */
+  xpBefore: number
+  /** User's account level right before this battle's rewards were applied. */
+  levelBefore: number
   isFirstClear: boolean
   equipmentDrop: {
     userEquipmentId: string
@@ -697,7 +701,16 @@ export class CampaignDomain {
       })
     }
 
-    return { gold, dust, xp, isFirstClear, equipmentDrop, cardDrop }
+    return {
+      gold,
+      dust,
+      xp,
+      xpBefore: userBefore?.xp ?? 0,
+      levelBefore: oldLevel,
+      isFirstClear,
+      equipmentDrop,
+      cardDrop,
+    }
   }
 
   #pickWeighted<T extends { dropWeight: number }>(
@@ -749,7 +762,10 @@ export class CampaignDomain {
   ): Promise<SimulatorUnit[]> {
     const userCards = await tx.userCard.findMany({
       where: { id: { in: userCardIds }, userId },
-      include: { card: true, equipment: { include: { equipment: true } } },
+      include: {
+        card: { include: { set: true } },
+        equipment: { include: { equipment: true } },
+      },
     })
     const byId = new Map(userCards.map((u) => [u.id, u]))
     return userCardIds
@@ -775,6 +791,10 @@ export class CampaignDomain {
           imageUrl: u.card.imageUrl
             ? this.#storageClient.publicUrl(u.card.imageUrl)
             : null,
+          rarity: u.card.rarity,
+          variant: u.variant,
+          setName: u.card.set?.name ?? null,
+          level: u.level,
           hp: stats.hp,
           atk: stats.atk,
           def: stats.def,

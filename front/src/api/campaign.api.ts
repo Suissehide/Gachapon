@@ -29,6 +29,8 @@ export type BattleRewards = {
   gold: number
   dust: number
   xp: number
+  xpBefore: number
+  levelBefore: number
   isFirstClear: boolean
   equipmentDrop: {
     userEquipmentId: string

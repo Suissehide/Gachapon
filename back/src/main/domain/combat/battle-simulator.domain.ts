@@ -16,6 +16,14 @@ export interface SimulatorUnit {
   name?: string
   /** Public URL of the unit's portrait (front consumes this for animation). Null when no asset. */
   imageUrl?: string | null
+  /** Card rarity (ally units only; used by the front to render the correct card frame). */
+  rarity?: string | null
+  /** Card variant (ally units only). */
+  variant?: string | null
+  /** Card set name (ally units only). */
+  setName?: string | null
+  /** Ally card level (ally units only). */
+  level?: number | null
   hp: number
   atk: number
   def: number

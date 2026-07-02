@@ -1,10 +1,15 @@
 import type { PrismaClient } from '../../src/generated/client'
 
-// Base RARE stats used as enemy power baseline
-const ENEMY_BASE = { baseHp: 200, baseAtk: 20, baseDef: 10, baseSpd: 100 }
+// Enemy baseline sits slightly BELOW a level-1 COMMON player card
+// (100/10/5/90) so a starter team can clear stage 1-1 and start earning gold.
+// Difficulty scales with stage index inside a chapter (×1.12 per stage) and
+// with chapter number (×2.5 per chapter), so chapter 2 opens roughly at the
+// power level of the chapter 1 boss.
+const ENEMY_BASE = { baseHp: 80, baseAtk: 8, baseDef: 4, baseSpd: 85 }
 
-function enemyPower(stageIndex: number) {
-  const mult = Math.pow(1.12, stageIndex)
+function enemyPower(chapter: number, stageIndex: number) {
+  const mult =
+    Math.pow(2.5, chapter - 1) * Math.pow(1.12, stageIndex - 1)
   return {
     baseHp: Math.round(ENEMY_BASE.baseHp * mult),
     baseAtk: Math.round(ENEMY_BASE.baseAtk * mult),
@@ -13,8 +18,8 @@ function enemyPower(stageIndex: number) {
   }
 }
 
-function normalEnemyTeam(stageIndex: number) {
-  const p = enemyPower(stageIndex)
+function normalEnemyTeam(chapter: number, stageIndex: number) {
+  const p = enemyPower(chapter, stageIndex)
   return [
     { ...p, level: 1, palier: 1, attackPattern: 'BASIC' },
     { ...p, level: 1, palier: 1, attackPattern: 'BASIC' },
@@ -22,8 +27,8 @@ function normalEnemyTeam(stageIndex: number) {
   ]
 }
 
-function bossEnemyTeam(stageIndex: number) {
-  const p = enemyPower(stageIndex)
+function bossEnemyTeam(chapter: number, stageIndex: number) {
+  const p = enemyPower(chapter, stageIndex)
   return [
     {
       baseHp: p.baseHp * 5,
@@ -86,22 +91,33 @@ const bossLoot = {
   },
 }
 
+const CHAPTER_COUNT = 3
+const STAGES_PER_CHAPTER = 10
+
 export async function seedCampaign(
   tx: Parameters<Parameters<PrismaClient['$transaction']>[0]>[0],
 ) {
-  for (let i = 1; i <= 10; i++) {
-    const isBoss = i === 10
-    await tx.campaignStage.create({
-      data: {
-        chapter: 1,
-        index: i,
-        label: isBoss ? `1-10 Boss` : `1-${i}`,
-        isBoss,
-        enemyTeam: isBoss ? bossEnemyTeam(i) : normalEnemyTeam(i),
-        lootTable: isBoss ? bossLoot : lootTableNormal(i),
-        order: i,
-      },
-    })
+  let order = 0
+  for (let chapter = 1; chapter <= CHAPTER_COUNT; chapter++) {
+    for (let i = 1; i <= STAGES_PER_CHAPTER; i++) {
+      order += 1
+      const isBoss = i === STAGES_PER_CHAPTER
+      await tx.campaignStage.create({
+        data: {
+          chapter,
+          index: i,
+          label: isBoss ? `${chapter}-${i} Boss` : `${chapter}-${i}`,
+          isBoss,
+          enemyTeam: isBoss
+            ? bossEnemyTeam(chapter, i)
+            : normalEnemyTeam(chapter, i),
+          lootTable: isBoss ? bossLoot : lootTableNormal(i),
+          order,
+        },
+      })
+    }
+    console.log(
+      `  Campaign chapter ${chapter} : ${STAGES_PER_CHAPTER} stages created`,
+    )
   }
-  console.log(`  Campaign chapter 1 : 10 stages created (1-10 boss)`)
 }

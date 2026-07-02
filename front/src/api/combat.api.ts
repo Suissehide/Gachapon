@@ -27,6 +27,11 @@ export type SimulatorUnit = {
   id: string
   name?: string
   imageUrl?: string | null
+  /** Card rarity for ally units (ennemis = undefined → rose placeholder). */
+  rarity?: string | null
+  variant?: string | null
+  setName?: string | null
+  level?: number | null
   hp: number
   atk: number
   def: number

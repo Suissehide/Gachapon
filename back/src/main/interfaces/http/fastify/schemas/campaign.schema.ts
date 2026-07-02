@@ -30,6 +30,8 @@ export const battleRewardsSchema = z.object({
   gold: z.number().int(),
   dust: z.number().int(),
   xp: z.number().int(),
+  xpBefore: z.number().int(),
+  levelBefore: z.number().int(),
   isFirstClear: z.boolean(),
   equipmentDrop: z
     .object({
@@ -53,6 +55,10 @@ const simulatorUnitSchema = z.object({
   id: z.string(),
   name: z.string().optional(),
   imageUrl: z.string().nullable().optional(),
+  rarity: z.string().nullable().optional(),
+  variant: z.string().nullable().optional(),
+  setName: z.string().nullable().optional(),
+  level: z.number().int().nullable().optional(),
   hp: z.number().int(),
   atk: z.number().int(),
   def: z.number().int(),

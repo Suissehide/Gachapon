@@ -1,20 +1,26 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import {
   AlertTriangle,
   ArrowLeft,
+  ArrowRight,
   Coins,
+  RotateCcw,
+  Skull,
   Sparkles,
   Swords,
   TrendingUp,
   Trophy,
 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import type { BattleResult } from '../../api/campaign.api.ts'
 import { BattleScene } from '../../components/battle/BattleScene.tsx'
 import { ArcadeCard } from '../../components/shared/ArcadeCard.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { Button } from '../../components/ui/button.tsx'
+import { Dialog } from 'radix-ui'
+
+import { Popup, PopupContent } from '../../components/ui/popup.tsx'
 import { isApiError } from '../../libs/httpErrorHandler.ts'
 import { useAttackStage } from '../../queries/useCampaign.ts'
 import { useCombatTeam } from '../../queries/useCombatTeam.ts'
@@ -26,43 +32,57 @@ export const Route = createFileRoute('/_authenticated/battle/$stageId')({
 function BattlePage() {
   const { stageId } = Route.useParams()
   const team = useCombatTeam()
-  const attack = useAttackStage()
+  const navigate = useNavigate()
   const [sceneDone, setSceneDone] = useState(false)
-  const hasFiredRef = useRef(false)
-
-  // Read directly from the mutation's cached data — React Query keeps
-  // the success state across StrictMode's double-invocation and across
-  // re-renders. Using a local state + onSuccess setter caused races where
-  // the setter fired on a temporarily-unmounted instance and the result
-  // never reached the render.
-  const result = attack.data ?? null
+  const [showResult, setShowResult] = useState(false)
+  const [round, setRound] = useState({ current: 1, total: 1 })
 
   const teamReady =
     !team.isLoading && (team.data?.team.length ?? 0) >= 1
 
+  // useQuery handles StrictMode's mount→unmount→mount dedup for us: both mounts
+  // subscribe to the same in-flight request keyed by stageId so the server is
+  // hit (and PC billed) exactly once.
+  const attack = useAttackStage(stageId, teamReady)
+  const result = attack.data ?? null
+
   useEffect(() => {
-    if (hasFiredRef.current) {
-      return
+    if (sceneDone && result) {
+      // Defer slightly so the final frame of the scene is visible before the
+      // overlay slides in.
+      const t = setTimeout(() => setShowResult(true), 300)
+      return () => clearTimeout(t)
     }
-    if (team.isLoading) {
-      return
-    }
-    if (!teamReady) {
-      return
-    }
-    hasFiredRef.current = true
-    attack.mutate(stageId)
-  }, [stageId, attack, team.isLoading, teamReady])
+  }, [sceneDone, result])
+
+  const handleReplay = () => {
+    setShowResult(false)
+    setSceneDone(false)
+    setRound({ current: 1, total: 1 })
+    attack.refetch()
+  }
+
+  const handleBackToCampaign = () => {
+    navigate({ to: '/campaign' })
+  }
 
   return (
     <PageShell>
-      <div className="mb-4 flex items-center justify-between">
+      {/* Topbar — back link on the left, round pill on the right. */}
+      <div className="flex items-center justify-between">
         <Link
           to="/campaign"
-          className="flex items-center gap-1 text-sm text-text-light hover:text-text"
+          className="inline-flex items-center gap-1.5 font-display text-base font-bold text-text-light/60 transition-colors hover:text-text"
         >
-          <ArrowLeft className="h-4 w-4" /> Campagne
+          <ArrowLeft className="h-4 w-4" />
+          Campagne
         </Link>
+        {result && (
+          <div className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-4 py-1.5 font-mono text-[12px] font-bold uppercase tracking-widest text-amber-700">
+            Tour {round.current}
+            <span className="ml-1 text-amber-600/70">/ {round.total}</span>
+          </div>
+        )}
       </div>
 
       {team.isLoading && (
@@ -73,7 +93,7 @@ function BattlePage() {
 
       {!team.isLoading && !teamReady && <NoTeamNotice />}
 
-      {teamReady && attack.isPending && !result && (
+      {teamReady && attack.isFetching && !result && (
         <ArcadeCard className="py-12 text-center">
           <p className="font-display text-lg text-text">Combat en cours…</p>
           <p className="mt-1 text-sm text-text-light">
@@ -102,39 +122,36 @@ function BattlePage() {
       )}
 
       {teamReady && result && (
-        <ArcadeCard className="p-0 sm:p-0">
-          <div className="p-4 sm:p-6">
-            <BattleScene
-              teamA={result.teamA}
-              teamB={result.teamB}
-              log={result.log}
-              onComplete={() => setSceneDone(true)}
-            />
-          </div>
+        <BattleScene
+          teamA={result.teamA}
+          teamB={result.teamB}
+          log={result.log}
+          onComplete={() => setSceneDone(true)}
+          onRoundChange={(current, total) => setRound({ current, total })}
+        />
+      )}
 
-          {sceneDone && (
-            <div className="border-t border-border/40 p-4 sm:p-6">
-              {result.won ? (
-                <RewardsPanel result={result} />
-              ) : (
-                <div className="text-center">
-                  <p className="font-bold text-rose-500">Défaite</p>
-                  <p className="mt-1 text-sm text-text-light">
-                    Lève ton équipe ou améliore tes cartes avant de réessayer.
-                  </p>
-                  <div className="mt-3 flex justify-center gap-2">
-                    <Link to="/campaign">
-                      <Button variant="outline">Retour</Button>
-                    </Link>
-                    <Button onClick={() => window.location.reload()}>
-                      Réessayer
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </ArcadeCard>
+      {/* Victory / Defeat overlay */}
+      {result && (
+        <Popup open={showResult} onOpenChange={setShowResult}>
+          <PopupContent
+            size="lg"
+            className="border-0 bg-[#fbf8f3] p-0 shadow-[0_30px_80px_-12px_rgba(0,0,0,0.4)]"
+          >
+            <Dialog.Title className="sr-only">
+              {result.won ? 'Victoire' : 'Défaite'}
+            </Dialog.Title>
+            {result.won ? (
+              <VictoryPanel
+                result={result}
+                onReplay={handleReplay}
+                onBack={handleBackToCampaign}
+              />
+            ) : (
+              <DefeatPanel onReplay={handleReplay} onBack={handleBackToCampaign} />
+            )}
+          </PopupContent>
+        </Popup>
       )}
     </PageShell>
   )
@@ -153,7 +170,7 @@ function NoTeamNotice() {
         tirages sur la page Jouer.
       </p>
       <div className="mt-4 flex flex-wrap justify-center gap-2">
-        <Link to="/combat">
+        <Link to="/campaign" search={{ editor: true }}>
           <Button>
             <Swords className="mr-2 h-4 w-4" />
             Configurer mon équipe
@@ -170,81 +187,260 @@ function NoTeamNotice() {
   )
 }
 
-function RewardsPanel({ result }: { result: BattleResult }) {
+function VictoryPanel({
+  result,
+  onReplay,
+  onBack,
+}: {
+  result: BattleResult
+  onReplay: () => void
+  onBack: () => void
+}) {
   const rewards = result.rewards
-  if (!rewards) {
-    return null
-  }
-
   return (
-    <div>
-      <div className="flex items-center justify-center gap-2">
-        <Trophy className="h-5 w-5 text-amber-500" />
-        <p className="font-display text-lg font-bold text-emerald-600">
-          {rewards.isFirstClear ? 'Premier clear !' : 'Victoire'}
-        </p>
-      </div>
+    <div className="relative overflow-hidden rounded-[26px] px-6 py-8 sm:px-8 animate-[battleResultIn_0.4s_ease]">
+      {/* Burst halo behind the badge */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-48"
+        style={{
+          background:
+            'radial-gradient(50% 60% at 50% 50%, rgba(245,158,11,0.3), transparent 70%)',
+        }}
+        aria-hidden
+      />
 
-      <div className="mt-4 grid grid-cols-3 gap-2 rounded-lg border border-border bg-muted/30 p-3 text-center">
-        <Stat icon={<Coins className="h-3 w-3" />} label="Or" value={rewards.gold} />
-        <Stat icon={<Sparkles className="h-3 w-3" />} label="Poussière" value={rewards.dust} />
-        <Stat icon={<TrendingUp className="h-3 w-3" />} label="XP" value={rewards.xp} />
-      </div>
-
-      {rewards.equipmentDrop && (
-        <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-center">
-          <p className="text-xs uppercase tracking-widest text-amber-700/70">
-            Équipement
-          </p>
-          <p className="mt-1 font-bold text-amber-700">
-            ✨ {rewards.equipmentDrop.name}{' '}
-            <span className="text-xs text-amber-600/70">
-              ({rewards.equipmentDrop.rarity})
-            </span>
-          </p>
+      <div className="relative flex flex-col items-center text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-[0_12px_28px_-8px_rgba(245,158,11,0.7)] animate-[battleBadgePop_0.5s_cubic-bezier(0.2,1.6,0.4,1)]">
+          <Trophy className="h-8 w-8" />
         </div>
-      )}
+        <h2 className="mt-4 font-display text-3xl font-bold text-text">
+          Victoire !
+        </h2>
+        {rewards?.isFirstClear && (
+          <p className="mt-1 font-mono text-xs font-bold uppercase tracking-widest text-amber-600">
+            Premier passage
+          </p>
+        )}
 
-      {rewards.cardDrop && (
-        <div className="mt-3 rounded-lg border border-sky-500/30 bg-sky-500/10 p-3 text-center">
-          <p className="text-xs uppercase tracking-widest text-sky-700/70">
-            Carte
-          </p>
-          <p className="mt-1 font-bold text-sky-700">
-            🎴 {rewards.cardDrop.name}{' '}
-            <span className="text-xs text-sky-600/70">
-              ({rewards.cardDrop.rarity}
-              {rewards.cardDrop.wasDuplicate ? ' · doublon' : ''})
-            </span>
-          </p>
+        {rewards && (
+          <div className="mt-6 grid w-full grid-cols-2 gap-2.5">
+            <RewardTile
+              icon={<Coins className="h-5 w-5" />}
+              label="Pièces"
+              value={rewards.gold}
+              tone="#f59e0b"
+            />
+            <RewardTile
+              icon={<Sparkles className="h-5 w-5" />}
+              label="Poussière"
+              value={rewards.dust}
+              tone="#8b5cf6"
+            />
+          </div>
+        )}
+
+        {rewards?.equipmentDrop && (
+          <div className="mt-3 w-full rounded-2xl border border-amber-400/40 bg-gradient-to-br from-amber-50 to-orange-50 p-3 text-center">
+            <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-amber-700/70">
+              Équipement
+            </p>
+            <p className="mt-1 font-display font-bold text-amber-800">
+              {rewards.equipmentDrop.name}
+            </p>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-amber-600/70">
+              {rewards.equipmentDrop.rarity}
+            </p>
+          </div>
+        )}
+
+        {rewards?.cardDrop && (
+          <div className="mt-3 w-full rounded-2xl border border-sky-400/40 bg-gradient-to-br from-sky-50 to-blue-50 p-3 text-center">
+            <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-sky-700/70">
+              Carte {rewards.cardDrop.wasDuplicate ? '· doublon' : ''}
+            </p>
+            <p className="mt-1 font-display font-bold text-sky-800">
+              {rewards.cardDrop.name}
+            </p>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-sky-600/70">
+              {rewards.cardDrop.rarity}
+            </p>
+          </div>
+        )}
+
+        {rewards && <XpBar rewards={rewards} />}
+
+        <div className="mt-6 flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-center">
+          <Button variant="outline" onClick={onReplay} className="gap-2">
+            <RotateCcw className="h-4 w-4" />
+            Rejouer
+          </Button>
+          <Button onClick={onBack} className="gap-2">
+            Niveau suivant
+            <ArrowRight className="h-4 w-4" />
+          </Button>
         </div>
-      )}
-
-      <div className="mt-4 flex justify-center gap-2">
-        <Link to="/campaign">
-          <Button variant="outline">Retour campagne</Button>
-        </Link>
       </div>
     </div>
   )
 }
 
-function Stat({
+function DefeatPanel({
+  onReplay,
+  onBack,
+}: {
+  onReplay: () => void
+  onBack: () => void
+}) {
+  return (
+    <div className="relative overflow-hidden rounded-[26px] px-6 py-8 sm:px-8 animate-[battleResultIn_0.4s_ease]">
+      <div className="relative flex flex-col items-center text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-slate-400 to-slate-600 text-white shadow-md animate-[battleBadgePop_0.5s_cubic-bezier(0.2,1.6,0.4,1)]">
+          <Skull className="h-8 w-8" />
+        </div>
+        <h2 className="mt-4 font-display text-3xl font-bold text-text">
+          Défaite
+        </h2>
+        <p className="mt-2 max-w-sm text-sm text-text-light">
+          Ton équipe n'a pas tenu le choc. Améliore ta composition ou monte tes
+          cartes avant de retourner au front.
+        </p>
+
+        <div className="mt-6 flex w-full flex-col gap-2.5">
+          <Link to="/campaign" search={{ editor: true }} className="w-full">
+            <Button
+              variant="outline"
+              className="h-auto w-full justify-start gap-3 whitespace-normal bg-white px-4 py-4 text-left"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
+                <Sparkles className="h-4 w-4" />
+              </span>
+              <span className="flex flex-col items-start gap-0.5">
+                <span className="font-display text-sm font-bold">
+                  Revoir mon équipe
+                </span>
+                <span className="text-xs text-text-light">
+                  Choisis une meilleure composition
+                </span>
+              </span>
+            </Button>
+          </Link>
+          <Link to="/collection" className="w-full">
+            <Button
+              variant="outline"
+              className="h-auto w-full justify-start gap-3 whitespace-normal bg-white px-4 py-4 text-left"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+                <TrendingUp className="h-4 w-4" />
+              </span>
+              <span className="flex flex-col items-start gap-0.5">
+                <span className="font-display text-sm font-bold">
+                  Monter tes cartes
+                </span>
+                <span className="text-xs text-text-light">
+                  Améliore le niveau de tes cartes
+                </span>
+              </span>
+            </Button>
+          </Link>
+        </div>
+
+        <div className="mt-6 flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-center">
+          <Button variant="outline" onClick={onBack}>
+            Retour
+          </Button>
+          <Button onClick={onReplay} className="gap-2">
+            <RotateCcw className="h-4 w-4" />
+            Réessayer
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function RewardTile({
   icon,
   label,
   value,
+  tone,
 }: {
   icon: React.ReactNode
   label: string
   value: number
+  tone: string
 }) {
   return (
-    <div>
-      <p className="flex items-center justify-center gap-1 text-xs text-text-light/60">
-        {icon} {label}
-      </p>
-      <p className="font-display text-base font-bold text-text tabular-nums">
+    <div className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-white p-3">
+      <span
+        className="flex h-9 w-9 items-center justify-center rounded-xl"
+        style={{ backgroundColor: `${tone}1f`, color: tone }}
+      >
+        {icon}
+      </span>
+      <b className="font-display text-lg tabular-nums text-text">
         +{value.toLocaleString('fr-FR')}
+      </b>
+      <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-text-light/70">
+        {label}
+      </span>
+    </div>
+  )
+}
+
+// XP progression bar — current XP (blue) + gain from this battle (orange).
+// Level formula mirrors the server: level = floor(sqrt(xp / 100)) + 1.
+function XpBar({
+  rewards,
+}: {
+  rewards: {
+    xp: number
+    xpBefore: number
+    levelBefore: number
+  }
+}) {
+  const xpBefore = rewards.xpBefore
+  const xpAfter = xpBefore + rewards.xp
+  const level = rewards.levelBefore
+  const xpAtLevelStart = (level - 1) ** 2 * 100
+  const xpAtLevelEnd = level ** 2 * 100
+  const xpInLevel = xpAtLevelEnd - xpAtLevelStart
+  const pctBefore = Math.max(
+    0,
+    Math.min(100, ((xpBefore - xpAtLevelStart) / xpInLevel) * 100),
+  )
+  const pctAfter = Math.max(
+    pctBefore,
+    Math.min(100, ((xpAfter - xpAtLevelStart) / xpInLevel) * 100),
+  )
+  const pctGain = pctAfter - pctBefore
+
+  return (
+    <div className="mt-4 w-full rounded-2xl border border-border bg-white p-3">
+      <div className="mb-1.5 flex items-baseline justify-between font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/70">
+        <span>Niveau {level}</span>
+        <span className="tabular-nums">
+          {xpAfter.toLocaleString('fr-FR')} /{' '}
+          {xpAtLevelEnd.toLocaleString('fr-FR')} XP
+        </span>
+      </div>
+      <div className="relative h-2 w-full overflow-hidden rounded-full bg-[rgba(27,23,38,0.08)]">
+        {/* Current XP (blue) */}
+        <div
+          className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-sky-500 to-blue-500"
+          style={{ width: `${pctBefore}%` }}
+        />
+        {/* Gain from this battle (orange) */}
+        <div
+          className="absolute inset-y-0 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 animate-[battleXpGrow_0.6s_ease_forwards]"
+          style={{
+            left: `${pctBefore}%`,
+            width: `${pctGain}%`,
+            transformOrigin: 'left center',
+          }}
+        />
+      </div>
+      <p className="mt-1 text-right font-mono text-[11px] font-bold tabular-nums text-orange-600">
+        +{rewards.xp.toLocaleString('fr-FR')} XP
       </p>
     </div>
   )

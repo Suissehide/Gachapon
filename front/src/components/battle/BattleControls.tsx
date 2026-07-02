@@ -1,6 +1,7 @@
 import { FastForward, Pause, Play, RotateCcw, SkipForward } from 'lucide-react'
 
-import { Button } from '../ui/button'
+import { Button } from '../ui/button.tsx'
+import { SegmentedControl } from '../ui/segmentedControl.tsx'
 import type { SceneSpeed } from './types'
 
 type Props = {
@@ -13,6 +14,12 @@ type Props = {
   isDone: boolean
 }
 
+const SPEED_OPTIONS: { value: '1' | '2' | '4'; label: string; icon: React.ReactNode }[] = [
+  { value: '1', label: '×1', icon: null },
+  { value: '2', label: '×2', icon: <FastForward className="h-3 w-3" /> },
+  { value: '4', label: '×4', icon: <FastForward className="h-3 w-3" /> },
+]
+
 export function BattleControls({
   speed,
   onSpeedChange,
@@ -23,62 +30,51 @@ export function BattleControls({
   isDone,
 }: Props) {
   return (
-    <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+    <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
       <Button
         type="button"
-        size="sm"
-        variant="outline"
         onClick={onTogglePause}
         disabled={isDone}
+        size="default"
       >
-        {isPaused ? (
-          <Play className="h-3.5 w-3.5" />
+        {isDone ? (
+          <>
+            <Play className="h-4 w-4" /> Terminé
+          </>
+        ) : isPaused ? (
+          <>
+            <Play className="h-4 w-4" /> Reprendre
+          </>
         ) : (
-          <Pause className="h-3.5 w-3.5" />
+          <>
+            <Pause className="h-4 w-4" /> Pause
+          </>
         )}
-        {isPaused ? 'Reprendre' : 'Pause'}
       </Button>
+
+      <SegmentedControl
+        options={SPEED_OPTIONS}
+        value={String(speed) as '1' | '2' | '4'}
+        onChange={(v) => onSpeedChange(Number(v) as SceneSpeed)}
+      />
+
       <Button
         type="button"
-        size="sm"
-        variant={speed === 1 ? 'default' : 'outline'}
-        onClick={() => onSpeedChange(1)}
-        disabled={isDone}
-      >
-        ×1
-      </Button>
-      <Button
-        type="button"
-        size="sm"
-        variant={speed === 2 ? 'default' : 'outline'}
-        onClick={() => onSpeedChange(2)}
-        disabled={isDone}
-      >
-        ×2
-      </Button>
-      <Button
-        type="button"
-        size="sm"
-        variant={speed === 4 ? 'default' : 'outline'}
-        onClick={() => onSpeedChange(4)}
-        disabled={isDone}
-      >
-        <FastForward className="h-3.5 w-3.5" />
-        ×4
-      </Button>
-      <Button
-        type="button"
-        size="sm"
         variant="outline"
         onClick={onSkip}
         disabled={isDone}
+        size="default"
       >
-        <SkipForward className="h-3.5 w-3.5" />
-        Skip
+        <SkipForward className="h-4 w-4" /> Passer
       </Button>
-      <Button type="button" size="sm" variant="outline" onClick={onReplay}>
-        <RotateCcw className="h-3.5 w-3.5" />
-        Replay
+
+      <Button
+        type="button"
+        variant="outline"
+        onClick={onReplay}
+        size="default"
+      >
+        <RotateCcw className="h-4 w-4" /> Rejouer
       </Button>
     </div>
   )

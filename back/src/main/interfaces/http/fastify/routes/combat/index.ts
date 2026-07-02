@@ -9,8 +9,19 @@ import {
 } from '../../schemas/combat.schema'
 
 export const combatRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { combatTeamTx, combatDebugDomain, combatPointsTx } =
+  const { combatTeamTx, combatDebugDomain, combatPointsTx, storageClient } =
     fastify.iocContainer
+
+  // The team query returns raw image storage keys; front-end consumers expect
+  // resolved public URLs (same as /collection and /gacha). Wrap once here.
+  const withPublicImage = <T extends { cardImageUrl: string | null }>(
+    unit: T,
+  ): T => ({
+    ...unit,
+    cardImageUrl: unit.cardImageUrl
+      ? storageClient.publicUrl(unit.cardImageUrl)
+      : null,
+  })
 
   fastify.get(
     '/combat/points',
@@ -27,7 +38,10 @@ export const combatRouter: FastifyPluginCallbackZod = (fastify) => {
       onRequest: [fastify.verifySessionCookie],
       schema: { response: { 200: combatTeamResponseSchema } },
     },
-    (request) => combatTeamTx.getTeam(request.user.userID),
+    async (request) => {
+      const { team } = await combatTeamTx.getTeam(request.user.userID)
+      return { team: team.map(withPublicImage) }
+    },
   )
 
   fastify.put(
@@ -39,8 +53,13 @@ export const combatRouter: FastifyPluginCallbackZod = (fastify) => {
         response: { 200: combatTeamResponseSchema },
       },
     },
-    (request) =>
-      combatTeamTx.setTeam(request.user.userID, request.body.userCardIds),
+    async (request) => {
+      const { team } = await combatTeamTx.setTeam(
+        request.user.userID,
+        request.body.userCardIds,
+      )
+      return { team: team.map(withPublicImage) }
+    },
   )
 
   fastify.post(
