@@ -6,6 +6,7 @@ import type { CardVariant } from '../../../api/collection.api.ts'
 import {
   CollectionFilters,
   type GroupMode,
+  type OwnershipFilter,
   type RarityFilter,
   type VariantFilter,
 } from '../../../components/collection/CollectionFilters.tsx'
@@ -38,6 +39,7 @@ function UserCollectionPage() {
   const [group, setGroup] = useState<GroupMode>('rarity')
   const [rarity, setRarity] = useState<RarityFilter>('all')
   const [variant, setVariant] = useState<VariantFilter>('all')
+  const [ownership, setOwnership] = useState<OwnershipFilter>('owned')
 
   const { data: catalogData } = useCards()
   const { data: userColl } = useUserCollection(profile?.id)
@@ -85,8 +87,9 @@ function UserCollectionPage() {
     () =>
       displayEntries
         .filter((e) => rarity === 'all' || e.card.rarity === rarity)
-        .filter((e) => variant === 'all' || e.variant === variant),
-    [displayEntries, rarity, variant],
+        .filter((e) => variant === 'all' || e.variant === variant)
+        .filter((e) => ownership === 'all' || e.isOwned),
+    [displayEntries, rarity, variant, ownership],
   )
 
   const sections = useMemo(() => {
@@ -173,6 +176,8 @@ function UserCollectionPage() {
           onRarityChange={setRarity}
           variant={variant}
           onVariantChange={setVariant}
+          ownership={ownership}
+          onOwnershipChange={setOwnership}
         />
       </ArcadeCard>
 

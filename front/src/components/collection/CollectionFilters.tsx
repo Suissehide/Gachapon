@@ -6,6 +6,7 @@ type Rarity = Card['rarity']
 export type RarityFilter = Rarity | 'all'
 export type VariantFilter = CardVariant | 'all'
 export type GroupMode = 'rarity' | 'set'
+export type OwnershipFilter = 'all' | 'owned'
 
 const RARITY_HEX: Record<string, string> = {
   COMMON: '#22c55e',
@@ -35,6 +36,11 @@ const VARIANT_OPTIONS = [
   },
 ]
 
+const OWNERSHIP_OPTIONS = [
+  { value: 'owned' as const, label: 'Possédées' },
+  { value: 'all' as const, label: 'Toutes' },
+]
+
 const RARITY_OPTIONS: {
   value: RarityFilter
   label: string
@@ -55,6 +61,8 @@ interface Props {
   onRarityChange: (r: RarityFilter) => void
   variant: VariantFilter
   onVariantChange: (v: VariantFilter) => void
+  ownership: OwnershipFilter
+  onOwnershipChange: (o: OwnershipFilter) => void
 }
 
 export function CollectionFilters({
@@ -64,11 +72,19 @@ export function CollectionFilters({
   onRarityChange,
   variant,
   onVariantChange,
+  ownership,
+  onOwnershipChange,
 }: Props) {
   return (
     <div className="flex flex-col gap-3">
-      {/* Row 1 — Grouping + Variant */}
+      {/* Row 1 — Ownership + Grouping + Variant */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+        <SegmentedControl
+          options={OWNERSHIP_OPTIONS}
+          value={ownership}
+          onChange={onOwnershipChange}
+        />
+        <Divider />
         <SegmentedControl
           options={GROUP_OPTIONS}
           value={group}

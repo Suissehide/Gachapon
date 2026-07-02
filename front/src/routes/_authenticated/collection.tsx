@@ -6,6 +6,7 @@ import { CardViewModal } from '../../components/collection/CardViewModal.tsx'
 import {
   CollectionFilters,
   type GroupMode,
+  type OwnershipFilter,
   type RarityFilter,
   type VariantFilter,
 } from '../../components/collection/CollectionFilters.tsx'
@@ -40,8 +41,13 @@ function Collection() {
   const [group, setGroup] = useState<GroupMode>('rarity')
   const [rarity, setRarity] = useState<RarityFilter>('all')
   const [variant, setVariant] = useState<VariantFilter>('all')
+  const [ownership, setOwnership] = useState<OwnershipFilter>('owned')
   const [recycleTarget, setRecycleTarget] = useState<UserCard | null>(null)
-  const [detailTarget, setDetailTarget] = useState<DisplayEntry | null>(null)
+  // Store just the key so we always re-derive the *fresh* entry from
+  // displayEntries. Storing the entry itself would freeze level/palier/quantity
+  // at the moment of click — subsequent level-ups / ascensions wouldn't be
+  // reflected until the modal is reopened.
+  const [detailKey, setDetailKey] = useState<string | null>(null)
 
   const { data: catalogData } = useCards()
   const { data: userColl } = useUserCollection(user?.id)
@@ -89,7 +95,8 @@ function Collection() {
     return displayEntries
       .filter((e) => rarity === 'all' || e.card.rarity === rarity)
       .filter((e) => variant === 'all' || e.variant === variant)
-  }, [displayEntries, rarity, variant])
+      .filter((e) => ownership === 'all' || e.isOwned)
+  }, [displayEntries, rarity, variant, ownership])
 
   const collectionStats = useMemo(() => {
     const distinctCardIds = new Set(userCards.map((uc) => uc.card.id))
@@ -144,7 +151,13 @@ function Collection() {
     })
   }, [group, filteredEntries])
 
-  const handleDetail = (entry: DisplayEntry) => setDetailTarget(entry)
+  const handleDetail = (entry: DisplayEntry) => setDetailKey(entry.key)
+
+  const detailTarget = useMemo(
+    () =>
+      detailKey ? displayEntries.find((e) => e.key === detailKey) ?? null : null,
+    [detailKey, displayEntries],
+  )
 
   const handleRecycleFromDetail = () => {
     if (detailTarget?.userCard) {
@@ -188,6 +201,8 @@ function Collection() {
           onRarityChange={setRarity}
           variant={variant}
           onVariantChange={setVariant}
+          ownership={ownership}
+          onOwnershipChange={setOwnership}
         />
       </ArcadeCard>
 
@@ -210,7 +225,7 @@ function Collection() {
 
       <CardViewModal
         entry={detailTarget}
-        onClose={() => setDetailTarget(null)}
+        onClose={() => setDetailKey(null)}
         onRecycle={handleRecycleFromDetail}
       />
       {recycleTarget && (
@@ -223,7 +238,7 @@ function Collection() {
           }}
           onRecycled={() => {
             setRecycleTarget(null)
-            setDetailTarget(null)
+            setDetailKey(null)
           }}
           card={{ ...recycleTarget.card, quantity: recycleTarget.quantity }}
           variant={recycleTarget.variant}
