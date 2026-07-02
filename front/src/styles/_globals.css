@@ -958,6 +958,45 @@ h6 {
   to { transform: scaleX(1); }
 }
 
+/* Click feedback for the card level-up button. Squeeze → overshoot → settle,
+ * with a bright amber flash at the pinch. Big enough to feel like the button
+ * *did* something even if the mutation resolves in a few ms. */
+@keyframes cardLevelUpPress {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 12px 26px -10px rgba(245, 158, 11, 0.55);
+  }
+  25% {
+    transform: scale(0.92);
+    box-shadow: 0 4px 30px 4px rgba(245, 158, 11, 0.9);
+  }
+  60% {
+    transform: scale(1.05);
+    box-shadow: 0 18px 34px -8px rgba(245, 158, 11, 0.7);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 12px 26px -10px rgba(245, 158, 11, 0.55);
+  }
+}
+
+/* Pop animation for stat / level numbers that just increased. Amber tint at
+ * the peak so the eye is drawn to what changed. */
+@keyframes cardStatPop {
+  0% {
+    transform: scale(1);
+    color: inherit;
+  }
+  35% {
+    transform: scale(1.35);
+    color: #f59e0b;
+  }
+  100% {
+    transform: scale(1);
+    color: inherit;
+  }
+}
+
 @keyframes levelUpFadeOut {
   from { opacity: 1; }
   to { opacity: 0; }

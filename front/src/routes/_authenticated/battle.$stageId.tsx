@@ -22,8 +22,24 @@ import { Dialog } from 'radix-ui'
 
 import { Popup, PopupContent } from '../../components/ui/popup.tsx'
 import { isApiError } from '../../libs/httpErrorHandler.ts'
-import { useAttackStage } from '../../queries/useCampaign.ts'
+import { useAttackStage, useCampaign } from '../../queries/useCampaign.ts'
 import { useCombatTeam } from '../../queries/useCombatTeam.ts'
+
+// Chapter titles — kept in sync with campaign.tsx's CHAPTER_META. Extracting
+// to a shared module would be nicer but the list is short enough that a
+// duplicate is cheaper than the extra indirection.
+const CHAPTER_TITLES = [
+  'Plaines',
+  'Forêt des Murmures',
+  'Cendres',
+  'Océan',
+  'Cristaux',
+  'Volcan',
+  'Toundra',
+]
+function chapterTitle(n: number): string {
+  return CHAPTER_TITLES[n - 1] ?? `Chapitre ${n}`
+}
 
 export const Route = createFileRoute('/_authenticated/battle/$stageId')({
   component: BattlePage,
@@ -32,6 +48,7 @@ export const Route = createFileRoute('/_authenticated/battle/$stageId')({
 function BattlePage() {
   const { stageId } = Route.useParams()
   const team = useCombatTeam()
+  const campaign = useCampaign()
   const navigate = useNavigate()
   const [sceneDone, setSceneDone] = useState(false)
   const [showResult, setShowResult] = useState(false)
@@ -45,6 +62,16 @@ function BattlePage() {
   // hit (and PC billed) exactly once.
   const attack = useAttackStage(stageId, teamReady)
   const result = attack.data ?? null
+
+  // Find the stage's label + chapter title from the campaign snapshot so the
+  // victory subtitle can read "NIVEAU 2-4 · FORÊT DES MURMURES".
+  const stageInfo = (() => {
+    for (const ch of campaign.data?.chapters ?? []) {
+      const s = ch.stages.find((st) => st.id === stageId)
+      if (s) return { label: s.label, chapterTitle: chapterTitle(ch.chapter) }
+    }
+    return null
+  })()
 
   useEffect(() => {
     if (sceneDone && result) {
@@ -144,6 +171,7 @@ function BattlePage() {
             {result.won ? (
               <VictoryPanel
                 result={result}
+                stageInfo={stageInfo}
                 onReplay={handleReplay}
                 onBack={handleBackToCampaign}
               />
@@ -189,10 +217,12 @@ function NoTeamNotice() {
 
 function VictoryPanel({
   result,
+  stageInfo,
   onReplay,
   onBack,
 }: {
   result: BattleResult
+  stageInfo: { label: string; chapterTitle: string } | null
   onReplay: () => void
   onBack: () => void
 }) {
@@ -216,6 +246,11 @@ function VictoryPanel({
         <h2 className="mt-4 font-display text-3xl font-bold text-text">
           Victoire !
         </h2>
+        {stageInfo && (
+          <p className="mt-1 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-text-light/70">
+            Niveau {stageInfo.label} · {stageInfo.chapterTitle}
+          </p>
+        )}
         {rewards?.isFirstClear && (
           <p className="mt-1 font-mono text-xs font-bold uppercase tracking-widest text-amber-600">
             Premier passage
@@ -424,19 +459,22 @@ function XpBar({
         </span>
       </div>
       <div className="relative h-2 w-full overflow-hidden rounded-full bg-[rgba(27,23,38,0.08)]">
-        {/* Current XP (blue) */}
+        {/* Gain from this battle (orange) — rendered FIRST so the blue "current"
+            fill can sit on top and hide the ~4% overlap on the left. The overlap
+            makes the joint feel like the orange grows from *under* the blue
+            instead of butting flush against it. */}
+        <div
+          className="absolute inset-y-0 rounded-r-full bg-gradient-to-r from-amber-400 to-orange-500 animate-[battleXpGrow_0.6s_ease_forwards]"
+          style={{
+            left: `${Math.max(0, pctBefore - 4)}%`,
+            width: `${pctAfter - Math.max(0, pctBefore - 4)}%`,
+            transformOrigin: 'left center',
+          }}
+        />
+        {/* Current XP (blue) — sits on top of the orange overlap. */}
         <div
           className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-sky-500 to-blue-500"
           style={{ width: `${pctBefore}%` }}
-        />
-        {/* Gain from this battle (orange) */}
-        <div
-          className="absolute inset-y-0 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 animate-[battleXpGrow_0.6s_ease_forwards]"
-          style={{
-            left: `${pctBefore}%`,
-            width: `${pctGain}%`,
-            transformOrigin: 'left center',
-          }}
         />
       </div>
       <p className="mt-1 text-right font-mono text-[11px] font-bold tabular-nums text-orange-600">

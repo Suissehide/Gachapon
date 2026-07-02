@@ -58,7 +58,7 @@ export const Route = createFileRoute('/_authenticated/campaign')({
 // stable across sessions.
 const CHAPTER_META: { title: string; hue: number }[] = [
   { title: 'Plaines', hue: 35 },
-  { title: 'Forêt', hue: 150 },
+  { title: 'Forêt des Murmures', hue: 150 },
   { title: 'Cendres', hue: 320 },
   { title: 'Océan', hue: 200 },
   { title: 'Cristaux', hue: 280 },

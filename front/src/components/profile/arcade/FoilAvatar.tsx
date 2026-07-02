@@ -8,16 +8,26 @@ type Props = {
   className?: string
 }
 
-export function FoilAvatar({ initials, isMax = false, size = 112, className }: Props) {
+export function FoilAvatar({
+  initials,
+  isMax = false,
+  size = 112,
+  className,
+}: Props) {
   return (
-    <div className={cn('relative shrink-0', className)} style={{ width: size, height: size }}>
+    <div
+      className={cn('relative shrink-0', className)}
+      style={{ width: size, height: size }}
+    >
       <div
         className="absolute inset-0 rounded-[24%]"
         style={{
           background:
             'conic-gradient(from 0deg, #f59e0b, #ec4899, #8b5cf6, #3b82f6, #22c55e, #f59e0b)',
-          padding: 6,
-          filter: isMax ? 'drop-shadow(0 0 14px rgba(245,158,11,.55))' : undefined,
+          padding: 4,
+          filter: isMax
+            ? 'drop-shadow(0 0 14px rgba(245,158,11,.55))'
+            : undefined,
         }}
       >
         <div

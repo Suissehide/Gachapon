@@ -1,6 +1,7 @@
 import {
   Coins,
   Heart,
+  Loader2,
   Lock,
   Shield,
   Sparkles,
@@ -102,7 +103,13 @@ export function CombatPanel({
           </span>
         </div>
         <div className="mt-1.5 font-display text-[26px] font-extrabold leading-none -tracking-[0.01em] text-text">
-          Niveau {level}{' '}
+          Niveau{' '}
+          <span
+            key={level}
+            className="inline-block animate-[cardStatPop_0.55s_cubic-bezier(0.25,1.6,0.4,1)]"
+          >
+            {level}
+          </span>{' '}
           <span className="font-bold text-[rgba(27,23,38,0.4)]">
             / {palierMax}
           </span>
@@ -265,15 +272,29 @@ function LevelUpAction({
   if (!dustOk) {
     missing.push('de poussière')
   }
+  // Click feedback — replays the press animation on every click (bumping the
+  // key remounts the animated node so the keyframe restarts from 0).
+  const [pressKey, setPressKey] = useState(0)
+  const handleClick = () => {
+    setPressKey((k) => k + 1)
+    onLevelUp()
+  }
   return (
     <div className="mt-4">
       <Button
-        onClick={onLevelUp}
+        key={pressKey}
+        onClick={handleClick}
         disabled={!canLevel || working}
-        className="h-auto w-full justify-between rounded-[14px] bg-gradient-to-br from-[#f59e0b] to-[#f97316] px-[18px] py-[15px] text-[15.5px] font-bold text-white shadow-[0_12px_26px_-10px_rgba(245,158,11,0.55)] hover:-translate-y-[1px] hover:from-[#f59e0b] hover:to-[#f97316] hover:shadow-[0_12px_26px_-10px_rgba(245,158,11,0.55)] disabled:cursor-not-allowed disabled:border disabled:border-[rgba(27,23,38,0.08)] disabled:bg-[#eceae4] disabled:bg-none disabled:text-[rgba(27,23,38,0.45)] disabled:opacity-100 disabled:shadow-none"
+        className={`h-auto w-full justify-between rounded-[14px] bg-gradient-to-br from-[#f59e0b] to-[#f97316] px-[18px] py-[15px] text-[15.5px] font-bold text-white shadow-[0_12px_26px_-10px_rgba(245,158,11,0.55)] hover:-translate-y-[1px] hover:from-[#f59e0b] hover:to-[#f97316] hover:shadow-[0_12px_26px_-10px_rgba(245,158,11,0.55)] active:scale-[0.98] disabled:cursor-not-allowed disabled:border disabled:border-[rgba(27,23,38,0.08)] disabled:bg-[#eceae4] disabled:bg-none disabled:text-[rgba(27,23,38,0.45)] disabled:opacity-100 disabled:shadow-none ${
+          pressKey > 0 ? 'animate-[cardLevelUpPress_0.32s_ease]' : ''
+        }`}
       >
         <span className="inline-flex items-center gap-[9px]">
-          <TrendingUp className="h-[17px] w-[17px]" />
+          {working ? (
+            <Loader2 className="h-[17px] w-[17px] animate-spin" />
+          ) : (
+            <TrendingUp className="h-[17px] w-[17px]" />
+          )}
           {working ? 'En cours…' : 'Monter au niveau sup.'}
         </span>
         <span
