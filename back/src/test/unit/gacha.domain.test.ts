@@ -80,4 +80,28 @@ describe('pickVariant', () => {
     jest.spyOn(Math, 'random').mockReturnValue(0.04) // roll=4, brilliantLegendary=5 → BRILLIANT
     expect(pickVariant('LEGENDARY', RATES)).toBe('BRILLIANT')
   })
+
+  it('régression unité: taux 100 => variante garantie (BRILLIANT pour RARE)', () => {
+    const ratesMax = {
+      brilliantRateRare: 100, brilliantRateEpic: 100, brilliantRateLegendary: 100,
+      holoRateRare: 100, holoRateEpic: 100, holoRateLegendary: 100,
+    }
+    for (let i = 0; i < 20; i++) {
+      expect(pickVariant('RARE', ratesMax)).toBe('BRILLIANT')
+      expect(pickVariant('EPIC', ratesMax)).toBe('BRILLIANT')
+      expect(pickVariant('LEGENDARY', ratesMax)).toBe('BRILLIANT')
+    }
+  })
+
+  it('régression unité: taux 0 => toujours NORMAL', () => {
+    const ratesZero = {
+      brilliantRateRare: 0, brilliantRateEpic: 0, brilliantRateLegendary: 0,
+      holoRateRare: 0, holoRateEpic: 0, holoRateLegendary: 0,
+    }
+    for (let i = 0; i < 20; i++) {
+      expect(pickVariant('RARE', ratesZero)).toBe('NORMAL')
+      expect(pickVariant('EPIC', ratesZero)).toBe('NORMAL')
+      expect(pickVariant('LEGENDARY', ratesZero)).toBe('NORMAL')
+    }
+  })
 })

@@ -228,8 +228,15 @@ export class CampaignDomain {
     teamA: SimulatorUnit[]
     teamB: SimulatorUnit[]
   }> {
-    return retryOnSerialization(() =>
-      this.#postgresOrm.executeWithTransactionClient(
+    return retryOnSerialization(async () => {
+      // Lire la config AVANT la transaction (évite les I/O async dans un tx Serializable)
+      const battleCfg = await this.#configService.getMany(
+        'combat.battleCost',
+        'xp.base',
+        'xp.slope',
+        'xp.levelCap',
+      )
+      return this.#postgresOrm.executeWithTransactionClient(
         // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing, refactor deferred
         async (tx) => {
           const stage = await tx.campaignStage.findUnique({
@@ -239,13 +246,7 @@ export class CampaignDomain {
             throw Boom.notFound('Stage not found')
           }
 
-          // Debit PC (cost from GlobalConfig, falls back to 6 if missing)
-          const battleCfg = await this.#configService.getMany(
-            'combat.battleCost',
-            'xp.base',
-            'xp.slope',
-            'xp.levelCap',
-          )
+          // Debit PC (cost from GlobalConfig, default 5)
           const battleCost = battleCfg['combat.battleCost']
           await this.#combatPointsTx.debitInTx(tx, userId, battleCost)
 
@@ -361,8 +362,8 @@ export class CampaignDomain {
           }
         },
         { isolationLevel: 'Serializable' },
-      ),
-    )
+      )
+    })
   }
 
   /**
@@ -385,8 +386,15 @@ export class CampaignDomain {
       throw Boom.badRequest('Sweep runs must be 1-10')
     }
 
-    return retryOnSerialization(() =>
-      this.#postgresOrm.executeWithTransactionClient(
+    return retryOnSerialization(async () => {
+      // Lire la config AVANT la transaction (évite les I/O async dans un tx Serializable)
+      const sweepCfg = await this.#configService.getMany(
+        'combat.sweepCost',
+        'xp.base',
+        'xp.slope',
+        'xp.levelCap',
+      )
+      return this.#postgresOrm.executeWithTransactionClient(
         // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing, refactor deferred
         async (tx) => {
           const stage = await tx.campaignStage.findUnique({
@@ -396,13 +404,7 @@ export class CampaignDomain {
             throw Boom.notFound('Stage not found')
           }
 
-          // Debit PC per run (cost from GlobalConfig, falls back to 6 if missing)
-          const sweepCfg = await this.#configService.getMany(
-            'combat.sweepCost',
-            'xp.base',
-            'xp.slope',
-            'xp.levelCap',
-          )
+          // Debit PC par run (coût depuis GlobalConfig, défaut 5)
           const sweepCost = sweepCfg['combat.sweepCost']
           await this.#combatPointsTx.debitInTx(tx, userId, sweepCost * runs)
 
@@ -531,8 +533,8 @@ export class CampaignDomain {
           }
         },
         { isolationLevel: 'Serializable' },
-      ),
-    )
+      )
+    })
   }
 
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing, refactor deferred
