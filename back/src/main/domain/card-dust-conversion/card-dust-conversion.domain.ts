@@ -3,30 +3,22 @@ import Boom from '@hapi/boom'
 import type { IocContainer } from '../../types/application/ioc'
 import { retryOnSerialization } from '../shared/retry-serialization'
 
-const DUST_BY_RARITY: Record<
-  'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY',
-  number
-> = {
-  COMMON: 5,
-  UNCOMMON: 15,
-  RARE: 40,
-  EPIC: 100,
-  LEGENDARY: 300,
-}
-
 export class CardDustConversionDomain {
   readonly #postgresOrm
   readonly #skillTreeRepository
   readonly #achievementsDomain
+  readonly #configService
 
   constructor({
     postgresOrm,
     skillTreeRepository,
     achievementsDomain,
+    configService,
   }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#skillTreeRepository = skillTreeRepository
     this.#achievementsDomain = achievementsDomain
+    this.#configService = configService
   }
 
   convert(
@@ -41,8 +33,24 @@ export class CardDustConversionDomain {
     return retryOnSerialization(async () => {
       // Read skill multiplier outside the TX — it depends on user-owned
       // SkillNode levels which the conversion does not mutate.
-      const upgrades = await this.#skillTreeRepository.getEffectsForUser(userId)
+      const [upgrades, dust] = await Promise.all([
+        this.#skillTreeRepository.getEffectsForUser(userId),
+        this.#configService.getMany(
+          'dustCommon',
+          'dustUncommon',
+          'dustRare',
+          'dustEpic',
+          'dustLegendary',
+        ),
+      ])
       const dustHarvestMultiplier = upgrades.dustHarvestMultiplier ?? 1
+      const dustByRarity = {
+        COMMON: dust.dustCommon,
+        UNCOMMON: dust.dustUncommon,
+        RARE: dust.dustRare,
+        EPIC: dust.dustEpic,
+        LEGENDARY: dust.dustLegendary,
+      } as const
 
       return this.#postgresOrm.executeWithTransactionClient(
         async (tx) => {
@@ -59,7 +67,7 @@ export class CardDustConversionDomain {
             )
           }
 
-          const perCopy = DUST_BY_RARITY[userCard.card.rarity]
+          const perCopy = dustByRarity[userCard.card.rarity]
           const dustEarned = Math.round(perCopy * amount * dustHarvestMultiplier)
 
           await tx.userCard.update({
