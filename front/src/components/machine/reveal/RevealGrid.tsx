@@ -62,7 +62,7 @@ export function RevealGrid({ results, onAllRevealed }: Props) {
   const isSingle = results.length === 1
 
   return (
-    <div className='fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/85 backdrop-blur-md'>
+    <div data-reveal-modal className='fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/85 backdrop-blur-md'>
       <div
         className={
           isSingle
@@ -74,7 +74,6 @@ export function RevealGrid({ results, onAllRevealed }: Props) {
           <RevealCard
             key={key}
             entry={entry}
-            index={idx}
             flipped={flipped.has(idx)}
             onFlip={() => flipCard(idx)}
             size={isSingle ? 'lg' : 'sm'}
@@ -98,7 +97,6 @@ export function RevealGrid({ results, onAllRevealed }: Props) {
 
 type CardProps = {
   entry: PullBatchEntry
-  index: number
   flipped: boolean
   onFlip: () => void
   size: 'lg' | 'sm'
@@ -137,6 +135,12 @@ function RevealCard({ entry, flipped, onFlip, size }: CardProps) {
             fontSize: size === 'lg' ? '3rem' : '1.5rem',
             color: effectConfig.impactColor,
             WebkitTextStroke: `2px ${effectConfig.impactStroke}`,
+            textShadow: effectConfig.impactExtraShadow ?? [
+              `3px 3px 0 ${effectConfig.impactStroke}`,
+              `6px 6px 0 ${effectConfig.impactStroke}`,
+              `9px 9px 0 rgba(0,0,0,0.2)`,
+              `-1px -1px 0 ${effectConfig.impactStroke}`,
+            ].join(', '),
             letterSpacing: '0.04em',
             textTransform: 'uppercase',
             pointerEvents: 'none',
