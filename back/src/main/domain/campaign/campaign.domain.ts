@@ -234,7 +234,13 @@ export class CampaignDomain {
         }
 
         // Debit PC (cost from GlobalConfig, falls back to 6 if missing)
-        const battleCost = await this.#configService.get('combat.battleCost')
+        const battleCfg = await this.#configService.getMany(
+          'combat.battleCost',
+          'xp.base',
+          'xp.slope',
+          'xp.levelCap',
+        )
+        const battleCost = battleCfg['combat.battleCost']
         await this.#combatPointsTx.debitInTx(tx, userId, battleCost)
 
         const user = await tx.user.findUnique({ where: { id: userId } })
@@ -302,7 +308,15 @@ export class CampaignDomain {
         if (won) {
           const loot = stage.lootTable as unknown as LootTable
           const isFirstClear = !isAlreadyCleared
-          rewards = await this.#applyRewards(tx, userId, loot, isFirstClear)
+          rewards = await this.#applyRewards(
+            tx,
+            userId,
+            loot,
+            isFirstClear,
+            battleCfg['xp.base'],
+            battleCfg['xp.slope'],
+            battleCfg['xp.levelCap'],
+          )
 
           if (isFirstClear) {
             if (isNewChapterFirst) {
@@ -376,7 +390,13 @@ export class CampaignDomain {
         }
 
         // Debit PC per run (cost from GlobalConfig, falls back to 6 if missing)
-        const sweepCost = await this.#configService.get('combat.sweepCost')
+        const sweepCfg = await this.#configService.getMany(
+          'combat.sweepCost',
+          'xp.base',
+          'xp.slope',
+          'xp.levelCap',
+        )
+        const sweepCost = sweepCfg['combat.sweepCost']
         await this.#combatPointsTx.debitInTx(tx, userId, sweepCost * runs)
 
         const progress = await tx.userCampaignProgress.findUnique({
@@ -472,7 +492,12 @@ export class CampaignDomain {
         })
         const oldLevel = userBefore?.level ?? 1
         const newXp = (userBefore?.xp ?? 0) + totalXp
-        const newLevel = calculateLevel(newXp)
+        const newLevel = calculateLevel(
+          newXp,
+          sweepCfg['xp.base'],
+          sweepCfg['xp.slope'],
+          sweepCfg['xp.levelCap'],
+        )
         await tx.user.update({
           where: { id: userId },
           data: {
@@ -508,6 +533,9 @@ export class CampaignDomain {
     userId: string,
     loot: LootTable,
     isFirstClear: boolean,
+    xpBase: number,
+    xpSlope: number,
+    xpLevelCap: number,
   ): Promise<BattleRewards> {
     let gold = 0
     let dust = 0
@@ -684,7 +712,7 @@ export class CampaignDomain {
     })
     const oldLevel = userBefore?.level ?? 1
     const newXp = (userBefore?.xp ?? 0) + xp
-    const newLevel = calculateLevel(newXp)
+    const newLevel = calculateLevel(newXp, xpBase, xpSlope, xpLevelCap)
     await tx.user.update({
       where: { id: userId },
       data: {

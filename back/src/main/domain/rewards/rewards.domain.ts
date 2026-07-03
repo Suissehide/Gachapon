@@ -94,7 +94,13 @@ export class RewardsDomain implements RewardsDomainInterface {
 
         const [upgrades, cfg] = await Promise.all([
           this.#skillTreeRepository.getEffectsForUser(userId),
-          this.#configService.getMany('tokenRegenIntervalMinutes', 'tokenMaxStock'),
+          this.#configService.getMany(
+            'tokenRegenIntervalMinutes',
+            'tokenMaxStock',
+            'xp.base',
+            'xp.slope',
+            'xp.levelCap',
+          ),
         ])
         const effectiveInterval = Math.max(
           1,
@@ -111,7 +117,12 @@ export class RewardsDomain implements RewardsDomainInterface {
         const newTokens = regenTokens + rewardTokens
         const newDust = user.dust + dust
         const newXp = user.xp + xp
-        const newLevel = calculateLevel(newXp)
+        const newLevel = calculateLevel(
+          newXp,
+          cfg['xp.base'],
+          cfg['xp.slope'],
+          cfg['xp.levelCap'],
+        )
 
         await this.#userRepository.updateAfterClaimInTx(tx, userId, {
           tokens: newTokens,
@@ -195,7 +206,13 @@ export class RewardsDomain implements RewardsDomainInterface {
 
         const [upgrades, cfg] = await Promise.all([
           this.#skillTreeRepository.getEffectsForUser(userId),
-          this.#configService.getMany('tokenRegenIntervalMinutes', 'tokenMaxStock'),
+          this.#configService.getMany(
+            'tokenRegenIntervalMinutes',
+            'tokenMaxStock',
+            'xp.base',
+            'xp.slope',
+            'xp.levelCap',
+          ),
         ])
         const effectiveInterval = Math.max(
           1,
@@ -212,7 +229,12 @@ export class RewardsDomain implements RewardsDomainInterface {
         const newTokens = regenTokens + totalTokens
         const newDust = user.dust + totalDust
         const newXp = user.xp + totalXp
-        const newLevel = calculateLevel(newXp)
+        const newLevel = calculateLevel(
+          newXp,
+          cfg['xp.base'],
+          cfg['xp.slope'],
+          cfg['xp.levelCap'],
+        )
 
         await this.#userRepository.updateAfterClaimInTx(tx, userId, {
           tokens: newTokens,
