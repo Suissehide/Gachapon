@@ -29,7 +29,7 @@ cd back && npm run prisma:migrate:dev && npm run db:seed
 
 # 4. Lancer les serveurs de développement
 cd back && npm run dev   # http://localhost:3000
-cd front && npm run dev  # http://localhost:5173
+cd front && npm run dev  # http://localhost:4269
 ```
 
 ## Structure du projet

@@ -41,7 +41,7 @@ Run a single Jest test file: `npx jest -c src/test/jest.config.ts path/to/file.t
 
 | | |
 |---|---|
-| `npm run dev` | Vite dev server on **port 4269** (not 5173 — the README is stale) |
+| `npm run dev` | Vite dev server on **port 4269** (not the 5173 Vite default) |
 | `npm run build` | `tsc -b && vite build`, followed by `scripts/prerender-seo.mjs` |
 | `npm run lint` | Biome lint on `src` |
 
@@ -49,7 +49,7 @@ Frontend has no test runner configured.
 
 ### Pre-commit
 
-Husky `pre-commit` in both packages runs `npm test`. For the backend that means the full Jest suite — keep the test DB available, or stage from a clean state and accept the local fail.
+A single root hook (`.husky/pre-commit`, activated via `core.hooksPath` by the `prepare` script of either package on `npm install`) runs Biome **on the staged files only** — the codebase has pre-existing lint errors, so a full-package lint would block every commit. `back/` staged additionally runs the unit tests (no e2e, no DB needed). E2E tests run in CI / `npm run validate` only.
 
 ## Workflow
 
@@ -140,7 +140,7 @@ SEO postbuild — `scripts/prerender-seo.mjs` rewrites per-route `<title>`/`<met
 | `switch.tsx` / `label.tsx` | `Switch` (Radix), `Label` |
 | `datePicker.tsx` / `timePicker.tsx` | `DatePicker` / `TimePicker` — MUI X wrapped in Tailwind styling (24h clock) |
 | `toast.tsx` / `toaster.tsx` | Radix Toast primitives + `Toaster` (mounted once at app root) — don't use directly, go through `useToast()` |
-| `fieldInfo.tsx` / `formField.tsx` | `FieldInfo` (TanStack Form errors), `FormField` (layout wrapper). `field.tsx` is a legacy Radix-Form wrapper — prefer the TanStack Form factory |
+| `fieldInfo.tsx` / `formField.tsx` | `FieldInfo` (TanStack Form errors), `FormField` (layout wrapper) — always via the TanStack Form factory below |
 
 **Forms — TanStack Form via the app factory.** Use `useAppForm` from `src/hooks/formConfig.tsx` (built with `createFormHook`); it pre-registers field components (Input, Password, Select, Number, DatePicker, TimePicker, Checkbox, TextArea, ColorPicker, Toggle, FileInput) and a `SubmitButton`. Field components render `<FieldInfo field={field} />` for errors. Do **not** introduce react-hook-form. Example consumer: `components/admin/cards/CreateCardSheet.tsx`.
 
@@ -157,7 +157,7 @@ SEO postbuild — `scripts/prerender-seo.mjs` rewrites per-route `<title>`/`<met
 
 ## Conventions
 
-- **Biome** is the linter/formatter for both packages (single quotes, no semicolons, space indent). The frontend README mentions ESLint — it's stale, the actual config is `front/biome.json`. Backend Biome rules enforce no barrel files, no re-export-all, no unused vars/imports, mandatory `await` on async fns.
+- **Biome** is the linter/formatter for both packages (single quotes, no semicolons, space indent; config in `back/biome.json` / `front/biome.json`). Backend Biome rules enforce no barrel files, no re-export-all, no unused vars/imports, mandatory `await` on async fns.
 - **Filenames**: backend uses `kebab-case.ts`; frontend mixes `PascalCase.tsx` for components and `camelCase.ts` for utilities/api/store files. UI primitives import with explicit extension (`from '../ui/button.tsx'`).
 - **Generated code is not linted**: `back/src/generated/**` and `back/src/test/**` are excluded from Biome.
 - **Domain logic stays pure**. Side effects (DB, HTTP, time) come from injected dependencies — that's why the unit tests in `src/test/unit/` can run without any infrastructure while e2e tests boot the full app via `helpers/build-test-app.ts`.
@@ -165,9 +165,9 @@ SEO postbuild — `scripts/prerender-seo.mjs` rewrites per-route `<title>`/`<met
 
 ## Things that bite
 
-- The frontend dev port is **4269**, not the Vite default and not what `README.md` claims.
+- The frontend dev port is **4269**, not the Vite default.
 - Frontend uses `VITE_API_URL` (build-time, baked into the bundle) — changing it requires a rebuild, not just a restart.
 - `back/.env*` and `deploy/.env*` are different files for different worlds. Migrating a config var means touching both if it's needed in prod.
 - When adding a new domain/repo, you must update **both** `types/application/ioc.ts` and `awilix-ioc-container.ts`, or DI resolution will throw at startup.
-- Husky's `pre-commit` runs the full backend test suite; e2e tests need Postgres. If you're committing a frontend-only change, the backend hook can still fire (depending on cwd) — start the DB or stage from `front/`.
+- The pre-commit hook lives at the repo root (`.husky/pre-commit`) and only fires for packages with staged files. If it doesn't run at all, `core.hooksPath` isn't set — run `npm install` in `back/` or `front/` (their `prepare` script wires it).
 - `docs/` is gitignored (see `.gitignore`); don't expect to commit specs there.

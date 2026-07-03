@@ -1,54 +1,36 @@
-# React + TypeScript + Vite
+# Gachapon — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+App React du Gachapon multijoueur. Voir le [README racine](../README.md) pour le démarrage complet (base de données, backend, variables d'environnement).
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- React 19 + TypeScript, bundlé par Vite (plugin SWC)
+- TanStack Router (routes fichiers, `routeTree.gen.ts` généré — ne pas éditer), Query, Form, Table
+- Tailwind CSS v4 (config CSS-first dans `src/styles/_globals.css`) + Radix UI
+- Zustand pour l'état client, react-three-fiber pour la 3D
+- Biome pour le lint/format (`biome.json`)
 
-## Expanding the ESLint configuration
+## Scripts
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+| Commande          | Description                                        |
+| ----------------- | -------------------------------------------------- |
+| `npm run dev`     | Serveur de dev Vite sur <http://localhost:4269>    |
+| `npm run build`   | `tsc -b` + build Vite, puis pré-rendu SEO (`scripts/prerender-seo.mjs`) |
+| `npm run lint`    | Lint Biome sur `src`                               |
+| `npm run preview` | Prévisualise le build de prod                      |
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## Organisation
+
+```
+src/
+  api/         wrappers fetch par ressource (via fetchWithAuth)
+  queries/     hooks React Query construits sur src/api
+  stores/      stores Zustand (état client uniquement)
+  routes/      routes TanStack Router (générées dans routeTree.gen.ts)
+  components/
+    ui/        primitives réutilisables (Button, Popup, Sheet, …) — toujours partir d'ici
+    machine/   machines 3D (gashapon, claw) + animations de reveal
+  styles/      tokens (_colors.css), thème Tailwind (_globals.css)
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+L'URL de l'API vient de `VITE_API_URL` (variable de build, intégrée au bundle).
