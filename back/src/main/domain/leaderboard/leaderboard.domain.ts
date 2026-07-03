@@ -1,4 +1,3 @@
-import { computeFinalStats } from '../combat/combat-stats.domain'
 import type { IocContainer } from '../../types/application/ioc'
 import type {
   CollectorEntry,
@@ -10,11 +9,12 @@ import type {
 import { LEADERBOARD_TOP_N } from '../../types/domain/leaderboard/leaderboard.domain.interface'
 import type {
   CollectorRankingRowWithLevel,
-  TeamForRanking,
   ILeaderboardRepository,
+  TeamForRanking,
 } from '../../types/infra/orm/repositories/leaderboard.repository.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 import type { EquipmentBonuses } from '../combat/combat-stats.domain'
+import { computeFinalStats } from '../combat/combat-stats.domain'
 
 export class LeaderboardDomain implements ILeaderboardDomain {
   readonly #leaderboardRepository: ILeaderboardRepository
@@ -30,8 +30,7 @@ export class LeaderboardDomain implements ILeaderboardDomain {
   ): Promise<LeaderboardResponse<CollectorEntry>> {
     const { total, variantEligible } =
       await this.#leaderboardRepository.countActiveCards()
-    const totalPossibleVariants =
-      total - variantEligible + variantEligible * 3
+    const totalPossibleVariants = total - variantEligible + variantEligible * 3
 
     const topRows =
       await this.#leaderboardRepository.getCollectorRankingWithLevel(
@@ -46,9 +45,8 @@ export class LeaderboardDomain implements ILeaderboardDomain {
 
     const users = await this.#userRepository.findManyByIds(userIdsToFetch)
     const userMap = new Map(users.map((u) => [u.id, u]))
-    const pulls = await this.#leaderboardRepository.countPullsByUsers(
-      userIdsToFetch,
-    )
+    const pulls =
+      await this.#leaderboardRepository.countPullsByUsers(userIdsToFetch)
     const legendaries =
       await this.#leaderboardRepository.countLegendariesByUsers(userIdsToFetch)
 
@@ -106,13 +104,16 @@ export class LeaderboardDomain implements ILeaderboardDomain {
     const myTeamId =
       await this.#leaderboardRepository.getTeamIdForUser(currentUserId)
     if (teams.length === 0) {
-      return { entries: [], currentUserEntry: null, currentUserTeamId: myTeamId }
+      return {
+        entries: [],
+        currentUserEntry: null,
+        currentUserTeamId: myTeamId,
+      }
     }
 
     const { total, variantEligible } =
       await this.#leaderboardRepository.countActiveCards()
-    const totalPossibleVariants =
-      total - variantEligible + variantEligible * 3
+    const totalPossibleVariants = total - variantEligible + variantEligible * 3
 
     const allMemberIds = [...new Set(teams.flatMap((t) => t.memberIds))]
     const memberCards =
@@ -143,9 +144,7 @@ export class LeaderboardDomain implements ILeaderboardDomain {
       return {
         team,
         cardPercentage:
-          total > 0
-            ? Math.round((distinctCardIds.size / total) * 100)
-            : 0,
+          total > 0 ? Math.round((distinctCardIds.size / total) * 100) : 0,
         variantPercentage:
           totalPossibleVariants > 0
             ? Math.round(
@@ -251,7 +250,9 @@ export class LeaderboardDomain implements ILeaderboardDomain {
     })
 
     scored.sort((a, b) => {
-      if (b.palier !== a.palier) { return b.palier - a.palier }
+      if (b.palier !== a.palier) {
+        return b.palier - a.palier
+      }
       return b.combatPower - a.combatPower
     })
 
@@ -282,7 +283,9 @@ export class LeaderboardDomain implements ILeaderboardDomain {
     if (!entries.find((e) => e.user.id === currentUserId)) {
       const myIndex = scored.findIndex((s) => s.userId === currentUserId)
       const myScored = myIndex >= 0 ? scored[myIndex] : undefined
-      if (myScored) { currentUserEntry = toEntry(myScored, myIndex + 1) }
+      if (myScored) {
+        currentUserEntry = toEntry(myScored, myIndex + 1)
+      }
     }
 
     return { entries, currentUserEntry }

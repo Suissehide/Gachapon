@@ -31,9 +31,7 @@ export class CardAscensionTx {
             throw Boom.notFound('UserCard not found')
           }
           if (userCard.palier >= MAX_PALIER) {
-            throw Boom.badRequest(
-              `Card already at max palier (${MAX_PALIER})`,
-            )
+            throw Boom.badRequest(`Card already at max palier (${MAX_PALIER})`)
           }
           if (!isAtTopOfPalier(userCard.level, userCard.palier)) {
             throw Boom.badRequest(

@@ -9,7 +9,13 @@ import type {
   SetProgressionDto,
 } from '../../types/domain/profile/profile.types'
 
-const RARITY_ORDER = ['LEGENDARY', 'EPIC', 'RARE', 'UNCOMMON', 'COMMON'] as const
+const RARITY_ORDER = [
+  'LEGENDARY',
+  'EPIC',
+  'RARE',
+  'UNCOMMON',
+  'COMMON',
+] as const
 
 type OwnedCardLike = { id: string; rarity: string }
 
@@ -124,12 +130,13 @@ export function hashHue(input: string): number {
 
 /** First 3 letters of the first word, ASCII-folded and uppercase. */
 export function deriveShort(name: string): string {
-  const folded = name
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-zA-Z]/g, ' ')
-    .trim()
-    .split(/\s+/)[0] ?? ''
+  const folded =
+    name
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-zA-Z]/g, ' ')
+      .trim()
+      .split(/\s+/)[0] ?? ''
   return folded.slice(0, 3).toUpperCase()
 }
 
@@ -160,10 +167,14 @@ export class ProfileDomain implements ProfileDomainInterface {
       BRILLIANT: 1,
       NORMAL: 0,
     }
-    const byCardId = new Map<string, typeof owned[number]>()
+    const byCardId = new Map<string, (typeof owned)[number]>()
     for (const uc of owned) {
       const current = byCardId.get(uc.card.id)
-      if (!current || (variantPriority[uc.variant] ?? 0) > (variantPriority[current.variant] ?? 0)) {
+      if (
+        !current ||
+        (variantPriority[uc.variant] ?? 0) >
+          (variantPriority[current.variant] ?? 0)
+      ) {
         byCardId.set(uc.card.id, uc)
       }
     }

@@ -50,6 +50,7 @@ export class CardLevelingTx {
 
     return retryOnSerialization(() =>
       this.#postgresOrm.executeWithTransactionClient(
+        // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing, refactor deferred
         async (tx) => {
           const userCard = await tx.userCard.findUnique({
             where: { id: userCardId },
@@ -75,8 +76,22 @@ export class CardLevelingTx {
           }
 
           const rarity = userCard.card.rarity
-          const goldCost = totalGoldCost(currentLevel, targetLevel, rarity, c['card.goldCostBase'], c['card.goldCostExp'], rarityMult)
-          const dustCost = totalDustCost(currentLevel, targetLevel, rarity, c['card.dustCostBase'], c['card.dustCostExp'], rarityMult)
+          const goldCost = totalGoldCost(
+            currentLevel,
+            targetLevel,
+            rarity,
+            c['card.goldCostBase'],
+            c['card.goldCostExp'],
+            rarityMult,
+          )
+          const dustCost = totalDustCost(
+            currentLevel,
+            targetLevel,
+            rarity,
+            c['card.dustCostBase'],
+            c['card.dustCostExp'],
+            rarityMult,
+          )
 
           const user = await tx.user.findUnique({ where: { id: userId } })
           if (!user) {

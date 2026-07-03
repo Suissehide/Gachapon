@@ -21,7 +21,10 @@ const computeOwnRarityCount = (
   state: UserAchievementState,
 ): number => {
   if (criterion.rarity && criterion.variant) {
-    return state.ownedByRarityVariant[`${criterion.rarity}_${criterion.variant}`] ?? 0
+    return (
+      state.ownedByRarityVariant[`${criterion.rarity}_${criterion.variant}`] ??
+      0
+    )
   }
   if (criterion.rarity) {
     // `ownedByRarity` is built sparsely (only keys the user owns), so missing

@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import type { IocContainer } from '../../types/application/ioc'
+import type { UserUpgradeEffects } from '../../types/domain/economy/economy.types'
 import type { GachaDomainInterface } from '../../types/domain/gacha/gacha.domain.interface'
 import type {
   CardVariant,
@@ -17,10 +18,9 @@ import type { IGachaPullRepository } from '../../types/infra/orm/repositories/ga
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 import type { IUserCardRepository } from '../../types/infra/orm/repositories/user-card.repository.interface'
+import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import { calculateTokens } from '../economy/economy.domain'
 import { calculateLevel } from '../shared/xp'
-import type { UserUpgradeEffects } from '../../types/domain/economy/economy.types'
-import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 
 export function pickWeightedRandom(cards: CardWithSet[]): CardWithSet {
   if (cards.length === 0) {
@@ -226,8 +226,18 @@ export class GachaDomain implements GachaDomainInterface {
     const isLegendary = card.rarity === 'LEGENDARY'
     const newPityCurrent = isLegendary ? 0 : user.pityCurrent + 1
     const xpGained = cfg.xpPerPull
-    const oldLevel = calculateLevel(user.xp, cfg.xpCurve.base, cfg.xpCurve.slope, cfg.xpCurve.levelCap)
-    const newLevel = calculateLevel(user.xp + xpGained, cfg.xpCurve.base, cfg.xpCurve.slope, cfg.xpCurve.levelCap)
+    const oldLevel = calculateLevel(
+      user.xp,
+      cfg.xpCurve.base,
+      cfg.xpCurve.slope,
+      cfg.xpCurve.levelCap,
+    )
+    const newLevel = calculateLevel(
+      user.xp + xpGained,
+      cfg.xpCurve.base,
+      cfg.xpCurve.slope,
+      cfg.xpCurve.levelCap,
+    )
     await this.#userRepository.updateAfterPullInTx(tx, userId, {
       tokens: tokens - cfg.pullTokenCost,
       dustIncrement: dustEarned,

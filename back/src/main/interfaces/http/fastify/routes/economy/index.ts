@@ -1,8 +1,8 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
-import { ASCENSION_STAT_BONUS } from '../../../../../domain/combat/combat-stats.domain'
-import { STAT_GROWTH_PER_LEVEL } from '../../../../../domain/card-leveling/card-leveling.domain'
 import { MAX_PALIER } from '../../../../../domain/card-ascension/card-ascension.tx'
+import { STAT_GROWTH_PER_LEVEL } from '../../../../../domain/card-leveling/card-leveling.domain'
+import { ASCENSION_STAT_BONUS } from '../../../../../domain/combat/combat-stats.domain'
 
 export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
   fastify.get(
@@ -37,7 +37,11 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
         'combat.sweepCost',
       )
       return {
-        xp: { base: c['xp.base'], slope: c['xp.slope'], levelCap: c['xp.levelCap'] },
+        xp: {
+          base: c['xp.base'],
+          slope: c['xp.slope'],
+          levelCap: c['xp.levelCap'],
+        },
         gacha: {
           pullTokenCost: c['gacha.pullTokenCost'],
           pityThreshold: c.pityThreshold,

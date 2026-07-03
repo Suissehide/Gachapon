@@ -50,7 +50,6 @@ const DEFAULTS: Record<ConfigKey, number> = {
   'card.rarityMultLegendary': 3.0,
 }
 
-
 export class ConfigService implements ConfigServiceInterface {
   readonly #prisma: PostgresPrismaClient
   readonly #redis: RedisClientInterface

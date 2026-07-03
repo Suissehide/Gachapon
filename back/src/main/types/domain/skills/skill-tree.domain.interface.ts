@@ -1,5 +1,5 @@
-import type { SkillBranchWithNodes } from '../../infra/orm/repositories/skill-tree.repository.interface'
 import type { UserSkill } from '../../../../generated/client'
+import type { SkillBranchWithNodes } from '../../infra/orm/repositories/skill-tree.repository.interface'
 
 export type SkillTreeState = {
   branches: SkillBranchWithNodes[]

@@ -47,9 +47,17 @@ export type CombatTeamCardForPower = {
 
 export interface ILeaderboardRepository {
   countActiveCards(): Promise<ActiveCardCounts>
-  getCollectorRankingWithLevel(limit: number): Promise<CollectorRankingRowWithLevel[]>
-  getCurrentUserCollectorRow(userId: string): Promise<CollectorRankingRowWithLevel | null>
-  countCollectorsAhead(userId: string, distinctCards: number, totalVariants: number): Promise<number>
+  getCollectorRankingWithLevel(
+    limit: number,
+  ): Promise<CollectorRankingRowWithLevel[]>
+  getCurrentUserCollectorRow(
+    userId: string,
+  ): Promise<CollectorRankingRowWithLevel | null>
+  countCollectorsAhead(
+    userId: string,
+    distinctCards: number,
+    totalVariants: number,
+  ): Promise<number>
   countPullsByUsers(userIds: string[]): Promise<Map<string, number>>
   countLegendariesByUsers(userIds: string[]): Promise<Map<string, number>>
   getTeamsForRanking(): Promise<TeamForRanking[]>
@@ -57,9 +65,16 @@ export interface ILeaderboardRepository {
   getUserCardsByUserIds(userIds: string[]): Promise<UserCardForScoring[]>
   getActiveQuests(): Promise<QuestWithReward[]>
   countCampaignStages(): Promise<number>
-  getCampaignProgressByUsers(userIds: string[]): Promise<Map<string, { highestChapter: number; highestIndex: number }>>
-  computePalierForProgress(progress: { highestChapter: number; highestIndex: number } | null, stagesOrdered: { chapter: number; index: number }[]): number
+  getCampaignProgressByUsers(
+    userIds: string[],
+  ): Promise<Map<string, { highestChapter: number; highestIndex: number }>>
+  computePalierForProgress(
+    progress: { highestChapter: number; highestIndex: number } | null,
+    stagesOrdered: { chapter: number; index: number }[],
+  ): number
   getActiveUserIds(): Promise<string[]>
-  getCombatTeamCardsByUsers(userIds: string[]): Promise<Map<string, CombatTeamCardForPower[]>>
+  getCombatTeamCardsByUsers(
+    userIds: string[],
+  ): Promise<Map<string, CombatTeamCardForPower[]>>
   getAllCampaignStagesOrdered(): Promise<{ chapter: number; index: number }[]>
 }

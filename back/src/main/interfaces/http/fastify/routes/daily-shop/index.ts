@@ -8,7 +8,20 @@ export const dailyShopRouter: FastifyPluginCallbackZod = (fastify) => {
   const resolveUrl = (key: string | null) =>
     key ? storageClient.publicUrl(key) : null
 
-  const resolveItems = (items: { id: string; card: { id: string; name: string; imageUrl: string | null; rarity: string; set: { id: string; name: string } }; dustPrice: number; purchased: boolean }[]) =>
+  const resolveItems = (
+    items: {
+      id: string
+      card: {
+        id: string
+        name: string
+        imageUrl: string | null
+        rarity: string
+        set: { id: string; name: string }
+      }
+      dustPrice: number
+      purchased: boolean
+    }[],
+  ) =>
     items.map((item) => ({
       ...item,
       card: { ...item.card, imageUrl: resolveUrl(item.card.imageUrl) },
@@ -30,8 +43,14 @@ export const dailyShopRouter: FastifyPluginCallbackZod = (fastify) => {
       schema: { params: dailyShopItemIdParamSchema },
     },
     async (request) => {
-      const result = await dailyShopDomain.buy(request.user.userID, request.params.itemId)
-      return { ...result, card: { ...result.card, imageUrl: resolveUrl(result.card.imageUrl) } }
+      const result = await dailyShopDomain.buy(
+        request.user.userID,
+        request.params.itemId,
+      )
+      return {
+        ...result,
+        card: { ...result.card, imageUrl: resolveUrl(result.card.imageUrl) },
+      }
     },
   )
 }

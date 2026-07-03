@@ -2,8 +2,10 @@ import Boom from '@hapi/boom'
 
 import type { IocContainer } from '../../types/application/ioc'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
-import type { PostgresORMInterface } from '../../types/infra/orm/client'
-import type { PrimaTransactionClient } from '../../types/infra/orm/client'
+import type {
+  PostgresORMInterface,
+  PrimaTransactionClient,
+} from '../../types/infra/orm/client'
 import { calculateCombatPoints } from './combat-points.domain'
 
 export interface CombatPointsView {
@@ -39,7 +41,9 @@ export class CombatPointsTx {
       where: { id: userId },
       select: { combatPoints: true, lastCombatPointAt: true },
     })
-    if (!user) throw Boom.notFound('User not found')
+    if (!user) {
+      throw Boom.notFound('User not found')
+    }
 
     const state = calculateCombatPoints(
       user.lastCombatPointAt,
@@ -78,7 +82,9 @@ export class CombatPointsTx {
       where: { id: userId },
       select: { combatPoints: true, lastCombatPointAt: true },
     })
-    if (!user) throw Boom.notFound('User not found')
+    if (!user) {
+      throw Boom.notFound('User not found')
+    }
 
     // Apply regen first so the user sees their current effective stock.
     const state = calculateCombatPoints(

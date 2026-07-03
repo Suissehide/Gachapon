@@ -1,8 +1,10 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
+
 import { nodeIdParamSchema } from '../../schemas/skills.schema'
 
 export const skillsRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { skillTreeDomain, skillInvestDomain, skillResetDomain } = fastify.iocContainer
+  const { skillTreeDomain, skillInvestDomain, skillResetDomain } =
+    fastify.iocContainer
 
   fastify.get(
     '/skills',
@@ -16,7 +18,8 @@ export const skillsRouter: FastifyPluginCallbackZod = (fastify) => {
       onRequest: [fastify.verifySessionCookie],
       schema: { params: nodeIdParamSchema },
     },
-    (request) => skillInvestDomain.invest(request.user.userID, request.params.nodeId),
+    (request) =>
+      skillInvestDomain.invest(request.user.userID, request.params.nodeId),
   )
 
   fastify.post(

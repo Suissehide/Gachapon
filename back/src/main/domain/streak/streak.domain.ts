@@ -1,7 +1,7 @@
-import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
-import type { UnlockedAchievement } from '../achievements/events.types'
 import type { IocContainer } from '../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
+import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
+import type { UnlockedAchievement } from '../achievements/events.types'
 import { encodeDailySourceId } from './streak-source-id'
 
 type StreakInput = {

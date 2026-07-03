@@ -339,8 +339,10 @@ export class TeamDomain implements TeamDomainInterface {
       // invited to (read-only). This unblocks the in-app invitation flow
       // where clicking the notification opens the inviting team's page
       // before they decide to accept or decline.
-      const pendingInvite =
-        await this.#invitationRepo.findPendingByTeamAndUser(teamId, userId)
+      const pendingInvite = await this.#invitationRepo.findPendingByTeamAndUser(
+        teamId,
+        userId,
+      )
       if (!pendingInvite) {
         throw Boom.forbidden('Not a member of this team')
       }

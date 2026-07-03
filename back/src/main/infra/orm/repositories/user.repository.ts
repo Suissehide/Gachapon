@@ -45,7 +45,10 @@ export class UserRepository implements UserRepositoryInterface {
     return this.#prisma.user.update({ where: { id }, data: input })
   }
 
-  async updateFeaturedCardIds(userId: string, cardIds: string[]): Promise<void> {
+  async updateFeaturedCardIds(
+    userId: string,
+    cardIds: string[],
+  ): Promise<void> {
     await this.#prisma.user.update({
       where: { id: userId },
       data: { featuredCardIds: cardIds },
@@ -92,7 +95,13 @@ export class UserRepository implements UserRepositoryInterface {
   async updateAfterClaimInTx(
     tx: PrimaTransactionClient,
     id: string,
-    data: { tokens: number; dust: number; xp: number; level: number; lastTokenAt?: Date },
+    data: {
+      tokens: number
+      dust: number
+      xp: number
+      level: number
+      lastTokenAt?: Date
+    },
   ): Promise<void> {
     await tx.user.update({ where: { id }, data })
   }
@@ -210,7 +219,11 @@ export class UserRepository implements UserRepositoryInterface {
     return { suspended: updated.suspended }
   }
 
-  findManyByIds(ids: string[]): Promise<{ id: string; username: string; level: number; avatar: string | null }[]> {
+  findManyByIds(
+    ids: string[],
+  ): Promise<
+    { id: string; username: string; level: number; avatar: string | null }[]
+  > {
     return this.#prisma.user.findMany({
       where: { id: { in: ids } },
       select: { id: true, username: true, level: true, avatar: true },

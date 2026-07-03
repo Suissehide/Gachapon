@@ -7,7 +7,9 @@ export const leaderboardRouter: FastifyPluginCallbackZod = (fastify) => {
     '/leaderboard/collectors',
     { onRequest: [fastify.verifySessionCookie] },
     async (request) => {
-      return await leaderboardDomain.getCollectorsLeaderboard(request.user.userID)
+      return await leaderboardDomain.getCollectorsLeaderboard(
+        request.user.userID,
+      )
     },
   )
 

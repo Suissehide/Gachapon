@@ -49,8 +49,18 @@ export interface DamageEntry {
 
 export type LogEntry =
   | { type: 'BANNER_APPLIED'; side: Side; bonusPct: number }
-  | { type: 'ATTACK'; attackerId: string; targetIds: string[]; damages: DamageEntry[] }
-  | { type: 'PASSIVE'; unitId: string; passive: string; payload: Record<string, number> }
+  | {
+      type: 'ATTACK'
+      attackerId: string
+      targetIds: string[]
+      damages: DamageEntry[]
+    }
+  | {
+      type: 'PASSIVE'
+      unitId: string
+      passive: string
+      payload: Record<string, number>
+    }
   | { type: 'DEATH'; unitId: string }
   | { type: 'REBIRTH'; unitId: string; restoredHp: number }
   | { type: 'TURN_END'; turn: number }
@@ -110,7 +120,9 @@ interface BattleUnit {
 
 function toBattleUnit(u: SimulatorUnit, side: Side): BattleUnit {
   const passiveKey =
-    u.passiveKey && u.passiveKey in PASSIVES ? (u.passiveKey as PassiveKey) : null
+    u.passiveKey && u.passiveKey in PASSIVES
+      ? (u.passiveKey as PassiveKey)
+      : null
   const passiveValuePct =
     passiveKey === null ? 0 : PASSIVES[passiveKey].compute(u.palier).valuePct
   return {
@@ -155,7 +167,10 @@ function pickLowestHp(enemies: BattleUnit[], count: number): BattleUnit[] {
   return sorted.slice(0, count)
 }
 
-function selectTargets(attacker: BattleUnit, enemies: BattleUnit[]): BattleUnit[] {
+function selectTargets(
+  attacker: BattleUnit,
+  enemies: BattleUnit[],
+): BattleUnit[] {
   if (enemies.length === 0) {
     return []
   }
@@ -177,11 +192,7 @@ function selectTargets(attacker: BattleUnit, enemies: BattleUnit[]): BattleUnit[
 // Banner pre-application
 // ---------------------------------------------------------------------------
 
-function applyBanner(
-  units: BattleUnit[],
-  side: Side,
-  log: LogEntry[],
-): void {
+function applyBanner(units: BattleUnit[], side: Side, log: LogEntry[]): void {
   const allies = units.filter((u) => u.side === side && u.alive)
   let totalBonus = 0
   for (const u of allies) {
@@ -208,7 +219,12 @@ function computeRawDamage(
   patternMultiplier: number,
 ): number {
   const variance = 0.9 + 0.2 * prng()
-  return attackerEffectiveAtk * patternMultiplier * (100 / (100 + target.def)) * variance
+  return (
+    attackerEffectiveAtk *
+    patternMultiplier *
+    (100 / (100 + target.def)) *
+    variance
+  )
 }
 
 function patternDamageMultiplier(pattern: AttackPattern): number {
@@ -248,7 +264,12 @@ function resolveAttackOnTarget(
     }
   }
 
-  let raw = computeRawDamage(attacker.effectiveAtk, target, prng, patternMultiplier)
+  let raw = computeRawDamage(
+    attacker.effectiveAtk,
+    target,
+    prng,
+    patternMultiplier,
+  )
 
   // EXECUTION boost (attacker's passive — boosts damage when target low HP)
   if (
@@ -380,7 +401,13 @@ function performStrike(ctx: StrikeContext): void {
   let totalNonDodgedDamage = 0
 
   for (const target of targets) {
-    const entry = resolveAttackOnTarget(attacker, target, prng, log, patternMultiplier)
+    const entry = resolveAttackOnTarget(
+      attacker,
+      target,
+      prng,
+      log,
+      patternMultiplier,
+    )
     damages.push(entry)
     if (!entry.dodged) {
       totalNonDodgedDamage += entry.final
@@ -430,10 +457,7 @@ function performUnitAction(
 // Turn ordering
 // ---------------------------------------------------------------------------
 
-function buildTurnOrder(
-  units: BattleUnit[],
-  prng: () => number,
-): BattleUnit[] {
+function buildTurnOrder(units: BattleUnit[], prng: () => number): BattleUnit[] {
   const alive = units.filter((u) => u.alive)
   // Sort descending by spd; ties broken by prng-derived random key
   const keyed = alive.map((u) => ({ unit: u, tieBreak: prng() }))
@@ -510,7 +534,11 @@ export function simulateBattle(input: SimulatorInput): SimulatorResult {
   const teamBUnits = input.teamB.map((u) => toBattleUnit(u, 'B'))
   const units: BattleUnit[] = [...teamAUnits, ...teamBUnits]
 
-  const earlyResult = handleEmptyTeams(teamAUnits.length, teamBUnits.length, log)
+  const earlyResult = handleEmptyTeams(
+    teamAUnits.length,
+    teamBUnits.length,
+    log,
+  )
   if (earlyResult !== null) {
     return earlyResult
   }

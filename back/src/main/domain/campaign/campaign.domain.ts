@@ -1,13 +1,11 @@
 import Boom from '@hapi/boom'
 
 import type { IocContainer } from '../../types/application/ioc'
-import { calculateLevel } from '../shared/xp'
-import { retryOnSerialization } from '../shared/retry-serialization'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import {
   type AttackPattern,
-  simulateBattle,
   type SimulatorUnit,
+  simulateBattle,
 } from '../combat/battle-simulator.domain'
 import {
   computeFinalStats,
@@ -20,6 +18,8 @@ import {
   rollFirstClearCardRarity,
   rollFirstClearEquipmentRarity,
 } from '../combat/equipment-drop.domain'
+import { retryOnSerialization } from '../shared/retry-serialization'
+import { calculateLevel } from '../shared/xp'
 import { computeTeamPower } from './campaign-power'
 
 type Rarity = 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
@@ -166,11 +166,11 @@ export class CampaignDomain {
       0,
     )
     const previousChapterCleared =
-      prevChapterMaxIndex > 0 &&
-      progress.highestIndex >= prevChapterMaxIndex
+      prevChapterMaxIndex > 0 && progress.highestIndex >= prevChapterMaxIndex
 
     const chapters: CampaignView['chapters'] = []
     for (const [chapter, ss] of byChapter) {
+      // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing, refactor deferred
       const stageViews = ss.map((s): CampaignStageView => {
         let status: CampaignStageView['status']
         if (chapter < progress.highestChapter) {
@@ -199,7 +199,9 @@ export class CampaignDomain {
           label: s.label,
           isBoss: s.isBoss,
           status,
-          recommendedPower: computeTeamPower(s.enemyTeam as unknown as EnemySpec[]),
+          recommendedPower: computeTeamPower(
+            s.enemyTeam as unknown as EnemySpec[],
+          ),
         }
       })
       chapters.push({ chapter, stages: stageViews })
@@ -216,7 +218,7 @@ export class CampaignDomain {
   /**
    * Attack a stage: validates unlock, runs the simulator, credits gains atomically.
    */
-  async attackStage(
+  attackStage(
     userId: string,
     stageId: string,
   ): Promise<{
@@ -227,138 +229,139 @@ export class CampaignDomain {
     teamB: SimulatorUnit[]
   }> {
     return retryOnSerialization(() =>
-    this.#postgresOrm.executeWithTransactionClient(
-      async (tx) => {
-        const stage = await tx.campaignStage.findUnique({
-          where: { id: stageId },
-        })
-        if (!stage) {
-          throw Boom.notFound('Stage not found')
-        }
-
-        // Debit PC (cost from GlobalConfig, falls back to 6 if missing)
-        const battleCfg = await this.#configService.getMany(
-          'combat.battleCost',
-          'xp.base',
-          'xp.slope',
-          'xp.levelCap',
-        )
-        const battleCost = battleCfg['combat.battleCost']
-        await this.#combatPointsTx.debitInTx(tx, userId, battleCost)
-
-        const user = await tx.user.findUnique({ where: { id: userId } })
-        if (!user) {
-          throw Boom.notFound('User not found')
-        }
-
-        // Ensure progress row exists (avoid race with the read-side check)
-        const progress = await tx.userCampaignProgress.upsert({
-          where: { userId },
-          create: { userId },
-          update: {},
-        })
-
-        const isInActiveChapter = stage.chapter === progress.highestChapter
-        const isAlreadyCleared =
-          stage.chapter < progress.highestChapter ||
-          (isInActiveChapter && stage.index <= progress.highestIndex)
-        const isCurrent =
-          isInActiveChapter && stage.index === progress.highestIndex + 1
-        // Cross-chapter unlock requires the previous chapter to be fully
-        // cleared (i.e. highestIndex reached the last stage of that chapter,
-        // which is the boss). Otherwise a player could clear stage 1-1 then
-        // jump straight to 2-1, bypassing the boss gate.
-        let isNewChapterFirst = false
-        if (
-          stage.chapter === progress.highestChapter + 1 &&
-          stage.index === 1
-        ) {
-          const prevChapterMax = await tx.campaignStage.aggregate({
-            where: { chapter: progress.highestChapter },
-            _max: { index: true },
+      this.#postgresOrm.executeWithTransactionClient(
+        // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing, refactor deferred
+        async (tx) => {
+          const stage = await tx.campaignStage.findUnique({
+            where: { id: stageId },
           })
-          const prevMaxIndex = prevChapterMax._max.index ?? 0
-          if (prevMaxIndex > 0 && progress.highestIndex >= prevMaxIndex) {
-            isNewChapterFirst = true
+          if (!stage) {
+            throw Boom.notFound('Stage not found')
           }
-        }
-        if (!isAlreadyCleared && !isCurrent && !isNewChapterFirst) {
-          throw Boom.forbidden('Stage is locked')
-        }
 
-        if (user.combatTeam.length === 0) {
-          throw Boom.badRequest('Deploy a combat team first')
-        }
-
-        const teamUnits = await this.#buildPlayerSimUnits(
-          tx,
-          userId,
-          user.combatTeam,
-        )
-        const enemyUnits = this.#buildEnemySimUnits(
-          stage.enemyTeam as unknown as EnemySpec[],
-        )
-        const seed = `${userId}:${stageId}:${Date.now()}`
-        const sim = simulateBattle({
-          teamA: teamUnits,
-          teamB: enemyUnits,
-          seed,
-        })
-
-        const won = sim.won === 'A'
-        let rewards: BattleRewards | null = null
-
-        if (won) {
-          const loot = stage.lootTable as unknown as LootTable
-          const isFirstClear = !isAlreadyCleared
-          rewards = await this.#applyRewards(
-            tx,
-            userId,
-            loot,
-            isFirstClear,
-            battleCfg['xp.base'],
-            battleCfg['xp.slope'],
-            battleCfg['xp.levelCap'],
+          // Debit PC (cost from GlobalConfig, falls back to 6 if missing)
+          const battleCfg = await this.#configService.getMany(
+            'combat.battleCost',
+            'xp.base',
+            'xp.slope',
+            'xp.levelCap',
           )
+          const battleCost = battleCfg['combat.battleCost']
+          await this.#combatPointsTx.debitInTx(tx, userId, battleCost)
 
-          if (isFirstClear) {
-            if (isNewChapterFirst) {
-              await tx.userCampaignProgress.update({
-                where: { userId },
-                data: {
-                  highestChapter: stage.chapter,
-                  highestIndex: stage.index,
-                },
-              })
-            } else if (isCurrent) {
-              await tx.userCampaignProgress.update({
-                where: { userId },
-                data: { highestIndex: stage.index },
-              })
+          const user = await tx.user.findUnique({ where: { id: userId } })
+          if (!user) {
+            throw Boom.notFound('User not found')
+          }
+
+          // Ensure progress row exists (avoid race with the read-side check)
+          const progress = await tx.userCampaignProgress.upsert({
+            where: { userId },
+            create: { userId },
+            update: {},
+          })
+
+          const isInActiveChapter = stage.chapter === progress.highestChapter
+          const isAlreadyCleared =
+            stage.chapter < progress.highestChapter ||
+            (isInActiveChapter && stage.index <= progress.highestIndex)
+          const isCurrent =
+            isInActiveChapter && stage.index === progress.highestIndex + 1
+          // Cross-chapter unlock requires the previous chapter to be fully
+          // cleared (i.e. highestIndex reached the last stage of that chapter,
+          // which is the boss). Otherwise a player could clear stage 1-1 then
+          // jump straight to 2-1, bypassing the boss gate.
+          let isNewChapterFirst = false
+          if (
+            stage.chapter === progress.highestChapter + 1 &&
+            stage.index === 1
+          ) {
+            const prevChapterMax = await tx.campaignStage.aggregate({
+              where: { chapter: progress.highestChapter },
+              _max: { index: true },
+            })
+            const prevMaxIndex = prevChapterMax._max.index ?? 0
+            if (prevMaxIndex > 0 && progress.highestIndex >= prevMaxIndex) {
+              isNewChapterFirst = true
             }
           }
-        }
+          if (!isAlreadyCleared && !isCurrent && !isNewChapterFirst) {
+            throw Boom.forbidden('Stage is locked')
+          }
 
-        await tx.battleResult.create({
-          data: {
+          if (user.combatTeam.length === 0) {
+            throw Boom.badRequest('Deploy a combat team first')
+          }
+
+          const teamUnits = await this.#buildPlayerSimUnits(
+            tx,
             userId,
-            stageId,
+            user.combatTeam,
+          )
+          const enemyUnits = this.#buildEnemySimUnits(
+            stage.enemyTeam as unknown as EnemySpec[],
+          )
+          const seed = `${userId}:${stageId}:${Date.now()}`
+          const sim = simulateBattle({
+            teamA: teamUnits,
+            teamB: enemyUnits,
             seed,
-            won,
-            log: sim.log as unknown as object,
-          },
-        })
+          })
 
-        return {
-          won,
-          log: sim.log,
-          rewards,
-          teamA: teamUnits,
-          teamB: enemyUnits,
-        }
-      },
-      { isolationLevel: 'Serializable' },
-    ),
+          const won = sim.won === 'A'
+          let rewards: BattleRewards | null = null
+
+          if (won) {
+            const loot = stage.lootTable as unknown as LootTable
+            const isFirstClear = !isAlreadyCleared
+            rewards = await this.#applyRewards(
+              tx,
+              userId,
+              loot,
+              isFirstClear,
+              battleCfg['xp.base'],
+              battleCfg['xp.slope'],
+              battleCfg['xp.levelCap'],
+            )
+
+            if (isFirstClear) {
+              if (isNewChapterFirst) {
+                await tx.userCampaignProgress.update({
+                  where: { userId },
+                  data: {
+                    highestChapter: stage.chapter,
+                    highestIndex: stage.index,
+                  },
+                })
+              } else if (isCurrent) {
+                await tx.userCampaignProgress.update({
+                  where: { userId },
+                  data: { highestIndex: stage.index },
+                })
+              }
+            }
+          }
+
+          await tx.battleResult.create({
+            data: {
+              userId,
+              stageId,
+              seed,
+              won,
+              log: sim.log as unknown as object,
+            },
+          })
+
+          return {
+            won,
+            log: sim.log,
+            rewards,
+            teamA: teamUnits,
+            teamB: enemyUnits,
+          }
+        },
+        { isolationLevel: 'Serializable' },
+      ),
     )
   }
 
@@ -366,7 +369,7 @@ export class CampaignDomain {
    * Sweep a stage N times (only on already-cleared stages). Applies farm rewards
    * N times in one TX. Cap N at 10 per request.
    */
-  async sweepStage(
+  sweepStage(
     userId: string,
     stageId: string,
     runs: number,
@@ -383,154 +386,156 @@ export class CampaignDomain {
     }
 
     return retryOnSerialization(() =>
-    this.#postgresOrm.executeWithTransactionClient(
-      async (tx) => {
-        const stage = await tx.campaignStage.findUnique({
-          where: { id: stageId },
-        })
-        if (!stage) {
-          throw Boom.notFound('Stage not found')
-        }
-
-        // Debit PC per run (cost from GlobalConfig, falls back to 6 if missing)
-        const sweepCfg = await this.#configService.getMany(
-          'combat.sweepCost',
-          'xp.base',
-          'xp.slope',
-          'xp.levelCap',
-        )
-        const sweepCost = sweepCfg['combat.sweepCost']
-        await this.#combatPointsTx.debitInTx(tx, userId, sweepCost * runs)
-
-        const progress = await tx.userCampaignProgress.findUnique({
-          where: { userId },
-        })
-        if (!progress) {
-          throw Boom.forbidden('Stage not cleared yet — cannot sweep')
-        }
-
-        const isInActiveChapter = stage.chapter === progress.highestChapter
-        const isAlreadyCleared =
-          stage.chapter < progress.highestChapter ||
-          (isInActiveChapter && stage.index <= progress.highestIndex)
-        if (!isAlreadyCleared) {
-          throw Boom.forbidden('Stage not cleared yet — cannot sweep')
-        }
-
-        const loot = (stage.lootTable as unknown as LootTable).farm
-        let totalGold = 0
-        let totalDust = 0
-        let totalXp = 0
-        const equipmentDrops: {
-          equipmentId: string
-          name: string
-          rarity: Rarity
-        }[] = []
-        const cardDrops: { cardId: string; name: string; rarity: Rarity }[] = []
-
-        // Catalog snapshots used to pick drops
-        const equipmentCatalogRaw = await tx.equipment.findMany({
-          select: { id: true, name: true, rarity: true, dropWeight: true },
-        })
-        const equipmentCatalog: EquipmentCatalogEntry[] = equipmentCatalogRaw.map(
-          (e) => ({
-            id: e.id,
-            name: e.name,
-            rarity: e.rarity as Rarity,
-            dropWeight: e.dropWeight,
-          }),
-        )
-        const activeCardsRaw = await tx.card.findMany({
-          where: { set: { isActive: true } },
-          select: { id: true, name: true, rarity: true, dropWeight: true },
-        })
-        const activeCards: CardCatalogEntry[] = activeCardsRaw.map((c) => ({
-          id: c.id,
-          name: c.name,
-          rarity: c.rarity as Rarity,
-          dropWeight: c.dropWeight,
-        }))
-
-        for (let i = 0; i < runs; i++) {
-          totalGold += loot.gold
-          totalDust += loot.dust
-          totalXp += loot.xp
-
-          const droppedRarity = rollFarmEquipmentDrop(loot, Math.random)
-          if (droppedRarity) {
-            const candidate = pickEquipmentForRarity(
-              equipmentCatalog,
-              droppedRarity,
-              Math.random,
-            )
-            if (candidate) {
-              await tx.userEquipment.create({
-                data: { userId, equipmentId: candidate.id },
-              })
-              equipmentDrops.push({
-                equipmentId: candidate.id,
-                name: candidate.name,
-                rarity: droppedRarity,
-              })
-            }
-          }
-
-          if (rollFarmCardDrop(loot, Math.random) && activeCards.length > 0) {
-            const picked = this.#pickWeighted(activeCards, Math.random)
-            if (picked) {
-              await this.#grantCard(tx, userId, picked.id)
-              cardDrops.push({
-                cardId: picked.id,
-                name: picked.name,
-                rarity: picked.rarity,
-              })
-            }
-          }
-        }
-
-        // Bump XP and recompute level (parity with applyRewards / gacha).
-        const userBefore = await tx.user.findUnique({
-          where: { id: userId },
-          select: { xp: true, level: true },
-        })
-        const oldLevel = userBefore?.level ?? 1
-        const newXp = (userBefore?.xp ?? 0) + totalXp
-        const newLevel = calculateLevel(
-          newXp,
-          sweepCfg['xp.base'],
-          sweepCfg['xp.slope'],
-          sweepCfg['xp.levelCap'],
-        )
-        await tx.user.update({
-          where: { id: userId },
-          data: {
-            gold: { increment: totalGold },
-            dust: { increment: totalDust },
-            xp: newXp,
-            level: newLevel,
-          },
-        })
-        if (newLevel > oldLevel) {
-          await this.#achievementsDomain.track(tx, userId, {
-            kind: 'LEVEL_UP',
-            newLevel,
+      this.#postgresOrm.executeWithTransactionClient(
+        // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing, refactor deferred
+        async (tx) => {
+          const stage = await tx.campaignStage.findUnique({
+            where: { id: stageId },
           })
-        }
+          if (!stage) {
+            throw Boom.notFound('Stage not found')
+          }
 
-        return {
-          runs,
-          totalGold,
-          totalDust,
-          totalXp,
-          equipmentDrops,
-          cardDrops,
-        }
-      },
-      { isolationLevel: 'Serializable' },
-    ),
+          // Debit PC per run (cost from GlobalConfig, falls back to 6 if missing)
+          const sweepCfg = await this.#configService.getMany(
+            'combat.sweepCost',
+            'xp.base',
+            'xp.slope',
+            'xp.levelCap',
+          )
+          const sweepCost = sweepCfg['combat.sweepCost']
+          await this.#combatPointsTx.debitInTx(tx, userId, sweepCost * runs)
+
+          const progress = await tx.userCampaignProgress.findUnique({
+            where: { userId },
+          })
+          if (!progress) {
+            throw Boom.forbidden('Stage not cleared yet — cannot sweep')
+          }
+
+          const isInActiveChapter = stage.chapter === progress.highestChapter
+          const isAlreadyCleared =
+            stage.chapter < progress.highestChapter ||
+            (isInActiveChapter && stage.index <= progress.highestIndex)
+          if (!isAlreadyCleared) {
+            throw Boom.forbidden('Stage not cleared yet — cannot sweep')
+          }
+
+          const loot = (stage.lootTable as unknown as LootTable).farm
+          let totalGold = 0
+          let totalDust = 0
+          let totalXp = 0
+          const equipmentDrops: {
+            equipmentId: string
+            name: string
+            rarity: Rarity
+          }[] = []
+          const cardDrops: { cardId: string; name: string; rarity: Rarity }[] =
+            []
+
+          // Catalog snapshots used to pick drops
+          const equipmentCatalogRaw = await tx.equipment.findMany({
+            select: { id: true, name: true, rarity: true, dropWeight: true },
+          })
+          const equipmentCatalog: EquipmentCatalogEntry[] =
+            equipmentCatalogRaw.map((e) => ({
+              id: e.id,
+              name: e.name,
+              rarity: e.rarity as Rarity,
+              dropWeight: e.dropWeight,
+            }))
+          const activeCardsRaw = await tx.card.findMany({
+            where: { set: { isActive: true } },
+            select: { id: true, name: true, rarity: true, dropWeight: true },
+          })
+          const activeCards: CardCatalogEntry[] = activeCardsRaw.map((c) => ({
+            id: c.id,
+            name: c.name,
+            rarity: c.rarity as Rarity,
+            dropWeight: c.dropWeight,
+          }))
+
+          for (let i = 0; i < runs; i++) {
+            totalGold += loot.gold
+            totalDust += loot.dust
+            totalXp += loot.xp
+
+            const droppedRarity = rollFarmEquipmentDrop(loot, Math.random)
+            if (droppedRarity) {
+              const candidate = pickEquipmentForRarity(
+                equipmentCatalog,
+                droppedRarity,
+                Math.random,
+              )
+              if (candidate) {
+                await tx.userEquipment.create({
+                  data: { userId, equipmentId: candidate.id },
+                })
+                equipmentDrops.push({
+                  equipmentId: candidate.id,
+                  name: candidate.name,
+                  rarity: droppedRarity,
+                })
+              }
+            }
+
+            if (rollFarmCardDrop(loot, Math.random) && activeCards.length > 0) {
+              const picked = this.#pickWeighted(activeCards, Math.random)
+              if (picked) {
+                await this.#grantCard(tx, userId, picked.id)
+                cardDrops.push({
+                  cardId: picked.id,
+                  name: picked.name,
+                  rarity: picked.rarity,
+                })
+              }
+            }
+          }
+
+          // Bump XP and recompute level (parity with applyRewards / gacha).
+          const userBefore = await tx.user.findUnique({
+            where: { id: userId },
+            select: { xp: true, level: true },
+          })
+          const oldLevel = userBefore?.level ?? 1
+          const newXp = (userBefore?.xp ?? 0) + totalXp
+          const newLevel = calculateLevel(
+            newXp,
+            sweepCfg['xp.base'],
+            sweepCfg['xp.slope'],
+            sweepCfg['xp.levelCap'],
+          )
+          await tx.user.update({
+            where: { id: userId },
+            data: {
+              gold: { increment: totalGold },
+              dust: { increment: totalDust },
+              xp: newXp,
+              level: newLevel,
+            },
+          })
+          if (newLevel > oldLevel) {
+            await this.#achievementsDomain.track(tx, userId, {
+              kind: 'LEVEL_UP',
+              newLevel,
+            })
+          }
+
+          return {
+            runs,
+            totalGold,
+            totalDust,
+            totalXp,
+            equipmentDrops,
+            cardDrops,
+          }
+        },
+        { isolationLevel: 'Serializable' },
+      ),
     )
   }
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing, refactor deferred
   async #applyRewards(
     tx: PrimaTransactionClient,
     userId: string,
@@ -863,7 +868,7 @@ export class CampaignDomain {
     })
   }
 
-  async #getOrCreateProgress(userId: string) {
+  #getOrCreateProgress(userId: string) {
     return this.#postgresOrm.prisma.userCampaignProgress.upsert({
       where: { userId },
       create: { userId },

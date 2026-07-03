@@ -22,14 +22,22 @@ const RARITY_PRICE_KEYS = {
 
 function todayUTC(): Date {
   const now = new Date()
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+  return new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+  )
 }
 
 function formatItem(item: {
   id: string
   dustPrice: number
   purchased: boolean
-  card: { id: string; name: string; imageUrl: string | null; rarity: string; set: { id: string; name: string } }
+  card: {
+    id: string
+    name: string
+    imageUrl: string | null
+    rarity: string
+    set: { id: string; name: string }
+  }
 }): DailyShopItemResult {
   return {
     id: item.id,
@@ -50,7 +58,11 @@ export class DailyShopDomain implements IDailyShopDomain {
   readonly #configService: ConfigServiceInterface
   readonly #skillTreeRepository: ISkillTreeRepository
 
-  constructor({ postgresOrm, configService, skillTreeRepository }: IocContainer) {
+  constructor({
+    postgresOrm,
+    configService,
+    skillTreeRepository,
+  }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#configService = configService
     this.#skillTreeRepository = skillTreeRepository
@@ -111,7 +123,12 @@ export class DailyShopDomain implements IDailyShopDomain {
           items: {
             create: picked.map((card) => ({
               cardId: card.id,
-              dustPrice: prices[RARITY_PRICE_KEYS[card.rarity as keyof typeof RARITY_PRICE_KEYS]] ?? 50,
+              dustPrice:
+                prices[
+                  RARITY_PRICE_KEYS[
+                    card.rarity as keyof typeof RARITY_PRICE_KEYS
+                  ]
+                ] ?? 50,
             })),
           },
         },
@@ -128,7 +145,12 @@ export class DailyShopDomain implements IDailyShopDomain {
       }
     } catch (err: unknown) {
       // Race condition: another request already created the shop for this (userId, date)
-      if (typeof err === 'object' && err !== null && 'code' in err && (err as { code: string }).code === 'P2002') {
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'code' in err &&
+        (err as { code: string }).code === 'P2002'
+      ) {
         const existing = await prisma.dailyShop.findUniqueOrThrow({
           where: { userId_date: { userId, date } },
           include: {
@@ -158,7 +180,11 @@ export class DailyShopDomain implements IDailyShopDomain {
       },
     })
 
-    if (!item || item.dailyShop.userId !== userId || item.dailyShop.date.getTime() !== date.getTime()) {
+    if (
+      !item ||
+      item.dailyShop.userId !== userId ||
+      item.dailyShop.date.getTime() !== date.getTime()
+    ) {
       throw Boom.notFound('Item not found')
     }
     if (item.purchased) {
@@ -167,7 +193,10 @@ export class DailyShopDomain implements IDailyShopDomain {
 
     const effects = await this.#skillTreeRepository.getEffectsForUser(userId)
     const discount = effects.shopDiscount ?? 0
-    const finalPrice = Math.max(0, Math.round(item.dustPrice * (1 - discount / 100)))
+    const finalPrice = Math.max(
+      0,
+      Math.round(item.dustPrice * (1 - discount / 100)),
+    )
 
     const result = await this.#postgresOrm.executeWithTransactionClient(
       async (tx) => {

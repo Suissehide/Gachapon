@@ -8,14 +8,21 @@ import type {
 } from '../../types/domain/shop/shop.domain.interface'
 import type { IShopItemRepository } from '../../types/infra/orm/repositories/shop-item.repository.interface'
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
-import type { AchievementEvent, UnlockedAchievement } from '../achievements/events.types'
+import type {
+  AchievementEvent,
+  UnlockedAchievement,
+} from '../achievements/events.types'
 
 export class ShopDomain implements IShopDomain {
   readonly #shopItemRepository: IShopItemRepository
   readonly #postgresOrm: PostgresOrm
   readonly #achievementsDomain: AchievementsDomainInterface
 
-  constructor({ shopItemRepository, postgresOrm, achievementsDomain }: IocContainer) {
+  constructor({
+    shopItemRepository,
+    postgresOrm,
+    achievementsDomain,
+  }: IocContainer) {
     this.#shopItemRepository = shopItemRepository
     this.#postgresOrm = postgresOrm
     this.#achievementsDomain = achievementsDomain

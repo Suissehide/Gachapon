@@ -68,7 +68,9 @@ export class CardDustConversionDomain {
           }
 
           const perCopy = dustByRarity[userCard.card.rarity]
-          const dustEarned = Math.round(perCopy * amount * dustHarvestMultiplier)
+          const dustEarned = Math.round(
+            perCopy * amount * dustHarvestMultiplier,
+          )
 
           await tx.userCard.update({
             where: { id: userCardId },

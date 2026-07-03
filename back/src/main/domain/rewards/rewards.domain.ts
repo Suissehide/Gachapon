@@ -10,8 +10,8 @@ import type {
   RewardsDomainInterface,
 } from '../../types/domain/rewards/rewards.domain.interface'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
-import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
+import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 import type {
   PendingUserReward,
   UserRewardRepositoryInterface,
@@ -39,7 +39,12 @@ export class RewardsDomain implements RewardsDomainInterface {
     achievementsDomain,
   }: Pick<
     IocContainer,
-    'userRewardRepository' | 'userRepository' | 'postgresOrm' | 'configService' | 'skillTreeRepository' | 'achievementsDomain'
+    | 'userRewardRepository'
+    | 'userRepository'
+    | 'postgresOrm'
+    | 'configService'
+    | 'skillTreeRepository'
+    | 'achievementsDomain'
   >) {
     this.#userRewardRepository = userRewardRepository
     this.#userRepository = userRepository
@@ -256,10 +261,14 @@ export class RewardsDomain implements RewardsDomainInterface {
           allUnlocks.push(...unlocks)
         }
         if (newLevel > initialLevel) {
-          const levelUnlocks = await this.#achievementsDomain.track(tx, userId, {
-            kind: 'LEVEL_UP',
-            newLevel,
-          })
+          const levelUnlocks = await this.#achievementsDomain.track(
+            tx,
+            userId,
+            {
+              kind: 'LEVEL_UP',
+              newLevel,
+            },
+          )
           allUnlocks.push(...levelUnlocks)
         }
 

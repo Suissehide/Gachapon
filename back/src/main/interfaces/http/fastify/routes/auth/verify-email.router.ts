@@ -1,10 +1,10 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
-import { sanitizeUser, setTokenCookies } from './helpers'
 import {
   userResponseSchema,
   verifyEmailBodySchema,
 } from '../../schemas/auth.schemas'
+import { sanitizeUser, setTokenCookies } from './helpers'
 
 export const verifyEmailRouter: FastifyPluginCallbackZod = (fastify) => {
   const { authDomain, userRewardRepository } = fastify.iocContainer
@@ -25,7 +25,11 @@ export const verifyEmailRouter: FastifyPluginCallbackZod = (fastify) => {
       const pendingRewardsCount = await userRewardRepository.countPendingByUser(
         user.id,
       )
-      return { ...sanitizeUser(user), pendingRewardsCount, unlockedAchievements }
+      return {
+        ...sanitizeUser(user),
+        pendingRewardsCount,
+        unlockedAchievements,
+      }
     },
   )
 }

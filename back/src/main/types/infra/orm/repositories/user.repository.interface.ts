@@ -39,7 +39,13 @@ export interface UserRepositoryInterface {
   updateAfterClaimInTx(
     tx: PrimaTransactionClient,
     id: string,
-    data: { tokens: number; dust: number; xp: number; level: number; lastTokenAt?: Date },
+    data: {
+      tokens: number
+      dust: number
+      xp: number
+      level: number
+      lastTokenAt?: Date
+    },
   ): Promise<void>
   findByEmailVerificationToken(token: string): Promise<UserEntity | null>
   findByPasswordResetToken(token: string): Promise<UserEntity | null>
@@ -76,5 +82,9 @@ export interface UserRepositoryInterface {
     id: string,
     suspended: boolean,
   ): Promise<{ suspended: boolean }>
-  findManyByIds(ids: string[]): Promise<{ id: string; username: string; level: number; avatar: string | null }[]>
+  findManyByIds(
+    ids: string[],
+  ): Promise<
+    { id: string; username: string; level: number; avatar: string | null }[]
+  >
 }

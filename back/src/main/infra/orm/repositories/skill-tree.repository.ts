@@ -1,7 +1,10 @@
 import { getSkillEffects } from '../../../domain/skills/skill-effects.domain'
-import type { UserUpgradeEffects } from '../../../types/domain/economy/economy.types'
 import type { IocContainer } from '../../../types/application/ioc'
-import type { ISkillTreeRepository, SkillBranchWithNodes } from '../../../types/infra/orm/repositories/skill-tree.repository.interface'
+import type { UserUpgradeEffects } from '../../../types/domain/economy/economy.types'
+import type {
+  ISkillTreeRepository,
+  SkillBranchWithNodes,
+} from '../../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 export class SkillTreeRepository implements ISkillTreeRepository {
@@ -18,7 +21,10 @@ export class SkillTreeRepository implements ISkillTreeRepository {
     })
     const rows = userSkills.map((us) => {
       const levelConfig = us.node.levels.find((l) => l.level === us.level)
-      return { effectType: us.node.effectType, effect: levelConfig?.effect ?? 0 }
+      return {
+        effectType: us.node.effectType,
+        effect: levelConfig?.effect ?? 0,
+      }
     })
     return getSkillEffects(rows)
   }
@@ -67,11 +73,26 @@ export class SkillTreeRepository implements ISkillTreeRepository {
     return tx.userSkill.deleteMany({ where: { userId } })
   }
 
-  createBranch(data: { name: string; description: string; icon: string; color: string; order: number }) {
+  createBranch(data: {
+    name: string
+    description: string
+    icon: string
+    color: string
+    order: number
+  }) {
     return this.#prisma.skillBranch.create({ data })
   }
 
-  updateBranch(id: string, data: Partial<{ name: string; description: string; icon: string; color: string; order: number }>) {
+  updateBranch(
+    id: string,
+    data: Partial<{
+      name: string
+      description: string
+      icon: string
+      color: string
+      order: number
+    }>,
+  ) {
     return this.#prisma.skillBranch.update({ where: { id }, data })
   }
 
@@ -79,7 +100,17 @@ export class SkillTreeRepository implements ISkillTreeRepository {
     await this.#prisma.skillBranch.delete({ where: { id } })
   }
 
-  async createNode(data: { branchId: string; name: string; description: string; icon: string; maxLevel: number; effectType: string; posX: number; posY: number; levels: { level: number; effect: number }[] }) {
+  createNode(data: {
+    branchId: string
+    name: string
+    description: string
+    icon: string
+    maxLevel: number
+    effectType: string
+    posX: number
+    posY: number
+    levels: { level: number; effect: number }[]
+  }) {
     const { levels, ...nodeData } = data
     return this.#prisma.skillNode.create({
       data: {
@@ -90,18 +121,35 @@ export class SkillTreeRepository implements ISkillTreeRepository {
     })
   }
 
-  async updateNode(id: string, data: Partial<{ branchId: string; name: string; description: string; icon: string; maxLevel: number; effectType: string; posX: number; posY: number; levels: { level: number; effect: number }[] }>) {
+  async updateNode(
+    id: string,
+    data: Partial<{
+      branchId: string
+      name: string
+      description: string
+      icon: string
+      maxLevel: number
+      effectType: string
+      posX: number
+      posY: number
+      levels: { level: number; effect: number }[]
+    }>,
+  ) {
     const { levels, ...rest } = data
     if (levels !== undefined) {
       await this.#prisma.skillNodeLevel.deleteMany({ where: { nodeId: id } })
-      await this.#prisma.skillNodeLevel.createMany({ data: levels.map((l) => ({ ...l, nodeId: id })) })
+      await this.#prisma.skillNodeLevel.createMany({
+        data: levels.map((l) => ({ ...l, nodeId: id })),
+      })
     }
     return this.#prisma.skillNode.update({ where: { id }, data: rest as any })
   }
 
   async deleteNode(id: string): Promise<void> {
     // Refund skill points to all users who invested in this node
-    const investedSkills = await this.#prisma.userSkill.findMany({ where: { nodeId: id } })
+    const investedSkills = await this.#prisma.userSkill.findMany({
+      where: { nodeId: id },
+    })
     if (investedSkills.length > 0) {
       await Promise.all(
         investedSkills.map((s) =>
@@ -115,12 +163,22 @@ export class SkillTreeRepository implements ISkillTreeRepository {
     await this.#prisma.skillNode.delete({ where: { id } })
   }
 
-  createEdge(fromNodeId: string, toNodeId: string, minLevel: number, sourceHandle?: string, targetHandle?: string) {
-    return this.#prisma.skillEdge.create({ data: { fromNodeId, toNodeId, minLevel, sourceHandle, targetHandle } })
+  createEdge(
+    fromNodeId: string,
+    toNodeId: string,
+    minLevel: number,
+    sourceHandle?: string,
+    targetHandle?: string,
+  ) {
+    return this.#prisma.skillEdge.create({
+      data: { fromNodeId, toNodeId, minLevel, sourceHandle, targetHandle },
+    })
   }
 
   async deleteEdge(fromNodeId: string, toNodeId: string): Promise<void> {
-    await this.#prisma.skillEdge.delete({ where: { fromNodeId_toNodeId: { fromNodeId, toNodeId } } })
+    await this.#prisma.skillEdge.delete({
+      where: { fromNodeId_toNodeId: { fromNodeId, toNodeId } },
+    })
   }
 
   updateSkillConfig(data: Partial<{ resetCostPerPoint: number }>) {

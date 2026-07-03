@@ -105,7 +105,9 @@ export class AdminStatsRepository implements IAdminStatsRepository {
         FROM "GachaPull"
         WHERE "pulledAt" >= ${thirtyDaysAgo}
       `,
-      this.#prisma.$queryRaw<{ nodeId: string; level: number; count: bigint }[]>`
+      this.#prisma.$queryRaw<
+        { nodeId: string; level: number; count: bigint }[]
+      >`
         SELECT "nodeId", level, COUNT(*) AS count
         FROM "UserSkill"
         GROUP BY "nodeId", level

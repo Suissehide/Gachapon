@@ -8,27 +8,53 @@ export class AdminSkillTreeDomain {
     this.#repo = skillTreeRepository
   }
 
-  getTree() { return this.#repo.getFullTree() }
-  getConfig() { return this.#repo.getSkillConfig() }
+  getTree() {
+    return this.#repo.getFullTree()
+  }
+  getConfig() {
+    return this.#repo.getSkillConfig()
+  }
 
   createBranch(data: Parameters<ISkillTreeRepository['createBranch']>[0]) {
     return this.#repo.createBranch(data)
   }
-  updateBranch(id: string, data: Parameters<ISkillTreeRepository['updateBranch']>[1]) {
+  updateBranch(
+    id: string,
+    data: Parameters<ISkillTreeRepository['updateBranch']>[1],
+  ) {
     return this.#repo.updateBranch(id, data)
   }
-  deleteBranch(id: string) { return this.#repo.deleteBranch(id) }
+  deleteBranch(id: string) {
+    return this.#repo.deleteBranch(id)
+  }
 
   createNode(data: Parameters<ISkillTreeRepository['createNode']>[0]) {
     return this.#repo.createNode(data)
   }
-  updateNode(id: string, data: Parameters<ISkillTreeRepository['updateNode']>[1]) {
+  updateNode(
+    id: string,
+    data: Parameters<ISkillTreeRepository['updateNode']>[1],
+  ) {
     return this.#repo.updateNode(id, data)
   }
-  deleteNode(id: string) { return this.#repo.deleteNode(id) }
+  deleteNode(id: string) {
+    return this.#repo.deleteNode(id)
+  }
 
-  createEdge(fromNodeId: string, toNodeId: string, minLevel: number, sourceHandle?: string, targetHandle?: string) {
-    return this.#repo.createEdge(fromNodeId, toNodeId, minLevel, sourceHandle, targetHandle)
+  createEdge(
+    fromNodeId: string,
+    toNodeId: string,
+    minLevel: number,
+    sourceHandle?: string,
+    targetHandle?: string,
+  ) {
+    return this.#repo.createEdge(
+      fromNodeId,
+      toNodeId,
+      minLevel,
+      sourceHandle,
+      targetHandle,
+    )
   }
   deleteEdge(fromNodeId: string, toNodeId: string) {
     return this.#repo.deleteEdge(fromNodeId, toNodeId)

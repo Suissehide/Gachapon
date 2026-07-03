@@ -30,7 +30,9 @@ export const createNodeSchema = z.object({
   ]),
   posX: z.int(),
   posY: z.int(),
-  levels: z.array(z.object({ level: z.int().min(1).max(5), effect: z.number() })).min(1),
+  levels: z
+    .array(z.object({ level: z.int().min(1).max(5), effect: z.number() }))
+    .min(1),
 })
 
 export const updateNodeSchema = createNodeSchema.partial()

@@ -3,10 +3,7 @@ import Boom from '@hapi/boom'
 import type { IocContainer } from '../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import { retryOnSerialization } from '../shared/retry-serialization'
-import {
-  computeFinalStats,
-  type EquipmentBonuses,
-} from './combat-stats.domain'
+import { computeFinalStats, type EquipmentBonuses } from './combat-stats.domain'
 import { getPassive } from './passives'
 
 const MAX_TEAM_SIZE = 3

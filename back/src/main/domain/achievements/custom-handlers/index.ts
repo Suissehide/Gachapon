@@ -23,13 +23,17 @@ export const getCustomHandler = (key: string): CustomHandler | undefined =>
   customHandlers[key]
 
 import { firstPullEverHandler } from './first-pull-ever'
+
 customHandlers.first_pull_ever = firstPullEverHandler
 
 import { fourRaritiesOneDayHandler } from './four-rarities-one-day'
+
 customHandlers.four_rarities_one_day = fourRaritiesOneDayHandler
 
 import { dustBalance10kHandler } from './dust-balance-10k'
+
 customHandlers.dust_balance_10k = dustBalance10kHandler
 
 import { sameCardTwoVariantsHandler } from './same-card-two-variants'
+
 customHandlers.same_card_two_variants = sameCardTwoVariantsHandler

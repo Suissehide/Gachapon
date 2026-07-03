@@ -1,8 +1,8 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import {
-  claimRewardParamsSchema,
   claimResultSchema,
+  claimRewardParamsSchema,
   noBodySchema,
   pendingRewardsResponseSchema,
   rewardsHistoryQuerySchema,

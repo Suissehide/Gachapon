@@ -7,13 +7,13 @@ import type {
   RecycleInput,
   RecycleResult,
 } from '../../types/domain/collection/collection.domain.interface'
-import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import type {
   ConfigKey,
   ConfigServiceInterface,
 } from '../../types/infra/config/config.service.interface'
 import type { ICardRepository } from '../../types/infra/orm/repositories/card.repository.interface'
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
+import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 
 export class CollectionDomain implements ICollectionDomain {
   readonly #cardRepository: ICardRepository
@@ -102,12 +102,20 @@ export class CollectionDomain implements ICollectionDomain {
           data: { dust: { increment: dustEarned } },
         })
 
-        const recycleUnlocks = await this.#achievementsDomain.track(tx, userId, {
-          kind: 'CARD_RECYCLED',
-          amount: quantity,
-        })
+        const recycleUnlocks = await this.#achievementsDomain.track(
+          tx,
+          userId,
+          {
+            kind: 'CARD_RECYCLED',
+            amount: quantity,
+          },
+        )
 
-        return { dustEarned, newDustTotal: user.dust, unlockedAchievements: recycleUnlocks }
+        return {
+          dustEarned,
+          newDustTotal: user.dust,
+          unlockedAchievements: recycleUnlocks,
+        }
       },
       { isolationLevel: 'Serializable', maxWait: 5000, timeout: 10000 },
     )

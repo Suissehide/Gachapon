@@ -1,7 +1,7 @@
 import {
-  simulateBattle,
   type SimulatorInput,
   type SimulatorResult,
+  simulateBattle,
 } from './battle-simulator.domain'
 
 export class CombatDebugDomain {

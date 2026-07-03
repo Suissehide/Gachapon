@@ -103,7 +103,9 @@ export class MinioClient implements StorageClientInterface {
 
   toKey(urlOrKey: string): string {
     const prefix = `${this.#endpoint}/${this.#bucket}/`
-    return urlOrKey.startsWith(prefix) ? urlOrKey.slice(prefix.length) : urlOrKey
+    return urlOrKey.startsWith(prefix)
+      ? urlOrKey.slice(prefix.length)
+      : urlOrKey
   }
 
   async listObjects(prefix: string): Promise<StorageObject[]> {

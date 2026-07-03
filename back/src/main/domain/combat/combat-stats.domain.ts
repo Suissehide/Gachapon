@@ -77,7 +77,8 @@ function computeStat(
   pctBonuses: number[],
   skillModPct: number,
 ): number {
-  const raw = baseStat * levelMultiplier(level) * variantMult * palierMultiplier(palier)
+  const raw =
+    baseStat * levelMultiplier(level) * variantMult * palierMultiplier(palier)
   const withFlat = raw + sum(flatBonuses)
   const totalPct = sum(pctBonuses) + skillModPct
   return withFlat * (1 + totalPct / 100)

@@ -111,7 +111,10 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
     '/collection/recycle',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { body: collectionRecycleBodySchema, response: { 200: collectionRecycleResponseSchema } },
+      schema: {
+        body: collectionRecycleBodySchema,
+        response: { 200: collectionRecycleResponseSchema },
+      },
     },
     (request) => {
       return collectionDomain.recycleCard(request.user.userID, request.body)

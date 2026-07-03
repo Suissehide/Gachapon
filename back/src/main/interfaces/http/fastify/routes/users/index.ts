@@ -3,17 +3,22 @@ import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import {
   featuredCardsResponseSchema,
-  setsProgressionResponseSchema,
   setFeaturedCardsBodySchema,
   setFeaturedCardsResponseSchema,
+  setsProgressionResponseSchema,
   userProfileResponseSchema,
   usersProfileParamSchema,
   usersSearchQuerySchema,
 } from '../../schemas/users.schema'
 
 export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { userRepository, gachaPullRepository, userCardRepository, profileDomain, storageClient } =
-    fastify.iocContainer
+  const {
+    userRepository,
+    gachaPullRepository,
+    userCardRepository,
+    profileDomain,
+    storageClient,
+  } = fastify.iocContainer
 
   const resolveUrl = (key: string | null) =>
     key ? storageClient.publicUrl(key) : null
@@ -83,7 +88,9 @@ export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
       },
     },
     async (request) => {
-      const cards = await profileDomain.getFeaturedCards(request.params.username)
+      const cards = await profileDomain.getFeaturedCards(
+        request.params.username,
+      )
       return {
         cards: cards.map((c) => ({ ...c, imageUrl: resolveUrl(c.imageUrl) })),
       }
@@ -100,7 +107,9 @@ export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
       },
     },
     async (request) => {
-      const sets = await profileDomain.getSetsProgression(request.params.username)
+      const sets = await profileDomain.getSetsProgression(
+        request.params.username,
+      )
       return { sets }
     },
   )

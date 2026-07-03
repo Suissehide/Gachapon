@@ -92,7 +92,10 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
       throw Boom.badRequest('Either an image file or imageUrl is required')
     }
 
-    const card = await cardRepository.create({ ...parsed.data, imageUrl: imageKey })
+    const card = await cardRepository.create({
+      ...parsed.data,
+      imageUrl: imageKey,
+    })
     return reply.status(201).send(resolveCard(card))
   })
 

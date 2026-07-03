@@ -30,14 +30,16 @@ export class EquipmentDomain {
   async listUserEquipment(
     userId: string,
   ): Promise<{ items: EquipmentInstanceView[] }> {
-    const userEquipment = await this.#postgresOrm.prisma.userEquipment.findMany({
-      where: { userId },
-      include: {
-        equipment: true,
-        equippedOn: { include: { card: true } },
+    const userEquipment = await this.#postgresOrm.prisma.userEquipment.findMany(
+      {
+        where: { userId },
+        include: {
+          equipment: true,
+          equippedOn: { include: { card: true } },
+        },
+        orderBy: { obtainedAt: 'desc' },
       },
-      orderBy: { obtainedAt: 'desc' },
-    })
+    )
 
     return {
       items: userEquipment.map((ue) => ({
@@ -47,7 +49,7 @@ export class EquipmentDomain {
         slot: ue.equipment.slot,
         rarity: ue.equipment.rarity,
         imageUrl: ue.equipment.imageUrl,
-        bonuses: ((ue.equipment.bonuses ?? {}) as Record<string, number>),
+        bonuses: (ue.equipment.bonuses ?? {}) as Record<string, number>,
         equippedOnId: ue.equippedOnId,
         equippedOnCardName: ue.equippedOn?.card?.name ?? null,
         obtainedAt: ue.obtainedAt.toISOString(),
@@ -59,7 +61,7 @@ export class EquipmentDomain {
    * Equip a UserEquipment on a UserCard. If the target slot is already occupied
    * on that card, the previous equipment is unequipped first.
    */
-  async equip(
+  equip(
     userId: string,
     userEquipmentId: string,
     targetUserCardId: string,
@@ -114,7 +116,7 @@ export class EquipmentDomain {
   /**
    * Unequip a UserEquipment.
    */
-  async unequip(
+  unequip(
     userId: string,
     userEquipmentId: string,
   ): Promise<{ unequipped: boolean }> {
@@ -145,7 +147,7 @@ export class EquipmentDomain {
    * Admin / test helper: grants a UserEquipment to the user from the catalog.
    * If equipmentId is omitted, picks a random catalog entry.
    */
-  async grantToUser(
+  grantToUser(
     userId: string,
     equipmentId?: string,
   ): Promise<{ userEquipmentId: string; equipmentName: string }> {

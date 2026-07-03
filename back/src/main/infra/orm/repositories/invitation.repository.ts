@@ -17,9 +17,7 @@ export class InvitationRepository implements IInvitationRepository {
     return this.#prisma.invitation.findUnique({ where: { token } })
   }
 
-  findByTokenWithDetails(
-    token: string,
-  ): Promise<InvitationWithDetails | null> {
+  findByTokenWithDetails(token: string): Promise<InvitationWithDetails | null> {
     return this.#prisma.invitation.findUnique({
       where: { token },
       include: {

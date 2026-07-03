@@ -119,7 +119,9 @@ export class LeaderboardRepository implements ILeaderboardRepository {
   }
 
   async countPullsByUsers(userIds: string[]): Promise<Map<string, number>> {
-    if (userIds.length === 0) { return new Map() }
+    if (userIds.length === 0) {
+      return new Map()
+    }
     const groups = await this.#prisma.gachaPull.groupBy({
       by: ['userId'],
       where: { userId: { in: userIds } },
@@ -131,7 +133,9 @@ export class LeaderboardRepository implements ILeaderboardRepository {
   async countLegendariesByUsers(
     userIds: string[],
   ): Promise<Map<string, number>> {
-    if (userIds.length === 0) { return new Map() }
+    if (userIds.length === 0) {
+      return new Map()
+    }
     const groups = await this.#prisma.userCard.groupBy({
       by: ['userId'],
       where: { userId: { in: userIds }, card: { rarity: 'LEGENDARY' } },
@@ -168,9 +172,7 @@ export class LeaderboardRepository implements ILeaderboardRepository {
     return this.#prisma.campaignStage.count()
   }
 
-  getAllCampaignStagesOrdered(): Promise<
-    { chapter: number; index: number }[]
-  > {
+  getAllCampaignStagesOrdered(): Promise<{ chapter: number; index: number }[]> {
     return this.#prisma.campaignStage.findMany({
       select: { chapter: true, index: true },
       orderBy: [{ chapter: 'asc' }, { index: 'asc' }],
@@ -180,7 +182,9 @@ export class LeaderboardRepository implements ILeaderboardRepository {
   async getCampaignProgressByUsers(
     userIds: string[],
   ): Promise<Map<string, { highestChapter: number; highestIndex: number }>> {
-    if (userIds.length === 0) { return new Map() }
+    if (userIds.length === 0) {
+      return new Map()
+    }
     const rows = await this.#prisma.userCampaignProgress.findMany({
       where: { userId: { in: userIds } },
       select: { userId: true, highestChapter: true, highestIndex: true },
@@ -197,12 +201,15 @@ export class LeaderboardRepository implements ILeaderboardRepository {
     progress: { highestChapter: number; highestIndex: number } | null,
     stagesOrdered: { chapter: number; index: number }[],
   ): number {
-    if (!progress) { return 0 }
+    if (!progress) {
+      return 0
+    }
     let count = 0
     for (const s of stagesOrdered) {
       if (
         s.chapter < progress.highestChapter ||
-        (s.chapter === progress.highestChapter && s.index <= progress.highestIndex)
+        (s.chapter === progress.highestChapter &&
+          s.index <= progress.highestIndex)
       ) {
         count++
       }
@@ -223,7 +230,9 @@ export class LeaderboardRepository implements ILeaderboardRepository {
   async getCombatTeamCardsByUsers(
     userIds: string[],
   ): Promise<Map<string, CombatTeamCardForPower[]>> {
-    if (userIds.length === 0) { return new Map() }
+    if (userIds.length === 0) {
+      return new Map()
+    }
     // 1) Get users' combatTeam (array of UserCard IDs).
     const users = await this.#prisma.user.findMany({
       where: { id: { in: userIds } },
@@ -259,7 +268,9 @@ export class LeaderboardRepository implements ILeaderboardRepository {
 
     // 3) Group by userId.
     const byUser = new Map<string, CombatTeamCardForPower[]>()
-    for (const uid of userIds) { byUser.set(uid, []) }
+    for (const uid of userIds) {
+      byUser.set(uid, [])
+    }
     for (const uc of userCards) {
       const list = byUser.get(uc.userId) ?? []
       list.push({
@@ -270,10 +281,7 @@ export class LeaderboardRepository implements ILeaderboardRepository {
         card: uc.card,
         equipmentBonuses: uc.equipment.map(
           (e) =>
-            (e.equipment.bonuses ?? {}) as Record<
-              string,
-              number | undefined
-            >,
+            (e.equipment.bonuses ?? {}) as Record<string, number | undefined>,
         ),
       })
       byUser.set(uc.userId, list)

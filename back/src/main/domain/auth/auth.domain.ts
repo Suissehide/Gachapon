@@ -12,13 +12,13 @@ import type {
   RegisterInput,
   TokenPair,
 } from '../../types/domain/auth/auth.types'
-import type { UnlockedAchievement } from '../achievements/events.types'
 import type { StreakDomainInterface } from '../../types/domain/streak/streak.domain.interface'
 import type { UserEntity } from '../../types/domain/user/user.types'
 import type { JwtServiceInterface } from '../../types/infra/auth/jwt.service'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
 import type { IMailService } from '../../types/infra/mail/mail.service.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
+import type { UnlockedAchievement } from '../achievements/events.types'
 
 const SALT_ROUNDS = 12
 const VERIFICATION_TOKEN_TTL_MS = 24 * 60 * 60 * 1000 // 24h
@@ -106,9 +106,7 @@ export class AuthDomain implements AuthDomainInterface {
     return { email: input.email }
   }
 
-  async login(
-    input: LoginInput,
-  ): Promise<{
+  async login(input: LoginInput): Promise<{
     user: UserEntity
     tokens: TokenPair
     unlockedAchievements: UnlockedAchievement[]
@@ -131,7 +129,10 @@ export class AuthDomain implements AuthDomainInterface {
     let unlockedAchievements: UnlockedAchievement[] = []
     try {
       await this.#postgresOrm.executeWithTransactionClient(async (tx) => {
-        unlockedAchievements = await this.#streakDomain.updateStreak(user.id, tx)
+        unlockedAchievements = await this.#streakDomain.updateStreak(
+          user.id,
+          tx,
+        )
       })
     } catch (err) {
       console.error('[StreakDomain] updateStreak failed:', err)
@@ -140,9 +141,7 @@ export class AuthDomain implements AuthDomainInterface {
     return { user, tokens, unlockedAchievements }
   }
 
-  async verifyEmail(
-    token: string,
-  ): Promise<{
+  async verifyEmail(token: string): Promise<{
     user: UserEntity
     tokens: TokenPair
     unlockedAchievements: UnlockedAchievement[]

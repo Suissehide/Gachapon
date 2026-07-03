@@ -1,18 +1,29 @@
 import type { Achievement } from '../../../generated/client'
 import type { CardRarity, CardVariant } from '../../../generated/enums'
-import type { IocContainer } from '../../types/application/ioc'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
+import type { IocContainer } from '../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import type {
   AchievementsDomainInterface,
   AchievementWithProgress,
 } from './achievements.domain.interface'
-import { AchievementCriterionSchema, type AchievementCriterion } from './criterion.types'
 import { computeDelta } from './counter-dispatcher'
-import { computeStateProgress, type UserAchievementState } from './state-dispatcher'
+import {
+  type AchievementCriterion,
+  AchievementCriterionSchema,
+} from './criterion.types'
 import { getCustomHandler } from './custom-handlers'
-import { counterTypesFor, stateTypesFor, isCounterCriterion, isStateCriterion } from './dispatch'
+import {
+  counterTypesFor,
+  isCounterCriterion,
+  isStateCriterion,
+  stateTypesFor,
+} from './dispatch'
 import type { AchievementEvent, UnlockedAchievement } from './events.types'
+import {
+  computeStateProgress,
+  type UserAchievementState,
+} from './state-dispatcher'
 
 type AchievementWithReward = Achievement & {
   reward: {
@@ -53,7 +64,14 @@ export class AchievementsDomain implements AchievementsDomainInterface {
 
     for (const achievement of candidates) {
       const criterion = AchievementCriterionSchema.parse(achievement.criterion)
-      const result = await this.#evaluate(tx, userId, criterion, event, state, achievement)
+      const result = await this.#evaluate(
+        tx,
+        userId,
+        criterion,
+        event,
+        state,
+        achievement,
+      )
       if (!result.unlocked) {
         continue
       }
@@ -78,15 +96,21 @@ export class AchievementsDomain implements AchievementsDomainInterface {
         orderBy: [{ family: 'asc' }, { tier: 'asc' }, { sortOrder: 'asc' }],
       }),
       this.#postgresOrm.prisma.userAchievement.findMany({ where: { userId } }),
-      this.#postgresOrm.prisma.userAchievementProgress.findMany({ where: { userId } }),
+      this.#postgresOrm.prisma.userAchievementProgress.findMany({
+        where: { userId },
+      }),
       this.#postgresOrm.executeWithTransactionClient(
         (tx) => this.#loadUserState(tx, userId),
         { isolationLevel: 'ReadCommitted' },
       ),
     ])
 
-    const unlockedMap = new Map(unlocked.map((u) => [u.achievementId, u.unlockedAt]))
-    const progressMap = new Map(progressRows.map((p) => [p.achievementId, p.progress]))
+    const unlockedMap = new Map(
+      unlocked.map((u) => [u.achievementId, u.unlockedAt]),
+    )
+    const progressMap = new Map(
+      progressRows.map((p) => [p.achievementId, p.progress]),
+    )
 
     return achievements.map((a) => {
       let criterion: AchievementCriterion
@@ -116,7 +140,9 @@ export class AchievementsDomain implements AchievementsDomainInterface {
     })
   }
 
-  async listFamilies(userId: string): Promise<Array<{ family: string; total: number; unlocked: number }>> {
+  async listFamilies(
+    userId: string,
+  ): Promise<Array<{ family: string; total: number; unlocked: number }>> {
     const [achievements, userUnlocked] = await Promise.all([
       this.#postgresOrm.prisma.achievement.findMany({
         where: { isActive: true, family: { not: null } },
@@ -249,10 +275,16 @@ export class AchievementsDomain implements AchievementsDomainInterface {
       case 'REWARDS_CLAIMED': {
         const delta = computeDelta(criterion, event)
         if (delta === 0) {
-          return { unlocked: false, progress: 0, threshold: criterion.threshold }
+          return {
+            unlocked: false,
+            progress: 0,
+            threshold: criterion.threshold,
+          }
         }
         const updated = await tx.userAchievementProgress.upsert({
-          where: { userId_achievementId: { userId, achievementId: achievement.id } },
+          where: {
+            userId_achievementId: { userId, achievementId: achievement.id },
+          },
           create: { userId, achievementId: achievement.id, progress: delta },
           update: { progress: { increment: delta } },
         })
@@ -282,10 +314,17 @@ export class AchievementsDomain implements AchievementsDomainInterface {
     userId: string,
   ): Promise<UserAchievementState> {
     const [user, ownedCards, machinesOwned] = await Promise.all([
-      tx.user.findUniqueOrThrow({ where: { id: userId }, select: { level: true, streakDays: true } }),
+      tx.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { level: true, streakDays: true },
+      }),
       tx.userCard.findMany({
         where: { userId },
-        select: { variant: true, quantity: true, card: { select: { rarity: true } } },
+        select: {
+          variant: true,
+          quantity: true,
+          card: { select: { rarity: true } },
+        },
       }),
       this.#countMachinesOwned(tx, userId),
     ])
@@ -314,7 +353,10 @@ export class AchievementsDomain implements AchievementsDomainInterface {
     }
   }
 
-  async #countMachinesOwned(tx: PrimaTransactionClient, userId: string): Promise<number> {
+  async #countMachinesOwned(
+    tx: PrimaTransactionClient,
+    userId: string,
+  ): Promise<number> {
     return await tx.purchase.count({
       where: {
         userId,
@@ -325,7 +367,11 @@ export class AchievementsDomain implements AchievementsDomainInterface {
 
   async #computeCompletions(
     tx: PrimaTransactionClient,
-    ownedCards: Array<{ variant: CardVariant; quantity: number; card: { rarity: CardRarity } }>,
+    ownedCards: Array<{
+      variant: CardVariant
+      quantity: number
+      card: { rarity: CardRarity }
+    }>,
   ): Promise<UserAchievementState['completedCollections']> {
     // Total cards per rarity in the catalog
     const totalByRarity = await tx.card.groupBy({
