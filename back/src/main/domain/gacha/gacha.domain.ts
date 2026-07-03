@@ -6,6 +6,7 @@ import type { GachaDomainInterface } from '../../types/domain/gacha/gacha.domain
 import type {
   CardVariant,
   CardWithSet,
+  PullBatchResult,
   PullResult,
 } from '../../types/domain/gacha/gacha.types'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
@@ -128,6 +129,15 @@ type PullCfg = {
   xpPerPull: number
   pullTokenCost: number
   xpCurve: { base: number; slope: number; levelCap: number }
+}
+
+type StepOutcome = {
+  pull: Awaited<ReturnType<IGachaPullRepository['createInTx']>>
+  card: CardWithSet
+  wasDuplicate: boolean
+  dustEarned: number
+  unlockedAchievements: Awaited<ReturnType<AchievementsDomainInterface['track']>>
+  nextPity: number
 }
 
 export class GachaDomain implements GachaDomainInterface {
@@ -404,6 +414,152 @@ export class GachaDomain implements GachaDomainInterface {
       }
     }
 
+    return run(MAX_RETRIES)
+  }
+
+  pullBatch(userId: string, count: 1 | 10): Promise<PullBatchResult> {
+    const attempt = async (): Promise<PullBatchResult> => {
+      const [c, upgrades] = await Promise.all([
+        this.#configService.getMany(
+          'tokenRegenIntervalMinutes',
+          'tokenMaxStock',
+          'pityThreshold',
+          'dustCommon',
+          'dustUncommon',
+          'dustRare',
+          'dustEpic',
+          'dustLegendary',
+          'brilliantRateRare',
+          'brilliantRateEpic',
+          'brilliantRateLegendary',
+          'holoRateRare',
+          'holoRateEpic',
+          'holoRateLegendary',
+          'xpPerPull',
+          'gacha.pullTokenCost',
+          'xp.base',
+          'xp.slope',
+          'xp.levelCap',
+        ),
+        this.#skillTreeRepository.getEffectsForUser(userId),
+      ])
+      const cfg: PullCfg = {
+        tokenRegenIntervalMinutes: c.tokenRegenIntervalMinutes,
+        tokenMaxStock: c.tokenMaxStock,
+        pityThreshold: c.pityThreshold,
+        dustByRarity: {
+          COMMON: c.dustCommon,
+          UNCOMMON: c.dustUncommon,
+          RARE: c.dustRare,
+          EPIC: c.dustEpic,
+          LEGENDARY: c.dustLegendary,
+        },
+        variantRates: {
+          brilliantRateRare: c.brilliantRateRare,
+          brilliantRateEpic: c.brilliantRateEpic,
+          brilliantRateLegendary: c.brilliantRateLegendary,
+          holoRateRare: c.holoRateRare,
+          holoRateEpic: c.holoRateEpic,
+          holoRateLegendary: c.holoRateLegendary,
+        },
+        xpPerPull: c.xpPerPull,
+        pullTokenCost: c['gacha.pullTokenCost'],
+        xpCurve: {
+          base: c['xp.base'],
+          slope: c['xp.slope'],
+          levelCap: c['xp.levelCap'],
+        },
+        upgrades,
+      }
+      return this.#postgresOrm.executeWithTransactionClient(
+        async (tx) => {
+          const { user, state } = await this.#loadUserAndInitialState(tx, userId, cfg)
+          if (state.currentTokens < count * cfg.pullTokenCost) {
+            throw Boom.paymentRequired('Not enough tokens')
+          }
+          const oldLevel = calculateLevel(
+            user.xp,
+            cfg.xpCurve.base,
+            cfg.xpCurve.slope,
+            cfg.xpCurve.levelCap,
+          )
+          const stepResults: StepOutcome[] = []
+          let currentPity = state.currentPity
+          let totalDust = 0
+          const totalXp = cfg.xpPerPull * count
+          const pullUnlocks: Awaited<ReturnType<AchievementsDomainInterface['track']>> = []
+          for (let i = 0; i < count; i++) {
+            const step = await this.#executeSinglePullStep(tx, userId, cfg, {
+              currentTokens: state.currentTokens - i * cfg.pullTokenCost,
+              currentPity,
+            })
+            stepResults.push(step)
+            currentPity = step.nextPity
+            totalDust += step.dustEarned
+            pullUnlocks.push(...step.unlockedAchievements)
+          }
+          const finalTokens = state.currentTokens - count * cfg.pullTokenCost
+          const newLevel = calculateLevel(
+            user.xp + totalXp,
+            cfg.xpCurve.base,
+            cfg.xpCurve.slope,
+            cfg.xpCurve.levelCap,
+          )
+          await this.#writeFinalUserUpdate(
+            tx,
+            userId,
+            finalTokens,
+            totalDust,
+            totalXp,
+            newLevel,
+            currentPity,
+            state.newLastTokenAt,
+          )
+          const [spentUnlocks, levelUnlocks] = await Promise.all([
+            this.#achievementsDomain.track(tx, userId, {
+              kind: 'TOKENS_SPENT',
+              amount: count * cfg.pullTokenCost,
+            }),
+            newLevel > oldLevel
+              ? this.#achievementsDomain.track(tx, userId, {
+                  kind: 'LEVEL_UP',
+                  newLevel,
+                })
+              : Promise.resolve([] as Awaited<ReturnType<AchievementsDomainInterface['track']>>),
+          ])
+          const dedupedAchievements = [
+            ...new Map(
+              [...pullUnlocks, ...spentUnlocks, ...levelUnlocks].map((a) => [a.key, a]),
+            ).values(),
+          ]
+          return {
+            pulls: stepResults.map((s) => ({
+              pull: s.pull,
+              card: s.card,
+              wasDuplicate: s.wasDuplicate,
+              dustEarned: s.dustEarned,
+              pityCurrent: s.nextPity,
+            })),
+            tokensRemaining: finalTokens,
+            xpGained: totalXp,
+            unlockedAchievements: dedupedAchievements,
+          }
+        },
+        { isolationLevel: 'Serializable', maxWait: 5000, timeout: 10000 },
+      )
+    }
+
+    const MAX_RETRIES = 3
+    const run = async (retriesLeft: number): Promise<PullBatchResult> => {
+      try {
+        return await attempt()
+      } catch (err: unknown) {
+        if (retriesLeft > 0 && isPrismaSerializationError(err)) {
+          return run(retriesLeft - 1)
+        }
+        throw err
+      }
+    }
     return run(MAX_RETRIES)
   }
 }

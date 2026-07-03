@@ -27,3 +27,16 @@ export type PullResult = {
   xpGained: number
   unlockedAchievements: UnlockedAchievement[]
 }
+
+export type PullBatchResult = {
+  pulls: Array<{
+    pull: GachaPullEntity
+    card: CardWithSet
+    wasDuplicate: boolean
+    dustEarned: number
+    pityCurrent: number
+  }>
+  tokensRemaining: number
+  xpGained: number
+  unlockedAchievements: UnlockedAchievement[]
+}
