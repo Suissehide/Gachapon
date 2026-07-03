@@ -45,7 +45,7 @@ export function MultiSelect({
       <Popover.Trigger asChild>
         <button
           type="button"
-          className="inline-flex w-full h-[36px] items-center justify-between rounded-md border border-border bg-white px-3 py-2 text-sm text-text"
+          className="inline-flex w-full h-[36px] items-center justify-between rounded-md border border-border bg-input px-3 py-2 text-sm text-text"
         >
           <span className="truncate">
             {value.length > 0
@@ -55,13 +55,13 @@ export function MultiSelect({
                   .join(', ')
               : placeholder}
           </span>
-          <ChevronDown className="ml-2 h-4 w-4 text-gray-500" />
+          <ChevronDown className="ml-2 h-4 w-4 text-text-light" />
         </button>
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content
           align="start"
-          className="z-150 w-[var(--radix-popover-trigger-width)] rounded-md border border-border bg-white shadow-md"
+          className="z-150 w-[var(--radix-popover-trigger-width)] rounded-md border border-border bg-popover shadow-md"
         >
           {/* Barre de recherche */}
           <div className="p-2">
@@ -81,7 +81,7 @@ export function MultiSelect({
               return (
                 <li
                   key={option.value}
-                  className="relative flex select-none items-center rounded text-sm hover:bg-gray-100"
+                  className="relative flex select-none items-center rounded text-sm hover:bg-muted"
                 >
                   <button
                     type="button"
@@ -96,7 +96,7 @@ export function MultiSelect({
             })}
 
             {selectedOptions.length > 0 && unselectedOptions.length > 0 && (
-              <hr className="my-1 border-t border-gray-200" />
+              <hr className="my-1 border-t border-border" />
             )}
 
             {unselectedOptions.map((option) => {
@@ -104,7 +104,7 @@ export function MultiSelect({
               return (
                 <li
                   key={option.value}
-                  className="relative flex select-none items-center rounded text-sm hover:bg-gray-100"
+                  className="relative flex select-none items-center rounded text-sm hover:bg-muted"
                 >
                   <button
                     type="button"
