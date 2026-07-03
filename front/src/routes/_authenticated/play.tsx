@@ -1,21 +1,22 @@
 import { Environment } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { createFileRoute } from '@tanstack/react-router'
-import { ChevronsRight, Coins } from 'lucide-react'
-import { type CSSProperties, useEffect, useRef, useState } from 'react'
+import { Coins } from 'lucide-react'
+import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react'
 
-import { CardReveal } from '../../components/machine/CardReveal'
 import { GachaBall } from '../../components/machine/GachaBall'
 import type { MachineStageHandle } from '../../components/machine/MachineStage'
 import { MachineStage } from '../../components/machine/MachineStage'
+import { RevealGrid } from '../../components/machine/reveal/RevealGrid'
+import { SummaryPanel } from '../../components/machine/reveal/SummaryPanel'
 import { LiveFeed } from '../../components/play/LiveFeed'
 import { PlayHud } from '../../components/play/PlayHud'
 import { Button } from '../../components/ui/button.tsx'
+import { Switch } from '../../components/ui/switch.tsx'
 import { apiUrl as API_URL } from '../../constants/config.constant.ts'
 import { wsClient } from '../../lib/ws'
-import type { PullResult } from '../../queries/useGacha'
-import { usePull, useTokenBalance } from '../../queries/useGacha'
-import { DEFAULT_ECONOMY, useEconomyConfig } from '../../queries/useEconomyConfig'
+import type { PullBatchResult } from '../../queries/useGacha'
+import { usePullBatch, useTokenBalance } from '../../queries/useGacha'
 import { useAuthStore } from '../../stores/auth.store'
 
 export const Route = createFileRoute('/_authenticated/play')({
@@ -25,36 +26,70 @@ export const Route = createFileRoute('/_authenticated/play')({
 type Phase =
   | 'idle'
   | 'machine-anim'
+  | 'ball-shake'
+  | 'ball-split'
   | 'pulling'
-  | 'ball'
-  | 'opening'
-  | 'revealed'
+  | 'reveal-grid'
+  | 'summary'
 
 const PARTICLES = [
-  { top: '15%', left: '12%', delay: '0s', duration: '3.2s', size: 4 },
-  { top: '25%', left: '82%', delay: '0.6s', duration: '2.8s', size: 3 },
-  { top: '60%', left: '8%', delay: '1.2s', duration: '3.6s', size: 3 },
-  { top: '70%', left: '88%', delay: '0.3s', duration: '2.5s', size: 4 },
-  { top: '40%', left: '4%', delay: '1.8s', duration: '4s', size: 2 },
-  { top: '50%', left: '93%', delay: '0.9s', duration: '3s', size: 2 },
-  { top: '80%', left: '20%', delay: '2.1s', duration: '2.7s', size: 3 },
-  { top: '20%', left: '75%', delay: '1.5s', duration: '3.4s', size: 2 },
+  { id: 'p0', top: '15%', left: '12%', delay: '0s', duration: '3.2s', size: 4 },
+  { id: 'p1', top: '25%', left: '82%', delay: '0.6s', duration: '2.8s', size: 3 },
+  { id: 'p2', top: '60%', left: '8%', delay: '1.2s', duration: '3.6s', size: 3 },
+  { id: 'p3', top: '70%', left: '88%', delay: '0.3s', duration: '2.5s', size: 4 },
+  { id: 'p4', top: '40%', left: '4%', delay: '1.8s', duration: '4s', size: 2 },
+  { id: 'p5', top: '50%', left: '93%', delay: '0.9s', duration: '3s', size: 2 },
+  { id: 'p6', top: '80%', left: '20%', delay: '2.1s', duration: '2.7s', size: 3 },
+  { id: 'p7', top: '20%', left: '75%', delay: '1.5s', duration: '3.4s', size: 2 },
 ]
 
+const SKIP_KEY = 'play.skipAnimations'
+
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: page-level orchestrator coordinates multiple state machines and phase branches
 function Play() {
   const [phase, setPhase] = useState<Phase>('idle')
-  const [pullResult, setPullResult] = useState<PullResult | null>(null)
-  const pendingResult = useRef<PullResult | null>(null)
+  const [result, setResult] = useState<PullBatchResult | null>(null)
+  const pendingResult = useRef<PullBatchResult | null>(null)
   const [now, setNow] = useState(Date.now())
   const machineRef = useRef<MachineStageHandle>(null)
+  const [skipAnimations, setSkipAnimations] = useState<boolean>(() => {
+    if (typeof window === 'undefined') { return false }
+    return localStorage.getItem(SKIP_KEY) === 'true'
+  })
 
   const { data: balance, isLoading: balanceLoading } = useTokenBalance()
-  const { mutate: pullMutation, isPending: pullPending } = usePull()
-  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  const { mutate: pullBatchMutation, isPending: pullPending } = usePullBatch()
   const setUser = useAuthStore((s) => s.setUser)
   const user = useAuthStore((s) => s.user)
 
-  // Sync auth store (topbar) with token balance query
+  // Stable handlers — useCallback because they're passed to children with effect deps.
+  const handleSplitDone = useCallback(() => {
+    const tryReveal = () => {
+      if (pendingResult.current) {
+        setResult(pendingResult.current)
+        setPhase('reveal-grid')
+      } else {
+        setTimeout(tryReveal, 50)
+      }
+    }
+    tryReveal()
+  }, [])
+
+  // RevealGrid's useEffect includes onAllRevealed in its dep array — must be stable
+  // or the 700ms summary-transition timer re-fires on every parent re-render.
+  const handleAllRevealed = useCallback(() => setPhase('summary'), [])
+
+  const handleClose = useCallback(() => {
+    setResult(null)
+    pendingResult.current = null
+    setPhase('idle')
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem(SKIP_KEY, String(skipAnimations))
+  }, [skipAnimations])
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional minimal dep — full deps cause a feedback loop with auth store
   useEffect(() => {
     if (balance && user && user.tokens !== balance.tokens) {
       setUser({ ...user, tokens: balance.tokens })
@@ -66,88 +101,71 @@ function Play() {
     return () => wsClient.disconnect()
   }, [])
 
-  // Live timer tick — only when a token is regenerating
   useEffect(() => {
     if (
       !balance?.nextTokenAt ||
-      (balance.tokens ?? 0) >= (balance.maxStock ?? economy.gacha.tokenMaxStock)
+      (balance.tokens ?? 0) >= (balance.maxStock ?? 5)
     ) {
       return
     }
     const id = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(id)
-  }, [balance?.nextTokenAt, balance?.tokens, balance?.maxStock, economy.gacha.tokenMaxStock])
-
-  // Quand la boule est ouverte : révélation de la carte après le lerp
-  useEffect(() => {
-    if (phase !== 'opening') {
-      return
-    }
-    const timer = setTimeout(() => {
-      setPullResult(pendingResult.current)
-      setPhase('revealed')
-    }, 700)
-    return () => clearTimeout(timer)
-  }, [phase])
+  }, [balance?.nextTokenAt, balance?.tokens, balance?.maxStock])
 
   const tokens = balance?.tokens ?? 0
-  const maxStock = balance?.maxStock ?? economy.gacha.tokenMaxStock
-  const canPull = tokens > 0 && phase === 'idle' && !pullPending
+  const maxStock = balance?.maxStock ?? 5
 
-  const handlePull = async () => {
-    if (!canPull || !machineRef.current) {
+  const startPull = async (count: 1 | 10) => {
+    if (tokens < count || phase !== 'idle' || pullPending) { return }
+
+    if (skipAnimations) {
+      setPhase('pulling')
+      pullBatchMutation(count, {
+        onSuccess: (r) => {
+          setResult(r)
+          setPhase('reveal-grid')
+        },
+        onError: () => setPhase('idle'),
+      })
       return
     }
+
+    // Full animation path — kick off network in parallel with visuals
+    pendingResult.current = null
     setPhase('machine-anim')
-    await machineRef.current.startAnimation()
-    await new Promise((r) => setTimeout(r, 600))
-    setPhase('ball')
-  }
-
-  const handleSkip = () => {
-    if (!canPull) {
-      return
-    }
-    setPhase('pulling')
-    pullMutation(undefined, {
-      onSuccess: (result) => {
-        setPullResult(result)
-        setPhase('revealed')
+    pullBatchMutation(count, {
+      onSuccess: (r) => {
+        pendingResult.current = r
       },
       onError: () => setPhase('idle'),
     })
+
+    await machineRef.current?.startAnimation()
+    await new Promise((res) => setTimeout(res, 600))
+    setPhase('ball-shake')
+    await new Promise((res) => setTimeout(res, 500))
+    setPhase('ball-split')
+    // ball-split ends via onSplitDone callback → transition inside handleSplitDone
   }
 
-  const handleBallClick = () => {
-    if (phase !== 'ball' || pullPending) {
-      return
-    }
-    pullMutation(undefined, {
-      onSuccess: (result) => {
-        pendingResult.current = result
-        setPhase('opening')
-      },
-      onError: () => setPhase('idle'),
-    })
-  }
-
-  const handleClose = () => {
-    setPullResult(null)
+  const handlePullAgain = (count: 1 | 10) => {
+    setResult(null)
     pendingResult.current = null
     setPhase('idle')
+    // Kick off next pull on the next tick so the phase reset propagates
+    setTimeout(() => startPull(count), 0)
   }
 
-  const showBall =
-    phase === 'ball' || phase === 'opening' || phase === 'revealed'
-  // Machine stays visible during ball/opening phases (behind the GachaBall)
-  // Hidden during 'pulling' (skip animation) to avoid heavy rendering
+  const showBall = phase === 'ball-shake' || phase === 'ball-split'
   const showMachine =
     phase === 'idle' ||
     phase === 'machine-anim' ||
-    phase === 'ball' ||
-    phase === 'opening'
-  const isIdle = phase === 'idle' || phase === 'pulling'
-  const showActions = phase !== 'revealed'
+    phase === 'ball-shake' ||
+    phase === 'ball-split'
+  const isIdle = phase === 'idle'
+  const showActions = phase === 'idle'
+  const canPullX1 = tokens >= 1 && phase === 'idle' && !pullPending
+  const canPullX10 = tokens >= 10 && phase === 'idle' && !pullPending
 
   const timeLeft =
     balance?.nextTokenAt && tokens < maxStock
@@ -156,20 +174,17 @@ function Play() {
 
   return (
     <div className="relative h-[calc(100vh-var(--topbar-h))] overflow-hidden bg-background">
-      {/* Ambient background — radial spotlight on stage */}
+      {/* Ambient background */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        {/* Stage spotlight */}
         <div className="absolute left-1/2 top-1/2 h-125 w-125 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/6 blur-[120px]" />
-        {/* Corner glows */}
         <div className="absolute -left-16 -top-16 h-80 w-80 rounded-full bg-primary/5 blur-[100px]" />
         <div className="absolute -bottom-8 -right-16 h-70 w-70 rounded-full bg-secondary/4 blur-[90px]" />
       </div>
 
-      {/* Floating ambient particles */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        {PARTICLES.map((p, i) => (
+        {PARTICLES.map((p) => (
           <div
-            key={i}
+            key={p.id}
             className="particle absolute rounded-full bg-primary/30"
             style={
               {
@@ -185,9 +200,8 @@ function Play() {
         ))}
       </div>
 
-      {/* ── CENTER STAGE (full page behind everything) ── */}
+      {/* Stage */}
       <div className="absolute inset-0">
-        {/* Machine layer */}
         {showMachine && (
           <div
             className={`absolute inset-0 transition-opacity duration-300 ${showBall ? 'opacity-30 pointer-events-none' : ''}`}
@@ -195,8 +209,6 @@ function Play() {
             <MachineStage ref={machineRef} />
           </div>
         )}
-
-        {/* GachaBall layer */}
         {showBall && (
           <div className="absolute inset-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
             <Canvas
@@ -218,29 +230,20 @@ function Play() {
                 color="#f59e0b"
               />
               <GachaBall
-                interactive={phase === 'ball'}
-                isOpening={phase === 'opening' || phase === 'revealed'}
-                onOpen={handleBallClick}
+                phase={phase === 'ball-shake' ? 'shake' : 'split'}
+                onSplitDone={handleSplitDone}
               />
               <Environment preset="city" />
             </Canvas>
-
-            {phase === 'ball' && (
-              <p className="absolute bottom-52 left-0 right-0 text-center text-xs text-text-light/50 animate-in fade-in-0 duration-500">
-                Clique sur la boule pour l'ouvrir
-              </p>
-            )}
           </div>
         )}
       </div>
 
-      {/* ── TOKEN COUNTER (top) ── */}
+      {/* Token counter */}
       <div className="relative z-10 pt-10 flex flex-col items-center">
         <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.3em] text-text-light/40">
           Jetons
         </p>
-
-        {/* Large number */}
         <div className="flex items-baseline gap-2">
           <Coins className="mb-1 h-7 w-7 text-primary" />
           <span
@@ -254,8 +257,6 @@ function Play() {
             /{maxStock}
           </span>
         </div>
-
-        {/* Timer or full message */}
         <div className="mt-3 h-5">
           {timeLeft ? (
             <p className="text-xs text-text-light/40">
@@ -272,61 +273,67 @@ function Play() {
         </div>
       </div>
 
-      {/* ── ACTIONS (bottom) ── */}
+      {/* Actions */}
       {showActions && (
-        <div className="absolute bottom-24 left-0 right-0 z-10 flex flex-col items-center gap-3">
-          <Button
-            onClick={handlePull}
-            disabled={!canPull}
-            className={`relative h-auto rounded-full px-10 py-3.5 text-base font-black tracking-wide transition-all ${
-              canPull
-                ? 'bg-linear-to-r from-primary to-secondary shadow-lg shadow-primary/30 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/40 active:translate-y-0'
-                : 'bg-muted text-text-light'
-            }`}
-          >
-            {phase === 'machine-anim' ||
-            phase === 'ball' ||
-            phase === 'opening' ||
-            phase === 'pulling'
-              ? 'Tirage en cours…'
-              : tokens < 1
-                ? 'Plus de jetons'
-                : `✦ Insérer (${economy.gacha.pullTokenCost} jeton${economy.gacha.pullTokenCost > 1 ? 's' : ''})`}
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleSkip}
-            disabled={!canPull}
-            className={`text-xs text-text-light/40 hover:text-text-light ${canPull ? '' : 'invisible'}`}
-          >
-            Passer l'animation
-            <ChevronsRight className="h-3.5 w-3.5" />
-          </Button>
+        <div className="absolute bottom-24 left-0 right-0 z-10 flex flex-col items-center gap-4">
+          {/* biome-ignore lint/a11y/noLabelWithoutControl: Radix Switch renders a <button> — label click activates it via DOM proximity */}
+          <label className="flex items-center gap-2 text-xs text-text-light/60">
+            <Switch
+              checked={skipAnimations}
+              onCheckedChange={setSkipAnimations}
+            />
+            Sauter les animations
+          </label>
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={() => startPull(1)}
+              disabled={!canPullX1}
+              className={`relative h-auto rounded-full px-8 py-3.5 text-base font-black tracking-wide transition-all ${
+                canPullX1
+                  ? 'bg-linear-to-r from-primary to-secondary shadow-lg shadow-primary/30 hover:-translate-y-0.5'
+                  : 'bg-muted text-text-light'
+              }`}
+            >
+              ✦ Insérer x1 (1 jeton)
+            </Button>
+            <Button
+              onClick={() => startPull(10)}
+              disabled={!canPullX10}
+              className={`relative h-auto rounded-full px-8 py-3.5 text-base font-black tracking-wide transition-all ${
+                canPullX10
+                  ? 'bg-linear-to-r from-primary to-secondary shadow-lg shadow-primary/30 hover:-translate-y-0.5'
+                  : 'bg-muted text-text-light'
+              }`}
+            >
+              ✦ Insérer x10 (10 jetons)
+            </Button>
+          </div>
         </div>
       )}
 
-      {/* Card reveal overlay */}
-      <CardReveal
-        result={pullResult}
-        onClose={handleClose}
-        isPulling={pullPending}
-        onNewPull={() => {
-          pullMutation(undefined, {
-            onSuccess: (result) => {
-              setPullResult(result)
-              setPhase('revealed')
-            },
-            onError: () => setPhase('revealed'),
-          })
-        }}
-      />
+      {phase === 'pulling' && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <p className="text-sm text-white/70">Tirage en cours…</p>
+        </div>
+      )}
 
-      {/* HUD — always visible */}
+      {phase === 'reveal-grid' && result && (
+        <RevealGrid results={result.pulls} onAllRevealed={handleAllRevealed} />
+      )}
+
+      {phase === 'summary' && result && (
+        <SummaryPanel
+          results={result.pulls}
+          tokensRemaining={result.tokensRemaining}
+          xpGained={result.xpGained}
+          dustGained={result.pulls.reduce((s, p) => s + p.dustEarned, 0)}
+          onClose={handleClose}
+          onPullAgain={handlePullAgain}
+        />
+      )}
+
       <PlayHud />
 
-      {/* Live feed sidebar — hidden during pull to avoid spoilers */}
       <div className={isIdle ? '' : 'invisible pointer-events-none'}>
         <LiveFeed />
       </div>
@@ -336,17 +343,11 @@ function Play() {
 
 function formatTimeLeft(isoDate: string, now = Date.now()): string {
   const diff = new Date(isoDate).getTime() - now
-  if (diff <= 0) {
-    return 'bientôt'
-  }
+  if (diff <= 0) { return 'bientôt' }
   const h = Math.floor(diff / 3600000)
   const m = Math.floor((diff % 3600000) / 60000)
   const s = Math.floor((diff % 60000) / 1000)
-  if (h > 0) {
-    return `${h}h${m.toString().padStart(2, '0')}`
-  }
-  if (m > 0) {
-    return `${m}min${s.toString().padStart(2, '0')}`
-  }
+  if (h > 0) { return `${h}h${m.toString().padStart(2, '0')}` }
+  if (m > 0) { return `${m}min${s.toString().padStart(2, '0')}` }
   return `${s}s`
 }
