@@ -9,6 +9,7 @@ export const campaignStageSchema = z.object({
   label: z.string(),
   isBoss: z.boolean(),
   status: stageStatusEnum,
+  recommendedPower: z.number(),
 })
 
 export const campaignChapterSchema = z.object({

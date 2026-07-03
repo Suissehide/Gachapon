@@ -20,6 +20,7 @@ import {
   rollFirstClearCardRarity,
   rollFirstClearEquipmentRarity,
 } from '../combat/equipment-drop.domain'
+import { computeTeamPower } from './campaign-power'
 
 type Rarity = 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
 
@@ -94,6 +95,7 @@ export interface CampaignStageView {
   label: string
   isBoss: boolean
   status: 'cleared' | 'current' | 'locked'
+  recommendedPower: number
 }
 
 export interface CampaignView {
@@ -197,6 +199,7 @@ export class CampaignDomain {
           label: s.label,
           isBoss: s.isBoss,
           status,
+          recommendedPower: computeTeamPower(s.enemyTeam as unknown as EnemySpec[]),
         }
       })
       chapters.push({ chapter, stages: stageViews })
