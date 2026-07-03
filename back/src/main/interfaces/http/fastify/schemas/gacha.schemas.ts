@@ -21,6 +21,33 @@ export const pullResponseSchema = z.object({
   unlockedAchievements: z.array(unlockedAchievementSchema).optional(),
 })
 
+// ── POST /pulls/batch ────────────────────────────────────────────────────────
+
+export const pullBatchBodySchema = z.object({
+  count: z.union([z.literal(1), z.literal(10)]),
+})
+
+export const pullBatchResponseSchema = z.object({
+  pulls: z.array(
+    z.object({
+      card: z.object({
+        id: z.string(),
+        name: z.string(),
+        imageUrl: z.string().nullable(),
+        rarity: z.string(),
+        variant: z.string(),
+        set: z.object({ id: z.string(), name: z.string() }),
+      }),
+      wasDuplicate: z.boolean(),
+      dustEarned: z.number(),
+      pityCurrent: z.number(),
+    }),
+  ),
+  tokensRemaining: z.number(),
+  xpGained: z.number(),
+  unlockedAchievements: z.array(unlockedAchievementSchema),
+})
+
 // ── GET /pulls/history ──────────────────────────────────────────────────────
 
 export const pullsHistoryQuerySchema = z.object({

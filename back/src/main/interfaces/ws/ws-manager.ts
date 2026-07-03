@@ -17,6 +17,25 @@ type PullResultEvent = {
   xpGained: number
 }
 
+type PullBatchResultEvent = {
+  type: 'pull:batch-result'
+  pulls: Array<{
+    card: {
+      id: string
+      name: string
+      imageUrl: string | null
+      rarity: string
+      variant: string
+      set: { id: string; name: string }
+    }
+    wasDuplicate: boolean
+    dustEarned: number
+    pityCurrent: number
+  }>
+  tokensRemaining: number
+  xpGained: number
+}
+
 export type FeedPullEvent = {
   type: 'feed:pull'
   username: string
@@ -29,7 +48,7 @@ export type FeedPullEvent = {
   pulledAt: string
 }
 
-type WsEvent = PullResultEvent | FeedPullEvent
+type WsEvent = PullResultEvent | PullBatchResultEvent | FeedPullEvent
 
 export class WsManager {
   readonly #connections = new Map<string, WebSocket>()

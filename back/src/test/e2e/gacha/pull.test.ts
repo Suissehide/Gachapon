@@ -172,6 +172,69 @@ describe('Gacha routes', () => {
     expect(res.statusCode).toBe(401)
   })
 
+  it('POST /pulls/batch count=1 — same shape as pulls[0]', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+    await postgresOrm.prisma.user.update({
+      where: { email },
+      data: { tokens: 5 },
+    })
+    const res = await app.inject({
+      method: 'POST',
+      url: '/pulls/batch',
+      headers: { cookie: cookies },
+      payload: { count: 1 },
+    })
+    expect(res.statusCode).toBe(201)
+    const body = res.json()
+    expect(body.pulls).toHaveLength(1)
+    expect(body.pulls[0].card).toHaveProperty('name')
+    expect(body.tokensRemaining).toBe(4)
+    expect(body).toHaveProperty('xpGained')
+  })
+
+  it('POST /pulls/batch count=10 — returns 10 cards, tokens -= 10', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+    await postgresOrm.prisma.user.update({
+      where: { email },
+      data: { tokens: 12 },
+    })
+    const res = await app.inject({
+      method: 'POST',
+      url: '/pulls/batch',
+      headers: { cookie: cookies },
+      payload: { count: 10 },
+    })
+    expect(res.statusCode).toBe(201)
+    const body = res.json()
+    expect(body.pulls).toHaveLength(10)
+    expect(body.tokensRemaining).toBe(2)
+  })
+
+  it('POST /pulls/batch count=10 with insufficient tokens → 402', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+    await postgresOrm.prisma.user.update({
+      where: { email },
+      data: { tokens: 3 },
+    })
+    const res = await app.inject({
+      method: 'POST',
+      url: '/pulls/batch',
+      headers: { cookie: cookies },
+      payload: { count: 10 },
+    })
+    expect(res.statusCode).toBe(402)
+  })
+
+  it('POST /pulls/batch count=5 → 400 (Zod)', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/pulls/batch',
+      headers: { cookie: cookies },
+      payload: { count: 5 },
+    })
+    expect(res.statusCode).toBe(400)
+  })
+
   it('POST /pulls — un doublon ne crédite plus de poussière auto', async () => {
     const { postgresOrm } = (app as any).iocContainer
 
