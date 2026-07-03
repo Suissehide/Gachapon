@@ -34,11 +34,8 @@ export function TeamLane({
     <div key={u.id} className="relative">
       <UnitPortrait
         unit={u}
-        attackingDirection={
-          // Player team (side 'A') is on the bottom — attacking means hopping UP.
-          // Enemy team (side 'B') is on top — attacking means hopping DOWN.
-          attackingUnitId === u.id ? (side === 'A' ? 'up' : 'down') : null
-        }
+        isActing={attackingUnitId === u.id}
+        isTargeted={false}
         enlarged={enlarged}
       />
       {(floatsByUnit[u.id] ?? []).map((f) => (
