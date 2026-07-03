@@ -131,7 +131,7 @@ function pickWeightedRarity(
       return rar
     }
   }
-  return entries[entries.length - 1]?.[0]
+  return entries[entries.length - 1]?.[0] ?? 'COMMON'
 }
 
 export const __test__ = { pickWeightedRarity }
