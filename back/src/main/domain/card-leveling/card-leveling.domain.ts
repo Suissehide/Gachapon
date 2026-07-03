@@ -25,8 +25,11 @@ export function isAtTopOfPalier(level: number, palier: number): boolean {
 export function goldCostNextLevel(
   currentLevel: number,
   rarity: CardRarity,
+  base = 5,
+  exp = 1.6,
+  rarityMult: Record<CardRarity, number> = RARITY_MULT,
 ): number {
-  return Math.round(5 * currentLevel ** 1.6 * RARITY_MULT[rarity])
+  return Math.round(base * currentLevel ** exp * rarityMult[rarity])
 }
 
 /**
@@ -35,8 +38,11 @@ export function goldCostNextLevel(
 export function dustCostNextLevel(
   currentLevel: number,
   rarity: CardRarity,
+  base = 0.5,
+  exp = 1.4,
+  rarityMult: Record<CardRarity, number> = RARITY_MULT,
 ): number {
-  return Math.round(8 * currentLevel ** 1.4 * RARITY_MULT[rarity])
+  return Math.round(base * currentLevel ** exp * rarityMult[rarity])
 }
 
 /**
@@ -48,10 +54,13 @@ export function totalGoldCost(
   from: number,
   to: number,
   rarity: CardRarity,
+  base = 5,
+  exp = 1.6,
+  rarityMult: Record<CardRarity, number> = RARITY_MULT,
 ): number {
   let total = 0
   for (let n = from; n < to; n++) {
-    total += goldCostNextLevel(n, rarity)
+    total += goldCostNextLevel(n, rarity, base, exp, rarityMult)
   }
   return total
 }
@@ -60,10 +69,13 @@ export function totalDustCost(
   from: number,
   to: number,
   rarity: CardRarity,
+  base = 0.5,
+  exp = 1.4,
+  rarityMult: Record<CardRarity, number> = RARITY_MULT,
 ): number {
   let total = 0
   for (let n = from; n < to; n++) {
-    total += dustCostNextLevel(n, rarity)
+    total += dustCostNextLevel(n, rarity, base, exp, rarityMult)
   }
   return total
 }

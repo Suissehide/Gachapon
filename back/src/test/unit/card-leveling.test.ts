@@ -60,12 +60,24 @@ describe('card-leveling pure domain', () => {
       expect(e).toBeGreaterThan(r)
       expect(l).toBeGreaterThan(e)
     })
+    it('accepts custom base/exp params', () => {
+      expect(goldCostNextLevel(10, 'COMMON', 10, 2)).toBe(1000)
+    })
   })
 
   describe('dustCostNextLevel', () => {
-    it('uses formula 8 × n^1.4 × multRareté', () => {
-      expect(dustCostNextLevel(1, 'COMMON')).toBe(8)
-      expect(dustCostNextLevel(1, 'RARE')).toBe(Math.round(8 * 1.7))
+    it('uses formula 0.5 × n^1.4 × multRareté (nouvelle économie)', () => {
+      // n=1, COMMON: round(0.5 × 1 × 1.0) = 1 (Math.round(0.5) → 1)
+      expect(dustCostNextLevel(1, 'COMMON')).toBe(1)
+      // n=10, LEGENDARY: round(0.5 × 10^1.4 × 3.0)
+      expect(dustCostNextLevel(10, 'LEGENDARY')).toBe(
+        Math.round(0.5 * Math.pow(10, 1.4) * 3.0),
+      )
+    })
+    it('accepts custom base/exp params', () => {
+      expect(dustCostNextLevel(10, 'COMMON', 8, 1.4)).toBe(
+        Math.round(8 * Math.pow(10, 1.4)),
+      )
     })
   })
 

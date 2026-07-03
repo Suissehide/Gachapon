@@ -11,12 +11,14 @@ import {
 
 export class CardLevelingTx {
   readonly #postgresOrm
+  readonly #configService
 
-  constructor({ postgresOrm }: IocContainer) {
+  constructor({ postgresOrm, configService }: IocContainer) {
     this.#postgresOrm = postgresOrm
+    this.#configService = configService
   }
 
-  levelUp(
+  async levelUp(
     userId: string,
     userCardId: string,
     targetLevel: number,
@@ -27,6 +29,25 @@ export class CardLevelingTx {
     newGold: number
     newDust: number
   }> {
+    const c = await this.#configService.getMany(
+      'card.goldCostBase',
+      'card.goldCostExp',
+      'card.dustCostBase',
+      'card.dustCostExp',
+      'card.rarityMultCommon',
+      'card.rarityMultUncommon',
+      'card.rarityMultRare',
+      'card.rarityMultEpic',
+      'card.rarityMultLegendary',
+    )
+    const rarityMult = {
+      COMMON: c['card.rarityMultCommon'],
+      UNCOMMON: c['card.rarityMultUncommon'],
+      RARE: c['card.rarityMultRare'],
+      EPIC: c['card.rarityMultEpic'],
+      LEGENDARY: c['card.rarityMultLegendary'],
+    }
+
     return retryOnSerialization(() =>
       this.#postgresOrm.executeWithTransactionClient(
         async (tx) => {
@@ -54,8 +75,8 @@ export class CardLevelingTx {
           }
 
           const rarity = userCard.card.rarity
-          const goldCost = totalGoldCost(currentLevel, targetLevel, rarity)
-          const dustCost = totalDustCost(currentLevel, targetLevel, rarity)
+          const goldCost = totalGoldCost(currentLevel, targetLevel, rarity, c['card.goldCostBase'], c['card.goldCostExp'], rarityMult)
+          const dustCost = totalDustCost(currentLevel, targetLevel, rarity, c['card.dustCostBase'], c['card.dustCostExp'], rarityMult)
 
           const user = await tx.user.findUnique({ where: { id: userId } })
           if (!user) {
