@@ -4,7 +4,7 @@ import type { IocContainer } from '../../types/application/ioc'
 import { isAtTopOfPalier } from '../card-leveling/card-leveling.domain'
 import { retryOnSerialization } from '../shared/retry-serialization'
 
-const MAX_PALIER = 6
+export const MAX_PALIER = 6
 
 export class CardAscensionTx {
   readonly #postgresOrm

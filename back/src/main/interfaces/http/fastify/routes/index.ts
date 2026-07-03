@@ -9,6 +9,7 @@ import { cardsRouter } from './cards'
 import { collectionRouter } from './collection'
 import { combatRouter } from './combat'
 import { dailyShopRouter } from './daily-shop'
+import { economyRouter } from './economy'
 import { equipmentRouter } from './equipment'
 import { gachaRouter } from './gacha'
 import { leaderboardRouter } from './leaderboard'
@@ -60,6 +61,7 @@ export const routes: FastifyPluginAsyncZod = async (fastify) => {
   await fastify.register(leaderboardRouter)
   await fastify.register(shopRouter)
   await fastify.register(dailyShopRouter)
+  await fastify.register(economyRouter)
   await fastify.register(equipmentRouter)
   await fastify.register(skillsRouter)
   await fastify.register(wsRouter)

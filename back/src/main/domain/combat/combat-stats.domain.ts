@@ -7,7 +7,7 @@ const VARIANT_MULT: Record<CardVariant, number> = {
 }
 
 const STAT_GROWTH_PER_LEVEL = 0.06
-const ASCENSION_STAT_BONUS = 0.15
+export const ASCENSION_STAT_BONUS = 0.15
 
 export interface CombatStats {
   hp: number
