@@ -273,14 +273,24 @@ export class GachaDomain implements GachaDomainInterface {
     cfg: PullCfg,
   ): Promise<PullResult> {
     const { user, state } = await this.#loadUserAndInitialState(tx, userId, cfg)
-    if (state.currentTokens < 1) {
+    if (state.currentTokens < cfg.pullTokenCost) {
       throw Boom.paymentRequired('Not enough tokens')
     }
     const step = await this.#executeSinglePullStep(tx, userId, cfg, state)
     const totalXp = cfg.xpPerPull
-    const oldLevel = calculateLevel(user.xp)
-    const newLevel = calculateLevel(user.xp + totalXp)
-    const finalTokens = state.currentTokens - 1
+    const oldLevel = calculateLevel(
+      user.xp,
+      cfg.xpCurve.base,
+      cfg.xpCurve.slope,
+      cfg.xpCurve.levelCap,
+    )
+    const newLevel = calculateLevel(
+      user.xp + totalXp,
+      cfg.xpCurve.base,
+      cfg.xpCurve.slope,
+      cfg.xpCurve.levelCap,
+    )
+    const finalTokens = state.currentTokens - cfg.pullTokenCost
     await this.#writeFinalUserUpdate(
       tx,
       userId,
@@ -294,7 +304,7 @@ export class GachaDomain implements GachaDomainInterface {
     const [spentUnlocks, levelUnlocks] = await Promise.all([
       this.#achievementsDomain.track(tx, userId, {
         kind: 'TOKENS_SPENT',
-        amount: 1,
+        amount: cfg.pullTokenCost,
       }),
       newLevel > oldLevel
         ? this.#achievementsDomain.track(tx, userId, {
