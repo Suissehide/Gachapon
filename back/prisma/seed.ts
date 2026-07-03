@@ -6,7 +6,6 @@ import { seedAchievements } from './seed/achievements'
 import { seedCampaign } from './seed/campaign'
 import { seedCards } from './seed/cards'
 import { seedEquipment } from './seed/equipment'
-import { seedGlobalConfig } from './seed/global-config'
 import { seedSkills } from './seed/skills'
 import { seedMilestones } from './seed/milestones'
 import { seedQuests } from './seed/quests'
@@ -65,7 +64,6 @@ async function main() {
     await seedQuests(tx)
     await seedAchievements(tx)
     await seedMilestones(tx)
-    await seedGlobalConfig(tx)
     await seedSkills(tx)
     await seedEquipment(tx)
     await seedCampaign(tx)

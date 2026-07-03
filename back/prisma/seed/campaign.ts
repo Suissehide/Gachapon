@@ -42,16 +42,10 @@ function bossEnemyTeam(chapter: number, stageIndex: number) {
   ]
 }
 
-function lootTableNormal(stageIndex: number) {
-  // Interpolate firstClear gold/dust/xp between 1-1 (200/50/30) and 1-9 (800/180/60)
-  const t = (stageIndex - 1) / 8
-  const fcGold = Math.round(200 + (800 - 200) * t)
-  const fcDust = Math.round(50 + (180 - 50) * t)
-  const fcXp = Math.round(30 + (60 - 30) * t)
-  const farmGold = Math.round(20 + (80 - 20) * t)
-  const farmDust = Math.round(3 + (12 - 3) * t)
-  const farmXp = Math.round(3 + (6 - 3) * t)
-
+// Le butin scale ×1,5 par chapitre (la difficulté scale ×2,5 : progresser
+// reste optimal, farmer un vieux chapitre reste digne). Spec §4b.
+function lootTableNormal(chapter: number, stageIndex: number) {
+  const m = Math.pow(1.5, chapter - 1)
   const minRarity = stageIndex <= 3 ? 'COMMON' : 'UNCOMMON'
   const farmWeights =
     stageIndex <= 3
@@ -59,13 +53,19 @@ function lootTableNormal(stageIndex: number) {
       : stageIndex <= 6
       ? { COMMON: 60, UNCOMMON: 30, RARE: 10 }
       : { COMMON: 50, UNCOMMON: 35, RARE: 15 }
+  const t = (stageIndex - 1) / 8
 
   return {
-    firstClear: { gold: fcGold, dust: fcDust, xp: fcXp, guaranteedEquipment: { minRarity } },
+    firstClear: {
+      gold: Math.round((150 + 80 * stageIndex) * m),
+      dust: Math.round((40 + 15 * stageIndex) * m),
+      xp: Math.round((30 + 3 * stageIndex) * m),
+      guaranteedEquipment: { minRarity },
+    },
     farm: {
-      gold: farmGold,
-      dust: farmDust,
-      xp: farmXp,
+      gold: Math.round((40 + 10 * stageIndex) * m),
+      dust: Math.round((3 + stageIndex) * m),
+      xp: Math.round((5 + stageIndex) * m),
       equipmentDropChance: 0.15 + 0.05 * t,
       equipmentWeights: farmWeights,
       cardChance: 0.005 + 0.005 * t,
@@ -73,22 +73,26 @@ function lootTableNormal(stageIndex: number) {
   }
 }
 
-const bossLoot = {
-  firstClear: {
-    gold: 5000,
-    dust: 1000,
-    xp: 200,
-    guaranteedEquipment: { minRarity: 'RARE' },
-    guaranteedCard: { minRarity: 'EPIC' },
-  },
-  farm: {
-    gold: 250,
-    dust: 40,
-    xp: 12,
-    equipmentDropChance: 0.3,
-    equipmentWeights: { UNCOMMON: 40, RARE: 40, EPIC: 18, LEGENDARY: 2 },
-    cardChance: 0.02,
-  },
+function bossLoot(chapter: number) {
+  const m = Math.pow(1.5, chapter - 1)
+  const stage9 = lootTableNormal(chapter, 9)
+  return {
+    firstClear: {
+      gold: Math.round(5000 * m),
+      dust: Math.round(1000 * m),
+      xp: Math.round(200 * m),
+      guaranteedEquipment: { minRarity: 'RARE' },
+      guaranteedCard: { minRarity: 'EPIC' },
+    },
+    farm: {
+      gold: Math.round(stage9.farm.gold * 2.5),
+      dust: Math.round(stage9.farm.dust * 2.5),
+      xp: Math.round(stage9.farm.xp * 2.5),
+      equipmentDropChance: 0.3,
+      equipmentWeights: { UNCOMMON: 40, RARE: 40, EPIC: 18, LEGENDARY: 2 },
+      cardChance: 0.02,
+    },
+  }
 }
 
 const CHAPTER_COUNT = 3
@@ -111,7 +115,7 @@ export async function seedCampaign(
           enemyTeam: isBoss
             ? bossEnemyTeam(chapter, i)
             : normalEnemyTeam(chapter, i),
-          lootTable: isBoss ? bossLoot : lootTableNormal(i),
+          lootTable: isBoss ? bossLoot(chapter) : lootTableNormal(chapter, i),
           order,
         },
       })

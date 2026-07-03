@@ -85,9 +85,9 @@ describe('POST /cards/:userCardId/level-up', () => {
     const body = res.json()
     expect(body.newLevel).toBe(3)
     expect(body.goldSpent).toBe(35) // 9 (1→2) + 26 (2→3)
-    expect(body.dustSpent).toBe(50) // 14 (1→2) + 36 (2→3)
+    expect(body.dustSpent).toBe(3) // 1 (1→2) + 2 (2→3)
     expect(body.newGold).toBe(10000 - 35)
-    expect(body.newDust).toBe(10000 - 50)
+    expect(body.newDust).toBe(10000 - 3)
   })
 
   it('refuses targetLevel beyond palier 1 cap (10)', async () => {

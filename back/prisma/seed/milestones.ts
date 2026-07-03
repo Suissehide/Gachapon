@@ -1,13 +1,11 @@
 import type { PrismaClient } from '../../src/generated/client'
 
 const MILESTONES = [
-  // day = 0 is the fixed daily default (not a special milestone)
-  { day: 0,  tokens: 2,  dust: 3,  xp: 5,  isMilestone: false },
-  // Milestone overrides — replace the default for these specific days
-  { day: 3,  tokens: 5,  dust: 8,  xp: 15, isMilestone: true  },
-  { day: 7,  tokens: 8,  dust: 15, xp: 25, isMilestone: true  },
-  { day: 14, tokens: 12, dust: 30, xp: 40, isMilestone: true  },
-  { day: 30, tokens: 20, dust: 60, xp: 60, isMilestone: true  },
+  { day: 0,  tokens: 2,  dust: 5,   xp: 25,  isMilestone: false },
+  { day: 3,  tokens: 5,  dust: 20,  xp: 50,  isMilestone: true  },
+  { day: 7,  tokens: 8,  dust: 50,  xp: 100, isMilestone: true  },
+  { day: 14, tokens: 12, dust: 120, xp: 200, isMilestone: true  },
+  { day: 30, tokens: 20, dust: 300, xp: 400, isMilestone: true  },
 ]
 
 export async function seedMilestones(
