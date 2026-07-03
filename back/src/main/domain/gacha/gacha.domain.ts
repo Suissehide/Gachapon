@@ -160,15 +160,15 @@ export class GachaDomain implements GachaDomainInterface {
     this.#achievementsDomain = achievementsDomain
   }
 
-  async #executePullTx(
+  async #loadUserAndInitialState(
     tx: PrimaTransactionClient,
     userId: string,
     cfg: PullCfg,
-  ): Promise<PullResult> {
-    // 1. Lire l'utilisateur
+  ): Promise<{
+    user: Awaited<ReturnType<UserRepositoryInterface['findByIdOrThrowInTx']>>
+    state: { currentTokens: number; currentPity: number; newLastTokenAt: Date | null }
+  }> {
     const user = await this.#userRepository.findByIdOrThrowInTx(tx, userId)
-
-    // 2. Calculer les tokens
     const effectiveInterval = Math.max(
       1,
       cfg.tokenRegenIntervalMinutes - cfg.upgrades.regenReductionMinutes,
@@ -180,31 +180,41 @@ export class GachaDomain implements GachaDomainInterface {
       effectiveInterval,
       effectiveMaxStock,
     )
-
-    if (tokens < cfg.pullTokenCost) {
-      throw Boom.paymentRequired('Not enough tokens')
+    return {
+      user,
+      state: {
+        currentTokens: tokens,
+        currentPity: user.pityCurrent,
+        newLastTokenAt,
+      },
     }
+  }
 
-    // 3. Charger les cartes (pity : forcer LEGENDARY si seuil atteint)
+  async #executeSinglePullStep(
+    tx: PrimaTransactionClient,
+    userId: string,
+    cfg: PullCfg,
+    stepState: { currentTokens: number; currentPity: number },
+  ): Promise<{
+    pull: Awaited<ReturnType<IGachaPullRepository['createInTx']>>
+    card: CardWithSet
+    wasDuplicate: boolean
+    dustEarned: number
+    unlockedAchievements: Awaited<ReturnType<AchievementsDomainInterface['track']>>
+    nextPity: number
+  }> {
     const activeCards = await this.#cardRepository.findActiveForPullInTx(
       tx,
-      user.pityCurrent >= cfg.pityThreshold,
+      stepState.currentPity >= cfg.pityThreshold,
     )
-
     if (activeCards.length === 0) {
       throw Boom.internal('No active cards in any set')
     }
-
-    // 4. Tirage pondéré
     const card =
       cfg.upgrades.luckMultiplier === 1.0
         ? pickWeightedRandom(activeCards)
         : pickWeightedRandomWithLuck(activeCards, cfg.upgrades.luckMultiplier)
-
-    // 4b. Roll variant
     const rolledVariant = pickVariant(card.rarity, cfg.variantRates)
-
-    // 5 & 6. Upsert UserCard (doublon ?)
     const { wasDuplicate } = await this.#userCardRepository.upsertInTx(
       tx,
       userId,
@@ -212,8 +222,6 @@ export class GachaDomain implements GachaDomainInterface {
       rolledVariant,
     )
     const dustEarned = 0
-
-    // 7. Créer GachaPull
     const pull = await this.#gachaPullRepository.createInTx(tx, {
       userId,
       cardId: card.id,
@@ -221,62 +229,95 @@ export class GachaDomain implements GachaDomainInterface {
       wasDuplicate,
       dustEarned,
     })
-
-    // 8. Mettre à jour l'utilisateur (tokens, dust, xp, pity)
     const isLegendary = card.rarity === 'LEGENDARY'
-    const newPityCurrent = isLegendary ? 0 : user.pityCurrent + 1
-    const xpGained = cfg.xpPerPull
-    const oldLevel = calculateLevel(
-      user.xp,
-      cfg.xpCurve.base,
-      cfg.xpCurve.slope,
-      cfg.xpCurve.levelCap,
-    )
-    const newLevel = calculateLevel(
-      user.xp + xpGained,
-      cfg.xpCurve.base,
-      cfg.xpCurve.slope,
-      cfg.xpCurve.levelCap,
-    )
-    await this.#userRepository.updateAfterPullInTx(tx, userId, {
-      tokens: tokens - cfg.pullTokenCost,
-      dustIncrement: dustEarned,
-      xpIncrement: xpGained,
-      newLevel,
-      pityCurrent: newPityCurrent,
-      lastTokenAt: newLastTokenAt,
+    const nextPity = isLegendary ? 0 : stepState.currentPity + 1
+    const pullUnlocks = await this.#achievementsDomain.track(tx, userId, {
+      kind: 'PULL_COMPLETED',
+      cardId: card.id,
+      rarity: card.rarity,
+      variant: rolledVariant,
     })
-
-    // 9. Tracker les achievements
-    const [pullUnlocks, spentUnlocks] = await Promise.all([
-      this.#achievementsDomain.track(tx, userId, {
-        kind: 'PULL_COMPLETED',
-        cardId: card.id,
-        rarity: card.rarity,
-        variant: rolledVariant,
-      }),
-      this.#achievementsDomain.track(tx, userId, {
-        kind: 'TOKENS_SPENT',
-        amount: cfg.pullTokenCost,
-      }),
-    ])
-    const levelUnlocks =
-      newLevel > oldLevel
-        ? await this.#achievementsDomain.track(tx, userId, {
-            kind: 'LEVEL_UP',
-            newLevel,
-          })
-        : []
-
     return {
       pull,
       card,
       wasDuplicate,
       dustEarned,
-      tokensRemaining: tokens - cfg.pullTokenCost,
-      pityCurrent: newPityCurrent,
-      xpGained,
-      unlockedAchievements: [...pullUnlocks, ...spentUnlocks, ...levelUnlocks],
+      unlockedAchievements: pullUnlocks,
+      nextPity,
+    }
+  }
+
+  async #writeFinalUserUpdate(
+    tx: PrimaTransactionClient,
+    userId: string,
+    finalTokens: number,
+    totalDust: number,
+    totalXp: number,
+    newLevel: number,
+    finalPity: number,
+    newLastTokenAt: Date | null,
+  ): Promise<void> {
+    await this.#userRepository.updateAfterPullInTx(tx, userId, {
+      tokens: finalTokens,
+      dustIncrement: totalDust,
+      xpIncrement: totalXp,
+      newLevel,
+      pityCurrent: finalPity,
+      lastTokenAt: newLastTokenAt,
+    })
+  }
+
+  async #executePullTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+    cfg: PullCfg,
+  ): Promise<PullResult> {
+    const { user, state } = await this.#loadUserAndInitialState(tx, userId, cfg)
+    if (state.currentTokens < 1) {
+      throw Boom.paymentRequired('Not enough tokens')
+    }
+    const step = await this.#executeSinglePullStep(tx, userId, cfg, state)
+    const totalXp = cfg.xpPerPull
+    const oldLevel = calculateLevel(user.xp)
+    const newLevel = calculateLevel(user.xp + totalXp)
+    const finalTokens = state.currentTokens - 1
+    await this.#writeFinalUserUpdate(
+      tx,
+      userId,
+      finalTokens,
+      step.dustEarned,
+      totalXp,
+      newLevel,
+      step.nextPity,
+      state.newLastTokenAt,
+    )
+    const [spentUnlocks, levelUnlocks] = await Promise.all([
+      this.#achievementsDomain.track(tx, userId, {
+        kind: 'TOKENS_SPENT',
+        amount: 1,
+      }),
+      newLevel > oldLevel
+        ? this.#achievementsDomain.track(tx, userId, {
+            kind: 'LEVEL_UP',
+            newLevel,
+          })
+        : Promise.resolve([] as Awaited<
+            ReturnType<AchievementsDomainInterface['track']>
+          >),
+    ])
+    return {
+      pull: step.pull,
+      card: step.card,
+      wasDuplicate: step.wasDuplicate,
+      dustEarned: step.dustEarned,
+      tokensRemaining: finalTokens,
+      pityCurrent: step.nextPity,
+      xpGained: totalXp,
+      unlockedAchievements: [
+        ...step.unlockedAchievements,
+        ...spentUnlocks,
+        ...levelUnlocks,
+      ],
     }
   }
 
