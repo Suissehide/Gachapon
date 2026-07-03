@@ -40,3 +40,6 @@ dist-ssr
 *.sln
 *.sw?
 
+
+# Jest coverage output
+src/test/coverage/
