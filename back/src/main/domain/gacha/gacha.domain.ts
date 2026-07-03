@@ -126,6 +126,8 @@ type PullCfg = {
   variantRates: VariantRates
   upgrades: UserUpgradeEffects
   xpPerPull: number
+  pullTokenCost: number
+  xpCurve: { base: number; slope: number; levelCap: number }
 }
 
 export class GachaDomain implements GachaDomainInterface {
@@ -179,7 +181,7 @@ export class GachaDomain implements GachaDomainInterface {
       effectiveMaxStock,
     )
 
-    if (tokens < 1) {
+    if (tokens < cfg.pullTokenCost) {
       throw Boom.paymentRequired('Not enough tokens')
     }
 
@@ -224,10 +226,10 @@ export class GachaDomain implements GachaDomainInterface {
     const isLegendary = card.rarity === 'LEGENDARY'
     const newPityCurrent = isLegendary ? 0 : user.pityCurrent + 1
     const xpGained = cfg.xpPerPull
-    const oldLevel = calculateLevel(user.xp)
-    const newLevel = calculateLevel(user.xp + xpGained)
+    const oldLevel = calculateLevel(user.xp, cfg.xpCurve.base, cfg.xpCurve.slope, cfg.xpCurve.levelCap)
+    const newLevel = calculateLevel(user.xp + xpGained, cfg.xpCurve.base, cfg.xpCurve.slope, cfg.xpCurve.levelCap)
     await this.#userRepository.updateAfterPullInTx(tx, userId, {
-      tokens: tokens - 1,
+      tokens: tokens - cfg.pullTokenCost,
       dustIncrement: dustEarned,
       xpIncrement: xpGained,
       newLevel,
@@ -245,7 +247,7 @@ export class GachaDomain implements GachaDomainInterface {
       }),
       this.#achievementsDomain.track(tx, userId, {
         kind: 'TOKENS_SPENT',
-        amount: 1,
+        amount: cfg.pullTokenCost,
       }),
     ])
     const levelUnlocks =
@@ -261,7 +263,7 @@ export class GachaDomain implements GachaDomainInterface {
       card,
       wasDuplicate,
       dustEarned,
-      tokensRemaining: tokens - 1,
+      tokensRemaining: tokens - cfg.pullTokenCost,
       pityCurrent: newPityCurrent,
       xpGained,
       unlockedAchievements: [...pullUnlocks, ...spentUnlocks, ...levelUnlocks],
@@ -288,6 +290,10 @@ export class GachaDomain implements GachaDomainInterface {
           'holoRateEpic',
           'holoRateLegendary',
           'xpPerPull',
+          'gacha.pullTokenCost',
+          'xp.base',
+          'xp.slope',
+          'xp.levelCap',
         ),
         this.#skillTreeRepository.getEffectsForUser(userId),
       ])
@@ -311,6 +317,12 @@ export class GachaDomain implements GachaDomainInterface {
           holoRateLegendary: c.holoRateLegendary,
         },
         xpPerPull: c.xpPerPull,
+        pullTokenCost: c['gacha.pullTokenCost'],
+        xpCurve: {
+          base: c['xp.base'],
+          slope: c['xp.slope'],
+          levelCap: c['xp.levelCap'],
+        },
         upgrades,
       }
       return this.#postgresOrm.executeWithTransactionClient(
