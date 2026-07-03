@@ -14,6 +14,8 @@ import { PlayHud } from '../../components/play/PlayHud'
 import { Button } from '../../components/ui/button.tsx'
 import { Switch } from '../../components/ui/switch.tsx'
 import { apiUrl as API_URL } from '../../constants/config.constant.ts'
+import { TOAST_SEVERITY } from '../../constants/ui.constant.ts'
+import { useToast } from '../../hooks/useToast'
 import { wsClient } from '../../lib/ws'
 import type { PullBatchResult } from '../../queries/useGacha'
 import { usePullBatch, useTokenBalance } from '../../queries/useGacha'
@@ -57,23 +59,56 @@ function Play() {
     return localStorage.getItem(SKIP_KEY) === 'true'
   })
 
+  // Refs that mirror reactive state so async callbacks / timers never see stale closures
+  const phaseRef = useRef<Phase>('idle')
+  const skipAnimationsRef = useRef(skipAnimations)
+  const pullAbortedRef = useRef(false)
+
+  useEffect(() => { phaseRef.current = phase }, [phase])
+  useEffect(() => { skipAnimationsRef.current = skipAnimations }, [skipAnimations])
+
   const { data: balance, isLoading: balanceLoading } = useTokenBalance()
   const { mutate: pullBatchMutation, isPending: pullPending } = usePullBatch()
   const setUser = useAuthStore((s) => s.setUser)
   const user = useAuthStore((s) => s.user)
+  const { toast } = useToast()
+
+  const tokens = balance?.tokens ?? 0
+  const maxStock = balance?.maxStock ?? 5
+
+  // Keep tokens in a ref so startPull can guard on it without being recreated on every balance tick
+  const tokensRef = useRef(tokens)
+  const pullPendingRef = useRef(pullPending)
+  useEffect(() => { tokensRef.current = tokens }, [tokens])
+  useEffect(() => { pullPendingRef.current = pullPending }, [pullPending])
 
   // Stable handlers — useCallback because they're passed to children with effect deps.
   const handleSplitDone = useCallback(() => {
+    let attempts = 0
     const tryReveal = () => {
+      // If onError already fired, bail immediately
+      if (pullAbortedRef.current) {
+        setPhase('idle')
+        phaseRef.current = 'idle'
+        return
+      }
       if (pendingResult.current) {
         setResult(pendingResult.current)
         setPhase('reveal-grid')
-      } else {
-        setTimeout(tryReveal, 50)
+        return
       }
+      attempts++
+      if (attempts > 200) {
+        // Network took too long — bail and surface an error
+        toast({ title: 'Tirage en cours…', message: 'Le serveur ne répond pas.', severity: TOAST_SEVERITY.ERROR })
+        setPhase('idle')
+        phaseRef.current = 'idle'
+        return
+      }
+      setTimeout(tryReveal, 50)
     }
     tryReveal()
-  }, [])
+  }, [toast])
 
   // RevealGrid's useEffect includes onAllRevealed in its dep array — must be stable
   // or the 700ms summary-transition timer re-fires on every parent re-render.
@@ -83,6 +118,7 @@ function Play() {
     setResult(null)
     pendingResult.current = null
     setPhase('idle')
+    phaseRef.current = 'idle'
   }, [])
 
   useEffect(() => {
@@ -112,20 +148,26 @@ function Play() {
     return () => clearInterval(id)
   }, [balance?.nextTokenAt, balance?.tokens, balance?.maxStock])
 
-  const tokens = balance?.tokens ?? 0
-  const maxStock = balance?.maxStock ?? 5
+  // startPull reads all guards from refs so it is safe to call via queueMicrotask / setTimeout
+  // after a synchronous state update (e.g. setPhase('idle') in handlePullAgain).
+  const startPull = useCallback(async (count: 1 | 10) => {
+    if (tokensRef.current < count || phaseRef.current !== 'idle' || pullPendingRef.current) { return }
+    pullAbortedRef.current = false
 
-  const startPull = async (count: 1 | 10) => {
-    if (tokens < count || phase !== 'idle' || pullPending) { return }
-
-    if (skipAnimations) {
+    if (skipAnimationsRef.current) {
       setPhase('pulling')
+      phaseRef.current = 'pulling'
       pullBatchMutation(count, {
         onSuccess: (r) => {
           setResult(r)
           setPhase('reveal-grid')
+          phaseRef.current = 'reveal-grid'
         },
-        onError: () => setPhase('idle'),
+        onError: () => {
+          pullAbortedRef.current = true
+          setPhase('idle')
+          phaseRef.current = 'idle'
+        },
       })
       return
     }
@@ -133,28 +175,40 @@ function Play() {
     // Full animation path — kick off network in parallel with visuals
     pendingResult.current = null
     setPhase('machine-anim')
+    phaseRef.current = 'machine-anim'
     pullBatchMutation(count, {
       onSuccess: (r) => {
         pendingResult.current = r
       },
-      onError: () => setPhase('idle'),
+      onError: () => {
+        pullAbortedRef.current = true
+        setPhase('idle')
+        phaseRef.current = 'idle'
+      },
     })
 
     await machineRef.current?.startAnimation()
+    if (pullAbortedRef.current) { return }
     await new Promise((res) => setTimeout(res, 600))
+    if (pullAbortedRef.current) { return }
     setPhase('ball-shake')
+    phaseRef.current = 'ball-shake'
     await new Promise((res) => setTimeout(res, 500))
+    if (pullAbortedRef.current) { return }
     setPhase('ball-split')
+    phaseRef.current = 'ball-split'
     // ball-split ends via onSplitDone callback → transition inside handleSplitDone
-  }
+  }, [pullBatchMutation])
 
-  const handlePullAgain = (count: 1 | 10) => {
+  // Reset to idle then schedule the next pull. phaseRef is synced synchronously so
+  // startPull's guard (phaseRef.current !== 'idle') sees 'idle' when the microtask fires.
+  const handlePullAgain = useCallback((count: 1 | 10) => {
     setResult(null)
     pendingResult.current = null
     setPhase('idle')
-    // Kick off next pull on the next tick so the phase reset propagates
-    setTimeout(() => startPull(count), 0)
-  }
+    phaseRef.current = 'idle'
+    queueMicrotask(() => startPull(count))
+  }, [startPull])
 
   const showBall = phase === 'ball-shake' || phase === 'ball-split'
   const showMachine =

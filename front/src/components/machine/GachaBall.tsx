@@ -1,5 +1,5 @@
 import { useFrame } from '@react-three/fiber'
-import { useMemo, useRef } from 'react'
+import { type MutableRefObject, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 
 const BALL_COLORS = [
@@ -36,7 +36,7 @@ function runSplit(
   seam: THREE.Mesh | null,
   lidMat: THREE.MeshPhysicalMaterial | null,
   bottomMat: THREE.MeshStandardMaterial | null,
-  notified: React.MutableRefObject<boolean>,
+  notified: MutableRefObject<boolean>,
   onDone: () => void,
 ) {
   const progress = Math.min(1, t / SPLIT_DURATION)
@@ -86,6 +86,8 @@ export function GachaBall({ phase, onSplitDone }: Props) {
       prevPhaseRef.current = phase
       timeRef.current = 0
       notifiedRef.current = false
+      groupRef.current.rotation.z = 0
+      groupRef.current.position.x = 0
     }
 
     timeRef.current += delta
