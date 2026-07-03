@@ -4,6 +4,7 @@
   "description": "",
   "type": "module",
   "scripts": {
+    "prepare": "git config core.hooksPath .husky || true",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "postbuild": "node scripts/prerender-seo.mjs",

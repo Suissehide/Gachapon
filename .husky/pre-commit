@@ -1,0 +1,22 @@
+#!/bin/sh
+# Lightweight pre-commit: Biome on staged files only, plus back unit tests
+# when back/ changes. E2E tests need Postgres — they stay in CI / `npm run validate`.
+
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+
+back_ts=$(echo "$staged" | grep -E '^back/src/main/.*\.ts$' | sed 's|^back/||')
+if echo "$staged" | grep -q '^back/'; then
+  echo "pre-commit(back): biome (fichiers stagés) + tests unitaires"
+  if [ -n "$back_ts" ]; then
+    # shellcheck disable=SC2086 — word splitting on the file list is intended
+    (cd back && npx biome lint $back_ts) || exit 1
+  fi
+  (cd back && npm run test:unit) || exit 1
+fi
+
+front_ts=$(echo "$staged" | grep -E '^front/src/.*\.(ts|tsx)$' | grep -v 'routeTree.gen.ts' | sed 's|^front/||')
+if [ -n "$front_ts" ]; then
+  echo "pre-commit(front): biome (fichiers stagés)"
+  # shellcheck disable=SC2086
+  (cd front && npx biome lint $front_ts) || exit 1
+fi

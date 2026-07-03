@@ -8,6 +8,7 @@
   "author": "",
   "license": "ISC",
   "scripts": {
+    "prepare": "git config core.hooksPath .husky || true",
     "build": "wireit",
     "build:app": "wireit",
     "build:check-typedefs": "wireit",
