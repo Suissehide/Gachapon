@@ -120,6 +120,12 @@ describe('Combat points routes & debit', () => {
   })
 
   afterAll(async () => {
+    // Restore combat config to defaults to avoid polluting other test suites
+    const { configService } = (app as any).iocContainer
+    await configService.set('combat.battleCost', 5)
+    await configService.set('combat.sweepCost', 5)
+    await configService.set('combat.regenSeconds', 900)
+    // combat.pointsMax remains 60 (was already the default)
     await app.close()
   })
 
