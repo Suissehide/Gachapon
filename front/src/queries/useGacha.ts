@@ -10,7 +10,7 @@ import { useLevelUpStore } from '../stores/levelUp.store.ts'
 import { DEFAULT_ECONOMY, useEconomyConfig } from './useEconomyConfig.ts'
 import { computeLevel } from '../utils/level.ts'
 
-export type { PullHistory, PullResult, TokenBalance } from '../api/gacha.api.ts'
+export type { PullHistory, PullResult, TokenBalance, PullBatchResult, PullBatchEntry } from '../api/gacha.api.ts'
 
 export const useTokenBalance = () => {
   const query = useQuery({
@@ -63,6 +63,51 @@ export const usePull = () => {
       // for instant updates, but if the socket is reconnecting or the
       // event is dropped we still want the rare pull to land in the
       // panel — invalidate the query so it refetches from the server.
+      qc.invalidateQueries({ queryKey: ['pulls', 'recent'] })
+      if (result.unlockedAchievements?.length) {
+        enqueueAchievementUnlock(result.unlockedAchievements)
+        qc.invalidateQueries({ queryKey: ['achievements'] })
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: 'Erreur lors du tirage',
+        message: error.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
+    },
+  })
+}
+
+export const usePullBatch = () => {
+  const qc = useQueryClient()
+  const { toast } = useToast()
+  const setUser = useAuthStore((s) => s.setUser)
+  const user = useAuthStore((s) => s.user)
+  const username = useAuthStore((s) => s.user?.username ?? '')
+  const triggerLevelUp = useLevelUpStore((s) => s.triggerLevelUp)
+  const enqueueAchievementUnlock = useAchievementUnlockStore((s) => s.enqueue)
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  return useMutation({
+    mutationFn: (count: 1 | 10) => GachaApi.pullBatch(count),
+    onSuccess: (result) => {
+      const cached = qc.getQueryData<{ xp?: number }>(['profile', username])
+      const oldXp = cached?.xp ?? 0
+      const oldLevel = computeLevel(oldXp, economy.xp)
+      const newLevel = computeLevel(oldXp + result.xpGained, economy.xp)
+      if (newLevel > oldLevel) {
+        triggerLevelUp(newLevel)
+      }
+      if (user) {
+        setUser({
+          ...user,
+          tokens: result.tokensRemaining,
+          dust: user.dust + result.pulls.reduce((s, p) => s + p.dustEarned, 0),
+        })
+      }
+      qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
+      qc.invalidateQueries({ queryKey: ['collection'] })
+      qc.invalidateQueries({ queryKey: ['profile'] })
       qc.invalidateQueries({ queryKey: ['pulls', 'recent'] })
       if (result.unlockedAchievements?.length) {
         enqueueAchievementUnlock(result.unlockedAchievements)
