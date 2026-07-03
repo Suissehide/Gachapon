@@ -8,10 +8,11 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 
+import { DEFAULT_ECONOMY, useEconomyConfig } from '../../queries/useEconomyConfig.ts'
 import { useUserProfile } from '../../queries/useProfile.ts'
 import { useStreakSummary } from '../../queries/useStreak.ts'
 import { useAuthStore } from '../../stores/auth.store.ts'
-import { computeLevel } from '../../utils/level.ts'
+import { computeLevel, xpForLevel } from '../../utils/level.ts'
 import { StreakSummaryModal } from '../streak/StreakSummaryModal.tsx'
 import { Button } from '../ui/button.tsx'
 
@@ -22,6 +23,7 @@ export function PlayHud() {
 
   const { data: streak } = useStreakSummary()
   const { data: profile } = useUserProfile(username)
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
 
   // Streak cycle progress (30-day repeating)
   const streakDays = streak?.streakDays ?? 0
@@ -29,10 +31,10 @@ export function PlayHud() {
 
   // XP progress within current level
   const xp = profile?.xp ?? 0
-  const level = computeLevel(xp)
-  const isMaxLevel = level >= 100
-  const xpStart = (level - 1) ** 2 * 100
-  const xpNext = level ** 2 * 100
+  const level = computeLevel(xp, economy.xp)
+  const isMaxLevel = level >= economy.xp.levelCap
+  const xpStart = xpForLevel(level, economy.xp)
+  const xpNext = xpForLevel(level + 1, economy.xp)
   const xpRange = xpNext - xpStart
   const xpInLevel = xp - xpStart
   const xpProgress = isMaxLevel

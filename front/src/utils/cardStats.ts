@@ -1,3 +1,4 @@
+import type { EconomyConfig } from '../api/economy.api'
 import type { CardRarity, CardVariant } from '../constants/card.constant'
 
 const VARIANT_MULT: Record<CardVariant, number> = {
@@ -26,20 +27,20 @@ export function finalStat(
   return statAtLevel(baseStat, level) * VARIANT_MULT[variant] * palierMultiplier(palier)
 }
 
-const RARITY_MULT: Record<CardRarity, number> = {
-  COMMON: 1.0,
-  UNCOMMON: 1.3,
-  RARE: 1.7,
-  EPIC: 2.3,
-  LEGENDARY: 3.0,
+export function goldCostNextLevel(
+  currentLevel: number,
+  rarity: CardRarity,
+  card: EconomyConfig['card'],
+): number {
+  return Math.round(card.goldCostBase * currentLevel ** card.goldCostExp * card.rarityMult[rarity])
 }
 
-export function goldCostNextLevel(currentLevel: number, rarity: CardRarity): number {
-  return Math.round(5 * currentLevel ** 1.6 * RARITY_MULT[rarity])
-}
-
-export function dustCostNextLevel(currentLevel: number, rarity: CardRarity): number {
-  return Math.round(8 * currentLevel ** 1.4 * RARITY_MULT[rarity])
+export function dustCostNextLevel(
+  currentLevel: number,
+  rarity: CardRarity,
+  card: EconomyConfig['card'],
+): number {
+  return Math.round(card.dustCostBase * currentLevel ** card.dustCostExp * card.rarityMult[rarity])
 }
 
 export function maxLevelInPalier(palier: number): number {

@@ -17,6 +17,7 @@ import type { Card, CardVariant } from '../../constants/card.constant'
 import { PASSIVE_LABELS } from '../../constants/passives.constant'
 import { useAscendCard } from '../../queries/useAscendCard'
 import { useLevelUpCard } from '../../queries/useLevelUpCard'
+import { DEFAULT_ECONOMY, useEconomyConfig } from '../../queries/useEconomyConfig'
 import { useAuthStore } from '../../stores/auth.store'
 import {
   dustCostNextLevel,
@@ -48,6 +49,7 @@ export function CombatPanel({
 }: Props) {
   const user = useAuthStore((s) => s.user)
   const fetchMe = useAuthStore((s) => s.fetchMe)
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
 
   const levelUp = useLevelUpCard()
   const ascend = useAscendCard()
@@ -56,8 +58,8 @@ export function CombatPanel({
   const palierMax = maxLevelInPalier(palier)
   const atTop = isAtTopOfPalier(level, palier)
   const atMaxPalier = palier >= MAX_PALIER
-  const goldCost = atTop ? 0 : goldCostNextLevel(level, card.rarity)
-  const dustCost = atTop ? 0 : dustCostNextLevel(level, card.rarity)
+  const goldCost = atTop ? 0 : goldCostNextLevel(level, card.rarity, economy.card)
+  const dustCost = atTop ? 0 : dustCostNextLevel(level, card.rarity, economy.card)
   const goldOk = (user?.gold ?? 0) >= goldCost
   const dustOk = (user?.dust ?? 0) >= dustCost
   const canLevel = !atTop && goldOk && dustOk

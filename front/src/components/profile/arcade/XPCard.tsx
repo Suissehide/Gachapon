@@ -1,13 +1,15 @@
 import type { UserProfile } from '../../../api/profile.api'
+import { DEFAULT_ECONOMY, useEconomyConfig } from '../../../queries/useEconomyConfig'
+import { xpForLevel } from '../../../utils/level'
 import { Card, CardTitle } from '../../ui/card'
 
 type Props = { profile: UserProfile }
 
 export function XPCard({ profile }: Props) {
-  const isMax = profile.level >= 100
-  const xpForLevel = (n: number) => (n - 1) ** 2 * 100
-  const xpInLevel = profile.xp - xpForLevel(profile.level)
-  const xpNeeded = xpForLevel(profile.level + 1) - xpForLevel(profile.level)
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  const isMax = profile.level >= economy.xp.levelCap
+  const xpInLevel = profile.xp - xpForLevel(profile.level, economy.xp)
+  const xpNeeded = xpForLevel(profile.level + 1, economy.xp) - xpForLevel(profile.level, economy.xp)
   const percent = isMax ? 100 : Math.min((xpInLevel / xpNeeded) * 100, 100)
 
   return (

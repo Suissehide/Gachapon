@@ -7,6 +7,7 @@ import { useToast } from '../hooks/useToast.ts'
 import { useAchievementUnlockStore } from '../stores/achievementUnlock.store.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 import { useLevelUpStore } from '../stores/levelUp.store.ts'
+import { DEFAULT_ECONOMY, useEconomyConfig } from './useEconomyConfig.ts'
 import { computeLevel } from '../utils/level.ts'
 
 export type { ClaimResult, PendingReward } from '../api/rewards.api.ts'
@@ -33,11 +34,12 @@ export const useClaimReward = () => {
   const triggerLevelUp = useLevelUpStore((s) => s.triggerLevelUp)
   const username = useAuthStore((s) => s.user?.username ?? '')
   const enqueueAchievementUnlock = useAchievementUnlockStore((s) => s.enqueue)
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   return useMutation({
     mutationFn: (rewardId: string) => RewardsApi.claimReward(rewardId),
     onSuccess: (result) => {
       const cached = qc.getQueryData<{ xp?: number }>(['profile', username])
-      const oldLevel = computeLevel(cached?.xp ?? 0)
+      const oldLevel = computeLevel(cached?.xp ?? 0, economy.xp)
       if (result.level > oldLevel) {
         triggerLevelUp(result.level)
       }
@@ -66,12 +68,13 @@ export const useClaimAllRewards = () => {
   const triggerLevelUp = useLevelUpStore((s) => s.triggerLevelUp)
   const username = useAuthStore((s) => s.user?.username ?? '')
   const enqueueAchievementUnlock = useAchievementUnlockStore((s) => s.enqueue)
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   return useMutation({
     mutationFn: () => RewardsApi.claimAllRewards(),
     onSuccess: (result) => {
       if (result) {
         const cached = qc.getQueryData<{ xp?: number }>(['profile', username])
-        const oldLevel = computeLevel(cached?.xp ?? 0)
+        const oldLevel = computeLevel(cached?.xp ?? 0, economy.xp)
         if (result.level > oldLevel) {
           triggerLevelUp(result.level)
         }

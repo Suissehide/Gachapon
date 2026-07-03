@@ -2,6 +2,7 @@ import { Minus, Plus, RefreshCw, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 
 import type { Card, CardVariant } from '../../api/collection.api.ts'
+import { DEFAULT_ECONOMY, useEconomyConfig } from '../../queries/useEconomyConfig.ts'
 import { useRecycle } from '../../queries/useCollection.ts'
 import { Button } from '../ui/button.tsx'
 import { Input } from '../ui/input.tsx'
@@ -16,14 +17,6 @@ import {
 } from '../ui/popup.tsx'
 import { RARITY_COLORS, RARITY_LABELS } from './CollectionCard.tsx'
 
-const DUST_BY_RARITY: Record<string, number> = {
-  COMMON: 5,
-  UNCOMMON: 15,
-  RARE: 50,
-  EPIC: 150,
-  LEGENDARY: 500,
-}
-
 interface RecycleModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -35,9 +28,10 @@ interface RecycleModalProps {
 export function RecycleModal({ open, onOpenChange, onRecycled, card, variant }: RecycleModalProps) {
   const [quantity, setQuantity] = useState(1)
   const { mutate: recycle, isPending } = useRecycle()
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
 
   const maxRecyclable = card.quantity - 1
-  const dustPerCard = DUST_BY_RARITY[card.rarity] ?? 0
+  const dustPerCard = economy.recycle[card.rarity] ?? 0
   const dustTotal = quantity * dustPerCard
   const rarityText = RARITY_COLORS[card.rarity]?.split(' ')[1] ?? 'text-text-light'
 

@@ -24,6 +24,8 @@ import { Popup, PopupContent } from '../../components/ui/popup.tsx'
 import { isApiError } from '../../libs/httpErrorHandler.ts'
 import { useAttackStage, useCampaign } from '../../queries/useCampaign.ts'
 import { useCombatTeam } from '../../queries/useCombatTeam.ts'
+import { DEFAULT_ECONOMY, useEconomyConfig } from '../../queries/useEconomyConfig.ts'
+import { xpForLevel } from '../../utils/level.ts'
 
 // Chapter titles — kept in sync with campaign.tsx's CHAPTER_META. Extracting
 // to a shared module would be nicer but the list is short enough that a
@@ -423,7 +425,6 @@ function RewardTile({
 }
 
 // XP progression bar — current XP (blue) + gain from this battle (orange).
-// Level formula mirrors the server: level = floor(sqrt(xp / 100)) + 1.
 function XpBar({
   rewards,
 }: {
@@ -433,11 +434,12 @@ function XpBar({
     levelBefore: number
   }
 }) {
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const xpBefore = rewards.xpBefore
   const xpAfter = xpBefore + rewards.xp
   const level = rewards.levelBefore
-  const xpAtLevelStart = (level - 1) ** 2 * 100
-  const xpAtLevelEnd = level ** 2 * 100
+  const xpAtLevelStart = xpForLevel(level, economy.xp)
+  const xpAtLevelEnd = xpForLevel(level + 1, economy.xp)
   const xpInLevel = xpAtLevelEnd - xpAtLevelStart
   const pctBefore = Math.max(
     0,

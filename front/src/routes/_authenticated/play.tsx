@@ -15,6 +15,7 @@ import { apiUrl as API_URL } from '../../constants/config.constant.ts'
 import { wsClient } from '../../lib/ws'
 import type { PullResult } from '../../queries/useGacha'
 import { usePull, useTokenBalance } from '../../queries/useGacha'
+import { DEFAULT_ECONOMY, useEconomyConfig } from '../../queries/useEconomyConfig'
 import { useAuthStore } from '../../stores/auth.store'
 
 export const Route = createFileRoute('/_authenticated/play')({
@@ -49,6 +50,7 @@ function Play() {
 
   const { data: balance, isLoading: balanceLoading } = useTokenBalance()
   const { mutate: pullMutation, isPending: pullPending } = usePull()
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const setUser = useAuthStore((s) => s.setUser)
   const user = useAuthStore((s) => s.user)
 
@@ -68,13 +70,13 @@ function Play() {
   useEffect(() => {
     if (
       !balance?.nextTokenAt ||
-      (balance.tokens ?? 0) >= (balance.maxStock ?? 5)
+      (balance.tokens ?? 0) >= (balance.maxStock ?? economy.gacha.tokenMaxStock)
     ) {
       return
     }
     const id = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(id)
-  }, [balance?.nextTokenAt, balance?.tokens, balance?.maxStock])
+  }, [balance?.nextTokenAt, balance?.tokens, balance?.maxStock, economy.gacha.tokenMaxStock])
 
   // Quand la boule est ouverte : révélation de la carte après le lerp
   useEffect(() => {
@@ -89,7 +91,7 @@ function Play() {
   }, [phase])
 
   const tokens = balance?.tokens ?? 0
-  const maxStock = balance?.maxStock ?? 5
+  const maxStock = balance?.maxStock ?? economy.gacha.tokenMaxStock
   const canPull = tokens > 0 && phase === 'idle' && !pullPending
 
   const handlePull = async () => {
@@ -289,7 +291,7 @@ function Play() {
               ? 'Tirage en cours…'
               : tokens < 1
                 ? 'Plus de jetons'
-                : '✦ Insérer (1 jeton)'}
+                : `✦ Insérer (${economy.gacha.pullTokenCost} jeton${economy.gacha.pullTokenCost > 1 ? 's' : ''})`}
           </Button>
 
           <Button

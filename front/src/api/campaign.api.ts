@@ -12,6 +12,7 @@ export type CampaignStage = {
   label: string
   isBoss: boolean
   status: StageStatus
+  recommendedPower: number
 }
 
 export type CampaignChapter = {

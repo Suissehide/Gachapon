@@ -746,13 +746,7 @@ function PrepModal({
   const meta = chapterMeta(chapter)
   const isBoss = stage.isBoss
   const totalPower = team.reduce((acc, u) => acc + computePower(u.stats), 0)
-  // Deterministic pseudo "recommended" power derived from chapter + stage
-  // index (no server field for this yet). Roughly matches campaign pacing.
-  const stageIndex = Number.parseInt(stage.label.split('-')[1] ?? '1', 10)
-  const recPower = Math.max(
-    100,
-    Math.round((chapter * 100 + stageIndex * 30) * (isBoss ? 1.35 : 1)),
-  )
+  const recPower = stage.recommendedPower
   const ratio = recPower === 0 ? 1 : totalPower / recPower
   const tone: 'good' | 'ok' | 'low' =
     ratio >= 1.05 ? 'good' : ratio >= 0.9 ? 'ok' : 'low'
