@@ -39,13 +39,13 @@ export const pullBatchResponseSchema = z.object({
         set: z.object({ id: z.string(), name: z.string() }),
       }),
       wasDuplicate: z.boolean(),
-      dustEarned: z.number(),
-      pityCurrent: z.number(),
+      dustEarned: z.number().int(),
+      pityCurrent: z.number().int(),
     }),
   ),
-  tokensRemaining: z.number(),
-  xpGained: z.number(),
-  unlockedAchievements: z.array(unlockedAchievementSchema),
+  tokensRemaining: z.number().int(),
+  xpGained: z.number().int(),
+  unlockedAchievements: z.array(unlockedAchievementSchema).optional(),
 })
 
 // ── GET /pulls/history ──────────────────────────────────────────────────────
