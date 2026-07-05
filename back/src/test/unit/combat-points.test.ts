@@ -1,6 +1,7 @@
 import { describe, expect, it } from '@jest/globals'
 
 import { calculateCombatPoints } from '../../main/domain/combat-points/combat-points.domain'
+import { effectiveCombatConfig } from '../../main/domain/combat-points/combat-points.tx'
 
 describe('calculateCombatPoints', () => {
   it('returns same value when already at max', () => {
@@ -54,5 +55,23 @@ describe('calculateCombatPoints', () => {
     expect(state.combatPoints).toBe(13)
     // newLast should be base + 3 × 360s
     expect(state.newLastCombatPointAt.getTime()).toBe(baseMs + 3 * 360 * 1000)
+  })
+})
+
+describe('effectiveCombatConfig', () => {
+  it('applique vault et regen reduction avec plancher 60s', () => {
+    const out = effectiveCombatConfig(
+      { maxStock: 60, regenSeconds: 900, battleCost: 5, sweepCost: 5 },
+      { pcVaultBonus: 15, pcRegenReductionSeconds: 900 },
+    )
+    expect(out.maxStock).toBe(75)
+    expect(out.regenSeconds).toBe(60)
+  })
+  it('neutre = identité', () => {
+    const out = effectiveCombatConfig(
+      { maxStock: 60, regenSeconds: 900, battleCost: 5, sweepCost: 5 },
+      { pcVaultBonus: 0, pcRegenReductionSeconds: 0 },
+    )
+    expect(out).toEqual({ maxStock: 60, regenSeconds: 900, battleCost: 5, sweepCost: 5 })
   })
 })

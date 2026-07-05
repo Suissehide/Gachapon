@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 
 import type { IocContainer } from '../../types/application/ioc'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
+import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type {
   PostgresORMInterface,
   PrimaTransactionClient,
@@ -17,13 +18,47 @@ export interface CombatPointsView {
   nextCombatPointAt: Date | null
 }
 
+type CombatCfg = {
+  maxStock: number
+  regenSeconds: number
+  battleCost: number
+  sweepCost: number
+}
+
+type PcEffects = {
+  pcVaultBonus: number
+  pcRegenReductionSeconds: number
+}
+
+const NEUTRAL_EFFECTS: PcEffects = { pcVaultBonus: 0, pcRegenReductionSeconds: 0 }
+
+const REGEN_FLOOR_SECONDS = 60
+
+/**
+ * Apply skill-tree PC effects to the raw combat config.
+ * Pure function — no side effects.
+ *
+ * - maxStock   += pcVaultBonus
+ * - regenSeconds = max(REGEN_FLOOR_SECONDS, regenSeconds - pcRegenReductionSeconds)
+ */
+export function effectiveCombatConfig(cfg: CombatCfg, effects: PcEffects): CombatCfg {
+  return {
+    maxStock: cfg.maxStock + effects.pcVaultBonus,
+    regenSeconds: Math.max(REGEN_FLOOR_SECONDS, cfg.regenSeconds - effects.pcRegenReductionSeconds),
+    battleCost: cfg.battleCost,
+    sweepCost: cfg.sweepCost,
+  }
+}
+
 export class CombatPointsTx {
   readonly #postgresOrm: PostgresORMInterface
   readonly #configService: ConfigServiceInterface
+  readonly #skillTreeRepository: ISkillTreeRepository
 
-  constructor({ postgresOrm, configService }: IocContainer) {
+  constructor({ postgresOrm, configService, skillTreeRepository }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#configService = configService
+    this.#skillTreeRepository = skillTreeRepository
   }
 
   /**
@@ -36,7 +71,12 @@ export class CombatPointsTx {
    * effectively refunding the spent PC.
    */
   async getView(userId: string): Promise<CombatPointsView> {
-    const cfg = await this.#loadConfig()
+    const [rawCfg, effects] = await Promise.all([
+      this.#loadConfig(),
+      this.#skillTreeRepository.getEffectsForUser(userId),
+    ])
+    const cfg = effectiveCombatConfig(rawCfg, effects)
+
     const user = await this.#postgresOrm.prisma.user.findUnique({
       where: { id: userId },
       select: { combatPoints: true, lastCombatPointAt: true },
@@ -68,16 +108,25 @@ export class CombatPointsTx {
    *
    * The caller passes its own tx client so the debit is part of the same
    * Serializable transaction (e.g. the campaign battle/sweep).
+   *
+   * `effects` must be read OUTSIDE the transaction by the caller before
+   * opening the tx (reading from a different connection inside a Serializable
+   * tx is unsafe and couples the tx to the skill-tree read path). When
+   * absent (e.g. legacy callers or task-8 migration), neutral effects apply
+   * and behaviour is byte-identical to the previous implementation.
    */
   async debitInTx(
     tx: PrimaTransactionClient,
     userId: string,
     cost: number,
+    effects: PcEffects = NEUTRAL_EFFECTS,
   ): Promise<{ combatPointsAfter: number }> {
     if (cost <= 0) {
       return { combatPointsAfter: 0 }
     }
-    const cfg = await this.#loadConfig()
+    const rawCfg = await this.#loadConfig()
+    const cfg = effectiveCombatConfig(rawCfg, effects)
+
     const user = await tx.user.findUnique({
       where: { id: userId },
       select: { combatPoints: true, lastCombatPointAt: true },
@@ -115,12 +164,7 @@ export class CombatPointsTx {
     return { combatPointsAfter: after }
   }
 
-  async #loadConfig(): Promise<{
-    maxStock: number
-    regenSeconds: number
-    battleCost: number
-    sweepCost: number
-  }> {
+  async #loadConfig(): Promise<CombatCfg> {
     const cfg = await this.#configService.getMany(
       'combat.pointsMax',
       'combat.regenSeconds',
