@@ -8,7 +8,7 @@ const rewardAmountsSchema = z.object({
   xp: z.number().int(),
 })
 
-const rewardSourceEnum = z.enum(['STREAK', 'ACHIEVEMENT', 'QUEST'])
+const rewardSourceEnum = z.enum(['STREAK', 'ACHIEVEMENT', 'QUEST', 'LEVEL_UP'])
 
 // ── POST /rewards/:id/claim & /claim-all responses ─────────────────────────
 
