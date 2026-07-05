@@ -12,6 +12,8 @@ export function calculateTokens(
   currentTokens: number,
   regenIntervalMinutes: number,
   maxStock: number,
+  multiTokenChance = 0,
+  rng: () => number = Math.random,
 ): TokenState {
   // Déjà au max (ou au-dessus) → pas de regen, pas de nextTokenAt
   // On reset lastTokenAt à maintenant pour que le clock de regen reparte
@@ -44,14 +46,27 @@ export function calculateTokens(
     return { tokens: currentTokens, newLastTokenAt: ref, nextTokenAt }
   }
 
-  const newTokens = Math.min(currentTokens + gained, maxStock)
-  const actualGained = newTokens - currentTokens
+  // Bonus tokens: MULTI_TOKEN_CHANCE — each time-gained token has a chance to grant a free extra.
+  // Bonus tokens do NOT advance the regen clock (they cost no regen time).
+  let bonus = 0
+  if (gained > 0 && multiTokenChance > 0) {
+    for (let i = 0; i < gained; i++) {
+      if (rng() < multiTokenChance / 100) {
+        bonus++
+      }
+    }
+  }
+
+  const newTokens = Math.min(currentTokens + gained + bonus, maxStock)
+  // actualGainedFromTime: time-based tokens that fit in stock (bonus excluded).
+  // Used to advance the regen clock — bonus tokens don't consume regen time.
+  const actualGainedFromTime = Math.min(gained, maxStock - currentTokens)
   // Si la regen amène au max, reset le clock à maintenant pour éviter
   // qu'un elapsed résiduel ne régénère instantanément un futur token consommé.
   const newLastTokenAt =
     newTokens >= maxStock
       ? new Date()
-      : new Date(ref.getTime() + actualGained * msPerToken)
+      : new Date(ref.getTime() + actualGainedFromTime * msPerToken)
 
   const nextTokenAt =
     newTokens >= maxStock

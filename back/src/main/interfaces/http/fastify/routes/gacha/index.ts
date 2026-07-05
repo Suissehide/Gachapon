@@ -177,6 +177,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         user.tokens,
         effectiveInterval,
         effectiveMaxStock,
+        upgrades.multiTokenChance,
       )
 
       return {
@@ -212,6 +213,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         user.tokens,
         effectiveInterval,
         effectiveMaxStock,
+        upgrades.multiTokenChance,
       )
 
       return {

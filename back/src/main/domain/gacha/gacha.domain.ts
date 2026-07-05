@@ -197,6 +197,7 @@ export class GachaDomain implements GachaDomainInterface {
       user.tokens,
       effectiveInterval,
       effectiveMaxStock,
+      cfg.upgrades.multiTokenChance,
     )
     return {
       user,

@@ -96,4 +96,21 @@ describe('calculateTokens', () => {
     expect(result.tokens).toBe(2)
     expect(result.newLastTokenAt!.getTime()).toBeCloseTo(lastTokenAt.getTime(), -3)
   })
+
+  describe('multiTokenChance', () => {
+    it('chance 100 double chaque jeton régénéré (plafonné au cap)', () => {
+      const past = new Date(Date.now() - 2 * INTERVAL * 60 * 1000)
+      const r = calculateTokens(past, 0, INTERVAL, MAX, 100, () => 0)
+      expect(r.tokens).toBe(Math.min(4, MAX)) // 2 gagnés + 2 bonus
+    })
+    it('chance 0 = comportement inchangé', () => {
+      const past = new Date(Date.now() - 2 * INTERVAL * 60 * 1000)
+      const r = calculateTokens(past, 0, INTERVAL, MAX, 0, () => 0)
+      expect(r.tokens).toBe(2)
+    })
+    it('défauts rétrocompatibles (appel à 4 arguments)', () => {
+      const past = new Date(Date.now() - INTERVAL * 60 * 1000)
+      expect(calculateTokens(past, 0, INTERVAL, MAX).tokens).toBe(1)
+    })
+  })
 })

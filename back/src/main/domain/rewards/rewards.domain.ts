@@ -118,6 +118,7 @@ export class RewardsDomain implements RewardsDomainInterface {
           user.tokens,
           effectiveInterval,
           effectiveMaxStock,
+          upgrades.multiTokenChance,
         )
 
         const newTokens = regenTokens + rewardTokens
@@ -246,6 +247,7 @@ export class RewardsDomain implements RewardsDomainInterface {
           user.tokens,
           effectiveInterval,
           effectiveMaxStock,
+          upgrades.multiTokenChance,
         )
 
         const newTokens = regenTokens + totalTokens
