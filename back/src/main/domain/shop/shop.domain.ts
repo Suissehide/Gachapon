@@ -1,6 +1,6 @@
 import Boom from '@hapi/boom'
 
-import type { CardRarity, ShopItem } from '../../../generated/client'
+import { CardRarity, type ShopItem } from '../../../generated/client'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
 import type {
@@ -43,6 +43,9 @@ export class ShopDomain implements IShopDomain {
     if (!item || !item.isActive) {
       throw Boom.notFound('Item not found')
     }
+
+    // Validate shop item structure early (before transaction)
+    this.#validateShopItem(item)
 
     const result = await this.#postgresOrm.executeWithTransactionClient(
       async (tx) => {
@@ -141,19 +144,56 @@ export class ShopDomain implements IShopDomain {
   ): Promise<void> {
     if (item.type !== 'BOOST') { return }
     const boostValue = item.value as BoostValue
+
+    // Guard: ensure at least one boost type is specified
+    if (boostValue.multiplier == null && boostValue.guaranteedRarity == null) {
+      throw Boom.internal('BOOST item value has neither multiplier nor guaranteedRarity')
+    }
+
+    // Guard: ensure pulls count is positive
+    const pulls = boostValue.pulls ?? 0
+    if (pulls <= 0) {
+      throw Boom.internal('BOOST item value has no positive pulls count')
+    }
+
     if (boostValue.multiplier != null) {
+      // Validate rarity for weight boost
+      this.#validateRarity(boostValue.rarity)
       await this.#userBoostRepository.createInTx(tx, {
         userId,
         weightMultiplier: boostValue.multiplier,
         weightRarity: boostValue.rarity as CardRarity,
-        pullsRemaining: boostValue.pulls ?? 0,
+        pullsRemaining: pulls,
       })
     } else if (boostValue.guaranteedRarity != null) {
+      // Validate rarity for guaranteed boost
+      this.#validateRarity(boostValue.guaranteedRarity)
       await this.#userBoostRepository.createInTx(tx, {
         userId,
         guaranteedRarity: boostValue.guaranteedRarity as CardRarity,
-        pullsRemaining: boostValue.pulls ?? 0,
+        pullsRemaining: pulls,
       })
+    }
+  }
+
+  #validateRarity(rarity?: string): void {
+    const validRarities = Object.values(CardRarity)
+    if (rarity && !validRarities.includes(rarity as CardRarity)) {
+      throw Boom.internal(`BOOST item has invalid rarity: ${rarity}`)
+    }
+  }
+
+  #validateShopItem(item: ShopItem): void {
+    if (item.type === 'BOOST') {
+      const boostValue = item.value as BoostValue
+      // Validate that at least one boost type is specified
+      if (boostValue.multiplier == null && boostValue.guaranteedRarity == null) {
+        throw Boom.internal('BOOST item value has neither multiplier nor guaranteedRarity')
+      }
+      // Validate that pulls count is positive
+      if ((boostValue.pulls ?? 0) <= 0) {
+        throw Boom.internal('BOOST item value has no positive pulls count')
+      }
     }
   }
 

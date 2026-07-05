@@ -48,10 +48,18 @@ describe('Shop routes', () => {
 
   it('POST /shop/:id/buy — 402 si pas assez de dust', async () => {
     const { postgresOrm } = (app as any).iocContainer
-    const item = await postgresOrm.prisma.shopItem.findFirst({
-      where: { isActive: true },
+
+    // Create a simple TOKEN_PACK item for testing
+    const item = await postgresOrm.prisma.shopItem.create({
+      data: {
+        name: 'Test Token Pack',
+        description: 'A test token pack',
+        type: 'TOKEN_PACK',
+        dustCost: 1000,
+        value: { tokens: 100 },
+        isActive: true,
+      },
     })
-    if (!item) return // Pas d'articles seedés — skip
 
     const res = await app.inject({
       method: 'POST',
@@ -64,10 +72,18 @@ describe('Shop routes', () => {
 
   it('POST /shop/:id/buy — 200 si assez de dust', async () => {
     const { postgresOrm } = (app as any).iocContainer
-    const item = await postgresOrm.prisma.shopItem.findFirst({
-      where: { isActive: true },
+
+    // Create a simple TOKEN_PACK item for testing
+    const item = await postgresOrm.prisma.shopItem.create({
+      data: {
+        name: 'Test Token Pack 2',
+        description: 'Another test token pack',
+        type: 'TOKEN_PACK',
+        dustCost: 100,
+        value: { tokens: 50 },
+        isActive: true,
+      },
     })
-    if (!item) return // Pas d'articles seedés — skip
 
     // Donner du dust à l'utilisateur
     await postgresOrm.prisma.user.update({
@@ -149,10 +165,17 @@ describe('Shop routes', () => {
   it('POST /shop/:id/buy — crée un UserBoost (weightMultiplier) pour Boost Rare+', async () => {
     const { postgresOrm } = (app as any).iocContainer
 
-    const boostItem = await postgresOrm.prisma.shopItem.findFirst({
-      where: { name: 'Boost Rare+', isActive: true },
+    // Create a weight multiplier BOOST item
+    const boostItem = await postgresOrm.prisma.shopItem.create({
+      data: {
+        name: 'Boost Rare+',
+        description: 'Boost with weight multiplier',
+        type: 'BOOST',
+        dustCost: 500,
+        value: { multiplier: 2, rarity: 'RARE', pulls: 10 },
+        isActive: true,
+      },
     })
-    if (!boostItem) return // pas seedé — skip
 
     // Give enough dust
     await postgresOrm.prisma.user.update({
@@ -181,10 +204,17 @@ describe('Shop routes', () => {
   it('POST /shop/:id/buy — 409 si boost de poids déjà actif', async () => {
     const { postgresOrm } = (app as any).iocContainer
 
-    const boostItem = await postgresOrm.prisma.shopItem.findFirst({
-      where: { name: 'Boost Rare+', isActive: true },
+    // Create another weight multiplier BOOST item to test conflict
+    const boostItem = await postgresOrm.prisma.shopItem.create({
+      data: {
+        name: 'Boost Rare+ Conflict',
+        description: 'Another boost with weight multiplier',
+        type: 'BOOST',
+        dustCost: 500,
+        value: { multiplier: 1.5, rarity: 'RARE', pulls: 5 },
+        isActive: true,
+      },
     })
-    if (!boostItem) return
 
     // Give enough dust
     await postgresOrm.prisma.user.update({
@@ -203,10 +233,17 @@ describe('Shop routes', () => {
   it('POST /shop/:id/buy — crée un UserBoost (guaranteedRarity) pour Boost Épique', async () => {
     const { postgresOrm } = (app as any).iocContainer
 
-    const boostItem = await postgresOrm.prisma.shopItem.findFirst({
-      where: { name: 'Boost Épique', isActive: true },
+    // Create a guaranteed rarity BOOST item
+    const boostItem = await postgresOrm.prisma.shopItem.create({
+      data: {
+        name: 'Boost Épique',
+        description: 'Boost with guaranteed epic rarity',
+        type: 'BOOST',
+        dustCost: 800,
+        value: { guaranteedRarity: 'EPIC', pulls: 5 },
+        isActive: true,
+      },
     })
-    if (!boostItem) return
 
     // Give enough dust
     await postgresOrm.prisma.user.update({
@@ -229,5 +266,45 @@ describe('Shop routes', () => {
     expect(userBoost!.guaranteedRarity).toBe('EPIC')
     expect(userBoost!.pullsRemaining).toBe(5)
     expect(userBoost!.satisfied).toBe(false)
+  })
+
+  it('POST /shop/:id/buy — 500 si BOOST item value est vide (ni multiplier ni guaranteedRarity)', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    // Create a malformed BOOST item with empty value
+    const malformedItem = await postgresOrm.prisma.shopItem.create({
+      data: {
+        name: 'Malformed Boost',
+        description: 'A boost with invalid value',
+        type: 'BOOST',
+        dustCost: 100,
+        value: {}, // Empty object — no multiplier, no guaranteedRarity
+        isActive: true,
+      },
+    })
+
+    // Give dust to the user
+    const userBefore = await postgresOrm.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+    })
+    const dustBefore = userBefore.dust
+    await postgresOrm.prisma.user.update({
+      where: { id: userId },
+      data: { dust: dustBefore + 500 },
+    })
+
+    // Attempt to purchase — should return 500 (internal error)
+    const res = await app.inject({
+      method: 'POST',
+      url: `/shop/${malformedItem.id}/buy`,
+      headers: { cookie: cookies },
+    })
+    expect(res.statusCode).toBe(500)
+
+    // Verify dust was NOT debited (transaction should have rolled back)
+    const userAfter = await postgresOrm.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+    })
+    expect(userAfter.dust).toBe(dustBefore + 500)
   })
 })
