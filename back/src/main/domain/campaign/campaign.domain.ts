@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 
 import type { IocContainer } from '../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
+import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { UserRewardRepositoryInterface } from '../../types/infra/orm/repositories/user-reward.repository.interface'
 import {
   type AttackPattern,
@@ -120,6 +121,27 @@ interface CardCatalogEntry {
   dropWeight: number
 }
 
+/**
+ * Apply skill-tree combat bonuses to a loot entry.
+ * Pure function — no side effects.
+ *
+ * - gold ×(1 + goldBonus/100), rounded
+ * - xp  ×(1 + combatXpBonus/100), rounded
+ * - equipmentDropChance/cardChance ×(1 + dropBonus/100), capped at 1
+ * - dust is intentionally NOT bonused (economy design)
+ */
+export function applyCombatBonuses(
+  loot: { gold: number; xp: number; equipmentDropChance: number; cardChance: number },
+  effects: { goldBonus: number; combatXpBonus: number; dropBonus: number },
+): { gold: number; xp: number; equipmentDropChance: number; cardChance: number } {
+  return {
+    gold: Math.round(loot.gold * (1 + effects.goldBonus / 100)),
+    xp: Math.round(loot.xp * (1 + effects.combatXpBonus / 100)),
+    equipmentDropChance: Math.min(1, loot.equipmentDropChance * (1 + effects.dropBonus / 100)),
+    cardChance: Math.min(1, loot.cardChance * (1 + effects.dropBonus / 100)),
+  }
+}
+
 export class CampaignDomain {
   readonly #postgresOrm
   readonly #combatPointsTx
@@ -127,6 +149,7 @@ export class CampaignDomain {
   readonly #achievementsDomain
   readonly #storageClient
   readonly #userRewardRepository: UserRewardRepositoryInterface
+  readonly #skillTreeRepository: ISkillTreeRepository
 
   constructor({
     postgresOrm,
@@ -135,6 +158,7 @@ export class CampaignDomain {
     achievementsDomain,
     storageClient,
     userRewardRepository,
+    skillTreeRepository,
   }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#combatPointsTx = combatPointsTx
@@ -142,6 +166,7 @@ export class CampaignDomain {
     this.#achievementsDomain = achievementsDomain
     this.#storageClient = storageClient
     this.#userRewardRepository = userRewardRepository
+    this.#skillTreeRepository = skillTreeRepository
   }
 
   /**
@@ -234,13 +259,16 @@ export class CampaignDomain {
     teamB: SimulatorUnit[]
   }> {
     return retryOnSerialization(async () => {
-      // Lire la config AVANT la transaction (évite les I/O async dans un tx Serializable)
-      const battleCfg = await this.#configService.getMany(
-        'combat.battleCost',
-        'xp.base',
-        'xp.slope',
-        'xp.levelCap',
-      )
+      // Lire la config ET les effets AVANT la transaction (évite les I/O async dans un tx Serializable)
+      const [battleCfg, effects] = await Promise.all([
+        this.#configService.getMany(
+          'combat.battleCost',
+          'xp.base',
+          'xp.slope',
+          'xp.levelCap',
+        ),
+        this.#skillTreeRepository.getEffectsForUser(userId),
+      ])
       return this.#postgresOrm.executeWithTransactionClient(
         // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing, refactor deferred
         async (tx) => {
@@ -253,7 +281,7 @@ export class CampaignDomain {
 
           // Debit PC (cost from GlobalConfig, default 5)
           const battleCost = battleCfg['combat.battleCost']
-          await this.#combatPointsTx.debitInTx(tx, userId, battleCost)
+          await this.#combatPointsTx.debitInTx(tx, userId, battleCost, effects)
 
           const user = await tx.user.findUnique({ where: { id: userId } })
           if (!user) {
@@ -318,8 +346,26 @@ export class CampaignDomain {
           let rewards: BattleRewards | null = null
 
           if (won) {
-            const loot = stage.lootTable as unknown as LootTable
+            const rawLoot = stage.lootTable as unknown as LootTable
             const isFirstClear = !isAlreadyCleared
+            // Apply skill-tree bonuses to both farm and first-clear loot (dust excluded by design)
+            const bonusedFarm = applyCombatBonuses(
+              {
+                gold: rawLoot.farm.gold,
+                xp: rawLoot.farm.xp,
+                equipmentDropChance: rawLoot.farm.equipmentDropChance,
+                cardChance: rawLoot.farm.cardChance,
+              },
+              effects,
+            )
+            const loot: LootTable = {
+              firstClear: {
+                ...rawLoot.firstClear,
+                gold: Math.round(rawLoot.firstClear.gold * (1 + effects.goldBonus / 100)),
+                xp: Math.round(rawLoot.firstClear.xp * (1 + effects.combatXpBonus / 100)),
+              },
+              farm: { ...rawLoot.farm, ...bonusedFarm },
+            }
             rewards = await this.#applyRewards(
               tx,
               userId,
@@ -392,13 +438,16 @@ export class CampaignDomain {
     }
 
     return retryOnSerialization(async () => {
-      // Lire la config AVANT la transaction (évite les I/O async dans un tx Serializable)
-      const sweepCfg = await this.#configService.getMany(
-        'combat.sweepCost',
-        'xp.base',
-        'xp.slope',
-        'xp.levelCap',
-      )
+      // Lire la config ET les effets AVANT la transaction (évite les I/O async dans un tx Serializable)
+      const [sweepCfg, effects] = await Promise.all([
+        this.#configService.getMany(
+          'combat.sweepCost',
+          'xp.base',
+          'xp.slope',
+          'xp.levelCap',
+        ),
+        this.#skillTreeRepository.getEffectsForUser(userId),
+      ])
       return this.#postgresOrm.executeWithTransactionClient(
         // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing, refactor deferred
         async (tx) => {
@@ -409,9 +458,10 @@ export class CampaignDomain {
             throw Boom.notFound('Stage not found')
           }
 
-          // Debit PC par run (coût depuis GlobalConfig, défaut 5)
+          // Debit PC par run (coût réduit par skill tree, minimum 1, depuis GlobalConfig défaut 5)
           const sweepCost = sweepCfg['combat.sweepCost']
-          await this.#combatPointsTx.debitInTx(tx, userId, sweepCost * runs)
+          const effectiveSweepCost = Math.max(1, sweepCost - effects.sweepCostReduction)
+          await this.#combatPointsTx.debitInTx(tx, userId, effectiveSweepCost * runs, effects)
 
           const progress = await tx.userCampaignProgress.findUnique({
             where: { userId },
@@ -428,7 +478,18 @@ export class CampaignDomain {
             throw Boom.forbidden('Stage not cleared yet — cannot sweep')
           }
 
-          const loot = (stage.lootTable as unknown as LootTable).farm
+          const rawFarm = (stage.lootTable as unknown as LootTable).farm
+          // Apply skill-tree bonuses once; dust is excluded by design
+          const bonusedFarmLoot = applyCombatBonuses(
+            {
+              gold: rawFarm.gold,
+              xp: rawFarm.xp,
+              equipmentDropChance: rawFarm.equipmentDropChance,
+              cardChance: rawFarm.cardChance,
+            },
+            effects,
+          )
+          const loot: FarmLoot = { ...rawFarm, ...bonusedFarmLoot }
           let totalGold = 0
           let totalDust = 0
           let totalXp = 0
