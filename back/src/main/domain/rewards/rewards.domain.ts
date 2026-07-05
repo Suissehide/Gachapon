@@ -20,6 +20,7 @@ import type {
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import type { UnlockedAchievement } from '../achievements/events.types'
 import { calculateTokens } from '../economy/economy.domain'
+import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
 import { calculateLevel } from '../shared/xp'
 
 export class RewardsDomain implements RewardsDomainInterface {
@@ -129,12 +130,14 @@ export class RewardsDomain implements RewardsDomainInterface {
           cfg['xp.levelCap'],
         )
 
+        const gained = skillPointsGained(user.level, newLevel)
         await this.#userRepository.updateAfterClaimInTx(tx, userId, {
           tokens: newTokens,
           dust: newDust,
           xp: newXp,
           level: newLevel,
           lastTokenAt: newLastTokenAt ?? undefined,
+          skillPoints: gained > 0 ? { increment: gained } : undefined,
         })
         await this.#userRewardRepository.markClaimedInTx(tx, userReward.id)
         // Count INSIDE tx so it reflects the just-committed mark
@@ -154,6 +157,20 @@ export class RewardsDomain implements RewardsDomainInterface {
                 newLevel,
               })
             : []
+
+        if (newLevel > user.level) {
+          for (const pack of milestonesCrossed(user.level, newLevel)) {
+            const milestoneReward = await tx.reward.create({
+              data: { tokens: pack.tokens, dust: pack.dust, xp: 0 },
+            })
+            await this.#userRewardRepository.upsertInTx(tx, {
+              userId,
+              rewardId: milestoneReward.id,
+              source: 'LEVEL_UP',
+              sourceId: `level-${pack.level}`,
+            })
+          }
+        }
 
         return {
           tokens: newTokens,
@@ -241,16 +258,18 @@ export class RewardsDomain implements RewardsDomainInterface {
           cfg['xp.levelCap'],
         )
 
+        const initialLevel = user.level
+        const gained = skillPointsGained(initialLevel, newLevel)
         await this.#userRepository.updateAfterClaimInTx(tx, userId, {
           tokens: newTokens,
           dust: newDust,
           xp: newXp,
           level: newLevel,
           lastTokenAt: newLastTokenAt ?? undefined,
+          skillPoints: gained > 0 ? { increment: gained } : undefined,
         })
         await this.#userRewardRepository.markAllClaimedInTx(tx, userId)
 
-        const initialLevel = user.level
         const allUnlocks: UnlockedAchievement[] = []
         for (const ur of pending) {
           const unlocks = await this.#achievementsDomain.track(tx, userId, {
@@ -270,6 +289,17 @@ export class RewardsDomain implements RewardsDomainInterface {
             },
           )
           allUnlocks.push(...levelUnlocks)
+          for (const pack of milestonesCrossed(initialLevel, newLevel)) {
+            const milestoneReward = await tx.reward.create({
+              data: { tokens: pack.tokens, dust: pack.dust, xp: 0 },
+            })
+            await this.#userRewardRepository.upsertInTx(tx, {
+              userId,
+              rewardId: milestoneReward.id,
+              source: 'LEVEL_UP',
+              sourceId: `level-${pack.level}`,
+            })
+          }
         }
 
         return {

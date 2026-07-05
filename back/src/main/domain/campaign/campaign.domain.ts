@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 
 import type { IocContainer } from '../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
+import type { UserRewardRepositoryInterface } from '../../types/infra/orm/repositories/user-reward.repository.interface'
 import {
   type AttackPattern,
   type SimulatorUnit,
@@ -18,6 +19,7 @@ import {
   rollFirstClearCardRarity,
   rollFirstClearEquipmentRarity,
 } from '../combat/equipment-drop.domain'
+import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import { calculateLevel } from '../shared/xp'
 import { computeTeamPower } from './campaign-power'
@@ -124,6 +126,7 @@ export class CampaignDomain {
   readonly #configService
   readonly #achievementsDomain
   readonly #storageClient
+  readonly #userRewardRepository: UserRewardRepositoryInterface
 
   constructor({
     postgresOrm,
@@ -131,12 +134,14 @@ export class CampaignDomain {
     configService,
     achievementsDomain,
     storageClient,
+    userRewardRepository,
   }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#combatPointsTx = combatPointsTx
     this.#configService = configService
     this.#achievementsDomain = achievementsDomain
     this.#storageClient = storageClient
+    this.#userRewardRepository = userRewardRepository
   }
 
   /**
@@ -507,6 +512,7 @@ export class CampaignDomain {
             sweepCfg['xp.slope'],
             sweepCfg['xp.levelCap'],
           )
+          const sweepGained = skillPointsGained(oldLevel, newLevel)
           await tx.user.update({
             where: { id: userId },
             data: {
@@ -514,6 +520,7 @@ export class CampaignDomain {
               dust: { increment: totalDust },
               xp: newXp,
               level: newLevel,
+              ...(sweepGained > 0 ? { skillPoints: { increment: sweepGained } } : {}),
             },
           })
           if (newLevel > oldLevel) {
@@ -521,6 +528,17 @@ export class CampaignDomain {
               kind: 'LEVEL_UP',
               newLevel,
             })
+            for (const pack of milestonesCrossed(oldLevel, newLevel)) {
+              const milestoneReward = await tx.reward.create({
+                data: { tokens: pack.tokens, dust: pack.dust, xp: 0 },
+              })
+              await this.#userRewardRepository.upsertInTx(tx, {
+                userId,
+                rewardId: milestoneReward.id,
+                source: 'LEVEL_UP',
+                sourceId: `level-${pack.level}`,
+              })
+            }
           }
 
           return {
@@ -723,6 +741,7 @@ export class CampaignDomain {
     const oldLevel = userBefore?.level ?? 1
     const newXp = (userBefore?.xp ?? 0) + xp
     const newLevel = calculateLevel(newXp, xpBase, xpSlope, xpLevelCap)
+    const battleGained = skillPointsGained(oldLevel, newLevel)
     await tx.user.update({
       where: { id: userId },
       data: {
@@ -730,6 +749,7 @@ export class CampaignDomain {
         dust: { increment: dust },
         xp: newXp,
         level: newLevel,
+        ...(battleGained > 0 ? { skillPoints: { increment: battleGained } } : {}),
       },
     })
     if (newLevel > oldLevel) {
@@ -737,6 +757,17 @@ export class CampaignDomain {
         kind: 'LEVEL_UP',
         newLevel,
       })
+      for (const pack of milestonesCrossed(oldLevel, newLevel)) {
+        const milestoneReward = await tx.reward.create({
+          data: { tokens: pack.tokens, dust: pack.dust, xp: 0 },
+        })
+        await this.#userRewardRepository.upsertInTx(tx, {
+          userId,
+          rewardId: milestoneReward.id,
+          source: 'LEVEL_UP',
+          sourceId: `level-${pack.level}`,
+        })
+      }
     }
 
     return {

@@ -18,9 +18,11 @@ import type { ICardRepository } from '../../types/infra/orm/repositories/card.re
 import type { IGachaPullRepository } from '../../types/infra/orm/repositories/gacha-pull.repository.interface'
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
+import type { UserRewardRepositoryInterface } from '../../types/infra/orm/repositories/user-reward.repository.interface'
 import type { IUserCardRepository } from '../../types/infra/orm/repositories/user-card.repository.interface'
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import { calculateTokens } from '../economy/economy.domain'
+import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
 import { calculateLevel } from '../shared/xp'
 
 export function pickWeightedRandom(cards: CardWithSet[]): CardWithSet {
@@ -149,6 +151,7 @@ export class GachaDomain implements GachaDomainInterface {
   readonly #gachaPullRepository: IGachaPullRepository
   readonly #skillTreeRepository: ISkillTreeRepository
   readonly #achievementsDomain: AchievementsDomainInterface
+  readonly #userRewardRepository: UserRewardRepositoryInterface
 
   constructor({
     postgresOrm,
@@ -159,6 +162,7 @@ export class GachaDomain implements GachaDomainInterface {
     gachaPullRepository,
     skillTreeRepository,
     achievementsDomain,
+    userRewardRepository,
   }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#configService = configService
@@ -168,6 +172,7 @@ export class GachaDomain implements GachaDomainInterface {
     this.#gachaPullRepository = gachaPullRepository
     this.#skillTreeRepository = skillTreeRepository
     this.#achievementsDomain = achievementsDomain
+    this.#userRewardRepository = userRewardRepository
   }
 
   async #loadUserAndInitialState(
@@ -266,6 +271,7 @@ export class GachaDomain implements GachaDomainInterface {
     newLevel: number,
     finalPity: number,
     newLastTokenAt: Date | null,
+    skillPointsIncrement?: number,
   ): Promise<void> {
     await this.#userRepository.updateAfterPullInTx(tx, userId, {
       tokens: finalTokens,
@@ -274,6 +280,7 @@ export class GachaDomain implements GachaDomainInterface {
       newLevel,
       pityCurrent: finalPity,
       lastTokenAt: newLastTokenAt,
+      skillPointsIncrement,
     })
   }
 
@@ -301,6 +308,7 @@ export class GachaDomain implements GachaDomainInterface {
       cfg.xpCurve.levelCap,
     )
     const finalTokens = state.currentTokens - cfg.pullTokenCost
+    const gained = skillPointsGained(oldLevel, newLevel)
     await this.#writeFinalUserUpdate(
       tx,
       userId,
@@ -310,6 +318,7 @@ export class GachaDomain implements GachaDomainInterface {
       newLevel,
       step.nextPity,
       state.newLastTokenAt,
+      gained > 0 ? gained : undefined,
     )
     const [spentUnlocks, levelUnlocks] = await Promise.all([
       this.#achievementsDomain.track(tx, userId, {
@@ -325,6 +334,19 @@ export class GachaDomain implements GachaDomainInterface {
             ReturnType<AchievementsDomainInterface['track']>
           >),
     ])
+    if (newLevel > oldLevel) {
+      for (const pack of milestonesCrossed(oldLevel, newLevel)) {
+        const milestoneReward = await tx.reward.create({
+          data: { tokens: pack.tokens, dust: pack.dust, xp: 0 },
+        })
+        await this.#userRewardRepository.upsertInTx(tx, {
+          userId,
+          rewardId: milestoneReward.id,
+          source: 'LEVEL_UP',
+          sourceId: `level-${pack.level}`,
+        })
+      }
+    }
     return {
       pull: step.pull,
       card: step.card,
@@ -472,6 +494,7 @@ export class GachaDomain implements GachaDomainInterface {
         upgrades,
       }
       return this.#postgresOrm.executeWithTransactionClient(
+        // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: milestone loop added, refactor deferred
         async (tx) => {
           const { user, state } = await this.#loadUserAndInitialState(tx, userId, cfg)
           if (state.currentTokens < count * cfg.pullTokenCost) {
@@ -505,6 +528,7 @@ export class GachaDomain implements GachaDomainInterface {
             cfg.xpCurve.slope,
             cfg.xpCurve.levelCap,
           )
+          const batchGained = skillPointsGained(oldLevel, newLevel)
           await this.#writeFinalUserUpdate(
             tx,
             userId,
@@ -514,6 +538,7 @@ export class GachaDomain implements GachaDomainInterface {
             newLevel,
             currentPity,
             state.newLastTokenAt,
+            batchGained > 0 ? batchGained : undefined,
           )
           const [spentUnlocks, levelUnlocks] = await Promise.all([
             this.#achievementsDomain.track(tx, userId, {
@@ -527,6 +552,19 @@ export class GachaDomain implements GachaDomainInterface {
                 })
               : Promise.resolve([] as Awaited<ReturnType<AchievementsDomainInterface['track']>>),
           ])
+          if (newLevel > oldLevel) {
+            for (const pack of milestonesCrossed(oldLevel, newLevel)) {
+              const milestoneReward = await tx.reward.create({
+                data: { tokens: pack.tokens, dust: pack.dust, xp: 0 },
+              })
+              await this.#userRewardRepository.upsertInTx(tx, {
+                userId,
+                rewardId: milestoneReward.id,
+                source: 'LEVEL_UP',
+                sourceId: `level-${pack.level}`,
+              })
+            }
+          }
           const dedupedAchievements = [
             ...new Map(
               [...pullUnlocks, ...spentUnlocks, ...levelUnlocks].map((a) => [a.key, a]),

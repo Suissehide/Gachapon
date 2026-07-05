@@ -12,6 +12,7 @@ export type PullUpdateInput = {
   lastTokenAt: Date | null
   xpIncrement: number
   newLevel: number
+  skillPointsIncrement?: number
 }
 
 export interface UserRepositoryInterface {
@@ -45,6 +46,7 @@ export interface UserRepositoryInterface {
       xp: number
       level: number
       lastTokenAt?: Date
+      skillPoints?: { increment: number }
     },
   ): Promise<void>
   findByEmailVerificationToken(token: string): Promise<UserEntity | null>

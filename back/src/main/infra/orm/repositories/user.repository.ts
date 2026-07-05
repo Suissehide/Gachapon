@@ -80,6 +80,9 @@ export class UserRepository implements UserRepositoryInterface {
         level: data.newLevel,
         pityCurrent: data.pityCurrent,
         lastTokenAt: data.lastTokenAt,
+        ...(data.skillPointsIncrement !== undefined
+          ? { skillPoints: { increment: data.skillPointsIncrement } }
+          : {}),
       },
     })
   }
@@ -101,6 +104,7 @@ export class UserRepository implements UserRepositoryInterface {
       xp: number
       level: number
       lastTokenAt?: Date
+      skillPoints?: { increment: number }
     },
   ): Promise<void> {
     await tx.user.update({ where: { id }, data })
