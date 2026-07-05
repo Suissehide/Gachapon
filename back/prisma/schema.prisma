@@ -138,6 +138,27 @@ model User {
   userEquipment        UserEquipment[]
   campaignProgress     UserCampaignProgress?
   battleResults        BattleResult[]
+
+  wishlistCardId      String?
+  wishlistCard        Card?     @relation("UserWishlist", fields: [wishlistCardId], references: [id], onDelete: SetNull)
+  wishlistPurchasedAt DateTime?
+  boosts              UserBoost[]
+}
+
+model UserBoost {
+  id               String      @id @default(cuid())
+  userId           String
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Boost de poids : multiplie le dropWeight des cartes de weightRarity
+  weightMultiplier Float?
+  weightRarity     CardRarity?
+  /// Boost de garantie : force le pool guaranteedRarity+ au dernier tirage si non satisfait
+  guaranteedRarity CardRarity?
+  pullsRemaining   Int
+  satisfied        Boolean     @default(false)
+  createdAt        DateTime    @default(now())
+
+  @@index([userId])
 }
 
 model OAuthAccount {
@@ -238,6 +259,7 @@ model Card {
   userCards      UserCard[]
   gachaPulls     GachaPull[]
   dailyShopItems DailyShopItem[]
+  wishedBy       User[]        @relation("UserWishlist")
 }
 
 model UserCard {

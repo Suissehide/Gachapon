@@ -38,6 +38,8 @@ export const CONFIG_KEYS = [
   'card.rarityMultRare',
   'card.rarityMultEpic',
   'card.rarityMultLegendary',
+  'wishlist.priceMultiplier',
+  'wishlist.cooldownDays',
 ] as const
 
 export type ConfigKey = (typeof CONFIG_KEYS)[number]
