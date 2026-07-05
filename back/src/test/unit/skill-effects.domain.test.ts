@@ -75,3 +75,48 @@ describe('getSkillEffects', () => {
     expect(effects.dustHarvestMultiplier).toBe(1.0)
   })
 })
+
+describe('skill-effects aggregation v2', () => {
+  it('neutral has all new fields at neutral values', () => {
+    const fx = getSkillEffects([])
+    expect(fx.pullXpBonus).toBe(0)
+    expect(fx.pityReduction).toBe(0)
+    expect(fx.variantLuckMultiplier).toBe(1.0)
+    expect(fx.dailyShopSlots).toBe(0)
+    expect(fx.wishlistCooldownReductionDays).toBe(0)
+    expect(fx.pcVaultBonus).toBe(0)
+    expect(fx.pcRegenReductionSeconds).toBe(0)
+    expect(fx.sweepCostReduction).toBe(0)
+    expect(fx.goldBonus).toBe(0)
+    expect(fx.combatXpBonus).toBe(0)
+    expect(fx.dropBonus).toBe(0)
+  })
+  it('aggregates new effect types additively', () => {
+    const fx = getSkillEffects([
+      { effectType: 'PULL_XP_BONUS', effect: 10 },
+      { effectType: 'PULL_XP_BONUS', effect: 20 },
+      { effectType: 'PITY_BOOST', effect: 5 },
+      { effectType: 'VARIANT_LUCK', effect: 0.25 },
+      { effectType: 'VARIANT_LUCK', effect: 0.5 },
+      { effectType: 'DAILY_SHOP_SLOT', effect: 1 },
+      { effectType: 'PC_VAULT', effect: 10 },
+      { effectType: 'PC_REGEN', effect: 120 },
+      { effectType: 'SWEEP_COST', effect: 1 },
+      { effectType: 'GOLD_BONUS', effect: 30 },
+      { effectType: 'COMBAT_XP_BONUS', effect: 10 },
+      { effectType: 'DROP_BONUS', effect: 40 },
+      { effectType: 'WISHLIST_COOLDOWN', effect: 2 },
+    ])
+    expect(fx.pullXpBonus).toBe(30)
+    expect(fx.pityReduction).toBe(5)
+    expect(fx.variantLuckMultiplier).toBe(1.75)
+    expect(fx.dailyShopSlots).toBe(1)
+    expect(fx.pcVaultBonus).toBe(10)
+    expect(fx.pcRegenReductionSeconds).toBe(120)
+    expect(fx.sweepCostReduction).toBe(1)
+    expect(fx.goldBonus).toBe(30)
+    expect(fx.combatXpBonus).toBe(10)
+    expect(fx.dropBonus).toBe(40)
+    expect(fx.wishlistCooldownReductionDays).toBe(2)
+  })
+})

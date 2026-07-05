@@ -15,6 +15,17 @@ const NEUTRAL_EFFECTS: UserUpgradeEffects = {
   multiTokenChance: 0,
   goldenBallChance: 0,
   shopDiscount: 0,
+  pullXpBonus: 0,
+  pityReduction: 0,
+  variantLuckMultiplier: 1.0,
+  dailyShopSlots: 0,
+  wishlistCooldownReductionDays: 0,
+  pcVaultBonus: 0,
+  pcRegenReductionSeconds: 0,
+  sweepCostReduction: 0,
+  goldBonus: 0,
+  combatXpBonus: 0,
+  dropBonus: 0,
 }
 
 export function getSkillEffects(rows: SkillEffectRow[]): UserUpgradeEffects {
@@ -44,6 +55,39 @@ export function getSkillEffects(rows: SkillEffectRow[]): UserUpgradeEffects {
         break
       case 'SHOP_DISCOUNT':
         result.shopDiscount += row.effect
+        break
+      case 'PULL_XP_BONUS':
+        result.pullXpBonus += row.effect
+        break
+      case 'PITY_BOOST':
+        result.pityReduction += row.effect
+        break
+      case 'VARIANT_LUCK':
+        result.variantLuckMultiplier += row.effect
+        break
+      case 'DAILY_SHOP_SLOT':
+        result.dailyShopSlots += row.effect
+        break
+      case 'WISHLIST_COOLDOWN':
+        result.wishlistCooldownReductionDays += row.effect
+        break
+      case 'PC_VAULT':
+        result.pcVaultBonus += row.effect
+        break
+      case 'PC_REGEN':
+        result.pcRegenReductionSeconds += row.effect
+        break
+      case 'SWEEP_COST':
+        result.sweepCostReduction += row.effect
+        break
+      case 'GOLD_BONUS':
+        result.goldBonus += row.effect
+        break
+      case 'COMBAT_XP_BONUS':
+        result.combatXpBonus += row.effect
+        break
+      case 'DROP_BONUS':
+        result.dropBonus += row.effect
         break
     }
   }
