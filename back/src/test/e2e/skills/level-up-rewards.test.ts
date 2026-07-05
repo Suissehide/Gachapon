@@ -76,6 +76,9 @@ describe('Level-up: skillPoints + milestone UserReward (claimOne)', () => {
     const body = res.json()
     expect(body.level).toBe(10)
 
+    // pendingRewardsCount must reflect the milestone reward(s) just created
+    expect(body.pendingRewardsCount).toBeGreaterThanOrEqual(1)
+
     // skillPoints should have increased by skillPointsGained(1, 10) = 11
     const userAfter = await prisma.user.findUnique({ where: { id: userId } })
     const expectedGained = skillPointsGained(1, 10) // 9 + 2 = 11

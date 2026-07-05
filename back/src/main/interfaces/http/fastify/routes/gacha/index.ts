@@ -172,12 +172,13 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
       )
       const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
 
+      // Lecture seule : pas de roll multiToken (le bonus est roulé et persisté au moment du débit) — évite un compteur qui fluctue entre deux GET
       const { tokens, nextTokenAt } = calculateTokens(
         user.lastTokenAt,
         user.tokens,
         effectiveInterval,
         effectiveMaxStock,
-        upgrades.multiTokenChance,
+        0,
       )
 
       return {
@@ -208,12 +209,13 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
       )
       const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
 
+      // Lecture seule : pas de roll multiToken (le bonus est roulé et persisté au moment du débit) — évite un compteur qui fluctue entre deux GET
       const { tokens, nextTokenAt } = calculateTokens(
         user.lastTokenAt,
         user.tokens,
         effectiveInterval,
         effectiveMaxStock,
-        upgrades.multiTokenChance,
+        0,
       )
 
       return {

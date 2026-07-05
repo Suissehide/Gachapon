@@ -141,10 +141,6 @@ export class RewardsDomain implements RewardsDomainInterface {
           skillPoints: gained > 0 ? { increment: gained } : undefined,
         })
         await this.#userRewardRepository.markClaimedInTx(tx, userReward.id)
-        // Count INSIDE tx so it reflects the just-committed mark
-        const pendingRewardsCount = await tx.userReward.count({
-          where: { userId, claimedAt: null },
-        })
 
         const claimUnlocks = await this.#achievementsDomain.track(tx, userId, {
           kind: 'REWARD_CLAIMED',
@@ -172,6 +168,11 @@ export class RewardsDomain implements RewardsDomainInterface {
             })
           }
         }
+
+        // Count AFTER milestone rewards are created so the caller sees the correct pending total
+        const pendingRewardsCount = await tx.userReward.count({
+          where: { userId, claimedAt: null },
+        })
 
         return {
           tokens: newTokens,
@@ -281,6 +282,7 @@ export class RewardsDomain implements RewardsDomainInterface {
           })
           allUnlocks.push(...unlocks)
         }
+        let milestonePacksCreated = 0
         if (newLevel > initialLevel) {
           const levelUnlocks = await this.#achievementsDomain.track(
             tx,
@@ -301,6 +303,7 @@ export class RewardsDomain implements RewardsDomainInterface {
               source: 'LEVEL_UP',
               sourceId: `level-${pack.level}`,
             })
+            milestonePacksCreated++
           }
         }
 
@@ -309,7 +312,8 @@ export class RewardsDomain implements RewardsDomainInterface {
           dust: newDust,
           xp: newXp,
           level: newLevel,
-          pendingRewardsCount: 0,
+          // milestone rewards just created are pending — surface them to the caller
+          pendingRewardsCount: milestonePacksCreated,
           unlockedAchievements: allUnlocks,
         }
       },
