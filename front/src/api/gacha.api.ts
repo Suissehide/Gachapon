@@ -1,5 +1,7 @@
 import { apiUrl } from '../constants/config.constant.ts'
 import type {
+  PullBatchEntry,
+  PullBatchResult,
   PullHistory,
   PullResult,
   TokenBalance,
@@ -9,7 +11,7 @@ import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import type { FeedEntry } from '../types/feed'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
-export type { PullResult, TokenBalance, PullHistory }
+export type { PullResult, TokenBalance, PullHistory, PullBatchResult, PullBatchEntry }
 
 export const GachaApi = {
   getTokenBalance: async (): Promise<TokenBalance> => {
@@ -38,6 +40,18 @@ export const GachaApi = {
     const res = await fetchWithAuth(`${apiUrl}${GACHA_ROUTES.history(page)}`)
     if (!res.ok) {
       handleHttpError(res, {}, "Erreur lors de la récupération de l'historique")
+    }
+    return res.json()
+  },
+
+  pullBatch: async (count: 1 | 10): Promise<PullBatchResult> => {
+    const res = await fetchWithAuth(`${apiUrl}${GACHA_ROUTES.pullBatch}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ count }),
+    })
+    if (!res.ok) {
+      handleHttpError(res, {}, 'Erreur lors du tirage')
     }
     return res.json()
   },

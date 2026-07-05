@@ -43,10 +43,32 @@ export type PullHistory = {
   limit: number
 }
 
+export type PullBatchEntry = {
+  card: {
+    id: string
+    name: string
+    imageUrl: string | null
+    rarity: string
+    variant: string | null
+    set: { id: string; name: string }
+  }
+  wasDuplicate: boolean
+  dustEarned: number
+  pityCurrent: number
+}
+
+export type PullBatchResult = {
+  pulls: PullBatchEntry[]
+  tokensRemaining: number
+  xpGained: number
+  unlockedAchievements?: UnlockedAchievement[]
+}
+
 // Routes
 export const GACHA_ROUTES = {
   tokenBalance: '/tokens/balance',
   pull: '/pulls',
+  pullBatch: '/pulls/batch',
   history: (page: number) => `/pulls/history?page=${page}`,
   recent: (opts?: {
     limit?: number

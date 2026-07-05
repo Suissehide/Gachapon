@@ -4,6 +4,8 @@ import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { calculateTokens } from '../../../../../domain/economy/economy.domain'
 import { wsManager } from '../../../../ws/ws-manager'
 import {
+  pullBatchBodySchema,
+  pullBatchResponseSchema,
   pullResponseSchema,
   pullsHistoryQuerySchema,
   pullsRecentQuerySchema,
@@ -77,6 +79,69 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         dustEarned: result.dustEarned,
         tokensRemaining: result.tokensRemaining,
         pityCurrent: result.pityCurrent,
+        xpGained: result.xpGained,
+        unlockedAchievements: result.unlockedAchievements,
+      })
+    },
+  )
+
+  // POST /pulls/batch — 1 ou 10 tirages atomiques
+  fastify.post(
+    '/pulls/batch',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        body: pullBatchBodySchema,
+        response: { 201: pullBatchResponseSchema },
+      },
+    },
+    async (request, reply) => {
+      const { count } = request.body
+      const result = await gachaDomain.pullBatch(request.user.userID, count)
+      const user = await userRepository.findById(request.user.userID)
+
+      const pullsPayload = result.pulls.map((p) => ({
+        card: {
+          id: p.card.id,
+          name: p.card.name,
+          imageUrl: resolveUrl(p.card.imageUrl),
+          rarity: p.card.rarity,
+          variant: p.pull.variant,
+          set: { id: p.card.set.id, name: p.card.set.name },
+        },
+        wasDuplicate: p.wasDuplicate,
+        dustEarned: p.dustEarned,
+        pityCurrent: p.pityCurrent,
+      }))
+
+      wsManager.notify(request.user.userID, {
+        type: 'pull:batch-result',
+        pulls: pullsPayload,
+        tokensRemaining: result.tokensRemaining,
+        xpGained: result.xpGained,
+      })
+
+      if (user) {
+        result.pulls.forEach((p, idx) => {
+          setTimeout(() => {
+            wsManager.broadcast({
+              type: 'feed:pull',
+              username: user.username,
+              cardName: p.card.name,
+              rarity: p.card.rarity,
+              variant: p.pull.variant,
+              cardId: p.card.id,
+              imageUrl: resolveUrl(p.card.imageUrl),
+              setName: p.card.set.name,
+              pulledAt: p.pull.pulledAt.toISOString(),
+            })
+          }, idx * 50)
+        })
+      }
+
+      return reply.status(201).send({
+        pulls: pullsPayload,
+        tokensRemaining: result.tokensRemaining,
         xpGained: result.xpGained,
         unlockedAchievements: result.unlockedAchievements,
       })

@@ -1,3 +1,4 @@
+import type { PullBatchEntry } from '../constants/gacha.constant.ts'
 import type { FeedEntry } from '../types/feed'
 
 type WsEvent =
@@ -16,6 +17,12 @@ type WsEvent =
       dustEarned: number
       tokensRemaining: number
       pityCurrent: number
+    }
+  | {
+      type: 'pull:batch-result'
+      pulls: PullBatchEntry[]
+      tokensRemaining: number
+      xpGained: number
     }
   | ({ type: 'feed:pull' } & FeedEntry)
   | { type: 'error'; message: string }

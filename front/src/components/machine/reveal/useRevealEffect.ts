@@ -19,12 +19,10 @@ import {
 } from './renderers'
 import type {
   CanvasRefs,
-  ChromState,
   EffectState,
   HalftoneState,
   InkBlotState,
   ParticleState,
-  SpeedLineState,
   WaveState,
 } from './types'
 
@@ -297,7 +295,10 @@ function scheduleHalftoneAndChrom(
 
 // ── Hook ───────────────────────────────────────────────────────────────────────
 
-export function useRevealEffect(rarity: CardRarity): {
+export function useRevealEffect(
+  rarity: CardRarity,
+  options?: { scoped?: boolean },
+): {
   containerRef: React.RefObject<HTMLDivElement | null>
   canvasRefs: CanvasRefs
   impactVisible: boolean
@@ -307,6 +308,7 @@ export function useRevealEffect(rarity: CardRarity): {
   triggerReveal: () => void
   reset: () => void
 } {
+  const scoped = options?.scoped ?? false
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasRefs: CanvasRefs = {
     dots: useRef<HTMLCanvasElement>(null),
@@ -338,10 +340,14 @@ export function useRevealEffect(rarity: CardRarity): {
 
   // ── Canvas helpers ───────────────────────────────────────────────────────────
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: canvasRefs contains only stable refs created with useRef
+  // biome-ignore lint/correctness/useExhaustiveDependencies: canvasRefs and containerRef are stable refs
   const clearCanvases = useCallback(() => {
-    const W = window.innerWidth
-    const H = window.innerHeight
+    const W = scoped
+      ? (containerRef.current?.clientWidth ?? window.innerWidth)
+      : window.innerWidth
+    const H = scoped
+      ? (containerRef.current?.clientHeight ?? window.innerHeight)
+      : window.innerHeight
     for (const key of [
       'dots',
       'speed',
@@ -353,20 +359,24 @@ export function useRevealEffect(rarity: CardRarity): {
       const canvas = canvasRefs[key].current
       canvas?.getContext('2d')?.clearRect(0, 0, W, H)
     }
-  }, [])
+  }, [scoped])
 
   // ── RAF tick — deps [] because it only reads stable refs ────────────────────
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: effectState and canvasRefs are stable refs
+  // biome-ignore lint/correctness/useExhaustiveDependencies: effectState, canvasRefs, and containerRef are stable refs
   const tick = useCallback((): void => {
     const s = effectState.current
-    const W = window.innerWidth
-    const H = window.innerHeight
+    const W = scoped
+      ? (containerRef.current?.clientWidth ?? window.innerWidth)
+      : window.innerWidth
+    const H = scoped
+      ? (containerRef.current?.clientHeight ?? window.innerHeight)
+      : window.innerHeight
 
     drawTick(s, canvasRefs, W, H)
 
     s.rafId = hasActiveEffects(s) ? requestAnimationFrame(tick) : null
-  }, [])
+  }, [scoped])
 
   // ── Timer helpers ─────────────────────────────────────────────────────────────
 
@@ -425,9 +435,14 @@ export function useRevealEffect(rarity: CardRarity): {
     const config = RARITY_CONFIG[rarity]
 
     const rect = container.getBoundingClientRect()
-    s.cx = rect.left + rect.width / 2
-    s.cy = rect.top + rect.height / 2
-    setImpactPos({ x: s.cx, y: s.cy })
+    if (scoped) {
+      s.cx = rect.width / 2
+      s.cy = rect.height / 2
+    } else {
+      s.cx = rect.left + rect.width / 2
+      s.cy = rect.top + rect.height / 2
+    }
+    setImpactPos({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 })
 
     applyShake(container, config, addTimer)
     applyFlashes(config, addTimer)
@@ -463,7 +478,7 @@ export function useRevealEffect(rarity: CardRarity): {
     addTimer(() => setImpactVisible(false), 500 + 600 + 150)
 
     ensureRAF()
-  }, [rarity])
+  }, [rarity, scoped])
 
   const hideScanline = useCallback(() => setScanlineVisible(false), [])
 
