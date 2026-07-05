@@ -60,21 +60,8 @@ export class CollectionDomain implements ICollectionDomain {
 
     const upgrades = await this.#skillTreeRepository.getEffectsForUser(userId)
 
-    const [variantMultiplierHolo, variantMultiplierBrilliant] =
-      await Promise.all([
-        this.#configService.get('variantMultiplierHolo'),
-        this.#configService.get('variantMultiplierBrilliant'),
-      ])
-
-    const variantMultiplier =
-      variant === 'BRILLIANT'
-        ? variantMultiplierBrilliant
-        : variant === 'HOLOGRAPHIC'
-          ? variantMultiplierHolo
-          : 1
-
     const dustEarned = Math.round(
-      baseDust * variantMultiplier * upgrades.dustHarvestMultiplier * quantity,
+      baseDust * upgrades.dustHarvestMultiplier * quantity,
     )
 
     const result = await this.#postgresOrm.executeWithTransactionClient(

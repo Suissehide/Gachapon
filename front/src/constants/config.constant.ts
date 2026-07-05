@@ -17,8 +17,7 @@ export type AdminConfig = {
   brilliantRateRare?: number
   brilliantRateEpic?: number
   brilliantRateLegendary?: number
-  variantMultiplierHolo?: number
-  variantMultiplierBrilliant?: number
+
 }
 
 export type ScoringConfig = {

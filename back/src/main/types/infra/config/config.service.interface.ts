@@ -13,8 +13,6 @@ export const CONFIG_KEYS = [
   'brilliantRateRare',
   'brilliantRateEpic',
   'brilliantRateLegendary',
-  'variantMultiplierHolo',
-  'variantMultiplierBrilliant',
   'dailyShopPriceCommon',
   'dailyShopPriceUncommon',
   'dailyShopPriceRare',

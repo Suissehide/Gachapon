@@ -122,4 +122,34 @@ describe('Collection routes', () => {
     expect(recycleBody).toHaveProperty('dustEarned')
     expect(recycleBody).toHaveProperty('newDustTotal')
   })
+
+  it('POST /collection/recycle — BRILLIANT RARE donne exactement 40 dust (valeur plate, pas de multiplicateur variante)', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    // Créer un set et une carte RARE dédiés pour ce test
+    const recycleSet = await postgresOrm.prisma.cardSet.create({
+      data: { name: `RecycleSet${suffix}`, isActive: true },
+    })
+    const rareCard = await postgresOrm.prisma.card.create({
+      data: { name: `RecycleRare${suffix}`, rarity: 'RARE', dropWeight: 5, setId: recycleSet.id },
+    })
+
+    // Insérer directement une copie BRILLIANT de cette carte RARE
+    await postgresOrm.prisma.userCard.create({
+      data: { userId, cardId: rareCard.id, variant: 'BRILLIANT', quantity: 1 },
+    })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/collection/recycle',
+      headers: { cookie: cookies },
+      payload: { cardId: rareCard.id, quantity: 1, variant: 'BRILLIANT' },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    // Règle canonique : valeur plate par rareté, pas de multiplicateur variante.
+    // dustRare = 40 par défaut, dustHarvestMultiplier = 1 (pas de skills)
+    // BRILLIANT RARE doit donner exactement 40, identique à NORMAL RARE.
+    expect(body.dustEarned).toBe(40)
+  })
 })
