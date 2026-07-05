@@ -51,6 +51,7 @@ import type { IStatsRepository } from '../infra/orm/repositories/stats.repositor
 import type { StreakMilestoneRepositoryInterface } from '../infra/orm/repositories/streak-milestone.repository.interface'
 import type { UserRepositoryInterface } from '../infra/orm/repositories/user.repository.interface'
 import type { UserAchievementProgressRepositoryInterface } from '../infra/orm/repositories/user-achievement-progress.repository.interface'
+import type { IUserBoostRepository } from '../infra/orm/repositories/user-boost.repository.interface'
 import type { UserRewardRepositoryInterface } from '../infra/orm/repositories/user-reward.repository.interface'
 import type { RedisClientInterface } from '../infra/redis/redis-client'
 import type { StorageClientInterface } from '../infra/storage/storage-client'
@@ -99,6 +100,7 @@ export interface IocContainer {
   readonly rewardRepository: RewardRepositoryInterface
   readonly streakMilestoneRepository: StreakMilestoneRepositoryInterface
   readonly userRewardRepository: UserRewardRepositoryInterface
+  readonly userBoostRepository: IUserBoostRepository
   readonly streakDomain: StreakDomainInterface
   readonly rewardsDomain: RewardsDomainInterface
   readonly questRepository: IQuestRepository

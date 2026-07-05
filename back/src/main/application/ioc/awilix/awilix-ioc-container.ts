@@ -53,6 +53,7 @@ import { TeamMemberRepository } from '../../../infra/orm/repositories/team-membe
 import { UserRepository } from '../../../infra/orm/repositories/user.repository'
 import { UserAchievementProgressRepository } from '../../../infra/orm/repositories/user-achievement-progress.repository'
 import { UserCardRepository } from '../../../infra/orm/repositories/user-card.repository'
+import { UserBoostRepository } from '../../../infra/orm/repositories/user-boost.repository'
 import { UserRewardRepository } from '../../../infra/orm/repositories/user-reward.repository'
 import { RedisClient } from '../../../infra/redis/redis-client'
 import { RefreshTokenRepository } from '../../../infra/redis/refresh-token.repository'
@@ -130,6 +131,7 @@ class AwilixIocContainer {
       asClass(StreakMilestoneRepository).singleton(),
     )
     this.#reg('userRewardRepository', asClass(UserRewardRepository).singleton())
+    this.#reg('userBoostRepository', asClass(UserBoostRepository).singleton())
     this.#reg('rewardsDomain', asClass(RewardsDomain).singleton())
     this.#reg('questRepository', asClass(QuestRepository).singleton())
     this.#reg(

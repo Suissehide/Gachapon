@@ -145,4 +145,89 @@ describe('Shop routes', () => {
     // From the previous test, user bought a gashapon machine
     expect(body.machineIds).toContain('gashapon')
   })
+
+  it('POST /shop/:id/buy — crée un UserBoost (weightMultiplier) pour Boost Rare+', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    const boostItem = await postgresOrm.prisma.shopItem.findFirst({
+      where: { name: 'Boost Rare+', isActive: true },
+    })
+    if (!boostItem) return // pas seedé — skip
+
+    // Give enough dust
+    await postgresOrm.prisma.user.update({
+      where: { id: userId },
+      data: { dust: boostItem.dustCost + 500 },
+    })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/shop/${boostItem.id}/buy`,
+      headers: { cookie: cookies },
+    })
+    expect(res.statusCode).toBe(200)
+
+    // Assert UserBoost row was created
+    const userBoost = await postgresOrm.prisma.userBoost.findFirst({
+      where: { userId, weightMultiplier: { not: null } },
+    })
+    expect(userBoost).not.toBeNull()
+    expect(userBoost!.weightMultiplier).toBe(2)
+    expect(userBoost!.weightRarity).toBe('RARE')
+    expect(userBoost!.pullsRemaining).toBe(10)
+    expect(userBoost!.satisfied).toBe(false)
+  })
+
+  it('POST /shop/:id/buy — 409 si boost de poids déjà actif', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    const boostItem = await postgresOrm.prisma.shopItem.findFirst({
+      where: { name: 'Boost Rare+', isActive: true },
+    })
+    if (!boostItem) return
+
+    // Give enough dust
+    await postgresOrm.prisma.user.update({
+      where: { id: userId },
+      data: { dust: boostItem.dustCost + 500 },
+    })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/shop/${boostItem.id}/buy`,
+      headers: { cookie: cookies },
+    })
+    expect(res.statusCode).toBe(409)
+  })
+
+  it('POST /shop/:id/buy — crée un UserBoost (guaranteedRarity) pour Boost Épique', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    const boostItem = await postgresOrm.prisma.shopItem.findFirst({
+      where: { name: 'Boost Épique', isActive: true },
+    })
+    if (!boostItem) return
+
+    // Give enough dust
+    await postgresOrm.prisma.user.update({
+      where: { id: userId },
+      data: { dust: boostItem.dustCost + 500 },
+    })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/shop/${boostItem.id}/buy`,
+      headers: { cookie: cookies },
+    })
+    expect(res.statusCode).toBe(200)
+
+    // Assert UserBoost row was created
+    const userBoost = await postgresOrm.prisma.userBoost.findFirst({
+      where: { userId, guaranteedRarity: { not: null } },
+    })
+    expect(userBoost).not.toBeNull()
+    expect(userBoost!.guaranteedRarity).toBe('EPIC')
+    expect(userBoost!.pullsRemaining).toBe(5)
+    expect(userBoost!.satisfied).toBe(false)
+  })
 })
