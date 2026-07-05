@@ -14,7 +14,11 @@ describe('Streak routes', () => {
     // Clean up streak data from previous runs and seed fresh data
     await prisma.userReward.deleteMany({ where: { source: 'STREAK' } })
     await prisma.streakMilestone.deleteMany({})
-    await prisma.reward.deleteMany({ where: { streakMilestones: { none: {} } } })
+    // userRewards: none — les rewards LEVEL_UP créés par d'autres suites sont
+    // référencés par UserReward ; les supprimer violerait la FK.
+    await prisma.reward.deleteMany({
+      where: { streakMilestones: { none: {} }, userRewards: { none: {} } },
+    })
 
     // Seed: day=0 default reward (tokens=2, dust=3, xp=5)
     const defaultReward = await prisma.reward.create({ data: { tokens: 2, dust: 3, xp: 5 } })
