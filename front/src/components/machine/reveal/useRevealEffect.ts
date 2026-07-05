@@ -435,9 +435,14 @@ export function useRevealEffect(
     const config = RARITY_CONFIG[rarity]
 
     const rect = container.getBoundingClientRect()
-    s.cx = rect.left + rect.width / 2
-    s.cy = rect.top + rect.height / 2
-    setImpactPos({ x: s.cx, y: s.cy })
+    if (scoped) {
+      s.cx = rect.width / 2
+      s.cy = rect.height / 2
+    } else {
+      s.cx = rect.left + rect.width / 2
+      s.cy = rect.top + rect.height / 2
+    }
+    setImpactPos({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 })
 
     applyShake(container, config, addTimer)
     applyFlashes(config, addTimer)
@@ -473,7 +478,7 @@ export function useRevealEffect(
     addTimer(() => setImpactVisible(false), 500 + 600 + 150)
 
     ensureRAF()
-  }, [rarity])
+  }, [rarity, scoped])
 
   const hideScanline = useCallback(() => setScanlineVisible(false), [])
 
