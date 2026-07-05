@@ -89,7 +89,7 @@ export class DailyShopDomain implements IDailyShopDomain {
       }
     }
 
-    const [prices, activeCards] = await Promise.all([
+    const [prices, activeCards, effects] = await Promise.all([
       this.#configService.getMany(
         'dailyShopPriceCommon',
         'dailyShopPriceUncommon',
@@ -101,15 +101,20 @@ export class DailyShopDomain implements IDailyShopDomain {
         where: { set: { isActive: true } },
         include: { set: true },
       }),
+      this.#skillTreeRepository.getEffectsForUser(userId),
     ])
 
-    if (activeCards.length < 4) {
+    // Slots are calculated from the user's current effects; only applied to today's generation.
+    // Investing in DAILY_SHOP_SLOT after today's shop is generated will not retroactively add a slot until tomorrow.
+    const slots = 4 + (effects.dailyShopSlots ?? 0)
+
+    if (activeCards.length < slots) {
       throw Boom.conflict('Not enough active cards to generate daily shop')
     }
 
     const picked: typeof activeCards = []
     let pool = [...activeCards]
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < slots; i++) {
       const card = pickWeightedRandom(pool)
       picked.push(card)
       pool = pool.filter((c) => c.id !== card.id)
