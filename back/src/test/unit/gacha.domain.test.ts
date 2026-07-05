@@ -186,7 +186,9 @@ function buildDomain(opts: {
   cardFactory?: (forceLegendary: boolean) => CardWithSet
   pullTokenCost?: number
   pityThreshold?: number
+  pityReduction?: number
   xpPerPull?: number
+  freePullChance?: number
   updateAfterPullInTx?: ReturnType<typeof jest.fn>
   createInTx?: ReturnType<typeof jest.fn>
   upsertInTx?: ReturnType<typeof jest.fn>
@@ -265,10 +267,10 @@ function buildDomain(opts: {
       luckMultiplier: 1.0,
       regenReductionMinutes: 0,
       tokenVaultBonus: 0,
-      freePullChance: 0,
+      freePullChance: opts.freePullChance ?? 0,
       goldenBallChance: 0,
       pullXpBonus: 0,
-      pityReduction: 0,
+      pityReduction: opts.pityReduction ?? 0,
       variantLuckMultiplier: 1,
     }),
   }
@@ -379,5 +381,62 @@ describe('GachaDomain.pullBatch', () => {
       'user-1',
       expect.objectContaining({ pityCurrent: 3 }),
     )
+  })
+
+  it('tirage gratuit à 0 tokens: freePullChance 100 permet le pull, wasFreePull true, tokens restent 0', async () => {
+    // Reproduces the single/batch free-pull parity bug: with freePullChance=100, a user
+    // with 0 tokens must succeed on pullBatch(1) just as they would on a single pull.
+    const { domain, mocks } = buildDomain({
+      tokens: 0,
+      pity: 0,
+      xp: 0,
+      pullTokenCost: 1,
+      freePullChance: 100,
+    })
+
+    const result = await domain.pullBatch('user-1', 1)
+
+    expect(result.pulls).toHaveLength(1)
+    expect(result.pulls[0]?.wasFreePull).toBe(true)
+    expect(result.tokensRemaining).toBe(0)
+    expect(mocks.updateAfterPullInTx).toHaveBeenCalledWith(
+      expect.anything(),
+      'user-1',
+      expect.objectContaining({ tokens: 0 }),
+    )
+  })
+
+  it('plancher de pity: pityThreshold 5 avec pityReduction 0 donne un seuil effectif de 10', async () => {
+    // The effective threshold is Math.max(10, pityThreshold - pityReduction).
+    // With pityThreshold=5 and pityReduction=0, the floor of 10 must apply.
+    const commonCard = makeCardWithSet('common-card', 'COMMON')
+    const legendaryCard = makeCardWithSet('legendary-card', 'LEGENDARY')
+
+    // Start at pity 9 — below the floor of 10 — so pull should NOT be pity-forced.
+    const { domain: domainAt9, mocks: mocks9 } = buildDomain({
+      tokens: 1,
+      pity: 9,
+      xp: 0,
+      pityThreshold: 5,
+      pityReduction: 0,
+      pullTokenCost: 1,
+      cardFactory: (forceLegendary) => (forceLegendary ? legendaryCard : commonCard),
+    })
+    await domainAt9.pullBatch('user-1', 1)
+    // findActiveForPullInTx must have been called with forceLegendary=false (pity floor not hit)
+    expect(mocks9.findActiveForPullInTx).toHaveBeenCalledWith(expect.anything(), false)
+
+    // Start at pity 10 — exactly at the floor — so pull MUST be pity-forced.
+    const { domain: domainAt10, mocks: mocks10 } = buildDomain({
+      tokens: 1,
+      pity: 10,
+      xp: 0,
+      pityThreshold: 5,
+      pityReduction: 0,
+      pullTokenCost: 1,
+      cardFactory: (forceLegendary) => (forceLegendary ? legendaryCard : commonCard),
+    })
+    await domainAt10.pullBatch('user-1', 1)
+    expect(mocks10.findActiveForPullInTx).toHaveBeenCalledWith(expect.anything(), true)
   })
 })

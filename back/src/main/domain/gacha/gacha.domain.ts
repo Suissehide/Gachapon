@@ -102,6 +102,8 @@ export function pickVariant(rarity: string, rates: VariantRates, variantLuckMult
   const key = rarityKey(rarity as VariantEligibleRarity)
   const brilliantRate = (rates[`brilliantRate${key}`] ?? 0) * variantLuckMultiplier
   const holoRate = (rates[`holoRate${key}`] ?? 0) * variantLuckMultiplier
+  // Note: multiplied rates are not capped; combined brilliant+holo > 100 makes NORMAL unreachable by design
+  // (les taux réels du jeu sont ≤ 5 % × 2 max, donc ce cas ne survient pas en pratique)
   const roll = Math.random() * 100
   if (roll < brilliantRate) {
     return 'BRILLIANT' as CardVariant
@@ -515,7 +517,13 @@ export class GachaDomain implements GachaDomainInterface {
         // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: milestone loop added, refactor deferred
         async (tx) => {
           const { user, state } = await this.#loadUserAndInitialState(tx, userId, cfg)
-          if (state.currentTokens < count * cfg.pullTokenCost) {
+          // Pre-roll free-pull outcomes for all pulls BEFORE the token guard so that
+          // users with freePullChance > 0 get identical parity to the single-pull path.
+          const preRolledFree = Array.from({ length: count }, () =>
+            Math.random() < (cfg.upgrades.freePullChance ?? 0) / 100
+          )
+          const paidCount = preRolledFree.filter((f) => !f).length
+          if (state.currentTokens < paidCount * cfg.pullTokenCost) {
             throw Boom.paymentRequired('Not enough tokens')
           }
           const oldLevel = calculateLevel(
@@ -533,7 +541,7 @@ export class GachaDomain implements GachaDomainInterface {
           const totalXp = xpPerPullBonused * count
           const pullUnlocks: Awaited<ReturnType<AchievementsDomainInterface['track']>> = []
           for (let i = 0; i < count; i++) {
-            const isFreePull = Math.random() < (cfg.upgrades.freePullChance ?? 0) / 100
+            const isFreePull = preRolledFree[i] ?? false
             stepFreePulls.push(isFreePull)
             totalActualCost += isFreePull ? 0 : cfg.pullTokenCost
             const step = await this.#executeSinglePullStep(tx, userId, cfg, {
