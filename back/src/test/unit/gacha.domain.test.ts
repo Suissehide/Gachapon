@@ -50,6 +50,11 @@ const RATES = {
   holoRateRare: 5, holoRateEpic: 8, holoRateLegendary: 10,
 }
 
+const ZERO_RATES = {
+  brilliantRateRare: 0, brilliantRateEpic: 0, brilliantRateLegendary: 0,
+  holoRateRare: 0, holoRateEpic: 0, holoRateLegendary: 0,
+}
+
 describe('pickVariant', () => {
   afterEach(() => jest.restoreAllMocks())
 
@@ -103,6 +108,18 @@ describe('pickVariant', () => {
       expect(pickVariant('EPIC', ratesZero)).toBe('NORMAL')
       expect(pickVariant('LEGENDARY', ratesZero)).toBe('NORMAL')
     }
+  })
+})
+
+describe('pickVariant avec variantLuckMultiplier', () => {
+  it('multiplie les taux (rate 50 ×2 = toujours variante)', () => {
+    for (let i = 0; i < 20; i++) {
+      const v = pickVariant('RARE', { ...ZERO_RATES, brilliantRateRare: 50 }, 2)
+      expect(v).toBe('BRILLIANT')
+    }
+  })
+  it('multiplicateur 1 = comportement inchangé à taux 0', () => {
+    expect(pickVariant('RARE', ZERO_RATES, 1)).toBe('NORMAL')
   })
 })
 
@@ -248,6 +265,11 @@ function buildDomain(opts: {
       luckMultiplier: 1.0,
       regenReductionMinutes: 0,
       tokenVaultBonus: 0,
+      freePullChance: 0,
+      goldenBallChance: 0,
+      pullXpBonus: 0,
+      pityReduction: 0,
+      variantLuckMultiplier: 1,
     }),
   }
 
@@ -332,9 +354,9 @@ describe('GachaDomain.pullBatch', () => {
 
     const { domain, mocks } = buildDomain({
       tokens: 5,
-      pity: 2,
+      pity: 11,
       xp: 0,
-      pityThreshold: 3,
+      pityThreshold: 12,
       pullTokenCost: 1,
       cardFactory: (forceLegendary) => (forceLegendary ? legendaryCard : commonCard),
     })

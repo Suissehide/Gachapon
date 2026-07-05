@@ -19,6 +19,8 @@ export const pullResponseSchema = z.object({
   pityCurrent: z.number().int(),
   xpGained: z.number().int(),
   unlockedAchievements: z.array(unlockedAchievementSchema).optional(),
+  wasFreePull: z.boolean(),
+  wasGoldenBall: z.boolean(),
 })
 
 // ── POST /pulls/batch ────────────────────────────────────────────────────────
@@ -41,6 +43,8 @@ export const pullBatchResponseSchema = z.object({
       wasDuplicate: z.boolean(),
       dustEarned: z.number().int(),
       pityCurrent: z.number().int(),
+      wasFreePull: z.boolean(),
+      wasGoldenBall: z.boolean(),
     }),
   ),
   tokensRemaining: z.number().int(),

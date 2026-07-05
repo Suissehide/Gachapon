@@ -81,6 +81,8 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         pityCurrent: result.pityCurrent,
         xpGained: result.xpGained,
         unlockedAchievements: result.unlockedAchievements,
+        wasFreePull: result.wasFreePull,
+        wasGoldenBall: result.wasGoldenBall,
       })
     },
   )
@@ -112,6 +114,8 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         wasDuplicate: p.wasDuplicate,
         dustEarned: p.dustEarned,
         pityCurrent: p.pityCurrent,
+        wasFreePull: p.wasFreePull,
+        wasGoldenBall: p.wasGoldenBall,
       }))
 
       wsManager.notify(request.user.userID, {
