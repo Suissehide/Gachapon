@@ -11,6 +11,7 @@ import { computeLevel } from '../utils/level.ts'
 import { DEFAULT_ECONOMY, useEconomyConfig } from './useEconomyConfig.ts'
 
 export type {
+  DropRate,
   PullBatchEntry,
   PullBatchResult,
   PullHistory,
