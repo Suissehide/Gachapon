@@ -12,6 +12,9 @@ export const useWishlist = () => {
   return useQuery({
     queryKey: ['wishlist'],
     queryFn: () => WishlistApi.get(),
+    staleTime: 30_000,
+    refetchInterval: (query) =>
+      query.state.data?.availableAt ? 10_000 : false,
   })
 }
 

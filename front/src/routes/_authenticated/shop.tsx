@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import {
   CalendarClock,
@@ -330,7 +331,15 @@ function WishlistBuyButton({
   availableAt: string | null
   onBuy: () => void
 }) {
+  const queryClient = useQueryClient()
   const countdown = useWishlistCountdown(availableAt)
+
+  // Invalidate wishlist query when countdown expires to ensure fresh data
+  useEffect(() => {
+    if (availableAt && !countdown) {
+      queryClient.invalidateQueries({ queryKey: ['wishlist'] })
+    }
+  }, [countdown, availableAt, queryClient])
 
   if (!canBuy && countdown) {
     return (
@@ -372,6 +381,8 @@ function WishlistBuyButton({
 }
 
 function WishlistSection({ dust }: { dust: number }) {
+  const queryClient = useQueryClient()
+  const user = useAuthStore((s) => s.user)
   const { data: wishlist, isLoading } = useWishlist()
   const { mutate: purchase, isPending: purchasing } = usePurchaseWishlist()
 
@@ -382,6 +393,16 @@ function WishlistSection({ dust }: { dust: number }) {
   // canBuy = card is set AND cooldown has expired (availableAt is null)
   const canBuy = card !== null && availableAt === null && price !== null
   const canAfford = price !== null && dust >= price
+
+  // Determine if the card is owned by checking collection cache
+  let cardIsOwned = false
+  if (card && user?.id) {
+    const collectionData = queryClient.getQueryData<{ cards: Array<{ card: { id: string } }> }>([
+      'collection',
+      user.id,
+    ])
+    cardIsOwned = !!collectionData?.cards?.some((uc) => uc.card.id === card.id)
+  }
 
   return (
     <Card className="p-6">
@@ -403,7 +424,7 @@ function WishlistSection({ dust }: { dust: number }) {
               setName={card.set.name}
               imageUrl={card.imageUrl}
               variant={null}
-              isOwned
+              isOwned={cardIsOwned}
               interactive={false}
               compact
             />
