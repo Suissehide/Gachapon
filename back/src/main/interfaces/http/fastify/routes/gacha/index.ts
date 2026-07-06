@@ -2,9 +2,11 @@ import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import { calculateTokens } from '../../../../../domain/economy/economy.domain'
+import { computeDropRates } from '../../../../../domain/gacha/drop-rates'
 import { effectivePityThreshold } from '../../../../../domain/gacha/gacha.domain'
 import { wsManager } from '../../../../ws/ws-manager'
 import {
+  dropRatesResponseSchema,
   pullBatchBodySchema,
   pullBatchResponseSchema,
   pullResponseSchema,
@@ -21,6 +23,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     gachaPullRepository,
     skillTreeRepository,
     storageClient,
+    cardRepository,
   } = fastify.iocContainer
 
   const resolveUrl = (key: string | null) =>
@@ -302,6 +305,16 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         })),
         hasMore: page.hasMore,
       }
+    },
+  )
+
+  // GET /pulls/rates — taux de drop de base par rareté (public, hors bonus)
+  fastify.get(
+    '/pulls/rates',
+    { schema: { response: { 200: dropRatesResponseSchema } } },
+    async () => {
+      const cards = await cardRepository.findAllActive()
+      return { rates: computeDropRates(cards) }
     },
   )
 }
