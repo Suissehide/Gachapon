@@ -21,9 +21,12 @@ import { TOAST_SEVERITY } from '../../constants/ui.constant.ts'
 import { useToast } from '../../hooks/useToast'
 import { wsClient } from '../../lib/ws'
 import { cn } from '../../libs/utils.ts'
+import {
+  DEFAULT_ECONOMY,
+  useEconomyConfig,
+} from '../../queries/useEconomyConfig.ts'
 import type { PullBatchResult } from '../../queries/useGacha'
 import { usePullBatch, useTokenBalance } from '../../queries/useGacha'
-import { DEFAULT_ECONOMY, useEconomyConfig } from '../../queries/useEconomyConfig.ts'
 import { useAuthStore } from '../../stores/auth.store'
 
 export const Route = createFileRoute('/_authenticated/play')({
@@ -350,7 +353,7 @@ function Play() {
               onClick={() => startPull(1)}
               disabled={!canPullX1}
               variant="none"
-              className="h-auto flex-1 whitespace-nowrap rounded-2xl border-[1.5px] border-border-dark bg-card px-7 py-4 text-[17px] font-bold text-text transition-all hover:-translate-y-0.5 hover:border-text-light disabled:opacity-50 sm:flex-none"
+              className="h-auto flex-1 whitespace-nowrap rounded-2xl border-solid border-[1.5px] border-border-dark bg-card px-7 py-4 text-[17px] font-bold text-text transition-all hover:-translate-y-0.5 hover:border-text-light disabled:opacity-50 sm:flex-none"
             >
               Tirage x1
               <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-text/6 px-2.5 py-1 font-mono text-xs text-text-light">
