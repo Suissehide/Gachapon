@@ -1,9 +1,18 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Coins, X } from 'lucide-react'
+import {
+  type CSSProperties,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import cardBackImg from '../../../assets/data/card-back/black.png'
 import type { CardRarity } from '../../../constants/card.constant'
 import type { PullBatchEntry } from '../../../queries/useGacha'
 import { CardDisplay } from '../../shared/tcg-card/CardDisplay'
-import { NewDupChip } from './NewDupChip'
+import { getRarityTone } from '../../shared/tcg-card/config'
+import { Button } from '../../ui/button'
 import { RevealCanvases } from './RevealCanvases'
 import { RARITY_CONFIG } from './rarityConfig'
 import { useRevealEffect } from './useRevealEffect'
@@ -18,56 +27,123 @@ const RARITY_RANK: Record<string, number> = {
 
 type Props = {
   results: PullBatchEntry[]
-  onAllRevealed: () => void
+  tokensRemaining: number
+  onClose: () => void
+  onPullAgain: (count: 1 | 10) => void
 }
 
-export function RevealGrid({ results, onAllRevealed }: Props) {
+type ActiveEffect = {
+  rarity: CardRarity
+  seq: number
+  centerX: number
+  centerY: number
+}
+
+export function RevealGrid({
+  results,
+  tokensRemaining,
+  onClose,
+  onPullAgain,
+}: Props) {
   const [flipped, setFlipped] = useState<Set<number>>(() => new Set())
   const [revealAllTriggered, setRevealAllTriggered] = useState(false)
+  const [activeEffect, setActiveEffect] = useState<ActiveEffect | null>(null)
+  const cardRefs = useRef<Array<HTMLDivElement | null>>([])
 
-  // Pre-compute stable keys so no iterator index appears in JSX key prop
   const stableResults = useMemo(
-    () => results.map((entry, i) => ({ entry, key: `${i}-${entry.card.id}`, idx: i })),
+    () =>
+      results.map((entry, i) => ({
+        entry,
+        key: `${i}-${entry.card.id}`,
+        idx: i,
+      })),
     [results],
   )
 
-  const flipCard = (idx: number) => {
-    setFlipped((prev) => {
-      if (prev.has(idx)) { return prev }
-      const next = new Set(prev)
-      next.add(idx)
-      return next
-    })
-  }
+  const flipCard = useCallback(
+    (idx: number, suppressEffect = false) => {
+      let alreadyFlipped = false
+      setFlipped((prev) => {
+        if (prev.has(idx)) {
+          alreadyFlipped = true
+          return prev
+        }
+        const next = new Set(prev)
+        next.add(idx)
+        return next
+      })
+      if (alreadyFlipped || suppressEffect) {
+        return
+      }
+      // Center the fullscreen effect on the card that was just flipped so the
+      // radial animation reads as "coming out of this specific card".
+      const el = cardRefs.current[idx]
+      const rect = el?.getBoundingClientRect()
+      const centerX = rect
+        ? rect.left + rect.width / 2
+        : window.innerWidth / 2
+      const centerY = rect
+        ? rect.top + rect.height / 2
+        : window.innerHeight / 2
+      setActiveEffect((prev) => ({
+        rarity: results[idx].card.rarity as CardRarity,
+        seq: (prev?.seq ?? 0) + 1,
+        centerX,
+        centerY,
+      }))
+    },
+    [results],
+  )
 
   const revealAll = () => {
-    if (revealAllTriggered) { return }
+    if (revealAllTriggered) {
+      return
+    }
     setRevealAllTriggered(true)
     const remaining = results
       .map((r, i) => ({ i, rank: RARITY_RANK[r.card.rarity] ?? 0 }))
       .filter(({ i }) => !flipped.has(i))
       .sort((a, b) => a.rank - b.rank)
+    // "Tout révéler" flips 10 cards in cascade — suppress the fullscreen
+    // rarity effect so we don't spam 10 flashes back-to-back.
     remaining.forEach(({ i }, order) => {
-      setTimeout(() => flipCard(i), order * 150)
+      setTimeout(() => flipCard(i, true), order * 150)
     })
   }
 
+  const allRevealed = flipped.size === results.length
+  const [showActions, setShowActions] = useState(false)
   useEffect(() => {
-    if (flipped.size === results.length) {
-      const timer = setTimeout(() => onAllRevealed(), 700)
+    if (allRevealed) {
+      const timer = setTimeout(() => setShowActions(true), 700)
       return () => clearTimeout(timer)
     }
-  }, [flipped.size, results.length, onAllRevealed])
+    setShowActions(false)
+  }, [allRevealed])
 
   const isSingle = results.length === 1
 
   return (
-    <div data-reveal-modal className='fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/85 backdrop-blur-md'>
+    <div
+      data-reveal-modal
+      className='fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/85 backdrop-blur-md'
+    >
+      {/* Fullscreen rarity effect — re-mounts on every flip via seq key so the
+       *  animation replays. Positioned at the flipped card's viewport center. */}
+      {activeEffect && (
+        <FullscreenRarityEffect
+          key={activeEffect.seq}
+          rarity={activeEffect.rarity}
+          centerX={activeEffect.centerX}
+          centerY={activeEffect.centerY}
+        />
+      )}
+
       <div
         className={
           isSingle
-            ? 'flex items-center justify-center'
-            : 'grid grid-cols-5 max-md:grid-cols-2 gap-4 p-8'
+            ? 'relative z-10 flex items-center justify-center'
+            : 'relative z-10 grid grid-cols-5 max-md:grid-cols-2 gap-x-4 gap-y-10 p-8 pt-14'
         }
       >
         {stableResults.map(({ entry, key, idx }) => (
@@ -77,19 +153,149 @@ export function RevealGrid({ results, onAllRevealed }: Props) {
             flipped={flipped.has(idx)}
             onFlip={() => flipCard(idx)}
             size={isSingle ? 'lg' : 'sm'}
+            entryDelay={isSingle ? 0 : idx * 70}
+            registerRef={(el) => {
+              cardRefs.current[idx] = el
+            }}
           />
         ))}
       </div>
-      {flipped.size < results.length && !revealAllTriggered && (
-        <button
+
+      {!allRevealed && !revealAllTriggered && (
+        <Button
           type='button'
+          variant='gradient'
+          size='lg'
           onClick={revealAll}
-          className='mt-8 rounded-full bg-linear-to-r from-primary to-secondary px-6 py-2 text-sm font-black uppercase tracking-widest text-white shadow-lg'
+          className='relative z-10 mt-8 rounded-full px-8 uppercase tracking-widest'
         >
           Tout révéler
-        </button>
+        </Button>
+      )}
+
+      {showActions && (
+        <div
+          className='pointer-events-none fixed inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-4 pt-3 animate-[fadeInUp_400ms_ease-out_forwards]'
+          style={{
+            background:
+              'linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,0.75) 45%)',
+          }}
+        >
+          <div className='pointer-events-auto inline-flex items-center gap-4 rounded-[20px] bg-[#1b1726] px-5 py-3 text-white shadow-[0_18px_44px_-16px_rgba(0,0,0,0.7)]'>
+            <div className='flex items-center gap-2'>
+              <Coins className='h-5 w-5 text-amber-400' />
+              <div>
+                <div className='font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-white/50'>
+                  Jetons restants
+                </div>
+                <div className='font-display text-lg font-extrabold tabular-nums text-amber-400 leading-none'>
+                  {tokensRemaining}
+                </div>
+              </div>
+            </div>
+
+            <div className='flex items-center gap-2'>
+              <Button
+                variant='outline'
+                onClick={() => onPullAgain(1)}
+                disabled={tokensRemaining < 1}
+                className='gap-2 border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white'
+              >
+                Nouveau tirage x1
+              </Button>
+              <Button
+                variant='gradient'
+                onClick={() => onPullAgain(10)}
+                disabled={tokensRemaining < 10}
+                className='gap-2'
+              >
+                Tirage x10
+              </Button>
+              <Button
+                variant='ghost'
+                size='icon'
+                onClick={onClose}
+                aria-label='Fermer'
+                className='border border-white/15 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white'
+              >
+                <X size={16} />
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
+  )
+}
+
+// ── FullscreenRarityEffect ─────────────────────────────────────────────────
+// Fullscreen canvases + big impact word. The `containerRef` is placed at the
+// clicked card's viewport center (as a 1×1 point) so useRevealEffect emits its
+// waves/particles/etc. from that spot instead of from the screen middle.
+
+function FullscreenRarityEffect({
+  rarity,
+  centerX,
+  centerY,
+}: {
+  rarity: CardRarity
+  centerX: number
+  centerY: number
+}) {
+  const { containerRef, canvasRefs, impactVisible, triggerReveal } =
+    useRevealEffect(rarity)
+  const config = RARITY_CONFIG[rarity]
+  const tone = getRarityTone(rarity)
+
+  useEffect(() => {
+    triggerReveal()
+  }, [triggerReveal])
+
+  return (
+    <>
+      {/* Center anchor — useRevealEffect measures containerRef.getBoundingClientRect
+       *  and uses that midpoint as the effect origin. */}
+      <div
+        ref={containerRef}
+        style={{
+          position: 'fixed',
+          left: centerX,
+          top: centerY,
+          width: 1,
+          height: 1,
+          pointerEvents: 'none',
+        }}
+      />
+      <RevealCanvases refs={canvasRefs} />
+      {impactVisible && config.impactText && (
+        <div
+          style={{
+            position: 'fixed',
+            left: centerX,
+            top: centerY - 160,
+            transform: 'translateX(-50%)',
+            fontFamily: 'Impact, Arial Black, sans-serif',
+            fontSize: '4.5rem',
+            color: tone.hex,
+            WebkitTextStroke: `3px ${tone.dark}`,
+            textShadow: [
+              `3px 3px 0 ${tone.dark}`,
+              `6px 6px 0 ${tone.dark}`,
+              `9px 9px 0 rgba(0,0,0,0.35)`,
+              `-1px -1px 0 ${tone.dark}`,
+            ].join(', '),
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase',
+            pointerEvents: 'none',
+            userSelect: 'none',
+            whiteSpace: 'nowrap',
+            zIndex: 40,
+          }}
+        >
+          {config.impactText}
+        </div>
+      )}
+    </>
   )
 }
 
@@ -100,89 +306,90 @@ type CardProps = {
   flipped: boolean
   onFlip: () => void
   size: 'lg' | 'sm'
+  entryDelay: number
+  registerRef: (el: HTMLDivElement | null) => void
 }
 
-function RevealCard({ entry, flipped, onFlip, size }: CardProps) {
+function RevealCard({
+  entry,
+  flipped,
+  onFlip,
+  size,
+  entryDelay,
+  registerRef,
+}: CardProps) {
   const rarity = entry.card.rarity as CardRarity
-  const { containerRef, canvasRefs, impactVisible, triggerReveal, reset } =
-    useRevealEffect(rarity, { scoped: true })
-  const effectConfig = RARITY_CONFIG[rarity]
-  const [showChip, setShowChip] = useState(false)
+  const tone = getRarityTone(rarity)
+  const [showLabel, setShowLabel] = useState(false)
 
   useEffect(() => {
     if (flipped) {
-      triggerReveal()
-      const chipTimer = setTimeout(() => setShowChip(true), 500)
-      return () => clearTimeout(chipTimer)
+      const timer = setTimeout(() => setShowLabel(true), 550)
+      return () => clearTimeout(timer)
     }
-    reset()
-    setShowChip(false)
-  }, [flipped, triggerReveal, reset])
+    setShowLabel(false)
+  }, [flipped])
 
-  const dimensions = size === 'lg' ? 'w-64 h-90' : 'w-32 h-45'
+  const dimensions =
+    size === 'lg' ? 'w-64 aspect-[2/3]' : 'w-36 aspect-[2/3]'
 
   return (
-    <div className={`relative ${dimensions}`} ref={containerRef}>
-      <RevealCanvases refs={canvasRefs} scoped />
-      {flipped && impactVisible && effectConfig.impactText && (
+    <div
+      ref={registerRef}
+      className={`relative ${dimensions} animate-[fadeIn_320ms_ease-out_backwards]`}
+      style={
+        {
+          animationDelay: `${entryDelay}ms`,
+          '--rar-glow': tone.hex,
+        } as CSSProperties
+      }
+    >
+      {/* Rarity name above the card — appears after flip. Small + tight
+       *  tracking so "Peu commun" fits on one line at w-36. */}
+      {showLabel && (
         <div
+          className='pointer-events-none absolute -top-5 left-1/2 -translate-x-1/2 whitespace-nowrap font-display text-[9px] font-black uppercase tracking-[0.14em] animate-[fadeInDown_320ms_ease-out_forwards]'
           style={{
-            position: 'absolute',
-            left: '50%',
-            top: -30,
-            transform: 'translateX(-50%)',
-            fontFamily: 'Impact, Arial Black, sans-serif',
-            fontSize: size === 'lg' ? '3rem' : '1.5rem',
-            color: effectConfig.impactColor,
-            WebkitTextStroke: `2px ${effectConfig.impactStroke}`,
-            textShadow: effectConfig.impactExtraShadow ?? [
-              `3px 3px 0 ${effectConfig.impactStroke}`,
-              `6px 6px 0 ${effectConfig.impactStroke}`,
-              `9px 9px 0 rgba(0,0,0,0.2)`,
-              `-1px -1px 0 ${effectConfig.impactStroke}`,
-            ].join(', '),
-            letterSpacing: '0.04em',
-            textTransform: 'uppercase',
-            pointerEvents: 'none',
-            userSelect: 'none',
-            whiteSpace: 'nowrap',
+            color: tone.hex,
+            textShadow: `0 0 8px ${tone.hex}, 0 1px 3px rgba(0,0,0,0.6)`,
           }}
         >
-          {effectConfig.impactText}
+          {tone.label}
         </div>
       )}
+
       <button
         type='button'
         onClick={flipped ? undefined : onFlip}
-        className='h-full w-full [perspective:1000px] disabled:cursor-default'
+        className={`relative h-full w-full rounded-2xl bg-transparent disabled:cursor-default ${
+          flipped
+            ? ''
+            : 'cursor-pointer transition-transform duration-200 hover:scale-105 hover:shadow-[0_0_24px_var(--rar-glow)]'
+        }`}
         disabled={flipped}
       >
-        <div
-          className={`relative h-full w-full transition-transform duration-500 [transform-style:preserve-3d] ${
-            flipped ? '[transform:rotateY(180deg)]' : ''
-          } ${flipped ? '' : 'hover:scale-105 hover:shadow-[0_0_30px_rgba(245,158,11,0.4)]'}`}
-        >
-          {/* Face cachée */}
-          <div className='absolute inset-0 [backface-visibility:hidden]'>
-            <img
-              src={cardBackImg}
-              alt='dos de carte'
-              className='h-full w-full rounded-2xl object-cover'
-            />
-          </div>
-          {/* Face révélée */}
-          <div className='absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)]'>
+        {!flipped && (
+          <img
+            src={cardBackImg}
+            alt='dos de carte'
+            className='h-full w-full rounded-2xl object-cover'
+            draggable={false}
+          />
+        )}
+        {flipped && (
+          <div className='h-full w-full animate-[flipReveal_500ms_cubic-bezier(0.34,1.56,0.64,1)_forwards]'>
             <CardDisplay
               rarity={rarity}
               name={entry.card.name}
               setName={entry.card.set.name}
               imageUrl={entry.card.imageUrl}
               variant={entry.card.variant}
-              interactive={false}
+              interactive
+              compact
+              newBadge={!entry.wasDuplicate}
             />
-            {showChip && <NewDupChip wasDuplicate={entry.wasDuplicate} />}
           </div>
-        </div>
+        )}
       </button>
     </div>
   )

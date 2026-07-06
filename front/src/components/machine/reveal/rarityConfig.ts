@@ -36,21 +36,35 @@ export interface RarityEffectConfig {
   chromaticDuration: number
 }
 
+// Colors are aligned with RARITY_TONES from shared/tcg-card/config.ts so the
+// canvas effect, impact word, and card frame all speak the same language:
+//   COMMON     → #22c55e (green)
+//   UNCOMMON   → #3b82f6 (blue)
+//   RARE       → #8b5cf6 (purple)
+//   EPIC       → #ec4899 (pink)
+//   LEGENDARY  → #f59e0b (amber) with #ec4899 + #fcd34d accents
+
 export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
   COMMON: {
     impactText: null,
     impactSize: '42px',
-    impactColor: '#888',
-    impactStroke: '#444',
+    impactColor: '#22c55e',
+    impactStroke: '#14532d',
 
     shake: 1,
     shakeDuration: 200,
-    flashColor: 'rgba(255,255,255,0.75)',
+    flashColor: 'rgba(255,255,255,0.7)',
     triFlash: false,
     scanlineColor: null,
 
     waves: [
-      { col: 'rgba(160,160,160,0.5)', w: 2.5, spd: 5, delay: 0, ghost: false },
+      {
+        col: 'rgba(34,197,94,0.5)',
+        w: 2.5,
+        spd: 5,
+        delay: 0,
+        ghost: false,
+      },
     ],
     particleSet: 'none',
     inkBlots: false,
@@ -65,18 +79,18 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
   UNCOMMON: {
     impactText: 'NICE!',
     impactSize: '54px',
-    impactColor: '#22c55e',
-    impactStroke: '#000',
+    impactColor: '#3b82f6',
+    impactStroke: '#1e3a8a',
 
     shake: 2,
     shakeDuration: 300,
-    flashColor: 'rgba(34,197,94,0.92)',
+    flashColor: 'rgba(59,130,246,0.9)',
     triFlash: false,
     scanlineColor: null,
 
     waves: [
-      { col: 'rgb(34,197,94)', w: 4, spd: 6, delay: 0, ghost: false },
-      { col: 'rgb(0,0,0)', w: 2.5, spd: 4.5, delay: 100, ghost: false },
+      { col: 'rgb(59,130,246)', w: 4, spd: 6, delay: 0, ghost: false },
+      { col: 'rgb(30,58,138)', w: 2.5, spd: 4.5, delay: 100, ghost: false },
     ],
     particleSet: 'uncommon',
     inkBlots: false,
@@ -91,19 +105,19 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
   RARE: {
     impactText: 'RARE!',
     impactSize: '64px',
-    impactColor: '#3b82f6',
-    impactStroke: '#000',
+    impactColor: '#8b5cf6',
+    impactStroke: '#4c1d95',
 
     shake: 5,
     shakeDuration: 350,
-    flashColor: 'rgba(59,130,246,0.92)',
+    flashColor: 'rgba(139,92,246,0.92)',
     triFlash: false,
     scanlineColor: null,
 
     waves: [
-      { col: 'rgb(0,0,0)', w: 6, spd: 8, delay: 0, ghost: false },
-      { col: 'rgb(59,130,246)', w: 4, spd: 6, delay: 70, ghost: true },
-      { col: 'rgb(0,0,0)', w: 2.5, spd: 5, delay: 180, ghost: false },
+      { col: 'rgb(76,29,149)', w: 6, spd: 8, delay: 0, ghost: false },
+      { col: 'rgb(139,92,246)', w: 4, spd: 6, delay: 70, ghost: true },
+      { col: 'rgb(196,181,253)', w: 2.5, spd: 5, delay: 180, ghost: false },
     ],
     particleSet: 'rare',
     inkBlots: false,
@@ -118,24 +132,24 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
   EPIC: {
     impactText: 'ÉPIQUE!',
     impactSize: '68px',
-    impactColor: '#8b5cf6',
-    impactStroke: '#000',
+    impactColor: '#ec4899',
+    impactStroke: '#831843',
 
     shake: 9,
     shakeDuration: 380,
-    flashColor: 'rgba(139,92,246,0.94)',
+    flashColor: 'rgba(236,72,153,0.94)',
     triFlash: false,
     scanlineColor: null,
 
     waves: [
-      { col: 'rgb(0,0,0)', w: 7, spd: 9, delay: 0, ghost: false },
-      { col: 'rgb(139,92,246)', w: 5, spd: 7, delay: 55, ghost: true },
-      { col: 'rgb(0,0,0)', w: 3.5, spd: 6, delay: 160, ghost: true },
-      { col: 'rgb(167,139,250)', w: 2, spd: 5, delay: 280, ghost: false },
+      { col: 'rgb(131,24,67)', w: 7, spd: 9, delay: 0, ghost: false },
+      { col: 'rgb(236,72,153)', w: 5, spd: 7, delay: 55, ghost: true },
+      { col: 'rgb(249,168,212)', w: 3.5, spd: 6, delay: 160, ghost: true },
+      { col: 'rgb(219,39,119)', w: 2, spd: 5, delay: 280, ghost: false },
     ],
     particleSet: 'epic',
     inkBlots: false,
-    inkColors: ['#8b5cf6', '#a78bfa', '#c4b5fd', '#000', '#7c3aed'],
+    inkColors: ['#ec4899', '#f9a8d4', '#fbcfe8', '#831843', '#db2777'],
     speedLines: true,
     speedLineCount: 22,
     halftone: false,
@@ -146,9 +160,9 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
   LEGENDARY: {
     impactText: 'LÉGENDAIRE!',
     impactSize: '72px',
-    impactColor: '#ffe600',
-    impactStroke: '#000',
-    impactExtraShadow: '3px 3px 0 #ff0055, 6px 6px 0 #00cfff',
+    impactColor: '#f59e0b',
+    impactStroke: '#78350f',
+    impactExtraShadow: '3px 3px 0 #78350f, 6px 6px 0 #ec4899',
 
     shake: 13,
     shakeDuration: 420,
@@ -157,16 +171,16 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
     scanlineColor: null,
 
     waves: [
-      { col: 'rgb(0,0,0)', w: 8, spd: 9, delay: 0, ghost: false },
-      { col: 'rgb(0,0,0)', w: 5.5, spd: 7.5, delay: 55, ghost: true },
-      { col: 'rgb(0,0,0)', w: 4, spd: 6.5, delay: 150, ghost: true },
-      { col: 'rgb(0,0,0)', w: 3, spd: 5.5, delay: 260, ghost: true },
-      { col: 'rgb(245,158,11)', w: 2, spd: 4.5, delay: 380, ghost: false },
-      { col: 'rgb(255,0,85)', w: 1.5, spd: 3.5, delay: 480, ghost: false },
+      { col: 'rgb(120,53,15)', w: 8, spd: 9, delay: 0, ghost: false },
+      { col: 'rgb(245,158,11)', w: 5.5, spd: 7.5, delay: 55, ghost: true },
+      { col: 'rgb(252,211,77)', w: 4, spd: 6.5, delay: 150, ghost: true },
+      { col: 'rgb(245,158,11)', w: 3, spd: 5.5, delay: 260, ghost: true },
+      { col: 'rgb(236,72,153)', w: 2, spd: 4.5, delay: 380, ghost: false },
+      { col: 'rgb(252,211,77)', w: 1.5, spd: 3.5, delay: 480, ghost: false },
     ],
     particleSet: 'legendary',
     inkBlots: false,
-    inkColors: ['#ff0055', '#ffe600', '#00cfff', '#000', '#ff7700'],
+    inkColors: ['#f59e0b', '#fcd34d', '#ec4899', '#78350f', '#fbbf24'],
     speedLines: true,
     speedLineCount: 28,
     halftone: true,
@@ -176,10 +190,10 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
 }
 
 export const PARTICLE_COLORS: Record<ParticleSetKey, string[]> = {
-  uncommon: ['#22c55e', '#86efac', '#000', '#fff'],
-  rare: ['#3b82f6', '#93c5fd', '#000', '#fff', '#60a5fa'],
-  epic: ['#8b5cf6', '#a78bfa', '#000', '#c4b5fd', '#7c3aed'],
-  legendary: ['#ff0055', '#ffe600', '#00cfff', '#000', '#ff7700', '#fff'],
+  uncommon: ['#3b82f6', '#93c5fd', '#1e3a8a', '#fff'],
+  rare: ['#8b5cf6', '#c4b5fd', '#4c1d95', '#fff', '#a78bfa'],
+  epic: ['#ec4899', '#f9a8d4', '#831843', '#fbcfe8', '#db2777'],
+  legendary: ['#f59e0b', '#fcd34d', '#ec4899', '#78350f', '#fbbf24', '#fff'],
 }
 
 // [squares, streaks, dots]

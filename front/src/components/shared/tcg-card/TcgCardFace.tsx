@@ -10,7 +10,9 @@ import {
   type RarityTone,
   STAT_DEFS,
   type StatKey,
+  VARIANT_OVERLAYS,
 } from './config.ts'
+import { HoloOverlay, useHoloPointer } from './HoloOverlay.tsx'
 
 const STAT_ICONS: Record<StatKey, LucideIcon> = {
   pv: Heart,
@@ -30,7 +32,7 @@ type Props = {
   setName: string
   imageUrl?: string | null
   isOwned?: boolean
-  /** Hidden in this design — kept for API compat with previous component. */
+  /** BRILLIANT / HOLOGRAPHIC render full-art foil overlays over the image. */
   variant?: string | null
   compact?: boolean
   /** When provided, renders the level square at the top of the right column. */
@@ -45,11 +47,19 @@ type Props = {
   artPosition?: string
   /** Hide the family tag + name band + description stack (art-only mode). */
   showName?: boolean
+  /** Show a "NOUVEAU" badge in the top-right corner. Used by the pull reveal to
+   *  flag first-time cards without extra external wrappers. */
+  newBadge?: boolean
 }
 
 // Trapezoidal tag: straight left edge, right edge slanted toward the right
 // (bottom-right pulled in so the slope goes `/`).
 const TAG_CLIP_PATH = 'polygon(0 0, 100% 0, calc(100% - 4px) 100%, 0 100%)'
+
+const getFoilLayers = (variant: string | null | undefined, isOwned: boolean) =>
+  isOwned && variant && variant !== 'NORMAL'
+    ? (VARIANT_OVERLAYS[variant] ?? null)
+    : null
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
@@ -59,6 +69,7 @@ export function TcgCardFace({
   setName,
   imageUrl,
   isOwned = true,
+  variant,
   compact = false,
   level,
   stats,
@@ -66,10 +77,21 @@ export function TcgCardFace({
   description,
   artPosition,
   showName = true,
+  newBadge = false,
 }: Props) {
   const tone = getRarityTone(rarity)
   const elementDef = element ? ELEMENTS[element] : null
   const outerRadius = compact ? '8px' : '10px'
+
+  const overlayLayers = getFoilLayers(variant, isOwned)
+  const isHolo = isOwned && variant === 'HOLOGRAPHIC'
+  const { rootRef, holoActive, onHoloMouseMove, onHoloMouseLeave } =
+    useHoloPointer()
+  // Any foil variant tracks the pointer: HOLOGRAPHIC feeds <HoloOverlay />,
+  // BRILLIANT feeds its `brilliant-glare` layer via the same CSS vars.
+  const holoHandlers = overlayLayers
+    ? { onMouseMove: onHoloMouseMove, onMouseLeave: onHoloMouseLeave }
+    : undefined
 
   const rootStyle = {
     '--rar': tone.hex,
@@ -82,8 +104,10 @@ export function TcgCardFace({
 
   return (
     <div
+      ref={rootRef}
       className="absolute inset-0 overflow-hidden bg-white shadow-[0_2px_4px_rgba(0,0,0,0.06),0_14px_30px_-18px_rgba(27,23,38,0.4)]"
       style={{ ...rootStyle, borderRadius: outerRadius }}
+      {...holoHandlers}
     >
       <img
         src={imageUrl || placeholderImg}
@@ -95,6 +119,22 @@ export function TcgCardFace({
         }}
       />
 
+      {/* Variant foil overlays — full-art layers over the image */}
+      {overlayLayers?.map((layer) => (
+        <div
+          key={layer.id}
+          className="pointer-events-none absolute inset-0 z-[2] transition-opacity duration-300"
+          style={{
+            background: layer.bg,
+            backgroundSize: layer.bgSize,
+            animation: layer.animation,
+            mixBlendMode: layer.blendMode as CSSProperties['mixBlendMode'],
+            opacity: layer.opacity,
+          }}
+        />
+      ))}
+      {isHolo && <HoloOverlay active={holoActive} />}
+
       {/* Internal stylized frame — double outline + corner accents */}
       <InternalFrame compact={compact} />
 
@@ -103,6 +143,13 @@ export function TcgCardFace({
         <div className="absolute top-3 left-3 z-40">
           <LevelSquare level={level} tone={tone} compact={compact} />
         </div>
+      )}
+
+      {/* NEW badge — top-right, for freshly pulled cards */}
+      {newBadge && (
+        <span className="absolute top-2 right-2 z-40 rounded-full bg-emerald-500/95 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-emerald-600/40">
+          Nouveau
+        </span>
       )}
 
       {/* Bottom stack: family tag + name band + description.

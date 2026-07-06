@@ -8,7 +8,6 @@ import { GachaBall } from '../../components/machine/GachaBall'
 import type { MachineStageHandle } from '../../components/machine/MachineStage'
 import { MachineStage } from '../../components/machine/MachineStage'
 import { RevealGrid } from '../../components/machine/reveal/RevealGrid'
-import { SummaryPanel } from '../../components/machine/reveal/SummaryPanel'
 import { LiveFeed } from '../../components/play/LiveFeed'
 import { PlayHud } from '../../components/play/PlayHud'
 import { Button } from '../../components/ui/button.tsx'
@@ -30,9 +29,9 @@ type Phase =
   | 'machine-anim'
   | 'ball-shake'
   | 'ball-split'
+  | 'ball-flash'
   | 'pulling'
   | 'reveal-grid'
-  | 'summary'
 
 const PARTICLES = [
   { id: 'p0', top: '15%', left: '12%', delay: '0s', duration: '3.2s', size: 4 },
@@ -43,6 +42,23 @@ const PARTICLES = [
   { id: 'p5', top: '50%', left: '93%', delay: '0.9s', duration: '3s', size: 2 },
   { id: 'p6', top: '80%', left: '20%', delay: '2.1s', duration: '2.7s', size: 3 },
   { id: 'p7', top: '20%', left: '75%', delay: '1.5s', duration: '3.4s', size: 2 },
+]
+
+// Persistent ambient dust that drifts across the reveal-grid backdrop so it
+// doesn't feel static once cards are revealed.
+const AMBIENT_PARTICLES = [
+  { id: 'a0', top: '12%', left: '8%', delay: '0s', duration: '6s', size: 3 },
+  { id: 'a1', top: '22%', left: '78%', delay: '1.2s', duration: '5s', size: 2 },
+  { id: 'a2', top: '55%', left: '5%', delay: '0.4s', duration: '7s', size: 3 },
+  { id: 'a3', top: '68%', left: '92%', delay: '2s', duration: '5.5s', size: 2 },
+  { id: 'a4', top: '35%', left: '3%', delay: '1.5s', duration: '8s', size: 2 },
+  { id: 'a5', top: '48%', left: '96%', delay: '0.9s', duration: '6s', size: 3 },
+  { id: 'a6', top: '82%', left: '18%', delay: '2.3s', duration: '5s', size: 2 },
+  { id: 'a7', top: '18%', left: '68%', delay: '1.8s', duration: '7s', size: 2 },
+  { id: 'a8', top: '75%', left: '85%', delay: '3s', duration: '6.5s', size: 3 },
+  { id: 'a9', top: '42%', left: '38%', delay: '0.6s', duration: '9s', size: 2 },
+  { id: 'a10', top: '88%', left: '62%', delay: '2.7s', duration: '5.5s', size: 2 },
+  { id: 'a11', top: '8%', left: '48%', delay: '1.1s', duration: '7.5s', size: 2 },
 ]
 
 const SKIP_KEY = 'play.skipAnimations'
@@ -83,10 +99,13 @@ function Play() {
   useEffect(() => { pullPendingRef.current = pullPending }, [pullPending])
 
   // Stable handlers — useCallback because they're passed to children with effect deps.
+  // Ball split ended → pieces are gone from the scene. Fire the white flash while
+  // we wait for the network, then swap to the reveal grid mid-flash.
   const handleSplitDone = useCallback(() => {
+    setPhase('ball-flash')
+    phaseRef.current = 'ball-flash'
     let attempts = 0
     const tryReveal = () => {
-      // If onError already fired, bail immediately
       if (pullAbortedRef.current) {
         setPhase('idle')
         phaseRef.current = 'idle'
@@ -94,12 +113,15 @@ function Play() {
       }
       if (pendingResult.current) {
         setResult(pendingResult.current)
-        setPhase('reveal-grid')
+        // Small delay so the flash peaks before cards land
+        setTimeout(() => {
+          setPhase('reveal-grid')
+          phaseRef.current = 'reveal-grid'
+        }, 220)
         return
       }
       attempts++
       if (attempts > 200) {
-        // Network took too long — bail and surface an error
         toast({ title: 'Tirage en cours…', message: 'Le serveur ne répond pas.', severity: TOAST_SEVERITY.ERROR })
         setPhase('idle')
         phaseRef.current = 'idle'
@@ -109,10 +131,6 @@ function Play() {
     }
     tryReveal()
   }, [toast])
-
-  // RevealGrid's useEffect includes onAllRevealed in its dep array — must be stable
-  // or the 700ms summary-transition timer re-fires on every parent re-render.
-  const handleAllRevealed = useCallback(() => setPhase('summary'), [])
 
   const handleClose = useCallback(() => {
     setResult(null)
@@ -193,29 +211,80 @@ function Play() {
     if (pullAbortedRef.current) { return }
     setPhase('ball-shake')
     phaseRef.current = 'ball-shake'
-    await new Promise((res) => setTimeout(res, 500))
+    await new Promise((res) => setTimeout(res, 800))
     if (pullAbortedRef.current) { return }
     setPhase('ball-split')
     phaseRef.current = 'ball-split'
     // ball-split ends via onSplitDone callback → transition inside handleSplitDone
   }, [pullBatchMutation])
 
-  // Reset to idle then schedule the next pull. phaseRef is synced synchronously so
-  // startPull's guard (phaseRef.current !== 'idle') sees 'idle' when the microtask fires.
-  const handlePullAgain = useCallback((count: 1 | 10) => {
-    setResult(null)
-    pendingResult.current = null
-    setPhase('idle')
-    phaseRef.current = 'idle'
-    queueMicrotask(() => startPull(count))
-  }, [startPull])
+  // From the reveal grid's bottom-bar "Nouveau tirage x1/x10": skip machine anim,
+  // keep the black backdrop up, and go straight to the ball animation.
+  const handlePullAgain = useCallback(
+    async (count: 1 | 10) => {
+      if (tokensRef.current < count || pullPendingRef.current) {
+        return
+      }
+      pullAbortedRef.current = false
+      pendingResult.current = null
+
+      // Skip mode: no ball, direct to reveal
+      if (skipAnimationsRef.current) {
+        setResult(null)
+        setPhase('pulling')
+        phaseRef.current = 'pulling'
+        pullBatchMutation(count, {
+          onSuccess: (r) => {
+            setResult(r)
+            setPhase('reveal-grid')
+            phaseRef.current = 'reveal-grid'
+          },
+          onError: () => {
+            pullAbortedRef.current = true
+            setPhase('idle')
+            phaseRef.current = 'idle'
+          },
+        })
+        return
+      }
+
+      // Full anim path — but skip machine-anim (we're already on the black backdrop)
+      pullBatchMutation(count, {
+        onSuccess: (r) => {
+          pendingResult.current = r
+        },
+        onError: () => {
+          pullAbortedRef.current = true
+          setPhase('idle')
+          phaseRef.current = 'idle'
+        },
+      })
+
+      setResult(null)
+      setPhase('ball-shake')
+      phaseRef.current = 'ball-shake'
+      await new Promise((res) => setTimeout(res, 800))
+      if (pullAbortedRef.current) {
+        return
+      }
+      setPhase('ball-split')
+      phaseRef.current = 'ball-split'
+      // Rest handled by onSplitDone → handleSplitDone → reveal-grid
+    },
+    [pullBatchMutation],
+  )
 
   const showBall = phase === 'ball-shake' || phase === 'ball-split'
-  const showMachine =
-    phase === 'idle' ||
-    phase === 'machine-anim' ||
-    phase === 'ball-shake' ||
-    phase === 'ball-split'
+  const showMachine = phase === 'idle' || phase === 'machine-anim'
+  // Fullscreen overlay stays mounted for the whole pull cycle so the topbar
+  // and HUD never flash back in between ball / flash / reveal / replay.
+  const inPullCycleFullscreen =
+    showBall ||
+    phase === 'ball-flash' ||
+    phase === 'reveal-grid' ||
+    phase === 'pulling'
+  // Flash fires only during ball-flash — pieces are gone, cards not yet in
+  const showFlash = phase === 'ball-flash'
   const isIdle = phase === 'idle'
   const showActions = phase === 'idle'
   const canPullX1 = tokens >= 1 && phase === 'idle' && !pullPending
@@ -254,78 +323,51 @@ function Play() {
         ))}
       </div>
 
-      {/* Stage */}
+      {/* Stage — only machine in the sub-window. Ball / flash / reveal live
+       *  in a fullscreen overlay below so they cover the topbar too. */}
       <div className="absolute inset-0">
         {showMachine && (
-          <div
-            className={`absolute inset-0 transition-opacity duration-300 ${showBall ? 'opacity-30 pointer-events-none' : ''}`}
-          >
+          <div className="absolute inset-0 transition-opacity duration-300">
             <MachineStage ref={machineRef} />
-          </div>
-        )}
-        {showBall && (
-          <div className="absolute inset-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
-            <Canvas
-              camera={{ position: [0, 0.3, 8], fov: 45 }}
-              shadows
-              gl={{ antialias: true, alpha: true }}
-              style={{ background: 'transparent' }}
-            >
-              <ambientLight intensity={0.5} />
-              <directionalLight
-                position={[5, 10, 5]}
-                intensity={1}
-                castShadow
-                shadow-mapSize={[1024, 1024] as [number, number]}
-              />
-              <pointLight
-                position={[-3, 3, 3]}
-                intensity={0.6}
-                color="#f59e0b"
-              />
-              <GachaBall
-                phase={phase === 'ball-shake' ? 'shake' : 'split'}
-                onSplitDone={handleSplitDone}
-              />
-              <Environment preset="city" />
-            </Canvas>
           </div>
         )}
       </div>
 
-      {/* Token counter */}
-      <div className="relative z-10 pt-10 flex flex-col items-center">
-        <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.3em] text-text-light/40">
-          Jetons
-        </p>
-        <div className="flex items-baseline gap-2">
-          <Coins className="mb-1 h-7 w-7 text-primary" />
-          <span
-            className={`font-display text-8xl font-black leading-none tabular-nums transition-colors duration-300 ${
-              tokens > 0 ? 'text-primary' : 'text-text-light/30'
-            }`}
-          >
-            {balanceLoading ? '·' : tokens}
-          </span>
-          <span className="text-xl font-bold text-text-light/25">
-            /{maxStock}
-          </span>
+      {/* Idle-only token counter — stays inside the /play sub-window */}
+      {isIdle && (
+        <div className="relative z-10 pt-10 flex flex-col items-center">
+          <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.3em] text-text-light/40">
+            Jetons
+          </p>
+          <div className="flex items-baseline gap-2">
+            <Coins className="mb-1 h-7 w-7 text-primary" />
+            <span
+              className={`font-display text-8xl font-black leading-none tabular-nums transition-colors duration-300 ${
+                tokens > 0 ? 'text-primary' : 'text-text-light/30'
+              }`}
+            >
+              {balanceLoading ? '·' : tokens}
+            </span>
+            <span className="text-xl font-bold text-text-light/25">
+              /{maxStock}
+            </span>
+          </div>
+          <div className="mt-3 h-5">
+            {timeLeft ? (
+              <p className="text-xs text-text-light/40">
+                +1 dans{' '}
+                <span className="font-semibold text-text-light/60">
+                  {timeLeft}
+                </span>
+              </p>
+            ) : tokens >= maxStock ? (
+              <p className="text-xs font-medium text-primary/50">
+                Jetons au maximum
+              </p>
+            ) : null}
+          </div>
         </div>
-        <div className="mt-3 h-5">
-          {timeLeft ? (
-            <p className="text-xs text-text-light/40">
-              +1 dans{' '}
-              <span className="font-semibold text-text-light/60">
-                {timeLeft}
-              </span>
-            </p>
-          ) : tokens >= maxStock ? (
-            <p className="text-xs font-medium text-primary/50">
-              Jetons au maximum
-            </p>
-          ) : null}
-        </div>
-      </div>
+      )}
 
       {/* Actions */}
       {showActions && (
@@ -365,32 +407,102 @@ function Play() {
         </div>
       )}
 
-      {phase === 'pulling' && (
-        <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <p className="text-sm text-white/70">Tirage en cours…</p>
-        </div>
-      )}
-
-      {phase === 'reveal-grid' && result && (
-        <RevealGrid results={result.pulls} onAllRevealed={handleAllRevealed} />
-      )}
-
-      {phase === 'summary' && result && (
-        <SummaryPanel
-          results={result.pulls}
-          tokensRemaining={result.tokensRemaining}
-          xpGained={result.xpGained}
-          dustGained={result.pulls.reduce((s, p) => s + p.dustEarned, 0)}
-          onClose={handleClose}
-          onPullAgain={handlePullAgain}
-        />
-      )}
-
       <PlayHud />
 
       <div className={isIdle ? '' : 'invisible pointer-events-none'}>
         <LiveFeed />
       </div>
+
+      {/* ── Fullscreen pull-cycle overlay ─────────────────────────────────
+       *  Covers the entire viewport (including the topbar) so ball → flash
+       *  → reveal → replay all happen against continuous black — no HUD
+       *  flashes between phases. Mounted from ball-shake onwards, unmounted
+       *  when the user closes the reveal or the pull errors back to idle. */}
+      {inPullCycleFullscreen && (
+        <div className="fixed inset-0 z-[100] overflow-hidden bg-black animate-in fade-in-0 duration-500">
+          {/* Persistent ambient particles — subtle drift once the reveal is open */}
+          {phase === 'reveal-grid' && (
+            <div className="pointer-events-none absolute inset-0 overflow-hidden">
+              {AMBIENT_PARTICLES.map((p) => (
+                <div
+                  key={p.id}
+                  className="particle absolute rounded-full bg-white/25"
+                  style={
+                    {
+                      top: p.top,
+                      left: p.left,
+                      width: p.size,
+                      height: p.size,
+                      '--delay': p.delay,
+                      '--duration': p.duration,
+                    } as CSSProperties
+                  }
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Ball scene */}
+          {showBall && (
+            <Canvas
+              camera={{ position: [0, 0.3, 7], fov: 45 }}
+              shadows
+              gl={{ antialias: true, alpha: true }}
+              style={{ background: 'transparent' }}
+            >
+              <ambientLight intensity={0.55} />
+              <directionalLight
+                position={[5, 10, 5]}
+                intensity={1.1}
+                castShadow
+                shadow-mapSize={[1024, 1024] as [number, number]}
+              />
+              <pointLight
+                position={[-3, 3, 3]}
+                intensity={0.9}
+                color="#f59e0b"
+                distance={12}
+              />
+              <pointLight
+                position={[3, 2, -2]}
+                intensity={0.6}
+                color="#ec4899"
+                distance={10}
+              />
+              <GachaBall
+                phase={phase === 'ball-shake' ? 'shake' : 'split'}
+                onSplitDone={handleSplitDone}
+              />
+              <Environment preset="city" />
+            </Canvas>
+          )}
+
+          {/* Flash between split and reveal */}
+          {showFlash && (
+            <div
+              className="pointer-events-none absolute inset-0 z-40 bg-white animate-[ballFlash_500ms_ease-out_forwards]"
+              style={{ mixBlendMode: 'screen' }}
+            />
+          )}
+
+          {/* Pulling spinner (skip-anim path) */}
+          {phase === 'pulling' && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <p className="text-sm text-white/70">Tirage en cours…</p>
+            </div>
+          )}
+
+          {/* Reveal grid */}
+          {phase === 'reveal-grid' && result && (
+            <RevealGrid
+              results={result.pulls}
+              tokensRemaining={result.tokensRemaining}
+              onClose={handleClose}
+              onPullAgain={handlePullAgain}
+            />
+          )}
+        </div>
+      )}
     </div>
   )
 }

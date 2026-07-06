@@ -58,6 +58,7 @@ type Props = {
   element?: ElementKey | null
   description?: string | null
   artPosition?: string
+  newBadge?: boolean
 }
 
 // ── Component ──────────────────────────────────────────────────────────────────
@@ -81,6 +82,7 @@ export function CardDisplay({
   element,
   description,
   artPosition,
+  newBadge,
 }: Props) {
   const cardRef = useRef<HTMLDivElement>(null)
   const springRef = useRef<SpringState>(makeSpring())
@@ -204,6 +206,7 @@ export function CardDisplay({
   const overlayRadius = compact ? 'rounded-[10px]' : 'rounded-[13px]'
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: hitbox for cursor-driven tilt on the card — not a control, decorative surface only
     <div
       className={hitboxClass}
       onMouseMove={handleMouseMove}
@@ -230,6 +233,7 @@ export function CardDisplay({
               element={element}
               description={description}
               artPosition={artPosition}
+              newBadge={newBadge}
             />
 
             {interactive && (
