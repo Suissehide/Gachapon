@@ -455,6 +455,63 @@ describe('GachaDomain.pullBatch', () => {
     await domainAt10.pullBatch('user-1', 1)
     expect(mocks10.findActiveForPullInTx).toHaveBeenCalledWith(expect.anything(), true)
   })
+
+  it('garantie boost en batch: déclenche au tirage 3 (pullsRemaining=3), cumule 3 décréments, satisfied=true après EPIC', async () => {
+    // Scenario: batch of 10 pulls with a guarantee boost (pullsRemaining: 3, satisfied: false)
+    // Guarantee fires when pullsRemaining === 1, which is at step 2 (pull index 2, the 3rd pull)
+    // After firing, the boost is satisfied and no further decrements happen
+    jest.spyOn(Math, 'random').mockReturnValue(0) // pick first card in pool deterministically
+    const commonCard = makeCardWithSet('common-1', 'COMMON')
+    const epicCard = makeCardWithSet('epic-1', 'EPIC')
+
+    const { domain: d, mocks } = buildDomain({
+      tokens: 10,
+      pity: 0,
+      xp: 0,
+      pullTokenCost: 1,
+      activeBoosts: [
+        {
+          id: 'boost-1',
+          weightMultiplier: null,
+          weightRarity: null,
+          guaranteedRarity: 'EPIC',
+          pullsRemaining: 3,
+          satisfied: false,
+        },
+      ],
+    })
+
+    // Mock findActiveForPullInTx to always return both cards
+    // When guarantee is inactive: random=0 picks COMMON (first card, weight 10)
+    // When guarantee is active (filtered to EPIC+): random=0 picks EPIC
+    mocks.findActiveForPullInTx.mockResolvedValue([commonCard, epicCard])
+
+    const result = await d.pullBatch('user-1', 10)
+
+    // Pulls #0–1: guarantee not yet active (pullsRemaining=3, then 2), random picks COMMON
+    expect(result.pulls[0]?.card.rarity).toBe('COMMON')
+    expect(result.pulls[0]?.wasBoostGuarantee).toBe(false)
+    expect(result.pulls[1]?.card.rarity).toBe('COMMON')
+    expect(result.pulls[1]?.wasBoostGuarantee).toBe(false)
+
+    // Pull #2: guarantee fires (pullsRemaining===1 before step), random=0 picks EPIC from filtered pool
+    expect(result.pulls[2]?.card.rarity).toBe('EPIC')
+    expect(result.pulls[2]?.wasBoostGuarantee).toBe(true)
+
+    // Pulls #3–9: guarantee exhausted and satisfied, random picks COMMON again
+    for (let i = 3; i < 10; i++) {
+      expect(result.pulls[i]?.card.rarity).toBe('COMMON')
+      expect(result.pulls[i]?.wasBoostGuarantee).toBe(false)
+    }
+
+    // Boost persisted once with cumulative decrement of 3 and satisfied=true
+    expect(mocks.decrementInTx).toHaveBeenCalledTimes(1)
+    expect(mocks.decrementInTx).toHaveBeenCalledWith(
+      expect.anything(), // tx
+      'boost-1',
+      expect.objectContaining({ by: 3, satisfied: true }),
+    )
+  })
 })
 
 // ---------------------------------------------------------------------------
