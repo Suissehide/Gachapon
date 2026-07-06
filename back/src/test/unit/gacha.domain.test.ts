@@ -1,5 +1,5 @@
 import { describe, expect, it, jest } from '@jest/globals'
-import { GachaDomain, pickWeightedRandom, pickVariant, weightFor } from '../../main/domain/gacha/gacha.domain'
+import { GachaDomain, pickWeightedRandom, pickVariant, weightFor, effectivePityThreshold } from '../../main/domain/gacha/gacha.domain'
 import type { CardWithSet } from '../../main/types/domain/gacha/gacha.types'
 
 function makeCard(name: string, weight: number, rarity = 'COMMON'): CardWithSet {
@@ -120,6 +120,22 @@ describe('pickVariant avec variantLuckMultiplier', () => {
   })
   it('multiplicateur 1 = comportement inchangé à taux 0', () => {
     expect(pickVariant('RARE', ZERO_RATES, 1)).toBe('NORMAL')
+  })
+})
+
+describe('effectivePityThreshold', () => {
+  it('returns the configured threshold when no reduction', () => {
+    expect(effectivePityThreshold(80)).toBe(80)
+    expect(effectivePityThreshold(80, 0)).toBe(80)
+  })
+
+  it('subtracts the skill-tree pity reduction', () => {
+    expect(effectivePityThreshold(80, 15)).toBe(65)
+  })
+
+  it('never goes below the floor of 10', () => {
+    expect(effectivePityThreshold(80, 75)).toBe(10)
+    expect(effectivePityThreshold(5, 0)).toBe(10)
   })
 })
 

@@ -90,3 +90,19 @@ export const pullsRecentQuerySchema = z.object({
   teamId: z.string().uuid().optional(),
   rarities: raritiesCsvSchema,
 })
+
+// ── GET /pulls/rates ────────────────────────────────────────────────────────
+
+export const dropRatesResponseSchema = z.object({
+  rates: z.array(z.object({ rarity: cardRarityEnum, pct: z.number() })),
+})
+
+// ── GET /tokens/balance ─────────────────────────────────────────────────────
+
+export const tokensBalanceResponseSchema = z.object({
+  tokens: z.number().int(),
+  maxStock: z.number().int(),
+  nextTokenAt: z.string().nullable(),
+  pityCurrent: z.number().int(),
+  pityThreshold: z.number().int(),
+})

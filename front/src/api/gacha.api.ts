@@ -1,5 +1,6 @@
 import { apiUrl } from '../constants/config.constant.ts'
 import type {
+  DropRate,
   PullBatchEntry,
   PullBatchResult,
   PullHistory,
@@ -11,7 +12,14 @@ import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import type { FeedEntry } from '../types/feed'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
-export type { PullResult, TokenBalance, PullHistory, PullBatchResult, PullBatchEntry }
+export type {
+  DropRate,
+  PullResult,
+  TokenBalance,
+  PullHistory,
+  PullBatchResult,
+  PullBatchEntry,
+}
 
 export const GachaApi = {
   getTokenBalance: async (): Promise<TokenBalance> => {
@@ -65,6 +73,14 @@ export const GachaApi = {
     const res = await fetchWithAuth(`${apiUrl}${GACHA_ROUTES.recent(opts)}`)
     if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors du chargement du fil')
+    }
+    return res.json()
+  },
+
+  getDropRates: async (): Promise<{ rates: DropRate[] }> => {
+    const res = await fetchWithAuth(`${apiUrl}${GACHA_ROUTES.rates}`)
+    if (!res.ok) {
+      handleHttpError(res, {}, 'Erreur lors du chargement des taux de drop')
     }
     return res.json()
   },

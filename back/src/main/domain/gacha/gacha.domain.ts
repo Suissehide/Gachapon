@@ -155,6 +155,14 @@ export function pickVariant(
   return 'NORMAL' as CardVariant
 }
 
+/** Seuil de pity effectif pour un utilisateur (réduction skill tree, plancher 10). */
+export function effectivePityThreshold(
+  pityThreshold: number,
+  pityReduction = 0,
+): number {
+  return Math.max(10, pityThreshold - pityReduction)
+}
+
 function isPrismaSerializationError(err: unknown): boolean {
   return (
     typeof err === 'object' &&
@@ -295,11 +303,11 @@ export class GachaDomain implements GachaDomainInterface {
     stepState: { currentTokens: number; currentPity: number },
     boosts: BoostState[],
   ): Promise<StepOutcome> {
-    const effectivePityThreshold = Math.max(
-      10,
-      cfg.pityThreshold - (cfg.upgrades.pityReduction ?? 0),
+    const pityThreshold = effectivePityThreshold(
+      cfg.pityThreshold,
+      cfg.upgrades.pityReduction ?? 0,
     )
-    const isPityForced = stepState.currentPity >= effectivePityThreshold
+    const isPityForced = stepState.currentPity >= pityThreshold
     let activeCards = await this.#cardRepository.findActiveForPullInTx(
       tx,
       isPityForced,

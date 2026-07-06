@@ -51,6 +51,8 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
 
+  --color-amber-soft: var(--amber-soft);
+
   --font-display: "Bricolage Grotesque", "Nunito", system-ui, sans-serif;
   --font-body: "DM Sans", "Figtree", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
@@ -88,28 +90,47 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: "Bricolage Grotesque", "Nunito", system-ui, -apple-system, sans-serif;
+  font-family:
+    "Bricolage Grotesque", "Nunito", system-ui, -apple-system, sans-serif;
   letter-spacing: -0.02em;
 }
 
 /* ANIMATIONS */
 
 @keyframes achievementToastIn {
-  from { opacity: 0; transform: translate(-50%, -16px); }
-  to   { opacity: 1; transform: translate(-50%, 0); }
+  from {
+    opacity: 0;
+    transform: translate(-50%, -16px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
 /* Drops the unlock toast from above the viewport down to its rest
    position (handled by the flex layout — translate works in % of self). */
 @keyframes achievementToastDrop {
-  from { opacity: 0; transform: translateY(-120%); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-120%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Mirror of …Drop for the exit phase — the toast lifts back up off-screen. */
 @keyframes achievementToastLift {
-  from { opacity: 1; transform: translateY(0); }
-  to   { opacity: 0; transform: translateY(-120%); }
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-120%);
+  }
 }
 
 @keyframes claimParticle {
@@ -650,25 +671,60 @@ h6 {
     transform: translate3d(0, 0, 0) rotate(0deg);
   }
   12% {
-    transform: translate3d(calc(var(--shake-amp, 7px) * -1), calc(var(--shake-amp, 7px) * 0.43), 0) rotate(-0.4deg);
+    transform: translate3d(
+        calc(var(--shake-amp, 7px) * -1),
+        calc(var(--shake-amp, 7px) * 0.43),
+        0
+      )
+      rotate(-0.4deg);
   }
   24% {
-    transform: translate3d(var(--shake-amp, 7px), calc(var(--shake-amp, 7px) * -0.43), 0) rotate(0.4deg);
+    transform: translate3d(
+        var(--shake-amp, 7px),
+        calc(var(--shake-amp, 7px) * -0.43),
+        0
+      )
+      rotate(0.4deg);
   }
   36% {
-    transform: translate3d(calc(var(--shake-amp, 7px) * -0.71), calc(var(--shake-amp, 7px) * 0.57), 0) rotate(-0.3deg);
+    transform: translate3d(
+        calc(var(--shake-amp, 7px) * -0.71),
+        calc(var(--shake-amp, 7px) * 0.57),
+        0
+      )
+      rotate(-0.3deg);
   }
   48% {
-    transform: translate3d(calc(var(--shake-amp, 7px) * 0.86), calc(var(--shake-amp, 7px) * -0.29), 0) rotate(0.3deg);
+    transform: translate3d(
+        calc(var(--shake-amp, 7px) * 0.86),
+        calc(var(--shake-amp, 7px) * -0.29),
+        0
+      )
+      rotate(0.3deg);
   }
   60% {
-    transform: translate3d(calc(var(--shake-amp, 7px) * -0.57), calc(var(--shake-amp, 7px) * 0.29), 0) rotate(-0.2deg);
+    transform: translate3d(
+        calc(var(--shake-amp, 7px) * -0.57),
+        calc(var(--shake-amp, 7px) * 0.29),
+        0
+      )
+      rotate(-0.2deg);
   }
   72% {
-    transform: translate3d(calc(var(--shake-amp, 7px) * 0.43), calc(var(--shake-amp, 7px) * -0.29), 0) rotate(0.2deg);
+    transform: translate3d(
+        calc(var(--shake-amp, 7px) * 0.43),
+        calc(var(--shake-amp, 7px) * -0.29),
+        0
+      )
+      rotate(0.2deg);
   }
   84% {
-    transform: translate3d(calc(var(--shake-amp, 7px) * -0.29), calc(var(--shake-amp, 7px) * 0.14), 0) rotate(-0.1deg);
+    transform: translate3d(
+        calc(var(--shake-amp, 7px) * -0.29),
+        calc(var(--shake-amp, 7px) * 0.14),
+        0
+      )
+      rotate(-0.1deg);
   }
 }
 
@@ -723,7 +779,8 @@ h6 {
 }
 
 .card-impact {
-  animation: cardImpact var(--impact-dur, 350ms) cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation: cardImpact var(--impact-dur, 350ms)
+    cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 @keyframes scanlineSweep {
@@ -843,34 +900,76 @@ h6 {
 /* ── 404 Not Found page ─────────────────────────────────────────────────── */
 
 @keyframes notfound-capsule-rise {
-  0%   { transform: translateX(0) translateY(0) rotate(0deg); opacity: 0; }
-  10%  { opacity: 0.3; }
-  90%  { opacity: 0.3; }
-  100% { transform: translateX(var(--capsule-drift, 30px)) translateY(-110vh) rotate(360deg); opacity: 0; }
+  0% {
+    transform: translateX(0) translateY(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.3;
+  }
+  90% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateX(var(--capsule-drift, 30px)) translateY(-110vh)
+      rotate(360deg);
+    opacity: 0;
+  }
 }
 
 @keyframes notfound-glitch-top {
-  0%, 100% { transform: translate(0); }
-  25%      { transform: translate(-3px, -1px); }
-  50%      { transform: translate(3px, 1px); }
-  75%      { transform: translate(-1px, 2px); }
+  0%,
+  100% {
+    transform: translate(0);
+  }
+  25% {
+    transform: translate(-3px, -1px);
+  }
+  50% {
+    transform: translate(3px, 1px);
+  }
+  75% {
+    transform: translate(-1px, 2px);
+  }
 }
 
 @keyframes notfound-glitch-bottom {
-  0%, 100% { transform: translate(0); }
-  33%      { transform: translate(2px, 1px); }
-  66%      { transform: translate(-2px, -1px); }
+  0%,
+  100% {
+    transform: translate(0);
+  }
+  33% {
+    transform: translate(2px, 1px);
+  }
+  66% {
+    transform: translate(-2px, -1px);
+  }
 }
 
 @keyframes notfound-fade-up {
-  from { opacity: 0; transform: translateY(24px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes shop-success-pop {
-  0%   { transform: scale(0.85); opacity: 0.6; }
-  60%  { transform: scale(1.05); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.85);
+    opacity: 0.6;
+  }
+  60% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .select-content {
@@ -981,54 +1080,121 @@ h6 {
 
 /* ── Level-up overlay ── */
 @keyframes levelUpBackdropIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes levelUpStarBounce {
-  0% { transform: scale(0); opacity: 0; }
-  50% { transform: scale(1.15); opacity: 1; }
-  70% { transform: scale(0.95); }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 @keyframes levelUpTextPop {
-  0% { transform: scale(0); opacity: 0; }
-  60% { transform: scale(1.2); opacity: 1; }
-  80% { transform: scale(0.95); }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  80% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* ── Battle scene animations ── */
 @keyframes battleLungeUp {
-  0%, 100% { transform: translateY(0); }
-  40% { transform: translateY(-14px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-14px);
+  }
 }
 @keyframes battleLungeDown {
-  0%, 100% { transform: translateY(0); }
-  40% { transform: translateY(14px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(14px);
+  }
 }
 @keyframes battleShake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  50% { transform: translateX(5px); }
-  75% { transform: translateX(-3px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  50% {
+    transform: translateX(5px);
+  }
+  75% {
+    transform: translateX(-3px);
+  }
 }
 @keyframes battleSkullIn {
-  from { transform: scale(0.3); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 @keyframes battleResultIn {
-  from { opacity: 0; transform: translateY(24px) scale(0.96); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 @keyframes battleBadgePop {
-  from { transform: scale(0.2) rotate(-30deg); opacity: 0; }
-  to { transform: scale(1) rotate(0); opacity: 1; }
+  from {
+    transform: scale(0.2) rotate(-30deg);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) rotate(0);
+    opacity: 1;
+  }
 }
 @keyframes battleXpGrow {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }
 
 /* Click feedback for the card level-up button. Squeeze → overshoot → settle,
@@ -1071,8 +1237,12 @@ h6 {
 }
 
 @keyframes levelUpFadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 @keyframes levelUpParticle {
@@ -1080,11 +1250,14 @@ h6 {
     transform: translate(0, 0) scale(1);
     opacity: 0;
   }
-  5% { opacity: 1; }
-  60% { opacity: 1; }
+  5% {
+    opacity: 1;
+  }
+  60% {
+    opacity: 1;
+  }
   100% {
-    transform:
-      translate(
+    transform: translate(
         calc(cos(var(--angle)) * var(--dist)),
         calc(sin(var(--angle)) * var(--dist))
       )

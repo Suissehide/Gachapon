@@ -7,10 +7,17 @@ import { useToast } from '../hooks/useToast.ts'
 import { useAchievementUnlockStore } from '../stores/achievementUnlock.store.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 import { useLevelUpStore } from '../stores/levelUp.store.ts'
-import { DEFAULT_ECONOMY, useEconomyConfig } from './useEconomyConfig.ts'
 import { computeLevel } from '../utils/level.ts'
+import { DEFAULT_ECONOMY, useEconomyConfig } from './useEconomyConfig.ts'
 
-export type { PullHistory, PullResult, TokenBalance, PullBatchResult, PullBatchEntry } from '../api/gacha.api.ts'
+export type {
+  DropRate,
+  PullBatchEntry,
+  PullBatchResult,
+  PullHistory,
+  PullResult,
+  TokenBalance,
+} from '../api/gacha.api.ts'
 
 export const useTokenBalance = () => {
   const query = useQuery({
@@ -59,10 +66,10 @@ export const usePull = () => {
       qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
       qc.invalidateQueries({ queryKey: ['collection'] })
       qc.invalidateQueries({ queryKey: ['profile'] })
-      // Belt-and-braces: the WebSocket pushes 'feed:pull' to the LiveFeed
-      // for instant updates, but if the socket is reconnecting or the
-      // event is dropped we still want the rare pull to land in the
-      // panel — invalidate the query so it refetches from the server.
+      // Belt-and-braces: the WebSocket pushes 'feed:pull' to the recent-pulls
+      // panel (RecentsPanel) for instant updates, but if the socket is
+      // reconnecting or the event is dropped we still want the rare pull to
+      // land in the panel — invalidate the query so it refetches from the server.
       qc.invalidateQueries({ queryKey: ['pulls', 'recent'] })
       // Keep active-boost pullsRemaining in sync on the shop page.
       qc.invalidateQueries({ queryKey: ['shop'] })
@@ -141,4 +148,12 @@ export const usePullHistory = (page = 1) => {
   })
 
   return query
+}
+
+export const useDropRates = () => {
+  return useQuery({
+    queryKey: ['pulls', 'rates'],
+    queryFn: () => GachaApi.getDropRates(),
+    staleTime: 10 * 60_000,
+  })
 }

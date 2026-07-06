@@ -2,13 +2,17 @@ import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import { calculateTokens } from '../../../../../domain/economy/economy.domain'
+import { computeDropRates } from '../../../../../domain/gacha/drop-rates'
+import { effectivePityThreshold } from '../../../../../domain/gacha/gacha.domain'
 import { wsManager } from '../../../../ws/ws-manager'
 import {
+  dropRatesResponseSchema,
   pullBatchBodySchema,
   pullBatchResponseSchema,
   pullResponseSchema,
   pullsHistoryQuerySchema,
   pullsRecentQuerySchema,
+  tokensBalanceResponseSchema,
 } from '../../schemas/gacha.schemas'
 
 export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
@@ -19,6 +23,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     gachaPullRepository,
     skillTreeRepository,
     storageClient,
+    cardRepository,
   } = fastify.iocContainer
 
   const resolveUrl = (key: string | null) =>
@@ -157,7 +162,10 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
   // GET /tokens/balance — solde de tokens (calcul lazy, sans écriture en DB)
   fastify.get(
     '/tokens/balance',
-    { onRequest: [fastify.verifySessionCookie] },
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: { response: { 200: tokensBalanceResponseSchema } },
+    },
     async (request) => {
       const user = await userRepository.findById(request.user.userID)
       if (!user) {
@@ -166,7 +174,11 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
 
       const [upgrades, cfg] = await Promise.all([
         skillTreeRepository.getEffectsForUser(request.user.userID),
-        configService.getMany('tokenRegenIntervalMinutes', 'tokenMaxStock'),
+        configService.getMany(
+          'tokenRegenIntervalMinutes',
+          'tokenMaxStock',
+          'pityThreshold',
+        ),
       ])
       const effectiveInterval = Math.max(
         1,
@@ -187,6 +199,11 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         tokens,
         maxStock: effectiveMaxStock,
         nextTokenAt: nextTokenAt?.toISOString() ?? null,
+        pityCurrent: user.pityCurrent,
+        pityThreshold: effectivePityThreshold(
+          cfg.pityThreshold,
+          upgrades.pityReduction ?? 0,
+        ),
       }
     },
   )
@@ -290,6 +307,16 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         })),
         hasMore: page.hasMore,
       }
+    },
+  )
+
+  // GET /pulls/rates — taux de drop de base par rareté (public, hors bonus)
+  fastify.get(
+    '/pulls/rates',
+    { schema: { response: { 200: dropRatesResponseSchema } } },
+    async () => {
+      const cards = await cardRepository.findAllActive()
+      return { rates: computeDropRates(cards) }
     },
   )
 }
