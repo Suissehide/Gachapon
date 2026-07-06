@@ -16,8 +16,14 @@ export type CreateUserBoostData =
 
 export interface IUserBoostRepository {
   findActiveByUser(userId: string): Promise<UserBoost[]>
-  findActiveByUserInTx(tx: PrimaTransactionClient, userId: string): Promise<UserBoost[]>
-  createInTx(tx: PrimaTransactionClient, data: CreateUserBoostData): Promise<UserBoost>
+  findActiveByUserInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+  ): Promise<UserBoost[]>
+  createInTx(
+    tx: PrimaTransactionClient,
+    data: CreateUserBoostData,
+  ): Promise<UserBoost>
   decrementInTx(
     tx: PrimaTransactionClient,
     id: string,

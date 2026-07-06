@@ -28,7 +28,6 @@ import type { ILeaderboardDomain } from '../domain/leaderboard/leaderboard.domai
 import type { ProfileDomainInterface } from '../domain/profile/profile.domain.interface'
 import type { RewardsDomainInterface } from '../domain/rewards/rewards.domain.interface'
 import type { IShopDomain } from '../domain/shop/shop.domain.interface'
-import type { IWishlistDomain } from '../domain/wishlist/wishlist.domain.interface'
 import type {
   ISkillInvestDomain,
   ISkillResetDomain,
@@ -37,6 +36,7 @@ import type {
 import type { StreakDomainInterface } from '../domain/streak/streak.domain.interface'
 import type { TeamDomainInterface } from '../domain/team/team.domain.interface'
 import type { UserDomainInterface } from '../domain/user/user.domain.interface'
+import type { IWishlistDomain } from '../domain/wishlist/wishlist.domain.interface'
 import type { JwtServiceInterface } from '../infra/auth/jwt.service'
 import type { ConfigServiceInterface } from '../infra/config/config.service.interface'
 import type { HttpClientInterface } from '../infra/http/http-client'

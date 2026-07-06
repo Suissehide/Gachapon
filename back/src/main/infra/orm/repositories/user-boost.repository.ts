@@ -20,13 +20,19 @@ export class UserBoostRepository implements IUserBoostRepository {
     })
   }
 
-  findActiveByUserInTx(tx: PrimaTransactionClient, userId: string): Promise<UserBoost[]> {
+  findActiveByUserInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+  ): Promise<UserBoost[]> {
     return tx.userBoost.findMany({
       where: { userId, pullsRemaining: { gt: 0 } },
     })
   }
 
-  createInTx(tx: PrimaTransactionClient, data: CreateUserBoostData): Promise<UserBoost> {
+  createInTx(
+    tx: PrimaTransactionClient,
+    data: CreateUserBoostData,
+  ): Promise<UserBoost> {
     return tx.userBoost.create({ data })
   }
 

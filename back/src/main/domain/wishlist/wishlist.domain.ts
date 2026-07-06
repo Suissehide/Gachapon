@@ -82,14 +82,18 @@ export class WishlistDomain implements IWishlistDomain {
       1,
       cooldownDays - (effects.wishlistCooldownReductionDays ?? 0),
     )
-    const availableAt = computeAvailableAt(user.wishlistPurchasedAt, effectiveCooldownDays)
+    const availableAt = computeAvailableAt(
+      user.wishlistPurchasedAt,
+      effectiveCooldownDays,
+    )
 
     if (!user.wishlistCard) {
       return { card: null, price: null, availableAt, cooldownDays }
     }
 
     const card = user.wishlistCard
-    const priceKey = RARITY_PRICE_KEYS[card.rarity as keyof typeof RARITY_PRICE_KEYS]
+    const priceKey =
+      RARITY_PRICE_KEYS[card.rarity as keyof typeof RARITY_PRICE_KEYS]
     const rarityBasePrice = priceKey ? (c[priceKey] ?? 50) : 50
     const basePrice = rarityBasePrice * c['wishlist.priceMultiplier']
     const discount = effects.shopDiscount ?? 0
@@ -161,12 +165,16 @@ export class WishlistDomain implements IWishlistDomain {
       )
       if (now < availableAt) {
         const err = Boom.tooManyRequests('Cooldown actif')
-        err.output.payload = { ...err.output.payload, availableAt: availableAt.toISOString() }
+        err.output.payload = {
+          ...err.output.payload,
+          availableAt: availableAt.toISOString(),
+        }
         throw err
       }
     }
 
-    const priceKey = RARITY_PRICE_KEYS[card.rarity as keyof typeof RARITY_PRICE_KEYS]
+    const priceKey =
+      RARITY_PRICE_KEYS[card.rarity as keyof typeof RARITY_PRICE_KEYS]
     const rarityBasePrice = priceKey ? (c[priceKey] ?? 50) : 50
     const basePrice = rarityBasePrice * c['wishlist.priceMultiplier']
     const discount = effects.shopDiscount ?? 0
@@ -185,11 +193,15 @@ export class WishlistDomain implements IWishlistDomain {
           // (effectiveCooldownDays captured outside tx is stable — it derives from config/effects, not mutable state)
           if (u.wishlistPurchasedAt !== null) {
             const availableAt = new Date(
-              u.wishlistPurchasedAt.getTime() + effectiveCooldownDays * 24 * 60 * 60 * 1000,
+              u.wishlistPurchasedAt.getTime() +
+                effectiveCooldownDays * 24 * 60 * 60 * 1000,
             )
             if (new Date() < availableAt) {
               const err = Boom.tooManyRequests('Cooldown actif')
-              err.output.payload = { ...err.output.payload, availableAt: availableAt.toISOString() }
+              err.output.payload = {
+                ...err.output.payload,
+                availableAt: availableAt.toISOString(),
+              }
               throw err
             }
           }
@@ -229,7 +241,9 @@ export class WishlistDomain implements IWishlistDomain {
       }
     }
 
-    const run = async (retriesLeft: number): Promise<PurchaseWishlistResult> => {
+    const run = async (
+      retriesLeft: number,
+    ): Promise<PurchaseWishlistResult> => {
       try {
         return await attempt()
       } catch (err: unknown) {

@@ -102,7 +102,9 @@ export class ShopDomain implements IShopDomain {
     item: ShopItem,
   ): Promise<void> {
     if (item.type === 'MACHINE') {
-      const existing = await tx.purchase.findFirst({ where: { userId, shopItemId } })
+      const existing = await tx.purchase.findFirst({
+        where: { userId, shopItemId },
+      })
       if (existing) {
         throw Boom.conflict('Machine already owned')
       }
@@ -119,7 +121,10 @@ export class ShopDomain implements IShopDomain {
   ): Promise<void> {
     const boostValue = item.value as BoostValue
     const isWeightBoost = boostValue.multiplier != null
-    const activeBoosts = await this.#userBoostRepository.findActiveByUserInTx(tx, userId)
+    const activeBoosts = await this.#userBoostRepository.findActiveByUserInTx(
+      tx,
+      userId,
+    )
     const conflict = isWeightBoost
       ? activeBoosts.some((b) => b.weightMultiplier != null)
       : activeBoosts.some((b) => b.guaranteedRarity != null)
@@ -129,7 +134,9 @@ export class ShopDomain implements IShopDomain {
   }
 
   #buildUpdateData(item: ShopItem): Record<string, unknown> {
-    const updateData: Record<string, unknown> = { dust: { decrement: item.dustCost } }
+    const updateData: Record<string, unknown> = {
+      dust: { decrement: item.dustCost },
+    }
     if (item.type === 'TOKEN_PACK') {
       const value = item.value as { tokens: number }
       updateData.tokens = { increment: value.tokens }
@@ -142,12 +149,16 @@ export class ShopDomain implements IShopDomain {
     userId: string,
     item: ShopItem,
   ): Promise<void> {
-    if (item.type !== 'BOOST') { return }
+    if (item.type !== 'BOOST') {
+      return
+    }
     const boostValue = item.value as BoostValue
 
     // Guard: ensure at least one boost type is specified
     if (boostValue.multiplier == null && boostValue.guaranteedRarity == null) {
-      throw Boom.internal('BOOST item value has neither multiplier nor guaranteedRarity')
+      throw Boom.internal(
+        'BOOST item value has neither multiplier nor guaranteedRarity',
+      )
     }
 
     // Guard: ensure pulls count is positive
@@ -187,8 +198,13 @@ export class ShopDomain implements IShopDomain {
     if (item.type === 'BOOST') {
       const boostValue = item.value as BoostValue
       // Validate that at least one boost type is specified
-      if (boostValue.multiplier == null && boostValue.guaranteedRarity == null) {
-        throw Boom.internal('BOOST item value has neither multiplier nor guaranteedRarity')
+      if (
+        boostValue.multiplier == null &&
+        boostValue.guaranteedRarity == null
+      ) {
+        throw Boom.internal(
+          'BOOST item value has neither multiplier nor guaranteedRarity',
+        )
       }
       // Validate that pulls count is positive
       if ((boostValue.pulls ?? 0) <= 0) {
@@ -205,7 +221,10 @@ export class ShopDomain implements IShopDomain {
     const events = []
     if (item.type === 'MACHINE') {
       const value = item.value as { machineId: string }
-      events.push({ kind: 'MACHINE_PURCHASED' as const, machineId: value.machineId })
+      events.push({
+        kind: 'MACHINE_PURCHASED' as const,
+        machineId: value.machineId,
+      })
     }
     events.push({ kind: 'DUST_SPENT' as const, amount: item.dustCost })
     const allUnlocks: UnlockedAchievement[] = []

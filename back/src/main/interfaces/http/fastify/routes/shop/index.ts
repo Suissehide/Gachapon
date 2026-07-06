@@ -7,7 +7,8 @@ import {
 } from '../../schemas/shop.schema'
 
 export const shopRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { shopItemRepository, shopDomain, userBoostRepository } = fastify.iocContainer
+  const { shopItemRepository, shopDomain, userBoostRepository } =
+    fastify.iocContainer
 
   fastify.get(
     '/shop',
@@ -25,7 +26,10 @@ export const shopRouter: FastifyPluginCallbackZod = (fastify) => {
         items: items.map((item) => {
           let activeBoost: { pullsRemaining: number } | null = null
           if (item.type === 'BOOST') {
-            const boostValue = item.value as { multiplier?: number; guaranteedRarity?: string }
+            const boostValue = item.value as {
+              multiplier?: number
+              guaranteedRarity?: string
+            }
             const isWeightBoost = boostValue.multiplier != null
             const matchingBoost = isWeightBoost
               ? activeBoosts.find((b) => b.weightMultiplier != null)
