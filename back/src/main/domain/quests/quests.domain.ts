@@ -23,6 +23,7 @@ import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import type { IUserQuestRepository } from '../../types/infra/orm/repositories/user-quest.repository.interface'
 import type { UserRewardRepositoryInterface } from '../../types/infra/orm/repositories/user-reward.repository.interface'
 import type { Logger } from '../../types/utils/logger'
+import { isPrismaSerializationError } from '../shared/retry-serialization'
 import type {
   AchievementEvent,
   AchievementEventKind,
@@ -51,16 +52,6 @@ interface ActiveQuestPool {
 interface CacheEntry {
   pool: ActiveQuestPool
   expiresAt: number
-}
-
-// Prisma P2034 = serialization failure (must be re-thrown so the caller retries)
-function isSerializationError(err: unknown): boolean {
-  return (
-    typeof err === 'object' &&
-    err !== null &&
-    'code' in err &&
-    (err as { code: string }).code === 'P2034'
-  )
 }
 
 // ---------------------------------------------------------------------------
@@ -109,7 +100,7 @@ export class QuestsDomain implements IQuestsDomain {
     try {
       await this.#trackImpl(tx, userId, event)
     } catch (err) {
-      if (isSerializationError(err)) {
+      if (isPrismaSerializationError(err)) {
         throw err
       }
       this.#logger?.warn(
@@ -189,15 +180,11 @@ export class QuestsDomain implements IQuestsDomain {
 
     // Weekly bonus: check whether the bonus UserReward was already granted
     const bonusSourceId = `weekly-bonus:${weeklyPeriodKey}`
-    const bonusReward = await this.#postgresOrm.prisma.userReward.findUnique({
-      where: {
-        userId_source_sourceId: {
-          userId,
-          source: 'QUEST',
-          sourceId: bonusSourceId,
-        },
-      },
-    })
+    const bonusReward = await this.#userRewardRepository.findByUserSourceAndSourceId(
+      userId,
+      'QUEST',
+      bonusSourceId,
+    )
 
     // Build oneshot state
     const oneshot: QuestStateItem[] = oneshotQuests.map((q) => {

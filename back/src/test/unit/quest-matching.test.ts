@@ -234,4 +234,17 @@ describe('pickWeeklyQuests', () => {
     const result = pickWeeklyQuests([], '2024-01-01', 3)
     expect(result).toHaveLength(0)
   })
+
+  // Golden values — pinned outputs guarantee determinism + prevent unintended hash/PRNG
+  // changes. If this test breaks, it is a PRODUCT DECISION to reassign weekly quests
+  // for all users — not a refactor.
+  it('golden value — week 2026-07-20', () => {
+    const result = pickWeeklyQuests(pool, '2026-07-20', 3)
+    expect(result.map((q) => q.key)).toEqual(['quest-b', 'quest-d', 'quest-a'])
+  })
+
+  it('golden value — week 2026-07-27', () => {
+    const result = pickWeeklyQuests(pool, '2026-07-27', 3)
+    expect(result.map((q) => q.key)).toEqual(['quest-a', 'quest-b', 'quest-c'])
+  })
 })

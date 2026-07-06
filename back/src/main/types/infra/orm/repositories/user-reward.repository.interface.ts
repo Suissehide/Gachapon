@@ -52,4 +52,10 @@ export interface UserRewardRepositoryInterface {
     page: number,
     limit: number,
   ): Promise<{ data: UserRewardWithReward[]; total: number }>
+  /** Finds a UserReward by userId, source, and sourceId (composite unique constraint). */
+  findByUserSourceAndSourceId(
+    userId: string,
+    source: RewardSource,
+    sourceId: string,
+  ): Promise<UserReward | null>
 }
