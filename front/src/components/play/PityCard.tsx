@@ -37,8 +37,11 @@ export function PityCard() {
       </div>
       <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-border">
         <div
-          className="h-full rounded-full bg-linear-to-r from-secondary to-rarity-legendary transition-[width] duration-300"
-          style={{ width: `${pct}%` }}
+          className="h-full rounded-full transition-[width] duration-300"
+          style={{
+            width: `${pct}%`,
+            background: 'linear-gradient(90deg, var(--secondary), var(--rarity-legendary))',
+          }}
         />
       </div>
     </div>
