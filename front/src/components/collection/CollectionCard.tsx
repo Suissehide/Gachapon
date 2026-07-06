@@ -1,4 +1,4 @@
-import { Sparkles } from 'lucide-react'
+import { Sparkles, Star } from 'lucide-react'
 
 import type { Card, CardVariant } from '../../api/collection.api.ts'
 import { describePassive } from '../../constants/passives.constant.ts'
@@ -38,19 +38,6 @@ export const RARITY_CHIP_ACTIVE: Record<string, string> = {
   LEGENDARY: 'border-primary text-primary bg-primary/10',
 }
 
-const VARIANT_TAGS: Record<string, { label: string; className: string }> = {
-  HOLOGRAPHIC: {
-    label: 'HOLO',
-    className:
-      'bg-[linear-gradient(90deg,#f9a8d4,#93c5fd,#86efac,#fcd34d)] text-[#1b1726]',
-  },
-  BRILLIANT: {
-    label: 'DORÉ',
-    className:
-      'bg-[linear-gradient(135deg,#fde68a,#f59e0b)] text-[#5b3a00]',
-  },
-}
-
 type Props = {
   card: Card
   variant: CardVariant
@@ -59,6 +46,7 @@ type Props = {
   level?: number | null
   palier?: number | null
   isNew?: boolean
+  isWishlisted?: boolean
   onClick: () => void
 }
 
@@ -70,11 +58,9 @@ export function CollectionCard({
   level,
   palier,
   isNew,
+  isWishlisted,
   onClick,
 }: Props) {
-  const variantTag =
-    isOwned && variant !== 'NORMAL' ? VARIANT_TAGS[variant] : null
-
   const stats: CardStats | null =
     isOwned && level && palier
       ? {
@@ -89,8 +75,9 @@ export function CollectionCard({
     isOwned && palier ? describePassive(card.passiveKey, palier) : null
 
   return (
-    <div
-      className="group relative cursor-pointer transition-transform duration-200 hover:-translate-y-1 hover:z-[2]"
+    <button
+      type="button"
+      className="group relative block w-full cursor-pointer text-left transition-transform duration-200 hover:-translate-y-1 hover:z-[2]"
       onClick={onClick}
     >
       <div className="relative aspect-[2/3]">
@@ -107,15 +94,6 @@ export function CollectionCard({
           description={isOwned ? description : null}
         />
 
-        {/* Overlays for owned cards */}
-        {isOwned && variantTag && (
-          <span
-            className={`absolute left-1/2 top-2.5 z-[6] -translate-x-1/2 rounded-full px-2.5 py-1 font-mono text-[9px] font-extrabold tracking-[0.16em] ${variantTag.className}`}
-          >
-            {variantTag.label}
-          </span>
-        )}
-
         {isOwned && isNew && (
           <span className="absolute -left-2 -top-2 z-[6] inline-flex items-center gap-1.5 rounded-full bg-[linear-gradient(135deg,#34d399,#16a34a)] px-[10px] py-[5px] font-mono text-[9.5px] font-extrabold leading-none tracking-[0.1em] text-white shadow-[0_5px_14px_-3px_rgba(22,163,74,0.65),0_0_0_2px_#fcfbf9]">
             <Sparkles className="h-2.5 w-2.5" />
@@ -123,12 +101,21 @@ export function CollectionCard({
           </span>
         )}
 
+        {isWishlisted && (
+          <span
+            title="Vœu actif"
+            className="absolute -left-1.5 -top-1.5 z-[6] inline-flex h-6 w-6 items-center justify-center rounded-full bg-[linear-gradient(135deg,#fbbf24,#d97706)] text-white shadow-[0_3px_8px_rgba(217,119,6,0.5),0_0_0_1.5px_#fcfbf9]"
+          >
+            <Star className="h-3 w-3" fill="currentColor" />
+          </span>
+        )}
+
         {isOwned && quantity > 1 && (
-          <span className="absolute -right-1.5 -top-1.5 z-[6] inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#1b1726] px-1 font-display text-[10px] font-extrabold leading-none text-white shadow-[0_3px_8px_rgba(27,23,38,0.4),0_0_0_1.5px_#fcfbf9]">
+          <span className="absolute -right-1.5 -top-1.5 z-[6] inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#1b1726] font-display text-[10px] font-extrabold leading-none text-white shadow-[0_3px_8px_rgba(27,23,38,0.4),0_0_0_1.5px_#fcfbf9]">
             ×{quantity}
           </span>
         )}
       </div>
-    </div>
+    </button>
   )
 }

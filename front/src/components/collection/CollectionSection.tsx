@@ -1,3 +1,4 @@
+import { useWishlist } from '../../queries/useWishlist.ts'
 import type { DisplayEntry } from '../../routes/_authenticated/collection.tsx'
 import { ArcadeCard } from '../shared/ArcadeCard.tsx'
 import { CollectionCard } from './CollectionCard.tsx'
@@ -9,6 +10,8 @@ type Props = {
 }
 
 export function CollectionSection({ title, entries, onDetail }: Props) {
+  const { data: wishlist } = useWishlist()
+
   const distinctCardIds = new Set(
     entries.filter((e) => e.isOwned).map((e) => e.card.id),
   )
@@ -40,6 +43,9 @@ export function CollectionSection({ title, entries, onDetail }: Props) {
             isOwned={entry.isOwned}
             level={entry.userCard?.level ?? null}
             palier={entry.userCard?.palier ?? null}
+            isWishlisted={
+              wishlist?.card?.id === entry.card.id && entry.variant === 'NORMAL'
+            }
             onClick={() => onDetail(entry)}
           />
         ))}
