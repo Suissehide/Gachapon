@@ -4,6 +4,7 @@ import { ShopApi } from '../api/shop.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
+import { isApiError } from '../libs/httpErrorHandler.ts'
 import { useAchievementUnlockStore } from '../stores/achievementUnlock.store.ts'
 
 export type { PurchaseResult, ShopItem } from '../api/shop.api.ts'
@@ -38,8 +39,9 @@ export const useBuyItem = () => {
       }
     },
     onError: (error) => {
+      const title = isApiError(error) && error.title ? error.title : "Erreur lors de l'achat"
       toast({
-        title: "Erreur lors de l'achat",
+        title,
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })

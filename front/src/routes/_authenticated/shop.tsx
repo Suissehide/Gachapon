@@ -115,10 +115,6 @@ function ShopPage() {
     toast({ title, message, severity: TOAST_SEVERITY.SUCCESS })
   }
 
-  const notifyError = (message: string) => {
-    toast({ title: 'Erreur', message, severity: TOAST_SEVERITY.ERROR })
-  }
-
   const handleBuyShop = (item: ShopItem) => {
     setBuyingShopId(item.id)
     const clickedAt = Date.now()
@@ -137,8 +133,7 @@ function ShopPage() {
           }, SUCCESS_MS)
         }, remaining)
       },
-      onError: (err) => {
-        notifyError(err.message)
+      onError: () => {
         setBuyingShopId(null)
       },
     })
@@ -158,8 +153,7 @@ function ShopPage() {
           setBuyingDailyId((id) => (id === item.id ? null : id))
         }, remaining)
       },
-      onError: (err) => {
-        notifyError(err.message)
+      onError: () => {
         setBuyingDailyId(null)
       },
     })
@@ -452,8 +446,8 @@ function StaticShopCard({
 }) {
   const canAfford = dust >= item.dustCost
   const supported = item.type === 'TOKEN_PACK' || item.type === 'MACHINE' || item.type === 'BOOST'
-  const isBoostActive = item.type === 'BOOST' && !!item.activeBoost
   const pulls = item.activeBoost?.pullsRemaining ?? 0
+  const isBoostActive = item.type === 'BOOST' && pulls > 0
 
   return (
     <div className={`rounded-xl border p-4 ${colorClass} flex flex-col gap-3`}>

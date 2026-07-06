@@ -5,6 +5,7 @@ import type { DailyShopResponse } from '../constants/daily-shop.constant.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
+import { isApiError } from '../libs/httpErrorHandler.ts'
 
 export const useDailyShop = () => {
   const query = useQuery({
@@ -40,8 +41,9 @@ export const useBuyDailyShopItem = () => {
       })
     },
     onError: (error) => {
+      const title = isApiError(error) && error.title ? error.title : "Erreur lors de l'achat"
       toast({
-        title: "Erreur lors de l'achat",
+        title,
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
