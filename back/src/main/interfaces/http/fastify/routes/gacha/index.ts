@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import { calculateTokens } from '../../../../../domain/economy/economy.domain'
+import { effectivePityThreshold } from '../../../../../domain/gacha/gacha.domain'
 import { wsManager } from '../../../../ws/ws-manager'
 import {
   pullBatchBodySchema,
@@ -9,6 +10,7 @@ import {
   pullResponseSchema,
   pullsHistoryQuerySchema,
   pullsRecentQuerySchema,
+  tokensBalanceResponseSchema,
 } from '../../schemas/gacha.schemas'
 
 export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
@@ -155,7 +157,10 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
   // GET /tokens/balance — solde de tokens (calcul lazy, sans écriture en DB)
   fastify.get(
     '/tokens/balance',
-    { onRequest: [fastify.verifySessionCookie] },
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: { response: { 200: tokensBalanceResponseSchema } },
+    },
     async (request) => {
       const user = await userRepository.findById(request.user.userID)
       if (!user) {
@@ -164,7 +169,11 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
 
       const [upgrades, cfg] = await Promise.all([
         skillTreeRepository.getEffectsForUser(request.user.userID),
-        configService.getMany('tokenRegenIntervalMinutes', 'tokenMaxStock'),
+        configService.getMany(
+          'tokenRegenIntervalMinutes',
+          'tokenMaxStock',
+          'pityThreshold',
+        ),
       ])
       const effectiveInterval = Math.max(
         1,
@@ -185,6 +194,11 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         tokens,
         maxStock: effectiveMaxStock,
         nextTokenAt: nextTokenAt?.toISOString() ?? null,
+        pityCurrent: user.pityCurrent,
+        pityThreshold: effectivePityThreshold(
+          cfg.pityThreshold,
+          upgrades.pityReduction ?? 0,
+        ),
       }
     },
   )

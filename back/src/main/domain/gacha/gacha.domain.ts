@@ -18,8 +18,8 @@ import type { ICardRepository } from '../../types/infra/orm/repositories/card.re
 import type { IGachaPullRepository } from '../../types/infra/orm/repositories/gacha-pull.repository.interface'
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
-import type { UserRewardRepositoryInterface } from '../../types/infra/orm/repositories/user-reward.repository.interface'
 import type { IUserCardRepository } from '../../types/infra/orm/repositories/user-card.repository.interface'
+import type { UserRewardRepositoryInterface } from '../../types/infra/orm/repositories/user-reward.repository.interface'
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import { calculateTokens } from '../economy/economy.domain'
 import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
@@ -95,12 +95,17 @@ function rarityKey(
   return map[rarity]
 }
 
-export function pickVariant(rarity: string, rates: VariantRates, variantLuckMultiplier = 1): CardVariant {
+export function pickVariant(
+  rarity: string,
+  rates: VariantRates,
+  variantLuckMultiplier = 1,
+): CardVariant {
   if (!(VARIANT_ELIGIBLE as readonly string[]).includes(rarity)) {
     return 'NORMAL' as CardVariant
   }
   const key = rarityKey(rarity as VariantEligibleRarity)
-  const brilliantRate = (rates[`brilliantRate${key}`] ?? 0) * variantLuckMultiplier
+  const brilliantRate =
+    (rates[`brilliantRate${key}`] ?? 0) * variantLuckMultiplier
   const holoRate = (rates[`holoRate${key}`] ?? 0) * variantLuckMultiplier
   // Note: multiplied rates are not capped; combined brilliant+holo > 100 makes NORMAL unreachable by design
   // (les taux réels du jeu sont ≤ 5 % × 2 max, donc ce cas ne survient pas en pratique)
@@ -112,6 +117,14 @@ export function pickVariant(rarity: string, rates: VariantRates, variantLuckMult
     return 'HOLOGRAPHIC' as CardVariant
   }
   return 'NORMAL' as CardVariant
+}
+
+/** Seuil de pity effectif pour un utilisateur (réduction skill tree, plancher 10). */
+export function effectivePityThreshold(
+  pityThreshold: number,
+  pityReduction = 0,
+): number {
+  return Math.max(10, pityThreshold - pityReduction)
 }
 
 function isPrismaSerializationError(err: unknown): boolean {
@@ -140,7 +153,9 @@ type StepOutcome = {
   card: CardWithSet
   wasDuplicate: boolean
   dustEarned: number
-  unlockedAchievements: Awaited<ReturnType<AchievementsDomainInterface['track']>>
+  unlockedAchievements: Awaited<
+    ReturnType<AchievementsDomainInterface['track']>
+  >
   nextPity: number
   wasGoldenBall: boolean
 }
@@ -184,7 +199,11 @@ export class GachaDomain implements GachaDomainInterface {
     cfg: PullCfg,
   ): Promise<{
     user: Awaited<ReturnType<UserRepositoryInterface['findByIdOrThrowInTx']>>
-    state: { currentTokens: number; currentPity: number; newLastTokenAt: Date | null }
+    state: {
+      currentTokens: number
+      currentPity: number
+      newLastTokenAt: Date | null
+    }
   }> {
     const user = await this.#userRepository.findByIdOrThrowInTx(tx, userId)
     const effectiveInterval = Math.max(
@@ -219,13 +238,21 @@ export class GachaDomain implements GachaDomainInterface {
     card: CardWithSet
     wasDuplicate: boolean
     dustEarned: number
-    unlockedAchievements: Awaited<ReturnType<AchievementsDomainInterface['track']>>
+    unlockedAchievements: Awaited<
+      ReturnType<AchievementsDomainInterface['track']>
+    >
     nextPity: number
     wasGoldenBall: boolean
   }> {
-    const effectivePityThreshold = Math.max(10, cfg.pityThreshold - (cfg.upgrades.pityReduction ?? 0))
-    const isPityForced = stepState.currentPity >= effectivePityThreshold
-    let activeCards = await this.#cardRepository.findActiveForPullInTx(tx, isPityForced)
+    const pityThreshold = effectivePityThreshold(
+      cfg.pityThreshold,
+      cfg.upgrades.pityReduction ?? 0,
+    )
+    const isPityForced = stepState.currentPity >= pityThreshold
+    let activeCards = await this.#cardRepository.findActiveForPullInTx(
+      tx,
+      isPityForced,
+    )
     if (activeCards.length === 0) {
       throw Boom.internal('No active cards in any set')
     }
@@ -243,7 +270,11 @@ export class GachaDomain implements GachaDomainInterface {
         ? pickWeightedRandom(activeCards)
         : pickWeightedRandomWithLuck(activeCards, cfg.upgrades.luckMultiplier)
     const variantLuckMultiplier = cfg.upgrades.variantLuckMultiplier ?? 1
-    const rolledVariant = pickVariant(card.rarity, cfg.variantRates, variantLuckMultiplier)
+    const rolledVariant = pickVariant(
+      card.rarity,
+      cfg.variantRates,
+      variantLuckMultiplier,
+    )
     const { wasDuplicate } = await this.#userCardRepository.upsertInTx(
       tx,
       userId,
@@ -310,7 +341,9 @@ export class GachaDomain implements GachaDomainInterface {
       throw Boom.paymentRequired('Not enough tokens')
     }
     const step = await this.#executeSinglePullStep(tx, userId, cfg, state)
-    const totalXp = Math.round(cfg.xpPerPull * (1 + (cfg.upgrades.pullXpBonus ?? 0) / 100))
+    const totalXp = Math.round(
+      cfg.xpPerPull * (1 + (cfg.upgrades.pullXpBonus ?? 0) / 100),
+    )
     const oldLevel = calculateLevel(
       user.xp,
       cfg.xpCurve.base,
@@ -323,7 +356,8 @@ export class GachaDomain implements GachaDomainInterface {
       cfg.xpCurve.slope,
       cfg.xpCurve.levelCap,
     )
-    const finalTokens = state.currentTokens - (isFreePull ? 0 : cfg.pullTokenCost)
+    const finalTokens =
+      state.currentTokens - (isFreePull ? 0 : cfg.pullTokenCost)
     const gained = skillPointsGained(oldLevel, newLevel)
     await this.#writeFinalUserUpdate(
       tx,
@@ -343,15 +377,17 @@ export class GachaDomain implements GachaDomainInterface {
             kind: 'TOKENS_SPENT',
             amount: spentAmount,
           })
-        : Promise.resolve([] as Awaited<ReturnType<AchievementsDomainInterface['track']>>),
+        : Promise.resolve(
+            [] as Awaited<ReturnType<AchievementsDomainInterface['track']>>,
+          ),
       newLevel > oldLevel
         ? this.#achievementsDomain.track(tx, userId, {
             kind: 'LEVEL_UP',
             newLevel,
           })
-        : Promise.resolve([] as Awaited<
-            ReturnType<AchievementsDomainInterface['track']>
-          >),
+        : Promise.resolve(
+            [] as Awaited<ReturnType<AchievementsDomainInterface['track']>>,
+          ),
     ])
     if (newLevel > oldLevel) {
       for (const pack of milestonesCrossed(oldLevel, newLevel)) {
@@ -517,11 +553,16 @@ export class GachaDomain implements GachaDomainInterface {
       return this.#postgresOrm.executeWithTransactionClient(
         // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: milestone loop added, refactor deferred
         async (tx) => {
-          const { user, state } = await this.#loadUserAndInitialState(tx, userId, cfg)
+          const { user, state } = await this.#loadUserAndInitialState(
+            tx,
+            userId,
+            cfg,
+          )
           // Pre-roll free-pull outcomes for all pulls BEFORE the token guard so that
           // users with freePullChance > 0 get identical parity to the single-pull path.
-          const preRolledFree = Array.from({ length: count }, () =>
-            Math.random() < (cfg.upgrades.freePullChance ?? 0) / 100
+          const preRolledFree = Array.from(
+            { length: count },
+            () => Math.random() < (cfg.upgrades.freePullChance ?? 0) / 100,
           )
           const paidCount = preRolledFree.filter((f) => !f).length
           if (state.currentTokens < paidCount * cfg.pullTokenCost) {
@@ -538,9 +579,13 @@ export class GachaDomain implements GachaDomainInterface {
           let currentPity = state.currentPity
           let totalDust = 0
           let totalActualCost = 0
-          const xpPerPullBonused = Math.round(cfg.xpPerPull * (1 + (cfg.upgrades.pullXpBonus ?? 0) / 100))
+          const xpPerPullBonused = Math.round(
+            cfg.xpPerPull * (1 + (cfg.upgrades.pullXpBonus ?? 0) / 100),
+          )
           const totalXp = xpPerPullBonused * count
-          const pullUnlocks: Awaited<ReturnType<AchievementsDomainInterface['track']>> = []
+          const pullUnlocks: Awaited<
+            ReturnType<AchievementsDomainInterface['track']>
+          > = []
           for (let i = 0; i < count; i++) {
             const isFreePull = preRolledFree[i] ?? false
             stepFreePulls.push(isFreePull)
@@ -579,13 +624,21 @@ export class GachaDomain implements GachaDomainInterface {
                   kind: 'TOKENS_SPENT',
                   amount: totalActualCost,
                 })
-              : Promise.resolve([] as Awaited<ReturnType<AchievementsDomainInterface['track']>>),
+              : Promise.resolve(
+                  [] as Awaited<
+                    ReturnType<AchievementsDomainInterface['track']>
+                  >,
+                ),
             newLevel > oldLevel
               ? this.#achievementsDomain.track(tx, userId, {
                   kind: 'LEVEL_UP',
                   newLevel,
                 })
-              : Promise.resolve([] as Awaited<ReturnType<AchievementsDomainInterface['track']>>),
+              : Promise.resolve(
+                  [] as Awaited<
+                    ReturnType<AchievementsDomainInterface['track']>
+                  >,
+                ),
           ])
           if (newLevel > oldLevel) {
             for (const pack of milestonesCrossed(oldLevel, newLevel)) {
@@ -602,7 +655,10 @@ export class GachaDomain implements GachaDomainInterface {
           }
           const dedupedAchievements = [
             ...new Map(
-              [...pullUnlocks, ...spentUnlocks, ...levelUnlocks].map((a) => [a.key, a]),
+              [...pullUnlocks, ...spentUnlocks, ...levelUnlocks].map((a) => [
+                a.key,
+                a,
+              ]),
             ).values(),
           ]
           return {

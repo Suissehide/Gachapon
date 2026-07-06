@@ -88,3 +88,13 @@ export const pullsRecentQuerySchema = z.object({
   teamId: z.string().uuid().optional(),
   rarities: raritiesCsvSchema,
 })
+
+// ── GET /tokens/balance ─────────────────────────────────────────────────────
+
+export const tokensBalanceResponseSchema = z.object({
+  tokens: z.number().int(),
+  maxStock: z.number().int(),
+  nextTokenAt: z.string().nullable(),
+  pityCurrent: z.number().int(),
+  pityThreshold: z.number().int(),
+})
