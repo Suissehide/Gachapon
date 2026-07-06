@@ -28,6 +28,7 @@ export type PullResult = {
   unlockedAchievements: UnlockedAchievement[]
   wasFreePull: boolean
   wasGoldenBall: boolean
+  wasBoostGuarantee: boolean
 }
 
 export type PullBatchResult = {
@@ -39,6 +40,7 @@ export type PullBatchResult = {
     pityCurrent: number
     wasFreePull: boolean
     wasGoldenBall: boolean
+    wasBoostGuarantee: boolean
   }>
   tokensRemaining: number
   xpGained: number

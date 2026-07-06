@@ -1,5 +1,5 @@
 import { describe, expect, it, jest } from '@jest/globals'
-import { GachaDomain, pickWeightedRandom, pickVariant } from '../../main/domain/gacha/gacha.domain'
+import { GachaDomain, pickWeightedRandom, pickVariant, weightFor } from '../../main/domain/gacha/gacha.domain'
 import type { CardWithSet } from '../../main/types/domain/gacha/gacha.types'
 
 function makeCard(name: string, weight: number, rarity = 'COMMON'): CardWithSet {
@@ -192,6 +192,14 @@ function buildDomain(opts: {
   updateAfterPullInTx?: ReturnType<typeof jest.fn>
   createInTx?: ReturnType<typeof jest.fn>
   upsertInTx?: ReturnType<typeof jest.fn>
+  activeBoosts?: Array<{
+    id: string
+    weightMultiplier: number | null
+    weightRarity: string | null
+    guaranteedRarity: string | null
+    pullsRemaining: number
+    satisfied: boolean
+  }>
 }): { domain: GachaDomain; mocks: Record<string, ReturnType<typeof jest.fn>> } {
   const pullTokenCost = opts.pullTokenCost ?? 1
   const pityThreshold = opts.pityThreshold ?? 50
@@ -279,6 +287,11 @@ function buildDomain(opts: {
     track: jest.fn<() => Promise<[]>>().mockResolvedValue([]),
   }
 
+  const activeBoostsData = opts.activeBoosts ?? []
+  const findActiveByUserInTx = jest.fn().mockResolvedValue(activeBoostsData)
+  const decrementInTx = jest.fn().mockResolvedValue({})
+  const userBoostRepository = { findActiveByUserInTx, decrementInTx }
+
   const domain = new GachaDomain({
     postgresOrm,
     configService,
@@ -288,6 +301,7 @@ function buildDomain(opts: {
     gachaPullRepository,
     skillTreeRepository,
     achievementsDomain,
+    userBoostRepository,
   } as any)
 
   return {
@@ -297,6 +311,8 @@ function buildDomain(opts: {
       createInTx,
       upsertInTx,
       findActiveForPullInTx,
+      findActiveByUserInTx,
+      decrementInTx,
     },
   }
 }
@@ -438,5 +454,176 @@ describe('GachaDomain.pullBatch', () => {
     })
     await domainAt10.pullBatch('user-1', 1)
     expect(mocks10.findActiveForPullInTx).toHaveBeenCalledWith(expect.anything(), true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Boost unit tests (Task 4)
+// ---------------------------------------------------------------------------
+
+describe('weightFor', () => {
+  it('boost x2 RARE: double le poids RARE, laisse COMMON inchangé', () => {
+    const rareCard = makeCard('rare', 53, 'RARE')
+    const commonCard = makeCard('common', 136, 'COMMON')
+    const boost = { weightMultiplier: 2, weightRarity: 'RARE' as any }
+    // RARE: dropWeight 53 × luckMultiplier 1.0 (RARE+) × weightMultiplier 2 = 106
+    expect(weightFor(rareCard, 1.0, boost)).toBe(106)
+    // COMMON: dropWeight 136 × 1 (not RARE+) × 1 (not weightRarity) = 136
+    expect(weightFor(commonCard, 1.0, boost)).toBe(136)
+  })
+
+  it('sans boost: comportement identique à dropWeight × luck', () => {
+    const rareCard = makeCard('rare', 50, 'RARE')
+    const commonCard = makeCard('common', 100, 'COMMON')
+    expect(weightFor(rareCard, 1.0)).toBe(50)
+    expect(weightFor(commonCard, 1.0)).toBe(100)
+    expect(weightFor(rareCard, 2.0)).toBe(100)  // luck applies to RARE
+    expect(weightFor(commonCard, 2.0)).toBe(100) // luck does not apply to COMMON
+  })
+
+  it('weightRarity null: le boost de poids est ignoré (pas de multiplication)', () => {
+    const rareCard = makeCard('rare', 50, 'RARE')
+    const boost = { weightMultiplier: 3, weightRarity: null as any }
+    expect(weightFor(rareCard, 1.0, boost)).toBe(50) // ignored, stays 50
+  })
+})
+
+describe('GachaDomain boost: trigger conditions', () => {
+  afterEach(() => jest.restoreAllMocks())
+
+  function makeMultiRarityCards(): CardWithSet[] {
+    return [
+      makeCardWithSet('common-1', 'COMMON'),
+      makeCardWithSet('epic-1', 'EPIC'),
+      makeCardWithSet('legendary-1', 'LEGENDARY'),
+    ]
+  }
+
+  it('pullsRemaining=1 unsatisfied → pool filtré EPIC+, wasBoostGuarantee=true', async () => {
+    jest.spyOn(Math, 'random').mockReturnValue(0) // pick first card in pool
+    const cards = makeMultiRarityCards()
+    const { domain } = buildDomain({
+      tokens: 10,
+      pity: 0,
+      xp: 0,
+      pullTokenCost: 1,
+      cardFactory: () => cards[Math.floor(Math.random() * cards.length)] as CardWithSet,
+      activeBoosts: [
+        {
+          id: 'boost-1',
+          weightMultiplier: null,
+          weightRarity: null,
+          guaranteedRarity: 'EPIC',
+          pullsRemaining: 1,
+          satisfied: false,
+        },
+      ],
+    })
+    // Override findActiveForPullInTx to return all cards
+    const { domain: d, mocks } = buildDomain({
+      tokens: 10,
+      pity: 0,
+      xp: 0,
+      pullTokenCost: 1,
+      activeBoosts: [
+        {
+          id: 'boost-1',
+          weightMultiplier: null,
+          weightRarity: null,
+          guaranteedRarity: 'EPIC',
+          pullsRemaining: 1,
+          satisfied: false,
+        },
+      ],
+    })
+    mocks.findActiveForPullInTx.mockResolvedValue(cards)
+    const result = await d.pull('user-1')
+    // With Math.random()=0: first card in EPIC+ pool → EPIC
+    expect(['EPIC', 'LEGENDARY']).toContain(result.card.rarity)
+    expect(result.wasBoostGuarantee).toBe(true)
+  })
+
+  it('satisfied=true → pas de filtre boost garanti, wasBoostGuarantee=false', async () => {
+    jest.spyOn(Math, 'random').mockReturnValue(0) // pick first card (COMMON)
+    const cards = makeMultiRarityCards()
+    const { domain: d, mocks } = buildDomain({
+      tokens: 10,
+      pity: 0,
+      xp: 0,
+      pullTokenCost: 1,
+      activeBoosts: [
+        {
+          id: 'boost-1',
+          weightMultiplier: null,
+          weightRarity: null,
+          guaranteedRarity: 'EPIC',
+          pullsRemaining: 1,
+          satisfied: true, // already satisfied → no guarantee filter
+        },
+      ],
+    })
+    mocks.findActiveForPullInTx.mockResolvedValue(cards)
+    const result = await d.pull('user-1')
+    // With Math.random()=0: first card in full pool → COMMON
+    expect(result.card.rarity).toBe('COMMON')
+    expect(result.wasBoostGuarantee).toBe(false)
+  })
+
+  it('pullsRemaining=3 → pas de filtre boost garanti (seulement sur le dernier tirage)', async () => {
+    jest.spyOn(Math, 'random').mockReturnValue(0)
+    const cards = makeMultiRarityCards()
+    const { domain: d, mocks } = buildDomain({
+      tokens: 10,
+      pity: 0,
+      xp: 0,
+      pullTokenCost: 1,
+      activeBoosts: [
+        {
+          id: 'boost-1',
+          weightMultiplier: null,
+          weightRarity: null,
+          guaranteedRarity: 'EPIC',
+          pullsRemaining: 3, // 3 remaining, not the last → no guarantee
+          satisfied: false,
+        },
+      ],
+    })
+    mocks.findActiveForPullInTx.mockResolvedValue(cards)
+    const result = await d.pull('user-1')
+    expect(result.card.rarity).toBe('COMMON') // no filter, first card
+    expect(result.wasBoostGuarantee).toBe(false)
+  })
+})
+
+describe('GachaDomain boost: préséance pity > garantie', () => {
+  afterEach(() => jest.restoreAllMocks())
+
+  it('pity forcé + garantie active → pool LEGENDARY (pity gagne), wasBoostGuarantee=false', async () => {
+    jest.spyOn(Math, 'random').mockReturnValue(0)
+    const legendaryCard = makeCardWithSet('legendary-1', 'LEGENDARY')
+    const commonCard = makeCardWithSet('common-1', 'COMMON')
+    const { domain: d, mocks } = buildDomain({
+      tokens: 10,
+      pity: 50,       // pityThreshold=50 → isPityForced=true
+      xp: 0,
+      pityThreshold: 50,
+      pullTokenCost: 1,
+      cardFactory: (forceLegendary) => (forceLegendary ? legendaryCard : commonCard),
+      activeBoosts: [
+        {
+          id: 'boost-1',
+          weightMultiplier: null,
+          weightRarity: null,
+          guaranteedRarity: 'EPIC',
+          pullsRemaining: 1,
+          satisfied: false,
+        },
+      ],
+    })
+    const result = await d.pull('user-1')
+    expect(result.card.rarity).toBe('LEGENDARY') // pity wins
+    expect(result.wasBoostGuarantee).toBe(false)  // guarantee did NOT fire
+    // findActiveForPullInTx was called with forceLegendary=true (pity)
+    expect(mocks.findActiveForPullInTx).toHaveBeenCalledWith(expect.anything(), true)
   })
 })

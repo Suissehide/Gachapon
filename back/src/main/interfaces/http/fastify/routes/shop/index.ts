@@ -2,26 +2,48 @@ import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import {
   buyShopItemResponseSchema,
+  getShopResponseSchema,
   shopItemIdParamSchema,
 } from '../../schemas/shop.schema'
 
 export const shopRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { shopItemRepository, shopDomain } = fastify.iocContainer
+  const { shopItemRepository, shopDomain, userBoostRepository } = fastify.iocContainer
 
   fastify.get(
     '/shop',
-    { onRequest: [fastify.verifySessionCookie] },
-    async () => {
-      const items = await shopItemRepository.findActive()
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: { response: { 200: getShopResponseSchema } },
+    },
+    async (request) => {
+      const userId = request.user.userID
+      const [items, activeBoosts] = await Promise.all([
+        shopItemRepository.findActive(),
+        userBoostRepository.findActiveByUser(userId),
+      ])
       return {
-        items: items.map((item) => ({
-          id: item.id,
-          name: item.name,
-          description: item.description,
-          type: item.type,
-          dustCost: item.dustCost,
-          value: item.value,
-        })),
+        items: items.map((item) => {
+          let activeBoost: { pullsRemaining: number } | null = null
+          if (item.type === 'BOOST') {
+            const boostValue = item.value as { multiplier?: number; guaranteedRarity?: string }
+            const isWeightBoost = boostValue.multiplier != null
+            const matchingBoost = isWeightBoost
+              ? activeBoosts.find((b) => b.weightMultiplier != null)
+              : activeBoosts.find((b) => b.guaranteedRarity != null)
+            if (matchingBoost) {
+              activeBoost = { pullsRemaining: matchingBoost.pullsRemaining }
+            }
+          }
+          return {
+            id: item.id,
+            name: item.name,
+            description: item.description,
+            type: item.type,
+            dustCost: item.dustCost,
+            value: item.value,
+            activeBoost,
+          }
+        }),
       }
     },
   )

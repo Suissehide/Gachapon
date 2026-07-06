@@ -83,6 +83,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         unlockedAchievements: result.unlockedAchievements,
         wasFreePull: result.wasFreePull,
         wasGoldenBall: result.wasGoldenBall,
+        wasBoostGuarantee: result.wasBoostGuarantee,
       })
     },
   )
@@ -116,6 +117,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         pityCurrent: p.pityCurrent,
         wasFreePull: p.wasFreePull,
         wasGoldenBall: p.wasGoldenBall,
+        wasBoostGuarantee: p.wasBoostGuarantee,
       }))
 
       wsManager.notify(request.user.userID, {

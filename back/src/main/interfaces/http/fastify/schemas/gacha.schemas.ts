@@ -21,6 +21,7 @@ export const pullResponseSchema = z.object({
   unlockedAchievements: z.array(unlockedAchievementSchema).optional(),
   wasFreePull: z.boolean(),
   wasGoldenBall: z.boolean(),
+  wasBoostGuarantee: z.boolean(),
 })
 
 // ── POST /pulls/batch ────────────────────────────────────────────────────────
@@ -45,6 +46,7 @@ export const pullBatchResponseSchema = z.object({
       pityCurrent: z.number().int(),
       wasFreePull: z.boolean(),
       wasGoldenBall: z.boolean(),
+      wasBoostGuarantee: z.boolean(),
     }),
   ),
   tokensRemaining: z.number().int(),

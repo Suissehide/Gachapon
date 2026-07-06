@@ -21,6 +21,6 @@ export interface IUserBoostRepository {
   decrementInTx(
     tx: PrimaTransactionClient,
     id: string,
-    opts?: { satisfied?: boolean },
+    opts?: { satisfied?: boolean; by?: number },
   ): Promise<UserBoost>
 }

@@ -33,12 +33,12 @@ export class UserBoostRepository implements IUserBoostRepository {
   decrementInTx(
     tx: PrimaTransactionClient,
     id: string,
-    opts?: { satisfied?: boolean },
+    opts?: { satisfied?: boolean; by?: number },
   ): Promise<UserBoost> {
     return tx.userBoost.update({
       where: { id },
       data: {
-        pullsRemaining: { decrement: 1 },
+        pullsRemaining: { decrement: opts?.by ?? 1 },
         ...(opts?.satisfied !== undefined ? { satisfied: opts.satisfied } : {}),
       },
     })

@@ -4,6 +4,7 @@ import type { IocContainer } from '../../types/application/ioc'
 import type { UserUpgradeEffects } from '../../types/domain/economy/economy.types'
 import type { GachaDomainInterface } from '../../types/domain/gacha/gacha.domain.interface'
 import type {
+  CardRarity,
   CardVariant,
   CardWithSet,
   PullBatchResult,
@@ -20,22 +21,52 @@ import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/sk
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 import type { UserRewardRepositoryInterface } from '../../types/infra/orm/repositories/user-reward.repository.interface'
 import type { IUserCardRepository } from '../../types/infra/orm/repositories/user-card.repository.interface'
+import type { IUserBoostRepository } from '../../types/infra/orm/repositories/user-boost.repository.interface'
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import { calculateTokens } from '../economy/economy.domain'
 import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
 import { calculateLevel } from '../shared/xp'
 
-export function pickWeightedRandom(cards: CardWithSet[]): CardWithSet {
+// ---------------------------------------------------------------------------
+// Boost weight helper (exported for unit tests)
+// ---------------------------------------------------------------------------
+
+/**
+ * Computes the effective draw weight for a card, applying luck and boost multipliers.
+ *
+ * Formula: dropWeight × (RARE+? luckMultiplier : 1) × (rarity === weightRarity ? weightMultiplier : 1)
+ *
+ * Null weightRarity is silently ignored (no multiplication, no crash).
+ */
+export function weightFor(
+  card: CardWithSet,
+  luckMultiplier: number,
+  weightBoost?: { weightMultiplier: number; weightRarity: CardRarity | null },
+): number {
+  const LUCK_RARITIES = new Set(['RARE', 'EPIC', 'LEGENDARY'])
+  const base = LUCK_RARITIES.has(card.rarity)
+    ? card.dropWeight * luckMultiplier
+    : card.dropWeight
+  if (weightBoost && weightBoost.weightRarity != null && card.rarity === (weightBoost.weightRarity as string)) {
+    return base * weightBoost.weightMultiplier
+  }
+  return base
+}
+
+export function pickWeightedRandom(
+  cards: CardWithSet[],
+  weightBoost?: { weightMultiplier: number; weightRarity: CardRarity | null },
+): CardWithSet {
   if (cards.length === 0) {
     throw new Error('No cards to pick from')
   }
-  const total = cards.reduce((sum, c) => sum + c.dropWeight, 0)
+  const total = cards.reduce((sum, c) => sum + weightFor(c, 1.0, weightBoost), 0)
   if (total === 0) {
     throw new Error('All cards have zero weight')
   }
   let roll = Math.random() * total
   for (const card of cards) {
-    roll -= card.dropWeight
+    roll -= weightFor(card, 1.0, weightBoost)
     if (roll <= 0) {
       return card
     }
@@ -47,16 +78,14 @@ export function pickWeightedRandom(cards: CardWithSet[]): CardWithSet {
 export function pickWeightedRandomWithLuck(
   cards: CardWithSet[],
   luckMultiplier: number,
+  weightBoost?: { weightMultiplier: number; weightRarity: CardRarity | null },
 ): CardWithSet {
   if (cards.length === 0) {
     throw new Error('No cards to pick from')
   }
-  const LUCK_RARITIES = new Set(['RARE', 'EPIC', 'LEGENDARY'])
   const weighted = cards.map((card) => ({
     card,
-    weight: LUCK_RARITIES.has(card.rarity)
-      ? card.dropWeight * luckMultiplier
-      : card.dropWeight,
+    weight: weightFor(card, luckMultiplier, weightBoost),
   }))
   const total = weighted.reduce((sum, { weight }) => sum + weight, 0)
   if (total === 0) {
@@ -135,6 +164,33 @@ type PullCfg = {
   xpCurve: { base: number; slope: number; levelCap: number }
 }
 
+// ---------------------------------------------------------------------------
+// In-memory boost tracking (shared across steps in a batch)
+// ---------------------------------------------------------------------------
+
+type BoostState = {
+  id: string
+  weightMultiplier: number | null
+  weightRarity: string | null
+  guaranteedRarity: string | null
+  pullsRemaining: number
+  satisfied: boolean
+  /** Number of pulls consumed so far — used to persist a single bulk decrement. */
+  pullsConsumed: number
+}
+
+const RARITY_ORDER: Record<string, number> = {
+  COMMON: 0,
+  UNCOMMON: 1,
+  RARE: 2,
+  EPIC: 3,
+  LEGENDARY: 4,
+}
+
+function rarityGte(a: string, b: string): boolean {
+  return (RARITY_ORDER[a] ?? -1) >= (RARITY_ORDER[b] ?? -1)
+}
+
 type StepOutcome = {
   pull: Awaited<ReturnType<IGachaPullRepository['createInTx']>>
   card: CardWithSet
@@ -143,6 +199,7 @@ type StepOutcome = {
   unlockedAchievements: Awaited<ReturnType<AchievementsDomainInterface['track']>>
   nextPity: number
   wasGoldenBall: boolean
+  wasBoostGuarantee: boolean
 }
 
 export class GachaDomain implements GachaDomainInterface {
@@ -155,6 +212,7 @@ export class GachaDomain implements GachaDomainInterface {
   readonly #skillTreeRepository: ISkillTreeRepository
   readonly #achievementsDomain: AchievementsDomainInterface
   readonly #userRewardRepository: UserRewardRepositoryInterface
+  readonly #userBoostRepository: IUserBoostRepository
 
   constructor({
     postgresOrm,
@@ -166,6 +224,7 @@ export class GachaDomain implements GachaDomainInterface {
     skillTreeRepository,
     achievementsDomain,
     userRewardRepository,
+    userBoostRepository,
   }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#configService = configService
@@ -176,6 +235,7 @@ export class GachaDomain implements GachaDomainInterface {
     this.#skillTreeRepository = skillTreeRepository
     this.#achievementsDomain = achievementsDomain
     this.#userRewardRepository = userRewardRepository
+    this.#userBoostRepository = userBoostRepository
   }
 
   async #loadUserAndInitialState(
@@ -209,39 +269,78 @@ export class GachaDomain implements GachaDomainInterface {
     }
   }
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: boost + pity + golden-ball precedence logic, refactor deferred
   async #executeSinglePullStep(
     tx: PrimaTransactionClient,
     userId: string,
     cfg: PullCfg,
     stepState: { currentTokens: number; currentPity: number },
-  ): Promise<{
-    pull: Awaited<ReturnType<IGachaPullRepository['createInTx']>>
-    card: CardWithSet
-    wasDuplicate: boolean
-    dustEarned: number
-    unlockedAchievements: Awaited<ReturnType<AchievementsDomainInterface['track']>>
-    nextPity: number
-    wasGoldenBall: boolean
-  }> {
+    boosts: BoostState[],
+  ): Promise<StepOutcome> {
     const effectivePityThreshold = Math.max(10, cfg.pityThreshold - (cfg.upgrades.pityReduction ?? 0))
     const isPityForced = stepState.currentPity >= effectivePityThreshold
     let activeCards = await this.#cardRepository.findActiveForPullInTx(tx, isPityForced)
     if (activeCards.length === 0) {
       throw Boom.internal('No active cards in any set')
     }
+
+    let wasBoostGuarantee = false
+
     const goldenBallChance = cfg.upgrades.goldenBallChance ?? 0
+    // Roll golden ball before guarantee check (short-circuit: not rolled when pity fires)
     const isGolden = !isPityForced && Math.random() < goldenBallChance / 100
-    if (isGolden) {
-      const GOLDEN_RARITIES = new Set(['RARE', 'EPIC', 'LEGENDARY'])
-      const filtered = activeCards.filter((c) => GOLDEN_RARITIES.has(c.rarity))
-      if (filtered.length > 0) {
-        activeCards = filtered
+
+    if (!isPityForced) {
+      // Guarantee boost fires only on the LAST pull (pullsRemaining === 1) when unsatisfied.
+      // Precedence: guarantee > golden ball.
+      const guaranteeBoost = boosts.find(
+        (b) => b.guaranteedRarity != null && !b.satisfied && b.pullsRemaining === 1,
+      )
+      if (guaranteeBoost) {
+        const GUARANTEE_RARITIES = new Set(['EPIC', 'LEGENDARY'])
+        const filtered = activeCards.filter((c) => GUARANTEE_RARITIES.has(c.rarity))
+        if (filtered.length > 0) {
+          activeCards = filtered
+          wasBoostGuarantee = true
+        }
+        // else: fallback to unfiltered list (existing pattern)
+      } else if (isGolden) {
+        const GOLDEN_RARITIES = new Set(['RARE', 'EPIC', 'LEGENDARY'])
+        const filtered = activeCards.filter((c) => GOLDEN_RARITIES.has(c.rarity))
+        if (filtered.length > 0) {
+          activeCards = filtered
+        }
       }
     }
+
+    // Weight boost: find an active boost with a non-null weightRarity (null is ignored defensively)
+    const weightBoostState = boosts.find(
+      (b) => b.weightMultiplier != null && b.weightRarity != null && b.pullsRemaining > 0,
+    )
+    const weightBoostArg = weightBoostState
+      ? { weightMultiplier: weightBoostState.weightMultiplier!, weightRarity: weightBoostState.weightRarity as CardRarity }
+      : undefined
+
     const card =
       cfg.upgrades.luckMultiplier === 1.0
-        ? pickWeightedRandom(activeCards)
-        : pickWeightedRandomWithLuck(activeCards, cfg.upgrades.luckMultiplier)
+        ? pickWeightedRandom(activeCards, weightBoostArg)
+        : pickWeightedRandomWithLuck(activeCards, cfg.upgrades.luckMultiplier, weightBoostArg)
+
+    // Update boost states in memory (decrement all active boosts, set satisfied on guarantee)
+    for (const boost of boosts) {
+      if (boost.pullsRemaining > 0) {
+        boost.pullsRemaining -= 1
+        boost.pullsConsumed += 1
+        if (
+          boost.guaranteedRarity != null &&
+          !boost.satisfied &&
+          rarityGte(card.rarity, boost.guaranteedRarity)
+        ) {
+          boost.satisfied = true
+        }
+      }
+    }
+
     const variantLuckMultiplier = cfg.upgrades.variantLuckMultiplier ?? 1
     const rolledVariant = pickVariant(card.rarity, cfg.variantRates, variantLuckMultiplier)
     const { wasDuplicate } = await this.#userCardRepository.upsertInTx(
@@ -274,6 +373,7 @@ export class GachaDomain implements GachaDomainInterface {
       unlockedAchievements: pullUnlocks,
       nextPity,
       wasGoldenBall: isGolden,
+      wasBoostGuarantee,
     }
   }
 
@@ -299,6 +399,20 @@ export class GachaDomain implements GachaDomainInterface {
     })
   }
 
+  async #persistBoostDecrements(
+    tx: PrimaTransactionClient,
+    boosts: BoostState[],
+  ): Promise<void> {
+    for (const boost of boosts) {
+      if (boost.pullsConsumed > 0) {
+        await this.#userBoostRepository.decrementInTx(tx, boost.id, {
+          by: boost.pullsConsumed,
+          ...(boost.satisfied ? { satisfied: true } : {}),
+        })
+      }
+    }
+  }
+
   async #executePullTx(
     tx: PrimaTransactionClient,
     userId: string,
@@ -309,7 +423,24 @@ export class GachaDomain implements GachaDomainInterface {
     if (!isFreePull && state.currentTokens < cfg.pullTokenCost) {
       throw Boom.paymentRequired('Not enough tokens')
     }
-    const step = await this.#executeSinglePullStep(tx, userId, cfg, state)
+
+    // Load boosts in TX at step start (single-pull path)
+    const rawBoosts = await this.#userBoostRepository.findActiveByUserInTx(tx, userId)
+    const boosts: BoostState[] = rawBoosts.map((b) => ({
+      id: b.id,
+      weightMultiplier: b.weightMultiplier,
+      weightRarity: b.weightRarity,
+      guaranteedRarity: b.guaranteedRarity,
+      pullsRemaining: b.pullsRemaining,
+      satisfied: b.satisfied,
+      pullsConsumed: 0,
+    }))
+
+    const step = await this.#executeSinglePullStep(tx, userId, cfg, state, boosts)
+
+    // Persist boost decrements immediately after the single pull
+    await this.#persistBoostDecrements(tx, boosts)
+
     const totalXp = Math.round(cfg.xpPerPull * (1 + (cfg.upgrades.pullXpBonus ?? 0) / 100))
     const oldLevel = calculateLevel(
       user.xp,
@@ -381,6 +512,7 @@ export class GachaDomain implements GachaDomainInterface {
       ],
       wasFreePull: isFreePull,
       wasGoldenBall: step.wasGoldenBall,
+      wasBoostGuarantee: step.wasBoostGuarantee,
     }
   }
 
@@ -518,6 +650,19 @@ export class GachaDomain implements GachaDomainInterface {
         // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: milestone loop added, refactor deferred
         async (tx) => {
           const { user, state } = await this.#loadUserAndInitialState(tx, userId, cfg)
+
+          // Load boosts ONCE at batch start; track in memory across steps
+          const rawBoosts = await this.#userBoostRepository.findActiveByUserInTx(tx, userId)
+          const boosts: BoostState[] = rawBoosts.map((b) => ({
+            id: b.id,
+            weightMultiplier: b.weightMultiplier,
+            weightRarity: b.weightRarity,
+            guaranteedRarity: b.guaranteedRarity,
+            pullsRemaining: b.pullsRemaining,
+            satisfied: b.satisfied,
+            pullsConsumed: 0,
+          }))
+
           // Pre-roll free-pull outcomes for all pulls BEFORE the token guard so that
           // users with freePullChance > 0 get identical parity to the single-pull path.
           const preRolledFree = Array.from({ length: count }, () =>
@@ -548,12 +693,16 @@ export class GachaDomain implements GachaDomainInterface {
             const step = await this.#executeSinglePullStep(tx, userId, cfg, {
               currentTokens: state.currentTokens - totalActualCost,
               currentPity,
-            })
+            }, boosts)
             stepResults.push(step)
             currentPity = step.nextPity
             totalDust += step.dustEarned
             pullUnlocks.push(...step.unlockedAchievements)
           }
+
+          // Persist boost decrements ONCE at batch end (bulk decrement per boost)
+          await this.#persistBoostDecrements(tx, boosts)
+
           const finalTokens = state.currentTokens - totalActualCost
           const newLevel = calculateLevel(
             user.xp + totalXp,
@@ -614,6 +763,7 @@ export class GachaDomain implements GachaDomainInterface {
               pityCurrent: s.nextPity,
               wasFreePull: stepFreePulls[idx] ?? false,
               wasGoldenBall: s.wasGoldenBall,
+              wasBoostGuarantee: s.wasBoostGuarantee,
             })),
             tokensRemaining: finalTokens,
             xpGained: totalXp,
