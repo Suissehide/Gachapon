@@ -176,8 +176,9 @@ describe('Wishlist routes', () => {
     })
     expect(res.statusCode).toBe(429)
     const body = res.json()
-    // availableAt should be in the error message/payload
-    expect(body.message).toBeDefined()
+    // availableAt is now at the top level of the error payload (not buried in message)
+    expect(typeof body.availableAt).toBe('string')
+    expect(new Date(body.availableAt).getTime()).toBeGreaterThan(Date.now())
   })
 
   it('Négociant niv 2 reduces effective cooldown to 5 days', async () => {

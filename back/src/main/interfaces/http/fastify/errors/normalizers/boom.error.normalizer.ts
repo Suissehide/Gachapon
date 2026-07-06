@@ -36,11 +36,7 @@ const boomErrorNormalizer: ErrorNormalizer = (
     if (isZodError(error)) {
       return formatZodErrorFromBoomError(error)
     }
-    return {
-      error: error.output.payload.error,
-      message: error.output.payload.message,
-      statusCode: error.output.payload.statusCode,
-    }
+    return { ...error.output.payload }
   }
   return undefined
 }

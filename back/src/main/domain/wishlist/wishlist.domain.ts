@@ -160,9 +160,9 @@ export class WishlistDomain implements IWishlistDomain {
           effectiveCooldownDays * 24 * 60 * 60 * 1000,
       )
       if (now < availableAt) {
-        throw Boom.tooManyRequests(
-          JSON.stringify({ availableAt: availableAt.toISOString() }),
-        )
+        const err = Boom.tooManyRequests('Cooldown actif')
+        err.output.payload = { ...err.output.payload, availableAt: availableAt.toISOString() }
+        throw err
       }
     }
 
@@ -181,6 +181,18 @@ export class WishlistDomain implements IWishlistDomain {
       const result = await this.#postgresOrm.executeWithTransactionClient(
         async (tx) => {
           const u = await tx.user.findUniqueOrThrow({ where: { id: userId } })
+          // Re-check cooldown inside tx to close the race on P2034 retry
+          // (effectiveCooldownDays captured outside tx is stable — it derives from config/effects, not mutable state)
+          if (u.wishlistPurchasedAt !== null) {
+            const availableAt = new Date(
+              u.wishlistPurchasedAt.getTime() + effectiveCooldownDays * 24 * 60 * 60 * 1000,
+            )
+            if (new Date() < availableAt) {
+              const err = Boom.tooManyRequests('Cooldown actif')
+              err.output.payload = { ...err.output.payload, availableAt: availableAt.toISOString() }
+              throw err
+            }
+          }
           if (u.dust < finalPrice) {
             throw Boom.paymentRequired('Not enough dust')
           }

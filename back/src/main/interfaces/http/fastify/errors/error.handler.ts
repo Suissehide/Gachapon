@@ -53,11 +53,7 @@ const buildErrorHandler = (...errorNormalizers: ErrorNormalizer[]) => {
         </html>
       `
     }
-    return {
-      error: errorResponse.error,
-      message: errorResponse.message,
-      statusCode: errorResponse.statusCode,
-    }
+    return { ...errorResponse }
   }
 }
 

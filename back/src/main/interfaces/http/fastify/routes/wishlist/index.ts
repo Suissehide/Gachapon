@@ -1,6 +1,10 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
-import { setWishBodySchema } from '../../schemas/wishlist.schema'
+import {
+  setWishBodySchema,
+  wishlistPurchaseResponseSchema,
+  wishlistStatusResponseSchema,
+} from '../../schemas/wishlist.schema'
 
 export const wishlistRouter: FastifyPluginCallbackZod = (fastify) => {
   const { wishlistDomain, storageClient } = fastify.iocContainer
@@ -10,7 +14,10 @@ export const wishlistRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.get(
     '/wishlist',
-    { onRequest: [fastify.verifySessionCookie] },
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: { response: { 200: wishlistStatusResponseSchema } },
+    },
     async (request) => {
       const status = await wishlistDomain.getStatus(request.user.userID)
       return {
@@ -36,7 +43,10 @@ export const wishlistRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.post(
     '/wishlist/purchase',
-    { onRequest: [fastify.verifySessionCookie] },
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: { response: { 200: wishlistPurchaseResponseSchema } },
+    },
     async (request) => {
       const result = await wishlistDomain.purchase(request.user.userID)
       return {
