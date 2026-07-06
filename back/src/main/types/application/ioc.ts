@@ -45,6 +45,8 @@ import type { IAchievementRepository } from '../infra/orm/repositories/achieveme
 import type { IAdminStatsRepository } from '../infra/orm/repositories/admin-stats.repository.interface'
 import type { ILeaderboardRepository } from '../infra/orm/repositories/leaderboard.repository.interface'
 import type { IQuestRepository } from '../infra/orm/repositories/quest.repository.interface'
+import type { IUserQuestRepository } from '../infra/orm/repositories/user-quest.repository.interface'
+import type { IQuestsDomain } from '../domain/quests/quests.domain.interface'
 import type { RewardRepositoryInterface } from '../infra/orm/repositories/reward.repository.interface'
 import type { IScoringConfigRepository } from '../infra/orm/repositories/scoring-config.repository.interface'
 import type { IShopItemRepository } from '../infra/orm/repositories/shop-item.repository.interface'
@@ -105,6 +107,8 @@ export interface IocContainer {
   readonly streakDomain: StreakDomainInterface
   readonly rewardsDomain: RewardsDomainInterface
   readonly questRepository: IQuestRepository
+  readonly userQuestRepository: IUserQuestRepository
+  readonly questsDomain: IQuestsDomain
   readonly achievementRepository: IAchievementRepository
   readonly userAchievementProgressRepository: UserAchievementProgressRepositoryInterface
   readonly shopItemRepository: IShopItemRepository

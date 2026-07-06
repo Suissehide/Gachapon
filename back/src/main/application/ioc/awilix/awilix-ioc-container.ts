@@ -42,7 +42,9 @@ import { GachaPullRepository } from '../../../infra/orm/repositories/gacha-pull.
 import { InvitationRepository } from '../../../infra/orm/repositories/invitation.repository'
 import { LeaderboardRepository } from '../../../infra/orm/repositories/leaderboard.repository'
 import { OAuthAccountRepository } from '../../../infra/orm/repositories/oauth-account.repository'
+import { QuestsDomain } from '../../../domain/quests/quests.domain'
 import { QuestRepository } from '../../../infra/orm/repositories/quest.repository'
+import { UserQuestRepository } from '../../../infra/orm/repositories/user-quest.repository'
 import { RewardRepository } from '../../../infra/orm/repositories/reward.repository'
 import { ScoringConfigRepository } from '../../../infra/orm/repositories/scoring-config.repository'
 import { ShopItemRepository } from '../../../infra/orm/repositories/shop-item.repository'
@@ -135,6 +137,8 @@ class AwilixIocContainer {
     this.#reg('userBoostRepository', asClass(UserBoostRepository).singleton())
     this.#reg('rewardsDomain', asClass(RewardsDomain).singleton())
     this.#reg('questRepository', asClass(QuestRepository).singleton())
+    this.#reg('userQuestRepository', asClass(UserQuestRepository).singleton())
+    this.#reg('questsDomain', asClass(QuestsDomain).singleton())
     this.#reg(
       'achievementRepository',
       asClass(AchievementRepository).singleton(),
