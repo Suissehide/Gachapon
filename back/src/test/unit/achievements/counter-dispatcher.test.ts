@@ -6,7 +6,7 @@ describe('computeDelta', () => {
     expect(
       computeDelta(
         { type: 'PULL_COUNT', threshold: 10 },
-        { kind: 'PULL_COMPLETED', cardId: 'c1', rarity: 'COMMON', variant: 'NORMAL' },
+        { kind: 'PULL_COMPLETED', cardId: 'c1', rarity: 'COMMON', variant: 'NORMAL', wasDuplicate: false },
       ),
     ).toBe(1)
   })

@@ -392,6 +392,11 @@ export class CampaignDomain {
                 })
               }
             }
+
+            await this.#achievementsDomain.track(tx, userId, {
+              kind: 'STAGE_CLEARED',
+              isBoss: stage.isBoss,
+            })
           }
 
           await tx.battleResult.create({
@@ -558,6 +563,11 @@ export class CampaignDomain {
                 })
               }
             }
+
+            await this.#achievementsDomain.track(tx, userId, {
+              kind: 'STAGE_CLEARED',
+              isBoss: false,
+            })
           }
 
           // Bump XP and recompute level (parity with applyRewards / gacha).

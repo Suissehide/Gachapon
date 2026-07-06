@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 import slugify from 'slugify'
 
 import type { IocContainer } from '../../types/application/ioc'
+import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import type { TeamDomainInterface } from '../../types/domain/team/team.domain.interface'
 import type {
   InvitationEntity,
@@ -25,6 +26,7 @@ export class TeamDomain implements TeamDomainInterface {
   readonly #userRepo: UserRepositoryInterface
   readonly #postgresOrm: IocContainer['postgresOrm']
   readonly #mailService: IMailService
+  readonly #achievementsDomain: AchievementsDomainInterface
 
   constructor({
     teamRepository,
@@ -33,6 +35,7 @@ export class TeamDomain implements TeamDomainInterface {
     userRepository,
     postgresOrm,
     mailService,
+    achievementsDomain,
   }: IocContainer) {
     this.#teamRepo = teamRepository
     this.#memberRepo = teamMemberRepository
@@ -40,6 +43,7 @@ export class TeamDomain implements TeamDomainInterface {
     this.#userRepo = userRepository
     this.#postgresOrm = postgresOrm
     this.#mailService = mailService
+    this.#achievementsDomain = achievementsDomain
   }
 
   async createTeam(
@@ -194,8 +198,16 @@ export class TeamDomain implements TeamDomainInterface {
       )
     }
 
-    await this.#memberRepo.add(invitation.teamId, userId, 'MEMBER')
-    await this.#invitationRepo.updateStatus(invitation.id, 'ACCEPTED')
+    await this.#postgresOrm.executeWithTransactionClient(async (tx) => {
+      await tx.teamMember.create({
+        data: { teamId: invitation.teamId, userId, role: 'MEMBER' },
+      })
+      await tx.invitation.update({
+        where: { id: invitation.id },
+        data: { status: 'ACCEPTED' },
+      })
+      await this.#achievementsDomain.track(tx, userId, { kind: 'TEAM_JOINED' })
+    })
   }
 
   async declineInvitation(token: string, userId: string): Promise<void> {
