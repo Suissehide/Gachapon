@@ -1,7 +1,8 @@
-import { Recycle, X } from 'lucide-react'
+import { Recycle, Star, X } from 'lucide-react'
 import type { CSSProperties } from 'react'
 
 import { describePassive } from '../../constants/passives.constant.ts'
+import { useSetWishlist, useWishlist } from '../../queries/useWishlist.ts'
 import type { DisplayEntry } from '../../routes/_authenticated/collection.tsx'
 import { finalStat } from '../../utils/cardStats.ts'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
@@ -37,12 +38,45 @@ const VARIANT_LABELS: Record<string, { label: string; className: string }> = {
   },
 }
 
+function WishlistButton({
+  isWishlisted,
+  loading,
+  onSet,
+}: {
+  isWishlisted: boolean
+  loading: boolean
+  onSet: () => void
+}) {
+  return (
+    <div className="mt-3 flex">
+      <Button
+        variant={isWishlisted ? 'secondary' : 'outline'}
+        size="sm"
+        disabled={loading || isWishlisted}
+        onClick={onSet}
+        className="h-auto gap-1.5 rounded-[11px] border-[rgba(27,23,38,0.14)] px-[15px] py-[9px] text-[13.5px] font-semibold"
+      >
+        <Star
+          className="h-[15px] w-[15px]"
+          fill={isWishlisted ? 'currentColor' : 'none'}
+        />
+        {isWishlisted ? 'Vœu actif' : 'Définir comme vœu'}
+      </Button>
+    </div>
+  )
+}
+
 export function CardViewModal({ entry, onClose, onRecycle }: Props) {
+  // Hooks must be called unconditionally — before any early return.
+  const { data: wishlist } = useWishlist()
+  const { mutate: setWishlist, isPending: settingWishlist } = useSetWishlist()
+
   if (!entry) {
     return null
   }
 
   const { card, variant, quantity, isOwned, userCard } = entry
+  const isWishlisted = wishlist?.card?.id === card.id
   const rarityHex = RARITY_HEX[card.rarity] ?? RARITY_HEX.COMMON
   const variantInfo = variant !== 'NORMAL' ? VARIANT_LABELS[variant] : null
 
@@ -72,6 +106,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
       : null
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: backdrop dismiss pattern — role="presentation" signals it is intentional
     <div
       className="fixed inset-x-0 bottom-0 top-[var(--topbar-h)] z-[100] overflow-y-auto bg-black/55 backdrop-blur-md"
       role="presentation"
@@ -86,6 +121,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
         <div className="flex flex-wrap items-center justify-center gap-8 animate-in fade-in-0 zoom-in-95 duration-300 md:gap-10">
           {/* Card column — only the card area itself swallows the click; empty
             * flex padding around it stays inert so the backdrop close fires. */}
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: stop-propagation wrapper, not a user-facing interactive region */}
           <div
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
@@ -106,7 +142,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
           </div>
 
           <Card
-            className="flex w-full max-w-[400px] flex-col rounded-[22px] border-[rgba(27,23,38,0.06)] p-6 shadow-[0_2px_0_rgba(27,23,38,0.03),0_30px_60px_-28px_rgba(27,23,38,0.4)] md:w-[400px]"
+            className="flex max-h-[calc(100dvh-var(--topbar-h)-5rem)] w-full max-w-[400px] flex-col overflow-y-auto overscroll-contain rounded-[22px] border-[rgba(27,23,38,0.06)] p-6 shadow-[0_2px_0_rgba(27,23,38,0.03),0_30px_60px_-28px_rgba(27,23,38,0.4)] md:w-[400px]"
             style={panelStyle}
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
@@ -150,6 +186,13 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
                 <X className="h-4 w-4" />
               </Button>
             </div>
+
+            {/* Wishlist */}
+            <WishlistButton
+              isWishlisted={isWishlisted}
+              loading={settingWishlist}
+              onSet={() => setWishlist(card.id)}
+            />
 
             {/* Meta — Owned + inline recycle */}
             {isOwned && (

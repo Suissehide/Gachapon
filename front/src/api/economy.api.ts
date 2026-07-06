@@ -28,6 +28,10 @@ export interface EconomyConfig {
     battleCost: number
     sweepCost: number
   }
+  wishlist: {
+    priceMultiplier: number
+    cooldownDays: number
+  }
 }
 
 export async function getEconomyConfig(): Promise<EconomyConfig> {

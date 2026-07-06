@@ -1,11 +1,13 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import {
   CalendarClock,
   Check,
+  Clock,
   Cog,
   Lock,
   Package,
   Sparkles,
+  Star,
   Zap,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -21,6 +23,7 @@ import { useToast } from '../../hooks/useToast'
 import { useBuyDailyShopItem, useDailyShop } from '../../queries/useDailyShop'
 import type { ShopItem } from '../../queries/useShop'
 import { useBuyItem, useOwnedMachines, useShopItems } from '../../queries/useShop'
+import { usePurchaseWishlist, useWishlist } from '../../queries/useWishlist'
 import { useAuthStore } from '../../stores/auth.store'
 
 export const Route = createFileRoute('/_authenticated/shop')({
@@ -56,6 +59,37 @@ function useCountdown() {
   }, [])
 
   return timeLeft
+}
+
+// ── Wishlist countdown hook ─────────────────────────────────────────────────
+
+function useWishlistCountdown(availableAt: string | null) {
+  const [, setTick] = useState(0)
+  useEffect(() => {
+    if (!availableAt) {
+      return
+    }
+    const id = setInterval(() => setTick((t) => t + 1), 1000)
+    return () => clearInterval(id)
+  }, [availableAt])
+
+  if (!availableAt) {
+    return null
+  }
+  const target = new Date(availableAt)
+  const diff = Math.max(0, target.getTime() - Date.now())
+  if (diff === 0) {
+    return null
+  }
+  const totalSeconds = Math.floor(diff / 1000)
+  const days = Math.floor(totalSeconds / 86400)
+  const h = Math.floor((totalSeconds % 86400) / 3600)
+  const m = Math.floor((totalSeconds % 3600) / 60)
+  const s = totalSeconds % 60
+  const hh = String(h).padStart(2, '0')
+  const mm = String(m).padStart(2, '0')
+  const ss = String(s).padStart(2, '0')
+  return days > 0 ? `${days}j ${hh}h ${mm}m ${ss}s` : `${hh}h ${mm}m ${ss}s`
 }
 
 // ── Shop item type config ───────────────────────────────────────────────────
@@ -175,6 +209,9 @@ function ShopPage() {
         title="Dépense ta poussière"
       />
 
+        {/* ── Wishlist Section ──────────────────────────────────── */}
+        <WishlistSection dust={dust} />
+
         {/* ── Daily Shop Section ─────────────────────────────────── */}
         <Card className="p-6">
           <div className="mb-4 flex items-baseline justify-between gap-3">
@@ -275,6 +312,133 @@ function ShopPage() {
           ))
       )}
     </PageShell>
+  )
+}
+
+// ── Wishlist section ────────────────────────────────────────────────────────
+
+function WishlistBuyButton({
+  canBuy,
+  canAfford,
+  purchasing,
+  availableAt,
+  onBuy,
+}: {
+  canBuy: boolean
+  canAfford: boolean
+  purchasing: boolean
+  availableAt: string | null
+  onBuy: () => void
+}) {
+  const countdown = useWishlistCountdown(availableAt)
+
+  if (!canBuy && countdown) {
+    return (
+      <Button size="sm" disabled variant="secondary" className="gap-1.5 font-mono">
+        <Clock className="h-3.5 w-3.5 shrink-0" />
+        <span className="tabular-nums">{countdown}</span>
+      </Button>
+    )
+  }
+  if (!canBuy && !countdown && availableAt) {
+    // Cooldown just expired, waiting for refetch
+    return (
+      <Button size="sm" disabled>
+        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+      </Button>
+    )
+  }
+  if (purchasing) {
+    return (
+      <Button size="sm" disabled>
+        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+      </Button>
+    )
+  }
+  if (canAfford) {
+    return (
+      <Button size="sm" variant="gradient" onClick={onBuy} className="gap-1">
+        <Sparkles className="h-3.5 w-3.5" />
+        Acheter
+      </Button>
+    )
+  }
+  return (
+    <Button size="sm" disabled variant="outline" className="gap-1 text-text-light/70">
+      <Sparkles className="h-3.5 w-3.5" />
+      Insuffisant
+    </Button>
+  )
+}
+
+function WishlistSection({ dust }: { dust: number }) {
+  const { data: wishlist, isLoading } = useWishlist()
+  const { mutate: purchase, isPending: purchasing } = usePurchaseWishlist()
+
+  const card = wishlist?.card ?? null
+  const price = wishlist?.price ?? null
+  const availableAt = wishlist?.availableAt ?? null
+
+  // canBuy = card is set AND cooldown has expired (availableAt is null)
+  const canBuy = card !== null && availableAt === null && price !== null
+  const canAfford = price !== null && dust >= price
+
+  return (
+    <Card className="p-6">
+      <div className="mb-4 flex items-center gap-2">
+        <Star className="h-4 w-4 text-primary" />
+        <CardTitle className="text-sm uppercase tracking-wider">Vœu</CardTitle>
+      </div>
+
+      {isLoading ? (
+        <div className="flex h-32 items-center justify-center">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      ) : card ? (
+        <div className="flex flex-wrap items-center gap-6">
+          <div className="w-[110px] shrink-0 sm:w-[120px]">
+            <CardDisplay
+              rarity={card.rarity}
+              name={card.name}
+              setName={card.set.name}
+              imageUrl={card.imageUrl}
+              variant={null}
+              isOwned
+              interactive={false}
+              compact
+            />
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-3">
+            <div>
+              <h3 className="font-bold text-text">{card.name}</h3>
+              <p className="mt-0.5 text-xs text-text-light">{card.set.name}</p>
+            </div>
+            {price !== null && (
+              <div className="flex items-center gap-1.5 text-sm font-bold text-secondary">
+                <Sparkles className="h-3.5 w-3.5" />
+                <span className="tabular-nums">{price.toLocaleString('fr-FR')}</span>
+              </div>
+            )}
+            <WishlistBuyButton
+              canBuy={canBuy}
+              canAfford={canAfford}
+              purchasing={purchasing}
+              availableAt={availableAt}
+              onBuy={() => purchase()}
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="flex h-32 items-center justify-center rounded-xl border border-dashed border-border">
+          <p className="font-mono text-xs uppercase tracking-wider text-text-light">
+            Choisis une carte dans ta{' '}
+            <Link to="/collection" className="text-primary underline underline-offset-2">
+              collection
+            </Link>
+          </p>
+        </div>
+      )}
+    </Card>
   )
 }
 

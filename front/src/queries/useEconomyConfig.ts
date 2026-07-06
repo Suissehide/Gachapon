@@ -34,6 +34,7 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
     maxPalier: 6,
   },
   combat: { pointsMax: 60, regenSeconds: 900, battleCost: 5, sweepCost: 5 },
+  wishlist: { priceMultiplier: 2, cooldownDays: 7 },
 }
 
 export function useEconomyConfig() {
