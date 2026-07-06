@@ -566,7 +566,7 @@ export class CampaignDomain {
 
             await this.#achievementsDomain.track(tx, userId, {
               kind: 'STAGE_CLEARED',
-              isBoss: false,
+              isBoss: stage.isBoss,
             })
           }
 
