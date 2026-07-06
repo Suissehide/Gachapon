@@ -7,10 +7,16 @@ import { useToast } from '../hooks/useToast.ts'
 import { useAchievementUnlockStore } from '../stores/achievementUnlock.store.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 import { useLevelUpStore } from '../stores/levelUp.store.ts'
-import { DEFAULT_ECONOMY, useEconomyConfig } from './useEconomyConfig.ts'
 import { computeLevel } from '../utils/level.ts'
+import { DEFAULT_ECONOMY, useEconomyConfig } from './useEconomyConfig.ts'
 
-export type { PullHistory, PullResult, TokenBalance, PullBatchResult, PullBatchEntry } from '../api/gacha.api.ts'
+export type {
+  PullBatchEntry,
+  PullBatchResult,
+  PullHistory,
+  PullResult,
+  TokenBalance,
+} from '../api/gacha.api.ts'
 
 export const useTokenBalance = () => {
   const query = useQuery({
@@ -137,4 +143,12 @@ export const usePullHistory = (page = 1) => {
   })
 
   return query
+}
+
+export const useDropRates = () => {
+  return useQuery({
+    queryKey: ['pulls', 'rates'],
+    queryFn: () => GachaApi.getDropRates(),
+    staleTime: 10 * 60_000,
+  })
 }

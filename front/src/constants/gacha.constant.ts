@@ -1,4 +1,5 @@
 import type { UnlockedAchievement } from './achievements.constant'
+import type { CardRarity } from './card.constant.ts'
 
 // Types
 export type PullResult = {
@@ -22,6 +23,13 @@ export type TokenBalance = {
   tokens: number
   maxStock: number
   nextTokenAt: string | null
+  pityCurrent: number
+  pityThreshold: number
+}
+
+export type DropRate = {
+  rarity: CardRarity
+  pct: number
 }
 
 export type PullHistory = {
@@ -70,6 +78,7 @@ export const GACHA_ROUTES = {
   pull: '/pulls',
   pullBatch: '/pulls/batch',
   history: (page: number) => `/pulls/history?page=${page}`,
+  rates: '/pulls/rates',
   recent: (opts?: {
     limit?: number
     before?: string
