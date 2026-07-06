@@ -7,11 +7,44 @@ type Props = {
   title: string
   entries: DisplayEntry[]
   onDetail: (entry: DisplayEntry) => void
+  showWishlist?: boolean
 }
 
-export function CollectionSection({ title, entries, onDetail }: Props) {
+// Isolated subcomponent so useWishlist() is only called when the viewer is
+// looking at their OWN collection. Mounting it conditionally satisfies
+// Rules of Hooks — no conditional hook calls in the parent.
+function WishlistAwareCards({
+  entries,
+  onDetail,
+}: { entries: DisplayEntry[]; onDetail: (entry: DisplayEntry) => void }) {
   const { data: wishlist } = useWishlist()
+  return (
+    <>
+      {entries.map((entry) => (
+        <CollectionCard
+          key={entry.key}
+          card={entry.card}
+          variant={entry.variant}
+          quantity={entry.quantity}
+          isOwned={entry.isOwned}
+          level={entry.userCard?.level ?? null}
+          palier={entry.userCard?.palier ?? null}
+          isWishlisted={
+            wishlist?.card?.id === entry.card.id && entry.variant === 'NORMAL'
+          }
+          onClick={() => onDetail(entry)}
+        />
+      ))}
+    </>
+  )
+}
 
+export function CollectionSection({
+  title,
+  entries,
+  onDetail,
+  showWishlist = false,
+}: Props) {
   const distinctCardIds = new Set(
     entries.filter((e) => e.isOwned).map((e) => e.card.id),
   )
@@ -34,21 +67,23 @@ export function CollectionSection({ title, entries, onDetail }: Props) {
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-        {entries.map((entry) => (
-          <CollectionCard
-            key={entry.key}
-            card={entry.card}
-            variant={entry.variant}
-            quantity={entry.quantity}
-            isOwned={entry.isOwned}
-            level={entry.userCard?.level ?? null}
-            palier={entry.userCard?.palier ?? null}
-            isWishlisted={
-              wishlist?.card?.id === entry.card.id && entry.variant === 'NORMAL'
-            }
-            onClick={() => onDetail(entry)}
-          />
-        ))}
+        {showWishlist ? (
+          <WishlistAwareCards entries={entries} onDetail={onDetail} />
+        ) : (
+          entries.map((entry) => (
+            <CollectionCard
+              key={entry.key}
+              card={entry.card}
+              variant={entry.variant}
+              quantity={entry.quantity}
+              isOwned={entry.isOwned}
+              level={entry.userCard?.level ?? null}
+              palier={entry.userCard?.palier ?? null}
+              isWishlisted={false}
+              onClick={() => onDetail(entry)}
+            />
+          ))
+        )}
       </div>
     </ArcadeCard>
   )

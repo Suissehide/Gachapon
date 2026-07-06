@@ -222,9 +222,13 @@ function Play() {
   // keep the black backdrop up, and go straight to the ball animation.
   const handlePullAgain = useCallback(
     async (count: 1 | 10) => {
-      if (tokensRef.current < count || pullPendingRef.current) {
+      // Guard: only callable from the reveal-grid phase; phaseRef is set synchronously
+      // before any async work so a second click sees a non-reveal-grid phase and exits.
+      if (phaseRef.current !== 'reveal-grid' || tokensRef.current < count) {
         return
       }
+      // Lock synchronously — second click is now a no-op
+      phaseRef.current = 'pulling'
       pullAbortedRef.current = false
       pendingResult.current = null
 

@@ -219,6 +219,7 @@ function Collection() {
             title={section.title}
             entries={section.entries}
             onDetail={handleDetail}
+            showWishlist
           />
         ))
       )}

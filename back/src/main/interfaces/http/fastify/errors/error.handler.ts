@@ -20,14 +20,19 @@ const normalizeResponse = (
   error: unknown,
   customErrorNormalizers: ErrorNormalizer[],
 ): ErrorResponse => {
-  const initialCustomError = error as Partial<ErrorResponse>
-  const customError = [...customErrorNormalizers, errorNormalizer].reduce<
+  // Each normalizer receives the original error (not the accumulated output) so
+  // an unrecognised plain object never leaks its own fields into the response.
+  // First-match wins: once a normalizer produces output the rest are skipped,
+  // which prevents the catch-all errorNormalizer from overwriting a richer
+  // Boom/Fastify result that fired earlier in the chain.
+  const override = [...customErrorNormalizers, errorNormalizer].reduce<
     Partial<ErrorResponse>
-  >((acc, normalizer) => normalizer(acc) ?? acc, initialCustomError)
-  return {
-    ...defaultErrorResponse,
-    ...customError,
-  }
+  >(
+    (acc, normalizer) =>
+      Object.keys(acc).length > 0 ? acc : (normalizer(error) ?? acc),
+    {},
+  )
+  return { ...defaultErrorResponse, ...override }
 }
 
 const buildErrorHandler = (...errorNormalizers: ErrorNormalizer[]) => {
@@ -36,7 +41,7 @@ const buildErrorHandler = (...errorNormalizers: ErrorNormalizer[]) => {
     error: Boom | Error | FastifyError,
     request: FastifyRequest,
     reply: FastifyReply,
-  ): string | { error: string; message: string; statusCode: number } {
+  ): string | ErrorResponse {
     this.log.debug(error)
     const errorResponse = normalizeResponse(error, errorNormalizers)
     this.log.error(`Error: ${JSON.stringify(errorResponse)}`)
