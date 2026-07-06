@@ -90,11 +90,11 @@ export function RecentsPanel() {
             <Select
               id="recents-team-select"
               options={[
-                { value: '', label: 'Toutes' },
+                { value: 'all', label: 'Toutes' },
                 ...teams.map((t) => ({ value: t.id, label: t.name })),
               ]}
-              value={teamId ?? ''}
-              onValueChange={(v) => setTeamId(v || undefined)}
+              value={teamId ?? 'all'}
+              onValueChange={(v) => setTeamId(v === 'all' ? undefined : v)}
               clearable={false}
               className="h-7 flex-1 text-[10px]"
             />

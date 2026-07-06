@@ -393,7 +393,7 @@ function Play() {
         onClick={() => setSkipAnimations((s) => !s)}
       >
         <SkipForward className="h-3.5 w-3.5" />
-        <span className="hidden sm:inline">Sauter les animations</span>
+        <span className="hidden min-[721px]:inline">Sauter les animations</span>
       </button>
 
       {phase === 'pulling' && (
