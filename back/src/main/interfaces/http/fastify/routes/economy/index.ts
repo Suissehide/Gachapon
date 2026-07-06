@@ -35,6 +35,8 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
         'combat.regenSeconds',
         'combat.battleCost',
         'combat.sweepCost',
+        'wishlist.priceMultiplier',
+        'wishlist.cooldownDays',
       )
       return {
         xp: {
@@ -76,6 +78,10 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
           regenSeconds: c['combat.regenSeconds'],
           battleCost: c['combat.battleCost'],
           sweepCost: c['combat.sweepCost'],
+        },
+        wishlist: {
+          priceMultiplier: c['wishlist.priceMultiplier'],
+          cooldownDays: c['wishlist.cooldownDays'],
         },
       }
     },

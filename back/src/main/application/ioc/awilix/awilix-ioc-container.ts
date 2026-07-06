@@ -14,6 +14,7 @@ import { CombatDebugDomain } from '../../../domain/combat/combat-debug.domain'
 import { CombatTeamTx } from '../../../domain/combat/combat-team.tx'
 import { CombatPointsTx } from '../../../domain/combat-points/combat-points.tx'
 import { DailyShopDomain } from '../../../domain/daily-shop/daily-shop.domain'
+import { WishlistDomain } from '../../../domain/wishlist/wishlist.domain'
 import { EquipmentDomain } from '../../../domain/equipment/equipment.domain'
 import { GachaDomain } from '../../../domain/gacha/gacha.domain'
 import { LeaderboardDomain } from '../../../domain/leaderboard/leaderboard.domain'
@@ -161,6 +162,7 @@ class AwilixIocContainer {
     this.#reg('achievementsDomain', asClass(AchievementsDomain).singleton())
     // streakDomain depends on achievementsDomain — must be registered after it
     this.#reg('streakDomain', asClass(StreakDomain).singleton())
+    this.#reg('wishlistDomain', asClass(WishlistDomain).singleton())
     logger.info('IoC container initialized.')
   }
 

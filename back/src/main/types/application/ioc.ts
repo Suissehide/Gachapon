@@ -28,6 +28,7 @@ import type { ILeaderboardDomain } from '../domain/leaderboard/leaderboard.domai
 import type { ProfileDomainInterface } from '../domain/profile/profile.domain.interface'
 import type { RewardsDomainInterface } from '../domain/rewards/rewards.domain.interface'
 import type { IShopDomain } from '../domain/shop/shop.domain.interface'
+import type { IWishlistDomain } from '../domain/wishlist/wishlist.domain.interface'
 import type {
   ISkillInvestDomain,
   ISkillResetDomain,
@@ -120,4 +121,5 @@ export interface IocContainer {
   readonly skillResetDomain: ISkillResetDomain
   readonly adminSkillTreeDomain: AdminSkillTreeDomain
   readonly achievementsDomain: AchievementsDomainInterface
+  readonly wishlistDomain: IWishlistDomain
 }
