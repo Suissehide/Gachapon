@@ -15,6 +15,7 @@ export type ShopItem = {
   type: 'TOKEN_PACK' | 'BOOST' | 'COSMETIC' | 'MACHINE'
   dustCost: number
   value: unknown
+  activeBoost?: { pullsRemaining: number } | null
 }
 
 export type PurchaseResult = {

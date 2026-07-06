@@ -64,6 +64,8 @@ export const usePull = () => {
       // event is dropped we still want the rare pull to land in the
       // panel — invalidate the query so it refetches from the server.
       qc.invalidateQueries({ queryKey: ['pulls', 'recent'] })
+      // Keep active-boost pullsRemaining in sync on the shop page.
+      qc.invalidateQueries({ queryKey: ['shop'] })
       if (result.unlockedAchievements?.length) {
         enqueueAchievementUnlock(result.unlockedAchievements)
         qc.invalidateQueries({ queryKey: ['achievements'] })
@@ -109,6 +111,8 @@ export const usePullBatch = () => {
       qc.invalidateQueries({ queryKey: ['collection'] })
       qc.invalidateQueries({ queryKey: ['profile'] })
       qc.invalidateQueries({ queryKey: ['pulls', 'recent'] })
+      // Keep active-boost pullsRemaining in sync on the shop page.
+      qc.invalidateQueries({ queryKey: ['shop'] })
       if (result.unlockedAchievements?.length) {
         enqueueAchievementUnlock(result.unlockedAchievements)
         qc.invalidateQueries({ queryKey: ['achievements'] })

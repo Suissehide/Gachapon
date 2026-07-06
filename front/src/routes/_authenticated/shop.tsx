@@ -327,12 +327,12 @@ function DailyShopCard({
           <Check className="h-3.5 w-3.5" />
           Achetée
         </Button>
-      ) : !canAfford ? (
+      ) : canAfford ? (
         <Button
           size="sm"
-          disabled
-          variant="outline"
-          className="w-full gap-1 text-text-light/70"
+          onClick={onBuy}
+          variant="gradient"
+          className="w-full gap-1"
         >
           <Sparkles className="h-3.5 w-3.5" />
           <span className="tabular-nums">
@@ -342,9 +342,9 @@ function DailyShopCard({
       ) : (
         <Button
           size="sm"
-          onClick={onBuy}
-          variant="gradient"
-          className="w-full gap-1"
+          disabled
+          variant="outline"
+          className="w-full gap-1 text-text-light/70"
         >
           <Sparkles className="h-3.5 w-3.5" />
           <span className="tabular-nums">
@@ -357,6 +357,81 @@ function DailyShopCard({
 }
 
 // ── Static shop card ────────────────────────────────────────────────────────
+
+function StaticShopCardAction({
+  canAfford,
+  supported,
+  isBoostActive,
+  buying,
+  justBought,
+  owned,
+  onBuy,
+}: {
+  canAfford: boolean
+  supported: boolean
+  isBoostActive: boolean
+  buying: boolean
+  justBought: boolean
+  owned?: boolean
+  onBuy: () => void
+}) {
+  if (justBought) {
+    return (
+      <Button
+        size="sm"
+        disabled
+        variant="gradient"
+        className="gap-1.5 animate-[shop-success-pop_0.4s_var(--ease-spring)]"
+      >
+        <Check className="h-3.5 w-3.5" />
+        Achat réussi
+      </Button>
+    )
+  }
+  if (owned) {
+    return (
+      <Button size="sm" variant="secondary" disabled className="gap-1.5">
+        <Check className="h-3.5 w-3.5" />
+        Possédée
+      </Button>
+    )
+  }
+  if (isBoostActive) {
+    return (
+      <Button size="sm" variant="secondary" disabled className="gap-1.5">
+        <Check className="h-3.5 w-3.5" />
+        Actif
+      </Button>
+    )
+  }
+  if (!supported) {
+    return (
+      <Button size="sm" variant="secondary" disabled className="gap-1.5">
+        <Lock className="h-3.5 w-3.5" />
+        Bientôt
+      </Button>
+    )
+  }
+  if (buying) {
+    return (
+      <Button size="sm" disabled>
+        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+      </Button>
+    )
+  }
+  if (canAfford) {
+    return (
+      <Button size="sm" variant="gradient" onClick={onBuy}>
+        Acheter
+      </Button>
+    )
+  }
+  return (
+    <Button size="sm" disabled variant="outline" className="text-text-light/70">
+      Insuffisant
+    </Button>
+  )
+}
 
 function StaticShopCard({
   item,
@@ -376,7 +451,9 @@ function StaticShopCard({
   onBuy: () => void
 }) {
   const canAfford = dust >= item.dustCost
-  const supported = item.type === 'TOKEN_PACK' || item.type === 'MACHINE'
+  const supported = item.type === 'TOKEN_PACK' || item.type === 'MACHINE' || item.type === 'BOOST'
+  const isBoostActive = item.type === 'BOOST' && !!item.activeBoost
+  const pulls = item.activeBoost?.pullsRemaining ?? 0
 
   return (
     <div className={`rounded-xl border p-4 ${colorClass} flex flex-col gap-3`}>
@@ -385,6 +462,12 @@ function StaticShopCard({
         <p className="mt-0.5 text-xs leading-relaxed text-text-light">
           {item.description}
         </p>
+        {isBoostActive && (
+          <div className="mt-2 flex items-center gap-1.5 rounded-md bg-secondary/15 px-2 py-1 text-xs font-semibold text-secondary">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-secondary" />
+            Actif — {pulls} tirage{pulls > 1 ? 's' : ''} restant{pulls > 1 ? 's' : ''}
+          </div>
+        )}
       </div>
       <div className="mt-auto flex items-center justify-between">
         <span className="flex items-center gap-1 text-sm font-bold text-secondary">
@@ -393,39 +476,15 @@ function StaticShopCard({
             {item.dustCost.toLocaleString('fr-FR')}
           </span>
         </span>
-        {justBought ? (
-          <Button
-            size="sm"
-            disabled
-            variant="gradient"
-            className="gap-1.5 animate-[shop-success-pop_0.4s_var(--ease-spring)]"
-          >
-            <Check className="h-3.5 w-3.5" />
-            Achat réussi
-          </Button>
-        ) : owned ? (
-          <Button size="sm" variant="secondary" disabled className="gap-1.5">
-            <Check className="h-3.5 w-3.5" />
-            Possédée
-          </Button>
-        ) : !supported ? (
-          <Button size="sm" variant="secondary" disabled className="gap-1.5">
-            <Lock className="h-3.5 w-3.5" />
-            Bientôt
-          </Button>
-        ) : buying ? (
-          <Button size="sm" disabled>
-            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-          </Button>
-        ) : !canAfford ? (
-          <Button size="sm" disabled variant="outline" className="text-text-light/70">
-            Insuffisant
-          </Button>
-        ) : (
-          <Button size="sm" variant="gradient" onClick={onBuy}>
-            Acheter
-          </Button>
-        )}
+        <StaticShopCardAction
+          canAfford={canAfford}
+          supported={supported}
+          isBoostActive={isBoostActive}
+          buying={buying}
+          justBought={justBought}
+          owned={owned}
+          onBuy={onBuy}
+        />
       </div>
     </div>
   )

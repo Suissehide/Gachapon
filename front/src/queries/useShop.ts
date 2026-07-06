@@ -31,7 +31,7 @@ export const useBuyItem = () => {
     mutationFn: (itemId: string) => ShopApi.buyItem(itemId),
     onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
-      qc.invalidateQueries({ queryKey: ['shop', 'machines'] })
+      qc.invalidateQueries({ queryKey: ['shop'] })
       if (result.unlockedAchievements?.length) {
         enqueueAchievementUnlock(result.unlockedAchievements)
         qc.invalidateQueries({ queryKey: ['achievements'] })
