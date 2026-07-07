@@ -4,9 +4,11 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  Coins,
   Crown,
   Layers,
   Lock,
+  type LucideIcon,
   RotateCcw,
   Settings,
   Shield,
@@ -791,6 +793,14 @@ function PrepModal({
     tone === 'good' ? 'Avantage' : tone === 'ok' ? 'Équilibré' : 'Risqué'
   const rp = stage.rewardPreview
   const loot = stage.status !== 'cleared' ? rp.firstClear : rp.farm
+  // Fight button label reflects why it's disabled: no team takes priority over
+  // energy so we never tell the player "énergie insuffisante" when the real
+  // blocker is an empty team.
+  const fightLabel = team.length
+    ? currentPC < battleCost
+      ? 'Énergie insuffisante'
+      : 'Combattre'
+    : 'Équipe requise'
   // Sub-1% chances (ex. cardChance 0.005) : une décimale pour ne pas afficher
   // « 1% » (le double) ni masquer la pastille en arrondissant à 0.
   const fmtPct = (frac: number) => {
@@ -842,26 +852,44 @@ function PrepModal({
             Récompenses
           </div>
           <div className="flex flex-wrap gap-2">
-            <RewardPill color="#f59e0b" label={`${loot.gold} Or`} />
-            <RewardPill color="#8b5cf6" label={`${loot.dust} Poussière`} />
-            <RewardPill color="#3b82f6" label={`${loot.xp} XP`} />
+            <RewardPill
+              color="#f59e0b"
+              label={`${loot.gold} Or`}
+              icon={Coins}
+            />
+            <RewardPill
+              color="#8b5cf6"
+              label={`${loot.dust} Poussière`}
+              icon={Sparkles}
+            />
+            <RewardPill color="#3b82f6" label={`${loot.xp} XP`} icon={Star} />
             {equipPct > 0 && (
               <RewardPill
                 color="#ec4899"
                 label={`Drop équipement ${fmtPct(rp.farmEquipmentChance)}%`}
+                icon={Shield}
               />
             )}
             {cardPct > 0 && (
               <RewardPill
                 color="#10b981"
                 label={`Drop carte ${fmtPct(rp.farmCardChance)}%`}
+                icon={Layers}
               />
             )}
             {stage.status !== 'cleared' && rp.guaranteedEquipment && (
-              <RewardPill color="#ec4899" label="Équipement garanti" />
+              <RewardPill
+                color="#ec4899"
+                label="Équipement garanti"
+                icon={Shield}
+              />
             )}
             {stage.status !== 'cleared' && rp.guaranteedCard && (
-              <RewardPill color="#10b981" label="Carte garantie" />
+              <RewardPill
+                color="#10b981"
+                label="Carte garantie"
+                icon={Layers}
+              />
             )}
           </div>
           <div className="mt-3.5 flex items-center gap-2 border-t border-[rgba(27,23,38,0.07)] pt-3.5">
@@ -962,7 +990,7 @@ function PrepModal({
           className="flex-1 gap-2"
         >
           <Swords className="h-4 w-4" />
-          {canBattle ? 'Combattre' : 'Énergie insuffisante'}
+          {fightLabel}
           <span className="ml-1 inline-flex items-center gap-0.5 rounded-full bg-black/15 px-2 py-0.5 font-mono text-[12px] font-bold tabular-nums">
             <Zap className="h-3 w-3" />
             {battleCost}
@@ -1007,7 +1035,15 @@ function EnemyCard({
   )
 }
 
-function RewardPill({ color, label }: { color: string; label: string }) {
+function RewardPill({
+  color,
+  label,
+  icon: Icon = Sparkles,
+}: {
+  color: string
+  label: string
+  icon?: LucideIcon
+}) {
   return (
     <span
       className="inline-flex items-center gap-1.5 rounded-[10px] px-3 py-1.5 font-mono text-[12px] font-bold"
@@ -1016,7 +1052,7 @@ function RewardPill({ color, label }: { color: string; label: string }) {
         color,
       }}
     >
-      <Sparkles className="h-3 w-3" />
+      <Icon className="h-3 w-3" />
       {label}
     </span>
   )

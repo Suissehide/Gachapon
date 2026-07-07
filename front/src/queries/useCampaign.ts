@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef } from 'react'
 
 import { type BattleResult, CampaignApi } from '../api/campaign.api.ts'
+import { useAuthStore } from '../stores/auth.store.ts'
 
 const CAMPAIGN_KEY = ['campaign']
 
@@ -95,6 +96,10 @@ export function useAttackStage(stageId: string, enabled: boolean) {
     qc.invalidateQueries({ queryKey: ['equipment'] })
     qc.invalidateQueries({ queryKey: ['collection'] })
     qc.invalidateQueries({ queryKey: ['profile'] })
+    // Gold/dust live in the Zustand auth store (topbar + upgrade panel read
+    // from it), not in a query cache — refresh it so battle rewards show up
+    // without a manual page reload.
+    void useAuthStore.getState().fetchMe()
   }, [query.isSuccess, query.isError, qc])
 
   return query
@@ -111,6 +116,8 @@ export function useSweepStage() {
       qc.invalidateQueries({ queryKey: ['equipment'] })
       qc.invalidateQueries({ queryKey: ['collection'] })
       qc.invalidateQueries({ queryKey: ['profile'] })
+      // Refresh gold/dust in the auth store (see useAttackStage note).
+      void useAuthStore.getState().fetchMe()
     },
   })
 }
