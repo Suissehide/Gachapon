@@ -1,4 +1,5 @@
 import {
+  CheckCircle2,
   ChevronRight,
   Flame,
   PanelLeftClose,
@@ -6,10 +7,12 @@ import {
   Star,
   Trophy,
 } from 'lucide-react'
+import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 
 import { DEFAULT_ECONOMY, useEconomyConfig } from '../../queries/useEconomyConfig.ts'
 import { useUserProfile } from '../../queries/useProfile.ts'
+import { useQuests } from '../../queries/useQuests.ts'
 import { useStreakSummary } from '../../queries/useStreak.ts'
 import { useAuthStore } from '../../stores/auth.store.ts'
 import { computeLevel, xpForLevel } from '../../utils/level.ts'
@@ -19,11 +22,13 @@ import { Button } from '../ui/button.tsx'
 export function PlayHud() {
   const [visible, setVisible] = useState(() => window.innerWidth >= 768)
   const [streakModalOpen, setStreakModalOpen] = useState(false)
+  const navigate = useNavigate()
   const username = useAuthStore((s) => s.user?.username ?? '')
 
   const { data: streak } = useStreakSummary()
   const { data: profile } = useUserProfile(username)
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  const { data: quests, isPending: questsLoading } = useQuests()
 
   // Streak cycle progress (30-day repeating)
   const streakDays = streak?.streakDays ?? 0
@@ -114,7 +119,7 @@ export function PlayHud() {
             </button>
 
             {/* ── Level / XP ── */}
-            <div className="px-3 py-2.5">
+            <div className="px-3 py-2.5 border-b border-border">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-1.5">
                   <Star className="h-3.5 w-3.5 text-purple-400" />
@@ -142,6 +147,49 @@ export function PlayHud() {
                 </span>
               </div>
             </div>
+
+            {/* ── Quests ── */}
+            {!questsLoading && quests?.weekly && quests.weekly.length > 0 && (
+              <button
+                type="button"
+                className="group w-full cursor-pointer text-left px-3 py-2.5 hover:bg-white/60 transition-colors"
+                onClick={() => navigate({ to: '/quests' })}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <Trophy className="h-3.5 w-3.5 text-yellow-400" />
+                    <span className="text-[9px] font-bold uppercase tracking-[0.22em] text-text-light">
+                      Quêtes
+                    </span>
+                  </div>
+                  <ChevronRight className="h-3 w-3 text-text-light/30 group-hover:text-text-light/60 transition-colors" />
+                </div>
+
+                <div className="space-y-1.5">
+                  {quests.weekly.slice(0, 3).map((quest) => (
+                    <div key={quest.key} className="flex items-center gap-2 text-[9px]">
+                      {quest.completed ? (
+                        <CheckCircle2 className="h-3 w-3 text-green-500 flex-shrink-0" />
+                      ) : (
+                        <div className="h-3 w-3 rounded-full border border-text-light/30 flex-shrink-0" />
+                      )}
+                      <span
+                        className={`truncate flex-1 ${
+                          quest.completed
+                            ? 'text-text-light/40 line-through'
+                            : 'text-text-light'
+                        }`}
+                      >
+                        {quest.name}
+                      </span>
+                      <span className="font-semibold tabular-nums text-text-light flex-shrink-0">
+                        {quest.progress}/{quest.target}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </button>
+            )}
           </div>
         )}
       </div>
