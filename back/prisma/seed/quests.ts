@@ -91,7 +91,7 @@ const QUESTS: QuestConfig[] = [
     key: 'weekly_battles_25',
     name: 'Combattant Acharné',
     description: 'Remporte 25 combats cette semaine.',
-    criterion: { event: 'BATTLE_WON', target: 25 },
+    criterion: { event: 'STAGE_CLEARED', target: 25 },
     period: 'WEEKLY',
     rewardTokens: 5,
     rewardDust: 80,
@@ -100,8 +100,8 @@ const QUESTS: QuestConfig[] = [
   {
     key: 'weekly_recycle_20',
     name: 'Alchimiste',
-    description: 'Recycle 20 cartes cette semaine.',
-    criterion: { event: 'CARDS_RECYCLED', target: 20 },
+    description: 'Recycle 20 exemplaires de cartes cette semaine.',
+    criterion: { event: 'CARD_RECYCLED', target: 20 },
     period: 'WEEKLY',
     rewardTokens: 5,
     rewardDust: 80,
@@ -127,7 +127,7 @@ const QUESTS: QuestConfig[] = [
     rewardDust: 80,
     rewardXp: 150,
   },
-] as const
+]
 
 export async function seedQuests(
   tx: Parameters<Parameters<PrismaClient['$transaction']>[0]>[0],
