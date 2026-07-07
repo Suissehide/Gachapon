@@ -102,10 +102,17 @@ export interface RewardPreview {
 
 /**
  * Extracts a display-friendly reward preview from a raw lootTable JSON value.
- * Pure function — reads defensively (lootTable is Prisma JsonValue).
+ * Pure function. The lootTable is a Prisma JsonValue (non-nullable column,
+ * always seeded complete) — a top-level guard turns a malformed row into a
+ * debuggable error instead of a cryptic property-read crash across getCampaign.
  */
 export function extractRewardPreview(lootTable: unknown): RewardPreview {
   const lt = lootTable as LootTable
+  if (!lt?.firstClear || !lt?.farm) {
+    throw new Error(
+      `Stage has a malformed lootTable: ${JSON.stringify(lootTable)}`,
+    )
+  }
   const fc = lt.firstClear
   const farm = lt.farm
   return {
