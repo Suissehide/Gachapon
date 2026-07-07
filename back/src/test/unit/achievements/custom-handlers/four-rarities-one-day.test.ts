@@ -6,6 +6,7 @@ const event = {
   cardId: 'c1',
   rarity: 'EPIC' as const,
   variant: 'NORMAL' as const,
+  wasDuplicate: false,
 }
 
 describe('fourRaritiesOneDayHandler', () => {

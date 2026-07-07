@@ -12,10 +12,16 @@ import {
 export class CardLevelingTx {
   readonly #postgresOrm
   readonly #configService
+  readonly #achievementsDomain
 
-  constructor({ postgresOrm, configService }: IocContainer) {
+  constructor({
+    postgresOrm,
+    configService,
+    achievementsDomain,
+  }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#configService = configService
+    this.#achievementsDomain = achievementsDomain
   }
 
   async levelUp(
@@ -119,6 +125,20 @@ export class CardLevelingTx {
             where: { id: userCardId },
             data: { level: targetLevel },
           })
+
+          const levelsGained = targetLevel - currentLevel
+          await Promise.all([
+            this.#achievementsDomain.track(tx, userId, {
+              kind: 'CARD_LEVELED',
+              levels: levelsGained,
+            }),
+            goldCost > 0
+              ? this.#achievementsDomain.track(tx, userId, {
+                  kind: 'GOLD_SPENT',
+                  amount: goldCost,
+                })
+              : Promise.resolve([]),
+          ])
 
           return {
             newLevel: targetLevel,

@@ -13,6 +13,7 @@ import type { IInvitationRepository } from '../../types/infra/orm/repositories/i
 import type { ITeamRepository } from '../../types/infra/orm/repositories/team.repository.interface'
 import type { ITeamMemberRepository } from '../../types/infra/orm/repositories/team-member.repository.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
+import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 
 const MAX_TEAMS_PER_USER = 5
 const MAX_MEMBERS_PER_TEAM = 100
@@ -25,6 +26,7 @@ export class TeamDomain implements TeamDomainInterface {
   readonly #userRepo: UserRepositoryInterface
   readonly #postgresOrm: IocContainer['postgresOrm']
   readonly #mailService: IMailService
+  readonly #achievementsDomain: AchievementsDomainInterface
 
   constructor({
     teamRepository,
@@ -33,6 +35,7 @@ export class TeamDomain implements TeamDomainInterface {
     userRepository,
     postgresOrm,
     mailService,
+    achievementsDomain,
   }: IocContainer) {
     this.#teamRepo = teamRepository
     this.#memberRepo = teamMemberRepository
@@ -40,6 +43,7 @@ export class TeamDomain implements TeamDomainInterface {
     this.#userRepo = userRepository
     this.#postgresOrm = postgresOrm
     this.#mailService = mailService
+    this.#achievementsDomain = achievementsDomain
   }
 
   async createTeam(
@@ -54,16 +58,30 @@ export class TeamDomain implements TeamDomainInterface {
     }
 
     const slug = slugify(data.name, { lower: true, strict: true })
-    const team = await this.#teamRepo.create(ownerId, {
-      name: data.name,
-      slug,
-      description: data.description,
+
+    // Wrap in a transaction so the creator's TEAM_JOINED event is tracked
+    // atomically with the team + member row creation.
+    return this.#postgresOrm.executeWithTransactionClient(async (tx) => {
+      const team = await tx.team.create({
+        data: {
+          name: data.name,
+          slug,
+          description: data.description,
+          ownerId,
+          members: { create: { userId: ownerId, role: 'OWNER' } },
+        },
+        include: {
+          members: {
+            include: {
+              user: { select: { id: true, username: true, avatar: true } },
+            },
+          },
+        },
+      })
+      // The creator becomes a member — track the event so the join_team quest progresses.
+      await this.#achievementsDomain.track(tx, ownerId, { kind: 'TEAM_JOINED' })
+      return team as unknown as TeamWithMembers
     })
-    const full = await this.#teamRepo.findById(team.id)
-    if (!full) {
-      throw Boom.internal('Team creation failed')
-    }
-    return full
   }
 
   async #resolveInvitationTarget(
@@ -194,8 +212,16 @@ export class TeamDomain implements TeamDomainInterface {
       )
     }
 
-    await this.#memberRepo.add(invitation.teamId, userId, 'MEMBER')
-    await this.#invitationRepo.updateStatus(invitation.id, 'ACCEPTED')
+    await this.#postgresOrm.executeWithTransactionClient(async (tx) => {
+      await tx.teamMember.create({
+        data: { teamId: invitation.teamId, userId, role: 'MEMBER' },
+      })
+      await tx.invitation.update({
+        where: { id: invitation.id },
+        data: { status: 'ACCEPTED' },
+      })
+      await this.#achievementsDomain.track(tx, userId, { kind: 'TEAM_JOINED' })
+    })
   }
 
   async declineInvitation(token: string, userId: string): Promise<void> {

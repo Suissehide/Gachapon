@@ -11,6 +11,7 @@ describe('firstPullEverHandler', () => {
       cardId: 'c1',
       rarity: 'COMMON',
       variant: 'NORMAL',
+      wasDuplicate: false,
     })
     expect(result.unlocked).toBe(true)
   })
@@ -24,6 +25,7 @@ describe('firstPullEverHandler', () => {
       cardId: 'c1',
       rarity: 'COMMON',
       variant: 'NORMAL',
+      wasDuplicate: false,
     })
     expect(result.unlocked).toBe(false)
   })

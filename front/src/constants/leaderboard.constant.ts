@@ -39,18 +39,8 @@ export type LeaderboardResponse<E> = {
   currentUserTeamId?: string | null
 }
 
-export type Quest = {
-  id: string
-  key: string
-  name: string
-  description: string
-  rewardTokens: number
-  rewardDust: number
-}
-
 export const LEADERBOARD_ROUTES = {
   collectors: '/leaderboard/collectors',
   teams: '/leaderboard/teams',
   combat: '/leaderboard/combat',
-  quests: '/quests',
 } as const

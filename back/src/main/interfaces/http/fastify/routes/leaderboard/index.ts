@@ -1,7 +1,7 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 export const leaderboardRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { leaderboardDomain, leaderboardRepository } = fastify.iocContainer
+  const { leaderboardDomain } = fastify.iocContainer
 
   fastify.get(
     '/leaderboard/collectors',
@@ -26,24 +26,6 @@ export const leaderboardRouter: FastifyPluginCallbackZod = (fastify) => {
     { onRequest: [fastify.verifySessionCookie] },
     async (request) => {
       return await leaderboardDomain.getCombatLeaderboard(request.user.userID)
-    },
-  )
-
-  fastify.get(
-    '/quests',
-    { onRequest: [fastify.verifySessionCookie] },
-    async () => {
-      const quests = await leaderboardRepository.getActiveQuests()
-      return {
-        quests: quests.map((q) => ({
-          id: q.id,
-          key: q.key,
-          name: q.name,
-          description: q.description,
-          rewardTokens: q.reward?.tokens ?? 0,
-          rewardDust: q.reward?.dust ?? 0,
-        })),
-      }
     },
   )
 }

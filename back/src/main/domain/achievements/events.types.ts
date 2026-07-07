@@ -6,6 +6,7 @@ export type AchievementEvent =
       cardId: string
       rarity: CardRarity
       variant: CardVariant
+      wasDuplicate: boolean
     }
   | { kind: 'TOKENS_SPENT'; amount: number }
   | { kind: 'DUST_SPENT'; amount: number }
@@ -18,6 +19,10 @@ export type AchievementEvent =
   | { kind: 'LEVEL_UP'; newLevel: number }
   | { kind: 'STREAK_UPDATED'; days: number }
   | { kind: 'MACHINE_PURCHASED'; machineId: string }
+  | { kind: 'STAGE_CLEARED'; isBoss: boolean }
+  | { kind: 'CARD_LEVELED'; levels: number }
+  | { kind: 'GOLD_SPENT'; amount: number }
+  | { kind: 'TEAM_JOINED' }
 
 export type AchievementEventKind = AchievementEvent['kind']
 

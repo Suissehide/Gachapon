@@ -13,6 +13,7 @@ import { economyRouter } from './economy'
 import { equipmentRouter } from './equipment'
 import { gachaRouter } from './gacha'
 import { leaderboardRouter } from './leaderboard'
+import { questsRouter } from './quests'
 import { rewardsRouter } from './rewards'
 import { shopRouter } from './shop'
 import { skillsRouter } from './skills'
@@ -60,6 +61,7 @@ export const routes: FastifyPluginAsyncZod = async (fastify) => {
   await fastify.register(combatRouter)
   await fastify.register(campaignRouter)
   await fastify.register(leaderboardRouter)
+  await fastify.register(questsRouter)
   await fastify.register(shopRouter)
   await fastify.register(dailyShopRouter)
   await fastify.register(economyRouter)

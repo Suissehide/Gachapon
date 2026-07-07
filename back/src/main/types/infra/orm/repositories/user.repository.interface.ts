@@ -45,6 +45,7 @@ export interface UserRepositoryInterface {
       dust: number
       xp: number
       level: number
+      gold?: number
       lastTokenAt?: Date
       skillPoints?: { increment: number }
     },

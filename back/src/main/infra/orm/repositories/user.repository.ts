@@ -102,6 +102,7 @@ export class UserRepository implements UserRepositoryInterface {
       tokens: number
       dust: number
       xp: number
+      gold?: number
       level: number
       lastTokenAt?: Date
       skillPoints?: { increment: number }

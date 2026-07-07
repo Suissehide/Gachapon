@@ -26,6 +26,7 @@ import type { IDailyShopDomain } from '../domain/daily-shop/daily-shop.domain.in
 import type { GachaDomainInterface } from '../domain/gacha/gacha.domain.interface'
 import type { ILeaderboardDomain } from '../domain/leaderboard/leaderboard.domain.interface'
 import type { ProfileDomainInterface } from '../domain/profile/profile.domain.interface'
+import type { IQuestsDomain } from '../domain/quests/quests.domain.interface'
 import type { RewardsDomainInterface } from '../domain/rewards/rewards.domain.interface'
 import type { IShopDomain } from '../domain/shop/shop.domain.interface'
 import type {
@@ -53,6 +54,7 @@ import type { StreakMilestoneRepositoryInterface } from '../infra/orm/repositori
 import type { UserRepositoryInterface } from '../infra/orm/repositories/user.repository.interface'
 import type { UserAchievementProgressRepositoryInterface } from '../infra/orm/repositories/user-achievement-progress.repository.interface'
 import type { IUserBoostRepository } from '../infra/orm/repositories/user-boost.repository.interface'
+import type { IUserQuestRepository } from '../infra/orm/repositories/user-quest.repository.interface'
 import type { UserRewardRepositoryInterface } from '../infra/orm/repositories/user-reward.repository.interface'
 import type { RedisClientInterface } from '../infra/redis/redis-client'
 import type { StorageClientInterface } from '../infra/storage/storage-client'
@@ -105,6 +107,8 @@ export interface IocContainer {
   readonly streakDomain: StreakDomainInterface
   readonly rewardsDomain: RewardsDomainInterface
   readonly questRepository: IQuestRepository
+  readonly userQuestRepository: IUserQuestRepository
+  readonly questsDomain: IQuestsDomain
   readonly achievementRepository: IAchievementRepository
   readonly userAchievementProgressRepository: UserAchievementProgressRepositoryInterface
   readonly shopItemRepository: IShopItemRepository

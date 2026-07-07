@@ -80,6 +80,11 @@ enum RewardSource {
   LEVEL_UP
 }
 
+enum QuestPeriod {
+  ONESHOT
+  WEEKLY
+}
+
 enum EquipmentSlot {
   WEAPON
   ARMOR
@@ -417,14 +422,15 @@ model UserAchievementProgress {
 }
 
 model Quest {
-  id          String  @id @default(uuid())
-  key         String  @unique
+  id          String      @id @default(uuid())
+  key         String      @unique
   name        String
   description String
   criterion   Json
+  period      QuestPeriod @default(ONESHOT)
   rewardId    String?
-  reward      Reward? @relation(fields: [rewardId], references: [id])
-  isActive    Boolean @default(true)
+  reward      Reward?     @relation(fields: [rewardId], references: [id])
+  isActive    Boolean     @default(true)
 
   userQuests UserQuest[]
 }
@@ -435,12 +441,13 @@ model UserQuest {
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   questId     String
   quest       Quest     @relation(fields: [questId], references: [id])
-  date        DateTime  @db.Date
+  periodKey   String
   progress    Int       @default(0)
   completed   Boolean   @default(false)
   completedAt DateTime?
 
-  @@unique([userId, questId, date])
+  @@unique([userId, questId, periodKey])
+  @@index([userId, periodKey])
 }
 
 model Reward {
@@ -448,6 +455,7 @@ model Reward {
   tokens     Int         @default(0)
   dust       Int         @default(0)
   xp         Int         @default(0)
+  gold       Int         @default(0)
   cardRarity CardRarity?
   createdAt  DateTime    @default(now())
 

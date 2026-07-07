@@ -5,6 +5,7 @@ export const questSchema = z.object({
   name: z.string().min(1),
   description: z.string().min(1),
   criterion: z.record(z.string(), z.unknown()),
+  period: z.enum(['ONESHOT', 'WEEKLY']).optional(),
   isActive: z.boolean().default(true),
 })
 

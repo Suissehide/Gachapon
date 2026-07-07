@@ -149,4 +149,21 @@ export class UserRewardRepository implements UserRewardRepositoryInterface {
     ])
     return { data, total }
   }
+
+  async findByUserSourceAndSourceId(
+    userId: string,
+    source: RewardSource,
+    sourceId: string,
+  ): Promise<UserReward | null> {
+    const row = await this.#prisma.userReward.findUnique({
+      where: {
+        userId_source_sourceId: {
+          userId,
+          source,
+          sourceId,
+        },
+      },
+    })
+    return row ?? null
+  }
 }

@@ -6,7 +6,7 @@ export type PendingReward = {
   source: 'STREAK' | 'ACHIEVEMENT' | 'QUEST'
   sourceId: string | null
   createdAt: string
-  reward: { tokens: number; dust: number; xp: number }
+  reward: { tokens: number; dust: number; xp: number; gold: number }
   streakMilestone: { day: number; isMilestone: boolean } | null
 }
 

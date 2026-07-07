@@ -37,6 +37,10 @@ const EVENT_TO_COUNTER_TYPES: Record<AchievementEventKind, CriterionType[]> = {
   LEVEL_UP: [],
   STREAK_UPDATED: [],
   MACHINE_PURCHASED: [],
+  STAGE_CLEARED: [],
+  CARD_LEVELED: [],
+  GOLD_SPENT: [],
+  TEAM_JOINED: [],
 }
 
 const EVENT_TO_STATE_TYPES: Record<AchievementEventKind, CriterionType[]> = {
@@ -48,6 +52,10 @@ const EVENT_TO_STATE_TYPES: Record<AchievementEventKind, CriterionType[]> = {
   LEVEL_UP: ['LEVEL_REACHED'],
   STREAK_UPDATED: ['STREAK_REACHED'],
   MACHINE_PURCHASED: ['MACHINES_OWNED'],
+  STAGE_CLEARED: [],
+  CARD_LEVELED: [],
+  GOLD_SPENT: [],
+  TEAM_JOINED: [],
 }
 
 export const counterTypesFor = (kind: AchievementEventKind): CriterionType[] =>

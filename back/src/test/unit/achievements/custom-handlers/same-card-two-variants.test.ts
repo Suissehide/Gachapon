@@ -6,6 +6,7 @@ const event = {
   cardId: 'c1',
   rarity: 'COMMON' as const,
   variant: 'BRILLIANT' as const,
+  wasDuplicate: false,
 }
 
 describe('sameCardTwoVariantsHandler', () => {

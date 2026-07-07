@@ -73,6 +73,7 @@ export const usePull = () => {
       qc.invalidateQueries({ queryKey: ['pulls', 'recent'] })
       // Keep active-boost pullsRemaining in sync on the shop page.
       qc.invalidateQueries({ queryKey: ['shop'] })
+      qc.invalidateQueries({ queryKey: ['quests'] })
       if (result.unlockedAchievements?.length) {
         enqueueAchievementUnlock(result.unlockedAchievements)
         qc.invalidateQueries({ queryKey: ['achievements'] })
@@ -120,6 +121,7 @@ export const usePullBatch = () => {
       qc.invalidateQueries({ queryKey: ['pulls', 'recent'] })
       // Keep active-boost pullsRemaining in sync on the shop page.
       qc.invalidateQueries({ queryKey: ['shop'] })
+      qc.invalidateQueries({ queryKey: ['quests'] })
       if (result.unlockedAchievements?.length) {
         enqueueAchievementUnlock(result.unlockedAchievements)
         qc.invalidateQueries({ queryKey: ['achievements'] })

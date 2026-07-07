@@ -415,6 +415,7 @@ export class GachaDomain implements GachaDomainInterface {
       cardId: card.id,
       rarity: card.rarity,
       variant: rolledVariant,
+      wasDuplicate,
     })
     return {
       pull,

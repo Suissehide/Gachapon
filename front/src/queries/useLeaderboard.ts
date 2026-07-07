@@ -7,7 +7,6 @@ export type {
   CollectorEntry,
   CombatEntry,
   LeaderboardResponse,
-  Quest,
   TeamEntry,
 } from '../api/leaderboard.api.ts'
 
@@ -57,21 +56,6 @@ export const useCombatLeaderboard = () => {
     queryFn: LeaderboardApi.getCombat,
     staleTime: STALE,
     refetchOnMount: REFETCH_ON_MOUNT,
-  })
-
-  useDataFetching({
-    isPending: query.isPending,
-    isError: query.isError,
-    error: query.error,
-  })
-
-  return query
-}
-
-export const useQuests = () => {
-  const query = useQuery({
-    queryKey: ['quests'],
-    queryFn: LeaderboardApi.getQuests,
   })
 
   useDataFetching({

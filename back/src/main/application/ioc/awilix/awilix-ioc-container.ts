@@ -18,6 +18,7 @@ import { EquipmentDomain } from '../../../domain/equipment/equipment.domain'
 import { GachaDomain } from '../../../domain/gacha/gacha.domain'
 import { LeaderboardDomain } from '../../../domain/leaderboard/leaderboard.domain'
 import { ProfileDomain } from '../../../domain/profile/profile.domain'
+import { QuestsDomain } from '../../../domain/quests/quests.domain'
 import { RewardsDomain } from '../../../domain/rewards/rewards.domain'
 import { ShopDomain } from '../../../domain/shop/shop.domain'
 import { AdminSkillTreeDomain } from '../../../domain/skills/admin-skill-tree.domain'
@@ -55,6 +56,7 @@ import { UserRepository } from '../../../infra/orm/repositories/user.repository'
 import { UserAchievementProgressRepository } from '../../../infra/orm/repositories/user-achievement-progress.repository'
 import { UserBoostRepository } from '../../../infra/orm/repositories/user-boost.repository'
 import { UserCardRepository } from '../../../infra/orm/repositories/user-card.repository'
+import { UserQuestRepository } from '../../../infra/orm/repositories/user-quest.repository'
 import { UserRewardRepository } from '../../../infra/orm/repositories/user-reward.repository'
 import { RedisClient } from '../../../infra/redis/redis-client'
 import { RefreshTokenRepository } from '../../../infra/redis/refresh-token.repository'
@@ -135,6 +137,8 @@ class AwilixIocContainer {
     this.#reg('userBoostRepository', asClass(UserBoostRepository).singleton())
     this.#reg('rewardsDomain', asClass(RewardsDomain).singleton())
     this.#reg('questRepository', asClass(QuestRepository).singleton())
+    this.#reg('userQuestRepository', asClass(UserQuestRepository).singleton())
+    this.#reg('questsDomain', asClass(QuestsDomain).singleton())
     this.#reg(
       'achievementRepository',
       asClass(AchievementRepository).singleton(),
