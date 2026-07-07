@@ -338,7 +338,7 @@ function FamilyHeader({
       )}
       <span
         className={`relative z-0 inline-block bg-[#1b1726] text-white ${
-          compact ? 'px-1 py-0.5' : 'pl-1.5 pr-2.5 py-[3px]'
+          compact ? 'pl-1 pr-2 py-0.5' : 'pl-1.5 pr-3.5 py-[3px]'
         }`}
         style={{
           clipPath: TAG_CLIP_PATH,
