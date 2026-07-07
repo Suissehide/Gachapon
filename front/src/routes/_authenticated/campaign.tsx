@@ -263,7 +263,7 @@ function CampaignPage() {
           <PopupContent>
             <PopupHeader>
               <PopupTitle icon={<Zap className="h-4 w-4 text-amber-500" />}>
-                Sweep × {sweepResult.runs}
+                Farm × {sweepResult.runs}
               </PopupTitle>
             </PopupHeader>
             <PopupBody>

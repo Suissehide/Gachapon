@@ -675,7 +675,7 @@ export async function seedSkills(tx: Tx) {
     data: {
       branchId: combat.id,
       name: 'Logistique',
-      description: 'Réduit le coût des raids automatiques',
+      description: 'Réduit le coût du farm',
       icon: 'Truck',
       maxLevel: 2,
       effectType: 'SWEEP_COST',
