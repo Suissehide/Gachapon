@@ -22,13 +22,13 @@ export function RatesModal({ open, onClose }: Props) {
 
   return (
     <Popup open={open} onOpenChange={(o) => !o && onClose()}>
-      <PopupContent>
+      <PopupContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden">
         <PopupHeader>
           <PopupTitle icon={<Gem className="h-4 w-4 text-secondary" />}>
             Taux de drop
           </PopupTitle>
         </PopupHeader>
-        <PopupBody>
+        <PopupBody className="min-h-0 overflow-y-auto rounded-b-xl">
           <div className="flex flex-col gap-2.5">
             {rates.map((rate) => (
               <div key={rate.rarity} className="flex items-center gap-2.5">

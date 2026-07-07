@@ -1,7 +1,7 @@
 import { Environment } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { createFileRoute } from '@tanstack/react-router'
-import { Gem, SkipForward } from 'lucide-react'
+import { Gem, Layers, SkipForward } from 'lucide-react'
 import {
   type CSSProperties,
   useCallback,
@@ -21,6 +21,7 @@ import { RatesModal } from '../../components/play/RatesModal.tsx'
 import { RecentsPanel } from '../../components/play/RecentsPanel.tsx'
 import { StreakCard } from '../../components/play/StreakCard.tsx'
 import { TokenCard } from '../../components/play/TokenCard.tsx'
+import { AuroraGrid } from '../../components/shared/decorations/AuroraGrid'
 import { Button } from '../../components/ui/button.tsx'
 import { apiUrl as API_URL } from '../../constants/config.constant.ts'
 import { TOAST_SEVERITY } from '../../constants/ui.constant.ts'
@@ -332,18 +333,14 @@ function Play() {
   const pullCost = economy.gacha.pullTokenCost
 
   return (
-    <div className="relative flex min-h-[calc(100vh-var(--topbar-h))] flex-col overflow-x-clip bg-background px-4 pb-6 pt-5 sm:px-8 lg:px-12">
-      {/* Halos ambiance arcade clair */}
-      <div
-        className="pointer-events-none fixed inset-0 z-0"
-        style={{
-          background:
-            'radial-gradient(42% 34% at 16% 0%, color-mix(in oklab, var(--primary) 16%, transparent), transparent 70%), radial-gradient(42% 34% at 86% 4%, color-mix(in oklab, var(--secondary) 12%, transparent), transparent 70%)',
-        }}
-      />
+    <div
+      className="relative flex min-h-[calc(100vh-var(--topbar-h))] flex-col overflow-x-clip px-4 pb-8 pt-8"
+      style={{ background: '#fbf8f3', color: '#1b1726' }}
+    >
+      <AuroraGrid />
 
       {/* En-tête */}
-      <header className="relative z-1 mx-auto flex w-full max-w-[1240px] items-end justify-between">
+      <header className="relative z-1 mx-auto flex w-full max-w-5xl items-end justify-between">
         <div>
           <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-text-light/70">
             Gachapon / Tirage
@@ -363,7 +360,7 @@ function Play() {
       </header>
 
       {/* Scène : stats / machine / récents */}
-      <div className="relative z-1 mx-auto mt-4 flex w-full max-w-[1240px] flex-1 flex-col gap-4 lg:grid lg:grid-cols-[290px_1fr_290px] lg:items-center lg:gap-8">
+      <div className="relative z-1 mx-auto mt-1 flex w-full max-w-5xl flex-1 flex-col gap-4 lg:grid lg:grid-cols-[260px_1fr_260px] lg:items-center lg:gap-6">
         {/* Cartes de stats */}
         <div className="order-2 grid grid-cols-2 gap-2.5 md:grid-cols-4 lg:order-1 lg:flex lg:flex-col lg:gap-3.5">
           <TokenCard />
@@ -375,7 +372,7 @@ function Play() {
 
         {/* Machine + actions */}
         <div className="order-1 flex flex-col items-center lg:order-2">
-          <div className="relative flex min-h-[280px] w-full flex-col items-center justify-end lg:min-h-[440px]">
+          <div className="relative flex min-h-[280px] w-full flex-col items-center justify-end lg:min-h-[400px]">
             {/* Spot lumineux */}
             <div
               className="pointer-events-none absolute -inset-x-[14%] -inset-y-[6%]"
@@ -385,7 +382,7 @@ function Play() {
               }}
             />
             {/* Emplacement machine 3D — balle / flash / reveal vivent dans l'overlay plein écran */}
-            <div className="relative aspect-3/4 w-full max-w-[230px] lg:max-w-[340px]">
+            <div className="relative aspect-square w-full max-w-[320px] lg:max-w-[440px]">
               {showMachine && (
                 <div className="absolute inset-0 transition-opacity duration-300">
                   <MachineStage ref={machineRef} />
@@ -417,7 +414,8 @@ function Play() {
             >
               Tirage x1
               <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-text/6 px-2.5 py-1 font-mono text-xs text-text-light">
-                🪙 {pullCost}
+                <Layers className="h-3.5 w-3.5" />
+                {pullCost}
               </span>
             </Button>
             <Button
@@ -428,7 +426,8 @@ function Play() {
             >
               Tirage x10
               <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-white/25 px-2.5 py-1 font-mono text-xs text-white">
-                🪙 {pullCost * 10}
+                <Layers className="h-3.5 w-3.5" />
+                {pullCost * 10}
               </span>
             </Button>
           </div>

@@ -1,10 +1,11 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import {
   ArrowRight,
   Check,
   ChevronLeft,
   ChevronRight,
   Crown,
+  Layers,
   Lock,
   RotateCcw,
   Settings,
@@ -15,7 +16,8 @@ import {
   Zap,
 } from 'lucide-react'
 import type { CSSProperties } from 'react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { z } from 'zod/v4'
 
 import type {
   CampaignChapter,
@@ -23,6 +25,7 @@ import type {
   SweepResult,
 } from '../../api/campaign.api.ts'
 import type { TeamUnit } from '../../api/combat.api.ts'
+import { AuroraGrid } from '../../components/shared/decorations/AuroraGrid'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { getRarityTone } from '../../components/shared/tcg-card/config.ts'
 import { TcgCardFace } from '../../components/shared/tcg-card/TcgCardFace.tsx'
@@ -35,14 +38,9 @@ import {
   PopupHeader,
   PopupTitle,
 } from '../../components/ui/popup.tsx'
-import {
-  useCampaign,
-  useSweepStage,
-} from '../../queries/useCampaign.ts'
+import { useCampaign, useSweepStage } from '../../queries/useCampaign.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
 import { useCombatTeam } from '../../queries/useCombatTeam.ts'
-
-import { z } from 'zod/v4'
 
 const campaignSearchSchema = z.object({
   editor: z.boolean().optional(),
@@ -70,7 +68,12 @@ function chapterMeta(n: number): { title: string; hue: number } {
   return CHAPTER_META[n - 1] ?? { title: `Chapitre ${n}`, hue: (n * 47) % 360 }
 }
 
-function computePower(stats: { hp: number; atk: number; def: number; spd: number }): number {
+function computePower(stats: {
+  hp: number
+  atk: number
+  def: number
+  spd: number
+}): number {
   return Math.round(stats.hp / 4 + stats.atk * 1.5 + stats.def + stats.spd)
 }
 
@@ -154,17 +157,10 @@ function CampaignPage() {
       className="relative min-h-[calc(100vh-var(--topbar-h))] pb-32"
       style={{ background: '#fbf8f3', color: '#1b1726' }}
     >
-      {/* Background halos */}
-      <div
-        className="pointer-events-none fixed inset-0 z-0"
-        aria-hidden
-        style={{
-          background:
-            'radial-gradient(40% 30% at 12% 0%, rgba(245,158,11,0.14), transparent 70%), radial-gradient(40% 30% at 92% 4%, rgba(236,72,153,0.12), transparent 70%), radial-gradient(50% 30% at 60% 0%, rgba(139,92,246,0.08), transparent 70%)',
-        }}
-      />
+      {/* Fond partagé « Arcade clair » (halos + grille) — cf. /collection */}
+      <AuroraGrid />
 
-      <div className="relative z-10 mx-auto max-w-[1200px] px-4 pt-8 sm:px-8">
+      <div className="relative z-10 mx-auto max-w-5xl px-4 pt-8">
         {/* Header */}
         <header>
           <p className="font-mono text-[11px] font-bold uppercase tracking-[0.25em] text-text-light/60">
@@ -190,9 +186,7 @@ function CampaignPage() {
 
         {/* Chapter panel */}
         {chapter && (
-          <div
-            className="mt-5 rounded-3xl border border-[rgba(27,23,38,0.06)] bg-white p-5 shadow-[0_2px_0_rgba(27,23,38,0.03),0_20px_44px_-26px_rgba(27,23,38,0.16)] sm:p-7"
-          >
+          <div className="mt-5 rounded-3xl border border-[rgba(27,23,38,0.06)] bg-white p-5 shadow-[0_2px_0_rgba(27,23,38,0.03),0_20px_44px_-26px_rgba(27,23,38,0.16)] sm:p-7">
             <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 md:grid-cols-3">
               {chapter.stages.map((stage) => (
                 <LevelCard
@@ -208,7 +202,10 @@ function CampaignPage() {
       </div>
 
       {/* Persistent team dock */}
-      <TeamDock team={team.data?.team ?? []} onEdit={() => setEditorOpen(true)} />
+      <TeamDock
+        team={team.data?.team ?? []}
+        onEdit={() => setEditorOpen(true)}
+      />
 
       {/* Team editor popup — mirrors the mockup's TeamEditor modal */}
       <TeamEditorPopup open={editorOpen} onOpenChange={setEditorOpen} />
@@ -272,9 +269,13 @@ function CampaignPage() {
                     </p>
                     <ul className="space-y-1">
                       {sweepResult.equipmentDrops.map((e, i) => (
-                        // biome-ignore lint/suspicious/noArrayIndexKey: ephemeral
-                        <li key={i} className="text-text-light">
-                          ✨ {e.name}{' '}
+                        <li
+                          // biome-ignore lint/suspicious/noArrayIndexKey: ephemeral
+                          key={i}
+                          className="flex items-center gap-1.5 text-text-light"
+                        >
+                          <Shield className="h-3.5 w-3.5 shrink-0 text-amber-600" />
+                          {e.name}{' '}
                           <span className="text-xs text-text-light/50">
                             ({e.rarity})
                           </span>
@@ -290,9 +291,13 @@ function CampaignPage() {
                     </p>
                     <ul className="space-y-1">
                       {sweepResult.cardDrops.map((c, i) => (
-                        // biome-ignore lint/suspicious/noArrayIndexKey: ephemeral
-                        <li key={i} className="text-text-light">
-                          🎴 {c.name}{' '}
+                        <li
+                          // biome-ignore lint/suspicious/noArrayIndexKey: ephemeral
+                          key={i}
+                          className="flex items-center gap-1.5 text-text-light"
+                        >
+                          <Layers className="h-3.5 w-3.5 shrink-0 text-violet-500" />
+                          {c.name}{' '}
                           <span className="text-xs text-text-light/50">
                             ({c.rarity})
                           </span>
@@ -373,7 +378,11 @@ function ChapterStrip({
 
   return (
     <div className="relative flex items-center">
-      <StripArrow direction="left" onClick={() => nudge(-1)} hidden={!edges.left} />
+      <StripArrow
+        direction="left"
+        onClick={() => nudge(-1)}
+        hidden={!edges.left}
+      />
       <div
         ref={scrollRef}
         className="flex w-full snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-0.5 py-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -389,7 +398,11 @@ function ChapterStrip({
           />
         ))}
       </div>
-      <StripArrow direction="right" onClick={() => nudge(1)} hidden={!edges.right} />
+      <StripArrow
+        direction="right"
+        onClick={() => nudge(1)}
+        hidden={!edges.right}
+      />
     </div>
   )
 }
@@ -408,7 +421,9 @@ function StripArrow({
     <button
       type="button"
       onClick={onClick}
-      aria-label={direction === 'left' ? 'Chapitres précédents' : 'Chapitres suivants'}
+      aria-label={
+        direction === 'left' ? 'Chapitres précédents' : 'Chapitres suivants'
+      }
       className={`z-[2] flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[rgba(27,23,38,0.12)] bg-white text-text-light/70 shadow-[0_6px_16px_-8px_rgba(27,23,38,0.3)] transition-all hover:scale-105 hover:bg-[#fafaf7] hover:text-text ${marginClass} ${
         hidden ? 'pointer-events-none opacity-0' : ''
       }`}
@@ -507,7 +522,8 @@ function LevelCard({
   const base =
     'group relative rounded-2xl border-[1.5px] p-4 transition-all min-h-[92px]'
 
-  let stateClass = 'border-[rgba(27,23,38,0.08)] bg-[#fafaf7] cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_14px_30px_-16px_rgba(27,23,38,0.22)]'
+  let stateClass =
+    'border-[rgba(27,23,38,0.08)] bg-[#fafaf7] cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_14px_30px_-16px_rgba(27,23,38,0.22)]'
   if (isLocked) {
     stateClass =
       'border-dashed border-[rgba(27,23,38,0.12)] bg-[#f4f1ec] opacity-75 cursor-not-allowed'
@@ -611,11 +627,10 @@ function TeamDock({ team, onEdit }: { team: TeamUnit[]; onEdit: () => void }) {
     <div
       className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-4 pt-3"
       style={{
-        background:
-          'linear-gradient(180deg, rgba(251,248,243,0), #fbf8f3 38%)',
+        background: 'linear-gradient(180deg, rgba(251,248,243,0), #fbf8f3 38%)',
       }}
     >
-      <div className="pointer-events-auto mx-auto flex max-w-[1200px] items-center gap-4 rounded-[20px] bg-[#1b1726] px-4 py-3 pl-5 text-white shadow-[0_18px_44px_-16px_rgba(27,23,38,0.5)]">
+      <div className="pointer-events-auto mx-auto flex max-w-5xl items-center gap-4 rounded-[20px] bg-[#1b1726] px-4 py-3 pl-5 text-white shadow-[0_18px_44px_-16px_rgba(27,23,38,0.5)]">
         <div className="flex items-center gap-3">
           <Shield className="h-5 w-5 text-amber-400" />
           <div>
@@ -882,9 +897,9 @@ function PrepModal({
             disabled={!canSweep || sweepPending}
             className="gap-2"
             title={
-              !canSweep
-                ? `Coût : ${sweepCost * 3} PC`
-                : `Farm × 3 (${sweepCost * 3} PC)`
+              canSweep
+                ? `Farm × 3 (${sweepCost * 3} PC)`
+                : `Coût : ${sweepCost * 3} PC`
             }
           >
             <Zap className="h-4 w-4 text-amber-500" />
@@ -971,8 +986,7 @@ function PowerVerdict({
   label: string
   ratio: number
 }) {
-  const bg =
-    tone === 'good' ? '#f0fdf4' : tone === 'ok' ? '#fffbeb' : '#fef2f2'
+  const bg = tone === 'good' ? '#f0fdf4' : tone === 'ok' ? '#fffbeb' : '#fef2f2'
   const border =
     tone === 'good' ? '#bbf7d0' : tone === 'ok' ? '#fde68a' : '#fecaca'
   const mineColor =
@@ -1005,7 +1019,13 @@ function PowerVerdict({
         </span>
       </div>
       <div className="my-2.5 h-2 overflow-hidden rounded-[4px] bg-[rgba(27,23,38,0.1)]">
-        <div style={{ width: `${clampedPct}%`, background: barGradient, height: '100%' }} />
+        <div
+          style={{
+            width: `${clampedPct}%`,
+            background: barGradient,
+            height: '100%',
+          }}
+        />
       </div>
       <div className="flex justify-between font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-text-light/60">
         <span>Ta puissance</span>
