@@ -180,17 +180,22 @@ export function RevealGrid({
         ))}
       </div>
 
-      {!allRevealed && !revealAllTriggered && (
-        <Button
-          type="button"
-          variant="gradient"
-          size="lg"
-          onClick={revealAll}
-          className="relative z-10 mt-8 rounded-full px-8 uppercase tracking-widest"
-        >
-          Tout révéler
-        </Button>
-      )}
+      {/* Reserved slot (button height h-10 + mt-8): keeps the flex column's
+       *  height constant so removing the button on click doesn't recenter the
+       *  grid and shift the cards down. */}
+      <div className="relative z-10 mt-8 flex h-10 items-center justify-center">
+        {!allRevealed && !revealAllTriggered && (
+          <Button
+            type="button"
+            variant="gradient"
+            size="lg"
+            onClick={revealAll}
+            className="rounded-full px-8 uppercase tracking-widest"
+          >
+            Tout révéler
+          </Button>
+        )}
+      </div>
 
       {showActions && (
         <div
