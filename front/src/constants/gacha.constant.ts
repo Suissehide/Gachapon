@@ -63,6 +63,9 @@ export type PullBatchEntry = {
   wasDuplicate: boolean
   dustEarned: number
   pityCurrent: number
+  wasFreePull: boolean
+  wasGoldenBall: boolean
+  wasBoostGuarantee: boolean
 }
 
 export type PullBatchResult = {
