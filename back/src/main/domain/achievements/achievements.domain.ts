@@ -3,6 +3,7 @@ import type { CardRarity, CardVariant } from '../../../generated/enums'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
+import type { IQuestsDomain } from '../../types/domain/quests/quests.domain.interface'
 import type {
   AchievementsDomainInterface,
   AchievementWithProgress,
@@ -44,12 +45,29 @@ interface EvaluateResult {
 
 export class AchievementsDomain implements AchievementsDomainInterface {
   readonly #postgresOrm: PostgresOrm
+  readonly #questsDomain: IQuestsDomain
 
-  constructor({ postgresOrm }: Pick<IocContainer, 'postgresOrm'>) {
+  constructor({ postgresOrm, questsDomain }: Pick<IocContainer, 'postgresOrm' | 'questsDomain'>) {
     this.#postgresOrm = postgresOrm
+    this.#questsDomain = questsDomain
   }
 
   async track(
+    tx: PrimaTransactionClient,
+    userId: string,
+    event: AchievementEvent,
+  ): Promise<UnlockedAchievement[]> {
+    const unlocked = await this.#trackAchievements(tx, userId, event)
+
+    // Fan-out: every tracked event also feeds the quest engine.
+    // trackInTx is fail-safe (errors are caught inside, except P2034 which
+    // must propagate so the caller's serialization retry loop can handle it).
+    await this.#questsDomain.trackInTx(tx, userId, event)
+
+    return unlocked
+  }
+
+  async #trackAchievements(
     tx: PrimaTransactionClient,
     userId: string,
     event: AchievementEvent,
