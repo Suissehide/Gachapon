@@ -52,10 +52,10 @@ export interface UserRewardRepositoryInterface {
     page: number,
     limit: number,
   ): Promise<{ data: UserRewardWithReward[]; total: number }>
-  /** Finds a UserReward by userId, source, and sourceId (composite unique constraint). */
-  findByUserSourceAndSourceId(
+  /** Batch-reads UserRewards for a user/source across many sourceIds (claim status lookup). */
+  findManyByUserSourceAndSourceIds(
     userId: string,
     source: RewardSource,
-    sourceId: string,
-  ): Promise<UserReward | null>
+    sourceIds: string[],
+  ): Promise<Pick<UserReward, 'id' | 'sourceId' | 'claimedAt'>[]>
 }

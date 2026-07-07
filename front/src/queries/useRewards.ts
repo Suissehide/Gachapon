@@ -7,9 +7,9 @@ import { useToast } from '../hooks/useToast.ts'
 import { useAchievementUnlockStore } from '../stores/achievementUnlock.store.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 import { useLevelUpStore } from '../stores/levelUp.store.ts'
-import { DEFAULT_ECONOMY, useEconomyConfig } from './useEconomyConfig.ts'
 import { computeLevel } from '../utils/level.ts'
 import { levelUpReward } from '../utils/levelRewards.ts'
+import { DEFAULT_ECONOMY, useEconomyConfig } from './useEconomyConfig.ts'
 
 export type { ClaimResult, PendingReward } from '../api/rewards.api.ts'
 
@@ -42,9 +42,13 @@ export const useClaimReward = () => {
       const cached = qc.getQueryData<{ xp?: number }>(['profile', username])
       const oldLevel = computeLevel(cached?.xp ?? 0, economy.xp)
       if (result.level > oldLevel) {
-        triggerLevelUp(result.level, levelUpReward(oldLevel, result.level, economy.xp))
+        triggerLevelUp(
+          result.level,
+          levelUpReward(oldLevel, result.level, economy.xp),
+        )
       }
       qc.invalidateQueries({ queryKey: ['rewards', 'pending'] })
+      qc.invalidateQueries({ queryKey: ['quests'] })
       qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
       void fetchMe()
       if (result.unlockedAchievements?.length) {
@@ -77,10 +81,14 @@ export const useClaimAllRewards = () => {
         const cached = qc.getQueryData<{ xp?: number }>(['profile', username])
         const oldLevel = computeLevel(cached?.xp ?? 0, economy.xp)
         if (result.level > oldLevel) {
-          triggerLevelUp(result.level, levelUpReward(oldLevel, result.level, economy.xp))
+          triggerLevelUp(
+            result.level,
+            levelUpReward(oldLevel, result.level, economy.xp),
+          )
         }
       }
       qc.invalidateQueries({ queryKey: ['rewards', 'pending'] })
+      qc.invalidateQueries({ queryKey: ['quests'] })
       qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
       void fetchMe()
       if (result?.unlockedAchievements?.length) {

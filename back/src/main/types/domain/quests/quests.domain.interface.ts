@@ -8,6 +8,14 @@ export interface QuestReward {
   gold: number
 }
 
+/** Info allowing the front to claim a completed quest's reward directly. */
+export interface QuestClaimInfo {
+  /** Id of the pending UserReward to POST /rewards/:id/claim. */
+  rewardId: string
+  /** True once the reward has been claimed. */
+  claimed: boolean
+}
+
 export interface QuestStateItem {
   key: string
   name: string
@@ -16,12 +24,16 @@ export interface QuestStateItem {
   target: number
   completed: boolean
   reward: QuestReward | null
+  /** Non-null once the quest is completed and carries a reward to claim. */
+  claim: QuestClaimInfo | null
 }
 
 export interface QuestState {
   weekly: QuestStateItem[]
   /** True when all 3 weekly quests for the current period are completed AND the bonus reward has been granted. */
   weeklyBonusCompleted: boolean
+  /** Non-null once the perfect-week bonus reward exists to claim. */
+  weeklyBonusClaim: QuestClaimInfo | null
   oneshot: QuestStateItem[]
 }
 

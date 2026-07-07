@@ -108,6 +108,8 @@ describe('GET /quests — état utilisateur e2e', () => {
     expect(body.weeklyBonus.reward).toHaveProperty('xp')
     expect(typeof body.weeklyBonus.completed).toBe('boolean')
     expect(body.weeklyBonus.completed).toBe(false)
+    expect(body.weeklyBonus).toHaveProperty('claim')
+    expect(body.weeklyBonus.claim).toBeNull()
 
     // weekly items shape — at least our seeded quest should be present
     const seededQuest = body.weekly.find((q: { key: string }) => q.key === questKey)
@@ -120,6 +122,9 @@ describe('GET /quests — état utilisateur e2e', () => {
       target: 10,
       completed: false,
     })
+    // Not completed → no reward to claim yet
+    expect(seededQuest).toHaveProperty('claim')
+    expect(seededQuest.claim).toBeNull()
     expect(seededQuest.reward).toMatchObject({
       tokens: expect.any(Number),
       dust: expect.any(Number),
@@ -136,5 +141,54 @@ describe('GET /quests — état utilisateur e2e', () => {
     expect(uq).not.toBeNull()
     expect(uq!.progress).toBe(0)
     expect(uq!.completed).toBe(false)
+  })
+
+  it('GET /quests — quête complétée → claim réclamable, puis marqué claimed après /rewards/:id/claim', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    // Simulate completion: mark UserQuest done + queue its pending UserReward
+    // (mirrors what QuestsDomain does on the completing event).
+    await postgresOrm.prisma.userQuest.updateMany({
+      where: { userId, questId, periodKey },
+      data: { progress: 10, completed: true, completedAt: new Date() },
+    })
+    const userReward = await postgresOrm.prisma.userReward.create({
+      data: {
+        userId,
+        rewardId,
+        source: 'QUEST',
+        sourceId: `${questKey}:${periodKey}`,
+      },
+    })
+
+    // GET /quests → the quest now exposes a claimable reward
+    const before = await app
+      .inject({ method: 'GET', url: '/quests', headers: { cookie: cookies } })
+      .then((r) => r.json())
+    const questBefore = before.weekly.find(
+      (q: { key: string }) => q.key === questKey,
+    )
+    expect(questBefore.completed).toBe(true)
+    expect(questBefore.claim).toEqual({
+      rewardId: userReward.id,
+      claimed: false,
+    })
+
+    // Claim it through the existing rewards endpoint
+    const claimRes = await app.inject({
+      method: 'POST',
+      url: `/rewards/${userReward.id}/claim`,
+      headers: { cookie: cookies },
+    })
+    expect(claimRes.statusCode).toBe(200)
+
+    // GET /quests → same reward is now flagged as claimed
+    const after = await app
+      .inject({ method: 'GET', url: '/quests', headers: { cookie: cookies } })
+      .then((r) => r.json())
+    const questAfter = after.weekly.find(
+      (q: { key: string }) => q.key === questKey,
+    )
+    expect(questAfter.claim).toEqual({ rewardId: userReward.id, claimed: true })
   })
 })

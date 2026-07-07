@@ -4,6 +4,7 @@ import { QuestsApi } from '../api/quests.api.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 
 export type {
+  QuestClaim,
   QuestEntry,
   QuestReward,
   QuestsResponse,

@@ -157,47 +157,40 @@ export class QuestsDomain implements IQuestsDomain {
       }
     }
 
-    // Build weekly state
-    const weekly: QuestStateItem[] = weeklyQuests.map((q) => {
-      const uq = uqMap.get(`${q.id}:${weeklyPeriodKey}`)
-      const target = this.#parseTarget(q.criterion)
-      return {
-        key: q.key,
-        name: q.name,
-        description: q.description,
-        progress: uq?.progress ?? 0,
-        target,
-        completed: uq?.completed ?? false,
-        reward: q.reward
-          ? {
-              tokens: q.reward.tokens,
-              dust: q.reward.dust,
-              xp: q.reward.xp,
-              gold: q.reward.gold,
-            }
-          : null,
-      }
-    })
-
-    // Weekly bonus: check whether the bonus UserReward was already granted
+    // Batch-load the QUEST UserRewards backing every quest + the weekly bonus,
+    // so the front can claim each completed quest's reward directly.
     const bonusSourceId = `weekly-bonus:${weeklyPeriodKey}`
-    const bonusReward =
-      await this.#userRewardRepository.findByUserSourceAndSourceId(
+    const sourceIds = [
+      ...weeklyQuests.map((q) => `${q.key}:${weeklyPeriodKey}`),
+      ...oneshotQuests.map((q) => `${q.key}:oneshot`),
+      bonusSourceId,
+    ]
+    const rewardRows =
+      await this.#userRewardRepository.findManyByUserSourceAndSourceIds(
         userId,
         'QUEST',
-        bonusSourceId,
+        sourceIds,
       )
+    const claimBySourceId = new Map(
+      rewardRows
+        .filter((r): r is typeof r & { sourceId: string } => r.sourceId != null)
+        .map((r) => [
+          r.sourceId,
+          { rewardId: r.id, claimed: r.claimedAt !== null },
+        ]),
+    )
 
-    // Build oneshot state
-    const oneshot: QuestStateItem[] = oneshotQuests.map((q) => {
-      const uq = uqMap.get(`${q.id}:oneshot`)
-      const target = this.#parseTarget(q.criterion)
+    const buildItem = (
+      q: QuestWithReward,
+      periodKey: string,
+    ): QuestStateItem => {
+      const uq = uqMap.get(`${q.id}:${periodKey}`)
       return {
         key: q.key,
         name: q.name,
         description: q.description,
         progress: uq?.progress ?? 0,
-        target,
+        target: this.#parseTarget(q.criterion),
         completed: uq?.completed ?? false,
         reward: q.reward
           ? {
@@ -207,12 +200,22 @@ export class QuestsDomain implements IQuestsDomain {
               gold: q.reward.gold,
             }
           : null,
+        claim: claimBySourceId.get(`${q.key}:${periodKey}`) ?? null,
       }
-    })
+    }
+
+    const weekly: QuestStateItem[] = weeklyQuests.map((q) =>
+      buildItem(q, weeklyPeriodKey),
+    )
+    const oneshot: QuestStateItem[] = oneshotQuests.map((q) =>
+      buildItem(q, 'oneshot'),
+    )
+    const weeklyBonusClaim = claimBySourceId.get(bonusSourceId) ?? null
 
     return {
       weekly,
-      weeklyBonusCompleted: bonusReward !== null,
+      weeklyBonusCompleted: weeklyBonusClaim !== null,
+      weeklyBonusClaim,
       oneshot,
     }
   }

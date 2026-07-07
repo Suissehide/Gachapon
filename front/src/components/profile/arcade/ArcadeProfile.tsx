@@ -9,6 +9,7 @@ import { AchievementsCard } from './AchievementsCard'
 import { ArcadeHero } from './ArcadeHero'
 import { ArcadeTopbar } from './ArcadeTopbar'
 import { CollectionCTA } from './CollectionCTA'
+import { QuestsCard } from './QuestsCard'
 import { SetsProgressionCard } from './SetsProgressionCard'
 import { StatGrid } from './StatGrid'
 import { StreakCard } from './StreakCard'
@@ -36,7 +37,9 @@ export function ArcadeProfile({ username }: Props) {
     return (
       <div className="min-h-[calc(100vh-var(--topbar-h))] flex items-center justify-center">
         <div className="text-center">
-          <p className="font-display text-2xl font-extrabold">Joueur introuvable</p>
+          <p className="font-display text-2xl font-extrabold">
+            Joueur introuvable
+          </p>
           <p className="font-mono text-sm text-text-light mt-2">
             {username} n'existe pas.
           </p>
@@ -61,7 +64,10 @@ export function ArcadeProfile({ username }: Props) {
 
       <StatGrid profile={profile} />
 
-      <div className="grid gap-[22px]" style={{ gridTemplateColumns: '1.4fr 1fr' }}>
+      <div
+        className="grid gap-[22px]"
+        style={{ gridTemplateColumns: '1.4fr 1fr' }}
+      >
         <XPCard profile={profile} />
         <StreakCard
           profile={profile}
@@ -72,6 +78,7 @@ export function ArcadeProfile({ username }: Props) {
 
       <SetsProgressionCard sets={progression.data?.sets ?? []} />
 
+      {isOwnProfile && <QuestsCard />}
       {isOwnProfile && <AchievementsCard />}
 
       <CollectionCTA

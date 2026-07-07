@@ -12,6 +12,11 @@ const questRewardSchema = z.object({
   gold: z.number().int(),
 })
 
+const questClaimSchema = z.object({
+  rewardId: z.string(),
+  claimed: z.boolean(),
+})
+
 const questStateItemSchema = z.object({
   key: z.string(),
   name: z.string(),
@@ -20,6 +25,7 @@ const questStateItemSchema = z.object({
   target: z.number().int(),
   completed: z.boolean(),
   reward: questRewardSchema.nullable(),
+  claim: questClaimSchema.nullable(),
 })
 
 const weeklyBonusSchema = z.object({
@@ -28,6 +34,7 @@ const weeklyBonusSchema = z.object({
     gold: z.number().int(),
     xp: z.number().int(),
   }),
+  claim: questClaimSchema.nullable(),
 })
 
 const questsStateResponseSchema = z.object({
@@ -54,6 +61,7 @@ export const questsRouter: FastifyPluginCallbackZod = (fastify) => {
         weeklyBonus: {
           completed: state.weeklyBonusCompleted,
           reward: WEEKLY_BONUS_REWARD,
+          claim: state.weeklyBonusClaim,
         },
         oneshot: state.oneshot,
       }

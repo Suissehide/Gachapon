@@ -9,6 +9,12 @@ export type QuestReward = {
   gold: number
 }
 
+/** Info to claim a completed quest's reward directly from its card. */
+export type QuestClaim = {
+  rewardId: string
+  claimed: boolean
+}
+
 export type QuestEntry = {
   key: string
   name: string
@@ -17,11 +23,13 @@ export type QuestEntry = {
   target: number
   completed: boolean
   reward: QuestReward | null
+  claim: QuestClaim | null
 }
 
 export type WeeklyBonus = {
   completed: boolean
   reward: { gold: number; xp: number }
+  claim: QuestClaim | null
 }
 
 export type QuestsResponse = {
