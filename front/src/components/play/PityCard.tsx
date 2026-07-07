@@ -12,7 +12,7 @@ export function PityCard() {
 
   return (
     <div className="rounded-2xl border border-border bg-card px-4 py-3.5 shadow-sm">
-      <div className="flex items-baseline justify-between gap-2">
+      <div className="flex flex-col gap-1">
         <span className="flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-text-light">
           <Gem className="h-3.5 w-3.5 text-secondary" />
           Garantie
@@ -40,7 +40,8 @@ export function PityCard() {
           className="h-full rounded-full transition-[width] duration-300"
           style={{
             width: `${pct}%`,
-            background: 'linear-gradient(90deg, var(--secondary), var(--rarity-legendary))',
+            background:
+              'linear-gradient(90deg, var(--secondary), var(--rarity-legendary))',
           }}
         />
       </div>

@@ -81,6 +81,7 @@ export function FeedEntryRow({ entry, index = 0 }: Props) {
         <HoverCard.Content
           side="left"
           sideOffset={10}
+          hideWhenDetached
           className="z-50"
           style={{ filter: 'drop-shadow(0 12px 40px rgba(0,0,0,0.3))' }}
         >

@@ -17,39 +17,50 @@ const SHAKE_DURATION = 0.8 // seconds
 const SPLIT_DURATION = 1.0 // seconds
 const BALL_SCALE = 1.05
 
-function easeInOutCubic(x: number): number {
-  return x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2
+type ShakeSeed = {
+  freq: number
+  phaseX: number
+  phaseY: number
+  phaseZ: number
+  dir: number
 }
 
-// 4 segments = 3 direction changes: rest → right → left → right → rest.
-// Each transition uses easeInOutCubic so the ball swings distinctly rather
-// than blurring into a continuous jitter.
-const SWING_STOPS = [0, 1, -1, 1, 0]
-const SWING_SEGMENTS = SWING_STOPS.length - 1
-
+// Organic "shaking a capsule in your hand" motion: several incommensurate
+// sine waves per axis sum into a busy, aperiodic rattle across all three
+// rotation axes plus a translational jitter — nothing like a clean left/right
+// pendulum. A quick attack + late release envelope makes the ball grab, rattle
+// hard, then settle just before it splits open.
 function runShake(
   t: number,
   group: THREE.Group,
   mat: THREE.MeshStandardMaterial | null,
-  ampZ: number,
+  amp: number,
+  seed: ShakeSeed,
 ) {
   const progress = Math.min(1, t / SHAKE_DURATION)
-  const scaled = progress * SWING_SEGMENTS
-  const idx = Math.min(SWING_SEGMENTS - 1, Math.floor(scaled))
-  const local = scaled - idx
-  const eased = easeInOutCubic(local)
-  const from = SWING_STOPS[idx]
-  const to = SWING_STOPS[idx + 1]
-  const value = from + (to - from) * eased
+  const attack = Math.min(1, progress / 0.12)
+  const release = 1 - Math.max(0, (progress - 0.82) / 0.18)
+  const env = attack * release
 
-  // Main pendulum swing on Z axis with clear opposing sway
-  group.rotation.z = value * ampZ
-  // Subtle sympathetic tilt on X — same phase, small amplitude
-  group.rotation.x = value * ampZ * 0.28
-  // Tiny drift in sync with the swing so the ball feels grounded
-  group.position.x = value * 0.035
-  // Slight droop when swinging (max at the peaks)
-  group.position.y = -Math.abs(value) * 0.02
+  const { freq: f, phaseX, phaseY, phaseZ, dir } = seed
+  // Incommensurate frequency stacks → no visible repeating cycle.
+  const wz =
+    Math.sin(t * f + phaseZ) * 0.6 +
+    Math.sin(t * f * 1.73 + phaseZ * 2) * 0.3 +
+    Math.sin(t * f * 2.61 + phaseZ) * 0.1
+  const wx =
+    Math.sin(t * f * 0.86 + phaseX) * 0.55 +
+    Math.sin(t * f * 2.13 + phaseX * 1.4) * 0.3
+  const wy =
+    Math.sin(t * f * 1.27 + phaseY) * 0.5 +
+    Math.sin(t * f * 3.1 + phaseY * 0.7) * 0.22
+
+  group.rotation.z = wz * amp * dir * env
+  group.rotation.x = wx * amp * 0.7 * env
+  group.rotation.y = wy * amp * 0.55 * env
+  // Translational rattle in sync so the whole capsule jitters through space.
+  group.position.x = wz * 0.055 * env
+  group.position.y = wx * 0.035 * env
   group.scale.setScalar(BALL_SCALE)
 
   if (mat) {
@@ -132,9 +143,19 @@ export function GachaBall({ phase, onSplitDone }: Props) {
     [],
   )
 
-  // Randomize only the peak amplitude so each pull feels slightly different
-  // without breaking the deterministic pendulum pattern.
-  const ampZ = useMemo(() => 0.32 + Math.random() * 0.1, [])
+  // Per-pull random seed → every shake rattles on a distinct, non-repeating
+  // path, with a slightly different peak amplitude and starting direction.
+  const amp = useMemo(() => 0.34 + Math.random() * 0.12, [])
+  const shakeSeed = useMemo<ShakeSeed>(
+    () => ({
+      freq: 18 + Math.random() * 6,
+      phaseX: Math.random() * Math.PI * 2,
+      phaseY: Math.random() * Math.PI * 2,
+      phaseZ: Math.random() * Math.PI * 2,
+      dir: Math.random() < 0.5 ? -1 : 1,
+    }),
+    [],
+  )
 
   useFrame((_, delta) => {
     if (!groupRef.current || !topRef.current || !bottomRef.current) {
@@ -154,7 +175,7 @@ export function GachaBall({ phase, onSplitDone }: Props) {
     const t = timeRef.current
 
     if (phase === 'shake') {
-      runShake(t, groupRef.current, bottomMatRef.current, ampZ)
+      runShake(t, groupRef.current, bottomMatRef.current, amp, shakeSeed)
     } else {
       runSplit(
         t,

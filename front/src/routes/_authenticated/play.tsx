@@ -200,14 +200,16 @@ function Play() {
       }
       pullAbortedRef.current = false
 
+      // Kick off network in parallel with visuals
+      pendingResult.current = null
+
+      // "Skip animations" only skips the 3D machine animation — the ball
+      // shake/split, flash and card-reveal effects still play. Go straight to
+      // the ball on the black backdrop.
       if (skipAnimationsRef.current) {
-        setPhase('pulling')
-        phaseRef.current = 'pulling'
         pullBatchMutation(count, {
           onSuccess: (r) => {
-            setResult(r)
-            setPhase('reveal-grid')
-            phaseRef.current = 'reveal-grid'
+            pendingResult.current = r
           },
           onError: () => {
             pullAbortedRef.current = true
@@ -215,11 +217,19 @@ function Play() {
             phaseRef.current = 'idle'
           },
         })
+        setPhase('ball-shake')
+        phaseRef.current = 'ball-shake'
+        await new Promise((res) => setTimeout(res, 800))
+        if (pullAbortedRef.current) {
+          return
+        }
+        setPhase('ball-split')
+        phaseRef.current = 'ball-split'
+        // ball-split ends via onSplitDone → handleSplitDone → reveal-grid
         return
       }
 
-      // Full animation path — kick off network in parallel with visuals
-      pendingResult.current = null
+      // Full animation path
       setPhase('machine-anim')
       phaseRef.current = 'machine-anim'
       pullBatchMutation(count, {
@@ -268,27 +278,9 @@ function Play() {
       pullAbortedRef.current = false
       pendingResult.current = null
 
-      // Skip mode: no ball, direct to reveal
-      if (skipAnimationsRef.current) {
-        setResult(null)
-        setPhase('pulling')
-        phaseRef.current = 'pulling'
-        pullBatchMutation(count, {
-          onSuccess: (r) => {
-            setResult(r)
-            setPhase('reveal-grid')
-            phaseRef.current = 'reveal-grid'
-          },
-          onError: () => {
-            pullAbortedRef.current = true
-            setPhase('idle')
-            phaseRef.current = 'idle'
-          },
-        })
-        return
-      }
-
-      // Full anim path — but skip machine-anim (we're already on the black backdrop)
+      // This replay is already on the black backdrop, so the machine anim is
+      // never involved — the "skip animations" toggle has nothing to skip here.
+      // Always play the ball → flash → reveal sequence.
       pullBatchMutation(count, {
         onSuccess: (r) => {
           pendingResult.current = r
@@ -437,7 +429,9 @@ function Play() {
 
         {/* Tirages récents */}
         <div className="order-3 flex min-h-0 flex-col self-stretch lg:justify-center">
-          <RecentsPanel />
+          {/* Freeze the feed while a pull is in flight so the just-pulled card
+           *  doesn't surface in "récents" before its reveal animation. */}
+          <RecentsPanel frozen={phase !== 'idle'} />
         </div>
       </div>
 
@@ -464,6 +458,11 @@ function Play() {
        *  when the user closes the reveal or the pull errors back to idle. */}
       {inPullCycleFullscreen && (
         <div className="fixed inset-0 z-[100] overflow-hidden bg-black animate-in fade-in-0 duration-500">
+          {/* Permanent soft aurora glow behind the reveal so the backdrop
+           *  never reads as flat black once the capsule has opened. */}
+          {phase === 'reveal-grid' && (
+            <div className="reveal-aurora pointer-events-none absolute inset-0 animate-in fade-in-0 duration-1000" />
+          )}
           {/* Persistent ambient particles — subtle drift once the reveal is open */}
           {phase === 'reveal-grid' && (
             <div className="pointer-events-none absolute inset-0 overflow-hidden">

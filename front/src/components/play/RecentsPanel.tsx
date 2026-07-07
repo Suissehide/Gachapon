@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 
 import { TeamsApi } from '../../api/teams.api'
-import { useLiveFeed } from '../../hooks/useLiveFeed'
+import { type FeedEntry, useLiveFeed } from '../../hooks/useLiveFeed'
 import { cn } from '../../libs/utils.ts'
 import { Select } from '../ui/input.tsx'
 import { FeedEntryRow } from './FeedEntry'
@@ -10,7 +10,7 @@ import { FeedEntryRow } from './FeedEntry'
 const EPIC_PLUS = ['EPIC', 'LEGENDARY']
 const MAX_TEAM_CHIPS = 4
 
-export function RecentsPanel() {
+export function RecentsPanel({ frozen = false }: { frozen?: boolean }) {
   const [epicOnly, setEpicOnly] = useState(false)
   const [teamId, setTeamId] = useState<string | undefined>()
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -24,6 +24,17 @@ export function RecentsPanel() {
 
   const { entries, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useLiveFeed({ teamId, rarities: epicOnly ? EPIC_PLUS : undefined })
+
+  // While a pull cycle is running on the play page we display a snapshot of the
+  // feed taken when it started, so the player's own just-pulled card can't spoil
+  // the reveal by appearing here first. On unfreeze we resume the live list.
+  const [frozenEntries, setFrozenEntries] = useState<FeedEntry[] | null>(null)
+  const entriesRef = useRef(entries)
+  entriesRef.current = entries
+  useEffect(() => {
+    setFrozenEntries(frozen ? entriesRef.current : null)
+  }, [frozen])
+  const shownEntries = frozenEntries ?? entries
 
   useEffect(() => {
     const sentinel = sentinelRef.current
@@ -103,13 +114,13 @@ export function RecentsPanel() {
       )}
 
       {/* Liste scrollable + fondu bas */}
-      {entries.length === 0 ? (
+      {shownEntries.length === 0 ? (
         <p className="flex flex-1 items-center justify-center py-6 text-[13px] italic text-text-light/60">
           Aucun tirage récent…
         </p>
       ) : (
         <div className="mt-1 min-h-0 flex-1 overflow-y-auto pb-3.5 [mask-image:linear-gradient(180deg,#000_calc(100%-26px),transparent_100%)] [scrollbar-width:thin]">
-          {entries.map((entry, i) => (
+          {shownEntries.map((entry, i) => (
             <FeedEntryRow
               key={`${entry.username}-${entry.cardId}-${entry.pulledAt}`}
               entry={entry}

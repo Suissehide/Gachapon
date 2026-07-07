@@ -568,6 +568,42 @@ h6 {
     infinite;
 }
 
+/* Slow, permanent aurora drift behind the reveal so the backdrop never reads
+   as flat black once the capsule has opened. */
+@keyframes revealAurora {
+  0% {
+    transform: translate3d(-4%, -3%, 0) scale(1.1) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(4%, 3%, 0) scale(1.25) rotate(8deg);
+  }
+  100% {
+    transform: translate3d(-4%, -3%, 0) scale(1.1) rotate(0deg);
+  }
+}
+
+.reveal-aurora {
+  background:
+    radial-gradient(
+      42% 38% at 24% 30%,
+      color-mix(in oklab, var(--primary) 45%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      46% 40% at 78% 68%,
+      color-mix(in oklab, var(--secondary) 42%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      38% 34% at 62% 18%,
+      color-mix(in oklab, var(--rarity-legendary) 30%, transparent),
+      transparent 70%
+    );
+  filter: blur(60px);
+  opacity: 0.55;
+  animation: revealAurora 18s ease-in-out infinite;
+}
+
 @keyframes legendaryFlash {
   0% {
     opacity: 0.5;
