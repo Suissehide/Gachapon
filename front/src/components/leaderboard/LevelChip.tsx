@@ -1,9 +1,10 @@
+import { DEFAULT_ECONOMY, useEconomyConfig } from '../../queries/useEconomyConfig'
+
 type Props = { level: number }
 
-const MAX_LEVEL = 100
-
 export function LevelChip({ level }: Props) {
-  const isMax = level >= MAX_LEVEL
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  const isMax = level >= economy.xp.levelCap
   if (isMax) {
     return (
       <span

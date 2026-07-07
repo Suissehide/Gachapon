@@ -4,6 +4,7 @@ import { useState } from 'react'
 import type { UserProfile, FeaturedCard } from '../../../api/profile.api'
 import { Button } from '../../ui/button'
 import { Card, CardTitle } from '../../ui/card'
+import { DEFAULT_ECONOMY, useEconomyConfig } from '../../../queries/useEconomyConfig'
 import { FeaturedCardsEditorModal } from './FeaturedCardsEditorModal'
 import { FeaturedCardsFan } from './FeaturedCardsFan'
 import { FoilAvatar } from './FoilAvatar'
@@ -16,7 +17,8 @@ type Props = {
 
 export function ArcadeHero({ profile, featuredCards, isOwnProfile }: Props) {
   const [editorOpen, setEditorOpen] = useState(false)
-  const isMax = profile.level >= 100
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  const isMax = profile.level >= economy.xp.levelCap
   const initials = profile.username[0]?.toUpperCase() ?? '?'
   const joinedYear = new Date(profile.createdAt).getFullYear()
 
