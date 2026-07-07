@@ -58,16 +58,30 @@ export class TeamDomain implements TeamDomainInterface {
     }
 
     const slug = slugify(data.name, { lower: true, strict: true })
-    const team = await this.#teamRepo.create(ownerId, {
-      name: data.name,
-      slug,
-      description: data.description,
+
+    // Wrap in a transaction so the creator's TEAM_JOINED event is tracked
+    // atomically with the team + member row creation.
+    return this.#postgresOrm.executeWithTransactionClient(async (tx) => {
+      const team = await tx.team.create({
+        data: {
+          name: data.name,
+          slug,
+          description: data.description,
+          ownerId,
+          members: { create: { userId: ownerId, role: 'OWNER' } },
+        },
+        include: {
+          members: {
+            include: {
+              user: { select: { id: true, username: true, avatar: true } },
+            },
+          },
+        },
+      })
+      // The creator becomes a member — track the event so the join_team quest progresses.
+      await this.#achievementsDomain.track(tx, ownerId, { kind: 'TEAM_JOINED' })
+      return team as unknown as TeamWithMembers
     })
-    const full = await this.#teamRepo.findById(team.id)
-    if (!full) {
-      throw Boom.internal('Team creation failed')
-    }
-    return full
   }
 
   async #resolveInvitationTarget(

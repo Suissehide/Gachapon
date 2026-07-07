@@ -236,6 +236,8 @@ export class QuestsDomain implements IQuestsDomain {
       ...weeklyQuests.map((q) => ({ quest: q, questPeriodKey: periodKey })),
     ]
 
+    let anyWeeklyCompleted = false
+
     for (const { quest, questPeriodKey } of candidates) {
       const criterion = this.#parseCriterion(quest.criterion)
       if (!criterion) {
@@ -247,7 +249,7 @@ export class QuestsDomain implements IQuestsDomain {
         continue
       }
 
-      await this.#applyIncrement(
+      const justCompleted = await this.#applyIncrement(
         tx,
         userId,
         quest,
@@ -255,10 +257,16 @@ export class QuestsDomain implements IQuestsDomain {
         inc,
         criterion.target,
       )
+      // Only run the weekly bonus check when a WEEKLY quest actually completes
+      if (questPeriodKey === periodKey && justCompleted) {
+        anyWeeklyCompleted = true
+      }
     }
 
-    // Check whether all 3 weekly quests are done → grant weekly bonus
-    if (weeklyQuests.length > 0) {
+    // Check whether all weekly quests are done → grant weekly bonus.
+    // Gate on anyWeeklyCompleted so the DB count query is skipped on events
+    // that didn't advance any weekly quest to completion.
+    if (anyWeeklyCompleted && weeklyQuests.length > 0) {
       await this.#checkAndGrantWeeklyBonus(tx, userId, weeklyQuests, periodKey)
     }
   }
@@ -266,6 +274,7 @@ export class QuestsDomain implements IQuestsDomain {
   /**
    * Atomically applies an increment to a UserQuest row.
    * If the quest completes, marks it done and queues the reward.
+   * Returns true if the quest just transitioned to completed.
    */
   async #applyIncrement(
     tx: PrimaTransactionClient,
@@ -274,7 +283,7 @@ export class QuestsDomain implements IQuestsDomain {
     periodKey: string,
     inc: number,
     target: number,
-  ): Promise<void> {
+  ): Promise<boolean> {
     const existing = await this.#userQuestRepository.findUniqueInTx(tx, {
       userId,
       questId: quest.id,
@@ -282,12 +291,25 @@ export class QuestsDomain implements IQuestsDomain {
     })
 
     if (existing?.completed) {
-      return // already completed — nothing to do
+      return false // already completed — nothing to do
     }
 
     const currentProgress = existing?.progress ?? 0
     const newProgress = Math.min(currentProgress + inc, target)
     const justCompleted = newProgress >= target
+
+    if (justCompleted && quest.rewardId) {
+      // Create the reward FIRST (idempotent via unique constraint) so that a
+      // non-P2034 error between writes never leaves a quest marked completed
+      // without its reward. The inverse partial state (reward without flag)
+      // self-repairs on the next event that re-runs this path.
+      await this.#userRewardRepository.upsertInTx(tx, {
+        userId,
+        rewardId: quest.rewardId,
+        source: 'QUEST',
+        sourceId: `${quest.key}:${periodKey}`,
+      })
+    }
 
     await this.#userQuestRepository.upsertInTx(tx, {
       userId,
@@ -298,16 +320,7 @@ export class QuestsDomain implements IQuestsDomain {
       completedAt: justCompleted ? new Date() : null,
     })
 
-    if (justCompleted && quest.rewardId) {
-      // Quest references a Reward template — create a UserReward pointing to it
-      // sourceId = "<questKey>:<periodKey>" provides idempotency (@@unique constraint)
-      await this.#userRewardRepository.upsertInTx(tx, {
-        userId,
-        rewardId: quest.rewardId,
-        source: 'QUEST',
-        sourceId: `${quest.key}:${periodKey}`,
-      })
-    }
+    return justCompleted
   }
 
   /**

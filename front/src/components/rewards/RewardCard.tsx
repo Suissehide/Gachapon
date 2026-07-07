@@ -81,7 +81,10 @@ export function RewardCard({ reward, onClaim, isLoading }: RewardCardProps) {
   const handleClaim = () => {
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect()
-      setBurstOrigin({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 })
+      setBurstOrigin({
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      })
     }
     setBurst(true)
     setTimeout(() => setClaiming(true), 400)
@@ -135,6 +138,13 @@ export function RewardCard({ reward, onClaim, isLoading }: RewardCardProps) {
                 label="XP"
               />
             )}
+            {reward.reward.gold > 0 && (
+              <Stat
+                icon={<Coins className="h-3.5 w-3.5 text-yellow-400" />}
+                value={reward.reward.gold}
+                label="or"
+              />
+            )}
           </div>
         </div>
 
@@ -152,7 +162,9 @@ export function RewardCard({ reward, onClaim, isLoading }: RewardCardProps) {
             size="sm"
             onClick={handleClaim}
             disabled={isLoading || burst}
-            className={cn(isMilestone && 'shadow-[0_0_12px_rgba(245,158,11,0.3)]')}
+            className={cn(
+              isMilestone && 'shadow-[0_0_12px_rgba(245,158,11,0.3)]',
+            )}
           >
             Réclamer
           </Button>

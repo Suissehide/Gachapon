@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 import { buildTestApp } from '../../helpers/build-test-app'
+import { mondayOfUtcWeek } from '../../../main/domain/quests/quest-matching'
 
 describe('Teams routes', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
@@ -287,5 +288,100 @@ describe('Teams routes', () => {
       headers: { cookie: cookiesB },
     })
     expect(res.statusCode).toBe(204)
+  })
+})
+
+describe('Quest join_team — createTeam émet TEAM_JOINED', () => {
+  let app: Awaited<ReturnType<typeof buildTestApp>>
+  let cookies: string
+  let userId: string
+  let questId: string
+  let rewardId: string
+
+  const suffix = Date.now() + 1 // distinct from outer suite suffix
+  const periodKey = mondayOfUtcWeek(new Date())
+
+  beforeAll(async () => {
+    app = await buildTestApp()
+    const { postgresOrm } = (app as any).iocContainer
+
+    // Seed a ONESHOT join_team quest (test-scoped; DB is TRUNCATED before each run)
+    const reward = await postgresOrm.prisma.reward.create({
+      data: { tokens: 10, dust: 50, xp: 0 },
+    })
+    rewardId = reward.id
+
+    const quest = await postgresOrm.prisma.quest.create({
+      data: {
+        key: `join_team_${suffix}`,
+        name: 'Force du Groupe (test)',
+        description: 'Rejoins ou crée une équipe.',
+        period: 'ONESHOT',
+        criterion: { event: 'TEAM_JOINED', target: 1 },
+        isActive: true,
+        rewardId: reward.id,
+      },
+    })
+    questId = quest.id
+
+    // Register + verify + login a fresh user
+    await app.inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: {
+        username: `jt_user_${suffix}`,
+        email: `jtuser${suffix}@test.com`,
+        password: 'Password123!',
+      },
+    })
+    const user = await postgresOrm.prisma.user.update({
+      where: { email: `jtuser${suffix}@test.com` },
+      data: { emailVerifiedAt: new Date() },
+    })
+    userId = user.id
+
+    const loginRes = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email: `jtuser${suffix}@test.com`, password: 'Password123!' },
+    })
+    cookies = loginRes.headers['set-cookie'] as string
+  })
+
+  afterAll(async () => {
+    const { postgresOrm } = (app as any).iocContainer
+    await postgresOrm.prisma.userReward.deleteMany({
+      where: { source: 'QUEST', sourceId: { startsWith: `join_team_${suffix}:` } },
+    })
+    await postgresOrm.prisma.userQuest.deleteMany({ where: { questId } })
+    await postgresOrm.prisma.quest.deleteMany({ where: { id: questId } })
+    await postgresOrm.prisma.reward.deleteMany({ where: { id: rewardId } })
+    await app.close()
+  })
+
+  it('créer une équipe progresse la quête join_team (ONESHOT, progress=1, completed=true)', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/teams',
+      headers: { cookie: cookies },
+      payload: { name: `JTTeam${suffix}` },
+    })
+    expect(res.statusCode).toBe(201)
+
+    const { postgresOrm } = (app as any).iocContainer
+    const uq = await postgresOrm.prisma.userQuest.findFirst({
+      where: { userId, questId, periodKey: 'oneshot' },
+    })
+    expect(uq).not.toBeNull()
+    expect(uq!.progress).toBe(1)
+    expect(uq!.completed).toBe(true)
+
+    // A pending UserReward must also exist
+    const sourceId = `join_team_${suffix}:oneshot`
+    const ur = await postgresOrm.prisma.userReward.findUnique({
+      where: { userId_source_sourceId: { userId, source: 'QUEST', sourceId } },
+    })
+    expect(ur).not.toBeNull()
+    expect(ur!.rewardId).toBe(rewardId)
   })
 })
