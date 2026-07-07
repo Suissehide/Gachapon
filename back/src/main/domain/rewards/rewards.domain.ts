@@ -176,9 +176,10 @@ export class RewardsDomain implements RewardsDomainInterface {
           }
         }
 
-        // Count AFTER milestone rewards are created so the caller sees the correct pending total
+        // Count AFTER milestone rewards are created so the caller sees the correct
+        // pending total. Excludes QUEST rewards — the topbar badge never counts them.
         const pendingRewardsCount = await tx.userReward.count({
-          where: { userId, claimedAt: null },
+          where: { userId, claimedAt: null, source: { not: 'QUEST' } },
         })
 
         return {
@@ -221,9 +222,10 @@ export class RewardsDomain implements RewardsDomainInterface {
 
     return this.#postgresOrm.executeWithTransactionClient(
       async (tx) => {
-        // Authoritative read inside tx
+        // Authoritative read inside tx. QUEST rewards are excluded from
+        // "claim all" — they are claimed individually from the /quests page.
         const pending = await tx.userReward.findMany({
-          where: { userId, claimedAt: null },
+          where: { userId, claimedAt: null, source: { not: 'QUEST' } },
           include: { reward: true },
         })
 

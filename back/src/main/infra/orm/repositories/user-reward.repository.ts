@@ -49,7 +49,9 @@ export class UserRewardRepository implements UserRewardRepositoryInterface {
 
   async findPendingByUser(userId: string): Promise<PendingUserReward[]> {
     const rows = await this.#prisma.userReward.findMany({
-      where: { userId, claimedAt: null },
+      // QUEST rewards are claimed from the /quests page only, not the topbar
+      // rewards popup — exclude them from the pending list.
+      where: { userId, claimedAt: null, source: { not: 'QUEST' } },
       include: { reward: true },
       orderBy: { createdAt: 'asc' },
     })
@@ -94,7 +96,10 @@ export class UserRewardRepository implements UserRewardRepositoryInterface {
   }
 
   countPendingByUser(userId: string): Promise<number> {
-    return this.#prisma.userReward.count({ where: { userId, claimedAt: null } })
+    // QUEST rewards are excluded from the topbar badge count (claimed on /quests).
+    return this.#prisma.userReward.count({
+      where: { userId, claimedAt: null, source: { not: 'QUEST' } },
+    })
   }
 
   async markClaimedInTx(tx: PrimaTransactionClient, id: string): Promise<void> {
@@ -123,8 +128,10 @@ export class UserRewardRepository implements UserRewardRepositoryInterface {
     tx: PrimaTransactionClient,
     userId: string,
   ): Promise<void> {
+    // "Claim all" (topbar) never touches QUEST rewards — they are claimed
+    // individually from the /quests page.
     await tx.userReward.updateMany({
-      where: { userId, claimedAt: null },
+      where: { userId, claimedAt: null, source: { not: 'QUEST' } },
       data: { claimedAt: new Date() },
     })
   }
