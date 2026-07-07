@@ -3,7 +3,6 @@ import type {
   CollectorEntry,
   CombatEntry,
   LeaderboardResponse,
-  Quest,
   TeamEntry,
 } from '../constants/leaderboard.constant.ts'
 import { LEADERBOARD_ROUTES } from '../constants/leaderboard.constant.ts'
@@ -14,7 +13,6 @@ export type {
   CollectorEntry,
   CombatEntry,
   LeaderboardResponse,
-  Quest,
   TeamEntry,
 }
 
@@ -41,10 +39,5 @@ export const LeaderboardApi = {
     getJson<LeaderboardResponse<CombatEntry>>(
       LEADERBOARD_ROUTES.combat,
       'Erreur lors de la récupération du classement Combats',
-    ),
-  getQuests: () =>
-    getJson<{ quests: Quest[] }>(
-      LEADERBOARD_ROUTES.quests,
-      'Erreur lors de la récupération des quêtes',
     ),
 }
