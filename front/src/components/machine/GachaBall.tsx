@@ -13,7 +13,7 @@ const BALL_COLORS = [
   '#00b4d8',
 ]
 
-const SHAKE_DURATION = 0.8 // seconds
+const SHAKE_DURATION = 0.95 // seconds
 const SPLIT_DURATION = 1.0 // seconds
 const BALL_SCALE = 1.05
 
@@ -59,8 +59,8 @@ function runShake(
   group.rotation.x = wx * amp * 0.7 * env
   group.rotation.y = wy * amp * 0.55 * env
   // Translational rattle in sync so the whole capsule jitters through space.
-  group.position.x = wz * 0.055 * env
-  group.position.y = wx * 0.035 * env
+  group.position.x = wz * 0.085 * env
+  group.position.y = wx * 0.05 * env
   group.scale.setScalar(BALL_SCALE)
 
   if (mat) {
@@ -145,10 +145,10 @@ export function GachaBall({ phase, onSplitDone }: Props) {
 
   // Per-pull random seed → every shake rattles on a distinct, non-repeating
   // path, with a slightly different peak amplitude and starting direction.
-  const amp = useMemo(() => 0.34 + Math.random() * 0.12, [])
+  const amp = useMemo(() => 0.46 + Math.random() * 0.14, [])
   const shakeSeed = useMemo<ShakeSeed>(
     () => ({
-      freq: 18 + Math.random() * 6,
+      freq: 10 + Math.random() * 4,
       phaseX: Math.random() * Math.PI * 2,
       phaseY: Math.random() * Math.PI * 2,
       phaseZ: Math.random() * Math.PI * 2,
