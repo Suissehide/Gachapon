@@ -34,5 +34,5 @@ export function skillPointsGained(oldLevel: number, newLevel: number): number {
     (sum, m) => sum + m.bonusPoints,
     0,
   )
-  return newLevel - oldLevel + bonus
+  return (newLevel - oldLevel) * SKILL_POINTS_PER_LEVEL + bonus
 }

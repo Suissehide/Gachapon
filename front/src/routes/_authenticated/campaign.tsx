@@ -791,8 +791,14 @@ function PrepModal({
     tone === 'good' ? 'Avantage' : tone === 'ok' ? 'Équilibré' : 'Risqué'
   const rp = stage.rewardPreview
   const loot = stage.status !== 'cleared' ? rp.firstClear : rp.farm
-  const equipPct = Math.round(rp.farmEquipmentChance * 100)
-  const cardPct = Math.round(rp.farmCardChance * 100)
+  // Sub-1% chances (ex. cardChance 0.005) : une décimale pour ne pas afficher
+  // « 1% » (le double) ni masquer la pastille en arrondissant à 0.
+  const fmtPct = (frac: number) => {
+    const pct = frac * 100
+    return pct > 0 && pct < 1 ? pct.toFixed(1) : String(Math.round(pct))
+  }
+  const equipPct = rp.farmEquipmentChance * 100
+  const cardPct = rp.farmCardChance * 100
 
   return (
     <div className="flex max-h-[88vh] flex-col overflow-y-auto rounded-3xl">
@@ -842,11 +848,14 @@ function PrepModal({
             {equipPct > 0 && (
               <RewardPill
                 color="#ec4899"
-                label={`Drop équipement ${equipPct}%`}
+                label={`Drop équipement ${fmtPct(rp.farmEquipmentChance)}%`}
               />
             )}
             {cardPct > 0 && (
-              <RewardPill color="#10b981" label={`Drop carte ${cardPct}%`} />
+              <RewardPill
+                color="#10b981"
+                label={`Drop carte ${fmtPct(rp.farmCardChance)}%`}
+              />
             )}
             {stage.status !== 'cleared' && rp.guaranteedEquipment && (
               <RewardPill color="#ec4899" label="Équipement garanti" />
