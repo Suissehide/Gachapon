@@ -5,6 +5,21 @@ import { fetchWithAuth } from './fetchWithAuth.ts'
 
 export type StageStatus = 'cleared' | 'current' | 'locked'
 
+export type RewardLoot = {
+  gold: number
+  dust: number
+  xp: number
+}
+
+export type RewardPreview = {
+  firstClear: RewardLoot
+  farm: RewardLoot
+  farmEquipmentChance: number
+  farmCardChance: number
+  guaranteedEquipment: boolean
+  guaranteedCard: boolean
+}
+
 export type CampaignStage = {
   id: string
   chapter: number
@@ -13,6 +28,7 @@ export type CampaignStage = {
   isBoss: boolean
   status: StageStatus
   recommendedPower: number
+  rewardPreview: RewardPreview
 }
 
 export type CampaignChapter = {

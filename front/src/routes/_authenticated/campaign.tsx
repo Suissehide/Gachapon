@@ -789,6 +789,10 @@ function PrepModal({
     ratio >= 1.05 ? 'good' : ratio >= 0.9 ? 'ok' : 'low'
   const verdictLabel =
     tone === 'good' ? 'Avantage' : tone === 'ok' ? 'Équilibré' : 'Risqué'
+  const rp = stage.rewardPreview
+  const loot = stage.status !== 'cleared' ? rp.firstClear : rp.farm
+  const equipPct = Math.round(rp.farmEquipmentChance * 100)
+  const cardPct = Math.round(rp.farmCardChance * 100)
 
   return (
     <div className="flex max-h-[88vh] flex-col overflow-y-auto rounded-3xl">
@@ -832,10 +836,24 @@ function PrepModal({
             Récompenses
           </div>
           <div className="flex flex-wrap gap-2">
-            <RewardPill color="#f59e0b" label="Or" />
-            <RewardPill color="#8b5cf6" label="Poussière" />
-            <RewardPill color="#3b82f6" label="XP" />
-            <RewardPill color="#ec4899" label="Drop possible" />
+            <RewardPill color="#f59e0b" label={`${loot.gold} Or`} />
+            <RewardPill color="#8b5cf6" label={`${loot.dust} Poussière`} />
+            <RewardPill color="#3b82f6" label={`${loot.xp} XP`} />
+            {equipPct > 0 && (
+              <RewardPill
+                color="#ec4899"
+                label={`Drop équipement ${equipPct}%`}
+              />
+            )}
+            {cardPct > 0 && (
+              <RewardPill color="#10b981" label={`Drop carte ${cardPct}%`} />
+            )}
+            {stage.status !== 'cleared' && rp.guaranteedEquipment && (
+              <RewardPill color="#ec4899" label="Équipement garanti" />
+            )}
+            {stage.status !== 'cleared' && rp.guaranteedCard && (
+              <RewardPill color="#10b981" label="Carte garantie" />
+            )}
           </div>
           <div className="mt-3.5 flex items-center gap-2 border-t border-[rgba(27,23,38,0.07)] pt-3.5">
             <Zap className="h-4 w-4 text-violet-500" />
