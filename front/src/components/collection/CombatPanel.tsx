@@ -16,12 +16,16 @@ import { useState } from 'react'
 import type { Card, CardVariant } from '../../constants/card.constant'
 import { PASSIVE_LABELS } from '../../constants/passives.constant'
 import { useAscendCard } from '../../queries/useAscendCard'
+import {
+  DEFAULT_ECONOMY,
+  useEconomyConfig,
+} from '../../queries/useEconomyConfig'
+import { useCardEquipmentBonuses } from '../../queries/useEquipment'
 import { useLevelUpCard } from '../../queries/useLevelUpCard'
-import { DEFAULT_ECONOMY, useEconomyConfig } from '../../queries/useEconomyConfig'
 import { useAuthStore } from '../../stores/auth.store'
 import {
   dustCostNextLevel,
-  finalStat,
+  finalStatWithBonuses,
   goldCostNextLevel,
   isAtTopOfPalier,
   maxLevelInPalier,
@@ -58,8 +62,12 @@ export function CombatPanel({
   const palierMax = maxLevelInPalier(palier)
   const atTop = isAtTopOfPalier(level, palier)
   const atMaxPalier = palier >= MAX_PALIER
-  const goldCost = atTop ? 0 : goldCostNextLevel(level, card.rarity, economy.card)
-  const dustCost = atTop ? 0 : dustCostNextLevel(level, card.rarity, economy.card)
+  const goldCost = atTop
+    ? 0
+    : goldCostNextLevel(level, card.rarity, economy.card)
+  const dustCost = atTop
+    ? 0
+    : dustCostNextLevel(level, card.rarity, economy.card)
   const goldOk = (user?.gold ?? 0) >= goldCost
   const dustOk = (user?.dust ?? 0) >= dustCost
   const canLevel = !atTop && goldOk && dustOk
@@ -67,10 +75,19 @@ export function CombatPanel({
 
   const passive = card.passiveKey ? PASSIVE_LABELS[card.passiveKey] : null
 
-  const hp = Math.round(finalStat(card.baseHp, level, variant, palier))
-  const atk = Math.round(finalStat(card.baseAtk, level, variant, palier))
-  const def = Math.round(finalStat(card.baseDef, level, variant, palier))
-  const spd = Math.round(finalStat(card.baseSpd, level, variant, palier))
+  const bonuses = useCardEquipmentBonuses(userCardId)
+  const hp = Math.round(
+    finalStatWithBonuses(card.baseHp, level, variant, palier, bonuses.hp),
+  )
+  const atk = Math.round(
+    finalStatWithBonuses(card.baseAtk, level, variant, palier, bonuses.atk),
+  )
+  const def = Math.round(
+    finalStatWithBonuses(card.baseDef, level, variant, palier, bonuses.def),
+  )
+  const spd = Math.round(
+    finalStatWithBonuses(card.baseSpd, level, variant, palier, bonuses.spd),
+  )
 
   const onLevelUp = async () => {
     setWorking(true)

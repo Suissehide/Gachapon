@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMemo } from 'react'
 
 import { EquipmentApi } from '../api/equipment.api'
+import { aggregateEquipmentBonuses, type StatBonuses } from '../utils/cardStats'
 
 const EQUIPMENT_KEY = ['equipment']
 
@@ -9,6 +11,19 @@ export function useEquipmentList() {
     queryKey: EQUIPMENT_KEY,
     queryFn: EquipmentApi.list,
   })
+}
+
+/**
+ * Aggregated flat/percent stat bonuses from every piece equipped on the given
+ * card. Recomputes whenever the equipment list is invalidated (equip/unequip),
+ * so displayed stats stay in sync with what's equipped.
+ */
+export function useCardEquipmentBonuses(userCardId: string): StatBonuses {
+  const { data } = useEquipmentList()
+  return useMemo(
+    () => aggregateEquipmentBonuses(data?.items ?? [], userCardId),
+    [data, userCardId],
+  )
 }
 
 export function useEquipItem() {

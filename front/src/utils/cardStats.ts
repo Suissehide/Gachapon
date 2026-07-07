@@ -24,7 +24,85 @@ export function finalStat(
   variant: CardVariant,
   palier: number,
 ): number {
-  return statAtLevel(baseStat, level) * VARIANT_MULT[variant] * palierMultiplier(palier)
+  return (
+    statAtLevel(baseStat, level) *
+    VARIANT_MULT[variant] *
+    palierMultiplier(palier)
+  )
+}
+
+export type StatKey = 'hp' | 'atk' | 'def' | 'spd'
+export type StatBonus = { flat: number; pct: number }
+export type StatBonuses = Record<StatKey, StatBonus>
+
+const STAT_KEYS: StatKey[] = ['hp', 'atk', 'def', 'spd']
+
+export function emptyStatBonuses(): StatBonuses {
+  return {
+    hp: { flat: 0, pct: 0 },
+    atk: { flat: 0, pct: 0 },
+    def: { flat: 0, pct: 0 },
+    spd: { flat: 0, pct: 0 },
+  }
+}
+
+// Parse a backend bonus key (`hpFlat`, `atkPct`, …) into its stat + kind, or
+// null if it isn't a recognized stat bonus.
+function parseBonusKey(
+  key: string,
+): { stat: StatKey; kind: 'flat' | 'pct' } | null {
+  const kind = key.endsWith('Pct')
+    ? 'pct'
+    : key.endsWith('Flat')
+      ? 'flat'
+      : null
+  if (!kind) {
+    return null
+  }
+  const stat = key.slice(0, kind === 'pct' ? -3 : -4) as StatKey
+  return STAT_KEYS.includes(stat) ? { stat, kind } : null
+}
+
+/**
+ * Aggregate the flat/percent bonuses of every equipment piece equipped on a
+ * given card. Bonus keys follow the backend convention `<stat>Flat` / `<stat>Pct`
+ * (e.g. `hpFlat`, `atkPct`). Mirrors `computeFinalStats` in the backend.
+ */
+export function aggregateEquipmentBonuses(
+  items: { equippedOnId: string | null; bonuses: Record<string, number> }[],
+  userCardId: string,
+): StatBonuses {
+  const acc = emptyStatBonuses()
+  for (const item of items) {
+    if (item.equippedOnId !== userCardId) {
+      continue
+    }
+    for (const [key, value] of Object.entries(item.bonuses)) {
+      const parsed = parseBonusKey(key)
+      if (parsed) {
+        acc[parsed.stat][parsed.kind] += value
+      }
+    }
+  }
+  return acc
+}
+
+/**
+ * Same as `finalStat` but folds in equipment flat + percent bonuses, matching
+ * the backend's `(raw + flat) * (1 + pct/100)` order.
+ */
+export function finalStatWithBonuses(
+  baseStat: number,
+  level: number,
+  variant: CardVariant,
+  palier: number,
+  bonus: StatBonus,
+): number {
+  const raw =
+    statAtLevel(baseStat, level) *
+    VARIANT_MULT[variant] *
+    palierMultiplier(palier)
+  return (raw + bonus.flat) * (1 + bonus.pct / 100)
 }
 
 export function goldCostNextLevel(
@@ -32,7 +110,11 @@ export function goldCostNextLevel(
   rarity: CardRarity,
   card: EconomyConfig['card'],
 ): number {
-  return Math.round(card.goldCostBase * currentLevel ** card.goldCostExp * card.rarityMult[rarity])
+  return Math.round(
+    card.goldCostBase *
+      currentLevel ** card.goldCostExp *
+      card.rarityMult[rarity],
+  )
 }
 
 export function dustCostNextLevel(
@@ -40,7 +122,11 @@ export function dustCostNextLevel(
   rarity: CardRarity,
   card: EconomyConfig['card'],
 ): number {
-  return Math.round(card.dustCostBase * currentLevel ** card.dustCostExp * card.rarityMult[rarity])
+  return Math.round(
+    card.dustCostBase *
+      currentLevel ** card.dustCostExp *
+      card.rarityMult[rarity],
+  )
 }
 
 export function maxLevelInPalier(palier: number): number {

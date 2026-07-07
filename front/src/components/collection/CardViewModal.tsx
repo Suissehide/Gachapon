@@ -2,9 +2,10 @@ import { Recycle, Star, X } from 'lucide-react'
 import type { CSSProperties } from 'react'
 
 import { describePassive } from '../../constants/passives.constant.ts'
+import { useCardEquipmentBonuses } from '../../queries/useEquipment.ts'
 import { useSetWishlist, useWishlist } from '../../queries/useWishlist.ts'
 import type { DisplayEntry } from '../../routes/_authenticated/collection.tsx'
-import { finalStat } from '../../utils/cardStats.ts'
+import { finalStatWithBonuses } from '../../utils/cardStats.ts'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
 import type { CardStats } from '../shared/tcg-card/TcgCardFace.tsx'
 import { Button } from '../ui/button.tsx'
@@ -70,6 +71,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
   // Hooks must be called unconditionally — before any early return.
   const { data: wishlist } = useWishlist()
   const { mutate: setWishlist, isPending: settingWishlist } = useSetWishlist()
+  const bonuses = useCardEquipmentBonuses(entry?.userCard?.id ?? '')
 
   if (!entry) {
     return null
@@ -86,16 +88,40 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
     isOwned && userCard
       ? {
           pv: Math.round(
-            finalStat(card.baseHp, userCard.level, variant, userCard.palier),
+            finalStatWithBonuses(
+              card.baseHp,
+              userCard.level,
+              variant,
+              userCard.palier,
+              bonuses.hp,
+            ),
           ),
           atq: Math.round(
-            finalStat(card.baseAtk, userCard.level, variant, userCard.palier),
+            finalStatWithBonuses(
+              card.baseAtk,
+              userCard.level,
+              variant,
+              userCard.palier,
+              bonuses.atk,
+            ),
           ),
           def: Math.round(
-            finalStat(card.baseDef, userCard.level, variant, userCard.palier),
+            finalStatWithBonuses(
+              card.baseDef,
+              userCard.level,
+              variant,
+              userCard.palier,
+              bonuses.def,
+            ),
           ),
           vit: Math.round(
-            finalStat(card.baseSpd, userCard.level, variant, userCard.palier),
+            finalStatWithBonuses(
+              card.baseSpd,
+              userCard.level,
+              variant,
+              userCard.palier,
+              bonuses.spd,
+            ),
           ),
         }
       : null
@@ -120,7 +146,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
       <div className="flex min-h-full items-center justify-center px-4 py-10">
         <div className="flex flex-wrap items-center justify-center gap-8 animate-in fade-in-0 zoom-in-95 duration-300 md:gap-10">
           {/* Card column — only the card area itself swallows the click; empty
-            * flex padding around it stays inert so the backdrop close fires. */}
+           * flex padding around it stays inert so the backdrop close fires. */}
           {/* biome-ignore lint/a11y/noStaticElementInteractions: stop-propagation wrapper, not a user-facing interactive region */}
           <div
             onClick={(e) => e.stopPropagation()}
