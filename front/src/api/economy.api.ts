@@ -3,8 +3,21 @@ import { fetchWithAuth } from './fetchWithAuth.ts'
 
 export type CardRarityKey = 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
 
+export type MilestonePackConfig = {
+  level: number
+  bonusPoints: number
+  tokens: number
+  dust: number
+}
+
 export interface EconomyConfig {
-  xp: { base: number; slope: number; levelCap: number }
+  xp: {
+    base: number
+    slope: number
+    levelCap: number
+    skillPointsPerLevel: number
+    milestones: MilestonePackConfig[]
+  }
   gacha: {
     pullTokenCost: number
     pityThreshold: number

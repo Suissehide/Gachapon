@@ -8,6 +8,7 @@ import { useAchievementUnlockStore } from '../stores/achievementUnlock.store.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 import { useLevelUpStore } from '../stores/levelUp.store.ts'
 import { computeLevel } from '../utils/level.ts'
+import { levelUpReward } from '../utils/levelRewards.ts'
 import { DEFAULT_ECONOMY, useEconomyConfig } from './useEconomyConfig.ts'
 
 export type {
@@ -53,7 +54,7 @@ export const usePull = () => {
       const oldLevel = computeLevel(oldXp, economy.xp)
       const newLevel = computeLevel(oldXp + result.xpGained, economy.xp)
       if (newLevel > oldLevel) {
-        triggerLevelUp(newLevel)
+        triggerLevelUp(newLevel, levelUpReward(oldLevel, newLevel, economy.xp))
       }
 
       if (user) {
@@ -106,7 +107,7 @@ export const usePullBatch = () => {
       const oldLevel = computeLevel(oldXp, economy.xp)
       const newLevel = computeLevel(oldXp + result.xpGained, economy.xp)
       if (newLevel > oldLevel) {
-        triggerLevelUp(newLevel)
+        triggerLevelUp(newLevel, levelUpReward(oldLevel, newLevel, economy.xp))
       }
       if (user) {
         setUser({

@@ -1,13 +1,17 @@
 import { create } from 'zustand'
 
+import type { LevelUpReward } from '../utils/levelRewards.ts'
+
 type LevelUpState = {
   level: number | null
-  triggerLevelUp: (level: number) => void
+  reward: LevelUpReward | null
+  triggerLevelUp: (level: number, reward?: LevelUpReward) => void
   dismiss: () => void
 }
 
 export const useLevelUpStore = create<LevelUpState>((set) => ({
   level: null,
-  triggerLevelUp: (level) => set({ level }),
-  dismiss: () => set({ level: null }),
+  reward: null,
+  triggerLevelUp: (level, reward) => set({ level, reward: reward ?? null }),
+  dismiss: () => set({ level: null, reward: null }),
 }))
