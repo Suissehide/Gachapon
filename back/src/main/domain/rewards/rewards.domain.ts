@@ -96,7 +96,7 @@ export class RewardsDomain implements RewardsDomainInterface {
         }
 
         const user = await this.#userRepository.findByIdOrThrowInTx(tx, userId)
-        const { tokens: rewardTokens, dust, xp } = userReward.reward
+        const { tokens: rewardTokens, dust, xp, gold: rewardGold } = userReward.reward
 
         const [upgrades, cfg] = await Promise.all([
           this.#skillTreeRepository.getEffectsForUser(userId),
@@ -124,6 +124,7 @@ export class RewardsDomain implements RewardsDomainInterface {
         const newTokens = regenTokens + rewardTokens
         const newDust = user.dust + dust
         const newXp = user.xp + xp
+        const newGold = user.gold + rewardGold
         const newLevel = calculateLevel(
           newXp,
           cfg['xp.base'],
@@ -137,6 +138,7 @@ export class RewardsDomain implements RewardsDomainInterface {
           dust: newDust,
           xp: newXp,
           level: newLevel,
+          gold: newGold,
           lastTokenAt: newLastTokenAt ?? undefined,
           skillPoints: gained > 0 ? { increment: gained } : undefined,
         })
@@ -179,6 +181,7 @@ export class RewardsDomain implements RewardsDomainInterface {
           dust: newDust,
           xp: newXp,
           level: newLevel,
+          gold: newGold,
           pendingRewardsCount,
           unlockedAchievements: [...claimUnlocks, ...levelUnlocks],
         }
@@ -227,6 +230,7 @@ export class RewardsDomain implements RewardsDomainInterface {
         const totalTokens = pending.reduce((sum, r) => sum + r.reward.tokens, 0)
         const totalDust = pending.reduce((sum, r) => sum + r.reward.dust, 0)
         const totalXp = pending.reduce((sum, r) => sum + r.reward.xp, 0)
+        const totalGold = pending.reduce((sum, r) => sum + r.reward.gold, 0)
 
         const [upgrades, cfg] = await Promise.all([
           this.#skillTreeRepository.getEffectsForUser(userId),
@@ -254,6 +258,7 @@ export class RewardsDomain implements RewardsDomainInterface {
         const newTokens = regenTokens + totalTokens
         const newDust = user.dust + totalDust
         const newXp = user.xp + totalXp
+        const newGold = user.gold + totalGold
         const newLevel = calculateLevel(
           newXp,
           cfg['xp.base'],
@@ -268,6 +273,7 @@ export class RewardsDomain implements RewardsDomainInterface {
           dust: newDust,
           xp: newXp,
           level: newLevel,
+          gold: newGold,
           lastTokenAt: newLastTokenAt ?? undefined,
           skillPoints: gained > 0 ? { increment: gained } : undefined,
         })
@@ -312,6 +318,7 @@ export class RewardsDomain implements RewardsDomainInterface {
           dust: newDust,
           xp: newXp,
           level: newLevel,
+          gold: newGold,
           // milestone rewards just created are pending — surface them to the caller
           pendingRewardsCount: milestonePacksCreated,
           unlockedAchievements: allUnlocks,

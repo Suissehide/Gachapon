@@ -152,8 +152,8 @@ describe('Leaderboard routes', () => {
     expect(res.statusCode).toBe(404)
   })
 
-  // ── QUESTS (unchanged) ──────────────────────────────────────────────────
-  it('GET /quests — retourne la liste des quêtes', async () => {
+  // ── QUESTS (moved to /quests router, new shape) ─────────────────────────
+  it('GET /quests — retourne { weekly, weeklyBonus, oneshot }', async () => {
     const res = await app.inject({
       method: 'GET',
       url: '/quests',
@@ -161,7 +161,10 @@ describe('Leaderboard routes', () => {
     })
     expect(res.statusCode).toBe(200)
     const body = res.json()
-    expect(Array.isArray(body.quests)).toBe(true)
+    expect(Array.isArray(body.weekly)).toBe(true)
+    expect(Array.isArray(body.oneshot)).toBe(true)
+    expect(body.weeklyBonus).toHaveProperty('completed')
+    expect(body.weeklyBonus).toHaveProperty('reward')
   })
 
   it('GET /quests — 401 sans auth', async () => {
