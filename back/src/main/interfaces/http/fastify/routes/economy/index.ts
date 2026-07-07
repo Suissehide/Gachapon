@@ -3,6 +3,7 @@ import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { MAX_PALIER } from '../../../../../domain/card-ascension/card-ascension.tx'
 import { STAT_GROWTH_PER_LEVEL } from '../../../../../domain/card-leveling/card-leveling.domain'
 import { ASCENSION_STAT_BONUS } from '../../../../../domain/combat/combat-stats.domain'
+import { MILESTONE_PACKS, SKILL_POINTS_PER_LEVEL } from '../../../../../domain/shared/level-rewards'
 
 export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
   fastify.get(
@@ -43,6 +44,8 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
           base: c['xp.base'],
           slope: c['xp.slope'],
           levelCap: c['xp.levelCap'],
+          skillPointsPerLevel: SKILL_POINTS_PER_LEVEL,
+          milestones: MILESTONE_PACKS,
         },
         gacha: {
           pullTokenCost: c['gacha.pullTokenCost'],

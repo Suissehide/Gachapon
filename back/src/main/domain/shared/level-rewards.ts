@@ -5,7 +5,9 @@ export type MilestonePack = {
   dust: number
 }
 
-const MILESTONE_PACKS: MilestonePack[] = [
+export const SKILL_POINTS_PER_LEVEL = 1
+
+export const MILESTONE_PACKS: MilestonePack[] = [
   { level: 10, bonusPoints: 2, tokens: 5, dust: 100 },
   { level: 25, bonusPoints: 2, tokens: 10, dust: 300 },
   { level: 50, bonusPoints: 2, tokens: 15, dust: 800 },

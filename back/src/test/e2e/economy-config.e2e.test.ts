@@ -21,7 +21,23 @@ describe('GET /economy/config', () => {
     const res = await app.inject({ method: 'GET', url: '/economy/config' })
     expect(res.statusCode).toBe(200)
     const body = res.json()
-    expect(body.xp).toEqual({ base: 100, slope: 30, levelCap: 100 })
+    expect(body.xp.base).toBe(100)
+    expect(body.xp.slope).toBe(30)
+    expect(body.xp.levelCap).toBe(100)
+    expect(body.xp.skillPointsPerLevel).toBe(1)
+    expect(body.xp.milestones).toHaveLength(5)
+    expect(body.xp.milestones[0]).toEqual({
+      level: 10,
+      bonusPoints: 2,
+      tokens: 5,
+      dust: 100,
+    })
+    expect(body.xp.milestones[4]).toEqual({
+      level: 100,
+      bonusPoints: 2,
+      tokens: 30,
+      dust: 3000,
+    })
     expect(body.gacha.pullTokenCost).toBe(1)
     expect(body.gacha.pityThreshold).toBe(80)
     expect(body.recycle.LEGENDARY).toBe(400)
