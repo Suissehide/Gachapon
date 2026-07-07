@@ -204,3 +204,59 @@ export const PARTICLE_COUNTS: Record<ParticleSetKey, [number, number, number]> =
     epic: [60, 90, 40],
     legendary: [90, 140, 65],
   }
+
+// ── Ambient background (persistent post-reveal atmosphere) ──────────────────
+// Consumed by RevealAmbientBackground. auraIntensity = opacité du radial-gradient
+// derrière les cartes ; particleCount = cap dur de particules simultanées ;
+// particleSpeed = vitesse de dérive verticale (px/frame @60fps) ; glow = shadowBlur.
+export interface AmbientConfig {
+  auraIntensity: number
+  rays: boolean
+  particleCount: number
+  particleSpeed: number
+  particleSize: [number, number]
+  glow: number
+}
+
+export const AMBIENT_CONFIG: Record<CardRarity, AmbientConfig> = {
+  COMMON: {
+    auraIntensity: 0.06,
+    rays: false,
+    particleCount: 12,
+    particleSpeed: 0.25,
+    particleSize: [2, 4],
+    glow: 0,
+  },
+  UNCOMMON: {
+    auraIntensity: 0.12,
+    rays: false,
+    particleCount: 24,
+    particleSpeed: 0.35,
+    particleSize: [2, 5],
+    glow: 4,
+  },
+  RARE: {
+    auraIntensity: 0.18,
+    rays: true,
+    particleCount: 42,
+    particleSpeed: 0.45,
+    particleSize: [2, 6],
+    glow: 6,
+  },
+  EPIC: {
+    auraIntensity: 0.23,
+    rays: true,
+    particleCount: 64,
+    particleSpeed: 0.55,
+    particleSize: [3, 7],
+    glow: 8,
+  },
+  LEGENDARY: {
+    auraIntensity: 0.28,
+    rays: true,
+    particleCount: 90,
+    particleSpeed: 0.65,
+    particleSize: [3, 8],
+    glow: 12,
+  },
+}
