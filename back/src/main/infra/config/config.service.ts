@@ -31,7 +31,7 @@ const DEFAULTS: Record<ConfigKey, number> = {
   dailyShopPriceLegendary: 5000,
   xpPerPull: 10,
   'combat.pointsMax': 60,
-  'combat.regenSeconds': 900,
+  'combat.regenSeconds': 600,
   'combat.battleCost': 5,
   'combat.sweepCost': 5,
   'gacha.pullTokenCost': 1,

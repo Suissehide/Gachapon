@@ -119,7 +119,7 @@ model User {
   bestStreak    Int        @default(0)
 
   gold              Int       @default(0)
-  combatPoints      Int       @default(10)
+  combatPoints      Int       @default(60)
   lastCombatPointAt DateTime?
   combatTeam        String[]  @default([])
 
