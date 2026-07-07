@@ -16,6 +16,7 @@ import { MachineStage } from '../../components/machine/MachineStage'
 import { RevealGrid } from '../../components/machine/reveal/RevealGrid'
 import { LevelCard } from '../../components/play/LevelCard.tsx'
 import { PityCard } from '../../components/play/PityCard.tsx'
+import { QuestsCard } from '../../components/play/QuestsCard.tsx'
 import { RatesModal } from '../../components/play/RatesModal.tsx'
 import { RecentsPanel } from '../../components/play/RecentsPanel.tsx'
 import { StreakCard } from '../../components/play/StreakCard.tsx'
@@ -369,6 +370,7 @@ function Play() {
           <PityCard />
           <StreakCard />
           <LevelCard />
+          <QuestsCard />
         </div>
 
         {/* Machine + actions */}
