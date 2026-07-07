@@ -14,6 +14,7 @@ import type { PullBatchEntry } from '../../../queries/useGacha'
 import { CardDisplay } from '../../shared/tcg-card/CardDisplay'
 import { getRarityTone } from '../../shared/tcg-card/config'
 import { Button } from '../../ui/button'
+import { RevealAmbientBackground } from './RevealAmbientBackground'
 import { RevealCanvases } from './RevealCanvases'
 import { RARITY_CONFIG } from './rarityConfig'
 import { useRevealEffect } from './useRevealEffect'
@@ -60,6 +61,25 @@ export function RevealGrid({
       })),
     [results],
   )
+
+  // Meilleure rareté parmi les cartes déjà retournées — pilote le fond ambiant
+  // en crescendo (best-of-lot, ne redescend jamais). null avant tout flip.
+  const bestRevealed = useMemo<CardRarity | null>(() => {
+    let best: CardRarity | null = null
+    let bestRank = -1
+    for (const idx of flipped) {
+      const r = results[idx]?.card.rarity as CardRarity | undefined
+      if (!r) {
+        continue
+      }
+      const rank = RARITY_RANK[r] ?? 0
+      if (rank > bestRank) {
+        bestRank = rank
+        best = r
+      }
+    }
+    return best
+  }, [flipped, results])
 
   const flipCard = useCallback(
     (idx: number, suppressEffect = false) => {
@@ -125,6 +145,8 @@ export function RevealGrid({
       data-reveal-modal
       className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/70 backdrop-blur-md"
     >
+      <RevealAmbientBackground rarity={bestRevealed} />
+
       {/* Fullscreen rarity effect — re-mounts on every flip via seq key so the
        *  animation replays. Positioned at the flipped card's viewport center. */}
       {activeEffect && (
