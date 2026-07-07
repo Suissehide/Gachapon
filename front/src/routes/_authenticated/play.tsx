@@ -14,6 +14,7 @@ import { GachaBall } from '../../components/machine/GachaBall'
 import type { MachineStageHandle } from '../../components/machine/MachineStage'
 import { MachineStage } from '../../components/machine/MachineStage'
 import { RevealGrid } from '../../components/machine/reveal/RevealGrid'
+import { BoostCard } from '../../components/play/BoostCard.tsx'
 import { LevelCard } from '../../components/play/LevelCard.tsx'
 import { PityCard } from '../../components/play/PityCard.tsx'
 import { QuestsCard } from '../../components/play/QuestsCard.tsx'
@@ -368,6 +369,7 @@ function Play() {
           <StreakCard />
           <LevelCard />
           <QuestsCard />
+          <BoostCard />
         </div>
 
         {/* Machine + actions */}
