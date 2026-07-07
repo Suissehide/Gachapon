@@ -14,6 +14,7 @@ export const useQuests = () => {
   const query = useQuery({
     queryKey: ['quests'],
     queryFn: QuestsApi.get,
+    staleTime: 60_000,
   })
 
   useDataFetching({
