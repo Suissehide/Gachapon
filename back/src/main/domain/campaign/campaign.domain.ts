@@ -131,13 +131,26 @@ interface CardCatalogEntry {
  * - dust is intentionally NOT bonused (economy design)
  */
 export function applyCombatBonuses(
-  loot: { gold: number; xp: number; equipmentDropChance: number; cardChance: number },
+  loot: {
+    gold: number
+    xp: number
+    equipmentDropChance: number
+    cardChance: number
+  },
   effects: { goldBonus: number; combatXpBonus: number; dropBonus: number },
-): { gold: number; xp: number; equipmentDropChance: number; cardChance: number } {
+): {
+  gold: number
+  xp: number
+  equipmentDropChance: number
+  cardChance: number
+} {
   return {
     gold: Math.round(loot.gold * (1 + effects.goldBonus / 100)),
     xp: Math.round(loot.xp * (1 + effects.combatXpBonus / 100)),
-    equipmentDropChance: Math.min(1, loot.equipmentDropChance * (1 + effects.dropBonus / 100)),
+    equipmentDropChance: Math.min(
+      1,
+      loot.equipmentDropChance * (1 + effects.dropBonus / 100),
+    ),
     cardChance: Math.min(1, loot.cardChance * (1 + effects.dropBonus / 100)),
   }
 }
@@ -361,8 +374,12 @@ export class CampaignDomain {
             const loot: LootTable = {
               firstClear: {
                 ...rawLoot.firstClear,
-                gold: Math.round(rawLoot.firstClear.gold * (1 + effects.goldBonus / 100)),
-                xp: Math.round(rawLoot.firstClear.xp * (1 + effects.combatXpBonus / 100)),
+                gold: Math.round(
+                  rawLoot.firstClear.gold * (1 + effects.goldBonus / 100),
+                ),
+                xp: Math.round(
+                  rawLoot.firstClear.xp * (1 + effects.combatXpBonus / 100),
+                ),
               },
               farm: { ...rawLoot.farm, ...bonusedFarm },
             }
@@ -465,8 +482,16 @@ export class CampaignDomain {
 
           // Debit PC par run (coût réduit par skill tree, minimum 1, depuis GlobalConfig défaut 5)
           const sweepCost = sweepCfg['combat.sweepCost']
-          const effectiveSweepCost = Math.max(1, sweepCost - effects.sweepCostReduction)
-          await this.#combatPointsTx.debitInTx(tx, userId, effectiveSweepCost * runs, effects)
+          const effectiveSweepCost = Math.max(
+            1,
+            sweepCost - effects.sweepCostReduction,
+          )
+          await this.#combatPointsTx.debitInTx(
+            tx,
+            userId,
+            effectiveSweepCost * runs,
+            effects,
+          )
 
           const progress = await tx.userCampaignProgress.findUnique({
             where: { userId },
@@ -591,7 +616,9 @@ export class CampaignDomain {
               dust: { increment: totalDust },
               xp: newXp,
               level: newLevel,
-              ...(sweepGained > 0 ? { skillPoints: { increment: sweepGained } } : {}),
+              ...(sweepGained > 0
+                ? { skillPoints: { increment: sweepGained } }
+                : {}),
             },
           })
           if (newLevel > oldLevel) {
@@ -820,7 +847,9 @@ export class CampaignDomain {
         dust: { increment: dust },
         xp: newXp,
         level: newLevel,
-        ...(battleGained > 0 ? { skillPoints: { increment: battleGained } } : {}),
+        ...(battleGained > 0
+          ? { skillPoints: { increment: battleGained } }
+          : {}),
       },
     })
     if (newLevel > oldLevel) {

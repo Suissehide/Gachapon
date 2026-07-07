@@ -2,7 +2,6 @@ import Boom from '@hapi/boom'
 import slugify from 'slugify'
 
 import type { IocContainer } from '../../types/application/ioc'
-import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import type { TeamDomainInterface } from '../../types/domain/team/team.domain.interface'
 import type {
   InvitationEntity,
@@ -14,6 +13,7 @@ import type { IInvitationRepository } from '../../types/infra/orm/repositories/i
 import type { ITeamRepository } from '../../types/infra/orm/repositories/team.repository.interface'
 import type { ITeamMemberRepository } from '../../types/infra/orm/repositories/team-member.repository.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
+import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 
 const MAX_TEAMS_PER_USER = 5
 const MAX_MEMBERS_PER_TEAM = 100

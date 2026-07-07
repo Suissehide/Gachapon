@@ -2,11 +2,11 @@ import Boom from '@hapi/boom'
 
 import type { IocContainer } from '../../types/application/ioc'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
-import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type {
   PostgresORMInterface,
   PrimaTransactionClient,
 } from '../../types/infra/orm/client'
+import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import { calculateCombatPoints } from './combat-points.domain'
 
 export interface CombatPointsView {
@@ -30,7 +30,10 @@ type PcEffects = {
   pcRegenReductionSeconds: number
 }
 
-const NEUTRAL_EFFECTS: PcEffects = { pcVaultBonus: 0, pcRegenReductionSeconds: 0 }
+const NEUTRAL_EFFECTS: PcEffects = {
+  pcVaultBonus: 0,
+  pcRegenReductionSeconds: 0,
+}
 
 const REGEN_FLOOR_SECONDS = 60
 
@@ -41,10 +44,16 @@ const REGEN_FLOOR_SECONDS = 60
  * - maxStock   += pcVaultBonus
  * - regenSeconds = max(REGEN_FLOOR_SECONDS, regenSeconds - pcRegenReductionSeconds)
  */
-export function effectiveCombatConfig(cfg: CombatCfg, effects: PcEffects): CombatCfg {
+export function effectiveCombatConfig(
+  cfg: CombatCfg,
+  effects: PcEffects,
+): CombatCfg {
   return {
     maxStock: cfg.maxStock + effects.pcVaultBonus,
-    regenSeconds: Math.max(REGEN_FLOOR_SECONDS, cfg.regenSeconds - effects.pcRegenReductionSeconds),
+    regenSeconds: Math.max(
+      REGEN_FLOOR_SECONDS,
+      cfg.regenSeconds - effects.pcRegenReductionSeconds,
+    ),
     battleCost: cfg.battleCost,
     sweepCost: cfg.sweepCost,
   }
@@ -55,7 +64,11 @@ export class CombatPointsTx {
   readonly #configService: ConfigServiceInterface
   readonly #skillTreeRepository: ISkillTreeRepository
 
-  constructor({ postgresOrm, configService, skillTreeRepository }: IocContainer) {
+  constructor({
+    postgresOrm,
+    configService,
+    skillTreeRepository,
+  }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#configService = configService
     this.#skillTreeRepository = skillTreeRepository

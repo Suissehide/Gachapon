@@ -23,11 +23,11 @@ import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import type { IUserQuestRepository } from '../../types/infra/orm/repositories/user-quest.repository.interface'
 import type { UserRewardRepositoryInterface } from '../../types/infra/orm/repositories/user-reward.repository.interface'
 import type { Logger } from '../../types/utils/logger'
-import { isPrismaSerializationError } from '../shared/retry-serialization'
 import type {
   AchievementEvent,
   AchievementEventKind,
 } from '../achievements/events.types'
+import { isPrismaSerializationError } from '../shared/retry-serialization'
 import type { QuestCriterion } from './quest-matching'
 import {
   mondayOfUtcWeek,
@@ -181,11 +181,12 @@ export class QuestsDomain implements IQuestsDomain {
 
     // Weekly bonus: check whether the bonus UserReward was already granted
     const bonusSourceId = `weekly-bonus:${weeklyPeriodKey}`
-    const bonusReward = await this.#userRewardRepository.findByUserSourceAndSourceId(
-      userId,
-      'QUEST',
-      bonusSourceId,
-    )
+    const bonusReward =
+      await this.#userRewardRepository.findByUserSourceAndSourceId(
+        userId,
+        'QUEST',
+        bonusSourceId,
+      )
 
     // Build oneshot state
     const oneshot: QuestStateItem[] = oneshotQuests.map((q) => {

@@ -2,8 +2,8 @@ import type { Achievement } from '../../../generated/client'
 import type { CardRarity, CardVariant } from '../../../generated/enums'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
-import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import type { IQuestsDomain } from '../../types/domain/quests/quests.domain.interface'
+import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import type {
   AchievementsDomainInterface,
   AchievementWithProgress,
@@ -47,7 +47,10 @@ export class AchievementsDomain implements AchievementsDomainInterface {
   readonly #postgresOrm: PostgresOrm
   readonly #questsDomain: IQuestsDomain
 
-  constructor({ postgresOrm, questsDomain }: Pick<IocContainer, 'postgresOrm' | 'questsDomain'>) {
+  constructor({
+    postgresOrm,
+    questsDomain,
+  }: Pick<IocContainer, 'postgresOrm' | 'questsDomain'>) {
     this.#postgresOrm = postgresOrm
     this.#questsDomain = questsDomain
   }

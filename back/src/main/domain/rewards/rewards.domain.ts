@@ -96,7 +96,12 @@ export class RewardsDomain implements RewardsDomainInterface {
         }
 
         const user = await this.#userRepository.findByIdOrThrowInTx(tx, userId)
-        const { tokens: rewardTokens, dust, xp, gold: rewardGold } = userReward.reward
+        const {
+          tokens: rewardTokens,
+          dust,
+          xp,
+          gold: rewardGold,
+        } = userReward.reward
 
         const [upgrades, cfg] = await Promise.all([
           this.#skillTreeRepository.getEffectsForUser(userId),

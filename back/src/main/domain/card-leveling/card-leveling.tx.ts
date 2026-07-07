@@ -14,7 +14,11 @@ export class CardLevelingTx {
   readonly #configService
   readonly #achievementsDomain
 
-  constructor({ postgresOrm, configService, achievementsDomain }: IocContainer) {
+  constructor({
+    postgresOrm,
+    configService,
+    achievementsDomain,
+  }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#configService = configService
     this.#achievementsDomain = achievementsDomain

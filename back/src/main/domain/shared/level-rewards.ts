@@ -18,7 +18,9 @@ export function milestonesCrossed(
   oldLevel: number,
   newLevel: number,
 ): MilestonePack[] {
-  return MILESTONE_PACKS.filter((m) => m.level > oldLevel && m.level <= newLevel)
+  return MILESTONE_PACKS.filter(
+    (m) => m.level > oldLevel && m.level <= newLevel,
+  )
 }
 
 /** Points de compétence gagnés : 1 par niveau + bonus des paliers franchis. */
