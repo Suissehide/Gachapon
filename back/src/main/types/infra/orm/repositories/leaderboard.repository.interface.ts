@@ -28,14 +28,6 @@ export type UserCardForScoring = {
   card: { rarity: CardRarity }
 }
 
-export type QuestWithReward = {
-  id: string
-  key: string
-  name: string
-  description: string
-  reward: { tokens: number; dust: number } | null
-}
-
 export type CombatTeamCardForPower = {
   userCardId: string
   level: number
@@ -63,7 +55,6 @@ export interface ILeaderboardRepository {
   getTeamsForRanking(): Promise<TeamForRanking[]>
   getTeamIdForUser(userId: string): Promise<string | null>
   getUserCardsByUserIds(userIds: string[]): Promise<UserCardForScoring[]>
-  getActiveQuests(): Promise<QuestWithReward[]>
   countCampaignStages(): Promise<number>
   getCampaignProgressByUsers(
     userIds: string[],

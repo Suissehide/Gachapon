@@ -1,6 +1,8 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
+import { WEEKLY_BONUS_REWARD } from '../../../../../domain/quests/quest-matching'
+
 // ── Response schema ──────────────────────────────────────────────────────────
 
 const questRewardSchema = z.object({
@@ -51,8 +53,7 @@ export const questsRouter: FastifyPluginCallbackZod = (fastify) => {
         weekly: state.weekly,
         weeklyBonus: {
           completed: state.weeklyBonusCompleted,
-          // Bonus amounts are hardcoded by design (see QuestsDomain#checkAndGrantWeeklyBonus)
-          reward: { gold: 2000, xp: 300 },
+          reward: WEEKLY_BONUS_REWARD,
         },
         oneshot: state.oneshot,
       }

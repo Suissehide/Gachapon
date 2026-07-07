@@ -33,6 +33,7 @@ import {
   mondayOfUtcWeek,
   pickWeeklyQuests,
   questIncrement,
+  WEEKLY_BONUS_REWARD,
 } from './quest-matching'
 
 // ---------------------------------------------------------------------------
@@ -353,7 +354,7 @@ export class QuestsDomain implements IQuestsDomain {
 
     // Create the bonus Reward (not a template — created on demand)
     const bonusReward = await tx.reward.create({
-      data: { gold: 2000, xp: 300 },
+      data: { ...WEEKLY_BONUS_REWARD },
     })
 
     await tx.userReward.create({

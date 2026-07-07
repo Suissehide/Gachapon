@@ -158,3 +158,6 @@ function mulberry32(seed: number): () => number {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296
   }
 }
+
+/** Bonus « semaine parfaite » (3/3 hebdos complétées) — source de vérité unique. */
+export const WEEKLY_BONUS_REWARD = { gold: 2000, xp: 300 } as const

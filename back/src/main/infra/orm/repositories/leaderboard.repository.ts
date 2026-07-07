@@ -4,7 +4,6 @@ import type {
   CollectorRankingRowWithLevel,
   CombatTeamCardForPower,
   ILeaderboardRepository,
-  QuestWithReward,
   TeamForRanking,
   UserCardForScoring,
 } from '../../../types/infra/orm/repositories/leaderboard.repository.interface'
@@ -41,23 +40,6 @@ export class LeaderboardRepository implements ILeaderboardRepository {
         card: { select: { rarity: true } },
       },
     }) as Promise<UserCardForScoring[]>
-  }
-
-  async getActiveQuests(): Promise<QuestWithReward[]> {
-    const quests = await this.#prisma.quest.findMany({
-      where: { isActive: true },
-      orderBy: { name: 'asc' },
-      include: { reward: true },
-    })
-    return quests.map((q) => ({
-      id: q.id,
-      key: q.key,
-      name: q.name,
-      description: q.description,
-      reward: q.reward
-        ? { tokens: q.reward.tokens, dust: q.reward.dust }
-        : null,
-    }))
   }
 
   getCollectorRankingWithLevel(
