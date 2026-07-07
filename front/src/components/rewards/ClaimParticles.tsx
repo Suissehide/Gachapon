@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom'
 
 interface Particle {
   id: number
-  type: 'token' | 'dust' | 'xp'
+  type: 'token' | 'dust' | 'xp' | 'gold'
   tx: number
   ty: number
   delay: number
@@ -17,11 +17,12 @@ interface ClaimParticlesProps {
   hasTokens: boolean
   hasDust: boolean
   hasXp: boolean
+  hasGold: boolean
 }
 
 const PER_TYPE = 12
 
-function buildParticles(types: Array<'token' | 'dust' | 'xp'>): Particle[] {
+function buildParticles(types: Array<'token' | 'dust' | 'xp' | 'gold'>): Particle[] {
   const total = types.length * PER_TYPE
   return types.flatMap((type, ti) =>
     Array.from({ length: PER_TYPE }, (_, i) => {
@@ -43,6 +44,7 @@ const ICON: Record<Particle['type'], ReactNode> = {
   token: <Coins className="h-3 w-3 text-primary" />,
   dust: <Sparkles className="h-3 w-3 text-accent" />,
   xp: <Star className="h-3 w-3 text-yellow-400" />,
+  gold: <Coins className="h-3 w-3 text-yellow-400" />,
 }
 
 export function ClaimParticles({
@@ -52,6 +54,7 @@ export function ClaimParticles({
   hasTokens,
   hasDust,
   hasXp,
+  hasGold,
 }: ClaimParticlesProps) {
   const [particles, setParticles] = useState<Particle[]>([])
 
@@ -60,7 +63,7 @@ export function ClaimParticles({
       return
     }
 
-    const types: Array<'token' | 'dust' | 'xp'> = []
+    const types: Array<'token' | 'dust' | 'xp' | 'gold'> = []
     if (hasTokens) {
       types.push('token')
     }
@@ -70,6 +73,9 @@ export function ClaimParticles({
     if (hasXp) {
       types.push('xp')
     }
+    if (hasGold) {
+      types.push('gold')
+    }
     if (types.length === 0) {
       return
     }
@@ -77,7 +83,7 @@ export function ClaimParticles({
     setParticles(buildParticles(types))
     const t = setTimeout(() => setParticles([]), 1000)
     return () => clearTimeout(t)
-  }, [burst, hasTokens, hasDust, hasXp])
+  }, [burst, hasTokens, hasDust, hasXp, hasGold])
 
   if (!particles.length) {
     return null

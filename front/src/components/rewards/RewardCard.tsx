@@ -157,6 +157,7 @@ export function RewardCard({ reward, onClaim, isLoading }: RewardCardProps) {
             hasTokens={reward.reward.tokens > 0}
             hasDust={reward.reward.dust > 0}
             hasXp={reward.reward.xp > 0}
+            hasGold={reward.reward.gold > 0}
           />
           <Button
             size="sm"
