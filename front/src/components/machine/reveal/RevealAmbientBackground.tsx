@@ -188,7 +188,10 @@ export function RevealAmbientBackground({ rarity }: Props) {
           className="absolute left-1/2 top-[45%] aspect-square w-[140vmax] animate-[ambientSpin_40s_linear_infinite] transition-opacity duration-[800ms]"
           style={
             {
-              background: `conic-gradient(from 0deg, transparent 0deg, ${auraColor}55 12deg, transparent 24deg, transparent 36deg, ${auraColor}44 48deg, transparent 60deg)`,
+              // Sunburst : un rayon doux répété tous les 30° → 12 rayons
+              // répartis sur tout le cercle (le conic simple ne couvrait qu'un
+              // arc de 0→60°, d'où l'impression d'un seul rayon).
+              background: `repeating-conic-gradient(from 0deg, transparent 0deg, ${auraColor}55 5deg, transparent 11deg, transparent 30deg)`,
               maskImage:
                 'radial-gradient(circle at center, rgba(0,0,0,0.9) 0%, transparent 60%)',
               WebkitMaskImage:
