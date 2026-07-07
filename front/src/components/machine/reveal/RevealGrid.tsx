@@ -8,7 +8,7 @@ import {
   useState,
 } from 'react'
 
-import cardBackImg from '../../../assets/data/card-back/black.png'
+import cardBackImg from '../../../assets/data/card-back/star.png'
 import type { CardRarity } from '../../../constants/card.constant'
 import type { PullBatchEntry } from '../../../queries/useGacha'
 import { CardDisplay } from '../../shared/tcg-card/CardDisplay'
