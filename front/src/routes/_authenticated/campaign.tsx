@@ -81,6 +81,7 @@ function fmt(n: number): string {
   return n.toLocaleString('fr-FR')
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: page-level orchestrator coordinates campaign data, team, points and modal state
 function CampaignPage() {
   const navigate = useNavigate()
   const search = Route.useSearch()
@@ -136,11 +137,15 @@ function CampaignPage() {
   const canSweep = currentPC >= sweepCost * 3 && hasTeam
 
   const handleFight = () => {
-    if (!prep) return
+    if (!prep) {
+      return
+    }
     navigate({ to: '/battle/$stageId', params: { stageId: prep.id } })
   }
   const handleSweep = () => {
-    if (!prep) return
+    if (!prep) {
+      return
+    }
     sweep.mutate(
       { stageId: prep.id, runs: 3 },
       {
@@ -215,7 +220,9 @@ function CampaignPage() {
         <Popup
           open
           onOpenChange={(v) => {
-            if (!v) setPrep(null)
+            if (!v) {
+              setPrep(null)
+            }
           }}
         >
           <PopupContent
@@ -246,7 +253,9 @@ function CampaignPage() {
         <Popup
           open
           onOpenChange={(v) => {
-            if (!v) setSweepResult(null)
+            if (!v) {
+              setSweepResult(null)
+            }
           }}
         >
           <PopupContent>
@@ -336,7 +345,9 @@ function ChapterStrip({
 
   const update = useCallback(() => {
     const el = scrollRef.current
-    if (!el) return
+    if (!el) {
+      return
+    }
     const max = el.scrollWidth - el.clientWidth
     setEdges({ left: el.scrollLeft > 4, right: el.scrollLeft < max - 4 })
   }, [])
@@ -344,7 +355,9 @@ function ChapterStrip({
   useEffect(() => {
     update()
     const el = scrollRef.current
-    if (!el) return
+    if (!el) {
+      return
+    }
     el.addEventListener('scroll', update, { passive: true })
     window.addEventListener('resize', update)
     return () => {
@@ -356,16 +369,22 @@ function ChapterStrip({
   // Auto-center the active chapter tab.
   useEffect(() => {
     const el = scrollRef.current
-    if (!el) return
+    if (!el) {
+      return
+    }
     const tab = el.querySelector<HTMLElement>(`[data-ch="${activeChapter}"]`)
-    if (!tab) return
+    if (!tab) {
+      return
+    }
     const target = tab.offsetLeft - (el.clientWidth - tab.clientWidth) / 2
     el.scrollTo({ left: Math.max(0, target), behavior: 'smooth' })
   }, [activeChapter])
 
   const nudge = (dir: -1 | 1) => {
     const el = scrollRef.current
-    if (!el) return
+    if (!el) {
+      return
+    }
     el.scrollBy({ left: dir * el.clientWidth * 0.7, behavior: 'smooth' })
   }
 
@@ -454,7 +473,6 @@ function ChapterTab({
   const isLocked = chapter.stages.every((s) => s.status === 'locked')
 
   const style: CSSProperties = {
-    // biome-ignore lint/style/useNamingConvention: CSS custom property
     ['--hue' as string]: String(meta.hue),
   }
 
@@ -505,6 +523,7 @@ function ChapterTab({
 
 // ── Level card ──────────────────────────────────────────────────────────────
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: renders every stage status variant (locked/current/boss/cleared) with its own styling branch
 function LevelCard({
   stage,
   onOpen,
@@ -555,7 +574,9 @@ function LevelCard({
     <button
       type="button"
       onClick={() => {
-        if (!isLocked) onOpen()
+        if (!isLocked) {
+          onOpen()
+        }
       }}
       disabled={isLocked}
       className={`${base} ${stateClass} text-left`}
@@ -729,6 +750,7 @@ function MiniCard({
 
 // ── Prep modal ──────────────────────────────────────────────────────────────
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: combat-prep modal composes opponents, rewards, power verdict and team preview in one view
 function PrepModal({
   stage,
   chapter,
