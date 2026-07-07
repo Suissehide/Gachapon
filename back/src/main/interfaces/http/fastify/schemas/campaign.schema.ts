@@ -2,6 +2,21 @@ import { z } from 'zod/v4'
 
 const stageStatusEnum = z.enum(['cleared', 'current', 'locked'])
 
+const rewardAmountsSchema = z.object({
+  gold: z.number().int(),
+  dust: z.number().int(),
+  xp: z.number().int(),
+})
+
+export const rewardPreviewSchema = z.object({
+  firstClear: rewardAmountsSchema,
+  farm: rewardAmountsSchema,
+  farmEquipmentChance: z.number(),
+  farmCardChance: z.number(),
+  guaranteedEquipment: z.boolean(),
+  guaranteedCard: z.boolean(),
+})
+
 export const campaignStageSchema = z.object({
   id: z.string(),
   chapter: z.number().int(),
@@ -10,6 +25,7 @@ export const campaignStageSchema = z.object({
   isBoss: z.boolean(),
   status: stageStatusEnum,
   recommendedPower: z.number(),
+  rewardPreview: rewardPreviewSchema,
 })
 
 export const campaignChapterSchema = z.object({

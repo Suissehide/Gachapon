@@ -91,6 +91,33 @@ export interface BattleRewards {
   } | null
 }
 
+export interface RewardPreview {
+  firstClear: { gold: number; dust: number; xp: number }
+  farm: { gold: number; dust: number; xp: number }
+  farmEquipmentChance: number
+  farmCardChance: number
+  guaranteedEquipment: boolean
+  guaranteedCard: boolean
+}
+
+/**
+ * Extracts a display-friendly reward preview from a raw lootTable JSON value.
+ * Pure function — reads defensively (lootTable is Prisma JsonValue).
+ */
+export function extractRewardPreview(lootTable: unknown): RewardPreview {
+  const lt = lootTable as LootTable
+  const fc = lt.firstClear
+  const farm = lt.farm
+  return {
+    firstClear: { gold: fc.gold, dust: fc.dust, xp: fc.xp },
+    farm: { gold: farm.gold, dust: farm.dust, xp: farm.xp },
+    farmEquipmentChance: farm.equipmentDropChance,
+    farmCardChance: farm.cardChance,
+    guaranteedEquipment: fc.guaranteedEquipment != null,
+    guaranteedCard: fc.guaranteedCard != null,
+  }
+}
+
 export interface CampaignStageView {
   id: string
   chapter: number
@@ -99,6 +126,7 @@ export interface CampaignStageView {
   isBoss: boolean
   status: 'cleared' | 'current' | 'locked'
   recommendedPower: number
+  rewardPreview: RewardPreview
 }
 
 export interface CampaignView {
@@ -245,6 +273,7 @@ export class CampaignDomain {
           recommendedPower: computeTeamPower(
             s.enemyTeam as unknown as EnemySpec[],
           ),
+          rewardPreview: extractRewardPreview(s.lootTable),
         }
       })
       chapters.push({ chapter, stages: stageViews })
