@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { Link, createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   CalendarClock,
   Check,
@@ -23,7 +23,11 @@ import { TOAST_SEVERITY } from '../../constants/ui.constant'
 import { useToast } from '../../hooks/useToast'
 import { useBuyDailyShopItem, useDailyShop } from '../../queries/useDailyShop'
 import type { ShopItem } from '../../queries/useShop'
-import { useBuyItem, useOwnedMachines, useShopItems } from '../../queries/useShop'
+import {
+  useBuyItem,
+  useOwnedMachines,
+  useShopItems,
+} from '../../queries/useShop'
 import { usePurchaseWishlist, useWishlist } from '../../queries/useWishlist'
 import { useAuthStore } from '../../stores/auth.store'
 
@@ -43,16 +47,16 @@ function useCountdown() {
   useEffect(() => {
     const update = () => {
       const now = new Date()
-      const midnight = new Date(Date.UTC(
-        now.getUTCFullYear(),
-        now.getUTCMonth(),
-        now.getUTCDate() + 1,
-      ))
+      const midnight = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1),
+      )
       const diff = midnight.getTime() - now.getTime()
       const h = Math.floor(diff / 3_600_000)
       const m = Math.floor((diff % 3_600_000) / 60_000)
       const s = Math.floor((diff % 60_000) / 1000)
-      setTimeLeft(`${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`)
+      setTimeLeft(
+        `${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`,
+      )
     }
     update()
     const id = setInterval(update, 1000)
@@ -156,7 +160,11 @@ function ShopPage() {
     buyShop(item.id, {
       onSuccess: (result) => {
         if (user) {
-          setUser({ ...user, dust: result.newDustTotal, tokens: result.newTokenTotal })
+          setUser({
+            ...user,
+            dust: result.newDustTotal,
+            tokens: result.newTokenTotal,
+          })
         }
         notifySuccess(item.name, `Acheté ! −${result.dustSpent} poussière`)
         const remaining = Math.max(0, MIN_SPIN_MS - (Date.now() - clickedAt))
@@ -182,7 +190,10 @@ function ShopPage() {
         if (user) {
           setUser({ ...user, dust: result.newDustBalance })
         }
-        notifySuccess(result.card.name, `Obtenue ! −${result.dustSpent} poussière`)
+        notifySuccess(
+          result.card.name,
+          `Obtenue ! −${result.dustSpent} poussière`,
+        )
         const remaining = Math.max(0, MIN_SPIN_MS - (Date.now() - clickedAt))
         setTimeout(() => {
           setBuyingDailyId((id) => (id === item.id ? null : id))
@@ -210,105 +221,105 @@ function ShopPage() {
         title="Dépense ta poussière"
       />
 
-        {/* ── Wishlist Section ──────────────────────────────────── */}
-        <WishlistSection dust={dust} />
+      {/* ── Wishlist Section ──────────────────────────────────── */}
+      <WishlistSection dust={dust} />
 
-        {/* ── Daily Shop Section ─────────────────────────────────── */}
-        <Card className="p-6">
-          <div className="mb-4 flex items-baseline justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <CalendarClock className="h-4 w-4 text-accent" />
-              <CardTitle className="text-sm uppercase tracking-wider">
-                Boutique du jour
-              </CardTitle>
-            </div>
-            <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-text-light">
-              <span>Nouveau tirage dans</span>
-              <span className="font-bold tabular-nums text-accent">
-                {timeLeft}
-              </span>
-            </div>
+      {/* ── Daily Shop Section ─────────────────────────────────── */}
+      <Card className="p-6">
+        <div className="mb-4 flex items-baseline justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <CalendarClock className="h-4 w-4 text-accent" />
+            <CardTitle className="text-sm uppercase tracking-wider">
+              Boutique du jour
+            </CardTitle>
           </div>
+          <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-text-light">
+            <span>Nouveau tirage dans</span>
+            <span className="font-bold tabular-nums text-accent">
+              {timeLeft}
+            </span>
+          </div>
+        </div>
 
-          {dailyLoading ? (
-            <div className="flex h-32 items-center justify-center">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            </div>
-          ) : dailyItems.length === 0 ? (
-            <div className="flex h-32 items-center justify-center rounded-xl border border-dashed border-border">
-              <p className="font-mono text-xs uppercase tracking-wider text-text-light">
-                Aucune carte disponible
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-wrap justify-center gap-4">
-              {dailyItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="w-[120px] sm:w-[130px] md:w-[140px]"
-                >
-                  <DailyShopCard
-                    item={item}
-                    dust={dust}
-                    buying={buyingDailyId === item.id}
-                    onBuy={() => handleBuyDaily(item)}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
-
-        {/* ── Static Shop Section ────────────────────────────────── */}
-        {shopLoading ? (
-          <Card className="flex h-48 items-center justify-center p-6">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          </Card>
-        ) : shopItems.length === 0 ? (
-          <Card className="flex h-48 items-center justify-center p-6">
+        {dailyLoading ? (
+          <div className="flex h-32 items-center justify-center">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          </div>
+        ) : dailyItems.length === 0 ? (
+          <div className="flex h-32 items-center justify-center rounded-xl border border-dashed border-border">
             <p className="font-mono text-xs uppercase tracking-wider text-text-light">
-              Aucun article disponible pour l'instant
+              Aucune carte disponible
             </p>
-          </Card>
+          </div>
         ) : (
-          grouped
-            .filter((g) => g.items.length > 0)
-            .map(({ type, config, items: typeItems }) => (
-              <Card key={type} className="p-6">
-                <div className="mb-4 flex items-baseline justify-between">
-                  <div className="flex items-center gap-2">
-                    {config.icon}
-                    <CardTitle className="text-sm uppercase tracking-wider">
-                      {config.label}
-                    </CardTitle>
-                  </div>
-                  <span className="font-mono text-[11px] text-text-light">
-                    {typeItems.length} ARTICLE{typeItems.length > 1 ? 'S' : ''}
-                  </span>
+          <div className="flex flex-wrap justify-center gap-4">
+            {dailyItems.map((item) => (
+              <div
+                key={item.id}
+                className="w-[120px] sm:w-[130px] md:w-[140px]"
+              >
+                <DailyShopCard
+                  item={item}
+                  dust={dust}
+                  buying={buyingDailyId === item.id}
+                  onBuy={() => handleBuyDaily(item)}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      {/* ── Static Shop Section ────────────────────────────────── */}
+      {shopLoading ? (
+        <Card className="flex h-48 items-center justify-center p-6">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </Card>
+      ) : shopItems.length === 0 ? (
+        <Card className="flex h-48 items-center justify-center p-6">
+          <p className="font-mono text-xs uppercase tracking-wider text-text-light">
+            Aucun article disponible pour l'instant
+          </p>
+        </Card>
+      ) : (
+        grouped
+          .filter((g) => g.items.length > 0)
+          .map(({ type, config, items: typeItems }) => (
+            <Card key={type} className="p-6">
+              <div className="mb-4 flex items-baseline justify-between">
+                <div className="flex items-center gap-2">
+                  {config.icon}
+                  <CardTitle className="text-sm uppercase tracking-wider">
+                    {config.label}
+                  </CardTitle>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {typeItems.map((item) => {
-                    const machineId =
-                      item.type === 'MACHINE'
-                        ? (item.value as { machineId?: string })?.machineId
-                        : undefined
-                    const owned = machineId
-                      ? ownedMachineIds.includes(machineId)
-                      : false
-                    return (
-                      <StaticShopCard
-                        key={item.id}
-                        item={item}
-                        dust={dust}
-                        colorClass={config.color}
-                        buying={buyingShopId === item.id}
-                        justBought={justBoughtShopId === item.id}
-                        owned={owned}
-                        onBuy={() => handleBuyShop(item)}
-                      />
-                    )
-                  })}
-                </div>
+                <span className="font-mono text-[11px] text-text-light">
+                  {typeItems.length} ARTICLE{typeItems.length > 1 ? 'S' : ''}
+                </span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {typeItems.map((item) => {
+                  const machineId =
+                    item.type === 'MACHINE'
+                      ? (item.value as { machineId?: string })?.machineId
+                      : undefined
+                  const owned = machineId
+                    ? ownedMachineIds.includes(machineId)
+                    : false
+                  return (
+                    <StaticShopCard
+                      key={item.id}
+                      item={item}
+                      dust={dust}
+                      colorClass={config.color}
+                      buying={buyingShopId === item.id}
+                      justBought={justBoughtShopId === item.id}
+                      owned={owned}
+                      onBuy={() => handleBuyShop(item)}
+                    />
+                  )
+                })}
+              </div>
             </Card>
           ))
       )}
@@ -322,12 +333,14 @@ function WishlistBuyButton({
   canBuy,
   canAfford,
   purchasing,
+  price,
   availableAt,
   onBuy,
 }: {
   canBuy: boolean
   canAfford: boolean
   purchasing: boolean
+  price: number | null
   availableAt: string | null
   onBuy: () => void
 }) {
@@ -341,9 +354,16 @@ function WishlistBuyButton({
     }
   }, [countdown, availableAt, queryClient])
 
+  const priceLabel = price !== null ? price.toLocaleString('fr-FR') : ''
+
   if (!canBuy && countdown) {
     return (
-      <Button size="sm" disabled variant="secondary" className="gap-1.5 font-mono">
+      <Button
+        size="sm"
+        disabled
+        variant="secondary"
+        className="w-full gap-1.5 font-mono"
+      >
         <Clock className="h-3.5 w-3.5 shrink-0" />
         <span className="tabular-nums">{countdown}</span>
       </Button>
@@ -352,37 +372,45 @@ function WishlistBuyButton({
   if (!canBuy && !countdown && availableAt) {
     // Cooldown just expired, waiting for refetch
     return (
-      <Button size="sm" disabled>
+      <Button size="sm" disabled className="w-full">
         <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
       </Button>
     )
   }
   if (purchasing) {
     return (
-      <Button size="sm" disabled>
+      <Button size="sm" disabled className="w-full">
         <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
       </Button>
     )
   }
   if (canAfford) {
     return (
-      <Button size="sm" variant="gradient" onClick={onBuy} className="gap-1">
+      <Button
+        size="sm"
+        variant="gradient"
+        onClick={onBuy}
+        className="w-full gap-1"
+      >
         <Sparkles className="h-3.5 w-3.5" />
-        Acheter
+        <span className="tabular-nums">{priceLabel}</span>
       </Button>
     )
   }
   return (
-    <Button size="sm" disabled variant="outline" className="gap-1 text-text-light/70">
+    <Button
+      size="sm"
+      disabled
+      variant="outline"
+      className="w-full gap-1 text-text-light/70"
+    >
       <Sparkles className="h-3.5 w-3.5" />
-      Insuffisant
+      <span className="tabular-nums">{priceLabel}</span>
     </Button>
   )
 }
 
 function WishlistSection({ dust }: { dust: number }) {
-  const queryClient = useQueryClient()
-  const user = useAuthStore((s) => s.user)
   const { data: wishlist, isLoading } = useWishlist()
   const { mutate: purchase, isPending: purchasing } = usePurchaseWishlist()
 
@@ -393,16 +421,6 @@ function WishlistSection({ dust }: { dust: number }) {
   // canBuy = card is set AND cooldown has expired (availableAt is null)
   const canBuy = card !== null && availableAt === null && price !== null
   const canAfford = price !== null && dust >= price
-
-  // Determine if the card is owned by checking collection cache
-  let cardIsOwned = false
-  if (card && user?.id) {
-    const collectionData = queryClient.getQueryData<{ cards: Array<{ card: { id: string } }> }>([
-      'collection',
-      user.id,
-    ])
-    cardIsOwned = !!collectionData?.cards?.some((uc) => uc.card.id === card.id)
-  }
 
   return (
     <Card className="p-6">
@@ -416,44 +434,40 @@ function WishlistSection({ dust }: { dust: number }) {
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
       ) : card ? (
-        <div className="flex flex-wrap items-center gap-6">
-          <div className="w-[110px] shrink-0 sm:w-[120px]">
-            <CardDisplay
-              rarity={card.rarity}
-              name={card.name}
-              setName={card.set.name}
-              imageUrl={card.imageUrl}
-              variant={null}
-              isOwned={cardIsOwned}
-              interactive={false}
-              compact
-            />
-          </div>
-          <div className="flex min-w-0 flex-1 flex-col gap-3">
-            <div>
-              <h3 className="font-bold text-text">{card.name}</h3>
-              <p className="mt-0.5 text-xs text-text-light">{card.set.name}</p>
-            </div>
-            {price !== null && (
-              <div className="flex items-center gap-1.5 text-sm font-bold text-secondary">
-                <Sparkles className="h-3.5 w-3.5" />
-                <span className="tabular-nums">{price.toLocaleString('fr-FR')}</span>
+        <div className="flex flex-wrap justify-center gap-4">
+          <div className="w-[120px] sm:w-[130px] md:w-[140px]">
+            <div className="flex flex-col items-center gap-2.5">
+              <div className="w-full">
+                <CardDisplay
+                  rarity={card.rarity}
+                  name={card.name}
+                  setName={card.set.name}
+                  imageUrl={card.imageUrl}
+                  variant={null}
+                  isOwned
+                  interactive={canBuy}
+                  compact
+                />
               </div>
-            )}
-            <WishlistBuyButton
-              canBuy={canBuy}
-              canAfford={canAfford}
-              purchasing={purchasing}
-              availableAt={availableAt}
-              onBuy={() => purchase()}
-            />
+              <WishlistBuyButton
+                canBuy={canBuy}
+                canAfford={canAfford}
+                purchasing={purchasing}
+                price={price}
+                availableAt={availableAt}
+                onBuy={() => purchase()}
+              />
+            </div>
           </div>
         </div>
       ) : (
         <div className="flex h-32 items-center justify-center rounded-xl border border-dashed border-border">
           <p className="font-mono text-xs uppercase tracking-wider text-text-light">
             Choisis une carte dans ta{' '}
-            <Link to="/collection" className="text-primary underline underline-offset-2">
+            <Link
+              to="/collection"
+              className="text-primary underline underline-offset-2"
+            >
               collection
             </Link>
           </p>
@@ -630,7 +644,10 @@ function StaticShopCard({
   onBuy: () => void
 }) {
   const canAfford = dust >= item.dustCost
-  const supported = item.type === 'TOKEN_PACK' || item.type === 'MACHINE' || item.type === 'BOOST'
+  const supported =
+    item.type === 'TOKEN_PACK' ||
+    item.type === 'MACHINE' ||
+    item.type === 'BOOST'
   const pulls = item.activeBoost?.pullsRemaining ?? 0
   const isBoostActive = item.type === 'BOOST' && pulls > 0
 
@@ -644,7 +661,8 @@ function StaticShopCard({
         {isBoostActive && (
           <div className="mt-2 flex items-center gap-1.5 rounded-md bg-secondary/15 px-2 py-1 text-xs font-semibold text-secondary">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-secondary" />
-            Actif — {pulls} tirage{pulls > 1 ? 's' : ''} restant{pulls > 1 ? 's' : ''}
+            Actif — {pulls} tirage{pulls > 1 ? 's' : ''} restant
+            {pulls > 1 ? 's' : ''}
           </div>
         )}
       </div>
