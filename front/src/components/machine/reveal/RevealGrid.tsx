@@ -324,13 +324,12 @@ function RevealCard({
 
   // Priority badge: boostGuarantee > goldenBall > freePull > NEW (existing)
   const specialBadge = entry.wasBoostGuarantee
-    ? { label: 'EPIC garanti', Icon: Gift, cls: 'bg-violet-600/95 shadow-violet-700/40' }
+    ? { label: 'EPIC garanti', Icon: Sparkles, cls: 'bg-violet-600/95 shadow-violet-700/40' }
     : entry.wasGoldenBall
       ? { label: "Boule d'or", Icon: Trophy, cls: 'bg-amber-500/95 shadow-amber-600/40' }
       : entry.wasFreePull
-        ? { label: 'Gratuit', Icon: Sparkles, cls: 'bg-sky-500/95 shadow-sky-600/40' }
+        ? { label: 'Gratuit', Icon: Gift, cls: 'bg-sky-500/95 shadow-sky-600/40' }
         : null
-  const BadgeIcon = specialBadge?.Icon
 
   useEffect(() => {
     if (flipped) {
@@ -405,11 +404,11 @@ function RevealCard({
                 }
               />
             </div>
-            {BadgeIcon && specialBadge && (
+            {specialBadge && (
               <span
                 className={`pointer-events-none absolute top-2 right-2 z-50 flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-white shadow-lg ${specialBadge.cls}`}
               >
-                <BadgeIcon className='h-3 w-3' strokeWidth={2.5} />
+                <specialBadge.Icon className='h-3 w-3' strokeWidth={2.5} />
                 {specialBadge.label}
               </span>
             )}
