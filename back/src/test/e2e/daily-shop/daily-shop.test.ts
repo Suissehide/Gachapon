@@ -74,6 +74,7 @@ describe('Daily shop routes', () => {
     expect(body.items[0].card).toHaveProperty('set')
     expect(typeof body.items[0].dustPrice).toBe('number')
     expect(body.items[0].purchased).toBe(false)
+    expect(typeof body.items[0].owned).toBe('boolean')
   })
 
   it('GET /daily-shop — returns same shop on second call', async () => {

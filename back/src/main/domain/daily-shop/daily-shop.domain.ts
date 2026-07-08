@@ -27,18 +27,21 @@ function todayUTC(): Date {
   )
 }
 
-function formatItem(item: {
-  id: string
-  dustPrice: number
-  purchased: boolean
-  card: {
+function formatItem(
+  item: {
     id: string
-    name: string
-    imageUrl: string | null
-    rarity: string
-    set: { id: string; name: string }
-  }
-}): DailyShopItemResult {
+    dustPrice: number
+    purchased: boolean
+    card: {
+      id: string
+      name: string
+      imageUrl: string | null
+      rarity: string
+      set: { id: string; name: string }
+    }
+  },
+  ownedCardIds: Set<string>,
+): DailyShopItemResult {
   return {
     id: item.id,
     card: {
@@ -50,6 +53,7 @@ function formatItem(item: {
     },
     dustPrice: item.dustPrice,
     purchased: item.purchased,
+    owned: ownedCardIds.has(item.card.id),
   }
 }
 
@@ -68,24 +72,38 @@ export class DailyShopDomain implements IDailyShopDomain {
     this.#skillTreeRepository = skillTreeRepository
   }
 
+  // Set of card IDs the user already owns (any variant). Computed on every
+  // fetch so the "owned / new" flag stays fresh as the collection grows.
+  async #getOwnedCardIds(userId: string): Promise<Set<string>> {
+    const owned = await this.#postgresOrm.prisma.userCard.findMany({
+      where: { userId },
+      distinct: ['cardId'],
+      select: { cardId: true },
+    })
+    return new Set(owned.map((c) => c.cardId))
+  }
+
   async getOrGenerate(userId: string): Promise<DailyShopResult> {
     const date = todayUTC()
     const prisma = this.#postgresOrm.prisma
 
-    const existing = await prisma.dailyShop.findUnique({
-      where: { userId_date: { userId, date } },
-      include: {
-        items: {
-          include: { card: { include: { set: true } } },
-          orderBy: { id: 'asc' },
+    const [ownedCardIds, existing] = await Promise.all([
+      this.#getOwnedCardIds(userId),
+      prisma.dailyShop.findUnique({
+        where: { userId_date: { userId, date } },
+        include: {
+          items: {
+            include: { card: { include: { set: true } } },
+            orderBy: { id: 'asc' },
+          },
         },
-      },
-    })
+      }),
+    ])
 
     if (existing) {
       return {
         date: existing.date.toISOString(),
-        items: existing.items.map(formatItem),
+        items: existing.items.map((item) => formatItem(item, ownedCardIds)),
       }
     }
 
@@ -146,7 +164,7 @@ export class DailyShopDomain implements IDailyShopDomain {
 
       return {
         date: shop.date.toISOString(),
-        items: shop.items.map(formatItem),
+        items: shop.items.map((item) => formatItem(item, ownedCardIds)),
       }
     } catch (err: unknown) {
       // Race condition: another request already created the shop for this (userId, date)
@@ -166,7 +184,7 @@ export class DailyShopDomain implements IDailyShopDomain {
         })
         return {
           date: existing.date.toISOString(),
-          items: existing.items.map(formatItem),
+          items: existing.items.map((item) => formatItem(item, ownedCardIds)),
         }
       }
       throw err

@@ -462,7 +462,7 @@ function WishlistSection({ dust }: { dust: number }) {
         </div>
       ) : (
         <div className="flex h-32 items-center justify-center rounded-xl border border-dashed border-border">
-          <p className="font-mono text-xs uppercase tracking-wider text-text-light">
+          <p className="text-sm text-text-light">
             Choisis une carte dans ta{' '}
             <Link
               to="/collection"
@@ -503,6 +503,7 @@ function DailyShopCard({
           variant={null}
           isOwned
           interactive={!item.purchased}
+          newBadge={!item.owned && !item.purchased}
           compact
         />
       </div>

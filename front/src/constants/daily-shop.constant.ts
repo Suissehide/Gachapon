@@ -5,6 +5,8 @@ export type DailyShopItem = {
   card: Card
   dustPrice: number
   purchased: boolean
+  /** Whether the user already owns this card (any variant). */
+  owned: boolean
 }
 
 export type DailyShopResponse = {

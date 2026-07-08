@@ -20,6 +20,7 @@ export const dailyShopRouter: FastifyPluginCallbackZod = (fastify) => {
       }
       dustPrice: number
       purchased: boolean
+      owned: boolean
     }[],
   ) =>
     items.map((item) => ({
