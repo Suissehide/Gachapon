@@ -9,6 +9,7 @@ import type { AuthDomainInterface } from '../../types/domain/auth/auth.domain.in
 import type { TokenPair } from '../../types/domain/auth/auth.types'
 import type {
   OAuthDomainInterface,
+  OAuthMode,
   OAuthProviderName,
 } from '../../types/domain/auth/oauth.domain.interface'
 import type { StreakDomainInterface } from '../../types/domain/streak/streak.domain.interface'
@@ -45,7 +46,11 @@ export class OAuthDomain implements OAuthDomainInterface {
     this.#configService = configService
   }
 
-  getAuthorizationUrl(provider: OAuthProviderName, state: string): string {
+  getAuthorizationUrl(
+    provider: OAuthProviderName,
+    state: string,
+    mode: OAuthMode,
+  ): string {
     if (provider === 'google') {
       return `https://accounts.google.com/o/oauth2/v2/auth?${new URLSearchParams(
         {
@@ -54,6 +59,9 @@ export class OAuthDomain implements OAuthDomainInterface {
           response_type: 'code',
           scope: 'openid email profile',
           state,
+          // Force the consent screen on sign-up; let returning users
+          // through the default (silent) flow on login.
+          ...(mode === 'register' ? { prompt: 'consent' } : {}),
         },
       )}`
     }
@@ -64,7 +72,9 @@ export class OAuthDomain implements OAuthDomainInterface {
         response_type: 'code',
         scope: 'identify email',
         state,
-        prompt: 'none',
+        // Sign-up must show the consent screen; login attempts silent
+        // auth and falls back to consent via the callback on access_denied.
+        prompt: mode === 'register' ? 'consent' : 'none',
       })}`
     }
     throw Boom.badRequest('Unknown provider')

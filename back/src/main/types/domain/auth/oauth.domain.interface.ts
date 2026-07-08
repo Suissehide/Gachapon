@@ -3,8 +3,14 @@ import type { TokenPair } from './auth.types'
 
 export type OAuthProviderName = 'google' | 'discord'
 
+export type OAuthMode = 'login' | 'register'
+
 export interface OAuthDomainInterface {
-  getAuthorizationUrl(provider: OAuthProviderName, state: string): string
+  getAuthorizationUrl(
+    provider: OAuthProviderName,
+    state: string,
+    mode: OAuthMode,
+  ): string
   handleCallback(
     provider: OAuthProviderName,
     code: string,

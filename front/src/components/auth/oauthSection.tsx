@@ -1,6 +1,5 @@
-import type { ReactNode } from 'react'
-
 import { useNavigate } from '@tanstack/react-router'
+
 import DiscordIcon from '../../assets/icons/discord.svg?react'
 import GoogleIcon from '../../assets/icons/google.svg?react'
 import { apiUrl } from '../../constants/config.constant.ts'
@@ -19,52 +18,27 @@ export function OAuthDivider() {
   )
 }
 
-export function OAuthButton({
-  href,
-  icon,
-  label,
-  className,
-}: {
-  href: string
-  icon: ReactNode
-  label: string
-  className: string
-}) {
-  return (
-    <Button
-      asChild
-      variant="ghost"
-      className={`rounded-xl px-4 h-auto py-2.5 gap-2.5 ${className}`}
-    >
-      <a href={href}>
-        {icon}
-        {label}
-      </a>
-    </Button>
-  )
-}
-
 export function OAuthButtons({ action }: { action: 'login' | 'register' }) {
   const prefix = action === 'login' ? 'Continuer' : "S'inscrire"
   const navigate = useNavigate()
   const fetchMe = useAuthStore((s) => s.fetchMe)
 
-  const discordAuthorizeUrl = `${apiUrl}/auth/oauth/discord/authorize`
-
-  const handleDiscordClick = (e: React.MouseEvent) => {
-    e.preventDefault()
+  const openOAuthPopup = (provider: 'google' | 'discord') => {
+    const authorizeUrl = `${apiUrl}/auth/oauth/${provider}/authorize?mode=${action}`
     const popup = window.open(
-      discordAuthorizeUrl,
-      'discord-oauth',
+      authorizeUrl,
+      `${provider}-oauth`,
       'width=500,height=700,left=200,top=100',
     )
     if (!popup) {
       // Popup blocked (common on mobile) — fall back to full redirect
-      window.location.href = discordAuthorizeUrl
+      window.location.href = authorizeUrl
       return
     }
     const listener = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return
+      if (event.origin !== window.location.origin) {
+        return
+      }
       if ((event.data as { type?: string })?.type === 'oauth-success') {
         window.removeEventListener('message', listener)
         popup.close()
@@ -76,15 +50,17 @@ export function OAuthButtons({ action }: { action: 'login' | 'register' }) {
 
   return (
     <div className="flex flex-col gap-2.5">
-      <OAuthButton
-        href={`${apiUrl}/auth/oauth/google/authorize`}
-        icon={<GoogleIcon />}
-        label={`${prefix} avec Google`}
-        className="bg-white text-gray-900 border border-gray-200 hover:bg-gray-50"
-      />
       <Button
         variant="ghost"
-        onClick={handleDiscordClick}
+        onClick={() => openOAuthPopup('google')}
+        className="rounded-xl px-4 h-auto py-2.5 gap-2.5 bg-white text-gray-900 border border-gray-200 hover:bg-gray-50"
+      >
+        <GoogleIcon />
+        {`${prefix} avec Google`}
+      </Button>
+      <Button
+        variant="ghost"
+        onClick={() => openOAuthPopup('discord')}
         className="rounded-xl px-4 h-auto py-2.5 gap-2.5 bg-[#5865F2] text-white hover:bg-[#4752C4]"
       >
         <DiscordIcon />

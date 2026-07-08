@@ -2,23 +2,32 @@ import { randomBytes } from 'node:crypto'
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
-import { oauthCallbackQuerySchema } from '../../../schemas/auth.schemas'
+import {
+  oauthAuthorizeQuerySchema,
+  oauthCallbackQuerySchema,
+} from '../../../schemas/auth.schemas'
 import { setTokenCookies } from '../helpers'
 
 export const googleOAuthRouter: FastifyPluginCallbackZod = (fastify) => {
   const { oauthDomain, config } = fastify.iocContainer
 
-  fastify.get('/authorize', {}, (_request, reply) => {
-    const state = randomBytes(16).toString('hex')
-    reply.setCookie('oauth_state', state, {
-      httpOnly: true,
-      secure: true,
-      maxAge: 600,
-      path: '/',
-      sameSite: 'lax',
-    })
-    return reply.redirect(oauthDomain.getAuthorizationUrl('google', state))
-  })
+  fastify.get(
+    '/authorize',
+    { schema: { querystring: oauthAuthorizeQuerySchema } },
+    (request, reply) => {
+      const state = randomBytes(16).toString('hex')
+      reply.setCookie('oauth_state', state, {
+        httpOnly: true,
+        secure: true,
+        maxAge: 600,
+        path: '/',
+        sameSite: 'lax',
+      })
+      return reply.redirect(
+        oauthDomain.getAuthorizationUrl('google', state, request.query.mode),
+      )
+    },
+  )
 
   fastify.get(
     '/callback',
