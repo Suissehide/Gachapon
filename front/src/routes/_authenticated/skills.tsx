@@ -1,12 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router'
+import type { LucideIcon } from 'lucide-react'
 import * as Icons from 'lucide-react'
 import { RotateCcw, Sparkles, TriangleAlert, Zap } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 
 const iconMap = Icons as unknown as Record<string, LucideIcon>
+
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
-import { SkillTreeCanvas } from '../../components/skill-tree/index.ts'
+import { SkillTreeCanvas } from '../../components/skill-tree/player/SkillTreeCanvas.tsx'
 import { ConfirmPopup } from '../../components/team/ConfirmPopup.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import {
@@ -84,10 +85,7 @@ function SkillsPage() {
       </div>
 
       {/* Légende — same container as the header */}
-      <div
-        className="border-t"
-        style={{ borderColor: 'rgba(27,23,38,.08)' }}
-      >
+      <div className="border-t" style={{ borderColor: 'rgba(27,23,38,.08)' }}>
         <div className="mx-auto flex w-full max-w-5xl flex-wrap gap-x-6 gap-y-1 px-4 py-3">
           {state.branches.map((b) => {
             const Icon = iconMap[b.icon] ?? Icons.Zap

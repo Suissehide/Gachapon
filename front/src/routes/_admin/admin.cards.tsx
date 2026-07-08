@@ -3,14 +3,12 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { LayoutGrid, List, Plus, Search, X } from 'lucide-react'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import {
-  CardVariantPanel,
-  CreateCardSheet,
-  EditCardSheet,
-  SetSidebar,
-  useCardColumns,
-  useCardColumnsAll,
-} from '../../components/admin/cards'
+import { useCardColumns } from '../../components/admin/cards/CardColumns'
+import { useCardColumnsAll } from '../../components/admin/cards/CardColumnsAll'
+import { CardVariantPanel } from '../../components/admin/cards/CardVariantPanel'
+import { CreateCardSheet } from '../../components/admin/cards/CreateCardSheet'
+import { EditCardSheet } from '../../components/admin/cards/EditCardSheet'
+import { SetSidebar } from '../../components/admin/cards/SetSidebar'
 import { ReactTable } from '../../components/table/reactTable'
 import { Button } from '../../components/ui/button'
 import DropdownFilter from '../../components/ui/dropdownFilter'

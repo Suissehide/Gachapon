@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import { useAuthStore } from '../../stores/auth.store'
 import { useAuthDialogStore } from '../../stores/authDialog.store'
-import { AuthDialog } from '../auth'
+import { AuthDialog } from '../auth/authDialog'
 import { Button } from '../ui/button'
 import {
   CapsuleIcon,
@@ -124,7 +124,9 @@ export function LandingNavbar() {
                     >
                       <Icon className="h-4 w-4 mt-0.5 text-text-light group-hover:text-primary transition-colors shrink-0" />
                       <div>
-                        <p className="text-sm font-semibold text-foreground">{label}</p>
+                        <p className="text-sm font-semibold text-foreground">
+                          {label}
+                        </p>
                         <p className="text-xs text-text-light mt-0.5">{desc}</p>
                       </div>
                     </Link>
@@ -172,7 +174,9 @@ export function LandingNavbar() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => void logout().then(() => navigate({ to: '/' }))}
+                    onClick={() =>
+                      void logout().then(() => navigate({ to: '/' }))
+                    }
                     title="Déconnexion"
                     className="text-text-light hover:text-destructive hover:bg-destructive/10"
                   >
@@ -213,7 +217,11 @@ export function LandingNavbar() {
         </div>
       </header>
 
-      <MobileMenuShell id="landing-mobile-menu" open={menuOpen} onClose={closeMenu}>
+      <MobileMenuShell
+        id="landing-mobile-menu"
+        open={menuOpen}
+        onClose={closeMenu}
+      >
         {NAV_ITEMS.map((item, i) => (
           <MobileNavLink
             key={item.to}

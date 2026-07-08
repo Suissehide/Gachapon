@@ -14,12 +14,10 @@ import {
 } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 
-import {
-  AdminSkillTreeCanvas,
-  ConfigSheet,
-  CreateNodeSheet,
-  EditNodeSheet,
-} from '../../components/skill-tree/index.ts'
+import { AdminSkillTreeCanvas } from '../../components/skill-tree/admin/AdminSkillTreeCanvas.tsx'
+import { ConfigSheet } from '../../components/skill-tree/admin/ConfigSheet.tsx'
+import { CreateNodeSheet } from '../../components/skill-tree/admin/CreateNodeSheet.tsx'
+import { EditNodeSheet } from '../../components/skill-tree/admin/EditNodeSheet.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import {
   Sheet,

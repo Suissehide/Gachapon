@@ -4,7 +4,8 @@ import { Users } from 'lucide-react'
 import { ArcadeCard } from '../../../components/shared/ArcadeCard.tsx'
 import { PageHeader } from '../../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../../components/shared/PageShell.tsx'
-import { CreateTeamPopup, TeamCard } from '../../../components/team/index.ts'
+import { CreateTeamPopup } from '../../../components/team/CreateTeamPopup.tsx'
+import { TeamCard } from '../../../components/team/TeamCard.tsx'
 import { useLeaveTeam, useMyTeams } from '../../../queries/useTeams.ts'
 import { useAuthStore } from '../../../stores/auth.store.ts'
 
@@ -22,10 +23,7 @@ function TeamsPage() {
   return (
     <PageShell>
       <PageHeader
-        breadcrumbs={[
-          { label: 'Gachapon', to: '/play' },
-          { label: 'Équipes' },
-        ]}
+        breadcrumbs={[{ label: 'Gachapon', to: '/play' }, { label: 'Équipes' }]}
         title="Mes équipes"
         subtitle={`${teams.length} / 5 équipes`}
         right={teams.length < 5 ? <CreateTeamPopup /> : undefined}

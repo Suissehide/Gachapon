@@ -2,11 +2,9 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
 
-import {
-  CreateShopItemSheet,
-  EditShopItemSheet,
-  useShopColumns,
-} from '../../components/admin/shop'
+import { CreateShopItemSheet } from '../../components/admin/shop/CreateShopItemSheet'
+import { EditShopItemSheet } from '../../components/admin/shop/EditShopItemSheet'
+import { useShopColumns } from '../../components/admin/shop/ShopColumns'
 import { ReactTable } from '../../components/table/reactTable'
 import { Button } from '../../components/ui/button'
 import {

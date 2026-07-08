@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { ArrowLeft, Settings } from 'lucide-react'
 
-import { DangerZone } from '../../../components/team'
+import { DangerZone } from '../../../components/team/DangerZone.tsx'
 import { Button } from '../../../components/ui/button.tsx'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
 import {
@@ -30,7 +30,9 @@ function TeamSettingsPage() {
     },
     onSubmit: ({ value }) => {
       const name = value.name.trim()
-      if (!name) return
+      if (!name) {
+        return
+      }
       updateTeam({ name, description: value.description.trim() || undefined })
     },
   })
@@ -99,9 +101,7 @@ function TeamSettingsPage() {
               {(field) => <field.Input label="Nom de l'équipe" />}
             </form.AppField>
             <form.AppField name="description">
-              {(field) => (
-                <field.Input label="Description (optionnel)" />
-              )}
+              {(field) => <field.Input label="Description (optionnel)" />}
             </form.AppField>
             <div className="flex justify-end">
               <Button type="submit" disabled={isUpdating}>

@@ -17,10 +17,8 @@ import { ArcadeCard } from '../../../components/shared/ArcadeCard.tsx'
 import { PageHeader } from '../../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../../components/shared/PageShell.tsx'
 import { ReactTable } from '../../../components/table/reactTable.tsx'
-import {
-  ConfirmPopup,
-  InviteMemberPopup,
-} from '../../../components/team'
+import { ConfirmPopup } from '../../../components/team/ConfirmPopup.tsx'
+import { InviteMemberPopup } from '../../../components/team/InviteMemberPopup.tsx'
 import { Button } from '../../../components/ui/button.tsx'
 import { Input } from '../../../components/ui/input.tsx'
 import {

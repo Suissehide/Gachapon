@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-import type { AuthTab } from '../components/auth/index.ts'
+import type { AuthTab } from '../components/auth/authDialog.tsx'
 
 interface AuthDialogState {
   open: boolean
