@@ -5,6 +5,17 @@ const PASSIVE_LABELS: Record<string, string> = {
   RIPOSTE: 'Riposte',
   REBIRTH: 'Renaissance',
   EXECUTION: 'Exécution',
+  VIGOR: 'Vigueur',
+  HASTE: 'Célérité',
+  FORTIFY: 'Fortification',
+  EMPOWER: 'Puissance',
+  BULWARK: 'Bouclier',
+  FURY: 'Furie',
+  CRIT: 'Précision',
+  PIERCE: 'Perce-armure',
+  NEMESIS: 'Vengeance',
+  RAMPART: 'Rempart',
+  REGEN: 'Régénération',
 }
 
 type Props = {

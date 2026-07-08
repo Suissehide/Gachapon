@@ -116,6 +116,8 @@ interface BattleUnit {
   palier: number
   alive: boolean
   hasBeenRevived: boolean
+  /** Bouclier restant (BULWARK) : absorbe les dégâts avant les PV. */
+  shield: number
 }
 
 function toBattleUnit(u: SimulatorUnit, side: Side): BattleUnit {
@@ -125,21 +127,50 @@ function toBattleUnit(u: SimulatorUnit, side: Side): BattleUnit {
       : null
   const passiveValuePct =
     passiveKey === null ? 0 : PASSIVES[passiveKey].compute(u.palier).valuePct
+
+  // Passifs de statistiques appliqués une fois, en début de combat.
+  let maxHp = u.hp
+  let atk = u.atk
+  let def = u.def
+  let spd = u.spd
+  let shield = 0
+  const mult = 1 + passiveValuePct / 100
+  switch (passiveKey) {
+    case 'VIGOR':
+      maxHp = Math.round(maxHp * mult)
+      break
+    case 'HASTE':
+      spd = Math.round(spd * mult)
+      break
+    case 'FORTIFY':
+      def = Math.round(def * mult)
+      break
+    case 'EMPOWER':
+      atk = Math.round(atk * mult)
+      break
+    case 'BULWARK':
+      shield = Math.round(maxHp * (passiveValuePct / 100))
+      break
+    default:
+      break
+  }
+
   return {
     id: u.id,
     side,
-    maxHp: u.hp,
-    currentHp: u.hp,
-    baseAtk: u.atk,
-    effectiveAtk: u.atk,
-    def: u.def,
-    spd: u.spd,
+    maxHp,
+    currentHp: maxHp,
+    baseAtk: atk,
+    effectiveAtk: atk,
+    def,
+    spd,
     attackPattern: u.attackPattern,
     passiveKey,
     passiveValuePct,
     palier: u.palier,
     alive: true,
     hasBeenRevived: false,
+    shield,
   }
 }
 
@@ -214,7 +245,7 @@ function applyBanner(units: BattleUnit[], side: Side, log: LogEntry[]): void {
 
 function computeRawDamage(
   attackerEffectiveAtk: number,
-  target: BattleUnit,
+  targetDef: number,
   prng: () => number,
   patternMultiplier: number,
 ): number {
@@ -222,7 +253,7 @@ function computeRawDamage(
   return (
     attackerEffectiveAtk *
     patternMultiplier *
-    (100 / (100 + target.def)) *
+    (100 / (100 + Math.max(0, targetDef))) *
     variance
   )
 }
@@ -241,6 +272,8 @@ interface StrikeContext {
   prng: () => number
   log: LogEntry[]
   patternMultiplier: number
+  /** Multiplicateur d'ATQ propre à l'action (ex. NEMESIS selon les alliés tombés). */
+  attackerAtkMult: number
 }
 
 function resolveAttackOnTarget(
@@ -249,6 +282,7 @@ function resolveAttackOnTarget(
   prng: () => number,
   log: LogEntry[],
   patternMultiplier: number,
+  attackerAtkMult: number,
 ): DamageEntry {
   // AEGIS roll
   if (target.passiveKey === 'AEGIS') {
@@ -264,12 +298,32 @@ function resolveAttackOnTarget(
     }
   }
 
+  // PIERCE (attacker) — ignore une partie de la défense de la cible.
+  let effectiveDef = target.def
+  if (attacker.passiveKey === 'PIERCE') {
+    effectiveDef = target.def * (1 - attacker.passiveValuePct / 100)
+  }
+
   let raw = computeRawDamage(
-    attacker.effectiveAtk,
-    target,
+    attacker.effectiveAtk * attackerAtkMult,
+    effectiveDef,
     prng,
     patternMultiplier,
   )
+
+  // FURY (attacker) — bonus de dégâts quand l'attaquant est sous 50 % de PV.
+  if (
+    attacker.passiveKey === 'FURY' &&
+    attacker.currentHp < attacker.maxHp * 0.5
+  ) {
+    raw *= 1 + attacker.passiveValuePct / 100
+    log.push({
+      type: 'PASSIVE',
+      unitId: attacker.id,
+      passive: 'FURY',
+      payload: { bonusPct: attacker.passiveValuePct },
+    })
+  }
 
   // EXECUTION boost (attacker's passive — boosts damage when target low HP)
   if (
@@ -285,7 +339,43 @@ function resolveAttackOnTarget(
     })
   }
 
-  const final = Math.round(raw)
+  // CRIT (attacker) — chance d'infliger le double des dégâts.
+  if (attacker.passiveKey === 'CRIT' && prng() < attacker.passiveValuePct / 100) {
+    raw *= 2
+    log.push({
+      type: 'PASSIVE',
+      unitId: attacker.id,
+      passive: 'CRIT',
+      payload: { pct: attacker.passiveValuePct },
+    })
+  }
+
+  // RAMPART (target) — atténuation plate des dégâts subis.
+  if (target.passiveKey === 'RAMPART') {
+    raw *= 1 - target.passiveValuePct / 100
+    log.push({
+      type: 'PASSIVE',
+      unitId: target.id,
+      passive: 'RAMPART',
+      payload: { reducedPct: target.passiveValuePct },
+    })
+  }
+
+  let final = Math.round(raw)
+
+  // BULWARK (target) — le bouclier absorbe les dégâts avant les PV.
+  if (target.shield > 0 && final > 0) {
+    const absorbed = Math.min(target.shield, final)
+    target.shield -= absorbed
+    final -= absorbed
+    log.push({
+      type: 'PASSIVE',
+      unitId: target.id,
+      passive: 'BULWARK',
+      payload: { absorbed },
+    })
+  }
+
   target.currentHp = Math.max(0, target.currentHp - final)
 
   return { id: target.id, raw, final, dodged: false }
@@ -395,7 +485,8 @@ function processDeaths(targets: BattleUnit[], log: LogEntry[]): void {
 }
 
 function performStrike(ctx: StrikeContext): void {
-  const { attacker, targets, prng, log, patternMultiplier } = ctx
+  const { attacker, targets, prng, log, patternMultiplier, attackerAtkMult } =
+    ctx
   const damages: DamageEntry[] = []
   const targetIds = targets.map((t) => t.id)
   let totalNonDodgedDamage = 0
@@ -407,6 +498,7 @@ function performStrike(ctx: StrikeContext): void {
       prng,
       log,
       patternMultiplier,
+      attackerAtkMult,
     )
     damages.push(entry)
     if (!entry.dodged) {
@@ -425,6 +517,30 @@ function performStrike(ctx: StrikeContext): void {
 // Per-turn dispatch (one unit's action — may be multiple strikes for MONO_DOUBLE)
 // ---------------------------------------------------------------------------
 
+function computeAttackerAtkMult(
+  attacker: BattleUnit,
+  units: BattleUnit[],
+  log: LogEntry[],
+): number {
+  // NEMESIS — gagne de l'ATQ pour chaque allié tombé au combat.
+  if (attacker.passiveKey === 'NEMESIS') {
+    const fallenAllies = units.filter(
+      (u) => u.side === attacker.side && u.id !== attacker.id && !u.alive,
+    ).length
+    if (fallenAllies > 0) {
+      const bonusPct = attacker.passiveValuePct * fallenAllies
+      log.push({
+        type: 'PASSIVE',
+        unitId: attacker.id,
+        passive: 'NEMESIS',
+        payload: { bonusPct, fallenAllies },
+      })
+      return 1 + bonusPct / 100
+    }
+  }
+  return 1
+}
+
 function performUnitAction(
   attacker: BattleUnit,
   units: BattleUnit[],
@@ -436,6 +552,7 @@ function performUnitAction(
   }
   const pattern = attacker.attackPattern
   const patternMultiplier = patternDamageMultiplier(pattern)
+  const attackerAtkMult = computeAttackerAtkMult(attacker, units, log)
   const strikes = pattern === 'MONO_DOUBLE' ? 2 : 1
   for (let s = 0; s < strikes; s++) {
     if (!attacker.alive) {
@@ -449,7 +566,14 @@ function performUnitAction(
     if (targets.length === 0) {
       return
     }
-    performStrike({ attacker, targets, prng, log, patternMultiplier })
+    performStrike({
+      attacker,
+      targets,
+      prng,
+      log,
+      patternMultiplier,
+      attackerAtkMult,
+    })
   }
 }
 
@@ -503,6 +627,31 @@ function checkVictory(units: BattleUnit[]): Side | null {
   return null
 }
 
+function applyRegen(units: BattleUnit[], log: LogEntry[]): void {
+  for (const u of units) {
+    if (!u.alive || u.passiveKey !== 'REGEN') {
+      continue
+    }
+    if (u.currentHp >= u.maxHp) {
+      continue
+    }
+    const healed = Math.min(
+      Math.round((u.maxHp * u.passiveValuePct) / 100),
+      u.maxHp - u.currentHp,
+    )
+    if (healed <= 0) {
+      continue
+    }
+    u.currentHp += healed
+    log.push({
+      type: 'PASSIVE',
+      unitId: u.id,
+      passive: 'REGEN',
+      payload: { healed },
+    })
+  }
+}
+
 function runRound(
   units: BattleUnit[],
   prng: () => number,
@@ -522,6 +671,8 @@ function runRound(
       return winner
     }
   }
+  // Régénération de fin de tour (les combats non terminés uniquement).
+  applyRegen(units, log)
   log.push({ type: 'TURN_END', turn })
   return null
 }

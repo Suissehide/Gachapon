@@ -55,11 +55,11 @@ const CARDS = [
   { id: 'HUM-033', name: 'Bertrand', rarity: 'RARE', dropWeight: 27, baseHp: 155, baseAtk: 23, baseDef: 7, baseSpd: 135, passiveKey: null },  // Assassin
   { id: 'HUM-034', name: 'Akira Double-Lame', rarity: 'RARE', dropWeight: 27, baseHp: 164, baseAtk: 23, baseDef: 8, baseSpd: 131, passiveKey: null },  // Assassin
   // EPIC — dropWeight 25 chacune
-  { id: 'HUM-035', name: 'Archimage Cael', rarity: 'EPIC', dropWeight: 25, baseHp: 254, baseAtk: 44, baseDef: 11, baseSpd: 96, passiveKey: 'EXECUTION' },  // Mage
+  { id: 'HUM-035', name: 'Archimage Cael', rarity: 'EPIC', dropWeight: 25, baseHp: 254, baseAtk: 44, baseDef: 11, baseSpd: 96, passiveKey: 'PIERCE' },  // Mage
   { id: 'HUM-036', name: 'Lucien', rarity: 'EPIC', dropWeight: 25, baseHp: 408, baseAtk: 25, baseDef: 22, baseSpd: 88, passiveKey: 'AEGIS' },  // Tank
   // LEGENDARY — dropWeight 5 chacune
-  { id: 'HUM-037', name: 'Roi Aldric', rarity: 'LEGENDARY', dropWeight: 5, baseHp: 597, baseAtk: 51, baseDef: 30, baseSpd: 106, passiveKey: 'BANNER' },  // Combattant
-  { id: 'HUM-038', name: 'Reine Isaure', rarity: 'LEGENDARY', dropWeight: 5, baseHp: 584, baseAtk: 54, baseDef: 27, baseSpd: 107, passiveKey: 'REBIRTH' },  // Combattant
+  { id: 'HUM-037', name: 'Roi Aldric', rarity: 'LEGENDARY', dropWeight: 5, baseHp: 597, baseAtk: 51, baseDef: 30, baseSpd: 106, passiveKey: 'NEMESIS' },  // Combattant
+  { id: 'HUM-038', name: 'Reine Isaure', rarity: 'LEGENDARY', dropWeight: 5, baseHp: 584, baseAtk: 54, baseDef: 27, baseSpd: 107, passiveKey: 'BANNER' },  // Combattant
 ] as const
 
 export async function seedCards(

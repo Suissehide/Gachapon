@@ -7,6 +7,18 @@ export type PassiveKey =
   | 'RIPOSTE'
   | 'REBIRTH'
   | 'EXECUTION'
+  // --- Nouveaux passifs ---
+  | 'VIGOR'
+  | 'HASTE'
+  | 'FORTIFY'
+  | 'EMPOWER'
+  | 'BULWARK'
+  | 'FURY'
+  | 'CRIT'
+  | 'PIERCE'
+  | 'NEMESIS'
+  | 'RAMPART'
+  | 'REGEN'
 
 export interface PassiveEffect {
   /**
@@ -109,6 +121,150 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     },
     describe(palier) {
       return `+${20 + 5 * clampPalier(palier)} % de dégâts sous 30 % de PV cible`
+    },
+  },
+
+  // -------------------------------------------------------------------------
+  // Nouveaux passifs
+  // -------------------------------------------------------------------------
+
+  // Passifs de statistiques (appliqués en début de combat)
+  VIGOR: {
+    key: 'VIGOR',
+    rarityHint: 'EPIC',
+    label: 'Vigueur',
+    compute(palier) {
+      const p = clampPalier(palier)
+      return { valuePct: 8 + 2 * p }
+    },
+    describe(palier) {
+      return `+${8 + 2 * clampPalier(palier)} % de PV max`
+    },
+  },
+  HASTE: {
+    key: 'HASTE',
+    rarityHint: 'EPIC',
+    label: 'Célérité',
+    compute(palier) {
+      const p = clampPalier(palier)
+      return { valuePct: 6 + 2 * p }
+    },
+    describe(palier) {
+      return `+${6 + 2 * clampPalier(palier)} % de vitesse`
+    },
+  },
+  FORTIFY: {
+    key: 'FORTIFY',
+    rarityHint: 'EPIC',
+    label: 'Fortification',
+    compute(palier) {
+      const p = clampPalier(palier)
+      return { valuePct: 10 + 4 * p }
+    },
+    describe(palier) {
+      return `+${10 + 4 * clampPalier(palier)} % de défense`
+    },
+  },
+  EMPOWER: {
+    key: 'EMPOWER',
+    rarityHint: 'EPIC',
+    label: 'Puissance',
+    compute(palier) {
+      const p = clampPalier(palier)
+      return { valuePct: 6 + 2 * p }
+    },
+    describe(palier) {
+      return `+${6 + 2 * clampPalier(palier)} % d'ATQ`
+    },
+  },
+  BULWARK: {
+    key: 'BULWARK',
+    rarityHint: 'LEGENDARY',
+    label: 'Bouclier',
+    compute(palier) {
+      const p = clampPalier(palier)
+      return { valuePct: 12 + 3 * p }
+    },
+    describe(palier) {
+      return `Absorbe un bouclier de ${12 + 3 * clampPalier(palier)} % des PV max`
+    },
+  },
+
+  // Passifs offensifs (appliqués à l'attaque)
+  FURY: {
+    key: 'FURY',
+    rarityHint: 'EPIC',
+    label: 'Furie',
+    compute(palier) {
+      const p = clampPalier(palier)
+      return { valuePct: 12 + 4 * p }
+    },
+    describe(palier) {
+      return `+${12 + 4 * clampPalier(palier)} % d'ATQ sous 50 % de PV`
+    },
+  },
+  CRIT: {
+    key: 'CRIT',
+    rarityHint: 'EPIC',
+    label: 'Précision',
+    compute(palier) {
+      const p = clampPalier(palier)
+      return { valuePct: 8 + 3 * p }
+    },
+    describe(palier) {
+      return `${8 + 3 * clampPalier(palier)} % de chance d'infliger le double des dégâts`
+    },
+  },
+  PIERCE: {
+    key: 'PIERCE',
+    rarityHint: 'EPIC',
+    label: 'Perce-armure',
+    compute(palier) {
+      const p = clampPalier(palier)
+      return { valuePct: 15 + 5 * p }
+    },
+    describe(palier) {
+      return `Ignore ${15 + 5 * clampPalier(palier)} % de la défense de la cible`
+    },
+  },
+  NEMESIS: {
+    key: 'NEMESIS',
+    rarityHint: 'LEGENDARY',
+    label: 'Vengeance',
+    compute(palier) {
+      const p = clampPalier(palier)
+      return { valuePct: 6 + 2 * p }
+    },
+    describe(palier) {
+      return `+${6 + 2 * clampPalier(palier)} % d'ATQ par allié tombé`
+    },
+  },
+
+  // Passif défensif (appliqué à la défense)
+  RAMPART: {
+    key: 'RAMPART',
+    rarityHint: 'EPIC',
+    label: 'Rempart',
+    compute(palier) {
+      const p = clampPalier(palier)
+      return { valuePct: 6 + 2 * p }
+    },
+    describe(palier) {
+      return `Réduit de ${6 + 2 * clampPalier(palier)} % les dégâts subis`
+    },
+  },
+
+  // Passif de soin (appliqué en fin de tour)
+  REGEN: {
+    key: 'REGEN',
+    rarityHint: 'EPIC',
+    label: 'Régénération',
+    compute(palier) {
+      const p = clampPalier(palier)
+      return { valuePct: 4 + 2 * p }
+    },
+    describe(palier) {
+      return `Soigne ${4 + 2 * clampPalier(palier)} % des PV max en fin de tour`
     },
   },
 }

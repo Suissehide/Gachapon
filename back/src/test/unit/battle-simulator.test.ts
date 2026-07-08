@@ -517,6 +517,296 @@ describe('simulateBattle', () => {
     expect(result.won).toBe('A')
   })
 
+  // -----------------------------------------------------------------------
+  // New passives
+  // -----------------------------------------------------------------------
+
+  function firstAttackDamage(log: LogEntry[], attackerId: string): number {
+    const atk = log.find(
+      (e) => e.type === 'ATTACK' && e.attackerId === attackerId,
+    )
+    if (atk?.type === 'ATTACK') {
+      return atk.damages[0]?.final ?? 0
+    }
+    return 0
+  }
+
+  // VIGOR — +% max HP → survives more hits
+  it('VIGOR raises effective HP so the unit takes more hits to die', () => {
+    const seed = 'vigor-test'
+    const attacker = () => makeUnit('A0', { atk: 50, def: 0, spd: 999 })
+    const base = simulateBattle({
+      teamA: [attacker()],
+      teamB: [makeUnit('B0', { hp: 500, atk: 1, def: 0, spd: 1 })],
+      seed,
+      timeoutTurns: 100,
+    })
+    const vig = simulateBattle({
+      teamA: [attacker()],
+      teamB: [
+        makeUnit('B0', {
+          hp: 500,
+          atk: 1,
+          def: 0,
+          spd: 1,
+          passiveKey: 'VIGOR',
+          palier: 6,
+        }),
+      ],
+      seed,
+      timeoutTurns: 100,
+    })
+    expect(vig.turns).toBeGreaterThan(base.turns)
+  })
+
+  // HASTE — +% SPD → acts before a slightly faster enemy
+  it('HASTE lets a unit act before an enemy with marginally higher SPD', () => {
+    const withHaste = simulateBattle({
+      teamA: [makeUnit('A0', { spd: 100, passiveKey: 'HASTE', palier: 6 })],
+      teamB: [makeUnit('B0', { spd: 110 }), makeUnit('B1', { spd: 40 })],
+      seed: 'haste-test',
+      timeoutTurns: 1,
+    })
+    const first = withHaste.log.find((e) => e.type === 'ATTACK')
+    expect(first?.type).toBe('ATTACK')
+    if (first?.type === 'ATTACK') {
+      expect(first.attackerId).toBe('A0')
+    }
+  })
+
+  // FORTIFY — +% DEF → takes less damage
+  it('FORTIFY reduces incoming damage', () => {
+    const seed = 'fortify-test'
+    const base = simulateBattle({
+      teamA: [makeUnit('A0', { atk: 80, spd: 999 })],
+      teamB: [makeUnit('B0', { hp: 100000, def: 20, spd: 1 })],
+      seed,
+      timeoutTurns: 1,
+    })
+    const fort = simulateBattle({
+      teamA: [makeUnit('A0', { atk: 80, spd: 999 })],
+      teamB: [
+        makeUnit('B0', {
+          hp: 100000,
+          def: 20,
+          spd: 1,
+          passiveKey: 'FORTIFY',
+          palier: 6,
+        }),
+      ],
+      seed,
+      timeoutTurns: 1,
+    })
+    expect(firstAttackDamage(fort.log, 'A0')).toBeLessThan(
+      firstAttackDamage(base.log, 'A0'),
+    )
+  })
+
+  // EMPOWER — +% ATK → deals more damage
+  it('EMPOWER increases the attacker damage', () => {
+    const seed = 'empower-test'
+    const base = simulateBattle({
+      teamA: [makeUnit('A0', { atk: 50, spd: 999 })],
+      teamB: [makeUnit('B0', { hp: 100000, def: 10, spd: 1 })],
+      seed,
+      timeoutTurns: 1,
+    })
+    const emp = simulateBattle({
+      teamA: [
+        makeUnit('A0', { atk: 50, spd: 999, passiveKey: 'EMPOWER', palier: 6 }),
+      ],
+      teamB: [makeUnit('B0', { hp: 100000, def: 10, spd: 1 })],
+      seed,
+      timeoutTurns: 1,
+    })
+    expect(firstAttackDamage(emp.log, 'A0')).toBeGreaterThan(
+      firstAttackDamage(base.log, 'A0'),
+    )
+  })
+
+  // BULWARK — shield absorbs damage before HP
+  it('BULWARK absorbs early damage with a shield and emits a PASSIVE log', () => {
+    const withBulwark = simulateBattle({
+      teamA: [makeUnit('A0', { atk: 40, def: 0, spd: 999 })],
+      teamB: [
+        makeUnit('B0', {
+          hp: 200,
+          atk: 1,
+          def: 0,
+          spd: 1,
+          passiveKey: 'BULWARK',
+          palier: 6,
+        }),
+      ],
+      seed: 'bulwark-test',
+      timeoutTurns: 1,
+    })
+    const bulwarkLogs = withBulwark.log.filter(
+      (e) => e.type === 'PASSIVE' && e.passive === 'BULWARK',
+    )
+    expect(bulwarkLogs.length).toBeGreaterThanOrEqual(1)
+    if (bulwarkLogs[0]?.type === 'PASSIVE') {
+      expect(bulwarkLogs[0].payload.absorbed).toBeGreaterThan(0)
+    }
+  })
+
+  // FURY — bonus damage when the attacker is under 50% HP
+  it('FURY triggers when the attacker drops below 50% HP', () => {
+    const result = simulateBattle({
+      teamA: [
+        makeUnit('A0', {
+          hp: 1000,
+          atk: 30,
+          def: 0,
+          spd: 1,
+          passiveKey: 'FURY',
+          palier: 6,
+        }),
+      ],
+      teamB: [makeUnit('B0', { hp: 100000, atk: 600, def: 0, spd: 999 })],
+      seed: 'fury-test',
+      timeoutTurns: 2,
+    })
+    const furyLogs = result.log.filter(
+      (e) => e.type === 'PASSIVE' && e.passive === 'FURY',
+    )
+    expect(furyLogs.length).toBeGreaterThanOrEqual(1)
+  })
+
+  // CRIT — chance to deal double damage over many trials
+  it('CRIT produces double-damage procs over many trials', () => {
+    let crits = 0
+    for (let i = 0; i < 200; i++) {
+      const result = simulateBattle({
+        teamA: [
+          makeUnit('A0', {
+            atk: 30,
+            spd: 999,
+            passiveKey: 'CRIT',
+            palier: 6,
+          }),
+        ],
+        teamB: [makeUnit('B0', { hp: 100000, def: 0, spd: 1 })],
+        seed: `crit-${i}`,
+        timeoutTurns: 1,
+      })
+      crits += result.log.filter(
+        (e) => e.type === 'PASSIVE' && e.passive === 'CRIT',
+      ).length
+    }
+    const rate = crits / 200
+    // Palier 6 → 26 % expected; allow a wide window.
+    expect(rate).toBeGreaterThan(0.1)
+    expect(rate).toBeLessThan(0.45)
+  })
+
+  // PIERCE — ignores part of the target DEF → more damage
+  it('PIERCE increases damage against a high-DEF target', () => {
+    const seed = 'pierce-test'
+    const base = simulateBattle({
+      teamA: [makeUnit('A0', { atk: 50, spd: 999 })],
+      teamB: [makeUnit('B0', { hp: 100000, def: 100, spd: 1 })],
+      seed,
+      timeoutTurns: 1,
+    })
+    const pierce = simulateBattle({
+      teamA: [
+        makeUnit('A0', { atk: 50, spd: 999, passiveKey: 'PIERCE', palier: 6 }),
+      ],
+      teamB: [makeUnit('B0', { hp: 100000, def: 100, spd: 1 })],
+      seed,
+      timeoutTurns: 1,
+    })
+    expect(firstAttackDamage(pierce.log, 'A0')).toBeGreaterThan(
+      firstAttackDamage(base.log, 'A0'),
+    )
+  })
+
+  // NEMESIS — gains ATK for each fallen ally
+  it('NEMESIS emits a PASSIVE log once an ally has fallen', () => {
+    const result = simulateBattle({
+      teamA: [
+        makeUnit('A0', {
+          hp: 100000,
+          atk: 30,
+          def: 1000,
+          spd: 1,
+          passiveKey: 'NEMESIS',
+          palier: 6,
+        }),
+        makeUnit('A1', { hp: 1, atk: 1, def: 0, spd: 1 }),
+      ],
+      teamB: [makeUnit('B0', { hp: 100000, atk: 500, def: 0, spd: 999 })],
+      seed: 'nemesis-test',
+      timeoutTurns: 3,
+    })
+    const nemesisLogs = result.log.filter(
+      (e) => e.type === 'PASSIVE' && e.passive === 'NEMESIS',
+    )
+    expect(nemesisLogs.length).toBeGreaterThanOrEqual(1)
+    if (nemesisLogs[0]?.type === 'PASSIVE') {
+      expect(nemesisLogs[0].payload.fallenAllies).toBeGreaterThanOrEqual(1)
+    }
+  })
+
+  // RAMPART — flat mitigation of incoming damage
+  it('RAMPART reduces incoming damage and emits a PASSIVE log', () => {
+    const seed = 'rampart-test'
+    const base = simulateBattle({
+      teamA: [makeUnit('A0', { atk: 80, spd: 999 })],
+      teamB: [makeUnit('B0', { hp: 100000, def: 10, spd: 1 })],
+      seed,
+      timeoutTurns: 1,
+    })
+    const rampart = simulateBattle({
+      teamA: [makeUnit('A0', { atk: 80, spd: 999 })],
+      teamB: [
+        makeUnit('B0', {
+          hp: 100000,
+          def: 10,
+          spd: 1,
+          passiveKey: 'RAMPART',
+          palier: 6,
+        }),
+      ],
+      seed,
+      timeoutTurns: 1,
+    })
+    expect(firstAttackDamage(rampart.log, 'A0')).toBeLessThan(
+      firstAttackDamage(base.log, 'A0'),
+    )
+    const rampartLogs = rampart.log.filter(
+      (e) => e.type === 'PASSIVE' && e.passive === 'RAMPART',
+    )
+    expect(rampartLogs.length).toBeGreaterThanOrEqual(1)
+  })
+
+  // REGEN — heals a fraction of max HP at end of turn
+  it('REGEN heals the unit at the end of a turn', () => {
+    const result = simulateBattle({
+      teamA: [
+        makeUnit('A0', {
+          hp: 1000,
+          atk: 1,
+          def: 50,
+          spd: 100,
+          passiveKey: 'REGEN',
+          palier: 6,
+        }),
+      ],
+      teamB: [makeUnit('B0', { hp: 1000, atk: 30, def: 50, spd: 100 })],
+      seed: 'regen-test',
+      timeoutTurns: 10,
+    })
+    const regenLogs = result.log.filter(
+      (e) => e.type === 'PASSIVE' && e.passive === 'REGEN',
+    )
+    expect(regenLogs.length).toBeGreaterThanOrEqual(1)
+    if (regenLogs[0]?.type === 'PASSIVE') {
+      expect(regenLogs[0].payload.healed).toBeGreaterThan(0)
+    }
+  })
+
   // Sanity: every attack pattern produces an ATTACK with damages
   it.each<AttackPattern>([
     'BASIC',
