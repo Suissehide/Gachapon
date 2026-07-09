@@ -47,6 +47,8 @@ export const pullBatchResponseSchema = z.object({
       wasFreePull: z.boolean(),
       wasGoldenBall: z.boolean(),
       wasBoostGuarantee: z.boolean(),
+      // Succès débloqués par cette carte (affichés au flip de la carte).
+      unlockedAchievements: z.array(unlockedAchievementSchema).optional(),
     }),
   ),
   tokensRemaining: z.number().int(),

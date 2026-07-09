@@ -123,6 +123,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         wasFreePull: p.wasFreePull,
         wasGoldenBall: p.wasGoldenBall,
         wasBoostGuarantee: p.wasBoostGuarantee,
+        unlockedAchievements: p.unlockedAchievements,
       }))
 
       wsManager.notify(request.user.userID, {

@@ -759,9 +759,6 @@ export class GachaDomain implements GachaDomainInterface {
             cfg.xpPerPull * (1 + (cfg.upgrades.pullXpBonus ?? 0) / 100),
           )
           const totalXp = xpPerPullBonused * count
-          const pullUnlocks: Awaited<
-            ReturnType<AchievementsDomainInterface['track']>
-          > = []
           for (let i = 0; i < count; i++) {
             const isFreePull = preRolledFree[i] ?? false
             stepFreePulls.push(isFreePull)
@@ -779,7 +776,6 @@ export class GachaDomain implements GachaDomainInterface {
             stepResults.push(step)
             currentPity = step.nextPity
             totalDust += step.dustEarned
-            pullUnlocks.push(...step.unlockedAchievements)
           }
 
           // Persist boost decrements ONCE at batch end (bulk decrement per boost)
@@ -839,12 +835,12 @@ export class GachaDomain implements GachaDomainInterface {
               })
             }
           }
-          const dedupedAchievements = [
+          // Top-level = uniquement les succès NON liés à une carte (dépense de
+          // jetons, montée de niveau). Les succès PULL_COMPLETED sont rattachés
+          // à leur carte ci-dessous. Dédupliqués par clé par sécurité.
+          const batchAchievements = [
             ...new Map(
-              [...pullUnlocks, ...spentUnlocks, ...levelUnlocks].map((a) => [
-                a.key,
-                a,
-              ]),
+              [...spentUnlocks, ...levelUnlocks].map((a) => [a.key, a]),
             ).values(),
           ]
           return {
@@ -857,10 +853,11 @@ export class GachaDomain implements GachaDomainInterface {
               wasFreePull: stepFreePulls[idx] ?? false,
               wasGoldenBall: s.wasGoldenBall,
               wasBoostGuarantee: s.wasBoostGuarantee,
+              unlockedAchievements: s.unlockedAchievements,
             })),
             tokensRemaining: finalTokens,
             xpGained: totalXp,
-            unlockedAchievements: dedupedAchievements,
+            unlockedAchievements: batchAchievements,
           }
         },
         { isolationLevel: 'Serializable', maxWait: 5000, timeout: 10000 },

@@ -1,5 +1,6 @@
 import { Environment } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
+import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { Gem, Layers, SkipForward } from 'lucide-react'
 import {
@@ -29,6 +30,7 @@ import { apiUrl as API_URL } from '../../constants/config.constant.ts'
 import { TOAST_SEVERITY } from '../../constants/ui.constant.ts'
 import { useToast } from '../../hooks/useToast'
 import { wsClient } from '../../lib/ws'
+import { preloadImages } from '../../libs/preloadImages.ts'
 import { cn } from '../../libs/utils.ts'
 import {
   DEFAULT_ECONOMY,
@@ -36,7 +38,11 @@ import {
 } from '../../queries/useEconomyConfig.ts'
 import type { PullBatchResult } from '../../queries/useGacha'
 import { usePullBatch, useTokenBalance } from '../../queries/useGacha'
+import { useAchievementUnlockStore } from '../../stores/achievementUnlock.store.ts'
 import { useAuthStore } from '../../stores/auth.store'
+import { useLevelUpStore } from '../../stores/levelUp.store.ts'
+import { computeLevel } from '../../utils/level.ts'
+import { type LevelUpReward, levelUpReward } from '../../utils/levelRewards.ts'
 
 export const Route = createFileRoute('/_authenticated/play')({
   component: Play,
@@ -89,6 +95,12 @@ function Play() {
   const [phase, setPhase] = useState<Phase>('idle')
   const [result, setResult] = useState<PullBatchResult | null>(null)
   const pendingResult = useRef<PullBatchResult | null>(null)
+  // Level-up detected at pull time but celebrated only once every card is
+  // flipped (see receivePullResult / handleAllRevealed).
+  const pendingLevelUp = useRef<{
+    level: number
+    reward: LevelUpReward
+  } | null>(null)
   const machineRef = useRef<MachineStageHandle>(null)
   const [skipAnimations, setSkipAnimations] = useState<boolean>(() => {
     if (typeof window === 'undefined') {
@@ -113,7 +125,12 @@ function Play() {
   const { mutate: pullBatchMutation, isPending: pullPending } = usePullBatch()
   const setUser = useAuthStore((s) => s.setUser)
   const user = useAuthStore((s) => s.user)
+  const username = useAuthStore((s) => s.user?.username ?? '')
   const { toast } = useToast()
+  const qc = useQueryClient()
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  const triggerLevelUp = useLevelUpStore((s) => s.triggerLevelUp)
+  const enqueueAchievementUnlock = useAchievementUnlockStore((s) => s.enqueue)
 
   const tokens = balance?.tokens ?? 0
 
@@ -168,9 +185,60 @@ function Play() {
   const handleClose = useCallback(() => {
     setResult(null)
     pendingResult.current = null
+    pendingLevelUp.current = null
     setPhase('idle')
     phaseRef.current = 'idle'
   }, [])
+
+  // Called from all pull entry points the moment the network responds. Stashes
+  // the result, preloads the card art (so the flip paints instantly), and
+  // detects a level-up NOW — before the profile refetch lands — but holds the
+  // celebration back until every card is revealed (handleAllRevealed).
+  const receivePullResult = useCallback(
+    (r: PullBatchResult) => {
+      pendingResult.current = r
+      preloadImages(r.pulls.map((p) => p.card.imageUrl))
+      const cached = qc.getQueryData<{ xp?: number }>(['profile', username])
+      const oldXp = cached?.xp ?? 0
+      const oldLevel = computeLevel(oldXp, economy.xp)
+      const newLevel = computeLevel(oldXp + r.xpGained, economy.xp)
+      pendingLevelUp.current =
+        newLevel > oldLevel
+          ? {
+              level: newLevel,
+              reward: levelUpReward(oldLevel, newLevel, economy.xp),
+            }
+          : null
+    },
+    [qc, username, economy],
+  )
+
+  // A card was turned over → reveal the achievements THAT card unlocked, so a
+  // spoiler-y "Tirer une légendaire" only pops when its card is flipped.
+  const handleCardRevealed = useCallback(
+    (index: number) => {
+      const unlocks = pendingResult.current?.pulls[index]?.unlockedAchievements
+      if (unlocks?.length) {
+        enqueueAchievementUnlock(unlocks)
+      }
+    },
+    [enqueueAchievementUnlock],
+  )
+
+  // Whole reveal done → play the deferred level-up celebration and surface the
+  // batch-level achievements (token-spend / level-up milestones) not tied to a
+  // specific card.
+  const handleAllRevealed = useCallback(() => {
+    const lvl = pendingLevelUp.current
+    if (lvl) {
+      triggerLevelUp(lvl.level, lvl.reward)
+      pendingLevelUp.current = null
+    }
+    const batchUnlocks = pendingResult.current?.unlockedAchievements
+    if (batchUnlocks?.length) {
+      enqueueAchievementUnlock(batchUnlocks)
+    }
+  }, [triggerLevelUp, enqueueAchievementUnlock])
 
   useEffect(() => {
     localStorage.setItem(SKIP_KEY, String(skipAnimations))
@@ -209,9 +277,7 @@ function Play() {
       // the ball on the black backdrop.
       if (skipAnimationsRef.current) {
         pullBatchMutation(count, {
-          onSuccess: (r) => {
-            pendingResult.current = r
-          },
+          onSuccess: receivePullResult,
           onError: () => {
             pullAbortedRef.current = true
             setPhase('idle')
@@ -234,9 +300,7 @@ function Play() {
       setPhase('machine-anim')
       phaseRef.current = 'machine-anim'
       pullBatchMutation(count, {
-        onSuccess: (r) => {
-          pendingResult.current = r
-        },
+        onSuccess: receivePullResult,
         onError: () => {
           pullAbortedRef.current = true
           setPhase('idle')
@@ -262,7 +326,7 @@ function Play() {
       phaseRef.current = 'ball-split'
       // ball-split ends via onSplitDone callback → transition inside handleSplitDone
     },
-    [pullBatchMutation],
+    [pullBatchMutation, receivePullResult],
   )
 
   // From the reveal grid's bottom-bar "Nouveau tirage x1/x10": skip machine anim,
@@ -283,9 +347,7 @@ function Play() {
       // never involved — the "skip animations" toggle has nothing to skip here.
       // Always play the ball → flash → reveal sequence.
       pullBatchMutation(count, {
-        onSuccess: (r) => {
-          pendingResult.current = r
-        },
+        onSuccess: receivePullResult,
         onError: () => {
           pullAbortedRef.current = true
           setPhase('idle')
@@ -304,7 +366,7 @@ function Play() {
       phaseRef.current = 'ball-split'
       // Rest handled by onSplitDone → handleSplitDone → reveal-grid
     },
-    [pullBatchMutation],
+    [pullBatchMutation, receivePullResult],
   )
 
   const showBall = phase === 'ball-shake' || phase === 'ball-split'
@@ -323,7 +385,6 @@ function Play() {
   const canPullX10 = tokens >= 10 && phase === 'idle' && !pullPending
 
   const [ratesOpen, setRatesOpen] = useState(false)
-  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const pullCost = economy.gacha.pullTokenCost
 
   return (
@@ -544,6 +605,8 @@ function Play() {
               tokensRemaining={result.tokensRemaining}
               onClose={handleClose}
               onPullAgain={handlePullAgain}
+              onCardRevealed={handleCardRevealed}
+              onAllRevealed={handleAllRevealed}
             />
           )}
         </div>

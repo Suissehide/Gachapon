@@ -38,11 +38,16 @@ export function LevelUpOverlay() {
   const [fadingOut, setFadingOut] = useState(false)
 
   useEffect(() => {
-    if (level === null) { return }
+    if (level === null) {
+      return
+    }
 
     setFadingOut(false)
 
-    const fadeTimer = setTimeout(() => setFadingOut(true), DISPLAY_MS - FADE_OUT_MS)
+    const fadeTimer = setTimeout(
+      () => setFadingOut(true),
+      DISPLAY_MS - FADE_OUT_MS,
+    )
     const dismissTimer = setTimeout(() => {
       dismiss()
       setFadingOut(false)
@@ -54,14 +59,16 @@ export function LevelUpOverlay() {
     }
   }, [level, dismiss])
 
-  if (level === null) { return null }
+  if (level === null) {
+    return null
+  }
 
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Niveau supérieur"
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-[200] flex items-center justify-center"
       style={{
         animation: fadingOut
           ? `levelUpFadeOut ${FADE_OUT_MS}ms ease-out forwards`
@@ -82,7 +89,8 @@ export function LevelUpOverlay() {
         <div
           className="flex items-center justify-center rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 p-4 shadow-lg shadow-amber-500/30"
           style={{
-            animation: 'levelUpStarBounce 500ms cubic-bezier(0.34, 1.56, 0.64, 1) 100ms both',
+            animation:
+              'levelUpStarBounce 500ms cubic-bezier(0.34, 1.56, 0.64, 1) 100ms both',
           }}
         >
           <Star className="h-8 w-8 fill-white text-white" />
@@ -92,7 +100,8 @@ export function LevelUpOverlay() {
         <div
           className="flex flex-col items-center gap-1"
           style={{
-            animation: 'levelUpTextPop 600ms cubic-bezier(0.34, 1.56, 0.64, 1) 300ms both',
+            animation:
+              'levelUpTextPop 600ms cubic-bezier(0.34, 1.56, 0.64, 1) 300ms both',
           }}
         >
           <span className="text-xs font-bold uppercase tracking-[0.25em] text-amber-200">
@@ -108,14 +117,16 @@ export function LevelUpOverlay() {
           <div
             className="flex flex-col items-center gap-2"
             style={{
-              animation: 'levelUpTextPop 600ms cubic-bezier(0.34, 1.56, 0.64, 1) 450ms both',
+              animation:
+                'levelUpTextPop 600ms cubic-bezier(0.34, 1.56, 0.64, 1) 450ms both',
             }}
           >
             {/* Skill points */}
             <div className="flex items-center gap-1.5 rounded-full bg-amber-500/20 px-3 py-1 ring-1 ring-amber-400/40">
               <Zap className="h-3.5 w-3.5 text-amber-300" />
               <span className="text-sm font-bold text-amber-200">
-                +{reward.skillPoints} point{reward.skillPoints > 1 ? 's' : ''} de compétence
+                +{reward.skillPoints} point{reward.skillPoints > 1 ? 's' : ''}{' '}
+                de compétence
               </span>
             </div>
 
@@ -154,16 +165,18 @@ export function LevelUpOverlay() {
           <span
             key={p.id}
             className="absolute left-1/2 top-1/2 rounded-full"
-            style={{
-              width: p.size,
-              height: p.size,
-              backgroundColor: p.color,
-              marginLeft: -p.size / 2,
-              marginTop: -p.size / 2,
-              '--angle': `${p.angle}rad`,
-              '--dist': `${p.dist}px`,
-              animation: `levelUpParticle 800ms ease-out ${p.delay}ms both`,
-            } as React.CSSProperties}
+            style={
+              {
+                width: p.size,
+                height: p.size,
+                backgroundColor: p.color,
+                marginLeft: -p.size / 2,
+                marginTop: -p.size / 2,
+                '--angle': `${p.angle}rad`,
+                '--dist': `${p.dist}px`,
+                animation: `levelUpParticle 800ms ease-out ${p.delay}ms both`,
+              } as React.CSSProperties
+            }
           />
         ))}
       </div>

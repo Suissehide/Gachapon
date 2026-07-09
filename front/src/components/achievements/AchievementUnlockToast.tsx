@@ -49,6 +49,7 @@ export function AchievementUnlockToast() {
   }, [current, pending])
 
   // Auto-dismiss after DISPLAY_MS (resets on each fresh item).
+  // biome-ignore lint/correctness/useExhaustiveDependencies: startExit is intentionally omitted — including it would re-arm the timer on every render
   useEffect(() => {
     if (!pending || phase !== 'in') {
       return
@@ -81,7 +82,7 @@ export function AchievementUnlockToast() {
   const reward = pending.reward
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-6 z-50 flex justify-center px-4">
+    <div className="pointer-events-none fixed inset-x-0 top-6 z-[200] flex justify-center px-4">
       <button
         type="button"
         onClick={startExit}

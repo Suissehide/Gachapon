@@ -101,19 +101,18 @@ export const usePullBatch = () => {
   const setUser = useAuthStore((s) => s.setUser)
   const user = useAuthStore((s) => s.user)
   const username = useAuthStore((s) => s.user?.username ?? '')
-  const triggerLevelUp = useLevelUpStore((s) => s.triggerLevelUp)
-  const enqueueAchievementUnlock = useAchievementUnlockStore((s) => s.enqueue)
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   return useMutation({
     mutationFn: (count: 1 | 10) => GachaApi.pullBatch(count),
     onSuccess: (result) => {
+      // NB: les célébrations (montée de niveau + succès) ne sont PAS déclenchées
+      // ici. La page de tirage (play.tsx) les joue au bon moment — succès au
+      // flip de la carte concernée, niveau une fois toutes les cartes révélées —
+      // pour ne rien spoiler. Ce hook ne fait que synchroniser les données.
       const cached = qc.getQueryData<{ xp?: number }>(['profile', username])
       const oldXp = cached?.xp ?? 0
       const oldLevel = computeLevel(oldXp, economy.xp)
       const newLevel = computeLevel(oldXp + result.xpGained, economy.xp)
-      if (newLevel > oldLevel) {
-        triggerLevelUp(newLevel, levelUpReward(oldLevel, newLevel, economy.xp))
-      }
       if (user) {
         setUser({
           ...user,
@@ -128,13 +127,15 @@ export const usePullBatch = () => {
       // Keep active-boost pullsRemaining in sync on the shop page.
       qc.invalidateQueries({ queryKey: ['shop'] })
       qc.invalidateQueries({ queryKey: ['quests'] })
+      const hasUnlocks =
+        !!result.unlockedAchievements?.length ||
+        result.pulls.some((p) => p.unlockedAchievements?.length)
       // A pull can mint a new pending reward (achievement unlock or level
       // milestone pack) — refresh the topbar badge count from /auth/me.
-      if (result.unlockedAchievements?.length || newLevel > oldLevel) {
+      if (hasUnlocks || newLevel > oldLevel) {
         void useAuthStore.getState().fetchMe()
       }
-      if (result.unlockedAchievements?.length) {
-        enqueueAchievementUnlock(result.unlockedAchievements)
+      if (hasUnlocks) {
         qc.invalidateQueries({ queryKey: ['achievements'] })
       }
     },

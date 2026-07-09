@@ -66,6 +66,8 @@ export type PullBatchEntry = {
   wasFreePull: boolean
   wasGoldenBall: boolean
   wasBoostGuarantee: boolean
+  // Succès débloqués par cette carte — affichés au flip de la carte (anti-spoil).
+  unlockedAchievements?: UnlockedAchievement[]
 }
 
 export type PullBatchResult = {

@@ -34,6 +34,12 @@ type Props = {
   // which then show a plain "Fermer" button instead of the pull-again bar.
   tokensRemaining?: number
   onPullAgain?: (count: 1 | 10) => void
+  // Fired the first time a given card is flipped (index into `results`). Lets
+  // the caller reveal that card's achievements exactly when it's turned over.
+  onCardRevealed?: (index: number) => void
+  // Fired once every card has been flipped. Used to play deferred celebrations
+  // (level-up) after the whole reveal is done.
+  onAllRevealed?: () => void
 }
 
 type ActiveEffect = {
@@ -48,6 +54,8 @@ export function RevealGrid({
   tokensRemaining,
   onClose,
   onPullAgain,
+  onCardRevealed,
+  onAllRevealed,
 }: Props) {
   const showPullAgain = onPullAgain !== undefined
   const [flipped, setFlipped] = useState<Set<number>>(() => new Set())
@@ -96,7 +104,14 @@ export function RevealGrid({
         next.add(idx)
         return next
       })
-      if (alreadyFlipped || suppressEffect) {
+      if (alreadyFlipped) {
+        return
+      }
+      // First time this card is turned over → let the caller reveal its
+      // achievements (fires even on the "Tout révéler" cascade, which passes
+      // suppressEffect to skip only the fullscreen flash).
+      onCardRevealed?.(idx)
+      if (suppressEffect) {
         return
       }
       // Center the fullscreen effect on the card that was just flipped so the
@@ -112,7 +127,7 @@ export function RevealGrid({
         centerY,
       }))
     },
-    [results],
+    [results, onCardRevealed],
   )
 
   const revealAll = () => {
@@ -133,13 +148,19 @@ export function RevealGrid({
 
   const allRevealed = flipped.size === results.length
   const [showActions, setShowActions] = useState(false)
+  const allRevealedNotified = useRef(false)
   useEffect(() => {
     if (allRevealed) {
+      // Fire once — deferred celebrations (level-up) play after the full reveal.
+      if (!allRevealedNotified.current) {
+        allRevealedNotified.current = true
+        onAllRevealed?.()
+      }
       const timer = setTimeout(() => setShowActions(true), 700)
       return () => clearTimeout(timer)
     }
     setShowActions(false)
-  }, [allRevealed])
+  }, [allRevealed, onAllRevealed])
 
   const isSingle = results.length === 1
 

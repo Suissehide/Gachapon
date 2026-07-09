@@ -41,6 +41,11 @@ export type PullBatchResult = {
     wasFreePull: boolean
     wasGoldenBall: boolean
     wasBoostGuarantee: boolean
+    // Succès débloqués par CETTE carte (événement PULL_COMPLETED). Rattachés à
+    // la carte pour que le front puisse n'afficher la notif qu'au flip de la
+    // carte concernée (anti-spoil). Les succès non liés à une carte
+    // (TOKENS_SPENT, LEVEL_UP) restent au niveau `unlockedAchievements` global.
+    unlockedAchievements: UnlockedAchievement[]
   }>
   tokensRemaining: number
   xpGained: number
