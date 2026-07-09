@@ -79,18 +79,21 @@ export function useAttackStage(stageId: string, enabled: boolean) {
     }
   }, [query.isSuccess, query.data, stageId])
 
-  // Invalidate sibling caches once the battle settles (success or error). A
-  // ref guard so we only invalidate on the *transition* into settled.
-  const settledRef = useRef(false)
+  // Invalidate sibling caches every time a battle *fetch resolves* — success or
+  // error. We key off dataUpdatedAt/errorUpdatedAt (which bump once per completed
+  // fetch) rather than isSuccess/isError: `refetch()` (the "Rejouer"/"Réessayer"
+  // button) keeps status === 'success' throughout, so a transition-into-settled
+  // guard would fire only on the first battle and leave combat points, rewards
+  // and campaign progress stale on every retry. A result hydrated from
+  // sessionStorage has updatedAt === 0, so the page-refresh replay stays inert
+  // (no phantom re-invalidation for a battle that wasn't actually re-fought).
+  const lastSettledAtRef = useRef(0)
   useEffect(() => {
-    if (!query.isSuccess && !query.isError) {
-      settledRef.current = false
+    const settledAt = Math.max(query.dataUpdatedAt, query.errorUpdatedAt)
+    if (settledAt === 0 || settledAt === lastSettledAtRef.current) {
       return
     }
-    if (settledRef.current) {
-      return
-    }
-    settledRef.current = true
+    lastSettledAtRef.current = settledAt
     qc.invalidateQueries({ queryKey: CAMPAIGN_KEY })
     qc.invalidateQueries({ queryKey: ['combat', 'points'] })
     qc.invalidateQueries({ queryKey: ['equipment'] })
@@ -100,7 +103,7 @@ export function useAttackStage(stageId: string, enabled: boolean) {
     // from it), not in a query cache — refresh it so battle rewards show up
     // without a manual page reload.
     void useAuthStore.getState().fetchMe()
-  }, [query.isSuccess, query.isError, qc])
+  }, [query.dataUpdatedAt, query.errorUpdatedAt, qc])
 
   return query
 }

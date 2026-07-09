@@ -11,6 +11,7 @@ import {
   TrendingUp,
   Trophy,
 } from 'lucide-react'
+import { Dialog } from 'radix-ui'
 import { useEffect, useState } from 'react'
 
 import type { BattleResult } from '../../api/campaign.api.ts'
@@ -18,13 +19,15 @@ import { BattleScene } from '../../components/battle/BattleScene.tsx'
 import { ArcadeCard } from '../../components/shared/ArcadeCard.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { Button } from '../../components/ui/button.tsx'
-import { Dialog } from 'radix-ui'
-
 import { Popup, PopupContent } from '../../components/ui/popup.tsx'
 import { isApiError } from '../../libs/httpErrorHandler.ts'
 import { useAttackStage, useCampaign } from '../../queries/useCampaign.ts'
+import { useCombatPoints } from '../../queries/useCombatPoints.ts'
 import { useCombatTeam } from '../../queries/useCombatTeam.ts'
-import { DEFAULT_ECONOMY, useEconomyConfig } from '../../queries/useEconomyConfig.ts'
+import {
+  DEFAULT_ECONOMY,
+  useEconomyConfig,
+} from '../../queries/useEconomyConfig.ts'
 import { xpForLevel } from '../../utils/level.ts'
 
 // Chapter titles — kept in sync with campaign.tsx's CHAPTER_META. Extracting
@@ -51,13 +54,21 @@ function BattlePage() {
   const { stageId } = Route.useParams()
   const team = useCombatTeam()
   const campaign = useCampaign()
+  const combatPoints = useCombatPoints()
   const navigate = useNavigate()
+
+  // Gate the replay buttons on the live combat-point balance so the player
+  // can't fire a battle they can't pay for. While the balance is still loading
+  // we optimistically allow it (the server stays the source of truth and will
+  // reject with a 402 shown in the error popup).
+  const canReplay = combatPoints.data
+    ? combatPoints.data.combatPoints >= combatPoints.data.battleCost
+    : true
   const [sceneDone, setSceneDone] = useState(false)
   const [showResult, setShowResult] = useState(false)
   const [round, setRound] = useState({ current: 1, total: 1 })
 
-  const teamReady =
-    !team.isLoading && (team.data?.team.length ?? 0) >= 1
+  const teamReady = !team.isLoading && (team.data?.team.length ?? 0) >= 1
 
   // useQuery handles StrictMode's mount→unmount→mount dedup for us: both mounts
   // subscribe to the same in-flight request keyed by stageId so the server is
@@ -70,7 +81,9 @@ function BattlePage() {
   const stageInfo = (() => {
     for (const ch of campaign.data?.chapters ?? []) {
       const s = ch.stages.find((st) => st.id === stageId)
-      if (s) return { label: s.label, chapterTitle: chapterTitle(ch.chapter) }
+      if (s) {
+        return { label: s.label, chapterTitle: chapterTitle(ch.chapter) }
+      }
     }
     return null
   })()
@@ -131,26 +144,10 @@ function BattlePage() {
         </ArcadeCard>
       )}
 
-      {teamReady && attack.isError && (
-        <ArcadeCard className="text-center">
-          <AlertTriangle className="mx-auto mb-2 h-8 w-8 text-rose-500" />
-          <p className="font-bold text-rose-500">
-            {isApiError(attack.error) ? attack.error.title : 'Erreur'}
-          </p>
-          <p className="mt-1 text-sm text-text-light">
-            {isApiError(attack.error)
-              ? attack.error.message
-              : String(attack.error)}
-          </p>
-          <Link to="/campaign">
-            <Button variant="outline" className="mt-3">
-              Retour
-            </Button>
-          </Link>
-        </ArcadeCard>
-      )}
-
-      {teamReady && result && (
+      {/* A failed (re)fetch keeps the previous battle's data around, so gate the
+          scene + result overlay on !isError to avoid a stale result lingering
+          behind the error popup. */}
+      {teamReady && result && !attack.isError && (
         <BattleScene
           teamA={result.teamA}
           teamB={result.teamB}
@@ -160,8 +157,34 @@ function BattlePage() {
         />
       )}
 
+      {/* Battle error overlay — e.g. "Plus assez de points de combat" (402). */}
+      <Popup
+        open={teamReady && attack.isError}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleBackToCampaign()
+          }
+        }}
+      >
+        <PopupContent size="default" className="p-8 text-center">
+          <Dialog.Title className="sr-only">Erreur</Dialog.Title>
+          <AlertTriangle className="mx-auto mb-3 h-10 w-10 text-rose-500" />
+          <p className="font-display text-lg font-bold text-rose-500">
+            {isApiError(attack.error) ? attack.error.title : 'Erreur'}
+          </p>
+          <p className="mt-1.5 text-sm text-text-light">
+            {isApiError(attack.error)
+              ? attack.error.message
+              : String(attack.error)}
+          </p>
+          <Button onClick={handleBackToCampaign} className="mt-5">
+            Retour à la campagne
+          </Button>
+        </PopupContent>
+      </Popup>
+
       {/* Victory / Defeat overlay */}
-      {result && (
+      {result && !attack.isError && (
         <Popup open={showResult} onOpenChange={setShowResult}>
           <PopupContent
             size="lg"
@@ -174,11 +197,16 @@ function BattlePage() {
               <VictoryPanel
                 result={result}
                 stageInfo={stageInfo}
+                canReplay={canReplay}
                 onReplay={handleReplay}
                 onBack={handleBackToCampaign}
               />
             ) : (
-              <DefeatPanel onReplay={handleReplay} onBack={handleBackToCampaign} />
+              <DefeatPanel
+                canReplay={canReplay}
+                onReplay={handleReplay}
+                onBack={handleBackToCampaign}
+              />
             )}
           </PopupContent>
         </Popup>
@@ -195,9 +223,9 @@ function NoTeamNotice() {
         Aucune équipe déployée
       </p>
       <p className="mt-2 text-sm text-text-light">
-        Avant de combattre, sélectionne jusqu'à 3 cartes dans la page
-        Combat. Si tu n'as pas encore de cartes, fais d'abord quelques
-        tirages sur la page Jouer.
+        Avant de combattre, sélectionne jusqu'à 3 cartes dans la page Combat. Si
+        tu n'as pas encore de cartes, fais d'abord quelques tirages sur la page
+        Jouer.
       </p>
       <div className="mt-4 flex flex-wrap justify-center gap-2">
         <Link to="/campaign" search={{ editor: true }}>
@@ -220,11 +248,13 @@ function NoTeamNotice() {
 function VictoryPanel({
   result,
   stageInfo,
+  canReplay,
   onReplay,
   onBack,
 }: {
   result: BattleResult
   stageInfo: { label: string; chapterTitle: string } | null
+  canReplay: boolean
   onReplay: () => void
   onBack: () => void
 }) {
@@ -307,7 +337,12 @@ function VictoryPanel({
         {rewards && <XpBar rewards={rewards} />}
 
         <div className="mt-6 flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-center">
-          <Button variant="outline" onClick={onReplay} className="gap-2">
+          <Button
+            variant="outline"
+            onClick={onReplay}
+            disabled={!canReplay}
+            className="gap-2"
+          >
             <RotateCcw className="h-4 w-4" />
             Rejouer
           </Button>
@@ -316,15 +351,22 @@ function VictoryPanel({
             <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
+        {!canReplay && (
+          <p className="mt-2 font-mono text-[11px] font-bold uppercase tracking-widest text-text-light/70">
+            Plus assez de points de combat
+          </p>
+        )}
       </div>
     </div>
   )
 }
 
 function DefeatPanel({
+  canReplay,
   onReplay,
   onBack,
 }: {
+  canReplay: boolean
   onReplay: () => void
   onBack: () => void
 }) {
@@ -385,11 +427,16 @@ function DefeatPanel({
           <Button variant="outline" onClick={onBack}>
             Retour
           </Button>
-          <Button onClick={onReplay} className="gap-2">
+          <Button onClick={onReplay} disabled={!canReplay} className="gap-2">
             <RotateCcw className="h-4 w-4" />
             Réessayer
           </Button>
         </div>
+        {!canReplay && (
+          <p className="mt-2 font-mono text-[11px] font-bold uppercase tracking-widest text-text-light/70">
+            Plus assez de points de combat
+          </p>
+        )}
       </div>
     </div>
   )
@@ -449,7 +496,6 @@ function XpBar({
     pctBefore,
     Math.min(100, ((xpAfter - xpAtLevelStart) / xpInLevel) * 100),
   )
-  const pctGain = pctAfter - pctBefore
 
   return (
     <div className="mt-4 w-full rounded-2xl border border-border bg-white p-3">
