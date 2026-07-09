@@ -12,10 +12,16 @@ function AboutPage() {
     <div className="min-h-screen bg-background text-foreground">
       <Helmet>
         <title>À propos — Gachapon</title>
-        <meta name="description" content="Découvrez Gachapon, un jeu de cartes à collectionner en ligne inspiré des distributeurs automatiques de capsules japonaises. Tirage, rareté, équipes et API publique." />
+        <meta
+          name="description"
+          content="Découvrez Gachapon, un jeu de cartes à collectionner en ligne inspiré des distributeurs automatiques de capsules japonaises. Tirage, rareté, équipes et API publique."
+        />
         <link rel="canonical" href="https://gachapon.qwetle.fr/about" />
         <meta property="og:title" content="À propos — Gachapon" />
-        <meta property="og:description" content="Découvrez Gachapon, un jeu de cartes à collectionner en ligne inspiré des distributeurs automatiques de capsules japonaises." />
+        <meta
+          property="og:description"
+          content="Découvrez Gachapon, un jeu de cartes à collectionner en ligne inspiré des distributeurs automatiques de capsules japonaises."
+        />
         <meta property="og:url" content="https://gachapon.qwetle.fr/about" />
       </Helmet>
       <LandingNavbar />
@@ -39,9 +45,12 @@ function AboutPage() {
             <h2 className="text-lg font-black text-foreground mb-3">L'idée</h2>
             <p>
               L'idée est simple : chaque capsule que tu ouvres peut contenir une
-              carte commune ou un trésor légendaire. La chance est au
-              rendez-vous, mais la stratégie aussi — upgrades, équipes, et
-              échanges font toute la différence.
+              carte commune ou un trésor légendaire. Mais Gachapon ne s'arrête
+              pas à la collection — tu fais aussi{' '}
+              <strong className="text-foreground">combattre</strong> tes cartes
+              dans une campagne. La chance ouvre les capsules, la stratégie fait
+              le reste : compétences, montée en puissance des cartes et
+              composition d'équipe font toute la différence.
             </p>
           </section>
 
@@ -51,11 +60,14 @@ function AboutPage() {
             </h2>
             <ul className="space-y-2">
               {[
-                'Tirage de capsules avec système de rareté (Common → Legendary)',
-                'Collection personnelle avec variantes Holographiques et Brillantes',
-                "Système d'upgrades pour améliorer régénération, chance et récompenses",
+                'Tirage de capsules avec système de rareté (Common → Legendary) et variantes Brillantes & Holographiques',
+                'Campagne et combats au tour par tour avec ton équipe de cartes',
+                'Amélioration des cartes : niveau, ascension par palier et équipement',
+                'Arbre de compétences pour des bonus passifs permanents',
+                'Quêtes, succès, chaîne de connexion et récompenses à récupérer',
+                'Boutique du jour et Vœu pour cibler les cartes qui te manquent',
+                'Classements collectionneurs, équipes et combats',
                 'Équipes pour jouer avec tes amis',
-                'Boutique pour dépenser tes tokens',
                 'API publique pour créer ton propre bot Discord',
               ].map((f) => (
                 <li key={f} className="flex items-start gap-2.5">
@@ -66,30 +78,6 @@ function AboutPage() {
                 </li>
               ))}
             </ul>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-black text-foreground mb-3">
-              Stack technique
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {[
-                'Fastify',
-                'Prisma',
-                'PostgreSQL',
-                'React',
-                'TanStack Router',
-                'Tailwind CSS',
-                'TypeScript',
-              ].map((t) => (
-                <span
-                  key={t}
-                  className="text-xs font-mono px-2.5 py-1 rounded-md bg-muted border border-border/50 text-text-light"
-                >
-                  {t}
-                </span>
-              ))}
-            </div>
           </section>
 
           <section>

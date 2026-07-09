@@ -19,13 +19,13 @@ export const SEO_ROUTES = [
     path: '/about',
     title: 'À propos — Gachapon',
     description:
-      "Découvrez Gachapon, un jeu de cartes à collectionner en ligne inspiré des distributeurs automatiques de capsules japonaises. Tirages, rareté, équipes et API publique.",
+      "Découvrez Gachapon, un jeu de cartes à collectionner en ligne inspiré des distributeurs automatiques de capsules japonaises. Tirages, raretés, campagne & combats, compétences, équipes et API publique.",
   },
   {
     path: '/guide',
     title: 'Guide du joueur — Gachapon',
     description:
-      "Tout ce qu'il faut savoir pour débuter sur Gachapon : jetons, tirages, raretés, variantes, système de pitié, améliorations, équipes et API publique.",
+      "Tout ce qu'il faut savoir sur Gachapon : jetons, tirages, raretés, pitié, poussière, boutique du jour, arbre de compétences, campagne & combats, amélioration des cartes, quêtes, succès, classements et API publique.",
   },
   {
     path: '/changelog',
