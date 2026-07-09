@@ -37,6 +37,7 @@ import {
   Popup,
   PopupBody,
   PopupContent,
+  PopupFooter,
   PopupHeader,
   PopupTitle,
 } from '../../components/ui/popup.tsx'
@@ -229,7 +230,7 @@ function CampaignPage() {
         >
           <PopupContent
             size="lg"
-            className="border-0 bg-[#fbf8f3] p-0 shadow-[0_40px_90px_-30px_rgba(0,0,0,0.6)]"
+            className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden bg-[#fbf8f3] shadow-[0_40px_90px_-30px_rgba(0,0,0,0.6)]"
           >
             <PrepModal
               stage={prep}
@@ -811,104 +812,105 @@ function PrepModal({
   const cardPct = rp.farmCardChance * 100
 
   return (
-    <div className="flex max-h-[88vh] flex-col overflow-y-auto rounded-3xl">
+    <>
       {/* Header — just the eyebrow, no redundant title. */}
-      <div className="px-6 pb-4 pt-6 sm:px-7">
+      <PopupHeader>
         <p className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-text-light/60">
           {isBoss ? 'Combat de boss' : 'Préparation'} · Niveau {stage.label}
           {isBoss ? ` · ${meta.title}` : ''}
         </p>
-      </div>
+      </PopupHeader>
 
-      {/* Grid: opponents + rewards */}
-      <div className="grid grid-cols-1 gap-4 px-6 sm:grid-cols-[1.3fr_1fr] sm:px-7">
-        {/* Opponents block */}
-        <div className="rounded-2xl border border-[rgba(27,23,38,0.06)] bg-white p-4">
-          <div className="mb-3 flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-            <Swords className="h-3 w-3 text-amber-600" />
-            Adversaires · {isBoss ? 'Boss 1v3' : '1v3'}
+      {/* Scrollable body — header/footer stay pinned outside the scroll. */}
+      <PopupBody className="min-h-0 space-y-4 overflow-y-auto bg-transparent">
+        {/* Grid: opponents + rewards */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1.3fr_1fr]">
+          {/* Opponents block */}
+          <div className="rounded-2xl border border-[rgba(27,23,38,0.06)] bg-white p-4">
+            <div className="mb-3 flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
+              <Swords className="h-3 w-3 text-amber-600" />
+              Adversaires · {isBoss ? 'Boss 1v3' : '1v3'}
+            </div>
+            <div
+              className={`flex flex-wrap justify-center gap-2.5 ${
+                isBoss ? 'py-1' : ''
+              }`}
+            >
+              {Array.from({ length: isBoss ? 1 : 3 }).map((_, i) => (
+                <EnemyCard
+                  // biome-ignore lint/suspicious/noArrayIndexKey: static count
+                  key={i}
+                  boss={isBoss}
+                  power={Math.round(recPower / (isBoss ? 1 : 3))}
+                  width={isBoss ? 'w-[110px]' : 'w-[74px]'}
+                />
+              ))}
+            </div>
           </div>
-          <div
-            className={`flex flex-wrap justify-center gap-2.5 ${
-              isBoss ? 'py-1' : ''
-            }`}
-          >
-            {Array.from({ length: isBoss ? 1 : 3 }).map((_, i) => (
-              <EnemyCard
-                // biome-ignore lint/suspicious/noArrayIndexKey: static count
-                key={i}
-                boss={isBoss}
-                power={Math.round(recPower / (isBoss ? 1 : 3))}
-                width={isBoss ? 'w-[110px]' : 'w-[74px]'}
+
+          {/* Rewards + energy block */}
+          <div className="rounded-2xl border border-[rgba(27,23,38,0.06)] bg-white p-4">
+            <div className="mb-3 flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
+              <Sparkles className="h-3 w-3 text-amber-600" />
+              Récompenses
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <RewardPill
+                color="#f59e0b"
+                label={`${loot.gold} Or`}
+                icon={Coins}
               />
-            ))}
+              <RewardPill
+                color="#8b5cf6"
+                label={`${loot.dust} Poussière`}
+                icon={Sparkles}
+              />
+              <RewardPill color="#3b82f6" label={`${loot.xp} XP`} icon={Star} />
+              {equipPct > 0 && (
+                <RewardPill
+                  color="#ec4899"
+                  label={`Drop équipement ${fmtPct(rp.farmEquipmentChance)}%`}
+                  icon={Shield}
+                />
+              )}
+              {cardPct > 0 && (
+                <RewardPill
+                  color="#10b981"
+                  label={`Drop carte ${fmtPct(rp.farmCardChance)}%`}
+                  icon={Layers}
+                />
+              )}
+              {stage.status !== 'cleared' && rp.guaranteedEquipment && (
+                <RewardPill
+                  color="#ec4899"
+                  label="Équipement garanti"
+                  icon={Shield}
+                />
+              )}
+              {stage.status !== 'cleared' && rp.guaranteedCard && (
+                <RewardPill
+                  color="#10b981"
+                  label="Carte garantie"
+                  icon={Layers}
+                />
+              )}
+            </div>
+            <div className="mt-3.5 flex items-center gap-2 border-t border-[rgba(27,23,38,0.07)] pt-3.5">
+              <Zap className="h-4 w-4 text-violet-500" />
+              <span className="font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-text-light/60">
+                Coût
+              </span>
+              <b className="font-display text-xl font-extrabold text-text">
+                {battleCost}
+              </b>
+              <span className="ml-auto font-mono text-[11px] text-text-light/50">
+                énergie {currentPC}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Rewards + energy block */}
-        <div className="rounded-2xl border border-[rgba(27,23,38,0.06)] bg-white p-4">
-          <div className="mb-3 flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-            <Sparkles className="h-3 w-3 text-amber-600" />
-            Récompenses
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <RewardPill
-              color="#f59e0b"
-              label={`${loot.gold} Or`}
-              icon={Coins}
-            />
-            <RewardPill
-              color="#8b5cf6"
-              label={`${loot.dust} Poussière`}
-              icon={Sparkles}
-            />
-            <RewardPill color="#3b82f6" label={`${loot.xp} XP`} icon={Star} />
-            {equipPct > 0 && (
-              <RewardPill
-                color="#ec4899"
-                label={`Drop équipement ${fmtPct(rp.farmEquipmentChance)}%`}
-                icon={Shield}
-              />
-            )}
-            {cardPct > 0 && (
-              <RewardPill
-                color="#10b981"
-                label={`Drop carte ${fmtPct(rp.farmCardChance)}%`}
-                icon={Layers}
-              />
-            )}
-            {stage.status !== 'cleared' && rp.guaranteedEquipment && (
-              <RewardPill
-                color="#ec4899"
-                label="Équipement garanti"
-                icon={Shield}
-              />
-            )}
-            {stage.status !== 'cleared' && rp.guaranteedCard && (
-              <RewardPill
-                color="#10b981"
-                label="Carte garantie"
-                icon={Layers}
-              />
-            )}
-          </div>
-          <div className="mt-3.5 flex items-center gap-2 border-t border-[rgba(27,23,38,0.07)] pt-3.5">
-            <Zap className="h-4 w-4 text-violet-500" />
-            <span className="font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-text-light/60">
-              Coût
-            </span>
-            <b className="font-display text-xl font-extrabold text-text">
-              {battleCost}
-            </b>
-            <span className="ml-auto font-mono text-[11px] text-text-light/50">
-              énergie {currentPC}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Power verdict */}
-      <div className="px-6 sm:px-7">
+        {/* Power verdict */}
         <PowerVerdict
           mine={totalPower}
           rec={recPower}
@@ -916,53 +918,47 @@ function PrepModal({
           label={verdictLabel}
           ratio={ratio}
         />
-      </div>
 
-      {/* Team preview */}
-      <div className="px-6 sm:px-7">
-        <div className="mb-3 flex items-center justify-between">
-          <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-            Ton équipe
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              onClose()
-              onEditTeam()
-            }}
-            className="gap-1"
-          >
-            <Settings className="h-3 w-3" />
-            Modifier
-          </Button>
+        {/* Team preview */}
+        <div>
+          <div className="mb-3 flex items-center justify-between">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
+              Ton équipe
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                onClose()
+                onEditTeam()
+              }}
+              className="gap-1"
+            >
+              <Settings className="h-3 w-3" />
+              Modifier
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-2.5">
+            {team.length === 0 ? (
+              <p className="text-sm text-text-light">
+                Aucune carte. Configure ton équipe avant de combattre.
+              </p>
+            ) : (
+              team.map((u) => (
+                <MiniCard
+                  key={u.userCardId}
+                  unit={u}
+                  width="w-[80px]"
+                  showName={false}
+                />
+              ))
+            )}
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2.5">
-          {team.length === 0 ? (
-            <p className="text-sm text-text-light">
-              Aucune carte. Configure ton équipe avant de combattre.
-            </p>
-          ) : (
-            team.map((u) => (
-              <MiniCard
-                key={u.userCardId}
-                unit={u}
-                width="w-[80px]"
-                showName={false}
-              />
-            ))
-          )}
-        </div>
-      </div>
+      </PopupBody>
 
-      {/* Footer */}
-      <div
-        className="sticky bottom-0 mt-2 flex gap-3 px-6 pb-6 pt-5 sm:px-7"
-        style={{
-          background:
-            'linear-gradient(180deg, rgba(251,248,243,0), #fbf8f3 40%)',
-        }}
-      >
+      {/* Footer — pinned below the scroll area, always visible. */}
+      <PopupFooter className="justify-stretch gap-3">
         <Button variant="outline" size="lg" onClick={onClose}>
           Retour
         </Button>
@@ -996,8 +992,8 @@ function PrepModal({
             {battleCost}
           </span>
         </Button>
-      </div>
-    </div>
+      </PopupFooter>
+    </>
   )
 }
 
