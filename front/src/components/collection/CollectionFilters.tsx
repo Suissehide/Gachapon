@@ -9,10 +9,10 @@ export type GroupMode = 'rarity' | 'set'
 export type OwnershipFilter = 'all' | 'owned'
 
 const RARITY_HEX: Record<string, string> = {
-  COMMON: '#22c55e',
-  UNCOMMON: '#3b82f6',
-  RARE: '#8b5cf6',
-  EPIC: '#ec4899',
+  COMMON: '#6b7280',
+  UNCOMMON: '#22c55e',
+  RARE: '#3b82f6',
+  EPIC: '#8b5cf6',
   LEGENDARY: '#f59e0b',
 }
 

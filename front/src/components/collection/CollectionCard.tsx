@@ -17,8 +17,8 @@ export const RARITY_ORDER = [
 export const RARITY_COLORS: Record<string, string> = {
   COMMON: 'border-border text-text-light',
   UNCOMMON: 'border-green-500/40 text-green-400',
-  RARE: 'border-accent/40 text-accent',
-  EPIC: 'border-secondary/40 text-secondary',
+  RARE: 'border-blue-500/40 text-blue-400',
+  EPIC: 'border-violet-500/40 text-violet-400',
   LEGENDARY: 'border-primary/50 text-primary',
 }
 
@@ -33,8 +33,8 @@ export const RARITY_LABELS: Record<string, string> = {
 export const RARITY_CHIP_ACTIVE: Record<string, string> = {
   COMMON: 'border-border text-text-light bg-border/20',
   UNCOMMON: 'border-green-500 text-green-400 bg-green-500/10',
-  RARE: 'border-accent text-accent bg-accent/10',
-  EPIC: 'border-secondary text-secondary bg-secondary/10',
+  RARE: 'border-blue-500 text-blue-400 bg-blue-500/10',
+  EPIC: 'border-violet-500 text-violet-400 bg-violet-500/10',
   LEGENDARY: 'border-primary text-primary bg-primary/10',
 }
 

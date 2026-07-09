@@ -1,8 +1,17 @@
-import { Check, Copy, ExternalLink, FileImage, Pencil, Plus, Trash2, X } from 'lucide-react'
+import {
+  Check,
+  Copy,
+  ExternalLink,
+  FileImage,
+  Pencil,
+  Plus,
+  Trash2,
+  X,
+} from 'lucide-react'
 import { useState } from 'react'
-import { isApiError } from '../../../libs/httpErrorHandler'
-import { useToast } from '../../../hooks/useToast'
 
+import { useToast } from '../../../hooks/useToast'
+import { isApiError } from '../../../libs/httpErrorHandler'
 import type { MediaItem } from '../../../queries/useAdminMedia'
 import { Button } from '../../ui/button'
 import { Card } from '../../ui/card'
@@ -20,11 +29,12 @@ interface MediaDetailPanelProps {
 const RARITY_COLORS: Record<string, string> = {
   COMMON: 'text-text-light',
   UNCOMMON: 'text-green-400',
-  RARE: 'text-accent',
-  EPIC: 'text-secondary',
+  RARE: 'text-blue-400',
+  EPIC: 'text-violet-400',
   LEGENDARY: 'text-primary',
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: composant existant, hors périmètre du changement de couleurs
 export function MediaDetailPanel({
   item,
   onDelete,
@@ -73,7 +83,8 @@ export function MediaDetailPanel({
         setIsEditing(false)
         toast({
           title: 'Erreur',
-          message: err instanceof Error ? err.message : 'Erreur lors du renommage',
+          message:
+            err instanceof Error ? err.message : 'Erreur lors du renommage',
           severity: 'error',
         })
       }
@@ -158,8 +169,12 @@ export function MediaDetailPanel({
                   setRenameError(null)
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSubmitRename()
-                  if (e.key === 'Escape') handleCancelEdit()
+                  if (e.key === 'Enter') {
+                    handleSubmitRename()
+                  }
+                  if (e.key === 'Escape') {
+                    handleCancelEdit()
+                  }
                 }}
                 disabled={isRenaming}
                 className="h-7 text-sm"
@@ -188,7 +203,10 @@ export function MediaDetailPanel({
           </div>
         ) : (
           <div className="group flex items-center gap-1.5">
-            <p className="truncate text-sm font-semibold text-text" title={filename}>
+            <p
+              className="truncate text-sm font-semibold text-text"
+              title={filename}
+            >
               {filename}
             </p>
             <button

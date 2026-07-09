@@ -14,19 +14,19 @@ export type RarityTone = {
 
 export const RARITY_TONES: Record<RarityKey, RarityTone> = {
   COMMON: {
-    hex: '#22c55e',
-    light: '#86efac',
-    dark: '#14532d',
+    hex: '#6b7280',
+    light: '#d1d5db',
+    dark: '#374151',
     label: 'Commun',
   },
   UNCOMMON: {
-    hex: '#3b82f6',
-    light: '#93c5fd',
-    dark: '#1e3a8a',
+    hex: '#22c55e',
+    light: '#86efac',
+    dark: '#14532d',
     label: 'Peu commun',
   },
-  RARE: { hex: '#8b5cf6', light: '#c4b5fd', dark: '#4c1d95', label: 'Rare' },
-  EPIC: { hex: '#ec4899', light: '#f9a8d4', dark: '#831843', label: 'Épique' },
+  RARE: { hex: '#3b82f6', light: '#93c5fd', dark: '#1e3a8a', label: 'Rare' },
+  EPIC: { hex: '#8b5cf6', light: '#c4b5fd', dark: '#4c1d95', label: 'Épique' },
   LEGENDARY: {
     hex: '#f59e0b',
     light: '#fcd34d',
