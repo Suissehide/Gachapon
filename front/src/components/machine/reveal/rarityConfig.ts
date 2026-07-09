@@ -88,8 +88,9 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
     triFlash: false,
     scanlineColor: null,
 
-    // Signature « étincelles » : un seul fin anneau rapide, les particules mènent.
-    waves: [{ col: 'rgb(34,197,94)', w: 2.5, spd: 7, delay: 0, ghost: false }],
+    // Signature « étincelles » : AUCUN anneau de choc — juste une nuée de
+    // particules vertes qui monte. C'est l'absence d'onde qui la distingue.
+    waves: [],
     particleSet: 'uncommon',
     inkBlots: false,
     inkColors: [],
@@ -112,13 +113,14 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
     triFlash: false,
     scanlineColor: null,
 
-    // Signature « zoom » : les lignes de vitesse mènent, un seul anneau net.
-    waves: [{ col: 'rgb(147,197,253)', w: 4, spd: 8, delay: 0, ghost: false }],
+    // Signature « zoom » : PAS d'anneau — uniquement des lignes de vitesse
+    // radiales qui emplissent l'écran. Motion pure, aucune onde.
+    waves: [],
     particleSet: 'rare',
     inkBlots: false,
     inkColors: [],
     speedLines: true,
-    speedLineCount: 26,
+    speedLineCount: 32,
     halftone: false,
     chromaticAberration: false,
     chromaticDuration: 0,
@@ -136,24 +138,29 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
     triFlash: false,
     scanlineColor: null,
 
-    // Signature « glitch instable » : encre liquide + aberration chromatique
-    // mènent ; anneaux réduits, PAS de lignes de vitesse (exclusives à Rare).
+    // Signature « glitch » : anneaux dédoublés RVB (ghost) + forte aberration
+    // chromatique = réalité qui se brise. Pas d'encre (trop molle), pas de
+    // lignes de vitesse (exclusives à Rare).
+    // Fast rapid-fire ghost rings that sweep PAST the card (visible, not hidden
+    // behind it) + heavy chromatic split = violent purple glitch.
     waves: [
-      { col: 'rgb(76,29,149)', w: 5, spd: 8, delay: 0, ghost: true },
-      { col: 'rgb(196,181,253)', w: 3, spd: 6, delay: 140, ghost: true },
+      { col: 'rgb(196,181,253)', w: 8, spd: 17, delay: 0, ghost: true },
+      { col: 'rgb(139,92,246)', w: 6, spd: 15, delay: 55, ghost: true },
+      { col: 'rgb(124,58,237)', w: 4.5, spd: 13, delay: 120, ghost: true },
+      { col: 'rgb(167,139,250)', w: 3, spd: 11, delay: 200, ghost: true },
     ],
     particleSet: 'epic',
-    inkBlots: true,
-    inkColors: ['#8b5cf6', '#c4b5fd', '#ddd6fe', '#4c1d95', '#7c3aed'],
+    inkBlots: false,
+    inkColors: [],
     speedLines: false,
     speedLineCount: 0,
     halftone: false,
     chromaticAberration: true,
-    chromaticDuration: 680,
+    chromaticDuration: 900,
   },
 
   LEGENDARY: {
-    impactText: 'LÉGENDAIRE!',
+    impactText: 'INCROYABLE!',
     impactSize: '72px',
     impactColor: '#f59e0b',
     impactStroke: '#78350f',

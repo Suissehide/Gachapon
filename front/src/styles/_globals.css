@@ -410,6 +410,16 @@ h6 {
   }
 }
 
+/* Variant impact word — sweeps its gradient (gold shimmer / prismatic flow). */
+@keyframes impactSweep {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 200% 50%;
+  }
+}
+
 /* Golden shimmer for the brilliant aura — molten-gold brightness pulse. */
 @keyframes cardAuraShimmer {
   0%,

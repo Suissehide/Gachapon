@@ -16,6 +16,7 @@ import { Route as PendingRouteImport } from './routes/pending'
 import { Route as GuideRouteImport } from './routes/guide'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DiscordRouteImport } from './routes/discord'
+import { Route as DevRevealRouteImport } from './routes/dev-reveal'
 import { Route as ChangelogRouteImport } from './routes/changelog'
 import { Route as ApiDocsRouteImport } from './routes/api-docs'
 import { Route as AboutRouteImport } from './routes/about'
@@ -87,6 +88,11 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
 const DiscordRoute = DiscordRouteImport.update({
   id: '/discord',
   path: '/discord',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DevRevealRoute = DevRevealRouteImport.update({
+  id: '/dev-reveal',
+  path: '/dev-reveal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChangelogRoute = ChangelogRouteImport.update({
@@ -284,6 +290,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/api-docs': typeof ApiDocsRoute
   '/changelog': typeof ChangelogRoute
+  '/dev-reveal': typeof DevRevealRoute
   '/discord': typeof DiscordRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/guide': typeof GuideRoute
@@ -328,6 +335,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/api-docs': typeof ApiDocsRoute
   '/changelog': typeof ChangelogRoute
+  '/dev-reveal': typeof DevRevealRoute
   '/discord': typeof DiscordRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/guide': typeof GuideRoute
@@ -374,6 +382,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/api-docs': typeof ApiDocsRoute
   '/changelog': typeof ChangelogRoute
+  '/dev-reveal': typeof DevRevealRoute
   '/discord': typeof DiscordRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/guide': typeof GuideRoute
@@ -420,6 +429,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/api-docs'
     | '/changelog'
+    | '/dev-reveal'
     | '/discord'
     | '/forgot-password'
     | '/guide'
@@ -464,6 +474,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/api-docs'
     | '/changelog'
+    | '/dev-reveal'
     | '/discord'
     | '/forgot-password'
     | '/guide'
@@ -509,6 +520,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/api-docs'
     | '/changelog'
+    | '/dev-reveal'
     | '/discord'
     | '/forgot-password'
     | '/guide'
@@ -556,6 +568,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   ApiDocsRoute: typeof ApiDocsRoute
   ChangelogRoute: typeof ChangelogRoute
+  DevRevealRoute: typeof DevRevealRoute
   DiscordRoute: typeof DiscordRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   GuideRoute: typeof GuideRoute
@@ -616,6 +629,13 @@ declare module '@tanstack/react-router' {
       path: '/discord'
       fullPath: '/discord'
       preLoaderRoute: typeof DiscordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dev-reveal': {
+      id: '/dev-reveal'
+      path: '/dev-reveal'
+      fullPath: '/dev-reveal'
+      preLoaderRoute: typeof DevRevealRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/changelog': {
@@ -974,6 +994,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   ApiDocsRoute: ApiDocsRoute,
   ChangelogRoute: ChangelogRoute,
+  DevRevealRoute: DevRevealRoute,
   DiscordRoute: DiscordRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   GuideRoute: GuideRoute,

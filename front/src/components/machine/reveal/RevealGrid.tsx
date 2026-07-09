@@ -45,6 +45,7 @@ type Props = {
 
 type ActiveEffect = {
   rarity: CardRarity
+  variant: string | null
   seq: number
   centerX: number
   centerY: number
@@ -124,6 +125,7 @@ export function RevealGrid({
       const centerY = rect ? rect.top + rect.height / 2 : window.innerHeight / 2
       setActiveEffect((prev) => ({
         rarity: results[idx].card.rarity as CardRarity,
+        variant: results[idx].card.variant,
         seq: (prev?.seq ?? 0) + 1,
         centerX,
         centerY,
@@ -179,6 +181,7 @@ export function RevealGrid({
         <FullscreenRarityEffect
           key={activeEffect.seq}
           rarity={activeEffect.rarity}
+          variant={activeEffect.variant}
           centerX={activeEffect.centerX}
           centerY={activeEffect.centerY}
         />
@@ -236,10 +239,17 @@ export function RevealGrid({
       {showActions && (
         <div
           className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-4 pt-3 animate-[fadeInUp_400ms_ease-out_forwards]"
-          style={{
-            background:
-              'linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,0.75) 45%)',
-          }}
+          // The full-width scrim only exists to keep the wide "pull again" bar
+          // legible over the card grid. For the lone "Génial" pill it just reads
+          // as a stray dark band, and the modal backdrop already darkens things.
+          style={
+            showPullAgain
+              ? {
+                  background:
+                    'linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,0.75) 45%)',
+                }
+              : undefined
+          }
         >
           <div className="pointer-events-auto inline-flex items-center gap-4 rounded-[20px] bg-[#1b1726] px-5 py-3 text-white shadow-[0_18px_44px_-16px_rgba(0,0,0,0.7)]">
             {showPullAgain ? (
@@ -314,12 +324,100 @@ export function RevealGrid({
 // clicked card's viewport center (as a 1×1 point) so useRevealEffect emits its
 // waves/particles/etc. from that spot instead of from the screen middle.
 
+type ImpactKind = 'rarity' | 'brilliant' | 'holo'
+
+// Variant cards override the rarity word with a shimmering gradient word.
+const IMPACT_VARIANT: Record<
+  'brilliant' | 'holo',
+  { text: string; gradient: string; stroke: string; dur: string }
+> = {
+  brilliant: {
+    text: 'SCINTILLANT!',
+    gradient:
+      'linear-gradient(120deg, #b45309, #fde68a, #f59e0b, #fffbe6, #f59e0b, #b45309)',
+    stroke: '#78350f',
+    dur: '1.1s',
+  },
+  holo: {
+    text: 'CHROMATIQUE!',
+    gradient:
+      'linear-gradient(120deg, #22d3ee, #a855f7, #f59e0b, #ec4899, #38bdf8, #22d3ee)',
+    stroke: '#4c1d95',
+    dur: '1.6s',
+  },
+}
+
+function ImpactWord({
+  text,
+  kind,
+  tone,
+  centerX,
+  centerY,
+}: {
+  text: string
+  kind: ImpactKind
+  tone: ReturnType<typeof getRarityTone>
+  centerX: number
+  centerY: number
+}) {
+  const base: CSSProperties = {
+    position: 'fixed',
+    left: centerX,
+    top: centerY - 160,
+    transform: 'translateX(-50%)',
+    fontFamily: 'Impact, Arial Black, sans-serif',
+    fontSize: '4.5rem',
+    letterSpacing: '0.04em',
+    textTransform: 'uppercase',
+    pointerEvents: 'none',
+    userSelect: 'none',
+    whiteSpace: 'nowrap',
+    zIndex: 40,
+  }
+  if (kind === 'rarity') {
+    return (
+      <div
+        style={{
+          ...base,
+          color: tone.hex,
+          WebkitTextStroke: `3px ${tone.dark}`,
+          textShadow: `3px 3px 0 ${tone.dark}, 6px 6px 0 ${tone.dark}, 9px 9px 0 rgba(0,0,0,0.35), -1px -1px 0 ${tone.dark}`,
+        }}
+      >
+        {text}
+      </div>
+    )
+  }
+  const v = IMPACT_VARIANT[kind]
+  return (
+    <div
+      style={{
+        ...base,
+        backgroundImage: v.gradient,
+        backgroundSize: '200% 100%',
+        WebkitBackgroundClip: 'text',
+        backgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+        color: 'transparent',
+        WebkitTextStroke: `3px ${v.stroke}`,
+        textShadow: '4px 4px 0 rgba(0,0,0,0.4)',
+        filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.5))',
+        animation: `impactSweep ${v.dur} linear infinite`,
+      }}
+    >
+      {text}
+    </div>
+  )
+}
+
 function FullscreenRarityEffect({
   rarity,
+  variant,
   centerX,
   centerY,
 }: {
   rarity: CardRarity
+  variant: string | null
   centerX: number
   centerY: number
 }) {
@@ -327,6 +425,15 @@ function FullscreenRarityEffect({
     useRevealEffect(rarity)
   const config = RARITY_CONFIG[rarity]
   const tone = getRarityTone(rarity)
+
+  const kind: ImpactKind =
+    variant === 'BRILLIANT'
+      ? 'brilliant'
+      : variant === 'HOLOGRAPHIC'
+        ? 'holo'
+        : 'rarity'
+  const impactText =
+    kind === 'rarity' ? config.impactText : IMPACT_VARIANT[kind].text
 
   useEffect(() => {
     triggerReveal()
@@ -348,33 +455,14 @@ function FullscreenRarityEffect({
         }}
       />
       <RevealCanvases refs={canvasRefs} />
-      {impactVisible && config.impactText && (
-        <div
-          style={{
-            position: 'fixed',
-            left: centerX,
-            top: centerY - 160,
-            transform: 'translateX(-50%)',
-            fontFamily: 'Impact, Arial Black, sans-serif',
-            fontSize: '4.5rem',
-            color: tone.hex,
-            WebkitTextStroke: `3px ${tone.dark}`,
-            textShadow: [
-              `3px 3px 0 ${tone.dark}`,
-              `6px 6px 0 ${tone.dark}`,
-              `9px 9px 0 rgba(0,0,0,0.35)`,
-              `-1px -1px 0 ${tone.dark}`,
-            ].join(', '),
-            letterSpacing: '0.04em',
-            textTransform: 'uppercase',
-            pointerEvents: 'none',
-            userSelect: 'none',
-            whiteSpace: 'nowrap',
-            zIndex: 40,
-          }}
-        >
-          {config.impactText}
-        </div>
+      {impactVisible && impactText && (
+        <ImpactWord
+          text={impactText}
+          kind={kind}
+          tone={tone}
+          centerX={centerX}
+          centerY={centerY}
+        />
       )}
     </>
   )
