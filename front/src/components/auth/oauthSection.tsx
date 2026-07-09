@@ -4,6 +4,7 @@ import DiscordIcon from '../../assets/icons/discord.svg?react'
 import GoogleIcon from '../../assets/icons/google.svg?react'
 import { apiUrl } from '../../constants/config.constant.ts'
 import { useAuthStore } from '../../stores/auth.store'
+import { useAuthDialogStore } from '../../stores/authDialog.store'
 import { Button } from '../ui/button.tsx'
 
 export function OAuthDivider() {
@@ -22,6 +23,7 @@ export function OAuthButtons({ action }: { action: 'login' | 'register' }) {
   const prefix = action === 'login' ? 'Continuer' : "S'inscrire"
   const navigate = useNavigate()
   const fetchMe = useAuthStore((s) => s.fetchMe)
+  const setDialogOpen = useAuthDialogStore((s) => s.setOpen)
 
   const openOAuthPopup = (provider: 'google' | 'discord') => {
     const authorizeUrl = `${apiUrl}/auth/oauth/${provider}/authorize?mode=${action}`
@@ -42,6 +44,7 @@ export function OAuthButtons({ action }: { action: 'login' | 'register' }) {
       if ((event.data as { type?: string })?.type === 'oauth-success') {
         window.removeEventListener('message', listener)
         popup.close()
+        setDialogOpen(false)
         fetchMe().then(() => void navigate({ to: '/play' }))
       }
     }
