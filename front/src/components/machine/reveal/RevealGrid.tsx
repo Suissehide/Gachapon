@@ -17,15 +17,17 @@ import { Button } from '../../ui/button'
 import { RevealAmbientBackground } from './RevealAmbientBackground'
 import { RevealCanvases } from './RevealCanvases'
 import { RevealInspectOverlay } from './RevealInspectOverlay'
-import { EFFECT_CONFIG, resolveEffectKey } from './rarityConfig'
+import { EFFECT_CONFIG, type EffectKey, resolveEffectKey } from './rarityConfig'
 import { useRevealEffect } from './useRevealEffect'
 
-const RARITY_RANK: Record<string, number> = {
+const EFFECT_RANK: Record<EffectKey, number> = {
   COMMON: 0,
   UNCOMMON: 1,
   RARE: 2,
   EPIC: 3,
+  BRILLIANT: 3.5,
   LEGENDARY: 4,
+  HOLOGRAPHIC: 4.5,
 }
 
 type Props = {
@@ -76,20 +78,24 @@ export function RevealGrid({
     [results],
   )
 
-  // Meilleure rareté parmi les cartes déjà retournées — pilote le fond ambiant
-  // en crescendo (best-of-lot, ne redescend jamais). null avant tout flip.
-  const bestRevealed = useMemo<CardRarity | null>(() => {
-    let best: CardRarity | null = null
+  // Meilleure clé d'effet parmi les cartes déjà retournées — pilote le fond
+  // ambiant en crescendo (best-of-lot, ne redescend jamais). null avant tout flip.
+  const bestRevealed = useMemo<EffectKey | null>(() => {
+    let best: EffectKey | null = null
     let bestRank = -1
     for (const idx of flipped) {
-      const r = results[idx]?.card.rarity as CardRarity | undefined
-      if (!r) {
+      const entry = results[idx]
+      if (!entry) {
         continue
       }
-      const rank = RARITY_RANK[r] ?? 0
+      const key = resolveEffectKey(
+        entry.card.rarity as CardRarity,
+        entry.card.variant,
+      )
+      const rank = EFFECT_RANK[key] ?? 0
       if (rank > bestRank) {
         bestRank = rank
-        best = r
+        best = key
       }
     }
     return best
@@ -140,7 +146,13 @@ export function RevealGrid({
     }
     setRevealAllTriggered(true)
     const remaining = results
-      .map((r, i) => ({ i, rank: RARITY_RANK[r.card.rarity] ?? 0 }))
+      .map((r, i) => ({
+        i,
+        rank:
+          EFFECT_RANK[
+            resolveEffectKey(r.card.rarity as CardRarity, r.card.variant)
+          ] ?? 0,
+      }))
       .filter(({ i }) => !flipped.has(i))
       .sort((a, b) => a.rank - b.rank)
     // "Tout révéler" flips 10 cards in cascade — suppress the fullscreen
@@ -173,7 +185,7 @@ export function RevealGrid({
       data-reveal-modal
       className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md"
     >
-      <RevealAmbientBackground rarity={bestRevealed} />
+      <RevealAmbientBackground effectKey={bestRevealed} />
 
       {/* Fullscreen rarity effect — re-mounts on every flip via seq key so the
        *  animation replays. Positioned at the flipped card's viewport center. */}

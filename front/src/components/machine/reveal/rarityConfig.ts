@@ -345,7 +345,7 @@ export interface AmbientConfig {
   glow: number
 }
 
-export const AMBIENT_CONFIG: Record<CardRarity, AmbientConfig> = {
+export const AMBIENT_CONFIG: Record<EffectKey, AmbientConfig> = {
   COMMON: {
     auraIntensity: 0.06,
     rays: false,
@@ -379,6 +379,24 @@ export const AMBIENT_CONFIG: Record<CardRarity, AmbientConfig> = {
     glow: 8,
   },
   LEGENDARY: {
+    auraIntensity: 0.28,
+    rays: true,
+    particleCount: 90,
+    particleSpeed: 0.65,
+    particleSize: [3, 8],
+    glow: 12,
+  },
+  // Intensité ≈ EPIC — aura dorée
+  BRILLIANT: {
+    auraIntensity: 0.24,
+    rays: true,
+    particleCount: 64,
+    particleSpeed: 0.55,
+    particleSize: [3, 7],
+    glow: 10,
+  },
+  // Intensité ≈ LEGENDARY — champ prismatique
+  HOLOGRAPHIC: {
     auraIntensity: 0.28,
     rays: true,
     particleCount: 90,

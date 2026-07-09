@@ -6,12 +6,13 @@ import { getRarityTone } from '../../shared/tcg-card/config'
 import {
   AMBIENT_CONFIG,
   type AmbientConfig,
+  type EffectKey,
   PARTICLE_COLORS,
 } from './rarityConfig'
 
-type Props = { rarity: CardRarity | null }
+type Props = { effectKey: EffectKey | null }
 
-// Baseline neutre violet-nuit avant tout flip (rarity === null).
+// Baseline neutre violet-nuit avant tout flip (effectKey === null).
 const BASELINE: AmbientConfig = {
   auraIntensity: 0.05,
   rays: false,
@@ -23,25 +24,47 @@ const BASELINE: AmbientConfig = {
 const BASELINE_COLOR = '#5b4b82'
 const BASELINE_PARTICLE_COLORS = ['#4c3f6b', '#6d5ea8', '#c4b5fd']
 
-function resolveConfig(rarity: CardRarity | null): AmbientConfig {
-  return rarity ? AMBIENT_CONFIG[rarity] : BASELINE
+const VARIANT_AURA: Record<'BRILLIANT' | 'HOLOGRAPHIC', string> = {
+  BRILLIANT: '#f59e0b',
+  // Violet-rosé fixe : pas de cycle de teinte sur le radial-gradient de fond
+  // (coûteux et criard) — ce sont les particules qui portent l'arc-en-ciel.
+  HOLOGRAPHIC: '#c084fc',
 }
 
-function resolveAuraColor(rarity: CardRarity | null): string {
-  return rarity ? getRarityTone(rarity).hex : BASELINE_COLOR
+function isVariantKey(key: EffectKey): key is 'BRILLIANT' | 'HOLOGRAPHIC' {
+  return key === 'BRILLIANT' || key === 'HOLOGRAPHIC'
 }
 
-function resolveParticleColors(rarity: CardRarity | null): string[] {
-  if (!rarity) {
+function resolveConfig(key: EffectKey | null): AmbientConfig {
+  return key ? AMBIENT_CONFIG[key] : BASELINE
+}
+
+function resolveAuraColor(key: EffectKey | null): string {
+  if (!key) {
+    return BASELINE_COLOR
+  }
+  if (isVariantKey(key)) {
+    return VARIANT_AURA[key]
+  }
+  return getRarityTone(key as CardRarity).hex
+}
+
+function resolveParticleColors(key: EffectKey | null): string[] {
+  if (!key) {
     return BASELINE_PARTICLE_COLORS
   }
-  const key = rarity.toLowerCase() as keyof typeof PARTICLE_COLORS
-  const palette = PARTICLE_COLORS[key]
+  const setKey =
+    key === 'BRILLIANT'
+      ? 'brilliant'
+      : key === 'HOLOGRAPHIC'
+        ? 'holo'
+        : (key.toLowerCase() as keyof typeof PARTICLE_COLORS)
+  const palette = PARTICLE_COLORS[setKey as keyof typeof PARTICLE_COLORS]
   if (palette) {
     return palette
   }
   // COMMON n'a pas de palette dans PARTICLE_COLORS → dérive du ton.
-  const tone = getRarityTone(rarity)
+  const tone = getRarityTone(key as CardRarity)
   return [tone.hex, tone.light, '#ffffff']
 }
 
@@ -62,13 +85,13 @@ function prefersReducedMotion(): boolean {
   )
 }
 
-export function RevealAmbientBackground({ rarity }: Props) {
+export function RevealAmbientBackground({ effectKey }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef<number | null>(null)
   const particlesRef = useRef<Particle[]>([])
-  // Rareté courante lue par la boucle RAF sans la relancer.
-  const rarityRef = useRef<CardRarity | null>(rarity)
-  rarityRef.current = rarity
+  // Clé d'effet courante lue par la boucle RAF sans la relancer.
+  const effectKeyRef = useRef<EffectKey | null>(effectKey)
+  effectKeyRef.current = effectKey
 
   useEffect(() => {
     if (prefersReducedMotion()) {
@@ -94,7 +117,7 @@ export function RevealAmbientBackground({ rarity }: Props) {
     const rand = (a: number, b: number) => a + Math.random() * (b - a)
 
     const spawn = (atBottom: boolean): Particle => {
-      const current = rarityRef.current
+      const current = effectKeyRef.current
       const cfg = resolveConfig(current)
       const colors = resolveParticleColors(current)
       const [smin, smax] = cfg.particleSize
@@ -104,13 +127,16 @@ export function RevealAmbientBackground({ rarity }: Props) {
         vx: rand(-0.15, 0.15),
         vy: -cfg.particleSpeed * rand(0.6, 1.4),
         size: rand(smin, smax),
-        col: colors[Math.floor(Math.random() * colors.length)],
+        col:
+          current === 'HOLOGRAPHIC'
+            ? `hsl(${rand(0, 360)}, 90%, 65%)`
+            : colors[Math.floor(Math.random() * colors.length)],
         alpha: rand(0.3, 0.9),
       }
     }
 
     const tick = () => {
-      const cfg = resolveConfig(rarityRef.current)
+      const cfg = resolveConfig(effectKeyRef.current)
       const ps = particlesRef.current
       // best-of-lot ne fait que monter → on ne fait que croître vers la cible.
       while (ps.length < cfg.particleCount) {
@@ -166,8 +192,8 @@ export function RevealAmbientBackground({ rarity }: Props) {
     }
   }, [])
 
-  const auraColor = resolveAuraColor(rarity)
-  const cfg = resolveConfig(rarity)
+  const auraColor = resolveAuraColor(effectKey)
+  const cfg = resolveConfig(effectKey)
 
   return (
     <div
