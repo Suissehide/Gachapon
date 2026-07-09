@@ -146,7 +146,7 @@ export function RevealGrid({
   return (
     <div
       data-reveal-modal
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/70 backdrop-blur-md"
+      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md"
     >
       <RevealAmbientBackground rarity={bestRevealed} />
 
@@ -161,43 +161,52 @@ export function RevealGrid({
         />
       )}
 
-      <div
-        className={
-          isSingle
-            ? 'relative z-10 flex items-center justify-center'
-            : 'relative z-10 grid grid-cols-5 max-md:grid-cols-2 gap-x-4 gap-y-10 p-8 pt-14'
-        }
-      >
-        {stableResults.map(({ entry, key, idx }) => (
-          <RevealCard
-            key={key}
-            entry={entry}
-            flipped={flipped.has(idx)}
-            onFlip={() => flipCard(idx)}
-            size={isSingle ? 'lg' : 'sm'}
-            entryDelay={isSingle ? 0 : idx * 70}
-            registerRef={(el) => {
-              cardRefs.current[idx] = el
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Reserved slot (button height h-10 + mt-8): keeps the flex column's
-       *  height constant so removing the button on click doesn't recenter the
-       *  grid and shift the cards down. */}
-      <div className="relative z-10 mt-8 flex h-10 items-center justify-center">
-        {!allRevealed && !revealAllTriggered && (
-          <Button
-            type="button"
-            variant="gradient"
-            size="lg"
-            onClick={revealAll}
-            className="rounded-full px-8 uppercase tracking-widest"
+      {/* Scroll layer (viewport-sized) wrapping a min-h-full flex column: the
+       *  content stays centered when it fits, and grows scrollable when it
+       *  doesn't (10-pull grid on mobile) instead of being clipped by
+       *  justify-center. Bottom padding keeps the last row clear of the fixed
+       *  action bar. */}
+      <div className="absolute inset-0 z-10 overflow-y-auto overflow-x-hidden">
+        <div className="flex min-h-full flex-col items-center justify-center pb-32 md:pb-0">
+          <div
+            className={
+              isSingle
+                ? 'relative flex items-center justify-center'
+                : 'relative grid grid-cols-5 max-md:grid-cols-2 gap-x-4 gap-y-10 p-8 pt-14'
+            }
           >
-            Tout révéler
-          </Button>
-        )}
+            {stableResults.map(({ entry, key, idx }) => (
+              <RevealCard
+                key={key}
+                entry={entry}
+                flipped={flipped.has(idx)}
+                onFlip={() => flipCard(idx)}
+                size={isSingle ? 'lg' : 'sm'}
+                entryDelay={isSingle ? 0 : idx * 70}
+                registerRef={(el) => {
+                  cardRefs.current[idx] = el
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Reserved slot (button height h-10 + mt-8): keeps the flex column's
+           *  height constant so removing the button on click doesn't recenter
+           *  the grid and shift the cards down. */}
+          <div className="relative mt-8 flex h-10 items-center justify-center">
+            {!allRevealed && !revealAllTriggered && (
+              <Button
+                type="button"
+                variant="gradient"
+                size="lg"
+                onClick={revealAll}
+                className="rounded-full px-8 uppercase tracking-widest"
+              >
+                Tout révéler
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
 
       {showActions && (
