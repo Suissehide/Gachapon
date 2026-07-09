@@ -1,9 +1,24 @@
 import type { RewardSource, UserReward } from '../../../../generated/client'
+import type { CardRarity, CardVariant } from '../../../../generated/enums'
 import type { UnlockedAchievement } from '../../../domain/achievements/events.types'
 import type {
   PendingUserReward,
   UserRewardWithReward,
 } from '../../infra/orm/repositories/user-reward.repository.interface'
+
+/** A card actually granted when a reward with a `cardRarity` is claimed.
+ *  Shaped to map directly onto the front's PullBatchEntry for the reveal. */
+export type ClaimedCard = {
+  card: {
+    id: string
+    name: string
+    imageUrl: string | null
+    rarity: CardRarity
+    variant: CardVariant
+    set: { id: string; name: string }
+  }
+  wasDuplicate: boolean
+}
 
 export type ClaimResult = {
   tokens: number
@@ -13,6 +28,7 @@ export type ClaimResult = {
   gold: number
   pendingRewardsCount: number
   unlockedAchievements: UnlockedAchievement[]
+  cards: ClaimedCard[]
 }
 
 export type AddRewardInput = {

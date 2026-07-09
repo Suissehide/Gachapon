@@ -2,16 +2,21 @@ import { randomUUID } from 'node:crypto'
 import Boom from '@hapi/boom'
 
 import type { UserReward } from '../../../generated/client'
+import type { CardRarity, CardVariant } from '../../../generated/enums'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
 import type {
   AddRewardInput,
+  ClaimedCard,
   ClaimResult,
   RewardsDomainInterface,
 } from '../../types/domain/rewards/rewards.domain.interface'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
+import type { PrimaTransactionClient } from '../../types/infra/orm/client'
+import type { ICardRepository } from '../../types/infra/orm/repositories/card.repository.interface'
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
+import type { IUserCardRepository } from '../../types/infra/orm/repositories/user-card.repository.interface'
 import type {
   PendingUserReward,
   UserRewardRepositoryInterface,
@@ -30,6 +35,8 @@ export class RewardsDomain implements RewardsDomainInterface {
   readonly #configService: ConfigServiceInterface
   readonly #skillTreeRepository: ISkillTreeRepository
   readonly #achievementsDomain: AchievementsDomainInterface
+  readonly #cardRepository: ICardRepository
+  readonly #userCardRepository: IUserCardRepository
 
   constructor({
     userRewardRepository,
@@ -38,6 +45,8 @@ export class RewardsDomain implements RewardsDomainInterface {
     configService,
     skillTreeRepository,
     achievementsDomain,
+    cardRepository,
+    userCardRepository,
   }: Pick<
     IocContainer,
     | 'userRewardRepository'
@@ -46,6 +55,8 @@ export class RewardsDomain implements RewardsDomainInterface {
     | 'configService'
     | 'skillTreeRepository'
     | 'achievementsDomain'
+    | 'cardRepository'
+    | 'userCardRepository'
   >) {
     this.#userRewardRepository = userRewardRepository
     this.#userRepository = userRepository
@@ -53,6 +64,61 @@ export class RewardsDomain implements RewardsDomainInterface {
     this.#configService = configService
     this.#skillTreeRepository = skillTreeRepository
     this.#achievementsDomain = achievementsDomain
+    this.#cardRepository = cardRepository
+    this.#userCardRepository = userCardRepository
+  }
+
+  /** Grants a random active card of the given rarity (NORMAL variant) when a
+   *  reward carries a `cardRarity`. Returns the granted card for the reveal, or
+   *  null when the catalog has no active card of that rarity. */
+  async #grantCardReward(
+    tx: PrimaTransactionClient,
+    userId: string,
+    rarity: CardRarity,
+  ): Promise<ClaimedCard | null> {
+    const cards = await this.#cardRepository.findActiveByRarityInTx(tx, rarity)
+    const picked = cards[Math.floor(Math.random() * cards.length)]
+    if (!picked) {
+      return null
+    }
+    const variant = 'NORMAL' as CardVariant
+    const { wasDuplicate } = await this.#userCardRepository.upsertInTx(
+      tx,
+      userId,
+      picked.id,
+      variant,
+    )
+    return {
+      card: {
+        id: picked.id,
+        name: picked.name,
+        imageUrl: picked.imageUrl,
+        rarity: picked.rarity,
+        variant,
+        set: { id: picked.set.id, name: picked.set.name },
+      },
+      wasDuplicate,
+    }
+  }
+
+  /** Grants a card for each reward that carries a `cardRarity`, skipping the
+   *  rest. Returns the granted cards (in reward order) for the claim reveal. */
+  async #grantCardRewards(
+    tx: PrimaTransactionClient,
+    userId: string,
+    rewards: Array<{ cardRarity: CardRarity | null }>,
+  ): Promise<ClaimedCard[]> {
+    const granted: ClaimedCard[] = []
+    for (const reward of rewards) {
+      if (!reward.cardRarity) {
+        continue
+      }
+      const card = await this.#grantCardReward(tx, userId, reward.cardRarity)
+      if (card) {
+        granted.push(card)
+      }
+    }
+    return granted
   }
 
   getPending(userId: string): Promise<PendingUserReward[]> {
@@ -149,6 +215,10 @@ export class RewardsDomain implements RewardsDomainInterface {
         })
         await this.#userRewardRepository.markClaimedInTx(tx, userReward.id)
 
+        const claimedCards = await this.#grantCardRewards(tx, userId, [
+          userReward.reward,
+        ])
+
         const claimUnlocks = await this.#achievementsDomain.track(tx, userId, {
           kind: 'REWARD_CLAIMED',
           rewardId: userReward.rewardId,
@@ -190,6 +260,7 @@ export class RewardsDomain implements RewardsDomainInterface {
           gold: newGold,
           pendingRewardsCount,
           unlockedAchievements: [...claimUnlocks, ...levelUnlocks],
+          cards: claimedCards,
         }
       },
       { isolationLevel: 'Serializable' },
@@ -286,6 +357,12 @@ export class RewardsDomain implements RewardsDomainInterface {
         })
         await this.#userRewardRepository.markAllClaimedInTx(tx, userId)
 
+        const claimedCards = await this.#grantCardRewards(
+          tx,
+          userId,
+          pending.map((ur) => ur.reward),
+        )
+
         const allUnlocks: UnlockedAchievement[] = []
         for (const ur of pending) {
           const unlocks = await this.#achievementsDomain.track(tx, userId, {
@@ -329,6 +406,7 @@ export class RewardsDomain implements RewardsDomainInterface {
           // milestone rewards just created are pending — surface them to the caller
           pendingRewardsCount: milestonePacksCreated,
           unlockedAchievements: allUnlocks,
+          cards: claimedCards,
         }
       },
       { isolationLevel: 'Serializable' },

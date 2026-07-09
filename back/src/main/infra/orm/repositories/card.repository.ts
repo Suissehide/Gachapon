@@ -73,6 +73,16 @@ export class CardRepository implements ICardRepository {
     }) as Promise<CardWithSet[]>
   }
 
+  findActiveByRarityInTx(
+    tx: PrimaTransactionClient,
+    rarity: CardRarity,
+  ): Promise<CardWithSet[]> {
+    return tx.card.findMany({
+      where: { set: { isActive: true }, rarity },
+      include: { set: true },
+    }) as Promise<CardWithSet[]>
+  }
+
   create(data: {
     name: string
     setId: string

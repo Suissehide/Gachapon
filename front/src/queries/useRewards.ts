@@ -7,6 +7,10 @@ import { useToast } from '../hooks/useToast.ts'
 import { useAchievementUnlockStore } from '../stores/achievementUnlock.store.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 import { useLevelUpStore } from '../stores/levelUp.store.ts'
+import {
+  claimedCardToRevealEntry,
+  useRewardRevealStore,
+} from '../stores/rewardReveal.store.ts'
 import { computeLevel } from '../utils/level.ts'
 import { levelUpReward } from '../utils/levelRewards.ts'
 import { DEFAULT_ECONOMY, useEconomyConfig } from './useEconomyConfig.ts'
@@ -35,6 +39,7 @@ export const useClaimReward = () => {
   const triggerLevelUp = useLevelUpStore((s) => s.triggerLevelUp)
   const username = useAuthStore((s) => s.user?.username ?? '')
   const enqueueAchievementUnlock = useAchievementUnlockStore((s) => s.enqueue)
+  const revealRewardCards = useRewardRevealStore((s) => s.reveal)
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   return useMutation({
     mutationFn: (rewardId: string) => RewardsApi.claimReward(rewardId),
@@ -50,10 +55,14 @@ export const useClaimReward = () => {
       qc.invalidateQueries({ queryKey: ['rewards', 'pending'] })
       qc.invalidateQueries({ queryKey: ['quests'] })
       qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
+      qc.invalidateQueries({ queryKey: ['collection'] })
       void fetchMe()
       if (result.unlockedAchievements?.length) {
         enqueueAchievementUnlock(result.unlockedAchievements)
         qc.invalidateQueries({ queryKey: ['achievements'] })
+      }
+      if (result.cards?.length) {
+        revealRewardCards(result.cards.map(claimedCardToRevealEntry))
       }
     },
     onError: (error) => {
@@ -73,6 +82,7 @@ export const useClaimAllRewards = () => {
   const triggerLevelUp = useLevelUpStore((s) => s.triggerLevelUp)
   const username = useAuthStore((s) => s.user?.username ?? '')
   const enqueueAchievementUnlock = useAchievementUnlockStore((s) => s.enqueue)
+  const revealRewardCards = useRewardRevealStore((s) => s.reveal)
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   return useMutation({
     mutationFn: () => RewardsApi.claimAllRewards(),
@@ -90,10 +100,14 @@ export const useClaimAllRewards = () => {
       qc.invalidateQueries({ queryKey: ['rewards', 'pending'] })
       qc.invalidateQueries({ queryKey: ['quests'] })
       qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
+      qc.invalidateQueries({ queryKey: ['collection'] })
       void fetchMe()
       if (result?.unlockedAchievements?.length) {
         enqueueAchievementUnlock(result.unlockedAchievements)
         qc.invalidateQueries({ queryKey: ['achievements'] })
+      }
+      if (result?.cards?.length) {
+        revealRewardCards(result.cards.map(claimedCardToRevealEntry))
       }
     },
     onError: (error) => {

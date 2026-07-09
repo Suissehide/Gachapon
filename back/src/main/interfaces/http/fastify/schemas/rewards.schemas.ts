@@ -2,14 +2,38 @@ import { z } from 'zod/v4'
 
 import { unlockedAchievementSchema } from './achievements.schemas'
 
+const cardRarityEnum = z.enum([
+  'COMMON',
+  'UNCOMMON',
+  'RARE',
+  'EPIC',
+  'LEGENDARY',
+])
+
+const cardVariantEnum = z.enum(['NORMAL', 'BRILLIANT', 'HOLOGRAPHIC'])
+
 const rewardAmountsSchema = z.object({
   tokens: z.number().int(),
   dust: z.number().int(),
   xp: z.number().int(),
   gold: z.number().int().optional(),
+  cardRarity: cardRarityEnum.nullable().optional(),
 })
 
 const rewardSourceEnum = z.enum(['STREAK', 'ACHIEVEMENT', 'QUEST', 'LEVEL_UP'])
+
+// A card actually granted by claiming a reward — mirrors the front's PullBatchEntry.
+const claimedCardSchema = z.object({
+  card: z.object({
+    id: z.string(),
+    name: z.string(),
+    imageUrl: z.string().nullable(),
+    rarity: cardRarityEnum,
+    variant: cardVariantEnum,
+    set: z.object({ id: z.string(), name: z.string() }),
+  }),
+  wasDuplicate: z.boolean(),
+})
 
 // ── POST /rewards/:id/claim & /claim-all responses ─────────────────────────
 
@@ -21,6 +45,7 @@ export const claimResultSchema = z.object({
   gold: z.number().int(),
   pendingRewardsCount: z.number().int().nonnegative(),
   unlockedAchievements: z.array(unlockedAchievementSchema).optional(),
+  cards: z.array(claimedCardSchema).optional(),
 })
 
 // ── GET /rewards/pending ───────────────────────────────────────────────────
@@ -29,6 +54,9 @@ export const pendingRewardSchema = z.object({
   id: z.string().uuid(),
   source: rewardSourceEnum,
   sourceId: z.string().nullable(),
+  // Human-readable title of the reward's source (e.g. the achievement name).
+  // Null for sources without a title (streak days, level-up milestones).
+  sourceTitle: z.string().nullable(),
   claimedAt: z.date().nullable(),
   createdAt: z.date(),
   reward: rewardAmountsSchema,

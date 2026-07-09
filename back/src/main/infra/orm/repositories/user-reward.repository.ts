@@ -71,15 +71,44 @@ export class UserRewardRepository implements UserRewardRepositoryInterface {
     const milestoneMap = new Map(
       milestones.map((m) => [m.id, { day: m.day, isMilestone: m.isMilestone }]),
     )
+
+    // Achievement rewards carry the achievement id in sourceId — resolve their
+    // names so the rewards popup can show the real title instead of "Succès".
+    const achievementIds = rows
+      .filter(
+        (r): r is typeof r & { sourceId: string } =>
+          r.source === 'ACHIEVEMENT' && r.sourceId != null,
+      )
+      .map((r) => r.sourceId)
+    const achievements = achievementIds.length
+      ? await this.#prisma.achievement.findMany({
+          where: { id: { in: achievementIds } },
+          select: { id: true, name: true },
+        })
+      : []
+    const achievementNameMap = new Map(achievements.map((a) => [a.id, a.name]))
+
     return rows.map((r) => {
+      const sourceTitle =
+        r.source === 'ACHIEVEMENT' && r.sourceId
+          ? (achievementNameMap.get(r.sourceId) ?? null)
+          : null
       if (r.source !== 'STREAK' || !r.sourceId) {
-        return { ...r, streakMilestone: null }
+        return { ...r, streakMilestone: null, sourceTitle }
       }
       const dailyDay = parseDailySourceId(r.sourceId)
       if (dailyDay !== null) {
-        return { ...r, streakMilestone: { day: dailyDay, isMilestone: false } }
+        return {
+          ...r,
+          streakMilestone: { day: dailyDay, isMilestone: false },
+          sourceTitle,
+        }
       }
-      return { ...r, streakMilestone: milestoneMap.get(r.sourceId) ?? null }
+      return {
+        ...r,
+        streakMilestone: milestoneMap.get(r.sourceId) ?? null,
+        sourceTitle,
+      }
     })
   }
 

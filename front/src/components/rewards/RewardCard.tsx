@@ -1,7 +1,17 @@
-import { Coins, Flame, Sparkles, Star, Trophy, Zap } from 'lucide-react'
+import {
+  ArrowUp,
+  Coins,
+  Flame,
+  Layers,
+  Sparkles,
+  Star,
+  Trophy,
+  Zap,
+} from 'lucide-react'
 import { type ReactNode, useRef, useState } from 'react'
 
 import type { PendingReward } from '../../api/rewards.api.ts'
+import { RARITY_FR, RARITY_HEX } from '../../constants/achievements.constant.ts'
 import { cn } from '../../libs/utils.ts'
 import { Button } from '../ui/button.tsx'
 import { ClaimParticles } from './ClaimParticles.tsx'
@@ -20,10 +30,13 @@ function sourceLabel(reward: PendingReward): string {
     return `Streak — Jour ${reward.streakMilestone.day}`
   }
   if (reward.source === 'ACHIEVEMENT') {
-    return 'Achievement'
+    return reward.sourceTitle ? `Succès — ${reward.sourceTitle}` : 'Succès'
   }
   if (reward.source === 'QUEST') {
-    return 'Quête'
+    return reward.sourceTitle ? `Quête — ${reward.sourceTitle}` : 'Quête'
+  }
+  if (reward.source === 'LEVEL_UP') {
+    return 'Montée de niveau'
   }
   return 'Récompense'
 }
@@ -43,6 +56,11 @@ const SOURCE_CONFIG = {
     icon: <Zap className="h-3.5 w-3.5 text-purple-400" />,
     gradientFrom:
       '[background-image:linear-gradient(135deg,rgba(168,85,247,0.07)_0%,transparent_60%)]',
+  },
+  LEVEL_UP: {
+    icon: <ArrowUp className="h-3.5 w-3.5 text-emerald-400" />,
+    gradientFrom:
+      '[background-image:linear-gradient(135deg,rgba(16,185,129,0.07)_0%,transparent_60%)]',
   },
 } as const
 
@@ -104,7 +122,7 @@ export function RewardCard({ reward, onClaim, isLoading }: RewardCardProps) {
         claiming && 'reward-claim',
       )}
     >
-      <div className="flex items-center gap-12 px-3 py-2.5">
+      <div className="flex items-center gap-6 px-3 py-2.5">
         {/* Left: source + amounts */}
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           {/* Source row */}
@@ -144,6 +162,26 @@ export function RewardCard({ reward, onClaim, isLoading }: RewardCardProps) {
                 value={reward.reward.gold}
                 label="or"
               />
+            )}
+            {reward.reward.cardRarity && (
+              <div className="flex flex-col items-center gap-px">
+                <div className="flex items-center gap-1">
+                  <Layers
+                    className="h-3.5 w-3.5"
+                    style={{ color: RARITY_HEX[reward.reward.cardRarity] }}
+                  />
+                  <span
+                    className="text-[13px] font-black uppercase leading-none tracking-wide"
+                    style={{ color: RARITY_HEX[reward.reward.cardRarity] }}
+                  >
+                    {RARITY_FR[reward.reward.cardRarity] ??
+                      reward.reward.cardRarity}
+                  </span>
+                </div>
+                <span className="text-[9px] font-semibold uppercase tracking-widest text-text-light/50">
+                  carte
+                </span>
+              </div>
             )}
           </div>
         </div>

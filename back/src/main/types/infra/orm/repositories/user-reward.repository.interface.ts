@@ -11,6 +11,7 @@ export type StreakMilestoneInfo = Pick<StreakMilestone, 'day' | 'isMilestone'>
 export type PendingUserReward = UserReward & {
   reward: Reward
   streakMilestone: StreakMilestoneInfo | null
+  sourceTitle: string | null
 }
 
 export type UserRewardWithReward = UserReward & { reward: Reward }

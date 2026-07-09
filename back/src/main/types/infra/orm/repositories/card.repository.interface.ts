@@ -19,6 +19,10 @@ export interface ICardRepository {
     tx: PrimaTransactionClient,
     forceLegendary: boolean,
   ): Promise<CardWithSet[]>
+  findActiveByRarityInTx(
+    tx: PrimaTransactionClient,
+    rarity: CardRarity,
+  ): Promise<CardWithSet[]>
   create(data: {
     name: string
     setId: string

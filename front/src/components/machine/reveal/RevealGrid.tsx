@@ -29,9 +29,11 @@ const RARITY_RANK: Record<string, number> = {
 
 type Props = {
   results: PullBatchEntry[]
-  tokensRemaining: number
   onClose: () => void
-  onPullAgain: (count: 1 | 10) => void
+  // Pull context — omit for non-pull reveals (e.g. a claimed reward card),
+  // which then show a plain "Fermer" button instead of the pull-again bar.
+  tokensRemaining?: number
+  onPullAgain?: (count: 1 | 10) => void
 }
 
 type ActiveEffect = {
@@ -47,6 +49,7 @@ export function RevealGrid({
   onClose,
   onPullAgain,
 }: Props) {
+  const showPullAgain = onPullAgain !== undefined
   const [flipped, setFlipped] = useState<Set<number>>(() => new Set())
   const [revealAllTriggered, setRevealAllTriggered] = useState(false)
   const [activeEffect, setActiveEffect] = useState<ActiveEffect | null>(null)
@@ -206,45 +209,57 @@ export function RevealGrid({
           }}
         >
           <div className="pointer-events-auto inline-flex items-center gap-4 rounded-[20px] bg-[#1b1726] px-5 py-3 text-white shadow-[0_18px_44px_-16px_rgba(0,0,0,0.7)]">
-            <div className="flex items-center gap-2">
-              <Coins className="h-5 w-5 text-amber-400" />
-              <div>
-                <div className="font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-white/50">
-                  Jetons restants
+            {showPullAgain ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <Coins className="h-5 w-5 text-amber-400" />
+                  <div>
+                    <div className="font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-white/50">
+                      Jetons restants
+                    </div>
+                    <div className="font-display text-lg font-extrabold tabular-nums text-amber-400 leading-none">
+                      {tokensRemaining}
+                    </div>
+                  </div>
                 </div>
-                <div className="font-display text-lg font-extrabold tabular-nums text-amber-400 leading-none">
-                  {tokensRemaining}
-                </div>
-              </div>
-            </div>
 
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                onClick={() => onPullAgain(1)}
-                disabled={tokensRemaining < 1}
-                className="gap-2 border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
-              >
-                Nouveau tirage x1
-              </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => onPullAgain(1)}
+                    disabled={(tokensRemaining ?? 0) < 1}
+                    className="gap-2 border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                  >
+                    Nouveau tirage x1
+                  </Button>
+                  <Button
+                    variant="gradient"
+                    onClick={() => onPullAgain(10)}
+                    disabled={(tokensRemaining ?? 0) < 10}
+                    className="gap-2"
+                  >
+                    Tirage x10
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onClose}
+                    aria-label="Fermer"
+                    className="border border-white/15 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
+                  >
+                    <X size={16} />
+                  </Button>
+                </div>
+              </>
+            ) : (
               <Button
                 variant="gradient"
-                onClick={() => onPullAgain(10)}
-                disabled={tokensRemaining < 10}
-                className="gap-2"
-              >
-                Tirage x10
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
                 onClick={onClose}
-                aria-label="Fermer"
-                className="border border-white/15 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
+                className="gap-2 px-8 uppercase tracking-widest"
               >
-                <X size={16} />
+                Génial !
               </Button>
-            </div>
+            )}
           </div>
         </div>
       )}
