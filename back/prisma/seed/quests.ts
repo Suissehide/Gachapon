@@ -12,7 +12,9 @@ interface QuestConfig {
 }
 
 const QUESTS: QuestConfig[] = [
-  // One-shot quests
+  // One-shot quests — chaîne d'onboarding : enseigne une boucle de jeu à la fois.
+  // Les jalons de progression (X tirages, posséder une rareté) sont couverts par
+  // les succès (achievements) ; les quêtes ne les doublonnent plus.
   {
     key: 'first_pull',
     name: 'Premier Tirage',
@@ -23,46 +25,50 @@ const QUESTS: QuestConfig[] = [
     rewardDust: 0,
   },
   {
-    key: 'pull_10',
-    name: 'Dix Tirages',
-    description: 'Effectue 10 tirages au total.',
-    criterion: { event: 'PULL_COMPLETED', target: 10 },
+    key: 'first_battle',
+    name: 'Baptême du Feu',
+    description: 'Remporte ton premier combat en campagne.',
+    criterion: { event: 'STAGE_CLEARED', target: 1 },
     period: 'ONESHOT',
     rewardTokens: 10,
     rewardDust: 50,
   },
   {
-    key: 'pull_100',
-    name: 'Centurion',
-    description: 'Effectue 100 tirages au total.',
-    criterion: { event: 'PULL_COMPLETED', target: 100 },
+    key: 'first_card_level',
+    name: 'Première Évolution',
+    description: "Monte le niveau d'une carte pour la première fois.",
+    criterion: { event: 'CARD_LEVELED', target: 1 },
     period: 'ONESHOT',
-    rewardTokens: 50,
-    rewardDust: 500,
+    rewardTokens: 10,
+    rewardDust: 50,
   },
   {
-    key: 'collect_rare',
-    name: 'Chasseur de Rares',
-    description: 'Obtiens ta première carte RARE.',
-    criterion: { event: 'PULL_COMPLETED', target: 1, filter: { rarity: 'RARE' } },
+    key: 'first_recycle',
+    name: 'Premier Recyclage',
+    description: 'Recycle ta première carte en poussière.',
+    criterion: { event: 'CARD_RECYCLED', target: 1 },
     period: 'ONESHOT',
-    rewardTokens: 15,
-    rewardDust: 100,
+    rewardTokens: 5,
+    rewardDust: 50,
   },
   {
-    key: 'collect_legendary',
-    name: 'Toucher l\'Absolu',
-    description: 'Obtiens ta première carte LÉGENDAIRE.',
-    criterion: { event: 'PULL_COMPLETED', target: 1, filter: { rarity: 'LEGENDARY' } },
+    key: 'first_gold_spent',
+    name: 'Premier Achat',
+    description: "Dépense de l'or pour la première fois.",
+    criterion: { event: 'GOLD_SPENT', target: 1 },
     period: 'ONESHOT',
-    rewardTokens: 100,
-    rewardDust: 1000,
+    rewardTokens: 5,
+    rewardDust: 30,
   },
   {
     key: 'collect_10_unique',
     name: 'Collectionneur Débutant',
     description: 'Possède 10 cartes uniques dans ta collection.',
-    criterion: { event: 'PULL_COMPLETED', target: 10, filter: { uniqueOnly: true } },
+    criterion: {
+      event: 'PULL_COMPLETED',
+      target: 10,
+      filter: { uniqueOnly: true },
+    },
     period: 'ONESHOT',
     rewardTokens: 20,
     rewardDust: 200,
@@ -76,12 +82,40 @@ const QUESTS: QuestConfig[] = [
     rewardTokens: 10,
     rewardDust: 50,
   },
-  // Weekly quests
+  // Weekly quests — 3 tirées au sort chaque semaine parmi ce pool.
   {
     key: 'weekly_pulls_30',
     name: 'Semaine Explosive',
     description: 'Effectue 30 tirages cette semaine.',
     criterion: { event: 'PULL_COMPLETED', target: 30 },
+    period: 'WEEKLY',
+    rewardTokens: 5,
+    rewardDust: 80,
+    rewardXp: 150,
+  },
+  {
+    key: 'weekly_uniques_5',
+    name: 'Nouvelles Trouvailles',
+    description: 'Obtiens 5 nouvelles cartes uniques cette semaine.',
+    criterion: {
+      event: 'PULL_COMPLETED',
+      target: 5,
+      filter: { uniqueOnly: true },
+    },
+    period: 'WEEKLY',
+    rewardTokens: 5,
+    rewardDust: 80,
+    rewardXp: 150,
+  },
+  {
+    key: 'weekly_rares_3',
+    name: 'Éclat Hebdomadaire',
+    description: 'Obtiens 3 cartes RARE cette semaine.',
+    criterion: {
+      event: 'PULL_COMPLETED',
+      target: 3,
+      filter: { rarity: 'RARE' },
+    },
     period: 'WEEKLY',
     rewardTokens: 5,
     rewardDust: 80,
@@ -109,7 +143,7 @@ const QUESTS: QuestConfig[] = [
   },
   {
     key: 'weekly_card_levels_8',
-    name: 'Maître d\'Évolution',
+    name: "Maître d'Évolution",
     description: 'Monte le niveau de 8 cartes cette semaine.',
     criterion: { event: 'CARD_LEVELED', target: 8 },
     period: 'WEEKLY',
@@ -132,13 +166,14 @@ const QUESTS: QuestConfig[] = [
 export async function seedQuests(
   tx: Parameters<Parameters<PrismaClient['$transaction']>[0]>[0],
 ) {
-
   for (const quest of QUESTS) {
     const { rewardTokens, rewardDust, rewardXp = 0, ...questData } = quest
     await tx.quest.create({
       data: {
         ...questData,
-        reward: { create: { tokens: rewardTokens, dust: rewardDust, xp: rewardXp } },
+        reward: {
+          create: { tokens: rewardTokens, dust: rewardDust, xp: rewardXp },
+        },
       },
     })
   }

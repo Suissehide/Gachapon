@@ -5,6 +5,7 @@ export interface UserAchievementState {
   ownedByRarity: Record<CardRarity, number>
   ownedByRarityVariant: Record<string, number>
   completedCollections: { ALL: boolean } & Partial<Record<CardRarity, boolean>>
+  completedSetsCount: number
   level: number
   streakDays: number
   machinesOwned: number
@@ -81,6 +82,13 @@ export const computeStateProgress = (
         progress: state.machinesOwned,
         threshold: criterion.threshold,
         unlocked: state.machinesOwned >= criterion.threshold,
+      }
+    }
+    case 'SETS_COMPLETED': {
+      return {
+        progress: state.completedSetsCount,
+        threshold: criterion.threshold,
+        unlocked: state.completedSetsCount >= criterion.threshold,
       }
     }
     default: {

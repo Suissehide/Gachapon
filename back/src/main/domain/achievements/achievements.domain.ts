@@ -318,6 +318,7 @@ export class AchievementsDomain implements AchievementsDomainInterface {
 
       case 'OWN_RARITY_COUNT':
       case 'COLLECTION_COMPLETE':
+      case 'SETS_COMPLETED':
       case 'LEVEL_REACHED':
       case 'STREAK_REACHED':
       case 'MACHINES_OWNED': {
@@ -344,7 +345,7 @@ export class AchievementsDomain implements AchievementsDomainInterface {
         select: {
           variant: true,
           quantity: true,
-          card: { select: { rarity: true } },
+          card: { select: { id: true, rarity: true, setId: true } },
         },
       }),
       this.#countMachinesOwned(tx, userId),
@@ -363,11 +364,13 @@ export class AchievementsDomain implements AchievementsDomainInterface {
     }
 
     const completedCollections = await this.#computeCompletions(tx, ownedCards)
+    const completedSetsCount = await this.#computeCompletedSets(tx, ownedCards)
 
     return {
       ownedByRarity: ownedByRarity as Record<CardRarity, number>,
       ownedByRarityVariant,
       completedCollections,
+      completedSetsCount,
       level: user.level,
       streakDays: user.streakDays,
       machinesOwned,
@@ -428,6 +431,48 @@ export class AchievementsDomain implements AchievementsDomainInterface {
 
     result.ALL = allComplete && totalByRarity.length > 0
     return result
+  }
+
+  // Nombre de sets entièrement possédés (au moins un exemplaire de chaque carte
+  // du set). Ce compteur alimente les succès SETS_COMPLETED, qui scalent avec le
+  // contenu — contrairement à un « tout compléter » qui devient un objectif mouvant.
+  async #computeCompletedSets(
+    tx: PrimaTransactionClient,
+    ownedCards: Array<{
+      quantity: number
+      card: { id: string; setId: string }
+    }>,
+  ): Promise<number> {
+    // Total de cartes par set dans le catalogue
+    const totalBySet = await tx.card.groupBy({
+      by: ['setId'],
+      _count: { id: true },
+    })
+
+    // Cartes distinctes possédées par set (déduplication par carte : plusieurs
+    // variantes d'une même carte ne comptent que pour une seule carte du set).
+    const ownedCardIdsBySet: Record<string, Set<string>> = {}
+    for (const uc of ownedCards) {
+      if (uc.quantity > 0) {
+        const { id, setId } = uc.card
+        let owned = ownedCardIdsBySet[setId]
+        if (!owned) {
+          owned = new Set()
+          ownedCardIdsBySet[setId] = owned
+        }
+        owned.add(id)
+      }
+    }
+
+    let completed = 0
+    for (const row of totalBySet) {
+      const total = row._count.id
+      const owned = ownedCardIdsBySet[row.setId]?.size ?? 0
+      if (total > 0 && owned >= total) {
+        completed++
+      }
+    }
+    return completed
   }
 
   async #tryInsertUnlock(

@@ -12,6 +12,7 @@ describe('computeStateProgress', () => {
         level: 5,
         streakDays: 0,
         machinesOwned: 0,
+        completedSetsCount: 0,
       },
     )
     expect(result.progress).toBe(3)
@@ -28,6 +29,7 @@ describe('computeStateProgress', () => {
         level: 1,
         streakDays: 0,
         machinesOwned: 0,
+        completedSetsCount: 0,
       },
     )
     expect(result.unlocked).toBe(true)
@@ -48,6 +50,7 @@ describe('computeStateProgress', () => {
         level: 1,
         streakDays: 0,
         machinesOwned: 0,
+        completedSetsCount: 0,
       },
     )
     expect(result.progress).toBe(5)
@@ -64,6 +67,7 @@ describe('computeStateProgress', () => {
         level: 1,
         streakDays: 0,
         machinesOwned: 0,
+        completedSetsCount: 0,
       },
     )
     expect(result.unlocked).toBe(true)
@@ -79,6 +83,7 @@ describe('computeStateProgress', () => {
         level: 1,
         streakDays: 0,
         machinesOwned: 0,
+        completedSetsCount: 0,
       },
     )
     expect(result.unlocked).toBe(false)
@@ -95,6 +100,7 @@ describe('computeStateProgress', () => {
         level: 10,
         streakDays: 0,
         machinesOwned: 0,
+        completedSetsCount: 0,
       },
     )
     expect(result.unlocked).toBe(true)
@@ -110,6 +116,7 @@ describe('computeStateProgress', () => {
         level: 1,
         streakDays: 30,
         machinesOwned: 0,
+        completedSetsCount: 0,
       },
     )
     expect(result.unlocked).toBe(true)
@@ -125,9 +132,44 @@ describe('computeStateProgress', () => {
         level: 1,
         streakDays: 0,
         machinesOwned: 1,
+        completedSetsCount: 0,
       },
     )
     expect(result.progress).toBe(1)
     expect(result.unlocked).toBe(false)
+  })
+
+  it('SETS_COMPLETED 3 — 1 set complété → progress 1, not unlocked', () => {
+    const result = computeStateProgress(
+      { type: 'SETS_COMPLETED', threshold: 3 },
+      {
+        ownedByRarity: { COMMON: 0, UNCOMMON: 0, RARE: 0, EPIC: 0, LEGENDARY: 0 },
+        ownedByRarityVariant: {},
+        completedCollections: { ALL: false },
+        level: 1,
+        streakDays: 0,
+        machinesOwned: 0,
+        completedSetsCount: 1,
+      },
+    )
+    expect(result.progress).toBe(1)
+    expect(result.unlocked).toBe(false)
+  })
+
+  it('SETS_COMPLETED 1 — 1 set complété → unlocked', () => {
+    const result = computeStateProgress(
+      { type: 'SETS_COMPLETED', threshold: 1 },
+      {
+        ownedByRarity: { COMMON: 0, UNCOMMON: 0, RARE: 0, EPIC: 0, LEGENDARY: 0 },
+        ownedByRarityVariant: {},
+        completedCollections: { ALL: false },
+        level: 1,
+        streakDays: 0,
+        machinesOwned: 0,
+        completedSetsCount: 1,
+      },
+    )
+    expect(result.progress).toBe(1)
+    expect(result.unlocked).toBe(true)
   })
 })

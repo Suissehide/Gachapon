@@ -34,6 +34,7 @@ const FAMILY_ORDER = [
   'collection_rarity',
   'collection_variants',
   'collection_complete',
+  'collection_sets',
   'machines',
   'streak',
   'dust',

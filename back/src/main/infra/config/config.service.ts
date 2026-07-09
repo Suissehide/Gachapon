@@ -11,7 +11,7 @@ const REDIS_TTL_SECONDS = 300 // 5 minutes
 const DEFAULTS: Record<ConfigKey, number> = {
   tokenRegenIntervalMinutes: 120,
   tokenMaxStock: 6,
-  pityThreshold: 80,
+  pityThreshold: 120,
   dustCommon: 5,
   dustUncommon: 15,
   dustRare: 40,

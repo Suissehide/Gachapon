@@ -75,6 +75,7 @@ export const FAMILY_VISUAL: Record<
   collection_rarity: { hue: 270, label: 'Collection — Raretés', icon: 'Gem' },
   collection_variants: { hue: 290, label: 'Collection — Variantes', icon: 'Gem' },
   collection_complete: { hue: 250, label: 'Collection — Complétion', icon: 'Layers' },
+  collection_sets: { hue: 230, label: 'Collection — Sets', icon: 'Layers' },
   streak: { hue: 15, label: 'Fidélité', icon: 'Flame' },
   machines: { hue: 320, label: 'Machines', icon: 'Cog' },
 } as const

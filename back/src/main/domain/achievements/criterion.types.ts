@@ -41,6 +41,10 @@ export const AchievementCriterionSchema = z.discriminatedUnion('type', [
     scope: z.union([z.literal('ALL'), z.object({ rarity: RaritySchema })]),
   }),
   z.object({
+    type: z.literal('SETS_COMPLETED'),
+    threshold: z.number().int().positive(),
+  }),
+  z.object({
     type: z.literal('LEVEL_REACHED'),
     threshold: z.number().int().positive(),
   }),

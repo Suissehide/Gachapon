@@ -10,6 +10,7 @@ const FAMILY_LABELS: Record<string, string> = {
   collection_rarity: 'Collection — raretés',
   collection_variants: 'Collection — variantes',
   collection_complete: 'Complétion',
+  collection_sets: 'Sets',
   streak: 'Fidélité',
   machines: 'Machines',
 }
