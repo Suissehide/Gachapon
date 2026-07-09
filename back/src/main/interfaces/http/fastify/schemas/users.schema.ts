@@ -64,3 +64,13 @@ export const setFeaturedCardsBodySchema = z.object({
 export const setFeaturedCardsResponseSchema = z.object({
   cardIds: z.array(z.string()),
 })
+
+export const updateUsernameBodySchema = z.object({
+  username: z
+    .string()
+    .min(3)
+    .max(30)
+    .regex(/^[a-zA-Z0-9_]+$/),
+})
+
+export const updateUsernameResponseSchema = z.object({ username: z.string() })

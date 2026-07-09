@@ -5,4 +5,5 @@ export interface UserDomainInterface {
   findByEmail(email: string): Promise<UserEntity | null>
   findByUsername(username: string): Promise<UserEntity | null>
   update(id: string, input: UpdateUserInput): Promise<UserEntity>
+  updateUsername(id: string, username: string): Promise<UserEntity>
 }

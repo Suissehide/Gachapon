@@ -6,6 +6,8 @@ import {
   setFeaturedCardsBodySchema,
   setFeaturedCardsResponseSchema,
   setsProgressionResponseSchema,
+  updateUsernameBodySchema,
+  updateUsernameResponseSchema,
   userProfileResponseSchema,
   usersProfileParamSchema,
   usersSearchQuerySchema,
@@ -18,6 +20,7 @@ export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
     userCardRepository,
     profileDomain,
     storageClient,
+    userDomain,
   } = fastify.iocContainer
 
   const resolveUrl = (key: string | null) =>
@@ -129,6 +132,24 @@ export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
         request.body.cardIds,
       )
       return { cardIds }
+    },
+  )
+
+  fastify.patch(
+    '/users/me/username',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        body: updateUsernameBodySchema,
+        response: { 200: updateUsernameResponseSchema },
+      },
+    },
+    async (request) => {
+      const user = await userDomain.updateUsername(
+        request.user.userID,
+        request.body.username,
+      )
+      return { username: user.username }
     },
   )
 }

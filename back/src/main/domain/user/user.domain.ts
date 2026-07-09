@@ -1,3 +1,5 @@
+import Boom from '@hapi/boom'
+
 import type { IocContainer } from '../../types/application/ioc'
 import type { UserDomainInterface } from '../../types/domain/user/user.domain.interface'
 import type {
@@ -24,5 +26,20 @@ export class UserDomain implements UserDomainInterface {
   }
   update(id: string, input: UpdateUserInput): Promise<UserEntity> {
     return this.#repo.update(id, input)
+  }
+
+  async updateUsername(id: string, username: string): Promise<UserEntity> {
+    const current = await this.#repo.findById(id)
+    if (!current) {
+      throw Boom.notFound('Utilisateur introuvable')
+    }
+    if (current.username === username) {
+      return current
+    }
+    const taken = await this.#repo.findByUsername(username)
+    if (taken) {
+      throw Boom.conflict('Ce pseudo est déjà pris')
+    }
+    return this.#repo.update(id, { username })
   }
 }
