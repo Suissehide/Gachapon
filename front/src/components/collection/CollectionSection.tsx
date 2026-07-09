@@ -1,11 +1,46 @@
+import type { Card } from '../../api/collection.api.ts'
+import type { UserCard } from '../../queries/useCollection.ts'
 import { useWishlist } from '../../queries/useWishlist.ts'
 import type { DisplayEntry } from '../../routes/_authenticated/collection.tsx'
 import { ArcadeCard } from '../shared/ArcadeCard.tsx'
 import { CollectionCard } from './CollectionCard.tsx'
 
+// Rarities that ship in 3 variants (NORMAL + 2 special) — everything else has 1.
+const VARIANT_RARITIES = ['RARE', 'EPIC', 'LEGENDARY']
+const variantsPerCard = (rarity: string) =>
+  VARIANT_RARITIES.includes(rarity) ? 3 : 1
+
+export type SectionStats = {
+  distinctCards: number
+  totalCards: number
+  ownedVariants: number
+  totalVariants: number
+}
+
+// Completeness for a section, computed from the FULL catalog slice (all cards
+// that exist in the rarity/set) so the denominator is the max obtainable —
+// independent of the ownership/variant view filters applied to the grid.
+export function computeSectionStats(
+  sectionCards: Card[],
+  userCards: UserCard[],
+): SectionStats {
+  const cardIds = new Set(sectionCards.map((c) => c.id))
+  const owned = userCards.filter((uc) => cardIds.has(uc.card.id))
+  return {
+    distinctCards: new Set(owned.map((uc) => uc.card.id)).size,
+    totalCards: cardIds.size,
+    ownedVariants: owned.length,
+    totalVariants: sectionCards.reduce(
+      (sum, c) => sum + variantsPerCard(c.rarity),
+      0,
+    ),
+  }
+}
+
 type Props = {
   title: string
   entries: DisplayEntry[]
+  stats: SectionStats
   onDetail: (entry: DisplayEntry) => void
   showWishlist?: boolean
 }
@@ -42,16 +77,11 @@ function WishlistAwareCards({
 export function CollectionSection({
   title,
   entries,
+  stats,
   onDetail,
   showWishlist = false,
 }: Props) {
-  const distinctCardIds = new Set(
-    entries.filter((e) => e.isOwned).map((e) => e.card.id),
-  )
-  const distinctCards = distinctCardIds.size
-  const totalCards = new Set(entries.map((e) => e.card.id)).size
-  const ownedVariants = entries.filter((e) => e.isOwned).length
-  const totalVariants = entries.length
+  const { distinctCards, totalCards, ownedVariants, totalVariants } = stats
 
   return (
     <ArcadeCard>

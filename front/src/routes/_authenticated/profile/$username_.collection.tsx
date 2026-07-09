@@ -14,7 +14,10 @@ import {
   RARITY_LABELS,
   RARITY_ORDER,
 } from '../../../components/collection/CollectionCard.tsx'
-import { CollectionSection } from '../../../components/collection/CollectionSection.tsx'
+import {
+  CollectionSection,
+  computeSectionStats,
+} from '../../../components/collection/CollectionSection.tsx'
 import { ArcadeCard } from '../../../components/shared/ArcadeCard.tsx'
 import { PageHeader } from '../../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../../components/shared/PageShell.tsx'
@@ -100,6 +103,10 @@ function UserCollectionPage() {
           key: r,
           title: RARITY_LABELS[r],
           entries: filteredEntries.filter((e) => e.card.rarity === r),
+          stats: computeSectionStats(
+            allCards.filter((c) => c.rarity === r),
+            userCards,
+          ),
         }))
         .filter((g) => g.entries.length > 0)
     }
@@ -115,9 +122,17 @@ function UserCollectionPage() {
     }
     return order.map((id) => {
       const g = byId.get(id)
-      return { key: id, title: g?.name ?? '', entries: g?.entries ?? [] }
+      return {
+        key: id,
+        title: g?.name ?? '',
+        entries: g?.entries ?? [],
+        stats: computeSectionStats(
+          allCards.filter((c) => c.set.id === id),
+          userCards,
+        ),
+      }
     })
-  }, [group, filteredEntries])
+  }, [group, filteredEntries, allCards, userCards])
 
   const ownedCount = userCards.length
   const totalCount = displayEntries.length
@@ -193,7 +208,10 @@ function UserCollectionPage() {
             key={section.key}
             title={section.title}
             entries={section.entries}
-            onDetail={() => {}}
+            stats={section.stats}
+            onDetail={() => {
+              // Vue lecture seule : pas de modale de détail sur le profil d'autrui.
+            }}
           />
         ))
       )}

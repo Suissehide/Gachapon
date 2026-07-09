@@ -10,7 +10,10 @@ import {
   type RarityFilter,
   type VariantFilter,
 } from '../../components/collection/CollectionFilters.tsx'
-import { CollectionSection } from '../../components/collection/CollectionSection.tsx'
+import {
+  CollectionSection,
+  computeSectionStats,
+} from '../../components/collection/CollectionSection.tsx'
 import { RecycleModal } from '../../components/collection/RecycleModal.tsx'
 import { ArcadeCard } from '../../components/shared/ArcadeCard.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
@@ -127,6 +130,10 @@ function Collection() {
           key: r,
           title: RARITY_LABELS[r],
           entries: filteredEntries.filter((e) => e.card.rarity === r),
+          stats: computeSectionStats(
+            allCards.filter((c) => c.rarity === r),
+            userCards,
+          ),
         }))
         .filter((g) => g.entries.length > 0)
     }
@@ -147,9 +154,13 @@ function Collection() {
         key: id,
         title: group?.name ?? '',
         entries: group?.entries ?? [],
+        stats: computeSectionStats(
+          allCards.filter((c) => c.set.id === id),
+          userCards,
+        ),
       }
     })
-  }, [group, filteredEntries])
+  }, [group, filteredEntries, allCards, userCards])
 
   const handleDetail = (entry: DisplayEntry) => setDetailKey(entry.key)
 
@@ -218,6 +229,7 @@ function Collection() {
             key={section.key}
             title={section.title}
             entries={section.entries}
+            stats={section.stats}
             onDetail={handleDetail}
             showWishlist
           />
