@@ -4,10 +4,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import type { CardRarity } from '../../../constants/card.constant'
 import {
+  EFFECT_CONFIG,
+  type EffectConfig,
   PARTICLE_COLORS,
   PARTICLE_COUNTS,
-  RARITY_CONFIG,
-  type RarityEffectConfig,
 } from './rarityConfig'
 import {
   drawChromAberration,
@@ -30,7 +30,7 @@ import type {
 
 function spawnParticles(
   s: EffectState,
-  config: RarityEffectConfig,
+  config: EffectConfig,
   cx: number,
   cy: number,
 ): void {
@@ -71,7 +71,7 @@ function spawnParticles(
 
 function spawnInkBlots(
   s: EffectState,
-  config: RarityEffectConfig,
+  config: EffectConfig,
   cx: number,
   cy: number,
 ): void {
@@ -196,7 +196,7 @@ function hasActiveEffects(s: EffectState): boolean {
 
 function applyShake(
   container: HTMLElement,
-  config: RarityEffectConfig,
+  config: EffectConfig,
   addTimer: (fn: () => void, delay: number) => void,
 ): void {
   if (config.shake <= 0) {
@@ -215,11 +215,14 @@ function applyShake(
   // Card tilt/zoom at impact
   container.style.setProperty('--impact-dur', `${config.shakeDuration + 50}ms`)
   container.classList.add('card-impact')
-  addTimer(() => container.classList.remove('card-impact'), config.shakeDuration + 100)
+  addTimer(
+    () => container.classList.remove('card-impact'),
+    config.shakeDuration + 100,
+  )
 }
 
 function applyFlashes(
-  config: RarityEffectConfig,
+  config: EffectConfig,
   addTimer: (fn: () => void, delay: number) => void,
 ): void {
   if (config.triFlash) {
@@ -239,7 +242,7 @@ function applyFlashes(
 
 function scheduleWaves(
   s: EffectState,
-  config: RarityEffectConfig,
+  config: EffectConfig,
   addTimer: (fn: () => void, delay: number) => void,
   ensureRAF: () => void,
 ): void {
@@ -264,7 +267,7 @@ const FLASH_DONE = 260
 
 function scheduleHalftoneAndChrom(
   s: EffectState,
-  config: RarityEffectConfig,
+  config: EffectConfig,
   addTimer: (fn: () => void, delay: number) => void,
   ensureRAF: () => void,
 ): void {
@@ -432,7 +435,7 @@ export function useRevealEffect(
 
     clearAll()
 
-    const config = RARITY_CONFIG[rarity]
+    const config = EFFECT_CONFIG[rarity]
 
     const rect = container.getBoundingClientRect()
     if (scoped) {
@@ -442,7 +445,10 @@ export function useRevealEffect(
       s.cx = rect.left + rect.width / 2
       s.cy = rect.top + rect.height / 2
     }
-    setImpactPos({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 })
+    setImpactPos({
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+    })
 
     applyShake(container, config, addTimer)
     applyFlashes(config, addTimer)

@@ -2,7 +2,25 @@ import type { CardRarity } from '../../../constants/card.constant'
 
 export type { CardRarity as Rarity }
 
-export type ParticleSetKey = 'uncommon' | 'rare' | 'epic' | 'legendary'
+// Clé d'effet : la variante écrase la rareté (remplacement total, décision de
+// spec). BRILLIANT et HOLOGRAPHIC ont leur propre animation, la rareté ne
+// pilote alors plus rien.
+export type EffectKey = CardRarity | 'BRILLIANT' | 'HOLOGRAPHIC'
+
+export function resolveEffectKey(
+  rarity: CardRarity,
+  variant: string | null | undefined,
+): EffectKey {
+  return variant === 'BRILLIANT' || variant === 'HOLOGRAPHIC' ? variant : rarity
+}
+
+export type ParticleSetKey =
+  | 'uncommon'
+  | 'rare'
+  | 'epic'
+  | 'legendary'
+  | 'brilliant'
+  | 'holo'
 
 export interface WaveConfig {
   col: string
@@ -12,7 +30,7 @@ export interface WaveConfig {
   ghost: boolean
 }
 
-export interface RarityEffectConfig {
+export interface EffectConfig {
   impactText: string | null
   impactSize: string
   impactColor: string
@@ -23,10 +41,13 @@ export interface RarityEffectConfig {
   shakeDuration: number
   flashColor: string | null
   triFlash: boolean
+  // Couleurs du tri-flash — défaut CMJ legendary si absent (voir applyFlashes).
+  triFlashColors?: string[]
   scanlineColor: string | null
 
   waves: WaveConfig[]
-  particleSet: 'none' | 'uncommon' | 'rare' | 'epic' | 'legendary'
+  particleSet: 'none' | ParticleSetKey
+  particleHueShift: boolean
   inkBlots: boolean
   inkColors: string[]
   speedLines: boolean
@@ -34,17 +55,21 @@ export interface RarityEffectConfig {
   halftone: boolean
   chromaticAberration: boolean
   chromaticDuration: number
+  tearBands: boolean
+  starSparkles: boolean
+  prismRays: boolean
 }
 
-// Colors are aligned with RARITY_TONES from shared/tcg-card/config.ts so the
-// canvas effect, impact word, and card frame all speak the same language:
-//   COMMON     → #6b7280 (grey)
-//   UNCOMMON   → #22c55e (green)
-//   RARE       → #3b82f6 (blue)
-//   EPIC       → #8b5cf6 (purple)
-//   LEGENDARY  → #f59e0b (amber) with #ec4899 + #fcd34d accents
-
-export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
+// Chaque clé a UNE primitive vedette que les autres n'utilisent pas :
+//   COMMON     → « pof » : 1 anneau sec, rien d'autre
+//   UNCOMMON   → étincelles : particules only, aucun anneau
+//   RARE       → zoom : speed lines radiales manga
+//   EPIC       → glitch : aberration chromatique + tear bands
+//   LEGENDARY  → splash page : halftone + encre + tri-flash (SANS speed lines
+//                ni chromatique, qui appartiennent à RARE/EPIC)
+//   BRILLIANT  → ruée vers l'or : star sparkles 4 branches dorées
+//   HOLOGRAPHIC→ prisme : rayons arc-en-ciel rotatifs + particules hue-shift
+export const EFFECT_CONFIG: Record<EffectKey, EffectConfig> = {
   COMMON: {
     impactText: null,
     impactSize: '42px',
@@ -67,6 +92,7 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
       },
     ],
     particleSet: 'none',
+    particleHueShift: false,
     inkBlots: false,
     inkColors: [],
     speedLines: false,
@@ -74,6 +100,9 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
     halftone: false,
     chromaticAberration: false,
     chromaticDuration: 0,
+    tearBands: false,
+    starSparkles: false,
+    prismRays: false,
   },
 
   UNCOMMON: {
@@ -92,6 +121,7 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
     // particules vertes qui monte. C'est l'absence d'onde qui la distingue.
     waves: [],
     particleSet: 'uncommon',
+    particleHueShift: false,
     inkBlots: false,
     inkColors: [],
     speedLines: false,
@@ -99,6 +129,9 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
     halftone: false,
     chromaticAberration: false,
     chromaticDuration: 0,
+    tearBands: false,
+    starSparkles: false,
+    prismRays: false,
   },
 
   RARE: {
@@ -117,6 +150,7 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
     // radiales qui emplissent l'écran. Motion pure, aucune onde.
     waves: [],
     particleSet: 'rare',
+    particleHueShift: false,
     inkBlots: false,
     inkColors: [],
     speedLines: true,
@@ -124,6 +158,9 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
     halftone: false,
     chromaticAberration: false,
     chromaticDuration: 0,
+    tearBands: false,
+    starSparkles: false,
+    prismRays: false,
   },
 
   EPIC: {
@@ -138,11 +175,8 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
     triFlash: false,
     scanlineColor: null,
 
-    // Signature « glitch » : anneaux dédoublés RVB (ghost) + forte aberration
-    // chromatique = réalité qui se brise. Pas d'encre (trop molle), pas de
-    // lignes de vitesse (exclusives à Rare).
-    // Fast rapid-fire ghost rings that sweep PAST the card (visible, not hidden
-    // behind it) + heavy chromatic split = violent purple glitch.
+    // Signature « glitch » : anneaux dédoublés RVB + aberration chromatique
+    // + NOUVELLES bandes de déchirure d'écran = réalité qui se brise.
     waves: [
       { col: 'rgb(196,181,253)', w: 8, spd: 17, delay: 0, ghost: true },
       { col: 'rgb(139,92,246)', w: 6, spd: 15, delay: 55, ghost: true },
@@ -150,6 +184,7 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
       { col: 'rgb(167,139,250)', w: 3, spd: 11, delay: 200, ghost: true },
     ],
     particleSet: 'epic',
+    particleHueShift: false,
     inkBlots: false,
     inkColors: [],
     speedLines: false,
@@ -157,6 +192,9 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
     halftone: false,
     chromaticAberration: true,
     chromaticDuration: 900,
+    tearBands: true,
+    starSparkles: false,
+    prismRays: false,
   },
 
   LEGENDARY: {
@@ -172,6 +210,10 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
     triFlash: true,
     scanlineColor: null,
 
+    // Signature « splash page » : la page de BD qui explose — tri-flash,
+    // halftone Ben-Day, taches d'encre, anneaux ambre. On lui RETIRE les
+    // speed lines (signature de RARE) et la chromatique (signature d'EPIC) :
+    // feu d'artifice éditorial, pas « tout en même temps ».
     waves: [
       { col: 'rgb(120,53,15)', w: 8, spd: 9, delay: 0, ghost: false },
       { col: 'rgb(245,158,11)', w: 5.5, spd: 7.5, delay: 55, ghost: true },
@@ -181,13 +223,89 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
       { col: 'rgb(252,211,77)', w: 1.5, spd: 3.5, delay: 480, ghost: false },
     ],
     particleSet: 'legendary',
+    particleHueShift: false,
     inkBlots: true,
     inkColors: ['#f59e0b', '#fcd34d', '#ec4899', '#78350f', '#fbbf24'],
-    speedLines: true,
-    speedLineCount: 28,
+    speedLines: false,
+    speedLineCount: 0,
     halftone: true,
-    chromaticAberration: true,
-    chromaticDuration: 550,
+    chromaticAberration: false,
+    chromaticDuration: 0,
+    tearBands: false,
+    starSparkles: false,
+    prismRays: false,
+  },
+
+  BRILLIANT: {
+    // Le mot affiché pour une variante est en réalité IMPACT_VARIANT
+    // (RevealGrid) — dégradé animé. Ces valeurs restent pour cohérence.
+    impactText: 'SCINTILLANT!',
+    impactSize: '68px',
+    impactColor: '#f59e0b',
+    impactStroke: '#78350f',
+
+    // Intensité ≈ EPIC (décision de spec).
+    shake: 8,
+    shakeDuration: 380,
+    flashColor: 'rgba(253,230,138,0.95)',
+    triFlash: false,
+    scanlineColor: null,
+
+    // Signature « ruée vers l'or » : flash doré chaud, pluie d'étoiles
+    // scintillantes 4 branches, anneaux dorés épais. Aucun élément d'une
+    // autre signature (pas de speed lines, encre, halftone, chromatique).
+    waves: [
+      { col: 'rgb(180,83,9)', w: 7, spd: 9, delay: 0, ghost: false },
+      { col: 'rgb(245,158,11)', w: 5, spd: 7.5, delay: 90, ghost: false },
+      { col: 'rgb(253,230,138)', w: 3.5, spd: 6, delay: 200, ghost: false },
+    ],
+    particleSet: 'none',
+    particleHueShift: false,
+    inkBlots: false,
+    inkColors: [],
+    speedLines: false,
+    speedLineCount: 0,
+    halftone: false,
+    chromaticAberration: false,
+    chromaticDuration: 0,
+    tearBands: false,
+    starSparkles: true,
+    prismRays: false,
+  },
+
+  HOLOGRAPHIC: {
+    impactText: 'CHROMATIQUE!',
+    impactSize: '72px',
+    impactColor: '#a855f7',
+    impactStroke: '#4c1d95',
+
+    // Intensité ≈ LEGENDARY (décision de spec).
+    shake: 12,
+    shakeDuration: 420,
+    flashColor: null,
+    triFlash: true,
+    triFlashColors: [
+      'rgba(34,211,238,0.85)',
+      'rgba(236,72,153,0.85)',
+      'rgba(168,85,247,0.85)',
+    ],
+    scanlineColor: null,
+
+    // Signature « prisme » : rayons arc-en-ciel rotatifs + particules à
+    // teinte cyclante. Aucun anneau — le prisme EST l'élément radial.
+    waves: [],
+    particleSet: 'holo',
+    particleHueShift: true,
+    inkBlots: false,
+    inkColors: [],
+    speedLines: false,
+    speedLineCount: 0,
+    halftone: false,
+    chromaticAberration: false,
+    chromaticDuration: 0,
+    tearBands: false,
+    starSparkles: false,
+    prismRays: true,
   },
 }
 
@@ -196,6 +314,11 @@ export const PARTICLE_COLORS: Record<ParticleSetKey, string[]> = {
   rare: ['#3b82f6', '#93c5fd', '#1e3a8a', '#fff', '#60a5fa'],
   epic: ['#8b5cf6', '#c4b5fd', '#4c1d95', '#fff', '#a78bfa'],
   legendary: ['#f59e0b', '#fcd34d', '#ec4899', '#78350f', '#fbbf24', '#fff'],
+  // Palette or : star sparkles (BRILLIANT) + fond ambiant. Pas de particules
+  // classiques pour BRILLIANT (counts à 0) — les étoiles sont la signature.
+  brilliant: ['#f59e0b', '#fde68a', '#fbbf24', '#fffbe6', '#b45309'],
+  // Couleurs de DÉPART holo — la teinte cycle ensuite au rendu (hue-shift).
+  holo: ['#22d3ee', '#a855f7', '#f59e0b', '#ec4899', '#38bdf8'],
 }
 
 // [squares, streaks, dots]
@@ -205,6 +328,8 @@ export const PARTICLE_COUNTS: Record<ParticleSetKey, [number, number, number]> =
     rare: [22, 32, 16],
     epic: [40, 60, 28],
     legendary: [90, 140, 65],
+    brilliant: [0, 0, 0],
+    holo: [70, 110, 50],
   }
 
 // ── Ambient background (persistent post-reveal atmosphere) ──────────────────

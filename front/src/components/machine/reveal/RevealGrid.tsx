@@ -17,7 +17,7 @@ import { Button } from '../../ui/button'
 import { RevealAmbientBackground } from './RevealAmbientBackground'
 import { RevealCanvases } from './RevealCanvases'
 import { RevealInspectOverlay } from './RevealInspectOverlay'
-import { RARITY_CONFIG } from './rarityConfig'
+import { EFFECT_CONFIG } from './rarityConfig'
 import { useRevealEffect } from './useRevealEffect'
 
 const RARITY_RANK: Record<string, number> = {
@@ -423,7 +423,7 @@ function FullscreenRarityEffect({
 }) {
   const { containerRef, canvasRefs, impactVisible, triggerReveal } =
     useRevealEffect(rarity)
-  const config = RARITY_CONFIG[rarity]
+  const config = EFFECT_CONFIG[rarity]
   const tone = getRarityTone(rarity)
 
   const kind: ImpactKind =
