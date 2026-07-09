@@ -10,7 +10,31 @@ import {
 } from '../../schemas/rewards.schemas'
 
 export const rewardsRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { rewardsDomain } = fastify.iocContainer
+  const { rewardsDomain, storageClient } = fastify.iocContainer
+
+  // Granted cards carry a storage key in `imageUrl`; resolve it to a public URL
+  // so the front reveal renders the art instead of the not-found placeholder.
+  const resolveClaimCards = <
+    T extends { cards?: { card: { imageUrl: string | null } }[] },
+  >(
+    result: T,
+  ): T => {
+    if (!result.cards) {
+      return result
+    }
+    return {
+      ...result,
+      cards: result.cards.map((entry) => ({
+        ...entry,
+        card: {
+          ...entry.card,
+          imageUrl: entry.card.imageUrl
+            ? storageClient.publicUrl(entry.card.imageUrl)
+            : null,
+        },
+      })),
+    }
+  }
 
   // GET /rewards/pending — list unclaimed rewards for the current user
   fastify.get(
@@ -34,8 +58,12 @@ export const rewardsRouter: FastifyPluginCallbackZod = (fastify) => {
         response: { 200: claimResultSchema },
       },
     },
-    (request) => {
-      return rewardsDomain.claimOne(request.params.id, request.user.userID)
+    async (request) => {
+      const result = await rewardsDomain.claimOne(
+        request.params.id,
+        request.user.userID,
+      )
+      return resolveClaimCards(result)
     },
   )
 
@@ -51,7 +79,7 @@ export const rewardsRouter: FastifyPluginCallbackZod = (fastify) => {
       if (result === null) {
         return reply.status(204).send(null)
       }
-      return result
+      return resolveClaimCards(result)
     },
   )
 

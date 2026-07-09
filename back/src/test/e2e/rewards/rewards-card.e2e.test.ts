@@ -13,6 +13,7 @@ describe('Rewards card grant e2e', () => {
   let userId: string
   let setId: string
   let cardId: string
+  let imageKey: string
   const rewardIds: string[] = []
 
   const suffix = Date.now()
@@ -54,10 +55,12 @@ describe('Rewards card grant e2e', () => {
         setId: set.id,
         name: `Reward EPIC ${suffix}`,
         rarity: 'EPIC',
-        imageUrl: 'https://example.test/epic.png',
+        // Cards store a storage key; the route must resolve it to a public URL.
+        imageUrl: `cards/epic-${suffix}.png`,
       },
     })
     cardId = card.id
+    imageKey = card.imageUrl as string
 
     // Reward granting an EPIC card, assigned as a pending achievement reward.
     const reward = await postgresOrm.prisma.reward.create({
@@ -120,6 +123,12 @@ describe('Rewards card grant e2e', () => {
     expect(body.cards[0].card.id).toBe(cardId)
     expect(body.cards[0].card.rarity).toBe('EPIC')
     expect(body.cards[0].card.variant).toBe('NORMAL')
+
+    // imageUrl must be the resolved public URL, not the raw storage key, so
+    // the front reveal shows the art instead of the not-found placeholder.
+    const { storageClient } = (app as any).iocContainer
+    expect(body.cards[0].card.imageUrl).toBe(storageClient.publicUrl(imageKey))
+    expect(body.cards[0].card.imageUrl).not.toBe(imageKey)
 
     // The card is actually in the user's collection now.
     const owned = await postgresOrm.prisma.userCard.findFirst({
