@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import {
+  CalendarClock,
   Coins,
   Crown,
   Layers,
@@ -22,6 +23,20 @@ import { useAuthDialogStore } from '../stores/authDialog.store'
 export const Route = createFileRoute('/stats')({
   component: StatsPage,
 })
+
+const fallback: PublicStats = {
+  totalUsers: 0,
+  totalPulls: 0,
+  totalCards: 0,
+  activeUsers: 0,
+  legendaryPulls: 0,
+  pullsToday: 0,
+  totalDust: 0,
+  setsCount: 0,
+  legendaryCardsCount: 0,
+  activeToday: 0,
+  recentLegendaries: [],
+}
 
 function useCountUp(target: number, duration = 1800) {
   const [value, setValue] = useState(0)
@@ -100,20 +115,6 @@ function StatCard({
 function StatsPage() {
   const { openRegister } = useAuthDialogStore()
   const { data: stats } = usePublicStats()
-
-  const fallback: PublicStats = {
-    totalUsers: 0,
-    totalPulls: 0,
-    totalCards: 0,
-    activeUsers: 0,
-    legendaryPulls: 0,
-    pullsToday: 0,
-    totalDust: 0,
-    setsCount: 0,
-    legendaryCardsCount: 0,
-    activeToday: 0,
-    recentLegendaries: [],
-  }
 
   const s = stats ?? fallback
 
@@ -204,7 +205,7 @@ function StatsPage() {
             delay={400}
           />
           <StatCard
-            icon={Zap}
+            icon={CalendarClock}
             label="Capsules ouvertes aujourd'hui"
             value={s.pullsToday}
             bgColor="bg-secondary/10"
