@@ -14,6 +14,7 @@ import { GachaBall } from '../../components/machine/GachaBall'
 import type { MachineStageHandle } from '../../components/machine/MachineStage'
 import { MachineStage } from '../../components/machine/MachineStage'
 import { RevealGrid } from '../../components/machine/reveal/RevealGrid'
+import { AchievementsCard } from '../../components/play/AchievementsCard.tsx'
 import { BoostCard } from '../../components/play/BoostCard.tsx'
 import { LevelCard } from '../../components/play/LevelCard.tsx'
 import { PityCard } from '../../components/play/PityCard.tsx'
@@ -353,7 +354,7 @@ function Play() {
       </header>
 
       {/* Scène : stats / machine / récents */}
-      <div className="relative z-1 mx-auto mt-1 flex w-full max-w-5xl flex-1 flex-col gap-4 lg:grid lg:grid-cols-[260px_1fr_260px] lg:items-center lg:gap-6">
+      <div className="relative z-1 mx-auto mt-6 flex w-full max-w-5xl flex-1 flex-col gap-4 lg:grid lg:grid-cols-[260px_1fr_260px] lg:gap-6">
         {/* Cartes de stats */}
         <div className="order-2 grid grid-cols-2 gap-2.5 md:grid-cols-4 lg:order-1 lg:flex lg:flex-col lg:gap-3.5">
           <TokenCard />
@@ -361,11 +362,12 @@ function Play() {
           <StreakCard />
           <LevelCard />
           <QuestsCard />
+          <AchievementsCard />
           <BoostCard />
         </div>
 
         {/* Machine + actions */}
-        <div className="order-1 flex flex-col items-center lg:order-2">
+        <div className="order-1 flex flex-col items-center lg:order-2 lg:self-center">
           <div className="relative flex min-h-[280px] w-full flex-col items-center justify-end lg:min-h-[400px]">
             {/* Spot lumineux */}
             <div
@@ -428,7 +430,7 @@ function Play() {
         </div>
 
         {/* Tirages récents */}
-        <div className="order-3 flex min-h-0 flex-col self-stretch lg:justify-center">
+        <div className="order-3 flex min-h-0 flex-col self-stretch">
           {/* Freeze the feed while a pull is in flight so the just-pulled card
            *  doesn't surface in "récents" before its reveal animation. */}
           <RecentsPanel frozen={phase !== 'idle'} />
