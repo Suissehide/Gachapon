@@ -98,18 +98,21 @@ export function drawParticles(
       const nx = p.vx / spd
       const ny = p.vy / spd
 
-      // Red misprint shadow
-      ctx.globalAlpha = a * 0.2
-      ctx.strokeStyle = '#ff0055'
-      ctx.lineWidth = p.size
-      ctx.beginPath()
-      ctx.moveTo(p.x + 3 - nx * len, p.y + 3 - ny * len)
-      ctx.lineTo(p.x + 3, p.y + 3)
-      ctx.stroke()
+      // Red misprint shadow — pas en hue-shift (rendu doux, non cartoon)
+      if (p.baseHue == null) {
+        ctx.globalAlpha = a * 0.2
+        ctx.strokeStyle = '#ff0055'
+        ctx.lineWidth = p.size
+        ctx.beginPath()
+        ctx.moveTo(p.x + 3 - nx * len, p.y + 3 - ny * len)
+        ctx.lineTo(p.x + 3, p.y + 3)
+        ctx.stroke()
+      }
 
       // Main streak
       ctx.globalAlpha = a
       ctx.strokeStyle = col
+      ctx.lineWidth = p.size
       ctx.beginPath()
       ctx.moveTo(p.x - nx * len, p.y - ny * len)
       ctx.lineTo(p.x, p.y)
@@ -124,20 +127,24 @@ export function drawParticles(
         }
       }
 
-      // Red misprint shadow at (+3, +3)
-      ctx.globalAlpha = a * 0.2
-      drawShape(p.x + 3, p.y + 3)
-      ctx.fillStyle = '#ff0055'
-      ctx.fill()
+      // Red misprint shadow at (+3, +3) — pas en hue-shift
+      if (p.baseHue == null) {
+        ctx.globalAlpha = a * 0.2
+        drawShape(p.x + 3, p.y + 3)
+        ctx.fillStyle = '#ff0055'
+        ctx.fill()
+      }
 
-      // Main shape
+      // Main shape — le contour noir BD saute en hue-shift (non cartoon)
       ctx.globalAlpha = a
       drawShape(p.x, p.y)
       ctx.fillStyle = col
       ctx.fill()
-      ctx.strokeStyle = '#000'
-      ctx.lineWidth = 2
-      ctx.stroke()
+      if (p.baseHue == null) {
+        ctx.strokeStyle = '#000'
+        ctx.lineWidth = 2
+        ctx.stroke()
+      }
     }
   }
   ctx.globalAlpha = 1
@@ -333,7 +340,7 @@ export function drawChromAberration(
 
 // ── Tear bands (déchirure d'écran glitch — signature EPIC) ────────────────────
 
-const TEAR_DECAY = 0.04
+const TEAR_DECAY = 0.03
 const TEAR_RESHUFFLE_FRAMES = 4
 
 export function drawTearBands(
@@ -349,19 +356,21 @@ export function drawTearBands(
   if (state.reshuffleIn <= 0) {
     state.reshuffleIn = TEAR_RESHUFFLE_FRAMES
     for (const b of state.bands) {
-      b.offset = (Math.random() - 0.5) * 60 * state.life
+      b.offset = (Math.random() - 0.5) * 140 * state.life
     }
   }
 
   for (const b of state.bands) {
     const y = b.y * H
     const h = b.h * H
-    // Liseré rouge en haut, cyan en bas (frange RVB), cœur translucide décalé
-    ctx.fillStyle = `rgba(255,0,85,${state.life * 0.35})`
-    ctx.fillRect(b.offset - 4, y, W, 2)
-    ctx.fillStyle = `rgba(0,207,255,${state.life * 0.35})`
-    ctx.fillRect(b.offset + 4, y + h - 2, W, 2)
-    ctx.fillStyle = `rgba(255,255,255,${state.life * 0.08})`
+    // Liseré rouge en haut, cyan en bas (frange RVB), cœur sombre décalé.
+    // Le canvas chrom est en mix-blend multiply : le blanc y est invisible,
+    // la « tranche » doit être sombre pour se voir.
+    ctx.fillStyle = `rgba(255,0,85,${state.life * 0.6})`
+    ctx.fillRect(b.offset - 7, y, W, 3)
+    ctx.fillStyle = `rgba(0,207,255,${state.life * 0.6})`
+    ctx.fillRect(b.offset + 7, y + h - 3, W, 3)
+    ctx.fillStyle = `rgba(0,0,0,${state.life * 0.2})`
     ctx.fillRect(b.offset, y, W, h)
   }
 
@@ -420,7 +429,7 @@ export function drawStarSparkles(
 // ── Prism rays (secteurs arc-en-ciel rotatifs — signature HOLOGRAPHIC) ────────
 
 const PRISM_DECAY = 0.008
-const PRISM_SPIN = 0.006 // rad/frame
+const PRISM_SPIN = 0.011 // rad/frame
 
 export function drawPrismRays(
   ctx: CanvasRenderingContext2D,
@@ -445,11 +454,17 @@ export function drawPrismRays(
   for (let i = 0; i < state.count; i++) {
     const start = state.rot + slice * i
     const hue = (i / state.count) * 360
+    // Dégradé radial : le rayon s'évanouit vers les bords au lieu d'un
+    // secteur plat — rendu prismatique doux plutôt que camembert cartoon.
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR)
+    grad.addColorStop(0, `hsla(${hue}, 85%, 68%, ${state.life * 0.55})`)
+    grad.addColorStop(0.5, `hsla(${hue}, 85%, 62%, ${state.life * 0.3})`)
+    grad.addColorStop(1, `hsla(${hue}, 85%, 60%, 0)`)
     ctx.beginPath()
     ctx.moveTo(cx, cy)
     ctx.arc(cx, cy, maxR, start, start + slice * 0.5)
     ctx.closePath()
-    ctx.fillStyle = `hsla(${hue}, 90%, 60%, ${state.life * 0.35})`
+    ctx.fillStyle = grad
     ctx.fill()
   }
 

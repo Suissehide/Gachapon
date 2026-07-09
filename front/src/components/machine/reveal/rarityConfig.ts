@@ -111,8 +111,8 @@ export const EFFECT_CONFIG: Record<EffectKey, EffectConfig> = {
     impactColor: '#22c55e',
     impactStroke: '#14532d',
 
-    shake: 2,
-    shakeDuration: 300,
+    shake: 3,
+    shakeDuration: 320,
     flashColor: 'rgba(34,197,94,0.9)',
     triFlash: false,
     scanlineColor: null,
@@ -140,8 +140,8 @@ export const EFFECT_CONFIG: Record<EffectKey, EffectConfig> = {
     impactColor: '#3b82f6',
     impactStroke: '#1e3a8a',
 
-    shake: 5,
-    shakeDuration: 350,
+    shake: 7,
+    shakeDuration: 380,
     flashColor: 'rgba(59,130,246,0.92)',
     triFlash: false,
     scanlineColor: null,
@@ -154,7 +154,7 @@ export const EFFECT_CONFIG: Record<EffectKey, EffectConfig> = {
     inkBlots: false,
     inkColors: [],
     speedLines: true,
-    speedLineCount: 32,
+    speedLineCount: 48,
     halftone: false,
     chromaticAberration: false,
     chromaticDuration: 0,
@@ -169,8 +169,8 @@ export const EFFECT_CONFIG: Record<EffectKey, EffectConfig> = {
     impactColor: '#8b5cf6',
     impactStroke: '#4c1d95',
 
-    shake: 9,
-    shakeDuration: 380,
+    shake: 11,
+    shakeDuration: 450,
     flashColor: 'rgba(139,92,246,0.94)',
     triFlash: false,
     scanlineColor: null,
@@ -204,15 +204,16 @@ export const EFFECT_CONFIG: Record<EffectKey, EffectConfig> = {
     impactStroke: '#78350f',
     impactExtraShadow: '3px 3px 0 #78350f, 6px 6px 0 #ec4899',
 
-    shake: 13,
-    shakeDuration: 420,
+    shake: 16,
+    shakeDuration: 520,
     flashColor: null,
     triFlash: true,
     scanlineColor: null,
 
     // Signature « splash page » : la page de BD qui explose — tri-flash,
-    // halftone Ben-Day, taches d'encre, anneaux ambre. On lui RETIRE les
-    // speed lines (signature de RARE) et la chromatique (signature d'EPIC) :
+    // halftone Ben-Day, déluge de confettis, anneaux ambre. On lui RETIRE les
+    // speed lines (signature de RARE), la chromatique (signature d'EPIC) et
+    // les taches d'encre (retour QA : formes parasites derrière la carte) :
     // feu d'artifice éditorial, pas « tout en même temps ».
     waves: [
       { col: 'rgb(120,53,15)', w: 8, spd: 9, delay: 0, ghost: false },
@@ -224,8 +225,8 @@ export const EFFECT_CONFIG: Record<EffectKey, EffectConfig> = {
     ],
     particleSet: 'legendary',
     particleHueShift: false,
-    inkBlots: true,
-    inkColors: ['#f59e0b', '#fcd34d', '#ec4899', '#78350f', '#fbbf24'],
+    inkBlots: false,
+    inkColors: [],
     speedLines: false,
     speedLineCount: 0,
     halftone: true,
@@ -245,8 +246,8 @@ export const EFFECT_CONFIG: Record<EffectKey, EffectConfig> = {
     impactStroke: '#78350f',
 
     // Intensité ≈ EPIC (décision de spec).
-    shake: 8,
-    shakeDuration: 380,
+    shake: 10,
+    shakeDuration: 450,
     flashColor: 'rgba(253,230,138,0.95)',
     triFlash: false,
     scanlineColor: null,
@@ -258,6 +259,7 @@ export const EFFECT_CONFIG: Record<EffectKey, EffectConfig> = {
       { col: 'rgb(180,83,9)', w: 7, spd: 9, delay: 0, ghost: false },
       { col: 'rgb(245,158,11)', w: 5, spd: 7.5, delay: 90, ghost: false },
       { col: 'rgb(253,230,138)', w: 3.5, spd: 6, delay: 200, ghost: false },
+      { col: 'rgb(255,236,179)', w: 2, spd: 5, delay: 330, ghost: false },
     ],
     particleSet: 'none',
     particleHueShift: false,
@@ -280,8 +282,8 @@ export const EFFECT_CONFIG: Record<EffectKey, EffectConfig> = {
     impactStroke: '#4c1d95',
 
     // Intensité ≈ LEGENDARY (décision de spec).
-    shake: 12,
-    shakeDuration: 420,
+    shake: 14,
+    shakeDuration: 520,
     flashColor: null,
     triFlash: true,
     triFlashColors: [
@@ -324,12 +326,14 @@ export const PARTICLE_COLORS: Record<ParticleSetKey, string[]> = {
 // [squares, streaks, dots]
 export const PARTICLE_COUNTS: Record<ParticleSetKey, [number, number, number]> =
   {
-    uncommon: [30, 50, 28],
-    rare: [22, 32, 16],
-    epic: [40, 60, 28],
-    legendary: [90, 140, 65],
+    uncommon: [45, 70, 40],
+    rare: [30, 45, 22],
+    epic: [60, 90, 42],
+    legendary: [130, 200, 95],
     brilliant: [0, 0, 0],
-    holo: [70, 110, 50],
+    // Holo « moins cartoon » (retour QA) : peu de carrés à contour noir,
+    // surtout des streaks et des points lumineux.
+    holo: [25, 150, 85],
   }
 
 // ── Ambient background (persistent post-reveal atmosphere) ──────────────────

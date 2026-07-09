@@ -102,7 +102,7 @@ function spawnInkBlots(
   }
 }
 
-const SPARKLE_COUNT = 70
+const SPARKLE_COUNT = 110
 
 function spawnStarSparkles(s: EffectState, cx: number, cy: number): void {
   const colors = PARTICLE_COLORS.brilliant
@@ -115,7 +115,7 @@ function spawnStarSparkles(s: EffectState, cx: number, cy: number): void {
       // Éjection radiale avec biais vers le haut → pluie qui retombe
       vx: Math.cos(angle) * speed,
       vy: Math.sin(angle) * speed - 4,
-      size: Math.random() * 10 + 5,
+      size: Math.random() * 12 + 6,
       col: colors[Math.floor(Math.random() * colors.length)],
       life: 1,
       t: Math.floor(Math.random() * 60),
@@ -328,6 +328,10 @@ function scheduleHalftoneAndChrom(
       s.halftones.push({ life: 1 } satisfies HalftoneState)
       ensureRAF()
     }, 500)
+    addTimer(() => {
+      s.halftones.push({ life: 1 } satisfies HalftoneState)
+      ensureRAF()
+    }, 780)
   }
 
   if (config.chromaticAberration) {
@@ -530,7 +534,7 @@ export function useRevealEffect(
         s.tearBands = {
           life: 1,
           reshuffleIn: 0,
-          bands: Array.from({ length: 6 }, () => ({
+          bands: Array.from({ length: 9 }, () => ({
             y: Math.random(),
             h: 0.02 + Math.random() * 0.05,
             offset: 0,
@@ -549,7 +553,7 @@ export function useRevealEffect(
 
     if (config.prismRays) {
       addTimer(() => {
-        s.prismRays = { life: 1, rot: Math.random() * Math.PI, count: 10 }
+        s.prismRays = { life: 1, rot: Math.random() * Math.PI, count: 14 }
         ensureRAF()
       }, FLASH_DONE)
     }

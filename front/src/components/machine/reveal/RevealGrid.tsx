@@ -378,7 +378,7 @@ function ImpactWord({
     top: centerY - 160,
     transform: 'translateX(-50%)',
     fontFamily: 'Impact, Arial Black, sans-serif',
-    fontSize: '4.5rem',
+    fontSize: '5.5rem',
     letterSpacing: '0.04em',
     textTransform: 'uppercase',
     pointerEvents: 'none',
