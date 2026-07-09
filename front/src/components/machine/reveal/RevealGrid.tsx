@@ -440,9 +440,9 @@ function FullscreenRarityEffect({
   const tone = getRarityTone(rarity)
 
   const kind: ImpactKind =
-    variant === 'BRILLIANT'
+    effectKey === 'BRILLIANT'
       ? 'brilliant'
-      : variant === 'HOLOGRAPHIC'
+      : effectKey === 'HOLOGRAPHIC'
         ? 'holo'
         : 'rarity'
   const impactText =
