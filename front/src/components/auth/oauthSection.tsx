@@ -51,6 +51,7 @@ export function OAuthButtons({ action }: { action: 'login' | 'register' }) {
   return (
     <div className="flex flex-col gap-2.5">
       <Button
+        type="button"
         variant="ghost"
         onClick={() => openOAuthPopup('google')}
         className="rounded-xl px-4 h-auto py-2.5 gap-2.5 bg-white text-gray-900 border border-gray-200 hover:bg-gray-50"
@@ -59,6 +60,7 @@ export function OAuthButtons({ action }: { action: 'login' | 'register' }) {
         {`${prefix} avec Google`}
       </Button>
       <Button
+        type="button"
         variant="ghost"
         onClick={() => openOAuthPopup('discord')}
         className="rounded-xl px-4 h-auto py-2.5 gap-2.5 bg-[#5865F2] text-white hover:bg-[#4752C4]"
