@@ -55,10 +55,7 @@ export function ArcadeHero({ profile, featuredCards, isOwnProfile }: Props) {
 
   return (
     <Card className="rounded-3xl p-8 overflow-visible">
-      <div
-        className="grid gap-8"
-        style={{ gridTemplateColumns: 'minmax(0, 320px) minmax(0, 1fr)' }}
-      >
+      <div className="grid grid-cols-1 gap-8 md:[grid-template-columns:minmax(0,320px)_minmax(0,1fr)]">
         {/* Identity column */}
         <div className="flex flex-col gap-5 min-w-0">
           <FoilAvatar initials={initials} isMax={isMax} />
@@ -115,7 +112,7 @@ export function ArcadeHero({ profile, featuredCards, isOwnProfile }: Props) {
                     variant="ghost"
                     size="icon-sm"
                     onClick={startEditName}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="text-text-light"
                     title="Changer le pseudo"
                   >
                     <Pencil className="h-4 w-4" />

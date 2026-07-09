@@ -233,22 +233,24 @@ export function RevealGrid({
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => onPullAgain(1)}
-                    disabled={(tokensRemaining ?? 0) < 1}
-                    className="gap-2 border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
-                  >
-                    Nouveau tirage x1
-                  </Button>
-                  <Button
-                    variant="gradient"
-                    onClick={() => onPullAgain(10)}
-                    disabled={(tokensRemaining ?? 0) < 10}
-                    className="gap-2"
-                  >
-                    Tirage x10
-                  </Button>
+                  <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+                    <Button
+                      variant="outline"
+                      onClick={() => onPullAgain(1)}
+                      disabled={(tokensRemaining ?? 0) < 1}
+                      className="gap-2 border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                    >
+                      Nouveau tirage x1
+                    </Button>
+                    <Button
+                      variant="gradient"
+                      onClick={() => onPullAgain(10)}
+                      disabled={(tokensRemaining ?? 0) < 10}
+                      className="gap-2"
+                    >
+                      Tirage x10
+                    </Button>
+                  </div>
                   <Button
                     variant="ghost"
                     size="icon"

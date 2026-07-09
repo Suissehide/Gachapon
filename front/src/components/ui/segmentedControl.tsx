@@ -14,6 +14,8 @@ interface SegmentedControlProps<T extends string> {
   onChange: (value: T) => void
   /** Étire chaque option pour remplir la largeur du conteneur */
   stretch?: boolean
+  /** Laisse les options passer sur plusieurs lignes si la largeur manque */
+  wrap?: boolean
   className?: string
 }
 
@@ -22,12 +24,14 @@ export function SegmentedControl<T extends string>({
   value,
   onChange,
   stretch = false,
+  wrap = false,
   className,
 }: SegmentedControlProps<T>) {
   return (
     <div
       className={cn(
         'inline-flex gap-0.5 rounded-xl border border-border bg-muted p-0.5',
+        wrap && 'flex flex-wrap',
         className,
       )}
     >

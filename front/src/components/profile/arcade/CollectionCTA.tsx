@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 
-import type { UserProfile, SetProgression } from '../../../api/profile.api'
+import type { SetProgression, UserProfile } from '../../../api/profile.api'
 import { Button } from '../../ui/button'
 
 type Props = {
@@ -10,12 +10,17 @@ type Props = {
   isOwnProfile: boolean
 }
 
-export function CollectionCTA({ profile, sets, username, isOwnProfile }: Props) {
+export function CollectionCTA({
+  profile,
+  sets,
+  username,
+  isOwnProfile,
+}: Props) {
   const exploredSets = sets.filter((s) => s.owned > 0).length
 
   return (
     <div
-      className="rounded-2xl p-6 border flex items-center justify-between overflow-hidden relative"
+      className="rounded-2xl p-6 border flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between overflow-hidden relative"
       style={{
         background: 'linear-gradient(135deg, #fff7ed, #fee2e2, #ede9fe)',
         borderColor: '#fed7aa',

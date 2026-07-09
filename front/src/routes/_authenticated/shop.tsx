@@ -233,7 +233,7 @@ function ShopPage() {
 
       {/* ── Daily Shop Section ─────────────────────────────────── */}
       <Card className="p-6">
-        <div className="mb-4 flex items-baseline justify-between gap-3">
+        <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
           <div className="flex items-center gap-2">
             <CalendarClock className="h-4 w-4 text-accent" />
             <CardTitle className="text-sm uppercase tracking-wider">

@@ -20,40 +20,61 @@ export function StreakCard({ profile, lastLoginAt, isOwnProfile }: Props) {
   const content = (
     <>
       <div className="flex items-baseline justify-between mb-4">
-        <CardTitle className="text-sm uppercase tracking-wider">Streak de connexion</CardTitle>
+        <CardTitle className="text-sm uppercase tracking-wider">
+          Streak de connexion
+        </CardTitle>
         {isOwnProfile && <ChevronRight size={16} className="text-text-light" />}
       </div>
       <div className="flex items-end gap-8">
         <div>
           <div className="flex items-center gap-2">
-            <Flame size={28} color="#fb923c" style={{ filter: 'drop-shadow(0 0 8px rgba(251, 146, 60, 0.5))' }} />
-            <span className="font-display text-[64px] font-extrabold leading-none">{profile.streakDays}</span>
+            <Flame
+              size={28}
+              color="#fb923c"
+              style={{ filter: 'drop-shadow(0 0 8px rgba(251, 146, 60, 0.5))' }}
+            />
+            <span className="font-display text-[64px] font-extrabold leading-none">
+              {profile.streakDays}
+            </span>
           </div>
-          <div className="font-mono text-[10px] uppercase tracking-wider text-text-light">Jour</div>
+          <div className="font-mono text-[10px] uppercase tracking-wider text-text-light">
+            Jour
+          </div>
         </div>
         <div>
           <div className="flex items-center gap-2">
             <Trophy size={18} className="text-primary-light" />
-            <span className="font-display text-[36px] font-extrabold leading-none">{profile.bestStreak}</span>
+            <span className="font-display text-[36px] font-extrabold leading-none">
+              {profile.bestStreak}
+            </span>
           </div>
-          <div className="font-mono text-[10px] uppercase tracking-wider text-text-light">Record</div>
+          <div className="font-mono text-[10px] uppercase tracking-wider text-text-light">
+            Record
+          </div>
         </div>
       </div>
       <div className="flex gap-2 mt-6">
         {days.map((d) => {
           const active = d.isToday && todayActive
           return (
-            <div key={d.dow} className="flex-1 flex flex-col items-center gap-1">
+            <div
+              key={d.dow}
+              className="flex-1 flex flex-col items-center gap-1"
+            >
               <span
                 className="h-[6px] w-full rounded-full"
                 style={{
                   background: active
                     ? 'linear-gradient(90deg, #fbbf24, #fb923c)'
                     : 'var(--muted)',
-                  boxShadow: active ? '0 0 8px rgba(251, 146, 60, 0.5)' : undefined,
+                  boxShadow: active
+                    ? '0 0 8px rgba(251, 146, 60, 0.5)'
+                    : undefined,
                 }}
               />
-              <span className="font-mono text-[10px] text-text-light">{d.label}</span>
+              <span className="font-mono text-[10px] text-text-light">
+                {d.label}
+              </span>
             </div>
           )
         })}
@@ -74,7 +95,9 @@ export function StreakCard({ profile, lastLoginAt, isOwnProfile }: Props) {
       ) : (
         <Card>{content}</Card>
       )}
-      {isOwnProfile && <StreakSummaryModal open={open} onClose={() => setOpen(false)} />}
+      {isOwnProfile && (
+        <StreakSummaryModal open={open} onClose={() => setOpen(false)} />
+      )}
     </>
   )
 }

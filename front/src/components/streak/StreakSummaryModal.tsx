@@ -238,10 +238,12 @@ function StreakBody({ summary }: { summary: StreakSummary }) {
             Jour {cycleDay} / 30
           </span>
         </div>
-        <div className="grid grid-cols-7 gap-1.5">
-          {slots.map((slot) => (
-            <DayTile key={slot.day} entry={slot.entry} label={slot.label} />
-          ))}
+        <div className="-mx-1 overflow-x-auto px-1 pt-2.5 pb-1">
+          <div className="grid min-w-[420px] grid-cols-7 gap-1.5">
+            {slots.map((slot) => (
+              <DayTile key={slot.day} entry={slot.entry} label={slot.label} />
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -335,9 +337,9 @@ function DayTile({ entry, label }: { entry: StreakDayEntry; label: string }) {
 
       {rewards.length > 1 && (
         <div className="flex gap-0.5">
-          {rewards.slice(1).map((r, i) => (
+          {rewards.slice(1).map((r) => (
             <r.icon
-              key={i}
+              key={r.key}
               className={['h-2.5 w-2.5', r.iconClass].join(' ')}
             />
           ))}
@@ -376,7 +378,10 @@ function RewardOrb({
           useBubbleFg: true,
         }
       case 'past':
-        return { orbClass: 'bg-amber-500/15 text-amber-500/70', useBubbleFg: false }
+        return {
+          orbClass: 'bg-amber-500/15 text-amber-500/70',
+          useBubbleFg: false,
+        }
       case 'past-milestone':
         return {
           orbClass: 'bg-amber-500/20 text-amber-600/80',

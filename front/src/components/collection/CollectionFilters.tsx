@@ -95,6 +95,7 @@ export function CollectionFilters({
           options={VARIANT_OPTIONS}
           value={variant}
           onChange={onVariantChange}
+          wrap
         />
       </div>
 
@@ -104,6 +105,7 @@ export function CollectionFilters({
           options={RARITY_OPTIONS}
           value={rarity}
           onChange={onRarityChange}
+          wrap
         />
       </div>
     </div>
@@ -113,12 +115,7 @@ export function CollectionFilters({
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function Divider() {
-  return (
-    <span
-      aria-hidden
-      className="h-7 w-px bg-[rgba(27,23,38,0.12)]"
-    />
-  )
+  return <span aria-hidden className="h-7 w-px bg-[rgba(27,23,38,0.12)]" />
 }
 
 function Swatch({ kind }: { kind: 'holo' | 'dore' }) {

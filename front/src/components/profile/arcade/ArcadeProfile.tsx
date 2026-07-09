@@ -64,10 +64,7 @@ export function ArcadeProfile({ username }: Props) {
 
       <StatGrid profile={profile} />
 
-      <div
-        className="grid gap-[22px]"
-        style={{ gridTemplateColumns: '1.4fr 1fr' }}
-      >
+      <div className="grid grid-cols-1 gap-3 md:gap-[22px] md:[grid-template-columns:1.4fr_1fr]">
         <XPCard profile={profile} />
         <StreakCard
           profile={profile}

@@ -20,11 +20,11 @@ export function FeaturedCardsFan({ cards }: Props) {
 
   return (
     <div
-      className="relative flex items-end justify-center"
-      // Sized to fit inside an ArcadeHero with a 320px identity column
-      // and 32px gap inside max-w-5xl (≈ 568px available). 5 cards × 130px
-      // overlapping by 38px + small left pad → ~520px wide.
-      style={{ minHeight: 240, paddingLeft: 28 }}
+      // Card width / overlap / left-pad are driven by CSS variables so the fan
+      // shrinks to fit a phone (≈340px) and expands on ≥sm inside the ArcadeHero
+      // (5 cards × 130px overlapping by 34px + left pad → ~520px wide).
+      className="relative flex items-end justify-center min-h-[180px] [--fan-card-w:86px] [--fan-overlap:-26px] [--fan-pad:12px] sm:min-h-[240px] sm:[--fan-card-w:130px] sm:[--fan-overlap:-34px] sm:[--fan-pad:28px]"
+      style={{ paddingLeft: 'var(--fan-pad)' }}
     >
       {cards.map((card, i) => {
         const rotation = (i - 2) * 5
@@ -36,13 +36,13 @@ export function FeaturedCardsFan({ cards }: Props) {
           // biome-ignore lint/a11y/useAriaPropsSupportedByRole: aria-label kept for screen readers describing the hovered card
           <div
             key={card.id}
-            className="w-[130px] transition-all duration-[350ms]"
+            className="w-[var(--fan-card-w)] transition-all duration-[350ms]"
             style={{
               transform: isHovered
                 ? 'translateY(-26px) rotate(0deg) scale(1.06)'
                 : `translateY(${offset}px) rotate(${rotation}deg)`,
               transformOrigin: '50% 100%',
-              marginLeft: i === 0 ? 0 : -34,
+              marginLeft: i === 0 ? 0 : 'var(--fan-overlap)',
               filter: isDimmed
                 ? 'brightness(.65) saturate(.7)'
                 : 'drop-shadow(0 14px 24px rgba(27,23,38,.18))',
