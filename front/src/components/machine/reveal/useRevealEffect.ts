@@ -188,7 +188,10 @@ function hasActiveEffects(s: EffectState): boolean {
     s.inkBlots.some((b) => b.life > 0) ||
     (s.speedLine?.life ?? 0) > 0 ||
     s.halftones.some((h) => h.life > 0) ||
-    (s.chrom?.life ?? 0) > 0
+    (s.chrom?.life ?? 0) > 0 ||
+    (s.tearBands?.life ?? 0) > 0 ||
+    s.sparkles.some((sp) => sp.life > 0) ||
+    (s.prismRays?.life ?? 0) > 0
   )
 }
 
@@ -337,6 +340,9 @@ export function useRevealEffect(
     speedLine: null,
     halftones: [],
     chrom: null,
+    tearBands: null,
+    sparkles: [],
+    prismRays: null,
     timers: [],
     rafId: null,
   })
@@ -413,6 +419,9 @@ export function useRevealEffect(
     s.speedLine = null
     s.halftones = []
     s.chrom = null
+    s.tearBands = null
+    s.sparkles = []
+    s.prismRays = null
     clearCanvases()
   }, [clearCanvases])
 

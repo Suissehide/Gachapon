@@ -19,14 +19,15 @@ export type WaveState = {
 }
 
 export type ParticleState = {
-  x:    number
-  y:    number
-  vx:   number
-  vy:   number
-  col:  string
-  size: number
-  life: number              // 0→1, decays each frame
-  type: 'square' | 'streak' | 'dot'
+  x:       number
+  y:       number
+  vx:      number
+  vy:      number
+  col:     string
+  size:    number
+  life:    number            // 0→1, decays each frame
+  type:    'square' | 'streak' | 'dot'
+  baseHue?: number
 }
 
 export type InkBlotState = {
@@ -51,6 +52,29 @@ export type ChromState = {
   life: number              // 1→0, decays 0.025/frame
 }
 
+export type TearBandState = {
+  life:       number
+  bands:      Array<{ y: number; h: number; offset: number }>
+  reshuffleIn: number
+}
+
+export type StarSparkleState = {
+  x:    number
+  y:    number
+  vx:   number
+  vy:   number
+  size: number
+  col:  string
+  life: number
+  t:    number
+}
+
+export type PrismRayState = {
+  life:  number
+  rot:   number
+  count: number
+}
+
 export type EffectState = {
   cx:        number
   cy:        number
@@ -60,6 +84,9 @@ export type EffectState = {
   speedLine: SpeedLineState | null
   halftones: HalftoneState[]
   chrom:     ChromState | null
+  tearBands: TearBandState | null
+  sparkles:  StarSparkleState[]
+  prismRays: PrismRayState | null
   timers:    ReturnType<typeof setTimeout>[]
   rafId:     number | null
 }
