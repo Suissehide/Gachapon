@@ -116,9 +116,15 @@ export function useUpdateUsernameMutation() {
   return useMutation({
     mutationFn: (username: string) => ProfileApi.updateUsername(username),
     onSuccess: async ({ username }) => {
+      // Update the auth store first so the destination page renders with the
+      // new identity, then navigate. Only AFTER leaving the old profile do we
+      // invalidate: while still mounted on /profile/<old>, invalidating would
+      // refetch that now-deleted username (404) and reject, blocking the
+      // redirect. Post-navigation the old query is inactive, so the default
+      // active-only refetch touches just the new username.
       await fetchMe()
-      await qc.invalidateQueries({ queryKey: ['profile'] })
       await navigate({ to: '/profile/$username', params: { username } })
+      await qc.invalidateQueries({ queryKey: ['profile'] })
     },
     onError: (err) => {
       const info = isApiError(err)
