@@ -16,6 +16,7 @@ import { getRarityTone } from '../../shared/tcg-card/config'
 import { Button } from '../../ui/button'
 import { RevealAmbientBackground } from './RevealAmbientBackground'
 import { RevealCanvases } from './RevealCanvases'
+import { RevealInspectOverlay } from './RevealInspectOverlay'
 import { RARITY_CONFIG } from './rarityConfig'
 import { useRevealEffect } from './useRevealEffect'
 
@@ -61,6 +62,7 @@ export function RevealGrid({
   const [flipped, setFlipped] = useState<Set<number>>(() => new Set())
   const [revealAllTriggered, setRevealAllTriggered] = useState(false)
   const [activeEffect, setActiveEffect] = useState<ActiveEffect | null>(null)
+  const [inspecting, setInspecting] = useState<PullBatchEntry | null>(null)
   const cardRefs = useRef<Array<HTMLDivElement | null>>([])
 
   const stableResults = useMemo(
@@ -202,6 +204,7 @@ export function RevealGrid({
                 entry={entry}
                 flipped={flipped.has(idx)}
                 onFlip={() => flipCard(idx)}
+                onInspect={() => setInspecting(entry)}
                 size={isSingle ? 'lg' : 'sm'}
                 entryDelay={isSingle ? 0 : idx * 70}
                 registerRef={(el) => {
@@ -295,6 +298,13 @@ export function RevealGrid({
           </div>
         </div>
       )}
+
+      {inspecting && (
+        <RevealInspectOverlay
+          entry={inspecting}
+          onClose={() => setInspecting(null)}
+        />
+      )}
     </div>
   )
 }
@@ -372,10 +382,40 @@ function FullscreenRarityEffect({
 
 // ── RevealCard ──────────────────────────────────────────────────────────────
 
+type SpecialBadge = { label: string; Icon: typeof Sparkles; cls: string }
+
+// Priority badge on a revealed card: boostGuarantee > goldenBall > freePull.
+function getSpecialBadge(entry: PullBatchEntry): SpecialBadge | null {
+  if (entry.wasBoostGuarantee) {
+    return {
+      label: 'EPIC garanti',
+      Icon: Sparkles,
+      cls: 'bg-violet-600/95 shadow-violet-700/40',
+    }
+  }
+  if (entry.wasGoldenBall) {
+    return {
+      label: "Boule d'or",
+      Icon: Trophy,
+      cls: 'bg-amber-500/95 shadow-amber-600/40',
+    }
+  }
+  if (entry.wasFreePull) {
+    return {
+      label: 'Gratuit',
+      Icon: Gift,
+      cls: 'bg-sky-500/95 shadow-sky-600/40',
+    }
+  }
+  return null
+}
+
 type CardProps = {
   entry: PullBatchEntry
   flipped: boolean
   onFlip: () => void
+  // Fired when an already-flipped card is tapped — opens the zoom overlay.
+  onInspect: () => void
   size: 'lg' | 'sm'
   entryDelay: number
   registerRef: (el: HTMLDivElement | null) => void
@@ -385,6 +425,7 @@ function RevealCard({
   entry,
   flipped,
   onFlip,
+  onInspect,
   size,
   entryDelay,
   registerRef,
@@ -393,26 +434,7 @@ function RevealCard({
   const tone = getRarityTone(rarity)
   const [showLabel, setShowLabel] = useState(false)
 
-  // Priority badge: boostGuarantee > goldenBall > freePull > NEW (existing)
-  const specialBadge = entry.wasBoostGuarantee
-    ? {
-        label: 'EPIC garanti',
-        Icon: Sparkles,
-        cls: 'bg-violet-600/95 shadow-violet-700/40',
-      }
-    : entry.wasGoldenBall
-      ? {
-          label: "Boule d'or",
-          Icon: Trophy,
-          cls: 'bg-amber-500/95 shadow-amber-600/40',
-        }
-      : entry.wasFreePull
-        ? {
-            label: 'Gratuit',
-            Icon: Gift,
-            cls: 'bg-sky-500/95 shadow-sky-600/40',
-          }
-        : null
+  const specialBadge = getSpecialBadge(entry)
 
   useEffect(() => {
     if (flipped) {
@@ -457,13 +479,15 @@ function RevealCard({
 
       <button
         type="button"
-        onClick={flipped ? undefined : onFlip}
-        className={`relative h-full w-full rounded-2xl bg-transparent disabled:cursor-default ${
+        onClick={flipped ? onInspect : onFlip}
+        aria-label={
+          flipped ? `Inspecter ${entry.card.name}` : 'Révéler la carte'
+        }
+        className={`relative h-full w-full rounded-2xl bg-transparent ${
           flipped
-            ? ''
+            ? 'cursor-zoom-in'
             : 'cursor-pointer transition-transform duration-200 hover:scale-105 hover:shadow-[0_0_24px_var(--rar-glow)]'
         }`}
-        disabled={flipped}
       >
         {!flipped && (
           <img
