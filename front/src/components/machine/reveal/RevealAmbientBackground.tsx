@@ -185,7 +185,7 @@ export function RevealAmbientBackground({ rarity }: Props) {
       {/* God-rays — conic en rotation lente, masqué en fondu radial. */}
       {cfg.rays && (
         <div
-          className="absolute left-1/2 top-[45%] aspect-square w-[140vmax] animate-[ambientSpin_40s_linear_infinite] transition-opacity duration-[800ms]"
+          className="absolute left-1/2 top-[45%] aspect-square w-[140vmax] animate-[ambientSpin_90s_linear_infinite] transition-opacity duration-[800ms]"
           style={
             {
               // Sunburst : un rayon doux répété tous les 30° → 12 rayons
