@@ -1,7 +1,8 @@
 import { useNavigate } from '@tanstack/react-router'
-import { Bell, Check, Users, X } from 'lucide-react'
+import { ArrowRight, Bell, Check, ScrollText, Users, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
+import { useClaimableQuestsCount } from '../../queries/useQuests.ts'
 import {
   useAcceptInvitation,
   useDeclineInvitation,
@@ -10,16 +11,17 @@ import {
 import { Button } from '../ui/button.tsx'
 import { NotificationDot } from './NotificationDot.tsx'
 
-export function InvitationsBadge() {
+export function NotificationsBadge() {
   const [isOpen, setIsOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const { data, isLoading } = useMyInvitations()
+  const questsCount = useClaimableQuestsCount()
   const navigate = useNavigate()
   const accept = useAcceptInvitation()
   const decline = useDeclineInvitation()
 
   const invitations = data?.invitations ?? []
-  const count = invitations.length
+  const count = invitations.length + questsCount
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -44,6 +46,11 @@ export function InvitationsBadge() {
 
   const handleDecline = (token: string) => {
     decline.mutate(token)
+  }
+
+  const goToQuests = () => {
+    setIsOpen(false)
+    void navigate({ to: '/quests' })
   }
 
   return (
@@ -90,6 +97,31 @@ export function InvitationsBadge() {
               </div>
             ) : (
               <ul className="flex flex-col gap-1.5">
+                {questsCount > 0 && (
+                  <li>
+                    <button
+                      type="button"
+                      onClick={goToQuests}
+                      title="Voir mes quêtes"
+                      className="group flex w-full cursor-pointer items-center gap-3 rounded-lg border border-border/60 bg-muted/30 p-3 text-left transition-colors hover:bg-muted/60"
+                    >
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary text-white transition-transform group-hover:scale-105">
+                        <ScrollText className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-display text-sm font-bold text-text transition-colors group-hover:text-primary">
+                          Quêtes à récupérer
+                        </p>
+                        <p className="truncate text-xs text-text-light">
+                          {questsCount > 1
+                            ? `${questsCount} quêtes prêtes à réclamer`
+                            : '1 quête prête à réclamer'}
+                        </p>
+                      </div>
+                      <ArrowRight className="h-4 w-4 shrink-0 text-text-light/50 transition-colors group-hover:text-primary" />
+                    </button>
+                  </li>
+                )}
                 {invitations.map((inv) => {
                   const isAccepting =
                     accept.isPending && accept.variables === inv.token
@@ -106,13 +138,13 @@ export function InvitationsBadge() {
                   return (
                     <li
                       key={inv.id}
-                      className="flex items-start gap-3 rounded-lg border border-border/60 bg-muted/30 p-3 transition-colors hover:bg-muted/60"
+                      className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/30 p-3 transition-colors hover:bg-muted/60"
                     >
                       <button
                         type="button"
                         onClick={goToTeam}
                         title="Voir l'équipe"
-                        className="group flex min-w-0 flex-1 cursor-pointer items-start gap-3 text-left"
+                        className="group flex min-w-0 flex-1 cursor-pointer items-center gap-3 text-left"
                       >
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary text-white transition-transform group-hover:scale-105">
                           <Users className="h-4 w-4" />
@@ -124,7 +156,7 @@ export function InvitationsBadge() {
                           <p className="truncate text-xs text-text-light">
                             {inv.invitedBy
                               ? `${inv.invitedBy.username} t'invite à rejoindre`
-                              : "Tu es invité(e) à rejoindre"}
+                              : 'Tu es invité(e) à rejoindre'}
                           </p>
                         </div>
                       </button>

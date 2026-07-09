@@ -6,7 +6,7 @@ import { useCombatPoints } from '../../queries/useCombatPoints.ts'
 import { useTokenBalance } from '../../queries/useGacha.ts'
 import type { AuthUser } from '../../stores/auth.store'
 import { useAuthStore } from '../../stores/auth.store'
-import { InvitationsBadge } from '../notifications/InvitationsBadge.tsx'
+import { NotificationsBadge } from '../notifications/NotificationsBadge.tsx'
 import { RewardsBadge } from '../rewards/RewardsBadge.tsx'
 import { Button } from '../ui/button.tsx'
 import {
@@ -54,7 +54,7 @@ export function Navbar() {
           <div className="flex items-center gap-2">
             {user && (
               <>
-                <InvitationsBadge />
+                <NotificationsBadge />
                 <RewardsBadge
                   pendingRewardsCount={user.pendingRewardsCount ?? 0}
                 />
@@ -88,7 +88,7 @@ export function Navbar() {
                 </div>
                 <span aria-hidden className="h-[30px] w-px bg-text/[0.12]" />
                 <div className="flex items-center gap-2">
-                  <InvitationsBadge />
+                  <NotificationsBadge />
                   <RewardsBadge
                     pendingRewardsCount={user.pendingRewardsCount ?? 0}
                   />
