@@ -421,6 +421,53 @@ type CardProps = {
   registerRef: (el: HTMLDivElement | null) => void
 }
 
+const VARIANT_LABELS: Record<string, string> = {
+  BRILLIANT: 'Brillant',
+  HOLOGRAPHIC: 'Holographique',
+}
+
+// Variant name under the card (mirrors the rarity label on top). Gold for
+// brilliant, prismatic gradient text for holographic.
+function VariantLabel({
+  variant,
+  size,
+}: {
+  variant: string
+  size: 'lg' | 'sm'
+}) {
+  const label = VARIANT_LABELS[variant]
+  if (!label) {
+    return null
+  }
+  const isHolo = variant === 'HOLOGRAPHIC'
+  return (
+    <div
+      className={`pointer-events-none absolute left-1/2 z-30 -translate-x-1/2 whitespace-nowrap font-display font-black uppercase animate-[fadeInUp_320ms_ease-out_forwards] ${
+        size === 'lg'
+          ? '-bottom-5 text-base tracking-[0.2em]'
+          : '-bottom-3 text-[9px] tracking-[0.14em]'
+      }`}
+      style={
+        isHolo
+          ? {
+              backgroundImage:
+                'linear-gradient(90deg, #22d3ee, #a855f7, #f59e0b, #ec4899)',
+              WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
+              color: 'transparent',
+              filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.6))',
+            }
+          : {
+              color: '#fbbf24',
+              textShadow: '0 0 8px #fbbf24, 0 1px 3px rgba(0,0,0,0.6)',
+            }
+      }
+    >
+      {label}
+    </div>
+  )
+}
+
 function RevealCard({
   entry,
   flipped,
@@ -477,6 +524,11 @@ function RevealCard({
         </div>
       )}
 
+      {/* Variant name below the card — mirrors the rarity label above. */}
+      {showLabel && entry.card.variant && (
+        <VariantLabel variant={entry.card.variant} size={size} />
+      )}
+
       <button
         type="button"
         onClick={flipped ? onInspect : onFlip}
@@ -508,6 +560,7 @@ function RevealCard({
                 variant={entry.card.variant}
                 interactive
                 compact
+                showAura
                 newBadge={
                   !entry.wasDuplicate &&
                   !entry.wasFreePull &&

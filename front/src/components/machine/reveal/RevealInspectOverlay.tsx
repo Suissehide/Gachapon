@@ -70,6 +70,7 @@ export function RevealInspectOverlay({ entry, onClose }: Props) {
           variant={entry.card.variant}
           interactive
           large
+          showAura
         />
 
         <div className="flex flex-wrap items-center justify-center gap-2">

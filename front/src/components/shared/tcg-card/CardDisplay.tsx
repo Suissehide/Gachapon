@@ -1,6 +1,7 @@
 import type React from 'react'
 import { useCallback, useEffect, useRef } from 'react'
 
+import { CardAura } from './CardAura.tsx'
 import type { ElementKey, StatKey } from './config.ts'
 import { TcgCardFace } from './TcgCardFace.tsx'
 
@@ -59,6 +60,8 @@ type Props = {
   description?: string | null
   artPosition?: string
   newBadge?: boolean
+  /** Render the rarity/variant aura (glow + particles) behind the card. */
+  showAura?: boolean
 }
 
 // ── Component ──────────────────────────────────────────────────────────────────
@@ -83,6 +86,7 @@ export function CardDisplay({
   description,
   artPosition,
   newBadge,
+  showAura = false,
 }: Props) {
   const cardRef = useRef<HTMLDivElement>(null)
   const springRef = useRef<SpringState>(makeSpring())
@@ -219,6 +223,14 @@ export function CardDisplay({
           className={`w-full h-full transform-3d [transition:--shine-o_0.35s_ease] ${animClass ?? ''} ${interactive ? 'will-change-transform' : ''}`}
           onAnimationEnd={onAnimationEnd}
         >
+          {showAura && (
+            <CardAura
+              rarity={rarity}
+              variant={variant}
+              intensity={large ? 'large' : 'grid'}
+            />
+          )}
+
           <div className="card-face absolute inset-0 [isolation:isolate]">
             <TcgCardFace
               rarity={rarity}

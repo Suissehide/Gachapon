@@ -88,10 +88,8 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
     triFlash: false,
     scanlineColor: null,
 
-    waves: [
-      { col: 'rgb(34,197,94)', w: 4, spd: 6, delay: 0, ghost: false },
-      { col: 'rgb(20,83,45)', w: 2.5, spd: 4.5, delay: 100, ghost: false },
-    ],
+    // Signature « étincelles » : un seul fin anneau rapide, les particules mènent.
+    waves: [{ col: 'rgb(34,197,94)', w: 2.5, spd: 7, delay: 0, ghost: false }],
     particleSet: 'uncommon',
     inkBlots: false,
     inkColors: [],
@@ -103,7 +101,7 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
   },
 
   RARE: {
-    impactText: 'RARE!',
+    impactText: 'SUPERBE!',
     impactSize: '64px',
     impactColor: '#3b82f6',
     impactStroke: '#1e3a8a',
@@ -114,23 +112,20 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
     triFlash: false,
     scanlineColor: null,
 
-    waves: [
-      { col: 'rgb(30,58,138)', w: 6, spd: 8, delay: 0, ghost: false },
-      { col: 'rgb(59,130,246)', w: 4, spd: 6, delay: 70, ghost: true },
-      { col: 'rgb(147,197,253)', w: 2.5, spd: 5, delay: 180, ghost: false },
-    ],
+    // Signature « zoom » : les lignes de vitesse mènent, un seul anneau net.
+    waves: [{ col: 'rgb(147,197,253)', w: 4, spd: 8, delay: 0, ghost: false }],
     particleSet: 'rare',
     inkBlots: false,
     inkColors: [],
     speedLines: true,
-    speedLineCount: 16,
+    speedLineCount: 26,
     halftone: false,
     chromaticAberration: false,
     chromaticDuration: 0,
   },
 
   EPIC: {
-    impactText: 'ÉPIQUE!',
+    impactText: 'ÉNORME!',
     impactSize: '68px',
     impactColor: '#8b5cf6',
     impactStroke: '#4c1d95',
@@ -141,20 +136,20 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
     triFlash: false,
     scanlineColor: null,
 
+    // Signature « glitch instable » : encre liquide + aberration chromatique
+    // mènent ; anneaux réduits, PAS de lignes de vitesse (exclusives à Rare).
     waves: [
-      { col: 'rgb(76,29,149)', w: 7, spd: 9, delay: 0, ghost: false },
-      { col: 'rgb(139,92,246)', w: 5, spd: 7, delay: 55, ghost: true },
-      { col: 'rgb(196,181,253)', w: 3.5, spd: 6, delay: 160, ghost: true },
-      { col: 'rgb(124,58,237)', w: 2, spd: 5, delay: 280, ghost: false },
+      { col: 'rgb(76,29,149)', w: 5, spd: 8, delay: 0, ghost: true },
+      { col: 'rgb(196,181,253)', w: 3, spd: 6, delay: 140, ghost: true },
     ],
     particleSet: 'epic',
-    inkBlots: false,
+    inkBlots: true,
     inkColors: ['#8b5cf6', '#c4b5fd', '#ddd6fe', '#4c1d95', '#7c3aed'],
-    speedLines: true,
-    speedLineCount: 22,
+    speedLines: false,
+    speedLineCount: 0,
     halftone: false,
     chromaticAberration: true,
-    chromaticDuration: 520,
+    chromaticDuration: 680,
   },
 
   LEGENDARY: {
@@ -179,7 +174,7 @@ export const RARITY_CONFIG: Record<CardRarity, RarityEffectConfig> = {
       { col: 'rgb(252,211,77)', w: 1.5, spd: 3.5, delay: 480, ghost: false },
     ],
     particleSet: 'legendary',
-    inkBlots: false,
+    inkBlots: true,
     inkColors: ['#f59e0b', '#fcd34d', '#ec4899', '#78350f', '#fbbf24'],
     speedLines: true,
     speedLineCount: 28,
@@ -199,9 +194,9 @@ export const PARTICLE_COLORS: Record<ParticleSetKey, string[]> = {
 // [squares, streaks, dots]
 export const PARTICLE_COUNTS: Record<ParticleSetKey, [number, number, number]> =
   {
-    uncommon: [22, 35, 16],
-    rare: [38, 58, 26],
-    epic: [60, 90, 40],
+    uncommon: [30, 50, 28],
+    rare: [22, 32, 16],
+    epic: [40, 60, 28],
     legendary: [90, 140, 65],
   }
 

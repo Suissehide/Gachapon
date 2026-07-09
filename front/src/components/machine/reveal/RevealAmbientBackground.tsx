@@ -182,24 +182,28 @@ export function RevealAmbientBackground({ rarity }: Props) {
           opacity: cfg.auraIntensity,
         }}
       />
-      {/* God-rays — conic en rotation lente, masqué en fondu radial. */}
+      {/* God-rays — conic en rotation lente, masqué en fondu radial. Le wrapper
+       *  centre le disque à l'écran (translate) pour que la rotation pivote
+       *  autour d'un centre visible ; l'enfant porte le spin (rotate) — sinon
+       *  le transform du spin écraserait le translate et le centre partirait
+       *  hors écran (rayons décentrés + balayage trop rapide). */}
       {cfg.rays && (
-        <div
-          className="absolute left-1/2 top-[45%] aspect-square w-[140vmax] animate-[ambientSpin_90s_linear_infinite] transition-opacity duration-[800ms]"
-          style={
-            {
-              // Sunburst : un rayon doux répété tous les 30° → 12 rayons
-              // répartis sur tout le cercle (le conic simple ne couvrait qu'un
-              // arc de 0→60°, d'où l'impression d'un seul rayon).
-              background: `repeating-conic-gradient(from 0deg, transparent 0deg, ${auraColor}55 5deg, transparent 11deg, transparent 30deg)`,
-              maskImage:
-                'radial-gradient(circle at center, rgba(0,0,0,0.9) 0%, transparent 60%)',
-              WebkitMaskImage:
-                'radial-gradient(circle at center, rgba(0,0,0,0.9) 0%, transparent 60%)',
-              opacity: cfg.auraIntensity * 0.6,
-            } as CSSProperties
-          }
-        />
+        <div className="-translate-x-1/2 -translate-y-1/2 absolute top-[45%] left-1/2 aspect-square w-[140vmax] transition-opacity duration-[800ms]">
+          <div
+            className="absolute inset-0 animate-[ambientSpin_120s_linear_infinite]"
+            style={
+              {
+                // Sunburst : un rayon doux répété tous les 30° → 12 rayons.
+                background: `repeating-conic-gradient(from 0deg, transparent 0deg, ${auraColor}55 5deg, transparent 11deg, transparent 30deg)`,
+                maskImage:
+                  'radial-gradient(circle at center, rgba(0,0,0,0.9) 0%, transparent 60%)',
+                WebkitMaskImage:
+                  'radial-gradient(circle at center, rgba(0,0,0,0.9) 0%, transparent 60%)',
+                opacity: cfg.auraIntensity * 0.6,
+              } as CSSProperties
+            }
+          />
+        </div>
       )}
       {/* Particules flottantes. */}
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
