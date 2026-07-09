@@ -106,11 +106,14 @@ export const ProfileApi = {
   },
 
   updateUsername: async (username: string): Promise<{ username: string }> => {
-    const res = await fetchWithAuth(`${apiUrl}${PROFILE_ROUTES.myUsername}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username }),
-    })
+    const res = await fetchWithAuth(
+      `${apiUrl}${PROFILE_ROUTES.myUsername}`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username }),
+      },
+    )
     if (!res.ok) {
       handleHttpError(
         res,

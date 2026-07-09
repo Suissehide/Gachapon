@@ -117,7 +117,7 @@ export function useUpdateUsernameMutation() {
     mutationFn: (username: string) => ProfileApi.updateUsername(username),
     onSuccess: async ({ username }) => {
       await fetchMe()
-      qc.invalidateQueries({ queryKey: ['profile'] })
+      await qc.invalidateQueries({ queryKey: ['profile'] })
       await navigate({ to: '/profile/$username', params: { username } })
     },
     onError: (err) => {
