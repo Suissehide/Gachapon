@@ -15,8 +15,6 @@ import { Helmet } from 'react-helmet-async'
 
 import type { PublicStats } from '../api/stats.api.ts'
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
-import { LiveLegendaries } from '../components/custom/LiveLegendaries.tsx'
-import { StatsTicker } from '../components/custom/StatsTicker.tsx'
 import { usePublicStats } from '../queries/usePublicStats.ts'
 import { useAuthDialogStore } from '../stores/authDialog.store'
 
@@ -135,19 +133,8 @@ function StatsPage() {
         <meta property="og:url" content="https://gachapon.qwetle.fr/stats" />
       </Helmet>
       <LandingNavbar />
-      <div className="pt-24">
-        <StatsTicker
-          items={[
-            { label: 'joueurs inscrits', value: s.totalUsers },
-            { label: 'capsules ouvertes', value: s.totalPulls },
-            { label: 'cartes légendaires obtenues', value: s.legendaryPulls },
-            { label: 'dust accumulé', value: s.totalDust },
-            { label: 'sets', value: s.setsCount },
-          ]}
-        />
-      </div>
 
-      <main className="pt-12 pb-24 px-6 lg:px-10 max-w-4xl mx-auto">
+      <main className="pt-32 pb-24 px-6 lg:px-10 max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-16">
           <p className="text-[11px] font-semibold text-text-light/50 uppercase tracking-[0.2em] mb-4">
@@ -235,14 +222,6 @@ function StatsPage() {
             bgColor="bg-amber-500/10"
             iconColor="text-amber-500"
             delay={800}
-          />
-        </div>
-
-        {/* Live legendaries band */}
-        <div className="mb-16">
-          <LiveLegendaries
-            activeToday={s.activeToday}
-            recent={s.recentLegendaries}
           />
         </div>
 
