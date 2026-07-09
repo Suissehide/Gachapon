@@ -42,7 +42,10 @@ export const useInvestBatch = () => {
   return useMutation({
     mutationFn: (allocations: { nodeId: string; levels: number }[]) =>
       SkillsApi.investBatch(allocations),
-    onSuccess: () => qc.invalidateQueries({ queryKey: SKILLS_KEY }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: SKILLS_KEY })
+      qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
+    },
     onError: (error) => {
       toast({
         title: "Erreur lors de l'enregistrement",

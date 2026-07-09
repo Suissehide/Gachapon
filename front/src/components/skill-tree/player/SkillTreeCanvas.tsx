@@ -238,6 +238,7 @@ export function SkillTreeCanvas({ state, onInvest, onUninvest }: Props) {
       nodesDraggable={false}
       nodesConnectable={false}
       elementsSelectable={false}
+      zoomOnDoubleClick={false}
       proOptions={{ hideAttribution: true }}
     >
       <Background color="#1f2937" gap={24} />
