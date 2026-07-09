@@ -2,10 +2,10 @@
 import type React from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import type { CardRarity } from '../../../constants/card.constant'
 import {
   EFFECT_CONFIG,
   type EffectConfig,
+  type EffectKey,
   PARTICLE_COLORS,
   PARTICLE_COUNTS,
 } from './rarityConfig'
@@ -14,7 +14,10 @@ import {
   drawHalftone,
   drawInkBlots,
   drawParticles,
+  drawPrismRays,
   drawSpeedLines,
+  drawStarSparkles,
+  drawTearBands,
   drawWaves,
 } from './renderers'
 import type {
@@ -55,6 +58,7 @@ function spawnParticles(
       size,
       life: 1,
       type,
+      baseHue: config.particleHueShift ? Math.random() * 360 : undefined,
     })
   }
 
@@ -95,6 +99,27 @@ function spawnInkBlots(
       t: 0,
     }
     s.inkBlots.push(blot)
+  }
+}
+
+const SPARKLE_COUNT = 70
+
+function spawnStarSparkles(s: EffectState, cx: number, cy: number): void {
+  const colors = PARTICLE_COLORS.brilliant
+  for (let i = 0; i < SPARKLE_COUNT; i++) {
+    const angle = Math.random() * Math.PI * 2
+    const speed = Math.random() * 10 + 3
+    s.sparkles.push({
+      x: cx,
+      y: cy,
+      // Éjection radiale avec biais vers le haut → pluie qui retombe
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 4,
+      size: Math.random() * 10 + 5,
+      col: colors[Math.floor(Math.random() * colors.length)],
+      life: 1,
+      t: Math.floor(Math.random() * 60),
+    })
   }
 }
 
@@ -153,9 +178,15 @@ function drawTick(
     drawWaves(waveCtx, s.waves, cx, cy)
   }
 
+  // Canvas partagé pt : particules classiques + star sparkles
   const ptCtx = get('pt')
-  if (ptCtx && s.particles.some((p) => p.life > 0)) {
-    drawParticles(ptCtx, s.particles)
+  if (ptCtx) {
+    if (s.particles.some((p) => p.life > 0)) {
+      drawParticles(ptCtx, s.particles)
+    }
+    if (s.sparkles.some((sp) => sp.life > 0)) {
+      drawStarSparkles(ptCtx, s.sparkles)
+    }
   }
 
   const inkCtx = get('ink')
@@ -163,9 +194,15 @@ function drawTick(
     drawInkBlots(inkCtx, s.inkBlots)
   }
 
+  // Canvas partagé speed : speed lines + prism rays (même famille radiale)
   const speedCtx = get('speed')
-  if (speedCtx && s.speedLine && s.speedLine.life > 0) {
-    drawSpeedLines(speedCtx, s.speedLine, cx, cy, W, H)
+  if (speedCtx) {
+    if (s.speedLine && s.speedLine.life > 0) {
+      drawSpeedLines(speedCtx, s.speedLine, cx, cy, W, H)
+    }
+    if (s.prismRays && s.prismRays.life > 0) {
+      drawPrismRays(speedCtx, s.prismRays, cx, cy, W, H)
+    }
   }
 
   const dotsCtx = get('dots')
@@ -175,9 +212,15 @@ function drawTick(
     }
   }
 
+  // Canvas partagé chrom : aberration chromatique + tear bands (famille glitch)
   const chromCtx = get('chrom')
-  if (chromCtx && s.chrom && s.chrom.life > 0) {
-    drawChromAberration(chromCtx, s.chrom, cx, cy, W, H)
+  if (chromCtx) {
+    if (s.chrom && s.chrom.life > 0) {
+      drawChromAberration(chromCtx, s.chrom, cx, cy, W, H)
+    }
+    if (s.tearBands && s.tearBands.life > 0) {
+      drawTearBands(chromCtx, s.tearBands, W, H)
+    }
   }
 }
 
@@ -224,16 +267,18 @@ function applyShake(
   )
 }
 
+const DEFAULT_TRI_FLASH_COLORS = [
+  'rgba(255,0,85,0.85)',
+  'rgba(255,230,0,0.82)',
+  'rgba(0,207,255,0.82)',
+]
+
 function applyFlashes(
   config: EffectConfig,
   addTimer: (fn: () => void, delay: number) => void,
 ): void {
   if (config.triFlash) {
-    const triColors = [
-      'rgba(255,0,85,0.85)',
-      'rgba(255,230,0,0.82)',
-      'rgba(0,207,255,0.82)',
-    ]
+    const triColors = config.triFlashColors ?? DEFAULT_TRI_FLASH_COLORS
     for (let i = 0; i < triColors.length; i++) {
       const col = triColors[i]
       addTimer(() => triggerFlash(col), i * 70)
@@ -302,7 +347,7 @@ function scheduleHalftoneAndChrom(
 // ── Hook ───────────────────────────────────────────────────────────────────────
 
 export function useRevealEffect(
-  rarity: CardRarity,
+  effectKey: EffectKey,
   options?: { scoped?: boolean },
 ): {
   containerRef: React.RefObject<HTMLDivElement | null>
@@ -444,7 +489,7 @@ export function useRevealEffect(
 
     clearAll()
 
-    const config = EFFECT_CONFIG[rarity]
+    const config = EFFECT_CONFIG[effectKey]
 
     const rect = container.getBoundingClientRect()
     if (scoped) {
@@ -480,6 +525,35 @@ export function useRevealEffect(
 
     scheduleHalftoneAndChrom(s, config, addTimer, ensureRAF)
 
+    if (config.tearBands) {
+      addTimer(() => {
+        s.tearBands = {
+          life: 1,
+          reshuffleIn: 0,
+          bands: Array.from({ length: 6 }, () => ({
+            y: Math.random(),
+            h: 0.02 + Math.random() * 0.05,
+            offset: 0,
+          })),
+        }
+        ensureRAF()
+      }, FLASH_DONE)
+    }
+
+    if (config.starSparkles) {
+      addTimer(() => {
+        spawnStarSparkles(s, s.cx, s.cy)
+        ensureRAF()
+      }, FLASH_DONE)
+    }
+
+    if (config.prismRays) {
+      addTimer(() => {
+        s.prismRays = { life: 1, rot: Math.random() * Math.PI, count: 10 }
+        ensureRAF()
+      }, FLASH_DONE)
+    }
+
     // Particles at t=500ms (after flash + initial wave burst)
     if (config.particleSet !== 'none') {
       addTimer(() => {
@@ -493,7 +567,7 @@ export function useRevealEffect(
     addTimer(() => setImpactVisible(false), 500 + 600 + 150)
 
     ensureRAF()
-  }, [rarity, scoped])
+  }, [effectKey, scoped])
 
   const hideScanline = useCallback(() => setScanlineVisible(false), [])
 
