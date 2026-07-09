@@ -60,8 +60,7 @@ export function TokenCard() {
           'Stockage plein'
         ) : timeLeft ? (
           <>
-            +1 jeton dans{' '}
-            <b className="text-primary-dark">{timeLeft}</b>
+            +1 jeton dans <b className="text-primary-dark">{timeLeft}</b>
           </>
         ) : null}
       </p>
@@ -74,14 +73,12 @@ function formatTimeLeft(isoDate: string, now = Date.now()): string {
   if (diff <= 0) {
     return 'bientôt'
   }
-  const h = Math.floor(diff / 3600000)
-  const m = Math.floor((diff % 3600000) / 60000)
-  const s = Math.floor((diff % 60000) / 1000)
+  const secondsLeft = Math.floor(diff / 1000)
+  const h = Math.floor(secondsLeft / 3600)
+  const m = Math.floor((secondsLeft % 3600) / 60)
+  const s = secondsLeft % 60
   if (h > 0) {
-    return `${h}h${m.toString().padStart(2, '0')}`
+    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
   }
-  if (m > 0) {
-    return `${m}min${s.toString().padStart(2, '0')}`
-  }
-  return `${s}s`
+  return `${m}:${s.toString().padStart(2, '0')}`
 }

@@ -1,12 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router'
-import {
-  ArrowRight,
-  Coins,
-  Layers,
-  LogOut,
-  Sparkles,
-  Zap,
-} from 'lucide-react'
+import { ArrowRight, Coins, Layers, LogOut, Sparkles, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
@@ -93,10 +86,7 @@ export function Navbar() {
                   <Wallet user={user} />
                   <Energy />
                 </div>
-                <span
-                  aria-hidden
-                  className="h-[30px] w-px bg-text/[0.12]"
-                />
+                <span aria-hidden className="h-[30px] w-px bg-text/[0.12]" />
                 <div className="flex items-center gap-2">
                   <InvitationsBadge />
                   <RewardsBadge
@@ -252,6 +242,17 @@ function Wallet({ user }: { user: AuthUser }) {
   )
 }
 
+// Formate un décompte en secondes : "m:ss" en dessous d'une heure, "h:mm:ss" au-delà
+function formatCountdown(secondsLeft: number): string {
+  const h = Math.floor(secondsLeft / 3600)
+  const m = Math.floor((secondsLeft % 3600) / 60)
+  const s = secondsLeft % 60
+  if (h > 0) {
+    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+  }
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
 function TokensPill() {
   const balance = useTokenBalance()
   // 1s tick for live regen countdown
@@ -271,12 +272,7 @@ function TokensPill() {
   const secondsLeft = next
     ? Math.max(0, Math.round((next.getTime() - Date.now()) / 1000))
     : 0
-  const min = Math.floor(secondsLeft / 60)
-  const sec = secondsLeft % 60
-  const timer =
-    !isFull && secondsLeft > 0
-      ? `${min}:${sec.toString().padStart(2, '0')}`
-      : null
+  const timer = !isFull && secondsLeft > 0 ? formatCountdown(secondsLeft) : null
 
   return (
     <Link
@@ -352,18 +348,11 @@ function Energy() {
   }
 
   const isFull = data.combatPoints >= data.maxStock
-  const next = data.nextCombatPointAt
-    ? new Date(data.nextCombatPointAt)
-    : null
+  const next = data.nextCombatPointAt ? new Date(data.nextCombatPointAt) : null
   const secondsLeft = next
     ? Math.max(0, Math.round((next.getTime() - Date.now()) / 1000))
     : 0
-  const min = Math.floor(secondsLeft / 60)
-  const sec = secondsLeft % 60
-  const timer =
-    !isFull && secondsLeft > 0
-      ? `${min}:${sec.toString().padStart(2, '0')}`
-      : null
+  const timer = !isFull && secondsLeft > 0 ? formatCountdown(secondsLeft) : null
 
   return (
     <Link
