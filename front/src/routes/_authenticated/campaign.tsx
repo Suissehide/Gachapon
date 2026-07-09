@@ -22,6 +22,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { z } from 'zod/v4'
 
 import type {
+  Campaign,
   CampaignChapter,
   CampaignStage,
   SweepResult,
@@ -71,6 +72,19 @@ function chapterMeta(n: number): { title: string; hue: number } {
   return CHAPTER_META[n - 1] ?? { title: `Chapitre ${n}`, hue: (n * 47) % 360 }
 }
 
+// The "frontier" chapter is the one holding the player's next playable stage
+// (status === 'current'). Once a chapter's boss is cleared the frontier moves to
+// the freshly-unlocked first stage of the next chapter — even though the
+// backend's `highestChapter` only advances after that stage is actually beaten.
+// Defaulting the view (and the "Actuel" marker) to `highestChapter` would strand
+// the player on the fully-cleared chapter, so derive it from the stage statuses.
+function frontierChapter(data: Campaign): number {
+  const withCurrent = data.chapters.find((c) =>
+    c.stages.some((s) => s.status === 'current'),
+  )
+  return withCurrent?.chapter ?? data.highestChapter
+}
+
 function computePower(stats: {
   hp: number
   atk: number
@@ -107,11 +121,12 @@ function CampaignPage() {
     }
   }, [search.editor, navigate])
 
-  // Initialise active chapter from server-provided highestChapter once the
-  // campaign response lands.
+  // Initialise the active chapter to the frontier (the chapter with the next
+  // playable stage) once the campaign response lands — not `highestChapter`,
+  // which lags a chapter behind once a boss is cleared.
   useEffect(() => {
     if (activeChapter == null && campaign.data) {
-      setActiveChapter(campaign.data.highestChapter)
+      setActiveChapter(frontierChapter(campaign.data))
     }
   }, [activeChapter, campaign.data])
 
@@ -186,7 +201,7 @@ function CampaignPage() {
         <div className="mt-7">
           <ChapterStrip
             chapters={data.chapters}
-            highestChapter={data.highestChapter}
+            currentChapter={frontierChapter(data)}
             activeChapter={activeChapter}
             onPick={setActiveChapter}
           />
@@ -334,12 +349,12 @@ function CampaignPage() {
 
 function ChapterStrip({
   chapters,
-  highestChapter,
+  currentChapter,
   activeChapter,
   onPick,
 }: {
   chapters: CampaignChapter[]
-  highestChapter: number
+  currentChapter: number
   activeChapter: number
   onPick: (n: number) => void
 }) {
@@ -415,7 +430,7 @@ function ChapterStrip({
             key={ch.chapter}
             chapter={ch}
             active={ch.chapter === activeChapter}
-            isCurrent={ch.chapter === highestChapter}
+            isCurrent={ch.chapter === currentChapter}
             onClick={() => onPick(ch.chapter)}
           />
         ))}
