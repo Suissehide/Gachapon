@@ -105,7 +105,6 @@ export function LeaderRow(props: Props) {
             </span>
             <span className="font-mono text-[9px] tracking-[0.12em] text-[rgba(27,23,38,0.5)]">
               TIRAGES
-              {entry.legendaries > 0 ? ` · ${entry.legendaries} LÉG.` : ''}
             </span>
           </>
         )}
