@@ -328,18 +328,18 @@ function Play() {
 
   return (
     <div
-      className="relative flex min-h-[calc(100vh-var(--topbar-h))] flex-col overflow-x-clip px-4 pb-8 pt-8"
+      className="relative flex min-h-[calc(100vh-var(--topbar-h))] flex-col overflow-x-clip pb-8 pt-8"
       style={{ background: '#fbf8f3', color: '#1b1726' }}
     >
       <AuroraGrid />
 
       {/* En-tête */}
-      <header className="relative z-1 mx-auto flex w-full max-w-5xl items-end justify-between">
+      <header className="relative z-1 mx-auto flex w-full max-w-5xl items-end justify-between px-4">
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-text-light/70">
+          <p className="font-mono text-[11px] font-bold uppercase tracking-[0.25em] text-text-light/60">
             Gachapon / Tirage
           </p>
-          <h1 className="mt-1 font-display text-3xl font-extrabold leading-none tracking-tight lg:text-[44px]">
+          <h1 className="mt-2 font-display text-4xl font-bold tracking-tight text-text sm:text-5xl">
             Tirage
           </h1>
         </div>
@@ -354,7 +354,7 @@ function Play() {
       </header>
 
       {/* Scène : stats / machine / récents */}
-      <div className="relative z-1 mx-auto mt-6 flex w-full max-w-5xl flex-1 flex-col gap-4 lg:grid lg:grid-cols-[260px_1fr_260px] lg:gap-6">
+      <div className="relative z-1 mx-auto mt-6 flex w-full max-w-5xl flex-1 flex-col gap-4 px-4 lg:grid lg:grid-cols-[260px_1fr_260px] lg:gap-6">
         {/* Cartes de stats */}
         <div className="order-2 grid grid-cols-2 gap-2.5 md:grid-cols-4 lg:order-1 lg:flex lg:flex-col lg:gap-3.5">
           <TokenCard />
