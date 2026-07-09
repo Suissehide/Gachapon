@@ -73,16 +73,17 @@ function chapterMeta(n: number): { title: string; hue: number } {
 }
 
 // The "frontier" chapter is the one holding the player's next playable stage
-// (status === 'current'). Once a chapter's boss is cleared the frontier moves to
-// the freshly-unlocked first stage of the next chapter — even though the
-// backend's `highestChapter` only advances after that stage is actually beaten.
-// Defaulting the view (and the "Actuel" marker) to `highestChapter` would strand
-// the player on the fully-cleared chapter, so derive it from the stage statuses.
-function frontierChapter(data: Campaign): number {
+// (status === 'current'), or null once every stage is cleared. Once a chapter's
+// boss is cleared the frontier moves to the freshly-unlocked first stage of the
+// next chapter — even though the backend's `highestChapter` only advances after
+// that stage is actually beaten. Using `highestChapter` for the "Actuel" marker
+// would lag a chapter behind after a boss clear, or falsely flag a 100%-cleared
+// final chapter (no next chapter) as current — hence null in that case.
+function frontierChapter(data: Campaign): number | null {
   const withCurrent = data.chapters.find((c) =>
     c.stages.some((s) => s.status === 'current'),
   )
-  return withCurrent?.chapter ?? data.highestChapter
+  return withCurrent?.chapter ?? null
 }
 
 function computePower(stats: {
@@ -126,7 +127,11 @@ function CampaignPage() {
   // which lags a chapter behind once a boss is cleared.
   useEffect(() => {
     if (activeChapter == null && campaign.data) {
-      setActiveChapter(frontierChapter(campaign.data))
+      // Land on the frontier chapter; once everything is cleared there is no
+      // frontier, so fall back to the furthest-reached chapter.
+      setActiveChapter(
+        frontierChapter(campaign.data) ?? campaign.data.highestChapter,
+      )
     }
   }, [activeChapter, campaign.data])
 
@@ -354,7 +359,7 @@ function ChapterStrip({
   onPick,
 }: {
   chapters: CampaignChapter[]
-  currentChapter: number
+  currentChapter: number | null
   activeChapter: number
   onPick: (n: number) => void
 }) {
