@@ -73,6 +73,14 @@ Gachapon/
 | `npm run lint`      | Linting Biome                      |
 | `npm run preview`   | Prévisualiser le build de prod     |
 
+## Commandes Claude Code (`.claude/commands/`)
+
+Slash commands custom du projet, appelées à la demande dans Claude Code :
+
+| Commande     | Description                                                                                     |
+| ------------ | ----------------------------------------------------------------------------------------------- |
+| `/changelog` | Met à jour la page changelog joueur (`front/src/routes/changelog.tsx`) à partir des commits git depuis la dernière synchro. Accepte une note optionnelle (ex. `/changelog nouvelle version 1.5`). |
+
 ## Variables d'environnement
 
 Copier `deploy/.env.example` vers `deploy/.env` et remplir :
