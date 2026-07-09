@@ -1,8 +1,11 @@
 import { apiUrl } from '../constants/config.constant.ts'
-import type { PublicStats } from '../constants/stats.constant.ts'
+import type {
+  PublicStats,
+  RecentLegendary,
+} from '../constants/stats.constant.ts'
 import { STATS_ROUTES } from '../constants/stats.constant.ts'
 
-export type { PublicStats }
+export type { PublicStats, RecentLegendary }
 
 export const StatsApi = {
   getPublicStats: async (): Promise<PublicStats> => {

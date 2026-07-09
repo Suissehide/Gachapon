@@ -99,6 +99,12 @@ function StatsPage() {
     totalCards: 0,
     activeUsers: 0,
     legendaryPulls: 0,
+    pullsToday: 0,
+    totalDust: 0,
+    setsCount: 0,
+    legendaryCardsCount: 0,
+    activeToday: 0,
+    recentLegendaries: [],
   }
 
   const s = stats ?? fallback
