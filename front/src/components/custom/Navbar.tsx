@@ -18,8 +18,8 @@ import {
 
 const navItemsBeforeProfile = [
   { to: '/play', label: 'Jouer' },
-  { to: '/campaign', label: 'Campagne' },
   { to: '/collection', label: 'Collection' },
+  { to: '/campaign', label: 'Campagne' },
   { to: '/skills', label: 'Compétences' },
 ] as const
 
