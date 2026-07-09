@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async'
 
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
 import { apiUrl } from '../constants/config.constant'
+import { cn } from '../libs/utils'
 
 export const Route = createFileRoute('/discord')({
   component: DiscordIntegrationPage,
@@ -67,6 +68,40 @@ function Step({
   )
 }
 
+function EndpointRef({
+  method,
+  path,
+  auth,
+  children,
+}: {
+  method: string
+  path: string
+  auth: 'public' | 'key'
+  children: React.ReactNode
+}) {
+  return (
+    <div className="flex flex-col gap-1 py-3 border-b border-border/30 last:border-0 sm:flex-row sm:items-baseline sm:gap-3">
+      <div className="flex items-center gap-2 shrink-0">
+        <span className="text-[10px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded bg-muted text-text-light">
+          {method}
+        </span>
+        <code className="text-xs font-mono text-foreground">{path}</code>
+        <span
+          className={cn(
+            'text-[10px] font-semibold px-1.5 py-0.5 rounded',
+            auth === 'public'
+              ? 'bg-green-500/10 text-green-600'
+              : 'bg-primary/10 text-primary',
+          )}
+        >
+          {auth === 'public' ? 'public' : 'X-API-Key'}
+        </span>
+      </div>
+      <p className="text-xs text-text-light sm:flex-1">{children}</p>
+    </div>
+  )
+}
+
 function DiscordIntegrationPage() {
   const baseUrl = apiUrl ?? 'https://api.gachapon.app'
 
@@ -74,10 +109,16 @@ function DiscordIntegrationPage() {
     <div className="min-h-screen bg-background text-foreground">
       <Helmet>
         <title>Bot Discord — Gachapon</title>
-        <meta name="description" content="Connecte ton serveur Discord à Gachapon via l'API publique. Tire des capsules, consulte ta collection et suis le classement sans quitter Discord." />
+        <meta
+          name="description"
+          content="Connecte ton serveur Discord à Gachapon via l'API publique. Tire des capsules, consulte ta collection et suis le classement sans quitter Discord."
+        />
         <link rel="canonical" href="https://gachapon.qwetle.fr/discord" />
         <meta property="og:title" content="Bot Discord — Gachapon" />
-        <meta property="og:description" content="Connecte ton serveur Discord à Gachapon via l'API publique. Tire des capsules et consulte ta collection sans quitter Discord." />
+        <meta
+          property="og:description"
+          content="Connecte ton serveur Discord à Gachapon via l'API publique. Tire des capsules et consulte ta collection sans quitter Discord."
+        />
         <meta property="og:url" content="https://gachapon.qwetle.fr/discord" />
       </Helmet>
       <LandingNavbar />
@@ -268,26 +309,32 @@ export async function handlePull(interaction) {
   })
 
   if (res.status === 402) {
-    return interaction.editReply('❌ Tokens insuffisants pour tirer une capsule.')
+    return interaction.editReply('❌ Jetons insuffisants pour tirer une capsule.')
   }
   if (!res.ok) {
     return interaction.editReply('❌ Erreur lors du tirage.')
   }
 
-  const pull = await res.json()
-  const { card } = pull
+  const { card, tokensRemaining } = await res.json()
 
-  const rarityEmoji = {
-    STANDARD: '⚪',
+  // Variantes réelles : NORMAL · BRILLIANT · HOLOGRAPHIC
+  const variantEmoji = {
+    NORMAL: '⚪',
+    BRILLIANT: '✨',
     HOLOGRAPHIC: '🌈',
-    SHINY: '✨',
   }[card.variant] ?? '⚪'
+
+  const variantLabel = {
+    NORMAL: 'Normale',
+    BRILLIANT: 'Brillante',
+    HOLOGRAPHIC: 'Holographique',
+  }[card.variant] ?? card.variant
 
   await interaction.editReply({
     embeds: [{
-      title: \`\${rarityEmoji} \${card.name}\`,
-      description: \`**Set :** \${card.setName}\\n**Variante :** \${card.variant}\`,
-      color: card.variant === 'SHINY' ? 0xf59e0b
+      title: \`\${variantEmoji} \${card.name}\`,
+      description: \`**Set :** \${card.set.name}\\n**Variante :** \${variantLabel}\\n**Jetons restants :** \${tokensRemaining}\`,
+      color: card.variant === 'BRILLIANT' ? 0xf59e0b
         : card.variant === 'HOLOGRAPHIC' ? 0x818cf8
         : 0x94a3b8,
       footer: { text: 'Gachapon' },
@@ -304,17 +351,29 @@ export async function handlePull(interaction) {
 export async function handleCollection(interaction) {
   await interaction.deferReply()
 
-  const res = await fetch(\`\${process.env.GACHAPON_API_URL}/collection\`, {
-    headers: { 'X-API-Key': process.env.GACHAPON_API_KEY },
-  })
+  const headers = { 'X-API-Key': process.env.GACHAPON_API_KEY }
 
-  const { cards, total } = await res.json()
-  const preview = cards.slice(0, 5).map((c) => \`• \${c.name}\`).join('\\n')
+  // 1. Identifie l'utilisateur lié à la clé API
+  const me = await fetch(
+    \`\${process.env.GACHAPON_API_URL}/auth/me\`,
+    { headers },
+  ).then((r) => r.json())
+
+  // 2. Récupère sa collection — { cards: [{ card: { name }, quantity, ... }] }
+  const { cards } = await fetch(
+    \`\${process.env.GACHAPON_API_URL}/users/\${me.id}/collection\`,
+    { headers },
+  ).then((r) => r.json())
+
+  const preview = cards
+    .slice(0, 5)
+    .map((c) => \`• \${c.card.name}\`)
+    .join('\\n')
 
   await interaction.editReply({
     embeds: [{
-      title: \`🗂 Ta collection (\${total} cartes)\`,
-      description: preview || 'Aucune carte pour l'instant.',
+      title: \`🗂 Ta collection (\${cards.length} cartes)\`,
+      description: preview || "Aucune carte pour l'instant.",
       color: 0x22c55e,
     }],
   })
@@ -324,18 +383,19 @@ export async function handleCollection(interaction) {
 export async function handleLeaderboard(interaction) {
   await interaction.deferReply()
 
-  const res = await fetch(\`\${process.env.GACHAPON_API_URL}/leaderboard\`, {
-    headers: { 'X-API-Key': process.env.GACHAPON_API_KEY },
-  })
+  // Classements disponibles : /collectors · /teams · /combat
+  const { entries } = await fetch(
+    \`\${process.env.GACHAPON_API_URL}/leaderboard/collectors\`,
+    { headers: { 'X-API-Key': process.env.GACHAPON_API_KEY } },
+  ).then((r) => r.json())
 
-  const { entries } = await res.json()
   const lines = entries.slice(0, 10).map(
-    (e, i) => \`\${i + 1}. **\${e.username}** — \${e.totalCards} cartes\`
+    (e) => \`\${e.rank}. **\${e.user.username}** — \${e.cardPercentage}% de collection\`
   )
 
   await interaction.editReply({
     embeds: [{
-      title: '🏆 Classement Gachapon',
+      title: '🏆 Classement collectionneurs',
       description: lines.join('\\n'),
       color: 0xf59e0b,
     }],
@@ -371,6 +431,149 @@ client.on(Events.InteractionCreate, async (interaction) => {
 client.login(process.env.DISCORD_TOKEN)`}
             />
             <CodeBlock language="bash" code="node index.js" />
+          </Step>
+
+          <Step n={8} title="Aller plus loin">
+            <p className="text-sm text-text-light mb-4">
+              L'API expose bien plus que le trio pull / collection / classement.
+              Voici les endpoints les plus utiles pour enrichir ton bot. Les
+              endpoints{' '}
+              <span className="text-green-600 font-semibold">publics</span> ne
+              demandent aucune clé ; les autres passent par le header{' '}
+              <code className="text-xs bg-muted px-1 py-0.5 rounded">
+                X-API-Key
+              </code>
+              .
+            </p>
+
+            <div className="rounded-xl border border-border/50 bg-card px-4 my-4">
+              <EndpointRef method="post" path="/pulls/batch" auth="key">
+                Tire 1 ou 10 capsules d'un coup —{' '}
+                <code className="text-[11px] bg-muted px-1 rounded">
+                  {'{ count: 1 | 10 }'}
+                </code>
+                , renvoie{' '}
+                <code className="text-[11px] bg-muted px-1 rounded">
+                  {'{ pulls, tokensRemaining, xpGained }'}
+                </code>
+                .
+              </EndpointRef>
+              <EndpointRef method="get" path="/tokens/balance" auth="key">
+                Solde de jetons, date du prochain jeton et pitié courante.
+              </EndpointRef>
+              <EndpointRef method="get" path="/streak/summary" auth="key">
+                Série quotidienne, meilleur streak et paliers de récompense.
+              </EndpointRef>
+              <EndpointRef method="get" path="/pulls/recent" auth="key">
+                Feed des derniers tirages (nom, rareté, variante, joueur).
+              </EndpointRef>
+              <EndpointRef method="get" path="/pulls/history" auth="key">
+                Historique paginé des tirages du compte.
+              </EndpointRef>
+              <EndpointRef method="get" path="/stats" auth="public">
+                Statistiques globales : joueurs, tirages, cartes, tirages du
+                jour…
+              </EndpointRef>
+              <EndpointRef method="get" path="/pulls/rates" auth="public">
+                Taux de drop de base par rareté.
+              </EndpointRef>
+              <EndpointRef method="get" path="/economy/config" auth="public">
+                Toute la config d'économie : coûts, pitié, taux de variantes,
+                XP.
+              </EndpointRef>
+            </div>
+
+            <p className="text-sm text-text-light mt-6 mb-2">
+              Exemple —{' '}
+              <code className="text-xs bg-muted px-1 py-0.5 rounded">
+                /pull10
+              </code>{' '}
+              via{' '}
+              <code className="text-xs bg-muted px-1 py-0.5 rounded">
+                POST /pulls/batch
+              </code>{' '}
+              :
+            </p>
+            <CodeBlock
+              language="javascript"
+              code={`// handlers/pull10.js
+export async function handlePull10(interaction) {
+  await interaction.deferReply()
+
+  const res = await fetch(\`\${process.env.GACHAPON_API_URL}/pulls/batch\`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-API-Key': process.env.GACHAPON_API_KEY,
+    },
+    body: JSON.stringify({ count: 10 }),
+  })
+
+  if (res.status === 402) {
+    return interaction.editReply('❌ Jetons insuffisants (10 requis).')
+  }
+
+  const { pulls, tokensRemaining } = await res.json()
+
+  const emoji = { NORMAL: '⚪', BRILLIANT: '✨', HOLOGRAPHIC: '🌈' }
+  const lines = pulls.map(
+    (p) => \`\${emoji[p.card.variant] ?? '⚪'} \${p.card.name}\` +
+      (p.wasDuplicate ? ' (doublon)' : '')
+  )
+
+  await interaction.editReply({
+    embeds: [{
+      title: '🎊 Tirage x10',
+      description: lines.join('\\n'),
+      footer: { text: \`\${tokensRemaining} jetons restants\` },
+      color: 0xf59e0b,
+    }],
+  })
+}`}
+            />
+
+            <p className="text-sm text-text-light mt-6 mb-2">
+              Exemple —{' '}
+              <code className="text-xs bg-muted px-1 py-0.5 rounded">
+                /taux
+              </code>{' '}
+              via l'endpoint <strong className="text-foreground">public</strong>{' '}
+              <code className="text-xs bg-muted px-1 py-0.5 rounded">
+                GET /pulls/rates
+              </code>{' '}
+              (aucune clé requise) :
+            </p>
+            <CodeBlock
+              language="javascript"
+              code={`// handlers/rates.js
+export async function handleRates(interaction) {
+  const { rates } = await fetch(
+    \`\${process.env.GACHAPON_API_URL}/pulls/rates\`,
+  ).then((r) => r.json())
+
+  const lines = rates.map((r) => \`**\${r.rarity}** — \${r.pct}%\`)
+
+  await interaction.reply({
+    embeds: [{
+      title: '🎯 Taux de drop',
+      description: lines.join('\\n'),
+      color: 0x818cf8,
+    }],
+  })
+}`}
+            />
+
+            <div className="rounded-lg border border-border/50 bg-muted/30 px-4 py-3 text-xs text-text-light mt-4">
+              💡 Pense à déclarer chaque nouvelle commande dans{' '}
+              <code className="text-[11px] bg-muted px-1 py-0.5 rounded">
+                deploy-commands.js
+              </code>{' '}
+              (Étape 4) et à router son interaction dans{' '}
+              <code className="text-[11px] bg-muted px-1 py-0.5 rounded">
+                index.js
+              </code>{' '}
+              (Étape 7).
+            </div>
           </Step>
         </div>
 
