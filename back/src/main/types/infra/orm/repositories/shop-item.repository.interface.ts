@@ -4,7 +4,8 @@ export type CreateShopItemInput = {
   name: string
   description: string
   type: 'TOKEN_PACK' | 'BOOST' | 'COSMETIC' | 'MACHINE'
-  dustCost: number
+  cost: number
+  currency?: 'DUST' | 'GOLD'
   value: Record<string, unknown>
   isActive?: boolean
 }

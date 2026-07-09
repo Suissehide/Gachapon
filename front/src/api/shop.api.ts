@@ -20,9 +20,16 @@ export const ShopApi = {
       method: 'POST',
     })
     if (!res.ok) {
-      handleHttpError(res, {
-        409: { title: 'Boost déjà actif', message: 'Un boost de ce type est déjà actif' },
-      }, "Erreur lors de l'achat")
+      handleHttpError(
+        res,
+        {
+          409: {
+            title: 'Boost déjà actif',
+            message: 'Un boost de ce type est déjà actif',
+          },
+        },
+        "Erreur lors de l'achat",
+      )
     }
     return res.json()
   },

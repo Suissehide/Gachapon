@@ -7,6 +7,7 @@ import { EditShopItemSheet } from '../../components/admin/shop/EditShopItemSheet
 import { useShopColumns } from '../../components/admin/shop/ShopColumns'
 import { ReactTable } from '../../components/table/reactTable'
 import { Button } from '../../components/ui/button'
+import type { ShopCurrency } from '../../constants/shop.constant'
 import {
   type AdminShopItem,
   useAdminCreateShopItem,
@@ -57,7 +58,10 @@ function AdminShop() {
         open={showCreate}
         onOpenChange={(o) => !o && setShowCreate(false)}
         onCreate={(item) => {
-          createItem.mutate(item)
+          createItem.mutate({
+            ...item,
+            currency: item.currency as ShopCurrency,
+          })
           setShowCreate(false)
         }}
       />
@@ -70,7 +74,8 @@ function AdminShop() {
             updateItem.mutate({
               id: editItem.id,
               ...fields,
-              dustCost: fields.dustCost ?? 0,
+              cost: fields.cost ?? 0,
+              currency: fields.currency as ShopCurrency,
             })
           }
           setEditItem(null)

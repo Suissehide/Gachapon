@@ -10,7 +10,19 @@ export function useShopColumns(onEdit: (item: AdminShopItem) => void) {
     () => [
       { accessorKey: 'name', header: 'Nom', meta: { grow: true } },
       { accessorKey: 'type', header: 'Type', size: 120 },
-      { accessorKey: 'dustCost', header: 'Coût (dust)', size: 110 },
+      {
+        accessorKey: 'cost',
+        header: 'Coût',
+        size: 130,
+        cell: ({ row }) => (
+          <span className="tabular-nums">
+            {row.original.cost.toLocaleString('fr-FR')}{' '}
+            <span className="text-text-light">
+              {row.original.currency === 'GOLD' ? 'or' : 'poussière'}
+            </span>
+          </span>
+        ),
+      },
       {
         accessorKey: 'isActive',
         header: 'Actif',

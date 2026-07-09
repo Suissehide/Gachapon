@@ -21,7 +21,7 @@ export class ShopItemRepository implements IShopItemRepository {
   findActive(): Promise<ShopItem[]> {
     return this.#prisma.shopItem.findMany({
       where: { isActive: true },
-      orderBy: [{ type: 'asc' }, { dustCost: 'asc' }],
+      orderBy: [{ type: 'asc' }, { cost: 'asc' }],
     })
   }
 

@@ -55,7 +55,7 @@ describe('Shop routes', () => {
         name: 'Test Token Pack',
         description: 'A test token pack',
         type: 'TOKEN_PACK',
-        dustCost: 1000,
+        cost: 1000,
         value: { tokens: 100 },
         isActive: true,
       },
@@ -79,7 +79,7 @@ describe('Shop routes', () => {
         name: 'Test Token Pack 2',
         description: 'Another test token pack',
         type: 'TOKEN_PACK',
-        dustCost: 100,
+        cost: 100,
         value: { tokens: 50 },
         isActive: true,
       },
@@ -88,7 +88,7 @@ describe('Shop routes', () => {
     // Donner du dust à l'utilisateur
     await postgresOrm.prisma.user.update({
       where: { id: userId },
-      data: { dust: item.dustCost + 100 },
+      data: { dust: item.cost + 100 },
     })
 
     const res = await app.inject({
@@ -100,6 +100,75 @@ describe('Shop routes', () => {
     const body = res.json()
     expect(typeof body.newDustTotal).toBe('number')
     expect(body.newDustTotal).toBe(100)
+  })
+
+  it('POST /shop/:id/buy — 402 si pas assez d\'or (TOKEN_PACK en GOLD)', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    const item = await postgresOrm.prisma.shopItem.create({
+      data: {
+        name: 'Gold Pack',
+        description: 'Token pack bought with gold',
+        type: 'TOKEN_PACK',
+        cost: 1000,
+        currency: 'GOLD',
+        value: { tokens: 100 },
+        isActive: true,
+      },
+    })
+
+    // Give plenty of dust but no gold — must NOT be buyable with dust.
+    await postgresOrm.prisma.user.update({
+      where: { id: userId },
+      data: { dust: 100000, gold: 0 },
+    })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/shop/${item.id}/buy`,
+      headers: { cookie: cookies },
+    })
+    expect(res.statusCode).toBe(402)
+  })
+
+  it('POST /shop/:id/buy — 200 débite l\'or et crédite les tokens (TOKEN_PACK en GOLD)', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    const item = await postgresOrm.prisma.shopItem.create({
+      data: {
+        name: 'Gold Pack 2',
+        description: 'Token pack bought with gold',
+        type: 'TOKEN_PACK',
+        cost: 500,
+        currency: 'GOLD',
+        value: { tokens: 50 },
+        isActive: true,
+      },
+    })
+
+    const before = await postgresOrm.prisma.user.update({
+      where: { id: userId },
+      data: { gold: 700, tokens: 0 },
+    })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/shop/${item.id}/buy`,
+      headers: { cookie: cookies },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.currency).toBe('GOLD')
+    expect(body.amountSpent).toBe(500)
+    expect(body.newGoldTotal).toBe(before.gold - 500)
+    expect(body.newTokenTotal).toBe(50)
+
+    // A gold purchase records currency=GOLD and doesn't touch dust.
+    const purchase = await postgresOrm.prisma.purchase.findFirst({
+      where: { userId, shopItemId: item.id },
+    })
+    expect(purchase!.currency).toBe('GOLD')
+    expect(purchase!.amountSpent).toBe(500)
   })
 
   it('POST /shop/:id/buy — 404 si article inexistant', async () => {
@@ -120,7 +189,7 @@ describe('Shop routes', () => {
         name: 'Gashapon',
         description: 'Machine Gashapon',
         type: 'MACHINE',
-        dustCost: 500,
+        cost: 500,
         value: { machineId: 'gashapon' },
         isActive: true,
       },
@@ -171,7 +240,7 @@ describe('Shop routes', () => {
         name: 'Boost Rare+',
         description: 'Boost with weight multiplier',
         type: 'BOOST',
-        dustCost: 500,
+        cost: 500,
         value: { multiplier: 2, rarity: 'RARE', pulls: 10 },
         isActive: true,
       },
@@ -180,7 +249,7 @@ describe('Shop routes', () => {
     // Give enough dust
     await postgresOrm.prisma.user.update({
       where: { id: userId },
-      data: { dust: boostItem.dustCost + 500 },
+      data: { dust: boostItem.cost + 500 },
     })
 
     const res = await app.inject({
@@ -210,7 +279,7 @@ describe('Shop routes', () => {
         name: 'Boost Rare+ Conflict',
         description: 'Another boost with weight multiplier',
         type: 'BOOST',
-        dustCost: 500,
+        cost: 500,
         value: { multiplier: 1.5, rarity: 'RARE', pulls: 5 },
         isActive: true,
       },
@@ -219,7 +288,7 @@ describe('Shop routes', () => {
     // Give enough dust
     await postgresOrm.prisma.user.update({
       where: { id: userId },
-      data: { dust: boostItem.dustCost + 500 },
+      data: { dust: boostItem.cost + 500 },
     })
 
     const res = await app.inject({
@@ -239,7 +308,7 @@ describe('Shop routes', () => {
         name: 'Boost Épique',
         description: 'Boost with guaranteed epic rarity',
         type: 'BOOST',
-        dustCost: 800,
+        cost: 800,
         value: { guaranteedRarity: 'EPIC', pulls: 5 },
         isActive: true,
       },
@@ -248,7 +317,7 @@ describe('Shop routes', () => {
     // Give enough dust
     await postgresOrm.prisma.user.update({
       where: { id: userId },
-      data: { dust: boostItem.dustCost + 500 },
+      data: { dust: boostItem.cost + 500 },
     })
 
     const res = await app.inject({
@@ -277,7 +346,7 @@ describe('Shop routes', () => {
         name: 'Malformed Boost',
         description: 'A boost with invalid value',
         type: 'BOOST',
-        dustCost: 100,
+        cost: 100,
         value: {}, // Empty object — no multiplier, no guaranteedRarity
         isActive: true,
       },

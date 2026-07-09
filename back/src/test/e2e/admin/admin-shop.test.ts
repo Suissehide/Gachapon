@@ -31,7 +31,7 @@ describe('Admin shop routes', () => {
     const res = await app.inject({
       method: 'POST', url: '/admin/shop-items',
       headers: { cookie: adminCookies },
-      payload: { name: 'Test Pack', description: 'desc', type: 'TOKEN_PACK', dustCost: 100, value: { tokens: 3 }, isActive: true },
+      payload: { name: 'Test Pack', description: 'desc', type: 'TOKEN_PACK', cost: 1000, currency: 'GOLD', value: { tokens: 3 }, isActive: true },
     })
     expect(res.statusCode).toBe(201)
     itemId = res.json().id

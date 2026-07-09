@@ -50,14 +50,22 @@ export class ShopDomain implements IShopDomain {
     const result = await this.#postgresOrm.executeWithTransactionClient(
       async (tx) => {
         const user = await tx.user.findUniqueOrThrow({ where: { id: userId } })
-        if (user.dust < item.dustCost) {
-          throw Boom.paymentRequired('Not enough dust')
+        const balance = item.currency === 'GOLD' ? user.gold : user.dust
+        if (balance < item.cost) {
+          throw Boom.paymentRequired(
+            item.currency === 'GOLD' ? 'Not enough gold' : 'Not enough dust',
+          )
         }
 
         await this.#checkItemConflicts(tx, userId, shopItemId, item)
 
         const purchase = await tx.purchase.create({
-          data: { userId, shopItemId, dustSpent: item.dustCost },
+          data: {
+            userId,
+            shopItemId,
+            amountSpent: item.cost,
+            currency: item.currency,
+          },
         })
 
         const updateData = this.#buildUpdateData(item)
@@ -73,6 +81,7 @@ export class ShopDomain implements IShopDomain {
         return {
           purchase,
           newDustTotal: updated.dust,
+          newGoldTotal: updated.gold,
           newTokenTotal: updated.tokens,
           unlockedAchievements: allUnlocks,
         }
@@ -82,8 +91,10 @@ export class ShopDomain implements IShopDomain {
 
     return {
       purchaseId: result.purchase.id,
-      dustSpent: item.dustCost,
+      currency: item.currency,
+      amountSpent: item.cost,
       newDustTotal: result.newDustTotal,
+      newGoldTotal: result.newGoldTotal,
       newTokenTotal: result.newTokenTotal,
       unlockedAchievements: result.unlockedAchievements,
       item: {
@@ -134,9 +145,10 @@ export class ShopDomain implements IShopDomain {
   }
 
   #buildUpdateData(item: ShopItem): Record<string, unknown> {
-    const updateData: Record<string, unknown> = {
-      dust: { decrement: item.dustCost },
-    }
+    const updateData: Record<string, unknown> =
+      item.currency === 'GOLD'
+        ? { gold: { decrement: item.cost } }
+        : { dust: { decrement: item.cost } }
     if (item.type === 'TOKEN_PACK') {
       const value = item.value as { tokens: number }
       updateData.tokens = { increment: value.tokens }
@@ -226,7 +238,11 @@ export class ShopDomain implements IShopDomain {
         machineId: value.machineId,
       })
     }
-    events.push({ kind: 'DUST_SPENT' as const, amount: item.dustCost })
+    events.push(
+      item.currency === 'GOLD'
+        ? { kind: 'GOLD_SPENT' as const, amount: item.cost }
+        : { kind: 'DUST_SPENT' as const, amount: item.cost },
+    )
     const allUnlocks: UnlockedAchievement[] = []
     for (const e of events) {
       const unlocks = await this.#achievementsDomain.track(tx, userId, e)

@@ -51,6 +51,11 @@ enum ShopItemType {
   MACHINE
 }
 
+enum ShopCurrency {
+  DUST
+  GOLD
+}
+
 enum SkillEffectType {
   REGEN
   LUCK
@@ -330,7 +335,8 @@ model ShopItem {
   name        String
   description String
   type        ShopItemType
-  dustCost    Int
+  cost        Int
+  currency    ShopCurrency @default(DUST)
   value       Json
   isActive    Boolean      @default(true)
   createdAt   DateTime     @default(now())
@@ -343,9 +349,10 @@ model Purchase {
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   shopItemId  String
-  shopItem    ShopItem @relation(fields: [shopItemId], references: [id])
-  dustSpent   Int
-  purchasedAt DateTime @default(now())
+  shopItem    ShopItem     @relation(fields: [shopItemId], references: [id])
+  amountSpent Int
+  currency    ShopCurrency @default(DUST)
+  purchasedAt DateTime     @default(now())
 
   @@index([purchasedAt])
   @@index([userId])

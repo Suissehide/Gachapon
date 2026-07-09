@@ -2,8 +2,10 @@ import type { UnlockedAchievement } from '../../../domain/achievements/events.ty
 
 export type BuyShopItemResult = {
   purchaseId: string
-  dustSpent: number
+  currency: 'DUST' | 'GOLD'
+  amountSpent: number
   newDustTotal: number
+  newGoldTotal: number
   newTokenTotal: number
   unlockedAchievements: UnlockedAchievement[]
   item: {

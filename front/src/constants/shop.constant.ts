@@ -7,21 +7,31 @@ export const ITEM_TYPE_OPTIONS = [
   { value: 'MACHINE', label: 'Machine' },
 ]
 
+export const CURRENCY_OPTIONS = [
+  { value: 'DUST', label: 'Poussière' },
+  { value: 'GOLD', label: 'Or' },
+]
+
 // Types
+export type ShopCurrency = 'DUST' | 'GOLD'
+
 export type ShopItem = {
   id: string
   name: string
   description: string
   type: 'TOKEN_PACK' | 'BOOST' | 'COSMETIC' | 'MACHINE'
-  dustCost: number
+  cost: number
+  currency: ShopCurrency
   value: unknown
   activeBoost?: { pullsRemaining: number } | null
 }
 
 export type PurchaseResult = {
   purchaseId: string
-  dustSpent: number
+  currency: ShopCurrency
+  amountSpent: number
   newDustTotal: number
+  newGoldTotal: number
   newTokenTotal: number
   item: { id: string; name: string; type: string; value: unknown }
   unlockedAchievements?: UnlockedAchievement[]
@@ -32,7 +42,8 @@ export type AdminShopItem = {
   name: string
   description: string
   type: string
-  dustCost: number
+  cost: number
+  currency: ShopCurrency
   value: unknown
   isActive: boolean
   createdAt: string

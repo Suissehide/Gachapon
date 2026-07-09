@@ -1,6 +1,9 @@
 import { useState } from 'react'
 
-import { ITEM_TYPE_OPTIONS } from '../../../constants/shop.constant'
+import {
+  CURRENCY_OPTIONS,
+  ITEM_TYPE_OPTIONS,
+} from '../../../constants/shop.constant'
 import { useAppForm } from '../../../hooks/formConfig'
 import { Button } from '../../ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../../ui/sheet'
@@ -9,7 +12,8 @@ export type CreateShopItemPayload = {
   name: string
   description: string
   type: string
-  dustCost: number
+  cost: number
+  currency: string
   value: unknown
   isActive: boolean
 }
@@ -51,7 +55,8 @@ function CreateShopItemForm({
       name: '',
       description: '',
       type: 'TOKEN_PACK',
-      dustCost: 0 as number,
+      cost: 0 as number,
+      currency: 'DUST',
       value: '{}',
       isActive: true,
     },
@@ -64,7 +69,7 @@ function CreateShopItemForm({
         return
       }
       setJsonError('')
-      onCreate({ ...value, dustCost: value.dustCost ?? 0, value: parsed })
+      onCreate({ ...value, cost: value.cost ?? 0, value: parsed })
     },
   })
 
@@ -85,8 +90,11 @@ function CreateShopItemForm({
       <form.AppField name="type">
         {(field) => <field.Select label="Type" options={ITEM_TYPE_OPTIONS} />}
       </form.AppField>
-      <form.AppField name="dustCost">
-        {(field) => <field.Number label="Coût (dust)" />}
+      <form.AppField name="cost">
+        {(field) => <field.Number label="Coût" />}
+      </form.AppField>
+      <form.AppField name="currency">
+        {(field) => <field.Select label="Monnaie" options={CURRENCY_OPTIONS} />}
       </form.AppField>
       <form.AppField name="value">
         {(field) => <field.TextArea label='Valeur JSON (ex: {"tokens":3})' />}

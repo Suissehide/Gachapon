@@ -1,4 +1,7 @@
-import { ITEM_TYPE_OPTIONS } from '../../../constants/shop.constant'
+import {
+  CURRENCY_OPTIONS,
+  ITEM_TYPE_OPTIONS,
+} from '../../../constants/shop.constant'
 import { useAppForm } from '../../../hooks/formConfig'
 import type { AdminShopItem } from '../../../queries/useAdminShop'
 import { Button } from '../../ui/button'
@@ -8,7 +11,8 @@ export type EditShopItemPayload = {
   name: string
   description: string
   type: string
-  dustCost: number
+  cost: number
+  currency: string
   isActive: boolean
 }
 
@@ -60,7 +64,8 @@ function EditShopItemForm({
       name: item.name,
       description: item.description,
       type: item.type,
-      dustCost: item.dustCost,
+      cost: item.cost,
+      currency: item.currency,
       isActive: item.isActive,
     },
     onSubmit: ({ value }) => {
@@ -90,8 +95,11 @@ function EditShopItemForm({
       <form.AppField name="type">
         {(field) => <field.Select label="Type" options={ITEM_TYPE_OPTIONS} />}
       </form.AppField>
-      <form.AppField name="dustCost">
-        {(field) => <field.Number label="Coût (dust)" />}
+      <form.AppField name="cost">
+        {(field) => <field.Number label="Coût" />}
+      </form.AppField>
+      <form.AppField name="currency">
+        {(field) => <field.Select label="Monnaie" options={CURRENCY_OPTIONS} />}
       </form.AppField>
       <div className="flex gap-2 pt-2">
         <Button type="submit" className="flex-1">

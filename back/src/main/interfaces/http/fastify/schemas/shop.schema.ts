@@ -13,7 +13,8 @@ export const getShopResponseSchema = z.object({
       name: z.string(),
       description: z.string().nullable(),
       type: z.string(),
-      dustCost: z.number(),
+      cost: z.number(),
+      currency: z.enum(['DUST', 'GOLD']),
       value: z.unknown(),
       activeBoost: z.object({ pullsRemaining: z.number().int() }).nullable(),
     }),
@@ -24,8 +25,10 @@ export const getShopResponseSchema = z.object({
 
 export const buyShopItemResponseSchema = z.object({
   purchaseId: z.string(),
-  dustSpent: z.number(),
+  currency: z.enum(['DUST', 'GOLD']),
+  amountSpent: z.number(),
   newDustTotal: z.number(),
+  newGoldTotal: z.number(),
   newTokenTotal: z.number(),
   unlockedAchievements: z.array(unlockedAchievementSchema).optional(),
   item: z.object({

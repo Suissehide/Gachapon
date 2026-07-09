@@ -5,6 +5,7 @@ import {
   Check,
   Clock,
   Cog,
+  Coins,
   Lock,
   Package,
   Sparkles,
@@ -147,6 +148,7 @@ function ShopPage() {
   const timeLeft = useCountdown()
 
   const dust = user?.dust ?? 0
+  const gold = user?.gold ?? 0
   const shopItems = shopData?.items ?? []
   const dailyItems = dailyData?.items ?? []
 
@@ -163,10 +165,15 @@ function ShopPage() {
           setUser({
             ...user,
             dust: result.newDustTotal,
+            gold: result.newGoldTotal,
             tokens: result.newTokenTotal,
           })
         }
-        notifySuccess(item.name, `Acheté ! −${result.dustSpent} poussière`)
+        const currencyLabel = result.currency === 'GOLD' ? 'or' : 'poussière'
+        notifySuccess(
+          item.name,
+          `Acheté ! −${result.amountSpent} ${currencyLabel}`,
+        )
         const remaining = Math.max(0, MIN_SPIN_MS - (Date.now() - clickedAt))
         setTimeout(() => {
           setBuyingShopId((id) => (id === item.id ? null : id))
@@ -311,6 +318,7 @@ function ShopPage() {
                       key={item.id}
                       item={item}
                       dust={dust}
+                      gold={gold}
                       colorClass={config.color}
                       buying={buyingShopId === item.id}
                       justBought={justBoughtShopId === item.id}
@@ -630,6 +638,7 @@ function StaticShopCardAction({
 function StaticShopCard({
   item,
   dust,
+  gold,
   colorClass,
   buying,
   justBought,
@@ -638,13 +647,15 @@ function StaticShopCard({
 }: {
   item: ShopItem
   dust: number
+  gold: number
   colorClass: string
   buying: boolean
   justBought: boolean
   owned?: boolean
   onBuy: () => void
 }) {
-  const canAfford = dust >= item.dustCost
+  const isGold = item.currency === 'GOLD'
+  const canAfford = (isGold ? gold : dust) >= item.cost
   const supported =
     item.type === 'TOKEN_PACK' ||
     item.type === 'MACHINE' ||
@@ -668,10 +679,18 @@ function StaticShopCard({
         )}
       </div>
       <div className="mt-auto flex items-center justify-between">
-        <span className="flex items-center gap-1 text-sm font-bold text-secondary">
-          <Sparkles className="h-3.5 w-3.5" />
+        <span
+          className={`flex items-center gap-1 text-sm font-bold ${
+            isGold ? 'text-primary' : 'text-secondary'
+          }`}
+        >
+          {isGold ? (
+            <Coins className="h-3.5 w-3.5" />
+          ) : (
+            <Sparkles className="h-3.5 w-3.5" />
+          )}
           <span className="tabular-nums">
-            {item.dustCost.toLocaleString('fr-FR')}
+            {item.cost.toLocaleString('fr-FR')}
           </span>
         </span>
         <StaticShopCardAction

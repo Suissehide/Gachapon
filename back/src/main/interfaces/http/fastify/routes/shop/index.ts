@@ -43,7 +43,8 @@ export const shopRouter: FastifyPluginCallbackZod = (fastify) => {
             name: item.name,
             description: item.description,
             type: item.type,
-            dustCost: item.dustCost,
+            cost: item.cost,
+            currency: item.currency,
             value: item.value,
             activeBoost,
           }
