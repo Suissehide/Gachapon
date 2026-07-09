@@ -30,6 +30,37 @@ export interface PRNG {
 }
 
 /**
+ * Base rarity weights for guaranteed first-clear drops. `minRarity` is only a
+ * floor: once the pool is filtered to rarities >= minRarity, these weights make
+ * each higher tier progressively rarer (steep decay) instead of uniform — so a
+ * LEGENDARY guaranteed drop stays a real event. Farm drops carry their own
+ * per-stage `equipmentWeights`; this table applies to first-clear rolls only.
+ */
+const FIRST_CLEAR_RARITY_WEIGHTS: Record<Rarity, number> = {
+  COMMON: 100,
+  UNCOMMON: 40,
+  RARE: 12,
+  EPIC: 3,
+  LEGENDARY: 0.5,
+}
+
+/**
+ * Weighted pick among rarities >= minRarity using FIRST_CLEAR_RARITY_WEIGHTS.
+ * Returns null when minRarity is unknown (no allowed tiers).
+ */
+function pickFirstClearRarity(minRarity: Rarity, prng: PRNG): Rarity | null {
+  const start = RARITY_ORDER.indexOf(minRarity)
+  if (start < 0) {
+    return null
+  }
+  const weights: Partial<Record<Rarity, number>> = {}
+  for (const rarity of RARITY_ORDER.slice(start)) {
+    weights[rarity] = FIRST_CLEAR_RARITY_WEIGHTS[rarity]
+  }
+  return pickWeightedRarity(weights, prng)
+}
+
+/**
  * Roll for an equipment drop in farm mode.
  * Returns the dropped rarity, or null if no drop.
  */
@@ -61,13 +92,7 @@ export function rollFirstClearEquipmentRarity(
   if (!firstClear.guaranteedEquipment) {
     return null
   }
-  const min = firstClear.guaranteedEquipment.minRarity
-  const allowed = RARITY_ORDER.slice(RARITY_ORDER.indexOf(min))
-  if (allowed.length === 0) {
-    return null
-  }
-  const idx = Math.floor(prng() * allowed.length)
-  return allowed[Math.min(idx, allowed.length - 1)]!
+  return pickFirstClearRarity(firstClear.guaranteedEquipment.minRarity, prng)
 }
 
 /**
@@ -80,13 +105,7 @@ export function rollFirstClearCardRarity(
   if (!firstClear.guaranteedCard) {
     return null
   }
-  const min = firstClear.guaranteedCard.minRarity
-  const allowed = RARITY_ORDER.slice(RARITY_ORDER.indexOf(min))
-  if (allowed.length === 0) {
-    return null
-  }
-  const idx = Math.floor(prng() * allowed.length)
-  return allowed[Math.min(idx, allowed.length - 1)]!
+  return pickFirstClearRarity(firstClear.guaranteedCard.minRarity, prng)
 }
 
 /**

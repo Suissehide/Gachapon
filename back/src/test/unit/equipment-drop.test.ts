@@ -102,6 +102,24 @@ describe('equipment-drop pure', () => {
         expect(allowed).toContain(r)
       }
     })
+
+    it('makes higher rarities progressively rarer, not uniform (steep curve)', () => {
+      // minRarity COMMON => full pool. LEGENDARY must be super rare (< 2%),
+      // COMMON dominant. Uniform (the old bug) would give ~20% legendary.
+      const fc = { gold: 0, dust: 0, xp: 0, guaranteedEquipment: { minRarity: 'COMMON' as const } }
+      const counts: Record<string, number> = {}
+      const N = 20000
+      for (let i = 0; i < N; i++) {
+        const r = rollFirstClearEquipmentRarity(fc, Math.random)!
+        counts[r] = (counts[r] ?? 0) + 1
+      }
+      const legendaryRate = (counts.LEGENDARY ?? 0) / N
+      expect(legendaryRate).toBeLessThan(0.02)
+      expect(counts.COMMON!).toBeGreaterThan(counts.UNCOMMON!)
+      expect(counts.UNCOMMON!).toBeGreaterThan(counts.RARE!)
+      expect(counts.RARE!).toBeGreaterThan(counts.EPIC!)
+      expect(counts.EPIC!).toBeGreaterThan(counts.LEGENDARY ?? 0)
+    })
   })
 
   describe('rollFirstClearCardRarity', () => {
