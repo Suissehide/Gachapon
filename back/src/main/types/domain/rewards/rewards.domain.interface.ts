@@ -25,6 +25,7 @@ export type ClaimResult = {
   dust: number
   xp: number
   level: number
+  levelBefore: number
   gold: number
   pendingRewardsCount: number
   unlockedAchievements: UnlockedAchievement[]

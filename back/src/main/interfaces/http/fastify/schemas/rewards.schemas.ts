@@ -42,6 +42,7 @@ export const claimResultSchema = z.object({
   dust: z.number().int(),
   xp: z.number().int(),
   level: z.number().int(),
+  levelBefore: z.number().int(),
   gold: z.number().int(),
   pendingRewardsCount: z.number().int().nonnegative(),
   unlockedAchievements: z.array(unlockedAchievementSchema).optional(),

@@ -1,5 +1,5 @@
 import { Award, Coins, Sparkles, Star, X } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import {
   RARITY_FR,
@@ -24,7 +24,7 @@ export function AchievementUnlockToast() {
   const autoHideTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const removeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const startExit = () => {
+  const startExit = useCallback(() => {
     if (phase === 'out') {
       return
     }
@@ -38,7 +38,7 @@ export function AchievementUnlockToast() {
       setPending(null)
       setPhase('in')
     }, EXIT_MS)
-  }
+  }, [phase, popQueue])
 
   // When a new unlock arrives and nothing is on screen, swap it in.
   useEffect(() => {
@@ -49,7 +49,6 @@ export function AchievementUnlockToast() {
   }, [current, pending])
 
   // Auto-dismiss after DISPLAY_MS (resets on each fresh item).
-  // biome-ignore lint/correctness/useExhaustiveDependencies: startExit is intentionally omitted — including it would re-arm the timer on every render
   useEffect(() => {
     if (!pending || phase !== 'in') {
       return
@@ -60,8 +59,7 @@ export function AchievementUnlockToast() {
         clearTimeout(autoHideTimer.current)
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pending, phase])
+  }, [pending, phase, startExit])
 
   // Cleanup on unmount.
   useEffect(() => {

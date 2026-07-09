@@ -28,7 +28,9 @@ import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
 } from '../../queries/useEconomyConfig.ts'
-import { xpForLevel } from '../../utils/level.ts'
+import { useLevelUpStore } from '../../stores/levelUp.store.ts'
+import { computeLevel, xpForLevel } from '../../utils/level.ts'
+import { levelUpReward } from '../../utils/levelRewards.ts'
 
 // Chapter titles — kept in sync with campaign.tsx's CHAPTER_META. Extracting
 // to a shared module would be nicer but the list is short enough that a
@@ -76,6 +78,9 @@ function BattlePage() {
   const attack = useAttackStage(stageId, teamReady)
   const result = attack.data ?? null
 
+  const triggerLevelUp = useLevelUpStore((s) => s.triggerLevelUp)
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+
   // Find the stage's label + chapter title from the campaign snapshot so the
   // victory subtitle can read "NIVEAU 2-4 · FORÊT DES MURMURES".
   const stageInfo = (() => {
@@ -96,6 +101,26 @@ function BattlePage() {
       return () => clearTimeout(t)
     }
   }, [sceneDone, result])
+
+  // Fire the player level-up celebration once the victory panel is shown. The
+  // combat XP can push the player over a level threshold; unlike the gacha
+  // flow, nothing else triggers it, so we detect it here from the battle
+  // rewards (xpBefore/levelBefore) and let LevelUpOverlay (z-[200]) render on
+  // top of the victory popup.
+  useEffect(() => {
+    if (!showResult) {
+      return
+    }
+    const rewards = result?.rewards
+    if (!(result?.won && rewards)) {
+      return
+    }
+    const oldLevel = rewards.levelBefore
+    const newLevel = computeLevel(rewards.xpBefore + rewards.xp, economy.xp)
+    if (newLevel > oldLevel) {
+      triggerLevelUp(newLevel, levelUpReward(oldLevel, newLevel, economy.xp))
+    }
+  }, [showResult, result, economy, triggerLevelUp])
 
   const handleReplay = () => {
     setShowResult(false)

@@ -257,6 +257,7 @@ export class RewardsDomain implements RewardsDomainInterface {
           dust: newDust,
           xp: newXp,
           level: newLevel,
+          levelBefore: user.level,
           gold: newGold,
           pendingRewardsCount,
           unlockedAchievements: [...claimUnlocks, ...levelUnlocks],
@@ -402,6 +403,7 @@ export class RewardsDomain implements RewardsDomainInterface {
           dust: newDust,
           xp: newXp,
           level: newLevel,
+          levelBefore: initialLevel,
           gold: newGold,
           // milestone rewards just created are pending — surface them to the caller
           pendingRewardsCount: milestonePacksCreated,

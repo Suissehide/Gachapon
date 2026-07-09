@@ -11,7 +11,6 @@ import {
   claimedCardToRevealEntry,
   useRewardRevealStore,
 } from '../stores/rewardReveal.store.ts'
-import { computeLevel } from '../utils/level.ts'
 import { levelUpReward } from '../utils/levelRewards.ts'
 import { DEFAULT_ECONOMY, useEconomyConfig } from './useEconomyConfig.ts'
 
@@ -37,19 +36,20 @@ export const useClaimReward = () => {
   const { toast } = useToast()
   const fetchMe = useAuthStore((s) => s.fetchMe)
   const triggerLevelUp = useLevelUpStore((s) => s.triggerLevelUp)
-  const username = useAuthStore((s) => s.user?.username ?? '')
   const enqueueAchievementUnlock = useAchievementUnlockStore((s) => s.enqueue)
   const revealRewardCards = useRewardRevealStore((s) => s.reveal)
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   return useMutation({
     mutationFn: (rewardId: string) => RewardsApi.claimReward(rewardId),
     onSuccess: (result) => {
-      const cached = qc.getQueryData<{ xp?: number }>(['profile', username])
-      const oldLevel = computeLevel(cached?.xp ?? 0, economy.xp)
-      if (result.level > oldLevel) {
+      // Use the server-authoritative levelBefore: computing the old level from
+      // the ['profile'] cache is unreliable (that query isn't loaded on the
+      // rewards page, so it defaulted to xp 0 → level 1, firing the overlay on
+      // every claim for anyone past level 1).
+      if (result.level > result.levelBefore) {
         triggerLevelUp(
           result.level,
-          levelUpReward(oldLevel, result.level, economy.xp),
+          levelUpReward(result.levelBefore, result.level, economy.xp),
         )
       }
       qc.invalidateQueries({ queryKey: ['rewards', 'pending'] })
@@ -80,22 +80,17 @@ export const useClaimAllRewards = () => {
   const { toast } = useToast()
   const fetchMe = useAuthStore((s) => s.fetchMe)
   const triggerLevelUp = useLevelUpStore((s) => s.triggerLevelUp)
-  const username = useAuthStore((s) => s.user?.username ?? '')
   const enqueueAchievementUnlock = useAchievementUnlockStore((s) => s.enqueue)
   const revealRewardCards = useRewardRevealStore((s) => s.reveal)
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   return useMutation({
     mutationFn: () => RewardsApi.claimAllRewards(),
     onSuccess: (result) => {
-      if (result) {
-        const cached = qc.getQueryData<{ xp?: number }>(['profile', username])
-        const oldLevel = computeLevel(cached?.xp ?? 0, economy.xp)
-        if (result.level > oldLevel) {
-          triggerLevelUp(
-            result.level,
-            levelUpReward(oldLevel, result.level, economy.xp),
-          )
-        }
+      if (result && result.level > result.levelBefore) {
+        triggerLevelUp(
+          result.level,
+          levelUpReward(result.levelBefore, result.level, economy.xp),
+        )
       }
       qc.invalidateQueries({ queryKey: ['rewards', 'pending'] })
       qc.invalidateQueries({ queryKey: ['quests'] })

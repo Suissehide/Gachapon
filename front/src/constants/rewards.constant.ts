@@ -36,6 +36,7 @@ export type ClaimResult = {
   dust: number
   xp: number
   level: number
+  levelBefore: number
   pendingRewardsCount: number
   unlockedAchievements?: UnlockedAchievement[]
   cards?: ClaimedCard[]
