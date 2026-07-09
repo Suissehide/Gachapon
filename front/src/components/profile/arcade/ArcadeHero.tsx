@@ -20,12 +20,13 @@ type Props = {
   isOwnProfile: boolean
 }
 
+const USERNAME_RE = /^[a-zA-Z0-9_]{3,30}$/
+
 export function ArcadeHero({ profile, featuredCards, isOwnProfile }: Props) {
   const [editorOpen, setEditorOpen] = useState(false)
   const [editingName, setEditingName] = useState(false)
   const [nameDraft, setNameDraft] = useState(profile.username)
   const updateUsername = useUpdateUsernameMutation()
-  const USERNAME_RE = /^[a-zA-Z0-9_]{3,30}$/
   const canSaveName =
     USERNAME_RE.test(nameDraft) && nameDraft !== profile.username
 
