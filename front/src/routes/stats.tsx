@@ -1,11 +1,23 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Sparkles, Star, Trophy, Users, Zap } from 'lucide-react'
+import {
+  Coins,
+  Crown,
+  Layers,
+  Sparkles,
+  Star,
+  Trophy,
+  Users,
+  Zap,
+} from 'lucide-react'
 import { type ComponentType, useEffect, useRef, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 
+import type { PublicStats } from '../api/stats.api.ts'
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
+import { LiveLegendaries } from '../components/custom/LiveLegendaries.tsx'
+import { StatsTicker } from '../components/custom/StatsTicker.tsx'
+import { usePublicStats } from '../queries/usePublicStats.ts'
 import { useAuthDialogStore } from '../stores/authDialog.store'
-import { type PublicStats, StatsApi } from '../api/stats.api.ts'
 
 export const Route = createFileRoute('/stats')({
   component: StatsPage,
@@ -87,11 +99,7 @@ function StatCard({
 
 function StatsPage() {
   const { openRegister } = useAuthDialogStore()
-  const [stats, setStats] = useState<PublicStats | null>(null)
-
-  useEffect(() => {
-    StatsApi.getPublicStats().then(setStats)
-  }, [])
+  const { data: stats } = usePublicStats()
 
   const fallback: PublicStats = {
     totalUsers: 0,
@@ -113,15 +121,32 @@ function StatsPage() {
     <div className="min-h-screen bg-background text-foreground">
       <Helmet>
         <title>Statistiques — Gachapon</title>
-        <meta name="description" content="Les chiffres de Gachapon en temps réel : joueurs inscrits, capsules ouvertes, cartes disponibles et légendaires obtenues." />
+        <meta
+          name="description"
+          content="Les chiffres de Gachapon en temps réel : joueurs inscrits, capsules ouvertes, cartes disponibles et légendaires obtenues."
+        />
         <link rel="canonical" href="https://gachapon.qwetle.fr/stats" />
         <meta property="og:title" content="Statistiques — Gachapon" />
-        <meta property="og:description" content="Les chiffres de Gachapon en temps réel : joueurs inscrits, capsules ouvertes, cartes disponibles et légendaires obtenues." />
+        <meta
+          property="og:description"
+          content="Les chiffres de Gachapon en temps réel : joueurs inscrits, capsules ouvertes, cartes disponibles et légendaires obtenues."
+        />
         <meta property="og:url" content="https://gachapon.qwetle.fr/stats" />
       </Helmet>
       <LandingNavbar />
+      <div className="pt-24">
+        <StatsTicker
+          items={[
+            { label: 'joueurs inscrits', value: s.totalUsers },
+            { label: 'capsules ouvertes', value: s.totalPulls },
+            { label: 'cartes légendaires obtenues', value: s.legendaryPulls },
+            { label: 'dust accumulé', value: s.totalDust },
+            { label: 'sets', value: s.setsCount },
+          ]}
+        />
+      </div>
 
-      <main className="pt-32 pb-24 px-6 lg:px-10 max-w-4xl mx-auto">
+      <main className="pt-12 pb-24 px-6 lg:px-10 max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-16">
           <p className="text-[11px] font-semibold text-text-light/50 uppercase tracking-[0.2em] mb-4">
@@ -177,6 +202,46 @@ function StatsPage() {
             bgColor="bg-amber-500/10"
             iconColor="text-amber-500"
             delay={400}
+          />
+          <StatCard
+            icon={Zap}
+            label="Capsules ouvertes aujourd'hui"
+            value={s.pullsToday}
+            bgColor="bg-secondary/10"
+            iconColor="text-secondary"
+            delay={500}
+          />
+          <StatCard
+            icon={Coins}
+            label="Dust total accumulé"
+            value={s.totalDust}
+            bgColor="bg-accent/10"
+            iconColor="text-accent"
+            delay={600}
+          />
+          <StatCard
+            icon={Layers}
+            label="Sets disponibles"
+            value={s.setsCount}
+            bgColor="bg-primary/10"
+            iconColor="text-primary"
+            delay={700}
+          />
+          <StatCard
+            icon={Crown}
+            label="Cartes légendaires existantes"
+            value={s.legendaryCardsCount}
+            bgColor="bg-amber-500/10"
+            iconColor="text-amber-500"
+            delay={800}
+          />
+        </div>
+
+        {/* Live legendaries band */}
+        <div className="mb-16">
+          <LiveLegendaries
+            activeToday={s.activeToday}
+            recent={s.recentLegendaries}
           />
         </div>
 
