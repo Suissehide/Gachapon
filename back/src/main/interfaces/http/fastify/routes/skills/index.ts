@@ -1,10 +1,17 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
-import { nodeIdParamSchema } from '../../schemas/skills.schema'
+import {
+  investBatchBodySchema,
+  nodeIdParamSchema,
+} from '../../schemas/skills.schema'
 
 export const skillsRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { skillTreeDomain, skillInvestDomain, skillResetDomain } =
-    fastify.iocContainer
+  const {
+    skillTreeDomain,
+    skillInvestDomain,
+    skillInvestBatchDomain,
+    skillResetDomain,
+  } = fastify.iocContainer
 
   fastify.get(
     '/skills',
@@ -20,6 +27,19 @@ export const skillsRouter: FastifyPluginCallbackZod = (fastify) => {
     },
     (request) =>
       skillInvestDomain.invest(request.user.userID, request.params.nodeId),
+  )
+
+  fastify.post(
+    '/skills/invest-batch',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: { body: investBatchBodySchema },
+    },
+    (request) =>
+      skillInvestBatchDomain.investBatch(
+        request.user.userID,
+        request.body.allocations,
+      ),
   )
 
   fastify.post(

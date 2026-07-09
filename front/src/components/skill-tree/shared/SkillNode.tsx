@@ -13,7 +13,6 @@ export type SkillNodeData = {
   canInvest: boolean
   isLocked: boolean
   missingPrereqs: string[]
-  onInvest?: (nodeId: string) => void
   isAdmin?: boolean
 }
 
@@ -116,7 +115,6 @@ export function SkillNodeComponent({ data }: NodeProps) {
     canInvest,
     isLocked,
     missingPrereqs,
-    onInvest,
     isAdmin,
   } = data as SkillNodeData
 
@@ -131,17 +129,10 @@ export function SkillNodeComponent({ data }: NodeProps) {
     />
   ))
 
-  const handleClick = () => {
-    if (!isLocked && canInvest && userLevel < node.maxLevel) {
-      onInvest?.(node.id)
-    }
-  }
-
   return (
     <button
       ref={buttonRef}
       type="button"
-      onClick={handleClick}
       onMouseEnter={() => !isAdmin && setHovered(true)}
       onMouseLeave={() => !isAdmin && setHovered(false)}
       title={isAdmin ? node.description : undefined}

@@ -8,10 +8,13 @@ const iconMap = Icons as unknown as Record<string, LucideIcon>
 
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { SkillTreeCanvas } from '../../components/skill-tree/player/SkillTreeCanvas.tsx'
+import { useSkillDraft } from '../../components/skill-tree/player/useSkillDraft.ts'
 import { ConfirmPopup } from '../../components/team/ConfirmPopup.tsx'
 import { Button } from '../../components/ui/button.tsx'
+import { TOAST_SEVERITY } from '../../constants/ui.constant.ts'
+import { useToast } from '../../hooks/useToast.ts'
 import {
-  useInvestSkill,
+  useInvestBatch,
   useResetSkills,
   useSkillTree,
 } from '../../queries/useSkills.ts'
@@ -22,9 +25,41 @@ export const Route = createFileRoute('/_authenticated/skills')({
 
 function SkillsPage() {
   const { data: state, isLoading } = useSkillTree()
-  const invest = useInvestSkill()
   const reset = useResetSkills()
+  const investBatch = useInvestBatch()
+  const draft = useSkillDraft(state)
+  const { toast } = useToast()
   const [resetOpen, setResetOpen] = useState(false)
+
+  const handleSave = () => {
+    const allocations = Object.entries(draft.pending).map(
+      ([nodeId, levels]) => ({ nodeId, levels }),
+    )
+    if (allocations.length === 0) {
+      return
+    }
+    const count = draft.pendingCount
+    investBatch.mutate(allocations, {
+      onSuccess: () => {
+        draft.clear()
+        toast({
+          title: 'Compétences enregistrées',
+          message: `${count} point${count > 1 ? 's' : ''} attribué${count > 1 ? 's' : ''}`,
+          severity: TOAST_SEVERITY.SUCCESS,
+        })
+      },
+    })
+  }
+
+  const handleUninvest = (nodeId: string) => {
+    if (draft.removePoint(nodeId) === 'blocked') {
+      toast({
+        title: 'Retrait impossible',
+        message: 'Retire d’abord les compétences qui en dépendent.',
+        severity: TOAST_SEVERITY.WARNING,
+      })
+    }
+  }
 
   if (isLoading || !state) {
     return (
@@ -33,6 +68,8 @@ function SkillsPage() {
       </div>
     )
   }
+
+  const view = draft.effectiveState ?? state
 
   return (
     <div
@@ -57,16 +94,36 @@ function SkillsPage() {
                   className="font-display text-[18px] font-extrabold tabular-nums"
                   style={{ color: '#8b5cf6' }}
                 >
-                  {state.skillPoints}
+                  {view.skillPoints}
                 </span>{' '}
                 points
               </span>
+              {draft.isDirty && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={draft.clear}
+                    disabled={investBatch.isPending}
+                  >
+                    Annuler
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleSave}
+                    disabled={investBatch.isPending}
+                  >
+                    Sauvegarder · {draft.pendingCount} pt
+                    {draft.pendingCount > 1 ? 's' : ''}
+                  </Button>
+                </>
+              )}
               {state.totalInvested > 0 && (
                 <Button
                   variant="destructive"
                   size="sm"
                   onClick={() => setResetOpen(true)}
-                  disabled={reset.isPending}
+                  disabled={reset.isPending || investBatch.isPending}
                 >
                   Reset · {state.resetCost} dust
                 </Button>
@@ -79,8 +136,9 @@ function SkillsPage() {
       {/* Canvas — full width because the skill tree benefits from the space */}
       <div className="flex-1">
         <SkillTreeCanvas
-          state={state}
-          onInvest={(nodeId) => invest.mutate(nodeId)}
+          state={view}
+          onInvest={draft.addPoint}
+          onUninvest={handleUninvest}
         />
       </div>
 

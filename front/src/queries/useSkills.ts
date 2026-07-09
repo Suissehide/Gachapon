@@ -36,6 +36,23 @@ export const useInvestSkill = () => {
   })
 }
 
+export const useInvestBatch = () => {
+  const qc = useQueryClient()
+  const { toast } = useToast()
+  return useMutation({
+    mutationFn: (allocations: { nodeId: string; levels: number }[]) =>
+      SkillsApi.investBatch(allocations),
+    onSuccess: () => qc.invalidateQueries({ queryKey: SKILLS_KEY }),
+    onError: (error) => {
+      toast({
+        title: "Erreur lors de l'enregistrement",
+        message: error.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
+    },
+  })
+}
+
 export const useResetSkills = () => {
   const qc = useQueryClient()
   const { toast } = useToast()

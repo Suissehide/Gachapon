@@ -20,6 +20,15 @@ export type ResetResult = {
   dustSpent: number
 }
 
+export type SkillAllocation = {
+  nodeId: string
+  levels: number
+}
+
+export type InvestBatchResult = {
+  skillPoints: number
+}
+
 export interface ISkillTreeDomain {
   getState(userId: string): Promise<SkillTreeState>
 }
@@ -30,4 +39,11 @@ export interface ISkillInvestDomain {
 
 export interface ISkillResetDomain {
   reset(userId: string): Promise<ResetResult>
+}
+
+export interface ISkillInvestBatchDomain {
+  investBatch(
+    userId: string,
+    allocations: SkillAllocation[],
+  ): Promise<InvestBatchResult>
 }

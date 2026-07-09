@@ -182,6 +182,96 @@ describe('Skills routes', () => {
     expect(res.statusCode).toBe(400)
   })
 
+  it('POST /skills/invest-batch — investit plusieurs points en chaîne de façon atomique', async () => {
+    const treeRes = await app.inject({ method: 'GET', url: '/skills', headers: { cookie: cookies } })
+    const tree = treeRes.json()
+    const allNodes: any[] = tree.branches.flatMap((b: any) => b.nodes)
+    const root = allNodes.find((n: any) => n.edgesTo.length === 0)
+    const child = allNodes.find((n: any) =>
+      n.edgesTo.some((e: any) => e.fromNodeId === root.id),
+    )
+    expect(root).toBeDefined()
+    expect(child).toBeDefined()
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/skills/invest-batch',
+      headers: { cookie: cookies },
+      payload: {
+        allocations: [
+          { nodeId: root.id, levels: 1 },
+          { nodeId: child.id, levels: 1 },
+        ],
+      },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().skillPoints).toBe(8)
+
+    const after = (
+      await app.inject({ method: 'GET', url: '/skills', headers: { cookie: cookies } })
+    ).json()
+    expect(after.totalInvested).toBe(2)
+    const levels = Object.fromEntries(
+      after.userSkills.map((s: any) => [s.nodeId, s.level]),
+    )
+    expect(levels[root.id]).toBe(1)
+    expect(levels[child.id]).toBe(1)
+  })
+
+  it('POST /skills/invest-batch — 403 si un prérequis final n’est pas rempli', async () => {
+    const tree = (
+      await app.inject({ method: 'GET', url: '/skills', headers: { cookie: cookies } })
+    ).json()
+    const investedNodeIds = new Set((tree.userSkills as any[]).map((s: any) => s.nodeId))
+    const allNodes: any[] = tree.branches.flatMap((b: any) => b.nodes)
+    const lockedNode = allNodes.find(
+      (n: any) =>
+        n.edgesTo.length > 0 &&
+        n.edgesTo.some((e: any) => !investedNodeIds.has(e.fromNodeId)),
+    )
+    expect(lockedNode).toBeDefined()
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/skills/invest-batch',
+      headers: { cookie: cookies },
+      payload: { allocations: [{ nodeId: lockedNode.id, levels: 1 }] },
+    })
+    expect(res.statusCode).toBe(403)
+  })
+
+  it('POST /skills/invest-batch — 402 si pas assez de points (aucune écriture)', async () => {
+    const before = (
+      await app.inject({ method: 'GET', url: '/skills', headers: { cookie: cookies } })
+    ).json()
+    const root = before.branches
+      .flatMap((b: any) => b.nodes)
+      .find((n: any) => n.edgesTo.length === 0)
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/skills/invest-batch',
+      headers: { cookie: cookies },
+      payload: { allocations: [{ nodeId: root.id, levels: 999 }] },
+    })
+    expect(res.statusCode).toBe(402)
+
+    const after = (
+      await app.inject({ method: 'GET', url: '/skills', headers: { cookie: cookies } })
+    ).json()
+    expect(after.skillPoints).toBe(before.skillPoints)
+    expect(after.totalInvested).toBe(before.totalInvested)
+  })
+
+  it('POST /skills/invest-batch — sans cookie → 401', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/skills/invest-batch',
+      payload: { allocations: [{ nodeId: 'x', levels: 1 }] },
+    })
+    expect(res.statusCode).toBe(401)
+  })
+
   it('GET /skills — sans cookie → 401', async () => {
     const res = await app.inject({ method: 'GET', url: '/skills' })
     expect(res.statusCode).toBe(401)

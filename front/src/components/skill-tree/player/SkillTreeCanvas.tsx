@@ -21,9 +21,10 @@ const nodeTypes = { skillNode: SkillNodeComponent, centerNode: CenterNode }
 type Props = {
   state: SkillTreeState
   onInvest?: (nodeId: string) => void
+  onUninvest?: (nodeId: string) => void
 }
 
-export function SkillTreeCanvas({ state, onInvest }: Props) {
+export function SkillTreeCanvas({ state, onInvest, onUninvest }: Props) {
   const skillMap = useMemo(
     () => Object.fromEntries(state.userSkills.map((s) => [s.nodeId, s.level])),
     [state.userSkills],
@@ -124,7 +125,6 @@ export function SkillTreeCanvas({ state, onInvest }: Props) {
             canInvest: state.skillPoints > 0,
             isLocked,
             missingPrereqs,
-            onInvest,
           } satisfies SkillNodeData,
           draggable: false,
         })
@@ -132,7 +132,7 @@ export function SkillTreeCanvas({ state, onInvest }: Props) {
     }
 
     return result
-  }, [state, skillMap, onInvest, branchByHandle, colorByNodeId, allNodes])
+  }, [state, skillMap, branchByHandle, colorByNodeId, allNodes])
 
   const nodePositions = useMemo(() => {
     const map = new Map<string, { x: number; y: number }>()
@@ -198,6 +198,9 @@ export function SkillTreeCanvas({ state, onInvest }: Props) {
     return result
   }, [state.branches, skillMap, colorByNodeId, nodePositions])
 
+  // Invest is driven from here (not the SkillNode button) so a single click
+  // fires onInvest exactly once. onNodeClick also keeps the node interactive,
+  // which ReactFlow needs for the inner button to receive pointer events.
   const handleNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
       if (node.id === 'center' || !onInvest) {
@@ -211,12 +214,24 @@ export function SkillTreeCanvas({ state, onInvest }: Props) {
     [onInvest],
   )
 
+  const handleNodeContextMenu = useCallback(
+    (e: React.MouseEvent, node: Node) => {
+      e.preventDefault()
+      if (node.id === 'center' || !onUninvest) {
+        return
+      }
+      onUninvest((node.data as SkillNodeData).node.id)
+    },
+    [onUninvest],
+  )
+
   return (
     <ReactFlow
       nodes={nodes}
       edges={edges}
       nodeTypes={nodeTypes}
       onNodeClick={handleNodeClick}
+      onNodeContextMenu={handleNodeContextMenu}
       fitView
       minZoom={0.5}
       maxZoom={1.5}

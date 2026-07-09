@@ -30,6 +30,7 @@ import type { IQuestsDomain } from '../domain/quests/quests.domain.interface'
 import type { RewardsDomainInterface } from '../domain/rewards/rewards.domain.interface'
 import type { IShopDomain } from '../domain/shop/shop.domain.interface'
 import type {
+  ISkillInvestBatchDomain,
   ISkillInvestDomain,
   ISkillResetDomain,
   ISkillTreeDomain,
@@ -122,6 +123,7 @@ export interface IocContainer {
   readonly dailyShopDomain: IDailyShopDomain
   readonly skillTreeDomain: ISkillTreeDomain
   readonly skillInvestDomain: ISkillInvestDomain
+  readonly skillInvestBatchDomain: ISkillInvestBatchDomain
   readonly skillResetDomain: ISkillResetDomain
   readonly adminSkillTreeDomain: AdminSkillTreeDomain
   readonly achievementsDomain: AchievementsDomainInterface
