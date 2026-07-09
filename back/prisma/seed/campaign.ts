@@ -7,9 +7,31 @@ import type { PrismaClient } from '../../src/generated/client'
 // power level of the chapter 1 boss.
 const ENEMY_BASE = { baseHp: 80, baseAtk: 8, baseDef: 4, baseSpd: 85 }
 
+// Apparence cosmétique par étage : clé `${chapter}-${index}`, valeur = liste
+// de sous-chemins MinIO (sans cards/ ni .png), un par slot d'ennemi dans l'ordre.
+// Doublons et mélange de familles autorisés. Étage absent => pas d'image.
+const STAGE_LOOKS: Record<string, string[]> = {
+  '1-1': [
+    'monsters/slime/SLI-001',
+    'monsters/slime/SLI-001',
+    'monsters/slime/SLI-002',
+  ],
+  '1-2': [
+    'monsters/slime/SLI-002',
+    'monsters/slime/SLI-002',
+    'monsters/slime/SLI-002',
+  ],
+  '1-10': ['monsters/boss/BOSS-001'],
+  '2-10': ['monsters/boss/BOSS-002'],
+  '3-10': ['monsters/boss/BOSS-003'],
+}
+
+function looksForStage(chapter: number, stageIndex: number): string[] {
+  return STAGE_LOOKS[`${chapter}-${stageIndex}`] ?? []
+}
+
 function enemyPower(chapter: number, stageIndex: number) {
-  const mult =
-    Math.pow(2.5, chapter - 1) * Math.pow(1.12, stageIndex - 1)
+  const mult = 2.5 ** (chapter - 1) * 1.12 ** (stageIndex - 1)
   return {
     baseHp: Math.round(ENEMY_BASE.baseHp * mult),
     baseAtk: Math.round(ENEMY_BASE.baseAtk * mult),
@@ -20,15 +42,19 @@ function enemyPower(chapter: number, stageIndex: number) {
 
 function normalEnemyTeam(chapter: number, stageIndex: number) {
   const p = enemyPower(chapter, stageIndex)
-  return [
-    { ...p, level: 1, palier: 1, attackPattern: 'BASIC' },
-    { ...p, level: 1, palier: 1, attackPattern: 'BASIC' },
-    { ...p, level: 1, palier: 1, attackPattern: 'BASIC' },
-  ]
+  const looks = looksForStage(chapter, stageIndex)
+  return [0, 1, 2].map((slot) => ({
+    ...p,
+    level: 1,
+    palier: 1,
+    attackPattern: 'BASIC',
+    appearance: looks[slot],
+  }))
 }
 
 function bossEnemyTeam(chapter: number, stageIndex: number) {
   const p = enemyPower(chapter, stageIndex)
+  const looks = looksForStage(chapter, stageIndex)
   return [
     {
       baseHp: p.baseHp * 5,
@@ -38,6 +64,7 @@ function bossEnemyTeam(chapter: number, stageIndex: number) {
       level: 1,
       palier: 1,
       attackPattern: 'AOE_3',
+      appearance: looks[0],
     },
   ]
 }
@@ -45,14 +72,14 @@ function bossEnemyTeam(chapter: number, stageIndex: number) {
 // Le butin scale ×1,5 par chapitre (la difficulté scale ×2,5 : progresser
 // reste optimal, farmer un vieux chapitre reste digne). Spec §4b.
 function lootTableNormal(chapter: number, stageIndex: number) {
-  const m = Math.pow(1.5, chapter - 1)
+  const m = 1.5 ** (chapter - 1)
   const minRarity = stageIndex <= 3 ? 'COMMON' : 'UNCOMMON'
   const farmWeights =
     stageIndex <= 3
       ? { COMMON: 80, UNCOMMON: 20 }
       : stageIndex <= 6
-      ? { COMMON: 60, UNCOMMON: 30, RARE: 10 }
-      : { COMMON: 50, UNCOMMON: 35, RARE: 15 }
+        ? { COMMON: 60, UNCOMMON: 30, RARE: 10 }
+        : { COMMON: 50, UNCOMMON: 35, RARE: 15 }
   const t = (stageIndex - 1) / 8
 
   return {
@@ -74,7 +101,7 @@ function lootTableNormal(chapter: number, stageIndex: number) {
 }
 
 function bossLoot(chapter: number) {
-  const m = Math.pow(1.5, chapter - 1)
+  const m = 1.5 ** (chapter - 1)
   const stage9 = lootTableNormal(chapter, 9)
   return {
     firstClear: {
