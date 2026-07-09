@@ -1,9 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 
 import { ProfileApi } from '../api/profile.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
+import { isApiError } from '../libs/httpErrorHandler.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 
 export type { ApiKey, ApiKeyCreated, UserProfile } from '../api/profile.api.ts'
@@ -102,6 +104,31 @@ export function useSetFeaturedCardsMutation() {
       if (me) {
         qc.invalidateQueries({ queryKey: ['profile', me, 'featured-cards'] })
       }
+    },
+  })
+}
+
+export function useUpdateUsernameMutation() {
+  const qc = useQueryClient()
+  const navigate = useNavigate()
+  const fetchMe = useAuthStore((s) => s.fetchMe)
+  const { toast } = useToast()
+  return useMutation({
+    mutationFn: (username: string) => ProfileApi.updateUsername(username),
+    onSuccess: async ({ username }) => {
+      await fetchMe()
+      qc.invalidateQueries({ queryKey: ['profile'] })
+      await navigate({ to: '/profile/$username', params: { username } })
+    },
+    onError: (err) => {
+      const info = isApiError(err)
+        ? { title: err.title, message: err.message }
+        : { title: 'Erreur', message: 'Changement de pseudo impossible.' }
+      toast({
+        title: info.title,
+        message: info.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
     },
   })
 }

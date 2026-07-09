@@ -51,9 +51,12 @@ export type SetProgression = {
 // Routes
 export const PROFILE_ROUTES = {
   profile: (username: string) => `/users/${username}/profile`,
-  featuredCards: (username: string) => `/users/${username}/profile/featured-cards`,
-  setsProgression: (username: string) => `/users/${username}/profile/sets-progression`,
+  featuredCards: (username: string) =>
+    `/users/${username}/profile/featured-cards`,
+  setsProgression: (username: string) =>
+    `/users/${username}/profile/sets-progression`,
   mySetFeaturedCards: '/users/me/featured-cards',
+  myUsername: '/users/me/username',
   apiKeys: '/api-keys',
   apiKey: (id: string) => `/api-keys/${id}`,
 } as const

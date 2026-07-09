@@ -59,7 +59,11 @@ export const ProfileApi = {
       `${apiUrl}${PROFILE_ROUTES.featuredCards(username)}`,
     )
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la récupération des cartes vedettes')
+      handleHttpError(
+        res,
+        {},
+        'Erreur lors de la récupération des cartes vedettes',
+      )
     }
     return res.json()
   },
@@ -71,7 +75,11 @@ export const ProfileApi = {
       `${apiUrl}${PROFILE_ROUTES.setsProgression(username)}`,
     )
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la récupération de la progression')
+      handleHttpError(
+        res,
+        {},
+        'Erreur lors de la récupération de la progression',
+      )
     }
     return res.json()
   },
@@ -79,13 +87,41 @@ export const ProfileApi = {
   setFeaturedCards: async (
     cardIds: string[],
   ): Promise<{ cardIds: string[] }> => {
-    const res = await fetchWithAuth(`${apiUrl}${PROFILE_ROUTES.mySetFeaturedCards}`, {
-      method: 'PUT',
+    const res = await fetchWithAuth(
+      `${apiUrl}${PROFILE_ROUTES.mySetFeaturedCards}`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cardIds }),
+      },
+    )
+    if (!res.ok) {
+      handleHttpError(
+        res,
+        {},
+        "Erreur lors de l'enregistrement des cartes vedettes",
+      )
+    }
+    return res.json()
+  },
+
+  updateUsername: async (username: string): Promise<{ username: string }> => {
+    const res = await fetchWithAuth(`${apiUrl}${PROFILE_ROUTES.myUsername}`, {
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cardIds }),
+      body: JSON.stringify({ username }),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de l\'enregistrement des cartes vedettes')
+      handleHttpError(
+        res,
+        {
+          409: {
+            title: 'Pseudo indisponible',
+            message: 'Ce pseudo est déjà pris.',
+          },
+        },
+        'Erreur lors du changement de pseudo',
+      )
     }
     return res.json()
   },
