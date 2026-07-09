@@ -1,8 +1,3 @@
-export type RecentLegendary = {
-  cardName: string
-  pulledAt: string
-}
-
 export type PublicStats = {
   totalUsers: number
   totalPulls: number
@@ -13,8 +8,6 @@ export type PublicStats = {
   totalDust: number
   setsCount: number
   legendaryCardsCount: number
-  activeToday: number
-  recentLegendaries: RecentLegendary[]
 }
 
 export interface IStatsRepository {

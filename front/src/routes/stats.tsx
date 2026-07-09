@@ -32,8 +32,6 @@ const fallback: PublicStats = {
   totalDust: 0,
   setsCount: 0,
   legendaryCardsCount: 0,
-  activeToday: 0,
-  recentLegendaries: [],
 }
 
 function useCountUp(target: number, duration = 1800) {

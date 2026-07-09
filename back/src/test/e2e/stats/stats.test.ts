@@ -26,10 +26,8 @@ describe('GET /stats (public)', () => {
       'totalDust',
       'setsCount',
       'legendaryCardsCount',
-      'activeToday',
     ]) {
       expect(typeof body[key]).toBe('number')
     }
-    expect(Array.isArray(body.recentLegendaries)).toBe(true)
   })
 })

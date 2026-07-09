@@ -28,8 +28,6 @@ export class StatsRepository implements IStatsRepository {
       dustAgg,
       setsCount,
       legendaryCardsCount,
-      activeTodayRaw,
-      recentLegendariesRaw,
     ] = await Promise.all([
       this.#prisma.user.count(),
       this.#prisma.gachaPull.count(),
@@ -48,17 +46,6 @@ export class StatsRepository implements IStatsRepository {
       this.#prisma.gachaPull.aggregate({ _sum: { dustEarned: true } }),
       this.#prisma.cardSet.count(),
       this.#prisma.card.count({ where: { rarity: 'LEGENDARY' } }),
-      this.#prisma.$queryRaw<{ count: bigint }[]>`
-        SELECT COUNT(DISTINCT "userId") AS count
-        FROM "GachaPull"
-        WHERE "pulledAt" >= ${startOfToday}
-      `,
-      this.#prisma.gachaPull.findMany({
-        where: { card: { rarity: 'LEGENDARY' } },
-        orderBy: { pulledAt: 'desc' },
-        take: 8,
-        select: { pulledAt: true, card: { select: { name: true } } },
-      }),
     ])
 
     return {
@@ -71,11 +58,6 @@ export class StatsRepository implements IStatsRepository {
       totalDust: dustAgg._sum.dustEarned ?? 0,
       setsCount,
       legendaryCardsCount,
-      activeToday: Number(activeTodayRaw[0]?.count ?? 0),
-      recentLegendaries: recentLegendariesRaw.map((p) => ({
-        cardName: p.card.name,
-        pulledAt: p.pulledAt.toISOString(),
-      })),
     }
   }
 }

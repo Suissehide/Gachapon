@@ -1,11 +1,6 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
-const recentLegendarySchema = z.object({
-  cardName: z.string(),
-  pulledAt: z.string(),
-})
-
 const publicStatsSchema = z.object({
   totalUsers: z.number(),
   totalPulls: z.number(),
@@ -16,8 +11,6 @@ const publicStatsSchema = z.object({
   totalDust: z.number(),
   setsCount: z.number(),
   legendaryCardsCount: z.number(),
-  activeToday: z.number(),
-  recentLegendaries: z.array(recentLegendarySchema),
 })
 
 export const statsRouter: FastifyPluginCallbackZod = (fastify) => {
