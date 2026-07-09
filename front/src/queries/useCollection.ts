@@ -84,6 +84,8 @@ export const useRecycle = () => {
       if (data.unlockedAchievements?.length) {
         enqueueAchievementUnlock(data.unlockedAchievements)
         qc.invalidateQueries({ queryKey: ['achievements'] })
+        // The unlocked achievement mints a pending reward — refresh the badge.
+        void useAuthStore.getState().fetchMe()
       }
     },
     onError: (error) => {

@@ -6,6 +6,7 @@ import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
 import { isApiError } from '../libs/httpErrorHandler.ts'
 import { useAchievementUnlockStore } from '../stores/achievementUnlock.store.ts'
+import { useAuthStore } from '../stores/auth.store.ts'
 
 export type { PurchaseResult, ShopItem } from '../api/shop.api.ts'
 
@@ -36,6 +37,8 @@ export const useBuyItem = () => {
       if (result.unlockedAchievements?.length) {
         enqueueAchievementUnlock(result.unlockedAchievements)
         qc.invalidateQueries({ queryKey: ['achievements'] })
+        // The unlocked achievement mints a pending reward — refresh the badge.
+        void useAuthStore.getState().fetchMe()
       }
     },
     onError: (error) => {

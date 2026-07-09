@@ -75,6 +75,11 @@ export const usePull = () => {
       // Keep active-boost pullsRemaining in sync on the shop page.
       qc.invalidateQueries({ queryKey: ['shop'] })
       qc.invalidateQueries({ queryKey: ['quests'] })
+      // A pull can mint a new pending reward (achievement unlock or level
+      // milestone pack) — refresh the topbar badge count from /auth/me.
+      if (result.unlockedAchievements?.length || newLevel > oldLevel) {
+        void useAuthStore.getState().fetchMe()
+      }
       if (result.unlockedAchievements?.length) {
         enqueueAchievementUnlock(result.unlockedAchievements)
         qc.invalidateQueries({ queryKey: ['achievements'] })
@@ -123,6 +128,11 @@ export const usePullBatch = () => {
       // Keep active-boost pullsRemaining in sync on the shop page.
       qc.invalidateQueries({ queryKey: ['shop'] })
       qc.invalidateQueries({ queryKey: ['quests'] })
+      // A pull can mint a new pending reward (achievement unlock or level
+      // milestone pack) — refresh the topbar badge count from /auth/me.
+      if (result.unlockedAchievements?.length || newLevel > oldLevel) {
+        void useAuthStore.getState().fetchMe()
+      }
       if (result.unlockedAchievements?.length) {
         enqueueAchievementUnlock(result.unlockedAchievements)
         qc.invalidateQueries({ queryKey: ['achievements'] })
