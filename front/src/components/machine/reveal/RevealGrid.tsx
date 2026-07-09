@@ -1,4 +1,4 @@
-import { Coins, Gift, Sparkles, Trophy, X } from 'lucide-react'
+import { Coins, Gift, Sparkles, Star, Trophy, X } from 'lucide-react'
 import {
   type CSSProperties,
   useCallback,
@@ -384,30 +384,42 @@ function FullscreenRarityEffect({
 
 type SpecialBadge = { label: string; Icon: typeof Sparkles; cls: string }
 
-// Priority badge on a revealed card: boostGuarantee > goldenBall > freePull.
-function getSpecialBadge(entry: PullBatchEntry): SpecialBadge | null {
+// All applicable badges on a revealed card, stacked top-to-bottom in this
+// order: Nouveau, boostGuarantee, goldenBall, freePull. A pull can hold several
+// at once (e.g. a new card that also rolled a golden ball), so each is shown
+// rather than collapsing to a single priority badge. "Nouveau" is orthogonal to
+// how the card was obtained — it flags any freshly-owned (non-duplicate) card.
+function getSpecialBadges(entry: PullBatchEntry): SpecialBadge[] {
+  const badges: SpecialBadge[] = []
+  if (!entry.wasDuplicate) {
+    badges.push({
+      label: 'Nouveau',
+      Icon: Star,
+      cls: 'bg-emerald-500/95 shadow-emerald-600/40',
+    })
+  }
   if (entry.wasBoostGuarantee) {
-    return {
+    badges.push({
       label: 'EPIC garanti',
       Icon: Sparkles,
       cls: 'bg-violet-600/95 shadow-violet-700/40',
-    }
+    })
   }
   if (entry.wasGoldenBall) {
-    return {
+    badges.push({
       label: "Boule d'or",
       Icon: Trophy,
       cls: 'bg-amber-500/95 shadow-amber-600/40',
-    }
+    })
   }
   if (entry.wasFreePull) {
-    return {
+    badges.push({
       label: 'Gratuit',
       Icon: Gift,
       cls: 'bg-sky-500/95 shadow-sky-600/40',
-    }
+    })
   }
-  return null
+  return badges
 }
 
 type CardProps = {
@@ -481,7 +493,7 @@ function RevealCard({
   const tone = getRarityTone(rarity)
   const [showLabel, setShowLabel] = useState(false)
 
-  const specialBadge = getSpecialBadge(entry)
+  const specialBadges = getSpecialBadges(entry)
 
   useEffect(() => {
     if (flipped) {
@@ -561,21 +573,23 @@ function RevealCard({
                 interactive
                 compact
                 showAura
-                newBadge={
-                  !entry.wasDuplicate &&
-                  !entry.wasFreePull &&
-                  !entry.wasGoldenBall &&
-                  !entry.wasBoostGuarantee
-                }
+                // "Nouveau" is rendered in the stacked badge group below (so it
+                // coexists with Boule d'or / Gratuit) — not by CardDisplay here.
+                newBadge={false}
               />
             </div>
-            {specialBadge && (
-              <span
-                className={`pointer-events-none absolute top-2 right-2 z-50 flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-white shadow-lg ${specialBadge.cls}`}
-              >
-                <specialBadge.Icon className="h-3 w-3" strokeWidth={2.5} />
-                {specialBadge.label}
-              </span>
+            {specialBadges.length > 0 && (
+              <div className="pointer-events-none absolute top-2 right-2 z-50 flex flex-col items-end gap-1">
+                {specialBadges.map((badge) => (
+                  <span
+                    key={badge.label}
+                    className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-white shadow-lg ${badge.cls}`}
+                  >
+                    <badge.Icon className="h-3 w-3" strokeWidth={2.5} />
+                    {badge.label}
+                  </span>
+                ))}
+              </div>
             )}
           </>
         )}
