@@ -191,7 +191,7 @@ export function CombatPanel({
           {!canAscend && quantity <= 1 && (
             <div className="mt-2.5 flex items-center gap-[7px] px-0.5 text-[13px] font-semibold text-[#dc2626]">
               <Lock className="h-[13px] w-[13px] flex-shrink-0" />
-              Doublon requis (tu n'en as pas)
+              Doublon requis
             </div>
           )}
         </div>
