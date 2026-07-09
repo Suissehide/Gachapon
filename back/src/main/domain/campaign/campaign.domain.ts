@@ -24,6 +24,7 @@ import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import { calculateLevel } from '../shared/xp'
 import { computeTeamPower } from './campaign-power'
+import { resolveEnemyImageUrl } from './enemy-appearance'
 
 type Rarity = 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
 
@@ -44,6 +45,9 @@ interface EnemySpec {
   palier: number
   attackPattern?: AttackPattern
   passiveKey?: string | null
+  // Sous-chemin MinIO sans cards/ ni .png, ex. "monsters/slime/SLI-001".
+  // Purement cosmétique. Absent => placeholder côté front.
+  appearance?: string | null
 }
 
 interface FirstClearLoot {
@@ -1025,7 +1029,9 @@ export class CampaignDomain {
       return {
         id: `B${idx}`,
         name: `Ennemi ${idx + 1}`,
-        imageUrl: null,
+        imageUrl: resolveEnemyImageUrl(e.appearance, (key) =>
+          this.#storageClient.publicUrl(key),
+        ),
         hp: stats.hp,
         atk: stats.atk,
         def: stats.def,
