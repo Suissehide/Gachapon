@@ -1,11 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { Trophy } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
+import { AdminPageHeader } from '../../components/admin/shared/AdminPageHeader.tsx'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label.tsx'
 import type { ScoringConfig } from '../../queries/useScoring'
-import { useScoringConfig, useUpdateScoringConfig } from '../../queries/useScoring'
+import {
+  useScoringConfig,
+  useUpdateScoringConfig,
+} from '../../queries/useScoring'
 
 export const Route = createFileRoute('/_admin/admin/scoring')({
   component: AdminScoringPage,
@@ -30,7 +35,9 @@ function AdminScoringPage() {
   const [draft, setDraft] = useState<ScoringConfig | null>(null)
 
   useEffect(() => {
-    if (data && !draft) setDraft(data)
+    if (data && !draft) {
+      setDraft(data)
+    }
   }, [data, draft])
 
   if (isLoading || !draft) {
@@ -47,12 +54,17 @@ function AdminScoringPage() {
 
   return (
     <div className="p-8">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-black text-text">Scoring — Configuration</h1>
-        <Button onClick={handleSave} disabled={update.isPending}>
-          {update.isPending ? 'Sauvegarde…' : 'Sauvegarder'}
-        </Button>
-      </div>
+      <AdminPageHeader
+        icon={Trophy}
+        kicker="Économie"
+        title="Scoring — Configuration"
+        subtitle="Points attribués par rareté et multiplicateurs de variante"
+        actions={
+          <Button onClick={handleSave} disabled={update.isPending}>
+            {update.isPending ? 'Sauvegarde…' : 'Sauvegarder'}
+          </Button>
+        }
+      />
 
       <div className="max-w-md space-y-6">
         <div className="rounded-xl border border-border bg-card p-5">
@@ -61,15 +73,22 @@ function AdminScoringPage() {
           </p>
           <div className="space-y-3">
             {RARITY_FIELDS.map(({ key, label }) => (
-              <div key={key} className="flex items-center justify-between gap-4">
-                <Label className="text-sm font-semibold text-text">{label}</Label>
+              <div
+                key={key}
+                className="flex items-center justify-between gap-4"
+              >
+                <Label className="text-sm font-semibold text-text">
+                  {label}
+                </Label>
                 <Input
                   type="number"
                   min={0}
                   step={1}
                   value={draft[key] as number}
                   onChange={(e) =>
-                    setDraft((d) => d ? { ...d, [key]: Number(e.target.value) } : d)
+                    setDraft((d) =>
+                      d ? { ...d, [key]: Number(e.target.value) } : d,
+                    )
                   }
                   className="w-24 text-right"
                 />
@@ -84,15 +103,22 @@ function AdminScoringPage() {
           </p>
           <div className="space-y-3">
             {MULTIPLIER_FIELDS.map(({ key, label }) => (
-              <div key={key} className="flex items-center justify-between gap-4">
-                <Label className="text-sm font-semibold text-text">{label}</Label>
+              <div
+                key={key}
+                className="flex items-center justify-between gap-4"
+              >
+                <Label className="text-sm font-semibold text-text">
+                  {label}
+                </Label>
                 <Input
                   type="number"
                   min={1.0}
                   step={0.1}
                   value={draft[key] as number}
                   onChange={(e) =>
-                    setDraft((d) => d ? { ...d, [key]: Number(e.target.value) } : d)
+                    setDraft((d) =>
+                      d ? { ...d, [key]: Number(e.target.value) } : d,
+                    )
                   }
                   className="w-24 text-right"
                 />

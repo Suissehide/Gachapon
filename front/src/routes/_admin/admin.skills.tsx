@@ -11,6 +11,7 @@ import {
   PlusCircle,
   Scissors,
   Settings,
+  Zap,
 } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 
@@ -45,7 +46,7 @@ function AdminSkillsPage() {
 
   if (isLoading || !branches) {
     return (
-      <div className="flex h-64 items-center justify-center text-gray-400">
+      <div className="flex h-64 items-center justify-center text-text-light">
         Chargement…
       </div>
     )
@@ -67,9 +68,16 @@ function AdminSkillsPage() {
     <div className="flex h-full flex-col overflow-hidden">
       {/* Toolbar */}
       <div className="h-14 flex shrink-0 items-center gap-2 border-b border-border bg-card px-4 py-2">
-        <span className="text-sm font-semibold text-text">
-          Arbre de compétences
-        </span>
+        <div className="flex items-center gap-2">
+          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/15">
+            <Zap className="h-3.5 w-3.5 text-primary" />
+          </div>
+          <span className="text-xs font-black uppercase tracking-widest text-primary">
+            Économie
+          </span>
+          <span className="text-text-light/40">·</span>
+          <span className="text-sm font-semibold text-text">Compétences</span>
+        </div>
         <div className="ml-auto flex gap-2">
           <Button
             variant="outline"

@@ -8,6 +8,7 @@ import type {
   DebugBattleResult,
   SimulatorUnit,
 } from '../../api/combat.api'
+import { AdminPageHeader } from '../../components/admin/shared/AdminPageHeader.tsx'
 import { BattleScene } from '../../components/battle/BattleScene'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
@@ -105,10 +106,12 @@ function DebugBattlePage() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <h1 className="text-2xl font-bold mb-1">Combat — Debug Battle</h1>
-      <p className="text-text-light mb-6">
-        Simule un combat libre pour tester le balancing.
-      </p>
+      <AdminPageHeader
+        icon={Swords}
+        kicker="Système"
+        title="Combat — Debug Battle"
+        subtitle="Simule un combat libre pour tester le balancing."
+      />
 
       <div className="grid md:grid-cols-2 gap-4 mb-4">
         <TeamPanel
@@ -162,7 +165,7 @@ function DebugBattlePage() {
       </div>
 
       {debugBattle.isError && (
-        <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-rose-300">
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-destructive">
           Erreur : {String(debugBattle.error)}
         </div>
       )}
@@ -244,7 +247,7 @@ function TeamPanel({
               <button
                 type="button"
                 onClick={() => removeUnit(i)}
-                className="text-rose-400 hover:text-rose-300"
+                className="text-destructive hover:text-destructive/80"
                 aria-label="Supprimer"
               >
                 <Trash2 className="h-4 w-4" />
@@ -381,15 +384,17 @@ function ResultPanel({
         : 'Timeout'
   const wonColor =
     result.won === 'A' || result.won === 'B'
-      ? 'text-emerald-400'
-      : 'text-rose-400'
+      ? 'text-success'
+      : 'text-destructive'
 
   return (
     <div className="mt-4 rounded-2xl border border-border bg-muted/20 p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className={`font-bold ${wonColor}`}>{wonLabel}</h2>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-text-light/60">{result.turns} tours</span>
+          <span className="text-xs text-text-light/60">
+            {result.turns} tours
+          </span>
           <div className="flex rounded-full border border-border bg-background/40 p-0.5">
             <button
               type="button"
@@ -458,24 +463,26 @@ function LogLine({ entry }: { entry: BattleLogEntry }) {
     }
     case 'PASSIVE':
       return (
-        <div className="text-amber-300">
+        <div className="text-primary">
           ✨ {String(entry.unitId)} · {String(entry.passive)} ·{' '}
           {JSON.stringify(entry.payload)}
         </div>
       )
     case 'DEATH':
       return (
-        <div className="text-rose-400">💀 {String(entry.unitId)} is down</div>
+        <div className="text-destructive">
+          💀 {String(entry.unitId)} is down
+        </div>
       )
     case 'REBIRTH':
       return (
-        <div className="text-emerald-400">
+        <div className="text-success">
           🌱 {String(entry.unitId)} revives to {String(entry.restoredHp)} HP
         </div>
       )
     case 'BANNER_APPLIED':
       return (
-        <div className="text-amber-400">
+        <div className="text-primary">
           🚩 Side {String(entry.side)}: +{String(entry.bonusPct)}% ATK
         </div>
       )
@@ -484,12 +491,10 @@ function LogLine({ entry }: { entry: BattleLogEntry }) {
         <div className="text-text-light/40">— Turn {String(entry.turn)} —</div>
       )
     case 'TIMEOUT':
-      return <div className="text-rose-400">⏱ Timeout reached</div>
+      return <div className="text-destructive">⏱ Timeout reached</div>
     case 'WIN':
       return (
-        <div className="text-emerald-400">
-          🏆 Side {String(entry.side)} wins
-        </div>
+        <div className="text-success">🏆 Side {String(entry.side)} wins</div>
       )
     default:
       return <div className="text-text-light/60">{JSON.stringify(entry)}</div>

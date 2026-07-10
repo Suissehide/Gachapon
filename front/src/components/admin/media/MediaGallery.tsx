@@ -32,13 +32,15 @@ export function MediaGallery({
             type="button"
             className={`relative aspect-square w-full cursor-pointer overflow-hidden rounded-md border-2 transition-all ${
               isChecked
-                ? 'border-red-500 bg-red-950/40'
+                ? 'border-destructive bg-destructive/10'
                 : isActive
-                  ? 'border-violet-500 bg-card'
+                  ? 'border-accent bg-card'
                   : 'border-transparent bg-card hover:border-border'
             }`}
             onClick={(e) => {
-              if ((e.target as HTMLElement).closest('[data-checkbox-wrap]')) return
+              if ((e.target as HTMLElement).closest('[data-checkbox-wrap]')) {
+                return
+              }
               if (onSelect) {
                 onSelect(item)
               } else if (onActivate) {
@@ -56,21 +58,18 @@ export function MediaGallery({
             />
 
             {selectable && item.orphan && (
-              <div
-                className="absolute left-1 top-1"
-                data-checkbox-wrap
-              >
+              <div className="absolute left-1 top-1" data-checkbox-wrap>
                 <Checkbox
                   checked={isChecked}
                   onChange={() => onToggleSelect?.(item.key)}
-                  className={`bg-white ${isChecked ? '!border-violet-500 [&>svg]:!text-violet-500' : 'border-border/60'}`}
+                  className={`bg-white ${isChecked ? '!border-accent [&>svg]:!text-accent' : 'border-border/60'}`}
                 />
               </div>
             )}
 
             <div
               className={`absolute bottom-1 right-1 h-2 w-2 rounded-full ${
-                item.orphan ? 'bg-red-500' : 'bg-green-600'
+                item.orphan ? 'bg-destructive' : 'bg-success'
               }`}
             />
           </button>

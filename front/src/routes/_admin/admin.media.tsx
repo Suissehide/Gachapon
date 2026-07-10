@@ -1,10 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Upload } from 'lucide-react'
+import { Images, Upload } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { CreateCardSheet } from '../../components/admin/cards/CreateCardSheet'
 import { MediaDetailPanel } from '../../components/admin/media/MediaDetailPanel'
 import { MediaGallery } from '../../components/admin/media/MediaGallery'
+import { AdminPageHeader } from '../../components/admin/shared/AdminPageHeader.tsx'
 import { Button } from '../../components/ui/button'
 import { SegmentedControl } from '../../components/ui/segmentedControl'
 import {
@@ -36,7 +37,9 @@ function AdminMediaPage() {
 
   const handleRename = async (from: string, newName: string) => {
     const result = await renameMutation.mutateAsync({ from, newName })
-    setActiveItem((prev) => (prev ? { ...prev, key: result.key, url: result.url } : prev))
+    setActiveItem((prev) =>
+      prev ? { ...prev, key: result.key, url: result.url } : prev,
+    )
   }
 
   const [filter, setFilter] = useState<Filter>('all')
@@ -138,7 +141,12 @@ function AdminMediaPage() {
 
   return (
     <div className="p-8">
-      <h1 className="mb-6 text-2xl font-black text-text">Médias</h1>
+      <AdminPageHeader
+        icon={Images}
+        kicker="Contenu"
+        title="Médias"
+        subtitle="Bibliothèque d'images — upload, organisation et nettoyage des orphelines"
+      />
 
       {/* Zone upload */}
       {/* biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop upload zone */}
@@ -180,7 +188,7 @@ function AdminMediaPage() {
           <p className="mt-2 text-xs text-primary">Upload en cours…</p>
         )}
         {uploadMutation.data?.errors?.map((err) => (
-          <p key={err.filename} className="mt-1 text-xs text-red-400">
+          <p key={err.filename} className="mt-1 text-xs text-destructive">
             {err.filename} : {err.reason}
           </p>
         ))}
@@ -233,7 +241,7 @@ function AdminMediaPage() {
           </div>
         )}
         {errorMessage && (
-          <p className="mt-2 text-xs text-red-400">{errorMessage}</p>
+          <p className="mt-2 text-xs text-destructive">{errorMessage}</p>
         )}
       </div>
 
@@ -243,8 +251,8 @@ function AdminMediaPage() {
           Chargement…
         </div>
       ) : isError ? (
-        <div className="flex h-64 flex-col items-center justify-center gap-2 rounded-lg border border-red-500/30 bg-red-500/5 text-center">
-          <p className="text-sm font-medium text-red-400">
+        <div className="flex h-64 flex-col items-center justify-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 text-center">
+          <p className="text-sm font-medium text-destructive">
             Impossible de charger les médias
           </p>
           <p className="text-xs text-text-light">
