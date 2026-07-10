@@ -112,10 +112,27 @@ export function TcgCardFace({
       <img
         src={imageUrl || placeholderImg}
         alt={name}
+        // Defer offscreen art so grids of hundreds of cards don't fire every
+        // request at once — that burst is what makes MinIO drop/throttle some
+        // and leaves them stuck on the placeholder.
+        loading="lazy"
+        decoding="async"
         className={`absolute inset-0 h-full w-full object-cover ${isOwned ? '' : 'grayscale'}`}
         style={{ objectPosition: artPosition ?? '50% 20%' }}
         onError={(e) => {
-          ;(e.target as HTMLImageElement).src = placeholderImg
+          const img = e.currentTarget
+          const retries = Number(img.dataset.retries ?? '0')
+          // Retry once (cache-busted, small backoff) before giving up — a
+          // transient failure under load shouldn't permanently show not-found.
+          if (imageUrl && retries < 1) {
+            img.dataset.retries = String(retries + 1)
+            const sep = imageUrl.includes('?') ? '&' : '?'
+            setTimeout(() => {
+              img.src = `${imageUrl}${sep}retry=1`
+            }, 600)
+          } else {
+            img.src = placeholderImg
+          }
         }}
       />
 
