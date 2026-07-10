@@ -108,7 +108,7 @@ export function Navbar() {
                     {item.to === '/skills' && (
                       <NotificationDot
                         count={user?.skillPoints ?? 0}
-                        className="-right-2 -top-2"
+                        className="-right-5 -top-2"
                       />
                     )}
                   </span>
