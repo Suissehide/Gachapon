@@ -23,6 +23,7 @@ import {
 import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import { calculateLevel } from '../shared/xp'
+import { deriveClearFlags } from './campaign-clear-flags'
 import { computeTeamPower } from './campaign-power'
 import { resolveEnemyImageUrl } from './enemy-appearance'
 
@@ -450,9 +451,17 @@ export class CampaignDomain {
               }
             }
 
+            const { flawless, understaffed } = deriveClearFlags(
+              sim.log,
+              teamUnits,
+              stage,
+            )
             await this.#achievementsDomain.track(tx, userId, {
               kind: 'STAGE_CLEARED',
               isBoss: stage.isBoss,
+              viaSweep: false,
+              flawless,
+              understaffed,
             })
           }
 
@@ -632,6 +641,9 @@ export class CampaignDomain {
             await this.#achievementsDomain.track(tx, userId, {
               kind: 'STAGE_CLEARED',
               isBoss: stage.isBoss,
+              viaSweep: true,
+              flawless: false,
+              understaffed: false,
             })
           }
 
