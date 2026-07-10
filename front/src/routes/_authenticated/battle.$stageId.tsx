@@ -10,6 +10,7 @@ import {
   Swords,
   TrendingUp,
   Trophy,
+  Zap,
 } from 'lucide-react'
 import { Dialog } from 'radix-ui'
 import { useEffect, useState } from 'react'
@@ -229,6 +230,7 @@ function BattlePage() {
             ) : (
               <DefeatPanel
                 canReplay={canReplay}
+                battleCost={combatPoints.data?.battleCost}
                 onReplay={handleReplay}
                 onBack={handleBackToCampaign}
               />
@@ -388,10 +390,12 @@ function VictoryPanel({
 
 function DefeatPanel({
   canReplay,
+  battleCost = 1,
   onReplay,
   onBack,
 }: {
   canReplay: boolean
+  battleCost?: number
   onReplay: () => void
   onBack: () => void
 }) {
@@ -455,6 +459,10 @@ function DefeatPanel({
           <Button onClick={onReplay} disabled={!canReplay} className="gap-2">
             <RotateCcw className="h-4 w-4" />
             Réessayer
+            <span className="ml-1 inline-flex items-center gap-0.5 rounded-full bg-black/15 px-2 py-0.5 font-mono text-[12px] font-bold tabular-nums">
+              <Zap className="h-3 w-3" />
+              {battleCost}
+            </span>
           </Button>
         </div>
         {!canReplay && (
