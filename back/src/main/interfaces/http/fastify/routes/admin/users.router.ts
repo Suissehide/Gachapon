@@ -17,6 +17,7 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
     gachaPullRepository,
     userCardRepository,
     rewardsDomain,
+    activityDomain,
   } = fastify.iocContainer
 
   fastify.get(
@@ -100,10 +101,20 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
       if (!user) {
         throw Boom.notFound('User not found')
       }
-      return userRepository.incrementTokens(
+      const result = await userRepository.incrementTokens(
         request.params.id,
         request.body.amount,
       )
+      void activityDomain.record('ADMIN_GRANT', {
+        userId: request.params.id,
+        username: user.username,
+        payload: {
+          kind: 'tokens',
+          amount: request.body.amount,
+          by: request.user.userID,
+        },
+      })
+      return result
     },
   )
 
@@ -117,10 +128,20 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
       if (!user) {
         throw Boom.notFound('User not found')
       }
-      return userRepository.incrementDust(
+      const result = await userRepository.incrementDust(
         request.params.id,
         request.body.amount,
       )
+      void activityDomain.record('ADMIN_GRANT', {
+        userId: request.params.id,
+        username: user.username,
+        payload: {
+          kind: 'dust',
+          amount: request.body.amount,
+          by: request.user.userID,
+        },
+      })
+      return result
     },
   )
 
@@ -157,6 +178,14 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
         request.params.id,
         request.body,
       )
+      void activityDomain.record('ADMIN_GRANT', {
+        userId: request.params.id,
+        payload: {
+          kind: 'reward',
+          rewardId: request.body.rewardId,
+          by: request.user.userID,
+        },
+      })
       return reply.status(201).send({ id: userReward.id })
     },
   )
@@ -177,10 +206,19 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
       if (!user) {
         throw Boom.notFound('User not found')
       }
-      return userRepository.updateSuspended(
+      const result = await userRepository.updateSuspended(
         request.params.id,
         request.body.suspended,
       )
+      void activityDomain.record(
+        request.body.suspended ? 'USER_SUSPENDED' : 'USER_UNSUSPENDED',
+        {
+          userId: request.params.id,
+          username: user.username,
+          payload: { by: request.user.userID },
+        },
+      )
+      return result
     },
   )
 }

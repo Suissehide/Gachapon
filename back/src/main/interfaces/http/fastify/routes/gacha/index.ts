@@ -24,6 +24,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     skillTreeRepository,
     storageClient,
     cardRepository,
+    activityDomain,
   } = fastify.iocContainer
 
   const resolveUrl = (key: string | null) =>
@@ -69,6 +70,23 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
           setName: result.card.set.name,
           pulledAt: result.pull.pulledAt.toISOString(),
         })
+        if (
+          result.card.rarity === 'EPIC' ||
+          result.card.rarity === 'LEGENDARY'
+        ) {
+          void activityDomain.record(
+            result.card.rarity === 'LEGENDARY' ? 'PULL_LEGENDARY' : 'PULL_EPIC',
+            {
+              userId: user.id,
+              username: user.username,
+              payload: {
+                cardName: result.card.name,
+                rarity: result.card.rarity,
+                variant: result.pull.variant,
+              },
+            },
+          )
+        }
       }
 
       return reply.status(201).send({
@@ -149,6 +167,22 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
             })
           }, idx * 50)
         })
+        for (const p of result.pulls) {
+          if (p.card.rarity === 'EPIC' || p.card.rarity === 'LEGENDARY') {
+            void activityDomain.record(
+              p.card.rarity === 'LEGENDARY' ? 'PULL_LEGENDARY' : 'PULL_EPIC',
+              {
+                userId: user.id,
+                username: user.username,
+                payload: {
+                  cardName: p.card.name,
+                  rarity: p.card.rarity,
+                  variant: p.pull.variant,
+                },
+              },
+            )
+          }
+        }
       }
 
       return reply.status(201).send({

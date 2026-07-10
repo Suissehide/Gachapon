@@ -5,6 +5,7 @@ import type { UserReward } from '../../../generated/client'
 import type { CardRarity, CardVariant } from '../../../generated/enums'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
+import type { IActivityDomain } from '../../types/domain/activity/activity.domain.interface'
 import type {
   AddRewardInput,
   ClaimedCard,
@@ -37,6 +38,7 @@ export class RewardsDomain implements RewardsDomainInterface {
   readonly #achievementsDomain: AchievementsDomainInterface
   readonly #cardRepository: ICardRepository
   readonly #userCardRepository: IUserCardRepository
+  readonly #activityDomain: IActivityDomain
 
   constructor({
     userRewardRepository,
@@ -47,6 +49,7 @@ export class RewardsDomain implements RewardsDomainInterface {
     achievementsDomain,
     cardRepository,
     userCardRepository,
+    activityDomain,
   }: Pick<
     IocContainer,
     | 'userRewardRepository'
@@ -57,6 +60,7 @@ export class RewardsDomain implements RewardsDomainInterface {
     | 'achievementsDomain'
     | 'cardRepository'
     | 'userCardRepository'
+    | 'activityDomain'
   >) {
     this.#userRewardRepository = userRewardRepository
     this.#userRepository = userRepository
@@ -66,6 +70,7 @@ export class RewardsDomain implements RewardsDomainInterface {
     this.#achievementsDomain = achievementsDomain
     this.#cardRepository = cardRepository
     this.#userCardRepository = userCardRepository
+    this.#activityDomain = activityDomain
   }
 
   /** Grants a random active card of the given rarity (NORMAL variant) when a
@@ -147,7 +152,7 @@ export class RewardsDomain implements RewardsDomainInterface {
       throw Boom.conflict('Reward already claimed')
     }
 
-    return this.#postgresOrm.executeWithTransactionClient(
+    const result = await this.#postgresOrm.executeWithTransactionClient(
       async (tx) => {
         // Re-read inside tx to close TOCTOU window
         const userReward = await tx.userReward.findUnique({
@@ -266,6 +271,13 @@ export class RewardsDomain implements RewardsDomainInterface {
       },
       { isolationLevel: 'Serializable' },
     )
+    if (result.level > result.levelBefore) {
+      void this.#activityDomain.record('LEVEL_UP', {
+        userId,
+        payload: { from: result.levelBefore, to: result.level },
+      })
+    }
+    return result
   }
 
   async addRewardToUser(
@@ -292,7 +304,7 @@ export class RewardsDomain implements RewardsDomainInterface {
       return null
     }
 
-    return this.#postgresOrm.executeWithTransactionClient(
+    const result = await this.#postgresOrm.executeWithTransactionClient(
       async (tx) => {
         // Authoritative read inside tx. QUEST rewards are excluded from
         // "claim all" — they are claimed individually from the /quests page.
@@ -413,5 +425,12 @@ export class RewardsDomain implements RewardsDomainInterface {
       },
       { isolationLevel: 'Serializable' },
     )
+    if (result && result.level > result.levelBefore) {
+      void this.#activityDomain.record('LEVEL_UP', {
+        userId,
+        payload: { from: result.levelBefore, to: result.level },
+      })
+    }
+    return result
   }
 }
