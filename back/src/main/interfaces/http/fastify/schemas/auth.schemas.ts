@@ -28,6 +28,7 @@ export const userResponseSchema = z.object({
   avatar: z.string().nullable(),
   banner: z.string().nullable(),
   createdAt: z.date(),
+  skillPoints: z.number().int().nonnegative(),
   pendingRewardsCount: z.number().int().nonnegative(),
   unlockedAchievements: z.array(unlockedAchievementSchema).default([]),
 })
