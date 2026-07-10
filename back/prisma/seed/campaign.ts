@@ -158,17 +158,26 @@ export async function seedCampaign(
     for (let i = 1; i <= STAGES_PER_CHAPTER; i++) {
       order += 1
       const isBoss = i === STAGES_PER_CHAPTER
-      await tx.campaignStage.create({
-        data: {
-          chapter,
-          index: i,
-          label: isBoss ? `${chapter}-${i} Boss` : `${chapter}-${i}`,
-          isBoss,
-          enemyTeam: isBoss
-            ? bossEnemyTeam(chapter, i)
-            : normalEnemyTeam(chapter, i),
-          lootTable: isBoss ? bossLoot(chapter) : lootTableNormal(chapter, i),
-          order,
+      const data = {
+        chapter,
+        index: i,
+        label: isBoss ? `${chapter}-${i} Boss` : `${chapter}-${i}`,
+        isBoss,
+        enemyTeam: isBoss
+          ? bossEnemyTeam(chapter, i)
+          : normalEnemyTeam(chapter, i),
+        lootTable: isBoss ? bossLoot(chapter) : lootTableNormal(chapter, i),
+        order,
+      }
+      await tx.campaignStage.upsert({
+        where: { chapter_index: { chapter, index: i } },
+        create: data,
+        update: {
+          label: data.label,
+          isBoss: data.isBoss,
+          enemyTeam: data.enemyTeam,
+          lootTable: data.lootTable,
+          order: data.order,
         },
       })
     }
