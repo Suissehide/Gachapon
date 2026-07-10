@@ -2,9 +2,8 @@ import type { PrismaClient } from '../../src/generated/client'
 
 // Enemy baseline sits slightly BELOW a level-1 COMMON player card
 // (100/10/5/90) so a starter team can clear stage 1-1 and start earning gold.
-// Difficulty scales with stage index inside a chapter (×1.12 per stage) and
-// with chapter number (×2.5 per chapter), so chapter 2 opens roughly at the
-// power level of the chapter 1 boss.
+// Difficulty scales ×1.18 per stage inside a chapter and ×2.0 per chapter,
+// so chapter 2 opens roughly at the power level of the chapter 1 boss.
 const ENEMY_BASE = { baseHp: 80, baseAtk: 8, baseDef: 4, baseSpd: 85 }
 
 // Balance de difficulté. Montée intra-chapitre raide (×1.18/stage) pour que
@@ -13,6 +12,14 @@ const ENEMY_BASE = { baseHp: 80, baseAtk: 8, baseDef: 4, baseSpd: 85 }
 const CHAPTER_MULT = 2.0
 const STAGE_MULT = 1.18
 const BOSS_HP_MULT = 4
+
+// First-clear recalé sur la difficulté : base modeste, ramp ×1.18/stage, et
+// montée inter-chapitre plus douce (×1.5) que la difficulté (progresser reste
+// optimal, farmer un vieux chapitre reste digne). Équipement garanti à partir
+// de 1-3 (1-1/1-2 trop faciles).
+const FIRST_CLEAR_GOLD_BASE = 120
+const FIRST_CLEAR_DUST_BASE = 30
+const FIRST_CLEAR_XP_BASE = 22
 
 // Apparence cosmétique par étage : clé `${chapter}-${index}`, valeur = liste
 // de sous-chemins MinIO (sans cards/ ni .png), un par slot d'ennemi dans l'ordre.
@@ -76,10 +83,11 @@ function bossEnemyTeam(chapter: number, stageIndex: number) {
   ]
 }
 
-// Le butin scale ×1,5 par chapitre (la difficulté scale ×2,5 : progresser
+// Le butin farm scale ×1,5 par chapitre (la difficulté scale ×2,0 : progresser
 // reste optimal, farmer un vieux chapitre reste digne). Spec §4b.
-function lootTableNormal(chapter: number, stageIndex: number) {
+export function lootTableNormal(chapter: number, stageIndex: number) {
   const m = 1.5 ** (chapter - 1)
+  const stageRamp = STAGE_MULT ** (stageIndex - 1)
   const minRarity = stageIndex <= 3 ? 'COMMON' : 'UNCOMMON'
   const farmWeights =
     stageIndex <= 3
@@ -89,13 +97,23 @@ function lootTableNormal(chapter: number, stageIndex: number) {
         : { COMMON: 50, UNCOMMON: 35, RARE: 15 }
   const t = (stageIndex - 1) / 8
 
+  const firstClear: {
+    gold: number
+    dust: number
+    xp: number
+    guaranteedEquipment?: { minRarity: string }
+  } = {
+    gold: Math.round(FIRST_CLEAR_GOLD_BASE * stageRamp * m),
+    dust: Math.round(FIRST_CLEAR_DUST_BASE * stageRamp * m),
+    xp: Math.round(FIRST_CLEAR_XP_BASE * stageRamp * m),
+  }
+  // Équipement garanti seulement à partir de 1-3.
+  if (stageIndex >= 3) {
+    firstClear.guaranteedEquipment = { minRarity }
+  }
+
   return {
-    firstClear: {
-      gold: Math.round((150 + 80 * stageIndex) * m),
-      dust: Math.round((40 + 15 * stageIndex) * m),
-      xp: Math.round((30 + 3 * stageIndex) * m),
-      guaranteedEquipment: { minRarity },
-    },
+    firstClear,
     farm: {
       gold: Math.round((40 + 10 * stageIndex) * m),
       dust: Math.round((3 + stageIndex) * m),
