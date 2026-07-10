@@ -23,7 +23,7 @@ export class ActivityEventRepository implements IActivityEventRepository {
         type: input.type,
         userId: input.userId ?? null,
         // Prisma expects InputJsonValue; cast through unknown to satisfy strict typing
-        payload: (input.payload ?? undefined) as never,
+        payload: (input.payload ?? undefined) as unknown as object,
       },
     })
   }
