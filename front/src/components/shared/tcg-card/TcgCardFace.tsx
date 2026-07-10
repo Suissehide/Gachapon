@@ -1,5 +1,5 @@
 import { Heart, type LucideIcon, Shield, Sword, Zap } from 'lucide-react'
-import type { CSSProperties } from 'react'
+import { type CSSProperties, useState } from 'react'
 
 import placeholderImg from '../../../assets/data/not-found.png'
 import {
@@ -61,6 +61,29 @@ const getFoilLayers = (variant: string | null | undefined, isOwned: boolean) =>
     ? (VARIANT_OVERLAYS[variant] ?? null)
     : null
 
+// Loading placeholder — a calm, static, pale rarity-tinted fill shown while the
+// art is still loading. Sits above the <img> (z-1) but below the foil overlays
+// and frame chrome, so a loading card shows its frame/level over a themed fill
+// rather than a bare white rectangle or a half-drawn image. It is simply unmounted
+// once `onLoad` fires (the art pops in), with no pulse or cross-fade — those read
+// as a "strange fade" on the /play hover card, whose heavy art reloads on every
+// open. Reads `--rar-light` set on the card root.
+function ArtPlaceholder({ loaded }: { loaded: boolean }) {
+  if (loaded) {
+    return null
+  }
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 z-[1]"
+      style={{
+        background:
+          'linear-gradient(160deg, color-mix(in srgb, var(--rar-light) 40%, #fff) 0%, color-mix(in srgb, var(--rar-light) 65%, #fff) 100%)',
+      }}
+    />
+  )
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export function TcgCardFace({
@@ -82,6 +105,11 @@ export function TcgCardFace({
   const tone = getRarityTone(rarity)
   const elementDef = element ? ELEMENTS[element] : null
   const outerRadius = compact ? '8px' : '10px'
+
+  // Tracks whether the art has loaded. Until then a static, pale rarity-tinted
+  // placeholder covers the <img> so a card never flashes a bare white rectangle
+  // (or a half-streamed image) — see the placeholder layer below.
+  const [loaded, setLoaded] = useState(false)
 
   const overlayLayers = getFoilLayers(variant, isOwned)
   const isHolo = isOwned && variant === 'HOLOGRAPHIC'
@@ -119,6 +147,7 @@ export function TcgCardFace({
         decoding="async"
         className={`absolute inset-0 h-full w-full object-cover ${isOwned ? '' : 'grayscale'}`}
         style={{ objectPosition: artPosition ?? '50% 20%' }}
+        onLoad={() => setLoaded(true)}
         onError={(e) => {
           const img = e.currentTarget
           const retries = Number(img.dataset.retries ?? '0')
@@ -135,6 +164,8 @@ export function TcgCardFace({
           }
         }}
       />
+
+      <ArtPlaceholder loaded={loaded} />
 
       {/* Variant foil overlays — full-art layers over the image */}
       {overlayLayers?.map((layer) => (
