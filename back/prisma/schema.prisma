@@ -83,6 +83,7 @@ enum RewardSource {
   ACHIEVEMENT
   QUEST
   LEVEL_UP
+  ADMIN
 }
 
 enum QuestPeriod {
@@ -477,6 +478,7 @@ model Reward {
   xp         Int         @default(0)
   gold       Int         @default(0)
   cardRarity CardRarity?
+  label      String?
   createdAt  DateTime    @default(now())
 
   streakMilestones StreakMilestone[]

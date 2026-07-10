@@ -47,4 +47,13 @@ export interface RewardsDomainInterface {
   claimOne(rewardId: string, userId: string): Promise<ClaimResult>
   claimAll(userId: string): Promise<ClaimResult | null>
   addRewardToUser(userId: string, input: AddRewardInput): Promise<UserReward>
+  grantBulk(input: {
+    userIds: string[] | 'ALL'
+    tokens: number
+    dust: number
+    xp: number
+    gold: number
+    cardRarity?: CardRarity
+    label?: string
+  }): Promise<{ count: number }>
 }

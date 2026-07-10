@@ -6,7 +6,9 @@ import type {
 } from '../../../types/domain/user/user.types'
 import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type {
+  AdminUsersWhereInput,
   PullUpdateInput,
+  UserExportRow,
   UserRepositoryInterface,
 } from '../../../types/infra/orm/repositories/user.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
@@ -129,26 +131,67 @@ export class UserRepository implements UserRepositoryInterface {
     })
   }
 
-  async findAllPaginated(params: {
-    page: number
-    limit: number
-    search?: string
-  }) {
-    const where = params.search
-      ? {
-          OR: [
-            {
-              username: {
-                contains: params.search,
-                mode: 'insensitive' as const,
-              },
-            },
-            {
-              email: { contains: params.search, mode: 'insensitive' as const },
-            },
-          ],
-        }
-      : {}
+  #buildAdminWhere(params: AdminUsersWhereInput) {
+    const where: Record<string, unknown> = {}
+    if (params.search) {
+      where.OR = [
+        { username: { contains: params.search, mode: 'insensitive' } },
+        { email: { contains: params.search, mode: 'insensitive' } },
+      ]
+    }
+    if (params.status) {
+      where.suspended = params.status === 'suspended'
+    }
+    this.#applyDateRange(
+      where,
+      'createdAt',
+      params.createdFrom,
+      params.createdTo,
+    )
+    this.#applyNumericRange(where, 'level', params.levelMin, params.levelMax)
+    this.#applyDateRange(
+      where,
+      'lastLoginAt',
+      params.lastLoginFrom,
+      params.lastLoginTo,
+    )
+    return where
+  }
+
+  #applyDateRange(
+    where: Record<string, unknown>,
+    field: string,
+    from?: Date,
+    to?: Date,
+  ) {
+    if (!from && !to) {
+      return
+    }
+    where[field] = {
+      ...(from ? { gte: from } : {}),
+      ...(to ? { lte: to } : {}),
+    }
+  }
+
+  #applyNumericRange(
+    where: Record<string, unknown>,
+    field: string,
+    min?: number,
+    max?: number,
+  ) {
+    if (!min && !max) {
+      return
+    }
+    where[field] = {
+      ...(min ? { gte: min } : {}),
+      ...(max ? { lte: max } : {}),
+    }
+  }
+
+  async findAllPaginated(
+    params: AdminUsersWhereInput & { page: number; limit: number },
+  ) {
+    const where = this.#buildAdminWhere(params)
     const [users, total] = await Promise.all([
       this.#prisma.user.findMany({
         where,
@@ -162,13 +205,44 @@ export class UserRepository implements UserRepositoryInterface {
           role: true,
           tokens: true,
           dust: true,
+          gold: true,
+          level: true,
           suspended: true,
           createdAt: true,
+          lastLoginAt: true,
         },
       }),
       this.#prisma.user.count({ where }),
     ])
     return { users, total }
+  }
+
+  async findAllActiveIds(): Promise<string[]> {
+    const rows = await this.#prisma.user.findMany({
+      where: { suspended: false },
+      select: { id: true },
+    })
+    return rows.map((r) => r.id)
+  }
+
+  findAllForExport(filters: AdminUsersWhereInput): Promise<UserExportRow[]> {
+    return this.#prisma.user.findMany({
+      where: this.#buildAdminWhere(filters),
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        suspended: true,
+        level: true,
+        tokens: true,
+        dust: true,
+        gold: true,
+        createdAt: true,
+        lastLoginAt: true,
+      },
+    })
   }
 
   searchByUsername(q: string, excludeId: string) {

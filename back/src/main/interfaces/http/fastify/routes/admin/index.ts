@@ -13,6 +13,7 @@ import { adminShopRouter } from './shop.router'
 import { adminSkillsRouter } from './skills.router'
 import { adminStatsRouter } from './stats.router'
 import { adminStreakRouter } from './streak.router'
+import { adminRewardsRouter } from './rewards.router'
 import { adminUsersRouter } from './users.router'
 
 export const adminRouter: FastifyPluginAsyncZod = async (fastify) => {
@@ -44,4 +45,5 @@ export const adminRouter: FastifyPluginAsyncZod = async (fastify) => {
   await fastify.register(adminSkillsRouter)
   await fastify.register(adminEquipmentRouter)
   await fastify.register(adminActivityRouter, { prefix: '/activity' })
+  await fastify.register(adminRewardsRouter, { prefix: '/rewards' })
 }
