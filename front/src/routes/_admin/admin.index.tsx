@@ -9,12 +9,17 @@ import {
   Users,
 } from 'lucide-react'
 
+import type { AdminStatsApi } from '../../api/admin-stats.api.ts'
 import { ActivityFeed } from '../../components/admin/ActivityFeed'
 import { PullsChart } from '../../components/admin/PullsChart'
 import { AdminPageHeader } from '../../components/admin/shared/AdminPageHeader.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import { Card, CardContent } from '../../components/ui/card.tsx'
 import { useAdminDashboard } from '../../queries/useAdminStats'
+
+type DashboardKpis = Awaited<
+  ReturnType<typeof AdminStatsApi.getDashboard>
+>['kpis']
 
 export const Route = createFileRoute('/_admin/admin/')({
   component: AdminDashboard,
@@ -59,7 +64,7 @@ const KPI_META = [
     icon: UserPlus,
     color: 'text-success',
     bg: 'bg-success/10',
-    sub: (kpis: { signups7d: number }) =>
+    sub: (kpis: DashboardKpis) =>
       `7 derniers jours : ${kpis.signups7d.toLocaleString('fr-FR')}`,
   },
   {
@@ -68,7 +73,7 @@ const KPI_META = [
     icon: Users,
     color: 'text-info',
     bg: 'bg-info/10',
-    sub: (kpis: { activeUsers30d: number }) =>
+    sub: (kpis: DashboardKpis) =>
       `30 j : ${kpis.activeUsers30d.toLocaleString('fr-FR')}`,
   },
   {
@@ -140,7 +145,7 @@ function AdminDashboard() {
                 )}
                 <p className="mt-0.5 text-xs text-text-light/70">
                   {typeof sub === 'function' && data
-                    ? sub(data.kpis as never)
+                    ? sub(data.kpis)
                     : typeof sub === 'string'
                       ? sub
                       : ''}
@@ -179,6 +184,7 @@ function AdminDashboard() {
                 data={data.signupsSeries}
                 title="Inscriptions / jour"
                 color="hsl(var(--success))"
+                unit="inscriptions"
               />
             )}
           </div>

@@ -15,15 +15,22 @@ type PullsChartProps = {
   data: { day: string; count: number }[]
   title?: string
   color?: string
+  unit?: string
 }
 
 type TooltipContentProps = {
   active?: boolean
   payload?: Array<{ value?: number }>
   label?: string
+  unit?: string
 }
 
-function ChartTooltip({ active, payload, label }: TooltipContentProps) {
+function ChartTooltip({
+  active,
+  payload,
+  label,
+  unit = 'pulls',
+}: TooltipContentProps) {
   if (!active || !payload?.length) {
     return null
   }
@@ -31,7 +38,7 @@ function ChartTooltip({ active, payload, label }: TooltipContentProps) {
     <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-md">
       <p className="mb-0.5 text-[11px] font-bold text-text">{label}</p>
       <p className="text-[11px] text-text-light">
-        {payload[0].value?.toLocaleString('fr-FR')} pulls
+        {payload[0].value?.toLocaleString('fr-FR')} {unit}
       </p>
     </div>
   )
@@ -41,6 +48,7 @@ export function PullsChart({
   data,
   title = 'Pulls / jour',
   color = 'hsl(var(--primary))',
+  unit = 'pulls',
 }: PullsChartProps) {
   const total = data.reduce((s, d) => s + d.count, 0)
 
@@ -119,7 +127,7 @@ export function PullsChart({
               tick={{ fontSize: 10, fill: 'hsl(var(--text-light))' }}
               width={30}
             />
-            <Tooltip cursor={false} content={<ChartTooltip />} />
+            <Tooltip cursor={false} content={<ChartTooltip unit={unit} />} />
             <Bar
               dataKey="count"
               fill={color}

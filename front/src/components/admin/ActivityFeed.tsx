@@ -76,7 +76,7 @@ const EVENT_META: Record<
 }
 
 export function ActivityFeed() {
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+  const { data, isPending, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useAdminActivity()
   const [live, setLive] = useState<ActivityEvent[]>([])
 
@@ -107,7 +107,21 @@ export function ActivityFeed() {
           Activité récente
         </p>
         <div className="flex max-h-[480px] flex-col gap-1 overflow-y-auto">
-          {events.length === 0 && (
+          {isPending &&
+            Array.from({ length: 6 }).map((_, i) => (
+              <div
+                // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton, never reordered
+                key={i}
+                className="flex items-start gap-2.5 rounded-lg px-2 py-1.5"
+              >
+                <div className="mt-0.5 h-4 w-4 shrink-0 animate-pulse rounded bg-border" />
+                <div className="flex flex-1 flex-col gap-1.5">
+                  <div className="h-3 w-3/4 animate-pulse rounded bg-border" />
+                  <div className="h-2.5 w-1/3 animate-pulse rounded bg-border" />
+                </div>
+              </div>
+            ))}
+          {!isPending && events.length === 0 && (
             <p className="py-6 text-center text-xs text-text-light">
               Aucune activité pour le moment
             </p>
