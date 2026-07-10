@@ -95,3 +95,21 @@ describe('computeStateProgress — nouveaux critères d\'état', () => {
     ).toEqual({ progress: 1, threshold: 1, unlocked: true })
   })
 })
+
+import { AchievementCriterionSchema } from '../../main/domain/achievements/criterion.types'
+
+describe('nouveaux critères — validité du schéma', () => {
+  it('valide un échantillon des nouveaux types', () => {
+    const samples = [
+      { type: 'STAGES_CLEARED_COUNT', threshold: 25 },
+      { type: 'BOSS_DEFEATS_COUNT', threshold: 5 },
+      { type: 'FLAWLESS_CLEARS_COUNT', threshold: 1 },
+      { type: 'UNDERSTAFFED_CLEARS_COUNT', threshold: 1 },
+      { type: 'CAMPAIGN_CHAPTER_REACHED', threshold: 2 },
+      { type: 'CARDS_AT_MAX_LEVEL', threshold: 1 },
+    ]
+    for (const s of samples) {
+      expect(() => AchievementCriterionSchema.parse(s)).not.toThrow()
+    }
+  })
+})
