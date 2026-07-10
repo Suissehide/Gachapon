@@ -33,7 +33,7 @@ const navItemsAfterProfile = [
 const navItems = [...navItemsBeforeProfile, ...navItemsAfterProfile]
 
 const tabClass =
-  'relative whitespace-nowrap px-[18px] pt-[15px] pb-[14px] text-[15.5px] font-semibold text-text-light/70 transition-colors hover:text-text [&.active]:text-primary-dark [&.active>span]:bg-linear-to-r [&.active>span]:from-primary [&.active>span]:to-secondary'
+  'relative whitespace-nowrap px-[18px] pt-[15px] pb-[14px] text-[15.5px] font-semibold text-text-light/70 transition-colors hover:text-text [&.active]:text-primary-dark [&.active>span:last-child]:bg-linear-to-r [&.active>span:last-child]:from-primary [&.active>span:last-child]:to-secondary'
 
 export function Navbar() {
   const user = useAuthStore((s) => s.user)
