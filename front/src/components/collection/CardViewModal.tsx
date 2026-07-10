@@ -161,6 +161,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
               isOwned={isOwned}
               interactive
               large
+              showAura
               level={userCard?.level ?? null}
               stats={stats}
               description={description}
