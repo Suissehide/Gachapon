@@ -290,8 +290,15 @@ const ENTRIES: SeedEntry[] = [
 
 export async function seedAchievements(tx: Tx) {
   for (const entry of ENTRIES) {
-    await tx.achievement.create({
-      data: {
+    const rewardData = {
+      tokens: entry.reward.tokens,
+      dust: entry.reward.dust,
+      xp: entry.reward.xp,
+      cardRarity: entry.reward.cardRarity ?? null,
+    }
+    await tx.achievement.upsert({
+      where: { key: entry.key },
+      create: {
         key: entry.key,
         name: entry.name,
         description: entry.description,
@@ -301,14 +308,18 @@ export async function seedAchievements(tx: Tx) {
         sortOrder: entry.sortOrder,
         isActive: true,
         criterion: entry.criterion,
-        reward: {
-          create: {
-            tokens: entry.reward.tokens,
-            dust: entry.reward.dust,
-            xp: entry.reward.xp,
-            cardRarity: entry.reward.cardRarity ?? null,
-          },
-        },
+        reward: { create: rewardData },
+      },
+      update: {
+        name: entry.name,
+        description: entry.description,
+        family: entry.family,
+        tier: entry.tier,
+        hidden: entry.hidden,
+        sortOrder: entry.sortOrder,
+        isActive: true,
+        criterion: entry.criterion,
+        reward: { update: rewardData },
       },
     })
   }
