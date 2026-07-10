@@ -36,6 +36,10 @@
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
 
+  --success: #16a34a;
+  --warning: #d97706;
+  --info: #0ea5e9;
+
   /* Promus depuis l'ancien scope .arcade-theme */
   --surface-2: #fafaf7;
   --surface-3: #f4f0eb;
@@ -49,6 +53,5 @@
   --rarity-legendary: #f59e0b;
 
   --shadow-card:
-    0 2px 0 rgba(27, 23, 38, 0.04),
-    0 12px 30px -12px rgba(27, 23, 38, 0.08);
+    0 2px 0 rgba(27, 23, 38, 0.04), 0 12px 30px -12px rgba(27, 23, 38, 0.08);
 }
