@@ -1,5 +1,3 @@
-import { randomUUID } from 'node:crypto'
-
 import type { ActivityEventType } from '../../../generated/enums'
 import type {
   AdminActivityEvent,
@@ -36,7 +34,7 @@ export class ActivityDomain implements IActivityDomain {
     } = {},
   ): Promise<void> {
     try {
-      await this.#repository.create({
+      const row = await this.#repository.create({
         type,
         userId: opts.userId ?? null,
         payload: opts.payload,
@@ -44,10 +42,10 @@ export class ActivityDomain implements IActivityDomain {
       const adminEvent: AdminActivityEvent = {
         type: 'admin:activity',
         event: {
-          id: randomUUID(),
+          id: row.id,
           type,
           payload: opts.payload ?? null,
-          createdAt: new Date().toISOString(),
+          createdAt: row.createdAt.toISOString(),
           user:
             opts.userId && opts.username
               ? { id: opts.userId, username: opts.username }

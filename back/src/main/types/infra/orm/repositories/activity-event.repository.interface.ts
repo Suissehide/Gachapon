@@ -13,7 +13,7 @@ export interface IActivityEventRepository {
     type: ActivityEventType
     userId?: string | null
     payload?: Record<string, unknown>
-  }): Promise<void>
+  }): Promise<{ id: string; createdAt: Date }>
   list(params: {
     cursor?: string
     limit: number

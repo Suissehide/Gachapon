@@ -5,7 +5,7 @@ import { ActivityDomain } from '../../main/domain/activity/activity.domain'
 const makeDeps = (overrides: Record<string, unknown> = {}) =>
   ({
     activityEventRepository: {
-      create: jest.fn(async () => {}),
+      create: jest.fn(async () => ({ id: 'evt-1', createdAt: new Date() })),
       list: jest.fn(async () => ({ events: [], nextCursor: null })),
       deleteOlderThan: jest.fn(async () => 3),
     },
@@ -29,6 +29,9 @@ describe('ActivityDomain', () => {
       payload: { via: 'email' },
     })
     expect(deps.wsManager.notifyAdmins).toHaveBeenCalledTimes(1)
+    const pushed = (deps.wsManager.notifyAdmins as jest.Mock).mock
+      .calls[0][0] as { type: string; event: { id: string } }
+    expect(pushed.event.id).toBe('evt-1')
   })
 
   it('record ne throw jamais si le repo échoue', async () => {

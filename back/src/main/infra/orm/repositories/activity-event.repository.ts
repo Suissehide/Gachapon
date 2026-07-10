@@ -17,15 +17,17 @@ export class ActivityEventRepository implements IActivityEventRepository {
     type: ActivityEventType
     userId?: string | null
     payload?: Record<string, unknown>
-  }): Promise<void> {
-    await this.#prisma.activityEvent.create({
+  }): Promise<{ id: string; createdAt: Date }> {
+    const row = await this.#prisma.activityEvent.create({
       data: {
         type: input.type,
         userId: input.userId ?? null,
         // Prisma expects InputJsonValue; cast through unknown to satisfy strict typing
         payload: (input.payload ?? undefined) as unknown as object,
       },
+      select: { id: true, createdAt: true },
     })
+    return row
   }
 
   async list(params: {
