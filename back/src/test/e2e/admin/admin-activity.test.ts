@@ -28,12 +28,13 @@ describe('Admin activity routes', () => {
   afterAll(async () => { await app.close() })
 
   it('GET /admin/activity — retourne events + nextCursor', async () => {
-    // Seed direct : 2 événements
+    // Seed direct : 2 événements avec des createdAt distincts pour un ordre déterministe
     const prisma = (app as any).iocContainer.postgresOrm.prisma
+    const now = Date.now()
     await prisma.activityEvent.createMany({
       data: [
-        { type: 'USER_SIGNUP', payload: { via: 'email' } },
-        { type: 'PULL_LEGENDARY', payload: { cardName: 'Dragon' } },
+        { type: 'USER_SIGNUP', payload: { via: 'email' }, createdAt: new Date(now - 60_000) },
+        { type: 'PULL_LEGENDARY', payload: { cardName: 'Dragon' }, createdAt: new Date(now - 30_000) },
       ],
     })
     const res = await app.inject({
