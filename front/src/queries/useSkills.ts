@@ -4,6 +4,7 @@ import { SkillsApi } from '../api/skills.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
+import { useAuthStore } from '../stores/auth.store.ts'
 
 const SKILLS_KEY = ['skills'] as const
 const ADMIN_SKILLS_KEY = ['admin', 'skills'] as const
@@ -25,7 +26,10 @@ export const useInvestSkill = () => {
   const { toast } = useToast()
   return useMutation({
     mutationFn: (nodeId: string) => SkillsApi.invest(nodeId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: SKILLS_KEY }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: SKILLS_KEY })
+      void useAuthStore.getState().fetchMe()
+    },
     onError: (error) => {
       toast({
         title: "Erreur lors de l'investissement",
@@ -45,6 +49,7 @@ export const useInvestBatch = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: SKILLS_KEY })
       qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
+      void useAuthStore.getState().fetchMe()
     },
     onError: (error) => {
       toast({
@@ -61,7 +66,10 @@ export const useResetSkills = () => {
   const { toast } = useToast()
   return useMutation({
     mutationFn: SkillsApi.reset,
-    onSuccess: () => qc.invalidateQueries({ queryKey: SKILLS_KEY }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: SKILLS_KEY })
+      void useAuthStore.getState().fetchMe()
+    },
     onError: (error) => {
       toast({
         title: 'Erreur lors de la réinitialisation',

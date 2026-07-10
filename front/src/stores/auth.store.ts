@@ -1,8 +1,8 @@
 import { create } from 'zustand'
 
+import type { UnlockedAchievement } from '../constants/achievements.constant.ts'
 import { api } from '../lib/api.js'
 import { queryClient } from '../lib/queryClient.ts'
-import type { UnlockedAchievement } from '../constants/achievements.constant.ts'
 import { useAchievementUnlockStore } from './achievementUnlock.store.ts'
 
 export type AuthUser = {
@@ -15,6 +15,7 @@ export type AuthUser = {
   gold: number
   avatar: string | null
   banner: string | null
+  skillPoints: number
   pendingRewardsCount: number
 }
 
