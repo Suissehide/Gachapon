@@ -5,6 +5,7 @@ import {
   ArrowRight,
   ChevronRight,
   Coins,
+  Eye,
   RotateCcw,
   Skull,
   Sparkles,
@@ -30,6 +31,7 @@ import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
 } from '../../queries/useEconomyConfig.ts'
+import { useAuthStore } from '../../stores/auth.store.ts'
 import { useLevelUpStore } from '../../stores/levelUp.store.ts'
 import { computeLevel, xpForLevel } from '../../utils/level.ts'
 import { levelUpReward } from '../../utils/levelRewards.ts'
@@ -70,6 +72,10 @@ function BattlePage() {
     : true
   const [sceneDone, setSceneDone] = useState(false)
   const [showResult, setShowResult] = useState(false)
+  // True once the result popup has opened at least once. Gates the fallback
+  // dock so it only appears after a *dismissed* result — never in the 300ms gap
+  // between the scene ending and the popup sliding in.
+  const [resultSeen, setResultSeen] = useState(false)
   const [round, setRound] = useState({ current: 1, total: 1 })
 
   const teamReady = !team.isLoading && (team.data?.team.length ?? 0) >= 1
@@ -104,6 +110,19 @@ function BattlePage() {
     }
   }, [sceneDone, result])
 
+  // Refresh the gold/dust balance in the auth store (which the topbar reads
+  // from) only once the result popup is revealed. The battle fetch resolves
+  // several seconds earlier — while the scene is still animating — so
+  // refreshing then would flash the new gold in the topbar before the victory
+  // popup appears (useAttackStage deliberately skips this refresh for that
+  // reason).
+  useEffect(() => {
+    if (showResult) {
+      setResultSeen(true)
+      void useAuthStore.getState().fetchMe()
+    }
+  }, [showResult])
+
   // Fire the player level-up celebration once the victory panel is shown. The
   // combat XP can push the player over a level threshold; unlike the gacha
   // flow, nothing else triggers it, so we detect it here from the battle
@@ -126,6 +145,7 @@ function BattlePage() {
 
   const handleReplay = () => {
     setShowResult(false)
+    setResultSeen(false)
     setSceneDone(false)
     setRound({ current: 1, total: 1 })
     attack.refetch()
@@ -149,7 +169,6 @@ function BattlePage() {
         {result && (
           <div className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-4 py-1.5 font-mono text-[12px] font-bold uppercase tracking-widest text-amber-700">
             Tour {round.current}
-            <span className="ml-1 text-amber-600/70">/ {round.total}</span>
           </div>
         )}
       </div>
@@ -210,36 +229,140 @@ function BattlePage() {
         </PopupContent>
       </Popup>
 
-      {/* Victory / Defeat overlay */}
+      {/* Victory / Defeat overlay — plus the fallback dock once it's dismissed. */}
       {result && !attack.isError && (
-        <Popup open={showResult} onOpenChange={setShowResult}>
-          <PopupContent
-            size="lg"
-            className="border-0 bg-[#fbf8f3] p-0 shadow-[0_30px_80px_-12px_rgba(0,0,0,0.4)]"
-          >
-            <Dialog.Title className="sr-only">
-              {result.won ? 'Victoire' : 'Défaite'}
-            </Dialog.Title>
-            {result.won ? (
-              <VictoryPanel
-                result={result}
-                stageInfo={stageInfo}
-                canReplay={canReplay}
-                onReplay={handleReplay}
-                onBack={handleBackToCampaign}
-              />
-            ) : (
-              <DefeatPanel
-                canReplay={canReplay}
-                battleCost={combatPoints.data?.battleCost}
-                onReplay={handleReplay}
-                onBack={handleBackToCampaign}
-              />
-            )}
-          </PopupContent>
-        </Popup>
+        <BattleResultOverlay
+          result={result}
+          stageInfo={stageInfo}
+          resultSeen={resultSeen}
+          showResult={showResult}
+          setShowResult={setShowResult}
+          canReplay={canReplay}
+          battleCost={combatPoints.data?.battleCost}
+          onReplay={handleReplay}
+          onBack={handleBackToCampaign}
+        />
       )}
     </PageShell>
+  )
+}
+
+function BattleResultOverlay({
+  result,
+  stageInfo,
+  resultSeen,
+  showResult,
+  setShowResult,
+  canReplay,
+  battleCost,
+  onReplay,
+  onBack,
+}: {
+  result: BattleResult
+  stageInfo: { label: string; chapterTitle: string } | null
+  resultSeen: boolean
+  showResult: boolean
+  setShowResult: (open: boolean) => void
+  canReplay: boolean
+  battleCost: number | undefined
+  onReplay: () => void
+  onBack: () => void
+}) {
+  // The dock is only a fallback for a *dismissed* result: it needs the popup to
+  // have opened at least once (resultSeen), so it never flashes during the
+  // fight or in the gap before the popup slides in.
+  const dockVisible = resultSeen && !showResult
+  return (
+    <>
+      <Popup open={showResult} onOpenChange={setShowResult}>
+        <PopupContent
+          size="lg"
+          className="border-0 bg-[#fbf8f3] p-0 shadow-[0_30px_80px_-12px_rgba(0,0,0,0.4)]"
+        >
+          <Dialog.Title className="sr-only">
+            {result.won ? 'Victoire' : 'Défaite'}
+          </Dialog.Title>
+          {result.won ? (
+            <VictoryPanel
+              result={result}
+              stageInfo={stageInfo}
+              canReplay={canReplay}
+              onReplay={onReplay}
+              onBack={onBack}
+            />
+          ) : (
+            <DefeatPanel
+              canReplay={canReplay}
+              battleCost={battleCost}
+              onReplay={onReplay}
+              onBack={onBack}
+            />
+          )}
+        </PopupContent>
+      </Popup>
+
+      {/* Once the result popup is dismissed, a floating bar (same pattern as the
+          campaign TeamDock) keeps a way back: reopen the result or leave for the
+          campaign. The spacer reserves in-flow height so the fixed bar doesn't
+          cover the bottom of the scene / its action buttons. */}
+      {dockVisible && (
+        <>
+          <div aria-hidden className="h-28" />
+          <ResultDock
+            won={result.won}
+            onReview={() => setShowResult(true)}
+            onBack={onBack}
+          />
+        </>
+      )}
+    </>
+  )
+}
+
+function ResultDock({
+  won,
+  onReview,
+  onBack,
+}: {
+  won: boolean
+  onReview: () => void
+  onBack: () => void
+}) {
+  return (
+    <div
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-4 pt-3"
+      style={{
+        background: 'linear-gradient(180deg, rgba(251,248,243,0), #fbf8f3 38%)',
+      }}
+    >
+      <div className="pointer-events-auto mx-auto flex max-w-3xl items-center gap-4 rounded-[20px] bg-[#1b1726] px-4 py-3 pl-5 text-white shadow-[0_18px_44px_-16px_rgba(27,23,38,0.5)]">
+        <div className="flex items-center gap-3">
+          {won ? (
+            <Trophy className="h-5 w-5 text-amber-400" />
+          ) : (
+            <Skull className="h-5 w-5 text-rose-400" />
+          )}
+          <div className="font-display text-base font-extrabold text-white">
+            {won ? 'Victoire' : 'Défaite'}
+          </div>
+        </div>
+
+        <div className="ml-auto flex gap-2">
+          <Button
+            variant="secondary"
+            onClick={onReview}
+            className="gap-2 border-white/0 bg-white text-[#1b1726] hover:bg-white/90 hover:text-[#1b1726]"
+          >
+            <Eye className="h-4 w-4" />
+            <span className="hidden sm:inline">Revoir le résultat</span>
+          </Button>
+          <Button onClick={onBack} className="gap-2">
+            Campagne
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -375,7 +498,7 @@ function VictoryPanel({
             Rejouer
           </Button>
           <Button onClick={onBack} className="gap-2">
-            Niveau suivant
+            Etage suivant
             <ArrowRight className="h-4 w-4" />
           </Button>
         </div>

@@ -137,9 +137,11 @@ export function useAttackStage(stageId: string, enabled: boolean) {
     qc.invalidateQueries({ queryKey: ['collection'] })
     qc.invalidateQueries({ queryKey: ['profile'] })
     // Gold/dust live in the Zustand auth store (topbar + upgrade panel read
-    // from it), not in a query cache — refresh it so battle rewards show up
-    // without a manual page reload.
-    void useAuthStore.getState().fetchMe()
+    // from it), not in a query cache. We do NOT refresh it here: the battle
+    // fetch resolves several seconds before the scene animation finishes and
+    // the result popup slides in, so a refresh on settle would flash the new
+    // gold in the topbar before the victory popup appears. The battle page
+    // refreshes the store when it reveals the result popup instead.
   }, [query.dataUpdatedAt, query.errorUpdatedAt, qc])
 
   return query
