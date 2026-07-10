@@ -134,7 +134,9 @@ export function MobileNavLink({
       />
       <span className="relative text-3xl font-semibold uppercase tracking-wide">
         {label}
-        {badgeCount ? <NotificationDot count={badgeCount} /> : null}
+        {badgeCount ? (
+          <NotificationDot count={badgeCount} className="-right-2 -top-2" />
+        ) : null}
       </span>
     </Link>
   )

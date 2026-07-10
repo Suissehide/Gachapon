@@ -106,7 +106,10 @@ export function Navbar() {
                   <span className="relative">
                     {item.label}
                     {item.to === '/skills' && (
-                      <NotificationDot count={user?.skillPoints ?? 0} />
+                      <NotificationDot
+                        count={user?.skillPoints ?? 0}
+                        className="-right-2 -top-2"
+                      />
                     )}
                   </span>
                   <span
