@@ -18,6 +18,13 @@ const startApp = async (): Promise<IocContainer> => {
   await configService.bootstrap()
   await httpServer.start()
 
+  const { activityDomain } = iocContainer.instances
+  void activityDomain.purgeOlderThanDays(30)
+  setInterval(
+    () => void activityDomain.purgeOlderThanDays(30),
+    24 * 60 * 60 * 1000,
+  ).unref()
+
   return iocContainer.instances
 }
 

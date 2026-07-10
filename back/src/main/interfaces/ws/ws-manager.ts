@@ -48,7 +48,22 @@ export type FeedPullEvent = {
   pulledAt: string
 }
 
-type WsEvent = PullResultEvent | PullBatchResultEvent | FeedPullEvent
+export type AdminActivityEvent = {
+  type: 'admin:activity'
+  event: {
+    id: string
+    type: string
+    payload: unknown
+    createdAt: string
+    user: { id: string; username: string } | null
+  }
+}
+
+type WsEvent =
+  | PullResultEvent
+  | PullBatchResultEvent
+  | FeedPullEvent
+  | AdminActivityEvent
 
 export class WsManager {
   readonly #connections = new Map<string, WebSocket>()
@@ -76,6 +91,30 @@ export class WsManager {
   broadcast(event: FeedPullEvent): void {
     const json = JSON.stringify(event)
     for (const ws of this.#connections.values()) {
+      if (ws.readyState === 1 /* OPEN */) {
+        try {
+          ws.send(json)
+        } catch {
+          // Best-effort push
+        }
+      }
+    }
+  }
+
+  readonly #adminConnections = new Map<string, WebSocket>()
+
+  registerAdmin(userId: string, ws: WebSocket): void {
+    this.#adminConnections.set(userId, ws)
+    ws.on('close', () => {
+      if (this.#adminConnections.get(userId) === ws) {
+        this.#adminConnections.delete(userId)
+      }
+    })
+  }
+
+  notifyAdmins(event: AdminActivityEvent): void {
+    const json = JSON.stringify(event)
+    for (const ws of this.#adminConnections.values()) {
       if (ws.readyState === 1 /* OPEN */) {
         try {
           ws.send(json)

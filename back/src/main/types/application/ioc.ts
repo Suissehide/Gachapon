@@ -19,6 +19,7 @@ import type { TeamRepository } from '../../infra/orm/repositories/team.repositor
 import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
 import type { UserCardRepository } from '../../infra/orm/repositories/user-card.repository'
 import type { RefreshTokenRepository } from '../../infra/redis/refresh-token.repository'
+import type { IActivityDomain } from '../domain/activity/activity.domain.interface'
 import type { AuthDomainInterface } from '../domain/auth/auth.domain.interface'
 import type { OAuthDomainInterface } from '../domain/auth/oauth.domain.interface'
 import type { ICollectionDomain } from '../domain/collection/collection.domain.interface'
@@ -61,6 +62,7 @@ import type { UserRewardRepositoryInterface } from '../infra/orm/repositories/us
 import type { RedisClientInterface } from '../infra/redis/redis-client'
 import type { StorageClientInterface } from '../infra/storage/storage-client'
 import type { HttpServer } from '../interfaces/http/server'
+import type { WsManager } from '../../interfaces/ws/ws-manager'
 import type { ErrorHandlerInterface } from '../utils/error-handler'
 import type { Logger } from '../utils/logger'
 import type { Config } from './config'
@@ -130,4 +132,6 @@ export interface IocContainer {
   readonly achievementsDomain: AchievementsDomainInterface
   readonly wishlistDomain: IWishlistDomain
   readonly activityEventRepository: IActivityEventRepository
+  readonly wsManager: WsManager
+  readonly activityDomain: IActivityDomain
 }
