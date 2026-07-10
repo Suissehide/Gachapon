@@ -9,6 +9,8 @@ export interface UserAchievementState {
   level: number
   streakDays: number
   machinesOwned: number
+  highestChapter: number
+  cardsAtMaxLevel: number
 }
 
 export interface StateProgressResult {
@@ -89,6 +91,20 @@ export const computeStateProgress = (
         progress: state.completedSetsCount,
         threshold: criterion.threshold,
         unlocked: state.completedSetsCount >= criterion.threshold,
+      }
+    }
+    case 'CAMPAIGN_CHAPTER_REACHED': {
+      return {
+        progress: state.highestChapter,
+        threshold: criterion.threshold,
+        unlocked: state.highestChapter >= criterion.threshold,
+      }
+    }
+    case 'CARDS_AT_MAX_LEVEL': {
+      return {
+        progress: state.cardsAtMaxLevel,
+        threshold: criterion.threshold,
+        unlocked: state.cardsAtMaxLevel >= criterion.threshold,
       }
     }
     default: {

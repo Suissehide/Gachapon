@@ -56,6 +56,30 @@ export const AchievementCriterionSchema = z.discriminatedUnion('type', [
     type: z.literal('MACHINES_OWNED'),
     threshold: z.number().int().positive(),
   }),
+  z.object({
+    type: z.literal('STAGES_CLEARED_COUNT'),
+    threshold: z.number().int().positive(),
+  }),
+  z.object({
+    type: z.literal('BOSS_DEFEATS_COUNT'),
+    threshold: z.number().int().positive(),
+  }),
+  z.object({
+    type: z.literal('FLAWLESS_CLEARS_COUNT'),
+    threshold: z.number().int().positive(),
+  }),
+  z.object({
+    type: z.literal('UNDERSTAFFED_CLEARS_COUNT'),
+    threshold: z.number().int().positive(),
+  }),
+  z.object({
+    type: z.literal('CAMPAIGN_CHAPTER_REACHED'),
+    threshold: z.number().int().positive(),
+  }),
+  z.object({
+    type: z.literal('CARDS_AT_MAX_LEVEL'),
+    threshold: z.number().int().positive(),
+  }),
   z.object({ type: z.literal('CUSTOM_EVENT'), handlerKey: z.string().min(1) }),
 ])
 

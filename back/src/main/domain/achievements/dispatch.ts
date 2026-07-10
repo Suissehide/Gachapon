@@ -9,6 +9,10 @@ const COUNTER_TYPES: ReadonlySet<CriterionType> = new Set([
   'TOKENS_SPENT',
   'CARDS_RECYCLED',
   'REWARDS_CLAIMED',
+  'STAGES_CLEARED_COUNT',
+  'BOSS_DEFEATS_COUNT',
+  'FLAWLESS_CLEARS_COUNT',
+  'UNDERSTAFFED_CLEARS_COUNT',
 ])
 
 const STATE_TYPES: ReadonlySet<CriterionType> = new Set([
@@ -18,6 +22,8 @@ const STATE_TYPES: ReadonlySet<CriterionType> = new Set([
   'LEVEL_REACHED',
   'STREAK_REACHED',
   'MACHINES_OWNED',
+  'CAMPAIGN_CHAPTER_REACHED',
+  'CARDS_AT_MAX_LEVEL',
 ])
 
 export const isCounterCriterion = (c: AchievementCriterion): boolean =>
@@ -38,7 +44,12 @@ const EVENT_TO_COUNTER_TYPES: Record<AchievementEventKind, CriterionType[]> = {
   LEVEL_UP: [],
   STREAK_UPDATED: [],
   MACHINE_PURCHASED: [],
-  STAGE_CLEARED: [],
+  STAGE_CLEARED: [
+    'STAGES_CLEARED_COUNT',
+    'BOSS_DEFEATS_COUNT',
+    'FLAWLESS_CLEARS_COUNT',
+    'UNDERSTAFFED_CLEARS_COUNT',
+  ],
   CARD_LEVELED: [],
   GOLD_SPENT: [],
   TEAM_JOINED: [],
@@ -53,8 +64,8 @@ const EVENT_TO_STATE_TYPES: Record<AchievementEventKind, CriterionType[]> = {
   LEVEL_UP: ['LEVEL_REACHED'],
   STREAK_UPDATED: ['STREAK_REACHED'],
   MACHINE_PURCHASED: ['MACHINES_OWNED'],
-  STAGE_CLEARED: [],
-  CARD_LEVELED: [],
+  STAGE_CLEARED: ['CAMPAIGN_CHAPTER_REACHED'],
+  CARD_LEVELED: ['CARDS_AT_MAX_LEVEL'],
   GOLD_SPENT: [],
   TEAM_JOINED: [],
 }

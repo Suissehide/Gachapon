@@ -4,6 +4,8 @@ import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
 import type { IQuestsDomain } from '../../types/domain/quests/quests.domain.interface'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
+import { MAX_PALIER } from '../card-ascension/card-ascension.tx'
+import { maxLevelInPalier } from '../card-leveling/card-leveling.domain'
 import type {
   AchievementsDomainInterface,
   AchievementWithProgress,
@@ -293,7 +295,11 @@ export class AchievementsDomain implements AchievementsDomainInterface {
       case 'DUST_SPENT':
       case 'TOKENS_SPENT':
       case 'CARDS_RECYCLED':
-      case 'REWARDS_CLAIMED': {
+      case 'REWARDS_CLAIMED':
+      case 'STAGES_CLEARED_COUNT':
+      case 'BOSS_DEFEATS_COUNT':
+      case 'FLAWLESS_CLEARS_COUNT':
+      case 'UNDERSTAFFED_CLEARS_COUNT': {
         const delta = computeDelta(criterion, event)
         if (delta === 0) {
           return {
@@ -321,7 +327,9 @@ export class AchievementsDomain implements AchievementsDomainInterface {
       case 'SETS_COMPLETED':
       case 'LEVEL_REACHED':
       case 'STREAK_REACHED':
-      case 'MACHINES_OWNED': {
+      case 'MACHINES_OWNED':
+      case 'CAMPAIGN_CHAPTER_REACHED':
+      case 'CARDS_AT_MAX_LEVEL': {
         const result = computeStateProgress(criterion, state)
         return result
       }
@@ -335,21 +343,29 @@ export class AchievementsDomain implements AchievementsDomainInterface {
     tx: PrimaTransactionClient,
     userId: string,
   ): Promise<UserAchievementState> {
-    const [user, ownedCards, machinesOwned] = await Promise.all([
-      tx.user.findUniqueOrThrow({
-        where: { id: userId },
-        select: { level: true, streakDays: true },
-      }),
-      tx.userCard.findMany({
-        where: { userId },
-        select: {
-          variant: true,
-          quantity: true,
-          card: { select: { id: true, rarity: true, setId: true } },
-        },
-      }),
-      this.#countMachinesOwned(tx, userId),
-    ])
+    const maxCardLevel = maxLevelInPalier(MAX_PALIER)
+    const [user, ownedCards, machinesOwned, campaignProgress] =
+      await Promise.all([
+        tx.user.findUniqueOrThrow({
+          where: { id: userId },
+          select: { level: true, streakDays: true },
+        }),
+        tx.userCard.findMany({
+          where: { userId },
+          select: {
+            variant: true,
+            quantity: true,
+            level: true,
+            palier: true,
+            card: { select: { id: true, rarity: true, setId: true } },
+          },
+        }),
+        this.#countMachinesOwned(tx, userId),
+        tx.userCampaignProgress.findUnique({
+          where: { userId },
+          select: { highestChapter: true },
+        }),
+      ])
 
     // Build rarity/variant counts
     const ownedByRarity: Record<string, number> = {}
@@ -366,6 +382,13 @@ export class AchievementsDomain implements AchievementsDomainInterface {
     const completedCollections = await this.#computeCompletions(tx, ownedCards)
     const completedSetsCount = await this.#computeCompletedSets(tx, ownedCards)
 
+    let cardsAtMaxLevel = 0
+    for (const uc of ownedCards) {
+      if (uc.palier === MAX_PALIER && uc.level === maxCardLevel) {
+        cardsAtMaxLevel += 1
+      }
+    }
+
     return {
       ownedByRarity: ownedByRarity as Record<CardRarity, number>,
       ownedByRarityVariant,
@@ -374,6 +397,8 @@ export class AchievementsDomain implements AchievementsDomainInterface {
       level: user.level,
       streakDays: user.streakDays,
       machinesOwned,
+      highestChapter: campaignProgress?.highestChapter ?? 1,
+      cardsAtMaxLevel,
     }
   }
 

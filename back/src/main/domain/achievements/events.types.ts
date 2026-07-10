@@ -19,7 +19,13 @@ export type AchievementEvent =
   | { kind: 'LEVEL_UP'; newLevel: number }
   | { kind: 'STREAK_UPDATED'; days: number }
   | { kind: 'MACHINE_PURCHASED'; machineId: string }
-  | { kind: 'STAGE_CLEARED'; isBoss: boolean }
+  | {
+      kind: 'STAGE_CLEARED'
+      isBoss: boolean
+      viaSweep: boolean
+      flawless: boolean
+      understaffed: boolean
+    }
   | { kind: 'CARD_LEVELED'; levels: number }
   | { kind: 'GOLD_SPENT'; amount: number }
   | { kind: 'TEAM_JOINED' }
