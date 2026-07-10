@@ -16,6 +16,10 @@
  * Idempotent : une carte dont la clé d'image (…/<ID>.png) existe déjà dans le
  * set est ignorée. Relancer le script ne crée pas de doublons.
  *
+ * Rate limit : l'API limite les requêtes (par défaut 100 / 60 s). Le script
+ * détecte le dépassement, attend la fenêtre (Retry-After ou 60 s) et retente
+ * automatiquement — un seul run suffit, pas besoin de relancer à la main.
+ *
  * Auth : header X-API-Key d'un compte SUPER_ADMIN.
  *
  * Usage :
@@ -63,27 +67,49 @@ const imagePrefix = (folder) =>
 
 const headers = { 'X-API-Key': API_KEY }
 
-async function api(method, path, { json, form } = {}) {
-  const opts = { method, headers: { ...headers } }
-  if (json) {
-    opts.headers['Content-Type'] = 'application/json'
-    opts.body = JSON.stringify(json)
-  }
-  if (form) {
-    opts.body = form // FormData → boundary auto
-  }
-  const res = await fetch(`${API_URL}${path}`, opts)
-  const text = await res.text()
-  let body
-  try {
-    body = text ? JSON.parse(text) : null
-  } catch {
-    body = text
-  }
-  if (!res.ok) {
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+// L'API applique un rate limit (par défaut 100 requêtes / 60 s). Au lieu de faire
+// échouer les cartes restantes, on attend la fenêtre et on retente la requête.
+const RATE_LIMIT_MAX_RETRIES = 20
+
+function isRateLimited(status, body) {
+  const message = typeof body === 'string' ? body : (body?.message ?? '')
+  return status === 429 || /rate limit exceeded/i.test(message)
+}
+
+// Le body multipart est reconstruit à chaque tentative (une FormData ne peut pas
+// être réutilisée pour un second fetch), d'où `formFactory` plutôt qu'une `form`.
+async function api(method, path, { json, formFactory } = {}) {
+  for (let attempt = 0; ; attempt++) {
+    const opts = { method, headers: { ...headers } }
+    if (json) {
+      opts.headers['Content-Type'] = 'application/json'
+      opts.body = JSON.stringify(json)
+    }
+    if (formFactory) {
+      opts.body = formFactory() // FormData fraîche → boundary auto
+    }
+    const res = await fetch(`${API_URL}${path}`, opts)
+    const text = await res.text()
+    let body
+    try {
+      body = text ? JSON.parse(text) : null
+    } catch {
+      body = text
+    }
+    if (res.ok) {
+      return body
+    }
+    if (isRateLimited(res.status, body) && attempt < RATE_LIMIT_MAX_RETRIES) {
+      const retryAfter = Number(res.headers.get('retry-after'))
+      const waitS = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : 60
+      process.stdout.write(`\n  ⏳ Rate limit atteint — pause ${waitS}s puis reprise…\n`)
+      await sleep((waitS + 1) * 1000)
+      continue
+    }
     throw new Error(`${method} ${path} → ${res.status} ${res.statusText} : ${typeof body === 'string' ? body : JSON.stringify(body)}`)
   }
-  return body
 }
 
 async function ensureSet(folder) {
@@ -123,23 +149,26 @@ async function existingImageKeys(setId) {
 
 async function createCard(setId, card) {
   const key = `${imagePrefix(card.folder)}/${card.id}.png`
-  const form = new FormData()
-  form.append('name', card.name)
-  form.append('setId', setId)
-  form.append('rarity', card.rarity)
-  form.append('dropWeight', String(card.dropWeight))
-  form.append('baseHp', String(card.hp))
-  form.append('baseAtk', String(card.atk))
-  form.append('baseDef', String(card.def))
-  form.append('baseSpd', String(card.spd))
-  if (card.passiveKey) form.append('passiveKey', card.passiveKey)
-  form.append('imageUrl', key)
+  const buildForm = () => {
+    const form = new FormData()
+    form.append('name', card.name)
+    form.append('setId', setId)
+    form.append('rarity', card.rarity)
+    form.append('dropWeight', String(card.dropWeight))
+    form.append('baseHp', String(card.hp))
+    form.append('baseAtk', String(card.atk))
+    form.append('baseDef', String(card.def))
+    form.append('baseSpd', String(card.spd))
+    if (card.passiveKey) form.append('passiveKey', card.passiveKey)
+    form.append('imageUrl', key)
+    return form
+  }
 
   if (DRY_RUN) {
     console.log(`    [dry-run] ${card.id} ${card.name} (${card.rarity}) → ${key}${card.passiveKey ? ` [${card.passiveKey}]` : ''}`)
     return 'created'
   }
-  await api('POST', '/admin/cards', { form })
+  await api('POST', '/admin/cards', { formFactory: buildForm })
   return 'created'
 }
 
