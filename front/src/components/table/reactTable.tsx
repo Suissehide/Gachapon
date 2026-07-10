@@ -57,6 +57,7 @@ type ReactTableProps<TData extends { id: string }> = {
   filterId?: string
   infiniteScroll?: boolean
   onRowClick?: (row: Row<TData>) => void
+  onSelectionChange?: (ids: string[]) => void
 }
 
 export function ReactTable<TData extends { id: string }>({
@@ -67,6 +68,7 @@ export function ReactTable<TData extends { id: string }>({
   filterId = 'default',
   infiniteScroll = true,
   onRowClick,
+  onSelectionChange,
 }: ReactTableProps<TData>) {
   const initialColumnFilters = safeParse(
     localStorage.getItem(`filters/${filterId}`),
@@ -142,6 +144,10 @@ export function ReactTable<TData extends { id: string }>({
       JSON.stringify(columnVisibility),
     )
   }, [columnVisibility, filterId])
+
+  useEffect(() => {
+    onSelectionChange?.(Object.keys(rowSelection))
+  }, [rowSelection, onSelectionChange])
 
   const getCommonPinningStyles = <TData,>(
     column: Column<TData, unknown>,
