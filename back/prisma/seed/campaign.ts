@@ -7,6 +7,13 @@ import type { PrismaClient } from '../../src/generated/client'
 // power level of the chapter 1 boss.
 const ENEMY_BASE = { baseHp: 80, baseAtk: 8, baseDef: 4, baseSpd: 85 }
 
+// Balance de difficulté. Montée intra-chapitre raide (×1.18/stage) pour que
+// lever ses persos compte ; saut inter-chapitre adouci (×2.0) pour éviter le
+// mur au changement de chapitre. Boss = check de build (PV ×4).
+const CHAPTER_MULT = 2.0
+const STAGE_MULT = 1.18
+const BOSS_HP_MULT = 4
+
 // Apparence cosmétique par étage : clé `${chapter}-${index}`, valeur = liste
 // de sous-chemins MinIO (sans cards/ ni .png), un par slot d'ennemi dans l'ordre.
 // Doublons et mélange de familles autorisés. Étage absent => pas d'image.
@@ -30,8 +37,8 @@ function looksForStage(chapter: number, stageIndex: number): string[] {
   return STAGE_LOOKS[`${chapter}-${stageIndex}`] ?? []
 }
 
-function enemyPower(chapter: number, stageIndex: number) {
-  const mult = 2.5 ** (chapter - 1) * 1.12 ** (stageIndex - 1)
+export function enemyPower(chapter: number, stageIndex: number) {
+  const mult = CHAPTER_MULT ** (chapter - 1) * STAGE_MULT ** (stageIndex - 1)
   return {
     baseHp: Math.round(ENEMY_BASE.baseHp * mult),
     baseAtk: Math.round(ENEMY_BASE.baseAtk * mult),
@@ -57,7 +64,7 @@ function bossEnemyTeam(chapter: number, stageIndex: number) {
   const looks = looksForStage(chapter, stageIndex)
   return [
     {
-      baseHp: p.baseHp * 5,
+      baseHp: p.baseHp * BOSS_HP_MULT,
       baseAtk: Math.round(p.baseAtk * 1.5),
       baseDef: Math.round(p.baseDef * 1.2),
       baseSpd: 100,
