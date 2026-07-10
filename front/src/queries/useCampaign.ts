@@ -52,6 +52,31 @@ function writeCachedBattle(stageId: string, result: BattleResult): void {
   }
 }
 
+/**
+ * Drop every persisted battle result. Call this whenever something that changes
+ * a battle's outcome changes (the combat team, notably) so a later navigation
+ * back to /battle/$id fires a *fresh* battle instead of replaying the stale
+ * cached one. Without this, the sessionStorage cache — keyed only by stageId —
+ * would replay a battle fought with the previous team even after the player has
+ * swapped their team.
+ */
+export function clearCachedBattles(): void {
+  try {
+    const keys: string[] = []
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i)
+      if (key?.startsWith(BATTLE_STORAGE_PREFIX)) {
+        keys.push(key)
+      }
+    }
+    for (const key of keys) {
+      sessionStorage.removeItem(key)
+    }
+  } catch {
+    // sessionStorage blocked — nothing to clear.
+  }
+}
+
 export function useAttackStage(stageId: string, enabled: boolean) {
   const qc = useQueryClient()
   const cached = useMemo(() => readCachedBattle(stageId), [stageId])
