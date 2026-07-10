@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 
 import { EquipmentApi } from '../api/equipment.api'
 import { aggregateEquipmentBonuses, type StatBonuses } from '../utils/cardStats'
+import { invalidateBattleCache } from './useCampaign.ts'
 
 const EQUIPMENT_KEY = ['equipment']
 
@@ -40,6 +41,8 @@ export function useEquipItem() {
       qc.invalidateQueries({ queryKey: EQUIPMENT_KEY })
       qc.invalidateQueries({ queryKey: ['collection'] })
       qc.invalidateQueries({ queryKey: ['combat', 'team'] })
+      // Equipped stats changed → drop the cached battle replay cache.
+      invalidateBattleCache(qc)
     },
   })
 }
@@ -53,6 +56,8 @@ export function useUnequipItem() {
       qc.invalidateQueries({ queryKey: EQUIPMENT_KEY })
       qc.invalidateQueries({ queryKey: ['collection'] })
       qc.invalidateQueries({ queryKey: ['combat', 'team'] })
+      // Equipped stats changed → drop the cached battle replay cache.
+      invalidateBattleCache(qc)
     },
   })
 }

@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { CollectionApi } from '../api/collection.api'
+import { invalidateBattleCache } from './useCampaign.ts'
 
 export function useLevelUpCard() {
   const qc = useQueryClient()
@@ -15,6 +16,8 @@ export function useLevelUpCard() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['collection'] })
       qc.invalidateQueries({ queryKey: ['profile'] })
+      // Stronger card → any cached battle is now stale; drop the replay cache.
+      invalidateBattleCache(qc)
     },
   })
 }

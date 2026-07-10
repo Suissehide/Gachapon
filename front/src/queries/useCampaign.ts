@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  type QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { useEffect, useMemo, useRef } from 'react'
 
 import { type BattleResult, CampaignApi } from '../api/campaign.api.ts'
@@ -52,15 +57,8 @@ function writeCachedBattle(stageId: string, result: BattleResult): void {
   }
 }
 
-/**
- * Drop every persisted battle result. Call this whenever something that changes
- * a battle's outcome changes (the combat team, notably) so a later navigation
- * back to /battle/$id fires a *fresh* battle instead of replaying the stale
- * cached one. Without this, the sessionStorage cache — keyed only by stageId —
- * would replay a battle fought with the previous team even after the player has
- * swapped their team.
- */
-export function clearCachedBattles(): void {
+/** Drop every persisted battle result from sessionStorage. */
+function clearCachedBattles(): void {
   try {
     const keys: string[] = []
     for (let i = 0; i < sessionStorage.length; i++) {
@@ -75,6 +73,20 @@ export function clearCachedBattles(): void {
   } catch {
     // sessionStorage blocked — nothing to clear.
   }
+}
+
+/**
+ * Invalidate every cached battle — both the sessionStorage replay cache (keyed
+ * only by stageId) and react-query's own ['battle',*] entries. Call this from
+ * any mutation that changes a battle's outcome (team swap, card level-up/ascend,
+ * equip/unequip) so a later navigation back to /battle/$id fires a *fresh*
+ * battle instead of replaying one fought with the previous stats. Without it the
+ * cache would replay a stale battle even after the player strengthened their
+ * cards.
+ */
+export function invalidateBattleCache(qc: QueryClient): void {
+  clearCachedBattles()
+  qc.removeQueries({ queryKey: ['battle'] })
 }
 
 export function useAttackStage(stageId: string, enabled: boolean) {
