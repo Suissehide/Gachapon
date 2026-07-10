@@ -13,6 +13,8 @@ import { Card } from '../ui/card'
 
 type PullsChartProps = {
   data: { day: string; count: number }[]
+  title?: string
+  color?: string
 }
 
 type TooltipContentProps = {
@@ -35,7 +37,11 @@ function ChartTooltip({ active, payload, label }: TooltipContentProps) {
   )
 }
 
-export function PullsChart({ data }: PullsChartProps) {
+export function PullsChart({
+  data,
+  title = 'Pulls / jour',
+  color = 'hsl(var(--primary))',
+}: PullsChartProps) {
   const total = data.reduce((s, d) => s + d.count, 0)
 
   const last7 = data.slice(-7).reduce((s, d) => s + d.count, 0)
@@ -51,7 +57,7 @@ export function PullsChart({ data }: PullsChartProps) {
           </div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-text-light">
-              Pulls / jour
+              {title}
             </p>
             <p className="text-[10px] text-text-light/60">30 derniers jours</p>
           </div>
@@ -116,7 +122,7 @@ export function PullsChart({ data }: PullsChartProps) {
             <Tooltip cursor={false} content={<ChartTooltip />} />
             <Bar
               dataKey="count"
-              fill="hsl(var(--primary))"
+              fill={color}
               fillOpacity={0.85}
               radius={[4, 4, 0, 0]}
               activeBar={{ fillOpacity: 1 }}

@@ -9,8 +9,15 @@ export const AdminStatsApi = {
       pullsToday: number
       dustGenerated: number
       legendaryCount: number
+      signups7d: number
+      signups30d: number
+      activeUsers7d: number
+      activeUsers30d: number
+      dustSpent: number
+      totalPulls: number
     }
     pullsSeries: { day: string; count: number }[]
+    signupsSeries: { day: string; count: number }[]
   }> => {
     const res = await fetchWithAuth(`${apiUrl}${CONFIG_ROUTES.admin.dashboard}`)
     if (!res.ok) {

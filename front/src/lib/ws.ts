@@ -26,6 +26,16 @@ type WsEvent =
     }
   | ({ type: 'feed:pull' } & FeedEntry)
   | { type: 'error'; message: string }
+  | {
+      type: 'admin:activity'
+      event: {
+        id: string
+        type: string
+        payload: Record<string, unknown> | null
+        createdAt: string
+        user: { id: string; username: string } | null
+      }
+    }
 
 type WsEventListener = (event: WsEvent) => void
 
