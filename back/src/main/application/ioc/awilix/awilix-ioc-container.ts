@@ -37,6 +37,7 @@ import { PinoLogger } from '../../../infra/logger/pino/pino-logger'
 import { MailService } from '../../../infra/mail/mail.service'
 import { PostgresOrm } from '../../../infra/orm/postgres-client'
 import { AchievementRepository } from '../../../infra/orm/repositories/achievement.repository'
+import { ActivityEventRepository } from '../../../infra/orm/repositories/activity-event.repository'
 import { AdminStatsRepository } from '../../../infra/orm/repositories/admin-stats.repository'
 import { ApiKeyRepository } from '../../../infra/orm/repositories/api-key.repository'
 import { CardRepository } from '../../../infra/orm/repositories/card.repository'
@@ -172,6 +173,10 @@ class AwilixIocContainer {
     // streakDomain depends on achievementsDomain — must be registered after it
     this.#reg('streakDomain', asClass(StreakDomain).singleton())
     this.#reg('wishlistDomain', asClass(WishlistDomain).singleton())
+    this.#reg(
+      'activityEventRepository',
+      asClass(ActivityEventRepository).singleton(),
+    )
     logger.info('IoC container initialized.')
   }
 

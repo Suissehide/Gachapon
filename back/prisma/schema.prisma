@@ -96,6 +96,18 @@ enum EquipmentSlot {
   ACCESSORY
 }
 
+enum ActivityEventType {
+  USER_SIGNUP
+  PULL_EPIC
+  PULL_LEGENDARY
+  SHOP_PURCHASE
+  USER_SUSPENDED
+  USER_UNSUSPENDED
+  ADMIN_GRANT
+  BULK_REWARD
+  LEVEL_UP
+}
+
 model User {
   id            String     @id @default(uuid())
   username      String     @unique
@@ -153,6 +165,7 @@ model User {
   wishlistCard        Card?     @relation("UserWishlist", fields: [wishlistCardId], references: [id], onDelete: SetNull)
   wishlistPurchasedAt DateTime?
   boosts              UserBoost[]
+  activityEvents      ActivityEvent[]
 }
 
 model UserBoost {
@@ -616,4 +629,16 @@ model BattleResult {
   createdAt DateTime @default(now())
 
   @@index([userId, createdAt])
+}
+
+model ActivityEvent {
+  id        String            @id @default(uuid())
+  type      ActivityEventType
+  userId    String?
+  user      User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  payload   Json?
+  createdAt DateTime          @default(now())
+
+  @@index([createdAt])
+  @@index([type, createdAt])
 }
