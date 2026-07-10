@@ -36,6 +36,11 @@ describe('Admin stats routes', () => {
     expect(body.kpis).toHaveProperty('pullsToday')
     expect(body).toHaveProperty('pullsSeries')
     expect(Array.isArray(body.pullsSeries)).toBe(true)
+    expect(body.kpis).toHaveProperty('signups7d')
+    expect(body.kpis).toHaveProperty('activeUsers7d')
+    expect(body.kpis).toHaveProperty('dustSpent')
+    expect(body.kpis).toHaveProperty('totalPulls')
+    expect(Array.isArray(body.signupsSeries)).toBe(true)
   })
 
   it('GET /admin/stats — retourne rarityDrift + neverPulledCards + activeUsers + skillDistribution', async () => {

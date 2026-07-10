@@ -4,8 +4,15 @@ export type DashboardData = {
     pullsToday: number
     dustGenerated: number
     legendaryCount: number
+    signups7d: number
+    signups30d: number
+    activeUsers7d: number
+    activeUsers30d: number
+    dustSpent: number
+    totalPulls: number
   }
   pullsSeries: { day: string; count: number }[]
+  signupsSeries: { day: string; count: number }[]
 }
 
 export type RarityDriftEntry = {
