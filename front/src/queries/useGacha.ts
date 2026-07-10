@@ -103,7 +103,7 @@ export const usePullBatch = () => {
   const username = useAuthStore((s) => s.user?.username ?? '')
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   return useMutation({
-    mutationFn: (count: 1 | 10) => GachaApi.pullBatch(count),
+    mutationFn: (count: number) => GachaApi.pullBatch(count),
     onSuccess: (result) => {
       // NB: les célébrations (montée de niveau + succès) ne sont PAS déclenchées
       // ici. La page de tirage (play.tsx) les joue au bon moment — succès au

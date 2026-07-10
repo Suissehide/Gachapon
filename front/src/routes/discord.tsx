@@ -448,9 +448,9 @@ client.login(process.env.DISCORD_TOKEN)`}
 
             <div className="rounded-xl border border-border/50 bg-card px-4 my-4">
               <EndpointRef method="post" path="/pulls/batch" auth="key">
-                Tire 1 ou 10 capsules d'un coup —{' '}
+                Tire de 1 à 10 capsules d'un coup —{' '}
                 <code className="text-[11px] bg-muted px-1 rounded">
-                  {'{ count: 1 | 10 }'}
+                  {'{ count: 1-10 }'}
                 </code>
                 , renvoie{' '}
                 <code className="text-[11px] bg-muted px-1 rounded">

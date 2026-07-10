@@ -259,7 +259,7 @@ function Play() {
   // startPull reads all guards from refs so it is safe to call via queueMicrotask / setTimeout
   // after a synchronous state update.
   const startPull = useCallback(
-    async (count: 1 | 10) => {
+    async (count: number) => {
       if (
         tokensRef.current < count ||
         phaseRef.current !== 'idle' ||
@@ -332,7 +332,7 @@ function Play() {
   // From the reveal grid's bottom-bar "Nouveau tirage x1/x10": skip machine anim,
   // keep the black backdrop up, and go straight to the ball animation.
   const handlePullAgain = useCallback(
-    async (count: 1 | 10) => {
+    async (count: number) => {
       // Guard: only callable from the reveal-grid phase; phaseRef is set synchronously
       // before any async work so a second click sees a non-reveal-grid phase and exits.
       if (phaseRef.current !== 'reveal-grid' || tokensRef.current < count) {
@@ -382,7 +382,10 @@ function Play() {
   const showFlash = phase === 'ball-flash'
   const showActions = phase === 'idle'
   const canPullX1 = tokens >= 1 && phase === 'idle' && !pullPending
-  const canPullX10 = tokens >= 10 && phase === 'idle' && !pullPending
+  // Le gros bouton fait un x10 complet quand on peut se le payer, sinon un "xN"
+  // pour ce qu'il reste (2..9). En dessous de 2 jetons il retombe sur un x10 désactivé.
+  const batchCount = tokens >= 2 ? Math.min(tokens, 10) : 10
+  const canPullBatch = tokens >= 2 && phase === 'idle' && !pullPending
 
   const [ratesOpen, setRatesOpen] = useState(false)
   const pullCost = economy.gacha.pullTokenCost
@@ -476,15 +479,15 @@ function Play() {
               </span>
             </Button>
             <Button
-              onClick={() => startPull(10)}
-              disabled={!canPullX10}
+              onClick={() => startPull(batchCount)}
+              disabled={!canPullBatch}
               variant="none"
               className="h-auto flex-1 whitespace-nowrap rounded-2xl bg-linear-to-br from-primary to-orange-500 px-7 py-4 text-[17px] font-bold text-white shadow-[0_14px_30px_-12px_rgba(245,158,11,0.65)] transition-all hover:-translate-y-0.5 disabled:opacity-50 sm:flex-none"
             >
-              Tirage x10
+              Tirage x{batchCount}
               <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-white/25 px-2.5 py-1 font-mono text-xs text-white">
                 <Layers className="h-3.5 w-3.5" />
-                {pullCost * 10}
+                {pullCost * batchCount}
               </span>
             </Button>
           </div>

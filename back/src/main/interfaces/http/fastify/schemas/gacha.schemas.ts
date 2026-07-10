@@ -27,7 +27,7 @@ export const pullResponseSchema = z.object({
 // ── POST /pulls/batch ────────────────────────────────────────────────────────
 
 export const pullBatchBodySchema = z.object({
-  count: z.union([z.literal(1), z.literal(10)]),
+  count: z.number().int().min(1).max(10),
 })
 
 export const pullBatchResponseSchema = z.object({

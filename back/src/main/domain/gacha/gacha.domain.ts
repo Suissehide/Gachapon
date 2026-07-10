@@ -658,7 +658,7 @@ export class GachaDomain implements GachaDomainInterface {
     return run(MAX_RETRIES)
   }
 
-  pullBatch(userId: string, count: 1 | 10): Promise<PullBatchResult> {
+  pullBatch(userId: string, count: number): Promise<PullBatchResult> {
     const attempt = async (): Promise<PullBatchResult> => {
       const [c, upgrades] = await Promise.all([
         this.#configService.getMany(

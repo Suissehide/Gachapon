@@ -228,14 +228,34 @@ describe('Gacha routes', () => {
     expect(res.statusCode).toBe(402)
   })
 
-  it('POST /pulls/batch count=5 → 400 (Zod)', async () => {
+  it('POST /pulls/batch count=5 — returns 5 cards, tokens -= 5', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+    await postgresOrm.prisma.user.update({
+      where: { email },
+      data: { tokens: 8 },
+    })
     const res = await app.inject({
       method: 'POST',
       url: '/pulls/batch',
       headers: { cookie: cookies },
       payload: { count: 5 },
     })
-    expect(res.statusCode).toBe(400)
+    expect(res.statusCode).toBe(201)
+    const body = res.json()
+    expect(body.pulls).toHaveLength(5)
+    expect(body.tokensRemaining).toBe(3)
+  })
+
+  it('POST /pulls/batch count out of range (0, 11) → 400 (Zod)', async () => {
+    for (const count of [0, 11]) {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/pulls/batch',
+        headers: { cookie: cookies },
+        payload: { count },
+      })
+      expect(res.statusCode).toBe(400)
+    }
   })
 
   it('POST /pulls — un doublon ne crédite plus de poussière auto', async () => {

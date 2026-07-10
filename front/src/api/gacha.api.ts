@@ -52,7 +52,7 @@ export const GachaApi = {
     return res.json()
   },
 
-  pullBatch: async (count: 1 | 10): Promise<PullBatchResult> => {
+  pullBatch: async (count: number): Promise<PullBatchResult> => {
     const res = await fetchWithAuth(`${apiUrl}${GACHA_ROUTES.pullBatch}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
