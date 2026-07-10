@@ -70,7 +70,7 @@ export function SetSidebar({ selectedSetId, onSelect }: SetSidebarProps) {
                 <span
                   className={`rounded-full px-1.5 py-0 text-[10px] font-bold ${
                     set.isActive
-                      ? 'bg-green-500/20 text-green-800'
+                      ? 'bg-success/20 text-success'
                       : 'bg-border text-text-light'
                   }`}
                 >
@@ -104,7 +104,7 @@ export function SetSidebar({ selectedSetId, onSelect }: SetSidebarProps) {
               <Button
                 size="icon-sm"
                 variant="ghost"
-                className="text-red-400 hover:text-red-400"
+                className="text-destructive hover:text-destructive"
                 onClick={(e) => {
                   e.stopPropagation()
                   deleteSet.mutate(set.id)

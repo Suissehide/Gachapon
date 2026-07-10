@@ -104,7 +104,7 @@ function CreateShopItemForm({
           <field.Toggle label="Statut" options={['Actif', 'Inactif']} />
         )}
       </form.AppField>
-      {jsonError && <p className="text-xs text-red-400">{jsonError}</p>}
+      {jsonError && <p className="text-xs text-destructive">{jsonError}</p>}
       <Button type="submit" className="w-full">
         Créer
       </Button>

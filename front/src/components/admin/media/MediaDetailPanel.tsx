@@ -27,11 +27,11 @@ interface MediaDetailPanelProps {
 }
 
 const RARITY_COLORS: Record<string, string> = {
-  COMMON: 'text-text-light',
-  UNCOMMON: 'text-green-400',
-  RARE: 'text-blue-400',
-  EPIC: 'text-violet-400',
-  LEGENDARY: 'text-primary',
+  COMMON: 'text-rarity-common',
+  UNCOMMON: 'text-rarity-uncommon',
+  RARE: 'text-rarity-rare',
+  EPIC: 'text-rarity-epic',
+  LEGENDARY: 'text-rarity-legendary',
 }
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: composant existant, hors périmètre du changement de couleurs
@@ -143,8 +143,8 @@ export function MediaDetailPanel({
         <div
           className={`absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
             item.orphan
-              ? 'bg-red-500/80 text-white'
-              : 'bg-green-600/80 text-white'
+              ? 'bg-destructive/80 text-white'
+              : 'bg-success/80 text-white'
           }`}
         >
           {item.orphan ? 'Orpheline' : 'Utilisée'}
@@ -184,7 +184,7 @@ export function MediaDetailPanel({
                 type="button"
                 onClick={handleSubmitRename}
                 disabled={isRenaming}
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-green-400 hover:bg-green-400/10 disabled:opacity-50"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-success hover:bg-success/10 disabled:opacity-50"
               >
                 <Check className="h-3.5 w-3.5" />
               </button>
@@ -198,7 +198,7 @@ export function MediaDetailPanel({
               </button>
             </div>
             {renameError && (
-              <p className="text-[11px] text-red-400">{renameError}</p>
+              <p className="text-[11px] text-destructive">{renameError}</p>
             )}
           </div>
         ) : (
@@ -275,7 +275,7 @@ export function MediaDetailPanel({
           className="w-full gap-2"
         >
           {copied ? (
-            <Check className="h-3.5 w-3.5 text-green-400" />
+            <Check className="h-3.5 w-3.5 text-success" />
           ) : (
             <Copy className="h-3.5 w-3.5" />
           )}
@@ -310,7 +310,7 @@ export function MediaDetailPanel({
               onClick={handleDelete}
               className={`w-full gap-2 ${
                 item.orphan
-                  ? 'border border-red-500/20 text-red-400 hover:border-red-500/40 hover:bg-red-500/5 hover:text-red-400'
+                  ? 'border border-destructive/20 text-destructive hover:border-destructive/40 hover:bg-destructive/5 hover:text-destructive'
                   : 'cursor-not-allowed opacity-40'
               }`}
             >

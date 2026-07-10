@@ -68,7 +68,7 @@ export function PullsChart({ data }: PullsChartProps) {
             <div
               className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs font-bold ${
                 trend > 0
-                  ? 'bg-green-500/10 text-green-500'
+                  ? 'bg-success/10 text-success'
                   : trend < 0
                     ? 'bg-destructive/10 text-destructive'
                     : 'bg-border text-text-light'
@@ -113,10 +113,7 @@ export function PullsChart({ data }: PullsChartProps) {
               tick={{ fontSize: 10, fill: 'hsl(var(--text-light))' }}
               width={30}
             />
-            <Tooltip
-              cursor={false}
-              content={<ChartTooltip />}
-            />
+            <Tooltip cursor={false} content={<ChartTooltip />} />
             <Bar
               dataKey="count"
               fill="hsl(var(--primary))"
