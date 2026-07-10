@@ -2,6 +2,8 @@ import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useState } from 'react'
 
+import { NotificationDot } from '../notifications/NotificationDot.tsx'
+
 // Tailwind JIT: these strings must appear literally in source
 export const itemDelays = ['80ms', '125ms', '170ms', '215ms', '260ms', '305ms']
 
@@ -108,12 +110,14 @@ export function MobileNavLink({
   index,
   open,
   onClick,
+  badgeCount,
 }: {
   to: string
   label: string
   index: number
   open: boolean
   onClick: () => void
+  badgeCount?: number
 }) {
   return (
     <Link
@@ -128,8 +132,9 @@ export function MobileNavLink({
       <span
         className={`w-4 h-4 rounded-full shrink-0 bg-linear-to-br ${dotGradients[index % 3]}`}
       />
-      <span className="text-3xl font-semibold uppercase tracking-wide">
+      <span className="relative text-3xl font-semibold uppercase tracking-wide">
         {label}
+        {badgeCount ? <NotificationDot count={badgeCount} /> : null}
       </span>
     </Link>
   )

@@ -163,6 +163,9 @@ export function Navbar() {
             index={i}
             open={menuOpen}
             onClick={closeMenu}
+            badgeCount={
+              item.to === '/skills' ? (user?.skillPoints ?? 0) : undefined
+            }
           />
         ))}
 
