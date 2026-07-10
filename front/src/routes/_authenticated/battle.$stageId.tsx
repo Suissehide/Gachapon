@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
+  ChevronRight,
   Coins,
   RotateCcw,
   Skull,
@@ -430,6 +431,7 @@ function DefeatPanel({
                   Choisis une meilleure composition
                 </span>
               </span>
+              <ChevronRight className="ml-auto h-5 w-5 shrink-0 text-text-light/40" />
             </Button>
           </Link>
           <Link to="/collection" className="w-full">
@@ -448,6 +450,7 @@ function DefeatPanel({
                   Améliore le niveau de tes cartes
                 </span>
               </span>
+              <ChevronRight className="ml-auto h-5 w-5 shrink-0 text-text-light/40" />
             </Button>
           </Link>
         </div>
