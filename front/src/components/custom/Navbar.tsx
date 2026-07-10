@@ -6,6 +6,7 @@ import { useCombatPoints } from '../../queries/useCombatPoints.ts'
 import { useTokenBalance } from '../../queries/useGacha.ts'
 import type { AuthUser } from '../../stores/auth.store'
 import { useAuthStore } from '../../stores/auth.store'
+import { NotificationDot } from '../notifications/NotificationDot.tsx'
 import { NotificationsBadge } from '../notifications/NotificationsBadge.tsx'
 import { RewardsBadge } from '../rewards/RewardsBadge.tsx'
 import { Button } from '../ui/button.tsx'
@@ -103,6 +104,9 @@ export function Navbar() {
               {navItemsBeforeProfile.map((item) => (
                 <Link key={item.label} to={item.to} className={tabClass}>
                   {item.label}
+                  {item.to === '/skills' && (
+                    <NotificationDot count={user?.skillPoints ?? 0} />
+                  )}
                   <span
                     aria-hidden
                     className="pointer-events-none absolute right-3 bottom-0 left-3 h-[3px] rounded-t-[3px] bg-transparent"
