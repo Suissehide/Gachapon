@@ -103,10 +103,12 @@ export function Navbar() {
             <nav className="flex items-stretch gap-[2px]">
               {navItemsBeforeProfile.map((item) => (
                 <Link key={item.label} to={item.to} className={tabClass}>
-                  {item.label}
-                  {item.to === '/skills' && (
-                    <NotificationDot count={user?.skillPoints ?? 0} />
-                  )}
+                  <span className="relative">
+                    {item.label}
+                    {item.to === '/skills' && (
+                      <NotificationDot count={user?.skillPoints ?? 0} />
+                    )}
+                  </span>
                   <span
                     aria-hidden
                     className="pointer-events-none absolute right-3 bottom-0 left-3 h-[3px] rounded-t-[3px] bg-transparent"
