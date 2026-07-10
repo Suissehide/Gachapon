@@ -10,6 +10,7 @@ import { TeamsApi } from '../api/teams.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
+import { useAuthStore } from '../stores/auth.store.ts'
 
 export type {
   Invitation,
@@ -54,11 +55,20 @@ export const useTeam = (teamId: string | undefined) => {
 export const useCreateTeam = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const fetchMe = useAuthStore((s) => s.fetchMe)
   return useMutation({
     mutationFn: (data: { name: string; description?: string }) =>
       TeamsApi.createTeam(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['teams'] })
+      // Creating a team fires a TEAM_JOINED event server-side, which completes
+      // the "join_team" quest and mints its (pending) reward. Refresh the quests
+      // cache so the completion + claimable badge show without a hard refresh,
+      // the pending-rewards list, and fetchMe() so the navbar rewards pastille
+      // (user.pendingRewardsCount) updates too.
+      qc.invalidateQueries({ queryKey: ['quests'] })
+      qc.invalidateQueries({ queryKey: ['rewards', 'pending'] })
+      void fetchMe()
       toast({
         title: 'Équipe créée',
         severity: TOAST_SEVERITY.SUCCESS,
@@ -210,11 +220,18 @@ export const useMyInvitations = (enabled = true) => {
 export const useAcceptInvitation = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const fetchMe = useAuthStore((s) => s.fetchMe)
   return useMutation({
     mutationFn: (token: string) => TeamsApi.acceptInvitation(token),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['invitations', 'me'] })
       void qc.invalidateQueries({ queryKey: ['teams'] })
+      // Accepting an invitation also fires TEAM_JOINED, completing the
+      // "join_team" quest and minting its (pending) reward — refresh the quests
+      // cache, the pending-rewards list, and fetchMe() for the rewards pastille.
+      void qc.invalidateQueries({ queryKey: ['quests'] })
+      void qc.invalidateQueries({ queryKey: ['rewards', 'pending'] })
+      void fetchMe()
     },
     onError: (error) => {
       toast({
