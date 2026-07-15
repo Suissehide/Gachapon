@@ -7,6 +7,7 @@ export interface StorageClientInterface {
   listObjects(prefix: string): Promise<StorageObject[]>
   exists(key: string): Promise<boolean>
   copy(sourceKey: string, destKey: string): Promise<void>
+  healthCheck(): Promise<boolean>
 }
 
 export type StorageObject = {

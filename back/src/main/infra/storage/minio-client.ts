@@ -108,6 +108,13 @@ export class MinioClient implements StorageClientInterface {
       : urlOrKey
   }
 
+  async healthCheck(): Promise<boolean> {
+    await this.#s3.send(
+      new ListObjectsV2Command({ Bucket: this.#bucket, MaxKeys: 1 }),
+    )
+    return true
+  }
+
   async listObjects(prefix: string): Promise<StorageObject[]> {
     const results: StorageObject[] = []
     let continuationToken: string | undefined
