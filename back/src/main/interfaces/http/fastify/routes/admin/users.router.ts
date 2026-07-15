@@ -1,12 +1,14 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
+import { toCsv } from '../../../../../domain/shared/csv'
 import {
   adminUserDustBodySchema,
   adminUserIdParamSchema,
   adminUserRewardBodySchema,
   adminUserRoleBodySchema,
   adminUserSuspendBodySchema,
+  adminUsersExportQuerySchema,
   adminUsersQuerySchema,
   adminUserTokensBodySchema,
 } from '../../schemas/admin-users.schema'
@@ -24,8 +26,89 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
     '/',
     { schema: { querystring: adminUsersQuerySchema } },
     (request) => {
-      const { page, limit, search } = request.query
-      return userRepository.findAllPaginated({ page, limit, search })
+      const {
+        page,
+        limit,
+        search,
+        status,
+        createdFrom,
+        createdTo,
+        levelMin,
+        levelMax,
+        lastLoginFrom,
+        lastLoginTo,
+      } = request.query
+      return userRepository.findAllPaginated({
+        page,
+        limit,
+        search,
+        status,
+        createdFrom,
+        createdTo,
+        levelMin,
+        levelMax,
+        lastLoginFrom,
+        lastLoginTo,
+      })
+    },
+  )
+
+  fastify.get(
+    '/export',
+    { schema: { querystring: adminUsersExportQuerySchema } },
+    async (request, reply) => {
+      const {
+        search,
+        status,
+        createdFrom,
+        createdTo,
+        levelMin,
+        levelMax,
+        lastLoginFrom,
+        lastLoginTo,
+      } = request.query
+      const users = await userRepository.findAllForExport({
+        search,
+        status,
+        createdFrom,
+        createdTo,
+        levelMin,
+        levelMax,
+        lastLoginFrom,
+        lastLoginTo,
+      })
+      const csv = toCsv(
+        [
+          'id',
+          'username',
+          'email',
+          'role',
+          'statut',
+          'niveau',
+          'tokens',
+          'dust',
+          'gold',
+          'inscription',
+          'derniere_connexion',
+        ],
+        users.map((u) => [
+          u.id,
+          u.username,
+          u.email,
+          u.role,
+          u.suspended ? 'suspendu' : 'actif',
+          u.level,
+          u.tokens,
+          u.dust,
+          u.gold,
+          u.createdAt,
+          u.lastLoginAt,
+        ]),
+      )
+      return reply
+        .header('Content-Type', 'text/csv; charset=utf-8')
+        .header('Content-Disposition', 'attachment; filename="joueurs.csv"')
+        .send(csv)
     },
   )
 

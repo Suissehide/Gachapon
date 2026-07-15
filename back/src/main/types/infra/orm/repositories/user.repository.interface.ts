@@ -78,8 +78,20 @@ export interface UserRepositoryInterface {
   findByEmailVerificationToken(token: string): Promise<UserEntity | null>
   findByPasswordResetToken(token: string): Promise<UserEntity | null>
   deleteUnverifiedByEmail(email: string): Promise<void>
-  findAllPaginated(params: AdminUsersWhereInput & { page: number; limit: number }): Promise<{
-    users: (Pick<UserEntity, 'id' | 'username' | 'email' | 'role' | 'tokens' | 'dust' | 'suspended' | 'createdAt'> & { level: number; lastLoginAt: Date | null; gold: number })[]
+  findAllPaginated(
+    params: AdminUsersWhereInput & { page: number; limit: number },
+  ): Promise<{
+    users: (Pick<
+      UserEntity,
+      | 'id'
+      | 'username'
+      | 'email'
+      | 'role'
+      | 'tokens'
+      | 'dust'
+      | 'suspended'
+      | 'createdAt'
+    > & { level: number; lastLoginAt: Date | null; gold: number })[]
     total: number
   }>
   findAllActiveIds(): Promise<string[]>
