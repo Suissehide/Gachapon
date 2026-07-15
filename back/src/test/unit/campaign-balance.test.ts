@@ -1,4 +1,8 @@
-import { enemyPower, lootTableNormal } from '../../../prisma/seed/campaign'
+import {
+  bossEnemyTeam,
+  enemyPower,
+  lootTableNormal,
+} from '../../../prisma/seed/campaign'
 
 describe('enemyPower — courbe durcie', () => {
   it('laisse le stage 1-1 au plancher (tuto)', () => {
@@ -27,6 +31,41 @@ describe('enemyPower — courbe durcie', () => {
       baseDef: 8,
       baseSpd: 85,
     })
+  })
+})
+
+describe('bossEnemyTeam — boss adouci (PV ×2.75, atk ×1.0, AOE_3)', () => {
+  it('le boss 1-10 est un solo AOE tank calibré par simulation', () => {
+    const [boss, ...rest] = bossEnemyTeam(1, 10)
+    // un seul ennemi (solo boss)
+    expect(rest).toHaveLength(0)
+    // enemyPower(1,10) = { hp 355, atk 35, def 18, spd 85 }
+    // boss = hp ×2.75 → 976, atk ×1.0 → 35, def ×1.2 → 22, spd 100
+    expect(boss).toMatchObject({
+      baseHp: 976,
+      baseAtk: 35,
+      baseDef: 22,
+      baseSpd: 100,
+      attackPattern: 'AOE_3',
+    })
+  })
+
+  it('les boss de TOUS les chapitres (1-5) suivent la même courbe', () => {
+    // Attendus dérivés d'enemyPower pour éviter tout calcul à la main : la
+    // même recette softenée (PV ×2.75, atk ×1.0, def ×1.2, AOE_3) s'applique
+    // aux chapitres 4 et 5 nouvellement ajoutés comme aux ch. 1-3.
+    for (const chapter of [1, 2, 3, 4, 5]) {
+      const p = enemyPower(chapter, 10)
+      const team = bossEnemyTeam(chapter, 10)
+      expect(team).toHaveLength(1)
+      expect(team[0]).toMatchObject({
+        baseHp: Math.round(p.baseHp * 2.75),
+        baseAtk: Math.round(p.baseAtk * 1.0),
+        baseDef: Math.round(p.baseDef * 1.2),
+        baseSpd: 100,
+        attackPattern: 'AOE_3',
+      })
+    }
   })
 })
 

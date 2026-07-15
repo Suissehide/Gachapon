@@ -92,7 +92,7 @@ function computePower(stats: {
   def: number
   spd: number
 }): number {
-  return Math.round(stats.hp / 4 + stats.atk * 1.5 + stats.def + stats.spd)
+  return Math.round(stats.hp / 2 + stats.atk * 1.5 + stats.def + stats.spd)
 }
 
 function fmt(n: number): string {

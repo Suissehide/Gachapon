@@ -8,10 +8,16 @@ const ENEMY_BASE = { baseHp: 80, baseAtk: 8, baseDef: 4, baseSpd: 85 }
 
 // Balance de difficulté. Montée intra-chapitre raide (×1.18/stage) pour que
 // lever ses persos compte ; saut inter-chapitre adouci (×2.0) pour éviter le
-// mur au changement de chapitre. Boss = check de build (PV ×4).
+// mur au changement de chapitre. Boss = check de build : PV ×2.75 + AOE_3
+// (frappe toute l'équipe). L'AOE sur un solo est brutal, donc l'atk n'est PAS
+// gonflée (×1.0) — calibré par simulation pour un seuil de victoire ≈ stage 9
+// +11 % (un joueur qui vient de finir les 1-9 doit se gear un peu). Baisser
+// ces mults rend le boss plus souple ; l'ancien ×4 PV / ×1.5 atk était
+// invincible même à 2× la puissance affichée.
 const CHAPTER_MULT = 2.0
 const STAGE_MULT = 1.18
-const BOSS_HP_MULT = 4
+const BOSS_HP_MULT = 2.75
+const BOSS_ATK_MULT = 1.0
 
 // First-clear recalé sur la difficulté : base modeste, ramp ×1.18/stage, et
 // montée inter-chapitre plus douce (×1.5) que la difficulté (progresser reste
@@ -38,6 +44,8 @@ const STAGE_LOOKS: Record<string, string[]> = {
   '1-10': ['monsters/boss/BOSS-001'],
   '2-10': ['monsters/boss/BOSS-002'],
   '3-10': ['monsters/boss/BOSS-003'],
+  '4-10': ['monsters/boss/BOSS-004'],
+  '5-10': ['monsters/boss/BOSS-005'],
 }
 
 function looksForStage(chapter: number, stageIndex: number): string[] {
@@ -66,13 +74,13 @@ function normalEnemyTeam(chapter: number, stageIndex: number) {
   }))
 }
 
-function bossEnemyTeam(chapter: number, stageIndex: number) {
+export function bossEnemyTeam(chapter: number, stageIndex: number) {
   const p = enemyPower(chapter, stageIndex)
   const looks = looksForStage(chapter, stageIndex)
   return [
     {
-      baseHp: p.baseHp * BOSS_HP_MULT,
-      baseAtk: Math.round(p.baseAtk * 1.5),
+      baseHp: Math.round(p.baseHp * BOSS_HP_MULT),
+      baseAtk: Math.round(p.baseAtk * BOSS_ATK_MULT),
       baseDef: Math.round(p.baseDef * 1.2),
       baseSpd: 100,
       level: 1,
@@ -147,7 +155,7 @@ function bossLoot(chapter: number) {
   }
 }
 
-const CHAPTER_COUNT = 3
+const CHAPTER_COUNT = 5
 const STAGES_PER_CHAPTER = 10
 
 export async function seedCampaign(
