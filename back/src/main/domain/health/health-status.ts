@@ -15,10 +15,14 @@ export const checkWithTimeout = async (
 ): Promise<{ ok: boolean; latencyMs: number }> => {
   const start = Date.now()
   try {
+    const checkPromise = check()
+    checkPromise.catch(() => {
+      // Absorb late rejections so they don't bubble as unhandledRejection
+    })
     const timeout = new Promise<boolean>((resolve) => {
       setTimeout(() => resolve(false), timeoutMs).unref?.()
     })
-    const ok = await Promise.race([check(), timeout])
+    const ok = await Promise.race([checkPromise, timeout])
     return { ok, latencyMs: Date.now() - start }
   } catch {
     return { ok: false, latencyMs: Date.now() - start }

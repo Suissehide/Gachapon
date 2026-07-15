@@ -10,7 +10,10 @@ export const Route = createFileRoute('/_admin/admin/health')({
   component: AdminHealth,
 })
 
-const STATUS_META: Record<string, { variant: BadgeVariant; label: string }> = {
+const STATUS_META: Record<
+  'ok' | 'degraded' | 'down',
+  { variant: BadgeVariant; label: string }
+> = {
   ok: { variant: 'success', label: 'Opérationnel' },
   degraded: { variant: 'warning', label: 'Dégradé' },
   down: { variant: 'danger', label: 'Hors service' },

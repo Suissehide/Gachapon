@@ -36,4 +36,15 @@ describe('checkWithTimeout', () => {
     )
     expect(r.ok).toBe(false)
   })
+  it('rejet tardif après timeout ne lance pas unhandledRejection', async () => {
+    const r = await checkWithTimeout(
+      () =>
+        new Promise<boolean>((_, reject) => {
+          setTimeout(() => reject(new Error('late')), 150)
+        }),
+      50,
+    )
+    expect(r.ok).toBe(false)
+    await new Promise((resolve) => setTimeout(resolve, 200))
+  })
 })
