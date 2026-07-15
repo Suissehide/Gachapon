@@ -78,12 +78,16 @@ export const useRecycle = () => {
     }) => CollectionApi.recycle(cardId, quantity, variant),
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ['collection'] })
+      // Recycling fires a CARD_RECYCLED event that also feeds the quest engine
+      // (fan-out in achievementsDomain.track) — refresh quest + achievement
+      // progress even when nothing unlocks (progress bars advance every time).
+      qc.invalidateQueries({ queryKey: ['quests'] })
+      qc.invalidateQueries({ queryKey: ['achievements'] })
       if (user) {
         setUser({ ...user, dust: data.newDustTotal })
       }
       if (data.unlockedAchievements?.length) {
         enqueueAchievementUnlock(data.unlockedAchievements)
-        qc.invalidateQueries({ queryKey: ['achievements'] })
         // The unlocked achievement mints a pending reward — refresh the badge.
         void useAuthStore.getState().fetchMe()
       }

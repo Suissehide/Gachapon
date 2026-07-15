@@ -67,6 +67,7 @@ export const useCreateTeam = () => {
       // the pending-rewards list, and fetchMe() so the navbar rewards pastille
       // (user.pendingRewardsCount) updates too.
       qc.invalidateQueries({ queryKey: ['quests'] })
+      qc.invalidateQueries({ queryKey: ['achievements'] })
       qc.invalidateQueries({ queryKey: ['rewards', 'pending'] })
       void fetchMe()
       toast({
@@ -230,6 +231,7 @@ export const useAcceptInvitation = () => {
       // "join_team" quest and minting its (pending) reward — refresh the quests
       // cache, the pending-rewards list, and fetchMe() for the rewards pastille.
       void qc.invalidateQueries({ queryKey: ['quests'] })
+      void qc.invalidateQueries({ queryKey: ['achievements'] })
       void qc.invalidateQueries({ queryKey: ['rewards', 'pending'] })
       void fetchMe()
     },

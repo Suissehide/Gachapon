@@ -16,6 +16,10 @@ export function useDustConvert() {
       // Refresh collection (quantity changed) and profile (dust changed)
       qc.invalidateQueries({ queryKey: ['collection'] })
       qc.invalidateQueries({ queryKey: ['profile'] })
+      // Converting doublons fires a CARD_RECYCLED event that feeds the quest +
+      // achievement engines — refresh their progress.
+      qc.invalidateQueries({ queryKey: ['quests'] })
+      qc.invalidateQueries({ queryKey: ['achievements'] })
     },
   })
 }

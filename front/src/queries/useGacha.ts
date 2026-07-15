@@ -75,6 +75,8 @@ export const usePull = () => {
       // Keep active-boost pullsRemaining in sync on the shop page.
       qc.invalidateQueries({ queryKey: ['shop'] })
       qc.invalidateQueries({ queryKey: ['quests'] })
+      // Progress bars advance on every pull, not only on unlock — refresh.
+      qc.invalidateQueries({ queryKey: ['achievements'] })
       // A pull can mint a new pending reward (achievement unlock or level
       // milestone pack) — refresh the topbar badge count from /auth/me.
       if (result.unlockedAchievements?.length || newLevel > oldLevel) {
@@ -82,7 +84,6 @@ export const usePull = () => {
       }
       if (result.unlockedAchievements?.length) {
         enqueueAchievementUnlock(result.unlockedAchievements)
-        qc.invalidateQueries({ queryKey: ['achievements'] })
       }
     },
     onError: (error) => {
@@ -127,6 +128,8 @@ export const usePullBatch = () => {
       // Keep active-boost pullsRemaining in sync on the shop page.
       qc.invalidateQueries({ queryKey: ['shop'] })
       qc.invalidateQueries({ queryKey: ['quests'] })
+      // Progress bars advance on every pull, not only on unlock — refresh.
+      qc.invalidateQueries({ queryKey: ['achievements'] })
       const hasUnlocks =
         !!result.unlockedAchievements?.length ||
         result.pulls.some((p) => p.unlockedAchievements?.length)
@@ -134,9 +137,6 @@ export const usePullBatch = () => {
       // milestone pack) — refresh the topbar badge count from /auth/me.
       if (hasUnlocks || newLevel > oldLevel) {
         void useAuthStore.getState().fetchMe()
-      }
-      if (hasUnlocks) {
-        qc.invalidateQueries({ queryKey: ['achievements'] })
       }
     },
     onError: (error) => {

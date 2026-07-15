@@ -136,6 +136,10 @@ export function useAttackStage(stageId: string, enabled: boolean) {
     qc.invalidateQueries({ queryKey: ['equipment'] })
     qc.invalidateQueries({ queryKey: ['collection'] })
     qc.invalidateQueries({ queryKey: ['profile'] })
+    // A cleared stage fires STAGE_CLEARED (+ LEVEL_UP) events that feed the
+    // quest + achievement engines — refresh their progress.
+    qc.invalidateQueries({ queryKey: ['quests'] })
+    qc.invalidateQueries({ queryKey: ['achievements'] })
     // Gold/dust live in the Zustand auth store (topbar + upgrade panel read
     // from it), not in a query cache. We do NOT refresh it here: the battle
     // fetch resolves several seconds before the scene animation finishes and
@@ -158,6 +162,10 @@ export function useSweepStage() {
       qc.invalidateQueries({ queryKey: ['equipment'] })
       qc.invalidateQueries({ queryKey: ['collection'] })
       qc.invalidateQueries({ queryKey: ['profile'] })
+      // Sweeping clears stages → STAGE_CLEARED (+ LEVEL_UP) events feed the
+      // quest + achievement engines — refresh their progress.
+      qc.invalidateQueries({ queryKey: ['quests'] })
+      qc.invalidateQueries({ queryKey: ['achievements'] })
       // Refresh gold/dust in the auth store (see useAttackStage note).
       void useAuthStore.getState().fetchMe()
     },

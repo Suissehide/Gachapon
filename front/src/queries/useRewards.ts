@@ -54,12 +54,13 @@ export const useClaimReward = () => {
       }
       qc.invalidateQueries({ queryKey: ['rewards', 'pending'] })
       qc.invalidateQueries({ queryKey: ['quests'] })
+      // Progress advances on every claim, not only on unlock — refresh.
+      qc.invalidateQueries({ queryKey: ['achievements'] })
       qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
       qc.invalidateQueries({ queryKey: ['collection'] })
       void fetchMe()
       if (result.unlockedAchievements?.length) {
         enqueueAchievementUnlock(result.unlockedAchievements)
-        qc.invalidateQueries({ queryKey: ['achievements'] })
       }
       if (result.cards?.length) {
         revealRewardCards(result.cards.map(claimedCardToRevealEntry))
@@ -94,12 +95,13 @@ export const useClaimAllRewards = () => {
       }
       qc.invalidateQueries({ queryKey: ['rewards', 'pending'] })
       qc.invalidateQueries({ queryKey: ['quests'] })
+      // Progress advances on every claim, not only on unlock — refresh.
+      qc.invalidateQueries({ queryKey: ['achievements'] })
       qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
       qc.invalidateQueries({ queryKey: ['collection'] })
       void fetchMe()
       if (result?.unlockedAchievements?.length) {
         enqueueAchievementUnlock(result.unlockedAchievements)
-        qc.invalidateQueries({ queryKey: ['achievements'] })
       }
       if (result?.cards?.length) {
         revealRewardCards(result.cards.map(claimedCardToRevealEntry))

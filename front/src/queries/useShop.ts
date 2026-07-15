@@ -34,15 +34,22 @@ export const useBuyItem = () => {
     onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
       qc.invalidateQueries({ queryKey: ['shop'] })
+      // A purchase fires MACHINE_PURCHASED + GOLD/DUST_SPENT events that feed the
+      // quest + achievement engines — progress advances on every buy, not only
+      // on unlock, so refresh both unconditionally.
+      qc.invalidateQueries({ queryKey: ['quests'] })
+      qc.invalidateQueries({ queryKey: ['achievements'] })
       if (result.unlockedAchievements?.length) {
         enqueueAchievementUnlock(result.unlockedAchievements)
-        qc.invalidateQueries({ queryKey: ['achievements'] })
         // The unlocked achievement mints a pending reward — refresh the badge.
         void useAuthStore.getState().fetchMe()
       }
     },
     onError: (error) => {
-      const title = isApiError(error) && error.title ? error.title : "Erreur lors de l'achat"
+      const title =
+        isApiError(error) && error.title
+          ? error.title
+          : "Erreur lors de l'achat"
       toast({
         title,
         message: error.message,

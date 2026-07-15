@@ -16,6 +16,10 @@ export function useLevelUpCard() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['collection'] })
       qc.invalidateQueries({ queryKey: ['profile'] })
+      // Leveling a card fires CARD_LEVELED + GOLD_SPENT events that feed the
+      // quest + achievement engines — refresh their progress.
+      qc.invalidateQueries({ queryKey: ['quests'] })
+      qc.invalidateQueries({ queryKey: ['achievements'] })
       // Stronger card → any cached battle is now stale; drop the replay cache.
       invalidateBattleCache(qc)
     },
