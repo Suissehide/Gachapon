@@ -87,4 +87,14 @@ describe('Admin bulk rewards', () => {
     })
     expect(res.statusCode).toBe(400)
   })
+
+  it('déduplique les userIds dans target.userIds', async () => {
+    const res = await app.inject({
+      method: 'POST', url: '/admin/rewards/bulk',
+      headers: { cookie: adminCookies },
+      payload: { target: { userIds: [activeUserId, activeUserId] }, reward: { gold: 15 } },
+    })
+    expect(res.statusCode).toBe(201)
+    expect(res.json().count).toBe(1)
+  })
 })

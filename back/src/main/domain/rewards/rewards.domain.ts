@@ -303,7 +303,8 @@ export class RewardsDomain implements RewardsDomainInterface {
       input.userIds === 'ALL'
         ? await this.#userRepository.findAllActiveIds()
         : input.userIds
-    if (targetIds.length === 0) {
+    const deduplicatedIds = [...new Set(targetIds)]
+    if (deduplicatedIds.length === 0) {
       throw Boom.badRequest('No target users')
     }
 
@@ -321,7 +322,7 @@ export class RewardsDomain implements RewardsDomainInterface {
           },
         })
         const created = await tx.userReward.createMany({
-          data: targetIds.map((userId) => ({
+          data: deduplicatedIds.map((userId) => ({
             userId,
             rewardId: reward.id,
             source: 'ADMIN' as const,
