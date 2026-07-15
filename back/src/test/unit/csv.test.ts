@@ -18,4 +18,13 @@ describe('toCsv', () => {
     const csv = toCsv(['v'], [[null], [d], [true]])
     expect(csv).toBe('v\r\n\r\n2026-01-02T03:04:05.000Z\r\ntrue\r\n')
   })
+
+  it('anti-injection CSV : préfixe apostrophe sur les strings débutant par =, +, -, @', () => {
+    const csv = toCsv(
+      ['formula', 'plus', 'minus', 'at', 'negnum'],
+      [["=cmd()", '+1', '-5str', '@user', -5]],
+    )
+    // strings starting with formula chars get an apostrophe prefix; numbers do not
+    expect(csv).toBe("formula,plus,minus,at,negnum\r\n'=cmd(),'+1,'-5str,'@user,-5\r\n")
+  })
 })

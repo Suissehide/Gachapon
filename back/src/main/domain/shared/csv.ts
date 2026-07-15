@@ -1,19 +1,23 @@
 type CsvValue = string | number | boolean | Date | null
 
+const FORMULA_CHARS = /^[=+\-@]/
+
 const escapeField = (value: CsvValue): string => {
   if (value === null) {
     return ''
   }
+  const isString = typeof value === 'string'
   const str =
     value instanceof Date
       ? value.toISOString()
-      : typeof value === 'string'
+      : isString
         ? value
         : String(value)
-  if (/[",\n\r]/.test(str)) {
-    return `"${str.replaceAll('"', '""')}"`
+  const sanitized = isString && FORMULA_CHARS.test(str) ? `'${str}` : str
+  if (/[",\n\r]/.test(sanitized)) {
+    return `"${sanitized.replaceAll('"', '""')}"`
   }
-  return str
+  return sanitized
 }
 
 export const toCsv = (headers: string[], rows: CsvValue[][]): string => {

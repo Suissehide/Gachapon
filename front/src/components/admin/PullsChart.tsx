@@ -47,7 +47,7 @@ function ChartTooltip({
 export function PullsChart({
   data,
   title = 'Pulls / jour',
-  color = 'hsl(var(--primary))',
+  color = 'var(--primary)',
   unit = 'pulls',
 }: PullsChartProps) {
   const total = data.reduce((s, d) => s + d.count, 0)
@@ -110,21 +110,21 @@ export function PullsChart({
           >
             <CartesianGrid
               strokeDasharray="3 3"
-              stroke="hsl(var(--border))"
+              stroke="var(--border)"
               vertical={false}
             />
             <XAxis
               dataKey="day"
               axisLine={true}
               tickLine={true}
-              tick={{ fontSize: 10, fill: 'hsl(var(--text-light))' }}
+              tick={{ fontSize: 10, fill: 'var(--text-light)' }}
               tickFormatter={(v) => v.slice(5)}
               interval="preserveStartEnd"
             />
             <YAxis
               axisLine={true}
               tickLine={true}
-              tick={{ fontSize: 10, fill: 'hsl(var(--text-light))' }}
+              tick={{ fontSize: 10, fill: 'var(--text-light)' }}
               width={30}
             />
             <Tooltip cursor={false} content={<ChartTooltip unit={unit} />} />

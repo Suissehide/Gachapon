@@ -183,7 +183,7 @@ function AdminDashboard() {
               <PullsChart
                 data={data.signupsSeries}
                 title="Inscriptions / jour"
-                color="hsl(var(--success))"
+                color="var(--success)"
                 unit="inscriptions"
               />
             )}
