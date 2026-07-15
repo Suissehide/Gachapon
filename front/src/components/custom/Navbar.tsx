@@ -118,19 +118,6 @@ export function Navbar() {
                   />
                 </Link>
               ))}
-              {user && (
-                <Link
-                  to="/profile/$username"
-                  params={{ username: user.username }}
-                  className={tabClass}
-                >
-                  Mon profil
-                  <span
-                    aria-hidden
-                    className="pointer-events-none absolute right-3 bottom-0 left-3 h-[3px] rounded-t-[3px] bg-transparent"
-                  />
-                </Link>
-              )}
               {navItemsAfterProfile.map((item) => (
                 <Link key={item.label} to={item.to} className={tabClass}>
                   {item.label}
@@ -142,16 +129,26 @@ export function Navbar() {
               ))}
             </nav>
             {user && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => void handleLogout()}
-                aria-label="Déconnexion"
-                title="Déconnexion"
-                className="my-2 h-10 w-10 self-center rounded-[11px] text-text-light/40 hover:bg-text/[0.06] hover:text-destructive"
-              >
-                <LogOut className="h-[19px] w-[19px]" />
-              </Button>
+              <div className="flex items-center gap-3 self-center">
+                <Link
+                  to="/profile/$username"
+                  params={{ username: user.username }}
+                  title="Mon profil"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary text-xs font-bold text-white ring-2 ring-primary/20 transition-all hover:ring-primary/50"
+                >
+                  {user.username[0]?.toUpperCase()}
+                </Link>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => void handleLogout()}
+                  aria-label="Déconnexion"
+                  title="Déconnexion"
+                  className="my-2 h-10 w-10 rounded-[11px] text-text-light/40 hover:bg-text/[0.06] hover:text-destructive"
+                >
+                  <LogOut className="h-[19px] w-[19px]" />
+                </Button>
+              </div>
             )}
           </div>
         </div>
