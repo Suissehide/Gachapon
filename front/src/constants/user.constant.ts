@@ -16,8 +16,11 @@ export type AdminUser = {
   role: string
   tokens: number
   dust: number
+  gold: number
   suspended: boolean
   createdAt: string
+  level: number
+  lastLoginAt: string | null
 }
 
 export type UserStats = {
@@ -33,6 +36,7 @@ export const USER_ROUTES = {
   collection: (userId: string) => `/users/${userId}/collection`,
   admin: {
     users: '/admin/users',
+    usersExport: '/admin/users/export',
     user: (id: string) => `/admin/users/${id}`,
     tokens: (id: string) => `/admin/users/${id}/tokens`,
     dust: (id: string) => `/admin/users/${id}/dust`,
