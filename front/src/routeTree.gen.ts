@@ -49,6 +49,7 @@ import { Route as AdminAdminSkillsRouteImport } from './routes/_admin/admin.skil
 import { Route as AdminAdminShopRouteImport } from './routes/_admin/admin.shop'
 import { Route as AdminAdminScoringRouteImport } from './routes/_admin/admin.scoring'
 import { Route as AdminAdminMediaRouteImport } from './routes/_admin/admin.media'
+import { Route as AdminAdminHealthRouteImport } from './routes/_admin/admin.health'
 import { Route as AdminAdminConfigRouteImport } from './routes/_admin/admin.config'
 import { Route as AdminAdminCombatDebugRouteImport } from './routes/_admin/admin.combat-debug'
 import { Route as AdminAdminCardsRouteImport } from './routes/_admin/admin.cards'
@@ -257,6 +258,11 @@ const AdminAdminMediaRoute = AdminAdminMediaRouteImport.update({
   path: '/media',
   getParentRoute: () => AdminAdminRoute,
 } as any)
+const AdminAdminHealthRoute = AdminAdminHealthRouteImport.update({
+  id: '/health',
+  path: '/health',
+  getParentRoute: () => AdminAdminRoute,
+} as any)
 const AdminAdminConfigRoute = AdminAdminConfigRouteImport.update({
   id: '/config',
   path: '/config',
@@ -315,6 +321,7 @@ export interface FileRoutesByFullPath {
   '/admin/cards': typeof AdminAdminCardsRoute
   '/admin/combat-debug': typeof AdminAdminCombatDebugRoute
   '/admin/config': typeof AdminAdminConfigRoute
+  '/admin/health': typeof AdminAdminHealthRoute
   '/admin/media': typeof AdminAdminMediaRoute
   '/admin/scoring': typeof AdminAdminScoringRoute
   '/admin/shop': typeof AdminAdminShopRoute
@@ -359,6 +366,7 @@ export interface FileRoutesByTo {
   '/admin/cards': typeof AdminAdminCardsRoute
   '/admin/combat-debug': typeof AdminAdminCombatDebugRoute
   '/admin/config': typeof AdminAdminConfigRoute
+  '/admin/health': typeof AdminAdminHealthRoute
   '/admin/media': typeof AdminAdminMediaRoute
   '/admin/scoring': typeof AdminAdminScoringRoute
   '/admin/shop': typeof AdminAdminShopRoute
@@ -407,6 +415,7 @@ export interface FileRoutesById {
   '/_admin/admin/cards': typeof AdminAdminCardsRoute
   '/_admin/admin/combat-debug': typeof AdminAdminCombatDebugRoute
   '/_admin/admin/config': typeof AdminAdminConfigRoute
+  '/_admin/admin/health': typeof AdminAdminHealthRoute
   '/_admin/admin/media': typeof AdminAdminMediaRoute
   '/_admin/admin/scoring': typeof AdminAdminScoringRoute
   '/_admin/admin/shop': typeof AdminAdminShopRoute
@@ -454,6 +463,7 @@ export interface FileRouteTypes {
     | '/admin/cards'
     | '/admin/combat-debug'
     | '/admin/config'
+    | '/admin/health'
     | '/admin/media'
     | '/admin/scoring'
     | '/admin/shop'
@@ -498,6 +508,7 @@ export interface FileRouteTypes {
     | '/admin/cards'
     | '/admin/combat-debug'
     | '/admin/config'
+    | '/admin/health'
     | '/admin/media'
     | '/admin/scoring'
     | '/admin/shop'
@@ -545,6 +556,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/cards'
     | '/_admin/admin/combat-debug'
     | '/_admin/admin/config'
+    | '/_admin/admin/health'
     | '/_admin/admin/media'
     | '/_admin/admin/scoring'
     | '/_admin/admin/shop'
@@ -862,6 +874,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminMediaRouteImport
       parentRoute: typeof AdminAdminRoute
     }
+    '/_admin/admin/health': {
+      id: '/_admin/admin/health'
+      path: '/health'
+      fullPath: '/admin/health'
+      preLoaderRoute: typeof AdminAdminHealthRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
     '/_admin/admin/config': {
       id: '/_admin/admin/config'
       path: '/config'
@@ -904,6 +923,7 @@ interface AdminAdminRouteChildren {
   AdminAdminCardsRoute: typeof AdminAdminCardsRoute
   AdminAdminCombatDebugRoute: typeof AdminAdminCombatDebugRoute
   AdminAdminConfigRoute: typeof AdminAdminConfigRoute
+  AdminAdminHealthRoute: typeof AdminAdminHealthRoute
   AdminAdminMediaRoute: typeof AdminAdminMediaRoute
   AdminAdminScoringRoute: typeof AdminAdminScoringRoute
   AdminAdminShopRoute: typeof AdminAdminShopRoute
@@ -918,6 +938,7 @@ const AdminAdminRouteChildren: AdminAdminRouteChildren = {
   AdminAdminCardsRoute: AdminAdminCardsRoute,
   AdminAdminCombatDebugRoute: AdminAdminCombatDebugRoute,
   AdminAdminConfigRoute: AdminAdminConfigRoute,
+  AdminAdminHealthRoute: AdminAdminHealthRoute,
   AdminAdminMediaRoute: AdminAdminMediaRoute,
   AdminAdminScoringRoute: AdminAdminScoringRoute,
   AdminAdminShopRoute: AdminAdminShopRoute,

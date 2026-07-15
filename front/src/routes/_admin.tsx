@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-router'
 import type { LucideIcon } from 'lucide-react'
 import {
+  Activity,
   ArrowLeft,
   BarChart2,
   ChevronRight,
@@ -72,6 +73,7 @@ const NAV_SECTIONS: NavSection[] = [
   {
     label: 'Système',
     items: [
+      { to: '/admin/health', label: 'Santé', icon: Activity },
       { to: '/admin/combat-debug', label: 'Combat — Debug', icon: Swords },
     ],
   },
