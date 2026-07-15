@@ -114,6 +114,7 @@ function AdminUsers() {
   const [tokenAmount, setTokenAmount] = useState('')
   const [dustAmount, setDustAmount] = useState('')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [tableKey, setTableKey] = useState(0)
   const [rewardPopupOpen, setRewardPopupOpen] = useState(false)
   const [rewardTarget, setRewardTarget] = useState<'ALL' | string[]>('ALL')
   const [rewardTargetLabel, setRewardTargetLabel] = useState('')
@@ -289,6 +290,7 @@ function AdminUsers() {
 
       <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-border bg-card">
         <DataTable
+          key={tableKey}
           columns={columns}
           data={data?.users ?? []}
           isLoading={isLoading}
@@ -338,6 +340,10 @@ function AdminUsers() {
       <BulkRewardPopup
         open={rewardPopupOpen}
         onClose={() => setRewardPopupOpen(false)}
+        onSuccess={() => {
+          setSelectedIds([])
+          setTableKey((k) => k + 1)
+        }}
         target={rewardTarget}
         targetLabel={rewardTargetLabel}
       />

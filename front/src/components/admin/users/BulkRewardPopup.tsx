@@ -1,7 +1,9 @@
 import { useState } from 'react'
 
 import type { BulkRewardBody } from '../../../api/admin-rewards.api.ts'
+import { TOAST_SEVERITY } from '../../../constants/ui.constant.ts'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
+import { useToast } from '../../../hooks/useToast.ts'
 import { RARITY_LABEL_FR } from '../../../libs/rarity.ts'
 import { useAdminBulkReward } from '../../../queries/useAdminBulkReward.ts'
 import { Badge } from '../../ui/badge.tsx'
@@ -34,6 +36,16 @@ type RewardFormValues = {
   message: string
 }
 
+function isRewardEmpty(value: RewardFormValues): boolean {
+  return (
+    (value.tokens == null || value.tokens === 0) &&
+    (value.dust == null || value.dust === 0) &&
+    (value.xp == null || value.xp === 0) &&
+    (value.gold == null || value.gold === 0) &&
+    !value.cardRarity
+  )
+}
+
 function buildReward(value: RewardFormValues): BulkRewardBody['reward'] {
   const reward: BulkRewardBody['reward'] = {}
   if (value.tokens != null) {
@@ -57,6 +69,7 @@ function buildReward(value: RewardFormValues): BulkRewardBody['reward'] {
 interface BulkRewardPopupProps {
   open: boolean
   onClose: () => void
+  onSuccess?: () => void
   target: 'ALL' | string[]
   targetLabel: string
 }
@@ -64,11 +77,13 @@ interface BulkRewardPopupProps {
 export function BulkRewardPopup({
   open,
   onClose,
+  onSuccess,
   target,
   targetLabel,
 }: BulkRewardPopupProps) {
   const [confirmed, setConfirmed] = useState(false)
   const bulkReward = useAdminBulkReward()
+  const { toast } = useToast()
   const isAll = target === 'ALL'
 
   const form = useAppForm({
@@ -81,6 +96,14 @@ export function BulkRewardPopup({
       message: '',
     },
     onSubmit: ({ value }) => {
+      if (isRewardEmpty(value)) {
+        toast({
+          title: 'Récompense vide',
+          message: 'La récompense doit contenir au moins une ressource',
+          severity: TOAST_SEVERITY.ERROR,
+        })
+        return
+      }
       bulkReward.mutate(
         {
           target: isAll ? 'ALL' : { userIds: target as string[] },
@@ -92,6 +115,7 @@ export function BulkRewardPopup({
             onClose()
             setConfirmed(false)
             form.reset()
+            onSuccess?.()
           },
         },
       )
