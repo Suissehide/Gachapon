@@ -46,6 +46,12 @@ describe('Rewards card grant e2e', () => {
     cookies = loginRes.headers['set-cookie'] as string
 
     // Active set + a single EPIC card so the grant is deterministic.
+    // Other e2e files may have left active EPIC cards behind (shared DB,
+    // single TRUNCATE per run) — deactivate their sets so the random pick
+    // in the card grant can only land on ours.
+    await postgresOrm.prisma.cardSet.updateMany({
+      data: { isActive: false },
+    })
     const set = await postgresOrm.prisma.cardSet.create({
       data: { name: `Card reward set ${suffix}`, isActive: true },
     })
