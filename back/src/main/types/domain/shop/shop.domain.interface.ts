@@ -7,6 +7,7 @@ export type BuyShopItemResult = {
   newDustTotal: number
   newGoldTotal: number
   newTokenTotal: number
+  newCombatPoints?: number
   unlockedAchievements: UnlockedAchievement[]
   item: {
     id: string

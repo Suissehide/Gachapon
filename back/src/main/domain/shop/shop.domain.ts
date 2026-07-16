@@ -9,9 +9,11 @@ import type {
 } from '../../types/domain/shop/shop.domain.interface'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import type { IShopItemRepository } from '../../types/infra/orm/repositories/shop-item.repository.interface'
+import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { IUserBoostRepository } from '../../types/infra/orm/repositories/user-boost.repository.interface'
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import type { UnlockedAchievement } from '../achievements/events.types'
+import type { CombatPointsTx } from '../combat-points/combat-points.tx'
 
 type BoostValue = {
   multiplier?: number
@@ -20,22 +22,32 @@ type BoostValue = {
   guaranteedRarity?: string
 }
 
+type EnergyValue = {
+  combatPoints?: number
+}
+
 export class ShopDomain implements IShopDomain {
   readonly #shopItemRepository: IShopItemRepository
   readonly #userBoostRepository: IUserBoostRepository
   readonly #postgresOrm: PostgresOrm
   readonly #achievementsDomain: AchievementsDomainInterface
+  readonly #combatPointsTx: CombatPointsTx
+  readonly #skillTreeRepository: ISkillTreeRepository
 
   constructor({
     shopItemRepository,
     userBoostRepository,
     postgresOrm,
     achievementsDomain,
+    combatPointsTx,
+    skillTreeRepository,
   }: IocContainer) {
     this.#shopItemRepository = shopItemRepository
     this.#userBoostRepository = userBoostRepository
     this.#postgresOrm = postgresOrm
     this.#achievementsDomain = achievementsDomain
+    this.#combatPointsTx = combatPointsTx
+    this.#skillTreeRepository = skillTreeRepository
   }
 
   async buy(userId: string, shopItemId: string): Promise<BuyShopItemResult> {
@@ -46,6 +58,12 @@ export class ShopDomain implements IShopDomain {
 
     // Validate shop item structure early (before transaction)
     this.#validateShopItem(item)
+
+    // PC_VAULT affects the regen settle inside creditInTx — read outside the tx.
+    const effects =
+      item.type === 'ENERGY_PACK'
+        ? await this.#skillTreeRepository.getEffectsForUser(userId)
+        : undefined
 
     const result = await this.#postgresOrm.executeWithTransactionClient(
       async (tx) => {
@@ -71,6 +89,18 @@ export class ShopDomain implements IShopDomain {
         const updateData = this.#buildUpdateData(item)
         await this.#applyBoostEffect(tx, userId, item)
 
+        let newCombatPoints: number | undefined
+        if (item.type === 'ENERGY_PACK') {
+          const energyValue = item.value as EnergyValue
+          const credit = await this.#combatPointsTx.creditInTx(
+            tx,
+            userId,
+            energyValue.combatPoints as number,
+            effects,
+          )
+          newCombatPoints = credit.combatPointsAfter
+        }
+
         const updated = await tx.user.update({
           where: { id: userId },
           data: updateData,
@@ -83,6 +113,7 @@ export class ShopDomain implements IShopDomain {
           newDustTotal: updated.dust,
           newGoldTotal: updated.gold,
           newTokenTotal: updated.tokens,
+          newCombatPoints,
           unlockedAchievements: allUnlocks,
         }
       },
@@ -96,6 +127,7 @@ export class ShopDomain implements IShopDomain {
       newDustTotal: result.newDustTotal,
       newGoldTotal: result.newGoldTotal,
       newTokenTotal: result.newTokenTotal,
+      newCombatPoints: result.newCombatPoints,
       unlockedAchievements: result.unlockedAchievements,
       item: {
         id: item.id,
@@ -221,6 +253,15 @@ export class ShopDomain implements IShopDomain {
       // Validate that pulls count is positive
       if ((boostValue.pulls ?? 0) <= 0) {
         throw Boom.internal('BOOST item value has no positive pulls count')
+      }
+    }
+    if (item.type === 'ENERGY_PACK') {
+      const energyValue = item.value as EnergyValue
+      const pc = energyValue.combatPoints
+      if (pc == null || !Number.isInteger(pc) || pc <= 0) {
+        throw Boom.internal(
+          'ENERGY_PACK item value has no positive integer combatPoints',
+        )
       }
     }
   }

@@ -376,4 +376,97 @@ describe('Shop routes', () => {
     })
     expect(userAfter.dust).toBe(dustBefore + 500)
   })
+
+  it('POST /shop/:id/buy — ENERGY_PACK crédite les PC avec overcap', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    const item = await postgresOrm.prisma.shopItem.create({
+      data: {
+        name: 'Petite recharge test',
+        description: '+15 points de combat',
+        type: 'ENERGY_PACK',
+        cost: 75,
+        currency: 'DUST',
+        value: { combatPoints: 15 },
+        isActive: true,
+      },
+    })
+
+    // Utilisateur au plafond (60 par défaut) : le crédit doit overcap à 75.
+    await postgresOrm.prisma.user.update({
+      where: { id: userId },
+      data: { dust: 200, combatPoints: 60, lastCombatPointAt: new Date() },
+    })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/shop/${item.id}/buy`,
+      headers: { cookie: cookies },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.newDustTotal).toBe(125)
+    expect(body.newCombatPoints).toBe(75)
+
+    const dbUser = await postgresOrm.prisma.user.findUnique({
+      where: { id: userId },
+    })
+    expect(dbUser.combatPoints).toBe(75)
+  })
+
+  it('POST /shop/:id/buy — ENERGY_PACK 402 si pas assez de poussière', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    const item = await postgresOrm.prisma.shopItem.create({
+      data: {
+        name: 'Recharge test',
+        description: '+40 points de combat',
+        type: 'ENERGY_PACK',
+        cost: 180,
+        currency: 'DUST',
+        value: { combatPoints: 40 },
+        isActive: true,
+      },
+    })
+
+    await postgresOrm.prisma.user.update({
+      where: { id: userId },
+      data: { dust: 10 },
+    })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/shop/${item.id}/buy`,
+      headers: { cookie: cookies },
+    })
+    expect(res.statusCode).toBe(402)
+  })
+
+  it('POST /shop/:id/buy — ENERGY_PACK mal configuré (combatPoints manquant) → 500', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    const item = await postgresOrm.prisma.shopItem.create({
+      data: {
+        name: 'Recharge cassée',
+        description: 'value invalide',
+        type: 'ENERGY_PACK',
+        cost: 10,
+        currency: 'DUST',
+        value: {},
+        isActive: true,
+      },
+    })
+
+    await postgresOrm.prisma.user.update({
+      where: { id: userId },
+      data: { dust: 100 },
+    })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/shop/${item.id}/buy`,
+      headers: { cookie: cookies },
+    })
+    expect(res.statusCode).toBe(500)
+  })
 })
