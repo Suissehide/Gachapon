@@ -2,6 +2,8 @@ import { describe, expect, it } from '@jest/globals'
 
 import { calculateCombatPoints } from '../../main/domain/combat-points/combat-points.domain'
 import { effectiveCombatConfig } from '../../main/domain/combat-points/combat-points.tx'
+import { CombatPointsTx } from '../../main/domain/combat-points/combat-points.tx'
+import type { IocContainer } from '../../main/types/application/ioc'
 
 describe('calculateCombatPoints', () => {
   it('returns same value when already at max', () => {
@@ -73,5 +75,89 @@ describe('effectiveCombatConfig', () => {
       { pcVaultBonus: 0, pcRegenReductionSeconds: 0 },
     )
     expect(out).toEqual({ maxStock: 60, regenSeconds: 900, battleCost: 5, sweepCost: 5 })
+  })
+})
+
+describe('CombatPointsTx.creditInTx', () => {
+  const DEFAULT_CFG = {
+    'combat.pointsMax': 60,
+    'combat.regenSeconds': 600,
+    'combat.battleCost': 5,
+    'combat.sweepCost': 5,
+  }
+
+  const makeCpTx = () =>
+    new CombatPointsTx({
+      postgresOrm: {},
+      configService: { getMany: async () => DEFAULT_CFG },
+      skillTreeRepository: {},
+    } as unknown as IocContainer)
+
+  const makeTx = (user: {
+    combatPoints: number
+    lastCombatPointAt: Date | null
+  }) => {
+    const calls: { update: unknown[] } = { update: [] }
+    const tx = {
+      user: {
+        findUnique: async () => user,
+        update: async (args: unknown) => {
+          calls.update.push(args)
+          return {}
+        },
+      },
+    }
+    return { tx: tx as never, calls }
+  }
+
+  it('crédite au-delà du plafond sans clamp (overcap)', async () => {
+    // Utilisateur au max (60) : la regen est nulle, le crédit doit dépasser 60.
+    const { tx, calls } = makeTx({
+      combatPoints: 60,
+      lastCombatPointAt: new Date(),
+    })
+    const result = await makeCpTx().creditInTx(tx, 'u1', 15)
+    expect(result.combatPointsAfter).toBe(75)
+    expect(calls.update).toHaveLength(1)
+    const args = calls.update[0] as { data: { combatPoints: number } }
+    expect(args.data.combatPoints).toBe(75)
+  })
+
+  it('règle la regen lazy avant de créditer', async () => {
+    // 3 intervalles écoulés (3 × 600s) : 30 PC deviennent 33, puis +15 = 48.
+    const last = new Date(Date.now() - 3 * 600 * 1000 - 100)
+    const { tx, calls } = makeTx({ combatPoints: 30, lastCombatPointAt: last })
+    const result = await makeCpTx().creditInTx(tx, 'u1', 15)
+    expect(result.combatPointsAfter).toBe(48)
+    const args = calls.update[0] as {
+      data: { combatPoints: number; lastCombatPointAt: Date }
+    }
+    expect(args.data.combatPoints).toBe(48)
+    // Clock avancé de 3 intervalles exactement (fenêtre partielle préservée).
+    expect(args.data.lastCombatPointAt.getTime()).toBe(
+      last.getTime() + 3 * 600 * 1000,
+    )
+  })
+
+  it('applique les effets PC_VAULT au plafond de regen', async () => {
+    // Vault +15 → max effectif 75 : un user à 60 avec un vieux clock regen
+    // jusqu'à 75, puis crédit +15 = 90.
+    const last = new Date(Date.now() - 100 * 600 * 1000)
+    const { tx } = makeTx({ combatPoints: 60, lastCombatPointAt: last })
+    const result = await makeCpTx().creditInTx(tx, 'u1', 15, {
+      pcVaultBonus: 15,
+      pcRegenReductionSeconds: 0,
+    })
+    expect(result.combatPointsAfter).toBe(90)
+  })
+
+  it('amount <= 0 : no-op, aucune écriture', async () => {
+    const { tx, calls } = makeTx({
+      combatPoints: 42,
+      lastCombatPointAt: new Date(),
+    })
+    const result = await makeCpTx().creditInTx(tx, 'u1', 0)
+    expect(result.combatPointsAfter).toBe(42)
+    expect(calls.update).toHaveLength(0)
   })
 })
