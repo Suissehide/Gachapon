@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router'
 import dayjs from 'dayjs'
 import type { LucideIcon } from 'lucide-react'
 import {
@@ -132,6 +133,32 @@ export function ActivityFeed() {
               return null
             }
             const Icon = meta.icon
+            const label = meta.label(e)
+            const username = e.user?.username
+
+            let labelContent: React.ReactNode = label
+
+            if (username) {
+              const index = label.indexOf(username)
+              if (index !== -1) {
+                const before = label.slice(0, index)
+                const after = label.slice(index + username.length)
+                labelContent = (
+                  <>
+                    {before}
+                    <Link
+                      to="/profile/$username"
+                      params={{ username }}
+                      className="hover:underline"
+                    >
+                      {username}
+                    </Link>
+                    {after}
+                  </>
+                )
+              }
+            }
+
             return (
               <div
                 key={e.id}
@@ -139,7 +166,7 @@ export function ActivityFeed() {
               >
                 <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${meta.tone}`} />
                 <div className="min-w-0">
-                  <p className="truncate text-sm text-text">{meta.label(e)}</p>
+                  <p className="truncate text-sm text-text">{labelContent}</p>
                   <p className="text-[11px] text-text-light">
                     {dayjs(e.createdAt).fromNow()}
                   </p>
