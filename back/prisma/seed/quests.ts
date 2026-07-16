@@ -21,7 +21,7 @@ const QUESTS: QuestConfig[] = [
     description: 'Effectue ton premier tirage au Gachapon.',
     criterion: { event: 'PULL_COMPLETED', target: 1 },
     period: 'ONESHOT',
-    rewardTokens: 5,
+    rewardTokens: 2,
     rewardDust: 0,
   },
   {
@@ -30,8 +30,8 @@ const QUESTS: QuestConfig[] = [
     description: 'Remporte ton premier combat en campagne.',
     criterion: { event: 'STAGE_CLEARED', target: 1 },
     period: 'ONESHOT',
-    rewardTokens: 10,
-    rewardDust: 50,
+    rewardTokens: 3,
+    rewardDust: 25,
   },
   {
     key: 'first_card_level',
@@ -39,8 +39,8 @@ const QUESTS: QuestConfig[] = [
     description: "Monte le niveau d'une carte pour la première fois.",
     criterion: { event: 'CARD_LEVELED', target: 1 },
     period: 'ONESHOT',
-    rewardTokens: 10,
-    rewardDust: 50,
+    rewardTokens: 3,
+    rewardDust: 25,
   },
   {
     key: 'first_recycle',
@@ -48,8 +48,8 @@ const QUESTS: QuestConfig[] = [
     description: 'Recycle ta première carte en poussière.',
     criterion: { event: 'CARD_RECYCLED', target: 1 },
     period: 'ONESHOT',
-    rewardTokens: 5,
-    rewardDust: 50,
+    rewardTokens: 2,
+    rewardDust: 25,
   },
   {
     key: 'first_gold_spent',
@@ -57,8 +57,8 @@ const QUESTS: QuestConfig[] = [
     description: "Dépense de l'or pour la première fois.",
     criterion: { event: 'GOLD_SPENT', target: 1 },
     period: 'ONESHOT',
-    rewardTokens: 5,
-    rewardDust: 30,
+    rewardTokens: 2,
+    rewardDust: 15,
   },
   {
     key: 'collect_10_unique',
@@ -70,8 +70,8 @@ const QUESTS: QuestConfig[] = [
       filter: { uniqueOnly: true },
     },
     period: 'ONESHOT',
-    rewardTokens: 20,
-    rewardDust: 200,
+    rewardTokens: 5,
+    rewardDust: 100,
   },
   {
     key: 'join_team',
@@ -79,8 +79,8 @@ const QUESTS: QuestConfig[] = [
     description: 'Rejoins ou crée une équipe.',
     criterion: { event: 'TEAM_JOINED', target: 1 },
     period: 'ONESHOT',
-    rewardTokens: 10,
-    rewardDust: 50,
+    rewardTokens: 3,
+    rewardDust: 25,
   },
   // Weekly quests — 3 tirées au sort chaque semaine parmi ce pool.
   {
