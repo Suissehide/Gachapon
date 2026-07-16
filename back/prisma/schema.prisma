@@ -46,6 +46,7 @@ enum CardVariant {
 
 enum ShopItemType {
   TOKEN_PACK
+  ENERGY_PACK
   BOOST
   COSMETIC
   MACHINE
@@ -119,6 +120,7 @@ model User {
   role          GlobalRole @default(USER)
   tokens        Int        @default(0)
   dust          Int        @default(0)
+  dustGenerated Int        @default(0)
   lastTokenAt   DateTime?
   xp            Int        @default(0)
   level         Int        @default(1)
