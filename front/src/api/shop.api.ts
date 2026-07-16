@@ -27,8 +27,8 @@ export const ShopApi = {
         res,
         {
           409: {
-            title: 'Boost déjà actif',
-            message: 'Un boost de ce type est déjà actif',
+            title: 'Boost incompatible',
+            message: 'Un boost différent est déjà actif sur cette rareté',
           },
           429: {
             title: 'Limite atteinte',

@@ -576,7 +576,6 @@ function DailyShopCard({
 function StaticShopCardAction({
   canAfford,
   supported,
-  isBoostActive,
   buying,
   justBought,
   owned,
@@ -585,7 +584,6 @@ function StaticShopCardAction({
 }: {
   canAfford: boolean
   supported: boolean
-  isBoostActive: boolean
   buying: boolean
   justBought: boolean
   owned?: boolean
@@ -610,14 +608,6 @@ function StaticShopCardAction({
       <Button size="sm" variant="secondary" disabled className="gap-1.5">
         <Check className="h-3.5 w-3.5" />
         Possédée
-      </Button>
-    )
-  }
-  if (isBoostActive) {
-    return (
-      <Button size="sm" variant="secondary" disabled className="gap-1.5">
-        <Check className="h-3.5 w-3.5" />
-        Actif
       </Button>
     )
   }
@@ -722,7 +712,6 @@ function StaticShopCard({
         <StaticShopCardAction
           canAfford={canAfford}
           supported={supported}
-          isBoostActive={isBoostActive}
           buying={buying}
           justBought={justBought}
           owned={owned}
