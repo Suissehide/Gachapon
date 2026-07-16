@@ -82,7 +82,7 @@ function getDisplayRewards(
       key: 'dust',
       icon: Sparkles,
       iconClass: 'text-violet-400',
-      label: `${entry.dust} Dust`,
+      label: `${entry.dust} poussière`,
     })
   }
   if (entry.xp > 0) {

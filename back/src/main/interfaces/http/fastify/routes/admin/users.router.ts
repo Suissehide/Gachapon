@@ -122,11 +122,11 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
         throw Boom.notFound('User not found')
       }
 
-      const [pullsTotal, dustGenerated, cardsOwned] = await Promise.all([
+      const [pullsTotal, cardsOwned] = await Promise.all([
         gachaPullRepository.countByUser(id),
-        gachaPullRepository.sumDustEarnedByUser(id),
         userCardRepository.countByUser(id),
       ])
+      const dustGenerated = user.dustGenerated
 
       return {
         user: {

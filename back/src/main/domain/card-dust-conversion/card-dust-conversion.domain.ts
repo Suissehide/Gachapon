@@ -78,7 +78,10 @@ export class CardDustConversionDomain {
           })
           await tx.user.update({
             where: { id: userId },
-            data: { dust: { increment: dustEarned } },
+            data: {
+              dust: { increment: dustEarned },
+              dustGenerated: { increment: dustEarned },
+            },
           })
 
           // Track achievement (parity with the legacy collection.recycle path).

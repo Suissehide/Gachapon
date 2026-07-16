@@ -86,7 +86,10 @@ export class CollectionDomain implements ICollectionDomain {
 
         const user = await tx.user.update({
           where: { id: userId },
-          data: { dust: { increment: dustEarned } },
+          data: {
+            dust: { increment: dustEarned },
+            dustGenerated: { increment: dustEarned },
+          },
         })
 
         const recycleUnlocks = await this.#achievementsDomain.track(

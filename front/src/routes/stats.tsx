@@ -199,7 +199,7 @@ function StatsPage() {
           />
           <StatCard
             icon={Coins}
-            label="Dust total accumulé"
+            label="Poussière totale accumulée"
             value={s.totalDust}
             bgColor="bg-accent/10"
             iconColor="text-accent"

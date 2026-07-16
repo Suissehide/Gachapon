@@ -44,7 +44,7 @@ const KPI_META = [
   },
   {
     key: 'dustGenerated' as const,
-    label: 'Dust généré',
+    label: 'Poussière générée',
     icon: Sparkles,
     color: 'text-secondary',
     bg: 'bg-secondary/10',
@@ -78,7 +78,7 @@ const KPI_META = [
   },
   {
     key: 'dustSpent' as const,
-    label: 'Dust dépensé',
+    label: 'Poussière dépensée',
     icon: Sparkles,
     color: 'text-warning',
     bg: 'bg-warning/10',

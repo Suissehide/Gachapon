@@ -142,7 +142,7 @@ export function RecycleModal({ open, onOpenChange, onRecycled, card, variant }: 
               <Sparkles className="ml-1.5 inline h-6 w-6 text-primary" />
             </p>
             <p className="mt-1 text-[11px] text-text-light/50">
-              {quantity} × {dustPerCard} dust · hors bonus multiplicateur
+              {quantity} × {dustPerCard} poussière · hors bonus multiplicateur
             </p>
           </div>
         </PopupBody>

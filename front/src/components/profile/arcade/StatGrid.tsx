@@ -17,7 +17,7 @@ export function StatGrid({ profile }: Props) {
         rarity="EPIC"
         hint={profile.stats.legendaryCount === 0 ? 'première en attente' : undefined}
       />
-      <StatCard icon={Zap} label="Dust généré" value={profile.stats.dustGenerated} rarity="RARE" />
+      <StatCard icon={Zap} label="Poussière générée" value={profile.stats.dustGenerated} rarity="RARE" />
     </div>
   )
 }

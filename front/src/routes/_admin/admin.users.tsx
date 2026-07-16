@@ -70,7 +70,7 @@ function buildColumns(): ColumnDef<AdminUser>[] {
       ),
     },
     { accessorKey: 'tokens', header: 'Tokens', size: 80 },
-    { accessorKey: 'dust', header: 'Dust', size: 80 },
+    { accessorKey: 'dust', header: 'Poussière', size: 80 },
     { accessorKey: 'level', header: 'Niveau', size: 70 },
     {
       accessorKey: 'suspended',
@@ -397,7 +397,7 @@ function AdminUserDetail({
           <p className="text-xl font-bold text-text">
             {detail.stats.dustGenerated}
           </p>
-          <p className="text-xs text-text-light">Dust gagné</p>
+          <p className="text-xs text-text-light">Poussière gagnée</p>
         </div>
       </div>
 
@@ -426,7 +426,7 @@ function AdminUserDetail({
 
       <div className="space-y-2">
         <p className="text-xs font-semibold uppercase tracking-widest text-text-light">
-          Attribuer dust
+          Attribuer poussière
         </p>
         <div className="flex gap-2">
           <Input

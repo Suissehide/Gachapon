@@ -125,7 +125,7 @@ function SkillsPage() {
                   onClick={() => setResetOpen(true)}
                   disabled={reset.isPending || investBatch.isPending}
                 >
-                  Reset · {state.resetCost} dust
+                  Reset · {state.resetCost} poussière
                 </Button>
               )}
             </div>
@@ -179,7 +179,7 @@ function SkillsPage() {
                     {state.resetCost}
                   </span>
                   <span className="font-mono text-[10px] uppercase tracking-wider text-text-light">
-                    dust
+                    poussière
                   </span>
                 </div>
               </div>

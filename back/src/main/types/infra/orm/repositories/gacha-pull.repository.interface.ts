@@ -50,5 +50,4 @@ export interface IGachaPullRepository {
   ): Promise<{ pulls: GachaPullWithCard[]; total: number }>
   findRecent(limit: number, opts?: FindRecentOpts): Promise<RecentPullPage>
   countByUser(userId: string): Promise<number>
-  sumDustEarnedByUser(userId: string): Promise<number>
 }

@@ -29,7 +29,7 @@ export function ConfigSheet({ config, onClose }: { config: SkillConfig; onClose:
       >
         <div className="flex-1 space-y-4 overflow-y-auto p-4">
           <form.AppField name="resetCostPerPoint">
-            {(f) => <f.Number label="Coût reset (dust / point)" />}
+            {(f) => <f.Number label="Coût reset (poussière / point)" />}
           </form.AppField>
         </div>
 

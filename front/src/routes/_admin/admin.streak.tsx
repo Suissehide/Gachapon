@@ -106,7 +106,7 @@ function RewardEditor({
         onChange={(tokens) => onChange({ ...draft, tokens })}
       />
       <NumberField
-        label="Dust"
+        label="Poussière"
         icon={<Sparkles className="h-3.5 w-3.5 text-info" />}
         value={draft.dust}
         onChange={(dust) => onChange({ ...draft, dust })}

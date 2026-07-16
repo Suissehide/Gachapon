@@ -152,4 +152,46 @@ describe('Collection routes', () => {
     // BRILLIANT RARE doit donner exactement 40, identique à NORMAL RARE.
     expect(body.dustEarned).toBe(40)
   })
+
+  it('POST /collection/recycle — incrémente le cumul dustGenerated exposé sur le profil', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+    const username = `coll${suffix}`
+
+    const before = await app.inject({
+      method: 'GET',
+      url: `/users/${username}/profile`,
+      headers: { cookie: cookies },
+    })
+    const dustBefore = before.json().stats.dustGenerated
+    expect(typeof dustBefore).toBe('number')
+
+    // Carte RARE dédiée + une copie NORMAL à recycler
+    const genSet = await postgresOrm.prisma.cardSet.create({
+      data: { name: `GenSet${suffix}`, isActive: true },
+    })
+    const genCard = await postgresOrm.prisma.card.create({
+      data: { name: `GenRare${suffix}`, rarity: 'RARE', dropWeight: 5, setId: genSet.id },
+    })
+    await postgresOrm.prisma.userCard.create({
+      data: { userId, cardId: genCard.id, variant: 'NORMAL', quantity: 1 },
+    })
+
+    const recycle = await app.inject({
+      method: 'POST',
+      url: '/collection/recycle',
+      headers: { cookie: cookies },
+      payload: { cardId: genCard.id, quantity: 1, variant: 'NORMAL' },
+    })
+    expect(recycle.statusCode).toBe(200)
+    const earned = recycle.json().dustEarned
+    expect(earned).toBeGreaterThan(0)
+
+    // Le cumul « poussière générée » doit augmenter du montant recyclé.
+    const after = await app.inject({
+      method: 'GET',
+      url: `/users/${username}/profile`,
+      headers: { cookie: cookies },
+    })
+    expect(after.json().stats.dustGenerated).toBe(dustBefore + earned)
+  })
 })

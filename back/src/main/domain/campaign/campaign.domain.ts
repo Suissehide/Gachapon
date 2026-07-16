@@ -666,6 +666,7 @@ export class CampaignDomain {
             data: {
               gold: { increment: totalGold },
               dust: { increment: totalDust },
+              dustGenerated: { increment: totalDust },
               xp: newXp,
               level: newLevel,
               ...(sweepGained > 0
@@ -897,6 +898,7 @@ export class CampaignDomain {
       data: {
         gold: { increment: gold },
         dust: { increment: dust },
+        dustGenerated: { increment: dust },
         xp: newXp,
         level: newLevel,
         ...(battleGained > 0

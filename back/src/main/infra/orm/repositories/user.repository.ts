@@ -78,6 +78,7 @@ export class UserRepository implements UserRepositoryInterface {
       data: {
         tokens: data.tokens,
         dust: { increment: data.dustIncrement },
+        dustGenerated: { increment: data.dustIncrement },
         xp: { increment: data.xpIncrement },
         level: data.newLevel,
         pityCurrent: data.pityCurrent,

@@ -153,7 +153,7 @@ export function BulkRewardPopup({
                 {(field) => <field.Number label="Tokens" />}
               </form.AppField>
               <form.AppField name="dust">
-                {(field) => <field.Number label="Dust" />}
+                {(field) => <field.Number label="Poussière" />}
               </form.AppField>
               <form.AppField name="xp">
                 {(field) => <field.Number label="XP" />}

@@ -36,7 +36,7 @@ const CONFIG_GROUPS = [
     ],
   },
   {
-    title: 'Dust par doublon',
+    title: 'Poussière par doublon',
     fields: [
       { key: 'dustCommon', label: 'Common', min: 0, step: 1 },
       { key: 'dustUncommon', label: 'Uncommon', min: 0, step: 1 },

@@ -1,7 +1,7 @@
 export const EFFECT_DESCRIPTIONS: Record<string, string> = {
   REGEN: 'Réduit le temps de régénération des jetons (en minutes)',
   LUCK: 'Multiplie la chance de base lors des tirages',
-  DUST_HARVEST: 'Multiplie la quantité de dust obtenue',
+  DUST_HARVEST: 'Multiplie la quantité de poussière obtenue',
   TOKEN_VAULT: 'Augmente la capacité max de jetons',
   FREE_PULL_CHANCE: "Chance d'obtenir un tirage gratuit",
   MULTI_TOKEN_CHANCE: 'Chance de gagner plusieurs jetons à la fois',
