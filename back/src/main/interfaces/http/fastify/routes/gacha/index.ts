@@ -30,6 +30,38 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
   const resolveUrl = (key: string | null) =>
     key ? storageClient.publicUrl(key) : null
 
+  const recordRarityActivity = (
+    userId: string,
+    username: string,
+    card: { name: string; rarity: string },
+    variant: string,
+  ) => {
+    if (card.rarity === 'EPIC' || card.rarity === 'LEGENDARY') {
+      void activityDomain.record(
+        card.rarity === 'LEGENDARY' ? 'PULL_LEGENDARY' : 'PULL_EPIC',
+        {
+          userId,
+          username,
+          payload: { cardName: card.name, rarity: card.rarity, variant },
+        },
+      )
+    }
+  }
+
+  const recordLevelUpActivity = (
+    userId: string,
+    username: string,
+    leveledUp: { from: number; to: number } | undefined,
+  ) => {
+    if (leveledUp) {
+      void activityDomain.record('LEVEL_UP', {
+        userId,
+        username,
+        payload: { from: leveledUp.from, to: leveledUp.to },
+      })
+    }
+  }
+
   // POST /pulls — consommer 1 token et tirer une carte
   fastify.post(
     '/pulls',
@@ -70,23 +102,13 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
           setName: result.card.set.name,
           pulledAt: result.pull.pulledAt.toISOString(),
         })
-        if (
-          result.card.rarity === 'EPIC' ||
-          result.card.rarity === 'LEGENDARY'
-        ) {
-          void activityDomain.record(
-            result.card.rarity === 'LEGENDARY' ? 'PULL_LEGENDARY' : 'PULL_EPIC',
-            {
-              userId: user.id,
-              username: user.username,
-              payload: {
-                cardName: result.card.name,
-                rarity: result.card.rarity,
-                variant: result.pull.variant,
-              },
-            },
-          )
-        }
+        recordRarityActivity(
+          user.id,
+          user.username,
+          result.card,
+          result.pull.variant,
+        )
+        recordLevelUpActivity(user.id, user.username, result.leveledUp)
       }
 
       return reply.status(201).send({
@@ -168,21 +190,9 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
           }, idx * 50)
         })
         for (const p of result.pulls) {
-          if (p.card.rarity === 'EPIC' || p.card.rarity === 'LEGENDARY') {
-            void activityDomain.record(
-              p.card.rarity === 'LEGENDARY' ? 'PULL_LEGENDARY' : 'PULL_EPIC',
-              {
-                userId: user.id,
-                username: user.username,
-                payload: {
-                  cardName: p.card.name,
-                  rarity: p.card.rarity,
-                  variant: p.pull.variant,
-                },
-              },
-            )
-          }
+          recordRarityActivity(user.id, user.username, p.card, p.pull.variant)
         }
+        recordLevelUpActivity(user.id, user.username, result.leveledUp)
       }
 
       return reply.status(201).send({

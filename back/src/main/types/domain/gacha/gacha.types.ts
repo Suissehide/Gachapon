@@ -29,6 +29,7 @@ export type PullResult = {
   wasFreePull: boolean
   wasGoldenBall: boolean
   wasBoostGuarantee: boolean
+  leveledUp?: { from: number; to: number }
 }
 
 export type PullBatchResult = {
@@ -46,8 +47,10 @@ export type PullBatchResult = {
     // carte concernée (anti-spoil). Les succès non liés à une carte
     // (TOKENS_SPENT, LEVEL_UP) restent au niveau `unlockedAchievements` global.
     unlockedAchievements: UnlockedAchievement[]
+    leveledUp?: { from: number; to: number }
   }>
   tokensRemaining: number
   xpGained: number
   unlockedAchievements: UnlockedAchievement[]
+  leveledUp?: { from: number; to: number }
 }

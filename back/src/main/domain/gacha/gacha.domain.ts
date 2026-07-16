@@ -579,6 +579,8 @@ export class GachaDomain implements GachaDomainInterface {
       wasFreePull: isFreePull,
       wasGoldenBall: step.wasGoldenBall,
       wasBoostGuarantee: step.wasBoostGuarantee,
+      leveledUp:
+        newLevel > oldLevel ? { from: oldLevel, to: newLevel } : undefined,
     }
   }
 
@@ -759,6 +761,9 @@ export class GachaDomain implements GachaDomainInterface {
             cfg.xpPerPull * (1 + (cfg.upgrades.pullXpBonus ?? 0) / 100),
           )
           const totalXp = xpPerPullBonused * count
+          const stepLeveledUp: Array<{ from: number; to: number } | undefined> =
+            []
+          let runningXp = user.xp
           for (let i = 0; i < count; i++) {
             const isFreePull = preRolledFree[i] ?? false
             stepFreePulls.push(isFreePull)
@@ -772,6 +777,24 @@ export class GachaDomain implements GachaDomainInterface {
                 currentPity,
               },
               boosts,
+            )
+            const levelBefore = calculateLevel(
+              runningXp,
+              cfg.xpCurve.base,
+              cfg.xpCurve.slope,
+              cfg.xpCurve.levelCap,
+            )
+            runningXp += xpPerPullBonused
+            const levelAfter = calculateLevel(
+              runningXp,
+              cfg.xpCurve.base,
+              cfg.xpCurve.slope,
+              cfg.xpCurve.levelCap,
+            )
+            stepLeveledUp.push(
+              levelAfter > levelBefore
+                ? { from: levelBefore, to: levelAfter }
+                : undefined,
             )
             stepResults.push(step)
             currentPity = step.nextPity
@@ -843,6 +866,16 @@ export class GachaDomain implements GachaDomainInterface {
               [...spentUnlocks, ...levelUnlocks].map((a) => [a.key, a]),
             ).values(),
           ]
+          const pullLevelUps = stepLeveledUp.filter(
+            (l): l is { from: number; to: number } => l !== undefined,
+          )
+          const batchLeveledUp =
+            pullLevelUps.length > 0
+              ? {
+                  from: Math.min(...pullLevelUps.map((l) => l.from)),
+                  to: Math.max(...pullLevelUps.map((l) => l.to)),
+                }
+              : undefined
           return {
             pulls: stepResults.map((s, idx) => ({
               pull: s.pull,
@@ -854,10 +887,12 @@ export class GachaDomain implements GachaDomainInterface {
               wasGoldenBall: s.wasGoldenBall,
               wasBoostGuarantee: s.wasBoostGuarantee,
               unlockedAchievements: s.unlockedAchievements,
+              leveledUp: stepLeveledUp[idx],
             })),
             tokensRemaining: finalTokens,
             xpGained: totalXp,
             unlockedAchievements: batchAchievements,
+            leveledUp: batchLeveledUp,
           }
         },
         { isolationLevel: 'Serializable', maxWait: 5000, timeout: 10000 },
