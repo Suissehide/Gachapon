@@ -1,10 +1,10 @@
 import type { PrismaClient } from '../../src/generated/client'
 
 const SHOP_ITEMS = [
-  // Packs de tokens — achetés avec l'or gagné en campagne
+  // Packs de jetons — achetés avec l'or gagné en campagne
   {
     name: 'Pack Starter',
-    description: '10 tokens pour démarrer ton aventure.',
+    description: '10 jetons pour démarrer ton aventure.',
     type: 'TOKEN_PACK' as const,
     cost: 1000,
     currency: 'GOLD' as const,
@@ -12,7 +12,7 @@ const SHOP_ITEMS = [
   },
   {
     name: 'Pack Aventurier',
-    description: '50 tokens — le meilleur rapport qualité/prix.',
+    description: '50 jetons — le meilleur rapport qualité/prix.',
     type: 'TOKEN_PACK' as const,
     cost: 4500,
     currency: 'GOLD' as const,
@@ -20,11 +20,38 @@ const SHOP_ITEMS = [
   },
   {
     name: 'Pack Légende',
-    description: '150 tokens pour les collectionneurs sérieux.',
+    description: '150 jetons pour les collectionneurs sérieux.',
     type: 'TOKEN_PACK' as const,
     cost: 12000,
     currency: 'GOLD' as const,
     value: { tokens: 150 },
+  },
+  // Packs d'énergie — points de combat achetés avec la poussière.
+  // L'énergie achetée peut dépasser le plafond (overcap) ; la regen naturelle
+  // reste en pause tant qu'on est au-dessus.
+  {
+    name: 'Petite recharge',
+    description: '+15 points de combat, même au-delà du plafond.',
+    type: 'ENERGY_PACK' as const,
+    cost: 75,
+    currency: 'DUST' as const,
+    value: { combatPoints: 15 },
+  },
+  {
+    name: 'Recharge',
+    description: '+40 points de combat — le bon compromis.',
+    type: 'ENERGY_PACK' as const,
+    cost: 180,
+    currency: 'DUST' as const,
+    value: { combatPoints: 40 },
+  },
+  {
+    name: 'Grande recharge',
+    description: '+90 points de combat pour enchaîner les batailles.',
+    type: 'ENERGY_PACK' as const,
+    cost: 360,
+    currency: 'DUST' as const,
+    value: { combatPoints: 90 },
   },
   // Boosts
   {
