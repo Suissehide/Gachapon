@@ -155,6 +155,13 @@ function BattlePage() {
     navigate({ to: '/campaign' })
   }
 
+  // "Étage suivant" — return to the campaign and auto-open the pre-battle modal
+  // for the next playable stage. If none is unlocked, the campaign just opens
+  // normally (see the ?prep handling in campaign.tsx).
+  const handleNextFloor = () => {
+    navigate({ to: '/campaign', search: { prep: true } })
+  }
+
   return (
     <PageShell>
       {/* Topbar — back link on the left, round pill on the right. */}
@@ -241,6 +248,7 @@ function BattlePage() {
           battleCost={combatPoints.data?.battleCost}
           onReplay={handleReplay}
           onBack={handleBackToCampaign}
+          onNextFloor={handleNextFloor}
         />
       )}
     </PageShell>
@@ -257,6 +265,7 @@ function BattleResultOverlay({
   battleCost,
   onReplay,
   onBack,
+  onNextFloor,
 }: {
   result: BattleResult
   stageInfo: { label: string; chapterTitle: string } | null
@@ -267,6 +276,7 @@ function BattleResultOverlay({
   battleCost: number | undefined
   onReplay: () => void
   onBack: () => void
+  onNextFloor: () => void
 }) {
   // The dock is only a fallback for a *dismissed* result: it needs the popup to
   // have opened at least once (resultSeen), so it never flashes during the
@@ -288,7 +298,7 @@ function BattleResultOverlay({
               stageInfo={stageInfo}
               canReplay={canReplay}
               onReplay={onReplay}
-              onBack={onBack}
+              onNextFloor={onNextFloor}
             />
           ) : (
             <DefeatPanel
@@ -401,13 +411,13 @@ function VictoryPanel({
   stageInfo,
   canReplay,
   onReplay,
-  onBack,
+  onNextFloor,
 }: {
   result: BattleResult
   stageInfo: { label: string; chapterTitle: string } | null
   canReplay: boolean
   onReplay: () => void
-  onBack: () => void
+  onNextFloor: () => void
 }) {
   const rewards = result.rewards
   return (
@@ -497,7 +507,7 @@ function VictoryPanel({
             <RotateCcw className="h-4 w-4" />
             Rejouer
           </Button>
-          <Button onClick={onBack} className="gap-2">
+          <Button onClick={onNextFloor} className="gap-2">
             Etage suivant
             <ArrowRight className="h-4 w-4" />
           </Button>

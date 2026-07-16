@@ -48,6 +48,9 @@ import { useCombatTeam } from '../../queries/useCombatTeam.ts'
 
 const campaignSearchSchema = z.object({
   editor: z.boolean().optional(),
+  // ?prep=true auto-opens the pre-battle modal for the next playable stage
+  // (used by the battle page's "Étage suivant" button after a victory).
+  prep: z.boolean().optional(),
 })
 
 export const Route = createFileRoute('/_authenticated/campaign')({
@@ -112,6 +115,11 @@ function CampaignPage() {
   const [prep, setPrep] = useState<CampaignStage | null>(null)
   const [sweepResult, setSweepResult] = useState<SweepResult | null>(null)
   const [editorOpen, setEditorOpen] = useState(false)
+  // When the team editor is opened from the prep modal we remember which stage
+  // to return to, so closing the editor (Valider/Annuler) reopens the prep
+  // modal instead of dropping the player back on the bare campaign.
+  const [editorReturnStage, setEditorReturnStage] =
+    useState<CampaignStage | null>(null)
 
   // ?editor=true auto-opens the team editor popup (used by /combat redirect and
   // the battle page's "revoir mon équipe" link).
@@ -121,6 +129,24 @@ function CampaignPage() {
       navigate({ to: '/campaign', search: {}, replace: true })
     }
   }, [search.editor, navigate])
+
+  // ?prep=true auto-opens the pre-battle modal for the next playable stage —
+  // the one marked `status === 'current'`. If the campaign/chapter is fully
+  // cleared there is no such stage, so we just land on the campaign normally.
+  // Also snaps the active chapter to that stage's chapter so the panel behind
+  // the popup matches.
+  useEffect(() => {
+    if (search.prep && campaign.data) {
+      const nextStage = campaign.data.chapters
+        .flatMap((c) => c.stages)
+        .find((s) => s.status === 'current')
+      if (nextStage) {
+        setActiveChapter(frontierChapter(campaign.data))
+        setPrep(nextStage)
+      }
+      navigate({ to: '/campaign', search: {}, replace: true })
+    }
+  }, [search.prep, campaign.data, navigate])
 
   // Initialise the active chapter to the frontier (the chapter with the next
   // playable stage) once the campaign response lands — not `highestChapter`,
@@ -235,8 +261,18 @@ function CampaignPage() {
         onEdit={() => setEditorOpen(true)}
       />
 
-      {/* Team editor popup — mirrors the mockup's TeamEditor modal */}
-      <TeamEditorPopup open={editorOpen} onOpenChange={setEditorOpen} />
+      {/* Team editor popup — mirrors the mockup's TeamEditor modal. When it was
+          opened from the prep modal, closing it reopens that prep modal. */}
+      <TeamEditorPopup
+        open={editorOpen}
+        onOpenChange={(v) => {
+          setEditorOpen(v)
+          if (!v && editorReturnStage) {
+            setPrep(editorReturnStage)
+            setEditorReturnStage(null)
+          }
+        }}
+      />
 
       {/* Prep modal */}
       {prep && (
@@ -264,7 +300,10 @@ function CampaignPage() {
               sweepPending={sweep.isPending}
               onFight={handleFight}
               onSweep={handleSweep}
-              onEditTeam={() => setEditorOpen(true)}
+              onEditTeam={() => {
+                setEditorReturnStage(prep)
+                setEditorOpen(true)
+              }}
               onClose={() => setPrep(null)}
             />
           </PopupContent>
