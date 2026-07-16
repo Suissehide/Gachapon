@@ -61,7 +61,7 @@ describe('Gacha routes', () => {
     expect(body).toHaveProperty('nextTokenAt')
     // Pity exposé pour la carte Garantie du hub tirage
     expect(body.pityCurrent).toBe(0)
-    expect(body.pityThreshold).toBe(80)
+    expect(body.pityThreshold).toBe(120)
   })
 
   it('POST /pulls — retourne la carte tirée', async () => {
