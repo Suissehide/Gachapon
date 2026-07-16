@@ -139,13 +139,9 @@ export function ActivityFeed() {
             let labelContent: React.ReactNode = label
 
             if (username) {
-              const index = label.indexOf(username)
-              if (index !== -1) {
-                const before = label.slice(0, index)
-                const after = label.slice(index + username.length)
+              if (label.startsWith(username)) {
                 labelContent = (
                   <>
-                    {before}
                     <Link
                       to="/profile/$username"
                       params={{ username }}
@@ -153,7 +149,20 @@ export function ActivityFeed() {
                     >
                       {username}
                     </Link>
-                    {after}
+                    {label.slice(username.length)}
+                  </>
+                )
+              } else if (label.endsWith(username)) {
+                labelContent = (
+                  <>
+                    {label.slice(0, label.length - username.length)}
+                    <Link
+                      to="/profile/$username"
+                      params={{ username }}
+                      className="hover:underline"
+                    >
+                      {username}
+                    </Link>
                   </>
                 )
               }
