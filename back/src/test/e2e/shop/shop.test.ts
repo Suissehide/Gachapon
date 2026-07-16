@@ -469,4 +469,70 @@ describe('Shop routes', () => {
     })
     expect(res.statusCode).toBe(500)
   })
+
+  it('POST /shop/:id/buy — ENERGY_PACK 429 au-delà du cap journalier', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    const item = await postgresOrm.prisma.shopItem.create({
+      data: {
+        name: 'Recharge cap test',
+        description: '+15 points de combat',
+        type: 'ENERGY_PACK',
+        cost: 10,
+        currency: 'DUST',
+        value: { combatPoints: 15 },
+        isActive: true,
+      },
+    })
+
+    await postgresOrm.prisma.user.update({
+      where: { id: userId },
+      data: { dust: 10_000 },
+    })
+    // Purge les achats d'énergie du user faits par les tests précédents
+    await postgresOrm.prisma.purchase.deleteMany({
+      where: { userId, shopItem: { type: 'ENERGY_PACK' } },
+    })
+
+    // Cap par défaut : 3. Les 3 premiers passent, le 4e est refusé.
+    for (let i = 0; i < 3; i++) {
+      const ok = await app.inject({
+        method: 'POST',
+        url: `/shop/${item.id}/buy`,
+        headers: { cookie: cookies },
+      })
+      expect(ok.statusCode).toBe(200)
+    }
+    const blocked = await app.inject({
+      method: 'POST',
+      url: `/shop/${item.id}/buy`,
+      headers: { cookie: cookies },
+    })
+    expect(blocked.statusCode).toBe(429)
+
+    // Un achat d'hier ne compte pas dans le cap du jour
+    await postgresOrm.prisma.purchase.updateMany({
+      where: { userId, shopItem: { type: 'ENERGY_PACK' } },
+      data: { purchasedAt: new Date(Date.now() - 25 * 3600 * 1000) },
+    })
+    const again = await app.inject({
+      method: 'POST',
+      url: `/shop/${item.id}/buy`,
+      headers: { cookie: cookies },
+    })
+    expect(again.statusCode).toBe(200)
+  })
+
+  it('GET /shop — expose energyDaily { cap, used }', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/shop',
+      headers: { cookie: cookies },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.energyDaily.cap).toBe(3)
+    expect(typeof body.energyDaily.used).toBe('number')
+    expect(body.energyDaily.used).toBeGreaterThanOrEqual(1)
+  })
 })

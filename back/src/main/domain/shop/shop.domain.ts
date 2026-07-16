@@ -7,6 +7,7 @@ import type {
   BuyShopItemResult,
   IShopDomain,
 } from '../../types/domain/shop/shop.domain.interface'
+import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import type { IShopItemRepository } from '../../types/infra/orm/repositories/shop-item.repository.interface'
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
@@ -34,6 +35,7 @@ export class ShopDomain implements IShopDomain {
   readonly #achievementsDomain: AchievementsDomainInterface
   readonly #combatPointsTx: CombatPointsTx
   readonly #skillTreeRepository: ISkillTreeRepository
+  readonly #configService: ConfigServiceInterface
 
   constructor({
     shopItemRepository,
@@ -42,6 +44,7 @@ export class ShopDomain implements IShopDomain {
     achievementsDomain,
     combatPointsTx,
     skillTreeRepository,
+    configService,
   }: IocContainer) {
     this.#shopItemRepository = shopItemRepository
     this.#userBoostRepository = userBoostRepository
@@ -49,6 +52,7 @@ export class ShopDomain implements IShopDomain {
     this.#achievementsDomain = achievementsDomain
     this.#combatPointsTx = combatPointsTx
     this.#skillTreeRepository = skillTreeRepository
+    this.#configService = configService
   }
 
   async buy(userId: string, shopItemId: string): Promise<BuyShopItemResult> {
@@ -62,10 +66,13 @@ export class ShopDomain implements IShopDomain {
 
     const result = await retryOnSerialization(async () => {
       // PC_VAULT affects the regen settle inside creditInTx — read outside the tx.
-      const effects =
+      const [effects, cfg] =
         item.type === 'ENERGY_PACK'
-          ? await this.#skillTreeRepository.getEffectsForUser(userId)
-          : undefined
+          ? await Promise.all([
+              this.#skillTreeRepository.getEffectsForUser(userId),
+              this.#configService.getMany('shop.energyDailyCap'),
+            ])
+          : [undefined, undefined]
 
       return this.#postgresOrm.executeWithTransactionClient(
         async (tx) => {
@@ -80,6 +87,7 @@ export class ShopDomain implements IShopDomain {
           }
 
           await this.#checkItemConflicts(tx, userId, shopItemId, item)
+          await this.#checkEnergyDailyCap(tx, userId, item, cfg)
 
           const purchase = await tx.purchase.create({
             data: {
@@ -159,6 +167,31 @@ export class ShopDomain implements IShopDomain {
     }
     if (item.type === 'BOOST') {
       await this.#checkBoostConflict(tx, userId, item)
+    }
+  }
+
+  async #checkEnergyDailyCap(
+    tx: PrimaTransactionClient,
+    userId: string,
+    item: ShopItem,
+    cfg: Record<'shop.energyDailyCap', number> | undefined,
+  ): Promise<void> {
+    if (item.type !== 'ENERGY_PACK' || !cfg) {
+      return
+    }
+    const startOfDayUtc = new Date()
+    startOfDayUtc.setUTCHours(0, 0, 0, 0)
+    const usedToday = await tx.purchase.count({
+      where: {
+        userId,
+        purchasedAt: { gte: startOfDayUtc },
+        shopItem: { type: 'ENERGY_PACK' },
+      },
+    })
+    if (usedToday >= cfg['shop.energyDailyCap']) {
+      throw Boom.tooManyRequests(
+        "Limite quotidienne d'achats d'énergie atteinte",
+      )
     }
   }
 

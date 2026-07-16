@@ -7,6 +7,7 @@ export const shopItemIdParamSchema = z.object({ id: z.string().uuid() })
 // ── GET /shop response ────────────────────────────────────────────────────────
 
 export const getShopResponseSchema = z.object({
+  energyDaily: z.object({ cap: z.number().int(), used: z.number().int() }),
   items: z.array(
     z.object({
       id: z.string(),

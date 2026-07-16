@@ -18,11 +18,22 @@ export const shopRouter: FastifyPluginCallbackZod = (fastify) => {
     },
     async (request) => {
       const userId = request.user.userID
-      const [items, activeBoosts] = await Promise.all([
+      const startOfDayUtc = new Date()
+      startOfDayUtc.setUTCHours(0, 0, 0, 0)
+      const [items, activeBoosts, cfg, energyUsed] = await Promise.all([
         shopItemRepository.findActive(),
         userBoostRepository.findActiveByUser(userId),
+        fastify.iocContainer.configService.getMany('shop.energyDailyCap'),
+        fastify.iocContainer.postgresOrm.prisma.purchase.count({
+          where: {
+            userId,
+            purchasedAt: { gte: startOfDayUtc },
+            shopItem: { type: 'ENERGY_PACK' },
+          },
+        }),
       ])
       return {
+        energyDaily: { cap: cfg['shop.energyDailyCap'], used: energyUsed },
         items: items.map((item) => {
           let activeBoost: { pullsRemaining: number } | null = null
           if (item.type === 'BOOST') {

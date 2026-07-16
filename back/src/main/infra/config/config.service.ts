@@ -49,6 +49,7 @@ const DEFAULTS: Record<ConfigKey, number> = {
   'card.rarityMultLegendary': 3.0,
   'wishlist.priceMultiplier': 2,
   'wishlist.cooldownDays': 7,
+  'shop.energyDailyCap': 3,
 }
 
 export class ConfigService implements ConfigServiceInterface {
