@@ -9,9 +9,9 @@ import type { PostgresPrismaClient } from '../orm/postgres-client'
 const REDIS_TTL_SECONDS = 300 // 5 minutes
 
 const DEFAULTS: Record<ConfigKey, number> = {
-  tokenRegenIntervalMinutes: 120,
+  tokenRegenIntervalMinutes: 60,
   tokenMaxStock: 6,
-  pityThreshold: 120,
+  pityThreshold: 300,
   dustCommon: 5,
   dustUncommon: 15,
   dustRare: 40,
