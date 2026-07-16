@@ -38,6 +38,9 @@ function sourceLabel(reward: PendingReward): string {
   if (reward.source === 'LEVEL_UP') {
     return 'Montée de niveau'
   }
+  if (reward.source === 'ADMIN') {
+    return 'Récompense admin'
+  }
   return 'Récompense'
 }
 
@@ -61,6 +64,11 @@ const SOURCE_CONFIG = {
     icon: <ArrowUp className="h-3.5 w-3.5 text-emerald-400" />,
     gradientFrom:
       '[background-image:linear-gradient(135deg,rgba(16,185,129,0.07)_0%,transparent_60%)]',
+  },
+  ADMIN: {
+    icon: <Star className="h-3.5 w-3.5 text-primary" />,
+    gradientFrom:
+      '[background-image:linear-gradient(135deg,rgba(245,158,11,0.07)_0%,transparent_60%)]',
   },
 } as const
 
@@ -132,6 +140,13 @@ export function RewardCard({ reward, onClaim, isLoading }: RewardCardProps) {
               {sourceLabel(reward)}
             </span>
           </div>
+
+          {/* Admin label */}
+          {reward.label && (
+            <p className="text-[10px] italic text-text-light/70">
+              {reward.label}
+            </p>
+          )}
 
           {/* Amounts */}
           <div className="flex items-center gap-4">

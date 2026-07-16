@@ -64,6 +64,8 @@ export const pendingRewardSchema = z.object({
   // Human-readable title of the reward's source (e.g. the achievement name).
   // Null for sources without a title (streak days, level-up milestones).
   sourceTitle: z.string().nullable(),
+  // Free-text message set by admins in the bulk reward form. Null for non-admin rewards.
+  label: z.string().nullable(),
   claimedAt: z.date().nullable(),
   createdAt: z.date(),
   reward: rewardAmountsSchema,

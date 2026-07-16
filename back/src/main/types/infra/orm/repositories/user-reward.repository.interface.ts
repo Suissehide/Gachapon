@@ -12,6 +12,7 @@ export type PendingUserReward = UserReward & {
   reward: Reward
   streakMilestone: StreakMilestoneInfo | null
   sourceTitle: string | null
+  label: string | null
 }
 
 export type UserRewardWithReward = UserReward & { reward: Reward }

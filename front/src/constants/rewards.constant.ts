@@ -4,9 +4,10 @@ import type { CardRarity } from './card.constant'
 // Types
 export type PendingReward = {
   id: string
-  source: 'STREAK' | 'ACHIEVEMENT' | 'QUEST' | 'LEVEL_UP'
+  source: 'STREAK' | 'ACHIEVEMENT' | 'QUEST' | 'LEVEL_UP' | 'ADMIN'
   sourceId: string | null
   sourceTitle: string | null
+  label: string | null
   createdAt: string
   reward: {
     tokens: number

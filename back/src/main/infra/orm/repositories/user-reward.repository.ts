@@ -93,8 +93,9 @@ export class UserRewardRepository implements UserRewardRepositoryInterface {
         r.source === 'ACHIEVEMENT' && r.sourceId
           ? (achievementNameMap.get(r.sourceId) ?? null)
           : null
+      const label = r.reward.label ?? null
       if (r.source !== 'STREAK' || !r.sourceId) {
-        return { ...r, streakMilestone: null, sourceTitle }
+        return { ...r, streakMilestone: null, sourceTitle, label }
       }
       const dailyDay = parseDailySourceId(r.sourceId)
       if (dailyDay !== null) {
@@ -102,12 +103,14 @@ export class UserRewardRepository implements UserRewardRepositoryInterface {
           ...r,
           streakMilestone: { day: dailyDay, isMilestone: false },
           sourceTitle,
+          label,
         }
       }
       return {
         ...r,
         streakMilestone: milestoneMap.get(r.sourceId) ?? null,
         sourceTitle,
+        label,
       }
     })
   }
