@@ -29,4 +29,9 @@ export interface IUserBoostRepository {
     id: string,
     opts?: { satisfied?: boolean; by?: number },
   ): Promise<UserBoost>
+  extendInTx(
+    tx: PrimaTransactionClient,
+    id: string,
+    by: number,
+  ): Promise<UserBoost>
 }

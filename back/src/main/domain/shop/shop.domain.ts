@@ -165,9 +165,6 @@ export class ShopDomain implements IShopDomain {
         throw Boom.conflict('Machine already owned')
       }
     }
-    if (item.type === 'BOOST') {
-      await this.#checkBoostConflict(tx, userId, item)
-    }
   }
 
   async #checkEnergyDailyCap(
@@ -192,25 +189,6 @@ export class ShopDomain implements IShopDomain {
       throw Boom.tooManyRequests(
         "Limite quotidienne d'achats d'énergie atteinte",
       )
-    }
-  }
-
-  async #checkBoostConflict(
-    tx: PrimaTransactionClient,
-    userId: string,
-    item: ShopItem,
-  ): Promise<void> {
-    const boostValue = item.value as BoostValue
-    const isWeightBoost = boostValue.multiplier != null
-    const activeBoosts = await this.#userBoostRepository.findActiveByUserInTx(
-      tx,
-      userId,
-    )
-    const conflict = isWeightBoost
-      ? activeBoosts.some((b) => b.weightMultiplier != null)
-      : activeBoosts.some((b) => b.guaranteedRarity != null)
-    if (conflict) {
-      throw Boom.conflict('Un boost de ce type est déjà actif')
     }
   }
 
@@ -249,9 +227,29 @@ export class ShopDomain implements IShopDomain {
       throw Boom.internal('BOOST item value has no positive pulls count')
     }
 
+    const activeBoosts = await this.#userBoostRepository.findActiveByUserInTx(
+      tx,
+      userId,
+    )
+
     if (boostValue.multiplier != null) {
       // Validate rarity for weight boost
       this.#validateRarity(boostValue.rarity)
+      const sameRarity = activeBoosts.find(
+        (b) =>
+          b.weightMultiplier != null && b.weightRarity === boostValue.rarity,
+      )
+      if (sameRarity) {
+        // Même article racheté → on prolonge. Multiplicateur différent sur la
+        // même rareté : ambigu (lequel appliquer ?), on refuse.
+        if (sameRarity.weightMultiplier !== boostValue.multiplier) {
+          throw Boom.conflict(
+            'Un boost différent est déjà actif sur cette rareté',
+          )
+        }
+        await this.#userBoostRepository.extendInTx(tx, sameRarity.id, pulls)
+        return
+      }
       await this.#userBoostRepository.createInTx(tx, {
         userId,
         weightMultiplier: boostValue.multiplier,
@@ -261,6 +259,10 @@ export class ShopDomain implements IShopDomain {
     } else if (boostValue.guaranteedRarity != null) {
       // Validate rarity for guaranteed boost
       this.#validateRarity(boostValue.guaranteedRarity)
+      const hasGuarantee = activeBoosts.some((b) => b.guaranteedRarity != null)
+      if (hasGuarantee) {
+        throw Boom.conflict('Un boost de ce type est déjà actif')
+      }
       await this.#userBoostRepository.createInTx(tx, {
         userId,
         guaranteedRarity: boostValue.guaranteedRarity as CardRarity,

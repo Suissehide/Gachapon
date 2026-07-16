@@ -49,4 +49,15 @@ export class UserBoostRepository implements IUserBoostRepository {
       },
     })
   }
+
+  extendInTx(
+    tx: PrimaTransactionClient,
+    id: string,
+    by: number,
+  ): Promise<UserBoost> {
+    return tx.userBoost.update({
+      where: { id },
+      data: { pullsRemaining: { increment: by } },
+    })
+  }
 }
