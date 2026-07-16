@@ -48,6 +48,9 @@ export const useBuyItem = () => {
       }
     },
     onError: (error) => {
+      if (isApiError(error) && error.status === 429) {
+        qc.invalidateQueries({ queryKey: ['shop'] })
+      }
       const title =
         isApiError(error) && error.title
           ? error.title

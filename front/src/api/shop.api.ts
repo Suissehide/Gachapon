@@ -30,6 +30,10 @@ export const ShopApi = {
             title: 'Boost déjà actif',
             message: 'Un boost de ce type est déjà actif',
           },
+          429: {
+            title: 'Limite atteinte',
+            message: "Limite quotidienne d'achats d'énergie atteinte",
+          },
         },
         "Erreur lors de l'achat",
       )
