@@ -33,6 +33,8 @@ export const useBuyItem = () => {
     mutationFn: (itemId: string) => ShopApi.buyItem(itemId),
     onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
+      // Un ENERGY_PACK crédite des PC — rafraîchit la jauge de la campagne.
+      qc.invalidateQueries({ queryKey: ['combat', 'points'] })
       qc.invalidateQueries({ queryKey: ['shop'] })
       if (result.unlockedAchievements?.length) {
         enqueueAchievementUnlock(result.unlockedAchievements)
@@ -42,7 +44,10 @@ export const useBuyItem = () => {
       }
     },
     onError: (error) => {
-      const title = isApiError(error) && error.title ? error.title : "Erreur lors de l'achat"
+      const title =
+        isApiError(error) && error.title
+          ? error.title
+          : "Erreur lors de l'achat"
       toast({
         title,
         message: error.message,

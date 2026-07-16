@@ -105,9 +105,16 @@ const TYPE_CONFIG: Record<
   { label: string; icon: React.ReactNode; color: string }
 > = {
   TOKEN_PACK: {
-    label: 'Packs de tokens',
+    label: 'Packs de jetons',
     icon: <Zap className="h-4 w-4 text-primary" />,
     color: 'border-primary/30 bg-primary/5',
+  },
+  ENERGY_PACK: {
+    // Zap violet = identité visuelle de l'énergie sur la page campagne
+    // (campaign.tsx utilise Zap text-violet-500 pour le coût en PC).
+    label: 'Énergie',
+    icon: <Zap className="h-4 w-4 text-violet-500" />,
+    color: 'border-violet-500/30 bg-violet-500/5',
   },
   BOOST: {
     label: 'Boosts',
@@ -658,6 +665,7 @@ function StaticShopCard({
   const canAfford = (isGold ? gold : dust) >= item.cost
   const supported =
     item.type === 'TOKEN_PACK' ||
+    item.type === 'ENERGY_PACK' ||
     item.type === 'MACHINE' ||
     item.type === 'BOOST'
   const pulls = item.activeBoost?.pullsRemaining ?? 0

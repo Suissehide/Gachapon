@@ -19,7 +19,7 @@ export type ShopItem = {
   id: string
   name: string
   description: string
-  type: 'TOKEN_PACK' | 'BOOST' | 'COSMETIC' | 'MACHINE'
+  type: 'TOKEN_PACK' | 'ENERGY_PACK' | 'BOOST' | 'COSMETIC' | 'MACHINE'
   cost: number
   currency: ShopCurrency
   value: unknown
@@ -33,6 +33,7 @@ export type PurchaseResult = {
   newDustTotal: number
   newGoldTotal: number
   newTokenTotal: number
+  newCombatPoints?: number
   item: { id: string; name: string; type: string; value: unknown }
   unlockedAchievements?: UnlockedAchievement[]
 }
