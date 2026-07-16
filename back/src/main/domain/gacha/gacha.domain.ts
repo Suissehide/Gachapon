@@ -34,38 +34,45 @@ import { calculateLevel } from '../shared/xp'
 /**
  * Computes the effective draw weight for a card, applying luck and boost multipliers.
  *
- * Formula: dropWeight × (RARE+? luckMultiplier : 1) × (rarity === weightRarity ? weightMultiplier : 1)
+ * Formula: dropWeight × (RARE+? luckMultiplier : 1) × Π(weightMultiplier des boosts dont la rareté matche)
  *
  * Null weightRarity is silently ignored (no multiplication, no crash).
  */
 export function weightFor(
   card: CardWithSet,
   luckMultiplier: number,
-  weightBoost?: { weightMultiplier: number; weightRarity: CardRarity | null },
+  weightBoosts?: Array<{
+    weightMultiplier: number
+    weightRarity: CardRarity | null
+  }>,
 ): number {
   const LUCK_RARITIES = new Set(['RARE', 'EPIC', 'LEGENDARY'])
-  const base = LUCK_RARITIES.has(card.rarity)
+  let weight = LUCK_RARITIES.has(card.rarity)
     ? card.dropWeight * luckMultiplier
     : card.dropWeight
-  if (
-    weightBoost &&
-    weightBoost.weightRarity != null &&
-    card.rarity === (weightBoost.weightRarity as string)
-  ) {
-    return base * weightBoost.weightMultiplier
+  for (const boost of weightBoosts ?? []) {
+    if (
+      boost.weightRarity != null &&
+      card.rarity === (boost.weightRarity as string)
+    ) {
+      weight *= boost.weightMultiplier
+    }
   }
-  return base
+  return weight
 }
 
 export function pickWeightedRandom(
   cards: CardWithSet[],
-  weightBoost?: { weightMultiplier: number; weightRarity: CardRarity | null },
+  weightBoosts?: Array<{
+    weightMultiplier: number
+    weightRarity: CardRarity | null
+  }>,
 ): CardWithSet {
   if (cards.length === 0) {
     throw new Error('No cards to pick from')
   }
   const total = cards.reduce(
-    (sum, c) => sum + weightFor(c, 1.0, weightBoost),
+    (sum, c) => sum + weightFor(c, 1.0, weightBoosts),
     0,
   )
   if (total === 0) {
@@ -73,7 +80,7 @@ export function pickWeightedRandom(
   }
   let roll = Math.random() * total
   for (const card of cards) {
-    roll -= weightFor(card, 1.0, weightBoost)
+    roll -= weightFor(card, 1.0, weightBoosts)
     if (roll <= 0) {
       return card
     }
@@ -85,14 +92,17 @@ export function pickWeightedRandom(
 export function pickWeightedRandomWithLuck(
   cards: CardWithSet[],
   luckMultiplier: number,
-  weightBoost?: { weightMultiplier: number; weightRarity: CardRarity | null },
+  weightBoosts?: Array<{
+    weightMultiplier: number
+    weightRarity: CardRarity | null
+  }>,
 ): CardWithSet {
   if (cards.length === 0) {
     throw new Error('No cards to pick from')
   }
   const weighted = cards.map((card) => ({
     card,
-    weight: weightFor(card, luckMultiplier, weightBoost),
+    weight: weightFor(card, luckMultiplier, weightBoosts),
   }))
   const total = weighted.reduce((sum, { weight }) => sum + weight, 0)
   if (total === 0) {
@@ -350,19 +360,20 @@ export class GachaDomain implements GachaDomainInterface {
       }
     }
 
-    // Weight boost: find an active boost with a non-null weightRarity (null is ignored defensively)
-    const weightBoostState = boosts.find(
-      (b) =>
-        b.weightMultiplier != null &&
-        b.weightRarity != null &&
-        b.pullsRemaining > 0,
-    )
-    const weightBoostArg = weightBoostState
-      ? {
-          weightMultiplier: weightBoostState.weightMultiplier!,
-          weightRarity: weightBoostState.weightRarity as CardRarity,
-        }
-      : undefined
+    // Weight boosts: apply every active boost to its rarity (null ignored defensively)
+    const weightBoostArgs = boosts
+      .filter(
+        (b) =>
+          b.weightMultiplier != null &&
+          b.weightRarity != null &&
+          b.pullsRemaining > 0,
+      )
+      .map((b) => ({
+        weightMultiplier: b.weightMultiplier!,
+        weightRarity: b.weightRarity as CardRarity,
+      }))
+    const weightBoostArg =
+      weightBoostArgs.length > 0 ? weightBoostArgs : undefined
 
     const card =
       cfg.upgrades.luckMultiplier === 1.0
