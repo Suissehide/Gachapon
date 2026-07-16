@@ -133,7 +133,10 @@ export function lootTableNormal(chapter: number, stageIndex: number) {
   }
 }
 
-function bossLoot(chapter: number) {
+// Carte garantie des boss : RARE pour les chapitres 1-3, EPIC pour les 4-5.
+// 5 boss pour seulement 4 cartes EPIC/LEGENDARY au total : en EPIC partout,
+// la campagne offrait quasiment tout le haut de la collection (spec §7).
+export function bossLoot(chapter: number) {
   const m = 1.5 ** (chapter - 1)
   const stage9 = lootTableNormal(chapter, 9)
   return {
@@ -142,7 +145,7 @@ function bossLoot(chapter: number) {
       dust: Math.round(1000 * m),
       xp: Math.round(200 * m),
       guaranteedEquipment: { minRarity: 'RARE' },
-      guaranteedCard: { minRarity: 'EPIC' },
+      guaranteedCard: { minRarity: chapter <= 3 ? 'RARE' : 'EPIC' },
     },
     farm: {
       gold: Math.round(stage9.farm.gold * 2.5),

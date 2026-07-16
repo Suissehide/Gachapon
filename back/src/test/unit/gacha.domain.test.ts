@@ -538,11 +538,11 @@ describe('weightFor', () => {
   it('boost x2 RARE: double le poids RARE, laisse COMMON inchangé', () => {
     const rareCard = makeCard('rare', 53, 'RARE')
     const commonCard = makeCard('common', 136, 'COMMON')
-    const boost = { weightMultiplier: 2, weightRarity: 'RARE' as any }
+    const boosts = [{ weightMultiplier: 2, weightRarity: 'RARE' as any }]
     // RARE: dropWeight 53 × luckMultiplier 1.0 (RARE+) × weightMultiplier 2 = 106
-    expect(weightFor(rareCard, 1.0, boost)).toBe(106)
+    expect(weightFor(rareCard, 1.0, boosts)).toBe(106)
     // COMMON: dropWeight 136 × 1 (not RARE+) × 1 (not weightRarity) = 136
-    expect(weightFor(commonCard, 1.0, boost)).toBe(136)
+    expect(weightFor(commonCard, 1.0, boosts)).toBe(136)
   })
 
   it('sans boost: comportement identique à dropWeight × luck', () => {
@@ -556,8 +556,21 @@ describe('weightFor', () => {
 
   it('weightRarity null: le boost de poids est ignoré (pas de multiplication)', () => {
     const rareCard = makeCard('rare', 50, 'RARE')
-    const boost = { weightMultiplier: 3, weightRarity: null as any }
-    expect(weightFor(rareCard, 1.0, boost)).toBe(50) // ignored, stays 50
+    const boosts = [{ weightMultiplier: 3, weightRarity: null as any }]
+    expect(weightFor(rareCard, 1.0, boosts)).toBe(50) // ignored, stays 50
+  })
+
+  it('deux boosts actifs: chacun ne multiplie que sa rareté', () => {
+    const rareCard = makeCard('rare', 16, 'RARE')
+    const epicCard = makeCard('epic', 8, 'EPIC')
+    const commonCard = makeCard('common', 85, 'COMMON')
+    const boosts = [
+      { weightMultiplier: 2, weightRarity: 'RARE' as any },
+      { weightMultiplier: 3, weightRarity: 'EPIC' as any },
+    ]
+    expect(weightFor(rareCard, 1.0, boosts)).toBe(32) // 16 × 2
+    expect(weightFor(epicCard, 1.0, boosts)).toBe(24) // 8 × 3
+    expect(weightFor(commonCard, 1.0, boosts)).toBe(85)
   })
 })
 

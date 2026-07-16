@@ -39,11 +39,16 @@ export const shopRouter: FastifyPluginCallbackZod = (fastify) => {
           if (item.type === 'BOOST') {
             const boostValue = item.value as {
               multiplier?: number
+              rarity?: string
               guaranteedRarity?: string
             }
             const isWeightBoost = boostValue.multiplier != null
             const matchingBoost = isWeightBoost
-              ? activeBoosts.find((b) => b.weightMultiplier != null)
+              ? activeBoosts.find(
+                  (b) =>
+                    b.weightMultiplier != null &&
+                    b.weightRarity === boostValue.rarity,
+                )
               : activeBoosts.find((b) => b.guaranteedRarity != null)
             if (matchingBoost) {
               activeBoost = { pullsRemaining: matchingBoost.pullsRemaining }

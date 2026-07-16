@@ -299,6 +299,79 @@ describe('Shop routes', () => {
     expect(res.statusCode).toBe(409)
   })
 
+  it('POST /shop/:id/buy — racheter le même boost cumule pullsRemaining', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    const boostItem = await postgresOrm.prisma.shopItem.create({
+      data: {
+        name: 'Boost Rare+ Cumul',
+        description: 'Boost with weight multiplier',
+        type: 'BOOST',
+        cost: 200,
+        value: { multiplier: 2, rarity: 'RARE', pulls: 10 },
+        isActive: true,
+      },
+    })
+    await postgresOrm.prisma.userBoost.deleteMany({ where: { userId } })
+    await postgresOrm.prisma.user.update({
+      where: { id: userId },
+      data: { dust: boostItem.cost * 2 + 500 },
+    })
+
+    const first = await app.inject({
+      method: 'POST',
+      url: `/shop/${boostItem.id}/buy`,
+      headers: { cookie: cookies },
+    })
+    expect(first.statusCode).toBe(200)
+
+    const second = await app.inject({
+      method: 'POST',
+      url: `/shop/${boostItem.id}/buy`,
+      headers: { cookie: cookies },
+    })
+    expect(second.statusCode).toBe(200)
+
+    const rows = await postgresOrm.prisma.userBoost.findMany({
+      where: { userId, weightRarity: 'RARE', pullsRemaining: { gt: 0 } },
+    })
+    expect(rows).toHaveLength(1)
+    expect(rows[0].pullsRemaining).toBe(20)
+  })
+
+  it('POST /shop/:id/buy — deux boosts de raretés différentes coexistent', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    const epicBoost = await postgresOrm.prisma.shopItem.create({
+      data: {
+        name: 'Boost Épique Coexist',
+        description: 'Boost with weight multiplier on EPIC',
+        type: 'BOOST',
+        cost: 500,
+        value: { multiplier: 3, rarity: 'EPIC', pulls: 10 },
+        isActive: true,
+      },
+    })
+    // Le test précédent laisse un boost RARE actif (20 tirages)
+    await postgresOrm.prisma.user.update({
+      where: { id: userId },
+      data: { dust: epicBoost.cost + 500 },
+    })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/shop/${epicBoost.id}/buy`,
+      headers: { cookie: cookies },
+    })
+    expect(res.statusCode).toBe(200)
+
+    const rows = await postgresOrm.prisma.userBoost.findMany({
+      where: { userId, weightMultiplier: { not: null }, pullsRemaining: { gt: 0 } },
+    })
+    const rarities = rows.map((r: { weightRarity: string }) => r.weightRarity).sort()
+    expect(rarities).toEqual(['EPIC', 'RARE'])
+  })
+
   it('POST /shop/:id/buy — crée un UserBoost (guaranteedRarity) pour Boost Épique', async () => {
     const { postgresOrm } = (app as any).iocContainer
 
@@ -521,6 +594,64 @@ describe('Shop routes', () => {
       headers: { cookie: cookies },
     })
     expect(again.statusCode).toBe(200)
+  })
+
+  it('GET /shop — le compteur actif de chaque boost correspond à sa rareté', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    await postgresOrm.prisma.userBoost.deleteMany({ where: { userId } })
+    await postgresOrm.prisma.userBoost.create({
+      data: {
+        userId,
+        weightMultiplier: 2,
+        weightRarity: 'RARE',
+        pullsRemaining: 7,
+      },
+    })
+    await postgresOrm.prisma.userBoost.create({
+      data: {
+        userId,
+        weightMultiplier: 3,
+        weightRarity: 'EPIC',
+        pullsRemaining: 4,
+      },
+    })
+    const rareItem = await postgresOrm.prisma.shopItem.create({
+      data: {
+        name: 'Boost Rare+ Compteur',
+        description: 'x2 RARE',
+        type: 'BOOST',
+        cost: 200,
+        value: { multiplier: 2, rarity: 'RARE', pulls: 10 },
+        isActive: true,
+      },
+    })
+    const epicItem = await postgresOrm.prisma.shopItem.create({
+      data: {
+        name: 'Boost Épique Compteur',
+        description: 'x3 EPIC',
+        type: 'BOOST',
+        cost: 500,
+        value: { multiplier: 3, rarity: 'EPIC', pulls: 10 },
+        isActive: true,
+      },
+    })
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/shop',
+      headers: { cookie: cookies },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    const rare = body.items.find(
+      (i: { id: string }) => i.id === rareItem.id,
+    )
+    const epic = body.items.find(
+      (i: { id: string }) => i.id === epicItem.id,
+    )
+    expect(rare.activeBoost).toEqual({ pullsRemaining: 7 })
+    expect(epic.activeBoost).toEqual({ pullsRemaining: 4 })
   })
 
   it('GET /shop — expose energyDaily { cap, used }', async () => {
