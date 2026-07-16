@@ -66,11 +66,11 @@ const SHOP_ITEMS = [
   {
     name: 'Boost Épique',
     description:
-      'Garantit au moins une carte EPIC dans les 5 prochains tirages.',
+      "Multiplie par 3 les chances d'obtenir des cartes EPIC pendant 10 tirages.",
     type: 'BOOST' as const,
     cost: 500,
     currency: 'DUST' as const,
-    value: { guaranteedRarity: 'EPIC', pulls: 5 },
+    value: { multiplier: 3, rarity: 'EPIC', pulls: 10 },
   },
   // Cosmétiques
   {
