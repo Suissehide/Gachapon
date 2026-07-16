@@ -2,6 +2,7 @@ import type { UnlockedAchievement } from './achievements.constant.ts'
 
 export const ITEM_TYPE_OPTIONS = [
   { value: 'TOKEN_PACK', label: 'Token Pack' },
+  { value: 'ENERGY_PACK', label: "Pack d'énergie" },
   { value: 'BOOST', label: 'Boost' },
   { value: 'COSMETIC', label: 'Cosmétique' },
   { value: 'MACHINE', label: 'Machine' },

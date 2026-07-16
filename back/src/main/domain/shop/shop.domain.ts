@@ -14,6 +14,7 @@ import type { IUserBoostRepository } from '../../types/infra/orm/repositories/us
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import type { UnlockedAchievement } from '../achievements/events.types'
 import type { CombatPointsTx } from '../combat-points/combat-points.tx'
+import { retryOnSerialization } from '../shared/retry-serialization'
 
 type BoostValue = {
   multiplier?: number
@@ -59,66 +60,70 @@ export class ShopDomain implements IShopDomain {
     // Validate shop item structure early (before transaction)
     this.#validateShopItem(item)
 
-    // PC_VAULT affects the regen settle inside creditInTx — read outside the tx.
-    const effects =
-      item.type === 'ENERGY_PACK'
-        ? await this.#skillTreeRepository.getEffectsForUser(userId)
-        : undefined
+    const result = await retryOnSerialization(async () => {
+      // PC_VAULT affects the regen settle inside creditInTx — read outside the tx.
+      const effects =
+        item.type === 'ENERGY_PACK'
+          ? await this.#skillTreeRepository.getEffectsForUser(userId)
+          : undefined
 
-    const result = await this.#postgresOrm.executeWithTransactionClient(
-      async (tx) => {
-        const user = await tx.user.findUniqueOrThrow({ where: { id: userId } })
-        const balance = item.currency === 'GOLD' ? user.gold : user.dust
-        if (balance < item.cost) {
-          throw Boom.paymentRequired(
-            item.currency === 'GOLD' ? 'Not enough gold' : 'Not enough dust',
-          )
-        }
+      return this.#postgresOrm.executeWithTransactionClient(
+        async (tx) => {
+          const user = await tx.user.findUniqueOrThrow({
+            where: { id: userId },
+          })
+          const balance = item.currency === 'GOLD' ? user.gold : user.dust
+          if (balance < item.cost) {
+            throw Boom.paymentRequired(
+              item.currency === 'GOLD' ? 'Not enough gold' : 'Not enough dust',
+            )
+          }
 
-        await this.#checkItemConflicts(tx, userId, shopItemId, item)
+          await this.#checkItemConflicts(tx, userId, shopItemId, item)
 
-        const purchase = await tx.purchase.create({
-          data: {
-            userId,
-            shopItemId,
-            amountSpent: item.cost,
-            currency: item.currency,
-          },
-        })
+          const purchase = await tx.purchase.create({
+            data: {
+              userId,
+              shopItemId,
+              amountSpent: item.cost,
+              currency: item.currency,
+            },
+          })
 
-        const updateData = this.#buildUpdateData(item)
-        await this.#applyBoostEffect(tx, userId, item)
+          const updateData = this.#buildUpdateData(item)
+          await this.#applyBoostEffect(tx, userId, item)
 
-        let newCombatPoints: number | undefined
-        if (item.type === 'ENERGY_PACK') {
-          const energyValue = item.value as EnergyValue
-          const credit = await this.#combatPointsTx.creditInTx(
-            tx,
-            userId,
-            energyValue.combatPoints as number,
-            effects,
-          )
-          newCombatPoints = credit.combatPointsAfter
-        }
+          let newCombatPoints: number | undefined
+          if (item.type === 'ENERGY_PACK') {
+            const energyValue = item.value as EnergyValue
+            const credit = await this.#combatPointsTx.creditInTx(
+              tx,
+              userId,
+              energyValue.combatPoints as number,
+              effects,
+            )
+            newCombatPoints = credit.combatPointsAfter
+          }
 
-        const updated = await tx.user.update({
-          where: { id: userId },
-          data: updateData,
-        })
+          const updated = await tx.user.update({
+            where: { id: userId },
+            data: updateData,
+          })
 
-        const allUnlocks = await this.#trackAchievements(tx, userId, item)
+          const allUnlocks = await this.#trackAchievements(tx, userId, item)
 
-        return {
-          purchase,
-          newDustTotal: updated.dust,
-          newGoldTotal: updated.gold,
-          newTokenTotal: updated.tokens,
-          newCombatPoints,
-          unlockedAchievements: allUnlocks,
-        }
-      },
-      { isolationLevel: 'Serializable', maxWait: 5000, timeout: 10000 },
-    )
+          return {
+            purchase,
+            newDustTotal: updated.dust,
+            newGoldTotal: updated.gold,
+            newTokenTotal: updated.tokens,
+            newCombatPoints,
+            unlockedAchievements: allUnlocks,
+          }
+        },
+        { isolationLevel: 'Serializable', maxWait: 5000, timeout: 10000 },
+      )
+    })
 
     return {
       purchaseId: result.purchase.id,

@@ -3,7 +3,7 @@ import type { ShopItem } from '../../../../../generated/client'
 export type CreateShopItemInput = {
   name: string
   description: string
-  type: 'TOKEN_PACK' | 'BOOST' | 'COSMETIC' | 'MACHINE'
+  type: 'TOKEN_PACK' | 'ENERGY_PACK' | 'BOOST' | 'COSMETIC' | 'MACHINE'
   cost: number
   currency?: 'DUST' | 'GOLD'
   value: Record<string, unknown>
