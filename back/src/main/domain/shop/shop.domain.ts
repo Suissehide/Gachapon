@@ -9,9 +9,12 @@ import type {
 } from '../../types/domain/shop/shop.domain.interface'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import type { IShopItemRepository } from '../../types/infra/orm/repositories/shop-item.repository.interface'
+import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { IUserBoostRepository } from '../../types/infra/orm/repositories/user-boost.repository.interface'
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import type { UnlockedAchievement } from '../achievements/events.types'
+import type { CombatPointsTx } from '../combat-points/combat-points.tx'
+import { retryOnSerialization } from '../shared/retry-serialization'
 
 type BoostValue = {
   multiplier?: number
@@ -20,22 +23,32 @@ type BoostValue = {
   guaranteedRarity?: string
 }
 
+type EnergyValue = {
+  combatPoints?: number
+}
+
 export class ShopDomain implements IShopDomain {
   readonly #shopItemRepository: IShopItemRepository
   readonly #userBoostRepository: IUserBoostRepository
   readonly #postgresOrm: PostgresOrm
   readonly #achievementsDomain: AchievementsDomainInterface
+  readonly #combatPointsTx: CombatPointsTx
+  readonly #skillTreeRepository: ISkillTreeRepository
 
   constructor({
     shopItemRepository,
     userBoostRepository,
     postgresOrm,
     achievementsDomain,
+    combatPointsTx,
+    skillTreeRepository,
   }: IocContainer) {
     this.#shopItemRepository = shopItemRepository
     this.#userBoostRepository = userBoostRepository
     this.#postgresOrm = postgresOrm
     this.#achievementsDomain = achievementsDomain
+    this.#combatPointsTx = combatPointsTx
+    this.#skillTreeRepository = skillTreeRepository
   }
 
   async buy(userId: string, shopItemId: string): Promise<BuyShopItemResult> {
@@ -47,47 +60,70 @@ export class ShopDomain implements IShopDomain {
     // Validate shop item structure early (before transaction)
     this.#validateShopItem(item)
 
-    const result = await this.#postgresOrm.executeWithTransactionClient(
-      async (tx) => {
-        const user = await tx.user.findUniqueOrThrow({ where: { id: userId } })
-        const balance = item.currency === 'GOLD' ? user.gold : user.dust
-        if (balance < item.cost) {
-          throw Boom.paymentRequired(
-            item.currency === 'GOLD' ? 'Not enough gold' : 'Not enough dust',
-          )
-        }
+    const result = await retryOnSerialization(async () => {
+      // PC_VAULT affects the regen settle inside creditInTx — read outside the tx.
+      const effects =
+        item.type === 'ENERGY_PACK'
+          ? await this.#skillTreeRepository.getEffectsForUser(userId)
+          : undefined
 
-        await this.#checkItemConflicts(tx, userId, shopItemId, item)
+      return this.#postgresOrm.executeWithTransactionClient(
+        async (tx) => {
+          const user = await tx.user.findUniqueOrThrow({
+            where: { id: userId },
+          })
+          const balance = item.currency === 'GOLD' ? user.gold : user.dust
+          if (balance < item.cost) {
+            throw Boom.paymentRequired(
+              item.currency === 'GOLD' ? 'Not enough gold' : 'Not enough dust',
+            )
+          }
 
-        const purchase = await tx.purchase.create({
-          data: {
-            userId,
-            shopItemId,
-            amountSpent: item.cost,
-            currency: item.currency,
-          },
-        })
+          await this.#checkItemConflicts(tx, userId, shopItemId, item)
 
-        const updateData = this.#buildUpdateData(item)
-        await this.#applyBoostEffect(tx, userId, item)
+          const purchase = await tx.purchase.create({
+            data: {
+              userId,
+              shopItemId,
+              amountSpent: item.cost,
+              currency: item.currency,
+            },
+          })
 
-        const updated = await tx.user.update({
-          where: { id: userId },
-          data: updateData,
-        })
+          const updateData = this.#buildUpdateData(item)
+          await this.#applyBoostEffect(tx, userId, item)
 
-        const allUnlocks = await this.#trackAchievements(tx, userId, item)
+          let newCombatPoints: number | undefined
+          if (item.type === 'ENERGY_PACK') {
+            const energyValue = item.value as EnergyValue
+            const credit = await this.#combatPointsTx.creditInTx(
+              tx,
+              userId,
+              energyValue.combatPoints as number,
+              effects,
+            )
+            newCombatPoints = credit.combatPointsAfter
+          }
 
-        return {
-          purchase,
-          newDustTotal: updated.dust,
-          newGoldTotal: updated.gold,
-          newTokenTotal: updated.tokens,
-          unlockedAchievements: allUnlocks,
-        }
-      },
-      { isolationLevel: 'Serializable', maxWait: 5000, timeout: 10000 },
-    )
+          const updated = await tx.user.update({
+            where: { id: userId },
+            data: updateData,
+          })
+
+          const allUnlocks = await this.#trackAchievements(tx, userId, item)
+
+          return {
+            purchase,
+            newDustTotal: updated.dust,
+            newGoldTotal: updated.gold,
+            newTokenTotal: updated.tokens,
+            newCombatPoints,
+            unlockedAchievements: allUnlocks,
+          }
+        },
+        { isolationLevel: 'Serializable', maxWait: 5000, timeout: 10000 },
+      )
+    })
 
     return {
       purchaseId: result.purchase.id,
@@ -96,6 +132,7 @@ export class ShopDomain implements IShopDomain {
       newDustTotal: result.newDustTotal,
       newGoldTotal: result.newGoldTotal,
       newTokenTotal: result.newTokenTotal,
+      newCombatPoints: result.newCombatPoints,
       unlockedAchievements: result.unlockedAchievements,
       item: {
         id: item.id,
@@ -221,6 +258,15 @@ export class ShopDomain implements IShopDomain {
       // Validate that pulls count is positive
       if ((boostValue.pulls ?? 0) <= 0) {
         throw Boom.internal('BOOST item value has no positive pulls count')
+      }
+    }
+    if (item.type === 'ENERGY_PACK') {
+      const energyValue = item.value as EnergyValue
+      const pc = energyValue.combatPoints
+      if (pc == null || !Number.isInteger(pc) || pc <= 0) {
+        throw Boom.internal(
+          'ENERGY_PACK item value has no positive integer combatPoints',
+        )
       }
     }
   }

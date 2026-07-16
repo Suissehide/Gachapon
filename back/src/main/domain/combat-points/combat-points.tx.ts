@@ -177,6 +177,55 @@ export class CombatPointsTx {
     return { combatPointsAfter: after }
   }
 
+  /**
+   * Credit `amount` PC atomically inside the calling transaction.
+   * Settles lazy regen first, then credits WITHOUT clamping to maxStock:
+   * purchased PC may exceed the cap (overcap). Natural regen stays paused
+   * while above the cap (calculateCombatPoints handles that branch).
+   *
+   * Same contract as debitInTx: `effects` must be read OUTSIDE the
+   * transaction by the caller. `amount <= 0` is a no-op returning the
+   * settled balance without writing.
+   */
+  async creditInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+    amount: number,
+    effects: PcEffects = NEUTRAL_EFFECTS,
+  ): Promise<{ combatPointsAfter: number }> {
+    const rawCfg = await this.#loadConfig()
+    const cfg = effectiveCombatConfig(rawCfg, effects)
+
+    const user = await tx.user.findUnique({
+      where: { id: userId },
+      select: { combatPoints: true, lastCombatPointAt: true },
+    })
+    if (!user) {
+      throw Boom.notFound('User not found')
+    }
+
+    const state = calculateCombatPoints(
+      user.lastCombatPointAt,
+      user.combatPoints,
+      cfg.regenSeconds,
+      cfg.maxStock,
+    )
+
+    if (amount <= 0) {
+      return { combatPointsAfter: state.combatPoints }
+    }
+
+    const after = state.combatPoints + amount
+    await tx.user.update({
+      where: { id: userId },
+      data: {
+        combatPoints: after,
+        lastCombatPointAt: state.newLastCombatPointAt,
+      },
+    })
+    return { combatPointsAfter: after }
+  }
+
   async #loadConfig(): Promise<CombatCfg> {
     const cfg = await this.#configService.getMany(
       'combat.pointsMax',

@@ -46,6 +46,7 @@ enum CardVariant {
 
 enum ShopItemType {
   TOKEN_PACK
+  ENERGY_PACK
   BOOST
   COSMETIC
   MACHINE

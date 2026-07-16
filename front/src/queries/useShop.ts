@@ -33,6 +33,8 @@ export const useBuyItem = () => {
     mutationFn: (itemId: string) => ShopApi.buyItem(itemId),
     onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
+      // Un ENERGY_PACK crédite des PC — rafraîchit la jauge de la campagne.
+      qc.invalidateQueries({ queryKey: ['combat', 'points'] })
       qc.invalidateQueries({ queryKey: ['shop'] })
       // A purchase fires MACHINE_PURCHASED + GOLD/DUST_SPENT events that feed the
       // quest + achievement engines — progress advances on every buy, not only

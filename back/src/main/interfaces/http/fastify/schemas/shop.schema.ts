@@ -30,6 +30,7 @@ export const buyShopItemResponseSchema = z.object({
   newDustTotal: z.number(),
   newGoldTotal: z.number(),
   newTokenTotal: z.number(),
+  newCombatPoints: z.number().optional(),
   unlockedAchievements: z.array(unlockedAchievementSchema).optional(),
   item: z.object({
     id: z.string(),
