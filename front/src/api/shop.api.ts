@@ -7,7 +7,10 @@ import { fetchWithAuth } from './fetchWithAuth.ts'
 export type { ShopItem, PurchaseResult }
 
 export const ShopApi = {
-  getItems: async (): Promise<{ items: ShopItem[] }> => {
+  getItems: async (): Promise<{
+    items: ShopItem[]
+    energyDaily: { cap: number; used: number }
+  }> => {
     const res = await fetchWithAuth(`${apiUrl}${SHOP_ROUTES.items}`)
     if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors de la récupération des articles')

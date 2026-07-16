@@ -158,6 +158,9 @@ function ShopPage() {
   const gold = user?.gold ?? 0
   const shopItems = shopData?.items ?? []
   const dailyItems = dailyData?.items ?? []
+  const energyDaily = shopData?.energyDaily
+  const energyCapReached =
+    energyDaily != null && energyDaily.used >= energyDaily.cap
 
   const notifySuccess = (title: string, message: string) => {
     toast({ title, message, severity: TOAST_SEVERITY.SUCCESS })
@@ -330,6 +333,9 @@ function ShopPage() {
                       buying={buyingShopId === item.id}
                       justBought={justBoughtShopId === item.id}
                       owned={owned}
+                      capReached={
+                        energyCapReached && item.type === 'ENERGY_PACK'
+                      }
                       onBuy={() => handleBuyShop(item)}
                     />
                   )
@@ -574,6 +580,7 @@ function StaticShopCardAction({
   buying,
   justBought,
   owned,
+  capReached,
   onBuy,
 }: {
   canAfford: boolean
@@ -582,6 +589,7 @@ function StaticShopCardAction({
   buying: boolean
   justBought: boolean
   owned?: boolean
+  capReached?: boolean
   onBuy: () => void
 }) {
   if (justBought) {
@@ -628,6 +636,14 @@ function StaticShopCardAction({
       </Button>
     )
   }
+  if (capReached) {
+    return (
+      <Button size="sm" variant="secondary" disabled className="gap-1.5">
+        <Clock className="h-3.5 w-3.5" />
+        Limite atteinte
+      </Button>
+    )
+  }
   if (canAfford) {
     return (
       <Button size="sm" variant="gradient" onClick={onBuy}>
@@ -650,6 +666,7 @@ function StaticShopCard({
   buying,
   justBought,
   owned,
+  capReached,
   onBuy,
 }: {
   item: ShopItem
@@ -659,6 +676,7 @@ function StaticShopCard({
   buying: boolean
   justBought: boolean
   owned?: boolean
+  capReached?: boolean
   onBuy: () => void
 }) {
   const isGold = item.currency === 'GOLD'
@@ -708,6 +726,7 @@ function StaticShopCard({
           buying={buying}
           justBought={justBought}
           owned={owned}
+          capReached={capReached}
           onBuy={onBuy}
         />
       </div>
