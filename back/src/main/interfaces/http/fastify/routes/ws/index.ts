@@ -18,6 +18,9 @@ export const wsRouter: FastifyPluginCallbackZod = (fastify) => {
 
     const userId = request.user.userID
     wsManager.register(userId, socket)
+    if (request.user.role === 'SUPER_ADMIN') {
+      wsManager.registerAdmin(userId, socket)
+    }
     socket.send(JSON.stringify({ type: 'connected', userId }))
   })
 }

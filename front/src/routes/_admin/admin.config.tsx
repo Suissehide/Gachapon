@@ -1,6 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { Settings } from 'lucide-react'
 import { useState } from 'react'
 
+import { AdminPageHeader } from '../../components/admin/shared/AdminPageHeader.tsx'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label.tsx'
@@ -62,18 +64,23 @@ function AdminConfigPage() {
 
   return (
     <div className="p-8">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-black text-text">Configuration</h1>
-        <Button
-          onClick={() => {
-            save.mutate(draft)
-            setDraft({})
-          }}
-          disabled={Object.keys(draft).length === 0}
-        >
-          Sauvegarder
-        </Button>
-      </div>
+      <AdminPageHeader
+        icon={Settings}
+        kicker="Économie"
+        title="Configuration"
+        subtitle="Paramètres globaux de l'économie du jeu"
+        actions={
+          <Button
+            onClick={() => {
+              save.mutate(draft)
+              setDraft({})
+            }}
+            disabled={Object.keys(draft).length === 0}
+          >
+            Sauvegarder
+          </Button>
+        }
+      />
 
       <div className="max-w-xl space-y-6">
         {CONFIG_GROUPS.map((group) => (

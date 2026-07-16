@@ -14,7 +14,9 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 
 import type { RewardPatch } from '../../api/admin-streak.api.ts'
+import { AdminPageHeader } from '../../components/admin/shared/AdminPageHeader.tsx'
 import { ReactTable } from '../../components/table/reactTable.tsx'
+import { Badge } from '../../components/ui/badge.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import { Input } from '../../components/ui/input.tsx'
 import { Label } from '../../components/ui/label.tsx'
@@ -32,6 +34,7 @@ import type {
   AdminMilestone,
   StreakReward,
 } from '../../constants/streak.constant.ts'
+import { RARITY_BADGE_VARIANT } from '../../libs/rarity.ts'
 import {
   useAdminCreateMilestone,
   useAdminDeleteMilestone,
@@ -98,19 +101,19 @@ function RewardEditor({
     <div className="space-y-3">
       <NumberField
         label="Jetons"
-        icon={<Coins className="h-3.5 w-3.5 text-yellow-400" />}
+        icon={<Coins className="h-3.5 w-3.5 text-primary" />}
         value={draft.tokens}
         onChange={(tokens) => onChange({ ...draft, tokens })}
       />
       <NumberField
         label="Dust"
-        icon={<Sparkles className="h-3.5 w-3.5 text-sky-400" />}
+        icon={<Sparkles className="h-3.5 w-3.5 text-info" />}
         value={draft.dust}
         onChange={(dust) => onChange({ ...draft, dust })}
       />
       <NumberField
         label="XP"
-        icon={<Star className="h-3.5 w-3.5 text-purple-400" />}
+        icon={<Star className="h-3.5 w-3.5 text-success" />}
         value={draft.xp}
         onChange={(xp) => onChange({ ...draft, xp })}
       />
@@ -161,7 +164,7 @@ function RarityField({
   return (
     <div className="space-y-1.5">
       <Label className="flex items-center gap-1.5">
-        <RectangleVertical className="h-3.5 w-3.5 text-violet-400" />
+        <RectangleVertical className="h-3.5 w-3.5 text-primary" />
         Rareté de la carte
       </Label>
       <div className="flex flex-wrap gap-1">
@@ -310,11 +313,12 @@ function AdminStreakPage() {
 
   return (
     <div className="flex h-full flex-col gap-6 p-8">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Flame className="h-6 w-6 text-orange-500" />
-        <h1 className="text-2xl font-black text-text">Streak — Récompenses</h1>
-      </div>
+      <AdminPageHeader
+        icon={Flame}
+        kicker="Économie"
+        title="Streak — Récompenses"
+        subtitle="Récompenses quotidiennes et jalons spéciaux de connexion"
+      />
 
       {/* Default daily reward */}
       <section className="w-full">
@@ -413,67 +417,46 @@ function AdminStreakPage() {
 // Compact, multi-type summary for the milestone table — mirrors how the user
 // modal collapses several reward types into a single row of badges.
 function MilestoneRewardSummary({ milestone }: { milestone: AdminMilestone }) {
-  const badges: React.ReactNode[] = []
+  const items: React.ReactNode[] = []
   if (milestone.cardRarity) {
-    badges.push(
-      <Badge key="card" tone="violet">
+    items.push(
+      <Badge
+        key="card"
+        variant={RARITY_BADGE_VARIANT[milestone.cardRarity] ?? 'neutral'}
+        size="sm"
+      >
         {rarityIcon(milestone.cardRarity)}
         Carte {milestone.cardRarity.toLowerCase()}
       </Badge>,
     )
   }
   if (milestone.tokens > 0) {
-    badges.push(
-      <Badge key="tokens" tone="yellow">
+    items.push(
+      <Badge key="tokens" variant="primary" size="sm">
         <Coins className="h-3 w-3" />
         {milestone.tokens}
       </Badge>,
     )
   }
   if (milestone.dust > 0) {
-    badges.push(
-      <Badge key="dust" tone="sky">
+    items.push(
+      <Badge key="dust" variant="info" size="sm">
         <Sparkles className="h-3 w-3" />
         {milestone.dust}
       </Badge>,
     )
   }
   if (milestone.xp > 0) {
-    badges.push(
-      <Badge key="xp" tone="purple">
+    items.push(
+      <Badge key="xp" variant="success" size="sm">
         <Star className="h-3 w-3" />
         {milestone.xp} XP
       </Badge>,
     )
   }
 
-  if (badges.length === 0) {
+  if (items.length === 0) {
     return <span className="text-text-light/40">—</span>
   }
-  return <div className="flex flex-wrap items-center gap-1.5">{badges}</div>
-}
-
-const TONE: Record<string, string> = {
-  yellow: 'bg-yellow-400/10 text-yellow-400 border-yellow-400/30',
-  sky: 'bg-sky-400/10 text-sky-400 border-sky-400/30',
-  purple: 'bg-purple-400/10 text-purple-400 border-purple-400/30',
-  violet: 'bg-violet-400/10 text-violet-400 border-violet-400/30',
-}
-function Badge({
-  tone,
-  children,
-}: {
-  tone: keyof typeof TONE
-  children: React.ReactNode
-}) {
-  return (
-    <span
-      className={[
-        'inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-semibold tabular-nums',
-        TONE[tone],
-      ].join(' ')}
-    >
-      {children}
-    </span>
-  )
+  return <div className="flex flex-wrap items-center gap-1.5">{items}</div>
 }

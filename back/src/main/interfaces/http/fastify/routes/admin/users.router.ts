@@ -1,12 +1,14 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
+import { toCsv } from '../../../../../domain/shared/csv'
 import {
   adminUserDustBodySchema,
   adminUserIdParamSchema,
   adminUserRewardBodySchema,
   adminUserRoleBodySchema,
   adminUserSuspendBodySchema,
+  adminUsersExportQuerySchema,
   adminUsersQuerySchema,
   adminUserTokensBodySchema,
 } from '../../schemas/admin-users.schema'
@@ -17,14 +19,96 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
     gachaPullRepository,
     userCardRepository,
     rewardsDomain,
+    activityDomain,
   } = fastify.iocContainer
 
   fastify.get(
     '/',
     { schema: { querystring: adminUsersQuerySchema } },
     (request) => {
-      const { page, limit, search } = request.query
-      return userRepository.findAllPaginated({ page, limit, search })
+      const {
+        page,
+        limit,
+        search,
+        status,
+        createdFrom,
+        createdTo,
+        levelMin,
+        levelMax,
+        lastLoginFrom,
+        lastLoginTo,
+      } = request.query
+      return userRepository.findAllPaginated({
+        page,
+        limit,
+        search,
+        status,
+        createdFrom,
+        createdTo,
+        levelMin,
+        levelMax,
+        lastLoginFrom,
+        lastLoginTo,
+      })
+    },
+  )
+
+  fastify.get(
+    '/export',
+    { schema: { querystring: adminUsersExportQuerySchema } },
+    async (request, reply) => {
+      const {
+        search,
+        status,
+        createdFrom,
+        createdTo,
+        levelMin,
+        levelMax,
+        lastLoginFrom,
+        lastLoginTo,
+      } = request.query
+      const users = await userRepository.findAllForExport({
+        search,
+        status,
+        createdFrom,
+        createdTo,
+        levelMin,
+        levelMax,
+        lastLoginFrom,
+        lastLoginTo,
+      })
+      const csv = toCsv(
+        [
+          'id',
+          'username',
+          'email',
+          'role',
+          'statut',
+          'niveau',
+          'tokens',
+          'dust',
+          'gold',
+          'inscription',
+          'derniere_connexion',
+        ],
+        users.map((u) => [
+          u.id,
+          u.username,
+          u.email,
+          u.role,
+          u.suspended ? 'suspendu' : 'actif',
+          u.level,
+          u.tokens,
+          u.dust,
+          u.gold,
+          u.createdAt,
+          u.lastLoginAt,
+        ]),
+      )
+      return reply
+        .header('Content-Type', 'text/csv; charset=utf-8')
+        .header('Content-Disposition', 'attachment; filename="joueurs.csv"')
+        .send(csv)
     },
   )
 
@@ -100,10 +184,20 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
       if (!user) {
         throw Boom.notFound('User not found')
       }
-      return userRepository.incrementTokens(
+      const result = await userRepository.incrementTokens(
         request.params.id,
         request.body.amount,
       )
+      void activityDomain.record('ADMIN_GRANT', {
+        userId: request.params.id,
+        username: user.username,
+        payload: {
+          kind: 'tokens',
+          amount: request.body.amount,
+          by: request.user.userID,
+        },
+      })
+      return result
     },
   )
 
@@ -117,10 +211,20 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
       if (!user) {
         throw Boom.notFound('User not found')
       }
-      return userRepository.incrementDust(
+      const result = await userRepository.incrementDust(
         request.params.id,
         request.body.amount,
       )
+      void activityDomain.record('ADMIN_GRANT', {
+        userId: request.params.id,
+        username: user.username,
+        payload: {
+          kind: 'dust',
+          amount: request.body.amount,
+          by: request.user.userID,
+        },
+      })
+      return result
     },
   )
 
@@ -157,6 +261,14 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
         request.params.id,
         request.body,
       )
+      void activityDomain.record('ADMIN_GRANT', {
+        userId: request.params.id,
+        payload: {
+          kind: 'reward',
+          rewardId: request.body.rewardId,
+          by: request.user.userID,
+        },
+      })
       return reply.status(201).send({ id: userReward.id })
     },
   )
@@ -177,10 +289,19 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
       if (!user) {
         throw Boom.notFound('User not found')
       }
-      return userRepository.updateSuspended(
+      const result = await userRepository.updateSuspended(
         request.params.id,
         request.body.suspended,
       )
+      void activityDomain.record(
+        request.body.suspended ? 'USER_SUSPENDED' : 'USER_UNSUSPENDED',
+        {
+          userId: request.params.id,
+          username: user.username,
+          payload: { by: request.user.userID },
+        },
+      )
+      return result
     },
   )
 }

@@ -82,8 +82,16 @@ export const shopRouter: FastifyPluginCallbackZod = (fastify) => {
         response: { 200: buyShopItemResponseSchema },
       },
     },
-    (request) => {
-      return shopDomain.buy(request.user.userID, request.params.id)
+    async (request) => {
+      const result = await shopDomain.buy(
+        request.user.userID,
+        request.params.id,
+      )
+      void fastify.iocContainer.activityDomain.record('SHOP_PURCHASE', {
+        userId: request.user.userID,
+        payload: { shopItemId: request.params.id },
+      })
+      return result
     },
   )
 }

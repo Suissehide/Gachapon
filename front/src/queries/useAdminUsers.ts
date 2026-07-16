@@ -1,19 +1,26 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { AdminUsersApi } from '../api/admin-users.api.ts'
+import {
+  AdminUsersApi,
+  type AdminUsersFilters,
+} from '../api/admin-users.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
 
-export type { AdminUser, UserStats } from '../api/admin-users.api.ts'
+export type {
+  AdminUser,
+  AdminUsersFilters,
+  UserStats,
+} from '../api/admin-users.api.ts'
 
 export function useAdminUsers(
-  params: { page?: number; limit?: number; search?: string } = {},
+  params: AdminUsersFilters & { page?: number; limit?: number } = {},
 ) {
-  const { page = 1, limit = 20, search } = params
+  const { page = 1, limit = 20, ...filters } = params
   const query = useQuery({
-    queryKey: ['admin', 'users', page, limit, search],
-    queryFn: () => AdminUsersApi.getUsers({ page, limit, search }),
+    queryKey: ['admin', 'users', page, limit, filters],
+    queryFn: () => AdminUsersApi.getUsers({ page, limit, ...filters }),
   })
 
   useDataFetching({

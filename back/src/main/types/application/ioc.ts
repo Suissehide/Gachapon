@@ -19,6 +19,8 @@ import type { TeamRepository } from '../../infra/orm/repositories/team.repositor
 import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
 import type { UserCardRepository } from '../../infra/orm/repositories/user-card.repository'
 import type { RefreshTokenRepository } from '../../infra/redis/refresh-token.repository'
+import type { WsManager } from '../../interfaces/ws/ws-manager'
+import type { IActivityDomain } from '../domain/activity/activity.domain.interface'
 import type { AuthDomainInterface } from '../domain/auth/auth.domain.interface'
 import type { OAuthDomainInterface } from '../domain/auth/oauth.domain.interface'
 import type { ICollectionDomain } from '../domain/collection/collection.domain.interface'
@@ -44,6 +46,7 @@ import type { ConfigServiceInterface } from '../infra/config/config.service.inte
 import type { HttpClientInterface } from '../infra/http/http-client'
 import type { IMailService } from '../infra/mail/mail.service.interface'
 import type { IAchievementRepository } from '../infra/orm/repositories/achievement.repository.interface'
+import type { IActivityEventRepository } from '../infra/orm/repositories/activity-event.repository.interface'
 import type { IAdminStatsRepository } from '../infra/orm/repositories/admin-stats.repository.interface'
 import type { ILeaderboardRepository } from '../infra/orm/repositories/leaderboard.repository.interface'
 import type { IQuestRepository } from '../infra/orm/repositories/quest.repository.interface'
@@ -128,4 +131,7 @@ export interface IocContainer {
   readonly adminSkillTreeDomain: AdminSkillTreeDomain
   readonly achievementsDomain: AchievementsDomainInterface
   readonly wishlistDomain: IWishlistDomain
+  readonly activityEventRepository: IActivityEventRepository
+  readonly wsManager: WsManager
+  readonly activityDomain: IActivityDomain
 }

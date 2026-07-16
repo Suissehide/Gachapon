@@ -3,6 +3,7 @@ import { type AwilixContainer, asClass, asValue } from 'awilix'
 import type { Resolver } from 'awilix/lib/resolvers'
 
 import { AchievementsDomain } from '../../../domain/achievements/achievements.domain'
+import { ActivityDomain } from '../../../domain/activity/activity.domain'
 import { AuthDomain } from '../../../domain/auth/auth.domain'
 import { OAuthDomain } from '../../../domain/auth/oauth.domain'
 import { CampaignDomain } from '../../../domain/campaign/campaign.domain'
@@ -37,6 +38,7 @@ import { PinoLogger } from '../../../infra/logger/pino/pino-logger'
 import { MailService } from '../../../infra/mail/mail.service'
 import { PostgresOrm } from '../../../infra/orm/postgres-client'
 import { AchievementRepository } from '../../../infra/orm/repositories/achievement.repository'
+import { ActivityEventRepository } from '../../../infra/orm/repositories/activity-event.repository'
 import { AdminStatsRepository } from '../../../infra/orm/repositories/admin-stats.repository'
 import { ApiKeyRepository } from '../../../infra/orm/repositories/api-key.repository'
 import { CardRepository } from '../../../infra/orm/repositories/card.repository'
@@ -63,6 +65,7 @@ import { RedisClient } from '../../../infra/redis/redis-client'
 import { RefreshTokenRepository } from '../../../infra/redis/refresh-token.repository'
 import { MinioClient } from '../../../infra/storage/minio-client'
 import { FastifyHttpServer } from '../../../interfaces/http/fastify/fastify-http-server'
+import { wsManager } from '../../../interfaces/ws/ws-manager'
 import type { IocContainer } from '../../../types/application/ioc'
 import { ErrorHandler } from '../../../utils/error-handler'
 import { recordToString } from '../../../utils/helper'
@@ -172,6 +175,12 @@ class AwilixIocContainer {
     // streakDomain depends on achievementsDomain — must be registered after it
     this.#reg('streakDomain', asClass(StreakDomain).singleton())
     this.#reg('wishlistDomain', asClass(WishlistDomain).singleton())
+    this.#reg(
+      'activityEventRepository',
+      asClass(ActivityEventRepository).singleton(),
+    )
+    this.#reg('wsManager', asValue(wsManager))
+    this.#reg('activityDomain', asClass(ActivityDomain).singleton())
     logger.info('IoC container initialized.')
   }
 

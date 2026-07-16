@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-router'
 import type { LucideIcon } from 'lucide-react'
 import {
+  Activity,
   ArrowLeft,
   BarChart2,
   ChevronRight,
@@ -22,6 +23,7 @@ import {
   Zap,
 } from 'lucide-react'
 
+import { cn } from '../libs/utils'
 import { useAuthStore } from '../stores/auth.store'
 
 export const Route = createFileRoute('/_admin')({
@@ -35,19 +37,46 @@ export const Route = createFileRoute('/_admin')({
 })
 
 type NavItem = { to: string; label: string; icon: LucideIcon; exact?: boolean }
+type NavSection = { label: string | null; items: NavItem[] }
 
-const NAV_ITEMS: NavItem[] = [
-  { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-  { to: '/admin/users', label: 'Joueurs', icon: Users },
-  { to: '/admin/cards', label: 'Cartes', icon: Package },
-  { to: '/admin/media', label: 'Médias', icon: Images },
-  { to: '/admin/shop', label: 'Boutique', icon: ShoppingBag },
-  { to: '/admin/skills', label: 'Compétences', icon: Zap },
-  { to: '/admin/scoring', label: 'Scoring', icon: Trophy },
-  { to: '/admin/config', label: 'Config', icon: Settings },
-  { to: '/admin/streak', label: 'Streak', icon: Flame },
-  { to: '/admin/stats', label: 'Stats', icon: BarChart2 },
-  { to: '/admin/combat-debug', label: 'Combat — Debug', icon: Swords },
+const NAV_SECTIONS: NavSection[] = [
+  {
+    label: null,
+    items: [
+      { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+    ],
+  },
+  {
+    label: 'Contenu',
+    items: [
+      { to: '/admin/cards', label: 'Cartes', icon: Package },
+      { to: '/admin/media', label: 'Médias', icon: Images },
+      { to: '/admin/shop', label: 'Boutique', icon: ShoppingBag },
+    ],
+  },
+  {
+    label: 'Économie',
+    items: [
+      { to: '/admin/config', label: 'Config', icon: Settings },
+      { to: '/admin/scoring', label: 'Scoring', icon: Trophy },
+      { to: '/admin/streak', label: 'Streak', icon: Flame },
+      { to: '/admin/skills', label: 'Compétences', icon: Zap },
+    ],
+  },
+  {
+    label: 'Joueurs',
+    items: [
+      { to: '/admin/users', label: 'Joueurs', icon: Users },
+      { to: '/admin/stats', label: 'Stats', icon: BarChart2 },
+    ],
+  },
+  {
+    label: 'Système',
+    items: [
+      { to: '/admin/health', label: 'Santé', icon: Activity },
+      { to: '/admin/combat-debug', label: 'Combat — Debug', icon: Swords },
+    ],
+  },
 ]
 
 function AdminLayout() {
@@ -61,25 +90,35 @@ function AdminLayout() {
             Admin
           </span>
         </div>
-        <nav className="flex flex-col gap-1 p-3">
-          {NAV_ITEMS.map(({ to, label, icon: Icon, exact }) => {
-            const active = exact ? pathname === to : pathname.startsWith(to)
-            return (
-              <Link
-                key={to}
-                to={to as '/admin'}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  active
-                    ? 'bg-primary/20 text-primary'
-                    : 'text-text-light hover:bg-surface hover:text-text'
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                {label}
-                {active && <ChevronRight className="ml-auto h-3 w-3" />}
-              </Link>
-            )
-          })}
+        <nav className="flex flex-col gap-4 overflow-y-auto p-3">
+          {NAV_SECTIONS.map((section) => (
+            <div key={section.label ?? 'root'} className="flex flex-col gap-1">
+              {section.label && (
+                <span className="px-3 pb-1 text-[10px] font-black uppercase tracking-widest text-text-light/60">
+                  {section.label}
+                </span>
+              )}
+              {section.items.map(({ to, label, icon: Icon, exact }) => {
+                const active = exact ? pathname === to : pathname.startsWith(to)
+                return (
+                  <Link
+                    key={to}
+                    to={to as '/admin'}
+                    className={cn(
+                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      active
+                        ? 'bg-primary/20 text-primary'
+                        : 'text-text-light hover:bg-surface hover:text-text',
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {label}
+                    {active && <ChevronRight className="ml-auto h-3 w-3" />}
+                  </Link>
+                )
+              })}
+            </div>
+          ))}
         </nav>
         <div className="mt-auto border-t border-border p-3">
           <Link

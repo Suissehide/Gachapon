@@ -340,7 +340,10 @@ function resolveAttackOnTarget(
   }
 
   // CRIT (attacker) — chance d'infliger le double des dégâts.
-  if (attacker.passiveKey === 'CRIT' && prng() < attacker.passiveValuePct / 100) {
+  if (
+    attacker.passiveKey === 'CRIT' &&
+    prng() < attacker.passiveValuePct / 100
+  ) {
     raw *= 2
     log.push({
       type: 'PASSIVE',

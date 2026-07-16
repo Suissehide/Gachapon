@@ -5,6 +5,7 @@ import type { UserReward } from '../../../generated/client'
 import type { CardRarity, CardVariant } from '../../../generated/enums'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
+import type { IActivityDomain } from '../../types/domain/activity/activity.domain.interface'
 import type {
   AddRewardInput,
   ClaimedCard,
@@ -37,6 +38,7 @@ export class RewardsDomain implements RewardsDomainInterface {
   readonly #achievementsDomain: AchievementsDomainInterface
   readonly #cardRepository: ICardRepository
   readonly #userCardRepository: IUserCardRepository
+  readonly #activityDomain: IActivityDomain
 
   constructor({
     userRewardRepository,
@@ -47,6 +49,7 @@ export class RewardsDomain implements RewardsDomainInterface {
     achievementsDomain,
     cardRepository,
     userCardRepository,
+    activityDomain,
   }: Pick<
     IocContainer,
     | 'userRewardRepository'
@@ -57,6 +60,7 @@ export class RewardsDomain implements RewardsDomainInterface {
     | 'achievementsDomain'
     | 'cardRepository'
     | 'userCardRepository'
+    | 'activityDomain'
   >) {
     this.#userRewardRepository = userRewardRepository
     this.#userRepository = userRepository
@@ -66,6 +70,7 @@ export class RewardsDomain implements RewardsDomainInterface {
     this.#achievementsDomain = achievementsDomain
     this.#cardRepository = cardRepository
     this.#userCardRepository = userCardRepository
+    this.#activityDomain = activityDomain
   }
 
   /** Grants a random active card of the given rarity (NORMAL variant) when a
@@ -147,7 +152,7 @@ export class RewardsDomain implements RewardsDomainInterface {
       throw Boom.conflict('Reward already claimed')
     }
 
-    return this.#postgresOrm.executeWithTransactionClient(
+    const result = await this.#postgresOrm.executeWithTransactionClient(
       async (tx) => {
         // Re-read inside tx to close TOCTOU window
         const userReward = await tx.userReward.findUnique({
@@ -266,6 +271,68 @@ export class RewardsDomain implements RewardsDomainInterface {
       },
       { isolationLevel: 'Serializable' },
     )
+    if (result.level > result.levelBefore) {
+      void this.#activityDomain.record('LEVEL_UP', {
+        userId,
+        payload: { from: result.levelBefore, to: result.level },
+      })
+    }
+    return result
+  }
+
+  async grantBulk(input: {
+    userIds: string[] | 'ALL'
+    tokens: number
+    dust: number
+    xp: number
+    gold: number
+    cardRarity?: CardRarity
+    label?: string
+  }): Promise<{ count: number }> {
+    const hasContent =
+      input.tokens > 0 ||
+      input.dust > 0 ||
+      input.xp > 0 ||
+      input.gold > 0 ||
+      !!input.cardRarity
+    if (!hasContent) {
+      throw Boom.badRequest('Reward must grant at least one resource')
+    }
+
+    const targetIds =
+      input.userIds === 'ALL'
+        ? await this.#userRepository.findAllActiveIds()
+        : input.userIds
+    const deduplicatedIds = [...new Set(targetIds)]
+    if (deduplicatedIds.length === 0) {
+      throw Boom.badRequest('No target users')
+    }
+
+    const sourceId = randomUUID()
+    const count = await this.#postgresOrm.executeWithTransactionClient(
+      async (tx) => {
+        const reward = await tx.reward.create({
+          data: {
+            tokens: input.tokens,
+            dust: input.dust,
+            xp: input.xp,
+            gold: input.gold,
+            cardRarity: input.cardRarity ?? null,
+            label: input.label ?? null,
+          },
+        })
+        const created = await tx.userReward.createMany({
+          data: deduplicatedIds.map((userId) => ({
+            userId,
+            rewardId: reward.id,
+            source: 'ADMIN' as const,
+            sourceId,
+          })),
+        })
+        return created.count
+      },
+    )
+    return { count }
   }
 
   async addRewardToUser(
@@ -292,7 +359,7 @@ export class RewardsDomain implements RewardsDomainInterface {
       return null
     }
 
-    return this.#postgresOrm.executeWithTransactionClient(
+    const result = await this.#postgresOrm.executeWithTransactionClient(
       async (tx) => {
         // Authoritative read inside tx. QUEST rewards are excluded from
         // "claim all" — they are claimed individually from the /quests page.
@@ -413,5 +480,12 @@ export class RewardsDomain implements RewardsDomainInterface {
       },
       { isolationLevel: 'Serializable' },
     )
+    if (result && result.level > result.levelBefore) {
+      void this.#activityDomain.record('LEVEL_UP', {
+        userId,
+        payload: { from: result.levelBefore, to: result.level },
+      })
+    }
+    return result
   }
 }

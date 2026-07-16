@@ -13,15 +13,24 @@ import { Card } from '../ui/card'
 
 type PullsChartProps = {
   data: { day: string; count: number }[]
+  title?: string
+  color?: string
+  unit?: string
 }
 
 type TooltipContentProps = {
   active?: boolean
   payload?: Array<{ value?: number }>
   label?: string
+  unit?: string
 }
 
-function ChartTooltip({ active, payload, label }: TooltipContentProps) {
+function ChartTooltip({
+  active,
+  payload,
+  label,
+  unit = 'pulls',
+}: TooltipContentProps) {
   if (!active || !payload?.length) {
     return null
   }
@@ -29,13 +38,18 @@ function ChartTooltip({ active, payload, label }: TooltipContentProps) {
     <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-md">
       <p className="mb-0.5 text-[11px] font-bold text-text">{label}</p>
       <p className="text-[11px] text-text-light">
-        {payload[0].value?.toLocaleString('fr-FR')} pulls
+        {payload[0].value?.toLocaleString('fr-FR')} {unit}
       </p>
     </div>
   )
 }
 
-export function PullsChart({ data }: PullsChartProps) {
+export function PullsChart({
+  data,
+  title = 'Pulls / jour',
+  color = 'var(--primary)',
+  unit = 'pulls',
+}: PullsChartProps) {
   const total = data.reduce((s, d) => s + d.count, 0)
 
   const last7 = data.slice(-7).reduce((s, d) => s + d.count, 0)
@@ -51,7 +65,7 @@ export function PullsChart({ data }: PullsChartProps) {
           </div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-text-light">
-              Pulls / jour
+              {title}
             </p>
             <p className="text-[10px] text-text-light/60">30 derniers jours</p>
           </div>
@@ -68,7 +82,7 @@ export function PullsChart({ data }: PullsChartProps) {
             <div
               className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs font-bold ${
                 trend > 0
-                  ? 'bg-green-500/10 text-green-500'
+                  ? 'bg-success/10 text-success'
                   : trend < 0
                     ? 'bg-destructive/10 text-destructive'
                     : 'bg-border text-text-light'
@@ -96,30 +110,27 @@ export function PullsChart({ data }: PullsChartProps) {
           >
             <CartesianGrid
               strokeDasharray="3 3"
-              stroke="hsl(var(--border))"
+              stroke="var(--border)"
               vertical={false}
             />
             <XAxis
               dataKey="day"
               axisLine={true}
               tickLine={true}
-              tick={{ fontSize: 10, fill: 'hsl(var(--text-light))' }}
+              tick={{ fontSize: 10, fill: 'var(--text-light)' }}
               tickFormatter={(v) => v.slice(5)}
               interval="preserveStartEnd"
             />
             <YAxis
               axisLine={true}
               tickLine={true}
-              tick={{ fontSize: 10, fill: 'hsl(var(--text-light))' }}
+              tick={{ fontSize: 10, fill: 'var(--text-light)' }}
               width={30}
             />
-            <Tooltip
-              cursor={false}
-              content={<ChartTooltip />}
-            />
+            <Tooltip cursor={false} content={<ChartTooltip unit={unit} />} />
             <Bar
               dataKey="count"
-              fill="hsl(var(--primary))"
+              fill={color}
               fillOpacity={0.85}
               radius={[4, 4, 0, 0]}
               activeBar={{ fillOpacity: 1 }}

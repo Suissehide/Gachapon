@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import type { ColumnDef } from '@tanstack/react-table'
-import { LayoutGrid, List, Plus, Search, X } from 'lucide-react'
+import { LayoutGrid, List, Package, Plus, Search, X } from 'lucide-react'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useCardColumns } from '../../components/admin/cards/CardColumns'
@@ -9,6 +9,7 @@ import { CardVariantPanel } from '../../components/admin/cards/CardVariantPanel'
 import { CreateCardSheet } from '../../components/admin/cards/CreateCardSheet'
 import { EditCardSheet } from '../../components/admin/cards/EditCardSheet'
 import { SetSidebar } from '../../components/admin/cards/SetSidebar'
+import { AdminPageHeader } from '../../components/admin/shared/AdminPageHeader.tsx'
 import { ReactTable } from '../../components/table/reactTable'
 import { Button } from '../../components/ui/button'
 import DropdownFilter from '../../components/ui/dropdownFilter'
@@ -106,33 +107,36 @@ function AdminCards() {
 
   return (
     <div className="flex h-screen flex-col p-8">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-black text-text">Cartes & Sets</h1>
-
-        <div className="flex items-center gap-2">
-          <SegmentedControl
-            value={view}
-            onChange={setView}
-            options={[
-              {
-                value: 'sets',
-                label: 'Sets',
-                icon: <LayoutGrid className="h-3.5 w-3.5" />,
-              },
-              {
-                value: 'all',
-                label: 'Toutes',
-                icon: <List className="h-3.5 w-3.5" />,
-              },
-            ]}
-          />
-
-          <Button size="sm" onClick={() => setShowCreate(true)}>
-            <Plus className="h-4 w-4" />
-            Nouvelle carte
-          </Button>
-        </div>
-      </div>
+      <AdminPageHeader
+        icon={Package}
+        kicker="Contenu"
+        title="Cartes & Sets"
+        subtitle="Gestion des cartes et de leurs sets"
+        actions={
+          <>
+            <SegmentedControl
+              value={view}
+              onChange={setView}
+              options={[
+                {
+                  value: 'sets',
+                  label: 'Sets',
+                  icon: <LayoutGrid className="h-3.5 w-3.5" />,
+                },
+                {
+                  value: 'all',
+                  label: 'Toutes',
+                  icon: <List className="h-3.5 w-3.5" />,
+                },
+              ]}
+            />
+            <Button size="sm" onClick={() => setShowCreate(true)}>
+              <Plus className="h-4 w-4" />
+              Nouvelle carte
+            </Button>
+          </>
+        }
+      />
 
       <CardVariantPanel />
 

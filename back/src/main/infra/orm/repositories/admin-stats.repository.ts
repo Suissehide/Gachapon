@@ -22,20 +22,45 @@ export class AdminStatsRepository implements IAdminStatsRepository {
       now.getMonth(),
       now.getDate(),
     )
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
-    const [totalUsers, pullsToday, dustAgg, legendaryCount] = await Promise.all(
-      [
-        this.#prisma.user.count(),
-        this.#prisma.gachaPull.count({
-          where: { pulledAt: { gte: startOfToday } },
-        }),
-        this.#prisma.gachaPull.aggregate({ _sum: { dustEarned: true } }),
-        this.#prisma.gachaPull.count({
-          where: { card: { rarity: 'LEGENDARY' } },
-        }),
-      ],
-    )
+    const [
+      totalUsers,
+      pullsToday,
+      dustAgg,
+      legendaryCount,
+      signups7d,
+      signups30d,
+      dustSpentAgg,
+      totalPulls,
+      activeUsers7dRows,
+      activeUsers30dRows,
+    ] = await Promise.all([
+      this.#prisma.user.count(),
+      this.#prisma.gachaPull.count({
+        where: { pulledAt: { gte: startOfToday } },
+      }),
+      this.#prisma.gachaPull.aggregate({ _sum: { dustEarned: true } }),
+      this.#prisma.gachaPull.count({
+        where: { card: { rarity: 'LEGENDARY' } },
+      }),
+      this.#prisma.user.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
+      this.#prisma.user.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
+      this.#prisma.purchase.aggregate({
+        _sum: { amountSpent: true },
+        where: { currency: 'DUST' },
+      }),
+      this.#prisma.gachaPull.count(),
+      this.#prisma.$queryRaw<{ count: bigint }[]>`
+        SELECT COUNT(DISTINCT "userId") AS count FROM "GachaPull"
+        WHERE "pulledAt" >= ${sevenDaysAgo}
+      `,
+      this.#prisma.$queryRaw<{ count: bigint }[]>`
+        SELECT COUNT(DISTINCT "userId") AS count FROM "GachaPull"
+        WHERE "pulledAt" >= ${thirtyDaysAgo}
+      `,
+    ])
 
     const pullsSeries = await this.#prisma.$queryRaw<
       { day: Date; count: bigint }[]
@@ -47,14 +72,34 @@ export class AdminStatsRepository implements IAdminStatsRepository {
       ORDER BY day ASC
     `
 
+    const signupsSeries = await this.#prisma.$queryRaw<
+      { day: Date; count: bigint }[]
+    >`
+      SELECT DATE_TRUNC('day', "createdAt") AS day, COUNT(*) AS count
+      FROM "User"
+      WHERE "createdAt" >= ${thirtyDaysAgo}
+      GROUP BY DATE_TRUNC('day', "createdAt")
+      ORDER BY day ASC
+    `
+
     return {
       kpis: {
         totalUsers,
         pullsToday,
         dustGenerated: dustAgg._sum.dustEarned ?? 0,
         legendaryCount,
+        signups7d,
+        signups30d,
+        activeUsers7d: Number(activeUsers7dRows[0]?.count ?? 0),
+        activeUsers30d: Number(activeUsers30dRows[0]?.count ?? 0),
+        dustSpent: dustSpentAgg._sum.amountSpent ?? 0,
+        totalPulls,
       },
       pullsSeries: pullsSeries.map((r) => ({
+        day: r.day.toISOString().slice(0, 10),
+        count: Number(r.count),
+      })),
+      signupsSeries: signupsSeries.map((r) => ({
         day: r.day.toISOString().slice(0, 10),
         count: Number(r.count),
       })),

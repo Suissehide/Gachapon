@@ -4,7 +4,10 @@ import { z } from 'zod/v4'
 import { MAX_PALIER } from '../../../../../domain/card-ascension/card-ascension.tx'
 import { STAT_GROWTH_PER_LEVEL } from '../../../../../domain/card-leveling/card-leveling.domain'
 import { ASCENSION_STAT_BONUS } from '../../../../../domain/combat/combat-stats.domain'
-import { MILESTONE_PACKS, SKILL_POINTS_PER_LEVEL } from '../../../../../domain/shared/level-rewards'
+import {
+  MILESTONE_PACKS,
+  SKILL_POINTS_PER_LEVEL,
+} from '../../../../../domain/shared/level-rewards'
 
 const rarityRecordSchema = z.object({
   COMMON: z.number(),

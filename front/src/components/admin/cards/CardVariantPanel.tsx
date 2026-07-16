@@ -17,22 +17,22 @@ type VariantRates = {
 }
 
 const HOLO_FIELDS = [
-  { key: 'holoRateRare' as const, label: 'Rare', dot: 'bg-violet-400' },
-  { key: 'holoRateEpic' as const, label: 'Epic', dot: 'bg-pink-400' },
+  { key: 'holoRateRare' as const, label: 'Rare', dot: 'bg-rarity-rare' },
+  { key: 'holoRateEpic' as const, label: 'Epic', dot: 'bg-rarity-epic' },
   {
     key: 'holoRateLegendary' as const,
     label: 'Legendary',
-    dot: 'bg-amber-400',
+    dot: 'bg-rarity-legendary',
   },
 ] satisfies { key: keyof VariantRates; label: string; dot: string }[]
 
 const BRILLIANT_FIELDS = [
-  { key: 'brilliantRateRare' as const, label: 'Rare', dot: 'bg-violet-400' },
-  { key: 'brilliantRateEpic' as const, label: 'Epic', dot: 'bg-pink-400' },
+  { key: 'brilliantRateRare' as const, label: 'Rare', dot: 'bg-rarity-rare' },
+  { key: 'brilliantRateEpic' as const, label: 'Epic', dot: 'bg-rarity-epic' },
   {
     key: 'brilliantRateLegendary' as const,
     label: 'Legendary',
-    dot: 'bg-amber-400',
+    dot: 'bg-rarity-legendary',
   },
 ] satisfies { key: keyof VariantRates; label: string; dot: string }[]
 
@@ -145,7 +145,7 @@ function CardVariantForm({
 
         {/* Brilliant */}
         <div className="flex items-center gap-6">
-          <span className="w-32 shrink-0 text-xs font-semibold text-amber-400">
+          <span className="w-32 shrink-0 text-xs font-semibold text-rarity-legendary">
             ✨ Brilliant
           </span>
           <div className="flex items-center gap-8">
@@ -179,7 +179,6 @@ function CardVariantForm({
             ))}
           </div>
         </div>
-
       </div>
     </form>
   )

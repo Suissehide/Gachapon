@@ -6,20 +6,35 @@ import { fetchWithAuth } from './fetchWithAuth.ts'
 
 export type { AdminUser, UserStats }
 
+export type AdminUsersFilters = {
+  search?: string
+  status?: 'active' | 'suspended'
+  createdFrom?: string
+  createdTo?: string
+  levelMin?: number
+  levelMax?: number
+  lastLoginFrom?: string
+  lastLoginTo?: string
+}
+
 export const AdminUsersApi = {
   getUsers: async (
-    params: { page?: number; limit?: number; search?: string } = {},
+    params: AdminUsersFilters & { page?: number; limit?: number } = {},
   ): Promise<{
     users: AdminUser[]
     total: number
     page: number
     limit: number
   }> => {
-    const { page = 1, limit = 20, search } = params
+    const { page = 1, limit = 20, ...filters } = params
     const qs = new URLSearchParams({
       page: String(page),
       limit: String(limit),
-      ...(search ? { search } : {}),
+      ...Object.fromEntries(
+        Object.entries(filters).filter(
+          ([, v]) => v !== undefined && v !== '',
+        ) as [string, string][],
+      ),
     })
     const res = await fetchWithAuth(`${apiUrl}${USER_ROUTES.admin.users}?${qs}`)
     if (!res.ok) {
@@ -30,6 +45,21 @@ export const AdminUsersApi = {
       )
     }
     return res.json()
+  },
+
+  exportCsv: async (filters: AdminUsersFilters): Promise<Blob> => {
+    const qs = new URLSearchParams(
+      Object.entries(filters).filter(
+        ([, v]) => v !== undefined && v !== '',
+      ) as [string, string][],
+    )
+    const res = await fetchWithAuth(
+      `${apiUrl}${USER_ROUTES.admin.usersExport}?${qs}`,
+    )
+    if (!res.ok) {
+      handleHttpError(res, {}, "Erreur lors de l'export CSV")
+    }
+    return res.blob()
   },
 
   getUser: async (

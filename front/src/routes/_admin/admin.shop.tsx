@@ -1,7 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Plus } from 'lucide-react'
+import { Plus, ShoppingBag } from 'lucide-react'
 import { useState } from 'react'
 
+import { AdminPageHeader } from '../../components/admin/shared/AdminPageHeader.tsx'
 import { CreateShopItemSheet } from '../../components/admin/shop/CreateShopItemSheet'
 import { EditShopItemSheet } from '../../components/admin/shop/EditShopItemSheet'
 import { useShopColumns } from '../../components/admin/shop/ShopColumns'
@@ -32,13 +33,18 @@ function AdminShop() {
 
   return (
     <div className="flex h-screen flex-col p-8">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-black text-text">Boutique</h1>
-        <Button size="sm" onClick={() => setShowCreate(true)}>
-          <Plus className="h-4 w-4" />
-          Nouvel item
-        </Button>
-      </div>
+      <AdminPageHeader
+        icon={ShoppingBag}
+        kicker="Contenu"
+        title="Boutique"
+        subtitle="Gestion des articles disponibles à l'achat"
+        actions={
+          <Button size="sm" onClick={() => setShowCreate(true)}>
+            <Plus className="h-4 w-4" />
+            Nouvel item
+          </Button>
+        }
+      />
 
       <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-border bg-card">
         {isLoading ? (

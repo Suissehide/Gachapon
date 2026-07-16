@@ -48,6 +48,10 @@ export const dailyShopRouter: FastifyPluginCallbackZod = (fastify) => {
         request.user.userID,
         request.params.itemId,
       )
+      void fastify.iocContainer.activityDomain.record('SHOP_PURCHASE', {
+        userId: request.user.userID,
+        payload: { dailyShop: true, itemId: request.params.itemId },
+      })
       return {
         ...result,
         card: { ...result.card, imageUrl: resolveUrl(result.card.imageUrl) },

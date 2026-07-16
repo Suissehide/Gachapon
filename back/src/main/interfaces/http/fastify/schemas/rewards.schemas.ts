@@ -20,7 +20,13 @@ const rewardAmountsSchema = z.object({
   cardRarity: cardRarityEnum.nullable().optional(),
 })
 
-const rewardSourceEnum = z.enum(['STREAK', 'ACHIEVEMENT', 'QUEST', 'LEVEL_UP'])
+const rewardSourceEnum = z.enum([
+  'STREAK',
+  'ACHIEVEMENT',
+  'QUEST',
+  'LEVEL_UP',
+  'ADMIN',
+])
 
 // A card actually granted by claiming a reward — mirrors the front's PullBatchEntry.
 const claimedCardSchema = z.object({

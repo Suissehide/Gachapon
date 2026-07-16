@@ -1,29 +1,19 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { AlertTriangle, Users } from 'lucide-react'
+import { AlertTriangle, BarChart2, Users } from 'lucide-react'
 
+import { AdminPageHeader } from '../../components/admin/shared/AdminPageHeader.tsx'
+import { Badge } from '../../components/ui/badge.tsx'
 import { Card, CardContent } from '../../components/ui/card.tsx'
+import {
+  RARITY_BADGE_VARIANT,
+  RARITY_COLOR_VAR,
+  RARITY_LABEL_FR,
+} from '../../libs/rarity.ts'
 import { useAdminStats } from '../../queries/useAdminStats'
 
 export const Route = createFileRoute('/_admin/admin/stats')({
   component: AdminStats,
 })
-
-const RARITY_COLORS: Record<string, string> = {
-  COMMON: '#9ca3af',
-  UNCOMMON: '#4ade80',
-  RARE: '#60a5fa',
-  EPIC: '#c084fc',
-  LEGENDARY: '#fbbf24',
-}
-
-const RARITY_LABELS: Record<string, string> = {
-  COMMON: 'Commun',
-  UNCOMMON: 'Peu commun',
-  RARE: 'Rare',
-  EPIC: 'Épique',
-  LEGENDARY: 'Légendaire',
-}
-
 
 function AdminStats() {
   const { data, isLoading } = useAdminStats()
@@ -36,12 +26,16 @@ function AdminStats() {
     )
   }
 
-  const totalUsers =
-    data.skillDistribution.reduce((s, d) => s + d.count, 0)
+  const totalUsers = data.skillDistribution.reduce((s, d) => s + d.count, 0)
 
   return (
     <div className="p-8">
-      <h1 className="mb-6 text-2xl font-black text-text">Statistiques</h1>
+      <AdminPageHeader
+        icon={BarChart2}
+        kicker="Joueurs"
+        title="Statistiques"
+        subtitle="Métriques globales et distribution des raretés"
+      />
 
       {/* Row 1 — Joueurs actifs + Distribution raretés */}
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -104,13 +98,17 @@ function AdminStats() {
               {data.rarityDrift.map(
                 ({ rarity, realCount, realPct, theoreticalPct }) => {
                   const drift = realPct - theoreticalPct
-                  const color = RARITY_COLORS[rarity] ?? '#6b7280'
+                  const colorVar =
+                    RARITY_COLOR_VAR[rarity] ?? 'var(--text-light)'
                   return (
                     <div key={rarity}>
                       <div className="mb-1 flex items-center justify-between text-xs">
-                        <span className="font-semibold" style={{ color }}>
-                          {RARITY_LABELS[rarity] ?? rarity}
-                        </span>
+                        <Badge
+                          variant={RARITY_BADGE_VARIANT[rarity] ?? 'neutral'}
+                          size="sm"
+                        >
+                          {RARITY_LABEL_FR[rarity] ?? rarity}
+                        </Badge>
                         <div className="flex items-center gap-3 text-text-light">
                           <span>
                             théo.{' '}
@@ -141,7 +139,7 @@ function AdminStats() {
                             className="absolute h-full rounded-full opacity-30"
                             style={{
                               width: `${Math.min(theoreticalPct, 100)}%`,
-                              backgroundColor: color,
+                              backgroundColor: colorVar,
                             }}
                           />
                         )}
@@ -150,7 +148,7 @@ function AdminStats() {
                             className="absolute h-full rounded-full"
                             style={{
                               width: `${Math.min(realPct, 100)}%`,
-                              backgroundColor: color,
+                              backgroundColor: colorVar,
                             }}
                           />
                         )}
@@ -176,14 +174,25 @@ function AdminStats() {
             Distribution des compétences
           </p>
           {data.skillDistribution.length === 0 ? (
-            <p className="text-center text-xs text-text-light">Aucune compétence investie</p>
+            <p className="text-center text-xs text-text-light">
+              Aucune compétence investie
+            </p>
           ) : (
             <div className="space-y-1.5">
               {data.skillDistribution.map(({ nodeId, level, count }) => (
-                <div key={`${nodeId}-${level}`} className="flex items-center gap-2">
-                  <span className="w-40 truncate text-xs font-mono text-text-light">{nodeId}</span>
-                  <span className="w-12 text-right text-xs font-mono text-text-light">Niv.{level}</span>
-                  <span className="w-10 text-right text-xs font-mono text-text">{count}</span>
+                <div
+                  key={`${nodeId}-${level}`}
+                  className="flex items-center gap-2"
+                >
+                  <span className="w-40 truncate text-xs font-mono text-text-light">
+                    {nodeId}
+                  </span>
+                  <span className="w-12 text-right text-xs font-mono text-text-light">
+                    Niv.{level}
+                  </span>
+                  <span className="w-10 text-right text-xs font-mono text-text">
+                    {count}
+                  </span>
                 </div>
               ))}
             </div>
@@ -219,7 +228,8 @@ function AdminStats() {
                   <div
                     className="h-2 w-2 flex-shrink-0 rounded-full"
                     style={{
-                      backgroundColor: RARITY_COLORS[card.rarity] ?? '#6b7280',
+                      backgroundColor:
+                        RARITY_COLOR_VAR[card.rarity] ?? 'var(--text-light)',
                     }}
                   />
                   <span className="min-w-0 flex-1 truncate text-sm font-medium text-text">

@@ -5,6 +5,7 @@ import bcrypt from 'bcrypt'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { RefreshTokenRepository } from '../../infra/redis/refresh-token.repository'
 import type { IocContainer } from '../../types/application/ioc'
+import type { IActivityDomain } from '../../types/domain/activity/activity.domain.interface'
 import type { AuthDomainInterface } from '../../types/domain/auth/auth.domain.interface'
 import type {
   JwtPayload,
@@ -33,6 +34,7 @@ export class AuthDomain implements AuthDomainInterface {
   readonly #postgresOrm: PostgresOrm
   readonly #streakDomain: StreakDomainInterface
   readonly #configService: ConfigServiceInterface
+  readonly #activityDomain: IActivityDomain
 
   constructor({
     userRepository,
@@ -42,6 +44,7 @@ export class AuthDomain implements AuthDomainInterface {
     postgresOrm,
     streakDomain,
     configService,
+    activityDomain,
   }: IocContainer) {
     this.#userRepository = userRepository
     this.#refreshTokenRepository = refreshTokenRepository
@@ -50,6 +53,7 @@ export class AuthDomain implements AuthDomainInterface {
     this.#postgresOrm = postgresOrm
     this.#streakDomain = streakDomain
     this.#configService = configService
+    this.#activityDomain = activityDomain
   }
 
   hashPassword(password: string): Promise<string> {
@@ -94,6 +98,12 @@ export class AuthDomain implements AuthDomainInterface {
       email: input.email,
       passwordHash,
       tokens: tokenMaxStock,
+    })
+
+    void this.#activityDomain.record('USER_SIGNUP', {
+      userId: user.id,
+      username: user.username,
+      payload: { username: user.username },
     })
 
     await this.#userRepository.update(user.id, {

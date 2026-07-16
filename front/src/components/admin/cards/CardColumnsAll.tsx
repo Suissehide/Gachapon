@@ -3,8 +3,9 @@ import { Pencil, Trash2 } from 'lucide-react'
 import { useMemo } from 'react'
 
 import notFoundImg from '../../../assets/data/not-found.png'
-import { RARITY_COLORS } from '../../../constants/card.constant'
+import { RARITY_BADGE_VARIANT } from '../../../libs/rarity.ts'
 import type { AdminCard } from '../../../queries/useAdminCards'
+import { Badge } from '../../ui/badge.tsx'
 import { Button } from '../../ui/button'
 
 export function useCardColumnsAll(
@@ -41,11 +42,12 @@ export function useCardColumnsAll(
         header: 'Rareté',
         size: 110,
         cell: ({ row }) => (
-          <span
-            className={`rounded-full px-2 py-0.5 text-xs font-bold ${RARITY_COLORS[row.original.rarity] ?? 'bg-border text-text-light'}`}
+          <Badge
+            variant={RARITY_BADGE_VARIANT[row.original.rarity] ?? 'neutral'}
+            size="sm"
           >
             {row.original.rarity}
-          </span>
+          </Badge>
         ),
       },
       {
@@ -78,7 +80,7 @@ export function useCardColumnsAll(
             <Button
               size="icon-sm"
               variant="ghost"
-              className="text-red-400 hover:text-red-400"
+              className="text-destructive hover:text-destructive"
               onClick={(e) => {
                 e.stopPropagation()
                 onDelete(row.original.id)

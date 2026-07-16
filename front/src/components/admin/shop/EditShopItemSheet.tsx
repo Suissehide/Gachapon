@@ -108,7 +108,7 @@ function EditShopItemForm({
         <Button
           type="button"
           variant="ghost"
-          className="border border-red-500/30 text-red-400 hover:text-red-400"
+          className="border border-destructive/30 text-destructive hover:text-destructive"
           onClick={onDelete}
         >
           Supprimer

@@ -18,6 +18,24 @@ const startApp = async (): Promise<IocContainer> => {
   await configService.bootstrap()
   await httpServer.start()
 
+  const { activityDomain, logger } = iocContainer.instances
+  void activityDomain
+    .purgeOlderThanDays(30)
+    .catch((err: unknown) =>
+      logger.warn(`[starter] purgeOlderThanDays boot failed: ${String(err)}`),
+    )
+  setInterval(
+    () =>
+      void activityDomain
+        .purgeOlderThanDays(30)
+        .catch((err: unknown) =>
+          logger.warn(
+            `[starter] purgeOlderThanDays daily tick failed: ${String(err)}`,
+          ),
+        ),
+    24 * 60 * 60 * 1000,
+  ).unref()
+
   return iocContainer.instances
 }
 

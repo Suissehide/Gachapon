@@ -31,7 +31,7 @@ export function useShopColumns(onEdit: (item: AdminShopItem) => void) {
           <span
             className={`rounded-full px-2 py-0.5 text-xs font-bold ${
               row.original.isActive
-                ? 'bg-green-500/20 text-green-400'
+                ? 'bg-success/20 text-success'
                 : 'bg-border text-text-light'
             }`}
           >
