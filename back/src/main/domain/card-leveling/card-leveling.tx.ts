@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import type { IocContainer } from '../../types/application/ioc'
+import { applyPercentDiscount } from '../shared/discount'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import {
   isAtTopOfPalier,
@@ -13,15 +14,18 @@ export class CardLevelingTx {
   readonly #postgresOrm
   readonly #configService
   readonly #achievementsDomain
+  readonly #skillTreeRepository
 
   constructor({
     postgresOrm,
     configService,
     achievementsDomain,
+    skillTreeRepository,
   }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#configService = configService
     this.#achievementsDomain = achievementsDomain
+    this.#skillTreeRepository = skillTreeRepository
   }
 
   async levelUp(
@@ -53,6 +57,7 @@ export class CardLevelingTx {
       EPIC: c['card.rarityMultEpic'],
       LEGENDARY: c['card.rarityMultLegendary'],
     }
+    const effects = await this.#skillTreeRepository.getEffectsForUser(userId)
 
     return retryOnSerialization(() =>
       this.#postgresOrm.executeWithTransactionClient(
@@ -90,13 +95,16 @@ export class CardLevelingTx {
             c['card.goldCostExp'],
             rarityMult,
           )
-          const dustCost = totalDustCost(
-            currentLevel,
-            targetLevel,
-            rarity,
-            c['card.dustCostBase'],
-            c['card.dustCostExp'],
-            rarityMult,
+          const dustCost = applyPercentDiscount(
+            totalDustCost(
+              currentLevel,
+              targetLevel,
+              rarity,
+              c['card.dustCostBase'],
+              c['card.dustCostExp'],
+              rarityMult,
+            ),
+            effects.upgradeDustDiscount,
           )
 
           const user = await tx.user.findUnique({ where: { id: userId } })
