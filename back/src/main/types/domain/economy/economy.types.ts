@@ -24,4 +24,7 @@ export type UserUpgradeEffects = {
   goldBonus: number
   combatXpBonus: number
   dropBonus: number
+  upgradeDustDiscount: number
+  goldShopDiscount: number
+  dailyShopLuckMultiplier: number
 }
