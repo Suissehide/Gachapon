@@ -4,7 +4,7 @@ import { useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import type { SkillNode as SkillNodeType } from '../../../api/skills.api.ts'
-import { EFFECT_DESCRIPTIONS } from '../../../constants/skills.constant.ts'
+import { EFFECT_DESCRIPTIONS, formatEffect } from '../../../constants/skills.constant.ts'
 
 export type SkillNodeData = {
   node: SkillNodeType
@@ -52,7 +52,7 @@ function NodeTooltip({
           <p className="mt-0.5">
             Actuel :{' '}
             <span className="font-semibold" style={{ color: branchColor }}>
-              {currentEffect.effect}
+              {formatEffect(node.effectType, currentEffect.effect)}
             </span>
           </p>
         )}
@@ -60,7 +60,7 @@ function NodeTooltip({
           <p className="mt-0.5">
             Niv. {userLevel + 1} :{' '}
             <span className="font-semibold text-green-400">
-              {nextEffect.effect}
+              {formatEffect(node.effectType, nextEffect.effect)}
             </span>
           </p>
         )}
