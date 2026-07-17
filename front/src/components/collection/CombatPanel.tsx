@@ -20,9 +20,9 @@ import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
 } from '../../queries/useEconomyConfig'
-import { useSkillTree } from '../../queries/useSkills.ts'
 import { useCardEquipmentBonuses } from '../../queries/useEquipment'
 import { useLevelUpCard } from '../../queries/useLevelUpCard'
+import { useSkillTree } from '../../queries/useSkills.ts'
 import { useAuthStore } from '../../stores/auth.store'
 import {
   dustCostNextLevel,

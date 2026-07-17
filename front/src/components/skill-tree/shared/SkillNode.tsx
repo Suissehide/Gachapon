@@ -1,10 +1,13 @@
 import { Handle, type NodeProps, Position } from '@xyflow/react'
 import * as Icons from 'lucide-react'
-import { useRef, useState } from 'react'
+import { type ComponentType, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import type { SkillNode as SkillNodeType } from '../../../api/skills.api.ts'
-import { EFFECT_DESCRIPTIONS, formatEffect } from '../../../constants/skills.constant.ts'
+import {
+  EFFECT_DESCRIPTIONS,
+  formatEffect,
+} from '../../../constants/skills.constant.ts'
 
 export type SkillNodeData = {
   node: SkillNodeType
@@ -17,7 +20,9 @@ export type SkillNodeData = {
 }
 
 function LucideIcon({ name, size = 16 }: { name: string; size?: number }) {
-  const Icon = (Icons as any)[name]
+  const Icon = Icons[name as keyof typeof Icons] as
+    | ComponentType<{ size?: number }>
+    | undefined
   return Icon ? <Icon size={size} /> : null
 }
 
@@ -121,13 +126,15 @@ export function SkillNodeComponent({ data }: NodeProps) {
   const [hovered, setHovered] = useState(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
 
-  const dots = Array.from({ length: node.maxLevel }, (_, i) => (
-    <div
-      key={i}
-      className="h-1.5 w-1.5 rounded-full"
-      style={{ background: i < userLevel ? branchColor : '#d1d5db' }}
-    />
-  ))
+  const dots = Array.from({ length: node.maxLevel }, (_, i) => i + 1).map(
+    (lvl) => (
+      <div
+        key={lvl}
+        className="h-1.5 w-1.5 rounded-full"
+        style={{ background: lvl <= userLevel ? branchColor : '#d1d5db' }}
+      />
+    ),
+  )
 
   return (
     <button
@@ -163,7 +170,13 @@ export function SkillNodeComponent({ data }: NodeProps) {
             position={pos}
             style={
               isAdmin
-                ? { width: 10, height: 10, background: 'transparent', border: 'none', zIndex: 0 }
+                ? {
+                    width: 10,
+                    height: 10,
+                    background: 'transparent',
+                    border: 'none',
+                    zIndex: 0,
+                  }
                 : { width: 0, height: 0, opacity: 0, pointerEvents: 'none' }
             }
           />
@@ -173,7 +186,13 @@ export function SkillNodeComponent({ data }: NodeProps) {
             position={pos}
             style={
               isAdmin
-                ? { width: 10, height: 10, background: branchColor, border: '2px solid #fff', zIndex: 1 }
+                ? {
+                    width: 10,
+                    height: 10,
+                    background: branchColor,
+                    border: '2px solid #fff',
+                    zIndex: 1,
+                  }
                 : { width: 0, height: 0, opacity: 0, pointerEvents: 'none' }
             }
           />
@@ -195,7 +214,9 @@ export function SkillNodeComponent({ data }: NodeProps) {
       )}
 
       {/* Tooltip joueur — rendu via portal pour échapper au z-index des noeuds React Flow */}
-      {!isAdmin && hovered && buttonRef.current &&
+      {!isAdmin &&
+        hovered &&
+        buttonRef.current &&
         createPortal(
           <PortalTooltip buttonEl={buttonRef.current}>
             <NodeTooltip

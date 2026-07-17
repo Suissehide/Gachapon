@@ -18,7 +18,8 @@ export const EFFECT_DESCRIPTIONS: Record<string, string> = {
   GOLD_BONUS: "Bonus d'or sur les victoires",
   COMBAT_XP_BONUS: "Bonus d'XP de combat",
   DROP_BONUS: 'Chance de butin bonus en combat',
-  UPGRADE_DUST_DISCOUNT: "Réduit le coût en poussière d'amélioration des cartes",
+  UPGRADE_DUST_DISCOUNT:
+    "Réduit le coût en poussière d'amélioration des cartes",
   GOLD_SHOP_DISCOUNT: 'Réduction sur les prix en or de la boutique',
   DAILY_SHOP_LUCK: 'Plus de cartes rares dans ta boutique du jour',
 }
