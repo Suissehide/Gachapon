@@ -59,9 +59,12 @@ const configSchema = z.object({
     .string()
     .default('http://localhost:3000/auth/oauth/discord/callback'),
 
+  // Garde-fou anti-abus global (par IP) : les routes sensibles (auth) ont
+  // leurs propres limites par route, bien plus strictes. 100/min se déclenchait
+  // en navigation normale (rafales de queries au mount + polls + invalidations).
   rateLimitMax: z
     .string()
-    .default('100')
+    .default('300')
     .transform((v) => Number.parseInt(v, 10)),
   rateLimitTimeWindow: z
     .string()
