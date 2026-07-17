@@ -668,6 +668,23 @@ describe('GachaDomain boost: trigger conditions', () => {
   })
 })
 
+describe('pickWeightedRandom avec luckMultiplier', () => {
+  afterEach(() => jest.restoreAllMocks())
+
+  it('boost le poids des raretés RARE+ (Math.random mocké)', () => {
+    const common = makeCard('common', 100, 'COMMON')
+    const rare = makeCard('rare', 100, 'RARE')
+    const spy = jest.spyOn(Math, 'random').mockReturnValue(0.5)
+    // Avec luckMultiplier 2 : total = 100 + 100*2 = 300 ; roll = 0.5*300 = 150
+    // → dépasse common (100), tombe dans rare
+    expect(pickWeightedRandom([common, rare], undefined, 2)).toBe(rare)
+    // Sans boost (luckMultiplier 1) : total = 200 ; roll = 0.5*200 = 100
+    // → roll - common (100) = 0, exactement la frontière → tombe sur common
+    expect(pickWeightedRandom([common, rare], undefined, 1)).toBe(common)
+    spy.mockRestore()
+  })
+})
+
 describe('GachaDomain boost: préséance pity > garantie', () => {
   afterEach(() => jest.restoreAllMocks())
 

@@ -60,12 +60,13 @@ export function weightFor(
 export function pickWeightedRandom(
   cards: CardWithSet[],
   weightBoost?: { weightMultiplier: number; weightRarity: CardRarity | null },
+  luckMultiplier = 1.0,
 ): CardWithSet {
   if (cards.length === 0) {
     throw new Error('No cards to pick from')
   }
   const total = cards.reduce(
-    (sum, c) => sum + weightFor(c, 1.0, weightBoost),
+    (sum, c) => sum + weightFor(c, luckMultiplier, weightBoost),
     0,
   )
   if (total === 0) {
@@ -73,7 +74,7 @@ export function pickWeightedRandom(
   }
   let roll = Math.random() * total
   for (const card of cards) {
-    roll -= weightFor(card, 1.0, weightBoost)
+    roll -= weightFor(card, luckMultiplier, weightBoost)
     if (roll <= 0) {
       return card
     }
