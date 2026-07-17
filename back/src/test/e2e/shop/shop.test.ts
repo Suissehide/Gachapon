@@ -535,4 +535,86 @@ describe('Shop routes', () => {
     expect(typeof body.energyDaily.used).toBe('number')
     expect(body.energyDaily.used).toBeGreaterThanOrEqual(1)
   })
+
+  it('POST /shop/:id/buy — Marchandeur 15 % : amountSpent = 850, gold débité de 850, GET /shop affiche cost = 850', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    // Seed skill tree: branch → node GOLD_SHOP_DISCOUNT → level 1 effect 15 → UserSkill
+    const branch = await postgresOrm.prisma.skillBranch.create({
+      data: {
+        name: `Marchandeur${suffix}`,
+        description: 'Test branch',
+        icon: 'tag',
+        color: '#f59e0b',
+        order: 99,
+      },
+    })
+    const node = await postgresOrm.prisma.skillNode.create({
+      data: {
+        branchId: branch.id,
+        name: 'Marchandeur Lv1',
+        description: 'Remise gold shop',
+        icon: 'tag',
+        maxLevel: 1,
+        effectType: 'GOLD_SHOP_DISCOUNT',
+        posX: 0,
+        posY: 0,
+        levels: { create: [{ level: 1, effect: 15 }] },
+      },
+    })
+    await postgresOrm.prisma.userSkill.create({
+      data: { userId, nodeId: node.id, level: 1 },
+    })
+
+    // Create a GOLD TOKEN_PACK priced at 1000
+    const item = await postgresOrm.prisma.shopItem.create({
+      data: {
+        name: `Marchandeur Pack${suffix}`,
+        description: 'Pack gold avec remise',
+        type: 'TOKEN_PACK',
+        cost: 1000,
+        currency: 'GOLD',
+        value: { tokens: 10 },
+        isActive: true,
+      },
+    })
+
+    // Give user enough gold
+    await postgresOrm.prisma.user.update({
+      where: { id: userId },
+      data: { gold: 2000, tokens: 0 },
+    })
+
+    // GET /shop must show discounted cost = 850
+    const listRes = await app.inject({
+      method: 'GET',
+      url: '/shop',
+      headers: { cookie: cookies },
+    })
+    expect(listRes.statusCode).toBe(200)
+    const listBody = listRes.json()
+    const listed = listBody.items.find((i: any) => i.id === item.id)
+    expect(listed).toBeDefined()
+    expect(listed.cost).toBe(850) // 1000 × 0.85
+
+    // POST /shop/:id/buy
+    const buyRes = await app.inject({
+      method: 'POST',
+      url: `/shop/${item.id}/buy`,
+      headers: { cookie: cookies },
+    })
+    expect(buyRes.statusCode).toBe(200)
+    const buyBody = buyRes.json()
+    expect(buyBody.amountSpent).toBe(850)
+    expect(buyBody.newGoldTotal).toBe(2000 - 850)
+
+    // DB cross-check
+    const dbUser = await postgresOrm.prisma.user.findUnique({ where: { id: userId } })
+    expect(dbUser.gold).toBe(2000 - 850)
+
+    // Cleanup: remove UserSkill + node + branch so later tests see no discount
+    await postgresOrm.prisma.userSkill.delete({ where: { userId_nodeId: { userId, nodeId: node.id } } })
+    await postgresOrm.prisma.skillNode.delete({ where: { id: node.id } })
+    await postgresOrm.prisma.skillBranch.delete({ where: { id: branch.id } })
+  })
 })
