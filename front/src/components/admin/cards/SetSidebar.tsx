@@ -45,15 +45,23 @@ export function SetSidebar({ selectedSetId, onSelect }: SetSidebarProps) {
       </div>
       <div className="flex-1 space-y-1 overflow-y-auto p-2">
         {filteredSets.map((set) => (
-          <button
+          // biome-ignore lint/a11y/useSemanticElements: cannot use <button> — it contains nested action buttons
+          <div
             key={set.id}
-            type="button"
+            role="button"
+            tabIndex={0}
             className={`group flex w-full cursor-pointer items-start gap-2 rounded-lg px-3 py-2 text-left transition-colors ${
               selectedSetId === set.id
                 ? 'border border-primary/30 bg-primary/10'
                 : 'hover:bg-surface'
             }`}
             onClick={() => onSelect(set.id)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onSelect(set.id)
+              }
+            }}
           >
             <div className="min-w-0 flex-1">
               <p
@@ -114,7 +122,7 @@ export function SetSidebar({ selectedSetId, onSelect }: SetSidebarProps) {
                 <Trash2 className="h-3 w-3" />
               </Button>
             </div>
-          </button>
+          </div>
         ))}
       </div>
 

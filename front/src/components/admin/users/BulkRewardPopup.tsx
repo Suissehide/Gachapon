@@ -19,8 +19,11 @@ import {
   PopupTitle,
 } from '../../ui/popup.tsx'
 
+// Radix Select interdit une value vide sur un Item — on utilise un sentinel
+const NO_RARITY = 'NONE'
+
 const RARITY_OPTIONS = [
-  { value: '', label: '— Aucune —' },
+  { value: NO_RARITY, label: '— Aucune —' },
   ...Object.entries(RARITY_LABEL_FR).map(([value, label]) => ({
     value,
     label,
@@ -42,7 +45,7 @@ function isRewardEmpty(value: RewardFormValues): boolean {
     (value.dust == null || value.dust === 0) &&
     (value.xp == null || value.xp === 0) &&
     (value.gold == null || value.gold === 0) &&
-    !value.cardRarity
+    (!value.cardRarity || value.cardRarity === NO_RARITY)
   )
 }
 
@@ -60,7 +63,7 @@ function buildReward(value: RewardFormValues): BulkRewardBody['reward'] {
   if (value.gold != null) {
     reward.gold = value.gold
   }
-  if (value.cardRarity) {
+  if (value.cardRarity && value.cardRarity !== NO_RARITY) {
     reward.cardRarity = value.cardRarity
   }
   return reward
@@ -92,7 +95,7 @@ export function BulkRewardPopup({
       dust: undefined as number | undefined,
       xp: undefined as number | undefined,
       gold: undefined as number | undefined,
-      cardRarity: '',
+      cardRarity: NO_RARITY,
       message: '',
     },
     onSubmit: ({ value }) => {

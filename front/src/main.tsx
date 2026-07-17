@@ -1,3 +1,5 @@
+import { LocalizationProvider } from '@mui/x-date-pickers'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { createRouter, RouterProvider } from '@tanstack/react-router'
 import dayjs from 'dayjs'
@@ -49,7 +51,9 @@ if (rootElement && !rootElement.innerHTML) {
     <StrictMode>
       <HelmetProvider>
         <QueryClientProvider client={queryClient}>
-          <RouterProvider router={router} />
+          <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
+            <RouterProvider router={router} />
+          </LocalizationProvider>
           <ReactQueryDevtools initialIsOpen={false} position={'right'} />
         </QueryClientProvider>
       </HelmetProvider>

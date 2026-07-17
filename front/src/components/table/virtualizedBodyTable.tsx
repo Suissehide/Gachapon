@@ -49,7 +49,7 @@ export function VirtualizedBodyTable<TData>({
 
   if (rowCount === 0) {
     return (
-      <tbody className="bg-background">
+      <tbody className="bg-card">
         <tr>
           <td
             colSpan={table.getAllLeafColumns().length}
@@ -70,7 +70,7 @@ export function VirtualizedBodyTable<TData>({
   }
 
   return (
-    <tbody className="bg-background">
+    <tbody className="bg-card">
       {paddingTop > 0 && (
         <tr style={{ height: paddingTop }}>
           <td colSpan={table.getAllLeafColumns().length} />
@@ -92,8 +92,8 @@ export function VirtualizedBodyTable<TData>({
             style={{ height: rowHeight }}
             className={`group border-b border-border/30 transition-[background-color,box-shadow] duration-150 ${
               onRowClick
-                ? 'cursor-pointer hover:bg-amber-50/60'
-                : 'hover:bg-muted/40'
+                ? 'cursor-pointer hover:bg-amber-100/60'
+                : 'hover:bg-amber-50'
             }`}
             onClick={onRowClick ? () => onRowClick(row) : undefined}
           >

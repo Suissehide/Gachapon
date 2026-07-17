@@ -51,6 +51,8 @@ export function MediaGallery({
             <img
               src={item.url}
               alt={item.key}
+              loading="lazy"
+              decoding="async"
               className="h-full w-full object-contain p-2"
               onError={(e) => {
                 ;(e.target as HTMLImageElement).style.display = 'none'
