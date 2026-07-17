@@ -26,6 +26,9 @@ const NEUTRAL_EFFECTS: UserUpgradeEffects = {
   goldBonus: 0,
   combatXpBonus: 0,
   dropBonus: 0,
+  upgradeDustDiscount: 0,
+  goldShopDiscount: 0,
+  dailyShopLuckMultiplier: 1.0,
 }
 
 export function getSkillEffects(rows: SkillEffectRow[]): UserUpgradeEffects {
@@ -39,10 +42,10 @@ export function getSkillEffects(rows: SkillEffectRow[]): UserUpgradeEffects {
         result.tokenVaultBonus += row.effect
         break
       case 'LUCK':
-        result.luckMultiplier += row.effect
+        result.luckMultiplier += row.effect / 100
         break
       case 'DUST_HARVEST':
-        result.dustHarvestMultiplier += row.effect
+        result.dustHarvestMultiplier += row.effect / 100
         break
       case 'FREE_PULL_CHANCE':
         result.freePullChance += row.effect
@@ -63,7 +66,7 @@ export function getSkillEffects(rows: SkillEffectRow[]): UserUpgradeEffects {
         result.pityReduction += row.effect
         break
       case 'VARIANT_LUCK':
-        result.variantLuckMultiplier += row.effect
+        result.variantLuckMultiplier += row.effect / 100
         break
       case 'DAILY_SHOP_SLOT':
         result.dailyShopSlots += row.effect
@@ -88,6 +91,15 @@ export function getSkillEffects(rows: SkillEffectRow[]): UserUpgradeEffects {
         break
       case 'DROP_BONUS':
         result.dropBonus += row.effect
+        break
+      case 'UPGRADE_DUST_DISCOUNT':
+        result.upgradeDustDiscount += row.effect
+        break
+      case 'GOLD_SHOP_DISCOUNT':
+        result.goldShopDiscount += row.effect
+        break
+      case 'DAILY_SHOP_LUCK':
+        result.dailyShopLuckMultiplier += row.effect / 100
         break
     }
   }

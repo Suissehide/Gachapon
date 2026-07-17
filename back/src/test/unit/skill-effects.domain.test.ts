@@ -27,16 +27,16 @@ describe('getSkillEffects', () => {
     expect(effects.tokenVaultBonus).toBe(10)
   })
 
-  it('LUCK : luckMultiplier = 1 + somme des effets', () => {
+  it('LUCK : luckMultiplier = 1 + somme des points de % / 100', () => {
     const effects = getSkillEffects([
-      { effectType: 'LUCK', effect: 0.1 },
-      { effectType: 'LUCK', effect: 0.25 },
+      { effectType: 'LUCK', effect: 10 },
+      { effectType: 'LUCK', effect: 25 },
     ])
     expect(effects.luckMultiplier).toBeCloseTo(1.35)
   })
 
-  it('DUST_HARVEST : dustHarvestMultiplier = 1 + somme des effets', () => {
-    const effects = getSkillEffects([{ effectType: 'DUST_HARVEST', effect: 0.5 }])
+  it('DUST_HARVEST : dustHarvestMultiplier = 1 + somme des points de % / 100', () => {
+    const effects = getSkillEffects([{ effectType: 'DUST_HARVEST', effect: 50 }])
     expect(effects.dustHarvestMultiplier).toBeCloseTo(1.5)
   })
 
@@ -66,7 +66,7 @@ describe('getSkillEffects', () => {
   it('combine plusieurs types différents', () => {
     const effects = getSkillEffects([
       { effectType: 'REGEN', effect: 2 },
-      { effectType: 'LUCK', effect: 0.1 },
+      { effectType: 'LUCK', effect: 10 },
       { effectType: 'FREE_PULL_CHANCE', effect: 0.04 },
     ])
     expect(effects.regenReductionMinutes).toBe(2)
@@ -96,8 +96,8 @@ describe('skill-effects aggregation v2', () => {
       { effectType: 'PULL_XP_BONUS', effect: 10 },
       { effectType: 'PULL_XP_BONUS', effect: 20 },
       { effectType: 'PITY_BOOST', effect: 5 },
-      { effectType: 'VARIANT_LUCK', effect: 0.25 },
-      { effectType: 'VARIANT_LUCK', effect: 0.5 },
+      { effectType: 'VARIANT_LUCK', effect: 25 },
+      { effectType: 'VARIANT_LUCK', effect: 50 },
       { effectType: 'DAILY_SHOP_SLOT', effect: 1 },
       { effectType: 'PC_VAULT', effect: 10 },
       { effectType: 'PC_REGEN', effect: 120 },
@@ -118,5 +118,27 @@ describe('skill-effects aggregation v2', () => {
     expect(fx.combatXpBonus).toBe(10)
     expect(fx.dropBonus).toBe(40)
     expect(fx.wishlistCooldownReductionDays).toBe(2)
+  })
+})
+
+describe('skill-effects nouveaux effets Collection', () => {
+  it('neutre : nouveaux champs à zéro / 1.0', () => {
+    const fx = getSkillEffects([])
+    expect(fx.upgradeDustDiscount).toBe(0)
+    expect(fx.goldShopDiscount).toBe(0)
+    expect(fx.dailyShopLuckMultiplier).toBe(1.0)
+  })
+  it('UPGRADE_DUST_DISCOUNT / GOLD_SHOP_DISCOUNT : additionne les %', () => {
+    const fx = getSkillEffects([
+      { effectType: 'UPGRADE_DUST_DISCOUNT', effect: 5 },
+      { effectType: 'UPGRADE_DUST_DISCOUNT', effect: 10 },
+      { effectType: 'GOLD_SHOP_DISCOUNT', effect: 15 },
+    ])
+    expect(fx.upgradeDustDiscount).toBe(15)
+    expect(fx.goldShopDiscount).toBe(15)
+  })
+  it('DAILY_SHOP_LUCK : multiplicateur = 1 + points de % / 100', () => {
+    const fx = getSkillEffects([{ effectType: 'DAILY_SHOP_LUCK', effect: 35 }])
+    expect(fx.dailyShopLuckMultiplier).toBeCloseTo(1.35)
   })
 })

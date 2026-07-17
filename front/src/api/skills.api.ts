@@ -33,24 +33,31 @@ export type SkillBranch = {
   order: number
   nodes: SkillNode[]
 }
+export type SkillEffects = {
+  upgradeDustDiscount: number
+  goldShopDiscount: number
+  [key: string]: number
+}
 export type SkillTreeState = {
   branches: SkillBranch[]
   userSkills: { userId: string; nodeId: string; level: number }[]
   skillPoints: number
   totalInvested: number
   resetCost: number
+  effects: SkillEffects
 }
 export type SkillConfig = { id: number; resetCostPerPoint: number }
 
 export const SkillsApi = {
   getState: async (): Promise<SkillTreeState> => {
     const res = await fetchWithAuth(`${apiUrl}/skills`)
-    if (!res.ok)
+    if (!res.ok) {
       handleHttpError(
         res,
         {},
         "Erreur lors du chargement de l'arbre de compétences",
       )
+    }
     return res.json()
   },
 
@@ -60,7 +67,9 @@ export const SkillsApi = {
     const res = await fetchWithAuth(`${apiUrl}/skills/${nodeId}/invest`, {
       method: 'POST',
     })
-    if (!res.ok) handleHttpError(res, {}, "Erreur lors de l'investissement")
+    if (!res.ok) {
+      handleHttpError(res, {}, "Erreur lors de l'investissement")
+    }
     return res.json()
   },
 
@@ -72,12 +81,13 @@ export const SkillsApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ allocations }),
     })
-    if (!res.ok)
+    if (!res.ok) {
       handleHttpError(
         res,
         {},
         "Erreur lors de l'enregistrement des compétences",
       )
+    }
     return res.json()
   },
 
@@ -85,22 +95,26 @@ export const SkillsApi = {
     const res = await fetchWithAuth(`${apiUrl}/skills/reset`, {
       method: 'POST',
     })
-    if (!res.ok) handleHttpError(res, {}, 'Erreur lors du reset')
+    if (!res.ok) {
+      handleHttpError(res, {}, 'Erreur lors du reset')
+    }
     return res.json()
   },
 
   // Admin
   adminGetTree: async (): Promise<SkillBranch[]> => {
     const res = await fetchWithAuth(`${apiUrl}/admin/skills/tree`)
-    if (!res.ok)
+    if (!res.ok) {
       handleHttpError(res, {}, "Erreur lors du chargement de l'arbre")
+    }
     return res.json()
   },
 
   adminGetConfig: async (): Promise<SkillConfig> => {
     const res = await fetchWithAuth(`${apiUrl}/admin/skills/config`)
-    if (!res.ok)
+    if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors du chargement de la config')
+    }
     return res.json()
   },
 
@@ -112,8 +126,9 @@ export const SkillsApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     })
-    if (!res.ok)
+    if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors de la mise à jour de la config')
+    }
     return res.json()
   },
 
@@ -125,8 +140,9 @@ export const SkillsApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     })
-    if (!res.ok)
+    if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors de la création de la branche')
+    }
     return res.json()
   },
 
@@ -139,8 +155,9 @@ export const SkillsApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     })
-    if (!res.ok)
+    if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors de la mise à jour de la branche')
+    }
     return res.json()
   },
 
@@ -148,8 +165,9 @@ export const SkillsApi = {
     const res = await fetchWithAuth(`${apiUrl}/admin/skills/branches/${id}`, {
       method: 'DELETE',
     })
-    if (!res.ok)
+    if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors de la suppression de la branche')
+    }
   },
 
   adminCreateNode: async (
@@ -160,7 +178,9 @@ export const SkillsApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     })
-    if (!res.ok) handleHttpError(res, {}, 'Erreur lors de la création du nœud')
+    if (!res.ok) {
+      handleHttpError(res, {}, 'Erreur lors de la création du nœud')
+    }
     return res.json()
   },
 
@@ -173,8 +193,9 @@ export const SkillsApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     })
-    if (!res.ok)
+    if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors de la mise à jour du nœud')
+    }
     return res.json()
   },
 
@@ -182,8 +203,9 @@ export const SkillsApi = {
     const res = await fetchWithAuth(`${apiUrl}/admin/skills/nodes/${id}`, {
       method: 'DELETE',
     })
-    if (!res.ok)
+    if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors de la suppression du nœud')
+    }
   },
 
   adminCreateEdge: async (data: SkillEdge): Promise<SkillEdge> => {
@@ -192,8 +214,9 @@ export const SkillsApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     })
-    if (!res.ok)
+    if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors de la création de la connexion')
+    }
     return res.json()
   },
 
@@ -207,7 +230,8 @@ export const SkillsApi = {
         method: 'DELETE',
       },
     )
-    if (!res.ok)
+    if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors de la suppression de la connexion')
+    }
   },
 }

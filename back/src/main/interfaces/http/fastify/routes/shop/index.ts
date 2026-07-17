@@ -1,5 +1,6 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
+import { applyPercentDiscount } from '../../../../../domain/shared/discount'
 import {
   buyShopItemResponseSchema,
   getShopResponseSchema,
@@ -20,18 +21,21 @@ export const shopRouter: FastifyPluginCallbackZod = (fastify) => {
       const userId = request.user.userID
       const startOfDayUtc = new Date()
       startOfDayUtc.setUTCHours(0, 0, 0, 0)
-      const [items, activeBoosts, cfg, energyUsed] = await Promise.all([
-        shopItemRepository.findActive(),
-        userBoostRepository.findActiveByUser(userId),
-        fastify.iocContainer.configService.getMany('shop.energyDailyCap'),
-        fastify.iocContainer.postgresOrm.prisma.purchase.count({
-          where: {
-            userId,
-            purchasedAt: { gte: startOfDayUtc },
-            shopItem: { type: 'ENERGY_PACK' },
-          },
-        }),
-      ])
+      const [items, activeBoosts, cfg, energyUsed, effects] = await Promise.all(
+        [
+          shopItemRepository.findActive(),
+          userBoostRepository.findActiveByUser(userId),
+          fastify.iocContainer.configService.getMany('shop.energyDailyCap'),
+          fastify.iocContainer.postgresOrm.prisma.purchase.count({
+            where: {
+              userId,
+              purchasedAt: { gte: startOfDayUtc },
+              shopItem: { type: 'ENERGY_PACK' },
+            },
+          }),
+          fastify.iocContainer.skillTreeRepository.getEffectsForUser(userId),
+        ],
+      )
       return {
         energyDaily: { cap: cfg['shop.energyDailyCap'], used: energyUsed },
         items: items.map((item) => {
@@ -59,7 +63,10 @@ export const shopRouter: FastifyPluginCallbackZod = (fastify) => {
             name: item.name,
             description: item.description,
             type: item.type,
-            cost: item.cost,
+            cost:
+              item.currency === 'GOLD'
+                ? applyPercentDiscount(item.cost, effects.goldShopDiscount)
+                : item.cost,
             currency: item.currency,
             value: item.value,
             activeBoost,

@@ -160,4 +160,92 @@ describe('POST /cards/:userCardId/level-up', () => {
     })
     expect(res.statusCode).toBe(404)
   })
+
+  it('Artisan 15 % : dustSpent remisé, goldSpent NON remisé (LEGENDARY 1→5)', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    // Seed skill: UPGRADE_DUST_DISCOUNT effect 15
+    const branch = await postgresOrm.prisma.skillBranch.create({
+      data: {
+        name: `Artisan${suffix}`,
+        description: 'Test branch',
+        icon: 'hammer',
+        color: '#10b981',
+        order: 98,
+      },
+    })
+    const node = await postgresOrm.prisma.skillNode.create({
+      data: {
+        branchId: branch.id,
+        name: 'Artisan Lv1',
+        description: 'Remise dust upgrade',
+        icon: 'hammer',
+        maxLevel: 1,
+        effectType: 'UPGRADE_DUST_DISCOUNT',
+        posX: 0,
+        posY: 0,
+        levels: { create: [{ level: 1, effect: 15 }] },
+      },
+    })
+    await postgresOrm.prisma.userSkill.create({
+      data: { userId, nodeId: node.id, level: 1 },
+    })
+
+    // Create a LEGENDARY card + UserCard at level 1, palier 1
+    const set2 = await postgresOrm.prisma.cardSet.create({
+      data: { name: `ArtisanSet${suffix}`, isActive: false },
+    })
+    const legendCard = await postgresOrm.prisma.card.create({
+      data: {
+        name: `ArtisanCard${suffix}`,
+        rarity: 'LEGENDARY',
+        dropWeight: 1,
+        setId: set2.id,
+        baseHp: 500,
+        baseAtk: 50,
+        baseDef: 30,
+        baseSpd: 80,
+      },
+    })
+    const artisanUc = await postgresOrm.prisma.userCard.create({
+      data: {
+        userId,
+        cardId: legendCard.id,
+        variant: 'NORMAL',
+        quantity: 1,
+        level: 1,
+        palier: 1,
+      },
+    })
+
+    // Give the user plenty of gold and dust
+    await postgresOrm.prisma.user.update({
+      where: { id: userId },
+      data: { gold: 100000, dust: 100000 },
+    })
+
+    // Expected costs for LEGENDARY 1→5 (defaults: dustBase=0.5, dustExp=1.4, goldBase=5, goldExp=1.6, rarityMult=3.0)
+    // raw dust = sum Math.round(0.5 * n^1.4 * 3) for n=1..4 = 2+4+7+10 = 23
+    // discounted dust = Math.round(23 * 0.85) = 20
+    // raw gold = sum Math.round(5 * n^1.6 * 3) for n=1..4 = 15+45+87+138 = 285 (no discount)
+    const expectedRawDust = 23
+    const expectedDustSpent = Math.round(expectedRawDust * 0.85) // 20
+    const expectedGoldSpent = 285
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/cards/${artisanUc.id}/level-up`,
+      headers: { cookie: cookies },
+      payload: { targetLevel: 5 },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.dustSpent).toBe(expectedDustSpent) // 20, not 23
+    expect(body.goldSpent).toBe(expectedGoldSpent) // 285, not discounted
+
+    // Cleanup
+    await postgresOrm.prisma.userSkill.delete({ where: { userId_nodeId: { userId, nodeId: node.id } } })
+    await postgresOrm.prisma.skillNode.delete({ where: { id: node.id } })
+    await postgresOrm.prisma.skillBranch.delete({ where: { id: branch.id } })
+  })
 })

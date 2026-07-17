@@ -1,31 +1,61 @@
 import type { PrismaClient } from '../../src/generated/client'
 
+const CHAPTER_COUNT = 5
+const STAGES_PER_CHAPTER = 10
+
 // Enemy baseline sits slightly BELOW a level-1 COMMON player card
 // (100/10/5/90) so a starter team can clear stage 1-1 and start earning gold.
-// Difficulty scales ×1.18 per stage inside a chapter and ×2.0 per chapter,
-// so chapter 2 opens roughly at the power level of the chapter 1 boss.
 const ENEMY_BASE = { baseHp: 80, baseAtk: 8, baseDef: 4, baseSpd: 85 }
 
-// Balance de difficulté. Montée intra-chapitre raide (×1.18/stage) pour que
-// lever ses persos compte ; saut inter-chapitre adouci (×2.0) pour éviter le
-// mur au changement de chapitre. Boss = check de build : PV ×2.75 + AOE_3
-// (frappe toute l'équipe). L'AOE sur un solo est brutal, donc l'atk n'est PAS
-// gonflée (×1.0) — calibré par simulation pour un seuil de victoire ≈ stage 9
-// +11 % (un joueur qui vient de finir les 1-9 doit se gear un peu). Baisser
-// ces mults rend le boss plus souple ; l'ancien ×4 PV / ×1.5 atk était
-// invincible même à 2× la puissance affichée.
-const CHAPTER_MULT = 2.0
-const STAGE_MULT = 1.18
-const BOSS_HP_MULT = 2.75
-const BOSS_ATK_MULT = 1.0
+// Courbe de difficulté CONTINUE et CONCAVE sur le n° de stage global
+// n = (chapitre-1)×10 + index (1..50) : mult(n) = (1 + 0.08·(n-1))^2.5.
+// Croissance relative ≈ +21 %/stage au début puis ~+4 %/stage en fin de jeu —
+// calquée sur le coût des niveaux de carte : les premiers niveaux sont bon
+// marché (montée rapide possible), chaque niveau devient ensuite cher
+// (gold ∝ L^1.6, dust ∝ L^1.4), donc la difficulté ralentit d'autant.
+// Remplace l'ancien 2^(chapitre-1) × 1.18^(index-1) qui faisait des dents de
+// scie : 3-1 retombait sous 2-6 alors que le boss 2-10 restait le meilleur
+// farm — désormais le niveau d'équipe requis est strictement croissant
+// (vérifié par simulation : COMMON ~21 au boss 1, EPIC ~41 fin ch.3,
+// LÉGENDAIRE ~57 au boss final).
+const CURVE_A = 0.08
+const CURVE_B = 2.5
 
-// First-clear recalé sur la difficulté : base modeste, ramp ×1.18/stage, et
-// montée inter-chapitre plus douce (×1.5) que la difficulté (progresser reste
-// optimal, farmer un vieux chapitre reste digne). Équipement garanti à partir
-// de 1-3 (1-1/1-2 trop faciles).
+// Boss = check de build : PV ×3.25 + AOE_3 (frappe toute l'équipe, threat ×7
+// dans la jauge affichée). L'atk n'est PAS gonflée (×1.0) : l'AOE sur un solo
+// est déjà brutal. Calibré par simulation sous la courbe lissée : seuil de
+// victoire ≈ stage 9 +2 à +5 niveaux selon le chapitre (×3.75 créait un mur
+// de +15 niveaux au boss final, ×2.75 ne dépassait plus le stage 9).
+const BOSS_HP_MULT = 3.25
+
+// Le butin scale comme mult^exp avec exp < 1 : la difficulté croît plus vite
+// que le butin, donc progresser reste optimal et farmer un vieux stage reste
+// digne. 0.585 = ln(1.5)/ln(2), le même ratio farm/difficulté que l'ancien
+// couple ×1.5 butin / ×2 difficulté par chapitre. First-clear un peu plus
+// généreux (0.75) : récompense one-shot, elle finance la montée en niveau.
+const FARM_EXP = 0.585
+const FIRST_CLEAR_EXP = 0.75
+const FARM_GOLD_BASE = 50
+const FARM_DUST_BASE = 4
+const FARM_XP_BASE = 6
 const FIRST_CLEAR_GOLD_BASE = 120
 const FIRST_CLEAR_DUST_BASE = 30
 const FIRST_CLEAR_XP_BASE = 22
+
+// Prime de farm du boss par rapport à un stage normal de même position.
+// Alignée sur son surcoût de difficulté réel (+2 à +5 niveaux requis, fight
+// mono-cible) — l'ancien ×2.5 rendait le boss N-10 plus rentable que TOUS les
+// stages normaux du chapitre N+1 (boss 2-10 : 45 dust vs 23 pour un 3-7
+// pourtant plus dur), vidant la progression de son intérêt.
+const BOSS_FARM_PREMIUM = 1.25
+
+function globalStage(chapter: number, stageIndex: number): number {
+  return (chapter - 1) * STAGES_PER_CHAPTER + stageIndex
+}
+
+export function difficultyMult(chapter: number, stageIndex: number): number {
+  return (1 + CURVE_A * (globalStage(chapter, stageIndex) - 1)) ** CURVE_B
+}
 
 // Apparence cosmétique par étage : clé `${chapter}-${index}`, valeur = liste
 // de sous-chemins MinIO (sans cards/ ni .png), un par slot d'ennemi dans l'ordre.
@@ -53,7 +83,7 @@ function looksForStage(chapter: number, stageIndex: number): string[] {
 }
 
 export function enemyPower(chapter: number, stageIndex: number) {
-  const mult = CHAPTER_MULT ** (chapter - 1) * STAGE_MULT ** (stageIndex - 1)
+  const mult = difficultyMult(chapter, stageIndex)
   return {
     baseHp: Math.round(ENEMY_BASE.baseHp * mult),
     baseAtk: Math.round(ENEMY_BASE.baseAtk * mult),
@@ -80,7 +110,7 @@ export function bossEnemyTeam(chapter: number, stageIndex: number) {
   return [
     {
       baseHp: Math.round(p.baseHp * BOSS_HP_MULT),
-      baseAtk: Math.round(p.baseAtk * BOSS_ATK_MULT),
+      baseAtk: p.baseAtk,
       baseDef: Math.round(p.baseDef * 1.2),
       baseSpd: 100,
       level: 1,
@@ -91,11 +121,10 @@ export function bossEnemyTeam(chapter: number, stageIndex: number) {
   ]
 }
 
-// Le butin farm scale ×1,5 par chapitre (la difficulté scale ×2,0 : progresser
-// reste optimal, farmer un vieux chapitre reste digne). Spec §4b.
 export function lootTableNormal(chapter: number, stageIndex: number) {
-  const m = 1.5 ** (chapter - 1)
-  const stageRamp = STAGE_MULT ** (stageIndex - 1)
+  const d = difficultyMult(chapter, stageIndex)
+  const farmScale = d ** FARM_EXP
+  const firstClearScale = d ** FIRST_CLEAR_EXP
   const minRarity = stageIndex <= 3 ? 'COMMON' : 'UNCOMMON'
   const farmWeights =
     stageIndex <= 3
@@ -111,9 +140,9 @@ export function lootTableNormal(chapter: number, stageIndex: number) {
     xp: number
     guaranteedEquipment?: { minRarity: string }
   } = {
-    gold: Math.round(FIRST_CLEAR_GOLD_BASE * stageRamp * m),
-    dust: Math.round(FIRST_CLEAR_DUST_BASE * stageRamp * m),
-    xp: Math.round(FIRST_CLEAR_XP_BASE * stageRamp * m),
+    gold: Math.round(FIRST_CLEAR_GOLD_BASE * firstClearScale),
+    dust: Math.round(FIRST_CLEAR_DUST_BASE * firstClearScale),
+    xp: Math.round(FIRST_CLEAR_XP_BASE * firstClearScale),
   }
   // Équipement garanti seulement à partir de 1-3.
   if (stageIndex >= 3) {
@@ -123,9 +152,9 @@ export function lootTableNormal(chapter: number, stageIndex: number) {
   return {
     firstClear,
     farm: {
-      gold: Math.round((40 + 10 * stageIndex) * m),
-      dust: Math.round((3 + stageIndex) * m),
-      xp: Math.round((5 + stageIndex) * m),
+      gold: Math.round(FARM_GOLD_BASE * farmScale),
+      dust: Math.round(FARM_DUST_BASE * farmScale),
+      xp: Math.round(FARM_XP_BASE * farmScale),
       equipmentDropChance: 0.15 + 0.05 * t,
       equipmentWeights: farmWeights,
       cardChance: 0.005 + 0.005 * t,
@@ -138,7 +167,7 @@ export function lootTableNormal(chapter: number, stageIndex: number) {
 // la campagne offrait quasiment tout le haut de la collection (spec §7).
 export function bossLoot(chapter: number) {
   const m = 1.5 ** (chapter - 1)
-  const stage9 = lootTableNormal(chapter, 9)
+  const atBossStage = lootTableNormal(chapter, STAGES_PER_CHAPTER)
   return {
     firstClear: {
       gold: Math.round(5000 * m),
@@ -148,18 +177,15 @@ export function bossLoot(chapter: number) {
       guaranteedCard: { minRarity: chapter <= 3 ? 'RARE' : 'EPIC' },
     },
     farm: {
-      gold: Math.round(stage9.farm.gold * 2.5),
-      dust: Math.round(stage9.farm.dust * 2.5),
-      xp: Math.round(stage9.farm.xp * 2.5),
+      gold: Math.round(atBossStage.farm.gold * BOSS_FARM_PREMIUM),
+      dust: Math.round(atBossStage.farm.dust * BOSS_FARM_PREMIUM),
+      xp: Math.round(atBossStage.farm.xp * BOSS_FARM_PREMIUM),
       equipmentDropChance: 0.3,
       equipmentWeights: { UNCOMMON: 40, RARE: 40, EPIC: 18, LEGENDARY: 2 },
       cardChance: 0.02,
     },
   }
 }
-
-const CHAPTER_COUNT = 5
-const STAGES_PER_CHAPTER = 10
 
 export async function seedCampaign(
   tx: Parameters<Parameters<PrismaClient['$transaction']>[0]>[0],

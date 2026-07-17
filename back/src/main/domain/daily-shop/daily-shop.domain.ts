@@ -133,7 +133,11 @@ export class DailyShopDomain implements IDailyShopDomain {
     const picked: typeof activeCards = []
     let pool = [...activeCards]
     for (let i = 0; i < slots; i++) {
-      const card = pickWeightedRandom(pool)
+      const card = pickWeightedRandom(
+        pool,
+        undefined,
+        effects.dailyShopLuckMultiplier ?? 1,
+      )
       picked.push(card)
       pool = pool.filter((c) => c.id !== card.id)
     }

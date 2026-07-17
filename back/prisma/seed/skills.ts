@@ -55,9 +55,9 @@ export async function seedSkills(tx: Tx) {
   // ══════════════════════════════════════════════
   //  FLUX — spreads upward from center (top handle)
   //
-  //    [Ferveur]  [Token Surge]  [Grande réserve]
+  //    [Ferveur]  [Déferlante]  [Grande réserve]
   //        |       /        \        |
-  //   [Multi-ticket]      [Tirage gratuit]
+  //   [Multi-jetons]      [Tirage gratuit]
   //        \                    /
   //       [Regen]          [Stockage]
   //            \           /
@@ -67,18 +67,20 @@ export async function seedSkills(tx: Tx) {
   const regen = await tx.skillNode.create({
     data: {
       branchId: flux.id,
-      name: 'Regen',
-      description: 'Réduit le délai de régénération des tickets',
+      name: 'Régénération',
+      description: 'Réduit le délai de régénération des jetons',
       icon: 'Timer',
-      maxLevel: 3,
+      maxLevel: 5,
       effectType: 'REGEN',
       posX: -72,
       posY: -168,
       levels: {
         create: [
-          { level: 1, effect: 10 },
-          { level: 2, effect: 20 },
-          { level: 3, effect: 30 },
+          { level: 1, effect: 5 },
+          { level: 2, effect: 10 },
+          { level: 3, effect: 15 },
+          { level: 4, effect: 20 },
+          { level: 5, effect: 30 },
         ],
       },
     },
@@ -87,9 +89,9 @@ export async function seedSkills(tx: Tx) {
     data: {
       branchId: flux.id,
       name: 'Stockage',
-      description: 'Augmente le stockage max de tickets',
+      description: 'Augmente le stockage max de jetons',
       icon: 'Database',
-      maxLevel: 3,
+      maxLevel: 5,
       effectType: 'TOKEN_VAULT',
       posX: 72,
       posY: -168,
@@ -98,6 +100,8 @@ export async function seedSkills(tx: Tx) {
           { level: 1, effect: 1 },
           { level: 2, effect: 2 },
           { level: 3, effect: 3 },
+          { level: 4, effect: 4 },
+          { level: 5, effect: 5 },
         ],
       },
     },
@@ -105,8 +109,8 @@ export async function seedSkills(tx: Tx) {
   const multiToken = await tx.skillNode.create({
     data: {
       branchId: flux.id,
-      name: 'Multi-ticket',
-      description: 'Chance de recevoir plusieurs tickets à la fois',
+      name: 'Multi-jetons',
+      description: 'Chance de recevoir plusieurs jetons à la fois',
       icon: 'Layers',
       maxLevel: 3,
       effectType: 'MULTI_TOKEN_CHANCE',
@@ -114,9 +118,9 @@ export async function seedSkills(tx: Tx) {
       posY: -336,
       levels: {
         create: [
-          { level: 1, effect: 5 },
-          { level: 2, effect: 10 },
-          { level: 3, effect: 15 },
+          { level: 1, effect: 2 },
+          { level: 2, effect: 4 },
+          { level: 3, effect: 6 },
         ],
       },
     },
@@ -125,9 +129,9 @@ export async function seedSkills(tx: Tx) {
     data: {
       branchId: flux.id,
       name: 'Tirage gratuit',
-      description: 'Chance de tirer sans consommer de ticket',
+      description: 'Chance de tirer sans consommer de jeton',
       icon: 'Gift',
-      maxLevel: 3,
+      maxLevel: 5,
       effectType: 'FREE_PULL_CHANCE',
       posX: 72,
       posY: -336,
@@ -135,7 +139,9 @@ export async function seedSkills(tx: Tx) {
         create: [
           { level: 1, effect: 1 },
           { level: 2, effect: 2 },
-          { level: 3, effect: 3 },
+          { level: 3, effect: 4 },
+          { level: 4, effect: 6 },
+          { level: 5, effect: 10 },
         ],
       },
     },
@@ -143,21 +149,15 @@ export async function seedSkills(tx: Tx) {
   const tokenSurge = await tx.skillNode.create({
     data: {
       branchId: flux.id,
-      name: 'Ticket Surge',
-      description: 'Boost massif de chance multi-ticket',
+      name: 'Déferlante',
+      description: 'Boost massif de chance multi-jetons',
       icon: 'Flame',
-      maxLevel: 5,
+      maxLevel: 1,
       effectType: 'MULTI_TOKEN_CHANCE',
       posX: 0,
       posY: -504,
       levels: {
-        create: [
-          { level: 1, effect: 4 },
-          { level: 2, effect: 8 },
-          { level: 3, effect: 12 },
-          { level: 4, effect: 16 },
-          { level: 5, effect: 20 },
-        ],
+        create: [{ level: 1, effect: 4 }],
       },
     },
   })
@@ -167,15 +167,17 @@ export async function seedSkills(tx: Tx) {
       name: 'Ferveur',
       description: "Bonus d'XP par tirage",
       icon: 'BookOpen',
-      maxLevel: 3,
+      maxLevel: 5,
       effectType: 'PULL_XP_BONUS',
       posX: -144,
       posY: -504,
       levels: {
         create: [
-          { level: 1, effect: 10 },
-          { level: 2, effect: 20 },
-          { level: 3, effect: 30 },
+          { level: 1, effect: 1 },
+          { level: 2, effect: 2 },
+          { level: 3, effect: 3 },
+          { level: 4, effect: 4 },
+          { level: 5, effect: 7 },
         ],
       },
     },
@@ -184,7 +186,7 @@ export async function seedSkills(tx: Tx) {
     data: {
       branchId: flux.id,
       name: 'Grande réserve',
-      description: 'Augmente la capacité de stockage des tickets',
+      description: 'Augmente encore le stockage max de jetons',
       icon: 'Warehouse',
       maxLevel: 2,
       effectType: 'TOKEN_VAULT',
@@ -192,8 +194,8 @@ export async function seedSkills(tx: Tx) {
       posY: -504,
       levels: {
         create: [
-          { level: 1, effect: 1 },
-          { level: 2, effect: 2 },
+          { level: 1, effect: 2 },
+          { level: 2, effect: 5 },
         ],
       },
     },
@@ -248,27 +250,29 @@ export async function seedSkills(tx: Tx) {
   // ══════════════════════════════════════════════
   //  FORTUNE — spreads right from center (right handle)
   //
-  //  (center) — [Luck] — [Boule d'or]  — [Apex Fortune]
-  //                    \— [Tirage gratuit] —/
-  //                         [Boule d'or] —[Destin]
-  //                     [Tirage gratuit] —[Prisme]
+  //  (center) — [Chance] — [Boule d'or]  — [Apogée de Fortune]
+  //                      \— [Tirage gratuit] —/
+  //                           [Boule d'or] —[Destin]
+  //                       [Tirage gratuit] —[Prisme]
   // ══════════════════════════════════════════════
 
   const luck = await tx.skillNode.create({
     data: {
       branchId: fortune.id,
-      name: 'Luck',
+      name: 'Chance',
       description: 'Augmente les taux de drop des raretés élevées',
       icon: 'Star',
-      maxLevel: 3,
+      maxLevel: 5,
       effectType: 'LUCK',
       posX: 216,
       posY: -48,
       levels: {
         create: [
-          { level: 1, effect: 0.1 },
-          { level: 2, effect: 0.2 },
-          { level: 3, effect: 0.3 },
+          { level: 1, effect: 1 },
+          { level: 2, effect: 2 },
+          { level: 3, effect: 3 },
+          { level: 4, effect: 4 },
+          { level: 5, effect: 5 },
         ],
       },
     },
@@ -285,9 +289,9 @@ export async function seedSkills(tx: Tx) {
       posY: -120,
       levels: {
         create: [
-          { level: 1, effect: 1 },
-          { level: 2, effect: 2 },
-          { level: 3, effect: 5 },
+          { level: 1, effect: 2 },
+          { level: 2, effect: 5 },
+          { level: 3, effect: 10 },
         ],
       },
     },
@@ -298,15 +302,17 @@ export async function seedSkills(tx: Tx) {
       name: 'Tirage gratuit',
       description: 'Chance de tirage gratuit via Fortune',
       icon: 'Ticket',
-      maxLevel: 3,
+      maxLevel: 5,
       effectType: 'FREE_PULL_CHANCE',
       posX: 408,
       posY: 24,
       levels: {
         create: [
-          { level: 1, effect: 1 },
-          { level: 2, effect: 2 },
-          { level: 3, effect: 4 },
+          { level: 1, effect: 2 },
+          { level: 2, effect: 3 },
+          { level: 3, effect: 5 },
+          { level: 4, effect: 7 },
+          { level: 5, effect: 12 },
         ],
       },
     },
@@ -314,20 +320,18 @@ export async function seedSkills(tx: Tx) {
   const apexFortune = await tx.skillNode.create({
     data: {
       branchId: fortune.id,
-      name: 'Apex Fortune',
+      name: 'Apogée de Fortune',
       description: 'Maîtrise ultime de la fortune',
       icon: 'Crown',
-      maxLevel: 5,
+      maxLevel: 3,
       effectType: 'LUCK',
       posX: 600,
       posY: -48,
       levels: {
         create: [
-          { level: 1, effect: 0.04 },
-          { level: 2, effect: 0.08 },
-          { level: 3, effect: 0.12 },
-          { level: 4, effect: 0.16 },
-          { level: 5, effect: 0.2 },
+          { level: 1, effect: 2 },
+          { level: 2, effect: 4 },
+          { level: 3, effect: 7 },
         ],
       },
     },
@@ -346,7 +350,7 @@ export async function seedSkills(tx: Tx) {
         create: [
           { level: 1, effect: 5 },
           { level: 2, effect: 10 },
-          { level: 3, effect: 15 },
+          { level: 3, effect: 20 },
         ],
       },
     },
@@ -363,9 +367,9 @@ export async function seedSkills(tx: Tx) {
       posY: 120,
       levels: {
         create: [
-          { level: 1, effect: 0.25 },
-          { level: 2, effect: 0.5 },
-          { level: 3, effect: 1.0 },
+          { level: 1, effect: 1 },
+          { level: 2, effect: 2 },
+          { level: 3, effect: 4 },
         ],
       },
     },
@@ -422,28 +426,28 @@ export async function seedSkills(tx: Tx) {
   //
   //              (center)
   //               /   \
-  //         [Dust+]  [Réduction]
+  //       [Recyclage]  [Réduction]
   //            /           \
-  //     [Recyclage+]  [Marchandeur]
+  //       [Artisan]    [Marchandeur]
   //        /    \         /    \
-  //  [Négociant] [Apex Collection] [Étal élargi]
+  //  [Négociant] [Apogée Collection] [Étal élargi]
   // ══════════════════════════════════════════════
 
-  const dustPlus = await tx.skillNode.create({
+  const recyclage = await tx.skillNode.create({
     data: {
       branchId: collection.id,
-      name: 'Dust+',
-      description: 'Plus de dust lors du recyclage de doublons',
-      icon: 'Wind',
+      name: 'Recyclage',
+      description: 'Plus de poussière lors du recyclage de doublons',
+      icon: 'RefreshCw',
       maxLevel: 3,
       effectType: 'DUST_HARVEST',
       posX: -72,
       posY: 168,
       levels: {
         create: [
-          { level: 1, effect: 0.04 },
-          { level: 2, effect: 0.07 },
-          { level: 3, effect: 0.1 },
+          { level: 1, effect: 4 },
+          { level: 2, effect: 7 },
+          { level: 3, effect: 10 },
         ],
       },
     },
@@ -452,7 +456,7 @@ export async function seedSkills(tx: Tx) {
     data: {
       branchId: collection.id,
       name: 'Réduction',
-      description: 'Réduit les prix en boutique',
+      description: 'Réduit les prix en poussière de la boutique',
       icon: 'BadgePercent',
       maxLevel: 3,
       effectType: 'SHOP_DISCOUNT',
@@ -467,21 +471,21 @@ export async function seedSkills(tx: Tx) {
       },
     },
   })
-  const recyclage = await tx.skillNode.create({
+  const artisan = await tx.skillNode.create({
     data: {
       branchId: collection.id,
-      name: 'Recyclage+',
-      description: 'Bonus supplémentaire sur le recyclage',
-      icon: 'RefreshCw',
+      name: 'Artisan',
+      description: "Réduit le coût en poussière d'amélioration des cartes",
+      icon: 'Hammer',
       maxLevel: 3,
-      effectType: 'DUST_HARVEST',
+      effectType: 'UPGRADE_DUST_DISCOUNT',
       posX: -72,
       posY: 336,
       levels: {
         create: [
-          { level: 1, effect: 0.04 },
-          { level: 2, effect: 0.07 },
-          { level: 3, effect: 0.1 },
+          { level: 1, effect: 5 },
+          { level: 2, effect: 10 },
+          { level: 3, effect: 15 },
         ],
       },
     },
@@ -490,10 +494,10 @@ export async function seedSkills(tx: Tx) {
     data: {
       branchId: collection.id,
       name: 'Marchandeur',
-      description: 'Réductions exclusives en boutique',
+      description: 'Réduit les prix en or de la boutique',
       icon: 'ShoppingBag',
       maxLevel: 3,
-      effectType: 'SHOP_DISCOUNT',
+      effectType: 'GOLD_SHOP_DISCOUNT',
       posX: 72,
       posY: 336,
       levels: {
@@ -508,20 +512,18 @@ export async function seedSkills(tx: Tx) {
   const apexCollection = await tx.skillNode.create({
     data: {
       branchId: collection.id,
-      name: 'Apex Collection',
-      description: 'Maîtrise ultime de la collection',
+      name: 'Apogée de Collection',
+      description: 'Plus de cartes rares dans ta boutique du jour',
       icon: 'Gem',
-      maxLevel: 5,
-      effectType: 'DUST_HARVEST',
+      maxLevel: 3,
+      effectType: 'DAILY_SHOP_LUCK',
       posX: 0,
       posY: 504,
       levels: {
         create: [
-          { level: 1, effect: 0.04 },
-          { level: 2, effect: 0.08 },
-          { level: 3, effect: 0.12 },
-          { level: 4, effect: 0.16 },
-          { level: 5, effect: 0.2 },
+          { level: 1, effect: 10 },
+          { level: 2, effect: 20 },
+          { level: 3, effect: 35 },
         ],
       },
     },
@@ -560,8 +562,8 @@ export async function seedSkills(tx: Tx) {
   await tx.skillEdge.createMany({
     data: [
       {
-        fromNodeId: dustPlus.id,
-        toNodeId: recyclage.id,
+        fromNodeId: recyclage.id,
+        toNodeId: artisan.id,
         minLevel: 1,
         sourceHandle: 's-bottom',
         targetHandle: 't-top',
@@ -574,7 +576,7 @@ export async function seedSkills(tx: Tx) {
         targetHandle: 't-top',
       },
       {
-        fromNodeId: recyclage.id,
+        fromNodeId: artisan.id,
         toNodeId: apexCollection.id,
         minLevel: 1,
         sourceHandle: 's-bottom',
@@ -588,7 +590,7 @@ export async function seedSkills(tx: Tx) {
         targetHandle: 't-right',
       },
       {
-        fromNodeId: recyclage.id,
+        fromNodeId: artisan.id,
         toNodeId: negociant.id,
         minLevel: 1,
         sourceHandle: 's-bottom',
@@ -609,7 +611,7 @@ export async function seedSkills(tx: Tx) {
   //
   //             [Butin doré]
   //            /             \
-  //  [Endurance]—[Logistique]  [Apex Combat]
+  //  [Endurance]—[Logistique]  [Apogée de Combat]
   //            \             /
   //          [Récupération]—[Vétéran]
   // ══════════════════════════════════════════════
@@ -711,7 +713,7 @@ export async function seedSkills(tx: Tx) {
   const apexCombat = await tx.skillNode.create({
     data: {
       branchId: combat.id,
-      name: 'Apex Combat',
+      name: 'Apogée de Combat',
       description: 'Bonus de butin en combat',
       icon: 'Swords',
       maxLevel: 5,
@@ -770,6 +772,6 @@ export async function seedSkills(tx: Tx) {
   })
 
   console.log(
-    '  Skill tree seedé : 4 branches, 26 nœuds, 81 points investissables',
+    '  Skill tree seedé : 4 branches, 26 nœuds, 85 points investissables',
   )
 }

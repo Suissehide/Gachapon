@@ -22,6 +22,7 @@ import {
 } from '../../queries/useEconomyConfig'
 import { useCardEquipmentBonuses } from '../../queries/useEquipment'
 import { useLevelUpCard } from '../../queries/useLevelUpCard'
+import { useSkillTree } from '../../queries/useSkills.ts'
 import { useAuthStore } from '../../stores/auth.store'
 import {
   dustCostNextLevel,
@@ -54,6 +55,8 @@ export function CombatPanel({
   const user = useAuthStore((s) => s.user)
   const fetchMe = useAuthStore((s) => s.fetchMe)
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  const { data: skillState } = useSkillTree()
+  const dustDiscount = skillState?.effects?.upgradeDustDiscount ?? 0
 
   const levelUp = useLevelUpCard()
   const ascend = useAscendCard()
@@ -67,7 +70,13 @@ export function CombatPanel({
     : goldCostNextLevel(level, card.rarity, economy.card)
   const dustCost = atTop
     ? 0
-    : dustCostNextLevel(level, card.rarity, economy.card)
+    : Math.max(
+        0,
+        Math.round(
+          dustCostNextLevel(level, card.rarity, economy.card) *
+            (1 - dustDiscount / 100),
+        ),
+      )
   const goldOk = (user?.gold ?? 0) >= goldCost
   const dustOk = (user?.dust ?? 0) >= dustCost
   const canLevel = !atTop && goldOk && dustOk

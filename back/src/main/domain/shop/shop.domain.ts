@@ -15,6 +15,7 @@ import type { IUserBoostRepository } from '../../types/infra/orm/repositories/us
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import type { UnlockedAchievement } from '../achievements/events.types'
 import type { CombatPointsTx } from '../combat-points/combat-points.tx'
+import { applyPercentDiscount } from '../shared/discount'
 import { retryOnSerialization } from '../shared/retry-serialization'
 
 type BoostValue = {
@@ -65,14 +66,18 @@ export class ShopDomain implements IShopDomain {
     this.#validateShopItem(item)
 
     const result = await retryOnSerialization(async () => {
-      // PC_VAULT affects the regen settle inside creditInTx — read outside the tx.
-      const [effects, cfg] =
+      // PC_VAULT affects the regen settle inside creditInTx; GOLD_SHOP_DISCOUNT
+      // affects the price — both read outside the tx.
+      const [effects, cfg] = await Promise.all([
+        this.#skillTreeRepository.getEffectsForUser(userId),
         item.type === 'ENERGY_PACK'
-          ? await Promise.all([
-              this.#skillTreeRepository.getEffectsForUser(userId),
-              this.#configService.getMany('shop.energyDailyCap'),
-            ])
-          : [undefined, undefined]
+          ? this.#configService.getMany('shop.energyDailyCap')
+          : undefined,
+      ])
+      const effectiveCost =
+        item.currency === 'GOLD'
+          ? applyPercentDiscount(item.cost, effects.goldShopDiscount)
+          : item.cost
 
       return this.#postgresOrm.executeWithTransactionClient(
         async (tx) => {
@@ -80,7 +85,7 @@ export class ShopDomain implements IShopDomain {
             where: { id: userId },
           })
           const balance = item.currency === 'GOLD' ? user.gold : user.dust
-          if (balance < item.cost) {
+          if (balance < effectiveCost) {
             throw Boom.paymentRequired(
               item.currency === 'GOLD' ? 'Not enough gold' : 'Not enough dust',
             )
@@ -93,12 +98,12 @@ export class ShopDomain implements IShopDomain {
             data: {
               userId,
               shopItemId,
-              amountSpent: item.cost,
+              amountSpent: effectiveCost,
               currency: item.currency,
             },
           })
 
-          const updateData = this.#buildUpdateData(item)
+          const updateData = this.#buildUpdateData(item, effectiveCost)
           await this.#applyBoostEffect(tx, userId, item)
 
           let newCombatPoints: number | undefined
@@ -118,10 +123,16 @@ export class ShopDomain implements IShopDomain {
             data: updateData,
           })
 
-          const allUnlocks = await this.#trackAchievements(tx, userId, item)
+          const allUnlocks = await this.#trackAchievements(
+            tx,
+            userId,
+            item,
+            effectiveCost,
+          )
 
           return {
             purchase,
+            effectiveCost,
             newDustTotal: updated.dust,
             newGoldTotal: updated.gold,
             newTokenTotal: updated.tokens,
@@ -136,7 +147,7 @@ export class ShopDomain implements IShopDomain {
     return {
       purchaseId: result.purchase.id,
       currency: item.currency,
-      amountSpent: item.cost,
+      amountSpent: result.effectiveCost,
       newDustTotal: result.newDustTotal,
       newGoldTotal: result.newGoldTotal,
       newTokenTotal: result.newTokenTotal,
@@ -192,11 +203,14 @@ export class ShopDomain implements IShopDomain {
     }
   }
 
-  #buildUpdateData(item: ShopItem): Record<string, unknown> {
+  #buildUpdateData(
+    item: ShopItem,
+    effectiveCost: number,
+  ): Record<string, unknown> {
     const updateData: Record<string, unknown> =
       item.currency === 'GOLD'
-        ? { gold: { decrement: item.cost } }
-        : { dust: { decrement: item.cost } }
+        ? { gold: { decrement: effectiveCost } }
+        : { dust: { decrement: effectiveCost } }
     if (item.type === 'TOKEN_PACK') {
       const value = item.value as { tokens: number }
       updateData.tokens = { increment: value.tokens }
@@ -310,6 +324,7 @@ export class ShopDomain implements IShopDomain {
     tx: PrimaTransactionClient,
     userId: string,
     item: ShopItem,
+    effectiveCost: number,
   ): Promise<UnlockedAchievement[]> {
     const events = []
     if (item.type === 'MACHINE') {
@@ -321,8 +336,8 @@ export class ShopDomain implements IShopDomain {
     }
     events.push(
       item.currency === 'GOLD'
-        ? { kind: 'GOLD_SPENT' as const, amount: item.cost }
-        : { kind: 'DUST_SPENT' as const, amount: item.cost },
+        ? { kind: 'GOLD_SPENT' as const, amount: effectiveCost }
+        : { kind: 'DUST_SPENT' as const, amount: effectiveCost },
     )
     const allUnlocks: UnlockedAchievement[] = []
     for (const e of events) {
