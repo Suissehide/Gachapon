@@ -16,18 +16,19 @@ export class SkillTreeDomain implements ISkillTreeDomain {
   }
 
   async getState(userId: string): Promise<SkillTreeState> {
-    const [branches, userSkills, config, user, totalInvested] =
+    const [branches, userSkills, config, user, totalInvested, effects] =
       await Promise.all([
         this.#skillTreeRepository.getFullTree(),
         this.#skillTreeRepository.getUserSkills(userId),
         this.#skillTreeRepository.getSkillConfig(),
         this.#userRepository.findById(userId),
         this.#skillTreeRepository.getTotalInvestedPoints(userId),
+        this.#skillTreeRepository.getEffectsForUser(userId),
       ])
 
     const skillPoints = user?.skillPoints ?? 0
     const resetCost = totalInvested * config.resetCostPerPoint
 
-    return { branches, userSkills, skillPoints, totalInvested, resetCost }
+    return { branches, userSkills, skillPoints, totalInvested, resetCost, effects }
   }
 }
