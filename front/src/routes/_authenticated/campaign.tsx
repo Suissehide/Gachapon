@@ -17,6 +17,7 @@ import {
   Swords,
   Zap,
 } from 'lucide-react'
+import { Dialog } from 'radix-ui'
 import type { CSSProperties } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { z } from 'zod/v4'
@@ -252,6 +253,9 @@ function CampaignPage() {
             size="lg"
             className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden bg-[#fbf8f3] shadow-[0_40px_90px_-30px_rgba(0,0,0,0.6)]"
           >
+            <Dialog.Title className="sr-only">
+              Préparation du combat
+            </Dialog.Title>
             <PrepModal
               stage={prep}
               chapter={activeChapter}
