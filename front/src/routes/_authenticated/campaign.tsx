@@ -29,6 +29,13 @@ import type {
   SweepResult,
 } from '../../api/campaign.api.ts'
 import type { TeamUnit } from '../../api/combat.api.ts'
+import {
+  DropCard,
+  RESULT_BADGE_WIN,
+  ResultBadge,
+  ResultPanel,
+  RewardTile,
+} from '../../components/battle/resultKit.tsx'
 import { AuroraGrid } from '../../components/shared/decorations/AuroraGrid'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { getRarityTone } from '../../components/shared/tcg-card/config.ts'
@@ -41,7 +48,6 @@ import {
   PopupContent,
   PopupFooter,
   PopupHeader,
-  PopupTitle,
 } from '../../components/ui/popup.tsx'
 import { useCampaign, useSweepStage } from '../../queries/useCampaign.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
@@ -103,7 +109,6 @@ function fmt(n: number): string {
   return n.toLocaleString('fr-FR')
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: page-level orchestrator coordinates campaign data, team, points and modal state
 function CampaignPage() {
   const navigate = useNavigate()
   const search = Route.useSearch()
@@ -324,68 +329,72 @@ function CampaignPage() {
             }
           }}
         >
-          <PopupContent>
-            <PopupHeader>
-              <PopupTitle icon={<Zap className="h-4 w-4 text-amber-500" />}>
-                Farm × {sweepResult.runs}
-              </PopupTitle>
-            </PopupHeader>
-            <PopupBody>
-              <div className="space-y-3 text-sm">
-                <div className="grid grid-cols-3 gap-2 rounded-lg border border-border bg-muted/30 p-3 text-center">
-                  <SweepStat label="Or" value={sweepResult.totalGold} />
-                  <SweepStat label="Poussière" value={sweepResult.totalDust} />
-                  <SweepStat label="XP" value={sweepResult.totalXp} />
-                </div>
-                {sweepResult.equipmentDrops.length > 0 && (
-                  <div>
-                    <p className="mb-1 text-xs uppercase tracking-widest text-text-light/60">
-                      Équipement
-                    </p>
-                    <ul className="space-y-1">
-                      {sweepResult.equipmentDrops.map((e, i) => (
-                        <li
-                          // biome-ignore lint/suspicious/noArrayIndexKey: ephemeral
-                          key={i}
-                          className="flex items-center gap-1.5 text-text-light"
-                        >
-                          <Shield className="h-3.5 w-3.5 shrink-0 text-amber-600" />
-                          {e.name}{' '}
-                          <span className="text-xs text-text-light/50">
-                            ({e.rarity})
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {sweepResult.cardDrops.length > 0 && (
-                  <div>
-                    <p className="mb-1 text-xs uppercase tracking-widest text-text-light/60">
-                      Cartes
-                    </p>
-                    <ul className="space-y-1">
-                      {sweepResult.cardDrops.map((c, i) => (
-                        <li
-                          // biome-ignore lint/suspicious/noArrayIndexKey: ephemeral
-                          key={i}
-                          className="flex items-center gap-1.5 text-text-light"
-                        >
-                          <Layers className="h-3.5 w-3.5 shrink-0 text-violet-500" />
-                          {c.name}{' '}
-                          <span className="text-xs text-text-light/50">
-                            ({c.rarity})
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                <div className="pt-2 text-center">
-                  <Button onClick={() => setSweepResult(null)}>OK</Button>
-                </div>
+          <PopupContent
+            size="lg"
+            className="border-0 bg-[#fbf8f3] p-0 shadow-[0_30px_80px_-12px_rgba(0,0,0,0.4)]"
+          >
+            <Dialog.Title className="sr-only">Farm terminé</Dialog.Title>
+            <ResultPanel halo>
+              <ResultBadge
+                className={RESULT_BADGE_WIN}
+                icon={<Zap className="h-8 w-8" />}
+              />
+              <h2 className="mt-4 font-display text-3xl font-bold text-text">
+                Farm terminé
+              </h2>
+              <p className="mt-1 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-text-light/70">
+                × {sweepResult.runs} passages
+              </p>
+
+              <div className="mt-6 grid w-full grid-cols-3 gap-2.5">
+                <RewardTile
+                  icon={<Coins className="h-5 w-5" />}
+                  label="Pièces"
+                  value={sweepResult.totalGold}
+                  tone="#f59e0b"
+                />
+                <RewardTile
+                  icon={<Sparkles className="h-5 w-5" />}
+                  label="Poussière"
+                  value={sweepResult.totalDust}
+                  tone="#8b5cf6"
+                />
+                <RewardTile
+                  icon={<Star className="h-5 w-5" />}
+                  label="XP"
+                  value={sweepResult.totalXp}
+                  tone="#3b82f6"
+                />
               </div>
-            </PopupBody>
+
+              {sweepResult.equipmentDrops.map((e, i) => (
+                <DropCard
+                  // biome-ignore lint/suspicious/noArrayIndexKey: ephemeral
+                  key={i}
+                  tone="amber"
+                  label="Équipement"
+                  name={e.name}
+                  rarity={e.rarity}
+                />
+              ))}
+              {sweepResult.cardDrops.map((c, i) => (
+                <DropCard
+                  // biome-ignore lint/suspicious/noArrayIndexKey: ephemeral
+                  key={i}
+                  tone="sky"
+                  label="Carte"
+                  name={c.name}
+                  rarity={c.rarity}
+                />
+              ))}
+
+              <div className="mt-6 flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-center">
+                <Button onClick={() => setSweepResult(null)} className="gap-2">
+                  Continuer
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </ResultPanel>
           </PopupContent>
         </Popup>
       )}
@@ -1178,17 +1187,6 @@ function PowerVerdict({
         </span>
         <span>Recommandé</span>
       </div>
-    </div>
-  )
-}
-
-function SweepStat({ label, value }: { label: string; value: number }) {
-  return (
-    <div>
-      <p className="text-xs text-text-light/60">{label}</p>
-      <p className="font-display text-base font-bold tabular-nums text-text">
-        +{value.toLocaleString('fr-FR')}
-      </p>
     </div>
   )
 }

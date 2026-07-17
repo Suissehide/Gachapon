@@ -19,6 +19,14 @@ import { useEffect, useState } from 'react'
 
 import type { BattleResult } from '../../api/campaign.api.ts'
 import { BattleScene } from '../../components/battle/BattleScene.tsx'
+import {
+  DropCard,
+  RESULT_BADGE_LOSS,
+  RESULT_BADGE_WIN,
+  ResultBadge,
+  ResultPanel,
+  RewardTile,
+} from '../../components/battle/resultKit.tsx'
 import { ArcadeCard } from '../../components/shared/ArcadeCard.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { Button } from '../../components/ui/button.tsx'
@@ -421,104 +429,83 @@ function VictoryPanel({
 }) {
   const rewards = result.rewards
   return (
-    <div className="relative overflow-hidden rounded-[26px] px-6 py-8 sm:px-8 animate-[battleResultIn_0.4s_ease]">
-      {/* Burst halo behind the badge */}
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-48"
-        style={{
-          background:
-            'radial-gradient(50% 60% at 50% 50%, rgba(245,158,11,0.3), transparent 70%)',
-        }}
-        aria-hidden
+    <ResultPanel halo>
+      <ResultBadge
+        className={RESULT_BADGE_WIN}
+        icon={<Trophy className="h-8 w-8" />}
       />
+      <h2 className="mt-4 font-display text-3xl font-bold text-text">
+        Victoire !
+      </h2>
+      {stageInfo && (
+        <p className="mt-1 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-text-light/70">
+          Niveau {stageInfo.label} · {stageInfo.chapterTitle}
+        </p>
+      )}
+      {rewards?.isFirstClear && (
+        <p className="mt-1 font-mono text-xs font-bold uppercase tracking-widest text-amber-600">
+          Premier passage
+        </p>
+      )}
 
-      <div className="relative flex flex-col items-center text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-[0_12px_28px_-8px_rgba(245,158,11,0.7)] animate-[battleBadgePop_0.5s_cubic-bezier(0.2,1.6,0.4,1)]">
-          <Trophy className="h-8 w-8" />
+      {rewards && (
+        <div className="mt-6 grid w-full grid-cols-2 gap-2.5">
+          <RewardTile
+            icon={<Coins className="h-5 w-5" />}
+            label="Pièces"
+            value={rewards.gold}
+            tone="#f59e0b"
+          />
+          <RewardTile
+            icon={<Sparkles className="h-5 w-5" />}
+            label="Poussière"
+            value={rewards.dust}
+            tone="#8b5cf6"
+          />
         </div>
-        <h2 className="mt-4 font-display text-3xl font-bold text-text">
-          Victoire !
-        </h2>
-        {stageInfo && (
-          <p className="mt-1 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-text-light/70">
-            Niveau {stageInfo.label} · {stageInfo.chapterTitle}
-          </p>
-        )}
-        {rewards?.isFirstClear && (
-          <p className="mt-1 font-mono text-xs font-bold uppercase tracking-widest text-amber-600">
-            Premier passage
-          </p>
-        )}
+      )}
 
-        {rewards && (
-          <div className="mt-6 grid w-full grid-cols-2 gap-2.5">
-            <RewardTile
-              icon={<Coins className="h-5 w-5" />}
-              label="Pièces"
-              value={rewards.gold}
-              tone="#f59e0b"
-            />
-            <RewardTile
-              icon={<Sparkles className="h-5 w-5" />}
-              label="Poussière"
-              value={rewards.dust}
-              tone="#8b5cf6"
-            />
-          </div>
-        )}
+      {rewards?.equipmentDrop && (
+        <DropCard
+          tone="amber"
+          label="Équipement"
+          name={rewards.equipmentDrop.name}
+          rarity={rewards.equipmentDrop.rarity}
+        />
+      )}
 
-        {rewards?.equipmentDrop && (
-          <div className="mt-3 w-full rounded-2xl border border-amber-400/40 bg-gradient-to-br from-amber-50 to-orange-50 p-3 text-center">
-            <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-amber-700/70">
-              Équipement
-            </p>
-            <p className="mt-1 font-display font-bold text-amber-800">
-              {rewards.equipmentDrop.name}
-            </p>
-            <p className="font-mono text-[10px] uppercase tracking-widest text-amber-600/70">
-              {rewards.equipmentDrop.rarity}
-            </p>
-          </div>
-        )}
+      {rewards?.cardDrop && (
+        <DropCard
+          tone="sky"
+          label={rewards.cardDrop.wasDuplicate ? 'Carte · doublon' : 'Carte'}
+          name={rewards.cardDrop.name}
+          rarity={rewards.cardDrop.rarity}
+        />
+      )}
 
-        {rewards?.cardDrop && (
-          <div className="mt-3 w-full rounded-2xl border border-sky-400/40 bg-gradient-to-br from-sky-50 to-blue-50 p-3 text-center">
-            <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-sky-700/70">
-              Carte {rewards.cardDrop.wasDuplicate ? '· doublon' : ''}
-            </p>
-            <p className="mt-1 font-display font-bold text-sky-800">
-              {rewards.cardDrop.name}
-            </p>
-            <p className="font-mono text-[10px] uppercase tracking-widest text-sky-600/70">
-              {rewards.cardDrop.rarity}
-            </p>
-          </div>
-        )}
+      {rewards && <XpBar rewards={rewards} />}
 
-        {rewards && <XpBar rewards={rewards} />}
-
-        <div className="mt-6 flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-center">
-          <Button
-            variant="outline"
-            onClick={onReplay}
-            disabled={!canReplay}
-            className="gap-2"
-          >
-            <RotateCcw className="h-4 w-4" />
-            Rejouer
-          </Button>
-          <Button onClick={onNextFloor} className="gap-2">
-            Etage suivant
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        </div>
-        {!canReplay && (
-          <p className="mt-2 font-mono text-[11px] font-bold uppercase tracking-widest text-text-light/70">
-            Plus assez de points de combat
-          </p>
-        )}
+      <div className="mt-6 flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-center">
+        <Button
+          variant="outline"
+          onClick={onReplay}
+          disabled={!canReplay}
+          className="gap-2"
+        >
+          <RotateCcw className="h-4 w-4" />
+          Rejouer
+        </Button>
+        <Button onClick={onNextFloor} className="gap-2">
+          Etage suivant
+          <ArrowRight className="h-4 w-4" />
+        </Button>
       </div>
-    </div>
+      {!canReplay && (
+        <p className="mt-2 font-mono text-[11px] font-bold uppercase tracking-widest text-text-light/70">
+          Plus assez de points de combat
+        </p>
+      )}
+    </ResultPanel>
   )
 }
 
@@ -534,109 +521,79 @@ function DefeatPanel({
   onBack: () => void
 }) {
   return (
-    <div className="relative overflow-hidden rounded-[26px] px-6 py-8 sm:px-8 animate-[battleResultIn_0.4s_ease]">
-      <div className="relative flex flex-col items-center text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-slate-400 to-slate-600 text-white shadow-md animate-[battleBadgePop_0.5s_cubic-bezier(0.2,1.6,0.4,1)]">
-          <Skull className="h-8 w-8" />
-        </div>
-        <h2 className="mt-4 font-display text-3xl font-bold text-text">
-          Défaite
-        </h2>
-        <p className="mt-2 max-w-sm text-sm text-text-light">
-          Ton équipe n'a pas tenu le choc. Améliore ta composition ou monte tes
-          cartes avant de retourner au front.
-        </p>
+    <ResultPanel>
+      <ResultBadge
+        className={RESULT_BADGE_LOSS}
+        icon={<Skull className="h-8 w-8" />}
+      />
+      <h2 className="mt-4 font-display text-3xl font-bold text-text">
+        Défaite
+      </h2>
+      <p className="mt-2 max-w-sm text-sm text-text-light">
+        Ton équipe n'a pas tenu le choc. Améliore ta composition ou monte tes
+        cartes avant de retourner au front.
+      </p>
 
-        <div className="mt-6 flex w-full flex-col gap-2.5">
-          <Link to="/campaign" search={{ editor: true }} className="w-full">
-            <Button
-              variant="outline"
-              className="h-auto w-full justify-start gap-3 whitespace-normal bg-white px-4 py-4 text-left"
-            >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
-                <Sparkles className="h-4 w-4" />
-              </span>
-              <span className="flex flex-col items-start gap-0.5">
-                <span className="font-display text-sm font-bold">
-                  Revoir mon équipe
-                </span>
-                <span className="text-xs text-text-light">
-                  Choisis une meilleure composition
-                </span>
-              </span>
-              <ChevronRight className="ml-auto h-5 w-5 shrink-0 text-text-light/40" />
-            </Button>
-          </Link>
-          <Link to="/collection" className="w-full">
-            <Button
-              variant="outline"
-              className="h-auto w-full justify-start gap-3 whitespace-normal bg-white px-4 py-4 text-left"
-            >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
-                <TrendingUp className="h-4 w-4" />
-              </span>
-              <span className="flex flex-col items-start gap-0.5">
-                <span className="font-display text-sm font-bold">
-                  Monter tes cartes
-                </span>
-                <span className="text-xs text-text-light">
-                  Améliore le niveau de tes cartes
-                </span>
-              </span>
-              <ChevronRight className="ml-auto h-5 w-5 shrink-0 text-text-light/40" />
-            </Button>
-          </Link>
-        </div>
-
-        <div className="mt-6 flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-center">
-          <Button variant="outline" onClick={onBack}>
-            Retour
-          </Button>
-          <Button onClick={onReplay} disabled={!canReplay} className="gap-2">
-            <RotateCcw className="h-4 w-4" />
-            Réessayer
-            <span className="ml-1 inline-flex items-center gap-0.5 rounded-full bg-black/15 px-2 py-0.5 font-mono text-[12px] font-bold tabular-nums">
-              <Zap className="h-3 w-3" />
-              {battleCost}
+      <div className="mt-6 flex w-full flex-col gap-2.5">
+        <Link to="/campaign" search={{ editor: true }} className="w-full">
+          <Button
+            variant="outline"
+            className="h-auto w-full justify-start gap-3 whitespace-normal bg-white px-4 py-4 text-left"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
+              <Sparkles className="h-4 w-4" />
             </span>
+            <span className="flex flex-col items-start gap-0.5">
+              <span className="font-display text-sm font-bold">
+                Revoir mon équipe
+              </span>
+              <span className="text-xs text-text-light">
+                Choisis une meilleure composition
+              </span>
+            </span>
+            <ChevronRight className="ml-auto h-5 w-5 shrink-0 text-text-light/40" />
           </Button>
-        </div>
-        {!canReplay && (
-          <p className="mt-2 font-mono text-[11px] font-bold uppercase tracking-widest text-text-light/70">
-            Plus assez de points de combat
-          </p>
-        )}
+        </Link>
+        <Link to="/collection" className="w-full">
+          <Button
+            variant="outline"
+            className="h-auto w-full justify-start gap-3 whitespace-normal bg-white px-4 py-4 text-left"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+              <TrendingUp className="h-4 w-4" />
+            </span>
+            <span className="flex flex-col items-start gap-0.5">
+              <span className="font-display text-sm font-bold">
+                Monter tes cartes
+              </span>
+              <span className="text-xs text-text-light">
+                Améliore le niveau de tes cartes
+              </span>
+            </span>
+            <ChevronRight className="ml-auto h-5 w-5 shrink-0 text-text-light/40" />
+          </Button>
+        </Link>
       </div>
-    </div>
-  )
-}
 
-function RewardTile({
-  icon,
-  label,
-  value,
-  tone,
-}: {
-  icon: React.ReactNode
-  label: string
-  value: number
-  tone: string
-}) {
-  return (
-    <div className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-white p-3">
-      <span
-        className="flex h-9 w-9 items-center justify-center rounded-xl"
-        style={{ backgroundColor: `${tone}1f`, color: tone }}
-      >
-        {icon}
-      </span>
-      <b className="font-display text-lg tabular-nums text-text">
-        +{value.toLocaleString('fr-FR')}
-      </b>
-      <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-text-light/70">
-        {label}
-      </span>
-    </div>
+      <div className="mt-6 flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-center">
+        <Button variant="outline" onClick={onBack}>
+          Retour
+        </Button>
+        <Button onClick={onReplay} disabled={!canReplay} className="gap-2">
+          <RotateCcw className="h-4 w-4" />
+          Réessayer
+          <span className="ml-1 inline-flex items-center gap-0.5 rounded-full bg-black/15 px-2 py-0.5 font-mono text-[12px] font-bold tabular-nums">
+            <Zap className="h-3 w-3" />
+            {battleCost}
+          </span>
+        </Button>
+      </div>
+      {!canReplay && (
+        <p className="mt-2 font-mono text-[11px] font-bold uppercase tracking-widest text-text-light/70">
+          Plus assez de points de combat
+        </p>
+      )}
+    </ResultPanel>
   )
 }
 
