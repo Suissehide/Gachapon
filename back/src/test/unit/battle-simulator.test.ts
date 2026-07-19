@@ -838,4 +838,116 @@ describe('simulateBattle', () => {
       }
     }
   })
+
+  // ------------------------------------------------------------------------
+  // Nouveaux passifs de famille
+  // ------------------------------------------------------------------------
+  describe('passifs de famille', () => {
+    function passiveEntries(
+      log: LogEntry[],
+      passive: string,
+    ): Extract<LogEntry, { type: 'PASSIVE' }>[] {
+      return log.filter(
+        (e): e is Extract<LogEntry, { type: 'PASSIVE' }> =>
+          e.type === 'PASSIVE' && e.passive === passive,
+      )
+    }
+
+    it('POISON applique un effet qui inflige des dégâts en fin de tour', () => {
+      const result = simulateBattle({
+        teamA: [
+          makeUnit('A0', { atk: 1, spd: 999, passiveKey: 'POISON' }),
+        ],
+        teamB: [makeUnit('B0', { hp: 100000, def: 0, spd: 1 })],
+        seed: 'poison-test',
+        timeoutTurns: 2,
+      })
+      const entries = passiveEntries(result.log, 'POISON')
+      // Au moins une application (dmgPerTurn) et un tick (damage).
+      expect(entries.some((e) => 'dmgPerTurn' in e.payload)).toBe(true)
+      expect(entries.some((e) => 'damage' in e.payload)).toBe(true)
+    })
+
+    it('BURN applique une brûlure basée sur l’ATQ', () => {
+      const result = simulateBattle({
+        teamA: [
+          makeUnit('A0', { atk: 100, spd: 999, passiveKey: 'BURN' }),
+        ],
+        teamB: [makeUnit('B0', { hp: 100000, def: 0, spd: 1 })],
+        seed: 'burn-test',
+        timeoutTurns: 2,
+      })
+      const entries = passiveEntries(result.log, 'BURN')
+      expect(entries.length).toBeGreaterThan(0)
+      const tick = entries.find((e) => 'damage' in e.payload)
+      expect(tick).toBeDefined()
+      if (tick) {
+        expect(tick.payload.damage).toBeGreaterThan(0)
+      }
+    })
+
+    it('BLESSING soigne un allié blessé en fin de tour', () => {
+      const result = simulateBattle({
+        teamA: [
+          makeUnit('A0', {
+            hp: 2000,
+            atk: 1,
+            spd: 1,
+            passiveKey: 'BLESSING',
+          }),
+          makeUnit('A1', { hp: 1000, atk: 1, def: 0, spd: 1 }),
+        ],
+        teamB: [makeUnit('B0', { hp: 100000, atk: 200, def: 0, spd: 500 })],
+        seed: 'blessing-test',
+        timeoutTurns: 2,
+      })
+      const entries = passiveEntries(result.log, 'BLESSING')
+      expect(entries.length).toBeGreaterThan(0)
+      expect(entries[0]?.payload.healed).toBeGreaterThan(0)
+    })
+
+    it('SANCTUARY soigne toute l’équipe en fin de tour', () => {
+      const result = simulateBattle({
+        teamA: [
+          makeUnit('A0', {
+            hp: 2000,
+            atk: 1,
+            spd: 1,
+            passiveKey: 'SANCTUARY',
+          }),
+          makeUnit('A1', { hp: 1000, atk: 1, def: 0, spd: 1 }),
+        ],
+        teamB: [makeUnit('B0', { hp: 100000, atk: 200, def: 0, spd: 500 })],
+        seed: 'sanctuary-test',
+        timeoutTurns: 2,
+      })
+      const entries = passiveEntries(result.log, 'SANCTUARY')
+      expect(entries.length).toBeGreaterThan(0)
+      expect(entries[0]?.payload.healed).toBeGreaterThan(0)
+    })
+
+    it('BLOODLUST soigne l’attaquant blessé qui élimine un ennemi', () => {
+      const result = simulateBattle({
+        teamA: [
+          makeUnit('A0', {
+            hp: 1000,
+            atk: 1000,
+            def: 0,
+            spd: 999,
+            passiveKey: 'BLOODLUST',
+          }),
+        ],
+        teamB: [
+          makeUnit('B0', { hp: 100000, atk: 300, def: 0, spd: 1000 }),
+          makeUnit('B1', { hp: 1, atk: 1, def: 0, spd: 1 }),
+        ],
+        seed: 'bloodlust-test',
+        timeoutTurns: 1,
+      })
+      const entries = passiveEntries(result.log, 'BLOODLUST')
+      expect(entries.length).toBeGreaterThan(0)
+      expect(entries[0]?.payload.kills).toBe(1)
+      expect(entries[0]?.payload.healed).toBeGreaterThan(0)
+    })
+  })
 })

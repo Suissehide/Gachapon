@@ -33,6 +33,22 @@ const PASSIVE_KEYS = [
   'RIPOSTE',
   'REBIRTH',
   'EXECUTION',
+  'VIGOR',
+  'HASTE',
+  'FORTIFY',
+  'EMPOWER',
+  'BULWARK',
+  'FURY',
+  'CRIT',
+  'PIERCE',
+  'NEMESIS',
+  'RAMPART',
+  'REGEN',
+  'BLESSING',
+  'SANCTUARY',
+  'BURN',
+  'POISON',
+  'BLOODLUST',
 ] as const
 
 const DEFAULT_TEAM_A: SimulatorUnit[] = [

@@ -19,6 +19,12 @@ export type PassiveKey =
   | 'NEMESIS'
   | 'RAMPART'
   | 'REGEN'
+  // --- Passifs de famille (soin d'allié, dégâts sur la durée, soin sur élimination) ---
+  | 'BLESSING'
+  | 'SANCTUARY'
+  | 'BURN'
+  | 'POISON'
+  | 'BLOODLUST'
 
 export interface PassiveEffect {
   /**
@@ -265,6 +271,76 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     },
     describe(palier) {
       return `Soigne ${4 + 2 * clampPalier(palier)} % des PV max en fin de tour`
+    },
+  },
+
+  // -------------------------------------------------------------------------
+  // Passifs de famille — soin d'allié, dégâts sur la durée, soin sur élimination
+  // -------------------------------------------------------------------------
+
+  // Passifs de soin d'allié (appliqués en fin de tour)
+  BLESSING: {
+    key: 'BLESSING',
+    rarityHint: 'LEGENDARY',
+    label: 'Bénédiction',
+    compute(palier) {
+      const p = clampPalier(palier)
+      return { valuePct: 6 + 2 * p }
+    },
+    describe(palier) {
+      return `Soigne l'allié le plus faible de ${6 + 2 * clampPalier(palier)} % de ses PV max en fin de tour`
+    },
+  },
+  SANCTUARY: {
+    key: 'SANCTUARY',
+    rarityHint: 'EPIC',
+    label: 'Sanctuaire',
+    compute(palier) {
+      const p = clampPalier(palier)
+      return { valuePct: 3 + p }
+    },
+    describe(palier) {
+      return `Soigne toute l'équipe de ${3 + clampPalier(palier)} % des PV max en fin de tour`
+    },
+  },
+
+  // Passifs de dégâts sur la durée (appliqués à l'attaque, résolus en fin de tour)
+  BURN: {
+    key: 'BURN',
+    rarityHint: 'EPIC',
+    label: 'Brûlure',
+    compute(palier) {
+      const p = clampPalier(palier)
+      return { valuePct: 15 + 5 * p }
+    },
+    describe(palier) {
+      return `Inflige une brûlure : ${15 + 5 * clampPalier(palier)} % de l'ATQ par tour pendant 2 tours`
+    },
+  },
+  POISON: {
+    key: 'POISON',
+    rarityHint: 'EPIC',
+    label: 'Poison',
+    compute(palier) {
+      const p = clampPalier(palier)
+      return { valuePct: 4 + 2 * p }
+    },
+    describe(palier) {
+      return `Empoisonne la cible : ${4 + 2 * clampPalier(palier)} % de ses PV max par tour pendant 2 tours`
+    },
+  },
+
+  // Passif de soin sur élimination (appliqué après un coup fatal)
+  BLOODLUST: {
+    key: 'BLOODLUST',
+    rarityHint: 'LEGENDARY',
+    label: 'Soif de sang',
+    compute(palier) {
+      const p = clampPalier(palier)
+      return { valuePct: 15 + 5 * p }
+    },
+    describe(palier) {
+      return `Se soigne de ${15 + 5 * clampPalier(palier)} % des PV max en éliminant un ennemi`
     },
   },
 }

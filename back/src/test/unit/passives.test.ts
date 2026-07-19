@@ -44,6 +44,37 @@ describe('passives', () => {
     })
   })
 
+  describe('BLESSING', () => {
+    it('8% at P1, 18% at P6', () => {
+      expect(PASSIVES.BLESSING.compute(1).valuePct).toBe(8)
+      expect(PASSIVES.BLESSING.compute(6).valuePct).toBe(18)
+    })
+  })
+  describe('SANCTUARY', () => {
+    it('4% at P1, 9% at P6', () => {
+      expect(PASSIVES.SANCTUARY.compute(1).valuePct).toBe(4)
+      expect(PASSIVES.SANCTUARY.compute(6).valuePct).toBe(9)
+    })
+  })
+  describe('BURN', () => {
+    it('20% at P1, 45% at P6', () => {
+      expect(PASSIVES.BURN.compute(1).valuePct).toBe(20)
+      expect(PASSIVES.BURN.compute(6).valuePct).toBe(45)
+    })
+  })
+  describe('POISON', () => {
+    it('6% at P1, 16% at P6', () => {
+      expect(PASSIVES.POISON.compute(1).valuePct).toBe(6)
+      expect(PASSIVES.POISON.compute(6).valuePct).toBe(16)
+    })
+  })
+  describe('BLOODLUST', () => {
+    it('20% at P1, 45% at P6', () => {
+      expect(PASSIVES.BLOODLUST.compute(1).valuePct).toBe(20)
+      expect(PASSIVES.BLOODLUST.compute(6).valuePct).toBe(45)
+    })
+  })
+
   describe('clamp', () => {
     it('clamps palier below 1 to 1', () => {
       expect(PASSIVES.VAMPIRISM.compute(0).valuePct).toBe(15)
@@ -57,7 +88,15 @@ describe('passives', () => {
 
   describe('rarityHint', () => {
     it('EPIC passives are tagged EPIC', () => {
-      const epicKeys: PassiveKey[] = ['VAMPIRISM', 'AEGIS', 'BANNER', 'RIPOSTE']
+      const epicKeys: PassiveKey[] = [
+        'VAMPIRISM',
+        'AEGIS',
+        'BANNER',
+        'RIPOSTE',
+        'SANCTUARY',
+        'BURN',
+        'POISON',
+      ]
       for (const k of epicKeys) {
         expect(PASSIVES[k].rarityHint).toBe('EPIC')
       }
@@ -65,6 +104,8 @@ describe('passives', () => {
     it('LEGENDARY passives are tagged LEGENDARY', () => {
       expect(PASSIVES.REBIRTH.rarityHint).toBe('LEGENDARY')
       expect(PASSIVES.EXECUTION.rarityHint).toBe('LEGENDARY')
+      expect(PASSIVES.BLESSING.rarityHint).toBe('LEGENDARY')
+      expect(PASSIVES.BLOODLUST.rarityHint).toBe('LEGENDARY')
     })
   })
 

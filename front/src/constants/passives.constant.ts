@@ -72,6 +72,30 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     name: 'Régénération',
     describe: (p) => `Soigne ${4 + 2 * p} % des PV max en fin de tour.`,
   },
+  BLESSING: {
+    name: 'Bénédiction',
+    describe: (p) =>
+      `Soigne l'allié le plus faible de ${6 + 2 * p} % de ses PV max en fin de tour.`,
+  },
+  SANCTUARY: {
+    name: 'Sanctuaire',
+    describe: (p) =>
+      `Soigne toute l'équipe de ${3 + p} % des PV max en fin de tour.`,
+  },
+  BURN: {
+    name: 'Brûlure',
+    describe: (p) =>
+      `Inflige une brûlure : ${15 + 5 * p} % de l'ATQ par tour pendant 2 tours.`,
+  },
+  POISON: {
+    name: 'Poison',
+    describe: (p) =>
+      `Empoisonne la cible : ${4 + 2 * p} % de ses PV max par tour pendant 2 tours.`,
+  },
+  BLOODLUST: {
+    name: 'Soif de sang',
+    describe: (p) => `Se soigne de ${15 + 5 * p} % des PV max en éliminant un ennemi.`,
+  },
 }
 
 export const describePassive = (

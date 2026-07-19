@@ -101,6 +101,15 @@ function mulberry32(seed: number): () => number {
 // Internal mutable battle state
 // ---------------------------------------------------------------------------
 
+/** Effet de dégâts sur la durée subi par une unité (BURN, POISON). */
+interface DotEffect {
+  source: 'BURN' | 'POISON'
+  /** Dégâts infligés à chaque fin de tour. */
+  dmgPerTurn: number
+  /** Nombre de fins de tour restantes. */
+  turnsLeft: number
+}
+
 interface BattleUnit {
   id: string
   side: Side
@@ -118,6 +127,8 @@ interface BattleUnit {
   hasBeenRevived: boolean
   /** Bouclier restant (BULWARK) : absorbe les dégâts avant les PV. */
   shield: number
+  /** Effets de dégâts sur la durée actifs (BURN, POISON). */
+  dots: DotEffect[]
 }
 
 function toBattleUnit(u: SimulatorUnit, side: Side): BattleUnit {
@@ -171,6 +182,7 @@ function toBattleUnit(u: SimulatorUnit, side: Side): BattleUnit {
     alive: true,
     hasBeenRevived: false,
     shield,
+    dots: [],
   }
 }
 
@@ -381,7 +393,57 @@ function resolveAttackOnTarget(
 
   target.currentHp = Math.max(0, target.currentHp - final)
 
+  // BURN / POISON (attacker) — applique un effet de dégâts sur la durée à la cible.
+  if (final > 0) {
+    applyDotOnHit(attacker, target, log)
+  }
+
   return { id: target.id, raw, final, dodged: false }
+}
+
+/**
+ * Applique (ou rafraîchit) un effet de dégâts sur la durée quand l'attaquant
+ * possède BURN ou POISON.
+ * - BURN : dégâts par tour = % de l'ATQ de l'attaquant.
+ * - POISON : dégâts par tour = % des PV max de la cible.
+ * Durée fixe de 2 tours ; un nouvel effet de même source remplace le précédent.
+ */
+function applyDotOnHit(
+  attacker: BattleUnit,
+  target: BattleUnit,
+  log: LogEntry[],
+): void {
+  let source: DotEffect['source']
+  let dmgPerTurn: number
+  if (attacker.passiveKey === 'BURN') {
+    source = 'BURN'
+    dmgPerTurn = Math.max(
+      1,
+      Math.round((attacker.effectiveAtk * attacker.passiveValuePct) / 100),
+    )
+  } else if (attacker.passiveKey === 'POISON') {
+    source = 'POISON'
+    dmgPerTurn = Math.max(
+      1,
+      Math.round((target.maxHp * attacker.passiveValuePct) / 100),
+    )
+  } else {
+    return
+  }
+
+  const existing = target.dots.find((d) => d.source === source)
+  if (existing) {
+    existing.dmgPerTurn = Math.max(existing.dmgPerTurn, dmgPerTurn)
+    existing.turnsLeft = 2
+  } else {
+    target.dots.push({ source, dmgPerTurn, turnsLeft: 2 })
+  }
+  log.push({
+    type: 'PASSIVE',
+    unitId: attacker.id,
+    passive: source,
+    payload: { dmgPerTurn },
+  })
 }
 
 function applyRiposte(
@@ -514,6 +576,38 @@ function performStrike(ctx: StrikeContext): void {
   processRiposteOnSurvivors(attacker, targets, damages, log)
   processDeaths(targets, log)
   applyVampirism(attacker, totalNonDodgedDamage, log)
+  applyBloodlust(attacker, targets, log)
+}
+
+/**
+ * BLOODLUST — l'attaquant se soigne pour chaque ennemi éliminé par sa frappe.
+ * Une cible « éliminée » est une cible ciblée par la frappe qui n'est plus en vie
+ * après résolution (REBIRTH la garde en vie, donc ne déclenche pas le soin).
+ */
+function applyBloodlust(
+  attacker: BattleUnit,
+  targets: BattleUnit[],
+  log: LogEntry[],
+): void {
+  if (attacker.passiveKey !== 'BLOODLUST' || !attacker.alive) {
+    return
+  }
+  const kills = targets.filter((t) => !t.alive).length
+  if (kills <= 0) {
+    return
+  }
+  const perKill = Math.round((attacker.maxHp * attacker.passiveValuePct) / 100)
+  const healed = Math.min(perKill * kills, attacker.maxHp - attacker.currentHp)
+  if (healed <= 0) {
+    return
+  }
+  attacker.currentHp += healed
+  log.push({
+    type: 'PASSIVE',
+    unitId: attacker.id,
+    passive: 'BLOODLUST',
+    payload: { healed, kills },
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -655,6 +749,120 @@ function applyRegen(units: BattleUnit[], log: LogEntry[]): void {
   }
 }
 
+/**
+ * BURN / POISON — inflige les dégâts sur la durée en fin de tour, puis décrémente
+ * (et retire) les effets expirés. Une unité tombée à 0 PV meurt (REBIRTH peut la
+ * relever).
+ */
+function applyDots(units: BattleUnit[], log: LogEntry[]): void {
+  for (const u of units) {
+    if (!u.alive || u.dots.length === 0) {
+      continue
+    }
+    let total = 0
+    for (const dot of u.dots) {
+      total += dot.dmgPerTurn
+      log.push({
+        type: 'PASSIVE',
+        unitId: u.id,
+        passive: dot.source,
+        payload: { damage: dot.dmgPerTurn },
+      })
+    }
+    if (total > 0) {
+      u.currentHp = Math.max(0, u.currentHp - total)
+    }
+    u.dots = u.dots
+      .map((d) => ({ ...d, turnsLeft: d.turnsLeft - 1 }))
+      .filter((d) => d.turnsLeft > 0)
+    if (u.currentHp <= 0) {
+      finalizeDeath(u, log)
+    }
+  }
+}
+
+/** BLESSING — soigne l'allié vivant le plus bas en PV (ratio PV/PV max). */
+function applyBlessing(units: BattleUnit[], log: LogEntry[]): void {
+  for (const healer of units) {
+    if (!healer.alive || healer.passiveKey !== 'BLESSING') {
+      continue
+    }
+    const allies = units
+      .filter(
+        (u) => u.side === healer.side && u.alive && u.currentHp < u.maxHp,
+      )
+      .sort((a, b) => {
+        const ra = a.currentHp / a.maxHp
+        const rb = b.currentHp / b.maxHp
+        if (ra !== rb) {
+          return ra - rb
+        }
+        return a.id < b.id ? -1 : 1
+      })
+    const target = allies[0]
+    if (!target) {
+      continue
+    }
+    const healed = Math.min(
+      Math.round((target.maxHp * healer.passiveValuePct) / 100),
+      target.maxHp - target.currentHp,
+    )
+    if (healed <= 0) {
+      continue
+    }
+    target.currentHp += healed
+    log.push({
+      type: 'PASSIVE',
+      unitId: healer.id,
+      passive: 'BLESSING',
+      payload: { healed },
+    })
+  }
+}
+
+/** SANCTUARY — soigne tous les alliés vivants d'un petit pourcentage de PV max. */
+function applySanctuary(units: BattleUnit[], log: LogEntry[]): void {
+  for (const src of units) {
+    if (!src.alive || src.passiveKey !== 'SANCTUARY') {
+      continue
+    }
+    for (const ally of units) {
+      if (
+        ally.side !== src.side ||
+        !ally.alive ||
+        ally.currentHp >= ally.maxHp
+      ) {
+        continue
+      }
+      const healed = Math.min(
+        Math.round((ally.maxHp * src.passiveValuePct) / 100),
+        ally.maxHp - ally.currentHp,
+      )
+      if (healed <= 0) {
+        continue
+      }
+      ally.currentHp += healed
+      log.push({
+        type: 'PASSIVE',
+        unitId: src.id,
+        passive: 'SANCTUARY',
+        payload: { healed },
+      })
+    }
+  }
+}
+
+/**
+ * Effets de fin de tour, dans l'ordre : dégâts sur la durée (BURN/POISON), puis
+ * soins (REGEN sur soi, BLESSING sur un allié, SANCTUARY sur l'équipe).
+ */
+function applyEndOfTurnEffects(units: BattleUnit[], log: LogEntry[]): void {
+  applyDots(units, log)
+  applyRegen(units, log)
+  applyBlessing(units, log)
+  applySanctuary(units, log)
+}
+
 function runRound(
   units: BattleUnit[],
   prng: () => number,
@@ -674,8 +882,14 @@ function runRound(
       return winner
     }
   }
-  // Régénération de fin de tour (les combats non terminés uniquement).
-  applyRegen(units, log)
+  // Effets de fin de tour (DoT + soins) — les combats non terminés uniquement.
+  applyEndOfTurnEffects(units, log)
+  const endOfTurnWinner = checkVictory(units)
+  if (endOfTurnWinner !== null) {
+    log.push({ type: 'TURN_END', turn })
+    log.push({ type: 'WIN', side: endOfTurnWinner })
+    return endOfTurnWinner
+  }
   log.push({ type: 'TURN_END', turn })
   return null
 }

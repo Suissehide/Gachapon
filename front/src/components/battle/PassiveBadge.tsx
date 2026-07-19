@@ -16,6 +16,11 @@ const PASSIVE_LABELS: Record<string, string> = {
   NEMESIS: 'Vengeance',
   RAMPART: 'Rempart',
   REGEN: 'Régénération',
+  BLESSING: 'Bénédiction',
+  SANCTUARY: 'Sanctuaire',
+  BURN: 'Brûlure',
+  POISON: 'Poison',
+  BLOODLUST: 'Soif de sang',
 }
 
 type Props = {
