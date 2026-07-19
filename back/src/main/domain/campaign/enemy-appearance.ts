@@ -13,3 +13,34 @@ export function resolveEnemyImageUrl(
   }
   return publicUrl(`${keyPrefix}cards/${appearance}.png`)
 }
+
+// Nom d'affichage FR par famille (slug MinIO -> libellé singulier).
+const FAMILY_LABELS: Record<string, string> = {
+  slimes: 'Slime',
+  mushrooms: 'Champignon',
+  kobolds: 'Kobold',
+  wisps: 'Feu follet',
+  gnolls: 'Gnoll',
+  wolves: 'Loup',
+  mimics: 'Mimic',
+  specters: 'Spectre',
+  elementals: 'Élémentaire',
+  minotaurs: 'Minotaure',
+  basilisks: 'Basilic',
+  hydras: 'Hydre',
+  krakens: 'Kraken',
+  wyverns: 'Wyverne',
+  bosses: 'Boss',
+}
+
+// Nom d'affichage d'un ennemi depuis son apparence "monsters/{slug}/{CODE}".
+// null si pas d'apparence ou slug inconnu (l'appelant met un nom générique).
+export function enemyNameFromAppearance(
+  appearance: string | null | undefined,
+): string | null {
+  if (!appearance) {
+    return null
+  }
+  const slug = appearance.split('/')[1]
+  return (slug && FAMILY_LABELS[slug]) || null
+}

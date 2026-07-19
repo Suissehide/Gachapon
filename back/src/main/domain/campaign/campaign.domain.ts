@@ -1,4 +1,5 @@
 import Boom from '@hapi/boom'
+import { z } from 'zod/v4'
 
 import type { IocContainer } from '../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
@@ -25,7 +26,10 @@ import { retryOnSerialization } from '../shared/retry-serialization'
 import { calculateLevel } from '../shared/xp'
 import { deriveClearFlags } from './campaign-clear-flags'
 import { computeTeamPower } from './campaign-power'
-import { resolveEnemyImageUrl } from './enemy-appearance'
+import {
+  enemyNameFromAppearance,
+  resolveEnemyImageUrl,
+} from './enemy-appearance'
 
 type Rarity = 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
 
@@ -37,19 +41,25 @@ const RARITY_ORDER: Rarity[] = [
   'LEGENDARY',
 ]
 
-interface EnemySpec {
-  baseHp: number
-  baseAtk: number
-  baseDef: number
-  baseSpd: number
-  level: number
-  palier: number
-  attackPattern?: AttackPattern
-  passiveKey?: string | null
-  // Sous-chemin MinIO sans cards/ ni .png, ex. "monsters/slime/SLI-001".
+// Un ennemi stocké dans CampaignStage.enemyTeam (Json). Schéma Zod = source
+// unique du type + parse type-safe du Json Prisma (pas de cast unknown).
+const enemySpecSchema = z.object({
+  baseHp: z.number(),
+  baseAtk: z.number(),
+  baseDef: z.number(),
+  baseSpd: z.number(),
+  level: z.number(),
+  palier: z.number(),
+  attackPattern: z
+    .enum(['BASIC', 'AOE_3', 'MULTI_2', 'MONO_AMPLIFIED', 'MONO_DOUBLE'])
+    .optional(),
+  passiveKey: z.string().nullish(),
+  // Sous-chemin MinIO sans cards/ ni .png, ex. "monsters/slimes/SLIME-001".
   // Purement cosmétique. Absent => placeholder côté front.
-  appearance?: string | null
-}
+  appearance: z.string().nullish(),
+})
+const enemyTeamSchema = z.array(enemySpecSchema)
+type EnemySpec = z.infer<typeof enemySpecSchema>
 
 interface FirstClearLoot {
   gold: number
@@ -139,6 +149,7 @@ export interface CampaignStageView {
   status: 'cleared' | 'current' | 'locked'
   recommendedPower: number
   rewardPreview: RewardPreview
+  enemies: { id: string; imageUrl: string | null }[]
 }
 
 export interface CampaignView {
@@ -278,6 +289,7 @@ export class CampaignDomain {
         } else {
           status = 'locked'
         }
+        const enemyTeam = enemyTeamSchema.parse(s.enemyTeam)
         return {
           id: s.id,
           chapter: s.chapter,
@@ -285,10 +297,12 @@ export class CampaignDomain {
           label: s.label,
           isBoss: s.isBoss,
           status,
-          recommendedPower: computeTeamPower(
-            s.enemyTeam as unknown as EnemySpec[],
-          ),
+          recommendedPower: computeTeamPower(enemyTeam),
           rewardPreview: extractRewardPreview(s.lootTable),
+          enemies: enemyTeam.map((e, idx) => ({
+            id: `B${idx}`,
+            imageUrl: this.#resolveEnemyImage(e.appearance),
+          })),
         }
       })
       chapters.push({ chapter, stages: stageViews })
@@ -390,7 +404,7 @@ export class CampaignDomain {
             user.combatTeam,
           )
           const enemyUnits = this.#buildEnemySimUnits(
-            stage.enemyTeam as unknown as EnemySpec[],
+            enemyTeamSchema.parse(stage.enemyTeam),
           )
           const seed = `${userId}:${stageId}:${Date.now()}`
           const sim = simulateBattle({
@@ -1032,6 +1046,16 @@ export class CampaignDomain {
       })
   }
 
+  // Résout l'apparence d'un ennemi en URL publique MinIO (préfixe env comme les
+  // cartes), ou null si pas d'apparence. Partagé aperçu d'étage / combat.
+  #resolveEnemyImage(appearance: string | null | undefined): string | null {
+    return resolveEnemyImageUrl(
+      appearance,
+      (key) => this.#storageClient.publicUrl(key),
+      this.#config.isDevelopment ? 'staging/' : '',
+    )
+  }
+
   #buildEnemySimUnits(enemyTeam: EnemySpec[]): SimulatorUnit[] {
     return enemyTeam.map((e, idx) => {
       const stats = computeFinalStats({
@@ -1045,12 +1069,8 @@ export class CampaignDomain {
       })
       return {
         id: `B${idx}`,
-        name: `Ennemi ${idx + 1}`,
-        imageUrl: resolveEnemyImageUrl(
-          e.appearance,
-          (key) => this.#storageClient.publicUrl(key),
-          this.#config.isDevelopment ? 'staging/' : '',
-        ),
+        name: enemyNameFromAppearance(e.appearance) ?? `Ennemi ${idx + 1}`,
+        imageUrl: this.#resolveEnemyImage(e.appearance),
         hp: stats.hp,
         atk: stats.atk,
         def: stats.def,

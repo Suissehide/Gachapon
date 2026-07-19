@@ -908,13 +908,13 @@ function PrepModal({
                 isBoss ? 'py-1' : ''
               }`}
             >
-              {Array.from({ length: isBoss ? 1 : 3 }).map((_, i) => (
+              {stage.enemies.map((enemy) => (
                 <EnemyCard
-                  // biome-ignore lint/suspicious/noArrayIndexKey: static count
-                  key={i}
+                  key={enemy.id}
                   boss={isBoss}
-                  power={Math.round(recPower / (isBoss ? 1 : 3))}
+                  power={Math.round(recPower / stage.enemies.length)}
                   width={isBoss ? 'w-[110px]' : 'w-[74px]'}
+                  imageUrl={enemy.imageUrl}
                 />
               ))}
             </div>
@@ -1070,17 +1070,19 @@ function PrepModal({
 }
 
 // Enemy card in the prep modal — same visual language as ally cards
-// (TcgCardFace, no name band, power pill at the bottom). We don't have real
-// enemy portraits yet so the art falls back to the placeholder. A rose rarity
-// tone distinguishes them from allies.
+// (TcgCardFace, no name band, power pill at the bottom). Portrait comes from the
+// stage's enemy appearances (MinIO); falls back to the placeholder when null.
+// A rose rarity tone distinguishes them from allies.
 function EnemyCard({
   boss,
   power,
   width,
+  imageUrl,
 }: {
   boss: boolean
   power: number
   width: string
+  imageUrl: string | null
 }) {
   const rarity = boss ? 'LEGENDARY' : 'EPIC'
   return (
@@ -1089,7 +1091,7 @@ function EnemyCard({
         rarity={rarity}
         name=""
         setName=""
-        imageUrl={null}
+        imageUrl={imageUrl}
         variant="NORMAL"
         isOwned
         compact

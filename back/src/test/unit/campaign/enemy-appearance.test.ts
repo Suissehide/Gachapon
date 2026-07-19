@@ -1,4 +1,7 @@
-import { resolveEnemyImageUrl } from '../../../main/domain/campaign/enemy-appearance'
+import {
+  enemyNameFromAppearance,
+  resolveEnemyImageUrl,
+} from '../../../main/domain/campaign/enemy-appearance'
 
 const fakePublicUrl = (key: string) => `https://cdn.test/gachapon/${key}`
 
@@ -26,5 +29,19 @@ describe('resolveEnemyImageUrl', () => {
     expect(resolveEnemyImageUrl(undefined, fakePublicUrl)).toBeNull()
     expect(resolveEnemyImageUrl('', fakePublicUrl)).toBeNull()
     expect(resolveEnemyImageUrl(null, fakePublicUrl, 'staging/')).toBeNull()
+  })
+})
+
+describe('enemyNameFromAppearance', () => {
+  it('déduit le libellé FR depuis le slug de famille', () => {
+    expect(enemyNameFromAppearance('monsters/slimes/SLIME-001')).toBe('Slime')
+    expect(enemyNameFromAppearance('monsters/wolves/WOLF-003')).toBe('Loup')
+    expect(enemyNameFromAppearance('monsters/bosses/BOSS-001')).toBe('Boss')
+  })
+
+  it('retourne null sans apparence ou pour un slug inconnu', () => {
+    expect(enemyNameFromAppearance(null)).toBeNull()
+    expect(enemyNameFromAppearance(undefined)).toBeNull()
+    expect(enemyNameFromAppearance('monsters/unknown/XXX-001')).toBeNull()
   })
 })

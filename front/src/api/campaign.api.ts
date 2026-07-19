@@ -29,6 +29,7 @@ export type CampaignStage = {
   status: StageStatus
   recommendedPower: number
   rewardPreview: RewardPreview
+  enemies: { id: string; imageUrl: string | null }[]
 }
 
 export type CampaignChapter = {
