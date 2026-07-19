@@ -1,13 +1,15 @@
-// Enemy images live under the shared cards/ prefix in MinIO:
-//   cards/monsters/{family}/{CODE}.png   (bosses: cards/monsters/boss/BOSS-001.png)
-// `appearance` holds the sub-path without the cards/ prefix nor the .png extension,
-// e.g. "monsters/slime/SLI-001". The image is purely cosmetic.
+// Enemy images live alongside cards in MinIO, under the same env-based prefix as
+// the card import (import-cards.mjs): dev => `staging/cards/…`, prod => `cards/…`.
+// `appearance` holds the sub-path after `cards/`, without the .png extension,
+// e.g. "monsters/slimes/SLIME-001". `keyPrefix` is the env prefix ('staging/' in
+// dev, '' in prod). The image is purely cosmetic.
 export function resolveEnemyImageUrl(
   appearance: string | null | undefined,
   publicUrl: (key: string) => string,
+  keyPrefix = '',
 ): string | null {
   if (!appearance) {
     return null
   }
-  return publicUrl(`cards/${appearance}.png`)
+  return publicUrl(`${keyPrefix}cards/${appearance}.png`)
 }

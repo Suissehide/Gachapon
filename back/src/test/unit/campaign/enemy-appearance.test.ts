@@ -15,9 +15,16 @@ describe('resolveEnemyImageUrl', () => {
     )
   })
 
+  it('insère le préfixe env (staging/) avant cards/', () => {
+    expect(
+      resolveEnemyImageUrl('monsters/slimes/SLIME-001', fakePublicUrl, 'staging/'),
+    ).toBe('https://cdn.test/gachapon/staging/cards/monsters/slimes/SLIME-001.png')
+  })
+
   it('retourne null sans apparence', () => {
     expect(resolveEnemyImageUrl(null, fakePublicUrl)).toBeNull()
     expect(resolveEnemyImageUrl(undefined, fakePublicUrl)).toBeNull()
     expect(resolveEnemyImageUrl('', fakePublicUrl)).toBeNull()
+    expect(resolveEnemyImageUrl(null, fakePublicUrl, 'staging/')).toBeNull()
   })
 })

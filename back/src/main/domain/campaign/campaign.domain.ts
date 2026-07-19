@@ -199,6 +199,7 @@ export class CampaignDomain {
   readonly #postgresOrm
   readonly #combatPointsTx
   readonly #configService
+  readonly #config
   readonly #achievementsDomain
   readonly #storageClient
   readonly #userRewardRepository: UserRewardRepositoryInterface
@@ -208,6 +209,7 @@ export class CampaignDomain {
     postgresOrm,
     combatPointsTx,
     configService,
+    config,
     achievementsDomain,
     storageClient,
     userRewardRepository,
@@ -216,6 +218,7 @@ export class CampaignDomain {
     this.#postgresOrm = postgresOrm
     this.#combatPointsTx = combatPointsTx
     this.#configService = configService
+    this.#config = config
     this.#achievementsDomain = achievementsDomain
     this.#storageClient = storageClient
     this.#userRewardRepository = userRewardRepository
@@ -1043,8 +1046,10 @@ export class CampaignDomain {
       return {
         id: `B${idx}`,
         name: `Ennemi ${idx + 1}`,
-        imageUrl: resolveEnemyImageUrl(e.appearance, (key) =>
-          this.#storageClient.publicUrl(key),
+        imageUrl: resolveEnemyImageUrl(
+          e.appearance,
+          (key) => this.#storageClient.publicUrl(key),
+          this.#config.isDevelopment ? 'staging/' : '',
         ),
         hp: stats.hp,
         atk: stats.atk,
