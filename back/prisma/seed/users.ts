@@ -7,6 +7,11 @@ const SALT_ROUNDS = 10
 // Mot de passe commun pour le dev : Password123!
 const DEV_PASSWORD = 'Password123!'
 
+// Clé API fixe recréée à chaque seed — doit rester identique à celle du
+// script npm `prisma:seed` (back/package.json) qui enchaîne l'import des cartes
+const IMPORT_CARDS_API_KEY =
+  'gp_0b598bdc94b6247e86cad4646fe11a110ba530c9079bdaba940971106ca1abd0'
+
 export async function seedUsers(
   tx: Parameters<Parameters<PrismaClient['$transaction']>[0]>[0],
 ) {
@@ -27,6 +32,15 @@ export async function seedUsers(
       skillPoints: 99,
     },
   })
+
+  await tx.apiKey.create({
+    data: {
+      key: IMPORT_CARDS_API_KEY,
+      name: 'local-import-cards',
+      userId: admin.id,
+    },
+  })
+  console.log(`  Clé API "local-import-cards" créée pour admin`)
 
   // Owner de l'équipe commune
   const owner = await tx.user.create({

@@ -46,7 +46,7 @@ const CARDS = [
   { id: 'HUM-025', name: 'Perceval', rarity: 'UNCOMMON', dropWeight: 38, baseHp: 131, baseAtk: 14, baseDef: 7, baseSpd: 100, passiveKey: null },  // Équilibré
   { id: 'HUM-026', name: 'Kenji le Ronin', rarity: 'UNCOMMON', dropWeight: 38, baseHp: 106, baseAtk: 16, baseDef: 5, baseSpd: 119, passiveKey: null },  // Assassin
   { id: 'HUM-027', name: 'Dame Coralie', rarity: 'UNCOMMON', dropWeight: 38, baseHp: 149, baseAtk: 15, baseDef: 8, baseSpd: 88, passiveKey: null },  // Combattant
-  { id: 'HUM-028', name: 'Séléné Fouet', rarity: 'UNCOMMON', dropWeight: 38, baseHp: 119, baseAtk: 17, baseDef: 5, baseSpd: 115, passiveKey: null },  // Assassin
+  { id: 'HUM-028', name: 'Séléné au Fouet', rarity: 'UNCOMMON', dropWeight: 38, baseHp: 119, baseAtk: 17, baseDef: 5, baseSpd: 115, passiveKey: null },  // Assassin
   // RARE — dropWeight 16 chacune
   { id: 'HUM-029', name: 'Capitaine Hélène', rarity: 'RARE', dropWeight: 16, baseHp: 249, baseAtk: 16, baseDef: 14, baseSpd: 88, passiveKey: null },  // Tank
   { id: 'HUM-030', name: 'Dame Ysolde la Paladine', rarity: 'RARE', dropWeight: 16, baseHp: 250, baseAtk: 16, baseDef: 15, baseSpd: 80, passiveKey: null },  // Tank

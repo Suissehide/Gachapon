@@ -48,7 +48,7 @@
     "prisma:migrate:reset": "npm run with:dotenv -- -e .env -e .env.local prisma migrate reset",
     "prisma:migrate:reset:test": "npm run with:dotenv -- -e .env.test prisma migrate reset",
     "db:seed": "prisma db seed",
-    "prisma:seed": "prisma db seed",
+    "prisma:seed": "prisma db seed && API_URL=http://localhost:3001 ENV=dev API_KEY=gp_0b598bdc94b6247e86cad4646fe11a110ba530c9079bdaba940971106ca1abd0 node scripts/import-cards/import-cards.mjs",
     "prisma:seed:test": "npm run with:dotenv -- -e .env.test prisma db seed",
     "prisma:studio": "prisma studio",
     "sonar:scan": "wireit",

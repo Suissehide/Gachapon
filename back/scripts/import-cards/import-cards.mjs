@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 /**
- * Import des cartes Gobelins / Elfes / Orcs / Démons via l'API admin.
+ * Import des cartes Gobelins / Elfes / Orcs / Démons / Anges / Dragons / Nains /
+ * Morts-vivants / Puazi via l'API admin.
  *
  * Pré-requis : les images sont déjà présentes dans le stockage aux chemins
  *   - prod : cards/<folder>/<ID>.png
  *   - dev  : staging/cards/<folder>/<ID>.png
- * (folder = goblins | elves | orcs | demons)
+ * (folder = goblins | elves | orcs | demons | angels | dragons | dwarfs | undeads | puazis)
  *
  * Le script :
  *   1. crée (ou réutilise) un set par famille via POST /admin/sets
@@ -60,6 +61,11 @@ const FAMILIES = {
   elves: { setName: 'Elfes', description: 'Le set des Elfes du Gachapon.' },
   orcs: { setName: 'Orcs', description: 'Le set des Orcs du Gachapon.' },
   demons: { setName: 'Démons', description: 'Le set des Démons du Gachapon.' },
+  angels: { setName: 'Anges', description: 'Le set des Anges du Gachapon.' },
+  dragons: { setName: 'Dragons', description: 'Le set des Dragons du Gachapon.' },
+  dwarfs: { setName: 'Nains', description: 'Le set des Nains du Gachapon.' },
+  undeads: { setName: 'Morts-vivants', description: 'Le set des Morts-vivants du Gachapon.' },
+  puazis: { setName: 'Puazi', description: 'Le set des Puazi du Gachapon.' },
 }
 
 const imagePrefix = (folder) =>
