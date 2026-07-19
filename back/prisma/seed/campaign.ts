@@ -57,26 +57,65 @@ export function difficultyMult(chapter: number, stageIndex: number): number {
   return (1 + CURVE_A * (globalStage(chapter, stageIndex) - 1)) ** CURVE_B
 }
 
-// Apparence cosmétique par étage : clé `${chapter}-${index}`, valeur = liste
-// de sous-chemins MinIO (sans cards/ ni .png), un par slot d'ennemi dans l'ordre.
-// Doublons et mélange de familles autorisés. Étage absent => pas d'image.
-const STAGE_LOOKS: Record<string, string[]> = {
-  '1-1': [
-    'monsters/slime/SLI-001',
-    'monsters/slime/SLI-001',
-    'monsters/slime/SLI-002',
-  ],
-  '1-2': [
-    'monsters/slime/SLI-002',
-    'monsters/slime/SLI-002',
-    'monsters/slime/SLI-002',
-  ],
-  '1-10': ['monsters/boss/BOSS-001'],
-  '2-10': ['monsters/boss/BOSS-002'],
-  '3-10': ['monsters/boss/BOSS-003'],
-  '4-10': ['monsters/boss/BOSS-004'],
-  '5-10': ['monsters/boss/BOSS-005'],
+// Bestiaire cosmétique. Chaque famille = un dossier MinIO sous cards/monsters/
+// contenant PREFIX-001..PREFIX-{count}.png. `slug` = nom du dossier tel qu'uploadé.
+type MonsterFamily = { slug: string; prefix: string; count: number }
+const FAMILIES: Record<string, MonsterFamily> = {
+  slimes: { slug: 'Slimes', prefix: 'SLIME', count: 9 },
+  champignons: { slug: 'Champignons', prefix: 'MYCO', count: 3 },
+  kobolds: { slug: 'Kobolds', prefix: 'KOBO', count: 6 },
+  feuxfollets: { slug: 'FeuxFollets', prefix: 'WISP', count: 11 },
+  gnolls: { slug: 'Gnolls', prefix: 'GNOL', count: 12 },
+  loups: { slug: 'Loups', prefix: 'WOLF', count: 13 },
+  mimics: { slug: 'Mimics', prefix: 'MIMC', count: 3 },
+  spectres: { slug: 'Spectres', prefix: 'SPEC', count: 10 },
+  elementaires: { slug: 'Elementaires', prefix: 'ELEM', count: 16 },
+  minotaures: { slug: 'Minotaures', prefix: 'MINO', count: 13 },
+  basilics: { slug: 'Basilics', prefix: 'BSLK', count: 7 },
+  hydres: { slug: 'Hydres', prefix: 'HYDRA', count: 5 },
+  krakens: { slug: 'Krakens', prefix: 'KRAK', count: 12 },
+  wyvernes: { slug: 'Wyvernes', prefix: 'WYVN', count: 18 },
 }
+
+// Familles peuplant chaque chapitre (difficulté croissante), étages 1-9.
+const CHAPTER_FAMILIES: string[][] = [
+  ['slimes', 'champignons', 'kobolds'],
+  ['feuxfollets', 'gnolls', 'loups'],
+  ['mimics', 'spectres', 'elementaires'],
+  ['minotaures', 'basilics', 'hydres'],
+  ['krakens', 'wyvernes'],
+]
+
+// Boss (étage 10 de chaque chapitre) : cards/monsters/Boss/BOSS-001..019.
+const BOSS_SLUG = 'Boss'
+const BOSS_COUNT = 19
+
+// Apparence cosmétique par étage : clé `${chapter}-${index}`, valeur = liste de
+// sous-chemins MinIO (sans cards/ ni .png), un par slot d'ennemi. Généré depuis
+// FAMILIES/CHAPTER_FAMILIES : chaque étage cycle les images de ses familles pour
+// varier les sprites. Étage absent (ou slug/count faux) => pas d'image (fallback).
+const STAGE_LOOKS: Record<string, string[]> = (() => {
+  const looks: Record<string, string[]> = {}
+  const cursor: Record<string, number> = {}
+  const nextImage = (famKey: string): string => {
+    const fam = FAMILIES[famKey]
+    const i = cursor[famKey] ?? 0
+    cursor[famKey] = i + 1
+    const num = String((i % fam.count) + 1).padStart(3, '0')
+    return `monsters/${fam.slug}/${fam.prefix}-${num}`
+  }
+  CHAPTER_FAMILIES.forEach((fams, ci) => {
+    const chapter = ci + 1
+    for (let stage = 1; stage <= 9; stage++) {
+      looks[`${chapter}-${stage}`] = [0, 1, 2].map((slot) =>
+        nextImage(fams[(stage + slot) % fams.length]),
+      )
+    }
+    const bossNum = String(((chapter - 1) % BOSS_COUNT) + 1).padStart(3, '0')
+    looks[`${chapter}-10`] = [`monsters/${BOSS_SLUG}/BOSS-${bossNum}`]
+  })
+  return looks
+})()
 
 function looksForStage(chapter: number, stageIndex: number): string[] {
   return STAGE_LOOKS[`${chapter}-${stageIndex}`] ?? []
