@@ -61,20 +61,20 @@ export function difficultyMult(chapter: number, stageIndex: number): number {
 // contenant PREFIX-001..PREFIX-{count}.png. `slug` = nom du dossier tel qu'uploadé.
 type MonsterFamily = { slug: string; prefix: string; count: number }
 const FAMILIES: Record<string, MonsterFamily> = {
-  slimes: { slug: 'Slimes', prefix: 'SLIME', count: 9 },
-  champignons: { slug: 'Champignons', prefix: 'MYCO', count: 3 },
-  kobolds: { slug: 'Kobolds', prefix: 'KOBO', count: 6 },
-  feuxfollets: { slug: 'FeuxFollets', prefix: 'WISP', count: 11 },
-  gnolls: { slug: 'Gnolls', prefix: 'GNOL', count: 12 },
-  loups: { slug: 'Loups', prefix: 'WOLF', count: 13 },
-  mimics: { slug: 'Mimics', prefix: 'MIMC', count: 3 },
-  spectres: { slug: 'Spectres', prefix: 'SPEC', count: 10 },
-  elementaires: { slug: 'Elementaires', prefix: 'ELEM', count: 16 },
-  minotaures: { slug: 'Minotaures', prefix: 'MINO', count: 13 },
-  basilics: { slug: 'Basilics', prefix: 'BSLK', count: 7 },
-  hydres: { slug: 'Hydres', prefix: 'HYDRA', count: 5 },
-  krakens: { slug: 'Krakens', prefix: 'KRAK', count: 12 },
-  wyvernes: { slug: 'Wyvernes', prefix: 'WYVN', count: 18 },
+  slimes: { slug: 'slimes', prefix: 'SLIME', count: 9 },
+  champignons: { slug: 'mushrooms', prefix: 'MYCO', count: 3 },
+  kobolds: { slug: 'kobolds', prefix: 'KOBO', count: 6 },
+  feuxfollets: { slug: 'wisps', prefix: 'WISP', count: 11 },
+  gnolls: { slug: 'gnolls', prefix: 'GNOL', count: 12 },
+  loups: { slug: 'wolves', prefix: 'WOLF', count: 13 },
+  mimics: { slug: 'mimics', prefix: 'MIMC', count: 3 },
+  spectres: { slug: 'specters', prefix: 'SPEC', count: 10 },
+  elementaires: { slug: 'elementals', prefix: 'ELEM', count: 16 },
+  minotaures: { slug: 'minotaurs', prefix: 'MINO', count: 13 },
+  basilics: { slug: 'basilisks', prefix: 'BSLK', count: 7 },
+  hydres: { slug: 'hydras', prefix: 'HYDRA', count: 5 },
+  krakens: { slug: 'krakens', prefix: 'KRAK', count: 12 },
+  wyvernes: { slug: 'wyverns', prefix: 'WYVN', count: 18 },
 }
 
 // Familles peuplant chaque chapitre (difficulté croissante), étages 1-9.
@@ -86,8 +86,8 @@ const CHAPTER_FAMILIES: string[][] = [
   ['krakens', 'wyvernes'],
 ]
 
-// Boss (étage 10 de chaque chapitre) : cards/monsters/Boss/BOSS-001..019.
-const BOSS_SLUG = 'Boss'
+// Boss (étage 10 de chaque chapitre) : cards/monsters/bosses/BOSS-001..019.
+const BOSS_SLUG = 'bosses'
 const BOSS_COUNT = 19
 
 // Apparence cosmétique par étage : clé `${chapter}-${index}`, valeur = liste de
