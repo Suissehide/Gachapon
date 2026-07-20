@@ -5,6 +5,8 @@ import type { CardRarity } from '../../../../../types/domain/gacha/gacha.types'
 import {
   collectionCardIdParamSchema,
   collectionCardsQuerySchema,
+  collectionRecycleAllBodySchema,
+  collectionRecycleAllResponseSchema,
   collectionRecycleBodySchema,
   collectionRecycleResponseSchema,
   collectionUserIdParamSchema,
@@ -118,6 +120,23 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
     },
     (request) => {
       return collectionDomain.recycleCard(request.user.userID, request.body)
+    },
+  )
+
+  fastify.post(
+    '/collection/recycle-all',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        body: collectionRecycleAllBodySchema,
+        response: { 200: collectionRecycleAllResponseSchema },
+      },
+    },
+    (request) => {
+      return collectionDomain.recycleAllBelow(
+        request.user.userID,
+        request.body.maxRarity,
+      )
     },
   )
 }

@@ -22,3 +22,14 @@ export const collectionRecycleResponseSchema = z.object({
   newDustTotal: z.number().int(),
   unlockedAchievements: z.array(unlockedAchievementSchema).optional(),
 })
+
+export const collectionRecycleAllBodySchema = z.object({
+  maxRarity: z.enum(['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY']),
+})
+
+export const collectionRecycleAllResponseSchema = z.object({
+  dustEarned: z.number().int(),
+  cardsRecycled: z.number().int(),
+  newDustTotal: z.number().int(),
+  unlockedAchievements: z.array(unlockedAchievementSchema).optional(),
+})
