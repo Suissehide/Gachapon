@@ -209,7 +209,8 @@ export function bossLoot(chapter: number) {
   const atBossStage = lootTableNormal(chapter, STAGES_PER_CHAPTER)
   return {
     firstClear: {
-      gold: Math.round(5000 * m),
+      // ÷3 (spec 2026-07-20) : l'or des boss finançait ~900 jetons en boutique
+      gold: Math.round(1650 * m),
       dust: Math.round(1000 * m),
       xp: Math.round(200 * m),
       guaranteedEquipment: { minRarity: 'RARE' },
