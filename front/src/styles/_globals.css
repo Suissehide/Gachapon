@@ -79,8 +79,9 @@
 :root {
   /* Hauteur de la topbar — utilisée par toutes les pages _authenticated
      pour calculer leur hauteur viewport (h-[calc(100vh-var(--topbar-h))]).
-     Doit rester en phase avec la <Navbar /> + le pt du <main>. */
-  --topbar-h: 4rem;
+     Doit rester en phase avec la <Navbar /> + le pt du <main>.
+     Mobile : rangée compacte (h-16) + rangée ressources (h-12). */
+  --topbar-h: 112px;
 }
 @media (min-width: 1024px) {
   :root {

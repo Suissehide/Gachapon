@@ -49,6 +49,15 @@ export function Navbar() {
   return (
     <>
       <nav className="fixed top-0 z-50 w-full border-b border-border bg-background">
+        {/* Mobile / tablet — resources row (jetons · poussière · or · PC) */}
+        {user && (
+          <div className="flex h-12 items-center gap-1.5 overflow-x-auto px-3 lg:hidden">
+            <TokensPill />
+            <Wallet user={user} />
+            <Energy />
+          </div>
+        )}
+
         {/* Mobile / tablet bar — single compact row */}
         <div className="flex h-16 items-center justify-between gap-3 px-6 lg:hidden">
           <BrandLink onClick={closeMenu} compact />
@@ -226,7 +235,7 @@ function BrandLink({
 function Wallet({ user }: { user: AuthUser }) {
   const fmt = (n: number) => n.toLocaleString('fr-FR')
   return (
-    <div className="flex items-center gap-2">
+    <div className="contents lg:flex lg:items-center lg:gap-2">
       <CoinPill
         title={`${fmt(user.dust)} poussière`}
         icon={<Sparkles size={15} strokeWidth={1.8} />}
@@ -287,19 +296,19 @@ function TokensPill() {
     <Link
       to="/play"
       title={`Jetons gacha — ${data.tokens}/${data.maxStock}${timer ? ` · prochain dans ${timer}` : ''}`}
-      className="relative inline-flex items-center gap-2 whitespace-nowrap rounded-[13px] border border-[#fdba74] bg-[#ffedd5] py-2 pr-3 pl-[11px] shadow-[0_2px_6px_rgba(234,88,12,0.1)]"
+      className="relative inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-[13px] border border-[#fdba74] bg-[#ffedd5] px-2 py-2 shadow-[0_2px_6px_rgba(234,88,12,0.1)] lg:flex-none lg:justify-start lg:gap-2 lg:pr-3 lg:pl-[11px]"
     >
       <span className="flex text-[#ea580c]">
         <Layers size={15} strokeWidth={1.8} />
       </span>
-      <span className="font-display text-[15px] font-extrabold tabular-nums text-[#9a3412]">
+      <span className="font-display text-[13px] font-extrabold tabular-nums text-[#9a3412] lg:text-[15px]">
         {data.tokens}
-        <span className="text-[12px] font-bold text-[#9a3412]/50">
+        <span className="text-[11px] font-bold text-[#9a3412]/50 lg:text-[12px]">
           /{data.maxStock}
         </span>
       </span>
       {timer && (
-        <span className="font-mono text-[11px] tracking-[0.04em] text-[#9a3412]/60">
+        <span className="font-mono text-[10px] tracking-[0.04em] text-[#9a3412]/60 lg:text-[11px]">
           {timer}
         </span>
       )}
@@ -330,11 +339,11 @@ function CoinPill({
     <Link
       to="/shop"
       title={title}
-      className={`inline-flex items-center gap-2 whitespace-nowrap rounded-[13px] border px-3 py-2 ${bgClassName} ${borderClassName} ${shadowClassName}`}
+      className={`inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-[13px] border px-2 py-2 lg:flex-none lg:justify-start lg:gap-2 lg:px-3 ${bgClassName} ${borderClassName} ${shadowClassName}`}
     >
       <span className={`flex ${iconColorClassName}`}>{icon}</span>
       <b
-        className={`font-display text-[15px] font-extrabold tabular-nums ${textColorClassName}`}
+        className={`font-display text-[13px] font-extrabold tabular-nums lg:text-[15px] ${textColorClassName}`}
       >
         {value}
       </b>
@@ -367,25 +376,25 @@ function Energy() {
     <Link
       to="/campaign"
       title={`Points de combat — ${data.combatPoints}/${data.maxStock}${timer ? ` · prochain dans ${timer}` : ''}`}
-      className="relative inline-flex items-center gap-2 whitespace-nowrap rounded-[13px] border border-[#ddd0ff] bg-[#f3efff] py-2 pr-3 pl-[11px] shadow-[0_2px_6px_rgba(139,92,246,0.1)]"
+      className="relative inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-[13px] border border-[#ddd0ff] bg-[#f3efff] px-2 py-2 shadow-[0_2px_6px_rgba(139,92,246,0.1)] lg:flex-none lg:justify-start lg:gap-2 lg:pr-3 lg:pl-[11px]"
     >
       <span className="flex text-[#7c3aed]">
         <Zap size={15} strokeWidth={1.8} />
       </span>
-      <span className="font-display text-[15px] font-extrabold tabular-nums text-[#5b21b6]">
+      <span className="font-display text-[13px] font-extrabold tabular-nums text-[#5b21b6] lg:text-[15px]">
         {data.combatPoints}
-        <span className="text-[12px] font-bold text-[#5b21b6]/50">
+        <span className="text-[11px] font-bold text-[#5b21b6]/50 lg:text-[12px]">
           /{data.maxStock}
         </span>
       </span>
       {timer && (
-        <span className="font-mono text-[11px] tracking-[0.04em] text-[#5b21b6]/60">
+        <span className="font-mono text-[10px] tracking-[0.04em] text-[#5b21b6]/60 lg:text-[11px]">
           {timer}
         </span>
       )}
       <span
         aria-hidden
-        className="ml-[2px] flex h-5 w-5 items-center justify-center rounded-[7px] bg-linear-to-br from-accent to-[#7c3aed] text-white"
+        className="ml-[2px] hidden h-5 w-5 items-center justify-center rounded-[7px] bg-linear-to-br from-accent to-[#7c3aed] text-white lg:flex"
       >
         <ArrowRight size={14} strokeWidth={2.5} />
       </span>

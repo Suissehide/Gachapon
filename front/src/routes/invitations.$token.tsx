@@ -76,8 +76,14 @@ function InvitationPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {isAuthenticated ? <Navbar /> : <LandingNavbar />}
-      <main className="pt-16">
-        <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
+      <main className={isAuthenticated ? 'pt-[var(--topbar-h)]' : 'pt-16'}>
+        <div
+          className={`flex items-center justify-center px-4 ${
+            isAuthenticated
+              ? 'min-h-[calc(100vh-var(--topbar-h))]'
+              : 'min-h-[calc(100vh-4rem)]'
+          }`}
+        >
           <div className="w-full max-w-md text-center">
             {(isLoading || isLoadingAuth) && (
               <>
