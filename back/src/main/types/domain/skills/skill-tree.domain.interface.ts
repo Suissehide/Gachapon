@@ -1,6 +1,6 @@
 import type { UserSkill } from '../../../../generated/client'
-import type { UserUpgradeEffects } from '../economy/economy.types'
 import type { SkillBranchWithNodes } from '../../infra/orm/repositories/skill-tree.repository.interface'
+import type { UserUpgradeEffects } from '../economy/economy.types'
 
 export type SkillTreeState = {
   branches: SkillBranchWithNodes[]

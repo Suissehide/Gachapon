@@ -29,6 +29,13 @@ export class SkillTreeDomain implements ISkillTreeDomain {
     const skillPoints = user?.skillPoints ?? 0
     const resetCost = totalInvested * config.resetCostPerPoint
 
-    return { branches, userSkills, skillPoints, totalInvested, resetCost, effects }
+    return {
+      branches,
+      userSkills,
+      skillPoints,
+      totalInvested,
+      resetCost,
+      effects,
+    }
   }
 }

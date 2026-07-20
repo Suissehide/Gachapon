@@ -788,9 +788,7 @@ function applyBlessing(units: BattleUnit[], log: LogEntry[]): void {
       continue
     }
     const allies = units
-      .filter(
-        (u) => u.side === healer.side && u.alive && u.currentHp < u.maxHp,
-      )
+      .filter((u) => u.side === healer.side && u.alive && u.currentHp < u.maxHp)
       .sort((a, b) => {
         const ra = a.currentHp / a.maxHp
         const rb = b.currentHp / b.maxHp
