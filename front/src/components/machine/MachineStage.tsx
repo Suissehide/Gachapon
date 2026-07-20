@@ -2,6 +2,7 @@ import { Environment, OrbitControls } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { forwardRef, useImperativeHandle, useRef } from 'react'
 
+import { useCanvasContextRecovery } from '../../hooks/useCanvasContextRecovery.ts'
 import type { GashaponMachineHandle } from './type/GashaponMachine'
 import { GashaponMachine } from './type/GashaponMachine'
 
@@ -11,6 +12,7 @@ export type MachineStageHandle = {
 
 export const MachineStage = forwardRef<MachineStageHandle, object>((_, ref) => {
   const machineRef = useRef<GashaponMachineHandle>(null)
+  const { canvasKey, canvasRef } = useCanvasContextRecovery()
 
   useImperativeHandle(ref, () => ({
     async startAnimation() {
@@ -23,6 +25,8 @@ export const MachineStage = forwardRef<MachineStageHandle, object>((_, ref) => {
 
   return (
     <Canvas
+      key={canvasKey}
+      ref={canvasRef}
       camera={{ position: [0, 0.1, 3.5], fov: 38 }}
       shadows
       gl={{ antialias: true }}

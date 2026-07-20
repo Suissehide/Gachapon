@@ -106,7 +106,7 @@ export const EFFECT_CONFIG: Record<EffectKey, EffectConfig> = {
   },
 
   UNCOMMON: {
-    impactText: 'NICE!',
+    impactText: 'JOLI!',
     impactSize: '54px',
     impactColor: '#22c55e',
     impactStroke: '#14532d',

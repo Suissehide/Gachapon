@@ -28,6 +28,7 @@ import { AuroraGrid } from '../../components/shared/decorations/AuroraGrid'
 import { Button } from '../../components/ui/button.tsx'
 import { apiUrl as API_URL } from '../../constants/config.constant.ts'
 import { TOAST_SEVERITY } from '../../constants/ui.constant.ts'
+import { useCanvasContextRecovery } from '../../hooks/useCanvasContextRecovery.ts'
 import { useToast } from '../../hooks/useToast'
 import { wsClient } from '../../lib/ws'
 import { preloadImages } from '../../libs/preloadImages.ts'
@@ -102,6 +103,8 @@ function Play() {
     reward: LevelUpReward
   } | null>(null)
   const machineRef = useRef<MachineStageHandle>(null)
+  const { canvasKey: ballCanvasKey, canvasRef: ballCanvasRef } =
+    useCanvasContextRecovery()
   const [skipAnimations, setSkipAnimations] = useState<boolean>(() => {
     if (typeof window === 'undefined') {
       return false
@@ -554,6 +557,8 @@ function Play() {
           {/* Ball scene */}
           {showBall && (
             <Canvas
+              key={ballCanvasKey}
+              ref={ballCanvasRef}
               camera={{ position: [0, 0.3, 7], fov: 45 }}
               shadows
               gl={{ antialias: true, alpha: true }}
