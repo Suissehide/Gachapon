@@ -1,6 +1,6 @@
 export const EFFECT_DESCRIPTIONS: Record<string, string> = {
   REGEN: 'Réduit le temps de régénération des jetons',
-  LUCK: 'Augmente les chances de raretés élevées au tirage',
+  LUCK: 'Multiplie les chances de tirer une carte Rare ou mieux',
   DUST_HARVEST: 'Augmente la poussière obtenue au recyclage',
   TOKEN_VAULT: 'Augmente la capacité max de jetons',
   FREE_PULL_CHANCE: "Chance d'obtenir un tirage gratuit",
@@ -30,7 +30,7 @@ export const EFFECT_OPTIONS = EFFECT_TYPES.map((t) => ({ value: t, label: t }))
 
 export const EFFECT_FORMATTERS: Record<string, (v: number) => string> = {
   REGEN: (v) => `−${v} min`,
-  LUCK: (v) => `+${v} %`,
+  LUCK: (v) => `×${(1 + v / 100).toFixed(2).replace('.', ',')}`,
   DUST_HARVEST: (v) => `+${v} %`,
   TOKEN_VAULT: (v) => `+${v} jeton${v > 1 ? 's' : ''}`,
   FREE_PULL_CHANCE: (v) => `${v} %`,
