@@ -18,7 +18,7 @@ export function RewardsPopup({ onClose: _ }: RewardsPopupProps) {
   const claimAll = useClaimAllRewards()
 
   return (
-    <div className="absolute right-0 top-10 z-50 min-w-64 max-h-[70vh] flex flex-col overflow-hidden rounded-xl border border-border bg-background shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+    <div className="absolute right-0 top-10 z-50 min-w-72 max-h-[70vh] flex flex-col overflow-hidden rounded-xl border border-border bg-background shadow-[0_8px_32px_rgba(0,0,0,0.4)] max-lg:fixed max-lg:inset-x-3 max-lg:top-[116px] max-lg:min-w-0">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
         <div className="flex items-center gap-2">
@@ -36,7 +36,7 @@ export function RewardsPopup({ onClose: _ }: RewardsPopupProps) {
             variant="ghost"
             onClick={() => claimAll.mutate(undefined)}
             disabled={claimAll.isPending}
-            className="h-7 px-2 text-xs text-primary hover:bg-primary/10 hover:text-primary"
+            className="h-7 shrink-0 whitespace-nowrap px-2 text-xs text-primary hover:bg-primary/10 hover:text-primary"
           >
             Tout réclamer
           </Button>

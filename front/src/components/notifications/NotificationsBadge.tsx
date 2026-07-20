@@ -68,7 +68,7 @@ export function NotificationsBadge() {
       <NotificationDot count={count} />
 
       {isOpen && (
-        <div className="absolute right-0 top-10 z-50 min-w-80 overflow-hidden rounded-xl border border-border bg-card shadow-[0_24px_64px_-16px_rgba(27,23,38,0.18)]">
+        <div className="absolute right-0 top-10 z-50 min-w-80 overflow-hidden rounded-xl border border-border bg-background shadow-[0_8px_32px_rgba(0,0,0,0.4)] max-lg:fixed max-lg:inset-x-3 max-lg:top-[116px] max-lg:min-w-0">
           <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
             <div className="flex items-center gap-2">
               <Bell className="h-4 w-4 text-text-light" />
