@@ -91,6 +91,7 @@ export const CARD_ROUTES = {
   cards: '/cards',
   collection: (userId: string) => `/users/${userId}/collection`,
   recycle: '/collection/recycle',
+  recycleAll: '/collection/recycle-all',
   admin: {
     sets: '/admin/sets',
     set: (id: string) => `/admin/sets/${id}`,
