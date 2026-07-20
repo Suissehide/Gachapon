@@ -23,11 +23,11 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
     tokenMaxStock: 6,
   },
   recycle: {
-    COMMON: 5,
-    UNCOMMON: 15,
-    RARE: 40,
-    EPIC: 120,
-    LEGENDARY: 400,
+    COMMON: 10,
+    UNCOMMON: 30,
+    RARE: 80,
+    EPIC: 240,
+    LEGENDARY: 800,
   },
   card: {
     goldCostBase: 5,
