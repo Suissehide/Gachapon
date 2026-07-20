@@ -46,6 +46,10 @@ const API_KEY = process.env.API_KEY
 const ENV = (process.env.ENV ?? 'prod').toLowerCase()
 const DRY_RUN = process.env.DRY_RUN === '1' || process.env.DRY_RUN === 'true'
 
+// dropWeight imposé par rareté (spec rééquilibrage 2026-07-20) : le champ
+// dropWeight de cards-data.json (généré depuis l'Excel) est volontairement ignoré.
+const DROP_WEIGHT_BY_RARITY = { COMMON: 85, UNCOMMON: 38, RARE: 16, EPIC: 8, LEGENDARY: 2 }
+
 if (!API_KEY) {
   console.error('✗ API_KEY manquant. Usage : API_KEY=xxxx node scripts/import-cards/import-cards.mjs')
   process.exit(1)
@@ -153,6 +157,12 @@ async function existingImageKeys(setId) {
   return keys
 }
 
+function dropWeightFor(card) {
+  const weight = DROP_WEIGHT_BY_RARITY[card.rarity]
+  if (weight == null) throw new Error(`Rareté inconnue pour ${card.id}: ${card.rarity}`)
+  return weight
+}
+
 async function createCard(setId, card) {
   const key = `${imagePrefix(card.folder)}/${card.id}.png`
   const buildForm = () => {
@@ -160,7 +170,7 @@ async function createCard(setId, card) {
     form.append('name', card.name)
     form.append('setId', setId)
     form.append('rarity', card.rarity)
-    form.append('dropWeight', String(card.dropWeight))
+    form.append('dropWeight', String(dropWeightFor(card)))
     form.append('baseHp', String(card.hp))
     form.append('baseAtk', String(card.atk))
     form.append('baseDef', String(card.def))
