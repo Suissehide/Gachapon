@@ -260,7 +260,8 @@ export async function seedSkills(tx: Tx) {
     data: {
       branchId: fortune.id,
       name: 'Chance',
-      description: 'Augmente les taux de drop des raretés élevées',
+      description:
+        "Multiplie les chances de tirer une carte Rare ou mieux (jusqu'à ×1,05)",
       icon: 'Star',
       maxLevel: 5,
       effectType: 'LUCK',
@@ -290,8 +291,8 @@ export async function seedSkills(tx: Tx) {
       levels: {
         create: [
           { level: 1, effect: 2 },
-          { level: 2, effect: 5 },
-          { level: 3, effect: 10 },
+          { level: 2, effect: 4 },
+          { level: 3, effect: 6 },
         ],
       },
     },
@@ -321,7 +322,8 @@ export async function seedSkills(tx: Tx) {
     data: {
       branchId: fortune.id,
       name: 'Apogée de Fortune',
-      description: 'Maîtrise ultime de la fortune',
+      description:
+        "Multiplie encore les chances de Rare+ (jusqu'à ×1,07, cumulable avec Chance)",
       icon: 'Crown',
       maxLevel: 3,
       effectType: 'LUCK',
