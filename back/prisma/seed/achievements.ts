@@ -25,7 +25,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 1,
     criterion: { type: 'PULL_COUNT', threshold: 10 },
-    reward: { tokens: 2, dust: 0, xp: 0 },
+    reward: { tokens: 1, dust: 0, xp: 0 },
   },
   {
     key: 'pulls_100',
@@ -36,7 +36,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 2,
     criterion: { type: 'PULL_COUNT', threshold: 100 },
-    reward: { tokens: 4, dust: 30, xp: 0 },
+    reward: { tokens: 1, dust: 30, xp: 0 },
   },
   {
     key: 'pulls_500',
@@ -47,7 +47,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 3,
     criterion: { type: 'PULL_COUNT', threshold: 500 },
-    reward: { tokens: 10, dust: 100, xp: 50 },
+    reward: { tokens: 2, dust: 100, xp: 50 },
   },
   {
     key: 'pulls_1000',
@@ -58,7 +58,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 4,
     criterion: { type: 'PULL_COUNT', threshold: 1000 },
-    reward: { tokens: 50, dust: 250, xp: 0, cardRarity: 'RARE' },
+    reward: { tokens: 10, dust: 250, xp: 0, cardRarity: 'RARE' },
   },
 
   // dust
@@ -71,7 +71,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 1,
     criterion: { type: 'DUST_SPENT', threshold: 500 },
-    reward: { tokens: 2, dust: 0, xp: 0 },
+    reward: { tokens: 1, dust: 0, xp: 0 },
   },
   {
     key: 'dust_spent_5000',
@@ -82,7 +82,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 2,
     criterion: { type: 'DUST_SPENT', threshold: 5000 },
-    reward: { tokens: 10, dust: 100, xp: 50 },
+    reward: { tokens: 2, dust: 100, xp: 50 },
   },
   {
     key: 'cards_recycled_50',
@@ -93,7 +93,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 3,
     criterion: { type: 'CARDS_RECYCLED', threshold: 50 },
-    reward: { tokens: 4, dust: 30, xp: 0 },
+    reward: { tokens: 1, dust: 30, xp: 0 },
   },
 
   // collection_rarity
@@ -106,7 +106,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 1,
     criterion: { type: 'OWN_RARITY_COUNT', rarity: 'RARE', threshold: 10 },
-    reward: { tokens: 4, dust: 30, xp: 0 },
+    reward: { tokens: 1, dust: 30, xp: 0 },
   },
   {
     key: 'own_epic_5',
@@ -117,7 +117,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 2,
     criterion: { type: 'OWN_RARITY_COUNT', rarity: 'EPIC', threshold: 5 },
-    reward: { tokens: 10, dust: 100, xp: 50 },
+    reward: { tokens: 2, dust: 100, xp: 50 },
   },
   {
     key: 'own_legendary_1',
@@ -128,7 +128,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 3,
     criterion: { type: 'OWN_RARITY_COUNT', rarity: 'LEGENDARY', threshold: 1 },
-    reward: { tokens: 10, dust: 100, xp: 50 },
+    reward: { tokens: 2, dust: 100, xp: 50 },
   },
   {
     key: 'own_legendary_5',
@@ -139,7 +139,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 4,
     criterion: { type: 'OWN_RARITY_COUNT', rarity: 'LEGENDARY', threshold: 5 },
-    reward: { tokens: 50, dust: 250, xp: 0, cardRarity: 'RARE' },
+    reward: { tokens: 10, dust: 250, xp: 0, cardRarity: 'RARE' },
   },
   {
     key: 'own_holographic_1',
@@ -154,7 +154,7 @@ const ENTRIES: SeedEntry[] = [
       variant: 'HOLOGRAPHIC',
       threshold: 1,
     },
-    reward: { tokens: 20, dust: 100, xp: 50 },
+    reward: { tokens: 4, dust: 100, xp: 50 },
   },
 
   // collection_variants
@@ -167,7 +167,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 1,
     criterion: { type: 'OWN_RARITY_COUNT', variant: 'BRILLIANT', threshold: 1 },
-    reward: { tokens: 8, dust: 30, xp: 0 },
+    reward: { tokens: 2, dust: 30, xp: 0 },
   },
   {
     key: 'own_brilliant_5',
@@ -178,7 +178,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 2,
     criterion: { type: 'OWN_RARITY_COUNT', variant: 'BRILLIANT', threshold: 5 },
-    reward: { tokens: 20, dust: 100, xp: 50 },
+    reward: { tokens: 4, dust: 100, xp: 50 },
   },
   {
     key: 'same_card_two_variants',
@@ -189,7 +189,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 3,
     criterion: { type: 'CUSTOM_EVENT', handlerKey: 'same_card_two_variants' },
-    reward: { tokens: 20, dust: 100, xp: 50 },
+    reward: { tokens: 4, dust: 100, xp: 50 },
   },
 
   // collection_complete
@@ -202,7 +202,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 1,
     criterion: { type: 'COLLECTION_COMPLETE', scope: { rarity: 'COMMON' } },
-    reward: { tokens: 50, dust: 250, xp: 0, cardRarity: 'RARE' },
+    reward: { tokens: 10, dust: 250, xp: 0, cardRarity: 'RARE' },
   },
   {
     key: 'complete_1_set',
@@ -213,7 +213,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 0,
     criterion: { type: 'SETS_COMPLETED', threshold: 1 },
-    reward: { tokens: 25, dust: 250, xp: 0, cardRarity: 'RARE' },
+    reward: { tokens: 5, dust: 250, xp: 0, cardRarity: 'RARE' },
   },
   {
     key: 'complete_3_sets',
@@ -224,7 +224,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 1,
     criterion: { type: 'SETS_COMPLETED', threshold: 3 },
-    reward: { tokens: 100, dust: 500, xp: 0, cardRarity: 'EPIC' },
+    reward: { tokens: 20, dust: 500, xp: 0, cardRarity: 'EPIC' },
   },
   {
     key: 'complete_5_sets',
@@ -235,7 +235,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 2,
     criterion: { type: 'SETS_COMPLETED', threshold: 5 },
-    reward: { tokens: 200, dust: 1000, xp: 0, cardRarity: 'LEGENDARY' },
+    reward: { tokens: 40, dust: 1000, xp: 0, cardRarity: 'LEGENDARY' },
   },
 
   // streak
@@ -248,7 +248,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 1,
     criterion: { type: 'STREAK_REACHED', threshold: 30 },
-    reward: { tokens: 100, dust: 500, xp: 0, cardRarity: 'EPIC' },
+    reward: { tokens: 20, dust: 500, xp: 0, cardRarity: 'EPIC' },
   },
 
   // pulls (suite)
@@ -261,7 +261,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 5,
     criterion: { type: 'PULL_COUNT', threshold: 2500 },
-    reward: { tokens: 100, dust: 500, xp: 0, cardRarity: 'EPIC' },
+    reward: { tokens: 20, dust: 500, xp: 0, cardRarity: 'EPIC' },
   },
   {
     key: 'pulls_5000',
@@ -272,7 +272,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 6,
     criterion: { type: 'PULL_COUNT', threshold: 5000 },
-    reward: { tokens: 200, dust: 1000, xp: 0, cardRarity: 'LEGENDARY' },
+    reward: { tokens: 40, dust: 1000, xp: 0, cardRarity: 'LEGENDARY' },
   },
 
   // dust (suite)
@@ -285,7 +285,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 4,
     criterion: { type: 'DUST_SPENT', threshold: 50000 },
-    reward: { tokens: 100, dust: 500, xp: 0, cardRarity: 'EPIC' },
+    reward: { tokens: 20, dust: 500, xp: 0, cardRarity: 'EPIC' },
   },
   {
     key: 'cards_recycled_250',
@@ -296,7 +296,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 5,
     criterion: { type: 'CARDS_RECYCLED', threshold: 250 },
-    reward: { tokens: 50, dust: 250, xp: 0, cardRarity: 'RARE' },
+    reward: { tokens: 10, dust: 250, xp: 0, cardRarity: 'RARE' },
   },
 
   // collection_rarity (suite)
@@ -309,7 +309,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 6,
     criterion: { type: 'OWN_RARITY_COUNT', rarity: 'RARE', threshold: 25 },
-    reward: { tokens: 20, dust: 100, xp: 50 },
+    reward: { tokens: 4, dust: 100, xp: 50 },
   },
   {
     key: 'own_rare_50',
@@ -320,7 +320,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 7,
     criterion: { type: 'OWN_RARITY_COUNT', rarity: 'RARE', threshold: 50 },
-    reward: { tokens: 50, dust: 250, xp: 0, cardRarity: 'RARE' },
+    reward: { tokens: 10, dust: 250, xp: 0, cardRarity: 'RARE' },
   },
   {
     key: 'own_epic_15',
@@ -331,7 +331,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 8,
     criterion: { type: 'OWN_RARITY_COUNT', rarity: 'EPIC', threshold: 15 },
-    reward: { tokens: 50, dust: 250, xp: 0, cardRarity: 'RARE' },
+    reward: { tokens: 10, dust: 250, xp: 0, cardRarity: 'RARE' },
   },
   {
     key: 'own_epic_30',
@@ -342,7 +342,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 9,
     criterion: { type: 'OWN_RARITY_COUNT', rarity: 'EPIC', threshold: 30 },
-    reward: { tokens: 100, dust: 500, xp: 0, cardRarity: 'EPIC' },
+    reward: { tokens: 20, dust: 500, xp: 0, cardRarity: 'EPIC' },
   },
   {
     key: 'own_legendary_10',
@@ -353,7 +353,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 10,
     criterion: { type: 'OWN_RARITY_COUNT', rarity: 'LEGENDARY', threshold: 10 },
-    reward: { tokens: 100, dust: 500, xp: 0, cardRarity: 'EPIC' },
+    reward: { tokens: 20, dust: 500, xp: 0, cardRarity: 'EPIC' },
   },
   {
     key: 'own_legendary_20',
@@ -364,7 +364,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 11,
     criterion: { type: 'OWN_RARITY_COUNT', rarity: 'LEGENDARY', threshold: 20 },
-    reward: { tokens: 200, dust: 1000, xp: 0, cardRarity: 'LEGENDARY' },
+    reward: { tokens: 40, dust: 1000, xp: 0, cardRarity: 'LEGENDARY' },
   },
   {
     key: 'own_holographic_3',
@@ -379,7 +379,7 @@ const ENTRIES: SeedEntry[] = [
       variant: 'HOLOGRAPHIC',
       threshold: 3,
     },
-    reward: { tokens: 50, dust: 250, xp: 0, cardRarity: 'RARE' },
+    reward: { tokens: 10, dust: 250, xp: 0, cardRarity: 'RARE' },
   },
   {
     key: 'own_holographic_10',
@@ -394,7 +394,7 @@ const ENTRIES: SeedEntry[] = [
       variant: 'HOLOGRAPHIC',
       threshold: 10,
     },
-    reward: { tokens: 100, dust: 500, xp: 0, cardRarity: 'EPIC' },
+    reward: { tokens: 20, dust: 500, xp: 0, cardRarity: 'EPIC' },
   },
 
   // collection_variants (suite)
@@ -411,7 +411,7 @@ const ENTRIES: SeedEntry[] = [
       variant: 'BRILLIANT',
       threshold: 15,
     },
-    reward: { tokens: 50, dust: 250, xp: 0, cardRarity: 'RARE' },
+    reward: { tokens: 10, dust: 250, xp: 0, cardRarity: 'RARE' },
   },
   {
     key: 'own_brilliant_30',
@@ -426,7 +426,7 @@ const ENTRIES: SeedEntry[] = [
       variant: 'BRILLIANT',
       threshold: 30,
     },
-    reward: { tokens: 100, dust: 500, xp: 0, cardRarity: 'EPIC' },
+    reward: { tokens: 20, dust: 500, xp: 0, cardRarity: 'EPIC' },
   },
 
   // collection_sets (suite)
@@ -439,7 +439,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 3,
     criterion: { type: 'SETS_COMPLETED', threshold: 10 },
-    reward: { tokens: 300, dust: 1500, xp: 0, cardRarity: 'LEGENDARY' },
+    reward: { tokens: 60, dust: 1500, xp: 0, cardRarity: 'LEGENDARY' },
   },
 
   // streak (suite)
@@ -452,7 +452,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 2,
     criterion: { type: 'STREAK_REACHED', threshold: 60 },
-    reward: { tokens: 200, dust: 1000, xp: 0, cardRarity: 'LEGENDARY' },
+    reward: { tokens: 40, dust: 1000, xp: 0, cardRarity: 'LEGENDARY' },
   },
   {
     key: 'streak_100',
@@ -463,7 +463,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 3,
     criterion: { type: 'STREAK_REACHED', threshold: 100 },
-    reward: { tokens: 300, dust: 1500, xp: 0, cardRarity: 'LEGENDARY' },
+    reward: { tokens: 60, dust: 1500, xp: 0, cardRarity: 'LEGENDARY' },
   },
 
   // account
@@ -476,7 +476,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 1,
     criterion: { type: 'LEVEL_REACHED', threshold: 10 },
-    reward: { tokens: 4, dust: 30, xp: 0 },
+    reward: { tokens: 1, dust: 30, xp: 0 },
   },
   {
     key: 'level_25',
@@ -487,7 +487,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 2,
     criterion: { type: 'LEVEL_REACHED', threshold: 25 },
-    reward: { tokens: 10, dust: 100, xp: 50 },
+    reward: { tokens: 2, dust: 100, xp: 50 },
   },
   {
     key: 'level_50',
@@ -498,7 +498,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 3,
     criterion: { type: 'LEVEL_REACHED', threshold: 50 },
-    reward: { tokens: 50, dust: 250, xp: 0, cardRarity: 'RARE' },
+    reward: { tokens: 10, dust: 250, xp: 0, cardRarity: 'RARE' },
   },
   {
     key: 'level_100',
@@ -509,7 +509,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 4,
     criterion: { type: 'LEVEL_REACHED', threshold: 100 },
-    reward: { tokens: 100, dust: 500, xp: 0, cardRarity: 'EPIC' },
+    reward: { tokens: 20, dust: 500, xp: 0, cardRarity: 'EPIC' },
   },
 
   // campaign
@@ -522,7 +522,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 1,
     criterion: { type: 'STAGES_CLEARED_COUNT', threshold: 25 },
-    reward: { tokens: 8, dust: 30, xp: 0 },
+    reward: { tokens: 2, dust: 30, xp: 0 },
   },
   {
     key: 'stages_cleared_50',
@@ -533,7 +533,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 2,
     criterion: { type: 'STAGES_CLEARED_COUNT', threshold: 50 },
-    reward: { tokens: 20, dust: 100, xp: 50 },
+    reward: { tokens: 4, dust: 100, xp: 50 },
   },
   {
     key: 'stages_cleared_100',
@@ -544,7 +544,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 3,
     criterion: { type: 'STAGES_CLEARED_COUNT', threshold: 100 },
-    reward: { tokens: 50, dust: 250, xp: 0, cardRarity: 'RARE' },
+    reward: { tokens: 10, dust: 250, xp: 0, cardRarity: 'RARE' },
   },
   {
     key: 'boss_defeats_5',
@@ -555,7 +555,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 4,
     criterion: { type: 'BOSS_DEFEATS_COUNT', threshold: 5 },
-    reward: { tokens: 8, dust: 30, xp: 0 },
+    reward: { tokens: 2, dust: 30, xp: 0 },
   },
   {
     key: 'boss_defeats_10',
@@ -566,7 +566,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 5,
     criterion: { type: 'BOSS_DEFEATS_COUNT', threshold: 10 },
-    reward: { tokens: 20, dust: 100, xp: 50 },
+    reward: { tokens: 4, dust: 100, xp: 50 },
   },
   {
     key: 'boss_defeats_25',
@@ -577,7 +577,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 6,
     criterion: { type: 'BOSS_DEFEATS_COUNT', threshold: 25 },
-    reward: { tokens: 50, dust: 250, xp: 0, cardRarity: 'RARE' },
+    reward: { tokens: 10, dust: 250, xp: 0, cardRarity: 'RARE' },
   },
   {
     key: 'chapter_reached_2',
@@ -588,7 +588,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 7,
     criterion: { type: 'CAMPAIGN_CHAPTER_REACHED', threshold: 2 },
-    reward: { tokens: 8, dust: 30, xp: 0 },
+    reward: { tokens: 2, dust: 30, xp: 0 },
   },
   {
     key: 'chapter_reached_3',
@@ -599,7 +599,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 8,
     criterion: { type: 'CAMPAIGN_CHAPTER_REACHED', threshold: 3 },
-    reward: { tokens: 20, dust: 100, xp: 50 },
+    reward: { tokens: 4, dust: 100, xp: 50 },
   },
 
   // mastery
@@ -612,7 +612,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 1,
     criterion: { type: 'FLAWLESS_CLEARS_COUNT', threshold: 1 },
-    reward: { tokens: 8, dust: 30, xp: 0 },
+    reward: { tokens: 2, dust: 30, xp: 0 },
   },
   {
     key: 'flawless_clears_25',
@@ -623,7 +623,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 2,
     criterion: { type: 'FLAWLESS_CLEARS_COUNT', threshold: 25 },
-    reward: { tokens: 50, dust: 250, xp: 0, cardRarity: 'RARE' },
+    reward: { tokens: 10, dust: 250, xp: 0, cardRarity: 'RARE' },
   },
   {
     key: 'flawless_clears_100',
@@ -634,7 +634,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 3,
     criterion: { type: 'FLAWLESS_CLEARS_COUNT', threshold: 100 },
-    reward: { tokens: 100, dust: 500, xp: 0, cardRarity: 'EPIC' },
+    reward: { tokens: 20, dust: 500, xp: 0, cardRarity: 'EPIC' },
   },
   {
     key: 'understaffed_clear_1',
@@ -645,7 +645,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 4,
     criterion: { type: 'UNDERSTAFFED_CLEARS_COUNT', threshold: 1 },
-    reward: { tokens: 20, dust: 100, xp: 50 },
+    reward: { tokens: 4, dust: 100, xp: 50 },
   },
   {
     key: 'cards_max_level_1',
@@ -657,7 +657,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 5,
     criterion: { type: 'CARDS_AT_MAX_LEVEL', threshold: 1 },
-    reward: { tokens: 20, dust: 100, xp: 50 },
+    reward: { tokens: 4, dust: 100, xp: 50 },
   },
   {
     key: 'cards_max_level_5',
@@ -668,7 +668,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: false,
     sortOrder: 6,
     criterion: { type: 'CARDS_AT_MAX_LEVEL', threshold: 5 },
-    reward: { tokens: 50, dust: 250, xp: 0, cardRarity: 'RARE' },
+    reward: { tokens: 10, dust: 250, xp: 0, cardRarity: 'RARE' },
   },
 
   // cachés
@@ -681,7 +681,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: true,
     sortOrder: 0,
     criterion: { type: 'CUSTOM_EVENT', handlerKey: 'first_pull_ever' },
-    reward: { tokens: 3, dust: 0, xp: 0 },
+    reward: { tokens: 1, dust: 0, xp: 0 },
   },
   {
     key: 'rainbow_day',
@@ -704,7 +704,7 @@ const ENTRIES: SeedEntry[] = [
     hidden: true,
     sortOrder: 0,
     criterion: { type: 'CUSTOM_EVENT', handlerKey: 'dust_balance_10k' },
-    reward: { tokens: 20, dust: 0, xp: 0 },
+    reward: { tokens: 4, dust: 0, xp: 0 },
   },
 ]
 
