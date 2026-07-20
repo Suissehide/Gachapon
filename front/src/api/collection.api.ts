@@ -1,3 +1,4 @@
+import type { UnlockedAchievement } from '../constants/achievements.constant.ts'
 import type {
   Card,
   CardSet,
@@ -6,11 +7,12 @@ import type {
 } from '../constants/card.constant.ts'
 import { CARD_ROUTES } from '../constants/card.constant.ts'
 import { apiUrl } from '../constants/config.constant.ts'
-import type { UnlockedAchievement } from '../constants/achievements.constant.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
 export type { CardSet, CardVariant, Card, UserCard }
+
+export type BulkRecycleMaxRarity = 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC'
 
 export const CollectionApi = {
   getSets: async (): Promise<{ sets: CardSet[] }> => {
@@ -60,7 +62,11 @@ export const CollectionApi = {
     cardId: string,
     quantity: number,
     variant: CardVariant,
-  ): Promise<{ dustEarned: number; newDustTotal: number; unlockedAchievements?: UnlockedAchievement[] }> => {
+  ): Promise<{
+    dustEarned: number
+    newDustTotal: number
+    unlockedAchievements?: UnlockedAchievement[]
+  }> => {
     const res = await fetchWithAuth(`${apiUrl}${CARD_ROUTES.recycle}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -68,6 +74,25 @@ export const CollectionApi = {
     })
     if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors du recyclage')
+    }
+    return res.json()
+  },
+
+  recycleAll: async (
+    maxRarity: BulkRecycleMaxRarity,
+  ): Promise<{
+    dustEarned: number
+    cardsRecycled: number
+    newDustTotal: number
+    unlockedAchievements?: UnlockedAchievement[]
+  }> => {
+    const res = await fetchWithAuth(`${apiUrl}${CARD_ROUTES.recycleAll}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ maxRarity }),
+    })
+    if (!res.ok) {
+      handleHttpError(res, {}, 'Erreur lors du recyclage en masse')
     }
     return res.json()
   },

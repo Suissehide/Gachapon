@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 import { config as loadEnv } from 'dotenv'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '../generated/client'
+import Redis from 'ioredis'
 
 export default async function globalSetup() {
   // Load .env.test — overrides DATABASE_URL to point at gachapon_test
@@ -33,5 +34,14 @@ export default async function globalSetup() {
     `)
   } finally {
     await prisma.$disconnect()
+  }
+
+  // Flush Redis cache so config values are re-read from DB on next test
+  const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379'
+  const redis = new Redis(redisUrl)
+  try {
+    await redis.flushdb()
+  } finally {
+    redis.disconnect()
   }
 }

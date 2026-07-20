@@ -153,7 +153,7 @@ describe('bossLoot — prime de farm alignée sur la difficulté réelle', () =>
 
   it('le first-clear boss reste un jackpot chapitre-based', () => {
     const fc = bossLoot(1).firstClear
-    expect(fc.gold).toBe(5000)
+    expect(fc.gold).toBe(1650)
     expect(fc.dust).toBe(1000)
     expect(fc.xp).toBe(200)
     expect(fc.guaranteedEquipment).toEqual({ minRarity: 'RARE' })

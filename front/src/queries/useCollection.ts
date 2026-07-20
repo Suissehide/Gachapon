@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { type CardVariant, CollectionApi } from '../api/collection.api.ts'
+import {
+  type BulkRecycleMaxRarity,
+  type CardVariant,
+  CollectionApi,
+} from '../api/collection.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
@@ -95,6 +99,44 @@ export const useRecycle = () => {
     onError: (error) => {
       toast({
         title: 'Erreur lors du recyclage',
+        message: error.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
+    },
+  })
+}
+
+export const useRecycleAll = () => {
+  const qc = useQueryClient()
+  const { toast } = useToast()
+  const setUser = useAuthStore((s) => s.setUser)
+  const user = useAuthStore((s) => s.user)
+  const enqueueAchievementUnlock = useAchievementUnlockStore((s) => s.enqueue)
+  return useMutation({
+    mutationFn: (maxRarity: BulkRecycleMaxRarity) =>
+      CollectionApi.recycleAll(maxRarity),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['collection'] })
+      // Même fan-out que useRecycle : CARD_RECYCLED alimente quêtes + succès.
+      qc.invalidateQueries({ queryKey: ['quests'] })
+      qc.invalidateQueries({ queryKey: ['achievements'] })
+      if (user) {
+        setUser({ ...user, dust: data.newDustTotal })
+      }
+      toast({
+        title: 'Recyclage terminé',
+        message: `${data.cardsRecycled} carte${data.cardsRecycled > 1 ? 's' : ''} recyclée${data.cardsRecycled > 1 ? 's' : ''} → ${data.dustEarned.toLocaleString('fr-FR')} poussière`,
+        severity: TOAST_SEVERITY.SUCCESS,
+      })
+      if (data.unlockedAchievements?.length) {
+        enqueueAchievementUnlock(data.unlockedAchievements)
+        // Le succès débloqué crée une récompense en attente — rafraîchir la pastille.
+        void useAuthStore.getState().fetchMe()
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: 'Erreur lors du recyclage en masse',
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })

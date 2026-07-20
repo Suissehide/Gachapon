@@ -76,7 +76,7 @@ describe('POST /cards/:userCardId/dust', () => {
     })
     expect(res.statusCode).toBe(200)
     const body = res.json()
-    expect(body.dustEarned).toBe(80) // 2 × 40 (RARE)
+    expect(body.dustEarned).toBe(160) // 2 × 80 (RARE)
     expect(body.remainingQuantity).toBe(1)
   })
 

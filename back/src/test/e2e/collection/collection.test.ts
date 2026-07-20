@@ -123,7 +123,7 @@ describe('Collection routes', () => {
     expect(recycleBody).toHaveProperty('newDustTotal')
   })
 
-  it('POST /collection/recycle — BRILLIANT RARE donne exactement 40 dust (valeur plate, pas de multiplicateur variante)', async () => {
+  it('POST /collection/recycle — BRILLIANT RARE donne exactement 80 dust (valeur plate, pas de multiplicateur variante)', async () => {
     const { postgresOrm } = (app as any).iocContainer
 
     // Créer un set et une carte RARE dédiés pour ce test
@@ -148,9 +148,9 @@ describe('Collection routes', () => {
     expect(res.statusCode).toBe(200)
     const body = res.json()
     // Règle canonique : valeur plate par rareté, pas de multiplicateur variante.
-    // dustRare = 40 par défaut, dustHarvestMultiplier = 1 (pas de skills)
-    // BRILLIANT RARE doit donner exactement 40, identique à NORMAL RARE.
-    expect(body.dustEarned).toBe(40)
+    // dustRare = 80 par défaut, dustHarvestMultiplier = 1 (pas de skills)
+    // BRILLIANT RARE doit donner exactement 80, identique à NORMAL RARE.
+    expect(body.dustEarned).toBe(80)
   })
 
   it('POST /collection/recycle — incrémente le cumul dustGenerated exposé sur le profil', async () => {
