@@ -1,8 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { RefreshCw } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import type { Card, CardVariant } from '../../api/collection.api.ts'
 import { CardViewModal } from '../../components/collection/CardViewModal.tsx'
+import {
+  RARITY_LABELS,
+  RARITY_ORDER,
+} from '../../components/collection/CollectionCard.tsx'
 import {
   CollectionFilters,
   type GroupMode,
@@ -14,17 +19,18 @@ import {
   CollectionSection,
   computeSectionStats,
 } from '../../components/collection/CollectionSection.tsx'
+import { RecycleAllModal } from '../../components/collection/RecycleAllModal.tsx'
 import { RecycleModal } from '../../components/collection/RecycleModal.tsx'
 import { ArcadeCard } from '../../components/shared/ArcadeCard.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
+import { Button } from '../../components/ui/button.tsx'
 import {
   type UserCard,
   useCards,
   useUserCollection,
 } from '../../queries/useCollection'
 import { useAuthStore } from '../../stores/auth.store'
-import { RARITY_LABELS, RARITY_ORDER } from '../../components/collection/CollectionCard.tsx'
 
 export type DisplayEntry = {
   key: string
@@ -46,6 +52,7 @@ function Collection() {
   const [variant, setVariant] = useState<VariantFilter>('all')
   const [ownership, setOwnership] = useState<OwnershipFilter>('owned')
   const [recycleTarget, setRecycleTarget] = useState<UserCard | null>(null)
+  const [recycleAllOpen, setRecycleAllOpen] = useState(false)
   // Store just the key so we always re-derive the *fresh* entry from
   // displayEntries. Storing the entry itself would freeze level/palier/quantity
   // at the moment of click — subsequent level-ups / ascensions wouldn't be
@@ -166,7 +173,9 @@ function Collection() {
 
   const detailTarget = useMemo(
     () =>
-      detailKey ? displayEntries.find((e) => e.key === detailKey) ?? null : null,
+      detailKey
+        ? (displayEntries.find((e) => e.key === detailKey) ?? null)
+        : null,
     [detailKey, displayEntries],
   )
 
@@ -205,16 +214,27 @@ function Collection() {
       />
 
       <ArcadeCard>
-        <CollectionFilters
-          group={group}
-          onGroupChange={setGroup}
-          rarity={rarity}
-          onRarityChange={setRarity}
-          variant={variant}
-          onVariantChange={setVariant}
-          ownership={ownership}
-          onOwnershipChange={setOwnership}
-        />
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <CollectionFilters
+            group={group}
+            onGroupChange={setGroup}
+            rarity={rarity}
+            onRarityChange={setRarity}
+            variant={variant}
+            onVariantChange={setVariant}
+            ownership={ownership}
+            onOwnershipChange={setOwnership}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setRecycleAllOpen(true)}
+          >
+            <RefreshCw className="h-4 w-4" />
+            Tout recycler
+          </Button>
+        </div>
       </ArcadeCard>
 
       {sections.length === 0 ? (
@@ -257,6 +277,11 @@ function Collection() {
           variant={recycleTarget.variant}
         />
       )}
+      <RecycleAllModal
+        open={recycleAllOpen}
+        onOpenChange={setRecycleAllOpen}
+        userCards={userCards}
+      />
     </PageShell>
   )
 }
