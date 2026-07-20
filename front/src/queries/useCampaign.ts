@@ -26,16 +26,41 @@ export function useCampaign() {
  *
  * The last result is also persisted in `sessionStorage` so a full page refresh
  * on /battle/$id replays the same battle instead of consuming another combat
- * point. `refetch()` (called by "Rejouer") always overrides the cached copy.
+ * point. That replay is gated by `foughtThisSession` (see below) so it only
+ * happens on a genuine reload — NOT when the player navigates back onto a stage
+ * they already fought this session, which must bill a fresh battle.
+ * `refetch()` (called by "Rejouer"/"Réessayer") always fires a fresh battle.
  *
  * - `staleTime: Infinity` + `refetchOnWindowFocus: false` keep the battle from
  *   being re-fired by focus events or stale-time expiry.
- * - `gcTime: 1000` removes the cached result shortly after the page leaves —
- *   longer than StrictMode's quick remount but short enough that a real
- *   navigate-away → navigate-back fires a new battle.
+ * - `gcTime: 1000` removes react-query's own cached result shortly after the
+ *   page leaves — longer than StrictMode's quick remount but short enough that
+ *   a real navigate-away → navigate-back fires a new battle.
  * - `retry: false` so we don't quietly bill PC twice on network blips.
  */
 const BATTLE_STORAGE_PREFIX = 'battle-result:'
+
+// Stages whose battle has actually been *fetched* from the server during the
+// current app lifetime. This is module scope, so it is wiped on a full page
+// reload but survives client-side navigation. It lets us tell two look-alike
+// cases apart when landing on /battle/$id with a sessionStorage copy present:
+//   • Page refresh (F5) on a battle we just ran — the app rebooted, so the
+//     stage is ABSENT here → replay the cached result without re-billing.
+//   • Navigating back onto a stage already fought this session (e.g. "Rejouer"
+//     then "Combattre") — the stage is PRESENT here → ignore the cache and
+//     fire a fresh, billed battle.
+// We record the stage only inside `queryFn` (a real fetch), never on mount, so
+// StrictMode's mount→unmount→mount cannot flip a replay into a billed fetch.
+const foughtThisSession = new Set<string>()
+
+function readReplayableBattle(stageId: string): BattleResult | null {
+  // A stage already fought in-memory this session must fight fresh, not replay
+  // a stale sessionStorage copy — otherwise a navigate-back would be free.
+  if (foughtThisSession.has(stageId)) {
+    return null
+  }
+  return readCachedBattle(stageId)
+}
 
 function readCachedBattle(stageId: string): BattleResult | null {
   try {
@@ -91,11 +116,17 @@ export function invalidateBattleCache(qc: QueryClient): void {
 
 export function useAttackStage(stageId: string, enabled: boolean) {
   const qc = useQueryClient()
-  const cached = useMemo(() => readCachedBattle(stageId), [stageId])
+  const cached = useMemo(() => readReplayableBattle(stageId), [stageId])
 
   const query = useQuery({
     queryKey: ['battle', stageId],
-    queryFn: () => CampaignApi.battle(stageId),
+    queryFn: () => {
+      // Mark before awaiting: any fetch means this stage was fought fresh this
+      // session, so a later navigate-back replays nothing (see
+      // `foughtThisSession`).
+      foughtThisSession.add(stageId)
+      return CampaignApi.battle(stageId)
+    },
     // If we hydrated a result from sessionStorage, seed react-query with it so
     // the query starts satisfied and no new battle is fired on mount.
     initialData: cached ?? undefined,

@@ -6,6 +6,7 @@ import {
   ChevronRight,
   Coins,
   Eye,
+  Hourglass,
   RotateCcw,
   Skull,
   Sparkles,
@@ -22,6 +23,7 @@ import { BattleScene } from '../../components/battle/BattleScene.tsx'
 import {
   DropCard,
   RESULT_BADGE_LOSS,
+  RESULT_BADGE_TIMEOUT,
   RESULT_BADGE_WIN,
   ResultBadge,
   ResultPanel,
@@ -290,6 +292,12 @@ function BattleResultOverlay({
   // have opened at least once (resultSeen), so it never flashes during the
   // fight or in the gap before the popup slides in.
   const dockVisible = resultSeen && !showResult
+  // A battle that neither side won within the turn limit ends on a TIMEOUT log
+  // entry (server-side it counts as a loss: energy spent, no clear). Surface it
+  // as its own "Match nul" state so the player knows they nearly made it rather
+  // than being wiped out.
+  const isTimeout =
+    !result.won && result.log.some((entry) => entry.type === 'TIMEOUT')
   return (
     <>
       <Popup open={showResult} onOpenChange={setShowResult}>
@@ -298,7 +306,7 @@ function BattleResultOverlay({
           className="border-0 bg-[#fbf8f3] p-0 shadow-[0_30px_80px_-12px_rgba(0,0,0,0.4)]"
         >
           <Dialog.Title className="sr-only">
-            {result.won ? 'Victoire' : 'Défaite'}
+            {result.won ? 'Victoire' : isTimeout ? 'Match nul' : 'Défaite'}
           </Dialog.Title>
           {result.won ? (
             <VictoryPanel
@@ -312,6 +320,7 @@ function BattleResultOverlay({
             <DefeatPanel
               canReplay={canReplay}
               battleCost={battleCost}
+              timeout={isTimeout}
               onReplay={onReplay}
               onBack={onBack}
             />
@@ -328,6 +337,7 @@ function BattleResultOverlay({
           <div aria-hidden className="h-28" />
           <ResultDock
             won={result.won}
+            timeout={isTimeout}
             onReview={() => setShowResult(true)}
             onBack={onBack}
           />
@@ -339,10 +349,12 @@ function BattleResultOverlay({
 
 function ResultDock({
   won,
+  timeout = false,
   onReview,
   onBack,
 }: {
   won: boolean
+  timeout?: boolean
   onReview: () => void
   onBack: () => void
 }) {
@@ -357,11 +369,13 @@ function ResultDock({
         <div className="flex items-center gap-3">
           {won ? (
             <Trophy className="h-5 w-5 text-amber-400" />
+          ) : timeout ? (
+            <Hourglass className="h-5 w-5 text-indigo-300" />
           ) : (
             <Skull className="h-5 w-5 text-rose-400" />
           )}
           <div className="font-display text-base font-extrabold text-white">
-            {won ? 'Victoire' : 'Défaite'}
+            {won ? 'Victoire' : timeout ? 'Match nul' : 'Défaite'}
           </div>
         </div>
 
@@ -512,26 +526,35 @@ function VictoryPanel({
 function DefeatPanel({
   canReplay,
   battleCost = 1,
+  timeout = false,
   onReplay,
   onBack,
 }: {
   canReplay: boolean
   battleCost?: number
+  timeout?: boolean
   onReplay: () => void
   onBack: () => void
 }) {
   return (
     <ResultPanel>
       <ResultBadge
-        className={RESULT_BADGE_LOSS}
-        icon={<Skull className="h-8 w-8" />}
+        className={timeout ? RESULT_BADGE_TIMEOUT : RESULT_BADGE_LOSS}
+        icon={
+          timeout ? (
+            <Hourglass className="h-8 w-8" />
+          ) : (
+            <Skull className="h-8 w-8" />
+          )
+        }
       />
       <h2 className="mt-4 font-display text-3xl font-bold text-text">
-        Défaite
+        {timeout ? 'Match nul' : 'Défaite'}
       </h2>
       <p className="mt-2 max-w-sm text-sm text-text-light">
-        Ton équipe n'a pas tenu le choc. Améliore ta composition ou monte tes
-        cartes avant de retourner au front.
+        {timeout
+          ? "Aucune équipe n'a pris l'avantage avant la fin des 60 tours. Renforce ta composition pour l'emporter plus vite — l'énergie a quand même été dépensée."
+          : "Ton équipe n'a pas tenu le choc. Améliore ta composition ou monte tes cartes avant de retourner au front."}
       </p>
 
       <div className="mt-6 flex w-full flex-col gap-2.5">

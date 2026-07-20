@@ -463,6 +463,21 @@ describe('simulateBattle', () => {
     expect(last?.type).toBe('TIMEOUT')
   })
 
+  // 14b. Default turn limit is 60 (doubled from the original 30 so more
+  // matchups resolve on their own before timing out).
+  it('defaults to a 60-turn limit when timeoutTurns is omitted', () => {
+    const tank = (id: string): SimulatorUnit =>
+      makeUnit(id, { hp: 500, atk: 1, def: 1000, spd: 100 })
+    const result = simulateBattle({
+      teamA: [tank('A0'), tank('A1')],
+      teamB: [tank('B0'), tank('B1')],
+      seed: 'default-timeout',
+    })
+    expect(result.won).toBeNull()
+    expect(result.turns).toBe(60)
+    expect(result.log[result.log.length - 1]?.type).toBe('TIMEOUT')
+  })
+
   // 15. 1v3 boss config
   it('1v3 boss with AOE_3 eventually defeats 3 weak units', () => {
     const boss = makeUnit('A0', {

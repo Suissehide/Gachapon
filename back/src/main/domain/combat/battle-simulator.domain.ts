@@ -896,7 +896,7 @@ function runRound(
 
 export function simulateBattle(input: SimulatorInput): SimulatorResult {
   const log: LogEntry[] = []
-  const timeoutTurns = input.timeoutTurns ?? 30
+  const timeoutTurns = input.timeoutTurns ?? 60
 
   const teamAUnits = input.teamA.map((u) => toBattleUnit(u, 'A'))
   const teamBUnits = input.teamB.map((u) => toBattleUnit(u, 'B'))

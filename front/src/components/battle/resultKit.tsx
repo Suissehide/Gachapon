@@ -59,6 +59,9 @@ export const RESULT_BADGE_WIN =
   'bg-gradient-to-br from-amber-400 to-orange-500 shadow-[0_12px_28px_-8px_rgba(245,158,11,0.7)]'
 export const RESULT_BADGE_LOSS =
   'bg-gradient-to-br from-slate-400 to-slate-600 shadow-md'
+// Draw / timeout — indigo, distinct from both the amber win and the slate loss.
+export const RESULT_BADGE_TIMEOUT =
+  'bg-gradient-to-br from-indigo-400 to-indigo-600 shadow-md'
 
 export function RewardTile({
   icon,
