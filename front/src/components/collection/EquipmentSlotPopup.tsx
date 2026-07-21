@@ -13,6 +13,7 @@ import type {
   EquipmentInstance,
   EquipmentMilestone,
   EquipmentSlot,
+  Substat,
   SubstatKey,
 } from '../../api/equipment.api.ts'
 import { TOAST_SEVERITY } from '../../constants/ui.constant.ts'
@@ -476,6 +477,59 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
   )
 }
 
+function SubstatSection({
+  substats,
+  maxSubstats,
+  highlight,
+}: {
+  substats: Substat[]
+  maxSubstats: number
+  highlight: { kind: 'substat' | 'base'; key: SubstatKey } | null
+}) {
+  const emptySlots = Math.max(0, maxSubstats - substats.length)
+  return (
+    <div>
+      <p className="mb-1 text-[10px] uppercase tracking-widest text-text-light/60">
+        Sous-stats
+        {maxSubstats > 0 && ` (${substats.length}/${maxSubstats})`}
+      </p>
+      {maxSubstats === 0 ? (
+        <p className="rounded border border-dashed border-border px-1.5 py-1 text-[11px] text-text-light/60">
+          Pas d'emplacement — les paliers renforcent le bonus de base.
+        </p>
+      ) : (
+        <ul className="flex flex-col gap-1 text-xs">
+          {substats.map((s) => (
+            <li
+              key={s.key}
+              className={cn(
+                'rounded px-1.5 py-0.5 font-mono text-violet-600',
+                highlight?.kind === 'substat' &&
+                  highlight.key === s.key &&
+                  'bg-primary/15',
+              )}
+            >
+              +{formatBonusValue(s.value)} {formatBonusKey(s.key)}
+            </li>
+          ))}
+          {Array.from({ length: emptySlots }, (_, i) => {
+            // Keys are stable: item substats are fixed-length & ordered by backend
+            const slotIndex = substats.length + i
+            return (
+              <li
+                key={`empty-slot-${slotIndex}`}
+                className="rounded border border-dashed border-border px-1.5 py-0.5 text-text-light/40"
+              >
+                Emplacement vide
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 function ItemDetail({
   item,
   userCardId,
@@ -506,7 +560,6 @@ function ItemDetail({
   const nextIsMilestone =
     !isMaxLevel && (item.level + 1) % economy.equip.substatMilestone === 0
   const maxSubstats = economy.equip.maxSubstatsByRarity[item.rarity] ?? 0
-  const emptySlots = Math.max(0, maxSubstats - item.substats.length)
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3.5">
@@ -543,45 +596,11 @@ function ItemDetail({
         </ul>
       </div>
 
-      <div>
-        <p className="mb-1 text-[10px] uppercase tracking-widest text-text-light/60">
-          Sous-stats
-          {maxSubstats > 0 && ` (${item.substats.length}/${maxSubstats})`}
-        </p>
-        {maxSubstats === 0 ? (
-          <p className="rounded border border-dashed border-border px-1.5 py-1 text-[11px] text-text-light/60">
-            Pas d'emplacement — les paliers renforcent le bonus de base.
-          </p>
-        ) : (
-          <ul className="flex flex-col gap-1 text-xs">
-            {item.substats.map((s) => (
-              <li
-                key={s.key}
-                className={cn(
-                  'rounded px-1.5 py-0.5 font-mono text-violet-600',
-                  highlight?.kind === 'substat' &&
-                    highlight.key === s.key &&
-                    'bg-primary/15',
-                )}
-              >
-                +{formatBonusValue(s.value)} {formatBonusKey(s.key)}
-              </li>
-            ))}
-            {Array.from({ length: emptySlots }, (_, i) => {
-              // Keys are stable: item substats are fixed-length & ordered by backend
-              const slotIndex = item.substats.length + i
-              return (
-                <li
-                  key={`empty-slot-${slotIndex}`}
-                  className="rounded border border-dashed border-border px-1.5 py-0.5 text-text-light/40"
-                >
-                  Emplacement vide
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </div>
+      <SubstatSection
+        substats={item.substats}
+        maxSubstats={maxSubstats}
+        highlight={highlight}
+      />
 
       <div className="mt-auto flex flex-col gap-2">
         {isEquippedHere ? (

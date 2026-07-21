@@ -76,6 +76,39 @@ function parseBonusKey(
   return STAT_KEYS.includes(stat) ? { stat, kind } : null
 }
 
+// Accumulate equipment item bonuses into the aggregated stats.
+function accumulateItemBonuses(
+  acc: StatBonuses,
+  item: {
+    bonuses: Record<string, number>
+    level: number
+    substats: { key: string; value: number }[]
+    baseBoost: number
+  },
+  equipLevelScale: number,
+): void {
+  const mult = 1 + equipLevelScale * (item.level - 1)
+  for (const [key, value] of Object.entries(item.bonuses)) {
+    const parsed = parseBonusKey(key)
+    if (parsed) {
+      acc[parsed.stat][parsed.kind] += value * mult
+    }
+  }
+  const baseKey = Object.keys(item.bonuses)[0]
+  if (baseKey !== undefined && item.baseBoost !== 0) {
+    const parsed = parseBonusKey(baseKey)
+    if (parsed) {
+      acc[parsed.stat][parsed.kind] += item.baseBoost
+    }
+  }
+  for (const s of item.substats) {
+    const parsed = parseBonusKey(s.key)
+    if (parsed) {
+      acc[parsed.stat][parsed.kind] += s.value
+    }
+  }
+}
+
 /**
  * Aggregate the flat/percent bonuses of every equipment piece equipped on a
  * given card: catalog base scaled by instance level (baseBoost added on the
@@ -98,26 +131,7 @@ export function aggregateEquipmentBonuses(
     if (item.equippedOnId !== userCardId) {
       continue
     }
-    const mult = 1 + equipLevelScale * (item.level - 1)
-    for (const [key, value] of Object.entries(item.bonuses)) {
-      const parsed = parseBonusKey(key)
-      if (parsed) {
-        acc[parsed.stat][parsed.kind] += value * mult
-      }
-    }
-    const baseKey = Object.keys(item.bonuses)[0]
-    if (baseKey !== undefined && item.baseBoost !== 0) {
-      const parsed = parseBonusKey(baseKey)
-      if (parsed) {
-        acc[parsed.stat][parsed.kind] += item.baseBoost
-      }
-    }
-    for (const s of item.substats) {
-      const parsed = parseBonusKey(s.key)
-      if (parsed) {
-        acc[parsed.stat][parsed.kind] += s.value
-      }
-    }
+    accumulateItemBonuses(acc, item, equipLevelScale)
   }
   return acc
 }
