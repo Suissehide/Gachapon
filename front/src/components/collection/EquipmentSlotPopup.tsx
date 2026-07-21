@@ -560,6 +560,13 @@ function ItemDetail({
   const nextIsMilestone =
     !isMaxLevel && (item.level + 1) % economy.equip.substatMilestone === 0
   const maxSubstats = economy.equip.maxSubstatsByRarity[item.rarity] ?? 0
+  const upgradeTitle = nextIsMilestone
+    ? maxSubstats === 0
+      ? 'Prochain niveau : bonus de base renforcé !'
+      : item.substats.length >= maxSubstats
+        ? 'Prochain niveau : sous-stat améliorée !'
+        : 'Prochain niveau : sous-stat bonus !'
+    : undefined
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3.5">
@@ -623,13 +630,7 @@ function ItemDetail({
           variant="secondary"
           disabled={busy || isMaxLevel || gold < cost}
           onClick={onUpgrade}
-          title={
-            nextIsMilestone
-              ? maxSubstats === 0
-                ? 'Prochain niveau : bonus de base renforcé !'
-                : 'Prochain niveau : sous-stat bonus !'
-              : undefined
-          }
+          title={upgradeTitle}
         >
           <ArrowUpCircle className="mr-1.5 h-4 w-4" />
           {isMaxLevel

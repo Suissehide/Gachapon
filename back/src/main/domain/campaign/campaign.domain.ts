@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 import { z } from 'zod/v4'
 
+import type { Prisma } from '../../../generated/client'
 import type { IocContainer } from '../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
@@ -23,7 +24,12 @@ import {
 } from '../combat/equipment-drop.domain'
 import {
   effectiveEquipmentBonuses,
+  MAX_SUBSTATS_BY_RARITY,
+  rollInitialSubstats,
+  SUBSTAT_RANGE_CONFIG_KEYS,
   type Substat,
+  type SubstatRanges,
+  substatRangesFromConfig,
 } from '../equipment/equipment-progression'
 import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
 import { retryOnSerialization } from '../shared/retry-serialization'
@@ -335,7 +341,7 @@ export class CampaignDomain {
   }> {
     return retryOnSerialization(async () => {
       // Lire la config ET les effets AVANT la transaction (évite les I/O async dans un tx Serializable)
-      const [battleCfg, effects] = await Promise.all([
+      const [battleCfg, effects, substatRanges] = await Promise.all([
         this.#configService.getMany(
           'combat.battleCost',
           'xp.base',
@@ -343,6 +349,7 @@ export class CampaignDomain {
           'xp.levelCap',
         ),
         this.#skillTreeRepository.getEffectsForUser(userId),
+        this.#getSubstatRanges(),
       ])
       return this.#postgresOrm.executeWithTransactionClient(
         // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing, refactor deferred
@@ -453,6 +460,7 @@ export class CampaignDomain {
               battleCfg['xp.base'],
               battleCfg['xp.slope'],
               battleCfg['xp.levelCap'],
+              substatRanges,
             )
 
             if (isFirstClear) {
@@ -531,7 +539,7 @@ export class CampaignDomain {
 
     return retryOnSerialization(async () => {
       // Lire la config ET les effets AVANT la transaction (évite les I/O async dans un tx Serializable)
-      const [sweepCfg, effects] = await Promise.all([
+      const [sweepCfg, effects, substatRanges] = await Promise.all([
         this.#configService.getMany(
           'combat.sweepCost',
           'xp.base',
@@ -539,6 +547,7 @@ export class CampaignDomain {
           'xp.levelCap',
         ),
         this.#skillTreeRepository.getEffectsForUser(userId),
+        this.#getSubstatRanges(),
       ])
       return this.#postgresOrm.executeWithTransactionClient(
         // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing, refactor deferred
@@ -637,7 +646,15 @@ export class CampaignDomain {
               )
               if (candidate) {
                 await tx.userEquipment.create({
-                  data: { userId, equipmentId: candidate.id },
+                  data: {
+                    userId,
+                    equipmentId: candidate.id,
+                    substats: rollInitialSubstats(
+                      MAX_SUBSTATS_BY_RARITY[droppedRarity],
+                      substatRanges,
+                      Math.random,
+                    ) as unknown as Prisma.InputJsonValue,
+                  },
                 })
                 equipmentDrops.push({
                   equipmentId: candidate.id,
@@ -727,6 +744,11 @@ export class CampaignDomain {
     })
   }
 
+  async #getSubstatRanges(): Promise<SubstatRanges> {
+    const c = await this.#configService.getMany(...SUBSTAT_RANGE_CONFIG_KEYS)
+    return substatRangesFromConfig(c)
+  }
+
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing, refactor deferred
   async #applyRewards(
     tx: PrimaTransactionClient,
@@ -736,6 +758,7 @@ export class CampaignDomain {
     xpBase: number,
     xpSlope: number,
     xpLevelCap: number,
+    substatRanges: SubstatRanges,
   ): Promise<BattleRewards> {
     let gold = 0
     let dust = 0
@@ -777,7 +800,17 @@ export class CampaignDomain {
         }
         if (picked) {
           const ue = await tx.userEquipment.create({
-            data: { userId, equipmentId: picked.id },
+            data: {
+              userId,
+              equipmentId: picked.id,
+              substats: rollInitialSubstats(
+                MAX_SUBSTATS_BY_RARITY[
+                  picked.rarity as keyof typeof MAX_SUBSTATS_BY_RARITY
+                ],
+                substatRanges,
+                Math.random,
+              ) as unknown as Prisma.InputJsonValue,
+            },
           })
           equipmentDrop = {
             userEquipmentId: ue.id,
@@ -862,7 +895,17 @@ export class CampaignDomain {
         )
         if (picked) {
           const ue = await tx.userEquipment.create({
-            data: { userId, equipmentId: picked.id },
+            data: {
+              userId,
+              equipmentId: picked.id,
+              substats: rollInitialSubstats(
+                MAX_SUBSTATS_BY_RARITY[
+                  droppedRarity as keyof typeof MAX_SUBSTATS_BY_RARITY
+                ],
+                substatRanges,
+                Math.random,
+              ) as unknown as Prisma.InputJsonValue,
+            },
           })
           equipmentDrop = {
             userEquipmentId: ue.id,

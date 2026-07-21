@@ -10,8 +10,10 @@ import {
   isSubstatMilestone,
   MAX_SUBSTATS_BY_RARITY,
   type MilestoneResult,
+  rollInitialSubstats,
   rollMilestone,
   SUBSTAT_KEYS,
+  SUBSTAT_RANGE_CONFIG_KEYS,
   type Substat,
   type SubstatKey,
   type SubstatRanges,
@@ -200,14 +202,21 @@ export class EquipmentDomain {
     )
   }
 
+  async #getSubstatRanges(): Promise<SubstatRanges> {
+    const c = await this.#configService.getMany(...SUBSTAT_RANGE_CONFIG_KEYS)
+    return substatRangesFromConfig(c)
+  }
+
   /**
    * Admin / test helper: grants a UserEquipment to the user from the catalog.
-   * If equipmentId is omitted, picks a random catalog entry.
+   * If equipmentId is omitted, picks a random catalog entry. Les sous-stats
+   * initiales sont tirées selon la rareté.
    */
-  grantToUser(
+  async grantToUser(
     userId: string,
     equipmentId?: string,
   ): Promise<{ userEquipmentId: string; equipmentName: string }> {
+    const ranges = await this.#getSubstatRanges()
     return this.#postgresOrm.executeWithTransactionClient(async (tx) => {
       let chosenId = equipmentId
       if (!chosenId) {
@@ -231,6 +240,11 @@ export class EquipmentDomain {
         data: {
           userId,
           equipmentId: catalog.id,
+          substats: rollInitialSubstats(
+            MAX_SUBSTATS_BY_RARITY[catalog.rarity],
+            ranges,
+            Math.random,
+          ) as unknown as Prisma.InputJsonValue,
         },
       })
       return { userEquipmentId: ue.id, equipmentName: catalog.name }
