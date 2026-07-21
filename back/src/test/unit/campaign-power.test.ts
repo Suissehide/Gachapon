@@ -21,13 +21,14 @@ describe('computeTeamPower', () => {
   })
 
   it('rounds per enemy, not the total', () => {
-    // (5/2) × (0/100) = 2.5 × 0 = 0 → round(0) = 0 par ennemi, donc 0+0 = 0
-    // un arrondi de la somme donnerait round(0.0) = 0
+    // (5/2 + 0 + 0) × (100/100) = 2.5 → round(2.5) = 3 par ennemi, donc 3+3 = 6.
+    // Un arrondi de la somme donnerait round(5.0) = 5 → l'écart prouve
+    // l'arrondi PAR ennemi.
     const team = [
-      { baseHp: 5, baseAtk: 0, baseDef: 0, baseSpd: 0 },
-      { baseHp: 5, baseAtk: 0, baseDef: 0, baseSpd: 0 },
+      { baseHp: 5, baseAtk: 0, baseDef: 0, baseSpd: 100 },
+      { baseHp: 5, baseAtk: 0, baseDef: 0, baseSpd: 100 },
     ]
-    expect(computeTeamPower(team)).toBe(0)
+    expect(computeTeamPower(team)).toBe(6)
   })
 
   it('returns 0 for an empty team', () => {

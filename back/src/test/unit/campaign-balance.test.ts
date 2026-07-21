@@ -49,6 +49,16 @@ describe('bossEnemyTeam — solo AOE_3, PV ×BOSS_HP_MULT, vitesse à parité AT
     expect(boss.attackPattern).toBe('AOE_3')
     // Vitesse scaleée — plus de valeur fixe 100
     expect(boss.baseSpd).toBeGreaterThan(100)
+    // Ancre exacte (COMMON, niveau 10, palier 1 → scale = 1.54) :
+    // PV = round(105 × 3.25 × 0.92 × 1.54) = 483, ATQ = round(10 × 0.92 × 1.54) = 14,
+    // DEF = round(5 × 1.2 × 0.92 × 1.54) = 9, VIT = round(92 × 1.54) = 142.
+    expect(boss).toMatchObject({
+      baseHp: 483,
+      baseAtk: 14,
+      baseDef: 9,
+      baseSpd: 142,
+      attackPattern: 'AOE_3',
+    })
   })
 
   it('pour chaque chapitre (1-5) : solo, AOE_3, PV > ennemi normal du stage 9', () => {
