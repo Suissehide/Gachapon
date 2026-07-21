@@ -409,7 +409,7 @@ function ResultPanel({
         <h2 className={`font-bold ${wonColor}`}>{wonLabel}</h2>
         <div className="flex items-center gap-2">
           <span className="text-xs text-text-light/60">
-            {result.turns} tours
+            {result.turns} actions
           </span>
           <div className="flex rounded-full border border-border bg-background/40 p-0.5">
             <button
