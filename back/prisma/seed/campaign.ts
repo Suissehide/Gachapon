@@ -131,7 +131,7 @@ export function enemyPower(chapter: number, stageIndex: number) {
   }
 }
 
-function normalEnemyTeam(chapter: number, stageIndex: number) {
+export function normalEnemyTeam(chapter: number, stageIndex: number) {
   const p = enemyPower(chapter, stageIndex)
   const looks = looksForStage(chapter, stageIndex)
   return [0, 1, 2].map((slot) => ({
