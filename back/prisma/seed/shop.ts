@@ -1,12 +1,12 @@
 import type { PrismaClient } from '../../src/generated/client'
 
-const SHOP_ITEMS = [
+export const SHOP_ITEMS = [
   // Packs de jetons — achetés avec l'or gagné en campagne
   {
     name: 'Pack Starter',
     description: '10 jetons pour démarrer ton aventure.',
     type: 'TOKEN_PACK' as const,
-    cost: 5000,
+    cost: 25000,
     currency: 'GOLD' as const,
     value: { tokens: 10 },
   },
@@ -14,7 +14,7 @@ const SHOP_ITEMS = [
     name: 'Pack Aventurier',
     description: '50 jetons — le bon compromis.',
     type: 'TOKEN_PACK' as const,
-    cost: 22500,
+    cost: 112500,
     currency: 'GOLD' as const,
     value: { tokens: 50 },
   },
@@ -22,7 +22,7 @@ const SHOP_ITEMS = [
     name: 'Pack Légende',
     description: '150 jetons — le meilleur rapport or/jeton.',
     type: 'TOKEN_PACK' as const,
-    cost: 60000,
+    cost: 300000,
     currency: 'GOLD' as const,
     value: { tokens: 150 },
   },
@@ -66,11 +66,11 @@ const SHOP_ITEMS = [
   {
     name: 'Boost Épique',
     description:
-      "Multiplie par 3 les chances d'obtenir des cartes EPIC pendant 10 tirages.",
+      "Multiplie par 2 les chances d'obtenir des cartes EPIC pendant 10 tirages.",
     type: 'BOOST' as const,
-    cost: 500,
+    cost: 800,
     currency: 'DUST' as const,
-    value: { multiplier: 3, rarity: 'EPIC', pulls: 10 },
+    value: { multiplier: 2, rarity: 'EPIC', pulls: 10 },
   },
   // Cosmétiques
   {

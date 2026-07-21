@@ -8,7 +8,7 @@ import type { PostgresPrismaClient } from '../orm/postgres-client'
 
 const REDIS_TTL_SECONDS = 300 // 5 minutes
 
-const DEFAULTS: Record<ConfigKey, number> = {
+export const DEFAULTS: Record<ConfigKey, number> = {
   tokenRegenIntervalMinutes: 60,
   tokenMaxStock: 6,
   pityThreshold: 300,
@@ -26,17 +26,17 @@ const DEFAULTS: Record<ConfigKey, number> = {
   brilliantRateLegendary: 5,
   dailyShopPriceCommon: 50,
   dailyShopPriceUncommon: 150,
-  dailyShopPriceRare: 500,
-  dailyShopPriceEpic: 1500,
-  dailyShopPriceLegendary: 5000,
+  dailyShopPriceRare: 800,
+  dailyShopPriceEpic: 3500,
+  dailyShopPriceLegendary: 12000,
   xpPerPull: 10,
   'combat.pointsMax': 60,
-  'combat.regenSeconds': 600,
+  'combat.regenSeconds': 900,
   'combat.battleCost': 5,
   'combat.sweepCost': 5,
   'gacha.pullTokenCost': 1,
   'xp.base': 100,
-  'xp.slope': 30,
+  'xp.slope': 24,
   'xp.levelCap': 100,
   'card.goldCostBase': 5,
   'card.goldCostExp': 1.6,
