@@ -45,7 +45,10 @@ export type DisplayEntry = {
 // Tri appliqué à l'intérieur de chaque groupe. `default` préserve l'ordre
 // existant ; les entrées non possédées (level/quantity absents) tombent en
 // fin de groupe pour les tris numériques.
-function sortEntries(entries: DisplayEntry[], sort: SortMode): DisplayEntry[] {
+export function sortEntries(
+  entries: DisplayEntry[],
+  sort: SortMode,
+): DisplayEntry[] {
   if (sort === 'default') {
     return entries
   }

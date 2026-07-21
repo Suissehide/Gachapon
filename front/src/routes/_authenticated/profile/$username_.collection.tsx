@@ -28,22 +28,7 @@ import {
   useUserCollection,
 } from '../../../queries/useCollection.ts'
 import { useUserProfile } from '../../../queries/useProfile.ts'
-import type { DisplayEntry } from '../collection.tsx'
-
-function sortEntries(entries: DisplayEntry[], sort: SortMode): DisplayEntry[] {
-  if (sort === 'default') {
-    return entries
-  }
-  const sorted = [...entries]
-  if (sort === 'level') {
-    sorted.sort((a, b) => (b.userCard?.level ?? 0) - (a.userCard?.level ?? 0))
-  } else if (sort === 'copies') {
-    sorted.sort((a, b) => b.quantity - a.quantity)
-  } else {
-    sorted.sort((a, b) => a.card.name.localeCompare(b.card.name, 'fr'))
-  }
-  return sorted
-}
+import { type DisplayEntry, sortEntries } from '../collection.tsx'
 
 export const Route = createFileRoute(
   '/_authenticated/profile/$username_/collection',
