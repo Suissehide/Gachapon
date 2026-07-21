@@ -681,15 +681,12 @@ export async function seedSkills(tx: Tx) {
       name: 'Logistique',
       description: 'Réduit le coût du farm',
       icon: 'Truck',
-      maxLevel: 2,
+      maxLevel: 1,
       effectType: 'SWEEP_COST',
       posX: -408,
       posY: 0,
       levels: {
-        create: [
-          { level: 1, effect: 1 },
-          { level: 2, effect: 2 },
-        ],
+        create: [{ level: 1, effect: 1 }],
       },
     },
   })
