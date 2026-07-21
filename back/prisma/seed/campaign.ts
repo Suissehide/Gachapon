@@ -3,23 +3,41 @@ import type { PrismaClient } from '../../src/generated/client'
 const CHAPTER_COUNT = 5
 const STAGES_PER_CHAPTER = 10
 
-// Enemy baseline sits slightly BELOW a level-1 COMMON player card
-// (100/10/5/90) so a starter team can clear stage 1-1 and start earning gold.
-const ENEMY_BASE = { baseHp: 80, baseAtk: 8, baseDef: 4, baseSpd: 85 }
-
 // Courbe de difficulté CONTINUE et CONCAVE sur le n° de stage global
 // n = (chapitre-1)×10 + index (1..50) : mult(n) = (1 + 0.08·(n-1))^2.5.
-// Croissance relative ≈ +21 %/stage au début puis ~+4 %/stage en fin de jeu —
-// calquée sur le coût des niveaux de carte : les premiers niveaux sont bon
-// marché (montée rapide possible), chaque niveau devient ensuite cher
-// (gold ∝ L^1.6, dust ∝ L^1.4), donc la difficulté ralentit d'autant.
-// Remplace l'ancien 2^(chapitre-1) × 1.18^(index-1) qui faisait des dents de
-// scie : 3-1 retombait sous 2-6 alors que le boss 2-10 restait le meilleur
-// farm — désormais le niveau d'équipe requis est strictement croissant
-// (vérifié par simulation : COMMON ~21 au boss 1, EPIC ~41 fin ch.3,
-// LÉGENDAIRE ~57 au boss final).
+// Utilisée UNIQUEMENT pour le BUTIN (loot) — plus pour les stats ennemies.
 const CURVE_A = 0.08
 const CURVE_B = 2.5
+
+// Progression joueur attendue par chapitre : l'ennemi s'y aligne (base de rareté
+// + niveau + palier) pour que ses stats ET sa vitesse scalent comme le joueur
+// sous l'ATB. Valeurs = médianes du roster (prisma/seed/cards.ts).
+const RARITY_BASE = {
+  COMMON: { hp: 105, atk: 10, def: 5, spd: 92 },
+  UNCOMMON: { hp: 137, atk: 15, def: 7, spd: 99 },
+  RARE: { hp: 195, atk: 21, def: 10, spd: 104 },
+  EPIC: { hp: 331, atk: 35, def: 16, spd: 92 },
+  LEGENDARY: { hp: 591, atk: 53, def: 29, spd: 107 },
+} as const
+const RARITY_BY_CHAPTER = [
+  'COMMON',
+  'UNCOMMON',
+  'RARE',
+  'EPIC',
+  'LEGENDARY',
+] as const
+
+const NORMAL_FACTOR = 0.98 // ennemi normal = base joueur × 0.98 (léger avantage joueur)
+const BOSS_FACTOR = 0.92 // boss (avant ×PV et AOE)
+const ENEMY_STAT_GROWTH_PER_LEVEL = 0.06
+const ENEMY_ASCENSION_BONUS = 0.15
+
+function enemyLevelMult(level: number): number {
+  return 1 + ENEMY_STAT_GROWTH_PER_LEVEL * (level - 1)
+}
+function enemyPalierMult(palier: number): number {
+  return (1 + ENEMY_ASCENSION_BONUS) ** (palier - 1)
+}
 
 // Boss = check de build : PV ×3.25 + AOE_3 (frappe toute l'équipe, threat ×7
 // dans la jauge affichée). L'atk n'est PAS gonflée (×1.0) : l'AOE sur un solo
@@ -122,12 +140,15 @@ function looksForStage(chapter: number, stageIndex: number): string[] {
 }
 
 export function enemyPower(chapter: number, stageIndex: number) {
-  const mult = difficultyMult(chapter, stageIndex)
+  const rb = RARITY_BASE[RARITY_BY_CHAPTER[chapter - 1]]
+  const level = globalStage(chapter, stageIndex) // expected player level 1..50
+  const palier = chapter
+  const scale = enemyLevelMult(level) * enemyPalierMult(palier)
   return {
-    baseHp: Math.round(ENEMY_BASE.baseHp * mult),
-    baseAtk: Math.round(ENEMY_BASE.baseAtk * mult),
-    baseDef: Math.round(ENEMY_BASE.baseDef * mult),
-    baseSpd: ENEMY_BASE.baseSpd,
+    baseHp: Math.round(rb.hp * NORMAL_FACTOR * scale),
+    baseAtk: Math.round(rb.atk * NORMAL_FACTOR * scale),
+    baseDef: Math.round(rb.def * NORMAL_FACTOR * scale),
+    baseSpd: Math.round(rb.spd * scale),
   }
 }
 
@@ -144,14 +165,17 @@ export function normalEnemyTeam(chapter: number, stageIndex: number) {
 }
 
 export function bossEnemyTeam(chapter: number, stageIndex: number) {
-  const p = enemyPower(chapter, stageIndex)
+  const rb = RARITY_BASE[RARITY_BY_CHAPTER[chapter - 1]]
   const looks = looksForStage(chapter, stageIndex)
+  const level = globalStage(chapter, stageIndex)
+  const palier = chapter
+  const scale = enemyLevelMult(level) * enemyPalierMult(palier)
   return [
     {
-      baseHp: Math.round(p.baseHp * BOSS_HP_MULT),
-      baseAtk: p.baseAtk,
-      baseDef: Math.round(p.baseDef * 1.2),
-      baseSpd: 100,
+      baseHp: Math.round(rb.hp * BOSS_HP_MULT * BOSS_FACTOR * scale),
+      baseAtk: Math.round(rb.atk * BOSS_FACTOR * scale),
+      baseDef: Math.round(rb.def * 1.2 * BOSS_FACTOR * scale),
+      baseSpd: Math.round(rb.spd * scale),
       level: 1,
       palier: 1,
       attackPattern: 'AOE_3',
