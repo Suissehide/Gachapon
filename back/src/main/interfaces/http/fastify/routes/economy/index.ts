@@ -7,8 +7,8 @@ import { ASCENSION_STAT_BONUS } from '../../../../../domain/combat/combat-stats.
 import {
   EQUIP_LEVEL_SCALE,
   EQUIP_MAX_LEVEL,
-  EQUIP_MAX_SUBSTATS,
   EQUIP_SUBSTAT_MILESTONE,
+  MAX_SUBSTATS_BY_RARITY,
 } from '../../../../../domain/equipment/equipment-progression'
 import {
   MILESTONE_PACKS,
@@ -192,7 +192,7 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
           levelScale: EQUIP_LEVEL_SCALE,
           maxLevel: EQUIP_MAX_LEVEL,
           substatMilestone: EQUIP_SUBSTAT_MILESTONE,
-          maxSubstats: EQUIP_MAX_SUBSTATS,
+          maxSubstats: MAX_SUBSTATS_BY_RARITY.LEGENDARY,
           salvageGold: {
             COMMON: c['equip.salvageGoldCommon'],
             UNCOMMON: c['equip.salvageGoldUncommon'],

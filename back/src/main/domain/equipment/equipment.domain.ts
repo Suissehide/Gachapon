@@ -8,9 +8,12 @@ import { retryOnSerialization } from '../shared/retry-serialization'
 import {
   EQUIP_MAX_LEVEL,
   isSubstatMilestone,
+  MAX_SUBSTATS_BY_RARITY,
   type MilestoneResult,
   rollMilestone,
+  SUBSTAT_KEYS,
   type Substat,
+  type SubstatKey,
   type SubstatRanges,
   upgradeGoldCost,
 } from './equipment-progression'
@@ -33,6 +36,7 @@ export interface EquipmentInstanceView {
   bonuses: Record<string, number>
   level: number
   substats: Substat[]
+  baseBoost: number
   equippedOnId: string | null // UserCard.id when equipped
   equippedOnCardName: string | null
   obtainedAt: string // ISO
@@ -41,6 +45,7 @@ export interface EquipmentInstanceView {
 export interface EquipmentUpgradeResult {
   level: number
   substats: Substat[]
+  baseBoost: number
   goldSpent: number
   newGold: number
   milestone: MilestoneResult | null
@@ -100,6 +105,7 @@ export class EquipmentDomain {
         bonuses: (ue.equipment.bonuses ?? {}) as Record<string, number>,
         level: ue.level,
         substats: (ue.substats ?? []) as unknown as Substat[],
+        baseBoost: ue.baseBoost,
         equippedOnId: ue.equippedOnId,
         equippedOnCardName: ue.equippedOn?.card?.name ?? null,
         obtainedAt: ue.obtainedAt.toISOString(),
@@ -305,16 +311,26 @@ export class EquipmentDomain {
             where: { id: userId },
             select: { gold: true },
           })
-          if (!user || user.gold < cost) {
-            throw Boom.badRequest("Pas assez d'or")
-          }
+          this.#assertGold(user?.gold, cost)
 
           const newLevel = ue.level + 1
+          const catalogBonuses = (ue.equipment.bonuses ?? {}) as Record<
+            string,
+            number
+          >
           let substats = (ue.substats ?? []) as unknown as Substat[]
+          let baseBoost = ue.baseBoost
           let milestone: MilestoneResult | null = null
           if (isSubstatMilestone(newLevel)) {
-            const rolled = rollMilestone(substats, ranges, Math.random)
+            const rolled = this.#resolveMilestone(
+              substats,
+              baseBoost,
+              catalogBonuses,
+              MAX_SUBSTATS_BY_RARITY[ue.equipment.rarity],
+              ranges,
+            )
             substats = rolled.substats
+            baseBoost = rolled.baseBoost
             milestone = rolled.milestone
           }
 
@@ -328,12 +344,14 @@ export class EquipmentDomain {
             data: {
               level: newLevel,
               substats: substats as unknown as Prisma.InputJsonValue,
+              baseBoost,
             },
           })
 
           return {
             level: newLevel,
             substats,
+            baseBoost,
             goldSpent: cost,
             newGold: updatedUser.gold,
             milestone,
@@ -341,6 +359,33 @@ export class EquipmentDomain {
         },
         { isolationLevel: 'Serializable' },
       ),
+    )
+  }
+
+  #assertGold(gold: number | undefined, cost: number): void {
+    if (gold === undefined || gold < cost) {
+      throw Boom.badRequest("Pas assez d'or")
+    }
+  }
+
+  #resolveMilestone(
+    substats: Substat[],
+    baseBoost: number,
+    catalogBonuses: Record<string, number>,
+    maxSubstats: number,
+    ranges: SubstatRanges,
+  ): { substats: Substat[]; baseBoost: number; milestone: MilestoneResult } {
+    const baseKey = Object.keys(catalogBonuses)[0] as SubstatKey | undefined
+    if (baseKey === undefined || !SUBSTAT_KEYS.includes(baseKey)) {
+      throw Boom.badImplementation('Équipement sans bonus de base valide')
+    }
+    return rollMilestone(
+      substats,
+      maxSubstats,
+      baseKey,
+      baseBoost,
+      ranges,
+      Math.random,
     )
   }
 

@@ -3,7 +3,15 @@
 
 export const EQUIP_MAX_LEVEL = 12
 export const EQUIP_SUBSTAT_MILESTONE = 3
-export const EQUIP_MAX_SUBSTATS = 4
+export const MAX_SUBSTATS_BY_RARITY = {
+  COMMON: 0,
+  UNCOMMON: 1,
+  RARE: 2,
+  EPIC: 3,
+  LEGENDARY: 4,
+} as const
+
+export type EquipmentRarity = keyof typeof MAX_SUBSTATS_BY_RARITY
 export const EQUIP_LEVEL_SCALE = 0.1
 
 export const SUBSTAT_KEYS = [
@@ -27,7 +35,7 @@ export interface Substat {
 export type SubstatRanges = Record<SubstatKey, { min: number; max: number }>
 
 export interface MilestoneResult {
-  type: 'added' | 'improved'
+  type: 'added' | 'improved' | 'base'
   key: SubstatKey
   rolledValue: number
   newValue: number
@@ -54,18 +62,25 @@ function rollValue(
 }
 
 /**
- * Applique un palier : ajoute une sous-stat aléatoire tant qu'il reste des
- * emplacements (clé jamais dupliquée), sinon améliore une sous-stat existante
- * en lui ajoutant un nouveau tirage dans sa range.
+ * Applique un palier, en cascade :
+ * 1. s'il reste un emplacement de sous-stat pour la rareté → ajout d'une
+ *    sous-stat aléatoire (clé jamais dupliquée) ;
+ * 2. sinon, s'il existe au moins une sous-stat → amélioration additive
+ *    d'une existante ;
+ * 3. sinon (aucun emplacement, ex. commune) → renforcement du bonus de
+ *    base : le tirage s'ajoute au baseBoost de l'instance.
  *
  * @param rng doit retourner un nombre dans [0, 1), comme Math.random.
  */
 export function rollMilestone(
   substats: Substat[],
+  maxSubstats: number,
+  baseKey: SubstatKey,
+  baseBoost: number,
   ranges: SubstatRanges,
   rng: () => number,
-): { substats: Substat[]; milestone: MilestoneResult } {
-  if (substats.length < EQUIP_MAX_SUBSTATS) {
+): { substats: Substat[]; baseBoost: number; milestone: MilestoneResult } {
+  if (substats.length < maxSubstats) {
     const available = SUBSTAT_KEYS.filter(
       (k) => !substats.some((s) => s.key === k),
     )
@@ -76,19 +91,30 @@ export function rollMilestone(
     const rolledValue = rollValue(ranges[key], rng)
     return {
       substats: [...substats, { key, value: rolledValue }],
+      baseBoost,
       milestone: { type: 'added', key, rolledValue, newValue: rolledValue },
     }
   }
-  const len = substats.length
-  const index = Math.min(Math.floor(rng() * len), len - 1)
-  const target = substats[index] as Substat
-  const rolledValue = rollValue(ranges[target.key], rng)
-  const newValue = Math.round((target.value + rolledValue) * 10) / 10
+  if (substats.length > 0) {
+    const len = substats.length
+    const index = Math.min(Math.floor(rng() * len), len - 1)
+    const target = substats[index] as Substat
+    const rolledValue = rollValue(ranges[target.key], rng)
+    const newValue = Math.round((target.value + rolledValue) * 10) / 10
+    return {
+      substats: substats.map((s, i) =>
+        i === index ? { ...s, value: newValue } : s,
+      ),
+      baseBoost,
+      milestone: { type: 'improved', key: target.key, rolledValue, newValue },
+    }
+  }
+  const rolledValue = rollValue(ranges[baseKey], rng)
+  const newBoost = Math.round((baseBoost + rolledValue) * 10) / 10
   return {
-    substats: substats.map((s, i) =>
-      i === index ? { ...s, value: newValue } : s,
-    ),
-    milestone: { type: 'improved', key: target.key, rolledValue, newValue },
+    substats,
+    baseBoost: newBoost,
+    milestone: { type: 'base', key: baseKey, rolledValue, newValue: newBoost },
   }
 }
 
@@ -104,14 +130,20 @@ export function scaleBaseBonuses(
 
 /**
  * Bonus effectifs d'une instance : base du catalogue scalée par le niveau,
- * plus les sous-stats sommées par clé.
+ * baseBoost appliqué à la première clé (le bonus de base de l'objet), puis
+ * sous-stats sommées par clé.
  */
 export function effectiveEquipmentBonuses(
   catalogBonuses: Record<string, number>,
   level: number,
   substats: Substat[],
+  baseBoost = 0,
 ): Record<string, number> {
   const acc = scaleBaseBonuses(catalogBonuses, level)
+  const baseKey = Object.keys(catalogBonuses)[0]
+  if (baseKey !== undefined && baseBoost !== 0) {
+    acc[baseKey] = (acc[baseKey] ?? 0) + baseBoost
+  }
   for (const s of substats) {
     acc[s.key] = (acc[s.key] ?? 0) + s.value
   }

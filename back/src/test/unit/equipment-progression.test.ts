@@ -3,6 +3,7 @@ import { describe, expect, it } from '@jest/globals'
 import {
   effectiveEquipmentBonuses,
   isSubstatMilestone,
+  MAX_SUBSTATS_BY_RARITY,
   rollMilestone,
   scaleBaseBonuses,
   type Substat,
@@ -51,6 +52,18 @@ describe('equipment-progression: isSubstatMilestone', () => {
   })
 })
 
+describe('equipment-progression: MAX_SUBSTATS_BY_RARITY', () => {
+  it('suit le barème C0/U1/R2/E3/L4', () => {
+    expect(MAX_SUBSTATS_BY_RARITY).toEqual({
+      COMMON: 0,
+      UNCOMMON: 1,
+      RARE: 2,
+      EPIC: 3,
+      LEGENDARY: 4,
+    })
+  })
+})
+
 describe('equipment-progression: scaleBaseBonuses', () => {
   it('ne change rien au niveau 1', () => {
     expect(scaleBaseBonuses({ atkFlat: 10, hpPct: 4 }, 1)).toEqual({
@@ -67,11 +80,12 @@ describe('equipment-progression: scaleBaseBonuses', () => {
 })
 
 describe('equipment-progression: rollMilestone', () => {
-  it('ajoute une sous-stat quand il reste des emplacements', () => {
+  it("ajoute une sous-stat quand il reste des emplacements pour la rareté", () => {
     // rng: 0 → première clé du pool (hpFlat), 0.5 → milieu de range 20–60 = 40
-    const { substats, milestone } = rollMilestone([], RANGES, rngFrom([0, 0.5]))
-    expect(substats).toEqual([{ key: 'hpFlat', value: 40 }])
-    expect(milestone).toEqual({
+    const result = rollMilestone([], 4, 'atkFlat', 0, RANGES, rngFrom([0, 0.5]))
+    expect(result.substats).toEqual([{ key: 'hpFlat', value: 40 }])
+    expect(result.baseBoost).toBe(0)
+    expect(result.milestone).toEqual({
       type: 'added',
       key: 'hpFlat',
       rolledValue: 40,
@@ -86,39 +100,68 @@ describe('equipment-progression: rollMilestone', () => {
       { key: 'atkFlat', value: 10 },
     ]
     // rng 0 → première clé DISPONIBLE (atkPct, car hpFlat/hpPct/atkFlat pris)
-    const { substats, milestone } = rollMilestone(
+    const result = rollMilestone(
       existing,
+      4,
+      'atkFlat',
+      0,
       RANGES,
       rngFrom([0, 0]),
     )
-    expect(milestone.type).toBe('added')
-    expect(milestone.key).toBe('atkPct')
-    expect(substats).toHaveLength(4)
+    expect(result.milestone.type).toBe('added')
+    expect(result.milestone.key).toBe('atkPct')
+    expect(result.substats).toHaveLength(4)
   })
 
-  it('améliore une sous-stat existante quand les 4 sont remplies', () => {
+  it('améliore une existante quand les emplacements de la rareté sont pleins', () => {
+    // EPIC : max 3 — plein avec 3 sous-stats.
     const full: Substat[] = [
       { key: 'hpFlat', value: 30 },
       { key: 'atkPct', value: 5 },
       { key: 'defFlat', value: 8 },
-      { key: 'spdFlat', value: 4 },
     ]
-    // rng 0.5 → index floor(0.5×4)=2 (defFlat), rng 0 → min de range 5–15 = 5
-    const { substats, milestone } = rollMilestone(full, RANGES, rngFrom([0.5, 0]))
-    expect(milestone).toEqual({
+    // rng 0.5 → index floor(0.5×3)=1 (atkPct), rng 0 → min de range 3–8 = 3
+    const result = rollMilestone(full, 3, 'atkFlat', 0, RANGES, rngFrom([0.5, 0]))
+    expect(result.milestone).toEqual({
       type: 'improved',
-      key: 'defFlat',
-      rolledValue: 5,
-      newValue: 13,
+      key: 'atkPct',
+      rolledValue: 3,
+      newValue: 8,
     })
-    expect(substats[2]).toEqual({ key: 'defFlat', value: 13 })
-    expect(substats).toHaveLength(4)
+    expect(result.substats[1]).toEqual({ key: 'atkPct', value: 8 })
+    expect(result.substats).toHaveLength(3)
+    expect(result.baseBoost).toBe(0)
   })
 
   it('arrondit les tirages à 1 décimale', () => {
-    const { milestone } = rollMilestone([], RANGES, rngFrom([0, 1 / 3]))
+    const result = rollMilestone([], 4, 'atkFlat', 0, RANGES, rngFrom([0, 1 / 3]))
     // 20 + (1/3)×40 = 33.333… → 33.3
-    expect(milestone.rolledValue).toBe(33.3)
+    expect(result.milestone.rolledValue).toBe(33.3)
+  })
+
+  it("renforce le bonus de base quand la rareté n'a aucun emplacement", () => {
+    // COMMON : max 0. rng 0.5 → milieu de range atkFlat 5–15 = 10
+    const result = rollMilestone([], 0, 'atkFlat', 0, RANGES, rngFrom([0.5]))
+    expect(result.substats).toEqual([])
+    expect(result.baseBoost).toBe(10)
+    expect(result.milestone).toEqual({
+      type: 'base',
+      key: 'atkFlat',
+      rolledValue: 10,
+      newValue: 10,
+    })
+  })
+
+  it('cumule le baseBoost sur plusieurs paliers', () => {
+    // rng 0 → min de range atkFlat = 5, cumulé sur un boost existant de 10
+    const result = rollMilestone([], 0, 'atkFlat', 10, RANGES, rngFrom([0]))
+    expect(result.baseBoost).toBe(15)
+    expect(result.milestone).toEqual({
+      type: 'base',
+      key: 'atkFlat',
+      rolledValue: 5,
+      newValue: 15,
+    })
   })
 })
 
@@ -130,5 +173,27 @@ describe('equipment-progression: effectiveEquipmentBonuses', () => {
     ])
     expect(result.atkFlat).toBeCloseTo(18) // 10 × 1.3 + 5
     expect(result.hpPct).toBeCloseTo(4.5)
+  })
+
+  it('applique le baseBoost à la première clé du bonus de base', () => {
+    const result = effectiveEquipmentBonuses(
+      { atkFlat: 10 },
+      4,
+      [{ key: 'hpPct', value: 4.5 }],
+      7,
+    )
+    expect(result.atkFlat).toBeCloseTo(20) // 10 × 1.3 + 7
+    expect(result.hpPct).toBeCloseTo(4.5)
+  })
+
+  it('ne booste que la première clé pour un objet legacy multi-bonus', () => {
+    const result = effectiveEquipmentBonuses(
+      { atkFlat: 10, spdFlat: 4 },
+      1,
+      [],
+      5,
+    )
+    expect(result.atkFlat).toBeCloseTo(15)
+    expect(result.spdFlat).toBeCloseTo(4)
   })
 })

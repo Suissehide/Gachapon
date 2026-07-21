@@ -22,6 +22,7 @@ export const equipmentInstanceSchema = z.object({
   bonuses: z.record(z.string(), z.number()),
   level: z.number().int(),
   substats: z.array(substatSchema),
+  baseBoost: z.number(),
   equippedOnId: z.string().nullable(),
   equippedOnCardName: z.string().nullable(),
   obtainedAt: z.string(),
@@ -51,11 +52,12 @@ export const equipmentUnequipResponseSchema = z.object({
 export const equipmentUpgradeResponseSchema = z.object({
   level: z.number().int(),
   substats: z.array(substatSchema),
+  baseBoost: z.number(),
   goldSpent: z.number().int(),
   newGold: z.number().int(),
   milestone: z
     .object({
-      type: z.enum(['added', 'improved']),
+      type: z.enum(['added', 'improved', 'base']),
       key: substatKeyEnum,
       rolledValue: z.number(),
       newValue: z.number(),

@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "UserEquipment" ADD COLUMN     "baseBoost" DOUBLE PRECISION NOT NULL DEFAULT 0;
