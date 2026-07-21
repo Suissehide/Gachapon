@@ -98,6 +98,51 @@ function mulberry32(seed: number): () => number {
 }
 
 // ---------------------------------------------------------------------------
+// ATB scheduling
+// ---------------------------------------------------------------------------
+
+const ACTION_THRESHOLD = 1000
+const BASE_SPD_REF = 100
+
+/**
+ * Avance le temps jusqu'à la prochaine action : chaque unité vivante gagne
+ * `spd * dt` de jauge, où `dt` est le temps minimal pour qu'une unité atteigne
+ * ACTION_THRESHOLD. L'unité prête de plus haute jauge agit (départage PRNG),
+ * puis on lui soustrait ACTION_THRESHOLD (reliquat conservé). Déterministe.
+ */
+function advanceToNextActor(
+  units: BattleUnit[],
+  prng: () => number,
+): { actor: BattleUnit; dt: number } | null {
+  const alive = units.filter((u) => u.alive)
+  if (alive.length === 0) {
+    return null
+  }
+  let dt = Number.POSITIVE_INFINITY
+  for (const u of alive) {
+    const t = (ACTION_THRESHOLD - u.gauge) / u.spd
+    if (t < dt) {
+      dt = t
+    }
+  }
+  for (const u of alive) {
+    u.gauge += u.spd * dt
+  }
+  const ready = alive
+    .filter((u) => u.gauge >= ACTION_THRESHOLD - 1e-9)
+    .map((u) => ({ u, tie: prng() }))
+  ready.sort((a, b) => {
+    if (a.u.gauge !== b.u.gauge) {
+      return b.u.gauge - a.u.gauge
+    }
+    return a.tie - b.tie
+  })
+  const actor = ready[0].u
+  actor.gauge -= ACTION_THRESHOLD
+  return { actor, dt }
+}
+
+// ---------------------------------------------------------------------------
 // Internal mutable battle state
 // ---------------------------------------------------------------------------
 
@@ -129,6 +174,8 @@ interface BattleUnit {
   shield: number
   /** Effets de dégâts sur la durée actifs (BURN, POISON). */
   dots: DotEffect[]
+  /** Jauge d'action ATB : se remplit de `spd` par unité de temps ; agit à ACTION_THRESHOLD. */
+  gauge: number
 }
 
 function toBattleUnit(u: SimulatorUnit, side: Side): BattleUnit {
@@ -183,6 +230,7 @@ function toBattleUnit(u: SimulatorUnit, side: Side): BattleUnit {
     hasBeenRevived: false,
     shield,
     dots: [],
+    gauge: 0,
   }
 }
 
@@ -952,4 +1000,7 @@ export function simulateBattle(input: SimulatorInput): SimulatorResult {
 export const _internals = {
   hashSeed,
   mulberry32,
+  advanceToNextActor,
+  ACTION_THRESHOLD,
+  BASE_SPD_REF,
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from '@jest/globals'
 
 import {
+  _internals,
   type AttackPattern,
   type LogEntry,
   type SimulatorInput,
@@ -964,5 +965,28 @@ describe('simulateBattle', () => {
       expect(entries[0]?.payload.kills).toBe(1)
       expect(entries[0]?.payload.healed).toBeGreaterThan(0)
     })
+  })
+})
+
+describe('ATB scheduler', () => {
+  it('a unit with 2x speed acts about twice as often', () => {
+    const { advanceToNextActor, ACTION_THRESHOLD } = _internals
+    // Unités minimales pour l'ordonnanceur (structure BattleUnit interne).
+    const fast = { id: 'F', side: 'A', spd: 200, gauge: 0, alive: true } as never
+    const slow = { id: 'S', side: 'B', spd: 100, gauge: 0, alive: true } as never
+    const units = [fast, slow] as never[]
+    const prng = _internals.mulberry32(_internals.hashSeed('freq'))
+    const counts: Record<string, number> = { F: 0, S: 0 }
+    for (let i = 0; i < 300; i++) {
+      const next = advanceToNextActor(units, prng)
+      if (next) {
+        counts[(next.actor as { id: string }).id] += 1
+      }
+    }
+    // ~2:1 attendu, tolérance large.
+    const ratio = counts.F / Math.max(1, counts.S)
+    expect(ratio).toBeGreaterThan(1.7)
+    expect(ratio).toBeLessThan(2.3)
+    expect(ACTION_THRESHOLD).toBe(1000)
   })
 })
