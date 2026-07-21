@@ -37,7 +37,6 @@ const XP_SLOPE = DEFAULTS['xp.slope']
 
 // ── Knobs MODEL: (ajustables dans les bornes commentées, PAS au-delà) ─────────
 const SKILL_MATURITY_DAY = 15 // MODEL: jour où le build skills est mature [10..25]
-const EQUIP_FACTOR = 1.25 // MODEL: bonus équipement+synergies sur le power [1.1..1.4]
 const TEAM_SIZE = 4
 const AVG_RARITY_MULT = 1.7 // MODEL: coût leveling, équipe typique RARE [1.3..2.3]
 const QUEST_TOKENS_PER_DAY = 15 / 7 // 3 quêtes hebdo × 5 jetons
@@ -55,13 +54,16 @@ function goldToLevel(target: number): number {
   return Math.round(sum)
 }
 
-// Niveau moyen d'équipe requis pour le stage global n (1..50) :
-// (1 + 0.06·(L−1)) × EQUIP_FACTOR ≥ difficultyMult(chapitre, index)
+const MULT_50 = difficultyMult(5, 10)
+// MODEL: les mécaniques de combat (DEF, patterns, équipement) absorbent
+// l'écart brut de stats — impossible de comparer mult ennemi et croissance
+// +6 %/niveau terme à terme. On ancre la progression sur le cap de palier :
+// finir la campagne (stage 50) demande une équipe ~niveau 55 (cap palier 6 = 60).
 function levelRequired(globalStage: number): number {
   const chapter = Math.ceil(globalStage / 10)
   const index = globalStage - (chapter - 1) * 10
   const mult = difficultyMult(chapter, index)
-  return Math.max(1, Math.ceil(1 + (mult / EQUIP_FACTOR - 1) / 0.06))
+  return Math.max(1, Math.ceil(1 + ((mult - 1) / (MULT_50 - 1)) * 54))
 }
 
 function stageLoot(globalStage: number) {
@@ -159,8 +161,12 @@ function simulate(days: number): Snapshot[] {
     dust += pullsToday * dustPerPull * completion + QUEST_DUST_PER_DAY
 
     // Boutique quotidienne : acheter les LEGENDARY manquantes en priorité
-    const pulledLegendaries =
-      17 * (1 - (1 - pRarity(POOL[4]) / 17) ** totalPulls)
+    // Pity : une LEGENDARY forcée tous les pityThreshold tirages
+    // (card.repository.ts, forceLegendary) — en plus du taux naturel.
+    const legendaryDraws =
+      totalPulls * pRarity(POOL[4]) +
+      Math.floor(totalPulls / DEFAULTS.pityThreshold)
+    const pulledLegendaries = 17 * (1 - (1 - 1 / 17) ** legendaryDraws)
     const gifted = GIFTED_LEGENDARY_DAYS.filter((d) => d <= day).length
     if (
       pulledLegendaries + boughtLegendaries + gifted < 17 &&
