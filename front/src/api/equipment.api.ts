@@ -23,7 +23,7 @@ export type SubstatKey =
 export type Substat = { key: SubstatKey; value: number }
 
 export type EquipmentMilestone = {
-  type: 'added' | 'improved'
+  type: 'added' | 'improved' | 'base'
   key: SubstatKey
   rolledValue: number
   newValue: number
@@ -42,6 +42,7 @@ export type EquipmentInstance = {
   obtainedAt: string
   level: number
   substats: Substat[]
+  baseBoost: number
 }
 
 export const EquipmentApi = {
@@ -89,6 +90,7 @@ export const EquipmentApi = {
   ): Promise<{
     level: number
     substats: Substat[]
+    baseBoost: number
     goldSpent: number
     newGold: number
     milestone: EquipmentMilestone | null

@@ -252,10 +252,15 @@ function EquipmentCard({
       </p>
 
       <ul className="mt-2 space-y-0.5 text-xs">
-        {Object.entries(item.bonuses).map(([key, value]) => (
+        {Object.entries(item.bonuses).map(([key, value], idx) => (
           <li key={key} className="text-text-light">
             <span className="font-mono text-emerald-300">
-              +{(Math.round(value * scale * 10) / 10).toLocaleString('fr-FR')}
+              +
+              {(
+                Math.round(
+                  (value * scale + (idx === 0 ? item.baseBoost : 0)) * 10,
+                ) / 10
+              ).toLocaleString('fr-FR')}
             </span>{' '}
             <span className="text-text-light/70">{formatBonusKey(key)}</span>
           </li>

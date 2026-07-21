@@ -78,7 +78,8 @@ function parseBonusKey(
 
 /**
  * Aggregate the flat/percent bonuses of every equipment piece equipped on a
- * given card: catalog base scaled by instance level, plus substats. Mirrors
+ * given card: catalog base scaled by instance level (baseBoost added on the
+ * first key — the item's base bonus), plus substats. Mirrors
  * `effectiveEquipmentBonuses` + `computeFinalStats` in the backend.
  */
 export function aggregateEquipmentBonuses(
@@ -87,6 +88,7 @@ export function aggregateEquipmentBonuses(
     bonuses: Record<string, number>
     level: number
     substats: { key: string; value: number }[]
+    baseBoost: number
   }[],
   userCardId: string,
   equipLevelScale: number,
@@ -101,6 +103,13 @@ export function aggregateEquipmentBonuses(
       const parsed = parseBonusKey(key)
       if (parsed) {
         acc[parsed.stat][parsed.kind] += value * mult
+      }
+    }
+    const baseKey = Object.keys(item.bonuses)[0]
+    if (baseKey !== undefined && item.baseBoost !== 0) {
+      const parsed = parseBonusKey(baseKey)
+      if (parsed) {
+        acc[parsed.stat][parsed.kind] += item.baseBoost
       }
     }
     for (const s of item.substats) {

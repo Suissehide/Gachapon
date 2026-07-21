@@ -11,6 +11,7 @@ import { useMemo, useState } from 'react'
 
 import type {
   EquipmentInstance,
+  EquipmentMilestone,
   EquipmentSlot,
   SubstatKey,
 } from '../../api/equipment.api.ts'
@@ -215,7 +216,12 @@ function ItemRow({
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-text">{item.name}</p>
         <p className="text-[11px] text-text-light">
-          Nv. {item.level} · {item.substats.length}/{maxSubstats} sous-stats
+          Nv. {item.level}
+          {maxSubstats > 0 &&
+            ` · ${item.substats.length}/${maxSubstats} sous-stats`}
+          {maxSubstats === 0 &&
+            item.baseBoost > 0 &&
+            ` · base +${formatBonusValue(item.baseBoost)}`}
         </p>
       </div>
       {isEquippedHere && (
@@ -252,7 +258,10 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
   const [selectMode, setSelectMode] = useState(false)
   const [checked, setChecked] = useState<Set<string>>(new Set())
   const [confirmOpen, setConfirmOpen] = useState(false)
-  const [highlightKey, setHighlightKey] = useState<SubstatKey | null>(null)
+  const [highlight, setHighlight] = useState<{
+    kind: 'substat' | 'base'
+    key: SubstatKey
+  } | null>(null)
 
   const items = useMemo(
     () =>
@@ -274,7 +283,7 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
   }
 
   const handleSelect = (id: string) => {
-    setHighlightKey(null)
+    setHighlight(null)
     setSelectedId(id)
   }
 
@@ -283,22 +292,20 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
     setChecked(new Set())
   }
 
-  const onUpgradeSuccess = (res: {
-    milestone: {
-      type: 'added' | 'improved'
-      key: SubstatKey
-      rolledValue: number
-      newValue: number
-    } | null
-  }) => {
+  const onUpgradeSuccess = (res: { milestone: EquipmentMilestone | null }) => {
     if (!res.milestone) {
       return
     }
-    setHighlightKey(res.milestone.key)
+    setHighlight({
+      kind: res.milestone.type === 'base' ? 'base' : 'substat',
+      key: res.milestone.key,
+    })
     const milestoneTitle =
       res.milestone.type === 'added'
         ? 'Nouvelle sous-stat !'
-        : 'Sous-stat améliorée !'
+        : res.milestone.type === 'improved'
+          ? 'Sous-stat améliorée !'
+          : 'Bonus de base amélioré !'
     toast({
       title: milestoneTitle,
       message: `+${formatBonusValue(res.milestone.rolledValue)} ${formatBonusKey(res.milestone.key)}`,
@@ -307,7 +314,7 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
   }
 
   const handleUpgrade = (item: EquipmentInstance) => {
-    setHighlightKey(null)
+    setHighlight(null)
     upgradeItem.mutate(item.id, { onSuccess: onUpgradeSuccess })
   }
 
@@ -404,7 +411,9 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
                       selectedId={selectedId}
                       selectMode={selectMode}
                       checked={checked}
-                      maxSubstats={economy.equip.maxSubstats}
+                      maxSubstats={
+                        economy.equip.maxSubstatsByRarity[item.rarity] ?? 0
+                      }
                       onSelect={handleSelect}
                       onToggle={toggleChecked}
                     />
@@ -417,7 +426,7 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
                     userCardId={userCardId}
                     gold={gold}
                     busy={busy}
-                    highlightKey={highlightKey}
+                    highlight={highlight}
                     onEquip={handleEquipSelected}
                     onUnequip={handleUnequipSelected}
                     onUpgrade={handleUpgradeSelected}
@@ -472,7 +481,7 @@ function ItemDetail({
   userCardId,
   gold,
   busy,
-  highlightKey,
+  highlight,
   onEquip,
   onUnequip,
   onUpgrade,
@@ -481,7 +490,7 @@ function ItemDetail({
   userCardId: string
   gold: number
   busy: boolean
-  highlightKey: SubstatKey | null
+  highlight: { kind: 'substat' | 'base'; key: SubstatKey } | null
   onEquip: () => void
   onUnequip: () => void
   onUpgrade: () => void
@@ -496,10 +505,8 @@ function ItemDetail({
   const scale = 1 + economy.equip.levelScale * (item.level - 1)
   const nextIsMilestone =
     !isMaxLevel && (item.level + 1) % economy.equip.substatMilestone === 0
-  const emptySlots = Math.max(
-    0,
-    economy.equip.maxSubstats - item.substats.length,
-  )
+  const maxSubstats = economy.equip.maxSubstatsByRarity[item.rarity] ?? 0
+  const emptySlots = Math.max(0, maxSubstats - item.substats.length)
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3.5">
@@ -521,9 +528,16 @@ function ItemDetail({
           Bonus de base
         </p>
         <ul className="text-xs">
-          {Object.entries(item.bonuses).map(([k, v]) => (
-            <li key={k} className="font-mono text-emerald-600">
-              +{formatBonusValue(v * scale)} {formatBonusKey(k)}
+          {Object.entries(item.bonuses).map(([k, v], idx) => (
+            <li
+              key={k}
+              className={cn(
+                'rounded px-1.5 py-0.5 font-mono text-emerald-600',
+                idx === 0 && highlight?.kind === 'base' && 'bg-primary/15',
+              )}
+            >
+              +{formatBonusValue(v * scale + (idx === 0 ? item.baseBoost : 0))}{' '}
+              {formatBonusKey(k)}
             </li>
           ))}
         </ul>
@@ -531,33 +545,42 @@ function ItemDetail({
 
       <div>
         <p className="mb-1 text-[10px] uppercase tracking-widest text-text-light/60">
-          Sous-stats ({item.substats.length}/{economy.equip.maxSubstats})
+          Sous-stats
+          {maxSubstats > 0 && ` (${item.substats.length}/${maxSubstats})`}
         </p>
-        <ul className="flex flex-col gap-1 text-xs">
-          {item.substats.map((s) => (
-            <li
-              key={s.key}
-              className={cn(
-                'rounded px-1.5 py-0.5 font-mono text-violet-600',
-                highlightKey === s.key && 'bg-primary/15',
-              )}
-            >
-              +{formatBonusValue(s.value)} {formatBonusKey(s.key)}
-            </li>
-          ))}
-          {Array.from({ length: emptySlots }, (_, i) => {
-            // Keys are stable: item substats are fixed-length & ordered by backend
-            const slotIndex = item.substats.length + i
-            return (
+        {maxSubstats === 0 ? (
+          <p className="rounded border border-dashed border-border px-1.5 py-1 text-[11px] text-text-light/60">
+            Pas d'emplacement — les paliers renforcent le bonus de base.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-1 text-xs">
+            {item.substats.map((s) => (
               <li
-                key={`empty-slot-${slotIndex}`}
-                className="rounded border border-dashed border-border px-1.5 py-0.5 text-text-light/40"
+                key={s.key}
+                className={cn(
+                  'rounded px-1.5 py-0.5 font-mono text-violet-600',
+                  highlight?.kind === 'substat' &&
+                    highlight.key === s.key &&
+                    'bg-primary/15',
+                )}
               >
-                Emplacement vide
+                +{formatBonusValue(s.value)} {formatBonusKey(s.key)}
               </li>
-            )
-          })}
-        </ul>
+            ))}
+            {Array.from({ length: emptySlots }, (_, i) => {
+              // Keys are stable: item substats are fixed-length & ordered by backend
+              const slotIndex = item.substats.length + i
+              return (
+                <li
+                  key={`empty-slot-${slotIndex}`}
+                  className="rounded border border-dashed border-border px-1.5 py-0.5 text-text-light/40"
+                >
+                  Emplacement vide
+                </li>
+              )
+            })}
+          </ul>
+        )}
       </div>
 
       <div className="mt-auto flex flex-col gap-2">
@@ -582,7 +605,11 @@ function ItemDetail({
           disabled={busy || isMaxLevel || gold < cost}
           onClick={onUpgrade}
           title={
-            nextIsMilestone ? 'Prochain niveau : sous-stat bonus !' : undefined
+            nextIsMilestone
+              ? maxSubstats === 0
+                ? 'Prochain niveau : bonus de base renforcé !'
+                : 'Prochain niveau : sous-stat bonus !'
+              : undefined
           }
         >
           <ArrowUpCircle className="mr-1.5 h-4 w-4" />

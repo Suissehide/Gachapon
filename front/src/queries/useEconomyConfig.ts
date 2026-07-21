@@ -53,7 +53,13 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
     levelScale: 0.1,
     maxLevel: 12,
     substatMilestone: 3,
-    maxSubstats: 4,
+    maxSubstatsByRarity: {
+      COMMON: 0,
+      UNCOMMON: 1,
+      RARE: 2,
+      EPIC: 3,
+      LEGENDARY: 4,
+    },
     salvageGold: {
       COMMON: 10,
       UNCOMMON: 30,

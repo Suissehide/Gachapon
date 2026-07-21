@@ -56,7 +56,7 @@ export interface EconomyConfig {
     levelScale: number
     maxLevel: number
     substatMilestone: number
-    maxSubstats: number
+    maxSubstatsByRarity: Record<CardRarityKey, number>
     salvageGold: Record<CardRarityKey, number>
     substatRanges: {
       hpFlat: { min: number; max: number }
