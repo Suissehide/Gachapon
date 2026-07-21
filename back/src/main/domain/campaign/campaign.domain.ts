@@ -21,6 +21,10 @@ import {
   rollFirstClearCardRarity,
   rollFirstClearEquipmentRarity,
 } from '../combat/equipment-drop.domain'
+import {
+  effectiveEquipmentBonuses,
+  type Substat,
+} from '../equipment/equipment-progression'
 import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import { calculateLevel } from '../shared/xp'
@@ -1013,7 +1017,12 @@ export class CampaignDomain {
       .filter((u): u is NonNullable<typeof u> => u != null)
       .map((u, idx) => {
         const equipmentBonuses: EquipmentBonuses[] = u.equipment.map(
-          (ue) => (ue.equipment.bonuses ?? {}) as EquipmentBonuses,
+          (ue) =>
+            effectiveEquipmentBonuses(
+              (ue.equipment.bonuses ?? {}) as Record<string, number>,
+              ue.level,
+              (ue.substats ?? []) as unknown as Substat[],
+            ) as EquipmentBonuses,
         )
         const stats = computeFinalStats({
           baseHp: u.card.baseHp,
