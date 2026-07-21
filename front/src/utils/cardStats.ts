@@ -9,6 +9,11 @@ const VARIANT_MULT: Record<CardVariant, number> = {
 
 const STAT_GROWTH_PER_LEVEL = 0.06
 const ASCENSION_STAT_BONUS = 0.15
+// Référence de vitesse pour la puissance : une unité à SPD_REF a un multiplicateur
+// de vitesse neutre (×1). Au-dessus, elle agit plus souvent (ATB) → puissance
+// plus élevée ; en dessous, plus faible. Doit rester alignée avec le backend
+// (campaign-power.ts).
+const SPD_REF = 100
 
 export function statAtLevel(baseStat: number, level: number): number {
   return baseStat * (1 + STAT_GROWTH_PER_LEVEL * (level - 1))
@@ -32,8 +37,10 @@ export function finalStat(
 }
 
 /**
- * Puissance agrégée d'une carte, à partir de ses stats finales.
- * Formule pondérée partagée (grille collection, popup, team editor, campagne).
+ * Puissance agrégée d'une carte, à partir de ses stats finales. Sous ATB la
+ * vitesse multiplie le rendement (une unité 2× plus rapide agit ~2× plus
+ * souvent), donc elle pondère l'ensemble au lieu d'être un simple terme additif.
+ * Formule partagée (grille collection, popup, team editor, campagne, mobs).
  */
 export function computePower(stats: {
   hp: number
@@ -41,7 +48,9 @@ export function computePower(stats: {
   def: number
   spd: number
 }): number {
-  return Math.round(stats.hp / 2 + stats.atk * 1.5 + stats.def + stats.spd)
+  return Math.round(
+    (stats.hp / 2 + stats.atk * 1.5 + stats.def) * (stats.spd / SPD_REF),
+  )
 }
 
 export type StatKey = 'hp' | 'atk' | 'def' | 'spd'
