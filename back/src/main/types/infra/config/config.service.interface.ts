@@ -39,6 +39,23 @@ export const CONFIG_KEYS = [
   'wishlist.priceMultiplier',
   'wishlist.cooldownDays',
   'shop.energyDailyCap',
+  'equip.goldCostBase',
+  'equip.goldCostExp',
+  'equip.salvageGoldCommon',
+  'equip.salvageGoldUncommon',
+  'equip.salvageGoldRare',
+  'equip.salvageGoldEpic',
+  'equip.salvageGoldLegendary',
+  'equip.substatHpFlatMin',
+  'equip.substatHpFlatMax',
+  'equip.substatAtkFlatMin',
+  'equip.substatAtkFlatMax',
+  'equip.substatDefFlatMin',
+  'equip.substatDefFlatMax',
+  'equip.substatSpdFlatMin',
+  'equip.substatSpdFlatMax',
+  'equip.substatPctMin',
+  'equip.substatPctMax',
 ] as const
 
 export type ConfigKey = (typeof CONFIG_KEYS)[number]

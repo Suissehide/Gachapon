@@ -50,6 +50,23 @@ const DEFAULTS: Record<ConfigKey, number> = {
   'wishlist.priceMultiplier': 2,
   'wishlist.cooldownDays': 7,
   'shop.energyDailyCap': 3,
+  'equip.goldCostBase': 25,
+  'equip.goldCostExp': 1.35,
+  'equip.salvageGoldCommon': 10,
+  'equip.salvageGoldUncommon': 30,
+  'equip.salvageGoldRare': 80,
+  'equip.salvageGoldEpic': 240,
+  'equip.salvageGoldLegendary': 800,
+  'equip.substatHpFlatMin': 20,
+  'equip.substatHpFlatMax': 60,
+  'equip.substatAtkFlatMin': 5,
+  'equip.substatAtkFlatMax': 15,
+  'equip.substatDefFlatMin': 5,
+  'equip.substatDefFlatMax': 15,
+  'equip.substatSpdFlatMin': 3,
+  'equip.substatSpdFlatMax': 9,
+  'equip.substatPctMin': 3,
+  'equip.substatPctMax': 8,
 }
 
 export class ConfigService implements ConfigServiceInterface {

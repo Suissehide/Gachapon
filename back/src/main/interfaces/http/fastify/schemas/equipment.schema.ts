@@ -48,6 +48,21 @@ export const equipmentUnequipResponseSchema = z.object({
   unequipped: z.boolean(),
 })
 
+export const equipmentUpgradeResponseSchema = z.object({
+  level: z.number().int(),
+  substats: z.array(substatSchema),
+  goldSpent: z.number().int(),
+  newGold: z.number().int(),
+  milestone: z
+    .object({
+      type: z.enum(['added', 'improved']),
+      key: substatKeyEnum,
+      rolledValue: z.number(),
+      newValue: z.number(),
+    })
+    .nullable(),
+})
+
 export const adminGrantEquipmentBodySchema = z.object({
   userId: z.string().uuid(),
   equipmentId: z.string().uuid().optional(),
