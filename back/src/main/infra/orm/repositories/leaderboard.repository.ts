@@ -250,6 +250,7 @@ export class LeaderboardRepository implements ILeaderboardRepository {
           select: {
             level: true,
             substats: true,
+            baseBoost: true,
             equipment: { select: { bonuses: true } },
           },
         },
@@ -275,6 +276,7 @@ export class LeaderboardRepository implements ILeaderboardRepository {
               (e.equipment.bonuses ?? {}) as Record<string, number>,
               e.level,
               (e.substats ?? []) as unknown as Substat[],
+              e.baseBoost,
             ) as Record<string, number | undefined>,
         ),
       })

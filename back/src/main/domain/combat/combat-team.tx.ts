@@ -110,6 +110,7 @@ export class CombatTeamTx {
               (ue.equipment.bonuses ?? {}) as Record<string, number>,
               ue.level,
               (ue.substats ?? []) as unknown as Substat[],
+              ue.baseBoost,
             ) as EquipmentBonuses,
         )
         const stats = computeFinalStats({
