@@ -723,23 +723,6 @@ function performUnitAction(
 }
 
 // ---------------------------------------------------------------------------
-// Turn ordering
-// ---------------------------------------------------------------------------
-
-function buildTurnOrder(units: BattleUnit[], prng: () => number): BattleUnit[] {
-  const alive = units.filter((u) => u.alive)
-  // Sort descending by spd; ties broken by prng-derived random key
-  const keyed = alive.map((u) => ({ unit: u, tieBreak: prng() }))
-  keyed.sort((a, b) => {
-    if (a.unit.spd !== b.unit.spd) {
-      return b.unit.spd - a.unit.spd
-    }
-    return a.tieBreak - b.tieBreak
-  })
-  return keyed.map((k) => k.unit)
-}
-
-// ---------------------------------------------------------------------------
 // Main simulator
 // ---------------------------------------------------------------------------
 
@@ -793,12 +776,6 @@ function applyRegenToUnit(u: BattleUnit, log: LogEntry[]): void {
   })
 }
 
-function applyRegen(units: BattleUnit[], log: LogEntry[]): void {
-  for (const u of units) {
-    applyRegenToUnit(u, log)
-  }
-}
-
 /** BURN / POISON pour une seule unité : dégâts, décrément des durées, mort éventuelle. */
 function applyDotsToUnit(u: BattleUnit, log: LogEntry[]): void {
   if (!u.alive || u.dots.length === 0) {
@@ -822,17 +799,6 @@ function applyDotsToUnit(u: BattleUnit, log: LogEntry[]): void {
     .filter((d) => d.turnsLeft > 0)
   if (u.currentHp <= 0) {
     finalizeDeath(u, log)
-  }
-}
-
-/**
- * BURN / POISON — inflige les dégâts sur la durée en fin de tour, puis décrémente
- * (et retire) les effets expirés. Une unité tombée à 0 PV meurt (REBIRTH peut la
- * relever).
- */
-function applyDots(units: BattleUnit[], log: LogEntry[]): void {
-  for (const u of units) {
-    applyDotsToUnit(u, log)
   }
 }
 
@@ -875,13 +841,6 @@ function applyBlessingFromUnit(
   })
 }
 
-/** BLESSING — soigne l'allié vivant le plus bas en PV (ratio PV/PV max). */
-function applyBlessing(units: BattleUnit[], log: LogEntry[]): void {
-  for (const healer of units) {
-    applyBlessingFromUnit(healer, units, log)
-  }
-}
-
 /** SANCTUARY : la source soigne tous ses alliés vivants d'un % de PV max. */
 function applySanctuaryFromUnit(
   src: BattleUnit,
@@ -912,58 +871,41 @@ function applySanctuaryFromUnit(
   }
 }
 
-/** SANCTUARY — soigne tous les alliés vivants d'un petit pourcentage de PV max. */
-function applySanctuary(units: BattleUnit[], log: LogEntry[]): void {
-  for (const src of units) {
-    applySanctuaryFromUnit(src, units, log)
-  }
-}
-
 /**
- * Effets de fin de tour, dans l'ordre : dégâts sur la durée (BURN/POISON), puis
- * soins (REGEN sur soi, BLESSING sur un allié, SANCTUARY sur l'équipe).
+ * Calcule le temps jusqu'à la prochaine action parmi les unités vivantes,
+ * sans avancer les jauges. Retourne Infinity si aucune unité n'est vivante.
  */
-function applyEndOfTurnEffects(units: BattleUnit[], log: LogEntry[]): void {
-  applyDots(units, log)
-  applyRegen(units, log)
-  applyBlessing(units, log)
-  applySanctuary(units, log)
+function computeNextDt(alive: BattleUnit[]): number {
+  let dt = Number.POSITIVE_INFINITY
+  for (const u of alive) {
+    const t = (ACTION_THRESHOLD - u.gauge) / u.spd
+    if (t < dt) {
+      dt = t
+    }
+  }
+  return dt
 }
 
-function runRound(
+/** Applique DoT, action et soins pour le tour d'une unité actrice. */
+function runActorTurn(
+  actor: BattleUnit,
   units: BattleUnit[],
   prng: () => number,
   log: LogEntry[],
-  turn: number,
-): Side | null {
-  const order = buildTurnOrder(units, prng)
-  for (const unit of order) {
-    if (!unit.alive) {
-      continue
-    }
-    performUnitAction(unit, units, prng, log)
-    const winner = checkVictory(units)
-    if (winner !== null) {
-      log.push({ type: 'TURN_END', turn })
-      log.push({ type: 'WIN', side: winner })
-      return winner
-    }
+): void {
+  applyDotsToUnit(actor, log)
+  if (actor.alive) {
+    performUnitAction(actor, units, prng, log)
   }
-  // Effets de fin de tour (DoT + soins) — les combats non terminés uniquement.
-  applyEndOfTurnEffects(units, log)
-  const endOfTurnWinner = checkVictory(units)
-  if (endOfTurnWinner !== null) {
-    log.push({ type: 'TURN_END', turn })
-    log.push({ type: 'WIN', side: endOfTurnWinner })
-    return endOfTurnWinner
+  if (actor.alive) {
+    applyRegenToUnit(actor, log)
+    applyBlessingFromUnit(actor, units, log)
+    applySanctuaryFromUnit(actor, units, log)
   }
-  log.push({ type: 'TURN_END', turn })
-  return null
 }
 
 export function simulateBattle(input: SimulatorInput): SimulatorResult {
   const log: LogEntry[] = []
-  const timeoutTurns = input.timeoutTurns ?? 60
 
   const teamAUnits = input.teamA.map((u) => toBattleUnit(u, 'A'))
   const teamBUnits = input.teamB.map((u) => toBattleUnit(u, 'B'))
@@ -983,17 +925,42 @@ export function simulateBattle(input: SimulatorInput): SimulatorResult {
   applyBanner(units, 'A', log)
   applyBanner(units, 'B', log)
 
-  let turn = 0
-  while (turn < timeoutTurns) {
-    turn += 1
-    const winner = runRound(units, prng, log, turn)
+  const timeCap = ((input.timeoutTurns ?? 60) * ACTION_THRESHOLD) / BASE_SPD_REF
+  let elapsed = 0
+  let actions = 0
+
+  while (true) {
+    const alive = units.filter((u) => u.alive)
+    if (alive.length === 0) {
+      break
+    }
+    // Vérifie le cap avant d'avancer le temps.
+    const dt = computeNextDt(alive)
+    if (elapsed + dt > timeCap) {
+      log.push({ type: 'TIMEOUT' })
+      return { won: null, log, turns: actions }
+    }
+
+    const next = advanceToNextActor(units, prng)
+    if (next === null) {
+      break
+    }
+    elapsed += next.dt
+
+    runActorTurn(next.actor, units, prng, log)
+
+    actions += 1
+    log.push({ type: 'TURN_END', turn: actions })
+
+    const winner = checkVictory(units)
     if (winner !== null) {
-      return { won: winner, log, turns: turn }
+      log.push({ type: 'WIN', side: winner })
+      return { won: winner, log, turns: actions }
     }
   }
 
   log.push({ type: 'TIMEOUT' })
-  return { won: null, log, turns: turn }
+  return { won: null, log, turns: actions }
 }
 
 // Re-export helpers for tests / consumers that want the same PRNG

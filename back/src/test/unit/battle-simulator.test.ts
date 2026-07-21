@@ -464,8 +464,9 @@ describe('simulateBattle', () => {
     expect(last?.type).toBe('TIMEOUT')
   })
 
-  // 14b. Default turn limit is 60 (doubled from the original 30 so more
-  // matchups resolve on their own before timing out).
+  // 14b. Default timeout is 60 timeoutTurns (= 60 * ACTION_THRESHOLD / BASE_SPD_REF time units).
+  // Under ATB semantics, turns = total number of actions fired before the cap, not round count.
+  // 4 tanks (spd=100) each act ~60 times in the cap → turns ≈ 240, not 60.
   it('defaults to a 60-turn limit when timeoutTurns is omitted', () => {
     const tank = (id: string): SimulatorUnit =>
       makeUnit(id, { hp: 500, atk: 1, def: 1000, spd: 100 })
@@ -475,7 +476,8 @@ describe('simulateBattle', () => {
       seed: 'default-timeout',
     })
     expect(result.won).toBeNull()
-    expect(result.turns).toBe(60)
+    // ATB: turns = action count, not round count. 4 units × ~60 actions each ≈ 240.
+    expect(result.turns).toBeGreaterThan(60)
     expect(result.log[result.log.length - 1]?.type).toBe('TIMEOUT')
   })
 
@@ -667,6 +669,8 @@ describe('simulateBattle', () => {
   })
 
   // FURY — bonus damage when the attacker is under 50% HP
+  // ATB: B0 (spd=110) acts before A0 (spd=100), damaging A0 below 50% HP;
+  // then A0 gets its turn and FURY triggers.
   it('FURY triggers when the attacker drops below 50% HP', () => {
     const result = simulateBattle({
       teamA: [
@@ -674,14 +678,14 @@ describe('simulateBattle', () => {
           hp: 1000,
           atk: 30,
           def: 0,
-          spd: 1,
+          spd: 100,
           passiveKey: 'FURY',
           palier: 6,
         }),
       ],
-      teamB: [makeUnit('B0', { hp: 100000, atk: 600, def: 0, spd: 999 })],
+      teamB: [makeUnit('B0', { hp: 100000, atk: 600, def: 0, spd: 110 })],
       seed: 'fury-test',
-      timeoutTurns: 2,
+      timeoutTurns: 3,
     })
     const furyLogs = result.log.filter(
       (e) => e.type === 'PASSIVE' && e.passive === 'FURY',
@@ -690,8 +694,11 @@ describe('simulateBattle', () => {
   })
 
   // CRIT — chance to deal double damage over many trials
+  // ATB: count crits per attack (not per battle), since a fast attacker fires multiple
+  // attacks within a single timeoutTurns window.
   it('CRIT produces double-damage procs over many trials', () => {
     let crits = 0
+    let attacks = 0
     for (let i = 0; i < 200; i++) {
       const result = simulateBattle({
         teamA: [
@@ -709,9 +716,12 @@ describe('simulateBattle', () => {
       crits += result.log.filter(
         (e) => e.type === 'PASSIVE' && e.passive === 'CRIT',
       ).length
+      attacks += result.log.filter(
+        (e) => e.type === 'ATTACK' && e.attackerId === 'A0',
+      ).length
     }
-    const rate = crits / 200
-    // Palier 6 → 26 % expected; allow a wide window.
+    // Palier 6 → 26 % crit rate per attack; allow a wide window.
+    const rate = crits / Math.max(1, attacks)
     expect(rate).toBeGreaterThan(0.1)
     expect(rate).toBeLessThan(0.45)
   })
@@ -739,6 +749,8 @@ describe('simulateBattle', () => {
   })
 
   // NEMESIS — gains ATK for each fallen ally
+  // ATB: A0 (spd=100) and A1 (spd=100) act at ATB cadence. B0 (spd=999) kills A1
+  // almost immediately; A0 then acts with NEMESIS bonus.
   it('NEMESIS emits a PASSIVE log once an ally has fallen', () => {
     const result = simulateBattle({
       teamA: [
@@ -746,11 +758,11 @@ describe('simulateBattle', () => {
           hp: 100000,
           atk: 30,
           def: 1000,
-          spd: 1,
+          spd: 100,
           passiveKey: 'NEMESIS',
           palier: 6,
         }),
-        makeUnit('A1', { hp: 1, atk: 1, def: 0, spd: 1 }),
+        makeUnit('A1', { hp: 1, atk: 1, def: 0, spd: 100 }),
       ],
       teamB: [makeUnit('B0', { hp: 100000, atk: 500, def: 0, spd: 999 })],
       seed: 'nemesis-test',
@@ -870,11 +882,12 @@ describe('simulateBattle', () => {
     }
 
     it('POISON applique un effet qui inflige des dégâts en fin de tour', () => {
+      // ATB: B0 (spd=100) must get a turn for the DoT to tick (applied at actor own turn).
       const result = simulateBattle({
         teamA: [
           makeUnit('A0', { atk: 1, spd: 999, passiveKey: 'POISON' }),
         ],
-        teamB: [makeUnit('B0', { hp: 100000, def: 0, spd: 1 })],
+        teamB: [makeUnit('B0', { hp: 100000, def: 0, spd: 100 })],
         seed: 'poison-test',
         timeoutTurns: 2,
       })
@@ -889,7 +902,8 @@ describe('simulateBattle', () => {
         teamA: [
           makeUnit('A0', { atk: 100, spd: 999, passiveKey: 'BURN' }),
         ],
-        teamB: [makeUnit('B0', { hp: 100000, def: 0, spd: 1 })],
+        // ATB: B0 (spd=100) must get a turn for the DoT to tick (applied at actor own turn).
+        teamB: [makeUnit('B0', { hp: 100000, def: 0, spd: 100 })],
         seed: 'burn-test',
         timeoutTurns: 2,
       })
@@ -903,15 +917,16 @@ describe('simulateBattle', () => {
     })
 
     it('BLESSING soigne un allié blessé en fin de tour', () => {
+      // ATB: A0 (spd=100, BLESSING) must get a turn after B0 damages A1.
       const result = simulateBattle({
         teamA: [
           makeUnit('A0', {
             hp: 2000,
             atk: 1,
-            spd: 1,
+            spd: 100,
             passiveKey: 'BLESSING',
           }),
-          makeUnit('A1', { hp: 1000, atk: 1, def: 0, spd: 1 }),
+          makeUnit('A1', { hp: 1000, atk: 1, def: 0, spd: 100 }),
         ],
         teamB: [makeUnit('B0', { hp: 100000, atk: 200, def: 0, spd: 500 })],
         seed: 'blessing-test',
@@ -924,14 +939,15 @@ describe('simulateBattle', () => {
 
     it('SANCTUARY soigne toute l’équipe en fin de tour', () => {
       const result = simulateBattle({
+        // ATB: A0 (spd=100, SANCTUARY) must get a turn after B0 damages A1.
         teamA: [
           makeUnit('A0', {
             hp: 2000,
             atk: 1,
-            spd: 1,
+            spd: 100,
             passiveKey: 'SANCTUARY',
           }),
-          makeUnit('A1', { hp: 1000, atk: 1, def: 0, spd: 1 }),
+          makeUnit('A1', { hp: 1000, atk: 1, def: 0, spd: 100 }),
         ],
         teamB: [makeUnit('B0', { hp: 100000, atk: 200, def: 0, spd: 500 })],
         seed: 'sanctuary-test',
@@ -965,6 +981,50 @@ describe('simulateBattle', () => {
       expect(entries[0]?.payload.kills).toBe(1)
       expect(entries[0]?.payload.healed).toBeGreaterThan(0)
     })
+  })
+})
+
+describe('ATB battle behavior', () => {
+  it('a much faster attacker lands more ATTACK actions than a slower one', () => {
+    const fast = makeUnit('A0', { spd: 300, hp: 100000, atk: 1 })
+    const slow = makeUnit('B0', { spd: 100, hp: 100000, atk: 1 })
+    // hp énorme + atk faible => pas de mort avant le cap => on compte les actions.
+    const result = simulateBattle({
+      teamA: [fast],
+      teamB: [slow],
+      seed: 'atb-freq',
+      timeoutTurns: 60,
+    })
+    const aAttacks = result.log.filter(
+      (e) => e.type === 'ATTACK' && e.attackerId === 'A0',
+    ).length
+    const bAttacks = result.log.filter(
+      (e) => e.type === 'ATTACK' && e.attackerId === 'B0',
+    ).length
+    expect(aAttacks).toBeGreaterThan(bAttacks)
+    // ~3:1 attendu (300 vs 100), tolérance large.
+    expect(aAttacks / Math.max(1, bAttacks)).toBeGreaterThan(2.3)
+  })
+
+  it('turns counts total actions, not rounds', () => {
+    const result = simulateBattle({ ...mirrorTeams(), seed: 'atb-turns' })
+    const attackCount = result.log.filter((e) => e.type === 'ATTACK').length
+    // Chaque action produit exactement un ATTACK (patterns simples) ; turns >= attackCount.
+    expect(result.turns).toBeGreaterThanOrEqual(1)
+    expect(result.turns).toBeGreaterThanOrEqual(attackCount)
+  })
+
+  it('unkillable units end in a TIMEOUT draw at the cap', () => {
+    const a = makeUnit('A0', { hp: 1000000, atk: 0, def: 1000 })
+    const b = makeUnit('B0', { hp: 1000000, atk: 0, def: 1000 })
+    const result = simulateBattle({
+      teamA: [a],
+      teamB: [b],
+      seed: 'atb-timeout',
+      timeoutTurns: 10,
+    })
+    expect(result.won).toBeNull()
+    expect(result.log[result.log.length - 1]?.type).toBe('TIMEOUT')
   })
 })
 
