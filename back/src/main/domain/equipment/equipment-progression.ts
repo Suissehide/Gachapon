@@ -74,10 +74,10 @@ export function substatRangesFromConfig(
       min: c['equip.substatSpdFlatMin'],
       max: c['equip.substatSpdFlatMax'],
     },
-    hpPct: pct,
-    atkPct: pct,
-    defPct: pct,
-    spdPct: pct,
+    hpPct: { ...pct },
+    atkPct: { ...pct },
+    defPct: { ...pct },
+    spdPct: { ...pct },
   }
 }
 
