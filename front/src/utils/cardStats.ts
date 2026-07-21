@@ -171,6 +171,22 @@ export function maxLevelInPalier(palier: number): number {
   return 10 * palier
 }
 
+/**
+ * Formate une clé de bonus d'équipement (`hpFlat`, `atkPct`, …) en libellé
+ * lisible : `hpFlat` → `PV`, `atkPct` → `% ATK`, etc.
+ */
+export function formatBonusKey(key: string): string {
+  if (key.endsWith('Flat')) {
+    const base = key.replace('Flat', '').toUpperCase()
+    return base === 'HP' ? 'PV' : base
+  }
+  if (key.endsWith('Pct')) {
+    const base = key.replace('Pct', '').toUpperCase()
+    return `% ${base === 'HP' ? 'PV' : base}`
+  }
+  return key
+}
+
 export function isAtTopOfPalier(level: number, palier: number): boolean {
   return level === maxLevelInPalier(palier)
 }

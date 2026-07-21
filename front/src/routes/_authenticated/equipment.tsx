@@ -29,11 +29,16 @@ import {
 import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
 import { useUserCollection } from '../../queries/useCollection.ts'
 import {
+  DEFAULT_ECONOMY,
+  useEconomyConfig,
+} from '../../queries/useEconomyConfig.ts'
+import {
   useEquipItem,
   useEquipmentList,
   useUnequipItem,
 } from '../../queries/useEquipment.ts'
 import { useAuthStore } from '../../stores/auth.store.ts'
+import { formatBonusKey } from '../../utils/cardStats.ts'
 
 export const Route = createFileRoute('/_authenticated/equipment')({
   component: EquipmentPage,
@@ -81,15 +86,21 @@ function EquipmentPage() {
   const filtered = useMemo(
     () =>
       items.filter((i) => {
-        if (slotFilter !== 'ALL' && i.slot !== slotFilter) { return false }
-        if (rarityFilter !== 'ALL' && i.rarity !== rarityFilter) { return false }
+        if (slotFilter !== 'ALL' && i.slot !== slotFilter) {
+          return false
+        }
+        if (rarityFilter !== 'ALL' && i.rarity !== rarityFilter) {
+          return false
+        }
         return true
       }),
     [items, slotFilter, rarityFilter],
   )
 
   const handleEquipOn = (targetUserCardId: string) => {
-    if (!pickerFor) { return }
+    if (!pickerFor) {
+      return
+    }
     equipItem.mutate(
       { userEquipmentId: pickerFor.id, targetUserCardId },
       { onSuccess: () => setPickerFor(null) },
@@ -215,6 +226,9 @@ function EquipmentCard({
   onUnequipClick: () => void
   isPending: boolean
 }) {
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  const levelScale = economy.equip.levelScale
+  const scale = 1 + levelScale * (item.level - 1)
   const Icon = SLOT_ICONS[item.slot]
   return (
     <div className="rounded-2xl border border-border bg-muted/20 p-4">
@@ -222,6 +236,9 @@ function EquipmentCard({
         <div className="flex items-center gap-2">
           <Icon className="h-4 w-4 text-text-light" />
           <p className="font-semibold text-text">{item.name}</p>
+          <span className="text-[10px] font-medium text-text-light">
+            Nv. {item.level}
+          </span>
         </div>
         <span
           className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${RARITY_COLORS[item.rarity]}`}
@@ -230,13 +247,25 @@ function EquipmentCard({
         </span>
       </div>
 
-      <p className="mt-1 text-xs text-text-light/60">{SLOT_LABELS[item.slot]}</p>
+      <p className="mt-1 text-xs text-text-light/60">
+        {SLOT_LABELS[item.slot]}
+      </p>
 
       <ul className="mt-2 space-y-0.5 text-xs">
         {Object.entries(item.bonuses).map(([key, value]) => (
           <li key={key} className="text-text-light">
-            <span className="font-mono text-emerald-300">+{value}</span>{' '}
+            <span className="font-mono text-emerald-300">
+              +{(Math.round(value * scale * 10) / 10).toLocaleString('fr-FR')}
+            </span>{' '}
             <span className="text-text-light/70">{formatBonusKey(key)}</span>
+          </li>
+        ))}
+        {item.substats.map((s) => (
+          <li key={s.key} className="text-text-light">
+            <span className="font-mono text-violet-600">
+              +{(Math.round(s.value * 10) / 10).toLocaleString('fr-FR')}
+            </span>{' '}
+            <span className="text-violet-600/70">{formatBonusKey(s.key)}</span>
           </li>
         ))}
       </ul>
@@ -271,16 +300,4 @@ function EquipmentCard({
       </div>
     </div>
   )
-}
-
-function formatBonusKey(key: string): string {
-  if (key.endsWith('Flat')) {
-    const base = key.replace('Flat', '').toUpperCase()
-    return base === 'HP' ? 'PV' : base
-  }
-  if (key.endsWith('Pct')) {
-    const base = key.replace('Pct', '').toUpperCase()
-    return `% ${base === 'HP' ? 'PV' : base}`
-  }
-  return key
 }

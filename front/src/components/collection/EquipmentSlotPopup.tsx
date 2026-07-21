@@ -1,5 +1,6 @@
 import {
   ArrowUpCircle,
+  Check,
   Coins,
   Shield,
   Sparkles,
@@ -29,9 +30,11 @@ import {
   useUpgradeItem,
 } from '../../queries/useEquipment.ts'
 import { useAuthStore } from '../../stores/auth.store.ts'
-import { equipGoldCostNextLevel } from '../../utils/cardStats.ts'
+import {
+  equipGoldCostNextLevel,
+  formatBonusKey,
+} from '../../utils/cardStats.ts'
 import { Button } from '../ui/button.tsx'
-import { Checkbox } from '../ui/input.tsx'
 import {
   Popup,
   PopupBody,
@@ -53,18 +56,6 @@ const SLOT_ICONS: Record<EquipmentSlot, typeof Sword> = {
   WEAPON: Sword,
   ARMOR: Shield,
   ACCESSORY: Sparkles,
-}
-
-export function formatBonusKey(key: string): string {
-  if (key.endsWith('Flat')) {
-    const base = key.replace('Flat', '').toUpperCase()
-    return base === 'HP' ? 'PV' : base
-  }
-  if (key.endsWith('Pct')) {
-    const base = key.replace('Pct', '').toUpperCase()
-    return `% ${base === 'HP' ? 'PV' : base}`
-  }
-  return key
 }
 
 function formatBonusValue(value: number): string {
@@ -209,7 +200,17 @@ function ItemRow({
           'cursor-not-allowed opacity-40',
       )}
     >
-      {checkable && <Checkbox checked={checked.has(item.id)} readOnly />}
+      {checkable && (
+        <span
+          aria-hidden="true"
+          className={cn(
+            'flex h-5 w-5 shrink-0 items-center justify-center rounded border border-border bg-input transition-colors',
+            checked.has(item.id) && 'border-primary bg-primary/10',
+          )}
+        >
+          {checked.has(item.id) && <Check className="h-4 w-4 text-primary" />}
+        </span>
+      )}
       <RarityDot color={RARITY_COLOR_VAR[item.rarity]} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-text">{item.name}</p>

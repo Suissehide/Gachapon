@@ -57,6 +57,8 @@ function rollValue(
  * Applique un palier : ajoute une sous-stat aléatoire tant qu'il reste des
  * emplacements (clé jamais dupliquée), sinon améliore une sous-stat existante
  * en lui ajoutant un nouveau tirage dans sa range.
+ *
+ * @param rng doit retourner un nombre dans [0, 1), comme Math.random.
  */
 export function rollMilestone(
   substats: Substat[],
@@ -67,14 +69,18 @@ export function rollMilestone(
     const available = SUBSTAT_KEYS.filter(
       (k) => !substats.some((s) => s.key === k),
     )
-    const key = available[Math.floor(rng() * available.length)] as SubstatKey
+    const len = available.length
+    const key = available[
+      Math.min(Math.floor(rng() * len), len - 1)
+    ] as SubstatKey
     const rolledValue = rollValue(ranges[key], rng)
     return {
       substats: [...substats, { key, value: rolledValue }],
       milestone: { type: 'added', key, rolledValue, newValue: rolledValue },
     }
   }
-  const index = Math.floor(rng() * substats.length)
+  const len = substats.length
+  const index = Math.min(Math.floor(rng() * len), len - 1)
   const target = substats[index] as Substat
   const rolledValue = rollValue(ranges[target.key], rng)
   const newValue = Math.round((target.value + rolledValue) * 10) / 10
