@@ -15,6 +15,7 @@ import {
   type Substat,
   type SubstatKey,
   type SubstatRanges,
+  substatRangesFromConfig,
   upgradeGoldCost,
 } from './equipment-progression'
 
@@ -263,29 +264,7 @@ export class EquipmentDomain {
       'equip.substatPctMin',
       'equip.substatPctMax',
     )
-    const pct = { min: c['equip.substatPctMin'], max: c['equip.substatPctMax'] }
-    const ranges: SubstatRanges = {
-      hpFlat: {
-        min: c['equip.substatHpFlatMin'],
-        max: c['equip.substatHpFlatMax'],
-      },
-      atkFlat: {
-        min: c['equip.substatAtkFlatMin'],
-        max: c['equip.substatAtkFlatMax'],
-      },
-      defFlat: {
-        min: c['equip.substatDefFlatMin'],
-        max: c['equip.substatDefFlatMax'],
-      },
-      spdFlat: {
-        min: c['equip.substatSpdFlatMin'],
-        max: c['equip.substatSpdFlatMax'],
-      },
-      hpPct: pct,
-      atkPct: pct,
-      defPct: pct,
-      spdPct: pct,
-    }
+    const ranges = substatRangesFromConfig(c)
 
     return retryOnSerialization(() =>
       this.#postgresOrm.executeWithTransactionClient(

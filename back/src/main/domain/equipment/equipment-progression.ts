@@ -34,6 +34,53 @@ export interface Substat {
 
 export type SubstatRanges = Record<SubstatKey, { min: number; max: number }>
 
+export const SUBSTAT_RANGE_CONFIG_KEYS = [
+  'equip.substatHpFlatMin',
+  'equip.substatHpFlatMax',
+  'equip.substatAtkFlatMin',
+  'equip.substatAtkFlatMax',
+  'equip.substatDefFlatMin',
+  'equip.substatDefFlatMax',
+  'equip.substatSpdFlatMin',
+  'equip.substatSpdFlatMax',
+  'equip.substatPctMin',
+  'equip.substatPctMax',
+] as const
+
+export type SubstatRangeConfigKey = (typeof SUBSTAT_RANGE_CONFIG_KEYS)[number]
+
+/**
+ * Construit les ranges de tirage depuis les valeurs de GlobalConfig.
+ * Pur : reçoit les valeurs, ne lit pas la config.
+ */
+export function substatRangesFromConfig(
+  c: Record<SubstatRangeConfigKey, number>,
+): SubstatRanges {
+  const pct = { min: c['equip.substatPctMin'], max: c['equip.substatPctMax'] }
+  return {
+    hpFlat: {
+      min: c['equip.substatHpFlatMin'],
+      max: c['equip.substatHpFlatMax'],
+    },
+    atkFlat: {
+      min: c['equip.substatAtkFlatMin'],
+      max: c['equip.substatAtkFlatMax'],
+    },
+    defFlat: {
+      min: c['equip.substatDefFlatMin'],
+      max: c['equip.substatDefFlatMax'],
+    },
+    spdFlat: {
+      min: c['equip.substatSpdFlatMin'],
+      max: c['equip.substatSpdFlatMax'],
+    },
+    hpPct: pct,
+    atkPct: pct,
+    defPct: pct,
+    spdPct: pct,
+  }
+}
+
 export interface MilestoneResult {
   type: 'added' | 'improved' | 'base'
   key: SubstatKey
@@ -61,6 +108,34 @@ function rollValue(
   return Math.round((range.min + rng() * (range.max - range.min)) * 10) / 10
 }
 
+function pickAvailableKey(substats: Substat[], rng: () => number): SubstatKey {
+  const available = SUBSTAT_KEYS.filter(
+    (k) => !substats.some((s) => s.key === k),
+  )
+  const len = available.length
+  return available[Math.min(Math.floor(rng() * len), len - 1)] as SubstatKey
+}
+
+/**
+ * Tire les sous-stats initiales d'une instance à l'obtention : clés
+ * distinctes du pool, valeurs uniformes dans leurs ranges.
+ *
+ * @param rng doit retourner un nombre dans [0, 1), comme Math.random.
+ */
+export function rollInitialSubstats(
+  maxSubstats: number,
+  ranges: SubstatRanges,
+  rng: () => number,
+): Substat[] {
+  const count = Math.min(maxSubstats, SUBSTAT_KEYS.length)
+  const substats: Substat[] = []
+  for (let i = 0; i < count; i++) {
+    const key = pickAvailableKey(substats, rng)
+    substats.push({ key, value: rollValue(ranges[key], rng) })
+  }
+  return substats
+}
+
 /**
  * Applique un palier, en cascade :
  * 1. s'il reste un emplacement de sous-stat pour la rareté → ajout d'une
@@ -81,13 +156,7 @@ export function rollMilestone(
   rng: () => number,
 ): { substats: Substat[]; baseBoost: number; milestone: MilestoneResult } {
   if (substats.length < maxSubstats) {
-    const available = SUBSTAT_KEYS.filter(
-      (k) => !substats.some((s) => s.key === k),
-    )
-    const len = available.length
-    const key = available[
-      Math.min(Math.floor(rng() * len), len - 1)
-    ] as SubstatKey
+    const key = pickAvailableKey(substats, rng)
     const rolledValue = rollValue(ranges[key], rng)
     return {
       substats: [...substats, { key, value: rolledValue }],

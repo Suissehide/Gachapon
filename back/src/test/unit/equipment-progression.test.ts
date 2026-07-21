@@ -4,8 +4,10 @@ import {
   effectiveEquipmentBonuses,
   isSubstatMilestone,
   MAX_SUBSTATS_BY_RARITY,
+  rollInitialSubstats,
   rollMilestone,
   scaleBaseBonuses,
+  substatRangesFromConfig,
   type Substat,
   type SubstatRanges,
   upgradeGoldCost,
@@ -195,5 +197,57 @@ describe('equipment-progression: effectiveEquipmentBonuses', () => {
     )
     expect(result.atkFlat).toBeCloseTo(15)
     expect(result.spdFlat).toBeCloseTo(4)
+  })
+})
+
+describe('equipment-progression: substatRangesFromConfig', () => {
+  it('construit les ranges depuis les 10 valeurs de config', () => {
+    const ranges = substatRangesFromConfig({
+      'equip.substatHpFlatMin': 20,
+      'equip.substatHpFlatMax': 60,
+      'equip.substatAtkFlatMin': 5,
+      'equip.substatAtkFlatMax': 15,
+      'equip.substatDefFlatMin': 5,
+      'equip.substatDefFlatMax': 15,
+      'equip.substatSpdFlatMin': 3,
+      'equip.substatSpdFlatMax': 9,
+      'equip.substatPctMin': 3,
+      'equip.substatPctMax': 8,
+    })
+    expect(ranges).toEqual(RANGES)
+  })
+})
+
+describe('equipment-progression: rollInitialSubstats', () => {
+  it('retourne un tableau vide pour 0 emplacement (commune)', () => {
+    expect(rollInitialSubstats(0, RANGES, rngFrom([0.5]))).toEqual([])
+  })
+
+  it('tire le bon nombre de sous-stats à clés distinctes', () => {
+    const substats = rollInitialSubstats(4, RANGES, rngFrom([0, 0.5]))
+    expect(substats).toHaveLength(4)
+    expect(new Set(substats.map((s) => s.key)).size).toBe(4)
+  })
+
+  it('est déterministe au RNG injecté', () => {
+    // Séquence [0, 0.5] : clé = première disponible, valeur = milieu de range.
+    const substats = rollInitialSubstats(2, RANGES, rngFrom([0, 0.5]))
+    expect(substats).toEqual([
+      { key: 'hpFlat', value: 40 }, // 20 + 0.5 × 40
+      { key: 'hpPct', value: 5.5 }, // hpFlat pris → hpPct ; 3 + 0.5 × 5
+    ])
+  })
+
+  it('tire chaque valeur dans la range de sa clé', () => {
+    const substats = rollInitialSubstats(8, RANGES, rngFrom([0.99, 0.01, 0.37]))
+    expect(substats).toHaveLength(8)
+    for (const s of substats) {
+      expect(s.value).toBeGreaterThanOrEqual(RANGES[s.key].min)
+      expect(s.value).toBeLessThanOrEqual(RANGES[s.key].max)
+    }
+  })
+
+  it('plafonne au nombre de clés du pool', () => {
+    expect(rollInitialSubstats(12, RANGES, rngFrom([0.2, 0.6]))).toHaveLength(8)
   })
 })
