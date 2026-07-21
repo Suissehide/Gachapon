@@ -1,8 +1,8 @@
-import { Sparkles, Star } from 'lucide-react'
+import { Sparkles, Star, Zap } from 'lucide-react'
 
 import type { Card, CardVariant } from '../../api/collection.api.ts'
 import { describePassive } from '../../constants/passives.constant.ts'
-import { finalStat } from '../../utils/cardStats.ts'
+import { computePower, finalStat } from '../../utils/cardStats.ts'
 import type { CardStats } from '../shared/tcg-card/TcgCardFace.tsx'
 import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
 
@@ -71,6 +71,16 @@ export function CollectionCard({
         }
       : null
 
+  const power =
+    stats !== null
+      ? computePower({
+          hp: stats.pv,
+          atk: stats.atq,
+          def: stats.def,
+          spd: stats.vit,
+        })
+      : null
+
   const description =
     isOwned && palier ? describePassive(card.passiveKey, palier) : null
 
@@ -93,6 +103,13 @@ export function CollectionCard({
           stats={isOwned ? stats : null}
           description={isOwned ? description : null}
         />
+
+        {isOwned && power !== null && (
+          <span className="pointer-events-none absolute bottom-1.5 left-1/2 z-[6] inline-flex -translate-x-1/2 items-center gap-1 rounded-full bg-[#1b1726]/92 px-2 py-[3px] font-display text-[10px] font-extrabold leading-none tabular-nums text-white shadow-[0_2px_6px_rgba(27,23,38,0.45),0_0_0_1.5px_#fcfbf9]">
+            <Zap className="h-2.5 w-2.5 text-primary" fill="currentColor" />
+            {power.toLocaleString('fr-FR')}
+          </span>
+        )}
 
         {isOwned && isNew && (
           <span className="absolute -left-2 -top-2 z-[6] inline-flex items-center gap-1.5 rounded-full bg-[linear-gradient(135deg,#34d399,#16a34a)] px-[10px] py-[5px] font-mono text-[9.5px] font-extrabold leading-none tracking-[0.1em] text-white shadow-[0_5px_14px_-3px_rgba(22,163,74,0.65),0_0_0_2px_#fcfbf9]">
