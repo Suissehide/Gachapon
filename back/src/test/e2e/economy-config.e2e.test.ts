@@ -44,5 +44,20 @@ describe('GET /economy/config', () => {
     expect(body.card.rarityMult.EPIC).toBe(2.3)
     expect(body.card.maxPalier).toBe(6)
     expect(body.combat.battleCost).toBe(5)
+    expect(body.equip.goldCostBase).toBe(25)
+    expect(body.equip.goldCostExp).toBe(1.35)
+    expect(body.equip.levelScale).toBe(0.1)
+    expect(body.equip.maxLevel).toBe(12)
+    expect(body.equip.substatMilestone).toBe(3)
+    expect(body.equip.maxSubstatsByRarity).toEqual({
+      COMMON: 0,
+      UNCOMMON: 1,
+      RARE: 2,
+      EPIC: 3,
+      LEGENDARY: 4,
+    })
+    expect(body.equip.salvageGold.LEGENDARY).toBe(800)
+    expect(body.equip.substatRanges.hpFlat).toEqual({ min: 20, max: 60 })
+    expect(body.equip.substatRanges.pct).toEqual({ min: 3, max: 8 })
   })
 })

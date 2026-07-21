@@ -2,6 +2,10 @@ import Boom from '@hapi/boom'
 
 import type { IocContainer } from '../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
+import {
+  effectiveEquipmentBonuses,
+  type Substat,
+} from '../equipment/equipment-progression'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import { computeFinalStats, type EquipmentBonuses } from './combat-stats.domain'
 import { getPassive } from './passives'
@@ -101,7 +105,13 @@ export class CombatTeamTx {
       .filter((uc): uc is NonNullable<typeof uc> => uc != null)
       .map((uc) => {
         const equipmentBonuses: EquipmentBonuses[] = uc.equipment.map(
-          (ue) => (ue.equipment.bonuses ?? {}) as EquipmentBonuses,
+          (ue) =>
+            effectiveEquipmentBonuses(
+              (ue.equipment.bonuses ?? {}) as Record<string, number>,
+              ue.level,
+              (ue.substats ?? []) as unknown as Substat[],
+              ue.baseBoost,
+            ) as EquipmentBonuses,
         )
         const stats = computeFinalStats({
           baseHp: uc.card.baseHp,

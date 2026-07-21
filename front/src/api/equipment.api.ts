@@ -3,7 +3,31 @@ import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
 export type EquipmentSlot = 'WEAPON' | 'ARMOR' | 'ACCESSORY'
-export type EquipmentRarity = 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
+export type EquipmentRarity =
+  | 'COMMON'
+  | 'UNCOMMON'
+  | 'RARE'
+  | 'EPIC'
+  | 'LEGENDARY'
+
+export type SubstatKey =
+  | 'hpFlat'
+  | 'hpPct'
+  | 'atkFlat'
+  | 'atkPct'
+  | 'defFlat'
+  | 'defPct'
+  | 'spdFlat'
+  | 'spdPct'
+
+export type Substat = { key: SubstatKey; value: number }
+
+export type EquipmentMilestone = {
+  type: 'added' | 'improved' | 'base'
+  key: SubstatKey
+  rolledValue: number
+  newValue: number
+}
 
 export type EquipmentInstance = {
   id: string
@@ -16,13 +40,16 @@ export type EquipmentInstance = {
   equippedOnId: string | null
   equippedOnCardName: string | null
   obtainedAt: string
+  level: number
+  substats: Substat[]
+  baseBoost: number
 }
 
 export const EquipmentApi = {
   list: async (): Promise<{ items: EquipmentInstance[] }> => {
     const res = await fetchWithAuth(`${apiUrl}/equipment`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors du chargement de l\'équipement')
+      handleHttpError(res, {}, "Erreur lors du chargement de l'équipement")
     }
     return res.json()
   },
@@ -40,7 +67,7 @@ export const EquipmentApi = {
       },
     )
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de l\'équipement')
+      handleHttpError(res, {}, "Erreur lors de l'équipement")
     }
     return res.json()
   },
@@ -54,6 +81,44 @@ export const EquipmentApi = {
     )
     if (!res.ok) {
       handleHttpError(res, {}, 'Erreur lors du déséquipement')
+    }
+    return res.json()
+  },
+
+  upgrade: async (
+    userEquipmentId: string,
+  ): Promise<{
+    level: number
+    substats: Substat[]
+    baseBoost: number
+    goldSpent: number
+    newGold: number
+    milestone: EquipmentMilestone | null
+  }> => {
+    const res = await fetchWithAuth(
+      `${apiUrl}/equipment/${userEquipmentId}/upgrade`,
+      { method: 'POST' },
+    )
+    if (!res.ok) {
+      handleHttpError(res, {}, "Erreur lors de l'amélioration")
+    }
+    return res.json()
+  },
+
+  salvage: async (
+    userEquipmentIds: string[],
+  ): Promise<{
+    goldEarned: number
+    newGold: number
+    destroyedCount: number
+  }> => {
+    const res = await fetchWithAuth(`${apiUrl}/equipment/salvage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userEquipmentIds }),
+    })
+    if (!res.ok) {
+      handleHttpError(res, {}, 'Erreur lors de la destruction')
     }
     return res.json()
   },

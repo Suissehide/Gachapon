@@ -85,26 +85,62 @@ function parseBonusKey(
   return STAT_KEYS.includes(stat) ? { stat, kind } : null
 }
 
+// Accumulate equipment item bonuses into the aggregated stats.
+function accumulateItemBonuses(
+  acc: StatBonuses,
+  item: {
+    bonuses: Record<string, number>
+    level: number
+    substats: { key: string; value: number }[]
+    baseBoost: number
+  },
+  equipLevelScale: number,
+): void {
+  const mult = 1 + equipLevelScale * (item.level - 1)
+  for (const [key, value] of Object.entries(item.bonuses)) {
+    const parsed = parseBonusKey(key)
+    if (parsed) {
+      acc[parsed.stat][parsed.kind] += value * mult
+    }
+  }
+  const baseKey = Object.keys(item.bonuses)[0]
+  if (baseKey !== undefined && item.baseBoost !== 0) {
+    const parsed = parseBonusKey(baseKey)
+    if (parsed) {
+      acc[parsed.stat][parsed.kind] += item.baseBoost
+    }
+  }
+  for (const s of item.substats) {
+    const parsed = parseBonusKey(s.key)
+    if (parsed) {
+      acc[parsed.stat][parsed.kind] += s.value
+    }
+  }
+}
+
 /**
  * Aggregate the flat/percent bonuses of every equipment piece equipped on a
- * given card. Bonus keys follow the backend convention `<stat>Flat` / `<stat>Pct`
- * (e.g. `hpFlat`, `atkPct`). Mirrors `computeFinalStats` in the backend.
+ * given card: catalog base scaled by instance level (baseBoost added on the
+ * first key — the item's base bonus), plus substats. Mirrors
+ * `effectiveEquipmentBonuses` + `computeFinalStats` in the backend.
  */
 export function aggregateEquipmentBonuses(
-  items: { equippedOnId: string | null; bonuses: Record<string, number> }[],
+  items: {
+    equippedOnId: string | null
+    bonuses: Record<string, number>
+    level: number
+    substats: { key: string; value: number }[]
+    baseBoost: number
+  }[],
   userCardId: string,
+  equipLevelScale: number,
 ): StatBonuses {
   const acc = emptyStatBonuses()
   for (const item of items) {
     if (item.equippedOnId !== userCardId) {
       continue
     }
-    for (const [key, value] of Object.entries(item.bonuses)) {
-      const parsed = parseBonusKey(key)
-      if (parsed) {
-        acc[parsed.stat][parsed.kind] += value
-      }
-    }
+    accumulateItemBonuses(acc, item, equipLevelScale)
   }
   return acc
 }
@@ -182,8 +218,36 @@ export function dustCostNextLevel(
   )
 }
 
+export function equipGoldCostNextLevel(
+  currentLevel: number,
+  rarity: CardRarity,
+  economy: EconomyConfig,
+): number {
+  return Math.round(
+    economy.equip.goldCostBase *
+      economy.equip.goldCostExp ** (currentLevel - 1) *
+      economy.card.rarityMult[rarity],
+  )
+}
+
 export function maxLevelInPalier(palier: number): number {
   return 10 * palier
+}
+
+/**
+ * Formate une clé de bonus d'équipement (`hpFlat`, `atkPct`, …) en libellé
+ * lisible : `hpFlat` → `PV`, `atkPct` → `% ATK`, etc.
+ */
+export function formatBonusKey(key: string): string {
+  if (key.endsWith('Flat')) {
+    const base = key.replace('Flat', '').toUpperCase()
+    return base === 'HP' ? 'PV' : base
+  }
+  if (key.endsWith('Pct')) {
+    const base = key.replace('Pct', '').toUpperCase()
+    return `% ${base === 'HP' ? 'PV' : base}`
+  }
+  return key
 }
 
 export function isAtTopOfPalier(level: number, palier: number): boolean {

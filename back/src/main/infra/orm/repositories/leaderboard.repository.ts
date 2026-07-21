@@ -1,3 +1,7 @@
+import {
+  effectiveEquipmentBonuses,
+  type Substat,
+} from '../../../domain/equipment/equipment-progression'
 import type { IocContainer } from '../../../types/application/ioc'
 import type {
   ActiveCardCounts,
@@ -243,7 +247,12 @@ export class LeaderboardRepository implements ILeaderboardRepository {
           },
         },
         equipment: {
-          select: { equipment: { select: { bonuses: true } } },
+          select: {
+            level: true,
+            substats: true,
+            baseBoost: true,
+            equipment: { select: { bonuses: true } },
+          },
         },
       },
     })
@@ -263,7 +272,12 @@ export class LeaderboardRepository implements ILeaderboardRepository {
         card: uc.card,
         equipmentBonuses: uc.equipment.map(
           (e) =>
-            (e.equipment.bonuses ?? {}) as Record<string, number | undefined>,
+            effectiveEquipmentBonuses(
+              (e.equipment.bonuses ?? {}) as Record<string, number>,
+              e.level,
+              (e.substats ?? []) as unknown as Substat[],
+              e.baseBoost,
+            ) as Record<string, number | undefined>,
         ),
       })
       byUser.set(uc.userId, list)
