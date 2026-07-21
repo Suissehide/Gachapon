@@ -1,19 +1,20 @@
-import { Link, createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { ArrowLeft } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import type { CardVariant } from '../../../api/collection.api.ts'
 import {
+  RARITY_LABELS,
+  RARITY_ORDER,
+} from '../../../components/collection/CollectionCard.tsx'
+import {
   CollectionFilters,
   type GroupMode,
   type OwnershipFilter,
   type RarityFilter,
+  type SortMode,
   type VariantFilter,
 } from '../../../components/collection/CollectionFilters.tsx'
-import {
-  RARITY_LABELS,
-  RARITY_ORDER,
-} from '../../../components/collection/CollectionCard.tsx'
 import {
   CollectionSection,
   computeSectionStats,
@@ -29,6 +30,21 @@ import {
 import { useUserProfile } from '../../../queries/useProfile.ts'
 import type { DisplayEntry } from '../collection.tsx'
 
+function sortEntries(entries: DisplayEntry[], sort: SortMode): DisplayEntry[] {
+  if (sort === 'default') {
+    return entries
+  }
+  const sorted = [...entries]
+  if (sort === 'level') {
+    sorted.sort((a, b) => (b.userCard?.level ?? 0) - (a.userCard?.level ?? 0))
+  } else if (sort === 'copies') {
+    sorted.sort((a, b) => b.quantity - a.quantity)
+  } else {
+    sorted.sort((a, b) => a.card.name.localeCompare(b.card.name, 'fr'))
+  }
+  return sorted
+}
+
 export const Route = createFileRoute(
   '/_authenticated/profile/$username_/collection',
 )({
@@ -43,6 +59,7 @@ function UserCollectionPage() {
   const [rarity, setRarity] = useState<RarityFilter>('all')
   const [variant, setVariant] = useState<VariantFilter>('all')
   const [ownership, setOwnership] = useState<OwnershipFilter>('owned')
+  const [sort, setSort] = useState<SortMode>('default')
 
   const { data: catalogData } = useCards()
   const { data: userColl } = useUserCollection(profile?.id)
@@ -102,7 +119,10 @@ function UserCollectionPage() {
         .map((r) => ({
           key: r,
           title: RARITY_LABELS[r],
-          entries: filteredEntries.filter((e) => e.card.rarity === r),
+          entries: sortEntries(
+            filteredEntries.filter((e) => e.card.rarity === r),
+            sort,
+          ),
           stats: computeSectionStats(
             allCards.filter((c) => c.rarity === r),
             userCards,
@@ -125,14 +145,14 @@ function UserCollectionPage() {
       return {
         key: id,
         title: g?.name ?? '',
-        entries: g?.entries ?? [],
+        entries: sortEntries(g?.entries ?? [], sort),
         stats: computeSectionStats(
           allCards.filter((c) => c.set.id === id),
           userCards,
         ),
       }
     })
-  }, [group, filteredEntries, allCards, userCards])
+  }, [group, filteredEntries, allCards, userCards, sort])
 
   const ownedCount = userCards.length
   const totalCount = displayEntries.length
@@ -193,6 +213,8 @@ function UserCollectionPage() {
           onVariantChange={setVariant}
           ownership={ownership}
           onOwnershipChange={setOwnership}
+          sort={sort}
+          onSortChange={setSort}
         />
       </ArcadeCard>
 

@@ -13,6 +13,7 @@ import {
   type GroupMode,
   type OwnershipFilter,
   type RarityFilter,
+  type SortMode,
   type VariantFilter,
 } from '../../components/collection/CollectionFilters.tsx'
 import {
@@ -41,6 +42,24 @@ export type DisplayEntry = {
   userCard: UserCard | null
 }
 
+// Tri appliqué à l'intérieur de chaque groupe. `default` préserve l'ordre
+// existant ; les entrées non possédées (level/quantity absents) tombent en
+// fin de groupe pour les tris numériques.
+function sortEntries(entries: DisplayEntry[], sort: SortMode): DisplayEntry[] {
+  if (sort === 'default') {
+    return entries
+  }
+  const sorted = [...entries]
+  if (sort === 'level') {
+    sorted.sort((a, b) => (b.userCard?.level ?? 0) - (a.userCard?.level ?? 0))
+  } else if (sort === 'copies') {
+    sorted.sort((a, b) => b.quantity - a.quantity)
+  } else {
+    sorted.sort((a, b) => a.card.name.localeCompare(b.card.name, 'fr'))
+  }
+  return sorted
+}
+
 export const Route = createFileRoute('/_authenticated/collection')({
   component: Collection,
 })
@@ -51,6 +70,7 @@ function Collection() {
   const [rarity, setRarity] = useState<RarityFilter>('all')
   const [variant, setVariant] = useState<VariantFilter>('all')
   const [ownership, setOwnership] = useState<OwnershipFilter>('owned')
+  const [sort, setSort] = useState<SortMode>('default')
   const [recycleTarget, setRecycleTarget] = useState<UserCard | null>(null)
   const [recycleAllOpen, setRecycleAllOpen] = useState(false)
   // Store just the key so we always re-derive the *fresh* entry from
@@ -136,7 +156,10 @@ function Collection() {
         .map((r) => ({
           key: r,
           title: RARITY_LABELS[r],
-          entries: filteredEntries.filter((e) => e.card.rarity === r),
+          entries: sortEntries(
+            filteredEntries.filter((e) => e.card.rarity === r),
+            sort,
+          ),
           stats: computeSectionStats(
             allCards.filter((c) => c.rarity === r),
             userCards,
@@ -160,14 +183,14 @@ function Collection() {
       return {
         key: id,
         title: group?.name ?? '',
-        entries: group?.entries ?? [],
+        entries: sortEntries(group?.entries ?? [], sort),
         stats: computeSectionStats(
           allCards.filter((c) => c.set.id === id),
           userCards,
         ),
       }
     })
-  }, [group, filteredEntries, allCards, userCards])
+  }, [group, filteredEntries, allCards, userCards, sort])
 
   const handleDetail = (entry: DisplayEntry) => setDetailKey(entry.key)
 
@@ -224,6 +247,8 @@ function Collection() {
             onVariantChange={setVariant}
             ownership={ownership}
             onOwnershipChange={setOwnership}
+            sort={sort}
+            onSortChange={setSort}
           />
           <Button
             type="button"
