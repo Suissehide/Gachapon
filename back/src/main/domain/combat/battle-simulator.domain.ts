@@ -137,7 +137,10 @@ function advanceToNextActor(
     }
     return a.tie - b.tie
   })
-  const actor = ready[0].u
+  const actor = ready[0]?.u
+  if (!actor) {
+    return null
+  }
   actor.gauge -= ACTION_THRESHOLD
   return { actor, dt }
 }
