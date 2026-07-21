@@ -724,28 +724,56 @@ function checkVictory(units: BattleUnit[]): Side | null {
   return null
 }
 
+/** REGEN pour une seule unité (soin de soi). */
+function applyRegenToUnit(u: BattleUnit, log: LogEntry[]): void {
+  if (!u.alive || u.passiveKey !== 'REGEN' || u.currentHp >= u.maxHp) {
+    return
+  }
+  const healed = Math.min(
+    Math.round((u.maxHp * u.passiveValuePct) / 100),
+    u.maxHp - u.currentHp,
+  )
+  if (healed <= 0) {
+    return
+  }
+  u.currentHp += healed
+  log.push({
+    type: 'PASSIVE',
+    unitId: u.id,
+    passive: 'REGEN',
+    payload: { healed },
+  })
+}
+
 function applyRegen(units: BattleUnit[], log: LogEntry[]): void {
   for (const u of units) {
-    if (!u.alive || u.passiveKey !== 'REGEN') {
-      continue
-    }
-    if (u.currentHp >= u.maxHp) {
-      continue
-    }
-    const healed = Math.min(
-      Math.round((u.maxHp * u.passiveValuePct) / 100),
-      u.maxHp - u.currentHp,
-    )
-    if (healed <= 0) {
-      continue
-    }
-    u.currentHp += healed
+    applyRegenToUnit(u, log)
+  }
+}
+
+/** BURN / POISON pour une seule unité : dégâts, décrément des durées, mort éventuelle. */
+function applyDotsToUnit(u: BattleUnit, log: LogEntry[]): void {
+  if (!u.alive || u.dots.length === 0) {
+    return
+  }
+  let total = 0
+  for (const dot of u.dots) {
+    total += dot.dmgPerTurn
     log.push({
       type: 'PASSIVE',
       unitId: u.id,
-      passive: 'REGEN',
-      payload: { healed },
+      passive: dot.source,
+      payload: { damage: dot.dmgPerTurn },
     })
+  }
+  if (total > 0) {
+    u.currentHp = Math.max(0, u.currentHp - total)
+  }
+  u.dots = u.dots
+    .map((d) => ({ ...d, turnsLeft: d.turnsLeft - 1 }))
+    .filter((d) => d.turnsLeft > 0)
+  if (u.currentHp <= 0) {
+    finalizeDeath(u, log)
   }
 }
 
@@ -756,63 +784,81 @@ function applyRegen(units: BattleUnit[], log: LogEntry[]): void {
  */
 function applyDots(units: BattleUnit[], log: LogEntry[]): void {
   for (const u of units) {
-    if (!u.alive || u.dots.length === 0) {
-      continue
-    }
-    let total = 0
-    for (const dot of u.dots) {
-      total += dot.dmgPerTurn
-      log.push({
-        type: 'PASSIVE',
-        unitId: u.id,
-        passive: dot.source,
-        payload: { damage: dot.dmgPerTurn },
-      })
-    }
-    if (total > 0) {
-      u.currentHp = Math.max(0, u.currentHp - total)
-    }
-    u.dots = u.dots
-      .map((d) => ({ ...d, turnsLeft: d.turnsLeft - 1 }))
-      .filter((d) => d.turnsLeft > 0)
-    if (u.currentHp <= 0) {
-      finalizeDeath(u, log)
-    }
+    applyDotsToUnit(u, log)
   }
+}
+
+/** BLESSING : le soigneur soigne l'allié vivant le plus bas en ratio PV/PV max. */
+function applyBlessingFromUnit(
+  healer: BattleUnit,
+  units: BattleUnit[],
+  log: LogEntry[],
+): void {
+  if (!healer.alive || healer.passiveKey !== 'BLESSING') {
+    return
+  }
+  const allies = units
+    .filter((u) => u.side === healer.side && u.alive && u.currentHp < u.maxHp)
+    .sort((a, b) => {
+      const ra = a.currentHp / a.maxHp
+      const rb = b.currentHp / b.maxHp
+      if (ra !== rb) {
+        return ra - rb
+      }
+      return a.id < b.id ? -1 : 1
+    })
+  const target = allies[0]
+  if (!target) {
+    return
+  }
+  const healed = Math.min(
+    Math.round((target.maxHp * healer.passiveValuePct) / 100),
+    target.maxHp - target.currentHp,
+  )
+  if (healed <= 0) {
+    return
+  }
+  target.currentHp += healed
+  log.push({
+    type: 'PASSIVE',
+    unitId: healer.id,
+    passive: 'BLESSING',
+    payload: { healed },
+  })
 }
 
 /** BLESSING — soigne l'allié vivant le plus bas en PV (ratio PV/PV max). */
 function applyBlessing(units: BattleUnit[], log: LogEntry[]): void {
   for (const healer of units) {
-    if (!healer.alive || healer.passiveKey !== 'BLESSING') {
-      continue
-    }
-    const allies = units
-      .filter((u) => u.side === healer.side && u.alive && u.currentHp < u.maxHp)
-      .sort((a, b) => {
-        const ra = a.currentHp / a.maxHp
-        const rb = b.currentHp / b.maxHp
-        if (ra !== rb) {
-          return ra - rb
-        }
-        return a.id < b.id ? -1 : 1
-      })
-    const target = allies[0]
-    if (!target) {
+    applyBlessingFromUnit(healer, units, log)
+  }
+}
+
+/** SANCTUARY : la source soigne tous ses alliés vivants d'un % de PV max. */
+function applySanctuaryFromUnit(
+  src: BattleUnit,
+  units: BattleUnit[],
+  log: LogEntry[],
+): void {
+  if (!src.alive || src.passiveKey !== 'SANCTUARY') {
+    return
+  }
+  for (const ally of units) {
+    if (ally.side !== src.side || !ally.alive || ally.currentHp >= ally.maxHp) {
       continue
     }
     const healed = Math.min(
-      Math.round((target.maxHp * healer.passiveValuePct) / 100),
-      target.maxHp - target.currentHp,
+      Math.round((ally.maxHp * src.passiveValuePct) / 100),
+      ally.maxHp - ally.currentHp,
     )
     if (healed <= 0) {
       continue
     }
-    target.currentHp += healed
+    ally.currentHp += healed
     log.push({
       type: 'PASSIVE',
-      unitId: healer.id,
-      passive: 'BLESSING',
+      unitId: src.id,
+      passive: 'SANCTUARY',
       payload: { healed },
     })
   }
@@ -821,32 +867,7 @@ function applyBlessing(units: BattleUnit[], log: LogEntry[]): void {
 /** SANCTUARY — soigne tous les alliés vivants d'un petit pourcentage de PV max. */
 function applySanctuary(units: BattleUnit[], log: LogEntry[]): void {
   for (const src of units) {
-    if (!src.alive || src.passiveKey !== 'SANCTUARY') {
-      continue
-    }
-    for (const ally of units) {
-      if (
-        ally.side !== src.side ||
-        !ally.alive ||
-        ally.currentHp >= ally.maxHp
-      ) {
-        continue
-      }
-      const healed = Math.min(
-        Math.round((ally.maxHp * src.passiveValuePct) / 100),
-        ally.maxHp - ally.currentHp,
-      )
-      if (healed <= 0) {
-        continue
-      }
-      ally.currentHp += healed
-      log.push({
-        type: 'PASSIVE',
-        unitId: src.id,
-        passive: 'SANCTUARY',
-        payload: { healed },
-      })
-    }
+    applySanctuaryFromUnit(src, units, log)
   }
 }
 
