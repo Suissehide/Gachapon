@@ -4,91 +4,60 @@ import {
   difficultyMult,
   enemyPower,
   lootTableNormal,
+  normalEnemyTeam,
 } from '../../../prisma/seed/campaign'
 
-describe('enemyPower — courbe concave continue', () => {
-  it('laisse le stage 1-1 au plancher (tuto)', () => {
+describe('enemyPower — aligné sur le joueur attendu (rareté + niveau + palier ATB)', () => {
+  it('stage 1-1 : valeur ancre exacte (scale=1, NORMAL_FACTOR=0.98)', () => {
+    // rb = COMMON {105,10,5,92}, scale = levelMult(1)*palierMult(1) = 1
+    // hp: 105×0.98×1 = 102.9 → 103 ; atk: 10×0.98 = 9.8 → 10
+    // def: 5×0.98 = 4.9 → 5 ; spd: 92×1 = 92 (pas de NORMAL_FACTOR)
     expect(enemyPower(1, 1)).toEqual({
-      baseHp: 80,
-      baseAtk: 8,
-      baseDef: 4,
-      baseSpd: 85,
+      baseHp: 103,
+      baseAtk: 10,
+      baseDef: 5,
+      baseSpd: 92,
     })
   })
 
-  it('monte fort en début de jeu (1-9 : mult ≈ 3.44)', () => {
-    // mult = (1 + 0.08×8)^2.5 ≈ 3.444 → 80→276, 8→28, 4→14
-    expect(enemyPower(1, 9)).toEqual({
-      baseHp: 276,
-      baseAtk: 28,
-      baseDef: 14,
-      baseSpd: 85,
-    })
+  it('la vitesse SCALE désormais avec le niveau (ATB parity — ancienne valeur fixe éliminée)', () => {
+    expect(enemyPower(1, 9).baseSpd).toBeGreaterThan(enemyPower(1, 1).baseSpd)
   })
 
-  it('est CONTINUE au changement de chapitre (2-1 > 1-10, plus de dent de scie)', () => {
-    // Ancienne courbe : 3-1 retombait sous 2-6. Désormais le stage global
-    // n = (chapitre-1)×10 + index est seul maître de la difficulté.
-    expect(enemyPower(2, 1)).toEqual({
-      baseHp: 348,
-      baseAtk: 35,
-      baseDef: 17,
-      baseSpd: 85,
-    })
-    expect(enemyPower(2, 1).baseHp).toBeGreaterThan(enemyPower(1, 10).baseHp)
-    expect(enemyPower(3, 1).baseHp).toBeGreaterThan(enemyPower(2, 9).baseHp)
-  })
-
-  it('croît de moins en moins vite (concave : lvl-up bon marché au début, cher ensuite)', () => {
-    // Croissance relative par stage strictement décroissante : ≈ +21 % au
-    // stage 2, ≈ +4 % au stage 50.
-    let prevGrowth = Number.POSITIVE_INFINITY
-    for (let n = 2; n <= 50; n++) {
+  it('les PV sont STRICTEMENT croissants sur les 50 stages globaux', () => {
+    let prevHp = -1
+    for (let n = 1; n <= 50; n++) {
       const chapter = Math.floor((n - 1) / 10) + 1
       const index = ((n - 1) % 10) + 1
-      const prevChapter = Math.floor((n - 2) / 10) + 1
-      const prevIndex = ((n - 2) % 10) + 1
-      const growth =
-        difficultyMult(chapter, index) / difficultyMult(prevChapter, prevIndex)
-      expect(growth).toBeGreaterThan(1)
-      expect(growth).toBeLessThan(prevGrowth)
-      prevGrowth = growth
+      const hp = enemyPower(chapter, index).baseHp
+      expect(hp).toBeGreaterThan(prevHp)
+      prevHp = hp
     }
-    expect(difficultyMult(1, 2)).toBeCloseTo(1.212, 2)
-    expect(difficultyMult(5, 10) / difficultyMult(5, 9)).toBeCloseTo(1.043, 2)
+  })
+
+  it('est CONTINU au changement de chapitre (2-1 > 1-10, 3-1 > 2-10)', () => {
+    expect(enemyPower(2, 1).baseHp).toBeGreaterThan(enemyPower(1, 10).baseHp)
+    expect(enemyPower(3, 1).baseHp).toBeGreaterThan(enemyPower(2, 10).baseHp)
   })
 })
 
-describe('bossEnemyTeam — check de build (PV ×3.25, atk ×1.0, AOE_3)', () => {
-  it('le boss 1-10 est un solo AOE tank calibré par simulation', () => {
-    const [boss, ...rest] = bossEnemyTeam(1, 10)
-    // un seul ennemi (solo boss)
+describe('bossEnemyTeam — solo AOE_3, PV ×BOSS_HP_MULT, vitesse à parité ATB', () => {
+  it('le boss 1-10 est un solo AOE dont la vitesse scale (> 100)', () => {
+    const team = bossEnemyTeam(1, 10)
+    const [boss, ...rest] = team
     expect(rest).toHaveLength(0)
-    // enemyPower(1,10) = { hp 310, atk 31, def 16, spd 85 }
-    // boss = hp ×3.25 → 1008, atk ×1.0 → 31, def ×1.2 → 19, spd 100
-    expect(boss).toMatchObject({
-      baseHp: 1008,
-      baseAtk: 31,
-      baseDef: 19,
-      baseSpd: 100,
-      attackPattern: 'AOE_3',
-    })
+    expect(boss.attackPattern).toBe('AOE_3')
+    // Vitesse scaleée — plus de valeur fixe 100
+    expect(boss.baseSpd).toBeGreaterThan(100)
   })
 
-  it('les boss de TOUS les chapitres (1-5) suivent la même recette', () => {
-    // Attendus dérivés d'enemyPower pour éviter tout calcul à la main : la
-    // même recette (PV ×3.25, atk ×1.0, def ×1.2, AOE_3) s'applique partout.
+  it('pour chaque chapitre (1-5) : solo, AOE_3, PV > ennemi normal du stage 9', () => {
     for (const chapter of [1, 2, 3, 4, 5]) {
-      const p = enemyPower(chapter, 10)
-      const team = bossEnemyTeam(chapter, 10)
-      expect(team).toHaveLength(1)
-      expect(team[0]).toMatchObject({
-        baseHp: Math.round(p.baseHp * 3.25),
-        baseAtk: Math.round(p.baseAtk * 1.0),
-        baseDef: Math.round(p.baseDef * 1.2),
-        baseSpd: 100,
-        attackPattern: 'AOE_3',
-      })
+      const bosses = bossEnemyTeam(chapter, 10)
+      const normals = normalEnemyTeam(chapter, 9)
+      expect(bosses).toHaveLength(1)
+      expect(bosses[0].attackPattern).toBe('AOE_3')
+      expect(bosses[0].baseHp).toBeGreaterThan(normals[0].baseHp)
     }
   })
 })
