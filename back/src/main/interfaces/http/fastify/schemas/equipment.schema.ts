@@ -3,6 +3,22 @@ import { z } from 'zod/v4'
 const equipmentSlotEnum = z.enum(['WEAPON', 'ARMOR', 'ACCESSORY'])
 const rarityEnum = z.enum(['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY'])
 
+const substatKeyEnum = z.enum([
+  'hpFlat',
+  'hpPct',
+  'atkFlat',
+  'atkPct',
+  'defFlat',
+  'defPct',
+  'spdFlat',
+  'spdPct',
+])
+
+export const substatSchema = z.object({
+  key: substatKeyEnum,
+  value: z.number(),
+})
+
 export const equipmentInstanceSchema = z.object({
   id: z.string(),
   equipmentId: z.string(),
@@ -11,6 +27,8 @@ export const equipmentInstanceSchema = z.object({
   rarity: rarityEnum,
   imageUrl: z.string().nullable(),
   bonuses: z.record(z.string(), z.number()),
+  level: z.number().int(),
+  substats: z.array(substatSchema),
   equippedOnId: z.string().nullable(),
   equippedOnCardName: z.string().nullable(),
   obtainedAt: z.string(),

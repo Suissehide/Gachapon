@@ -3,6 +3,7 @@ import Boom from '@hapi/boom'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
 import { retryOnSerialization } from '../shared/retry-serialization'
+import type { Substat } from './equipment-progression'
 
 export interface EquipmentInstanceView {
   id: string // UserEquipment.id
@@ -12,6 +13,8 @@ export interface EquipmentInstanceView {
   rarity: 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
   imageUrl: string | null
   bonuses: Record<string, number>
+  level: number
+  substats: Substat[]
   equippedOnId: string | null // UserCard.id when equipped
   equippedOnCardName: string | null
   obtainedAt: string // ISO
@@ -50,6 +53,8 @@ export class EquipmentDomain {
         rarity: ue.equipment.rarity,
         imageUrl: ue.equipment.imageUrl,
         bonuses: (ue.equipment.bonuses ?? {}) as Record<string, number>,
+        level: ue.level,
+        substats: (ue.substats ?? []) as unknown as Substat[],
         equippedOnId: ue.equippedOnId,
         equippedOnCardName: ue.equippedOn?.card?.name ?? null,
         obtainedAt: ue.obtainedAt.toISOString(),

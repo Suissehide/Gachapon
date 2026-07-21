@@ -328,6 +328,8 @@ model UserEquipment {
   equippedOnId String?
   equippedOn   UserCard? @relation(fields: [equippedOnId], references: [id], onDelete: SetNull)
   obtainedAt   DateTime  @default(now())
+  level        Int       @default(1)
+  substats     Json      @default("[]")
 
   @@index([userId])
   @@index([equippedOnId])
