@@ -51,7 +51,10 @@ type Props = {
 function WishlistAwareCards({
   entries,
   onDetail,
-}: { entries: DisplayEntry[]; onDetail: (entry: DisplayEntry) => void }) {
+}: {
+  entries: DisplayEntry[]
+  onDetail: (entry: DisplayEntry) => void
+}) {
   const { data: wishlist } = useWishlist()
   return (
     <>
@@ -62,6 +65,7 @@ function WishlistAwareCards({
           variant={entry.variant}
           quantity={entry.quantity}
           isOwned={entry.isOwned}
+          userCardId={entry.userCard?.id ?? null}
           level={entry.userCard?.level ?? null}
           palier={entry.userCard?.palier ?? null}
           isWishlisted={
@@ -107,6 +111,7 @@ export function CollectionSection({
               variant={entry.variant}
               quantity={entry.quantity}
               isOwned={entry.isOwned}
+              userCardId={entry.userCard?.id ?? null}
               level={entry.userCard?.level ?? null}
               palier={entry.userCard?.palier ?? null}
               isWishlisted={false}

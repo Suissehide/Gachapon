@@ -31,8 +31,14 @@ import {
   useCards,
   useUserCollection,
 } from '../../queries/useCollection'
+import { useEquipmentList } from '../../queries/useEquipment.ts'
 import { useAuthStore } from '../../stores/auth.store'
-import { computePower, finalStat } from '../../utils/cardStats.ts'
+import {
+  aggregateEquipmentBonuses,
+  cardPower,
+  emptyStatBonuses,
+  type StatBonuses,
+} from '../../utils/cardStats.ts'
 
 export type DisplayEntry = {
   key: string
@@ -43,20 +49,21 @@ export type DisplayEntry = {
   userCard: UserCard | null
 }
 
-// Puissance d'une entrée (stats de base, sans équipement — cohérent avec la
-// pastille de la grille). Les non-possédées renvoient -1 pour tomber en fin
-// de groupe sur le tri décroissant.
-function entryPower(e: DisplayEntry): number {
+// Puissance d'une entrée, équipement inclus. `bonusByCardId` mappe l'id de
+// carte possédée vers ses bonus d'équipement ; absent (ex. collection d'un
+// autre joueur, dont on ne connaît pas l'équipement), on retombe sur la
+// puissance de base. Les non-possédées renvoient -1 pour tomber en fin de
+// groupe sur le tri décroissant.
+function entryPower(
+  e: DisplayEntry,
+  bonusByCardId?: Map<string, StatBonuses>,
+): number {
   const uc = e.userCard
   if (!uc) {
     return -1
   }
-  return computePower({
-    hp: finalStat(e.card.baseHp, uc.level, e.variant, uc.palier),
-    atk: finalStat(e.card.baseAtk, uc.level, e.variant, uc.palier),
-    def: finalStat(e.card.baseDef, uc.level, e.variant, uc.palier),
-    spd: finalStat(e.card.baseSpd, uc.level, e.variant, uc.palier),
-  })
+  const bonuses = bonusByCardId?.get(uc.id) ?? emptyStatBonuses()
+  return cardPower(e.card, uc.level, e.variant, uc.palier, bonuses)
 }
 
 // Tri appliqué à l'intérieur de chaque groupe. `default` préserve l'ordre
@@ -65,13 +72,16 @@ function entryPower(e: DisplayEntry): number {
 export function sortEntries(
   entries: DisplayEntry[],
   sort: SortMode,
+  bonusByCardId?: Map<string, StatBonuses>,
 ): DisplayEntry[] {
   if (sort === 'default') {
     return entries
   }
   const sorted = [...entries]
   if (sort === 'power') {
-    sorted.sort((a, b) => entryPower(b) - entryPower(a))
+    sorted.sort(
+      (a, b) => entryPower(b, bonusByCardId) - entryPower(a, bonusByCardId),
+    )
   } else if (sort === 'level') {
     sorted.sort((a, b) => (b.userCard?.level ?? 0) - (a.userCard?.level ?? 0))
   } else if (sort === 'copies') {
@@ -103,9 +113,21 @@ function Collection() {
 
   const { data: catalogData } = useCards()
   const { data: userColl } = useUserCollection(user?.id)
+  const { data: equipData } = useEquipmentList()
 
   const allCards = useMemo(() => catalogData?.cards ?? [], [catalogData?.cards])
   const userCards = useMemo(() => userColl?.cards ?? [], [userColl?.cards])
+
+  // Bonus d'équipement par carte possédée, pour que le tri « Puissance »
+  // corresponde à la pastille de la grille et au panneau de détail.
+  const equipBonusByCardId = useMemo(() => {
+    const items = equipData?.items ?? []
+    const map = new Map<string, StatBonuses>()
+    for (const uc of userCards) {
+      map.set(uc.id, aggregateEquipmentBonuses(items, uc.id))
+    }
+    return map
+  }, [equipData?.items, userCards])
 
   const displayEntries = useMemo((): DisplayEntry[] => {
     const ownedByCardId = new Map<string, UserCard[]>()
@@ -181,6 +203,7 @@ function Collection() {
           entries: sortEntries(
             filteredEntries.filter((e) => e.card.rarity === r),
             sort,
+            equipBonusByCardId,
           ),
           stats: computeSectionStats(
             allCards.filter((c) => c.rarity === r),
@@ -205,14 +228,14 @@ function Collection() {
       return {
         key: id,
         title: group?.name ?? '',
-        entries: sortEntries(group?.entries ?? [], sort),
+        entries: sortEntries(group?.entries ?? [], sort, equipBonusByCardId),
         stats: computeSectionStats(
           allCards.filter((c) => c.set.id === id),
           userCards,
         ),
       }
     })
-  }, [group, filteredEntries, allCards, userCards, sort])
+  }, [group, filteredEntries, allCards, userCards, sort, equipBonusByCardId])
 
   const handleDetail = (entry: DisplayEntry) => setDetailKey(entry.key)
 

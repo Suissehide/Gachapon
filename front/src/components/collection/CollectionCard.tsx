@@ -2,7 +2,8 @@ import { Sparkles, Star, Zap } from 'lucide-react'
 
 import type { Card, CardVariant } from '../../api/collection.api.ts'
 import { describePassive } from '../../constants/passives.constant.ts'
-import { computePower, finalStat } from '../../utils/cardStats.ts'
+import { useCardEquipmentBonuses } from '../../queries/useEquipment.ts'
+import { computePower, finalStatWithBonuses } from '../../utils/cardStats.ts'
 import type { CardStats } from '../shared/tcg-card/TcgCardFace.tsx'
 import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
 
@@ -43,6 +44,9 @@ type Props = {
   variant: CardVariant
   quantity: number
   isOwned: boolean
+  // Identifiant de la carte possédée : sert à récupérer ses bonus d'équipement
+  // pour que la puissance affichée corresponde au panneau de détail.
+  userCardId?: string | null
   level?: number | null
   palier?: number | null
   isNew?: boolean
@@ -55,19 +59,55 @@ export function CollectionCard({
   variant,
   quantity,
   isOwned,
+  userCardId,
   level,
   palier,
   isNew,
   isWishlisted,
   onClick,
 }: Props) {
+  // Bonus d'équipement de cette carte (vides si non possédée ou si l'équipement
+  // n'est pas le nôtre — ex. collection d'un autre joueur).
+  const bonuses = useCardEquipmentBonuses(userCardId ?? '')
   const stats: CardStats | null =
     isOwned && level && palier
       ? {
-          pv: Math.round(finalStat(card.baseHp, level, variant, palier)),
-          atq: Math.round(finalStat(card.baseAtk, level, variant, palier)),
-          def: Math.round(finalStat(card.baseDef, level, variant, palier)),
-          vit: Math.round(finalStat(card.baseSpd, level, variant, palier)),
+          pv: Math.round(
+            finalStatWithBonuses(
+              card.baseHp,
+              level,
+              variant,
+              palier,
+              bonuses.hp,
+            ),
+          ),
+          atq: Math.round(
+            finalStatWithBonuses(
+              card.baseAtk,
+              level,
+              variant,
+              palier,
+              bonuses.atk,
+            ),
+          ),
+          def: Math.round(
+            finalStatWithBonuses(
+              card.baseDef,
+              level,
+              variant,
+              palier,
+              bonuses.def,
+            ),
+          ),
+          vit: Math.round(
+            finalStatWithBonuses(
+              card.baseSpd,
+              level,
+              variant,
+              palier,
+              bonuses.spd,
+            ),
+          ),
         }
       : null
 

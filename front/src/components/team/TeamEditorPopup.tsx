@@ -7,8 +7,14 @@ import {
   useUserCollection,
 } from '../../queries/useCollection.ts'
 import { useCombatTeam, useSetCombatTeam } from '../../queries/useCombatTeam.ts'
+import { useEquipmentList } from '../../queries/useEquipment.ts'
 import { useAuthStore } from '../../stores/auth.store.ts'
-import { computePower } from '../../utils/cardStats.ts'
+import {
+  aggregateEquipmentBonuses,
+  cardPower,
+  emptyStatBonuses,
+  type StatBonuses,
+} from '../../utils/cardStats.ts'
 import { getRarityTone } from '../shared/tcg-card/config.ts'
 import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
 import { Button, buttonVariants } from '../ui/button.tsx'
@@ -37,6 +43,7 @@ export function TeamEditorPopup({ open, onOpenChange }: Props) {
   const teamQuery = useCombatTeam()
   const setTeam = useSetCombatTeam()
   const collection = useUserCollection(userId)
+  const { data: equipData } = useEquipmentList()
 
   const initialIds = useMemo(
     () => teamQuery.data?.team.map((u) => u.userCardId) ?? [],
@@ -60,19 +67,36 @@ export function TeamEditorPopup({ open, onOpenChange }: Props) {
     return m
   }, [collection.data])
 
+  // Puissance d'une carte, équipement inclus — même valeur que la collection et
+  // le panneau de détail. Sert au tri du roster, à l'auto-équipe et au total.
+  const equipBonusByCardId = useMemo(() => {
+    const items = equipData?.items ?? []
+    const map = new Map<string, StatBonuses>()
+    for (const uc of collection.data?.cards ?? []) {
+      map.set(uc.id, aggregateEquipmentBonuses(items, uc.id))
+    }
+    return map
+  }, [equipData?.items, collection.data])
+
+  const powerOf = useMemo(
+    () => (uc: UserCard) =>
+      cardPower(
+        uc.card,
+        uc.level,
+        uc.variant,
+        uc.palier,
+        equipBonusByCardId.get(uc.id) ?? emptyStatBonuses(),
+      ),
+    [equipBonusByCardId],
+  )
+
   const roster = collection.data?.cards ?? []
+  // Trié par puissance décroissante (départage par niveau) : l'auto-équipe
+  // prend simplement les 3 premières, et les plus fortes sont affichées d'abord.
   const sortedRoster = useMemo(
     () =>
-      [...roster].sort((a, b) => {
-        const rarityOrder = ['LEGENDARY', 'EPIC', 'RARE', 'UNCOMMON', 'COMMON']
-        const rA = rarityOrder.indexOf(a.card.rarity)
-        const rB = rarityOrder.indexOf(b.card.rarity)
-        if (rA !== rB) {
-          return rA - rB
-        }
-        return b.level - a.level
-      }),
-    [roster],
+      [...roster].sort((a, b) => powerOf(b) - powerOf(a) || b.level - a.level),
+    [roster, powerOf],
   )
 
   const isDirty =
@@ -109,17 +133,7 @@ export function TeamEditorPopup({ open, onOpenChange }: Props) {
     .map((id) => cardsById.get(id))
     .filter((c): c is UserCard => c != null)
 
-  const totalPower = teamCards.reduce(
-    (acc, uc) =>
-      acc +
-      computePower({
-        hp: uc.card.baseHp,
-        atk: uc.card.baseAtk,
-        def: uc.card.baseDef,
-        spd: uc.card.baseSpd,
-      }),
-    0,
-  )
+  const totalPower = teamCards.reduce((acc, uc) => acc + powerOf(uc), 0)
 
   return (
     <Popup open={open} onOpenChange={onOpenChange}>
@@ -149,6 +163,7 @@ export function TeamEditorPopup({ open, onOpenChange }: Props) {
                   key={i}
                   index={i}
                   card={uc}
+                  power={uc ? powerOf(uc) : undefined}
                   onRemove={() => removeAt(i)}
                 />
               )
@@ -202,6 +217,7 @@ export function TeamEditorPopup({ open, onOpenChange }: Props) {
                     <RosterTile
                       key={uc.id}
                       card={uc}
+                      power={powerOf(uc)}
                       active={selectedIds.includes(uc.id)}
                       disabled={
                         !selectedIds.includes(uc.id) &&
@@ -242,9 +258,11 @@ export function TeamEditorPopup({ open, onOpenChange }: Props) {
 // `size` controls the tile width; TcgCardFace stretches to fill.
 function MiniCardFace({
   card,
+  power,
   extra,
 }: {
   card: UserCard
+  power?: number
   extra?: React.ReactNode
 }) {
   const tone = getRarityTone(card.card.rarity)
@@ -267,6 +285,12 @@ function MiniCardFace({
           {card.level}
         </div>
       </div>
+      {power !== undefined && (
+        <span className="pointer-events-none absolute left-1/2 top-1.5 z-20 inline-flex -translate-x-1/2 items-center gap-1 rounded-sm border-[0.5px] border-white bg-[#1b1726]/92 px-1.5 py-[3px] font-display text-[10px] font-extrabold leading-none tabular-nums text-white shadow-[0_2px_6px_rgba(27,23,38,0.45)]">
+          <Zap className="h-2.5 w-2.5 text-primary" fill="currentColor" />
+          {fmt(power)}
+        </span>
+      )}
       {extra}
     </div>
   )
@@ -275,10 +299,12 @@ function MiniCardFace({
 function Slot({
   index,
   card,
+  power,
   onRemove,
 }: {
   index: number
   card: UserCard | null
+  power?: number
   onRemove: () => void
 }) {
   if (!card) {
@@ -295,6 +321,7 @@ function Slot({
   return (
     <MiniCardFace
       card={card}
+      power={power}
       extra={
         <Button
           type="button"
@@ -313,11 +340,13 @@ function Slot({
 
 function RosterTile({
   card,
+  power,
   active,
   disabled,
   onClick,
 }: {
   card: UserCard
+  power?: number
   active: boolean
   disabled: boolean
   onClick: () => void
@@ -337,6 +366,7 @@ function RosterTile({
     >
       <MiniCardFace
         card={card}
+        power={power}
         extra={
           active ? (
             <span

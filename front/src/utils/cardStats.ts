@@ -118,6 +118,37 @@ export function finalStatWithBonuses(
   return (raw + bonus.flat) * (1 + bonus.pct / 100)
 }
 
+/**
+ * Puissance d'une carte possédée, équipement inclus. Source unique partagée par
+ * la grille de collection, le tri, le popup de détail et l'éditeur d'équipe pour
+ * que la même carte affiche toujours la même valeur. Chaque stat est arrondie
+ * avant l'agrégation (même ordre que le panneau de détail). Passer
+ * `emptyStatBonuses()` donne la puissance de base (sans équipement), utile quand
+ * l'équipement n'est pas disponible (collection d'un autre joueur).
+ */
+export function cardPower(
+  card: { baseHp: number; baseAtk: number; baseDef: number; baseSpd: number },
+  level: number,
+  variant: CardVariant,
+  palier: number,
+  bonuses: StatBonuses,
+): number {
+  return computePower({
+    hp: Math.round(
+      finalStatWithBonuses(card.baseHp, level, variant, palier, bonuses.hp),
+    ),
+    atk: Math.round(
+      finalStatWithBonuses(card.baseAtk, level, variant, palier, bonuses.atk),
+    ),
+    def: Math.round(
+      finalStatWithBonuses(card.baseDef, level, variant, palier, bonuses.def),
+    ),
+    spd: Math.round(
+      finalStatWithBonuses(card.baseSpd, level, variant, palier, bonuses.spd),
+    ),
+  })
+}
+
 export function goldCostNextLevel(
   currentLevel: number,
   rarity: CardRarity,
