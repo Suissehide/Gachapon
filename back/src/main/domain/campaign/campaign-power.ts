@@ -24,17 +24,22 @@ const ATTACK_THREAT_MULT: Record<string, number> = {
   MONO_DOUBLE: 2,
 }
 
+// Alignée avec le front (cardStats.ts SPD_REF) : la vitesse multiplie le
+// rendement sous ATB. SPD_REF = vitesse neutre (×1).
+const SPD_REF = 100
+
 function unitPower(e: EnemyStats): number {
   const threat = ATTACK_THREAT_MULT[e.attackPattern ?? 'BASIC'] ?? 1
   return Math.round(
-    e.baseHp / 2 + e.baseAtk * 1.5 * threat + e.baseDef + e.baseSpd,
+    (e.baseHp / 2 + e.baseAtk * 1.5 * threat + e.baseDef) *
+      (e.baseSpd / SPD_REF),
   )
 }
 
 /**
- * Puissance affichée d'une équipe ennemie. Même socle que l'affichage front
- * (hp/2 + atk×1,5 + def + spd — le HP compte pour moitié pour qu'un boss tank
- * ne paraisse pas faible), plus une prime de menace selon le pattern d'attaque.
+ * Puissance affichée d'une équipe ennemie. Même socle que le front
+ * (hp/2 + atk×1,5 + def, la vitesse multipliant l'ensemble sous ATB), plus une
+ * prime de menace selon le pattern d'attaque (un boss AOE_3 pèse plus lourd).
  */
 export function computeTeamPower(team: EnemyStats[]): number {
   return team.reduce((sum, e) => sum + unitPower(e), 0)
