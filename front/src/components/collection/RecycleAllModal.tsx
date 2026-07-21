@@ -1,16 +1,18 @@
 import { RefreshCw, Sparkles } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { type ReactNode, useMemo, useState } from 'react'
 
 import type {
   BulkRecycleMaxRarity,
   UserCard,
 } from '../../api/collection.api.ts'
+import { RARITY_COLOR_VAR } from '../../libs/rarity.ts'
 import { useRecycleAll } from '../../queries/useCollection.ts'
 import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
 } from '../../queries/useEconomyConfig.ts'
 import { Button } from '../ui/button.tsx'
+import { Select } from '../ui/input.tsx'
 import { Label } from '../ui/label.tsx'
 import {
   Popup,
@@ -20,8 +22,8 @@ import {
   PopupHeader,
   PopupTitle,
 } from '../ui/popup.tsx'
-import { SegmentedControl } from '../ui/segmentedControl.tsx'
 import { RARITY_LABELS, RARITY_ORDER } from './CollectionCard.tsx'
+import { RarityDot } from './CollectionFilters.tsx'
 
 interface RecycleAllModalProps {
   open: boolean
@@ -29,12 +31,15 @@ interface RecycleAllModalProps {
   userCards: UserCard[]
 }
 
-const THRESHOLD_OPTIONS: { value: BulkRecycleMaxRarity; label: string }[] = [
-  { value: 'COMMON', label: RARITY_LABELS.COMMON },
-  { value: 'UNCOMMON', label: RARITY_LABELS.UNCOMMON },
-  { value: 'RARE', label: RARITY_LABELS.RARE },
-  { value: 'EPIC', label: RARITY_LABELS.EPIC },
-]
+const THRESHOLD_OPTIONS: {
+  value: BulkRecycleMaxRarity
+  label: string
+  icon: ReactNode
+}[] = (['COMMON', 'UNCOMMON', 'RARE', 'EPIC'] as const).map((r) => ({
+  value: r,
+  label: RARITY_LABELS[r],
+  icon: <RarityDot color={RARITY_COLOR_VAR[r]} />,
+}))
 
 export function RecycleAllModal({
   open,
@@ -87,11 +92,12 @@ export function RecycleAllModal({
 
           <div className="space-y-2">
             <Label className="text-xs text-text-light">Jusqu'à la rareté</Label>
-            <SegmentedControl
+            <Select
+              id="recycle-max-rarity"
               options={THRESHOLD_OPTIONS}
               value={maxRarity}
-              onChange={setMaxRarity}
-              wrap
+              onValueChange={(v) => setMaxRarity(v as BulkRecycleMaxRarity)}
+              clearable={false}
             />
           </div>
 
