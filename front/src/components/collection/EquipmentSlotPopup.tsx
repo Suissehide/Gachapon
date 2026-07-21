@@ -64,6 +64,22 @@ function formatBonusValue(value: number): string {
   return (Math.round(value * 10) / 10).toLocaleString('fr-FR')
 }
 
+function upgradeHintTitle(
+  nextIsMilestone: boolean,
+  maxSubstats: number,
+  substatsCount: number,
+): string | undefined {
+  if (!nextIsMilestone) {
+    return undefined
+  }
+  if (maxSubstats === 0) {
+    return 'Prochain niveau : bonus de base renforcé !'
+  }
+  return substatsCount >= maxSubstats
+    ? 'Prochain niveau : sous-stat améliorée !'
+    : 'Prochain niveau : sous-stat bonus !'
+}
+
 function sortItems(
   a: EquipmentInstance,
   b: EquipmentInstance,
@@ -560,13 +576,11 @@ function ItemDetail({
   const nextIsMilestone =
     !isMaxLevel && (item.level + 1) % economy.equip.substatMilestone === 0
   const maxSubstats = economy.equip.maxSubstatsByRarity[item.rarity] ?? 0
-  const upgradeTitle = nextIsMilestone
-    ? maxSubstats === 0
-      ? 'Prochain niveau : bonus de base renforcé !'
-      : item.substats.length >= maxSubstats
-        ? 'Prochain niveau : sous-stat améliorée !'
-        : 'Prochain niveau : sous-stat bonus !'
-    : undefined
+  const upgradeTitle = upgradeHintTitle(
+    nextIsMilestone,
+    maxSubstats,
+    item.substats.length,
+  )
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3.5">
