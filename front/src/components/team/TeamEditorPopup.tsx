@@ -2,11 +2,15 @@ import { Check, Save, Sparkles, X, Zap } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { cn } from '../../libs/utils.ts'
+import {
+  type UserCard,
+  useUserCollection,
+} from '../../queries/useCollection.ts'
+import { useCombatTeam, useSetCombatTeam } from '../../queries/useCombatTeam.ts'
+import { useAuthStore } from '../../stores/auth.store.ts'
+import { computePower } from '../../utils/cardStats.ts'
 import { getRarityTone } from '../shared/tcg-card/config.ts'
 import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
-import { useCombatTeam, useSetCombatTeam } from '../../queries/useCombatTeam.ts'
-import { type UserCard, useUserCollection } from '../../queries/useCollection.ts'
-import { useAuthStore } from '../../stores/auth.store.ts'
 import { Button, buttonVariants } from '../ui/button.tsx'
 import {
   Popup,
@@ -19,14 +23,6 @@ import {
 
 const MAX_TEAM_SIZE = 3
 
-function computePower(stats: {
-  hp: number
-  atk: number
-  def: number
-  spd: number
-}): number {
-  return Math.round(stats.hp / 2 + stats.atk * 1.5 + stats.def + stats.spd)
-}
 function fmt(n: number): string {
   return n.toLocaleString('fr-FR')
 }
@@ -51,7 +47,9 @@ export function TeamEditorPopup({ open, onOpenChange }: Props) {
   // Sync local edit state with server whenever the popup opens (or the server
   // team changes while it's open).
   useEffect(() => {
-    if (open) setSelectedIds(initialIds)
+    if (open) {
+      setSelectedIds(initialIds)
+    }
   }, [open, initialIds])
 
   const cardsById = useMemo(() => {
@@ -69,7 +67,9 @@ export function TeamEditorPopup({ open, onOpenChange }: Props) {
         const rarityOrder = ['LEGENDARY', 'EPIC', 'RARE', 'UNCOMMON', 'COMMON']
         const rA = rarityOrder.indexOf(a.card.rarity)
         const rB = rarityOrder.indexOf(b.card.rarity)
-        if (rA !== rB) return rA - rB
+        if (rA !== rB) {
+          return rA - rB
+        }
         return b.level - a.level
       }),
     [roster],
@@ -79,16 +79,16 @@ export function TeamEditorPopup({ open, onOpenChange }: Props) {
     initialIds.length !== selectedIds.length ||
     initialIds.some((id, i) => id !== selectedIds[i])
   const canSave =
-    selectedIds.length >= 1 &&
-    selectedIds.length <= MAX_TEAM_SIZE &&
-    isDirty
+    selectedIds.length >= 1 && selectedIds.length <= MAX_TEAM_SIZE && isDirty
 
   const toggle = (userCardId: string) => {
     setSelectedIds((cur) => {
       if (cur.includes(userCardId)) {
         return cur.filter((id) => id !== userCardId)
       }
-      if (cur.length >= MAX_TEAM_SIZE) return cur
+      if (cur.length >= MAX_TEAM_SIZE) {
+        return cur
+      }
       return [...cur, userCardId]
     })
   }
@@ -142,7 +142,7 @@ export function TeamEditorPopup({ open, onOpenChange }: Props) {
           <div className="mx-auto grid w-full max-w-[420px] grid-cols-3 gap-3">
             {Array.from({ length: MAX_TEAM_SIZE }).map((_, i) => {
               const id = selectedIds[i] ?? null
-              const uc = id ? cardsById.get(id) ?? null : null
+              const uc = id ? (cardsById.get(id) ?? null) : null
               return (
                 <Slot
                   // biome-ignore lint/suspicious/noArrayIndexKey: fixed slot index
@@ -331,11 +331,8 @@ function RosterTile({
       // ring wraps the card cleanly; ring-offset gives the "extend out" look.
       className={cn(
         'group relative rounded-[8px] transition-transform focus:outline-none',
-        disabled
-          ? 'cursor-not-allowed opacity-40'
-          : 'hover:-translate-y-0.5',
-        active &&
-          'ring-[3px] ring-primary ring-offset-2 ring-offset-[#fbf8f3]',
+        disabled ? 'cursor-not-allowed opacity-40' : 'hover:-translate-y-0.5',
+        active && 'ring-[3px] ring-primary ring-offset-2 ring-offset-[#fbf8f3]',
       )}
     >
       <MiniCardFace

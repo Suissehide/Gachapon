@@ -52,6 +52,7 @@ import {
 import { useCampaign, useSweepStage } from '../../queries/useCampaign.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
 import { useCombatTeam } from '../../queries/useCombatTeam.ts'
+import { computePower } from '../../utils/cardStats.ts'
 
 const campaignSearchSchema = z.object({
   editor: z.boolean().optional(),
@@ -94,15 +95,6 @@ function frontierChapter(data: Campaign): number | null {
     c.stages.some((s) => s.status === 'current'),
   )
   return withCurrent?.chapter ?? null
-}
-
-function computePower(stats: {
-  hp: number
-  atk: number
-  def: number
-  spd: number
-}): number {
-  return Math.round(stats.hp / 2 + stats.atk * 1.5 + stats.def + stats.spd)
 }
 
 function fmt(n: number): string {

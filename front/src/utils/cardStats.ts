@@ -31,6 +31,19 @@ export function finalStat(
   )
 }
 
+/**
+ * Puissance agrégée d'une carte, à partir de ses stats finales.
+ * Formule pondérée partagée (grille collection, popup, team editor, campagne).
+ */
+export function computePower(stats: {
+  hp: number
+  atk: number
+  def: number
+  spd: number
+}): number {
+  return Math.round(stats.hp / 2 + stats.atk * 1.5 + stats.def + stats.spd)
+}
+
 export type StatKey = 'hp' | 'atk' | 'def' | 'spd'
 export type StatBonus = { flat: number; pct: number }
 export type StatBonuses = Record<StatKey, StatBonus>
