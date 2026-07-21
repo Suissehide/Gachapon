@@ -12,7 +12,7 @@ export type RarityFilter = Rarity | 'all'
 export type VariantFilter = CardVariant | 'all'
 export type GroupMode = 'rarity' | 'set'
 export type OwnershipFilter = 'all' | 'owned'
-export type SortMode = 'default' | 'level' | 'copies' | 'name'
+export type SortMode = 'default' | 'power' | 'level' | 'copies' | 'name'
 
 const GROUP_OPTIONS = [
   { value: 'rarity' as const, label: 'Par rareté' },
@@ -42,6 +42,7 @@ const RARITY_OPTIONS = [
 
 const SORT_OPTIONS = [
   { value: 'default', label: 'Par défaut' },
+  { value: 'power', label: 'Puissance' },
   { value: 'level', label: 'Niveau' },
   { value: 'copies', label: 'Doublons' },
   { value: 'name', label: 'Nom' },

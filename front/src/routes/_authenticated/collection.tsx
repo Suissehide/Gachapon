@@ -32,6 +32,7 @@ import {
   useUserCollection,
 } from '../../queries/useCollection'
 import { useAuthStore } from '../../stores/auth.store'
+import { computePower, finalStat } from '../../utils/cardStats.ts'
 
 export type DisplayEntry = {
   key: string
@@ -40,6 +41,22 @@ export type DisplayEntry = {
   quantity: number
   isOwned: boolean
   userCard: UserCard | null
+}
+
+// Puissance d'une entrée (stats de base, sans équipement — cohérent avec la
+// pastille de la grille). Les non-possédées renvoient -1 pour tomber en fin
+// de groupe sur le tri décroissant.
+function entryPower(e: DisplayEntry): number {
+  const uc = e.userCard
+  if (!uc) {
+    return -1
+  }
+  return computePower({
+    hp: finalStat(e.card.baseHp, uc.level, e.variant, uc.palier),
+    atk: finalStat(e.card.baseAtk, uc.level, e.variant, uc.palier),
+    def: finalStat(e.card.baseDef, uc.level, e.variant, uc.palier),
+    spd: finalStat(e.card.baseSpd, uc.level, e.variant, uc.palier),
+  })
 }
 
 // Tri appliqué à l'intérieur de chaque groupe. `default` préserve l'ordre
@@ -53,7 +70,9 @@ export function sortEntries(
     return entries
   }
   const sorted = [...entries]
-  if (sort === 'level') {
+  if (sort === 'power') {
+    sorted.sort((a, b) => entryPower(b) - entryPower(a))
+  } else if (sort === 'level') {
     sorted.sort((a, b) => (b.userCard?.level ?? 0) - (a.userCard?.level ?? 0))
   } else if (sort === 'copies') {
     sorted.sort((a, b) => b.quantity - a.quantity)
