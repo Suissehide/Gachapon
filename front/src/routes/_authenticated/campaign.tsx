@@ -904,7 +904,7 @@ function PrepModal({
                 <EnemyCard
                   key={enemy.id}
                   boss={isBoss}
-                  power={Math.round(recPower / stage.enemies.length)}
+                  power={enemy.power}
                   width={isBoss ? 'w-[110px]' : 'w-[74px]'}
                   imageUrl={enemy.imageUrl}
                 />
