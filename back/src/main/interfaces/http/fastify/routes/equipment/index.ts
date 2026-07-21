@@ -5,6 +5,8 @@ import {
   equipmentEquipResponseSchema,
   equipmentIdParamSchema,
   equipmentListResponseSchema,
+  equipmentSalvageBodySchema,
+  equipmentSalvageResponseSchema,
   equipmentUnequipResponseSchema,
   equipmentUpgradeResponseSchema,
 } from '../../schemas/equipment.schema'
@@ -68,6 +70,22 @@ export const equipmentRouter: FastifyPluginCallbackZod = (fastify) => {
       equipmentDomain.upgrade(
         request.user.userID,
         request.params.userEquipmentId,
+      ),
+  )
+
+  fastify.post(
+    '/equipment/salvage',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        body: equipmentSalvageBodySchema,
+        response: { 200: equipmentSalvageResponseSchema },
+      },
+    },
+    (request) =>
+      equipmentDomain.salvage(
+        request.user.userID,
+        request.body.userEquipmentIds,
       ),
   )
 }

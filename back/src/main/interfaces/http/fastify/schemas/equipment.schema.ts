@@ -72,3 +72,13 @@ export const adminGrantEquipmentResponseSchema = z.object({
   userEquipmentId: z.string(),
   equipmentName: z.string(),
 })
+
+export const equipmentSalvageBodySchema = z.object({
+  userEquipmentIds: z.array(z.string().uuid()).min(1).max(200),
+})
+
+export const equipmentSalvageResponseSchema = z.object({
+  goldEarned: z.number().int(),
+  newGold: z.number().int(),
+  destroyedCount: z.number().int(),
+})

@@ -46,6 +46,20 @@ export interface EquipmentUpgradeResult {
   milestone: MilestoneResult | null
 }
 
+export interface EquipmentSalvageResult {
+  goldEarned: number
+  newGold: number
+  destroyedCount: number
+}
+
+const SALVAGE_GOLD_KEY = {
+  COMMON: 'equip.salvageGoldCommon',
+  UNCOMMON: 'equip.salvageGoldUncommon',
+  RARE: 'equip.salvageGoldRare',
+  EPIC: 'equip.salvageGoldEpic',
+  LEGENDARY: 'equip.salvageGoldLegendary',
+} as const
+
 export class EquipmentDomain {
   readonly #postgresOrm: PostgresOrm
   readonly #configService: ConfigServiceInterface
@@ -323,6 +337,60 @@ export class EquipmentDomain {
             goldSpent: cost,
             newGold: updatedUser.gold,
             milestone,
+          }
+        },
+        { isolationLevel: 'Serializable' },
+      ),
+    )
+  }
+
+  /**
+   * Détruit des objets non équipés contre de l'or (selon la rareté).
+   * Tout ou rien : la moindre violation annule l'ensemble.
+   */
+  async salvage(
+    userId: string,
+    userEquipmentIds: string[],
+  ): Promise<EquipmentSalvageResult> {
+    const c = await this.#configService.getMany(
+      'equip.salvageGoldCommon',
+      'equip.salvageGoldUncommon',
+      'equip.salvageGoldRare',
+      'equip.salvageGoldEpic',
+      'equip.salvageGoldLegendary',
+    )
+    const ids = [...new Set(userEquipmentIds)]
+
+    return retryOnSerialization(() =>
+      this.#postgresOrm.executeWithTransactionClient(
+        async (tx) => {
+          const items = await tx.userEquipment.findMany({
+            where: { id: { in: ids } },
+            include: { equipment: true },
+          })
+          if (
+            items.length !== ids.length ||
+            items.some((i) => i.userId !== userId)
+          ) {
+            throw Boom.notFound('UserEquipment not found')
+          }
+          if (items.some((i) => i.equippedOnId !== null)) {
+            throw Boom.badRequest('Impossible de détruire un objet équipé')
+          }
+          const goldEarned = items.reduce(
+            (sum, i) => sum + c[SALVAGE_GOLD_KEY[i.equipment.rarity]],
+            0,
+          )
+          await tx.userEquipment.deleteMany({ where: { id: { in: ids } } })
+          const updatedUser = await tx.user.update({
+            where: { id: userId },
+            data: { gold: { increment: goldEarned } },
+            select: { gold: true },
+          })
+          return {
+            goldEarned,
+            newGold: updatedUser.gold,
+            destroyedCount: items.length,
           }
         },
         { isolationLevel: 'Serializable' },
