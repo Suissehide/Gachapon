@@ -25,7 +25,7 @@ import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import { calculateLevel } from '../shared/xp'
 import { deriveClearFlags } from './campaign-clear-flags'
-import { computeTeamPower } from './campaign-power'
+import { computeTeamPower, unitPower } from './campaign-power'
 import {
   enemyNameFromAppearance,
   resolveEnemyImageUrl,
@@ -149,7 +149,7 @@ export interface CampaignStageView {
   status: 'cleared' | 'current' | 'locked'
   recommendedPower: number
   rewardPreview: RewardPreview
-  enemies: { id: string; imageUrl: string | null }[]
+  enemies: { id: string; imageUrl: string | null; power: number }[]
 }
 
 export interface CampaignView {
@@ -302,6 +302,7 @@ export class CampaignDomain {
           enemies: enemyTeam.map((e, idx) => ({
             id: `B${idx}`,
             imageUrl: this.#resolveEnemyImage(e.appearance),
+            power: unitPower(e),
           })),
         }
       })

@@ -28,7 +28,7 @@ const ATTACK_THREAT_MULT: Record<string, number> = {
 // rendement sous ATB. SPD_REF = vitesse neutre (×1).
 const SPD_REF = 100
 
-function unitPower(e: EnemyStats): number {
+export function unitPower(e: EnemyStats): number {
   const threat = ATTACK_THREAT_MULT[e.attackPattern ?? 'BASIC'] ?? 1
   return Math.round(
     (e.baseHp / 2 + e.baseAtk * 1.5 * threat + e.baseDef) *

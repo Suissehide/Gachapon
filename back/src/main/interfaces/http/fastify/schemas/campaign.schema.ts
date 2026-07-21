@@ -27,9 +27,13 @@ export const campaignStageSchema = z.object({
   recommendedPower: z.number(),
   rewardPreview: rewardPreviewSchema,
   // Un slot d'ennemi par entrée (ordre = équipe). id stable pour la key React,
-  // imageUrl null si pas d'apparence.
+  // imageUrl null si pas d'apparence, power = puissance réelle de l'ennemi.
   enemies: z.array(
-    z.object({ id: z.string(), imageUrl: z.string().nullable() }),
+    z.object({
+      id: z.string(),
+      imageUrl: z.string().nullable(),
+      power: z.number(),
+    }),
   ),
 })
 
