@@ -105,7 +105,7 @@ export function CollectionCard({
         />
 
         {isOwned && power !== null && (
-          <span className="pointer-events-none absolute top-1.5 left-1/2 z-[6] inline-flex -translate-x-1/2 items-center gap-1 rounded-full bg-[#1b1726]/92 px-2 py-[3px] font-display text-[10px] font-extrabold leading-none tabular-nums text-white shadow-[0_2px_6px_rgba(27,23,38,0.45),0_0_0_1.5px_#fcfbf9]">
+          <span className="pointer-events-none absolute top-1.5 left-1/2 z-[6] inline-flex -translate-x-1/2 items-center gap-1 rounded-md bg-[#1b1726]/92 px-2 py-[3px] font-display text-[10px] font-extrabold leading-none tabular-nums text-white shadow-[0_2px_6px_rgba(27,23,38,0.45),0_0_0_1px_#fcfbf9]">
             <Zap className="h-2.5 w-2.5 text-primary" fill="currentColor" />
             {power.toLocaleString('fr-FR')}
           </span>
