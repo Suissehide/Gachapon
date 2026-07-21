@@ -36,7 +36,7 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'combat.sweepCost': 5,
   'gacha.pullTokenCost': 1,
   'xp.base': 100,
-  'xp.slope': 40,
+  'xp.slope': 44,
   'xp.levelCap': 100,
   'card.goldCostBase': 5,
   'card.goldCostExp': 1.6,
