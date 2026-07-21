@@ -5,6 +5,12 @@ import { MAX_PALIER } from '../../../../../domain/card-ascension/card-ascension.
 import { STAT_GROWTH_PER_LEVEL } from '../../../../../domain/card-leveling/card-leveling.domain'
 import { ASCENSION_STAT_BONUS } from '../../../../../domain/combat/combat-stats.domain'
 import {
+  EQUIP_LEVEL_SCALE,
+  EQUIP_MAX_LEVEL,
+  EQUIP_MAX_SUBSTATS,
+  EQUIP_SUBSTAT_MILESTONE,
+} from '../../../../../domain/equipment/equipment-progression'
+import {
   MILESTONE_PACKS,
   SKILL_POINTS_PER_LEVEL,
 } from '../../../../../domain/shared/level-rewards'
@@ -59,6 +65,22 @@ const economyConfigResponseSchema = z.object({
     priceMultiplier: z.number(),
     cooldownDays: z.number(),
   }),
+  equip: z.object({
+    goldCostBase: z.number(),
+    goldCostExp: z.number(),
+    levelScale: z.number(),
+    maxLevel: z.number(),
+    substatMilestone: z.number(),
+    maxSubstats: z.number(),
+    salvageGold: rarityRecordSchema,
+    substatRanges: z.object({
+      hpFlat: z.object({ min: z.number(), max: z.number() }),
+      atkFlat: z.object({ min: z.number(), max: z.number() }),
+      defFlat: z.object({ min: z.number(), max: z.number() }),
+      spdFlat: z.object({ min: z.number(), max: z.number() }),
+      pct: z.object({ min: z.number(), max: z.number() }),
+    }),
+  }),
 })
 
 export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
@@ -99,6 +121,23 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
         'combat.sweepCost',
         'wishlist.priceMultiplier',
         'wishlist.cooldownDays',
+        'equip.goldCostBase',
+        'equip.goldCostExp',
+        'equip.salvageGoldCommon',
+        'equip.salvageGoldUncommon',
+        'equip.salvageGoldRare',
+        'equip.salvageGoldEpic',
+        'equip.salvageGoldLegendary',
+        'equip.substatHpFlatMin',
+        'equip.substatHpFlatMax',
+        'equip.substatAtkFlatMin',
+        'equip.substatAtkFlatMax',
+        'equip.substatDefFlatMin',
+        'equip.substatDefFlatMax',
+        'equip.substatSpdFlatMin',
+        'equip.substatSpdFlatMax',
+        'equip.substatPctMin',
+        'equip.substatPctMax',
       )
       return {
         xp: {
@@ -146,6 +185,43 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
         wishlist: {
           priceMultiplier: c['wishlist.priceMultiplier'],
           cooldownDays: c['wishlist.cooldownDays'],
+        },
+        equip: {
+          goldCostBase: c['equip.goldCostBase'],
+          goldCostExp: c['equip.goldCostExp'],
+          levelScale: EQUIP_LEVEL_SCALE,
+          maxLevel: EQUIP_MAX_LEVEL,
+          substatMilestone: EQUIP_SUBSTAT_MILESTONE,
+          maxSubstats: EQUIP_MAX_SUBSTATS,
+          salvageGold: {
+            COMMON: c['equip.salvageGoldCommon'],
+            UNCOMMON: c['equip.salvageGoldUncommon'],
+            RARE: c['equip.salvageGoldRare'],
+            EPIC: c['equip.salvageGoldEpic'],
+            LEGENDARY: c['equip.salvageGoldLegendary'],
+          },
+          substatRanges: {
+            hpFlat: {
+              min: c['equip.substatHpFlatMin'],
+              max: c['equip.substatHpFlatMax'],
+            },
+            atkFlat: {
+              min: c['equip.substatAtkFlatMin'],
+              max: c['equip.substatAtkFlatMax'],
+            },
+            defFlat: {
+              min: c['equip.substatDefFlatMin'],
+              max: c['equip.substatDefFlatMax'],
+            },
+            spdFlat: {
+              min: c['equip.substatSpdFlatMin'],
+              max: c['equip.substatSpdFlatMax'],
+            },
+            pct: {
+              min: c['equip.substatPctMin'],
+              max: c['equip.substatPctMax'],
+            },
+          },
         },
       }
     },

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { getEconomyConfig, type EconomyConfig } from '../api/economy.api.ts'
+import { type EconomyConfig, getEconomyConfig } from '../api/economy.api.ts'
 
 export const DEFAULT_ECONOMY: EconomyConfig = {
   xp: {
@@ -47,6 +47,28 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
   },
   combat: { pointsMax: 60, regenSeconds: 900, battleCost: 5, sweepCost: 5 },
   wishlist: { priceMultiplier: 2, cooldownDays: 7 },
+  equip: {
+    goldCostBase: 25,
+    goldCostExp: 1.35,
+    levelScale: 0.1,
+    maxLevel: 12,
+    substatMilestone: 3,
+    maxSubstats: 4,
+    salvageGold: {
+      COMMON: 10,
+      UNCOMMON: 30,
+      RARE: 80,
+      EPIC: 240,
+      LEGENDARY: 800,
+    },
+    substatRanges: {
+      hpFlat: { min: 20, max: 60 },
+      atkFlat: { min: 5, max: 15 },
+      defFlat: { min: 5, max: 15 },
+      spdFlat: { min: 3, max: 9 },
+      pct: { min: 3, max: 8 },
+    },
+  },
 }
 
 export function useEconomyConfig() {

@@ -1,7 +1,12 @@
 import { apiUrl } from '../constants/config.constant.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
-export type CardRarityKey = 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
+export type CardRarityKey =
+  | 'COMMON'
+  | 'UNCOMMON'
+  | 'RARE'
+  | 'EPIC'
+  | 'LEGENDARY'
 
 export type MilestonePackConfig = {
   level: number
@@ -44,6 +49,22 @@ export interface EconomyConfig {
   wishlist: {
     priceMultiplier: number
     cooldownDays: number
+  }
+  equip: {
+    goldCostBase: number
+    goldCostExp: number
+    levelScale: number
+    maxLevel: number
+    substatMilestone: number
+    maxSubstats: number
+    salvageGold: Record<CardRarityKey, number>
+    substatRanges: {
+      hpFlat: { min: number; max: number }
+      atkFlat: { min: number; max: number }
+      defFlat: { min: number; max: number }
+      spdFlat: { min: number; max: number }
+      pct: { min: number; max: number }
+    }
   }
 }
 
