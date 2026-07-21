@@ -71,7 +71,7 @@ const economyConfigResponseSchema = z.object({
     levelScale: z.number(),
     maxLevel: z.number(),
     substatMilestone: z.number(),
-    maxSubstats: z.number(),
+    maxSubstatsByRarity: rarityRecordSchema,
     salvageGold: rarityRecordSchema,
     substatRanges: z.object({
       hpFlat: z.object({ min: z.number(), max: z.number() }),
@@ -192,7 +192,7 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
           levelScale: EQUIP_LEVEL_SCALE,
           maxLevel: EQUIP_MAX_LEVEL,
           substatMilestone: EQUIP_SUBSTAT_MILESTONE,
-          maxSubstats: MAX_SUBSTATS_BY_RARITY.LEGENDARY,
+          maxSubstatsByRarity: { ...MAX_SUBSTATS_BY_RARITY },
           salvageGold: {
             COMMON: c['equip.salvageGoldCommon'],
             UNCOMMON: c['equip.salvageGoldUncommon'],
