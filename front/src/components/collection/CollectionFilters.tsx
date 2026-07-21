@@ -1,4 +1,5 @@
 import type { Card, CardVariant } from '../../api/collection.api.ts'
+import { RARITY_COLOR_VAR } from '../../libs/rarity.ts'
 import { SegmentedControl } from '../ui/segmentedControl.tsx'
 import { RARITY_LABELS, RARITY_ORDER } from './CollectionCard.tsx'
 
@@ -7,14 +8,6 @@ export type RarityFilter = Rarity | 'all'
 export type VariantFilter = CardVariant | 'all'
 export type GroupMode = 'rarity' | 'set'
 export type OwnershipFilter = 'all' | 'owned'
-
-const RARITY_HEX: Record<string, string> = {
-  COMMON: '#6b7280',
-  UNCOMMON: '#22c55e',
-  RARE: '#3b82f6',
-  EPIC: '#8b5cf6',
-  LEGENDARY: '#f59e0b',
-}
 
 const GROUP_OPTIONS = [
   { value: 'rarity' as const, label: 'Par rareté' },
@@ -50,7 +43,7 @@ const RARITY_OPTIONS: {
   ...RARITY_ORDER.map((r) => ({
     value: r as RarityFilter,
     label: RARITY_LABELS[r],
-    icon: <RarityDot color={RARITY_HEX[r]} />,
+    icon: <RarityDot color={RARITY_COLOR_VAR[r]} />,
   })),
 ]
 
@@ -132,7 +125,7 @@ function Swatch({ kind }: { kind: 'holo' | 'dore' }) {
   )
 }
 
-function RarityDot({ color }: { color: string }) {
+export function RarityDot({ color }: { color: string }) {
   return (
     <span
       aria-hidden
