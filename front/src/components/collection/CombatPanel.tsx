@@ -25,6 +25,7 @@ import { useLevelUpCard } from '../../queries/useLevelUpCard'
 import { useSkillTree } from '../../queries/useSkills.ts'
 import { useAuthStore } from '../../stores/auth.store'
 import {
+  computePower,
   dustCostNextLevel,
   finalStatWithBonuses,
   goldCostNextLevel,
@@ -97,6 +98,7 @@ export function CombatPanel({
   const spd = Math.round(
     finalStatWithBonuses(card.baseSpd, level, variant, palier, bonuses.spd),
   )
+  const power = computePower({ hp, atk, def, spd })
 
   const onLevelUp = async () => {
     setWorking(true)
@@ -142,6 +144,17 @@ export function CombatPanel({
             / {palierMax}
           </span>
         </div>
+      </div>
+
+      {/* Puissance (équipement inclus) */}
+      <div className="mt-[18px] flex items-center justify-between rounded-[14px] border border-[#fcd34d] bg-[#fff7ed] px-4 py-3.5">
+        <span className="inline-flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.1em] text-[#d97706]">
+          <Zap className="h-4 w-4" fill="currentColor" />
+          Puissance
+        </span>
+        <span className="font-display text-[22px] font-extrabold tabular-nums text-[#d97706]">
+          {power.toLocaleString('fr-FR')}
+        </span>
       </div>
 
       {/* Stat grid */}
