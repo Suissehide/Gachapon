@@ -78,22 +78,35 @@ function parseBonusKey(
 
 /**
  * Aggregate the flat/percent bonuses of every equipment piece equipped on a
- * given card. Bonus keys follow the backend convention `<stat>Flat` / `<stat>Pct`
- * (e.g. `hpFlat`, `atkPct`). Mirrors `computeFinalStats` in the backend.
+ * given card: catalog base scaled by instance level, plus substats. Mirrors
+ * `effectiveEquipmentBonuses` + `computeFinalStats` in the backend.
  */
 export function aggregateEquipmentBonuses(
-  items: { equippedOnId: string | null; bonuses: Record<string, number> }[],
+  items: {
+    equippedOnId: string | null
+    bonuses: Record<string, number>
+    level: number
+    substats: { key: string; value: number }[]
+  }[],
   userCardId: string,
+  equipLevelScale: number,
 ): StatBonuses {
   const acc = emptyStatBonuses()
   for (const item of items) {
     if (item.equippedOnId !== userCardId) {
       continue
     }
+    const mult = 1 + equipLevelScale * (item.level - 1)
     for (const [key, value] of Object.entries(item.bonuses)) {
       const parsed = parseBonusKey(key)
       if (parsed) {
-        acc[parsed.stat][parsed.kind] += value
+        acc[parsed.stat][parsed.kind] += value * mult
+      }
+    }
+    for (const s of item.substats) {
+      const parsed = parseBonusKey(s.key)
+      if (parsed) {
+        acc[parsed.stat][parsed.kind] += s.value
       }
     }
   }
@@ -139,6 +152,18 @@ export function dustCostNextLevel(
     card.dustCostBase *
       currentLevel ** card.dustCostExp *
       card.rarityMult[rarity],
+  )
+}
+
+export function equipGoldCostNextLevel(
+  currentLevel: number,
+  rarity: CardRarity,
+  economy: EconomyConfig,
+): number {
+  return Math.round(
+    economy.equip.goldCostBase *
+      economy.equip.goldCostExp ** (currentLevel - 1) *
+      economy.card.rarityMult[rarity],
   )
 }
 
