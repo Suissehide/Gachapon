@@ -185,7 +185,7 @@ function BattlePage() {
         </Link>
         {result && (
           <div className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-4 py-1.5 font-mono text-[12px] font-bold uppercase tracking-widest text-amber-700">
-            Tour {round.current}
+            Action {round.current}
           </div>
         )}
       </div>
@@ -553,7 +553,7 @@ function DefeatPanel({
       </h2>
       <p className="mt-2 max-w-sm text-sm text-text-light">
         {timeout
-          ? "Aucune équipe n'a pris l'avantage avant la fin des 60 tours. Renforce ta composition pour l'emporter plus vite — l'énergie a quand même été dépensée."
+          ? "Aucune équipe n'a pris l'avantage avant la limite de combat. Renforce ta composition pour l'emporter plus vite — l'énergie a quand même été dépensée."
           : "Ton équipe n'a pas tenu le choc. Améliore ta composition ou monte tes cartes avant de retourner au front."}
       </p>
 

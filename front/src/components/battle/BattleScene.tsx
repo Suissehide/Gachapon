@@ -13,8 +13,8 @@ type Props = {
   log: BattleLogEntry[]
   controls?: boolean
   onComplete?: (winner: 'A' | 'B' | null) => void
-  /** Fires whenever the current round changes (1-based). */
-  onRoundChange?: (round: number, total: number) => void
+  /** Fires whenever the current action index changes (1-based). */
+  onRoundChange?: (action: number, total: number) => void
 }
 
 const BASE_ENTRY_DELAY_MS = 600
@@ -32,7 +32,11 @@ type BadgeItem = { key: number; passiveKey: string }
 function applyEntry(entry: BattleLogEntry, units: SceneUnit[]): SceneUnit[] {
   switch (entry.type) {
     case 'ATTACK': {
-      const damages = entry.damages as { id: string; final: number; dodged: boolean }[]
+      const damages = entry.damages as {
+        id: string
+        final: number
+        dodged: boolean
+      }[]
       return units.map((u) => {
         const d = damages.find((d) => d.id === u.id)
         if (!d || d.dodged) {
@@ -44,13 +48,17 @@ function applyEntry(entry: BattleLogEntry, units: SceneUnit[]): SceneUnit[] {
     }
     case 'PASSIVE': {
       const unitId = entry.unitId as string
-      const payload = (entry.payload as { healed?: number; reflected?: number }) ?? {}
+      const payload =
+        (entry.payload as { healed?: number; reflected?: number }) ?? {}
       if (payload.healed && payload.healed > 0) {
         return units.map((u) =>
           u.id === unitId
             ? {
                 ...u,
-                currentHp: Math.min(u.maxHp, u.currentHp + (payload.healed as number)),
+                currentHp: Math.min(
+                  u.maxHp,
+                  u.currentHp + (payload.healed as number),
+                ),
               }
             : u,
         )
@@ -75,7 +83,10 @@ function applyEntry(entry: BattleLogEntry, units: SceneUnit[]): SceneUnit[] {
   }
 }
 
-function countRoundsUpTo(log: BattleLogEntry[], indexExclusive: number): number {
+function countActionsUpTo(
+  log: BattleLogEntry[],
+  indexExclusive: number,
+): number {
   let r = 1
   for (let i = 0; i < indexExclusive && i < log.length; i++) {
     if (log[i].type === 'TURN_END') {
@@ -109,8 +120,12 @@ export function BattleScene({
   const [logIndex, setLogIndex] = useState(0)
   const [attackingId, setAttackingId] = useState<string | null>(null)
   const [targetedIds, setTargetedIds] = useState<string[]>([])
-  const [floatsByUnit, setFloatsByUnit] = useState<Record<string, FloatItem[]>>({})
-  const [badgesByUnit, setBadgesByUnit] = useState<Record<string, BadgeItem[]>>({})
+  const [floatsByUnit, setFloatsByUnit] = useState<Record<string, FloatItem[]>>(
+    {},
+  )
+  const [badgesByUnit, setBadgesByUnit] = useState<Record<string, BadgeItem[]>>(
+    {},
+  )
   const [speed, setSpeed] = useState<SceneSpeed>(1)
   const [isPaused, setIsPaused] = useState(false)
   const completedRef = useRef(false)
@@ -244,11 +259,14 @@ export function BattleScene({
     [pushBadge, pushFloat],
   )
 
-  const runGenericEntry = useCallback((entry: BattleLogEntry, delay: number) => {
-    setUnits((cur) => applyEntry(entry, cur))
-    const t = setTimeout(() => setLogIndex((i) => i + 1), delay / 2)
-    return () => clearTimeout(t)
-  }, [])
+  const runGenericEntry = useCallback(
+    (entry: BattleLogEntry, delay: number) => {
+      setUnits((cur) => applyEntry(entry, cur))
+      const t = setTimeout(() => setLogIndex((i) => i + 1), delay / 2)
+      return () => clearTimeout(t)
+    },
+    [],
+  )
 
   useEffect(() => {
     if (isPaused) {
@@ -291,21 +309,21 @@ export function BattleScene({
   // ally team of 1 should just render small, not balloon up to fill the row.
   const isBossOnB = teamBUnits.length === 1 && teamAUnits.length > 1
   const isDone = logIndex >= log.length
-  const round = countRoundsUpTo(log, logIndex)
-  const totalRounds = useMemo(
+  const actionCount = countActionsUpTo(log, logIndex)
+  const totalActions = useMemo(
     () => Math.max(1, log.filter((e) => e.type === 'TURN_END').length),
     [log],
   )
 
-  // Latest callback held in a ref so the round-change effect doesn't re-fire
+  // Latest callback held in a ref so the action-change effect doesn't re-fire
   // every render just because the parent passed a new inline function.
   const onRoundChangeRef = useRef(onRoundChange)
   useEffect(() => {
     onRoundChangeRef.current = onRoundChange
   }, [onRoundChange])
   useEffect(() => {
-    onRoundChangeRef.current?.(round, totalRounds)
-  }, [round, totalRounds])
+    onRoundChangeRef.current?.(actionCount, totalActions)
+  }, [actionCount, totalActions])
 
   const renderUnit = (u: SceneUnit, enlarged?: boolean) => (
     <div key={u.id} className="relative">
@@ -328,7 +346,9 @@ export function BattleScene({
     if (isBoss && rowUnits.length === 1) {
       return (
         <div className="flex w-full items-center justify-center">
-          <div className="w-[200px] sm:w-[220px]">{renderUnit(rowUnits[0], true)}</div>
+          <div className="w-[200px] sm:w-[220px]">
+            {renderUnit(rowUnits[0], true)}
+          </div>
         </div>
       )
     }
