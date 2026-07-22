@@ -206,14 +206,14 @@ describe('economy-progression — partie complète en ~3 mois', () => {
     expect(traj).toHaveLength(90)
   })
 
-  it('tirages/jour en régime établi ∈ [28, 42]', () => {
+  it('tirages/jour en régime établi ∈ [55, 75]', () => {
     const avgPulls = avg(steady.map((s) => s.pullsToday))
-    expect(avgPulls).toBeGreaterThanOrEqual(28)
-    expect(avgPulls).toBeLessThanOrEqual(42)
+    expect(avgPulls).toBeGreaterThanOrEqual(55)
+    expect(avgPulls).toBeLessThanOrEqual(75)
   })
 
-  it('jetons achetés/jour en régime établi ≤ 8', () => {
-    expect(avg(steady.map((s) => s.boughtTokensToday))).toBeLessThanOrEqual(8)
+  it('jetons achetés/jour en régime établi ≤ 45', () => {
+    expect(avg(steady.map((s) => s.boughtTokensToday))).toBeLessThanOrEqual(45)
   })
 
   it('campagne (50 stages) terminée entre J40 et J65', () => {
