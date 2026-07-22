@@ -27,7 +27,10 @@ const RARITY_BY_CHAPTER = [
   'LEGENDARY',
 ] as const
 
-const NORMAL_FACTOR = 0.98 // ennemi normal = base joueur × 0.98 (léger avantage joueur)
+// Ennemi normal = base joueur × 0.99. Monté de 0.98 avec le passage au ciblage
+// aléatoire (2026-07-22) : sim à 68 % de win moyen, 46/50 stages en bande 45-90 %.
+// ATTENTION : quasi-miroir, ±0.01 fait bouger le win rate de ~10 pts (1.02 → 35 %).
+const NORMAL_FACTOR = 0.99
 const BOSS_FACTOR = 0.92 // boss (avant ×PV et AOE)
 const ENEMY_STAT_GROWTH_PER_LEVEL = 0.06
 const ENEMY_ASCENSION_BONUS = 0.15

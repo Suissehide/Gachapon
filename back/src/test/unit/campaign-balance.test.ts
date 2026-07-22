@@ -8,12 +8,12 @@ import {
 } from '../../../prisma/seed/campaign'
 
 describe('enemyPower — aligné sur le joueur attendu (rareté + niveau + palier ATB)', () => {
-  it('stage 1-1 : valeur ancre exacte (scale=1, NORMAL_FACTOR=0.98)', () => {
+  it('stage 1-1 : valeur ancre exacte (scale=1, NORMAL_FACTOR=0.99)', () => {
     // rb = COMMON {105,10,5,92}, scale = levelMult(1)*palierMult(1) = 1
-    // hp: 105×0.98×1 = 102.9 → 103 ; atk: 10×0.98 = 9.8 → 10
-    // def: 5×0.98 = 4.9 → 5 ; spd: 92×1 = 92 (pas de NORMAL_FACTOR)
+    // hp: 105×0.99×1 = 103.95 → 104 ; atk: 10×0.99 = 9.9 → 10
+    // def: 5×0.99 = 4.95 → 5 ; spd: 92×1 = 92 (pas de NORMAL_FACTOR)
     expect(enemyPower(1, 1)).toEqual({
-      baseHp: 103,
+      baseHp: 104,
       baseAtk: 10,
       baseDef: 5,
       baseSpd: 92,
