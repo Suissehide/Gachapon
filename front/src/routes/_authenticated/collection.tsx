@@ -26,6 +26,7 @@ import { ArcadeCard } from '../../components/shared/ArcadeCard.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { Button } from '../../components/ui/button.tsx'
+import { useStoredState } from '../../hooks/useStoredState.ts'
 import {
   type UserCard,
   useCards,
@@ -102,11 +103,31 @@ export const Route = createFileRoute('/_authenticated/collection')({
 
 function Collection() {
   const user = useAuthStore((s) => s.user)
-  const [group, setGroup] = useState<GroupMode>('rarity')
-  const [rarity, setRarity] = useState<RarityFilter>('all')
-  const [variant, setVariant] = useState<VariantFilter>('all')
-  const [ownership, setOwnership] = useState<OwnershipFilter>('owned')
-  const [sort, setSort] = useState<SortMode>('default')
+  const [group, setGroup] = useStoredState<GroupMode>(
+    'collection-filters/group',
+    'rarity',
+    ['rarity', 'set'],
+  )
+  const [rarity, setRarity] = useStoredState<RarityFilter>(
+    'collection-filters/rarity',
+    'all',
+    ['all', ...RARITY_ORDER],
+  )
+  const [variant, setVariant] = useStoredState<VariantFilter>(
+    'collection-filters/variant',
+    'all',
+    ['all', 'NORMAL', 'HOLOGRAPHIC', 'BRILLIANT'],
+  )
+  const [ownership, setOwnership] = useStoredState<OwnershipFilter>(
+    'collection-filters/ownership',
+    'owned',
+    ['owned', 'all'],
+  )
+  const [sort, setSort] = useStoredState<SortMode>(
+    'collection-filters/sort',
+    'default',
+    ['default', 'power', 'level', 'copies', 'name'],
+  )
   const [recycleTarget, setRecycleTarget] = useState<UserCard | null>(null)
   const [recycleAllOpen, setRecycleAllOpen] = useState(false)
   // Store just the key so we always re-derive the *fresh* entry from
