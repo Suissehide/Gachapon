@@ -23,7 +23,7 @@ export type SubstatKey =
 export type Substat = { key: SubstatKey; value: number }
 
 export type EquipmentMilestone = {
-  type: 'added' | 'improved' | 'base'
+  type: 'added' | 'improved'
   key: SubstatKey
   rolledValue: number
   newValue: number

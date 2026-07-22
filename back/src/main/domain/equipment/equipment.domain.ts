@@ -7,15 +7,13 @@ import type { ConfigServiceInterface } from '../../types/infra/config/config.ser
 import { retryOnSerialization } from '../shared/retry-serialization'
 import {
   EQUIP_MAX_LEVEL,
+  INITIAL_SUBSTATS_BY_RARITY,
   isSubstatMilestone,
-  MAX_SUBSTATS_BY_RARITY,
   type MilestoneResult,
   rollInitialSubstats,
   rollMilestone,
-  SUBSTAT_KEYS,
   SUBSTAT_RANGE_CONFIG_KEYS,
   type Substat,
-  type SubstatKey,
   type SubstatRanges,
   substatRangesFromConfig,
   upgradeGoldCost,
@@ -241,7 +239,7 @@ export class EquipmentDomain {
           userId,
           equipmentId: catalog.id,
           substats: rollInitialSubstats(
-            MAX_SUBSTATS_BY_RARITY[catalog.rarity],
+            INITIAL_SUBSTATS_BY_RARITY[catalog.rarity],
             ranges,
             Math.random,
           ) as unknown as Prisma.InputJsonValue,
@@ -307,23 +305,12 @@ export class EquipmentDomain {
           this.#assertGold(user?.gold, cost)
 
           const newLevel = ue.level + 1
-          const catalogBonuses = (ue.equipment.bonuses ?? {}) as Record<
-            string,
-            number
-          >
           let substats = (ue.substats ?? []) as unknown as Substat[]
-          let baseBoost = ue.baseBoost
+          const baseBoost = ue.baseBoost
           let milestone: MilestoneResult | null = null
           if (isSubstatMilestone(newLevel)) {
-            const rolled = this.#resolveMilestone(
-              substats,
-              baseBoost,
-              catalogBonuses,
-              MAX_SUBSTATS_BY_RARITY[ue.equipment.rarity],
-              ranges,
-            )
+            const rolled = rollMilestone(substats, ranges, Math.random)
             substats = rolled.substats
-            baseBoost = rolled.baseBoost
             milestone = rolled.milestone
           }
 
@@ -359,27 +346,6 @@ export class EquipmentDomain {
     if (gold === undefined || gold < cost) {
       throw Boom.badRequest("Pas assez d'or")
     }
-  }
-
-  #resolveMilestone(
-    substats: Substat[],
-    baseBoost: number,
-    catalogBonuses: Record<string, number>,
-    maxSubstats: number,
-    ranges: SubstatRanges,
-  ): { substats: Substat[]; baseBoost: number; milestone: MilestoneResult } {
-    const baseKey = Object.keys(catalogBonuses)[0] as SubstatKey | undefined
-    if (baseKey === undefined || !SUBSTAT_KEYS.includes(baseKey)) {
-      throw Boom.badImplementation('Équipement sans bonus de base valide')
-    }
-    return rollMilestone(
-      substats,
-      maxSubstats,
-      baseKey,
-      baseBoost,
-      ranges,
-      Math.random,
-    )
   }
 
   /**

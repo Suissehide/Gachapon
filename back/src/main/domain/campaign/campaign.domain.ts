@@ -24,7 +24,7 @@ import {
 } from '../combat/equipment-drop.domain'
 import {
   effectiveEquipmentBonuses,
-  MAX_SUBSTATS_BY_RARITY,
+  INITIAL_SUBSTATS_BY_RARITY,
   rollInitialSubstats,
   SUBSTAT_RANGE_CONFIG_KEYS,
   type Substat,
@@ -651,7 +651,7 @@ export class CampaignDomain {
                     userId,
                     equipmentId: candidate.id,
                     substats: rollInitialSubstats(
-                      MAX_SUBSTATS_BY_RARITY[droppedRarity],
+                      INITIAL_SUBSTATS_BY_RARITY[droppedRarity],
                       substatRanges,
                       Math.random,
                     ) as unknown as Prisma.InputJsonValue,
@@ -805,8 +805,8 @@ export class CampaignDomain {
               userId,
               equipmentId: picked.id,
               substats: rollInitialSubstats(
-                MAX_SUBSTATS_BY_RARITY[
-                  picked.rarity as keyof typeof MAX_SUBSTATS_BY_RARITY
+                INITIAL_SUBSTATS_BY_RARITY[
+                  picked.rarity as keyof typeof INITIAL_SUBSTATS_BY_RARITY
                 ],
                 substatRanges,
                 Math.random,
@@ -900,8 +900,8 @@ export class CampaignDomain {
               userId,
               equipmentId: picked.id,
               substats: rollInitialSubstats(
-                MAX_SUBSTATS_BY_RARITY[
-                  droppedRarity as keyof typeof MAX_SUBSTATS_BY_RARITY
+                INITIAL_SUBSTATS_BY_RARITY[
+                  droppedRarity as keyof typeof INITIAL_SUBSTATS_BY_RARITY
                 ],
                 substatRanges,
                 Math.random,

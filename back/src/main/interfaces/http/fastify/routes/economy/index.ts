@@ -7,8 +7,9 @@ import { ASCENSION_STAT_BONUS } from '../../../../../domain/combat/combat-stats.
 import {
   EQUIP_LEVEL_SCALE,
   EQUIP_MAX_LEVEL,
+  EQUIP_MAX_SUBSTATS,
   EQUIP_SUBSTAT_MILESTONE,
-  MAX_SUBSTATS_BY_RARITY,
+  INITIAL_SUBSTATS_BY_RARITY,
 } from '../../../../../domain/equipment/equipment-progression'
 import {
   MILESTONE_PACKS,
@@ -71,7 +72,8 @@ const economyConfigResponseSchema = z.object({
     levelScale: z.number(),
     maxLevel: z.number(),
     substatMilestone: z.number(),
-    maxSubstatsByRarity: rarityRecordSchema,
+    maxSubstats: z.number(),
+    initialSubstatsByRarity: rarityRecordSchema,
     salvageGold: rarityRecordSchema,
     substatRanges: z.object({
       hpFlat: z.object({ min: z.number(), max: z.number() }),
@@ -192,7 +194,8 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
           levelScale: EQUIP_LEVEL_SCALE,
           maxLevel: EQUIP_MAX_LEVEL,
           substatMilestone: EQUIP_SUBSTAT_MILESTONE,
-          maxSubstatsByRarity: { ...MAX_SUBSTATS_BY_RARITY },
+          maxSubstats: EQUIP_MAX_SUBSTATS,
+          initialSubstatsByRarity: { ...INITIAL_SUBSTATS_BY_RARITY },
           salvageGold: {
             COMMON: c['equip.salvageGoldCommon'],
             UNCOMMON: c['equip.salvageGoldUncommon'],

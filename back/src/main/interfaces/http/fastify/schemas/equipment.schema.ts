@@ -57,7 +57,7 @@ export const equipmentUpgradeResponseSchema = z.object({
   newGold: z.number().int(),
   milestone: z
     .object({
-      type: z.enum(['added', 'improved', 'base']),
+      type: z.enum(['added', 'improved']),
       key: substatKeyEnum,
       rolledValue: z.number(),
       newValue: z.number(),

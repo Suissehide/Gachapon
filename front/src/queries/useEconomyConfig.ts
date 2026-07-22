@@ -53,7 +53,8 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
     levelScale: 0.1,
     maxLevel: 12,
     substatMilestone: 3,
-    maxSubstatsByRarity: {
+    maxSubstats: 4,
+    initialSubstatsByRarity: {
       COMMON: 0,
       UNCOMMON: 1,
       RARE: 2,

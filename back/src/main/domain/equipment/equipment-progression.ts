@@ -3,7 +3,8 @@
 
 export const EQUIP_MAX_LEVEL = 12
 export const EQUIP_SUBSTAT_MILESTONE = 3
-export const MAX_SUBSTATS_BY_RARITY = {
+export const EQUIP_MAX_SUBSTATS = 4
+export const INITIAL_SUBSTATS_BY_RARITY = {
   COMMON: 0,
   UNCOMMON: 1,
   RARE: 2,
@@ -11,7 +12,7 @@ export const MAX_SUBSTATS_BY_RARITY = {
   LEGENDARY: 4,
 } as const
 
-export type EquipmentRarity = keyof typeof MAX_SUBSTATS_BY_RARITY
+export type EquipmentRarity = keyof typeof INITIAL_SUBSTATS_BY_RARITY
 export const EQUIP_LEVEL_SCALE = 0.1
 
 export const SUBSTAT_KEYS = [
@@ -82,7 +83,7 @@ export function substatRangesFromConfig(
 }
 
 export interface MilestoneResult {
-  type: 'added' | 'improved' | 'base'
+  type: 'added' | 'improved'
   key: SubstatKey
   rolledValue: number
   newValue: number
@@ -137,53 +138,35 @@ export function rollInitialSubstats(
 }
 
 /**
- * Applique un palier, en cascade :
- * 1. s'il reste un emplacement de sous-stat pour la rareté → ajout d'une
- *    sous-stat aléatoire (clé jamais dupliquée) ;
- * 2. sinon, s'il existe au moins une sous-stat → amélioration additive
- *    d'une existante ;
- * 3. sinon (aucun emplacement, ex. commune) → renforcement du bonus de
- *    base : le tirage s'ajoute au baseBoost de l'instance.
+ * Applique un palier : sous le cap universel de 4 sous-stats → ajout d'une
+ * sous-stat aléatoire (clé jamais dupliquée) ; sinon → amélioration additive
+ * d'une existante tirée au hasard.
  *
  * @param rng doit retourner un nombre dans [0, 1), comme Math.random.
  */
 export function rollMilestone(
   substats: Substat[],
-  maxSubstats: number,
-  baseKey: SubstatKey,
-  baseBoost: number,
   ranges: SubstatRanges,
   rng: () => number,
-): { substats: Substat[]; baseBoost: number; milestone: MilestoneResult } {
-  if (substats.length < maxSubstats) {
+): { substats: Substat[]; milestone: MilestoneResult } {
+  if (substats.length < EQUIP_MAX_SUBSTATS) {
     const key = pickAvailableKey(substats, rng)
     const rolledValue = rollValue(ranges[key], rng)
     return {
       substats: [...substats, { key, value: rolledValue }],
-      baseBoost,
       milestone: { type: 'added', key, rolledValue, newValue: rolledValue },
     }
   }
-  if (substats.length > 0) {
-    const len = substats.length
-    const index = Math.min(Math.floor(rng() * len), len - 1)
-    const target = substats[index] as Substat
-    const rolledValue = rollValue(ranges[target.key], rng)
-    const newValue = Math.round((target.value + rolledValue) * 10) / 10
-    return {
-      substats: substats.map((s, i) =>
-        i === index ? { ...s, value: newValue } : s,
-      ),
-      baseBoost,
-      milestone: { type: 'improved', key: target.key, rolledValue, newValue },
-    }
-  }
-  const rolledValue = rollValue(ranges[baseKey], rng)
-  const newBoost = Math.round((baseBoost + rolledValue) * 10) / 10
+  const len = substats.length
+  const index = Math.min(Math.floor(rng() * len), len - 1)
+  const target = substats[index] as Substat
+  const rolledValue = rollValue(ranges[target.key], rng)
+  const newValue = Math.round((target.value + rolledValue) * 10) / 10
   return {
-    substats,
-    baseBoost: newBoost,
-    milestone: { type: 'base', key: baseKey, rolledValue, newValue: newBoost },
+    substats: substats.map((s, i) =>
+      i === index ? { ...s, value: newValue } : s,
+    ),
+    milestone: { type: 'improved', key: target.key, rolledValue, newValue },
   }
 }
 

@@ -2,8 +2,9 @@ import { describe, expect, it } from '@jest/globals'
 
 import {
   effectiveEquipmentBonuses,
+  EQUIP_MAX_SUBSTATS,
+  INITIAL_SUBSTATS_BY_RARITY,
   isSubstatMilestone,
-  MAX_SUBSTATS_BY_RARITY,
   rollInitialSubstats,
   rollMilestone,
   scaleBaseBonuses,
@@ -54,15 +55,19 @@ describe('equipment-progression: isSubstatMilestone', () => {
   })
 })
 
-describe('equipment-progression: MAX_SUBSTATS_BY_RARITY', () => {
-  it('suit le barème C0/U1/R2/E3/L4', () => {
-    expect(MAX_SUBSTATS_BY_RARITY).toEqual({
+describe('equipment-progression: INITIAL_SUBSTATS_BY_RARITY', () => {
+  it('suit le barème initial C0/U1/R2/E3/L4', () => {
+    expect(INITIAL_SUBSTATS_BY_RARITY).toEqual({
       COMMON: 0,
       UNCOMMON: 1,
       RARE: 2,
       EPIC: 3,
       LEGENDARY: 4,
     })
+  })
+
+  it('le cap universel est de 4 sous-stats', () => {
+    expect(EQUIP_MAX_SUBSTATS).toBe(4)
   })
 })
 
@@ -82,11 +87,10 @@ describe('equipment-progression: scaleBaseBonuses', () => {
 })
 
 describe('equipment-progression: rollMilestone', () => {
-  it("ajoute une sous-stat quand il reste des emplacements pour la rareté", () => {
+  it('ajoute une sous-stat sous le cap de 4 (même pour une commune vide)', () => {
     // rng: 0 → première clé du pool (hpFlat), 0.5 → milieu de range 20–60 = 40
-    const result = rollMilestone([], 4, 'atkFlat', 0, RANGES, rngFrom([0, 0.5]))
+    const result = rollMilestone([], RANGES, rngFrom([0, 0.5]))
     expect(result.substats).toEqual([{ key: 'hpFlat', value: 40 }])
-    expect(result.baseBoost).toBe(0)
     expect(result.milestone).toEqual({
       type: 'added',
       key: 'hpFlat',
@@ -102,28 +106,21 @@ describe('equipment-progression: rollMilestone', () => {
       { key: 'atkFlat', value: 10 },
     ]
     // rng 0 → première clé DISPONIBLE (atkPct, car hpFlat/hpPct/atkFlat pris)
-    const result = rollMilestone(
-      existing,
-      4,
-      'atkFlat',
-      0,
-      RANGES,
-      rngFrom([0, 0]),
-    )
+    const result = rollMilestone(existing, RANGES, rngFrom([0, 0]))
     expect(result.milestone.type).toBe('added')
     expect(result.milestone.key).toBe('atkPct')
     expect(result.substats).toHaveLength(4)
   })
 
-  it('améliore une existante quand les emplacements de la rareté sont pleins', () => {
-    // EPIC : max 3 — plein avec 3 sous-stats.
+  it('améliore une existante quand les 4 emplacements sont pleins', () => {
     const full: Substat[] = [
       { key: 'hpFlat', value: 30 },
       { key: 'atkPct', value: 5 },
       { key: 'defFlat', value: 8 },
+      { key: 'spdFlat', value: 4 },
     ]
-    // rng 0.5 → index floor(0.5×3)=1 (atkPct), rng 0 → min de range 3–8 = 3
-    const result = rollMilestone(full, 3, 'atkFlat', 0, RANGES, rngFrom([0.5, 0]))
+    // rng 0.25 → index floor(0.25×4)=1 (atkPct), rng 0 → min de range 3–8 = 3
+    const result = rollMilestone(full, RANGES, rngFrom([0.25, 0]))
     expect(result.milestone).toEqual({
       type: 'improved',
       key: 'atkPct',
@@ -131,39 +128,13 @@ describe('equipment-progression: rollMilestone', () => {
       newValue: 8,
     })
     expect(result.substats[1]).toEqual({ key: 'atkPct', value: 8 })
-    expect(result.substats).toHaveLength(3)
-    expect(result.baseBoost).toBe(0)
+    expect(result.substats).toHaveLength(4)
   })
 
   it('arrondit les tirages à 1 décimale', () => {
-    const result = rollMilestone([], 4, 'atkFlat', 0, RANGES, rngFrom([0, 1 / 3]))
+    const result = rollMilestone([], RANGES, rngFrom([0, 1 / 3]))
     // 20 + (1/3)×40 = 33.333… → 33.3
     expect(result.milestone.rolledValue).toBe(33.3)
-  })
-
-  it("renforce le bonus de base quand la rareté n'a aucun emplacement", () => {
-    // COMMON : max 0. rng 0.5 → milieu de range atkFlat 5–15 = 10
-    const result = rollMilestone([], 0, 'atkFlat', 0, RANGES, rngFrom([0.5]))
-    expect(result.substats).toEqual([])
-    expect(result.baseBoost).toBe(10)
-    expect(result.milestone).toEqual({
-      type: 'base',
-      key: 'atkFlat',
-      rolledValue: 10,
-      newValue: 10,
-    })
-  })
-
-  it('cumule le baseBoost sur plusieurs paliers', () => {
-    // rng 0 → min de range atkFlat = 5, cumulé sur un boost existant de 10
-    const result = rollMilestone([], 0, 'atkFlat', 10, RANGES, rngFrom([0]))
-    expect(result.baseBoost).toBe(15)
-    expect(result.milestone).toEqual({
-      type: 'base',
-      key: 'atkFlat',
-      rolledValue: 5,
-      newValue: 15,
-    })
   })
 })
 

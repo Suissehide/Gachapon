@@ -22,7 +22,7 @@ describe('GET /economy/config', () => {
     expect(res.statusCode).toBe(200)
     const body = res.json()
     expect(body.xp.base).toBe(100)
-    expect(body.xp.slope).toBe(30)
+    expect(body.xp.slope).toBe(44)
     expect(body.xp.levelCap).toBe(100)
     expect(body.xp.skillPointsPerLevel).toBe(1)
     expect(body.xp.milestones).toHaveLength(5)
@@ -49,7 +49,8 @@ describe('GET /economy/config', () => {
     expect(body.equip.levelScale).toBe(0.1)
     expect(body.equip.maxLevel).toBe(12)
     expect(body.equip.substatMilestone).toBe(3)
-    expect(body.equip.maxSubstatsByRarity).toEqual({
+    expect(body.equip.maxSubstats).toBe(4)
+    expect(body.equip.initialSubstatsByRarity).toEqual({
       COMMON: 0,
       UNCOMMON: 1,
       RARE: 2,

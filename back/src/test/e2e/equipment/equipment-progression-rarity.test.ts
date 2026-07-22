@@ -52,7 +52,7 @@ describe('Equipment milestone cascade by rarity', () => {
         dropWeight: 10,
       },
     })
-    // Épique déjà plein (max 3 sous-stats), au niveau 2 : le prochain
+    // Épique déjà au cap universel (4 sous-stats), au niveau 2 : le prochain
     // palier (niveau 3) doit améliorer une existante.
     fullEpicId = (
       await postgresOrm.prisma.userEquipment.create({
@@ -64,6 +64,7 @@ describe('Equipment milestone cascade by rarity', () => {
             { key: 'hpFlat', value: 30 },
             { key: 'atkPct', value: 5 },
             { key: 'defFlat', value: 8 },
+            { key: 'spdFlat', value: 4 },
           ],
         },
       })
@@ -93,7 +94,7 @@ describe('Equipment milestone cascade by rarity', () => {
     expect(common?.baseBoost).toBe(0)
   })
 
-  it("commune (0 emplacement) : le palier 3 renforce le bonus de base", async () => {
+  it('commune née sans sous-stat : le palier 3 en ajoute une', async () => {
     let last: any = null
     for (let i = 0; i < 3; i++) {
       const res = await app.inject({
@@ -107,12 +108,11 @@ describe('Equipment milestone cascade by rarity', () => {
     expect(last.level).toBe(4)
     // Palier atteint au niveau 3 (2e upgrade) — le 3e upgrade (niveau 4)
     // n'est pas un palier, donc on vérifie l'état persistant.
-    expect(last.substats).toEqual([])
-    expect(last.baseBoost).toBeGreaterThanOrEqual(5)
-    expect(last.baseBoost).toBeLessThanOrEqual(15)
+    expect(last.substats).toHaveLength(1)
+    expect(last.baseBoost).toBe(0)
   })
 
-  it("commune : la réponse du palier lui-même est de type 'base'", async () => {
+  it("commune : la réponse du palier lui-même est de type 'added'", async () => {
     // Niveaux 4 → 5 → 6 : le passage à 6 est un palier.
     await app.inject({
       method: 'POST',
@@ -127,15 +127,15 @@ describe('Equipment milestone cascade by rarity', () => {
     expect(res.statusCode).toBe(200)
     const body = res.json()
     expect(body.level).toBe(6)
-    expect(body.milestone?.type).toBe('base')
-    expect(body.milestone?.key).toBe('atkFlat')
-    expect(body.milestone?.rolledValue).toBeGreaterThanOrEqual(5)
-    expect(body.milestone?.rolledValue).toBeLessThanOrEqual(15)
-    expect(body.baseBoost).toBe(body.milestone?.newValue)
-    expect(body.substats).toEqual([])
+    expect(body.milestone?.type).toBe('added')
+    expect(body.substats).toHaveLength(2)
+    expect(
+      new Set(body.substats.map((s: { key: string }) => s.key)).size,
+    ).toBe(2)
+    expect(body.baseBoost).toBe(0)
   })
 
-  it("épique plein : le palier améliore une sous-stat existante", async () => {
+  it('épique à 4 sous-stats : le palier améliore une existante', async () => {
     const res = await app.inject({
       method: 'POST',
       url: `/equipment/${fullEpicId}/upgrade`,
@@ -145,7 +145,7 @@ describe('Equipment milestone cascade by rarity', () => {
     const body = res.json()
     expect(body.level).toBe(3)
     expect(body.milestone?.type).toBe('improved')
-    expect(body.substats).toHaveLength(3)
+    expect(body.substats).toHaveLength(4)
     expect(body.baseBoost).toBe(0)
   })
 })

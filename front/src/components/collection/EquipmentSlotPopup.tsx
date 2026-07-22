@@ -72,9 +72,6 @@ function upgradeHintTitle(
   if (!nextIsMilestone) {
     return undefined
   }
-  if (maxSubstats === 0) {
-    return 'Prochain niveau : bonus de base renforcé !'
-  }
   return substatsCount >= maxSubstats
     ? 'Prochain niveau : sous-stat améliorée !'
     : 'Prochain niveau : sous-stat bonus !'
@@ -182,7 +179,6 @@ function ItemRow({
   selectedId,
   selectMode,
   checked,
-  maxSubstats,
   onSelect,
   onToggle,
 }: {
@@ -191,7 +187,6 @@ function ItemRow({
   selectedId: string | null
   selectMode: boolean
   checked: Set<string>
-  maxSubstats: number
   onSelect: (id: string) => void
   onToggle: (id: string) => void
 }) {
@@ -232,14 +227,7 @@ function ItemRow({
       <RarityDot color={RARITY_COLOR_VAR[item.rarity]} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-text">{item.name}</p>
-        <p className="text-[11px] text-text-light">
-          Nv. {item.level}
-          {maxSubstats > 0 &&
-            ` · ${item.substats.length}/${maxSubstats} sous-stats`}
-          {maxSubstats === 0 &&
-            item.baseBoost > 0 &&
-            ` · base +${formatBonusValue(item.baseBoost)}`}
-        </p>
+        <p className="text-[11px] text-text-light">Nv. {item.level}</p>
       </div>
       {isEquippedHere && (
         <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
@@ -275,10 +263,7 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
   const [selectMode, setSelectMode] = useState(false)
   const [checked, setChecked] = useState<Set<string>>(new Set())
   const [confirmOpen, setConfirmOpen] = useState(false)
-  const [highlight, setHighlight] = useState<{
-    kind: 'substat' | 'base'
-    key: SubstatKey
-  } | null>(null)
+  const [highlight, setHighlight] = useState<SubstatKey | null>(null)
 
   const items = useMemo(
     () =>
@@ -313,16 +298,11 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
     if (!res.milestone) {
       return
     }
-    setHighlight({
-      kind: res.milestone.type === 'base' ? 'base' : 'substat',
-      key: res.milestone.key,
-    })
+    setHighlight(res.milestone.key)
     const milestoneTitle =
       res.milestone.type === 'added'
         ? 'Nouvelle sous-stat !'
-        : res.milestone.type === 'improved'
-          ? 'Sous-stat améliorée !'
-          : 'Bonus de base amélioré !'
+        : 'Sous-stat améliorée !'
     toast({
       title: milestoneTitle,
       message: `+${formatBonusValue(res.milestone.rolledValue)} ${formatBonusKey(res.milestone.key)}`,
@@ -428,9 +408,6 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
                       selectedId={selectedId}
                       selectMode={selectMode}
                       checked={checked}
-                      maxSubstats={
-                        economy.equip.maxSubstatsByRarity[item.rarity] ?? 0
-                      }
                       onSelect={handleSelect}
                       onToggle={toggleChecked}
                     />
@@ -500,48 +477,39 @@ function SubstatSection({
 }: {
   substats: Substat[]
   maxSubstats: number
-  highlight: { kind: 'substat' | 'base'; key: SubstatKey } | null
+  highlight: SubstatKey | null
 }) {
   const emptySlots = Math.max(0, maxSubstats - substats.length)
   return (
     <div>
       <p className="mb-1 text-[10px] uppercase tracking-widest text-text-light/60">
         Sous-stats
-        {maxSubstats > 0 && ` (${substats.length}/${maxSubstats})`}
       </p>
-      {maxSubstats === 0 ? (
-        <p className="rounded border border-dashed border-border px-1.5 py-1 text-[11px] text-text-light/60">
-          Pas d'emplacement — les paliers renforcent le bonus de base.
-        </p>
-      ) : (
-        <ul className="flex flex-col gap-1 text-xs">
-          {substats.map((s) => (
+      <ul className="flex flex-col gap-1 text-xs">
+        {substats.map((s) => (
+          <li
+            key={s.key}
+            className={cn(
+              'rounded px-1.5 py-0.5 font-mono text-violet-600',
+              highlight === s.key && 'bg-primary/15',
+            )}
+          >
+            +{formatBonusValue(s.value)} {formatBonusKey(s.key)}
+          </li>
+        ))}
+        {Array.from({ length: emptySlots }, (_, i) => {
+          // Keys are stable: item substats are fixed-length & ordered by backend
+          const slotIndex = substats.length + i
+          return (
             <li
-              key={s.key}
-              className={cn(
-                'rounded px-1.5 py-0.5 font-mono text-violet-600',
-                highlight?.kind === 'substat' &&
-                  highlight.key === s.key &&
-                  'bg-primary/15',
-              )}
+              key={`empty-slot-${slotIndex}`}
+              className="rounded border border-dashed border-border px-1.5 py-0.5 text-text-light/40"
             >
-              +{formatBonusValue(s.value)} {formatBonusKey(s.key)}
+              Emplacement vide
             </li>
-          ))}
-          {Array.from({ length: emptySlots }, (_, i) => {
-            // Keys are stable: item substats are fixed-length & ordered by backend
-            const slotIndex = substats.length + i
-            return (
-              <li
-                key={`empty-slot-${slotIndex}`}
-                className="rounded border border-dashed border-border px-1.5 py-0.5 text-text-light/40"
-              >
-                Emplacement vide
-              </li>
-            )
-          })}
-        </ul>
-      )}
+          )
+        })}
+      </ul>
     </div>
   )
 }
@@ -560,7 +528,7 @@ function ItemDetail({
   userCardId: string
   gold: number
   busy: boolean
-  highlight: { kind: 'substat' | 'base'; key: SubstatKey } | null
+  highlight: SubstatKey | null
   onEquip: () => void
   onUnequip: () => void
   onUpgrade: () => void
@@ -575,7 +543,7 @@ function ItemDetail({
   const scale = 1 + economy.equip.levelScale * (item.level - 1)
   const nextIsMilestone =
     !isMaxLevel && (item.level + 1) % economy.equip.substatMilestone === 0
-  const maxSubstats = economy.equip.maxSubstatsByRarity[item.rarity] ?? 0
+  const maxSubstats = economy.equip.maxSubstats
   const upgradeTitle = upgradeHintTitle(
     nextIsMilestone,
     maxSubstats,
@@ -605,10 +573,7 @@ function ItemDetail({
           {Object.entries(item.bonuses).map(([k, v], idx) => (
             <li
               key={k}
-              className={cn(
-                'rounded px-1.5 py-0.5 font-mono text-emerald-600',
-                idx === 0 && highlight?.kind === 'base' && 'bg-primary/15',
-              )}
+              className="rounded px-1.5 py-0.5 font-mono text-emerald-600"
             >
               +{formatBonusValue(v * scale + (idx === 0 ? item.baseBoost : 0))}{' '}
               {formatBonusKey(k)}
