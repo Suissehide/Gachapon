@@ -1,5 +1,5 @@
 // changelog-sync: dernier commit intégré au changelog. Mis à jour par la commande /changelog.
-// last-synced-commit: 4be74dcd2243bc87a6ce464ad4af269779df4c94
+// last-synced-commit: 1cf8761651fed089b80002287b775a9ad6f39d50
 import { createFileRoute } from '@tanstack/react-router'
 import { Helmet } from 'react-helmet-async'
 
@@ -37,6 +37,39 @@ const TYPE_META: Record<ChangeType, { label: string; className: string }> = {
 }
 
 const RELEASES: ChangelogRelease[] = [
+  {
+    version: '1.5',
+    title: 'Équipement, combat & campagne',
+    date: 'Juillet 2026',
+    summary:
+      'Ton équipement progresse, le combat gagne en profondeur et la campagne s’agrandit.',
+    entries: [
+      {
+        type: 'new',
+        text: 'Progression d’équipement : améliore tes pièces jusqu’au niveau 12, sous-stats selon la rareté, et destruction en masse contre de l’or.',
+      },
+      {
+        type: 'improved',
+        text: 'Combat repensé : chaque carte agit selon sa vitesse (jauge d’action) et les attaques touchent des cibles aléatoires.',
+      },
+      {
+        type: 'new',
+        text: 'Campagne enrichie : chapitres 4 et 5, ennemis avec portraits et familles aux passifs uniques (poison, brûlure, bénédiction…).',
+      },
+      {
+        type: 'improved',
+        text: 'Collection : puissance affichée sur tes cartes, tri et filtres mémorisés, et recyclage des doublons en masse.',
+      },
+      {
+        type: 'new',
+        text: 'Boutique : packs d’énergie pour la campagne et boosts de tirage cumulables.',
+      },
+      {
+        type: 'improved',
+        text: 'Révélations plus spectaculaires : animations dédiées aux variantes Brillante et Holo, et inspection de la carte au clic.',
+      },
+    ],
+  },
   {
     version: '1.4',
     title: 'Quêtes, souhaits & économie',
