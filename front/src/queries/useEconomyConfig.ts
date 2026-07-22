@@ -5,7 +5,7 @@ import { type EconomyConfig, getEconomyConfig } from '../api/economy.api.ts'
 export const DEFAULT_ECONOMY: EconomyConfig = {
   xp: {
     base: 100,
-    slope: 30,
+    slope: 44,
     levelCap: 100,
     skillPointsPerLevel: 1,
     milestones: [
@@ -18,8 +18,8 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
   },
   gacha: {
     pullTokenCost: 1,
-    pityThreshold: 80,
-    tokenRegenIntervalMinutes: 120,
+    pityThreshold: 300,
+    tokenRegenIntervalMinutes: 60,
     tokenMaxStock: 6,
   },
   recycle: {

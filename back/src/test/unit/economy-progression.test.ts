@@ -1,6 +1,5 @@
 import {
   bossLoot,
-  difficultyMult,
   lootTableNormal,
 } from '../../../prisma/seed/campaign'
 import { SHOP_ITEMS } from '../../../prisma/seed/shop'
@@ -24,10 +23,13 @@ const POOL = [
   { rarity: 'EPIC', cards: 31, weight: 8, dust: DEFAULTS.dustEpic },
   { rarity: 'LEGENDARY', cards: 17, weight: 2, dust: DEFAULTS.dustLegendary },
 ] as const
+const TOTAL_CARDS = POOL.reduce((s, p) => s + p.cards, 0)
+const LEGENDARY_CARDS = POOL[4].cards
 const TOTAL_WEIGHT = POOL.reduce((s, p) => s + p.cards * p.weight, 0)
 const pRarity = (p: (typeof POOL)[number]) => (p.cards * p.weight) / TOTAL_WEIGHT
 
 // ── Constantes économie (sources réelles) ─────────────────────────────────────
+const REGEN_TOKENS_PER_DAY = (24 * 60) / DEFAULTS.tokenRegenIntervalMinutes
 const bestTokenPack = SHOP_ITEMS.filter((i) => i.type === 'TOKEN_PACK')
   .map((i) => ({ tokens: (i.value as { tokens: number }).tokens, cost: i.cost }))
   .sort((a, b) => a.cost / a.tokens - b.cost / b.tokens)[0]
@@ -54,16 +56,13 @@ function goldToLevel(target: number): number {
   return Math.round(sum)
 }
 
-const MULT_50 = difficultyMult(5, 10)
-// MODEL: les mécaniques de combat (DEF, patterns, équipement) absorbent
-// l'écart brut de stats — impossible de comparer mult ennemi et croissance
-// +6 %/niveau terme à terme. On ancre la progression sur le cap de palier :
-// finir la campagne (stage 50) demande une équipe ~niveau 55 (cap palier 6 = 60).
+// MODEL: post-ATB, les ennemis scalent comme les joueurs (rarity+level+palier,
+// niveau ennemi = numéro de stage global — cf. enemyPower, campaign.ts). La
+// porte de progression est donc la parité de niveau, pas la courbe de butin
+// (difficultyMult, désormais loot-only). LEVEL_PARITY ∈ [0.8, 1.2].
+const LEVEL_PARITY = 1.0
 function levelRequired(globalStage: number): number {
-  const chapter = Math.ceil(globalStage / 10)
-  const index = globalStage - (chapter - 1) * 10
-  const mult = difficultyMult(chapter, index)
-  return Math.max(1, Math.ceil(1 + ((mult - 1) / (MULT_50 - 1)) * 54))
+  return Math.max(1, Math.ceil(globalStage * LEVEL_PARITY))
 }
 
 function stageLoot(globalStage: number) {
@@ -88,7 +87,6 @@ function simulate(days: number): Snapshot[] {
   let xp = 0
   let stageCleared = 0 // dernier stage global validé (0..50)
   let teamLevel = 1 // niveau moyen des 4 cartes de l'équipe
-  let goldSpentOnLeveling = 0
   let totalPulls = 0
   let boughtLegendaries = 0
 
@@ -135,7 +133,6 @@ function simulate(days: number): Snapshot[] {
         break
       }
       gold -= cost
-      goldSpentOnLeveling += cost
       teamLevel += 1
     }
     let boughtTokensToday = 0
@@ -145,8 +142,8 @@ function simulate(days: number): Snapshot[] {
       boughtTokensToday += 10
     }
 
-    // Tirages : régén 24/j + quêtes + achats du jour
-    const pullsToday = 24 + QUEST_TOKENS_PER_DAY + boughtTokensToday
+    // Tirages : régén REGEN_TOKENS_PER_DAY/j + quêtes + achats du jour
+    const pullsToday = REGEN_TOKENS_PER_DAY + QUEST_TOKENS_PER_DAY + boughtTokensToday
     totalPulls += pullsToday
 
     // Poussière de recyclage : part de doublons ≈ complétion collection
@@ -155,7 +152,7 @@ function simulate(days: number): Snapshot[] {
       POOL.reduce((s, p) => {
         const pCard = pRarity(p) / p.cards
         return s + p.cards * (1 - (1 - pCard) ** totalPulls)
-      }, 0) / 329,
+      }, 0) / TOTAL_CARDS,
     )
     const dustPerPull = POOL.reduce((s, p) => s + pRarity(p) * p.dust, 0)
     dust += pullsToday * dustPerPull * completion + QUEST_DUST_PER_DAY
@@ -163,13 +160,16 @@ function simulate(days: number): Snapshot[] {
     // Boutique quotidienne : acheter les LEGENDARY manquantes en priorité
     // Pity : une LEGENDARY forcée tous les pityThreshold tirages
     // (card.repository.ts, forceLegendary) — en plus du taux naturel.
+    // Approximation additive : le vrai compteur pity se reset à chaque LEGENDARY
+    // (surestime ~20 %), et pityReduction (skills) est ignoré (sous-estime) —
+    // directions opposées, acceptable dans la bande [J75, J95].
     const legendaryDraws =
       totalPulls * pRarity(POOL[4]) +
       Math.floor(totalPulls / DEFAULTS.pityThreshold)
-    const pulledLegendaries = 17 * (1 - (1 - 1 / 17) ** legendaryDraws)
+    const pulledLegendaries = LEGENDARY_CARDS * (1 - (1 - 1 / LEGENDARY_CARDS) ** legendaryDraws)
     const gifted = GIFTED_LEGENDARY_DAYS.filter((d) => d <= day).length
     if (
-      pulledLegendaries + boughtLegendaries + gifted < 17 &&
+      pulledLegendaries + boughtLegendaries + gifted < LEGENDARY_CARDS &&
       dust >= LEGENDARY_PRICE
     ) {
       dust -= LEGENDARY_PRICE
@@ -223,11 +223,11 @@ describe('economy-progression — partie complète en ~3 mois', () => {
   })
 
   it('17 LEGENDARY atteints entre J75 et J95', () => {
-    const doneDay = traj.find((s) => s.legendaries >= 17)?.day
+    const doneDay = traj.find((s) => s.legendaries >= LEGENDARY_CARDS)?.day
     // undefined accepté si atteint entre J91 et J95 : on simule 95 jours pour vérifier
     if (doneDay == null) {
       const ext = simulate(95)
-      const extDay = ext.find((s) => s.legendaries >= 17)?.day
+      const extDay = ext.find((s) => s.legendaries >= LEGENDARY_CARDS)?.day
       expect(extDay).toBeDefined()
       expect(extDay).toBeLessThanOrEqual(95)
     } else {
