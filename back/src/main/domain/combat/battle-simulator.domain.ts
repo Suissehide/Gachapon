@@ -250,35 +250,43 @@ function isSideDead(units: BattleUnit[], side: Side): boolean {
 // Target selection
 // ---------------------------------------------------------------------------
 
-function pickLowestHp(enemies: BattleUnit[], count: number): BattleUnit[] {
-  // stable sort by currentHp ascending, then by id for determinism
-  const sorted = [...enemies].sort((a, b) => {
-    if (a.currentHp !== b.currentHp) {
-      return a.currentHp - b.currentHp
+function pickRandom(
+  enemies: BattleUnit[],
+  count: number,
+  prng: () => number,
+): BattleUnit[] {
+  // pool trié par id : résultat indépendant de l'ordre d'entrée du tableau
+  const pool = [...enemies].sort((a, b) => (a.id < b.id ? -1 : 1))
+  const picked: BattleUnit[] = []
+  while (picked.length < count && pool.length > 0) {
+    const idx = Math.floor(prng() * pool.length)
+    const [unit] = pool.splice(idx, 1)
+    if (unit) {
+      picked.push(unit)
     }
-    return a.id < b.id ? -1 : 1
-  })
-  return sorted.slice(0, count)
+  }
+  return picked
 }
 
 function selectTargets(
   attacker: BattleUnit,
   enemies: BattleUnit[],
+  prng: () => number,
 ): BattleUnit[] {
   if (enemies.length === 0) {
     return []
   }
   switch (attacker.attackPattern) {
     case 'BASIC':
-      return pickLowestHp(enemies, 1)
+      return pickRandom(enemies, 1, prng)
     case 'AOE_3':
       return [...enemies]
     case 'MULTI_2':
-      return pickLowestHp(enemies, 2)
+      return pickRandom(enemies, 2, prng)
     case 'MONO_AMPLIFIED':
-      return pickLowestHp(enemies, 1)
+      return pickRandom(enemies, 1, prng)
     case 'MONO_DOUBLE':
-      return pickLowestHp(enemies, 1)
+      return pickRandom(enemies, 1, prng)
   }
 }
 
@@ -710,7 +718,7 @@ function performUnitAction(
     if (enemies.length === 0) {
       return
     }
-    const targets = selectTargets(attacker, enemies)
+    const targets = selectTargets(attacker, enemies, prng)
     if (targets.length === 0) {
       return
     }

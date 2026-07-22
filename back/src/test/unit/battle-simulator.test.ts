@@ -982,6 +982,64 @@ describe('simulateBattle', () => {
       expect(entries[0]?.payload.healed).toBeGreaterThan(0)
     })
   })
+
+  // ------------------------------------------------------------------------
+  // Ciblage aléatoire (remplace le focus « PV les plus bas »)
+  // ------------------------------------------------------------------------
+  describe('random targeting', () => {
+    it('BASIC ne focus plus l’ennemi aux PV les plus bas : sur plusieurs seeds, chaque ennemi est ciblé en premier au moins une fois', () => {
+      // B1 démarre avec moins de PV : l’ancien ciblage l’aurait TOUJOURS visé en premier.
+      const firstTargets = new Set<string>()
+      for (let k = 0; k < 40; k++) {
+        const result = simulateBattle({
+          teamA: [makeUnit('A0', { spd: 999, hp: 100000 })],
+          teamB: [
+            makeUnit('B0', { spd: 1 }),
+            makeUnit('B1', { spd: 1, hp: 50 }),
+            makeUnit('B2', { spd: 1 }),
+          ],
+          seed: `random-target-${k}`,
+        })
+        const firstAttack = result.log.find(
+          (e) => e.type === 'ATTACK' && e.attackerId === 'A0',
+        )
+        if (firstAttack && firstAttack.type === 'ATTACK') {
+          firstTargets.add(firstAttack.targetIds[0])
+        }
+      }
+      expect(firstTargets).toEqual(new Set(['B0', 'B1', 'B2']))
+    })
+
+    it('MULTI_2 cible 2 ennemis distincts, pas forcément les 2 plus faibles', () => {
+      // B0 et B1 sont les plus faibles : l’ancien ciblage aurait TOUJOURS pris {B0, B1}.
+      let sawOtherPair = false
+      for (let k = 0; k < 40; k++) {
+        const result = simulateBattle({
+          teamA: [
+            makeUnit('A0', { spd: 999, hp: 100000, attackPattern: 'MULTI_2' }),
+          ],
+          teamB: [
+            makeUnit('B0', { spd: 1, hp: 60 }),
+            makeUnit('B1', { spd: 1, hp: 70 }),
+            makeUnit('B2', { spd: 1, hp: 200 }),
+          ],
+          seed: `multi2-random-${k}`,
+        })
+        const firstAttack = result.log.find(
+          (e) => e.type === 'ATTACK' && e.attackerId === 'A0',
+        )
+        if (firstAttack && firstAttack.type === 'ATTACK') {
+          const ids = [...firstAttack.targetIds].sort()
+          expect(ids).toHaveLength(2)
+          expect(new Set(ids).size).toBe(2)
+          if (ids.includes('B2')) {
+            sawOtherPair = true
+          }
+        }
+      }
+      expect(sawOtherPair).toBe(true)
+    })
+  })
 })
 
 describe('ATB battle behavior', () => {
