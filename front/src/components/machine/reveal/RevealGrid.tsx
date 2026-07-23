@@ -276,136 +276,17 @@ export function RevealGrid({
        *  action bar. */}
       <div className="absolute inset-0 z-10 overflow-y-auto overflow-x-hidden">
         {stack.mode === 'stack' ? (
-          // Key par étape : remonte le conteneur à chaque carte révélée pour
-          // rejouer le screenShake d'impact (retardé pour coïncider avec le
-          // toucher au sol de stackCardDrop, à 70 % de ses 220 ms).
-          <div
-            key={
-              stack.step === 'pile'
-                ? `pile-${stack.index}`
-                : `impact-${stack.index}`
-            }
-            className={
-              stack.step === 'pile'
-                ? 'relative flex min-h-full flex-col items-center justify-center pb-32 md:pb-0'
-                : 'relative flex min-h-full flex-col items-center justify-center pb-32 md:pb-0 animate-[screenShake_260ms_ease-out_150ms]'
-            }
-            style={
-              stack.step === 'pile'
-                ? undefined
-                : ({ '--shake-amp': '10px' } as CSSProperties)
-            }
-          >
-            {stack.step === 'pile' ? (
-              <>
-                <button
-                  type="button"
-                  onClick={revealNextFromPile}
-                  aria-label="Révéler la carte suivante"
-                  className="group relative aspect-[2/3] w-40 cursor-pointer bg-transparent"
-                >
-                  {/* Ordre inversé : la prochaine carte à révéler (stack.index)
-                   *  est peinte en dernier, donc visuellement au-dessus. Au
-                   *  hover, seule elle réagit — avec le halo de SA rareté,
-                   *  comme les cartes face cachée de la grille (petit spoiler
-                   *  assumé, même langage visuel). */}
-                  {stableResults
-                    .filter(({ idx }) => idx >= stack.index)
-                    .reverse()
-                    .map(({ key, idx }) => (
-                      <img
-                        key={key}
-                        src={cardBackImg}
-                        alt=""
-                        draggable={false}
-                        className={
-                          idx === stack.index
-                            ? 'absolute inset-0 h-full w-full rounded-2xl object-cover shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all duration-200 group-hover:scale-[1.06] group-hover:shadow-[0_0_28px_var(--rar-glow)]'
-                            : 'absolute inset-0 h-full w-full rounded-2xl object-cover shadow-[0_10px_30px_rgba(0,0,0,0.5)]'
-                        }
-                        style={
-                          {
-                            transform: `translate(${pileJitter[idx].dx}px, ${pileJitter[idx].dy}px) rotate(${pileJitter[idx].rot}deg)`,
-                            ...(idx === stack.index
-                              ? {
-                                  '--rar-glow': getRarityTone(
-                                    results[idx].card.rarity as CardRarity,
-                                  ).hex,
-                                }
-                              : {}),
-                          } as CSSProperties
-                        }
-                      />
-                    ))}
-                </button>
-                <p className="mt-10 font-mono text-xs font-bold uppercase tracking-[0.2em] text-white/60">
-                  {results.length - stack.index}{' '}
-                  {results.length - stack.index > 1
-                    ? 'cartes restantes'
-                    : 'carte restante'}
-                </p>
-              </>
-            ) : (
-              <>
-                {/* Fond cliquable plein écran : n'importe quel clic passe à la
-                 *  carte suivante (la carte elle-même avance via onInspect). */}
-                <button
-                  type="button"
-                  aria-label="Carte suivante"
-                  onClick={dismissShownCard}
-                  className="absolute inset-0 z-0 cursor-pointer bg-transparent"
-                />
-                <div
-                  className={
-                    stack.step === 'exiting'
-                      ? 'relative z-10 animate-[stackCardOut_180ms_ease-in_forwards]'
-                      : 'relative z-10 animate-[stackCardDrop_220ms_cubic-bezier(0.45,0,1,0.55)_both]'
-                  }
-                  style={
-                    {
-                      '--rar-glow': getRarityTone(
-                        results[stack.index].card.rarity as CardRarity,
-                      ).hex,
-                    } as CSSProperties
-                  }
-                >
-                  {/* Onde de choc au sol, teintée rareté — part au toucher
-                   *  (150 ms ≈ 70 % de la chute), opacity-0 pendant le délai. */}
-                  {stack.step === 'showing' && (
-                    <div
-                      aria-hidden
-                      className="pointer-events-none absolute -bottom-5 left-1/2 h-16 w-80 rounded-[50%] opacity-0 blur-md animate-[stackImpactWave_320ms_ease-out_150ms_forwards]"
-                      style={{
-                        background:
-                          'radial-gradient(50% 50% at 50% 50%, var(--rar-glow), transparent 70%)',
-                      }}
-                    />
-                  )}
-                  <RevealCard
-                    key={stableResults[stack.index].key}
-                    entry={results[stack.index]}
-                    flipped={flipped.has(stack.index)}
-                    onFlip={noop}
-                    onInspect={dismissShownCard}
-                    size="lg"
-                    entryDelay={0}
-                    // Pas de ref en mode pile — flipCard retombe sur le centre de l'écran, là où la carte apparaît.
-                    registerRef={noop}
-                  />
-                </div>
-              </>
-            )}
-            <div className="relative z-10 mt-8 flex h-10 items-center justify-center">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={skipStack}
-                className="rounded-full border-white/20 bg-transparent px-8 uppercase tracking-widest text-white hover:bg-white/10 hover:text-white"
-              >
-                Passer
-              </Button>
-            </div>
-          </div>
+          <StackReveal
+            step={stack.step}
+            index={stack.index}
+            results={results}
+            stableResults={stableResults}
+            pileJitter={pileJitter}
+            flipped={flipped}
+            onRevealNext={revealNextFromPile}
+            onDismiss={dismissShownCard}
+            onSkip={skipStack}
+          />
         ) : (
           <div className="flex min-h-full flex-col items-center justify-center pb-32 md:pb-0">
             <div
@@ -530,6 +411,197 @@ export function RevealGrid({
           onClose={() => setInspecting(null)}
         />
       )}
+    </div>
+  )
+}
+
+// ── StackReveal ─────────────────────────────────────────────────────────────
+// Dépilage un-par-un : pile de dos jitterés, puis carte du dessus révélée en
+// grand avec un impact (chute + squash + shake + ondes) dont l'intensité monte
+// avec la rareté. Présentation pure — la machine à états reste dans RevealGrid.
+
+type StackRevealProps = {
+  step: 'pile' | 'showing' | 'exiting'
+  index: number
+  results: PullBatchEntry[]
+  stableResults: Array<{ entry: PullBatchEntry; key: string; idx: number }>
+  pileJitter: Array<{ dx: number; dy: number; rot: number }>
+  flipped: Set<number>
+  onRevealNext: () => void
+  onDismiss: () => void
+  onSkip: () => void
+}
+
+// Intensité d'impact par rang d'effet (EFFECT_RANK 0 → 4.5) : shake, taille et
+// opacité de l'onde montent linéairement ; à partir d'ÉPIQUE une seconde onde
+// part en écho, et LÉGENDAIRE/HOLO ajoutent un flash radial derrière la carte.
+function impactParams(entry: PullBatchEntry) {
+  const rank =
+    EFFECT_RANK[
+      resolveEffectKey(entry.card.rarity as CardRarity, entry.card.variant)
+    ] ?? 0
+  return {
+    rank,
+    shakeAmp: `${Math.round(6 + rank * 2.5)}px`,
+    waveScale: (1.4 + rank * 0.3).toFixed(2),
+    waveOpacity: (0.35 + rank * 0.08).toFixed(2),
+  }
+}
+
+const RARITY_WAVE_GRADIENT =
+  'radial-gradient(50% 50% at 50% 50%, var(--rar-glow), transparent 70%)'
+
+function StackReveal({
+  step,
+  index,
+  results,
+  stableResults,
+  pileJitter,
+  flipped,
+  onRevealNext,
+  onDismiss,
+  onSkip,
+}: StackRevealProps) {
+  const entry = results[index]
+  const tone = getRarityTone(entry.card.rarity as CardRarity)
+  const impact = impactParams(entry)
+  const remaining = results.length - index
+
+  return (
+    // Key par étape : remonte le conteneur à chaque carte révélée pour rejouer
+    // le screenShake d'impact (retardé pour coïncider avec le toucher au sol
+    // de stackCardDrop, à 70 % de ses 220 ms).
+    <div
+      key={step === 'pile' ? `pile-${index}` : `impact-${index}`}
+      className={
+        step === 'pile'
+          ? 'relative flex min-h-full flex-col items-center justify-center pb-32 md:pb-0'
+          : 'relative flex min-h-full flex-col items-center justify-center pb-32 md:pb-0 animate-[screenShake_260ms_ease-out_150ms]'
+      }
+      style={
+        step === 'pile'
+          ? undefined
+          : ({ '--shake-amp': impact.shakeAmp } as CSSProperties)
+      }
+    >
+      {step === 'pile' ? (
+        <>
+          <button
+            type="button"
+            onClick={onRevealNext}
+            aria-label="Révéler la carte suivante"
+            className="group relative aspect-[2/3] w-40 cursor-pointer bg-transparent"
+          >
+            {/* Ordre inversé : la prochaine carte à révéler (index) est peinte
+             *  en dernier, donc visuellement au-dessus. Au hover, seule elle
+             *  réagit — avec le halo de SA rareté, comme les cartes face
+             *  cachée de la grille (petit spoiler assumé, même langage). */}
+            {stableResults
+              .filter(({ idx }) => idx >= index)
+              .reverse()
+              .map(({ key, idx }) => (
+                <img
+                  key={key}
+                  src={cardBackImg}
+                  alt=""
+                  draggable={false}
+                  className={
+                    idx === index
+                      ? 'absolute inset-0 h-full w-full rounded-2xl object-cover shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all duration-200 group-hover:scale-[1.06] group-hover:shadow-[0_0_28px_var(--rar-glow)]'
+                      : 'absolute inset-0 h-full w-full rounded-2xl object-cover shadow-[0_10px_30px_rgba(0,0,0,0.5)]'
+                  }
+                  style={
+                    {
+                      transform: `translate(${pileJitter[idx].dx}px, ${pileJitter[idx].dy}px) rotate(${pileJitter[idx].rot}deg)`,
+                      ...(idx === index ? { '--rar-glow': tone.hex } : {}),
+                    } as CSSProperties
+                  }
+                />
+              ))}
+          </button>
+          <p className="mt-10 font-mono text-xs font-bold uppercase tracking-[0.2em] text-white/60">
+            {remaining} {remaining > 1 ? 'cartes restantes' : 'carte restante'}
+          </p>
+        </>
+      ) : (
+        <>
+          {/* Fond cliquable plein écran : n'importe quel clic passe à la
+           *  carte suivante (la carte elle-même avance via onInspect). */}
+          <button
+            type="button"
+            aria-label="Carte suivante"
+            onClick={onDismiss}
+            className="absolute inset-0 z-0 cursor-pointer bg-transparent"
+          />
+          <div
+            className={
+              step === 'exiting'
+                ? 'relative z-10 animate-[stackCardOut_180ms_ease-in_forwards]'
+                : 'relative z-10 animate-[stackCardDrop_220ms_cubic-bezier(0.45,0,1,0.55)_both]'
+            }
+            style={{ '--rar-glow': tone.hex } as CSSProperties}
+          >
+            {/* Effets d'impact — partent au toucher au sol (150 ms), opacity-0
+             *  pendant le délai. Montée en gamme avec le rang de rareté. */}
+            {step === 'showing' && (
+              <>
+                {impact.rank >= 4 && (
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute -inset-[12%] rounded-3xl opacity-0 blur-2xl animate-[stackImpactFlash_300ms_ease-out_150ms_forwards]"
+                    style={{ background: RARITY_WAVE_GRADIENT }}
+                  />
+                )}
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute -bottom-5 left-1/2 h-16 w-80 rounded-[50%] opacity-0 blur-md animate-[stackImpactWave_320ms_ease-out_150ms_forwards]"
+                  style={
+                    {
+                      background: RARITY_WAVE_GRADIENT,
+                      '--wave-scale': impact.waveScale,
+                      '--wave-opacity': impact.waveOpacity,
+                    } as CSSProperties
+                  }
+                />
+                {impact.rank >= 3 && (
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute -bottom-6 left-1/2 h-20 w-96 rounded-[50%] opacity-0 blur-lg animate-[stackImpactWave_420ms_ease-out_230ms_forwards]"
+                    style={
+                      {
+                        background: RARITY_WAVE_GRADIENT,
+                        '--wave-scale': impact.waveScale,
+                        '--wave-opacity': '0.3',
+                      } as CSSProperties
+                    }
+                  />
+                )}
+              </>
+            )}
+            <RevealCard
+              key={stableResults[index].key}
+              entry={entry}
+              flipped={flipped.has(index)}
+              onFlip={noop}
+              onInspect={onDismiss}
+              size="lg"
+              entryDelay={0}
+              // Pas de ref en mode pile — flipCard retombe sur le centre de l'écran, là où la carte apparaît.
+              registerRef={noop}
+            />
+          </div>
+        </>
+      )}
+      <div className="relative z-10 mt-8 flex h-10 items-center justify-center">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onSkip}
+          className="rounded-full border-white/20 bg-transparent px-8 uppercase tracking-widest text-white hover:bg-white/10 hover:text-white"
+        >
+          Passer
+        </Button>
+      </div>
     </div>
   )
 }

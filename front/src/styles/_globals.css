@@ -396,15 +396,29 @@ h6 {
 }
 
 /* Onde de choc au sol à l'atterrissage de la carte dépilée — ellipse teintée
- * par la rareté via --rar-glow, qui s'étale et s'éteint. */
+ * par la rareté via --rar-glow. Amplitude et opacité pilotées par StackReveal
+ * selon le rang de rareté (--wave-scale / --wave-opacity). */
 @keyframes stackImpactWave {
   0% {
-    opacity: 0.5;
+    opacity: var(--wave-opacity, 0.5);
     transform: translate(-50%, 0) scaleX(0.5);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, 0) scaleX(1.8);
+    transform: translate(-50%, 0) scaleX(var(--wave-scale, 1.8));
+  }
+}
+
+/* Flash radial derrière la carte à l'impact — réservé aux hauts rangs
+ * (LÉGENDAIRE / HOLO) par StackReveal. */
+@keyframes stackImpactFlash {
+  0% {
+    opacity: 0.85;
+    transform: scale(0.7);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.4);
   }
 }
 
