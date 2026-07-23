@@ -545,7 +545,7 @@ function StackReveal({
             type="button"
             onClick={onRevealNext}
             aria-label="Révéler la carte suivante"
-            className="group relative aspect-[2/3] w-40 cursor-pointer bg-transparent"
+            className="group relative aspect-[2/3] w-64 cursor-pointer bg-transparent"
           >
             {/* Ordre inversé : la prochaine carte à révéler (index) est peinte
              *  en dernier, donc visuellement au-dessus. Au hover, seule elle
@@ -609,6 +609,7 @@ function StackReveal({
               flipped={flipped.has(index)}
               onFlip={noop}
               onInspect={onDismiss}
+              inspectable={false}
               size="lg"
               entryDelay={0}
               // Pas de ref en mode pile — flipCard retombe sur le centre de l'écran, là où la carte apparaît.
@@ -882,8 +883,11 @@ type CardProps = {
   entry: PullBatchEntry
   flipped: boolean
   onFlip: () => void
-  // Fired when an already-flipped card is tapped — opens the zoom overlay.
+  // Fired when an already-flipped card is tapped — opens the zoom overlay,
+  // sauf en mode pile où le tap avance à la carte suivante (inspectable=false
+  // affiche alors un pointeur au lieu de la loupe).
   onInspect: () => void
+  inspectable?: boolean
   size: 'lg' | 'sm'
   entryDelay: number
   registerRef: (el: HTMLDivElement | null) => void
@@ -941,6 +945,7 @@ function RevealCard({
   flipped,
   onFlip,
   onInspect,
+  inspectable = true,
   size,
   entryDelay,
   registerRef,
@@ -1001,11 +1006,17 @@ function RevealCard({
         type="button"
         onClick={flipped ? onInspect : onFlip}
         aria-label={
-          flipped ? `Inspecter ${entry.card.name}` : 'Révéler la carte'
+          flipped
+            ? inspectable
+              ? `Inspecter ${entry.card.name}`
+              : 'Carte suivante'
+            : 'Révéler la carte'
         }
         className={`relative h-full w-full rounded-2xl bg-transparent ${
           flipped
-            ? 'cursor-zoom-in'
+            ? inspectable
+              ? 'cursor-zoom-in'
+              : 'cursor-pointer'
             : 'cursor-pointer transition-transform duration-200 hover:scale-105 hover:shadow-[0_0_24px_var(--rar-glow)]'
         }`}
       >
