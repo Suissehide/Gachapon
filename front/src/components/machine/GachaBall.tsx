@@ -13,7 +13,14 @@ const BALL_COLORS = [
   '#00b4d8',
 ]
 
-const SHAKE_DURATION = 0.95 // seconds
+// Shake = 3 à-coups de rotation aléatoires : la boule part vers une
+// orientation aléatoire, revient au repos, mini pause, et recommence —
+// 3 fois avant d'enchaîner sur la vibration. Le timer de phase côté
+// play.tsx (1350 ms) doit couvrir SHAKE_DURATION.
+const SHAKE_BURSTS = 3
+const SHAKE_BURST_ACTIVE = 0.3 // seconds — aller-retour de rotation
+const SHAKE_BURST_PAUSE = 0.14 // seconds — repos complet entre deux à-coups
+const SHAKE_DURATION = SHAKE_BURSTS * (SHAKE_BURST_ACTIVE + SHAKE_BURST_PAUSE)
 const VIBRATE_DURATION = 0.9 // seconds
 // Short violent burst — the white flash fires at the same moment and covers it.
 const SPLIT_DURATION = 0.3 // seconds
@@ -28,46 +35,37 @@ type ShakeSeed = {
   dir: number
 }
 
-// Organic "shaking a capsule in your hand" motion: several incommensurate
-// sine waves per axis sum into a busy, aperiodic rattle across all three
-// rotation axes plus a translational jitter — nothing like a clean left/right
-// pendulum. A quick attack + late release envelope makes the ball grab, rattle
-// hard, then settle just before it splits open.
+type ShakeBurst = { rx: number; ry: number; rz: number }
+
+// Trois à-coups de rotation : à chaque à-coup la boule part vers son
+// orientation cible et revient au repos (sinus aller-retour 0 → cible → 0),
+// puis marque une pause complète avant le suivant. La lueur monte doucement
+// sur toute la durée pour préparer la vibration. Après le 3e à-coup la boule
+// reste au repos jusqu'au changement de phase.
 function runShake(
   t: number,
   group: THREE.Group,
   mat: THREE.MeshStandardMaterial | null,
-  amp: number,
-  seed: ShakeSeed,
+  bursts: ShakeBurst[],
 ) {
-  const progress = Math.min(1, t / SHAKE_DURATION)
-  const attack = Math.min(1, progress / 0.12)
-  const release = 1 - Math.max(0, (progress - 0.82) / 0.18)
-  const env = attack * release
+  const slotLength = SHAKE_BURST_ACTIVE + SHAKE_BURST_PAUSE
+  const slot = Math.min(bursts.length - 1, Math.floor(t / slotLength))
+  const tin = t - slot * slotLength
+  const target = bursts[slot]
 
-  const { freq: f, phaseX, phaseY, phaseZ, dir } = seed
-  // Incommensurate frequency stacks → no visible repeating cycle.
-  const wz =
-    Math.sin(t * f + phaseZ) * 0.6 +
-    Math.sin(t * f * 1.73 + phaseZ * 2) * 0.3 +
-    Math.sin(t * f * 2.61 + phaseZ) * 0.1
-  const wx =
-    Math.sin(t * f * 0.86 + phaseX) * 0.55 +
-    Math.sin(t * f * 2.13 + phaseX * 1.4) * 0.3
-  const wy =
-    Math.sin(t * f * 1.27 + phaseY) * 0.5 +
-    Math.sin(t * f * 3.1 + phaseY * 0.7) * 0.22
-
-  group.rotation.z = wz * amp * dir * env
-  group.rotation.x = wx * amp * 0.7 * env
-  group.rotation.y = wy * amp * 0.55 * env
-  // Translational rattle in sync so the whole capsule jitters through space.
-  group.position.x = wz * 0.085 * env
-  group.position.y = wx * 0.05 * env
+  if (tin < SHAKE_BURST_ACTIVE) {
+    const k = Math.sin(Math.PI * (tin / SHAKE_BURST_ACTIVE))
+    group.rotation.x = target.rx * k
+    group.rotation.y = target.ry * k
+    group.rotation.z = target.rz * k
+  } else {
+    group.rotation.set(0, 0, 0)
+  }
+  group.position.set(0, 0, 0)
   group.scale.setScalar(BALL_SCALE)
 
   if (mat) {
-    mat.emissiveIntensity = progress * 0.6
+    mat.emissiveIntensity = Math.min(1, t / SHAKE_DURATION) * 0.6
   }
 }
 
@@ -194,9 +192,8 @@ export function GachaBall({ phase, onSplitDone }: Props) {
     [bottomColor],
   )
 
-  // Per-pull random seed → every shake rattles on a distinct, non-repeating
-  // path, with a slightly different peak amplitude and starting direction.
-  const amp = useMemo(() => 0.46 + Math.random() * 0.14, [])
+  // Per-pull random seed → the vibrate jitter follows a distinct path each
+  // pull; `dir` fixe aussi le sens du premier à-coup du shake.
   const shakeSeed = useMemo<ShakeSeed>(
     () => ({
       freq: 10 + Math.random() * 4,
@@ -206,6 +203,21 @@ export function GachaBall({ phase, onSplitDone }: Props) {
       dir: Math.random() < 0.5 ? -1 : 1,
     }),
     [],
+  )
+
+  // 3 orientations cibles aléatoires pour les à-coups — Z alterne de signe à
+  // partir de `dir` pour un gauche/droite crédible, X/Y désaxent légèrement.
+  const shakeBursts = useMemo<ShakeBurst[]>(
+    () =>
+      Array.from({ length: SHAKE_BURSTS }, (_, i) => ({
+        rx: (Math.random() - 0.5) * 0.5,
+        ry: (Math.random() - 0.5) * 0.4,
+        rz:
+          (0.45 + Math.random() * 0.35) *
+          shakeSeed.dir *
+          (i % 2 === 0 ? 1 : -1),
+      })),
+    [shakeSeed],
   )
 
   useFrame((_, delta) => {
@@ -226,7 +238,7 @@ export function GachaBall({ phase, onSplitDone }: Props) {
     const t = timeRef.current
 
     if (phase === 'shake') {
-      runShake(t, groupRef.current, bottomMatRef.current, amp, shakeSeed)
+      runShake(t, groupRef.current, bottomMatRef.current, shakeBursts)
     } else if (phase === 'vibrate') {
       runVibrate(
         t,
