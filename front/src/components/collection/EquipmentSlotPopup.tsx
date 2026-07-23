@@ -208,6 +208,11 @@ function ItemRow({
       className={cn(
         'flex items-center gap-2.5 rounded-lg border border-border bg-card p-2.5 text-left transition-colors',
         !selectMode && selectedId === item.id && 'border-primary bg-primary/5',
+        !selectMode &&
+          selectedId !== item.id &&
+          'cursor-pointer hover:border-primary/40 hover:bg-primary/5',
+        checkable &&
+          'cursor-pointer hover:border-primary/40 hover:bg-primary/5',
         selectMode &&
           item.equippedOnId !== null &&
           'cursor-not-allowed opacity-40',
@@ -596,7 +601,7 @@ function ItemDetail({
         ) : (
           <>
             <Button disabled={busy} onClick={onEquip}>
-              {isEquippedElsewhere ? 'Équiper ici' : 'Équiper'}
+              {isEquippedElsewhere ? 'Remplacer' : 'Équiper'}
             </Button>
             {isEquippedElsewhere && (
               <Button variant="outline" disabled={busy} onClick={onUnequip}>
