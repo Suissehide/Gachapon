@@ -193,6 +193,7 @@ type PullCfg = {
   xpPerPull: number
   pullTokenCost: number
   xpCurve: { base: number; slope: number; levelCap: number }
+  refillEnergyOnLevelUp: boolean
 }
 
 // ---------------------------------------------------------------------------
@@ -246,6 +247,7 @@ export class GachaDomain implements GachaDomainInterface {
   readonly #achievementsDomain: AchievementsDomainInterface
   readonly #userRewardRepository: UserRewardRepositoryInterface
   readonly #userBoostRepository: IUserBoostRepository
+  readonly #combatPointsTx: IocContainer['combatPointsTx']
 
   constructor({
     postgresOrm,
@@ -258,6 +260,7 @@ export class GachaDomain implements GachaDomainInterface {
     achievementsDomain,
     userRewardRepository,
     userBoostRepository,
+    combatPointsTx,
   }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#configService = configService
@@ -269,6 +272,7 @@ export class GachaDomain implements GachaDomainInterface {
     this.#achievementsDomain = achievementsDomain
     this.#userRewardRepository = userRewardRepository
     this.#userBoostRepository = userBoostRepository
+    this.#combatPointsTx = combatPointsTx
   }
 
   async #loadUserAndInitialState(
@@ -574,6 +578,9 @@ export class GachaDomain implements GachaDomainInterface {
           sourceId: `level-${pack.level}`,
         })
       }
+      if (cfg.refillEnergyOnLevelUp) {
+        await this.#combatPointsTx.refillToMaxInTx(tx, userId, cfg.upgrades)
+      }
     }
     return {
       pull: step.pull,
@@ -620,6 +627,7 @@ export class GachaDomain implements GachaDomainInterface {
           'xp.base',
           'xp.slope',
           'xp.levelCap',
+          'levelup.refillEnergy',
         ),
         this.#skillTreeRepository.getEffectsForUser(userId),
       ])
@@ -650,6 +658,7 @@ export class GachaDomain implements GachaDomainInterface {
           levelCap: c['xp.levelCap'],
         },
         upgrades,
+        refillEnergyOnLevelUp: c['levelup.refillEnergy'] === 1,
       }
       return this.#postgresOrm.executeWithTransactionClient(
         (tx) => this.#executePullTx(tx, userId, cfg),
@@ -695,6 +704,7 @@ export class GachaDomain implements GachaDomainInterface {
           'xp.base',
           'xp.slope',
           'xp.levelCap',
+          'levelup.refillEnergy',
         ),
         this.#skillTreeRepository.getEffectsForUser(userId),
       ])
@@ -725,6 +735,7 @@ export class GachaDomain implements GachaDomainInterface {
           levelCap: c['xp.levelCap'],
         },
         upgrades,
+        refillEnergyOnLevelUp: c['levelup.refillEnergy'] === 1,
       }
       return this.#postgresOrm.executeWithTransactionClient(
         // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: milestone loop added, refactor deferred
@@ -868,6 +879,13 @@ export class GachaDomain implements GachaDomainInterface {
                 source: 'LEVEL_UP',
                 sourceId: `level-${pack.level}`,
               })
+            }
+            if (cfg.refillEnergyOnLevelUp) {
+              await this.#combatPointsTx.refillToMaxInTx(
+                tx,
+                userId,
+                cfg.upgrades,
+              )
             }
           }
           // Top-level = uniquement les succès NON liés à une carte (dépense de

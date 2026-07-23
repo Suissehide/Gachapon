@@ -38,6 +38,7 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'xp.base': 100,
   'xp.slope': 44,
   'xp.levelCap': 100,
+  'levelup.refillEnergy': 1,
   'card.goldCostBase': 5,
   'card.goldCostExp': 1.6,
   'card.dustCostBase': 0.5,

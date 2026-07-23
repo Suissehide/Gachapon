@@ -226,6 +226,49 @@ export class CombatPointsTx {
     return { combatPointsAfter: after }
   }
 
+  /**
+   * Remonte les PC de l'utilisateur à leur max effectif à l'intérieur de la
+   * transaction appelante. Utilisé au level-up (refill énergie).
+   *
+   * Settle la regen lazy d'abord, puis vise `max(actuel, maxStock)` : on ne
+   * réduit JAMAIS un overfill existant (PC achetés au-dessus du cap). Au/au-
+   * dessus du cap la regen est en pause, donc on reset `lastCombatPointAt` à
+   * maintenant. Même contrat que debit/credit : `effects` lus hors transaction.
+   */
+  async refillToMaxInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+    effects: PcEffects = NEUTRAL_EFFECTS,
+  ): Promise<{ combatPointsAfter: number }> {
+    const rawCfg = await this.#loadConfig()
+    const cfg = effectiveCombatConfig(rawCfg, effects)
+
+    const user = await tx.user.findUnique({
+      where: { id: userId },
+      select: { combatPoints: true, lastCombatPointAt: true },
+    })
+    if (!user) {
+      throw Boom.notFound('User not found')
+    }
+
+    const state = calculateCombatPoints(
+      user.lastCombatPointAt,
+      user.combatPoints,
+      cfg.regenSeconds,
+      cfg.maxStock,
+    )
+
+    const target = Math.max(state.combatPoints, cfg.maxStock)
+    await tx.user.update({
+      where: { id: userId },
+      data: {
+        combatPoints: target,
+        lastCombatPointAt: new Date(),
+      },
+    })
+    return { combatPointsAfter: target }
+  }
+
   async #loadConfig(): Promise<CombatCfg> {
     const cfg = await this.#configService.getMany(
       'combat.pointsMax',

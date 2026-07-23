@@ -39,6 +39,7 @@ export class RewardsDomain implements RewardsDomainInterface {
   readonly #cardRepository: ICardRepository
   readonly #userCardRepository: IUserCardRepository
   readonly #activityDomain: IActivityDomain
+  readonly #combatPointsTx: IocContainer['combatPointsTx']
 
   constructor({
     userRewardRepository,
@@ -50,6 +51,7 @@ export class RewardsDomain implements RewardsDomainInterface {
     cardRepository,
     userCardRepository,
     activityDomain,
+    combatPointsTx,
   }: Pick<
     IocContainer,
     | 'userRewardRepository'
@@ -61,6 +63,7 @@ export class RewardsDomain implements RewardsDomainInterface {
     | 'cardRepository'
     | 'userCardRepository'
     | 'activityDomain'
+    | 'combatPointsTx'
   >) {
     this.#userRewardRepository = userRewardRepository
     this.#userRepository = userRepository
@@ -71,6 +74,7 @@ export class RewardsDomain implements RewardsDomainInterface {
     this.#cardRepository = cardRepository
     this.#userCardRepository = userCardRepository
     this.#activityDomain = activityDomain
+    this.#combatPointsTx = combatPointsTx
   }
 
   /** Grants a random active card of the given rarity (NORMAL variant) when a
@@ -153,6 +157,7 @@ export class RewardsDomain implements RewardsDomainInterface {
     }
 
     const result = await this.#postgresOrm.executeWithTransactionClient(
+      // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: refill + milestone loop added, refactor deferred
       async (tx) => {
         // Re-read inside tx to close TOCTOU window
         const userReward = await tx.userReward.findUnique({
@@ -182,6 +187,7 @@ export class RewardsDomain implements RewardsDomainInterface {
             'xp.base',
             'xp.slope',
             'xp.levelCap',
+            'levelup.refillEnergy',
           ),
         ])
         const effectiveInterval = Math.max(
@@ -248,6 +254,9 @@ export class RewardsDomain implements RewardsDomainInterface {
               source: 'LEVEL_UP',
               sourceId: `level-${pack.level}`,
             })
+          }
+          if (cfg['levelup.refillEnergy'] === 1) {
+            await this.#combatPointsTx.refillToMaxInTx(tx, userId, upgrades)
           }
         }
 
@@ -386,6 +395,7 @@ export class RewardsDomain implements RewardsDomainInterface {
             'xp.base',
             'xp.slope',
             'xp.levelCap',
+            'levelup.refillEnergy',
           ),
         ])
         const effectiveInterval = Math.max(
@@ -462,6 +472,9 @@ export class RewardsDomain implements RewardsDomainInterface {
               sourceId: `level-${pack.level}`,
             })
             milestonePacksCreated++
+          }
+          if (cfg['levelup.refillEnergy'] === 1) {
+            await this.#combatPointsTx.refillToMaxInTx(tx, userId, upgrades)
           }
         }
 
