@@ -33,14 +33,12 @@ export function PlayTutorialPopup({ open, onClose }: Props) {
 
   const step = PLAY_TUTORIAL_STEPS[stepIndex]
   const isLast = stepIndex === PLAY_TUTORIAL_STEPS.length - 1
-  const Icon = step.icon
 
   return (
     <Popup open={open} onOpenChange={(o) => !o && onClose()}>
       <PopupContent>
         <PopupHeader>
           <PopupTitle
-            icon={<Icon className="h-4 w-4" />}
             subtitle={`Étape ${stepIndex + 1} sur ${PLAY_TUTORIAL_STEPS.length}`}
           >
             {step.title}
