@@ -205,17 +205,17 @@ export function GachaBall({ phase, onSplitDone }: Props) {
     [],
   )
 
-  // 3 orientations cibles aléatoires pour les à-coups — Z alterne de signe à
-  // partir de `dir` pour un gauche/droite crédible, X/Y désaxent légèrement.
+  // 3 orientations cibles aléatoires pour les à-coups, marquées sur LES TROIS
+  // axes pour vendre la 3D : X bascule la ligne de jonction vers/loin de la
+  // caméra, Z la penche à gauche/droite (signe alterné à partir de `dir`), et
+  // Y fait tourner les reflets. Chaque axe tire fort, pas de rotation timide.
   const shakeBursts = useMemo<ShakeBurst[]>(
     () =>
       Array.from({ length: SHAKE_BURSTS }, (_, i) => ({
-        rx: (Math.random() - 0.5) * 0.5,
-        ry: (Math.random() - 0.5) * 0.4,
+        rx: (0.4 + Math.random() * 0.4) * (Math.random() < 0.5 ? -1 : 1),
+        ry: (0.5 + Math.random() * 0.5) * (Math.random() < 0.5 ? -1 : 1),
         rz:
-          (0.45 + Math.random() * 0.35) *
-          shakeSeed.dir *
-          (i % 2 === 0 ? 1 : -1),
+          (0.4 + Math.random() * 0.4) * shakeSeed.dir * (i % 2 === 0 ? 1 : -1),
       })),
     [shakeSeed],
   )
