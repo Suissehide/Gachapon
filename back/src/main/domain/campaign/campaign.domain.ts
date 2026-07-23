@@ -348,6 +348,7 @@ export class CampaignDomain {
           'xp.base',
           'xp.slope',
           'xp.levelCap',
+          'levelup.refillEnergy',
         ),
         this.#skillTreeRepository.getEffectsForUser(userId),
         this.#getSubstatRanges(),
@@ -462,6 +463,8 @@ export class CampaignDomain {
               battleCfg['xp.slope'],
               battleCfg['xp.levelCap'],
               substatRanges,
+              battleCfg['levelup.refillEnergy'],
+              effects,
             )
 
             if (isFirstClear) {
@@ -546,6 +549,7 @@ export class CampaignDomain {
           'xp.base',
           'xp.slope',
           'xp.levelCap',
+          'levelup.refillEnergy',
         ),
         this.#skillTreeRepository.getEffectsForUser(userId),
         this.#getSubstatRanges(),
@@ -729,6 +733,9 @@ export class CampaignDomain {
                 sourceId: `level-${pack.level}`,
               })
             }
+            if (sweepCfg['levelup.refillEnergy'] === 1) {
+              await this.#combatPointsTx.refillToMaxInTx(tx, userId, effects)
+            }
           }
 
           return {
@@ -760,6 +767,8 @@ export class CampaignDomain {
     xpSlope: number,
     xpLevelCap: number,
     substatRanges: SubstatRanges,
+    refillEnergy: number,
+    effects: Awaited<ReturnType<ISkillTreeRepository['getEffectsForUser']>>,
   ): Promise<BattleRewards> {
     let gold = 0
     let dust = 0
@@ -986,6 +995,9 @@ export class CampaignDomain {
           source: 'LEVEL_UP',
           sourceId: `level-${pack.level}`,
         })
+      }
+      if (refillEnergy === 1) {
+        await this.#combatPointsTx.refillToMaxInTx(tx, userId, effects)
       }
     }
 
