@@ -47,24 +47,26 @@ function Res({
         className,
       )}
     >
-      <Icon className="h-3.5 w-3.5" />
+      <Icon aria-hidden className="h-3.5 w-3.5" />
       {children}
     </span>
   )
 }
 
+const RARITY_TEXT_CLASS = {
+  common: 'text-rarity-common',
+  legendary: 'text-rarity-legendary',
+} as const
+
 function Rarity({
   rarity,
   children,
 }: {
-  rarity: 'common' | 'legendary'
+  rarity: keyof typeof RARITY_TEXT_CLASS
   children: ReactNode
 }) {
   return (
-    <span
-      className="font-semibold"
-      style={{ color: `var(--rarity-${rarity})` }}
-    >
+    <span className={cn('font-semibold', RARITY_TEXT_CLASS[rarity])}>
       {children}
     </span>
   )

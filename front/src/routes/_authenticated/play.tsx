@@ -518,6 +518,7 @@ function Play() {
       <div className="fixed bottom-4 right-4 z-5 flex items-center gap-2 sm:bottom-5 sm:right-5">
         <button
           type="button"
+          aria-label="Revoir le tutoriel"
           title="Revoir le tutoriel"
           className="inline-flex cursor-pointer items-center rounded-full border border-border-dark bg-card p-2.5 text-text-light shadow-md transition-colors hover:text-text"
           onClick={() => setTutorialOpen(true)}
