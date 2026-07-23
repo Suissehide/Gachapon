@@ -2,7 +2,7 @@ import { Environment } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { Gem, Layers, SkipForward } from 'lucide-react'
+import { Gem, HelpCircle, Layers, SkipForward } from 'lucide-react'
 import {
   type CSSProperties,
   useCallback,
@@ -19,6 +19,7 @@ import { AchievementsCard } from '../../components/play/AchievementsCard.tsx'
 import { BoostCard } from '../../components/play/BoostCard.tsx'
 import { LevelCard } from '../../components/play/LevelCard.tsx'
 import { PityCard } from '../../components/play/PityCard.tsx'
+import { PlayTutorialPopup } from '../../components/play/PlayTutorialPopup.tsx'
 import { QuestsCard } from '../../components/play/QuestsCard.tsx'
 import { RatesModal } from '../../components/play/RatesModal.tsx'
 import { RecentsPanel } from '../../components/play/RecentsPanel.tsx'
@@ -29,6 +30,7 @@ import { Button } from '../../components/ui/button.tsx'
 import { apiUrl as API_URL } from '../../constants/config.constant.ts'
 import { TOAST_SEVERITY } from '../../constants/ui.constant.ts'
 import { useCanvasContextRecovery } from '../../hooks/useCanvasContextRecovery.ts'
+import { useStoredState } from '../../hooks/useStoredState.ts'
 import { useToast } from '../../hooks/useToast'
 import { wsClient } from '../../lib/ws'
 import { preloadImages } from '../../libs/preloadImages.ts'
@@ -53,6 +55,7 @@ type Phase =
   | 'idle'
   | 'machine-anim'
   | 'ball-shake'
+  | 'ball-vibrate'
   | 'ball-split'
   | 'ball-flash'
   | 'pulling'
@@ -111,6 +114,16 @@ function Play() {
     }
     return localStorage.getItem(SKIP_KEY) === 'true'
   })
+
+  // Tutoriel de première visite : le flag « vu » vit en localStorage, la
+  // popup est ouverte tant qu'il n'est pas posé. Le bouton « ? » rouvre la
+  // popup sans toucher au flag.
+  const [tutorialSeen, setTutorialSeen] = useStoredState<'false' | 'true'>(
+    'play.hasSeenTutorial',
+    'false',
+    ['false', 'true'],
+  )
+  const [tutorialOpen, setTutorialOpen] = useState(tutorialSeen === 'false')
 
   // Refs that mirror reactive state so async callbacks / timers never see stale closures
   const phaseRef = useRef<Phase>('idle')
@@ -259,6 +272,27 @@ function Play() {
     return () => wsClient.disconnect()
   }, [])
 
+  // Shared ball choreography: shake (rattle) → vibrate (contained-power
+  // crescendo) → split (burst; the white flash fires with it). Bails out
+  // between steps if the pull errored back to idle.
+  const runBallSequence = useCallback(async () => {
+    setPhase('ball-shake')
+    phaseRef.current = 'ball-shake'
+    await new Promise((res) => setTimeout(res, 800))
+    if (pullAbortedRef.current) {
+      return
+    }
+    setPhase('ball-vibrate')
+    phaseRef.current = 'ball-vibrate'
+    await new Promise((res) => setTimeout(res, 900))
+    if (pullAbortedRef.current) {
+      return
+    }
+    setPhase('ball-split')
+    phaseRef.current = 'ball-split'
+    // ball-split ends via onSplitDone → handleSplitDone → reveal-grid
+  }, [])
+
   // startPull reads all guards from refs so it is safe to call via queueMicrotask / setTimeout
   // after a synchronous state update.
   const startPull = useCallback(
@@ -287,15 +321,7 @@ function Play() {
             phaseRef.current = 'idle'
           },
         })
-        setPhase('ball-shake')
-        phaseRef.current = 'ball-shake'
-        await new Promise((res) => setTimeout(res, 800))
-        if (pullAbortedRef.current) {
-          return
-        }
-        setPhase('ball-split')
-        phaseRef.current = 'ball-split'
-        // ball-split ends via onSplitDone → handleSplitDone → reveal-grid
+        await runBallSequence()
         return
       }
 
@@ -319,17 +345,9 @@ function Play() {
       if (pullAbortedRef.current) {
         return
       }
-      setPhase('ball-shake')
-      phaseRef.current = 'ball-shake'
-      await new Promise((res) => setTimeout(res, 800))
-      if (pullAbortedRef.current) {
-        return
-      }
-      setPhase('ball-split')
-      phaseRef.current = 'ball-split'
-      // ball-split ends via onSplitDone callback → transition inside handleSplitDone
+      await runBallSequence()
     },
-    [pullBatchMutation, receivePullResult],
+    [pullBatchMutation, receivePullResult, runBallSequence],
   )
 
   // From the reveal grid's bottom-bar "Nouveau tirage x1/x10": skip machine anim,
@@ -359,20 +377,13 @@ function Play() {
       })
 
       setResult(null)
-      setPhase('ball-shake')
-      phaseRef.current = 'ball-shake'
-      await new Promise((res) => setTimeout(res, 800))
-      if (pullAbortedRef.current) {
-        return
-      }
-      setPhase('ball-split')
-      phaseRef.current = 'ball-split'
-      // Rest handled by onSplitDone → handleSplitDone → reveal-grid
+      await runBallSequence()
     },
-    [pullBatchMutation, receivePullResult],
+    [pullBatchMutation, receivePullResult, runBallSequence],
   )
 
-  const showBall = phase === 'ball-shake' || phase === 'ball-split'
+  const showBall =
+    phase === 'ball-shake' || phase === 'ball-vibrate' || phase === 'ball-split'
   const showMachine = phase === 'idle' || phase === 'machine-anim'
   // Fullscreen overlay stays mounted for the whole pull cycle so the topbar
   // and HUD never flash back in between ball / flash / reveal / replay.
@@ -381,8 +392,10 @@ function Play() {
     phase === 'ball-flash' ||
     phase === 'reveal-grid' ||
     phase === 'pulling'
-  // Flash fires only during ball-flash — pieces are gone, cards not yet in
-  const showFlash = phase === 'ball-flash'
+  // Flash fires at the exact moment the capsule bursts (ball-split) and stays
+  // through ball-flash while we wait for the network. Same DOM element across
+  // both phases so the CSS animation doesn't restart.
+  const showFlash = phase === 'ball-split' || phase === 'ball-flash'
   const showActions = phase === 'idle'
   const canPullX1 = tokens >= 1 && phase === 'idle' && !pullPending
   const canPullX10 = tokens >= 10 && phase === 'idle' && !pullPending
@@ -501,21 +514,33 @@ function Play() {
         </div>
       </div>
 
-      {/* Toggle sauter les animations */}
-      <button
-        type="button"
-        title="Sauter les animations"
-        className={cn(
-          'fixed bottom-4 right-4 z-5 inline-flex cursor-pointer items-center gap-2 rounded-full border bg-card px-3.5 py-2.5 text-[12.5px] font-semibold shadow-md transition-colors sm:bottom-5 sm:right-5',
-          skipAnimations
-            ? 'border-amber-soft bg-primary/5 text-primary-dark'
-            : 'border-border-dark text-text-light hover:text-text',
-        )}
-        onClick={() => setSkipAnimations((s) => !s)}
-      >
-        <SkipForward className="h-3.5 w-3.5" />
-        <span className="hidden min-[721px]:inline">Sauter les animations</span>
-      </button>
+      {/* Boutons flottants : revoir le tutoriel + sauter les animations */}
+      <div className="fixed bottom-4 right-4 z-5 flex items-center gap-2 sm:bottom-5 sm:right-5">
+        <button
+          type="button"
+          title="Revoir le tutoriel"
+          className="inline-flex cursor-pointer items-center rounded-full border border-border-dark bg-card p-2.5 text-text-light shadow-md transition-colors hover:text-text"
+          onClick={() => setTutorialOpen(true)}
+        >
+          <HelpCircle className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          title="Sauter les animations"
+          className={cn(
+            'inline-flex cursor-pointer items-center gap-2 rounded-full border bg-card px-3.5 py-2.5 text-[12.5px] font-semibold shadow-md transition-colors',
+            skipAnimations
+              ? 'border-amber-soft bg-primary/5 text-primary-dark'
+              : 'border-border-dark text-text-light hover:text-text',
+          )}
+          onClick={() => setSkipAnimations((s) => !s)}
+        >
+          <SkipForward className="h-3.5 w-3.5" />
+          <span className="hidden min-[721px]:inline">
+            Sauter les animations
+          </span>
+        </button>
+      </div>
 
       {/* ── Fullscreen pull-cycle overlay ─────────────────────────────────
        *  Covers the entire viewport (including the topbar) so ball → flash
@@ -581,7 +606,13 @@ function Play() {
                 distance={10}
               />
               <GachaBall
-                phase={phase === 'ball-shake' ? 'shake' : 'split'}
+                phase={
+                  phase === 'ball-shake'
+                    ? 'shake'
+                    : phase === 'ball-vibrate'
+                      ? 'vibrate'
+                      : 'split'
+                }
                 onSplitDone={handleSplitDone}
               />
               <Environment preset="city" />
@@ -618,6 +649,13 @@ function Play() {
       )}
 
       <RatesModal open={ratesOpen} onClose={() => setRatesOpen(false)} />
+      <PlayTutorialPopup
+        open={tutorialOpen}
+        onClose={() => {
+          setTutorialOpen(false)
+          setTutorialSeen('true')
+        }}
+      />
     </div>
   )
 }

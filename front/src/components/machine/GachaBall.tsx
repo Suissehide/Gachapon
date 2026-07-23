@@ -14,7 +14,10 @@ const BALL_COLORS = [
 ]
 
 const SHAKE_DURATION = 0.95 // seconds
-const SPLIT_DURATION = 1.0 // seconds
+const VIBRATE_DURATION = 0.9 // seconds
+// Short violent burst — the white flash fires at the same moment and covers it.
+const SPLIT_DURATION = 0.3 // seconds
+const WHITE = new THREE.Color('#ffffff')
 const BALL_SCALE = 1.05
 
 type ShakeSeed = {
@@ -65,6 +68,50 @@ function runShake(
 
   if (mat) {
     mat.emissiveIntensity = progress * 0.6
+  }
+}
+
+// High-frequency, low-amplitude tremble ramping up as if the capsule strains
+// to contain something powerful: jitter frequency/amplitude grow with
+// progress, the shell overheats toward white, and an accelerating pulse makes
+// it "breathe" faster and faster until it bursts.
+function runVibrate(
+  t: number,
+  group: THREE.Group,
+  bottomMat: THREE.MeshStandardMaterial | null,
+  lidMat: THREE.MeshPhysicalMaterial | null,
+  baseEmissive: THREE.Color,
+  seed: ShakeSeed,
+) {
+  const progress = Math.min(1, t / VIBRATE_DURATION)
+  const ramp = progress ** 2
+
+  const f = seed.freq * (3 + ramp * 3)
+  const jx =
+    Math.sin(t * f + seed.phaseX) + Math.sin(t * f * 1.31 + seed.phaseY) * 0.5
+  const jy =
+    Math.sin(t * f * 1.17 + seed.phaseY) +
+    Math.sin(t * f * 2.03 + seed.phaseZ) * 0.5
+  const jz = Math.sin(t * f * 0.89 + seed.phaseZ)
+
+  const amp = 0.015 + ramp * 0.055
+  group.position.x = jx * amp
+  group.position.y = jy * amp
+  group.rotation.z = jz * (0.02 + ramp * 0.05)
+  group.rotation.x = jx * 0.02 * ramp
+  group.rotation.y = 0
+
+  // Accelerating heartbeat pulse + slow overall swell
+  const pulse = 1 + Math.sin(t * (6 + ramp * 18)) * 0.015 * (1 + ramp)
+  group.scale.setScalar(BALL_SCALE * (1 + ramp * 0.06) * pulse)
+
+  if (bottomMat) {
+    bottomMat.emissive.copy(baseEmissive).lerp(WHITE, ramp * 0.8)
+    bottomMat.emissiveIntensity = 0.6 + ramp * 2.4
+  }
+  if (lidMat) {
+    lidMat.emissive.copy(WHITE)
+    lidMat.emissiveIntensity = ramp * 1.6
   }
 }
 
@@ -123,7 +170,7 @@ function runSplit(
 }
 
 type Props = {
-  phase: 'shake' | 'split'
+  phase: 'shake' | 'vibrate' | 'split'
   onSplitDone: () => void
 }
 
@@ -141,6 +188,10 @@ export function GachaBall({ phase, onSplitDone }: Props) {
   const bottomColor = useMemo(
     () => BALL_COLORS[Math.floor(Math.random() * BALL_COLORS.length)],
     [],
+  )
+  const baseEmissive = useMemo(
+    () => new THREE.Color(bottomColor),
+    [bottomColor],
   )
 
   // Per-pull random seed → every shake rattles on a distinct, non-repeating
@@ -176,6 +227,15 @@ export function GachaBall({ phase, onSplitDone }: Props) {
 
     if (phase === 'shake') {
       runShake(t, groupRef.current, bottomMatRef.current, amp, shakeSeed)
+    } else if (phase === 'vibrate') {
+      runVibrate(
+        t,
+        groupRef.current,
+        bottomMatRef.current,
+        lidMatRef.current,
+        baseEmissive,
+        shakeSeed,
+      )
     } else {
       runSplit(
         t,
