@@ -423,7 +423,7 @@ export function RevealGrid({
 
 // ── StackReveal ─────────────────────────────────────────────────────────────
 // Dépilage un-par-un : pile de dos jitterés, puis carte du dessus révélée en
-// grand avec un impact (chute + squash + shake + ondes) dont l'intensité monte
+// grand avec un impact (dézoom de face + shake + ondes) dont l'intensité monte
 // avec la rareté. Présentation pure — la machine à états reste dans RevealGrid.
 
 type StackRevealProps = {
@@ -457,7 +457,7 @@ function impactParams(entry: PullBatchEntry) {
 const RARITY_WAVE_GRADIENT =
   'radial-gradient(50% 50% at 50% 50%, var(--rar-glow), transparent 70%)'
 
-// Effets d'impact au toucher au sol (150 ms après le début de la chute) —
+// Effets d'impact au contact du dézoom (~190 ms après son départ) —
 // teintés par le --rar-glow du parent, montée en gamme avec le rang : onde
 // seule, + écho dès ÉPIQUE, + flash radial pour LÉGENDAIRE/HOLO.
 function ImpactWaves({
@@ -474,13 +474,13 @@ function ImpactWaves({
       {rank >= 4 && (
         <div
           aria-hidden
-          className="pointer-events-none absolute -inset-[12%] rounded-3xl opacity-0 blur-2xl animate-[stackImpactFlash_300ms_ease-out_150ms_forwards]"
+          className="pointer-events-none absolute -inset-[12%] rounded-3xl opacity-0 blur-2xl animate-[stackImpactFlash_300ms_ease-out_190ms_forwards]"
           style={{ background: RARITY_WAVE_GRADIENT }}
         />
       )}
       <div
         aria-hidden
-        className="pointer-events-none absolute -bottom-5 left-1/2 h-16 w-80 rounded-[50%] opacity-0 blur-md animate-[stackImpactWave_320ms_ease-out_150ms_forwards]"
+        className="pointer-events-none absolute -bottom-5 left-1/2 h-16 w-80 rounded-[50%] opacity-0 blur-md animate-[stackImpactWave_320ms_ease-out_190ms_forwards]"
         style={
           {
             background: RARITY_WAVE_GRADIENT,
@@ -492,7 +492,7 @@ function ImpactWaves({
       {rank >= 3 && (
         <div
           aria-hidden
-          className="pointer-events-none absolute -bottom-6 left-1/2 h-20 w-96 rounded-[50%] opacity-0 blur-lg animate-[stackImpactWave_420ms_ease-out_230ms_forwards]"
+          className="pointer-events-none absolute -bottom-6 left-1/2 h-20 w-96 rounded-[50%] opacity-0 blur-lg animate-[stackImpactWave_420ms_ease-out_270ms_forwards]"
           style={
             {
               background: RARITY_WAVE_GRADIENT,
@@ -524,14 +524,14 @@ function StackReveal({
 
   return (
     // Key par étape : remonte le conteneur à chaque carte révélée pour rejouer
-    // le screenShake d'impact (retardé pour coïncider avec le toucher au sol
-    // de stackCardDrop, à 70 % de ses 220 ms).
+    // le screenShake d'impact (retardé pour coïncider avec le contact du
+    // dézoom stackCardSlam, à ~80 % de ses 240 ms).
     <div
       key={step === 'pile' ? `pile-${index}` : `impact-${index}`}
       className={
         step === 'pile'
           ? 'relative flex min-h-full flex-col items-center justify-center pb-32 md:pb-0'
-          : 'relative flex min-h-full flex-col items-center justify-center pb-32 md:pb-0 animate-[screenShake_260ms_ease-out_150ms]'
+          : 'relative flex min-h-full flex-col items-center justify-center pb-32 md:pb-0 animate-[screenShake_260ms_ease-out_190ms]'
       }
       style={
         step === 'pile'
@@ -592,7 +592,7 @@ function StackReveal({
             className={
               step === 'exiting'
                 ? 'relative z-10 animate-[stackCardOut_180ms_ease-in_forwards]'
-                : 'relative z-10 animate-[stackCardDrop_220ms_cubic-bezier(0.45,0,1,0.55)_both]'
+                : 'relative z-10 animate-[stackCardSlam_240ms_ease-in_both]'
             }
             style={{ '--rar-glow': tone.hex } as CSSProperties}
           >
@@ -632,7 +632,7 @@ function StackReveal({
 }
 
 // ── SingleReveal ────────────────────────────────────────────────────────────
-// Reveal à carte unique : la carte arrive dos visible en mode impact (chute +
+// Reveal à carte unique : la carte arrive dos visible en mode impact (dézoom +
 // shake neutres, en blanc pour ne pas spoiler la rareté), puis rejoue l'impact
 // aux couleurs et à l'intensité de sa rareté quand on la retourne.
 
@@ -655,10 +655,10 @@ function SingleReveal({
   const impact = impactParams(entry)
 
   return (
-    // Key sur l'état retourné : le remount rejoue chute + shake + ondes au flip.
+    // Key sur l'état retourné : le remount rejoue dézoom + shake + ondes au flip.
     <div
       key={flipped ? 'face' : 'dos'}
-      className="relative flex items-center justify-center animate-[screenShake_260ms_ease-out_150ms]"
+      className="relative flex items-center justify-center animate-[screenShake_260ms_ease-out_190ms]"
       style={
         {
           '--shake-amp': flipped ? impact.shakeAmp : '7px',
@@ -666,7 +666,7 @@ function SingleReveal({
         } as CSSProperties
       }
     >
-      <div className="relative animate-[stackCardDrop_220ms_cubic-bezier(0.45,0,1,0.55)_both]">
+      <div className="relative animate-[stackCardSlam_240ms_ease-in_both]">
         <ImpactWaves
           rank={flipped ? impact.rank : 0}
           waveScale={flipped ? impact.waveScale : '1.4'}

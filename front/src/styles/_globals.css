@@ -375,23 +375,24 @@ h6 {
   }
 }
 
-/* Stacked-reveal card entrance — gravity drop with a squash on touchdown;
- * the delayed screenShake + stackImpactWave sell the landing. Touchdown sits
- * at 70% of the duration — keep the shake/wave delays in sync with it. */
-@keyframes stackCardDrop {
+/* Entrée de la carte révélée — elle arrive de face, côté spectateur :
+ * surdimensionnée puis dézoom rapide jusqu'à sa place, léger enfoncement au
+ * contact (~80 % de la durée). Le screenShake et les ondes partent à ce
+ * moment-là — garder leurs délais synchronisés. */
+@keyframes stackCardSlam {
   0% {
     opacity: 0;
-    transform: translateY(-90px) scale(1.06);
+    transform: scale(1.9);
   }
-  55% {
+  50% {
     opacity: 1;
   }
-  70% {
-    transform: translateY(0) scale(1.05, 0.93);
+  80% {
+    transform: scale(0.97);
   }
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: scale(1);
   }
 }
 
