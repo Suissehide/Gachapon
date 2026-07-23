@@ -216,8 +216,11 @@ describe('CombatPointsTx.refillToMaxInTx', () => {
     })
     const result = await makeCpTx().refillToMaxInTx(tx, 'u1')
     expect(result.combatPointsAfter).toBe(75)
-    const args = calls.update[0] as { data: { combatPoints: number } }
+    const args = calls.update[0] as {
+      data: { combatPoints: number; lastCombatPointAt: Date }
+    }
     expect(args.data.combatPoints).toBe(75)
+    expect(args.data.lastCombatPointAt).toBeInstanceOf(Date)
   })
 
   it('règle la regen lazy avant de comparer au cap', async () => {
