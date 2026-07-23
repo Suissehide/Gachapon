@@ -27,6 +27,7 @@ export const CONFIG_KEYS = [
   'xp.base',
   'xp.slope',
   'xp.levelCap',
+  'levelup.refillEnergy',
   'card.goldCostBase',
   'card.goldCostExp',
   'card.dustCostBase',
