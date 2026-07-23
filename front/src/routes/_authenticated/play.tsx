@@ -385,10 +385,7 @@ function Play() {
   const showFlash = phase === 'ball-flash'
   const showActions = phase === 'idle'
   const canPullX1 = tokens >= 1 && phase === 'idle' && !pullPending
-  // Le gros bouton fait un x10 complet quand on peut se le payer, sinon un "xN"
-  // pour ce qu'il reste (2..9). En dessous de 2 jetons il retombe sur un x10 désactivé.
-  const batchCount = tokens >= 2 ? Math.min(tokens, 10) : 10
-  const canPullBatch = tokens >= 2 && phase === 'idle' && !pullPending
+  const canPullX10 = tokens >= 10 && phase === 'idle' && !pullPending
 
   const [ratesOpen, setRatesOpen] = useState(false)
   const pullCost = economy.gacha.pullTokenCost
@@ -482,15 +479,15 @@ function Play() {
               </span>
             </Button>
             <Button
-              onClick={() => startPull(batchCount)}
-              disabled={!canPullBatch}
+              onClick={() => startPull(10)}
+              disabled={!canPullX10}
               variant="none"
               className="h-auto flex-1 whitespace-nowrap rounded-2xl bg-linear-to-br from-primary to-orange-500 px-7 py-4 text-[17px] font-bold text-white shadow-[0_14px_30px_-12px_rgba(245,158,11,0.65)] transition-all hover:-translate-y-0.5 disabled:opacity-50 sm:flex-none"
             >
-              Tirage x{batchCount}
+              Tirage x10
               <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-white/25 px-2.5 py-1 font-mono text-xs text-white">
                 <Layers className="h-3.5 w-3.5" />
-                {pullCost * batchCount}
+                {pullCost * 10}
               </span>
             </Button>
           </div>

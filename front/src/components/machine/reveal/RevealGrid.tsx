@@ -62,10 +62,6 @@ export function RevealGrid({
   onAllRevealed,
 }: Props) {
   const showPullAgain = onPullAgain !== undefined
-  // Comme sur la page de tirage : x10 complet si on peut se le payer, sinon "xN"
-  // pour ce qu'il reste (2..9), et un x10 désactivé en dessous de 2 jetons.
-  const replayBatchCount =
-    (tokensRemaining ?? 0) >= 2 ? Math.min(tokensRemaining ?? 0, 10) : 10
   const [flipped, setFlipped] = useState<Set<number>>(() => new Set())
   const [revealAllTriggered, setRevealAllTriggered] = useState(false)
   const [activeEffect, setActiveEffect] = useState<ActiveEffect | null>(null)
@@ -294,11 +290,11 @@ export function RevealGrid({
                     </Button>
                     <Button
                       variant="gradient"
-                      onClick={() => onPullAgain(replayBatchCount)}
-                      disabled={(tokensRemaining ?? 0) < 2}
+                      onClick={() => onPullAgain(10)}
+                      disabled={(tokensRemaining ?? 0) < 10}
                       className="gap-2"
                     >
-                      Tirage x{replayBatchCount}
+                      Tirage x10
                     </Button>
                   </div>
                   <Button
