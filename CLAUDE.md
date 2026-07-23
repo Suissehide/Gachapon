@@ -21,7 +21,7 @@ Scripts go through [Wireit](https://github.com/google/wireit), which caches base
 
 | | |
 |---|---|
-| `npm run dev` | Dev server with hot reload (`node -r @swc-node/register`), watches `src/main/**/*.ts` |
+| `npm run dev` | Dev server with hot reload (`node -r @swc-node/register`) on **port 3001**, watches `src/main/**/*.ts` |
 | `npm run build` | Type-check then SWC transpile to `lib/` |
 | `npm test` | Run all Jest tests (unit + e2e), `--runInBand` |
 | `npm run test:unit` | Unit tests only (pure-domain logic in `src/test/unit/`) |
@@ -35,7 +35,7 @@ Scripts go through [Wireit](https://github.com/google/wireit), which caches base
 
 Run a single Jest test file: `npx jest -c src/test/jest.config.ts path/to/file.test.ts`. Add `-t "name fragment"` to filter by test name.
 
-**E2E tests require a running Postgres** with a `gachapon_test` database reachable via the `DATABASE_URL` in `back/.env.test`. `globalSetup.ts` runs `prisma migrate deploy` and `TRUNCATE` on every run — there's no Docker spin-up inside the test runner. Spin up Postgres beforehand with `cd deploy && docker compose --profile db up -d`, then `deploy/create-test-db.sh` creates the test DB.
+**E2E tests require a running Postgres** with a `gachapon_test` database reachable via the `DATABASE_URL` in `back/.env.test`. `globalSetup.ts` runs `prisma migrate deploy` and `TRUNCATE` on every run — there's no Docker spin-up inside the test runner. Spin up Postgres beforehand with `cd deploy && docker compose --profile db up -d` (needs `docker network create proxy` once — the compose file declares `proxy` as external), then `deploy/create-test-db.sh` creates the test DB.
 
 ### Frontend (`cd front`)
 
@@ -165,9 +165,14 @@ SEO postbuild — `scripts/prerender-seo.mjs` rewrites per-route `<title>`/`<met
 
 ## Things that bite
 
-- The frontend dev port is **4269**, not the Vite default.
+- The frontend dev port is **4269**, not the Vite default. The backend dev port is **3001**, not the `3000` fallback baked into `config.ts` — `vite.config.ts` proxies `/auth` to `localhost:3001`, so `back/.env` must set `PORT=3001` or OAuth callbacks break.
 - Frontend uses `VITE_API_URL` (build-time, baked into the bundle) — changing it requires a rebuild, not just a restart.
 - `back/.env*` and `deploy/.env*` are different files for different worlds. Migrating a config var means touching both if it's needed in prod.
+- **npm 11+ blocks lifecycle scripts by default.** A bare `npm install` leaves Prisma without its engines and bcrypt/esbuild/swc without native binaries — everything fails at runtime, not at install. Unblock once per package: `npm install-scripts approve @prisma/engines @swc/core bcrypt esbuild prisma unrs-resolver` in `back/`, `npm install-scripts approve esbuild @swc/core` in `front/`.
+- `deploy/compose.yaml` declares the `proxy` network as **external** — `docker compose up` fails until `docker network create proxy` has been run once.
+- Mailpit sits behind `--profile dev`, not `--profile db`. Bring up both (`--profile db --profile dev`) or every transactional email (verification, password reset) fails against a dead SMTP.
+- **No MinIO service in `deploy/compose.yaml`.** Seeded cards carry object keys (`staging/cards/humans/<id>.png`, see `prisma/seed/cards.ts:8`) resolved against `MINIO_ENDPOINT`, so card art 404s locally. `MinioClient` is lazy — nothing fails at boot, images just don't render.
+- `prisma migrate status` reports `0 applied, 0 pending` under Prisma 7 + `prisma.config.ts` even when every migration is applied. Check the actual tables rather than trusting it.
 - When adding a new domain/repo, you must update **both** `types/application/ioc.ts` and `awilix-ioc-container.ts`, or DI resolution will throw at startup.
 - The pre-commit hook lives at the repo root (`.husky/pre-commit`) and only fires for packages with staged files. If it doesn't run at all, `core.hooksPath` isn't set — run `npm install` in `back/` or `front/` (their `prepare` script wires it).
 - `docs/` is gitignored (see `.gitignore`); don't expect to commit specs there.
