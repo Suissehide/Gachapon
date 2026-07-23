@@ -49,7 +49,7 @@ export function Navbar() {
   return (
     <>
       <nav className="fixed top-0 z-50 w-full border-b border-border bg-background">
-        {/* Mobile / tablet — resources row (jetons · poussière · or · PC) */}
+        {/* Mobile / tablet — resources row (jetons · poussière · or · énergie) */}
         {user && (
           <div className="flex h-12 items-center gap-1.5 overflow-x-auto px-3 lg:hidden">
             <TokensPill />
@@ -237,7 +237,7 @@ function Wallet({ user }: { user: AuthUser }) {
   return (
     <div className="contents lg:flex lg:items-center lg:gap-2">
       <CoinPill
-        title={`${fmt(user.dust)} poussière`}
+        title={`Poussière — ${fmt(user.dust)}`}
         icon={<Sparkles size={15} strokeWidth={1.8} />}
         value={fmt(user.dust)}
         bgClassName="bg-[#e0f2fe]"
@@ -247,7 +247,7 @@ function Wallet({ user }: { user: AuthUser }) {
         shadowClassName="shadow-[0_2px_6px_rgba(2,132,199,0.1)]"
       />
       <CoinPill
-        title={`${fmt(user.gold)} or`}
+        title={`Or — ${fmt(user.gold)}`}
         icon={<Coins size={15} strokeWidth={1.8} />}
         value={fmt(user.gold)}
         bgClassName="bg-[#fef9c3]"
@@ -295,7 +295,7 @@ function TokensPill() {
   return (
     <Link
       to="/play"
-      title={`Jetons gacha — ${data.tokens}/${data.maxStock}${timer ? ` · prochain dans ${timer}` : ''}`}
+      title={`Jetons — ${data.tokens}/${data.maxStock}${timer ? ` · prochain dans ${timer}` : ''}`}
       className="relative inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-[13px] border border-[#fdba74] bg-[#ffedd5] px-2 py-2 shadow-[0_2px_6px_rgba(234,88,12,0.1)] lg:flex-none lg:justify-start lg:gap-2 lg:pr-3 lg:pl-[11px]"
     >
       <span className="flex text-[#ea580c]">
@@ -375,7 +375,7 @@ function Energy() {
   return (
     <Link
       to="/campaign"
-      title={`Points de combat — ${data.combatPoints}/${data.maxStock}${timer ? ` · prochain dans ${timer}` : ''}`}
+      title={`Énergie — ${data.combatPoints}/${data.maxStock}${timer ? ` · prochain dans ${timer}` : ''}`}
       className="relative inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-[13px] border border-[#ddd0ff] bg-[#f3efff] px-2 py-2 shadow-[0_2px_6px_rgba(139,92,246,0.1)] lg:flex-none lg:justify-start lg:gap-2 lg:pr-3 lg:pl-[11px]"
     >
       <span className="flex text-[#7c3aed]">

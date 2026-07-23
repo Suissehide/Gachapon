@@ -622,7 +622,7 @@ export async function seedSkills(tx: Tx) {
     data: {
       branchId: combat.id,
       name: 'Endurance',
-      description: 'Augmente le stock maximum de PC',
+      description: "Augmente le stock maximum d'énergie",
       icon: 'BatteryCharging',
       maxLevel: 3,
       effectType: 'PC_VAULT',
@@ -641,7 +641,7 @@ export async function seedSkills(tx: Tx) {
     data: {
       branchId: combat.id,
       name: 'Récupération',
-      description: 'Réduit le délai de régénération des PC',
+      description: "Réduit le délai de régénération de l'énergie",
       icon: 'Timer',
       maxLevel: 3,
       effectType: 'PC_REGEN',
