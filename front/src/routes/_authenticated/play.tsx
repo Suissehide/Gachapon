@@ -1,8 +1,13 @@
-import { Environment } from '@react-three/drei'
-import { Canvas } from '@react-three/fiber'
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { Gem, HelpCircle, SkipForward, Ticket } from 'lucide-react'
+import {
+  Gem,
+  HelpCircle,
+  SkipForward,
+  Ticket,
+  Volume2,
+  VolumeX,
+} from 'lucide-react'
 import {
   type CSSProperties,
   useCallback,
@@ -11,7 +16,13 @@ import {
   useState,
 } from 'react'
 
-import { GachaBall } from '../../components/machine/GachaBall'
+import { CapsuleStage } from '../../components/machine/capsule/CapsuleStage'
+import { capsuleAudio } from '../../components/machine/capsule/capsuleAudio'
+import {
+  computeTeaseTier,
+  type TeaseTier,
+  tierConfig,
+} from '../../components/machine/capsule/capsuleConfig'
 import type { MachineStageHandle } from '../../components/machine/MachineStage'
 import { MachineStage } from '../../components/machine/MachineStage'
 import { RevealGrid } from '../../components/machine/reveal/RevealGrid'
@@ -29,7 +40,6 @@ import { AuroraGrid } from '../../components/shared/decorations/AuroraGrid'
 import { Button } from '../../components/ui/button.tsx'
 import { apiUrl as API_URL } from '../../constants/config.constant.ts'
 import { TOAST_SEVERITY } from '../../constants/ui.constant.ts'
-import { useCanvasContextRecovery } from '../../hooks/useCanvasContextRecovery.ts'
 import { useStoredState } from '../../hooks/useStoredState.ts'
 import { useToast } from '../../hooks/useToast'
 import { wsClient } from '../../lib/ws'
@@ -54,9 +64,7 @@ export const Route = createFileRoute('/_authenticated/play')({
 type Phase =
   | 'idle'
   | 'machine-anim'
-  | 'ball-shake'
-  | 'ball-vibrate'
-  | 'ball-split'
+  | 'capsule'
   | 'ball-flash'
   | 'pulling'
   | 'reveal-grid'
@@ -98,6 +106,10 @@ const SKIP_KEY = 'play.skipAnimations'
 function Play() {
   const [phase, setPhase] = useState<Phase>('idle')
   const [result, setResult] = useState<PullBatchResult | null>(null)
+  // Palier de rareté teasé par la capsule (meilleure rareté du lot) — null
+  // tant que le réseau n'a pas répondu : capsule neutre, qui « bloom » à sa
+  // couleur dès que le résultat tombe.
+  const [teaseTier, setTeaseTier] = useState<TeaseTier | null>(null)
   const pendingResult = useRef<PullBatchResult | null>(null)
   // Level-up detected at pull time but celebrated only once every card is
   // flipped (see receivePullResult / handleAllRevealed).
@@ -106,8 +118,6 @@ function Play() {
     reward: LevelUpReward
   } | null>(null)
   const machineRef = useRef<MachineStageHandle>(null)
-  const { canvasKey: ballCanvasKey, canvasRef: ballCanvasRef } =
-    useCanvasContextRecovery()
   const [skipAnimations, setSkipAnimations] = useState<boolean>(() => {
     if (typeof window === 'undefined') {
       return false
@@ -124,6 +134,17 @@ function Play() {
     ['false', 'true'],
   )
   const [tutorialOpen, setTutorialOpen] = useState(tutorialSeen === 'false')
+
+  // Son du tirage : off par défaut, persistant. Le moteur audio est un
+  // singleton — on synchronise juste son état muet.
+  const [soundOn, setSoundOn] = useStoredState<'true' | 'false'>(
+    'play.soundOn',
+    'false',
+    ['true', 'false'],
+  )
+  useEffect(() => {
+    capsuleAudio.setMuted(soundOn !== 'true')
+  }, [soundOn])
 
   // Refs that mirror reactive state so async callbacks / timers never see stale closures
   const phaseRef = useRef<Phase>('idle')
@@ -161,9 +182,9 @@ function Play() {
   }, [pullPending])
 
   // Stable handlers — useCallback because they're passed to children with effect deps.
-  // Ball split ended → pieces are gone from the scene. Fire the white flash while
-  // we wait for the network, then swap to the reveal grid mid-flash.
-  const handleSplitDone = useCallback(() => {
+  // La capsule vient d'exploser (burst gsap dans CapsuleScene). Fire the flash
+  // while we wait for the network, then swap to the reveal grid mid-flash.
+  const handleCapsuleBurst = useCallback(() => {
     setPhase('ball-flash')
     phaseRef.current = 'ball-flash'
     let attempts = 0
@@ -200,6 +221,7 @@ function Play() {
 
   const handleClose = useCallback(() => {
     setResult(null)
+    setTeaseTier(null)
     pendingResult.current = null
     pendingLevelUp.current = null
     setPhase('idle')
@@ -213,6 +235,9 @@ function Play() {
   const receivePullResult = useCallback(
     (r: PullBatchResult) => {
       pendingResult.current = r
+      // Foreshadowing : la capsule s'illumine à la couleur de la meilleure
+      // rareté du lot — jamais la carte précise.
+      setTeaseTier(computeTeaseTier(r))
       preloadImages(r.pulls.map((p) => p.card.imageUrl))
       const cached = qc.getQueryData<{ xp?: number }>(['profile', username])
       const oldXp = cached?.xp ?? 0
@@ -272,25 +297,12 @@ function Play() {
     return () => wsClient.disconnect()
   }, [])
 
-  // Shared ball choreography: shake (3 à-coups avec pauses, 3 × 560 ms côté
-  // GachaBall) → vibrate → split (le flash blanc part avec). Bails out
-  // between steps if the pull errored back to idle.
-  const runBallSequence = useCallback(async () => {
-    setPhase('ball-shake')
-    phaseRef.current = 'ball-shake'
-    await new Promise((res) => setTimeout(res, 1700))
-    if (pullAbortedRef.current) {
-      return
-    }
-    setPhase('ball-vibrate')
-    phaseRef.current = 'ball-vibrate'
-    await new Promise((res) => setTimeout(res, 900))
-    if (pullAbortedRef.current) {
-      return
-    }
-    setPhase('ball-split')
-    phaseRef.current = 'ball-split'
-    // ball-split ends via onSplitDone → handleSplitDone → reveal-grid
+  // Séquence capsule : toute la chorégraphie (pop → shake → charge → inhale
+  // → burst) est orchestrée par la timeline gsap de CapsuleScene — plus de
+  // chaîne de setTimeout ici. La fin arrive via onBurst → handleCapsuleBurst.
+  const runCapsuleSequence = useCallback(() => {
+    setPhase('capsule')
+    phaseRef.current = 'capsule'
   }, [])
 
   // startPull reads all guards from refs so it is safe to call via queueMicrotask / setTimeout
@@ -306,12 +318,16 @@ function Play() {
       }
       pullAbortedRef.current = false
 
+      // Geste utilisateur → déverrouille le contexte WebAudio
+      capsuleAudio.unlock()
+
       // Kick off network in parallel with visuals
       pendingResult.current = null
+      setTeaseTier(null)
 
-      // "Skip animations" only skips the 3D machine animation — the ball
-      // shake/split, flash and card-reveal effects still play. Go straight to
-      // the ball on the black backdrop.
+      // "Skip animations" only skips the 3D machine animation — the capsule
+      // sequence, flash and card-reveal effects still play. Go straight to
+      // the capsule on the black backdrop.
       if (skipAnimationsRef.current) {
         pullBatchMutation(count, {
           onSuccess: receivePullResult,
@@ -321,7 +337,7 @@ function Play() {
             phaseRef.current = 'idle'
           },
         })
-        await runBallSequence()
+        runCapsuleSequence()
         return
       }
 
@@ -345,15 +361,15 @@ function Play() {
       if (pullAbortedRef.current) {
         return
       }
-      await runBallSequence()
+      runCapsuleSequence()
     },
-    [pullBatchMutation, receivePullResult, runBallSequence],
+    [pullBatchMutation, receivePullResult, runCapsuleSequence],
   )
 
   // From the reveal grid's bottom-bar "Nouveau tirage x1/x10": skip machine anim,
   // keep the black backdrop up, and go straight to the ball animation.
   const handlePullAgain = useCallback(
-    async (count: number) => {
+    (count: number) => {
       // Guard: only callable from the reveal-grid phase; phaseRef is set synchronously
       // before any async work so a second click sees a non-reveal-grid phase and exits.
       if (phaseRef.current !== 'reveal-grid' || tokensRef.current < count) {
@@ -363,6 +379,8 @@ function Play() {
       phaseRef.current = 'pulling'
       pullAbortedRef.current = false
       pendingResult.current = null
+      capsuleAudio.unlock()
+      setTeaseTier(null)
 
       // This replay is already on the black backdrop, so the machine anim is
       // never involved — the "skip animations" toggle has nothing to skip here.
@@ -377,25 +395,27 @@ function Play() {
       })
 
       setResult(null)
-      await runBallSequence()
+      runCapsuleSequence()
     },
-    [pullBatchMutation, receivePullResult, runBallSequence],
+    [pullBatchMutation, receivePullResult, runCapsuleSequence],
   )
 
-  const showBall =
-    phase === 'ball-shake' || phase === 'ball-vibrate' || phase === 'ball-split'
+  const showCapsule = phase === 'capsule'
   const showMachine = phase === 'idle' || phase === 'machine-anim'
   // Fullscreen overlay stays mounted for the whole pull cycle so the topbar
-  // and HUD never flash back in between ball / flash / reveal / replay.
+  // and HUD never flash back in between capsule / flash / reveal / replay.
   const inPullCycleFullscreen =
-    showBall ||
+    showCapsule ||
     phase === 'ball-flash' ||
     phase === 'reveal-grid' ||
     phase === 'pulling'
-  // Flash fires at the exact moment the capsule bursts (ball-split) and stays
-  // through ball-flash while we wait for the network. Same DOM element across
-  // both phases so the CSS animation doesn't restart.
-  const showFlash = phase === 'ball-split' || phase === 'ball-flash'
+  // Flash au burst de la capsule — teinté à la couleur du palier teasé.
+  // Il reste monté pendant reveal-grid : c'est le MÊME élément DOM, donc
+  // l'animation CSS ne redémarre pas et le fondu se termine par-dessus la
+  // carte de dos — sans ça le flash est démonté en pleine opacité au
+  // changement de phase et la transition se coupe net.
+  const showFlash = phase === 'ball-flash' || phase === 'reveal-grid'
+  const flashColor = tierConfig(teaseTier).flash
   const showActions = phase === 'idle'
   const canPullX1 = tokens >= 1 && phase === 'idle' && !pullPending
   const canPullX10 = tokens >= 10 && phase === 'idle' && !pullPending
@@ -518,6 +538,28 @@ function Play() {
       <div className="fixed bottom-4 right-4 z-5 flex items-center gap-2 sm:bottom-5 sm:right-5">
         <button
           type="button"
+          aria-label={
+            soundOn === 'true' ? 'Couper le son' : 'Activer le son du tirage'
+          }
+          title={
+            soundOn === 'true' ? 'Couper le son' : 'Activer le son du tirage'
+          }
+          className={cn(
+            'inline-flex cursor-pointer items-center rounded-full border bg-card p-2.5 shadow-md transition-colors',
+            soundOn === 'true'
+              ? 'border-amber-soft bg-primary/5 text-primary-dark'
+              : 'border-border-dark text-text-light hover:text-text',
+          )}
+          onClick={() => setSoundOn(soundOn === 'true' ? 'false' : 'true')}
+        >
+          {soundOn === 'true' ? (
+            <Volume2 className="h-3.5 w-3.5" />
+          ) : (
+            <VolumeX className="h-3.5 w-3.5" />
+          )}
+        </button>
+        <button
+          type="button"
           aria-label="Revoir le tutoriel"
           title="Revoir le tutoriel"
           className="inline-flex cursor-pointer items-center rounded-full border border-border-dark bg-card p-2.5 text-text-light shadow-md transition-colors hover:text-text"
@@ -577,56 +619,42 @@ function Play() {
             </div>
           )}
 
-          {/* Ball scene */}
-          {showBall && (
-            <Canvas
-              key={ballCanvasKey}
-              ref={ballCanvasRef}
-              camera={{ position: [0, 0.3, 7], fov: 45 }}
-              shadows
-              gl={{ antialias: true, alpha: true }}
-              style={{ background: 'transparent' }}
-            >
-              <ambientLight intensity={0.55} />
-              <directionalLight
-                position={[5, 10, 5]}
-                intensity={1.1}
-                castShadow
-                shadow-mapSize={[1024, 1024] as [number, number]}
+          {/* Capsule scene — chorégraphie gsap + bloom, rarity-aware */}
+          {showCapsule && (
+            <div className="absolute inset-0">
+              <CapsuleStage
+                teaseTier={teaseTier}
+                onBurst={handleCapsuleBurst}
               />
-              <pointLight
-                position={[-3, 3, 3]}
-                intensity={0.9}
-                color="#f59e0b"
-                distance={12}
-              />
-              <pointLight
-                position={[3, 2, -2]}
-                intensity={0.6}
-                color="#ec4899"
-                distance={10}
-              />
-              <GachaBall
-                phase={
-                  phase === 'ball-shake'
-                    ? 'shake'
-                    : phase === 'ball-vibrate'
-                      ? 'vibrate'
-                      : 'split'
-                }
-                onSplitDone={handleSplitDone}
-              />
-              <Environment preset="city" />
-            </Canvas>
+            </div>
           )}
 
-          {/* Flash between split and reveal */}
+          {/* Flash between burst and reveal — teinté rareté, fondu qui se
+           *  prolonge par-dessus l'arrivée de la carte */}
           {showFlash && (
             <div
-              className="pointer-events-none absolute inset-0 z-40 bg-white animate-[ballFlash_500ms_ease-out_forwards]"
-              style={{ mixBlendMode: 'screen' }}
+              className="pointer-events-none absolute inset-0 z-40 animate-[ballFlash_900ms_ease-out_forwards]"
+              style={{
+                mixBlendMode: 'screen',
+                background: `radial-gradient(circle at 50% 50%, #ffffff 0%, #ffffff 28%, ${flashColor} 62%, ${flashColor} 100%)`,
+              }}
             />
           )}
+
+          {/* Mute — visible pendant tout le cycle de tirage */}
+          <button
+            type="button"
+            aria-label={soundOn === 'true' ? 'Couper le son' : 'Activer le son'}
+            title={soundOn === 'true' ? 'Couper le son' : 'Activer le son'}
+            className="absolute bottom-4 left-4 z-50 inline-flex cursor-pointer items-center rounded-full border border-white/20 bg-white/10 p-2.5 text-white/80 backdrop-blur transition-colors hover:text-white"
+            onClick={() => setSoundOn(soundOn === 'true' ? 'false' : 'true')}
+          >
+            {soundOn === 'true' ? (
+              <Volume2 className="h-4 w-4" />
+            ) : (
+              <VolumeX className="h-4 w-4" />
+            )}
+          </button>
 
           {/* Pulling spinner (skip-anim path) */}
           {phase === 'pulling' && (

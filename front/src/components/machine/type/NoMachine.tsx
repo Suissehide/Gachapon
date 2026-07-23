@@ -10,8 +10,7 @@ export function NoMachine() {
         className="absolute h-[300px] w-[300px] rounded-full"
         style={{
           border: '1px dashed',
-          borderColor:
-            'color-mix(in srgb, var(--primary) 8%, transparent)',
+          borderColor: 'color-mix(in srgb, var(--primary) 8%, transparent)',
           animation: 'spin 80s linear infinite reverse',
         }}
       />

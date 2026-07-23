@@ -21,7 +21,9 @@ export function RevealCanvases({ refs, scoped = false }: Props) {
     const resize = () => {
       for (const key of CANVAS_KEYS) {
         const canvas = refs[key].current
-        if (!canvas) { continue }
+        if (!canvas) {
+          continue
+        }
         if (scoped) {
           const parent = canvas.parentElement
           canvas.width = parent?.clientWidth ?? window.innerWidth

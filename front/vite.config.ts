@@ -2,6 +2,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 import react from '@vitejs/plugin-react-swc'
 import { defineConfig } from 'vite'
+import glsl from 'vite-plugin-glsl'
 import svgr from 'vite-plugin-svgr'
 
 // https://vite.dev/config/
@@ -18,5 +19,6 @@ export default defineConfig({
     react(),
     tailwindcss(),
     svgr(),
+    glsl(),
   ],
 })

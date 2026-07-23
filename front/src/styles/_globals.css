@@ -512,12 +512,18 @@ h6 {
   }
 }
 
+/* Pic à 25 % = pile au swap capsule → reveal (225 ms sur 900 ms) : le blanc
+   couvre entièrement le changement de scène, puis fond doucement par-dessus
+   la carte de dos. */
 @keyframes ballFlash {
   0% {
     opacity: 0;
   }
   25% {
-    opacity: 0.85;
+    opacity: 1;
+  }
+  55% {
+    opacity: 0.4;
   }
   100% {
     opacity: 0;

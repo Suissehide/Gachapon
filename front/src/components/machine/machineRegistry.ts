@@ -1,11 +1,9 @@
-import type { ForwardRefExoticComponent, RefAttributes } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import { CircleOff, Cog, GripVertical } from 'lucide-react'
+import type { ForwardRefExoticComponent, RefAttributes } from 'react'
 
 import { ClawMachine } from './type/ClawMachine'
-import type { ClawMachineHandle } from './type/ClawMachine'
 import { GashaponMachine } from './type/GashaponMachine'
-import type { GashaponMachineHandle } from './type/GashaponMachine'
 
 export type MachineHandle = {
   startAnimation: () => Promise<void>
@@ -33,7 +31,9 @@ export const MACHINE_REGISTRY: MachineDefinition[] = [
   {
     id: 'gashapon',
     name: 'Gashapon',
-    component: GashaponMachine as ForwardRefExoticComponent<RefAttributes<MachineHandle>>,
+    component: GashaponMachine as ForwardRefExoticComponent<
+      RefAttributes<MachineHandle>
+    >,
     price: 500,
     icon: Cog,
     description: 'La machine à capsules classique',
@@ -41,7 +41,9 @@ export const MACHINE_REGISTRY: MachineDefinition[] = [
   {
     id: 'claw',
     name: 'Claw Machine',
-    component: ClawMachine as ForwardRefExoticComponent<RefAttributes<MachineHandle>>,
+    component: ClawMachine as ForwardRefExoticComponent<
+      RefAttributes<MachineHandle>
+    >,
     price: 1500,
     icon: GripVertical,
     description: 'La pince à grappins',
