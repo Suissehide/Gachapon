@@ -1,4 +1,14 @@
-import { Coins, Cog, Flame, Gem, HelpCircle, Layers, Sparkles, Zap } from 'lucide-react'
+import {
+  Cog,
+  Coins,
+  Flame,
+  Gem,
+  HelpCircle,
+  Layers,
+  Sparkles,
+  Ticket,
+  Zap,
+} from 'lucide-react'
 import type { ComponentType, SVGProps } from 'react'
 
 import {
@@ -23,6 +33,7 @@ const ICON_MAP: Record<
   Gem,
   Zap,
   Coins,
+  Ticket,
   Flame,
   Cog,
   Layers,

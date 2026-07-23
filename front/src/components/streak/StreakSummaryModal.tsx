@@ -1,4 +1,4 @@
-import { Check, Coins, Crown, Flame, Gem, Sparkles, Star } from 'lucide-react'
+import { Check, Crown, Flame, Gem, Sparkles, Star, Ticket } from 'lucide-react'
 import type { ComponentType, SVGProps } from 'react'
 
 import type { CardRarity } from '../../constants/card.constant.ts'
@@ -72,7 +72,7 @@ function getDisplayRewards(
   if (entry.tokens > 0) {
     rewards.push({
       key: 'tokens',
-      icon: Coins,
+      icon: Ticket,
       iconClass: 'text-amber-400',
       label: `${entry.tokens} Jeton${plural(entry.tokens)}`,
     })

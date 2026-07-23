@@ -1,4 +1,4 @@
-import { Award, Coins, Sparkles, Star, X } from 'lucide-react'
+import { Award, Sparkles, Star, Ticket, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import {
@@ -139,7 +139,7 @@ export function AchievementUnlockToast() {
               </span>
               {reward.tokens > 0 && (
                 <span className="flex items-center gap-1 font-display text-base font-extrabold tabular-nums text-white">
-                  <Coins className="h-3.5 w-3.5" />
+                  <Ticket className="h-3.5 w-3.5" />
                   {reward.tokens}
                 </span>
               )}

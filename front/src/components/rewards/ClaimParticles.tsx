@@ -1,4 +1,4 @@
-import { Coins, Sparkles, Star } from 'lucide-react'
+import { Coins, Sparkles, Star, Ticket } from 'lucide-react'
 import { type CSSProperties, type ReactNode, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 
@@ -22,7 +22,9 @@ interface ClaimParticlesProps {
 
 const PER_TYPE = 12
 
-function buildParticles(types: Array<'token' | 'dust' | 'xp' | 'gold'>): Particle[] {
+function buildParticles(
+  types: Array<'token' | 'dust' | 'xp' | 'gold'>,
+): Particle[] {
   const total = types.length * PER_TYPE
   return types.flatMap((type, ti) =>
     Array.from({ length: PER_TYPE }, (_, i) => {
@@ -41,7 +43,7 @@ function buildParticles(types: Array<'token' | 'dust' | 'xp' | 'gold'>): Particl
 }
 
 const ICON: Record<Particle['type'], ReactNode> = {
-  token: <Coins className="h-3 w-3 text-primary" />,
+  token: <Ticket className="h-3 w-3 text-primary" />,
   dust: <Sparkles className="h-3 w-3 text-accent" />,
   xp: <Star className="h-3 w-3 text-yellow-400" />,
   gold: <Coins className="h-3 w-3 text-yellow-400" />,

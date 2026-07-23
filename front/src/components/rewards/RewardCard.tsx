@@ -5,6 +5,7 @@ import {
   Layers,
   Sparkles,
   Star,
+  Ticket,
   Trophy,
   Zap,
 } from 'lucide-react'
@@ -152,7 +153,7 @@ export function RewardCard({ reward, onClaim, isLoading }: RewardCardProps) {
           <div className="flex items-center gap-4">
             {reward.reward.tokens > 0 && (
               <Stat
-                icon={<Coins className="h-3.5 w-3.5 text-primary" />}
+                icon={<Ticket className="h-3.5 w-3.5 text-primary" />}
                 value={reward.reward.tokens}
                 label="jeton"
               />

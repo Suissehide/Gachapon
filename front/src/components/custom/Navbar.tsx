@@ -1,5 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router'
-import { ArrowRight, Coins, Layers, LogOut, Sparkles, Zap } from 'lucide-react'
+import { ArrowRight, Coins, LogOut, Sparkles, Ticket, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
@@ -299,7 +299,7 @@ function TokensPill() {
       className="relative inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-[13px] border border-[#fdba74] bg-[#ffedd5] px-2 py-2 shadow-[0_2px_6px_rgba(234,88,12,0.1)] lg:flex-none lg:justify-start lg:gap-2 lg:pr-3 lg:pl-[11px]"
     >
       <span className="flex text-[#ea580c]">
-        <Layers size={15} strokeWidth={1.8} />
+        <Ticket size={15} strokeWidth={1.8} />
       </span>
       <span className="font-display text-[13px] font-extrabold tabular-nums text-[#9a3412] lg:text-[15px]">
         {data.tokens}

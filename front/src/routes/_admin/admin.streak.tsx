@@ -1,7 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import type { ColumnDef } from '@tanstack/react-table'
 import {
-  Coins,
   Crown,
   Flame,
   Pencil,
@@ -9,6 +8,7 @@ import {
   RectangleVertical,
   Sparkles,
   Star,
+  Ticket,
   Trash2,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
@@ -101,7 +101,7 @@ function RewardEditor({
     <div className="space-y-3">
       <NumberField
         label="Jetons"
-        icon={<Coins className="h-3.5 w-3.5 text-primary" />}
+        icon={<Ticket className="h-3.5 w-3.5 text-primary" />}
         value={draft.tokens}
         onChange={(tokens) => onChange({ ...draft, tokens })}
       />
@@ -433,7 +433,7 @@ function MilestoneRewardSummary({ milestone }: { milestone: AdminMilestone }) {
   if (milestone.tokens > 0) {
     items.push(
       <Badge key="tokens" variant="primary" size="sm">
-        <Coins className="h-3 w-3" />
+        <Ticket className="h-3 w-3" />
         {milestone.tokens}
       </Badge>,
     )

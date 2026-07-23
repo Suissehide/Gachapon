@@ -1,7 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import {
   CalendarClock,
-  Coins,
   Crown,
   Layers,
   Sparkles,
@@ -198,7 +197,7 @@ function StatsPage() {
             delay={500}
           />
           <StatCard
-            icon={Coins}
+            icon={Sparkles}
             label="Poussière totale accumulée"
             value={s.totalDust}
             bgColor="bg-accent/10"

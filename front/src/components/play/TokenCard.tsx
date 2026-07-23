@@ -1,4 +1,4 @@
-import { Coins } from 'lucide-react'
+import { Ticket } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { cn } from '../../libs/utils.ts'
@@ -29,7 +29,7 @@ export function TokenCard() {
     <div className="rounded-2xl border border-border bg-card px-4 py-3.5 shadow-sm">
       <div className="flex items-baseline justify-between gap-2">
         <span className="flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-text-light">
-          <Coins className="h-3.5 w-3.5 text-primary" />
+          <Ticket className="h-3.5 w-3.5 text-primary" />
           Jetons
         </span>
         <span className="font-display text-2xl font-extrabold tabular-nums leading-none">

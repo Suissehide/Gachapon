@@ -1,4 +1,4 @@
-import { Award, Check, Coins, Lock, Sparkles, Star } from 'lucide-react'
+import { Award, Check, Lock, Sparkles, Star, Ticket } from 'lucide-react'
 
 import {
   type AchievementWithProgress,
@@ -15,7 +15,9 @@ const fmt = (n: number) => n.toLocaleString('fr-FR')
 export function AchievementCard({ achievement }: Props) {
   const pct = Math.min(
     100,
-    Math.round((achievement.progress / Math.max(1, achievement.threshold)) * 100),
+    Math.round(
+      (achievement.progress / Math.max(1, achievement.threshold)) * 100,
+    ),
   )
   const done = achievement.unlocked
   const reward = achievement.reward
@@ -135,7 +137,7 @@ export function AchievementCard({ achievement }: Props) {
           <div className="flex items-center gap-3.5">
             {reward.tokens > 0 && (
               <RewardChip
-                icon={<Coins size={15} />}
+                icon={<Ticket size={15} />}
                 color="#f59e0b"
                 value={reward.tokens}
               />

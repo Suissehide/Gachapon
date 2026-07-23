@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   BarChart2,
-  Coins,
   Crown,
   Sparkles,
+  Ticket,
   TrendingUp,
   UserPlus,
   Users,
@@ -37,7 +37,7 @@ const KPI_META = [
   {
     key: 'pullsToday' as const,
     label: "Pulls aujourd'hui",
-    icon: Coins,
+    icon: Ticket,
     color: 'text-primary',
     bg: 'bg-primary/10',
     sub: 'tirages du jour',
@@ -87,7 +87,7 @@ const KPI_META = [
   {
     key: 'totalPulls' as const,
     label: 'Pulls (total)',
-    icon: Coins,
+    icon: Ticket,
     color: 'text-primary',
     bg: 'bg-primary/10',
     sub: 'tous les temps',

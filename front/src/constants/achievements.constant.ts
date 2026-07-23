@@ -68,13 +68,34 @@ export const RARITY_FR: Record<string, string> = {
 // component since lucide-react doesn't allow dynamic imports).
 export const FAMILY_VISUAL: Record<
   string,
-  { hue: number; label: string; icon: 'Sparkles' | 'Gem' | 'Zap' | 'Coins' | 'Flame' | 'Cog' | 'Layers' | 'HelpCircle' }
+  {
+    hue: number
+    label: string
+    icon:
+      | 'Sparkles'
+      | 'Ticket'
+      | 'Gem'
+      | 'Zap'
+      | 'Coins'
+      | 'Flame'
+      | 'Cog'
+      | 'Layers'
+      | 'HelpCircle'
+  }
 > = {
-  pulls: { hue: 35, label: 'Tirages', icon: 'Sparkles' },
+  pulls: { hue: 35, label: 'Tirages', icon: 'Ticket' },
   dust: { hue: 150, label: 'Économie', icon: 'Coins' },
   collection_rarity: { hue: 270, label: 'Collection — Raretés', icon: 'Gem' },
-  collection_variants: { hue: 290, label: 'Collection — Variantes', icon: 'Gem' },
-  collection_complete: { hue: 250, label: 'Collection — Complétion', icon: 'Layers' },
+  collection_variants: {
+    hue: 290,
+    label: 'Collection — Variantes',
+    icon: 'Gem',
+  },
+  collection_complete: {
+    hue: 250,
+    label: 'Collection — Complétion',
+    icon: 'Layers',
+  },
   collection_sets: { hue: 230, label: 'Collection — Sets', icon: 'Layers' },
   streak: { hue: 15, label: 'Fidélité', icon: 'Flame' },
   machines: { hue: 320, label: 'Machines', icon: 'Cog' },

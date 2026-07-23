@@ -1,4 +1,4 @@
-import { Coins, Gift, Sparkles, Star, Trophy, X } from 'lucide-react'
+import { Gift, Sparkles, Star, Ticket, Trophy, X } from 'lucide-react'
 import {
   type CSSProperties,
   useCallback,
@@ -276,7 +276,21 @@ export function RevealGrid({
        *  action bar. */}
       <div className="absolute inset-0 z-10 overflow-y-auto overflow-x-hidden">
         {stack.mode === 'stack' ? (
-          <div className="relative flex min-h-full flex-col items-center justify-center pb-32 md:pb-0">
+          // Key par étape : remonte le conteneur à chaque carte révélée pour
+          // rejouer le screenShake d'impact (retardé pour coïncider avec la
+          // fin de la chute stackCardDrop).
+          <div
+            key={
+              stack.step === 'pile'
+                ? `pile-${stack.index}`
+                : `impact-${stack.index}`
+            }
+            className={
+              stack.step === 'pile'
+                ? 'relative flex min-h-full flex-col items-center justify-center pb-32 md:pb-0'
+                : 'relative flex min-h-full flex-col items-center justify-center pb-32 md:pb-0 animate-[screenShake_280ms_ease-out_170ms]'
+            }
+          >
             {stack.step === 'pile' ? (
               <>
                 <button
@@ -321,7 +335,7 @@ export function RevealGrid({
                   className={
                     stack.step === 'exiting'
                       ? 'relative z-10 animate-[stackCardOut_180ms_ease-in_forwards]'
-                      : 'relative z-10'
+                      : 'relative z-10 animate-[stackCardDrop_170ms_cubic-bezier(0.45,0,1,0.55)_both]'
                   }
                 >
                   <RevealCard
@@ -413,7 +427,7 @@ export function RevealGrid({
             {showPullAgain ? (
               <>
                 <div className="flex items-center gap-2">
-                  <Coins className="h-5 w-5 text-amber-400" />
+                  <Ticket className="h-5 w-5 text-amber-400" />
                   <div>
                     <div className="font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-white/50">
                       Jetons restants

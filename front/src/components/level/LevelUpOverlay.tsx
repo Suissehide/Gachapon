@@ -1,4 +1,4 @@
-import { Coins, Star, Zap } from 'lucide-react'
+import { Star, Ticket, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { useLevelUpStore } from '../../stores/levelUp.store.ts'
@@ -141,7 +141,7 @@ export function LevelUpOverlay() {
                 </span>
                 <div className="flex items-center gap-3 text-xs text-white/80">
                   <span className="flex items-center gap-1">
-                    <Coins className="h-3 w-3 text-amber-400" />
+                    <Ticket className="h-3 w-3 text-amber-400" />
                     {m.tokens} jetons
                   </span>
                   <span className="text-white/40">·</span>
