@@ -620,7 +620,7 @@ function DefeatPanel({
   )
 }
 
-// XP progression bar — current XP (blue) + gain from this battle (orange).
+// XP progression bar — current XP (violet) + gain from this battle (vert).
 function XpBar({
   rewards,
 }: {
@@ -656,25 +656,25 @@ function XpBar({
         </span>
       </div>
       <div className="relative h-2 w-full overflow-hidden rounded-full bg-[rgba(27,23,38,0.08)]">
-        {/* Gain from this battle (orange) — rendered FIRST so the blue "current"
+        {/* Gain from this battle (vert) — rendered FIRST so the violet "current"
             fill can sit on top and hide the ~4% overlap on the left. The overlap
-            makes the joint feel like the orange grows from *under* the blue
+            makes the joint feel like the green grows from *under* the violet
             instead of butting flush against it. */}
         <div
-          className="absolute inset-y-0 rounded-r-full bg-gradient-to-r from-amber-400 to-orange-500 animate-[battleXpGrow_0.6s_ease_forwards]"
+          className="absolute inset-y-0 rounded-r-full bg-gradient-to-r from-emerald-400 to-green-500 animate-[battleXpGrow_0.6s_ease_forwards]"
           style={{
             left: `${Math.max(0, pctBefore - 4)}%`,
             width: `${pctAfter - Math.max(0, pctBefore - 4)}%`,
             transformOrigin: 'left center',
           }}
         />
-        {/* Current XP (blue) — sits on top of the orange overlap. */}
+        {/* Current XP (violet) — sits on top of the green overlap. */}
         <div
           className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-violet-500 to-purple-500"
           style={{ width: `${pctBefore}%` }}
         />
       </div>
-      <p className="mt-1 text-right font-mono text-[11px] font-bold tabular-nums text-orange-600">
+      <p className="mt-1 text-right font-mono text-[11px] font-bold tabular-nums text-emerald-600">
         +{rewards.xp.toLocaleString('fr-FR')} XP
       </p>
     </div>
