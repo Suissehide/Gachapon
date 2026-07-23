@@ -13,14 +13,12 @@ const BALL_COLORS = [
   '#00b4d8',
 ]
 
-// Shake = 3 à-coups de rotation aléatoires façon Pokéball : montée sèche vers
-// l'extrême puis ressort amorti (la boule repasse par le centre, déborde de
-// l'autre côté et se pose), mini pause, et on recommence — 3 fois avant la
+// Shake = 3 à-coups de rotation aléatoires séparés par des pauses, avant la
 // vibration. Le timer de phase côté play.tsx (1700 ms) doit couvrir
 // SHAKE_DURATION.
 const SHAKE_BURSTS = 3
 const SHAKE_BURST_ACTIVE = 0.42 // seconds — snap + oscillation amortie
-const SHAKE_BURST_PAUSE = 0.14 // seconds — repos complet entre deux à-coups
+const SHAKE_BURST_PAUSE = 0.14 // seconds — repos entre deux à-coups
 const SHAKE_DURATION = SHAKE_BURSTS * (SHAKE_BURST_ACTIVE + SHAKE_BURST_PAUSE)
 const VIBRATE_DURATION = 0.9 // seconds
 // Short violent burst — the white flash fires at the same moment and covers it.
@@ -38,10 +36,8 @@ type ShakeSeed = {
 
 type ShakeBurst = { rx: number; ry: number; rz: number }
 
-// Profil d'un à-coup façon Pokéball, k(p) avec p ∈ [0,1] :
-// 18 % de montée sèche vers l'extrême (ease-out), puis ressort amorti — la
-// boule repasse par le centre, déborde à ~40 % de l'autre côté, petit rebond,
-// et finit posée pile à zéro (cos s'annule à p = 1).
+// Profil d'un à-coup, k(p) : montée sèche vers l'extrême (18 %), puis ressort
+// amorti qui déborde de l'autre côté et s'annule pile à p = 1.
 function burstProfile(p: number): number {
   const ATTACK = 0.18
   if (p < ATTACK) {
@@ -52,12 +48,10 @@ function burstProfile(p: number): number {
   return Math.cos(r * Math.PI * 2.5) * Math.E ** (-2.2 * r)
 }
 
-// Trois à-coups de rotation : à chaque à-coup la boule claque vers son
-// orientation cible puis oscille en ressort amorti jusqu'au repos, marque une
-// pause complète, et recommence. Un léger déport latéral couplé au tilt Z
-// donne l'impression qu'elle bascule sur son poids. La lueur monte doucement
-// sur toute la durée pour préparer la vibration. Après le 3e à-coup la boule
-// reste au repos jusqu'au changement de phase.
+// Trois à-coups : la boule claque vers son orientation cible, oscille jusqu'au
+// repos, pause, et recommence. Le déport latéral couplé au tilt Z vend le
+// basculement ; la lueur monte doucement sur toute la durée. Après le 3e
+// à-coup la boule reste au repos jusqu'au changement de phase.
 function runShake(
   t: number,
   group: THREE.Group,
@@ -223,10 +217,9 @@ export function GachaBall({ phase, onSplitDone }: Props) {
     [],
   )
 
-  // 3 orientations cibles aléatoires pour les à-coups, marquées sur LES TROIS
-  // axes pour vendre la 3D : X bascule la ligne de jonction vers/loin de la
-  // caméra, Z la penche à gauche/droite (signe alterné à partir de `dir`), et
-  // Y fait tourner les reflets. Chaque axe tire fort, pas de rotation timide.
+  // 3 orientations cibles aléatoires, marquées sur les trois axes : X bascule
+  // la ligne de jonction vers/loin de la caméra, Z penche à gauche/droite
+  // (signe alterné à partir de `dir`), Y fait tourner les reflets.
   const shakeBursts = useMemo<ShakeBurst[]>(
     () =>
       Array.from({ length: SHAKE_BURSTS }, (_, i) => ({

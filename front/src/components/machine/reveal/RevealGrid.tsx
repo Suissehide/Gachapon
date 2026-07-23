@@ -289,28 +289,34 @@ export function RevealGrid({
           />
         ) : (
           <div className="flex min-h-full flex-col items-center justify-center pb-32 md:pb-0">
-            <div
-              className={
-                isSingle
-                  ? 'relative flex items-center justify-center'
-                  : 'relative grid grid-cols-5 max-md:grid-cols-2 gap-x-4 gap-y-10 p-8 pt-14'
-              }
-            >
-              {stableResults.map(({ entry, key, idx }) => (
-                <RevealCard
-                  key={key}
-                  entry={entry}
-                  flipped={flipped.has(idx)}
-                  onFlip={() => flipCard(idx)}
-                  onInspect={() => setInspecting(entry)}
-                  size={isSingle ? 'lg' : 'sm'}
-                  entryDelay={isSingle ? 0 : idx * 70}
-                  registerRef={(el) => {
-                    cardRefs.current[idx] = el
-                  }}
-                />
-              ))}
-            </div>
+            {isSingle ? (
+              <SingleReveal
+                entry={results[0]}
+                flipped={flipped.has(0)}
+                onFlip={() => flipCard(0)}
+                onInspect={() => setInspecting(results[0])}
+                registerRef={(el) => {
+                  cardRefs.current[0] = el
+                }}
+              />
+            ) : (
+              <div className="relative grid grid-cols-5 max-md:grid-cols-2 gap-x-4 gap-y-10 p-8 pt-14">
+                {stableResults.map(({ entry, key, idx }) => (
+                  <RevealCard
+                    key={key}
+                    entry={entry}
+                    flipped={flipped.has(idx)}
+                    onFlip={() => flipCard(idx)}
+                    onInspect={() => setInspecting(entry)}
+                    size="sm"
+                    entryDelay={idx * 70}
+                    registerRef={(el) => {
+                      cardRefs.current[idx] = el
+                    }}
+                  />
+                ))}
+              </div>
+            )}
 
             {/* Reserved slot (button height h-10 + mt-8): keeps the flex column's
              *  height constant so removing the button on click doesn't recenter
@@ -451,6 +457,55 @@ function impactParams(entry: PullBatchEntry) {
 const RARITY_WAVE_GRADIENT =
   'radial-gradient(50% 50% at 50% 50%, var(--rar-glow), transparent 70%)'
 
+// Effets d'impact au toucher au sol (150 ms après le début de la chute) —
+// teintés par le --rar-glow du parent, montée en gamme avec le rang : onde
+// seule, + écho dès ÉPIQUE, + flash radial pour LÉGENDAIRE/HOLO.
+function ImpactWaves({
+  rank,
+  waveScale,
+  waveOpacity,
+}: {
+  rank: number
+  waveScale: string
+  waveOpacity: string
+}) {
+  return (
+    <>
+      {rank >= 4 && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -inset-[12%] rounded-3xl opacity-0 blur-2xl animate-[stackImpactFlash_300ms_ease-out_150ms_forwards]"
+          style={{ background: RARITY_WAVE_GRADIENT }}
+        />
+      )}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-5 left-1/2 h-16 w-80 rounded-[50%] opacity-0 blur-md animate-[stackImpactWave_320ms_ease-out_150ms_forwards]"
+        style={
+          {
+            background: RARITY_WAVE_GRADIENT,
+            '--wave-scale': waveScale,
+            '--wave-opacity': waveOpacity,
+          } as CSSProperties
+        }
+      />
+      {rank >= 3 && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-6 left-1/2 h-20 w-96 rounded-[50%] opacity-0 blur-lg animate-[stackImpactWave_420ms_ease-out_230ms_forwards]"
+          style={
+            {
+              background: RARITY_WAVE_GRADIENT,
+              '--wave-scale': waveScale,
+              '--wave-opacity': '0.3',
+            } as CSSProperties
+          }
+        />
+      )}
+    </>
+  )
+}
+
 function StackReveal({
   step,
   index,
@@ -541,42 +596,12 @@ function StackReveal({
             }
             style={{ '--rar-glow': tone.hex } as CSSProperties}
           >
-            {/* Effets d'impact — partent au toucher au sol (150 ms), opacity-0
-             *  pendant le délai. Montée en gamme avec le rang de rareté. */}
             {step === 'showing' && (
-              <>
-                {impact.rank >= 4 && (
-                  <div
-                    aria-hidden
-                    className="pointer-events-none absolute -inset-[12%] rounded-3xl opacity-0 blur-2xl animate-[stackImpactFlash_300ms_ease-out_150ms_forwards]"
-                    style={{ background: RARITY_WAVE_GRADIENT }}
-                  />
-                )}
-                <div
-                  aria-hidden
-                  className="pointer-events-none absolute -bottom-5 left-1/2 h-16 w-80 rounded-[50%] opacity-0 blur-md animate-[stackImpactWave_320ms_ease-out_150ms_forwards]"
-                  style={
-                    {
-                      background: RARITY_WAVE_GRADIENT,
-                      '--wave-scale': impact.waveScale,
-                      '--wave-opacity': impact.waveOpacity,
-                    } as CSSProperties
-                  }
-                />
-                {impact.rank >= 3 && (
-                  <div
-                    aria-hidden
-                    className="pointer-events-none absolute -bottom-6 left-1/2 h-20 w-96 rounded-[50%] opacity-0 blur-lg animate-[stackImpactWave_420ms_ease-out_230ms_forwards]"
-                    style={
-                      {
-                        background: RARITY_WAVE_GRADIENT,
-                        '--wave-scale': impact.waveScale,
-                        '--wave-opacity': '0.3',
-                      } as CSSProperties
-                    }
-                  />
-                )}
-              </>
+              <ImpactWaves
+                rank={impact.rank}
+                waveScale={impact.waveScale}
+                waveOpacity={impact.waveOpacity}
+              />
             )}
             <RevealCard
               key={stableResults[index].key}
@@ -601,6 +626,61 @@ function StackReveal({
         >
           Passer
         </Button>
+      </div>
+    </div>
+  )
+}
+
+// ── SingleReveal ────────────────────────────────────────────────────────────
+// Reveal à carte unique : la carte arrive dos visible en mode impact (chute +
+// shake neutres, en blanc pour ne pas spoiler la rareté), puis rejoue l'impact
+// aux couleurs et à l'intensité de sa rareté quand on la retourne.
+
+type SingleRevealProps = {
+  entry: PullBatchEntry
+  flipped: boolean
+  onFlip: () => void
+  onInspect: () => void
+  registerRef: (el: HTMLDivElement | null) => void
+}
+
+function SingleReveal({
+  entry,
+  flipped,
+  onFlip,
+  onInspect,
+  registerRef,
+}: SingleRevealProps) {
+  const tone = getRarityTone(entry.card.rarity as CardRarity)
+  const impact = impactParams(entry)
+
+  return (
+    // Key sur l'état retourné : le remount rejoue chute + shake + ondes au flip.
+    <div
+      key={flipped ? 'face' : 'dos'}
+      className="relative flex items-center justify-center animate-[screenShake_260ms_ease-out_150ms]"
+      style={
+        {
+          '--shake-amp': flipped ? impact.shakeAmp : '7px',
+          '--rar-glow': flipped ? tone.hex : '#ffffff',
+        } as CSSProperties
+      }
+    >
+      <div className="relative animate-[stackCardDrop_220ms_cubic-bezier(0.45,0,1,0.55)_both]">
+        <ImpactWaves
+          rank={flipped ? impact.rank : 0}
+          waveScale={flipped ? impact.waveScale : '1.4'}
+          waveOpacity={flipped ? impact.waveOpacity : '0.35'}
+        />
+        <RevealCard
+          entry={entry}
+          flipped={flipped}
+          onFlip={onFlip}
+          onInspect={onInspect}
+          size="lg"
+          entryDelay={0}
+          registerRef={registerRef}
+        />
       </div>
     </div>
   )
