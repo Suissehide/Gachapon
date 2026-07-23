@@ -375,19 +375,36 @@ h6 {
   }
 }
 
-/* Stacked-reveal card entrance — short gravity drop; the delayed screenShake
- * on the container sells the landing impact. */
+/* Stacked-reveal card entrance — gravity drop with a squash on touchdown;
+ * the delayed screenShake + stackImpactWave sell the landing. Touchdown sits
+ * at 70% of the duration — keep the shake/wave delays in sync with it. */
 @keyframes stackCardDrop {
-  from {
+  0% {
     opacity: 0;
-    transform: translateY(-64px) scale(1.05);
+    transform: translateY(-90px) scale(1.06);
   }
-  60% {
+  55% {
     opacity: 1;
   }
-  to {
+  70% {
+    transform: translateY(0) scale(1.05, 0.93);
+  }
+  100% {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+/* Onde de choc au sol à l'atterrissage de la carte dépilée — ellipse teintée
+ * par la rareté via --rar-glow, qui s'étale et s'éteint. */
+@keyframes stackImpactWave {
+  0% {
+    opacity: 0.5;
+    transform: translate(-50%, 0) scaleX(0.5);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 0) scaleX(1.8);
   }
 }
 

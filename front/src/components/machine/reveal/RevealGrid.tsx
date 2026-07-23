@@ -277,8 +277,8 @@ export function RevealGrid({
       <div className="absolute inset-0 z-10 overflow-y-auto overflow-x-hidden">
         {stack.mode === 'stack' ? (
           // Key par étape : remonte le conteneur à chaque carte révélée pour
-          // rejouer le screenShake d'impact (retardé pour coïncider avec la
-          // fin de la chute stackCardDrop).
+          // rejouer le screenShake d'impact (retardé pour coïncider avec le
+          // toucher au sol de stackCardDrop, à 70 % de ses 220 ms).
           <div
             key={
               stack.step === 'pile'
@@ -288,7 +288,12 @@ export function RevealGrid({
             className={
               stack.step === 'pile'
                 ? 'relative flex min-h-full flex-col items-center justify-center pb-32 md:pb-0'
-                : 'relative flex min-h-full flex-col items-center justify-center pb-32 md:pb-0 animate-[screenShake_280ms_ease-out_170ms]'
+                : 'relative flex min-h-full flex-col items-center justify-center pb-32 md:pb-0 animate-[screenShake_260ms_ease-out_150ms]'
+            }
+            style={
+              stack.step === 'pile'
+                ? undefined
+                : ({ '--shake-amp': '10px' } as CSSProperties)
             }
           >
             {stack.step === 'pile' ? (
@@ -299,20 +304,39 @@ export function RevealGrid({
                   aria-label="Révéler la carte suivante"
                   className="group relative aspect-[2/3] w-40 cursor-pointer bg-transparent"
                 >
-                  {stableResults.map(({ key, idx }) =>
-                    idx >= stack.index ? (
+                  {/* Ordre inversé : la prochaine carte à révéler (stack.index)
+                   *  est peinte en dernier, donc visuellement au-dessus. Au
+                   *  hover, seule elle réagit — avec le halo de SA rareté,
+                   *  comme les cartes face cachée de la grille (petit spoiler
+                   *  assumé, même langage visuel). */}
+                  {stableResults
+                    .filter(({ idx }) => idx >= stack.index)
+                    .reverse()
+                    .map(({ key, idx }) => (
                       <img
                         key={key}
                         src={cardBackImg}
                         alt=""
                         draggable={false}
-                        className="absolute inset-0 h-full w-full rounded-2xl object-cover shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-transform duration-200 group-hover:scale-[1.03]"
-                        style={{
-                          transform: `translate(${pileJitter[idx].dx}px, ${pileJitter[idx].dy}px) rotate(${pileJitter[idx].rot}deg)`,
-                        }}
+                        className={
+                          idx === stack.index
+                            ? 'absolute inset-0 h-full w-full rounded-2xl object-cover shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all duration-200 group-hover:scale-[1.06] group-hover:shadow-[0_0_28px_var(--rar-glow)]'
+                            : 'absolute inset-0 h-full w-full rounded-2xl object-cover shadow-[0_10px_30px_rgba(0,0,0,0.5)]'
+                        }
+                        style={
+                          {
+                            transform: `translate(${pileJitter[idx].dx}px, ${pileJitter[idx].dy}px) rotate(${pileJitter[idx].rot}deg)`,
+                            ...(idx === stack.index
+                              ? {
+                                  '--rar-glow': getRarityTone(
+                                    results[idx].card.rarity as CardRarity,
+                                  ).hex,
+                                }
+                              : {}),
+                          } as CSSProperties
+                        }
                       />
-                    ) : null,
-                  )}
+                    ))}
                 </button>
                 <p className="mt-10 font-mono text-xs font-bold uppercase tracking-[0.2em] text-white/60">
                   {results.length - stack.index}{' '}
@@ -335,9 +359,28 @@ export function RevealGrid({
                   className={
                     stack.step === 'exiting'
                       ? 'relative z-10 animate-[stackCardOut_180ms_ease-in_forwards]'
-                      : 'relative z-10 animate-[stackCardDrop_170ms_cubic-bezier(0.45,0,1,0.55)_both]'
+                      : 'relative z-10 animate-[stackCardDrop_220ms_cubic-bezier(0.45,0,1,0.55)_both]'
+                  }
+                  style={
+                    {
+                      '--rar-glow': getRarityTone(
+                        results[stack.index].card.rarity as CardRarity,
+                      ).hex,
+                    } as CSSProperties
                   }
                 >
+                  {/* Onde de choc au sol, teintée rareté — part au toucher
+                   *  (150 ms ≈ 70 % de la chute), opacity-0 pendant le délai. */}
+                  {stack.step === 'showing' && (
+                    <div
+                      aria-hidden
+                      className="pointer-events-none absolute -bottom-5 left-1/2 h-16 w-80 rounded-[50%] opacity-0 blur-md animate-[stackImpactWave_320ms_ease-out_150ms_forwards]"
+                      style={{
+                        background:
+                          'radial-gradient(50% 50% at 50% 50%, var(--rar-glow), transparent 70%)',
+                      }}
+                    />
+                  )}
                   <RevealCard
                     key={stableResults[stack.index].key}
                     entry={results[stack.index]}
