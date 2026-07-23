@@ -1,16 +1,16 @@
 import { Link } from '@tanstack/react-router'
-import { Zap } from 'lucide-react'
+import { Swords } from 'lucide-react'
 
-import { FoilAvatar } from '../profile/arcade/FoilAvatar'
-import { cn } from '../../libs/utils'
 import type {
   CollectorEntry,
   CombatEntry,
   TeamEntry,
 } from '../../constants/leaderboard.constant'
-import { ProgressBar } from './ProgressBar'
+import { cn } from '../../libs/utils'
+import { FoilAvatar } from '../profile/arcade/FoilAvatar'
 import { LevelChip } from './LevelChip'
 import { MedalRank } from './MedalRank'
+import { ProgressBar } from './ProgressBar'
 
 type Props =
   | { mode: 'collectors'; entry: CollectorEntry; isMe: boolean }
@@ -21,8 +21,7 @@ const fmt = (n: number) => n.toLocaleString('fr-FR')
 
 export function LeaderRow(props: Props) {
   const { mode, entry, isMe } = props
-  const displayName =
-    mode === 'teams' ? entry.team.name : entry.user.username
+  const displayName = mode === 'teams' ? entry.team.name : entry.user.username
   const initials = displayName.slice(0, 1).toUpperCase()
 
   const rowClasses = cn(
@@ -71,9 +70,7 @@ export function LeaderRow(props: Props) {
           <ProgressBar
             variant="combat"
             value={
-              entry.maxPalier > 0
-                ? (entry.palier / entry.maxPalier) * 100
-                : 0
+              entry.maxPalier > 0 ? (entry.palier / entry.maxPalier) * 100 : 0
             }
             label="PALIER ATTEINT"
             displayValue={`${entry.palier} / ${entry.maxPalier}`}
@@ -121,7 +118,7 @@ export function LeaderRow(props: Props) {
         {mode === 'combat' && (
           <>
             <span className="inline-flex items-center gap-[5px] font-display text-[26px] font-extrabold leading-none tabular-nums text-[#ea580c]">
-              <Zap size={18} className="text-[#f59e0b]" />
+              <Swords size={18} className="text-[#f59e0b]" />
               {fmt(entry.combatPower)}
             </span>
             <span className="font-mono text-[9px] tracking-[0.12em] text-[rgba(27,23,38,0.5)]">

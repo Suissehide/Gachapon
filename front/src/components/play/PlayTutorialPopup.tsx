@@ -1,11 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import {
-  BatteryCharging,
-  Coins,
-  type LucideIcon,
-  Sparkles,
-  Ticket,
-} from 'lucide-react'
+import { Coins, type LucideIcon, Sparkles, Ticket, Zap } from 'lucide-react'
 import { type ReactNode, useEffect, useState } from 'react'
 
 import { cn } from '../../libs/utils.ts'
@@ -130,7 +124,7 @@ const PLAY_TUTORIAL_STEPS: readonly TutorialStep[] = [
         pour cibler des cartes précises, ou formule un Vœu pour la carte de tes
         rêves. La boutique propose aussi des packs de <Jeton>jetons</Jeton> et
         des recharges d'
-        <Res icon={BatteryCharging} className="text-emerald-400">
+        <Res icon={Zap} className="text-violet-600">
           énergie
         </Res>
         .

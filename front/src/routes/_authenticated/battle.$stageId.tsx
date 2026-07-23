@@ -474,7 +474,7 @@ function VictoryPanel({
             icon={<Sparkles className="h-5 w-5" />}
             label="Poussière"
             value={rewards.dust}
-            tone="#8b5cf6"
+            tone="#38bdf8"
           />
         </div>
       )}
@@ -670,7 +670,7 @@ function XpBar({
         />
         {/* Current XP (blue) — sits on top of the orange overlap. */}
         <div
-          className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-sky-500 to-blue-500"
+          className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-violet-500 to-purple-500"
           style={{ width: `${pctBefore}%` }}
         />
       </div>

@@ -21,11 +21,11 @@ const SLOT_ICONS: Record<EquipmentSlot, typeof Sword> = {
   ACCESSORY: Sparkles,
 }
 const RARITY_TEXT: Record<string, string> = {
-  COMMON: 'text-text-light',
-  UNCOMMON: 'text-emerald-600',
-  RARE: 'text-violet-600',
-  EPIC: 'text-pink-600',
-  LEGENDARY: 'text-amber-600',
+  COMMON: 'text-rarity-common',
+  UNCOMMON: 'text-rarity-uncommon',
+  RARE: 'text-rarity-rare',
+  EPIC: 'text-rarity-epic',
+  LEGENDARY: 'text-rarity-legendary',
 }
 
 type Props = {

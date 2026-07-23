@@ -7,6 +7,7 @@ import {
   Sparkles,
   Star,
   Sword,
+  Swords,
   TrendingUp,
   Zap,
 } from 'lucide-react'
@@ -149,7 +150,7 @@ export function CombatPanel({
       {/* Puissance (équipement inclus) */}
       <div className="mt-[18px] flex items-center justify-between rounded-[14px] border border-[#fcd34d] bg-[#fff7ed] px-4 py-3.5">
         <span className="inline-flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.1em] text-[#d97706]">
-          <Zap className="h-4 w-4" fill="currentColor" />
+          <Swords className="h-4 w-4" />
           Puissance
         </span>
         <span className="font-display text-[22px] font-extrabold tabular-nums text-[#d97706]">

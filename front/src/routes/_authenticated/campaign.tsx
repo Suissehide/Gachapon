@@ -349,13 +349,13 @@ function CampaignPage() {
                   icon={<Sparkles className="h-5 w-5" />}
                   label="Poussière"
                   value={sweepResult.totalDust}
-                  tone="#8b5cf6"
+                  tone="#38bdf8"
                 />
                 <RewardTile
                   icon={<Star className="h-5 w-5" />}
                   label="XP"
                   value={sweepResult.totalXp}
-                  tone="#3b82f6"
+                  tone="#8b5cf6"
                 />
               </div>
 
@@ -687,7 +687,7 @@ function LevelCard({
       {!isLocked && !isCurrent && (
         <div className="mt-3 flex items-center gap-3.5 font-mono text-[11px] text-text-light/60">
           <span className="inline-flex items-center gap-1">
-            <Zap className="h-3 w-3 text-amber-500" />
+            <Zap className="h-3 w-3 text-violet-500" />
             {battleCost}
           </span>
         </div>
@@ -726,7 +726,7 @@ function TeamDock({ team, onEdit }: { team: TeamUnit[]; onEdit: () => void }) {
               Mon équipe
             </div>
             <div className="mt-0.5 inline-flex items-center gap-1 font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-white/60">
-              <Zap className="h-3 w-3 text-amber-400" />
+              <Swords className="h-3 w-3 text-amber-400" />
               <b className="tabular-nums text-[13px] text-amber-400">
                 {fmt(total)}
               </b>
@@ -807,7 +807,7 @@ function MiniCard({
       </div>
       {!showName && (
         <div className="pointer-events-none absolute bottom-1.5 left-1/2 z-20 inline-flex -translate-x-1/2 items-center gap-1 rounded-sm border-[0.5px] border-white bg-[#1b1726]/92 px-2 py-[3px] font-display text-[10px] font-extrabold leading-none tabular-nums text-white shadow-[0_2px_6px_rgba(27,23,38,0.45)]">
-          <Zap className="h-2.5 w-2.5 text-primary" fill="currentColor" />
+          <Swords className="h-2.5 w-2.5 text-primary" />
           {fmt(power)}
         </div>
       )}
@@ -925,11 +925,11 @@ function PrepModal({
                 icon={Coins}
               />
               <RewardPill
-                color="#8b5cf6"
+                color="#38bdf8"
                 label={`${loot.dust} Poussière`}
                 icon={Sparkles}
               />
-              <RewardPill color="#3b82f6" label={`${loot.xp} XP`} icon={Star} />
+              <RewardPill color="#8b5cf6" label={`${loot.xp} XP`} icon={Star} />
               {equipPct > 0 && (
                 <RewardPill
                   color="#ec4899"
