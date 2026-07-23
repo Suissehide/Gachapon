@@ -161,3 +161,82 @@ describe('CombatPointsTx.creditInTx', () => {
     expect(calls.update).toHaveLength(0)
   })
 })
+
+describe('CombatPointsTx.refillToMaxInTx', () => {
+  const DEFAULT_CFG = {
+    'combat.pointsMax': 60,
+    'combat.regenSeconds': 600,
+    'combat.battleCost': 5,
+    'combat.sweepCost': 5,
+  }
+
+  const makeCpTx = () =>
+    new CombatPointsTx({
+      postgresOrm: {},
+      configService: { getMany: async () => DEFAULT_CFG },
+      skillTreeRepository: {},
+    } as unknown as IocContainer)
+
+  const makeTx = (user: {
+    combatPoints: number
+    lastCombatPointAt: Date | null
+  }) => {
+    const calls: { update: unknown[] } = { update: [] }
+    const tx = {
+      user: {
+        findUnique: async () => user,
+        update: async (args: unknown) => {
+          calls.update.push(args)
+          return {}
+        },
+      },
+    }
+    return { tx: tx as never, calls }
+  }
+
+  it('remonte au cap quand sous le cap', async () => {
+    const { tx, calls } = makeTx({
+      combatPoints: 12,
+      lastCombatPointAt: new Date(),
+    })
+    const result = await makeCpTx().refillToMaxInTx(tx, 'u1')
+    expect(result.combatPointsAfter).toBe(60)
+    expect(calls.update).toHaveLength(1)
+    const args = calls.update[0] as {
+      data: { combatPoints: number; lastCombatPointAt: Date }
+    }
+    expect(args.data.combatPoints).toBe(60)
+    expect(args.data.lastCombatPointAt).toBeInstanceOf(Date)
+  })
+
+  it('ne réduit jamais un overfill au-dessus du cap', async () => {
+    const { tx, calls } = makeTx({
+      combatPoints: 75,
+      lastCombatPointAt: new Date(),
+    })
+    const result = await makeCpTx().refillToMaxInTx(tx, 'u1')
+    expect(result.combatPointsAfter).toBe(75)
+    const args = calls.update[0] as { data: { combatPoints: number } }
+    expect(args.data.combatPoints).toBe(75)
+  })
+
+  it('règle la regen lazy avant de comparer au cap', async () => {
+    // 3 intervalles écoulés : 12 → 15, toujours sous 60 → remonté à 60.
+    const last = new Date(Date.now() - 3 * 600 * 1000 - 100)
+    const { tx, calls } = makeTx({ combatPoints: 12, lastCombatPointAt: last })
+    const result = await makeCpTx().refillToMaxInTx(tx, 'u1')
+    expect(result.combatPointsAfter).toBe(60)
+    const args = calls.update[0] as { data: { combatPoints: number } }
+    expect(args.data.combatPoints).toBe(60)
+  })
+
+  it('utilise le cap boosté par PC_VAULT', async () => {
+    const { tx } = makeTx({ combatPoints: 60, lastCombatPointAt: new Date() })
+    const result = await makeCpTx().refillToMaxInTx(tx, 'u1', {
+      pcVaultBonus: 15,
+      pcRegenReductionSeconds: 0,
+    })
+    // cap effectif = 60 + 15 = 75, user à 60 → remonté à 75.
+    expect(result.combatPointsAfter).toBe(75)
+  })
+})
