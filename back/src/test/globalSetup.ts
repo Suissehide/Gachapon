@@ -9,10 +9,13 @@ export default async function globalSetup() {
   // Load .env.test — overrides DATABASE_URL to point at gachapon_test
   loadEnv({ path: resolve(__dirname, '../../.env.test'), override: true })
 
-  // Apply any pending migrations to the test database
+  // Apply any pending migrations to the test database.
+  // `shell: true` — sur Windows npx est un .cmd, qu'execFileSync ne sait pas
+  // résoudre seul (spawnSync npx ENOENT).
   execFileSync('npx', ['prisma', 'migrate', 'deploy'], {
     stdio: 'inherit',
     cwd: resolve(__dirname, '../..'),
+    shell: true,
   })
 
   // Truncate all tables so each run starts clean

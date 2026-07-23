@@ -35,11 +35,14 @@ const sharedConfig = {
 }
 
 const config: Config = {
-  globalSetup: '<rootDir>/globalSetup.ts',
   projects: [
     {
       displayName: 'e2e',
       testMatch: ['<rootDir>/e2e/**/*.test.ts'],
+      // Migrations + TRUNCATE + flush Redis : réservé aux e2e. Déclaré ici et
+      // non à la racine, sinon `--selectProjects unit` le déclenche aussi et
+      // les tests unitaires exigent une base alors qu'ils sont purs.
+      globalSetup: '<rootDir>/globalSetup.ts',
       ...sharedConfig,
     },
     {
