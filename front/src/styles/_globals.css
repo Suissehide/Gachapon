@@ -367,6 +367,14 @@ h6 {
   }
 }
 
+/* Stacked-reveal card dismissal — quick shrink-and-lift before the next card */
+@keyframes stackCardOut {
+  to {
+    opacity: 0;
+    transform: scale(0.85) translateY(-24px);
+  }
+}
+
 @keyframes cardAura {
   0%,
   100% {

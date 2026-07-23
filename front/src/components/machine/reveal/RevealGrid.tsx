@@ -66,6 +66,59 @@ export function RevealGrid({
   const [revealAllTriggered, setRevealAllTriggered] = useState(false)
   const [activeEffect, setActiveEffect] = useState<ActiveEffect | null>(null)
   const [inspecting, setInspecting] = useState<PullBatchEntry | null>(null)
+
+  // Dépilage un-par-un pour les reveals multi-cartes : on démarre en mode
+  // pile, chaque clic révèle la carte du dessus en grand, puis la grille
+  // habituelle s'affiche une fois tout dépilé (ou sur « Passer »).
+  type StackState =
+    | { mode: 'grid' }
+    | { mode: 'stack'; step: 'pile' | 'showing' | 'exiting'; index: number }
+  const [stack, setStack] = useState<StackState>(() =>
+    results.length > 1
+      ? { mode: 'stack', step: 'pile', index: 0 }
+      : { mode: 'grid' },
+  )
+
+  // Léger décalage/rotation aléatoire par carte de la pile, figé au montage
+  // pour que la pile ne se réorganise pas à chaque render.
+  const pileJitter = useMemo(
+    () =>
+      results.map(() => ({
+        dx: (Math.random() - 0.5) * 16,
+        dy: (Math.random() - 0.5) * 12,
+        rot: (Math.random() - 0.5) * 10,
+      })),
+    [results],
+  )
+
+  const noop = () => undefined
+
+  const revealNextFromPile = () => {
+    if (stack.mode !== 'stack' || stack.step !== 'pile') {
+      return
+    }
+    flipCard(stack.index)
+    setStack({ mode: 'stack', step: 'showing', index: stack.index })
+  }
+
+  const dismissShownCard = () => {
+    if (stack.mode !== 'stack' || stack.step !== 'showing') {
+      return
+    }
+    setStack({ mode: 'stack', step: 'exiting', index: stack.index })
+    setTimeout(() => {
+      setStack((prev) => {
+        if (prev.mode !== 'stack') {
+          return prev
+        }
+        const next = prev.index + 1
+        return next >= results.length
+          ? { mode: 'grid' }
+          : { mode: 'stack', step: 'pile', index: next }
+      })
+    }, 180)
+  }
+
   const cardRefs = useRef<Array<HTMLDivElement | null>>([])
 
   const stableResults = useMemo(
@@ -162,6 +215,14 @@ export function RevealGrid({
     })
   }
 
+  const skipStack = () => {
+    if (stack.mode !== 'stack') {
+      return
+    }
+    setStack({ mode: 'grid' })
+    revealAll()
+  }
+
   const allRevealed = flipped.size === results.length
   const [showActions, setShowActions] = useState(false)
   const allRevealedNotified = useRef(false)
@@ -205,47 +266,122 @@ export function RevealGrid({
        *  justify-center. Bottom padding keeps the last row clear of the fixed
        *  action bar. */}
       <div className="absolute inset-0 z-10 overflow-y-auto overflow-x-hidden">
-        <div className="flex min-h-full flex-col items-center justify-center pb-32 md:pb-0">
-          <div
-            className={
-              isSingle
-                ? 'relative flex items-center justify-center'
-                : 'relative grid grid-cols-5 max-md:grid-cols-2 gap-x-4 gap-y-10 p-8 pt-14'
-            }
-          >
-            {stableResults.map(({ entry, key, idx }) => (
-              <RevealCard
-                key={key}
-                entry={entry}
-                flipped={flipped.has(idx)}
-                onFlip={() => flipCard(idx)}
-                onInspect={() => setInspecting(entry)}
-                size={isSingle ? 'lg' : 'sm'}
-                entryDelay={isSingle ? 0 : idx * 70}
-                registerRef={(el) => {
-                  cardRefs.current[idx] = el
-                }}
-              />
-            ))}
-          </div>
-
-          {/* Reserved slot (button height h-10 + mt-8): keeps the flex column's
-           *  height constant so removing the button on click doesn't recenter
-           *  the grid and shift the cards down. */}
-          <div className="relative mt-8 flex h-10 items-center justify-center">
-            {!allRevealed && !revealAllTriggered && (
+        {stack.mode === 'stack' ? (
+          <div className="relative flex min-h-full flex-col items-center justify-center pb-32 md:pb-0">
+            {stack.step === 'pile' ? (
+              <>
+                <button
+                  type="button"
+                  onClick={revealNextFromPile}
+                  aria-label="Révéler la carte suivante"
+                  className="group relative aspect-[2/3] w-40 cursor-pointer bg-transparent"
+                >
+                  {stableResults.map(({ key, idx }) =>
+                    idx >= stack.index ? (
+                      <img
+                        key={key}
+                        src={cardBackImg}
+                        alt=""
+                        draggable={false}
+                        className="absolute inset-0 h-full w-full rounded-2xl object-cover shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-transform duration-200 group-hover:scale-[1.03]"
+                        style={{
+                          transform: `translate(${pileJitter[idx].dx}px, ${pileJitter[idx].dy}px) rotate(${pileJitter[idx].rot}deg)`,
+                        }}
+                      />
+                    ) : null,
+                  )}
+                </button>
+                <p className="mt-10 font-mono text-xs font-bold uppercase tracking-[0.2em] text-white/60">
+                  {results.length - stack.index}{' '}
+                  {results.length - stack.index > 1
+                    ? 'cartes restantes'
+                    : 'carte restante'}
+                </p>
+              </>
+            ) : (
+              <>
+                {/* Fond cliquable plein écran : n'importe quel clic passe à la
+                 *  carte suivante (la carte elle-même avance via onInspect). */}
+                <button
+                  type="button"
+                  aria-label="Carte suivante"
+                  onClick={dismissShownCard}
+                  className="absolute inset-0 z-0 cursor-pointer bg-transparent"
+                />
+                <div
+                  className={
+                    stack.step === 'exiting'
+                      ? 'relative z-10 animate-[stackCardOut_180ms_ease-in_forwards]'
+                      : 'relative z-10'
+                  }
+                >
+                  <RevealCard
+                    key={stableResults[stack.index].key}
+                    entry={results[stack.index]}
+                    flipped={flipped.has(stack.index)}
+                    onFlip={noop}
+                    onInspect={dismissShownCard}
+                    size="lg"
+                    entryDelay={0}
+                    registerRef={noop}
+                  />
+                </div>
+              </>
+            )}
+            <div className="relative z-10 mt-8 flex h-10 items-center justify-center">
               <Button
                 type="button"
-                variant="gradient"
-                size="lg"
-                onClick={revealAll}
-                className="rounded-full px-8 uppercase tracking-widest"
+                variant="outline"
+                onClick={skipStack}
+                className="rounded-full border-white/20 bg-transparent px-8 uppercase tracking-widest text-white hover:bg-white/10 hover:text-white"
               >
-                Tout révéler
+                Passer
               </Button>
-            )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex min-h-full flex-col items-center justify-center pb-32 md:pb-0">
+            <div
+              className={
+                isSingle
+                  ? 'relative flex items-center justify-center'
+                  : 'relative grid grid-cols-5 max-md:grid-cols-2 gap-x-4 gap-y-10 p-8 pt-14'
+              }
+            >
+              {stableResults.map(({ entry, key, idx }) => (
+                <RevealCard
+                  key={key}
+                  entry={entry}
+                  flipped={flipped.has(idx)}
+                  onFlip={() => flipCard(idx)}
+                  onInspect={() => setInspecting(entry)}
+                  size={isSingle ? 'lg' : 'sm'}
+                  entryDelay={isSingle ? 0 : idx * 70}
+                  registerRef={(el) => {
+                    cardRefs.current[idx] = el
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Reserved slot (button height h-10 + mt-8): keeps the flex column's
+             *  height constant so removing the button on click doesn't recenter
+             *  the grid and shift the cards down. */}
+            <div className="relative mt-8 flex h-10 items-center justify-center">
+              {!allRevealed && !revealAllTriggered && (
+                <Button
+                  type="button"
+                  variant="gradient"
+                  size="lg"
+                  onClick={revealAll}
+                  className="rounded-full px-8 uppercase tracking-widest"
+                >
+                  Tout révéler
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {showActions && (
