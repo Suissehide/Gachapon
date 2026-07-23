@@ -30,6 +30,8 @@ const EFFECT_RANK: Record<EffectKey, number> = {
   HOLOGRAPHIC: 4.5,
 }
 
+const noop = () => undefined
+
 type Props = {
   results: PullBatchEntry[]
   onClose: () => void
@@ -91,8 +93,6 @@ export function RevealGrid({
     [results],
   )
 
-  const noop = () => undefined
-
   const revealNextFromPile = () => {
     if (stack.mode !== 'stack' || stack.step !== 'pile') {
       return
@@ -106,7 +106,7 @@ export function RevealGrid({
       return
     }
     setStack({ mode: 'stack', step: 'exiting', index: stack.index })
-    setTimeout(() => {
+    exitTimerRef.current = setTimeout(() => {
       setStack((prev) => {
         if (prev.mode !== 'stack') {
           return prev
@@ -120,6 +120,7 @@ export function RevealGrid({
   }
 
   const cardRefs = useRef<Array<HTMLDivElement | null>>([])
+  const exitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const stableResults = useMemo(
     () =>
@@ -239,6 +240,14 @@ export function RevealGrid({
     setShowActions(false)
   }, [allRevealed, onAllRevealed])
 
+  useEffect(() => {
+    return () => {
+      if (exitTimerRef.current) {
+        clearTimeout(exitTimerRef.current)
+      }
+    }
+  }, [])
+
   const isSingle = results.length === 1
 
   return (
@@ -323,6 +332,7 @@ export function RevealGrid({
                     onInspect={dismissShownCard}
                     size="lg"
                     entryDelay={0}
+                    // Pas de ref en mode pile — flipCard retombe sur le centre de l'écran, là où la carte apparaît.
                     registerRef={noop}
                   />
                 </div>
