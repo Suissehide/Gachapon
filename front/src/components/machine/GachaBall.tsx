@@ -13,12 +13,13 @@ const BALL_COLORS = [
   '#00b4d8',
 ]
 
-// Shake = 3 à-coups de rotation aléatoires : la boule part vers une
-// orientation aléatoire, revient au repos, mini pause, et recommence —
-// 3 fois avant d'enchaîner sur la vibration. Le timer de phase côté
-// play.tsx (1350 ms) doit couvrir SHAKE_DURATION.
+// Shake = 3 à-coups de rotation aléatoires façon Pokéball : montée sèche vers
+// l'extrême puis ressort amorti (la boule repasse par le centre, déborde de
+// l'autre côté et se pose), mini pause, et on recommence — 3 fois avant la
+// vibration. Le timer de phase côté play.tsx (1700 ms) doit couvrir
+// SHAKE_DURATION.
 const SHAKE_BURSTS = 3
-const SHAKE_BURST_ACTIVE = 0.3 // seconds — aller-retour de rotation
+const SHAKE_BURST_ACTIVE = 0.42 // seconds — snap + oscillation amortie
 const SHAKE_BURST_PAUSE = 0.14 // seconds — repos complet entre deux à-coups
 const SHAKE_DURATION = SHAKE_BURSTS * (SHAKE_BURST_ACTIVE + SHAKE_BURST_PAUSE)
 const VIBRATE_DURATION = 0.9 // seconds
@@ -37,9 +38,24 @@ type ShakeSeed = {
 
 type ShakeBurst = { rx: number; ry: number; rz: number }
 
-// Trois à-coups de rotation : à chaque à-coup la boule part vers son
-// orientation cible et revient au repos (sinus aller-retour 0 → cible → 0),
-// puis marque une pause complète avant le suivant. La lueur monte doucement
+// Profil d'un à-coup façon Pokéball, k(p) avec p ∈ [0,1] :
+// 18 % de montée sèche vers l'extrême (ease-out), puis ressort amorti — la
+// boule repasse par le centre, déborde à ~40 % de l'autre côté, petit rebond,
+// et finit posée pile à zéro (cos s'annule à p = 1).
+function burstProfile(p: number): number {
+  const ATTACK = 0.18
+  if (p < ATTACK) {
+    const a = p / ATTACK
+    return 1 - (1 - a) ** 2
+  }
+  const r = (p - ATTACK) / (1 - ATTACK)
+  return Math.cos(r * Math.PI * 2.5) * Math.E ** (-2.2 * r)
+}
+
+// Trois à-coups de rotation : à chaque à-coup la boule claque vers son
+// orientation cible puis oscille en ressort amorti jusqu'au repos, marque une
+// pause complète, et recommence. Un léger déport latéral couplé au tilt Z
+// donne l'impression qu'elle bascule sur son poids. La lueur monte doucement
 // sur toute la durée pour préparer la vibration. Après le 3e à-coup la boule
 // reste au repos jusqu'au changement de phase.
 function runShake(
@@ -54,14 +70,16 @@ function runShake(
   const target = bursts[slot]
 
   if (tin < SHAKE_BURST_ACTIVE) {
-    const k = Math.sin(Math.PI * (tin / SHAKE_BURST_ACTIVE))
+    const k = burstProfile(tin / SHAKE_BURST_ACTIVE)
     group.rotation.x = target.rx * k
     group.rotation.y = target.ry * k
     group.rotation.z = target.rz * k
+    group.position.x = target.rz * k * 0.12
+    group.position.y = 0
   } else {
     group.rotation.set(0, 0, 0)
+    group.position.set(0, 0, 0)
   }
-  group.position.set(0, 0, 0)
   group.scale.setScalar(BALL_SCALE)
 
   if (mat) {

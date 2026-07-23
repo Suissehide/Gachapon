@@ -272,14 +272,14 @@ function Play() {
     return () => wsClient.disconnect()
   }, [])
 
-  // Shared ball choreography: shake (3 à-coups de rotation avec pauses,
-  // 3 × 440 ms côté GachaBall) → vibrate (contained-power crescendo) → split
+  // Shared ball choreography: shake (3 à-coups façon Pokéball avec pauses,
+  // 3 × 560 ms côté GachaBall) → vibrate (contained-power crescendo) → split
   // (burst; the white flash fires with it). Bails out between steps if the
   // pull errored back to idle.
   const runBallSequence = useCallback(async () => {
     setPhase('ball-shake')
     phaseRef.current = 'ball-shake'
-    await new Promise((res) => setTimeout(res, 1350))
+    await new Promise((res) => setTimeout(res, 1700))
     if (pullAbortedRef.current) {
       return
     }
