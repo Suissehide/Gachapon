@@ -2,7 +2,7 @@ import { Environment } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { Gem, HelpCircle, Layers, SkipForward } from 'lucide-react'
+import { Gem, HelpCircle, SkipForward, Ticket } from 'lucide-react'
 import {
   type CSSProperties,
   useCallback,
@@ -487,7 +487,7 @@ function Play() {
             >
               Tirage x1
               <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-text/6 px-2.5 py-1 font-mono text-xs text-text-light">
-                <Layers className="h-3.5 w-3.5" />
+                <Ticket className="h-3.5 w-3.5" />
                 {pullCost}
               </span>
             </Button>
@@ -499,7 +499,7 @@ function Play() {
             >
               Tirage x10
               <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-white/25 px-2.5 py-1 font-mono text-xs text-white">
-                <Layers className="h-3.5 w-3.5" />
+                <Ticket className="h-3.5 w-3.5" />
                 {pullCost * 10}
               </span>
             </Button>
