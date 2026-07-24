@@ -20,7 +20,7 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
     pullTokenCost: 1,
     pityThreshold: 300,
     tokenRegenIntervalMinutes: 60,
-    tokenMaxStock: 6,
+    tokenMaxStock: 10,
   },
   recycle: {
     COMMON: 10,
