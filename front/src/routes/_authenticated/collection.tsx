@@ -27,10 +27,7 @@ import { ArcadeCard } from '../../components/shared/ArcadeCard.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { Button } from '../../components/ui/button.tsx'
-import {
-  ELEMENT_LABELS,
-  ELEMENT_ORDER,
-} from '../../constants/card.constant.ts'
+import { ELEMENT_LABELS, ELEMENT_ORDER } from '../../constants/card.constant.ts'
 import { useStoredState } from '../../hooks/useStoredState.ts'
 import {
   type UserCard,

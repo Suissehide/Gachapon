@@ -31,7 +31,10 @@ const RARITY_BY_CHAPTER = [
 // Ennemi normal = base joueur × NORMAL_FACTOR. Recalé le 2026-08-06 avec
 // l'activation des éléments et du ciblage prioritaire (les deux camps focus
 // désormais la cible qu'ils battent) : sim à 67 % de win moyen, 47/50 stages
-// en bande 45-90 %.
+// en bande 45-90 %. IMPORTANT : la sim (balance-sim.ts) attribue les éléments
+// du joueur de façon cyclique déterministe, SANS regarder ceux des ennemis —
+// c'est donc une mesure en régime « joueur qui ne contre-pick pas ». Un joueur
+// qui contre-pick ses éléments obtient un win rate nettement supérieur.
 // ATTENTION : quasi-miroir. Mesuré le 2026-08-06 sous ce régime (éléments actifs
 // + ciblage prioritaire des deux côtés) : ±0.01 fait bouger le win rate
 // d'environ 4 pts (0.99→59 %, 0.981→63 %, 0.976→65 %, 0.971→67 %), pas ~10 pts
@@ -109,7 +112,9 @@ const FAMILIES: Record<string, MonsterFamily> = {
 // Élément par famille de bestiaire. Une famille = un élément fixe : le joueur
 // apprend « les loups sont NATURE » et c'est vrai partout. Comme chaque étage
 // tire ses 3 slots dans 3 familles différentes (voir STAGE_LOOKS), les étages
-// des chapitres 1-4 présentent naturellement 3 éléments distincts.
+// des chapitres 1-4 présentent naturellement 3 éléments distincts. Exception :
+// le chapitre 5 (CHAPTER_FAMILIES) n'a que 2 familles (krakens, wyvernes),
+// donc ses étages ne présentent que 2 éléments distincts sur 3 slots.
 // Clé = fam.slug (le dossier MinIO), pas la clé française de FAMILIES : c'est
 // le slug qui apparaît dans `appearance` et sert de source commune sprite/élément.
 export const FAMILY_ELEMENTS: Record<string, Element> = {
@@ -156,8 +161,10 @@ const BOSS_COUNT = 19
 // Apparence cosmétique ET élément par étage : clé `${chapter}-${index}`, valeur
 // = une entrée par slot d'ennemi. `appearance` = sous-chemin MinIO (sans cards/
 // ni .png), `family` = clé dans FAMILY_ELEMENTS (= fam.slug, le dossier MinIO).
-// Les deux sortent du même tirage : le sprite et l'élément ne peuvent pas diverger.
-type StageLook = { appearance: string; family: string }
+// Vrai pour les étages 1-9 : le sprite et l'élément sortent du même tirage et
+// ne peuvent pas diverger. Faux pour les boss (étage 10) : leur élément vient
+// de BOSS_ELEMENT_BY_CHAPTER, pas de `family` — voir `family` optionnel ci-dessous.
+type StageLook = { appearance: string; family?: string }
 
 const STAGE_LOOKS: Record<string, StageLook[]> = (() => {
   const looks: Record<string, StageLook[]> = {}
@@ -180,10 +187,11 @@ const STAGE_LOOKS: Record<string, StageLook[]> = (() => {
       )
     }
     const bossNum = String(((chapter - 1) % BOSS_COUNT) + 1).padStart(3, '0')
+    // Pas de `family` pour le boss : son élément vient de
+    // BOSS_ELEMENT_BY_CHAPTER (voir bossEnemyTeam), pas de FAMILY_ELEMENTS.
     looks[`${chapter}-10`] = [
       {
         appearance: `monsters/${BOSS_SLUG}/BOSS-${bossNum}`,
-        family: BOSS_SLUG,
       },
     ]
   })
@@ -210,14 +218,22 @@ export function enemyPower(chapter: number, stageIndex: number) {
 export function normalEnemyTeam(chapter: number, stageIndex: number) {
   const p = enemyPower(chapter, stageIndex)
   const looks = looksForStage(chapter, stageIndex)
-  return [0, 1, 2].map((slot) => ({
-    ...p,
-    level: 1,
-    palier: 1,
-    attackPattern: 'BASIC',
-    appearance: looks[slot].appearance,
-    element: FAMILY_ELEMENTS[looks[slot].family],
-  }))
+  return [0, 1, 2].map((slot) => {
+    const look = looks[slot]
+    if (!look.family) {
+      throw new Error(
+        `Stage look ${chapter}-${stageIndex} slot ${slot} has no family (normal stages must set one)`,
+      )
+    }
+    return {
+      ...p,
+      level: 1,
+      palier: 1,
+      attackPattern: 'BASIC',
+      appearance: look.appearance,
+      element: FAMILY_ELEMENTS[look.family],
+    }
+  })
 }
 
 export function bossEnemyTeam(chapter: number, stageIndex: number) {

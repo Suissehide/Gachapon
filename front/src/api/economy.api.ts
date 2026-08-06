@@ -45,6 +45,8 @@ export interface EconomyConfig {
     regenSeconds: number
     battleCost: number
     sweepCost: number
+    elementAdvantageMult: number
+    elementDisadvantageMult: number
   }
   wishlist: {
     priceMultiplier: number

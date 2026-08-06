@@ -31,7 +31,7 @@ export interface SimulatorUnit {
   spd: number
   attackPattern: AttackPattern
   passiveKey: string | null
-  /** Élément (FIRE/WATER/NATURE/LIGHT/DARK) ; null = neutre. */
+  /** Élément (FIRE/WATER/NATURE/EARTH/LIGHT/DARK) ; null = neutre. */
   element?: string | null
   palier: number
 }

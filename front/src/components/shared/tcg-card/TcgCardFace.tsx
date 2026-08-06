@@ -362,6 +362,9 @@ function ElementBadge({
   compact: boolean
 }) {
   const Icon = ELEMENT_ICON[element]
+  if (!Icon) {
+    return null
+  }
   return (
     <div
       className={`flex items-center justify-center rounded-full border-[0.5px] border-white text-white shadow-[0_2px_6px_rgba(0,0,0,0.4)] ${

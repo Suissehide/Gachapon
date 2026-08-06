@@ -64,7 +64,7 @@ const enemySpecSchema = z.object({
     .enum(['BASIC', 'AOE_3', 'MULTI_2', 'MONO_AMPLIFIED', 'MONO_DOUBLE'])
     .optional(),
   passiveKey: z.string().nullish(),
-  // Élément (FIRE/WATER/NATURE/LIGHT/DARK) ; absent => neutre.
+  // Élément (FIRE/WATER/NATURE/EARTH/LIGHT/DARK) ; absent => neutre.
   element: z.string().nullish(),
   // Sous-chemin MinIO sans cards/ ni .png, ex. "monsters/slimes/SLIME-001".
   // Purement cosmétique. Absent => placeholder côté front.

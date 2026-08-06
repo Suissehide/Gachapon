@@ -24,12 +24,7 @@ type Props = {
 
 const PLACEHOLDER_RARITY = 'COMMON' as const
 
-export function UnitPortrait({
-  unit,
-  isActing,
-  isTargeted,
-  enlarged,
-}: Props) {
+export function UnitPortrait({ unit, isActing, isTargeted, enlarged }: Props) {
   const hpPct = Math.max(0, (unit.currentHp / unit.maxHp) * 100)
   const isDead = !unit.alive
   const isAlly = unit.side === 'A'

@@ -20,13 +20,13 @@ import {
   CollectionSection,
   computeSectionStats,
 } from '../../../components/collection/CollectionSection.tsx'
+import { ArcadeCard } from '../../../components/shared/ArcadeCard.tsx'
+import { PageHeader } from '../../../components/shared/PageHeader.tsx'
+import { PageShell } from '../../../components/shared/PageShell.tsx'
 import {
   ELEMENT_LABELS,
   ELEMENT_ORDER,
 } from '../../../constants/card.constant.ts'
-import { ArcadeCard } from '../../../components/shared/ArcadeCard.tsx'
-import { PageHeader } from '../../../components/shared/PageHeader.tsx'
-import { PageShell } from '../../../components/shared/PageShell.tsx'
 import {
   type UserCard,
   useCards,

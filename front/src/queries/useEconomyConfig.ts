@@ -45,7 +45,14 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
     ascensionStatBonus: 0.15,
     maxPalier: 6,
   },
-  combat: { pointsMax: 60, regenSeconds: 900, battleCost: 5, sweepCost: 5 },
+  combat: {
+    pointsMax: 60,
+    regenSeconds: 900,
+    battleCost: 5,
+    sweepCost: 5,
+    elementAdvantageMult: 1.3,
+    elementDisadvantageMult: 0.75,
+  },
   wishlist: { priceMultiplier: 2, cooldownDays: 7 },
   equip: {
     goldCostBase: 25,

@@ -77,9 +77,11 @@ export const ELEMENT_COLOR: Record<CardElement, string> = {
 }
 
 /**
- * Pictogramme par élément. Les pastilles sont posées sur un fond sombre
- * (#1b1726) et l'icône est rendue en blanc : les silhouettes doivent donc
- * rester lisibles en aplat, d'où des formes franches et bien distinctes.
+ * Pictogramme par élément. `ElementBadge` remplit la pastille avec
+ * `ELEMENT_COLOR[element]` (pas un fond sombre fixe) et rend l'icône en
+ * blanc par-dessus : les silhouettes doivent donc rester lisibles en aplat
+ * blanc sur chacune des six couleurs d'accent, d'où des formes franches et
+ * bien distinctes.
  */
 export const ELEMENT_ICON: Record<CardElement, LucideIcon> = {
   FIRE: Flame,

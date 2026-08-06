@@ -23,7 +23,6 @@ export const teamUnitSchema = z.object({
   level: z.number().int(),
   palier: z.number().int(),
   passiveKey: z.string().nullable(),
-  element: z.string().nullable().optional(),
   passiveLabel: z.string().nullable(),
   stats: z.object({
     hp: z.number().int(),

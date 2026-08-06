@@ -8,6 +8,7 @@ import {
   simulateBattle,
 } from '../src/main/domain/combat/battle-simulator.domain'
 import { computeFinalStats } from '../src/main/domain/combat/combat-stats.domain'
+import { ELEMENTS } from '../src/main/domain/combat/element'
 
 type BaseBlock = {
   baseHp: number
@@ -46,9 +47,9 @@ function playerLevelForStage(chapter: number, index: number): number {
 }
 
 // Éléments joueur balayés de façon déterministe : l'unité i du run k prend
-// ELEMENTS[(i + k) % 6]. Sur 200 runs, les 6 compositions cycliques sont
-// couvertes à parts égales, et le rapport reste reproductible.
-const SIM_ELEMENTS = ['FIRE', 'WATER', 'NATURE', 'EARTH', 'LIGHT', 'DARK']
+// ELEMENTS[(i + k) % 6]. Sur 200 runs (200 mod 6 = 2), deux rotations sur
+// six sont couvertes par 34 runs et les quatre autres par 33 — quasi égal,
+// et le rapport reste reproductible.
 
 function playerTeam(opts: {
   level: number
@@ -148,7 +149,7 @@ function runScenario(
     const sim = simulateBattle({
       teamA: playerUnits.map((u, i) => ({
         ...u,
-        element: SIM_ELEMENTS[(i + k) % SIM_ELEMENTS.length],
+        element: ELEMENTS[(i + k) % ELEMENTS.length],
       })),
       teamB: enemies.map((u) => ({ ...u })),
       seed: `sim-${chapter}-${index}-${scenario}-${k}`,

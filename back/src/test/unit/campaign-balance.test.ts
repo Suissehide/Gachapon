@@ -1,3 +1,4 @@
+import { ELEMENTS } from '../../main/domain/combat/element'
 import {
   BOSS_ELEMENT_BY_CHAPTER,
   FAMILY_ELEMENTS,
@@ -145,20 +146,18 @@ describe('bossLoot — prime de farm alignée sur la difficulté réelle', () =>
 })
 
 describe('éléments des monstres — un élément par famille de bestiaire', () => {
-  const ALL: string[] = ['FIRE', 'WATER', 'NATURE', 'EARTH', 'LIGHT', 'DARK']
-
   it('chaque famille du bestiaire a un élément valide', () => {
     const families = Object.keys(FAMILY_ELEMENTS)
     expect(families.length).toBe(14)
     for (const fam of families) {
-      expect(ALL).toContain(FAMILY_ELEMENTS[fam])
+      expect(ELEMENTS).toContain(FAMILY_ELEMENTS[fam])
     }
   })
 
   it('les 5 boss ont un élément valide', () => {
     expect(BOSS_ELEMENT_BY_CHAPTER).toHaveLength(5)
     for (const el of BOSS_ELEMENT_BY_CHAPTER) {
-      expect(ALL).toContain(el)
+      expect(ELEMENTS).toContain(el)
     }
   })
 
@@ -168,7 +167,7 @@ describe('éléments des monstres — un élément par famille de bestiaire', ()
         const team = normalEnemyTeam(chapter, index)
         expect(team).toHaveLength(3)
         for (const e of team) {
-          expect(ALL).toContain(e.element)
+          expect(ELEMENTS).toContain(e.element)
         }
       }
     }

@@ -38,7 +38,7 @@ export type SimulatorUnit = {
   spd: number
   attackPattern: AttackPattern
   passiveKey: string | null
-  /** Élément du domaine (FIRE/WATER/NATURE/LIGHT/DARK) ; null = neutre. */
+  /** Élément du domaine (FIRE/WATER/NATURE/EARTH/LIGHT/DARK) ; null = neutre. */
   element?: string | null
   palier: number
 }
@@ -72,7 +72,7 @@ export const CombatApi = {
   getTeam: async (): Promise<{ team: TeamUnit[] }> => {
     const res = await fetchWithAuth(`${apiUrl}/combat/team`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors du chargement de l\'équipe')
+      handleHttpError(res, {}, "Erreur lors du chargement de l'équipe")
     }
     return res.json()
   },
@@ -84,7 +84,7 @@ export const CombatApi = {
       body: JSON.stringify({ userCardIds }),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de l\'enregistrement de l\'équipe')
+      handleHttpError(res, {}, "Erreur lors de l'enregistrement de l'équipe")
     }
     return res.json()
   },
