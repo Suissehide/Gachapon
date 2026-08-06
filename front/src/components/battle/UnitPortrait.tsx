@@ -1,7 +1,7 @@
 import { Skull } from 'lucide-react'
 
+import type { CardElement } from '../../constants/card.constant'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
-import { getRarityTone } from '../shared/tcg-card/config.ts'
 import type { SceneUnit } from './types'
 
 type Props = {
@@ -81,13 +81,9 @@ export function UnitPortrait({
             isOwned
             interactive={false}
             compact
+            level={isAlly ? unit.level : null}
+            element={(unit.element ?? null) as CardElement | null}
           />
-          {/* Level badge — allies only, sits over the top-left corner. */}
-          {isAlly && unit.level != null && (
-            <div className="pointer-events-none absolute top-2 left-2 z-20">
-              <LevelBadge level={unit.level} rarity={unit.rarity} />
-            </div>
-          )}
           {isDead && (
             <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center animate-[battleSkullIn_0.3s_ease]">
               <Skull className="h-12 w-12 text-text-light drop-shadow-md" />
@@ -111,24 +107,6 @@ export function UnitPortrait({
           </span>
         </p>
       </div>
-    </div>
-  )
-}
-
-function LevelBadge({
-  level,
-  rarity,
-}: {
-  level: number
-  rarity?: string | null
-}) {
-  const tone = getRarityTone(rarity ?? 'COMMON')
-  return (
-    <div
-      className="flex h-7 min-w-[28px] items-center justify-center rounded-[7px] border-[0.5px] border-white px-1 font-display text-[13px] font-extrabold leading-none text-white shadow-[0_2px_6px_rgba(0,0,0,0.4)]"
-      style={{ background: tone.hex }}
-    >
-      {level}
     </div>
   )
 }

@@ -49,6 +49,7 @@ import {
   PopupFooter,
   PopupHeader,
 } from '../../components/ui/popup.tsx'
+import type { CardElement } from '../../constants/card.constant'
 import { useCampaign, useSweepStage } from '../../queries/useCampaign.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
 import { useCombatTeam } from '../../queries/useCombatTeam.ts'
@@ -907,6 +908,7 @@ function PrepModal({
                   power={enemy.power}
                   width={isBoss ? 'w-[110px]' : 'w-[74px]'}
                   imageUrl={enemy.imageUrl}
+                  element={enemy.element}
                 />
               ))}
             </div>
@@ -1070,11 +1072,13 @@ function EnemyCard({
   power,
   width,
   imageUrl,
+  element,
 }: {
   boss: boolean
   power: number
   width: string
   imageUrl: string | null
+  element: string | null
 }) {
   const rarity = boss ? 'LEGENDARY' : 'EPIC'
   return (
@@ -1088,6 +1092,7 @@ function EnemyCard({
         isOwned
         compact
         showName={false}
+        element={(element ?? null) as CardElement | null}
       />
       <div className="pointer-events-none absolute bottom-1.5 left-1/2 z-20 inline-flex -translate-x-1/2 items-center gap-1 rounded-sm border-[0.5px] border-white bg-[#1b1726]/92 px-2 py-[3px] font-display text-[10px] font-extrabold leading-none tabular-nums text-white shadow-[0_2px_6px_rgba(27,23,38,0.45)]">
         <Swords className="h-2.5 w-2.5 text-primary" />

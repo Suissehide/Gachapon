@@ -38,6 +38,8 @@ export type SimulatorUnit = {
   spd: number
   attackPattern: AttackPattern
   passiveKey: string | null
+  /** Élément du domaine (FIRE/WATER/NATURE/LIGHT/DARK) ; null = neutre. */
+  element?: string | null
   palier: number
 }
 
