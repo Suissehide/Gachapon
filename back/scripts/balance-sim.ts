@@ -201,6 +201,8 @@ function runScenario(
       })),
       teamB: enemies.map((u) => ({ ...u })),
       seed: `sim-${chapter}-${index}-${scenario}-${k}`,
+      elementAdvantageMult: ELEMENT_ADVANTAGE_MULT,
+      elementDisadvantageMult: ELEMENT_DISADVANTAGE_MULT,
     })
     if (sim.won === 'A') {
       wins++
@@ -211,6 +213,17 @@ function runScenario(
 }
 
 const RUNS = 200
+
+// Multiplicateurs élémentaires pilotables depuis l'extérieur (balayage de
+// mesure), avec les valeurs par défaut de battle-simulator.domain.ts si les
+// variables d'env sont absentes — le comportement par défaut du script reste
+// donc strictement inchangé.
+const ELEMENT_ADVANTAGE_MULT = process.env.ELEMENT_ADVANTAGE_MULT
+  ? Number.parseFloat(process.env.ELEMENT_ADVANTAGE_MULT)
+  : undefined
+const ELEMENT_DISADVANTAGE_MULT = process.env.ELEMENT_DISADVANTAGE_MULT
+  ? Number.parseFloat(process.env.ELEMENT_DISADVANTAGE_MULT)
+  : undefined
 
 function main(): void {
   const header =
