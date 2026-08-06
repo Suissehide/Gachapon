@@ -20,6 +20,7 @@ function makeEntry(rarity: string, variant: string): PullBatchEntry {
       name: `${rarity} ${variant}`,
       imageUrl: null,
       rarity,
+      element: null,
       variant: variant === 'NORMAL' ? null : variant,
       set: { id: 'dev', name: 'Preview' },
     },

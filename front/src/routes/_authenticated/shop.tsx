@@ -465,6 +465,7 @@ function WishlistSection({ dust }: { dust: number }) {
                   setName={card.set.name}
                   imageUrl={card.imageUrl}
                   variant={null}
+                  element={card.element}
                   isOwned
                   interactive={canBuy}
                   compact
@@ -522,6 +523,7 @@ function DailyShopCard({
           setName={item.card.set.name}
           imageUrl={item.card.imageUrl}
           variant={null}
+          element={item.card.element}
           isOwned
           interactive={!item.purchased}
           newBadge={!item.owned && !item.purchased}

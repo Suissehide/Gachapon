@@ -1,5 +1,9 @@
 import type { RewardSource, UserReward } from '../../../../generated/client'
-import type { CardRarity, CardVariant } from '../../../../generated/enums'
+import type {
+  CardElement,
+  CardRarity,
+  CardVariant,
+} from '../../../../generated/enums'
 import type { UnlockedAchievement } from '../../../domain/achievements/events.types'
 import type {
   PendingUserReward,
@@ -14,6 +18,7 @@ export type ClaimedCard = {
     name: string
     imageUrl: string | null
     rarity: CardRarity
+    element: CardElement | null
     variant: CardVariant
     set: { id: string; name: string }
   }

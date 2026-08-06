@@ -1,6 +1,7 @@
 import { z } from 'zod/v4'
 
 import { unlockedAchievementSchema } from './achievements.schemas'
+import { cardElementEnum } from './admin-cards.schema'
 
 const cardRarityEnum = z.enum([
   'COMMON',
@@ -35,6 +36,7 @@ const claimedCardSchema = z.object({
     name: z.string(),
     imageUrl: z.string().nullable(),
     rarity: cardRarityEnum,
+    element: cardElementEnum.nullable(),
     variant: cardVariantEnum,
     set: z.object({ id: z.string(), name: z.string() }),
   }),

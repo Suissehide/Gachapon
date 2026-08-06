@@ -1,5 +1,5 @@
 import type { UnlockedAchievement } from './achievements.constant'
-import type { CardRarity } from './card.constant.ts'
+import type { CardElement, CardRarity } from './card.constant.ts'
 
 // Types
 export type PullResult = {
@@ -8,6 +8,7 @@ export type PullResult = {
     name: string
     imageUrl: string | null
     rarity: string
+    element: CardElement | null
     variant: string | null
     set: { id: string; name: string }
   }
@@ -57,6 +58,7 @@ export type PullBatchEntry = {
     name: string
     imageUrl: string | null
     rarity: string
+    element: CardElement | null
     variant: string | null
     set: { id: string; name: string }
   }

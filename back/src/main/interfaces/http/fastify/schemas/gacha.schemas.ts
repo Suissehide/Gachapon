@@ -1,6 +1,7 @@
 import { z } from 'zod/v4'
 
 import { unlockedAchievementSchema } from './achievements.schemas'
+import { cardElementEnum } from './admin-cards.schema'
 
 // ── POST /pulls ─────────────────────────────────────────────────────────────
 
@@ -10,6 +11,7 @@ export const pullResponseSchema = z.object({
     name: z.string(),
     imageUrl: z.string().nullable(),
     rarity: z.string(),
+    element: cardElementEnum.nullable(),
     variant: z.string(),
     set: z.object({ id: z.string(), name: z.string() }),
   }),
@@ -38,6 +40,7 @@ export const pullBatchResponseSchema = z.object({
         name: z.string(),
         imageUrl: z.string().nullable(),
         rarity: z.string(),
+        element: cardElementEnum.nullable(),
         variant: z.string(),
         set: z.object({ id: z.string(), name: z.string() }),
       }),

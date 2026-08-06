@@ -1,8 +1,11 @@
+import type { CardElement } from '../../../../generated/client'
+
 export type DailyShopCard = {
   id: string
   name: string
   imageUrl: string | null
   rarity: string
+  element: CardElement | null
   set: { id: string; name: string }
 }
 

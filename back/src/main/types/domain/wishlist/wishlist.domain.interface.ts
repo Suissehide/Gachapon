@@ -1,8 +1,11 @@
+import type { CardElement } from '../../../../generated/client'
+
 export interface WishlistCardInfo {
   id: string
   name: string
   imageUrl: string | null
   rarity: string
+  element: CardElement | null
   set: { id: string; name: string }
 }
 

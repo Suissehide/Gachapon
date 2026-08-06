@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { cardElementEnum } from './admin-cards.schema'
+
 export const setWishBodySchema = z.object({
   cardId: z.string().uuid(),
 })
@@ -9,6 +11,7 @@ const wishlistCardSchema = z.object({
   name: z.string(),
   imageUrl: z.string().nullable(),
   rarity: z.string(),
+  element: cardElementEnum.nullable(),
   set: z.object({ id: z.string().uuid(), name: z.string() }),
 })
 

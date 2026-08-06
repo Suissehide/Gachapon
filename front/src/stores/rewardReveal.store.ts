@@ -26,6 +26,7 @@ export function claimedCardToRevealEntry(c: ClaimedCard): PullBatchEntry {
       name: c.card.name,
       imageUrl: c.card.imageUrl,
       rarity: c.card.rarity,
+      element: c.card.element,
       variant: c.card.variant,
       set: c.card.set,
     },

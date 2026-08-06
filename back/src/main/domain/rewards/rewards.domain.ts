@@ -103,6 +103,7 @@ export class RewardsDomain implements RewardsDomainInterface {
         name: picked.name,
         imageUrl: picked.imageUrl,
         rarity: picked.rarity,
+        element: picked.element,
         variant,
         set: { id: picked.set.id, name: picked.set.name },
       },

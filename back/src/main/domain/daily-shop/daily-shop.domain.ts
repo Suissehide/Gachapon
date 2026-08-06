@@ -1,5 +1,6 @@
 import Boom from '@hapi/boom'
 
+import type { CardElement } from '../../../generated/client'
 import type { IocContainer } from '../../types/application/ioc'
 import type {
   BuyDailyShopItemResult,
@@ -37,6 +38,7 @@ function formatItem(
       name: string
       imageUrl: string | null
       rarity: string
+      element: CardElement | null
       set: { id: string; name: string }
     }
   },
@@ -49,6 +51,7 @@ function formatItem(
       name: item.card.name,
       imageUrl: item.card.imageUrl,
       rarity: item.card.rarity,
+      element: item.card.element,
       set: { id: item.card.set.id, name: item.card.set.name },
     },
     dustPrice: item.dustPrice,
@@ -272,6 +275,7 @@ export class DailyShopDomain implements IDailyShopDomain {
         name: item.card.name,
         imageUrl: item.card.imageUrl,
         rarity: item.card.rarity,
+        element: item.card.element,
         set: { id: item.card.set.id, name: item.card.set.name },
       },
       dustSpent: finalPrice,

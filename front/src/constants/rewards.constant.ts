@@ -1,5 +1,5 @@
 import type { UnlockedAchievement } from './achievements.constant'
-import type { CardRarity } from './card.constant'
+import type { CardElement, CardRarity } from './card.constant'
 
 // Types
 export type PendingReward = {
@@ -26,6 +26,7 @@ export type ClaimedCard = {
     name: string
     imageUrl: string | null
     rarity: string
+    element: CardElement | null
     variant: string | null
     set: { id: string; name: string }
   }

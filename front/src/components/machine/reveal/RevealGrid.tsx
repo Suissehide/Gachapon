@@ -1037,6 +1037,7 @@ function RevealCard({
                 setName={entry.card.set.name}
                 imageUrl={entry.card.imageUrl}
                 variant={entry.card.variant}
+                element={entry.card.element}
                 interactive
                 compact
                 showAura

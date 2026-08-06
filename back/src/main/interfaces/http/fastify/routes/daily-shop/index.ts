@@ -1,5 +1,6 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
+import type { CardElement } from '../../../../../../generated/client'
 import { dailyShopItemIdParamSchema } from '../../schemas/daily-shop.schema'
 
 export const dailyShopRouter: FastifyPluginCallbackZod = (fastify) => {
@@ -16,6 +17,7 @@ export const dailyShopRouter: FastifyPluginCallbackZod = (fastify) => {
         name: string
         imageUrl: string | null
         rarity: string
+        element: CardElement | null
         set: { id: string; name: string }
       }
       dustPrice: number
