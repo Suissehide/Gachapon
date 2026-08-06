@@ -161,7 +161,12 @@ export interface CampaignStageView {
   status: 'cleared' | 'current' | 'locked'
   recommendedPower: number
   rewardPreview: RewardPreview
-  enemies: { id: string; imageUrl: string | null; power: number; element: string | null }[]
+  enemies: {
+    id: string
+    imageUrl: string | null
+    power: number
+    element: string | null
+  }[]
 }
 
 export interface CampaignView {
@@ -430,7 +435,8 @@ export class CampaignDomain {
             teamB: enemyUnits,
             seed,
             elementAdvantageMult: battleCfg['combat.elementAdvantageMult'],
-            elementDisadvantageMult: battleCfg['combat.elementDisadvantageMult'],
+            elementDisadvantageMult:
+              battleCfg['combat.elementDisadvantageMult'],
           })
 
           const won = sim.won === 'A'
