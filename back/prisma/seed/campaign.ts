@@ -116,7 +116,7 @@ export const FAMILY_ELEMENTS: Record<string, Element> = {
   specters: 'DARK',
   elementals: 'FIRE',
   minotaurs: 'FIRE',
-  basilisks: 'NATURE',
+  basilisks: 'EARTH',
   hydras: 'WATER',
   krakens: 'WATER',
   wyverns: 'FIRE',
@@ -130,7 +130,7 @@ export const BOSS_ELEMENT_BY_CHAPTER: readonly Element[] = [
   'FIRE',
   'LIGHT',
   'DARK',
-  'NATURE',
+  'EARTH',
 ]
 
 // Familles peuplant chaque chapitre (difficulté croissante), étages 1-9.

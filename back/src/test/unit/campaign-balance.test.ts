@@ -145,7 +145,7 @@ describe('bossLoot — prime de farm alignée sur la difficulté réelle', () =>
 })
 
 describe('éléments des monstres — un élément par famille de bestiaire', () => {
-  const ALL: string[] = ['FIRE', 'WATER', 'NATURE', 'LIGHT', 'DARK']
+  const ALL: string[] = ['FIRE', 'WATER', 'NATURE', 'EARTH', 'LIGHT', 'DARK']
 
   it('chaque famille du bestiaire a un élément valide', () => {
     const families = Object.keys(FAMILY_ELEMENTS)
