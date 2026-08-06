@@ -23,6 +23,7 @@ export const teamUnitSchema = z.object({
   level: z.number().int(),
   palier: z.number().int(),
   passiveKey: z.string().nullable(),
+  element: z.string().nullable().optional(),
   passiveLabel: z.string().nullable(),
   stats: z.object({
     hp: z.number().int(),
@@ -44,8 +45,6 @@ const attackPatternEnum = z.enum([
   'MONO_DOUBLE',
 ])
 
-const elementEnum = z.enum(['FIRE', 'WATER', 'NATURE', 'EARTH', 'LIGHT', 'DARK'])
-
 const simulatorUnitSchema = z.object({
   id: z.string(),
   name: z.string().optional(),
@@ -55,7 +54,7 @@ const simulatorUnitSchema = z.object({
   spd: z.number().int().nonnegative(),
   attackPattern: attackPatternEnum,
   passiveKey: z.string().nullable(),
-  element: elementEnum.nullish(),
+  element: z.string().nullable().optional(),
   palier: z.number().int().min(1).max(6),
 })
 

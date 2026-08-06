@@ -33,6 +33,7 @@ export const campaignStageSchema = z.object({
       id: z.string(),
       imageUrl: z.string().nullable(),
       power: z.number(),
+      element: z.string().nullable(),
     }),
   ),
 })
@@ -91,6 +92,7 @@ const simulatorUnitSchema = z.object({
   spd: z.number().int(),
   attackPattern: z.string(),
   passiveKey: z.string().nullable(),
+  element: z.string().nullable().optional(),
   palier: z.number().int(),
 })
 

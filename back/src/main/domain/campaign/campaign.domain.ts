@@ -161,7 +161,7 @@ export interface CampaignStageView {
   status: 'cleared' | 'current' | 'locked'
   recommendedPower: number
   rewardPreview: RewardPreview
-  enemies: { id: string; imageUrl: string | null; power: number }[]
+  enemies: { id: string; imageUrl: string | null; power: number; element: string | null }[]
 }
 
 export interface CampaignView {
@@ -315,6 +315,7 @@ export class CampaignDomain {
             id: `B${idx}`,
             imageUrl: this.#resolveEnemyImage(e.appearance),
             power: unitPower(e),
+            element: e.element ?? null,
           })),
         }
       })
