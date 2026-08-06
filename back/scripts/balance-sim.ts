@@ -46,9 +46,9 @@ function playerLevelForStage(chapter: number, index: number): number {
 }
 
 // Éléments joueur balayés de façon déterministe : l'unité i du run k prend
-// ELEMENTS[(i + k) % 5]. Sur 200 runs, les 5 compositions cycliques sont
+// ELEMENTS[(i + k) % 6]. Sur 200 runs, les 6 compositions cycliques sont
 // couvertes à parts égales, et le rapport reste reproductible.
-const SIM_ELEMENTS = ['FIRE', 'WATER', 'NATURE', 'LIGHT', 'DARK']
+const SIM_ELEMENTS = ['FIRE', 'WATER', 'NATURE', 'EARTH', 'LIGHT', 'DARK']
 
 function playerTeam(opts: {
   level: number
