@@ -8,7 +8,11 @@ import {
   simulateBattle,
 } from '../src/main/domain/combat/battle-simulator.domain'
 import { computeFinalStats } from '../src/main/domain/combat/combat-stats.domain'
-import { ELEMENTS } from '../src/main/domain/combat/element'
+import {
+  ELEMENTS,
+  type Element,
+  elementRelation,
+} from '../src/main/domain/combat/element'
 
 type BaseBlock = {
   baseHp: number
@@ -135,6 +139,46 @@ function enemyUnitsSpeedScaled(
   return current.map((u) => ({ ...u, spd: scaledSpd }))
 }
 
+// Élément dominant côté ennemi pour l'étage : le plus fréquent parmi les
+// unités adverses, en prenant le premier de ELEMENTS en cas d'égalité (ordre
+// déterministe). Renvoie null si aucun ennemi n'a d'élément défini.
+function dominantEnemyElement(enemies: SimulatorUnit[]): Element | null {
+  const counts = new Map<Element, number>()
+  for (const enemy of enemies) {
+    const el = enemy.element
+    if (el && (ELEMENTS as readonly string[]).includes(el)) {
+      counts.set(el as Element, (counts.get(el as Element) ?? 0) + 1)
+    }
+  }
+  let best: Element | null = null
+  let bestCount = 0
+  for (const el of ELEMENTS) {
+    const count = counts.get(el) ?? 0
+    if (count > bestCount) {
+      bestCount = count
+      best = el
+    }
+  }
+  return best
+}
+
+// Élément qui bat `target`, via la source de vérité elementRelation (pas de
+// copie de la roue ici). Toujours défini sur cette roue (cycle de 4 + paire
+// mutuelle LIGHT/DARK), le fallback ne devrait donc jamais servir.
+function counterElement(target: Element): Element {
+  return (
+    ELEMENTS.find((el) => elementRelation(el, target) === 'ADVANTAGE') ?? target
+  )
+}
+
+// Élément à assigner aux 3 unités joueur en régime contre-pick : celui qui
+// bat l'élément le plus fréquent chez les ennemis de l'étage. Si aucun
+// ennemi n'a d'élément (ne devrait pas arriver), retombe en neutre (null).
+function counterPickElement(enemies: SimulatorUnit[]): Element | null {
+  const dominant = dominantEnemyElement(enemies)
+  return dominant ? counterElement(dominant) : null
+}
+
 function runScenario(
   chapter: number,
   index: number,
@@ -142,14 +186,18 @@ function runScenario(
   enemies: SimulatorUnit[],
   scenario: string,
   runs: number,
+  playerElement?: (i: number, k: number) => string | null,
 ): { winRate: number; avgActions: number } {
+  const elementFor =
+    playerElement ??
+    ((i: number, k: number) => ELEMENTS[(i + k) % ELEMENTS.length])
   let wins = 0
   let totalActions = 0
   for (let k = 0; k < runs; k++) {
     const sim = simulateBattle({
       teamA: playerUnits.map((u, i) => ({
         ...u,
-        element: ELEMENTS[(i + k) % ELEMENTS.length],
+        element: elementFor(i, k),
       })),
       teamB: enemies.map((u) => ({ ...u })),
       seed: `sim-${chapter}-${index}-${scenario}-${k}`,
@@ -166,7 +214,7 @@ const RUNS = 200
 
 function main(): void {
   const header =
-    'stage\tboss\trarity\tL\tP\twin%(current)\twin%(spdScaled)\tactions(cur)'
+    'stage\tboss\trarity\tL\tP\twin%(current)\twin%(spdScaled)\tactions(cur)\twin%(counterpick)'
   // eslint-disable-next-line no-console
   console.log(header)
   const rows: string[] = []
@@ -196,6 +244,20 @@ function main(): void {
         RUNS,
       )
 
+      // Contre-pick : les 3 unités joueur prennent l'élément qui bat le plus
+      // fréquent chez les ennemis de l'étage (borne haute, joueur optimal).
+      // Enemis inchangés (mêmes stats/éléments que le scénario 'current').
+      const counterpickElement = counterPickElement(enemiesCurrent)
+      const counterpick = runScenario(
+        chapter,
+        index,
+        team,
+        enemiesCurrent,
+        'counterpick',
+        RUNS,
+        () => counterpickElement,
+      )
+
       const row = [
         `${chapter}-${index}`,
         isBoss ? 'B' : '',
@@ -205,6 +267,7 @@ function main(): void {
         `${Math.round(cur.winRate * 100)}%`,
         `${Math.round(scaled.winRate * 100)}%`,
         Math.round(cur.avgActions),
+        `${Math.round(counterpick.winRate * 100)}%`,
       ].join('\t')
       // eslint-disable-next-line no-console
       console.log(row)
@@ -214,21 +277,26 @@ function main(): void {
 
   const reportDir = path.join(__dirname, '..', '..', '.superpowers', 'sdd')
   fs.mkdirSync(reportDir, { recursive: true })
+  // Colonne ajoutée en fin de ligne (index 8) : les index 5/6 utilisés par
+  // parsePct pour current/spdScaled restent inchangés.
   const mdHeader =
-    '| stage | boss | rarity | L | P | win%(current) | win%(spdScaled) | actions(cur) |'
-  const mdSep = '|---|---|---|---|---|---|---|---|'
+    '| stage | boss | rarity | L | P | win%(current) | win%(spdScaled) | actions(cur) | win%(counterpick) |'
+  const mdSep = '|---|---|---|---|---|---|---|---|---|'
   const mdRows = rows.map((r) => `| ${r.split('\t').join(' | ')} |`)
   const parsePct = (row: string, col: number) =>
     Number.parseInt(row.split('\t')[col].replace('%', ''), 10)
   const cur = rows.map((r) => parsePct(r, 5))
   const scaled = rows.map((r) => parsePct(r, 6))
+  const counterpick = rows.map((r) => parsePct(r, 8))
   const avg = (a: number[]) =>
     Math.round(a.reduce((x, y) => x + y, 0) / a.length)
   const band = (a: number[]) => a.filter((w) => w >= 45 && w <= 90).length
   const verdict =
     `Realistic teams (rarity by chapter). Current avg win: ${avg(cur)}%, ` +
     `spdScaled avg win: ${avg(scaled)}%. In 45-90% band: current ${band(cur)}/50, ` +
-    `spdScaled ${band(scaled)}/50.`
+    `spdScaled ${band(scaled)}/50. Counterpick avg win: ${avg(counterpick)}% ` +
+    `(gap vs current: +${avg(counterpick) - avg(cur)}pt). In 45-90% band: ` +
+    `counterpick ${band(counterpick)}/50.`
   fs.writeFileSync(
     path.join(reportDir, 'D-sim-realistic-report.md'),
     `# D-sim-realistic-report\n\nRealistic per-rarity player teams vs enemy speed scenarios.\n\n${mdHeader}\n${mdSep}\n${mdRows.join('\n')}\n\n**Verdict:** ${verdict}\n`,
