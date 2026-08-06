@@ -549,6 +549,19 @@ describe('simulateBattle', () => {
     return 0
   }
 
+  // Dégâts AVANT arrondi. Les ratios élémentaires se vérifient sur cette
+  // valeur : `final` est un entier arrondi, et sur de petits nombres l'arrondi
+  // décale le ratio de plusieurs points (92/70 = 1.314 pour un ×1.3 exact).
+  function firstAttackRawDamage(log: LogEntry[], attackerId: string): number {
+    const atk = log.find(
+      (e) => e.type === 'ATTACK' && e.attackerId === attackerId,
+    )
+    if (atk?.type === 'ATTACK') {
+      return atk.damages[0]?.raw ?? 0
+    }
+    return 0
+  }
+
   // VIGOR — +% max HP → survives more hits
   it('VIGOR raises effective HP so the unit takes more hits to die', () => {
     const seed = 'vigor-test'
@@ -832,6 +845,96 @@ describe('simulateBattle', () => {
     expect(regenLogs.length).toBeGreaterThanOrEqual(1)
     if (regenLogs[0]?.type === 'PASSIVE') {
       expect(regenLogs[0].payload.healed).toBeGreaterThan(0)
+    }
+  })
+
+  // -----------------------------------------------------------------------
+  // Roue élémentaire
+  // -----------------------------------------------------------------------
+
+  it('ADVANTAGE element deals ~1.3x vs a neutral matchup on the same seed', () => {
+    const seed = 'element-adv'
+    const neutral = simulateBattle({
+      teamA: [makeUnit('A0', { atk: 50, spd: 999 })],
+      teamB: [makeUnit('B0', { hp: 100000, def: 10, spd: 1 })],
+      seed,
+      timeoutTurns: 1,
+    })
+    const advantage = simulateBattle({
+      teamA: [makeUnit('A0', { atk: 50, spd: 999, element: 'FIRE' })],
+      teamB: [
+        makeUnit('B0', { hp: 100000, def: 10, spd: 1, element: 'NATURE' }),
+      ],
+      seed,
+      timeoutTurns: 1,
+    })
+    const base = firstAttackRawDamage(neutral.log, 'A0')
+    const adv = firstAttackRawDamage(advantage.log, 'A0')
+    expect(adv).toBeGreaterThan(base)
+    expect(Math.abs(adv / base - 1.3)).toBeLessThan(0.001)
+    const dmg = advantage.log.find(
+      (e) => e.type === 'ATTACK' && e.attackerId === 'A0',
+    )
+    if (dmg?.type === 'ATTACK') {
+      expect(dmg.damages[0]?.elementMult).toBe(1.3)
+    }
+  })
+
+  it('DISADVANTAGE element deals ~0.75x vs a neutral matchup', () => {
+    const seed = 'element-dis'
+    const neutral = simulateBattle({
+      teamA: [makeUnit('A0', { atk: 50, spd: 999 })],
+      teamB: [makeUnit('B0', { hp: 100000, def: 10, spd: 1 })],
+      seed,
+      timeoutTurns: 1,
+    })
+    const disadvantage = simulateBattle({
+      teamA: [makeUnit('A0', { atk: 50, spd: 999, element: 'FIRE' })],
+      teamB: [
+        makeUnit('B0', { hp: 100000, def: 10, spd: 1, element: 'WATER' }),
+      ],
+      seed,
+      timeoutTurns: 1,
+    })
+    expect(firstAttackDamage(disadvantage.log, 'A0')).toBeLessThan(
+      firstAttackDamage(neutral.log, 'A0'),
+    )
+  })
+
+  it('custom element multipliers from config are honored', () => {
+    const seed = 'element-cfg'
+    const neutral = simulateBattle({
+      teamA: [makeUnit('A0', { atk: 50, spd: 999 })],
+      teamB: [makeUnit('B0', { hp: 100000, def: 10, spd: 1 })],
+      seed,
+      timeoutTurns: 1,
+    })
+    const advantage = simulateBattle({
+      teamA: [makeUnit('A0', { atk: 50, spd: 999, element: 'LIGHT' })],
+      teamB: [makeUnit('B0', { hp: 100000, def: 10, spd: 1, element: 'DARK' })],
+      seed,
+      timeoutTurns: 1,
+      elementAdvantageMult: 2,
+      elementDisadvantageMult: 0.5,
+    })
+    const ratio =
+      firstAttackRawDamage(advantage.log, 'A0') /
+      firstAttackRawDamage(neutral.log, 'A0')
+    expect(Math.abs(ratio - 2)).toBeLessThan(0.001)
+  })
+
+  it('same/orthogonal elements are neutral (no elementMult in log)', () => {
+    const result = simulateBattle({
+      teamA: [makeUnit('A0', { atk: 50, spd: 999, element: 'FIRE' })],
+      teamB: [makeUnit('B0', { hp: 100000, def: 10, spd: 1, element: 'LIGHT' })],
+      seed: 'element-neutral',
+      timeoutTurns: 1,
+    })
+    const dmg = result.log.find(
+      (e) => e.type === 'ATTACK' && e.attackerId === 'A0',
+    )
+    if (dmg?.type === 'ATTACK') {
+      expect(dmg.damages[0]?.elementMult).toBeUndefined()
     }
   })
 

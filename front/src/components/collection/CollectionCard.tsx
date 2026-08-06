@@ -1,7 +1,13 @@
 import { Sparkles, Star, Swords } from 'lucide-react'
 
 import type { Card, CardVariant } from '../../api/collection.api.ts'
+import {
+  ELEMENT_COLOR,
+  ELEMENT_ICON,
+  ELEMENT_LABELS,
+} from '../../constants/card.constant.ts'
 import { describePassive } from '../../constants/passives.constant.ts'
+import { cn } from '../../libs/utils.ts'
 import { useCardEquipmentBonuses } from '../../queries/useEquipment.ts'
 import { computePower, finalStatWithBonuses } from '../../utils/cardStats.ts'
 import type { CardStats } from '../shared/tcg-card/TcgCardFace.tsx'
@@ -124,6 +130,11 @@ export function CollectionCard({
   const description =
     isOwned && palier ? describePassive(card.passiveKey, palier) : null
 
+  // The element pill stacks under the level square drawn by TcgCardFace
+  // (top-3 left-3, h-6 in compact mode) — when there's no level it takes
+  // that slot itself.
+  const shownLevel = isOwned ? (level ?? null) : null
+
   return (
     <button
       type="button"
@@ -139,7 +150,7 @@ export function CollectionCard({
           variant={variant}
           isOwned={isOwned}
           compact
-          level={isOwned ? (level ?? null) : null}
+          level={shownLevel}
           stats={isOwned ? stats : null}
           description={isOwned ? description : null}
         />
@@ -172,7 +183,39 @@ export function CollectionCard({
             ×{quantity}
           </span>
         )}
+
+        <ElementPill element={card.element} underLevel={shownLevel !== null} />
       </div>
     </button>
+  )
+}
+
+// Element pill — top-left, stacked right under the level square drawn by
+// TcgCardFace (top-3 left-3, h-6 in compact mode). Without a level it takes
+// that slot itself.
+function ElementPill({
+  element,
+  underLevel,
+}: {
+  element: Card['element']
+  underLevel: boolean
+}) {
+  if (!element) {
+    return null
+  }
+  const Icon = ELEMENT_ICON[element]
+  return (
+    <span
+      title={ELEMENT_LABELS[element]}
+      // Same thin white ring as the level square above it, so the column reads
+      // as one set of badges rather than two unrelated chips.
+      className={cn(
+        'pointer-events-none absolute left-3 z-[6] inline-flex h-6 w-6 items-center justify-center rounded-full border-[0.5px] border-white text-white shadow-[0_2px_6px_rgba(27,23,38,0.45)]',
+        underLevel ? 'top-10' : 'top-3',
+      )}
+      style={{ backgroundColor: ELEMENT_COLOR[element] }}
+    >
+      <Icon className="h-3.5 w-3.5" />
+    </span>
   )
 }

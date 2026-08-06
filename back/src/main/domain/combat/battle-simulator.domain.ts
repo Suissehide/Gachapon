@@ -1,3 +1,4 @@
+import { elementMultiplier } from './element'
 import { PASSIVES, type PassiveKey } from './passives'
 
 export type AttackPattern =
@@ -30,6 +31,8 @@ export interface SimulatorUnit {
   spd: number
   attackPattern: AttackPattern
   passiveKey: string | null
+  /** Élément (FIRE/WATER/NATURE/LIGHT/DARK) ; null = neutre. */
+  element?: string | null
   palier: number
 }
 
@@ -38,6 +41,15 @@ export interface SimulatorInput {
   teamB: SimulatorUnit[]
   seed: string
   timeoutTurns?: number
+  /** Multiplicateur de dégâts en avantage élémentaire (défaut 1.3). */
+  elementAdvantageMult?: number
+  /** Multiplicateur de dégâts en désavantage élémentaire (défaut 0.75). */
+  elementDisadvantageMult?: number
+}
+
+interface ElementMults {
+  adv: number
+  dis: number
 }
 
 export interface DamageEntry {
@@ -45,6 +57,8 @@ export interface DamageEntry {
   raw: number
   final: number
   dodged: boolean
+  /** Multiplicateur élémentaire appliqué (présent seulement si ≠ 1). */
+  elementMult?: number
 }
 
 export type LogEntry =
@@ -179,6 +193,8 @@ interface BattleUnit {
   dots: DotEffect[]
   /** Jauge d'action ATB : se remplit de `spd` par unité de temps ; agit à ACTION_THRESHOLD. */
   gauge: number
+  /** Élément (string libre) ; null = neutre. */
+  element: string | null
 }
 
 function toBattleUnit(u: SimulatorUnit, side: Side): BattleUnit {
@@ -234,6 +250,7 @@ function toBattleUnit(u: SimulatorUnit, side: Side): BattleUnit {
     shield,
     dots: [],
     gauge: 0,
+    element: u.element ?? null,
   }
 }
 
@@ -345,6 +362,81 @@ interface StrikeContext {
   patternMultiplier: number
   /** Multiplicateur d'ATQ propre à l'action (ex. NEMESIS selon les alliés tombés). */
   attackerAtkMult: number
+  /** Multiplicateurs de la roue élémentaire (avantage / désavantage). */
+  elementMults: ElementMults
+}
+
+/**
+ * Modificateurs de dégâts liés aux passifs, dans l'ordre : FURY et EXECUTION
+ * (attaquant, conditionnés aux PV), CRIT (attaquant, aléatoire), puis RAMPART
+ * (cible, atténuation plate). Chaque déclenchement est journalisé.
+ *
+ * L'appel au PRNG de CRIT reste à la même position dans la séquence qu'avant
+ * l'extraction : le déterminisme à seed égal en dépend.
+ */
+function applyPassiveDamageModifiers(
+  attacker: BattleUnit,
+  target: BattleUnit,
+  raw: number,
+  prng: () => number,
+  log: LogEntry[],
+): number {
+  let out = raw
+
+  // FURY (attacker) — bonus de dégâts quand l'attaquant est sous 50 % de PV.
+  if (
+    attacker.passiveKey === 'FURY' &&
+    attacker.currentHp < attacker.maxHp * 0.5
+  ) {
+    out *= 1 + attacker.passiveValuePct / 100
+    log.push({
+      type: 'PASSIVE',
+      unitId: attacker.id,
+      passive: 'FURY',
+      payload: { bonusPct: attacker.passiveValuePct },
+    })
+  }
+
+  // EXECUTION (attacker) — bonus de dégâts quand la cible est sous 30 % de PV.
+  if (
+    attacker.passiveKey === 'EXECUTION' &&
+    target.currentHp < target.maxHp * 0.3
+  ) {
+    out *= 1 + attacker.passiveValuePct / 100
+    log.push({
+      type: 'PASSIVE',
+      unitId: attacker.id,
+      passive: 'EXECUTION',
+      payload: { bonusPct: attacker.passiveValuePct },
+    })
+  }
+
+  // CRIT (attacker) — chance d'infliger le double des dégâts.
+  if (
+    attacker.passiveKey === 'CRIT' &&
+    prng() < attacker.passiveValuePct / 100
+  ) {
+    out *= 2
+    log.push({
+      type: 'PASSIVE',
+      unitId: attacker.id,
+      passive: 'CRIT',
+      payload: { pct: attacker.passiveValuePct },
+    })
+  }
+
+  // RAMPART (target) — atténuation plate des dégâts subis.
+  if (target.passiveKey === 'RAMPART') {
+    out *= 1 - target.passiveValuePct / 100
+    log.push({
+      type: 'PASSIVE',
+      unitId: target.id,
+      passive: 'RAMPART',
+      payload: { reducedPct: target.passiveValuePct },
+    })
+  }
+
+  return out
 }
 
 function resolveAttackOnTarget(
@@ -354,6 +446,7 @@ function resolveAttackOnTarget(
   log: LogEntry[],
   patternMultiplier: number,
   attackerAtkMult: number,
+  elementMults: ElementMults,
 ): DamageEntry {
   // AEGIS roll
   if (target.passiveKey === 'AEGIS') {
@@ -382,57 +475,17 @@ function resolveAttackOnTarget(
     patternMultiplier,
   )
 
-  // FURY (attacker) — bonus de dégâts quand l'attaquant est sous 50 % de PV.
-  if (
-    attacker.passiveKey === 'FURY' &&
-    attacker.currentHp < attacker.maxHp * 0.5
-  ) {
-    raw *= 1 + attacker.passiveValuePct / 100
-    log.push({
-      type: 'PASSIVE',
-      unitId: attacker.id,
-      passive: 'FURY',
-      payload: { bonusPct: attacker.passiveValuePct },
-    })
-  }
+  raw = applyPassiveDamageModifiers(attacker, target, raw, prng, log)
 
-  // EXECUTION boost (attacker's passive — boosts damage when target low HP)
-  if (
-    attacker.passiveKey === 'EXECUTION' &&
-    target.currentHp < target.maxHp * 0.3
-  ) {
-    raw *= 1 + attacker.passiveValuePct / 100
-    log.push({
-      type: 'PASSIVE',
-      unitId: attacker.id,
-      passive: 'EXECUTION',
-      payload: { bonusPct: attacker.passiveValuePct },
-    })
-  }
-
-  // CRIT (attacker) — chance d'infliger le double des dégâts.
-  if (
-    attacker.passiveKey === 'CRIT' &&
-    prng() < attacker.passiveValuePct / 100
-  ) {
-    raw *= 2
-    log.push({
-      type: 'PASSIVE',
-      unitId: attacker.id,
-      passive: 'CRIT',
-      payload: { pct: attacker.passiveValuePct },
-    })
-  }
-
-  // RAMPART (target) — atténuation plate des dégâts subis.
-  if (target.passiveKey === 'RAMPART') {
-    raw *= 1 - target.passiveValuePct / 100
-    log.push({
-      type: 'PASSIVE',
-      unitId: target.id,
-      passive: 'RAMPART',
-      payload: { reducedPct: target.passiveValuePct },
-    })
+  // Roue élémentaire — avantage/désavantage de l'attaquant sur la cible.
+  const elMult = elementMultiplier(
+    attacker.element,
+    target.element,
+    elementMults.adv,
+    elementMults.dis,
+  )
+  if (elMult !== 1) {
+    raw *= elMult
   }
 
   let final = Math.round(raw)
@@ -457,7 +510,13 @@ function resolveAttackOnTarget(
     applyDotOnHit(attacker, target, log)
   }
 
-  return { id: target.id, raw, final, dodged: false }
+  return {
+    id: target.id,
+    raw,
+    final,
+    dodged: false,
+    ...(elMult !== 1 ? { elementMult: elMult } : {}),
+  }
 }
 
 /**
@@ -609,8 +668,15 @@ function processDeaths(targets: BattleUnit[], log: LogEntry[]): void {
 }
 
 function performStrike(ctx: StrikeContext): void {
-  const { attacker, targets, prng, log, patternMultiplier, attackerAtkMult } =
-    ctx
+  const {
+    attacker,
+    targets,
+    prng,
+    log,
+    patternMultiplier,
+    attackerAtkMult,
+    elementMults,
+  } = ctx
   const damages: DamageEntry[] = []
   const targetIds = targets.map((t) => t.id)
   let totalNonDodgedDamage = 0
@@ -623,6 +689,7 @@ function performStrike(ctx: StrikeContext): void {
       log,
       patternMultiplier,
       attackerAtkMult,
+      elementMults,
     )
     damages.push(entry)
     if (!entry.dodged) {
@@ -702,6 +769,7 @@ function performUnitAction(
   units: BattleUnit[],
   prng: () => number,
   log: LogEntry[],
+  elementMults: ElementMults,
 ): void {
   if (!attacker.alive) {
     return
@@ -729,6 +797,7 @@ function performUnitAction(
       log,
       patternMultiplier,
       attackerAtkMult,
+      elementMults,
     })
   }
 }
@@ -903,10 +972,11 @@ function runActorTurn(
   units: BattleUnit[],
   prng: () => number,
   log: LogEntry[],
+  elementMults: ElementMults,
 ): void {
   applyDotsToUnit(actor, log)
   if (actor.alive) {
-    performUnitAction(actor, units, prng, log)
+    performUnitAction(actor, units, prng, log, elementMults)
   }
   if (actor.alive) {
     applyRegenToUnit(actor, log)
@@ -933,6 +1003,11 @@ export function simulateBattle(input: SimulatorInput): SimulatorResult {
 
   const prng = mulberry32(hashSeed(input.seed))
 
+  const elementMults: ElementMults = {
+    adv: input.elementAdvantageMult ?? 1.3,
+    dis: input.elementDisadvantageMult ?? 0.75,
+  }
+
   applyBanner(units, 'A', log)
   applyBanner(units, 'B', log)
 
@@ -958,7 +1033,7 @@ export function simulateBattle(input: SimulatorInput): SimulatorResult {
     }
     elapsed += next.dt
 
-    runActorTurn(next.actor, units, prng, log)
+    runActorTurn(next.actor, units, prng, log, elementMults)
 
     actions += 1
     log.push({ type: 'TURN_END', turn: actions })

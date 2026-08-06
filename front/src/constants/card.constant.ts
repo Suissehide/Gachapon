@@ -1,3 +1,13 @@
+import {
+  Droplet,
+  Flame,
+  Leaf,
+  type LucideIcon,
+  Moon,
+  Mountain,
+  Sun,
+} from 'lucide-react'
+
 export const RARITY_OPTIONS = [
   { value: 'COMMON', label: 'Common' },
   { value: 'UNCOMMON', label: 'Uncommon' },
@@ -30,6 +40,56 @@ export type CardVariant = 'NORMAL' | 'BRILLIANT' | 'HOLOGRAPHIC'
 
 export type CardRarity = 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
 
+export type CardElement =
+  | 'FIRE'
+  | 'WATER'
+  | 'NATURE'
+  | 'EARTH'
+  | 'LIGHT'
+  | 'DARK'
+
+export const ELEMENT_ORDER: CardElement[] = [
+  'FIRE',
+  'WATER',
+  'NATURE',
+  'EARTH',
+  'LIGHT',
+  'DARK',
+]
+
+export const ELEMENT_LABELS: Record<CardElement, string> = {
+  FIRE: 'Feu',
+  WATER: 'Eau',
+  NATURE: 'Nature',
+  EARTH: 'Terre',
+  LIGHT: 'Lumière',
+  DARK: 'Ténèbres',
+}
+
+/** Couleur d'accent (hex) par élément — pastilles et badges. */
+export const ELEMENT_COLOR: Record<CardElement, string> = {
+  FIRE: '#E8552D',
+  WATER: '#2D8FE8',
+  NATURE: '#3FA34D',
+  EARTH: '#A6772F',
+  LIGHT: '#E8C23D',
+  DARK: '#7A4FB5',
+}
+
+/**
+ * Pictogramme par élément. Les pastilles sont posées sur un fond sombre
+ * (#1b1726) et l'icône est rendue en blanc : les silhouettes doivent donc
+ * rester lisibles en aplat, d'où des formes franches et bien distinctes.
+ */
+export const ELEMENT_ICON: Record<CardElement, LucideIcon> = {
+  FIRE: Flame,
+  WATER: Droplet,
+  NATURE: Leaf,
+  EARTH: Mountain,
+  LIGHT: Sun,
+  DARK: Moon,
+}
+
 export type CardSet = {
   id: string
   name: string
@@ -43,6 +103,7 @@ export type Card = {
   name: string
   imageUrl: string | null
   rarity: CardRarity
+  element: CardElement | null
   set: { id: string; name: string }
   baseHp: number
   baseAtk: number
@@ -82,6 +143,7 @@ export type AdminCard = {
   baseDef: number
   baseSpd: number
   passiveKey: string | null
+  element: CardElement | null
   set: { id: string; name: string }
 }
 

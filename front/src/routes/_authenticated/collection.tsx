@@ -10,6 +10,7 @@ import {
 } from '../../components/collection/CollectionCard.tsx'
 import {
   CollectionFilters,
+  type ElementFilter,
   type GroupMode,
   type OwnershipFilter,
   type RarityFilter,
@@ -26,6 +27,10 @@ import { ArcadeCard } from '../../components/shared/ArcadeCard.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { Button } from '../../components/ui/button.tsx'
+import {
+  ELEMENT_LABELS,
+  ELEMENT_ORDER,
+} from '../../constants/card.constant.ts'
 import { useStoredState } from '../../hooks/useStoredState.ts'
 import {
   type UserCard,
@@ -106,7 +111,7 @@ function Collection() {
   const [group, setGroup] = useStoredState<GroupMode>(
     'collection-filters/group',
     'rarity',
-    ['rarity', 'set'],
+    ['rarity', 'element', 'set'],
   )
   const [rarity, setRarity] = useStoredState<RarityFilter>(
     'collection-filters/rarity',
@@ -117,6 +122,11 @@ function Collection() {
     'collection-filters/variant',
     'all',
     ['all', 'NORMAL', 'HOLOGRAPHIC', 'BRILLIANT'],
+  )
+  const [element, setElement] = useStoredState<ElementFilter>(
+    'collection-filters/element',
+    'all',
+    ['all', ...ELEMENT_ORDER],
   )
   const [ownership, setOwnership] = useStoredState<OwnershipFilter>(
     'collection-filters/ownership',
@@ -198,8 +208,9 @@ function Collection() {
     return displayEntries
       .filter((e) => rarity === 'all' || e.card.rarity === rarity)
       .filter((e) => variant === 'all' || e.variant === variant)
+      .filter((e) => element === 'all' || e.card.element === element)
       .filter((e) => ownership === 'all' || e.isOwned)
-  }, [displayEntries, rarity, variant, ownership])
+  }, [displayEntries, rarity, variant, element, ownership])
 
   const collectionStats = useMemo(() => {
     const distinctCardIds = new Set(userCards.map((uc) => uc.card.id))
@@ -240,6 +251,21 @@ function Collection() {
           ),
         }))
         .filter((g) => g.entries.length > 0)
+    }
+    if (group === 'element') {
+      return ELEMENT_ORDER.map((el) => ({
+        key: el,
+        title: ELEMENT_LABELS[el],
+        entries: sortEntries(
+          filteredEntries.filter((e) => e.card.element === el),
+          sort,
+          equipBonusByCardId,
+        ),
+        stats: computeSectionStats(
+          allCards.filter((c) => c.element === el),
+          userCards,
+        ),
+      })).filter((g) => g.entries.length > 0)
     }
     // group === 'set'
     const order: string[] = []
@@ -319,6 +345,8 @@ function Collection() {
             onRarityChange={setRarity}
             variant={variant}
             onVariantChange={setVariant}
+            element={element}
+            onElementChange={setElement}
             ownership={ownership}
             onOwnershipChange={setOwnership}
             sort={sort}

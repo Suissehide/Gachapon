@@ -1,5 +1,6 @@
 import type { IocContainer } from '../../../types/application/ioc'
 import type {
+  CardElement,
   CardRarity,
   CardSetEntity,
   CardWithSet,
@@ -94,6 +95,7 @@ export class CardRepository implements ICardRepository {
     baseDef?: number
     baseSpd?: number
     passiveKey?: string | null
+    element?: CardElement | null
   }): Promise<CardWithSet> {
     return this.#prisma.card.create({
       data,
@@ -114,6 +116,7 @@ export class CardRepository implements ICardRepository {
       baseDef: number
       baseSpd: number
       passiveKey: string | null
+      element: CardElement | null
     }>,
   ): Promise<CardWithSet> {
     return this.#prisma.card.update({

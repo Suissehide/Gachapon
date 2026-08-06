@@ -1,4 +1,5 @@
 import type {
+  CardElement,
   CardRarity,
   CardSetEntity,
   CardWithSet,
@@ -34,6 +35,7 @@ export interface ICardRepository {
     baseDef?: number
     baseSpd?: number
     passiveKey?: string | null
+    element?: CardElement | null
   }): Promise<CardWithSet>
   update(
     id: string,
@@ -48,6 +50,7 @@ export interface ICardRepository {
       baseDef: number
       baseSpd: number
       passiveKey: string | null
+      element: CardElement | null
     }>,
   ): Promise<CardWithSet>
   delete(id: string): Promise<void>

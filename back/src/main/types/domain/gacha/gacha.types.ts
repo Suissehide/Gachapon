@@ -6,7 +6,11 @@ import type {
 } from '../../../../generated/client'
 import type { UnlockedAchievement } from '../../../domain/achievements/events.types'
 
-export type { CardRarity, CardVariant } from '../../../../generated/client'
+export type {
+  CardElement,
+  CardRarity,
+  CardVariant,
+} from '../../../../generated/client'
 
 export type CardEntity = Card
 export type CardSetEntity = CardSet

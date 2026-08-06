@@ -1,5 +1,3 @@
-import { Droplet, Flame, Leaf, type LucideIcon, Moon, Zap } from 'lucide-react'
-
 // ── Rarity tokens ──────────────────────────────────────────────────────────────
 // Drives --rar / --rar-light / --rar-dark CSS vars on the card root.
 
@@ -178,20 +176,6 @@ export const VARIANT_OVERLAYS: Record<string, VariantOverlayLayer[]> = {
   ],
 }
 
-// ── Elements ───────────────────────────────────────────────────────────────────
-
-export type ElementKey = 'feu' | 'eau' | 'nature' | 'foudre' | 'ombre'
-
-export type ElementDef = {
-  name: string
-  color: string
-  icon: LucideIcon
-}
-
-export const ELEMENTS: Record<ElementKey, ElementDef> = {
-  feu: { name: 'Feu', color: '#ef4444', icon: Flame },
-  eau: { name: 'Eau', color: '#3b82f6', icon: Droplet },
-  nature: { name: 'Nature', color: '#22c55e', icon: Leaf },
-  foudre: { name: 'Foudre', color: '#f59e0b', icon: Zap },
-  ombre: { name: 'Ombre', color: '#8b5cf6', icon: Moon },
-}
+// Les éléments (libellés, couleurs, icônes) vivent dans
+// `constants/card.constant.ts`, seule source alignée sur l'enum `CardElement`
+// du back — ne pas en redéclarer ici.

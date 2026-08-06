@@ -50,6 +50,7 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
           name: c.name,
           imageUrl: resolveUrl(c.imageUrl),
           rarity: c.rarity,
+          element: c.element,
           set: { id: c.set.id, name: c.set.name },
         })),
       }
@@ -92,6 +93,7 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
             name: uc.card.name,
             imageUrl: resolveUrl(uc.card.imageUrl),
             rarity: uc.card.rarity,
+            element: uc.card.element,
             set: { id: uc.card.set.id, name: uc.card.set.name },
             baseHp: uc.card.baseHp,
             baseAtk: uc.card.baseAtk,

@@ -1,8 +1,9 @@
 import type React from 'react'
 import { useCallback, useEffect, useRef } from 'react'
 
+import type { CardElement } from '../../../constants/card.constant.ts'
 import { CardAura } from './CardAura.tsx'
-import type { ElementKey, StatKey } from './config.ts'
+import type { StatKey } from './config.ts'
 import { TcgCardFace } from './TcgCardFace.tsx'
 
 // ── Spring physics (simeydotme parameters) ────────────────────────────────────
@@ -56,7 +57,7 @@ type Props = {
   // Forwarded to TcgCardFace
   level?: number | null
   stats?: Record<StatKey, number> | null
-  element?: ElementKey | null
+  element?: CardElement | null
   description?: string | null
   artPosition?: string
   newBadge?: boolean

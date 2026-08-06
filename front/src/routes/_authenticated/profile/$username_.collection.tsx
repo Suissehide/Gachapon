@@ -9,6 +9,7 @@ import {
 } from '../../../components/collection/CollectionCard.tsx'
 import {
   CollectionFilters,
+  type ElementFilter,
   type GroupMode,
   type OwnershipFilter,
   type RarityFilter,
@@ -19,6 +20,10 @@ import {
   CollectionSection,
   computeSectionStats,
 } from '../../../components/collection/CollectionSection.tsx'
+import {
+  ELEMENT_LABELS,
+  ELEMENT_ORDER,
+} from '../../../constants/card.constant.ts'
 import { ArcadeCard } from '../../../components/shared/ArcadeCard.tsx'
 import { PageHeader } from '../../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../../components/shared/PageShell.tsx'
@@ -43,6 +48,7 @@ function UserCollectionPage() {
   const [group, setGroup] = useState<GroupMode>('rarity')
   const [rarity, setRarity] = useState<RarityFilter>('all')
   const [variant, setVariant] = useState<VariantFilter>('all')
+  const [element, setElement] = useState<ElementFilter>('all')
   const [ownership, setOwnership] = useState<OwnershipFilter>('owned')
   const [sort, setSort] = useState<SortMode>('default')
 
@@ -93,8 +99,9 @@ function UserCollectionPage() {
       displayEntries
         .filter((e) => rarity === 'all' || e.card.rarity === rarity)
         .filter((e) => variant === 'all' || e.variant === variant)
+        .filter((e) => element === 'all' || e.card.element === element)
         .filter((e) => ownership === 'all' || e.isOwned),
-    [displayEntries, rarity, variant, ownership],
+    [displayEntries, rarity, variant, element, ownership],
   )
 
   const sections = useMemo(() => {
@@ -114,6 +121,20 @@ function UserCollectionPage() {
           ),
         }))
         .filter((g) => g.entries.length > 0)
+    }
+    if (group === 'element') {
+      return ELEMENT_ORDER.map((el) => ({
+        key: el,
+        title: ELEMENT_LABELS[el],
+        entries: sortEntries(
+          filteredEntries.filter((e) => e.card.element === el),
+          sort,
+        ),
+        stats: computeSectionStats(
+          allCards.filter((c) => c.element === el),
+          userCards,
+        ),
+      })).filter((g) => g.entries.length > 0)
     }
     const order: string[] = []
     const byId = new Map<string, { name: string; entries: DisplayEntry[] }>()
@@ -196,6 +217,8 @@ function UserCollectionPage() {
           onRarityChange={setRarity}
           variant={variant}
           onVariantChange={setVariant}
+          element={element}
+          onElementChange={setElement}
           ownership={ownership}
           onOwnershipChange={setOwnership}
           sort={sort}

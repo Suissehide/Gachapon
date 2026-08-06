@@ -44,6 +44,15 @@ enum CardVariant {
   HOLOGRAPHIC
 }
 
+enum CardElement {
+  FIRE
+  WATER
+  NATURE
+  EARTH
+  LIGHT
+  DARK
+}
+
 enum ShopItemType {
   TOKEN_PACK
   ENERGY_PACK
@@ -279,11 +288,12 @@ model Card {
   dropWeight Float      @default(1.0)
   createdAt  DateTime   @default(now())
 
-  baseHp     Int     @default(100)
-  baseAtk    Int     @default(10)
-  baseDef    Int     @default(5)
-  baseSpd    Int     @default(100)
+  baseHp     Int          @default(100)
+  baseAtk    Int          @default(10)
+  baseDef    Int          @default(5)
+  baseSpd    Int          @default(100)
   passiveKey String?
+  element    CardElement?
 
   userCards      UserCard[]
   gachaPulls     GachaPull[]

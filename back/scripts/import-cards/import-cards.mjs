@@ -61,6 +61,11 @@ if (ENV !== 'prod' && ENV !== 'dev') {
 
 // Métadonnées de set par famille (clé = dossier d'image).
 const FAMILIES = {
+  humans: {
+    setName: 'Royaume des Humains',
+    description:
+      'Le set des Humains du Gachapon. 38 combattants à collectionner, de la paysanne au roi.',
+  },
   goblins: { setName: 'Gobelins', description: 'Le set des Gobelins du Gachapon.' },
   elves: { setName: 'Elfes', description: 'Le set des Elfes du Gachapon.' },
   orcs: { setName: 'Orcs', description: 'Le set des Orcs du Gachapon.' },
@@ -176,6 +181,7 @@ async function createCard(setId, card) {
     form.append('baseDef', String(card.def))
     form.append('baseSpd', String(card.spd))
     if (card.passiveKey) form.append('passiveKey', card.passiveKey)
+    if (card.element) form.append('element', card.element)
     form.append('imageUrl', key)
     return form
   }

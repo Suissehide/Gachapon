@@ -1,6 +1,12 @@
 import type React from 'react'
 
 import type { Card, CardVariant } from '../../api/collection.api.ts'
+import {
+  type CardElement,
+  ELEMENT_COLOR,
+  ELEMENT_LABELS,
+  ELEMENT_ORDER,
+} from '../../constants/card.constant.ts'
 import { RARITY_COLOR_VAR } from '../../libs/rarity.ts'
 import { Select } from '../ui/input.tsx'
 import { Label } from '../ui/label.tsx'
@@ -10,13 +16,24 @@ import { RARITY_LABELS, RARITY_ORDER } from './CollectionCard.tsx'
 type Rarity = Card['rarity']
 export type RarityFilter = Rarity | 'all'
 export type VariantFilter = CardVariant | 'all'
-export type GroupMode = 'rarity' | 'set'
+export type ElementFilter = CardElement | 'all'
+export type GroupMode = 'rarity' | 'set' | 'element'
 export type OwnershipFilter = 'all' | 'owned'
 export type SortMode = 'default' | 'power' | 'level' | 'copies' | 'name'
 
 const GROUP_OPTIONS = [
   { value: 'rarity' as const, label: 'Par rareté' },
+  { value: 'element' as const, label: 'Par élément' },
   { value: 'set' as const, label: 'Par set' },
+]
+
+const ELEMENT_OPTIONS = [
+  { value: 'all', label: 'Tous' },
+  ...ELEMENT_ORDER.map((el) => ({
+    value: el,
+    label: ELEMENT_LABELS[el],
+    icon: <RarityDot color={ELEMENT_COLOR[el]} />,
+  })),
 ]
 
 const VARIANT_OPTIONS = [
@@ -55,6 +72,8 @@ interface Props {
   onRarityChange: (r: RarityFilter) => void
   variant: VariantFilter
   onVariantChange: (v: VariantFilter) => void
+  element: ElementFilter
+  onElementChange: (e: ElementFilter) => void
   ownership: OwnershipFilter
   onOwnershipChange: (o: OwnershipFilter) => void
   sort: SortMode
@@ -68,6 +87,8 @@ export function CollectionFilters({
   onRarityChange,
   variant,
   onVariantChange,
+  element,
+  onElementChange,
   ownership,
   onOwnershipChange,
   sort,
@@ -107,6 +128,15 @@ export function CollectionFilters({
             options={VARIANT_OPTIONS}
             value={variant}
             onValueChange={(v) => onVariantChange(v as VariantFilter)}
+            clearable={false}
+          />
+        </FilterField>
+        <FilterField id="filter-element" label="Élément">
+          <Select
+            id="filter-element"
+            options={ELEMENT_OPTIONS}
+            value={element}
+            onValueChange={(v) => onElementChange(v as ElementFilter)}
             clearable={false}
           />
         </FilterField>

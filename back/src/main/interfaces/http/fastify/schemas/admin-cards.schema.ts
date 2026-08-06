@@ -8,6 +8,15 @@ export const cardRarityEnum = z.enum([
   'LEGENDARY',
 ])
 
+export const cardElementEnum = z.enum([
+  'FIRE',
+  'WATER',
+  'NATURE',
+  'EARTH',
+  'LIGHT',
+  'DARK',
+])
+
 export const adminCardsQuerySchema = z.object({
   setId: z.string().uuid().optional(),
   rarity: cardRarityEnum.optional(),
@@ -25,6 +34,7 @@ export const adminCardFieldsSchema = z.object({
   baseDef: z.coerce.number().int().nonnegative().optional(),
   baseSpd: z.coerce.number().int().nonnegative().optional(),
   passiveKey: z.string().min(1).nullable().optional(),
+  element: cardElementEnum.nullish(),
 })
 
 export const adminCardUpdateBodySchema = z.object({
@@ -38,4 +48,5 @@ export const adminCardUpdateBodySchema = z.object({
   baseDef: z.number().int().nonnegative().optional(),
   baseSpd: z.number().int().nonnegative().optional(),
   passiveKey: z.string().min(1).nullable().optional(),
+  element: cardElementEnum.nullish(),
 })

@@ -1,6 +1,12 @@
 import { Recycle, Star, X } from 'lucide-react'
 import type { CSSProperties } from 'react'
 
+import {
+  type CardElement,
+  ELEMENT_COLOR,
+  ELEMENT_ICON,
+  ELEMENT_LABELS,
+} from '../../constants/card.constant.ts'
 import { describePassive } from '../../constants/passives.constant.ts'
 import { useCardEquipmentBonuses } from '../../queries/useEquipment.ts'
 import { useSetWishlist, useWishlist } from '../../queries/useWishlist.ts'
@@ -164,6 +170,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
               showAura
               level={userCard?.level ?? null}
               stats={stats}
+              element={card.element}
               description={description}
             />
           </div>
@@ -194,6 +201,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
                   >
                     {RARITY_LABELS[card.rarity]}
                   </span>
+                  {card.element && <ElementChip element={card.element} />}
                   {variantInfo && (
                     <span
                       className={`whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${variantInfo.className}`}
@@ -269,5 +277,26 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
         </div>
       </div>
     </div>
+  )
+}
+
+// Element chip — sits next to the rarity chip in the recap header and borrows
+// its shape, so the two read as one row of tags; only the accent colour and the
+// leading pictogram change.
+function ElementChip({ element }: { element: CardElement }) {
+  const hex = ELEMENT_COLOR[element]
+  const Icon = ELEMENT_ICON[element]
+  return (
+    <span
+      className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border px-2.75 py-1.25 font-mono text-[10px] font-bold uppercase tracking-[0.12em]"
+      style={{
+        color: hex,
+        backgroundColor: `color-mix(in oklab, ${hex} 14%, white)`,
+        borderColor: `color-mix(in oklab, ${hex} 45%, transparent)`,
+      }}
+    >
+      <Icon className="h-3 w-3" />
+      {ELEMENT_LABELS[element]}
+    </span>
   )
 }

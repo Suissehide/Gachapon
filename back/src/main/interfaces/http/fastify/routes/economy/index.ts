@@ -61,6 +61,8 @@ const economyConfigResponseSchema = z.object({
     regenSeconds: z.number(),
     battleCost: z.number(),
     sweepCost: z.number(),
+    elementAdvantageMult: z.number(),
+    elementDisadvantageMult: z.number(),
   }),
   wishlist: z.object({
     priceMultiplier: z.number(),
@@ -121,6 +123,8 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
         'combat.regenSeconds',
         'combat.battleCost',
         'combat.sweepCost',
+        'combat.elementAdvantageMult',
+        'combat.elementDisadvantageMult',
         'wishlist.priceMultiplier',
         'wishlist.cooldownDays',
         'equip.goldCostBase',
@@ -183,6 +187,8 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
           regenSeconds: c['combat.regenSeconds'],
           battleCost: c['combat.battleCost'],
           sweepCost: c['combat.sweepCost'],
+          elementAdvantageMult: c['combat.elementAdvantageMult'],
+          elementDisadvantageMult: c['combat.elementDisadvantageMult'],
         },
         wishlist: {
           priceMultiplier: c['wishlist.priceMultiplier'],

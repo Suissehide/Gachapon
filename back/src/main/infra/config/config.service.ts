@@ -34,6 +34,9 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'combat.regenSeconds': 900,
   'combat.battleCost': 5,
   'combat.sweepCost': 5,
+  // Roue élémentaire : dégâts ×1,30 en avantage, ×0,75 en désavantage, ×1 neutre.
+  'combat.elementAdvantageMult': 1.3,
+  'combat.elementDisadvantageMult': 0.75,
   'gacha.pullTokenCost': 1,
   'xp.base': 100,
   'xp.slope': 44,

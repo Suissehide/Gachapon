@@ -3,9 +3,12 @@ import { type CSSProperties, useState } from 'react'
 
 import placeholderImg from '../../../assets/data/not-found.png'
 import {
-  ELEMENTS,
-  type ElementDef,
-  type ElementKey,
+  type CardElement,
+  ELEMENT_COLOR,
+  ELEMENT_ICON,
+  ELEMENT_LABELS,
+} from '../../../constants/card.constant.ts'
+import {
   getRarityTone,
   type RarityTone,
   STAT_DEFS,
@@ -39,8 +42,8 @@ type Props = {
   level?: number | null
   /** When provided, renders the vertical stat pill column on the right. */
   stats?: CardStats | null
-  /** When provided, renders the element pill above the family tag. */
-  element?: ElementKey | null
+  /** When provided, renders the element badge under the level square. */
+  element?: CardElement | null
   /** Description / lore / passive effect shown in the bottom area. */
   description?: string | null
   /** CSS `object-position` for the art image (e.g. `'50% 18%'`). */
@@ -103,7 +106,6 @@ export function TcgCardFace({
   newBadge = false,
 }: Props) {
   const tone = getRarityTone(rarity)
-  const elementDef = element ? ELEMENTS[element] : null
   const outerRadius = compact ? '8px' : '10px'
 
   // Tracks whether the art has loaded. Until then a static, pale rarity-tinted
@@ -186,12 +188,13 @@ export function TcgCardFace({
       {/* Internal stylized frame — double outline + corner accents */}
       <InternalFrame compact={compact} />
 
-      {/* Level — top-left, aligned with the inner frame */}
-      {level !== null && level !== undefined && (
-        <div className="absolute top-3 left-3 z-40">
-          <LevelSquare level={level} tone={tone} compact={compact} />
-        </div>
-      )}
+      {/* Level + element — top-left column, aligned with the inner frame */}
+      <BadgeColumn
+        level={level}
+        element={element ?? null}
+        tone={tone}
+        compact={compact}
+      />
 
       {/* NEW badge — top-right, for freshly pulled cards */}
       {newBadge && (
@@ -225,7 +228,6 @@ export function TcgCardFace({
           <>
             <FamilyHeader
               setName={setName}
-              elementDef={elementDef}
               compact={compact}
               frameInset={frameInset}
             />
@@ -300,6 +302,34 @@ function CornerAccent({
   return <span className="pointer-events-none absolute z-[5]" style={styles} />
 }
 
+// Top-left column: level square with the element badge stacked right under it.
+function BadgeColumn({
+  level,
+  element,
+  tone,
+  compact,
+}: {
+  level: number | null | undefined
+  element: CardElement | null
+  tone: RarityTone
+  compact: boolean
+}) {
+  const hasLevel = level !== null && level !== undefined
+  if (!hasLevel && !element) {
+    return null
+  }
+  return (
+    <div
+      className={`absolute top-3 left-3 z-40 flex flex-col items-center ${
+        compact ? 'gap-1' : 'gap-1.5'
+      }`}
+    >
+      {hasLevel && <LevelSquare level={level} tone={tone} compact={compact} />}
+      {element && <ElementBadge element={element} compact={compact} />}
+    </div>
+  )
+}
+
 function LevelSquare({
   level,
   tone,
@@ -317,6 +347,30 @@ function LevelSquare({
       style={{ background: tone.hex }}
     >
       {level}
+    </div>
+  )
+}
+
+// Element badge — sits directly under the level square, same footprint and same
+// treatment (colour fill, white icon, thin white ring) so the two read as a
+// single top-left column: rarity tints the level, element tints this one.
+function ElementBadge({
+  element,
+  compact,
+}: {
+  element: CardElement
+  compact: boolean
+}) {
+  const Icon = ELEMENT_ICON[element]
+  return (
+    <div
+      className={`flex items-center justify-center rounded-full border-[0.5px] border-white text-white shadow-[0_2px_6px_rgba(0,0,0,0.4)] ${
+        compact ? 'h-6 w-6' : 'h-8 w-8'
+      }`}
+      style={{ background: ELEMENT_COLOR[element] }}
+      title={ELEMENT_LABELS[element]}
+    >
+      <Icon className={compact ? 'h-3 w-3' : 'h-4 w-4'} />
     </div>
   )
 }
@@ -357,12 +411,10 @@ function StatLine({
 
 function FamilyHeader({
   setName,
-  elementDef,
   compact,
   frameInset,
 }: {
   setName: string
-  elementDef: ElementDef | null
   compact: boolean
   frameInset: string
 }) {
@@ -371,27 +423,11 @@ function FamilyHeader({
       className={`relative z-10 flex flex-col items-start mb-1`}
       style={{ paddingLeft: frameInset, paddingRight: frameInset }}
     >
-      {elementDef && (
-        <div
-          className={`relative z-10 flex items-center justify-center rounded-full text-white shadow-[0_2px_6px_rgba(0,0,0,0.35)] ${
-            compact
-              ? '-mb-1 h-6 w-5 border border-white'
-              : '-mb-1.5 h-8 w-6.5 border-2 border-white'
-          }`}
-          style={{ background: '#1b1726' }}
-          title={elementDef.name}
-        >
-          <elementDef.icon className={compact ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
-        </div>
-      )}
       <span
         className={`relative z-0 inline-block bg-[#1b1726] text-white ${
           compact ? 'pl-1 pr-2 py-0.5' : 'pl-1.5 pr-3.5 py-[3px]'
         }`}
-        style={{
-          clipPath: TAG_CLIP_PATH,
-          marginLeft: elementDef ? (compact ? '5px' : '7px') : '0',
-        }}
+        style={{ clipPath: TAG_CLIP_PATH }}
       >
         <span
           className={`block font-mono font-bold uppercase leading-none tracking-[0.16em] text-white/90 ${

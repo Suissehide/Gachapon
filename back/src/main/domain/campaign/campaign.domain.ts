@@ -64,6 +64,8 @@ const enemySpecSchema = z.object({
     .enum(['BASIC', 'AOE_3', 'MULTI_2', 'MONO_AMPLIFIED', 'MONO_DOUBLE'])
     .optional(),
   passiveKey: z.string().nullish(),
+  // Élément (FIRE/WATER/NATURE/LIGHT/DARK) ; absent => neutre.
+  element: z.string().nullish(),
   // Sous-chemin MinIO sans cards/ ni .png, ex. "monsters/slimes/SLIME-001".
   // Purement cosmétique. Absent => placeholder côté front.
   appearance: z.string().nullish(),
@@ -345,6 +347,8 @@ export class CampaignDomain {
       const [battleCfg, effects, substatRanges] = await Promise.all([
         this.#configService.getMany(
           'combat.battleCost',
+          'combat.elementAdvantageMult',
+          'combat.elementDisadvantageMult',
           'xp.base',
           'xp.slope',
           'xp.levelCap',
@@ -424,6 +428,8 @@ export class CampaignDomain {
             teamA: teamUnits,
             teamB: enemyUnits,
             seed,
+            elementAdvantageMult: battleCfg['combat.elementAdvantageMult'],
+            elementDisadvantageMult: battleCfg['combat.elementDisadvantageMult'],
           })
 
           const won = sim.won === 'A'
@@ -867,10 +873,12 @@ export class CampaignDomain {
             },
           })
         }
-        if (cardsRaw.length > 0) {
-          const picked =
-            this.#pickWeighted(cardsRaw, Math.random) ??
-            cardsRaw[cardsRaw.length - 1]!
+        // Repli sur la dernière carte si le tirage pondéré ne rend rien.
+        // `picked` est undefined quand cardsRaw est vide : rien à octroyer.
+        const picked =
+          this.#pickWeighted(cardsRaw, Math.random) ??
+          cardsRaw[cardsRaw.length - 1]
+        if (picked) {
           const { wasDuplicate } = await this.#grantCard(tx, userId, picked.id)
           cardDrop = {
             cardId: picked.id,
@@ -1107,6 +1115,7 @@ export class CampaignDomain {
           spd: stats.spd,
           attackPattern: 'BASIC' as AttackPattern,
           passiveKey: u.card.passiveKey,
+          element: u.card.element,
           palier: u.palier,
         }
       })
@@ -1143,6 +1152,7 @@ export class CampaignDomain {
         spd: stats.spd,
         attackPattern: e.attackPattern ?? 'BASIC',
         passiveKey: e.passiveKey ?? null,
+        element: e.element ?? null,
         palier: e.palier,
       }
     })

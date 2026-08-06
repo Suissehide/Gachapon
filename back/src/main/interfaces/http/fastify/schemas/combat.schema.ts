@@ -44,6 +44,8 @@ const attackPatternEnum = z.enum([
   'MONO_DOUBLE',
 ])
 
+const elementEnum = z.enum(['FIRE', 'WATER', 'NATURE', 'EARTH', 'LIGHT', 'DARK'])
+
 const simulatorUnitSchema = z.object({
   id: z.string(),
   name: z.string().optional(),
@@ -53,6 +55,7 @@ const simulatorUnitSchema = z.object({
   spd: z.number().int().nonnegative(),
   attackPattern: attackPatternEnum,
   passiveKey: z.string().nullable(),
+  element: elementEnum.nullish(),
   palier: z.number().int().min(1).max(6),
 })
 
@@ -61,6 +64,8 @@ export const combatDebugBattleBodySchema = z.object({
   teamB: z.array(simulatorUnitSchema).min(1).max(3),
   seed: z.string().min(1).max(64),
   timeoutTurns: z.number().int().min(1).max(100).optional(),
+  elementAdvantageMult: z.number().positive().optional(),
+  elementDisadvantageMult: z.number().positive().optional(),
 })
 
 export const combatDebugBattleResponseSchema = z.object({
