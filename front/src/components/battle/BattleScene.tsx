@@ -26,6 +26,7 @@ type FloatItem = {
   key: number
   value: number | string
   kind: 'damage' | 'heal' | 'dodge'
+  elementMult?: number
 }
 type BadgeItem = { key: number; passiveKey: string }
 
@@ -132,12 +133,17 @@ export function BattleScene({
   const itemKeyRef = useRef(0)
 
   const pushFloat = useCallback(
-    (unitId: string, value: number | string, kind: FloatItem['kind']) => {
+    (
+      unitId: string,
+      value: number | string,
+      kind: FloatItem['kind'],
+      elementMult?: number,
+    ) => {
       itemKeyRef.current += 1
       const key = itemKeyRef.current
       setFloatsByUnit((cur) => ({
         ...cur,
-        [unitId]: [...(cur[unitId] ?? []), { key, value, kind }],
+        [unitId]: [...(cur[unitId] ?? []), { key, value, kind, elementMult }],
       }))
       setTimeout(() => {
         setFloatsByUnit((cur) => ({
@@ -217,12 +223,13 @@ export function BattleScene({
           id: string
           final: number
           dodged: boolean
+          elementMult?: number
         }[]
         for (const d of damages) {
           if (d.dodged) {
             pushFloat(d.id, 'DODGED', 'dodge')
           } else if (d.final > 0) {
-            pushFloat(d.id, d.final, 'damage')
+            pushFloat(d.id, d.final, 'damage', d.elementMult)
           }
         }
         setUnits((cur) => applyEntry(entry, cur))
@@ -334,7 +341,12 @@ export function BattleScene({
         enlarged={enlarged}
       />
       {(floatsByUnit[u.id] ?? []).map((f) => (
-        <FloatingNumber key={f.key} value={f.value} kind={f.kind} />
+        <FloatingNumber
+          key={f.key}
+          value={f.value}
+          kind={f.kind}
+          elementMult={f.elementMult}
+        />
       ))}
       {(badgesByUnit[u.id] ?? []).map((b) => (
         <PassiveBadge key={b.key} passiveKey={b.passiveKey} />
