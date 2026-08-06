@@ -32,7 +32,12 @@ const RARITY_BY_CHAPTER = [
 // l'activation des éléments et du ciblage prioritaire (les deux camps focus
 // désormais la cible qu'ils battent) : sim à 67 % de win moyen, 47/50 stages
 // en bande 45-90 %.
-// ATTENTION : quasi-miroir, ±0.01 fait bouger le win rate de ~10 pts.
+// ATTENTION : quasi-miroir. Mesuré le 2026-08-06 sous ce régime (éléments actifs
+// + ciblage prioritaire des deux côtés) : ±0.01 fait bouger le win rate
+// d'environ 4 pts (0.99→59 %, 0.981→63 %, 0.976→65 %, 0.971→67 %), pas ~10 pts
+// comme sous l'ancien régime ciblage aléatoire/éléments inactifs — les
+// affinités élémentaires absorbent une partie de l'écart de stats et
+// aplatissent la sensibilité. Réévaluer cette pente si le régime rechange.
 const NORMAL_FACTOR = 0.971
 const BOSS_FACTOR = 0.92 // boss (avant ×PV et AOE)
 const ENEMY_STAT_GROWTH_PER_LEVEL = 0.06
