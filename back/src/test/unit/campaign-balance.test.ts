@@ -1,4 +1,6 @@
 import {
+  BOSS_ELEMENT_BY_CHAPTER,
+  FAMILY_ELEMENTS,
   bossEnemyTeam,
   bossLoot,
   difficultyMult,
@@ -139,5 +141,64 @@ describe('bossLoot — prime de farm alignée sur la difficulté réelle', () =>
     // f4a400f : carte garantie RARE ch.1-3, EPIC ch.4-5
     expect(fc.guaranteedCard).toEqual({ minRarity: 'RARE' })
     expect(bossLoot(4).firstClear.guaranteedCard).toEqual({ minRarity: 'EPIC' })
+  })
+})
+
+describe('éléments des monstres — un élément par famille de bestiaire', () => {
+  const ALL: string[] = ['FIRE', 'WATER', 'NATURE', 'LIGHT', 'DARK']
+
+  it('chaque famille du bestiaire a un élément valide', () => {
+    const families = Object.keys(FAMILY_ELEMENTS)
+    expect(families.length).toBe(14)
+    for (const fam of families) {
+      expect(ALL).toContain(FAMILY_ELEMENTS[fam])
+    }
+  })
+
+  it('les 5 boss ont un élément valide', () => {
+    expect(BOSS_ELEMENT_BY_CHAPTER).toHaveLength(5)
+    for (const el of BOSS_ELEMENT_BY_CHAPTER) {
+      expect(ALL).toContain(el)
+    }
+  })
+
+  it('chaque monstre de chaque stage normal porte un élément', () => {
+    for (let chapter = 1; chapter <= 5; chapter++) {
+      for (let index = 1; index <= 9; index++) {
+        const team = normalEnemyTeam(chapter, index)
+        expect(team).toHaveLength(3)
+        for (const e of team) {
+          expect(ALL).toContain(e.element)
+        }
+      }
+    }
+  })
+
+  it('le boss de chaque chapitre porte l’élément de son chapitre', () => {
+    for (let chapter = 1; chapter <= 5; chapter++) {
+      const [boss] = bossEnemyTeam(chapter, 10)
+      expect(boss.element).toBe(BOSS_ELEMENT_BY_CHAPTER[chapter - 1])
+    }
+  })
+
+  it('les chapitres 1 à 4 présentent 3 éléments DISTINCTS par étage', () => {
+    for (let chapter = 1; chapter <= 4; chapter++) {
+      for (let index = 1; index <= 9; index++) {
+        const els = normalEnemyTeam(chapter, index).map((e) => e.element)
+        expect(new Set(els).size).toBe(3)
+      }
+    }
+  })
+
+  it('l’élément d’un monstre correspond à la famille de son sprite', () => {
+    // appearance = "monsters/{slug}/{CODE}" ; slug = clé de FAMILY_ELEMENTS.
+    for (let chapter = 1; chapter <= 5; chapter++) {
+      for (let index = 1; index <= 9; index++) {
+        for (const e of normalEnemyTeam(chapter, index)) {
+          const slug = e.appearance.split('/')[1]
+          expect(e.element).toBe(FAMILY_ELEMENTS[slug])
+        }
+      }
+    }
   })
 })

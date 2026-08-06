@@ -1,4 +1,5 @@
 import type { PrismaClient } from '../../src/generated/client'
+import type { Element } from '../../src/main/domain/combat/element'
 
 const CHAPTER_COUNT = 5
 const STAGES_PER_CHAPTER = 10
@@ -98,6 +99,40 @@ const FAMILIES: Record<string, MonsterFamily> = {
   wyvernes: { slug: 'wyverns', prefix: 'WYVN', count: 18 },
 }
 
+// Élément par famille de bestiaire. Une famille = un élément fixe : le joueur
+// apprend « les loups sont NATURE » et c'est vrai partout. Comme chaque étage
+// tire ses 3 slots dans 3 familles différentes (voir STAGE_LOOKS), les étages
+// des chapitres 1-4 présentent naturellement 3 éléments distincts.
+// Clé = fam.slug (le dossier MinIO), pas la clé française de FAMILIES : c'est
+// le slug qui apparaît dans `appearance` et sert de source commune sprite/élément.
+export const FAMILY_ELEMENTS: Record<string, Element> = {
+  slimes: 'WATER',
+  mushrooms: 'NATURE',
+  kobolds: 'FIRE',
+  wisps: 'LIGHT',
+  gnolls: 'DARK',
+  wolves: 'NATURE',
+  mimics: 'NATURE',
+  specters: 'DARK',
+  elementals: 'FIRE',
+  minotaurs: 'FIRE',
+  basilisks: 'NATURE',
+  hydras: 'WATER',
+  krakens: 'WATER',
+  wyverns: 'FIRE',
+}
+
+// Élément du boss de chaque chapitre (index 0 = chapitre 1). Chaque fois un
+// élément absent des mobs du chapitre : le boss demande un ajustement d'équipe
+// plutôt que la compo des 9 étages précédents.
+export const BOSS_ELEMENT_BY_CHAPTER: readonly Element[] = [
+  'DARK',
+  'FIRE',
+  'LIGHT',
+  'DARK',
+  'NATURE',
+]
+
 // Familles peuplant chaque chapitre (difficulté croissante), étages 1-9.
 const CHAPTER_FAMILIES: string[][] = [
   ['slimes', 'champignons', 'kobolds'],
@@ -111,34 +146,44 @@ const CHAPTER_FAMILIES: string[][] = [
 const BOSS_SLUG = 'bosses'
 const BOSS_COUNT = 19
 
-// Apparence cosmétique par étage : clé `${chapter}-${index}`, valeur = liste de
-// sous-chemins MinIO (sans cards/ ni .png), un par slot d'ennemi. Généré depuis
-// FAMILIES/CHAPTER_FAMILIES : chaque étage cycle les images de ses familles pour
-// varier les sprites. Étage absent (ou slug/count faux) => pas d'image (fallback).
-const STAGE_LOOKS: Record<string, string[]> = (() => {
-  const looks: Record<string, string[]> = {}
+// Apparence cosmétique ET élément par étage : clé `${chapter}-${index}`, valeur
+// = une entrée par slot d'ennemi. `appearance` = sous-chemin MinIO (sans cards/
+// ni .png), `family` = clé dans FAMILY_ELEMENTS (= fam.slug, le dossier MinIO).
+// Les deux sortent du même tirage : le sprite et l'élément ne peuvent pas diverger.
+type StageLook = { appearance: string; family: string }
+
+const STAGE_LOOKS: Record<string, StageLook[]> = (() => {
+  const looks: Record<string, StageLook[]> = {}
   const cursor: Record<string, number> = {}
-  const nextImage = (famKey: string): string => {
+  const nextLook = (famKey: string): StageLook => {
     const fam = FAMILIES[famKey]
     const i = cursor[famKey] ?? 0
     cursor[famKey] = i + 1
     const num = String((i % fam.count) + 1).padStart(3, '0')
-    return `monsters/${fam.slug}/${fam.prefix}-${num}`
+    return {
+      appearance: `monsters/${fam.slug}/${fam.prefix}-${num}`,
+      family: fam.slug,
+    }
   }
   CHAPTER_FAMILIES.forEach((fams, ci) => {
     const chapter = ci + 1
     for (let stage = 1; stage <= 9; stage++) {
       looks[`${chapter}-${stage}`] = [0, 1, 2].map((slot) =>
-        nextImage(fams[(stage + slot) % fams.length]),
+        nextLook(fams[(stage + slot) % fams.length]),
       )
     }
     const bossNum = String(((chapter - 1) % BOSS_COUNT) + 1).padStart(3, '0')
-    looks[`${chapter}-10`] = [`monsters/${BOSS_SLUG}/BOSS-${bossNum}`]
+    looks[`${chapter}-10`] = [
+      {
+        appearance: `monsters/${BOSS_SLUG}/BOSS-${bossNum}`,
+        family: BOSS_SLUG,
+      },
+    ]
   })
   return looks
 })()
 
-function looksForStage(chapter: number, stageIndex: number): string[] {
+function looksForStage(chapter: number, stageIndex: number): StageLook[] {
   return STAGE_LOOKS[`${chapter}-${stageIndex}`] ?? []
 }
 
@@ -163,7 +208,8 @@ export function normalEnemyTeam(chapter: number, stageIndex: number) {
     level: 1,
     palier: 1,
     attackPattern: 'BASIC',
-    appearance: looks[slot],
+    appearance: looks[slot].appearance,
+    element: FAMILY_ELEMENTS[looks[slot].family],
   }))
 }
 
@@ -182,7 +228,8 @@ export function bossEnemyTeam(chapter: number, stageIndex: number) {
       level: 1,
       palier: 1,
       attackPattern: 'AOE_3',
-      appearance: looks[0],
+      appearance: looks[0].appearance,
+      element: BOSS_ELEMENT_BY_CHAPTER[chapter - 1],
     },
   ]
 }
