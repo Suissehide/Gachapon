@@ -1,4 +1,4 @@
-import { elementMultiplier } from './element'
+import { elementMultiplier, elementRelation } from './element'
 import { PASSIVES, type PassiveKey } from './passives'
 
 export type AttackPattern =
@@ -285,6 +285,23 @@ function pickRandom(
   return picked
 }
 
+/**
+ * Restreint le pool de cibles à celles que l'attaquant bat élémentairement.
+ * Focus dur : s'il existe au moins une cible en désavantage, elle est la seule
+ * candidate. Sinon on rend le pool complet (tirage aléatoire habituel).
+ * Un attaquant ou une cible sans élément donne une relation NEUTRAL, donc
+ * aucune préférence — le comportement historique est préservé.
+ */
+function preferAdvantagedTargets<T extends { element: string | null }>(
+  attackerElement: string | null,
+  enemies: T[],
+): T[] {
+  const advantaged = enemies.filter(
+    (e) => elementRelation(attackerElement, e.element) === 'ADVANTAGE',
+  )
+  return advantaged.length > 0 ? advantaged : enemies
+}
+
 function selectTargets(
   attacker: BattleUnit,
   enemies: BattleUnit[],
@@ -293,17 +310,25 @@ function selectTargets(
   if (enemies.length === 0) {
     return []
   }
+  // AOE_3 frappe tout le monde : aucune sélection de cible à faire.
+  if (attacker.attackPattern === 'AOE_3') {
+    return [...enemies]
+  }
+  const preferred = preferAdvantagedTargets(attacker.element, enemies)
   switch (attacker.attackPattern) {
     case 'BASIC':
-      return pickRandom(enemies, 1, prng)
-    case 'AOE_3':
-      return [...enemies]
-    case 'MULTI_2':
-      return pickRandom(enemies, 2, prng)
     case 'MONO_AMPLIFIED':
-      return pickRandom(enemies, 1, prng)
     case 'MONO_DOUBLE':
-      return pickRandom(enemies, 1, prng)
+      return pickRandom(preferred, 1, prng)
+    case 'MULTI_2': {
+      const picked = pickRandom(preferred, 2, prng)
+      if (picked.length >= 2) {
+        return picked
+      }
+      // Une seule cible avantagée : on complète avec le reste du pool.
+      const rest = enemies.filter((e) => !picked.includes(e))
+      return [...picked, ...pickRandom(rest, 2 - picked.length, prng)]
+    }
   }
 }
 
@@ -1054,6 +1079,7 @@ export const _internals = {
   hashSeed,
   mulberry32,
   advanceToNextActor,
+  preferAdvantagedTargets,
   ACTION_THRESHOLD,
   BASE_SPD_REF,
 }

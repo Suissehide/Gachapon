@@ -1143,6 +1143,159 @@ describe('simulateBattle', () => {
       expect(sawOtherPair).toBe(true)
     })
   })
+
+  // --- Ciblage par avantage élémentaire ---
+
+  it('preferAdvantagedTargets ne garde que les cibles battues par l’attaquant', () => {
+    const pool = [
+      { id: 'B0', element: 'NATURE' },
+      { id: 'B1', element: 'WATER' },
+      { id: 'B2', element: null },
+    ]
+    // FIRE bat NATURE.
+    expect(_internals.preferAdvantagedTargets('FIRE', pool)).toEqual([
+      { id: 'B0', element: 'NATURE' },
+    ])
+  })
+
+  it('preferAdvantagedTargets rend le pool complet si aucune cible n’est battue', () => {
+    const pool = [
+      { id: 'B0', element: 'WATER' },
+      { id: 'B1', element: 'WATER' },
+    ]
+    // FIRE ne bat pas WATER (il en est la victime).
+    expect(_internals.preferAdvantagedTargets('FIRE', pool)).toEqual(pool)
+  })
+
+  it('preferAdvantagedTargets rend le pool complet pour un attaquant sans élément', () => {
+    const pool = [
+      { id: 'B0', element: 'NATURE' },
+      { id: 'B1', element: 'WATER' },
+    ]
+    expect(_internals.preferAdvantagedTargets(null, pool)).toEqual(pool)
+  })
+
+  it('BASIC frappe TOUJOURS la cible en désavantage élémentaire', () => {
+    // A0 est FIRE, B0 est NATURE (battu), B1 et B2 sont WATER (non battus).
+    const sim = simulateBattle({
+      teamA: [makeUnit('A0', { element: 'FIRE', spd: 500, atk: 5 })],
+      teamB: [
+        makeUnit('B0', { element: 'NATURE', hp: 100000, spd: 1 }),
+        makeUnit('B1', { element: 'WATER', hp: 100000, spd: 1 }),
+        makeUnit('B2', { element: 'WATER', hp: 100000, spd: 1 }),
+      ],
+      seed: 'focus-basic',
+      timeoutTurns: 30,
+    })
+    const attacksFromA0 = sim.log.filter(
+      (e): e is Extract<LogEntry, { type: 'ATTACK' }> =>
+        e.type === 'ATTACK' && e.attackerId === 'A0',
+    )
+    expect(attacksFromA0.length).toBeGreaterThan(3)
+    for (const atk of attacksFromA0) {
+      expect(atk.targetIds).toEqual(['B0'])
+    }
+  })
+
+  it('sans cible avantagée, BASIC répartit ses frappes sur plusieurs cibles', () => {
+    // A0 est FIRE, aucune cible NATURE : retour au tirage aléatoire.
+    const sim = simulateBattle({
+      teamA: [makeUnit('A0', { element: 'FIRE', spd: 500, atk: 5 })],
+      teamB: [
+        makeUnit('B0', { element: 'WATER', hp: 100000, spd: 1 }),
+        makeUnit('B1', { element: 'WATER', hp: 100000, spd: 1 }),
+        makeUnit('B2', { element: 'WATER', hp: 100000, spd: 1 }),
+      ],
+      seed: 'focus-fallback',
+      timeoutTurns: 30,
+    })
+    const hit = new Set<string>()
+    for (const e of sim.log) {
+      if (e.type === 'ATTACK' && e.attackerId === 'A0') {
+        for (const id of e.targetIds) {
+          hit.add(id)
+        }
+      }
+    }
+    expect(hit.size).toBeGreaterThan(1)
+  })
+
+  it('MULTI_2 prend la cible avantagée puis complète avec une autre', () => {
+    const sim = simulateBattle({
+      teamA: [
+        makeUnit('A0', {
+          element: 'FIRE',
+          attackPattern: 'MULTI_2',
+          spd: 500,
+          atk: 5,
+        }),
+      ],
+      teamB: [
+        makeUnit('B0', { element: 'NATURE', hp: 100000, spd: 1 }),
+        makeUnit('B1', { element: 'WATER', hp: 100000, spd: 1 }),
+        makeUnit('B2', { element: 'WATER', hp: 100000, spd: 1 }),
+      ],
+      seed: 'focus-multi2',
+      timeoutTurns: 30,
+    })
+    const attacks = sim.log.filter(
+      (e): e is Extract<LogEntry, { type: 'ATTACK' }> =>
+        e.type === 'ATTACK' && e.attackerId === 'A0',
+    )
+    expect(attacks.length).toBeGreaterThan(3)
+    for (const atk of attacks) {
+      expect(atk.targetIds).toHaveLength(2)
+      expect(atk.targetIds).toContain('B0')
+    }
+  })
+
+  it('AOE_3 frappe les 3 cibles quelle que soit la relation élémentaire', () => {
+    const sim = simulateBattle({
+      teamA: [
+        makeUnit('A0', {
+          element: 'FIRE',
+          attackPattern: 'AOE_3',
+          spd: 500,
+          atk: 5,
+        }),
+      ],
+      teamB: [
+        makeUnit('B0', { element: 'NATURE', hp: 100000, spd: 1 }),
+        makeUnit('B1', { element: 'WATER', hp: 100000, spd: 1 }),
+        makeUnit('B2', { element: 'LIGHT', hp: 100000, spd: 1 }),
+      ],
+      seed: 'focus-aoe',
+      timeoutTurns: 30,
+    })
+    const attacks = sim.log.filter(
+      (e): e is Extract<LogEntry, { type: 'ATTACK' }> =>
+        e.type === 'ATTACK' && e.attackerId === 'A0',
+    )
+    expect(attacks.length).toBeGreaterThan(0)
+    for (const atk of attacks) {
+      expect([...atk.targetIds].sort()).toEqual(['B0', 'B1', 'B2'])
+    }
+  })
+
+  it('reste déterministe à seed égal avec des éléments', () => {
+    const build = (): SimulatorInput => ({
+      teamA: [
+        makeUnit('A0', { element: 'FIRE' }),
+        makeUnit('A1', { element: 'WATER' }),
+        makeUnit('A2', { element: 'DARK' }),
+      ],
+      teamB: [
+        makeUnit('B0', { element: 'NATURE' }),
+        makeUnit('B1', { element: 'LIGHT' }),
+        makeUnit('B2', { element: 'WATER' }),
+      ],
+      seed: 'element-determinism',
+    })
+    const a = simulateBattle(build())
+    const b = simulateBattle(build())
+    expect(a.won).toBe(b.won)
+    expect(a.log).toEqual(b.log)
+  })
 })
 
 describe('ATB battle behavior', () => {
