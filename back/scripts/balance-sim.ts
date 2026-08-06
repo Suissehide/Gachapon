@@ -45,6 +45,11 @@ function playerLevelForStage(chapter: number, index: number): number {
   return 10 * (chapter - 1) + index
 }
 
+// Éléments joueur balayés de façon déterministe : l'unité i du run k prend
+// ELEMENTS[(i + k) % 5]. Sur 200 runs, les 5 compositions cycliques sont
+// couvertes à parts égales, et le rapport reste reproductible.
+const SIM_ELEMENTS = ['FIRE', 'WATER', 'NATURE', 'LIGHT', 'DARK']
+
 function playerTeam(opts: {
   level: number
   palier: number
@@ -109,6 +114,7 @@ function enemyUnitsForStage(chapter: number, index: number): SimulatorUnit[] {
       spd: stats.spd,
       attackPattern: (e.attackPattern ?? 'BASIC') as AttackPattern,
       passiveKey: (e as { passiveKey?: string | null }).passiveKey ?? null,
+      element: e.element,
       palier: e.palier,
     }
   })
@@ -140,7 +146,10 @@ function runScenario(
   let totalActions = 0
   for (let k = 0; k < runs; k++) {
     const sim = simulateBattle({
-      teamA: playerUnits.map((u) => ({ ...u })),
+      teamA: playerUnits.map((u, i) => ({
+        ...u,
+        element: SIM_ELEMENTS[(i + k) % SIM_ELEMENTS.length],
+      })),
       teamB: enemies.map((u) => ({ ...u })),
       seed: `sim-${chapter}-${index}-${scenario}-${k}`,
     })
