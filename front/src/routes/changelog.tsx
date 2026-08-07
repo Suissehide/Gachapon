@@ -1,5 +1,5 @@
 // changelog-sync: dernier commit intégré au changelog. Mis à jour par la commande /changelog.
-// last-synced-commit: 1cf8761651fed089b80002287b775a9ad6f39d50
+// last-synced-commit: e9859d1c57297034f8fea96f231e8d44d2a8710e
 import { createFileRoute } from '@tanstack/react-router'
 import { Helmet } from 'react-helmet-async'
 
@@ -37,6 +37,39 @@ const TYPE_META: Record<ChangeType, { label: string; className: string }> = {
 }
 
 const RELEASES: ChangelogRelease[] = [
+  {
+    version: '1.6',
+    title: 'Éléments & tirage',
+    date: 'Juillet – Août 2026',
+    summary:
+      'Tes cartes ont un élément, tes adversaires aussi — et le tirage se vit en grand.',
+    entries: [
+      {
+        type: 'new',
+        text: 'Éléments : chaque carte et chaque monstre appartient à un élément. Le feu brûle la nature, la nature fissure la terre, la terre absorbe l’eau, l’eau éteint le feu — et lumière et ténèbres se répondent. Attaquer avec l’avantage fait mal ; l’encaisser fait moins mal.',
+      },
+      {
+        type: 'new',
+        text: 'Ciblage élémentaire : au combat, chaque unité frappe en priorité l’adversaire qu’elle domine. Les éléments ennemis sont affichés avant de lancer l’assaut — à toi de composer ton équipe en conséquence.',
+      },
+      {
+        type: 'improved',
+        text: 'Campagne recalibrée pour tenir compte des éléments, et pastilles d’élément visibles sur les portraits comme sur l’aperçu des adversaires.',
+      },
+      {
+        type: 'new',
+        text: 'Tirage repensé : la capsule vibre en crescendo puis explose, la machine s’anime, le son suit. Le tirage x10 se dépile carte par carte, avec un bouton Passer si tu es pressé.',
+      },
+      {
+        type: 'new',
+        text: 'Un tutoriel en six étapes t’accueille sur la page de tirage, et ton énergie se remplit à bloc à chaque montée de niveau.',
+      },
+      {
+        type: 'improved',
+        text: 'Boutique rééquilibrée (packs de jetons, recharges, boutique du jour), stockage de jetons de base porté à 10, et affichage des ressources uniformisé partout.',
+      },
+    ],
+  },
   {
     version: '1.5',
     title: 'Équipement, combat & campagne',
