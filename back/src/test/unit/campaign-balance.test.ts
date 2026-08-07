@@ -11,9 +11,9 @@ import {
   normalEnemyTeam,
 } from '../../../prisma/seed/campaign'
 
-describe('enemyPower — aligné sur le joueur attendu (rareté + niveau + palier ATB)', () => {
+describe('enemyPower — aligné sur le joueur attendu (rareté + enemyScale)', () => {
   it('stage 1-1 : valeur ancre exacte (scale=1, NORMAL_FACTOR=0.971)', () => {
-    // rb = COMMON {105,10,5,92}, scale = levelMult(1)*palierMult(1) = 1
+    // rb = COMMON {105,10,5,92}, scale = enemyScale(1) = 1
     // hp: 105×0.971×1 = 101.955 → 102 ; atk: 10×0.971 = 9.71 → 10
     // def: 5×0.971 = 4.855 → 5 ; spd: 92×1 = 92 (pas de NORMAL_FACTOR)
     expect(enemyPower(1, 1)).toEqual({
@@ -28,9 +28,9 @@ describe('enemyPower — aligné sur le joueur attendu (rareté + niveau + palie
     expect(enemyPower(1, 9).baseSpd).toBeGreaterThan(enemyPower(1, 1).baseSpd)
   })
 
-  it('les PV sont STRICTEMENT croissants sur les 50 stages globaux', () => {
+  it('les PV sont STRICTEMENT croissants sur les 90 stages globaux', () => {
     let prevHp = -1
-    for (let n = 1; n <= 50; n++) {
+    for (let n = 1; n <= 90; n++) {
       const chapter = Math.floor((n - 1) / 10) + 1
       const index = ((n - 1) % 10) + 1
       const hp = enemyPower(chapter, index).baseHp
@@ -122,8 +122,8 @@ describe('bossEnemyTeam — solo AOE_3, PV ×BOSS_HP_MULT, vitesse à parité AT
     })
   })
 
-  it('pour chaque chapitre (1-5) : solo, AOE_3, PV > ennemi normal du stage 9', () => {
-    for (const chapter of [1, 2, 3, 4, 5]) {
+  it('pour chaque chapitre (1-9) : solo, AOE_3, PV > ennemi normal du stage 9', () => {
+    for (let chapter = 1; chapter <= 9; chapter++) {
       const bosses = bossEnemyTeam(chapter, 10)
       const normals = normalEnemyTeam(chapter, 9)
       expect(bosses).toHaveLength(1)
@@ -174,7 +174,7 @@ describe('lootTableNormal — butin lissé sur la difficulté', () => {
 
 describe('bossLoot — prime de farm alignée sur la difficulté réelle', () => {
   it('farm boss = farm du stage de même position ×1.25', () => {
-    for (const chapter of [1, 2, 3, 4, 5]) {
+    for (let chapter = 1; chapter <= 9; chapter++) {
       const atBossStage = lootTableNormal(chapter, 10).farm
       const boss = bossLoot(chapter).farm
       expect(boss.gold).toBe(Math.round(atBossStage.gold * 1.25))
@@ -212,15 +212,8 @@ describe('éléments des monstres — un élément par famille de bestiaire', ()
     }
   })
 
-  it('les 5 boss ont un élément valide', () => {
-    expect(BOSS_ELEMENT_BY_CHAPTER).toHaveLength(5)
-    for (const el of BOSS_ELEMENT_BY_CHAPTER) {
-      expect(ELEMENTS).toContain(el)
-    }
-  })
-
   it('chaque monstre de chaque stage normal porte un élément', () => {
-    for (let chapter = 1; chapter <= 5; chapter++) {
+    for (let chapter = 1; chapter <= 9; chapter++) {
       for (let index = 1; index <= 9; index++) {
         const team = normalEnemyTeam(chapter, index)
         expect(team).toHaveLength(3)
@@ -232,7 +225,7 @@ describe('éléments des monstres — un élément par famille de bestiaire', ()
   })
 
   it('le boss de chaque chapitre porte l’élément de son chapitre', () => {
-    for (let chapter = 1; chapter <= 5; chapter++) {
+    for (let chapter = 1; chapter <= 9; chapter++) {
       const [boss] = bossEnemyTeam(chapter, 10)
       expect(boss.element).toBe(BOSS_ELEMENT_BY_CHAPTER[chapter - 1])
     }
@@ -249,7 +242,7 @@ describe('éléments des monstres — un élément par famille de bestiaire', ()
 
   it('l’élément d’un monstre correspond à la famille de son sprite', () => {
     // appearance = "monsters/{slug}/{CODE}" ; slug = clé de FAMILY_ELEMENTS.
-    for (let chapter = 1; chapter <= 5; chapter++) {
+    for (let chapter = 1; chapter <= 9; chapter++) {
       for (let index = 1; index <= 9; index++) {
         for (const e of normalEnemyTeam(chapter, index)) {
           const slug = e.appearance.split('/')[1]
@@ -257,5 +250,49 @@ describe('éléments des monstres — un élément par famille de bestiaire', ()
         }
       }
     }
+  })
+})
+
+describe('chapitres 6 à 9', () => {
+  it('les 9 boss ont un élément absent des mobs de leur chapitre', () => {
+    expect(BOSS_ELEMENT_BY_CHAPTER).toHaveLength(9)
+    for (let chapter = 1; chapter <= 9; chapter++) {
+      const bossElement = BOSS_ELEMENT_BY_CHAPTER[chapter - 1]
+      expect(ELEMENTS).toContain(bossElement)
+      const mobElements = new Set(
+        [1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((index) =>
+          normalEnemyTeam(chapter, index).map((e) => e.element),
+        ),
+      )
+      expect(mobElements.has(bossElement)).toBe(false)
+    }
+  })
+
+  it('les chapitres 6 à 9 présentent 3 éléments DISTINCTS par étage', () => {
+    for (let chapter = 6; chapter <= 9; chapter++) {
+      for (let index = 1; index <= 9; index++) {
+        const els = normalEnemyTeam(chapter, index).map((e) => e.element)
+        expect(new Set(els).size).toBe(3)
+      }
+    }
+  })
+
+  it('les sprites de boss 6 à 9 existent déjà (BOSS-006..009)', () => {
+    for (let chapter = 6; chapter <= 9; chapter++) {
+      const [boss] = bossEnemyTeam(chapter, 10)
+      expect(boss.appearance).toBe(`monsters/bosses/BOSS-00${chapter}`)
+    }
+  })
+
+  it('la carte garantie des boss : RARE (1-3), EPIC (4-8), LEGENDARY (9)', () => {
+    expect(bossLoot(3).firstClear.guaranteedCard).toEqual({
+      minRarity: 'RARE',
+    })
+    expect(bossLoot(8).firstClear.guaranteedCard).toEqual({
+      minRarity: 'EPIC',
+    })
+    expect(bossLoot(9).firstClear.guaranteedCard).toEqual({
+      minRarity: 'LEGENDARY',
+    })
   })
 })

@@ -2,7 +2,7 @@ import type { PrismaClient } from '../../src/generated/client'
 import { MAX_PALIER } from '../../src/main/domain/card-leveling/card-leveling.domain'
 import type { Element } from '../../src/main/domain/combat/element'
 
-const CHAPTER_COUNT = 5
+const CHAPTER_COUNT = 9
 const STAGES_PER_CHAPTER = 10
 
 // Courbe de difficulté CONTINUE et CONCAVE sur le n° de stage global
@@ -11,9 +11,9 @@ const STAGES_PER_CHAPTER = 10
 const CURVE_A = 0.08
 const CURVE_B = 2.5
 
-// Progression joueur attendue par chapitre : l'ennemi s'y aligne (base de rareté
-// + niveau + palier) pour que ses stats ET sa vitesse scalent comme le joueur
-// sous l'ATB. Valeurs = médianes du roster (prisma/seed/cards.ts).
+// Progression joueur attendue par chapitre : l'ennemi s'y aligne (base de
+// rareté + enemyScale) pour que ses stats ET sa vitesse scalent comme le
+// joueur sous l'ATB. Valeurs = médianes du roster (prisma/seed/cards.ts).
 const RARITY_BASE = {
   COMMON: { hp: 105, atk: 10, def: 5, spd: 92 },
   UNCOMMON: { hp: 137, atk: 15, def: 7, spd: 99 },
@@ -26,6 +26,10 @@ const RARITY_BY_CHAPTER = [
   'UNCOMMON',
   'RARE',
   'EPIC',
+  'LEGENDARY',
+  'LEGENDARY',
+  'LEGENDARY',
+  'LEGENDARY',
   'LEGENDARY',
 ] as const
 
@@ -162,6 +166,10 @@ export const BOSS_ELEMENT_BY_CHAPTER: readonly Element[] = [
   'LIGHT',
   'DARK',
   'EARTH',
+  'LIGHT', // ch.6 mobs : FIRE · EARTH · DARK
+  'DARK', // ch.7 mobs : WATER · FIRE · LIGHT
+  'NATURE', // ch.8 mobs : WATER · FIRE · DARK
+  'FIRE', // ch.9 mobs : EARTH · DARK · WATER
 ]
 
 // Familles peuplant chaque chapitre (difficulté croissante), étages 1-9.
@@ -171,6 +179,10 @@ const CHAPTER_FAMILIES: string[][] = [
   ['mimics', 'spectres', 'elementaires'],
   ['minotaures', 'basilics', 'hydres'],
   ['krakens', 'wyvernes'],
+  ['wyvernes', 'basilics', 'spectres'], // FIRE · EARTH · DARK
+  ['krakens', 'minotaures', 'feuxfollets'], // WATER · FIRE · LIGHT
+  ['hydres', 'elementaires', 'gnolls'], // WATER · FIRE · DARK
+  ['basilics', 'spectres', 'krakens'], // EARTH · DARK · WATER
 ]
 
 // Boss (étage 10 de chaque chapitre) : cards/monsters/bosses/BOSS-001..019.
@@ -313,9 +325,10 @@ export function lootTableNormal(chapter: number, stageIndex: number) {
   }
 }
 
-// Carte garantie des boss : RARE pour les chapitres 1-3, EPIC pour les 4-5.
-// 5 boss pour seulement 4 cartes EPIC/LEGENDARY au total : en EPIC partout,
-// la campagne offrait quasiment tout le haut de la collection (spec §7).
+// Carte garantie des boss : RARE pour les chapitres 1-3, EPIC pour les 4-8,
+// LEGENDARY pour le boss 9-10 qui conclut la campagne. La légendaire terminale
+// est une récompense one-shot après 90 étages, à mettre en regard du taux de
+// tirage de 0,20 %.
 export function bossLoot(chapter: number) {
   const m = 1.5 ** (chapter - 1)
   const atBossStage = lootTableNormal(chapter, STAGES_PER_CHAPTER)
@@ -326,7 +339,9 @@ export function bossLoot(chapter: number) {
       dust: Math.round(1000 * m),
       xp: Math.round(200 * m),
       guaranteedEquipment: { minRarity: 'RARE' },
-      guaranteedCard: { minRarity: chapter <= 3 ? 'RARE' : 'EPIC' },
+      guaranteedCard: {
+        minRarity: chapter <= 3 ? 'RARE' : chapter <= 8 ? 'EPIC' : 'LEGENDARY',
+      },
     },
     farm: {
       gold: Math.round(atBossStage.farm.gold * BOSS_FARM_PREMIUM),
