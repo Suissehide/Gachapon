@@ -122,21 +122,24 @@ export class ConfigService implements ConfigServiceInterface {
   }
 
   async bootstrap(): Promise<void> {
-    for (const [key, defaultValue] of Object.entries(this.#envDefaults) as [
-      ConfigKey,
-      number,
-    ][]) {
-      await this.#prisma.globalConfig.upsert({
-        where: { key },
-        create: { key, value: String(defaultValue) },
-        update: {}, // ne pas écraser les valeurs existantes
-      })
-    }
+    // createMany + skipDuplicates plutôt qu'une boucle d'upsert : une seule
+    // requête au lieu d'une soixantaine, et surtout pas de fenêtre de course.
+    // Deux bootstraps concurrents sur la même base (deux suites e2e lancées en
+    // parallèle, par exemple) faisaient échouer l'upsert sur la contrainte
+    // d'unicité de `key` entre son SELECT et son INSERT.
+    // Sémantique préservée : on crée ce qui manque, on n'écrase jamais
+    // une valeur existante.
+    await this.#prisma.globalConfig.createMany({
+      data: Object.entries(this.#envDefaults).map(([key, defaultValue]) => ({
+        key,
+        value: String(defaultValue),
+      })),
+      skipDuplicates: true,
+    })
 
-    await this.#prisma.skillConfig.upsert({
-      where: { id: 1 },
-      create: { id: 1, resetCostPerPoint: 50 },
-      update: {},
+    await this.#prisma.skillConfig.createMany({
+      data: [{ id: 1, resetCostPerPoint: 50 }],
+      skipDuplicates: true,
     })
   }
 }

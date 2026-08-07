@@ -105,7 +105,10 @@ describe('Gacha level-up → refill énergie', () => {
       where: { email: email2 },
       data: {
         emailVerifiedAt: new Date(),
-        xp: 219, // xpForLevel(3)=224 avec base=100/slope=24 ; +10 → 229 = niveau 3
+        // xpForLevel(3) = 100*2 + 44*2*1/2 = 244 avec la config (base=100,
+        // slope=44). À 243, n'importe quel gain d'XP du tirage fait passer
+        // niveau 3 — volontairement insensible au montant exact.
+        xp: 243,
         tokens: 10,
         lastTokenAt: new Date(),
         combatPoints: 7,

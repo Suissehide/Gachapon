@@ -55,11 +55,15 @@ describe('Combat points routes & debit', () => {
     // Weak stage with easy-to-win enemy + minimal loot table
     const stage = await postgresOrm.prisma.campaignStage.create({
       data: {
-        chapter: 99,
+        // Chapitre 98 et non 99 : campaign/levelup-refill.test.ts utilise 99-1
+        // avec un butin réel, alors que ce stage-ci a un butin à zéro. Partager
+        // la clé faisait hériter l'un du butin de l'autre selon l'ordre
+        // d'exécution — un fichier de test = son propre chapitre.
+        chapter: 98,
         index: 1,
         label: 'CP-1',
         isBoss: false,
-        order: 9901,
+        order: 9801,
         enemyTeam: [
           { baseHp: 1, baseAtk: 1, baseDef: 0, baseSpd: 1, level: 1, palier: 1, attackPattern: 'BASIC' },
         ],
@@ -111,11 +115,11 @@ describe('Combat points routes & debit', () => {
       payload: { userCardIds: [uc.id] },
     })
 
-    // CampaignProgress: pretend we already cleared up to chapter 99 stage 1 by upserting later
+    // CampaignProgress: pretend we already cleared up to chapter 98 stage 1 by upserting later
     await postgresOrm.prisma.userCampaignProgress.upsert({
       where: { userId },
-      create: { userId, highestChapter: 99, highestIndex: 0 },
-      update: { highestChapter: 99, highestIndex: 0 },
+      create: { userId, highestChapter: 98, highestIndex: 0 },
+      update: { highestChapter: 98, highestIndex: 0 },
     })
   })
 

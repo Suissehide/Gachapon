@@ -3,10 +3,12 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 import { buildTestApp } from '../../helpers/build-test-app'
 import { skillPointsGained } from '../../../main/domain/shared/level-rewards'
 
-// XP math with defaults (base=100, slope=30):
-//   xpForLevel(n) = 100*(n-1) + 30*(n-1)*(n-2)/2
-//   xpForLevel(10) = 900 + 1080 = 1980
-//   user starts at xp=99 (level 1), adding 1881 → total 1980 = exactly level 10
+// XP math with the configured defaults (xp.base=100, xp.slope=44) :
+//   xpForLevel(n) = 100*(n-1) + 44*(n-1)*(n-2)/2
+//   xpForLevel(10) = 900 + 1584 = 2484
+//   user starts at xp=99 (level 1), adding 2385 → total 2484 = exactly level 10
+// NB : les valeurs par défaut du paramètre de `xpForLevel` (slope=30) sont
+// celles de la signature, pas celles de la config — l'app lit `xp.slope` en base.
 // skillPointsGained(1, 10) = 9 levels + 2 bonus (milestone at level 10) = 11
 
 describe('Level-up: skillPoints + milestone UserReward (claimOne)', () => {
@@ -54,9 +56,9 @@ describe('Level-up: skillPoints + milestone UserReward (claimOne)', () => {
     const { postgresOrm } = (app as any).iocContainer
     const prisma = postgresOrm.prisma
 
-    // Reward with 1881 XP: user goes from xp=99 to xp=1980 (level 10)
+    // Reward with 2385 XP: user goes from xp=99 to xp=2484 (level 10)
     const reward1 = await prisma.reward.create({
-      data: { tokens: 0, dust: 0, xp: 1881 },
+      data: { tokens: 0, dust: 0, xp: 2385 },
     })
     const ur1 = await prisma.userReward.create({
       data: {

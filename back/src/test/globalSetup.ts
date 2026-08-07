@@ -30,6 +30,7 @@ export default async function globalSetup() {
         "Invitation", "TeamMember", "Team",
         "OAuthAccount", "ApiKey", "User",
         "Card", "CardSet",
+        "UserCampaignProgress", "CampaignStage",
         "ShopItem", "Achievement", "Quest",
         "GlobalConfig",
         "SkillEdge", "SkillNodeLevel", "SkillNode", "SkillBranch", "SkillConfig"

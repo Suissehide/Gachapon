@@ -76,7 +76,7 @@ describe('Wishlist routes', () => {
     expect([200, 204]).toContain(res.statusCode)
   })
 
-  it('GET /wishlist — shows card, price=1000 for RARE, availableAt=null (never purchased)', async () => {
+  it('GET /wishlist — shows card, price=4800 for RARE, availableAt=null (never purchased)', async () => {
     const res = await app.inject({
       method: 'GET',
       url: '/wishlist',
@@ -87,8 +87,8 @@ describe('Wishlist routes', () => {
     expect(body.card).not.toBeNull()
     expect(body.card.id).toBe(rareCardId)
     expect(body.card.rarity).toBe('RARE')
-    // RARE base = 500, multiplier = 2 → price = 1000
-    expect(body.price).toBe(1000)
+    // dailyShopPriceRare = 2400, wishlist.priceMultiplier = 2 → price = 4800
+    expect(body.price).toBe(4800)
     expect(body.availableAt).toBeNull()
     expect(body.cooldownDays).toBe(7)
   })
@@ -112,7 +112,7 @@ describe('Wishlist routes', () => {
     const { postgresOrm } = (app as any).iocContainer
     await postgresOrm.prisma.user.update({
       where: { id: userId },
-      data: { dust: 5000 },
+      data: { dust: 10000 },
     })
 
     const before = new Date()
@@ -126,9 +126,9 @@ describe('Wishlist routes', () => {
     expect(res.statusCode).toBe(200)
     const body = res.json()
     expect(body.card.id).toBe(rareCardId)
-    expect(body.dustSpent).toBe(1000)
+    expect(body.dustSpent).toBe(4800)
     expect(typeof body.newDustBalance).toBe('number')
-    expect(body.newDustBalance).toBe(4000)
+    expect(body.newDustBalance).toBe(5200)
     expect(typeof body.wasDuplicate).toBe('boolean')
 
     // availableAt ≈ purchasedAt + 7 days
