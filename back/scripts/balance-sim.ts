@@ -315,6 +315,27 @@ function runStage(chapter: number, index: number): StageRun {
     () => counterpickElement,
   )
 
+  // Mêmes équipes sous-montées, mais en régime AVEUGLE (rotation d'éléments,
+  // sans regarder l'étage). C'est ce qui isole l'effet du niveau de celui du
+  // contre-pick : sans ces deux points, un écart mesuré en contre-pick
+  // sous-monté mélange les deux causes.
+  const blind5 = runScenario(
+    chapter,
+    index,
+    under5.team,
+    enemiesCurrent,
+    'blind-5',
+    RUNS,
+  )
+  const blind10 = runScenario(
+    chapter,
+    index,
+    under10.team,
+    enemiesCurrent,
+    'blind-10',
+    RUNS,
+  )
+
   const flooredStages: FlooredStage[] = []
   const stageLabel = `${chapter}-${index}`
   if (under5.floored) {
@@ -336,6 +357,8 @@ function runStage(chapter: number, index: number): StageRun {
     `${Math.round(counterpick.winRate * 100)}%`,
     `${Math.round(counterpick5.winRate * 100)}%`,
     `${Math.round(counterpick10.winRate * 100)}%`,
+    `${Math.round(blind5.winRate * 100)}%`,
+    `${Math.round(blind10.winRate * 100)}%`,
   ].join('\t')
 
   return { row, flooredStages }
@@ -346,12 +369,11 @@ function runStage(chapter: number, index: number): StageRun {
 function writeReport(rows: string[]): string {
   const reportDir = path.join(__dirname, '..', '..', '.superpowers', 'sdd')
   fs.mkdirSync(reportDir, { recursive: true })
-  // Colonnes ajoutées en fin de ligne (index 9 et 10) : les index 5/6/8
-  // utilisés par parsePct pour current/spdScaled/counterpick restent
-  // inchangés.
+  // Colonnes toujours ajoutées EN FIN de ligne : les index déjà utilisés par
+  // parsePct (5/6/8/9/10) restent inchangés, les nouvelles prennent 11 et 12.
   const mdHeader =
-    '| stage | boss | rarity | L | P | win%(current) | win%(spdScaled) | actions(cur) | win%(counterpick) | win%(counterpick-5) | win%(counterpick-10) |'
-  const mdSep = '|---|---|---|---|---|---|---|---|---|---|---|'
+    '| stage | boss | rarity | L | P | win%(current) | win%(spdScaled) | actions(cur) | win%(counterpick) | win%(counterpick-5) | win%(counterpick-10) | win%(blind-5) | win%(blind-10) |'
+  const mdSep = '|---|---|---|---|---|---|---|---|---|---|---|---|---|'
   const mdRows = rows.map((r) => `| ${r.split('\t').join(' | ')} |`)
   const parsePct = (row: string, col: number) =>
     Number.parseInt(row.split('\t')[col].replace('%', ''), 10)
@@ -360,6 +382,8 @@ function writeReport(rows: string[]): string {
   const counterpick = rows.map((r) => parsePct(r, 8))
   const counterpick5 = rows.map((r) => parsePct(r, 9))
   const counterpick10 = rows.map((r) => parsePct(r, 10))
+  const blind5 = rows.map((r) => parsePct(r, 11))
+  const blind10 = rows.map((r) => parsePct(r, 12))
   const avg = (a: number[]) =>
     Math.round(a.reduce((x, y) => x + y, 0) / a.length)
   const band = (a: number[]) => a.filter((w) => w >= 45 && w <= 90).length
@@ -371,7 +395,9 @@ function writeReport(rows: string[]): string {
     `counterpick ${band(counterpick)}/50. Counterpick-5 avg win: ${avg(counterpick5)}% ` +
     `(gap vs counterpick: ${avg(counterpick5) - avg(counterpick)}pt). ` +
     `Counterpick-10 avg win: ${avg(counterpick10)}% ` +
-    `(gap vs counterpick: ${avg(counterpick10) - avg(counterpick)}pt).`
+    `(gap vs counterpick: ${avg(counterpick10) - avg(counterpick)}pt). ` +
+    `Blind-5 avg win: ${avg(blind5)}% (gap vs current: ${avg(blind5) - avg(cur)}pt). ` +
+    `Blind-10 avg win: ${avg(blind10)}% (gap vs current: ${avg(blind10) - avg(cur)}pt).`
   fs.writeFileSync(
     path.join(reportDir, 'D-sim-realistic-report.md'),
     `# D-sim-realistic-report\n\nRealistic per-rarity player teams vs enemy speed scenarios.\n\n${mdHeader}\n${mdSep}\n${mdRows.join('\n')}\n\n**Verdict:** ${verdict}\n`,
