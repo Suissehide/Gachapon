@@ -78,9 +78,12 @@ export function enemyScale(globalStageNumber: number): number {
 
 // Boss = check de build : PV ×3.25 + AOE_3 (frappe toute l'équipe, threat ×7
 // dans la jauge affichée). L'atk n'est PAS gonflée (×1.0) : l'AOE sur un solo
-// est déjà brutal. Calibré par simulation sous la courbe lissée : seuil de
-// victoire ≈ stage 9 +2 à +5 niveaux selon le chapitre (×3.75 créait un mur
-// de +15 niveaux au boss final, ×2.75 ne dépassait plus le stage 9).
+// est déjà brutal. Mesuré le 2026-08-07 avec la courbe continue : le boss
+// est désormais le point haut de son chapitre par construction (+10,8 % à
+// +15,6 % d'écart de stats selon le chapitre, contre -2,9 % sous l'ancienne
+// courbe plate), le ×3.25 s'empile donc sur un écart déjà défavorable.
+// Conservé tel quel : la mesure donne 70 % de victoire sur les 9 boss en
+// régime de référence (équipement partiel epic, joueur qui contre-pick).
 const BOSS_HP_MULT = 3.25
 
 // Le butin scale comme mult^exp avec exp < 1 : la difficulté croît plus vite

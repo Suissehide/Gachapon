@@ -197,7 +197,7 @@ describe('bossLoot — prime de farm alignée sur la difficulté réelle', () =>
     expect(fc.dust).toBe(1000)
     expect(fc.xp).toBe(200)
     expect(fc.guaranteedEquipment).toEqual({ minRarity: 'RARE' })
-    // f4a400f : carte garantie RARE ch.1-3, EPIC ch.4-5
+    // carte garantie : RARE ch.1-3, EPIC ch.4-8, LEGENDARY ch.9
     expect(fc.guaranteedCard).toEqual({ minRarity: 'RARE' })
     expect(bossLoot(4).firstClear.guaranteedCard).toEqual({ minRarity: 'EPIC' })
   })
