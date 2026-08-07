@@ -1,4 +1,5 @@
 import type { PrismaClient } from '../../src/generated/client'
+import { MAX_PALIER } from '../../src/main/domain/card-leveling/card-leveling.domain'
 import type { Element } from '../../src/main/domain/combat/element'
 
 const CHAPTER_COUNT = 5
@@ -28,29 +29,47 @@ const RARITY_BY_CHAPTER = [
   'LEGENDARY',
 ] as const
 
-// Ennemi normal = base joueur × NORMAL_FACTOR. Recalé le 2026-08-06 avec
-// l'activation des éléments et du ciblage prioritaire (les deux camps focus
-// désormais la cible qu'ils battent) : sim à 67 % de win moyen, 47/50 stages
-// en bande 45-90 %. IMPORTANT : la sim (balance-sim.ts) attribue les éléments
-// du joueur de façon cyclique déterministe, SANS regarder ceux des ennemis —
-// c'est donc une mesure en régime « joueur qui ne contre-pick pas ». Un joueur
-// qui contre-pick ses éléments obtient un win rate nettement supérieur.
-// ATTENTION : quasi-miroir. Mesuré le 2026-08-06 sous ce régime (éléments actifs
-// + ciblage prioritaire des deux côtés) : ±0.01 fait bouger le win rate
-// d'environ 4 pts (0.99→59 %, 0.981→63 %, 0.976→65 %, 0.971→67 %), pas ~10 pts
-// comme sous l'ancien régime ciblage aléatoire/éléments inactifs — les
-// affinités élémentaires absorbent une partie de l'écart de stats et
-// aplatissent la sensibilité. Réévaluer cette pente si le régime rechange.
+// Ennemi normal = base joueur × NORMAL_FACTOR. Conservé à 0.971 lors de la
+// refonte du 2026-08-07 : la courbe lissée durcit la campagne d'environ 17 %
+// au stage 5-10, et cette hausse est VOULUE. La sim mesure un régime
+// doublement pessimiste (elle attribue les éléments du joueur sans regarder
+// ceux des ennemis, donc « joueur qui ne contre-pick pas », et tourne avec
+// equipment: [] des deux côtés), alors que le contre-pick vaut ×1.3 en dégâts
+// et que le budget d'équipement est appelé à croître.
 const NORMAL_FACTOR = 0.971
 const BOSS_FACTOR = 0.92 // boss (avant ×PV et AOE)
-const ENEMY_STAT_GROWTH_PER_LEVEL = 0.06
-const ENEMY_ASCENSION_BONUS = 0.15
 
-function enemyLevelMult(level: number): number {
-  return 1 + ENEMY_STAT_GROWTH_PER_LEVEL * (level - 1)
-}
-function enemyPalierMult(palier: number): number {
-  return (1 + ENEMY_ASCENSION_BONUS) ** (palier - 1)
+// --- Courbe de difficulté : continue, en deux phases -----------------------
+//
+// Phase 1 (étages 1-70) — le joueur progresse par le NIVEAU.
+//   L'ascension ennemie est continue sur l'étage global (plus de marche aux
+//   frontières de chapitre) et avance un peu plus vite que celle du joueur :
+//   0.105/étage contre 0.10, soit un palier tous les 9.5 étages au lieu de 10.
+//   Comme le joueur ascensionne EN BLOC au changement de chapitre, l'écart
+//   repart près de zéro à chaque chapitre puis monte jusqu'au boss — qui est
+//   donc le point haut de son chapitre, par construction.
+//
+// Phase 2 (étages 71-90) — le joueur est au plafond, il progresse par
+//   l'ÉQUIPEMENT. L'ascension ennemie est figée (elle sature à l'étage
+//   10 × MAX_PALIER) et le gain de niveau est divisé par deux : l'amplitude
+//   d'un chapitre tombe de ~14 à ~6 points.
+const ENEMY_STAT_GROWTH_PER_LEVEL = 0.06
+const ENEMY_GROWTH_LATE = 0.03
+const ENEMY_ASCENSION_BONUS = 0.15
+const ENEMY_ASCENSION_PER_STAGE = 0.105
+const PLAYER_CAP_STAGE = 10 * MAX_PALIER // 70
+
+/** Multiplicateur de stats ennemies à un étage global (1..90). */
+export function enemyScale(globalStageNumber: number): number {
+  const capped = Math.min(globalStageNumber, PLAYER_CAP_STAGE)
+  const overflow = Math.max(0, globalStageNumber - PLAYER_CAP_STAGE)
+  const level =
+    1 +
+    ENEMY_STAT_GROWTH_PER_LEVEL * (capped - 1) +
+    ENEMY_GROWTH_LATE * overflow
+  const ascension =
+    (1 + ENEMY_ASCENSION_BONUS) ** (ENEMY_ASCENSION_PER_STAGE * (capped - 1))
+  return level * ascension
 }
 
 // Boss = check de build : PV ×3.25 + AOE_3 (frappe toute l'équipe, threat ×7
@@ -204,9 +223,7 @@ function looksForStage(chapter: number, stageIndex: number): StageLook[] {
 
 export function enemyPower(chapter: number, stageIndex: number) {
   const rb = RARITY_BASE[RARITY_BY_CHAPTER[chapter - 1]]
-  const level = globalStage(chapter, stageIndex) // expected player level 1..50
-  const palier = chapter
-  const scale = enemyLevelMult(level) * enemyPalierMult(palier)
+  const scale = enemyScale(globalStage(chapter, stageIndex))
   return {
     baseHp: Math.round(rb.hp * NORMAL_FACTOR * scale),
     baseAtk: Math.round(rb.atk * NORMAL_FACTOR * scale),
@@ -239,9 +256,7 @@ export function normalEnemyTeam(chapter: number, stageIndex: number) {
 export function bossEnemyTeam(chapter: number, stageIndex: number) {
   const rb = RARITY_BASE[RARITY_BY_CHAPTER[chapter - 1]]
   const looks = looksForStage(chapter, stageIndex)
-  const level = globalStage(chapter, stageIndex)
-  const palier = chapter
-  const scale = enemyLevelMult(level) * enemyPalierMult(palier)
+  const scale = enemyScale(globalStage(chapter, stageIndex))
   return [
     {
       baseHp: Math.round(rb.hp * BOSS_HP_MULT * BOSS_FACTOR * scale),
