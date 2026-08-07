@@ -1,5 +1,5 @@
 // changelog-sync: dernier commit intégré au changelog. Mis à jour par la commande /changelog.
-// last-synced-commit: 40e71575a58741e7089e49f5633a22244769d452
+// last-synced-commit: a6c30d3d145fa5ee64a05f68ca33e06d4aab95fc
 import { createFileRoute } from '@tanstack/react-router'
 import { Helmet } from 'react-helmet-async'
 

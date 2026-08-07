@@ -735,8 +735,10 @@ function GuidePage() {
                     <strong className="text-foreground">doublon</strong> pour
                     passer au palier suivant et relever son plafond de niveau.
                     Son <strong className="text-foreground">passif</strong>{' '}
-                    gagne aussi en puissance à chaque palier. Une fois le palier
-                    maximum atteint, la progression passe par{' '}
+                    gagne aussi en puissance à chaque palier, jusqu'à un certain
+                    point : au-delà, il reste fixe et seules les stats
+                    continuent de progresser. Une fois le palier maximum
+                    atteint, la progression passe par{' '}
                     <strong className="text-foreground">l'équipement</strong>.
                   </p>
                 </div>

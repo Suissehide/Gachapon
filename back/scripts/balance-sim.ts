@@ -2,6 +2,7 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 
 import { bossEnemyTeam, normalEnemyTeam } from '../prisma/seed/campaign'
+import { MAX_PALIER } from '../src/main/domain/card-leveling/card-leveling.domain'
 import {
   type AttackPattern,
   type SimulatorUnit,
@@ -48,9 +49,9 @@ const RARITY_BY_CHAPTER: Record<number, string> = {
   9: 'LEGENDARY',
 }
 
-// Niveau joueur à un étage : suit l'étage global jusqu'au plafond de 70
-// (palier 7). Au-delà, le joueur ne progresse plus que par l'équipement.
-const PLAYER_MAX_LEVEL = 70
+// Niveau joueur à un étage : suit l'étage global jusqu'au plafond de
+// 10 × MAX_PALIER. Au-delà, le joueur ne progresse plus que par l'équipement.
+const PLAYER_MAX_LEVEL = 10 * MAX_PALIER
 function playerLevelForStage(chapter: number, index: number): number {
   return Math.min(10 * (chapter - 1) + index, PLAYER_MAX_LEVEL)
 }
@@ -114,7 +115,7 @@ function playerTeam(opts: {
 function realisticPlayerTeam(chapter: number, index: number): SimulatorUnit[] {
   const rarity = RARITY_BY_CHAPTER[chapter]
   const level = playerLevelForStage(chapter, index)
-  const palier = Math.min(chapter, 7)
+  const palier = Math.min(chapter, MAX_PALIER)
   return playerTeam({ level, palier, base: RARITY_BASE[rarity] })
 }
 
@@ -133,7 +134,7 @@ function underleveledPlayerTeam(
   const rarity = RARITY_BY_CHAPTER[chapter]
   const targetLevel = playerLevelForStage(chapter, index) - levelDeficit
   const level = Math.max(1, targetLevel)
-  const palier = Math.min(chapter, 7)
+  const palier = Math.min(chapter, MAX_PALIER)
   return {
     team: playerTeam({ level, palier, base: RARITY_BASE[rarity] }),
     level,

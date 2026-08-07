@@ -2,8 +2,8 @@ import Boom from '@hapi/boom'
 
 import type { IocContainer } from '../../types/application/ioc'
 import {
-  MAX_PALIER,
   isAtTopOfPalier,
+  MAX_PALIER,
 } from '../card-leveling/card-leveling.domain'
 import { retryOnSerialization } from '../shared/retry-serialization'
 

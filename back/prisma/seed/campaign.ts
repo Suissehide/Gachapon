@@ -6,7 +6,7 @@ const CHAPTER_COUNT = 9
 const STAGES_PER_CHAPTER = 10
 
 // Courbe de difficulté CONTINUE et CONCAVE sur le n° de stage global
-// n = (chapitre-1)×10 + index (1..50) : mult(n) = (1 + 0.08·(n-1))^2.5.
+// n = (chapitre-1)×10 + index (1..90) : mult(n) = (1 + 0.08·(n-1))^2.5.
 // Utilisée UNIQUEMENT pour le BUTIN (loot) — plus pour les stats ennemies.
 const CURVE_A = 0.08
 const CURVE_B = 2.5
@@ -37,9 +37,10 @@ const RARITY_BY_CHAPTER = [
 // refonte du 2026-08-07 : la courbe lissée durcit la campagne d'environ 17 %
 // au stage 5-10, et cette hausse est VOULUE. La sim mesure un régime
 // doublement pessimiste (elle attribue les éléments du joueur sans regarder
-// ceux des ennemis, donc « joueur qui ne contre-pick pas », et tourne avec
-// equipment: [] des deux côtés), alors que le contre-pick vaut ×1.3 en dégâts
-// et que le budget d'équipement est appelé à croître.
+// ceux des ennemis, donc « joueur qui ne contre-pick pas », et tourne PAR
+// DÉFAUT sans équipement — profil `none` (`SIM_GEAR=epic|legendary` active
+// les régimes équipés côté joueur) — alors que le contre-pick vaut ×1.3 en
+// dégâts et que les ennemis, eux, n'en portent jamais.
 const NORMAL_FACTOR = 0.971
 const BOSS_FACTOR = 0.92 // boss (avant ×PV et AOE)
 
@@ -79,11 +80,14 @@ export function enemyScale(globalStageNumber: number): number {
 // Boss = check de build : PV ×3.25 + AOE_3 (frappe toute l'équipe, threat ×7
 // dans la jauge affichée). L'atk n'est PAS gonflée (×1.0) : l'AOE sur un solo
 // est déjà brutal. Mesuré le 2026-08-07 avec la courbe continue : le boss
-// est désormais le point haut de son chapitre par construction (+10,8 % à
-// +15,6 % d'écart de stats selon le chapitre, contre -2,9 % sous l'ancienne
-// courbe plate), le ×3.25 s'empile donc sur un écart déjà défavorable.
-// Conservé tel quel : la mesure donne 70 % de victoire sur les 9 boss en
-// régime de référence (équipement partiel epic, joueur qui contre-pick).
+// est désormais le point haut de son chapitre par construction. En phase 1
+// (chapitres 1 à 7, joueur qui progresse par le niveau) l'écart de stats va
+// de +10,8 % à +15,6 % selon le chapitre, contre -2,9 % sous l'ancienne
+// courbe plate ; en phase 2 (joueur plafonné, chapitres 8-9) il grimpe
+// jusqu'à +29,0 % au boss 9-10, le ×3.25 s'empilant donc sur un écart déjà
+// défavorable et croissant. Conservé tel quel : la mesure donne 70 % de
+// victoire sur les 9 boss en régime de référence (équipement partiel epic,
+// joueur qui contre-pick).
 const BOSS_HP_MULT = 3.25
 
 // Le butin scale comme mult^exp avec exp < 1 : la difficulté croît plus vite
@@ -138,9 +142,10 @@ const FAMILIES: Record<string, MonsterFamily> = {
 // Élément par famille de bestiaire. Une famille = un élément fixe : le joueur
 // apprend « les loups sont NATURE » et c'est vrai partout. Comme chaque étage
 // tire ses 3 slots dans 3 familles différentes (voir STAGE_LOOKS), les étages
-// des chapitres 1-4 présentent naturellement 3 éléments distincts. Exception :
-// le chapitre 5 (CHAPTER_FAMILIES) n'a que 2 familles (krakens, wyvernes),
-// donc ses étages ne présentent que 2 éléments distincts sur 3 slots.
+// des chapitres 1-4 et 6-9 présentent naturellement 3 éléments distincts.
+// Exception : le chapitre 5 (CHAPTER_FAMILIES) n'a que 2 familles (krakens,
+// wyvernes), donc ses étages ne présentent que 2 éléments distincts sur 3
+// slots.
 // Clé = fam.slug (le dossier MinIO), pas la clé française de FAMILIES : c'est
 // le slug qui apparaît dans `appearance` et sert de source commune sprite/élément.
 export const FAMILY_ELEMENTS: Record<string, Element> = {
