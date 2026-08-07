@@ -54,7 +54,8 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
   },
   CRIT: {
     name: 'Précision',
-    describe: (p) => `${8 + 3 * p} % de chance d'infliger le double des dégâts.`,
+    describe: (p) =>
+      `${8 + 3 * p} % de chance d'infliger le double des dégâts.`,
   },
   PIERCE: {
     name: 'Perce-armure',
@@ -94,7 +95,8 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
   },
   BLOODLUST: {
     name: 'Soif de sang',
-    describe: (p) => `Se soigne de ${15 + 5 * p} % des PV max en éliminant un ennemi.`,
+    describe: (p) =>
+      `Se soigne de ${15 + 5 * p} % des PV max en éliminant un ennemi.`,
   },
 }
 

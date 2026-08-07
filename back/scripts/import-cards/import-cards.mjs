@@ -75,6 +75,9 @@ const FAMILIES = {
   dwarfs: { setName: 'Nains', description: 'Le set des Nains du Gachapon.' },
   undeads: { setName: 'Morts-vivants', description: 'Le set des Morts-vivants du Gachapon.' },
   puazis: { setName: 'Puazi', description: 'Le set des Puazi du Gachapon.' },
+  sirens: { setName: 'Sirènes', description: 'Le set des Sirènes du Gachapon.' },
+  tabaxi: { setName: 'Tabaxis', description: 'Le set des Tabaxis du Gachapon.' },
+  fairies: { setName: 'Fées', description: 'Le set des Fées du Gachapon.' },
 }
 
 const imagePrefix = (folder) =>

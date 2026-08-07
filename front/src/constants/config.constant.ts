@@ -17,7 +17,6 @@ export type AdminConfig = {
   brilliantRateRare?: number
   brilliantRateEpic?: number
   brilliantRateLegendary?: number
-
 }
 
 export type ScoringConfig = {
