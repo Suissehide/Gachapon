@@ -43,7 +43,7 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
     },
     statGrowthPerLevel: 0.06,
     ascensionStatBonus: 0.15,
-    maxPalier: 6,
+    maxPalier: 7,
   },
   combat: {
     pointsMax: 60,

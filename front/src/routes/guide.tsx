@@ -632,7 +632,7 @@ function GuidePage() {
                 boucle de combat. Tu progresses à travers des{' '}
                 <strong className="text-foreground">chapitres</strong>{' '}
                 thématiques — Plaines, Forêt des Murmures, Cendres, Océan,
-                Cristaux, Volcan, Toundra — chacun découpé en{' '}
+                Cristaux, Volcan, Toundra, Abysses, Faille — chacun découpé en{' '}
                 <strong className="text-foreground">étapes</strong> de plus en
                 plus difficiles.
               </p>
@@ -735,7 +735,9 @@ function GuidePage() {
                     <strong className="text-foreground">doublon</strong> pour
                     passer au palier suivant et relever son plafond de niveau.
                     Son <strong className="text-foreground">passif</strong>{' '}
-                    gagne aussi en puissance à chaque palier.
+                    gagne aussi en puissance à chaque palier. Une fois le palier
+                    maximum atteint, la progression passe par{' '}
+                    <strong className="text-foreground">l'équipement</strong>.
                   </p>
                 </div>
                 <div className="rounded-lg border border-border/50 bg-card px-4 py-3">
