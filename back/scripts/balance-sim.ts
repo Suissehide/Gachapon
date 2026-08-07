@@ -95,6 +95,29 @@ function realisticPlayerTeam(chapter: number, index: number): SimulatorUnit[] {
   return playerTeam({ level, palier, base: RARITY_BASE[rarity] })
 }
 
+// Équipe joueur sous-montée : même rareté/palier que l'équipe de référence
+// (realisticPlayerTeam), mais `levelDeficit` niveaux en dessous — proxy d'un
+// joueur qui a dilué son investissement sur plusieurs équipes élémentaires
+// plutôt que de tout mettre sur une seule. Le niveau est borné à 1 (un
+// niveau nul ou négatif produirait des stats absurdes) ; `floored` indique
+// que la borne a joué, signe que la mesure sous-estime l'écart réel demandé
+// à cet étage.
+function underleveledPlayerTeam(
+  chapter: number,
+  index: number,
+  levelDeficit: number,
+): { team: SimulatorUnit[]; level: number; floored: boolean } {
+  const rarity = RARITY_BY_CHAPTER[chapter]
+  const targetLevel = playerLevelForStage(chapter, index) - levelDeficit
+  const level = Math.max(1, targetLevel)
+  const palier = chapter
+  return {
+    team: playerTeam({ level, palier, base: RARITY_BASE[rarity] }),
+    level,
+    floored: targetLevel < 1,
+  }
+}
+
 function enemyUnitsForStage(chapter: number, index: number): SimulatorUnit[] {
   const isBoss = index === 10
   const team = isBoss
@@ -225,82 +248,118 @@ const ELEMENT_DISADVANTAGE_MULT = process.env.ELEMENT_DISADVANTAGE_MULT
   ? Number.parseFloat(process.env.ELEMENT_DISADVANTAGE_MULT)
   : undefined
 
-function main(): void {
-  const header =
-    'stage\tboss\trarity\tL\tP\twin%(current)\twin%(spdScaled)\tactions(cur)\twin%(counterpick)'
-  // eslint-disable-next-line no-console
-  console.log(header)
-  const rows: string[] = []
+type FlooredStage = { deficit: number; stage: string }
 
-  for (let chapter = 1; chapter <= 5; chapter++) {
-    for (let index = 1; index <= 10; index++) {
-      const isBoss = index === 10
-      const level = playerLevelForStage(chapter, index)
-      const team = realisticPlayerTeam(chapter, index)
-      const enemiesCurrent = enemyUnitsForStage(chapter, index)
-      const enemiesScaled = enemyUnitsSpeedScaled(chapter, index, level)
+type StageRun = {
+  row: string
+  flooredStages: FlooredStage[]
+}
 
-      const cur = runScenario(
-        chapter,
-        index,
-        team,
-        enemiesCurrent,
-        'current',
-        RUNS,
-      )
-      const scaled = runScenario(
-        chapter,
-        index,
-        team,
-        enemiesScaled,
-        'spdscaled',
-        RUNS,
-      )
+// Calcule toutes les mesures d'un étage (aveugle, speed-scaled, contre-pick
+// plein niveau, contre-pick -5 et -10 niveaux) et les assemble en une ligne
+// de rapport. Extrait de main() pour rester sous le plafond de complexité
+// cognitive de la fonction.
+function runStage(chapter: number, index: number): StageRun {
+  const isBoss = index === 10
+  const level = playerLevelForStage(chapter, index)
+  const team = realisticPlayerTeam(chapter, index)
+  const enemiesCurrent = enemyUnitsForStage(chapter, index)
+  const enemiesScaled = enemyUnitsSpeedScaled(chapter, index, level)
 
-      // Contre-pick : les 3 unités joueur prennent l'élément qui bat le plus
-      // fréquent chez les ennemis de l'étage (borne haute, joueur optimal).
-      // Enemis inchangés (mêmes stats/éléments que le scénario 'current').
-      const counterpickElement = counterPickElement(enemiesCurrent)
-      const counterpick = runScenario(
-        chapter,
-        index,
-        team,
-        enemiesCurrent,
-        'counterpick',
-        RUNS,
-        () => counterpickElement,
-      )
+  const cur = runScenario(chapter, index, team, enemiesCurrent, 'current', RUNS)
+  const scaled = runScenario(
+    chapter,
+    index,
+    team,
+    enemiesScaled,
+    'spdscaled',
+    RUNS,
+  )
 
-      const row = [
-        `${chapter}-${index}`,
-        isBoss ? 'B' : '',
-        RARITY_BY_CHAPTER[chapter],
-        level,
-        chapter,
-        `${Math.round(cur.winRate * 100)}%`,
-        `${Math.round(scaled.winRate * 100)}%`,
-        Math.round(cur.avgActions),
-        `${Math.round(counterpick.winRate * 100)}%`,
-      ].join('\t')
-      // eslint-disable-next-line no-console
-      console.log(row)
-      rows.push(row)
-    }
+  // Contre-pick : les 3 unités joueur prennent l'élément qui bat le plus
+  // fréquent chez les ennemis de l'étage (borne haute, joueur optimal).
+  // Enemis inchangés (mêmes stats/éléments que le scénario 'current').
+  const counterpickElement = counterPickElement(enemiesCurrent)
+  const counterpick = runScenario(
+    chapter,
+    index,
+    team,
+    enemiesCurrent,
+    'counterpick',
+    RUNS,
+    () => counterpickElement,
+  )
+
+  // Contre-pick sous-monté : même élément contre-pické, même palier/rareté,
+  // mais niveau réduit de 5 / 10 (borné à 1) — proxy d'un joueur qui dilue
+  // son investissement sur plusieurs équipes élémentaires plutôt que de
+  // tout mettre sur une seule.
+  const under5 = underleveledPlayerTeam(chapter, index, 5)
+  const under10 = underleveledPlayerTeam(chapter, index, 10)
+  const counterpick5 = runScenario(
+    chapter,
+    index,
+    under5.team,
+    enemiesCurrent,
+    'counterpick-5',
+    RUNS,
+    () => counterpickElement,
+  )
+  const counterpick10 = runScenario(
+    chapter,
+    index,
+    under10.team,
+    enemiesCurrent,
+    'counterpick-10',
+    RUNS,
+    () => counterpickElement,
+  )
+
+  const flooredStages: FlooredStage[] = []
+  const stageLabel = `${chapter}-${index}`
+  if (under5.floored) {
+    flooredStages.push({ deficit: 5, stage: stageLabel })
+  }
+  if (under10.floored) {
+    flooredStages.push({ deficit: 10, stage: stageLabel })
   }
 
+  const row = [
+    stageLabel,
+    isBoss ? 'B' : '',
+    RARITY_BY_CHAPTER[chapter],
+    level,
+    chapter,
+    `${Math.round(cur.winRate * 100)}%`,
+    `${Math.round(scaled.winRate * 100)}%`,
+    Math.round(cur.avgActions),
+    `${Math.round(counterpick.winRate * 100)}%`,
+    `${Math.round(counterpick5.winRate * 100)}%`,
+    `${Math.round(counterpick10.winRate * 100)}%`,
+  ].join('\t')
+
+  return { row, flooredStages }
+}
+
+// Écrit le rapport Markdown et la ligne de verdict à partir des lignes
+// brutes accumulées par main(). Extrait pour la même raison que runStage.
+function writeReport(rows: string[]): string {
   const reportDir = path.join(__dirname, '..', '..', '.superpowers', 'sdd')
   fs.mkdirSync(reportDir, { recursive: true })
-  // Colonne ajoutée en fin de ligne (index 8) : les index 5/6 utilisés par
-  // parsePct pour current/spdScaled restent inchangés.
+  // Colonnes ajoutées en fin de ligne (index 9 et 10) : les index 5/6/8
+  // utilisés par parsePct pour current/spdScaled/counterpick restent
+  // inchangés.
   const mdHeader =
-    '| stage | boss | rarity | L | P | win%(current) | win%(spdScaled) | actions(cur) | win%(counterpick) |'
-  const mdSep = '|---|---|---|---|---|---|---|---|---|'
+    '| stage | boss | rarity | L | P | win%(current) | win%(spdScaled) | actions(cur) | win%(counterpick) | win%(counterpick-5) | win%(counterpick-10) |'
+  const mdSep = '|---|---|---|---|---|---|---|---|---|---|---|'
   const mdRows = rows.map((r) => `| ${r.split('\t').join(' | ')} |`)
   const parsePct = (row: string, col: number) =>
     Number.parseInt(row.split('\t')[col].replace('%', ''), 10)
   const cur = rows.map((r) => parsePct(r, 5))
   const scaled = rows.map((r) => parsePct(r, 6))
   const counterpick = rows.map((r) => parsePct(r, 8))
+  const counterpick5 = rows.map((r) => parsePct(r, 9))
+  const counterpick10 = rows.map((r) => parsePct(r, 10))
   const avg = (a: number[]) =>
     Math.round(a.reduce((x, y) => x + y, 0) / a.length)
   const band = (a: number[]) => a.filter((w) => w >= 45 && w <= 90).length
@@ -309,13 +368,45 @@ function main(): void {
     `spdScaled avg win: ${avg(scaled)}%. In 45-90% band: current ${band(cur)}/50, ` +
     `spdScaled ${band(scaled)}/50. Counterpick avg win: ${avg(counterpick)}% ` +
     `(gap vs current: +${avg(counterpick) - avg(cur)}pt). In 45-90% band: ` +
-    `counterpick ${band(counterpick)}/50.`
+    `counterpick ${band(counterpick)}/50. Counterpick-5 avg win: ${avg(counterpick5)}% ` +
+    `(gap vs counterpick: ${avg(counterpick5) - avg(counterpick)}pt). ` +
+    `Counterpick-10 avg win: ${avg(counterpick10)}% ` +
+    `(gap vs counterpick: ${avg(counterpick10) - avg(counterpick)}pt).`
   fs.writeFileSync(
     path.join(reportDir, 'D-sim-realistic-report.md'),
     `# D-sim-realistic-report\n\nRealistic per-rarity player teams vs enemy speed scenarios.\n\n${mdHeader}\n${mdSep}\n${mdRows.join('\n')}\n\n**Verdict:** ${verdict}\n`,
   )
+  return verdict
+}
+
+function main(): void {
+  const header =
+    'stage\tboss\trarity\tL\tP\twin%(current)\twin%(spdScaled)\tactions(cur)\twin%(counterpick)\twin%(counterpick-5)\twin%(counterpick-10)'
+  // eslint-disable-next-line no-console
+  console.log(header)
+  const rows: string[] = []
+  const flooredStages: FlooredStage[] = []
+
+  for (let chapter = 1; chapter <= 5; chapter++) {
+    for (let index = 1; index <= 10; index++) {
+      const result = runStage(chapter, index)
+      // eslint-disable-next-line no-console
+      console.log(result.row)
+      rows.push(result.row)
+      flooredStages.push(...result.flooredStages)
+    }
+  }
+
+  const verdict = writeReport(rows)
   // eslint-disable-next-line no-console
   console.log(`\n${verdict}`)
+  if (flooredStages.length > 0) {
+    const list = flooredStages
+      .map((f) => `${f.stage} (-${f.deficit})`)
+      .join(', ')
+    // eslint-disable-next-line no-console
+    console.log(`\nNiveau borné à 1 sur : ${list}`)
+  }
 }
 
 main()
