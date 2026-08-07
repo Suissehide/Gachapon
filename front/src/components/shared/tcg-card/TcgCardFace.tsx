@@ -373,7 +373,7 @@ function ElementBadge({
       style={{ background: ELEMENT_COLOR[element] }}
       title={ELEMENT_LABELS[element]}
     >
-      <Icon className={compact ? 'h-3 w-3' : 'h-4 w-4'} />
+      <Icon className={compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} />
     </div>
   )
 }
