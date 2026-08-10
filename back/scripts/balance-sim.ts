@@ -2,6 +2,7 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 
 import { bossEnemyTeam, normalEnemyTeam } from '../prisma/seed/campaign'
+import { MAX_PALIER } from '../src/main/domain/card-leveling/card-leveling.domain'
 import {
   type AttackPattern,
   type SimulatorUnit,
@@ -42,18 +43,39 @@ const RARITY_BY_CHAPTER: Record<number, string> = {
   3: 'RARE',
   4: 'EPIC',
   5: 'LEGENDARY',
+  6: 'LEGENDARY',
+  7: 'LEGENDARY',
+  8: 'LEGENDARY',
+  9: 'LEGENDARY',
 }
 
-// Player level at a given stage: fills the palier's 10-level band.
-// palier = chapter (optimistic but bounded), level = 10*(chapter-1) + index.
+// Niveau joueur à un étage : suit l'étage global jusqu'au plafond de
+// 10 × MAX_PALIER. Au-delà, le joueur ne progresse plus que par l'équipement.
+const PLAYER_MAX_LEVEL = 10 * MAX_PALIER
 function playerLevelForStage(chapter: number, index: number): number {
-  return 10 * (chapter - 1) + index
+  return Math.min(10 * (chapter - 1) + index, PLAYER_MAX_LEVEL)
 }
 
 // Éléments joueur balayés de façon déterministe : l'unité i du run k prend
 // ELEMENTS[(i + k) % 6]. Sur 200 runs (200 mod 6 = 2), deux rotations sur
 // six sont couvertes par 34 runs et les quatre autres par 33 — quasi égal,
 // et le rapport reste reproductible.
+
+// Profils d'équipement du joueur, pilotés par SIM_GEAR. Les valeurs
+// reproduisent le budget mesuré dans la spec : un set best-in-slot niveau 12
+// donne +44 % PV / +48 % ATQ — bonus de base ×2.1 au niveau 12 (soit 25.2 %
+// sur la stat principale) plus ~16.5 % de sous-stats par stat. Le profil
+// `epic` représente un joueur à mi-parcours du gear chase.
+// Les ennemis n'ont JAMAIS d'équipement : le profil ne s'applique qu'à
+// playerTeam, pas à enemyUnitsForStage.
+type GearProfile = { hpPct: number; atkPct: number; defPct: number }
+const GEAR_PROFILES: Record<string, GearProfile> = {
+  none: { hpPct: 0, atkPct: 0, defPct: 0 },
+  epic: { hpPct: 22, atkPct: 24, defPct: 18 },
+  legendary: { hpPct: 44, atkPct: 48, defPct: 34 },
+}
+const GEAR: GearProfile =
+  GEAR_PROFILES[process.env.SIM_GEAR ?? 'none'] ?? GEAR_PROFILES.none
 
 function playerTeam(opts: {
   level: number
@@ -72,7 +94,9 @@ function playerTeam(opts: {
       level: opts.level,
       palier: opts.palier,
       variant: 'NORMAL',
-      equipment: [],
+      equipment: [
+        { hpPct: GEAR.hpPct, atkPct: GEAR.atkPct, defPct: GEAR.defPct },
+      ],
     })
     return {
       id: `A${idx}`,
@@ -91,7 +115,7 @@ function playerTeam(opts: {
 function realisticPlayerTeam(chapter: number, index: number): SimulatorUnit[] {
   const rarity = RARITY_BY_CHAPTER[chapter]
   const level = playerLevelForStage(chapter, index)
-  const palier = chapter
+  const palier = Math.min(chapter, MAX_PALIER)
   return playerTeam({ level, palier, base: RARITY_BASE[rarity] })
 }
 
@@ -110,7 +134,7 @@ function underleveledPlayerTeam(
   const rarity = RARITY_BY_CHAPTER[chapter]
   const targetLevel = playerLevelForStage(chapter, index) - levelDeficit
   const level = Math.max(1, targetLevel)
-  const palier = chapter
+  const palier = Math.min(chapter, MAX_PALIER)
   return {
     team: playerTeam({ level, palier, base: RARITY_BASE[rarity] }),
     level,
@@ -389,10 +413,10 @@ function writeReport(rows: string[]): string {
   const band = (a: number[]) => a.filter((w) => w >= 45 && w <= 90).length
   const verdict =
     `Realistic teams (rarity by chapter). Current avg win: ${avg(cur)}%, ` +
-    `spdScaled avg win: ${avg(scaled)}%. In 45-90% band: current ${band(cur)}/50, ` +
-    `spdScaled ${band(scaled)}/50. Counterpick avg win: ${avg(counterpick)}% ` +
+    `spdScaled avg win: ${avg(scaled)}%. In 45-90% band: current ${band(cur)}/${rows.length}, ` +
+    `spdScaled ${band(scaled)}/${rows.length}. Counterpick avg win: ${avg(counterpick)}% ` +
     `(gap vs current: +${avg(counterpick) - avg(cur)}pt). In 45-90% band: ` +
-    `counterpick ${band(counterpick)}/50. Counterpick-5 avg win: ${avg(counterpick5)}% ` +
+    `counterpick ${band(counterpick)}/${rows.length}. Counterpick-5 avg win: ${avg(counterpick5)}% ` +
     `(gap vs counterpick: ${avg(counterpick5) - avg(counterpick)}pt). ` +
     `Counterpick-10 avg win: ${avg(counterpick10)}% ` +
     `(gap vs counterpick: ${avg(counterpick10) - avg(counterpick)}pt). ` +
@@ -413,7 +437,7 @@ function main(): void {
   const rows: string[] = []
   const flooredStages: FlooredStage[] = []
 
-  for (let chapter = 1; chapter <= 5; chapter++) {
+  for (let chapter = 1; chapter <= 9; chapter++) {
     for (let index = 1; index <= 10; index++) {
       const result = runStage(chapter, index)
       // eslint-disable-next-line no-console

@@ -1,8 +1,10 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
-import { MAX_PALIER } from '../../../../../domain/card-ascension/card-ascension.tx'
-import { STAT_GROWTH_PER_LEVEL } from '../../../../../domain/card-leveling/card-leveling.domain'
+import {
+  MAX_PALIER,
+  STAT_GROWTH_PER_LEVEL,
+} from '../../../../../domain/card-leveling/card-leveling.domain'
 import { ASCENSION_STAT_BONUS } from '../../../../../domain/combat/combat-stats.domain'
 import {
   EQUIP_LEVEL_SCALE,

@@ -601,6 +601,39 @@ const ENTRIES: SeedEntry[] = [
     criterion: { type: 'CAMPAIGN_CHAPTER_REACHED', threshold: 3 },
     reward: { tokens: 4, dust: 100, xp: 50 },
   },
+  {
+    key: 'chapter_reached_5',
+    name: 'Cristaux',
+    description: 'Atteindre le chapitre 5.',
+    family: 'campaign',
+    tier: 2,
+    hidden: false,
+    sortOrder: 9,
+    criterion: { type: 'CAMPAIGN_CHAPTER_REACHED', threshold: 5 },
+    reward: { tokens: 6, dust: 150, xp: 80 },
+  },
+  {
+    key: 'chapter_reached_7',
+    name: 'Toundra',
+    description: 'Atteindre le chapitre 7.',
+    family: 'campaign',
+    tier: 3,
+    hidden: false,
+    sortOrder: 10,
+    criterion: { type: 'CAMPAIGN_CHAPTER_REACHED', threshold: 7 },
+    reward: { tokens: 12, dust: 300, xp: 0, cardRarity: 'RARE' },
+  },
+  {
+    key: 'chapter_reached_9',
+    name: 'Au bout de la Faille',
+    description: 'Atteindre le chapitre 9.',
+    family: 'campaign',
+    tier: 4,
+    hidden: false,
+    sortOrder: 11,
+    criterion: { type: 'CAMPAIGN_CHAPTER_REACHED', threshold: 9 },
+    reward: { tokens: 25, dust: 600, xp: 0, cardRarity: 'EPIC' },
+  },
 
   // mastery
   {
@@ -651,7 +684,7 @@ const ENTRIES: SeedEntry[] = [
     key: 'cards_max_level_1',
     name: 'Apogée',
     description:
-      'Monter un personnage au niveau maximum (palier 6, niveau 60).',
+      'Monter un personnage au niveau maximum (palier 7, niveau 70).',
     family: 'mastery',
     tier: 2,
     hidden: false,

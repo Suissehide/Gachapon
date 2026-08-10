@@ -1,5 +1,5 @@
 // changelog-sync: dernier commit intégré au changelog. Mis à jour par la commande /changelog.
-// last-synced-commit: e9859d1c57297034f8fea96f231e8d44d2a8710e
+// last-synced-commit: a6c30d3d145fa5ee64a05f68ca33e06d4aab95fc
 import { createFileRoute } from '@tanstack/react-router'
 import { Helmet } from 'react-helmet-async'
 
@@ -37,6 +37,31 @@ const TYPE_META: Record<ChangeType, { label: string; className: string }> = {
 }
 
 const RELEASES: ChangelogRelease[] = [
+  {
+    version: '1.7',
+    title: 'Neuf chapitres et palier 7',
+    date: 'Août 2026',
+    summary:
+      'La campagne s’étend jusqu’au chapitre 9, tes cartes montent un palier de plus, et les boss reprennent leur rôle de vrai test de fin de chapitre.',
+    entries: [
+      {
+        type: 'new',
+        text: 'Quatre nouveaux chapitres : Volcan, Toundra, Abysses et Faille. La campagne compte désormais 9 chapitres et 90 étages.',
+      },
+      {
+        type: 'new',
+        text: 'Palier d’ascension 7 débloqué : tes cartes peuvent grimper jusqu’au niveau 70.',
+      },
+      {
+        type: 'improved',
+        text: 'Difficulté revue en profondeur : la montée en puissance des ennemis est désormais continue d’un bout à l’autre de la campagne, et le boss redevient le vrai pic de chaque chapitre — le vrai check de ta build.',
+      },
+      {
+        type: 'new',
+        text: 'De nouveaux succès marquent les jalons des chapitres 5, 7 et 9, alignés sur le plafond de niveau 70.',
+      },
+    ],
+  },
   {
     version: '1.6',
     title: 'Éléments & tirage',

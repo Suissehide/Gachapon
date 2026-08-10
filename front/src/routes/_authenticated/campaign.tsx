@@ -78,6 +78,8 @@ const CHAPTER_META: { title: string; hue: number }[] = [
   { title: 'Cristaux', hue: 280 },
   { title: 'Volcan', hue: 12 },
   { title: 'Toundra', hue: 195 },
+  { title: 'Abysses', hue: 235 },
+  { title: 'Faille', hue: 355 },
 ]
 
 function chapterMeta(n: number): { title: string; hue: number } {

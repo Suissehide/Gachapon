@@ -1,10 +1,11 @@
 import Boom from '@hapi/boom'
 
 import type { IocContainer } from '../../types/application/ioc'
-import { isAtTopOfPalier } from '../card-leveling/card-leveling.domain'
+import {
+  isAtTopOfPalier,
+  MAX_PALIER,
+} from '../card-leveling/card-leveling.domain'
 import { retryOnSerialization } from '../shared/retry-serialization'
-
-export const MAX_PALIER = 6
 
 export class CardAscensionTx {
   readonly #postgresOrm

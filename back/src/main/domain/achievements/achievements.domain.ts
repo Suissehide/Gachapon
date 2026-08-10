@@ -4,8 +4,10 @@ import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
 import type { IQuestsDomain } from '../../types/domain/quests/quests.domain.interface'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
-import { MAX_PALIER } from '../card-ascension/card-ascension.tx'
-import { maxLevelInPalier } from '../card-leveling/card-leveling.domain'
+import {
+  MAX_PALIER,
+  maxLevelInPalier,
+} from '../card-leveling/card-leveling.domain'
 import type {
   AchievementsDomainInterface,
   AchievementWithProgress,

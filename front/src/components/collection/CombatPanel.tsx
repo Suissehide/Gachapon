@@ -35,8 +35,6 @@ import {
 } from '../../utils/cardStats'
 import { Button } from '../ui/button'
 
-const MAX_PALIER = 6
-
 type Props = {
   userCardId: string
   card: Card
@@ -66,7 +64,7 @@ export function CombatPanel({
 
   const palierMax = maxLevelInPalier(palier)
   const atTop = isAtTopOfPalier(level, palier)
-  const atMaxPalier = palier >= MAX_PALIER
+  const atMaxPalier = palier >= economy.card.maxPalier
   const goldCost = atTop
     ? 0
     : goldCostNextLevel(level, card.rarity, economy.card)

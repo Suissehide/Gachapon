@@ -1,18 +1,19 @@
 import type { PrismaClient } from '../../src/generated/client'
+import { MAX_PALIER } from '../../src/main/domain/card-leveling/card-leveling.domain'
 import type { Element } from '../../src/main/domain/combat/element'
 
-const CHAPTER_COUNT = 5
+const CHAPTER_COUNT = 9
 const STAGES_PER_CHAPTER = 10
 
 // Courbe de difficulté CONTINUE et CONCAVE sur le n° de stage global
-// n = (chapitre-1)×10 + index (1..50) : mult(n) = (1 + 0.08·(n-1))^2.5.
+// n = (chapitre-1)×10 + index (1..90) : mult(n) = (1 + 0.08·(n-1))^2.5.
 // Utilisée UNIQUEMENT pour le BUTIN (loot) — plus pour les stats ennemies.
 const CURVE_A = 0.08
 const CURVE_B = 2.5
 
-// Progression joueur attendue par chapitre : l'ennemi s'y aligne (base de rareté
-// + niveau + palier) pour que ses stats ET sa vitesse scalent comme le joueur
-// sous l'ATB. Valeurs = médianes du roster (prisma/seed/cards.ts).
+// Progression joueur attendue par chapitre : l'ennemi s'y aligne (base de
+// rareté + enemyScale) pour que ses stats ET sa vitesse scalent comme le
+// joueur sous l'ATB. Valeurs = médianes du roster (prisma/seed/cards.ts).
 const RARITY_BASE = {
   COMMON: { hp: 105, atk: 10, def: 5, spd: 92 },
   UNCOMMON: { hp: 137, atk: 15, def: 7, spd: 99 },
@@ -26,38 +27,67 @@ const RARITY_BY_CHAPTER = [
   'RARE',
   'EPIC',
   'LEGENDARY',
+  'LEGENDARY',
+  'LEGENDARY',
+  'LEGENDARY',
+  'LEGENDARY',
 ] as const
 
-// Ennemi normal = base joueur × NORMAL_FACTOR. Recalé le 2026-08-06 avec
-// l'activation des éléments et du ciblage prioritaire (les deux camps focus
-// désormais la cible qu'ils battent) : sim à 67 % de win moyen, 47/50 stages
-// en bande 45-90 %. IMPORTANT : la sim (balance-sim.ts) attribue les éléments
-// du joueur de façon cyclique déterministe, SANS regarder ceux des ennemis —
-// c'est donc une mesure en régime « joueur qui ne contre-pick pas ». Un joueur
-// qui contre-pick ses éléments obtient un win rate nettement supérieur.
-// ATTENTION : quasi-miroir. Mesuré le 2026-08-06 sous ce régime (éléments actifs
-// + ciblage prioritaire des deux côtés) : ±0.01 fait bouger le win rate
-// d'environ 4 pts (0.99→59 %, 0.981→63 %, 0.976→65 %, 0.971→67 %), pas ~10 pts
-// comme sous l'ancien régime ciblage aléatoire/éléments inactifs — les
-// affinités élémentaires absorbent une partie de l'écart de stats et
-// aplatissent la sensibilité. Réévaluer cette pente si le régime rechange.
+// Ennemi normal = base joueur × NORMAL_FACTOR. Conservé à 0.971 lors de la
+// refonte du 2026-08-07 : la courbe lissée durcit la campagne d'environ 17 %
+// au stage 5-10, et cette hausse est VOULUE. La sim mesure un régime
+// doublement pessimiste (elle attribue les éléments du joueur sans regarder
+// ceux des ennemis, donc « joueur qui ne contre-pick pas », et tourne PAR
+// DÉFAUT sans équipement — profil `none` (`SIM_GEAR=epic|legendary` active
+// les régimes équipés côté joueur) — alors que le contre-pick vaut ×1.3 en
+// dégâts et que les ennemis, eux, n'en portent jamais.
 const NORMAL_FACTOR = 0.971
 const BOSS_FACTOR = 0.92 // boss (avant ×PV et AOE)
-const ENEMY_STAT_GROWTH_PER_LEVEL = 0.06
-const ENEMY_ASCENSION_BONUS = 0.15
 
-function enemyLevelMult(level: number): number {
-  return 1 + ENEMY_STAT_GROWTH_PER_LEVEL * (level - 1)
-}
-function enemyPalierMult(palier: number): number {
-  return (1 + ENEMY_ASCENSION_BONUS) ** (palier - 1)
+// --- Courbe de difficulté : continue, en deux phases -----------------------
+//
+// Phase 1 (étages 1-70) — le joueur progresse par le NIVEAU.
+//   L'ascension ennemie est continue sur l'étage global (plus de marche aux
+//   frontières de chapitre) et avance un peu plus vite que celle du joueur :
+//   0.105/étage contre 0.10, soit un palier tous les 9.5 étages au lieu de 10.
+//   Comme le joueur ascensionne EN BLOC au changement de chapitre, l'écart
+//   repart près de zéro à chaque chapitre puis monte jusqu'au boss — qui est
+//   donc le point haut de son chapitre, par construction.
+//
+// Phase 2 (étages 71-90) — le joueur est au plafond, il progresse par
+//   l'ÉQUIPEMENT. L'ascension ennemie est figée (elle sature à l'étage
+//   10 × MAX_PALIER) et le gain de niveau est divisé par deux : l'amplitude
+//   d'un chapitre tombe de ~14 à ~6 points.
+const ENEMY_STAT_GROWTH_PER_LEVEL = 0.06
+const ENEMY_GROWTH_LATE = 0.03
+const ENEMY_ASCENSION_BONUS = 0.15
+const ENEMY_ASCENSION_PER_STAGE = 0.105
+const PLAYER_CAP_STAGE = 10 * MAX_PALIER // 70
+
+/** Multiplicateur de stats ennemies à un étage global (1..90). */
+export function enemyScale(globalStageNumber: number): number {
+  const capped = Math.min(globalStageNumber, PLAYER_CAP_STAGE)
+  const overflow = Math.max(0, globalStageNumber - PLAYER_CAP_STAGE)
+  const level =
+    1 +
+    ENEMY_STAT_GROWTH_PER_LEVEL * (capped - 1) +
+    ENEMY_GROWTH_LATE * overflow
+  const ascension =
+    (1 + ENEMY_ASCENSION_BONUS) ** (ENEMY_ASCENSION_PER_STAGE * (capped - 1))
+  return level * ascension
 }
 
 // Boss = check de build : PV ×3.25 + AOE_3 (frappe toute l'équipe, threat ×7
 // dans la jauge affichée). L'atk n'est PAS gonflée (×1.0) : l'AOE sur un solo
-// est déjà brutal. Calibré par simulation sous la courbe lissée : seuil de
-// victoire ≈ stage 9 +2 à +5 niveaux selon le chapitre (×3.75 créait un mur
-// de +15 niveaux au boss final, ×2.75 ne dépassait plus le stage 9).
+// est déjà brutal. Mesuré le 2026-08-07 avec la courbe continue : le boss
+// est désormais le point haut de son chapitre par construction. En phase 1
+// (chapitres 1 à 7, joueur qui progresse par le niveau) l'écart de stats va
+// de +10,8 % à +15,6 % selon le chapitre, contre -2,9 % sous l'ancienne
+// courbe plate ; en phase 2 (joueur plafonné, chapitres 8-9) il grimpe
+// jusqu'à +29,0 % au boss 9-10, le ×3.25 s'empilant donc sur un écart déjà
+// défavorable et croissant. Conservé tel quel : la mesure donne 70 % de
+// victoire sur les 9 boss en régime de référence (équipement partiel epic,
+// joueur qui contre-pick).
 const BOSS_HP_MULT = 3.25
 
 // Le butin scale comme mult^exp avec exp < 1 : la difficulté croît plus vite
@@ -112,9 +142,10 @@ const FAMILIES: Record<string, MonsterFamily> = {
 // Élément par famille de bestiaire. Une famille = un élément fixe : le joueur
 // apprend « les loups sont NATURE » et c'est vrai partout. Comme chaque étage
 // tire ses 3 slots dans 3 familles différentes (voir STAGE_LOOKS), les étages
-// des chapitres 1-4 présentent naturellement 3 éléments distincts. Exception :
-// le chapitre 5 (CHAPTER_FAMILIES) n'a que 2 familles (krakens, wyvernes),
-// donc ses étages ne présentent que 2 éléments distincts sur 3 slots.
+// des chapitres 1-4 et 6-9 présentent naturellement 3 éléments distincts.
+// Exception : le chapitre 5 (CHAPTER_FAMILIES) n'a que 2 familles (krakens,
+// wyvernes), donc ses étages ne présentent que 2 éléments distincts sur 3
+// slots.
 // Clé = fam.slug (le dossier MinIO), pas la clé française de FAMILIES : c'est
 // le slug qui apparaît dans `appearance` et sert de source commune sprite/élément.
 export const FAMILY_ELEMENTS: Record<string, Element> = {
@@ -143,6 +174,10 @@ export const BOSS_ELEMENT_BY_CHAPTER: readonly Element[] = [
   'LIGHT',
   'DARK',
   'EARTH',
+  'LIGHT', // ch.6 mobs : FIRE · EARTH · DARK
+  'DARK', // ch.7 mobs : WATER · FIRE · LIGHT
+  'NATURE', // ch.8 mobs : WATER · FIRE · DARK
+  'FIRE', // ch.9 mobs : EARTH · DARK · WATER
 ]
 
 // Familles peuplant chaque chapitre (difficulté croissante), étages 1-9.
@@ -152,6 +187,10 @@ const CHAPTER_FAMILIES: string[][] = [
   ['mimics', 'spectres', 'elementaires'],
   ['minotaures', 'basilics', 'hydres'],
   ['krakens', 'wyvernes'],
+  ['wyvernes', 'basilics', 'spectres'], // FIRE · EARTH · DARK
+  ['krakens', 'minotaures', 'feuxfollets'], // WATER · FIRE · LIGHT
+  ['hydres', 'elementaires', 'gnolls'], // WATER · FIRE · DARK
+  ['basilics', 'spectres', 'krakens'], // EARTH · DARK · WATER
 ]
 
 // Boss (étage 10 de chaque chapitre) : cards/monsters/bosses/BOSS-001..019.
@@ -204,9 +243,7 @@ function looksForStage(chapter: number, stageIndex: number): StageLook[] {
 
 export function enemyPower(chapter: number, stageIndex: number) {
   const rb = RARITY_BASE[RARITY_BY_CHAPTER[chapter - 1]]
-  const level = globalStage(chapter, stageIndex) // expected player level 1..50
-  const palier = chapter
-  const scale = enemyLevelMult(level) * enemyPalierMult(palier)
+  const scale = enemyScale(globalStage(chapter, stageIndex))
   return {
     baseHp: Math.round(rb.hp * NORMAL_FACTOR * scale),
     baseAtk: Math.round(rb.atk * NORMAL_FACTOR * scale),
@@ -239,9 +276,7 @@ export function normalEnemyTeam(chapter: number, stageIndex: number) {
 export function bossEnemyTeam(chapter: number, stageIndex: number) {
   const rb = RARITY_BASE[RARITY_BY_CHAPTER[chapter - 1]]
   const looks = looksForStage(chapter, stageIndex)
-  const level = globalStage(chapter, stageIndex)
-  const palier = chapter
-  const scale = enemyLevelMult(level) * enemyPalierMult(palier)
+  const scale = enemyScale(globalStage(chapter, stageIndex))
   return [
     {
       baseHp: Math.round(rb.hp * BOSS_HP_MULT * BOSS_FACTOR * scale),
@@ -298,9 +333,10 @@ export function lootTableNormal(chapter: number, stageIndex: number) {
   }
 }
 
-// Carte garantie des boss : RARE pour les chapitres 1-3, EPIC pour les 4-5.
-// 5 boss pour seulement 4 cartes EPIC/LEGENDARY au total : en EPIC partout,
-// la campagne offrait quasiment tout le haut de la collection (spec §7).
+// Carte garantie des boss : RARE pour les chapitres 1-3, EPIC pour les 4-8,
+// LEGENDARY pour le boss 9-10 qui conclut la campagne. La légendaire terminale
+// est une récompense one-shot après 90 étages, à mettre en regard du taux de
+// tirage de 0,20 %.
 export function bossLoot(chapter: number) {
   const m = 1.5 ** (chapter - 1)
   const atBossStage = lootTableNormal(chapter, STAGES_PER_CHAPTER)
@@ -311,7 +347,9 @@ export function bossLoot(chapter: number) {
       dust: Math.round(1000 * m),
       xp: Math.round(200 * m),
       guaranteedEquipment: { minRarity: 'RARE' },
-      guaranteedCard: { minRarity: chapter <= 3 ? 'RARE' : 'EPIC' },
+      guaranteedCard: {
+        minRarity: chapter <= 3 ? 'RARE' : chapter <= 8 ? 'EPIC' : 'LEGENDARY',
+      },
     },
     farm: {
       gold: Math.round(atBossStage.farm.gold * BOSS_FARM_PREMIUM),

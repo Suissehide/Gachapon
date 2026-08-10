@@ -10,6 +10,14 @@ export const RARITY_MULT: Record<CardRarity, number> = {
 
 export const STAT_GROWTH_PER_LEVEL = 0.06
 
+/**
+ * Palier maximum atteignable par une carte. Sert aussi de point de saturation
+ * à la courbe de difficulté de la campagne (`enemyScale` dans
+ * prisma/seed/campaign.ts) : l'ascension ennemie se fige à l'étage
+ * 10 × MAX_PALIER, là où le joueur ne peut plus ascensionner.
+ */
+export const MAX_PALIER = 7
+
 export function maxLevelInPalier(palier: number): number {
   return 10 * palier
 }

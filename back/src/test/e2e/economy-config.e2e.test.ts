@@ -42,7 +42,7 @@ describe('GET /economy/config', () => {
     expect(body.gacha.pityThreshold).toBe(300)
     expect(body.recycle.LEGENDARY).toBe(800)
     expect(body.card.rarityMult.EPIC).toBe(2.3)
-    expect(body.card.maxPalier).toBe(6)
+    expect(body.card.maxPalier).toBe(7)
     expect(body.combat.battleCost).toBe(5)
     expect(body.equip.goldCostBase).toBe(25)
     expect(body.equip.goldCostExp).toBe(1.35)
