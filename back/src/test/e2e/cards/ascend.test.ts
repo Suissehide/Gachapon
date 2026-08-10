@@ -1,5 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
+import {
+  MAX_PALIER,
+  maxLevelInPalier,
+} from '../../../main/domain/card-leveling/card-leveling.domain'
 import { buildTestApp } from '../../helpers/build-test-app'
 
 describe('POST /cards/:userCardId/ascend', () => {
@@ -115,11 +119,15 @@ describe('POST /cards/:userCardId/ascend', () => {
     expect(res.statusCode).toBe(400)
   })
 
-  it('refuses ascending when already at max palier (6)', async () => {
+  it(`refuses ascending when already at max palier (${MAX_PALIER})`, async () => {
     const { postgresOrm } = (app as any).iocContainer
     await postgresOrm.prisma.userCard.update({
       where: { id: userCardId },
-      data: { quantity: 5, level: 60, palier: 6 },
+      data: {
+        quantity: 5,
+        level: maxLevelInPalier(MAX_PALIER),
+        palier: MAX_PALIER,
+      },
     })
 
     const res = await app.inject({
