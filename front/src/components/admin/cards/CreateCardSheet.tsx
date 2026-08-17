@@ -6,9 +6,10 @@ import { RARITY_OPTIONS } from '../../../constants/card.constant'
 import { useAppForm } from '../../../hooks/formConfig'
 import type { AdminCardSet } from '../../../queries/useAdminCards'
 import type { MediaItem } from '../../../queries/useAdminMedia'
+import { ELEMENT_SELECT_OPTIONS } from '../../shared/ElementTag'
 import { Button } from '../../ui/button'
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../../ui/sheet'
 import { SegmentedControl } from '../../ui/segmentedControl'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../../ui/sheet'
 import { MediaPickerModal } from '../media/MediaPickerModal'
 
 const STATS_BY_RARITY: Record<
@@ -24,6 +25,53 @@ const STATS_BY_RARITY: Record<
 
 const DEFAULT_RARITY = 'COMMON'
 const DEFAULT_STATS = STATS_BY_RARITY[DEFAULT_RARITY]
+
+type CardFormValues = {
+  name: string
+  setId: string
+  rarity: string
+  dropWeight?: number
+  baseHp?: number
+  baseAtk?: number
+  baseDef?: number
+  baseSpd?: number
+  passiveKey: string
+  element: string
+  image: File | null
+}
+
+/**
+ * Sérialise le formulaire en FormData. Extrait de `onSubmit` pour garder ce
+ * dernier lisible : les champs optionnels (passif, élément, image) ne sont
+ * envoyés que s'ils sont renseignés, le back distinguant absent de vide.
+ */
+function buildCardFormData(
+  value: CardFormValues,
+  imageMode: 'upload' | 'pick',
+  pickedUrl: string | null,
+): FormData {
+  const fd = new FormData()
+  fd.append('name', value.name)
+  fd.append('setId', value.setId)
+  fd.append('rarity', value.rarity)
+  fd.append('dropWeight', String(value.dropWeight ?? 1))
+  fd.append('baseHp', String(value.baseHp ?? DEFAULT_STATS.baseHp))
+  fd.append('baseAtk', String(value.baseAtk ?? DEFAULT_STATS.baseAtk))
+  fd.append('baseDef', String(value.baseDef ?? DEFAULT_STATS.baseDef))
+  fd.append('baseSpd', String(value.baseSpd ?? DEFAULT_STATS.baseSpd))
+  if (value.passiveKey.trim()) {
+    fd.append('passiveKey', value.passiveKey.trim())
+  }
+  if (value.element) {
+    fd.append('element', value.element)
+  }
+  if (imageMode === 'upload' && value.image) {
+    fd.append('image', value.image)
+  } else if (pickedUrl) {
+    fd.append('imageUrl', pickedUrl)
+  }
+  return fd
+}
 
 interface CreateCardSheetProps {
   open: boolean
@@ -79,7 +127,9 @@ function CreateCardForm({
   const [imageMode, setImageMode] = useState<'upload' | 'pick'>(
     defaultImageUrl ? 'pick' : 'upload',
   )
-  const [pickedUrl, setPickedUrl] = useState<string | null>(defaultImageUrl ?? null)
+  const [pickedUrl, setPickedUrl] = useState<string | null>(
+    defaultImageUrl ?? null,
+  )
   const [pickerOpen, setPickerOpen] = useState(false)
   const userTouchedStatsRef = useRef(false)
 
@@ -96,39 +146,31 @@ function CreateCardForm({
       baseDef: DEFAULT_STATS.baseDef as number | undefined,
       baseSpd: DEFAULT_STATS.baseSpd as number | undefined,
       passiveKey: '',
+      element: '',
       image: null as File | null,
     },
     onSubmit: ({ value }) => {
-      if (imageMode === 'upload' && !value.image) return
-      if (imageMode === 'pick' && !pickedUrl) return
+      if (imageMode === 'upload' && !value.image) {
+        return
+      }
+      if (imageMode === 'pick' && !pickedUrl) {
+        return
+      }
 
-      const fd = new FormData()
-      fd.append('name', value.name)
-      fd.append('setId', value.setId)
-      fd.append('rarity', value.rarity)
-      fd.append('dropWeight', String(value.dropWeight ?? 1))
-      fd.append('baseHp', String(value.baseHp ?? DEFAULT_STATS.baseHp))
-      fd.append('baseAtk', String(value.baseAtk ?? DEFAULT_STATS.baseAtk))
-      fd.append('baseDef', String(value.baseDef ?? DEFAULT_STATS.baseDef))
-      fd.append('baseSpd', String(value.baseSpd ?? DEFAULT_STATS.baseSpd))
-      if (value.passiveKey.trim()) {
-        fd.append('passiveKey', value.passiveKey.trim())
-      }
-      if (imageMode === 'upload' && value.image) {
-        fd.append('image', value.image)
-      } else if (pickedUrl) {
-        fd.append('imageUrl', pickedUrl)
-      }
-      onCreate(fd)
+      onCreate(buildCardFormData(value, imageMode, pickedUrl))
     },
   })
 
   // Watch rarity changes to pre-fill stats — only when user hasn't manually edited them.
   const rarity = useStore(form.store, (s) => s.values.rarity)
   useEffect(() => {
-    if (userTouchedStatsRef.current) return
+    if (userTouchedStatsRef.current) {
+      return
+    }
     const preset = STATS_BY_RARITY[rarity]
-    if (!preset) return
+    if (!preset) {
+      return
+    }
     form.setFieldValue('baseHp', preset.baseHp)
     form.setFieldValue('baseAtk', preset.baseAtk)
     form.setFieldValue('baseDef', preset.baseDef)
@@ -155,6 +197,15 @@ function CreateCardForm({
       </form.AppField>
       <form.AppField name="rarity">
         {(f) => <f.Select label="Rareté" options={RARITY_OPTIONS} />}
+      </form.AppField>
+      <form.AppField name="element">
+        {(f) => (
+          <f.Select
+            label="Élément"
+            options={ELEMENT_SELECT_OPTIONS}
+            placeholder="Aucun"
+          />
+        )}
       </form.AppField>
       <form.AppField name="dropWeight">
         {(f) => <f.Number label="Poids de drop" />}
@@ -184,7 +235,9 @@ function CreateCardForm({
           value={imageMode}
           onChange={(mode) => {
             setImageMode(mode)
-            if (mode === 'upload') setPickedUrl(null)
+            if (mode === 'upload') {
+              setPickedUrl(null)
+            }
           }}
           options={[
             { value: 'upload', label: 'Upload' },
@@ -203,7 +256,7 @@ function CreateCardForm({
               <div className="group relative overflow-hidden rounded-md border border-border">
                 <img
                   src={pickedUrl}
-                  alt="Image sélectionnée"
+                  alt="Aperçu de la carte sélectionnée"
                   className="h-32 w-full object-contain bg-surface"
                 />
                 <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/40">

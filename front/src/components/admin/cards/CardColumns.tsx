@@ -5,6 +5,7 @@ import { useMemo } from 'react'
 import notFoundImg from '../../../assets/data/not-found.png'
 import { RARITY_BADGE_VARIANT } from '../../../libs/rarity.ts'
 import type { AdminCard } from '../../../queries/useAdminCards'
+import { ElementTag } from '../../shared/ElementTag.tsx'
 import { Badge } from '../../ui/badge.tsx'
 import { Button } from '../../ui/button'
 
@@ -49,6 +50,12 @@ export function useCardColumns(
             {row.original.rarity}
           </Badge>
         ),
+      },
+      {
+        accessorKey: 'element',
+        header: 'Élément',
+        size: 110,
+        cell: ({ row }) => <ElementTag element={row.original.element} />,
       },
       {
         accessorKey: 'dropWeight',

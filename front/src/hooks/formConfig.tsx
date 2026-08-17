@@ -30,7 +30,14 @@ interface InputFieldProps extends FieldComponentProps {
 }
 
 interface SelectFieldProps extends FieldComponentProps {
-  options: Array<{ value: string | number; label: string }>
+  options: Array<{
+    value: string | number
+    label: string
+    icon?: React.ReactNode
+  }>
+  /** Affiché quand la valeur est vide — utile pour les champs optionnels. */
+  placeholder?: string
+  clearable?: boolean
 }
 
 interface ToggleFieldProps extends FieldComponentProps {
@@ -104,6 +111,8 @@ function SelectField({
   disabled,
   className,
   options,
+  placeholder,
+  clearable,
 }: SelectFieldProps) {
   const field = useFieldContext<string | number>()
   const value = field.state.value ?? ''
@@ -115,6 +124,8 @@ function SelectField({
         id={field.name}
         options={options}
         value={value.toString()}
+        placeholder={placeholder}
+        clearable={clearable}
         disabled={disabled}
         onValueChange={(value) => field.handleChange(value)}
       />

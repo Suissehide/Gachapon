@@ -10,12 +10,17 @@ import { CreateCardSheet } from '../../components/admin/cards/CreateCardSheet'
 import { EditCardSheet } from '../../components/admin/cards/EditCardSheet'
 import { SetSidebar } from '../../components/admin/cards/SetSidebar'
 import { AdminPageHeader } from '../../components/admin/shared/AdminPageHeader.tsx'
+import { ElementDot } from '../../components/shared/ElementTag'
 import { ReactTable } from '../../components/table/reactTable'
 import { Button } from '../../components/ui/button'
 import DropdownFilter from '../../components/ui/dropdownFilter'
 import { Input } from '../../components/ui/input'
 import { SegmentedControl } from '../../components/ui/segmentedControl'
-import { RARITY_OPTIONS } from '../../constants/card.constant'
+import {
+  ELEMENT_LABELS,
+  ELEMENT_ORDER,
+  RARITY_OPTIONS,
+} from '../../constants/card.constant'
 import {
   type AdminCard,
   useAdminCards,
@@ -30,6 +35,18 @@ export const Route = createFileRoute('/_admin/admin/cards')({
   component: AdminCards,
 })
 
+/** Id du filtre « élément non renseigné » — les cartes ont `element: null`. */
+const NO_ELEMENT = 'NONE'
+
+const ELEMENT_FILTERS = [
+  ...ELEMENT_ORDER.map((el) => ({
+    id: el as string,
+    label: ELEMENT_LABELS[el],
+    icon: <ElementDot element={el} />,
+  })),
+  { id: NO_ELEMENT, label: 'Sans élément' },
+]
+
 function AdminCards() {
   const [view, setView] = useState<'sets' | 'all'>('sets')
   const [selectedSetId, setSelectedSetId] = useState<string | null>(null)
@@ -38,12 +55,14 @@ function AdminCards() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedRarities, setSelectedRarities] = useState<string[]>([])
   const [selectedSetIds, setSelectedSetIds] = useState<string[]>([])
+  const [selectedElements, setSelectedElements] = useState<string[]>([])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset filters when view changes
   useEffect(() => {
     setSearchQuery('')
     setSelectedRarities([])
     setSelectedSetIds([])
+    setSelectedElements([])
   }, [view])
 
   const { data: setsData } = useAdminSets()
@@ -78,32 +97,27 @@ function AdminCards() {
   const columns = useCardColumns(cards, setEditCard, handleDeleteCard)
   const columnsAll = useCardColumnsAll(setEditCard, handleDeleteCard)
 
-  const filteredCards = useMemo(
-    () =>
-      cards.filter((card) => {
-        if (
-          searchQuery &&
-          !card.name.toLowerCase().includes(searchQuery.toLowerCase())
-        ) {
-          return false
-        }
-        if (
-          selectedRarities.length > 0 &&
-          !selectedRarities.includes(card.rarity)
-        ) {
-          return false
-        }
-        if (
-          view === 'all' &&
-          selectedSetIds.length > 0 &&
-          !selectedSetIds.includes(card.set.id)
-        ) {
-          return false
-        }
-        return true
-      }),
-    [cards, searchQuery, selectedRarities, selectedSetIds, view],
-  )
+  const filteredCards = useMemo(() => {
+    const query = searchQuery.toLowerCase()
+    return cards.filter(
+      (card) =>
+        (!query || card.name.toLowerCase().includes(query)) &&
+        (selectedRarities.length === 0 ||
+          selectedRarities.includes(card.rarity)) &&
+        (view !== 'all' ||
+          selectedSetIds.length === 0 ||
+          selectedSetIds.includes(card.set.id)) &&
+        (selectedElements.length === 0 ||
+          selectedElements.includes(card.element ?? NO_ELEMENT)),
+    )
+  }, [
+    cards,
+    searchQuery,
+    selectedRarities,
+    selectedSetIds,
+    selectedElements,
+    view,
+  ])
 
   return (
     <div className="flex h-screen flex-col p-8">
@@ -173,6 +187,19 @@ function AdminCards() {
             )
           }
           onClear={() => setSelectedRarities([])}
+        />
+        <DropdownFilter
+          label="Élément"
+          filters={ELEMENT_FILTERS.map((e) => ({
+            ...e,
+            checked: selectedElements.includes(e.id),
+          }))}
+          onFilterChange={(id, checked) =>
+            setSelectedElements((prev) =>
+              checked ? [...prev, id] : prev.filter((e) => e !== id),
+            )
+          }
+          onClear={() => setSelectedElements([])}
         />
         {view === 'all' && (
           <DropdownFilter

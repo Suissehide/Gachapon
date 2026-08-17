@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { AdminCardsApi } from '../api/admin-cards.api.ts'
+import type { CardElement } from '../constants/card.constant.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
@@ -135,6 +136,7 @@ export function useAdminUpdateCard() {
       baseDef?: number
       baseSpd?: number
       passiveKey?: string | null
+      element?: CardElement | null
     }) => AdminCardsApi.updateCard(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'cards'] }),
     onError: (error) => {

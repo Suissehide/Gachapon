@@ -1,10 +1,12 @@
 import { Images, X } from 'lucide-react'
 import { useState } from 'react'
 
+import type { CardElement } from '../../../constants/card.constant'
 import { RARITY_OPTIONS } from '../../../constants/card.constant'
 import { useAppForm } from '../../../hooks/formConfig'
 import type { AdminCard } from '../../../queries/useAdminCards'
 import type { MediaItem } from '../../../queries/useAdminMedia'
+import { ELEMENT_SELECT_OPTIONS } from '../../shared/ElementTag'
 import { Button } from '../../ui/button'
 import { SegmentedControl } from '../../ui/segmentedControl'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../../ui/sheet'
@@ -19,8 +21,31 @@ export type EditCardPayload = {
   baseDef: number
   baseSpd: number
   passiveKey: string | null
+  element: CardElement | null
   imageUrl?: string | null
   imageFile?: File
+}
+
+/**
+ * Résout les deux champs image du payload. Extrait de `onSubmit` pour garder
+ * ce dernier lisible : `undefined` signifie « ne touche pas à l'image
+ * existante », `null` signifie « supprime-la » — la distinction est portée
+ * jusqu'au back, d'où les ternaires imbriqués qu'on isole ici.
+ */
+function resolveImageFields(opts: {
+  imageRemoved: boolean
+  imageMode: 'upload' | 'pick'
+  pickedImageUrl: string | null
+  file: File | null
+}): Pick<EditCardPayload, 'imageUrl' | 'imageFile'> {
+  const { imageRemoved, imageMode, pickedImageUrl, file } = opts
+  if (imageRemoved) {
+    return { imageUrl: null, imageFile: undefined }
+  }
+  if (imageMode === 'pick') {
+    return { imageUrl: pickedImageUrl ?? undefined, imageFile: undefined }
+  }
+  return { imageUrl: undefined, imageFile: file ?? undefined }
 }
 
 interface EditCardSheetProps {
@@ -81,6 +106,7 @@ function EditCardForm({
       baseDef: item.baseDef as number | undefined,
       baseSpd: item.baseSpd as number | undefined,
       passiveKey: item.passiveKey ?? '',
+      element: (item.element ?? '') as CardElement | '',
       image: null as File | null,
     },
     onSubmit: ({ value }) => {
@@ -94,13 +120,13 @@ function EditCardForm({
         baseDef: value.baseDef ?? item.baseDef,
         baseSpd: value.baseSpd ?? item.baseSpd,
         passiveKey: trimmedPassive === '' ? null : trimmedPassive,
-        imageUrl: imageRemoved
-          ? null
-          : imageMode === 'pick'
-            ? (pickedImageUrl ?? undefined)
-            : undefined,
-        imageFile:
-          !imageRemoved && imageMode === 'upload' ? (value.image ?? undefined) : undefined,
+        element: value.element === '' ? null : value.element,
+        ...resolveImageFields({
+          imageRemoved,
+          imageMode,
+          pickedImageUrl,
+          file: value.image,
+        }),
       })
     },
   })
@@ -120,6 +146,15 @@ function EditCardForm({
       </form.AppField>
       <form.AppField name="rarity">
         {(f) => <f.Select label="Rareté" options={RARITY_OPTIONS} />}
+      </form.AppField>
+      <form.AppField name="element">
+        {(f) => (
+          <f.Select
+            label="Élément"
+            options={ELEMENT_SELECT_OPTIONS}
+            placeholder="Aucun"
+          />
+        )}
       </form.AppField>
       <form.AppField name="dropWeight">
         {(f) => <f.Number label="Poids de drop" />}

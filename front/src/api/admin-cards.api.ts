@@ -1,4 +1,8 @@
-import type { AdminCard, AdminCardSet } from '../constants/card.constant.ts'
+import type {
+  AdminCard,
+  AdminCardSet,
+  CardElement,
+} from '../constants/card.constant.ts'
 import { CARD_ROUTES } from '../constants/card.constant.ts'
 import { apiUrl } from '../constants/config.constant.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
@@ -92,6 +96,7 @@ export const AdminCardsApi = {
       baseDef?: number
       baseSpd?: number
       passiveKey?: string | null
+      element?: CardElement | null
     },
   ): Promise<unknown> => {
     const res = await fetchWithAuth(`${apiUrl}${CARD_ROUTES.admin.card(id)}`, {
