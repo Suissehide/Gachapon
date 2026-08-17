@@ -19,6 +19,18 @@ export const SEO_ROUTES = [
     title: 'Gachapon — Attrape. Collectionne. Échange.',
     description:
       'Gachapon est un jeu de cartes à collectionner en ligne, gratuit et inspiré des capsules japonaises. Tire des capsules, découvre des cartes rares, échange avec ta communauté.',
+    // Only the landing page gets a body pre-rendered: it's the one route whose
+    // rendered content is thin (~600 words vs 2000+ for /guide), and the one
+    // Google reports as "Explorée, actuellement non indexée".
+    //
+    // `heading` and `lead` mirror the hero in src/routes/index.tsx. They're
+    // duplicated on purpose — the JSX splits the heading across a <br> and a
+    // gradient <span>, which can't be expressed as a plain string. Keep in sync.
+    staticBlock: {
+      heading: 'Une nouvelle manière de collectionner.',
+      lead: 'Gachapon transforme le plaisir de collection en une expérience élégante, immersive et profondément sociale. Chaque tirage, mémorable.',
+      faq: true,
+    },
   },
   {
     path: '/about',

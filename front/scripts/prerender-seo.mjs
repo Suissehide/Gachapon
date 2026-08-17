@@ -29,6 +29,7 @@ import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { FAQ_ITEMS } from './faq-items.mjs'
 import { SEO_ROUTES, SITE_ORIGIN } from './seo-routes.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -51,6 +52,39 @@ function escapeHtml(s) {
     .replace(/"/g, '&quot;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
+}
+
+const ROOT_DIV = '<div id="root"></div>'
+const STATIC_BLOCK_RE = /<div id="seo-static"[\s\S]*?<\/div><!--\/seo-static-->/
+
+/**
+ * Body content a crawler can read without executing any JS.
+ *
+ * It is emitted as a *sibling* of #root, never inside it: `src/main.tsx` only
+ * mounts the app when #root is empty, so content placed inside would silently
+ * prevent the app from ever booting. `main.tsx` removes this node as soon as
+ * React mounts.
+ *
+ * It is deliberately NOT `hidden`: Google discounts hidden text, which would
+ * defeat the point. The trade-off is a brief flash of unstyled content before
+ * the JS boots, so the markup carries inline styles to stay presentable.
+ */
+function renderStaticBlock(block) {
+  const faq = block.faq
+    ? FAQ_ITEMS.map(
+        (item) =>
+          `<h2 style="font-size:1.05rem;margin:1.5rem 0 .35rem">${escapeHtml(item.q)}</h2>` +
+          `<p style="margin:0;opacity:.75">${escapeHtml(item.a)}</p>`,
+      ).join('')
+    : ''
+
+  return (
+    '<div id="seo-static" style="max-width:44rem;margin:0 auto;padding:4rem 1.5rem;line-height:1.6">' +
+    `<h1 style="font-size:2rem;margin:0 0 1rem">${escapeHtml(block.heading)}</h1>` +
+    `<p style="margin:0 0 2rem;opacity:.8">${escapeHtml(block.lead)}</p>` +
+    faq +
+    '</div><!--/seo-static-->'
+  )
 }
 
 function patchHtml(template, route) {
@@ -105,6 +139,13 @@ function patchHtml(template, route) {
     /<meta\s+name="twitter:description"[^>]*>/,
     `<meta name="twitter:description" content="${desc}" />`,
   )
+
+  // Body content readable without JS. Strip any previous block first so
+  // re-running the script on an already-patched HTML stays idempotent.
+  html = html.replace(STATIC_BLOCK_RE, '')
+  if (route.staticBlock) {
+    html = html.replace(ROOT_DIV, renderStaticBlock(route.staticBlock) + ROOT_DIV)
+  }
 
   return html
 }

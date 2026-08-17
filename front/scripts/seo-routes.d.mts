@@ -6,6 +6,13 @@ export type SeoRoute = {
   path: string
   title: string
   description: string
+  /** When set, the route's HTML ships real body content readable without JS. */
+  staticBlock?: {
+    heading: string
+    lead: string
+    /** Append the shared FAQ_ITEMS as <h2>/<p> pairs. */
+    faq?: boolean
+  }
 }
 
 export declare const SEO_ROUTES: SeoRoute[]
