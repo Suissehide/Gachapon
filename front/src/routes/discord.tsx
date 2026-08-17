@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState } from 'react'
-import { Helmet } from 'react-helmet-async'
 
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
+import { SeoHead } from '../components/shared/SeoHead.tsx'
 import { apiUrl } from '../constants/config.constant'
 import { cn } from '../libs/utils'
 
@@ -107,20 +107,7 @@ function DiscordIntegrationPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Helmet>
-        <title>Bot Discord — Gachapon</title>
-        <meta
-          name="description"
-          content="Connecte ton serveur Discord à Gachapon via l'API publique. Tire des capsules, consulte ta collection et suis le classement sans quitter Discord."
-        />
-        <link rel="canonical" href="https://gachapon.qwetle.fr/discord" />
-        <meta property="og:title" content="Bot Discord — Gachapon" />
-        <meta
-          property="og:description"
-          content="Connecte ton serveur Discord à Gachapon via l'API publique. Tire des capsules et consulte ta collection sans quitter Discord."
-        />
-        <meta property="og:url" content="https://gachapon.qwetle.fr/discord" />
-      </Helmet>
+      <SeoHead path="/discord" />
       <LandingNavbar />
 
       <div className="pt-32 pb-24 px-6 lg:px-10 max-w-4xl mx-auto">

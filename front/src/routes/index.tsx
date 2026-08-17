@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { ChevronDown, Package, Sparkles, User, Users } from 'lucide-react'
 import type { CSSProperties } from 'react'
-import { Helmet } from 'react-helmet-async'
 
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
+import { SeoHead } from '../components/shared/SeoHead.tsx'
 import { Button } from '../components/ui/button.tsx'
 import { Card } from '../components/ui/card.tsx'
 import { useAuthDialogStore } from '../stores/authDialog.store'
@@ -201,23 +201,7 @@ function LandingPage() {
 
   return (
     <div className="relative flex flex-col min-h-screen bg-background text-foreground overflow-x-hidden">
-      <Helmet>
-        <title>Gachapon — Attrape. Collectionne. Échange.</title>
-        <meta
-          name="description"
-          content="Gachapon transforme le plaisir de collection en une expérience élégante, immersive et sociale. Tire des capsules, découvre des cartes rares et construis ta collection."
-        />
-        <link rel="canonical" href="https://gachapon.qwetle.fr/" />
-        <meta
-          property="og:title"
-          content="Gachapon — Attrape. Collectionne. Échange."
-        />
-        <meta
-          property="og:description"
-          content="Gachapon transforme le plaisir de collection en une expérience élégante, immersive et sociale. Tire des capsules, découvre des cartes rares et construis ta collection."
-        />
-        <meta property="og:url" content="https://gachapon.qwetle.fr/" />
-      </Helmet>
+      <SeoHead path="/" />
       {/* Dot grid */}
       <div
         className="pointer-events-none fixed inset-0 -z-10"
@@ -643,6 +627,7 @@ function LandingPage() {
           {/* Structured FAQ — duplicate cue for Google */}
           <script
             type="application/ld+json"
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: seule façon d'émettre du JSON-LD ; JSON.stringify d'une constante du module, aucune donnée utilisateur
             dangerouslySetInnerHTML={{
               __html: JSON.stringify({
                 '@context': 'https://schema.org',

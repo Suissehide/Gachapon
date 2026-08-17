@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { Helmet } from 'react-helmet-async'
 
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
+import { SeoHead } from '../components/shared/SeoHead.tsx'
 
 export const Route = createFileRoute('/about')({
   component: AboutPage,
@@ -10,20 +10,7 @@ export const Route = createFileRoute('/about')({
 function AboutPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Helmet>
-        <title>À propos — Gachapon</title>
-        <meta
-          name="description"
-          content="Découvrez Gachapon, un jeu de cartes à collectionner en ligne inspiré des distributeurs automatiques de capsules japonaises. Tirage, rareté, équipes et API publique."
-        />
-        <link rel="canonical" href="https://gachapon.qwetle.fr/about" />
-        <meta property="og:title" content="À propos — Gachapon" />
-        <meta
-          property="og:description"
-          content="Découvrez Gachapon, un jeu de cartes à collectionner en ligne inspiré des distributeurs automatiques de capsules japonaises."
-        />
-        <meta property="og:url" content="https://gachapon.qwetle.fr/about" />
-      </Helmet>
+      <SeoHead path="/about" />
       <LandingNavbar />
 
       <main className="pt-32 pb-24 px-6 lg:px-10 max-w-4xl mx-auto">

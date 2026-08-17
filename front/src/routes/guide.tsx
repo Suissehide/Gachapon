@@ -24,9 +24,9 @@ import {
   Zap,
 } from 'lucide-react'
 import type { ComponentType, ReactNode } from 'react'
-import { Helmet } from 'react-helmet-async'
 
 import { LandingNavbar } from '../components/custom/LandingNavbar'
+import { SeoHead } from '../components/shared/SeoHead.tsx'
 import { useAuthDialogStore } from '../stores/authDialog.store'
 
 export const Route = createFileRoute('/guide')({
@@ -146,20 +146,7 @@ function GuidePage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Helmet>
-        <title>Guide du joueur — Gachapon</title>
-        <meta
-          name="description"
-          content="Tout ce qu'il faut savoir sur Gachapon : jetons, tirages, raretés, pitié, poussière, boutique du jour, arbre de compétences, campagne & combats, amélioration des cartes, quêtes, succès, classements et API."
-        />
-        <link rel="canonical" href="https://gachapon.qwetle.fr/guide" />
-        <meta property="og:title" content="Guide du joueur — Gachapon" />
-        <meta
-          property="og:description"
-          content="Tout ce qu'il faut savoir sur Gachapon : tirages, raretés, poussière, boutique, arbre de compétences, campagne & combats, amélioration des cartes, quêtes et succès."
-        />
-        <meta property="og:url" content="https://gachapon.qwetle.fr/guide" />
-      </Helmet>
+      <SeoHead path="/guide" />
       <LandingNavbar />
 
       <div className="pt-32 pb-24 px-6 lg:px-10 max-w-4xl mx-auto">
