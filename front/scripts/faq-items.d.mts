@@ -1,10 +1,8 @@
-// Types for faq-items.mjs, so `src/` and the build script share one copy of
-// the FAQ instead of each keeping its own.
+// Types de faq-items.mjs.
 
 export type FaqItem = {
-  /** Question. */
   q: string
-  /** Answer, plain text (no markup). */
+  /** Texte brut, sans balises. */
   a: string
 }
 

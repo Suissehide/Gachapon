@@ -1,17 +1,10 @@
-// Source of truth for per-route SEO metadata.
+// Source of truth for per-route SEO metadata, lue par prerender-seo.mjs et par
+// src/components/shared/SeoHead.tsx — d'où le .mjs, lisible sans transpilation.
 //
-// Consumed by TWO sides, which is why it lives in plain .mjs (readable by node
-// without a transpile step, bundlable by Vite):
-//   1. scripts/prerender-seo.mjs — bakes title/description/canonical/og into
-//      `dist/<route>/index.html` at build time, for crawlers that don't run JS.
-//   2. src/components/shared/SeoHead.tsx — re-applies the <title> during
-//      client-side navigation, where no new HTML document is fetched.
+// Une nouvelle route publique et indexable s'ajoute ici ET dans
+// public/sitemap.xml. Pas de route derrière authentification.
 //
-// Add a new entry here whenever you create a new public, indexable route, and
-// add the matching <url> to public/sitemap.xml.
-// Don't add auth-walled routes (they'd be empty/duplicate to Googlebot).
-//
-// `path: '/'` is special-cased — it overwrites the root index.html in place.
+// `path: '/'` est un cas spécial : il écrase dist/index.html sur place.
 
 export const SEO_ROUTES = [
   {
@@ -19,13 +12,10 @@ export const SEO_ROUTES = [
     title: 'Gachapon — Attrape. Collectionne. Échange.',
     description:
       'Gachapon est un jeu de cartes à collectionner en ligne, gratuit et inspiré des capsules japonaises. Tire des capsules, découvre des cartes rares, échange avec ta communauté.',
-    // Only the landing page gets a body pre-rendered: it's the one route whose
-    // rendered content is thin (~600 words vs 2000+ for /guide), and the one
-    // Google reports as "Explorée, actuellement non indexée".
-    //
-    // `heading` and `lead` mirror the hero in src/routes/index.tsx. They're
-    // duplicated on purpose — the JSX splits the heading across a <br> and a
-    // gradient <span>, which can't be expressed as a plain string. Keep in sync.
+    // Seule la home prérend un corps : les autres routes ont déjà du contenu
+    // rendu suffisant. `heading` et `lead` recopient le hero de
+    // src/routes/index.tsx (que son JSX éclate sur un <br> et un <span>) —
+    // à garder synchronisés.
     staticBlock: {
       heading: 'Une nouvelle manière de collectionner.',
       lead: 'Gachapon transforme le plaisir de collection en une expérience élégante, immersive et profondément sociale. Chaque tirage, mémorable.',

@@ -58,16 +58,13 @@ const ROOT_DIV = '<div id="root"></div>'
 const STATIC_BLOCK_RE = /<div id="seo-static"[\s\S]*?<\/div><!--\/seo-static-->/
 
 /**
- * Body content a crawler can read without executing any JS.
+ * Contenu lisible sans exécuter le JS.
  *
- * It is emitted as a *sibling* of #root, never inside it: `src/main.tsx` only
- * mounts the app when #root is empty, so content placed inside would silently
- * prevent the app from ever booting. `main.tsx` removes this node as soon as
- * React mounts.
+ * Émis en frère de #root, jamais dedans : `src/main.tsx` ne monte l'app que si
+ * #root est vide, donc y placer du contenu l'empêcherait de démarrer.
  *
- * It is deliberately NOT `hidden`: Google discounts hidden text, which would
- * defeat the point. The trade-off is a brief flash of unstyled content before
- * the JS boots, so the markup carries inline styles to stay presentable.
+ * Volontairement pas `hidden` — Google dévalue le texte masqué. D'où les
+ * styles inline : le bloc reste visible le temps que le JS démarre.
  */
 function renderStaticBlock(block) {
   const faq = block.faq
@@ -140,8 +137,7 @@ function patchHtml(template, route) {
     `<meta name="twitter:description" content="${desc}" />`,
   )
 
-  // Body content readable without JS. Strip any previous block first so
-  // re-running the script on an already-patched HTML stays idempotent.
+  // Retiré d'abord pour rester idempotent sur un HTML déjà patché.
   html = html.replace(STATIC_BLOCK_RE, '')
   if (route.staticBlock) {
     html = html.replace(ROOT_DIV, renderStaticBlock(route.staticBlock) + ROOT_DIV)

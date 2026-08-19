@@ -1,16 +1,15 @@
-// Types for seo-routes.mjs, so `src/` can import the same table the build
-// script uses instead of keeping a second, drift-prone copy of every string.
+// Types de seo-routes.mjs, pour que src/ importe la table du script de build
+// au lieu d'en garder une seconde copie.
 
 export type SeoRoute = {
-  /** Route path, leading slash, no trailing slash (except the root `/`). */
   path: string
   title: string
   description: string
-  /** When set, the route's HTML ships real body content readable without JS. */
+  /** Présent = la route prérend un corps lisible sans JS. */
   staticBlock?: {
     heading: string
     lead: string
-    /** Append the shared FAQ_ITEMS as <h2>/<p> pairs. */
+    /** Ajoute FAQ_ITEMS en paires <h2>/<p>. */
     faq?: boolean
   }
 }

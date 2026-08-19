@@ -1,12 +1,6 @@
-// FAQ content for the landing page — single source of truth.
-//
-// Lives in plain .mjs so BOTH consumers can read it:
-//   1. src/routes/index.tsx — renders the accordion + the FAQPage JSON-LD.
-//   2. scripts/prerender-seo.mjs — bakes the same Q/A into the static HTML of
-//      `/`, so a crawler that doesn't run JS still gets real content.
-//
-// Keeping one copy matters: if the static HTML and the rendered page disagreed,
-// Google would compare two different pages for the same URL.
+// FAQ de la landing, lue par src/routes/index.tsx (accordéon + JSON-LD) et par
+// prerender-seo.mjs. Une seule copie : si le HTML statique et la page rendue
+// divergeaient, Google comparerait deux pages pour une même URL.
 
 export const FAQ_ITEMS = [
   {

@@ -46,9 +46,8 @@ declare module '@tanstack/react-router' {
 
 const rootElement = document.getElementById('root')
 if (rootElement && !rootElement.innerHTML) {
-  // Crawler-readable content injected by scripts/prerender-seo.mjs, sitting
-  // next to #root (never inside it — the guard above would then never pass).
-  // The app is about to render the same content, so drop it.
+  // Contenu prérendu par scripts/prerender-seo.mjs, posé à côté de #root
+  // (jamais dedans, sinon la garde ci-dessus ne passerait plus).
   document.getElementById('seo-static')?.remove()
 
   const root = ReactDOM.createRoot(rootElement)
