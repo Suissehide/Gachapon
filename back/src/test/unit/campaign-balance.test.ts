@@ -296,3 +296,35 @@ describe('chapitres 6 à 9', () => {
     })
   })
 })
+
+describe('mitigation des ennemis', () => {
+  it('chaque ennemi porte un mitigationScale égal à son enemyScale', () => {
+    for (const [chapitre, etage] of [[1, 1], [5, 5], [9, 9]] as const) {
+      const global = (chapitre - 1) * 10 + etage
+      for (const e of normalEnemyTeam(chapitre, etage)) {
+        expect(e.mitigationScale).toBeCloseTo(enemyScale(global), 6)
+      }
+    }
+  })
+
+  it('les boss aussi', () => {
+    const boss = bossEnemyTeam(9, 10)[0]
+    expect(boss.mitigationScale).toBeCloseTo(enemyScale(90), 6)
+  })
+
+  it('la réduction de dégâts d un ennemi ne dérive pas avec le chapitre', () => {
+    const reduction = (chapitre: number, etage: number) => {
+      const e = normalEnemyTeam(chapitre, etage)[0]
+      const k = 100 * e.mitigationScale
+      return 1 - k / (k + e.baseDef)
+    }
+    // Chapitres 5 et 9 sont tous deux LEGENDARY (RARITY_BY_CHAPTER) : à
+    // rareté égale, la réduction ne doit pas dériver avec l'étage global
+    // malgré la DEF ×15,8 du chapitre 9. NB : chapitre 1 (COMMON) n'est PAS
+    // comparable ici, sa DEF de base (5) n'est pas sur la même échelle que
+    // celle d'un LEGENDARY (29) — ce n'est pas le même monstre, la
+    // différence de réduction entre paliers de rareté est voulue.
+    // Sans correction, le chapitre 9 dérivait jusqu'à 82 % de réduction.
+    expect(reduction(9, 9)).toBeCloseTo(reduction(5, 5), 2)
+  })
+})

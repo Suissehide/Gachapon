@@ -255,6 +255,7 @@ export function enemyPower(chapter: number, stageIndex: number) {
 export function normalEnemyTeam(chapter: number, stageIndex: number) {
   const p = enemyPower(chapter, stageIndex)
   const looks = looksForStage(chapter, stageIndex)
+  const scale = enemyScale(globalStage(chapter, stageIndex))
   return [0, 1, 2].map((slot) => {
     const look = looks[slot]
     if (!look.family) {
@@ -266,6 +267,10 @@ export function normalEnemyTeam(chapter: number, stageIndex: number) {
       ...p,
       level: 1,
       palier: 1,
+      // La puissance de l'ennemi est pré-cuite dans ses stats de base par
+      // enemyPower(), donc son niveau vaut 1 et ne peut pas servir à dériver
+      // sa mitigation. On transporte le facteur d'échelle explicitement.
+      mitigationScale: scale,
       attackPattern: 'BASIC',
       appearance: look.appearance,
       element: FAMILY_ELEMENTS[look.family],
@@ -285,6 +290,9 @@ export function bossEnemyTeam(chapter: number, stageIndex: number) {
       baseSpd: Math.round(rb.spd * scale),
       level: 1,
       palier: 1,
+      // Même raison que normalEnemyTeam : niveau figé à 1, la mitigation
+      // suit le facteur d'échelle plutôt que le niveau.
+      mitigationScale: scale,
       attackPattern: 'AOE_3',
       appearance: looks[0].appearance,
       element: BOSS_ELEMENT_BY_CHAPTER[chapter - 1],

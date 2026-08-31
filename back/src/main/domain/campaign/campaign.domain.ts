@@ -70,6 +70,12 @@ const enemySpecSchema = z.object({
   // Sous-chemin MinIO sans cards/ ni .png, ex. "monsters/slimes/SLIME-001".
   // Purement cosmétique. Absent => placeholder côté front.
   appearance: z.string().nullish(),
+  // Facteur d'échelle de la puissance de l'ennemi, écrit par le seed
+  // (enemyScale). Obligatoire : les ennemis sont seedés à level 1 / palier 1
+  // avec leur puissance pré-cuite dans leurs stats de base, donc un
+  // mitigationRef dérivé du niveau vaudrait toujours 100 pendant que leur DEF
+  // est déjà multipliée par ce facteur — voir mitigationRefFor vs #buildEnemySimUnits.
+  mitigationScale: z.number(),
 })
 const enemyTeamSchema = z.array(enemySpecSchema)
 type EnemySpec = z.infer<typeof enemySpecSchema>
@@ -431,6 +437,7 @@ export class CampaignDomain {
           )
           const enemyUnits = this.#buildEnemySimUnits(
             enemyTeamSchema.parse(stage.enemyTeam),
+            battleCfg['combat.defMitigationRef'],
           )
           const seed = `${userId}:${stageId}:${Date.now()}`
           const sim = simulateBattle({
@@ -1148,7 +1155,10 @@ export class CampaignDomain {
     )
   }
 
-  #buildEnemySimUnits(enemyTeam: EnemySpec[]): SimulatorUnit[] {
+  #buildEnemySimUnits(
+    enemyTeam: EnemySpec[],
+    defMitigationRef: number,
+  ): SimulatorUnit[] {
     return enemyTeam.map((e, idx) => {
       const stats = computeFinalStats({
         baseHp: e.baseHp,
@@ -1171,6 +1181,7 @@ export class CampaignDomain {
         passiveKey: e.passiveKey ?? null,
         element: e.element ?? null,
         palier: e.palier,
+        mitigationRef: defMitigationRef * e.mitigationScale,
       }
     })
   }
