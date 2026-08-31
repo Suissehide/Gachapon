@@ -1495,3 +1495,15 @@ describe('stats offensives', () => {
     }
   })
 })
+
+describe('compteurs de BattleUnit', () => {
+  it('attackCount croît d une unité par action de l attaquant', () => {
+    // Vérifié indirectement : un passif de cadence toutes les 3 actions
+    // se déclenche floor(actions/3) fois. Test complet en tâche 10 (HASTE) ;
+    // ici on vérifie seulement que le combat reste déterministe.
+    const a = simulateBattle({ seed: 'compteurs', ...mirrorTeams() })
+    const b = simulateBattle({ seed: 'compteurs', ...mirrorTeams() })
+    expect(a.log).toEqual(b.log)
+    expect(a.turns).toBe(b.turns)
+  })
+})

@@ -217,6 +217,12 @@ interface BattleUnit {
   gauge: number
   /** Élément (string libre) ; null = neutre. */
   element: string | null
+  /** Nombre d'actions déjà jouées par cette unité. Support des passifs de cadence. */
+  attackCount: number
+  /** Nombre de coups encaissés. Support des empilements défensifs. */
+  hitsTaken: number
+  /** Charges d'empilement par clé de passif. */
+  stacks: Record<string, number>
 }
 
 function toBattleUnit(u: SimulatorUnit, side: Side): BattleUnit {
@@ -278,6 +284,9 @@ function toBattleUnit(u: SimulatorUnit, side: Side): BattleUnit {
     dots: [],
     gauge: 0,
     element: u.element ?? null,
+    attackCount: 0,
+    hitsTaken: 0,
+    stacks: {},
   }
 }
 
@@ -515,6 +524,9 @@ function resolveAttackOnTarget(
       return { id: target.id, raw: 0, final: 0, dodged: true, crit: false }
     }
   }
+
+  // Coup non esquivé : la cible l'encaisse. Support des empilements défensifs.
+  target.hitsTaken += 1
 
   // armorPen (attaquant) — remplace l'ancien cas particulier du passif PIERCE.
   const effectiveDef = target.def * (1 - Math.min(100, attacker.armorPen) / 100)
@@ -1047,6 +1059,9 @@ function runActorTurn(
   applyDotsToUnit(actor, log)
   if (actor.alive) {
     performUnitAction(actor, units, prng, log, elementMults)
+    // Compteur de cadence : incrémenté après l'action, jamais avant — les
+    // passifs de cadence (tâche 9) se basent sur (attackCount + 1) % N.
+    actor.attackCount += 1
   }
   if (actor.alive) {
     applyRegenToUnit(actor, log)
