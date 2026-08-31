@@ -13,13 +13,13 @@ import {
 
 describe('enemyPower — aligné sur le joueur attendu (rareté + enemyScale)', () => {
   it('stage 1-1 : valeur ancre exacte (scale=1, NORMAL_FACTOR=0.971)', () => {
-    // rb = COMMON {105,10,5,92}, scale = enemyScale(1) = 1
-    // hp: 105×0.971×1 = 101.955 → 102 ; atk: 10×0.971 = 9.71 → 10
-    // def: 5×0.971 = 4.855 → 5 ; spd: 92×1 = 92 (pas de NORMAL_FACTOR)
+    // rb = COMMON {105,13,13,92} (rééquilibrage DEF ×2,5 / ATQ ×1,25), scale = enemyScale(1) = 1
+    // hp: 105×0.971×1 = 101.955 → 102 ; atk: 13×0.971 = 12.623 → 13
+    // def: 13×0.971 = 12.623 → 13 ; spd: 92×1 = 92 (pas de NORMAL_FACTOR)
     expect(enemyPower(1, 1)).toEqual({
       baseHp: 102,
-      baseAtk: 10,
-      baseDef: 5,
+      baseAtk: 13,
+      baseDef: 13,
       baseSpd: 92,
     })
   })
@@ -108,15 +108,15 @@ describe('bossEnemyTeam — solo AOE_3, PV ×BOSS_HP_MULT, vitesse à parité AT
     expect(boss.attackPattern).toBe('AOE_3')
     // Vitesse scaleée — plus de valeur fixe 100
     expect(boss.baseSpd).toBeGreaterThan(100)
-    // Ancre exacte (COMMON, étage global 10 → enemyScale(10) = 1.757439) :
+    // Ancre exacte (COMMON {105,13,13,92} rééquilibré, étage global 10 → enemyScale(10) = 1.757439) :
     // PV = round(105 × 3.25 × 0.92 × 1.757439) = 552,
-    // ATQ = round(10 × 0.92 × 1.757439) = 16,
-    // DEF = round(5 × 1.2 × 0.92 × 1.757439) = 10,
+    // ATQ = round(13 × 0.92 × 1.757439) = 21,
+    // DEF = round(13 × 1.2 × 0.92 × 1.757439) = 25,
     // VIT = round(92 × 1.757439) = 162.
     expect(boss).toMatchObject({
       baseHp: 552,
-      baseAtk: 16,
-      baseDef: 10,
+      baseAtk: 21,
+      baseDef: 25,
       baseSpd: 162,
       attackPattern: 'AOE_3',
     })

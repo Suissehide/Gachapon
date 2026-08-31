@@ -10,13 +10,15 @@ import {
 } from '../../main/domain/combat/combat-stats.domain'
 
 // Profils médians mesurés sur le classeur de production, rareté Épique.
+// DEF ×2,5 et ATQ ×1,25 (rééquilibrage), arrondis au supérieur à la moitié
+// comme Math.round : PV et VIT inchangés.
 const PROFILS = {
-  Assassin: { baseHp: 254, baseAtk: 44, baseDef: 11, baseSpd: 117 },
-  Mage: { baseHp: 252, baseAtk: 49, baseDef: 12, baseSpd: 98 },
-  Tireur: { baseHp: 282, baseAtk: 42, baseDef: 13, baseSpd: 106 },
-  Combattant: { baseHp: 354, baseAtk: 35, baseDef: 17, baseSpd: 96 },
-  Tank: { baseHp: 408, baseAtk: 25, baseDef: 22, baseSpd: 88 },
-  Soutien: { baseHp: 366, baseAtk: 33, baseDef: 18, baseSpd: 95 },
+  Assassin: { baseHp: 254, baseAtk: 55, baseDef: 28, baseSpd: 117 },
+  Mage: { baseHp: 252, baseAtk: 61, baseDef: 30, baseSpd: 98 },
+  Tireur: { baseHp: 282, baseAtk: 53, baseDef: 33, baseSpd: 106 },
+  Combattant: { baseHp: 354, baseAtk: 44, baseDef: 43, baseSpd: 96 },
+  Tank: { baseHp: 408, baseAtk: 31, baseDef: 55, baseSpd: 88 },
+  Soutien: { baseHp: 366, baseAtk: 41, baseDef: 45, baseSpd: 95 },
 } as const
 
 const NIVEAU = 70

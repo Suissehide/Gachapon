@@ -15,11 +15,11 @@ const CURVE_B = 2.5
 // rareté + enemyScale) pour que ses stats ET sa vitesse scalent comme le
 // joueur sous l'ATB. Valeurs = médianes du roster (prisma/seed/cards.ts).
 const RARITY_BASE = {
-  COMMON: { hp: 105, atk: 10, def: 5, spd: 92 },
-  UNCOMMON: { hp: 137, atk: 15, def: 7, spd: 99 },
-  RARE: { hp: 195, atk: 21, def: 10, spd: 104 },
-  EPIC: { hp: 331, atk: 35, def: 16, spd: 92 },
-  LEGENDARY: { hp: 591, atk: 53, def: 29, spd: 107 },
+  COMMON: { hp: 105, atk: 13, def: 13, spd: 92 },
+  UNCOMMON: { hp: 137, atk: 19, def: 18, spd: 99 },
+  RARE: { hp: 195, atk: 26, def: 25, spd: 104 },
+  EPIC: { hp: 331, atk: 44, def: 40, spd: 92 },
+  LEGENDARY: { hp: 591, atk: 66, def: 73, spd: 107 },
 } as const
 const RARITY_BY_CHAPTER = [
   'COMMON',
