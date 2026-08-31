@@ -65,7 +65,17 @@ describe('Combat points routes & debit', () => {
         isBoss: false,
         order: 9801,
         enemyTeam: [
-          { baseHp: 1, baseAtk: 1, baseDef: 0, baseSpd: 1, level: 1, palier: 1, attackPattern: 'BASIC' },
+          // mitigationScale: 1 — stats écrites à la main, non mises à l'échelle par enemyScale.
+          {
+            baseHp: 1,
+            baseAtk: 1,
+            baseDef: 0,
+            baseSpd: 1,
+            level: 1,
+            palier: 1,
+            attackPattern: 'BASIC',
+            mitigationScale: 1,
+          },
         ],
         lootTable: {
           firstClear: { gold: 0, dust: 0, xp: 0 },

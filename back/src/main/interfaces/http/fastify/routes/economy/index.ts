@@ -12,11 +12,14 @@ import {
   EQUIP_MAX_SUBSTATS,
   EQUIP_SUBSTAT_MILESTONE,
   INITIAL_SUBSTATS_BY_RARITY,
+  SUBSTAT_RANGE_CONFIG_KEYS,
+  substatRangesFromConfig,
 } from '../../../../../domain/equipment/equipment-progression'
 import {
   MILESTONE_PACKS,
   SKILL_POINTS_PER_LEVEL,
 } from '../../../../../domain/shared/level-rewards'
+import { substatKeyEnum } from '../../schemas/equipment.schema'
 
 const rarityRecordSchema = z.object({
   COMMON: z.number(),
@@ -79,13 +82,11 @@ const economyConfigResponseSchema = z.object({
     maxSubstats: z.number(),
     initialSubstatsByRarity: rarityRecordSchema,
     salvageGold: rarityRecordSchema,
-    substatRanges: z.object({
-      hpFlat: z.object({ min: z.number(), max: z.number() }),
-      atkFlat: z.object({ min: z.number(), max: z.number() }),
-      defFlat: z.object({ min: z.number(), max: z.number() }),
-      spdFlat: z.object({ min: z.number(), max: z.number() }),
-      pct: z.object({ min: z.number(), max: z.number() }),
-    }),
+    // Dérivé de SUBSTAT_KEYS : ajouter une sous-stat n'exige aucune édition ici.
+    substatRanges: z.record(
+      substatKeyEnum,
+      z.object({ min: z.number(), max: z.number() }),
+    ),
   }),
 })
 
@@ -136,16 +137,7 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
         'equip.salvageGoldRare',
         'equip.salvageGoldEpic',
         'equip.salvageGoldLegendary',
-        'equip.substatHpFlatMin',
-        'equip.substatHpFlatMax',
-        'equip.substatAtkFlatMin',
-        'equip.substatAtkFlatMax',
-        'equip.substatDefFlatMin',
-        'equip.substatDefFlatMax',
-        'equip.substatSpdFlatMin',
-        'equip.substatSpdFlatMax',
-        'equip.substatPctMin',
-        'equip.substatPctMax',
+        ...SUBSTAT_RANGE_CONFIG_KEYS,
       )
       return {
         xp: {
@@ -211,28 +203,7 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
             EPIC: c['equip.salvageGoldEpic'],
             LEGENDARY: c['equip.salvageGoldLegendary'],
           },
-          substatRanges: {
-            hpFlat: {
-              min: c['equip.substatHpFlatMin'],
-              max: c['equip.substatHpFlatMax'],
-            },
-            atkFlat: {
-              min: c['equip.substatAtkFlatMin'],
-              max: c['equip.substatAtkFlatMax'],
-            },
-            defFlat: {
-              min: c['equip.substatDefFlatMin'],
-              max: c['equip.substatDefFlatMax'],
-            },
-            spdFlat: {
-              min: c['equip.substatSpdFlatMin'],
-              max: c['equip.substatSpdFlatMax'],
-            },
-            pct: {
-              min: c['equip.substatPctMin'],
-              max: c['equip.substatPctMax'],
-            },
-          },
+          substatRanges: substatRangesFromConfig(c),
         },
       }
     },

@@ -15,6 +15,22 @@ export type MilestonePackConfig = {
   dust: number
 }
 
+// Miroir de SUBSTAT_KEYS (back/src/main/domain/equipment/equipment-progression.ts) :
+// une plage par clé, dérivée côté back — étendre ici en même temps que là-bas.
+export type SubstatRangeKey =
+  | 'hpFlat'
+  | 'hpPct'
+  | 'atkFlat'
+  | 'atkPct'
+  | 'defFlat'
+  | 'defPct'
+  | 'spdFlat'
+  | 'spdPct'
+  | 'critRatePct'
+  | 'critDmgPct'
+  | 'armorPenPct'
+  | 'lifestealPct'
+
 export interface EconomyConfig {
   xp: {
     base: number
@@ -61,13 +77,7 @@ export interface EconomyConfig {
     maxSubstats: number
     initialSubstatsByRarity: Record<CardRarityKey, number>
     salvageGold: Record<CardRarityKey, number>
-    substatRanges: {
-      hpFlat: { min: number; max: number }
-      atkFlat: { min: number; max: number }
-      defFlat: { min: number; max: number }
-      spdFlat: { min: number; max: number }
-      pct: { min: number; max: number }
-    }
+    substatRanges: Record<SubstatRangeKey, { min: number; max: number }>
   }
 }
 

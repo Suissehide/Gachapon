@@ -77,10 +77,17 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
     },
     substatRanges: {
       hpFlat: { min: 20, max: 60 },
+      hpPct: { min: 3, max: 8 },
       atkFlat: { min: 5, max: 15 },
+      atkPct: { min: 3, max: 8 },
       defFlat: { min: 5, max: 15 },
+      defPct: { min: 3, max: 8 },
       spdFlat: { min: 3, max: 9 },
-      pct: { min: 3, max: 8 },
+      spdPct: { min: 3, max: 8 },
+      critRatePct: { min: 2, max: 5 },
+      critDmgPct: { min: 4, max: 10 },
+      armorPenPct: { min: 2, max: 6 },
+      lifestealPct: { min: 1, max: 4 },
     },
   },
 }
