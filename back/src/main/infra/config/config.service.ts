@@ -41,6 +41,12 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // par unité (cf. mitigationRefFor) pour que la réduction de dégâts d'une
   // carte ne dépende plus de son niveau.
   'combat.defMitigationRef': 100,
+  // Valeurs de base des stats de stuff, communes aux alliés ET aux ennemis.
+  // Sans base, critDmg seul ne ferait rien et le set correspondant paraîtrait cassé.
+  'combat.baseCritRate': 5,
+  'combat.baseCritDmg': 150,
+  'combat.baseArmorPen': 0,
+  'combat.baseLifesteal': 0,
   'gacha.pullTokenCost': 1,
   'xp.base': 100,
   'xp.slope': 44,

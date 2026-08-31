@@ -13,6 +13,7 @@ import {
 } from '../combat/battle-simulator.domain'
 import {
   computeFinalStats,
+  type CombatStatsBaseline,
   type EquipmentBonuses,
   mitigationRefFor,
 } from '../combat/combat-stats.domain'
@@ -76,6 +77,13 @@ const enemySpecSchema = z.object({
   // mitigationRef dérivé du niveau vaudrait toujours 100 pendant que leur DEF
   // est déjà multipliée par ce facteur — voir mitigationRefFor vs #buildEnemySimUnits.
   mitigationScale: z.number(),
+  // Stats de stuff : absentes => valeurs de base (GlobalConfig). Point
+  // d'extension pour un seed futur (ex. boss « bourreau » à 40 % de critRate) ;
+  // aucun ennemi ne les surcharge à ce jour.
+  critRate: z.number().optional(),
+  critDmg: z.number().optional(),
+  armorPen: z.number().optional(),
+  lifesteal: z.number().optional(),
 })
 const enemyTeamSchema = z.array(enemySpecSchema)
 type EnemySpec = z.infer<typeof enemySpecSchema>
@@ -363,6 +371,10 @@ export class CampaignDomain {
           'combat.elementAdvantageMult',
           'combat.elementDisadvantageMult',
           'combat.defMitigationRef',
+          'combat.baseCritRate',
+          'combat.baseCritDmg',
+          'combat.baseArmorPen',
+          'combat.baseLifesteal',
           'xp.base',
           'xp.slope',
           'xp.levelCap',
@@ -429,15 +441,23 @@ export class CampaignDomain {
             throw Boom.badRequest('Deploy a combat team first')
           }
 
+          const baseStats: CombatStatsBaseline = {
+            critRate: battleCfg['combat.baseCritRate'],
+            critDmg: battleCfg['combat.baseCritDmg'],
+            armorPen: battleCfg['combat.baseArmorPen'],
+            lifesteal: battleCfg['combat.baseLifesteal'],
+          }
           const teamUnits = await this.#buildPlayerSimUnits(
             tx,
             userId,
             user.combatTeam,
             battleCfg['combat.defMitigationRef'],
+            baseStats,
           )
           const enemyUnits = this.#buildEnemySimUnits(
             enemyTeamSchema.parse(stage.enemyTeam),
             battleCfg['combat.defMitigationRef'],
+            baseStats,
           )
           const seed = `${userId}:${stageId}:${Date.now()}`
           const sim = simulateBattle({
@@ -1085,6 +1105,7 @@ export class CampaignDomain {
     userId: string,
     userCardIds: string[],
     defMitigationRef: number,
+    baseStats: CombatStatsBaseline,
   ): Promise<SimulatorUnit[]> {
     const userCards = await tx.userCard.findMany({
       where: { id: { in: userCardIds }, userId },
@@ -1116,6 +1137,7 @@ export class CampaignDomain {
           palier: u.palier,
           variant: u.variant,
           equipment: equipmentBonuses,
+          baseStats,
         })
         return {
           id: `A${idx}`,
@@ -1158,6 +1180,7 @@ export class CampaignDomain {
   #buildEnemySimUnits(
     enemyTeam: EnemySpec[],
     defMitigationRef: number,
+    baseStats: CombatStatsBaseline,
   ): SimulatorUnit[] {
     return enemyTeam.map((e, idx) => {
       const stats = computeFinalStats({
@@ -1168,6 +1191,14 @@ export class CampaignDomain {
         level: e.level,
         palier: e.palier,
         variant: 'NORMAL',
+        // Le seed peut surcharger une stat de stuff par ennemi (ex. boss
+        // « bourreau » à 40 % de critRate) ; sinon valeur de base commune.
+        baseStats: {
+          critRate: e.critRate ?? baseStats.critRate,
+          critDmg: e.critDmg ?? baseStats.critDmg,
+          armorPen: e.armorPen ?? baseStats.armorPen,
+          lifesteal: e.lifesteal ?? baseStats.lifesteal,
+        },
       })
       return {
         id: `B${idx}`,

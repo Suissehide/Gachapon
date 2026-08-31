@@ -14,6 +14,14 @@ export interface CombatStats {
   atk: number
   def: number
   spd: number
+  /** Chance de coup critique, en points de pourcentage. Capé à 100. */
+  critRate: number
+  /** Multiplicateur de coup critique, en points de pourcentage (150 = x1,5). */
+  critDmg: number
+  /** Part de la DEF de la cible ignorée, en points de pourcentage. */
+  armorPen: number
+  /** Part des dégâts infligés rendue en soin, en points de pourcentage. */
+  lifesteal: number
 }
 
 export interface EquipmentBonuses {
@@ -25,6 +33,20 @@ export interface EquipmentBonuses {
   defPct?: number
   spdFlat?: number
   spdPct?: number
+  // Stats de stuff : additives en points de pourcentage, jamais mises à
+  // l'échelle par la progression de la carte.
+  critRatePct?: number
+  critDmgPct?: number
+  armorPenPct?: number
+  lifestealPct?: number
+}
+
+/** Valeurs de base des quatre stats de stuff, communes alliés/ennemis (GlobalConfig). */
+export interface CombatStatsBaseline {
+  critRate: number
+  critDmg: number
+  armorPen: number
+  lifesteal: number
 }
 
 export interface SkillModifiers {
@@ -50,6 +72,8 @@ export interface CombatStatsInput {
   equipment?: EquipmentBonuses[]
   /** Phase 2 hook — empty object in Phase 1. */
   skillModifiers?: SkillModifiers
+  /** Valeurs de base des stats de stuff (GlobalConfig), non mises à l'échelle. */
+  baseStats: CombatStatsBaseline
 }
 
 function sum(arr: number[]): number {
@@ -124,6 +148,7 @@ export function computeFinalStats(input: CombatStatsInput): CombatStats {
     variant,
     equipment = [],
     skillModifiers = {},
+    baseStats,
   } = input
 
   const variantMult = VARIANT_MULT[variant]
@@ -165,10 +190,20 @@ export function computeFinalStats(input: CombatStatsInput): CombatStats {
     skillModifiers.spdPct ?? 0,
   )
 
+  // Stats de stuff : purement additives en points de pourcentage, jamais
+  // multipliées par le niveau/palier/variante — seul l'équipement les fait
+  // bouger, contrairement à hp/atk/def/spd ci-dessus.
+  const somme = (cle: keyof EquipmentBonuses) =>
+    equipment.reduce((acc, e) => acc + (e[cle] ?? 0), 0)
+
   return {
     hp: Math.round(hp),
     atk: Math.round(atk),
     def: Math.round(def),
     spd: Math.round(spd),
+    critRate: Math.min(100, baseStats.critRate + somme('critRatePct')),
+    critDmg: baseStats.critDmg + somme('critDmgPct'),
+    armorPen: baseStats.armorPen + somme('armorPenPct'),
+    lifesteal: baseStats.lifesteal + somme('lifestealPct'),
   }
 }

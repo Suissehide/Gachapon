@@ -28,9 +28,11 @@ export interface TeamUnit {
 
 export class CombatTeamTx {
   readonly #postgresOrm
+  readonly #configService
 
-  constructor({ postgresOrm }: IocContainer) {
+  constructor({ postgresOrm, configService }: IocContainer) {
     this.#postgresOrm = postgresOrm
+    this.#configService = configService
   }
 
   getTeam(userId: string): Promise<{ team: TeamUnit[] }> {
@@ -99,6 +101,18 @@ export class CombatTeamTx {
         equipment: { include: { equipment: true } },
       },
     })
+    const cfg = await this.#configService.getMany(
+      'combat.baseCritRate',
+      'combat.baseCritDmg',
+      'combat.baseArmorPen',
+      'combat.baseLifesteal',
+    )
+    const baseStats = {
+      critRate: cfg['combat.baseCritRate'],
+      critDmg: cfg['combat.baseCritDmg'],
+      armorPen: cfg['combat.baseArmorPen'],
+      lifesteal: cfg['combat.baseLifesteal'],
+    }
     const byId = new Map(userCards.map((uc) => [uc.id, uc]))
     return userCardIds
       .map((id) => byId.get(id))
@@ -122,6 +136,7 @@ export class CombatTeamTx {
           palier: uc.palier,
           variant: uc.variant,
           equipment: equipmentBonuses,
+          baseStats,
         })
         const passive = getPassive(uc.card.passiveKey)
         return {

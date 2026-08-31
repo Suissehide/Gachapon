@@ -7,6 +7,7 @@ import type {
   TeamEntry,
 } from '../../types/domain/leaderboard/leaderboard.domain.interface'
 import { LEADERBOARD_TOP_N } from '../../types/domain/leaderboard/leaderboard.domain.interface'
+import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
 import type {
   CollectorRankingRowWithLevel,
   ILeaderboardRepository,
@@ -19,10 +20,16 @@ import { computeFinalStats } from '../combat/combat-stats.domain'
 export class LeaderboardDomain implements ILeaderboardDomain {
   readonly #leaderboardRepository: ILeaderboardRepository
   readonly #userRepository: UserRepositoryInterface
+  readonly #configService: ConfigServiceInterface
 
-  constructor({ leaderboardRepository, userRepository }: IocContainer) {
+  constructor({
+    leaderboardRepository,
+    userRepository,
+    configService,
+  }: IocContainer) {
     this.#leaderboardRepository = leaderboardRepository
     this.#userRepository = userRepository
+    this.#configService = configService
   }
 
   async getCollectorsLeaderboard(
@@ -220,12 +227,27 @@ export class LeaderboardDomain implements ILeaderboardDomain {
       return { entries: [], currentUserEntry: null }
     }
 
-    const [progressMap, combatCardsMap, users] = await Promise.all([
-      this.#leaderboardRepository.getCampaignProgressByUsers(candidateIds),
-      this.#leaderboardRepository.getCombatTeamCardsByUsers(candidateIds),
-      this.#userRepository.findManyByIds(candidateIds),
-    ])
+    const [progressMap, combatCardsMap, users, baseStatsCfg] =
+      await Promise.all([
+        this.#leaderboardRepository.getCampaignProgressByUsers(candidateIds),
+        this.#leaderboardRepository.getCombatTeamCardsByUsers(candidateIds),
+        this.#userRepository.findManyByIds(candidateIds),
+        this.#configService.getMany(
+          'combat.baseCritRate',
+          'combat.baseCritDmg',
+          'combat.baseArmorPen',
+          'combat.baseLifesteal',
+        ),
+      ])
     const userMap = new Map(users.map((u) => [u.id, u]))
+    // combatPower ne dépend que de hp/atk/def/spd ; les stats de stuff sont
+    // requises par computeFinalStats mais sans effet ici (câblage : tâche 6).
+    const baseStats = {
+      critRate: baseStatsCfg['combat.baseCritRate'],
+      critDmg: baseStatsCfg['combat.baseCritDmg'],
+      armorPen: baseStatsCfg['combat.baseArmorPen'],
+      lifesteal: baseStatsCfg['combat.baseLifesteal'],
+    }
 
     const scored = candidateIds.map((userId) => {
       const palier = this.#leaderboardRepository.computePalierForProgress(
@@ -242,6 +264,7 @@ export class LeaderboardDomain implements ILeaderboardDomain {
           level: c.level,
           palier: c.palier,
           variant: c.variant,
+          baseStats,
           equipment: c.equipmentBonuses as EquipmentBonuses[],
         })
         return sum + stats.hp + stats.atk + stats.def + stats.spd

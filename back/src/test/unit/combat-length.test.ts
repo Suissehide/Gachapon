@@ -24,10 +24,14 @@ const PROFILS = {
 const NIVEAU = 70
 const PALIER = 7
 
+// Stats de stuff : hors périmètre de ce test de longueur de combat, valeurs
+// de base GlobalConfig sans équipement.
+const BASES_COMBAT = { critRate: 5, critDmg: 150, armorPen: 0, lifesteal: 0 }
+
 function unite(id: string, profil: keyof typeof PROFILS): SimulatorUnit {
   const base = PROFILS[profil]
   const stats = computeFinalStats({
-    ...base, level: NIVEAU, palier: PALIER, variant: 'NORMAL',
+    ...base, level: NIVEAU, palier: PALIER, variant: 'NORMAL', baseStats: BASES_COMBAT,
   })
   return {
     id,
