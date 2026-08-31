@@ -525,9 +525,6 @@ function resolveAttackOnTarget(
     }
   }
 
-  // Coup non esquivé : la cible l'encaisse. Support des empilements défensifs.
-  target.hitsTaken += 1
-
   // armorPen (attaquant) — remplace l'ancien cas particulier du passif PIERCE.
   const effectiveDef = target.def * (1 - Math.min(100, attacker.armorPen) / 100)
 
@@ -574,6 +571,12 @@ function resolveAttackOnTarget(
   }
 
   target.currentHp = Math.max(0, target.currentHp - final)
+
+  // Coup non esquivé encaissé après absorption du bouclier : ne compte que
+  // s'il reste des dégâts réels. Support des empilements défensifs (FORTIFY).
+  if (final > 0) {
+    target.hitsTaken += 1
+  }
 
   // BURN / POISON (attacker) — applique un effet de dégâts sur la durée à la cible.
   if (final > 0) {
