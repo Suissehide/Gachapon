@@ -81,6 +81,18 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'equip.substatSpdFlatMax': 9,
   'equip.substatPctMin': 3,
   'equip.substatPctMax': 8,
+  // Stats de stuff — bornes calibrées pour rester comparables aux substats
+  // existantes (voir §12 point 3 de la spec) : critDmg part plus haut car son
+  // impact par point est plus faible (multiplicateur appliqué seulement sur
+  // les coups critiques, alors que critRate module la fréquence de ce même gain).
+  'equip.substatCritRatePctMin': 2,
+  'equip.substatCritRatePctMax': 5,
+  'equip.substatCritDmgPctMin': 4,
+  'equip.substatCritDmgPctMax': 10,
+  'equip.substatArmorPenPctMin': 2,
+  'equip.substatArmorPenPctMax': 6,
+  'equip.substatLifestealPctMin': 1,
+  'equip.substatLifestealPctMax': 4,
 }
 
 export class ConfigService implements ConfigServiceInterface {

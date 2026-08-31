@@ -64,6 +64,14 @@ export const CONFIG_KEYS = [
   'equip.substatSpdFlatMax',
   'equip.substatPctMin',
   'equip.substatPctMax',
+  'equip.substatCritRatePctMin',
+  'equip.substatCritRatePctMax',
+  'equip.substatCritDmgPctMin',
+  'equip.substatCritDmgPctMax',
+  'equip.substatArmorPenPctMin',
+  'equip.substatArmorPenPctMax',
+  'equip.substatLifestealPctMin',
+  'equip.substatLifestealPctMax',
 ] as const
 
 export type ConfigKey = (typeof CONFIG_KEYS)[number]

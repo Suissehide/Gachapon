@@ -265,16 +265,7 @@ export class EquipmentDomain {
       'card.rarityMultRare',
       'card.rarityMultEpic',
       'card.rarityMultLegendary',
-      'equip.substatHpFlatMin',
-      'equip.substatHpFlatMax',
-      'equip.substatAtkFlatMin',
-      'equip.substatAtkFlatMax',
-      'equip.substatDefFlatMin',
-      'equip.substatDefFlatMax',
-      'equip.substatSpdFlatMin',
-      'equip.substatSpdFlatMax',
-      'equip.substatPctMin',
-      'equip.substatPctMax',
+      ...SUBSTAT_RANGE_CONFIG_KEYS,
     )
     const ranges = substatRangesFromConfig(c)
 

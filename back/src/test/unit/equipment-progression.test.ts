@@ -8,6 +8,8 @@ import {
   rollInitialSubstats,
   rollMilestone,
   scaleBaseBonuses,
+  SUBSTAT_KEYS,
+  SUBSTAT_RANGE_CONFIG_KEYS,
   substatRangesFromConfig,
   type Substat,
   type SubstatRanges,
@@ -23,6 +25,10 @@ const RANGES: SubstatRanges = {
   defPct: { min: 3, max: 8 },
   spdFlat: { min: 3, max: 9 },
   spdPct: { min: 3, max: 8 },
+  critRatePct: { min: 2, max: 5 },
+  critDmgPct: { min: 4, max: 10 },
+  armorPenPct: { min: 2, max: 6 },
+  lifestealPct: { min: 1, max: 4 },
 }
 
 // RNG déterministe : rejoue la séquence donnée.
@@ -172,7 +178,7 @@ describe('equipment-progression: effectiveEquipmentBonuses', () => {
 })
 
 describe('equipment-progression: substatRangesFromConfig', () => {
-  it('construit les ranges depuis les 10 valeurs de config', () => {
+  it('construit les ranges depuis les 18 valeurs de config', () => {
     const ranges = substatRangesFromConfig({
       'equip.substatHpFlatMin': 20,
       'equip.substatHpFlatMax': 60,
@@ -184,6 +190,14 @@ describe('equipment-progression: substatRangesFromConfig', () => {
       'equip.substatSpdFlatMax': 9,
       'equip.substatPctMin': 3,
       'equip.substatPctMax': 8,
+      'equip.substatCritRatePctMin': 2,
+      'equip.substatCritRatePctMax': 5,
+      'equip.substatCritDmgPctMin': 4,
+      'equip.substatCritDmgPctMax': 10,
+      'equip.substatArmorPenPctMin': 2,
+      'equip.substatArmorPenPctMax': 6,
+      'equip.substatLifestealPctMin': 1,
+      'equip.substatLifestealPctMax': 4,
     })
     expect(ranges).toEqual(RANGES)
   })
@@ -219,6 +233,36 @@ describe('equipment-progression: rollInitialSubstats', () => {
   })
 
   it('plafonne au nombre de clés du pool', () => {
-    expect(rollInitialSubstats(12, RANGES, rngFrom([0.2, 0.6]))).toHaveLength(8)
+    expect(rollInitialSubstats(20, RANGES, rngFrom([0.2, 0.6]))).toHaveLength(
+      12,
+    )
+  })
+})
+
+describe('substats étendues', () => {
+  it('expose 12 clés', () => {
+    expect(SUBSTAT_KEYS).toHaveLength(12)
+    for (const k of ['critRatePct', 'critDmgPct', 'armorPenPct', 'lifestealPct']) {
+      expect(SUBSTAT_KEYS).toContain(k)
+    }
+  })
+
+  it('aucune nouvelle stat n a de version plate', () => {
+    for (const k of SUBSTAT_KEYS) {
+      if (/^(critRate|critDmg|armorPen|lifesteal)/.test(k)) {
+        expect(k.endsWith('Pct')).toBe(true)
+      }
+    }
+  })
+
+  it('construit une plage pour chacune des 12 clés', () => {
+    const conf = Object.fromEntries(
+      SUBSTAT_RANGE_CONFIG_KEYS.map((k) => [k, k.endsWith('Max') ? 10 : 1]),
+    ) as Parameters<typeof substatRangesFromConfig>[0]
+    const plages = substatRangesFromConfig(conf)
+    for (const k of SUBSTAT_KEYS) {
+      expect(plages[k]).toBeDefined()
+      expect(plages[k].min).toBeLessThanOrEqual(plages[k].max)
+    }
   })
 })

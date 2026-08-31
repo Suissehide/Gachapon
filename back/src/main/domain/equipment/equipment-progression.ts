@@ -24,6 +24,11 @@ export const SUBSTAT_KEYS = [
   'defPct',
   'spdFlat',
   'spdPct',
+  // Stats de stuff — pourcentage uniquement, une valeur plate n'aurait pas de sens.
+  'critRatePct',
+  'critDmgPct',
+  'armorPenPct',
+  'lifestealPct',
 ] as const
 
 export type SubstatKey = (typeof SUBSTAT_KEYS)[number]
@@ -46,6 +51,14 @@ export const SUBSTAT_RANGE_CONFIG_KEYS = [
   'equip.substatSpdFlatMax',
   'equip.substatPctMin',
   'equip.substatPctMax',
+  'equip.substatCritRatePctMin',
+  'equip.substatCritRatePctMax',
+  'equip.substatCritDmgPctMin',
+  'equip.substatCritDmgPctMax',
+  'equip.substatArmorPenPctMin',
+  'equip.substatArmorPenPctMax',
+  'equip.substatLifestealPctMin',
+  'equip.substatLifestealPctMax',
 ] as const
 
 export type SubstatRangeConfigKey = (typeof SUBSTAT_RANGE_CONFIG_KEYS)[number]
@@ -79,6 +92,22 @@ export function substatRangesFromConfig(
     atkPct: { ...pct },
     defPct: { ...pct },
     spdPct: { ...pct },
+    critRatePct: {
+      min: c['equip.substatCritRatePctMin'],
+      max: c['equip.substatCritRatePctMax'],
+    },
+    critDmgPct: {
+      min: c['equip.substatCritDmgPctMin'],
+      max: c['equip.substatCritDmgPctMax'],
+    },
+    armorPenPct: {
+      min: c['equip.substatArmorPenPctMin'],
+      max: c['equip.substatArmorPenPctMax'],
+    },
+    lifestealPct: {
+      min: c['equip.substatLifestealPctMin'],
+      max: c['equip.substatLifestealPctMax'],
+    },
   }
 }
 
