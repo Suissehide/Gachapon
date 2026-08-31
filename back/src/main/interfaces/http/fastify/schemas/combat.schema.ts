@@ -55,6 +55,9 @@ const simulatorUnitSchema = z.object({
   passiveKey: z.string().nullable(),
   element: z.string().nullable().optional(),
   palier: z.number().int().min(1).max(6),
+  // Défaut 100 : préserve la compatibilité des charges utiles existantes de
+  // cette route de debug admin, où mitigationRef n'était pas encore envoyé.
+  mitigationRef: z.number().positive().default(100),
 })
 
 export const combatDebugBattleBodySchema = z.object({

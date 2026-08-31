@@ -37,6 +37,10 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // Roue élémentaire : dégâts ×1,30 en avantage, ×0,75 en désavantage, ×1 neutre.
   'combat.elementAdvantageMult': 1.3,
   'combat.elementDisadvantageMult': 0.75,
+  // Constante K de la formule de mitigation `K / (K + DEF)`. Mise à l'échelle
+  // par unité (cf. mitigationRefFor) pour que la réduction de dégâts d'une
+  // carte ne dépende plus de son niveau.
+  'combat.defMitigationRef': 100,
   'gacha.pullTokenCost': 1,
   'xp.base': 100,
   'xp.slope': 44,

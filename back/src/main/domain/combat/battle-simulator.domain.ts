@@ -34,6 +34,12 @@ export interface SimulatorUnit {
   /** Élément (FIRE/WATER/NATURE/EARTH/LIGHT/DARK) ; null = neutre. */
   element?: string | null
   palier: number
+  /**
+   * Référence de mitigation de l'unité. Doit être mise à l'échelle de la même
+   * façon que sa DEF, sinon l'unité devient en papier ou increvable.
+   * Allié : mitigationRefFor(niveau/palier/variante). Ennemi : defMitigationRef × scale du seed.
+   */
+  mitigationRef: number
 }
 
 export interface SimulatorInput {
@@ -185,6 +191,7 @@ interface BattleUnit {
   passiveKey: PassiveKey | null
   passiveValuePct: number
   palier: number
+  mitigationRef: number
   alive: boolean
   hasBeenRevived: boolean
   /** Bouclier restant (BULWARK) : absorbe les dégâts avant les PV. */
@@ -245,6 +252,7 @@ function toBattleUnit(u: SimulatorUnit, side: Side): BattleUnit {
     passiveKey,
     passiveValuePct,
     palier: u.palier,
+    mitigationRef: u.mitigationRef,
     alive: true,
     hasBeenRevived: false,
     shield,
@@ -359,14 +367,16 @@ function applyBanner(units: BattleUnit[], side: Side, log: LogEntry[]): void {
 function computeRawDamage(
   attackerEffectiveAtk: number,
   targetDef: number,
+  targetMitigationRef: number,
   prng: () => number,
   patternMultiplier: number,
 ): number {
   const variance = 0.9 + 0.2 * prng()
+  const k = Math.max(1, targetMitigationRef)
   return (
     attackerEffectiveAtk *
     patternMultiplier *
-    (100 / (100 + Math.max(0, targetDef))) *
+    (k / (k + Math.max(0, targetDef))) *
     variance
   )
 }
@@ -496,6 +506,7 @@ function resolveAttackOnTarget(
   let raw = computeRawDamage(
     attacker.effectiveAtk * attackerAtkMult,
     effectiveDef,
+    target.mitigationRef,
     prng,
     patternMultiplier,
   )

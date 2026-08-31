@@ -14,6 +14,7 @@ import {
 import {
   computeFinalStats,
   type EquipmentBonuses,
+  mitigationRefFor,
 } from '../combat/combat-stats.domain'
 import {
   pickEquipmentForRarity,
@@ -355,6 +356,7 @@ export class CampaignDomain {
           'combat.battleCost',
           'combat.elementAdvantageMult',
           'combat.elementDisadvantageMult',
+          'combat.defMitigationRef',
           'xp.base',
           'xp.slope',
           'xp.levelCap',
@@ -425,6 +427,7 @@ export class CampaignDomain {
             tx,
             userId,
             user.combatTeam,
+            battleCfg['combat.defMitigationRef'],
           )
           const enemyUnits = this.#buildEnemySimUnits(
             enemyTeamSchema.parse(stage.enemyTeam),
@@ -1074,6 +1077,7 @@ export class CampaignDomain {
     tx: PrimaTransactionClient,
     userId: string,
     userCardIds: string[],
+    defMitigationRef: number,
   ): Promise<SimulatorUnit[]> {
     const userCards = await tx.userCard.findMany({
       where: { id: { in: userCardIds }, userId },
@@ -1124,6 +1128,12 @@ export class CampaignDomain {
           passiveKey: u.card.passiveKey,
           element: u.card.element,
           palier: u.palier,
+          mitigationRef: mitigationRefFor({
+            level: u.level,
+            palier: u.palier,
+            variant: u.variant,
+            defMitigationRef,
+          }),
         }
       })
   }

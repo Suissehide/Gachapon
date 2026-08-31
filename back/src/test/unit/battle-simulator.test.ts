@@ -26,6 +26,7 @@ function makeUnit(
     attackPattern: 'BASIC',
     passiveKey: null,
     palier: 1,
+    mitigationRef: 100,
     ...overrides,
   }
 }
@@ -1362,5 +1363,37 @@ describe('ATB scheduler', () => {
     expect(ratio).toBeGreaterThan(1.7)
     expect(ratio).toBeLessThan(2.3)
     expect(ACTION_THRESHOLD).toBe(1000)
+  })
+})
+
+describe('mitigation mise à l échelle', () => {
+  it('une DEF doublée avec un mitigationRef doublé donne la même réduction', () => {
+    const seed = 'mitigation-invariance'
+    const petit = simulateBattle({
+      seed,
+      teamA: [makeUnit('A0', { atk: 100, mitigationRef: 100 })],
+      teamB: [makeUnit('B0', { hp: 100000, def: 50, mitigationRef: 100 })],
+    })
+    const grand = simulateBattle({
+      seed,
+      teamA: [makeUnit('A0', { atk: 100, mitigationRef: 1000 })],
+      teamB: [makeUnit('B0', { hp: 100000, def: 500, mitigationRef: 1000 })],
+    })
+    const degats = (r: typeof petit) =>
+      r.log.filter((e) => e.type === 'ATTACK').length
+    expect(degats(petit)).toBe(degats(grand))
+  })
+
+  it('un mitigationRef plus élevé réduit la protection apportée par la même DEF', () => {
+    const cible = { hp: 10000, def: 100, atk: 1, spd: 1 }
+    const dur = simulateBattle({
+      seed: 's', teamA: [makeUnit('A0', { atk: 200 })],
+      teamB: [makeUnit('B0', { ...cible, mitigationRef: 100 })],
+    })
+    const mou = simulateBattle({
+      seed: 's', teamA: [makeUnit('A0', { atk: 200 })],
+      teamB: [makeUnit('B0', { ...cible, mitigationRef: 1000 })],
+    })
+    expect(mou.turns).toBeLessThan(dur.turns)
   })
 })

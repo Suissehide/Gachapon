@@ -25,6 +25,7 @@ export const CONFIG_KEYS = [
   'combat.sweepCost',
   'combat.elementAdvantageMult',
   'combat.elementDisadvantageMult',
+  'combat.defMitigationRef',
   'gacha.pullTokenCost',
   'xp.base',
   'xp.slope',

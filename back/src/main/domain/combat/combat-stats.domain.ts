@@ -65,6 +65,32 @@ function palierMultiplier(palier: number): number {
 }
 
 /**
+ * Référence de mitigation d'une unité : reproduit exactement le facteur d'échelle
+ * appliqué à la DEF de base par `computeStat` (niveau, variante, palier), mais
+ * PAS les bonus d'équipement.
+ *
+ * C'est volontaire : la DEF de base devient invariante en progression (un Tank
+ * réduit autant les dégâts au niveau 1 qu'au niveau 70), tandis que l'équipement
+ * apporte un gain de mitigation réel. Sans ça, la constante fixe de l'ancienne
+ * formule faisait passer un Tank épique de 15 % à 73 % de réduction par simple
+ * montée en niveau.
+ */
+export function mitigationRefFor(input: {
+  level: number
+  palier: number
+  variant: CardVariant
+  defMitigationRef: number
+}): number {
+  const { level, palier, variant, defMitigationRef } = input
+  return (
+    defMitigationRef *
+    levelMultiplier(level) *
+    VARIANT_MULT[variant] *
+    palierMultiplier(palier)
+  )
+}
+
+/**
  * Computes one stat's final value with: base growth, variant, palier,
  * equipment flat + percent bonuses, and skill modifier percent.
  */

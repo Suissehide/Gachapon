@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals'
 
-import { computeFinalStats } from '../../main/domain/combat/combat-stats.domain'
+import { computeFinalStats, mitigationRefFor } from '../../main/domain/combat/combat-stats.domain'
 
 const BASE = {
   baseHp: 200,
@@ -174,5 +174,41 @@ describe('combat-stats: computeFinalStats', () => {
     expect(Number.isInteger(stats.hp)).toBe(true)
     expect(Number.isInteger(stats.def)).toBe(true)
     expect(Number.isInteger(stats.spd)).toBe(true)
+  })
+})
+
+describe('combat-stats: mitigationRefFor', () => {
+  it('vaut la référence brute au niveau 1, palier 1, NORMAL', () => {
+    expect(
+      mitigationRefFor({ level: 1, palier: 1, variant: 'NORMAL', defMitigationRef: 100 }),
+    ).toBe(100)
+  })
+
+  it('suit exactement le facteur d échelle appliqué à la DEF de base', () => {
+    // Le contrat : DEF finale / DEF de base === mitigationRef / defMitigationRef.
+    // C est ce qui rend la réduction de dégâts invariante en progression.
+    const base = { baseHp: 200, baseAtk: 20, baseDef: 10, baseSpd: 100 }
+    for (const [level, palier, variant] of [
+      [70, 7, 'NORMAL'],
+      [35, 4, 'BRILLIANT'],
+      [12, 2, 'HOLOGRAPHIC'],
+    ] as const) {
+      const stats = computeFinalStats({ ...base, level, palier, variant })
+      const ref = mitigationRefFor({ level, palier, variant, defMitigationRef: 100 })
+      // arrondi de computeFinalStats -> tolérance
+      expect(ref / 100).toBeCloseTo(stats.def / base.baseDef, 1)
+    }
+  })
+
+  it('la réduction de dégâts d une même carte ne dépend plus du niveau', () => {
+    const baseDef = 14
+    const reduction = (level: number, palier: number) => {
+      const stats = computeFinalStats({
+        baseHp: 200, baseAtk: 20, baseDef, baseSpd: 100, level, palier, variant: 'NORMAL',
+      })
+      const ref = mitigationRefFor({ level, palier, variant: 'NORMAL', defMitigationRef: 100 })
+      return 1 - ref / (ref + stats.def)
+    }
+    expect(reduction(70, 7)).toBeCloseTo(reduction(1, 1), 2)
   })
 })
