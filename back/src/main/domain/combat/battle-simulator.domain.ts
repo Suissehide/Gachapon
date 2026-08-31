@@ -40,6 +40,14 @@ export interface SimulatorUnit {
    * Allié : mitigationRefFor(niveau/palier/variante). Ennemi : defMitigationRef × scale du seed.
    */
   mitigationRef: number
+  /** Chance de coup critique, en points de pourcentage. */
+  critRate: number
+  /** Multiplicateur de coup critique, en points de pourcentage (150 = x1,5). */
+  critDmg: number
+  /** Part de la DEF de la cible ignorée, en points de pourcentage. */
+  armorPen: number
+  /** Part des dégâts infligés rendue en soin, en points de pourcentage. */
+  lifesteal: number
 }
 
 export interface SimulatorInput {
@@ -63,6 +71,8 @@ export interface DamageEntry {
   raw: number
   final: number
   dodged: boolean
+  /** Coup critique (armé par critRate, amplifié par critDmg). */
+  crit: boolean
   /** Multiplicateur élémentaire appliqué (présent seulement si ≠ 1). */
   elementMult?: number
 }
@@ -83,6 +93,7 @@ export type LogEntry =
     }
   | { type: 'DEATH'; unitId: string }
   | { type: 'REBIRTH'; unitId: string; restoredHp: number }
+  | { type: 'HEAL'; unitId: string; amount: number }
   | { type: 'TURN_END'; turn: number }
   | { type: 'TIMEOUT' }
   | { type: 'WIN'; side: Side }
@@ -192,6 +203,10 @@ interface BattleUnit {
   passiveValuePct: number
   palier: number
   mitigationRef: number
+  critRate: number
+  critDmg: number
+  armorPen: number
+  lifesteal: number
   alive: boolean
   hasBeenRevived: boolean
   /** Bouclier restant (BULWARK) : absorbe les dégâts avant les PV. */
@@ -253,6 +268,10 @@ function toBattleUnit(u: SimulatorUnit, side: Side): BattleUnit {
     passiveValuePct,
     palier: u.palier,
     mitigationRef: u.mitigationRef,
+    critRate: u.critRate,
+    critDmg: u.critDmg,
+    armorPen: u.armorPen,
+    lifesteal: u.lifesteal,
     alive: true,
     hasBeenRevived: false,
     shield,
@@ -493,15 +512,12 @@ function resolveAttackOnTarget(
         passive: 'AEGIS',
         payload: { pct: target.passiveValuePct },
       })
-      return { id: target.id, raw: 0, final: 0, dodged: true }
+      return { id: target.id, raw: 0, final: 0, dodged: true, crit: false }
     }
   }
 
-  // PIERCE (attacker) — ignore une partie de la défense de la cible.
-  let effectiveDef = target.def
-  if (attacker.passiveKey === 'PIERCE') {
-    effectiveDef = target.def * (1 - attacker.passiveValuePct / 100)
-  }
+  // armorPen (attaquant) — remplace l'ancien cas particulier du passif PIERCE.
+  const effectiveDef = target.def * (1 - Math.min(100, attacker.armorPen) / 100)
 
   let raw = computeRawDamage(
     attacker.effectiveAtk * attackerAtkMult,
@@ -510,6 +526,12 @@ function resolveAttackOnTarget(
     prng,
     patternMultiplier,
   )
+
+  // Critique — le tirage garde sa position historique dans la séquence PRNG.
+  const crit = prng() < attacker.critRate / 100
+  if (crit) {
+    raw *= attacker.critDmg / 100
+  }
 
   raw = applyPassiveDamageModifiers(attacker, target, raw, prng, log)
 
@@ -546,11 +568,23 @@ function resolveAttackOnTarget(
     applyDotOnHit(attacker, target, log)
   }
 
+  // lifesteal (attaquant) — soin sur les dégâts infligés, borné aux PV max.
+  if (attacker.lifesteal > 0 && final > 0) {
+    const soin = Math.round((final * attacker.lifesteal) / 100)
+    const avant = attacker.currentHp
+    attacker.currentHp = Math.min(attacker.maxHp, attacker.currentHp + soin)
+    const rendu = attacker.currentHp - avant
+    if (rendu > 0) {
+      log.push({ type: 'HEAL', unitId: attacker.id, amount: rendu })
+    }
+  }
+
   return {
     id: target.id,
     raw,
     final,
     dodged: false,
+    crit,
     ...(elMult !== 1 ? { elementMult: elMult } : {}),
   }
 }

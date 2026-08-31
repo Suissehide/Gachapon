@@ -27,6 +27,10 @@ function makeUnit(
     passiveKey: null,
     palier: 1,
     mitigationRef: 100,
+    critRate: 5,
+    critDmg: 150,
+    armorPen: 0,
+    lifesteal: 0,
     ...overrides,
   }
 }
@@ -740,27 +744,11 @@ describe('simulateBattle', () => {
     expect(rate).toBeLessThan(0.45)
   })
 
-  // PIERCE — ignores part of the target DEF → more damage
-  it('PIERCE increases damage against a high-DEF target', () => {
-    const seed = 'pierce-test'
-    const base = simulateBattle({
-      teamA: [makeUnit('A0', { atk: 50, spd: 999 })],
-      teamB: [makeUnit('B0', { hp: 100000, def: 100, spd: 1 })],
-      seed,
-      timeoutTurns: 1,
-    })
-    const pierce = simulateBattle({
-      teamA: [
-        makeUnit('A0', { atk: 50, spd: 999, passiveKey: 'PIERCE', palier: 6 }),
-      ],
-      teamB: [makeUnit('B0', { hp: 100000, def: 100, spd: 1 })],
-      seed,
-      timeoutTurns: 1,
-    })
-    expect(firstAttackDamage(pierce.log, 'A0')).toBeGreaterThan(
-      firstAttackDamage(base.log, 'A0'),
-    )
-  })
+  // PIERCE — le cas particulier « le passif PIERCE ignore une part de la DEF »
+  // a été retiré de resolveAttackOnTarget (tâche 6) : cette réduction de DEF
+  // est désormais portée par la stat armorPen, pas par le passif lui-même.
+  // PIERCE reste défini dans PASSIVES mais n'a plus d'effet sur les dégâts
+  // tant que la tâche 9 ne l'aura pas reconnecté (ex. via armorPen).
 
   // NEMESIS — gains ATK for each fallen ally
   // ATB: A0 (spd=100) and A1 (spd=100) act at ATB cadence. B0 (spd=999) kills A1
@@ -1368,15 +1356,21 @@ describe('ATB scheduler', () => {
 
 describe('mitigation mise à l échelle', () => {
   it('une DEF doublée avec un mitigationRef doublé donne la même réduction', () => {
+    // A0 subit aussi les attaques de B0 (celui-ci a l'ATQ par défaut) : sa
+    // propre DEF doit être mise à l'échelle avec son mitigationRef, sinon
+    // seule la protection de B0 est invariante et pas celle d'A0 — un écart
+    // qui ne se voyait pas avant l'ajout du tirage de critique (tâche 6),
+    // celui-ci consommant un appel PRNG de plus par coup et faisant basculer
+    // le nombre de coups nécessaires pour achever A0.
     const seed = 'mitigation-invariance'
     const petit = simulateBattle({
       seed,
-      teamA: [makeUnit('A0', { atk: 100, mitigationRef: 100 })],
+      teamA: [makeUnit('A0', { atk: 100, def: 10, mitigationRef: 100 })],
       teamB: [makeUnit('B0', { hp: 100000, def: 50, mitigationRef: 100 })],
     })
     const grand = simulateBattle({
       seed,
-      teamA: [makeUnit('A0', { atk: 100, mitigationRef: 1000 })],
+      teamA: [makeUnit('A0', { atk: 100, def: 100, mitigationRef: 1000 })],
       teamB: [makeUnit('B0', { hp: 100000, def: 500, mitigationRef: 1000 })],
     })
     const degats = (r: typeof petit) =>
@@ -1395,5 +1389,73 @@ describe('mitigation mise à l échelle', () => {
       teamB: [makeUnit('B0', { ...cible, mitigationRef: 1000 })],
     })
     expect(mou.turns).toBeLessThan(dur.turns)
+  })
+})
+
+describe('stats offensives', () => {
+  // Note : `atk: 1` sur la cible-sac-de-frappe neutralise sa contre-attaque,
+  // comme dans `describe('mitigation mise à l échelle')` ci-dessus — sans ça
+  // B0 (ATQ 30 par défaut) tue A0 (200 PV / 10 DEF par défaut) avant que la
+  // stat testée ait pu influer sur la durée du combat. Les PV de B0 sont
+  // aussi réduits (au lieu des 100000/50000 dans le brief) : avec un B0
+  // increvable les deux combats vont au bout du timeout (60 tours × 2
+  // unités = 120 actions) et affichent la même durée, ce qui masque
+  // justement l'effet qu'on veut observer. Valeurs choisies par mesure
+  // directe pour que les deux scénarios se terminent avant le timeout.
+  it('armorPen réduit la DEF effective de la cible', () => {
+    const sansPen = simulateBattle({
+      seed: 'pen', teamA: [makeUnit('A0', { atk: 100, armorPen: 0 })],
+      teamB: [makeUnit('B0', { hp: 1500, def: 200, atk: 1 })],
+    })
+    const avecPen = simulateBattle({
+      seed: 'pen', teamA: [makeUnit('A0', { atk: 100, armorPen: 50 })],
+      teamB: [makeUnit('B0', { hp: 1500, def: 200, atk: 1 })],
+    })
+    expect(avecPen.turns).toBeLessThan(sansPen.turns)
+  })
+
+  it('critRate à 100 fait critiquer chaque coup', () => {
+    // B0 à 20 PV et A0 à VIT 999 : A0 agit forcément en premier et son
+    // coup (toujours critique ici) l'achève en un tour — B0 n'a donc jamais
+    // l'occasion d'ajouter au log une attaque non critique (son critRate
+    // par défaut de 5 % n'est pas celui qu'on teste).
+    const r = simulateBattle({
+      seed: 'crit', teamA: [makeUnit('A0', { critRate: 100, spd: 999 })],
+      teamB: [makeUnit('B0', { hp: 20, atk: 1 })],
+    })
+    const attaques = r.log.filter((e) => e.type === 'ATTACK')
+    expect(attaques.length).toBeGreaterThan(0)
+    expect(attaques.every((e) => e.damages.every((d) => d.crit))).toBe(true)
+  })
+
+  it('critRate à 0 ne fait jamais critiquer', () => {
+    const r = simulateBattle({
+      seed: 'crit', teamA: [makeUnit('A0', { critRate: 0 })],
+      teamB: [makeUnit('B0', { hp: 5000 })],
+    })
+    const attaques = r.log.filter((e) => e.type === 'ATTACK')
+    expect(attaques.some((e) => e.damages.some((d) => d.crit))).toBe(false)
+  })
+
+  it('critDmg multiplie les dégâts du coup critique', () => {
+    const faible = simulateBattle({
+      seed: 'cd', teamA: [makeUnit('A0', { critRate: 100, critDmg: 150 })],
+      teamB: [makeUnit('B0', { hp: 2000, atk: 1 })],
+    })
+    const fort = simulateBattle({
+      seed: 'cd', teamA: [makeUnit('A0', { critRate: 100, critDmg: 300 })],
+      teamB: [makeUnit('B0', { hp: 2000, atk: 1 })],
+    })
+    expect(fort.turns).toBeLessThan(faible.turns)
+  })
+
+  it('lifesteal soigne l attaquant sans dépasser ses PV max', () => {
+    const r = simulateBattle({
+      seed: 'ls',
+      teamA: [makeUnit('A0', { hp: 1000, atk: 500, lifesteal: 100, spd: 200 })],
+      teamB: [makeUnit('B0', { hp: 100000, atk: 50 })],
+    })
+    const soins = r.log.filter((e) => e.type === 'HEAL')
+    expect(soins.length).toBeGreaterThan(0)
   })
 })
