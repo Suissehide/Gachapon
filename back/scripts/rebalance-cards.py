@@ -39,8 +39,15 @@ def arrondi(x: float) -> int:
 # data_only=False : la feuille contient des formules vivantes (colonne G
 # "Prompt complet (auto)" avec des VLOOKUP vers Recettes, colonne H "Chemin
 # Save Image"). Charger en mode valeurs les écraserait par leur résultat.
-shutil.copy(XLSX, COPIE)
-wb = openpyxl.load_workbook(COPIE, data_only=False)
+#
+# La copie n'est écrite sur disque qu'en mode --apply : un essai à blanc
+# charge l'original en lecture seule (jamais réécrit) pour que le message
+# « copie non sauvegardée » soit vrai.
+if apply:
+    shutil.copy(XLSX, COPIE)
+    wb = openpyxl.load_workbook(COPIE, data_only=False)
+else:
+    wb = openpyxl.load_workbook(XLSX, data_only=False)
 ws = wb['Production']
 
 entetes = [c.value for c in ws[3]]
@@ -53,7 +60,9 @@ for ligne in range(4, ws.max_row + 1):
         continue
     c_def = ws.cell(row=ligne, column=col['DEF'])
     c_atk = ws.cell(row=ligne, column=col['ATQ'])
-    if not isinstance(c_def.value, (int, float)):
+    # Ligne en cours d'édition (DEF ou ATQ pas encore renseigné) : on ignore
+    # la paire plutôt que de planter sur un TypeError côté colonne manquante.
+    if not isinstance(c_def.value, (int, float)) or not isinstance(c_atk.value, (int, float)):
         continue
     c_def.value = arrondi(c_def.value * MULT_DEF)
     c_atk.value = arrondi(c_atk.value * MULT_ATK)
