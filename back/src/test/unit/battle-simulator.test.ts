@@ -1415,26 +1415,39 @@ describe('stats offensives', () => {
   })
 
   it('critRate à 100 fait critiquer chaque coup', () => {
-    // B0 à 20 PV et A0 à VIT 999 : A0 agit forcément en premier et son
-    // coup (toujours critique ici) l'achève en un tour — B0 n'a donc jamais
-    // l'occasion d'ajouter au log une attaque non critique (son critRate
-    // par défaut de 5 % n'est pas celui qu'on teste).
+    // atk: 1 sur B0 neutralise sa contre-attaque (même idiome que les
+    // autres tests de ce describe) : le combat dure alors plusieurs tours
+    // côté A0 au lieu de se terminer sur un unique coup fatal, ce qui donne
+    // plusieurs échantillons du tirage de critique plutôt qu'un seul (un
+    // B0 à 20 PV mort au premier coup ne prouverait rien : crit y serait
+    // vrai par construction, prng() étant toujours < 1). On filtre sur
+    // attackerId === 'A0' : B0 attaque aussi et son critRate par défaut de
+    // 5 % ne doit pas fausser l'assertion.
     const r = simulateBattle({
-      seed: 'crit', teamA: [makeUnit('A0', { critRate: 100, spd: 999 })],
-      teamB: [makeUnit('B0', { hp: 20, atk: 1 })],
+      seed: 'crit', teamA: [makeUnit('A0', { critRate: 100 })],
+      teamB: [makeUnit('B0', { hp: 5000, atk: 1 })],
     })
-    const attaques = r.log.filter((e) => e.type === 'ATTACK')
-    expect(attaques.length).toBeGreaterThan(0)
-    expect(attaques.every((e) => e.damages.every((d) => d.crit))).toBe(true)
+    const attaquesA0 = r.log.filter(
+      (e) => e.type === 'ATTACK' && e.attackerId === 'A0',
+    )
+    expect(attaquesA0.length).toBeGreaterThan(1)
+    expect(attaquesA0.every((e) => e.damages.every((d) => d.crit))).toBe(true)
   })
 
   it('critRate à 0 ne fait jamais critiquer', () => {
+    // Filtré sur A0 pour ne pas dépendre du critRate par défaut (5 %) des
+    // contre-attaques de B0 — sans ce filtre le test ne passe que parce que
+    // le seed 'crit' ne fait pas critiquer B0 sur cette durée, ce qui est
+    // fragile à tout changement des défauts de makeUnit.
     const r = simulateBattle({
       seed: 'crit', teamA: [makeUnit('A0', { critRate: 0 })],
       teamB: [makeUnit('B0', { hp: 5000 })],
     })
-    const attaques = r.log.filter((e) => e.type === 'ATTACK')
-    expect(attaques.some((e) => e.damages.some((d) => d.crit))).toBe(false)
+    const attaquesA0 = r.log.filter(
+      (e) => e.type === 'ATTACK' && e.attackerId === 'A0',
+    )
+    expect(attaquesA0.length).toBeGreaterThan(0)
+    expect(attaquesA0.some((e) => e.damages.some((d) => d.crit))).toBe(false)
   })
 
   it('critDmg multiplie les dégâts du coup critique', () => {
@@ -1450,12 +1463,35 @@ describe('stats offensives', () => {
   })
 
   it('lifesteal soigne l attaquant sans dépasser ses PV max', () => {
+    const maxHp = 1000
     const r = simulateBattle({
       seed: 'ls',
-      teamA: [makeUnit('A0', { hp: 1000, atk: 500, lifesteal: 100, spd: 200 })],
+      teamA: [makeUnit('A0', { hp: maxHp, atk: 500, lifesteal: 100, spd: 200 })],
       teamB: [makeUnit('B0', { hp: 100000, atk: 50 })],
     })
     const soins = r.log.filter((e) => e.type === 'HEAL')
     expect(soins.length).toBeGreaterThan(0)
+
+    // Rejoue le log pour vérifier que les PV reconstitués d'A0 ne dépassent
+    // jamais son maxHp. A0 et B0 ont tous deux passiveKey: null (défaut de
+    // makeUnit), donc les seules variations des PV d'A0 dans ce log sont
+    // les dégâts subis (ATTACK le ciblant) et les soins du vol de vie
+    // (HEAL) — pas de DOT/RIPOSTE/REGEN/REBIRTH à prendre en compte. Ce
+    // test échoue si le Math.min(maxHp, …) de resolveAttackOnTarget est
+    // retiré : un simple `expect(soins.length).toBeGreaterThan(0)` (l'ancien
+    // dispositif) ne le détecterait pas.
+    let hp = maxHp
+    for (const entry of r.log) {
+      if (entry.type === 'ATTACK') {
+        for (const d of entry.damages) {
+          if (d.id === 'A0' && !d.dodged) {
+            hp = Math.max(0, hp - d.final)
+          }
+        }
+      } else if (entry.type === 'HEAL' && entry.unitId === 'A0') {
+        hp += entry.amount
+        expect(hp).toBeLessThanOrEqual(maxHp)
+      }
+    }
   })
 })

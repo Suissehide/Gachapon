@@ -61,7 +61,7 @@ const simulatorUnitSchema = z.object({
   // Défauts alignés sur DEFAULTS (config.service.ts) : préservent la
   // compatibilité des charges utiles existantes de cette route de debug
   // admin, où ces 4 stats n'étaient pas encore envoyées.
-  critRate: z.number().nonnegative().default(5),
+  critRate: z.number().nonnegative().max(100).default(5),
   critDmg: z.number().nonnegative().default(150),
   armorPen: z.number().nonnegative().default(0),
   lifesteal: z.number().nonnegative().default(0),
