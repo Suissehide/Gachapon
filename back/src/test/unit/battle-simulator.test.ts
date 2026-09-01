@@ -261,36 +261,37 @@ describe('simulateBattle', () => {
     expect(dodgeRate).toBeLessThan(0.3)
   })
 
-  // 9. VAMPIRISM heals the attacker
-  it('VAMPIRISM heals the attacker and emits PASSIVE log entry', () => {
+  // 9. VAMPIRISM ne double le lifesteal que sous 50 % de PV (tâche 9 :
+  // le passif a cédé sa magnitude au lifesteal de stuff, cf. tests dédiés
+  // plus bas dans « passifs dynamiques — collision avec les stats »).
+  // Ce test couvre la branche complémentaire : tant que l'attaquant reste
+  // au-dessus de 50 % de PV, aucun déclenchement ne doit être journalisé,
+  // même s'il inflige des dégâts et porte un lifesteal de base.
+  it("VAMPIRISM ne se déclenche pas tant que l'attaquant reste au-dessus de 50 % de PV", () => {
     const vamp = makeUnit('A0', {
-      hp: 200,
-      atk: 30,
+      hp: 1_000_000,
+      atk: 200,
+      lifesteal: 10,
       spd: 999,
       passiveKey: 'VAMPIRISM',
       palier: 6,
     })
     const enemy = makeUnit('B0', {
-      hp: 5000,
-      atk: 60,
+      hp: 100000,
+      atk: 300,
       def: 0,
-      spd: 50,
+      spd: 300,
     })
     const result = simulateBattle({
       teamA: [vamp],
       teamB: [enemy],
-      seed: 'vamp-heal',
-      timeoutTurns: 5,
+      seed: 'vamp-above-half',
+      timeoutTurns: 8,
     })
-    // We need attacker to have lost some HP first then healed, OR to receive
-    // damage at some round. Either way, find at least one VAMPIRISM passive log.
     const vampLogs = result.log.filter(
       (e) => e.type === 'PASSIVE' && e.passive === 'VAMPIRISM',
     )
-    expect(vampLogs.length).toBeGreaterThanOrEqual(1)
-    if (vampLogs[0]?.type === 'PASSIVE') {
-      expect(vampLogs[0].payload.healed).toBeGreaterThan(0)
-    }
+    expect(vampLogs.length).toBe(0)
   })
 
   // 10. RIPOSTE reflects damage
@@ -711,10 +712,16 @@ describe('simulateBattle', () => {
     expect(furyLogs.length).toBeGreaterThanOrEqual(1)
   })
 
-  // CRIT — chance to deal double damage over many trials
+  // CRIT (tâche 9) — n'est plus une chance : une cadence garantie (1 attaque
+  // sur 3, cf. `passives.ts`). Ce test agrège de nombreuses parties courtes
+  // pour vérifier que la fréquence des PASSIVE CRIT converge bien vers 1/3
+  // en moyenne, indépendamment de la position exacte du cycle de 3 dans
+  // chaque partie individuelle. Le test dédié et déterministe (une seule
+  // partie, cadence exacte) vit dans « passifs dynamiques — collision avec
+  // les stats ».
   // ATB: count crits per attack (not per battle), since a fast attacker fires multiple
   // attacks within a single timeoutTurns window.
-  it('CRIT produces double-damage procs over many trials', () => {
+  it('CRIT force un critique toutes les 3 attaques, en moyenne sur de nombreuses parties', () => {
     let crits = 0
     let attacks = 0
     for (let i = 0; i < 200; i++) {
@@ -738,17 +745,21 @@ describe('simulateBattle', () => {
         (e) => e.type === 'ATTACK' && e.attackerId === 'A0',
       ).length
     }
-    // Palier 6 → 26 % crit rate per attack; allow a wide window.
+    // Cadence 1/3 ≈ 0.333 ; fenêtre large pour absorber l'effet de bord du
+    // découpage en parties courtes (le cycle de 3 ne tombe pas toujours pile
+    // à la fin d'une partie).
     const rate = crits / Math.max(1, attacks)
-    expect(rate).toBeGreaterThan(0.1)
+    expect(rate).toBeGreaterThan(0.2)
     expect(rate).toBeLessThan(0.45)
   })
 
   // PIERCE — le cas particulier « le passif PIERCE ignore une part de la DEF »
   // a été retiré de resolveAttackOnTarget (tâche 6) : cette réduction de DEF
   // est désormais portée par la stat armorPen, pas par le passif lui-même.
-  // PIERCE reste défini dans PASSIVES mais n'a plus d'effet sur les dégâts
-  // tant que la tâche 9 ne l'aura pas reconnecté (ex. via armorPen).
+  // Tâche 9 : PIERCE a récupéré un effet dynamique — le premier coup porté à
+  // chaque cible ignore toute sa défense, les suivants retombent sur
+  // armorPen. Voir le test dédié dans « passifs dynamiques — collision avec
+  // les stats ».
 
   // NEMESIS — gains ATK for each fallen ally
   // ATB: A0 (spd=100) and A1 (spd=100) act at ATB cadence. B0 (spd=999) kills A1
@@ -1505,5 +1516,69 @@ describe('compteurs de BattleUnit', () => {
     const b = simulateBattle({ seed: 'compteurs', ...mirrorTeams() })
     expect(a.log).toEqual(b.log)
     expect(a.turns).toBe(b.turns)
+  })
+})
+
+describe('passifs dynamiques — collision avec les stats', () => {
+  it('CRIT force un critique toutes les 3 actions', () => {
+    const r = simulateBattle({
+      seed: 'crit-cadence',
+      teamA: [makeUnit('A0', { passiveKey: 'CRIT', critRate: 0, spd: 500 })],
+      teamB: [makeUnit('B0', { hp: 200000, atk: 1 })],
+    })
+    const coups = r.log.filter(
+      (e) => e.type === 'ATTACK' && e.attackerId === 'A0',
+    )
+    const crits = coups.filter((e) => e.damages.some((d) => d.crit))
+    // critRate 0 : les seuls critiques viennent du passif, un sur trois.
+    expect(crits.length).toBe(Math.floor(coups.length / 3))
+  })
+
+  it('PIERCE ignore toute la DEF au premier coup sur une cible, pas au second', () => {
+    const r = simulateBattle({
+      seed: 'pierce',
+      teamA: [
+        makeUnit('A0', { passiveKey: 'PIERCE', atk: 100, critRate: 0, spd: 500 }),
+      ],
+      teamB: [makeUnit('B0', { hp: 200000, def: 500, atk: 1 })],
+    })
+    const degats = r.log
+      .filter((e) => e.type === 'ATTACK' && e.attackerId === 'A0')
+      .flatMap((e) => e.damages.map((d) => d.final))
+    expect(degats[0]).toBeGreaterThan(degats[1] * 2)
+  })
+
+  it('VAMPIRISM double le vol de vie sous 50 % de PV', () => {
+    const r = simulateBattle({
+      seed: 'vamp',
+      teamA: [
+        makeUnit('A0', {
+          passiveKey: 'VAMPIRISM',
+          hp: 1000,
+          lifesteal: 10,
+          atk: 200,
+        }),
+      ],
+      teamB: [makeUnit('B0', { hp: 100000, atk: 300, spd: 300 })],
+    })
+    expect(
+      r.log.some((e) => e.type === 'PASSIVE' && e.passive === 'VAMPIRISM'),
+    ).toBe(true)
+  })
+
+  it('VAMPIRISM ne fait rien sans lifesteal — synergie stuff obligatoire', () => {
+    const r = simulateBattle({
+      seed: 'vamp0',
+      teamA: [
+        makeUnit('A0', {
+          passiveKey: 'VAMPIRISM',
+          hp: 1000,
+          lifesteal: 0,
+          atk: 200,
+        }),
+      ],
+      teamB: [makeUnit('B0', { hp: 100000, atk: 300, spd: 300 })],
+    })
+    expect(r.log.some((e) => e.type === 'HEAL')).toBe(false)
   })
 })

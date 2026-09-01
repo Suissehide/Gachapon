@@ -61,12 +61,14 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     key: 'VAMPIRISM',
     rarityHint: 'EPIC',
     label: 'Vampirisme',
-    compute(palier) {
-      const p = clampPalier(palier)
-      return { valuePct: 10 + 5 * p }
+    // La magnitude du vol de vie appartient désormais au stuff (lifesteal).
+    // Le passif apporte ce qu'aucun équipement ne peut donner : un doublement
+    // conditionnel, sous 50 % de PV.
+    compute() {
+      return { valuePct: 100 } // bonus de lifesteal en pourcentage relatif
     },
-    describe(palier) {
-      return `Soigne ${10 + 5 * clampPalier(palier)} % des dégâts infligés`
+    describe() {
+      return 'Sous 50 % de ses PV, son vol de vie est doublé'
     },
   },
   AEGIS: {
@@ -213,24 +215,24 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     key: 'CRIT',
     rarityHint: 'EPIC',
     label: 'Précision',
-    compute(palier) {
-      const p = clampPalier(palier)
-      return { valuePct: 8 + 3 * p }
+    // La magnitude du critique appartient désormais aux stats (critRate/critDmg).
+    // Le passif apporte ce qu'aucun équipement ne peut donner : la certitude.
+    compute() {
+      return { valuePct: 3 } // cadence, en nombre d'actions
     },
-    describe(palier) {
-      return `${8 + 3 * clampPalier(palier)} % de chance d'infliger le double des dégâts`
+    describe() {
+      return 'Toutes les 3 attaques, inflige un coup critique garanti'
     },
   },
   PIERCE: {
     key: 'PIERCE',
     rarityHint: 'EPIC',
     label: 'Perce-armure',
-    compute(palier) {
-      const p = clampPalier(palier)
-      return { valuePct: 15 + 5 * p }
+    compute() {
+      return { valuePct: 100 } // part de DEF ignorée au premier coup
     },
-    describe(palier) {
-      return `Ignore ${15 + 5 * clampPalier(palier)} % de la défense de la cible`
+    describe() {
+      return 'Le premier coup porté à chaque cible ignore toute sa défense'
     },
   },
   NEMESIS: {

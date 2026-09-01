@@ -8,9 +8,28 @@ import {
 
 describe('passives', () => {
   describe('VAMPIRISM', () => {
-    it('15% at P1, 40% at P6', () => {
-      expect(PASSIVES.VAMPIRISM.compute(1).valuePct).toBe(15)
-      expect(PASSIVES.VAMPIRISM.compute(6).valuePct).toBe(40)
+    // Tâche 9 : la magnitude (soin en % des dégâts) est cédée au lifesteal de
+    // stuff. Le passif ne porte plus qu'un facteur de doublement fixe,
+    // indépendant du palier.
+    it('facteur de doublement fixe, quel que soit le palier', () => {
+      expect(PASSIVES.VAMPIRISM.compute(1).valuePct).toBe(100)
+      expect(PASSIVES.VAMPIRISM.compute(6).valuePct).toBe(100)
+    })
+  })
+  describe('CRIT', () => {
+    // Tâche 9 : la magnitude (chance de critique) est cédée à critRate/critDmg.
+    // Le passif ne porte plus que la cadence, fixe, indépendante du palier.
+    it('cadence fixe de 3 actions, quel que soit le palier', () => {
+      expect(PASSIVES.CRIT.compute(1).valuePct).toBe(3)
+      expect(PASSIVES.CRIT.compute(6).valuePct).toBe(3)
+    })
+  })
+  describe('PIERCE', () => {
+    // Tâche 9 : la magnitude (% de DEF ignorée) est cédée à armorPen.
+    // Le passif ignore 100 % de la DEF, mais seulement au premier coup.
+    it("part de DEF ignorée fixe à 100 %, quel que soit le palier", () => {
+      expect(PASSIVES.PIERCE.compute(1).valuePct).toBe(100)
+      expect(PASSIVES.PIERCE.compute(6).valuePct).toBe(100)
     })
   })
   describe('AEGIS', () => {
@@ -76,13 +95,15 @@ describe('passives', () => {
   })
 
   describe('clamp', () => {
+    // VAMPIRISM ne dépend plus du palier depuis la tâche 9 (facteur fixe) ;
+    // AEGIS reste palier-dépendant et sert de témoin pour clampPalier().
     it('clamps palier below 1 to 1', () => {
-      expect(PASSIVES.VAMPIRISM.compute(0).valuePct).toBe(15)
-      expect(PASSIVES.VAMPIRISM.compute(-3).valuePct).toBe(15)
+      expect(PASSIVES.AEGIS.compute(0).valuePct).toBe(7)
+      expect(PASSIVES.AEGIS.compute(-3).valuePct).toBe(7)
     })
     it('clamps palier above 6 to 6', () => {
-      expect(PASSIVES.VAMPIRISM.compute(7).valuePct).toBe(40)
-      expect(PASSIVES.VAMPIRISM.compute(100).valuePct).toBe(40)
+      expect(PASSIVES.AEGIS.compute(7).valuePct).toBe(17)
+      expect(PASSIVES.AEGIS.compute(100).valuePct).toBe(17)
     })
   })
 
@@ -111,8 +132,20 @@ describe('passives', () => {
 
   describe('describe()', () => {
     it('returns localized French strings with the palier value', () => {
-      expect(PASSIVES.VAMPIRISM.describe(1)).toContain('15 %')
       expect(PASSIVES.AEGIS.describe(3)).toContain('11 %')
+    })
+    // Tâche 9 : CRIT, PIERCE et VAMPIRISM n'ont plus de magnitude
+    // palier-dépendante — leur describe() est un texte fixe.
+    it('CRIT, PIERCE et VAMPIRISM décrivent un comportement fixe, sans pourcentage de palier', () => {
+      expect(PASSIVES.CRIT.describe(1)).toBe(
+        'Toutes les 3 attaques, inflige un coup critique garanti',
+      )
+      expect(PASSIVES.PIERCE.describe(1)).toBe(
+        'Le premier coup porté à chaque cible ignore toute sa défense',
+      )
+      expect(PASSIVES.VAMPIRISM.describe(1)).toBe(
+        'Sous 50 % de ses PV, son vol de vie est doublé',
+      )
     })
   })
 

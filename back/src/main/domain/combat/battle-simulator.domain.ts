@@ -431,17 +431,16 @@ interface StrikeContext {
 
 /**
  * Modificateurs de dégâts liés aux passifs, dans l'ordre : FURY et EXECUTION
- * (attaquant, conditionnés aux PV), CRIT (attaquant, aléatoire), puis RAMPART
- * (cible, atténuation plate). Chaque déclenchement est journalisé.
+ * (attaquant, conditionnés aux PV), puis RAMPART (cible, atténuation plate).
+ * Chaque déclenchement est journalisé.
  *
- * L'appel au PRNG de CRIT reste à la même position dans la séquence qu'avant
- * l'extraction : le déterminisme à seed égal en dépend.
+ * CRIT n'y figure plus : sa cadence garantie est câblée directement dans
+ * `resolveAttackOnTarget`, au point d'appel du tirage `critRate`.
  */
 function applyPassiveDamageModifiers(
   attacker: BattleUnit,
   target: BattleUnit,
   raw: number,
-  prng: () => number,
   log: LogEntry[],
 ): number {
   let out = raw
@@ -474,20 +473,6 @@ function applyPassiveDamageModifiers(
     })
   }
 
-  // CRIT (attacker) — chance d'infliger le double des dégâts.
-  if (
-    attacker.passiveKey === 'CRIT' &&
-    prng() < attacker.passiveValuePct / 100
-  ) {
-    out *= 2
-    log.push({
-      type: 'PASSIVE',
-      unitId: attacker.id,
-      passive: 'CRIT',
-      payload: { pct: attacker.passiveValuePct },
-    })
-  }
-
   // RAMPART (target) — atténuation plate des dégâts subis.
   if (target.passiveKey === 'RAMPART') {
     out *= 1 - target.passiveValuePct / 100
@@ -500,6 +485,80 @@ function applyPassiveDamageModifiers(
   }
 
   return out
+}
+
+/**
+ * PIERCE — le premier coup porté à chaque cible ignore toute sa DEF ; les
+ * suivants retombent sur armorPen. N'est appelée qu'après le roll d'esquive
+ * (AEGIS) : un coup esquivé n'est pas « porté » et ne consomme pas ce
+ * premier coup.
+ */
+function resolveEffectiveDef(
+  attacker: BattleUnit,
+  target: BattleUnit,
+  log: LogEntry[],
+): number {
+  const premierCoupPierce =
+    attacker.passiveKey === 'PIERCE' && !attacker.stacks[`pierce:${target.id}`]
+  if (!premierCoupPierce) {
+    return target.def * (1 - Math.min(100, attacker.armorPen) / 100)
+  }
+  attacker.stacks[`pierce:${target.id}`] = 1
+  log.push({
+    type: 'PASSIVE',
+    unitId: attacker.id,
+    passive: 'PIERCE',
+    payload: {},
+  })
+  return 0
+}
+
+/**
+ * Critique — le tirage prng() garde sa position historique dans la séquence
+ * et s'exécute systématiquement, même quand CRIT force déjà le critique par
+ * cadence (une attaque sur trois) : sinon la séquence PRNG diverge selon que
+ * l'unité porte le passif ou non, et le déterminisme à seed égal casse.
+ */
+function resolveCrit(
+  attacker: BattleUnit,
+  prng: () => number,
+  log: LogEntry[],
+): boolean {
+  const cadenceCrit =
+    attacker.passiveKey === 'CRIT' &&
+    (attacker.attackCount + 1) % attacker.passiveValuePct === 0
+  const tirageCrit = prng() < attacker.critRate / 100
+  if (cadenceCrit) {
+    log.push({
+      type: 'PASSIVE',
+      unitId: attacker.id,
+      passive: 'CRIT',
+      payload: {},
+    })
+  }
+  return cadenceCrit || tirageCrit
+}
+
+/**
+ * lifesteal (attaquant) — VAMPIRISM double ce lifesteal sous 50 % de PV de
+ * l'attaquant ; sans lifesteal de base (stuff), le passif ne fait rien — la
+ * synergie est voulue.
+ */
+function resolveLifesteal(attacker: BattleUnit, log: LogEntry[]): number {
+  if (
+    attacker.passiveKey !== 'VAMPIRISM' ||
+    attacker.currentHp >= attacker.maxHp / 2 ||
+    attacker.lifesteal <= 0
+  ) {
+    return attacker.lifesteal
+  }
+  log.push({
+    type: 'PASSIVE',
+    unitId: attacker.id,
+    passive: 'VAMPIRISM',
+    payload: {},
+  })
+  return attacker.lifesteal * 2
 }
 
 function resolveAttackOnTarget(
@@ -525,8 +584,9 @@ function resolveAttackOnTarget(
     }
   }
 
-  // armorPen (attaquant) — remplace l'ancien cas particulier du passif PIERCE.
-  const effectiveDef = target.def * (1 - Math.min(100, attacker.armorPen) / 100)
+  // armorPen (attaquant) — remplace l'ancien cas particulier du passif PIERCE ;
+  // PIERCE (tâche 9) y ajoute un premier coup à 0 DEF par cible.
+  const effectiveDef = resolveEffectiveDef(attacker, target, log)
 
   let raw = computeRawDamage(
     attacker.effectiveAtk * attackerAtkMult,
@@ -536,13 +596,12 @@ function resolveAttackOnTarget(
     patternMultiplier,
   )
 
-  // Critique — le tirage garde sa position historique dans la séquence PRNG.
-  const crit = prng() < attacker.critRate / 100
+  const crit = resolveCrit(attacker, prng, log)
   if (crit) {
     raw *= attacker.critDmg / 100
   }
 
-  raw = applyPassiveDamageModifiers(attacker, target, raw, prng, log)
+  raw = applyPassiveDamageModifiers(attacker, target, raw, log)
 
   // Roue élémentaire — avantage/désavantage de l'attaquant sur la cible.
   const elMult = elementMultiplier(
@@ -584,8 +643,10 @@ function resolveAttackOnTarget(
   }
 
   // lifesteal (attaquant) — soin sur les dégâts infligés, borné aux PV max.
-  if (attacker.lifesteal > 0 && final > 0) {
-    const soin = Math.round((final * attacker.lifesteal) / 100)
+  // VAMPIRISM (tâche 9) double ce lifesteal sous 50 % de PV de l'attaquant.
+  const lifestealEffectif = resolveLifesteal(attacker, log)
+  if (lifestealEffectif > 0 && final > 0) {
+    const soin = Math.round((final * lifestealEffectif) / 100)
     const avant = attacker.currentHp
     attacker.currentHp = Math.min(attacker.maxHp, attacker.currentHp + soin)
     const rendu = attacker.currentHp - avant
@@ -696,33 +757,6 @@ function finalizeDeath(unit: BattleUnit, log: LogEntry[]): void {
   log.push({ type: 'DEATH', unitId: unit.id })
 }
 
-function applyVampirism(
-  attacker: BattleUnit,
-  totalDamage: number,
-  log: LogEntry[],
-): void {
-  if (attacker.passiveKey !== 'VAMPIRISM' || !attacker.alive) {
-    return
-  }
-  if (totalDamage <= 0) {
-    return
-  }
-  const healed = Math.min(
-    Math.round((totalDamage * attacker.passiveValuePct) / 100),
-    attacker.maxHp - attacker.currentHp,
-  )
-  if (healed <= 0) {
-    return
-  }
-  attacker.currentHp += healed
-  log.push({
-    type: 'PASSIVE',
-    unitId: attacker.id,
-    passive: 'VAMPIRISM',
-    payload: { healed },
-  })
-}
-
 function processRiposteOnSurvivors(
   attacker: BattleUnit,
   targets: BattleUnit[],
@@ -764,7 +798,6 @@ function performStrike(ctx: StrikeContext): void {
   } = ctx
   const damages: DamageEntry[] = []
   const targetIds = targets.map((t) => t.id)
-  let totalNonDodgedDamage = 0
 
   for (const target of targets) {
     const entry = resolveAttackOnTarget(
@@ -777,16 +810,12 @@ function performStrike(ctx: StrikeContext): void {
       elementMults,
     )
     damages.push(entry)
-    if (!entry.dodged) {
-      totalNonDodgedDamage += entry.final
-    }
   }
 
   log.push({ type: 'ATTACK', attackerId: attacker.id, targetIds, damages })
 
   processRiposteOnSurvivors(attacker, targets, damages, log)
   processDeaths(targets, log)
-  applyVampirism(attacker, totalNonDodgedDamage, log)
   applyBloodlust(attacker, targets, log)
 }
 
