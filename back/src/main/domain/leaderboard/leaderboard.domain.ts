@@ -16,6 +16,11 @@ import type {
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 import type { EquipmentBonuses } from '../combat/combat-stats.domain'
 import { computeFinalStats } from '../combat/combat-stats.domain'
+import {
+  computeSetBonuses,
+  SET_BONUS_CONFIG_KEYS,
+  setBonusesFromConfig,
+} from '../equipment/set-bonuses'
 
 export class LeaderboardDomain implements ILeaderboardDomain {
   readonly #leaderboardRepository: ILeaderboardRepository
@@ -237,6 +242,7 @@ export class LeaderboardDomain implements ILeaderboardDomain {
           'combat.baseCritDmg',
           'combat.baseArmorPen',
           'combat.baseLifesteal',
+          ...SET_BONUS_CONFIG_KEYS,
         ),
       ])
     const userMap = new Map(users.map((u) => [u.id, u]))
@@ -248,6 +254,8 @@ export class LeaderboardDomain implements ILeaderboardDomain {
       armorPen: baseStatsCfg['combat.baseArmorPen'],
       lifesteal: baseStatsCfg['combat.baseLifesteal'],
     }
+    // Bonus de set — une seule reconstruction pour tout le calcul de classement.
+    const setDefs = setBonusesFromConfig(baseStatsCfg)
 
     const scored = candidateIds.map((userId) => {
       const palier = this.#leaderboardRepository.computePalierForProgress(
@@ -256,6 +264,8 @@ export class LeaderboardDomain implements ILeaderboardDomain {
       )
       const cards = combatCardsMap.get(userId) ?? []
       const combatPower = cards.reduce((sum, c) => {
+        // Bonus de set — comptés sur les pièces portées par CETTE carte.
+        const setBonus = computeSetBonuses(c.setKeys, setDefs)
         const stats = computeFinalStats({
           baseHp: c.card.baseHp,
           baseAtk: c.card.baseAtk,
@@ -265,7 +275,7 @@ export class LeaderboardDomain implements ILeaderboardDomain {
           palier: c.palier,
           variant: c.variant,
           baseStats,
-          equipment: c.equipmentBonuses as EquipmentBonuses[],
+          equipment: [...(c.equipmentBonuses as EquipmentBonuses[]), setBonus],
         })
         return sum + stats.hp + stats.atk + stats.def + stats.spd
       }, 0)

@@ -35,6 +35,8 @@ export type CombatTeamCardForPower = {
   variant: CardVariant
   card: { baseHp: number; baseAtk: number; baseDef: number; baseSpd: number }
   equipmentBonuses: Record<string, number | undefined>[]
+  /** Clés de set des pièces portées par cette carte — comptage par carte. */
+  setKeys: string[]
 }
 
 export interface ILeaderboardRepository {

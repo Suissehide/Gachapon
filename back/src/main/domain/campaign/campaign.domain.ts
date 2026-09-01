@@ -33,6 +33,13 @@ import {
   type SubstatRanges,
   substatRangesFromConfig,
 } from '../equipment/equipment-progression'
+import {
+  computeSetBonuses,
+  SET_BONUS_CONFIG_KEYS,
+  type SetDefinition,
+  type SetKey,
+  setBonusesFromConfig,
+} from '../equipment/set-bonuses'
 import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import { calculateLevel } from '../shared/xp'
@@ -379,10 +386,13 @@ export class CampaignDomain {
           'xp.slope',
           'xp.levelCap',
           'levelup.refillEnergy',
+          ...SET_BONUS_CONFIG_KEYS,
         ),
         this.#skillTreeRepository.getEffectsForUser(userId),
         this.#getSubstatRanges(),
       ])
+      // Bonus de set : une seule reconstruction par combat, jamais par carte.
+      const setDefs = setBonusesFromConfig(battleCfg)
       return this.#postgresOrm.executeWithTransactionClient(
         // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing, refactor deferred
         async (tx) => {
@@ -453,6 +463,7 @@ export class CampaignDomain {
             user.combatTeam,
             battleCfg['combat.defMitigationRef'],
             baseStats,
+            setDefs,
           )
           const enemyUnits = this.#buildEnemySimUnits(
             enemyTeamSchema.parse(stage.enemyTeam),
@@ -1106,6 +1117,7 @@ export class CampaignDomain {
     userCardIds: string[],
     defMitigationRef: number,
     baseStats: CombatStatsBaseline,
+    setDefs: Record<SetKey, SetDefinition>,
   ): Promise<SimulatorUnit[]> {
     const userCards = await tx.userCard.findMany({
       where: { id: { in: userCardIds }, userId },
@@ -1128,6 +1140,13 @@ export class CampaignDomain {
               ue.baseBoost,
             ) as EquipmentBonuses,
         )
+
+        // Bonus de set — comptés sur les pièces portées par CETTE carte.
+        const setBonus = computeSetBonuses(
+          u.equipment.map((ue) => ue.equipment.setKey),
+          setDefs,
+        )
+
         const stats = computeFinalStats({
           baseHp: u.card.baseHp,
           baseAtk: u.card.baseAtk,
@@ -1136,7 +1155,7 @@ export class CampaignDomain {
           level: u.level,
           palier: u.palier,
           variant: u.variant,
-          equipment: equipmentBonuses,
+          equipment: [...equipmentBonuses, setBonus],
           baseStats,
         })
         return {

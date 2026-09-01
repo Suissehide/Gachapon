@@ -251,7 +251,7 @@ export class LeaderboardRepository implements ILeaderboardRepository {
             level: true,
             substats: true,
             baseBoost: true,
-            equipment: { select: { bonuses: true } },
+            equipment: { select: { bonuses: true, setKey: true } },
           },
         },
       },
@@ -279,6 +279,7 @@ export class LeaderboardRepository implements ILeaderboardRepository {
               e.baseBoost,
             ) as Record<string, number | undefined>,
         ),
+        setKeys: uc.equipment.map((e) => e.equipment.setKey),
       })
       byUser.set(uc.userId, list)
     }

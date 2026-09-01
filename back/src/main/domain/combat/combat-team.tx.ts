@@ -6,6 +6,11 @@ import {
   effectiveEquipmentBonuses,
   type Substat,
 } from '../equipment/equipment-progression'
+import {
+  computeSetBonuses,
+  SET_BONUS_CONFIG_KEYS,
+  setBonusesFromConfig,
+} from '../equipment/set-bonuses'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import { computeFinalStats, type EquipmentBonuses } from './combat-stats.domain'
 import { getPassive } from './passives'
@@ -106,6 +111,7 @@ export class CombatTeamTx {
       'combat.baseCritDmg',
       'combat.baseArmorPen',
       'combat.baseLifesteal',
+      ...SET_BONUS_CONFIG_KEYS,
     )
     const baseStats = {
       critRate: cfg['combat.baseCritRate'],
@@ -113,6 +119,8 @@ export class CombatTeamTx {
       armorPen: cfg['combat.baseArmorPen'],
       lifesteal: cfg['combat.baseLifesteal'],
     }
+    // Bonus de set — une seule reconstruction pour tout l'aperçu d'équipe.
+    const setDefs = setBonusesFromConfig(cfg)
     const byId = new Map(userCards.map((uc) => [uc.id, uc]))
     return userCardIds
       .map((id) => byId.get(id))
@@ -127,6 +135,13 @@ export class CombatTeamTx {
               ue.baseBoost,
             ) as EquipmentBonuses,
         )
+
+        // Bonus de set — comptés sur les pièces portées par CETTE carte.
+        const setBonus = computeSetBonuses(
+          uc.equipment.map((ue) => ue.equipment.setKey),
+          setDefs,
+        )
+
         const stats = computeFinalStats({
           baseHp: uc.card.baseHp,
           baseAtk: uc.card.baseAtk,
@@ -135,7 +150,7 @@ export class CombatTeamTx {
           level: uc.level,
           palier: uc.palier,
           variant: uc.variant,
-          equipment: equipmentBonuses,
+          equipment: [...equipmentBonuses, setBonus],
           baseStats,
         })
         const passive = getPassive(uc.card.passiveKey)
