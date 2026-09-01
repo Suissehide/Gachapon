@@ -1553,6 +1553,60 @@ describe('passifs dynamiques — anciens bâtons de stats', () => {
     expect(declenchements).toHaveLength(1)
   })
 
+  // Trouvaille de relecture (round 1) : applyVigorSecondWind n'était câblée
+  // que dans resolveAttackOnTarget (chemin d'attaque directe). Un porteur de
+  // VIGOR empoisonné tôt, puis plus jamais attaqué directement, franchissait
+  // silencieusement 50 % de PV via les ticks de POISON (applyDotsToUnit) —
+  // pouvant même mourir — sans jamais bénéficier de son second souffle.
+  it('VIGOR se déclenche depuis un tick de poison, sans nouveau coup direct après l empoisonnement', () => {
+    const r = simulateBattle({
+      seed: 'vigor-poison',
+      teamA: [
+        makeUnit('A0', {
+          passiveKey: 'VIGOR',
+          hp: 1000,
+          atk: 0,
+          def: 0,
+          spd: 999,
+        }),
+      ],
+      teamB: [
+        makeUnit('B0', {
+          passiveKey: 'POISON',
+          hp: 500,
+          atk: 400,
+          def: 0,
+          spd: 1,
+          palier: 6,
+        }),
+      ],
+      timeoutTurns: 150,
+    })
+
+    const vigorIdx = r.log.findIndex(
+      (e) => e.type === 'PASSIVE' && e.passive === 'VIGOR',
+    )
+    expect(vigorIdx).toBeGreaterThanOrEqual(0)
+
+    // Un seul coup direct de B0 sur A0 avant le déclenchement de VIGOR :
+    // celui qui a posé le poison. Le déclenchement lui-même ne vient donc
+    // pas d'un second coup direct, mais bien d'un tick de poison.
+    const coupsDirectsAvant = r.log
+      .slice(0, vigorIdx)
+      .filter((e) => e.type === 'ATTACK' && e.attackerId === 'B0')
+    expect(coupsDirectsAvant.length).toBe(1)
+
+    // La cause immédiate est bien un tick de poison : applyDotsToUnit pousse
+    // son entrée PASSIVE POISON juste avant d'appeler applyVigorSecondWind,
+    // donc l'entrée juste avant VIGOR dans le log est ce tick, pas une
+    // entrée ATTACK.
+    const avantVigor = r.log[vigorIdx - 1]
+    expect(avantVigor?.type).toBe('PASSIVE')
+    if (avantVigor?.type === 'PASSIVE') {
+      expect(avantVigor.passive).toBe('POISON')
+    }
+  })
+
   it('HASTE offre un tour bonus toutes les 3 actions', () => {
     const avec = simulateBattle({
       seed: 'haste',
@@ -1568,15 +1622,55 @@ describe('passifs dynamiques — anciens bâtons de stats', () => {
     expect(avec.turns).toBeGreaterThan(sans.turns)
   })
 
-  it('FORTIFY n empile PAS sur un coup entièrement absorbé par un bouclier', () => {
-    // hitsTaken n'est incrémenté que si `final > 0` après absorption BULWARK
-    // (tâche 8). Un porteur de bouclier ne doit donc pas accumuler de défense
-    // tant que son bouclier encaisse tout.
-    // Fixture corrigée : le makeUnit par défaut (def: 10, mitigationRef: 100)
-    // ne rend PAS des dégâts nuls pour un atk de 1 — 100/(100+10) * 1 * variance
-    // reste ~0,82 à 1,0, arrondi à 1, donc FORTIFY empilerait quand même.
-    // Une DEF réellement écrasante (1 000 000) est nécessaire pour que le
-    // ratio de mitigation écrase la formule et arrondisse `final` à 0.
+  // Trouvaille de relecture (round 1) : le brief désignait HASTE comme le
+  // mécanisme le plus susceptible de menacer le déterminisme (remise de
+  // `gauge` au seuil, en dehors du tirage PRNG habituel de l'ordonnanceur).
+  // Le seul test permanent de déterminisme (compteurs de BattleUnit) ne
+  // porte aucun passif — celui-ci comble le trou avec HASTE des deux côtés.
+  it('HASTE reste déterministe à seed égal, tour bonus inclus', () => {
+    const build = () =>
+      simulateBattle({
+        seed: 'haste-determinisme',
+        teamA: [
+          makeUnit('A0', { passiveKey: 'HASTE', atk: 40, spd: 120 }),
+        ],
+        teamB: [
+          makeUnit('B0', {
+            passiveKey: 'HASTE',
+            hp: 5000,
+            atk: 20,
+            spd: 130,
+          }),
+        ],
+        timeoutTurns: 30,
+      })
+    const a = build()
+    const b = build()
+    expect(a.log).toEqual(b.log)
+    expect(a.turns).toBe(b.turns)
+    // Pas de boucle infinie / explosion d'actions bonus.
+    expect(a.turns).toBeLessThan(3000)
+    // Le tour bonus se déclenche bien dans cette fixture — sinon le test ne
+    // prouverait rien de spécifique à HASTE.
+    expect(
+      a.log.some((e) => e.type === 'PASSIVE' && e.passive === 'HASTE'),
+    ).toBe(true)
+  })
+
+  it('FORTIFY n empile PAS sur un coup dont les dégâts nets sont nuls (DEF écrasante)', () => {
+    // hitsTaken n'est incrémenté que si `final > 0` (tâche 8, garde partagée
+    // avec l'absorption BULWARK). FORTIFY hérite de la même garde : un coup
+    // dont les dégâts nets tombent à 0 ne doit pas faire empiler de défense.
+    //
+    // Fixture corrigée : le brief original visait un coup absorbé par
+    // BULWARK, mais `SimulatorUnit.passiveKey` est une valeur unique — un
+    // porteur de FORTIFY ne peut jamais porter BULWARK en même temps, donc
+    // cette fixture était structurellement impossible telle que décrite.
+    // On exerce la même garde `final > 0` autrement : le makeUnit par défaut
+    // (def: 10, mitigationRef: 100) ne rend PAS des dégâts nuls pour un atk
+    // de 1 — 100/(100+10) * 1 * variance reste ~0,82 à 1,0, arrondi à 1, donc
+    // FORTIFY empilerait quand même. Une DEF réellement écrasante
+    // (1 000 000) écrase le ratio de mitigation et arrondit `final` à 0.
     const r = simulateBattle({
       seed: 'fortify-shield',
       teamA: [

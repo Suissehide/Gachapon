@@ -545,11 +545,12 @@ function resolveLifesteal(attacker: BattleUnit, log: LogEntry[]): number {
 
 /**
  * FORTIFY — durcit à chaque coup encaissé, aligné sur `hitsTaken` (tâche 8) :
- * un coup entièrement absorbé par un bouclier BULWARK (`final` retombé à 0
- * après absorption) n'incrémente ni l'un ni l'autre — la garde `final > 0`
- * est partagée. Les dégâts sur la durée (BURN/POISON, appliqués par
- * `applyDotsToUnit` en fin de tour) ne passent pas par cette fonction non
- * plus : un tick de poison n'est pas « un coup encaissé », c'est voulu.
+ * un coup entièrement absorbé (`final` retombé à 0, ex. DEF écrasante) n'incrémente
+ * ni l'un ni l'autre — la garde `final > 0` est partagée. Les dégâts sur la
+ * durée (BURN/POISON, appliqués par `applyDotsToUnit` en fin de tour) ne
+ * passent pas par cette fonction non plus : un tick de poison n'est pas
+ * « un coup encaissé », c'est voulu — contrairement à VIGOR (ci-dessous),
+ * qui surveille un seuil de PV et se moque de la cause de la perte.
  */
 function applyFortifyStack(
   target: BattleUnit,
@@ -574,7 +575,14 @@ function applyFortifyStack(
   })
 }
 
-/** VIGOR — second souffle, une seule fois par combat, au passage sous 50 % de PV. */
+/**
+ * VIGOR — second souffle, une seule fois par combat, au passage sous 50 % de
+ * PV. Contrairement à FORTIFY, VIGOR surveille un SEUIL DE PV, pas « un coup
+ * encaissé » — il doit donc se déclencher quelle que soit la cause de la
+ * perte : appelée à la fois depuis `resolveAttackOnTarget` (dégâts directs)
+ * et depuis `applyDotsToUnit` (BURN/POISON), avant tout `finalizeDeath` pour
+ * qu'un second souffle sur un tick fatal ait une chance de sauver l'unité.
+ */
 function applyVigorSecondWind(target: BattleUnit, log: LogEntry[]): void {
   if (
     target.passiveKey !== 'VIGOR' ||
@@ -1023,7 +1031,14 @@ function applyRegenToUnit(u: BattleUnit, log: LogEntry[]): void {
   })
 }
 
-/** BURN / POISON pour une seule unité : dégâts, décrément des durées, mort éventuelle. */
+/**
+ * BURN / POISON pour une seule unité : dégâts, décrément des durées, mort
+ * éventuelle. VIGOR est consulté ici aussi (pas seulement au fil de l'épée
+ * dans `resolveAttackOnTarget`) : un porteur empoisonné qui n'est plus
+ * attaqué directement doit quand même bénéficier de son second souffle.
+ * Appelé AVANT `finalizeDeath` : un second souffle qui arrive après la mort
+ * ne sert à rien.
+ */
 function applyDotsToUnit(u: BattleUnit, log: LogEntry[]): void {
   if (!u.alive || u.dots.length === 0) {
     return
@@ -1044,6 +1059,7 @@ function applyDotsToUnit(u: BattleUnit, log: LogEntry[]): void {
   u.dots = u.dots
     .map((d) => ({ ...d, turnsLeft: d.turnsLeft - 1 }))
     .filter((d) => d.turnsLeft > 0)
+  applyVigorSecondWind(u, log)
   if (u.currentHp <= 0) {
     finalizeDeath(u, log)
   }
