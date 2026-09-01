@@ -57,12 +57,21 @@ export function useCardEquipmentBonuses(userCardId: string): StatBonuses {
 }
 
 /**
- * PV/ATQ/DEF/VIT d'une carte, bonus de set (2/4 pièces) inclus — usage
- * dédié à `CombatPanel` (la fiche de carte). `useCardEquipmentBonuses`
- * reste inchangé pour ses autres consommateurs (tri de collection, calcul
- * de puissance d'équipe dans `TeamEditorPopup`/`collection.tsx`/
- * `CollectionCard.tsx`) : l'absence de bonus de set y est un écart
- * préexistant, hors périmètre de cette carte.
+ * PV/ATQ/DEF/VIT d'une carte, bonus de set (2/4 pièces) inclus — utilisé
+ * partout où ces stats sont affichées côte à côte avec `CombatPanel` dans la
+ * même fenêtre : `CombatPanel` lui-même et `CardViewModal` (la face de
+ * carte, `CardDisplay`, rendue juste au-dessus de `CombatPanel`). Sans ce
+ * chemin partagé, les deux blocs afficheraient deux ATQ différentes pour la
+ * même carte, visibles simultanément.
+ *
+ * `useCardEquipmentBonuses` reste inchangé pour ses autres consommateurs —
+ * `CollectionCard` (grille de collection) et `TeamEditorPopup`/
+ * `collection.tsx` (tri par puissance, badge de puissance) : ces trois-là ne
+ * rendent jamais leurs stats à côté de `CombatPanel` (la grille disparaît
+ * derrière le fond opaque/flouté de `CardViewModal` dès qu'il s'ouvre ;
+ * `TeamEditorPopup` vit sur la route campagne, pas la route collection).
+ * L'absence de bonus de set y est donc un écart préexistant, mais jamais vu
+ * côte à côte par le joueur — hors périmètre de cette carte.
  */
 export function useCardClassicStatsWithSetBonuses(
   userCardId: string,

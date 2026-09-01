@@ -324,10 +324,15 @@ export function activeSetsForCard(
 
 /**
  * Replie les bonus de set (2/4 pièces) dans des bonus PV/ATQ/DEF/VIT déjà
- * agrégés (catalogue + substats). Fonction pure dédiée à `CombatPanel` — les
- * autres consommateurs de `aggregateEquipmentBonuses`/`useCardEquipmentBonuses`
- * (tri de collection, puissance d'équipe) ne l'utilisent pas : leur écart
- * préexistant avec le combat réel est hors périmètre de cette carte.
+ * agrégés (catalogue + substats). Fonction pure utilisée par
+ * `useCardClassicStatsWithSetBonuses`, elle-même consommée par `CombatPanel`
+ * et `CardViewModal` — les deux blocs qui affichent PV/ATQ/DEF/VIT côte à
+ * côte dans la même fenêtre. Les autres consommateurs de
+ * `aggregateEquipmentBonuses`/`useCardEquipmentBonuses` (tri de collection
+ * dans `CollectionCard`/`collection.tsx`, puissance d'équipe dans
+ * `TeamEditorPopup`) ne l'utilisent pas : leur écart préexistant avec le
+ * combat réel est hors périmètre de cette carte, et jamais vu côte à côte
+ * avec `CombatPanel`.
  */
 export function withCardSetBonuses(
   bonuses: StatBonuses,

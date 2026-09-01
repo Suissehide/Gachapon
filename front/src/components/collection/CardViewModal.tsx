@@ -8,7 +8,7 @@ import {
   ELEMENT_LABELS,
 } from '../../constants/card.constant.ts'
 import { describePassive } from '../../constants/passives.constant.ts'
-import { useCardEquipmentBonuses } from '../../queries/useEquipment.ts'
+import { useCardClassicStatsWithSetBonuses } from '../../queries/useEquipment.ts'
 import { useSetWishlist, useWishlist } from '../../queries/useWishlist.ts'
 import type { DisplayEntry } from '../../routes/_authenticated/collection.tsx'
 import { finalStatWithBonuses } from '../../utils/cardStats.ts'
@@ -77,7 +77,10 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
   // Hooks must be called unconditionally — before any early return.
   const { data: wishlist } = useWishlist()
   const { mutate: setWishlist, isPending: settingWishlist } = useSetWishlist()
-  const bonuses = useCardEquipmentBonuses(entry?.userCard?.id ?? '')
+  // Bonus de set (2/4 pièces) inclus : la face de carte doit annoncer les
+  // mêmes PV/ATQ/DEF/VIT que CombatPanel, affiché juste en dessous dans la
+  // même fenêtre — voir useCardClassicStatsWithSetBonuses.
+  const bonuses = useCardClassicStatsWithSetBonuses(entry?.userCard?.id ?? '')
 
   if (!entry) {
     return null
