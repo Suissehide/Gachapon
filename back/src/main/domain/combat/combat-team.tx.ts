@@ -2,17 +2,13 @@ import Boom from '@hapi/boom'
 
 import type { IocContainer } from '../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
+import type { Substat } from '../equipment/equipment-progression'
 import {
-  effectiveEquipmentBonuses,
-  type Substat,
-} from '../equipment/equipment-progression'
-import {
-  computeSetBonuses,
   SET_BONUS_CONFIG_KEYS,
   setBonusesFromConfig,
 } from '../equipment/set-bonuses'
 import { retryOnSerialization } from '../shared/retry-serialization'
-import { computeFinalStats, type EquipmentBonuses } from './combat-stats.domain'
+import { computeEquippedCardStats } from './equipped-card-stats'
 import { getPassive } from './passives'
 
 const MAX_TEAM_SIZE = 3
@@ -126,23 +122,7 @@ export class CombatTeamTx {
       .map((id) => byId.get(id))
       .filter((uc): uc is NonNullable<typeof uc> => uc != null)
       .map((uc) => {
-        const equipmentBonuses: EquipmentBonuses[] = uc.equipment.map(
-          (ue) =>
-            effectiveEquipmentBonuses(
-              (ue.equipment.bonuses ?? {}) as Record<string, number>,
-              ue.level,
-              (ue.substats ?? []) as unknown as Substat[],
-              ue.baseBoost,
-            ) as EquipmentBonuses,
-        )
-
-        // Bonus de set — comptés sur les pièces portées par CETTE carte.
-        const setBonus = computeSetBonuses(
-          uc.equipment.map((ue) => ue.equipment.setKey),
-          setDefs,
-        )
-
-        const stats = computeFinalStats({
+        const stats = computeEquippedCardStats({
           baseHp: uc.card.baseHp,
           baseAtk: uc.card.baseAtk,
           baseDef: uc.card.baseDef,
@@ -150,7 +130,14 @@ export class CombatTeamTx {
           level: uc.level,
           palier: uc.palier,
           variant: uc.variant,
-          equipment: [...equipmentBonuses, setBonus],
+          pieces: uc.equipment.map((ue) => ({
+            bonuses: (ue.equipment.bonuses ?? {}) as Record<string, number>,
+            level: ue.level,
+            substats: (ue.substats ?? []) as unknown as Substat[],
+            baseBoost: ue.baseBoost,
+            setKey: ue.equipment.setKey,
+          })),
+          setDefs,
           baseStats,
         })
         const passive = getPassive(uc.card.passiveKey)

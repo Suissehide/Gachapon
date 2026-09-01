@@ -21,6 +21,13 @@ ALTER TYPE "EquipmentSlot" ADD VALUE 'EMBER';
 ALTER TYPE "EquipmentSlot" ADD VALUE 'PRISM';
 ALTER TYPE "EquipmentSlot" ADD VALUE 'MONOLITH';
 
+-- Le catalogue est integralement regenere par prisma/seed/equipment.ts
+-- (4 sets x 7 slots x 5 raretes). setKey etant NOT NULL sans defaut, la
+-- colonne ne peut pas s'ajouter sur une table non vide : on purge d'abord.
+-- UserEquipment part aussi, sa cle etrangere vers Equipment etant en Restrict.
+DELETE FROM "UserEquipment";
+DELETE FROM "Equipment";
+
 -- AlterTable
 ALTER TABLE "Equipment" ADD COLUMN     "setKey" "EquipmentSet" NOT NULL;
 

@@ -14,7 +14,6 @@ import {
 import {
   type CombatStatsBaseline,
   computeFinalStats,
-  type EquipmentBonuses,
   mitigationRefFor,
 } from '../combat/combat-stats.domain'
 import {
@@ -24,8 +23,8 @@ import {
   rollFirstClearCardRarity,
   rollFirstClearEquipmentRarity,
 } from '../combat/equipment-drop.domain'
+import { computeEquippedCardStats } from '../combat/equipped-card-stats'
 import {
-  effectiveEquipmentBonuses,
   INITIAL_SUBSTATS_BY_RARITY,
   rollInitialSubstats,
   SUBSTAT_RANGE_CONFIG_KEYS,
@@ -34,7 +33,6 @@ import {
   substatRangesFromConfig,
 } from '../equipment/equipment-progression'
 import {
-  computeSetBonuses,
   SET_BONUS_CONFIG_KEYS,
   type SetDefinition,
   type SetKey,
@@ -1131,23 +1129,7 @@ export class CampaignDomain {
       .map((id) => byId.get(id))
       .filter((u): u is NonNullable<typeof u> => u != null)
       .map((u, idx) => {
-        const equipmentBonuses: EquipmentBonuses[] = u.equipment.map(
-          (ue) =>
-            effectiveEquipmentBonuses(
-              (ue.equipment.bonuses ?? {}) as Record<string, number>,
-              ue.level,
-              (ue.substats ?? []) as unknown as Substat[],
-              ue.baseBoost,
-            ) as EquipmentBonuses,
-        )
-
-        // Bonus de set — comptés sur les pièces portées par CETTE carte.
-        const setBonus = computeSetBonuses(
-          u.equipment.map((ue) => ue.equipment.setKey),
-          setDefs,
-        )
-
-        const stats = computeFinalStats({
+        const stats = computeEquippedCardStats({
           baseHp: u.card.baseHp,
           baseAtk: u.card.baseAtk,
           baseDef: u.card.baseDef,
@@ -1155,7 +1137,14 @@ export class CampaignDomain {
           level: u.level,
           palier: u.palier,
           variant: u.variant,
-          equipment: [...equipmentBonuses, setBonus],
+          pieces: u.equipment.map((ue) => ({
+            bonuses: (ue.equipment.bonuses ?? {}) as Record<string, number>,
+            level: ue.level,
+            substats: (ue.substats ?? []) as unknown as Substat[],
+            baseBoost: ue.baseBoost,
+            setKey: ue.equipment.setKey,
+          })),
+          setDefs,
           baseStats,
         })
         return {
