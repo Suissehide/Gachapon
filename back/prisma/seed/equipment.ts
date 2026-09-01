@@ -1,35 +1,43 @@
-import type { PrismaClient } from '../../src/generated/client'
+import {
+  CardRarity,
+  EquipmentSet,
+  EquipmentSlot,
+  type PrismaClient,
+} from '../../src/generated/client'
 import type { EquipmentBonuses } from '../../src/main/domain/combat/combat-stats.domain'
 
-type Slot =
-  | 'WEAPON'
-  | 'ARMOR'
-  | 'ACCESSORY'
-  | 'SAP'
-  | 'EMBER'
-  | 'PRISM'
-  | 'MONOLITH'
-type SetKey = 'FUREUR' | 'PRECISION' | 'PERCEE' | 'SANGSUE'
-type Rarity = 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
-
-const SLOTS: Slot[] = [
-  'WEAPON',
-  'ARMOR',
-  'ACCESSORY',
-  'SAP',
-  'EMBER',
-  'PRISM',
-  'MONOLITH',
+// Dérivés des enums Prisma plutôt que redupliqués en unions littérales — le
+// même motif de duplication a déjà été corrigé côté domain/schema (commit
+// « derive slot types from the Prisma enum instead of duplicating »).
+const SLOTS: EquipmentSlot[] = [
+  EquipmentSlot.WEAPON,
+  EquipmentSlot.ARMOR,
+  EquipmentSlot.ACCESSORY,
+  EquipmentSlot.SAP,
+  EquipmentSlot.EMBER,
+  EquipmentSlot.PRISM,
+  EquipmentSlot.MONOLITH,
 ]
-const SETS: SetKey[] = ['FUREUR', 'PRECISION', 'PERCEE', 'SANGSUE']
-const RARITIES: Rarity[] = ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY']
+const SETS: EquipmentSet[] = [
+  EquipmentSet.FUREUR,
+  EquipmentSet.PRECISION,
+  EquipmentSet.PERCEE,
+  EquipmentSet.SANGSUE,
+]
+const RARITIES: CardRarity[] = [
+  CardRarity.COMMON,
+  CardRarity.UNCOMMON,
+  CardRarity.RARE,
+  CardRarity.EPIC,
+  CardRarity.LEGENDARY,
+]
 
 /**
  * Le slot dicte la stat principale — c'est ce qui rend les slots distincts
  * les uns des autres. Le set est orthogonal (§5 de la spec) : il ne joue que
  * sur les bonus de set (2/4 pièces), pas sur la stat de base de la pièce.
  */
-const SLOT_MAIN_STAT: Record<Slot, keyof EquipmentBonuses> = {
+const SLOT_MAIN_STAT: Record<EquipmentSlot, keyof EquipmentBonuses> = {
   WEAPON: 'atkFlat',
   ARMOR: 'defFlat',
   ACCESSORY: 'spdFlat',
@@ -47,7 +55,7 @@ const SLOT_MAIN_STAT: Record<Slot, keyof EquipmentBonuses> = {
  * Point de calibrage ouvert : ces valeurs sont un point de départ plausible,
  * à simuler avant de figer (§12 de la spec).
  */
-const MAIN_STAT_SCALE: Record<string, Record<Rarity, number>> = {
+const MAIN_STAT_SCALE: Record<string, Record<CardRarity, number>> = {
   atkFlat: { COMMON: 5, UNCOMMON: 8, RARE: 15, EPIC: 25, LEGENDARY: 40 },
   defFlat: { COMMON: 8, UNCOMMON: 13, RARE: 25, EPIC: 43, LEGENDARY: 70 },
   spdFlat: { COMMON: 3, UNCOMMON: 5, RARE: 8, EPIC: 12, LEGENDARY: 18 },
@@ -57,7 +65,7 @@ const MAIN_STAT_SCALE: Record<string, Record<Rarity, number>> = {
   armorPenPct: { COMMON: 3, UNCOMMON: 5, RARE: 9, EPIC: 14, LEGENDARY: 22 },
 }
 
-const RARITY_DROP_WEIGHT: Record<Rarity, number> = {
+const RARITY_DROP_WEIGHT: Record<CardRarity, number> = {
   COMMON: 50,
   UNCOMMON: 25,
   RARE: 10,
@@ -65,14 +73,14 @@ const RARITY_DROP_WEIGHT: Record<Rarity, number> = {
   LEGENDARY: 1,
 }
 
-const SET_LABEL: Record<SetKey, string> = {
+const SET_LABEL: Record<EquipmentSet, string> = {
   FUREUR: 'Fureur',
   PRECISION: 'Précision',
   PERCEE: 'Percée',
   SANGSUE: 'Sangsue',
 }
 
-const SLOT_LABEL: Record<Slot, string> = {
+const SLOT_LABEL: Record<EquipmentSlot, string> = {
   WEAPON: 'Arme',
   ARMOR: 'Armure',
   ACCESSORY: 'Accessoire',
@@ -82,7 +90,7 @@ const SLOT_LABEL: Record<Slot, string> = {
   MONOLITH: 'Monolithe',
 }
 
-const RARITY_LABEL: Record<Rarity, string> = {
+const RARITY_LABEL: Record<CardRarity, string> = {
   COMMON: 'commune',
   UNCOMMON: 'peu commune',
   RARE: 'rare',
@@ -92,9 +100,9 @@ const RARITY_LABEL: Record<Rarity, string> = {
 
 export interface EquipmentSeedRow {
   name: string
-  slot: Slot
-  setKey: SetKey
-  rarity: Rarity
+  slot: EquipmentSlot
+  setKey: EquipmentSet
+  rarity: CardRarity
   bonuses: EquipmentBonuses
   dropWeight: number
 }
