@@ -12,8 +12,8 @@ import {
   simulateBattle,
 } from '../combat/battle-simulator.domain'
 import {
-  computeFinalStats,
   type CombatStatsBaseline,
+  computeFinalStats,
   type EquipmentBonuses,
   mitigationRefFor,
 } from '../combat/combat-stats.domain'
