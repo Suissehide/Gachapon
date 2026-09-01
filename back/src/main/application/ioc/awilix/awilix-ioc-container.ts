@@ -29,6 +29,7 @@ import { SkillResetDomain } from '../../../domain/skills/skill-reset.domain'
 import { SkillTreeDomain } from '../../../domain/skills/skill-tree.domain'
 import { StreakDomain } from '../../../domain/streak/streak.domain'
 import { TeamDomain } from '../../../domain/team/team.domain'
+import { TowerDomain } from '../../../domain/tower/tower.domain'
 import { UserDomain } from '../../../domain/user/user.domain'
 import { WishlistDomain } from '../../../domain/wishlist/wishlist.domain'
 import { JwtService } from '../../../infra/auth/jwt.service'
@@ -130,6 +131,7 @@ class AwilixIocContainer {
     this.#reg('campaignDomain', asClass(CampaignDomain).singleton())
     this.#reg('equipmentDomain', asClass(EquipmentDomain).singleton())
     this.#reg('towerRepository', asClass(TowerRepository).singleton())
+    this.#reg('towerDomain', asClass(TowerDomain).singleton())
     this.#reg('teamRepository', asClass(TeamRepository).singleton())
     this.#reg('teamMemberRepository', asClass(TeamMemberRepository).singleton())
     this.#reg('invitationRepository', asClass(InvitationRepository).singleton())

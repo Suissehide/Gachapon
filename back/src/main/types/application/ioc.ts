@@ -8,6 +8,7 @@ import type { CombatTeamTx } from '../../domain/combat/combat-team.tx'
 import type { CombatPointsTx } from '../../domain/combat-points/combat-points.tx'
 import type { EquipmentDomain } from '../../domain/equipment/equipment.domain'
 import type { AdminSkillTreeDomain } from '../../domain/skills/admin-skill-tree.domain'
+import type { TowerDomain } from '../../domain/tower/tower.domain'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { ApiKeyRepository } from '../../infra/orm/repositories/api-key.repository'
 import type { CardRepository } from '../../infra/orm/repositories/card.repository'
@@ -101,6 +102,7 @@ export interface IocContainer {
   readonly campaignDomain: CampaignDomain
   readonly equipmentDomain: EquipmentDomain
   readonly towerRepository: ITowerRepository
+  readonly towerDomain: TowerDomain
   readonly teamRepository: TeamRepository
   readonly teamMemberRepository: TeamMemberRepository
   readonly invitationRepository: InvitationRepository
