@@ -27,8 +27,14 @@ NOUVEAUX_LIBELLES = {
 }
 
 apply = '--apply' in sys.argv
-shutil.copy(XLSX, COPIE)
-wb = openpyxl.load_workbook(COPIE, data_only=False)
+# La copie n'est écrite sur disque qu'en mode --apply : un essai à blanc
+# charge l'original en lecture seule (jamais réécrit) pour que le message
+# « copie non sauvegardée » soit vrai (même correctif que rebalance-cards.py).
+if apply:
+    shutil.copy(XLSX, COPIE)
+    wb = openpyxl.load_workbook(COPIE, data_only=False)
+else:
+    wb = openpyxl.load_workbook(XLSX, data_only=False)
 ws = wb['Production']
 entetes = [c.value for c in ws[3]]
 col_passif = entetes.index('Passif') + 1
