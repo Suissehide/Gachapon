@@ -1566,6 +1566,45 @@ describe('passifs dynamiques — collision avec les stats', () => {
     ).toBe(true)
   })
 
+  // Relecture round 1 : le test ci-dessus ne prouve que le déclenchement
+  // (présence du log PASSIVE), pas la magnitude du soin. Test différentiel :
+  // même fixture, même seed, avec et sans le passif. VAMPIRISM (resolveLifesteal)
+  // ne consomme aucun tirage prng() — c'est un pur calcul — donc les dégâts
+  // infligés et le nombre de soins sont rigoureusement identiques entre les
+  // deux parties ; seule la magnitude de chaque soin doit différer, d'un
+  // facteur exactement 2.
+  it('VAMPIRISM double effectivement le MONTANT du soin, pas seulement le déclenchement', () => {
+    const lifesteal = 10
+    const build = (passiveKey: string | null): SimulatorInput => ({
+      seed: 'vamp-magnitude',
+      teamA: [makeUnit('A0', { hp: 1000, atk: 200, lifesteal, passiveKey })],
+      teamB: [makeUnit('B0', { hp: 100000, atk: 300, spd: 300 })],
+      timeoutTurns: 10,
+    })
+
+    const withVamp = simulateBattle(build('VAMPIRISM'))
+    const withoutVamp = simulateBattle(build(null))
+
+    const healsWith = withVamp.log.filter(
+      (e) => e.type === 'HEAL' && e.unitId === 'A0',
+    )
+    const healsWithout = withoutVamp.log.filter(
+      (e) => e.type === 'HEAL' && e.unitId === 'A0',
+    )
+
+    expect(healsWith.length).toBeGreaterThan(0)
+    expect(healsWith.length).toBe(healsWithout.length)
+
+    for (let i = 0; i < healsWith.length; i++) {
+      const avecPassif = healsWith[i]
+      const sansPassif = healsWithout[i]
+      if (avecPassif?.type !== 'HEAL' || sansPassif?.type !== 'HEAL') {
+        throw new Error('structure de log inattendue')
+      }
+      expect(avecPassif.amount).toBe(sansPassif.amount * 2)
+    }
+  })
+
   it('VAMPIRISM ne fait rien sans lifesteal — synergie stuff obligatoire', () => {
     const r = simulateBattle({
       seed: 'vamp0',
