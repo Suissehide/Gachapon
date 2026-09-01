@@ -79,6 +79,15 @@ function applyEntry(entry: BattleLogEntry, units: SceneUnit[]): SceneUnit[] {
         u.id === unitId ? { ...u, alive: true, currentHp: hp } : u,
       )
     }
+    case 'HEAL': {
+      const unitId = entry.unitId as string
+      const amount = entry.amount as number
+      return units.map((u) =>
+        u.id === unitId
+          ? { ...u, currentHp: Math.min(u.maxHp, u.currentHp + amount) }
+          : u,
+      )
+    }
     default:
       return units
   }
@@ -266,6 +275,20 @@ export function BattleScene({
     [pushBadge, pushFloat],
   )
 
+  const runHealEntry = useCallback(
+    (entry: BattleLogEntry, delay: number) => {
+      const unitId = entry.unitId as string
+      const amount = entry.amount as number
+      if (amount > 0) {
+        pushFloat(unitId, amount, 'heal')
+      }
+      setUnits((cur) => applyEntry(entry, cur))
+      const t = setTimeout(() => setLogIndex((i) => i + 1), delay / 2)
+      return () => clearTimeout(t)
+    },
+    [pushFloat],
+  )
+
   const runGenericEntry = useCallback(
     (entry: BattleLogEntry, delay: number) => {
       setUnits((cur) => applyEntry(entry, cur))
@@ -298,6 +321,9 @@ export function BattleScene({
     if (entry.type === 'PASSIVE') {
       return runPassiveEntry(entry, delay)
     }
+    if (entry.type === 'HEAL') {
+      return runHealEntry(entry, delay)
+    }
     return runGenericEntry(entry, delay)
   }, [
     logIndex,
@@ -307,6 +333,7 @@ export function BattleScene({
     onComplete,
     runAttackEntry,
     runPassiveEntry,
+    runHealEntry,
     runGenericEntry,
   ])
 
