@@ -68,7 +68,7 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     name: 'Second souffle',
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return `La première fois que ses PV passent sous 50 %, il récupère ${20 + 4 * p} % de ses PV max.`
+      return `La première fois que ses PV passent sous 50 % (y compris sur un coup normalement fatal, alors annulé), il récupère ${20 + 4 * p} % de ses PV max.`
     },
   },
   HASTE: {

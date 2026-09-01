@@ -151,7 +151,7 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
       return { valuePct: 20 + 4 * p } // part des PV max rendue
     },
     describe(palier) {
-      return `La première fois que ses PV passent sous 50 %, il récupère ${20 + 4 * clampPalier(palier)} % de ses PV max`
+      return `La première fois que ses PV passent sous 50 % (y compris sur un coup normalement fatal, alors annulé), il récupère ${20 + 4 * clampPalier(palier)} % de ses PV max`
     },
   },
   HASTE: {

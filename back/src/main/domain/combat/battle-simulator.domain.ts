@@ -601,6 +601,14 @@ function applyFortifyStack(
  * perte : appelée à la fois depuis `resolveAttackOnTarget` (dégâts directs)
  * et depuis `applyDotsToUnit` (BURN/POISON), avant tout `finalizeDeath` pour
  * qu'un second souffle sur un tick fatal ait une chance de sauver l'unité.
+ *
+ * Effet de bord voulu : un coup qui amène `currentHp` à 0 ne fait PAS mourir
+ * l'unité sur le coup — `target.alive` n'est mis à `false` que par
+ * `finalizeDeath`, appelé APRÈS cette fonction sur les deux chemins d'appel
+ * (voir `resolveAttackOnTarget` et `applyDotsToUnit`). La garde `!target.alive`
+ * ci-dessous est donc encore fausse à 0 PV : VIGOR se déclenche, soigne, et le
+ * coup mortel est purement et simplement annulé — ce n'est pas une simple
+ * marge de survie « de justesse », c'est une négation complète du coup fatal.
  */
 function applyVigorSecondWind(target: BattleUnit, log: LogEntry[]): void {
   if (
