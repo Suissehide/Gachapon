@@ -470,6 +470,20 @@ function applyPassiveDamageModifiers(
 }
 
 /**
+ * FORTIFY — multiplicateur de DEF composé au moment des dégâts, à partir des
+ * charges accumulées par `applyFortifyStack`. Additif (+X % par charge),
+ * symétrique de `resolveEmpowerMult` pour l'ATQ — ne touche jamais
+ * `target.def`.
+ */
+function resolveFortifyMult(target: BattleUnit): number {
+  const charges = target.stacks.fortify ?? 0
+  if (target.passiveKey !== 'FORTIFY' || charges <= 0) {
+    return 1
+  }
+  return 1 + (PASSIVES.FORTIFY.compute(target.palier).valuePct * charges) / 100
+}
+
+/**
  * PIERCE — le premier coup porté à chaque cible ignore toute sa DEF ; les
  * suivants retombent sur armorPen. N'est appelée qu'après le roll d'esquive
  * (AEGIS) : un coup esquivé n'est pas « porté » et ne consomme pas ce
@@ -483,7 +497,8 @@ function resolveEffectiveDef(
   const premierCoupPierce =
     attacker.passiveKey === 'PIERCE' && !attacker.stacks[`pierce:${target.id}`]
   if (!premierCoupPierce) {
-    return target.def * (1 - Math.min(100, attacker.armorPen) / 100)
+    const armorPenPct = Math.max(0, Math.min(100, attacker.armorPen))
+    return target.def * resolveFortifyMult(target) * (1 - armorPenPct / 100)
   }
   attacker.stacks[`pierce:${target.id}`] = 1
   log.push({
@@ -551,6 +566,12 @@ function resolveLifesteal(attacker: BattleUnit, log: LogEntry[]): number {
  * passent pas par cette fonction non plus : un tick de poison n'est pas
  * « un coup encaissé », c'est voulu — contrairement à VIGOR (ci-dessous),
  * qui surveille un seuil de PV et se moque de la cause de la perte.
+ *
+ * On ne stocke que les charges, jamais `target.def` directement : comme
+ * EMPOWER pour l'ATQ (voir `applyEmpowerStack`), le multiplicateur se
+ * compose au moment où la DEF est utilisée, dans `resolveEffectiveDef` via
+ * `resolveFortifyMult`. C'est ce qui rend l'empilement additif (+X % par
+ * charge) plutôt que géométrique — conforme au texte du passif.
  */
 function applyFortifyStack(
   target: BattleUnit,
@@ -565,8 +586,6 @@ function applyFortifyStack(
     return
   }
   target.stacks.fortify = (target.stacks.fortify ?? 0) + 1
-  const parCharge = PASSIVES.FORTIFY.compute(target.palier).valuePct
-  target.def *= 1 + parCharge / 100
   log.push({
     type: 'PASSIVE',
     unitId: target.id,

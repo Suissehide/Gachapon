@@ -1697,6 +1697,81 @@ describe('passifs dynamiques — anciens bâtons de stats', () => {
     expect(charges.length).toBe(MAX_CHARGES)
   })
 
+  it('FORTIFY empile en ADDITIF (+X % par charge), pas en géométrique', () => {
+    // Les deux tests FORTIFY ci-dessus ne vérifient que le nombre de
+    // charges et la garde à zéro dégât : ils passeraient tout aussi bien
+    // avec `target.def *= 1 + pct/100` (géométrique, le bug) qu'avec la
+    // composition additive attendue par le texte du passif et par son
+    // frère EMPOWER (`resolveEmpowerMult`). On mesure ici la magnitude.
+    //
+    // Palier 6 : +16 % de DEF par charge (4 + 2*palier).
+    //   Additif attendu   : 5 charges -> ×1.8   (1 + 5*16/100)
+    //   Géométrique (bug) : 5 charges -> ×(1.16)^5 ≈ ×2.100
+    // Écart de 16,7 % entre les deux hypothèses — largement au-dessus du
+    // bruit de la variance de dégâts (±10 %, formule dans computeRawDamage),
+    // qu'on efface encore par moyenne sur plusieurs coups à charge pleine.
+    const palier = 6
+    const defBase = 200
+    const mitigationRef = 100
+    const atk = 1000
+    const r = simulateBattle({
+      seed: 'fortify-magnitude',
+      teamA: [
+        makeUnit('A0', {
+          passiveKey: 'FORTIFY',
+          hp: 1_000_000,
+          atk: 1,
+          def: defBase,
+          mitigationRef,
+          palier,
+          critRate: 0,
+          spd: 1,
+        }),
+      ],
+      teamB: [
+        makeUnit('B0', {
+          hp: 1_000_000,
+          atk,
+          def: 10,
+          spd: 1000,
+          critRate: 0,
+        }),
+      ],
+      timeoutTurns: 60,
+    })
+
+    const hitsOnA0: number[] = []
+    for (const e of r.log) {
+      if (e.type === 'ATTACK' && e.attackerId === 'B0') {
+        for (const d of e.damages) {
+          if (d.id === 'A0' && !d.dodged) {
+            hitsOnA0.push(d.final)
+          }
+        }
+      }
+    }
+
+    // Les 5 premiers coups sur A0 correspondent à la montée en charge
+    // (0 -> 5, l'incrément ayant lieu après le coup) ; on ne moyenne que
+    // les coups qui voient déjà les 5 charges posées.
+    const pleineCharge = hitsOnA0.slice(5, 25)
+    expect(pleineCharge.length).toBeGreaterThanOrEqual(15)
+    const moyenne =
+      pleineCharge.reduce((sum, d) => sum + d, 0) / pleineCharge.length
+
+    const k = mitigationRef
+    const attenduAdditif = (atk * k) / (k + defBase * 1.8)
+    const attenduGeometrique = (atk * k) / (k + defBase * 1.16 ** 5)
+
+    // Colle à l'hypothèse additive...
+    expect(moyenne).toBeGreaterThan(attenduAdditif * 0.85)
+    expect(moyenne).toBeLessThan(attenduAdditif * 1.15)
+    // ...et reste nettement au-dessus de ce qu'un empilement géométrique
+    // donnerait : si `applyFortifyStack` remultipliait `target.def` en
+    // boucle, cette assertion échoue.
+    expect(moyenne).toBeGreaterThan(attenduGeometrique * 1.1)
+  })
+
   it('EMPOWER empile au plus 5 charges et augmente les dégâts', () => {
     const r = simulateBattle({
       seed: 'empower',
