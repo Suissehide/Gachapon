@@ -98,6 +98,12 @@ function palierMultiplier(palier: number): number {
  * apporte un gain de mitigation réel. Sans ça, la constante fixe de l'ancienne
  * formule faisait passer un Tank épique de 15 % à 73 % de réduction par simple
  * montée en niveau.
+ *
+ * Même remarque pour `skillModifiers.defPct` : `computeStat` l'agrège dans la
+ * DEF finale au même titre que l'équipement (voir `computeFinalStats`), mais
+ * cette référence ne le reproduit pas non plus. Un futur skill accordant de la
+ * DEF en pourcentage casserait donc l'invariance exactement comme le ferait
+ * l'équipement — c'est délibéré, pas un oubli.
  */
 export function mitigationRefFor(input: {
   level: number
@@ -135,7 +141,7 @@ function computeStat(
 }
 
 /**
- * Compute the four combat stats for a unit. Pure function.
+ * Compute the eight combat stats for a unit. Pure function.
  */
 export function computeFinalStats(input: CombatStatsInput): CombatStats {
   const {
