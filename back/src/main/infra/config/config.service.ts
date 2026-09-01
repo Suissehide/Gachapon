@@ -93,6 +93,18 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'equip.substatArmorPenPctMax': 6,
   'equip.substatLifestealPctMin': 1,
   'equip.substatLifestealPctMax': 4,
+  // Bonus de set. Le 2-pièces donne une stat classique, le 4-pièces une stat
+  // de stuff. critRate et critDmg sont volontairement sur deux sets différents :
+  // ils sont multiplicatifs, donc un build critique doit choisir lequel pousser.
+  // Point de calibrage ouvert (§12 de la spec) : valeurs plausibles, non simulées.
+  'set.fureur2AtkPct': 10,
+  'set.fureur4CritDmgPct': 25,
+  'set.precision2SpdPct': 8,
+  'set.precision4CritRatePct': 20,
+  'set.percee2DefPct': 10,
+  'set.percee4ArmorPenPct': 25,
+  'set.sangsue2HpPct': 12,
+  'set.sangsue4LifestealPct': 12,
 }
 
 export class ConfigService implements ConfigServiceInterface {
