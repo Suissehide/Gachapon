@@ -11,6 +11,13 @@ const SUBSTAT_RANGES: Record<string, { min: number; max: number }> = {
   defPct: { min: 3, max: 8 },
   spdFlat: { min: 3, max: 9 },
   spdPct: { min: 3, max: 8 },
+  // Stats de stuff ajoutées avec les 12 clés de sous-stats : sans elles, ce test
+  // échoue dès que le tirage tombe sur l'une d'elles, soit environ une fois sur
+  // trois. Valeurs alignées sur les défauts `equip.substat*` de config.service.ts.
+  critRatePct: { min: 2, max: 5 },
+  critDmgPct: { min: 4, max: 10 },
+  armorPenPct: { min: 2, max: 6 },
+  lifestealPct: { min: 1, max: 4 },
 }
 
 describe('Equipment upgrade route', () => {
