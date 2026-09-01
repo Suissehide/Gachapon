@@ -55,6 +55,7 @@ import type { IScoringConfigRepository } from '../infra/orm/repositories/scoring
 import type { IShopItemRepository } from '../infra/orm/repositories/shop-item.repository.interface'
 import type { IStatsRepository } from '../infra/orm/repositories/stats.repository.interface'
 import type { StreakMilestoneRepositoryInterface } from '../infra/orm/repositories/streak-milestone.repository.interface'
+import type { ITowerRepository } from '../infra/orm/repositories/tower.repository.interface'
 import type { UserRepositoryInterface } from '../infra/orm/repositories/user.repository.interface'
 import type { UserAchievementProgressRepositoryInterface } from '../infra/orm/repositories/user-achievement-progress.repository.interface'
 import type { IUserBoostRepository } from '../infra/orm/repositories/user-boost.repository.interface'
@@ -99,6 +100,7 @@ export interface IocContainer {
   readonly combatPointsTx: CombatPointsTx
   readonly campaignDomain: CampaignDomain
   readonly equipmentDomain: EquipmentDomain
+  readonly towerRepository: ITowerRepository
   readonly teamRepository: TeamRepository
   readonly teamMemberRepository: TeamMemberRepository
   readonly invitationRepository: InvitationRepository

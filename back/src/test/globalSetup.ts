@@ -33,6 +33,7 @@ export default async function globalSetup() {
         "Card", "CardSet",
         "UserCampaignProgress", "CampaignStage", "BattleResult",
         "Equipment", "UserEquipment",
+        "TowerFloor", "UserTowerProgress",
         "ShopItem", "Achievement", "Quest",
         "DailyShop", "DailyShopItem",
         "Rewards", "UserRewards", "StreakMilestones",

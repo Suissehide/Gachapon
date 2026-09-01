@@ -189,6 +189,7 @@ model User {
   userEquipment        UserEquipment[]
   campaignProgress     UserCampaignProgress?
   battleResults        BattleResult[]
+  towerProgress        UserTowerProgress[]
 
   wishlistCardId      String?
   wishlistCard        Card?     @relation("UserWishlist", fields: [wishlistCardId], references: [id], onDelete: SetNull)
@@ -655,6 +656,32 @@ model UserCampaignProgress {
   highestChapter Int      @default(1)
   highestIndex   Int      @default(0)
   updatedAt      DateTime @updatedAt
+}
+
+/// Un étage d'une tour élémentaire. Calqué sur CampaignStage : mêmes formes
+/// de enemyTeam et lootTable, donc mêmes helpers de drop réutilisables.
+model TowerFloor {
+  id        String      @id @default(uuid())
+  element   CardElement // FIRE | WATER | NATURE | EARTH uniquement
+  index     Int         // 1..10
+  label     String
+  enemyTeam Json
+  lootTable Json
+  order     Int
+
+  @@unique([element, index])
+}
+
+model UserTowerProgress {
+  id           String      @id @default(uuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  element      CardElement
+  highestFloor Int         @default(0)
+  updatedAt    DateTime    @updatedAt
+
+  @@unique([userId, element])
+  @@index([userId])
 }
 
 model BattleResult {

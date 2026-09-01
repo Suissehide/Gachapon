@@ -55,6 +55,7 @@ import { StatsRepository } from '../../../infra/orm/repositories/stats.repositor
 import { StreakMilestoneRepository } from '../../../infra/orm/repositories/streak-milestone.repository'
 import { TeamRepository } from '../../../infra/orm/repositories/team.repository'
 import { TeamMemberRepository } from '../../../infra/orm/repositories/team-member.repository'
+import { TowerRepository } from '../../../infra/orm/repositories/tower.repository'
 import { UserRepository } from '../../../infra/orm/repositories/user.repository'
 import { UserAchievementProgressRepository } from '../../../infra/orm/repositories/user-achievement-progress.repository'
 import { UserBoostRepository } from '../../../infra/orm/repositories/user-boost.repository'
@@ -128,6 +129,7 @@ class AwilixIocContainer {
     this.#reg('combatPointsTx', asClass(CombatPointsTx).singleton())
     this.#reg('campaignDomain', asClass(CampaignDomain).singleton())
     this.#reg('equipmentDomain', asClass(EquipmentDomain).singleton())
+    this.#reg('towerRepository', asClass(TowerRepository).singleton())
     this.#reg('teamRepository', asClass(TeamRepository).singleton())
     this.#reg('teamMemberRepository', asClass(TeamMemberRepository).singleton())
     this.#reg('invitationRepository', asClass(InvitationRepository).singleton())
