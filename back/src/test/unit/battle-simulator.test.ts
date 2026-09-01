@@ -1355,7 +1355,8 @@ describe('stats offensives', () => {
       teamB: [makeUnit('B0', { hp: 5000, atk: 1 })],
     })
     const attaquesA0 = r.log.filter(
-      (e) => e.type === 'ATTACK' && e.attackerId === 'A0',
+      (e): e is Extract<LogEntry, { type: 'ATTACK' }> =>
+        e.type === 'ATTACK' && e.attackerId === 'A0',
     )
     expect(attaquesA0.length).toBeGreaterThan(1)
     expect(attaquesA0.every((e) => e.damages.every((d) => d.crit))).toBe(true)
@@ -1371,7 +1372,8 @@ describe('stats offensives', () => {
       teamB: [makeUnit('B0', { hp: 5000 })],
     })
     const attaquesA0 = r.log.filter(
-      (e) => e.type === 'ATTACK' && e.attackerId === 'A0',
+      (e): e is Extract<LogEntry, { type: 'ATTACK' }> =>
+        e.type === 'ATTACK' && e.attackerId === 'A0',
     )
     expect(attaquesA0.length).toBeGreaterThan(0)
     expect(attaquesA0.some((e) => e.damages.some((d) => d.crit))).toBe(false)
@@ -1443,7 +1445,8 @@ describe('passifs dynamiques — collision avec les stats', () => {
       teamB: [makeUnit('B0', { hp: 200000, atk: 1 })],
     })
     const coups = r.log.filter(
-      (e) => e.type === 'ATTACK' && e.attackerId === 'A0',
+      (e): e is Extract<LogEntry, { type: 'ATTACK' }> =>
+        e.type === 'ATTACK' && e.attackerId === 'A0',
     )
     const crits = coups.filter((e) => e.damages.some((d) => d.crit))
     // critRate 0 : les seuls critiques viennent du passif, un sur trois.
@@ -1459,9 +1462,12 @@ describe('passifs dynamiques — collision avec les stats', () => {
       teamB: [makeUnit('B0', { hp: 200000, def: 500, atk: 1 })],
     })
     const degats = r.log
-      .filter((e) => e.type === 'ATTACK' && e.attackerId === 'A0')
+      .filter(
+        (e): e is Extract<LogEntry, { type: 'ATTACK' }> =>
+          e.type === 'ATTACK' && e.attackerId === 'A0',
+      )
       .flatMap((e) => e.damages.map((d) => d.final))
-    expect(degats[0]).toBeGreaterThan(degats[1] * 2)
+    expect(degats[0]).toBeGreaterThan(degats[1]! * 2)
   })
 
   it('VAMPIRISM double le vol de vie sous 50 % de PV', () => {
@@ -1783,9 +1789,12 @@ describe('passifs dynamiques — anciens bâtons de stats', () => {
     // dégâts constants de B0 (~1, sans EMPOWER) avec ceux d'A0 (croissants).
     // Filtrer sur attackerId isole la progression d'A0.
     const degats = r.log
-      .filter((e) => e.type === 'ATTACK' && e.attackerId === 'A0')
+      .filter(
+        (e): e is Extract<LogEntry, { type: 'ATTACK' }> =>
+          e.type === 'ATTACK' && e.attackerId === 'A0',
+      )
       .flatMap((e) => e.damages.map((d) => d.final))
-    expect(degats[6]).toBeGreaterThan(degats[0])
+    expect(degats[6]).toBeGreaterThan(degats[0]!)
     expect(
       r.log.filter((e) => e.type === 'PASSIVE' && e.passive === 'EMPOWER').length,
     ).toBe(MAX_CHARGES)
@@ -1825,7 +1834,10 @@ describe('passifs dynamiques — anciens bâtons de stats', () => {
 
     const degatsA1 = (r: typeof sansBanner) =>
       r.log
-        .filter((e) => e.type === 'ATTACK' && e.attackerId === 'A1')
+        .filter(
+          (e): e is Extract<LogEntry, { type: 'ATTACK' }> =>
+            e.type === 'ATTACK' && e.attackerId === 'A1',
+        )
         .flatMap((e) => e.damages.map((d) => d.final))
 
     const sans = degatsA1(sansBanner)
