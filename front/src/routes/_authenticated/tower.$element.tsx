@@ -17,7 +17,7 @@ import { useState } from 'react'
 
 import type { TowerBattleResult, TowerFloorView } from '../../api/tower.api.ts'
 import {
-  DropCard,
+  EquipmentDropReward,
   RESULT_BADGE_LOSS,
   RESULT_BADGE_WIN,
   ResultBadge,
@@ -251,12 +251,7 @@ function BattleResultPopup({
                   tone="#8b5cf6"
                 />
               </div>
-              <DropCard
-                tone="amber"
-                label="Équipement"
-                name={result.rewards.equipmentDrop.name}
-                rarity={result.rewards.equipmentDrop.rarity}
-              />
+              <EquipmentDropReward drop={result.rewards.equipmentDrop} />
             </>
           )}
 

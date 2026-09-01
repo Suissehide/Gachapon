@@ -22,6 +22,7 @@ import type { BattleResult } from '../../api/campaign.api.ts'
 import { BattleScene } from '../../components/battle/BattleScene.tsx'
 import {
   DropCard,
+  EquipmentDropReward,
   RESULT_BADGE_LOSS,
   RESULT_BADGE_TIMEOUT,
   RESULT_BADGE_WIN,
@@ -479,14 +480,7 @@ function VictoryPanel({
         </div>
       )}
 
-      {rewards?.equipmentDrop && (
-        <DropCard
-          tone="amber"
-          label="Équipement"
-          name={rewards.equipmentDrop.name}
-          rarity={rewards.equipmentDrop.rarity}
-        />
-      )}
+      <EquipmentDropReward drop={rewards?.equipmentDrop ?? null} />
 
       {rewards?.cardDrop && (
         <DropCard

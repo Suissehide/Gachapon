@@ -1,6 +1,17 @@
+import { Trash2 } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { useState } from 'react'
 
+import type { EquipmentRarity } from '../../api/equipment.api.ts'
+import { TOAST_SEVERITY } from '../../constants/ui.constant.ts'
+import { useToast } from '../../hooks/useToast.ts'
 import { cn } from '../../libs/utils.ts'
+import {
+  DEFAULT_ECONOMY,
+  useEconomyConfig,
+} from '../../queries/useEconomyConfig.ts'
+import { useSalvageItems } from '../../queries/useEquipment.ts'
+import { Button } from '../ui/button.tsx'
 
 // Shared visual language for the battle-result popups (victory / defeat) and the
 // campaign farm-result popup, so they stay uniform. The animations referenced
@@ -145,5 +156,80 @@ export function DropCard({
         {rarity}
       </p>
     </div>
+  )
+}
+
+// Equipment drop from a battle/tower victory, with an immediate "Détruire"
+// action so the player can salvage it on the spot instead of the inventory
+// filling up (~19 pieces/day without this — see task 11 brief). Shared by
+// tower.$element.tsx and battle.$stageId.tsx, the two victory screens that
+// can carry a guaranteed/possible equipment drop; the campaign sweep result
+// (campaign.tsx) is intentionally excluded — its `SweepResult.equipmentDrops`
+// carry no `userEquipmentId`, so salvage isn't possible without a back change.
+export function EquipmentDropReward({
+  drop,
+}: {
+  drop: {
+    userEquipmentId: string
+    name: string
+    rarity: string
+  } | null
+}) {
+  const salvageItems = useSalvageItems()
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  const { toast } = useToast()
+  const [destroyed, setDestroyed] = useState(false)
+  const [kept, setKept] = useState(false)
+
+  if (!drop || destroyed) {
+    return null
+  }
+
+  const salvageGold =
+    economy.equip.salvageGold[drop.rarity as EquipmentRarity] ?? 0
+
+  const handleDestroy = () => {
+    salvageItems.mutate([drop.userEquipmentId], {
+      onSuccess: (res) => {
+        toast({
+          title: 'Objet détruit',
+          message: `+${res.goldEarned.toLocaleString('fr-FR')} or`,
+          severity: TOAST_SEVERITY.SUCCESS,
+        })
+        setDestroyed(true)
+      },
+    })
+  }
+
+  return (
+    <>
+      <DropCard
+        tone="amber"
+        label="Équipement"
+        name={drop.name}
+        rarity={drop.rarity}
+      />
+      {!kept && (
+        <div className="mt-2 flex w-full gap-2">
+          <Button
+            variant="outline"
+            className="flex-1"
+            disabled={salvageItems.isPending}
+            onClick={() => setKept(true)}
+          >
+            Garder
+          </Button>
+          <Button
+            variant="destructive"
+            className="flex-1 gap-1.5"
+            disabled={salvageItems.isPending}
+            onClick={handleDestroy}
+          >
+            <Trash2 className="h-4 w-4" />
+            Détruire (+{salvageGold.toLocaleString('fr-FR')} or)
+          </Button>
+        </div>
+      )}
+    </>
   )
 }
