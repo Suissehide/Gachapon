@@ -29,17 +29,25 @@ describe('catalogue d équipement', () => {
     }
   })
 
-  it('la magnitude croît strictement avec la rareté, à slot et set égaux', () => {
+  it('la magnitude croît strictement avec la rareté, à slot et set égaux, pour les sept barèmes', () => {
     const ordre = ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY']
-    const serie = ordre.map((r) => {
-      const p = catalogue.find(
-        (e) => e.rarity === r && e.slot === 'WEAPON' && e.setKey === 'FUREUR',
-      )
-      if (!p) throw new Error(`pièce manquante pour ${r}`)
-      return Object.values(p.bonuses)[0] as number
-    })
-    for (let i = 1; i < serie.length; i++) {
-      expect(serie[i]).toBeGreaterThan(serie[i - 1])
+    // Chaque slot a sa propre stat principale (MAIN_STAT_SCALE en compte
+    // sept, saisis indépendamment) — itérer sur tous les slots plutôt que
+    // de ne tester que WEAPON garantit qu'une faute de frappe sur l'un des
+    // six autres barèmes (defFlat, spdFlat, hpFlat, critRatePct, critDmgPct,
+    // armorPenPct) est détectée. Ce fichier échappe au type-checking, ce
+    // test est son seul garde-fou.
+    const slots = [...new Set(catalogue.map((e) => e.slot))]
+    expect(slots).toHaveLength(7)
+    for (const slot of slots) {
+      const serie = ordre.map((r) => {
+        const p = catalogue.find((e) => e.rarity === r && e.slot === slot && e.setKey === 'FUREUR')
+        if (!p) throw new Error(`pièce manquante pour ${slot}/${r}`)
+        return Object.values(p.bonuses)[0] as number
+      })
+      for (let i = 1; i < serie.length; i++) {
+        expect(serie[i]).toBeGreaterThan(serie[i - 1])
+      }
     }
   })
 

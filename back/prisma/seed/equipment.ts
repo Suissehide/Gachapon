@@ -133,7 +133,12 @@ export function buildEquipmentCatalog(): EquipmentSeedRow[] {
   return rows
 }
 
-export async function seedEquipment(prisma: PrismaClient): Promise<void> {
+// Type juste : le vrai appelant (prisma/seed.ts) passe le client de
+// transaction (tx), structurellement plus étroit que PrismaClient (pas de
+// $transaction/$connect). Même expression que l'ancien seed.
+export async function seedEquipment(
+  prisma: Parameters<Parameters<PrismaClient['$transaction']>[0]>[0],
+): Promise<void> {
   const catalogue = buildEquipmentCatalog()
   for (const row of catalogue) {
     await prisma.equipment.upsert({
