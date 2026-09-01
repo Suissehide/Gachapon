@@ -108,6 +108,20 @@ enum EquipmentSlot {
   WEAPON
   ARMOR
   ACCESSORY
+  SAP        // Sève      — stat principale PV,       tour NATURE
+  EMBER      // Braise    — stat principale critDmg,  tour FEU
+  PRISM      // Prisme    — stat principale critRate, tour EAU
+  MONOLITH   // Monolithe — stat principale armorPen, tour TERRE
+}
+
+/// Les sets sont orthogonaux aux slots : chaque set existe dans les 7 slots.
+/// Nommés par identité de build et non par élément, précisément parce qu'ils
+/// ne sont pas liés à une tour (une tour droppe un slot, tous sets confondus).
+enum EquipmentSet {
+  FUREUR
+  PRECISION
+  PERCEE
+  SANGSUE
 }
 
 enum ActivityEventType {
@@ -322,11 +336,16 @@ model Equipment {
   id         String          @id @default(uuid())
   name       String
   slot       EquipmentSlot
+  setKey     EquipmentSet
   rarity     CardRarity
   imageUrl   String?
   bonuses    Json
   dropWeight Float           @default(1.0)
   userItems  UserEquipment[]
+
+  // Cle naturelle : une piece est identifiee par son triplet. Le seed de la
+  // tache 2 upserte dessus, et le tirage de drop de la tache 8 la recherche.
+  @@unique([slot, setKey, rarity])
 }
 
 model UserEquipment {

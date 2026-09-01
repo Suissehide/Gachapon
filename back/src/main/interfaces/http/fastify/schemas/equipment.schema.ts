@@ -2,7 +2,15 @@ import { z } from 'zod/v4'
 
 import { SUBSTAT_KEYS } from '../../../../domain/equipment/equipment-progression'
 
-const equipmentSlotEnum = z.enum(['WEAPON', 'ARMOR', 'ACCESSORY'])
+const equipmentSlotEnum = z.enum([
+  'WEAPON',
+  'ARMOR',
+  'ACCESSORY',
+  'SAP',
+  'EMBER',
+  'PRISM',
+  'MONOLITH',
+])
 const rarityEnum = z.enum(['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY'])
 
 export const substatKeyEnum = z.enum(SUBSTAT_KEYS)

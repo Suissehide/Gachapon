@@ -31,7 +31,14 @@ export interface EquipmentInstanceView {
   id: string // UserEquipment.id
   equipmentId: string // Equipment.id (catalog)
   name: string
-  slot: 'WEAPON' | 'ARMOR' | 'ACCESSORY'
+  slot:
+    | 'WEAPON'
+    | 'ARMOR'
+    | 'ACCESSORY'
+    | 'SAP'
+    | 'EMBER'
+    | 'PRISM'
+    | 'MONOLITH'
   rarity: 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
   imageUrl: string | null
   bonuses: Record<string, number>
