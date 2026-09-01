@@ -4,6 +4,7 @@ import type { EquipmentSlot, Prisma } from '../../../generated/client'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
+import type { EquipmentBonuses } from '../combat/combat-stats.domain'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import {
   EQUIP_MAX_LEVEL,
@@ -18,6 +19,48 @@ import {
   substatRangesFromConfig,
   upgradeGoldCost,
 } from './equipment-progression'
+import {
+  SET_BONUS_CONFIG_KEYS,
+  SET_KEYS,
+  type SetKey,
+  setBonusesFromConfig,
+} from './set-bonuses'
+
+/** Libellés français des 4 sets — seule source, réutilisée par l'inventaire et `listSets`. */
+export const SET_LABELS: Record<SetKey, string> = {
+  FUREUR: 'Fureur',
+  PRECISION: 'Précision',
+  PERCEE: 'Percée',
+  SANGSUE: 'Sangsue',
+}
+
+/** Libellés français des stats portées par les bonus de set (clé technique → nom affiché). */
+const SET_STAT_LABELS: Record<string, string> = {
+  hpPct: 'PV',
+  atkPct: 'ATQ',
+  defPct: 'DEF',
+  spdPct: 'VIT',
+  critRatePct: 'taux crit',
+  critDmgPct: 'dégâts crit',
+  armorPenPct: "pénétration d'armure",
+  lifestealPct: 'vol de vie',
+}
+
+/** Décrit un palier de set à partir de son unique bonus, ex. `+10 % ATQ`. */
+function formatSetTierLabel(bonuses: EquipmentBonuses): string {
+  const [key, value] = Object.entries(bonuses)[0] ?? []
+  if (key === undefined || value === undefined) {
+    return ''
+  }
+  return `+${value} % ${SET_STAT_LABELS[key] ?? key}`
+}
+
+export interface SetDefinitionView {
+  key: SetKey
+  label: string
+  two: { label: string; bonuses: Record<string, number> }
+  four: { label: string; bonuses: Record<string, number> }
+}
 
 const RARITY_MULT_KEY = {
   COMMON: 'card.rarityMultCommon',
@@ -33,6 +76,8 @@ export interface EquipmentInstanceView {
   name: string
   slot: EquipmentSlot
   rarity: 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
+  setKey: SetKey
+  setLabel: string
   imageUrl: string | null
   bonuses: Record<string, number>
   level: number
@@ -102,6 +147,8 @@ export class EquipmentDomain {
         name: ue.equipment.name,
         slot: ue.equipment.slot,
         rarity: ue.equipment.rarity,
+        setKey: ue.equipment.setKey,
+        setLabel: SET_LABELS[ue.equipment.setKey],
         imageUrl: ue.equipment.imageUrl,
         bonuses: (ue.equipment.bonuses ?? {}) as Record<string, number>,
         level: ue.level,
@@ -110,6 +157,30 @@ export class EquipmentDomain {
         equippedOnId: ue.equippedOnId,
         equippedOnCardName: ue.equippedOn?.card?.name ?? null,
         obtainedAt: ue.obtainedAt.toISOString(),
+      })),
+    }
+  }
+
+  /**
+   * Donnée de référence publique : les 4 sets d'équipement avec leurs deux
+   * paliers (2 et 4 pièces). Consommée par l'écran d'équipement pour afficher
+   * ce qu'un set apporte, sans jamais recopier les valeurs côté front.
+   */
+  async listSets(): Promise<{ sets: SetDefinitionView[] }> {
+    const c = await this.#configService.getMany(...SET_BONUS_CONFIG_KEYS)
+    const defs = setBonusesFromConfig(c)
+    return {
+      sets: SET_KEYS.map((key) => ({
+        key,
+        label: SET_LABELS[key],
+        two: {
+          label: formatSetTierLabel(defs[key].two),
+          bonuses: defs[key].two,
+        },
+        four: {
+          label: formatSetTierLabel(defs[key].four),
+          bonuses: defs[key].four,
+        },
       })),
     }
   }

@@ -7,6 +7,7 @@ import {
   equipmentListResponseSchema,
   equipmentSalvageBodySchema,
   equipmentSalvageResponseSchema,
+  equipmentSetsResponseSchema,
   equipmentUnequipResponseSchema,
   equipmentUpgradeResponseSchema,
 } from '../../schemas/equipment.schema'
@@ -21,6 +22,18 @@ export const equipmentRouter: FastifyPluginCallbackZod = (fastify) => {
       schema: { response: { 200: equipmentListResponseSchema } },
     },
     (request) => equipmentDomain.listUserEquipment(request.user.userID),
+  )
+
+  // Donnée de référence publique, comme /economy/config — pas de session requise.
+  fastify.get(
+    '/equipment/sets',
+    {
+      schema: {
+        tags: ['equipment'],
+        response: { 200: equipmentSetsResponseSchema },
+      },
+    },
+    () => equipmentDomain.listSets(),
   )
 
   fastify.post(

@@ -68,6 +68,12 @@ const economyConfigResponseSchema = z.object({
     sweepCost: z.number(),
     elementAdvantageMult: z.number(),
     elementDisadvantageMult: z.number(),
+    // Valeurs de base des 4 stats de stuff, communes alliés/ennemis — le
+    // front en a besoin pour afficher ces stats même sans équipement.
+    baseCritRate: z.number(),
+    baseCritDmg: z.number(),
+    baseArmorPen: z.number(),
+    baseLifesteal: z.number(),
   }),
   wishlist: z.object({
     priceMultiplier: z.number(),
@@ -128,6 +134,10 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
         'combat.sweepCost',
         'combat.elementAdvantageMult',
         'combat.elementDisadvantageMult',
+        'combat.baseCritRate',
+        'combat.baseCritDmg',
+        'combat.baseArmorPen',
+        'combat.baseLifesteal',
         'wishlist.priceMultiplier',
         'wishlist.cooldownDays',
         'equip.goldCostBase',
@@ -183,6 +193,10 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
           sweepCost: c['combat.sweepCost'],
           elementAdvantageMult: c['combat.elementAdvantageMult'],
           elementDisadvantageMult: c['combat.elementDisadvantageMult'],
+          baseCritRate: c['combat.baseCritRate'],
+          baseCritDmg: c['combat.baseCritDmg'],
+          baseArmorPen: c['combat.baseArmorPen'],
+          baseLifesteal: c['combat.baseLifesteal'],
         },
         wishlist: {
           priceMultiplier: c['wishlist.priceMultiplier'],

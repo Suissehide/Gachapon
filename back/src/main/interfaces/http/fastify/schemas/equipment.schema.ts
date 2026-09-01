@@ -1,9 +1,10 @@
 import { z } from 'zod/v4'
 
-import { EquipmentSlot } from '../../../../../generated/client'
+import { EquipmentSet, EquipmentSlot } from '../../../../../generated/client'
 import { SUBSTAT_KEYS } from '../../../../domain/equipment/equipment-progression'
 
 const equipmentSlotEnum = z.enum(EquipmentSlot)
+const equipmentSetEnum = z.enum(EquipmentSet)
 const rarityEnum = z.enum(['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY'])
 
 export const substatKeyEnum = z.enum(SUBSTAT_KEYS)
@@ -19,6 +20,8 @@ export const equipmentInstanceSchema = z.object({
   name: z.string(),
   slot: equipmentSlotEnum,
   rarity: rarityEnum,
+  setKey: equipmentSetEnum,
+  setLabel: z.string(),
   imageUrl: z.string().nullable(),
   bonuses: z.record(z.string(), z.number()),
   level: z.number().int(),
@@ -84,4 +87,20 @@ export const equipmentSalvageResponseSchema = z.object({
   goldEarned: z.number().int(),
   newGold: z.number().int(),
   destroyedCount: z.number().int(),
+})
+
+const setTierSchema = z.object({
+  label: z.string(),
+  bonuses: z.record(z.string(), z.number()),
+})
+
+export const equipmentSetsResponseSchema = z.object({
+  sets: z.array(
+    z.object({
+      key: equipmentSetEnum,
+      label: z.string(),
+      two: setTierSchema,
+      four: setTierSchema,
+    }),
+  ),
 })

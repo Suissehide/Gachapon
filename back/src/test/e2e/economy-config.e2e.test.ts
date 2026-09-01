@@ -44,6 +44,12 @@ describe('GET /economy/config', () => {
     expect(body.card.rarityMult.EPIC).toBe(2.3)
     expect(body.card.maxPalier).toBe(7)
     expect(body.combat.battleCost).toBe(5)
+    // Valeurs de base des stats de stuff (§5 de la spec) — le front en a
+    // besoin pour afficher critRate/critDmg/armorPen/lifesteal sans équipement.
+    expect(body.combat.baseCritRate).toBe(5)
+    expect(body.combat.baseCritDmg).toBe(150)
+    expect(body.combat.baseArmorPen).toBe(0)
+    expect(body.combat.baseLifesteal).toBe(0)
     expect(body.equip.goldCostBase).toBe(25)
     expect(body.equip.goldCostExp).toBe(1.35)
     expect(body.equip.levelScale).toBe(0.1)
