@@ -24,6 +24,7 @@ import {
   computeFinalStats,
   mitigationRefFor,
 } from '../combat/combat-stats.domain'
+import type { FirstClearLoot } from '../combat/equipment-drop.domain'
 import { computeEquippedCardStats } from '../combat/equipped-card-stats'
 import {
   INITIAL_SUBSTATS_BY_RARITY,
@@ -42,7 +43,7 @@ import {
 import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import { calculateLevel } from '../shared/xp'
-import { rollTowerDrop } from './tower-drop'
+import { rollTowerDrop, rollTowerFirstClearDrop } from './tower-drop'
 import {
   TOWER_ELEMENTS,
   TOWER_FLOOR_COUNT,
@@ -79,17 +80,17 @@ const towerEnemySpecSchema = z.object({
 const towerEnemyTeamSchema = z.array(towerEnemySpecSchema)
 type TowerEnemySpec = z.infer<typeof towerEnemySpecSchema>
 
-// lootTable JSON d'un TowerFloor (prisma/seed/tower.ts:towerFloorLoot). Les
-// champs guaranteedEquipment/equipmentDropChance/cardChance existent dans le
-// JSON seedé mais ne pilotent rien ici : en tour, la pièce est TOUJOURS
-// garantie via rollTowerDrop (voir §6 design spec), pas de chance à rouler ;
-// et la tour ne drope jamais de carte (cardChance reste à 0 par construction
-// du seed — la campagne garde l'or, la poussière et les cartes).
-interface TowerFirstClearLoot {
-  gold: number
-  dust: number
-  xp: number
-}
+// lootTable JSON d'un TowerFloor (prisma/seed/tower.ts:towerFloorLoot).
+// `equipmentDropChance`/`cardChance` existent dans le JSON seedé mais ne
+// pilotent rien ici : en tour, la pièce est TOUJOURS garantie (pas de
+// chance à rouler), et la tour ne drope jamais de carte (cardChance reste
+// à 0 par construction du seed — la campagne garde l'or, la poussière et
+// les cartes). En revanche `firstClear.guaranteedEquipment` PILOTE bien le
+// tirage du premier passage : c'est le plancher de rareté consommé par
+// rollTowerFirstClearDrop (via rollFirstClearEquipmentRarity) — d'où la
+// réutilisation directe du type FirstClearLoot de equipment-drop.domain.ts
+// plutôt qu'une redéfinition locale qui aurait pu (et a, en relecture)
+// oublier ce champ.
 interface TowerFarmLoot {
   gold: number
   dust: number
@@ -97,7 +98,7 @@ interface TowerFarmLoot {
   equipmentWeights: Record<string, number>
 }
 interface TowerLootTable {
-  firstClear: TowerFirstClearLoot
+  firstClear: FirstClearLoot
   farm: TowerFarmLoot
 }
 
@@ -355,15 +356,26 @@ export class TowerDomain {
               effects,
             )
 
-            // Pièce garantie — jamais de branche « pas de pièce ». Set
-            // d'abord, rareté ensuite (ordre PRNG imposé par rollTowerDrop).
-            // Les poids de rareté par étage vivent dans farm.equipmentWeights
-            // du seed, indépendamment de firstClear/farm.
-            const drop = rollTowerDrop({
-              element,
-              weights: loot.farm.equipmentWeights,
-              prng: Math.random,
-            })
+            // Pièce garantie — jamais de branche « pas de pièce ». Deux
+            // chemins, un seul contrat PRNG (set d'abord, rareté ensuite —
+            // voir tower-drop.ts) :
+            //  - premier passage : rollTowerFirstClearDrop, rareté avec
+            //    PLANCHER (firstClear.guaranteedEquipment.minRarity, motif
+            //    de la campagne) — ne JAMAIS utiliser farm.equipmentWeights
+            //    ici, sinon le plancher ne se déclenche jamais.
+            //  - farm (déjà nettoyé) : rollTowerDrop, rareté pondérée par
+            //    farm.equipmentWeights, propre à l'étage.
+            const drop = isFirstClear
+              ? rollTowerFirstClearDrop({
+                  element,
+                  firstClear: loot.firstClear,
+                  prng: Math.random,
+                })
+              : rollTowerDrop({
+                  element,
+                  weights: loot.farm.equipmentWeights,
+                  prng: Math.random,
+                })
             const equipment = await tx.equipment.findUnique({
               where: {
                 slot_setKey_rarity: {
