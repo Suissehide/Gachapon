@@ -175,11 +175,11 @@ export class EquipmentDomain {
         label: SET_LABELS[key],
         two: {
           label: formatSetTierLabel(defs[key].two),
-          bonuses: defs[key].two,
+          bonuses: defs[key].two as Record<string, number>,
         },
         four: {
           label: formatSetTierLabel(defs[key].four),
-          bonuses: defs[key].four,
+          bonuses: defs[key].four as Record<string, number>,
         },
       })),
     }
