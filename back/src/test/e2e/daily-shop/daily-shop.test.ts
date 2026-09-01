@@ -28,10 +28,16 @@ describe('Daily shop routes', () => {
     })
     userId = user.id
 
-    // Give dust for purchases
+    // Give dust for purchases.
+    // 100 000 et non 10 000 : le test achète le PREMIER article non acheté de la
+    // boutique, quelle que soit sa rareté, or un épique coûte 10 500 et un
+    // légendaire 60 000 (dailyShopPrice* dans config.service.ts). Avec 10 000 le
+    // test ne pouvait acheter qu'un commun, peu commun ou rare, et échouait en
+    // 402 dès que la boutique plaçait un article cher en tête — ce qui dépend du
+    // pool de cartes, donc des fichiers de test exécutés avant celui-ci.
     await postgresOrm.prisma.user.update({
       where: { id: userId },
-      data: { dust: 10000 },
+      data: { dust: 100000 },
     })
 
     // Create a card set with cards to populate the shop
