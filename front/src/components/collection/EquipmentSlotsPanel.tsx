@@ -103,7 +103,7 @@ export function EquipmentSlotsPanel({ userCardId, rarityHex }: Props) {
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-2.5">
+      <div className="grid grid-cols-4 gap-2">
         {SLOT_ORDER.map((slot) => {
           const item = bySlot[slot]
           const Icon = SLOT_ICONS[slot]
@@ -115,7 +115,7 @@ export function EquipmentSlotsPanel({ userCardId, rarityHex }: Props) {
                 onClick={() => setPickerSlot(slot)}
                 title="Gérer l'équipement"
                 style={{ '--rar-hover': rarityHex } as React.CSSProperties}
-                className="h-auto flex-col gap-1 rounded-[13px] border-[rgba(27,23,38,0.14)] bg-card px-2 py-3.5 text-center hover:border-[var(--rar-hover)] hover:bg-[color-mix(in_oklab,var(--rar-hover)_6%,white)] hover:text-text"
+                className="h-auto flex-col gap-1 rounded-[13px] border-[rgba(27,23,38,0.14)] bg-card px-1.5 py-3 text-center hover:border-[var(--rar-hover)] hover:bg-[color-mix(in_oklab,var(--rar-hover)_6%,white)] hover:text-text"
               >
                 <Icon className="h-4 w-4 text-text-light" />
                 <p className="line-clamp-2 text-[11px] font-semibold leading-tight text-text">
@@ -138,7 +138,7 @@ export function EquipmentSlotsPanel({ userCardId, rarityHex }: Props) {
               variant="outline"
               onClick={() => setPickerSlot(slot)}
               style={{ '--rar-hover': rarityHex } as React.CSSProperties}
-              className="h-auto flex-col gap-1.5 rounded-[13px] border-[1.5px] border-dashed border-[rgba(27,23,38,0.16)] bg-card px-2 py-3.5 text-[rgba(27,23,38,0.45)] hover:bg-[color-mix(in_oklab,var(--rar-hover)_6%,white)] hover:text-[var(--rar-hover)]"
+              className="h-auto flex-col gap-1.5 rounded-[13px] border-[1.5px] border-dashed border-[rgba(27,23,38,0.16)] bg-card px-1.5 py-3 text-[rgba(27,23,38,0.45)] hover:bg-[color-mix(in_oklab,var(--rar-hover)_6%,white)] hover:text-[var(--rar-hover)]"
             >
               <Icon className="h-[18px] w-[18px]" />
               <p className="text-[12px] font-semibold">{SLOT_LABELS[slot]}</p>

@@ -8,8 +8,10 @@ import {
   activeSetsForCard,
   aggregateEquipmentBonuses,
   cardStuffStats,
+  computeCardSetBonuses,
   type StatBonuses,
   type StuffStatBonuses,
+  withCardSetBonuses,
 } from '../utils/cardStats'
 import { invalidateBattleCache } from './useCampaign.ts'
 import { DEFAULT_ECONOMY, useEconomyConfig } from './useEconomyConfig.ts'
@@ -52,6 +54,29 @@ export function useCardEquipmentBonuses(userCardId: string): StatBonuses {
       ),
     [data, userCardId, economy.equip.levelScale],
   )
+}
+
+/**
+ * PV/ATQ/DEF/VIT d'une carte, bonus de set (2/4 pièces) inclus — usage
+ * dédié à `CombatPanel` (la fiche de carte). `useCardEquipmentBonuses`
+ * reste inchangé pour ses autres consommateurs (tri de collection, calcul
+ * de puissance d'équipe dans `TeamEditorPopup`/`collection.tsx`/
+ * `CollectionCard.tsx`) : l'absence de bonus de set y est un écart
+ * préexistant, hors périmètre de cette carte.
+ */
+export function useCardClassicStatsWithSetBonuses(
+  userCardId: string,
+): StatBonuses {
+  const bonuses = useCardEquipmentBonuses(userCardId)
+  const { data } = useEquipmentList()
+  const { data: sets } = useEquipmentSets()
+  return useMemo(() => {
+    const equippedSetKeys = (data?.items ?? [])
+      .filter((i) => i.equippedOnId === userCardId)
+      .map((i) => i.setKey)
+    const setBonuses = computeCardSetBonuses(equippedSetKeys, sets?.sets ?? [])
+    return withCardSetBonuses(bonuses, setBonuses)
+  }, [bonuses, data, sets, userCardId])
 }
 
 /**

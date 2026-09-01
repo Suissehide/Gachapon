@@ -323,6 +323,37 @@ export function activeSetsForCard(
 }
 
 /**
+ * Replie les bonus de set (2/4 pièces) dans des bonus PV/ATQ/DEF/VIT déjà
+ * agrégés (catalogue + substats). Fonction pure dédiée à `CombatPanel` — les
+ * autres consommateurs de `aggregateEquipmentBonuses`/`useCardEquipmentBonuses`
+ * (tri de collection, puissance d'équipe) ne l'utilisent pas : leur écart
+ * préexistant avec le combat réel est hors périmètre de cette carte.
+ */
+export function withCardSetBonuses(
+  bonuses: StatBonuses,
+  setBonuses: Record<string, number>,
+): StatBonuses {
+  return {
+    hp: {
+      flat: bonuses.hp.flat,
+      pct: bonuses.hp.pct + (setBonuses.hpPct ?? 0),
+    },
+    atk: {
+      flat: bonuses.atk.flat,
+      pct: bonuses.atk.pct + (setBonuses.atkPct ?? 0),
+    },
+    def: {
+      flat: bonuses.def.flat,
+      pct: bonuses.def.pct + (setBonuses.defPct ?? 0),
+    },
+    spd: {
+      flat: bonuses.spd.flat,
+      pct: bonuses.spd.pct + (setBonuses.spdPct ?? 0),
+    },
+  }
+}
+
+/**
  * Same as `finalStat` but folds in equipment flat + percent bonuses, matching
  * the backend's `(raw + flat) * (1 + pct/100)` order.
  */

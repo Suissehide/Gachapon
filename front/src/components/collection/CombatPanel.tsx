@@ -1,5 +1,6 @@
 import {
   Coins,
+  Crosshair,
   Droplets,
   Flame,
   Heart,
@@ -25,7 +26,7 @@ import {
   useEconomyConfig,
 } from '../../queries/useEconomyConfig'
 import {
-  useCardEquipmentBonuses,
+  useCardClassicStatsWithSetBonuses,
   useCardStuffStats,
 } from '../../queries/useEquipment'
 import { useLevelUpCard } from '../../queries/useLevelUpCard'
@@ -90,19 +91,46 @@ export function CombatPanel({
 
   const passive = card.passiveKey ? PASSIVE_LABELS[card.passiveKey] : null
 
-  const bonuses = useCardEquipmentBonuses(userCardId)
+  // Bonus de set (2/4 pièces) inclus, pas seulement catalogue+substats — la
+  // fiche de carte doit afficher les mêmes stats que le combat réel
+  // (equipped-card-stats.ts, back).
+  const classicBonuses = useCardClassicStatsWithSetBonuses(userCardId)
   const stuffStats = useCardStuffStats(userCardId)
   const hp = Math.round(
-    finalStatWithBonuses(card.baseHp, level, variant, palier, bonuses.hp),
+    finalStatWithBonuses(
+      card.baseHp,
+      level,
+      variant,
+      palier,
+      classicBonuses.hp,
+    ),
   )
   const atk = Math.round(
-    finalStatWithBonuses(card.baseAtk, level, variant, palier, bonuses.atk),
+    finalStatWithBonuses(
+      card.baseAtk,
+      level,
+      variant,
+      palier,
+      classicBonuses.atk,
+    ),
   )
   const def = Math.round(
-    finalStatWithBonuses(card.baseDef, level, variant, palier, bonuses.def),
+    finalStatWithBonuses(
+      card.baseDef,
+      level,
+      variant,
+      palier,
+      classicBonuses.def,
+    ),
   )
   const spd = Math.round(
-    finalStatWithBonuses(card.baseSpd, level, variant, palier, bonuses.spd),
+    finalStatWithBonuses(
+      card.baseSpd,
+      level,
+      variant,
+      palier,
+      classicBonuses.spd,
+    ),
   )
   const power = computePower({ hp, atk, def, spd })
 
@@ -204,7 +232,7 @@ export function CombatPanel({
           accent="#f97316"
         />
         <StatTile
-          icon={<Shield className="h-4 w-4" />}
+          icon={<Crosshair className="h-4 w-4" />}
           label="PÉNÉ. ARMURE"
           value={stuffStats.armorPen}
           suffix="%"
