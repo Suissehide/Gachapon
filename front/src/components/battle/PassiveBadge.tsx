@@ -5,7 +5,7 @@ const PASSIVE_LABELS: Record<string, string> = {
   RIPOSTE: 'Riposte',
   REBIRTH: 'Renaissance',
   EXECUTION: 'Exécution',
-  VIGOR: 'Vigueur',
+  VIGOR: 'Second souffle',
   HASTE: 'Célérité',
   FORTIFY: 'Fortification',
   EMPOWER: 'Puissance',

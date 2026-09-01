@@ -24,10 +24,10 @@ function clampPalierForPassiveDisplay(palier: number): number {
 export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
   VAMPIRISM: {
     name: 'Vampirisme',
-    describe: (palier) => {
-      const p = clampPalierForPassiveDisplay(palier)
-      return `Soigne ${10 + 5 * p} % des dégâts infligés.`
-    },
+    // La magnitude du vol de vie appartient désormais au stuff (lifesteal) :
+    // ce passif ne dépend plus du palier, il apporte un doublement
+    // conditionnel sous 50 % de PV.
+    describe: () => 'Sous 50 % de ses PV, son vol de vie est doublé.',
   },
   AEGIS: {
     name: 'Égide',
@@ -65,31 +65,29 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
     },
   },
   VIGOR: {
-    name: 'Vigueur',
+    name: 'Second souffle',
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return `+${8 + 2 * p} % de PV max.`
+      return `La première fois que ses PV passent sous 50 %, il récupère ${20 + 4 * p} % de ses PV max.`
     },
   },
   HASTE: {
     name: 'Célérité',
-    describe: (palier) => {
-      const p = clampPalierForPassiveDisplay(palier)
-      return `+${6 + 2 * p} % de vitesse.`
-    },
+    // La cadence est fixe (toutes les 3 actions), plus de palier.
+    describe: () => 'Toutes les 3 actions, il rejoue immédiatement.',
   },
   FORTIFY: {
     name: 'Fortification',
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return `+${10 + 4 * p} % de défense.`
+      return `Chaque coup encaissé lui donne +${4 + 2 * p} % de défense, cumulable 5 fois.`
     },
   },
   EMPOWER: {
     name: 'Puissance',
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return `+${6 + 2 * p} % d'ATQ.`
+      return `Chaque attaque portée lui donne +${3 + p} % d'attaque, cumulable 5 fois.`
     },
   },
   BULWARK: {
@@ -108,17 +106,15 @@ export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
   },
   CRIT: {
     name: 'Précision',
-    describe: (palier) => {
-      const p = clampPalierForPassiveDisplay(palier)
-      return `${8 + 3 * p} % de chance d'infliger le double des dégâts.`
-    },
+    // La magnitude du critique appartient désormais aux stats (critRate/critDmg) :
+    // ce passif ne dépend plus du palier, il apporte la certitude.
+    describe: () => 'Toutes les 3 attaques, inflige un coup critique garanti.',
   },
   PIERCE: {
     name: 'Perce-armure',
-    describe: (palier) => {
-      const p = clampPalierForPassiveDisplay(palier)
-      return `Ignore ${15 + 5 * p} % de la défense de la cible.`
-    },
+    // Ne dépend plus du palier : le premier coup ignore toute la défense.
+    describe: () =>
+      'Le premier coup porté à chaque cible ignore toute sa défense.',
   },
   NEMESIS: {
     name: 'Vengeance',
