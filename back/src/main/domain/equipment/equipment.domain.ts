@@ -1,6 +1,6 @@
 import Boom from '@hapi/boom'
 
-import type { Prisma } from '../../../generated/client'
+import type { EquipmentSlot, Prisma } from '../../../generated/client'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
@@ -31,14 +31,7 @@ export interface EquipmentInstanceView {
   id: string // UserEquipment.id
   equipmentId: string // Equipment.id (catalog)
   name: string
-  slot:
-    | 'WEAPON'
-    | 'ARMOR'
-    | 'ACCESSORY'
-    | 'SAP'
-    | 'EMBER'
-    | 'PRISM'
-    | 'MONOLITH'
+  slot: EquipmentSlot
   rarity: 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
   imageUrl: string | null
   bonuses: Record<string, number>
