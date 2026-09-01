@@ -25,6 +25,7 @@ import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OauthSuccessRouteImport } from './routes/oauth.success'
 import { Route as InvitationsTokenRouteImport } from './routes/invitations.$token'
+import { Route as AuthenticatedTowerRouteImport } from './routes/_authenticated/tower'
 import { Route as AuthenticatedSkillsRouteImport } from './routes/_authenticated/skills'
 import { Route as AuthenticatedShopRouteImport } from './routes/_authenticated/shop'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
@@ -39,6 +40,7 @@ import { Route as AuthenticatedAchievementsRouteImport } from './routes/_authent
 import { Route as AdminAdminRouteImport } from './routes/_admin/admin'
 import { Route as AuthenticatedTeamIndexRouteImport } from './routes/_authenticated/team/index'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin.index'
+import { Route as AuthenticatedTowerElementRouteImport } from './routes/_authenticated/tower.$element'
 import { Route as AuthenticatedTeamIdRouteImport } from './routes/_authenticated/team/$id'
 import { Route as AuthenticatedProfileUsernameRouteImport } from './routes/_authenticated/profile/$username'
 import { Route as AuthenticatedBattleStageIdRouteImport } from './routes/_authenticated/battle.$stageId'
@@ -134,6 +136,11 @@ const InvitationsTokenRoute = InvitationsTokenRouteImport.update({
   path: '/invitations/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedTowerRoute = AuthenticatedTowerRouteImport.update({
+  id: '/tower',
+  path: '/tower',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedSkillsRoute = AuthenticatedSkillsRouteImport.update({
   id: '/skills',
   path: '/skills',
@@ -206,6 +213,12 @@ const AdminAdminIndexRoute = AdminAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminAdminRoute,
 } as any)
+const AuthenticatedTowerElementRoute =
+  AuthenticatedTowerElementRouteImport.update({
+    id: '/$element',
+    path: '/$element',
+    getParentRoute: () => AuthenticatedTowerRoute,
+  } as any)
 const AuthenticatedTeamIdRoute = AuthenticatedTeamIdRouteImport.update({
   id: '/team/$id',
   path: '/team/$id',
@@ -316,6 +329,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/shop': typeof AuthenticatedShopRoute
   '/skills': typeof AuthenticatedSkillsRoute
+  '/tower': typeof AuthenticatedTowerRouteWithChildren
   '/invitations/$token': typeof InvitationsTokenRoute
   '/oauth/success': typeof OauthSuccessRoute
   '/admin/cards': typeof AdminAdminCardsRoute
@@ -332,6 +346,7 @@ export interface FileRoutesByFullPath {
   '/battle/$stageId': typeof AuthenticatedBattleStageIdRoute
   '/profile/$username': typeof AuthenticatedProfileUsernameRoute
   '/team/$id': typeof AuthenticatedTeamIdRoute
+  '/tower/$element': typeof AuthenticatedTowerElementRoute
   '/admin/': typeof AdminAdminIndexRoute
   '/team/': typeof AuthenticatedTeamIndexRoute
   '/profile/$username/collection': typeof AuthenticatedProfileUsernameCollectionRoute
@@ -361,6 +376,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/shop': typeof AuthenticatedShopRoute
   '/skills': typeof AuthenticatedSkillsRoute
+  '/tower': typeof AuthenticatedTowerRouteWithChildren
   '/invitations/$token': typeof InvitationsTokenRoute
   '/oauth/success': typeof OauthSuccessRoute
   '/admin/cards': typeof AdminAdminCardsRoute
@@ -377,6 +393,7 @@ export interface FileRoutesByTo {
   '/battle/$stageId': typeof AuthenticatedBattleStageIdRoute
   '/profile/$username': typeof AuthenticatedProfileUsernameRoute
   '/team/$id': typeof AuthenticatedTeamIdRoute
+  '/tower/$element': typeof AuthenticatedTowerElementRoute
   '/admin': typeof AdminAdminIndexRoute
   '/team': typeof AuthenticatedTeamIndexRoute
   '/profile/$username/collection': typeof AuthenticatedProfileUsernameCollectionRoute
@@ -410,6 +427,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/shop': typeof AuthenticatedShopRoute
   '/_authenticated/skills': typeof AuthenticatedSkillsRoute
+  '/_authenticated/tower': typeof AuthenticatedTowerRouteWithChildren
   '/invitations/$token': typeof InvitationsTokenRoute
   '/oauth/success': typeof OauthSuccessRoute
   '/_admin/admin/cards': typeof AdminAdminCardsRoute
@@ -426,6 +444,7 @@ export interface FileRoutesById {
   '/_authenticated/battle/$stageId': typeof AuthenticatedBattleStageIdRoute
   '/_authenticated/profile/$username': typeof AuthenticatedProfileUsernameRoute
   '/_authenticated/team/$id': typeof AuthenticatedTeamIdRoute
+  '/_authenticated/tower/$element': typeof AuthenticatedTowerElementRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
   '/_authenticated/team/': typeof AuthenticatedTeamIndexRoute
   '/_authenticated/profile/$username_/collection': typeof AuthenticatedProfileUsernameCollectionRoute
@@ -458,6 +477,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/shop'
     | '/skills'
+    | '/tower'
     | '/invitations/$token'
     | '/oauth/success'
     | '/admin/cards'
@@ -474,6 +494,7 @@ export interface FileRouteTypes {
     | '/battle/$stageId'
     | '/profile/$username'
     | '/team/$id'
+    | '/tower/$element'
     | '/admin/'
     | '/team/'
     | '/profile/$username/collection'
@@ -503,6 +524,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/shop'
     | '/skills'
+    | '/tower'
     | '/invitations/$token'
     | '/oauth/success'
     | '/admin/cards'
@@ -519,6 +541,7 @@ export interface FileRouteTypes {
     | '/battle/$stageId'
     | '/profile/$username'
     | '/team/$id'
+    | '/tower/$element'
     | '/admin'
     | '/team'
     | '/profile/$username/collection'
@@ -551,6 +574,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/shop'
     | '/_authenticated/skills'
+    | '/_authenticated/tower'
     | '/invitations/$token'
     | '/oauth/success'
     | '/_admin/admin/cards'
@@ -567,6 +591,7 @@ export interface FileRouteTypes {
     | '/_authenticated/battle/$stageId'
     | '/_authenticated/profile/$username'
     | '/_authenticated/team/$id'
+    | '/_authenticated/tower/$element'
     | '/_admin/admin/'
     | '/_authenticated/team/'
     | '/_authenticated/profile/$username_/collection'
@@ -706,6 +731,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InvitationsTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/tower': {
+      id: '/_authenticated/tower'
+      path: '/tower'
+      fullPath: '/tower'
+      preLoaderRoute: typeof AuthenticatedTowerRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/skills': {
       id: '/_authenticated/skills'
       path: '/skills'
@@ -803,6 +835,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminAdminIndexRouteImport
       parentRoute: typeof AdminAdminRoute
+    }
+    '/_authenticated/tower/$element': {
+      id: '/_authenticated/tower/$element'
+      path: '/$element'
+      fullPath: '/tower/$element'
+      preLoaderRoute: typeof AuthenticatedTowerElementRouteImport
+      parentRoute: typeof AuthenticatedTowerRoute
     }
     '/_authenticated/team/$id': {
       id: '/_authenticated/team/$id'
@@ -963,6 +1002,17 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface AuthenticatedTowerRouteChildren {
+  AuthenticatedTowerElementRoute: typeof AuthenticatedTowerElementRoute
+}
+
+const AuthenticatedTowerRouteChildren: AuthenticatedTowerRouteChildren = {
+  AuthenticatedTowerElementRoute: AuthenticatedTowerElementRoute,
+}
+
+const AuthenticatedTowerRouteWithChildren =
+  AuthenticatedTowerRoute._addFileChildren(AuthenticatedTowerRouteChildren)
+
 interface AuthenticatedRouteChildren {
   AuthenticatedAchievementsRoute: typeof AuthenticatedAchievementsRoute
   AuthenticatedCampaignRoute: typeof AuthenticatedCampaignRoute
@@ -975,6 +1025,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedShopRoute: typeof AuthenticatedShopRoute
   AuthenticatedSkillsRoute: typeof AuthenticatedSkillsRoute
+  AuthenticatedTowerRoute: typeof AuthenticatedTowerRouteWithChildren
   AuthenticatedBattleStageIdRoute: typeof AuthenticatedBattleStageIdRoute
   AuthenticatedProfileUsernameRoute: typeof AuthenticatedProfileUsernameRoute
   AuthenticatedTeamIdRoute: typeof AuthenticatedTeamIdRoute
@@ -995,6 +1046,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedShopRoute: AuthenticatedShopRoute,
   AuthenticatedSkillsRoute: AuthenticatedSkillsRoute,
+  AuthenticatedTowerRoute: AuthenticatedTowerRouteWithChildren,
   AuthenticatedBattleStageIdRoute: AuthenticatedBattleStageIdRoute,
   AuthenticatedProfileUsernameRoute: AuthenticatedProfileUsernameRoute,
   AuthenticatedTeamIdRoute: AuthenticatedTeamIdRoute,

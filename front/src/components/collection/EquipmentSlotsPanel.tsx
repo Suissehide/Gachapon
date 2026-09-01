@@ -31,7 +31,11 @@ const SLOT_ORDER: EquipmentSlot[] = [
   'PRISM',
   'MONOLITH',
 ]
-const SLOT_LABELS: Record<EquipmentSlot, string> = {
+// Exportés : réutilisés par l'écran de tour (routes/_authenticated/tower.tsx)
+// pour afficher le slot alimenté par chaque tour, sans en recopier une
+// troisième version — equipment.tsx en garde malheureusement déjà une copie
+// séparée (dette existante, hors périmètre de la tour).
+export const SLOT_LABELS: Record<EquipmentSlot, string> = {
   WEAPON: 'Arme',
   ARMOR: 'Armure',
   ACCESSORY: 'Accessoire',
@@ -40,7 +44,7 @@ const SLOT_LABELS: Record<EquipmentSlot, string> = {
   PRISM: 'Prisme',
   MONOLITH: 'Monolithe',
 }
-const SLOT_ICONS: Record<EquipmentSlot, typeof Sword> = {
+export const SLOT_ICONS: Record<EquipmentSlot, typeof Sword> = {
   WEAPON: Sword,
   ARMOR: Shield,
   ACCESSORY: Sparkles,
