@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
 import { buildTestApp } from '../../helpers/build-test-app'
+import { LEVELUP_REFILL } from '../../helpers/equipment-fixture-slots'
 
 // Deux cas :
 //  (a) énergie basse + xp au bord du niveau 2 → battle → level-up → refill à 60.
@@ -35,14 +36,18 @@ describe('Campaign battle level-up → refill énergie', () => {
     })
     cardId = card.id
 
-    // Equipment required for firstClear guaranteedEquipment drop
+    // Equipment required for firstClear guaranteedEquipment drop. Jamais
+    // équipées sur une carte (pool de drop, filtré par rareté seule côté
+    // campaign.domain.ts). Slot/setKey réservés dans
+    // equipment-fixture-slots.ts (LEVELUP_REFILL — partage le slot MONOLITH
+    // de campaign.test.ts avec un setKey différent).
     await prisma.equipment.createMany({
       data: [
-        { name: `LvlRefEqC${suffix}`, slot: 'WEAPON', rarity: 'COMMON', bonuses: { atkFlat: 1 }, dropWeight: 10 },
-        { name: `LvlRefEqU${suffix}`, slot: 'WEAPON', rarity: 'UNCOMMON', bonuses: { atkFlat: 2 }, dropWeight: 10 },
-        { name: `LvlRefEqR${suffix}`, slot: 'WEAPON', rarity: 'RARE', bonuses: { atkFlat: 5 }, dropWeight: 10 },
-        { name: `LvlRefEqE${suffix}`, slot: 'WEAPON', rarity: 'EPIC', bonuses: { atkFlat: 20 }, dropWeight: 1 },
-        { name: `LvlRefEqL${suffix}`, slot: 'WEAPON', rarity: 'LEGENDARY', bonuses: { atkFlat: 50 }, dropWeight: 1 },
+        { name: `LvlRefEqC${suffix}`, ...LEVELUP_REFILL, rarity: 'COMMON', bonuses: { atkFlat: 1 }, dropWeight: 10 },
+        { name: `LvlRefEqU${suffix}`, ...LEVELUP_REFILL, rarity: 'UNCOMMON', bonuses: { atkFlat: 2 }, dropWeight: 10 },
+        { name: `LvlRefEqR${suffix}`, ...LEVELUP_REFILL, rarity: 'RARE', bonuses: { atkFlat: 5 }, dropWeight: 10 },
+        { name: `LvlRefEqE${suffix}`, ...LEVELUP_REFILL, rarity: 'EPIC', bonuses: { atkFlat: 20 }, dropWeight: 1 },
+        { name: `LvlRefEqL${suffix}`, ...LEVELUP_REFILL, rarity: 'LEGENDARY', bonuses: { atkFlat: 50 }, dropWeight: 1 },
       ],
     })
 

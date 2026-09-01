@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
 import { buildTestApp } from '../../helpers/build-test-app'
+import { EQUIPMENT_PROGRESSION_RARITY } from '../../helpers/equipment-fixture-slots'
 
 describe('Equipment milestone cascade by rarity', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
@@ -28,10 +29,13 @@ describe('Equipment milestone cascade by rarity', () => {
       data: { emailVerifiedAt: new Date(), gold: 100000 },
     })
 
+    // Deux pièces, jamais équipées sur une carte : ni le setKey ni le slot
+    // n'affectent les assertions de palier/sous-stats. Slot/setKey réservés
+    // dans equipment-fixture-slots.ts (EQUIPMENT_PROGRESSION_RARITY).
     const commonWeapon = await postgresOrm.prisma.equipment.create({
       data: {
         name: `RarC-${suffix}`,
-        slot: 'WEAPON',
+        ...EQUIPMENT_PROGRESSION_RARITY,
         rarity: 'COMMON',
         bonuses: { atkFlat: 5 },
         dropWeight: 10,
@@ -46,7 +50,7 @@ describe('Equipment milestone cascade by rarity', () => {
     const epicWeapon = await postgresOrm.prisma.equipment.create({
       data: {
         name: `RarE-${suffix}`,
-        slot: 'WEAPON',
+        ...EQUIPMENT_PROGRESSION_RARITY,
         rarity: 'EPIC',
         bonuses: { atkFlat: 25 },
         dropWeight: 10,

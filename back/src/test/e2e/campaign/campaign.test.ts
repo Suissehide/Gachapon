@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
 import { buildTestApp } from '../../helpers/build-test-app'
+import { CAMPAIGN } from '../../helpers/equipment-fixture-slots'
 
 describe('Campaign routes', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
@@ -39,11 +40,14 @@ describe('Campaign routes', () => {
       },
     })
 
-    // Some equipment to allow firstClear drop to succeed across rarities
+    // Some equipment to allow firstClear drop to succeed across rarities.
+    // Ces pièces ne sont jamais équipées sur une carte (pool de drop, cf.
+    // campaign.domain.ts qui interroge tx.equipment sans filtre de slot).
+    // Slot/setKey réservés dans equipment-fixture-slots.ts (CAMPAIGN).
     await postgresOrm.prisma.equipment.create({
       data: {
         name: `CampEqC${suffix}`,
-        slot: 'WEAPON',
+        ...CAMPAIGN,
         rarity: 'COMMON',
         bonuses: { atkFlat: 1 },
         dropWeight: 10,
@@ -52,7 +56,7 @@ describe('Campaign routes', () => {
     await postgresOrm.prisma.equipment.create({
       data: {
         name: `CampEqU${suffix}`,
-        slot: 'WEAPON',
+        ...CAMPAIGN,
         rarity: 'UNCOMMON',
         bonuses: { atkFlat: 2 },
         dropWeight: 10,
@@ -61,7 +65,7 @@ describe('Campaign routes', () => {
     await postgresOrm.prisma.equipment.create({
       data: {
         name: `CampEqR${suffix}`,
-        slot: 'WEAPON',
+        ...CAMPAIGN,
         rarity: 'RARE',
         bonuses: { atkFlat: 5 },
         dropWeight: 10,
@@ -70,7 +74,7 @@ describe('Campaign routes', () => {
     await postgresOrm.prisma.equipment.create({
       data: {
         name: `CampEqE${suffix}`,
-        slot: 'WEAPON',
+        ...CAMPAIGN,
         rarity: 'EPIC',
         bonuses: { atkFlat: 20 },
         dropWeight: 1,
@@ -79,7 +83,7 @@ describe('Campaign routes', () => {
     await postgresOrm.prisma.equipment.create({
       data: {
         name: `CampEqL${suffix}`,
-        slot: 'WEAPON',
+        ...CAMPAIGN,
         rarity: 'LEGENDARY',
         bonuses: { atkFlat: 50 },
         dropWeight: 1,

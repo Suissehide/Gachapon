@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
 import { buildTestApp } from '../../helpers/build-test-app'
+import { EQUIPMENT_INITIAL_SUBSTATS } from '../../helpers/equipment-fixture-slots'
 
 const SUBSTAT_RANGES: Record<string, { min: number; max: number }> = {
   hpFlat: { min: 20, max: 60 },
@@ -45,11 +46,14 @@ describe('Equipment initial substats on grant', () => {
     })
     userId = user.id
 
+    // Ni l'une ni l'autre pièce n'est équipée sur une carte : ni le setKey ni
+    // le slot n'entrent dans aucun calcul ici. Slot/setKey réservés dans
+    // equipment-fixture-slots.ts (EQUIPMENT_INITIAL_SUBSTATS).
     legendaryId = (
       await postgresOrm.prisma.equipment.create({
         data: {
           name: `InitL-${suffix}`,
-          slot: 'WEAPON',
+          ...EQUIPMENT_INITIAL_SUBSTATS,
           rarity: 'LEGENDARY',
           bonuses: { atkFlat: 40 },
           dropWeight: 1,
@@ -60,7 +64,7 @@ describe('Equipment initial substats on grant', () => {
       await postgresOrm.prisma.equipment.create({
         data: {
           name: `InitC-${suffix}`,
-          slot: 'WEAPON',
+          ...EQUIPMENT_INITIAL_SUBSTATS,
           rarity: 'COMMON',
           bonuses: { atkFlat: 5 },
           dropWeight: 50,

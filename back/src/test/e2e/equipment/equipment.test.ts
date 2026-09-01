@@ -1,6 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
 import { buildTestApp } from '../../helpers/build-test-app'
+import {
+  EQUIPMENT_TEST_ARMOR,
+  EQUIPMENT_TEST_WEAPON,
+} from '../../helpers/equipment-fixture-slots'
 
 describe('Equipment routes', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
@@ -60,10 +64,15 @@ describe('Equipment routes', () => {
     })
     userCardId = uc.id
 
+    // Ce fichier ne teste que la mécanique equip/unequip (equippedOnId), pas
+    // les stats de combat : le setKey n'affecte aucune assertion. Le slot,
+    // lui, est sémantiquement nécessaire ici (exclusivité d'équipement par
+    // slot). Réservations dans equipment-fixture-slots.ts
+    // (EQUIPMENT_TEST_WEAPON / EQUIPMENT_TEST_ARMOR).
     const w1 = await postgresOrm.prisma.equipment.create({
       data: {
         name: `EquipW1-${suffix}`,
-        slot: 'WEAPON',
+        ...EQUIPMENT_TEST_WEAPON,
         rarity: 'COMMON',
         bonuses: { atkFlat: 5 },
         dropWeight: 50,
@@ -72,7 +81,7 @@ describe('Equipment routes', () => {
     const w2 = await postgresOrm.prisma.equipment.create({
       data: {
         name: `EquipW2-${suffix}`,
-        slot: 'WEAPON',
+        ...EQUIPMENT_TEST_WEAPON,
         rarity: 'UNCOMMON',
         bonuses: { atkFlat: 8 },
         dropWeight: 25,
@@ -81,7 +90,7 @@ describe('Equipment routes', () => {
     const a1 = await postgresOrm.prisma.equipment.create({
       data: {
         name: `EquipA1-${suffix}`,
-        slot: 'ARMOR',
+        ...EQUIPMENT_TEST_ARMOR,
         rarity: 'COMMON',
         bonuses: { defFlat: 3, hpPct: 2 },
         dropWeight: 50,
@@ -214,11 +223,14 @@ describe('Equipment routes', () => {
         emailVerifiedAt: new Date(),
       },
     })
+    // Même réservation EQUIPMENT_TEST_WEAPON que w1/w2, mais rareté RARE
+    // (ni COMMON comme w1, ni UNCOMMON comme w2) pour rester sous
+    // @@unique([slot, setKey, rarity]).
     const fakeEquip = await postgresOrm.prisma.equipment.create({
       data: {
         name: `OtherEquip-${suffix}`,
-        slot: 'WEAPON',
-        rarity: 'COMMON',
+        ...EQUIPMENT_TEST_WEAPON,
+        rarity: 'RARE',
         bonuses: { atkFlat: 1 },
         dropWeight: 1,
       },

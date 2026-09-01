@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
 import { buildTestApp } from '../../helpers/build-test-app'
+import { EQUIPMENT_SALVAGE } from '../../helpers/equipment-fixture-slots'
 
 describe('Equipment salvage route', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
@@ -51,11 +52,14 @@ describe('Equipment salvage route', () => {
       data: { userId: user.id, cardId: card.id, variant: 'NORMAL' },
     })
 
+    // Une seule pièce est équipée (epic, seule sur la carte) : pas de palier
+    // de set possible. Slot/setKey réservés dans equipment-fixture-slots.ts
+    // (EQUIPMENT_SALVAGE).
     const mkPiece = (name: string, rarity: string) =>
       postgresOrm.prisma.equipment.create({
         data: {
           name: `${name}-${suffix}`,
-          slot: 'WEAPON',
+          ...EQUIPMENT_SALVAGE,
           rarity,
           bonuses: { atkFlat: 5 },
           dropWeight: 10,

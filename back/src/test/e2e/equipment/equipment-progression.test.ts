@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
 import { buildTestApp } from '../../helpers/build-test-app'
+import { EQUIPMENT_PROGRESSION } from '../../helpers/equipment-fixture-slots'
 
 const SUBSTAT_RANGES: Record<string, { min: number; max: number }> = {
   hpFlat: { min: 20, max: 60 },
@@ -48,10 +49,13 @@ describe('Equipment upgrade route', () => {
     })
     userId = user.id
 
+    // Une seule pièce, jamais équipée : ni le setKey ni le slot n'affectent
+    // la progression ou un calcul de stats. Slot/setKey réservés dans
+    // equipment-fixture-slots.ts (EQUIPMENT_PROGRESSION).
     const weapon = await postgresOrm.prisma.equipment.create({
       data: {
         name: `UpgradeW-${suffix}`,
-        slot: 'WEAPON',
+        ...EQUIPMENT_PROGRESSION,
         rarity: 'RARE',
         bonuses: { atkFlat: 10 },
         dropWeight: 10,
