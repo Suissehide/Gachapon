@@ -62,6 +62,19 @@ export const EQUIPMENT_INITIAL_SUBSTATS = reservation('PRISM', 'FUREUR')
 export const CAMPAIGN = reservation('MONOLITH', 'FUREUR')
 export const LEVELUP_REFILL = reservation('MONOLITH', 'PRECISION')
 
+// tower.test.ts — pool de drop garanti de la tour FEU (élément FIRE → slot
+// EMBER, cf. TOWER_SLOT_BY_ELEMENT). Le tirage de tour pioche le set
+// uniformément parmi les 4 (drawSetKey, tower-drop.ts) : il faut donc les 4
+// setKeys pour CE slot, pas un seul. EMBER+FUREUR est déjà réservé par
+// EQUIPMENT_SALVAGE, qui ne crée que du COMMON/RARE/EPIC — tower.test.ts
+// réutilise ce même (slot, setKey) à la rareté LEGENDARY, qu'EQUIPMENT_SALVAGE
+// ne touche jamais, plutôt que de dupliquer la réservation (le check
+// runtime ci-dessous l'interdirait de toute façon). Les 3 autres setKeys
+// sont libres et réservés ici.
+export const TOWER_FIRE_PRECISION = reservation('EMBER', 'PRECISION')
+export const TOWER_FIRE_PERCEE = reservation('EMBER', 'PERCEE')
+export const TOWER_FIRE_SANGSUE = reservation('EMBER', 'SANGSUE')
+
 const ALL_RESERVATIONS = [
   EQUIPMENT_TEST_WEAPON,
   EQUIPMENT_TEST_ARMOR,
@@ -71,6 +84,9 @@ const ALL_RESERVATIONS = [
   EQUIPMENT_INITIAL_SUBSTATS,
   CAMPAIGN,
   LEVELUP_REFILL,
+  TOWER_FIRE_PRECISION,
+  TOWER_FIRE_PERCEE,
+  TOWER_FIRE_SANGSUE,
 ]
 
 const seen = new Set<string>()

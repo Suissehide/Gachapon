@@ -20,6 +20,7 @@ import { skillsRouter } from './skills'
 import { statsRouter } from './stats'
 import { streakRouter } from './streak'
 import { teamsRouter } from './teams'
+import { towerRouter } from './tower'
 import { usersRouter } from './users'
 import { wishlistRouter } from './wishlist'
 import { wsRouter } from './ws'
@@ -71,6 +72,7 @@ export const routes: FastifyPluginAsyncZod = async (fastify) => {
   await fastify.register(usersRouter)
   await fastify.register(wishlistRouter)
   await fastify.register(teamsRouter)
+  await fastify.register(towerRouter)
   await fastify.register(statsRouter)
   await fastify.register(rewardsRouter, { prefix: '/rewards' })
   await fastify.register(achievementsRouter, { prefix: '/achievements' })
