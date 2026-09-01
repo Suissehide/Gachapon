@@ -10,6 +10,8 @@ export type EquipmentRarity =
   | 'EPIC'
   | 'LEGENDARY'
 
+// Miroir de SUBSTAT_KEYS (back/src/main/domain/equipment/equipment-progression.ts) :
+// étendre ici en même temps que là-bas.
 export type SubstatKey =
   | 'hpFlat'
   | 'hpPct'
@@ -19,6 +21,10 @@ export type SubstatKey =
   | 'defPct'
   | 'spdFlat'
   | 'spdPct'
+  | 'critRatePct'
+  | 'critDmgPct'
+  | 'armorPenPct'
+  | 'lifestealPct'
 
 export type Substat = { key: SubstatKey; value: number }
 
