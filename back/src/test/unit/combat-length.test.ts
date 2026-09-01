@@ -69,7 +69,9 @@ describe('longueur des combats en endgame', () => {
   })
 
   it('le pire cas (défensive vs défensive) reste sous 90 actions', () => {
-    // Avant la correction de la constante de mitigation : 169 actions.
+    // La longueur avant la correction de la constante de mitigation n'a
+    // jamais été mesurée sur le vrai moteur (seulement estimée via une
+    // simulation Python approximative, non fiable) — pas de chiffre ici.
     expect(longueurMediane(DEFENSIVE, DEFENSIVE)).toBeLessThan(90)
   })
 
