@@ -136,29 +136,33 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
   // Nouveaux passifs
   // -------------------------------------------------------------------------
 
-  // Passifs de statistiques (appliqués en début de combat)
+  // Tâche 10 : VIGOR, HASTE, FORTIFY et EMPOWER dupliquaient un bonus
+  // d'équipement figé (+X % PV/VIT/DEF/ATQ dès le début du combat) — un
+  // équipement peut faire exactement ça, donc ce n'était pas un passif.
+  // Ils deviennent dynamiques : second souffle, tour bonus par cadence,
+  // empilement défensif/offensif — voir battle-simulator.domain.ts
+  // (runActorTurn / resolveAttackOnTarget).
   VIGOR: {
     key: 'VIGOR',
     rarityHint: 'EPIC',
-    label: 'Vigueur',
+    label: 'Second souffle',
     compute(palier) {
       const p = clampPalier(palier)
-      return { valuePct: 8 + 2 * p }
+      return { valuePct: 20 + 4 * p } // part des PV max rendue
     },
     describe(palier) {
-      return `+${8 + 2 * clampPalier(palier)} % de PV max`
+      return `La première fois que ses PV passent sous 50 %, il récupère ${20 + 4 * clampPalier(palier)} % de ses PV max`
     },
   },
   HASTE: {
     key: 'HASTE',
     rarityHint: 'EPIC',
     label: 'Célérité',
-    compute(palier) {
-      const p = clampPalier(palier)
-      return { valuePct: 6 + 2 * p }
+    compute() {
+      return { valuePct: 3 } // cadence, en nombre d'actions
     },
-    describe(palier) {
-      return `+${6 + 2 * clampPalier(palier)} % de vitesse`
+    describe() {
+      return 'Toutes les 3 actions, il rejoue immédiatement'
     },
   },
   FORTIFY: {
@@ -167,10 +171,10 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     label: 'Fortification',
     compute(palier) {
       const p = clampPalier(palier)
-      return { valuePct: 10 + 4 * p }
+      return { valuePct: 4 + 2 * p } // DEF gagnée par charge
     },
     describe(palier) {
-      return `+${10 + 4 * clampPalier(palier)} % de défense`
+      return `Chaque coup encaissé lui donne +${4 + 2 * clampPalier(palier)} % de défense, cumulable 5 fois`
     },
   },
   EMPOWER: {
@@ -179,12 +183,14 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
     label: 'Puissance',
     compute(palier) {
       const p = clampPalier(palier)
-      return { valuePct: 6 + 2 * p }
+      return { valuePct: 3 + p } // ATQ gagnée par charge
     },
     describe(palier) {
-      return `+${6 + 2 * clampPalier(palier)} % d'ATQ`
+      return `Chaque attaque portée lui donne +${3 + clampPalier(palier)} % d'attaque, cumulable 5 fois`
     },
   },
+
+  // Passif de statistiques appliqué une fois, en début de combat.
   BULWARK: {
     key: 'BULWARK',
     rarityHint: 'LEGENDARY',

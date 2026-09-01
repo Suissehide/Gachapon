@@ -134,6 +134,8 @@ function mulberry32(seed: number): () => number {
 
 const ACTION_THRESHOLD = 1000
 const BASE_SPD_REF = 100
+/** Plafond d'empilement des passifs de charges (FORTIFY, EMPOWER). */
+const MAX_STACKS = 5
 
 /**
  * Avance le temps jusqu'à la prochaine action : chaque unité vivante gagne
@@ -233,42 +235,22 @@ function toBattleUnit(u: SimulatorUnit, side: Side): BattleUnit {
   const passiveValuePct =
     passiveKey === null ? 0 : PASSIVES[passiveKey].compute(u.palier).valuePct
 
-  // Passifs de statistiques appliqués une fois, en début de combat.
-  let maxHp = u.hp
-  let atk = u.atk
-  let def = u.def
-  let spd = u.spd
-  let shield = 0
-  const mult = 1 + passiveValuePct / 100
-  switch (passiveKey) {
-    case 'VIGOR':
-      maxHp = Math.round(maxHp * mult)
-      break
-    case 'HASTE':
-      spd = Math.round(spd * mult)
-      break
-    case 'FORTIFY':
-      def = Math.round(def * mult)
-      break
-    case 'EMPOWER':
-      atk = Math.round(atk * mult)
-      break
-    case 'BULWARK':
-      shield = Math.round(maxHp * (passiveValuePct / 100))
-      break
-    default:
-      break
-  }
+  const maxHp = u.hp
+  // BULWARK reste le seul passif appliqué une fois, en début de combat : un
+  // bouclier de départ. VIGOR, HASTE, FORTIFY et EMPOWER (tâche 10) sont
+  // désormais dynamiques et n'altèrent plus les stats initiales.
+  const shield =
+    passiveKey === 'BULWARK' ? Math.round(maxHp * (passiveValuePct / 100)) : 0
 
   return {
     id: u.id,
     side,
     maxHp,
     currentHp: maxHp,
-    baseAtk: atk,
-    effectiveAtk: atk,
-    def,
-    spd,
+    baseAtk: u.atk,
+    effectiveAtk: u.atk,
+    def: u.def,
+    spd: u.spd,
     attackPattern: u.attackPattern,
     passiveKey,
     passiveValuePct,
@@ -561,6 +543,75 @@ function resolveLifesteal(attacker: BattleUnit, log: LogEntry[]): number {
   return attacker.lifesteal * 2
 }
 
+/**
+ * FORTIFY — durcit à chaque coup encaissé, aligné sur `hitsTaken` (tâche 8) :
+ * un coup entièrement absorbé par un bouclier BULWARK (`final` retombé à 0
+ * après absorption) n'incrémente ni l'un ni l'autre — la garde `final > 0`
+ * est partagée. Les dégâts sur la durée (BURN/POISON, appliqués par
+ * `applyDotsToUnit` en fin de tour) ne passent pas par cette fonction non
+ * plus : un tick de poison n'est pas « un coup encaissé », c'est voulu.
+ */
+function applyFortifyStack(
+  target: BattleUnit,
+  final: number,
+  log: LogEntry[],
+): void {
+  if (
+    final <= 0 ||
+    target.passiveKey !== 'FORTIFY' ||
+    (target.stacks.fortify ?? 0) >= MAX_STACKS
+  ) {
+    return
+  }
+  target.stacks.fortify = (target.stacks.fortify ?? 0) + 1
+  const parCharge = PASSIVES.FORTIFY.compute(target.palier).valuePct
+  target.def *= 1 + parCharge / 100
+  log.push({
+    type: 'PASSIVE',
+    unitId: target.id,
+    passive: 'FORTIFY',
+    payload: { stacks: target.stacks.fortify },
+  })
+}
+
+/** VIGOR — second souffle, une seule fois par combat, au passage sous 50 % de PV. */
+function applyVigorSecondWind(target: BattleUnit, log: LogEntry[]): void {
+  if (
+    target.passiveKey !== 'VIGOR' ||
+    target.stacks.vigor ||
+    !target.alive ||
+    target.currentHp >= target.maxHp / 2
+  ) {
+    return
+  }
+  target.stacks.vigor = 1
+  const soin = Math.round(
+    (target.maxHp * PASSIVES.VIGOR.compute(target.palier).valuePct) / 100,
+  )
+  target.currentHp = Math.min(target.maxHp, target.currentHp + soin)
+  log.push({
+    type: 'PASSIVE',
+    unitId: target.id,
+    passive: 'VIGOR',
+    payload: { healed: soin },
+  })
+}
+
+/**
+ * EMPOWER — multiplicateur d'ATQ composé à `attackerAtkMult`, calculé à
+ * partir des charges accumulées par `applyEmpowerStack` (runActorTurn).
+ * Ne touche jamais `effectiveAtk` : voir le commentaire d'`applyEmpowerStack`.
+ */
+function resolveEmpowerMult(attacker: BattleUnit): number {
+  const charges = attacker.stacks.empower ?? 0
+  if (attacker.passiveKey !== 'EMPOWER' || charges <= 0) {
+    return 1
+  }
+  return (
+    1 + (PASSIVES.EMPOWER.compute(attacker.palier).valuePct * charges) / 100
+  )
+}
+
 function resolveAttackOnTarget(
   attacker: BattleUnit,
   target: BattleUnit,
@@ -589,7 +640,7 @@ function resolveAttackOnTarget(
   const effectiveDef = resolveEffectiveDef(attacker, target, log)
 
   let raw = computeRawDamage(
-    attacker.effectiveAtk * attackerAtkMult,
+    attacker.effectiveAtk * attackerAtkMult * resolveEmpowerMult(attacker),
     effectiveDef,
     target.mitigationRef,
     prng,
@@ -636,6 +687,8 @@ function resolveAttackOnTarget(
   if (final > 0) {
     target.hitsTaken += 1
   }
+  applyFortifyStack(target, final, log)
+  applyVigorSecondWind(target, log)
 
   // BURN / POISON (attacker) — applique un effet de dégâts sur la durée à la cible.
   if (final > 0) {
@@ -1080,6 +1133,54 @@ function computeNextDt(alive: BattleUnit[]): number {
   return dt
 }
 
+/**
+ * EMPOWER — montée en puissance offensive.
+ *
+ * ATTENTION : ne PAS écrire `actor.effectiveAtk = actor.baseAtk * (...)`.
+ * `applyBanner` fait déjà exactement cette écriture pour le bonus de
+ * BANNER ; la refaire ici écraserait ce bonus pour toute équipe qui porte
+ * un porte-bannière, dès la première attaque du porteur d'EMPOWER. On ne
+ * stocke donc que les charges ; le multiplicateur s'applique au moment des
+ * dégâts, dans `resolveAttackOnTarget`, sans jamais toucher `effectiveAtk`.
+ */
+function applyEmpowerStack(actor: BattleUnit, log: LogEntry[]): void {
+  if (
+    actor.passiveKey !== 'EMPOWER' ||
+    (actor.stacks.empower ?? 0) >= MAX_STACKS
+  ) {
+    return
+  }
+  actor.stacks.empower = (actor.stacks.empower ?? 0) + 1
+  log.push({
+    type: 'PASSIVE',
+    unitId: actor.id,
+    passive: 'EMPOWER',
+    payload: { stacks: actor.stacks.empower },
+  })
+}
+
+/**
+ * HASTE — tour bonus par cadence : toutes les `cadence` actions, la jauge
+ * est remise directement au seuil ATB, ce qui fait rejouer l'unité au
+ * prochain passage de `advanceToNextActor` sans consommer de temps
+ * supplémentaire. Aucun tirage PRNG : le déterminisme à seed égal tient.
+ */
+function applyHasteBonusTurn(actor: BattleUnit, log: LogEntry[]): void {
+  if (actor.passiveKey !== 'HASTE') {
+    return
+  }
+  const cadence = PASSIVES.HASTE.compute(actor.palier).valuePct
+  if (actor.attackCount % cadence === 0) {
+    actor.gauge = ACTION_THRESHOLD
+    log.push({
+      type: 'PASSIVE',
+      unitId: actor.id,
+      passive: 'HASTE',
+      payload: {},
+    })
+  }
+}
+
 /** Applique DoT, action et soins pour le tour d'une unité actrice. */
 function runActorTurn(
   actor: BattleUnit,
@@ -1094,6 +1195,8 @@ function runActorTurn(
     // Compteur de cadence : incrémenté après l'action, jamais avant — les
     // passifs de cadence (tâche 9) se basent sur (attackCount + 1) % N.
     actor.attackCount += 1
+    applyEmpowerStack(actor, log)
+    applyHasteBonusTurn(actor, log)
   }
   if (actor.alive) {
     applyRegenToUnit(actor, log)

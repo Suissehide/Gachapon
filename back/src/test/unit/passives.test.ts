@@ -63,6 +63,34 @@ describe('passives', () => {
     })
   })
 
+  // Tâche 10 : VIGOR, HASTE, FORTIFY et EMPOWER dupliquaient un bonus
+  // d'équipement (+X % PV/VIT/DEF/ATQ figé). Ils deviennent dynamiques ;
+  // seul HASTE garde une magnitude fixe (cadence, indépendante du palier).
+  describe('VIGOR', () => {
+    it('24% at P1, 44% at P6 (part des PV max rendue)', () => {
+      expect(PASSIVES.VIGOR.compute(1).valuePct).toBe(24)
+      expect(PASSIVES.VIGOR.compute(6).valuePct).toBe(44)
+    })
+  })
+  describe('HASTE', () => {
+    it('cadence fixe de 3 actions, quel que soit le palier', () => {
+      expect(PASSIVES.HASTE.compute(1).valuePct).toBe(3)
+      expect(PASSIVES.HASTE.compute(6).valuePct).toBe(3)
+    })
+  })
+  describe('FORTIFY', () => {
+    it('6% at P1, 16% at P6 (DEF gagnée par charge)', () => {
+      expect(PASSIVES.FORTIFY.compute(1).valuePct).toBe(6)
+      expect(PASSIVES.FORTIFY.compute(6).valuePct).toBe(16)
+    })
+  })
+  describe('EMPOWER', () => {
+    it('4% at P1, 9% at P6 (ATQ gagnée par charge)', () => {
+      expect(PASSIVES.EMPOWER.compute(1).valuePct).toBe(4)
+      expect(PASSIVES.EMPOWER.compute(6).valuePct).toBe(9)
+    })
+  })
+
   describe('BLESSING', () => {
     it('8% at P1, 18% at P6', () => {
       expect(PASSIVES.BLESSING.compute(1).valuePct).toBe(8)

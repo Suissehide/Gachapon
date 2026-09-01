@@ -568,98 +568,14 @@ describe('simulateBattle', () => {
     return 0
   }
 
-  // VIGOR — +% max HP → survives more hits
-  it('VIGOR raises effective HP so the unit takes more hits to die', () => {
-    const seed = 'vigor-test'
-    const attacker = () => makeUnit('A0', { atk: 50, def: 0, spd: 999 })
-    const base = simulateBattle({
-      teamA: [attacker()],
-      teamB: [makeUnit('B0', { hp: 500, atk: 1, def: 0, spd: 1 })],
-      seed,
-      timeoutTurns: 100,
-    })
-    const vig = simulateBattle({
-      teamA: [attacker()],
-      teamB: [
-        makeUnit('B0', {
-          hp: 500,
-          atk: 1,
-          def: 0,
-          spd: 1,
-          passiveKey: 'VIGOR',
-          palier: 6,
-        }),
-      ],
-      seed,
-      timeoutTurns: 100,
-    })
-    expect(vig.turns).toBeGreaterThan(base.turns)
-  })
-
-  // HASTE — +% SPD → acts before a slightly faster enemy
-  it('HASTE lets a unit act before an enemy with marginally higher SPD', () => {
-    const withHaste = simulateBattle({
-      teamA: [makeUnit('A0', { spd: 100, passiveKey: 'HASTE', palier: 6 })],
-      teamB: [makeUnit('B0', { spd: 110 }), makeUnit('B1', { spd: 40 })],
-      seed: 'haste-test',
-      timeoutTurns: 1,
-    })
-    const first = withHaste.log.find((e) => e.type === 'ATTACK')
-    expect(first?.type).toBe('ATTACK')
-    if (first?.type === 'ATTACK') {
-      expect(first.attackerId).toBe('A0')
-    }
-  })
-
-  // FORTIFY — +% DEF → takes less damage
-  it('FORTIFY reduces incoming damage', () => {
-    const seed = 'fortify-test'
-    const base = simulateBattle({
-      teamA: [makeUnit('A0', { atk: 80, spd: 999 })],
-      teamB: [makeUnit('B0', { hp: 100000, def: 20, spd: 1 })],
-      seed,
-      timeoutTurns: 1,
-    })
-    const fort = simulateBattle({
-      teamA: [makeUnit('A0', { atk: 80, spd: 999 })],
-      teamB: [
-        makeUnit('B0', {
-          hp: 100000,
-          def: 20,
-          spd: 1,
-          passiveKey: 'FORTIFY',
-          palier: 6,
-        }),
-      ],
-      seed,
-      timeoutTurns: 1,
-    })
-    expect(firstAttackDamage(fort.log, 'A0')).toBeLessThan(
-      firstAttackDamage(base.log, 'A0'),
-    )
-  })
-
-  // EMPOWER — +% ATK → deals more damage
-  it('EMPOWER increases the attacker damage', () => {
-    const seed = 'empower-test'
-    const base = simulateBattle({
-      teamA: [makeUnit('A0', { atk: 50, spd: 999 })],
-      teamB: [makeUnit('B0', { hp: 100000, def: 10, spd: 1 })],
-      seed,
-      timeoutTurns: 1,
-    })
-    const emp = simulateBattle({
-      teamA: [
-        makeUnit('A0', { atk: 50, spd: 999, passiveKey: 'EMPOWER', palier: 6 }),
-      ],
-      teamB: [makeUnit('B0', { hp: 100000, def: 10, spd: 1 })],
-      seed,
-      timeoutTurns: 1,
-    })
-    expect(firstAttackDamage(emp.log, 'A0')).toBeGreaterThan(
-      firstAttackDamage(base.log, 'A0'),
-    )
-  })
+  // VIGOR, HASTE, FORTIFY, EMPOWER dupliquaient un bonus d'équipement figé
+  // (+X % PV/VIT/DEF/ATQ constant dès le début du combat) — tâche 10 les
+  // rend dynamiques (second souffle, tour bonus par cadence, empilements
+  // défensif/offensif). Les anciens tests de multiplicateur de départ n'ont
+  // plus de sens ; voir la section « passifs dynamiques — anciens bâtons de
+  // stats » plus bas dans ce fichier pour leur nouvelle couverture, ainsi
+  // que le test de cohabitation BANNER + EMPOWER qui protège
+  // `effectiveAtk` contre une régression d'écrasement.
 
   // BULWARK — shield absorbs damage before HP
   it('BULWARK absorbs early damage with a shield and emits a PASSIVE log', () => {
@@ -1619,5 +1535,148 @@ describe('passifs dynamiques — collision avec les stats', () => {
       teamB: [makeUnit('B0', { hp: 100000, atk: 300, spd: 300 })],
     })
     expect(r.log.some((e) => e.type === 'HEAL')).toBe(false)
+  })
+})
+
+const MAX_CHARGES = 5
+
+describe('passifs dynamiques — anciens bâtons de stats', () => {
+  it('VIGOR soigne une seule fois, au passage sous 50 % de PV', () => {
+    const r = simulateBattle({
+      seed: 'vigor',
+      teamA: [makeUnit('A0', { passiveKey: 'VIGOR', hp: 1000, atk: 1 })],
+      teamB: [makeUnit('B0', { hp: 100000, atk: 120, spd: 300 })],
+    })
+    const declenchements = r.log.filter(
+      (e) => e.type === 'PASSIVE' && e.passive === 'VIGOR',
+    )
+    expect(declenchements).toHaveLength(1)
+  })
+
+  it('HASTE offre un tour bonus toutes les 3 actions', () => {
+    const avec = simulateBattle({
+      seed: 'haste',
+      teamA: [makeUnit('A0', { passiveKey: 'HASTE', atk: 50 })],
+      teamB: [makeUnit('B0', { hp: 50000, atk: 1 })],
+    })
+    const sans = simulateBattle({
+      seed: 'haste',
+      teamA: [makeUnit('A0', { passiveKey: null, atk: 50 })],
+      teamB: [makeUnit('B0', { hp: 50000, atk: 1 })],
+    })
+    // Même total de dégâts à infliger, mais plus d'actions disponibles.
+    expect(avec.turns).toBeGreaterThan(sans.turns)
+  })
+
+  it('FORTIFY n empile PAS sur un coup entièrement absorbé par un bouclier', () => {
+    // hitsTaken n'est incrémenté que si `final > 0` après absorption BULWARK
+    // (tâche 8). Un porteur de bouclier ne doit donc pas accumuler de défense
+    // tant que son bouclier encaisse tout.
+    // Fixture corrigée : le makeUnit par défaut (def: 10, mitigationRef: 100)
+    // ne rend PAS des dégâts nuls pour un atk de 1 — 100/(100+10) * 1 * variance
+    // reste ~0,82 à 1,0, arrondi à 1, donc FORTIFY empilerait quand même.
+    // Une DEF réellement écrasante (1 000 000) est nécessaire pour que le
+    // ratio de mitigation écrase la formule et arrondisse `final` à 0.
+    const r = simulateBattle({
+      seed: 'fortify-shield',
+      teamA: [
+        makeUnit('A0', { passiveKey: 'FORTIFY', hp: 100000, atk: 1, def: 1_000_000 }),
+      ],
+      teamB: [makeUnit('B0', { hp: 100000, atk: 1, spd: 300 })],
+    })
+    const charges = r.log.filter(
+      (e) => e.type === 'PASSIVE' && e.passive === 'FORTIFY',
+    )
+    // Dégâts arrondis à 0 contre une DEF écrasante : aucune charge.
+    expect(charges.length).toBe(0)
+  })
+
+  it('FORTIFY empile au plus 5 charges', () => {
+    const r = simulateBattle({
+      seed: 'fortify',
+      teamA: [makeUnit('A0', { passiveKey: 'FORTIFY', hp: 100000, atk: 1 })],
+      teamB: [makeUnit('B0', { hp: 100000, atk: 50, spd: 300 })],
+    })
+    const charges = r.log.filter(
+      (e) => e.type === 'PASSIVE' && e.passive === 'FORTIFY',
+    )
+    expect(charges.length).toBe(MAX_CHARGES)
+  })
+
+  it('EMPOWER empile au plus 5 charges et augmente les dégâts', () => {
+    const r = simulateBattle({
+      seed: 'empower',
+      teamA: [makeUnit('A0', { passiveKey: 'EMPOWER', atk: 100, critRate: 0 })],
+      teamB: [makeUnit('B0', { hp: 200000, atk: 1 })],
+    })
+    // Fixture corrigée : A0 et B0 partagent la même vitesse par défaut (100),
+    // donc ils alternent — un filtre non spécifique à 'ATTACK' mélange les
+    // dégâts constants de B0 (~1, sans EMPOWER) avec ceux d'A0 (croissants).
+    // Filtrer sur attackerId isole la progression d'A0.
+    const degats = r.log
+      .filter((e) => e.type === 'ATTACK' && e.attackerId === 'A0')
+      .flatMap((e) => e.damages.map((d) => d.final))
+    expect(degats[6]).toBeGreaterThan(degats[0])
+    expect(
+      r.log.filter((e) => e.type === 'PASSIVE' && e.passive === 'EMPOWER').length,
+    ).toBe(MAX_CHARGES)
+  })
+
+  // Régression : applyBanner (battle-simulator.domain.ts) écrit
+  // `effectiveAtk = baseAtk * (1 + banner/100)` pour TOUTE l'équipe, y
+  // compris le porteur d'EMPOWER. Si EMPOWER réécrivait à son tour
+  // `effectiveAtk` (au lieu de composer un multiplicateur séparé via
+  // `attackerAtkMult`), ce bonus de bannière serait écrasé dès la première
+  // charge d'EMPOWER, et resterait perdu pour le reste du combat — y
+  // compris une fois les 5 charges accumulées.
+  it('EMPOWER laisse le bonus de BANNER intact, y compris après plusieurs charges', () => {
+    const seed = 'banner-empower'
+    const build = (withBanner: boolean): SimulatorInput => ({
+      seed,
+      teamA: [
+        makeUnit('A0', {
+          atk: 30,
+          spd: 999,
+          passiveKey: withBanner ? 'BANNER' : null,
+          palier: 6,
+        }),
+        makeUnit('A1', {
+          atk: 50,
+          spd: 998,
+          passiveKey: 'EMPOWER',
+          palier: 6,
+        }),
+      ],
+      teamB: [makeUnit('B0', { hp: 200000, atk: 1, def: 10, spd: 1 })],
+      timeoutTurns: 40,
+    })
+
+    const sansBanner = simulateBattle(build(false))
+    const avecBanner = simulateBattle(build(true))
+
+    const degatsA1 = (r: typeof sansBanner) =>
+      r.log
+        .filter((e) => e.type === 'ATTACK' && e.attackerId === 'A1')
+        .flatMap((e) => e.damages.map((d) => d.final))
+
+    const sans = degatsA1(sansBanner)
+    const avec = degatsA1(avecBanner)
+
+    // Assez d'attaques d'A1 pour dépasser les 5 charges d'EMPOWER et
+    // vérifier que le bonus de bannière survit au-delà du plafond.
+    expect(avec.length).toBeGreaterThanOrEqual(MAX_CHARGES + 2)
+    expect(sans.length).toBe(avec.length)
+
+    for (let i = 0; i < avec.length; i++) {
+      const a = avec[i]
+      const s = sans[i]
+      if (a === undefined || s === undefined) {
+        throw new Error('structure de log inattendue')
+      }
+      // Sans EMPOWER cassé : la bannière ajoute un bonus constant à chaque
+      // attaque d'A1, quel que soit le nombre de charges d'EMPOWER déjà
+      // accumulées.
+      expect(a).toBeGreaterThan(s)
+    }
   })
 })
