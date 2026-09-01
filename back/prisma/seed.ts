@@ -10,6 +10,7 @@ import { seedSkills } from './seed/skills'
 import { seedMilestones } from './seed/milestones'
 import { seedQuests } from './seed/quests'
 import { seedShop } from './seed/shop'
+import { seedTowerFloors } from './seed/tower'
 import { seedUsers } from './seed/users'
 
 // Load .env then .env.local (local overrides)
@@ -27,6 +28,7 @@ async function main() {
     // Combat (combat tables reference User/UserCard/Equipment — delete first)
     await tx.battleResult.deleteMany()
     await tx.userCampaignProgress.deleteMany()
+    await tx.userTowerProgress.deleteMany()
     await tx.userEquipment.deleteMany()
     await tx.userSkill.deleteMany()
     await tx.skillEdge.deleteMany()
@@ -49,6 +51,7 @@ async function main() {
     await tx.cardSet.deleteMany()
     await tx.equipment.deleteMany()
     await tx.campaignStage.deleteMany()
+    await tx.towerFloor.deleteMany()
     await tx.shopItem.deleteMany()
     await tx.userReward.deleteMany()
     await tx.streakMilestone.deleteMany()
@@ -67,6 +70,7 @@ async function main() {
     await seedSkills(tx)
     await seedEquipment(tx)
     await seedCampaign(tx)
+    await seedTowerFloors(tx)
 
     // Utilisateurs + équipe (en dernier, peut référencer le catalogue)
     await seedUsers(tx)
