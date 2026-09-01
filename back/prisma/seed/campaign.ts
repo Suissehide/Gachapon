@@ -14,7 +14,7 @@ const CURVE_B = 2.5
 // Progression joueur attendue par chapitre : l'ennemi s'y aligne (base de
 // rareté + enemyScale) pour que ses stats ET sa vitesse scalent comme le
 // joueur sous l'ATB. Valeurs = médianes du roster (prisma/seed/cards.ts).
-const RARITY_BASE = {
+export const RARITY_BASE = {
   COMMON: { hp: 105, atk: 13, def: 13, spd: 92 },
   UNCOMMON: { hp: 137, atk: 19, def: 18, spd: 99 },
   RARE: { hp: 195, atk: 26, def: 25, spd: 104 },

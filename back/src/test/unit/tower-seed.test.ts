@@ -1,5 +1,6 @@
 import { describe, expect, it } from '@jest/globals'
 
+import { RARITY_BASE } from '../../../prisma/seed/campaign'
 import {
   TOWER_ELEMENTS,
   buildTowerFloors,
@@ -62,6 +63,16 @@ describe('seed des tours', () => {
     const marches = Array.from({ length: 9 }, (_, i) => puissance(i + 2) / puissance(i + 1))
     // Au moins une marche vaut le double d'une autre : la courbe n'est pas plate.
     expect(Math.max(...marches) / Math.min(...marches)).toBeGreaterThan(1.5)
+  })
+
+  it('le profil de base des ennemis de tour suit RARITY_BASE.EPIC de la campagne, pas un littéral recopié', () => {
+    // Étage 1 (échelle ×1) : baseHp/baseAtk/baseDef doivent être EXACTEMENT
+    // le profil EPIC de la campagne, sinon la puissance des tours dérive en
+    // silence d'un futur rééquilibrage de campagne (voir campaign.ts).
+    const p1 = towerEnemyPower(1)
+    expect(p1.baseHp).toBe(RARITY_BASE.EPIC.hp)
+    expect(p1.baseAtk).toBe(RARITY_BASE.EPIC.atk)
+    expect(p1.baseDef).toBe(RARITY_BASE.EPIC.def)
   })
 
   it('chaque ennemi porte son mitigationScale', () => {

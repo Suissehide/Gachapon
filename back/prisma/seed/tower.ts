@@ -1,4 +1,5 @@
 import type { PrismaClient } from '../../src/generated/client'
+import { RARITY_BASE } from './campaign'
 
 // La table élément -> slot vit dans le domaine, pas ici : le seed et le
 // tirage de drop doivent lire la MÊME source, sinon une tour peut dropper
@@ -40,9 +41,22 @@ const ELEMENT_LABEL: Record<TowerElement, string> = {
  */
 const FLOOR_SCALE = [1, 1.2, 1.45, 1.75, 2.1, 2.5, 3.8, 5, 6.6, 13] as const
 
-const BASE = { hp: 331, atk: 35, def: 40, spd: 100 } // profil épique après rééquilibrage
+// Profil épique de campagne (source unique : RARITY_BASE.EPIC dans
+// campaign.ts) — pas de littéral recopié, sinon un futur rééquilibrage de
+// campagne diverge en silence de la puissance ennemie des tours.
+const BASE = RARITY_BASE.EPIC
+
+// Garde-fou : floor doit rester dans 1..TOWER_FLOOR_COUNT, sinon
+// FLOOR_SCALE[floor-1]/RARITY_WEIGHTS[floor] renverraient undefined et un
+// NaN silencieux se propagerait dans les stats ennemies ou le loot.
+function assertFloorInRange(floor: number): void {
+  if (floor < 1 || floor > TOWER_FLOOR_COUNT) {
+    throw new Error(`Étage de tour hors bornes : ${floor} (attendu 1..${TOWER_FLOOR_COUNT})`)
+  }
+}
 
 export function towerEnemyPower(floor: number) {
+  assertFloorInRange(floor)
   const s = FLOOR_SCALE[floor - 1]
   return {
     baseHp: Math.round(BASE.hp * s),
@@ -84,6 +98,7 @@ const RARITY_WEIGHTS: Record<number, Record<string, number>> = {
 }
 
 export function towerFloorLoot(floor: number) {
+  assertFloorInRange(floor)
   const s = FLOOR_SCALE[floor - 1]
   return {
     firstClear: {
