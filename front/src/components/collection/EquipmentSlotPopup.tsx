@@ -2,6 +2,10 @@ import {
   ArrowUpCircle,
   Check,
   Coins,
+  Flame,
+  Gem,
+  Leaf,
+  Mountain,
   Shield,
   Sparkles,
   Sword,
@@ -53,11 +57,19 @@ const SLOT_LABELS: Record<EquipmentSlot, string> = {
   WEAPON: 'Arme',
   ARMOR: 'Armure',
   ACCESSORY: 'Accessoire',
+  SAP: 'Sève',
+  EMBER: 'Braise',
+  PRISM: 'Prisme',
+  MONOLITH: 'Monolithe',
 }
 const SLOT_ICONS: Record<EquipmentSlot, typeof Sword> = {
   WEAPON: Sword,
   ARMOR: Shield,
   ACCESSORY: Sparkles,
+  SAP: Leaf,
+  EMBER: Flame,
+  PRISM: Gem,
+  MONOLITH: Mountain,
 }
 
 function formatBonusValue(value: number): string {

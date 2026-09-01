@@ -1,6 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
 import {
   CircleHelp,
+  Flame,
+  Gem,
+  Leaf,
+  Mountain,
   Shield,
   ShieldOff,
   Sparkles,
@@ -12,12 +16,14 @@ import { useMemo, useState } from 'react'
 import type {
   EquipmentInstance,
   EquipmentRarity,
+  EquipmentSetKey,
   EquipmentSlot,
 } from '../../api/equipment.api'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { CardDisplay } from '../../components/shared/tcg-card/CardDisplay.tsx'
 import { Button } from '../../components/ui/button.tsx'
+import DropdownFilter from '../../components/ui/dropdownFilter.tsx'
 import {
   Popup,
   PopupBody,
@@ -35,6 +41,7 @@ import {
 import {
   useEquipItem,
   useEquipmentList,
+  useEquipmentSets,
   useUnequipItem,
 } from '../../queries/useEquipment.ts'
 import { useAuthStore } from '../../stores/auth.store.ts'
@@ -48,12 +55,25 @@ const SLOT_LABELS: Record<EquipmentSlot, string> = {
   WEAPON: 'Arme',
   ARMOR: 'Armure',
   ACCESSORY: 'Accessoire',
+  SAP: 'Sève',
+  EMBER: 'Braise',
+  PRISM: 'Prisme',
+  MONOLITH: 'Monolithe',
 }
 const SLOT_ICONS: Record<EquipmentSlot, typeof Sword> = {
   WEAPON: Sword,
   ARMOR: Shield,
   ACCESSORY: Sparkles,
+  SAP: Leaf,
+  EMBER: Flame,
+  PRISM: Gem,
+  MONOLITH: Mountain,
 }
+// Ordre d'affichage du filtre de slot, dérivé de SLOT_LABELS plutôt que
+// recopié : une seule liste des 7 slots dans ce fichier.
+const SLOT_FILTER_OPTIONS = (
+  Object.entries(SLOT_LABELS) as [EquipmentSlot, string][]
+).map(([value, label]) => ({ value, label }))
 const RARITY_COLORS: Record<EquipmentRarity, string> = {
   COMMON: 'border-slate-400/30 bg-slate-400/10 text-slate-300',
   UNCOMMON: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300',
@@ -72,6 +92,7 @@ const RARITY_LABELS: Record<EquipmentRarity, string> = {
 function EquipmentPage() {
   const user = useAuthStore((s) => s.user)
   const equipment = useEquipmentList()
+  const equipmentSets = useEquipmentSets()
   const collection = useUserCollection(user?.id)
   const equipItem = useEquipItem()
   const unequipItem = useUnequipItem()
@@ -80,8 +101,13 @@ function EquipmentPage() {
   const [rarityFilter, setRarityFilter] = useState<EquipmentRarity | 'ALL'>(
     'ALL',
   )
+  // Filtre par set : indispensable dès que l'inventaire grossit (tours
+  // élémentaires). Multi-sélection, sur le modèle de DropdownFilter ailleurs
+  // dans l'app (voir admin.cards.tsx).
+  const [setFilter, setSetFilter] = useState<EquipmentSetKey[]>([])
   const [pickerFor, setPickerFor] = useState<EquipmentInstance | null>(null)
 
+  const sets = equipmentSets.data?.sets ?? []
   const items = equipment.data?.items ?? []
   const filtered = useMemo(
     () =>
@@ -92,9 +118,12 @@ function EquipmentPage() {
         if (rarityFilter !== 'ALL' && i.rarity !== rarityFilter) {
           return false
         }
+        if (setFilter.length > 0 && !setFilter.includes(i.setKey)) {
+          return false
+        }
         return true
       }),
-    [items, slotFilter, rarityFilter],
+    [items, slotFilter, rarityFilter, setFilter],
   )
 
   const handleEquipOn = (targetUserCardId: string) => {
@@ -120,16 +149,12 @@ function EquipmentPage() {
         subtitle="Pièces collectées via les combats"
       />
 
-      <div className="mt-6 flex flex-wrap gap-3">
+      <div className="mt-6 flex flex-wrap items-center gap-3">
         <SegmentedControl
           value={slotFilter}
           onChange={setSlotFilter}
-          options={[
-            { value: 'ALL', label: 'Tout' },
-            { value: 'WEAPON', label: 'Armes' },
-            { value: 'ARMOR', label: 'Armures' },
-            { value: 'ACCESSORY', label: 'Accessoires' },
-          ]}
+          wrap
+          options={[{ value: 'ALL', label: 'Tout' }, ...SLOT_FILTER_OPTIONS]}
         />
         <SegmentedControl
           value={rarityFilter}
@@ -142,6 +167,22 @@ function EquipmentPage() {
             { value: 'EPIC', label: 'E' },
             { value: 'LEGENDARY', label: 'L' },
           ]}
+        />
+        <DropdownFilter
+          label="Set"
+          filters={sets.map((s) => ({
+            id: s.key,
+            label: s.label,
+            checked: setFilter.includes(s.key),
+          }))}
+          onFilterChange={(id, checked) =>
+            setSetFilter((prev) =>
+              checked
+                ? [...prev, id as EquipmentSetKey]
+                : prev.filter((k) => k !== id),
+            )
+          }
+          onClear={() => setSetFilter([])}
         />
       </div>
 
@@ -248,7 +289,7 @@ function EquipmentCard({
       </div>
 
       <p className="mt-1 text-xs text-text-light/60">
-        {SLOT_LABELS[item.slot]}
+        {SLOT_LABELS[item.slot]} · {item.setLabel}
       </p>
 
       <ul className="mt-2 space-y-0.5 text-xs">

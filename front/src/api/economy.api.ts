@@ -63,6 +63,11 @@ export interface EconomyConfig {
     sweepCost: number
     elementAdvantageMult: number
     elementDisadvantageMult: number
+    // Valeurs de base des 4 stats de stuff — affichées même sans équipement.
+    baseCritRate: number
+    baseCritDmg: number
+    baseArmorPen: number
+    baseLifesteal: number
   }
   wishlist: {
     priceMultiplier: number

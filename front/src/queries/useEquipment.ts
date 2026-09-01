@@ -3,7 +3,14 @@ import { useMemo } from 'react'
 
 import { EquipmentApi } from '../api/equipment.api'
 import { useAuthStore } from '../stores/auth.store.ts'
-import { aggregateEquipmentBonuses, type StatBonuses } from '../utils/cardStats'
+import {
+  type ActiveSetSummary,
+  activeSetsForCard,
+  aggregateEquipmentBonuses,
+  cardStuffStats,
+  type StatBonuses,
+  type StuffStatBonuses,
+} from '../utils/cardStats'
 import { invalidateBattleCache } from './useCampaign.ts'
 import { DEFAULT_ECONOMY, useEconomyConfig } from './useEconomyConfig.ts'
 
@@ -13,6 +20,18 @@ export function useEquipmentList() {
   return useQuery({
     queryKey: EQUIPMENT_KEY,
     queryFn: EquipmentApi.list,
+  })
+}
+
+/**
+ * Les 4 sets d'équipement (libellés + bonus des deux paliers) — donnée de
+ * référence publique, jamais recopiée côté front.
+ */
+export function useEquipmentSets() {
+  return useQuery({
+    queryKey: ['equipment', 'sets'],
+    queryFn: EquipmentApi.sets,
+    staleTime: Number.POSITIVE_INFINITY,
   })
 }
 
@@ -33,6 +52,49 @@ export function useCardEquipmentBonuses(userCardId: string): StatBonuses {
       ),
     [data, userCardId, economy.equip.levelScale],
   )
+}
+
+/**
+ * Stats de stuff finales (critRate, critDmg, armorPen, lifesteal) d'une
+ * carte, baseline + équipement + bonus de set inclus. Contrairement à
+ * `useCardEquipmentBonuses`, tient compte des sets actifs — c'est là que le
+ * joueur voit l'effet d'un palier de set.
+ */
+export function useCardStuffStats(userCardId: string): StuffStatBonuses {
+  const { data } = useEquipmentList()
+  const { data: sets } = useEquipmentSets()
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  return useMemo(
+    () =>
+      cardStuffStats(
+        data?.items ?? [],
+        userCardId,
+        economy.equip.levelScale,
+        sets?.sets ?? [],
+        {
+          critRate: economy.combat.baseCritRate,
+          critDmg: economy.combat.baseCritDmg,
+          armorPen: economy.combat.baseArmorPen,
+          lifesteal: economy.combat.baseLifesteal,
+        },
+      ),
+    [data, sets, userCardId, economy],
+  )
+}
+
+/**
+ * Sets actifs portés par une carte (compte + palier atteint) — pour
+ * l'arbitrage du joueur sur la fiche de carte.
+ */
+export function useActiveSetsForCard(userCardId: string): ActiveSetSummary[] {
+  const { data } = useEquipmentList()
+  const { data: sets } = useEquipmentSets()
+  return useMemo(() => {
+    const setKeys = (data?.items ?? [])
+      .filter((i) => i.equippedOnId === userCardId)
+      .map((i) => i.setKey)
+    return activeSetsForCard(setKeys, sets?.sets ?? [])
+  }, [data, sets, userCardId])
 }
 
 export function useEquipItem() {

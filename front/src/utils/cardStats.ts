@@ -1,4 +1,8 @@
 import type { EconomyConfig } from '../api/economy.api'
+import type {
+  EquipmentSetDefinition,
+  EquipmentSetKey,
+} from '../api/equipment.api'
 import type { CardRarity, CardVariant } from '../constants/card.constant'
 
 const VARIANT_MULT: Record<CardVariant, number> = {
@@ -145,6 +149,179 @@ export function aggregateEquipmentBonuses(
   return acc
 }
 
+// --- Stats de stuff : critRate, critDmg, armorPen, lifesteal ---
+// Contrairement à PV/ATQ/DEF/VIT, elles ne sont jamais mises à l'échelle par
+// le niveau/palier de la carte : une baseline commune (config, jamais
+// recopiée en dur) + des points de pourcentage additifs venant de
+// l'équipement et des sets. Miroir de `computeFinalStats` côté back.
+
+export type StuffStatKey = 'critRate' | 'critDmg' | 'armorPen' | 'lifesteal'
+export type StuffStatBonuses = Record<StuffStatKey, number>
+
+const STUFF_STAT_KEYS: StuffStatKey[] = [
+  'critRate',
+  'critDmg',
+  'armorPen',
+  'lifesteal',
+]
+
+export function emptyStuffStatBonuses(): StuffStatBonuses {
+  return { critRate: 0, critDmg: 0, armorPen: 0, lifesteal: 0 }
+}
+
+function parseStuffBonusKey(key: string): StuffStatKey | null {
+  return STUFF_STAT_KEYS.find((stat) => key === `${stat}Pct`) ?? null
+}
+
+function accumulateItemStuffBonuses(
+  acc: StuffStatBonuses,
+  item: {
+    bonuses: Record<string, number>
+    level: number
+    substats: { key: string; value: number }[]
+    baseBoost: number
+  },
+  equipLevelScale: number,
+): void {
+  const mult = 1 + equipLevelScale * (item.level - 1)
+  for (const [key, value] of Object.entries(item.bonuses)) {
+    const stat = parseStuffBonusKey(key)
+    if (stat) {
+      acc[stat] += value * mult
+    }
+  }
+  const baseKey = Object.keys(item.bonuses)[0]
+  if (baseKey !== undefined && item.baseBoost !== 0) {
+    const stat = parseStuffBonusKey(baseKey)
+    if (stat) {
+      acc[stat] += item.baseBoost
+    }
+  }
+  for (const s of item.substats) {
+    const stat = parseStuffBonusKey(s.key)
+    if (stat) {
+      acc[stat] += s.value
+    }
+  }
+}
+
+// Paliers du système de sets — miroir de SET_TIER_TWO/SET_TIER_FOUR
+// (back/src/main/domain/equipment/set-bonuses.ts).
+const SET_TIER_TWO = 2
+const SET_TIER_FOUR = 4
+
+function addBonusRecord(
+  total: Record<string, number>,
+  bonuses: Record<string, number>,
+): void {
+  for (const [k, v] of Object.entries(bonuses)) {
+    total[k] = (total[k] ?? 0) + v
+  }
+}
+
+/**
+ * Bonus de set agrégés pour une carte, à partir des clés de set des pièces
+ * qu'elle porte. Miroir de `computeSetBonuses` (backend) : comptage PAR
+ * CARTE, palier 2 puis palier 4 — deux cartes qui portent chacune 2 pièces
+ * d'un même set ont chacune leur palier 2, elles ne cumulent pas à 4.
+ * `setDefs` vient de `useEquipmentSets()` : jamais de valeur recopiée ici.
+ */
+export function computeCardSetBonuses(
+  setKeys: readonly string[],
+  setDefs: EquipmentSetDefinition[],
+): Record<string, number> {
+  const counts = new Map<string, number>()
+  for (const key of setKeys) {
+    counts.set(key, (counts.get(key) ?? 0) + 1)
+  }
+  const byKey = new Map(setDefs.map((d) => [d.key, d]))
+  const total: Record<string, number> = {}
+  for (const [key, n] of counts) {
+    const def = byKey.get(key as EquipmentSetKey)
+    if (!def || n < SET_TIER_TWO) {
+      continue
+    }
+    addBonusRecord(total, def.two.bonuses)
+    if (n >= SET_TIER_FOUR) {
+      addBonusRecord(total, def.four.bonuses)
+    }
+  }
+  return total
+}
+
+/**
+ * Stats de stuff finales d'une carte : baseline (issue de `/economy/config`)
+ * + bonus d'équipement (catalogue + substats) + bonus de set. `critRate` est
+ * capé à 100, comme côté back.
+ */
+export function cardStuffStats(
+  items: {
+    equippedOnId: string | null
+    setKey: string
+    bonuses: Record<string, number>
+    level: number
+    substats: { key: string; value: number }[]
+    baseBoost: number
+  }[],
+  userCardId: string,
+  equipLevelScale: number,
+  setDefs: EquipmentSetDefinition[],
+  baseline: StuffStatBonuses,
+): StuffStatBonuses {
+  const equippedHere = items.filter((i) => i.equippedOnId === userCardId)
+  const acc = emptyStuffStatBonuses()
+  for (const item of equippedHere) {
+    accumulateItemStuffBonuses(acc, item, equipLevelScale)
+  }
+  const setBonuses = computeCardSetBonuses(
+    equippedHere.map((i) => i.setKey),
+    setDefs,
+  )
+  for (const [key, value] of Object.entries(setBonuses)) {
+    const stat = parseStuffBonusKey(key)
+    if (stat) {
+      acc[stat] += value
+    }
+  }
+  return {
+    critRate: Math.min(100, baseline.critRate + acc.critRate),
+    critDmg: baseline.critDmg + acc.critDmg,
+    armorPen: baseline.armorPen + acc.armorPen,
+    lifesteal: baseline.lifesteal + acc.lifesteal,
+  }
+}
+
+/**
+ * Sets actifs portés par une carte : pour chaque set représenté, le compte
+ * de pièces et le palier atteint (0, 2 ou 4). Consommée par la fiche de
+ * carte pour l'arbitrage — voir `EquipmentSlotsPanel`.
+ */
+export type ActiveSetSummary = {
+  key: string
+  label: string
+  count: number
+  tier: 0 | 2 | 4
+}
+
+export function activeSetsForCard(
+  setKeys: readonly string[],
+  setDefs: EquipmentSetDefinition[],
+): ActiveSetSummary[] {
+  const counts = new Map<string, number>()
+  for (const key of setKeys) {
+    counts.set(key, (counts.get(key) ?? 0) + 1)
+  }
+  const byKey = new Map(setDefs.map((d) => [d.key, d]))
+  return [...counts.entries()]
+    .map(([key, count]) => ({
+      key,
+      label: byKey.get(key as EquipmentSetKey)?.label ?? key,
+      count,
+      tier: (count >= 4 ? 4 : count >= 2 ? 2 : 0) as 0 | 2 | 4,
+    }))
+    .sort((a, b) => b.count - a.count)
+}
+
 /**
  * Same as `finalStat` but folds in equipment flat + percent bonuses, matching
  * the backend's `(raw + flat) * (1 + pct/100)` order.
@@ -238,6 +415,16 @@ export function maxLevelInPalier(palier: number): number {
  * Formate une clé de bonus d'équipement (`hpFlat`, `atkPct`, …) en libellé
  * lisible : `hpFlat` → `PV`, `atkPct` → `% ATK`, etc.
  */
+// Les 4 stats de stuff (report explicite du plan précédent) n'ont pas de
+// forme "Flat", et leur nom composé ne se lit pas bien en simple majuscules
+// (`CRITRATE`) : un libellé dédié, dans le même esprit que `HP` → `PV`.
+const STUFF_STAT_LABELS: Record<string, string> = {
+  CRITRATE: 'TAUX CRIT',
+  CRITDMG: 'DÉGÂTS CRIT',
+  ARMORPEN: 'PÉNÉTRATION ARMURE',
+  LIFESTEAL: 'VOL DE VIE',
+}
+
 export function formatBonusKey(key: string): string {
   if (key.endsWith('Flat')) {
     const base = key.replace('Flat', '').toUpperCase()
@@ -245,7 +432,7 @@ export function formatBonusKey(key: string): string {
   }
   if (key.endsWith('Pct')) {
     const base = key.replace('Pct', '').toUpperCase()
-    return `% ${base === 'HP' ? 'PV' : base}`
+    return `% ${STUFF_STAT_LABELS[base] ?? (base === 'HP' ? 'PV' : base)}`
   }
   return key
 }

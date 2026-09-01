@@ -1,5 +1,7 @@
 import {
   Coins,
+  Droplets,
+  Flame,
   Heart,
   Loader2,
   Lock,
@@ -8,6 +10,7 @@ import {
   Star,
   Sword,
   Swords,
+  Target,
   TrendingUp,
   Zap,
 } from 'lucide-react'
@@ -21,7 +24,10 @@ import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
 } from '../../queries/useEconomyConfig'
-import { useCardEquipmentBonuses } from '../../queries/useEquipment'
+import {
+  useCardEquipmentBonuses,
+  useCardStuffStats,
+} from '../../queries/useEquipment'
 import { useLevelUpCard } from '../../queries/useLevelUpCard'
 import { useSkillTree } from '../../queries/useSkills.ts'
 import { useAuthStore } from '../../stores/auth.store'
@@ -85,6 +91,7 @@ export function CombatPanel({
   const passive = card.passiveKey ? PASSIVE_LABELS[card.passiveKey] : null
 
   const bonuses = useCardEquipmentBonuses(userCardId)
+  const stuffStats = useCardStuffStats(userCardId)
   const hp = Math.round(
     finalStatWithBonuses(card.baseHp, level, variant, palier, bonuses.hp),
   )
@@ -182,6 +189,34 @@ export function CombatPanel({
           value={spd}
           accent="#8b5cf6"
         />
+        <StatTile
+          icon={<Target className="h-4 w-4" />}
+          label="TAUX CRIT"
+          value={stuffStats.critRate}
+          suffix="%"
+          accent="#f43f5e"
+        />
+        <StatTile
+          icon={<Flame className="h-4 w-4" />}
+          label="DÉGÂTS CRIT"
+          value={stuffStats.critDmg}
+          suffix="%"
+          accent="#f97316"
+        />
+        <StatTile
+          icon={<Shield className="h-4 w-4" />}
+          label="PÉNÉ. ARMURE"
+          value={stuffStats.armorPen}
+          suffix="%"
+          accent="#0ea5e9"
+        />
+        <StatTile
+          icon={<Droplets className="h-4 w-4" />}
+          label="VOL DE VIE"
+          value={stuffStats.lifesteal}
+          suffix="%"
+          accent="#22c55e"
+        />
       </div>
 
       {/* Level-up button */}
@@ -245,12 +280,18 @@ function StatTile({
   label,
   value,
   accent,
+  suffix,
 }: {
   icon: ReactNode
   label: string
   value: number
   accent: string
+  suffix?: string
 }) {
+  const displayValue =
+    Number.isInteger(value) || suffix === undefined
+      ? value.toLocaleString('fr-FR')
+      : (Math.round(value * 10) / 10).toLocaleString('fr-FR')
   return (
     <div className="flex items-center gap-2.5 rounded-[14px] border border-[rgba(27,23,38,0.06)] bg-surface-2 px-4 py-3.5">
       <span className="flex" style={{ color: accent }}>
@@ -260,7 +301,8 @@ function StatTile({
         {label}
       </span>
       <span className="ml-auto font-display text-[22px] font-extrabold tabular-nums text-text">
-        {value.toLocaleString('fr-FR')}
+        {displayValue}
+        {suffix}
       </span>
     </div>
   )

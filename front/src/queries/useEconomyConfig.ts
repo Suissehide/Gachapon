@@ -52,6 +52,10 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
     sweepCost: 5,
     elementAdvantageMult: 1.3,
     elementDisadvantageMult: 0.75,
+    baseCritRate: 5,
+    baseCritDmg: 150,
+    baseArmorPen: 0,
+    baseLifesteal: 0,
   },
   wishlist: { priceMultiplier: 2, cooldownDays: 7 },
   equip: {

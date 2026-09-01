@@ -1,24 +1,53 @@
-import { Plus, Shield, Sparkles, Sword } from 'lucide-react'
+import {
+  Flame,
+  Gem,
+  Leaf,
+  Mountain,
+  Plus,
+  Shield,
+  Sparkles,
+  Sword,
+} from 'lucide-react'
 import { useState } from 'react'
 
 import type {
   EquipmentInstance,
   EquipmentSlot,
 } from '../../api/equipment.api.ts'
-import { useEquipmentList } from '../../queries/useEquipment.ts'
+import { cn } from '../../libs/utils.ts'
+import {
+  useActiveSetsForCard,
+  useEquipmentList,
+} from '../../queries/useEquipment.ts'
 import { Button } from '../ui/button.tsx'
 import { EquipmentSlotPopup } from './EquipmentSlotPopup.tsx'
 
-const SLOT_ORDER: EquipmentSlot[] = ['WEAPON', 'ARMOR', 'ACCESSORY']
+const SLOT_ORDER: EquipmentSlot[] = [
+  'WEAPON',
+  'ARMOR',
+  'ACCESSORY',
+  'SAP',
+  'EMBER',
+  'PRISM',
+  'MONOLITH',
+]
 const SLOT_LABELS: Record<EquipmentSlot, string> = {
   WEAPON: 'Arme',
   ARMOR: 'Armure',
   ACCESSORY: 'Accessoire',
+  SAP: 'Sève',
+  EMBER: 'Braise',
+  PRISM: 'Prisme',
+  MONOLITH: 'Monolithe',
 }
 const SLOT_ICONS: Record<EquipmentSlot, typeof Sword> = {
   WEAPON: Sword,
   ARMOR: Shield,
   ACCESSORY: Sparkles,
+  SAP: Leaf,
+  EMBER: Flame,
+  PRISM: Gem,
+  MONOLITH: Mountain,
 }
 const RARITY_TEXT: Record<string, string> = {
   COMMON: 'text-rarity-common',
@@ -35,6 +64,7 @@ type Props = {
 
 export function EquipmentSlotsPanel({ userCardId, rarityHex }: Props) {
   const equipment = useEquipmentList()
+  const activeSets = useActiveSetsForCard(userCardId)
   const [pickerSlot, setPickerSlot] = useState<EquipmentSlot | null>(null)
 
   const items = equipment.data?.items ?? []
@@ -49,6 +79,29 @@ export function EquipmentSlotsPanel({ userCardId, rarityHex }: Props) {
       <p className="mb-2.5 font-mono text-[11px] uppercase tracking-[0.18em] text-[rgba(27,23,38,0.45)]">
         Équipement
       </p>
+
+      {activeSets.length > 0 && (
+        <div className="mb-2.5 flex flex-wrap gap-1.5">
+          {activeSets.map((s) => (
+            <span
+              key={s.key}
+              title={
+                s.tier > 0
+                  ? `Palier ${s.tier} atteint`
+                  : `${2 - s.count} pièce(s) de plus pour le palier 2`
+              }
+              className={cn(
+                'rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
+                s.tier > 0
+                  ? 'border-primary/40 bg-primary/10 text-primary'
+                  : 'border-[rgba(27,23,38,0.14)] text-text-light',
+              )}
+            >
+              {s.label} {s.count}/4
+            </span>
+          ))}
+        </div>
+      )}
 
       <div className="grid grid-cols-3 gap-2.5">
         {SLOT_ORDER.map((slot) => {
