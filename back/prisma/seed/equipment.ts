@@ -1,76 +1,149 @@
 import type { PrismaClient } from '../../src/generated/client'
+import type { EquipmentBonuses } from '../../src/main/domain/combat/combat-stats.domain'
 
-type Slot = 'WEAPON' | 'ARMOR' | 'ACCESSORY'
+type Slot =
+  | 'WEAPON'
+  | 'ARMOR'
+  | 'ACCESSORY'
+  | 'SAP'
+  | 'EMBER'
+  | 'PRISM'
+  | 'MONOLITH'
+type SetKey = 'FUREUR' | 'PRECISION' | 'PERCEE' | 'SANGSUE'
 type Rarity = 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
 
-// Chaque rareté existe en version flat ET en version % (bonus de base unique).
-// Les % sont volontairement plus rares (dropWeight ≈ moitié du flat de même
-// rareté) : meilleures sur le long terme, ce sont les objets de farm.
-//
-// Calibration des % (placeholders à re-simuler) : le croisement flat/% vise
-// ~300 de stat brute pour ATK/DEF (fin de progression d'une bonne carte) —
-// barème C2/U3/R5/E8/L12. La SPD part d'une base ~100, donc barème réduit
-// C1/U1.5/R2.5/E4/L5 pour garder le même point de croisement relatif.
-const EQUIPMENT: Array<{
+const SLOTS: Slot[] = [
+  'WEAPON',
+  'ARMOR',
+  'ACCESSORY',
+  'SAP',
+  'EMBER',
+  'PRISM',
+  'MONOLITH',
+]
+const SETS: SetKey[] = ['FUREUR', 'PRECISION', 'PERCEE', 'SANGSUE']
+const RARITIES: Rarity[] = ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY']
+
+/**
+ * Le slot dicte la stat principale — c'est ce qui rend les slots distincts
+ * les uns des autres. Le set est orthogonal (§5 de la spec) : il ne joue que
+ * sur les bonus de set (2/4 pièces), pas sur la stat de base de la pièce.
+ */
+const SLOT_MAIN_STAT: Record<Slot, keyof EquipmentBonuses> = {
+  WEAPON: 'atkFlat',
+  ARMOR: 'defFlat',
+  ACCESSORY: 'spdFlat',
+  SAP: 'hpFlat',
+  EMBER: 'critDmgPct',
+  PRISM: 'critRatePct',
+  MONOLITH: 'armorPenPct',
+}
+
+/**
+ * Barème de la stat principale par slot et rareté. Les stats de stuff
+ * (critDmg, critRate, armorPen) ont leur propre échelle : ce sont des points
+ * de pourcentage, pas des valeurs brutes comparables aux PV ou à l'ATQ.
+ *
+ * Point de calibrage ouvert : ces valeurs sont un point de départ plausible,
+ * à simuler avant de figer (§12 de la spec).
+ */
+const MAIN_STAT_SCALE: Record<string, Record<Rarity, number>> = {
+  atkFlat: { COMMON: 5, UNCOMMON: 8, RARE: 15, EPIC: 25, LEGENDARY: 40 },
+  defFlat: { COMMON: 8, UNCOMMON: 13, RARE: 25, EPIC: 43, LEGENDARY: 70 },
+  spdFlat: { COMMON: 3, UNCOMMON: 5, RARE: 8, EPIC: 12, LEGENDARY: 18 },
+  hpFlat: { COMMON: 25, UNCOMMON: 40, RARE: 70, EPIC: 120, LEGENDARY: 200 },
+  critRatePct: { COMMON: 3, UNCOMMON: 5, RARE: 8, EPIC: 12, LEGENDARY: 18 },
+  critDmgPct: { COMMON: 6, UNCOMMON: 10, RARE: 16, EPIC: 25, LEGENDARY: 40 },
+  armorPenPct: { COMMON: 3, UNCOMMON: 5, RARE: 9, EPIC: 14, LEGENDARY: 22 },
+}
+
+const RARITY_DROP_WEIGHT: Record<Rarity, number> = {
+  COMMON: 50,
+  UNCOMMON: 25,
+  RARE: 10,
+  EPIC: 4,
+  LEGENDARY: 1,
+}
+
+const SET_LABEL: Record<SetKey, string> = {
+  FUREUR: 'Fureur',
+  PRECISION: 'Précision',
+  PERCEE: 'Percée',
+  SANGSUE: 'Sangsue',
+}
+
+const SLOT_LABEL: Record<Slot, string> = {
+  WEAPON: 'Arme',
+  ARMOR: 'Armure',
+  ACCESSORY: 'Accessoire',
+  SAP: 'Sève',
+  EMBER: 'Braise',
+  PRISM: 'Prisme',
+  MONOLITH: 'Monolithe',
+}
+
+const RARITY_LABEL: Record<Rarity, string> = {
+  COMMON: 'commune',
+  UNCOMMON: 'peu commune',
+  RARE: 'rare',
+  EPIC: 'épique',
+  LEGENDARY: 'légendaire',
+}
+
+export interface EquipmentSeedRow {
   name: string
   slot: Slot
+  setKey: SetKey
   rarity: Rarity
-  bonuses: Record<string, number>
+  bonuses: EquipmentBonuses
   dropWeight: number
-}> = [
-  // WEAPONS — ATK
-  { name: 'Épée rouillée', slot: 'WEAPON', rarity: 'COMMON', bonuses: { atkFlat: 5 }, dropWeight: 50 },
-  { name: 'Hache de bûcheron', slot: 'WEAPON', rarity: 'COMMON', bonuses: { atkFlat: 6 }, dropWeight: 50 },
-  { name: 'Gourdin ferré', slot: 'WEAPON', rarity: 'COMMON', bonuses: { atkPct: 2 }, dropWeight: 25 },
-  { name: 'Épée d\'argent', slot: 'WEAPON', rarity: 'UNCOMMON', bonuses: { atkFlat: 8 }, dropWeight: 25 },
-  { name: 'Sabre gravé', slot: 'WEAPON', rarity: 'UNCOMMON', bonuses: { atkPct: 3 }, dropWeight: 12 },
-  { name: 'Hallebarde', slot: 'WEAPON', rarity: 'RARE', bonuses: { atkFlat: 15 }, dropWeight: 10 },
-  { name: 'Katana du duelliste', slot: 'WEAPON', rarity: 'RARE', bonuses: { atkPct: 5 }, dropWeight: 5 },
-  { name: 'Lame fantôme', slot: 'WEAPON', rarity: 'EPIC', bonuses: { atkFlat: 25 }, dropWeight: 4 },
-  { name: 'Griffes du chaos', slot: 'WEAPON', rarity: 'EPIC', bonuses: { atkPct: 8 }, dropWeight: 2 },
-  { name: 'Excalibur', slot: 'WEAPON', rarity: 'LEGENDARY', bonuses: { atkFlat: 40 }, dropWeight: 1 },
-  { name: 'Lame de l\'éclipse', slot: 'WEAPON', rarity: 'LEGENDARY', bonuses: { atkPct: 12 }, dropWeight: 0.5 },
-  // ARMORS — DEF / PV
-  { name: 'Cotte de mailles', slot: 'ARMOR', rarity: 'COMMON', bonuses: { defFlat: 3 }, dropWeight: 50 },
-  { name: 'Plastron de cuir', slot: 'ARMOR', rarity: 'COMMON', bonuses: { hpFlat: 25 }, dropWeight: 50 },
-  { name: 'Tunique de lin', slot: 'ARMOR', rarity: 'COMMON', bonuses: { hpPct: 2 }, dropWeight: 25 },
-  { name: 'Armure d\'écailles', slot: 'ARMOR', rarity: 'UNCOMMON', bonuses: { defFlat: 5 }, dropWeight: 25 },
-  { name: 'Gambison renforcé', slot: 'ARMOR', rarity: 'UNCOMMON', bonuses: { hpFlat: 40 }, dropWeight: 25 },
-  { name: 'Écu ciselé', slot: 'ARMOR', rarity: 'UNCOMMON', bonuses: { defPct: 3 }, dropWeight: 12 },
-  { name: 'Plastron du gardien', slot: 'ARMOR', rarity: 'RARE', bonuses: { defFlat: 10 }, dropWeight: 10 },
-  { name: 'Égide sculptée', slot: 'ARMOR', rarity: 'RARE', bonuses: { defPct: 5 }, dropWeight: 5 },
-  { name: 'Cuirasse vitale', slot: 'ARMOR', rarity: 'RARE', bonuses: { hpPct: 5 }, dropWeight: 5 },
-  { name: 'Armure dracogène', slot: 'ARMOR', rarity: 'EPIC', bonuses: { defFlat: 16 }, dropWeight: 4 },
-  { name: 'Rempart des titans', slot: 'ARMOR', rarity: 'EPIC', bonuses: { hpPct: 8 }, dropWeight: 2 },
-  { name: 'Armure céleste', slot: 'ARMOR', rarity: 'LEGENDARY', bonuses: { defFlat: 25 }, dropWeight: 1 },
-  { name: 'Égide du colosse', slot: 'ARMOR', rarity: 'LEGENDARY', bonuses: { defPct: 12 }, dropWeight: 0.5 },
-  { name: 'Cœur du monde', slot: 'ARMOR', rarity: 'LEGENDARY', bonuses: { hpPct: 12 }, dropWeight: 0.5 },
-  // ACCESSORIES — SPD / PV
-  { name: 'Pendentif simple', slot: 'ACCESSORY', rarity: 'COMMON', bonuses: { spdFlat: 3 }, dropWeight: 50 },
-  { name: 'Anneau de cuivre', slot: 'ACCESSORY', rarity: 'COMMON', bonuses: { hpPct: 2 }, dropWeight: 25 },
-  { name: 'Amulette des vents', slot: 'ACCESSORY', rarity: 'UNCOMMON', bonuses: { spdFlat: 5 }, dropWeight: 25 },
-  { name: 'Plume d\'hirondelle', slot: 'ACCESSORY', rarity: 'UNCOMMON', bonuses: { spdPct: 1.5 }, dropWeight: 12 },
-  { name: 'Anneau d\'argent', slot: 'ACCESSORY', rarity: 'RARE', bonuses: { spdFlat: 8 }, dropWeight: 10 },
-  { name: 'Sablier fêlé', slot: 'ACCESSORY', rarity: 'RARE', bonuses: { spdPct: 2.5 }, dropWeight: 5 },
-  { name: 'Talisman runique', slot: 'ACCESSORY', rarity: 'EPIC', bonuses: { spdFlat: 12 }, dropWeight: 4 },
-  { name: 'Ailes d\'Icare', slot: 'ACCESSORY', rarity: 'EPIC', bonuses: { spdPct: 4 }, dropWeight: 2 },
-  { name: 'Œil du dragon', slot: 'ACCESSORY', rarity: 'LEGENDARY', bonuses: { spdFlat: 18 }, dropWeight: 1 },
-  { name: 'Souffle du zéphyr', slot: 'ACCESSORY', rarity: 'LEGENDARY', bonuses: { spdPct: 5 }, dropWeight: 0.5 },
-] as const
+}
 
-export async function seedEquipment(
-  tx: Parameters<Parameters<PrismaClient['$transaction']>[0]>[0],
-) {
-  for (const item of EQUIPMENT) {
-    await tx.equipment.create({
-      data: {
-        name: item.name,
-        slot: item.slot,
-        rarity: item.rarity,
-        bonuses: item.bonuses,
-        dropWeight: item.dropWeight,
+/**
+ * Catalogue généré : 4 sets × 7 slots × 5 raretés = 140 pièces. Remplace les
+ * 33 lignes écrites à la main — la variété plat/pourcentage des anciens
+ * bonus de base disparaît, absorbée par le système de substats (§5 de la
+ * spec).
+ */
+export function buildEquipmentCatalog(): EquipmentSeedRow[] {
+  const rows: EquipmentSeedRow[] = []
+  for (const setKey of SETS) {
+    for (const slot of SLOTS) {
+      const stat = SLOT_MAIN_STAT[slot]
+      for (const rarity of RARITIES) {
+        rows.push({
+          name: `${SLOT_LABEL[slot]} de ${SET_LABEL[setKey]} (${RARITY_LABEL[rarity]})`,
+          slot,
+          setKey,
+          rarity,
+          bonuses: { [stat]: MAIN_STAT_SCALE[stat][rarity] },
+          dropWeight: RARITY_DROP_WEIGHT[rarity],
+        })
+      }
+    }
+  }
+  return rows
+}
+
+export async function seedEquipment(prisma: PrismaClient): Promise<void> {
+  const catalogue = buildEquipmentCatalog()
+  for (const row of catalogue) {
+    await prisma.equipment.upsert({
+      where: {
+        // Clé naturelle : une pièce est identifiée par son triplet.
+        slot_setKey_rarity: {
+          slot: row.slot,
+          setKey: row.setKey,
+          rarity: row.rarity,
+        },
+      },
+      create: row,
+      update: {
+        name: row.name,
+        bonuses: row.bonuses,
+        dropWeight: row.dropWeight,
       },
     })
   }
-  console.log(`  Equipment pool : ${EQUIPMENT.length} pièces créées`)
+  console.log(`  Equipment pool : ${catalogue.length} pièces créées`)
 }
