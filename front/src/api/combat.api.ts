@@ -7,6 +7,7 @@ export type TeamUnit = {
   cardId: string
   cardName: string
   cardImageUrl: string | null
+  element: string | null
   rarity: 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
   variant: 'NORMAL' | 'BRILLIANT' | 'HOLOGRAPHIC'
   level: number

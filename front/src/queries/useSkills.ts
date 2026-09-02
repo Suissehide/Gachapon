@@ -49,6 +49,10 @@ export const useInvestBatch = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: SKILLS_KEY })
       qc.invalidateQueries({ queryKey: ['tokens', 'balance'] })
+      // Les compétences changent le coût de balayage et le stock de points de
+      // combat : sans cette invalidation, les boutons gardent l'ancien prix
+      // jusqu'au prochain rechargement.
+      qc.invalidateQueries({ queryKey: ['combat', 'points'] })
       void useAuthStore.getState().fetchMe()
     },
     onError: (error) => {
@@ -68,6 +72,7 @@ export const useResetSkills = () => {
     mutationFn: SkillsApi.reset,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: SKILLS_KEY })
+      qc.invalidateQueries({ queryKey: ['combat', 'points'] })
       void useAuthStore.getState().fetchMe()
     },
     onError: (error) => {

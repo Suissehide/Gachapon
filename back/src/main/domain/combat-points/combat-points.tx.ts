@@ -28,11 +28,32 @@ type CombatCfg = {
 type PcEffects = {
   pcVaultBonus: number
   pcRegenReductionSeconds: number
+  sweepCostReduction: number
 }
 
 const NEUTRAL_EFFECTS: PcEffects = {
   pcVaultBonus: 0,
   pcRegenReductionSeconds: 0,
+  sweepCostReduction: 0,
+}
+
+/** Plancher du coût de balayage : une compétence ne le rend jamais gratuit. */
+const SWEEP_COST_FLOOR = 1
+
+/**
+ * Coût réel d'un balayage, remise de l'arbre de compétences appliquée.
+ *
+ * Source UNIQUE : `effectiveCombatConfig` (donc ce que GET /combat/points
+ * affiche) et le débit de `campaign.domain` passent tous deux par ici. Les
+ * deux divergeaient — l'API renvoyait le coût brut pendant que le débit
+ * appliquait la remise, si bien que le bouton affichait un prix que le joueur
+ * ne payait pas.
+ */
+export function effectiveSweepCost(
+  rawSweepCost: number,
+  sweepCostReduction: number,
+): number {
+  return Math.max(SWEEP_COST_FLOOR, rawSweepCost - sweepCostReduction)
 }
 
 const REGEN_FLOOR_SECONDS = 60
@@ -55,7 +76,7 @@ export function effectiveCombatConfig(
       cfg.regenSeconds - effects.pcRegenReductionSeconds,
     ),
     battleCost: cfg.battleCost,
-    sweepCost: cfg.sweepCost,
+    sweepCost: effectiveSweepCost(cfg.sweepCost, effects.sweepCostReduction),
   }
 }
 

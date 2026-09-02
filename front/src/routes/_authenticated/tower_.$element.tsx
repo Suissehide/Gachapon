@@ -16,6 +16,7 @@ import { Dialog } from 'radix-ui'
 import { useState } from 'react'
 
 import type { TowerBattleResult, TowerFloorView } from '../../api/tower.api.ts'
+import { BattleScene } from '../../components/battle/BattleScene.tsx'
 import {
   EquipmentDropReward,
   RESULT_BADGE_LOSS,
@@ -53,6 +54,9 @@ function TowerFloorsPage() {
 
   const [editorOpen, setEditorOpen] = useState(false)
   const [result, setResult] = useState<TowerBattleResult | null>(null)
+  // Le combat se joue d'abord en animation (comme la campagne), et seulement
+  // ensuite la fenêtre de résultat s'ouvre. `sceneDone` sépare les deux temps.
+  const [sceneDone, setSceneDone] = useState(false)
 
   const userCardIds = (team.data?.team ?? []).map((u) => u.userCardId)
   const currentPC = combatPoints.data?.combatPoints ?? 0
@@ -63,8 +67,18 @@ function TowerFloorsPage() {
   const handleFight = (floor: number) => {
     battle.mutate(
       { element, floor, userCardIds },
-      { onSuccess: (res) => setResult(res) },
+      {
+        onSuccess: (res) => {
+          setSceneDone(false)
+          setResult(res)
+        },
+      },
     )
+  }
+
+  const closeResult = () => {
+    setResult(null)
+    setSceneDone(false)
   }
 
   // Éléments valides : dérivés de la liste des tours (`useTowers`), jamais
@@ -103,33 +117,47 @@ function TowerFloorsPage() {
         }
       />
 
-      {segmentOptions.length > 0 && (
-        <SegmentedControl
-          value={element}
-          onChange={(value) =>
-            navigate({ to: '/tower/$element', params: { element: value } })
-          }
-          options={segmentOptions}
-          wrap
+      {result && !sceneDone ? (
+        <BattleScene
+          teamA={result.teamA}
+          teamB={result.teamB}
+          log={result.log}
+          onComplete={() => setSceneDone(true)}
         />
+      ) : (
+        <>
+          {segmentOptions.length > 0 && (
+            <SegmentedControl
+              value={element}
+              onChange={(value) =>
+                navigate({ to: '/tower/$element', params: { element: value } })
+              }
+              options={segmentOptions}
+              wrap
+            />
+          )}
+
+          <TeamSummary
+            cardCount={userCardIds.length}
+            onEdit={() => setEditorOpen(true)}
+          />
+
+          <FloorList
+            status={tower.status}
+            floors={tower.data?.floors ?? []}
+            canBattle={canBattle}
+            isPending={battle.isPending}
+            onFight={handleFight}
+          />
+        </>
       )}
-
-      <TeamSummary
-        cardCount={userCardIds.length}
-        onEdit={() => setEditorOpen(true)}
-      />
-
-      <FloorList
-        status={tower.status}
-        floors={tower.data?.floors ?? []}
-        canBattle={canBattle}
-        isPending={battle.isPending}
-        onFight={handleFight}
-      />
 
       <TeamEditorPopup open={editorOpen} onOpenChange={setEditorOpen} />
 
-      <BattleResultPopup result={result} onClose={() => setResult(null)} />
+      <BattleResultPopup
+        result={sceneDone ? result : null}
+        onClose={closeResult}
+      />
     </PageShell>
   )
 }
@@ -300,7 +328,7 @@ function FloorStatusIcon({ floor }: { floor: TowerFloorView }) {
 
 function floorButtonLabel(floor: TowerFloorView): string {
   if (floor.status === 'current') {
-    return 'Franchir'
+    return 'Combattre'
   }
   if (floor.isBoss) {
     return 'Farmer'

@@ -799,6 +799,7 @@ function MiniCard({
         isOwned
         compact
         showName={showName}
+        element={(unit.element ?? null) as CardElement | null}
       />
       <div className="pointer-events-none absolute left-1.5 top-1.5 z-20">
         <div

@@ -1,6 +1,6 @@
 import { apiUrl } from '../constants/config.constant.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
-import type { SimulatorUnit } from './combat.api.ts'
+import type { BattleLogEntry, SimulatorUnit } from './combat.api.ts'
 import type { EquipmentSlot } from './equipment.api.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
@@ -62,7 +62,7 @@ export type TowerBattleRewards = {
 
 export type TowerBattleResult = {
   won: boolean
-  log: unknown[]
+  log: BattleLogEntry[]
   rewards: TowerBattleRewards | null
   teamA: SimulatorUnit[]
   teamB: SimulatorUnit[]

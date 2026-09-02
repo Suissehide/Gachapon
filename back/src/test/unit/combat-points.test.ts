@@ -1,7 +1,10 @@
 import { describe, expect, it } from '@jest/globals'
 
 import { calculateCombatPoints } from '../../main/domain/combat-points/combat-points.domain'
-import { effectiveCombatConfig } from '../../main/domain/combat-points/combat-points.tx'
+import {
+  effectiveCombatConfig,
+  effectiveSweepCost,
+} from '../../main/domain/combat-points/combat-points.tx'
 import { CombatPointsTx } from '../../main/domain/combat-points/combat-points.tx'
 import type { IocContainer } from '../../main/types/application/ioc'
 
@@ -61,20 +64,62 @@ describe('calculateCombatPoints', () => {
 })
 
 describe('effectiveCombatConfig', () => {
+  const RAW = { maxStock: 60, regenSeconds: 900, battleCost: 5, sweepCost: 5 }
+
   it('applique vault et regen reduction avec plancher 60s', () => {
-    const out = effectiveCombatConfig(
-      { maxStock: 60, regenSeconds: 900, battleCost: 5, sweepCost: 5 },
-      { pcVaultBonus: 15, pcRegenReductionSeconds: 900 },
-    )
+    const out = effectiveCombatConfig(RAW, {
+      pcVaultBonus: 15,
+      pcRegenReductionSeconds: 900,
+      sweepCostReduction: 0,
+    })
     expect(out.maxStock).toBe(75)
     expect(out.regenSeconds).toBe(60)
   })
+
   it('neutre = identité', () => {
-    const out = effectiveCombatConfig(
-      { maxStock: 60, regenSeconds: 900, battleCost: 5, sweepCost: 5 },
-      { pcVaultBonus: 0, pcRegenReductionSeconds: 0 },
-    )
-    expect(out).toEqual({ maxStock: 60, regenSeconds: 900, battleCost: 5, sweepCost: 5 })
+    const out = effectiveCombatConfig(RAW, {
+      pcVaultBonus: 0,
+      pcRegenReductionSeconds: 0,
+      sweepCostReduction: 0,
+    })
+    expect(out).toEqual(RAW)
+  })
+
+  // Le coût de balayage affiché doit refléter la remise de l'arbre de
+  // compétences : il ne le faisait pas, si bien que le bouton annonçait un
+  // prix que le joueur ne payait pas (le débit, lui, appliquait la remise).
+  it('applique la remise de balayage au coût affiché', () => {
+    const out = effectiveCombatConfig(RAW, {
+      pcVaultBonus: 0,
+      pcRegenReductionSeconds: 0,
+      sweepCostReduction: 2,
+    })
+    expect(out.sweepCost).toBe(3)
+    expect(out.battleCost).toBe(5)
+  })
+
+  it('le balayage ne descend jamais sous 1, même avec une grosse remise', () => {
+    const out = effectiveCombatConfig(RAW, {
+      pcVaultBonus: 0,
+      pcRegenReductionSeconds: 0,
+      sweepCostReduction: 99,
+    })
+    expect(out.sweepCost).toBe(1)
+  })
+})
+
+describe('effectiveSweepCost', () => {
+  it('soustrait la remise', () => {
+    expect(effectiveSweepCost(5, 2)).toBe(3)
+  })
+
+  it('plancher à 1', () => {
+    expect(effectiveSweepCost(5, 5)).toBe(1)
+    expect(effectiveSweepCost(5, 99)).toBe(1)
+  })
+
+  it('sans remise, renvoie le coût brut', () => {
+    expect(effectiveSweepCost(5, 0)).toBe(5)
   })
 })
 

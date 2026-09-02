@@ -18,6 +18,7 @@ export interface TeamUnit {
   cardId: string
   cardName: string
   cardImageUrl: string | null
+  element: string | null
   rarity: string
   variant: string
   level: number
@@ -146,6 +147,7 @@ export class CombatTeamTx {
           cardId: uc.cardId,
           cardName: uc.card.name,
           cardImageUrl: uc.card.imageUrl,
+          element: uc.card.element,
           rarity: uc.card.rarity,
           variant: uc.variant,
           level: uc.level,

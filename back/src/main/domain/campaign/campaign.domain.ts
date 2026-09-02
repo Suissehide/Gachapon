@@ -24,6 +24,7 @@ import {
   rollFirstClearEquipmentRarity,
 } from '../combat/equipment-drop.domain'
 import { computeEquippedCardStats } from '../combat/equipped-card-stats'
+import { effectiveSweepCost } from '../combat-points/combat-points.tx'
 import {
   INITIAL_SUBSTATS_BY_RARITY,
   rollInitialSubstats,
@@ -618,16 +619,18 @@ export class CampaignDomain {
             throw Boom.notFound('Stage not found')
           }
 
-          // Debit PC par run (coût réduit par skill tree, minimum 1, depuis GlobalConfig défaut 5)
-          const sweepCost = sweepCfg['combat.sweepCost']
-          const effectiveSweepCost = Math.max(
-            1,
-            sweepCost - effects.sweepCostReduction,
+          // Debit PC par run (coût réduit par skill tree, minimum 1, depuis
+          // GlobalConfig défaut 5). Passe par effectiveSweepCost, la même
+          // fonction que GET /combat/points, pour que le prix affiché et le
+          // prix débité ne puissent plus diverger.
+          const sweepCostPerRun = effectiveSweepCost(
+            sweepCfg['combat.sweepCost'],
+            effects.sweepCostReduction,
           )
           await this.#combatPointsTx.debitInTx(
             tx,
             userId,
-            effectiveSweepCost * runs,
+            sweepCostPerRun * runs,
             effects,
           )
 

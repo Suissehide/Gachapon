@@ -18,6 +18,7 @@ export const teamUnitSchema = z.object({
   cardId: z.string(),
   cardName: z.string(),
   cardImageUrl: z.string().nullable(),
+  element: z.string().nullable(),
   rarity: z.string(),
   variant: z.string(),
   level: z.number().int(),
