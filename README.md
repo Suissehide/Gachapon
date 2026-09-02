@@ -154,3 +154,37 @@ docker compose --profile db --profile backend --profile frontend up -d
 ### Déploiement Dokploy
 
 Utiliser `deploy/dokploy/docker-compose.dokploy.yml` directement dans Dokploy.
+
+### Étape manquante après le tout premier déploiement : semer la base
+
+Le conteneur `back` ne lance que `npx prisma migrate deploy` au démarrage
+(`back/Dockerfile`, `CMD`) : les migrations s'appliquent, mais **le seed ne
+tourne jamais automatiquement**. Sans cette étape, le catalogue d'équipement
+est vide et aucun étage de tour n'existe : la campagne ne droppe plus rien,
+`/tower` liste quatre tours sans étages, et tout combat de tour échoue sur
+« catalogue incomplet ».
+
+Après le tout premier déploiement d'un environnement (et seulement celui-là),
+lancer le seed une fois à la main, en exécutant la commande dans le conteneur
+`back` déjà démarré (il porte déjà le `DATABASE_URL` de prod via son
+environnement) :
+
+```shell
+# Docker Compose (Traefik)
+cd deploy && docker compose exec back npx prisma db seed
+
+# Dokploy — même commande, dans le terminal du service "back" de l'app
+docker compose -f deploy/dokploy/docker-compose.dokploy.yml exec back npx prisma db seed
+```
+
+**Attention : `prisma db seed` est destructeur.** `back/prisma/seed.ts`
+commence par vider les tables de la base (`user.deleteMany()` en tête, avec
+effet de cascade sur les cartes, l'équipement, la progression, etc. — voir le
+bloc `$transaction` en haut du fichier). Ça n'est acceptable ici **que**
+parce qu'à ce jour la base de production ne contient encore aucun joueur
+réel : relancer cette commande sur un environnement qui a de vrais comptes
+effacerait tout leur historique. Dès qu'un compte joueur réel existe en
+production, cette commande **ne doit plus jamais être relancée telle
+quelle** — toute mise à jour de contenu (nouvelles tours, nouvel équipement,
+nouvelles quêtes…) devra passer par un chemin non destructif (upsert par clé
+plutôt que delete-then-create), pas par `prisma db seed`.

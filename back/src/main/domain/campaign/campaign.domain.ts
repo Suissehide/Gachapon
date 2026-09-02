@@ -41,6 +41,7 @@ import {
 import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import { calculateLevel } from '../shared/xp'
+import { CAMPAIGN_EQUIPMENT_SLOTS } from '../tower/tower-slots'
 import { deriveClearFlags } from './campaign-clear-flags'
 import { computeTeamPower, unitPower } from './campaign-power'
 import {
@@ -543,6 +544,7 @@ export class CampaignDomain {
             )
             await this.#achievementsDomain.track(tx, userId, {
               kind: 'STAGE_CLEARED',
+              source: 'CAMPAIGN',
               isBoss: stage.isBoss,
               viaSweep: false,
               flawless,
@@ -667,8 +669,11 @@ export class CampaignDomain {
           const cardDrops: { cardId: string; name: string; rarity: Rarity }[] =
             []
 
-          // Catalog snapshots used to pick drops
+          // Catalog snapshots used to pick drops. La campagne ne droppe que
+          // les slots classiques : les slots de tour (SAP/EMBER/PRISM/
+          // MONOLITH) sont l'exclusivité des tours (§5/§6 design spec).
           const equipmentCatalogRaw = await tx.equipment.findMany({
+            where: { slot: { in: [...CAMPAIGN_EQUIPMENT_SLOTS] } },
             select: { id: true, name: true, rarity: true, dropWeight: true },
           })
           const equipmentCatalog: EquipmentCatalogEntry[] =
@@ -735,6 +740,7 @@ export class CampaignDomain {
 
             await this.#achievementsDomain.track(tx, userId, {
               kind: 'STAGE_CLEARED',
+              source: 'CAMPAIGN',
               isBoss: stage.isBoss,
               viaSweep: true,
               flawless: false,
@@ -844,7 +850,10 @@ export class CampaignDomain {
         const minIdx = RARITY_ORDER.indexOf(minRarity)
         const allowedRarities = RARITY_ORDER.slice(minIdx)
         const catalogRaw = await tx.equipment.findMany({
-          where: { rarity: { in: allowedRarities as Rarity[] } },
+          where: {
+            rarity: { in: allowedRarities as Rarity[] },
+            slot: { in: [...CAMPAIGN_EQUIPMENT_SLOTS] },
+          },
           select: { id: true, name: true, rarity: true, dropWeight: true },
         })
         const catalog: EquipmentCatalogEntry[] = catalogRaw.map((e) => ({
@@ -943,7 +952,10 @@ export class CampaignDomain {
       const droppedRarity = rollFarmEquipmentDrop(farm, Math.random)
       if (droppedRarity) {
         const catalogRaw = await tx.equipment.findMany({
-          where: { rarity: droppedRarity },
+          where: {
+            rarity: droppedRarity,
+            slot: { in: [...CAMPAIGN_EQUIPMENT_SLOTS] },
+          },
           select: { id: true, name: true, rarity: true, dropWeight: true },
         })
         const catalog: EquipmentCatalogEntry[] = catalogRaw.map((e) => ({

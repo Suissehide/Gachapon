@@ -35,3 +35,23 @@ export const TOWER_SLOT_BY_ELEMENT: Record<TowerElement, EquipmentSlot> = {
   [CardElement.NATURE]: EquipmentSlot.SAP,
   [CardElement.EARTH]: EquipmentSlot.MONOLITH,
 }
+
+/**
+ * Les slots réservés aux tours — dérivés de `TOWER_SLOT_BY_ELEMENT`, jamais
+ * recopiés. C'est la seule liste qui énumère ces slots par leur nom.
+ */
+export const TOWER_EQUIPMENT_SLOTS: readonly EquipmentSlot[] = Object.values(
+  TOWER_SLOT_BY_ELEMENT,
+)
+
+/**
+ * Les slots que la campagne a le droit de faire dropper (§5/§6 design spec :
+ * « la campagne garde l'or, la poussière et les cartes, la tour a
+ * l'équipement »). Calculé comme le complément de `TOWER_EQUIPMENT_SLOTS`
+ * dans l'enum `EquipmentSlot` plutôt que recopié, pour qu'un futur slot de
+ * tour se retire automatiquement du pool de la campagne sans toucher ce
+ * fichier ailleurs.
+ */
+export const CAMPAIGN_EQUIPMENT_SLOTS: readonly EquipmentSlot[] = Object.values(
+  EquipmentSlot,
+).filter((slot) => !TOWER_EQUIPMENT_SLOTS.includes(slot))

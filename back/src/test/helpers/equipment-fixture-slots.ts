@@ -15,11 +15,15 @@ import type { SetKey } from '../../main/domain/equipment/set-bonuses'
  * de contrainte unique — un échec qui ressemble à l'instabilité aléatoire
  * connue de cette suite, pas à une régression évidente à diagnostiquer.
  *
- * Le slot n'entre dans aucun calcul de stats actuel (vérifié :
- * `equipment.domain.ts` ne s'en sert que pour l'exclusivité d'équipement par
- * slot sur une carte ; le pool de drop de campagne, `campaign.domain.ts`,
- * filtre uniquement par rareté). C'est donc un espace de noms libre, pas une
- * donnée de test — on peut se permettre de le dédier par fichier.
+ * Le slot n'entre dans aucun calcul de stats (vérifié : `equipment.domain.ts`
+ * ne s'en sert que pour l'exclusivité d'équipement par slot sur une carte).
+ * C'est donc en général un espace de noms libre, pas une donnée de test — on
+ * peut se permettre de le dédier par fichier. EXCEPTION : le pool de drop de
+ * campagne (`campaign.domain.ts`) filtre maintenant sur
+ * `CAMPAIGN_EQUIPMENT_SLOTS` (les 3 slots classiques WEAPON/ARMOR/ACCESSORY,
+ * cf. `domain/tower/tower-slots.ts`) — toute fixture consommée par
+ * `POST /campaign/.../battle|sweep` (firstClear ou farm) DOIT réserver un
+ * slot classique, jamais un slot de tour (SAP/EMBER/PRISM/MONOLITH).
  *
  * Convention : chaque fichier qui appelle `prisma.equipment.create(Many)`
  * importe SA réservation ci-dessous plutôt que d'écrire le littéral
@@ -58,9 +62,11 @@ export const EQUIPMENT_INITIAL_SUBSTATS = reservation('PRISM', 'FUREUR')
 
 // campaign.test.ts et levelup-refill.test.ts — pool de drop firstClear
 // (jamais équipé sur une carte), même besoin de 5 raretés dans les deux
-// fichiers. Partagent le slot MONOLITH, distingués par setKey.
-export const CAMPAIGN = reservation('MONOLITH', 'FUREUR')
-export const LEVELUP_REFILL = reservation('MONOLITH', 'PRECISION')
+// fichiers. Doivent rester sur un slot CLASSIQUE (cf. exception ci-dessus) :
+// campaign.domain.ts filtre le pool de drop sur CAMPAIGN_EQUIPMENT_SLOTS,
+// une pièce SAP/EMBER/PRISM/MONOLITH n'y serait jamais tirée.
+export const CAMPAIGN = reservation('WEAPON', 'PRECISION')
+export const LEVELUP_REFILL = reservation('ARMOR', 'PRECISION')
 
 // tower.test.ts — pool de drop garanti de la tour FEU (élément FIRE → slot
 // EMBER, cf. TOWER_SLOT_BY_ELEMENT). Le tirage de tour pioche le set
@@ -75,6 +81,13 @@ export const TOWER_FIRE_PRECISION = reservation('EMBER', 'PRECISION')
 export const TOWER_FIRE_PERCEE = reservation('EMBER', 'PERCEE')
 export const TOWER_FIRE_SANGSUE = reservation('EMBER', 'SANGSUE')
 
+// campaign.test.ts — preuve G1 qu'un drop de campagne ne peut jamais sortir
+// un slot de tour : une pièce classique et une pièce de tour, même rareté,
+// dans le même catalogue ; le filtre CAMPAIGN_EQUIPMENT_SLOTS doit rendre la
+// pièce de tour invisible au tirage.
+export const CAMPAIGN_SLOT_FILTER_CLASSIC = reservation('ACCESSORY', 'PRECISION')
+export const CAMPAIGN_SLOT_FILTER_TOWER = reservation('MONOLITH', 'FUREUR')
+
 const ALL_RESERVATIONS = [
   EQUIPMENT_TEST_WEAPON,
   EQUIPMENT_TEST_ARMOR,
@@ -87,6 +100,8 @@ const ALL_RESERVATIONS = [
   TOWER_FIRE_PRECISION,
   TOWER_FIRE_PERCEE,
   TOWER_FIRE_SANGSUE,
+  CAMPAIGN_SLOT_FILTER_CLASSIC,
+  CAMPAIGN_SLOT_FILTER_TOWER,
 ]
 
 const seen = new Set<string>()

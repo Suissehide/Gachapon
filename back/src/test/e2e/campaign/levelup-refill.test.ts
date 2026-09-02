@@ -37,10 +37,10 @@ describe('Campaign battle level-up → refill énergie', () => {
     cardId = card.id
 
     // Equipment required for firstClear guaranteedEquipment drop. Jamais
-    // équipées sur une carte (pool de drop, filtré par rareté seule côté
-    // campaign.domain.ts). Slot/setKey réservés dans
-    // equipment-fixture-slots.ts (LEVELUP_REFILL — partage le slot MONOLITH
-    // de campaign.test.ts avec un setKey différent).
+    // équipées sur une carte (pool de drop, filtré par rareté ET par
+    // CAMPAIGN_EQUIPMENT_SLOTS côté campaign.domain.ts — d'où le slot
+    // classique ARMOR ci-dessous). Slot/setKey réservés dans
+    // equipment-fixture-slots.ts (LEVELUP_REFILL).
     await prisma.equipment.createMany({
       data: [
         { name: `LvlRefEqC${suffix}`, ...LEVELUP_REFILL, rarity: 'COMMON', bonuses: { atkFlat: 1 }, dropWeight: 10 },

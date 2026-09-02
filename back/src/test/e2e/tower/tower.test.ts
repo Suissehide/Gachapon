@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
+import { mondayOfUtcWeek } from '../../../main/domain/quests/quest-matching'
 import { buildTestApp } from '../../helpers/build-test-app'
 import {
   EQUIPMENT_SALVAGE,
@@ -12,11 +13,22 @@ describe('routes de tour', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
   let cookies: string
   let userCardId: string
+  let userId: string
 
   const suffix = Date.now()
   const email = `tower${suffix}@test.com`
   const password = 'Password123!'
   const username = `toweruser${suffix}`
+
+  // G2 (relecture finale, passe 2) : preuve bout-en-bout qu'un combat de
+  // tour alimente les quêtes mais pas les compteurs de progression de
+  // campagne. Quête hebdo dédiée + achievement STAGES_CLEARED_COUNT dédié,
+  // vérifiés juste après le combat gagnant plus bas dans ce fichier.
+  const questKey = `tower_quest_${suffix}`
+  const achievementKey = `tower_stages_cleared_${suffix}`
+  const periodKey = mondayOfUtcWeek(new Date())
+  let questId: string
+  let achievementId: string
 
   beforeAll(async () => {
     app = await buildTestApp()
@@ -127,6 +139,40 @@ describe('routes de tour', () => {
       })
     }
 
+    // Quête hebdo STAGE_CLEARED (comme les vraies, quests.ts:128) — doit
+    // compter le combat de tour ci-dessous puisqu'elle ne filtre que sur
+    // `kind` (quest-matching.ts). Créée AVANT tout combat de la suite pour
+    // que le cache process-level de QuestsDomain (vide au boot, TTL 60s)
+    // la charge dès le premier trackInTx — même motif que
+    // quest-progress.test.ts.
+    const quest = await postgresOrm.prisma.quest.create({
+      data: {
+        key: questKey,
+        name: `Quête tour ${suffix}`,
+        description: 'Test: un combat de tour compte pour une quête',
+        period: 'WEEKLY',
+        criterion: { event: 'STAGE_CLEARED', target: 1 },
+        isActive: true,
+      },
+    })
+    questId = quest.id
+
+    // Achievement STAGES_CLEARED_COUNT — compteur de progression de
+    // CAMPAGNE : un combat de tour ne doit JAMAIS créer de ligne de
+    // progression pour lui (G2 : source: 'TOWER' fait renvoyer 0 à
+    // stageClearedDelta, donc achievements.domain.ts#evaluate court-circuite
+    // avant l'upsert de userAchievementProgress).
+    const achievement = await postgresOrm.prisma.achievement.create({
+      data: {
+        key: achievementKey,
+        name: `Étages franchis (test tour) ${suffix}`,
+        description: 'Test: un combat de tour ne compte pas ici',
+        criterion: { type: 'STAGES_CLEARED_COUNT', threshold: 100 },
+        isActive: true,
+      },
+    })
+    achievementId = achievement.id
+
     const reg = await app.inject({
       method: 'POST',
       url: '/auth/register',
@@ -137,6 +183,7 @@ describe('routes de tour', () => {
       where: { email },
       data: { emailVerifiedAt: new Date(), combatPoints: 100 },
     })
+    userId = user.id
 
     const uc = await postgresOrm.prisma.userCard.create({
       data: {
@@ -159,6 +206,25 @@ describe('routes de tour', () => {
   })
 
   afterAll(async () => {
+    const { postgresOrm } = (app as any).iocContainer
+    // Nettoyage dans l'ordre des FK (motif quest-progress.test.ts).
+    await postgresOrm.prisma.userReward.deleteMany({
+      where: { userId, source: 'QUEST', sourceId: { startsWith: `${questKey}:` } },
+    })
+    const bonus = await postgresOrm.prisma.userReward.findFirst({
+      where: { userId, source: 'QUEST', sourceId: `weekly-bonus:${periodKey}` },
+    })
+    if (bonus) {
+      await postgresOrm.prisma.userReward.delete({ where: { id: bonus.id } })
+      await postgresOrm.prisma.reward.deleteMany({ where: { id: bonus.rewardId } })
+    }
+    await postgresOrm.prisma.userQuest.deleteMany({ where: { questId } })
+    await postgresOrm.prisma.quest.deleteMany({ where: { key: questKey } })
+    await postgresOrm.prisma.userAchievementProgress.deleteMany({
+      where: { achievementId },
+    })
+    await postgresOrm.prisma.userAchievement.deleteMany({ where: { achievementId } })
+    await postgresOrm.prisma.achievement.deleteMany({ where: { key: achievementKey } })
     await app.close()
   })
 
@@ -316,6 +382,26 @@ describe('routes de tour', () => {
     expect(Array.isArray(body.log)).toBe(true)
     expect(body.teamA).toHaveLength(1)
     expect(body.teamB).toHaveLength(1)
+  })
+
+  it('le combat de tour ci-dessus compte pour la quête mais pas pour le compteur de campagne (G2)', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    const uq = await postgresOrm.prisma.userQuest.findFirst({
+      where: { userId, questId, periodKey },
+    })
+    expect(uq).not.toBeNull()
+    expect(uq!.progress).toBe(1)
+    expect(uq!.completed).toBe(true)
+
+    const progress = await postgresOrm.prisma.userAchievementProgress.findUnique(
+      {
+        where: { userId_achievementId: { userId, achievementId } },
+      },
+    )
+    // Aucune ligne créée : achievements.domain.ts#evaluate court-circuite
+    // avant l'upsert dès que stageClearedDelta renvoie 0 (source TOWER).
+    expect(progress).toBeNull()
   })
 
   it('GET /tower/FIRE après la victoire — étage 1 franchi, étage 5 toujours verrouillé', async () => {

@@ -41,6 +41,33 @@ describe('questIncrement', () => {
     expect(questIncrement(baseCriterion, event)).toBe(0)
   })
 
+  // G2 (relecture finale, passe 2) : les quêtes STAGE_CLEARED (quotidienne
+  // et hebdomadaire, prisma/seed/quests.ts) ne filtrent que sur `kind` — un
+  // combat de tour (source: 'TOWER') doit compter exactement comme un
+  // combat de campagne (source: 'CAMPAIGN'), sans changement de code côté
+  // quest-matching. Vérifié ici plutôt que supposé.
+  it('STAGE_CLEARED compte pour une quête quel que soit source (CAMPAIGN ou TOWER)', () => {
+    const criterion: QuestCriterion = { event: 'STAGE_CLEARED', target: 5 }
+    const campaignEvent: AchievementEvent = {
+      kind: 'STAGE_CLEARED',
+      source: 'CAMPAIGN',
+      isBoss: false,
+      viaSweep: false,
+      flawless: false,
+      understaffed: false,
+    }
+    const towerEvent: AchievementEvent = {
+      kind: 'STAGE_CLEARED',
+      source: 'TOWER',
+      isBoss: false,
+      viaSweep: false,
+      flawless: false,
+      understaffed: false,
+    }
+    expect(questIncrement(criterion, campaignEvent)).toBe(1)
+    expect(questIncrement(criterion, towerEvent)).toBe(1)
+  })
+
   it('applies rarity filter — matching rarity passes', () => {
     const criterion: QuestCriterion = {
       event: 'PULL_COMPLETED',

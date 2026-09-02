@@ -21,6 +21,14 @@ export type AchievementEvent =
   | { kind: 'MACHINE_PURCHASED'; machineId: string }
   | {
       kind: 'STAGE_CLEARED'
+      /**
+       * Campagne ou tour (G2, relecture finale) : les compteurs de
+       * progression de campagne (STAGES_CLEARED_COUNT, BOSS_DEFEATS_COUNT)
+       * ne doivent compter que 'CAMPAIGN' — voir stageClearedDelta dans
+       * counter-dispatcher.ts. Les quêtes, elles, ne regardent que `kind`
+       * et comptent les deux sources sans changement (quest-matching.ts).
+       */
+      source: 'CAMPAIGN' | 'TOWER'
       isBoss: boolean
       viaSweep: boolean
       flawless: boolean

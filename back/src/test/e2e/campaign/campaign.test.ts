@@ -1,18 +1,35 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
+import { mondayOfUtcWeek } from '../../../main/domain/quests/quest-matching'
 import { buildTestApp } from '../../helpers/build-test-app'
-import { CAMPAIGN } from '../../helpers/equipment-fixture-slots'
+import {
+  CAMPAIGN,
+  CAMPAIGN_SLOT_FILTER_CLASSIC,
+  CAMPAIGN_SLOT_FILTER_TOWER,
+} from '../../helpers/equipment-fixture-slots'
 
 describe('Campaign routes', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
   let cookies: string
   let userCardId: string
   let stage1Id: string
+  let stage2Id: string
+  let towerSlotPieceId: string
+  let userId: string
+  let questId: string
+  let achievementId: string
 
   const suffix = Date.now()
   const email = `camp${suffix}@test.com`
   const password = 'Password123!'
   const username = `campuser${suffix}`
+
+  // G2 (relecture finale, passe 2) : pendant de tower.test.ts — un combat de
+  // campagne DOIT toujours faire progresser STAGES_CLEARED_COUNT (source
+  // 'CAMPAIGN'), contrairement à un combat de tour.
+  const questKey = `campaign_quest_${suffix}`
+  const achievementKey = `campaign_stages_cleared_${suffix}`
+  const periodKey = mondayOfUtcWeek(new Date())
 
   beforeAll(async () => {
     app = await buildTestApp()
@@ -42,8 +59,10 @@ describe('Campaign routes', () => {
 
     // Some equipment to allow firstClear drop to succeed across rarities.
     // Ces pièces ne sont jamais équipées sur une carte (pool de drop, cf.
-    // campaign.domain.ts qui interroge tx.equipment sans filtre de slot).
-    // Slot/setKey réservés dans equipment-fixture-slots.ts (CAMPAIGN).
+    // campaign.domain.ts qui interroge tx.equipment filtré sur
+    // CAMPAIGN_EQUIPMENT_SLOTS — d'où le slot classique WEAPON réservé
+    // ci-dessous). Slot/setKey réservés dans equipment-fixture-slots.ts
+    // (CAMPAIGN).
     await postgresOrm.prisma.equipment.create({
       data: {
         name: `CampEqC${suffix}`,
@@ -132,6 +151,99 @@ describe('Campaign routes', () => {
     })
     stage1Id = stage.id
 
+    // Stage 2 — dédié à la preuve G1 : le pool de drop de campagne ne doit
+    // jamais offrir un slot de tour. Catalogue à deux pièces COMMON, une
+    // classique (ACCESSORY) et une de tour (MONOLITH), même dropWeight : si
+    // le filtre CAMPAIGN_EQUIPMENT_SLOTS venait à disparaître, la pièce de
+    // tour redeviendrait un candidat valide et ce test la verrait sortir.
+    await postgresOrm.prisma.equipment.create({
+      data: {
+        name: `SlotFilterClassic${suffix}`,
+        ...CAMPAIGN_SLOT_FILTER_CLASSIC,
+        rarity: 'COMMON',
+        bonuses: { atkFlat: 1 },
+        dropWeight: 10,
+      },
+    })
+    const towerPiece = await postgresOrm.prisma.equipment.create({
+      data: {
+        name: `SlotFilterTower${suffix}`,
+        ...CAMPAIGN_SLOT_FILTER_TOWER,
+        rarity: 'COMMON',
+        bonuses: { atkFlat: 1 },
+        dropWeight: 10,
+      },
+    })
+    towerSlotPieceId = towerPiece.id
+
+    const stage2 = await postgresOrm.prisma.campaignStage.create({
+      data: {
+        chapter: 1,
+        index: 2,
+        label: '1-2',
+        isBoss: false,
+        order: 2,
+        enemyTeam: [
+          {
+            baseHp: 10,
+            baseAtk: 1,
+            baseDef: 0,
+            baseSpd: 50,
+            level: 1,
+            palier: 1,
+            attackPattern: 'BASIC',
+            mitigationScale: 1,
+          },
+        ],
+        lootTable: {
+          firstClear: {
+            gold: 10,
+            dust: 1,
+            xp: 1,
+            guaranteedEquipment: null,
+            guaranteedCard: null,
+          },
+          farm: {
+            gold: 10,
+            dust: 1,
+            xp: 1,
+            // 100% de chance de drop pour rendre le test déterministe.
+            equipmentDropChance: 1.0,
+            equipmentWeights: { COMMON: 100 },
+            cardChance: 0.0,
+          },
+        },
+      },
+    })
+    stage2Id = stage2.id
+
+    // Quête hebdo + achievement STAGES_CLEARED_COUNT (pendant du même setup
+    // dans tower.test.ts) : preuve G2 qu'un combat de CAMPAGNE, lui,
+    // continue de faire progresser les deux. Créés avant tout combat pour
+    // que le cache process-level de QuestsDomain les charge (motif
+    // quest-progress.test.ts).
+    const quest = await postgresOrm.prisma.quest.create({
+      data: {
+        key: questKey,
+        name: `Quête campagne ${suffix}`,
+        description: 'Test: un combat de campagne compte pour une quête',
+        period: 'WEEKLY',
+        criterion: { event: 'STAGE_CLEARED', target: 1 },
+        isActive: true,
+      },
+    })
+    questId = quest.id
+    const achievement = await postgresOrm.prisma.achievement.create({
+      data: {
+        key: achievementKey,
+        name: `Étages franchis (test campagne) ${suffix}`,
+        description: 'Test: un combat de campagne doit compter ici',
+        criterion: { type: 'STAGES_CLEARED_COUNT', threshold: 100 },
+        isActive: true,
+      },
+    })
+    achievementId = achievement.id
+
     const reg = await app.inject({
       method: 'POST',
       url: '/auth/register',
@@ -140,11 +252,13 @@ describe('Campaign routes', () => {
     expect(reg.statusCode).toBe(201)
     const user = await postgresOrm.prisma.user.update({
       where: { email },
-      // Bump combatPoints to a high value so battle + sweep×3 never trips
+      // Bump combatPoints to a high value so battle + sweep×3 on stage 1
+      // AND battle + sweep×10 on stage 2 (G1 slot-filter proof) never trip
       // the stamina gate, regardless of how the global combat.battleCost /
       // combat.sweepCost configuration evolves.
-      data: { emailVerifiedAt: new Date(), combatPoints: 100 },
+      data: { emailVerifiedAt: new Date(), combatPoints: 300 },
     })
+    userId = user.id
 
     const uc = await postgresOrm.prisma.userCard.create({
       data: {
@@ -176,6 +290,25 @@ describe('Campaign routes', () => {
   })
 
   afterAll(async () => {
+    const { postgresOrm } = (app as any).iocContainer
+    // Nettoyage dans l'ordre des FK (motif quest-progress.test.ts).
+    await postgresOrm.prisma.userReward.deleteMany({
+      where: { userId, source: 'QUEST', sourceId: { startsWith: `${questKey}:` } },
+    })
+    const bonus = await postgresOrm.prisma.userReward.findFirst({
+      where: { userId, source: 'QUEST', sourceId: `weekly-bonus:${periodKey}` },
+    })
+    if (bonus) {
+      await postgresOrm.prisma.userReward.delete({ where: { id: bonus.id } })
+      await postgresOrm.prisma.reward.deleteMany({ where: { id: bonus.rewardId } })
+    }
+    await postgresOrm.prisma.userQuest.deleteMany({ where: { questId } })
+    await postgresOrm.prisma.quest.deleteMany({ where: { key: questKey } })
+    await postgresOrm.prisma.userAchievementProgress.deleteMany({
+      where: { achievementId },
+    })
+    await postgresOrm.prisma.userAchievement.deleteMany({ where: { achievementId } })
+    await postgresOrm.prisma.achievement.deleteMany({ where: { key: achievementKey } })
     await app.close()
   })
 
@@ -221,6 +354,27 @@ describe('Campaign routes', () => {
     expect(Array.isArray(body.teamB)).toBe(true)
     expect(body.teamA.length).toBe(1)
     expect(body.teamB.length).toBe(1)
+  })
+
+  it('le combat de campagne ci-dessus compte pour la quête ET pour le compteur STAGES_CLEARED_COUNT (G2)', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    const uq = await postgresOrm.prisma.userQuest.findFirst({
+      where: { userId, questId, periodKey },
+    })
+    expect(uq).not.toBeNull()
+    expect(uq!.progress).toBe(1)
+    expect(uq!.completed).toBe(true)
+
+    const progress = await postgresOrm.prisma.userAchievementProgress.findUnique(
+      {
+        where: { userId_achievementId: { userId, achievementId } },
+      },
+    )
+    // Contrairement à tower.test.ts : une source CAMPAIGN doit incrémenter
+    // STAGES_CLEARED_COUNT.
+    expect(progress).not.toBeNull()
+    expect(progress!.progress).toBe(1)
   })
 
   it('GET /campaign after first clear — stage marked cleared', async () => {
@@ -275,6 +429,50 @@ describe('Campaign routes', () => {
     expect(body.totalGold).toBe(60)
     expect(body.totalDust).toBe(9)
     expect(body.totalXp).toBe(9)
+  })
+
+  it('POST /sweep on stage 2 — never drops a tower-slot equipment (G1)', async () => {
+    // Clear stage 2 first (sweep requires a cleared stage).
+    const battleRes = await app.inject({
+      method: 'POST',
+      url: `/campaign/stages/${stage2Id}/battle`,
+      headers: { cookie: cookies },
+    })
+    expect(battleRes.statusCode).toBe(200)
+    expect((battleRes.json() as { won: boolean }).won).toBe(true)
+
+    const sweepRes = await app.inject({
+      method: 'POST',
+      url: `/campaign/stages/${stage2Id}/sweep`,
+      headers: { cookie: cookies, 'content-type': 'application/json' },
+      payload: { runs: 10 },
+    })
+    expect(sweepRes.statusCode).toBe(200)
+    const body = sweepRes.json() as {
+      equipmentDrops: { equipmentId: string; rarity: string }[]
+    }
+    // equipmentDropChance: 1.0 → un drop garanti par run.
+    expect(body.equipmentDrops).toHaveLength(10)
+
+    // Le catalogue de drop de campagne interroge TOUTE la table Equipment
+    // (filtrée par slot) : la suite e2e partage la même base, donc d'autres
+    // fichiers ont pu créer d'autres pièces COMMON de slot classique. On ne
+    // peut donc pas affirmer sur quelle pièce précise le tirage retombe —
+    // seulement qu'il ne retombe JAMAIS sur la pièce canari
+    // `towerSlotPieceId` (slot MONOLITH), et que chaque pièce tirée est bien
+    // sur un slot classique.
+    const { postgresOrm } = (app as any).iocContainer
+    const droppedIds = [...new Set(body.equipmentDrops.map((d) => d.equipmentId))]
+    const droppedPieces = await postgresOrm.prisma.equipment.findMany({
+      where: { id: { in: droppedIds } },
+      select: { id: true, slot: true },
+    })
+    for (const drop of body.equipmentDrops) {
+      expect(drop.equipmentId).not.toBe(towerSlotPieceId)
+    }
+    for (const piece of droppedPieces) {
+      expect(['WEAPON', 'ARMOR', 'ACCESSORY']).toContain(piece.slot)
+    }
   })
 
   it('POST /battle — refuses 400 when no team deployed', async () => {

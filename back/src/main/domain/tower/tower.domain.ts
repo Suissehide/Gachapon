@@ -9,6 +9,7 @@ import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/sk
 import type { ITowerRepository } from '../../types/infra/orm/repositories/tower.repository.interface'
 import type { UserRewardRepositoryInterface } from '../../types/infra/orm/repositories/user-reward.repository.interface'
 import { applyCombatBonuses } from '../campaign/campaign.domain'
+import { deriveFlawless } from '../campaign/campaign-clear-flags'
 import { computeTeamPower, unitPower } from '../campaign/campaign-power'
 import {
   enemyNameFromAppearance,
@@ -411,6 +412,26 @@ export class TowerDomain {
                   Math.random,
                 ) as unknown as Prisma.InputJsonValue,
               },
+            })
+
+            // Alimente les quêtes (STAGE_CLEARED, filtrées sur le seul
+            // `kind` — quest-matching.ts) sans faire progresser les succès
+            // de campagne (G2, relecture finale) : `source: 'TOWER'` fait
+            // renvoyer 0 à stageClearedDelta pour STAGES_CLEARED_COUNT et
+            // BOSS_DEFEATS_COUNT, cf. counter-dispatcher.ts.
+            // `flawless` est calculable normalement (même log de combat que
+            // la campagne). `understaffed` n'a pas d'équivalent tour :
+            // deriveClearFlags l'exempte sur les 2 premiers étages de la
+            // campagne (chapter/index — un repère de progression qui
+            // n'existe pas pour une tour) ; plutôt que d'inventer un
+            // équivalent, on l'émet à false pour toute source TOWER.
+            await this.#achievementsDomain.track(tx, userId, {
+              kind: 'STAGE_CLEARED',
+              source: 'TOWER',
+              isBoss: floor === TOWER_FLOOR_COUNT,
+              viaSweep: false,
+              flawless: deriveFlawless(sim.log, teamUnits),
+              understaffed: false,
             })
 
             // Progression : n'avance qu'en cas de victoire, jamais en arrière.

@@ -7,7 +7,12 @@ import {
   towerEnemyPower,
   towerFloorLoot,
 } from '../../../prisma/seed/tower'
-import { TOWER_SLOT_BY_ELEMENT } from '../../main/domain/tower/tower-slots'
+import { EquipmentSlot } from '../../generated/client'
+import {
+  CAMPAIGN_EQUIPMENT_SLOTS,
+  TOWER_EQUIPMENT_SLOTS,
+  TOWER_SLOT_BY_ELEMENT,
+} from '../../main/domain/tower/tower-slots'
 
 describe('seed des tours', () => {
   const etages = buildTowerFloors()
@@ -83,5 +88,26 @@ describe('seed des tours', () => {
         expect(ennemi.mitigationScale).toBeGreaterThan(0)
       }
     }
+  })
+})
+
+describe('CAMPAIGN_EQUIPMENT_SLOTS — pool de drop campagne (G1)', () => {
+  it('aucun slot de tour ne peut sortir d\'un drop de campagne', () => {
+    for (const slot of TOWER_EQUIPMENT_SLOTS) {
+      expect(CAMPAIGN_EQUIPMENT_SLOTS).not.toContain(slot)
+    }
+  })
+
+  it('tour + campagne recouvrent exactement tout l\'enum EquipmentSlot, sans trou ni doublon', () => {
+    const combined = [...TOWER_EQUIPMENT_SLOTS, ...CAMPAIGN_EQUIPMENT_SLOTS].sort()
+    expect(combined).toEqual([...Object.values(EquipmentSlot)].sort())
+    // Pas de doublon : les deux ensembles partitionnent l'enum.
+    expect(new Set(combined).size).toBe(combined.length)
+  })
+
+  it('les 3 slots classiques (WEAPON/ARMOR/ACCESSORY) sont les seuls slots de campagne actuels', () => {
+    expect([...CAMPAIGN_EQUIPMENT_SLOTS].sort()).toEqual(
+      ['ACCESSORY', 'ARMOR', 'WEAPON'].sort(),
+    )
   })
 })

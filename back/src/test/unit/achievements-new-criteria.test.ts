@@ -4,6 +4,7 @@ import type { UserAchievementState } from '../../main/domain/achievements/state-
 
 const stageEvent = (
   over: Partial<{
+    source: 'CAMPAIGN' | 'TOWER'
     isBoss: boolean
     viaSweep: boolean
     flawless: boolean
@@ -12,6 +13,7 @@ const stageEvent = (
 ) =>
   ({
     kind: 'STAGE_CLEARED' as const,
+    source: 'CAMPAIGN' as const,
     isBoss: false,
     viaSweep: false,
     flawless: false,
@@ -60,6 +62,67 @@ describe('computeDelta — critères pilotés par STAGE_CLEARED', () => {
         stageEvent({ understaffed: true }),
       ),
     ).toBe(1)
+  })
+
+  // G2 (relecture finale, passe 2) : les combats de tour alimentent les
+  // quêtes mais pas les compteurs de PROGRESSION de campagne.
+  describe('source TOWER vs CAMPAIGN (G2)', () => {
+    it('STAGES_CLEARED_COUNT : +1 en CAMPAIGN, 0 en TOWER (même combat non-sweep)', () => {
+      expect(
+        computeDelta(
+          { type: 'STAGES_CLEARED_COUNT', threshold: 1 },
+          stageEvent({ source: 'CAMPAIGN' }),
+        ),
+      ).toBe(1)
+      expect(
+        computeDelta(
+          { type: 'STAGES_CLEARED_COUNT', threshold: 1 },
+          stageEvent({ source: 'TOWER' }),
+        ),
+      ).toBe(0)
+    })
+
+    it('BOSS_DEFEATS_COUNT : +1 en CAMPAIGN sur un boss, 0 en TOWER même sur un boss de tour', () => {
+      expect(
+        computeDelta(
+          { type: 'BOSS_DEFEATS_COUNT', threshold: 1 },
+          stageEvent({ source: 'CAMPAIGN', isBoss: true }),
+        ),
+      ).toBe(1)
+      expect(
+        computeDelta(
+          { type: 'BOSS_DEFEATS_COUNT', threshold: 1 },
+          stageEvent({ source: 'TOWER', isBoss: true }),
+        ),
+      ).toBe(0)
+    })
+
+    it('FLAWLESS_CLEARS_COUNT / UNDERSTAFFED_CLEARS_COUNT : comptent pour les deux sources (décrivent COMMENT, pas QUOI)', () => {
+      expect(
+        computeDelta(
+          { type: 'FLAWLESS_CLEARS_COUNT', threshold: 1 },
+          stageEvent({ source: 'TOWER', flawless: true }),
+        ),
+      ).toBe(1)
+      expect(
+        computeDelta(
+          { type: 'FLAWLESS_CLEARS_COUNT', threshold: 1 },
+          stageEvent({ source: 'CAMPAIGN', flawless: true }),
+        ),
+      ).toBe(1)
+      expect(
+        computeDelta(
+          { type: 'UNDERSTAFFED_CLEARS_COUNT', threshold: 1 },
+          stageEvent({ source: 'TOWER', understaffed: true }),
+        ),
+      ).toBe(1)
+      expect(
+        computeDelta(
+          { type: 'UNDERSTAFFED_CLEARS_COUNT', threshold: 1 },
+          stageEvent({ source: 'CAMPAIGN', understaffed: true }),
+        ),
+      ).toBe(1)
+    })
   })
 })
 

@@ -7,11 +7,14 @@ const stageClearedDelta = (
   criterion: AchievementCriterion,
   event: StageClearedEvent,
 ): number => {
+  // STAGES_CLEARED_COUNT et BOSS_DEFEATS_COUNT sont des compteurs de
+  // progression de CAMPAGNE (G2, relecture finale) : un étage de tour n'est
+  // pas un étage de campagne, même s'il s'agit d'un boss de tour.
   if (criterion.type === 'STAGES_CLEARED_COUNT') {
-    return event.viaSweep ? 0 : 1
+    return event.source === 'TOWER' || event.viaSweep ? 0 : 1
   }
   if (criterion.type === 'BOSS_DEFEATS_COUNT') {
-    return !event.viaSweep && event.isBoss ? 1 : 0
+    return event.source !== 'TOWER' && !event.viaSweep && event.isBoss ? 1 : 0
   }
   if (criterion.type === 'FLAWLESS_CLEARS_COUNT') {
     return event.flawless ? 1 : 0
