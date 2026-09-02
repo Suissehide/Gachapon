@@ -21,25 +21,7 @@ export class TowerRepository implements ITowerRepository {
     })
   }
 
-  findFloor(element: CardElement, index: number): Promise<TowerFloor | null> {
-    return this.#prisma.towerFloor.findUnique({
-      where: { element_index: { element, index } },
-    })
-  }
-
   getProgress(userId: string): Promise<UserTowerProgress[]> {
     return this.#prisma.userTowerProgress.findMany({ where: { userId } })
-  }
-
-  upsertProgress(
-    userId: string,
-    element: CardElement,
-    highestFloor: number,
-  ): Promise<UserTowerProgress> {
-    return this.#prisma.userTowerProgress.upsert({
-      where: { userId_element: { userId, element } },
-      create: { userId, element, highestFloor },
-      update: { highestFloor },
-    })
   }
 }

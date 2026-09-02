@@ -73,6 +73,7 @@ describe('seed des tours', () => {
     expect(p1.baseHp).toBe(RARITY_BASE.EPIC.hp)
     expect(p1.baseAtk).toBe(RARITY_BASE.EPIC.atk)
     expect(p1.baseDef).toBe(RARITY_BASE.EPIC.def)
+    expect(p1.baseSpd).toBe(RARITY_BASE.EPIC.spd)
   })
 
   it('chaque ennemi porte son mitigationScale', () => {

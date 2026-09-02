@@ -257,6 +257,16 @@ describe('routes de tour', () => {
     expect(res.statusCode).toBe(400)
   })
 
+  it('refuse une équipe avec des cartes en double', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/tower/FIRE/1/battle',
+      headers: { cookie: cookies, 'content-type': 'application/json' },
+      payload: { userCardIds: [userCardId, userCardId, userCardId] },
+    })
+    expect(res.statusCode).toBe(400)
+  })
+
   it('GET /tower/FIRE — étage 1 disponible, étage 5 verrouillé', async () => {
     const res = await app.inject({
       method: 'GET',

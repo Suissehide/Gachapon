@@ -252,6 +252,10 @@ export class TowerDomain {
     if (userCardIds.length === 0 || userCardIds.length > MAX_TOWER_TEAM_SIZE) {
       throw Boom.badRequest('Composez une équipe de 1 à 3 cartes pour la tour')
     }
+    const uniqueUserCardIds = new Set(userCardIds)
+    if (uniqueUserCardIds.size !== userCardIds.length) {
+      throw Boom.badRequest('Team cards must be distinct')
+    }
 
     return retryOnSerialization(async () => {
       // Lire la config ET les effets AVANT la transaction (évite les I/O

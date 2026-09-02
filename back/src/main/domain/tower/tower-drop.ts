@@ -64,6 +64,16 @@ export function rollTowerDrop(input: {
   const setKey = drawSetKey(prng)
 
   const total = Object.values(weights).reduce((a, b) => a + b, 0)
+  if (Object.keys(weights).length === 0 || total <= 0) {
+    // Ne doit jamais arriver : le seed de tour pose `farm.equipmentWeights`
+    // sur les 40 étages (prisma/seed/tower.ts:towerFloorLoot). Des poids
+    // vides signalent un catalogue incomplet — on le signale plutôt que de
+    // renvoyer une rareté undefined qui échouerait plus loin sur une erreur
+    // Prisma opaque.
+    throw new Error(
+      `Poids de rareté absents pour l'élément de tour ${element} — seed de tour incomplet`,
+    )
+  }
   let seuil = prng() * total
   let rarity = Object.keys(weights)[0] as string
   for (const [cle, poids] of Object.entries(weights)) {

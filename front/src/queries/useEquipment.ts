@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo } from 'react'
 
 import { EquipmentApi } from '../api/equipment.api'
+import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
+import { useToast } from '../hooks/useToast.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 import {
   type ActiveSetSummary,
@@ -184,12 +186,20 @@ export function useUpgradeItem() {
 
 export function useSalvageItems() {
   const qc = useQueryClient()
+  const { toast } = useToast()
   return useMutation({
     mutationFn: (userEquipmentIds: string[]) =>
       EquipmentApi.salvage(userEquipmentIds),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: EQUIPMENT_KEY })
       void useAuthStore.getState().fetchMe()
+    },
+    onError: (error) => {
+      toast({
+        title: 'Erreur lors de la destruction',
+        message: error.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
     },
   })
 }

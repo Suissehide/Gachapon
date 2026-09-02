@@ -37,7 +37,7 @@ import { useCombatPoints } from '../../queries/useCombatPoints.ts'
 import { useCombatTeam } from '../../queries/useCombatTeam.ts'
 import { useTower, useTowerBattle, useTowers } from '../../queries/useTower.ts'
 
-export const Route = createFileRoute('/_authenticated/tower/$element')({
+export const Route = createFileRoute('/_authenticated/tower_/$element')({
   component: TowerFloorsPage,
 })
 
