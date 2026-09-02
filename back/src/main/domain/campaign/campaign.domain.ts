@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 import { z } from 'zod/v4'
 
 import type { Prisma } from '../../../generated/client'
+import type { EquipmentSet, EquipmentSlot } from '../../../generated/enums'
 import type { IocContainer } from '../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
@@ -131,6 +132,12 @@ export interface BattleRewards {
     equipmentId: string
     name: string
     rarity: Rarity
+    slot: EquipmentSlot
+    setKey: EquipmentSet
+    level: number
+    bonuses: Record<string, number>
+    substats: { key: string; value: number }[]
+    baseBoost: number
   } | null
   cardDrop: {
     cardId: string
@@ -202,6 +209,11 @@ interface EquipmentCatalogEntry {
   name: string
   rarity: Rarity
   dropWeight: number
+  // Portés jusqu'à la charge utile du drop : l'écran de victoire affiche
+  // l'emplacement, le set et la stat principale de la pièce obtenue.
+  slot: EquipmentSlot
+  setKey: EquipmentSet
+  bonuses: Record<string, number>
 }
 
 interface CardCatalogEntry {
@@ -677,7 +689,15 @@ export class CampaignDomain {
           // BELT) sont l'exclusivité des tours (§5/§6 design spec).
           const equipmentCatalogRaw = await tx.equipment.findMany({
             where: { slot: { in: [...CAMPAIGN_EQUIPMENT_SLOTS] } },
-            select: { id: true, name: true, rarity: true, dropWeight: true },
+            select: {
+              id: true,
+              name: true,
+              rarity: true,
+              dropWeight: true,
+              slot: true,
+              setKey: true,
+              bonuses: true,
+            },
           })
           const equipmentCatalog: EquipmentCatalogEntry[] =
             equipmentCatalogRaw.map((e) => ({
@@ -685,6 +705,9 @@ export class CampaignDomain {
               name: e.name,
               rarity: e.rarity as Rarity,
               dropWeight: e.dropWeight,
+              slot: e.slot,
+              setKey: e.setKey,
+              bonuses: (e.bonuses ?? {}) as Record<string, number>,
             }))
           const activeCardsRaw = await tx.card.findMany({
             where: { set: { isActive: true } },
@@ -857,13 +880,24 @@ export class CampaignDomain {
             rarity: { in: allowedRarities as Rarity[] },
             slot: { in: [...CAMPAIGN_EQUIPMENT_SLOTS] },
           },
-          select: { id: true, name: true, rarity: true, dropWeight: true },
+          select: {
+            id: true,
+            name: true,
+            rarity: true,
+            dropWeight: true,
+            slot: true,
+            setKey: true,
+            bonuses: true,
+          },
         })
         const catalog: EquipmentCatalogEntry[] = catalogRaw.map((e) => ({
           id: e.id,
           name: e.name,
           rarity: e.rarity as Rarity,
           dropWeight: e.dropWeight,
+          slot: e.slot,
+          setKey: e.setKey,
+          bonuses: (e.bonuses ?? {}) as Record<string, number>,
         }))
         // Prefer the rolled rarity; fall back to any allowed rarity if empty.
         let picked = fcEquipRarity
@@ -891,6 +925,12 @@ export class CampaignDomain {
             equipmentId: picked.id,
             name: picked.name,
             rarity: picked.rarity,
+            slot: picked.slot,
+            setKey: picked.setKey,
+            level: ue.level,
+            bonuses: picked.bonuses,
+            substats: (ue.substats ?? []) as { key: string; value: number }[],
+            baseBoost: ue.baseBoost,
           }
         }
       }
@@ -959,13 +999,24 @@ export class CampaignDomain {
             rarity: droppedRarity,
             slot: { in: [...CAMPAIGN_EQUIPMENT_SLOTS] },
           },
-          select: { id: true, name: true, rarity: true, dropWeight: true },
+          select: {
+            id: true,
+            name: true,
+            rarity: true,
+            dropWeight: true,
+            slot: true,
+            setKey: true,
+            bonuses: true,
+          },
         })
         const catalog: EquipmentCatalogEntry[] = catalogRaw.map((e) => ({
           id: e.id,
           name: e.name,
           rarity: e.rarity as Rarity,
           dropWeight: e.dropWeight,
+          slot: e.slot,
+          setKey: e.setKey,
+          bonuses: (e.bonuses ?? {}) as Record<string, number>,
         }))
         const picked = pickEquipmentForRarity(
           catalog,
@@ -991,6 +1042,12 @@ export class CampaignDomain {
             equipmentId: picked.id,
             name: picked.name,
             rarity: droppedRarity,
+            slot: picked.slot,
+            setKey: picked.setKey,
+            level: ue.level,
+            bonuses: picked.bonuses,
+            substats: (ue.substats ?? []) as { key: string; value: number }[],
+            baseBoost: ue.baseBoost,
           }
         }
       }

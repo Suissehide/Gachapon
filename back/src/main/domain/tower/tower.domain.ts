@@ -2,7 +2,11 @@ import Boom from '@hapi/boom'
 import { z } from 'zod/v4'
 
 import type { Prisma } from '../../../generated/client'
-import type { CardRarity, EquipmentSlot } from '../../../generated/enums'
+import type {
+  CardRarity,
+  EquipmentSet,
+  EquipmentSlot,
+} from '../../../generated/enums'
 import type { IocContainer } from '../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
@@ -115,6 +119,12 @@ export interface TowerBattleRewards {
     equipmentId: string
     name: string
     rarity: Rarity
+    slot: EquipmentSlot
+    setKey: EquipmentSet
+    level: number
+    bonuses: Record<string, number>
+    substats: { key: string; value: number }[]
+    baseBoost: number
   }
 }
 
@@ -469,6 +479,15 @@ export class TowerDomain {
                 equipmentId: equipment.id,
                 name: equipment.name,
                 rarity: drop.rarity as Rarity,
+                slot: equipment.slot,
+                setKey: equipment.setKey,
+                level: ue.level,
+                bonuses: (equipment.bonuses ?? {}) as Record<string, number>,
+                substats: (ue.substats ?? []) as {
+                  key: string
+                  value: number
+                }[],
+                baseBoost: ue.baseBoost,
               },
             }
           }

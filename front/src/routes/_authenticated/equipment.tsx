@@ -1,29 +1,25 @@
 import { createFileRoute } from '@tanstack/react-router'
-import {
-  Circle,
-  CircleHelp,
-  Footprints,
-  Gem,
-  Hand,
-  Link,
-  Shield,
-  ShieldOff,
-  Sword,
-  Zap,
-} from 'lucide-react'
+import { CircleHelp, ShieldOff, Sword, Zap } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import type {
+  EquipmentDrop,
   EquipmentInstance,
   EquipmentRarity,
   EquipmentSetKey,
   EquipmentSlot,
 } from '../../api/equipment.api'
+import {
+  FilterField,
+  RarityDot,
+} from '../../components/collection/CollectionFilters.tsx'
+import { EquipmentDropCard } from '../../components/equipment/EquipmentDropCard.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { CardDisplay } from '../../components/shared/tcg-card/CardDisplay.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import DropdownFilter from '../../components/ui/dropdownFilter.tsx'
+import { Select } from '../../components/ui/input.tsx'
 import {
   Popup,
   PopupBody,
@@ -33,6 +29,7 @@ import {
   PopupTitle,
 } from '../../components/ui/popup.tsx'
 import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
+import { RARITY_COLOR_VAR, RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { useUserCollection } from '../../queries/useCollection.ts'
 import {
   DEFAULT_ECONOMY,
@@ -45,7 +42,22 @@ import {
   useUnequipItem,
 } from '../../queries/useEquipment.ts'
 import { useAuthStore } from '../../stores/auth.store.ts'
-import { formatBonusKey } from '../../utils/cardStats.ts'
+
+// Options de rareté — mêmes libellés et mêmes pastilles que la page
+// Collection, dont on réutilise RARITY_LABEL_FR et RARITY_COLOR_VAR plutôt
+// que d'en recopier une seconde table.
+type RarityFilter = EquipmentRarity | 'ALL'
+
+const RARITY_FILTER_OPTIONS = [
+  { value: 'ALL', label: 'Toutes' },
+  ...(
+    ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY'] as EquipmentRarity[]
+  ).map((r) => ({
+    value: r,
+    label: RARITY_LABEL_FR[r] ?? r,
+    icon: <RarityDot color={RARITY_COLOR_VAR[r] ?? ''} />,
+  })),
+]
 
 export const Route = createFileRoute('/_authenticated/equipment')({
   component: EquipmentPage,
@@ -60,34 +72,11 @@ const SLOT_LABELS: Record<EquipmentSlot, string> = {
   BOOTS: 'Bottes',
   BELT: 'Ceinture',
 }
-const SLOT_ICONS: Record<EquipmentSlot, typeof Sword> = {
-  WEAPON: Sword,
-  ARMOR: Shield,
-  RING: Circle,
-  AMULET: Gem,
-  GLOVES: Hand,
-  BOOTS: Footprints,
-  BELT: Link,
-}
 // Ordre d'affichage du filtre de slot, dérivé de SLOT_LABELS plutôt que
 // recopié : une seule liste des 7 slots dans ce fichier.
 const SLOT_FILTER_OPTIONS = (
   Object.entries(SLOT_LABELS) as [EquipmentSlot, string][]
 ).map(([value, label]) => ({ value, label }))
-const RARITY_COLORS: Record<EquipmentRarity, string> = {
-  COMMON: 'border-slate-400/30 bg-slate-400/10 text-slate-300',
-  UNCOMMON: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300',
-  RARE: 'border-sky-400/30 bg-sky-400/10 text-sky-300',
-  EPIC: 'border-fuchsia-400/30 bg-fuchsia-400/10 text-fuchsia-300',
-  LEGENDARY: 'border-amber-400/30 bg-amber-400/10 text-amber-300',
-}
-const RARITY_LABELS: Record<EquipmentRarity, string> = {
-  COMMON: 'Commune',
-  UNCOMMON: 'Peu commune',
-  RARE: 'Rare',
-  EPIC: 'Épique',
-  LEGENDARY: 'Légendaire',
-}
 
 function EquipmentPage() {
   const user = useAuthStore((s) => s.user)
@@ -98,9 +87,7 @@ function EquipmentPage() {
   const unequipItem = useUnequipItem()
 
   const [slotFilter, setSlotFilter] = useState<EquipmentSlot | 'ALL'>('ALL')
-  const [rarityFilter, setRarityFilter] = useState<EquipmentRarity | 'ALL'>(
-    'ALL',
-  )
+  const [rarityFilter, setRarityFilter] = useState<RarityFilter>('ALL')
   // Filtre par set : indispensable dès que l'inventaire grossit (tours
   // élémentaires). Multi-sélection, sur le modèle de DropdownFilter ailleurs
   // dans l'app (voir admin.cards.tsx).
@@ -156,18 +143,19 @@ function EquipmentPage() {
           wrap
           options={[{ value: 'ALL', label: 'Tout' }, ...SLOT_FILTER_OPTIONS]}
         />
-        <SegmentedControl
-          value={rarityFilter}
-          onChange={setRarityFilter}
-          options={[
-            { value: 'ALL', label: 'Tout' },
-            { value: 'COMMON', label: 'Co' },
-            { value: 'UNCOMMON', label: 'Pc' },
-            { value: 'RARE', label: 'R' },
-            { value: 'EPIC', label: 'E' },
-            { value: 'LEGENDARY', label: 'L' },
-          ]}
-        />
+        {/* Même filtre que la page Collection : un Select intitulé « Rareté »
+            avec une pastille de couleur par option. Il affichait auparavant
+            « Co / Pc / R / E / L » sans intitulé, illisible pour qui ne
+            connaît pas déjà l'ordre des raretés. */}
+        <FilterField id="filter-equip-rarity" label="Rareté">
+          <Select
+            id="filter-equip-rarity"
+            options={RARITY_FILTER_OPTIONS}
+            value={rarityFilter}
+            onValueChange={(v) => setRarityFilter(v as RarityFilter)}
+            clearable={false}
+          />
+        </FilterField>
         <DropdownFilter
           label="Set"
           filters={sets.map((s) => ({
@@ -268,58 +256,31 @@ function EquipmentCard({
   isPending: boolean
 }) {
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
-  const levelScale = economy.equip.levelScale
-  const scale = 1 + levelScale * (item.level - 1)
-  const Icon = SLOT_ICONS[item.slot]
+
+  // Même fiche que l'écran de victoire, avec les actions d'inventaire à la
+  // place du bouton « Détruire ». `EquipmentInstance` porte déjà tous les
+  // champs d'`EquipmentDrop` ; seul l'identifiant change de nom.
+  const drop: EquipmentDrop = {
+    userEquipmentId: item.id,
+    equipmentId: item.equipmentId,
+    name: item.name,
+    rarity: item.rarity,
+    slot: item.slot,
+    setKey: item.setKey,
+    level: item.level,
+    bonuses: item.bonuses,
+    substats: item.substats,
+    baseBoost: item.baseBoost,
+  }
+
   return (
-    <div className="rounded-2xl border border-border bg-muted/20 p-4">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Icon className="h-4 w-4 text-text-light" />
-          <p className="font-semibold text-text">{item.name}</p>
-          <span className="text-[10px] font-medium text-text-light">
-            Nv. {item.level}
-          </span>
-        </div>
-        <span
-          className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${RARITY_COLORS[item.rarity]}`}
-        >
-          {RARITY_LABELS[item.rarity]}
-        </span>
-      </div>
-
-      <p className="mt-1 text-xs text-text-light/60">
-        {SLOT_LABELS[item.slot]} · {item.setLabel}
-      </p>
-
-      <ul className="mt-2 space-y-0.5 text-xs">
-        {Object.entries(item.bonuses).map(([key, value], idx) => (
-          <li key={key} className="text-text-light">
-            <span className="font-mono text-emerald-300">
-              +
-              {(
-                Math.round(
-                  (value * scale + (idx === 0 ? item.baseBoost : 0)) * 10,
-                ) / 10
-              ).toLocaleString('fr-FR')}
-            </span>{' '}
-            <span className="text-text-light/70">{formatBonusKey(key)}</span>
-          </li>
-        ))}
-        {item.substats.map((s) => (
-          <li key={s.key} className="text-text-light">
-            <span className="font-mono text-violet-600">
-              +{(Math.round(s.value * 10) / 10).toLocaleString('fr-FR')}
-            </span>{' '}
-            <span className="text-violet-600/70">{formatBonusKey(s.key)}</span>
-          </li>
-        ))}
-      </ul>
-
-      <div className="mt-3">
-        {item.equippedOnId ? (
+    <EquipmentDropCard
+      drop={drop}
+      equipLevelScale={economy.equip.levelScale}
+      actions={
+        item.equippedOnId ? (
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs text-amber-300">
+            <span className="font-mono text-[11px] text-text-light">
               <Zap className="mr-0.5 inline h-3 w-3" />
               Sur {item.equippedOnCardName ?? '…'}
             </span>
@@ -342,8 +303,8 @@ function EquipmentCard({
           >
             Équiper
           </Button>
-        )}
-      </div>
-    </div>
+        )
+      }
+    />
   )
 }

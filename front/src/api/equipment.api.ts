@@ -63,6 +63,25 @@ export type EquipmentInstance = {
   baseBoost: number
 }
 
+/**
+ * Pièce obtenue en fin de combat — campagne comme tour. Une seule définition
+ * pour les deux réponses, qui portaient auparavant chacune la leur.
+ * Contient tout ce que la fiche de victoire affiche : emplacement, set,
+ * niveau, stat principale (`bonuses`, une seule clé) et sous-stats.
+ */
+export type EquipmentDrop = {
+  userEquipmentId: string
+  equipmentId: string
+  name: string
+  rarity: EquipmentRarity
+  slot: EquipmentSlot
+  setKey: EquipmentSetKey
+  level: number
+  bonuses: Record<string, number>
+  substats: Substat[]
+  baseBoost: number
+}
+
 export type EquipmentSetTier = {
   label: string
   bonuses: Record<string, number>

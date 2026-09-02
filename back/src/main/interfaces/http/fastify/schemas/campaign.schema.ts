@@ -66,6 +66,12 @@ export const battleRewardsSchema = z.object({
       equipmentId: z.string(),
       name: z.string(),
       rarity: z.string(),
+      slot: z.string(),
+      setKey: z.string(),
+      level: z.number().int(),
+      bonuses: z.record(z.string(), z.number()),
+      substats: z.array(z.object({ key: z.string(), value: z.number() })),
+      baseBoost: z.number(),
     })
     .nullable(),
   cardDrop: z

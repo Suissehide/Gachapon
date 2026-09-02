@@ -1,6 +1,7 @@
 import { apiUrl } from '../constants/config.constant.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import type { SimulatorUnit } from './combat.api.ts'
+import type { EquipmentDrop } from './equipment.api.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
 export type StageStatus = 'cleared' | 'current' | 'locked'
@@ -55,12 +56,7 @@ export type BattleRewards = {
   xpBefore: number
   levelBefore: number
   isFirstClear: boolean
-  equipmentDrop: {
-    userEquipmentId: string
-    equipmentId: string
-    name: string
-    rarity: string
-  } | null
+  equipmentDrop: EquipmentDrop | null
   cardDrop: {
     cardId: string
     name: string

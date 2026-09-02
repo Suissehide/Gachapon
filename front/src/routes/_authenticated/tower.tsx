@@ -64,7 +64,6 @@ function TowerListPage() {
 function TowerCard({ tower }: { tower: TowerSummary }) {
   const ElementIcon = ELEMENT_ICON[tower.element] ?? Flame
   const SlotIcon = SLOT_ICONS[tower.slot]
-  const isFarmReady = tower.highestFloor >= tower.totalFloors
   const percent = Math.min((tower.highestFloor / tower.totalFloors) * 100, 100)
 
   return (
@@ -96,13 +95,7 @@ function TowerCard({ tower }: { tower: TowerSummary }) {
           <span className="font-mono text-sm text-text-light">
             Étage {tower.highestFloor} / {tower.totalFloors}
           </span>
-          {isFarmReady ? (
-            <span className="rounded-full border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-amber-600">
-              Spot de farm
-            </span>
-          ) : (
-            <ArrowRight className="h-4 w-4 shrink-0 text-text-light" />
-          )}
+          <ArrowRight className="h-4 w-4 shrink-0 text-text-light" />
         </div>
         <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
           <div

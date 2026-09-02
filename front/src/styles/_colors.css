@@ -52,6 +52,31 @@
   --rarity-epic: #8b5cf6;
   --rarity-legendary: #f59e0b;
 
+  /* Déclinaisons claire et sombre de chaque rareté — la fiche d'équipement
+     s'en sert pour son dégradé de fond et le dégradé de l'icône de slot. */
+  --rarity-common-light: #cbd5e1;
+  --rarity-common-dark: #334155;
+  --rarity-uncommon-light: #86efac;
+  --rarity-uncommon-dark: #14532d;
+  --rarity-rare-light: #93c5fd;
+  --rarity-rare-dark: #1e3a8a;
+  --rarity-epic-light: #c4b5fd;
+  --rarity-epic-dark: #4c1d95;
+  --rarity-legendary-light: #fcd34d;
+  --rarity-legendary-dark: #78350f;
+
+  /* Couleurs de stat — la fiche d'équipement teinte la stat principale et
+     les pastilles de sous-stat avec celle de la stat concernée. */
+  --stat-hp: #ef4444;
+  --stat-atk: #f59e0b;
+  --stat-def: #3b82f6;
+  --stat-spd: #8b5cf6;
+  --stat-crit: #ec4899;
+  /* Le jeu compte 12 clés de sous-stat, pas les 5 de la maquette : la
+     pénétration d'armure et le vol de vie ont besoin de leur propre teinte. */
+  --stat-armorpen: #14b8a6;
+  --stat-lifesteal: #f43f5e;
+
   --shadow-card:
     0 2px 0 rgba(27, 23, 38, 0.04), 0 12px 30px -12px rgba(27, 23, 38, 0.08);
 }

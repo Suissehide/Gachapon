@@ -156,7 +156,7 @@ export function CollectionFilters({
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function FilterField({
+export function FilterField({
   id,
   label,
   children,

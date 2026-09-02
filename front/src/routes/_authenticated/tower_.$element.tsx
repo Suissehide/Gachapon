@@ -15,10 +15,11 @@ import {
 import { Dialog } from 'radix-ui'
 import { useState } from 'react'
 
+import type { TeamUnit } from '../../api/combat.api.ts'
 import type { TowerBattleResult, TowerFloorView } from '../../api/tower.api.ts'
 import { BattleScene } from '../../components/battle/BattleScene.tsx'
+import { MiniCard } from '../../components/battle/MiniCard.tsx'
 import {
-  EquipmentDropReward,
   RESULT_BADGE_LOSS,
   RESULT_BADGE_WIN,
   ResultBadge,
@@ -26,17 +27,27 @@ import {
   RewardTile,
 } from '../../components/battle/resultKit.tsx'
 import { SLOT_LABELS } from '../../components/collection/EquipmentSlotsPanel.tsx'
+import { EquipmentDropReward } from '../../components/equipment/EquipmentDropCard.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
+import { TcgCardFace } from '../../components/shared/tcg-card/TcgCardFace.tsx'
 import { TeamEditorPopup } from '../../components/team/TeamEditorPopup.tsx'
 import { Button } from '../../components/ui/button.tsx'
-import { Popup, PopupContent } from '../../components/ui/popup.tsx'
+import {
+  Popup,
+  PopupBody,
+  PopupContent,
+  PopupFooter,
+  PopupHeader,
+  PopupTitle,
+} from '../../components/ui/popup.tsx'
 import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
 import type { CardElement } from '../../constants/card.constant.ts'
 import { ELEMENT_LABELS } from '../../constants/card.constant.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
 import { useCombatTeam } from '../../queries/useCombatTeam.ts'
 import { useTower, useTowerBattle, useTowers } from '../../queries/useTower.ts'
+import { computePower } from '../../utils/cardStats.ts'
 
 export const Route = createFileRoute('/_authenticated/tower_/$element')({
   component: TowerFloorsPage,
@@ -57,6 +68,9 @@ function TowerFloorsPage() {
   // Le combat se joue d'abord en animation (comme la campagne), et seulement
   // ensuite la fenêtre de résultat s'ouvre. `sceneDone` sépare les deux temps.
   const [sceneDone, setSceneDone] = useState(false)
+  // Étage en préparation : cliquer « Combattre » ouvre d'abord un aperçu
+  // équipe / ennemis, comme la campagne, plutôt que de lancer le combat sec.
+  const [prep, setPrep] = useState<TowerFloorView | null>(null)
 
   const userCardIds = (team.data?.team ?? []).map((u) => u.userCardId)
   const currentPC = combatPoints.data?.combatPoints ?? 0
@@ -65,6 +79,7 @@ function TowerFloorsPage() {
   const canBattle = currentPC >= battleCost && hasTeam && !battle.isPending
 
   const handleFight = (floor: number) => {
+    setPrep(null)
     battle.mutate(
       { element, floor, userCardIds },
       {
@@ -147,10 +162,24 @@ function TowerFloorsPage() {
             floors={tower.data?.floors ?? []}
             canBattle={canBattle}
             isPending={battle.isPending}
-            onFight={handleFight}
+            onFight={setPrep}
           />
         </>
       )}
+
+      <TowerPrepPopup
+        floor={prep}
+        team={team.data?.team ?? []}
+        currentPC={currentPC}
+        battleCost={battleCost}
+        isPending={battle.isPending}
+        onFight={() => prep && handleFight(prep.index)}
+        onEditTeam={() => {
+          setPrep(null)
+          setEditorOpen(true)
+        }}
+        onClose={() => setPrep(null)}
+      />
 
       <TeamEditorPopup open={editorOpen} onOpenChange={setEditorOpen} />
 
@@ -184,6 +213,133 @@ function TeamSummary({
   )
 }
 
+/**
+ * Aperçu avant combat — même principe que la campagne : on voit son équipe
+ * face aux ennemis de l'étage, avec un verdict de puissance, avant d'engager
+ * son énergie. Remplace l'ancienne ligne « Puissance recommandée … · N
+ * ennemis », qui donnait le chiffre sans le contexte.
+ */
+function TowerPrepPopup({
+  floor,
+  team,
+  currentPC,
+  battleCost,
+  isPending,
+  onFight,
+  onEditTeam,
+  onClose,
+}: {
+  floor: TowerFloorView | null
+  team: TeamUnit[]
+  currentPC: number
+  battleCost: number
+  isPending: boolean
+  onFight: () => void
+  onEditTeam: () => void
+  onClose: () => void
+}) {
+  if (!floor) {
+    return null
+  }
+
+  const totalPower = team.reduce((acc, u) => acc + computePower(u.stats), 0)
+  const ratio =
+    floor.recommendedPower === 0 ? 1 : totalPower / floor.recommendedPower
+  const verdict =
+    ratio >= 1.05 ? 'Avantage' : ratio >= 0.9 ? 'Équilibré' : 'Risqué'
+  const verdictTone =
+    ratio >= 1.05
+      ? 'text-emerald-600'
+      : ratio >= 0.9
+        ? 'text-amber-600'
+        : 'text-destructive'
+  // Le libellé dit POURQUOI c'est bloqué : une équipe vide prime sur
+  // l'énergie, sinon on annoncerait « énergie insuffisante » à tort.
+  const label = team.length
+    ? currentPC < battleCost
+      ? 'Énergie insuffisante'
+      : 'Combattre'
+    : 'Équipe requise'
+  const canFight = team.length > 0 && currentPC >= battleCost && !isPending
+
+  return (
+    <Popup open onOpenChange={(v) => !v && onClose()}>
+      <PopupContent size="lg">
+        <PopupHeader>
+          <PopupTitle
+            icon={<Swords className="h-4 w-4" />}
+            subtitle={`Puissance recommandée ${floor.recommendedPower.toLocaleString('fr-FR')}`}
+          >
+            {floor.label}
+          </PopupTitle>
+        </PopupHeader>
+        <PopupBody className="flex flex-col gap-5">
+          <div>
+            <div className="mb-2 flex items-baseline justify-between gap-2">
+              <span className="font-mono text-[11px] uppercase tracking-wider text-text-light">
+                Votre équipe
+              </span>
+              <span
+                className={`font-mono text-[11px] font-bold ${verdictTone}`}
+              >
+                {totalPower.toLocaleString('fr-FR')} · {verdict}
+              </span>
+            </div>
+            {team.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {team.map((u) => (
+                  <MiniCard
+                    key={u.userCardId}
+                    unit={u}
+                    width="w-16"
+                    showName={false}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-text-light">
+                Aucune carte dans l'équipe de combat.
+              </p>
+            )}
+          </div>
+
+          <div>
+            <span className="mb-2 block font-mono text-[11px] uppercase tracking-wider text-text-light">
+              Adversaires
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {floor.enemies.map((e) => (
+                <div key={e.id} className="relative aspect-[2/3] w-16">
+                  <TcgCardFace
+                    rarity={floor.isBoss ? 'LEGENDARY' : 'EPIC'}
+                    name=""
+                    setName=""
+                    imageUrl={e.imageUrl}
+                    variant="NORMAL"
+                    isOwned
+                    compact
+                    showName={false}
+                    element={(e.element ?? null) as CardElement | null}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </PopupBody>
+        <PopupFooter className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button variant="outline" onClick={onEditTeam}>
+            Modifier l'équipe
+          </Button>
+          <Button onClick={onFight} disabled={!canFight} className="gap-2">
+            <Swords className="h-4 w-4" />
+            {label}
+          </Button>
+        </PopupFooter>
+      </PopupContent>
+    </Popup>
+  )
+}
+
 function FloorList({
   status,
   floors,
@@ -195,7 +351,7 @@ function FloorList({
   floors: TowerFloorView[]
   canBattle: boolean
   isPending: boolean
-  onFight: (floor: number) => void
+  onFight: (floor: TowerFloorView) => void
 }) {
   if (status === 'pending') {
     return <p className="mt-10 text-center text-text-light">Chargement…</p>
@@ -218,7 +374,7 @@ function FloorList({
           floor={floor}
           canBattle={canBattle}
           isPending={isPending}
-          onFight={() => onFight(floor.index)}
+          onFight={() => onFight(floor)}
         />
       ))}
     </div>
@@ -363,17 +519,7 @@ function FloorRow({
           >
             {floor.label}
           </span>
-          {floor.isBoss && (
-            <span className="rounded-full border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-amber-600">
-              Spot de farm — hautes raretés
-            </span>
-          )}
         </div>
-        <p className="mt-1 font-mono text-[11px] text-text-light/60">
-          Puissance recommandée {floor.recommendedPower.toLocaleString('fr-FR')}
-          {' · '}
-          {floor.enemies.length} ennemi{floor.enemies.length > 1 ? 's' : ''}
-        </p>
       </div>
 
       {!isLocked && (

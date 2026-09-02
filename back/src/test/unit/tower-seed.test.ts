@@ -63,11 +63,32 @@ describe('seed des tours', () => {
     expect(partEpicPlus(10)).toBeGreaterThan(partEpicPlus(1))
   })
 
-  it('la difficulté monte par marches franches, pas linéairement', () => {
+  it('la difficulté monte régulièrement, sans mur', () => {
+    // Le design a changé : la tour n'a plus de « spot de farm » unique en haut.
+    // Chaque étage doit rester jouable, donc la puissance monte d'un pas
+    // CONSTANT — ce test remplace celui qui exigeait des marches franches.
     const puissance = (f: number) => towerEnemyPower(f).baseAtk
-    const marches = Array.from({ length: 9 }, (_, i) => puissance(i + 2) / puissance(i + 1))
-    // Au moins une marche vaut le double d'une autre : la courbe n'est pas plate.
-    expect(Math.max(...marches) / Math.min(...marches)).toBeGreaterThan(1.5)
+    const pas = Array.from(
+      { length: 9 },
+      (_, i) => puissance(i + 2) - puissance(i + 1),
+    )
+    // Strictement croissant, et le plus grand pas n'excède pas de 15 % le plus
+    // petit : aucun étage ne fait office de mur.
+    for (const p of pas) {
+      expect(p).toBeGreaterThan(0)
+    }
+    expect(Math.max(...pas) / Math.min(...pas)).toBeLessThan(1.15)
+  })
+
+  it('chaque étage a ses propres taux de rareté', () => {
+    // Monter est récompensé par le BUTIN et non par la difficulté : deux
+    // étages voisins ne doivent jamais partager la même table de raretés,
+    // sinon l'étage supérieur n'apporte rien.
+    const table = (f: number) =>
+      JSON.stringify(towerFloorLoot(f).farm.equipmentWeights)
+    for (let f = 2; f <= 10; f++) {
+      expect(table(f)).not.toBe(table(f - 1))
+    }
   })
 
   it('le profil de base des ennemis de tour suit RARITY_BASE.EPIC de la campagne, pas un littéral recopié', () => {

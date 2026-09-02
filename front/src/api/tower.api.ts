@@ -1,7 +1,7 @@
 import { apiUrl } from '../constants/config.constant.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import type { BattleLogEntry, SimulatorUnit } from './combat.api.ts'
-import type { EquipmentSlot } from './equipment.api.ts'
+import type { EquipmentDrop, EquipmentSlot } from './equipment.api.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
 // Les 4 éléments qui ont une tour (§6 design spec, TOWER_ELEMENTS côté back
@@ -52,12 +52,7 @@ export type TowerBattleRewards = {
   // Toujours présent quand `rewards` n'est pas null : la tour garantit une
   // pièce par run (§6 design spec), contrairement à la campagne — voir le
   // commentaire de towerBattleResponseSchema côté back.
-  equipmentDrop: {
-    userEquipmentId: string
-    equipmentId: string
-    name: string
-    rarity: string
-  }
+  equipmentDrop: EquipmentDrop
 }
 
 export type TowerBattleResult = {

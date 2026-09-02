@@ -22,7 +22,6 @@ import type { BattleResult } from '../../api/campaign.api.ts'
 import { BattleScene } from '../../components/battle/BattleScene.tsx'
 import {
   DropCard,
-  EquipmentDropReward,
   RESULT_BADGE_LOSS,
   RESULT_BADGE_TIMEOUT,
   RESULT_BADGE_WIN,
@@ -30,6 +29,7 @@ import {
   ResultPanel,
   RewardTile,
 } from '../../components/battle/resultKit.tsx'
+import { EquipmentDropReward } from '../../components/equipment/EquipmentDropCard.tsx'
 import { ArcadeCard } from '../../components/shared/ArcadeCard.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { Button } from '../../components/ui/button.tsx'

@@ -26,20 +26,24 @@ const ELEMENT_LABEL: Record<TowerElement, string> = {
 }
 
 /**
- * Marches de difficulté par étage. Volontairement irrégulières : l'étage 10
- * n'est pas « l'étage 1 en plus dur », c'est un mur qui suppose une équipe finie
- * et le contre-pick élémentaire. Farmer le 10 est le but ; les étages bas ne
- * servent qu'au passage.
+ * Difficulté par étage — progression LINÉAIRE, pas de mur.
  *
- * Deux marches franches, pas une accélération lisse : 1-6 est une montée
- * douce (passage), 6→7 marque l'entrée en régime « endgame » (le COMMON
- * disparaît du loot, le LEGENDARY apparaît — voir RARITY_WEIGHTS), et 9→10
- * est LE mur, délibérément disproportionné par rapport à toutes les autres.
+ * Le premier découpage faisait de l'étage 10 « le » spot de farm : deux
+ * marches franches (6→7, puis 9→10 à ×13) rendaient les étages bas inutiles
+ * dès qu'on avait passé le mur. La montée est désormais régulière, +0,6 par
+ * étage, pour que chaque étage reste un lieu de farm viable.
+ *
+ * Ce qui différencie les étages n'est plus la difficulté mais le BUTIN : les
+ * poids de rareté de RARITY_WEIGHTS évoluent étage par étage, donc monter
+ * améliore les chances de haute rareté sans jamais rendre les étages
+ * précédents obsolètes.
  *
  * Point de calibrage ouvert (§12 de la spec) : à comparer à enemyScale de la
  * campagne et à rejouer sur le simulateur réel.
  */
-const FLOOR_SCALE = [1, 1.2, 1.45, 1.75, 2.1, 2.5, 3.8, 5, 6.6, 13] as const
+const FLOOR_SCALE = [
+  1, 1.6, 2.2, 2.8, 3.4, 4, 4.6, 5.2, 5.8, 6.4,
+] as const
 
 // Profil épique de campagne (source unique : RARITY_BASE.EPIC dans
 // campaign.ts) — pas de littéral recopié, sinon un futur rééquilibrage de
@@ -86,15 +90,15 @@ export function towerEnemyTeam(element: TowerElement, floor: number) {
  */
 const RARITY_WEIGHTS: Record<number, Record<string, number>> = {
   1: { COMMON: 70, UNCOMMON: 30 },
-  2: { COMMON: 70, UNCOMMON: 30 },
-  3: { COMMON: 45, UNCOMMON: 40, RARE: 15 },
-  4: { COMMON: 45, UNCOMMON: 40, RARE: 15 },
-  5: { COMMON: 20, UNCOMMON: 45, RARE: 30, EPIC: 5 },
-  6: { COMMON: 20, UNCOMMON: 45, RARE: 30, EPIC: 5 },
-  7: { UNCOMMON: 30, RARE: 50, EPIC: 19, LEGENDARY: 1 },
-  8: { UNCOMMON: 30, RARE: 50, EPIC: 19, LEGENDARY: 1 },
-  9: { UNCOMMON: 15, RARE: 52, EPIC: 30, LEGENDARY: 3 },
-  10: { UNCOMMON: 5, RARE: 45, EPIC: 46, LEGENDARY: 4 },
+  2: { COMMON: 60, UNCOMMON: 35, RARE: 5 },
+  3: { COMMON: 50, UNCOMMON: 38, RARE: 12 },
+  4: { COMMON: 40, UNCOMMON: 40, RARE: 19, EPIC: 1 },
+  5: { COMMON: 30, UNCOMMON: 42, RARE: 25, EPIC: 3 },
+  6: { COMMON: 22, UNCOMMON: 40, RARE: 31, EPIC: 6, LEGENDARY: 1 },
+  7: { COMMON: 15, UNCOMMON: 36, RARE: 36, EPIC: 11, LEGENDARY: 2 },
+  8: { COMMON: 9, UNCOMMON: 30, RARE: 41, EPIC: 17, LEGENDARY: 3 },
+  9: { COMMON: 4, UNCOMMON: 22, RARE: 45, EPIC: 25, LEGENDARY: 4 },
+  10: { UNCOMMON: 15, RARE: 45, EPIC: 35, LEGENDARY: 5 },
 }
 
 export function towerFloorLoot(floor: number) {
