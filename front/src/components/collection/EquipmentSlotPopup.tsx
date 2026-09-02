@@ -1,11 +1,12 @@
 import {
   ArrowUpCircle,
   Check,
+  Circle,
   Coins,
-  Flame,
+  Footprints,
   Gem,
-  Leaf,
-  Mountain,
+  Hand,
+  Link,
   Shield,
   Sparkles,
   Sword,
@@ -56,20 +57,20 @@ const RARITY_DESC = ['LEGENDARY', 'EPIC', 'RARE', 'UNCOMMON', 'COMMON']
 const SLOT_LABELS: Record<EquipmentSlot, string> = {
   WEAPON: 'Arme',
   ARMOR: 'Armure',
-  ACCESSORY: 'Accessoire',
-  SAP: 'Sève',
-  EMBER: 'Braise',
-  PRISM: 'Prisme',
-  MONOLITH: 'Monolithe',
+  RING: 'Anneau',
+  AMULET: 'Amulette',
+  GLOVES: 'Gants',
+  BOOTS: 'Bottes',
+  BELT: 'Ceinture',
 }
 const SLOT_ICONS: Record<EquipmentSlot, typeof Sword> = {
   WEAPON: Sword,
   ARMOR: Shield,
-  ACCESSORY: Sparkles,
-  SAP: Leaf,
-  EMBER: Flame,
-  PRISM: Gem,
-  MONOLITH: Mountain,
+  RING: Circle,
+  AMULET: Gem,
+  GLOVES: Hand,
+  BOOTS: Footprints,
+  BELT: Link,
 }
 
 function formatBonusValue(value: number): string {

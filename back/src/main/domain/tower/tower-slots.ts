@@ -30,10 +30,10 @@ export const TOWER_FLOOR_COUNT = 10
  * l'écran annonce.
  */
 export const TOWER_SLOT_BY_ELEMENT: Record<TowerElement, EquipmentSlot> = {
-  [CardElement.FIRE]: EquipmentSlot.EMBER,
-  [CardElement.WATER]: EquipmentSlot.PRISM,
-  [CardElement.NATURE]: EquipmentSlot.SAP,
-  [CardElement.EARTH]: EquipmentSlot.MONOLITH,
+  [CardElement.FIRE]: EquipmentSlot.GLOVES,
+  [CardElement.WATER]: EquipmentSlot.BOOTS,
+  [CardElement.NATURE]: EquipmentSlot.AMULET,
+  [CardElement.EARTH]: EquipmentSlot.BELT,
 }
 
 /**

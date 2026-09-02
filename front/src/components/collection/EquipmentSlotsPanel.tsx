@@ -1,11 +1,11 @@
 import {
-  Flame,
+  Circle,
+  Footprints,
   Gem,
-  Leaf,
-  Mountain,
+  Hand,
+  Link,
   Plus,
   Shield,
-  Sparkles,
   Sword,
 } from 'lucide-react'
 import { useState } from 'react'
@@ -25,11 +25,11 @@ import { EquipmentSlotPopup } from './EquipmentSlotPopup.tsx'
 const SLOT_ORDER: EquipmentSlot[] = [
   'WEAPON',
   'ARMOR',
-  'ACCESSORY',
-  'SAP',
-  'EMBER',
-  'PRISM',
-  'MONOLITH',
+  'RING',
+  'AMULET',
+  'GLOVES',
+  'BOOTS',
+  'BELT',
 ]
 // Exportés : réutilisés par l'écran de tour (routes/_authenticated/tower.tsx)
 // pour afficher le slot alimenté par chaque tour, sans en recopier une
@@ -38,20 +38,20 @@ const SLOT_ORDER: EquipmentSlot[] = [
 export const SLOT_LABELS: Record<EquipmentSlot, string> = {
   WEAPON: 'Arme',
   ARMOR: 'Armure',
-  ACCESSORY: 'Accessoire',
-  SAP: 'Sève',
-  EMBER: 'Braise',
-  PRISM: 'Prisme',
-  MONOLITH: 'Monolithe',
+  RING: 'Anneau',
+  AMULET: 'Amulette',
+  GLOVES: 'Gants',
+  BOOTS: 'Bottes',
+  BELT: 'Ceinture',
 }
 export const SLOT_ICONS: Record<EquipmentSlot, typeof Sword> = {
   WEAPON: Sword,
   ARMOR: Shield,
-  ACCESSORY: Sparkles,
-  SAP: Leaf,
-  EMBER: Flame,
-  PRISM: Gem,
-  MONOLITH: Mountain,
+  RING: Circle,
+  AMULET: Gem,
+  GLOVES: Hand,
+  BOOTS: Footprints,
+  BELT: Link,
 }
 const RARITY_TEXT: Record<string, string> = {
   COMMON: 'text-rarity-common',

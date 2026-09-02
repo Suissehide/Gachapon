@@ -15,8 +15,8 @@ const POIDS = { UNCOMMON: 5, RARE: 45, EPIC: 46, LEGENDARY: 4 }
 describe('tirage de drop en tour', () => {
   it('le slot est dicté par l élément de la tour, jamais tiré', () => {
     for (const [element, slot] of [
-      ['FIRE', 'EMBER'], ['WATER', 'PRISM'],
-      ['NATURE', 'SAP'], ['EARTH', 'MONOLITH'],
+      ['FIRE', 'GLOVES'], ['WATER', 'BOOTS'],
+      ['NATURE', 'AMULET'], ['EARTH', 'BELT'],
     ] as const) {
       const d = rollTowerDrop({
         element, weights: POIDS, prng: prngSequence([0.5, 0.5]),
@@ -126,7 +126,7 @@ describe('tirage de drop en tour — premier passage vs farm', () => {
       },
       prng: prngSequence([0.5, 0.5]),
     })
-    expect(d.slot).toBe('MONOLITH')
+    expect(d.slot).toBe('BELT')
   })
 
   it('ne renvoie jamais null — le premier passage aussi est garanti', () => {

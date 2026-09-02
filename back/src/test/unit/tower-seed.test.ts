@@ -33,7 +33,7 @@ describe('seed des tours', () => {
     expect(new Set(slots).size).toBe(4)
     expect(slots).not.toContain('WEAPON')
     expect(slots).not.toContain('ARMOR')
-    expect(slots).not.toContain('ACCESSORY')
+    expect(slots).not.toContain('RING')
   })
 
   it('les poids de rareté somment à 100 à chaque étage', () => {
@@ -105,9 +105,9 @@ describe('CAMPAIGN_EQUIPMENT_SLOTS — pool de drop campagne (G1)', () => {
     expect(new Set(combined).size).toBe(combined.length)
   })
 
-  it('les 3 slots classiques (WEAPON/ARMOR/ACCESSORY) sont les seuls slots de campagne actuels', () => {
+  it('les 3 slots classiques (WEAPON/ARMOR/RING) sont les seuls slots de campagne actuels', () => {
     expect([...CAMPAIGN_EQUIPMENT_SLOTS].sort()).toEqual(
-      ['ACCESSORY', 'ARMOR', 'WEAPON'].sort(),
+      ['RING', 'ARMOR', 'WEAPON'].sort(),
     )
   })
 })

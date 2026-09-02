@@ -153,7 +153,7 @@ describe('Campaign routes', () => {
 
     // Stage 2 — dédié à la preuve G1 : le pool de drop de campagne ne doit
     // jamais offrir un slot de tour. Catalogue à deux pièces COMMON, une
-    // classique (ACCESSORY) et une de tour (MONOLITH), même dropWeight : si
+    // classique (RING) et une de tour (BELT), même dropWeight : si
     // le filtre CAMPAIGN_EQUIPMENT_SLOTS venait à disparaître, la pièce de
     // tour redeviendrait un candidat valide et ce test la verrait sortir.
     await postgresOrm.prisma.equipment.create({
@@ -459,7 +459,7 @@ describe('Campaign routes', () => {
     // fichiers ont pu créer d'autres pièces COMMON de slot classique. On ne
     // peut donc pas affirmer sur quelle pièce précise le tirage retombe —
     // seulement qu'il ne retombe JAMAIS sur la pièce canari
-    // `towerSlotPieceId` (slot MONOLITH), et que chaque pièce tirée est bien
+    // `towerSlotPieceId` (slot BELT), et que chaque pièce tirée est bien
     // sur un slot classique.
     const { postgresOrm } = (app as any).iocContainer
     const droppedIds = [...new Set(body.equipmentDrops.map((d) => d.equipmentId))]
@@ -471,7 +471,7 @@ describe('Campaign routes', () => {
       expect(drop.equipmentId).not.toBe(towerSlotPieceId)
     }
     for (const piece of droppedPieces) {
-      expect(['WEAPON', 'ARMOR', 'ACCESSORY']).toContain(piece.slot)
+      expect(['WEAPON', 'ARMOR', 'RING']).toContain(piece.slot)
     }
   })
 

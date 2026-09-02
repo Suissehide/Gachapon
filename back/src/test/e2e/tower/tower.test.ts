@@ -120,7 +120,7 @@ describe('routes de tour', () => {
       },
     })
 
-    // Pool de drop garanti — slot EMBER (tour FEU), les 4 setKeys en
+    // Pool de drop garanti — slot GLOVES (tour FEU), les 4 setKeys en
     // LEGENDARY (cf. equipment-fixture-slots.ts pour le pourquoi).
     for (const reservation of [
       EQUIPMENT_SALVAGE,
@@ -272,7 +272,7 @@ describe('routes de tour', () => {
     const fire = body.towers.find((t) => t.element === 'FIRE')
     expect(fire?.highestFloor).toBe(0)
     expect(fire?.totalFloors).toBe(10)
-    expect(fire?.slot).toBe('EMBER')
+    expect(fire?.slot).toBe('GLOVES')
   })
 
   it('GET /tower/LIGHT refuse un élément hors du cycle', async () => {

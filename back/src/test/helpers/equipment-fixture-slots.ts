@@ -20,10 +20,10 @@ import type { SetKey } from '../../main/domain/equipment/set-bonuses'
  * C'est donc en général un espace de noms libre, pas une donnée de test — on
  * peut se permettre de le dédier par fichier. EXCEPTION : le pool de drop de
  * campagne (`campaign.domain.ts`) filtre maintenant sur
- * `CAMPAIGN_EQUIPMENT_SLOTS` (les 3 slots classiques WEAPON/ARMOR/ACCESSORY,
+ * `CAMPAIGN_EQUIPMENT_SLOTS` (les 3 slots classiques WEAPON/ARMOR/RING,
  * cf. `domain/tower/tower-slots.ts`) — toute fixture consommée par
  * `POST /campaign/.../battle|sweep` (firstClear ou farm) DOIT réserver un
- * slot classique, jamais un slot de tour (SAP/EMBER/PRISM/MONOLITH).
+ * slot classique, jamais un slot de tour (AMULET/GLOVES/BOOTS/BELT).
  *
  * Convention : chaque fichier qui appelle `prisma.equipment.create(Many)`
  * importe SA réservation ci-dessous plutôt que d'écrire le littéral
@@ -48,45 +48,45 @@ export const EQUIPMENT_TEST_WEAPON = reservation('WEAPON', 'FUREUR')
 export const EQUIPMENT_TEST_ARMOR = reservation('ARMOR', 'FUREUR')
 
 // equipment-progression.test.ts — 1 pièce, jamais équipée.
-export const EQUIPMENT_PROGRESSION = reservation('ACCESSORY', 'FUREUR')
+export const EQUIPMENT_PROGRESSION = reservation('RING', 'FUREUR')
 
 // equipment-progression-rarity.test.ts — pièces par rareté, jamais équipées.
-export const EQUIPMENT_PROGRESSION_RARITY = reservation('SAP', 'FUREUR')
+export const EQUIPMENT_PROGRESSION_RARITY = reservation('AMULET', 'FUREUR')
 
 // equipment-salvage.test.ts — pièces à détruire, une seule équipée seule sur
 // sa carte (pas de palier de set possible).
-export const EQUIPMENT_SALVAGE = reservation('EMBER', 'FUREUR')
+export const EQUIPMENT_SALVAGE = reservation('GLOVES', 'FUREUR')
 
 // equipment-initial-substats.test.ts — pièces jamais équipées.
-export const EQUIPMENT_INITIAL_SUBSTATS = reservation('PRISM', 'FUREUR')
+export const EQUIPMENT_INITIAL_SUBSTATS = reservation('BOOTS', 'FUREUR')
 
 // campaign.test.ts et levelup-refill.test.ts — pool de drop firstClear
 // (jamais équipé sur une carte), même besoin de 5 raretés dans les deux
 // fichiers. Doivent rester sur un slot CLASSIQUE (cf. exception ci-dessus) :
 // campaign.domain.ts filtre le pool de drop sur CAMPAIGN_EQUIPMENT_SLOTS,
-// une pièce SAP/EMBER/PRISM/MONOLITH n'y serait jamais tirée.
+// une pièce AMULET/GLOVES/BOOTS/BELT n'y serait jamais tirée.
 export const CAMPAIGN = reservation('WEAPON', 'PRECISION')
 export const LEVELUP_REFILL = reservation('ARMOR', 'PRECISION')
 
 // tower.test.ts — pool de drop garanti de la tour FEU (élément FIRE → slot
-// EMBER, cf. TOWER_SLOT_BY_ELEMENT). Le tirage de tour pioche le set
+// GLOVES, cf. TOWER_SLOT_BY_ELEMENT). Le tirage de tour pioche le set
 // uniformément parmi les 4 (drawSetKey, tower-drop.ts) : il faut donc les 4
-// setKeys pour CE slot, pas un seul. EMBER+FUREUR est déjà réservé par
+// setKeys pour CE slot, pas un seul. GLOVES+FUREUR est déjà réservé par
 // EQUIPMENT_SALVAGE, qui ne crée que du COMMON/RARE/EPIC — tower.test.ts
 // réutilise ce même (slot, setKey) à la rareté LEGENDARY, qu'EQUIPMENT_SALVAGE
 // ne touche jamais, plutôt que de dupliquer la réservation (le check
 // runtime ci-dessous l'interdirait de toute façon). Les 3 autres setKeys
 // sont libres et réservés ici.
-export const TOWER_FIRE_PRECISION = reservation('EMBER', 'PRECISION')
-export const TOWER_FIRE_PERCEE = reservation('EMBER', 'PERCEE')
-export const TOWER_FIRE_SANGSUE = reservation('EMBER', 'SANGSUE')
+export const TOWER_FIRE_PRECISION = reservation('GLOVES', 'PRECISION')
+export const TOWER_FIRE_PERCEE = reservation('GLOVES', 'PERCEE')
+export const TOWER_FIRE_SANGSUE = reservation('GLOVES', 'SANGSUE')
 
 // campaign.test.ts — preuve G1 qu'un drop de campagne ne peut jamais sortir
 // un slot de tour : une pièce classique et une pièce de tour, même rareté,
 // dans le même catalogue ; le filtre CAMPAIGN_EQUIPMENT_SLOTS doit rendre la
 // pièce de tour invisible au tirage.
-export const CAMPAIGN_SLOT_FILTER_CLASSIC = reservation('ACCESSORY', 'PRECISION')
-export const CAMPAIGN_SLOT_FILTER_TOWER = reservation('MONOLITH', 'FUREUR')
+export const CAMPAIGN_SLOT_FILTER_CLASSIC = reservation('RING', 'PRECISION')
+export const CAMPAIGN_SLOT_FILTER_TOWER = reservation('BELT', 'FUREUR')
 
 const ALL_RESERVATIONS = [
   EQUIPMENT_TEST_WEAPON,

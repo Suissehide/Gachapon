@@ -673,8 +673,8 @@ export class CampaignDomain {
             []
 
           // Catalog snapshots used to pick drops. La campagne ne droppe que
-          // les slots classiques : les slots de tour (SAP/EMBER/PRISM/
-          // MONOLITH) sont l'exclusivité des tours (§5/§6 design spec).
+          // les slots classiques : les slots de tour (AMULET/GLOVES/BOOTS/
+          // BELT) sont l'exclusivité des tours (§5/§6 design spec).
           const equipmentCatalogRaw = await tx.equipment.findMany({
             where: { slot: { in: [...CAMPAIGN_EQUIPMENT_SLOTS] } },
             select: { id: true, name: true, rarity: true, dropWeight: true },

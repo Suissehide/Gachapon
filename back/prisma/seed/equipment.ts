@@ -12,11 +12,11 @@ import type { EquipmentBonuses } from '../../src/main/domain/combat/combat-stats
 const SLOTS: EquipmentSlot[] = [
   EquipmentSlot.WEAPON,
   EquipmentSlot.ARMOR,
-  EquipmentSlot.ACCESSORY,
-  EquipmentSlot.SAP,
-  EquipmentSlot.EMBER,
-  EquipmentSlot.PRISM,
-  EquipmentSlot.MONOLITH,
+  EquipmentSlot.RING,
+  EquipmentSlot.AMULET,
+  EquipmentSlot.GLOVES,
+  EquipmentSlot.BOOTS,
+  EquipmentSlot.BELT,
 ]
 const SETS: EquipmentSet[] = [
   EquipmentSet.FUREUR,
@@ -40,11 +40,11 @@ const RARITIES: CardRarity[] = [
 const SLOT_MAIN_STAT: Record<EquipmentSlot, keyof EquipmentBonuses> = {
   WEAPON: 'atkFlat',
   ARMOR: 'defFlat',
-  ACCESSORY: 'spdFlat',
-  SAP: 'hpFlat',
-  EMBER: 'critDmgPct',
-  PRISM: 'critRatePct',
-  MONOLITH: 'armorPenPct',
+  RING: 'spdFlat',
+  AMULET: 'hpFlat',
+  GLOVES: 'critDmgPct',
+  BOOTS: 'critRatePct',
+  BELT: 'armorPenPct',
 }
 
 /**
@@ -83,11 +83,11 @@ const SET_LABEL: Record<EquipmentSet, string> = {
 const SLOT_LABEL: Record<EquipmentSlot, string> = {
   WEAPON: 'Arme',
   ARMOR: 'Armure',
-  ACCESSORY: 'Accessoire',
-  SAP: 'Sève',
-  EMBER: 'Braise',
-  PRISM: 'Prisme',
-  MONOLITH: 'Monolithe',
+  RING: 'Anneau',
+  AMULET: 'Amulette',
+  GLOVES: 'Gants',
+  BOOTS: 'Bottes',
+  BELT: 'Ceinture',
 }
 
 const RARITY_LABEL: Record<CardRarity, string> = {

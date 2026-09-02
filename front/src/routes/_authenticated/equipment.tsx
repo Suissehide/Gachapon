@@ -1,13 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router'
 import {
+  Circle,
   CircleHelp,
-  Flame,
+  Footprints,
   Gem,
-  Leaf,
-  Mountain,
+  Hand,
+  Link,
   Shield,
   ShieldOff,
-  Sparkles,
   Sword,
   Zap,
 } from 'lucide-react'
@@ -54,20 +54,20 @@ export const Route = createFileRoute('/_authenticated/equipment')({
 const SLOT_LABELS: Record<EquipmentSlot, string> = {
   WEAPON: 'Arme',
   ARMOR: 'Armure',
-  ACCESSORY: 'Accessoire',
-  SAP: 'Sève',
-  EMBER: 'Braise',
-  PRISM: 'Prisme',
-  MONOLITH: 'Monolithe',
+  RING: 'Anneau',
+  AMULET: 'Amulette',
+  GLOVES: 'Gants',
+  BOOTS: 'Bottes',
+  BELT: 'Ceinture',
 }
 const SLOT_ICONS: Record<EquipmentSlot, typeof Sword> = {
   WEAPON: Sword,
   ARMOR: Shield,
-  ACCESSORY: Sparkles,
-  SAP: Leaf,
-  EMBER: Flame,
-  PRISM: Gem,
-  MONOLITH: Mountain,
+  RING: Circle,
+  AMULET: Gem,
+  GLOVES: Hand,
+  BOOTS: Footprints,
+  BELT: Link,
 }
 // Ordre d'affichage du filtre de slot, dérivé de SLOT_LABELS plutôt que
 // recopié : une seule liste des 7 slots dans ce fichier.

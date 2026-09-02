@@ -107,11 +107,11 @@ enum QuestPeriod {
 enum EquipmentSlot {
   WEAPON
   ARMOR
-  ACCESSORY
-  SAP        // Sève      — stat principale PV,       tour NATURE
-  EMBER      // Braise    — stat principale critDmg,  tour FEU
-  PRISM      // Prisme    — stat principale critRate, tour EAU
-  MONOLITH   // Monolithe — stat principale armorPen, tour TERRE
+  RING       // Anneau
+  AMULET     // Amulette  — stat principale PV,       tour NATURE
+  GLOVES     // Gants     — stat principale critDmg,  tour FEU
+  BOOTS      // Bottes    — stat principale critRate, tour EAU
+  BELT       // Ceinture  — stat principale armorPen, tour TERRE
 }
 
 /// Les sets sont orthogonaux aux slots : chaque set existe dans les 7 slots.
