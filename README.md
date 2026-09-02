@@ -171,11 +171,22 @@ environnement) :
 
 ```shell
 # Docker Compose (Traefik)
-cd deploy && docker compose exec back npx prisma db seed
+cd deploy && docker compose exec -e NODE_ENV=development back npx prisma db seed
 
-# Dokploy — même commande, dans le terminal du service "back" de l'app
-docker compose -f deploy/dokploy/docker-compose.dokploy.yml exec back npx prisma db seed
+# Dokploy — dans le terminal du service "back" de l'app, donc déjà à l'intérieur
+# du conteneur : lancer directement, sans docker compose exec
+NODE_ENV=development npx prisma db seed
 ```
+
+Le `NODE_ENV=development` n'est pas une coquille et n'est pas optionnel.
+`back/prisma.config.ts` résout le seed à `node lib/seed.js` quand
+`NODE_ENV=production`, or `build:transpile` ne transpile que `src` : il
+n'existe aucun `lib/seed.js`, et la commande échouerait sur MODULE_NOT_FOUND
+sans rien toucher. Forcer `development` fait repasser Prisma par
+`tsx prisma/seed.ts`, qui lui est bien présent dans l'image — le `node_modules`
+y est copié sans élagage et `prisma/` y est copié tel quel
+(`back/Dockerfile`). Seule la résolution du seed change ; la base visée reste
+celle du `DATABASE_URL` du conteneur, donc bien la prod.
 
 **Attention : `prisma db seed` est destructeur.** `back/prisma/seed.ts`
 commence par vider les tables de la base (`user.deleteMany()` en tête, avec

@@ -419,19 +419,19 @@ export class TowerDomain {
             // de campagne (G2, relecture finale) : `source: 'TOWER'` fait
             // renvoyer 0 à stageClearedDelta pour STAGES_CLEARED_COUNT et
             // BOSS_DEFEATS_COUNT, cf. counter-dispatcher.ts.
-            // `flawless` est calculable normalement (même log de combat que
-            // la campagne). `understaffed` n'a pas d'équivalent tour :
-            // deriveClearFlags l'exempte sur les 2 premiers étages de la
-            // campagne (chapter/index — un repère de progression qui
-            // n'existe pas pour une tour) ; plutôt que d'inventer un
-            // équivalent, on l'émet à false pour toute source TOWER.
+            // `flawless` et `understaffed` sont tous deux calculables ici.
+            // Ce qui n'a pas d'équivalent tour, c'est seulement l'EXEMPTION
+            // de deriveClearFlags (`chapter === 1 && index <= 2`), qui épargne
+            // le joueur des tout premiers étages de campagne avant qu'il ait
+            // trois cartes. Une tour n'est jamais dans ce cas, donc la mesure
+            // s'applique telle quelle.
             await this.#achievementsDomain.track(tx, userId, {
               kind: 'STAGE_CLEARED',
               source: 'TOWER',
               isBoss: floor === TOWER_FLOOR_COUNT,
               viaSweep: false,
               flawless: deriveFlawless(sim.log, teamUnits),
-              understaffed: false,
+              understaffed: teamUnits.length < 3,
             })
 
             // Progression : n'avance qu'en cas de victoire, jamais en arrière.

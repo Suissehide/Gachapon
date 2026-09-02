@@ -331,6 +331,10 @@ describe('routes de tour', () => {
       payload: { userCardIds: [userCardId, userCardId, userCardId] },
     })
     expect(res.statusCode).toBe(400)
+    // Épingle la RAISON du refus : sans ça, un futur changement de la taille
+    // maximale d'équipe garderait ce test au vert tout en cessant
+    // silencieusement de tester la déduplication.
+    expect(res.json().message).toContain('distinct')
   })
 
   it('GET /tower/FIRE — étage 1 disponible, étage 5 verrouillé', async () => {
