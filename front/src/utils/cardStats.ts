@@ -205,11 +205,6 @@ function accumulateItemStuffBonuses(
   }
 }
 
-// Paliers du système de sets — miroir de SET_TIER_TWO/SET_TIER_FOUR
-// (back/src/main/domain/equipment/set-bonuses.ts).
-const SET_TIER_TWO = 2
-const SET_TIER_FOUR = 4
-
 function addBonusRecord(
   total: Record<string, number>,
   bonuses: Record<string, number>,
@@ -238,12 +233,10 @@ export function computeCardSetBonuses(
   const total: Record<string, number> = {}
   for (const [key, n] of counts) {
     const def = byKey.get(key as EquipmentSetKey)
-    if (!def || n < SET_TIER_TWO) {
-      continue
-    }
-    addBonusRecord(total, def.two.bonuses)
-    if (n >= SET_TIER_FOUR) {
-      addBonusRecord(total, def.four.bonuses)
+    // Un seul seuil par set, et rien au-delà : porter 4 pièces d'un set de 2
+    // ne donne pas plus que 2.
+    if (def && n >= def.pieces) {
+      addBonusRecord(total, def.bonus.bonuses)
     }
   }
   return total
@@ -300,7 +293,9 @@ export type ActiveSetSummary = {
   key: string
   label: string
   count: number
-  tier: 0 | 2 | 4
+  /** Pièces exigées par le set (2, 3 ou 4). */
+  pieces: number
+  active: boolean
 }
 
 export function activeSetsForCard(
@@ -313,12 +308,19 @@ export function activeSetsForCard(
   }
   const byKey = new Map(setDefs.map((d) => [d.key, d]))
   return [...counts.entries()]
-    .map(([key, count]) => ({
-      key,
-      label: byKey.get(key as EquipmentSetKey)?.label ?? key,
-      count,
-      tier: (count >= 4 ? 4 : count >= 2 ? 2 : 0) as 0 | 2 | 4,
-    }))
+    .map(([key, count]) => {
+      const def = byKey.get(key as EquipmentSetKey)
+      // Sans définition (set inconnu du front), on affiche le compte sans
+      // prétendre savoir s'il est actif.
+      const pieces = def?.pieces ?? 0
+      return {
+        key,
+        label: def?.label ?? key,
+        count,
+        pieces,
+        active: pieces > 0 && count >= pieces,
+      }
+    })
     .sort((a, b) => b.count - a.count)
 }
 
@@ -459,6 +461,27 @@ const STUFF_STAT_LABELS: Record<string, string> = {
   CRITDMG: 'DÉGÂTS CRIT',
   ARMORPEN: 'PÉNÉTRATION ARMURE',
   LIFESTEAL: 'VOL DE VIE',
+}
+
+// Clé de bonus → couleur de stat. Les clés portent leur stat en préfixe
+// (`hpFlat`, `atkPct`, `critRatePct`…), donc on teste le préfixe plutôt que
+// d'énumérer les 12 clés — une 13e stat n'aurait rien à changer ici.
+// Partagé par la fiche de pièce et le guide des sets : une seule table de
+// correspondance, sinon les deux écrans finissent par diverger.
+const STAT_COLOR_BY_PREFIX: [string, string][] = [
+  ['hp', 'var(--stat-hp)'],
+  ['atk', 'var(--stat-atk)'],
+  ['def', 'var(--stat-def)'],
+  ['spd', 'var(--stat-spd)'],
+  ['crit', 'var(--stat-crit)'],
+  ['armorPen', 'var(--stat-armorpen)'],
+  ['lifesteal', 'var(--stat-lifesteal)'],
+]
+
+/** Variable CSS de couleur associée à une clé de bonus/sous-stat. */
+export function statColorVar(key: string): string {
+  const hit = STAT_COLOR_BY_PREFIX.find(([prefix]) => key.startsWith(prefix))
+  return hit ? hit[1] : 'var(--stat-def)'
 }
 
 export function formatBonusKey(key: string): string {

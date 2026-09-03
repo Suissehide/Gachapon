@@ -155,7 +155,51 @@ describe('lootTableNormal — butin lissé sur la difficulté', () => {
     // 120 × 3.444^0.75 ≈ 303 ; 30 × 3.444^0.75 ≈ 76
     expect(fc.gold).toBe(303)
     expect(fc.dust).toBe(76)
-    expect(fc.guaranteedEquipment).toEqual({ minRarity: 'UNCOMMON' })
+    // Le plancher suit l'avancement GLOBAL, pas l'index dans le chapitre :
+    // 1-9 n'est qu'au dixième de la campagne, il reste donc en COMMON.
+    expect(fc.guaranteedEquipment).toEqual({ minRarity: 'COMMON' })
+  })
+
+  // Le défaut que la linéarisation corrige : tout dépendait de `stageIndex`,
+  // donc se réinitialisait à chaque chapitre — 9-3 lâchait le même butin que
+  // 1-3, et le plancher COMMON ne tombait que sur l'index 3.
+  it('le plancher de premier passage progresse sur la campagne entière', () => {
+    const plancher = (c: number, i: number) =>
+      lootTableNormal(c, i).firstClear.guaranteedEquipment?.minRarity
+    expect(plancher(1, 3)).toBe('COMMON')
+    expect(plancher(3, 5)).toBe('UNCOMMON')
+    expect(plancher(6, 5)).toBe('RARE')
+    expect(plancher(9, 5)).toBe('EPIC')
+    // Un même index ne donne plus le même plancher d'un chapitre à l'autre.
+    expect(plancher(9, 3)).not.toBe(plancher(1, 3))
+  })
+
+  it('équipement garanti partout sauf sur les deux premiers étages de la campagne', () => {
+    const garanti = (c: number, i: number) =>
+      lootTableNormal(c, i).firstClear.guaranteedEquipment !== undefined
+    expect(garanti(1, 1)).toBe(false)
+    expect(garanti(1, 2)).toBe(false)
+    expect(garanti(1, 3)).toBe(true)
+    // C'était « index >= 3 », donc 9-1 et 9-2 ne donnaient rien non plus.
+    expect(garanti(9, 1)).toBe(true)
+  })
+
+  it('les communes décroissent strictement du début à la fin de la campagne', () => {
+    const communes: number[] = []
+    for (let c = 1; c <= 9; c++) {
+      for (let i = 1; i <= 9; i++) {
+        communes.push(lootTableNormal(c, i).farm.equipmentWeights.COMMON ?? 0)
+      }
+    }
+    for (let n = 1; n < communes.length; n++) {
+      expect(communes[n]).toBeLessThan(communes[n - 1])
+    }
+    expect(communes[0]).toBe(90)
+    // Le dernier étage normal (9-9) est à 1 %, et la courbe atteint zéro au
+    // bout de la campagne — les communes s'éteignent au lieu de se réarmer à
+    // chaque chapitre.
+    expect(communes[communes.length - 1]).toBe(1)
+    expect(lootTableNormal(9, 10).farm.equipmentWeights.COMMON ?? 0).toBe(0)
   })
 
   it('le farm 1-1 reste au plancher historique (50 gold / 4 dust / 6 xp)', () => {

@@ -18,7 +18,14 @@ export type EquipmentRarity =
   | 'EPIC'
   | 'LEGENDARY'
 // Miroir de EquipmentSet (prisma/schema.prisma).
-export type EquipmentSetKey = 'FUREUR' | 'PRECISION' | 'PERCEE' | 'SANGSUE'
+export type EquipmentSetKey =
+  | 'FUREUR'
+  | 'PRECISION'
+  | 'PERCEE'
+  | 'SANGSUE'
+  | 'ASSAUT'
+  | 'COLOSSE'
+  | 'CELERITE'
 
 // Miroir de SUBSTAT_KEYS (back/src/main/domain/equipment/equipment-progression.ts) :
 // étendre ici en même temps que là-bas.
@@ -54,6 +61,8 @@ export type EquipmentInstance = {
   setKey: EquipmentSetKey
   setLabel: string
   imageUrl: string | null
+  /** Clé de la stat principale — l'unique clé de `bonuses`. */
+  mainStat: SubstatKey
   bonuses: Record<string, number>
   equippedOnId: string | null
   equippedOnCardName: string | null
@@ -82,7 +91,7 @@ export type EquipmentDrop = {
   baseBoost: number
 }
 
-export type EquipmentSetTier = {
+export type EquipmentSetBonus = {
   label: string
   bonuses: Record<string, number>
 }
@@ -90,8 +99,9 @@ export type EquipmentSetTier = {
 export type EquipmentSetDefinition = {
   key: EquipmentSetKey
   label: string
-  two: EquipmentSetTier
-  four: EquipmentSetTier
+  /** Nombre de pièces requis sur une même carte pour activer le bonus. */
+  pieces: number
+  bonus: EquipmentSetBonus
 }
 
 export const EquipmentApi = {

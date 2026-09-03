@@ -122,6 +122,11 @@ enum EquipmentSet {
   PRECISION
   PERCEE
   SANGSUE
+  // Sets purs : les deux paliers portent la meme stat. CELERITE s'arrete a
+  // 2 pieces (pas de palier 4) — voir SetDefinition dans set-bonuses.ts.
+  ASSAUT
+  COLOSSE
+  CELERITE
 }
 
 enum ActivityEventType {
@@ -341,12 +346,20 @@ model Equipment {
   rarity     CardRarity
   imageUrl   String?
   bonuses    Json
+  // Cle de la stat principale, redondante avec l'unique cle de `bonuses`.
+  // En colonne parce que Postgres ne sait pas indexer une cle de JSON : c'est
+  // elle qui porte l'unicite, donc ce qui autorise plusieurs variantes d'un
+  // meme (slot, set, rarete). Valeurs = celles de EquipmentBonuses
+  // (combat-stats.domain.ts), pas un enum Prisma pour ne pas dupliquer ce
+  // referentiel.
+  mainStat   String
   dropWeight Float           @default(1.0)
   userItems  UserEquipment[]
 
-  // Cle naturelle : une piece est identifiee par son triplet. Le seed de la
-  // tache 2 upserte dessus, et le tirage de drop de la tache 8 la recherche.
-  @@unique([slot, setKey, rarity])
+  // Cle naturelle : une piece est identifiee par son emplacement, son set, sa
+  // rarete et sa stat principale. Le seed upserte dessus, et les tirages de
+  // drop (campagne, tour) la recherchent.
+  @@unique([slot, setKey, rarity, mainStat])
 }
 
 model UserEquipment {

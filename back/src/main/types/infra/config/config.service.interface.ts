@@ -72,14 +72,13 @@ export const CONFIG_KEYS = [
   'equip.substatArmorPenPctMax',
   'equip.substatLifestealPctMin',
   'equip.substatLifestealPctMax',
-  'set.fureur2AtkPct',
-  'set.fureur4CritDmgPct',
-  'set.precision2SpdPct',
-  'set.precision4CritRatePct',
-  'set.percee2DefPct',
-  'set.percee4ArmorPenPct',
-  'set.sangsue2HpPct',
-  'set.sangsue4LifestealPct',
+  'set.fureurCritDmgPct',
+  'set.precisionCritRatePct',
+  'set.sangsueLifestealPct',
+  'set.perceeArmorPenPct',
+  'set.assautAtkPct',
+  'set.colosseHpPct',
+  'set.celeriteSpdPct',
 ] as const
 
 export type ConfigKey = (typeof CONFIG_KEYS)[number]

@@ -23,6 +23,7 @@ export const equipmentInstanceSchema = z.object({
   setKey: equipmentSetEnum,
   setLabel: z.string(),
   imageUrl: z.string().nullable(),
+  mainStat: z.string(),
   bonuses: z.record(z.string(), z.number()),
   level: z.number().int(),
   substats: z.array(substatSchema),
@@ -99,8 +100,8 @@ export const equipmentSetsResponseSchema = z.object({
     z.object({
       key: equipmentSetEnum,
       label: z.string(),
-      two: setTierSchema,
-      four: setTierSchema,
+      pieces: z.number().int(),
+      bonus: setTierSchema,
     }),
   ),
 })

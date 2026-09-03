@@ -15,7 +15,7 @@ import {
   useEconomyConfig,
 } from '../../queries/useEconomyConfig.ts'
 import { useSalvageItems } from '../../queries/useEquipment.ts'
-import { formatBonusKey } from '../../utils/cardStats.ts'
+import { formatBonusKey, statColorVar } from '../../utils/cardStats.ts'
 import { Button } from '../ui/button.tsx'
 
 // Rang de rareté, pour la jauge de 5 pastilles de l'en-tête (Commune 1/5 …
@@ -58,24 +58,6 @@ const RARITY_VARS: Record<string, Record<string, string>> = {
     '--rar-light': 'var(--rarity-legendary-light)',
     '--rar-dark': 'var(--rarity-legendary-dark)',
   },
-}
-
-// Clé de bonus → couleur de stat. Les clés portent leur stat en préfixe
-// (`hpFlat`, `atkPct`, `critRatePct`…), donc on teste le préfixe plutôt que
-// d'énumérer les 12 clés — une 13e stat n'aurait rien à changer ici.
-const STAT_COLOR_BY_PREFIX: [string, string][] = [
-  ['hp', 'var(--stat-hp)'],
-  ['atk', 'var(--stat-atk)'],
-  ['def', 'var(--stat-def)'],
-  ['spd', 'var(--stat-spd)'],
-  ['crit', 'var(--stat-crit)'],
-  ['armorPen', 'var(--stat-armorpen)'],
-  ['lifesteal', 'var(--stat-lifesteal)'],
-]
-
-function statColorVar(key: string): string {
-  const hit = STAT_COLOR_BY_PREFIX.find(([prefix]) => key.startsWith(prefix))
-  return hit ? hit[1] : 'var(--stat-def)'
 }
 
 /**

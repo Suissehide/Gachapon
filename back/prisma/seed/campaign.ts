@@ -300,17 +300,92 @@ export function bossEnemyTeam(chapter: number, stageIndex: number) {
   ]
 }
 
+const TOTAL_STAGES = CHAPTER_COUNT * STAGES_PER_CHAPTER
+
+// Ordre croissant des raretés — sert à interpoler les poids de farm et à
+// nommer les planchers de premier passage.
+const RARITY_LADDER = [
+  'COMMON',
+  'UNCOMMON',
+  'RARE',
+  'EPIC',
+  'LEGENDARY',
+] as const
+
+/**
+ * Avancement dans la campagne, 0 à l'étage 1-1 et 1 au boss final.
+ *
+ * Tout ce qui touche à la rareté du butin s'appuie dessus plutôt que sur
+ * `stageIndex` seul. L'ancienne version ne regardait que l'index dans le
+ * chapitre : les paliers se réinitialisaient à chaque chapitre, si bien que
+ * l'étage 9-3 lâchait exactement le même butin que le 1-3 — 80 % de communes
+ * en fin de partie — et que le plancher COMMUNE des premiers passages ne
+ * tombait que sur 9 étages sur 90 (l'index 3, seul point où « index <= 3 »
+ * pour le plancher et « index >= 3 » pour la présence du drop se recoupent).
+ */
+function campaignProgress(chapter: number, stageIndex: number): number {
+  return (globalStage(chapter, stageIndex) - 1) / (TOTAL_STAGES - 1)
+}
+
+/**
+ * Poids de rareté du farm, interpolés linéairement entre le premier et le
+ * dernier étage. Les deux bornes somment 100, donc l'interpolation aussi :
+ * les poids se lisent directement comme des pourcentages.
+ *
+ * Les communes dominent au départ puis s'éteignent complètement ; les hautes
+ * raretés n'apparaissent qu'en montant. Le boss reste légèrement au-dessus de
+ * l'étage normal de fin de campagne (voir `bossLoot`), et sa chance de drop
+ * est deux fois plus élevée.
+ */
+const FARM_WEIGHTS_START: Record<string, number> = { COMMON: 90, UNCOMMON: 10 }
+const FARM_WEIGHTS_END: Record<string, number> = {
+  UNCOMMON: 35,
+  RARE: 45,
+  EPIC: 17,
+  LEGENDARY: 3,
+}
+
+function farmWeightsAt(progress: number): Record<string, number> {
+  const weights: Record<string, number> = {}
+  for (const rarity of RARITY_LADDER) {
+    const from = FARM_WEIGHTS_START[rarity] ?? 0
+    const to = FARM_WEIGHTS_END[rarity] ?? 0
+    const w = Math.round((from + (to - from) * progress) * 10) / 10
+    // Une rareté à poids nul est omise plutôt que stockée à 0 : le tirage
+    // (pickWeightedRarity) itère sur les entrées, autant qu'il ne voie que
+    // ce qui peut réellement tomber.
+    if (w > 0) {
+      weights[rarity] = w
+    }
+  }
+  return weights
+}
+
+/**
+ * Plancher de rareté du premier passage, par quart de campagne. Un plancher
+ * seulement : `pickFirstClearRarity` tire ensuite parmi les raretés au-dessus,
+ * avec une décroissance forte (equipment-drop.domain.ts).
+ */
+function firstClearFloorAt(progress: number): string {
+  if (progress < 0.25) {
+    return 'COMMON'
+  }
+  if (progress < 0.55) {
+    return 'UNCOMMON'
+  }
+  if (progress < 0.85) {
+    return 'RARE'
+  }
+  return 'EPIC'
+}
+
 export function lootTableNormal(chapter: number, stageIndex: number) {
   const d = difficultyMult(chapter, stageIndex)
   const farmScale = d ** FARM_EXP
   const firstClearScale = d ** FIRST_CLEAR_EXP
-  const minRarity = stageIndex <= 3 ? 'COMMON' : 'UNCOMMON'
-  const farmWeights =
-    stageIndex <= 3
-      ? { COMMON: 80, UNCOMMON: 20 }
-      : stageIndex <= 6
-        ? { COMMON: 60, UNCOMMON: 30, RARE: 10 }
-        : { COMMON: 50, UNCOMMON: 35, RARE: 15 }
+  const progress = campaignProgress(chapter, stageIndex)
+  const minRarity = firstClearFloorAt(progress)
+  const farmWeights = farmWeightsAt(progress)
   const t = (stageIndex - 1) / 8
 
   const firstClear: {
@@ -323,8 +398,11 @@ export function lootTableNormal(chapter: number, stageIndex: number) {
     dust: Math.round(FIRST_CLEAR_DUST_BASE * firstClearScale),
     xp: Math.round(FIRST_CLEAR_XP_BASE * firstClearScale),
   }
-  // Équipement garanti seulement à partir de 1-3.
-  if (stageIndex >= 3) {
+  // Équipement garanti partout SAUF sur les deux tout premiers étages de la
+  // campagne, le temps que le joueur voie un combat avant de recevoir du
+  // stuff. C'était « index >= 3 », donc réinitialisé à chaque chapitre : les
+  // étages 9-1 et 9-2 ne donnaient toujours rien.
+  if (globalStage(chapter, stageIndex) >= 3) {
     firstClear.guaranteedEquipment = { minRarity }
   }
 
@@ -341,10 +419,22 @@ export function lootTableNormal(chapter: number, stageIndex: number) {
   }
 }
 
-// Carte garantie des boss : RARE pour les chapitres 1-3, EPIC pour les 4-8,
+// Plancher garanti des boss : RARE pour les chapitres 1-3, EPIC pour les 4-8,
 // LEGENDARY pour le boss 9-10 qui conclut la campagne. La légendaire terminale
 // est une récompense one-shot après 90 étages, à mettre en regard du taux de
 // tirage de 0,20 %.
+//
+// Carte ET équipement suivent la MÊME échelle : l'équipement était figé à
+// RARE pour les neuf boss, si bien que le boss final garantissait la même
+// pièce que le boss du chapitre 1.
+// Avance de butin du boss sur les étages normaux de son chapitre, exprimée
+// dans l'unité de `campaignProgress` : ~13 étages d'avance.
+const BOSS_LOOT_PROGRESS_BONUS = 0.15
+
+function bossFloor(chapter: number): string {
+  return chapter <= 3 ? 'RARE' : chapter <= 8 ? 'EPIC' : 'LEGENDARY'
+}
+
 export function bossLoot(chapter: number) {
   const m = 1.5 ** (chapter - 1)
   const atBossStage = lootTableNormal(chapter, STAGES_PER_CHAPTER)
@@ -354,17 +444,23 @@ export function bossLoot(chapter: number) {
       gold: Math.round(1650 * m),
       dust: Math.round(1000 * m),
       xp: Math.round(200 * m),
-      guaranteedEquipment: { minRarity: 'RARE' },
-      guaranteedCard: {
-        minRarity: chapter <= 3 ? 'RARE' : chapter <= 8 ? 'EPIC' : 'LEGENDARY',
-      },
+      guaranteedEquipment: { minRarity: bossFloor(chapter) },
+      guaranteedCard: { minRarity: bossFloor(chapter) },
     },
     farm: {
       gold: Math.round(atBossStage.farm.gold * BOSS_FARM_PREMIUM),
       dust: Math.round(atBossStage.farm.dust * BOSS_FARM_PREMIUM),
       xp: Math.round(atBossStage.farm.xp * BOSS_FARM_PREMIUM),
       equipmentDropChance: 0.3,
-      equipmentWeights: { UNCOMMON: 40, RARE: 40, EPIC: 18, LEGENDARY: 2 },
+      // Même courbe que les étages normaux, prise un cran plus loin dans la
+      // campagne — plutôt qu'une table figée identique pour les neuf boss,
+      // qui faisait lâcher au boss du chapitre 1 le même butin qu'au boss
+      // final (40/40/18/2, soit 18 % d'épiques dès le premier chapitre).
+      // Le boss garde par ailleurs le double de chance de drop et sa prime
+      // d'or/poussière.
+      equipmentWeights: farmWeightsAt(
+        Math.min(1, campaignProgress(chapter, STAGES_PER_CHAPTER) + BOSS_LOOT_PROGRESS_BONUS),
+      ),
       cardChance: 0.02,
     },
   }

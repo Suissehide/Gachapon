@@ -97,14 +97,38 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // de stuff. critRate et critDmg sont volontairement sur deux sets différents :
   // ils sont multiplicatifs, donc un build critique doit choisir lequel pousser.
   // Point de calibrage ouvert (§12 de la spec) : valeurs plausibles, non simulées.
-  'set.fureur2AtkPct': 10,
-  'set.fureur4CritDmgPct': 25,
-  'set.precision2SpdPct': 8,
-  'set.precision4CritRatePct': 20,
-  'set.percee2DefPct': 10,
-  'set.percee4ArmorPenPct': 25,
-  'set.sangsue2HpPct': 12,
-  'set.sangsue4LifestealPct': 12,
+  // Bonus de set — un seul par set, accordé au nombre de pièces que le set
+  // exige (2, 3 ou 4 ; la taille est en dur dans set-bonuses.ts).
+  //
+  // Calibré au simulateur de combat (400 combats sur 4 étages, ennemi ajusté
+  // pour un témoin sans set à 50 %) sur une cible d'environ 9 points de
+  // victoire par emplacement mobilisé : ~18 pt pour un set de 2, ~27 pour un
+  // set de 3, ~36 pour un set de 4.
+  //
+  // DEUX EXCEPTIONS ASSUMÉES, qui rendent moins que la cible parce que leur
+  // valeur est CONDITIONNELLE et non plate :
+  //
+  //  - Fureur (dégâts critiques) ne vaut rien à 5 % de taux de crit de base :
+  //    il ne s'applique qu'à un coup sur vingt. Sa force vient d'un build
+  //    monté en taux de crit ailleurs (stat principale des bottes, sous-stats
+  //    critRatePct), pas de sa propre magnitude — la monter ne corrige rien,
+  //    même à 280 % il restait sous Précision à 25 %.
+  //  - Percée (pénétration d'armure) ronge une DÉF ennemie aujourd'hui
+  //    petite devant `combat.defMitigationRef`. Elle prendra sa valeur quand
+  //    la campagne et les tours auront des ennemis lourdement blindés ; la
+  //    gonfler d'ici là ne ferait que la rendre absurde contre tout le reste.
+  'set.fureurCritDmgPct': 55,
+  // Précision et Sangsue restent sous la cible, volontairement. Précision
+  // perd de la valeur à mesure que le build monte en crit (rendements
+  // décroissants en approchant 100 % : 37 pt à 5 % de crit de base, 18 pt
+  // dans un build déjà à 75 %), donc la monter n'aiderait que les builds qui
+  // en ont le moins besoin. Sangsue à 16 % rend déjà 27 pt.
+  'set.precisionCritRatePct': 25,
+  'set.sangsueLifestealPct': 16,
+  'set.perceeArmorPenPct': 25,
+  'set.assautAtkPct': 16,
+  'set.colosseHpPct': 10,
+  'set.celeriteSpdPct': 10,
 }
 
 export class ConfigService implements ConfigServiceInterface {

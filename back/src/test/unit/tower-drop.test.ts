@@ -25,7 +25,7 @@ describe('tirage de drop en tour', () => {
     }
   })
 
-  it('le set est tiré uniformément parmi les 4', () => {
+  it('le set est tiré uniformément parmi les 7', () => {
     const comptes = new Map<string, number>()
     for (let i = 0; i < 4000; i++) {
       const r = (i % 4000) / 4000
@@ -34,9 +34,9 @@ describe('tirage de drop en tour', () => {
       })
       comptes.set(d.setKey, (comptes.get(d.setKey) ?? 0) + 1)
     }
-    expect(comptes.size).toBe(4)
+    expect(comptes.size).toBe(7)
     for (const [, n] of comptes) {
-      expect(n).toBeGreaterThan(800) // ~1000 attendu, tolérance large
+      expect(n).toBeGreaterThan(450) // ~571 attendu, tolérance large
     }
   })
 

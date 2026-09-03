@@ -1,56 +1,95 @@
 // Bonus de set d'équipement. Module pur : reçoit les valeurs de configuration,
 // ne lit jamais la config lui-même.
 //
-// Règle mnémotechnique du système : le 2-pièces donne une stat classique,
-// le 4-pièces donne une stat de stuff. Les quatre sets couvrent ainsi
-// exactement les quatre anciennes stats et les quatre nouvelles.
+// Un set = UNE taille et UN bonus.
+//
+// Il n'y a plus de paliers cumulés (2 pièces puis 4) : on lisait mal qu'à
+// 4 pièces le bonus de 2 s'ajoutait à celui de 4. Chaque set annonce
+// désormais son nombre de pièces requis, atteint ou non — rien à additionner
+// de tête.
+//
+// Les tailles sont réparties sur 2, 3 et 4 pièces pour que les 7
+// emplacements d'une carte se composent : 4+3, 4+2, 3+2+2, etc. Plus un set
+// est grand, plus il mobilise d'emplacements, donc plus son bonus est fort.
+//
+// Chaque set porte la stat qui fait son identité. La défense en pourcentage
+// n'a volontairement pas de set — sept sets pour huit stats candidates — mais
+// elle reste disponible en stat principale (armure, gants, ceinture) et en
+// sous-stat.
 
 import type { EquipmentBonuses } from '../combat/combat-stats.domain'
 
-export const SET_KEYS = ['FUREUR', 'PRECISION', 'PERCEE', 'SANGSUE'] as const
+export const SET_KEYS = [
+  'FUREUR',
+  'PRECISION',
+  'PERCEE',
+  'SANGSUE',
+  'ASSAUT',
+  'COLOSSE',
+  'CELERITE',
+] as const
 export type SetKey = (typeof SET_KEYS)[number]
 
-/** Paliers du système. Ne pas ajouter de palier sans refaire le calcul du farm. */
-export const SET_TIER_TWO = 2
-export const SET_TIER_FOUR = 4
+/** Tailles autorisées. Une carte a 7 emplacements : 4+3 et 4+2 tiennent. */
+export type SetSize = 2 | 3 | 4
 
 export const SET_BONUS_CONFIG_KEYS = [
-  'set.fureur2AtkPct',
-  'set.fureur4CritDmgPct',
-  'set.precision2SpdPct',
-  'set.precision4CritRatePct',
-  'set.percee2DefPct',
-  'set.percee4ArmorPenPct',
-  'set.sangsue2HpPct',
-  'set.sangsue4LifestealPct',
+  'set.fureurCritDmgPct',
+  'set.precisionCritRatePct',
+  'set.perceeArmorPenPct',
+  'set.sangsueLifestealPct',
+  'set.assautAtkPct',
+  'set.colosseHpPct',
+  'set.celeriteSpdPct',
 ] as const
 
 export type SetBonusConfigKey = (typeof SET_BONUS_CONFIG_KEYS)[number]
 
 export interface SetDefinition {
-  two: EquipmentBonuses
-  four: EquipmentBonuses
+  /** Nombre de pièces à porter SUR LA MÊME CARTE pour activer le bonus. */
+  pieces: SetSize
+  bonuses: EquipmentBonuses
 }
 
+/**
+ * La taille est une donnée de conception (elle structure les combinaisons
+ * possibles sur 7 emplacements), la magnitude est un réglage d'économie —
+ * d'où l'une en dur ici et l'autre dans GlobalConfig.
+ */
 export function setBonusesFromConfig(
   c: Record<SetBonusConfigKey, number>,
 ): Record<SetKey, SetDefinition> {
   return {
+    // 4 pièces — le plus fort engagement, les bonus les plus marqués.
     FUREUR: {
-      two: { atkPct: c['set.fureur2AtkPct'] },
-      four: { critDmgPct: c['set.fureur4CritDmgPct'] },
+      pieces: 4,
+      bonuses: { critDmgPct: c['set.fureurCritDmgPct'] },
     },
     PRECISION: {
-      two: { spdPct: c['set.precision2SpdPct'] },
-      four: { critRatePct: c['set.precision4CritRatePct'] },
-    },
-    PERCEE: {
-      two: { defPct: c['set.percee2DefPct'] },
-      four: { armorPenPct: c['set.percee4ArmorPenPct'] },
+      pieces: 4,
+      bonuses: { critRatePct: c['set.precisionCritRatePct'] },
     },
     SANGSUE: {
-      two: { hpPct: c['set.sangsue2HpPct'] },
-      four: { lifestealPct: c['set.sangsue4LifestealPct'] },
+      pieces: 4,
+      bonuses: { lifestealPct: c['set.sangsueLifestealPct'] },
+    },
+    // 3 pièces — laissent 4 emplacements libres pour un second set.
+    PERCEE: {
+      pieces: 3,
+      bonuses: { armorPenPct: c['set.perceeArmorPenPct'] },
+    },
+    ASSAUT: {
+      pieces: 3,
+      bonuses: { atkPct: c['set.assautAtkPct'] },
+    },
+    // 2 pièces — le complément qu'on case à côté d'un set de 4.
+    COLOSSE: {
+      pieces: 2,
+      bonuses: { hpPct: c['set.colosseHpPct'] },
+    },
+    CELERITE: {
+      pieces: 2,
+      bonuses: { spdPct: c['set.celeriteSpdPct'] },
     },
   }
 }
@@ -80,14 +119,11 @@ export function computeSetBonuses(
   const total: EquipmentBonuses = {}
   for (const [cle, n] of comptes) {
     const def = defs[cle as SetKey]
-    if (!def) {
-      continue
-    }
-    if (n >= SET_TIER_TWO) {
-      accumulate(total, def.two)
-    }
-    if (n >= SET_TIER_FOUR) {
-      accumulate(total, def.four)
+    // Un seul seuil par set, et rien au-delà : porter 4 pièces d'un set de 2
+    // ne donne pas plus que 2. Les emplacements en trop sont du gaspillage,
+    // c'est ce qui rend le choix de composition intéressant.
+    if (def && n >= def.pieces) {
+      accumulate(total, def.bonuses)
     }
   }
   return total

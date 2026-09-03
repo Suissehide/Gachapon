@@ -291,13 +291,16 @@ describe('combat-stats: mitigationRefFor', () => {
 
 describe('bonus de set appliqués aux stats finales', () => {
   const defs = setBonusesFromConfig({
-    'set.fureur2AtkPct': 10, 'set.fureur4CritDmgPct': 25,
-    'set.precision2SpdPct': 8, 'set.precision4CritRatePct': 20,
-    'set.percee2DefPct': 10, 'set.percee4ArmorPenPct': 25,
-    'set.sangsue2HpPct': 12, 'set.sangsue4LifestealPct': 12,
+    'set.fureurCritDmgPct': 35,
+    'set.precisionCritRatePct': 25,
+    'set.sangsueLifestealPct': 16,
+    'set.perceeArmorPenPct': 20,
+    'set.assautAtkPct': 16,
+    'set.colosseHpPct': 12,
+    'set.celeriteSpdPct': 8,
   })
 
-  it('un 4-set Fureur augmente l ATQ et le critDmg de la carte', () => {
+  it('un set complet de 4 (Fureur) augmente le critDmg de la carte', () => {
     const setBonus = computeSetBonuses(Array(4).fill('FUREUR'), defs)
     const sans = computeFinalStats({
       ...BASE, level: 1, palier: 1, variant: 'NORMAL', baseStats: BASES_COMBAT,
@@ -306,23 +309,31 @@ describe('bonus de set appliqués aux stats finales', () => {
       ...BASE, level: 1, palier: 1, variant: 'NORMAL', baseStats: BASES_COMBAT,
       equipment: [setBonus],
     })
-    expect(avec.atk).toBeGreaterThan(sans.atk)
-    expect(avec.atk).toBe(22) // 20 × (1 + 10/100)
-    expect(avec.critDmg).toBe(sans.critDmg + 25)
+    expect(avec.critDmg).toBe(sans.critDmg + 35)
   })
 
-  it('un 2-set seul (moins de 4 pièces) ne donne que le palier 2, pas le palier 4', () => {
-    const setBonus = computeSetBonuses(Array(2).fill('FUREUR'), defs)
+  it('un set complet de 3 (Assaut) augmente l ATQ de la carte', () => {
+    const setBonus = computeSetBonuses(Array(3).fill('ASSAUT'), defs)
     const avec = computeFinalStats({
       ...BASE, level: 1, palier: 1, variant: 'NORMAL', baseStats: BASES_COMBAT,
       equipment: [setBonus],
     })
-    expect(avec.atk).toBe(22) // palier 2 : +10% ATQ
-    expect(avec.critDmg).toBe(BASES_COMBAT.critDmg) // pas de palier 4 : critDmg inchangé
+    expect(avec.atk).toBe(23) // 20 × (1 + 16/100) = 23.2
   })
 
-  it('deux cartes portant chacune 2 pièces du même set ont chacune leur palier 2, sans cumul à 4', () => {
-    // Comptage par carte : deux fois 2 pièces ne font pas un 4-set sur une carte.
+  it('un set incomplet ne donne rien du tout', () => {
+    // Fureur exige 4 pièces : 3 ne déclenchent aucun palier intermédiaire.
+    const setBonus = computeSetBonuses(Array(3).fill('FUREUR'), defs)
+    const avec = computeFinalStats({
+      ...BASE, level: 1, palier: 1, variant: 'NORMAL', baseStats: BASES_COMBAT,
+      equipment: [setBonus],
+    })
+    expect(avec.atk).toBe(20)
+    expect(avec.critDmg).toBe(BASES_COMBAT.critDmg)
+  })
+
+  it('deux cartes portant chacune 2 pièces d un set de 4 n activent rien', () => {
+    // Comptage par carte : deux fois 2 pièces ne font pas un 4-set.
     const bonusCarteA = computeSetBonuses(['FUREUR', 'FUREUR'], defs)
     const bonusCarteB = computeSetBonuses(['FUREUR', 'FUREUR'], defs)
     for (const bonus of [bonusCarteA, bonusCarteB]) {
@@ -330,8 +341,7 @@ describe('bonus de set appliqués aux stats finales', () => {
         ...BASE, level: 1, palier: 1, variant: 'NORMAL', baseStats: BASES_COMBAT,
         equipment: [bonus],
       })
-      expect(stats.atk).toBe(22) // palier 2 seulement
-      expect(stats.critDmg).toBe(BASES_COMBAT.critDmg) // pas de palier 4
+      expect(stats.critDmg).toBe(BASES_COMBAT.critDmg)
     }
   })
 })

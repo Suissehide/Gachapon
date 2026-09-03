@@ -32,6 +32,9 @@ export const SET_LABELS: Record<SetKey, string> = {
   PRECISION: 'Précision',
   PERCEE: 'Percée',
   SANGSUE: 'Sangsue',
+  ASSAUT: 'Assaut',
+  COLOSSE: 'Colosse',
+  CELERITE: 'Célérité',
 }
 
 /** Libellés français des stats portées par les bonus de set (clé technique → nom affiché). */
@@ -58,8 +61,9 @@ function formatSetTierLabel(bonuses: EquipmentBonuses): string {
 export interface SetDefinitionView {
   key: SetKey
   label: string
-  two: { label: string; bonuses: Record<string, number> }
-  four: { label: string; bonuses: Record<string, number> }
+  /** Nombre de pièces requis sur une même carte pour activer le bonus. */
+  pieces: number
+  bonus: { label: string; bonuses: Record<string, number> }
 }
 
 const RARITY_MULT_KEY = {
@@ -79,6 +83,8 @@ export interface EquipmentInstanceView {
   setKey: SetKey
   setLabel: string
   imageUrl: string | null
+  /** Clé de la stat principale — l'unique clé de `bonuses`, en colonne. */
+  mainStat: string
   bonuses: Record<string, number>
   level: number
   substats: Substat[]
@@ -150,6 +156,7 @@ export class EquipmentDomain {
         setKey: ue.equipment.setKey,
         setLabel: SET_LABELS[ue.equipment.setKey],
         imageUrl: ue.equipment.imageUrl,
+        mainStat: ue.equipment.mainStat,
         bonuses: (ue.equipment.bonuses ?? {}) as Record<string, number>,
         level: ue.level,
         substats: (ue.substats ?? []) as unknown as Substat[],
@@ -162,8 +169,8 @@ export class EquipmentDomain {
   }
 
   /**
-   * Donnée de référence publique : les 4 sets d'équipement avec leurs deux
-   * paliers (2 et 4 pièces). Consommée par l'écran d'équipement pour afficher
+   * Donnée de référence publique : les sets d'équipement, chacun avec le
+   * nombre de pièces qu'il exige et le bonus qu'il accorde. Consommée par l'écran d'équipement pour afficher
    * ce qu'un set apporte, sans jamais recopier les valeurs côté front.
    */
   async listSets(): Promise<{ sets: SetDefinitionView[] }> {
@@ -173,13 +180,10 @@ export class EquipmentDomain {
       sets: SET_KEYS.map((key) => ({
         key,
         label: SET_LABELS[key],
-        two: {
-          label: formatSetTierLabel(defs[key].two),
-          bonuses: defs[key].two as Record<string, number>,
-        },
-        four: {
-          label: formatSetTierLabel(defs[key].four),
-          bonuses: defs[key].four as Record<string, number>,
+        pieces: defs[key].pieces,
+        bonus: {
+          label: formatSetTierLabel(defs[key].bonuses),
+          bonuses: defs[key].bonuses as Record<string, number>,
         },
       })),
     }

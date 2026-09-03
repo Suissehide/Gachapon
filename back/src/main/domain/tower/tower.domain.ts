@@ -29,7 +29,10 @@ import {
   computeFinalStats,
   mitigationRefFor,
 } from '../combat/combat-stats.domain'
-import type { FirstClearLoot } from '../combat/equipment-drop.domain'
+import {
+  type FirstClearLoot,
+  pickEquipmentForRarity,
+} from '../combat/equipment-drop.domain'
 import { computeEquippedCardStats } from '../combat/equipped-card-stats'
 import {
   INITIAL_SUBSTATS_BY_RARITY,
@@ -429,21 +432,30 @@ export class TowerDomain {
                   weights: loot.farm.equipmentWeights,
                   prng: Math.random,
                 })
-            const equipment = await tx.equipment.findUnique({
+            // Un (slot, set, rareté) porte désormais PLUSIEURS pièces, une
+            // par stat principale possible de l'emplacement — d'où un
+            // findMany suivi d'un tirage pondéré là où un findUnique
+            // suffisait. Le `dropWeight` du seed est déjà divisé par la
+            // taille du pool, donc la probabilité du triplet est inchangée :
+            // seule la stat principale est tirée au sort ici.
+            const variants = await tx.equipment.findMany({
               where: {
-                slot_setKey_rarity: {
-                  slot: drop.slot as EquipmentSlot,
-                  setKey: drop.setKey,
-                  rarity: drop.rarity as CardRarity,
-                },
+                slot: drop.slot as EquipmentSlot,
+                setKey: drop.setKey,
+                rarity: drop.rarity as CardRarity,
               },
             })
+            const equipment = pickEquipmentForRarity(
+              variants,
+              drop.rarity as CardRarity,
+              Math.random,
+            )
             if (!equipment) {
-              // Ne doit jamais arriver : la contrainte d'unicité de la tâche 1
-              // et le catalogue de 140 pièces de la tâche 2 couvrent toutes
-              // les combinaisons (slot, setKey, rarity). Si ça arrive, le
-              // catalogue est incomplet — on le signale plutôt que de
-              // l'avaler silencieusement.
+              // Ne doit jamais arriver : la contrainte d'unicité et le
+              // catalogue généré couvrent toutes les combinaisons
+              // (slot, setKey, rarity). Si ça arrive, le catalogue est
+              // incomplet — on le signale plutôt que de l'avaler
+              // silencieusement.
               throw new Error(
                 `Pièce de tour introuvable pour ${drop.slot}/${drop.setKey}/${drop.rarity} — catalogue incomplet`,
               )

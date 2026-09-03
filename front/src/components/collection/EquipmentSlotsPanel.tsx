@@ -90,18 +90,20 @@ export function EquipmentSlotsPanel({ userCardId, rarityHex }: Props) {
             <span
               key={s.key}
               title={
-                s.tier > 0
-                  ? `Palier ${s.tier} atteint`
-                  : `${2 - s.count} pièce(s) de plus pour le palier 2`
+                s.active
+                  ? `Bonus de set actif (${s.pieces} pièces)`
+                  : `${s.pieces - s.count} pièce(s) de plus pour activer le set`
               }
               className={cn(
                 'rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
-                s.tier > 0
+                s.active
                   ? 'border-primary/40 bg-primary/10 text-primary'
                   : 'border-[rgba(27,23,38,0.14)] text-text-light',
               )}
             >
-              {s.label} {s.count}/4
+              {/* Le dénominateur est la taille DU set, plus un 4 fixe : un
+                  set de 2 affichait « 2/4 » alors qu'il était déjà complet. */}
+              {s.label} {s.count}/{s.pieces}
             </span>
           ))}
         </div>

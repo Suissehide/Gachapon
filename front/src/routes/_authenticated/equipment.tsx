@@ -16,12 +16,14 @@ import type {
   EquipmentRarity,
   EquipmentSetKey,
   EquipmentSlot,
+  SubstatKey,
 } from '../../api/equipment.api'
 import {
   FilterField,
   RarityDot,
 } from '../../components/collection/CollectionFilters.tsx'
 import { EquipmentDropCard } from '../../components/equipment/EquipmentDropCard.tsx'
+import { SetBonusGuide } from '../../components/equipment/SetBonusGuide.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { CardDisplay } from '../../components/shared/tcg-card/CardDisplay.tsx'
@@ -52,7 +54,11 @@ import {
   useUpgradeItem,
 } from '../../queries/useEquipment.ts'
 import { useAuthStore } from '../../stores/auth.store.ts'
-import { aggregateEquipmentBonuses, cardPower } from '../../utils/cardStats.ts'
+import {
+  aggregateEquipmentBonuses,
+  cardPower,
+  formatBonusKey,
+} from '../../utils/cardStats.ts'
 
 // Options de rareté — mêmes libellés et mêmes pastilles que la page
 // Collection, dont on réutilise RARITY_LABEL_FR et RARITY_COLOR_VAR plutôt
@@ -94,6 +100,29 @@ const SLOT_FILTER_OPTIONS = (
 const SLOT_RANK = new Map(
   SLOT_FILTER_OPTIONS.map((o, i) => [o.value, i] as const),
 )
+
+// Stats principales possibles, dans l'ordre d'affichage du filtre : chaque
+// stat plate suivie de sa version en pourcentage, puis les stats de stuff.
+// Miroir des pools de SLOT_MAIN_STATS (back/prisma/seed/equipment.ts) — la
+// vitesse n'existe qu'en plat, le vol de vie n'est jamais une principale.
+// Les libellés passent par formatBonusKey, comme sur la fiche de pièce, pour
+// qu'un renommage de stat n'ait pas deux endroits à corriger.
+const MAIN_STAT_ORDER: SubstatKey[] = [
+  'atkFlat',
+  'atkPct',
+  'hpFlat',
+  'hpPct',
+  'defFlat',
+  'defPct',
+  'spdFlat',
+  'critRatePct',
+  'critDmgPct',
+  'armorPenPct',
+]
+const MAIN_STAT_FILTER_OPTIONS = MAIN_STAT_ORDER.map((key) => ({
+  value: key,
+  label: formatBonusKey(key),
+}))
 
 // Tri de l'inventaire, sur le modèle de la page Collection : un Select
 // « Tri » dont le choix est persisté. Par défaut rareté puis niveau — ce
@@ -161,6 +190,9 @@ function EquipmentPage() {
   // élémentaires). Multi-sélection, sur le modèle de DropdownFilter ailleurs
   // dans l'app (voir admin.cards.tsx).
   const [setFilter, setSetFilter] = useState<EquipmentSetKey[]>([])
+  // Filtre par stat principale : depuis que chaque emplacement en propose
+  // plusieurs, deux pièces du même nom peuvent ne rien avoir en commun.
+  const [mainStatFilter, setMainStatFilter] = useState<SubstatKey[]>([])
   const [sort, setSort] = useStoredState<SortMode>(
     'equipment-filters/sort-v2',
     'rarity',
@@ -175,25 +207,27 @@ function EquipmentPage() {
 
   const sets = equipmentSets.data?.sets ?? []
   const items = equipment.data?.items ?? []
-  const filtered = useMemo(
-    () =>
-      sortItems(
-        items.filter((i) => {
-          if (slotFilter.length > 0 && !slotFilter.includes(i.slot)) {
-            return false
-          }
-          if (rarityFilter.length > 0 && !rarityFilter.includes(i.rarity)) {
-            return false
-          }
-          if (setFilter.length > 0 && !setFilter.includes(i.setKey)) {
-            return false
-          }
-          return true
-        }),
-        sort,
+  const filtered = useMemo(() => {
+    // Les quatre filtres suivent la même règle — sélection vide = tout passe,
+    // sinon la pièce doit être dans la sélection. Les décrire en table plutôt
+    // qu'en quatre `if` évite d'en réécrire la logique à chaque nouveau
+    // critère (et garde la fonction sous le seuil de complexité de Biome).
+    const criteres: [readonly string[], (i: EquipmentInstance) => string][] = [
+      [slotFilter, (i) => i.slot],
+      [rarityFilter, (i) => i.rarity],
+      [setFilter, (i) => i.setKey],
+      [mainStatFilter, (i) => i.mainStat],
+    ]
+    return sortItems(
+      items.filter((i) =>
+        criteres.every(
+          ([selection, valeur]) =>
+            selection.length === 0 || selection.includes(valeur(i)),
+        ),
       ),
-    [items, slotFilter, rarityFilter, setFilter, sort],
-  )
+      sort,
+    )
+  }, [items, slotFilter, rarityFilter, setFilter, mainStatFilter, sort])
 
   // Une pièce portée ne se vend pas : le serveur la refuse, donc elle n'entre
   // jamais dans la sélection.
@@ -292,6 +326,9 @@ function EquipmentPage() {
         ]}
         title="Mon équipement"
         subtitle="Pièces collectées via les combats"
+        // Aide de référence, pas un filtre : elle se lit une fois, au niveau
+        // du titre, plutôt que d'occuper une place dans la barre de filtres.
+        right={<SetBonusGuide sets={sets} />}
       />
 
       <div className="mt-6 flex flex-wrap items-end gap-x-4 gap-y-3">
@@ -335,6 +372,14 @@ function EquipmentPage() {
             options={sets.map((st) => ({ value: st.key, label: st.label }))}
             value={setFilter}
             onChange={(v) => setSetFilter(v as EquipmentSetKey[])}
+          />
+        </FilterField>
+        <FilterField id="filter-equip-mainstat" label="Stat principale">
+          <SelectMulti
+            id="filter-equip-mainstat"
+            options={MAIN_STAT_FILTER_OPTIONS}
+            value={mainStatFilter}
+            onChange={(v) => setMainStatFilter(v as SubstatKey[])}
           />
         </FilterField>
       </div>
