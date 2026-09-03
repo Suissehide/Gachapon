@@ -1,14 +1,21 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-import { bossEnemyTeam, normalEnemyTeam } from '../prisma/seed/campaign'
+import {
+  bossEnemyTeam,
+  normalEnemyTeam,
+  RARITY_BASE as SEED_RARITY_BASE,
+} from '../prisma/seed/campaign'
 import { MAX_PALIER } from '../src/main/domain/card-leveling/card-leveling.domain'
 import {
   type AttackPattern,
   type SimulatorUnit,
   simulateBattle,
 } from '../src/main/domain/combat/battle-simulator.domain'
-import { computeFinalStats } from '../src/main/domain/combat/combat-stats.domain'
+import {
+  computeFinalStats,
+  mitigationRefFor,
+} from '../src/main/domain/combat/combat-stats.domain'
 import {
   ELEMENTS,
   type Element,
@@ -27,14 +34,18 @@ function levelMultiplier(level: number): number {
   return 1 + 0.06 * (level - 1)
 }
 
-// Real per-rarity base-stat archetypes (median of the seed roster, prisma/seed/cards.ts).
-const RARITY_BASE: Record<string, BaseBlock> = {
-  COMMON: { baseHp: 105, baseAtk: 10, baseDef: 5, baseSpd: 92 },
-  UNCOMMON: { baseHp: 137, baseAtk: 15, baseDef: 7, baseSpd: 99 },
-  RARE: { baseHp: 195, baseAtk: 21, baseDef: 10, baseSpd: 104 },
-  EPIC: { baseHp: 331, baseAtk: 35, baseDef: 16, baseSpd: 92 },
-  LEGENDARY: { baseHp: 591, baseAtk: 53, baseDef: 29, baseSpd: 107 },
-}
+// Stats de base par rareté — IMPORTÉES du seed, plus recopiées.
+// Cette table était une copie figée aux valeurs d'avant le rééquilibrage
+// (atk 10/15/21/35/53, def 5/7/10/16/29) alors que le seed était passé à
+// 13/19/26/44/66 et 13/18/25/40/73 : le simulateur mesurait un jeu qui
+// n'existait plus. `SEED_RARITY_BASE` nomme les champs hp/atk/def/spd, le
+// simulateur les veut préfixés `base`.
+const RARITY_BASE: Record<string, BaseBlock> = Object.fromEntries(
+  Object.entries(SEED_RARITY_BASE).map(([rarity, b]) => [
+    rarity,
+    { baseHp: b.hp, baseAtk: b.atk, baseDef: b.def, baseSpd: b.spd },
+  ]),
+)
 
 // Realistic player progression: which rarity a player fields per chapter.
 const RARITY_BY_CHAPTER: Record<number, string> = {
@@ -68,6 +79,26 @@ function playerLevelForStage(chapter: number, index: number): number {
 // `epic` représente un joueur à mi-parcours du gear chase.
 // Les ennemis n'ont JAMAIS d'équipement : le profil ne s'applique qu'à
 // playerTeam, pas à enemyUnitsForStage.
+// Stats de stuff de base — mêmes valeurs que les défauts GlobalConfig
+// (config.service.ts). computeFinalStats les exige depuis le plan de fondation
+// combat ; le simulateur ne les passait pas et levait donc une exception dès
+// la première unité. Il n'avait plus tourné depuis.
+const SIM_BASE_STATS = {
+  critRate: 5,
+  critDmg: 150,
+  armorPen: 0,
+  lifesteal: 0,
+}
+
+// Référence de mitigation par défaut (GlobalConfig `combat.defMitigationRef`).
+// Le simulateur ne la posait sur AUCUNE unité : `mitigationRef` valait donc
+// `undefined`, la réduction de dégâts partait en NaN et plus un seul coup ne
+// portait — 1837 lignes de journal sans une seule entrée de dégâts, tous les
+// combats au plafond d'actions et 0 % de victoire partout. Le champ est
+// pourtant obligatoire dans SimulatorUnit ; `scripts/` n'étant pas
+// type-vérifié, rien ne l'avait signalé.
+const SIM_DEF_MITIGATION_REF = 100
+
 type GearProfile = { hpPct: number; atkPct: number; defPct: number }
 const GEAR_PROFILES: Record<string, GearProfile> = {
   none: { hpPct: 0, atkPct: 0, defPct: 0 },
@@ -97,6 +128,7 @@ function playerTeam(opts: {
       equipment: [
         { hpPct: GEAR.hpPct, atkPct: GEAR.atkPct, defPct: GEAR.defPct },
       ],
+      baseStats: SIM_BASE_STATS,
     })
     return {
       id: `A${idx}`,
@@ -104,6 +136,17 @@ function playerTeam(opts: {
       atk: stats.atk,
       def: stats.def,
       spd: stats.spd,
+      critRate: stats.critRate,
+      critDmg: stats.critDmg,
+      armorPen: stats.armorPen,
+      lifesteal: stats.lifesteal,
+      // Allié : dérivée du niveau/palier/variante, comme campaign.domain.
+      mitigationRef: mitigationRefFor({
+        level: opts.level,
+        palier: opts.palier,
+        variant: 'NORMAL',
+        defMitigationRef: SIM_DEF_MITIGATION_REF,
+      }),
       attackPattern: 'BASIC' as AttackPattern,
       passiveKey: opts.passiveKey ?? null,
       palier: opts.palier,
@@ -157,6 +200,7 @@ function enemyUnitsForStage(chapter: number, index: number): SimulatorUnit[] {
       palier: e.palier,
       variant: 'NORMAL',
       equipment: [],
+      baseStats: SIM_BASE_STATS,
     })
     return {
       id: `B${idx}`,
@@ -164,6 +208,15 @@ function enemyUnitsForStage(chapter: number, index: number): SimulatorUnit[] {
       atk: stats.atk,
       def: stats.def,
       spd: stats.spd,
+      critRate: stats.critRate,
+      critDmg: stats.critDmg,
+      armorPen: stats.armorPen,
+      lifesteal: stats.lifesteal,
+      // Ennemi : puissance pré-cuite dans les stats de base par le seed, donc
+      // la référence suit `mitigationScale` et non le niveau.
+      mitigationRef:
+        SIM_DEF_MITIGATION_REF *
+        ((e as { mitigationScale?: number }).mitigationScale ?? 1),
       attackPattern: (e.attackPattern ?? 'BASIC') as AttackPattern,
       passiveKey: (e as { passiveKey?: string | null }).passiveKey ?? null,
       element: e.element,

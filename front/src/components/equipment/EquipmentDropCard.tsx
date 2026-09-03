@@ -226,14 +226,12 @@ export function EquipmentDropCard({
         </div>
       )}
 
-      {/* sous-stats : 2 → 2 colonnes · 3 → 3 · 4 → 2×2, jamais de rangée à moitié vide */}
+      {/* sous-stats : toujours 2 colonnes. À 3 sous-stats, la troisième se
+          place seule sur la seconde rangée et garde la largeur d'une colonne
+          — elle ne s'étire pas sur toute la fiche. Une rangée de 3 colonnes
+          rendait les libellés trop étroits pour rester lisibles. */}
       {subs.length > 0 && (
-        <div
-          className={cn(
-            'mt-2 grid gap-[7px]',
-            subs.length === 3 ? 'grid-cols-3' : 'grid-cols-2',
-          )}
-        >
+        <div className="mt-2 grid grid-cols-2 gap-[7px]">
           {subs.map((s) => (
             <div
               key={s.key}

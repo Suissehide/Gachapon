@@ -26,7 +26,7 @@ import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { CardDisplay } from '../../components/shared/tcg-card/CardDisplay.tsx'
 import { Button } from '../../components/ui/button.tsx'
-import { Checkbox } from '../../components/ui/input.tsx'
+import { Checkbox, Select } from '../../components/ui/input.tsx'
 import {
   Popup,
   PopupBody,
@@ -36,6 +36,7 @@ import {
   PopupTitle,
 } from '../../components/ui/popup.tsx'
 import { SelectMulti } from '../../components/ui/selectMulti.tsx'
+import { useStoredState } from '../../hooks/useStoredState.ts'
 import { RARITY_COLOR_VAR, RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { useUserCollection } from '../../queries/useCollection.ts'
 import {
@@ -51,13 +52,22 @@ import {
   useUpgradeItem,
 } from '../../queries/useEquipment.ts'
 import { useAuthStore } from '../../stores/auth.store.ts'
+import { aggregateEquipmentBonuses, cardPower } from '../../utils/cardStats.ts'
 
 // Options de rareté — mêmes libellés et mêmes pastilles que la page
 // Collection, dont on réutilise RARITY_LABEL_FR et RARITY_COLOR_VAR plutôt
 // que d'en recopier une seconde table.
-const RARITY_FILTER_OPTIONS = (
-  ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY'] as EquipmentRarity[]
-).map((r) => ({
+// Du moins au plus rare — sert au filtre comme au tri, d'où l'ordre unique.
+const RARITY_ORDER: EquipmentRarity[] = [
+  'COMMON',
+  'UNCOMMON',
+  'RARE',
+  'EPIC',
+  'LEGENDARY',
+]
+const RARITY_RANK = new Map(RARITY_ORDER.map((r, i) => [r, i]))
+
+const RARITY_FILTER_OPTIONS = RARITY_ORDER.map((r) => ({
   value: r,
   label: RARITY_LABEL_FR[r] ?? r,
   icon: <RarityDot color={RARITY_COLOR_VAR[r] ?? ''} />,
@@ -81,6 +91,59 @@ const SLOT_LABELS: Record<EquipmentSlot, string> = {
 const SLOT_FILTER_OPTIONS = (
   Object.entries(SLOT_LABELS) as [EquipmentSlot, string][]
 ).map(([value, label]) => ({ value, label }))
+const SLOT_RANK = new Map(
+  SLOT_FILTER_OPTIONS.map((o, i) => [o.value, i] as const),
+)
+
+// Tri de l'inventaire, sur le modèle de la page Collection : un Select
+// « Tri » dont le choix est persisté. Par défaut rareté puis niveau — ce
+// qu'on cherche presque toujours ; `default` garde l'ordre du serveur
+// (plus récentes d'abord).
+type SortMode = 'default' | 'rarity' | 'level' | 'slot' | 'set' | 'name'
+
+const SORT_OPTIONS: { value: SortMode; label: string }[] = [
+  { value: 'default', label: 'Plus récentes' },
+  { value: 'rarity', label: 'Rareté' },
+  { value: 'level', label: 'Niveau' },
+  { value: 'slot', label: 'Emplacement' },
+  { value: 'set', label: 'Set' },
+  { value: 'name', label: 'Nom' },
+]
+const SORT_VALUES = SORT_OPTIONS.map((o) => o.value)
+
+const byRarityDesc = (a: EquipmentInstance, b: EquipmentInstance) =>
+  (RARITY_RANK.get(b.rarity) ?? -1) - (RARITY_RANK.get(a.rarity) ?? -1)
+
+// Array.prototype.sort est stable : les égalités conservent l'ordre d'entrée,
+// donc l'ancienneté reste le départage final de tous les tris.
+function sortItems(
+  items: EquipmentInstance[],
+  sort: SortMode,
+): EquipmentInstance[] {
+  if (sort === 'default') {
+    return items
+  }
+  const sorted = [...items]
+  if (sort === 'rarity') {
+    sorted.sort((a, b) => byRarityDesc(a, b) || b.level - a.level)
+  } else if (sort === 'level') {
+    sorted.sort((a, b) => b.level - a.level || byRarityDesc(a, b))
+  } else if (sort === 'slot') {
+    sorted.sort(
+      (a, b) =>
+        (SLOT_RANK.get(a.slot) ?? 0) - (SLOT_RANK.get(b.slot) ?? 0) ||
+        byRarityDesc(a, b),
+    )
+  } else if (sort === 'set') {
+    sorted.sort(
+      (a, b) =>
+        a.setLabel.localeCompare(b.setLabel, 'fr') || byRarityDesc(a, b),
+    )
+  } else {
+    sorted.sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+  }
+  return sorted
+}
 
 function EquipmentPage() {
   const user = useAuthStore((s) => s.user)
@@ -98,6 +161,11 @@ function EquipmentPage() {
   // élémentaires). Multi-sélection, sur le modèle de DropdownFilter ailleurs
   // dans l'app (voir admin.cards.tsx).
   const [setFilter, setSetFilter] = useState<EquipmentSetKey[]>([])
+  const [sort, setSort] = useStoredState<SortMode>(
+    'equipment-filters/sort-v2',
+    'rarity',
+    SORT_VALUES,
+  )
   // Sélection pour la vente groupée. Un Set d'identifiants : l'inventaire peut
   // compter des centaines de pièces, et un tableau imposerait un parcours à
   // chaque case cochée.
@@ -109,19 +177,22 @@ function EquipmentPage() {
   const items = equipment.data?.items ?? []
   const filtered = useMemo(
     () =>
-      items.filter((i) => {
-        if (slotFilter.length > 0 && !slotFilter.includes(i.slot)) {
-          return false
-        }
-        if (rarityFilter.length > 0 && !rarityFilter.includes(i.rarity)) {
-          return false
-        }
-        if (setFilter.length > 0 && !setFilter.includes(i.setKey)) {
-          return false
-        }
-        return true
-      }),
-    [items, slotFilter, rarityFilter, setFilter],
+      sortItems(
+        items.filter((i) => {
+          if (slotFilter.length > 0 && !slotFilter.includes(i.slot)) {
+            return false
+          }
+          if (rarityFilter.length > 0 && !rarityFilter.includes(i.rarity)) {
+            return false
+          }
+          if (setFilter.length > 0 && !setFilter.includes(i.setKey)) {
+            return false
+          }
+          return true
+        }),
+        sort,
+      ),
+    [items, slotFilter, rarityFilter, setFilter, sort],
   )
 
   // Une pièce portée ne se vend pas : le serveur la refuse, donc elle n'entre
@@ -187,6 +258,31 @@ function EquipmentPage() {
 
   const handleUnequip = (id: string) => unequipItem.mutate(id)
 
+  // Cartes de la fenêtre « Équiper sur… », les plus puissantes en tête :
+  // c'est presque toujours l'une d'elles qu'on stuffe, et l'ordre par défaut
+  // de la collection obligeait à la chercher. Même calcul de puissance que la
+  // page Collection — équipement déjà porté compris.
+  const pickerCards = useMemo(() => {
+    const cards = collection.data?.cards ?? []
+    // Puissance calculée une fois par carte, pas à chaque comparaison :
+    // l'agrégation parcourt tout l'inventaire d'équipement.
+    const power = new Map(
+      cards.map((uc) => [
+        uc.id,
+        cardPower(
+          uc.card,
+          uc.level,
+          uc.variant,
+          uc.palier,
+          aggregateEquipmentBonuses(items, uc.id, economy.equip.levelScale),
+        ),
+      ]),
+    )
+    return [...cards].sort(
+      (a, b) => (power.get(b.id) ?? 0) - (power.get(a.id) ?? 0),
+    )
+  }, [collection.data?.cards, items, economy.equip.levelScale])
+
   return (
     <PageShell>
       <PageHeader
@@ -199,6 +295,17 @@ function EquipmentPage() {
       />
 
       <div className="mt-6 flex flex-wrap items-end gap-x-4 gap-y-3">
+        {/* Tri — même contrôle et mêmes intitulés que la page Collection.
+            Choix unique, donc Select et non SelectMulti. */}
+        <FilterField id="filter-equip-sort" label="Tri">
+          <Select
+            id="filter-equip-sort"
+            options={SORT_OPTIONS}
+            value={sort}
+            onValueChange={(v) => setSort(v as SortMode)}
+            clearable={false}
+          />
+        </FilterField>
         {/* Type : même forme que le filtre de sets — déroulant, multi-choix,
             et son libellé porté par le déclencheur. C'était un contrôle
             segmenté sans intitulé. */}
@@ -349,7 +456,7 @@ function EquipmentPage() {
             </PopupHeader>
             <PopupBody className="flex flex-col gap-4">
               <div className="grid max-h-[55vh] grid-cols-2 gap-3 overflow-y-auto pr-1 sm:grid-cols-3 lg:grid-cols-4">
-                {(collection.data?.cards ?? []).map((uc) => (
+                {pickerCards.map((uc) => (
                   <button
                     key={uc.id}
                     type="button"
