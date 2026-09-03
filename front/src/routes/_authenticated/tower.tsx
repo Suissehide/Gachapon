@@ -12,11 +12,7 @@ import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { TeamEditorPopup } from '../../components/team/TeamEditorPopup.tsx'
 import { Card, CardTitle } from '../../components/ui/card.tsx'
-import {
-  ELEMENT_COLOR,
-  ELEMENT_ICON,
-  ELEMENT_LABELS,
-} from '../../constants/card.constant.ts'
+import { ELEMENT_COLOR, ELEMENT_ICON } from '../../constants/card.constant.ts'
 import { useCombatTeam } from '../../queries/useCombatTeam.ts'
 import { useTowers } from '../../queries/useTower.ts'
 
@@ -68,7 +64,9 @@ function TowerCard({ tower }: { tower: TowerSummary }) {
   return (
     <Link
       to="/tower/$element"
-      params={{ element: tower.element }}
+      // URL en minuscules : /tower/nature se lit mieux que /tower/NATURE.
+      // La page remet en majuscules pour l'API, dont l'enum l'exige.
+      params={{ element: tower.element.toLowerCase() }}
       className="block"
     >
       <Card className="cursor-pointer p-5 transition-transform hover:-translate-y-0.5 hover:shadow-[0_14px_30px_-16px_rgba(27,23,38,0.22)]">
@@ -80,12 +78,10 @@ function TowerCard({ tower }: { tower: TowerSummary }) {
             <ElementIcon className="h-5 w-5" />
           </span>
           <div className="min-w-0">
-            <CardTitle className="text-lg">
-              Tour {ELEMENT_LABELS[tower.element]}
-            </CardTitle>
+            <CardTitle className="text-lg">{tower.name}</CardTitle>
             <p className="flex items-center gap-1 text-xs text-text-light">
               <SlotIcon className="h-3.5 w-3.5" />
-              Alimente le slot « {SLOT_LABELS[tower.slot]} »
+              Permet d'obtenir des pièces « {SLOT_LABELS[tower.slot]} »
             </p>
           </div>
         </div>

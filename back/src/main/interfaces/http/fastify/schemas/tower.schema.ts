@@ -24,6 +24,10 @@ const towerFloorStatusSchema = z.enum(['cleared', 'current', 'locked'])
 
 export const towerSummarySchema = z.object({
   element: towerElementSchema,
+  // Nom propre de la tour (TOWER_NAME_BY_ELEMENT) — le front affichait
+  // « Tour Feu » reconstruit depuis le nom d'élément, quand les étages
+  // s'appelaient « Tour de Braise — étage 1 ».
+  name: z.string(),
   // Slot alimenté par cette tour (TOWER_SLOT_BY_ELEMENT, domain/tower/tower-slots.ts) —
   // exposé ici pour que le front n'ait jamais à recopier cette table (voir
   // l'avertissement dans tower-slots.ts).
@@ -54,6 +58,7 @@ export const towerFloorViewSchema = z.object({
 
 export const towerViewResponseSchema = z.object({
   element: towerElementSchema,
+  name: z.string(),
   highestFloor: z.number().int(),
   floors: z.array(towerFloorViewSchema),
 })

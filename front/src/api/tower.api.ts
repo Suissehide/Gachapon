@@ -13,6 +13,8 @@ export type TowerFloorStatus = 'cleared' | 'current' | 'locked'
 
 export type TowerSummary = {
   element: TowerElement
+  /** Nom propre de la tour (« Tour de Braise »), renvoyé par le back. */
+  name: string
   // Slot alimenté par cette tour — renvoyé par le back (TOWER_SLOT_BY_ELEMENT),
   // jamais recopié ici : voir l'avertissement dans tower-slots.ts côté back.
   slot: EquipmentSlot
@@ -38,6 +40,7 @@ export type TowerFloorView = {
 
 export type TowerView = {
   element: TowerElement
+  name: string
   highestFloor: number
   floors: TowerFloorView[]
 }

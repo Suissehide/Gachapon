@@ -53,7 +53,9 @@ export const Route = createFileRoute('/_authenticated/tower_/$element')({
 })
 
 function TowerFloorsPage() {
-  const { element } = Route.useParams()
+  // L'URL porte l'élément en minuscules ; l'API attend la valeur d'enum.
+  const { element: elementParam } = Route.useParams()
+  const element = elementParam.toUpperCase()
   const navigate = useNavigate()
 
   const towers = useTowers()
@@ -106,6 +108,10 @@ function TowerFloorsPage() {
   // jamais recopié : `useTower(element)` ne renvoie pas ce champ.
   const currentTower = towers.data?.towers.find((t) => t.element === element)
   const elementLabel = ELEMENT_LABELS[element as CardElement] ?? element
+  // Nom propre de la tour, renvoyé par le back. Le titre disait « Tour Feu »
+  // pendant que ses étages s'appelaient « Tour de Braise — étage 1 ».
+  const towerName =
+    currentTower?.name ?? tower.data?.name ?? `Tour ${elementLabel}`
   const slotLabel = currentTower ? SLOT_LABELS[currentTower.slot] : null
   const subtitle = slotLabel
     ? `Permet d'obtenir des pièces « ${slotLabel} ». Plus l'étage est haut, meilleures sont les raretés.`
@@ -117,9 +123,9 @@ function TowerFloorsPage() {
         breadcrumbs={[
           { label: 'Gachapon', to: '/play' },
           { label: 'Tours', to: '/tower' },
-          { label: elementLabel },
+          { label: towerName },
         ]}
-        title={`Tour ${elementLabel}`}
+        title={towerName}
         subtitle={subtitle}
       />
 
@@ -136,7 +142,10 @@ function TowerFloorsPage() {
             <SegmentedControl
               value={element}
               onChange={(value) =>
-                navigate({ to: '/tower/$element', params: { element: value } })
+                navigate({
+                  to: '/tower/$element',
+                  params: { element: value.toLowerCase() },
+                })
               }
               options={segmentOptions}
               wrap

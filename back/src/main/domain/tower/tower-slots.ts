@@ -37,6 +37,19 @@ export const TOWER_SLOT_BY_ELEMENT: Record<TowerElement, EquipmentSlot> = {
 }
 
 /**
+ * Nom propre de chaque tour. Source UNIQUE : le seed s'en servait seul, pour
+ * fabriquer les libellés d'étage, et le front reconstruisait de son côté un
+ * titre « Tour Feu » à partir du nom d'élément — d'où deux noms pour la même
+ * tour dans le même écran.
+ */
+export const TOWER_NAME_BY_ELEMENT: Record<TowerElement, string> = {
+  [CardElement.FIRE]: 'Tour de Braise',
+  [CardElement.WATER]: 'Tour de Prisme',
+  [CardElement.NATURE]: 'Tour de Sève',
+  [CardElement.EARTH]: 'Tour de Monolithe',
+}
+
+/**
  * Les slots réservés aux tours — dérivés de `TOWER_SLOT_BY_ELEMENT`, jamais
  * recopiés. C'est la seule liste qui énumère ces slots par leur nom.
  */

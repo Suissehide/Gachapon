@@ -363,7 +363,9 @@ function RosterTile({
       // ring wraps the card cleanly; ring-offset gives the "extend out" look.
       className={cn(
         'group relative rounded-[8px] transition-transform focus:outline-none',
-        disabled ? 'cursor-not-allowed opacity-40' : 'hover:-translate-y-0.5',
+        disabled
+          ? 'cursor-not-allowed opacity-40'
+          : 'cursor-pointer hover:-translate-y-0.5',
         active && 'ring-[3px] ring-primary ring-offset-2 ring-offset-[#fbf8f3]',
       )}
     >

@@ -1,14 +1,14 @@
 import type { PrismaClient } from '../../src/generated/client'
-import { RARITY_BASE } from './campaign'
-
 // La table élément -> slot vit dans le domaine, pas ici : le seed et le
 // tirage de drop doivent lire la MÊME source, sinon une tour peut dropper
 // un slot différent de celui que l'écran annonce.
 import {
   TOWER_ELEMENTS,
   TOWER_FLOOR_COUNT,
+  TOWER_NAME_BY_ELEMENT,
   type TowerElement,
 } from '../../src/main/domain/tower/tower-slots'
+import { RARITY_BASE } from './campaign'
 
 export { TOWER_ELEMENTS, TOWER_FLOOR_COUNT }
 export type { TowerElement }
@@ -17,13 +17,6 @@ export type { TowerElement }
 // transaction (tx), structurellement plus étroit que PrismaClient (pas de
 // $transaction/$connect) — même motif que seedCampaign/seedEquipment/seedSkills.
 type Tx = Parameters<Parameters<PrismaClient['$transaction']>[0]>[0]
-
-const ELEMENT_LABEL: Record<TowerElement, string> = {
-  FIRE: 'Tour de Braise',
-  WATER: 'Tour de Prisme',
-  NATURE: 'Tour de Sève',
-  EARTH: 'Tour de Monolithe',
-}
 
 /**
  * Difficulté par étage — progression LINÉAIRE, pas de mur.
@@ -41,9 +34,7 @@ const ELEMENT_LABEL: Record<TowerElement, string> = {
  * Point de calibrage ouvert (§12 de la spec) : à comparer à enemyScale de la
  * campagne et à rejouer sur le simulateur réel.
  */
-const FLOOR_SCALE = [
-  1, 1.6, 2.2, 2.8, 3.4, 4, 4.6, 5.2, 5.8, 6.4,
-] as const
+const FLOOR_SCALE = [1, 1.6, 2.2, 2.8, 3.4, 4, 4.6, 5.2, 5.8, 6.4] as const
 
 // Profil épique de campagne (source unique : RARITY_BASE.EPIC dans
 // campaign.ts) — pas de littéral recopié, sinon un futur rééquilibrage de
@@ -55,7 +46,9 @@ const BASE = RARITY_BASE.EPIC
 // NaN silencieux se propagerait dans les stats ennemies ou le loot.
 function assertFloorInRange(floor: number): void {
   if (floor < 1 || floor > TOWER_FLOOR_COUNT) {
-    throw new Error(`Étage de tour hors bornes : ${floor} (attendu 1..${TOWER_FLOOR_COUNT})`)
+    throw new Error(
+      `Étage de tour hors bornes : ${floor} (attendu 1..${TOWER_FLOOR_COUNT})`,
+    )
   }
 }
 
@@ -130,7 +123,7 @@ export function buildTowerFloors() {
       etages.push({
         element,
         index,
-        label: `${ELEMENT_LABEL[element]} — étage ${index}`,
+        label: `${TOWER_NAME_BY_ELEMENT[element]} — étage ${index}`,
         enemyTeam: towerEnemyTeam(element, index),
         lootTable: towerFloorLoot(index),
         order: ordre++,

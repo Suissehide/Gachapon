@@ -135,8 +135,16 @@ export function TcgCardFace({
   return (
     <div
       ref={rootRef}
-      className="absolute inset-0 overflow-hidden bg-white shadow-[0_2px_4px_rgba(0,0,0,0.06),0_14px_30px_-18px_rgba(27,23,38,0.4)]"
-      style={{ ...rootStyle, borderRadius: outerRadius }}
+      className="absolute inset-0 overflow-hidden shadow-[0_2px_4px_rgba(0,0,0,0.06),0_14px_30px_-18px_rgba(27,23,38,0.4)]"
+      // Fond teinté par la rareté plutôt que blanc : quand l'image ne charge
+      // pas — connexion coupée, S3 qui throttle — la carte garde sa couleur au
+      // lieu de virer au blanc.
+      style={{
+        ...rootStyle,
+        borderRadius: outerRadius,
+        background:
+          'linear-gradient(160deg, color-mix(in srgb, var(--rar-light) 40%, #fff) 0%, color-mix(in srgb, var(--rar-light) 65%, #fff) 100%)',
+      }}
       {...holoHandlers}
     >
       <img
@@ -162,7 +170,11 @@ export function TcgCardFace({
               img.src = `${imageUrl}${sep}retry=1`
             }, 600)
           } else {
-            img.src = placeholderImg
+            // Plus de swap vers l'image « non trouvé » : elle se chargeait,
+            // déclenchait onLoad, effaçait le placeholder teinté et laissait
+            // un aplat blanc. On masque l'image, le fond de rareté reste.
+            img.style.visibility = 'hidden'
+            setLoaded(false)
           }
         }}
       />

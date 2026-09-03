@@ -52,6 +52,7 @@ import { rollTowerDrop, rollTowerFirstClearDrop } from './tower-drop'
 import {
   TOWER_ELEMENTS,
   TOWER_FLOOR_COUNT,
+  TOWER_NAME_BY_ELEMENT,
   type TowerElement,
 } from './tower-slots'
 
@@ -144,12 +145,14 @@ export interface TowerFloorView {
 
 export interface TowerView {
   element: TowerElement
+  name: string
   highestFloor: number
   floors: TowerFloorView[]
 }
 
 export interface TowerSummary {
   element: TowerElement
+  name: string
   highestFloor: number
   totalFloors: number
 }
@@ -200,6 +203,7 @@ export class TowerDomain {
     )
     return TOWER_ELEMENTS.map((element) => ({
       element,
+      name: TOWER_NAME_BY_ELEMENT[element],
       highestFloor: byElement.get(element) ?? 0,
       totalFloors: TOWER_FLOOR_COUNT,
     }))
@@ -241,7 +245,12 @@ export class TowerDomain {
       }
     })
 
-    return { element, highestFloor, floors: floorViews }
+    return {
+      element,
+      name: TOWER_NAME_BY_ELEMENT[element],
+      highestFloor,
+      floors: floorViews,
+    }
   }
 
   /**
