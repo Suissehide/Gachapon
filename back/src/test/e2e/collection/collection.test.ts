@@ -110,12 +110,17 @@ describe('Collection routes', () => {
     const coll = collRes.json()
     if (coll.cards.length === 0) return // pas de carte à recycler
 
-    const cardId = coll.cards[0].card.id
+    // La VARIANTE compte : recycler se fait sur (carte, variante), et un
+    // tirage peut sortir un Brillant ou un Holo. Le test envoyait cardId seul,
+    // donc la variante par défaut NORMAL, et échouait en 400 « vous ne
+    // possédez pas cette carte » chaque fois que le tirage n'était pas normal
+    // — un échec aléatoire, une fois sur trois environ.
+    const drawn = coll.cards[0]
     const res = await app.inject({
       method: 'POST',
       url: '/collection/recycle',
       headers: { cookie: cookies },
-      payload: { cardId },
+      payload: { cardId: drawn.card.id, variant: drawn.variant },
     })
     expect(res.statusCode).toBe(200)
     const recycleBody = res.json()

@@ -55,14 +55,26 @@ const SLOT_MAIN_STAT: Record<EquipmentSlot, keyof EquipmentBonuses> = {
  * Point de calibrage ouvert : ces valeurs sont un point de départ plausible,
  * à simuler avant de figer (§12 de la spec).
  */
+// Barème de la stat principale, par rareté.
+//
+// Elle doit DOMINER les sous-stats : c'est l'identité de la pièce, les
+// sous-stats n'en sont que l'assaisonnement. L'ancien barème faisait
+// l'inverse — à légendaire, quatre sous-stats d'attaque au maximum totalisaient
+// 60 pour une principale à 40, et 36 contre 18 en vitesse. Les valeurs
+// ci-dessous placent la principale à environ 2× la somme des quatre
+// sous-stats maximales, et ~7× une sous-stat seule.
+//
+// Bornes de sous-stat de référence (config.service.ts, DEFAULTS) :
+//   hpFlat 20-60 · atkFlat/defFlat 5-15 · spdFlat 3-9
+//   critRate 2-5 · critDmg 4-10 · armorPen 2-6 · lifesteal 1-4
 const MAIN_STAT_SCALE: Record<string, Record<CardRarity, number>> = {
-  atkFlat: { COMMON: 5, UNCOMMON: 8, RARE: 15, EPIC: 25, LEGENDARY: 40 },
-  defFlat: { COMMON: 8, UNCOMMON: 13, RARE: 25, EPIC: 43, LEGENDARY: 70 },
-  spdFlat: { COMMON: 3, UNCOMMON: 5, RARE: 8, EPIC: 12, LEGENDARY: 18 },
-  hpFlat: { COMMON: 25, UNCOMMON: 40, RARE: 70, EPIC: 120, LEGENDARY: 200 },
-  critRatePct: { COMMON: 3, UNCOMMON: 5, RARE: 8, EPIC: 12, LEGENDARY: 18 },
-  critDmgPct: { COMMON: 6, UNCOMMON: 10, RARE: 16, EPIC: 25, LEGENDARY: 40 },
-  armorPenPct: { COMMON: 3, UNCOMMON: 5, RARE: 9, EPIC: 14, LEGENDARY: 22 },
+  atkFlat: { COMMON: 18, UNCOMMON: 28, RARE: 45, EPIC: 72, LEGENDARY: 115 },
+  defFlat: { COMMON: 18, UNCOMMON: 28, RARE: 45, EPIC: 72, LEGENDARY: 115 },
+  spdFlat: { COMMON: 10, UNCOMMON: 16, RARE: 26, EPIC: 40, LEGENDARY: 62 },
+  hpFlat: { COMMON: 80, UNCOMMON: 130, RARE: 210, EPIC: 340, LEGENDARY: 540 },
+  critRatePct: { COMMON: 6, UNCOMMON: 9, RARE: 14, EPIC: 21, LEGENDARY: 32 },
+  critDmgPct: { COMMON: 12, UNCOMMON: 19, RARE: 30, EPIC: 46, LEGENDARY: 70 },
+  armorPenPct: { COMMON: 7, UNCOMMON: 11, RARE: 17, EPIC: 26, LEGENDARY: 40 },
 }
 
 const RARITY_DROP_WEIGHT: Record<CardRarity, number> = {
@@ -90,12 +102,51 @@ const SLOT_LABEL: Record<EquipmentSlot, string> = {
   BELT: 'Ceinture',
 }
 
-const RARITY_LABEL: Record<CardRarity, string> = {
-  COMMON: 'commune',
-  UNCOMMON: 'peu commune',
-  RARE: 'rare',
-  EPIC: 'épique',
-  LEGENDARY: 'légendaire',
+/**
+ * Nom propre de chaque pièce, par set et par emplacement — 28 noms.
+ *
+ * Les pièces s'appelaient « Arme de Percée (rare) » : la formule décrivait la
+ * ligne du tableau au lieu de nommer l'objet, et répétait une rareté que la
+ * fiche affiche déjà en pastille. Les cinq raretés d'une même combinaison
+ * partagent désormais le même nom — c'est la pastille qui les distingue.
+ */
+const PIECE_NAME: Record<EquipmentSet, Record<EquipmentSlot, string>> = {
+  FUREUR: {
+    WEAPON: 'Hache du Courroux',
+    ARMOR: 'Cuirasse Ardente',
+    RING: 'Anneau du Brasier',
+    AMULET: 'Amulette de Rage',
+    GLOVES: 'Poings Incandescents',
+    BOOTS: 'Grèves du Fracas',
+    BELT: 'Ceinturon du Berserk',
+  },
+  PRECISION: {
+    WEAPON: 'Lame du Guetteur',
+    ARMOR: 'Plastron du Tireur',
+    RING: "Anneau de l'Œil Juste",
+    AMULET: 'Amulette du Viseur',
+    GLOVES: 'Gants du Duelliste',
+    BOOTS: 'Bottes du Traqueur',
+    BELT: "Ceinture d'Aplomb",
+  },
+  PERCEE: {
+    WEAPON: 'Estoc Brise-Écaille',
+    ARMOR: 'Harnois Perforant',
+    RING: 'Anneau de la Faille',
+    AMULET: 'Amulette de la Vrille',
+    GLOVES: 'Gants du Perce-Armure',
+    BOOTS: 'Bottes de la Charge',
+    BELT: 'Ceinture du Bélier',
+  },
+  SANGSUE: {
+    WEAPON: 'Croc Assoiffé',
+    ARMOR: 'Carapace Vorace',
+    RING: 'Anneau de Sangsue',
+    AMULET: 'Amulette du Calice',
+    GLOVES: 'Serres Avides',
+    BOOTS: 'Bottes du Suaire',
+    BELT: 'Ceinture du Festin',
+  },
 }
 
 export interface EquipmentSeedRow {
@@ -120,7 +171,7 @@ export function buildEquipmentCatalog(): EquipmentSeedRow[] {
       const stat = SLOT_MAIN_STAT[slot]
       for (const rarity of RARITIES) {
         rows.push({
-          name: `${SLOT_LABEL[slot]} de ${SET_LABEL[setKey]} (${RARITY_LABEL[rarity]})`,
+          name: PIECE_NAME[setKey][slot],
           slot,
           setKey,
           rarity,

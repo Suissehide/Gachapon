@@ -143,7 +143,7 @@ export function EquipmentDropCard({
   return (
     <div
       className={cn(
-        'relative rounded-[18px] border-[1.5px] p-4 pt-4 text-left',
+        'relative flex flex-col rounded-[18px] border-[1.5px] p-4 pt-4 text-left',
         'border-[color-mix(in_oklab,var(--rar)_42%,transparent)]',
         'bg-[linear-gradient(165deg,color-mix(in_oklab,var(--rar-light)_26%,var(--card)),var(--card)_62%)]',
         'shadow-[0_12px_30px_-20px_color-mix(in_oklab,var(--rar)_70%,transparent)]',
@@ -226,10 +226,16 @@ export function EquipmentDropCard({
               style={{ '--sc': statColorVar(s.key) } as React.CSSProperties}
             >
               <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[var(--sc)]" />
-              <span className="font-mono text-[9px] tracking-[0.08em] text-text-light">
+              {/* Le libellé tient sur UNE ligne : certaines clés sont longues
+                  (« % PÉNÉTRATION ARMURE ») et passaient à la ligne, ce qui
+                  décalait la hauteur des tuiles voisines. */}
+              <span
+                className="min-w-0 truncate font-mono text-[9px] whitespace-nowrap tracking-[0.08em] text-text-light"
+                title={formatBonusKey(s.key)}
+              >
                 {formatBonusKey(s.key)}
               </span>
-              <span className="ml-auto font-display text-sm font-extrabold tabular-nums text-text">
+              <span className="ml-auto shrink-0 font-display text-sm font-extrabold tabular-nums text-text">
                 {formatValue(s.key, s.value)}
               </span>
             </div>
@@ -238,10 +244,13 @@ export function EquipmentDropCard({
       )}
 
       {actions ? (
-        <div className="mt-3.5">{actions}</div>
+        // mt-auto : dans une grille où les fiches sont étirées à la même
+        // hauteur, les actions se calent en bas quel que soit le nombre de
+        // sous-stats au-dessus.
+        <div className="mt-auto pt-3.5">{actions}</div>
       ) : (
         // Pas de bouton « Garder » : ne rien faire conserve la pièce.
-        <div className="mt-3.5 flex">
+        <div className="mt-auto flex pt-3.5">
           <button
             type="button"
             onClick={onScrap}

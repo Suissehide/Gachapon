@@ -1,5 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { CircleHelp, ShieldOff, Sword, Zap } from 'lucide-react'
+import {
+  ChevronsUp,
+  CircleHelp,
+  Coins,
+  ShieldOff,
+  Sword,
+  Zap,
+} from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import type {
@@ -39,7 +46,9 @@ import {
   useEquipItem,
   useEquipmentList,
   useEquipmentSets,
+  useSalvageItems,
   useUnequipItem,
+  useUpgradeItem,
 } from '../../queries/useEquipment.ts'
 import { useAuthStore } from '../../stores/auth.store.ts'
 
@@ -182,7 +191,7 @@ function EquipmentPage() {
           Combats et boss en laissent tomber !
         </div>
       ) : (
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((item) => (
             <EquipmentCard
               key={item.id}
@@ -256,6 +265,9 @@ function EquipmentCard({
   isPending: boolean
 }) {
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  const upgradeItem = useUpgradeItem()
+  const salvageItems = useSalvageItems()
+  const gold = useAuthStore((st) => st.user?.gold ?? 0)
 
   // Même fiche que l'écran de victoire, avec les actions d'inventaire à la
   // place du bouton « Détruire ». `EquipmentInstance` porte déjà tous les
@@ -273,37 +285,96 @@ function EquipmentCard({
     baseBoost: item.baseBoost,
   }
 
+  // Coût d'amélioration — même formule que `upgradeGoldCost` côté serveur
+  // (base × exp^(niveau-1) × multiplicateur de rareté). Le multiplicateur est
+  // celui des cartes, que le domaine réutilise pour l'équipement.
+  const atMaxLevel = item.level >= economy.equip.maxLevel
+  const upgradeCost = Math.round(
+    economy.equip.goldCostBase *
+      economy.equip.goldCostExp ** (item.level - 1) *
+      (economy.card.rarityMult[item.rarity] ?? 1),
+  )
+  const salvageGold = economy.equip.salvageGold[item.rarity] ?? 0
+  const busy = isPending || upgradeItem.isPending || salvageItems.isPending
+  // On ne vend pas une pièce portée : le serveur la refuse, autant le dire
+  // avant le clic plutôt qu'après l'erreur.
+  const canSalvage = !item.equippedOnId && !busy
+
   return (
     <EquipmentDropCard
+      className="h-full"
       drop={drop}
       equipLevelScale={economy.equip.levelScale}
       actions={
-        item.equippedOnId ? (
-          <div className="flex items-center justify-between gap-2">
-            <span className="font-mono text-[11px] text-text-light">
-              <Zap className="mr-0.5 inline h-3 w-3" />
-              Sur {item.equippedOnCardName ?? '…'}
-            </span>
+        <div className="flex flex-col gap-2">
+          {item.equippedOnId ? (
+            <div className="flex items-center justify-between gap-2">
+              <span className="min-w-0 truncate font-mono text-[11px] text-text-light">
+                <Zap className="mr-0.5 inline h-3 w-3" />
+                Sur {item.equippedOnCardName ?? '…'}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onUnequipClick}
+                disabled={busy}
+                className="shrink-0"
+              >
+                <ShieldOff className="mr-1 h-3 w-3" />
+                Retirer
+              </Button>
+            </div>
+          ) : (
+            <Button
+              size="sm"
+              onClick={onEquipClick}
+              disabled={busy}
+              className="w-full"
+            >
+              Équiper
+            </Button>
+          )}
+
+          <div className="flex gap-2">
             <Button
               size="sm"
               variant="outline"
-              onClick={onUnequipClick}
-              disabled={isPending}
+              className="flex-1 gap-1"
+              disabled={busy || atMaxLevel || gold < upgradeCost}
+              onClick={() => upgradeItem.mutate(item.id)}
             >
-              <ShieldOff className="mr-1 h-3 w-3" />
-              Retirer
+              <ChevronsUp className="h-3.5 w-3.5" />
+              {atMaxLevel ? (
+                'Niveau max'
+              ) : (
+                <>
+                  Améliorer
+                  <span className="font-mono text-[10px] opacity-70">
+                    {upgradeCost.toLocaleString('fr-FR')} or
+                  </span>
+                </>
+              )}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex-1 gap-1 border-destructive/25 text-destructive hover:bg-destructive/10"
+              disabled={!canSalvage}
+              onClick={() => salvageItems.mutate([item.id])}
+              title={
+                item.equippedOnId
+                  ? 'Retire la pièce de sa carte avant de la vendre'
+                  : undefined
+              }
+            >
+              <Coins className="h-3.5 w-3.5" />
+              Vendre
+              <span className="font-mono text-[10px] opacity-70">
+                +{salvageGold.toLocaleString('fr-FR')}
+              </span>
             </Button>
           </div>
-        ) : (
-          <Button
-            size="sm"
-            onClick={onEquipClick}
-            disabled={isPending}
-            className="w-full"
-          >
-            Équiper
-          </Button>
-        )
+        </div>
       }
     />
   )
