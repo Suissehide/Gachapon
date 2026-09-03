@@ -144,6 +144,9 @@ export interface BattleRewards {
     name: string
     rarity: Rarity
     wasDuplicate: boolean
+    imageUrl: string | null
+    element: string | null
+    setName: string
   } | null
 }
 
@@ -221,6 +224,11 @@ interface CardCatalogEntry {
   name: string
   rarity: Rarity
   dropWeight: number
+  // Portés jusqu'à la charge utile : l'écran de victoire dessine la carte
+  // obtenue, il lui faut son illustration, son élément et son extension.
+  imageUrl: string | null
+  element: string | null
+  setName: string
 }
 
 /**
@@ -711,13 +719,24 @@ export class CampaignDomain {
             }))
           const activeCardsRaw = await tx.card.findMany({
             where: { set: { isActive: true } },
-            select: { id: true, name: true, rarity: true, dropWeight: true },
+            select: {
+              id: true,
+              name: true,
+              rarity: true,
+              dropWeight: true,
+              imageUrl: true,
+              element: true,
+              set: { select: { name: true } },
+            },
           })
           const activeCards: CardCatalogEntry[] = activeCardsRaw.map((c) => ({
             id: c.id,
             name: c.name,
             rarity: c.rarity as Rarity,
             dropWeight: c.dropWeight,
+            imageUrl: c.imageUrl,
+            element: c.element,
+            setName: c.set.name,
           }))
 
           for (let i = 0; i < runs; i++) {
@@ -954,6 +973,9 @@ export class CampaignDomain {
                 name: true,
                 rarity: true,
                 dropWeight: true,
+                imageUrl: true,
+                element: true,
+                set: { select: { name: true } },
               },
             })
           : []
@@ -968,6 +990,9 @@ export class CampaignDomain {
               name: true,
               rarity: true,
               dropWeight: true,
+              imageUrl: true,
+              element: true,
+              set: { select: { name: true } },
             },
           })
         }
@@ -983,6 +1008,9 @@ export class CampaignDomain {
             name: picked.name,
             rarity: picked.rarity as Rarity,
             wasDuplicate,
+            imageUrl: picked.imageUrl,
+            element: picked.element,
+            setName: picked.set.name,
           }
         }
       }
@@ -1055,7 +1083,15 @@ export class CampaignDomain {
       if (rollFarmCardDrop(farm, Math.random)) {
         const cardsRaw = await tx.card.findMany({
           where: { set: { isActive: true } },
-          select: { id: true, name: true, rarity: true, dropWeight: true },
+          select: {
+              id: true,
+              name: true,
+              rarity: true,
+              dropWeight: true,
+              imageUrl: true,
+              element: true,
+              set: { select: { name: true } },
+            },
         })
         if (cardsRaw.length > 0) {
           const cards: CardCatalogEntry[] = cardsRaw.map((c) => ({
@@ -1063,6 +1099,9 @@ export class CampaignDomain {
             name: c.name,
             rarity: c.rarity as Rarity,
             dropWeight: c.dropWeight,
+            imageUrl: c.imageUrl,
+            element: c.element,
+            setName: c.set.name,
           }))
           const picked = this.#pickWeighted(cards, Math.random)
           if (picked) {
@@ -1076,6 +1115,9 @@ export class CampaignDomain {
               name: picked.name,
               rarity: picked.rarity,
               wasDuplicate,
+              imageUrl: picked.imageUrl,
+              element: picked.element,
+              setName: picked.setName,
             }
           }
         }

@@ -80,6 +80,9 @@ export const battleRewardsSchema = z.object({
       name: z.string(),
       rarity: z.string(),
       wasDuplicate: z.boolean(),
+      imageUrl: z.string().nullable(),
+      element: z.string().nullable(),
+      setName: z.string(),
     })
     .nullable(),
 })

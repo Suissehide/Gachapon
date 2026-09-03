@@ -21,7 +21,6 @@ import { useEffect, useState } from 'react'
 import type { BattleResult } from '../../api/campaign.api.ts'
 import { BattleScene } from '../../components/battle/BattleScene.tsx'
 import {
-  DropCard,
   RESULT_BADGE_LOSS,
   RESULT_BADGE_TIMEOUT,
   RESULT_BADGE_WIN,
@@ -32,8 +31,10 @@ import {
 import { EquipmentDropReward } from '../../components/equipment/EquipmentDropCard.tsx'
 import { ArcadeCard } from '../../components/shared/ArcadeCard.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
+import { TcgCardFace } from '../../components/shared/tcg-card/TcgCardFace.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import { Popup, PopupContent } from '../../components/ui/popup.tsx'
+import type { CardElement } from '../../constants/card.constant.ts'
 import { isApiError } from '../../libs/httpErrorHandler.ts'
 import { useAttackStage, useCampaign } from '../../queries/useCampaign.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
@@ -486,12 +487,25 @@ function VictoryPanel({
       />
 
       {rewards?.cardDrop && (
-        <DropCard
-          tone="sky"
-          label={rewards.cardDrop.wasDuplicate ? 'Carte · doublon' : 'Carte'}
-          name={rewards.cardDrop.name}
-          rarity={rewards.cardDrop.rarity}
-        />
+        <div className="mt-4 flex flex-col items-center gap-2">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
+            {rewards.cardDrop.wasDuplicate ? 'Carte · doublon' : 'Carte'}
+          </span>
+          {/* La carte obtenue se voit, au lieu d'être décrite. Elle est
+              l'illustration de la récompense : la réduire à une ligne de
+              texte gâchait le seul moment où on la découvre. */}
+          <div className="relative aspect-[2/3] w-[150px]">
+            <TcgCardFace
+              rarity={rewards.cardDrop.rarity}
+              name={rewards.cardDrop.name}
+              setName={rewards.cardDrop.setName}
+              imageUrl={rewards.cardDrop.imageUrl}
+              variant="NORMAL"
+              isOwned
+              element={(rewards.cardDrop.element ?? null) as CardElement | null}
+            />
+          </div>
+        </div>
       )}
 
       {rewards && <XpBar rewards={rewards} />}

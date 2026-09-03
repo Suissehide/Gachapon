@@ -62,6 +62,9 @@ export type BattleRewards = {
     name: string
     rarity: string
     wasDuplicate: boolean
+    imageUrl: string | null
+    element: string | null
+    setName: string
   } | null
 }
 
