@@ -8,9 +8,7 @@ import {
   Crown,
   Layers,
   Lock,
-  type LucideIcon,
   RotateCcw,
-  Settings,
   Shield,
   Sparkles,
   Star,
@@ -30,31 +28,25 @@ import type {
 } from '../../api/campaign.api.ts'
 import type { TeamUnit } from '../../api/combat.api.ts'
 import {
+  BattlePrepModal,
+  RewardPill,
+} from '../../components/battle/BattlePrepModal.tsx'
+import {
   DropCard,
   RESULT_BADGE_WIN,
   ResultBadge,
   ResultPanel,
   RewardTile,
 } from '../../components/battle/resultKit.tsx'
-import { MiniCard } from '../../components/battle/MiniCard.tsx'
 import { TeamDock } from '../../components/battle/TeamDock.tsx'
 import { AuroraGrid } from '../../components/shared/decorations/AuroraGrid'
 import { PageShell } from '../../components/shared/PageShell.tsx'
-import { TcgCardFace } from '../../components/shared/tcg-card/TcgCardFace.tsx'
 import { TeamEditorPopup } from '../../components/team/TeamEditorPopup.tsx'
 import { Button } from '../../components/ui/button.tsx'
-import {
-  Popup,
-  PopupBody,
-  PopupContent,
-  PopupFooter,
-  PopupHeader,
-} from '../../components/ui/popup.tsx'
-import type { CardElement } from '../../constants/card.constant'
+import { Popup, PopupContent } from '../../components/ui/popup.tsx'
 import { useCampaign, useSweepStage } from '../../queries/useCampaign.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
 import { useCombatTeam } from '../../queries/useCombatTeam.ts'
-import { computePower } from '../../utils/cardStats.ts'
 
 const campaignSearchSchema = z.object({
   editor: z.boolean().optional(),
@@ -101,7 +93,7 @@ function frontierChapter(data: Campaign): number | null {
   return withCurrent?.chapter ?? null
 }
 
-function fmt(n: number): string {
+function _fmt(n: number): string {
   return n.toLocaleString('fr-FR')
 }
 
@@ -744,18 +736,10 @@ function PrepModal({
 }) {
   const meta = chapterMeta(chapter)
   const isBoss = stage.isBoss
-  const totalPower = team.reduce((acc, u) => acc + computePower(u.stats), 0)
-  const recPower = stage.recommendedPower
-  const ratio = recPower === 0 ? 1 : totalPower / recPower
-  const tone: 'good' | 'ok' | 'low' =
-    ratio >= 1.05 ? 'good' : ratio >= 0.9 ? 'ok' : 'low'
-  const verdictLabel =
-    tone === 'good' ? 'Avantage' : tone === 'ok' ? 'Équilibré' : 'Risqué'
   const rp = stage.rewardPreview
   const loot = stage.status !== 'cleared' ? rp.firstClear : rp.farm
-  // Fight button label reflects why it's disabled: no team takes priority over
-  // energy so we never tell the player "énergie insuffisante" when the real
-  // blocker is an empty team.
+  // Le libellé dit POURQUOI c'est bloqué : une équipe vide prime sur
+  // l'énergie, sinon on annoncerait « énergie insuffisante » à tort.
   const fightLabel = team.length
     ? currentPC < battleCost
       ? 'Énergie insuffisante'
@@ -771,189 +755,88 @@ function PrepModal({
   const cardPct = rp.farmCardChance * 100
 
   return (
-    <>
-      {/* Header — just the eyebrow, no redundant title. */}
-      <PopupHeader>
-        <p className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-text-light/60">
+    <BattlePrepModal
+      eyebrow={
+        <>
           {isBoss ? 'Combat de boss' : 'Préparation'} · Niveau {stage.label}
           {isBoss ? ` · ${meta.title}` : ''}
-        </p>
-      </PopupHeader>
-
-      {/* Scrollable body — header/footer stay pinned outside the scroll. */}
-      <PopupBody className="min-h-0 space-y-4 overflow-y-auto bg-transparent">
-        {/* Grid: opponents + rewards */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1.3fr_1fr]">
-          {/* Opponents block */}
-          <div className="rounded-2xl border border-[rgba(27,23,38,0.06)] bg-white p-4">
-            <div className="mb-3 flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-              <Swords className="h-3 w-3 text-amber-600" />
-              Adversaires · {isBoss ? 'Boss 1v3' : '1v3'}
-            </div>
-            <div
-              className={`flex flex-wrap justify-center gap-2.5 ${
-                isBoss ? 'py-1' : ''
-              }`}
-            >
-              {stage.enemies.map((enemy) => (
-                <EnemyCard
-                  key={enemy.id}
-                  boss={isBoss}
-                  power={enemy.power}
-                  width={isBoss ? 'w-[110px]' : 'w-[74px]'}
-                  imageUrl={enemy.imageUrl}
-                  element={enemy.element}
-                />
-              ))}
-            </div>
+        </>
+      }
+      enemies={stage.enemies}
+      isBoss={isBoss}
+      recommendedPower={stage.recommendedPower}
+      team={team}
+      currentPC={currentPC}
+      battleCost={battleCost}
+      rewards={
+        <>
+          <div className="mb-3 flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
+            <Sparkles className="h-3 w-3 text-amber-600" />
+            Récompenses
           </div>
-
-          {/* Rewards + energy block */}
-          <div className="rounded-2xl border border-[rgba(27,23,38,0.06)] bg-white p-4">
-            <div className="mb-3 flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-              <Sparkles className="h-3 w-3 text-amber-600" />
-              Récompenses
-            </div>
-            <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2">
+            <RewardPill
+              color="#f59e0b"
+              label={`${loot.gold} Or`}
+              icon={Coins}
+            />
+            <RewardPill
+              color="#38bdf8"
+              label={`${loot.dust} Poussière`}
+              icon={Sparkles}
+            />
+            <RewardPill color="#8b5cf6" label={`${loot.xp} XP`} icon={Star} />
+            {equipPct > 0 && (
               <RewardPill
-                color="#f59e0b"
-                label={`${loot.gold} Or`}
-                icon={Coins}
+                color="#ec4899"
+                label={`Drop équipement ${fmtPct(rp.farmEquipmentChance)}%`}
+                icon={Shield}
               />
+            )}
+            {cardPct > 0 && (
               <RewardPill
-                color="#38bdf8"
-                label={`${loot.dust} Poussière`}
-                icon={Sparkles}
+                color="#10b981"
+                label={`Drop carte ${fmtPct(rp.farmCardChance)}%`}
+                icon={Layers}
               />
-              <RewardPill color="#8b5cf6" label={`${loot.xp} XP`} icon={Star} />
-              {equipPct > 0 && (
-                <RewardPill
-                  color="#ec4899"
-                  label={`Drop équipement ${fmtPct(rp.farmEquipmentChance)}%`}
-                  icon={Shield}
-                />
-              )}
-              {cardPct > 0 && (
-                <RewardPill
-                  color="#10b981"
-                  label={`Drop carte ${fmtPct(rp.farmCardChance)}%`}
-                  icon={Layers}
-                />
-              )}
-              {stage.status !== 'cleared' && rp.guaranteedEquipment && (
-                <RewardPill
-                  color="#ec4899"
-                  label="Équipement garanti"
-                  icon={Shield}
-                />
-              )}
-              {stage.status !== 'cleared' && rp.guaranteedCard && (
-                <RewardPill
-                  color="#10b981"
-                  label="Carte garantie"
-                  icon={Layers}
-                />
-              )}
-            </div>
-            <div className="mt-3.5 flex items-center gap-2 border-t border-[rgba(27,23,38,0.07)] pt-3.5">
-              <Zap className="h-4 w-4 text-violet-500" />
-              <span className="font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-text-light/60">
-                Coût
-              </span>
-              <b className="font-display text-xl font-extrabold text-text">
-                {battleCost}
-              </b>
-              <span className="ml-auto font-mono text-[11px] text-text-light/50">
-                énergie {currentPC}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Power verdict */}
-        <PowerVerdict
-          mine={totalPower}
-          rec={recPower}
-          tone={tone}
-          label={verdictLabel}
-          ratio={ratio}
-        />
-
-        {/* Team preview */}
-        <div>
-          <div className="mb-3 flex items-center justify-between">
-            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-              Ton équipe
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                onClose()
-                onEditTeam()
-              }}
-              className="gap-1"
-            >
-              <Settings className="h-3 w-3" />
-              Modifier
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-2.5">
-            {team.length === 0 ? (
-              <p className="text-sm text-text-light">
-                Aucune carte. Configure ton équipe avant de combattre.
-              </p>
-            ) : (
-              team.map((u) => (
-                <MiniCard
-                  key={u.userCardId}
-                  unit={u}
-                  width="w-[80px]"
-                  showName={false}
-                />
-              ))
+            )}
+            {stage.status !== 'cleared' && rp.guaranteedEquipment && (
+              <RewardPill
+                color="#ec4899"
+                label="Équipement garanti"
+                icon={Shield}
+              />
+            )}
+            {stage.status !== 'cleared' && rp.guaranteedCard && (
+              <RewardPill
+                color="#10b981"
+                label="Carte garantie"
+                icon={Layers}
+              />
             )}
           </div>
-        </div>
-      </PopupBody>
-
-      {/* Footer — pinned below the scroll area, always visible. */}
-      <PopupFooter className="justify-stretch gap-3">
-        <Button variant="outline" size="lg" onClick={onClose}>
-          Retour
-        </Button>
-        {stage.status === 'cleared' && (
+        </>
+      }
+      extraActions={
+        stage.status === 'cleared' ? (
           <Button
             variant="outline"
             size="lg"
             onClick={onSweep}
             disabled={!canSweep || sweepPending}
             className="gap-2"
-            title={
-              canSweep
-                ? `Farm × 3 (${sweepCost * 3} PC)`
-                : `Coût : ${sweepCost * 3} PC`
-            }
           >
-            <Zap className="h-4 w-4 text-violet-500" />
-            Farm ×3
+            <RotateCcw className="h-4 w-4" />
+            Balayer · {sweepCost}
           </Button>
-        )}
-        <Button
-          size="lg"
-          onClick={onFight}
-          disabled={!canBattle}
-          className="flex-1 gap-2"
-        >
-          <Swords className="h-4 w-4" />
-          {fightLabel}
-          <span className="ml-1 inline-flex items-center gap-0.5 rounded-full bg-black/15 px-2 py-0.5 font-mono text-[12px] font-bold tabular-nums">
-            <Zap className="h-3 w-3" />
-            {battleCost}
-          </span>
-        </Button>
-      </PopupFooter>
-    </>
+        ) : undefined
+      }
+      fightLabel={fightLabel}
+      canFight={canBattle}
+      onFight={onFight}
+      onEditTeam={onEditTeam}
+      onClose={onClose}
+    />
   )
 }
 
@@ -961,125 +844,3 @@ function PrepModal({
 // (TcgCardFace, no name band, power pill at the bottom). Portrait comes from the
 // stage's enemy appearances (MinIO); falls back to the placeholder when null.
 // A rose rarity tone distinguishes them from allies.
-function EnemyCard({
-  boss,
-  power,
-  width,
-  imageUrl,
-  element,
-}: {
-  boss: boolean
-  power: number
-  width: string
-  imageUrl: string | null
-  element: string | null
-}) {
-  const rarity = boss ? 'LEGENDARY' : 'EPIC'
-  return (
-    <div className={`relative aspect-[2/3] ${width}`}>
-      <TcgCardFace
-        rarity={rarity}
-        name=""
-        setName=""
-        imageUrl={imageUrl}
-        variant="NORMAL"
-        isOwned
-        compact
-        showName={false}
-        element={(element ?? null) as CardElement | null}
-      />
-      <div className="pointer-events-none absolute bottom-1.5 left-1/2 z-20 inline-flex -translate-x-1/2 items-center gap-1 rounded-sm border-[0.5px] border-white bg-[#1b1726]/92 px-2 py-[3px] font-display text-[10px] font-extrabold leading-none tabular-nums text-white shadow-[0_2px_6px_rgba(27,23,38,0.45)]">
-        <Swords className="h-2.5 w-2.5 text-primary" />
-        {fmt(power)}
-      </div>
-    </div>
-  )
-}
-
-function RewardPill({
-  color,
-  label,
-  icon: Icon = Sparkles,
-}: {
-  color: string
-  label: string
-  icon?: LucideIcon
-}) {
-  return (
-    <span
-      className="inline-flex items-center gap-1.5 rounded-[10px] px-3 py-1.5 font-mono text-[12px] font-bold"
-      style={{
-        background: `${color}1f`,
-        color,
-      }}
-    >
-      <Icon className="h-3 w-3" />
-      {label}
-    </span>
-  )
-}
-
-function PowerVerdict({
-  mine,
-  rec,
-  tone,
-  label,
-  ratio,
-}: {
-  mine: number
-  rec: number
-  tone: 'good' | 'ok' | 'low'
-  label: string
-  ratio: number
-}) {
-  const bg = tone === 'good' ? '#f0fdf4' : tone === 'ok' ? '#fffbeb' : '#fef2f2'
-  const border =
-    tone === 'good' ? '#bbf7d0' : tone === 'ok' ? '#fde68a' : '#fecaca'
-  const mineColor =
-    tone === 'good' ? '#16a34a' : tone === 'ok' ? '#d97706' : '#dc2626'
-  const barGradient =
-    tone === 'good'
-      ? 'linear-gradient(90deg, #22c55e, #16a34a)'
-      : tone === 'ok'
-        ? 'linear-gradient(90deg, #f59e0b, #d97706)'
-        : 'linear-gradient(90deg, #ef4444, #dc2626)'
-  const clampedPct = Math.min(100, Math.round(ratio * 100))
-
-  return (
-    <div
-      className="my-4 rounded-2xl border p-4"
-      style={{ background: bg, borderColor: border }}
-    >
-      <div className="flex items-baseline justify-center gap-3.5">
-        <span
-          className="font-display text-3xl font-extrabold tabular-nums"
-          style={{ color: mineColor }}
-        >
-          {fmt(mine)}
-        </span>
-        <span className="font-mono text-xs uppercase tracking-[0.1em] text-text-light/40">
-          vs
-        </span>
-        <span className="font-display text-2xl font-extrabold tabular-nums text-text-light/45">
-          {fmt(rec)}
-        </span>
-      </div>
-      <div className="my-2.5 h-2 overflow-hidden rounded-[4px] bg-[rgba(27,23,38,0.1)]">
-        <div
-          style={{
-            width: `${clampedPct}%`,
-            background: barGradient,
-            height: '100%',
-          }}
-        />
-      </div>
-      <div className="flex justify-between font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-text-light/60">
-        <span>Ta puissance</span>
-        <span className="font-bold" style={{ color: mineColor }}>
-          {label}
-        </span>
-        <span>Recommandé</span>
-      </div>
-    </div>
-  )
-}
