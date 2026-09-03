@@ -26,7 +26,7 @@ import { PageShell } from '../../components/shared/PageShell.tsx'
 import { CardDisplay } from '../../components/shared/tcg-card/CardDisplay.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import DropdownFilter from '../../components/ui/dropdownFilter.tsx'
-import { Select } from '../../components/ui/input.tsx'
+import { Checkbox, Select } from '../../components/ui/input.tsx'
 import {
   Popup,
   PopupBody,
@@ -35,7 +35,6 @@ import {
   PopupHeader,
   PopupTitle,
 } from '../../components/ui/popup.tsx'
-import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
 import { RARITY_COLOR_VAR, RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { useUserCollection } from '../../queries/useCollection.ts'
 import {
@@ -94,13 +93,19 @@ function EquipmentPage() {
   const collection = useUserCollection(user?.id)
   const equipItem = useEquipItem()
   const unequipItem = useUnequipItem()
+  const salvageItems = useSalvageItems()
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
 
-  const [slotFilter, setSlotFilter] = useState<EquipmentSlot | 'ALL'>('ALL')
+  const [slotFilter, setSlotFilter] = useState<EquipmentSlot[]>([])
   const [rarityFilter, setRarityFilter] = useState<RarityFilter>('ALL')
   // Filtre par set : indispensable dès que l'inventaire grossit (tours
   // élémentaires). Multi-sélection, sur le modèle de DropdownFilter ailleurs
   // dans l'app (voir admin.cards.tsx).
   const [setFilter, setSetFilter] = useState<EquipmentSetKey[]>([])
+  // Sélection pour la vente groupée. Un Set d'identifiants : l'inventaire peut
+  // compter des centaines de pièces, et un tableau imposerait un parcours à
+  // chaque case cochée.
+  const [selected, setSelected] = useState<Set<string>>(new Set())
   const [pickerFor, setPickerFor] = useState<EquipmentInstance | null>(null)
 
   const sets = equipmentSets.data?.sets ?? []
@@ -108,7 +113,7 @@ function EquipmentPage() {
   const filtered = useMemo(
     () =>
       items.filter((i) => {
-        if (slotFilter !== 'ALL' && i.slot !== slotFilter) {
+        if (slotFilter.length > 0 && !slotFilter.includes(i.slot)) {
           return false
         }
         if (rarityFilter !== 'ALL' && i.rarity !== rarityFilter) {
@@ -121,6 +126,38 @@ function EquipmentPage() {
       }),
     [items, slotFilter, rarityFilter, setFilter],
   )
+
+  // Une pièce portée ne se vend pas : le serveur la refuse, donc elle n'entre
+  // jamais dans la sélection.
+  const sellable = filtered.filter((i) => !i.equippedOnId)
+  const selectedItems = items.filter((i) => selected.has(i.id))
+  const selectionGold = selectedItems.reduce(
+    (sum, i) => sum + (economy.equip.salvageGold[i.rarity] ?? 0),
+    0,
+  )
+  const allSellableSelected =
+    sellable.length > 0 && sellable.every((i) => selected.has(i.id))
+
+  const toggleSelected = (id: string, checked: boolean) =>
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (checked) {
+        next.add(id)
+      } else {
+        next.delete(id)
+      }
+      return next
+    })
+
+  const handleSellSelection = () => {
+    if (selectedItems.length === 0) {
+      return
+    }
+    salvageItems.mutate(
+      selectedItems.map((i) => i.id),
+      { onSuccess: () => setSelected(new Set()) },
+    )
+  }
 
   const handleEquipOn = (targetUserCardId: string) => {
     if (!pickerFor) {
@@ -146,11 +183,24 @@ function EquipmentPage() {
       />
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
-        <SegmentedControl
-          value={slotFilter}
-          onChange={setSlotFilter}
-          wrap
-          options={[{ value: 'ALL', label: 'Tout' }, ...SLOT_FILTER_OPTIONS]}
+        {/* Type : même forme que le filtre de sets — déroulant, multi-choix,
+            et son libellé porté par le déclencheur. C'était un contrôle
+            segmenté sans intitulé. */}
+        <DropdownFilter
+          label="Type"
+          filters={SLOT_FILTER_OPTIONS.map((o) => ({
+            id: o.value,
+            label: o.label,
+            checked: slotFilter.includes(o.value),
+          }))}
+          onFilterChange={(id, checked) =>
+            setSlotFilter((prev) =>
+              checked
+                ? [...prev, id as EquipmentSlot]
+                : prev.filter((k) => k !== id),
+            )
+          }
+          onClear={() => setSlotFilter([])}
         />
         {/* Même filtre que la page Collection : un Select intitulé « Rareté »
             avec une pastille de couleur par option. Il affichait auparavant
@@ -183,6 +233,39 @@ function EquipmentPage() {
         />
       </div>
 
+      {sellable.length > 0 && (
+        <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-muted/20 px-4 py-3">
+          <Checkbox
+            checked={allSellableSelected}
+            onChange={(e) =>
+              setSelected(
+                e.target.checked
+                  ? new Set(sellable.map((i) => i.id))
+                  : new Set(),
+              )
+            }
+          />
+          <span className="text-sm text-text-light">
+            {selected.size > 0
+              ? `${selected.size} pièce${selected.size > 1 ? 's' : ''} sélectionnée${selected.size > 1 ? 's' : ''}`
+              : 'Tout sélectionner'}
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            className="ml-auto gap-1 border-destructive/25 text-destructive hover:bg-destructive/10"
+            disabled={selected.size === 0 || salvageItems.isPending}
+            onClick={handleSellSelection}
+          >
+            <Coins className="h-3.5 w-3.5" />
+            Vendre la sélection
+            <span className="font-mono text-[10px] opacity-70">
+              +{selectionGold.toLocaleString('fr-FR')} or
+            </span>
+          </Button>
+        </div>
+      )}
+
       {items.length === 0 ? (
         <div className="mt-12 rounded-2xl border border-dashed border-border bg-muted/20 p-8 text-center text-text-light">
           <CircleHelp className="mx-auto mb-2 h-8 w-8" />
@@ -196,6 +279,8 @@ function EquipmentPage() {
             <EquipmentCard
               key={item.id}
               item={item}
+              selected={selected.has(item.id)}
+              onSelectedChange={(v) => toggleSelected(item.id, v)}
               onEquipClick={() => setPickerFor(item)}
               onUnequipClick={() => handleUnequip(item.id)}
               isPending={equipItem.isPending || unequipItem.isPending}
@@ -258,11 +343,15 @@ function EquipmentCard({
   onEquipClick,
   onUnequipClick,
   isPending,
+  selected,
+  onSelectedChange,
 }: {
   item: EquipmentInstance
   onEquipClick: () => void
   onUnequipClick: () => void
   isPending: boolean
+  selected: boolean
+  onSelectedChange: (checked: boolean) => void
 }) {
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const upgradeItem = useUpgradeItem()
@@ -307,6 +396,17 @@ function EquipmentCard({
       equipLevelScale={economy.equip.levelScale}
       actions={
         <div className="flex flex-col gap-2">
+          {/* Sélection pour la vente groupée — jamais sur une pièce portée,
+              que le serveur refuserait de vendre. */}
+          {!item.equippedOnId && (
+            <div className="flex items-center gap-2 text-[11px] text-text-light">
+              <Checkbox
+                checked={selected}
+                onChange={(e) => onSelectedChange(e.target.checked)}
+              />
+              Sélectionner
+            </div>
+          )}
           {item.equippedOnId ? (
             <div className="flex items-center justify-between gap-2">
               <span className="min-w-0 truncate font-mono text-[11px] text-text-light">

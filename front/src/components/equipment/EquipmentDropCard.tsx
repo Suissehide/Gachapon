@@ -16,6 +16,7 @@ import {
 } from '../../queries/useEconomyConfig.ts'
 import { useSalvageItems } from '../../queries/useEquipment.ts'
 import { formatBonusKey } from '../../utils/cardStats.ts'
+import { Button } from '../ui/button.tsx'
 
 // Rang de rareté, pour la jauge de 5 pastilles de l'en-tête (Commune 1/5 …
 // Légendaire 5/5). Le handoff la veut lisible d'un coup d'œil, avant même de
@@ -251,18 +252,18 @@ export function EquipmentDropCard({
       ) : (
         // Pas de bouton « Garder » : ne rien faire conserve la pièce.
         <div className="mt-auto flex pt-3.5">
-          <button
-            type="button"
+          <Button
+            variant="outline"
             onClick={onScrap}
             disabled={isPending}
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-[13px] border-[1.5px] border-destructive/25 bg-destructive/10 p-3 text-[15px] font-bold text-destructive transition-[transform,background] duration-150 hover:-translate-y-px hover:bg-destructive/15 disabled:opacity-60 motion-reduce:transition-none"
+            className="h-auto flex-1 rounded-[13px] border-[1.5px] border-destructive/25 bg-destructive/10 p-3 text-[15px] text-destructive hover:bg-destructive/15 motion-reduce:transition-none"
           >
             <Trash2 className="h-[15px] w-[15px]" />
             Détruire
-            <span className="font-mono text-[11px] opacity-80 whitespace-nowrap">
+            <span className="font-mono text-[11px] whitespace-nowrap opacity-80">
               +{(scrapGold ?? 0).toLocaleString('fr-FR')} or
             </span>
-          </button>
+          </Button>
         </div>
       )}
     </div>
@@ -270,9 +271,20 @@ export function EquipmentDropCard({
 }
 
 /** Confirmation compacte qui remplace la fiche une fois la pièce détruite. */
-export function EquipmentScrapped({ gold }: { gold: number }) {
+export function EquipmentScrapped({
+  gold,
+  className,
+}: {
+  gold: number
+  className?: string
+}) {
   return (
-    <div className="rounded-[14px] border border-emerald-200 bg-emerald-50 p-3.5 text-center font-mono text-xs font-bold tracking-[0.08em] text-emerald-800">
+    <div
+      className={cn(
+        'rounded-[14px] border border-emerald-200 bg-emerald-50 p-3.5 text-center font-mono text-xs font-bold tracking-[0.08em] text-emerald-800',
+        className,
+      )}
+    >
       ✓ Détruit · +{gold.toLocaleString('fr-FR')} or
     </div>
   )
@@ -284,7 +296,13 @@ export function EquipmentScrapped({ gold }: { gold: number }) {
  * la confirmation, et rend `null` quand il n'y a pas de drop (la campagne
  * n'en donne pas à tous les combats, la tour si).
  */
-export function EquipmentDropReward({ drop }: { drop: EquipmentDrop | null }) {
+export function EquipmentDropReward({
+  drop,
+  className,
+}: {
+  drop: EquipmentDrop | null
+  className?: string
+}) {
   const salvageItems = useSalvageItems()
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const { toast } = useToast()
@@ -294,7 +312,7 @@ export function EquipmentDropReward({ drop }: { drop: EquipmentDrop | null }) {
     return null
   }
   if (scrappedGold !== null) {
-    return <EquipmentScrapped gold={scrappedGold} />
+    return <EquipmentScrapped className={className} gold={scrappedGold} />
   }
 
   const scrapGold = economy.equip.salvageGold[drop.rarity] ?? 0
@@ -314,6 +332,7 @@ export function EquipmentDropReward({ drop }: { drop: EquipmentDrop | null }) {
 
   return (
     <EquipmentDropCard
+      className={className}
       drop={drop}
       scrapGold={scrapGold}
       equipLevelScale={economy.equip.levelScale}

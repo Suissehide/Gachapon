@@ -480,7 +480,10 @@ function VictoryPanel({
         </div>
       )}
 
-      <EquipmentDropReward drop={rewards?.equipmentDrop ?? null} />
+      <EquipmentDropReward
+        className="mt-4"
+        drop={rewards?.equipmentDrop ?? null}
+      />
 
       {rewards?.cardDrop && (
         <DropCard

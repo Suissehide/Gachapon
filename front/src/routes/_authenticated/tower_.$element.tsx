@@ -435,7 +435,10 @@ function BattleResultPopup({
                   tone="#8b5cf6"
                 />
               </div>
-              <EquipmentDropReward drop={result.rewards.equipmentDrop} />
+              <EquipmentDropReward
+                className="mt-4"
+                drop={result.rewards.equipmentDrop}
+              />
             </>
           )}
 
