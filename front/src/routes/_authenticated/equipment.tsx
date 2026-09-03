@@ -396,9 +396,10 @@ function EquipmentCard({
   return (
     <EquipmentDropCard
       className="h-full"
-      // Sélection pour la vente groupée, en tête de l'en-tête. Jamais sur une
-      // pièce portée : le serveur refuserait de la vendre.
-      leading={
+      // Sélection pour la vente groupée, en haut à droite au-dessus de la
+      // pastille de rareté. Jamais sur une pièce portée : le serveur
+      // refuserait de la vendre.
+      trailing={
         item.equippedOnId ? undefined : (
           <Checkbox
             aria-label={`Sélectionner ${item.name}`}

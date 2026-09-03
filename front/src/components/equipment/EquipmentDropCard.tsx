@@ -122,7 +122,7 @@ export function EquipmentDropCard({
   isPending = false,
   className,
   actions,
-  leading,
+  trailing,
 }: {
   drop: EquipmentDrop
   scrapGold?: number
@@ -131,10 +131,10 @@ export function EquipmentDropCard({
   isPending?: boolean
   className?: string
   /**
-   * Élément posé tout en haut à gauche de la fiche, avant l'icône
-   * d'emplacement — l'inventaire y met sa case de sélection.
+   * Élément posé en haut à droite de la fiche, au-dessus de la pastille de
+   * rareté — l'inventaire y met sa case de sélection.
    */
-  leading?: ReactNode
+  trailing?: ReactNode
   /**
    * Remplace le bouton « Détruire ». L'inventaire s'en sert pour ses actions
    * Équiper / Retirer, la fiche restant par ailleurs identique à celle de
@@ -158,9 +158,8 @@ export function EquipmentDropCard({
       )}
       style={RARITY_VARS[drop.rarity] as React.CSSProperties}
     >
-      {/* en-tête : sélection · icône d'emplacement · titres · rareté */}
+      {/* en-tête : icône d'emplacement · titres · (sélection puis) rareté */}
       <div className="flex items-center gap-3">
-        {leading && <div className="shrink-0">{leading}</div>}
         <span className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-[linear-gradient(140deg,var(--rar),var(--rar-dark))] text-white shadow-[0_5px_14px_-6px_color-mix(in_oklab,var(--rar)_70%,transparent)]">
           <SlotIcon className="h-5 w-5" />
         </span>
@@ -176,6 +175,7 @@ export function EquipmentDropCard({
           </div>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-[5px]">
+          {trailing}
           <span className="rounded-full bg-[var(--rar)] px-2.5 py-1 font-mono text-[9px] font-extrabold tracking-[0.12em] whitespace-nowrap text-white">
             {(RARITY_LABEL_FR[drop.rarity] ?? drop.rarity).toUpperCase()}
           </span>
