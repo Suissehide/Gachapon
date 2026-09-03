@@ -1,5 +1,5 @@
 // changelog-sync: dernier commit intégré au changelog. Mis à jour par la commande /changelog.
-// last-synced-commit: a6c30d3d145fa5ee64a05f68ca33e06d4aab95fc
+// last-synced-commit: b50e9bd1a4f60ae5ea6e1da3d1822a379aa61df3
 import { createFileRoute } from '@tanstack/react-router'
 
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
@@ -37,6 +37,64 @@ const TYPE_META: Record<ChangeType, { label: string; className: string }> = {
 }
 
 const RELEASES: ChangelogRelease[] = [
+  {
+    version: '2.0',
+    title: 'Les Tours et l’Équipement',
+    date: 'Septembre 2026',
+    summary:
+      'Quatre tours élémentaires à gravir, et de quoi équiper tes cartes de pied en cap : sept emplacements, des sets à composer et des sous-stats à chasser.',
+    entries: [
+      {
+        type: 'new',
+        text: 'Les Tours élémentaires : quatre tours de dix étages — Feu, Eau, Nature et Terre. Chaque tour alimente un emplacement précis (les gants au Feu, les bottes à l’Eau, l’amulette à la Nature, la ceinture à la Terre), donc tu montes celle qui lâche la pièce qui te manque. Chaque passage garantit une pièce, et plus tu grimpes, plus elle sort rare.',
+      },
+      {
+        type: 'new',
+        text: 'L’équipement : chaque carte porte sept pièces — arme, armure, anneau, amulette, gants, bottes, ceinture. Une pièce a une stat principale et jusqu’à quatre sous-stats, et monte jusqu’au niveau 12 : tous les trois niveaux, une sous-stat apparaît ou se renforce.',
+      },
+      {
+        type: 'new',
+        text: 'Les sets : sept sets, mais tous n’ont pas la même taille. Célérité et Colosse s’activent à deux pièces, Assaut et Percée à trois, Fureur, Précision et Sangsue à quatre — de quoi en porter deux à la fois sur une même carte. Attention : le compte se fait carte par carte, pas sur ton inventaire. Le bouton « Bonus de sets » récapitule tout.',
+      },
+      {
+        type: 'new',
+        text: 'Deux pièces du même emplacement ne se valent plus : une armure peut sortir en DÉF, en PV, en % DÉF ou en % PV. Il y a désormais une bonne version d’une pièce à chercher, pas seulement une bonne rareté.',
+      },
+      {
+        type: 'improved',
+        text: 'Ton inventaire d’équipement se trie et se filtre : par rareté, niveau, emplacement, set ou stat principale. Tu peux sélectionner plusieurs pièces d’un coup pour les vendre — avec une confirmation si un légendaire traîne dans le lot.',
+      },
+      {
+        type: 'improved',
+        text: 'Le butin de campagne suit enfin ta progression : les communes dominent aux premiers étages puis s’éteignent complètement en fin de campagne, pendant que les hautes raretés montent. Un premier passage garantit une pièce sur presque tous les étages, et les boss gardent une longueur d’avance.',
+      },
+    ],
+  },
+  {
+    version: '1.9',
+    title: 'Le combat s’étoffe',
+    date: 'Août – Septembre 2026',
+    summary:
+      'Coups critiques, pénétration d’armure, vol de vie — et des passifs qui réagissent vraiment à ce qui se passe sous tes yeux.',
+    entries: [
+      {
+        type: 'new',
+        text: 'Quatre stats de combat font leur entrée : taux critique, dégâts critiques, pénétration d’armure et vol de vie. Elles ne viennent que de l’équipement — c’est lui qui décide du style de ta carte.',
+      },
+      {
+        type: 'improved',
+        text: 'Les passifs ne se contentent plus d’un bonus fixe : ils réagissent au déroulé du combat. Vigueur annule un coup fatal, Fortification empile à chaque coup encaissé, Vampirisme double son soin sous la moitié des points de vie, et Hâte comme Exaltation se déclenchent en cours de route.',
+      },
+      {
+        type: 'improved',
+        text: 'Les combats vont deux fois plus vite. Les cartes encaissent moins et frappent plus fort : fini les échanges interminables où personne ne tombait.',
+      },
+      {
+        type: 'fixed',
+        text: 'Les soins s’affichent dans le déroulé du combat — le vol de vie et les passifs de régénération se voyaient sur les points de vie, mais pas dans le journal.',
+      },
+    ],
+  },
   {
     version: '1.7',
     title: 'Neuf chapitres et palier 7',
