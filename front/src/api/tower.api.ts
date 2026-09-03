@@ -35,6 +35,15 @@ export type TowerFloorView = {
   isBoss: boolean
   status: TowerFloorStatus
   recommendedPower: number
+  rewardPreview: {
+    gold: number
+    dust: number
+    xp: number
+    /** Premier passage : rareté minimale garantie. */
+    guaranteedMinRarity: string | null
+    /** Farm : poids de rareté de l'étage, en points de pourcentage. */
+    rarityWeights: Record<string, number>
+  }
   enemies: TowerFloorEnemy[]
 }
 

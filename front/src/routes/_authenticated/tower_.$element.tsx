@@ -5,6 +5,7 @@ import {
   Coins,
   Crown,
   Lock,
+  Shield,
   Sparkles,
   Star,
   Swords,
@@ -15,7 +16,10 @@ import { useState } from 'react'
 
 import type { TeamUnit } from '../../api/combat.api.ts'
 import type { TowerBattleResult, TowerFloorView } from '../../api/tower.api.ts'
-import { BattlePrepModal } from '../../components/battle/BattlePrepModal.tsx'
+import {
+  BattlePrepModal,
+  RewardPill,
+} from '../../components/battle/BattlePrepModal.tsx'
 import { BattleScene } from '../../components/battle/BattleScene.tsx'
 import {
   RESULT_BADGE_LOSS,
@@ -35,6 +39,7 @@ import { Popup, PopupContent } from '../../components/ui/popup.tsx'
 import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
 import type { CardElement } from '../../constants/card.constant.ts'
 import { ELEMENT_LABELS } from '../../constants/card.constant.ts'
+import { RARITY_COLOR_VAR, RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
 import { useCombatTeam } from '../../queries/useCombatTeam.ts'
 import { useTower, useTowerBattle, useTowers } from '../../queries/useTower.ts'
@@ -217,6 +222,11 @@ function TowerPrepPopup({
     return null
   }
 
+  const rp = floor.rewardPreview
+  // Les poids de rareté ne sont renseignés qu'en farm : au premier passage,
+  // c'est la rareté plancher qui fait foi.
+  const rarityOdds = Object.entries(rp.rarityWeights).filter(([, w]) => w > 0)
+
   // Le libellé dit POURQUOI c'est bloqué, comme en campagne.
   const fightLabel = team.length
     ? currentPC < battleCost
@@ -244,6 +254,57 @@ function TowerPrepPopup({
           team={team}
           currentPC={currentPC}
           battleCost={battleCost}
+          rewards={
+            <>
+              <div className="mb-3 flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
+                <Sparkles className="h-3 w-3 text-amber-600" />
+                Récompenses
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <RewardPill
+                  color="#f59e0b"
+                  label={`${rp.gold} Or`}
+                  icon={Coins}
+                />
+                <RewardPill
+                  color="#38bdf8"
+                  label={`${rp.dust} Poussière`}
+                  icon={Sparkles}
+                />
+                <RewardPill color="#8b5cf6" label={`${rp.xp} XP`} icon={Star} />
+                {/* La tour garantit TOUJOURS une pièce : ce qui change d'un
+                    étage à l'autre, c'est sa rareté. */}
+                <RewardPill
+                  color="#ec4899"
+                  label={
+                    rp.guaranteedMinRarity
+                      ? `Équipement garanti · ${RARITY_LABEL_FR[rp.guaranteedMinRarity] ?? rp.guaranteedMinRarity} min.`
+                      : 'Équipement garanti'
+                  }
+                  icon={Shield}
+                />
+              </div>
+              {rarityOdds.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {rarityOdds.map(([rarity, pct]) => (
+                    <span
+                      key={rarity}
+                      className="inline-flex items-center gap-1 font-mono text-[10px] text-text-light"
+                    >
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{
+                          background:
+                            RARITY_COLOR_VAR[rarity] ?? 'currentColor',
+                        }}
+                      />
+                      {pct}%
+                    </span>
+                  ))}
+                </div>
+              )}
+            </>
+          }
           fightLabel={fightLabel}
           canFight={team.length > 0 && currentPC >= battleCost && !isPending}
           onFight={onFight}

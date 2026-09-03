@@ -135,6 +135,22 @@ export interface TowerFloorView {
   isBoss: boolean
   status: 'cleared' | 'current' | 'locked'
   recommendedPower: number
+  /**
+   * Butin annoncé avant le combat, comme la campagne le fait pour ses étapes.
+   * Le premier passage et le farm n'ont ni les mêmes montants ni la même
+   * promesse : le premier garantit une rareté plancher, le farm tire dans les
+   * poids de l'étage — c'est là que se lit la progression, puisque la
+   * difficulté, elle, est désormais linéaire.
+   */
+  rewardPreview: {
+    gold: number
+    dust: number
+    xp: number
+    /** Premier passage seulement : rareté minimale garantie. */
+    guaranteedMinRarity: string | null
+    /** Farm seulement : poids de rareté de l'étage, en points de pourcentage. */
+    rarityWeights: Record<string, number>
+  }
   enemies: {
     id: string
     imageUrl: string | null
@@ -230,12 +246,25 @@ export class TowerDomain {
         status = 'locked'
       }
       const enemyTeam = towerEnemyTeamSchema.parse(f.enemyTeam)
+      const loot = f.lootTable as unknown as TowerLootTable
+      // Un étage déjà franchi se refarme : c'est le butin de farm qui compte.
+      const isFirstClear = status !== 'cleared'
+      const shown = isFirstClear ? loot.firstClear : loot.farm
       return {
         index: f.index,
         label: f.label,
         isBoss: f.index === TOWER_FLOOR_COUNT,
         status,
         recommendedPower: computeTeamPower(enemyTeam),
+        rewardPreview: {
+          gold: shown.gold,
+          dust: shown.dust,
+          xp: shown.xp,
+          guaranteedMinRarity: isFirstClear
+            ? (loot.firstClear.guaranteedEquipment?.minRarity ?? null)
+            : null,
+          rarityWeights: isFirstClear ? {} : loot.farm.equipmentWeights,
+        },
         enemies: enemyTeam.map((e, idx) => ({
           id: `B${idx}`,
           imageUrl: this.#resolveEnemyImage(e.appearance),
