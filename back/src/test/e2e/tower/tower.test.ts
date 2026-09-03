@@ -3,10 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 import { mondayOfUtcWeek } from '../../../main/domain/quests/quest-matching'
 import { buildTestApp } from '../../helpers/build-test-app'
 import {
-  EQUIPMENT_SALVAGE,
-  TOWER_FIRE_PERCEE,
-  TOWER_FIRE_PRECISION,
-  TOWER_FIRE_SANGSUE,
+  TOWER_FIRE_ALL_SETS,
 } from '../../helpers/equipment-fixture-slots'
 
 describe('routes de tour', () => {
@@ -120,14 +117,10 @@ describe('routes de tour', () => {
       },
     })
 
-    // Pool de drop garanti — slot GLOVES (tour FEU), les 4 setKeys en
-    // LEGENDARY (cf. equipment-fixture-slots.ts pour le pourquoi).
-    for (const reservation of [
-      EQUIPMENT_SALVAGE,
-      TOWER_FIRE_PRECISION,
-      TOWER_FIRE_PERCEE,
-      TOWER_FIRE_SANGSUE,
-    ]) {
+    // Pool de drop garanti — slot GLOVES (tour FEU), TOUS les setKeys en
+    // LEGENDARY (cf. equipment-fixture-slots.ts pour le pourquoi : le tirage
+    // pioche le set uniformément, un set absent fait échouer le combat).
+    for (const reservation of TOWER_FIRE_ALL_SETS) {
       await postgresOrm.prisma.equipment.create({
         data: {
           name: `TowerEq-${reservation.setKey}-${suffix}`,

@@ -1,5 +1,5 @@
 import type { EquipmentSlot } from '../../generated/client'
-import type { SetKey } from '../../main/domain/equipment/set-bonuses'
+import { SET_KEYS, type SetKey } from '../../main/domain/equipment/set-bonuses'
 
 /**
  * Réservations de (slot, setKey) pour les fixtures e2e qui créent des
@@ -86,16 +86,25 @@ export const LEVELUP_REFILL = reservation('ARMOR', 'PRECISION')
 
 // tower.test.ts — pool de drop garanti de la tour FEU (élément FIRE → slot
 // GLOVES, cf. TOWER_SLOT_BY_ELEMENT). Le tirage de tour pioche le set
-// uniformément parmi les 4 (drawSetKey, tower-drop.ts) : il faut donc les 4
-// setKeys pour CE slot, pas un seul. GLOVES+FUREUR est déjà réservé par
-// EQUIPMENT_SALVAGE, qui ne crée que du COMMON/RARE/EPIC — tower.test.ts
-// réutilise ce même (slot, setKey) à la rareté LEGENDARY, qu'EQUIPMENT_SALVAGE
-// ne touche jamais, plutôt que de dupliquer la réservation (le check
-// runtime ci-dessous l'interdirait de toute façon). Les 3 autres setKeys
-// sont libres et réservés ici.
-export const TOWER_FIRE_PRECISION = reservation('GLOVES', 'PRECISION')
-export const TOWER_FIRE_PERCEE = reservation('GLOVES', 'PERCEE')
-export const TOWER_FIRE_SANGSUE = reservation('GLOVES', 'SANGSUE')
+// UNIFORMÉMENT parmi SET_KEYS (drawSetKey, tower-drop.ts) : il faut donc une
+// pièce GLOVES pour CHAQUE set. S'il en manque un, le tirage tombe dessus une
+// fois sur N, `findMany` ne renvoie rien et le domaine lève « catalogue
+// incomplet » — un échec ALÉATOIRE, qui ressemble à l'instabilité connue de
+// cette suite plutôt qu'à la régression qu'il est.
+//
+// DÉRIVÉ de SET_KEYS, jamais énuméré à la main : la liste écrite en dur ne
+// couvrait que 4 sets et l'ajout des sets purs (Assaut, Colosse, Célérité) a
+// fait échouer ce fichier trois fois sur sept.
+//
+// Toutes ces pièces sont créées en LEGENDARY, rareté qu'aucune autre fixture
+// n'utilise sur GLOVES. Le recouvrement avec EQUIPMENT_SALVAGE
+// (GLOVES + FUREUR, en COMMON/RARE/EPIC) est donc sans danger sous
+// `@@unique([slot, setKey, rarity, mainStat])` — c'est pour ça que cette
+// liste n'entre pas dans le contrôle de doublons ci-dessous, qui ignore la
+// rareté et la signalerait à tort.
+export const TOWER_FIRE_ALL_SETS = SET_KEYS.map((setKey) =>
+  reservation('GLOVES', setKey),
+)
 
 // campaign.test.ts — preuve G1 qu'un drop de campagne ne peut jamais sortir
 // un slot de tour : une pièce classique et une pièce de tour, même rareté,
@@ -113,9 +122,6 @@ const ALL_RESERVATIONS = [
   EQUIPMENT_INITIAL_SUBSTATS,
   CAMPAIGN,
   LEVELUP_REFILL,
-  TOWER_FIRE_PRECISION,
-  TOWER_FIRE_PERCEE,
-  TOWER_FIRE_SANGSUE,
   CAMPAIGN_SLOT_FILTER_CLASSIC,
   CAMPAIGN_SLOT_FILTER_TOWER,
 ]
