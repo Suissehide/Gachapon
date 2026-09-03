@@ -47,12 +47,29 @@ const towerFloorEnemySchema = z.object({
   element: z.string().nullable(),
 })
 
+/**
+ * Butin annoncé avant le combat. Le domaine le calculait déjà, mais il
+ * manquait ICI : fastify-type-provider-zod retire de la réponse toute clé
+ * absente du schéma, donc la fenêtre de préparation recevait `undefined`.
+ * Miroir de `TowerFloorView['rewardPreview']` (tower.domain.ts).
+ */
+const towerRewardPreviewSchema = z.object({
+  gold: z.number().int(),
+  dust: z.number().int(),
+  xp: z.number().int(),
+  /** Premier passage seulement. */
+  guaranteedMinRarity: z.string().nullable(),
+  /** Farm seulement — vide au premier passage. */
+  rarityWeights: z.record(z.string(), z.number()),
+})
+
 export const towerFloorViewSchema = z.object({
   index: z.number().int(),
   label: z.string(),
   isBoss: z.boolean(),
   status: towerFloorStatusSchema,
   recommendedPower: z.number(),
+  rewardPreview: towerRewardPreviewSchema,
   enemies: z.array(towerFloorEnemySchema),
 })
 

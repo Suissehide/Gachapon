@@ -355,6 +355,45 @@ describe('routes de tour', () => {
     expect(body.floors.find((f) => f.index === 5)?.status).toBe('locked')
   })
 
+  // Le domaine calculait `rewardPreview` mais le schéma Zod de réponse ne le
+  // déclarait pas : fastify-type-provider-zod retire les clés non déclarées,
+  // la fenêtre de préparation recevait `undefined` et plantait sur
+  // `rp.rarityWeights`. Le test interroge la ROUTE, seul endroit où le
+  // filtrage de sérialisation se produit — un test du domaine seul serait
+  // passé au vert tout du long.
+  it('GET /tower/:element — chaque étage annonce son butin', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/tower/FIRE',
+      headers: { cookie: cookies },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json() as {
+      floors: {
+        index: number
+        rewardPreview?: {
+          gold: number
+          dust: number
+          xp: number
+          guaranteedMinRarity: string | null
+          rarityWeights: Record<string, number>
+        }
+      }[]
+    }
+    for (const floor of body.floors) {
+      expect(floor.rewardPreview).toBeDefined()
+    }
+    // Étage 1 jamais franchi : un plancher de rareté garanti et AUCUN poids de
+    // farm — c'est la branche que la fenêtre de préparation affiche, et celle
+    // qui plantait. La rareté exacte vient de la fixture d'étage ci-dessus, on
+    // n'y touche pas : ce test porte sur la forme du contrat, pas sur le
+    // barème.
+    const premier = body.floors.find((f) => f.index === 1)?.rewardPreview
+    expect(premier?.gold).toBeGreaterThan(0)
+    expect(premier?.guaranteedMinRarity).not.toBeNull()
+    expect(premier?.rarityWeights).toEqual({})
+  })
+
   it('POST /tower/FIRE/1/battle — gagne, récompenses de premier passage et pièce garantie', async () => {
     const res = await app.inject({
       method: 'POST',
