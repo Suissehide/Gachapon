@@ -704,7 +704,6 @@ function LevelCard({
 
 // ── Prep modal ──────────────────────────────────────────────────────────────
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: combat-prep modal composes opponents, rewards, power verdict and team preview in one view
 function PrepModal({
   stage,
   chapter,
