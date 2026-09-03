@@ -122,6 +122,7 @@ export function EquipmentDropCard({
   isPending = false,
   className,
   actions,
+  leading,
 }: {
   drop: EquipmentDrop
   scrapGold?: number
@@ -129,6 +130,11 @@ export function EquipmentDropCard({
   onScrap?: () => void
   isPending?: boolean
   className?: string
+  /**
+   * Élément posé tout en haut à gauche de la fiche, avant l'icône
+   * d'emplacement — l'inventaire y met sa case de sélection.
+   */
+  leading?: ReactNode
   /**
    * Remplace le bouton « Détruire ». L'inventaire s'en sert pour ses actions
    * Équiper / Retirer, la fiche restant par ailleurs identique à celle de
@@ -152,8 +158,9 @@ export function EquipmentDropCard({
       )}
       style={RARITY_VARS[drop.rarity] as React.CSSProperties}
     >
-      {/* en-tête : icône d'emplacement · titres · rareté */}
+      {/* en-tête : sélection · icône d'emplacement · titres · rareté */}
       <div className="flex items-center gap-3">
+        {leading && <div className="shrink-0">{leading}</div>}
         <span className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-[linear-gradient(140deg,var(--rar),var(--rar-dark))] text-white shadow-[0_5px_14px_-6px_color-mix(in_oklab,var(--rar)_70%,transparent)]">
           <SlotIcon className="h-5 w-5" />
         </span>

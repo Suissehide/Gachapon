@@ -182,26 +182,28 @@ function EquipmentPage() {
         subtitle="Pièces collectées via les combats"
       />
 
-      <div className="mt-6 flex flex-wrap items-center gap-3">
+      <div className="mt-6 flex flex-wrap items-end gap-x-4 gap-y-3">
         {/* Type : même forme que le filtre de sets — déroulant, multi-choix,
             et son libellé porté par le déclencheur. C'était un contrôle
             segmenté sans intitulé. */}
-        <DropdownFilter
-          label="Type"
-          filters={SLOT_FILTER_OPTIONS.map((o) => ({
-            id: o.value,
-            label: o.label,
-            checked: slotFilter.includes(o.value),
-          }))}
-          onFilterChange={(id, checked) =>
-            setSlotFilter((prev) =>
-              checked
-                ? [...prev, id as EquipmentSlot]
-                : prev.filter((k) => k !== id),
-            )
-          }
-          onClear={() => setSlotFilter([])}
-        />
+        <FilterField id="filter-equip-slot" label="Type">
+          <DropdownFilter
+            label="Tous"
+            filters={SLOT_FILTER_OPTIONS.map((o) => ({
+              id: o.value,
+              label: o.label,
+              checked: slotFilter.includes(o.value),
+            }))}
+            onFilterChange={(id, checked) =>
+              setSlotFilter((prev) =>
+                checked
+                  ? [...prev, id as EquipmentSlot]
+                  : prev.filter((k) => k !== id),
+              )
+            }
+            onClear={() => setSlotFilter([])}
+          />
+        </FilterField>
         {/* Même filtre que la page Collection : un Select intitulé « Rareté »
             avec une pastille de couleur par option. Il affichait auparavant
             « Co / Pc / R / E / L » sans intitulé, illisible pour qui ne
@@ -215,26 +217,28 @@ function EquipmentPage() {
             clearable={false}
           />
         </FilterField>
-        <DropdownFilter
-          label="Set"
-          filters={sets.map((s) => ({
-            id: s.key,
-            label: s.label,
-            checked: setFilter.includes(s.key),
-          }))}
-          onFilterChange={(id, checked) =>
-            setSetFilter((prev) =>
-              checked
-                ? [...prev, id as EquipmentSetKey]
-                : prev.filter((k) => k !== id),
-            )
-          }
-          onClear={() => setSetFilter([])}
-        />
+        <FilterField id="filter-equip-set" label="Set">
+          <DropdownFilter
+            label="Tous"
+            filters={sets.map((s) => ({
+              id: s.key,
+              label: s.label,
+              checked: setFilter.includes(s.key),
+            }))}
+            onFilterChange={(id, checked) =>
+              setSetFilter((prev) =>
+                checked
+                  ? [...prev, id as EquipmentSetKey]
+                  : prev.filter((k) => k !== id),
+              )
+            }
+            onClear={() => setSetFilter([])}
+          />
+        </FilterField>
       </div>
 
       {sellable.length > 0 && (
-        <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-muted/20 px-4 py-3">
+        <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-border bg-muted/20 px-4 py-3">
           <Checkbox
             checked={allSellableSelected}
             onChange={(e) =>
@@ -392,21 +396,21 @@ function EquipmentCard({
   return (
     <EquipmentDropCard
       className="h-full"
+      // Sélection pour la vente groupée, en tête de l'en-tête. Jamais sur une
+      // pièce portée : le serveur refuserait de la vendre.
+      leading={
+        item.equippedOnId ? undefined : (
+          <Checkbox
+            aria-label={`Sélectionner ${item.name}`}
+            checked={selected}
+            onChange={(e) => onSelectedChange(e.target.checked)}
+          />
+        )
+      }
       drop={drop}
       equipLevelScale={economy.equip.levelScale}
       actions={
         <div className="flex flex-col gap-2">
-          {/* Sélection pour la vente groupée — jamais sur une pièce portée,
-              que le serveur refuserait de vendre. */}
-          {!item.equippedOnId && (
-            <div className="flex items-center gap-2 text-[11px] text-text-light">
-              <Checkbox
-                checked={selected}
-                onChange={(e) => onSelectedChange(e.target.checked)}
-              />
-              Sélectionner
-            </div>
-          )}
           {item.equippedOnId ? (
             <div className="flex items-center justify-between gap-2">
               <span className="min-w-0 truncate font-mono text-[11px] text-text-light">
