@@ -64,6 +64,35 @@ const ENEMY_ASCENSION_BONUS = 0.15
 const ENEMY_ASCENSION_PER_STAGE = 0.105
 const PLAYER_CAP_STAGE = 10 * MAX_PALIER // 70
 
+/**
+ * Durcissement de la campagne — montée puis plateau, jamais de redescente.
+ *
+ * Mesuré au simulateur avec le roster réel rapporté par le joueur (1 épique +
+ * 2 rares niveau 10, trois pièces rares, un passif, un bonus de set à 3) :
+ * chapitres 1 et 2 gagnés à 100 %, en 7 à 18 actions. Le début de campagne ne
+ * demande rien.
+ *
+ * Le facteur ne touche PAS le chapitre 1, qui sert de tutoriel, monte jusqu'à
+ * l'étage 20 puis reste au plafond. Une bosse qui redescendrait rendrait
+ * l'étage 45 plus facile que le 25 — une campagne doit rester monotone, et un
+ * test d'équilibrage le vérifie.
+ *
+ * Au-delà du chapitre 3, le modèle diverge de l'expérience réelle : il annonce
+ * 0 % là où le joueur passe. L'équipement s'accumule en jouant, ce qu'un
+ * roster figé ne capture pas. Ce facteur est donc calibré sur le DÉBUT, la
+ * seule zone où mesure et partie concordent.
+ */
+const ENEMY_DIFFICULTY_MAX = 1.12
+const DIFFICULTY_START_STAGE = 10
+const DIFFICULTY_PEAK_STAGE = 20
+
+function difficultyFactor(globalStageNumber: number): number {
+  const t =
+    (globalStageNumber - DIFFICULTY_START_STAGE) /
+    (DIFFICULTY_PEAK_STAGE - DIFFICULTY_START_STAGE)
+  return 1 + (ENEMY_DIFFICULTY_MAX - 1) * Math.max(0, Math.min(1, t))
+}
+
 /** Multiplicateur de stats ennemies à un étage global (1..90). */
 export function enemyScale(globalStageNumber: number): number {
   const capped = Math.min(globalStageNumber, PLAYER_CAP_STAGE)
@@ -74,7 +103,7 @@ export function enemyScale(globalStageNumber: number): number {
     ENEMY_GROWTH_LATE * overflow
   const ascension =
     (1 + ENEMY_ASCENSION_BONUS) ** (ENEMY_ASCENSION_PER_STAGE * (capped - 1))
-  return level * ascension
+  return level * ascension * difficultyFactor(globalStageNumber)
 }
 
 // Boss = check de build : PV ×3.25 + AOE_3 (frappe toute l'équipe, threat ×7
