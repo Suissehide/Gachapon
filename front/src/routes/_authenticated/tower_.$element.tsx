@@ -68,6 +68,10 @@ function TowerFloorsPage() {
   // Étage en préparation : cliquer « Combattre » ouvre d'abord un aperçu
   // équipe / ennemis, comme la campagne, plutôt que de lancer le combat sec.
   const [prep, setPrep] = useState<TowerFloorView | null>(null)
+  // Le combat de tour se joue SUR PLACE, contrairement à la campagne qui part
+  // sur sa propre route : tout ce qui appartient à l'écran de sélection doit
+  // donc se retirer explicitement pendant l'animation.
+  const inBattle = result !== null && !sceneDone
 
   const userCardIds = (team.data?.team ?? []).map((u) => u.userCardId)
   const currentPC = combatPoints.data?.combatPoints ?? 0
@@ -125,7 +129,7 @@ function TowerFloorsPage() {
         subtitle={subtitle}
       />
 
-      {result && !sceneDone ? (
+      {inBattle ? (
         <BattleScene
           teamA={result.teamA}
           teamB={result.teamB}
@@ -175,11 +179,18 @@ function TowerFloorsPage() {
 
       {/* Même bandeau d'équipe qu'en campagne : les deux se jouent avec la
           même équipe de combat. Il remplace le résumé d'équipe local, qui
-          disait moins pour la même place. */}
-      <TeamDock
-        team={team.data?.team ?? []}
-        onEdit={() => setEditorOpen(true)}
-      />
+          disait moins pour la même place.
+
+          Masqué pendant l'animation de combat : il servait à composer son
+          équipe AVANT de lancer, et son bouton « Modifier » n'a plus de sens
+          une fois le combat parti. La campagne n'a pas ce cas — elle quitte
+          la page pour combattre. */}
+      {!inBattle && (
+        <TeamDock
+          team={team.data?.team ?? []}
+          onEdit={() => setEditorOpen(true)}
+        />
+      )}
 
       <TeamEditorPopup open={editorOpen} onOpenChange={setEditorOpen} />
 
