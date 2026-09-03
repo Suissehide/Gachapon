@@ -18,48 +18,48 @@ const IMAGE_PREFIX =
  */
 export const CARDS = [
   // COMMON — dropWeight 85 chacune
-  { id: 'HUM-001', name: 'Aurore la Paysanne', rarity: 'COMMON', dropWeight: 85, baseHp: 116, baseAtk: 11, baseDef: 13, baseSpd: 95, element: 'EARTH', passiveKey: null },  // Soutien
-  { id: 'HUM-002', name: 'Roland le Garde', rarity: 'COMMON', dropWeight: 85, baseHp: 123, baseAtk: 10, baseDef: 20, baseSpd: 81, element: 'DARK', passiveKey: null },  // Tank
-  { id: 'HUM-003', name: 'Mira la Voleuse', rarity: 'COMMON', dropWeight: 85, baseHp: 85, baseAtk: 15, baseDef: 10, baseSpd: 123, element: 'WATER', passiveKey: null },  // Assassin
-  { id: 'HUM-004', name: 'Frère Anselme', rarity: 'COMMON', dropWeight: 85, baseHp: 81, baseAtk: 19, baseDef: 8, baseSpd: 94, element: 'LIGHT', passiveKey: null },  // Mage
-  { id: 'HUM-005', name: 'Gauthier le Forgeron', rarity: 'COMMON', dropWeight: 85, baseHp: 130, baseAtk: 10, baseDef: 20, baseSpd: 81, element: 'EARTH', passiveKey: null },  // Tank
-  { id: 'HUM-006', name: 'Léna l\'Archère', rarity: 'COMMON', dropWeight: 85, baseHp: 82, baseAtk: 16, baseDef: 10, baseSpd: 100, element: 'WATER', passiveKey: null },  // Tireur
-  { id: 'HUM-007', name: 'Aldric', rarity: 'COMMON', dropWeight: 85, baseHp: 130, baseAtk: 11, baseDef: 20, baseSpd: 75, element: 'LIGHT', passiveKey: null },  // Tank
-  { id: 'HUM-008', name: 'Aveline', rarity: 'COMMON', dropWeight: 85, baseHp: 106, baseAtk: 13, baseDef: 13, baseSpd: 85, element: 'WATER', passiveKey: null },  // Équilibré
-  { id: 'HUM-009', name: 'Gauvain', rarity: 'COMMON', dropWeight: 85, baseHp: 131, baseAtk: 10, baseDef: 18, baseSpd: 82, element: 'DARK', passiveKey: null },  // Tank
-  { id: 'HUM-010', name: 'Tristan', rarity: 'COMMON', dropWeight: 85, baseHp: 87, baseAtk: 18, baseDef: 10, baseSpd: 97, element: 'LIGHT', passiveKey: null },  // Tireur
-  { id: 'HUM-011', name: 'Mahaut', rarity: 'COMMON', dropWeight: 85, baseHp: 88, baseAtk: 16, baseDef: 10, baseSpd: 102, element: 'FIRE', passiveKey: null },  // Tireur
-  { id: 'HUM-012', name: 'Lucien', rarity: 'COMMON', dropWeight: 85, baseHp: 127, baseAtk: 10, baseDef: 20, baseSpd: 72, element: 'NATURE', passiveKey: null },  // Tank
-  { id: 'HUM-013', name: 'Alix', rarity: 'COMMON', dropWeight: 85, baseHp: 100, baseAtk: 14, baseDef: 13, baseSpd: 95, element: 'FIRE', passiveKey: null },  // Équilibré
-  { id: 'HUM-014', name: 'Thibault', rarity: 'COMMON', dropWeight: 85, baseHp: 106, baseAtk: 14, baseDef: 13, baseSpd: 92, element: 'DARK', passiveKey: null },  // Équilibré
-  { id: 'HUM-015', name: 'Enguerrand', rarity: 'COMMON', dropWeight: 85, baseHp: 96, baseAtk: 11, baseDef: 13, baseSpd: 95, element: 'LIGHT', passiveKey: null },  // Équilibré
-  { id: 'HUM-016', name: 'Yseult', rarity: 'COMMON', dropWeight: 85, baseHp: 78, baseAtk: 15, baseDef: 10, baseSpd: 110, element: 'NATURE', passiveKey: null },  // Assassin
-  { id: 'HUM-017', name: 'Constant', rarity: 'COMMON', dropWeight: 85, baseHp: 130, baseAtk: 10, baseDef: 18, baseSpd: 76, element: 'LIGHT', passiveKey: null },  // Tank
-  { id: 'HUM-018', name: 'Blanche', rarity: 'COMMON', dropWeight: 85, baseHp: 103, baseAtk: 13, baseDef: 13, baseSpd: 91, element: 'DARK', passiveKey: null },  // Équilibré
-  { id: 'HUM-019', name: 'Lyra la Vive', rarity: 'COMMON', dropWeight: 85, baseHp: 106, baseAtk: 13, baseDef: 13, baseSpd: 94, element: 'FIRE', passiveKey: null },  // Équilibré
+  { id: 'HUM-001', name: 'Aurore la Paysanne', rarity: 'COMMON', dropWeight: 85, baseHp: 116, baseAtk: 17, baseDef: 5, baseSpd: 95, element: 'EARTH', passiveKey: null },  // Soutien
+  { id: 'HUM-002', name: 'Roland le Garde', rarity: 'COMMON', dropWeight: 85, baseHp: 123, baseAtk: 15, baseDef: 8, baseSpd: 81, element: 'DARK', passiveKey: null },  // Tank
+  { id: 'HUM-003', name: 'Mira la Voleuse', rarity: 'COMMON', dropWeight: 85, baseHp: 85, baseAtk: 23, baseDef: 4, baseSpd: 123, element: 'WATER', passiveKey: null },  // Assassin
+  { id: 'HUM-004', name: 'Frère Anselme', rarity: 'COMMON', dropWeight: 85, baseHp: 81, baseAtk: 29, baseDef: 3, baseSpd: 94, element: 'LIGHT', passiveKey: null },  // Mage
+  { id: 'HUM-005', name: 'Gauthier le Forgeron', rarity: 'COMMON', dropWeight: 85, baseHp: 130, baseAtk: 15, baseDef: 8, baseSpd: 81, element: 'EARTH', passiveKey: null },  // Tank
+  { id: 'HUM-006', name: 'Léna l\'Archère', rarity: 'COMMON', dropWeight: 85, baseHp: 82, baseAtk: 24, baseDef: 4, baseSpd: 100, element: 'WATER', passiveKey: null },  // Tireur
+  { id: 'HUM-007', name: 'Aldric', rarity: 'COMMON', dropWeight: 85, baseHp: 130, baseAtk: 17, baseDef: 8, baseSpd: 75, element: 'LIGHT', passiveKey: null },  // Tank
+  { id: 'HUM-008', name: 'Aveline', rarity: 'COMMON', dropWeight: 85, baseHp: 106, baseAtk: 20, baseDef: 5, baseSpd: 85, element: 'WATER', passiveKey: null },  // Équilibré
+  { id: 'HUM-009', name: 'Gauvain', rarity: 'COMMON', dropWeight: 85, baseHp: 131, baseAtk: 15, baseDef: 7, baseSpd: 82, element: 'DARK', passiveKey: null },  // Tank
+  { id: 'HUM-010', name: 'Tristan', rarity: 'COMMON', dropWeight: 85, baseHp: 87, baseAtk: 27, baseDef: 4, baseSpd: 97, element: 'LIGHT', passiveKey: null },  // Tireur
+  { id: 'HUM-011', name: 'Mahaut', rarity: 'COMMON', dropWeight: 85, baseHp: 88, baseAtk: 24, baseDef: 4, baseSpd: 102, element: 'FIRE', passiveKey: null },  // Tireur
+  { id: 'HUM-012', name: 'Lucien', rarity: 'COMMON', dropWeight: 85, baseHp: 127, baseAtk: 15, baseDef: 8, baseSpd: 72, element: 'NATURE', passiveKey: null },  // Tank
+  { id: 'HUM-013', name: 'Alix', rarity: 'COMMON', dropWeight: 85, baseHp: 100, baseAtk: 21, baseDef: 5, baseSpd: 95, element: 'FIRE', passiveKey: null },  // Équilibré
+  { id: 'HUM-014', name: 'Thibault', rarity: 'COMMON', dropWeight: 85, baseHp: 106, baseAtk: 21, baseDef: 5, baseSpd: 92, element: 'DARK', passiveKey: null },  // Équilibré
+  { id: 'HUM-015', name: 'Enguerrand', rarity: 'COMMON', dropWeight: 85, baseHp: 96, baseAtk: 17, baseDef: 5, baseSpd: 95, element: 'LIGHT', passiveKey: null },  // Équilibré
+  { id: 'HUM-016', name: 'Yseult', rarity: 'COMMON', dropWeight: 85, baseHp: 78, baseAtk: 23, baseDef: 4, baseSpd: 110, element: 'NATURE', passiveKey: null },  // Assassin
+  { id: 'HUM-017', name: 'Constant', rarity: 'COMMON', dropWeight: 85, baseHp: 130, baseAtk: 15, baseDef: 7, baseSpd: 76, element: 'LIGHT', passiveKey: null },  // Tank
+  { id: 'HUM-018', name: 'Blanche', rarity: 'COMMON', dropWeight: 85, baseHp: 103, baseAtk: 20, baseDef: 5, baseSpd: 91, element: 'DARK', passiveKey: null },  // Équilibré
+  { id: 'HUM-019', name: 'Lyra la Vive', rarity: 'COMMON', dropWeight: 85, baseHp: 106, baseAtk: 20, baseDef: 5, baseSpd: 94, element: 'FIRE', passiveKey: null },  // Équilibré
   // UNCOMMON — dropWeight 38 chacune
-  { id: 'HUM-020', name: 'Baudouin', rarity: 'UNCOMMON', dropWeight: 38, baseHp: 171, baseAtk: 15, baseDef: 25, baseSpd: 81, element: 'EARTH', passiveKey: null },  // Tank
-  { id: 'HUM-021', name: 'Aymeric', rarity: 'UNCOMMON', dropWeight: 38, baseHp: 118, baseAtk: 23, baseDef: 13, baseSpd: 105, element: 'DARK', passiveKey: null },  // Tireur
-  { id: 'HUM-022', name: 'Eleonore', rarity: 'UNCOMMON', dropWeight: 38, baseHp: 122, baseAtk: 23, baseDef: 13, baseSpd: 98, element: 'DARK', passiveKey: null },  // Tireur
-  { id: 'HUM-023', name: 'Foulques', rarity: 'UNCOMMON', dropWeight: 38, baseHp: 178, baseAtk: 14, baseDef: 25, baseSpd: 81, element: 'NATURE', passiveKey: null },  // Tank
-  { id: 'HUM-024', name: 'Mélisande', rarity: 'UNCOMMON', dropWeight: 38, baseHp: 135, baseAtk: 19, baseDef: 18, baseSpd: 100, element: 'NATURE', passiveKey: null },  // Équilibré
-  { id: 'HUM-025', name: 'Perceval', rarity: 'UNCOMMON', dropWeight: 38, baseHp: 131, baseAtk: 18, baseDef: 18, baseSpd: 100, element: 'EARTH', passiveKey: null },  // Équilibré
-  { id: 'HUM-026', name: 'Kenji le Ronin', rarity: 'UNCOMMON', dropWeight: 38, baseHp: 106, baseAtk: 20, baseDef: 13, baseSpd: 119, element: 'EARTH', passiveKey: null },  // Assassin
-  { id: 'HUM-027', name: 'Dame Coralie', rarity: 'UNCOMMON', dropWeight: 38, baseHp: 149, baseAtk: 19, baseDef: 20, baseSpd: 88, element: 'WATER', passiveKey: null },  // Combattant
-  { id: 'HUM-028', name: 'Séléné au Fouet', rarity: 'UNCOMMON', dropWeight: 38, baseHp: 119, baseAtk: 21, baseDef: 13, baseSpd: 115, element: 'WATER', passiveKey: null },  // Assassin
+  { id: 'HUM-020', name: 'Baudouin', rarity: 'UNCOMMON', dropWeight: 38, baseHp: 171, baseAtk: 23, baseDef: 10, baseSpd: 81, element: 'EARTH', passiveKey: null },  // Tank
+  { id: 'HUM-021', name: 'Aymeric', rarity: 'UNCOMMON', dropWeight: 38, baseHp: 118, baseAtk: 35, baseDef: 5, baseSpd: 105, element: 'DARK', passiveKey: null },  // Tireur
+  { id: 'HUM-022', name: 'Eleonore', rarity: 'UNCOMMON', dropWeight: 38, baseHp: 122, baseAtk: 35, baseDef: 5, baseSpd: 98, element: 'DARK', passiveKey: null },  // Tireur
+  { id: 'HUM-023', name: 'Foulques', rarity: 'UNCOMMON', dropWeight: 38, baseHp: 178, baseAtk: 21, baseDef: 10, baseSpd: 81, element: 'NATURE', passiveKey: null },  // Tank
+  { id: 'HUM-024', name: 'Mélisande', rarity: 'UNCOMMON', dropWeight: 38, baseHp: 135, baseAtk: 29, baseDef: 7, baseSpd: 100, element: 'NATURE', passiveKey: null },  // Équilibré
+  { id: 'HUM-025', name: 'Perceval', rarity: 'UNCOMMON', dropWeight: 38, baseHp: 131, baseAtk: 27, baseDef: 7, baseSpd: 100, element: 'EARTH', passiveKey: null },  // Équilibré
+  { id: 'HUM-026', name: 'Kenji le Ronin', rarity: 'UNCOMMON', dropWeight: 38, baseHp: 106, baseAtk: 30, baseDef: 5, baseSpd: 119, element: 'EARTH', passiveKey: null },  // Assassin
+  { id: 'HUM-027', name: 'Dame Coralie', rarity: 'UNCOMMON', dropWeight: 38, baseHp: 149, baseAtk: 29, baseDef: 8, baseSpd: 88, element: 'WATER', passiveKey: null },  // Combattant
+  { id: 'HUM-028', name: 'Séléné au Fouet', rarity: 'UNCOMMON', dropWeight: 38, baseHp: 119, baseAtk: 32, baseDef: 5, baseSpd: 115, element: 'WATER', passiveKey: null },  // Assassin
   // RARE — dropWeight 16 chacune
-  { id: 'HUM-029', name: 'Capitaine Hélène', rarity: 'RARE', dropWeight: 16, baseHp: 249, baseAtk: 20, baseDef: 35, baseSpd: 88, element: 'EARTH', passiveKey: null },  // Tank
-  { id: 'HUM-030', name: 'Dame Ysolde la Paladine', rarity: 'RARE', dropWeight: 16, baseHp: 250, baseAtk: 20, baseDef: 38, baseSpd: 80, element: 'DARK', passiveKey: null },  // Tank
-  { id: 'HUM-031', name: 'Séraphine la Magicienne', rarity: 'RARE', dropWeight: 16, baseHp: 159, baseAtk: 34, baseDef: 18, baseSpd: 96, element: 'DARK', passiveKey: null },  // Mage
-  { id: 'HUM-032', name: 'Josselin', rarity: 'RARE', dropWeight: 16, baseHp: 192, baseAtk: 25, baseDef: 25, baseSpd: 93, element: 'FIRE', passiveKey: null },  // Équilibré
-  { id: 'HUM-033', name: 'Oriane', rarity: 'RARE', dropWeight: 16, baseHp: 155, baseAtk: 29, baseDef: 18, baseSpd: 135, element: 'NATURE', passiveKey: null },  // Assassin
-  { id: 'HUM-034', name: 'Akira Double-Lame', rarity: 'RARE', dropWeight: 16, baseHp: 164, baseAtk: 29, baseDef: 20, baseSpd: 131, element: 'FIRE', passiveKey: null },  // Assassin
+  { id: 'HUM-029', name: 'Capitaine Hélène', rarity: 'RARE', dropWeight: 16, baseHp: 249, baseAtk: 30, baseDef: 14, baseSpd: 88, element: 'EARTH', passiveKey: null },  // Tank
+  { id: 'HUM-030', name: 'Dame Ysolde la Paladine', rarity: 'RARE', dropWeight: 16, baseHp: 250, baseAtk: 30, baseDef: 15, baseSpd: 80, element: 'DARK', passiveKey: null },  // Tank
+  { id: 'HUM-031', name: 'Séraphine la Magicienne', rarity: 'RARE', dropWeight: 16, baseHp: 159, baseAtk: 51, baseDef: 7, baseSpd: 96, element: 'DARK', passiveKey: null },  // Mage
+  { id: 'HUM-032', name: 'Josselin', rarity: 'RARE', dropWeight: 16, baseHp: 192, baseAtk: 38, baseDef: 10, baseSpd: 93, element: 'FIRE', passiveKey: null },  // Équilibré
+  { id: 'HUM-033', name: 'Oriane', rarity: 'RARE', dropWeight: 16, baseHp: 155, baseAtk: 44, baseDef: 7, baseSpd: 135, element: 'NATURE', passiveKey: null },  // Assassin
+  { id: 'HUM-034', name: 'Akira Double-Lame', rarity: 'RARE', dropWeight: 16, baseHp: 164, baseAtk: 44, baseDef: 8, baseSpd: 131, element: 'FIRE', passiveKey: null },  // Assassin
   // EPIC — dropWeight 8 chacune
-  { id: 'HUM-035', name: 'Archimage Cael', rarity: 'EPIC', dropWeight: 8, baseHp: 254, baseAtk: 55, baseDef: 28, baseSpd: 96, element: 'FIRE', passiveKey: 'PIERCE' },  // Mage
-  { id: 'HUM-036', name: 'Garnier', rarity: 'EPIC', dropWeight: 8, baseHp: 408, baseAtk: 31, baseDef: 55, baseSpd: 88, element: 'NATURE', passiveKey: 'AEGIS' },  // Tank
+  { id: 'HUM-035', name: 'Archimage Cael', rarity: 'EPIC', dropWeight: 8, baseHp: 254, baseAtk: 83, baseDef: 11, baseSpd: 96, element: 'FIRE', passiveKey: 'PIERCE' },  // Mage
+  { id: 'HUM-036', name: 'Garnier', rarity: 'EPIC', dropWeight: 8, baseHp: 408, baseAtk: 47, baseDef: 22, baseSpd: 88, element: 'NATURE', passiveKey: 'AEGIS' },  // Tank
   // LEGENDARY — dropWeight 2 chacune
-  { id: 'HUM-037', name: 'Roi Aldric', rarity: 'LEGENDARY', dropWeight: 2, baseHp: 597, baseAtk: 64, baseDef: 75, baseSpd: 106, element: 'LIGHT', passiveKey: 'NEMESIS' },  // Combattant
-  { id: 'HUM-038', name: 'Reine Isaure', rarity: 'LEGENDARY', dropWeight: 2, baseHp: 584, baseAtk: 68, baseDef: 68, baseSpd: 107, element: 'WATER', passiveKey: 'BANNER' },  // Combattant
+  { id: 'HUM-037', name: 'Roi Aldric', rarity: 'LEGENDARY', dropWeight: 2, baseHp: 597, baseAtk: 96, baseDef: 30, baseSpd: 106, element: 'LIGHT', passiveKey: 'NEMESIS' },  // Combattant
+  { id: 'HUM-038', name: 'Reine Isaure', rarity: 'LEGENDARY', dropWeight: 2, baseHp: 584, baseAtk: 102, baseDef: 27, baseSpd: 107, element: 'WATER', passiveKey: 'BANNER' },  // Combattant
 ] as const
 
 export async function seedCards(
