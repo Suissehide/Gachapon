@@ -1,20 +1,23 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { ArrowRight, Flame, Zap } from 'lucide-react'
+import { ArrowRight, Flame } from 'lucide-react'
+import { useState } from 'react'
 
 import type { TowerSummary } from '../../api/tower.api.ts'
+import { TeamDock } from '../../components/battle/TeamDock.tsx'
 import {
   SLOT_ICONS,
   SLOT_LABELS,
 } from '../../components/collection/EquipmentSlotsPanel.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
+import { TeamEditorPopup } from '../../components/team/TeamEditorPopup.tsx'
 import { Card, CardTitle } from '../../components/ui/card.tsx'
 import {
   ELEMENT_COLOR,
   ELEMENT_ICON,
   ELEMENT_LABELS,
 } from '../../constants/card.constant.ts'
-import { useCombatPoints } from '../../queries/useCombatPoints.ts'
+import { useCombatTeam } from '../../queries/useCombatTeam.ts'
 import { useTowers } from '../../queries/useTower.ts'
 
 export const Route = createFileRoute('/_authenticated/tower')({
@@ -23,25 +26,15 @@ export const Route = createFileRoute('/_authenticated/tower')({
 
 function TowerListPage() {
   const towers = useTowers()
-  const combatPoints = useCombatPoints()
+  const team = useCombatTeam()
+  const [editorOpen, setEditorOpen] = useState(false)
 
   return (
     <PageShell>
       <PageHeader
         breadcrumbs={[{ label: 'Gachapon', to: '/play' }, { label: 'Tours' }]}
         title="Tours élémentaires"
-        subtitle="Chaque tour alimente un slot d'équipement précis. Farmer l'étage 10 est le but : c'est là que tombent les hautes raretés."
-        right={
-          combatPoints.data ? (
-            <span className="inline-flex items-center gap-1.5 font-mono text-sm text-text-light">
-              <Zap className="h-4 w-4 text-violet-500" />
-              {combatPoints.data.combatPoints} / {combatPoints.data.maxStock}
-              <span className="text-text-light/60">
-                — partagés avec la campagne
-              </span>
-            </span>
-          ) : null
-        }
+        subtitle="Gravis les étages pour augmenter le taux de rareté des pièces obtenues."
       />
 
       {towers.isLoading ? (
@@ -57,6 +50,12 @@ function TowerListPage() {
           ))}
         </div>
       )}
+      <TeamDock
+        team={team.data?.team ?? []}
+        onEdit={() => setEditorOpen(true)}
+      />
+
+      <TeamEditorPopup open={editorOpen} onOpenChange={setEditorOpen} />
     </PageShell>
   )
 }

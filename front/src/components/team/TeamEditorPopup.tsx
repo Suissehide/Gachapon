@@ -19,7 +19,6 @@ import {
   emptyStatBonuses,
   type StatBonuses,
 } from '../../utils/cardStats.ts'
-import { getRarityTone } from '../shared/tcg-card/config.ts'
 import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
 import { Button, buttonVariants } from '../ui/button.tsx'
 import {
@@ -220,7 +219,7 @@ export function TeamEditorPopup({ open, onOpenChange }: Props) {
               // 2px offset) so it isn't clipped by the overflow-hidden that
               // overflow-y-auto implicitly forces on the horizontal axis.
               <div className="max-h-[40vh] overflow-y-auto p-2">
-                <div className="grid grid-cols-4 gap-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7">
+                <div className="grid grid-cols-4 gap-4 sm:grid-cols-5 md:grid-cols-6">
                   {sortedRoster.map((uc) => (
                     <RosterTile
                       key={uc.id}
@@ -273,9 +272,11 @@ function MiniCardFace({
   power?: number
   extra?: React.ReactNode
 }) {
-  const tone = getRarityTone(card.card.rarity)
   return (
     <div className="relative aspect-[2/3] w-full">
+      {/* Niveau ET élément confiés à la carte, qui les empile en colonne — le
+          niveau puis l'élément dessous. Le badge de niveau était dessiné ici,
+          au même endroit que la colonne de la carte. */}
       <TcgCardFace
         rarity={card.card.rarity}
         name={card.card.name}
@@ -284,15 +285,9 @@ function MiniCardFace({
         variant={card.variant}
         isOwned
         compact
+        level={card.level}
+        element={card.card.element}
       />
-      <div className="pointer-events-none absolute left-1.5 top-1.5 z-20">
-        <div
-          className="flex h-5 min-w-[20px] items-center justify-center rounded-[5px] border-[0.5px] border-white px-1 font-display text-[10px] font-extrabold leading-none text-white shadow-[0_2px_6px_rgba(0,0,0,0.4)]"
-          style={{ background: tone.hex }}
-        >
-          {card.level}
-        </div>
-      </div>
       {power !== undefined && (
         <span className="pointer-events-none absolute left-1/2 top-1.5 z-20 inline-flex -translate-x-1/2 items-center gap-1 rounded-sm border-[0.5px] border-white bg-[#1b1726]/92 px-1.5 py-[3px] font-display text-[10px] font-extrabold leading-none tabular-nums text-white shadow-[0_2px_6px_rgba(27,23,38,0.45)]">
           <Swords className="h-2.5 w-2.5 text-primary" />

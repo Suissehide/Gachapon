@@ -320,8 +320,10 @@ function BadgeColumn({
   }
   return (
     <div
-      className={`absolute top-3 left-3 z-40 flex flex-col items-center ${
-        compact ? 'gap-1' : 'gap-1.5'
+      className={`absolute z-40 flex flex-col items-center ${
+        // Sur une vignette compacte (52 px dans le bandeau d'équipe), un
+        // retrait de 12 px mange le quart de la largeur : on serre le coin.
+        compact ? 'top-1.5 left-1.5 gap-1' : 'top-3 left-3 gap-1.5'
       }`}
     >
       {hasLevel && <LevelSquare level={level} tone={tone} compact={compact} />}

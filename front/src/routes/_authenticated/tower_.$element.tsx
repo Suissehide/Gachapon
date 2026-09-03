@@ -9,8 +9,6 @@ import {
   Star,
   Swords,
   Trophy,
-  Users,
-  Zap,
 } from 'lucide-react'
 import { Dialog } from 'radix-ui'
 import { useState } from 'react'
@@ -26,6 +24,7 @@ import {
   ResultPanel,
   RewardTile,
 } from '../../components/battle/resultKit.tsx'
+import { TeamDock } from '../../components/battle/TeamDock.tsx'
 import { SLOT_LABELS } from '../../components/collection/EquipmentSlotsPanel.tsx'
 import { EquipmentDropReward } from '../../components/equipment/EquipmentDropCard.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
@@ -109,8 +108,8 @@ function TowerFloorsPage() {
   const elementLabel = ELEMENT_LABELS[element as CardElement] ?? element
   const slotLabel = currentTower ? SLOT_LABELS[currentTower.slot] : null
   const subtitle = slotLabel
-    ? `Alimente le slot « ${slotLabel} ». Un étage se franchit une fois, puis devient farmable indéfiniment.`
-    : 'Un étage se franchit une fois, puis devient farmable indéfiniment.'
+    ? `Permet d'obtenir des pièces « ${slotLabel} ». Plus l'étage est haut, meilleures sont les raretés.`
+    : "Plus l'étage est haut, meilleures sont les raretés."
 
   return (
     <PageShell>
@@ -122,14 +121,6 @@ function TowerFloorsPage() {
         ]}
         title={`Tour ${elementLabel}`}
         subtitle={subtitle}
-        right={
-          combatPoints.data && (
-            <span className="inline-flex items-center gap-1.5 font-mono text-sm text-text-light">
-              <Zap className="h-4 w-4 text-violet-500" />
-              {currentPC} / {combatPoints.data.maxStock}
-            </span>
-          )
-        }
       />
 
       {result && !sceneDone ? (
@@ -151,11 +142,6 @@ function TowerFloorsPage() {
               wrap
             />
           )}
-
-          <TeamSummary
-            cardCount={userCardIds.length}
-            onEdit={() => setEditorOpen(true)}
-          />
 
           <FloorList
             status={tower.status}
@@ -181,6 +167,14 @@ function TowerFloorsPage() {
         onClose={() => setPrep(null)}
       />
 
+      {/* Même bandeau d'équipe qu'en campagne : les deux se jouent avec la
+          même équipe de combat. Il remplace le résumé d'équipe local, qui
+          disait moins pour la même place. */}
+      <TeamDock
+        team={team.data?.team ?? []}
+        onEdit={() => setEditorOpen(true)}
+      />
+
       <TeamEditorPopup open={editorOpen} onOpenChange={setEditorOpen} />
 
       <BattleResultPopup
@@ -188,28 +182,6 @@ function TowerFloorsPage() {
         onClose={closeResult}
       />
     </PageShell>
-  )
-}
-
-function TeamSummary({
-  cardCount,
-  onEdit,
-}: {
-  cardCount: number
-  onEdit: () => void
-}) {
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4">
-      <div className="flex items-center gap-2 text-sm text-text-light">
-        <Users className="h-4 w-4" />
-        {cardCount > 0
-          ? `Équipe : ${cardCount} carte${cardCount > 1 ? 's' : ''}`
-          : 'Aucune équipe configurée'}
-      </div>
-      <Button variant="outline" size="sm" onClick={onEdit}>
-        Modifier l'équipe
-      </Button>
-    </div>
   )
 }
 
