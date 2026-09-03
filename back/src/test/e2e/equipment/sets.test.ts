@@ -3,24 +3,31 @@ import { describe, expect, it } from '@jest/globals'
 import { buildTestApp } from '../../helpers/build-test-app'
 
 describe('GET /equipment/sets', () => {
-  it('renvoie les 4 sets avec leurs deux paliers', async () => {
+  it('renvoie les sets avec leur taille et leur bonus unique', async () => {
     const app = await buildTestApp()
     const res = await app.inject({ method: 'GET', url: '/equipment/sets' })
     expect(res.statusCode).toBe(200)
     const body = res.json()
-    expect(body.sets).toHaveLength(4)
+    expect(body.sets.length).toBeGreaterThan(0)
     for (const s of body.sets) {
       expect(s).toHaveProperty('key')
       expect(s).toHaveProperty('label')
-      expect(s.two.bonuses).toBeDefined()
-      expect(s.four.bonuses).toBeDefined()
+      // Un seul palier par set depuis la refonte : `pieces` dit à partir de
+      // combien de pièces le bonus s'active, et il n'y a rien au-delà.
+      expect([2, 3, 4]).toContain(s.pieces)
+      expect(Object.keys(s.bonus.bonuses)).toHaveLength(1)
+      expect(s.bonus.label).toMatch(/^\+\d/)
     }
-    // Le 2-pièces donne une stat classique, le 4-pièces une stat de stuff —
-    // vérifié sur Fureur, sans recopier les valeurs sous arbitrage.
+    // Les trois tailles sont représentées — c'est ce qui permet de porter
+    // deux sets à la fois sur les 7 emplacements d'une carte.
+    const tailles = new Set(body.sets.map((s: { pieces: number }) => s.pieces))
+    expect([...tailles].sort()).toEqual([2, 3, 4])
+
+    // Vérifié sur Fureur, sans recopier la valeur sous arbitrage.
     const fureur = body.sets.find((s: { key: string }) => s.key === 'FUREUR')
     expect(fureur.label).toBe('Fureur')
-    expect(fureur.two.bonuses.atkPct).toBeGreaterThan(0)
-    expect(fureur.four.bonuses.critDmgPct).toBeGreaterThan(0)
+    expect(fureur.pieces).toBe(4)
+    expect(fureur.bonus.bonuses.critDmgPct).toBeGreaterThan(0)
     await app.close()
   })
 

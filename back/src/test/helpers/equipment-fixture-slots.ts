@@ -6,7 +6,7 @@ import type { SetKey } from '../../main/domain/equipment/set-bonuses'
  * `Equipment`.
  *
  * Pourquoi ce fichier existe : `Equipment` porte `@@unique([slot, setKey,
- * rarity])`, une contrainte GLOBALE à toute la table — pas isolée par
+ * rarity, mainStat])`, une contrainte GLOBALE à toute la table — pas isolée par
  * fichier de test. `src/test/globalSetup.ts` ne TRUNCATE la base qu'UNE
  * SEULE FOIS par exécution complète de la suite e2e (pas par fichier), donc
  * toutes les fixtures `Equipment` de tous les fichiers e2e partagent le même
@@ -38,14 +38,30 @@ import type { SetKey } from '../../main/domain/equipment/set-bonuses'
  * l'import (avant même le premier test) si vous en réutilisez un par erreur.
  */
 
-function reservation(slot: EquipmentSlot, setKey: SetKey) {
-  return { slot, setKey } as const
+/**
+ * `mainStat` fait partie de la clé naturelle depuis que plusieurs variantes
+ * d'un même (slot, set, rareté) coexistent. Il DOIT valoir la clé unique de
+ * `bonuses` de la fixture — le seed le garantit en production, et
+ * `EquipmentDropCard` comme `accumulateItemBonuses` lisent la première clé de
+ * `bonuses`. La quasi-totalité des fixtures posent `atkFlat`, d'où le défaut ;
+ * celles qui s'en écartent passent le leur.
+ */
+function reservation(
+  slot: EquipmentSlot,
+  setKey: SetKey,
+  mainStat: MainStat = 'atkFlat',
+) {
+  return { slot, setKey, mainStat } as const
 }
+
+type MainStat = 'atkFlat' | 'defFlat' | 'hpFlat' | 'spdFlat'
 
 // equipment.test.ts — seul fichier où le slot est sémantiquement nécessaire :
 // il teste l'exclusivité d'équipement par slot (2 pièces WEAPON, une ARMOR).
 export const EQUIPMENT_TEST_WEAPON = reservation('WEAPON', 'FUREUR')
-export const EQUIPMENT_TEST_ARMOR = reservation('ARMOR', 'FUREUR')
+// Seule fixture dont la stat principale n'est pas `atkFlat` : ses bonus sont
+// `{ defFlat: 3, hpPct: 2 }`, donc sa principale est `defFlat`.
+export const EQUIPMENT_TEST_ARMOR = reservation('ARMOR', 'FUREUR', 'defFlat')
 
 // equipment-progression.test.ts — 1 pièce, jamais équipée.
 export const EQUIPMENT_PROGRESSION = reservation('RING', 'FUREUR')
@@ -106,13 +122,13 @@ const ALL_RESERVATIONS = [
 
 const seen = new Set<string>()
 for (const r of ALL_RESERVATIONS) {
-  const key = `${r.slot}:${r.setKey}`
+  const key = `${r.slot}:${r.setKey}:${r.mainStat}`
   if (seen.has(key)) {
     throw new Error(
-      `Réservation Equipment en double sur (slot, setKey) = ${key} — ` +
+      `Réservation Equipment en double sur (slot, setKey, mainStat) = ${key} — ` +
         'deux fixtures e2e vont se marcher dessus sous ' +
-        '@@unique([slot, setKey, rarity]) car la base de test n\'est ' +
-        'purgée qu\'une fois par exécution complète. Corrigez ' +
+        '@@unique([slot, setKey, rarity, mainStat]) car la base de test ' +
+        'n\'est purgée qu\'une fois par exécution complète. Corrigez ' +
         'back/src/test/helpers/equipment-fixture-slots.ts.',
     )
   }
