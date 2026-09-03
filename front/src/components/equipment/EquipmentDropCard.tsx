@@ -123,6 +123,7 @@ export function EquipmentDropCard({
   className,
   actions,
   trailing,
+  highlight,
 }: {
   drop: EquipmentDrop
   scrapGold?: number
@@ -141,6 +142,12 @@ export function EquipmentDropCard({
    * l'écran de victoire.
    */
   actions?: ReactNode
+  /**
+   * Écart à mettre en avant sur une sous-stat, juste après une amélioration :
+   * l'inventaire y passe le palier renvoyé par le serveur pour que le joueur
+   * voie CE QUI a bougé, pas seulement que quelque chose a bougé.
+   */
+  highlight?: { key: string; delta: number } | null
 }) {
   const tier = RARITY_TIER[drop.rarity] ?? 1
   const SlotIcon = SLOT_ICONS[drop.slot]
@@ -246,6 +253,11 @@ export function EquipmentDropCard({
               <span className="ml-auto shrink-0 font-display text-sm font-extrabold tabular-nums text-text">
                 {formatValue(s.key, s.value)}
               </span>
+              {highlight?.key === s.key && (
+                <span className="shrink-0 font-mono text-[10px] font-bold text-emerald-600 tabular-nums">
+                  {formatValue(s.key, highlight.delta)}
+                </span>
+              )}
             </div>
           ))}
         </div>

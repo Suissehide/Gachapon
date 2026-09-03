@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import {
+  AlertTriangle,
   ChevronsUp,
   CircleHelp,
   Coins,
@@ -7,7 +8,7 @@ import {
   Sword,
   Zap,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import type {
   EquipmentDrop,
@@ -25,8 +26,7 @@ import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { CardDisplay } from '../../components/shared/tcg-card/CardDisplay.tsx'
 import { Button } from '../../components/ui/button.tsx'
-import DropdownFilter from '../../components/ui/dropdownFilter.tsx'
-import { Checkbox, Select } from '../../components/ui/input.tsx'
+import { Checkbox } from '../../components/ui/input.tsx'
 import {
   Popup,
   PopupBody,
@@ -35,6 +35,7 @@ import {
   PopupHeader,
   PopupTitle,
 } from '../../components/ui/popup.tsx'
+import { SelectMulti } from '../../components/ui/selectMulti.tsx'
 import { RARITY_COLOR_VAR, RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { useUserCollection } from '../../queries/useCollection.ts'
 import {
@@ -54,18 +55,13 @@ import { useAuthStore } from '../../stores/auth.store.ts'
 // Options de rareté — mêmes libellés et mêmes pastilles que la page
 // Collection, dont on réutilise RARITY_LABEL_FR et RARITY_COLOR_VAR plutôt
 // que d'en recopier une seconde table.
-type RarityFilter = EquipmentRarity | 'ALL'
-
-const RARITY_FILTER_OPTIONS = [
-  { value: 'ALL', label: 'Toutes' },
-  ...(
-    ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY'] as EquipmentRarity[]
-  ).map((r) => ({
-    value: r,
-    label: RARITY_LABEL_FR[r] ?? r,
-    icon: <RarityDot color={RARITY_COLOR_VAR[r] ?? ''} />,
-  })),
-]
+const RARITY_FILTER_OPTIONS = (
+  ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY'] as EquipmentRarity[]
+).map((r) => ({
+  value: r,
+  label: RARITY_LABEL_FR[r] ?? r,
+  icon: <RarityDot color={RARITY_COLOR_VAR[r] ?? ''} />,
+}))
 
 export const Route = createFileRoute('/_authenticated/equipment')({
   component: EquipmentPage,
@@ -97,7 +93,7 @@ function EquipmentPage() {
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
 
   const [slotFilter, setSlotFilter] = useState<EquipmentSlot[]>([])
-  const [rarityFilter, setRarityFilter] = useState<RarityFilter>('ALL')
+  const [rarityFilter, setRarityFilter] = useState<EquipmentRarity[]>([])
   // Filtre par set : indispensable dès que l'inventaire grossit (tours
   // élémentaires). Multi-sélection, sur le modèle de DropdownFilter ailleurs
   // dans l'app (voir admin.cards.tsx).
@@ -106,6 +102,7 @@ function EquipmentPage() {
   // compter des centaines de pièces, et un tableau imposerait un parcours à
   // chaque case cochée.
   const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [confirmSell, setConfirmSell] = useState(false)
   const [pickerFor, setPickerFor] = useState<EquipmentInstance | null>(null)
 
   const sets = equipmentSets.data?.sets ?? []
@@ -116,7 +113,7 @@ function EquipmentPage() {
         if (slotFilter.length > 0 && !slotFilter.includes(i.slot)) {
           return false
         }
-        if (rarityFilter !== 'ALL' && i.rarity !== rarityFilter) {
+        if (rarityFilter.length > 0 && !rarityFilter.includes(i.rarity)) {
           return false
         }
         if (setFilter.length > 0 && !setFilter.includes(i.setKey)) {
@@ -149,14 +146,33 @@ function EquipmentPage() {
       return next
     })
 
+  // Vendre un légendaire est irréversible et coûte cher à refarmer : on
+  // demande confirmation plutôt que de laisser un clic distrait le détruire.
+  const legendariesSelected = selectedItems.filter(
+    (i) => i.rarity === 'LEGENDARY',
+  )
+
+  const sellSelection = () => {
+    salvageItems.mutate(
+      selectedItems.map((i) => i.id),
+      {
+        onSuccess: () => {
+          setSelected(new Set())
+          setConfirmSell(false)
+        },
+      },
+    )
+  }
+
   const handleSellSelection = () => {
     if (selectedItems.length === 0) {
       return
     }
-    salvageItems.mutate(
-      selectedItems.map((i) => i.id),
-      { onSuccess: () => setSelected(new Set()) },
-    )
+    if (legendariesSelected.length > 0) {
+      setConfirmSell(true)
+      return
+    }
+    sellSelection()
   }
 
   const handleEquipOn = (targetUserCardId: string) => {
@@ -187,21 +203,11 @@ function EquipmentPage() {
             et son libellé porté par le déclencheur. C'était un contrôle
             segmenté sans intitulé. */}
         <FilterField id="filter-equip-slot" label="Type">
-          <DropdownFilter
-            label="Tous"
-            filters={SLOT_FILTER_OPTIONS.map((o) => ({
-              id: o.value,
-              label: o.label,
-              checked: slotFilter.includes(o.value),
-            }))}
-            onFilterChange={(id, checked) =>
-              setSlotFilter((prev) =>
-                checked
-                  ? [...prev, id as EquipmentSlot]
-                  : prev.filter((k) => k !== id),
-              )
-            }
-            onClear={() => setSlotFilter([])}
+          <SelectMulti
+            id="filter-equip-slot"
+            options={SLOT_FILTER_OPTIONS}
+            value={slotFilter}
+            onChange={(v) => setSlotFilter(v as EquipmentSlot[])}
           />
         </FilterField>
         {/* Même filtre que la page Collection : un Select intitulé « Rareté »
@@ -209,30 +215,19 @@ function EquipmentPage() {
             « Co / Pc / R / E / L » sans intitulé, illisible pour qui ne
             connaît pas déjà l'ordre des raretés. */}
         <FilterField id="filter-equip-rarity" label="Rareté">
-          <Select
+          <SelectMulti
             id="filter-equip-rarity"
             options={RARITY_FILTER_OPTIONS}
             value={rarityFilter}
-            onValueChange={(v) => setRarityFilter(v as RarityFilter)}
-            clearable={false}
+            onChange={(v) => setRarityFilter(v as EquipmentRarity[])}
           />
         </FilterField>
         <FilterField id="filter-equip-set" label="Set">
-          <DropdownFilter
-            label="Tous"
-            filters={sets.map((s) => ({
-              id: s.key,
-              label: s.label,
-              checked: setFilter.includes(s.key),
-            }))}
-            onFilterChange={(id, checked) =>
-              setSetFilter((prev) =>
-                checked
-                  ? [...prev, id as EquipmentSetKey]
-                  : prev.filter((k) => k !== id),
-              )
-            }
-            onClear={() => setSetFilter([])}
+          <SelectMulti
+            id="filter-equip-set"
+            options={sets.map((st) => ({ value: st.key, label: st.label }))}
+            value={setFilter}
+            onChange={(v) => setSetFilter(v as EquipmentSetKey[])}
           />
         </FilterField>
       </div>
@@ -292,6 +287,54 @@ function EquipmentPage() {
           ))}
         </div>
       )}
+
+      <Popup open={confirmSell} onOpenChange={setConfirmSell}>
+        <PopupContent>
+          <PopupHeader>
+            <PopupTitle
+              icon={<AlertTriangle className="h-4 w-4" />}
+              subtitle="Cette action est définitive."
+            >
+              Vendre {legendariesSelected.length} légendaire
+              {legendariesSelected.length > 1 ? 's' : ''} ?
+            </PopupTitle>
+          </PopupHeader>
+          <PopupBody>
+            <p className="text-sm text-text-light">
+              La sélection contient{' '}
+              <span className="font-semibold text-text">
+                {legendariesSelected.length} pièce
+                {legendariesSelected.length > 1 ? 's' : ''} légendaire
+                {legendariesSelected.length > 1 ? 's' : ''}
+              </span>{' '}
+              sur {selectedItems.length}. Vendre rapportera{' '}
+              <span className="font-semibold text-text">
+                {selectionGold.toLocaleString('fr-FR')} or
+              </span>
+              .
+            </p>
+            <ul className="mt-3 max-h-40 space-y-1 overflow-y-auto">
+              {legendariesSelected.map((i) => (
+                <li key={i.id} className="font-mono text-xs text-text-light">
+                  · {i.name}
+                </li>
+              ))}
+            </ul>
+          </PopupBody>
+          <PopupFooter className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button variant="outline" onClick={() => setConfirmSell(false)}>
+              Annuler
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={salvageItems.isPending}
+              onClick={sellSelection}
+            >
+              Vendre quand même
+            </Button>
+          </PopupFooter>
+        </PopupContent>
+      </Popup>
 
       {pickerFor && (
         <Popup open onOpenChange={(v) => !v && setPickerFor(null)}>
@@ -361,6 +404,17 @@ function EquipmentCard({
   const upgradeItem = useUpgradeItem()
   const salvageItems = useSalvageItems()
   const gold = useAuthStore((st) => st.user?.gold ?? 0)
+  // Écart de la dernière amélioration, effacé au bout de quelques secondes :
+  // c'est un accusé de réception, pas une information permanente.
+  const [gain, setGain] = useState<{ key: string; delta: number } | null>(null)
+
+  useEffect(() => {
+    if (!gain) {
+      return
+    }
+    const t = setTimeout(() => setGain(null), 4000)
+    return () => clearTimeout(t)
+  }, [gain])
 
   // Même fiche que l'écran de victoire, avec les actions d'inventaire à la
   // place du bouton « Détruire ». `EquipmentInstance` porte déjà tous les
@@ -410,6 +464,7 @@ function EquipmentCard({
       }
       drop={drop}
       equipLevelScale={economy.equip.levelScale}
+      highlight={gain}
       actions={
         <div className="flex flex-col gap-2">
           {item.equippedOnId ? (
@@ -444,26 +499,35 @@ function EquipmentCard({
             <Button
               size="sm"
               variant="outline"
-              className="flex-1 gap-1"
+              className="h-auto flex-1 flex-col gap-0 py-1.5"
               disabled={busy || atMaxLevel || gold < upgradeCost}
-              onClick={() => upgradeItem.mutate(item.id)}
+              onClick={() =>
+                upgradeItem.mutate(item.id, {
+                  onSuccess: (res) => {
+                    if (res.milestone) {
+                      setGain({
+                        key: res.milestone.key,
+                        delta: res.milestone.rolledValue,
+                      })
+                    }
+                  },
+                })
+              }
             >
-              <ChevronsUp className="h-3.5 w-3.5" />
-              {atMaxLevel ? (
-                'Niveau max'
-              ) : (
-                <>
-                  Améliorer
-                  <span className="font-mono text-[10px] opacity-70">
-                    {upgradeCost.toLocaleString('fr-FR')} or
-                  </span>
-                </>
-              )}
+              {/* Le prix passe AU-DESSUS du libellé : c'est lui qu'on compare
+                  d'une pièce à l'autre, le verbe ne change jamais. */}
+              <span className="font-mono text-[10px] opacity-70">
+                {atMaxLevel ? '—' : `${upgradeCost.toLocaleString('fr-FR')} or`}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <ChevronsUp className="h-3.5 w-3.5" />
+                {atMaxLevel ? 'Niveau max' : 'Améliorer'}
+              </span>
             </Button>
             <Button
               size="sm"
               variant="outline"
-              className="flex-1 gap-1 border-destructive/25 text-destructive hover:bg-destructive/10"
+              className="h-auto flex-1 flex-col gap-0 border-destructive/25 py-1.5 text-destructive hover:bg-destructive/10"
               disabled={!canSalvage}
               onClick={() => salvageItems.mutate([item.id])}
               title={
@@ -472,10 +536,12 @@ function EquipmentCard({
                   : undefined
               }
             >
-              <Coins className="h-3.5 w-3.5" />
-              Vendre
               <span className="font-mono text-[10px] opacity-70">
-                +{salvageGold.toLocaleString('fr-FR')}
+                +{salvageGold.toLocaleString('fr-FR')} or
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <Coins className="h-3.5 w-3.5" />
+                Vendre
               </span>
             </Button>
           </div>
