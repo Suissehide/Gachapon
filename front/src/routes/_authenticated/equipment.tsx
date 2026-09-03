@@ -514,14 +514,14 @@ function EquipmentCard({
                 })
               }
             >
-              {/* Le prix passe AU-DESSUS du libellé : c'est lui qu'on compare
-                  d'une pièce à l'autre, le verbe ne change jamais. */}
-              <span className="font-mono text-[10px] opacity-70">
-                {atMaxLevel ? '—' : `${upgradeCost.toLocaleString('fr-FR')} or`}
-              </span>
               <span className="inline-flex items-center gap-1">
                 <ChevronsUp className="h-3.5 w-3.5" />
                 {atMaxLevel ? 'Niveau max' : 'Améliorer'}
+              </span>
+              {/* Le prix se lit SOUS le libellé : l'action d'abord, son coût
+                  ensuite. */}
+              <span className="font-mono text-[10px] opacity-70">
+                {atMaxLevel ? '—' : `${upgradeCost.toLocaleString('fr-FR')} or`}
               </span>
             </Button>
             <Button
@@ -536,12 +536,12 @@ function EquipmentCard({
                   : undefined
               }
             >
-              <span className="font-mono text-[10px] opacity-70">
-                +{salvageGold.toLocaleString('fr-FR')} or
-              </span>
               <span className="inline-flex items-center gap-1">
                 <Coins className="h-3.5 w-3.5" />
                 Vendre
+              </span>
+              <span className="font-mono text-[10px] opacity-70">
+                +{salvageGold.toLocaleString('fr-FR')} or
               </span>
             </Button>
           </div>
