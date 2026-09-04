@@ -63,21 +63,27 @@ describe('seed des tours', () => {
     expect(partEpicPlus(10)).toBeGreaterThan(partEpicPlus(1))
   })
 
-  it('la difficulté monte régulièrement, sans mur', () => {
-    // Le design a changé : la tour n'a plus de « spot de farm » unique en haut.
-    // Chaque étage doit rester jouable, donc la puissance monte d'un pas
-    // CONSTANT — ce test remplace celui qui exigeait des marches franches.
+  it('la difficulté monte vite en bas et par paliers fins en haut', () => {
+    // Troisième forme demandée pour cette courbe, après « marches franches »
+    // puis « linéaire » : montée RAPIDE au début, qui filtre, puis paliers de
+    // plus en plus FINS, pour qu'un niveau de carte ou une pièce suffise à
+    // franchir la marche suivante.
     const puissance = (f: number) => towerEnemyPower(f).baseAtk
-    const pas = Array.from(
+    const rapports = Array.from(
       { length: 9 },
-      (_, i) => puissance(i + 2) - puissance(i + 1),
+      (_, i) => puissance(i + 2) / puissance(i + 1),
     )
-    // Strictement croissant, et le plus grand pas n'excède pas de 15 % le plus
-    // petit : aucun étage ne fait office de mur.
-    for (const p of pas) {
-      expect(p).toBeGreaterThan(0)
+    // Strictement croissante, et les rapports DÉCROISSENT : chaque marche est
+    // relativement plus douce que la précédente.
+    for (let i = 0; i < rapports.length; i++) {
+      expect(rapports[i]).toBeGreaterThan(1)
+      if (i > 0) {
+        expect(rapports[i]).toBeLessThanOrEqual(rapports[i - 1])
+      }
     }
-    expect(Math.max(...pas) / Math.min(...pas)).toBeLessThan(1.15)
+    // Le bas filtre (premier rapport large), le haut se joue à peu de chose.
+    expect(rapports[0]).toBeGreaterThan(2)
+    expect(rapports[rapports.length - 1]).toBeLessThan(1.15)
   })
 
   it('chaque étage a ses propres taux de rareté', () => {
@@ -92,13 +98,16 @@ describe('seed des tours', () => {
   })
 
   it('le profil de base des ennemis de tour suit RARITY_BASE.EPIC de la campagne, pas un littéral recopié', () => {
-    // Étage 1 (échelle ×1) : baseHp/baseAtk/baseDef doivent être EXACTEMENT
-    // le profil EPIC de la campagne, sinon la puissance des tours dérive en
-    // silence d'un futur rééquilibrage de campagne (voir campaign.ts).
+    // Le profil de base reste EXACTEMENT celui d'EPIC en campagne, mis à
+    // l'échelle de l'étage — sinon la puissance des tours dérive en silence
+    // d'un futur rééquilibrage de campagne (voir campaign.ts). L'étage 1
+    // n'étant plus à l'échelle ×1, on vérifie le RAPPORT plutôt que l'égalité.
     const p1 = towerEnemyPower(1)
-    expect(p1.baseHp).toBe(RARITY_BASE.EPIC.hp)
-    expect(p1.baseAtk).toBe(RARITY_BASE.EPIC.atk)
-    expect(p1.baseDef).toBe(RARITY_BASE.EPIC.def)
+    const echelle = p1.baseHp / RARITY_BASE.EPIC.hp
+    expect(echelle).toBeGreaterThan(0)
+    expect(p1.baseAtk).toBe(Math.round(RARITY_BASE.EPIC.atk * echelle))
+    expect(p1.baseDef).toBe(Math.round(RARITY_BASE.EPIC.def * echelle))
+    // La vitesse ne suit pas l'échelle de l'étage, seulement son index.
     expect(p1.baseSpd).toBe(RARITY_BASE.EPIC.spd)
   })
 

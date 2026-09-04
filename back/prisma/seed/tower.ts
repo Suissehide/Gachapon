@@ -19,22 +19,24 @@ export type { TowerElement }
 type Tx = Parameters<Parameters<PrismaClient['$transaction']>[0]>[0]
 
 /**
- * Difficulté par étage — progression LINÉAIRE, pas de mur.
+ * Difficulté par étage — montée RAPIDE puis paliers FINS.
  *
- * Le premier découpage faisait de l'étage 10 « le » spot de farm : deux
- * marches franches (6→7, puis 9→10 à ×13) rendaient les étages bas inutiles
- * dès qu'on avait passé le mur. La montée est désormais régulière, +0,6 par
- * étage, pour que chaque étage reste un lieu de farm viable.
+ * Ancrage : l'étage 10 pèse autant que l'étage 80 de la campagne (537 943 de
+ * puissance d'équipe). L'ancienne courbe linéaire y plafonnait à 19 293, soit
+ * vingt-huit fois moins — d'où trois cartes niveau 10 qui franchissaient
+ * l'étage 8 sans effort.
  *
- * Ce qui différencie les étages n'est plus la difficulté mais le BUTIN : les
- * poids de rareté de RARITY_WEIGHTS évoluent étage par étage, donc monter
- * améliore les chances de haute rareté sans jamais rendre les étages
- * précédents obsolètes.
+ * La forme : les rapports entre étages consécutifs partent de ×3,3 et
+ * retombent à ×1,05 en haut. Le bas filtre vite, le haut se joue à peu de
+ * chose — un niveau de carte ou une pièce doit suffire à franchir la marche
+ * suivante, plutôt qu'un mur.
  *
- * Point de calibrage ouvert (§12 de la spec) : à comparer à enemyScale de la
- * campagne et à rejouer sur le simulateur réel.
+ * L'étage 10 fait combattre trois ennemis en AOE_3 : sa puissance AFFICHÉE
+ * bondit (prime de menace ×7 dans la jauge) alors que ses stats réelles ne
+ * montent que de 4,7 % par rapport à l'étage 9. Qui franchit le 9 n'est donc
+ * pas loin du 10 — c'est la jauge qui exagère, pas la marche.
  */
-const FLOOR_SCALE = [1, 1.6, 2.2, 2.8, 3.4, 4, 4.6, 5.2, 5.8, 6.4] as const
+const FLOOR_SCALE = [3, 10, 25, 50, 85, 120, 145, 160, 172, 180] as const
 
 // Profil épique de campagne (source unique : RARITY_BASE.EPIC dans
 // campaign.ts) — pas de littéral recopié, sinon un futur rééquilibrage de
