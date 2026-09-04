@@ -8,7 +8,7 @@ export const RARITY_MULT: Record<CardRarity, number> = {
   LEGENDARY: 3.0,
 }
 
-export const STAT_GROWTH_PER_LEVEL = 0.06
+export const STAT_GROWTH_PER_LEVEL = 0.09
 
 /**
  * Palier maximum atteignable par une carte. Sert aussi de point de saturation

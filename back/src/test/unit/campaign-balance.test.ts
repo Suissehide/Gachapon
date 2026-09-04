@@ -67,17 +67,23 @@ describe('enemyScale — courbe continue en deux phases', () => {
     // scale = termeNiveau × termeAscension ; le terme de niveau est connu,
     // on isole donc l'ascension par division.
     const levelTerm = (n: number) =>
-      1 + 0.06 * (Math.min(n, 70) - 1) + 0.03 * Math.max(0, n - 70)
+      1 + 0.09 * (Math.min(n, 70) - 1) + 0.03 * Math.max(0, n - 70)
     const ascension = (n: number) => enemyScale(n) / levelTerm(n)
     expect(ascension(80)).toBeCloseTo(ascension(70), 10)
     expect(ascension(90)).toBeCloseTo(ascension(70), 10)
   })
 
-  it('plus aucune marche : chaque pas entre étages consécutifs reste sous +8 %', () => {
+  it('plus aucune marche : chaque pas entre étages consécutifs reste sous +12 %', () => {
+    // Seuil relevé de 8 % à 12 % avec la croissance passée de 0,06 à 0,09 par
+    // niveau. Les deux camps montent ensemble — le rapport joueur/ennemi est
+    // INCHANGÉ (0,876 à l'étage 10, 0,840 au 70, identique aux deux taux) —
+    // mais chaque étage franchit mécaniquement une marche plus haute : 10,6 %
+    // au maximum, en tout début de campagne. Ce que le test protège reste la
+    // continuité : aucune marche franche, pas de mur.
     for (let n = 2; n <= 90; n++) {
       const step = enemyScale(n) / enemyScale(n - 1)
       expect(step).toBeGreaterThan(1)
-      expect(step).toBeLessThan(1.08)
+      expect(step).toBeLessThan(1.12)
     }
   })
 
@@ -109,16 +115,17 @@ describe('bossEnemyTeam — solo AOE_3, PV ×BOSS_HP_MULT, vitesse à parité AT
     expect(boss.attackPattern).toBe('AOE_3')
     // Vitesse scaleée — plus de valeur fixe 100
     expect(boss.baseSpd).toBeGreaterThan(100)
-    // Ancre exacte (COMMON {101,20,5,89}, étage global 10 → enemyScale(10) = 1.757439) :
-    // PV = round(101 × 3.25 × 0.92 × 1.757439) = 531,
-    // ATQ = round(20 × 0.92 × 1.757439) = 32,
-    // DEF = round(5 × 1.2 × 0.92 × 1.757439) = 10,
-    // VIT = round(89 × 1.757439) = 156.
+    // Ancre exacte (COMMON {101,20,5,89}, étage global 10 → enemyScale(10) = 2.065561
+    // depuis la croissance passée à 0,09) :
+    // PV = round(101 × 3.25 × 0.92 × 2.065561) = 624,
+    // ATQ = round(20 × 0.92 × 2.065561) = 38,
+    // DEF = round(5 × 1.2 × 0.92 × 2.065561) = 11,
+    // VIT = round(89 × 2.065561) = 184.
     expect(boss).toMatchObject({
-      baseHp: 531,
-      baseAtk: 32,
-      baseDef: 10,
-      baseSpd: 156,
+      baseHp: 624,
+      baseAtk: 38,
+      baseDef: 11,
+      baseSpd: 184,
       attackPattern: 'AOE_3',
     })
   })

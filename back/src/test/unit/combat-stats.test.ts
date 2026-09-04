@@ -33,8 +33,8 @@ describe('combat-stats: computeFinalStats', () => {
     })
   })
 
-  it('applies +6% per level beyond level 1', () => {
-    // level 10 = +54% growth
+  it('applies +9% per level beyond level 1', () => {
+    // level 10 = +81 % de croissance (0,09 × 9)
     const stats = computeFinalStats({
       ...BASE,
       level: 10,
@@ -42,9 +42,9 @@ describe('combat-stats: computeFinalStats', () => {
       variant: 'NORMAL',
       baseStats: BASES_COMBAT,
     })
-    // hp 200 × 1.54 = 308
-    expect(stats.hp).toBe(308)
-    expect(stats.atk).toBe(31) // round(20 × 1.54) = round(30.8)
+    // hp 200 × 1.81 = 362
+    expect(stats.hp).toBe(362)
+    expect(stats.atk).toBe(36) // round(20 × 1.81) = round(36.2)
   })
 
   it('applies variant multiplier (BRILLIANT ×1.15)', () => {
@@ -92,8 +92,8 @@ describe('combat-stats: computeFinalStats', () => {
   })
 
   it('combines level + variant + palier multiplicatively', () => {
-    // level 10 (+54%), HOLOGRAPHIC (×1.30), palier 2 (×1.15)
-    // 200 × 1.54 × 1.30 × 1.15 = 460.46 → 460
+    // level 10 (+81 %), HOLOGRAPHIC (×1.30), palier 2 (×1.15)
+    // 200 × 1.81 × 1.30 × 1.15 = 541.19 → 541
     const stats = computeFinalStats({
       ...BASE,
       level: 10,
@@ -101,7 +101,7 @@ describe('combat-stats: computeFinalStats', () => {
       variant: 'HOLOGRAPHIC',
       baseStats: BASES_COMBAT,
     })
-    expect(stats.hp).toBe(460)
+    expect(stats.hp).toBe(541)
   })
 
   it('adds equipment flat bonuses', () => {
@@ -190,12 +190,12 @@ describe('combat-stats: computeFinalStats', () => {
   it('rounds final values to integers', () => {
     const stats = computeFinalStats({
       ...BASE,
-      level: 2, // +6% → 21.2
+      level: 2, // +9 % → 21.8
       palier: 1,
       variant: 'NORMAL',
       baseStats: BASES_COMBAT,
     })
-    expect(stats.atk).toBe(21)
+    expect(stats.atk).toBe(22)
     expect(Number.isInteger(stats.atk)).toBe(true)
     expect(Number.isInteger(stats.hp)).toBe(true)
     expect(Number.isInteger(stats.def)).toBe(true)

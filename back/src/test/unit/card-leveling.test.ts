@@ -99,11 +99,11 @@ describe('card-leveling pure domain', () => {
     it('returns base at level 1 (no growth)', () => {
       expect(statAtLevel(100, 1)).toBe(100)
     })
-    it('applies +6% per level beyond 1', () => {
-      // level 10 = 100 × (1 + 0.06 × 9) = 100 × 1.54 = 154
-      expect(statAtLevel(100, 10)).toBeCloseTo(154, 5)
-      // level 60 = 100 × (1 + 0.06 × 59) = 100 × 4.54 = 454
-      expect(statAtLevel(100, 60)).toBeCloseTo(454, 5)
+    it('applies +9% per level beyond 1', () => {
+      // level 10 = 100 × (1 + 0.09 × 9) = 100 × 1.81 = 181
+      expect(statAtLevel(100, 10)).toBeCloseTo(181, 5)
+      // level 60 = 100 × (1 + 0.09 × 59) = 100 × 6.31 = 631
+      expect(statAtLevel(100, 60)).toBeCloseTo(631, 5)
     })
   })
 

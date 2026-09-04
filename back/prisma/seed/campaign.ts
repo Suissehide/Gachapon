@@ -58,7 +58,7 @@ const BOSS_FACTOR = 0.92 // boss (avant ×PV et AOE)
 //   l'ÉQUIPEMENT. L'ascension ennemie est figée (elle sature à l'étage
 //   10 × MAX_PALIER) et le gain de niveau est divisé par deux : l'amplitude
 //   d'un chapitre tombe de ~14 à ~6 points.
-const ENEMY_STAT_GROWTH_PER_LEVEL = 0.06
+const ENEMY_STAT_GROWTH_PER_LEVEL = 0.09
 const ENEMY_GROWTH_LATE = 0.03
 const ENEMY_ASCENSION_BONUS = 0.15
 const ENEMY_ASCENSION_PER_STAGE = 0.105

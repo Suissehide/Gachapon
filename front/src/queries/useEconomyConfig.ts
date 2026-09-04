@@ -41,7 +41,7 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
       EPIC: 2.3,
       LEGENDARY: 3.0,
     },
-    statGrowthPerLevel: 0.06,
+    statGrowthPerLevel: 0.09,
     ascensionStatBonus: 0.15,
     maxPalier: 7,
   },

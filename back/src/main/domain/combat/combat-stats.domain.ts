@@ -6,7 +6,7 @@ const VARIANT_MULT: Record<CardVariant, number> = {
   HOLOGRAPHIC: 1.3,
 }
 
-const STAT_GROWTH_PER_LEVEL = 0.06
+const STAT_GROWTH_PER_LEVEL = 0.09
 export const ASCENSION_STAT_BONUS = 0.15
 
 export interface CombatStats {
