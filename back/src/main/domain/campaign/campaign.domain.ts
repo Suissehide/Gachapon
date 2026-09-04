@@ -768,6 +768,11 @@ export class CampaignDomain {
                   name: candidate.name,
                   rarity: droppedRarity,
                 })
+                await this.#achievementsDomain.track(tx, userId, {
+                  kind: 'EQUIPMENT_OBTAINED',
+                  equipmentId: candidate.id,
+                  rarity: droppedRarity,
+                })
               }
             }
 
@@ -951,6 +956,11 @@ export class CampaignDomain {
             substats: (ue.substats ?? []) as { key: string; value: number }[],
             baseBoost: ue.baseBoost,
           }
+          await this.#achievementsDomain.track(tx, userId, {
+            kind: 'EQUIPMENT_OBTAINED',
+            equipmentId: picked.id,
+            rarity: picked.rarity,
+          })
         }
       }
 
@@ -1077,6 +1087,11 @@ export class CampaignDomain {
             substats: (ue.substats ?? []) as { key: string; value: number }[],
             baseBoost: ue.baseBoost,
           }
+          await this.#achievementsDomain.track(tx, userId, {
+            kind: 'EQUIPMENT_OBTAINED',
+            equipmentId: picked.id,
+            rarity: droppedRarity,
+          })
         }
       }
 

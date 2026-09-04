@@ -53,6 +53,13 @@ const EVENT_TO_COUNTER_TYPES: Record<AchievementEventKind, CriterionType[]> = {
   CARD_LEVELED: [],
   GOLD_SPENT: [],
   TEAM_JOINED: [],
+  // Aucun succès ne consomme encore les événements équipement : ils
+  // n'existent que pour alimenter les quêtes (fan-out dans
+  // AchievementsDomain.track). Les entrées vides sont exigées par le
+  // Record exhaustif sur AchievementEventKind.
+  EQUIPMENT_OBTAINED: [],
+  EQUIPMENT_UPGRADED: [],
+  EQUIPMENT_SALVAGED: [],
 }
 
 const EVENT_TO_STATE_TYPES: Record<AchievementEventKind, CriterionType[]> = {
@@ -68,6 +75,13 @@ const EVENT_TO_STATE_TYPES: Record<AchievementEventKind, CriterionType[]> = {
   CARD_LEVELED: ['CARDS_AT_MAX_LEVEL'],
   GOLD_SPENT: [],
   TEAM_JOINED: [],
+  // Aucun succès ne consomme encore les événements équipement : ils
+  // n'existent que pour alimenter les quêtes (fan-out dans
+  // AchievementsDomain.track). Les entrées vides sont exigées par le
+  // Record exhaustif sur AchievementEventKind.
+  EQUIPMENT_OBTAINED: [],
+  EQUIPMENT_UPGRADED: [],
+  EQUIPMENT_SALVAGED: [],
 }
 
 export const counterTypesFor = (kind: AchievementEventKind): CriterionType[] =>

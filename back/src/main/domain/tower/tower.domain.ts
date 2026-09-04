@@ -474,6 +474,12 @@ export class TowerDomain {
               },
             })
 
+            await this.#achievementsDomain.track(tx, userId, {
+              kind: 'EQUIPMENT_OBTAINED',
+              equipmentId: equipment.id,
+              rarity: equipment.rarity,
+            })
+
             // Alimente les quêtes (STAGE_CLEARED, filtrées sur le seul
             // `kind` — quest-matching.ts) sans faire progresser les succès
             // de campagne (G2, relecture finale) : `source: 'TOWER'` fait

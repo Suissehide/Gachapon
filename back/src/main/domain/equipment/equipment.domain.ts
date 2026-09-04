@@ -4,6 +4,7 @@ import type { EquipmentSlot, Prisma } from '../../../generated/client'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
+import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import type { EquipmentBonuses } from '../combat/combat-stats.domain'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import {
@@ -120,13 +121,19 @@ const SALVAGE_GOLD_KEY = {
 export class EquipmentDomain {
   readonly #postgresOrm: PostgresOrm
   readonly #configService: ConfigServiceInterface
+  readonly #achievementsDomain: AchievementsDomainInterface
 
   constructor({
     postgresOrm,
     configService,
-  }: Pick<IocContainer, 'postgresOrm' | 'configService'>) {
+    achievementsDomain,
+  }: Pick<
+    IocContainer,
+    'postgresOrm' | 'configService' | 'achievementsDomain'
+  >) {
     this.#postgresOrm = postgresOrm
     this.#configService = configService
+    this.#achievementsDomain = achievementsDomain
   }
 
   /**
@@ -394,6 +401,22 @@ export class EquipmentDomain {
             },
           })
 
+          // GOLD_SPENT autant que EQUIPMENT_UPGRADED : l'amélioration
+          // d'équipement est le principal puits d'or du jeu, l'omettre faisait
+          // ignorer ces dépenses à la quête « Dépensier ».
+          await Promise.all([
+            this.#achievementsDomain.track(tx, userId, {
+              kind: 'EQUIPMENT_UPGRADED',
+              amount: 1,
+            }),
+            cost > 0
+              ? this.#achievementsDomain.track(tx, userId, {
+                  kind: 'GOLD_SPENT',
+                  amount: cost,
+                })
+              : Promise.resolve([]),
+          ])
+
           return {
             level: newLevel,
             substats,
@@ -457,6 +480,12 @@ export class EquipmentDomain {
             data: { gold: { increment: goldEarned } },
             select: { gold: true },
           })
+
+          await this.#achievementsDomain.track(tx, userId, {
+            kind: 'EQUIPMENT_SALVAGED',
+            amount: items.length,
+          })
+
           return {
             goldEarned,
             newGold: updatedUser.gold,

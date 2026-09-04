@@ -37,6 +37,17 @@ export type AchievementEvent =
   | { kind: 'CARD_LEVELED'; levels: number }
   | { kind: 'GOLD_SPENT'; amount: number }
   | { kind: 'TEAM_JOINED' }
+  /**
+   * Une pièce d'équipement obtenue (drop de tour, drop de ferme campagne,
+   * drop garanti de premier clear ou de boss). Un événement PAR pièce, jamais
+   * agrégé : la quête « Butin de Qualité » filtre sur `rarity`, ce qu'un
+   * compteur agrégé rendrait impossible.
+   */
+  | { kind: 'EQUIPMENT_OBTAINED'; equipmentId: string; rarity: CardRarity }
+  /** `amount` = niveaux gagnés (1 par appel à equipment.upgrade). */
+  | { kind: 'EQUIPMENT_UPGRADED'; amount: number }
+  /** `amount` = nombre de pièces détruites en un seul recyclage. */
+  | { kind: 'EQUIPMENT_SALVAGED'; amount: number }
 
 export type AchievementEventKind = AchievementEvent['kind']
 

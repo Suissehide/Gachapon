@@ -113,6 +113,11 @@ export const TOWER_FIRE_ALL_SETS = SET_KEYS.map((setKey) =>
 export const CAMPAIGN_SLOT_FILTER_CLASSIC = reservation('RING', 'PRECISION')
 export const CAMPAIGN_SLOT_FILTER_TOWER = reservation('BELT', 'FUREUR')
 
+// equipment-quest-progress.e2e.test.ts — pièces améliorées puis recyclées
+// pour vérifier que les événements équipement alimentent bien les quêtes.
+// Jamais équipées sur une carte.
+export const EQUIPMENT_QUESTS = reservation('BELT', 'PRECISION')
+
 const ALL_RESERVATIONS = [
   EQUIPMENT_TEST_WEAPON,
   EQUIPMENT_TEST_ARMOR,
@@ -124,6 +129,7 @@ const ALL_RESERVATIONS = [
   LEVELUP_REFILL,
   CAMPAIGN_SLOT_FILTER_CLASSIC,
   CAMPAIGN_SLOT_FILTER_TOWER,
+  EQUIPMENT_QUESTS,
 ]
 
 const seen = new Set<string>()

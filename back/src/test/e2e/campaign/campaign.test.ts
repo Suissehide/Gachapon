@@ -28,6 +28,13 @@ describe('Campaign routes', () => {
   // campagne DOIT toujours faire progresser STAGES_CLEARED_COUNT (source
   // 'CAMPAIGN'), contrairement à un combat de tour.
   const questKey = `campaign_quest_${suffix}`
+  // Les trois chemins de drop de campagne (premier passage, ferme d'un
+  // combat rejoué, ferme d'un balayage) doivent tous alimenter les quêtes
+  // équipement. Cible volontairement haute : une quête complétée cesse de
+  // compter (`#applyIncrement` sort tôt sur `existing.completed`), et ce
+  // fichier vérifie l'accumulation sur les trois chemins.
+  const equipQuestKey = `campaign_equip_quest_${suffix}`
+  let equipQuestId: string
   const achievementKey = `campaign_stages_cleared_${suffix}`
   const periodKey = mondayOfUtcWeek(new Date())
 
@@ -233,6 +240,18 @@ describe('Campaign routes', () => {
       },
     })
     questId = quest.id
+
+    const equipQuest = await postgresOrm.prisma.quest.create({
+      data: {
+        key: equipQuestKey,
+        name: `Quête butin campagne ${suffix}`,
+        description: 'Test: les drops de campagne comptent pour une quête',
+        period: 'ONESHOT',
+        criterion: { event: 'EQUIPMENT_OBTAINED', target: 999 },
+        isActive: true,
+      },
+    })
+    equipQuestId = equipQuest.id
     const achievement = await postgresOrm.prisma.achievement.create({
       data: {
         key: achievementKey,
@@ -304,6 +323,10 @@ describe('Campaign routes', () => {
     }
     await postgresOrm.prisma.userQuest.deleteMany({ where: { questId } })
     await postgresOrm.prisma.quest.deleteMany({ where: { key: questKey } })
+    await postgresOrm.prisma.userQuest.deleteMany({
+      where: { questId: equipQuestId },
+    })
+    await postgresOrm.prisma.quest.deleteMany({ where: { key: equipQuestKey } })
     await postgresOrm.prisma.userAchievementProgress.deleteMany({
       where: { achievementId },
     })
@@ -354,6 +377,15 @@ describe('Campaign routes', () => {
     expect(Array.isArray(body.teamB)).toBe(true)
     expect(body.teamA.length).toBe(1)
     expect(body.teamB.length).toBe(1)
+  })
+
+  it('la pièce de premier passage ci-dessus fait progresser une quête EQUIPMENT_OBTAINED', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+    const uq = await postgresOrm.prisma.userQuest.findFirst({
+      where: { userId, questId: equipQuestId, periodKey: 'oneshot' },
+    })
+    expect(uq).not.toBeNull()
+    expect(uq!.progress).toBe(1)
   })
 
   it('le combat de campagne ci-dessus compte pour la quête ET pour le compteur STAGES_CLEARED_COUNT (G2)', async () => {
@@ -473,6 +505,47 @@ describe('Campaign routes', () => {
     for (const piece of droppedPieces) {
       expect(['WEAPON', 'ARMOR', 'RING']).toContain(piece.slot)
     }
+  })
+
+  // 11 = le drop garanti de premier passage de l'étage 1 (vérifié plus haut)
+  // + les 10 drops du balayage de l'étage 2 (equipmentDropChance: 1.0).
+  // Rien d'autre ne droppe entre les deux : le premier passage de l'étage 2
+  // a `guaranteedEquipment: null`, et l'étage 1 est à equipmentDropChance 0
+  // en ferme, donc ni son combat rejoué ni son balayage de 3 runs ne comptent.
+  it('les drops de balayage font progresser la quête EQUIPMENT_OBTAINED', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+    const uq = await postgresOrm.prisma.userQuest.findFirst({
+      where: { userId, questId: equipQuestId, periodKey: 'oneshot' },
+    })
+    expect(uq!.progress).toBe(11)
+  })
+
+  // Troisième chemin de drop : un combat REJOUÉ sur un étage déjà franchi
+  // passe par la branche ferme d'`#applyRewards`, distincte de celle du
+  // premier passage et de celle du balayage.
+  it('le drop de ferme d un combat rejoué fait progresser la quête EQUIPMENT_OBTAINED', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+    const before = await postgresOrm.prisma.userQuest.findFirst({
+      where: { userId, questId: equipQuestId, periodKey: 'oneshot' },
+    })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/campaign/stages/${stage2Id}/battle`,
+      headers: { cookie: cookies },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json() as {
+      won: boolean
+      rewards: { isFirstClear: boolean } | null
+    }
+    expect(body.won).toBe(true)
+    expect(body.rewards?.isFirstClear).toBe(false)
+
+    const after = await postgresOrm.prisma.userQuest.findFirst({
+      where: { userId, questId: equipQuestId, periodKey: 'oneshot' },
+    })
+    expect(after!.progress).toBe(before!.progress + 1)
   })
 
   it('POST /battle — refuses 400 when no team deployed', async () => {

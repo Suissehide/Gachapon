@@ -57,4 +57,12 @@ export interface IQuestsDomain {
    * Must NOT be called inside a transaction.
    */
   getStateForUser(userId: string): Promise<QuestState>
+
+  /**
+   * Crée en base les quêtes de `QUEST_DEFINITIONS` qui manquent, sans jamais
+   * toucher à celles déjà présentes. Appelé au démarrage : c'est le seul
+   * chemin par lequel une nouvelle quête atteint une base déjà peuplée, le
+   * seed Prisma vidant toutes les tables avant d'écrire.
+   */
+  bootstrap(): Promise<void>
 }

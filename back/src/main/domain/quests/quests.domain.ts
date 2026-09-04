@@ -10,7 +10,7 @@
  * an explicit `clearQuestCache()` call from the admin route.
  */
 
-import type { Quest, Reward } from '../../../generated/client'
+import type { Prisma, Quest, Reward } from '../../../generated/client'
 import type { QuestPeriod } from '../../../generated/enums'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
@@ -28,6 +28,7 @@ import type {
   AchievementEventKind,
 } from '../achievements/events.types'
 import { isPrismaSerializationError } from '../shared/retry-serialization'
+import { QUEST_DEFINITIONS } from './quest-definitions'
 import type { QuestCriterion } from './quest-matching'
 import {
   mondayOfUtcWeek,
@@ -217,6 +218,54 @@ export class QuestsDomain implements IQuestsDomain {
       weeklyBonusCompleted: weeklyBonusClaim !== null,
       weeklyBonusClaim,
       oneshot,
+    }
+  }
+
+  /**
+   * Crée les quêtes manquantes, une par une, sans jamais écraser l'existant.
+   *
+   * Create-only et non upsert : une quête retouchée à chaud en base (renommée,
+   * désactivée, cible ajustée) doit survivre au redémarrage suivant.
+   *
+   * Le `create` imbriqué (Quest + Reward) est atomique côté Prisma, donc une
+   * collision de clé avec un bootstrap concurrent — deux instances qui
+   * démarrent ensemble — ne laisse aucune Reward orpheline derrière elle.
+   */
+  async bootstrap(): Promise<void> {
+    const existing = await this.#postgresOrm.prisma.quest.findMany({
+      select: { key: true },
+    })
+    const existingKeys = new Set(existing.map((q) => q.key))
+
+    for (const def of QUEST_DEFINITIONS) {
+      if (existingKeys.has(def.key)) {
+        continue
+      }
+      const {
+        rewardTokens,
+        rewardDust,
+        rewardXp = 0,
+        criterion,
+        ...questData
+      } = def
+      try {
+        await this.#postgresOrm.prisma.quest.create({
+          data: {
+            ...questData,
+            criterion: criterion as unknown as Prisma.InputJsonValue,
+            reward: {
+              create: { tokens: rewardTokens, dust: rewardDust, xp: rewardXp },
+            },
+          },
+        })
+      } catch (err) {
+        if (!isPrismaUniqueConstraintError(err)) {
+          throw err
+        }
+        this.#logger?.debug(
+          `[quests] bootstrap: ${def.key} créée entre-temps par un autre démarrage`,
+        )
+      }
     }
   }
 
@@ -470,4 +519,14 @@ export class QuestsDomain implements IQuestsDomain {
     const j = json as Record<string, unknown>
     return typeof j.target === 'number' ? j.target : 1
   }
+}
+
+/** Prisma signale `P2002` quand une contrainte d'unicité est violée. */
+function isPrismaUniqueConstraintError(err: unknown): boolean {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'code' in err &&
+    (err as { code: string }).code === 'P2002'
+  )
 }

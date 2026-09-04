@@ -27,6 +27,12 @@ describe('routes de tour', () => {
   let questId: string
   let achievementId: string
 
+  // Le drop d'équipement de tour doit alimenter les quêtes équipement.
+  // ONESHOT : toutes les quêtes one-shot sont actives, pas de tirage de 3
+  // parmi le pool, donc le suivi est déterministe.
+  const equipQuestKey = `tower_equip_quest_${suffix}`
+  let equipQuestId: string
+
   beforeAll(async () => {
     app = await buildTestApp()
     const { postgresOrm } = (app as any).iocContainer
@@ -150,6 +156,18 @@ describe('routes de tour', () => {
     })
     questId = quest.id
 
+    const equipQuest = await postgresOrm.prisma.quest.create({
+      data: {
+        key: equipQuestKey,
+        name: `Quête butin tour ${suffix}`,
+        description: 'Test: un drop de tour compte pour une quête équipement',
+        period: 'ONESHOT',
+        criterion: { event: 'EQUIPMENT_OBTAINED', target: 1 },
+        isActive: true,
+      },
+    })
+    equipQuestId = equipQuest.id
+
     // Achievement STAGES_CLEARED_COUNT — compteur de progression de
     // CAMPAGNE : un combat de tour ne doit JAMAIS créer de ligne de
     // progression pour lui (G2 : source: 'TOWER' fait renvoyer 0 à
@@ -213,6 +231,10 @@ describe('routes de tour', () => {
     }
     await postgresOrm.prisma.userQuest.deleteMany({ where: { questId } })
     await postgresOrm.prisma.quest.deleteMany({ where: { key: questKey } })
+    await postgresOrm.prisma.userQuest.deleteMany({
+      where: { questId: equipQuestId },
+    })
+    await postgresOrm.prisma.quest.deleteMany({ where: { key: equipQuestKey } })
     await postgresOrm.prisma.userAchievementProgress.deleteMany({
       where: { achievementId },
     })
@@ -438,6 +460,17 @@ describe('routes de tour', () => {
     // Aucune ligne créée : achievements.domain.ts#evaluate court-circuite
     // avant l'upsert dès que stageClearedDelta renvoie 0 (source TOWER).
     expect(progress).toBeNull()
+  })
+
+  it('la pièce garantie ci-dessus fait progresser une quête EQUIPMENT_OBTAINED', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    const uq = await postgresOrm.prisma.userQuest.findFirst({
+      where: { userId, questId: equipQuestId, periodKey: 'oneshot' },
+    })
+    expect(uq).not.toBeNull()
+    expect(uq!.progress).toBe(1)
+    expect(uq!.completed).toBe(true)
   })
 
   it('GET /tower/FIRE après la victoire — étage 1 franchi, étage 5 toujours verrouillé', async () => {

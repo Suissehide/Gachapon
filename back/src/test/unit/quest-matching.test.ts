@@ -68,6 +68,65 @@ describe('questIncrement', () => {
     expect(questIncrement(criterion, towerEvent)).toBe(1)
   })
 
+  // Quêtes hebdo équipement : les trois événements équipement doivent
+  // alimenter les quêtes exactement comme leurs équivalents cartes, sans
+  // code spécifique dans questIncrement.
+  it('compte 1 par pièce pour EQUIPMENT_OBTAINED', () => {
+    const criterion: QuestCriterion = {
+      event: 'EQUIPMENT_OBTAINED',
+      target: 12,
+    }
+    const event: AchievementEvent = {
+      kind: 'EQUIPMENT_OBTAINED',
+      equipmentId: 'equip-1',
+      rarity: 'COMMON',
+    }
+    expect(questIncrement(criterion, event)).toBe(1)
+  })
+
+  it('compte les niveaux gagnés pour EQUIPMENT_UPGRADED', () => {
+    const criterion: QuestCriterion = { event: 'EQUIPMENT_UPGRADED', target: 12 }
+    const event: AchievementEvent = { kind: 'EQUIPMENT_UPGRADED', amount: 3 }
+    expect(questIncrement(criterion, event)).toBe(3)
+  })
+
+  it('compte les pièces détruites pour EQUIPMENT_SALVAGED', () => {
+    const criterion: QuestCriterion = { event: 'EQUIPMENT_SALVAGED', target: 15 }
+    const event: AchievementEvent = { kind: 'EQUIPMENT_SALVAGED', amount: 4 }
+    expect(questIncrement(criterion, event)).toBe(4)
+  })
+
+  // Le filtre `filter.rarity` existant est réutilisé tel quel par la quête
+  // « Butin de Qualité » : questIncrement teste `'rarity' in event`, pas le
+  // kind, donc aucun code spécifique équipement n'est nécessaire.
+  it('applique le filtre de rareté à EQUIPMENT_OBTAINED — rareté identique', () => {
+    const criterion: QuestCriterion = {
+      event: 'EQUIPMENT_OBTAINED',
+      target: 3,
+      filter: { rarity: 'RARE' },
+    }
+    const event: AchievementEvent = {
+      kind: 'EQUIPMENT_OBTAINED',
+      equipmentId: 'equip-1',
+      rarity: 'RARE',
+    }
+    expect(questIncrement(criterion, event)).toBe(1)
+  })
+
+  it('applique le filtre de rareté à EQUIPMENT_OBTAINED — rareté différente', () => {
+    const criterion: QuestCriterion = {
+      event: 'EQUIPMENT_OBTAINED',
+      target: 3,
+      filter: { rarity: 'RARE' },
+    }
+    const event: AchievementEvent = {
+      kind: 'EQUIPMENT_OBTAINED',
+      equipmentId: 'equip-1',
+      rarity: 'COMMON',
+    }
+    expect(questIncrement(criterion, event)).toBe(0)
+  })
+
   it('applies rarity filter — matching rarity passes', () => {
     const criterion: QuestCriterion = {
       event: 'PULL_COMPLETED',
