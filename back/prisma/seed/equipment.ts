@@ -101,7 +101,11 @@ const SLOT_MAIN_STATS: Record<EquipmentSlot, (keyof EquipmentBonuses)[]> = {
 const MAIN_STAT_SCALE: Record<string, Record<CardRarity, number>> = {
   atkFlat: { COMMON: 18, UNCOMMON: 28, RARE: 45, EPIC: 72, LEGENDARY: 115 },
   defFlat: { COMMON: 18, UNCOMMON: 28, RARE: 45, EPIC: 72, LEGENDARY: 115 },
-  spdFlat: { COMMON: 10, UNCOMMON: 16, RARE: 26, EPIC: 40, LEGENDARY: 62 },
+  // Divisé par ~5 : la vitesse ne suivant plus le niveau, une pièce se compare
+  // désormais à une base d'environ 100 et non à une base gonflée par la
+  // progression. À l'ancien barème, un seul anneau légendaire niveau 12
+  // donnait +130, soit plus du double de la vitesse d'une carte.
+  spdFlat: { COMMON: 2, UNCOMMON: 3, RARE: 5, EPIC: 8, LEGENDARY: 12 },
   hpFlat: { COMMON: 80, UNCOMMON: 130, RARE: 210, EPIC: 340, LEGENDARY: 540 },
   hpPct: { COMMON: 3, UNCOMMON: 4.5, RARE: 6.5, EPIC: 9, LEGENDARY: 12 },
   atkPct: { COMMON: 3, UNCOMMON: 4.5, RARE: 6.5, EPIC: 9, LEGENDARY: 12 },

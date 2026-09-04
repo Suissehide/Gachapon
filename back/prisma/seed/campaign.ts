@@ -41,8 +41,14 @@ const RARITY_BY_CHAPTER = [
 // DÉFAUT sans équipement — profil `none` (`SIM_GEAR=epic|legendary` active
 // les régimes équipés côté joueur) — alors que le contre-pick vaut ×1.3 en
 // dégâts et que les ennemis, eux, n'en portent jamais.
-const NORMAL_FACTOR = 0.971
-const BOSS_FACTOR = 0.92 // boss (avant ×PV et AOE)
+// Compensation du gel de la vitesse : le joueur y gagne environ 15 % de
+// vitesse RELATIVE (le rapport passe de 0,85 à 1,0, sa vitesse n'étant plus
+// gonflée par le niveau — mais celle des ennemis non plus). Portée par les
+// facteurs plutôt que par enemyScale, pour que l'ancre « échelle = 1 à
+// l'étage 1 » reste vraie.
+const SPEED_FREEZE_COMPENSATION = 1.15
+const NORMAL_FACTOR = 0.971 * SPEED_FREEZE_COMPENSATION
+const BOSS_FACTOR = 0.92 * SPEED_FREEZE_COMPENSATION // boss (avant ×PV et AOE)
 
 // --- Courbe de difficulté : continue, en deux phases -----------------------
 //
@@ -277,7 +283,12 @@ export function enemyPower(chapter: number, stageIndex: number) {
     baseHp: Math.round(rb.hp * NORMAL_FACTOR * scale),
     baseAtk: Math.round(rb.atk * NORMAL_FACTOR * scale),
     baseDef: Math.round(rb.def * NORMAL_FACTOR * scale),
-    baseSpd: Math.round(rb.spd * scale),
+    // La vitesse ne suit PLUS l'échelle d'étage : comme celle du joueur, elle
+    // reste la valeur de base. Seul le rapport entre les deux camps compte
+    // sous ATB, et le faire croître des deux côtés ne changeait rien au combat
+    // tout en gonflant la jauge de puissance (un boss d'étage 80 y paraissait
+    // 23 fois plus fort qu'il ne l'est).
+    baseSpd: rb.spd,
   }
 }
 
@@ -316,7 +327,7 @@ export function bossEnemyTeam(chapter: number, stageIndex: number) {
       baseHp: Math.round(rb.hp * BOSS_HP_MULT * BOSS_FACTOR * scale),
       baseAtk: Math.round(rb.atk * BOSS_FACTOR * scale),
       baseDef: Math.round(rb.def * 1.2 * BOSS_FACTOR * scale),
-      baseSpd: Math.round(rb.spd * scale),
+      baseSpd: rb.spd,
       level: 1,
       palier: 1,
       // Même raison que normalEnemyTeam : niveau figé à 1, la mitigation

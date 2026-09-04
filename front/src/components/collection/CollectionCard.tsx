@@ -3,7 +3,11 @@ import { Sparkles, Star, Swords } from 'lucide-react'
 import type { Card, CardVariant } from '../../api/collection.api.ts'
 import { describePassive } from '../../constants/passives.constant.ts'
 import { useCardEquipmentBonuses } from '../../queries/useEquipment.ts'
-import { computePower, finalStatWithBonuses } from '../../utils/cardStats.ts'
+import {
+  computePower,
+  finalSpeed,
+  finalStatWithBonuses,
+} from '../../utils/cardStats.ts'
 import type { CardStats } from '../shared/tcg-card/TcgCardFace.tsx'
 import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
 
@@ -99,15 +103,7 @@ export function CollectionCard({
               bonuses.def,
             ),
           ),
-          vit: Math.round(
-            finalStatWithBonuses(
-              card.baseSpd,
-              level,
-              variant,
-              palier,
-              bonuses.spd,
-            ),
-          ),
+          vit: Math.round(finalSpeed(card.baseSpd, bonuses.spd)),
         }
       : null
 

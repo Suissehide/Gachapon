@@ -6,6 +6,7 @@ import {
   bossLoot,
   difficultyMult,
   enemyPower,
+  RARITY_BASE,
   enemyScale,
   lootTableNormal,
   normalEnemyTeam,
@@ -13,20 +14,28 @@ import {
 
 describe('enemyPower — aligné sur le joueur attendu (rareté + enemyScale)', () => {
   it('stage 1-1 : valeur ancre exacte (scale=1, NORMAL_FACTOR=0.971)', () => {
-    // rb = COMMON {101,20,5,89} — médiane du roster après le rééquilibrage
-    // « moins de tank, plus de dégâts » (ATQ ×1,5 / DEF ×0,4), scale = 1.
-    // hp: 101×0.971 = 98.07 → 98 ; atk: 20×0.971 = 19.42 → 19
-    // def: 5×0.971 = 4.855 → 5 ; spd: 89×1 = 89 (pas de NORMAL_FACTOR)
+    // rb = COMMON {101,20,5,89}, scale = 1, NORMAL_FACTOR = 0,971 × 1,15
+    // (compensation du gel de la vitesse) = 1,11665.
+    // hp: 101×1.11665 = 112.8 → 113 ; atk: 20×1.11665 = 22.3 → 22
+    // def: 5×1.11665 = 5.58 → 6 ; spd: 89 tel quel — la vitesse échappe au
+    // facteur ET à l'échelle, elle reste la base de rareté.
     expect(enemyPower(1, 1)).toEqual({
-      baseHp: 98,
-      baseAtk: 19,
-      baseDef: 5,
+      baseHp: 113,
+      baseAtk: 22,
+      baseDef: 6,
       baseSpd: 89,
     })
   })
 
-  it('la vitesse SCALE désormais avec le niveau (ATB parity — ancienne valeur fixe éliminée)', () => {
-    expect(enemyPower(1, 9).baseSpd).toBeGreaterThan(enemyPower(1, 1).baseSpd)
+  it("la vitesse NE suit PLUS l'échelle d'étage : elle reste la base de rareté", () => {
+    // Renversement assumé de l'ancienne règle « la vitesse scale avec le
+    // niveau (ATB parity) ». Sous ATB, seul le RAPPORT de vitesse entre les
+    // deux camps compte : la faire croître des deux côtés ne changeait rien au
+    // combat, rendait l'équilibrage mouvant, et gonflait la jauge de puissance
+    // — un boss d'étage 80 y paraissait 23 fois plus fort qu'il ne l'est.
+    // Elle est désormais figée des deux côtés, et seul l'équipement la bouge.
+    expect(enemyPower(1, 9).baseSpd).toBe(enemyPower(1, 1).baseSpd)
+    expect(enemyPower(9, 9).baseSpd).toBe(RARITY_BASE.LEGENDARY.spd)
   })
 
   it('les PV sont STRICTEMENT croissants sur les 90 stages globaux', () => {
@@ -108,24 +117,24 @@ describe('enemyScale — courbe continue en deux phases', () => {
 })
 
 describe('bossEnemyTeam — solo AOE_3, PV ×BOSS_HP_MULT, vitesse à parité ATB', () => {
-  it('le boss 1-10 est un solo AOE dont la vitesse scale (> 100)', () => {
+  it('le boss 1-10 est un solo AOE dont la vitesse reste celle de sa rareté', () => {
     const team = bossEnemyTeam(1, 10)
     const [boss, ...rest] = team
     expect(rest).toHaveLength(0)
     expect(boss.attackPattern).toBe('AOE_3')
-    // Vitesse scaleée — plus de valeur fixe 100
-    expect(boss.baseSpd).toBeGreaterThan(100)
-    // Ancre exacte (COMMON {101,20,5,89}, étage global 10 → enemyScale(10) = 2.065561
-    // depuis la croissance passée à 0,09) :
-    // PV = round(101 × 3.25 × 0.92 × 2.065561) = 624,
-    // ATQ = round(20 × 0.92 × 2.065561) = 38,
-    // DEF = round(5 × 1.2 × 0.92 × 2.065561) = 11,
-    // VIT = round(89 × 2.065561) = 184.
+    // La vitesse ne suit plus l'échelle : elle vaut la base de rareté.
+    expect(boss.baseSpd).toBe(RARITY_BASE.COMMON.spd)
+    // Ancre exacte (COMMON {101,20,5,89}, enemyScale(10) = 2.065561,
+    // BOSS_FACTOR = 0,92 × 1,15 = 1,058) :
+    // PV = round(101 × 3.25 × 1.058 × 2.065561) = 717,
+    // ATQ = round(20 × 1.058 × 2.065561) = 44,
+    // DEF = round(5 × 1.2 × 1.058 × 2.065561) = 13,
+    // VIT = 89, inchangée par l'échelle.
     expect(boss).toMatchObject({
-      baseHp: 624,
-      baseAtk: 38,
-      baseDef: 11,
-      baseSpd: 184,
+      baseHp: 717,
+      baseAtk: 44,
+      baseDef: 13,
+      baseSpd: 89,
       attackPattern: 'AOE_3',
     })
   })

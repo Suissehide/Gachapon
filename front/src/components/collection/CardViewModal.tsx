@@ -11,7 +11,7 @@ import { describePassive } from '../../constants/passives.constant.ts'
 import { useCardClassicStatsWithSetBonuses } from '../../queries/useEquipment.ts'
 import { useSetWishlist, useWishlist } from '../../queries/useWishlist.ts'
 import type { DisplayEntry } from '../../routes/_authenticated/collection.tsx'
-import { finalStatWithBonuses } from '../../utils/cardStats.ts'
+import { finalSpeed, finalStatWithBonuses } from '../../utils/cardStats.ts'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
 import type { CardStats } from '../shared/tcg-card/TcgCardFace.tsx'
 import { Button } from '../ui/button.tsx'
@@ -123,15 +123,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
               bonuses.def,
             ),
           ),
-          vit: Math.round(
-            finalStatWithBonuses(
-              card.baseSpd,
-              userCard.level,
-              variant,
-              userCard.palier,
-              bonuses.spd,
-            ),
-          ),
+          vit: Math.round(finalSpeed(card.baseSpd, bonuses.spd)),
         }
       : null
 

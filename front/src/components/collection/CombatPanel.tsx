@@ -35,6 +35,7 @@ import { useAuthStore } from '../../stores/auth.store'
 import {
   computePower,
   dustCostNextLevel,
+  finalSpeed,
   finalStatWithBonuses,
   goldCostNextLevel,
   isAtTopOfPalier,
@@ -123,15 +124,7 @@ export function CombatPanel({
       classicBonuses.def,
     ),
   )
-  const spd = Math.round(
-    finalStatWithBonuses(
-      card.baseSpd,
-      level,
-      variant,
-      palier,
-      classicBonuses.spd,
-    ),
-  )
+  const spd = Math.round(finalSpeed(card.baseSpd, classicBonuses.spd))
   const power = computePower({ hp, atk, def, spd })
 
   const onLevelUp = async () => {

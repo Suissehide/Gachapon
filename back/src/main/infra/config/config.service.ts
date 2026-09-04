@@ -77,8 +77,10 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'equip.substatAtkFlatMax': 15,
   'equip.substatDefFlatMin': 5,
   'equip.substatDefFlatMax': 15,
-  'equip.substatSpdFlatMin': 3,
-  'equip.substatSpdFlatMax': 9,
+  // Ramenées avec le barème principal : la vitesse ne suivant plus le niveau,
+  // quatre sous-stats à 9 auraient dépassé la stat principale légendaire (12).
+  'equip.substatSpdFlatMin': 1,
+  'equip.substatSpdFlatMax': 3,
   'equip.substatPctMin': 3,
   'equip.substatPctMax': 8,
   // Stats de stuff — bornes calibrées pour rester comparables aux substats

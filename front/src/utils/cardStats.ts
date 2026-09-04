@@ -41,6 +41,19 @@ export function finalStat(
 }
 
 /**
+ * Vitesse finale — miroir de `computeFinalStats` côté serveur.
+ *
+ * La vitesse ne suit NI le niveau, NI le palier, NI la variante : elle reste
+ * la valeur de base de la carte, que seul l'équipement fait bouger. Sous ATB
+ * seul le RAPPORT de vitesse entre les deux camps compte, jamais la valeur
+ * absolue : la faire croître des deux côtés ne changeait rien au combat mais
+ * rendait l'équilibrage mouvant. Elle devient donc une décision de build.
+ */
+export function finalSpeed(baseSpd: number, bonus: StatBonus): number {
+  return (baseSpd + bonus.flat) * (1 + bonus.pct / 100)
+}
+
+/**
  * Puissance agrégée d'une carte, à partir de ses stats finales. Sous ATB la
  * vitesse multiplie le rendement (une unité 2× plus rapide agit ~2× plus
  * souvent), donc elle pondère l'ensemble au lieu d'être un simple terme additif.
@@ -403,9 +416,7 @@ export function cardPower(
     def: Math.round(
       finalStatWithBonuses(card.baseDef, level, variant, palier, bonuses.def),
     ),
-    spd: Math.round(
-      finalStatWithBonuses(card.baseSpd, level, variant, palier, bonuses.spd),
-    ),
+    spd: Math.round(finalSpeed(card.baseSpd, bonuses.spd)),
   })
 }
 

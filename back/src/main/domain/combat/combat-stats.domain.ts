@@ -186,11 +186,23 @@ export function computeFinalStats(input: CombatStatsInput): CombatStats {
     equipment.map((e) => e.defPct ?? 0),
     skillModifiers.defPct ?? 0,
   )
+  // La VITESSE ne suit ni le niveau, ni le palier, ni la variante : elle reste
+  // la valeur de base de la carte, que seul l'équipement fait bouger.
+  //
+  // Sous ATB, la fréquence de tour est proportionnelle à la vitesse : ce qui
+  // compte est le RAPPORT entre les deux camps, jamais la valeur absolue. La
+  // faire croître des deux côtés ne changeait donc rien au combat, mais
+  // rendait l'équilibrage mouvant (le rapport dérivait avec la progression) et
+  // gonflait la jauge de puissance, qui multiplie tout par la vitesse — un
+  // boss d'étage 80 y paraissait 23 fois plus fort qu'il ne l'est.
+  //
+  // Figée, la vitesse devient une décision de build : une carte est rapide ou
+  // lente par archétype, et l'équipement décide du reste.
   const spd = computeStat(
     baseSpd,
-    level,
-    palier,
-    variantMult,
+    1,
+    1,
+    1,
     equipment.map((e) => e.spdFlat ?? 0),
     equipment.map((e) => e.spdPct ?? 0),
     skillModifiers.spdPct ?? 0,
