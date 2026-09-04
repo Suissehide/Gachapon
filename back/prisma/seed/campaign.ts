@@ -41,14 +41,8 @@ const RARITY_BY_CHAPTER = [
 // DÉFAUT sans équipement — profil `none` (`SIM_GEAR=epic|legendary` active
 // les régimes équipés côté joueur) — alors que le contre-pick vaut ×1.3 en
 // dégâts et que les ennemis, eux, n'en portent jamais.
-// Compensation du gel de la vitesse : le joueur y gagne environ 15 % de
-// vitesse RELATIVE (le rapport passe de 0,85 à 1,0, sa vitesse n'étant plus
-// gonflée par le niveau — mais celle des ennemis non plus). Portée par les
-// facteurs plutôt que par enemyScale, pour que l'ancre « échelle = 1 à
-// l'étage 1 » reste vraie.
-const SPEED_FREEZE_COMPENSATION = 1.15
-const NORMAL_FACTOR = 0.971 * SPEED_FREEZE_COMPENSATION
-const BOSS_FACTOR = 0.92 * SPEED_FREEZE_COMPENSATION // boss (avant ×PV et AOE)
+const NORMAL_FACTOR = 0.971
+const BOSS_FACTOR = 0.92 // boss (avant ×PV et AOE)
 
 // --- Courbe de difficulté : continue, en deux phases -----------------------
 //
@@ -88,7 +82,13 @@ const PLAYER_CAP_STAGE = 10 * MAX_PALIER // 70
  * roster figé ne capture pas. Ce facteur est donc calibré sur le DÉBUT, la
  * seule zone où mesure et partie concordent.
  */
-const ENEMY_DIFFICULTY_MAX = 1.12
+// 1,12 de durcissement × 1,15 de compensation du gel de la vitesse (le joueur
+// y gagne environ 15 % de vitesse relative). Les deux passent par la MONTÉE
+// progressive plutôt que par un facteur plat : appliquée dès l'étage 1, la
+// compensation rendait le tout premier combat INGAGNABLE avec trois communes
+// médiocres — 1 % de victoire contre 47 % avant. Un tutoriel doit rester
+// franchissable avec la pire main de départ.
+const ENEMY_DIFFICULTY_MAX = 1.12 * 1.15
 const DIFFICULTY_START_STAGE = 10
 const DIFFICULTY_PEAK_STAGE = 20
 

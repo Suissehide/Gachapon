@@ -14,15 +14,19 @@ import {
 
 describe('enemyPower — aligné sur le joueur attendu (rareté + enemyScale)', () => {
   it('stage 1-1 : valeur ancre exacte (scale=1, NORMAL_FACTOR=0.971)', () => {
-    // rb = COMMON {101,20,5,89}, scale = 1, NORMAL_FACTOR = 0,971 × 1,15
-    // (compensation du gel de la vitesse) = 1,11665.
-    // hp: 101×1.11665 = 112.8 → 113 ; atk: 20×1.11665 = 22.3 → 22
-    // def: 5×1.11665 = 5.58 → 6 ; spd: 89 tel quel — la vitesse échappe au
+    // rb = COMMON {101,20,5,89}, scale = 1, NORMAL_FACTOR = 0,971.
+    // hp: 101×0.971 = 98.07 → 98 ; atk: 20×0.971 = 19.42 → 19
+    // def: 5×0.971 = 4.855 → 5 ; spd: 89 tel quel — la vitesse échappe au
     // facteur ET à l'échelle, elle reste la base de rareté.
+    //
+    // Le durcissement (et la compensation du gel de la vitesse) passent par la
+    // MONTÉE progressive, neutre jusqu'à l'étage 10 : le tout premier combat
+    // garde donc ses valeurs d'origine. Appliqués à plat, ils le rendaient
+    // ingagnable avec trois communes médiocres.
     expect(enemyPower(1, 1)).toEqual({
-      baseHp: 113,
-      baseAtk: 22,
-      baseDef: 6,
+      baseHp: 98,
+      baseAtk: 19,
+      baseDef: 5,
       baseSpd: 89,
     })
   })
@@ -125,15 +129,15 @@ describe('bossEnemyTeam — solo AOE_3, PV ×BOSS_HP_MULT, vitesse à parité AT
     // La vitesse ne suit plus l'échelle : elle vaut la base de rareté.
     expect(boss.baseSpd).toBe(RARITY_BASE.COMMON.spd)
     // Ancre exacte (COMMON {101,20,5,89}, enemyScale(10) = 2.065561,
-    // BOSS_FACTOR = 0,92 × 1,15 = 1,058) :
-    // PV = round(101 × 3.25 × 1.058 × 2.065561) = 717,
-    // ATQ = round(20 × 1.058 × 2.065561) = 44,
-    // DEF = round(5 × 1.2 × 1.058 × 2.065561) = 13,
+    // BOSS_FACTOR = 0,92) :
+    // PV = round(101 × 3.25 × 0.92 × 2.065561) = 624,
+    // ATQ = round(20 × 0.92 × 2.065561) = 38,
+    // DEF = round(5 × 1.2 × 0.92 × 2.065561) = 11,
     // VIT = 89, inchangée par l'échelle.
     expect(boss).toMatchObject({
-      baseHp: 717,
-      baseAtk: 44,
-      baseDef: 13,
+      baseHp: 624,
+      baseAtk: 38,
+      baseDef: 11,
       baseSpd: 89,
       attackPattern: 'AOE_3',
     })
