@@ -21,22 +21,26 @@ type Tx = Parameters<Parameters<PrismaClient['$transaction']>[0]>[0]
 /**
  * Difficulté par étage — montée RAPIDE puis paliers FINS.
  *
- * Ancrage : l'étage 10 pèse autant que l'étage 80 de la campagne (537 943 de
- * puissance d'équipe). L'ancienne courbe linéaire y plafonnait à 19 293, soit
- * vingt-huit fois moins — d'où trois cartes niveau 10 qui franchissaient
- * l'étage 8 sans effort.
+ * Ancrage : l'étage 10 pèse autant que l'étage 80 de la campagne (50 943 de
+ * puissance d'équipe), et l'étage 1 reste franchissable par un joueur qui
+ * sort du début de campagne.
  *
- * La forme : les rapports entre étages consécutifs partent de ×3,3 et
- * retombent à ×1,05 en haut. Le bas filtre vite, le haut se joue à peu de
- * chose — un niveau de carte ou une pièce doit suffire à franchir la marche
- * suivante, plutôt qu'un mur.
+ * La courbe précédente visait 537 943 — la valeur de l'étage 80 AVANT le gel
+ * de la vitesse. Le gel a divisé les puissances de campagne par dix sans
+ * toucher celles de la tour, dont la vitesse ne suivait déjà pas l'échelle :
+ * l'ancrage pointait donc dans le vide, et l'étage 1 était infranchissable
+ * même à niveau 30 avec de l'équipement.
  *
- * L'étage 10 fait combattre trois ennemis en AOE_3 : sa puissance AFFICHÉE
- * bondit (prime de menace ×7 dans la jauge) alors que ses stats réelles ne
- * montent que de 4,7 % par rapport à l'étage 9. Qui franchit le 9 n'est donc
- * pas loin du 10 — c'est la jauge qui exagère, pas la marche.
+ * La forme suit la demande : les rapports entre étages consécutifs partent de
+ * ×2,2 et retombent à ×1,06. Le bas filtre, le haut se joue à peu de chose.
+ *
+ * L'étage 10 aligne trois ennemis en AOE_3 : sa puissance AFFICHÉE bondit
+ * (prime de menace ×7 dans la jauge) alors que ses stats réelles ne montent
+ * que de 6 % par rapport à l'étage 9.
  */
-const FLOOR_SCALE = [3, 10, 25, 50, 85, 120, 145, 160, 172, 180] as const
+const FLOOR_SCALE = [
+  1, 2.2, 4, 6.2, 8.6, 11, 13, 14.6, 15.9, 16.9,
+] as const
 
 // Profil épique de campagne (source unique : RARITY_BASE.EPIC dans
 // campaign.ts) — pas de littéral recopié, sinon un futur rééquilibrage de
