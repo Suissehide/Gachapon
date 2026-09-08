@@ -227,15 +227,21 @@ export class RaidDomain implements IRaidDomain {
             elementDisadvantageMult: cfg['combat.elementDisadvantageMult'],
           })
 
-          const damage = damageDealtToBoss(sim.log)
           const hpBefore = raid.hp
-          const hpAfter = Math.max(0, hpBefore - damage)
+          // On ne comptabilise jamais l'overkill (non-objectif de la spec) :
+          // les dégâts enregistrés sont plafonnés aux PV restants avant le
+          // coup, pour que hpAfter === hpBefore - damage reste toujours vrai
+          // et que la somme des contributions ne dépasse jamais la barre.
+          const damage = Math.min(damageDealtToBoss(sim.log), hpBefore)
+          const hpAfter = hpBefore - damage
           const killed = hpAfter === 0
 
           await tx.teamRaid.update({
             where: { id: raid.id },
             data: { hp: hpAfter, ...(killed ? { killedAt: now } : {}) },
           })
+          // Toujours enregistrée, même à 0 dégât : consomme le quota du
+          // jour et rend le joueur participant, donc éligible aux paliers.
           await tx.raidAttack.create({
             data: { raidId: raid.id, userId, damage, seed, userCardIds },
           })
