@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import dayjs from 'dayjs'
 import { Clock, Coins, Skull, Sparkles, Swords, Ticket } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 import type {
   RaidContribution,
@@ -14,15 +15,22 @@ import { useRaid, useRaidLive } from '../../queries/useRaid.ts'
 import { ArcadeCard } from '../shared/ArcadeCard.tsx'
 import { Button } from '../ui/button.tsx'
 
+function minutesRemaining(endsAt: string): number {
+  return Math.max(0, dayjs(endsAt).diff(dayjs(), 'minute'))
+}
+
 function formatRemaining(endsAt: string): string {
-  const diffMin = Math.max(0, dayjs(endsAt).diff(dayjs(), 'minute'))
+  const diffMin = minutesRemaining(endsAt)
   const days = Math.floor(diffMin / 1440)
   const hours = Math.floor((diffMin % 1440) / 60)
-  if (days > 0) {
-    return `${days} j ${hours} h`
-  }
   const minutes = diffMin % 60
-  return `${hours} h ${minutes} min`
+  if (days > 0) {
+    return hours > 0 ? `${days} j ${hours} h` : `${days} j`
+  }
+  if (hours > 0) {
+    return minutes > 0 ? `${hours} h ${minutes} min` : `${hours} h`
+  }
+  return `${minutes} min`
 }
 
 function TierMarker({ tier }: { tier: RaidTierView }) {
@@ -98,6 +106,19 @@ function ContributionRow({ c, rank }: { c: RaidContribution; rank: number }) {
 export function RaidPanel({ teamId }: { teamId: string }) {
   const { data: raid, isLoading, isError } = useRaid(teamId)
   useRaidLive(teamId)
+  const [, tick] = useState(0)
+
+  // Force un rafraîchissement du texte du compte à rebours une fois par
+  // minute — sans ça il reste figé sur la valeur calculée au montage tant
+  // qu'aucun coéquipier n'attaque. Inutile de tourner si le raid est déjà
+  // terminé (boss vaincu ou semaine écoulée).
+  useEffect(() => {
+    if (!raid || raid.killedAt !== null || minutesRemaining(raid.endsAt) <= 0) {
+      return
+    }
+    const id = setInterval(() => tick((n) => n + 1), 60_000)
+    return () => clearInterval(id)
+  }, [raid])
 
   if (isLoading) {
     return (
@@ -117,6 +138,7 @@ export function RaidPanel({ teamId }: { teamId: string }) {
   }
 
   const killed = raid.killedAt !== null
+  const ended = killed || minutesRemaining(raid.endsAt) <= 0
   const noAttackLeft = raid.me.attacksRemainingToday === 0
   const attackLabel = killed
     ? 'Boss vaincu'
@@ -174,7 +196,7 @@ export function RaidPanel({ teamId }: { teamId: string }) {
             </div>
             <div className="flex items-center gap-1.5 font-mono text-xs text-text-light">
               <Clock className="h-4 w-4" />
-              {killed ? 'Terminé' : `${formatRemaining(raid.endsAt)} restants`}
+              {ended ? 'Terminé' : `${formatRemaining(raid.endsAt)} restants`}
             </div>
           </div>
 
