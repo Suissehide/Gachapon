@@ -15,37 +15,30 @@ import type { UserRewardRepositoryInterface } from '../../types/infra/orm/reposi
 import { applyCombatBonuses } from '../campaign/campaign.domain'
 import { deriveFlawless } from '../campaign/campaign-clear-flags'
 import { computeTeamPower, unitPower } from '../campaign/campaign-power'
+import { resolveEnemyImageUrl } from '../campaign/enemy-appearance'
 import {
-  enemyNameFromAppearance,
-  resolveEnemyImageUrl,
-} from '../campaign/enemy-appearance'
-import {
-  type AttackPattern,
   type SimulatorUnit,
   simulateBattle,
 } from '../combat/battle-simulator.domain'
-import {
-  type CombatStatsBaseline,
-  computeFinalStats,
-  mitigationRefFor,
-} from '../combat/combat-stats.domain'
+import type { CombatStatsBaseline } from '../combat/combat-stats.domain'
 import {
   type FirstClearLoot,
   pickEquipmentForRarity,
 } from '../combat/equipment-drop.domain'
-import { computeEquippedCardStats } from '../combat/equipped-card-stats'
+import {
+  buildEnemySimUnits,
+  buildPlayerSimUnits,
+  enemySpecSchema,
+} from '../combat/sim-units'
 import {
   INITIAL_SUBSTATS_BY_RARITY,
   rollInitialSubstats,
   SUBSTAT_RANGE_CONFIG_KEYS,
-  type Substat,
   type SubstatRanges,
   substatRangesFromConfig,
 } from '../equipment/equipment-progression'
 import {
   SET_BONUS_CONFIG_KEYS,
-  type SetDefinition,
-  type SetKey,
   setBonusesFromConfig,
 } from '../equipment/set-bonuses'
 import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
@@ -67,27 +60,7 @@ type Rarity = 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
 // puissance étant pré-cuite via ce facteur — cf. towerEnemyPower côté seed),
 // les quatre stats de stuff optionnelles (surcharge par le seed, aucune tour
 // n'en surcharge à ce jour).
-const towerEnemySpecSchema = z.object({
-  baseHp: z.number(),
-  baseAtk: z.number(),
-  baseDef: z.number(),
-  baseSpd: z.number(),
-  level: z.number(),
-  palier: z.number(),
-  attackPattern: z
-    .enum(['BASIC', 'AOE_3', 'MULTI_2', 'MONO_AMPLIFIED', 'MONO_DOUBLE'])
-    .optional(),
-  passiveKey: z.string().nullish(),
-  element: z.string().nullish(),
-  appearance: z.string().nullish(),
-  mitigationScale: z.number(),
-  critRate: z.number().optional(),
-  critDmg: z.number().optional(),
-  armorPen: z.number().optional(),
-  lifesteal: z.number().optional(),
-})
-const towerEnemyTeamSchema = z.array(towerEnemySpecSchema)
-type TowerEnemySpec = z.infer<typeof towerEnemySpecSchema>
+const towerEnemyTeamSchema = z.array(enemySpecSchema)
 
 // lootTable JSON d'un TowerFloor (prisma/seed/tower.ts:towerFloorLoot).
 // `equipmentDropChance`/`cardChance` existent dans le JSON seedé mais ne
@@ -362,23 +335,26 @@ export class TowerDomain {
             armorPen: battleCfg['combat.baseArmorPen'],
             lifesteal: battleCfg['combat.baseLifesteal'],
           }
-          const teamUnits = await this.#buildPlayerSimUnits(
-            tx,
+          const teamUnits = await buildPlayerSimUnits(tx, {
             userId,
             userCardIds,
-            battleCfg['combat.defMitigationRef'],
+            defMitigationRef: battleCfg['combat.defMitigationRef'],
             baseStats,
             setDefs,
-          )
+            publicUrl: (key) => this.#storageClient.publicUrl(key),
+          })
           if (teamUnits.length === 0) {
             throw Boom.badRequest(
               'Aucune des cartes fournies n’appartient à ce joueur',
             )
           }
-          const enemyUnits = this.#buildEnemySimUnits(
+          const enemyUnits = buildEnemySimUnits(
             towerEnemyTeamSchema.parse(towerFloor.enemyTeam),
-            battleCfg['combat.defMitigationRef'],
-            baseStats,
+            {
+              defMitigationRef: battleCfg['combat.defMitigationRef'],
+              baseStats,
+              resolveImage: (appearance) => this.#resolveEnemyImage(appearance),
+            },
           )
 
           const seed = `${userId}:tower:${element}:${floor}:${Date.now()}`
@@ -641,125 +617,5 @@ export class TowerDomain {
       (key) => this.#storageClient.publicUrl(key),
       this.#config.isDevelopment ? 'staging/' : '',
     )
-  }
-
-  async #buildPlayerSimUnits(
-    tx: PrimaTransactionClient,
-    userId: string,
-    userCardIds: string[],
-    defMitigationRef: number,
-    baseStats: CombatStatsBaseline,
-    setDefs: Record<SetKey, SetDefinition>,
-  ): Promise<SimulatorUnit[]> {
-    const userCards = await tx.userCard.findMany({
-      where: { id: { in: userCardIds }, userId },
-      include: {
-        card: { include: { set: true } },
-        equipment: { include: { equipment: true } },
-      },
-    })
-    const byId = new Map(userCards.map((u) => [u.id, u]))
-    return userCardIds
-      .map((id) => byId.get(id))
-      .filter((u): u is NonNullable<typeof u> => u != null)
-      .map((u, idx) => {
-        const stats = computeEquippedCardStats({
-          baseHp: u.card.baseHp,
-          baseAtk: u.card.baseAtk,
-          baseDef: u.card.baseDef,
-          baseSpd: u.card.baseSpd,
-          level: u.level,
-          palier: u.palier,
-          variant: u.variant,
-          pieces: u.equipment.map((ue) => ({
-            bonuses: (ue.equipment.bonuses ?? {}) as Record<string, number>,
-            level: ue.level,
-            substats: (ue.substats ?? []) as unknown as Substat[],
-            baseBoost: ue.baseBoost,
-            setKey: ue.equipment.setKey,
-          })),
-          setDefs,
-          baseStats,
-        })
-        return {
-          id: `A${idx}`,
-          name: u.card.name,
-          imageUrl: u.card.imageUrl
-            ? this.#storageClient.publicUrl(u.card.imageUrl)
-            : null,
-          rarity: u.card.rarity,
-          variant: u.variant,
-          setName: u.card.set?.name ?? null,
-          level: u.level,
-          hp: stats.hp,
-          atk: stats.atk,
-          def: stats.def,
-          spd: stats.spd,
-          critRate: stats.critRate,
-          critDmg: stats.critDmg,
-          armorPen: stats.armorPen,
-          lifesteal: stats.lifesteal,
-          attackPattern: 'BASIC' as AttackPattern,
-          passiveKey: u.card.passiveKey,
-          element: u.card.element,
-          palier: u.palier,
-          mitigationRef: mitigationRefFor({
-            level: u.level,
-            palier: u.palier,
-            variant: u.variant,
-            defMitigationRef,
-          }),
-        }
-      })
-  }
-
-  /**
-   * SimulatorUnit pour les ennemis d'un étage de tour. Motif exact de
-   * campaign.domain#buildEnemySimUnits : mitigationRef = defMitigationRef ×
-   * e.mitigationScale (jamais dérivé du niveau — les ennemis sont seedés à
-   * level 1 / palier 1 avec leur puissance pré-cuite dans mitigationScale) ;
-   * les quatre stats de stuff prennent les valeurs de base baseStats sauf
-   * surcharge explicite du seed.
-   */
-  #buildEnemySimUnits(
-    enemyTeam: TowerEnemySpec[],
-    defMitigationRef: number,
-    baseStats: CombatStatsBaseline,
-  ): SimulatorUnit[] {
-    return enemyTeam.map((e, idx) => {
-      const stats = computeFinalStats({
-        baseHp: e.baseHp,
-        baseAtk: e.baseAtk,
-        baseDef: e.baseDef,
-        baseSpd: e.baseSpd,
-        level: e.level,
-        palier: e.palier,
-        variant: 'NORMAL',
-        baseStats: {
-          critRate: e.critRate ?? baseStats.critRate,
-          critDmg: e.critDmg ?? baseStats.critDmg,
-          armorPen: e.armorPen ?? baseStats.armorPen,
-          lifesteal: e.lifesteal ?? baseStats.lifesteal,
-        },
-      })
-      return {
-        id: `B${idx}`,
-        name: enemyNameFromAppearance(e.appearance) ?? `Ennemi ${idx + 1}`,
-        imageUrl: this.#resolveEnemyImage(e.appearance),
-        hp: stats.hp,
-        atk: stats.atk,
-        def: stats.def,
-        spd: stats.spd,
-        critRate: stats.critRate,
-        critDmg: stats.critDmg,
-        armorPen: stats.armorPen,
-        lifesteal: stats.lifesteal,
-        attackPattern: e.attackPattern ?? 'BASIC',
-        passiveKey: e.passiveKey ?? null,
-        element: e.element ?? null,
-        palier: e.palier,
-        mitigationRef: defMitigationRef * e.mitigationScale,
-      }
-    })
   }
 }
