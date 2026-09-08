@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import dayjs from 'dayjs'
-import { Clock, Coins, Skull, Sparkles, Swords, Ticket } from 'lucide-react'
+import { Clock, Coins, Sparkles, Swords, Ticket } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import type {
@@ -8,20 +8,12 @@ import type {
   RaidTierView,
   RaidView,
 } from '../../api/raid.api.ts'
-import { ELEMENT_LABELS } from '../../constants/card.constant.ts'
 import { RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { cn } from '../../libs/utils.ts'
 import { useRaid, useRaidLive } from '../../queries/useRaid.ts'
 import { ArcadeCard } from '../shared/ArcadeCard.tsx'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
 import { Button } from '../ui/button.tsx'
-import {
-  Popup,
-  PopupBody,
-  PopupContent,
-  PopupHeader,
-  PopupTitle,
-} from '../ui/popup.tsx'
 
 function minutesRemaining(endsAt: string): number {
   return Math.max(0, dayjs(endsAt).diff(dayjs(), 'minute'))
@@ -106,14 +98,17 @@ function HpBar({ raid, dealtPct }: { raid: RaidView; dealtPct: number }) {
 function BossCard({
   boss,
   killed,
-  large = false,
 }: {
   boss: RaidView['boss']
   killed: boolean
-  large?: boolean
 }) {
   return (
-    <div className="relative">
+    // `w-full` est obligatoire, pas cosmetique : la colonne parente est un
+    // flex `items-center`, qui dimensionne ses enfants sur leur contenu. Or
+    // ce contenu est une carte en largeur relative (`w-full aspect-[2/3]`) :
+    // sans largeur definie ici la reference est circulaire et la carte
+    // s'effondre a 0x0. Meme piege que le <button> de CollectionCard.tsx.
+    <div className="relative w-full">
       <CardDisplay
         rarity="LEGENDARY"
         name={boss.name}
@@ -122,8 +117,9 @@ function BossCard({
         imageUrl={boss.imageUrl}
         element={boss.element}
         isOwned={!killed}
-        compact={!large}
-        large={large}
+        // `compact` = la carte epouse la largeur de son parent (ratio 2/3) au
+        // lieu d'une taille fixe 240x360, qui deborderait de la colonne.
+        compact
         interactive={!killed}
         showAura={!killed}
       />
@@ -142,37 +138,6 @@ function BossPowerBadge({ power }: { power: number }) {
       <Swords className="h-3.5 w-3.5" />
       {power.toLocaleString('fr-FR')}
     </span>
-  )
-}
-
-function BossInspectPopup({
-  boss,
-  killed,
-  open,
-  onOpenChange,
-}: {
-  boss: RaidView['boss']
-  killed: boolean
-  open: boolean
-  onOpenChange: (open: boolean) => void
-}) {
-  return (
-    <Popup open={open} onOpenChange={onOpenChange}>
-      <PopupContent size="lg">
-        <PopupHeader>
-          <PopupTitle
-            icon={<Skull className="h-4 w-4" />}
-            subtitle={ELEMENT_LABELS[boss.element]}
-          >
-            {boss.name}
-          </PopupTitle>
-        </PopupHeader>
-        <PopupBody className="flex flex-col items-center gap-4 bg-transparent py-6">
-          <BossCard boss={boss} killed={killed} large />
-          <BossPowerBadge power={boss.power} />
-        </PopupBody>
-      </PopupContent>
-    </Popup>
   )
 }
 
@@ -206,7 +171,6 @@ export function RaidPanel({ teamId }: { teamId: string }) {
   const { data: raid, isLoading, isError } = useRaid(teamId)
   useRaidLive(teamId)
   const [, tick] = useState(0)
-  const [inspecting, setInspecting] = useState(false)
 
   // Force un rafraîchissement du texte du compte à rebours une fois par
   // minute — sans ça il reste figé sur la valeur calculée au montage tant
@@ -252,14 +216,7 @@ export function RaidPanel({ teamId }: { teamId: string }) {
     <ArcadeCard>
       <div className="flex flex-col gap-5 md:flex-row">
         <div className="flex w-36 shrink-0 flex-col items-center gap-2 md:w-40">
-          <button
-            type="button"
-            onClick={() => setInspecting(true)}
-            aria-label={`Agrandir la carte du boss ${raid.boss.name}`}
-            className="cursor-pointer rounded-xl transition-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          >
-            <BossCard boss={raid.boss} killed={killed} />
-          </button>
+          <BossCard boss={raid.boss} killed={killed} />
           <BossPowerBadge power={raid.boss.power} />
         </div>
 
@@ -359,13 +316,6 @@ export function RaidPanel({ teamId }: { teamId: string }) {
           </div>
         </div>
       </div>
-
-      <BossInspectPopup
-        boss={raid.boss}
-        killed={killed}
-        open={inspecting}
-        onOpenChange={setInspecting}
-      />
     </ArcadeCard>
   )
 }
