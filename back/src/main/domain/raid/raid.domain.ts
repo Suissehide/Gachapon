@@ -17,6 +17,7 @@ import type {
   TeamRaidWithBoss,
 } from '../../types/infra/orm/repositories/raid.repository.interface'
 import type { StorageClientInterface } from '../../types/infra/storage/storage-client'
+import type { Logger } from '../../types/utils/logger'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
 import type { TeamRepository } from '../../infra/orm/repositories/team.repository'
@@ -72,6 +73,7 @@ export class RaidDomain implements IRaidDomain {
   readonly #raidRepository: IRaidRepository
   readonly #postgresOrm: PostgresOrm
   readonly #wsManager: WsManager
+  readonly #logger: Logger
 
   constructor({
     configService,
@@ -82,6 +84,7 @@ export class RaidDomain implements IRaidDomain {
     raidRepository,
     postgresOrm,
     wsManager,
+    logger,
   }: IocContainer) {
     this.#configService = configService
     this.#config = config
@@ -91,6 +94,7 @@ export class RaidDomain implements IRaidDomain {
     this.#raidRepository = raidRepository
     this.#postgresOrm = postgresOrm
     this.#wsManager = wsManager
+    this.#logger = logger
   }
 
   async getRaid(
@@ -128,7 +132,7 @@ export class RaidDomain implements IRaidDomain {
     now: Date = new Date(),
   ): Promise<RaidAttackResult> {
     if (userCardIds.length === 0 || userCardIds.length > MAX_RAID_TEAM_SIZE) {
-      throw Boom.badRequest('Composez une équipe de 1 à 3 cartes pour le raid')
+      throw Boom.badRequest('Compose une équipe de 1 à 3 cartes pour le raid')
     }
     if (new Set(userCardIds).size !== userCardIds.length) {
       throw Boom.badRequest('Les cartes doivent être distinctes')
@@ -258,13 +262,22 @@ export class RaidDomain implements IRaidDomain {
               distinct: ['userId'],
               select: { userId: true },
             })
+            // Clé sur la SEMAINE (raid.weekKey), pas sur le raid (raid.id) :
+            // un raid est unique par équipe ET semaine, donc un joueur dans
+            // plusieurs équipes a un raid.id différent par équipe la même
+            // semaine. Clé sur raid.id lui ferait toucher le lot de palier
+            // une fois par équipe (jusqu'à 5, MAX_TEAMS_PER_USER). Clé sur
+            // la semaine + la contrainte unique [userId, source, sourceId]
+            // fait que la 2e équipe qui franchit un palier déjà obtenu via
+            // une autre équipe la même semaine ne redonne rien : le joueur
+            // reçoit l'union des paliers de ses équipes, jamais la somme.
             await tx.userReward.createMany({
               data: participants.flatMap((p) =>
                 after.map((t) => ({
                   userId: p.userId,
                   rewardId: t.rewardId,
                   source: 'RAID' as const,
-                  sourceId: `${raid.id}:${t.pct}`,
+                  sourceId: `${raid.weekKey}:${t.pct}`,
                 })),
               ),
               skipDuplicates: true,
@@ -342,8 +355,15 @@ export class RaidDomain implements IRaidDomain {
     const element = raidElementForWeek(weekKey)
     const boss = await this.#raidRepository.findBossByElement(element)
     if (!boss) {
-      throw Boom.badImplementation(
-        `Boss de raid manquant pour ${element} — lancer le seed`,
+      // Faute de contenu (migration de seed pas encore appliquée, ou boss
+      // supprimé en base), pas une erreur du client : 503, pas 500/4xx, et
+      // message générique côté client (le détail va au log serveur, pas au
+      // joueur).
+      this.#logger.error(
+        `Raid : boss manquant pour l'élément ${element} (semaine ${weekKey}) — vérifier la migration seed_raid_content`,
+      )
+      throw Boom.serverUnavailable(
+        'Raid indisponible pour le moment, réessaie plus tard',
       )
     }
     const cfg = await this.#configService.getMany('raid.baseHpPerMember')

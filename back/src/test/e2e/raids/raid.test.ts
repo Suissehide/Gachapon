@@ -316,20 +316,24 @@ describe('routes de raid', () => {
     })
     expect(res.statusCode).toBe(200)
     const body = res.json()
+    // PV forcés à 1 avant l'attaque : les dégâts enregistrés sont plafonnés
+    // aux PV restants (pas d'overkill comptabilisé), donc damage === 1 même
+    // si la simulation a calculé bien plus de dégâts bruts.
+    expect(body.damage).toBe(1)
     expect(body.hpAfter).toBe(0)
     expect(body.killed).toBe(true)
     expect(body.newTiers.map((t: any) => t.pct)).toEqual([100])
 
     for (const uid of [userIdA, userIdB]) {
       const rewards = await prisma.userReward.findMany({
-        where: { userId: uid, source: 'RAID', sourceId: { startsWith: `${raid.id}:` } },
+        where: { userId: uid, source: 'RAID', sourceId: { startsWith: `${raid.weekKey}:` } },
         orderBy: { sourceId: 'asc' },
       })
       expect(rewards.map((r: any) => r.sourceId)).toEqual([
-        `${raid.id}:100`,
-        `${raid.id}:25`,
-        `${raid.id}:50`,
-        `${raid.id}:75`,
+        `${raid.weekKey}:100`,
+        `${raid.weekKey}:25`,
+        `${raid.weekKey}:50`,
+        `${raid.weekKey}:75`,
       ])
       expect(rewards.every((r: any) => r.claimedAt === null)).toBe(true)
     }

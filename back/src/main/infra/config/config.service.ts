@@ -139,8 +139,12 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // `SIM_MODE=raid SIM_GEAR=epic npx tsx scripts/balance-sim.ts`
   // (docs/superpowers/mesures/2026-09-08-raid/rapport.md). Rappel : cette
   // valeur DEFAULTS est create-only en base — une instance déjà bootstrapée
-  // garde l'ancienne valeur tant qu'elle n'est pas mise à jour via
-  // /admin/config.
+  // garde l'ancienne valeur. Impossible à corriger depuis l'écran
+  // /admin/config : son schéma (adminConfigUpdateBodySchema) et son
+  // formulaire front (admin.config.tsx) sont des listes blanches figées qui
+  // ne connaissent pas les clés raid.*, alors que CONFIG_KEYS ci-dessous les
+  // liste bien. Seule voie actuelle : UPDATE direct de la table
+  // GlobalConfig (clé = 'raid.xxx'), ou élargir ces deux listes blanches.
   'raid.attacksPerDay': 2,
   'raid.timeoutTurns': 10,
   'raid.baseHpPerMember': 162000,

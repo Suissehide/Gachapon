@@ -23,14 +23,20 @@ export function useRaidAttack(teamId: string) {
   const { toast } = useToast()
   return useMutation({
     mutationFn: (userCardIds: string[]) => RaidApi.attack(teamId, userCardIds),
-    onSuccess: (res) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: raidKey(teamId) })
-      if (res.newTiers.length > 0) {
-        // La pastille Récompenses lit user.pendingRewardsCount (fetchMe),
-        // pas la query ['rewards','pending'] : rafraîchir les deux.
-        queryClient.invalidateQueries({ queryKey: ['rewards', 'pending'] })
-        void useAuthStore.getState().fetchMe()
-      }
+      // Inconditionnel, pas seulement quand newTiers n'est pas vide :
+      // newTiers est le delta franchi par CETTE attaque, pas l'état des
+      // récompenses du joueur. Un joueur qui rejoint en cours de semaine et
+      // attaque une fois alors que la barre a déjà franchi plusieurs
+      // paliers a un delta vide alors que le serveur vient d'écrire
+      // plusieurs lots de rattrapage — sans rafraîchir ici, ni la pastille
+      // ni la monnaie ne bougent avant le prochain rechargement. Le coût
+      // est nul (attaque limitée à 2/jour).
+      // La pastille Récompenses lit user.pendingRewardsCount (fetchMe),
+      // pas la query ['rewards','pending'] : rafraîchir les deux.
+      queryClient.invalidateQueries({ queryKey: ['rewards', 'pending'] })
+      void useAuthStore.getState().fetchMe()
     },
     onError: (e: Error) =>
       toast({

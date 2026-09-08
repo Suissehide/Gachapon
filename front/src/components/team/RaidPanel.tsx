@@ -58,14 +58,22 @@ function TierMarker({ tier }: { tier: RaidTierView }) {
   )
 }
 
-function HpBar({ raid }: { raid: RaidView }) {
-  const pct = raid.maxHp > 0 ? (raid.hp / raid.maxHp) * 100 : 0
+// `dealtPct` (dégâts infligés) est la même valeur que celle affichée en
+// légende ("X % infligés") — seule source de vérité, passée en prop plutôt
+// que recalculée ici. La barre se remplit de gauche à droite vers 100 %,
+// dans le même sens que les paliers (`left: ${tier.pct}%`) : avant ce
+// correctif elle se remplissait avec les PV restants (sens inverse), donc
+// une équipe à 25 % de dégâts voyait le bord de la barre sur le repère
+// "75 %". Dégradé conservé mais inversé : `primary` (départ) → `destructive`
+// au bord d'attaque, qui se rapproche visuellement du rouge à mesure que le
+// boss se rapproche de la mort, plutôt que fixe à gauche comme avant.
+function HpBar({ raid, dealtPct }: { raid: RaidView; dealtPct: number }) {
   return (
     <div className="relative pb-6">
       <div className="h-4 overflow-hidden rounded-full border border-border bg-background">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-destructive to-primary transition-[width] duration-700"
-          style={{ width: `${pct}%` }}
+          className="h-full rounded-full bg-gradient-to-r from-primary to-destructive transition-[width] duration-700"
+          style={{ width: `${dealtPct}%` }}
         />
       </div>
       <div className="absolute inset-x-0 top-4 h-8">
@@ -200,7 +208,7 @@ export function RaidPanel({ teamId }: { teamId: string }) {
             </div>
           </div>
 
-          <HpBar raid={raid} />
+          <HpBar raid={raid} dealtPct={dealtPct} />
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="font-mono text-sm text-text">
