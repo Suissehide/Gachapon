@@ -50,6 +50,7 @@ import { Route as AdminAdminStatsRouteImport } from './routes/_admin/admin.stats
 import { Route as AdminAdminSkillsRouteImport } from './routes/_admin/admin.skills'
 import { Route as AdminAdminShopRouteImport } from './routes/_admin/admin.shop'
 import { Route as AdminAdminScoringRouteImport } from './routes/_admin/admin.scoring'
+import { Route as AdminAdminRaidRouteImport } from './routes/_admin/admin.raid'
 import { Route as AdminAdminMediaRouteImport } from './routes/_admin/admin.media'
 import { Route as AdminAdminHealthRouteImport } from './routes/_admin/admin.health'
 import { Route as AdminAdminConfigRouteImport } from './routes/_admin/admin.config'
@@ -267,6 +268,11 @@ const AdminAdminScoringRoute = AdminAdminScoringRouteImport.update({
   path: '/scoring',
   getParentRoute: () => AdminAdminRoute,
 } as any)
+const AdminAdminRaidRoute = AdminAdminRaidRouteImport.update({
+  id: '/raid',
+  path: '/raid',
+  getParentRoute: () => AdminAdminRoute,
+} as any)
 const AdminAdminMediaRoute = AdminAdminMediaRouteImport.update({
   id: '/media',
   path: '/media',
@@ -343,6 +349,7 @@ export interface FileRoutesByFullPath {
   '/admin/config': typeof AdminAdminConfigRoute
   '/admin/health': typeof AdminAdminHealthRoute
   '/admin/media': typeof AdminAdminMediaRoute
+  '/admin/raid': typeof AdminAdminRaidRoute
   '/admin/scoring': typeof AdminAdminScoringRoute
   '/admin/shop': typeof AdminAdminShopRoute
   '/admin/skills': typeof AdminAdminSkillsRoute
@@ -391,6 +398,7 @@ export interface FileRoutesByTo {
   '/admin/config': typeof AdminAdminConfigRoute
   '/admin/health': typeof AdminAdminHealthRoute
   '/admin/media': typeof AdminAdminMediaRoute
+  '/admin/raid': typeof AdminAdminRaidRoute
   '/admin/scoring': typeof AdminAdminScoringRoute
   '/admin/shop': typeof AdminAdminShopRoute
   '/admin/skills': typeof AdminAdminSkillsRoute
@@ -443,6 +451,7 @@ export interface FileRoutesById {
   '/_admin/admin/config': typeof AdminAdminConfigRoute
   '/_admin/admin/health': typeof AdminAdminHealthRoute
   '/_admin/admin/media': typeof AdminAdminMediaRoute
+  '/_admin/admin/raid': typeof AdminAdminRaidRoute
   '/_admin/admin/scoring': typeof AdminAdminScoringRoute
   '/_admin/admin/shop': typeof AdminAdminShopRoute
   '/_admin/admin/skills': typeof AdminAdminSkillsRoute
@@ -494,6 +503,7 @@ export interface FileRouteTypes {
     | '/admin/config'
     | '/admin/health'
     | '/admin/media'
+    | '/admin/raid'
     | '/admin/scoring'
     | '/admin/shop'
     | '/admin/skills'
@@ -542,6 +552,7 @@ export interface FileRouteTypes {
     | '/admin/config'
     | '/admin/health'
     | '/admin/media'
+    | '/admin/raid'
     | '/admin/scoring'
     | '/admin/shop'
     | '/admin/skills'
@@ -593,6 +604,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/config'
     | '/_admin/admin/health'
     | '/_admin/admin/media'
+    | '/_admin/admin/raid'
     | '/_admin/admin/scoring'
     | '/_admin/admin/shop'
     | '/_admin/admin/skills'
@@ -918,6 +930,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminScoringRouteImport
       parentRoute: typeof AdminAdminRoute
     }
+    '/_admin/admin/raid': {
+      id: '/_admin/admin/raid'
+      path: '/raid'
+      fullPath: '/admin/raid'
+      preLoaderRoute: typeof AdminAdminRaidRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
     '/_admin/admin/media': {
       id: '/_admin/admin/media'
       path: '/media'
@@ -983,6 +1002,7 @@ interface AdminAdminRouteChildren {
   AdminAdminConfigRoute: typeof AdminAdminConfigRoute
   AdminAdminHealthRoute: typeof AdminAdminHealthRoute
   AdminAdminMediaRoute: typeof AdminAdminMediaRoute
+  AdminAdminRaidRoute: typeof AdminAdminRaidRoute
   AdminAdminScoringRoute: typeof AdminAdminScoringRoute
   AdminAdminShopRoute: typeof AdminAdminShopRoute
   AdminAdminSkillsRoute: typeof AdminAdminSkillsRoute
@@ -998,6 +1018,7 @@ const AdminAdminRouteChildren: AdminAdminRouteChildren = {
   AdminAdminConfigRoute: AdminAdminConfigRoute,
   AdminAdminHealthRoute: AdminAdminHealthRoute,
   AdminAdminMediaRoute: AdminAdminMediaRoute,
+  AdminAdminRaidRoute: AdminAdminRaidRoute,
   AdminAdminScoringRoute: AdminAdminScoringRoute,
   AdminAdminShopRoute: AdminAdminShopRoute,
   AdminAdminSkillsRoute: AdminAdminSkillsRoute,
