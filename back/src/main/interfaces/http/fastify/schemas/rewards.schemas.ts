@@ -27,6 +27,7 @@ const rewardSourceEnum = z.enum([
   'QUEST',
   'LEVEL_UP',
   'ADMIN',
+  'RAID',
 ])
 
 // A card actually granted by claiming a reward — mirrors the front's PullBatchEntry.

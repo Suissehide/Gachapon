@@ -14,7 +14,7 @@ export type AchievementEvent =
   | {
       kind: 'REWARD_CLAIMED'
       rewardId: string
-      source: 'STREAK' | 'ACHIEVEMENT' | 'QUEST' | 'LEVEL_UP' | 'ADMIN'
+      source: 'STREAK' | 'ACHIEVEMENT' | 'QUEST' | 'LEVEL_UP' | 'ADMIN' | 'RAID'
     }
   | { kind: 'LEVEL_UP'; newLevel: number }
   | { kind: 'STREAK_UPDATED'; days: number }

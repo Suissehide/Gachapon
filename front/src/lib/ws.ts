@@ -25,6 +25,16 @@ type WsEvent =
       xpGained: number
     }
   | ({ type: 'feed:pull' } & FeedEntry)
+  | {
+      type: 'raid:attack'
+      teamId: string
+      raidId: string
+      hp: number
+      maxHp: number
+      attacker: { id: string; username: string }
+      damage: number
+      killed: boolean
+    }
   | { type: 'error'; message: string }
   | {
       type: 'admin:activity'

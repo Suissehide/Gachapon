@@ -131,6 +131,23 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'set.assautAtkPct': 16,
   'set.colosseHpPct': 10,
   'set.celeriteSpdPct': 10,
+  // Raid d'équipe. attacksPerDay = quota journalier UTC, tous raids
+  // confondus. baseHpPerMember : PV du boss par membre au lancement de la
+  // semaine — 11 × D_ref (D_ref = dégâts moyens d'une attaque de l'équipe de
+  // référence : 3 épiques au plafond du palier 5, gear epic, un contre-pick,
+  // moyenné sur les 4 boss), mesuré le 2026-09-08 via
+  // `SIM_MODE=raid SIM_GEAR=epic npx tsx scripts/balance-sim.ts`
+  // (docs/superpowers/mesures/2026-09-08-raid/rapport.md). Rappel : cette
+  // valeur DEFAULTS est create-only en base — une instance déjà bootstrapée
+  // garde l'ancienne valeur. Impossible à corriger depuis l'écran
+  // /admin/config : son schéma (adminConfigUpdateBodySchema) et son
+  // formulaire front (admin.config.tsx) sont des listes blanches figées qui
+  // ne connaissent pas les clés raid.*, alors que CONFIG_KEYS ci-dessous les
+  // liste bien. Seule voie actuelle : UPDATE direct de la table
+  // GlobalConfig (clé = 'raid.xxx'), ou élargir ces deux listes blanches.
+  'raid.attacksPerDay': 2,
+  'raid.timeoutTurns': 10,
+  'raid.baseHpPerMember': 162000,
 }
 
 export class ConfigService implements ConfigServiceInterface {

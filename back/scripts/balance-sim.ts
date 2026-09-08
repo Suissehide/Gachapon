@@ -21,6 +21,13 @@ import {
   type Element,
   elementRelation,
 } from '../src/main/domain/combat/element'
+import { buildEnemySimUnits } from '../src/main/domain/combat/sim-units'
+import {
+  damageDealtToBoss,
+  RAID_BOSS_SIM_HP,
+  RAID_ROTATION,
+} from '../src/main/domain/raid/raid-rules'
+import { raidBossSpec } from '../prisma/seed/raid'
 
 type BaseBlock = {
   baseHp: number
@@ -512,4 +519,85 @@ function main(): void {
   }
 }
 
-main()
+const RAID_SEEDS = 200
+const RAID_TIMEOUT_TURNS = 10
+const RAID_PALIERS = [4, 5, 6, 7]
+type Counterpick = 'none' | 'one' | 'full'
+const COUNTERPICK_COUNT: Record<Counterpick, number> = { none: 0, one: 1, full: 3 }
+
+function percentile(sorted: number[], p: number): number {
+  const idx = Math.min(sorted.length - 1, Math.floor(p * sorted.length))
+  return sorted[idx] ?? 0
+}
+
+/** Équipe de référence : 3 épiques au plafond du palier, gear SIM_GEAR, 0/1/3 cartes en contre-pick du boss. */
+function raidReferenceTeam(
+  palier: number,
+  bossElement: Element,
+  counterpick: Counterpick,
+): SimulatorUnit[] {
+  const base: BaseBlock = {
+    baseHp: SEED_RARITY_BASE.EPIC.hp,
+    baseAtk: SEED_RARITY_BASE.EPIC.atk,
+    baseDef: SEED_RARITY_BASE.EPIC.def,
+    baseSpd: SEED_RARITY_BASE.EPIC.spd,
+  }
+  const team = playerTeam({ level: 10 * palier, palier, base })
+  const counter = counterElement(bossElement)
+  return team.map((u, idx) => ({
+    ...u,
+    element: idx < COUNTERPICK_COUNT[counterpick] ? counter : null,
+  }))
+}
+
+// Mode raid : mesure les dégâts infligés au boss (et les tours survécus) par
+// l'équipe de référence, pour chaque boss × palier × niveau de contre-pick.
+// Sert à dériver `raid.baseHpPerMember` = 11 × D_ref (11 attaques ≈ 5,5
+// jours à 2 attaques/jour) et à vérifier que le palier 5 survit ~7-9 tours.
+function mainRaid(): void {
+  // eslint-disable-next-line no-console
+  console.log('boss\tpalier\tcounterpick\tmean\tp10\tp90\tturns')
+  for (const element of RAID_ROTATION) {
+    const [boss] = buildEnemySimUnits([raidBossSpec(element)], {
+      defMitigationRef: SIM_DEF_MITIGATION_REF,
+      baseStats: SIM_BASE_STATS,
+      resolveImage: () => null,
+    })
+    if (!boss) {
+      throw new Error('boss introuvable')
+    }
+    boss.hp = RAID_BOSS_SIM_HP
+    for (const palier of RAID_PALIERS) {
+      for (const counterpick of ['none', 'one', 'full'] as const) {
+        const damages: number[] = []
+        let turns = 0
+        for (let s = 0; s < RAID_SEEDS; s++) {
+          const sim = simulateBattle({
+            teamA: raidReferenceTeam(palier, element as Element, counterpick),
+            teamB: [{ ...boss }],
+            seed: `raid:${element}:${palier}:${counterpick}:${s}`,
+            timeoutTurns: RAID_TIMEOUT_TURNS,
+            elementAdvantageMult: ELEMENT_ADVANTAGE_MULT,
+            elementDisadvantageMult: ELEMENT_DISADVANTAGE_MULT,
+          })
+          damages.push(damageDealtToBoss(sim.log))
+          turns += sim.turns
+        }
+        damages.sort((a, b) => a - b)
+        const mean = Math.round(
+          damages.reduce((a, b) => a + b, 0) / damages.length,
+        )
+        // eslint-disable-next-line no-console
+        console.log(
+          `${element}\t${palier}\t${counterpick}\t${mean}\t${percentile(damages, 0.1)}\t${percentile(damages, 0.9)}\t${(turns / RAID_SEEDS).toFixed(1)}`,
+        )
+      }
+    }
+  }
+}
+
+if (process.env.SIM_MODE === 'raid') {
+  mainRaid()
+} else {
+  main()
+}

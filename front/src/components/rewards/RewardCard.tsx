@@ -5,6 +5,7 @@ import {
   Layers,
   Sparkles,
   Star,
+  Swords,
   Ticket,
   Trophy,
   Zap,
@@ -42,6 +43,9 @@ function sourceLabel(reward: PendingReward): string {
   if (reward.source === 'ADMIN') {
     return 'Récompense admin'
   }
+  if (reward.source === 'RAID') {
+    return reward.label ?? "Raid d'équipe"
+  }
   return 'Récompense'
 }
 
@@ -70,6 +74,11 @@ const SOURCE_CONFIG = {
     icon: <Star className="h-3.5 w-3.5 text-primary" />,
     gradientFrom:
       '[background-image:linear-gradient(135deg,rgba(245,158,11,0.07)_0%,transparent_60%)]',
+  },
+  RAID: {
+    icon: <Swords className="h-3.5 w-3.5 text-red-400" />,
+    gradientFrom:
+      '[background-image:linear-gradient(135deg,rgba(248,113,113,0.07)_0%,transparent_60%)]',
   },
 } as const
 

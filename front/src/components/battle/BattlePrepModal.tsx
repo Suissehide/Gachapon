@@ -39,6 +39,7 @@ export function BattlePrepModal({
   team,
   currentPC,
   battleCost,
+  hideEnergy = false,
   rewards,
   extraActions,
   fightLabel,
@@ -54,6 +55,8 @@ export function BattlePrepModal({
   team: TeamUnit[]
   currentPC: number
   battleCost: number
+  /** Masque la ligne « coût en énergie » — pour les modes sans énergie (raid, gratuit). */
+  hideEnergy?: boolean
   rewards?: ReactNode
   extraActions?: ReactNode
   fightLabel: string
@@ -104,24 +107,26 @@ export function BattlePrepModal({
 
           <div className="rounded-2xl border border-[rgba(27,23,38,0.06)] bg-white p-4">
             {rewards}
-            <div
-              className={`flex items-center gap-2 ${
-                rewards
-                  ? 'mt-3.5 border-t border-[rgba(27,23,38,0.07)] pt-3.5'
-                  : ''
-              }`}
-            >
-              <Zap className="h-4 w-4 text-violet-500" />
-              <span className="font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-text-light/60">
-                Coût
-              </span>
-              <b className="font-display text-xl font-extrabold text-text">
-                {battleCost}
-              </b>
-              <span className="ml-auto font-mono text-[11px] text-text-light/50">
-                énergie {currentPC}
-              </span>
-            </div>
+            {!hideEnergy && (
+              <div
+                className={`flex items-center gap-2 ${
+                  rewards
+                    ? 'mt-3.5 border-t border-[rgba(27,23,38,0.07)] pt-3.5'
+                    : ''
+                }`}
+              >
+                <Zap className="h-4 w-4 text-violet-500" />
+                <span className="font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-text-light/60">
+                  Coût
+                </span>
+                <b className="font-display text-xl font-extrabold text-text">
+                  {battleCost}
+                </b>
+                <span className="ml-auto font-mono text-[11px] text-text-light/50">
+                  énergie {currentPC}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 

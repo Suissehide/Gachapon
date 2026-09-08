@@ -9,6 +9,7 @@ import { seedEquipment } from './seed/equipment'
 import { seedSkills } from './seed/skills'
 import { seedMilestones } from './seed/milestones'
 import { seedQuests } from './seed/quests'
+import { seedRaid } from './seed/raid'
 import { seedShop } from './seed/shop'
 import { seedTowerFloors } from './seed/tower'
 import { seedUsers } from './seed/users'
@@ -57,6 +58,7 @@ async function main() {
     await tx.streakMilestone.deleteMany()
     await tx.quest.deleteMany()
     await tx.achievement.deleteMany()
+    await tx.raidTier.deleteMany()
     await tx.reward.deleteMany()
     await tx.globalConfig.deleteMany()
     console.log('Toutes les tables vidées.')
@@ -71,6 +73,7 @@ async function main() {
     await seedEquipment(tx)
     await seedCampaign(tx)
     await seedTowerFloors(tx)
+    await seedRaid(tx)
 
     // Utilisateurs + équipe (en dernier, peut référencer le catalogue)
     await seedUsers(tx)

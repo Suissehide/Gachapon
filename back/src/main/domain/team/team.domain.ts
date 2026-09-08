@@ -15,7 +15,7 @@ import type { ITeamMemberRepository } from '../../types/infra/orm/repositories/t
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 
-const MAX_TEAMS_PER_USER = 5
+const MAX_TEAMS_PER_USER = 3
 const MAX_MEMBERS_PER_TEAM = 100
 const INVITATION_TTL_MS = 48 * 60 * 60 * 1000
 

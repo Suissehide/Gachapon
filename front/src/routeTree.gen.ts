@@ -50,12 +50,14 @@ import { Route as AdminAdminStatsRouteImport } from './routes/_admin/admin.stats
 import { Route as AdminAdminSkillsRouteImport } from './routes/_admin/admin.skills'
 import { Route as AdminAdminShopRouteImport } from './routes/_admin/admin.shop'
 import { Route as AdminAdminScoringRouteImport } from './routes/_admin/admin.scoring'
+import { Route as AdminAdminRaidRouteImport } from './routes/_admin/admin.raid'
 import { Route as AdminAdminMediaRouteImport } from './routes/_admin/admin.media'
 import { Route as AdminAdminHealthRouteImport } from './routes/_admin/admin.health'
 import { Route as AdminAdminConfigRouteImport } from './routes/_admin/admin.config'
 import { Route as AdminAdminCombatDebugRouteImport } from './routes/_admin/admin.combat-debug'
 import { Route as AdminAdminCardsRouteImport } from './routes/_admin/admin.cards'
 import { Route as AuthenticatedTeamIdSettingsRouteImport } from './routes/_authenticated/team/$id_.settings'
+import { Route as AuthenticatedTeamIdRaidRouteImport } from './routes/_authenticated/team/$id_.raid'
 import { Route as AuthenticatedProfileUsernameCollectionRouteImport } from './routes/_authenticated/profile/$username_.collection'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
@@ -266,6 +268,11 @@ const AdminAdminScoringRoute = AdminAdminScoringRouteImport.update({
   path: '/scoring',
   getParentRoute: () => AdminAdminRoute,
 } as any)
+const AdminAdminRaidRoute = AdminAdminRaidRouteImport.update({
+  id: '/raid',
+  path: '/raid',
+  getParentRoute: () => AdminAdminRoute,
+} as any)
 const AdminAdminMediaRoute = AdminAdminMediaRouteImport.update({
   id: '/media',
   path: '/media',
@@ -297,6 +304,11 @@ const AuthenticatedTeamIdSettingsRoute =
     path: '/team/$id/settings',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedTeamIdRaidRoute = AuthenticatedTeamIdRaidRouteImport.update({
+  id: '/team/$id_/raid',
+  path: '/team/$id/raid',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedProfileUsernameCollectionRoute =
   AuthenticatedProfileUsernameCollectionRouteImport.update({
     id: '/profile/$username_/collection',
@@ -337,6 +349,7 @@ export interface FileRoutesByFullPath {
   '/admin/config': typeof AdminAdminConfigRoute
   '/admin/health': typeof AdminAdminHealthRoute
   '/admin/media': typeof AdminAdminMediaRoute
+  '/admin/raid': typeof AdminAdminRaidRoute
   '/admin/scoring': typeof AdminAdminScoringRoute
   '/admin/shop': typeof AdminAdminShopRoute
   '/admin/skills': typeof AdminAdminSkillsRoute
@@ -350,6 +363,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminAdminIndexRoute
   '/team/': typeof AuthenticatedTeamIndexRoute
   '/profile/$username/collection': typeof AuthenticatedProfileUsernameCollectionRoute
+  '/team/$id/raid': typeof AuthenticatedTeamIdRaidRoute
   '/team/$id/settings': typeof AuthenticatedTeamIdSettingsRoute
 }
 export interface FileRoutesByTo {
@@ -384,6 +398,7 @@ export interface FileRoutesByTo {
   '/admin/config': typeof AdminAdminConfigRoute
   '/admin/health': typeof AdminAdminHealthRoute
   '/admin/media': typeof AdminAdminMediaRoute
+  '/admin/raid': typeof AdminAdminRaidRoute
   '/admin/scoring': typeof AdminAdminScoringRoute
   '/admin/shop': typeof AdminAdminShopRoute
   '/admin/skills': typeof AdminAdminSkillsRoute
@@ -397,6 +412,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminAdminIndexRoute
   '/team': typeof AuthenticatedTeamIndexRoute
   '/profile/$username/collection': typeof AuthenticatedProfileUsernameCollectionRoute
+  '/team/$id/raid': typeof AuthenticatedTeamIdRaidRoute
   '/team/$id/settings': typeof AuthenticatedTeamIdSettingsRoute
 }
 export interface FileRoutesById {
@@ -435,6 +451,7 @@ export interface FileRoutesById {
   '/_admin/admin/config': typeof AdminAdminConfigRoute
   '/_admin/admin/health': typeof AdminAdminHealthRoute
   '/_admin/admin/media': typeof AdminAdminMediaRoute
+  '/_admin/admin/raid': typeof AdminAdminRaidRoute
   '/_admin/admin/scoring': typeof AdminAdminScoringRoute
   '/_admin/admin/shop': typeof AdminAdminShopRoute
   '/_admin/admin/skills': typeof AdminAdminSkillsRoute
@@ -448,6 +465,7 @@ export interface FileRoutesById {
   '/_admin/admin/': typeof AdminAdminIndexRoute
   '/_authenticated/team/': typeof AuthenticatedTeamIndexRoute
   '/_authenticated/profile/$username_/collection': typeof AuthenticatedProfileUsernameCollectionRoute
+  '/_authenticated/team/$id_/raid': typeof AuthenticatedTeamIdRaidRoute
   '/_authenticated/team/$id_/settings': typeof AuthenticatedTeamIdSettingsRoute
 }
 export interface FileRouteTypes {
@@ -485,6 +503,7 @@ export interface FileRouteTypes {
     | '/admin/config'
     | '/admin/health'
     | '/admin/media'
+    | '/admin/raid'
     | '/admin/scoring'
     | '/admin/shop'
     | '/admin/skills'
@@ -498,6 +517,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/team/'
     | '/profile/$username/collection'
+    | '/team/$id/raid'
     | '/team/$id/settings'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -532,6 +552,7 @@ export interface FileRouteTypes {
     | '/admin/config'
     | '/admin/health'
     | '/admin/media'
+    | '/admin/raid'
     | '/admin/scoring'
     | '/admin/shop'
     | '/admin/skills'
@@ -545,6 +566,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/team'
     | '/profile/$username/collection'
+    | '/team/$id/raid'
     | '/team/$id/settings'
   id:
     | '__root__'
@@ -582,6 +604,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/config'
     | '/_admin/admin/health'
     | '/_admin/admin/media'
+    | '/_admin/admin/raid'
     | '/_admin/admin/scoring'
     | '/_admin/admin/shop'
     | '/_admin/admin/skills'
@@ -595,6 +618,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/'
     | '/_authenticated/team/'
     | '/_authenticated/profile/$username_/collection'
+    | '/_authenticated/team/$id_/raid'
     | '/_authenticated/team/$id_/settings'
   fileRoutesById: FileRoutesById
 }
@@ -906,6 +930,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminScoringRouteImport
       parentRoute: typeof AdminAdminRoute
     }
+    '/_admin/admin/raid': {
+      id: '/_admin/admin/raid'
+      path: '/raid'
+      fullPath: '/admin/raid'
+      preLoaderRoute: typeof AdminAdminRaidRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
     '/_admin/admin/media': {
       id: '/_admin/admin/media'
       path: '/media'
@@ -948,6 +979,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTeamIdSettingsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/team/$id_/raid': {
+      id: '/_authenticated/team/$id_/raid'
+      path: '/team/$id/raid'
+      fullPath: '/team/$id/raid'
+      preLoaderRoute: typeof AuthenticatedTeamIdRaidRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/profile/$username_/collection': {
       id: '/_authenticated/profile/$username_/collection'
       path: '/profile/$username/collection'
@@ -964,6 +1002,7 @@ interface AdminAdminRouteChildren {
   AdminAdminConfigRoute: typeof AdminAdminConfigRoute
   AdminAdminHealthRoute: typeof AdminAdminHealthRoute
   AdminAdminMediaRoute: typeof AdminAdminMediaRoute
+  AdminAdminRaidRoute: typeof AdminAdminRaidRoute
   AdminAdminScoringRoute: typeof AdminAdminScoringRoute
   AdminAdminShopRoute: typeof AdminAdminShopRoute
   AdminAdminSkillsRoute: typeof AdminAdminSkillsRoute
@@ -979,6 +1018,7 @@ const AdminAdminRouteChildren: AdminAdminRouteChildren = {
   AdminAdminConfigRoute: AdminAdminConfigRoute,
   AdminAdminHealthRoute: AdminAdminHealthRoute,
   AdminAdminMediaRoute: AdminAdminMediaRoute,
+  AdminAdminRaidRoute: AdminAdminRaidRoute,
   AdminAdminScoringRoute: AdminAdminScoringRoute,
   AdminAdminShopRoute: AdminAdminShopRoute,
   AdminAdminSkillsRoute: AdminAdminSkillsRoute,
@@ -1021,6 +1061,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedTowerElementRoute: typeof AuthenticatedTowerElementRoute
   AuthenticatedTeamIndexRoute: typeof AuthenticatedTeamIndexRoute
   AuthenticatedProfileUsernameCollectionRoute: typeof AuthenticatedProfileUsernameCollectionRoute
+  AuthenticatedTeamIdRaidRoute: typeof AuthenticatedTeamIdRaidRoute
   AuthenticatedTeamIdSettingsRoute: typeof AuthenticatedTeamIdSettingsRoute
 }
 
@@ -1044,6 +1085,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedTeamIndexRoute: AuthenticatedTeamIndexRoute,
   AuthenticatedProfileUsernameCollectionRoute:
     AuthenticatedProfileUsernameCollectionRoute,
+  AuthenticatedTeamIdRaidRoute: AuthenticatedTeamIdRaidRoute,
   AuthenticatedTeamIdSettingsRoute: AuthenticatedTeamIdSettingsRoute,
 }
 

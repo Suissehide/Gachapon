@@ -19,6 +19,7 @@ import { PageShell } from '../../../components/shared/PageShell.tsx'
 import { ReactTable } from '../../../components/table/reactTable.tsx'
 import { ConfirmPopup } from '../../../components/team/ConfirmPopup.tsx'
 import { InviteMemberPopup } from '../../../components/team/InviteMemberPopup.tsx'
+import { RaidPanel } from '../../../components/team/RaidPanel.tsx'
 import { Button } from '../../../components/ui/button.tsx'
 import { Input } from '../../../components/ui/input.tsx'
 import {
@@ -294,6 +295,8 @@ function TeamDetailPage() {
           </div>
         }
       />
+
+      <RaidPanel teamId={id} />
 
       <ArcadeCard>
         <div className="relative mb-4">
