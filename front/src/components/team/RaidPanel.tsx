@@ -141,6 +141,57 @@ function BossPowerBadge({ power }: { power: number }) {
   )
 }
 
+// Vue agrandie calquée sur CardViewModal (collection) : surcouche plein
+// écran + carte `large`, PAS une Popup à en-tête — c'est la présentation
+// que le joueur connaît déjà pour ses propres cartes.
+function BossCardOverlay({
+  boss,
+  killed,
+  onClose,
+}: {
+  boss: RaidView['boss']
+  killed: boolean
+  onClose: () => void
+}) {
+  return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: motif de fermeture au clic sur le fond, comme CardViewModal
+    <div
+      className="fixed inset-x-0 bottom-0 top-[var(--topbar-h)] z-[100] overflow-y-auto bg-black/55 backdrop-blur-md"
+      role="presentation"
+      onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          onClose()
+        }
+      }}
+    >
+      <div className="flex min-h-full items-center justify-center px-4 py-10">
+        <div className="flex flex-col items-center gap-4 animate-in fade-in-0 zoom-in-95 duration-300">
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: wrapper d'arrêt de propagation, pas une zone interactive */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <CardDisplay
+              rarity="LEGENDARY"
+              name={boss.name}
+              setName=""
+              showSetName={false}
+              imageUrl={boss.imageUrl}
+              element={boss.element}
+              isOwned={!killed}
+              interactive
+              large
+              showAura={!killed}
+            />
+          </div>
+          <BossPowerBadge power={boss.power} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ContributionRow({ c, rank }: { c: RaidContribution; rank: number }) {
   return (
     <li className="flex items-center gap-3 py-1.5">
@@ -170,6 +221,9 @@ function ContributionRow({ c, rank }: { c: RaidContribution; rank: number }) {
 export function RaidPanel({ teamId }: { teamId: string }) {
   const { data: raid, isLoading, isError } = useRaid(teamId)
   useRaidLive(teamId)
+  // Declare avant toute sortie anticipee : les hooks doivent s'executer dans
+  // le meme ordre a chaque rendu.
+  const [inspecting, setInspecting] = useState(false)
   const [, tick] = useState(0)
 
   // Force un rafraîchissement du texte du compte à rebours une fois par
@@ -216,7 +270,17 @@ export function RaidPanel({ teamId }: { teamId: string }) {
     <ArcadeCard>
       <div className="flex flex-col gap-5 md:flex-row">
         <div className="flex w-36 shrink-0 flex-col items-center gap-2 md:w-40">
-          <BossCard boss={raid.boss} killed={killed} />
+          <button
+            type="button"
+            onClick={() => setInspecting(true)}
+            aria-label={`Voir la carte du boss ${raid.boss.name} en grand`}
+            // `block w-full` obligatoire : un <button> se dimensionne sur son
+            // contenu, or la carte est en largeur relative — sans largeur
+            // imposée la référence est circulaire et tout s'effondre à 0x0.
+            className="block w-full cursor-pointer rounded-xl transition-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            <BossCard boss={raid.boss} killed={killed} />
+          </button>
           <BossPowerBadge power={raid.boss.power} />
         </div>
 
@@ -316,6 +380,14 @@ export function RaidPanel({ teamId }: { teamId: string }) {
           </div>
         </div>
       </div>
+
+      {inspecting && (
+        <BossCardOverlay
+          boss={raid.boss}
+          killed={killed}
+          onClose={() => setInspecting(false)}
+        />
+      )}
     </ArcadeCard>
   )
 }
