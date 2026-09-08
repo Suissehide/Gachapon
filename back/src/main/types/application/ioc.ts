@@ -30,6 +30,7 @@ import type { GachaDomainInterface } from '../domain/gacha/gacha.domain.interfac
 import type { ILeaderboardDomain } from '../domain/leaderboard/leaderboard.domain.interface'
 import type { ProfileDomainInterface } from '../domain/profile/profile.domain.interface'
 import type { IQuestsDomain } from '../domain/quests/quests.domain.interface'
+import type { RaidDomain } from '../../domain/raid/raid.domain'
 import type { RewardsDomainInterface } from '../domain/rewards/rewards.domain.interface'
 import type { IShopDomain } from '../domain/shop/shop.domain.interface'
 import type {
@@ -105,6 +106,7 @@ export interface IocContainer {
   readonly towerRepository: ITowerRepository
   readonly towerDomain: TowerDomain
   readonly raidRepository: IRaidRepository
+  readonly raidDomain: RaidDomain
   readonly teamRepository: TeamRepository
   readonly teamMemberRepository: TeamMemberRepository
   readonly invitationRepository: InvitationRepository

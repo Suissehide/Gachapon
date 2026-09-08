@@ -14,6 +14,7 @@ import { equipmentRouter } from './equipment'
 import { gachaRouter } from './gacha'
 import { leaderboardRouter } from './leaderboard'
 import { questsRouter } from './quests'
+import { raidsRouter } from './raids'
 import { rewardsRouter } from './rewards'
 import { shopRouter } from './shop'
 import { skillsRouter } from './skills'
@@ -72,6 +73,7 @@ export const routes: FastifyPluginAsyncZod = async (fastify) => {
   await fastify.register(usersRouter)
   await fastify.register(wishlistRouter)
   await fastify.register(teamsRouter)
+  await fastify.register(raidsRouter)
   await fastify.register(towerRouter)
   await fastify.register(statsRouter)
   await fastify.register(rewardsRouter, { prefix: '/rewards' })

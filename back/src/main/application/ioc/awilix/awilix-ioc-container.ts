@@ -20,6 +20,7 @@ import { GachaDomain } from '../../../domain/gacha/gacha.domain'
 import { LeaderboardDomain } from '../../../domain/leaderboard/leaderboard.domain'
 import { ProfileDomain } from '../../../domain/profile/profile.domain'
 import { QuestsDomain } from '../../../domain/quests/quests.domain'
+import { RaidDomain } from '../../../domain/raid/raid.domain'
 import { RewardsDomain } from '../../../domain/rewards/rewards.domain'
 import { ShopDomain } from '../../../domain/shop/shop.domain'
 import { AdminSkillTreeDomain } from '../../../domain/skills/admin-skill-tree.domain'
@@ -134,6 +135,7 @@ class AwilixIocContainer {
     this.#reg('towerRepository', asClass(TowerRepository).singleton())
     this.#reg('towerDomain', asClass(TowerDomain).singleton())
     this.#reg('raidRepository', asClass(RaidRepository).singleton())
+    this.#reg('raidDomain', asClass(RaidDomain).singleton())
     this.#reg('teamRepository', asClass(TeamRepository).singleton())
     this.#reg('teamMemberRepository', asClass(TeamMemberRepository).singleton())
     this.#reg('invitationRepository', asClass(InvitationRepository).singleton())
