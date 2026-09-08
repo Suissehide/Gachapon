@@ -25,8 +25,8 @@ function TeamsPage() {
       <PageHeader
         breadcrumbs={[{ label: 'Gachapon', to: '/play' }, { label: 'Équipes' }]}
         title="Mes équipes"
-        subtitle={`${teams.length} / 5 équipes`}
-        right={teams.length < 5 ? <CreateTeamPopup /> : undefined}
+        subtitle={`${teams.length} / 3 équipes`}
+        right={teams.length < 3 ? <CreateTeamPopup /> : undefined}
       />
 
       <ArcadeCard>

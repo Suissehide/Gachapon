@@ -262,22 +262,22 @@ export class RaidDomain implements IRaidDomain {
               distinct: ['userId'],
               select: { userId: true },
             })
-            // Clé sur la SEMAINE (raid.weekKey), pas sur le raid (raid.id) :
-            // un raid est unique par équipe ET semaine, donc un joueur dans
-            // plusieurs équipes a un raid.id différent par équipe la même
-            // semaine. Clé sur raid.id lui ferait toucher le lot de palier
-            // une fois par équipe (jusqu'à 5, MAX_TEAMS_PER_USER). Clé sur
-            // la semaine + la contrainte unique [userId, source, sourceId]
-            // fait que la 2e équipe qui franchit un palier déjà obtenu via
-            // une autre équipe la même semaine ne redonne rien : le joueur
-            // reçoit l'union des paliers de ses équipes, jamais la somme.
+            // Clé sur le RAID (raid.id), qui est unique par équipe ET par
+            // semaine : les lots de palier se gagnent DANS une équipe, donc un
+            // joueur qui joue le raid de plusieurs équipes les gagne dans
+            // chacune. Le plafond d'équipes par joueur (MAX_TEAMS_PER_USER,
+            // team.domain.ts) borne volontairement ce cumul — c'est lui le
+            // levier, pas la clé. Avec la contrainte unique
+            // [userId, source, sourceId], un palier donné d'un raid donné
+            // n'est jamais versé deux fois, et un joueur arrivé après coup
+            // reçoit d'un coup tous les paliers déjà franchis.
             await tx.userReward.createMany({
               data: participants.flatMap((p) =>
                 after.map((t) => ({
                   userId: p.userId,
                   rewardId: t.rewardId,
                   source: 'RAID' as const,
-                  sourceId: `${raid.weekKey}:${t.pct}`,
+                  sourceId: `${raid.id}:${t.pct}`,
                 })),
               ),
               skipDuplicates: true,

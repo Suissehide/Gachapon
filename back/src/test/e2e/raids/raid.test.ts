@@ -326,14 +326,14 @@ describe('routes de raid', () => {
 
     for (const uid of [userIdA, userIdB]) {
       const rewards = await prisma.userReward.findMany({
-        where: { userId: uid, source: 'RAID', sourceId: { startsWith: `${raid.weekKey}:` } },
+        where: { userId: uid, source: 'RAID', sourceId: { startsWith: `${raid.id}:` } },
         orderBy: { sourceId: 'asc' },
       })
       expect(rewards.map((r: any) => r.sourceId)).toEqual([
-        `${raid.weekKey}:100`,
-        `${raid.weekKey}:25`,
-        `${raid.weekKey}:50`,
-        `${raid.weekKey}:75`,
+        `${raid.id}:100`,
+        `${raid.id}:25`,
+        `${raid.id}:50`,
+        `${raid.id}:75`,
       ])
       expect(rewards.every((r: any) => r.claimedAt === null)).toBe(true)
     }
