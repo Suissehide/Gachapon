@@ -97,6 +97,7 @@ enum RewardSource {
   QUEST
   LEVEL_UP
   ADMIN
+  RAID
 }
 
 enum QuestPeriod {
@@ -201,6 +202,7 @@ model User {
   wishlistPurchasedAt DateTime?
   boosts              UserBoost[]
   activityEvents      ActivityEvent[]
+  raidAttacks         RaidAttack[]
 }
 
 model UserBoost {
@@ -253,6 +255,7 @@ model Team {
 
   members     TeamMember[]
   invitations Invitation[]
+  raids       TeamRaid[]
 
   @@index([ownerId])
 }
@@ -536,6 +539,7 @@ model Reward {
   achievements     Achievement[]
   quests           Quest[]
   userRewards      UserReward[]
+  raidTiers        RaidTier[]
 
   @@map("Rewards")
 }
@@ -720,4 +724,60 @@ model ActivityEvent {
 
   @@index([createdAt])
   @@index([type, createdAt])
+}
+
+/// Boss de raid, un par élément de tour (FIRE/WATER/NATURE/EARTH). `spec` a
+/// le même schéma JSON qu'un ennemi de tour (enemySpecSchema, sim-units.ts) :
+/// baseHp y est ignoré en combat (PV simulés infinis) mais conservé.
+model RaidBoss {
+  id        String      @id @default(uuid())
+  element   CardElement @unique
+  name      String
+  spec      Json
+  updatedAt DateTime    @updatedAt
+
+  raids TeamRaid[]
+}
+
+/// Le raid d'une équipe pour une semaine UTC. Créé paresseusement à la
+/// première lecture (raid.domain.ts#ensureRaid), jamais par cron.
+model TeamRaid {
+  id                 String    @id @default(uuid())
+  teamId             String
+  team               Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  weekKey            String
+  bossId             String
+  boss               RaidBoss  @relation(fields: [bossId], references: [id])
+  maxHp              Int
+  hp                 Int
+  memberCountAtStart Int
+  killedAt           DateTime?
+  createdAt          DateTime  @default(now())
+
+  attacks RaidAttack[]
+
+  @@unique([teamId, weekKey])
+}
+
+model RaidAttack {
+  id          String   @id @default(uuid())
+  raidId      String
+  raid        TeamRaid @relation(fields: [raidId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  damage      Int
+  seed        String
+  userCardIds String[]
+  createdAt   DateTime @default(now())
+
+  @@index([raidId, userId])
+  @@index([userId, createdAt])
+}
+
+/// Palier de récompense (25/50/75/100 %), calqué sur StreakMilestone.
+model RaidTier {
+  id       String @id @default(uuid())
+  pct      Int    @unique
+  rewardId String
+  reward   Reward @relation(fields: [rewardId], references: [id])
 }
