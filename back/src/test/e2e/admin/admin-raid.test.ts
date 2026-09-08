@@ -39,7 +39,14 @@ describe('admin raid routes', () => {
           appearance: 'monsters/bosses/BOSS-011', mitigationScale: 1,
         },
       },
-      update: {},
+      update: {
+        name: 'Nérée',
+        spec: {
+          baseHp: 100, baseAtk: 10, baseDef: 5, baseSpd: 100, level: 1, palier: 1,
+          attackPattern: 'BASIC', passiveKey: null, element: 'WATER',
+          appearance: 'monsters/bosses/BOSS-011', mitigationScale: 1,
+        },
+      },
     })
     const existing = await prisma.raidTier.findUnique({ where: { pct: 50 } })
     if (!existing) {
@@ -113,8 +120,30 @@ describe('admin raid routes', () => {
     expect(res.statusCode).toBe(404)
   })
 
-  it('refuse un non-admin', async () => {
+  it('refuse une requête non authentifiée', async () => {
     const res = await app.inject({ method: 'GET', url: '/admin/raid/bosses' })
     expect(res.statusCode).toBe(401)
+  })
+
+  it('refuse un utilisateur authentifié sans rôle SUPER_ADMIN', async () => {
+    const playerSuffix = Date.now()
+    const playerEmail = `player${playerSuffix}@test.com`
+    await app.inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: { username: `player${playerSuffix}`, email: playerEmail, password: 'Password123!' },
+    })
+    await prisma.user.update({
+      where: { email: playerEmail },
+      data: { emailVerifiedAt: new Date() },
+    })
+    const playerLogin = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email: playerEmail, password: 'Password123!' },
+    })
+    const playerCookies = playerLogin.headers['set-cookie'] as string
+    const res = await app.inject({ method: 'GET', url: '/admin/raid/bosses', headers: { cookie: playerCookies } })
+    expect(res.statusCode).toBe(403)
   })
 })
