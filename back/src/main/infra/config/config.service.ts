@@ -131,6 +131,13 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'set.assautAtkPct': 16,
   'set.colosseHpPct': 10,
   'set.celeriteSpdPct': 10,
+  // Raid d'équipe. attacksPerDay = quota journalier UTC, tous raids
+  // confondus. baseHpPerMember : PV du boss par membre au lancement de la
+  // semaine — valeur PROVISOIRE, remplacée par le calibrage
+  // (scripts/balance-sim.ts, mode raid : 11 × D_ref).
+  'raid.attacksPerDay': 2,
+  'raid.timeoutTurns': 10,
+  'raid.baseHpPerMember': 20000,
 }
 
 export class ConfigService implements ConfigServiceInterface {

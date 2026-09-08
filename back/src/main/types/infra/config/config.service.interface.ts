@@ -79,6 +79,9 @@ export const CONFIG_KEYS = [
   'set.assautAtkPct',
   'set.colosseHpPct',
   'set.celeriteSpdPct',
+  'raid.attacksPerDay',
+  'raid.timeoutTurns',
+  'raid.baseHpPerMember',
 ] as const
 
 export type ConfigKey = (typeof CONFIG_KEYS)[number]

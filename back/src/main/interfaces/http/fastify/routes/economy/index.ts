@@ -94,6 +94,10 @@ const economyConfigResponseSchema = z.object({
       z.object({ min: z.number(), max: z.number() }),
     ),
   }),
+  raid: z.object({
+    attacksPerDay: z.number(),
+    timeoutTurns: z.number(),
+  }),
 })
 
 export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
@@ -147,6 +151,8 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
         'equip.salvageGoldRare',
         'equip.salvageGoldEpic',
         'equip.salvageGoldLegendary',
+        'raid.attacksPerDay',
+        'raid.timeoutTurns',
         ...SUBSTAT_RANGE_CONFIG_KEYS,
       )
       return {
@@ -218,6 +224,10 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
             LEGENDARY: c['equip.salvageGoldLegendary'],
           },
           substatRanges: substatRangesFromConfig(c),
+        },
+        raid: {
+          attacksPerDay: c['raid.attacksPerDay'],
+          timeoutTurns: c['raid.timeoutTurns'],
         },
       }
     },

@@ -73,4 +73,11 @@ describe('GET /economy/config', () => {
     expect(body.equip.substatRanges.armorPenPct).toEqual({ min: 2, max: 6 })
     expect(body.equip.substatRanges.lifestealPct).toEqual({ min: 1, max: 4 })
   })
+
+  it('expose les tunables de raid', async () => {
+    const res = await app.inject({ method: 'GET', url: '/economy/config' })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.raid).toEqual({ attacksPerDay: 2, timeoutTurns: 10 })
+  })
 })
