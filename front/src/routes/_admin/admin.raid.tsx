@@ -75,6 +75,31 @@ function BossForm({ boss }: { boss: AdminRaidBoss }) {
       attackPattern: boss.spec.attackPattern ?? 'BASIC',
       passiveKey: boss.spec.passiveKey ?? '',
     },
+    // Un champ numérique vidé passe à `undefined` (voir NumberField dans
+    // formConfig.tsx) : sans ce garde-fou, `Number(undefined)` vaut NaN et
+    // part silencieusement dans la requête. On ne teste que `undefined`,
+    // pas la valeur falsy — 0 est une valeur légitime pour ces champs.
+    validators: {
+      onSubmit: ({ value }) => {
+        const fields: Record<string, string> = {}
+        if (value.baseAtk === undefined) {
+          fields.baseAtk = 'Valeur requise'
+        }
+        if (value.baseDef === undefined) {
+          fields.baseDef = 'Valeur requise'
+        }
+        if (value.baseSpd === undefined) {
+          fields.baseSpd = 'Valeur requise'
+        }
+        if (value.mitigationScale === undefined) {
+          fields.mitigationScale = 'Valeur requise'
+        }
+        if (Object.keys(fields).length > 0) {
+          return { fields, form: Object.values(fields)[0] }
+        }
+        return undefined
+      },
+    },
     onSubmit: ({ value }) =>
       patch.mutate({
         element: boss.element,
@@ -126,7 +151,9 @@ function BossForm({ boss }: { boss: AdminRaidBoss }) {
           {(f) => <f.Number label="VIT de base" />}
         </form.AppField>
         <form.AppField name="mitigationScale">
-          {(f) => <f.Number label="Échelle de mitigation" />}
+          {(f) => (
+            <f.Number label="Échelle de mitigation (facteur combiné à la DEF pour réduire les dégâts subis, ex. 12 sur les boss seedés)" />
+          )}
         </form.AppField>
         <form.AppField name="attackPattern">
           {(f) => (
@@ -178,6 +205,29 @@ function TierForm({ tier }: { tier: AdminRaidTier }) {
       dust: tier.dust as number | undefined,
       xp: tier.xp as number | undefined,
       cardRarity: tier.cardRarity ?? '',
+    },
+    // Même garde-fou que BossForm : un champ vidé vaut `undefined`, pas 0 —
+    // sans ça `Number(undefined)` (NaN) partirait silencieusement en requête.
+    validators: {
+      onSubmit: ({ value }) => {
+        const fields: Record<string, string> = {}
+        if (value.tokens === undefined) {
+          fields.tokens = 'Valeur requise'
+        }
+        if (value.gold === undefined) {
+          fields.gold = 'Valeur requise'
+        }
+        if (value.dust === undefined) {
+          fields.dust = 'Valeur requise'
+        }
+        if (value.xp === undefined) {
+          fields.xp = 'Valeur requise'
+        }
+        if (Object.keys(fields).length > 0) {
+          return { fields, form: Object.values(fields)[0] }
+        }
+        return undefined
+      },
     },
     onSubmit: ({ value }) =>
       patch.mutate({
