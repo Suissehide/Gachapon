@@ -164,6 +164,13 @@ describe('routes de raid', () => {
       headers: { cookie: cookiesC },
     })
     expect(res.statusCode).toBe(403)
+
+    // Le refus doit précéder la création paresseuse : aucune ligne TeamRaid
+    // ne doit exister pour cette équipe/semaine après ce rejet.
+    const orphan = await prisma.teamRaid.findUnique({
+      where: { teamId_weekKey: { teamId, weekKey: raidWeekKey(new Date()) } },
+    })
+    expect(orphan).toBeNull()
   })
 
   it('GET /teams/:id/raid crée le raid de la semaine une seule fois', async () => {
