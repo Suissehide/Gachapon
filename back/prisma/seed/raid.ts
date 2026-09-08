@@ -12,9 +12,12 @@ const BASE = RARITY_BASE.EPIC
 
 /**
  * Échelle de puissance du boss (même logique que FLOOR_SCALE en tour, où
- * l'étage 10 vaut 16,9). Valeur PROVISOIRE : la tâche de calibrage la
- * remplace après mesure (docs/superpowers/specs/2026-09-08-raid-equipe-design.md,
- * § Calibrage).
+ * l'étage 10 vaut 16,9). Mesurée le 2026-09-08 (docs/superpowers/mesures/
+ * 2026-09-08-raid/rapport.md) : à 12, l'équipe de référence (3 épiques
+ * palier 5, gear epic, un contre-pick) subit ~8,7 attaques du boss en
+ * moyenne avant d'être anéantie — dans la cible de 7 à 9 tours sur 10 — donc
+ * la valeur provisoire est conservée telle quelle plutôt que déplacée à
+ * l'aveugle.
  */
 export const RAID_BOSS_SCALE = 12
 
