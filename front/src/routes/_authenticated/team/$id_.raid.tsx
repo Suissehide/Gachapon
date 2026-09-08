@@ -5,6 +5,7 @@ import {
   Coins,
   Skull,
   Sparkles,
+  Star,
   Swords,
   Ticket,
   Trophy,
@@ -32,6 +33,7 @@ import { TeamEditorPopup } from '../../../components/team/TeamEditorPopup.tsx'
 import { Button } from '../../../components/ui/button.tsx'
 import { Popup, PopupContent } from '../../../components/ui/popup.tsx'
 import { ELEMENT_LABELS } from '../../../constants/card.constant.ts'
+import { isApiError } from '../../../libs/httpErrorHandler.ts'
 import { RARITY_LABEL_FR } from '../../../libs/rarity.ts'
 import { useCombatTeam } from '../../../queries/useCombatTeam.ts'
 import { useRaid, useRaidAttack } from '../../../queries/useRaid.ts'
@@ -59,6 +61,46 @@ function getFightLabel(
   return 'Attaquer'
 }
 
+/**
+ * Écran plein-page tant que le raid n'est pas chargé, ou message convivial
+ * si le joueur n'a pas (ou plus) accès à cette équipe — renvoie `null` une
+ * fois les données prêtes pour laisser la page normale s'afficher.
+ */
+function RaidGate({
+  raid,
+  id,
+}: {
+  raid: ReturnType<typeof useRaid>
+  id: string
+}) {
+  if (raid.isPending) {
+    return (
+      <div className="flex min-h-[calc(100vh-var(--topbar-h))] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    )
+  }
+  if (raid.isError || !raid.data) {
+    return (
+      <div className="flex min-h-[calc(100vh-var(--topbar-h))] flex-col items-center justify-center gap-3 text-center">
+        <p className="text-text-light">
+          {isApiError(raid.error)
+            ? raid.error.message
+            : 'Impossible de charger ce raid.'}
+        </p>
+        <Link
+          to="/team/$id"
+          params={{ id }}
+          className="text-sm text-primary underline"
+        >
+          Retour à l'équipe
+        </Link>
+      </div>
+    )
+  }
+  return null
+}
+
 function RaidAttackPage() {
   const { id } = Route.useParams()
   const navigate = useNavigate()
@@ -72,6 +114,10 @@ function RaidAttackPage() {
   const [result, setResult] = useState<RaidAttackResult | null>(null)
   const [sceneDone, setSceneDone] = useState(false)
   const inBattle = result !== null && !sceneDone
+
+  if (raid.isPending || raid.isError || !raid.data) {
+    return <RaidGate raid={raid} id={id} />
+  }
 
   const userCardIds = (combatTeam.data?.team ?? []).map((u) => u.userCardId)
   const hasTeam = userCardIds.length > 0
@@ -303,28 +349,46 @@ function RaidResultPopup({
                 {result.newTiers.length > 1 ? 's' : ''} pour toute l'équipe
               </div>
               {result.newTiers.map((t) => (
-                <div
-                  key={t.pct}
-                  className="mb-2 grid w-full grid-cols-3 gap-2.5"
-                >
-                  <RewardTile
-                    icon={<Ticket className="h-5 w-5" />}
-                    label={`${t.pct} % · Jetons`}
-                    value={t.reward.tokens}
-                    tone="#10b981"
-                  />
-                  <RewardTile
-                    icon={<Coins className="h-5 w-5" />}
-                    label="Pièces"
-                    value={t.reward.gold}
-                    tone="#f59e0b"
-                  />
-                  <RewardTile
-                    icon={<Sparkles className="h-5 w-5" />}
-                    label="Poussière"
-                    value={t.reward.dust}
-                    tone="#38bdf8"
-                  />
+                <div key={t.pct} className="mb-2 flex w-full flex-col gap-2">
+                  <div
+                    className={`grid w-full gap-2.5 ${
+                      t.reward.xp > 0 ? 'grid-cols-4' : 'grid-cols-3'
+                    }`}
+                  >
+                    <RewardTile
+                      icon={<Ticket className="h-5 w-5" />}
+                      label={`${t.pct} % · Jetons`}
+                      value={t.reward.tokens}
+                      tone="#10b981"
+                    />
+                    <RewardTile
+                      icon={<Coins className="h-5 w-5" />}
+                      label="Pièces"
+                      value={t.reward.gold}
+                      tone="#f59e0b"
+                    />
+                    <RewardTile
+                      icon={<Sparkles className="h-5 w-5" />}
+                      label="Poussière"
+                      value={t.reward.dust}
+                      tone="#38bdf8"
+                    />
+                    {t.reward.xp > 0 && (
+                      <RewardTile
+                        icon={<Star className="h-5 w-5" />}
+                        label="XP"
+                        value={t.reward.xp}
+                        tone="#8b5cf6"
+                      />
+                    )}
+                  </div>
+                  {t.reward.cardRarity && (
+                    <RewardPill
+                      color="#ec4899"
+                      label={`Carte ${RARITY_LABEL_FR[t.reward.cardRarity] ?? t.reward.cardRarity}`}
+                      icon={Trophy}
+                    />
+                  )}
                 </div>
               ))}
               <p className="text-xs text-text-light">
