@@ -8,12 +8,20 @@ import type {
   RaidTierView,
   RaidView,
 } from '../../api/raid.api.ts'
-import { ELEMENT_COLOR, ELEMENT_LABELS } from '../../constants/card.constant.ts'
+import { ELEMENT_LABELS } from '../../constants/card.constant.ts'
 import { RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { cn } from '../../libs/utils.ts'
 import { useRaid, useRaidLive } from '../../queries/useRaid.ts'
 import { ArcadeCard } from '../shared/ArcadeCard.tsx'
+import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
 import { Button } from '../ui/button.tsx'
+import {
+  Popup,
+  PopupBody,
+  PopupContent,
+  PopupHeader,
+  PopupTitle,
+} from '../ui/popup.tsx'
 
 function minutesRemaining(endsAt: string): number {
   return Math.max(0, dayjs(endsAt).diff(dayjs(), 'minute'))
@@ -85,6 +93,89 @@ function HpBar({ raid, dealtPct }: { raid: RaidView; dealtPct: number }) {
   )
 }
 
+// Boss rendered as a real game card rather than a bare portrait: no rarity,
+// set or level exist for a boss, so `LEGENDARY` is picked purely for the
+// frame it draws — the raid boss is the hardest fight in the game, so it
+// gets the top-tier frame — never a literal rarity claim about the boss.
+// `showSetName={false}` hides the family tag (there's no set to name) while
+// keeping the name band; the element badge the card already renders (top
+// left) is the only element signal — no separate colored frame/pill is
+// layered on top of it. Defeat reuses `isOwned={false}`, which already
+// grayscales the art and suppresses the description exactly like an
+// unowned collection card, plus an explicit "Vaincu" overlay for the label.
+function BossCard({
+  boss,
+  killed,
+  large = false,
+}: {
+  boss: RaidView['boss']
+  killed: boolean
+  large?: boolean
+}) {
+  return (
+    <div className="relative">
+      <CardDisplay
+        rarity="LEGENDARY"
+        name={boss.name}
+        setName=""
+        showSetName={false}
+        imageUrl={boss.imageUrl}
+        element={boss.element}
+        isOwned={!killed}
+        compact={!large}
+        large={large}
+        interactive={!killed}
+        showAura={!killed}
+      />
+      {killed && (
+        <div className="absolute inset-0 z-30 flex items-center justify-center rounded-[10px] bg-black/50 font-display text-lg font-bold text-white">
+          Vaincu
+        </div>
+      )}
+    </div>
+  )
+}
+
+function BossPowerBadge({ power }: { power: number }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-2.5 py-1 font-mono text-xs text-text-light">
+      <Swords className="h-3.5 w-3.5" />
+      {power.toLocaleString('fr-FR')}
+    </span>
+  )
+}
+
+function BossInspectPopup({
+  boss,
+  killed,
+  open,
+  onOpenChange,
+}: {
+  boss: RaidView['boss']
+  killed: boolean
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  return (
+    <Popup open={open} onOpenChange={onOpenChange}>
+      <PopupContent size="lg">
+        <PopupHeader>
+          <PopupTitle
+            icon={<Skull className="h-4 w-4" />}
+            subtitle={ELEMENT_LABELS[boss.element]}
+          >
+            {boss.name}
+          </PopupTitle>
+        </PopupHeader>
+        <PopupBody className="flex flex-col items-center gap-4 bg-transparent py-6">
+          <BossCard boss={boss} killed={killed} large />
+          <BossPowerBadge power={boss.power} />
+        </PopupBody>
+      </PopupContent>
+    </Popup>
+  )
+}
+
 function ContributionRow({ c, rank }: { c: RaidContribution; rank: number }) {
   return (
     <li className="flex items-center gap-3 py-1.5">
@@ -115,6 +206,7 @@ export function RaidPanel({ teamId }: { teamId: string }) {
   const { data: raid, isLoading, isError } = useRaid(teamId)
   useRaidLive(teamId)
   const [, tick] = useState(0)
+  const [inspecting, setInspecting] = useState(false)
 
   // Force un rafraîchissement du texte du compte à rebours une fois par
   // minute — sans ça il reste figé sur la valeur calculée au montage tant
@@ -159,44 +251,23 @@ export function RaidPanel({ teamId }: { teamId: string }) {
   return (
     <ArcadeCard>
       <div className="flex flex-col gap-5 md:flex-row">
-        <div className="flex shrink-0 flex-col items-center gap-2 md:w-44">
-          <div
-            className="relative h-40 w-40 overflow-hidden rounded-2xl border-2"
-            style={{ borderColor: ELEMENT_COLOR[raid.boss.element] }}
+        <div className="flex w-36 shrink-0 flex-col items-center gap-2 md:w-40">
+          <button
+            type="button"
+            onClick={() => setInspecting(true)}
+            aria-label={`Agrandir la carte du boss ${raid.boss.name}`}
+            className="cursor-pointer rounded-xl transition-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
-            {raid.boss.imageUrl ? (
-              <img
-                src={raid.boss.imageUrl}
-                alt={raid.boss.name}
-                className={cn(
-                  'h-full w-full object-cover',
-                  killed && 'grayscale',
-                )}
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-background">
-                <Skull className="h-10 w-10 text-text-light" />
-              </div>
-            )}
-            {killed && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 font-display text-xl font-bold text-white">
-                Vaincu
-              </div>
-            )}
-          </div>
-          <span
-            className="rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-white"
-            style={{ background: ELEMENT_COLOR[raid.boss.element] }}
-          >
-            {ELEMENT_LABELS[raid.boss.element]}
-          </span>
+            <BossCard boss={raid.boss} killed={killed} />
+          </button>
+          <BossPowerBadge power={raid.boss.power} />
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col gap-4">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <div>
               <div className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-                Raid d'équipe · semaine du {dayjs(raid.weekKey).format('D MMM')}
+                Raid d'équipe
               </div>
               <h2 className="font-display text-2xl font-bold text-text">
                 {raid.boss.name}
@@ -288,6 +359,13 @@ export function RaidPanel({ teamId }: { teamId: string }) {
           </div>
         </div>
       </div>
+
+      <BossInspectPopup
+        boss={raid.boss}
+        killed={killed}
+        open={inspecting}
+        onOpenChange={setInspecting}
+      />
     </ArcadeCard>
   )
 }

@@ -11,7 +11,7 @@ import {
   Trophy,
 } from 'lucide-react'
 import { Dialog } from 'radix-ui'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import type { RaidAttackResult, RaidView } from '../../../api/raid.api.ts'
 import {
@@ -115,6 +115,24 @@ function RaidAttackPage() {
   const [sceneDone, setSceneDone] = useState(false)
   const inBattle = result !== null && !sceneDone
 
+  // La boîte de préparation ne navigue plus depuis son propre `onClose` :
+  // le bouton « Modifier » de BattlePrepModal appelle toujours `onClose`
+  // juste avant `onEditTeam` (même geste pour « fermer avant d'ouvrir
+  // l'éditeur » que pour un abandon volontaire), donc `onClose` ne peut pas
+  // savoir tout seul lequel des deux c'est. On se contente d'y fermer la
+  // boîte (état pur), et cet effet décide APRÈS coup, une fois le rendu
+  // retombé avec l'état final de ce même clic (React 18 regroupe les deux
+  // mises à jour dans le même commit), si personne n'a pris le relais
+  // (éditeur ouvert, attaque en cours ou déjà lancée) — sinon seulement, on
+  // quitte vers la page d'équipe.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: ne doit réagir qu'à une fermeture de prepOpen elle-même — avec result/inBattle en deps, la fermeture du popup de résultat (qui navigue déjà lui-même) redéclencherait l'effet et naviguerait une seconde fois
+  useEffect(() => {
+    if (prepOpen || editorOpen || inBattle || result || attack.isPending) {
+      return
+    }
+    navigate({ to: '/team/$id', params: { id } })
+  }, [prepOpen])
+
   if (raid.isPending || raid.isError || !raid.data) {
     return <RaidGate raid={raid} id={id} />
   }
@@ -183,13 +201,8 @@ function RaidAttackPage() {
         />
       )}
 
-      {raid.data && prepOpen && !inBattle && !result && (
-        <Popup
-          open
-          onOpenChange={(v) =>
-            !v && navigate({ to: '/team/$id', params: { id } })
-          }
-        >
+      {raid.data && !inBattle && !result && (
+        <Popup open={prepOpen} onOpenChange={setPrepOpen}>
           <PopupContent size="lg">
             <BattlePrepModal
               eyebrow={
@@ -221,7 +234,7 @@ function RaidAttackPage() {
                 setPrepOpen(false)
                 setEditorOpen(true)
               }}
-              onClose={() => navigate({ to: '/team/$id', params: { id } })}
+              onClose={() => setPrepOpen(false)}
             />
           </PopupContent>
         </Popup>

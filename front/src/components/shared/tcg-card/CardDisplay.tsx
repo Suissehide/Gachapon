@@ -61,6 +61,8 @@ type Props = {
   description?: string | null
   artPosition?: string
   newBadge?: boolean
+  /** Hide just the family/set tag above the name band — see `TcgCardFace`. */
+  showSetName?: boolean
   /** Render the rarity/variant aura (glow + particles) behind the card. */
   showAura?: boolean
 }
@@ -87,6 +89,7 @@ export function CardDisplay({
   description,
   artPosition,
   newBadge,
+  showSetName,
   showAura = false,
 }: Props) {
   const cardRef = useRef<HTMLDivElement>(null)
@@ -247,6 +250,7 @@ export function CardDisplay({
               description={description}
               artPosition={artPosition}
               newBadge={newBadge}
+              showSetName={showSetName}
             />
 
             {interactive && (

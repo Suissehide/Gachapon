@@ -50,6 +50,10 @@ type Props = {
   artPosition?: string
   /** Hide the family tag + name band + description stack (art-only mode). */
   showName?: boolean
+  /** Hide just the family/set tag above the name band, independently of
+   *  `showName` — for subjects with no set to label (e.g. a raid boss)
+   *  where the name band and description should still render. */
+  showSetName?: boolean
   /** Show a "NOUVEAU" badge in the top-right corner. Used by the pull reveal to
    *  flag first-time cards without extra external wrappers. */
   newBadge?: boolean
@@ -103,6 +107,7 @@ export function TcgCardFace({
   description,
   artPosition,
   showName = true,
+  showSetName = true,
   newBadge = false,
 }: Props) {
   const tone = getRarityTone(rarity)
@@ -238,11 +243,13 @@ export function TcgCardFace({
 
         {showName && (
           <>
-            <FamilyHeader
-              setName={setName}
-              compact={compact}
-              frameInset={frameInset}
-            />
+            {showSetName && (
+              <FamilyHeader
+                setName={setName}
+                compact={compact}
+                frameInset={frameInset}
+              />
+            )}
             <Band
               name={name}
               tone={tone}
