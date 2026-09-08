@@ -217,4 +217,138 @@ describe('routes de raid', () => {
     expect(res.statusCode).toBe(200)
     expect(res.json()).toEqual({ contributions: [] })
   })
+
+  it('POST attack : inflige des dégâts, décrémente hp, enregistre la contribution', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: `/teams/${teamId}/raid/attack`,
+      headers: { cookie: cookiesA },
+      payload: { userCardIds: [cardIdA] },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.damage).toBeGreaterThan(0)
+    expect(body.hpBefore).toBe(HUGE_HP_PER_MEMBER * 2)
+    expect(body.hpAfter).toBe(body.hpBefore - body.damage)
+    expect(body.killed).toBe(false)
+    expect(body.newTiers).toEqual([])
+    expect(body.attacksRemainingToday).toBe(1)
+    expect(body.teamA).toHaveLength(1)
+    expect(body.teamB).toHaveLength(1)
+    expect(body.teamB[0].name).toBe('Boss de test')
+    expect(Array.isArray(body.log)).toBe(true)
+
+    const view = await app.inject({
+      method: 'GET',
+      url: `/teams/${teamId}/raid`,
+      headers: { cookie: cookiesA },
+    })
+    const v = view.json()
+    expect(v.hp).toBe(body.hpAfter)
+    expect(v.damageDone).toBe(body.damage)
+    expect(v.me.attacks).toBe(1)
+    expect(v.me.damage).toBe(body.damage)
+    expect(v.contributions[0].user.id).toBe(userIdA)
+    expect(v.contributions[0].attacks).toBe(1)
+  })
+
+  it('POST attack : refuse une carte qui n’appartient pas au joueur', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: `/teams/${teamId}/raid/attack`,
+      headers: { cookie: cookiesB },
+      payload: { userCardIds: [cardIdA] },
+    })
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('POST attack : la 3e attaque du jour est refusée (429), quota partagé entre équipes', async () => {
+    const second = await app.inject({
+      method: 'POST',
+      url: `/teams/${teamId}/raid/attack`,
+      headers: { cookie: cookiesA },
+      payload: { userCardIds: [cardIdA] },
+    })
+    expect(second.statusCode).toBe(200)
+    expect(second.json().attacksRemainingToday).toBe(0)
+
+    const third = await app.inject({
+      method: 'POST',
+      url: `/teams/${teamId}/raid/attack`,
+      headers: { cookie: cookiesA },
+      payload: { userCardIds: [cardIdA] },
+    })
+    expect(third.statusCode).toBe(429)
+
+    // Une seconde équipe ne rouvre pas le quota.
+    const team2 = await app.inject({
+      method: 'POST',
+      url: '/teams',
+      headers: { cookie: cookiesA },
+      payload: { name: `RaidTeam2${suffix}` },
+    })
+    const team2Id = team2.json().id
+    const other = await app.inject({
+      method: 'POST',
+      url: `/teams/${team2Id}/raid/attack`,
+      headers: { cookie: cookiesA },
+      payload: { userCardIds: [cardIdA] },
+    })
+    expect(other.statusCode).toBe(429)
+  })
+
+  it('POST attack : franchir les paliers récompense tous les participants, sans doublon, puis bloque (409)', async () => {
+    // On amène le boss au bord de la mort : l’attaque suivante le tue et
+    // franchit 100 %. 25/50/75 comptent comme « déjà franchis » sans avoir
+    // été distribués (hp forcé en base) : le rattrapage doit les donner
+    // aussi, à A (2 attaques plus tôt) comme à B (attaquant).
+    const raid = await prisma.teamRaid.findFirst({
+      where: { teamId },
+      orderBy: { createdAt: 'desc' },
+    })
+    await prisma.teamRaid.update({ where: { id: raid.id }, data: { hp: 1 } })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/teams/${teamId}/raid/attack`,
+      headers: { cookie: cookiesB },
+      payload: { userCardIds: [cardIdB] },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.hpAfter).toBe(0)
+    expect(body.killed).toBe(true)
+    expect(body.newTiers.map((t: any) => t.pct)).toEqual([100])
+
+    for (const uid of [userIdA, userIdB]) {
+      const rewards = await prisma.userReward.findMany({
+        where: { userId: uid, source: 'RAID', sourceId: { startsWith: `${raid.id}:` } },
+        orderBy: { sourceId: 'asc' },
+      })
+      expect(rewards.map((r: any) => r.sourceId)).toEqual([
+        `${raid.id}:100`,
+        `${raid.id}:25`,
+        `${raid.id}:50`,
+        `${raid.id}:75`,
+      ])
+      expect(rewards.every((r: any) => r.claimedAt === null)).toBe(true)
+    }
+
+    const view = await app.inject({
+      method: 'GET',
+      url: `/teams/${teamId}/raid`,
+      headers: { cookie: cookiesB },
+    })
+    expect(view.json().killedAt).not.toBeNull()
+    expect(view.json().tiers.every((t: any) => t.reached)).toBe(true)
+
+    // B a encore une attaque, mais le boss est mort.
+    const again = await app.inject({
+      method: 'POST',
+      url: `/teams/${teamId}/raid/attack`,
+      headers: { cookie: cookiesB },
+      payload: { userCardIds: [cardIdB] },
+    })
+    expect(again.statusCode).toBe(409)
+  })
 })

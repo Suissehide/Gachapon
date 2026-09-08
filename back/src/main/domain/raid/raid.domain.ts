@@ -17,15 +17,31 @@ import type {
   TeamRaidWithBoss,
 } from '../../types/infra/orm/repositories/raid.repository.interface'
 import type { StorageClientInterface } from '../../types/infra/storage/storage-client'
+import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
 import type { TeamRepository } from '../../infra/orm/repositories/team.repository'
+import type { RaidAttackEvent, WsManager } from '../../interfaces/ws/ws-manager'
 import { unitPower } from '../campaign/campaign-power'
 import { resolveEnemyImageUrl } from '../campaign/enemy-appearance'
-import { enemySpecSchema } from '../combat/sim-units'
+import { simulateBattle } from '../combat/battle-simulator.domain'
+import type { CombatStatsBaseline } from '../combat/combat-stats.domain'
+import {
+  buildEnemySimUnits,
+  buildPlayerSimUnits,
+  enemySpecSchema,
+} from '../combat/sim-units'
+import {
+  SET_BONUS_CONFIG_KEYS,
+  setBonusesFromConfig,
+} from '../equipment/set-bonuses'
+import { retryOnSerialization } from '../shared/retry-serialization'
 import type { TowerElement } from '../tower/tower-slots'
 import {
   attacksRemaining,
   crossedTiers,
+  damageDealtToBoss,
+  MAX_RAID_TEAM_SIZE,
+  RAID_BOSS_SIM_HP,
   raidElementForWeek,
   raidMaxHp,
   raidWeekEndsAt,
@@ -54,6 +70,8 @@ export class RaidDomain implements IRaidDomain {
   readonly #teamRepository: TeamRepository
   readonly #teamMemberRepository: TeamMemberRepository
   readonly #raidRepository: IRaidRepository
+  readonly #postgresOrm: PostgresOrm
+  readonly #wsManager: WsManager
 
   constructor({
     configService,
@@ -62,6 +80,8 @@ export class RaidDomain implements IRaidDomain {
     teamRepository,
     teamMemberRepository,
     raidRepository,
+    postgresOrm,
+    wsManager,
   }: IocContainer) {
     this.#configService = configService
     this.#config = config
@@ -69,6 +89,8 @@ export class RaidDomain implements IRaidDomain {
     this.#teamRepository = teamRepository
     this.#teamMemberRepository = teamMemberRepository
     this.#raidRepository = raidRepository
+    this.#postgresOrm = postgresOrm
+    this.#wsManager = wsManager
   }
 
   async getRaid(
@@ -90,14 +112,197 @@ export class RaidDomain implements IRaidDomain {
     return this.#contributions(raid.id, team)
   }
 
-  attack(
-    _teamId: string,
-    _userId: string,
-    _userCardIds: string[],
-    _now?: Date,
+  /**
+   * Une attaque = une bataille à tours limités contre le boss (PV simulés
+   * infinis). Les dégâts infligés sont retirés de la barre commune, dans
+   * une transaction Serializable (deux coéquipiers peuvent attaquer en
+   * même temps). Les lots des paliers atteints sont donnés à TOUS les
+   * participants en une insertion idempotente (unicité
+   * [userId, source, sourceId]), ce qui couvre aussi le rattrapage d'un
+   * membre arrivé après un palier.
+   */
+  async attack(
+    teamId: string,
+    userId: string,
+    userCardIds: string[],
+    now: Date = new Date(),
   ): Promise<RaidAttackResult> {
-    // Implémentée en Task 7.
-    throw Boom.notImplemented('Attaque de raid indisponible')
+    if (userCardIds.length === 0 || userCardIds.length > MAX_RAID_TEAM_SIZE) {
+      throw Boom.badRequest('Composez une équipe de 1 à 3 cartes pour le raid')
+    }
+    if (new Set(userCardIds).size !== userCardIds.length) {
+      throw Boom.badRequest('Les cartes doivent être distinctes')
+    }
+
+    const team = await this.#requireMembership(teamId, userId)
+    const raidId = (await this.#ensureRaid(team, now)).id
+
+    // Config lue AVANT la transaction (pas d'I/O async étranger dans un tx
+    // Serializable) — même motif que tower.domain#fight.
+    const cfg = await this.#configService.getMany(
+      'combat.elementAdvantageMult',
+      'combat.elementDisadvantageMult',
+      'combat.defMitigationRef',
+      'combat.baseCritRate',
+      'combat.baseCritDmg',
+      'combat.baseArmorPen',
+      'combat.baseLifesteal',
+      'raid.attacksPerDay',
+      'raid.timeoutTurns',
+      ...SET_BONUS_CONFIG_KEYS,
+    )
+    const setDefs = setBonusesFromConfig(cfg)
+    const baseStats: CombatStatsBaseline = {
+      critRate: cfg['combat.baseCritRate'],
+      critDmg: cfg['combat.baseCritDmg'],
+      armorPen: cfg['combat.baseArmorPen'],
+      lifesteal: cfg['combat.baseLifesteal'],
+    }
+    const perDay = cfg['raid.attacksPerDay']
+
+    const outcome = await retryOnSerialization(() =>
+      this.#postgresOrm.executeWithTransactionClient(
+        // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: motif calqué sur tower.domain#fight
+        async (tx): Promise<RaidAttackResult> => {
+          const raid = await tx.teamRaid.findUnique({
+            where: { id: raidId },
+            include: { boss: true },
+          })
+          if (!raid) {
+            throw Boom.notFound('Raid introuvable')
+          }
+          if (raid.killedAt || raid.hp <= 0) {
+            throw Boom.conflict(
+              'Le boss est déjà vaincu, rendez-vous la semaine prochaine',
+            )
+          }
+
+          const used = await tx.raidAttack.count({
+            where: { userId, createdAt: { gte: utcDayStart(now) } },
+          })
+          if (used >= perDay) {
+            throw Boom.tooManyRequests(
+              "Plus d'attaque aujourd'hui, reviens demain",
+            )
+          }
+
+          const teamUnits = await buildPlayerSimUnits(tx, {
+            userId,
+            userCardIds,
+            defMitigationRef: cfg['combat.defMitigationRef'],
+            baseStats,
+            setDefs,
+            publicUrl: (key) => this.#storageClient.publicUrl(key),
+          })
+          if (teamUnits.length === 0) {
+            throw Boom.badRequest(
+              'Aucune des cartes fournies n’appartient à ce joueur',
+            )
+          }
+
+          const spec = enemySpecSchema.parse(raid.boss.spec)
+          const [bossUnit] = buildEnemySimUnits([spec], {
+            defMitigationRef: cfg['combat.defMitigationRef'],
+            baseStats,
+            resolveImage: (appearance) =>
+              resolveEnemyImageUrl(
+                appearance,
+                (key) => this.#storageClient.publicUrl(key),
+                this.#config.isDevelopment ? 'staging/' : '',
+              ),
+          })
+          if (!bossUnit) {
+            throw Boom.badImplementation('Spec de boss invalide')
+          }
+          bossUnit.hp = RAID_BOSS_SIM_HP
+          bossUnit.name = raid.boss.name
+
+          const seed = `${userId}:raid:${raid.id}:${now.getTime()}`
+          const sim = simulateBattle({
+            teamA: teamUnits,
+            teamB: [bossUnit],
+            seed,
+            timeoutTurns: cfg['raid.timeoutTurns'],
+            elementAdvantageMult: cfg['combat.elementAdvantageMult'],
+            elementDisadvantageMult: cfg['combat.elementDisadvantageMult'],
+          })
+
+          const damage = damageDealtToBoss(sim.log)
+          const hpBefore = raid.hp
+          const hpAfter = Math.max(0, hpBefore - damage)
+          const killed = hpAfter === 0
+
+          await tx.teamRaid.update({
+            where: { id: raid.id },
+            data: { hp: hpAfter, ...(killed ? { killedAt: now } : {}) },
+          })
+          await tx.raidAttack.create({
+            data: { raidId: raid.id, userId, damage, seed, userCardIds },
+          })
+
+          const tiers = await tx.raidTier.findMany({
+            include: { reward: true },
+            orderBy: { pct: 'asc' },
+          })
+          const before = crossedTiers(raid.maxHp - hpBefore, raid.maxHp, tiers)
+          const after = crossedTiers(raid.maxHp - hpAfter, raid.maxHp, tiers)
+          if (after.length > 0) {
+            const participants = await tx.raidAttack.findMany({
+              where: { raidId: raid.id },
+              distinct: ['userId'],
+              select: { userId: true },
+            })
+            await tx.userReward.createMany({
+              data: participants.flatMap((p) =>
+                after.map((t) => ({
+                  userId: p.userId,
+                  rewardId: t.rewardId,
+                  source: 'RAID' as const,
+                  sourceId: `${raid.id}:${t.pct}`,
+                })),
+              ),
+              skipDuplicates: true,
+            })
+          }
+          const beforePcts = new Set(before.map((t) => t.pct))
+          const newTiers = after
+            .filter((t) => !beforePcts.has(t.pct))
+            .map((t) => tierView(t, true))
+
+          return {
+            log: sim.log,
+            teamA: teamUnits,
+            teamB: [bossUnit],
+            damage,
+            hpBefore,
+            hpAfter,
+            maxHp: raid.maxHp,
+            killed,
+            newTiers,
+            attacksRemainingToday: attacksRemaining(used + 1, perDay),
+          }
+        },
+        { isolationLevel: 'Serializable' },
+      ),
+    )
+
+    // Après commit : la barre bouge en direct chez les coéquipiers connectés.
+    const attacker = team.members.find((m) => m.userId === userId)?.user
+    const event: RaidAttackEvent = {
+      type: 'raid:attack',
+      teamId,
+      raidId,
+      hp: outcome.hpAfter,
+      maxHp: outcome.maxHp,
+      attacker: { id: userId, username: attacker?.username ?? 'Un coéquipier' },
+      damage: outcome.damage,
+      killed: outcome.killed,
+    }
+    for (const member of team.members) {
+      this.#wsManager.notify(member.userId, event)
+    }
+
+    return outcome
   }
 
   async #requireMembership(

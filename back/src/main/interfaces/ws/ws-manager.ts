@@ -59,11 +59,23 @@ export type AdminActivityEvent = {
   }
 }
 
+export type RaidAttackEvent = {
+  type: 'raid:attack'
+  teamId: string
+  raidId: string
+  hp: number
+  maxHp: number
+  attacker: { id: string; username: string }
+  damage: number
+  killed: boolean
+}
+
 type WsEvent =
   | PullResultEvent
   | PullBatchResultEvent
   | FeedPullEvent
   | AdminActivityEvent
+  | RaidAttackEvent
 
 export class WsManager {
   readonly #connections = new Map<string, WebSocket>()
