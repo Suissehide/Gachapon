@@ -425,6 +425,46 @@ describe('cote et placement du pari', () => {
     }
   })
 
+  it('POST /teams/:id/bets refuse une cote plancher : le pari ne rapporterait rien', async () => {
+    // La fenetre de placement refuse deja de soumettre a cote 1,00, mais un
+    // contrat qui ne vit que dans le client n'est pas un contrat : une
+    // requete directe debiterait la mise pour la recrediter a l'identique.
+    try {
+      await prisma.user.update({
+        where: { id: userIdB },
+        data: { pityCurrent: PITY_THRESHOLD - PULL_WINDOW + 1 },
+      })
+      await prisma.user.update({
+        where: { id: userIdA },
+        data: { dust: 5000 },
+      })
+      const betsBefore = await prisma.bet.count({ where: { teamId } })
+      const quote = await app.inject({
+        method: 'GET',
+        url: quoteUrl(userIdB),
+        headers: { cookie: cookiesA },
+      })
+      expect(quote.json().multiplier).toBe(1)
+
+      const res = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamId}/bets`,
+        headers: { cookie: cookiesA },
+        payload: { targetId: userIdB, minRarity: 'RARE', stake: 200 },
+      })
+      expect(res.statusCode).toBe(400)
+      // Ni ligne creee, ni poussiere debitee.
+      expect(await prisma.bet.count({ where: { teamId } })).toBe(betsBefore)
+      const a = await prisma.user.findUnique({ where: { id: userIdA } })
+      expect(a.dust).toBe(5000)
+    } finally {
+      await prisma.user.update({
+        where: { id: userIdB },
+        data: { pityCurrent: 0 },
+      })
+    }
+  })
+
   it("boost de garantie : certain jusqu'a EPIC, pas sur LEGENDARY", async () => {
     // Le moteur declenche la garantie au tirage ou le compteur du boost vaut
     // exactement 1 (donc au tirage n° R depuis un compteur persiste R), et

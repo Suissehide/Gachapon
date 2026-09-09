@@ -284,6 +284,17 @@ export class BetDomain implements IBetDomain {
     // ligne plutôt que de les relire là-bas, où elles auront bougé.
     const { multiplier, pityCurrent, luckMultiplier, weights } =
       await this.#computeOdds(targetId, minRarity, cfg)
+    // À la cote plancher (voir `betMultiplier`), le gain se réduit à la mise
+    // : le pari ne rapporte rien. La fenêtre de placement refuse déjà de
+    // soumettre dans ce cas, mais un contrat qui ne vit que dans le client
+    // n'est pas un contrat — une requête directe débiterait la mise pour la
+    // recréditer à l'identique, ce que personne n'a voulu faire.
+    if (multiplier <= 1) {
+      throw Boom.badRequest(
+        `Ce pari ne rapporterait rien : ${targetName} sortira presque à coup sûr cette rareté sur la fenêtre`,
+      )
+    }
+
     const deadlineAt = new Date(now.getTime() + cfg.deadlineHours * HOUR_MS)
 
     const created = await retryOnSerialization<Bet>(() =>
