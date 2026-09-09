@@ -192,9 +192,16 @@ describe('wager-rules — verdict de pari', () => {
     expect(betVerdict({ ...base, pulls: Array(10).fill(common) })).toBe('LOST')
   })
 
-  it('expiré si l\'échéance passe avant que la cible ait tiré', () => {
+  it('expiré (donc remboursé) seulement si la cible n\'a fait AUCUN tirage', () => {
     const past = { ...base, now: new Date('2026-09-13T12:00:00Z') }
-    expect(betVerdict({ ...past, pulls: [common, common] })).toBe('EXPIRED')
+    expect(betVerdict({ ...past, pulls: [] })).toBe('EXPIRED')
+  })
+
+  it('perdu si la cible a tiré puis s\'est arrêtée avant la fin de la fenêtre', () => {
+    // Cas historiquement remboursé : il rendait le pari IMPERDABLE (gagné si
+    // une carte qualifiante sortait, remboursé sinon). Voir betVerdict.
+    const past = { ...base, now: new Date('2026-09-13T12:00:00Z') }
+    expect(betVerdict({ ...past, pulls: [common, common] })).toBe('LOST')
   })
 
   it('un succès déjà obtenu l\'emporte sur une échéance passée', () => {

@@ -1328,6 +1328,51 @@ describe('cote et placement du pari', () => {
       expect(await dustOf(userIdA)).toBe(dustAfterPlacement + stake)
     })
 
+    it("echeance depassee avec une fenetre ENTAMEE mais incomplete : PERDU, pas de remboursement", async () => {
+      // Le remboursement est reserve a la cible genuinement ABSENTE. Une
+      // cible qui tire puis s'arrete a un tirage de la fin rendait le pari
+      // imperdable (gagne si une carte qualifiante sortait, rembourse sinon)
+      // : deux comptes complices en tiraient une imprimante a poussiere.
+      const stake = 250
+      const createdAt = new Date(Date.now() - 2 * 60 * 60 * 1000)
+      const bet = await prisma.bet.create({
+        data: {
+          teamId,
+          bettorId: userIdA,
+          targetId: userIdE,
+          stake,
+          minRarity: 'RARE',
+          pullWindow: PULL_WINDOW,
+          multiplier: EXPECTED_MULTIPLIER,
+          createdAt,
+          deadlineAt: new Date(Date.now() - 60 * 60 * 1000),
+        },
+      })
+      // Un seul tirage COMMON sur une fenetre de 10 : entamee, incomplete,
+      // et sans succes.
+      const commonCard = await prisma.card.findFirst({
+        where: { setId: commonSetId },
+      })
+      await prisma.gachaPull.create({
+        data: {
+          userId: userIdE,
+          cardId: commonCard.id,
+          variant: 'NORMAL',
+          pulledAt: new Date(createdAt.getTime() + 30 * 60 * 1000),
+        },
+      })
+
+      const dustBefore = await dustOf(userIdA)
+      const body = await wagersOf(cookiesA)
+      const view = body.settledBets.find((b: any) => b.id === bet.id)
+      expect(view).toBeDefined()
+      expect(view.status).toBe('LOST')
+      expect(view.payout).toBe(0)
+      expect(view.pullsSeen).toBe(1)
+      // La mise reste a la maison : le solde du parieur ne bouge pas.
+      expect(await dustOf(userIdA)).toBe(dustBefore)
+    })
+
     it('un succes obtenu AVANT une echeance depassee gagne quand meme', async () => {
       // Pari insere a la main dans le passe (createdAt il y a 2 h, echeance
       // il y a 1 h) avec un tirage qualifiant entre les deux : le verdict

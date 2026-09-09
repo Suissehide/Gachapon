@@ -145,6 +145,19 @@ export type BetVerdictInput = {
 /**
  * Un succès déjà obtenu prime sur tout : une cible qui sort la rareté visée
  * puis disparaît trois jours a quand même fait gagner le parieur.
+ *
+ * À l'échéance avec une fenêtre INCOMPLÈTE, le remboursement est réservé au
+ * cas où la cible n'a fait AUCUN tirage compté : une absence totale, ce pour
+ * quoi le remboursement existe. Une cible qui a tiré puis s'est arrêtée à un
+ * tirage de la fin fait PERDRE le pari.
+ *
+ * C'est délibérément plus dur que la lettre de la spec, qui prescrivait le
+ * remboursement dès que la fenêtre était incomplète : la même spec pose
+ * comme objectif de conception qu'aucun pari ne doit avoir une espérance
+ * positive, et la version « remboursé » rendait le pari IMPERDABLE — il
+ * gagnait si une carte qualifiante sortait, et se faisait rembourser sinon.
+ * Deux comptes d'une même équipe en tiraient une imprimante à poussière sans
+ * aucun risque. L'objectif de conception l'emporte sur la lettre.
  */
 export function betVerdict(
   input: BetVerdictInput,
@@ -156,7 +169,7 @@ export function betVerdict(
     return 'LOST'
   }
   if (input.now.getTime() >= input.deadlineAt.getTime()) {
-    return 'EXPIRED'
+    return input.pulls.length === 0 ? 'EXPIRED' : 'LOST'
   }
   return null
 }
