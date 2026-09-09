@@ -17,7 +17,13 @@ export class CardDustConversionDomain {
     achievementsDomain,
     configService,
     duelDomain,
-  }: Omit<IocContainer, 'duelDomain'> & { duelDomain: IDuelDomain }) {
+  }: Pick<
+    IocContainer,
+    | 'postgresOrm'
+    | 'skillTreeRepository'
+    | 'achievementsDomain'
+    | 'configService'
+  > & { duelDomain: IDuelDomain }) {
     this.#postgresOrm = postgresOrm
     this.#skillTreeRepository = skillTreeRepository
     this.#achievementsDomain = achievementsDomain
