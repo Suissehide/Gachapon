@@ -10,6 +10,7 @@ describe('cycle de vie du duel', () => {
   let cookiesB: string
   let cookiesC: string
   let cookiesD: string
+  let cookiesE: string
   let userIdA: string
   let userIdB: string
   let userIdC: string
@@ -68,6 +69,7 @@ describe('cycle de vie du duel', () => {
     cookiesB = b.cookies
     cookiesC = c.cookies
     cookiesD = d.cookies
+    cookiesE = e.cookies
 
     const team = await app.inject({
       method: 'POST',
@@ -91,6 +93,40 @@ describe('cycle de vie du duel', () => {
   afterAll(async () => {
     await app.close()
   })
+
+  // Le declenchement au tirage (POST /pulls) est fire-and-forget (`void
+  // duelDomain.settleForUser(...).catch(...)`) : la reponse HTTP du dernier
+  // tirage revient avant que le reglement asynchrone n'ait forcement fini.
+  // On sonde donc la ligne Duel jusqu'a ce qu'elle passe SETTLED plutot que
+  // de supposer une completion synchrone.
+  async function waitForDuelStatus(
+    duelId: string,
+    status: string,
+    timeoutMs = 5000,
+  ) {
+    const start = Date.now()
+    while (Date.now() - start < timeoutMs) {
+      const row = await prisma.duel.findUnique({ where: { id: duelId } })
+      if (row?.status === status) {
+        return row
+      }
+      await new Promise((r) => setTimeout(r, 25))
+    }
+    throw new Error(
+      `Timeout: le duel ${duelId} n'a pas atteint le statut ${status}`,
+    )
+  }
+
+  // Deactive tous les CardSet puis n'active que celui donne — cette suite
+  // possede sa propre base tronquee (globalSetup), donc aucun autre fichier
+  // e2e ne tourne en meme temps : pas besoin de restaurer un etat anterieur.
+  async function activateOnly(setId: string) {
+    await prisma.cardSet.updateMany({ data: { isActive: false } })
+    await prisma.cardSet.update({
+      where: { id: setId },
+      data: { isActive: true },
+    })
+  }
 
   it('GET /teams/:id/wagers exige une session', async () => {
     const res = await app.inject({
@@ -382,5 +418,267 @@ describe('cycle de vie du duel', () => {
     const inView = res.json().duels.find((d: any) => d.id === staleDuelId)
     expect(inView).toBeDefined()
     expect(inView.status).toBe('EXPIRED')
+  })
+
+  describe('reglement du duel', () => {
+    let legendarySetId: string
+    let commonSetId: string
+    let commonCardId: string
+
+    it('duel3 (A vs B, 9 tirages) : A rafle du LEGENDARY, B du COMMON -> reglement automatique au dernier tirage, cartes transferees, B garde sa poussiere', async () => {
+      const legendarySet = await prisma.cardSet.create({
+        data: { name: `DuelLegendarySet${suffix}`, isActive: false },
+      })
+      const legendaryCard = await prisma.card.create({
+        data: {
+          name: `DuelLegendaryCard${suffix}`,
+          rarity: 'LEGENDARY',
+          dropWeight: 10,
+          setId: legendarySet.id,
+        },
+      })
+      const commonSet = await prisma.cardSet.create({
+        data: { name: `DuelCommonSet${suffix}`, isActive: false },
+      })
+      const commonCard = await prisma.card.create({
+        data: {
+          name: `DuelCommonCard${suffix}`,
+          rarity: 'COMMON',
+          dropWeight: 10,
+          setId: commonSet.id,
+        },
+      })
+      legendarySetId = legendarySet.id
+      commonSetId = commonSet.id
+      commonCardId = commonCard.id
+
+      await prisma.user.update({
+        where: { id: userIdA },
+        data: { tokens: 20, lastTokenAt: new Date() },
+      })
+      await prisma.user.update({
+        where: { id: userIdB },
+        data: { tokens: 20, lastTokenAt: new Date() },
+      })
+
+      // A ne pioche que dans un catalogue 100% LEGENDARY : 9 tirages, 9
+      // LEGENDARY, score largement superieur a celui de B.
+      await activateOnly(legendarySet.id)
+      for (let i = 0; i < 9; i++) {
+        const res = await app.inject({
+          method: 'POST',
+          url: '/pulls',
+          headers: { cookie: cookiesA },
+        })
+        expect(res.statusCode).toBe(201)
+      }
+
+      // B ne pioche que dans un catalogue 100% COMMON, meme carte a chaque
+      // fois (le COMMON n'est jamais eligible aux variantes brillante/holo,
+      // donc toujours NORMAL) : 9 tirages, une seule ligne UserCard a
+      // quantite 9 avant transfert.
+      await activateOnly(commonSet.id)
+      for (let i = 0; i < 9; i++) {
+        const res = await app.inject({
+          method: 'POST',
+          url: '/pulls',
+          headers: { cookie: cookiesB },
+        })
+        expect(res.statusCode).toBe(201)
+      }
+
+      // La poussiere de B est deja creditee de facon synchrone (dans la
+      // transaction du dernier /pulls) ; le reglement, lui, est asynchrone
+      // (fire-and-forget) et ne doit rien y changer.
+      const bDustBeforeSettle = (
+        await prisma.user.findUnique({ where: { id: userIdB } })
+      ).dust
+
+      const settled = await waitForDuelStatus(duel3Id, 'SETTLED')
+      expect(settled.winnerId).toBe(userIdA)
+      expect(settled.settledAt).not.toBeNull()
+
+      const bDustAfterSettle = (
+        await prisma.user.findUnique({ where: { id: userIdB } })
+      ).dust
+      expect(bDustAfterSettle).toBe(bDustBeforeSettle)
+
+      // Les 9 cartes de B (le perdant) sont chez A (le vainqueur), et B n'en
+      // a plus une seule (derniere copie supprimee).
+      const aCommonCard = await prisma.userCard.findUnique({
+        where: {
+          userId_cardId_variant: {
+            userId: userIdA,
+            cardId: commonCard.id,
+            variant: 'NORMAL',
+          },
+        },
+      })
+      expect(aCommonCard).not.toBeNull()
+      expect(aCommonCard?.quantity).toBe(9)
+
+      const bCommonCard = await prisma.userCard.findUnique({
+        where: {
+          userId_cardId_variant: {
+            userId: userIdB,
+            cardId: commonCard.id,
+            variant: 'NORMAL',
+          },
+        },
+      })
+      expect(bCommonCard).toBeNull()
+
+      // Une ligne DuelTransfer par carte transferee.
+      const transfers = await prisma.duelTransfer.findMany({
+        where: { duelId: duel3Id },
+      })
+      expect(transfers).toHaveLength(9)
+      for (const t of transfers) {
+        expect(t.cardId).toBe(commonCard.id)
+        expect(t.fromUserId).toBe(userIdB)
+        expect(t.toUserId).toBe(userIdA)
+      }
+    })
+
+    it('idempotence : rejouer settleForUser sur duel3 (deja SETTLED) ne transfere rien de plus', async () => {
+      const { duelDomain } = (app as any).iocContainer
+      const before = await prisma.duelTransfer.count({
+        where: { duelId: duel3Id },
+      })
+
+      await duelDomain.settleForUser(userIdA)
+      await duelDomain.settleForUser(userIdB)
+
+      const after = await prisma.duelTransfer.count({
+        where: { duelId: duel3Id },
+      })
+      expect(after).toBe(before)
+
+      const row = await prisma.duel.findUnique({ where: { id: duel3Id } })
+      expect(row.status).toBe('SETTLED')
+    })
+
+    it('egalite : D et E tirent toujours la meme carte -> SETTLED, winnerId null, aucun DuelTransfer', async () => {
+      await configService.set('duel.pullCount', 2)
+
+      const propose = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamId}/duels`,
+        headers: { cookie: cookiesD },
+        payload: { opponentId: userIdE },
+      })
+      expect(propose.statusCode).toBe(201)
+      const tieDuelId = propose.json().id as string
+      expect(propose.json().pullCount).toBe(2)
+
+      const accept = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamId}/duels/${tieDuelId}/accept`,
+        headers: { cookie: cookiesE },
+      })
+      expect(accept.statusCode).toBe(200)
+
+      await prisma.user.updateMany({
+        where: { id: { in: [userIdD, userIdE] } },
+        data: { tokens: 10, lastTokenAt: new Date() },
+      })
+
+      // Un seul catalogue actif (COMMON) : D et E tirent forcement la meme
+      // carte a chaque fois, donc un score identique -> egalite.
+      await activateOnly(commonSetId)
+      for (let i = 0; i < 2; i++) {
+        const res = await app.inject({
+          method: 'POST',
+          url: '/pulls',
+          headers: { cookie: cookiesD },
+        })
+        expect(res.statusCode).toBe(201)
+      }
+      for (let i = 0; i < 2; i++) {
+        const res = await app.inject({
+          method: 'POST',
+          url: '/pulls',
+          headers: { cookie: cookiesE },
+        })
+        expect(res.statusCode).toBe(201)
+      }
+
+      const settled = await waitForDuelStatus(tieDuelId, 'SETTLED')
+      expect(settled.winnerId).toBeNull()
+      expect(settled.challengerScore).toBe(settled.opponentScore)
+
+      const transfers = await prisma.duelTransfer.count({
+        where: { duelId: tieDuelId },
+      })
+      expect(transfers).toBe(0)
+    })
+
+    it("echeance depassee, tirages manquants d'un cote : GET /teams/:id/wagers regle sur le score partiel", async () => {
+      // A et B sont libres depuis le reglement de duel3.
+      const propose = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamId}/duels`,
+        headers: { cookie: cookiesA },
+        payload: { opponentId: userIdB },
+      })
+      expect(propose.statusCode).toBe(201)
+      const deadlineDuelId = propose.json().id as string
+      expect(propose.json().pullCount).toBe(2)
+
+      const accept = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamId}/duels/${deadlineDuelId}/accept`,
+        headers: { cookie: cookiesB },
+      })
+      expect(accept.statusCode).toBe(200)
+
+      // L'echeance est encore loin : ce tirage d'A ne doit PAS regler le
+      // duel (verdict encore indecidable), seulement mettre a jour son
+      // compteur de tirages.
+      await activateOnly(legendarySetId)
+      await prisma.user.update({
+        where: { id: userIdA },
+        data: { tokens: 10, lastTokenAt: new Date() },
+      })
+      const pullA = await app.inject({
+        method: 'POST',
+        url: '/pulls',
+        headers: { cookie: cookiesA },
+      })
+      expect(pullA.statusCode).toBe(201)
+      // Laisse le reglement fire-and-forget declenche par ce tirage se
+      // terminer (verdict null attendu, sans effet observable a sonder).
+      await new Promise((r) => setTimeout(r, 100))
+
+      let row = await prisma.duel.findUnique({ where: { id: deadlineDuelId } })
+      expect(row?.status).toBe('ACTIVE')
+      expect(row?.challengerPulls).toBe(1)
+
+      // On force l'echeance dans le passe : B n'a jamais tire.
+      await prisma.duel.update({
+        where: { id: deadlineDuelId },
+        data: { deadlineAt: new Date(Date.now() - 1000) },
+      })
+
+      const wagers = await app.inject({
+        method: 'GET',
+        url: `/teams/${teamId}/wagers`,
+        headers: { cookie: cookiesA },
+      })
+      expect(wagers.statusCode).toBe(200)
+
+      row = await prisma.duel.findUnique({ where: { id: deadlineDuelId } })
+      expect(row?.status).toBe('SETTLED')
+      expect(row?.winnerId).toBe(userIdA)
+      expect(row?.challengerPulls).toBe(1)
+      expect(row?.opponentPulls).toBe(0)
+
+      const inView = wagers
+        .json()
+        .settledDuels.find((d: any) => d.id === deadlineDuelId)
+      expect(inView).toBeDefined()
+      expect(inView.status).toBe('SETTLED')
+      expect(inView.winnerId).toBe(userIdA)
+    })
   })
 })

@@ -89,6 +89,14 @@ export type DuelUpdateEvent = {
   pullCount: number
 }
 
+export type DuelSettledEvent = {
+  type: 'duel:settled'
+  teamId: string
+  duelId: string
+  winnerId: string | null
+  transferredCount: number
+}
+
 type WsEvent =
   | PullResultEvent
   | PullBatchResultEvent
@@ -97,6 +105,7 @@ type WsEvent =
   | RaidAttackEvent
   | DuelProposedEvent
   | DuelUpdateEvent
+  | DuelSettledEvent
 
 export class WsManager {
   readonly #connections = new Map<string, WebSocket>()

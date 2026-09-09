@@ -7,31 +7,45 @@ import type {
   WagersView,
 } from '../../types/domain/wagers/wagers.domain.interface'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
+import type { PrimaTransactionClient } from '../../types/infra/orm/client'
+import type { IUserCardRepository } from '../../types/infra/orm/repositories/user-card.repository.interface'
 import type {
   DuelWithParties,
   IWagerRepository,
+  PullWithRarity,
 } from '../../types/infra/orm/repositories/wager.repository.interface'
 import type { TeamWithMembers } from '../../types/domain/team/team.types'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
 import type { TeamRepository } from '../../infra/orm/repositories/team.repository'
+import type { IScoringConfigRepository } from '../../types/infra/orm/repositories/scoring-config.repository.interface'
 import type {
   DuelProposedEvent,
+  DuelSettledEvent,
   DuelUpdateEvent,
   WsManager,
 } from '../../interfaces/ws/ws-manager'
+import { retryOnSerialization } from '../shared/retry-serialization'
+import { duelScoreHalfPoints, duelVerdict } from './wager-rules'
 
 const HOUR_MS = 60 * 60 * 1000
 
-// Nombre de duels réglés récents renvoyés par la lecture d'équipe — le
-// règlement n'existe pas encore à cette tâche, mais la vue l'anticipe.
+// Nombre de duels réglés récents renvoyés par la lecture d'équipe.
 const RECENT_SETTLED_DUELS = 20
+
+type SettleOutcome = {
+  teamId: string
+  winnerId: string | null
+  transferredCount: number
+} | null
 
 export class DuelDomain implements IDuelDomain {
   readonly #configService: ConfigServiceInterface
   readonly #teamRepository: TeamRepository
   readonly #teamMemberRepository: TeamMemberRepository
   readonly #wagerRepository: IWagerRepository
+  readonly #userCardRepository: IUserCardRepository
+  readonly #scoringConfigRepository: IScoringConfigRepository
   readonly #postgresOrm: PostgresOrm
   readonly #wsManager: WsManager
 
@@ -40,6 +54,8 @@ export class DuelDomain implements IDuelDomain {
     teamRepository,
     teamMemberRepository,
     wagerRepository,
+    userCardRepository,
+    scoringConfigRepository,
     postgresOrm,
     wsManager,
   }: IocContainer) {
@@ -47,6 +63,8 @@ export class DuelDomain implements IDuelDomain {
     this.#teamRepository = teamRepository
     this.#teamMemberRepository = teamMemberRepository
     this.#wagerRepository = wagerRepository
+    this.#userCardRepository = userCardRepository
+    this.#scoringConfigRepository = scoringConfigRepository
     this.#postgresOrm = postgresOrm
     this.#wsManager = wsManager
   }
@@ -228,9 +246,10 @@ export class DuelDomain implements IDuelDomain {
   }
 
   /**
-   * Expire d'abord les PENDING hors délai d'acceptation, puis renvoie la
-   * vue. Le règlement des ACTIVE en retard (`listStaleForTeam`) arrive en
-   * tâche 6 — ici un duel ACTIVE reste ACTIVE sans jamais se conclure.
+   * Expire d'abord les PENDING hors délai d'acceptation, règle ensuite les
+   * ACTIVE dont l'échéance est passée (second déclencheur du règlement,
+   * avec le tirage — sans lui un duel où les deux joueurs ont cessé de
+   * tirer resterait ACTIVE indéfiniment), puis renvoie la vue.
    */
   async listForTeam(
     teamId: string,
@@ -238,6 +257,11 @@ export class DuelDomain implements IDuelDomain {
     now: Date = new Date(),
   ): Promise<WagersView> {
     await this.#requireMembership(teamId, userId)
+
+    const stale = await this.#wagerRepository.listStaleForTeam(teamId, now)
+    for (const duelId of stale.duelIds) {
+      await this.#settle(duelId, now)
+    }
 
     const [duels, settledDuels, cfg] = await Promise.all([
       this.#wagerRepository.listTeamDuels(teamId),
@@ -275,6 +299,219 @@ export class DuelDomain implements IDuelDomain {
         .map((d) => this.#toView(d, userId)),
       settledDuels: settledDuels.map((d) => this.#toView(d, userId)),
     }
+  }
+
+  /**
+   * Déclenché après chaque tirage : règle tous les duels ACTIVE où le
+   * joueur est partie. Aucun état de progression n'est stocké — chaque
+   * appel relit les tirages depuis GachaPull et recalcule tout, ce qui
+   * rend l'opération idempotente et sûre à rejouer.
+   */
+  async settleForUser(userId: string, now: Date = new Date()): Promise<void> {
+    const activeDuels = await this.#wagerRepository.listActiveDuelsForUser(
+      userId,
+    )
+    for (const duel of activeDuels) {
+      await this.#settle(duel.id, now)
+    }
+  }
+
+  /**
+   * Règle un duel. La config et le ScoringConfig sont lus AVANT la
+   * transaction (pas d'I/O async supplémentaire une fois le tx Serializable
+   * ouvert). La toute première lecture DANS le tx est le statut du duel :
+   * s'il n'est plus ACTIVE, on sort sans rien faire — c'est ce qui rend un
+   * double déclenchement (tirage + lecture d'équipe, ou deux tirages
+   * concurrents) inoffensif.
+   */
+  async #settle(duelId: string, now: Date): Promise<void> {
+    const scoring = await this.#scoringConfigRepository.get()
+
+    const outcome = await retryOnSerialization<SettleOutcome>(() =>
+      this.#postgresOrm.executeWithTransactionClient(
+        // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: verdict + transfert + détachement d'équipement, motif calqué sur tower.domain#fight
+        async (tx) => {
+          const duel = await tx.duel.findUnique({ where: { id: duelId } })
+          if (!duel || duel.status !== 'ACTIVE') {
+            return null
+          }
+          if (duel.acceptedAt === null) {
+            // Défensif : un duel ACTIVE a toujours acceptedAt posé par accept().
+            return null
+          }
+
+          const [challengerPulls, opponentPulls] = await Promise.all([
+            this.#wagerRepository.findPullsSinceInTx(
+              tx,
+              duel.challengerId,
+              duel.acceptedAt,
+              duel.pullCount,
+            ),
+            this.#wagerRepository.findPullsSinceInTx(
+              tx,
+              duel.opponentId,
+              duel.acceptedAt,
+              duel.pullCount,
+            ),
+          ])
+
+          const challengerScore = duelScoreHalfPoints(challengerPulls, scoring)
+          const opponentScore = duelScoreHalfPoints(opponentPulls, scoring)
+
+          const verdict = duelVerdict({
+            challengerScore,
+            opponentScore,
+            challengerPulls: challengerPulls.length,
+            opponentPulls: opponentPulls.length,
+            pullCount: duel.pullCount,
+            now,
+            deadlineAt: duel.deadlineAt,
+          })
+
+          if (verdict === null) {
+            // Duel toujours en cours : on met à jour les compteurs pour
+            // l'affichage en direct, sans conclure.
+            await tx.duel.update({
+              where: { id: duel.id },
+              data: {
+                challengerScore,
+                opponentScore,
+                challengerPulls: challengerPulls.length,
+                opponentPulls: opponentPulls.length,
+              },
+            })
+            return null
+          }
+
+          let winnerId: string | null = null
+          let loserId: string | null = null
+          let loserPulls: PullWithRarity[] = []
+          if (verdict === 'CHALLENGER') {
+            winnerId = duel.challengerId
+            loserId = duel.opponentId
+            loserPulls = opponentPulls
+          } else if (verdict === 'OPPONENT') {
+            winnerId = duel.opponentId
+            loserId = duel.challengerId
+            loserPulls = challengerPulls
+          }
+          // TIE : winnerId reste null, loserPulls reste vide — aucun transfert.
+
+          let transferredCount = 0
+          if (winnerId !== null && loserId !== null) {
+            for (const pull of loserPulls) {
+              const transferred = await this.#transferPull(
+                tx,
+                duel.id,
+                loserId,
+                winnerId,
+                pull,
+              )
+              if (transferred) {
+                transferredCount += 1
+              }
+            }
+          }
+
+          await tx.duel.update({
+            where: { id: duel.id },
+            data: {
+              status: 'SETTLED',
+              winnerId,
+              settledAt: now,
+              challengerScore,
+              opponentScore,
+              challengerPulls: challengerPulls.length,
+              opponentPulls: opponentPulls.length,
+            },
+          })
+
+          return { teamId: duel.teamId, winnerId, transferredCount }
+        },
+        { isolationLevel: 'Serializable' },
+      ),
+    )
+
+    if (!outcome) {
+      return
+    }
+
+    // Après le commit uniquement : un rollback ne doit jamais avoir
+    // notifié un transfert de cartes qui n'a pas eu lieu.
+    const team = await this.#teamRepository.findById(outcome.teamId)
+    const event: DuelSettledEvent = {
+      type: 'duel:settled',
+      teamId: outcome.teamId,
+      duelId,
+      winnerId: outcome.winnerId,
+      transferredCount: outcome.transferredCount,
+    }
+    for (const member of team?.members ?? []) {
+      this.#wsManager.notify(member.userId, event)
+    }
+  }
+
+  /**
+   * Transfère un tirage du perdant vers le vainqueur. Si le perdant ne
+   * possède plus la carte (recyclée entre-temps), ne transfère rien plutôt
+   * que d'échouer : le verrou de la tâche 7 rend ce cas improbable, mais un
+   * règlement ne doit jamais planter pour ça.
+   */
+  async #transferPull(
+    tx: PrimaTransactionClient,
+    duelId: string,
+    loserId: string,
+    winnerId: string,
+    pull: PullWithRarity,
+  ): Promise<boolean> {
+    const owned = await tx.userCard.findUnique({
+      where: {
+        userId_cardId_variant: {
+          userId: loserId,
+          cardId: pull.cardId,
+          variant: pull.variant,
+        },
+      },
+    })
+    if (!owned) {
+      return false
+    }
+
+    if (owned.quantity > 1) {
+      await tx.userCard.update({
+        where: { id: owned.id },
+        data: { quantity: { decrement: 1 } },
+      })
+    } else {
+      // Dernière copie : on détache d'abord l'équipement porté par cette
+      // carte, DIRECTEMENT via tx. Passer par la méthode publique du
+      // domaine équipement ouvrirait sa propre transaction imbriquée, ce
+      // qui casserait l'atomicité de tout le transfert.
+      await tx.userEquipment.updateMany({
+        where: { equippedOnId: owned.id },
+        data: { equippedOnId: null },
+      })
+      await tx.userCard.delete({ where: { id: owned.id } })
+    }
+
+    await this.#userCardRepository.upsertInTx(
+      tx,
+      winnerId,
+      pull.cardId,
+      pull.variant,
+    )
+
+    await tx.duelTransfer.create({
+      data: {
+        duelId,
+        cardId: pull.cardId,
+        variant: pull.variant,
+        fromUserId: loserId,
+        toUserId: winnerId,
+      },
+    })
+
+    return true
   }
 
   async #requireMembership(

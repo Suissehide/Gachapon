@@ -25,6 +25,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     storageClient,
     cardRepository,
     activityDomain,
+    duelDomain,
   } = fastify.iocContainer
 
   const resolveUrl = (key: string | null) =>
@@ -111,6 +112,13 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         recordLevelUpActivity(user.id, user.username, result.leveledUp)
       }
 
+      // Déclenche le règlement des duels ACTIVE du joueur. `void` + `catch` :
+      // un règlement en échec ne doit jamais transformer un tirage réussi
+      // en erreur pour le joueur.
+      void duelDomain
+        .settleForUser(request.user.userID)
+        .catch((err) => fastify.log.error({ err }, 'duel settle failed'))
+
       return reply.status(201).send({
         card: {
           id: result.card.id,
@@ -196,6 +204,13 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         }
         recordLevelUpActivity(user.id, user.username, result.leveledUp)
       }
+
+      // Déclenche le règlement des duels ACTIVE du joueur. `void` + `catch` :
+      // un règlement en échec ne doit jamais transformer un tirage réussi
+      // en erreur pour le joueur.
+      void duelDomain
+        .settleForUser(request.user.userID)
+        .catch((err) => fastify.log.error({ err }, 'duel settle failed'))
 
       return reply.status(201).send({
         pulls: pullsPayload,

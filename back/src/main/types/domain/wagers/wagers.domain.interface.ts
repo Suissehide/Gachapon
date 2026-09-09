@@ -51,4 +51,5 @@ export interface IDuelDomain {
     userId: string,
     now?: Date,
   ): Promise<WagersView>
+  settleForUser(userId: string, now?: Date): Promise<void>
 }
