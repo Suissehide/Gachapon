@@ -38,14 +38,13 @@ export interface IWagerRepository {
     since: Date,
     take: number,
   ): Promise<PullWithRarity[]>
-  /** Duel PENDING ou ACTIVE où le joueur est partie, ou null. Sert au « un duel à la fois ». */
-  findOpenDuelForUser(userId: string): Promise<Duel | null>
   /**
-   * Idem, relu DANS la transaction de `DuelDomain#propose`. Hors
-   * transaction, deux propositions simultanées lisent toutes deux « aucun
-   * duel ouvert » et créent toutes deux : le joueur se retrouve avec deux
-   * duels actifs, et un même tirage tombant dans les deux fenêtres lui est
-   * saisi deux fois pour un seul tirage compté.
+   * Duel PENDING ou ACTIVE où le joueur est partie, ou null. Sert au « un
+   * duel à la fois », et seulement EN TRANSACTION. Hors transaction, deux
+   * propositions simultanées lisent toutes deux « aucun duel ouvert » et
+   * créent toutes deux : le joueur se retrouve avec deux duels actifs, et un
+   * même tirage tombant dans les deux fenêtres lui est saisi deux fois pour
+   * un seul tirage compté.
    */
   findOpenDuelForUserInTx(
     tx: PrimaTransactionClient,

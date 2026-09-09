@@ -218,7 +218,7 @@ describe('cycle de vie du duel', () => {
     // D n'a jamais eu de duel : si le 409 tombe, ce n'est pas parce que D
     // (le defieur) est deja engage — c'est forcement la branche qui
     // verifie que l'ADVERSAIRE (B, deja opponent de duel1 PENDING) est
-    // deja engage. Un domaine qui n'appellerait findOpenDuelForUser que
+    // deja engage. Un domaine qui n'appellerait findOpenDuelForUserInTx que
     // sur le defieur laisserait passer cette requete en 201.
     const res = await app.inject({
       method: 'POST',
@@ -1240,6 +1240,138 @@ describe('cycle de vie du duel', () => {
         payload: { cardId: engagedCardId, quantity: 1, variant: 'NORMAL' },
       })
       expect(recycle.statusCode).toBe(200)
+    })
+  })
+
+  // Suppression d'equipe. Place ICI, dans le meme fichier, et pas dans un
+  // fichier a part : `activateOnly` bascule le catalogue GLOBAL, et jest
+  // execute les fichiers e2e en parallele par defaut — un troisieme fichier
+  // de paris/duels retournerait le catalogue sous les deux autres.
+  describe("suppression d'equipe", () => {
+    let delTeamId: string
+    let delSetId: string
+    let delBaselineActiveSetIds: string[]
+
+    beforeAll(async () => {
+      const active = await prisma.cardSet.findMany({
+        where: { isActive: true },
+        select: { id: true },
+      })
+      delBaselineActiveSetIds = active.map((set: { id: string }) => set.id)
+
+      // Catalogue mixte : la cote doit exister ET ne pas tomber au plancher
+      // de 1,00, sinon le placement est refuse (voir BetDomain#place).
+      const set = await prisma.cardSet.create({
+        data: { name: `DuelDelSet${suffix}`, isActive: false },
+      })
+      delSetId = set.id
+      await prisma.card.createMany({
+        data: [
+          {
+            name: `DuelDelCommon${suffix}`,
+            rarity: 'COMMON',
+            dropWeight: 90,
+            setId: delSetId,
+          },
+          {
+            name: `DuelDelRare${suffix}`,
+            rarity: 'RARE',
+            dropWeight: 10,
+            setId: delSetId,
+          },
+        ],
+      })
+      await activateOnly(delSetId)
+
+      // Equipe dediee : ce describe la detruit.
+      const team = await app.inject({
+        method: 'POST',
+        url: '/teams',
+        headers: { cookie: cookiesA },
+        payload: { name: `DuelDelTeam${suffix}` },
+      })
+      expect(team.statusCode).toBe(201)
+      delTeamId = team.json().id
+      await prisma.teamMember.create({
+        data: { teamId: delTeamId, userId: userIdB, role: 'MEMBER' },
+      })
+    })
+
+    afterAll(async () => {
+      await prisma.cardSet.updateMany({ data: { isActive: false } })
+      if (delBaselineActiveSetIds.length > 0) {
+        await prisma.cardSet.updateMany({
+          where: { id: { in: delBaselineActiveSetIds } },
+          data: { isActive: true },
+        })
+      }
+    })
+
+    it('DELETE /teams/:id rembourse la mise des paris ACTIVE et annule les duels', async () => {
+      // Duel et Bet cascadent sur Team : la mise, debitee AU PLACEMENT et
+      // stockee nulle part ailleurs, disparaissait avec la ligne.
+      await prisma.user.update({ where: { id: userIdA }, data: { dust: 5000 } })
+
+      const stake = 300
+      const placed = await app.inject({
+        method: 'POST',
+        url: `/teams/${delTeamId}/bets`,
+        headers: { cookie: cookiesA },
+        payload: { targetId: userIdB, minRarity: 'RARE', stake },
+      })
+      expect(placed.statusCode).toBe(201)
+      const betId = placed.json().id as string
+
+      const dustAfterPlacement = await prisma.user
+        .findUnique({ where: { id: userIdA } })
+        .then((u: { dust: number }) => u.dust)
+      expect(dustAfterPlacement).toBe(5000 - stake)
+
+      // Un duel ACTIVE en plus : il verrouille les cartes comptees des deux
+      // joueurs, et disparaitrait lui aussi sans un mot.
+      const propose = await app.inject({
+        method: 'POST',
+        url: `/teams/${delTeamId}/duels`,
+        headers: { cookie: cookiesA },
+        payload: { opponentId: userIdB },
+      })
+      expect(propose.statusCode).toBe(201)
+      const duelId = propose.json().id as string
+      const accept = await app.inject({
+        method: 'POST',
+        url: `/teams/${delTeamId}/duels/${duelId}/accept`,
+        headers: { cookie: cookiesB },
+      })
+      expect(accept.statusCode).toBe(200)
+
+      const res = await app.inject({
+        method: 'DELETE',
+        url: `/teams/${delTeamId}`,
+        headers: { cookie: cookiesA },
+      })
+      expect(res.statusCode).toBe(204)
+
+      // La mise est revenue : c'est la seule chose qui survit a la cascade,
+      // donc la seule observable — et la seule qui compte.
+      const dustAfterDelete = await prisma.user
+        .findUnique({ where: { id: userIdA } })
+        .then((u: { dust: number }) => u.dust)
+      expect(dustAfterDelete).toBe(5000)
+      expect(dustAfterDelete - dustAfterPlacement).toBe(stake)
+
+      expect(
+        await prisma.team.findUnique({ where: { id: delTeamId } }),
+      ).toBeNull()
+      expect(await prisma.bet.findUnique({ where: { id: betId } })).toBeNull()
+      expect(await prisma.duel.findUnique({ where: { id: duelId } })).toBeNull()
+      // Aucun duel fantome ne reste a verrouiller les cartes des deux joueurs.
+      const stillOpen = await prisma.duel.findMany({
+        where: {
+          status: { in: ['PENDING', 'ACTIVE'] },
+          OR: [{ challengerId: userIdA }, { opponentId: userIdA }],
+        },
+      })
+      expect(stillOpen).toHaveLength(0)
     })
   })
 })

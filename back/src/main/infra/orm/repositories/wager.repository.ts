@@ -27,10 +27,6 @@ export class WagerRepository implements IWagerRepository {
     return findPullsSinceWith(tx, userId, since, take)
   }
 
-  findOpenDuelForUser(userId: string): Promise<Duel | null> {
-    return findOpenDuelForUserWith(this.#prisma, userId)
-  }
-
   findOpenDuelForUserInTx(
     tx: PrimaTransactionClient,
     userId: string,
@@ -179,7 +175,7 @@ export class WagerRepository implements IWagerRepository {
 }
 
 function findOpenDuelForUserWith(
-  client: PostgresPrismaClient | PrimaTransactionClient,
+  client: PrimaTransactionClient,
   userId: string,
 ): Promise<Duel | null> {
   return client.duel.findFirst({
