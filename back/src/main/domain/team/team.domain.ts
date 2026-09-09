@@ -15,23 +15,33 @@ import type { ITeamMemberRepository } from '../../types/infra/orm/repositories/t
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import type { IDuelDomain } from '../../types/domain/wagers/wagers.domain.interface'
-import type {
-  BetSettledEvent,
-  DuelUpdateEvent,
-  WsManager,
-} from '../../interfaces/ws/ws-manager'
 import { retryOnSerialization } from '../shared/retry-serialization'
 
 const MAX_TEAMS_PER_USER = 3
 const MAX_MEMBERS_PER_TEAM = 100
 const INVITATION_TTL_MS = 48 * 60 * 60 * 1000
 
-// Le délai par défaut d'une transaction interactive Prisma est de 5 s. La
-// suppression d'une équipe fait tenir dans une seule transaction le
-// remboursement des paris, l'annulation des duels et une cascade qui
-// emporte membres, invitations, raids, duels et paris : sur une grosse
-// équipe, 5 s ne suffisent pas et la suppression échoue en bloc.
+// Défauts Prisma : 5 s pour le corps d'une transaction interactive, 2 s pour
+// acquérir une connexion. La suppression d'une équipe déclenche une cascade
+// qui emporte membres, invitations, raids, duels, paris et transferts : sur
+// une grosse équipe, ni l'un ni l'autre ne suffit.
 const DELETE_TX_TIMEOUT_MS = 30_000
+const DELETE_TX_MAX_WAIT_MS = 10_000
+
+/**
+ * Message du refus. Il nomme ce qui bloque et ce qu'il faut attendre : le
+ * propriétaire n'a rien à réparer, juste à laisser ses enjeux se conclure.
+ */
+function pendingWagersMessage(openBets: number, openDuels: number): string {
+  const parts: string[] = []
+  if (openBets > 0) {
+    parts.push(`${openBets} pari${openBets > 1 ? 's' : ''}`)
+  }
+  if (openDuels > 0) {
+    parts.push(`${openDuels} duel${openDuels > 1 ? 's' : ''}`)
+  }
+  return `Cette équipe a encore ${parts.join(' et ')} en cours : attends leur résolution avant de la supprimer. Une mise engagée ne peut pas être rendue, et les cartes d'un duel doivent revenir à son vainqueur.`
+}
 
 export class TeamDomain implements TeamDomainInterface {
   readonly #teamRepo: ITeamRepository
@@ -41,7 +51,6 @@ export class TeamDomain implements TeamDomainInterface {
   readonly #postgresOrm: IocContainer['postgresOrm']
   readonly #mailService: IMailService
   readonly #achievementsDomain: AchievementsDomainInterface
-  readonly #wsManager: WsManager
   readonly #duelDomain: IDuelDomain
 
   constructor({
@@ -52,7 +61,6 @@ export class TeamDomain implements TeamDomainInterface {
     postgresOrm,
     mailService,
     achievementsDomain,
-    wsManager,
     duelDomain,
   }: IocContainer) {
     this.#teamRepo = teamRepository
@@ -62,7 +70,6 @@ export class TeamDomain implements TeamDomainInterface {
     this.#postgresOrm = postgresOrm
     this.#mailService = mailService
     this.#achievementsDomain = achievementsDomain
-    this.#wsManager = wsManager
     this.#duelDomain = duelDomain
   }
 
@@ -360,30 +367,39 @@ export class TeamDomain implements TeamDomainInterface {
   }
 
   /**
-   * Supprime l'équipe — et solde d'abord ce que la cascade détruirait en
-   * silence.
+   * Supprime l'équipe — et REFUSE tant qu'un enjeu y court encore.
    *
    * Les clés étrangères de Duel et de Bet sont en `onDelete: Cascade` :
-   * supprimer l'équipe effaçait ses paris ACTIVE, mise comprise. Or la mise
-   * est débitée AU PLACEMENT et n'existe nulle part ailleurs — la poussière
-   * du parieur disparaissait purement et simplement, et le propriétaire qui
-   * déclenche la suppression peut être la CIBLE même sur laquelle on parie.
-   * Les duels partaient de la même façon : sans règlement, sans
-   * notification, le verrou des cartes engagées se levant sans un mot.
+   * supprimer l'équipe efface ses paris et ses duels. Or la mise d'un pari
+   * est débitée AU PLACEMENT et n'existe nulle part ailleurs, et les cartes
+   * comptées d'un duel sont dues au vainqueur.
    *
-   * Les paris ACTIVE sont donc REMBOURSÉS (statut EXPIRED, mise recréditée
-   * à l'identique — exactement ce que fait une échéance atteinte sans que
-   * la cible ait tiré).
+   * La version précédente remboursait la mise et annulait les duels. C'était
+   * encore une option gratuite, simplement déplacée : le propriétaire parie
+   * sur un compte complice, la cible tire, un tirage qualifiant règle le
+   * pari en gain au moment même du tirage — et si la fenêtre tourne mal, la
+   * cible cesse de tirer et le propriétaire supprime l'équipe avant
+   * l'échéance pour récupérer sa mise. Espérance positive, aucun risque, et
+   * répétable : le plafond porte sur les équipes SIMULTANÉES, pas sur le
+   * fait d'en recréer une. Même forme côté cartes — un duelliste en train de
+   * perdre supprimait l'équipe et ses cartes comptées ne partaient jamais.
    *
-   * Les duels PENDING et ACTIVE sont ANNULÉS, jamais réglés. Régler
-   * transférerait des cartes de façon définitive sur une action unilatérale
-   * du propriétaire, qui choisit QUAND supprimer — donc quand figer le
-   * score. Annuler ne fait bouger aucune carte : c'est la seule des deux
-   * issues qu'on ne peut pas exploiter.
+   * D'où la règle : on ne rend rien et on ne détruit rien. Si un enjeu court
+   * encore, la suppression est REFUSÉE et le propriétaire attend — au plus
+   * quelques jours, le délai d'acceptation et l'échéance étant tous deux
+   * bornés.
    *
-   * Le tout dans UNE transaction avec la suppression : un échec entre le
-   * remboursement et la suppression perdrait de la poussière ou en
-   * créerait.
+   * La passe de règlement AVANT ce contrôle est ce qui rend le refus juste
+   * plutôt que trop zélé : le règlement est paresseux (un pari ne se tranche
+   * qu'au tirage suivant de la cible ou à la lecture de la vue d'équipe), si
+   * bien qu'un enjeu dont l'issue est DÉJÀ déterminée dort en ACTIVE jusqu'à
+   * ce que quelqu'un le regarde. Sans elle, on refuserait des suppressions
+   * parfaitement légitimes.
+   *
+   * Effet de bord recherché : un règlement qui échoue laisse son enjeu
+   * ACTIVE, donc BLOQUE la suppression au lieu de la laisser détruire une
+   * ligne qu'on n'a pas su trancher. `settleTeamWagers` est idempotent, le
+   * propriétaire n'a qu'à réessayer.
    */
   async deleteTeam(teamId: string, userId: string): Promise<void> {
     const team = await this.#teamRepo.findById(teamId)
@@ -394,115 +410,43 @@ export class TeamDomain implements TeamDomainInterface {
       throw Boom.forbidden('Only the owner can delete the team')
     }
 
-    const now = new Date()
+    // Hors transaction, exprès : chaque règlement ouvre la sienne.
+    await this.#duelDomain.settleTeamWagers(teamId, new Date())
 
-    // D'ABORD : régler ce qui est déjà tranchable. Le règlement est
-    // paresseux — un pari ne se décide qu'au tirage suivant de la cible ou
-    // à la lecture de la vue d'équipe — donc un enjeu dont l'issue est DÉJÀ
-    // déterminée dort en ACTIVE jusqu'à ce que quelqu'un le regarde. Sans
-    // cette passe, fermer l'équipe rembourserait un pari en réalité PERDU
-    // (la cible a tiré puis s'est arrêtée, l'échéance est passée : l'option
-    // gratuite que `betVerdict` ferme, rouverte à l'échelle de la
-    // suppression, sous le contrôle du propriétaire et répétable puisque
-    // créer une équipe est gratuit), paierait la seule mise là où un pari
-    // déjà gagnant vaut `mise × cote`, et annulerait un duel périmé dont
-    // les cartes sont dues au vainqueur — alors que le propriétaire est
-    // souvent l'un des deux duellistes.
-    //
-    // Hors transaction, exprès : chaque règlement ouvre la sienne. Ce qui
-    // en ressort encore ACTIVE est relu à l'intérieur ci-dessous.
-    await this.#duelDomain.settleTeamWagers(teamId, now)
-
-    const closed = await retryOnSerialization(() =>
+    await retryOnSerialization(() =>
       this.#postgresOrm.executeWithTransactionClient(
         async (tx) => {
-          // Relu DANS la transaction : seuls les enjeux TOUJOURS en vol
-          // après la passe de règlement sont remboursés ou annulés.
-          const [bets, duels] = await Promise.all([
-            tx.bet.findMany({ where: { teamId, status: 'ACTIVE' } }),
-            tx.duel.findMany({
+          // Comptés DANS la transaction, avec la suppression : hors
+          // transaction, un pari placé entre le contrôle et la suppression
+          // serait détruit avec sa mise. Sous Serializable, ces comptes sont
+          // des lectures de prédicat que le placement concurrent contredit —
+          // l'une des deux transactions échoue en P2034 et `retryOnSerialization`
+          // la rejoue, cette fois avec le pari en vue.
+          const [openBets, openDuels] = await Promise.all([
+            tx.bet.count({ where: { teamId, status: 'ACTIVE' } }),
+            tx.duel.count({
               where: { teamId, status: { in: ['PENDING', 'ACTIVE'] } },
             }),
           ])
-
-          // Crédits REGROUPÉS par parieur, statuts en une seule écriture.
-          // Une équipe de 100 membres à trois paris par cible faisait
-          // autrement ~600 allers-retours sériels dans une transaction
-          // interactive dont le délai Prisma par défaut est de 5 secondes :
-          // la suppression échouait en bloc. Le `timeout` explicite couvre
-          // en plus la cascade elle-même, qui emporte membres, invitations,
-          // raids, duels et paris.
-          const refundByBettor = new Map<string, number>()
-          for (const bet of bets) {
-            refundByBettor.set(
-              bet.bettorId,
-              (refundByBettor.get(bet.bettorId) ?? 0) + bet.stake,
-            )
-          }
-          for (const [bettorId, refund] of refundByBettor) {
-            await tx.user.update({
-              where: { id: bettorId },
-              data: { dust: { increment: refund } },
-            })
-          }
-          if (bets.length > 0) {
-            // `payout` n'est pas réécrit ligne à ligne : ce serait un
-            // aller-retour par pari pour une valeur que plus rien ne peut
-            // lire, la ligne disparaissant avec l'équipe dans cette même
-            // transaction. Le statut, lui, l'est — il coûte une écriture
-            // pour toutes et garde la transaction cohérente.
-            await tx.bet.updateMany({
-              where: { id: { in: bets.map((b) => b.id) } },
-              data: { status: 'EXPIRED', settledAt: now },
-            })
-          }
-
-          if (duels.length > 0) {
-            await tx.duel.updateMany({
-              where: { id: { in: duels.map((d) => d.id) } },
-              data: { status: 'CANCELLED', settledAt: now },
-            })
+          if (openBets > 0 || openDuels > 0) {
+            throw Boom.conflict(pendingWagersMessage(openBets, openDuels))
           }
 
           await this.#teamRepo.deleteInTx(tx, teamId)
-          return { bets, duels }
         },
-        { isolationLevel: 'Serializable', timeout: DELETE_TX_TIMEOUT_MS },
+        {
+          isolationLevel: 'Serializable',
+          // La transaction se réduit à deux comptes et une suppression, mais
+          // cette suppression est une cascade qui emporte membres,
+          // invitations, raids, duels, paris et transferts : sur une grosse
+          // équipe elle dépasse le délai Prisma par défaut de 5 s. On relève
+          // AUSSI `maxWait` — l'attente d'une connexion du pool, à 2 s par
+          // défaut — sinon la même grosse équipe échoue avant même d'ouvrir.
+          maxWait: DELETE_TX_MAX_WAIT_MS,
+          timeout: DELETE_TX_TIMEOUT_MS,
+        },
       ),
     )
-
-    // Après le commit uniquement : ni remboursement ni annulation ne doit
-    // être annoncé si la suppression a été défaite par un rollback.
-    for (const bet of closed.bets) {
-      const event: BetSettledEvent = {
-        type: 'bet:settled',
-        teamId,
-        betId: bet.id,
-        status: 'EXPIRED',
-        payout: bet.stake,
-        bettorId: bet.bettorId,
-        targetId: bet.targetId,
-      }
-      this.#wsManager.notify(bet.bettorId, event)
-      if (bet.targetId !== bet.bettorId) {
-        this.#wsManager.notify(bet.targetId, event)
-      }
-    }
-    for (const duel of closed.duels) {
-      const event: DuelUpdateEvent = {
-        type: 'duel:update',
-        teamId,
-        duelId: duel.id,
-        status: 'CANCELLED',
-        challengerScore: duel.challengerScore / 2,
-        opponentScore: duel.opponentScore / 2,
-        challengerPulls: duel.challengerPulls,
-        opponentPulls: duel.opponentPulls,
-        pullCount: duel.pullCount,
-      }
-      this.#wsManager.notify(duel.challengerId, event)
-      this.#wsManager.notify(duel.opponentId, event)
-    }
   }
 
   getMyTeams(userId: string): Promise<TeamSummary[]> {

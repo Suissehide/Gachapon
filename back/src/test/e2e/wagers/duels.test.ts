@@ -1368,9 +1368,13 @@ describe('cycle de vie du duel', () => {
       }
     })
 
-    it('DELETE /teams/:id rembourse la mise des paris ACTIVE et annule les duels', async () => {
-      // Duel et Bet cascadent sur Team : la mise, debitee AU PLACEMENT et
-      // stockee nulle part ailleurs, disparaissait avec la ligne.
+    it("DELETE /teams/:id : REFUSE tant qu'un pari ou un duel court encore", async () => {
+      // Rembourser la mise a la fermeture etait une option gratuite
+      // deplacee : le proprietaire parie sur un complice, un tirage
+      // qualifiant paie immediatement, et si la fenetre tourne mal la cible
+      // cesse de tirer et le proprietaire supprime l'equipe pour recuperer
+      // sa mise. Repetable, puisque le plafond porte sur les equipes
+      // SIMULTANEES. On ne rend donc rien : on refuse.
       await activateOnly(delSetId)
       delTeamId = await newDeletableTeam('A')
       await prisma.user.update({ where: { id: userIdA }, data: { dust: 5000 } })
@@ -1384,14 +1388,9 @@ describe('cycle de vie du duel', () => {
       })
       expect(placed.statusCode).toBe(201)
       const betId = placed.json().id as string
+      expect(await dustOf(userIdA)).toBe(5000 - stake)
 
-      const dustAfterPlacement = await prisma.user
-        .findUnique({ where: { id: userIdA } })
-        .then((u: { dust: number }) => u.dust)
-      expect(dustAfterPlacement).toBe(5000 - stake)
-
-      // Un duel ACTIVE en plus : il verrouille les cartes comptees des deux
-      // joueurs, et disparaitrait lui aussi sans un mot.
+      // Un duel PENDING en plus : le refus doit aussi le voir.
       const propose = await app.inject({
         method: 'POST',
         url: `/teams/${delTeamId}/duels`,
@@ -1400,41 +1399,63 @@ describe('cycle de vie du duel', () => {
       })
       expect(propose.statusCode).toBe(201)
       const duelId = propose.json().id as string
-      const accept = await app.inject({
-        method: 'POST',
-        url: `/teams/${delTeamId}/duels/${duelId}/accept`,
-        headers: { cookie: cookiesB },
-      })
-      expect(accept.statusCode).toBe(200)
 
-      const res = await app.inject({
+      const refused = await app.inject({
         method: 'DELETE',
         url: `/teams/${delTeamId}`,
         headers: { cookie: cookiesA },
       })
-      expect(res.statusCode).toBe(204)
+      expect(refused.statusCode).toBe(409)
+      // Le message ENUMERE ce qui bloque (sa fin explique pourquoi et
+      // parle de duel dans tous les cas : on assert l'enumeration).
+      expect(refused.json().message).toContain('1 pari et 1 duel en cours')
 
-      // La mise est revenue : c'est la seule chose qui survit a la cascade,
-      // donc la seule observable — et la seule qui compte.
-      const dustAfterDelete = await prisma.user
-        .findUnique({ where: { id: userIdA } })
-        .then((u: { dust: number }) => u.dust)
-      expect(dustAfterDelete).toBe(5000)
-      expect(dustAfterDelete - dustAfterPlacement).toBe(stake)
+      // Rien n'a bouge : ni l'equipe, ni les lignes, ni la poussiere. En
+      // particulier la mise n'est PAS revenue.
+      expect(await dustOf(userIdA)).toBe(5000 - stake)
+      expect(
+        await prisma.team.findUnique({ where: { id: delTeamId } }),
+      ).not.toBeNull()
+      expect(
+        (await prisma.bet.findUnique({ where: { id: betId } })).status,
+      ).toBe('ACTIVE')
+      expect(
+        (await prisma.duel.findUnique({ where: { id: duelId } })).status,
+      ).toBe('PENDING')
 
+      // Le duel se resout : le pari seul doit continuer de bloquer.
+      const cancel = await app.inject({
+        method: 'POST',
+        url: `/teams/${delTeamId}/duels/${duelId}/cancel`,
+        headers: { cookie: cookiesA },
+      })
+      expect(cancel.statusCode).toBe(200)
+      const stillRefused = await app.inject({
+        method: 'DELETE',
+        url: `/teams/${delTeamId}`,
+        headers: { cookie: cookiesA },
+      })
+      expect(stillRefused.statusCode).toBe(409)
+      expect(stillRefused.json().message).toContain('1 pari en cours')
+      expect(stillRefused.json().message).not.toContain('duel en cours')
+
+      // Le pari atteint son echeance sans que la cible ait tire : la passe
+      // de reglement le rend EXPIRED et rembourse par le chemin NORMAL,
+      // puis la suppression passe.
+      await prisma.bet.update({
+        where: { id: betId },
+        data: { deadlineAt: new Date(Date.now() - 60 * 1000) },
+      })
+      const deleted = await app.inject({
+        method: 'DELETE',
+        url: `/teams/${delTeamId}`,
+        headers: { cookie: cookiesA },
+      })
+      expect(deleted.statusCode).toBe(204)
+      expect(await dustOf(userIdA)).toBe(5000)
       expect(
         await prisma.team.findUnique({ where: { id: delTeamId } }),
       ).toBeNull()
-      expect(await prisma.bet.findUnique({ where: { id: betId } })).toBeNull()
-      expect(await prisma.duel.findUnique({ where: { id: duelId } })).toBeNull()
-      // Aucun duel fantome ne reste a verrouiller les cartes des deux joueurs.
-      const stillOpen = await prisma.duel.findMany({
-        where: {
-          status: { in: ['PENDING', 'ACTIVE'] },
-          OR: [{ challengerId: userIdA }, { opponentId: userIdA }],
-        },
-      })
-      expect(stillOpen).toHaveLength(0)
     })
 
     it("DELETE /teams/:id : un pari echu dont la cible a tire sans finir est PERDU, pas rembourse", async () => {
@@ -1449,7 +1470,11 @@ describe('cycle de vie du duel', () => {
       await prisma.user.update({ where: { id: userIdA }, data: { dust: 5000 } })
 
       const stake = 400
-      const createdAt = new Date(Date.now() - 2 * 60 * 60 * 1000)
+      // Recule de QUELQUES SECONDES, pas de deux heures : la fenetre prend
+      // les dix premiers tirages posterieurs a `createdAt`, et deux heures
+      // avaleraient tous les tirages que B a faits plus haut dans ce
+      // fichier — le test ne passerait que par chance sur leur rarete.
+      const createdAt = new Date(Date.now() - 30 * 1000)
       const bet = await prisma.bet.create({
         data: {
           teamId: teamForLostBet,
@@ -1461,7 +1486,7 @@ describe('cycle de vie du duel', () => {
           multiplier: 1.38,
           createdAt,
           // Echeance depassee, fenetre ENTAMEE mais incomplete.
-          deadlineAt: new Date(Date.now() - 60 * 60 * 1000),
+          deadlineAt: new Date(Date.now() - 10 * 1000),
         },
       })
       // La mise a bien ete debitee au placement : on reproduit ce solde.
@@ -1475,7 +1500,7 @@ describe('cycle de vie du duel', () => {
             userId: userIdB,
             cardId: delCommonCardId,
             variant: 'NORMAL',
-            pulledAt: new Date(createdAt.getTime() + (i + 1) * 60 * 1000),
+            pulledAt: new Date(createdAt.getTime() + (i + 1) * 1000),
           },
         })
       }
@@ -1609,6 +1634,29 @@ describe('cycle de vie du duel', () => {
       expect(aAfter.quantity).toBe(1)
       expect(
         await prisma.team.findUnique({ where: { id: teamForDuel } }),
+      ).toBeNull()
+    })
+
+    it('DELETE /teams/:id : sans aucun enjeu, la suppression passe normalement', async () => {
+      // Garde-fou du refus : sans ce cas, un refus qui bloquerait TOUTES les
+      // suppressions passerait inapercu, les trois tests precedents ne
+      // supprimant qu'apres avoir resolu quelque chose.
+      const plainTeam = await newDeletableTeam('D')
+      expect(
+        await prisma.bet.count({ where: { teamId: plainTeam } }),
+      ).toBe(0)
+      expect(
+        await prisma.duel.count({ where: { teamId: plainTeam } }),
+      ).toBe(0)
+
+      const res = await app.inject({
+        method: 'DELETE',
+        url: `/teams/${plainTeam}`,
+        headers: { cookie: cookiesA },
+      })
+      expect(res.statusCode).toBe(204)
+      expect(
+        await prisma.team.findUnique({ where: { id: plainTeam } }),
       ).toBeNull()
     })
   })
