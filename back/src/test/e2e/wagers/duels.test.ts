@@ -9,9 +9,12 @@ describe('cycle de vie du duel', () => {
   let cookiesA: string
   let cookiesB: string
   let cookiesC: string
+  let cookiesD: string
   let userIdA: string
   let userIdB: string
   let userIdC: string
+  let userIdD: string
+  let userIdE: string
   let teamId: string
 
   const suffix = Date.now()
@@ -49,12 +52,22 @@ describe('cycle de vie du duel', () => {
     const a = await registerAndLogin('A')
     const b = await registerAndLogin('B')
     const c = await registerAndLogin('C')
+    // D et E : deux membres supplementaires de l'equipe, jamais engages
+    // dans un duel A/B. Ils servent a isoler la branche "adversaire deja
+    // engage" (D defie B) de la branche "defieur deja engage" (couverte
+    // par A/B ailleurs), et a exercer l'expiration paresseuse de
+    // listForTeam sans jamais passer par la route accept.
+    const d = await registerAndLogin('D')
+    const e = await registerAndLogin('E')
     userIdA = a.userId
     userIdB = b.userId
     userIdC = c.userId
+    userIdD = d.userId
+    userIdE = e.userId
     cookiesA = a.cookies
     cookiesB = b.cookies
     cookiesC = c.cookies
+    cookiesD = d.cookies
 
     const team = await app.inject({
       method: 'POST',
@@ -66,6 +79,12 @@ describe('cycle de vie du duel', () => {
     teamId = team.json().id
     await prisma.teamMember.create({
       data: { teamId, userId: userIdB, role: 'MEMBER' },
+    })
+    await prisma.teamMember.create({
+      data: { teamId, userId: userIdD, role: 'MEMBER' },
+    })
+    await prisma.teamMember.create({
+      data: { teamId, userId: userIdE, role: 'MEMBER' },
     })
   })
 
@@ -152,6 +171,35 @@ describe('cycle de vie du duel', () => {
       payload: { opponentId: userIdB },
     })
     expect(res.statusCode).toBe(409)
+    const duels = await prisma.duel.findMany({ where: { teamId } })
+    expect(duels).toHaveLength(1)
+  })
+
+  it("POST /teams/:id/duels : D (libre) defie B (deja engage comme adversaire) -> 409 cote adversaire, pas cote defieur", async () => {
+    // D n'a jamais eu de duel : si le 409 tombe, ce n'est pas parce que D
+    // (le defieur) est deja engage — c'est forcement la branche qui
+    // verifie que l'ADVERSAIRE (B, deja opponent de duel1 PENDING) est
+    // deja engage. Un domaine qui n'appellerait findOpenDuelForUser que
+    // sur le defieur laisserait passer cette requete en 201.
+    const res = await app.inject({
+      method: 'POST',
+      url: `/teams/${teamId}/duels`,
+      headers: { cookie: cookiesD },
+      payload: { opponentId: userIdB },
+    })
+    expect(res.statusCode).toBe(409)
+    const body = res.json()
+    // Le message cote defieur est fige ("Tu as deja..."), le message cote
+    // adversaire nomme la victime — ca distingue les deux branches plutot
+    // que de se contenter du code 409.
+    expect(body.message).not.toBe('Tu as déjà un duel en cours')
+    expect(body.message).toContain(`duelB${suffix}`)
+
+    // Aucun effet de bord : ni pour D, ni un duel supplementaire sur l'equipe.
+    const duelsForD = await prisma.duel.findMany({
+      where: { OR: [{ challengerId: userIdD }, { opponentId: userIdD }] },
+    })
+    expect(duelsForD).toHaveLength(0)
     const duels = await prisma.duel.findMany({ where: { teamId } })
     expect(duels).toHaveLength(1)
   })
@@ -298,5 +346,41 @@ describe('cycle de vie du duel', () => {
     expect(found.pullCount).toBe(9)
     expect(found.challengerScore).toBe(0)
     expect(found.opponentScore).toBe(0)
+  })
+
+  it("GET /teams/:id/wagers expire lui-meme un PENDING perime, sans passer par accept", async () => {
+    // D et E n'ont jamais ete engages dans un duel : ce nouveau duel entre
+    // eux n'a pas besoin qu'A/B se liberent.
+    const propose = await app.inject({
+      method: 'POST',
+      url: `/teams/${teamId}/duels`,
+      headers: { cookie: cookiesD },
+      payload: { opponentId: userIdE },
+    })
+    expect(propose.statusCode).toBe(201)
+    const staleDuelId = propose.json().id as string
+    expect(propose.json().status).toBe('PENDING')
+
+    await prisma.duel.update({
+      where: { id: staleDuelId },
+      data: { createdAt: new Date(Date.now() - 25 * 60 * 60 * 1000) },
+    })
+
+    // Lecture seule : ni accept ni decline ni cancel n'est appele ici.
+    // C'est le scan paresseux de listForTeam, et lui seul, qui doit
+    // expirer ce PENDING.
+    const res = await app.inject({
+      method: 'GET',
+      url: `/teams/${teamId}/wagers`,
+      headers: { cookie: cookiesA },
+    })
+    expect(res.statusCode).toBe(200)
+
+    const row = await prisma.duel.findUnique({ where: { id: staleDuelId } })
+    expect(row.status).toBe('EXPIRED')
+
+    const inView = res.json().duels.find((d: any) => d.id === staleDuelId)
+    expect(inView).toBeDefined()
+    expect(inView.status).toBe('EXPIRED')
   })
 })
