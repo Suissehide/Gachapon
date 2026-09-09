@@ -148,19 +148,11 @@ export class WagerRepository implements IWagerRepository {
     })
   }
 
-  countOpenBetsByBettor(bettorId: string): Promise<number> {
-    return this.#prisma.bet.count({ where: { bettorId, status: 'ACTIVE' } })
-  }
-
   countOpenBetsByBettorInTx(
     tx: PrimaTransactionClient,
     bettorId: string,
   ): Promise<number> {
     return tx.bet.count({ where: { bettorId, status: 'ACTIVE' } })
-  }
-
-  countOpenBetsOnTarget(targetId: string): Promise<number> {
-    return this.#prisma.bet.count({ where: { targetId, status: 'ACTIVE' } })
   }
 
   countOpenBetsOnTargetInTx(

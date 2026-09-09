@@ -304,6 +304,8 @@ export class BetDomain implements IBetDomain {
         pullsRemaining: b.pullsRemaining,
       }))
 
+    const guarantee = this.#guaranteeInWindow(cards, boosts, window)
+
     let probability: number
     if (
       this.#pityFiresInWindow(cards, target.pityCurrent, window, pityThreshold)
@@ -325,32 +327,41 @@ export class BetDomain implements IBetDomain {
       // qui effondre la cote sur la seule marge maison (plancher à 1,00 dans
       // `betMultiplier`) : le pari devient sans intérêt, ce qui est
       // exactement le message à faire passer.
+      //
+      // La pitié prime sur tout le reste dans le moteur (garantie et boule
+      // d'or sont sous `if (!isPityForced)`), d'où ce court-circuit AVANT la
+      // boucle : celle-ci n'a plus à connaître que garantie > boule d'or.
       probability = 1
-    } else if (
-      this.#guaranteeFiresInWindow(cards, boosts, window) &&
-      rarityAtLeast('EPIC', minRarity)
-    ) {
+    } else if (this.#guaranteeIsCertain(guarantee, minRarity)) {
       // COURT-CIRCUIT DE GARANTIE — second chemin vers la certitude.
       //
-      // Un boost de garantie non satisfait se déclenche au tirage où son
-      // compteur vaut exactement 1 : depuis un compteur persisté R, c'est le
-      // tirage n° R, donc il tombe dans la fenêtre dès que `R <= N`. Le
-      // moteur filtre alors le pool sur l'ensemble CODÉ EN DUR {EPIC,
-      // LEGENDARY} — il ne lit PAS la colonne `guaranteedRarity` pour choisir
-      // le pool. La garantie vaut donc « EPIC ou mieux », et rien de plus :
-      // l'événement n'est certain que si la rareté visée est satisfaite par
-      // un EPIC. Un pari sur LEGENDARY reste incertain, le pool garanti
-      // contenant encore des epics — le traiter comme acquis serait la même
-      // erreur que ci-dessus, en sens inverse.
+      // Deux conditions, et il faut LES DEUX :
+      //
+      //  1. le pool garanti (l'ensemble CODÉ EN DUR {EPIC, LEGENDARY} du
+      //     moteur — il ne lit PAS `guaranteedRarity` pour choisir le pool)
+      //     satisfait la rareté visée, donc `EPIC >= minRarity` ;
+      //  2. la rareté PROPRE de la garantie satisfait elle aussi la rareté
+      //     visée, donc `guaranteedRarity >= minRarity`.
+      //
+      // La seconde est ce qui empêche de vendre une certitude désamorçable :
+      // le moteur marque un boost `satisfied` dès qu'une carte >= sa propre
+      // rareté sort, et un boost satisfait ne se déclenche plus jamais. Avec
+      // une garantie RARE et un pari EPIC, un RARE naturel désamorce la
+      // garantie sans gagner le pari — la certitude serait fausse. Quand les
+      // deux conditions tiennent, soit le boost est désamorcé par une carte
+      // qui gagne déjà le pari, soit il se déclenche et livre EPIC ou mieux :
+      // le pari est gagné dans les deux cas.
       probability = 1
     } else {
-      probability = this.#windowProbability(
+      probability = this.#windowProbability({
         cards,
-        effects.luckMultiplier,
+        luckMultiplier: effects.luckMultiplier,
         weightBoosts,
         minRarity,
         window,
-      )
+        goldenBallPct: effects.goldenBallChance ?? 0,
+        guarantee,
+      })
     }
 
     return {
@@ -379,70 +390,178 @@ export class BetDomain implements IBetDomain {
   }
 
   /**
-   * Un boost de garantie non satisfait dont il reste au plus `window` tirages
-   * se déclenchera dans la fenêtre. Même réserve que pour la pitié : le
-   * moteur ne filtre que si le pool {EPIC, LEGENDARY} est non vide, sinon il
-   * retombe sur le catalogue entier et ne garantit rien.
+   * Le boost de garantie qui se déclenchera le PLUS TÔT dans la fenêtre, ou
+   * `null`. Un boost non satisfait se déclenche au tirage où son compteur
+   * vaut exactement 1 : depuis un compteur persisté R, c'est le tirage n° R,
+   * donc il tombe dans la fenêtre dès que `1 <= R <= N`. Si plusieurs sont
+   * éligibles on retient le premier à s'exercer — c'est lui qui restreint le
+   * pool en premier, et le moteur ne peut en déclencher qu'un par tirage.
+   *
+   * Le pool {EPIC, LEGENDARY} doit être non vide : sinon le moteur retombe
+   * sur le catalogue entier (`if (filtered.length > 0)`) et ne garantit rien.
    */
-  #guaranteeFiresInWindow(
+  #guaranteeInWindow(
     cards: Array<{ rarity: CardRarity }>,
     boosts: UserBoost[],
     window: number,
-  ): boolean {
+  ): { pullIndex: number; rarity: CardRarity } | null {
     if (!cards.some((c) => rarityAtLeast(c.rarity, 'EPIC'))) {
-      return false
+      return null
     }
-    return boosts.some(
-      (b) =>
+    let earliest: UserBoost | null = null
+    for (const b of boosts) {
+      if (
         b.guaranteedRarity != null &&
         !b.satisfied &&
         b.pullsRemaining >= 1 &&
-        b.pullsRemaining <= window,
+        b.pullsRemaining <= window &&
+        (earliest === null || b.pullsRemaining < earliest.pullsRemaining)
+      ) {
+        earliest = b
+      }
+    }
+    return earliest === null
+      ? null
+      : {
+          pullIndex: earliest.pullsRemaining,
+          rarity: earliest.guaranteedRarity as CardRarity,
+        }
+  }
+
+  #guaranteeIsCertain(
+    guarantee: { pullIndex: number; rarity: CardRarity } | null,
+    minRarity: CardRarity,
+  ): boolean {
+    if (guarantee === null) {
+      return false
+    }
+    return (
+      rarityAtLeast('EPIC', minRarity) &&
+      rarityAtLeast(guarantee.rarity, minRarity)
     )
   }
 
   /**
    * Probabilité d'au moins un succès sur la fenêtre, tirage par tirage.
    *
-   * Les boosts de poids EXPIRENT : au tirage n° i, seuls s'appliquent ceux
-   * dont il reste au moins `i` tirages. Les replier en une probabilité unique
-   * élevée à la puissance `window` gonflerait la probabilité d'un boost court
-   * sur toute la fenêtre, donc écraserait la cote et sous-paierait le
-   * parieur. On compose ici 1 − Π(1 − q_i).
+   * Trois mécanismes du moteur se superposent ici, dans SON ordre de
+   * priorité — la pitié est déjà traitée en amont (elle donne la certitude),
+   * restent garantie > boule d'or > tirage ordinaire :
    *
-   * Quand aucun boost n'expire dans la fenêtre, tous les q_i sont égaux et le
-   * produit se réduit exactement à `windowProbability(q, window)` — cette
-   * branche est explicite pour que le cas courant reste au bit près celui de
-   * la primitive unitairement testée.
+   *  - les boosts de POIDS EXPIRENT : au tirage n° i, seuls s'appliquent ceux
+   *    dont il reste au moins `i` tirages. Les replier en une probabilité
+   *    unique élevée à la puissance `window` gonflerait un boost court sur
+   *    toute la fenêtre, écraserait la cote et sous-paierait le parieur ;
+   *  - la BOULE D'OR se joue sur chaque tirage ordinaire avec la probabilité
+   *    du skill tree et restreint alors le pool à {RARE, EPIC, LEGENDARY}.
+   *    D'où un mélange : γ·q(pool doré) + (1 − γ)·q(catalogue) ;
+   *  - la GARANTIE, au tirage n° R, restreint le pool à {EPIC, LEGENDARY} —
+   *    mais seulement si elle n'a pas été DÉSAMORCÉE avant. C'est pour cela
+   *    que la récurrence porte deux états et non un seul survivant.
+   *
+   * Les deux états sont « pas encore gagné, garantie intacte » et « pas
+   * encore gagné, garantie déjà désamorcée (ou absente) ». Le passage de
+   * l'un à l'autre se fait avec `b` = P(rareté dans [rareté de la garantie,
+   * minRarity[), c'est-à-dire exactement les cartes qui satisfont le boost
+   * SANS gagner le pari. Ignorer cet état-là reviendrait à supposer que la
+   * garantie se déclenche toujours : on surestimerait la probabilité, on
+   * écraserait la cote, et le court-circuit de certitude ci-dessus (qui
+   * existe justement parce qu'une garantie est désamorçable) serait défait
+   * dans la foulée.
+   *
+   * Quand il n'y a ni garantie dans la fenêtre, ni boule d'or, ni boost de
+   * poids qui expire, tous les q_i sont égaux et le produit se réduit
+   * exactement à `windowProbability(q, window)` — cette branche est explicite
+   * pour que le cas courant reste au bit près celui de la primitive
+   * unitairement testée.
    */
-  #windowProbability(
-    cards: CardWithSet[],
-    luckMultiplier: number,
+  #windowProbability(input: {
+    cards: CardWithSet[]
+    luckMultiplier: number
     weightBoosts: Array<{
       weightMultiplier: number
       weightRarity: CardRarity
       pullsRemaining: number
-    }>,
-    minRarity: CardRarity,
-    window: number,
-  ): number {
-    const qAt = (pullIndex: number): number =>
+    }>
+    minRarity: CardRarity
+    window: number
+    goldenBallPct: number
+    guarantee: { pullIndex: number; rarity: CardRarity } | null
+  }): number {
+    const {
+      cards,
+      luckMultiplier,
+      weightBoosts,
+      minRarity,
+      window,
+      guarantee,
+    } = input
+    const golden = Math.min(1, Math.max(0, input.goldenBallPct / 100))
+
+    // Pools restreints du moteur, avec son repli : un filtre qui ne laisse
+    // rien est ignoré et le catalogue entier sert.
+    const restrict = (floor: CardRarity): CardWithSet[] => {
+      const filtered = cards.filter((c) => rarityAtLeast(c.rarity, floor))
+      return filtered.length > 0 ? filtered : cards
+    }
+    const goldenPool = restrict('RARE')
+    const guaranteePool = restrict('EPIC')
+
+    const boostsAt = (pullIndex: number) =>
+      weightBoosts.filter((b) => b.pullsRemaining >= pullIndex)
+
+    const winOn = (pool: CardWithSet[], pullIndex: number): number =>
       rarityAtLeastProbability(
-        cards,
+        pool,
         luckMultiplier,
-        weightBoosts.filter((b) => b.pullsRemaining >= pullIndex),
+        boostsAt(pullIndex),
         minRarity,
       )
-
-    if (!weightBoosts.some((b) => b.pullsRemaining < window)) {
-      return windowProbability(qAt(1), window)
+    // Cartes qui SATISFONT la garantie sans gagner le pari : elles la
+    // désamorcent. Vide (donc 0) dès que la garantie est au moins aussi
+    // haute que la rareté visée.
+    const defuseOn = (pool: CardWithSet[], pullIndex: number): number => {
+      if (guarantee === null) {
+        return 0
+      }
+      const atLeastGuarantee = rarityAtLeastProbability(
+        pool,
+        luckMultiplier,
+        boostsAt(pullIndex),
+        guarantee.rarity,
+      )
+      return Math.max(0, atLeastGuarantee - winOn(pool, pullIndex))
     }
 
-    let survival = 1
+    if (
+      guarantee === null &&
+      golden === 0 &&
+      !weightBoosts.some((b) => b.pullsRemaining < window)
+    ) {
+      return windowProbability(winOn(cards, 1), window)
+    }
+
+    let intact = guarantee === null ? 0 : 1
+    let defused = guarantee === null ? 1 : 0
     for (let i = 1; i <= window; i += 1) {
-      survival *= 1 - qAt(i)
+      const ordinaryWin =
+        golden * winOn(goldenPool, i) + (1 - golden) * winOn(cards, i)
+      if (guarantee !== null && i === guarantee.pullIndex) {
+        // La garantie prime sur la boule d'or : sur ce tirage-là, l'état
+        // intact tire dans le pool garanti, pas dans le mélange doré.
+        defused =
+          intact * (1 - winOn(guaranteePool, i)) + defused * (1 - ordinaryWin)
+        intact = 0
+      } else {
+        const ordinaryDefuse =
+          golden * defuseOn(goldenPool, i) + (1 - golden) * defuseOn(cards, i)
+        const nextDefused =
+          defused * (1 - ordinaryWin) + intact * ordinaryDefuse
+        intact *= Math.max(0, 1 - ordinaryWin - ordinaryDefuse)
+        defused = nextDefused
+      }
     }
-    return 1 - survival
+    return 1 - (intact + defused)
   }
 
   async #readConfig(): Promise<BetCfg> {

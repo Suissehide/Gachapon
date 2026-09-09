@@ -453,15 +453,36 @@ describe('cote et placement du pari', () => {
         expect(res.json().multiplier).toBe(1)
       }
 
-      // LEGENDARY : le pool garanti contient encore l'EPIC du catalogue, donc
-      // rien n'est acquis. La cote reste celle du catalogue.
+      // LEGENDARY : pas acquis (le pool garanti contient encore l'EPIC du
+      // catalogue), mais surtout PAS la cote catalogue non plus — le tirage
+      // n° 5 se joue dans {EPIC, LEG}, ou le legendaire sort une fois sur
+      // deux. Derivation a la main, garantie EPIC < LEGENDARY donc
+      // desamorcable par un EPIC qui ne gagne pas le pari :
+      //   a = P(>= LEG)          = 1/100 = 0,01
+      //   b = P(EPIC <= r < LEG) = 2/100 - 1/100 = 0,01   (desamorce sans gagner)
+      //   aGarantie = P(>= LEG | pool {EPIC 1, LEG 1}) = 1/2
+      const a = 0.01
+      const b = 0.01
+      const intact4 = (1 - a - b) ** 4
+      const alive4 = (1 - a) ** 4
+      // Au tirage 5 : intact -> pool garanti ; deja desamorce -> pool normal.
+      const survive5 = intact4 * (1 - 0.5) + (alive4 - intact4) * (1 - a)
+      const pGuaranteedEpic = 1 - survive5 * (1 - a) ** 5 // 0.5254277
+
       const legendary = await app.inject({
         method: 'GET',
         url: quoteUrl(userIdB, 'LEGENDARY'),
         headers: { cookie: cookiesA },
       })
-      expect(legendary.json().probability).toBeCloseTo(LEGENDARY_PROBABILITY, 6)
-      expect(legendary.json().multiplier).toBe(LEGENDARY_MULTIPLIER)
+      expect(legendary.json().probability).toBeCloseTo(pGuaranteedEpic, 6)
+      expect(legendary.json().multiplier).toBe(
+        expectedMultiplier(pGuaranteedEpic),
+      )
+      // Tres loin de la cote catalogue : c'est tout l'ecart que l'ancienne
+      // version offrait a la maison.
+      expect(legendary.json().probability).toBeGreaterThan(
+        LEGENDARY_PROBABILITY * 5,
+      )
 
       // R = 11 > 10 : la garantie tombe HORS de la fenetre, plus aucune
       // certitude — c'est la borne R <= N.
@@ -488,6 +509,78 @@ describe('cote et placement du pari', () => {
         headers: { cookie: cookiesA },
       })
       expect(satisfied.json().probability).toBeCloseTo(EPIC_PROBABILITY, 6)
+    } finally {
+      await prisma.userBoost.delete({ where: { id: boost.id } })
+    }
+  })
+
+  it("garantie LEGENDARY sur un pari LEGENDARY : le tirage garanti se paie a son vrai prix", async () => {
+    // Ici la garantie ne peut etre desamorcee QUE par un legendaire, qui
+    // gagne deja le pari : le terme de desamorcage est nul et la composition
+    // se reduit a « 9 tirages ordinaires + 1 tirage dans {EPIC, LEG} ».
+    const boost = await prisma.userBoost.create({
+      data: {
+        userId: userIdB,
+        guaranteedRarity: 'LEGENDARY',
+        pullsRemaining: 5,
+        satisfied: false,
+      },
+    })
+    try {
+      const res = await app.inject({
+        method: 'GET',
+        url: quoteUrl(userIdB, 'LEGENDARY'),
+        headers: { cookie: cookiesA },
+      })
+      expect(res.statusCode).toBe(200)
+      // p = 1 - 0,99^9 x 1/2
+      const expected = 1 - 0.99 ** (PULL_WINDOW - 1) * 0.5 // 0.5432414
+      expect(res.json().probability).toBeCloseTo(expected, 6)
+      expect(res.json().multiplier).toBe(expectedMultiplier(expected))
+    } finally {
+      await prisma.userBoost.delete({ where: { id: boost.id } })
+    }
+  })
+
+  it("garantie SOUS la rarete visee : desamorcable, donc pas de certitude", async () => {
+    // Garantie RARE, pari EPIC. Le pool garanti {EPIC, LEG} gagnerait le
+    // pari a coup sur... mais un RARE naturel satisfait le boost sans gagner
+    // le pari, et un boost satisfait ne se declenche plus jamais. Vendre la
+    // certitude ici, c'est faire payer plein tarif pour un gain plafonne sur
+    // un evenement a ~3/4.
+    const boost = await prisma.userBoost.create({
+      data: {
+        userId: userIdB,
+        guaranteedRarity: 'RARE',
+        pullsRemaining: 5,
+        satisfied: false,
+      },
+    })
+    try {
+      const res = await app.inject({
+        method: 'GET',
+        url: quoteUrl(userIdB, 'EPIC'),
+        headers: { cookie: cookiesA },
+      })
+      expect(res.statusCode).toBe(200)
+      //   a = P(>= EPIC)           = 2/100 = 0,02
+      //   b = P(RARE <= r < EPIC)  = 10/100 - 2/100 = 0,08
+      //   aGarantie = P(>= EPIC | pool {EPIC, LEG}) = 1
+      const a = 0.02
+      const b = 0.08
+      const intact4 = (1 - a - b) ** 4
+      const alive4 = (1 - a) ** 4
+      const survive5 = intact4 * (1 - 1) + (alive4 - intact4) * (1 - a)
+      const expected = 1 - survive5 * (1 - a) ** 5 // 0.7641283
+
+      expect(res.json().probability).toBeCloseTo(expected, 6)
+      expect(res.json().multiplier).toBe(expectedMultiplier(expected))
+      // Ni certitude...
+      expect(res.json().probability).toBeLessThan(1)
+      expect(res.json().multiplier).toBeGreaterThan(1)
+      // ...ni cote catalogue : la garantie compte quand meme, quand elle
+      // survit jusqu'au tirage n° 5.
+      expect(res.json().probability).toBeGreaterThan(EPIC_PROBABILITY)
     } finally {
       await prisma.userBoost.delete({ where: { id: boost.id } })
     }
@@ -585,6 +678,12 @@ describe('cote et placement du pari', () => {
       return res.json().probability as number
     }
 
+    // Les boosts crees dans les phases ci-dessous sont enregistres ici pour
+    // que le `finally` les supprime QUOI QU'IL ARRIVE : un boost de 50
+    // tirages laisse sur A ou B decalerait silencieusement toutes les cotes
+    // du fichier, transformant un echec en cascade.
+    const createdBoostIds: string[] = []
+
     try {
       expect(await quote()).toBeCloseTo(EXPECTED_PROBABILITY, 6)
 
@@ -601,6 +700,7 @@ describe('cote et placement du pari', () => {
           pullsRemaining: 50,
         },
       })
+      createdBoostIds.push(bettorBoost.id)
       expect(await quote()).toBeCloseTo(EXPECTED_PROBABILITY, 6)
 
       await prisma.userSkill.deleteMany({ where: { userId: userIdA } })
@@ -633,6 +733,7 @@ describe('cote et placement du pari', () => {
           pullsRemaining: 50,
         },
       })
+      createdBoostIds.push(targetBoost.id)
       const qBoost =
         (WEIGHT_RARE * 3 + WEIGHT_EPIC + WEIGHT_LEGENDARY) /
         (WEIGHT_COMMON + WEIGHT_RARE * 3 + WEIGHT_EPIC + WEIGHT_LEGENDARY)
@@ -645,6 +746,87 @@ describe('cote et placement du pari', () => {
     } finally {
       // Le catalogue de competences est partage entre fichiers e2e : on
       // remet la base exactement comme on l'a trouvee.
+      await prisma.userBoost.deleteMany({
+        where: { id: { in: createdBoostIds } },
+      })
+      await prisma.userSkill.deleteMany({ where: { nodeId: node.id } })
+      await prisma.skillNodeLevel.deleteMany({ where: { nodeId: node.id } })
+      await prisma.skillNode.delete({ where: { id: node.id } })
+      await prisma.skillBranch.delete({ where: { id: branch.id } })
+    }
+  })
+
+  it("boule d'or de la cible : le pool restreint entre dans la cote", async () => {
+    // Le moteur roule la boule d'or sur chaque tirage ordinaire avec la
+    // probabilite du skill tree (en POINTS de pourcentage) et restreint alors
+    // le pool a {RARE, EPIC, LEGENDARY}. Ne pas la lire, c'est sous-estimer
+    // les chances des joueurs sur qui les autres voudront justement parier.
+    const branch = await prisma.skillBranch.create({
+      data: {
+        name: `BetGoldBranch${suffix}`,
+        description: 'test',
+        icon: 'x',
+        color: '#fff',
+        order: 998,
+      },
+    })
+    const node = await prisma.skillNode.create({
+      data: {
+        branchId: branch.id,
+        name: `BetGoldNode${suffix}`,
+        description: 'test',
+        icon: 'x',
+        maxLevel: 1,
+        effectType: 'GOLDEN_BALL_CHANCE',
+        posX: 0,
+        posY: 0,
+      },
+    })
+    // effect 40 -> goldenBallChance = 40 points de pourcentage
+    await prisma.skillNodeLevel.create({
+      data: { nodeId: node.id, level: 1, effect: 40 },
+    })
+
+    try {
+      await prisma.userSkill.create({
+        data: { userId: userIdB, nodeId: node.id, level: 1 },
+      })
+
+      const gamma = 0.4
+      // Pool dore : {RARE 8, EPIC 1, LEG 1}, poids total 10.
+      const goldenTotal = WEIGHT_RARE + WEIGHT_EPIC + WEIGHT_LEGENDARY
+
+      // Pari LEGENDARY : 1/10 dans le pool dore contre 1/100 au catalogue.
+      const aLegendary =
+        gamma * (WEIGHT_LEGENDARY / goldenTotal) + (1 - gamma) * 0.01
+      const pLegendary = 1 - (1 - aLegendary) ** PULL_WINDOW // 0.375518
+      const legendary = await app.inject({
+        method: 'GET',
+        url: quoteUrl(userIdB, 'LEGENDARY'),
+        headers: { cookie: cookiesA },
+      })
+      expect(legendary.statusCode).toBe(200)
+      expect(legendary.json().probability).toBeCloseTo(pLegendary, 6)
+      expect(legendary.json().multiplier).toBe(expectedMultiplier(pLegendary))
+      // La cote ne peut que MONTER en probabilite (baisser en multiplicateur)
+      // par rapport a un joueur sans boule d'or.
+      expect(legendary.json().probability).toBeGreaterThan(
+        LEGENDARY_PROBABILITY,
+      )
+      expect(legendary.json().multiplier).toBeLessThan(LEGENDARY_MULTIPLIER)
+
+      // Pari RARE+ : le pool dore est entierement gagnant, q vaut 1 sur les
+      // tirages dores.
+      const aRare = gamma * 1 + (1 - gamma) * 0.1
+      const pRare = 1 - (1 - aRare) ** PULL_WINDOW
+      const rare = await app.inject({
+        method: 'GET',
+        url: quoteUrl(userIdB),
+        headers: { cookie: cookiesA },
+      })
+      expect(rare.json().probability).toBeCloseTo(pRare, 6)
+      expect(rare.json().probability).toBeGreaterThan(EXPECTED_PROBABILITY)
+    } finally {
       await prisma.userSkill.deleteMany({ where: { nodeId: node.id } })
       await prisma.skillNodeLevel.deleteMany({ where: { nodeId: node.id } })
       await prisma.skillNode.delete({ where: { id: node.id } })

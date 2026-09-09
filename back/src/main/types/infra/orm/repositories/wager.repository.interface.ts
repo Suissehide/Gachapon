@@ -65,13 +65,15 @@ export interface IWagerRepository {
   ): Promise<BetWithParties[]>
   listRecentSettledBets(teamId: string, take: number): Promise<BetWithParties[]>
   listActiveBetsForTarget(targetId: string): Promise<Bet[]>
-  countOpenBetsByBettor(bettorId: string): Promise<number>
-  /** Même compte, relu DANS la transaction : c'est lui qui fait autorité au placement. */
+  /**
+   * Paris ouverts du parieur, relus DANS la transaction : seule version
+   * exposée. Un compte lu hors transaction laisserait deux placements
+   * simultanés franchir le même plafond.
+   */
   countOpenBetsByBettorInTx(
     tx: PrimaTransactionClient,
     bettorId: string,
   ): Promise<number>
-  countOpenBetsOnTarget(targetId: string): Promise<number>
   countOpenBetsOnTargetInTx(
     tx: PrimaTransactionClient,
     targetId: string,
