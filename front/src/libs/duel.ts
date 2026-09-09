@@ -71,3 +71,15 @@ export function pullsLeftLabel(done: number, total: number): string {
   const left = pullsLeft(done, total)
   return `${left} tirage${plural(left)} restant${plural(left)}`
 }
+
+/**
+ * Cote d'un pari, formatée en français à 2 décimales (`×2,35`, `1,00`).
+ * Partagée par `WagersPanel` (ligne de pari active) et `BetPlacePopup`
+ * (devis en direct) — même formule, ne pas la recopier une troisième fois.
+ */
+export function fmtMultiplier(multiplier: number): string {
+  return multiplier.toLocaleString('fr-FR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+}

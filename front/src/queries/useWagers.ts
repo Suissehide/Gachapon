@@ -19,17 +19,20 @@ export function useWagers(teamId: string | undefined) {
     queryFn: () => WagersApi.getWagers(teamId as string),
     enabled: Boolean(teamId),
     staleTime: 30_000,
-    // Aucun événement WS ne part pendant qu'un duel tourne (seulement à sa
-    // proposition et à son règlement) alors que chaque tirage re-score le
-    // duel actif côté serveur. Sans ce polling, un coéquipier qui regarde
-    // le panneau verrait des scores figés jusqu'au prochain événement. Ne
-    // pas retirer ce refetchInterval en le prenant pour une redondance du
-    // WebSocket.
+    // Aucun événement WS ne part pendant qu'un duel ou un pari tourne — le
+    // serveur ne notifie qu'à la proposition/au placement et au règlement —
+    // alors que chaque tirage re-score le duel actif et avance `pullsSeen`
+    // sur les paris actifs de sa cible. Sans ce polling, un coéquipier qui
+    // regarde le panneau verrait des scores et des compteurs de tirages
+    // figés jusqu'au prochain événement (rien ne les rafraîchit sinon : il
+    // n'existe pas de `bet:progress`, seulement `bet:placed`/`bet:settled`).
+    // Ne pas retirer ce refetchInterval en le prenant pour une redondance
+    // du WebSocket.
     refetchInterval: (query) => {
       const data = query.state.data
-      return data?.duels.some((duel) => duel.status === 'ACTIVE')
-        ? 10_000
-        : false
+      const hasActiveDuel = data?.duels.some((duel) => duel.status === 'ACTIVE')
+      const hasActiveBet = (data?.bets.length ?? 0) > 0
+      return hasActiveDuel || hasActiveBet ? 10_000 : false
     },
   })
 }

@@ -3,6 +3,7 @@ import { useState } from 'react'
 
 import type { TeamMember } from '../../api/teams.api.ts'
 import type { CardRarity } from '../../constants/card.constant.ts'
+import { fmtMultiplier } from '../../libs/duel.ts'
 import { RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { cn } from '../../libs/utils.ts'
 import {
@@ -34,13 +35,6 @@ type Props = {
 // ou UNCOMMON serait presque toujours gagné d'avance : la fenêtre ne
 // propose que les trois raretés où la cote dit vraiment quelque chose.
 const BET_RARITIES: CardRarity[] = ['RARE', 'EPIC', 'LEGENDARY']
-
-function fmtMultiplier(multiplier: number): string {
-  return multiplier.toLocaleString('fr-FR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
-}
 
 /**
  * Le libellé porte la raison, pas seulement l'info-bulle : sur écran

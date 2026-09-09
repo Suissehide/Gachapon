@@ -4,7 +4,12 @@ import { useMemo, useState } from 'react'
 
 import type { TeamMember } from '../../api/teams.api.ts'
 import type { BetView, DuelView } from '../../api/wagers.api.ts'
-import { busyUserIds, hasOpenDuel, pullsLeftLabel } from '../../libs/duel.ts'
+import {
+  busyUserIds,
+  fmtMultiplier,
+  hasOpenDuel,
+  pullsLeftLabel,
+} from '../../libs/duel.ts'
 import { RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { cn } from '../../libs/utils.ts'
 import { useSettledDuel } from '../../queries/useSettledDuel.ts'
@@ -27,13 +32,6 @@ const HISTORY_SIZE = 10
 /** Les scores peuvent tomber sur un demi-point (bonus brillante ×1,5). */
 function fmtScore(score: number): string {
   return score.toLocaleString('fr-FR')
-}
-
-function fmtMultiplier(multiplier: number): string {
-  return multiplier.toLocaleString('fr-FR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
 }
 
 function ScoreLine({ duel }: { duel: DuelView }) {
