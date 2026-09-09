@@ -408,6 +408,14 @@ export class BetDomain implements IBetDomain {
     if (!cards.some((c) => rarityAtLeast(c.rarity, 'EPIC'))) {
       return null
     }
+    // On ne retient que la garantie la PLUS PROCHE, et c'est correct
+    // uniquement parce qu'un joueur ne peut en detenir qu'une : la boutique
+    // refuse l'achat quand une garantie est deja active (voir
+    // shop.domain.ts, `activeBoosts.some(b => b.guaranteedRarity != null)`).
+    // Si une quete ou une recompense se met un jour a en octroyer une
+    // seconde, cette cote sous-estimera la probabilite et surpayera le
+    // parieur : il faudra alors composer toutes les garanties de la fenetre,
+    // pas seulement la premiere.
     let earliest: UserBoost | null = null
     for (const b of boosts) {
       if (
