@@ -32,6 +32,7 @@ import { StreakDomain } from '../../../domain/streak/streak.domain'
 import { TeamDomain } from '../../../domain/team/team.domain'
 import { TowerDomain } from '../../../domain/tower/tower.domain'
 import { UserDomain } from '../../../domain/user/user.domain'
+import { DuelDomain } from '../../../domain/wagers/duel.domain'
 import { WishlistDomain } from '../../../domain/wishlist/wishlist.domain'
 import { JwtService } from '../../../infra/auth/jwt.service'
 import { ConfigService } from '../../../infra/config/config.service'
@@ -138,6 +139,7 @@ class AwilixIocContainer {
     this.#reg('raidRepository', asClass(RaidRepository).singleton())
     this.#reg('wagerRepository', asClass(WagerRepository).singleton())
     this.#reg('raidDomain', asClass(RaidDomain).singleton())
+    this.#reg('duelDomain', asClass(DuelDomain).singleton())
     this.#reg('teamRepository', asClass(TeamRepository).singleton())
     this.#reg('teamMemberRepository', asClass(TeamMemberRepository).singleton())
     this.#reg('invitationRepository', asClass(InvitationRepository).singleton())

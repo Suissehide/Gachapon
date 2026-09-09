@@ -31,6 +31,7 @@ import type { ILeaderboardDomain } from '../domain/leaderboard/leaderboard.domai
 import type { ProfileDomainInterface } from '../domain/profile/profile.domain.interface'
 import type { IQuestsDomain } from '../domain/quests/quests.domain.interface'
 import type { RaidDomain } from '../../domain/raid/raid.domain'
+import type { DuelDomain } from '../../domain/wagers/duel.domain'
 import type { RewardsDomainInterface } from '../domain/rewards/rewards.domain.interface'
 import type { IShopDomain } from '../domain/shop/shop.domain.interface'
 import type {
@@ -109,6 +110,7 @@ export interface IocContainer {
   readonly raidRepository: IRaidRepository
   readonly wagerRepository: IWagerRepository
   readonly raidDomain: RaidDomain
+  readonly duelDomain: DuelDomain
   readonly teamRepository: TeamRepository
   readonly teamMemberRepository: TeamMemberRepository
   readonly invitationRepository: InvitationRepository

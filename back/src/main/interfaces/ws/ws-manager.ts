@@ -70,12 +70,33 @@ export type RaidAttackEvent = {
   killed: boolean
 }
 
+export type DuelProposedEvent = {
+  type: 'duel:proposed'
+  teamId: string
+  duelId: string
+  challenger: { id: string; username: string }
+}
+
+export type DuelUpdateEvent = {
+  type: 'duel:update'
+  teamId: string
+  duelId: string
+  status: string
+  challengerScore: number
+  opponentScore: number
+  challengerPulls: number
+  opponentPulls: number
+  pullCount: number
+}
+
 type WsEvent =
   | PullResultEvent
   | PullBatchResultEvent
   | FeedPullEvent
   | AdminActivityEvent
   | RaidAttackEvent
+  | DuelProposedEvent
+  | DuelUpdateEvent
 
 export class WsManager {
   readonly #connections = new Map<string, WebSocket>()
