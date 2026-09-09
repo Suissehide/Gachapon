@@ -1,11 +1,12 @@
 import dayjs from 'dayjs'
-import { Clock, Swords, Trophy } from 'lucide-react'
+import { Clock, Swords, Target, Trophy } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import type { TeamMember } from '../../api/teams.api.ts'
-import type { DuelView } from '../../api/wagers.api.ts'
-import { busyUserIds, hasOpenDuel } from '../../libs/duel.ts'
-import { cn, plural } from '../../libs/utils.ts'
+import type { BetView, DuelView } from '../../api/wagers.api.ts'
+import { busyUserIds, hasOpenDuel, pullsLeftLabel } from '../../libs/duel.ts'
+import { RARITY_LABEL_FR } from '../../libs/rarity.ts'
+import { cn } from '../../libs/utils.ts'
 import { useSettledDuel } from '../../queries/useSettledDuel.ts'
 import {
   useAcceptDuel,
@@ -16,10 +17,11 @@ import {
 } from '../../queries/useWagers.ts'
 import { ArcadeCard } from '../shared/ArcadeCard.tsx'
 import { Button } from '../ui/button.tsx'
+import { BetPlacePopup } from './BetPlacePopup.tsx'
 import { DuelProposePopup } from './DuelProposePopup.tsx'
 import { DuelResultPopup } from './DuelResultPopup.tsx'
 
-/** Nombre de duels réglés gardés à l'écran (le serveur en renvoie plus). */
+/** Nombre d'entrées réglées (duels + paris confondus) gardées à l'écran. */
 const HISTORY_SIZE = 10
 
 /** Les scores peuvent tomber sur un demi-point (bonus brillante ×1,5). */
@@ -27,13 +29,11 @@ function fmtScore(score: number): string {
   return score.toLocaleString('fr-FR')
 }
 
-function pullsLeft(done: number, total: number): number {
-  return Math.max(0, total - done)
-}
-
-function pullsLabel(done: number, total: number): string {
-  const left = pullsLeft(done, total)
-  return `${left} tirage${plural(left)} restant${plural(left)}`
+function fmtMultiplier(multiplier: number): string {
+  return multiplier.toLocaleString('fr-FR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
 }
 
 function ScoreLine({ duel }: { duel: DuelView }) {
@@ -69,9 +69,9 @@ function ActiveDuelRow({ duel }: { duel: DuelView }) {
       </div>
       <span className="text-xs text-text-light">
         {duel.challenger.username} :{' '}
-        {pullsLabel(duel.challengerPulls, duel.pullCount)} ·{' '}
+        {pullsLeftLabel(duel.challengerPulls, duel.pullCount)} ·{' '}
         {duel.opponent.username} :{' '}
-        {pullsLabel(duel.opponentPulls, duel.pullCount)}
+        {pullsLeftLabel(duel.opponentPulls, duel.pullCount)}
       </span>
     </li>
   )
@@ -164,8 +164,125 @@ function SettledDuelRow({ duel }: { duel: DuelView }) {
   )
 }
 
+function ActiveBetRow({ bet }: { bet: BetView }) {
+  const mine = bet.myRole !== 'SPECTATOR'
+  const rarityLabel = RARITY_LABEL_FR[bet.minRarity] ?? bet.minRarity
+  return (
+    <li
+      className={cn(
+        'flex flex-col gap-1.5 rounded-xl border p-3',
+        mine ? 'border-primary/40 bg-primary/10' : 'border-border bg-card/60',
+      )}
+    >
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <span className="font-display text-base font-bold text-text">
+          {bet.bettor.username} → {bet.target.username}
+          <span className="mx-1.5 text-text-light">·</span>≥ {rarityLabel}
+        </span>
+        <span className="font-mono text-xs text-text-light">
+          Cote ×{fmtMultiplier(bet.multiplier)} · mise{' '}
+          {bet.stake.toLocaleString('fr-FR')} poussière
+        </span>
+      </div>
+      <span className="text-xs text-text-light">
+        {bet.pullsSeen}/{bet.pullWindow} tirages vus sur la fenêtre
+      </span>
+    </li>
+  )
+}
+
 /**
- * Panneau des duels de tirage d'une équipe.
+ * Le champ `payout` porte trois sens selon `status` (voir `BetView` dans
+ * `wagers.api.ts`) : la totalité du gain si WON, la mise remboursée à
+ * l'identique si EXPIRED, rien si LOST. Un libellé unique « gains » aurait
+ * fait passer un remboursement pour une victoire — chaque cas a donc son
+ * propre texte.
+ */
+function betVerdictText(bet: BetView): string {
+  if (bet.status === 'WON') {
+    return `Gagné · +${bet.payout.toLocaleString('fr-FR')} poussière`
+  }
+  if (bet.status === 'EXPIRED') {
+    return `Expiré · mise remboursée (${bet.payout.toLocaleString('fr-FR')} poussière)`
+  }
+  return 'Perdu · mise perdue'
+}
+
+function SettledBetRow({ bet }: { bet: BetView }) {
+  const rarityLabel = RARITY_LABEL_FR[bet.minRarity] ?? bet.minRarity
+  return (
+    <li className="flex flex-wrap items-baseline justify-between gap-2 py-1.5">
+      <span className="text-sm text-text">
+        {bet.bettor.username} → {bet.target.username} · ≥ {rarityLabel} · mise{' '}
+        {bet.stake.toLocaleString('fr-FR')}
+      </span>
+      <span className="font-mono text-xs text-text-light">
+        {betVerdictText(bet)}
+        {bet.settledAt !== null && ` · ${dayjs(bet.settledAt).format('L')}`}
+      </span>
+    </li>
+  )
+}
+
+type SettledEntry =
+  | { kind: 'duel'; settledAt: string | null; duel: DuelView }
+  | { kind: 'bet'; settledAt: string | null; bet: BetView }
+
+/**
+ * Historique combiné : duels et paris réglés triés par règlement décroissant,
+ * plafonné à HISTORY_SIZE. « dans l'historique existant » — les paris
+ * rejoignent la même liste plutôt qu'une seconde section, ce qui aurait
+ * dédoublé le rythme visuel du panneau. Sortie du composant pour ne pas
+ * alourdir sa complexité cognitive : c'est une fusion de deux tableaux, pas
+ * du rendu.
+ */
+function buildHistory(
+  settledDuels: DuelView[],
+  settledBets: BetView[],
+): SettledEntry[] {
+  const entries: SettledEntry[] = [
+    ...settledDuels.map(
+      (duel): SettledEntry => ({
+        kind: 'duel',
+        settledAt: duel.settledAt,
+        duel,
+      }),
+    ),
+    ...settledBets.map(
+      (bet): SettledEntry => ({ kind: 'bet', settledAt: bet.settledAt, bet }),
+    ),
+  ]
+  return entries
+    .sort((a, b) => (b.settledAt ?? '').localeCompare(a.settledAt ?? ''))
+    .slice(0, HISTORY_SIZE)
+}
+
+function SettledEntryRow({ entry }: { entry: SettledEntry }) {
+  return entry.kind === 'duel' ? (
+    <SettledDuelRow duel={entry.duel} />
+  ) : (
+    <SettledBetRow bet={entry.bet} />
+  )
+}
+
+// Un bouton grisé muet ne dit rien : le libellé porte lui-même la raison.
+// Sortie du composant (comme `submitLabelFor` dans `BetPlacePopup`) pour ne
+// pas alourdir la complexité cognitive du panneau avec une chaîne de
+// conditions sur des primitives.
+function challengeLabelFor(
+  iAmBusy: boolean,
+  availableOpponents: number,
+): string {
+  if (iAmBusy) {
+    return 'Tu as déjà un duel en cours'
+  }
+  return availableOpponents === 0
+    ? 'Aucun coéquipier disponible'
+    : 'Défier un coéquipier'
+}
+
+/**
+ * Panneau des duels et paris de tirage d'une équipe.
  *
  * `members` est passé en prop plutôt que relu par `useTeam` : la route
  * parente a déjà l'équipe en main, et remonter le hook ici ferait tourner
@@ -174,7 +291,7 @@ function SettledDuelRow({ duel }: { duel: DuelView }) {
  *
  * Aucun rafraîchissement n'est piloté ici : `useWagers` sonde déjà toutes
  * les dix secondes tant qu'un duel est ACTIVE et `useWagersLive` invalide
- * sur les événements WebSocket.
+ * sur les événements WebSocket (duels comme paris).
  */
 export function WagersPanel({
   teamId,
@@ -186,6 +303,7 @@ export function WagersPanel({
   const { data, isLoading, isError, error } = useWagers(teamId)
   useWagersLive(teamId)
   const [proposeOpen, setProposeOpen] = useState(false)
+  const [betOpen, setBetOpen] = useState(false)
   const teamIds = useMemo(() => [teamId], [teamId])
   const settled = useSettledDuel(teamIds, data?.settledDuels)
   const acceptDuel = useAcceptDuel(teamId)
@@ -220,7 +338,8 @@ export function WagersPanel({
 
   const active = data.duels.filter((d) => d.status === 'ACTIVE')
   const pending = data.duels.filter((d) => d.status === 'PENDING')
-  const history = data.settledDuels.slice(0, HISTORY_SIZE)
+  const activeBets = data.bets
+  const history = buildHistory(data.settledDuels, data.settledBets)
 
   const busy = busyUserIds(data.duels)
   // Déduit du rôle porté par la vue, jamais d'une comparaison avec
@@ -232,13 +351,15 @@ export function WagersPanel({
   const availableOpponents =
     members.filter((m) => !busy.has(m.userId)).length - 1
 
-  // Un bouton grisé muet ne dit rien : le libellé porte lui-même la raison.
-  const challengeLabel = iAmBusy
-    ? 'Tu as déjà un duel en cours'
-    : availableOpponents === 0
-      ? 'Aucun coéquipier disponible'
-      : 'Défier un coéquipier'
+  const challengeLabel = challengeLabelFor(iAmBusy, availableOpponents)
   const canChallenge = !iAmBusy && availableOpponents > 0
+
+  // Un pari, contrairement à un duel, peut viser un coéquipier déjà engagé
+  // dans un autre pari : le seul blocage visible côté client est l'absence
+  // de coéquipier tout court, les plafonds de paris ouverts restent une
+  // affaire du serveur (non exposés par `/economy/config`).
+  const canBet = members.length > 1
+  const betLabel = canBet ? 'Parier' : 'Aucun coéquipier disponible'
 
   return (
     <ArcadeCard>
@@ -286,19 +407,55 @@ export function WagersPanel({
           </ul>
         )}
 
+        <div className="flex flex-wrap items-end justify-between gap-3 border-t border-border/60 pt-4">
+          <div>
+            <div className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
+              Pari sur un tirage
+            </div>
+            <h2 className="font-display text-2xl font-bold text-text">
+              Paris entre coéquipiers
+            </h2>
+          </div>
+          <Button
+            className="gap-2"
+            disabled={!canBet}
+            title={betLabel}
+            onClick={() => setBetOpen(true)}
+          >
+            <Target className="h-4 w-4" />
+            {betLabel}
+          </Button>
+        </div>
+
+        {activeBets.length === 0 ? (
+          <p className="text-sm text-text-light">
+            Aucun pari en cours. Mise de la poussière sur le prochain tirage
+            d'un coéquipier : la cote vient du serveur et se fige au placement.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {activeBets.map((bet) => (
+              <ActiveBetRow key={bet.id} bet={bet} />
+            ))}
+          </ul>
+        )}
+
         <div>
           <div className="mb-1 flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
             <Trophy className="h-3 w-3" />
-            Duels réglés
+            Duels & paris réglés
           </div>
           {history.length === 0 ? (
             <p className="text-sm text-text-light">
-              Aucun duel réglé pour l'instant.
+              Aucun duel ni pari réglé pour l'instant.
             </p>
           ) : (
             <ul className="divide-y divide-border">
-              {history.map((duel) => (
-                <SettledDuelRow key={duel.id} duel={duel} />
+              {history.map((entry) => (
+                <SettledEntryRow
+                  key={`${entry.kind}-${entry.kind === 'duel' ? entry.duel.id : entry.bet.id}`}
+                  entry={entry}
+                />
               ))}
             </ul>
           )}
@@ -311,6 +468,13 @@ export function WagersPanel({
         teamId={teamId}
         members={members}
         duels={data.duels}
+      />
+
+      <BetPlacePopup
+        open={betOpen}
+        onOpenChange={setBetOpen}
+        teamId={teamId}
+        members={members}
       />
 
       {settled.duel !== null && (

@@ -59,6 +59,26 @@ type WsEvent =
       winnerId: string | null
       transferredCount: number
     }
+  | {
+      type: 'bet:placed'
+      teamId: string
+      betId: string
+      bettor: { id: string; username: string }
+      targetId: string
+      minRarity: string
+      stake: number
+      multiplier: number
+      pullWindow: number
+    }
+  | {
+      type: 'bet:settled'
+      teamId: string
+      betId: string
+      status: 'WON' | 'LOST' | 'EXPIRED'
+      payout: number
+      bettorId: string
+      targetId: string
+    }
   | { type: 'error'; message: string }
   | {
       type: 'admin:activity'

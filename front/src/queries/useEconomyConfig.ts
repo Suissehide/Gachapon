@@ -59,6 +59,7 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
   },
   wishlist: { priceMultiplier: 2, cooldownDays: 7 },
   duel: { pullCount: 5 },
+  bet: { pullWindow: 10, minStake: 50, maxStake: 2000 },
   equip: {
     goldCostBase: 25,
     goldCostExp: 1.35,

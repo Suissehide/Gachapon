@@ -79,6 +79,14 @@ export interface EconomyConfig {
   duel: {
     pullCount: number
   }
+  // Fenêtre de tirages et bornes de mise du pari sur un coéquipier — vit
+  // dans GlobalConfig, lu ici plutôt que codé en dur dans la fenêtre de
+  // pari, comme `duel.pullCount` ci-dessus.
+  bet: {
+    pullWindow: number
+    minStake: number
+    maxStake: number
+  }
   equip: {
     goldCostBase: number
     goldCostExp: number

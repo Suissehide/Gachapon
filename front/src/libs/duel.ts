@@ -1,4 +1,5 @@
 import type { DuelView } from '../api/wagers.api.ts'
+import { plural } from './utils.ts'
 
 /**
  * Les deux camps d'un duel vus depuis MOI. `myRole` est la seule source :
@@ -53,4 +54,20 @@ export function hasOpenDuel(duels: DuelView[]): boolean {
       duel.myRole !== 'SPECTATOR' &&
       (duel.status === 'PENDING' || duel.status === 'ACTIVE'),
   )
+}
+
+/**
+ * Tirages restants sur une fenêtre `done`/`total` — partagé par les duels
+ * (tirages comptés sur `pullCount`) et les paris (tirages vus sur
+ * `pullWindow`) : les deux sont le même calcul « fait / à faire », déplacé
+ * ici depuis `WagersPanel` pour que `WagerBanner` puisse aussi l'utiliser
+ * pour les paris posés sur le joueur.
+ */
+export function pullsLeft(done: number, total: number): number {
+  return Math.max(0, total - done)
+}
+
+export function pullsLeftLabel(done: number, total: number): string {
+  const left = pullsLeft(done, total)
+  return `${left} tirage${plural(left)} restant${plural(left)}`
 }
