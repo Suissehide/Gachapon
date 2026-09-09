@@ -11,6 +11,7 @@ describe('POST /cards/:userCardId/ascend', () => {
   let cookies: string
   let userCardId: string
   let cardId: string
+  let userId: string
 
   const suffix = Date.now()
   const email = `ascend${suffix}@test.com`
@@ -49,6 +50,7 @@ describe('POST /cards/:userCardId/ascend', () => {
       where: { email },
       data: { emailVerifiedAt: new Date() },
     })
+    userId = user.id
 
     const uc = await postgresOrm.prisma.userCard.create({
       data: {
@@ -163,5 +165,89 @@ describe('POST /cards/:userCardId/ascend', () => {
       headers: { cookie: cookies },
     })
     expect(res.statusCode).toBe(404)
+  })
+
+  // Tache 7, tour de correction 1 : le verrou des cartes engagees doit
+  // couvrir aussi l'ascension, pas seulement le recyclage. Le duel et le
+  // tirage sont inseres directement en base (pas de flux
+  // propose/accept/pulls complet) : ce test isole le verrou de
+  // card-ascension.tx, le cycle de vie du duel est deja couvert par
+  // duels.test.ts. La carte est creee au sommet de son palier (level 10,
+  // palier 1) avec quantite 2 : ca franchit les gardes de precondition
+  // (palier max, sommet de palier, doublon disponible) pour que le 409
+  // observe vienne bien du verrou, pas d'un echec de setup.
+  it("refuse l'ascension sur une carte engagee dans un duel ACTIF -> 409, quantite et palier inchanges", async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    const lockSet = await postgresOrm.prisma.cardSet.create({
+      data: { name: `AscendLockSet${suffix}`, isActive: false },
+    })
+    const lockCard = await postgresOrm.prisma.card.create({
+      data: {
+        name: `AscendLockCard${suffix}`,
+        rarity: 'RARE',
+        dropWeight: 10,
+        setId: lockSet.id,
+      },
+    })
+    const lockUc = await postgresOrm.prisma.userCard.create({
+      data: {
+        userId,
+        cardId: lockCard.id,
+        variant: 'NORMAL',
+        quantity: 2,
+        level: 10, // sommet du palier 1
+        palier: 1,
+      },
+    })
+
+    const opponent = await postgresOrm.prisma.user.create({
+      data: {
+        email: `ascendlockopp${suffix}@test.com`,
+        username: `ascendlockopp${suffix}`,
+        emailVerifiedAt: new Date(),
+      },
+    })
+    const team = await postgresOrm.prisma.team.create({
+      data: {
+        name: `AscendLockTeam${suffix}`,
+        slug: `ascend-lock-team-${suffix}`,
+        ownerId: userId,
+      },
+    })
+    await postgresOrm.prisma.duel.create({
+      data: {
+        teamId: team.id,
+        challengerId: userId,
+        opponentId: opponent.id,
+        status: 'ACTIVE',
+        pullCount: 5,
+        acceptedAt: new Date(Date.now() - 60 * 60 * 1000),
+        deadlineAt: new Date(Date.now() + 60 * 60 * 1000),
+      },
+    })
+    // Tirage compte pour ce duel : tombe dans les pullCount premiers
+    // tirages depuis acceptedAt, donc verrouille lockCard:NORMAL.
+    await postgresOrm.prisma.gachaPull.create({
+      data: {
+        userId,
+        cardId: lockCard.id,
+        variant: 'NORMAL',
+        pulledAt: new Date(),
+      },
+    })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/cards/${lockUc.id}/ascend`,
+      headers: { cookie: cookies },
+    })
+    expect(res.statusCode).toBe(409)
+
+    const after = await postgresOrm.prisma.userCard.findUniqueOrThrow({
+      where: { id: lockUc.id },
+    })
+    expect(after.quantity).toBe(2)
+    expect(after.palier).toBe(1)
   })
 })

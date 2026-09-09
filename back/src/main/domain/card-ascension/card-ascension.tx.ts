@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import type { IocContainer } from '../../types/application/ioc'
+import type { IDuelDomain } from '../../types/domain/wagers/wagers.domain.interface'
 import {
   isAtTopOfPalier,
   MAX_PALIER,
@@ -9,9 +10,14 @@ import { retryOnSerialization } from '../shared/retry-serialization'
 
 export class CardAscensionTx {
   readonly #postgresOrm
+  readonly #duelDomain: IDuelDomain
 
-  constructor({ postgresOrm }: IocContainer) {
+  constructor({
+    postgresOrm,
+    duelDomain,
+  }: Pick<IocContainer, 'postgresOrm'> & { duelDomain: IDuelDomain }) {
     this.#postgresOrm = postgresOrm
+    this.#duelDomain = duelDomain
   }
 
   ascend(
@@ -44,6 +50,12 @@ export class CardAscensionTx {
               `Need at least 1 duplicate (quantity > 1) to ascend — current quantity is ${userCard.quantity}`,
             )
           }
+          await this.#duelDomain.assertCardNotEngagedInTx(
+            tx,
+            userId,
+            userCard.cardId,
+            userCard.variant,
+          )
 
           const updated = await tx.userCard.update({
             where: { id: userCardId },

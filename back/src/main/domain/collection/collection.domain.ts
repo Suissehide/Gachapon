@@ -16,6 +16,7 @@ import type {
 import type { ICardRepository } from '../../types/infra/orm/repositories/card.repository.interface'
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
+import type { IDuelDomain } from '../../types/domain/wagers/wagers.domain.interface'
 import { retryOnSerialization } from '../shared/retry-serialization'
 
 const RARITY_ORDER: CardRarity[] = [
@@ -53,6 +54,7 @@ export class CollectionDomain implements ICollectionDomain {
   readonly #configService: ConfigServiceInterface
   readonly #postgresOrm: PostgresOrm
   readonly #achievementsDomain: AchievementsDomainInterface
+  readonly #duelDomain: IDuelDomain
 
   constructor({
     cardRepository,
@@ -60,6 +62,7 @@ export class CollectionDomain implements ICollectionDomain {
     configService,
     postgresOrm,
     achievementsDomain,
+    duelDomain,
   }: Pick<
     IocContainer,
     | 'cardRepository'
@@ -67,12 +70,13 @@ export class CollectionDomain implements ICollectionDomain {
     | 'configService'
     | 'postgresOrm'
     | 'achievementsDomain'
-  >) {
+  > & { duelDomain: IDuelDomain }) {
     this.#cardRepository = cardRepository
     this.#skillTreeRepository = skillTreeRepository
     this.#configService = configService
     this.#postgresOrm = postgresOrm
     this.#achievementsDomain = achievementsDomain
+    this.#duelDomain = duelDomain
   }
 
   async recycleCard(
@@ -99,12 +103,23 @@ export class CollectionDomain implements ICollectionDomain {
     const result = await retryOnSerialization(() =>
       this.#postgresOrm.executeWithTransactionClient(
         async (tx) => {
+          // Propriété d'ABORD, verrou de duel ensuite — comme sur les trois
+          // autres chemins de retrait. Dans l'ordre inverse, une demande
+          // portant sur une carte qu'on ne possède pas s'entendait répondre
+          // « engagée dans un duel », ce qui renseigne sur autrui.
           const uc = await tx.userCard.findUnique({
             where: { userId_cardId_variant: { userId, cardId, variant } },
           })
           if (!uc || uc.quantity < quantity) {
             throw Boom.badRequest('You do not own this card')
           }
+
+          await this.#duelDomain.assertCardNotEngagedInTx(
+            tx,
+            userId,
+            cardId,
+            variant,
+          )
 
           if (uc.quantity - quantity <= 0) {
             await tx.userCard.delete({
@@ -183,8 +198,25 @@ export class CollectionDomain implements ICollectionDomain {
             include: { card: { select: { rarity: true } } },
           })
 
+          // Chargé une seule fois pour tout le lot : une carte engagée est
+          // IGNORÉE plutôt que refusée — faire échouer tout le recyclage de
+          // masse pour une seule carte verrouillée serait hostile.
+          const engagedKeys = await this.#duelDomain.listEngagedCardKeysInTx(
+            tx,
+            userId,
+          )
+          const candidates = userCards.filter(
+            (uc) => !engagedKeys.has(`${uc.cardId}:${uc.variant}`),
+          )
+          // Même base que cardsRecycled (copies, pas lignes) : les deux
+          // champs sont affichés côte à côte au joueur, ils doivent être
+          // comparables un à un.
+          const skippedEngaged = userCards
+            .filter((uc) => engagedKeys.has(`${uc.cardId}:${uc.variant}`))
+            .reduce((sum, uc) => sum + (uc.quantity - 1), 0)
+
           const { dustEarned, copiesRecycled } = computeBulkRecycle(
-            userCards.map((uc) => ({
+            candidates.map((uc) => ({
               rarity: uc.card.rarity,
               quantity: uc.quantity,
             })),
@@ -201,11 +233,12 @@ export class CollectionDomain implements ICollectionDomain {
               cardsRecycled: 0,
               newDustTotal: user.dust,
               unlockedAchievements: [],
+              skippedEngaged,
             }
           }
 
           await tx.userCard.updateMany({
-            where: { id: { in: userCards.map((uc) => uc.id) } },
+            where: { id: { in: candidates.map((uc) => uc.id) } },
             data: { quantity: 1 },
           })
 
@@ -227,6 +260,7 @@ export class CollectionDomain implements ICollectionDomain {
             cardsRecycled: copiesRecycled,
             newDustTotal: user.dust,
             unlockedAchievements: unlocks,
+            skippedEngaged,
           }
         },
         { isolationLevel: 'Serializable', maxWait: 5000, timeout: 10000 },

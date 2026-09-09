@@ -55,6 +55,10 @@ type Props = {
   palier?: number | null
   isNew?: boolean
   isWishlisted?: boolean
+  // Carte verrouillée par un duel en cours : le recyclage, la conversion en
+  // poussière et l'ascension la refuseront. Le badge le dit AVANT la
+  // tentative plutôt que par un message d'erreur après coup.
+  isEngaged?: boolean
   onClick: () => void
 }
 
@@ -68,6 +72,7 @@ export function CollectionCard({
   palier,
   isNew,
   isWishlisted,
+  isEngaged,
   onClick,
 }: Props) {
   // Bonus d'équipement de cette carte (vides si non possédée ou si l'équipement
@@ -169,6 +174,16 @@ export function CollectionCard({
         {isOwned && quantity > 1 && (
           <span className="absolute -right-1.5 -top-1.5 z-[6] inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#1b1726] font-display text-[10px] font-extrabold leading-none text-white shadow-[0_3px_8px_rgba(27,23,38,0.4),0_0_0_1.5px_#fcfbf9]">
             ×{quantity}
+          </span>
+        )}
+
+        {isEngaged && (
+          <span
+            title="Carte engagée dans un duel : elle ne peut pas être recyclée tant qu'il dure"
+            className="pointer-events-none absolute -bottom-2 left-1/2 z-[6] inline-flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full border border-primary/50 bg-card px-2 py-[4px] font-mono text-[9.5px] font-extrabold leading-none tracking-[0.08em] text-primary shadow-[0_3px_8px_rgba(27,23,38,0.25)]"
+          >
+            <Swords className="h-2.5 w-2.5" />
+            EN DUEL
           </span>
         )}
       </div>

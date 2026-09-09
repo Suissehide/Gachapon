@@ -73,6 +73,20 @@ export interface EconomyConfig {
     priceMultiplier: number
     cooldownDays: number
   }
+  // Nombre de tirages comptés par duelliste dans un duel de tirage. Lu ici
+  // plutot que codé en dur dans la fenêtre de défi : la valeur vit dans
+  // GlobalConfig et peut bouger sans redéploiement du front.
+  duel: {
+    pullCount: number
+  }
+  // Fenêtre de tirages et bornes de mise du pari sur un coéquipier — vit
+  // dans GlobalConfig, lu ici plutôt que codé en dur dans la fenêtre de
+  // pari, comme `duel.pullCount` ci-dessus.
+  bet: {
+    pullWindow: number
+    minStake: number
+    maxStake: number
+  }
   equip: {
     goldCostBase: number
     goldCostExp: number

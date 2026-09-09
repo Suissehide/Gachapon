@@ -31,6 +31,8 @@ import type { ILeaderboardDomain } from '../domain/leaderboard/leaderboard.domai
 import type { ProfileDomainInterface } from '../domain/profile/profile.domain.interface'
 import type { IQuestsDomain } from '../domain/quests/quests.domain.interface'
 import type { RaidDomain } from '../../domain/raid/raid.domain'
+import type { BetDomain } from '../../domain/wagers/bet.domain'
+import type { DuelDomain } from '../../domain/wagers/duel.domain'
 import type { RewardsDomainInterface } from '../domain/rewards/rewards.domain.interface'
 import type { IShopDomain } from '../domain/shop/shop.domain.interface'
 import type {
@@ -64,6 +66,7 @@ import type { UserAchievementProgressRepositoryInterface } from '../infra/orm/re
 import type { IUserBoostRepository } from '../infra/orm/repositories/user-boost.repository.interface'
 import type { IUserQuestRepository } from '../infra/orm/repositories/user-quest.repository.interface'
 import type { UserRewardRepositoryInterface } from '../infra/orm/repositories/user-reward.repository.interface'
+import type { IWagerRepository } from '../infra/orm/repositories/wager.repository.interface'
 import type { RedisClientInterface } from '../infra/redis/redis-client'
 import type { StorageClientInterface } from '../infra/storage/storage-client'
 import type { HttpServer } from '../interfaces/http/server'
@@ -106,7 +109,10 @@ export interface IocContainer {
   readonly towerRepository: ITowerRepository
   readonly towerDomain: TowerDomain
   readonly raidRepository: IRaidRepository
+  readonly wagerRepository: IWagerRepository
   readonly raidDomain: RaidDomain
+  readonly duelDomain: DuelDomain
+  readonly betDomain: BetDomain
   readonly teamRepository: TeamRepository
   readonly teamMemberRepository: TeamMemberRepository
   readonly invitationRepository: InvitationRepository

@@ -35,6 +35,50 @@ type WsEvent =
       damage: number
       killed: boolean
     }
+  | {
+      type: 'duel:proposed'
+      teamId: string
+      duelId: string
+      challenger: { id: string; username: string }
+    }
+  | {
+      type: 'duel:update'
+      teamId: string
+      duelId: string
+      status: string
+      challengerScore: number
+      opponentScore: number
+      challengerPulls: number
+      opponentPulls: number
+      pullCount: number
+    }
+  | {
+      type: 'duel:settled'
+      teamId: string
+      duelId: string
+      winnerId: string | null
+      transferredCount: number
+    }
+  | {
+      type: 'bet:placed'
+      teamId: string
+      betId: string
+      bettor: { id: string; username: string }
+      targetId: string
+      minRarity: string
+      stake: number
+      multiplier: number
+      pullWindow: number
+    }
+  | {
+      type: 'bet:settled'
+      teamId: string
+      betId: string
+      status: 'WON' | 'LOST' | 'EXPIRED'
+      payout: number
+      bettorId: string
+      targetId: string
+    }
   | { type: 'error'; message: string }
   | {
       type: 'admin:activity'

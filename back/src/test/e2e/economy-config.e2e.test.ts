@@ -80,4 +80,12 @@ describe('GET /economy/config', () => {
     const body = res.json()
     expect(body.raid).toEqual({ attacksPerDay: 2, timeoutTurns: 10 })
   })
+
+  it('expose les tunables de duel et de pari', async () => {
+    const res = await app.inject({ method: 'GET', url: '/economy/config' })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.duel).toEqual({ pullCount: 5 })
+    expect(body.bet).toEqual({ pullWindow: 10, minStake: 50, maxStake: 2000 })
+  })
 })

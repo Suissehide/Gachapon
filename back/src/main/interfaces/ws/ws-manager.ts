@@ -70,12 +70,66 @@ export type RaidAttackEvent = {
   killed: boolean
 }
 
+export type DuelProposedEvent = {
+  type: 'duel:proposed'
+  teamId: string
+  duelId: string
+  challenger: { id: string; username: string }
+}
+
+export type DuelUpdateEvent = {
+  type: 'duel:update'
+  teamId: string
+  duelId: string
+  status: string
+  challengerScore: number
+  opponentScore: number
+  challengerPulls: number
+  opponentPulls: number
+  pullCount: number
+}
+
+export type DuelSettledEvent = {
+  type: 'duel:settled'
+  teamId: string
+  duelId: string
+  winnerId: string | null
+  transferredCount: number
+}
+
+export type BetPlacedEvent = {
+  type: 'bet:placed'
+  teamId: string
+  betId: string
+  bettor: { id: string; username: string }
+  targetId: string
+  minRarity: string
+  stake: number
+  multiplier: number
+  pullWindow: number
+}
+
+export type BetSettledEvent = {
+  type: 'bet:settled'
+  teamId: string
+  betId: string
+  status: 'WON' | 'LOST' | 'EXPIRED'
+  payout: number
+  bettorId: string
+  targetId: string
+}
+
 type WsEvent =
   | PullResultEvent
   | PullBatchResultEvent
   | FeedPullEvent
   | AdminActivityEvent
   | RaidAttackEvent
+  | DuelProposedEvent
+  | DuelUpdateEvent
+  | DuelSettledEvent
+  | BetPlacedEvent
+  | BetSettledEvent
 
 export class WsManager {
   readonly #connections = new Map<string, WebSocket>()

@@ -82,6 +82,16 @@ export const CONFIG_KEYS = [
   'raid.attacksPerDay',
   'raid.timeoutTurns',
   'raid.baseHpPerMember',
+  'duel.pullCount',
+  'duel.acceptHours',
+  'duel.deadlineHours',
+  'bet.pullWindow',
+  'bet.minStake',
+  'bet.maxStake',
+  'bet.houseFeePct',
+  'bet.deadlineHours',
+  'bet.maxOpenPerBettor',
+  'bet.maxOpenPerTarget',
 ] as const
 
 export type ConfigKey = (typeof CONFIG_KEYS)[number]

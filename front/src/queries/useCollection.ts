@@ -8,6 +8,7 @@ import {
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
+import { plural } from '../libs/utils.ts'
 import { useAchievementUnlockStore } from '../stores/achievementUnlock.store.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 
@@ -123,9 +124,19 @@ export const useRecycleAll = () => {
       if (user) {
         setUser({ ...user, dust: data.newDustTotal })
       }
+      // Les cartes verrouillées par un duel en cours sont ignorées par le
+      // serveur plutôt que refusées : sans cette mention, le joueur voit
+      // moins de cartes recyclées qu'attendu sans qu'on lui dise pourquoi.
+      // Zéro carte ignorée = message strictement identique à avant.
+      const skipped = data.skippedEngaged
+      const engagedNote =
+        skipped > 0
+          ? ` · ${skipped} carte${plural(skipped)} ignorée${plural(skipped)} car engagée${plural(skipped)} dans ton duel`
+          : ''
+      const recycled = data.cardsRecycled
       toast({
         title: 'Recyclage terminé',
-        message: `${data.cardsRecycled} carte${data.cardsRecycled > 1 ? 's' : ''} recyclée${data.cardsRecycled > 1 ? 's' : ''} → ${data.dustEarned.toLocaleString('fr-FR')} poussière`,
+        message: `${recycled} carte${plural(recycled)} recyclée${plural(recycled)} → ${data.dustEarned.toLocaleString('fr-FR')} poussière${engagedNote}`,
         severity: TOAST_SEVERITY.SUCCESS,
       })
       if (data.unlockedAchievements?.length) {

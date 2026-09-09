@@ -32,6 +32,8 @@ import { StreakDomain } from '../../../domain/streak/streak.domain'
 import { TeamDomain } from '../../../domain/team/team.domain'
 import { TowerDomain } from '../../../domain/tower/tower.domain'
 import { UserDomain } from '../../../domain/user/user.domain'
+import { BetDomain } from '../../../domain/wagers/bet.domain'
+import { DuelDomain } from '../../../domain/wagers/duel.domain'
 import { WishlistDomain } from '../../../domain/wishlist/wishlist.domain'
 import { JwtService } from '../../../infra/auth/jwt.service'
 import { ConfigService } from '../../../infra/config/config.service'
@@ -65,6 +67,7 @@ import { UserBoostRepository } from '../../../infra/orm/repositories/user-boost.
 import { UserCardRepository } from '../../../infra/orm/repositories/user-card.repository'
 import { UserQuestRepository } from '../../../infra/orm/repositories/user-quest.repository'
 import { UserRewardRepository } from '../../../infra/orm/repositories/user-reward.repository'
+import { WagerRepository } from '../../../infra/orm/repositories/wager.repository'
 import { RedisClient } from '../../../infra/redis/redis-client'
 import { RefreshTokenRepository } from '../../../infra/redis/refresh-token.repository'
 import { MinioClient } from '../../../infra/storage/minio-client'
@@ -135,7 +138,10 @@ class AwilixIocContainer {
     this.#reg('towerRepository', asClass(TowerRepository).singleton())
     this.#reg('towerDomain', asClass(TowerDomain).singleton())
     this.#reg('raidRepository', asClass(RaidRepository).singleton())
+    this.#reg('wagerRepository', asClass(WagerRepository).singleton())
     this.#reg('raidDomain', asClass(RaidDomain).singleton())
+    this.#reg('duelDomain', asClass(DuelDomain).singleton())
+    this.#reg('betDomain', asClass(BetDomain).singleton())
     this.#reg('teamRepository', asClass(TeamRepository).singleton())
     this.#reg('teamMemberRepository', asClass(TeamMemberRepository).singleton())
     this.#reg('invitationRepository', asClass(InvitationRepository).singleton())

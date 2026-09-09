@@ -98,6 +98,14 @@ const economyConfigResponseSchema = z.object({
     attacksPerDay: z.number(),
     timeoutTurns: z.number(),
   }),
+  duel: z.object({
+    pullCount: z.number(),
+  }),
+  bet: z.object({
+    pullWindow: z.number(),
+    minStake: z.number(),
+    maxStake: z.number(),
+  }),
 })
 
 export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
@@ -153,6 +161,10 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
         'equip.salvageGoldLegendary',
         'raid.attacksPerDay',
         'raid.timeoutTurns',
+        'duel.pullCount',
+        'bet.pullWindow',
+        'bet.minStake',
+        'bet.maxStake',
         ...SUBSTAT_RANGE_CONFIG_KEYS,
       )
       return {
@@ -228,6 +240,12 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
         raid: {
           attacksPerDay: c['raid.attacksPerDay'],
           timeoutTurns: c['raid.timeoutTurns'],
+        },
+        duel: { pullCount: c['duel.pullCount'] },
+        bet: {
+          pullWindow: c['bet.pullWindow'],
+          minStake: c['bet.minStake'],
+          maxStake: c['bet.maxStake'],
         },
       }
     },

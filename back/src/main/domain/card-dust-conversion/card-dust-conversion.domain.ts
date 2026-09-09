@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import type { IocContainer } from '../../types/application/ioc'
+import type { IDuelDomain } from '../../types/domain/wagers/wagers.domain.interface'
 import { retryOnSerialization } from '../shared/retry-serialization'
 
 export class CardDustConversionDomain {
@@ -8,17 +9,26 @@ export class CardDustConversionDomain {
   readonly #skillTreeRepository
   readonly #achievementsDomain
   readonly #configService
+  readonly #duelDomain: IDuelDomain
 
   constructor({
     postgresOrm,
     skillTreeRepository,
     achievementsDomain,
     configService,
-  }: IocContainer) {
+    duelDomain,
+  }: Pick<
+    IocContainer,
+    | 'postgresOrm'
+    | 'skillTreeRepository'
+    | 'achievementsDomain'
+    | 'configService'
+  > & { duelDomain: IDuelDomain }) {
     this.#postgresOrm = postgresOrm
     this.#skillTreeRepository = skillTreeRepository
     this.#achievementsDomain = achievementsDomain
     this.#configService = configService
+    this.#duelDomain = duelDomain
   }
 
   convert(
@@ -61,6 +71,12 @@ export class CardDustConversionDomain {
           if (!userCard || userCard.userId !== userId) {
             throw Boom.notFound('UserCard not found')
           }
+          await this.#duelDomain.assertCardNotEngagedInTx(
+            tx,
+            userId,
+            userCard.cardId,
+            userCard.variant,
+          )
           if (userCard.quantity - amount < 1) {
             throw Boom.badRequest(
               `Cannot convert ${amount} — would leave 0 copies (have ${userCard.quantity})`,

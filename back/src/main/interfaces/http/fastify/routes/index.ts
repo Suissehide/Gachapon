@@ -23,6 +23,7 @@ import { streakRouter } from './streak'
 import { teamsRouter } from './teams'
 import { towerRouter } from './tower'
 import { usersRouter } from './users'
+import { wagersRouter } from './wagers'
 import { wishlistRouter } from './wishlist'
 import { wsRouter } from './ws'
 
@@ -74,6 +75,7 @@ export const routes: FastifyPluginAsyncZod = async (fastify) => {
   await fastify.register(wishlistRouter)
   await fastify.register(teamsRouter)
   await fastify.register(raidsRouter)
+  await fastify.register(wagersRouter)
   await fastify.register(towerRouter)
   await fastify.register(statsRouter)
   await fastify.register(rewardsRouter, { prefix: '/rewards' })

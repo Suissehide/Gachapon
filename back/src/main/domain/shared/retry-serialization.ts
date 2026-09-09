@@ -9,12 +9,37 @@
  * card-ascension, card-dust-conversion, combat-team, combat-points,
  * equipment, campaign.
  */
+/**
+ * Deux formes selon la façon dont Prisma parle à Postgres :
+ *
+ *  - `code === 'P2034'`, la forme historique (moteur natif) ;
+ *  - un `DriverAdapterError` dont la cause porte
+ *    `kind === 'TransactionWriteConflict'` — c'est CETTE forme que
+ *    `@prisma/adapter-pg` remonte sous Prisma 7, et elle ne porte aucun
+ *    `code`. Ne reconnaître que la première revenait à ne jamais retenter :
+ *    le conflit de sérialisation sortait en 500 au lieu d'être rejoué, sur
+ *    tous les chemins contendus (tirage, règlement de pari, proposition de
+ *    duel).
+ */
 export function isPrismaSerializationError(err: unknown): boolean {
+  if (typeof err !== 'object' || err === null) {
+    return false
+  }
+  if ((err as { code?: unknown }).code === 'P2034') {
+    return true
+  }
+  const cause = (err as { cause?: { kind?: unknown } }).cause
+  if (
+    typeof cause === 'object' &&
+    cause !== null &&
+    cause.kind === 'TransactionWriteConflict'
+  ) {
+    return true
+  }
   return (
-    typeof err === 'object' &&
-    err !== null &&
-    'code' in err &&
-    (err as { code: string }).code === 'P2034'
+    (err as { name?: unknown }).name === 'DriverAdapterError' &&
+    typeof (err as { message?: unknown }).message === 'string' &&
+    (err as { message: string }).message.includes('TransactionWriteConflict')
   )
 }
 
