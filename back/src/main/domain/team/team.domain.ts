@@ -14,6 +14,12 @@ import type { ITeamRepository } from '../../types/infra/orm/repositories/team.re
 import type { ITeamMemberRepository } from '../../types/infra/orm/repositories/team-member.repository.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
+import type {
+  BetSettledEvent,
+  DuelUpdateEvent,
+  WsManager,
+} from '../../interfaces/ws/ws-manager'
+import { retryOnSerialization } from '../shared/retry-serialization'
 
 const MAX_TEAMS_PER_USER = 3
 const MAX_MEMBERS_PER_TEAM = 100
@@ -27,6 +33,7 @@ export class TeamDomain implements TeamDomainInterface {
   readonly #postgresOrm: IocContainer['postgresOrm']
   readonly #mailService: IMailService
   readonly #achievementsDomain: AchievementsDomainInterface
+  readonly #wsManager: WsManager
 
   constructor({
     teamRepository,
@@ -36,6 +43,7 @@ export class TeamDomain implements TeamDomainInterface {
     postgresOrm,
     mailService,
     achievementsDomain,
+    wsManager,
   }: IocContainer) {
     this.#teamRepo = teamRepository
     this.#memberRepo = teamMemberRepository
@@ -44,6 +52,7 @@ export class TeamDomain implements TeamDomainInterface {
     this.#postgresOrm = postgresOrm
     this.#mailService = mailService
     this.#achievementsDomain = achievementsDomain
+    this.#wsManager = wsManager
   }
 
   async createTeam(
@@ -339,6 +348,32 @@ export class TeamDomain implements TeamDomainInterface {
     })
   }
 
+  /**
+   * Supprime l'équipe — et solde d'abord ce que la cascade détruirait en
+   * silence.
+   *
+   * Les clés étrangères de Duel et de Bet sont en `onDelete: Cascade` :
+   * supprimer l'équipe effaçait ses paris ACTIVE, mise comprise. Or la mise
+   * est débitée AU PLACEMENT et n'existe nulle part ailleurs — la poussière
+   * du parieur disparaissait purement et simplement, et le propriétaire qui
+   * déclenche la suppression peut être la CIBLE même sur laquelle on parie.
+   * Les duels partaient de la même façon : sans règlement, sans
+   * notification, le verrou des cartes engagées se levant sans un mot.
+   *
+   * Les paris ACTIVE sont donc REMBOURSÉS (statut EXPIRED, mise recréditée
+   * à l'identique — exactement ce que fait une échéance atteinte sans que
+   * la cible ait tiré).
+   *
+   * Les duels PENDING et ACTIVE sont ANNULÉS, jamais réglés. Régler
+   * transférerait des cartes de façon définitive sur une action unilatérale
+   * du propriétaire, qui choisit QUAND supprimer — donc quand figer le
+   * score. Annuler ne fait bouger aucune carte : c'est la seule des deux
+   * issues qu'on ne peut pas exploiter.
+   *
+   * Le tout dans UNE transaction avec la suppression : un échec entre le
+   * remboursement et la suppression perdrait de la poussière ou en
+   * créerait.
+   */
   async deleteTeam(teamId: string, userId: string): Promise<void> {
     const team = await this.#teamRepo.findById(teamId)
     if (!team) {
@@ -347,7 +382,79 @@ export class TeamDomain implements TeamDomainInterface {
     if (team.ownerId !== userId) {
       throw Boom.forbidden('Only the owner can delete the team')
     }
-    await this.#teamRepo.delete(teamId)
+
+    const now = new Date()
+    const closed = await retryOnSerialization(() =>
+      this.#postgresOrm.executeWithTransactionClient(
+        async (tx) => {
+          const [bets, duels] = await Promise.all([
+            tx.bet.findMany({ where: { teamId, status: 'ACTIVE' } }),
+            tx.duel.findMany({
+              where: { teamId, status: { in: ['PENDING', 'ACTIVE'] } },
+            }),
+          ])
+
+          for (const bet of bets) {
+            await tx.user.update({
+              where: { id: bet.bettorId },
+              data: { dust: { increment: bet.stake } },
+            })
+            await tx.bet.update({
+              where: { id: bet.id },
+              data: {
+                status: 'EXPIRED',
+                payout: bet.stake,
+                settledAt: now,
+              },
+            })
+          }
+
+          if (duels.length > 0) {
+            await tx.duel.updateMany({
+              where: { id: { in: duels.map((d) => d.id) } },
+              data: { status: 'CANCELLED', settledAt: now },
+            })
+          }
+
+          await this.#teamRepo.deleteInTx(tx, teamId)
+          return { bets, duels }
+        },
+        { isolationLevel: 'Serializable' },
+      ),
+    )
+
+    // Après le commit uniquement : ni remboursement ni annulation ne doit
+    // être annoncé si la suppression a été défaite par un rollback.
+    for (const bet of closed.bets) {
+      const event: BetSettledEvent = {
+        type: 'bet:settled',
+        teamId,
+        betId: bet.id,
+        status: 'EXPIRED',
+        payout: bet.stake,
+        bettorId: bet.bettorId,
+        targetId: bet.targetId,
+      }
+      this.#wsManager.notify(bet.bettorId, event)
+      if (bet.targetId !== bet.bettorId) {
+        this.#wsManager.notify(bet.targetId, event)
+      }
+    }
+    for (const duel of closed.duels) {
+      const event: DuelUpdateEvent = {
+        type: 'duel:update',
+        teamId,
+        duelId: duel.id,
+        status: 'CANCELLED',
+        challengerScore: duel.challengerScore / 2,
+        opponentScore: duel.opponentScore / 2,
+        challengerPulls: duel.challengerPulls,
+        opponentPulls: duel.opponentPulls,
+        pullCount: duel.pullCount,
+      }
+      this.#wsManager.notify(duel.challengerId, event)
+      this.#wsManager.notify(duel.opponentId, event)
+    }
   }
 
   getMyTeams(userId: string): Promise<TeamSummary[]> {

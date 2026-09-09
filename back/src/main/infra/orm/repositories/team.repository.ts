@@ -3,6 +3,7 @@ import type {
   TeamSummary,
   TeamWithMembers,
 } from '../../../types/domain/team/team.types'
+import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type { ITeamRepository } from '../../../types/infra/orm/repositories/team.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
 
@@ -79,7 +80,7 @@ export class TeamRepository implements ITeamRepository {
     }) as unknown as Promise<TeamWithMembers>
   }
 
-  delete(id: string): Promise<void> {
-    return this.#prisma.team.delete({ where: { id } }).then(() => undefined)
+  deleteInTx(tx: PrimaTransactionClient, id: string): Promise<void> {
+    return tx.team.delete({ where: { id } }).then(() => undefined)
   }
 }
