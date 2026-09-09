@@ -347,13 +347,24 @@ export class DuelDomain implements IDuelDomain {
    * joueur est partie. Aucun état de progression n'est stocké — chaque
    * appel relit les tirages depuis GachaPull et recalcule tout, ce qui
    * rend l'opération idempotente et sûre à rejouer.
+   *
+   * Même confinement par duel qu'au chemin de lecture
+   * (`#settleStaleForTeam`) : un duel qui échoue de façon déterministe ne
+   * doit pas faire avorter la boucle et priver de règlement tous les duels
+   * suivants du joueur, à chaque tirage. L'échec est journalisé.
    */
   async settleForUser(userId: string, now: Date = new Date()): Promise<void> {
     const activeDuels = await this.#wagerRepository.listActiveDuelsForUser(
       userId,
     )
     for (const duel of activeDuels) {
-      await this.#settle(duel.id, now)
+      try {
+        await this.#settle(duel.id, now)
+      } catch (err) {
+        this.#logger.error(
+          `Règlement du duel ${duel.id} échoué (joueur ${userId}) : ${err instanceof Error ? err.message : String(err)}`,
+        )
+      }
     }
   }
 

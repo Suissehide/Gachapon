@@ -14,6 +14,7 @@ import type { ICardRepository } from '../../types/infra/orm/repositories/card.re
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { IUserBoostRepository } from '../../types/infra/orm/repositories/user-boost.repository.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
+import type { Logger } from '../../types/utils/logger'
 import type {
   BetWithParties,
   IWagerRepository,
@@ -132,6 +133,7 @@ export class BetDomain implements IBetDomain {
   readonly #userRepository: UserRepositoryInterface
   readonly #postgresOrm: PostgresOrm
   readonly #wsManager: WsManager
+  readonly #logger: Logger
 
   constructor({
     configService,
@@ -144,6 +146,7 @@ export class BetDomain implements IBetDomain {
     userRepository,
     postgresOrm,
     wsManager,
+    logger,
   }: IocContainer) {
     this.#configService = configService
     this.#teamRepository = teamRepository
@@ -155,6 +158,7 @@ export class BetDomain implements IBetDomain {
     this.#userRepository = userRepository
     this.#postgresOrm = postgresOrm
     this.#wsManager = wsManager
+    this.#logger = logger
   }
 
   /**
@@ -308,11 +312,24 @@ export class BetDomain implements IBetDomain {
    * Rien n'est mémorisé d'un appel à l'autre — chaque règlement relit les
    * tirages depuis GachaPull et recalcule le verdict, ce qui rend l'opération
    * rejouable sans risque.
+   *
+   * Chaque pari est isolé dans son propre try/catch, comme sur le chemin de
+   * lecture (`DuelDomain#settleStaleForTeam`) : sans ce confinement, un seul
+   * pari qui échoue de façon déterministe (ligne du parieur supprimée sous le
+   * crédit, par exemple) ferait avorter la boucle et affamerait TOUS les
+   * paris suivants de cette cible, à chaque tirage, indéfiniment. L'échec est
+   * journalisé, jamais avalé en silence.
    */
   async settleForUser(targetId: string, now: Date = new Date()): Promise<void> {
     const bets = await this.#wagerRepository.listActiveBetsForTarget(targetId)
     for (const bet of bets) {
-      await this.#settle(bet.id, now)
+      try {
+        await this.#settle(bet.id, now)
+      } catch (err) {
+        this.#logger.error(
+          `Règlement du pari ${bet.id} échoué (cible ${targetId}) : ${err instanceof Error ? err.message : String(err)}`,
+        )
+      }
     }
   }
 
