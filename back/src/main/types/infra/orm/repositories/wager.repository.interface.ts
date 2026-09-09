@@ -4,7 +4,6 @@ import type {
   CardRarity,
   CardVariant,
   Duel,
-  DuelTransfer,
 } from '../../../../../generated/client'
 import type { PrimaTransactionClient } from '../client'
 
@@ -26,12 +25,13 @@ export type BetWithParties = Bet & {
 }
 
 export interface IWagerRepository {
-  /** Les `take` premiers tirages du joueur postérieurs à `since`, du plus ancien au plus récent, avec la rareté de la carte. */
-  findPullsSince(
-    userId: string,
-    since: Date,
-    take: number,
-  ): Promise<PullWithRarity[]>
+  /**
+   * Les `take` premiers tirages du joueur postérieurs à `since`, du plus
+   * ancien au plus récent, avec la rareté de la carte. Seule version EN
+   * TRANSACTION : c'est ce sous-ensemble qui décide quelles cartes un duel
+   * saisit et quel verdict un pari reçoit, il ne se lit jamais hors du
+   * verrou de sérialisation qui le rend cohérent avec l'écriture qui suit.
+   */
   findPullsSinceInTx(
     tx: PrimaTransactionClient,
     userId: string,
@@ -40,6 +40,17 @@ export interface IWagerRepository {
   ): Promise<PullWithRarity[]>
   /** Duel PENDING ou ACTIVE où le joueur est partie, ou null. Sert au « un duel à la fois ». */
   findOpenDuelForUser(userId: string): Promise<Duel | null>
+  /**
+   * Idem, relu DANS la transaction de `DuelDomain#propose`. Hors
+   * transaction, deux propositions simultanées lisent toutes deux « aucun
+   * duel ouvert » et créent toutes deux : le joueur se retrouve avec deux
+   * duels actifs, et un même tirage tombant dans les deux fenêtres lui est
+   * saisi deux fois pour un seul tirage compté.
+   */
+  findOpenDuelForUserInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+  ): Promise<Duel | null>
   findDuelById(id: string): Promise<DuelWithParties | null>
   listTeamDuels(teamId: string): Promise<DuelWithParties[]>
   listRecentSettledDuels(
@@ -51,13 +62,20 @@ export interface IWagerRepository {
     tx: PrimaTransactionClient,
     userId: string,
   ): Promise<Duel[]>
-  createDuel(data: {
-    teamId: string
-    challengerId: string
-    opponentId: string
-    pullCount: number
-  }): Promise<Duel>
-  listTransfers(duelId: string): Promise<DuelTransfer[]>
+  /**
+   * Création EN TRANSACTION, seule version exposée : elle doit partager la
+   * transaction sérialisable des deux lectures ci-dessus, sans quoi le
+   * plafond « un duel ouvert par joueur » ne tient pas.
+   */
+  createDuelInTx(
+    tx: PrimaTransactionClient,
+    data: {
+      teamId: string
+      challengerId: string
+      opponentId: string
+      pullCount: number
+    },
+  ): Promise<Duel>
   /** Paris de l'équipe, filtrés par statut côté SQL quand `statuses` est fourni. */
   listTeamBets(
     teamId: string,
@@ -84,16 +102,6 @@ export interface IWagerRepository {
     tx: PrimaTransactionClient,
     targetId: string,
   ): Promise<number>
-  createBet(data: {
-    teamId: string
-    bettorId: string
-    targetId: string
-    stake: number
-    minRarity: CardRarity
-    pullWindow: number
-    multiplier: number
-    deadlineAt: Date
-  }): Promise<Bet>
   /** Duels et paris dont l'échéance est passée — alimente le règlement paresseux à la lecture. */
   listStaleForTeam(
     teamId: string,

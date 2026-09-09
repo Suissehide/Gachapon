@@ -1,10 +1,4 @@
-import type {
-  Bet,
-  BetStatus,
-  CardRarity,
-  Duel,
-  DuelTransfer,
-} from '../../../../generated/client'
+import type { Bet, BetStatus, Duel } from '../../../../generated/client'
 import type { IocContainer } from '../../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type {
@@ -24,14 +18,6 @@ export class WagerRepository implements IWagerRepository {
     this.#prisma = postgresOrm.prisma
   }
 
-  findPullsSince(
-    userId: string,
-    since: Date,
-    take: number,
-  ): Promise<PullWithRarity[]> {
-    return findPullsSinceWith(this.#prisma, userId, since, take)
-  }
-
   findPullsSinceInTx(
     tx: PrimaTransactionClient,
     userId: string,
@@ -42,12 +28,14 @@ export class WagerRepository implements IWagerRepository {
   }
 
   findOpenDuelForUser(userId: string): Promise<Duel | null> {
-    return this.#prisma.duel.findFirst({
-      where: {
-        status: { in: ['PENDING', 'ACTIVE'] },
-        OR: [{ challengerId: userId }, { opponentId: userId }],
-      },
-    })
+    return findOpenDuelForUserWith(this.#prisma, userId)
+  }
+
+  findOpenDuelForUserInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+  ): Promise<Duel | null> {
+    return findOpenDuelForUserWith(tx, userId)
   }
 
   findDuelById(id: string): Promise<DuelWithParties | null> {
@@ -97,20 +85,16 @@ export class WagerRepository implements IWagerRepository {
     return listActiveDuelsForUserWith(tx, userId)
   }
 
-  createDuel(data: {
-    teamId: string
-    challengerId: string
-    opponentId: string
-    pullCount: number
-  }): Promise<Duel> {
-    return this.#prisma.duel.create({ data })
-  }
-
-  listTransfers(duelId: string): Promise<DuelTransfer[]> {
-    return this.#prisma.duelTransfer.findMany({
-      where: { duelId },
-      orderBy: { createdAt: 'asc' },
-    })
+  createDuelInTx(
+    tx: PrimaTransactionClient,
+    data: {
+      teamId: string
+      challengerId: string
+      opponentId: string
+      pullCount: number
+    },
+  ): Promise<Duel> {
+    return tx.duel.create({ data })
   }
 
   listTeamBets(
@@ -168,19 +152,6 @@ export class WagerRepository implements IWagerRepository {
     return tx.bet.count({ where: { targetId, status: 'ACTIVE' } })
   }
 
-  createBet(data: {
-    teamId: string
-    bettorId: string
-    targetId: string
-    stake: number
-    minRarity: CardRarity
-    pullWindow: number
-    multiplier: number
-    deadlineAt: Date
-  }): Promise<Bet> {
-    return this.#prisma.bet.create({ data })
-  }
-
   // Le repository n'a pas accès à la config (délai d'acceptation d'un duel
   // PENDING) : il ne renvoie donc que ce qui est objectivement périmé, à
   // savoir les duels ACTIVE et paris ACTIVE dont `deadlineAt` est dépassée.
@@ -205,6 +176,18 @@ export class WagerRepository implements IWagerRepository {
       betIds: staleBets.map((b) => b.id),
     }
   }
+}
+
+function findOpenDuelForUserWith(
+  client: PostgresPrismaClient | PrimaTransactionClient,
+  userId: string,
+): Promise<Duel | null> {
+  return client.duel.findFirst({
+    where: {
+      status: { in: ['PENDING', 'ACTIVE'] },
+      OR: [{ challengerId: userId }, { opponentId: userId }],
+    },
+  })
 }
 
 function listActiveDuelsForUserWith(

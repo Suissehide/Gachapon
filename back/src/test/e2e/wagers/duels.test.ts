@@ -266,6 +266,92 @@ describe('cycle de vie du duel', () => {
     expect(row.status).toBe('DECLINED')
   })
 
+  it('deux propositions simultanees sur les memes joueurs : une seule ligne creee', async () => {
+    // Lues hors transaction, les deux verifications « un seul duel ouvert »
+    // voient toutes deux « aucun duel » et les deux insertions passent : le
+    // joueur se retrouve avec deux duels actifs, et un seul tirage tombant
+    // dans les deux fenetres lui est saisi DEUX fois.
+    const fire = () =>
+      app.inject({
+        method: 'POST',
+        url: `/teams/${teamId}/duels`,
+        headers: { cookie: cookiesA },
+        payload: { opponentId: userIdB },
+      })
+    const [first, second] = await Promise.all([fire(), fire()])
+    const codes = [first.statusCode, second.statusCode].sort()
+    expect(codes).toEqual([201, 409])
+
+    const open = await prisma.duel.findMany({
+      where: {
+        teamId,
+        status: { in: ['PENDING', 'ACTIVE'] },
+        OR: [{ challengerId: userIdA }, { opponentId: userIdA }],
+      },
+    })
+    expect(open).toHaveLength(1)
+
+    // On libere A et B pour la suite du fichier.
+    await prisma.duel.update({
+      where: { id: open[0].id },
+      data: { status: 'CANCELLED' },
+    })
+  })
+
+  it("accept, decline et cancel re-verifient le statut A L'ECRITURE, pas seulement a la lecture", async () => {
+    // Les trois commandes lisent le duel, verifient qu'il est PENDING, puis
+    // ecrivent — trois instructions non serialisees. On force ici
+    // l'entrelacement naturel (le defieur annule pendant que l'adversaire
+    // accepte) en faisant passer la ligne a CANCELLED juste APRES la
+    // lecture. Sans le `where: { status: 'PENDING' }` de l'ecriture, un duel
+    // annule repasserait ACTIVE — verrouillant les cartes des deux joueurs
+    // et saisissant celles du perdant.
+    const { wagerRepository } = (app as any).iocContainer
+    const originalFind = wagerRepository.findDuelById.bind(wagerRepository)
+
+    const cases = [
+      { action: 'accept', cookie: () => cookiesB },
+      { action: 'decline', cookie: () => cookiesB },
+      { action: 'cancel', cookie: () => cookiesA },
+    ]
+    for (const testCase of cases) {
+      const propose = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamId}/duels`,
+        headers: { cookie: cookiesA },
+        payload: { opponentId: userIdB },
+      })
+      expect(propose.statusCode).toBe(201)
+      const duelId = propose.json().id as string
+
+      let flipped = false
+      wagerRepository.findDuelById = async (id: string) => {
+        const duel = await originalFind(id)
+        if (id === duelId && !flipped) {
+          flipped = true
+          await prisma.duel.update({
+            where: { id },
+            data: { status: 'CANCELLED' },
+          })
+        }
+        return duel
+      }
+      try {
+        const res = await app.inject({
+          method: 'POST',
+          url: `/teams/${teamId}/duels/${duelId}/${testCase.action}`,
+          headers: { cookie: testCase.cookie() },
+        })
+        expect(res.statusCode).toBe(409)
+        const row = await prisma.duel.findUnique({ where: { id: duelId } })
+        expect(row.status).toBe('CANCELLED')
+        expect(row.acceptedAt).toBeNull()
+      } finally {
+        wagerRepository.findDuelById = originalFind
+      }
+    }
+  })
+
   let duel2Id: string
 
   it('POST /teams/:id/duels : nouveau duel A vs B, puis annule par A -> CANCELLED', async () => {
@@ -825,6 +911,14 @@ describe('cycle de vie du duel', () => {
         },
       })
 
+      // Et la meme carte est dans l'equipe de combat de D : perdre un duel
+      // ne doit pas y laisser une reference morte, que la lecture d'equipe
+      // filtre ensuite en silence.
+      await prisma.user.update({
+        where: { id: userIdD },
+        data: { combatTeam: [dCard.id] },
+      })
+
       // E ne tire que du LEGENDARY : score largement superieur, D perd et
       // sa derniere copie de la carte equipee est transferee (et
       // supprimee).
@@ -861,6 +955,12 @@ describe('cycle de vie du duel', () => {
       })
       expect(equipmentAfter).not.toBeNull()
       expect(equipmentAfter?.equippedOnId).toBeNull()
+
+      // L'identifiant a quitte l'equipe de combat du perdant, dans la meme
+      // transaction que la suppression : pas de reference morte.
+      const dAfter = await prisma.user.findUnique({ where: { id: userIdD } })
+      expect(dAfter.combatTeam).not.toContain(dCard.id)
+      expect(dAfter.combatTeam).toHaveLength(0)
     })
   })
 

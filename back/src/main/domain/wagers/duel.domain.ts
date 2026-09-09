@@ -1,6 +1,10 @@
 import Boom from '@hapi/boom'
 
-import type { CardVariant } from '../../../generated/client'
+import type {
+  CardVariant,
+  Duel,
+  DuelStatus,
+} from '../../../generated/client'
 import type { IocContainer } from '../../types/application/ioc'
 import type {
   DuelView,
@@ -109,25 +113,46 @@ export class DuelDomain implements IDuelDomain {
       throw Boom.badRequest("Cet adversaire ne fait pas partie de l'équipe")
     }
 
-    const [challengerOpen, opponentOpen] = await Promise.all([
-      this.#wagerRepository.findOpenDuelForUser(challengerId),
-      this.#wagerRepository.findOpenDuelForUser(opponentId),
-    ])
-    if (challengerOpen) {
-      throw Boom.conflict('Tu as déjà un duel en cours')
-    }
-    if (opponentOpen) {
-      const opponentName = opponentMember.user?.username ?? 'Ce joueur'
-      throw Boom.conflict(`${opponentName} a déjà un duel en cours`)
-    }
+    const opponentName = opponentMember.user?.username ?? 'Ce joueur'
 
+    // Config lue AVANT la transaction sérialisable : aucune I/O async
+    // supplémentaire ne doit s'y glisser.
     const cfg = await this.#configService.getMany('duel.pullCount')
-    const duel = await this.#wagerRepository.createDuel({
-      teamId,
-      challengerId,
-      opponentId,
-      pullCount: cfg['duel.pullCount'],
-    })
+
+    const duel = await retryOnSerialization<Duel>(() =>
+      this.#postgresOrm.executeWithTransactionClient(
+        async (tx) => {
+          // Les deux plafonds « un seul duel ouvert » sont relus ICI, pas
+          // avant : hors transaction, deux propositions simultanées lisent
+          // toutes deux « aucun duel ouvert » et créent toutes deux, laissant
+          // un joueur avec deux duels actifs — et un seul tirage tombant dans
+          // les deux fenêtres lui serait alors saisi DEUX fois. Sous
+          // Serializable ces lectures sont des prédicats que l'insertion qui
+          // suit contredit : la seconde transaction échoue en P2034,
+          // `retryOnSerialization` la rejoue, et elle voit alors le duel
+          // adverse. Même motif que `BetDomain#place`.
+          const [challengerOpen, opponentOpen] = await Promise.all([
+            this.#wagerRepository.findOpenDuelForUserInTx(tx, challengerId),
+            this.#wagerRepository.findOpenDuelForUserInTx(tx, opponentId),
+          ])
+          if (challengerOpen) {
+            throw Boom.conflict('Tu as déjà un duel en cours')
+          }
+          if (opponentOpen) {
+            throw Boom.conflict(`${opponentName} a déjà un duel en cours`)
+          }
+
+          return this.#wagerRepository.createDuelInTx(tx, {
+            teamId,
+            challengerId,
+            opponentId,
+            pullCount: cfg['duel.pullCount'],
+          })
+        },
+        { isolationLevel: 'Serializable' },
+      ),
+    )
+
     const full = await this.#wagerRepository.findDuelById(duel.id)
     if (!full) {
       throw Boom.badImplementation('Duel introuvable juste après sa création')
@@ -156,6 +181,13 @@ export class DuelDomain implements IDuelDomain {
    * Seul l'adversaire peut accepter, uniquement tant que le duel est
    * PENDING et dans le délai d'acceptation — au-delà, le duel est marché
    * EXPIRED plutôt que silencieusement refusé.
+   *
+   * Le contrôle `PENDING` est fait DEUX fois : une fois à la lecture pour
+   * répondre proprement au cas courant, une seconde fois dans le `where` de
+   * l'écriture (voir `#writeIfPending`). Sans cette seconde, une annulation
+   * du défieur concurrente d'une acceptation laisserait, selon
+   * l'entrelacement, un duel annulé passer ACTIVE — verrouillant les cartes
+   * des deux joueurs et saisissant celles du perdant.
    */
   async accept(
     teamId: string,
@@ -180,17 +212,22 @@ export class DuelDomain implements IDuelDomain {
     const acceptDeadline =
       duel.createdAt.getTime() + cfg['duel.acceptHours'] * HOUR_MS
     if (now.getTime() > acceptDeadline) {
-      await this.#postgresOrm.prisma.duel.update({
-        where: { id: duel.id },
+      // Conditionnel lui aussi : un duel qui vient d'être annulé ou refusé
+      // ne doit pas être réécrit EXPIRED par-dessus.
+      await this.#postgresOrm.prisma.duel.updateMany({
+        where: { id: duel.id, status: 'PENDING' },
         data: { status: 'EXPIRED' },
       })
-      throw Boom.conflict("Le délai pour accepter ce duel est dépassé")
+      throw Boom.conflict('Le délai pour accepter ce duel est dépassé')
     }
 
-    const deadlineAt = new Date(now.getTime() + cfg['duel.deadlineHours'] * HOUR_MS)
-    await this.#postgresOrm.prisma.duel.update({
-      where: { id: duel.id },
-      data: { status: 'ACTIVE', acceptedAt: now, deadlineAt },
+    const deadlineAt = new Date(
+      now.getTime() + cfg['duel.deadlineHours'] * HOUR_MS,
+    )
+    await this.#writeIfPending(duel.id, {
+      status: 'ACTIVE',
+      acceptedAt: now,
+      deadlineAt,
     })
     const updated = await this.#wagerRepository.findDuelById(duel.id)
     if (!updated) {
@@ -227,10 +264,7 @@ export class DuelDomain implements IDuelDomain {
       throw Boom.conflict("Ce duel n'est plus en attente d'acceptation")
     }
 
-    await this.#postgresOrm.prisma.duel.update({
-      where: { id: duel.id },
-      data: { status: 'DECLINED' },
-    })
+    await this.#writeIfPending(duel.id, { status: 'DECLINED' })
     const updated = await this.#wagerRepository.findDuelById(duel.id)
     if (!updated) {
       throw Boom.badImplementation('Duel introuvable juste après refus')
@@ -250,10 +284,7 @@ export class DuelDomain implements IDuelDomain {
       throw Boom.conflict("Ce duel n'est plus en attente d'acceptation")
     }
 
-    await this.#postgresOrm.prisma.duel.update({
-      where: { id: duel.id },
-      data: { status: 'CANCELLED' },
-    })
+    await this.#writeIfPending(duel.id, { status: 'CANCELLED' })
     const updated = await this.#wagerRepository.findDuelById(duel.id)
     if (!updated) {
       throw Boom.badImplementation('Duel introuvable juste après annulation')
@@ -323,6 +354,14 @@ export class DuelDomain implements IDuelDomain {
       this.#postgresOrm.prisma,
       userId,
     )
+    // La variante est DÉLIBÉRÉMENT retirée ici. Le verrou, lui, porte bien
+    // sur la paire `${cardId}:${variant}` (voir `assertCardNotEngagedInTx`) :
+    // c'est seulement le badge de la collection qui retombe sur la carte,
+    // donc qui signale « engagée » sur les trois variantes alors qu'une
+    // seule l'est. Choix assumé — le badge est un avertissement AVANT
+    // tentative, et un avertissement trop large fait perdre un clic là où un
+    // avertissement manquant fait perdre une action. Rendre le badge exact
+    // demanderait de porter la variante jusqu'à l'API et la vue collection.
     const engagedCardIds = [
       ...new Set(
         [...engagedKeys].map((key) => key.slice(0, key.indexOf(':'))),
@@ -413,6 +452,40 @@ export class DuelDomain implements IDuelDomain {
     const engagedKeys = await this.listEngagedCardKeysInTx(tx, userId)
     if (engagedKeys.has(`${cardId}:${variant}`)) {
       throw Boom.conflict('Carte engagée dans un duel en cours')
+    }
+  }
+
+  /**
+   * Écriture CONDITIONNELLE : la ligne n'est touchée que si elle est encore
+   * PENDING au moment du `UPDATE`, et le perdant de la course reçoit un
+   * conflit explicite plutôt qu'un succès silencieux.
+   *
+   * `accept`, `decline` et `cancel` lisent le duel, vérifient son statut,
+   * puis écrivent — trois instructions non sérialisées. La course n'a rien
+   * d'adversarial : le défieur annule pendant que l'adversaire accepte.
+   * Selon l'entrelacement, un duel annulé passait ACTIVE (verrouillant les
+   * cartes des deux joueurs, puis saisissant celles du perdant), ou une
+   * acceptation répondait 200 avant de s'évaporer. Deux acceptations
+   * concurrentes réussissaient toutes les deux, la seconde réécrivant
+   * `acceptedAt` — donc changeant quelles cartes sont comptées et
+   * saisissables.
+   */
+  async #writeIfPending(
+    duelId: string,
+    data: {
+      status: DuelStatus
+      acceptedAt?: Date
+      deadlineAt?: Date
+    },
+  ): Promise<void> {
+    const { count } = await this.#postgresOrm.prisma.duel.updateMany({
+      where: { id: duelId, status: 'PENDING' },
+      data,
+    })
+    if (count === 0) {
+      throw Boom.conflict(
+        "Trop tard : ce duel n'est plus en attente d'acceptation",
+      )
     }
   }
 
@@ -648,6 +721,13 @@ export class DuelDomain implements IDuelDomain {
         data: { equippedOnId: null },
       })
       await tx.userCard.delete({ where: { id: owned.id } })
+      // ...et on retire l'identifiant de l'équipe de combat, DANS la même
+      // transaction. Le tableau `combatTeam` porte des identifiants de
+      // UserCard : sans ce nettoyage il garde une référence morte, que la
+      // lecture d'équipe filtre en silence — l'équipe du perdant rétrécit
+      // sans qu'il en soit prévenu. Le recyclage a la même propriété, mais
+      // il est volontaire ; perdre un duel ne l'est pas.
+      await this.#pruneFromCombatTeam(tx, loserId, owned.id)
     }
 
     await this.#userCardRepository.upsertInTx(
@@ -657,6 +737,12 @@ export class DuelDomain implements IDuelDomain {
       pull.variant,
     )
 
+    // Trace d'audit. AUCUN code ne relit `DuelTransfer` aujourd'hui — c'est
+    // voulu, et ce n'est pas une raison de supprimer l'écriture : un
+    // transfert de cartes est définitif, et sans cette ligne il ne reste
+    // aucune trace de QUELLE carte est passée de qui à qui (le duel ne garde
+    // qu'un vainqueur et un compte). C'est ce qui permet de répondre à une
+    // réclamation ou de défaire un règlement fautif.
     await tx.duelTransfer.create({
       data: {
         duelId,
@@ -668,6 +754,30 @@ export class DuelDomain implements IDuelDomain {
     })
 
     return true
+  }
+
+  /**
+   * Retire un UserCard supprimé de l'équipe de combat de son ancien
+   * propriétaire. Lecture puis réécriture du tableau complet : Postgres ne
+   * sait pas retirer un élément d'un `text[]` par valeur via Prisma, et on
+   * est déjà dans la transaction du transfert.
+   */
+  async #pruneFromCombatTeam(
+    tx: PrimaTransactionClient,
+    userId: string,
+    userCardId: string,
+  ): Promise<void> {
+    const user = await tx.user.findUnique({
+      where: { id: userId },
+      select: { combatTeam: true },
+    })
+    if (!user || !user.combatTeam.includes(userCardId)) {
+      return
+    }
+    await tx.user.update({
+      where: { id: userId },
+      data: { combatTeam: user.combatTeam.filter((id) => id !== userCardId) },
+    })
   }
 
   async #requireMembership(
