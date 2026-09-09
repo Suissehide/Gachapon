@@ -28,9 +28,6 @@ export function applyTeamXp(
   cfg: { xpBase: number; xpExp: number; maxLevel: number },
 ): { level: number; xp: number; perkPointsGained: number } {
   let { level, xp } = state
-  if (level >= cfg.maxLevel) {
-    return { level: cfg.maxLevel, xp: 0, perkPointsGained: 0 }
-  }
   xp += gained
   let perkPointsGained = 0
   let need = xpForTeamLevel(level, cfg.xpBase, cfg.xpExp)
@@ -40,6 +37,11 @@ export function applyTeamXp(
     perkPointsGained += 1
     need = xpForTeamLevel(level, cfg.xpBase, cfg.xpExp)
   }
+  // Seule garde nécessaire, et elle couvre deux cas d'un coup : l'équipe qui
+  // vient d'atteindre le plafond dans la boucle, et celle qui y était déjà en
+  // entrant — la condition `level < cfg.maxLevel` de la boucle l'empêche alors
+  // de tourner, quel que soit le gain. Elle ramène aussi un `state.level`
+  // aberrant, supérieur au plafond, à la valeur du plafond.
   if (level >= cfg.maxLevel) {
     return { level: cfg.maxLevel, xp: 0, perkPointsGained }
   }

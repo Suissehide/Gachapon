@@ -84,3 +84,31 @@ describe('roleLabel', () => {
     expect(roleLabel('MEMBER', days(7), now, 7)).toBe('Membre')
   })
 })
+
+describe('hueFromName', () => {
+  // La tache 7 s'en sert comme repli garanti pour toute equipe sans `hue`
+  // explicite en base : la teinte doit donc etre TOUJOURS valide et TOUJOURS
+  // la meme pour un nom donne, sinon l'embleme changerait de couleur d'un
+  // rendu a l'autre.
+  it('reste dans la plage exploitable par hsl(), bornes comprises', () => {
+    const noms = ['', 'A', 'DeepLabCut', 'Nuit Blanche', 'Équipe 🐙', 'z'.repeat(200)]
+    for (const nom of noms) {
+      const hue = hueFromName(nom)
+      expect(Number.isInteger(hue)).toBe(true)
+      expect(hue).toBeGreaterThanOrEqual(0)
+      expect(hue).toBeLessThan(360)
+    }
+  })
+
+  it('est deterministe : deux appels sur le meme nom donnent la meme teinte', () => {
+    expect(hueFromName('DeepLabCut')).toBe(hueFromName('DeepLabCut'))
+  })
+
+  it('distingue deux noms proches', () => {
+    expect(hueFromName('DeepLabCut')).not.toBe(hueFromName('DeepLabCue'))
+  })
+
+  it('accepte une chaine vide sans exploser', () => {
+    expect(hueFromName('')).toBe(0)
+  })
+})
