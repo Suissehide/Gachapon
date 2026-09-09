@@ -35,6 +35,30 @@ type WsEvent =
       damage: number
       killed: boolean
     }
+  | {
+      type: 'duel:proposed'
+      teamId: string
+      duelId: string
+      challenger: { id: string; username: string }
+    }
+  | {
+      type: 'duel:update'
+      teamId: string
+      duelId: string
+      status: string
+      challengerScore: number
+      opponentScore: number
+      challengerPulls: number
+      opponentPulls: number
+      pullCount: number
+    }
+  | {
+      type: 'duel:settled'
+      teamId: string
+      duelId: string
+      winnerId: string | null
+      transferredCount: number
+    }
   | { type: 'error'; message: string }
   | {
       type: 'admin:activity'
