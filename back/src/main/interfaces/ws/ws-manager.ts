@@ -109,6 +109,16 @@ export type BetPlacedEvent = {
   pullWindow: number
 }
 
+export type BetSettledEvent = {
+  type: 'bet:settled'
+  teamId: string
+  betId: string
+  status: 'WON' | 'LOST' | 'EXPIRED'
+  payout: number
+  bettorId: string
+  targetId: string
+}
+
 type WsEvent =
   | PullResultEvent
   | PullBatchResultEvent
@@ -119,6 +129,7 @@ type WsEvent =
   | DuelUpdateEvent
   | DuelSettledEvent
   | BetPlacedEvent
+  | BetSettledEvent
 
 export class WsManager {
   readonly #connections = new Map<string, WebSocket>()

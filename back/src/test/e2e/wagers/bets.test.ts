@@ -942,4 +942,431 @@ describe('cote et placement du pari', () => {
     expect(settled.status).toBe('LOST')
     expect(settled.bettor.id).toBe(userIdA)
   })
+
+  // ---------------------------------------------------------------------
+  // Reglement (tache 11)
+  // ---------------------------------------------------------------------
+  describe('reglement du pari', () => {
+    let rareSetId: string
+    let commonSetId: string
+    let rareCardId: string
+    let wonBetId: string
+
+    // Deactive tous les CardSet puis n'active que celui donne. Le catalogue
+    // est un etat partage entre fichiers e2e : l'afterAll du describe parent
+    // restaure le snapshot pris avant ce fichier.
+    async function activateOnly(setId: string) {
+      await prisma.cardSet.updateMany({ data: { isActive: false } })
+      await prisma.cardSet.update({
+        where: { id: setId },
+        data: { isActive: true },
+      })
+    }
+
+    // Le declenchement au tirage est fire-and-forget (`void betDomain
+    // .settleForUser(...).catch(...)`) : la reponse HTTP du tirage revient
+    // avant que le reglement n'ait forcement fini. On sonde donc la ligne.
+    async function waitForBetStatus(
+      betId: string,
+      status: string,
+      timeoutMs = 5000,
+    ) {
+      const start = Date.now()
+      while (Date.now() - start < timeoutMs) {
+        const row = await prisma.bet.findUnique({ where: { id: betId } })
+        if (row?.status === status) {
+          return row
+        }
+        await new Promise((r) => setTimeout(r, 25))
+      }
+      throw new Error(
+        `Timeout: le pari ${betId} n'a pas atteint le statut ${status}`,
+      )
+    }
+
+    // Meme raison que waitForBetStatus, pour un pari qui n'est PAS encore
+    // tranche : c'est `pullsSeen` qui bouge, pas le statut.
+    async function waitForPullsSeen(
+      betId: string,
+      pullsSeen: number,
+      timeoutMs = 5000,
+    ) {
+      const start = Date.now()
+      while (Date.now() - start < timeoutMs) {
+        const row = await prisma.bet.findUnique({ where: { id: betId } })
+        if (row?.pullsSeen === pullsSeen) {
+          return row
+        }
+        await new Promise((r) => setTimeout(r, 25))
+      }
+      throw new Error(
+        `Timeout: le pari ${betId} n'a pas atteint ${pullsSeen} tirages vus`,
+      )
+    }
+
+    async function wagersOf(cookie: string) {
+      const res = await app.inject({
+        method: 'GET',
+        url: `/teams/${teamId}/wagers`,
+        headers: { cookie },
+      })
+      expect(res.statusCode).toBe(200)
+      return res.json()
+    }
+
+    function dustOf(userId: string): Promise<number> {
+      return prisma.user
+        .findUnique({ where: { id: userId } })
+        .then((u: { dust: number }) => u.dust)
+    }
+
+    beforeAll(async () => {
+      // Les paris ACTIVE laisses par les tests de plafond saturent le
+      // plafond de B et seraient regles par ses tirages : on repart d'une
+      // table vide pour cette equipe.
+      await prisma.bet.deleteMany({ where: { teamId } })
+
+      const rareSet = await prisma.cardSet.create({
+        data: { name: `BetRareOnly${suffix}`, isActive: false },
+      })
+      const rareCard = await prisma.card.create({
+        data: {
+          name: `BetRareOnlyCard${suffix}`,
+          rarity: 'RARE',
+          dropWeight: 10,
+          setId: rareSet.id,
+        },
+      })
+      rareSetId = rareSet.id
+      rareCardId = rareCard.id
+
+      const commonSet = await prisma.cardSet.create({
+        data: { name: `BetCommonOnly${suffix}`, isActive: false },
+      })
+      await prisma.card.create({
+        data: {
+          name: `BetCommonOnlyCard${suffix}`,
+          rarity: 'COMMON',
+          dropWeight: 10,
+          setId: commonSet.id,
+        },
+      })
+      commonSetId = commonSet.id
+
+      await activateOnly(betSetId)
+    })
+
+    afterAll(async () => {
+      await activateOnly(betSetId)
+    })
+
+    it('pari RARE sur B : une RARE des le premier tirage -> WON, A creditee de round(mise x cote) MISE COMPRISE', async () => {
+      // La cote est figee sur le catalogue de controle (1,38) : c'est ce qui
+      // rend le paiement discernable a la fois de la mise seule (200) et du
+      // seul benefice (76).
+      await activateOnly(betSetId)
+      await prisma.user.update({ where: { id: userIdA }, data: { dust: 5000 } })
+
+      const stake = 200
+      const placed = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamId}/bets`,
+        headers: { cookie: cookiesA },
+        payload: { targetId: userIdB, minRarity: 'RARE', stake },
+      })
+      expect(placed.statusCode).toBe(201)
+      wonBetId = placed.json().id
+      expect(placed.json().multiplier).toBe(EXPECTED_MULTIPLIER)
+
+      const dustAfterPlacement = await dustOf(userIdA)
+      expect(dustAfterPlacement).toBe(5000 - stake)
+
+      // Catalogue 100 % RARE : le premier tirage de B gagne le pari.
+      await activateOnly(rareSetId)
+      await prisma.user.update({
+        where: { id: userIdB },
+        data: { tokens: 20, lastTokenAt: new Date() },
+      })
+      const pull = await app.inject({
+        method: 'POST',
+        url: '/pulls',
+        headers: { cookie: cookiesB },
+      })
+      expect(pull.statusCode).toBe(201)
+      expect(pull.json().card.rarity).toBe('RARE')
+
+      const row = await waitForBetStatus(wonBetId, 'WON')
+      const expectedPayout = Math.round(stake * EXPECTED_MULTIPLIER)
+      // Verrou explicite : round(200 x 1,38) = 276, mise comprise.
+      expect(expectedPayout).toBe(276)
+      expect(row.payout).toBe(expectedPayout)
+      expect(row.pullsSeen).toBe(1)
+      expect(row.settledAt).not.toBeNull()
+
+      const dustAfterSettle = await dustOf(userIdA)
+      expect(dustAfterSettle).toBe(dustAfterPlacement + expectedPayout)
+      // Ce n'est ni le seul benefice (76), ni un simple remboursement (200).
+      expect(dustAfterSettle - dustAfterPlacement).toBe(276)
+
+      // Assertion sur la REPONSE HTTP : le provider Zod retire du JSON toute
+      // cle absente du schema, un controle sur la valeur de retour du
+      // domaine ne verrait pas cette perte.
+      const body = await wagersOf(cookiesA)
+      const view = body.settledBets.find((b: any) => b.id === wonBetId)
+      expect(view).toBeDefined()
+      expect(view.status).toBe('WON')
+      expect(view.payout).toBe(expectedPayout)
+      expect(view.pullsSeen).toBe(1)
+      expect(view.settledAt).not.toBeNull()
+      expect(view.myRole).toBe('BETTOR')
+      expect(body.bets.some((b: any) => b.id === wonBetId)).toBe(false)
+    })
+
+    it('pari LEGENDARY : B fait ses 10 tirages sans legendaire -> LOST, la poussiere de A ne bouge plus', async () => {
+      await activateOnly(betSetId)
+      await prisma.user.update({ where: { id: userIdA }, data: { dust: 5000 } })
+
+      const stake = 200
+      const placed = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamId}/bets`,
+        headers: { cookie: cookiesA },
+        payload: { targetId: userIdB, minRarity: 'LEGENDARY', stake },
+      })
+      expect(placed.statusCode).toBe(201)
+      const betId = placed.json().id
+      expect(placed.json().multiplier).toBe(LEGENDARY_MULTIPLIER)
+
+      // La mise est deja debitee au placement : c'est CE solde qui ne doit
+      // plus bouger d'un point une fois le pari perdu.
+      const dustAfterPlacement = await dustOf(userIdA)
+      expect(dustAfterPlacement).toBe(5000 - stake)
+
+      await activateOnly(commonSetId)
+      await prisma.user.update({
+        where: { id: userIdB },
+        data: { tokens: 30, lastTokenAt: new Date() },
+      })
+      for (let i = 0; i < PULL_WINDOW; i++) {
+        const res = await app.inject({
+          method: 'POST',
+          url: '/pulls',
+          headers: { cookie: cookiesB },
+        })
+        expect(res.statusCode).toBe(201)
+        expect(res.json().card.rarity).toBe('COMMON')
+      }
+
+      const row = await waitForBetStatus(betId, 'LOST')
+      expect(row.payout).toBe(0)
+      expect(row.pullsSeen).toBe(PULL_WINDOW)
+      expect(row.settledAt).not.toBeNull()
+      expect(await dustOf(userIdA)).toBe(dustAfterPlacement)
+
+      const body = await wagersOf(cookiesA)
+      const view = body.settledBets.find((b: any) => b.id === betId)
+      expect(view).toBeDefined()
+      expect(view.status).toBe('LOST')
+      expect(view.payout).toBe(0)
+    })
+
+    it("verdict encore indecidable : la ligne est ECRITE quand meme (pullsSeen), sans rien trancher ni crediter", async () => {
+      // TOUTE branche du reglement reecrit la ligne Bet, y compris celle ou
+      // le verdict est indecidable. C'est cette ecriture systematique qui,
+      // sous isolation Serializable, met deux reglements concurrents du meme
+      // pari en conflit — et donc qui donne sa portee a la relecture du
+      // statut en tete de transaction. La supprimer retirerait ce verrou en
+      // silence : ce test la rend observable.
+      await activateOnly(betSetId)
+      await prisma.user.update({ where: { id: userIdA }, data: { dust: 5000 } })
+
+      const stake = 200
+      const placed = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamId}/bets`,
+        headers: { cookie: cookiesA },
+        payload: { targetId: userIdB, minRarity: 'RARE', stake },
+      })
+      expect(placed.statusCode).toBe(201)
+      const betId = placed.json().id
+      const dustAfterPlacement = await dustOf(userIdA)
+
+      // 3 COMMON sur une fenetre de 10 : ni succes, ni fenetre epuisee, ni
+      // echeance atteinte.
+      await activateOnly(commonSetId)
+      await prisma.user.update({
+        where: { id: userIdB },
+        data: { tokens: 10, lastTokenAt: new Date() },
+      })
+      for (let i = 0; i < 3; i++) {
+        const res = await app.inject({
+          method: 'POST',
+          url: '/pulls',
+          headers: { cookie: cookiesB },
+        })
+        expect(res.statusCode).toBe(201)
+      }
+
+      const row = await waitForPullsSeen(betId, 3)
+      expect(row.status).toBe('ACTIVE')
+      expect(row.payout).toBe(0)
+      expect(row.settledAt).toBeNull()
+      expect(await dustOf(userIdA)).toBe(dustAfterPlacement)
+
+      const body = await wagersOf(cookiesA)
+      const view = body.bets.find((b: any) => b.id === betId)
+      expect(view).toBeDefined()
+      expect(view.status).toBe('ACTIVE')
+      expect(view.pullsSeen).toBe(3)
+    })
+
+    it('rejouer le reglement sur un pari deja regle ne recredite rien', async () => {
+      const { betDomain } = (app as any).iocContainer
+      const before = await prisma.bet.findUnique({ where: { id: wonBetId } })
+      const dustBefore = await dustOf(userIdA)
+
+      // `settleBet` entre DANS la transaction sans passer par le filtre
+      // `status: ACTIVE` du repository : seule la relecture du statut a
+      // l'interieur de la transaction peut alors empecher un second credit.
+      // Passer uniquement par `settleForUser` testerait le filtre SQL, pas
+      // le garde-fou d'idempotence.
+      await betDomain.settleBet(wonBetId)
+      await betDomain.settleForUser(userIdB)
+
+      expect(await dustOf(userIdA)).toBe(dustBefore)
+      const after = await prisma.bet.findUnique({ where: { id: wonBetId } })
+      expect(after.status).toBe('WON')
+      expect(after.payout).toBe(before.payout)
+      expect(after.settledAt.getTime()).toBe(before.settledAt.getTime())
+    })
+
+    it('deux reglements concurrents du meme pari ne creditent qu\'une fois', async () => {
+      const { betDomain } = (app as any).iocContainer
+      await activateOnly(betSetId)
+      await prisma.user.update({ where: { id: userIdA }, data: { dust: 5000 } })
+
+      const stake = 200
+      const placed = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamId}/bets`,
+        headers: { cookie: cookiesA },
+        payload: { targetId: userIdB, minRarity: 'RARE', stake },
+      })
+      expect(placed.statusCode).toBe(201)
+      const betId = placed.json().id
+
+      // Tirage insere DIRECTEMENT en base : il ne passe pas par la route,
+      // donc aucun reglement automatique ne vient decider avant nous.
+      await prisma.gachaPull.create({
+        data: {
+          userId: userIdB,
+          cardId: rareCardId,
+          variant: 'NORMAL',
+          pulledAt: new Date(Date.now() + 1000),
+        },
+      })
+
+      const dustBefore = await dustOf(userIdA)
+      await Promise.all([
+        betDomain.settleBet(betId),
+        betDomain.settleBet(betId),
+        betDomain.settleBet(betId),
+      ])
+
+      const row = await prisma.bet.findUnique({ where: { id: betId } })
+      expect(row.status).toBe('WON')
+      expect(await dustOf(userIdA)).toBe(dustBefore + row.payout)
+      expect(row.payout).toBe(Math.round(stake * EXPECTED_MULTIPLIER))
+    })
+
+    it('echeance depassee et cible inactive : la LECTURE de GET /teams/:id/wagers passe le pari EXPIRED et REMBOURSE la mise', async () => {
+      await activateOnly(betSetId)
+      await prisma.user.update({ where: { id: userIdA }, data: { dust: 5000 } })
+
+      const stake = 300
+      const placed = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamId}/bets`,
+        headers: { cookie: cookiesA },
+        // D est un compte sans session HTTP : il ne tirera jamais.
+        payload: { targetId: userIdD, minRarity: 'RARE', stake },
+      })
+      expect(placed.statusCode).toBe(201)
+      const betId = placed.json().id
+      const dustAfterPlacement = await dustOf(userIdA)
+      expect(dustAfterPlacement).toBe(5000 - stake)
+
+      await prisma.bet.update({
+        where: { id: betId },
+        data: { deadlineAt: new Date(Date.now() - 60 * 1000) },
+      })
+
+      // Aucun tirage ne se produira : sans reglement paresseux a la lecture,
+      // ce pari resterait ACTIVE pour toujours et la mise serait perdue.
+      const body = await wagersOf(cookiesA)
+      const view = body.settledBets.find((b: any) => b.id === betId)
+      expect(view).toBeDefined()
+      expect(view.status).toBe('EXPIRED')
+      expect(view.settledAt).not.toBeNull()
+      // Un pari expire ne doit pas disparaitre de la vue : le joueur doit
+      // pouvoir constater son remboursement.
+      expect(body.bets.some((b: any) => b.id === betId)).toBe(false)
+
+      expect(await dustOf(userIdA)).toBe(dustAfterPlacement + stake)
+      const row = await prisma.bet.findUnique({ where: { id: betId } })
+      expect(row.status).toBe('EXPIRED')
+      expect(row.pullsSeen).toBe(0)
+
+      // Une seconde lecture ne rembourse pas deux fois, et le pari reste
+      // visible.
+      const again = await wagersOf(cookiesA)
+      expect(
+        again.settledBets.some(
+          (b: any) => b.id === betId && b.status === 'EXPIRED',
+        ),
+      ).toBe(true)
+      expect(await dustOf(userIdA)).toBe(dustAfterPlacement + stake)
+    })
+
+    it('un succes obtenu AVANT une echeance depassee gagne quand meme', async () => {
+      // Pari insere a la main dans le passe (createdAt il y a 2 h, echeance
+      // il y a 1 h) avec un tirage qualifiant entre les deux : le verdict
+      // doit voir le succes AVANT de regarder l'echeance.
+      const stake = 200
+      const createdAt = new Date(Date.now() - 2 * 60 * 60 * 1000)
+      const bet = await prisma.bet.create({
+        data: {
+          teamId,
+          bettorId: userIdA,
+          targetId: userIdF,
+          stake,
+          minRarity: 'RARE',
+          pullWindow: PULL_WINDOW,
+          multiplier: EXPECTED_MULTIPLIER,
+          createdAt,
+          deadlineAt: new Date(Date.now() - 60 * 60 * 1000),
+        },
+      })
+      await prisma.gachaPull.create({
+        data: {
+          userId: userIdF,
+          cardId: rareCardId,
+          variant: 'NORMAL',
+          pulledAt: new Date(createdAt.getTime() + 30 * 60 * 1000),
+        },
+      })
+
+      const dustBefore = await dustOf(userIdA)
+      const body = await wagersOf(cookiesA)
+      const view = body.settledBets.find((b: any) => b.id === bet.id)
+      expect(view).toBeDefined()
+      expect(view.status).toBe('WON')
+
+      const expectedPayout = Math.round(stake * EXPECTED_MULTIPLIER)
+      expect(view.payout).toBe(expectedPayout)
+      expect(await dustOf(userIdA)).toBe(dustBefore + expectedPayout)
+      // Et surtout : pas un remboursement de la mise.
+      expect(expectedPayout).not.toBe(stake)
+    })
+  })
 })

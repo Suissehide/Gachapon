@@ -4,6 +4,7 @@ import type { CardVariant } from '../../../generated/client'
 import type { IocContainer } from '../../types/application/ioc'
 import type {
   DuelView,
+  IBetDomain,
   IDuelDomain,
   WagersView,
 } from '../../types/domain/wagers/wagers.domain.interface'
@@ -36,7 +37,8 @@ const HOUR_MS = 60 * 60 * 1000
 // Nombre de duels réglés récents renvoyés par la lecture d'équipe.
 const RECENT_SETTLED_DUELS = 20
 
-// Idem pour les paris tranchés (gagnés ou perdus).
+// Idem pour les paris tranchés (gagnés, perdus ou expirés — un pari expiré
+// est un pari remboursé, et le parieur doit pouvoir le constater).
 const RECENT_SETTLED_BETS = 20
 
 type SettleOutcome = {
@@ -52,6 +54,7 @@ export class DuelDomain implements IDuelDomain {
   readonly #teamRepository: TeamRepository
   readonly #teamMemberRepository: TeamMemberRepository
   readonly #wagerRepository: IWagerRepository
+  readonly #betDomain: IBetDomain
   readonly #userCardRepository: IUserCardRepository
   readonly #scoringConfigRepository: IScoringConfigRepository
   readonly #postgresOrm: PostgresOrm
@@ -63,6 +66,7 @@ export class DuelDomain implements IDuelDomain {
     teamRepository,
     teamMemberRepository,
     wagerRepository,
+    betDomain,
     userCardRepository,
     scoringConfigRepository,
     postgresOrm,
@@ -73,6 +77,7 @@ export class DuelDomain implements IDuelDomain {
     this.#teamRepository = teamRepository
     this.#teamMemberRepository = teamMemberRepository
     this.#wagerRepository = wagerRepository
+    this.#betDomain = betDomain
     this.#userCardRepository = userCardRepository
     this.#scoringConfigRepository = scoringConfigRepository
     this.#postgresOrm = postgresOrm
@@ -261,6 +266,13 @@ export class DuelDomain implements IDuelDomain {
    * ACTIVE dont l'échéance est passée (second déclencheur du règlement,
    * avec le tirage — sans lui un duel où les deux joueurs ont cessé de
    * tirer resterait ACTIVE indéfiniment), puis renvoie la vue.
+   *
+   * Les PARIS périmés sont réglés ici pour exactement la même raison, et
+   * elle est plus lourde de conséquences : le règlement d'un pari est
+   * déclenché par les tirages de la CIBLE. Une cible qui cesse de jouer
+   * laisserait la mise du parieur débitée sans que rien ne vienne jamais la
+   * rembourser. Cette lecture est le seul chemin qui rend l'échéance
+   * effective.
    */
   async listForTeam(
     teamId: string,
@@ -269,22 +281,9 @@ export class DuelDomain implements IDuelDomain {
   ): Promise<WagersView> {
     await this.#requireMembership(teamId, userId)
 
-    // Chaque règlement est isolé dans son propre try/catch : contrairement
-    // au déclencheur au tirage, cette lecture ne doit pas échouer pour
-    // toute l'équipe si un seul duel stale échoue à se régler (P2034 qui
-    // survit à tous les retries, par exemple) — même intention que le hook
-    // `POST /pulls` (`void ... .catch(...)`), appliquée ici à une boucle
-    // plutôt qu'à un fire-and-forget.
-    const stale = await this.#wagerRepository.listStaleForTeam(teamId, now)
-    for (const duelId of stale.duelIds) {
-      try {
-        await this.#settle(duelId, now)
-      } catch (err) {
-        this.#logger.error(
-          `Règlement du duel stale ${duelId} échoué (equipe ${teamId}) : ${err instanceof Error ? err.message : String(err)}`,
-        )
-      }
-    }
+    // Règlement paresseux AVANT toute lecture de la vue : un duel ou un
+    // pari périmé doit avoir été tranché quand la vue se construit.
+    await this.#settleStaleForTeam(teamId, now)
 
     const [duels, settledDuels, bets, settledBets, cfg] = await Promise.all([
       this.#wagerRepository.listTeamDuels(teamId),
@@ -335,8 +334,8 @@ export class DuelDomain implements IDuelDomain {
         .filter((d) => d.status !== 'SETTLED')
         .map((d) => this.#toView(d, userId)),
       settledDuels: settledDuels.map((d) => this.#toView(d, userId)),
-      // Le règlement des paris arrive en tâche 11 : ici on se contente de
-      // les exposer, ACTIVE d'un côté, déjà tranchés de l'autre.
+      // Lus APRES le règlement paresseux ci-dessus : un pari qui vient
+      // d'expirer a déjà quitté `bets` pour `settledBets`.
       bets: bets.map((b) => betToView(b, userId)),
       settledBets: settledBets.map((b) => betToView(b, userId)),
       engagedCardIds,
@@ -403,6 +402,37 @@ export class DuelDomain implements IDuelDomain {
     const engagedKeys = await this.listEngagedCardKeysInTx(tx, userId)
     if (engagedKeys.has(`${cardId}:${variant}`)) {
       throw Boom.conflict('Carte engagée dans un duel en cours')
+    }
+  }
+
+  /**
+   * Règle les duels ET les paris périmés d'une équipe, un par un et chacun
+   * dans son propre try/catch : contrairement au déclencheur au tirage,
+   * cette lecture ne doit pas échouer pour toute l'équipe parce qu'un seul
+   * règlement stale échoue (un P2034 qui survit à tous les retries, par
+   * exemple) — même intention que le hook `POST /pulls`
+   * (`void ... .catch(...)`), appliquée ici à une boucle plutôt qu'à un
+   * fire-and-forget.
+   */
+  async #settleStaleForTeam(teamId: string, now: Date): Promise<void> {
+    const stale = await this.#wagerRepository.listStaleForTeam(teamId, now)
+    for (const duelId of stale.duelIds) {
+      try {
+        await this.#settle(duelId, now)
+      } catch (err) {
+        this.#logger.error(
+          `Règlement du duel stale ${duelId} échoué (equipe ${teamId}) : ${err instanceof Error ? err.message : String(err)}`,
+        )
+      }
+    }
+    for (const betId of stale.betIds) {
+      try {
+        await this.#betDomain.settleBet(betId, now)
+      } catch (err) {
+        this.#logger.error(
+          `Règlement du pari stale ${betId} échoué (equipe ${teamId}) : ${err instanceof Error ? err.message : String(err)}`,
+        )
+      }
     }
   }
 

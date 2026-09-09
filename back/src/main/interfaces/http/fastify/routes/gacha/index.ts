@@ -26,6 +26,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     cardRepository,
     activityDomain,
     duelDomain,
+    betDomain,
   } = fastify.iocContainer
 
   const resolveUrl = (key: string | null) =>
@@ -119,6 +120,12 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         .settleForUser(request.user.userID)
         .catch((err) => fastify.log.error({ err }, 'duel settle failed'))
 
+      // Idem pour les paris pris SUR ce joueur : c'est son tirage qui les
+      // fait avancer, et le parieur n'a lui aucune raison de tirer.
+      void betDomain
+        .settleForUser(request.user.userID)
+        .catch((err) => fastify.log.error({ err }, 'bet settle failed'))
+
       return reply.status(201).send({
         card: {
           id: result.card.id,
@@ -211,6 +218,12 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
       void duelDomain
         .settleForUser(request.user.userID)
         .catch((err) => fastify.log.error({ err }, 'duel settle failed'))
+
+      // Idem pour les paris pris SUR ce joueur : c'est son tirage qui les
+      // fait avancer, et le parieur n'a lui aucune raison de tirer.
+      void betDomain
+        .settleForUser(request.user.userID)
+        .catch((err) => fastify.log.error({ err }, 'bet settle failed'))
 
       return reply.status(201).send({
         pulls: pullsPayload,

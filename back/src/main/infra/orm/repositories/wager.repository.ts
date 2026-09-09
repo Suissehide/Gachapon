@@ -132,7 +132,9 @@ export class WagerRepository implements IWagerRepository {
     take: number,
   ): Promise<BetWithParties[]> {
     return this.#prisma.bet.findMany({
-      where: { teamId, status: { in: ['WON', 'LOST'] } },
+      // EXPIRED compris : un pari expiré est un pari REMBOURSÉ, le parieur
+      // doit pouvoir le constater plutôt que de le voir disparaître.
+      where: { teamId, status: { in: ['WON', 'LOST', 'EXPIRED'] } },
       include: {
         bettor: { select: PARTY_SELECT },
         target: { select: PARTY_SELECT },

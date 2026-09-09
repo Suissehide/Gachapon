@@ -134,4 +134,18 @@ export interface IBetDomain {
     stake: number,
     now?: Date,
   ): Promise<BetView>
+  /**
+   * Règle tous les paris ACTIVE portant sur cette CIBLE — déclenché après
+   * chaque tirage de la cible. Aucun état de progression n'est stocké : les
+   * tirages sont relus et le verdict recalculé à chaque appel.
+   */
+  settleForUser(targetId: string, now?: Date): Promise<void>
+  /**
+   * Règle UN pari nommément, quel que soit le chemin qui l'a repéré. Sert au
+   * règlement paresseux à la lecture (`DuelDomain#listForTeam`), où l'on
+   * connaît l'identifiant du pari périmé mais pas forcément une cible qui
+   * tirera encore un jour — sans lui, un pari dont la cible a cessé de jouer
+   * ne serait jamais remboursé.
+   */
+  settleBet(betId: string, now?: Date): Promise<void>
 }

@@ -21,11 +21,18 @@ import type {
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
 import type { TeamRepository } from '../../infra/orm/repositories/team.repository'
-import type { BetPlacedEvent, WsManager } from '../../interfaces/ws/ws-manager'
+import type {
+  BetPlacedEvent,
+  BetSettledEvent,
+  WsManager,
+} from '../../interfaces/ws/ws-manager'
 import { effectivePityThreshold } from '../gacha/gacha.domain'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import {
   betMultiplier,
+  betPayout,
+  betVerdict,
+  firstQualifyingIndex,
   rarityAtLeast,
   rarityAtLeastProbability,
   windowProbability,
@@ -42,6 +49,38 @@ type BetCfg = {
   maxOpenPerBettor: number
   maxOpenPerTarget: number
   pityThreshold: number
+}
+
+/**
+ * Ce que le règlement a effectivement décidé et payé, une fois la
+ * transaction COMMITÉE. `null` quand rien n'a été tranché (pari déjà réglé,
+ * ou verdict encore indécidable) : dans ce cas aucune notification ne part.
+ */
+type BetSettleOutcome = {
+  teamId: string
+  betId: string
+  status: 'WON' | 'LOST' | 'EXPIRED'
+  payout: number
+  bettorId: string
+  targetId: string
+} | null
+
+/**
+ * Ce que le parieur touche selon le verdict :
+ *  - WON : la TOTALITÉ de `mise x cote`, mise comprise — elle a été débitée
+ *    au placement, la recréditer fait partie du gain ;
+ *  - EXPIRED : la mise seule, remboursée à l'identique ;
+ *  - LOST : rien, la mise reste à la maison.
+ */
+function betCredit(
+  verdict: 'WON' | 'LOST' | 'EXPIRED',
+  stake: number,
+  multiplier: number,
+): number {
+  if (verdict === 'WON') {
+    return betPayout(stake, multiplier)
+  }
+  return verdict === 'EXPIRED' ? stake : 0
 }
 
 /**
@@ -262,6 +301,143 @@ export class BetDomain implements IBetDomain {
     this.#wsManager.notify(targetId, event)
 
     return betToView(bet, bettorId)
+  }
+
+  /**
+   * Déclenché après chaque tirage de la CIBLE : règle tous ses paris ACTIVE.
+   * Rien n'est mémorisé d'un appel à l'autre — chaque règlement relit les
+   * tirages depuis GachaPull et recalcule le verdict, ce qui rend l'opération
+   * rejouable sans risque.
+   */
+  async settleForUser(targetId: string, now: Date = new Date()): Promise<void> {
+    const bets = await this.#wagerRepository.listActiveBetsForTarget(targetId)
+    for (const bet of bets) {
+      await this.#settle(bet.id, now)
+    }
+  }
+
+  /**
+   * Règle un pari nommément. Second déclencheur du règlement, avec le
+   * tirage : une cible qui cesse de jouer laisserait sinon la mise du
+   * parieur bloquée pour toujours (voir `DuelDomain#listForTeam`).
+   */
+  async settleBet(betId: string, now: Date = new Date()): Promise<void> {
+    await this.#settle(betId, now)
+  }
+
+  /**
+   * Règle un pari. Il n'y a délibérément AUCUNE lecture de config ici : tout
+   * ce dont le verdict a besoin (fenêtre, rareté visée, cote, échéance) est
+   * figé sur la ligne Bet au placement, si bien qu'aucune I/O supplémentaire
+   * ne peut se glisser dans la transaction Serializable — même règle que
+   * `DuelDomain#settle`, qui lit son ScoringConfig avant de l'ouvrir.
+   *
+   * La toute première lecture DANS la transaction est le statut du pari :
+   * s'il n'est plus ACTIVE, on sort sans rien créditer. C'est ce garde-fou —
+   * et lui seul — qui rend inoffensif un double déclenchement (tirage +
+   * lecture d'équipe, deux tirages concurrents, un rejeu manuel).
+   *
+   * Propriété importante à préserver : TOUTE branche de ce callback réécrit
+   * la ligne Bet, y compris celle où le verdict est encore indécidable (on
+   * n'y met à jour que `pullsSeen`). C'est cette écriture systématique qui,
+   * sous isolation Serializable, fait entrer en conflit deux transactions
+   * concurrentes sur le même pari : l'une échoue en P2034, `retryOnSerialization`
+   * la rejoue, et elle relit alors un statut déjà tranché par l'autre.
+   * Rendre cette écriture conditionnelle (« ne rien écrire si rien ne
+   * change ») retirerait ce verrou en silence, et la relecture du statut
+   * n'aurait plus rien pour la déclencher : le pari serait payé deux fois.
+   */
+  async #settle(betId: string, now: Date): Promise<void> {
+    const outcome = await retryOnSerialization<BetSettleOutcome>(() =>
+      this.#postgresOrm.executeWithTransactionClient(
+        async (tx) => {
+          const bet = await tx.bet.findUnique({ where: { id: betId } })
+          if (!bet || bet.status !== 'ACTIVE') {
+            return null
+          }
+
+          // Les `pullWindow` premiers tirages de la cible POSTÉRIEURS au
+          // placement : un pari ne peut pas être gagné par une carte déjà
+          // sortie avant qu'il ne soit pris.
+          const pulls = await this.#wagerRepository.findPullsSinceInTx(
+            tx,
+            bet.targetId,
+            bet.createdAt,
+            bet.pullWindow,
+          )
+
+          const verdict = betVerdict({
+            pulls,
+            minRarity: bet.minRarity,
+            pullWindow: bet.pullWindow,
+            now,
+            deadlineAt: bet.deadlineAt,
+          })
+
+          if (verdict === null) {
+            // Pari toujours en cours : on écrit quand même la ligne (voir la
+            // propriété décrite ci-dessus), avec le seul compteur affichable.
+            await tx.bet.update({
+              where: { id: bet.id },
+              data: { pullsSeen: pulls.length },
+            })
+            return null
+          }
+
+          const payout = betCredit(verdict, bet.stake, bet.multiplier)
+          if (payout > 0) {
+            await tx.user.update({
+              where: { id: bet.bettorId },
+              data: { dust: { increment: payout } },
+            })
+          }
+
+          // Sur un gain, `pullsSeen` est le rang du tirage qui a conclu, pas
+          // le nombre de tirages lus : c'est ce que le joueur veut lire
+          // (« gagné au 3e tirage »).
+          const pullsSeen =
+            verdict === 'WON'
+              ? firstQualifyingIndex(pulls, bet.minRarity) + 1
+              : pulls.length
+
+          await tx.bet.update({
+            where: { id: bet.id },
+            data: { status: verdict, pullsSeen, settledAt: now, payout },
+          })
+
+          return {
+            teamId: bet.teamId,
+            betId: bet.id,
+            status: verdict,
+            payout,
+            bettorId: bet.bettorId,
+            targetId: bet.targetId,
+          }
+        },
+        { isolationLevel: 'Serializable' },
+      ),
+    )
+
+    if (!outcome) {
+      return
+    }
+
+    // Après le commit uniquement : un rollback ne doit jamais avoir annoncé
+    // un paiement qui n'a pas eu lieu. Notification par joueur concerné
+    // (jamais `broadcast` : le montant regarde le parieur et sa cible).
+    const event: BetSettledEvent = {
+      type: 'bet:settled',
+      teamId: outcome.teamId,
+      betId: outcome.betId,
+      status: outcome.status,
+      payout: outcome.payout,
+      bettorId: outcome.bettorId,
+      targetId: outcome.targetId,
+    }
+    this.#wsManager.notify(outcome.bettorId, event)
+    if (outcome.targetId !== outcome.bettorId) {
+      this.#wsManager.notify(outcome.targetId, event)
+    }
   }
 
   /**
