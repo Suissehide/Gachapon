@@ -108,11 +108,11 @@ enum QuestPeriod {
 enum EquipmentSlot {
   WEAPON
   ARMOR
-  RING       // Anneau
-  AMULET     // Amulette  — stat principale PV,       tour NATURE
-  GLOVES     // Gants     — stat principale critDmg,  tour FEU
-  BOOTS      // Bottes    — stat principale critRate, tour EAU
-  BELT       // Ceinture  — stat principale armorPen, tour TERRE
+  RING // Anneau
+  AMULET // Amulette  — stat principale PV,       tour NATURE
+  GLOVES // Gants     — stat principale critDmg,  tour FEU
+  BOOTS // Bottes    — stat principale critRate, tour EAU
+  BELT // Ceinture  — stat principale armorPen, tour TERRE
 }
 
 /// Les sets sont orthogonaux aux slots : chaque set existe dans les 7 slots.
@@ -159,32 +159,32 @@ enum BetStatus {
 }
 
 model User {
-  id            String     @id @default(uuid())
-  username      String     @unique
-  email         String     @unique
-  passwordHash  String?
-  avatar        String?
-  banner        String?
-  role          GlobalRole @default(USER)
-  tokens        Int        @default(0)
-  dust          Int        @default(0)
-  dustGenerated Int        @default(0)
-  lastTokenAt   DateTime?
-  xp            Int        @default(0)
-  level         Int        @default(1)
-  pityCurrent   Int        @default(0)
-  streakDays    Int        @default(0)
-  lastLoginAt     DateTime?
-  createdAt       DateTime   @default(now())
-  featuredCardIds String[]   @default([])
+  id                              String     @id @default(uuid())
+  username                        String     @unique
+  email                           String     @unique
+  passwordHash                    String?
+  avatar                          String?
+  banner                          String?
+  role                            GlobalRole @default(USER)
+  tokens                          Int        @default(0)
+  dust                            Int        @default(0)
+  dustGenerated                   Int        @default(0)
+  lastTokenAt                     DateTime?
+  xp                              Int        @default(0)
+  level                           Int        @default(1)
+  pityCurrent                     Int        @default(0)
+  streakDays                      Int        @default(0)
+  lastLoginAt                     DateTime?
+  createdAt                       DateTime   @default(now())
+  featuredCardIds                 String[]   @default([])
   suspended                       Boolean    @default(false)
   emailVerifiedAt                 DateTime?
-  emailVerificationToken          String?   @unique
+  emailVerificationToken          String?    @unique
   emailVerificationTokenExpiresAt DateTime?
-  passwordResetToken              String?   @unique
+  passwordResetToken              String?    @unique
   passwordResetTokenExpiresAt     DateTime?
 
-  bestStreak    Int        @default(0)
+  bestStreak Int @default(0)
 
   gold              Int       @default(0)
   combatPoints      Int       @default(60)
@@ -193,36 +193,36 @@ model User {
 
   oauthAccounts       OAuthAccount[]
   apiKeys             ApiKey[]
-  ownedTeams          Team[]            @relation("TeamOwner")
+  ownedTeams          Team[]                    @relation("TeamOwner")
   teamMemberships     TeamMember[]
-  sentInvitations     Invitation[]      @relation("InvitedByUser")
-  receivedInvitations Invitation[]      @relation("InvitedUser")
+  sentInvitations     Invitation[]              @relation("InvitedByUser")
+  receivedInvitations Invitation[]              @relation("InvitedUser")
   userCards           UserCard[]
   gachaPulls          GachaPull[]
   purchases           Purchase[]
-  achievements             UserAchievement[]
-  achievementProgress      UserAchievementProgress[]
-  userQuests               UserQuest[]
-  skillPoints         Int        @default(0)
+  achievements        UserAchievement[]
+  achievementProgress UserAchievementProgress[]
+  userQuests          UserQuest[]
+  skillPoints         Int                       @default(0)
   skills              UserSkill[]
   userRewards         UserReward[]
   dailyShops          DailyShop[]
 
-  userEquipment        UserEquipment[]
-  campaignProgress     UserCampaignProgress?
-  battleResults        BattleResult[]
-  towerProgress        UserTowerProgress[]
+  userEquipment    UserEquipment[]
+  campaignProgress UserCampaignProgress?
+  battleResults    BattleResult[]
+  towerProgress    UserTowerProgress[]
 
   wishlistCardId      String?
-  wishlistCard        Card?     @relation("UserWishlist", fields: [wishlistCardId], references: [id], onDelete: SetNull)
+  wishlistCard        Card?           @relation("UserWishlist", fields: [wishlistCardId], references: [id], onDelete: SetNull)
   wishlistPurchasedAt DateTime?
   boosts              UserBoost[]
   activityEvents      ActivityEvent[]
   raidAttacks         RaidAttack[]
-  duelsAsChallenger   Duel[]     @relation("DuelChallenger")
-  duelsAsOpponent     Duel[]     @relation("DuelOpponent")
-  betsPlaced          Bet[]      @relation("BetBettor")
-  betsReceived        Bet[]      @relation("BetTarget")
+  duelsAsChallenger   Duel[]          @relation("DuelChallenger")
+  duelsAsOpponent     Duel[]          @relation("DuelOpponent")
+  betsPlaced          Bet[]           @relation("BetBettor")
+  betsReceived        Bet[]           @relation("BetTarget")
 }
 
 model UserBoost {
@@ -264,14 +264,14 @@ model ApiKey {
 }
 
 model Team {
-  id          String     @id @default(uuid())
+  id          String   @id @default(uuid())
   name        String
-  slug        String     @unique
+  slug        String   @unique
   description String?
   avatar      String?
   ownerId     String
-  owner       User       @relation("TeamOwner", fields: [ownerId], references: [id])
-  createdAt   DateTime   @default(now())
+  owner       User     @relation("TeamOwner", fields: [ownerId], references: [id])
+  createdAt   DateTime @default(now())
 
   members     TeamMember[]
   invitations Invitation[]
@@ -343,8 +343,8 @@ model Card {
   userCards      UserCard[]
   gachaPulls     GachaPull[]
   dailyShopItems DailyShopItem[]
-  wishedBy       User[]        @relation("UserWishlist")
-  duelTransfers  DuelTransfer[] @relation("DuelTransferCard")
+  wishedBy       User[]          @relation("UserWishlist")
+  duelTransfers  DuelTransfer[]  @relation("DuelTransferCard")
 }
 
 model UserCard {
@@ -357,8 +357,8 @@ model UserCard {
   quantity   Int         @default(1)
   obtainedAt DateTime    @default(now())
 
-  level     Int @default(1)
-  palier    Int @default(1)
+  level     Int             @default(1)
+  palier    Int             @default(1)
   equipment UserEquipment[]
 
   @@unique([userId, cardId, variant])
@@ -406,15 +406,15 @@ model UserEquipment {
 }
 
 model GachaPull {
-  id           String       @id @default(uuid())
+  id           String      @id @default(uuid())
   userId       String
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   cardId       String
-  card         Card         @relation(fields: [cardId], references: [id])
-  variant      CardVariant  @default(NORMAL)
-  wasDuplicate Boolean      @default(false)
-  dustEarned   Int          @default(0)
-  pulledAt     DateTime     @default(now())
+  card         Card        @relation(fields: [cardId], references: [id])
+  variant      CardVariant @default(NORMAL)
+  wasDuplicate Boolean     @default(false)
+  dustEarned   Int         @default(0)
+  pulledAt     DateTime    @default(now())
 
   @@index([userId])
   @@index([pulledAt])
@@ -436,9 +436,9 @@ model ShopItem {
 }
 
 model Purchase {
-  id          String   @id @default(uuid())
+  id          String       @id @default(uuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   shopItemId  String
   shopItem    ShopItem     @relation(fields: [shopItemId], references: [id])
   amountSpent Int
@@ -450,11 +450,11 @@ model Purchase {
 }
 
 model DailyShop {
-  id          String          @id @default(uuid())
+  id          String   @id @default(uuid())
   userId      String
-  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  date        DateTime        @db.Date
-  generatedAt DateTime        @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date        DateTime @db.Date
+  generatedAt DateTime @default(now())
 
   items DailyShopItem[]
 
@@ -474,19 +474,19 @@ model DailyShopItem {
 }
 
 model Achievement {
-  id          String   @id @default(uuid())
-  key         String   @unique
+  id          String  @id @default(uuid())
+  key         String  @unique
   name        String
   description String
   family      String?
-  tier        Int      @default(0)
-  hidden      Boolean  @default(false)
+  tier        Int     @default(0)
+  hidden      Boolean @default(false)
   iconKey     String?
   criterion   Json
-  sortOrder   Int      @default(0)
-  isActive    Boolean  @default(true)
+  sortOrder   Int     @default(0)
+  isActive    Boolean @default(true)
   rewardId    String?
-  reward      Reward?  @relation(fields: [rewardId], references: [id])
+  reward      Reward? @relation(fields: [rewardId], references: [id])
 
   userAchievements UserAchievement[]
   progress         UserAchievementProgress[]
@@ -589,9 +589,9 @@ model UserReward {
   claimedAt DateTime?
   createdAt DateTime     @default(now())
 
+  @@unique([userId, source, sourceId])
   @@index([userId, claimedAt])
   @@index([sourceId])
-  @@unique([userId, source, sourceId])
   @@map("UserRewards")
 }
 
@@ -649,7 +649,7 @@ model SkillEdge {
   sourceHandle String?
   targetHandle String?
   fromNode     SkillNode @relation("EdgeFrom", fields: [fromNodeId], references: [id], onDelete: Cascade)
-  toNode       SkillNode @relation("EdgeTo",   fields: [toNodeId],   references: [id], onDelete: Cascade)
+  toNode       SkillNode @relation("EdgeTo", fields: [toNodeId], references: [id], onDelete: Cascade)
 
   @@id([fromNodeId, toNodeId])
 }
@@ -703,7 +703,7 @@ model UserCampaignProgress {
 model TowerFloor {
   id        String      @id @default(uuid())
   element   CardElement // FIRE | WATER | NATURE | EARTH uniquement
-  index     Int         // 1..10
+  index     Int // 1..10
   label     String
   enemyTeam Json
   lootTable Json
@@ -857,24 +857,43 @@ model DuelTransfer {
 /// Un pari d'un joueur sur la rareté que sortira un coéquipier. La fenêtre
 /// de tirages est relue depuis GachaPull, jamais incrémentée.
 model Bet {
-  id         String     @id @default(uuid())
-  teamId     String
-  team       Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  bettorId   String
-  bettor     User       @relation("BetBettor", fields: [bettorId], references: [id], onDelete: Cascade)
-  targetId   String
-  target     User       @relation("BetTarget", fields: [targetId], references: [id], onDelete: Cascade)
-  stake      Int
-  minRarity  CardRarity
-  pullWindow Int
-  /// Cote figée au placement : jamais recalculée au règlement.
-  multiplier Float
-  status     BetStatus  @default(ACTIVE)
-  createdAt  DateTime   @default(now())
-  deadlineAt DateTime
-  settledAt  DateTime?
-  pullsSeen  Int        @default(0)
-  payout     Int        @default(0)
+  id               String     @id @default(uuid())
+  teamId           String
+  team             Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  bettorId         String
+  bettor           User       @relation("BetBettor", fields: [bettorId], references: [id], onDelete: Cascade)
+  targetId         String
+  target           User       @relation("BetTarget", fields: [targetId], references: [id], onDelete: Cascade)
+  stake            Int
+  minRarity        CardRarity
+  pullWindow       Int
+  /// Cote annoncée au parieur et figée au placement. Elle sert de PLAFOND au
+  /// règlement : si la cible a amélioré ses vraies chances entre-temps (achat
+  /// d'un boost de poids), le paiement retombe sur une cote recalculée plus
+  /// basse. Voir `BetDomain#settle`.
+  multiplier       Float
+  /// Compteur de pitié de la CIBLE au placement. Gelé ici parce que le
+  /// recalcul de la cote au règlement doit repartir des chances telles
+  /// qu'elles étaient : le compteur, lui, a avancé pendant la fenêtre même
+  /// qu'on règle, et le relire rendrait le recalcul vide de sens.
+  placementPity    Int        @default(0)
+  /// Multiplicateur de chance (skill tree) de la CIBLE au placement, gelé
+  /// pour la même raison. Seule la dimension « boosts » a le droit de bouger.
+  placementLuck    Float      @default(1)
+  /// Catalogue actif au placement, réduit à la somme des `dropWeight` par
+  /// rareté — `weightFor` étant linéaire en `dropWeight` et ne lisant que la
+  /// rareté, cette réduction donne exactement les mêmes probabilités que le
+  /// catalogue complet. Gelé pour que la rotation d'un set en cours de
+  /// fenêtre ne rogne pas rétroactivement le paiement d'un pari déjà pris.
+  /// `null` sur les paris antérieurs à cette colonne : le règlement retombe
+  /// alors sur le catalogue actif du moment.
+  placementWeights Json?
+  status           BetStatus  @default(ACTIVE)
+  createdAt        DateTime   @default(now())
+  deadlineAt       DateTime
+  settledAt        DateTime?
+  pullsSeen        Int        @default(0)
+  payout           Int        @default(0)
 
   @@index([teamId, status])
   @@index([bettorId, status])

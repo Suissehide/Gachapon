@@ -9,7 +9,6 @@ import type {
 } from '../../types/domain/wagers/wagers.domain.interface'
 import type { TeamWithMembers } from '../../types/domain/team/team.types'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
-import type { CardWithSet } from '../../types/domain/gacha/gacha.types'
 import type { ICardRepository } from '../../types/infra/orm/repositories/card.repository.interface'
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { IUserBoostRepository } from '../../types/infra/orm/repositories/user-boost.repository.interface'
@@ -35,6 +34,7 @@ import {
   betVerdict,
   firstQualifyingIndex,
   rarityAtLeast,
+  RARITY_ORDER,
   rarityAtLeastProbability,
   windowProbability,
 } from './wager-rules'
@@ -50,6 +50,59 @@ type BetCfg = {
   maxOpenPerBettor: number
   maxOpenPerTarget: number
   pityThreshold: number
+}
+
+/**
+ * Les dimensions des chances de la cible GELÉES au placement et relues
+ * telles quelles au règlement (colonnes `placementPity`, `placementLuck`,
+ * `placementWeights`).
+ *
+ * Les recalculer au règlement n'aurait aucun sens : le compteur de pitié a
+ * précisément avancé pendant la fenêtre qu'on est en train de régler, la
+ * chance du skill tree n'a pas à repeser sur un pari déjà pris, et une
+ * rotation de set en cours de fenêtre rognerait rétroactivement le paiement
+ * de tous les paris ouverts. Seule la dimension « boosts » a le droit de
+ * bouger entre le placement et le règlement — c'est celle que la cible peut
+ * acheter après coup, donc la seule que le plafond doit attraper.
+ */
+type FrozenOdds = {
+  pityCurrent: number
+  luckMultiplier: number
+  weights: RarityWeights | null
+}
+
+/**
+ * Le seul sous-ensemble d'une carte dont dépend le calcul des chances :
+ * `weightFor` ne lit que la rareté et le `dropWeight`.
+ */
+type OddsCard = { rarity: CardRarity; dropWeight: number }
+
+/** Somme des `dropWeight` du catalogue actif, par rareté. */
+type RarityWeights = Partial<Record<CardRarity, number>>
+
+/**
+ * Réduit le catalogue à une somme de poids par rareté. `weightFor` est
+ * LINÉAIRE en `dropWeight` et ne regarde rien d'autre que la rareté : sommer
+ * d'abord puis appliquer chance et boosts donne exactement le même résultat
+ * que carte par carte. C'est ce qui permet de geler le catalogue sur la
+ * ligne Bet en cinq nombres au lieu de plusieurs centaines de lignes.
+ *
+ * Une rareté présente au catalogue avec un poids nul est CONSERVÉE : sa
+ * présence, et pas son poids, décide si la pitié peut se résoudre
+ * (`#pityFiresInWindow`) et si le pool garanti est non vide.
+ */
+function collapseWeights(cards: OddsCard[]): RarityWeights {
+  const weights: RarityWeights = {}
+  for (const card of cards) {
+    weights[card.rarity] = (weights[card.rarity] ?? 0) + card.dropWeight
+  }
+  return weights
+}
+
+function expandWeights(weights: RarityWeights): OddsCard[] {
+  return RARITY_ORDER.filter((rarity) => weights[rarity] !== undefined).map(
+    (rarity) => ({ rarity, dropWeight: weights[rarity] as number }),
+  )
 }
 
 /**
@@ -225,8 +278,12 @@ export class BetDomain implements IBetDomain {
       team.members.find((m) => m.userId === targetId)?.user?.username ??
       'Ce joueur'
 
-    // Recalcul serveur : c'est CETTE valeur qui part en base.
-    const { multiplier } = await this.#computeOdds(targetId, minRarity, cfg)
+    // Recalcul serveur : c'est CETTE valeur qui part en base. `pityCurrent`
+    // et `luckMultiplier` sont les entrées de ce calcul qu'il faudra rejouer
+    // à l'identique au règlement (voir `FrozenOdds`) : on les gèle sur la
+    // ligne plutôt que de les relire là-bas, où elles auront bougé.
+    const { multiplier, pityCurrent, luckMultiplier, weights } =
+      await this.#computeOdds(targetId, minRarity, cfg)
     const deadlineAt = new Date(now.getTime() + cfg.deadlineHours * HOUR_MS)
 
     const created = await retryOnSerialization<Bet>(() =>
@@ -273,6 +330,9 @@ export class BetDomain implements IBetDomain {
               minRarity,
               pullWindow: cfg.pullWindow,
               multiplier,
+              placementPity: pityCurrent,
+              placementLuck: luckMultiplier,
+              placementWeights: weights,
               deadlineAt,
             },
           })
@@ -343,11 +403,24 @@ export class BetDomain implements IBetDomain {
   }
 
   /**
-   * Règle un pari. Il n'y a délibérément AUCUNE lecture de config ici : tout
-   * ce dont le verdict a besoin (fenêtre, rareté visée, cote, échéance) est
-   * figé sur la ligne Bet au placement, si bien qu'aucune I/O supplémentaire
-   * ne peut se glisser dans la transaction Serializable — même règle que
-   * `DuelDomain#settle`, qui lit son ScoringConfig avant de l'ouvrir.
+   * Règle un pari. Tout ce dont le verdict a besoin (fenêtre, rareté visée,
+   * cote, échéance) est figé sur la ligne Bet au placement ; ce que la COTE
+   * PAYÉE demande en plus (config, catalogue, boosts) est lu AVANT d'ouvrir
+   * la transaction, si bien qu'aucune I/O ne peut s'y glisser — même règle
+   * que `DuelDomain#settle`, qui lit son ScoringConfig avant de l'ouvrir.
+   *
+   * PLAFOND DE LA COTE. La cote figée reste un PLAFOND : le parieur ne
+   * touche jamais plus que ce qui lui a été annoncé, et jamais moins que ce
+   * que valent les chances réelles de la cible. Sans ce plafond, la cible
+   * pouvait acheter APRÈS le placement le boost de la boutique qui double le
+   * poids des EPIC sur exactement dix tirages — la longueur de la fenêtre —
+   * pour 800 poussière : la vraie probabilité doublait pendant que le
+   * paiement, lui, restait figé sur l'ancienne. C'est une espérance positive
+   * même boost payé, et elle s'amortit sur les trois paris qu'un même joueur
+   * peut subir. On plafonne plutôt que d'interdire : bloquer l'achat d'un
+   * boost tant qu'un pari court sur vous serait griefable (un pari à 50
+   * poussière gèlerait la boutique d'un joueur trois jours), et rembourser
+   * les paris à l'achat donnerait à la cible un bouton « annuler ».
    *
    * La toute première lecture DANS la transaction est le statut du pari :
    * s'il n'est plus ACTIVE, on sort sans rien créditer. C'est ce garde-fou —
@@ -365,6 +438,11 @@ export class BetDomain implements IBetDomain {
    * n'aurait plus rien pour la déclencher : le pari serait payé deux fois.
    */
   async #settle(betId: string, now: Date): Promise<void> {
+    const paidMultiplier = await this.#cappedMultiplier(betId)
+    if (paidMultiplier === null) {
+      return
+    }
+
     const outcome = await retryOnSerialization<BetSettleOutcome>(() =>
       this.#postgresOrm.executeWithTransactionClient(
         async (tx) => {
@@ -401,7 +479,7 @@ export class BetDomain implements IBetDomain {
             return null
           }
 
-          const payout = betCredit(verdict, bet.stake, bet.multiplier)
+          const payout = betCredit(verdict, bet.stake, paidMultiplier)
           if (payout > 0) {
             await tx.user.update({
               where: { id: bet.bettorId },
@@ -458,6 +536,43 @@ export class BetDomain implements IBetDomain {
   }
 
   /**
+   * `min(cote figée, cote recalculée)` — la cote effectivement payée si le
+   * verdict est WON. `null` quand le pari n'est plus à régler : inutile de
+   * payer une lecture de catalogue pour une ligne déjà tranchée.
+   *
+   * Le recalcul repart des valeurs GELÉES au placement (pitié, chance) et ne
+   * laisse flotter que les boosts actifs maintenant : voir `FrozenOdds` et le
+   * paragraphe « plafond de la cote » de `#settle`.
+   *
+   * Cette lecture est volontairement HORS transaction, comme toutes les
+   * autres I/O du règlement ; la relecture du statut à l'intérieur reste la
+   * seule autorité sur « ce pari est-il encore à régler ». Un pari qui
+   * passerait ACTIVE -> réglé entre les deux se fait simplement ignorer par
+   * cette relecture, sans rien payer.
+   */
+  async #cappedMultiplier(betId: string): Promise<number | null> {
+    const bet = await this.#wagerRepository.findBetById(betId)
+    if (!bet || bet.status !== 'ACTIVE') {
+      return null
+    }
+    const cfg = await this.#readConfig()
+    const { multiplier } = await this.#computeOdds(
+      bet.targetId,
+      bet.minRarity,
+      // La fenêtre est celle du PARI, pas celle de la config du jour : un
+      // `bet.pullWindow` retouché par l'admin ne doit pas déplacer la cote
+      // d'un pari déjà pris.
+      { ...cfg, pullWindow: bet.pullWindow },
+      {
+        pityCurrent: bet.placementPity,
+        luckMultiplier: bet.placementLuck,
+        weights: bet.placementWeights as RarityWeights | null,
+      },
+    )
+    return Math.min(bet.multiplier, multiplier)
+  }
+
+  /**
    * Probabilité que la cible sorte au moins `minRarity` dans les
    * `pullWindow` prochains tirages, sur ses vrais poids de tirage (chance du
    * skill tree et boosts actifs compris), puis cote correspondante.
@@ -466,8 +581,17 @@ export class BetDomain implements IBetDomain {
     targetId: string,
     minRarity: CardRarity,
     cfg: BetCfg,
-  ): Promise<{ probability: number; multiplier: number }> {
-    const [cards, effects, boosts, target] = await Promise.all([
+    // `null` au placement (tout est lu en direct), renseigné au règlement
+    // avec les valeurs gelées sur la ligne Bet — voir `FrozenOdds`.
+    frozen: FrozenOdds | null = null,
+  ): Promise<{
+    probability: number
+    multiplier: number
+    pityCurrent: number
+    luckMultiplier: number
+    weights: RarityWeights
+  }> {
+    const [activeCards, effects, boosts, target] = await Promise.all([
       this.#cardRepository.findAllActive(),
       this.#skillTreeRepository.getEffectsForUser(targetId),
       this.#userBoostRepository.findActiveByUser(targetId),
@@ -476,15 +600,23 @@ export class BetDomain implements IBetDomain {
     if (!target) {
       throw Boom.notFound('Joueur introuvable')
     }
-    if (cards.length === 0) {
+    if (activeCards.length === 0) {
       throw Boom.badImplementation('Aucune carte active : cote incalculable')
     }
+    // Catalogue gelé s'il y en a un sur la ligne (règlement), catalogue actif
+    // sinon (placement, devis, et paris antérieurs à la colonne).
+    const weights =
+      frozen?.weights == null ? collapseWeights(activeCards) : frozen.weights
+    const cards = expandWeights(weights)
 
     const pityThreshold = effectivePityThreshold(
       cfg.pityThreshold,
       effects.pityReduction ?? 0,
     )
     const window = cfg.pullWindow
+    const pityCurrent = frozen === null ? target.pityCurrent : frozen.pityCurrent
+    const luckMultiplier =
+      frozen === null ? effects.luckMultiplier : frozen.luckMultiplier
 
     // Les boosts de POIDS de la cible, normalisés pour `weightFor`. Chacun
     // garde son compteur de tirages restants : il décide jusqu'à quel rang
@@ -500,9 +632,7 @@ export class BetDomain implements IBetDomain {
     const guarantee = this.#guaranteeInWindow(cards, boosts, window)
 
     let probability: number
-    if (
-      this.#pityFiresInWindow(cards, target.pityCurrent, window, pityThreshold)
-    ) {
+    if (this.#pityFiresInWindow(cards, pityCurrent, window, pityThreshold)) {
       // COURT-CIRCUIT DE PITIÉ — délibéré.
       //
       // Le moteur de tirage force un LEGENDARY quand le compteur LU AVANT le
@@ -548,7 +678,7 @@ export class BetDomain implements IBetDomain {
     } else {
       probability = this.#windowProbability({
         cards,
-        luckMultiplier: effects.luckMultiplier,
+        luckMultiplier,
         weightBoosts,
         minRarity,
         window,
@@ -560,6 +690,9 @@ export class BetDomain implements IBetDomain {
     return {
       probability,
       multiplier: betMultiplier(probability, cfg.houseFeePct),
+      pityCurrent,
+      luckMultiplier,
+      weights,
     }
   }
 
@@ -677,7 +810,7 @@ export class BetDomain implements IBetDomain {
    * unitairement testée.
    */
   #windowProbability(input: {
-    cards: CardWithSet[]
+    cards: OddsCard[]
     luckMultiplier: number
     weightBoosts: Array<{
       weightMultiplier: number
@@ -701,7 +834,7 @@ export class BetDomain implements IBetDomain {
 
     // Pools restreints du moteur, avec son repli : un filtre qui ne laisse
     // rien est ignoré et le catalogue entier sert.
-    const restrict = (floor: CardRarity): CardWithSet[] => {
+    const restrict = (floor: CardRarity): OddsCard[] => {
       const filtered = cards.filter((c) => rarityAtLeast(c.rarity, floor))
       return filtered.length > 0 ? filtered : cards
     }
@@ -711,7 +844,7 @@ export class BetDomain implements IBetDomain {
     const boostsAt = (pullIndex: number) =>
       weightBoosts.filter((b) => b.pullsRemaining >= pullIndex)
 
-    const winOn = (pool: CardWithSet[], pullIndex: number): number =>
+    const winOn = (pool: OddsCard[], pullIndex: number): number =>
       rarityAtLeastProbability(
         pool,
         luckMultiplier,
@@ -721,7 +854,7 @@ export class BetDomain implements IBetDomain {
     // Cartes qui SATISFONT la garantie sans gagner le pari : elles la
     // désamorcent. Vide (donc 0) dès que la garantie est au moins aussi
     // haute que la rareté visée.
-    const defuseOn = (pool: CardWithSet[], pullIndex: number): number => {
+    const defuseOn = (pool: OddsCard[], pullIndex: number): number => {
       if (guarantee === null) {
         return 0
       }

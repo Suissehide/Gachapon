@@ -40,7 +40,9 @@ export type BetView = {
   stake: number
   minRarity: CardRarity
   pullWindow: number
-  // Cote figée au placement, jamais recalculée ensuite.
+  // Cote annoncée au parieur et figée au placement. Elle sert de PLAFOND au
+  // règlement : si la cible améliore ses vraies chances entre-temps (achat
+  // d'un boost), le paiement retombe sur une cote recalculée plus basse.
   multiplier: number
   createdAt: string
   deadlineAt: string

@@ -144,6 +144,10 @@ export class WagerRepository implements IWagerRepository {
     })
   }
 
+  findBetById(id: string): Promise<Bet | null> {
+    return this.#prisma.bet.findUnique({ where: { id } })
+  }
+
   listActiveBetsForTarget(targetId: string): Promise<Bet[]> {
     return this.#prisma.bet.findMany({
       where: { targetId, status: 'ACTIVE' },

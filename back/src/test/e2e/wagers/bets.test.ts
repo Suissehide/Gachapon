@@ -1122,6 +1122,187 @@ describe('cote et placement du pari', () => {
       expect(body.bets.some((b: any) => b.id === wonBetId)).toBe(false)
     })
 
+    it('plafond de la cote : un boost achete par la CIBLE apres le placement fait payer la cote recalculee', async () => {
+      // La boutique vend un boost qui double le poids d'une rarete sur
+      // exactement la longueur de la fenetre. Sans plafond, la cible
+      // l'achetait APRES le placement : la vraie probabilite doublait
+      // pendant que le paiement restait fige sur l'ancienne cote — une
+      // esperance positive pour le parieur, boost paye compris.
+      await activateOnly(betSetId)
+      await prisma.user.update({ where: { id: userIdA }, data: { dust: 5000 } })
+
+      const stake = 200
+      const placed = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamId}/bets`,
+        headers: { cookie: cookiesA },
+        payload: { targetId: userIdB, minRarity: 'RARE', stake },
+      })
+      expect(placed.statusCode).toBe(201)
+      const betId = placed.json().id
+      expect(placed.json().multiplier).toBe(EXPECTED_MULTIPLIER)
+      const dustAfterPlacement = await dustOf(userIdA)
+
+      const boost = await prisma.userBoost.create({
+        data: {
+          userId: userIdB,
+          weightMultiplier: 2,
+          weightRarity: 'RARE',
+          pullsRemaining: PULL_WINDOW,
+        },
+      })
+      try {
+        // Tirage insere DIRECTEMENT en base : la route decrementerait le
+        // boost, or on veut le voir intact au reglement. Horodate juste
+        // APRES la creation du pari et jamais dans le futur : un tirage
+        // post-date deborderait sur la fenetre des paris suivants.
+        const placedRow = await prisma.bet.findUnique({ where: { id: betId } })
+        await prisma.gachaPull.create({
+          data: {
+            userId: userIdB,
+            cardId: rareCardId,
+            variant: 'NORMAL',
+            pulledAt: new Date(placedRow.createdAt.getTime() + 1),
+          },
+        })
+        const { betDomain } = (app as any).iocContainer
+        await betDomain.settleBet(betId)
+
+        // Poids sous boost : COMMON 90, RARE 8x2 = 16, EPIC 1, LEG 1 -> 108.
+        const qBoost =
+          (WEIGHT_RARE * 2 + WEIGHT_EPIC + WEIGHT_LEGENDARY) /
+          (WEIGHT_COMMON + WEIGHT_RARE * 2 + WEIGHT_EPIC + WEIGHT_LEGENDARY)
+        const capped = expectedMultiplier(1 - (1 - qBoost) ** PULL_WINDOW)
+        expect(capped).toBeLessThan(EXPECTED_MULTIPLIER)
+
+        const row = await prisma.bet.findUnique({ where: { id: betId } })
+        expect(row.status).toBe('WON')
+        expect(row.payout).toBe(Math.round(stake * capped))
+        // Verrou explicite : 214 et non 276.
+        expect(row.payout).toBe(214)
+        expect(row.payout).not.toBe(Math.round(stake * EXPECTED_MULTIPLIER))
+        expect(await dustOf(userIdA)).toBe(dustAfterPlacement + row.payout)
+        // La cote annoncee reste ecrite telle quelle : c'est un PLAFOND, pas
+        // une reecriture de ce qui a ete promis au parieur.
+        expect(row.multiplier).toBe(EXPECTED_MULTIPLIER)
+      } finally {
+        await prisma.userBoost.delete({ where: { id: boost.id } })
+      }
+    })
+
+    it('plafond de la cote : sans rien qui bouge, le paiement est EXACTEMENT la cote figee', async () => {
+      // Garde-fou inverse du test precedent : un recalcul qui ne repartirait
+      // pas des valeurs GELEES au placement (pitie, chance) ou qui derive a
+      // l'arrondi ferait mordre le plafond alors que rien n'a change.
+      await activateOnly(betSetId)
+      await prisma.user.update({ where: { id: userIdA }, data: { dust: 5000 } })
+      const pityBefore = (
+        await prisma.user.findUnique({ where: { id: userIdB } })
+      ).pityCurrent
+
+      const stake = 200
+      const placed = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamId}/bets`,
+        headers: { cookie: cookiesA },
+        payload: { targetId: userIdB, minRarity: 'RARE', stake },
+      })
+      expect(placed.statusCode).toBe(201)
+      const betId = placed.json().id
+      const dustAfterPlacement = await dustOf(userIdA)
+
+      const stored = await prisma.bet.findUnique({ where: { id: betId } })
+      expect(stored.placementPity).toBe(pityBefore)
+      expect(stored.placementLuck).toBe(1)
+
+      await prisma.gachaPull.create({
+        data: {
+          userId: userIdB,
+          cardId: rareCardId,
+          variant: 'NORMAL',
+          pulledAt: new Date(stored.createdAt.getTime() + 1),
+        },
+      })
+      // La pitie de la cible avance pendant la fenetre : la relire au lieu
+      // de repartir de `placementPity` deplacerait la cote recalculee.
+      await prisma.user.update({
+        where: { id: userIdB },
+        data: { pityCurrent: pityBefore + 5 },
+      })
+      const { betDomain } = (app as any).iocContainer
+      await betDomain.settleBet(betId)
+
+      const row = await prisma.bet.findUnique({ where: { id: betId } })
+      expect(row.status).toBe('WON')
+      expect(row.payout).toBe(Math.round(stake * EXPECTED_MULTIPLIER))
+      expect(row.payout).toBe(276)
+      expect(await dustOf(userIdA)).toBe(dustAfterPlacement + row.payout)
+    })
+
+    it('plafond de la cote : des chances DEGRADEES apres le placement ne rabaissent pas le paiement', async () => {
+      // Sens inverse du plafond : si les vraies chances de la cible BAISSENT
+      // apres le placement (son boost expire), le parieur garde la cote qui
+      // lui a ete annoncee. Sans le `min`, on lui paierait la cote recalculee
+      // — plus genereuse ici, mais ce serait la meme mecanique qui, dans
+      // l'autre sens, le sous-paierait. Le fige est un PLAFOND, pas un
+      // remplacement.
+      await activateOnly(betSetId)
+      await prisma.user.update({ where: { id: userIdA }, data: { dust: 5000 } })
+
+      // Le boost existe AVANT le placement : il entre donc dans la cote figee.
+      const boost = await prisma.userBoost.create({
+        data: {
+          userId: userIdB,
+          weightMultiplier: 2,
+          weightRarity: 'RARE',
+          pullsRemaining: PULL_WINDOW,
+        },
+      })
+      const qBoost =
+        (WEIGHT_RARE * 2 + WEIGHT_EPIC + WEIGHT_LEGENDARY) /
+        (WEIGHT_COMMON + WEIGHT_RARE * 2 + WEIGHT_EPIC + WEIGHT_LEGENDARY)
+      const boostedMultiplier = expectedMultiplier(
+        1 - (1 - qBoost) ** PULL_WINDOW,
+      )
+
+      const stake = 200
+      const placed = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamId}/bets`,
+        headers: { cookie: cookiesA },
+        payload: { targetId: userIdB, minRarity: 'RARE', stake },
+      })
+      expect(placed.statusCode).toBe(201)
+      const betId = placed.json().id
+      expect(placed.json().multiplier).toBe(boostedMultiplier)
+      const dustAfterPlacement = await dustOf(userIdA)
+
+      // Le boost disparait : les vraies chances retombent au catalogue nu,
+      // donc la cote recalculee REMONTE au-dessus de la cote figee.
+      await prisma.userBoost.delete({ where: { id: boost.id } })
+      expect(EXPECTED_MULTIPLIER).toBeGreaterThan(boostedMultiplier)
+
+      const stored = await prisma.bet.findUnique({ where: { id: betId } })
+      await prisma.gachaPull.create({
+        data: {
+          userId: userIdB,
+          cardId: rareCardId,
+          variant: 'NORMAL',
+          pulledAt: new Date(stored.createdAt.getTime() + 1),
+        },
+      })
+      const { betDomain } = (app as any).iocContainer
+      await betDomain.settleBet(betId)
+
+      const row = await prisma.bet.findUnique({ where: { id: betId } })
+      expect(row.status).toBe('WON')
+      expect(row.payout).toBe(Math.round(stake * boostedMultiplier))
+      // Verrou explicite : 214 (cote annoncee) et non 276 (cote recalculee).
+      expect(row.payout).toBe(214)
+      expect(row.payout).not.toBe(Math.round(stake * EXPECTED_MULTIPLIER))
+      expect(await dustOf(userIdA)).toBe(dustAfterPlacement + row.payout)
+    })
+
     it('pari LEGENDARY : B fait ses 10 tirages sans legendaire -> LOST, la poussiere de A ne bouge plus', async () => {
       await activateOnly(betSetId)
       await prisma.user.update({ where: { id: userIdA }, data: { dust: 5000 } })

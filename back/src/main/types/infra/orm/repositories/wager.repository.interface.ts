@@ -64,6 +64,12 @@ export interface IWagerRepository {
     statuses?: BetStatus[],
   ): Promise<BetWithParties[]>
   listRecentSettledBets(teamId: string, take: number): Promise<BetWithParties[]>
+  /**
+   * Le pari brut, quel que soit son statut. Sert au calcul de la cote
+   * plafonnée AVANT la transaction de règlement : la relecture du statut
+   * DANS la transaction reste la seule autorité pour décider de payer.
+   */
+  findBetById(id: string): Promise<Bet | null>
   listActiveBetsForTarget(targetId: string): Promise<Bet[]>
   /**
    * Paris ouverts du parieur, relus DANS la transaction : seule version
