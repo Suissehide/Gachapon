@@ -20,6 +20,7 @@ describe('cycle de vie du duel', () => {
 
   const suffix = Date.now()
   const password = 'Password123!'
+  let basePullCount: number
 
   async function registerAndLogin(tag: string) {
     const email = `duel${tag}${suffix}@test.com`
@@ -49,6 +50,9 @@ describe('cycle de vie du duel', () => {
     const container = (app as any).iocContainer
     prisma = container.postgresOrm.prisma
     configService = container.configService
+    basePullCount = (await configService.getMany('duel.pullCount'))[
+      'duel.pullCount'
+    ]
 
     const a = await registerAndLogin('A')
     const b = await registerAndLogin('B')
@@ -91,6 +95,11 @@ describe('cycle de vie du duel', () => {
   })
 
   afterAll(async () => {
+    // `duel.pullCount` est une config GLOBALE partagee avec les autres
+    // fichiers e2e : sans cette remise en etat, la valeur 9 posee plus bas
+    // survit au fichier et fait echouer economy-config.e2e.test.ts, qui
+    // verifie que /economy/config expose bien le defaut.
+    await configService.set('duel.pullCount', basePullCount)
     await app.close()
   })
 
