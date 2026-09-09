@@ -6,6 +6,15 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/**
+ * Marque du pluriel français : rien au singulier, « s » au-delà. Sert à
+ * accorder les mots d'un même message (« 2 cartes ignorées »), d'où l'appel
+ * répété plutôt qu'une fonction qui formaterait un mot unique.
+ */
+export function plural(n: number): string {
+  return n > 1 ? 's' : ''
+}
+
 export function safeParse<T>(value: string | null, fallback: T): T {
   try {
     return value ? JSON.parse(value) : fallback

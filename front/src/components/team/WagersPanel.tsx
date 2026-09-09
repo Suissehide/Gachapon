@@ -4,7 +4,9 @@ import { useMemo, useState } from 'react'
 
 import type { TeamMember } from '../../api/teams.api.ts'
 import type { DuelView } from '../../api/wagers.api.ts'
-import { cn } from '../../libs/utils.ts'
+import { busyUserIds, hasOpenDuel } from '../../libs/duel.ts'
+import { cn, plural } from '../../libs/utils.ts'
+import { useSettledDuel } from '../../queries/useSettledDuel.ts'
 import {
   useAcceptDuel,
   useCancelDuel,
@@ -12,11 +14,10 @@ import {
   useWagers,
   useWagersLive,
 } from '../../queries/useWagers.ts'
-import { useAuthStore } from '../../stores/auth.store.ts'
 import { ArcadeCard } from '../shared/ArcadeCard.tsx'
 import { Button } from '../ui/button.tsx'
-import { busyUserIds, DuelProposePopup } from './DuelProposePopup.tsx'
-import { DuelResultPopup, useSettledDuel } from './DuelResultPopup.tsx'
+import { DuelProposePopup } from './DuelProposePopup.tsx'
+import { DuelResultPopup } from './DuelResultPopup.tsx'
 
 /** Nombre de duels réglés gardés à l'écran (le serveur en renvoie plus). */
 const HISTORY_SIZE = 10
@@ -32,7 +33,7 @@ function pullsLeft(done: number, total: number): number {
 
 function pullsLabel(done: number, total: number): string {
   const left = pullsLeft(done, total)
-  return `${left} tirage${left > 1 ? 's' : ''} restant${left > 1 ? 's' : ''}`
+  return `${left} tirage${plural(left)} restant${plural(left)}`
 }
 
 function ScoreLine({ duel }: { duel: DuelView }) {
@@ -122,7 +123,7 @@ function PendingDuelRow({
             disabled={busy}
             title={busy ? 'Envoi en cours…' : 'Refuser le défi'}
           >
-            Refuser
+            {busy ? 'Envoi en cours…' : 'Refuser'}
           </Button>
         </span>
       )}
@@ -184,13 +185,19 @@ export function WagersPanel({
 }) {
   const { data, isLoading, isError, error } = useWagers(teamId)
   useWagersLive(teamId)
-  const myUserId = useAuthStore((s) => s.user?.id ?? '')
   const [proposeOpen, setProposeOpen] = useState(false)
   const teamIds = useMemo(() => [teamId], [teamId])
   const settled = useSettledDuel(teamIds, data?.settledDuels)
-  const { mutate: accept, isPending: accepting } = useAcceptDuel(teamId)
-  const { mutate: decline, isPending: declining } = useDeclineDuel(teamId)
-  const { mutate: cancel, isPending: cancelling } = useCancelDuel(teamId)
+  const acceptDuel = useAcceptDuel(teamId)
+  const declineDuel = useDeclineDuel(teamId)
+  const cancelDuel = useCancelDuel(teamId)
+  // `variables` d'une mutation react-query = l'identifiant du duel en vol.
+  // Un seul drapeau partagé griserait les boutons de TOUTES les lignes ;
+  // aujourd'hui une seule ligne porte des boutons, mais l'invariant ne tient
+  // qu'au « un duel ouvert par joueur » du serveur.
+  const inFlightDuelId =
+    [acceptDuel, declineDuel, cancelDuel].find((m) => m.isPending)?.variables ??
+    null
 
   if (isLoading) {
     return (
@@ -216,10 +223,14 @@ export function WagersPanel({
   const history = data.settledDuels.slice(0, HISTORY_SIZE)
 
   const busy = busyUserIds(data.duels)
-  const iAmBusy = busy.has(myUserId)
-  const availableOpponents = members.filter(
-    (m) => m.userId !== myUserId && !busy.has(m.userId),
-  ).length
+  // Déduit du rôle porté par la vue, jamais d'une comparaison avec
+  // l'identifiant du store : un store momentanément vide rendrait la
+  // comparaison fausse pour tout le monde et activerait « Défier » à tort.
+  const iAmBusy = hasOpenDuel(data.duels)
+  // Quand je ne suis pas occupé, je ne figure pas dans `busy` : le seul
+  // membre libre à retrancher du décompte, c'est donc moi.
+  const availableOpponents =
+    members.filter((m) => !busy.has(m.userId)).length - 1
 
   // Un bouton grisé muet ne dit rien : le libellé porte lui-même la raison.
   const challengeLabel = iAmBusy
@@ -266,10 +277,10 @@ export function WagersPanel({
               <PendingDuelRow
                 key={duel.id}
                 duel={duel}
-                onAccept={accept}
-                onDecline={decline}
-                onCancel={cancel}
-                busy={accepting || declining || cancelling}
+                onAccept={acceptDuel.mutate}
+                onDecline={declineDuel.mutate}
+                onCancel={cancelDuel.mutate}
+                busy={inFlightDuelId === duel.id}
               />
             ))}
           </ul>
@@ -300,7 +311,6 @@ export function WagersPanel({
         teamId={teamId}
         members={members}
         duels={data.duels}
-        myUserId={myUserId}
       />
 
       {settled.duel !== null && (

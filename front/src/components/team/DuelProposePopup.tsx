@@ -3,11 +3,13 @@ import { useState } from 'react'
 
 import type { TeamMember } from '../../api/teams.api.ts'
 import type { DuelView } from '../../api/wagers.api.ts'
+import { busyUserIds } from '../../libs/duel.ts'
 import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
 } from '../../queries/useEconomyConfig.ts'
 import { useProposeDuel } from '../../queries/useWagers.ts'
+import { useAuthStore } from '../../stores/auth.store.ts'
 import { Button } from '../ui/button.tsx'
 import { Select } from '../ui/input.tsx'
 import {
@@ -26,27 +28,6 @@ type Props = {
   members: TeamMember[]
   /** Duels non réglés de l'équipe — sert à écarter les joueurs déjà pris. */
   duels: DuelView[]
-  myUserId: string
-}
-
-/**
- * Identifiants des joueurs déjà engagés dans un duel de cette équipe
- * (PENDING ou ACTIVE). Le serveur refuserait de toute façon la proposition
- * (« X a déjà un duel en cours »), mais un adversaire qu'on ne peut pas
- * choisir vaut mieux qu'une erreur après coup. Attention : un coéquipier
- * engagé dans une AUTRE de ses équipes reste proposé ici — la vue ne
- * connaît que les duels de cette équipe — et c'est l'erreur du serveur,
- * remontée en toast par `useProposeDuel`, qui tranche alors.
- */
-export function busyUserIds(duels: DuelView[]): Set<string> {
-  const busy = new Set<string>()
-  for (const duel of duels) {
-    if (duel.status === 'PENDING' || duel.status === 'ACTIVE') {
-      busy.add(duel.challenger.id)
-      busy.add(duel.opponent.id)
-    }
-  }
-  return busy
 }
 
 export function DuelProposePopup({
@@ -55,17 +36,23 @@ export function DuelProposePopup({
   teamId,
   members,
   duels,
-  myUserId,
 }: Props) {
   const [opponentId, setOpponentId] = useState('')
   const { mutate: propose, isPending } = useProposeDuel(teamId)
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  // `undefined` tant que le profil n'est pas chargé : on ne se rabat PAS sur
+  // une chaîne vide, qui ne filtrerait personne et me proposerait moi-même
+  // comme adversaire. Sans identifiant, pas de liste.
+  const myUserId = useAuthStore((s) => s.user?.id)
   const pullCount = economy.duel.pullCount
 
   const busy = busyUserIds(duels)
-  const options = members
-    .filter((m) => m.userId !== myUserId && !busy.has(m.userId))
-    .map((m) => ({ value: m.userId, label: m.user.username }))
+  const options =
+    myUserId === undefined
+      ? []
+      : members
+          .filter((m) => m.userId !== myUserId && !busy.has(m.userId))
+          .map((m) => ({ value: m.userId, label: m.user.username }))
 
   const submit = () => {
     if (opponentId === '') {
@@ -78,6 +65,14 @@ export function DuelProposePopup({
       },
     })
   }
+
+  // Le libellé porte la raison, pas seulement l'info-bulle : sur écran
+  // tactile il n'y a pas de survol pour révéler un `title`.
+  const submitLabel = isPending
+    ? 'Envoi en cours…'
+    : opponentId === ''
+      ? 'Choisis un adversaire'
+      : 'Envoyer le défi'
 
   return (
     <Popup open={open} onOpenChange={onOpenChange}>
@@ -140,14 +135,10 @@ export function DuelProposePopup({
           <Button
             onClick={submit}
             disabled={opponentId === '' || isPending}
-            title={
-              opponentId === ''
-                ? "Choisis d'abord un adversaire"
-                : 'Envoyer le défi'
-            }
+            title={submitLabel}
           >
             <Swords className="h-4 w-4" />
-            {opponentId === '' ? 'Choisis un adversaire' : 'Envoyer le défi'}
+            {submitLabel}
           </Button>
         </PopupFooter>
       </PopupContent>

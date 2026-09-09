@@ -8,6 +8,7 @@ import {
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
+import { plural } from '../libs/utils.ts'
 import { useAchievementUnlockStore } from '../stores/achievementUnlock.store.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 
@@ -105,9 +106,6 @@ export const useRecycle = () => {
     },
   })
 }
-
-/** Marque du pluriel français : rien au singulier, « s » au-delà. */
-const plural = (n: number) => (n > 1 ? 's' : '')
 
 export const useRecycleAll = () => {
   const qc = useQueryClient()

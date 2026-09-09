@@ -1,8 +1,11 @@
 import { Link } from '@tanstack/react-router'
 import { Swords } from 'lucide-react'
 
+import { duelSides } from '../../libs/duel.ts'
+import { plural } from '../../libs/utils.ts'
 import { useMyDuel } from '../../queries/useMyDuel.ts'
-import { DuelResultPopup, useSettledDuel } from '../team/DuelResultPopup.tsx'
+import { useSettledDuel } from '../../queries/useSettledDuel.ts'
+import { DuelResultPopup } from '../team/DuelResultPopup.tsx'
 import { Button } from '../ui/button.tsx'
 
 /**
@@ -33,12 +36,7 @@ export function WagerBanner() {
     return result
   }
 
-  const iAmChallenger = duel.myRole === 'CHALLENGER'
-  const me = iAmChallenger ? duel.challenger : duel.opponent
-  const them = iAmChallenger ? duel.opponent : duel.challenger
-  const myScore = iAmChallenger ? duel.challengerScore : duel.opponentScore
-  const theirScore = iAmChallenger ? duel.opponentScore : duel.challengerScore
-  const myPulls = iAmChallenger ? duel.challengerPulls : duel.opponentPulls
+  const { me, them, myScore, theirScore, myPulls } = duelSides(duel)
   const left = Math.max(0, duel.pullCount - myPulls)
 
   return (
@@ -62,7 +60,7 @@ export function WagerBanner() {
             <span className="font-mono text-xs text-text-light">
               {left === 0
                 ? "Tes tirages comptés sont faits, on attend l'adversaire"
-                : `Il te reste ${left} tirage${left > 1 ? 's' : ''} compté${left > 1 ? 's' : ''}`}
+                : `Il te reste ${left} tirage${plural(left)} compté${plural(left)}`}
             </span>
             <Button variant="outline" size="sm" asChild>
               <Link to="/team/$id" params={{ id: teamId }}>
