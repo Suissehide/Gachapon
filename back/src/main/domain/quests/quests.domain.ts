@@ -28,7 +28,7 @@ import type {
   AchievementEventKind,
 } from '../achievements/events.types'
 import { isPrismaSerializationError } from '../shared/retry-serialization'
-import { QUEST_DEFINITIONS } from './quest-definitions'
+import { QUEST_DEFINITIONS, type QuestDefinition } from './quest-definitions'
 import type { QuestCriterion } from './quest-matching'
 import {
   mondayOfUtcWeek,
@@ -222,10 +222,15 @@ export class QuestsDomain implements IQuestsDomain {
   }
 
   /**
-   * Crée les quêtes manquantes, une par une, sans jamais écraser l'existant.
+   * Crée les quêtes manquantes et réaligne les récompenses sur le fichier de
+   * définitions.
    *
-   * Create-only et non upsert : une quête retouchée à chaud en base (renommée,
-   * désactivée, cible ajustée) doit survivre au redémarrage suivant.
+   * La quête elle-même reste create-only : une quête retouchée à chaud en base
+   * (renommée, désactivée, cible ajustée) doit survivre au redémarrage suivant.
+   * La récompense, elle, n'a aucune surface d'édition (l'admin ne l'expose pas),
+   * donc `quest-definitions.ts` en est la seule source de vérité — sans cette
+   * synchro, un rééquilibrage de jetons ne prendrait effet que sur base fraîche
+   * et resterait invisible en production.
    *
    * Le `create` imbriqué (Quest + Reward) est atomique côté Prisma, donc une
    * collision de clé avec un bootstrap concurrent — deux instances qui
@@ -233,12 +238,14 @@ export class QuestsDomain implements IQuestsDomain {
    */
   async bootstrap(): Promise<void> {
     const existing = await this.#postgresOrm.prisma.quest.findMany({
-      select: { key: true },
+      select: { key: true, rewardId: true, reward: true },
     })
-    const existingKeys = new Set(existing.map((q) => q.key))
+    const existingByKey = new Map(existing.map((q) => [q.key, q]))
 
     for (const def of QUEST_DEFINITIONS) {
-      if (existingKeys.has(def.key)) {
+      const current = existingByKey.get(def.key)
+      if (current) {
+        await this.#syncReward(def, current.rewardId, current.reward)
         continue
       }
       const {
@@ -267,6 +274,54 @@ export class QuestsDomain implements IQuestsDomain {
         )
       }
     }
+  }
+
+  /**
+   * Aligne la Reward d'une quête existante sur sa définition.
+   *
+   * La ligne Reward est propre à la quête (chaque `bootstrap` la crée en
+   * imbriqué), donc la mettre à jour ne touche aucun autre contenu. Les
+   * UserReward déjà en attente pointent dessus : un joueur qui n'a pas encore
+   * réclamé touchera le nouveau montant, ce qui est le comportement voulu pour
+   * un rééquilibrage à la hausse.
+   */
+  async #syncReward(
+    def: QuestDefinition,
+    rewardId: string | null,
+    reward: { tokens: number; dust: number; xp: number } | null,
+  ): Promise<void> {
+    const target = {
+      tokens: def.rewardTokens,
+      dust: def.rewardDust,
+      xp: def.rewardXp ?? 0,
+    }
+
+    if (!rewardId || !reward) {
+      await this.#postgresOrm.prisma.quest.update({
+        where: { key: def.key },
+        data: { reward: { create: target } },
+      })
+      this.#logger?.debug(
+        `[quests] bootstrap: récompense créée pour ${def.key}`,
+      )
+      return
+    }
+
+    if (
+      reward.tokens === target.tokens &&
+      reward.dust === target.dust &&
+      reward.xp === target.xp
+    ) {
+      return
+    }
+
+    await this.#postgresOrm.prisma.reward.update({
+      where: { id: rewardId },
+      data: target,
+    })
+    this.#logger?.debug(
+      `[quests] bootstrap: récompense de ${def.key} alignée sur ${target.tokens} jetons / ${target.dust} poussière / ${target.xp} XP`,
+    )
   }
 
   // ---------------------------------------------------------------------------

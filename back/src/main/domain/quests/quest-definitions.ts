@@ -41,6 +41,12 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
   // One-shot — chaîne d'onboarding : enseigne une boucle de jeu à la fois.
   // Les jalons de progression (X tirages, posséder une rareté) sont couverts
   // par les succès (achievements) ; les quêtes ne les doublonnent plus.
+  //
+  // Jetons : 1 jeton = 1 tirage (gacha.pullTokenCost), et la régénération
+  // naturelle plafonne à 10 en stock. La chaîne complète vaut 41 jetons, soit
+  // ~4 stocks pleins étalés sur les premières heures — assez pour que le
+  // débutant ouvre sa collection sans attendre l'horloge, sans pour autant
+  // dépasser d'un cran la cadence quotidienne visée.
   // -------------------------------------------------------------------------
   {
     key: 'first_pull',
@@ -48,7 +54,7 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
     description: 'Effectue ton premier tirage au Gachapon.',
     criterion: { event: 'PULL_COMPLETED', target: 1 },
     period: 'ONESHOT',
-    rewardTokens: 2,
+    rewardTokens: 3,
     rewardDust: 0,
   },
   {
@@ -57,7 +63,7 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
     description: 'Remporte ton premier combat en campagne.',
     criterion: { event: 'STAGE_CLEARED', target: 1 },
     period: 'ONESHOT',
-    rewardTokens: 3,
+    rewardTokens: 5,
     rewardDust: 25,
   },
   {
@@ -66,7 +72,7 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
     description: "Monte le niveau d'une carte pour la première fois.",
     criterion: { event: 'CARD_LEVELED', target: 1 },
     period: 'ONESHOT',
-    rewardTokens: 3,
+    rewardTokens: 5,
     rewardDust: 25,
   },
   {
@@ -75,7 +81,7 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
     description: 'Recycle ta première carte en poussière.',
     criterion: { event: 'CARD_RECYCLED', target: 1 },
     period: 'ONESHOT',
-    rewardTokens: 2,
+    rewardTokens: 3,
     rewardDust: 25,
   },
   {
@@ -84,7 +90,7 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
     description: "Dépense de l'or pour la première fois.",
     criterion: { event: 'GOLD_SPENT', target: 1 },
     period: 'ONESHOT',
-    rewardTokens: 2,
+    rewardTokens: 3,
     rewardDust: 15,
   },
   {
@@ -97,7 +103,7 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
       filter: { uniqueOnly: true },
     },
     period: 'ONESHOT',
-    rewardTokens: 5,
+    rewardTokens: 8,
     rewardDust: 100,
   },
   {
@@ -106,7 +112,7 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
     description: 'Rejoins ou crée une équipe.',
     criterion: { event: 'TEAM_JOINED', target: 1 },
     period: 'ONESHOT',
-    rewardTokens: 3,
+    rewardTokens: 4,
     rewardDust: 25,
   },
   // Découverte de l'équipement — trois gestes, dans l'ordre où le joueur les
@@ -119,7 +125,7 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
     description: 'Obtiens ta première pièce d’équipement en combat.',
     criterion: { event: 'EQUIPMENT_OBTAINED', target: 1 },
     period: 'ONESHOT',
-    rewardTokens: 2,
+    rewardTokens: 3,
     rewardDust: 25,
   },
   {
@@ -128,7 +134,7 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
     description: 'Améliore une pièce d’équipement pour la première fois.',
     criterion: { event: 'EQUIPMENT_UPGRADED', target: 1 },
     period: 'ONESHOT',
-    rewardTokens: 3,
+    rewardTokens: 4,
     rewardDust: 25,
   },
   {
@@ -137,7 +143,7 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
     description: 'Recycle ta première pièce d’équipement contre de l’or.',
     criterion: { event: 'EQUIPMENT_SALVAGED', target: 1 },
     period: 'ONESHOT',
-    rewardTokens: 2,
+    rewardTokens: 3,
     rewardDust: 25,
   },
 
