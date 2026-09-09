@@ -224,11 +224,11 @@ export class DuelDomain implements IDuelDomain {
     const deadlineAt = new Date(
       now.getTime() + cfg['duel.deadlineHours'] * HOUR_MS,
     )
-    await this.#writeIfPending(duel.id, {
-      status: 'ACTIVE',
-      acceptedAt: now,
-      deadlineAt,
-    })
+    await this.#writeIfPending(
+      duel.id,
+      { status: 'ACTIVE', acceptedAt: now, deadlineAt },
+      "Trop tard : ce duel n'est plus en attente d'acceptation",
+    )
     const updated = await this.#wagerRepository.findDuelById(duel.id)
     if (!updated) {
       throw Boom.badImplementation('Duel introuvable juste après acceptation')
@@ -264,7 +264,11 @@ export class DuelDomain implements IDuelDomain {
       throw Boom.conflict("Ce duel n'est plus en attente d'acceptation")
     }
 
-    await this.#writeIfPending(duel.id, { status: 'DECLINED' })
+    await this.#writeIfPending(
+      duel.id,
+      { status: 'DECLINED' },
+      "Trop tard : ce duel n'est plus en attente d'acceptation",
+    )
     const updated = await this.#wagerRepository.findDuelById(duel.id)
     if (!updated) {
       throw Boom.badImplementation('Duel introuvable juste après refus')
@@ -284,7 +288,11 @@ export class DuelDomain implements IDuelDomain {
       throw Boom.conflict("Ce duel n'est plus en attente d'acceptation")
     }
 
-    await this.#writeIfPending(duel.id, { status: 'CANCELLED' })
+    await this.#writeIfPending(
+      duel.id,
+      { status: 'CANCELLED' },
+      'Trop tard : ce duel n\'est plus annulable',
+    )
     const updated = await this.#wagerRepository.findDuelById(duel.id)
     if (!updated) {
       throw Boom.badImplementation('Duel introuvable juste après annulation')
@@ -477,15 +485,17 @@ export class DuelDomain implements IDuelDomain {
       acceptedAt?: Date
       deadlineAt?: Date
     },
+    // Le message est passé par l'appelant : « n'est plus en attente
+    // d'acceptation » n'a aucun sens pour le DÉFIEUR qui annule — lui
+    // n'attendait rien, il retirait son défi.
+    conflictMessage: string,
   ): Promise<void> {
     const { count } = await this.#postgresOrm.prisma.duel.updateMany({
       where: { id: duelId, status: 'PENDING' },
       data,
     })
     if (count === 0) {
-      throw Boom.conflict(
-        "Trop tard : ce duel n'est plus en attente d'acceptation",
-      )
+      throw Boom.conflict(conflictMessage)
     }
   }
 
@@ -500,21 +510,75 @@ export class DuelDomain implements IDuelDomain {
    */
   async #settleStaleForTeam(teamId: string, now: Date): Promise<void> {
     const stale = await this.#wagerRepository.listStaleForTeam(teamId, now)
-    for (const duelId of stale.duelIds) {
+    await this.#settleEach(teamId, stale.duelIds, stale.betIds, now)
+  }
+
+  /**
+   * Règlement EXHAUSTIF des enjeux d'une équipe : tous ses duels ACTIVE et
+   * tous ses paris ACTIVE, pas seulement ceux dont l'échéance est passée.
+   *
+   * Sert AVANT la suppression d'une équipe (`TeamDomain#deleteTeam`). Le
+   * règlement est paresseux — un pari ne se tranche qu'au tirage suivant de
+   * la cible ou à la lecture de la vue d'équipe — si bien qu'un enjeu dont
+   * l'issue est DÉJÀ déterminée peut dormir en ACTIVE indéfiniment. Fermer
+   * l'équipe sans cette passe rembourserait un pari en réalité perdu (la
+   * cible a tiré puis s'est arrêtée, l'échéance est passée : c'est
+   * exactement l'option gratuite que `betVerdict` ferme, restaurée à
+   * l'échelle de la suppression d'équipe et sous le contrôle du
+   * propriétaire), paierait la seule mise là où un pari déjà gagnant doit
+   * `mise × cote`, et annulerait un duel périmé dont les cartes sont dues
+   * au vainqueur — alors que le propriétaire est souvent l'un des deux
+   * duellistes.
+   *
+   * On ne se limite pas à `listStaleForTeam` (le chemin de lecture, qui ne
+   * regarde que `deadlineAt`) : un pari déjà qualifiant ou une fenêtre déjà
+   * pleine se tranchent AVANT l'échéance, et leur règlement fire-and-forget
+   * a pu échouer. `#settle` et `settleBet` sont idempotents et ne
+   * réécrivent qu'un compteur quand le verdict reste indécidable : les
+   * appeler sur tout ce qui est ACTIVE est sans risque, et la suppression
+   * d'équipe est assez rare pour en payer le coût.
+   */
+  async settleTeamWagers(teamId: string, now: Date = new Date()): Promise<void> {
+    const [duels, bets] = await Promise.all([
+      this.#wagerRepository.listTeamDuels(teamId),
+      this.#wagerRepository.listTeamBets(teamId, ['ACTIVE']),
+    ])
+    await this.#settleEach(
+      teamId,
+      duels.filter((d) => d.status === 'ACTIVE').map((d) => d.id),
+      bets.map((b) => b.id),
+      now,
+    )
+  }
+
+  /**
+   * Un par un, et chacun dans son propre try/catch : un règlement qui
+   * échoue de façon déterministe ne doit pas priver de règlement tous les
+   * suivants — même intention que le hook `POST /pulls`
+   * (`void ... .catch(...)`), appliquée à une boucle plutôt qu'à un
+   * fire-and-forget. L'échec est journalisé, jamais avalé.
+   */
+  async #settleEach(
+    teamId: string,
+    duelIds: string[],
+    betIds: string[],
+    now: Date,
+  ): Promise<void> {
+    for (const duelId of duelIds) {
       try {
         await this.#settle(duelId, now)
       } catch (err) {
         this.#logger.error(
-          `Règlement du duel stale ${duelId} échoué (equipe ${teamId}) : ${err instanceof Error ? err.message : String(err)}`,
+          `Règlement du duel ${duelId} échoué (equipe ${teamId}) : ${err instanceof Error ? err.message : String(err)}`,
         )
       }
     }
-    for (const betId of stale.betIds) {
+    for (const betId of betIds) {
       try {
         await this.#betDomain.settleBet(betId, now)
       } catch (err) {
         this.#logger.error(
-          `Règlement du pari stale ${betId} échoué (equipe ${teamId}) : ${err instanceof Error ? err.message : String(err)}`,
+          `Règlement du pari ${betId} échoué (equipe ${teamId}) : ${err instanceof Error ? err.message : String(err)}`,
         )
       }
     }

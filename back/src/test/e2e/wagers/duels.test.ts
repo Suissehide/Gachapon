@@ -1259,6 +1259,10 @@ describe('cycle de vie du duel', () => {
   describe("suppression d'equipe", () => {
     let delTeamId: string
     let delSetId: string
+    let delCommonCardId: string
+    let delRareOnlySetId: string
+    let delCommonOnlySetId: string
+    let delLoserCardId: string
     let delBaselineActiveSetIds: string[]
 
     beforeAll(async () => {
@@ -1290,21 +1294,69 @@ describe('cycle de vie du duel', () => {
           },
         ],
       })
-      await activateOnly(delSetId)
+      delCommonCardId = (
+        await prisma.card.findFirstOrThrow({
+          where: { setId: delSetId, rarity: 'COMMON' },
+        })
+      ).id
 
-      // Equipe dediee : ce describe la detruit.
+      // Deux catalogues purs pour rendre le duel deterministe : A ne tire
+      // que de la RARE, B que de la COMMUNE, donc A gagne aux points.
+      const rareOnly = await prisma.cardSet.create({
+        data: { name: `DuelDelRareOnly${suffix}`, isActive: false },
+      })
+      delRareOnlySetId = rareOnly.id
+      await prisma.card.create({
+        data: {
+          name: `DuelDelRareOnlyCard${suffix}`,
+          rarity: 'RARE',
+          dropWeight: 10,
+          setId: delRareOnlySetId,
+        },
+      })
+      const commonOnly = await prisma.cardSet.create({
+        data: { name: `DuelDelCommonOnly${suffix}`, isActive: false },
+      })
+      delCommonOnlySetId = commonOnly.id
+      // Carte NEUVE, jamais tiree ailleurs dans ce fichier : c'est elle qui
+      // doit changer de main au reglement, et personne d'autre ne doit en
+      // posseder d'exemplaire.
+      delLoserCardId = (
+        await prisma.card.create({
+          data: {
+            name: `DuelDelLoserCard${suffix}`,
+            rarity: 'COMMON',
+            dropWeight: 10,
+            setId: delCommonOnlySetId,
+          },
+        })
+      ).id
+
+      await activateOnly(delSetId)
+    })
+
+    // Une equipe NEUVE par test : chacun la detruit, et le plafond de trois
+    // equipes par joueur interdit de les accumuler.
+    async function newDeletableTeam(tag: string): Promise<string> {
       const team = await app.inject({
         method: 'POST',
         url: '/teams',
         headers: { cookie: cookiesA },
-        payload: { name: `DuelDelTeam${suffix}` },
+        payload: { name: `DuelDelTeam${tag}${suffix}` },
       })
       expect(team.statusCode).toBe(201)
-      delTeamId = team.json().id
+      const id = team.json().id as string
       await prisma.teamMember.create({
-        data: { teamId: delTeamId, userId: userIdB, role: 'MEMBER' },
+        data: { teamId: id, userId: userIdB, role: 'MEMBER' },
       })
-    })
+      return id
+    }
+
+    function dustOf(userId: string): Promise<number> {
+      return prisma.user
+        .findUnique({ where: { id: userId } })
+        .then((u: { dust: number }) => u.dust)
+    }
 
     afterAll(async () => {
       await prisma.cardSet.updateMany({ data: { isActive: false } })
@@ -1319,6 +1371,8 @@ describe('cycle de vie du duel', () => {
     it('DELETE /teams/:id rembourse la mise des paris ACTIVE et annule les duels', async () => {
       // Duel et Bet cascadent sur Team : la mise, debitee AU PLACEMENT et
       // stockee nulle part ailleurs, disparaissait avec la ligne.
+      await activateOnly(delSetId)
+      delTeamId = await newDeletableTeam('A')
       await prisma.user.update({ where: { id: userIdA }, data: { dust: 5000 } })
 
       const stake = 300
@@ -1381,6 +1435,181 @@ describe('cycle de vie du duel', () => {
         },
       })
       expect(stillOpen).toHaveLength(0)
+    })
+
+    it("DELETE /teams/:id : un pari echu dont la cible a tire sans finir est PERDU, pas rembourse", async () => {
+      // Le reglement est paresseux : ce pari-la dort en ACTIVE tant que
+      // personne ne le regarde, alors que son verdict est deja fixe. Sans
+      // passe de reglement avant la fermeture, le proprietaire recuperait sa
+      // mise en supprimant l'equipe — l'option gratuite que betVerdict ferme,
+      // rouverte a l'echelle de l'equipe et repetable puisque creer une
+      // equipe est gratuit.
+      await activateOnly(delSetId)
+      const teamForLostBet = await newDeletableTeam('B')
+      await prisma.user.update({ where: { id: userIdA }, data: { dust: 5000 } })
+
+      const stake = 400
+      const createdAt = new Date(Date.now() - 2 * 60 * 60 * 1000)
+      const bet = await prisma.bet.create({
+        data: {
+          teamId: teamForLostBet,
+          bettorId: userIdA,
+          targetId: userIdB,
+          stake,
+          minRarity: 'RARE',
+          pullWindow: 10,
+          multiplier: 1.38,
+          createdAt,
+          // Echeance depassee, fenetre ENTAMEE mais incomplete.
+          deadlineAt: new Date(Date.now() - 60 * 60 * 1000),
+        },
+      })
+      // La mise a bien ete debitee au placement : on reproduit ce solde.
+      await prisma.user.update({
+        where: { id: userIdA },
+        data: { dust: 5000 - stake },
+      })
+      for (let i = 0; i < 2; i++) {
+        await prisma.gachaPull.create({
+          data: {
+            userId: userIdB,
+            cardId: delCommonCardId,
+            variant: 'NORMAL',
+            pulledAt: new Date(createdAt.getTime() + (i + 1) * 60 * 1000),
+          },
+        })
+      }
+      expect(
+        (await prisma.bet.findUnique({ where: { id: bet.id } })).status,
+      ).toBe('ACTIVE')
+
+      const res = await app.inject({
+        method: 'DELETE',
+        url: `/teams/${teamForLostBet}`,
+        headers: { cookie: cookiesA },
+      })
+      expect(res.statusCode).toBe(204)
+
+      // Perdu : la mise reste a la maison, le solde ne bouge pas.
+      expect(await dustOf(userIdA)).toBe(5000 - stake)
+      expect(
+        await prisma.team.findUnique({ where: { id: teamForLostBet } }),
+      ).toBeNull()
+    })
+
+    it("DELETE /teams/:id : un duel echu est REGLE, les cartes du perdant changent de main", async () => {
+      // Duel dont l'issue est deja figee par l'echeance : l'annuler priverait
+      // le vainqueur des cartes qui lui sont dues — et le proprietaire qui
+      // supprime est souvent l'un des deux duellistes.
+      const teamForDuel = await newDeletableTeam('C')
+
+      const propose = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamForDuel}/duels`,
+        headers: { cookie: cookiesA },
+        payload: { opponentId: userIdB },
+      })
+      expect(propose.statusCode).toBe(201)
+      const duelId = propose.json().id as string
+      const accept = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamForDuel}/duels/${duelId}/accept`,
+        headers: { cookie: cookiesB },
+      })
+      expect(accept.statusCode).toBe(200)
+
+      await prisma.user.updateMany({
+        where: { id: { in: [userIdA, userIdB] } },
+        data: { tokens: 20, lastTokenAt: new Date() },
+      })
+
+      // B (perdant prevu) tire UNE commune neuve, A deux rares : aucun des
+      // deux ne remplit la fenetre, le duel reste donc ACTIVE.
+      await activateOnly(delCommonOnlySetId)
+      const bPull = await app.inject({
+        method: 'POST',
+        url: '/pulls',
+        headers: { cookie: cookiesB },
+      })
+      expect(bPull.statusCode).toBe(201)
+
+      await activateOnly(delRareOnlySetId)
+      for (let i = 0; i < 2; i++) {
+        const res = await app.inject({
+          method: 'POST',
+          url: '/pulls',
+          headers: { cookie: cookiesA },
+        })
+        expect(res.statusCode).toBe(201)
+      }
+      expect(
+        (await prisma.duel.findUnique({ where: { id: duelId } })).status,
+      ).toBe('ACTIVE')
+
+      // B possede bien la carte comptee, A ne l'a pas.
+      const bBefore = await prisma.userCard.findUnique({
+        where: {
+          userId_cardId_variant: {
+            userId: userIdB,
+            cardId: delLoserCardId,
+            variant: 'NORMAL',
+          },
+        },
+      })
+      expect(bBefore.quantity).toBe(1)
+      expect(
+        await prisma.userCard.findUnique({
+          where: {
+            userId_cardId_variant: {
+              userId: userIdA,
+              cardId: delLoserCardId,
+              variant: 'NORMAL',
+            },
+          },
+        }),
+      ).toBeNull()
+
+      // Echeance depassee : le verdict est desormais fixe (16 demi-points
+      // contre 2), il ne manque qu'un declencheur.
+      await prisma.duel.update({
+        where: { id: duelId },
+        data: { deadlineAt: new Date(Date.now() - 60 * 1000) },
+      })
+
+      const res = await app.inject({
+        method: 'DELETE',
+        url: `/teams/${teamForDuel}`,
+        headers: { cookie: cookiesA },
+      })
+      expect(res.statusCode).toBe(204)
+
+      // La carte a change de main AVANT la fermeture : le duel a ete regle,
+      // pas annule.
+      expect(
+        await prisma.userCard.findUnique({
+          where: {
+            userId_cardId_variant: {
+              userId: userIdB,
+              cardId: delLoserCardId,
+              variant: 'NORMAL',
+            },
+          },
+        }),
+      ).toBeNull()
+      const aAfter = await prisma.userCard.findUnique({
+        where: {
+          userId_cardId_variant: {
+            userId: userIdA,
+            cardId: delLoserCardId,
+            variant: 'NORMAL',
+          },
+        },
+      })
+      expect(aAfter).not.toBeNull()
+      expect(aAfter.quantity).toBe(1)
+      expect(
+        await prisma.team.findUnique({ where: { id: teamForDuel } }),
+      ).toBeNull()
     })
   })
 })

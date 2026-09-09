@@ -97,6 +97,14 @@ export interface IDuelDomain {
   ): Promise<WagersView>
   settleForUser(userId: string, now?: Date): Promise<void>
   /**
+   * Règle TOUS les duels et paris ACTIVE de l'équipe, pas seulement ceux
+   * dont l'échéance est passée. Appelé avant de fermer une équipe : le
+   * règlement étant paresseux, un enjeu dont l'issue est déjà déterminée
+   * peut dormir en ACTIVE, et le rembourser ou l'annuler en l'état
+   * fausserait le résultat (voir `DuelDomain#settleTeamWagers`).
+   */
+  settleTeamWagers(teamId: string, now?: Date): Promise<void>
+  /**
    * Clés `${cardId}:${variant}` des cartes que les tirages comptés (au sens
    * de `findPullsSinceInTx`) de tous les duels ACTIVE du joueur verrouillent.
    * Utilisé à la fois pour peupler `WagersView#engagedCardIds` et par les
