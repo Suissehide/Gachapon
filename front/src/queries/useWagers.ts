@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 
-import { WagersApi, type WagersView } from '../api/wagers.api.ts'
+import { WagersApi } from '../api/wagers.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useToast } from '../hooks/useToast.ts'
 import { wsClient } from '../lib/ws.ts'
@@ -22,7 +22,7 @@ export function useWagers(teamId: string | undefined) {
     // pas retirer ce refetchInterval en le prenant pour une redondance du
     // WebSocket.
     refetchInterval: (query) => {
-      const data = query.state.data as WagersView | undefined
+      const data = query.state.data
       return data?.duels.some((duel) => duel.status === 'ACTIVE')
         ? 10_000
         : false

@@ -40,7 +40,7 @@ export type WagersView = {
   engagedCardIds: string[]
 }
 
-const DUEL_ALREADY_IN_PROGRESS = {
+const PROPOSE_DUEL_ERRORS = {
   403: {
     title: 'Accès refusé',
     message: 'Tu ne fais pas partie de cette équipe.',
@@ -83,7 +83,7 @@ export const WagersApi = {
       body: JSON.stringify({ opponentId }),
     })
     if (!res.ok) {
-      handleHttpError(res, DUEL_ALREADY_IN_PROGRESS, 'Proposition de duel')
+      handleHttpError(res, PROPOSE_DUEL_ERRORS, 'Proposition de duel')
     }
     return res.json()
   },
