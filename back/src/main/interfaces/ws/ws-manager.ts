@@ -97,6 +97,18 @@ export type DuelSettledEvent = {
   transferredCount: number
 }
 
+export type BetPlacedEvent = {
+  type: 'bet:placed'
+  teamId: string
+  betId: string
+  bettor: { id: string; username: string }
+  targetId: string
+  minRarity: string
+  stake: number
+  multiplier: number
+  pullWindow: number
+}
+
 type WsEvent =
   | PullResultEvent
   | PullBatchResultEvent
@@ -106,6 +118,7 @@ type WsEvent =
   | DuelProposedEvent
   | DuelUpdateEvent
   | DuelSettledEvent
+  | BetPlacedEvent
 
 export class WsManager {
   readonly #connections = new Map<string, WebSocket>()

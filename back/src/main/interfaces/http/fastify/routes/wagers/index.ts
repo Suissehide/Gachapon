@@ -1,15 +1,19 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import {
+  betQuoteQuerySchema,
+  betQuoteResponseSchema,
+  betViewSchema,
   duelParamSchema,
   duelViewSchema,
+  placeBetBodySchema,
   proposeDuelBodySchema,
   wagersTeamParamSchema,
   wagersViewResponseSchema,
 } from '../../schemas/wagers.schema'
 
 export const wagersRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { duelDomain } = fastify.iocContainer
+  const { betDomain, duelDomain } = fastify.iocContainer
 
   fastify.get(
     '/teams/:id/wagers',
@@ -98,5 +102,50 @@ export const wagersRouter: FastifyPluginCallbackZod = (fastify) => {
         request.params.duelId,
         request.user.userID,
       ),
+  )
+
+  fastify.get(
+    '/teams/:id/bets/quote',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        tags: ['Wagers'],
+        params: wagersTeamParamSchema,
+        querystring: betQuoteQuerySchema,
+        response: { 200: betQuoteResponseSchema },
+      },
+    },
+    (request) =>
+      betDomain.quote(
+        request.params.id,
+        request.user.userID,
+        request.query.targetId,
+        request.query.minRarity,
+      ),
+  )
+
+  fastify.post(
+    '/teams/:id/bets',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        tags: ['Wagers'],
+        params: wagersTeamParamSchema,
+        body: placeBetBodySchema,
+        response: { 201: betViewSchema },
+      },
+    },
+    async (request, reply) => {
+      // `request.body` ne porte que la cible, la rareté et la mise : la cote
+      // vient du domaine, jamais du client.
+      const bet = await betDomain.place(
+        request.params.id,
+        request.user.userID,
+        request.body.targetId,
+        request.body.minRarity,
+        request.body.stake,
+      )
+      return reply.status(201).send(bet)
+    },
   )
 }

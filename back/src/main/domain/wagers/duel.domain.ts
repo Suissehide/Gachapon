@@ -28,12 +28,16 @@ import type {
   WsManager,
 } from '../../interfaces/ws/ws-manager'
 import { retryOnSerialization } from '../shared/retry-serialization'
+import { betToView } from './bet.domain'
 import { duelScoreHalfPoints, duelVerdict } from './wager-rules'
 
 const HOUR_MS = 60 * 60 * 1000
 
 // Nombre de duels réglés récents renvoyés par la lecture d'équipe.
 const RECENT_SETTLED_DUELS = 20
+
+// Idem pour les paris tranchés (gagnés ou perdus).
+const RECENT_SETTLED_BETS = 20
 
 type SettleOutcome = {
   teamId: string
@@ -282,12 +286,14 @@ export class DuelDomain implements IDuelDomain {
       }
     }
 
-    const [duels, settledDuels, cfg] = await Promise.all([
+    const [duels, settledDuels, bets, settledBets, cfg] = await Promise.all([
       this.#wagerRepository.listTeamDuels(teamId),
       this.#wagerRepository.listRecentSettledDuels(
         teamId,
         RECENT_SETTLED_DUELS,
       ),
+      this.#wagerRepository.listTeamBets(teamId),
+      this.#wagerRepository.listRecentSettledBets(teamId, RECENT_SETTLED_BETS),
       this.#configService.getMany('duel.acceptHours'),
     ])
 
@@ -329,6 +335,12 @@ export class DuelDomain implements IDuelDomain {
         .filter((d) => d.status !== 'SETTLED')
         .map((d) => this.#toView(d, userId)),
       settledDuels: settledDuels.map((d) => this.#toView(d, userId)),
+      // Le règlement des paris arrive en tâche 11 : ici on se contente de
+      // les exposer, ACTIVE d'un côté, déjà tranchés de l'autre.
+      bets: bets
+        .filter((b) => b.status === 'ACTIVE')
+        .map((b) => betToView(b, userId)),
+      settledBets: settledBets.map((b) => betToView(b, userId)),
       engagedCardIds,
     }
   }

@@ -47,8 +47,62 @@ export const duelViewSchema = z.object({
   myRole: z.enum(['CHALLENGER', 'OPPONENT', 'SPECTATOR']),
 })
 
+const cardRaritySchema = z.enum([
+  'COMMON',
+  'UNCOMMON',
+  'RARE',
+  'EPIC',
+  'LEGENDARY',
+])
+
+const betStatusSchema = z.enum(['ACTIVE', 'WON', 'LOST', 'EXPIRED'])
+
+// Corps du placement d'un pari. Il n'y a VOLONTAIREMENT aucun champ de cote
+// ni de probabilité : la cote est recalculée par le serveur au placement, et
+// on ne veut pas même offrir une clé où le client pourrait l'annoncer.
+export const placeBetBodySchema = z.object({
+  targetId: z.string(),
+  minRarity: cardRaritySchema,
+  stake: z.number().int(),
+})
+
+export const betQuoteQuerySchema = z.object({
+  targetId: z.string(),
+  minRarity: cardRaritySchema,
+})
+
+export const betQuoteResponseSchema = z.object({
+  multiplier: z.number(),
+  probability: z.number(),
+  pullWindow: z.number().int(),
+  minStake: z.number().int(),
+  maxStake: z.number().int(),
+})
+
+// Croisé champ par champ avec `BetView`
+// (types/domain/wagers/wagers.domain.interface.ts) : le provider Zod retire
+// silencieusement du JSON toute clé absente d'ici.
+export const betViewSchema = z.object({
+  id: z.string(),
+  status: betStatusSchema,
+  bettor: wagerUserMiniSchema,
+  target: wagerUserMiniSchema,
+  stake: z.number().int(),
+  minRarity: cardRaritySchema,
+  pullWindow: z.number().int(),
+  multiplier: z.number(),
+  createdAt: z.string(),
+  deadlineAt: z.string(),
+  settledAt: z.string().nullable(),
+  pullsSeen: z.number().int(),
+  payout: z.number().int(),
+  myRole: z.enum(['BETTOR', 'TARGET', 'SPECTATOR']),
+})
+
 export const wagersViewResponseSchema = z.object({
   duels: z.array(duelViewSchema),
   settledDuels: z.array(duelViewSchema),
+  bets: z.array(betViewSchema),
+  settledBets: z.array(betViewSchema),
   engagedCardIds: z.array(z.string()),
 })

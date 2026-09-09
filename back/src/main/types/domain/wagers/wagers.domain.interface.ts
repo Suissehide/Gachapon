@@ -1,4 +1,9 @@
-import type { CardVariant, DuelStatus } from '../../../../generated/client'
+import type {
+  BetStatus,
+  CardRarity,
+  CardVariant,
+  DuelStatus,
+} from '../../../../generated/client'
 import type { PrimaTransactionClient } from '../../infra/orm/client'
 
 export type WagerUserMini = {
@@ -27,9 +32,42 @@ export type DuelView = {
   myRole: 'CHALLENGER' | 'OPPONENT' | 'SPECTATOR'
 }
 
+export type BetView = {
+  id: string
+  status: BetStatus
+  bettor: WagerUserMini
+  target: WagerUserMini
+  stake: number
+  minRarity: CardRarity
+  pullWindow: number
+  // Cote figée au placement, jamais recalculée ensuite.
+  multiplier: number
+  createdAt: string
+  deadlineAt: string
+  settledAt: string | null
+  pullsSeen: number
+  payout: number
+  myRole: 'BETTOR' | 'TARGET' | 'SPECTATOR'
+}
+
+/**
+ * Devis affiché avant le placement. `probability` et `multiplier` sont
+ * recalculés côté serveur au moment du POST : ce devis est indicatif, jamais
+ * une valeur que le client pourrait renvoyer pour fixer sa propre cote.
+ */
+export type BetQuote = {
+  multiplier: number
+  probability: number
+  pullWindow: number
+  minStake: number
+  maxStake: number
+}
+
 export type WagersView = {
   duels: DuelView[]
   settledDuels: DuelView[]
+  bets: BetView[]
+  settledBets: BetView[]
   // Cartes que MES duels ACTIVE verrouillent (voir DuelDomain#listEngagedCardKeysInTx) —
   // signale au joueur, avant qu'il ne tente un recyclage, pourquoi il serait refusé.
   engagedCardIds: string[]
@@ -74,4 +112,26 @@ export interface IDuelDomain {
     cardId: string,
     variant: CardVariant,
   ): Promise<void>
+}
+
+export interface IBetDomain {
+  /** Cote indicative pour un pari du parieur sur la cible, à la rareté visée. */
+  quote(
+    teamId: string,
+    bettorId: string,
+    targetId: string,
+    minRarity: CardRarity,
+  ): Promise<BetQuote>
+  /**
+   * Place le pari. La cote est RECALCULÉE ici, jamais reprise d'un devis
+   * transmis par le client.
+   */
+  place(
+    teamId: string,
+    bettorId: string,
+    targetId: string,
+    minRarity: CardRarity,
+    stake: number,
+    now?: Date,
+  ): Promise<BetView>
 }
