@@ -891,7 +891,15 @@ describe('cycle de vie du duel', () => {
       const engagedCard = await prisma.card.create({
         data: {
           name: `LockEngagedCard${suffix}`,
-          rarity: 'LEGENDARY',
+          // UNCOMMON, pas LEGENDARY, et c'est structurel : seules RARE, EPIC
+          // et LEGENDARY sont eligibles aux variantes (pickVariant), avec
+          // 5 % de brillante et 2 % d'holo sur une legendaire. Les
+          // assertions ci-dessous lisent la ligne UserCard en variant
+          // NORMAL, donc une legendaire faisait echouer ce describe environ
+          // une fois sur sept. UNCOMMON rend la variante deterministe sans
+          // rien changer au verdict : 3 points contre 1 pour le COMMON du
+          // perdant, B gagne toujours.
+          rarity: 'UNCOMMON',
           dropWeight: 10,
           setId: engagedSet.id,
         },
