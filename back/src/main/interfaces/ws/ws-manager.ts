@@ -119,6 +119,18 @@ export type BetSettledEvent = {
   targetId: string
 }
 
+/**
+ * Une équipe vient de franchir au moins un seuil d'XP. Poussé à CHAQUE
+ * membre après le commit du crédit de points, jamais diffusé : un niveau
+ * d'équipe ne regarde que cette équipe.
+ */
+export type TeamLevelUpEvent = {
+  type: 'team:levelup'
+  teamId: string
+  level: number
+  perkPoints: number
+}
+
 type WsEvent =
   | PullResultEvent
   | PullBatchResultEvent
@@ -130,6 +142,7 @@ type WsEvent =
   | DuelSettledEvent
   | BetPlacedEvent
   | BetSettledEvent
+  | TeamLevelUpEvent
 
 export class WsManager {
   readonly #connections = new Map<string, WebSocket>()

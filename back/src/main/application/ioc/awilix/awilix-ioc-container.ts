@@ -30,6 +30,7 @@ import { SkillResetDomain } from '../../../domain/skills/skill-reset.domain'
 import { SkillTreeDomain } from '../../../domain/skills/skill-tree.domain'
 import { StreakDomain } from '../../../domain/streak/streak.domain'
 import { TeamDomain } from '../../../domain/team/team.domain'
+import { TeamProgressionDomain } from '../../../domain/team-progression/team-progression.domain'
 import { TowerDomain } from '../../../domain/tower/tower.domain'
 import { UserDomain } from '../../../domain/user/user.domain'
 import { BetDomain } from '../../../domain/wagers/bet.domain'
@@ -60,6 +61,7 @@ import { StatsRepository } from '../../../infra/orm/repositories/stats.repositor
 import { StreakMilestoneRepository } from '../../../infra/orm/repositories/streak-milestone.repository'
 import { TeamRepository } from '../../../infra/orm/repositories/team.repository'
 import { TeamMemberRepository } from '../../../infra/orm/repositories/team-member.repository'
+import { TeamProgressionRepository } from '../../../infra/orm/repositories/team-progression.repository'
 import { TowerRepository } from '../../../infra/orm/repositories/tower.repository'
 import { UserRepository } from '../../../infra/orm/repositories/user.repository'
 import { UserAchievementProgressRepository } from '../../../infra/orm/repositories/user-achievement-progress.repository'
@@ -146,6 +148,14 @@ class AwilixIocContainer {
     this.#reg('teamMemberRepository', asClass(TeamMemberRepository).singleton())
     this.#reg('invitationRepository', asClass(InvitationRepository).singleton())
     this.#reg('teamDomain', asClass(TeamDomain).singleton())
+    this.#reg(
+      'teamProgressionRepository',
+      asClass(TeamProgressionRepository).singleton(),
+    )
+    this.#reg(
+      'teamProgressionDomain',
+      asClass(TeamProgressionDomain).singleton(),
+    )
     this.#reg('rewardRepository', asClass(RewardRepository).singleton())
     this.#reg(
       'streakMilestoneRepository',
