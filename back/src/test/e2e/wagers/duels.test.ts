@@ -1070,6 +1070,9 @@ describe('cycle de vie du duel', () => {
       })
       expect(res.statusCode).toBe(200)
       const body = res.json()
+      // skippedEngaged compte des COPIES retenues (quantity - 1), même base
+      // que cardsRecycled — pas des lignes. La carte engagee a quantite 2
+      // (2 tirages comptes), donc 1 copie retenue, pas 1 ligne.
       expect(body.skippedEngaged).toBe(1)
       expect(body.cardsRecycled).toBe(2)
 

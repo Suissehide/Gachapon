@@ -16,8 +16,8 @@ import type {
 import type { ICardRepository } from '../../types/infra/orm/repositories/card.repository.interface'
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
+import type { IDuelDomain } from '../../types/domain/wagers/wagers.domain.interface'
 import { retryOnSerialization } from '../shared/retry-serialization'
-import type { DuelDomain } from '../wagers/duel.domain'
 
 const RARITY_ORDER: CardRarity[] = [
   'COMMON',
@@ -54,7 +54,7 @@ export class CollectionDomain implements ICollectionDomain {
   readonly #configService: ConfigServiceInterface
   readonly #postgresOrm: PostgresOrm
   readonly #achievementsDomain: AchievementsDomainInterface
-  readonly #duelDomain: DuelDomain
+  readonly #duelDomain: IDuelDomain
 
   constructor({
     cardRepository,
@@ -70,8 +70,7 @@ export class CollectionDomain implements ICollectionDomain {
     | 'configService'
     | 'postgresOrm'
     | 'achievementsDomain'
-    | 'duelDomain'
-  >) {
+  > & { duelDomain: IDuelDomain }) {
     this.#cardRepository = cardRepository
     this.#skillTreeRepository = skillTreeRepository
     this.#configService = configService
@@ -205,7 +204,12 @@ export class CollectionDomain implements ICollectionDomain {
           const candidates = userCards.filter(
             (uc) => !engagedKeys.has(`${uc.cardId}:${uc.variant}`),
           )
-          const skippedEngaged = userCards.length - candidates.length
+          // Même base que cardsRecycled (copies, pas lignes) : les deux
+          // champs sont affichés côte à côte au joueur, ils doivent être
+          // comparables un à un.
+          const skippedEngaged = userCards
+            .filter((uc) => engagedKeys.has(`${uc.cardId}:${uc.variant}`))
+            .reduce((sum, uc) => sum + (uc.quantity - 1), 0)
 
           const { dustEarned, copiesRecycled } = computeBulkRecycle(
             candidates.map((uc) => ({

@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import type { IocContainer } from '../../types/application/ioc'
+import type { IDuelDomain } from '../../types/domain/wagers/wagers.domain.interface'
 import { retryOnSerialization } from '../shared/retry-serialization'
 
 export class CardDustConversionDomain {
@@ -8,7 +9,7 @@ export class CardDustConversionDomain {
   readonly #skillTreeRepository
   readonly #achievementsDomain
   readonly #configService
-  readonly #duelDomain
+  readonly #duelDomain: IDuelDomain
 
   constructor({
     postgresOrm,
@@ -16,7 +17,7 @@ export class CardDustConversionDomain {
     achievementsDomain,
     configService,
     duelDomain,
-  }: IocContainer) {
+  }: Omit<IocContainer, 'duelDomain'> & { duelDomain: IDuelDomain }) {
     this.#postgresOrm = postgresOrm
     this.#skillTreeRepository = skillTreeRepository
     this.#achievementsDomain = achievementsDomain
