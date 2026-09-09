@@ -58,6 +58,7 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
     baseLifesteal: 0,
   },
   wishlist: { priceMultiplier: 2, cooldownDays: 7 },
+  duel: { pullCount: 5 },
   equip: {
     goldCostBase: 25,
     goldCostExp: 1.35,

@@ -39,6 +39,7 @@ import {
   useEconomyConfig,
 } from '../../queries/useEconomyConfig.ts'
 import { useEquipmentList } from '../../queries/useEquipment.ts'
+import { useMyDuel } from '../../queries/useMyDuel.ts'
 import { useAuthStore } from '../../stores/auth.store'
 import {
   aggregateEquipmentBonuses,
@@ -105,6 +106,9 @@ export const Route = createFileRoute('/_authenticated/collection')({
 
 function Collection() {
   const user = useAuthStore((s) => s.user)
+  // Cartes verrouillées par un duel en cours : sans équipe, `useMyDuel`
+  // n'émet aucune requête de duel et l'ensemble reste vide.
+  const { engagedCardIds } = useMyDuel()
   const [group, setGroup] = useStoredState<GroupMode>(
     'collection-filters/group',
     'rarity',
@@ -376,6 +380,7 @@ function Collection() {
             stats={section.stats}
             onDetail={handleDetail}
             showWishlist
+            engagedCardIds={engagedCardIds}
           />
         ))
       )}

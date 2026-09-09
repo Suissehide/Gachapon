@@ -106,6 +106,9 @@ export const useRecycle = () => {
   })
 }
 
+/** Marque du pluriel français : rien au singulier, « s » au-delà. */
+const plural = (n: number) => (n > 1 ? 's' : '')
+
 export const useRecycleAll = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
@@ -123,9 +126,19 @@ export const useRecycleAll = () => {
       if (user) {
         setUser({ ...user, dust: data.newDustTotal })
       }
+      // Les cartes verrouillées par un duel en cours sont ignorées par le
+      // serveur plutôt que refusées : sans cette mention, le joueur voit
+      // moins de cartes recyclées qu'attendu sans qu'on lui dise pourquoi.
+      // Zéro carte ignorée = message strictement identique à avant.
+      const skipped = data.skippedEngaged
+      const engagedNote =
+        skipped > 0
+          ? ` · ${skipped} carte${plural(skipped)} ignorée${plural(skipped)} car engagée${plural(skipped)} dans ton duel`
+          : ''
+      const recycled = data.cardsRecycled
       toast({
         title: 'Recyclage terminé',
-        message: `${data.cardsRecycled} carte${data.cardsRecycled > 1 ? 's' : ''} recyclée${data.cardsRecycled > 1 ? 's' : ''} → ${data.dustEarned.toLocaleString('fr-FR')} poussière`,
+        message: `${recycled} carte${plural(recycled)} recyclée${plural(recycled)} → ${data.dustEarned.toLocaleString('fr-FR')} poussière${engagedNote}`,
         severity: TOAST_SEVERITY.SUCCESS,
       })
       if (data.unlockedAchievements?.length) {

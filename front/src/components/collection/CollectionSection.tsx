@@ -43,6 +43,10 @@ type Props = {
   stats: SectionStats
   onDetail: (entry: DisplayEntry) => void
   showWishlist?: boolean
+  // Identifiants de cartes verrouillées par un duel en cours (`engagedCardIds`
+  // de `useWagers`). Le serveur les renvoie sans la variante : le badge
+  // marque donc toutes les variantes de la carte concernée.
+  engagedCardIds?: Set<string>
 }
 
 // Isolated subcomponent so useWishlist() is only called when the viewer is
@@ -51,9 +55,11 @@ type Props = {
 function WishlistAwareCards({
   entries,
   onDetail,
+  engagedCardIds,
 }: {
   entries: DisplayEntry[]
   onDetail: (entry: DisplayEntry) => void
+  engagedCardIds?: Set<string>
 }) {
   const { data: wishlist } = useWishlist()
   return (
@@ -71,6 +77,7 @@ function WishlistAwareCards({
           isWishlisted={
             wishlist?.card?.id === entry.card.id && entry.variant === 'NORMAL'
           }
+          isEngaged={engagedCardIds?.has(entry.card.id) ?? false}
           onClick={() => onDetail(entry)}
         />
       ))}
@@ -84,6 +91,7 @@ export function CollectionSection({
   stats,
   onDetail,
   showWishlist = false,
+  engagedCardIds,
 }: Props) {
   const { distinctCards, totalCards, ownedVariants, totalVariants } = stats
 
@@ -102,7 +110,11 @@ export function CollectionSection({
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
         {showWishlist ? (
-          <WishlistAwareCards entries={entries} onDetail={onDetail} />
+          <WishlistAwareCards
+            entries={entries}
+            onDetail={onDetail}
+            engagedCardIds={engagedCardIds}
+          />
         ) : (
           entries.map((entry) => (
             <CollectionCard
@@ -115,6 +127,7 @@ export function CollectionSection({
               level={entry.userCard?.level ?? null}
               palier={entry.userCard?.palier ?? null}
               isWishlisted={false}
+              isEngaged={engagedCardIds?.has(entry.card.id) ?? false}
               onClick={() => onDetail(entry)}
             />
           ))

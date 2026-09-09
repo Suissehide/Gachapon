@@ -73,6 +73,12 @@ export interface EconomyConfig {
     priceMultiplier: number
     cooldownDays: number
   }
+  // Nombre de tirages comptés par duelliste dans un duel de tirage. Lu ici
+  // plutot que codé en dur dans la fenêtre de défi : la valeur vit dans
+  // GlobalConfig et peut bouger sans redéploiement du front.
+  duel: {
+    pullCount: number
+  }
   equip: {
     goldCostBase: number
     goldCostExp: number

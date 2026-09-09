@@ -36,6 +36,7 @@ import { RatesModal } from '../../components/play/RatesModal.tsx'
 import { RecentsPanel } from '../../components/play/RecentsPanel.tsx'
 import { StreakCard } from '../../components/play/StreakCard.tsx'
 import { TokenCard } from '../../components/play/TokenCard.tsx'
+import { WagerBanner } from '../../components/play/WagerBanner.tsx'
 import { AuroraGrid } from '../../components/shared/decorations/AuroraGrid'
 import { Button } from '../../components/ui/button.tsx'
 import { apiUrl as API_URL } from '../../constants/config.constant.ts'
@@ -449,6 +450,8 @@ function Play() {
           Taux de drop
         </Button>
       </header>
+
+      <WagerBanner />
 
       {/* Scène : stats / machine / récents */}
       <div className="relative z-1 mx-auto mt-6 flex w-full max-w-5xl flex-1 flex-col gap-4 px-4 lg:grid lg:grid-cols-[260px_1fr_260px] lg:gap-6">

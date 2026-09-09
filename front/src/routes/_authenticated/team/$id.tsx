@@ -20,6 +20,7 @@ import { ReactTable } from '../../../components/table/reactTable.tsx'
 import { ConfirmPopup } from '../../../components/team/ConfirmPopup.tsx'
 import { InviteMemberPopup } from '../../../components/team/InviteMemberPopup.tsx'
 import { RaidPanel } from '../../../components/team/RaidPanel.tsx'
+import { WagersPanel } from '../../../components/team/WagersPanel.tsx'
 import { Button } from '../../../components/ui/button.tsx'
 import { Input } from '../../../components/ui/input.tsx'
 import {
@@ -297,6 +298,8 @@ function TeamDetailPage() {
       />
 
       <RaidPanel teamId={id} />
+
+      <WagersPanel teamId={id} members={team.members} />
 
       <ArcadeCard>
         <div className="relative mb-4">

@@ -83,6 +83,10 @@ export const CollectionApi = {
   ): Promise<{
     dustEarned: number
     cardsRecycled: number
+    // Copies laissées en place parce qu'un duel en cours les verrouille —
+    // comptées en copies, comme `cardsRecycled` : les deux sont affichés
+    // cote a cote dans le toast de fin de recyclage.
+    skippedEngaged: number
     newDustTotal: number
     unlockedAchievements?: UnlockedAchievement[]
   }> => {
