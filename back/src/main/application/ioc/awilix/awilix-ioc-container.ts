@@ -65,6 +65,7 @@ import { UserBoostRepository } from '../../../infra/orm/repositories/user-boost.
 import { UserCardRepository } from '../../../infra/orm/repositories/user-card.repository'
 import { UserQuestRepository } from '../../../infra/orm/repositories/user-quest.repository'
 import { UserRewardRepository } from '../../../infra/orm/repositories/user-reward.repository'
+import { WagerRepository } from '../../../infra/orm/repositories/wager.repository'
 import { RedisClient } from '../../../infra/redis/redis-client'
 import { RefreshTokenRepository } from '../../../infra/redis/refresh-token.repository'
 import { MinioClient } from '../../../infra/storage/minio-client'
@@ -135,6 +136,7 @@ class AwilixIocContainer {
     this.#reg('towerRepository', asClass(TowerRepository).singleton())
     this.#reg('towerDomain', asClass(TowerDomain).singleton())
     this.#reg('raidRepository', asClass(RaidRepository).singleton())
+    this.#reg('wagerRepository', asClass(WagerRepository).singleton())
     this.#reg('raidDomain', asClass(RaidDomain).singleton())
     this.#reg('teamRepository', asClass(TeamRepository).singleton())
     this.#reg('teamMemberRepository', asClass(TeamMemberRepository).singleton())

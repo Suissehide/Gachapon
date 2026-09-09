@@ -64,6 +64,7 @@ import type { UserAchievementProgressRepositoryInterface } from '../infra/orm/re
 import type { IUserBoostRepository } from '../infra/orm/repositories/user-boost.repository.interface'
 import type { IUserQuestRepository } from '../infra/orm/repositories/user-quest.repository.interface'
 import type { UserRewardRepositoryInterface } from '../infra/orm/repositories/user-reward.repository.interface'
+import type { IWagerRepository } from '../infra/orm/repositories/wager.repository.interface'
 import type { RedisClientInterface } from '../infra/redis/redis-client'
 import type { StorageClientInterface } from '../infra/storage/storage-client'
 import type { HttpServer } from '../interfaces/http/server'
@@ -106,6 +107,7 @@ export interface IocContainer {
   readonly towerRepository: ITowerRepository
   readonly towerDomain: TowerDomain
   readonly raidRepository: IRaidRepository
+  readonly wagerRepository: IWagerRepository
   readonly raidDomain: RaidDomain
   readonly teamRepository: TeamRepository
   readonly teamMemberRepository: TeamMemberRepository
