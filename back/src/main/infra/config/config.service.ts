@@ -148,6 +148,22 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'raid.attacksPerDay': 2,
   'raid.timeoutTurns': 10,
   'raid.baseHpPerMember': 162000,
+  // Duel de tirage : chaque joueur engage ses `pullCount` prochains tirages,
+  // a `acceptHours` pour accepter et `deadlineHours` pour les faire.
+  'duel.pullCount': 5,
+  'duel.acceptHours': 24,
+  'duel.deadlineHours': 48,
+  // Pari : fenêtre de tirages observée chez la cible, bornes de mise en
+  // poussière, marge maison en points de pourcentage (elle garantit que la
+  // cote reste défavorable au parieur), délai avant remboursement, et
+  // plafonds de paris simultanés côté parieur et côté cible.
+  'bet.pullWindow': 10,
+  'bet.minStake': 50,
+  'bet.maxStake': 2000,
+  'bet.houseFeePct': 10,
+  'bet.deadlineHours': 72,
+  'bet.maxOpenPerBettor': 3,
+  'bet.maxOpenPerTarget': 3,
 }
 
 export class ConfigService implements ConfigServiceInterface {
