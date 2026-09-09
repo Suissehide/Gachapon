@@ -142,6 +142,22 @@ enum ActivityEventType {
   LEVEL_UP
 }
 
+enum DuelStatus {
+  PENDING
+  ACTIVE
+  SETTLED
+  EXPIRED
+  DECLINED
+  CANCELLED
+}
+
+enum BetStatus {
+  ACTIVE
+  WON
+  LOST
+  EXPIRED
+}
+
 model User {
   id            String     @id @default(uuid())
   username      String     @unique
@@ -203,6 +219,10 @@ model User {
   boosts              UserBoost[]
   activityEvents      ActivityEvent[]
   raidAttacks         RaidAttack[]
+  duelsAsChallenger   Duel[]     @relation("DuelChallenger")
+  duelsAsOpponent     Duel[]     @relation("DuelOpponent")
+  betsPlaced          Bet[]      @relation("BetBettor")
+  betsReceived        Bet[]      @relation("BetTarget")
 }
 
 model UserBoost {
@@ -256,6 +276,8 @@ model Team {
   members     TeamMember[]
   invitations Invitation[]
   raids       TeamRaid[]
+  duels       Duel[]
+  bets        Bet[]
 
   @@index([ownerId])
 }
@@ -322,6 +344,7 @@ model Card {
   gachaPulls     GachaPull[]
   dailyShopItems DailyShopItem[]
   wishedBy       User[]        @relation("UserWishlist")
+  duelTransfers  DuelTransfer[] @relation("DuelTransferCard")
 }
 
 model UserCard {
@@ -780,4 +803,80 @@ model RaidTier {
   pct      Int    @unique
   rewardId String
   reward   Reward @relation(fields: [rewardId], references: [id])
+}
+
+/// Un duel de tirage entre deux membres d'une même équipe. Aucun état de
+/// progression n'est stocké : les scores et compteurs ci-dessous sont
+/// recalculés depuis GachaPull à chaque règlement, et ne servent qu'à
+/// l'affichage.
+model Duel {
+  id              String     @id @default(uuid())
+  teamId          String
+  team            Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  challengerId    String
+  challenger      User       @relation("DuelChallenger", fields: [challengerId], references: [id], onDelete: Cascade)
+  opponentId      String
+  opponent        User       @relation("DuelOpponent", fields: [opponentId], references: [id], onDelete: Cascade)
+  status          DuelStatus @default(PENDING)
+  pullCount       Int
+  createdAt       DateTime   @default(now())
+  acceptedAt      DateTime?
+  deadlineAt      DateTime?
+  settledAt       DateTime?
+  winnerId        String?
+  /// Scores stockés en DEMI-POINTS (score × 2) : le barème applique un
+  /// multiplicateur ×1,5 aux brillantes, qui produit des demi-points.
+  challengerScore Int        @default(0)
+  opponentScore   Int        @default(0)
+  challengerPulls Int        @default(0)
+  opponentPulls   Int        @default(0)
+
+  transfers DuelTransfer[]
+
+  @@index([teamId, status])
+  @@index([challengerId, status])
+  @@index([opponentId, status])
+}
+
+/// Trace d'une carte transférée au règlement d'un duel — sert l'historique
+/// et l'écran de résultat.
+model DuelTransfer {
+  id         String      @id @default(uuid())
+  duelId     String
+  duel       Duel        @relation(fields: [duelId], references: [id], onDelete: Cascade)
+  cardId     String
+  card       Card        @relation("DuelTransferCard", fields: [cardId], references: [id])
+  variant    CardVariant
+  fromUserId String
+  toUserId   String
+  createdAt  DateTime    @default(now())
+
+  @@index([duelId])
+}
+
+/// Un pari d'un joueur sur la rareté que sortira un coéquipier. La fenêtre
+/// de tirages est relue depuis GachaPull, jamais incrémentée.
+model Bet {
+  id         String     @id @default(uuid())
+  teamId     String
+  team       Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  bettorId   String
+  bettor     User       @relation("BetBettor", fields: [bettorId], references: [id], onDelete: Cascade)
+  targetId   String
+  target     User       @relation("BetTarget", fields: [targetId], references: [id], onDelete: Cascade)
+  stake      Int
+  minRarity  CardRarity
+  pullWindow Int
+  /// Cote figée au placement : jamais recalculée au règlement.
+  multiplier Float
+  status     BetStatus  @default(ACTIVE)
+  createdAt  DateTime   @default(now())
+  deadlineAt DateTime
+  settledAt  DateTime?
+  pullsSeen  Int        @default(0)
+  payout     Int        @default(0)
+
+  @@index([teamId, status])
+  @@index([bettorId, status])
+  @@index([targetId, status])
 }
