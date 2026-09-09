@@ -292,7 +292,7 @@ export class DuelDomain implements IDuelDomain {
         teamId,
         RECENT_SETTLED_DUELS,
       ),
-      this.#wagerRepository.listTeamBets(teamId),
+      this.#wagerRepository.listTeamBets(teamId, ['ACTIVE']),
       this.#wagerRepository.listRecentSettledBets(teamId, RECENT_SETTLED_BETS),
       this.#configService.getMany('duel.acceptHours'),
     ])
@@ -337,9 +337,7 @@ export class DuelDomain implements IDuelDomain {
       settledDuels: settledDuels.map((d) => this.#toView(d, userId)),
       // Le règlement des paris arrive en tâche 11 : ici on se contente de
       // les exposer, ACTIVE d'un côté, déjà tranchés de l'autre.
-      bets: bets
-        .filter((b) => b.status === 'ACTIVE')
-        .map((b) => betToView(b, userId)),
+      bets: bets.map((b) => betToView(b, userId)),
       settledBets: settledBets.map((b) => betToView(b, userId)),
       engagedCardIds,
     }

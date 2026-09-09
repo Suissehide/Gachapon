@@ -2,10 +2,15 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
 import { buildTestApp } from '../../helpers/build-test-app'
 
-// Catalogue controle : COMMON 90 / RARE 9 / LEGENDARY 1, poids total 100.
+// Catalogue controle : COMMON 90 / RARE 8 / EPIC 1 / LEGENDARY 1, total 100.
 // q(RARE+) = 10/100 = 0,1 exactement, ce qui rend la cote previsible.
+// L'EPIC est indispensable au scenario de garantie : le moteur filtre le pool
+// sur {EPIC, LEGENDARY}, donc sans carte EPIC au catalogue la garantie
+// forcerait un LEGENDARY et un pari sur LEGENDARY deviendrait certain lui
+// aussi — le test n'opposerait plus rien.
 const WEIGHT_COMMON = 90
-const WEIGHT_RARE = 9
+const WEIGHT_RARE = 8
+const WEIGHT_EPIC = 1
 const WEIGHT_LEGENDARY = 1
 
 // Valeurs epinglees en beforeAll pour que les attentes chiffrees ci-dessous
@@ -18,10 +23,23 @@ const MAX_OPEN_PER_BETTOR = 3
 const MAX_OPEN_PER_TARGET = 3
 const PITY_THRESHOLD = 300
 
-// p = 1 - (1 - 0,1)^10 et cote = (1 - 10 %) / p, arrondie au centieme.
+// p = 1 - (1 - q)^10 et cote = (1 - 10 %) / p, arrondie au centieme. Ces
+// valeurs sont re-derivees a la main ici, sans passer par le code de prod.
+function expectedMultiplier(probability: number): number {
+  return (
+    Math.round(((100 - HOUSE_FEE_PCT) / 100 / probability) * 100) / 100
+  )
+}
+
+// RARE+ : q = (8 + 1 + 1) / 100 = 0,1
 const EXPECTED_PROBABILITY = 1 - 0.9 ** PULL_WINDOW // 0.6513215599
-const EXPECTED_MULTIPLIER =
-  Math.round((((100 - HOUSE_FEE_PCT) / 100 / EXPECTED_PROBABILITY) * 100)) / 100 // 1.38
+const EXPECTED_MULTIPLIER = expectedMultiplier(EXPECTED_PROBABILITY) // 1.38
+// EPIC+ : q = (1 + 1) / 100 = 0,02
+const EPIC_PROBABILITY = 1 - 0.98 ** PULL_WINDOW // 0.1829271932
+const EPIC_MULTIPLIER = expectedMultiplier(EPIC_PROBABILITY) // 4.92
+// LEGENDARY : q = 1 / 100 = 0,01
+const LEGENDARY_PROBABILITY = 1 - 0.99 ** PULL_WINDOW // 0.0956179250
+const LEGENDARY_MULTIPLIER = expectedMultiplier(LEGENDARY_PROBABILITY) // 9.41
 
 describe('cote et placement du pari', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
@@ -156,6 +174,12 @@ describe('cote et placement du pari', () => {
           name: `BetRare${suffix}`,
           rarity: 'RARE',
           dropWeight: WEIGHT_RARE,
+          setId: betSetId,
+        },
+        {
+          name: `BetEpic${suffix}`,
+          rarity: 'EPIC',
+          dropWeight: WEIGHT_EPIC,
           setId: betSetId,
         },
         {
@@ -356,40 +380,276 @@ describe('cote et placement du pari', () => {
     expect(row.pullWindow).toBe(PULL_WINDOW)
   })
 
-  it("court-circuit de pitie : une cible a moins d'une fenetre du pity donne probabilite 1 et cote 1", async () => {
-    // 290 + 10 >= 300 : un legendaire est certain dans la fenetre, donc la
-    // cote ne doit PAS refleter le catalogue (elle vaudrait 1,38).
-    await prisma.user.update({
-      where: { id: userIdB },
-      data: { pityCurrent: PITY_THRESHOLD - PULL_WINDOW },
-    })
-    const res = await app.inject({
-      method: 'GET',
-      url: quoteUrl(userIdB),
-      headers: { cookie: cookiesA },
-    })
-    expect(res.statusCode).toBe(200)
-    expect(res.json().probability).toBe(1)
-    expect(res.json().multiplier).toBe(1)
+  it("court-circuit de pitie : la certitude commence a T - N + 1, pas a T - N", async () => {
+    // Le moteur force un LEGENDARY quand le compteur LU AVANT le tirage a
+    // deja atteint T, et ce compteur avance d'un par tirage non legendaire.
+    // Depuis un compteur persiste P, le tirage n° k voit P + (k - 1) : la
+    // pitie tombe dans une fenetre de N tirages ssi P + N - 1 >= T.
+    //
+    // A P = T - N + 1 = 291 : le 10e tirage voit 300 -> legendaire force.
+    try {
+      await prisma.user.update({
+        where: { id: userIdB },
+        data: { pityCurrent: PITY_THRESHOLD - PULL_WINDOW + 1 },
+      })
+      const certain = await app.inject({
+        method: 'GET',
+        url: quoteUrl(userIdB),
+        headers: { cookie: cookiesA },
+      })
+      expect(certain.statusCode).toBe(200)
+      expect(certain.json().probability).toBe(1)
+      expect(certain.json().multiplier).toBe(1)
 
-    // Un cran en dessous du seuil, la cote redevient celle du catalogue :
-    // c'est bien la pitie, et non un effet de bord, qui produit le 1.
-    await prisma.user.update({
-      where: { id: userIdB },
-      data: { pityCurrent: PITY_THRESHOLD - PULL_WINDOW - 1 },
-    })
-    const below = await app.inject({
-      method: 'GET',
-      url: quoteUrl(userIdB),
-      headers: { cookie: cookiesA },
-    })
-    expect(below.json().probability).toBeCloseTo(EXPECTED_PROBABILITY, 6)
-    expect(below.json().multiplier).toBe(EXPECTED_MULTIPLIER)
+      // A P = T - N = 290 : le 10e tirage voit 299, un cran SOUS le seuil.
+      // Rien n'est force, la cote doit rester celle du catalogue. C'est la
+      // borne que la premiere version du code vendait a tort comme certaine.
+      await prisma.user.update({
+        where: { id: userIdB },
+        data: { pityCurrent: PITY_THRESHOLD - PULL_WINDOW },
+      })
+      const notYet = await app.inject({
+        method: 'GET',
+        url: quoteUrl(userIdB),
+        headers: { cookie: cookiesA },
+      })
+      expect(notYet.json().probability).toBeCloseTo(EXPECTED_PROBABILITY, 6)
+      expect(notYet.json().multiplier).toBe(EXPECTED_MULTIPLIER)
+    } finally {
+      // Etat partage : la remise a zero doit avoir lieu meme si une
+      // assertion casse, sinon l'echec se propage aux tests suivants.
+      await prisma.user.update({
+        where: { id: userIdB },
+        data: { pityCurrent: 0 },
+      })
+    }
+  })
 
-    await prisma.user.update({
-      where: { id: userIdB },
-      data: { pityCurrent: 0 },
+  it("boost de garantie : certain jusqu'a EPIC, pas sur LEGENDARY", async () => {
+    // Le moteur declenche la garantie au tirage ou le compteur du boost vaut
+    // exactement 1 (donc au tirage n° R depuis un compteur persiste R), et
+    // filtre alors le pool sur l'ensemble CODE EN DUR {EPIC, LEGENDARY} — il
+    // ne lit PAS `guaranteedRarity` pour choisir le pool. R = 5 <= 10 : la
+    // garantie tombe dans la fenetre.
+    const boost = await prisma.userBoost.create({
+      data: {
+        userId: userIdB,
+        guaranteedRarity: 'EPIC',
+        pullsRemaining: 5,
+        satisfied: false,
+      },
     })
+
+    try {
+      for (const rarity of ['COMMON', 'UNCOMMON', 'RARE', 'EPIC']) {
+        const res = await app.inject({
+          method: 'GET',
+          url: quoteUrl(userIdB, rarity),
+          headers: { cookie: cookiesA },
+        })
+        expect(res.statusCode).toBe(200)
+        // Un EPIC garanti satisfait toutes ces raretes.
+        expect(res.json().probability).toBe(1)
+        expect(res.json().multiplier).toBe(1)
+      }
+
+      // LEGENDARY : le pool garanti contient encore l'EPIC du catalogue, donc
+      // rien n'est acquis. La cote reste celle du catalogue.
+      const legendary = await app.inject({
+        method: 'GET',
+        url: quoteUrl(userIdB, 'LEGENDARY'),
+        headers: { cookie: cookiesA },
+      })
+      expect(legendary.json().probability).toBeCloseTo(LEGENDARY_PROBABILITY, 6)
+      expect(legendary.json().multiplier).toBe(LEGENDARY_MULTIPLIER)
+
+      // R = 11 > 10 : la garantie tombe HORS de la fenetre, plus aucune
+      // certitude — c'est la borne R <= N.
+      await prisma.userBoost.update({
+        where: { id: boost.id },
+        data: { pullsRemaining: PULL_WINDOW + 1 },
+      })
+      const outOfWindow = await app.inject({
+        method: 'GET',
+        url: quoteUrl(userIdB, 'EPIC'),
+        headers: { cookie: cookiesA },
+      })
+      expect(outOfWindow.json().probability).toBeCloseTo(EPIC_PROBABILITY, 6)
+      expect(outOfWindow.json().multiplier).toBe(EPIC_MULTIPLIER)
+
+      // Un boost deja satisfait ne se declenche jamais.
+      await prisma.userBoost.update({
+        where: { id: boost.id },
+        data: { pullsRemaining: 5, satisfied: true },
+      })
+      const satisfied = await app.inject({
+        method: 'GET',
+        url: quoteUrl(userIdB, 'EPIC'),
+        headers: { cookie: cookiesA },
+      })
+      expect(satisfied.json().probability).toBeCloseTo(EPIC_PROBABILITY, 6)
+    } finally {
+      await prisma.userBoost.delete({ where: { id: boost.id } })
+    }
+  })
+
+  it('boost de poids qui expire en cours de fenetre : cote strictement entre les deux extremes', async () => {
+    // 3 tirages boostes puis 7 sans. Un boost qui expire ne doit pas etre
+    // facture comme s'il durait toute la fenetre.
+    const boost = await prisma.userBoost.create({
+      data: {
+        userId: userIdB,
+        weightMultiplier: 3,
+        weightRarity: 'RARE',
+        pullsRemaining: 3,
+      },
+    })
+
+    try {
+      // Poids sous boost : COMMON 90, RARE 8x3 = 24, EPIC 1, LEG 1 -> total 116
+      const qBoosted = (WEIGHT_RARE * 3 + WEIGHT_EPIC + WEIGHT_LEGENDARY) /
+        (WEIGHT_COMMON + WEIGHT_RARE * 3 + WEIGHT_EPIC + WEIGHT_LEGENDARY)
+      const qPlain = 0.1
+      const pMixed = 1 - (1 - qBoosted) ** 3 * (1 - qPlain) ** 7
+      const pFullyBoosted = 1 - (1 - qBoosted) ** PULL_WINDOW
+
+      const res = await app.inject({
+        method: 'GET',
+        url: quoteUrl(userIdB),
+        headers: { cookie: cookiesA },
+      })
+      expect(res.statusCode).toBe(200)
+      const p = res.json().probability
+
+      // Strictement entre le prix non booste et le prix « booste partout ».
+      expect(p).toBeGreaterThan(EXPECTED_PROBABILITY)
+      expect(p).toBeLessThan(pFullyBoosted)
+      expect(p).toBeCloseTo(pMixed, 6)
+      expect(res.json().multiplier).toBe(expectedMultiplier(pMixed))
+
+      // Le meme boost prolonge au-dela de la fenetre redonne exactement le
+      // prix « booste partout » : la modelisation par tirage se reduit bien au
+      // cas constant.
+      await prisma.userBoost.update({
+        where: { id: boost.id },
+        data: { pullsRemaining: PULL_WINDOW },
+      })
+      const full = await app.inject({
+        method: 'GET',
+        url: quoteUrl(userIdB),
+        headers: { cookie: cookiesA },
+      })
+      expect(full.json().probability).toBeCloseTo(pFullyBoosted, 6)
+    } finally {
+      await prisma.userBoost.delete({ where: { id: boost.id } })
+    }
+  })
+
+  it("la cote lit la chance et les boosts de la CIBLE, jamais ceux du parieur", async () => {
+    // Sans ce test, echanger targetId contre bettorId dans l'un ou l'autre
+    // des deux appels laisserait toute la suite verte : les fixtures donnent
+    // aux deux joueurs exactement les memes effets par defaut.
+    const branch = await prisma.skillBranch.create({
+      data: {
+        name: `BetLuckBranch${suffix}`,
+        description: 'test',
+        icon: 'x',
+        color: '#fff',
+        order: 999,
+      },
+    })
+    const node = await prisma.skillNode.create({
+      data: {
+        branchId: branch.id,
+        name: `BetLuckNode${suffix}`,
+        description: 'test',
+        icon: 'x',
+        maxLevel: 1,
+        effectType: 'LUCK',
+        posX: 0,
+        posY: 0,
+      },
+    })
+    // effect 50 -> luckMultiplier = 1 + 50/100 = 1,5
+    await prisma.skillNodeLevel.create({
+      data: { nodeId: node.id, level: 1, effect: 50 },
+    })
+
+    const quote = async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: quoteUrl(userIdB),
+        headers: { cookie: cookiesA },
+      })
+      expect(res.statusCode).toBe(200)
+      return res.json().probability as number
+    }
+
+    try {
+      expect(await quote()).toBeCloseTo(EXPECTED_PROBABILITY, 6)
+
+      // Phase 1 — c'est le PARIEUR qui detient chance et boost. La cote sur
+      // la cible ne doit pas bouger d'un iota.
+      await prisma.userSkill.create({
+        data: { userId: userIdA, nodeId: node.id, level: 1 },
+      })
+      const bettorBoost = await prisma.userBoost.create({
+        data: {
+          userId: userIdA,
+          weightMultiplier: 3,
+          weightRarity: 'RARE',
+          pullsRemaining: 50,
+        },
+      })
+      expect(await quote()).toBeCloseTo(EXPECTED_PROBABILITY, 6)
+
+      await prisma.userSkill.deleteMany({ where: { userId: userIdA } })
+      await prisma.userBoost.delete({ where: { id: bettorBoost.id } })
+
+      // Phase 2 — la CIBLE detient la chance : luck 1,5 applique aux RARE+
+      // donne poids 12 / 1,5 / 1,5 pour un total de 105.
+      await prisma.userSkill.create({
+        data: { userId: userIdB, nodeId: node.id, level: 1 },
+      })
+      const qLuck =
+        (WEIGHT_RARE * 1.5 + WEIGHT_EPIC * 1.5 + WEIGHT_LEGENDARY * 1.5) /
+        (WEIGHT_COMMON +
+          WEIGHT_RARE * 1.5 +
+          WEIGHT_EPIC * 1.5 +
+          WEIGHT_LEGENDARY * 1.5)
+      const pLuck = 1 - (1 - qLuck) ** PULL_WINDOW
+      const withLuck = await quote()
+      expect(withLuck).toBeCloseTo(pLuck, 6)
+      expect(withLuck).toBeGreaterThan(EXPECTED_PROBABILITY)
+      await prisma.userSkill.deleteMany({ where: { userId: userIdB } })
+
+      // Phase 3 — la CIBLE detient le boost de poids (plus long que la
+      // fenetre, donc sans expiration a modeliser ici).
+      const targetBoost = await prisma.userBoost.create({
+        data: {
+          userId: userIdB,
+          weightMultiplier: 3,
+          weightRarity: 'RARE',
+          pullsRemaining: 50,
+        },
+      })
+      const qBoost =
+        (WEIGHT_RARE * 3 + WEIGHT_EPIC + WEIGHT_LEGENDARY) /
+        (WEIGHT_COMMON + WEIGHT_RARE * 3 + WEIGHT_EPIC + WEIGHT_LEGENDARY)
+      const withBoost = await quote()
+      expect(withBoost).toBeCloseTo(1 - (1 - qBoost) ** PULL_WINDOW, 6)
+      expect(withBoost).toBeGreaterThan(EXPECTED_PROBABILITY)
+      await prisma.userBoost.delete({ where: { id: targetBoost.id } })
+
+      expect(await quote()).toBeCloseTo(EXPECTED_PROBABILITY, 6)
+    } finally {
+      // Le catalogue de competences est partage entre fichiers e2e : on
+      // remet la base exactement comme on l'a trouvee.
+      await prisma.userSkill.deleteMany({ where: { nodeId: node.id } })
+      await prisma.skillNodeLevel.deleteMany({ where: { nodeId: node.id } })
+      await prisma.skillNode.delete({ where: { id: node.id } })
+      await prisma.skillBranch.delete({ where: { id: branch.id } })
+    }
   })
 
   it('plafond parieur : le 4e pari ouvert de A est refuse', async () => {

@@ -1,5 +1,6 @@
 import type {
   Bet,
+  BetStatus,
   CardRarity,
   Duel,
   DuelTransfer,
@@ -112,9 +113,12 @@ export class WagerRepository implements IWagerRepository {
     })
   }
 
-  listTeamBets(teamId: string): Promise<BetWithParties[]> {
+  listTeamBets(
+    teamId: string,
+    statuses?: BetStatus[],
+  ): Promise<BetWithParties[]> {
     return this.#prisma.bet.findMany({
-      where: { teamId },
+      where: { teamId, ...(statuses ? { status: { in: statuses } } : {}) },
       include: {
         bettor: { select: PARTY_SELECT },
         target: { select: PARTY_SELECT },
@@ -148,8 +152,22 @@ export class WagerRepository implements IWagerRepository {
     return this.#prisma.bet.count({ where: { bettorId, status: 'ACTIVE' } })
   }
 
+  countOpenBetsByBettorInTx(
+    tx: PrimaTransactionClient,
+    bettorId: string,
+  ): Promise<number> {
+    return tx.bet.count({ where: { bettorId, status: 'ACTIVE' } })
+  }
+
   countOpenBetsOnTarget(targetId: string): Promise<number> {
     return this.#prisma.bet.count({ where: { targetId, status: 'ACTIVE' } })
+  }
+
+  countOpenBetsOnTargetInTx(
+    tx: PrimaTransactionClient,
+    targetId: string,
+  ): Promise<number> {
+    return tx.bet.count({ where: { targetId, status: 'ACTIVE' } })
   }
 
   createBet(data: {

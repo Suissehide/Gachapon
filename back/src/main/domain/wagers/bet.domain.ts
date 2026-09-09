@@ -1,6 +1,6 @@
 import Boom from '@hapi/boom'
 
-import type { Bet, CardRarity } from '../../../generated/client'
+import type { Bet, CardRarity, UserBoost } from '../../../generated/client'
 import type { IocContainer } from '../../types/application/ioc'
 import type {
   BetQuote,
@@ -9,6 +9,7 @@ import type {
 } from '../../types/domain/wagers/wagers.domain.interface'
 import type { TeamWithMembers } from '../../types/domain/team/team.types'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
+import type { CardWithSet } from '../../types/domain/gacha/gacha.types'
 import type { ICardRepository } from '../../types/infra/orm/repositories/card.repository.interface'
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { IUserBoostRepository } from '../../types/infra/orm/repositories/user-boost.repository.interface'
@@ -25,6 +26,7 @@ import { effectivePityThreshold } from '../gacha/gacha.domain'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import {
   betMultiplier,
+  rarityAtLeast,
   rarityAtLeastProbability,
   windowProbability,
 } from './wager-rules'
@@ -176,21 +178,9 @@ export class BetDomain implements IBetDomain {
       throw Boom.badRequest(`La mise maximum est de ${cfg.maxStake} poussière`)
     }
 
-    const [openByBettor, openOnTarget] = await Promise.all([
-      this.#wagerRepository.countOpenBetsByBettor(bettorId),
-      this.#wagerRepository.countOpenBetsOnTarget(targetId),
-    ])
-    if (openByBettor >= cfg.maxOpenPerBettor) {
-      throw Boom.badRequest(`Tu as déjà ${cfg.maxOpenPerBettor} paris en cours`)
-    }
-    if (openOnTarget >= cfg.maxOpenPerTarget) {
-      const targetName =
-        team.members.find((m) => m.userId === targetId)?.user?.username ??
-        'Ce joueur'
-      throw Boom.badRequest(
-        `${targetName} a déjà ${cfg.maxOpenPerTarget} paris ouverts sur lui`,
-      )
-    }
+    const targetName =
+      team.members.find((m) => m.userId === targetId)?.user?.username ??
+      'Ce joueur'
 
     // Recalcul serveur : c'est CETTE valeur qui part en base.
     const { multiplier } = await this.#computeOdds(targetId, minRarity, cfg)
@@ -199,6 +189,27 @@ export class BetDomain implements IBetDomain {
     const created = await retryOnSerialization<Bet>(() =>
       this.#postgresOrm.executeWithTransactionClient(
         async (tx) => {
+          // Les deux plafonds sont relus ICI, pas avant : hors transaction,
+          // deux placements simultanés lisent tous deux 2 et créent tous deux,
+          // laissant 4 paris ouverts pour un plafond de 3. Sous Serializable,
+          // ces comptes sont des lectures de prédicat que l'insertion qui suit
+          // contredit — la seconde transaction échoue en P2034, `retryOnSerialization`
+          // la rejoue, et elle lit alors le compte à jour.
+          const [openByBettor, openOnTarget] = await Promise.all([
+            this.#wagerRepository.countOpenBetsByBettorInTx(tx, bettorId),
+            this.#wagerRepository.countOpenBetsOnTargetInTx(tx, targetId),
+          ])
+          if (openByBettor >= cfg.maxOpenPerBettor) {
+            throw Boom.badRequest(
+              `Tu as déjà ${cfg.maxOpenPerBettor} paris en cours`,
+            )
+          }
+          if (openOnTarget >= cfg.maxOpenPerTarget) {
+            throw Boom.badRequest(
+              `${targetName} a déjà ${cfg.maxOpenPerTarget} paris ouverts sur lui`,
+            )
+          }
+
           const bettor = await this.#userRepository.findByIdOrThrowInTx(
             tx,
             bettorId,
@@ -280,42 +291,158 @@ export class BetDomain implements IBetDomain {
       cfg.pityThreshold,
       effects.pityReduction ?? 0,
     )
+    const window = cfg.pullWindow
+
+    // Les boosts de POIDS de la cible, normalisés pour `weightFor`. Chacun
+    // garde son compteur de tirages restants : il décide jusqu'à quel rang
+    // de la fenêtre le boost s'applique encore (voir #windowProbability).
+    const weightBoosts = boosts
+      .filter((b) => b.weightMultiplier != null && b.weightRarity != null)
+      .map((b) => ({
+        weightMultiplier: b.weightMultiplier as number,
+        weightRarity: b.weightRarity as CardRarity,
+        pullsRemaining: b.pullsRemaining,
+      }))
 
     let probability: number
-    if (target.pityCurrent + cfg.pullWindow >= pityThreshold) {
+    if (
+      this.#pityFiresInWindow(cards, target.pityCurrent, window, pityThreshold)
+    ) {
       // COURT-CIRCUIT DE PITIÉ — délibéré.
       //
-      // La cible atteindra son seuil de pitié à l'intérieur de la fenêtre :
-      // un de ces tirages sera forcément un LEGENDARY, donc l'événement
-      // « au moins `minRarity` » est déjà acquis, quelle que soit la rareté
-      // visée (LEGENDARY est la plus haute, il satisfait toutes les autres).
-      // Sans ce court-circuit on vendrait une cote flatteuse (1,38 sur un
-      // catalogue courant) sur un résultat certain — la maison paierait un
-      // gain quasi garanti à chaque fois. On force donc p = 1, ce qui fait
-      // s'effondrer la cote sur la seule marge maison (plancher à 1,00 dans
+      // Le moteur de tirage force un LEGENDARY quand le compteur LU AVANT le
+      // tirage a déjà atteint le seuil, et ce compteur avance d'un par
+      // tirage non légendaire. Depuis un compteur persisté P, le tirage n° k
+      // voit donc P + (k - 1) : un légendaire forcé tombe dans une fenêtre de
+      // N tirages si et seulement si `P + N - 1 >= T`. (Écrire `P + N >= T`
+      // déclencherait un cran trop tôt et vendrait comme certain, à la cote
+      // plancher, un événement qui ne l'est pas — le parieur perdrait sa mise
+      // une fois sur trois sans jamais pouvoir gagner plus qu'elle.)
+      //
+      // Quand la pitié tombe dans la fenêtre, l'événement « au moins
+      // `minRarity` » est acquis quelle que soit la rareté visée : LEGENDARY
+      // est la plus haute, il satisfait toutes les autres. On force p = 1, ce
+      // qui effondre la cote sur la seule marge maison (plancher à 1,00 dans
       // `betMultiplier`) : le pari devient sans intérêt, ce qui est
       // exactement le message à faire passer.
       probability = 1
+    } else if (
+      this.#guaranteeFiresInWindow(cards, boosts, window) &&
+      rarityAtLeast('EPIC', minRarity)
+    ) {
+      // COURT-CIRCUIT DE GARANTIE — second chemin vers la certitude.
+      //
+      // Un boost de garantie non satisfait se déclenche au tirage où son
+      // compteur vaut exactement 1 : depuis un compteur persisté R, c'est le
+      // tirage n° R, donc il tombe dans la fenêtre dès que `R <= N`. Le
+      // moteur filtre alors le pool sur l'ensemble CODÉ EN DUR {EPIC,
+      // LEGENDARY} — il ne lit PAS la colonne `guaranteedRarity` pour choisir
+      // le pool. La garantie vaut donc « EPIC ou mieux », et rien de plus :
+      // l'événement n'est certain que si la rareté visée est satisfaite par
+      // un EPIC. Un pari sur LEGENDARY reste incertain, le pool garanti
+      // contenant encore des epics — le traiter comme acquis serait la même
+      // erreur que ci-dessus, en sens inverse.
+      probability = 1
     } else {
-      const weightBoosts = boosts
-        .filter((b) => b.weightMultiplier != null && b.weightRarity != null)
-        .map((b) => ({
-          weightMultiplier: b.weightMultiplier as number,
-          weightRarity: b.weightRarity as CardRarity,
-        }))
-      const q = rarityAtLeastProbability(
+      probability = this.#windowProbability(
         cards,
         effects.luckMultiplier,
         weightBoosts,
         minRarity,
+        window,
       )
-      probability = windowProbability(q, cfg.pullWindow)
     }
 
     return {
       probability,
       multiplier: betMultiplier(probability, cfg.houseFeePct),
     }
+  }
+
+  /**
+   * `P + N - 1 >= T` : voir la démonstration dans le court-circuit de pitié.
+   * La présence d'au moins un LEGENDARY actif est exigée parce que le moteur
+   * restreint le pool à cette rareté quand la pitié force — sans légendaire
+   * au catalogue le tirage échoue au lieu d'en produire un, et la pitié ne se
+   * résout jamais.
+   */
+  #pityFiresInWindow(
+    cards: Array<{ rarity: CardRarity }>,
+    pityCurrent: number,
+    window: number,
+    pityThreshold: number,
+  ): boolean {
+    if (!cards.some((c) => c.rarity === 'LEGENDARY')) {
+      return false
+    }
+    return pityCurrent + window - 1 >= pityThreshold
+  }
+
+  /**
+   * Un boost de garantie non satisfait dont il reste au plus `window` tirages
+   * se déclenchera dans la fenêtre. Même réserve que pour la pitié : le
+   * moteur ne filtre que si le pool {EPIC, LEGENDARY} est non vide, sinon il
+   * retombe sur le catalogue entier et ne garantit rien.
+   */
+  #guaranteeFiresInWindow(
+    cards: Array<{ rarity: CardRarity }>,
+    boosts: UserBoost[],
+    window: number,
+  ): boolean {
+    if (!cards.some((c) => rarityAtLeast(c.rarity, 'EPIC'))) {
+      return false
+    }
+    return boosts.some(
+      (b) =>
+        b.guaranteedRarity != null &&
+        !b.satisfied &&
+        b.pullsRemaining >= 1 &&
+        b.pullsRemaining <= window,
+    )
+  }
+
+  /**
+   * Probabilité d'au moins un succès sur la fenêtre, tirage par tirage.
+   *
+   * Les boosts de poids EXPIRENT : au tirage n° i, seuls s'appliquent ceux
+   * dont il reste au moins `i` tirages. Les replier en une probabilité unique
+   * élevée à la puissance `window` gonflerait la probabilité d'un boost court
+   * sur toute la fenêtre, donc écraserait la cote et sous-paierait le
+   * parieur. On compose ici 1 − Π(1 − q_i).
+   *
+   * Quand aucun boost n'expire dans la fenêtre, tous les q_i sont égaux et le
+   * produit se réduit exactement à `windowProbability(q, window)` — cette
+   * branche est explicite pour que le cas courant reste au bit près celui de
+   * la primitive unitairement testée.
+   */
+  #windowProbability(
+    cards: CardWithSet[],
+    luckMultiplier: number,
+    weightBoosts: Array<{
+      weightMultiplier: number
+      weightRarity: CardRarity
+      pullsRemaining: number
+    }>,
+    minRarity: CardRarity,
+    window: number,
+  ): number {
+    const qAt = (pullIndex: number): number =>
+      rarityAtLeastProbability(
+        cards,
+        luckMultiplier,
+        weightBoosts.filter((b) => b.pullsRemaining >= pullIndex),
+        minRarity,
+      )
+
+    if (!weightBoosts.some((b) => b.pullsRemaining < window)) {
+      return windowProbability(qAt(1), window)
+    }
+
+    let survival = 1
+    for (let i = 1; i <= window; i += 1) {
+      survival *= 1 - qAt(i)
+    }
+    return 1 - survival
   }
 
   async #readConfig(): Promise<BetCfg> {

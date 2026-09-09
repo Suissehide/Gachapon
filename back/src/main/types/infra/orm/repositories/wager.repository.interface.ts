@@ -1,5 +1,6 @@
 import type {
   Bet,
+  BetStatus,
   CardRarity,
   CardVariant,
   Duel,
@@ -57,11 +58,24 @@ export interface IWagerRepository {
     pullCount: number
   }): Promise<Duel>
   listTransfers(duelId: string): Promise<DuelTransfer[]>
-  listTeamBets(teamId: string): Promise<BetWithParties[]>
+  /** Paris de l'équipe, filtrés par statut côté SQL quand `statuses` est fourni. */
+  listTeamBets(
+    teamId: string,
+    statuses?: BetStatus[],
+  ): Promise<BetWithParties[]>
   listRecentSettledBets(teamId: string, take: number): Promise<BetWithParties[]>
   listActiveBetsForTarget(targetId: string): Promise<Bet[]>
   countOpenBetsByBettor(bettorId: string): Promise<number>
+  /** Même compte, relu DANS la transaction : c'est lui qui fait autorité au placement. */
+  countOpenBetsByBettorInTx(
+    tx: PrimaTransactionClient,
+    bettorId: string,
+  ): Promise<number>
   countOpenBetsOnTarget(targetId: string): Promise<number>
+  countOpenBetsOnTargetInTx(
+    tx: PrimaTransactionClient,
+    targetId: string,
+  ): Promise<number>
   createBet(data: {
     teamId: string
     bettorId: string
