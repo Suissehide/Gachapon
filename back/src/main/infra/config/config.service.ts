@@ -164,6 +164,30 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'bet.deadlineHours': 72,
   'bet.maxOpenPerBettor': 3,
   'bet.maxOpenPerTarget': 3,
+  // Progression d'équipe. teamPoints.* = points hebdo par membre selon la
+  // source (dégâts de raid, duel gagné, pari gagné, tirage effectué).
+  // teamLevel.* = courbe d'XP (xpBase * niveau^xpExp) et plafond de niveau.
+  // teamPerk.*  = coût max de rang, gain par rang et niveau de déblocage pour
+  // chacun des quatre perks (loot, raid, xp, forge).
+  'teamPoints.damagePerPoint': 2,
+  'teamPoints.duelWon': 50,
+  'teamPoints.betWon': 30,
+  'teamPoints.perPull': 1,
+  'teamLevel.xpBase': 175,
+  'teamLevel.xpExp': 1.6,
+  'teamLevel.maxLevel': 50,
+  'teamPerk.maxRank': 5,
+  'teamPerk.loot.perRank': 0.5,
+  'teamPerk.loot.unlockLevel': 1,
+  'teamPerk.raid.perRank': 0.5,
+  'teamPerk.raid.unlockLevel': 4,
+  'teamPerk.xp.perRank': 0.8,
+  'teamPerk.xp.unlockLevel': 8,
+  'teamPerk.forge.perRank': 1,
+  'teamPerk.forge.unlockLevel': 16,
+  'team.maxMembers': 35,
+  'team.recruitDays': 7,
+  'teamRaid.historyLimit': 6,
 }
 
 export class ConfigService implements ConfigServiceInterface {
