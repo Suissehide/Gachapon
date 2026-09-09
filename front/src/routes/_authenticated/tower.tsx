@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { ArrowRight, Flame } from 'lucide-react'
+import { ArrowRight, Flame, Swords } from 'lucide-react'
 import { useState } from 'react'
 
 import type { TowerSummary } from '../../api/tower.api.ts'
+import { ElementGuidePopup } from '../../components/battle/ElementGuidePopup.tsx'
 import { TeamDock } from '../../components/battle/TeamDock.tsx'
 import {
   SLOT_ICONS,
@@ -11,6 +12,7 @@ import {
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { TeamEditorPopup } from '../../components/team/TeamEditorPopup.tsx'
+import { Button } from '../../components/ui/button.tsx'
 import { Card, CardTitle } from '../../components/ui/card.tsx'
 import { ELEMENT_COLOR, ELEMENT_ICON } from '../../constants/card.constant.ts'
 import { useCombatTeam } from '../../queries/useCombatTeam.ts'
@@ -24,6 +26,7 @@ function TowerListPage() {
   const towers = useTowers()
   const team = useCombatTeam()
   const [editorOpen, setEditorOpen] = useState(false)
+  const [elementsOpen, setElementsOpen] = useState(false)
 
   return (
     <PageShell>
@@ -31,6 +34,17 @@ function TowerListPage() {
         breadcrumbs={[{ label: 'Gachapon', to: '/play' }, { label: 'Tours' }]}
         title="Tours élémentaires"
         subtitle="Gravis les étages pour augmenter le taux de rareté des pièces obtenues."
+        right={
+          <Button
+            variant="pill"
+            size="pill"
+            onClick={() => setElementsOpen(true)}
+            title="Comprendre les éléments"
+          >
+            <Swords className="h-3.5 w-3.5 text-amber-600" />
+            Éléments
+          </Button>
+        }
       />
 
       {towers.isLoading ? (
@@ -52,6 +66,9 @@ function TowerListPage() {
       />
 
       <TeamEditorPopup open={editorOpen} onOpenChange={setEditorOpen} />
+
+      {/* Éléments & priorité de ciblage */}
+      <ElementGuidePopup open={elementsOpen} onOpenChange={setElementsOpen} />
     </PageShell>
   )
 }

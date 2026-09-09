@@ -31,6 +31,7 @@ import {
   BattlePrepModal,
   RewardPill,
 } from '../../components/battle/BattlePrepModal.tsx'
+import { ElementGuidePopup } from '../../components/battle/ElementGuidePopup.tsx'
 import {
   DropCard,
   RESULT_BADGE_WIN,
@@ -109,6 +110,7 @@ function CampaignPage() {
   const [prep, setPrep] = useState<CampaignStage | null>(null)
   const [sweepResult, setSweepResult] = useState<SweepResult | null>(null)
   const [editorOpen, setEditorOpen] = useState(false)
+  const [elementsOpen, setElementsOpen] = useState(false)
   // When the team editor is opened from the prep modal we remember which stage
   // to return to, so closing the editor (Valider/Annuler) reopens the prep
   // modal instead of dropping the player back on the bare campaign.
@@ -210,16 +212,29 @@ function CampaignPage() {
 
       <div className="relative z-10 mx-auto max-w-5xl px-4 pt-8">
         {/* Header */}
-        <header>
-          <p className="font-mono text-[11px] font-bold uppercase tracking-[0.25em] text-text-light/60">
-            Gachapon / Campagne
-          </p>
-          <h1 className="mt-2 font-display text-4xl font-bold tracking-tight text-text sm:text-5xl">
-            Campagne
-          </h1>
-          <p className="mt-2.5 text-[15px] text-text-light">
-            Progresse à travers les chapitres pour débloquer drops et puissance
-          </p>
+        <header className="flex flex-wrap items-end justify-between gap-4">
+          <div className="min-w-0">
+            <p className="font-mono text-[11px] font-bold uppercase tracking-[0.25em] text-text-light/60">
+              Gachapon / Campagne
+            </p>
+            <h1 className="mt-2 font-display text-4xl font-bold tracking-tight text-text sm:text-5xl">
+              Campagne
+            </h1>
+            <p className="mt-2.5 text-[15px] text-text-light">
+              Progresse à travers les chapitres pour débloquer drops et
+              puissance
+            </p>
+          </div>
+          <Button
+            variant="pill"
+            size="pill"
+            onClick={() => setElementsOpen(true)}
+            title="Comprendre les éléments"
+            className="shrink-0"
+          >
+            <Swords className="h-3.5 w-3.5 text-amber-600" />
+            Éléments
+          </Button>
         </header>
 
         {/* Chapter strip */}
@@ -248,6 +263,9 @@ function CampaignPage() {
           </div>
         )}
       </div>
+
+      {/* Élements & priorité de ciblage */}
+      <ElementGuidePopup open={elementsOpen} onOpenChange={setElementsOpen} />
 
       {/* Persistent team dock */}
       <TeamDock
