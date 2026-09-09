@@ -103,19 +103,23 @@ export class CollectionDomain implements ICollectionDomain {
     const result = await retryOnSerialization(() =>
       this.#postgresOrm.executeWithTransactionClient(
         async (tx) => {
-          await this.#duelDomain.assertCardNotEngagedInTx(
-            tx,
-            userId,
-            cardId,
-            variant,
-          )
-
+          // Propriété d'ABORD, verrou de duel ensuite — comme sur les trois
+          // autres chemins de retrait. Dans l'ordre inverse, une demande
+          // portant sur une carte qu'on ne possède pas s'entendait répondre
+          // « engagée dans un duel », ce qui renseigne sur autrui.
           const uc = await tx.userCard.findUnique({
             where: { userId_cardId_variant: { userId, cardId, variant } },
           })
           if (!uc || uc.quantity < quantity) {
             throw Boom.badRequest('You do not own this card')
           }
+
+          await this.#duelDomain.assertCardNotEngagedInTx(
+            tx,
+            userId,
+            cardId,
+            variant,
+          )
 
           if (uc.quantity - quantity <= 0) {
             await tx.userCard.delete({
