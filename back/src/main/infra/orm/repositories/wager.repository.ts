@@ -204,7 +204,12 @@ function findPullsSinceWith(
         pulledAt: true,
         card: { select: { rarity: true } },
       },
-      orderBy: { pulledAt: 'asc' },
+      // `pulledAt` est en précision milliseconde : deux tirages d'un même
+      // batch peuvent tomber sur le même instant. `id` en second tri rend
+      // l'ordre — et donc le sous-ensemble des `take` premiers — déterministe,
+      // ce qui compte ici puisque c'est lui qui décide quelles cartes sont
+      // saisissables au règlement du duel.
+      orderBy: [{ pulledAt: 'asc' }, { id: 'asc' }],
       take,
     })
     .then((pulls) =>

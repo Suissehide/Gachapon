@@ -19,6 +19,7 @@ import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
 import type { TeamRepository } from '../../infra/orm/repositories/team.repository'
 import type { IScoringConfigRepository } from '../../types/infra/orm/repositories/scoring-config.repository.interface'
+import type { Logger } from '../../types/utils/logger'
 import type {
   DuelProposedEvent,
   DuelSettledEvent,
@@ -35,6 +36,8 @@ const RECENT_SETTLED_DUELS = 20
 
 type SettleOutcome = {
   teamId: string
+  challengerId: string
+  opponentId: string
   winnerId: string | null
   transferredCount: number
 } | null
@@ -48,6 +51,7 @@ export class DuelDomain implements IDuelDomain {
   readonly #scoringConfigRepository: IScoringConfigRepository
   readonly #postgresOrm: PostgresOrm
   readonly #wsManager: WsManager
+  readonly #logger: Logger
 
   constructor({
     configService,
@@ -58,6 +62,7 @@ export class DuelDomain implements IDuelDomain {
     scoringConfigRepository,
     postgresOrm,
     wsManager,
+    logger,
   }: IocContainer) {
     this.#configService = configService
     this.#teamRepository = teamRepository
@@ -67,6 +72,7 @@ export class DuelDomain implements IDuelDomain {
     this.#scoringConfigRepository = scoringConfigRepository
     this.#postgresOrm = postgresOrm
     this.#wsManager = wsManager
+    this.#logger = logger
   }
 
   /**
@@ -258,9 +264,21 @@ export class DuelDomain implements IDuelDomain {
   ): Promise<WagersView> {
     await this.#requireMembership(teamId, userId)
 
+    // Chaque règlement est isolé dans son propre try/catch : contrairement
+    // au déclencheur au tirage, cette lecture ne doit pas échouer pour
+    // toute l'équipe si un seul duel stale échoue à se régler (P2034 qui
+    // survit à tous les retries, par exemple) — même intention que le hook
+    // `POST /pulls` (`void ... .catch(...)`), appliquée ici à une boucle
+    // plutôt qu'à un fire-and-forget.
     const stale = await this.#wagerRepository.listStaleForTeam(teamId, now)
     for (const duelId of stale.duelIds) {
-      await this.#settle(duelId, now)
+      try {
+        await this.#settle(duelId, now)
+      } catch (err) {
+        this.#logger.error(
+          `Règlement du duel stale ${duelId} échoué (equipe ${teamId}) : ${err instanceof Error ? err.message : String(err)}`,
+        )
+      }
     }
 
     const [duels, settledDuels, cfg] = await Promise.all([
@@ -323,6 +341,17 @@ export class DuelDomain implements IDuelDomain {
    * s'il n'est plus ACTIVE, on sort sans rien faire — c'est ce qui rend un
    * double déclenchement (tirage + lecture d'équipe, ou deux tirages
    * concurrents) inoffensif.
+   *
+   * Propriété importante à préserver : TOUTE branche de ce callback
+   * réécrit la ligne Duel — y compris le cas verdict encore indécidable
+   * (mise à jour des seuls compteurs). C'est cette écriture systématique
+   * qui, sous isolation Serializable, fait entrer en conflit deux
+   * transactions concurrentes touchant le même duel : l'une des deux
+   * échoue en P2034 et retente, relisant alors un statut déjà à jour par
+   * la première. Rendre cette écriture conditionnelle (« ne rien écrire si
+   * rien ne change ») retirerait ce verrou de sérialisation en silence et
+   * casserait l'idempotence — ce n'est pas la seule relecture du statut en
+   * tête de fonction qui la garantit, c'est la combinaison des deux.
    */
   async #settle(duelId: string, now: Date): Promise<void> {
     const scoring = await this.#scoringConfigRepository.get()
@@ -426,7 +455,13 @@ export class DuelDomain implements IDuelDomain {
             },
           })
 
-          return { teamId: duel.teamId, winnerId, transferredCount }
+          return {
+            teamId: duel.teamId,
+            challengerId: duel.challengerId,
+            opponentId: duel.opponentId,
+            winnerId,
+            transferredCount,
+          }
         },
         { isolationLevel: 'Serializable' },
       ),
@@ -446,8 +481,16 @@ export class DuelDomain implements IDuelDomain {
       winnerId: outcome.winnerId,
       transferredCount: outcome.transferredCount,
     }
-    for (const member of team?.members ?? []) {
-      this.#wsManager.notify(member.userId, event)
+    // Les deux duellistes doivent être prévenus même si l'un d'eux a
+    // quitté l'équipe entre l'acceptation et le règlement — la spec dit
+    // « les deux joueurs ET l'équipe », pas seulement l'équipe.
+    const recipientIds = new Set([
+      outcome.challengerId,
+      outcome.opponentId,
+      ...(team?.members.map((m) => m.userId) ?? []),
+    ])
+    for (const recipientId of recipientIds) {
+      this.#wsManager.notify(recipientId, event)
     }
   }
 

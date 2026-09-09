@@ -117,9 +117,12 @@ describe('cycle de vie du duel', () => {
     )
   }
 
-  // Deactive tous les CardSet puis n'active que celui donne — cette suite
-  // possede sa propre base tronquee (globalSetup), donc aucun autre fichier
-  // e2e ne tourne en meme temps : pas besoin de restaurer un etat anterieur.
+  // Deactive tous les CardSet puis n'active que celui donne. ATTENTION :
+  // globalSetup ne tronque la base qu'une fois par run, pas par fichier —
+  // les fichiers e2e partagent la meme base et peuvent tourner dans le
+  // meme process. Ce catalogue est donc un etat partage : voir le
+  // snapshot/restore dans le describe('reglement du duel') plus bas, sur
+  // le modele de gacha/pull.test.ts.
   async function activateOnly(setId: string) {
     await prisma.cardSet.updateMany({ data: { isActive: false } })
     await prisma.cardSet.update({
@@ -424,6 +427,29 @@ describe('cycle de vie du duel', () => {
     let legendarySetId: string
     let commonSetId: string
     let commonCardId: string
+    let baselineActiveSetIds: string[]
+
+    // Snapshot des CardSet actifs AVANT toute manipulation du catalogue par
+    // ce describe, et restauration a la fin — cette suite ne possede pas sa
+    // propre base isolee (voir le commentaire d'activateOnly plus haut), il
+    // faut donc rendre le catalogue exactement comme on l'a trouve.
+    beforeAll(async () => {
+      const active = await prisma.cardSet.findMany({
+        where: { isActive: true },
+        select: { id: true },
+      })
+      baselineActiveSetIds = active.map((s: { id: string }) => s.id)
+    })
+
+    afterAll(async () => {
+      await prisma.cardSet.updateMany({ data: { isActive: false } })
+      if (baselineActiveSetIds.length > 0) {
+        await prisma.cardSet.updateMany({
+          where: { id: { in: baselineActiveSetIds } },
+          data: { isActive: true },
+        })
+      }
+    })
 
     it('duel3 (A vs B, 9 tirages) : A rafle du LEGENDARY, B du COMMON -> reglement automatique au dernier tirage, cartes transferees, B garde sa poussiere', async () => {
       const legendarySet = await prisma.cardSet.create({
@@ -540,19 +566,53 @@ describe('cycle de vie du duel', () => {
       }
     })
 
-    it('idempotence : rejouer settleForUser sur duel3 (deja SETTLED) ne transfere rien de plus', async () => {
+    it('idempotence : reactiver artificiellement duel3 (deja SETTLED) et rejouer le reglement ne transfere rien de plus', async () => {
       const { duelDomain } = (app as any).iocContainer
-      const before = await prisma.duelTransfer.count({
+
+      const transfersBefore = await prisma.duelTransfer.count({
         where: { duelId: duel3Id },
+      })
+      const aCardBefore = await prisma.userCard.findUnique({
+        where: {
+          userId_cardId_variant: {
+            userId: userIdA,
+            cardId: commonCardId,
+            variant: 'NORMAL',
+          },
+        },
+      })
+
+      // On force le statut a redevenir ACTIVE SANS toucher settledAt ni
+      // winnerId : `listActiveDuelsForUser` (filtre sur ACTIVE) ne fait
+      // donc plus barrage, et `settleForUser` entre reellement dans
+      // `#settle`. Si c'est le garde-fou en tete de `#settle` (relecture
+      // du statut) ou l'absence de propriétaire cote perdant dans
+      // `#transferPull` qui sauve l'idempotence, on le verifie ici pour de
+      // vrai plutot que de compter sur le filtre du repository pour ne
+      // jamais rentrer dans la transaction.
+      await prisma.duel.update({
+        where: { id: duel3Id },
+        data: { status: 'ACTIVE' },
       })
 
       await duelDomain.settleForUser(userIdA)
       await duelDomain.settleForUser(userIdB)
 
-      const after = await prisma.duelTransfer.count({
+      const transfersAfter = await prisma.duelTransfer.count({
         where: { duelId: duel3Id },
       })
-      expect(after).toBe(before)
+      expect(transfersAfter).toBe(transfersBefore)
+
+      const aCardAfter = await prisma.userCard.findUnique({
+        where: {
+          userId_cardId_variant: {
+            userId: userIdA,
+            cardId: commonCardId,
+            variant: 'NORMAL',
+          },
+        },
+      })
+      expect(aCardAfter?.quantity).toBe(aCardBefore?.quantity)
 
       const row = await prisma.duel.findUnique({ where: { id: duel3Id } })
       expect(row.status).toBe('SETTLED')
@@ -679,6 +739,128 @@ describe('cycle de vie du duel', () => {
       expect(inView).toBeDefined()
       expect(inView.status).toBe('SETTLED')
       expect(inView.winnerId).toBe(userIdA)
+    })
+
+    it("equipement : la piece portee sur la derniere copie du perdant est detachee (ligne conservee, equippedOnId a null)", async () => {
+      // Carte dediee, jamais tiree avant dans ce fichier : garantit que D
+      // part de zero exemplaire, donc que le transfert de ses tirages fait
+      // tomber la quantite a 0 (branche "derniere copie") de facon fiable,
+      // sans copies residuelles d'un test precedent qui fausseraient le
+      // compte.
+      const equipSet = await prisma.cardSet.create({
+        data: { name: `DuelEquipSet${suffix}`, isActive: false },
+      })
+      const equipCard = await prisma.card.create({
+        data: {
+          name: `DuelEquipCard${suffix}`,
+          rarity: 'COMMON',
+          dropWeight: 10,
+          setId: equipSet.id,
+        },
+      })
+
+      const propose = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamId}/duels`,
+        headers: { cookie: cookiesD },
+        payload: { opponentId: userIdE },
+      })
+      expect(propose.statusCode).toBe(201)
+      const equipDuelId = propose.json().id as string
+      const pullCount = propose.json().pullCount as number
+
+      const accept = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamId}/duels/${equipDuelId}/accept`,
+        headers: { cookie: cookiesE },
+      })
+      expect(accept.statusCode).toBe(200)
+
+      await prisma.user.updateMany({
+        where: { id: { in: [userIdD, userIdE] } },
+        data: { tokens: 20, lastTokenAt: new Date() },
+      })
+
+      // D (perdant prevu) ne tire que la carte dediee : toutes ses pulls
+      // tombent sur la meme ligne UserCard.
+      await activateOnly(equipSet.id)
+      for (let i = 0; i < pullCount; i++) {
+        const res = await app.inject({
+          method: 'POST',
+          url: '/pulls',
+          headers: { cookie: cookiesD },
+        })
+        expect(res.statusCode).toBe(201)
+      }
+
+      const dCard = await prisma.userCard.findUniqueOrThrow({
+        where: {
+          userId_cardId_variant: {
+            userId: userIdD,
+            cardId: equipCard.id,
+            variant: 'NORMAL',
+          },
+        },
+      })
+      expect(dCard.quantity).toBe(pullCount)
+
+      // On equipe une piece directement en base sur cette carte (pas
+      // besoin de passer par le flux d'equipement pour ce test) : c'est
+      // elle qui doit se retrouver detachee, pas supprimee, au reglement.
+      const equipment = await prisma.equipment.create({
+        data: {
+          name: `DuelEquipPiece${suffix}`,
+          slot: 'WEAPON',
+          setKey: 'FUREUR',
+          rarity: 'COMMON',
+          mainStat: 'attack',
+          bonuses: {},
+        },
+      })
+      const userEquipment = await prisma.userEquipment.create({
+        data: {
+          userId: userIdD,
+          equipmentId: equipment.id,
+          equippedOnId: dCard.id,
+        },
+      })
+
+      // E ne tire que du LEGENDARY : score largement superieur, D perd et
+      // sa derniere copie de la carte equipee est transferee (et
+      // supprimee).
+      await activateOnly(legendarySetId)
+      for (let i = 0; i < pullCount; i++) {
+        const res = await app.inject({
+          method: 'POST',
+          url: '/pulls',
+          headers: { cookie: cookiesE },
+        })
+        expect(res.statusCode).toBe(201)
+      }
+
+      const settled = await waitForDuelStatus(equipDuelId, 'SETTLED')
+      expect(settled.winnerId).toBe(userIdE)
+
+      const dCardAfter = await prisma.userCard.findUnique({
+        where: {
+          userId_cardId_variant: {
+            userId: userIdD,
+            cardId: equipCard.id,
+            variant: 'NORMAL',
+          },
+        },
+      })
+      expect(dCardAfter).toBeNull()
+
+      // Les deux moities comptent : la ligne existe toujours (pas
+      // supprimee en cascade avec la carte — onDelete: SetNull sur
+      // equippedOnId, pas Cascade), ET equippedOnId est passe a null (le
+      // detachement a bien eu lieu).
+      const equipmentAfter = await prisma.userEquipment.findUnique({
+        where: { id: userEquipment.id },
+      })
+      expect(equipmentAfter).not.toBeNull()
+      expect(equipmentAfter?.equippedOnId).toBeNull()
     })
   })
 })
