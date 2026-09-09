@@ -9,9 +9,11 @@ import { retryOnSerialization } from '../shared/retry-serialization'
 
 export class CardAscensionTx {
   readonly #postgresOrm
+  readonly #duelDomain
 
-  constructor({ postgresOrm }: IocContainer) {
+  constructor({ postgresOrm, duelDomain }: IocContainer) {
     this.#postgresOrm = postgresOrm
+    this.#duelDomain = duelDomain
   }
 
   ascend(
@@ -44,6 +46,12 @@ export class CardAscensionTx {
               `Need at least 1 duplicate (quantity > 1) to ascend — current quantity is ${userCard.quantity}`,
             )
           }
+          await this.#duelDomain.assertCardNotEngagedInTx(
+            tx,
+            userId,
+            userCard.cardId,
+            userCard.variant,
+          )
 
           const updated = await tx.userCard.update({
             where: { id: userCardId },

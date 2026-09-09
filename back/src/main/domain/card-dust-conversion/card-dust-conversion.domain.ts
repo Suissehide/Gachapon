@@ -8,17 +8,20 @@ export class CardDustConversionDomain {
   readonly #skillTreeRepository
   readonly #achievementsDomain
   readonly #configService
+  readonly #duelDomain
 
   constructor({
     postgresOrm,
     skillTreeRepository,
     achievementsDomain,
     configService,
+    duelDomain,
   }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#skillTreeRepository = skillTreeRepository
     this.#achievementsDomain = achievementsDomain
     this.#configService = configService
+    this.#duelDomain = duelDomain
   }
 
   convert(
@@ -61,6 +64,12 @@ export class CardDustConversionDomain {
           if (!userCard || userCard.userId !== userId) {
             throw Boom.notFound('UserCard not found')
           }
+          await this.#duelDomain.assertCardNotEngagedInTx(
+            tx,
+            userId,
+            userCard.cardId,
+            userCard.variant,
+          )
           if (userCard.quantity - amount < 1) {
             throw Boom.badRequest(
               `Cannot convert ${amount} — would leave 0 copies (have ${userCard.quantity})`,

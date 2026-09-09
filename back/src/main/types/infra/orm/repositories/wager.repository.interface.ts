@@ -46,6 +46,10 @@ export interface IWagerRepository {
     take: number,
   ): Promise<DuelWithParties[]>
   listActiveDuelsForUser(userId: string): Promise<Duel[]>
+  listActiveDuelsForUserInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+  ): Promise<Duel[]>
   createDuel(data: {
     teamId: string
     challengerId: string

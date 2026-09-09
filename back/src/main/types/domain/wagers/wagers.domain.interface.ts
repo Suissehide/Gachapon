@@ -1,4 +1,5 @@
-import type { DuelStatus } from '../../../../generated/client'
+import type { CardVariant, DuelStatus } from '../../../../generated/client'
+import type { PrimaTransactionClient } from '../../infra/orm/client'
 
 export type WagerUserMini = {
   id: string
@@ -29,6 +30,9 @@ export type DuelView = {
 export type WagersView = {
   duels: DuelView[]
   settledDuels: DuelView[]
+  // Cartes que MES duels ACTIVE verrouillent (voir DuelDomain#listEngagedCardKeysInTx) —
+  // signale au joueur, avant qu'il ne tente un recyclage, pourquoi il serait refusé.
+  engagedCardIds: string[]
 }
 
 export interface IDuelDomain {
@@ -52,4 +56,22 @@ export interface IDuelDomain {
     now?: Date,
   ): Promise<WagersView>
   settleForUser(userId: string, now?: Date): Promise<void>
+  /**
+   * Clés `${cardId}:${variant}` des cartes que les tirages comptés (au sens
+   * de `findPullsSinceInTx`) de tous les duels ACTIVE du joueur verrouillent.
+   * Utilisé à la fois pour peupler `WagersView#engagedCardIds` et par les
+   * quatre chemins de retrait de carte (recyclage unitaire/masse, conversion
+   * en poussière, ascension) pour refuser ou ignorer une carte engagée.
+   */
+  listEngagedCardKeysInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+  ): Promise<Set<string>>
+  /** Lève `Boom.conflict` si `${cardId}:${variant}` est engagée dans un duel ACTIVE du joueur. */
+  assertCardNotEngagedInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+    cardId: string,
+    variant: CardVariant,
+  ): Promise<void>
 }

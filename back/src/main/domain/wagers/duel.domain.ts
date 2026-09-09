@@ -1,5 +1,6 @@
 import Boom from '@hapi/boom'
 
+import type { CardVariant } from '../../../generated/client'
 import type { IocContainer } from '../../types/application/ioc'
 import type {
   DuelView,
@@ -311,11 +312,24 @@ export class DuelDomain implements IDuelDomain {
       }
     }
 
+    // Lu APRES le règlement paresseux ci-dessus : un duel qui vient de
+    // passer SETTLED dans cet appel ne doit plus apparaître comme verrou.
+    const engagedKeys = await this.listEngagedCardKeysInTx(
+      this.#postgresOrm.prisma,
+      userId,
+    )
+    const engagedCardIds = [
+      ...new Set(
+        [...engagedKeys].map((key) => key.slice(0, key.indexOf(':'))),
+      ),
+    ]
+
     return {
       duels: duels
         .filter((d) => d.status !== 'SETTLED')
         .map((d) => this.#toView(d, userId)),
       settledDuels: settledDuels.map((d) => this.#toView(d, userId)),
+      engagedCardIds,
     }
   }
 
@@ -331,6 +345,54 @@ export class DuelDomain implements IDuelDomain {
     )
     for (const duel of activeDuels) {
       await this.#settle(duel.id, now)
+    }
+  }
+
+  /**
+   * Verrou des cartes engagées (tâche 7) : les clés `${cardId}:${variant}`
+   * des tirages COMPTÉS (mêmes appel et arguments que `#settle` —
+   * `findPullsSinceInTx(tx, userId, duel.acceptedAt, duel.pullCount)`) de
+   * chaque duel ACTIVE où le joueur est partie. C'est ce même sous-ensemble
+   * que le règlement saisira chez le perdant ; verrouiller autre chose
+   * protégerait les mauvaises cartes.
+   */
+  async listEngagedCardKeysInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+  ): Promise<Set<string>> {
+    const activeDuels = await this.#wagerRepository.listActiveDuelsForUserInTx(
+      tx,
+      userId,
+    )
+    const keys = new Set<string>()
+    for (const duel of activeDuels) {
+      if (duel.acceptedAt === null) {
+        // Défensif, symétrique au skip de #settle : un duel ACTIVE a
+        // toujours acceptedAt posé par accept().
+        continue
+      }
+      const pulls = await this.#wagerRepository.findPullsSinceInTx(
+        tx,
+        userId,
+        duel.acceptedAt,
+        duel.pullCount,
+      )
+      for (const pull of pulls) {
+        keys.add(`${pull.cardId}:${pull.variant}`)
+      }
+    }
+    return keys
+  }
+
+  async assertCardNotEngagedInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+    cardId: string,
+    variant: CardVariant,
+  ): Promise<void> {
+    const engagedKeys = await this.listEngagedCardKeysInTx(tx, userId)
+    if (engagedKeys.has(`${cardId}:${variant}`)) {
+      throw Boom.conflict('Carte engagée dans un duel en cours')
     }
   }
 

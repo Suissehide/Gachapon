@@ -32,4 +32,5 @@ export const collectionRecycleAllResponseSchema = z.object({
   cardsRecycled: z.number().int(),
   newDustTotal: z.number().int(),
   unlockedAchievements: z.array(unlockedAchievementSchema).optional(),
+  skippedEngaged: z.number().int(),
 })

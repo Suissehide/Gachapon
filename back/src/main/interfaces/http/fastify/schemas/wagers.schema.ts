@@ -50,4 +50,5 @@ export const duelViewSchema = z.object({
 export const wagersViewResponseSchema = z.object({
   duels: z.array(duelViewSchema),
   settledDuels: z.array(duelViewSchema),
+  engagedCardIds: z.array(z.string()),
 })

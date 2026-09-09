@@ -86,12 +86,14 @@ export class WagerRepository implements IWagerRepository {
   }
 
   listActiveDuelsForUser(userId: string): Promise<Duel[]> {
-    return this.#prisma.duel.findMany({
-      where: {
-        status: 'ACTIVE',
-        OR: [{ challengerId: userId }, { opponentId: userId }],
-      },
-    })
+    return listActiveDuelsForUserWith(this.#prisma, userId)
+  }
+
+  listActiveDuelsForUserInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+  ): Promise<Duel[]> {
+    return listActiveDuelsForUserWith(tx, userId)
   }
 
   createDuel(data: {
@@ -187,6 +189,18 @@ export class WagerRepository implements IWagerRepository {
       betIds: staleBets.map((b) => b.id),
     }
   }
+}
+
+function listActiveDuelsForUserWith(
+  client: PostgresPrismaClient | PrimaTransactionClient,
+  userId: string,
+): Promise<Duel[]> {
+  return client.duel.findMany({
+    where: {
+      status: 'ACTIVE',
+      OR: [{ challengerId: userId }, { opponentId: userId }],
+    },
+  })
 }
 
 function findPullsSinceWith(

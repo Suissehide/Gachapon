@@ -18,6 +18,10 @@ export type RecycleAllResult = {
   cardsRecycled: number
   newDustTotal: number
   unlockedAchievements: UnlockedAchievement[]
+  // Cartes candidates au recyclage de masse mais engagées dans un duel
+  // ACTIVE : ignorées plutôt que refusées — un recyclage de masse ne doit
+  // pas échouer en bloc pour une carte verrouillée (voir DuelDomain, tâche 7).
+  skippedEngaged: number
 }
 
 export interface ICollectionDomain {

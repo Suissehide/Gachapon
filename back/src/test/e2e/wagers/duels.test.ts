@@ -863,4 +863,272 @@ describe('cycle de vie du duel', () => {
       expect(equipmentAfter?.equippedOnId).toBeNull()
     })
   })
+
+  // Tache 7 : verrou des cartes engagees. Reutilise B (challenger, defieur)
+  // et A (adversaire perdant) plutot que d'enregistrer de nouveaux comptes :
+  // /auth/register est plafonne a 5 inscriptions / 15 min (voir
+  // register.router.ts), et A-E epuisent deja ce quota dans ce fichier. B
+  // termine chaque describe precedent sans la moindre UserCard residuelle
+  // (perdant de duel3, puis perdant par forfait de l'echeance depassee) :
+  // c'est le seul candidat propre pour verifier des comptes exacts sur le
+  // recyclage de masse. A porte des doublons residuels (legendaryCard,
+  // commonCardId) mais ca n'affecte pas ce describe : A n'y joue que le
+  // role du perdant, dont on n'inspecte jamais la collection.
+  describe('verrou des cartes engagees', () => {
+    let engagedSetId: string
+    let engagedCardId: string
+    let extraSetId: string
+    let extraCardId: string
+    let loserSetId: string
+    let lockDuelId: string
+
+    beforeAll(async () => {
+      await configService.set('duel.pullCount', 2)
+
+      const engagedSet = await prisma.cardSet.create({
+        data: { name: `LockEngagedSet${suffix}`, isActive: false },
+      })
+      const engagedCard = await prisma.card.create({
+        data: {
+          name: `LockEngagedCard${suffix}`,
+          rarity: 'LEGENDARY',
+          dropWeight: 10,
+          setId: engagedSet.id,
+        },
+      })
+      engagedSetId = engagedSet.id
+      engagedCardId = engagedCard.id
+
+      const extraSet = await prisma.cardSet.create({
+        data: { name: `LockExtraSet${suffix}`, isActive: false },
+      })
+      const extraCard = await prisma.card.create({
+        data: {
+          name: `LockExtraCard${suffix}`,
+          rarity: 'COMMON',
+          dropWeight: 10,
+          setId: extraSet.id,
+        },
+      })
+      extraSetId = extraSet.id
+      extraCardId = extraCard.id
+
+      const loserSet = await prisma.cardSet.create({
+        data: { name: `LockLoserSet${suffix}`, isActive: false },
+      })
+      await prisma.card.create({
+        data: {
+          name: `LockLoserCard${suffix}`,
+          rarity: 'COMMON',
+          dropWeight: 10,
+          setId: loserSet.id,
+        },
+      })
+      loserSetId = loserSet.id
+    })
+
+    it('B defie A, A accepte -> ACTIVE', async () => {
+      const propose = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamId}/duels`,
+        headers: { cookie: cookiesB },
+        payload: { opponentId: userIdA },
+      })
+      expect(propose.statusCode).toBe(201)
+      lockDuelId = propose.json().id
+      expect(propose.json().pullCount).toBe(2)
+
+      const accept = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamId}/duels/${lockDuelId}/accept`,
+        headers: { cookie: cookiesA },
+      })
+      expect(accept.statusCode).toBe(200)
+      expect(accept.json().status).toBe('ACTIVE')
+    })
+
+    it('B tire ses 2 tirages comptes, tous sur la carte engagee', async () => {
+      await prisma.user.update({
+        where: { id: userIdB },
+        data: { tokens: 10, lastTokenAt: new Date() },
+      })
+      await activateOnly(engagedSetId)
+      for (let i = 0; i < 2; i++) {
+        const res = await app.inject({
+          method: 'POST',
+          url: '/pulls',
+          headers: { cookie: cookiesB },
+        })
+        expect(res.statusCode).toBe(201)
+      }
+      const card = await prisma.userCard.findUniqueOrThrow({
+        where: {
+          userId_cardId_variant: {
+            userId: userIdB,
+            cardId: engagedCardId,
+            variant: 'NORMAL',
+          },
+        },
+      })
+      expect(card.quantity).toBe(2)
+    })
+
+    it('GET /teams/:id/wagers : B voit sa carte engagee dans engagedCardIds', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: `/teams/${teamId}/wagers`,
+        headers: { cookie: cookiesB },
+      })
+      expect(res.statusCode).toBe(200)
+      expect(res.json().engagedCardIds).toContain(engagedCardId)
+    })
+
+    it('POST /collection/recycle sur la carte engagee -> 409, quantite inchangee en base', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/collection/recycle',
+        headers: { cookie: cookiesB },
+        payload: { cardId: engagedCardId, quantity: 1, variant: 'NORMAL' },
+      })
+      expect(res.statusCode).toBe(409)
+
+      const card = await prisma.userCard.findUniqueOrThrow({
+        where: {
+          userId_cardId_variant: {
+            userId: userIdB,
+            cardId: engagedCardId,
+            variant: 'NORMAL',
+          },
+        },
+      })
+      expect(card.quantity).toBe(2)
+    })
+
+    it('une carte NON comptee du meme joueur (au-dela du pullCount) se recycle normalement -> 200', async () => {
+      // 3e tirage de B, au-dela de pullCount=2 : findPullsSinceInTx ne
+      // retient que les 2 premiers, donc cette carte n'est jamais engagee.
+      await activateOnly(extraSetId)
+      const pull = await app.inject({
+        method: 'POST',
+        url: '/pulls',
+        headers: { cookie: cookiesB },
+      })
+      expect(pull.statusCode).toBe(201)
+
+      const recycle = await app.inject({
+        method: 'POST',
+        url: '/collection/recycle',
+        headers: { cookie: cookiesB },
+        payload: { cardId: extraCardId, quantity: 1, variant: 'NORMAL' },
+      })
+      expect(recycle.statusCode).toBe(200)
+
+      const card = await prisma.userCard.findUnique({
+        where: {
+          userId_cardId_variant: {
+            userId: userIdB,
+            cardId: extraCardId,
+            variant: 'NORMAL',
+          },
+        },
+      })
+      expect(card).toBeNull()
+    })
+
+    it('POST /collection/recycle-all : la carte engagee est ignoree, le lot aboutit quand meme, skippedEngaged la compte', async () => {
+      const dupSet = await prisma.cardSet.create({
+        data: { name: `LockDupSet${suffix}`, isActive: false },
+      })
+      const dupCard = await prisma.card.create({
+        data: {
+          name: `LockDupCard${suffix}`,
+          rarity: 'COMMON',
+          dropWeight: 10,
+          setId: dupSet.id,
+        },
+      })
+
+      // Cree directement en base (hors tirage) : une duplication non
+      // engagee, quantite > 1, pour verifier qu'un recyclage de masse
+      // legitime n'est pas bloque par la presence d'une carte engagee. B
+      // n'a aucune autre UserCard a ce stade (voir le commentaire du
+      // describe), donc ce candidat est le seul non-engage vu par l'appel.
+      await prisma.userCard.create({
+        data: {
+          userId: userIdB,
+          cardId: dupCard.id,
+          variant: 'NORMAL',
+          quantity: 3,
+        },
+      })
+
+      const res = await app.inject({
+        method: 'POST',
+        url: '/collection/recycle-all',
+        headers: { cookie: cookiesB },
+        payload: { maxRarity: 'LEGENDARY' },
+      })
+      expect(res.statusCode).toBe(200)
+      const body = res.json()
+      expect(body.skippedEngaged).toBe(1)
+      expect(body.cardsRecycled).toBe(2)
+
+      const engaged = await prisma.userCard.findUniqueOrThrow({
+        where: {
+          userId_cardId_variant: {
+            userId: userIdB,
+            cardId: engagedCardId,
+            variant: 'NORMAL',
+          },
+        },
+      })
+      expect(engaged.quantity).toBe(2)
+
+      const dup = await prisma.userCard.findUniqueOrThrow({
+        where: {
+          userId_cardId_variant: {
+            userId: userIdB,
+            cardId: dupCard.id,
+            variant: 'NORMAL',
+          },
+        },
+      })
+      expect(dup.quantity).toBe(1)
+    })
+
+    it('reglement du duel (B gagne) : engagedCardIds redevient vide, la carte anciennement engagee se recycle -> 200', async () => {
+      await prisma.user.update({
+        where: { id: userIdA },
+        data: { tokens: 10, lastTokenAt: new Date() },
+      })
+      await activateOnly(loserSetId)
+      for (let i = 0; i < 2; i++) {
+        const res = await app.inject({
+          method: 'POST',
+          url: '/pulls',
+          headers: { cookie: cookiesA },
+        })
+        expect(res.statusCode).toBe(201)
+      }
+
+      const settled = await waitForDuelStatus(lockDuelId, 'SETTLED')
+      expect(settled.winnerId).toBe(userIdB)
+
+      const wagers = await app.inject({
+        method: 'GET',
+        url: `/teams/${teamId}/wagers`,
+        headers: { cookie: cookiesB },
+      })
+      expect(wagers.statusCode).toBe(200)
+      expect(wagers.json().engagedCardIds).toEqual([])
+
+      const recycle = await app.inject({
+        method: 'POST',
+        url: '/collection/recycle',
+        headers: { cookie: cookiesB },
+        payload: { cardId: engagedCardId, quantity: 1, variant: 'NORMAL' },
+      })
+      expect(recycle.statusCode).toBe(200)
+    })
+  })
 })
