@@ -106,7 +106,10 @@ export function TeamIdentityCard({
         <StatTile value={fr(team.raidsWon)} label="RAIDS VAINCUS" />
       </div>
 
-      {(canManage || isOwner) && (
+      {/* `canManage` suffit : `isOwner` est un sous-ensemble strict — un chef
+          a forcément le rôle OWNER dans la liste des membres, donc
+          `canManage`. Le disjoint n'ajoutait aucun cas. */}
+      {canManage && (
         <div className="mt-[18px] flex items-center gap-2">
           {canManage && myRole && (
             <InviteMemberPopup
@@ -121,7 +124,7 @@ export function TeamIdentityCard({
               trigger={
                 <PopupTrigger
                   variant="secondary"
-                  className="h-auto w-full flex-1 gap-2 rounded-xl border-[1.5px] py-[11px] text-sm font-bold"
+                  className="h-auto w-full flex-1 gap-2 rounded-lg border-[1.5px] px-[18px] py-[11px] text-sm font-bold"
                 >
                   <UserPlus className="h-4 w-4" />
                   Inviter
@@ -129,15 +132,17 @@ export function TeamIdentityCard({
               }
             />
           )}
-          {/* Réglages réservés au chef, pas aux officiers comme le suggère la
-              maquette : la route /team/$id/settings refuse déjà tout autre
-              rôle, un bouton visible pour un officier mènerait à un mur. */}
+          {/* NE PAS ouvrir ce bouton aux officiers. La maquette et le brief le
+              donnent au chef ET aux officiers, mais /team/$id/settings répond
+              « Accès réservé au propriétaire » à tout rôle autre que OWNER :
+              un officier qui cliquerait tomberait sur un mur. Tant que la
+              route n'accepte pas les officiers, ce bouton reste `isOwner`. */}
           {isOwner && (
             <Button
               variant="secondary"
               asChild
               title="Réglages de l'équipe"
-              className="h-auto shrink-0 rounded-xl border-[1.5px] p-[11px]"
+              className="h-auto shrink-0 rounded-lg border-[1.5px] p-[11px]"
             >
               <Link to="/team/$id/settings" params={{ id: team.id }}>
                 <Settings className="h-4 w-4" />

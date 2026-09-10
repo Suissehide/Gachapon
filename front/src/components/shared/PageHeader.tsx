@@ -20,10 +20,17 @@ export type Crumb =
 type Props = {
   breadcrumbs?: Crumb[]
   eyebrow?: string
-  // Optionnel : la fiche d'équipe n'a pas de titre de page — le nom de
-  // l'équipe vit dans sa carte d'identité, et le handoff ne montre au-dessus
-  // des deux colonnes que le fil d'Ariane. Toutes les autres pages passent
-  // un titre et sont inchangées.
+  /**
+   * Titre de page. **Optionnel, mais sous contrainte** : une page qui
+   * l'omet doit fournir son `<h1>` ailleurs dans son contenu. Aucune page
+   * ne doit se retrouver sans titre du tout — ni pour le lecteur, ni pour
+   * un lecteur d'écran, ni pour le SEO préconstruit.
+   *
+   * Le seul consommateur qui l'omet aujourd'hui est la fiche d'équipe : le
+   * handoff ne montre au-dessus de ses deux colonnes que le fil d'Ariane, et
+   * le nom de l'équipe est le `<h1>` de sa carte d'identité, dans le rail.
+   * Toutes les autres pages passent un titre et sont inchangées.
+   */
   title?: string
   subtitle?: ReactNode
   right?: ReactNode

@@ -58,8 +58,13 @@ function HistoryRow({ raid }: { raid: TeamRaidHistoryEntry }) {
 export function RaidHistoryPanel({ teamId }: { teamId: string }) {
   const { data, isLoading } = useTeamRaidHistory(teamId)
   const raids = data?.raids ?? []
-  // `killedAt` plutôt que `pct === 100` : c'est le serveur qui décide qu'un
-  // boss est tombé, et un raid peut se terminer à 100 % arrondi sans l'être.
+  // `killedAt` plutôt que `pct === 100`. Non pas parce que les deux
+  // divergeraient : `raidPct` PLANCHERISE (`Math.floor`, raid-rules.ts), donc
+  // 100 % implique bel et bien que le boss est tombé. Mais `killedAt` est le
+  // FAIT posé par le serveur et `pct` n'en est qu'une dérivée : compter les
+  // victoires sur le pourcentage, ce serait faire dépendre ce compteur d'une
+  // règle d'arrondi qui ne lui appartient pas et qui peut changer sans que
+  // personne ne pense à ce panneau.
   const won = raids.filter((raid) => raid.killedAt !== null).length
 
   return (
