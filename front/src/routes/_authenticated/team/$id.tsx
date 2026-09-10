@@ -338,6 +338,7 @@ function TeamDetailPage() {
             maxRank={team.maxRank}
             perkPoints={team.perkPoints}
             canManage={canManage}
+            isOwner={isOwner}
           />
 
           <RaidHistoryPanel teamId={id} />
@@ -362,10 +363,7 @@ function TeamDetailPage() {
               />
             </div>
 
-            <div
-              className="overflow-hidden rounded-xl border"
-              style={{ borderColor: 'rgba(27,23,38,.07)' }}
-            >
+            <div className="overflow-hidden rounded-xl border border-foreground/7">
               <div className="h-[min(80vh,600px)]">
                 <ReactTable
                   columns={columns}

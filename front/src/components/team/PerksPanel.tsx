@@ -10,79 +10,28 @@
 // par le niveau d'équipe (grisé, pointillés, badge « NIV. X »). On lit donc
 // `perk.unlocked`, calculé côté back à partir de `teamPerk.<clé>.unlockLevel`,
 // jamais le rang.
-import { Coins, Hammer, Lock, Star, Swords } from 'lucide-react'
-import type { ComponentType, CSSProperties } from 'react'
+//
+// Les noms, teintes et descriptions vivent dans
+// `constants/teamPerks.constant.ts` : ce panneau monte `PerkInvestPopup`, qui
+// affiche les mêmes bonus — les garder ici créait un cycle d'imports entre
+// les deux fichiers.
+import { Lock, RotateCcw } from 'lucide-react'
+import type { CSSProperties } from 'react'
+import { useState } from 'react'
 
-import type {
-  TeamPerkKey,
-  TeamPerkState,
-} from '../../api/teamProgression.api.ts'
+import type { TeamPerkState } from '../../api/teamProgression.api.ts'
+import {
+  PERK_META,
+  perkDescription,
+} from '../../constants/teamPerks.constant.ts'
 import { cn, plural } from '../../libs/utils.ts'
+import { useResetPerks } from '../../queries/useTeamProgression.ts'
 import { ArcadeCard } from '../shared/ArcadeCard.tsx'
+import { Button } from '../ui/button.tsx'
+import { ConfirmPopup } from './ConfirmPopup.tsx'
 import { PerkInvestPopup } from './PerkInvestPopup.tsx'
 
-type PerkMeta = {
-  name: string
-  /** Teinte de la rangée (icône + pastilles), injectée en `--pc`. */
-  color: string
-  Icon: ComponentType<{ className?: string }>
-}
-
-// Noms et teintes repris du handoff (`equipe-data.jsx`, `PERKS`). Les quatre
-// couleurs sont tokenisées dans `styles/_colors.css` (`--perk-*`) plutôt
-// qu'écrites en hex ici.
-export const PERK_META: Record<TeamPerkKey, PerkMeta> = {
-  loot: { name: 'Butin partagé', color: 'var(--perk-loot)', Icon: Coins },
-  raid: { name: 'Cadence de raid', color: 'var(--perk-raid)', Icon: Swords },
-  xp: { name: "Bannière d'XP", color: 'var(--perk-xp)', Icon: Star },
-  forge: { name: 'Forge commune', color: 'var(--perk-forge)', Icon: Hammer },
-}
-
-const formatEffect = (n: number) =>
-  n.toLocaleString('fr-FR', { maximumFractionDigits: 1 })
-
-/**
- * Description d'un bonus, à son rang courant.
- *
- * Les libellés de la maquette (« +5 % de jetons sur chaque tirage ») ne
- * décrivent PAS ce que le serveur applique : `loot` accélère la
- * régénération de jetons (`effectiveRegenInterval`, economy.domain.ts), il
- * n'ajoute rien au butin d'un tirage. Les quatre phrases ci-dessous sont
- * écrites depuis les sites d'application réels, pas depuis la maquette.
- *
- * `raid` est le seul effet entier (`Math.floor(rang × 0,5)`) : au rang 1 il
- * vaut encore 0, et afficher « +0 attaque » se lirait comme un bug. Ce cas
- * bascule sur la phrase générique, qui dit la règle plutôt que le total.
- */
-export function perkDescription(perk: TeamPerkState): string {
-  const value = formatEffect(perk.effect)
-  switch (perk.key) {
-    case 'loot':
-      return perk.rank > 0
-        ? `Régénération de jetons +${value} % pour chaque membre`
-        : 'Accélère la régénération de jetons de chaque membre'
-    case 'raid':
-      return perk.effect > 0
-        ? `+${value} attaque${plural(perk.effect)} de raid par membre et par semaine`
-        : 'Une attaque de raid de plus par membre tous les deux rangs'
-    case 'xp':
-      return perk.rank > 0
-        ? `+${value} % d'XP de campagne pour chaque membre`
-        : "Augmente l'XP de campagne de chaque membre"
-    case 'forge':
-      return perk.rank > 0
-        ? `Coût d'amélioration d'équipement −${value} %`
-        : "Réduit le coût d'amélioration d'équipement"
-  }
-}
-
-export function PerkRow({
-  perk,
-  maxRank,
-}: {
-  perk: TeamPerkState
-  maxRank: number
-}) {
+function PerkRow({ perk, maxRank }: { perk: TeamPerkState; maxRank: number }) {
   const meta = PERK_META[perk.key]
   const locked = !perk.unlocked
   const { Icon } = meta
@@ -129,7 +78,7 @@ export function PerkRow({
               NIV. {perk.unlockLevel}
             </span>
           ) : (
-            <span className="ml-auto shrink-0 font-mono text-[10px] text-foreground/50">
+            <span className="ml-auto shrink-0 font-mono text-[10px] tracking-[0.18em] text-foreground/50">
               {perk.rank}/{maxRank}
             </span>
           )}
@@ -170,6 +119,8 @@ type PerksPanelProps = {
   perkPoints: number
   /** Chef ou officier : les seuls rôles autorisés à dépenser un point. */
   canManage: boolean
+  /** Chef seul : la remise à zéro des bonus lui est réservée côté serveur. */
+  isOwner: boolean
 }
 
 export function PerksPanel({
@@ -178,7 +129,12 @@ export function PerksPanel({
   maxRank,
   perkPoints,
   canManage,
+  isOwner,
 }: PerksPanelProps) {
+  const [resetOpen, setResetOpen] = useState(false)
+  const { mutate: reset, isPending: isResetting } = useResetPerks(teamId)
+  const investedRanks = perks.reduce((sum, perk) => sum + perk.rank, 0)
+
   return (
     <ArcadeCard>
       <div className="mb-3 flex items-center justify-between gap-3">
@@ -213,6 +169,37 @@ export function PerksPanel({
         <p className="mt-3 text-center font-mono text-[10px] leading-[1.5] tracking-[0.06em] text-foreground/45">
           Seuls le chef et les officiers investissent les points de bonus.
         </p>
+      )}
+
+      {/* Remise à zéro : gratuite et illimitée, mais réservée au chef côté
+          serveur (`resetPerks`). Le popup d'investissement l'annonce au
+          joueur — sans cette commande, cette phrase serait un mensonge.
+          Masquée tant qu'aucun rang n'est investi : la remise à zéro ne
+          ferait alors rien, et cette page n'affiche jamais un bouton grisé
+          muet — même traitement que le déclencheur d'investissement à zéro
+          point. */}
+      {isOwner && investedRanks > 0 && (
+        <>
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={isResetting}
+            className="mt-2 w-full text-text-light hover:bg-destructive/10 hover:text-destructive"
+            onClick={() => setResetOpen(true)}
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            {isResetting ? 'Réinitialisation…' : 'Réinitialiser les bonus'}
+          </Button>
+          <ConfirmPopup
+            open={resetOpen}
+            onOpenChange={setResetOpen}
+            icon={<RotateCcw className="h-4 w-4" />}
+            title="Réinitialiser les bonus"
+            description={`Les ${investedRanks} rang${plural(investedRanks)} investi${plural(investedRanks)} repartent à zéro et l'équipe récupère ses ${investedRanks} point${plural(investedRanks)} de bonus. L'opération est gratuite et sans limite, mais tous les membres perdent immédiatement les effets en cours.`}
+            confirmLabel="Tout réinitialiser"
+            onConfirm={() => reset()}
+          />
+        </>
       )}
     </ArcadeCard>
   )

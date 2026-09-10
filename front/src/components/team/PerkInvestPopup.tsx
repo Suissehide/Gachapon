@@ -11,6 +11,10 @@ import { Sparkles } from 'lucide-react'
 import { useState } from 'react'
 
 import type { TeamPerkState } from '../../api/teamProgression.api.ts'
+import {
+  PERK_META,
+  perkDescription,
+} from '../../constants/teamPerks.constant.ts'
 import { plural } from '../../libs/utils.ts'
 import { useSpendPerk } from '../../queries/useTeamProgression.ts'
 import { Button } from '../ui/button.tsx'
@@ -23,7 +27,6 @@ import {
   PopupTitle,
   PopupTrigger,
 } from '../ui/popup.tsx'
-import { PERK_META, perkDescription } from './PerksPanel.tsx'
 
 type PerkInvestPopupProps = {
   teamId: string
@@ -73,7 +76,7 @@ export function PerkInvestPopup({
       {perkPoints > 0 ? (
         <PopupTrigger
           variant="default"
-          className="mt-3 h-auto w-full rounded-xl py-[11px] text-sm font-bold"
+          className="mt-3 h-auto w-full rounded-lg px-[18px] py-[11px] text-sm font-bold"
         >
           <Sparkles className="h-4 w-4" />
           Investir {perkPoints} point{plural(perkPoints)}
@@ -88,7 +91,7 @@ export function PerkInvestPopup({
         <PopupHeader>
           <PopupTitle
             icon={<Sparkles className="h-4 w-4" />}
-            subtitle="Un point monte un bonus d'un rang. Seul le chef peut ensuite tout remettre à zéro."
+            subtitle="Un point monte un bonus d'un rang. Seul le chef peut ensuite tout remettre à zéro, depuis le pied du panneau des bonus."
           >
             Investir un point de bonus
           </PopupTitle>
@@ -125,7 +128,7 @@ export function PerkInvestPopup({
                     <span className="truncate font-display text-sm font-extrabold text-text">
                       {meta.name}
                     </span>
-                    <span className="ml-auto shrink-0 font-mono text-[10px] text-foreground/50">
+                    <span className="ml-auto shrink-0 font-mono text-[10px] tracking-[0.18em] text-foreground/50">
                       {perk.rank}/{maxRank}
                     </span>
                   </div>
