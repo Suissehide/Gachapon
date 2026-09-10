@@ -46,6 +46,16 @@
   --amber-soft: #fde68a;
   --amber-deep: #d97706;
 
+  /* Couleurs des quatre bonus d'équipe — handoff `docs/design_handoff_equipe`
+     (bloc `PerkRows`, variable `--pc`). Trois reprennent une teinte déjà
+     tokenisée, la quatrième (forge) n'en avait aucune : les quatre sont
+     déclarées ensemble pour que la palette des bonus se relise et se
+     retouche d'un bloc, plutôt que trois alias plus un hex isolé. */
+  --perk-loot: var(--primary);
+  --perk-raid: var(--destructive);
+  --perk-xp: var(--accent);
+  --perk-forge: #3b82f6;
+
   /* Piste des barres graduées (équipe) — handoff `docs/design_handoff_equipe`,
      `.tm-hp-track`. Distincte de --surface-2/3 : plus chaude, réservée aux
      jauges de progression plutôt qu'aux surfaces de carte. */
