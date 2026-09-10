@@ -139,4 +139,33 @@ describe('Bonus équipe `forge` — coût d\'amélioration', () => {
     )
     expect(bonusedCost).toBeLessThan(baselineCost)
   })
+
+  it("GET /equipment annonce le MÊME coût que celui réellement facturé (revue coordinateur : plus de recalcul côté front)", async () => {
+    const bonused = await registerAndLogin('Announced')
+    const teamId = await makeTeam('Announced', bonused.userId)
+    await prisma.teamPerk.create({
+      data: { teamId, key: 'forge', rank: 5 },
+    })
+
+    const weaponId = await makeWeapon(bonused.userId)
+
+    const listRes = await app.inject({
+      method: 'GET',
+      url: '/equipment',
+      headers: { cookie: bonused.cookies },
+    })
+    expect(listRes.statusCode).toBe(200)
+    const item = listRes.json().items.find((i: any) => i.id === weaponId)
+    expect(item).toBeDefined()
+    const announcedCost = item.nextUpgradeCost as number
+    expect(announcedCost).toBeGreaterThan(0)
+
+    const upgradeRes = await app.inject({
+      method: 'POST',
+      url: `/equipment/${weaponId}/upgrade`,
+      headers: { cookie: bonused.cookies },
+    })
+    expect(upgradeRes.statusCode).toBe(200)
+    expect(upgradeRes.json().goldSpent).toBe(announcedCost)
+  })
 })

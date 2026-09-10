@@ -70,6 +70,13 @@ export type EquipmentInstance = {
   level: number
   substats: Substat[]
   baseBoost: number
+  /**
+   * Coût EXACT que POST /equipment/:id/upgrade facturera (remise du bonus
+   * d'équipe forge déjà appliquée) ; null au niveau maximum. À afficher et
+   * à utiliser pour désactiver le bouton — jamais un recalcul depuis
+   * useEconomyConfig, qui ne porte aucune donnée de bonus d'équipe.
+   */
+  nextUpgradeCost: number | null
 }
 
 /**
