@@ -24,7 +24,10 @@ import type { IUserBoostRepository } from '../../types/infra/orm/repositories/us
 import type { IUserCardRepository } from '../../types/infra/orm/repositories/user-card.repository.interface'
 import type { UserRewardRepositoryInterface } from '../../types/infra/orm/repositories/user-reward.repository.interface'
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
-import { calculateTokens } from '../economy/economy.domain'
+import {
+  calculateTokens,
+  effectiveRegenInterval,
+} from '../economy/economy.domain'
 import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
 import { calculateLevel } from '../shared/xp'
 
@@ -295,13 +298,10 @@ export class GachaDomain implements GachaDomainInterface {
     }
   }> {
     const user = await this.#userRepository.findByIdOrThrowInTx(tx, userId)
-    // Bonus d'équipe `loot` : multiplicatif, APRÈS la réduction du skill
-    // tree, `Math.max(1, …)` toujours le dernier mot — même formule que
-    // rewards.domain.ts#claimOne/#claimAll.
-    const effectiveInterval = Math.max(
-      1,
-      (cfg.tokenRegenIntervalMinutes - cfg.upgrades.regenReductionMinutes) /
-        (1 + cfg.teamLootBonusPct / 100),
+    const effectiveInterval = effectiveRegenInterval(
+      cfg.tokenRegenIntervalMinutes,
+      cfg.upgrades.regenReductionMinutes,
+      cfg.teamLootBonusPct,
     )
     const effectiveMaxStock = cfg.tokenMaxStock + cfg.upgrades.tokenVaultBonus
     const { tokens, newLastTokenAt } = calculateTokens(

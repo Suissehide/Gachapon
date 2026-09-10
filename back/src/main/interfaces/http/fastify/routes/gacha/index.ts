@@ -1,7 +1,10 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
-import { calculateTokens } from '../../../../../domain/economy/economy.domain'
+import {
+  calculateTokens,
+  effectiveRegenInterval,
+} from '../../../../../domain/economy/economy.domain'
 import { computeDropRates } from '../../../../../domain/gacha/drop-rates'
 import { effectivePityThreshold } from '../../../../../domain/gacha/gacha.domain'
 import { wsManager } from '../../../../ws/ws-manager'
@@ -271,13 +274,10 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         ),
         teamProgressionDomain.effectsForUser(request.user.userID),
       ])
-      // Bonus d'équipe `loot` : multiplicatif, APRÈS la réduction du skill
-      // tree, `Math.max(1, …)` toujours le dernier mot — même formule que
-      // gacha.domain.ts#pull et rewards.domain.ts#claimOne/#claimAll.
-      const effectiveInterval = Math.max(
-        1,
-        (cfg.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes) /
-          (1 + teamEffects.loot / 100),
+      const effectiveInterval = effectiveRegenInterval(
+        cfg.tokenRegenIntervalMinutes,
+        upgrades.regenReductionMinutes,
+        teamEffects.loot,
       )
       const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
 
@@ -318,11 +318,10 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         configService.getMany('tokenRegenIntervalMinutes', 'tokenMaxStock'),
         teamProgressionDomain.effectsForUser(request.user.userID),
       ])
-      // Même formule que /tokens/balance et gacha.domain.ts#pull.
-      const effectiveInterval = Math.max(
-        1,
-        (cfg.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes) /
-          (1 + teamEffects.loot / 100),
+      const effectiveInterval = effectiveRegenInterval(
+        cfg.tokenRegenIntervalMinutes,
+        upgrades.regenReductionMinutes,
+        teamEffects.loot,
       )
       const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
 

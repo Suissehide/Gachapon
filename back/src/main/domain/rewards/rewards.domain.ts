@@ -26,7 +26,10 @@ import type {
 } from '../../types/infra/orm/repositories/user-reward.repository.interface'
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import type { UnlockedAchievement } from '../achievements/events.types'
-import { calculateTokens } from '../economy/economy.domain'
+import {
+  calculateTokens,
+  effectiveRegenInterval,
+} from '../economy/economy.domain'
 import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
 import { calculateLevel } from '../shared/xp'
 
@@ -197,13 +200,10 @@ export class RewardsDomain implements RewardsDomainInterface {
           ),
           this.#teamProgressionDomain.effectsForUser(userId),
         ])
-        // Le bonus d'équipe `loot` est MULTIPLICATIF et vient APRÈS la
-        // réduction du skill tree — jamais l'inverse, sinon les deux
-        // sources divergent selon l'ordre de composition.
-        const effectiveInterval = Math.max(
-          1,
-          (cfg.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes) /
-            (1 + teamEffects.loot / 100),
+        const effectiveInterval = effectiveRegenInterval(
+          cfg.tokenRegenIntervalMinutes,
+          upgrades.regenReductionMinutes,
+          teamEffects.loot,
         )
         const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
         const { tokens: regenTokens, newLastTokenAt } = calculateTokens(
@@ -410,12 +410,10 @@ export class RewardsDomain implements RewardsDomainInterface {
           ),
           this.#teamProgressionDomain.effectsForUser(userId),
         ])
-        // Même formule que `claimOne` : le bonus d'équipe `loot` est
-        // MULTIPLICATIF et vient APRÈS la réduction du skill tree.
-        const effectiveInterval = Math.max(
-          1,
-          (cfg.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes) /
-            (1 + teamEffects.loot / 100),
+        const effectiveInterval = effectiveRegenInterval(
+          cfg.tokenRegenIntervalMinutes,
+          upgrades.regenReductionMinutes,
+          teamEffects.loot,
         )
         const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
         const { tokens: regenTokens, newLastTokenAt } = calculateTokens(

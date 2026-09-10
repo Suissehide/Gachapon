@@ -1,5 +1,8 @@
 import { describe, expect, it } from '@jest/globals'
-import { calculateTokens } from '../../main/domain/economy/economy.domain'
+import {
+  calculateTokens,
+  effectiveRegenInterval,
+} from '../../main/domain/economy/economy.domain'
 
 const INTERVAL = 120  // minutes (= 2h)
 const MAX = 6
@@ -112,5 +115,44 @@ describe('calculateTokens', () => {
       const past = new Date(Date.now() - INTERVAL * 60 * 1000)
       expect(calculateTokens(past, 0, INTERVAL, MAX).tokens).toBe(1)
     })
+  })
+})
+
+// Task 5 (refonte équipe) : cinq appelants dupliquaient cette arithmétique
+// avant l'extraction — l'ORDRE (soustraire, diviser, plancher) est
+// l'invariant que ce helper garde. Ce bloc le fixe une fois pour toutes.
+describe('effectiveRegenInterval', () => {
+  it('sans réduction ni bonus : identité', () => {
+    expect(effectiveRegenInterval(60, 0, 0)).toBe(60)
+  })
+
+  it('réduction du skill tree seule : soustraction simple', () => {
+    expect(effectiveRegenInterval(60, 15, 0)).toBe(45)
+  })
+
+  it('bonus d\'équipe seul : diviseur multiplicatif', () => {
+    // 60 / 1.10 = 54.545...
+    expect(effectiveRegenInterval(60, 0, 10)).toBeCloseTo(54.545, 3)
+  })
+
+  it('les deux ensemble : la soustraction vient AVANT la division', () => {
+    // (60 - 15) / 1.10 = 40.909..., PAS (60 / 1.10) - 15 = 39.545...
+    const result = effectiveRegenInterval(60, 15, 10)
+    expect(result).toBeCloseTo(40.909, 3)
+    expect(result).not.toBeCloseTo(39.545, 3)
+  })
+
+  it('rang 5 du bonus loot (2,5 % au barème par défaut) : baisse de 2,5 %', () => {
+    const base = effectiveRegenInterval(60, 0, 0)
+    const bonused = effectiveRegenInterval(60, 0, 2.5)
+    expect(bonused).toBeCloseTo(base / 1.025, 6)
+  })
+
+  it('le plancher à 1 minute reste le DERNIER mot, même avec un très gros bonus', () => {
+    expect(effectiveRegenInterval(1, 0, 100000)).toBe(1)
+  })
+
+  it('une réduction qui dépasserait l\'intervalle ne passe jamais sous le plancher', () => {
+    expect(effectiveRegenInterval(10, 50, 0)).toBe(1)
   })
 })

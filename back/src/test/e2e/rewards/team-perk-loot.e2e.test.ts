@@ -99,19 +99,38 @@ describe('Bonus équipe `loot` — régénération de jetons', () => {
     lootPct = 5 * cfg['teamPerk.loot.perRank']
   })
 
-  afterAll(async () => {
-    await app.close()
-  })
+  async function makeTeamWithLoot(memberUserId: string, tag: string) {
+    const owner = await prisma.user.create({
+      data: {
+        username: `tplootowner${tag}${suffix}`,
+        email: `tplootowner${tag}${suffix}@test.com`,
+        emailVerifiedAt: new Date(),
+      },
+    })
+    const team = await prisma.team.create({
+      data: {
+        name: `TeamPerkLoot${tag}${suffix}`,
+        slug: `team-perk-loot-${tag}-${suffix}`,
+        ownerId: owner.id,
+      },
+    })
+    await prisma.teamMember.create({
+      data: { teamId: team.id, userId: memberUserId, role: 'MEMBER' },
+    })
+    await prisma.teamPerk.create({
+      data: { teamId: team.id, key: 'loot', rank: 5 },
+    })
+  }
 
-  it('rang 5 : baisse le nombre de minutes par jeton, donc augmente les jetons régénérés à durée égale', async () => {
+  /** Milieu de la fenêtre où l'intervalle DE BASE tombe juste sous le
+   *  plafond de jetons et l'intervalle BONUSÉ l'atteint pile — marge
+   *  confortable par rapport aux quelques dizaines de ms d'aller-retour
+   *  HTTP. Calculée depuis la config réelle, jamais codée en dur. */
+  function boundaryWindow() {
     const mult = 1 + lootPct / 100
-    // Fenêtre choisie pour que l'intervalle DE BASE tombe juste sous le
-    // plafond et l'intervalle BONUSÉ l'atteigne pile — marge confortable
-    // par rapport aux quelques dizaines de ms d'aller-retour HTTP.
     const lowBoundMin = (intervalMinutes * maxStock) / mult
     const highBoundMin = intervalMinutes * maxStock
     const elapsedMin = (lowBoundMin + highBoundMin) / 2
-
     const baselineTokens = Math.min(
       Math.floor(elapsedMin / intervalMinutes),
       maxStock,
@@ -122,32 +141,19 @@ describe('Bonus équipe `loot` — régénération de jetons', () => {
     )
     // Le scénario ne prouve rien si les deux issues coïncident.
     expect(bonusedTokens).toBeGreaterThan(baselineTokens)
+    return { elapsedMin, baselineTokens, bonusedTokens }
+  }
+
+  afterAll(async () => {
+    await app.close()
+  })
+
+  it('POST /rewards/:id/claim (claimOne) — rang 5 augmente les jetons régénérés à durée égale', async () => {
+    const { elapsedMin, baselineTokens, bonusedTokens } = boundaryWindow()
 
     const baseline = await registerAndLogin('Base')
     const bonused = await registerAndLogin('Bonus')
-
-    // Équipe avec le bonus `loot` au rang maximum (5), dont seul le second
-    // joueur est membre.
-    const owner = await prisma.user.create({
-      data: {
-        username: `tplootowner${suffix}`,
-        email: `tplootowner${suffix}@test.com`,
-        emailVerifiedAt: new Date(),
-      },
-    })
-    const team = await prisma.team.create({
-      data: {
-        name: `TeamPerkLoot${suffix}`,
-        slug: `team-perk-loot-${suffix}`,
-        ownerId: owner.id,
-      },
-    })
-    await prisma.teamMember.create({
-      data: { teamId: team.id, userId: bonused.userId, role: 'MEMBER' },
-    })
-    await prisma.teamPerk.create({
-      data: { teamId: team.id, key: 'loot', rank: 5 },
-    })
+    await makeTeamWithLoot(bonused.userId, 'One')
 
     const baselineRewardId = await setupClaimant(baseline.userId, elapsedMin)
     const bonusedRewardId = await setupClaimant(bonused.userId, elapsedMin)
@@ -163,6 +169,35 @@ describe('Bonus équipe `loot` — régénération de jetons', () => {
     const bonusedRes = await app.inject({
       method: 'POST',
       url: `/rewards/${bonusedRewardId}/claim`,
+      headers: { cookie: bonused.cookies },
+    })
+    expect(bonusedRes.statusCode).toBe(200)
+    expect(bonusedRes.json().tokens).toBe(bonusedTokens)
+  })
+
+  // Site distinct de claimOne (revue coordinateur) : claimAll a son propre
+  // calcul d'`effectiveInterval`, jamais exercé par le test ci-dessus.
+  it('POST /rewards/claim-all (claimAll) — rang 5 augmente les jetons régénérés à durée égale', async () => {
+    const { elapsedMin, baselineTokens, bonusedTokens } = boundaryWindow()
+
+    const baseline = await registerAndLogin('AllBase')
+    const bonused = await registerAndLogin('AllBonus')
+    await makeTeamWithLoot(bonused.userId, 'All')
+
+    await setupClaimant(baseline.userId, elapsedMin)
+    await setupClaimant(bonused.userId, elapsedMin)
+
+    const baselineRes = await app.inject({
+      method: 'POST',
+      url: '/rewards/claim-all',
+      headers: { cookie: baseline.cookies },
+    })
+    expect(baselineRes.statusCode).toBe(200)
+    expect(baselineRes.json().tokens).toBe(baselineTokens)
+
+    const bonusedRes = await app.inject({
+      method: 'POST',
+      url: '/rewards/claim-all',
       headers: { cookie: bonused.cookies },
     })
     expect(bonusedRes.statusCode).toBe(200)

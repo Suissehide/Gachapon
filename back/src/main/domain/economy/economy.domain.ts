@@ -3,6 +3,32 @@ export type { TokenState } from '../../types/domain/economy/economy.types'
 import type { TokenState } from '../../types/domain/economy/economy.types'
 
 /**
+ * Intervalle de régénération EFFECTIF, en minutes. Trois ingrédients dans un
+ * ORDRE qui est l'invariant que ce helper existe pour garder : soustraire la
+ * réduction du skill tree, diviser par le bonus d'équipe `loot`
+ * (multiplicatif, donc APRÈS la soustraction), puis plancher à 1 minute en
+ * dernier — jamais avant, sinon un gros bonus pourrait repartir d'un
+ * intervalle déjà tronqué à 1 au lieu du vrai écart.
+ *
+ * Cinq appelants calculaient cette arithmétique en double avant cette
+ * extraction (task 5, refonte équipe : `rewards.domain.ts` × 2,
+ * `gacha.domain.ts#pull`/`#pullBatch`, `routes/gacha/index.ts` × 2) — un
+ * grep cherchant la soustraction étalée sur deux lignes n'en avait trouvé
+ * que deux, les trois autres l'écrivant sur une seule. Un sixième appelant
+ * ne peut plus diverger : il importe cette fonction, il ne réécrit rien.
+ */
+export function effectiveRegenInterval(
+  intervalMinutes: number,
+  reductionMinutes: number,
+  lootBonusPct: number,
+): number {
+  return Math.max(
+    1,
+    (intervalMinutes - reductionMinutes) / (1 + lootBonusPct / 100),
+  )
+}
+
+/**
  * Calcul lazy des tokens accumulés depuis lastTokenAt.
  * Si lastTokenAt est null : on initialise le clock à maintenant (0 tokens gagnés, regen commence).
  * Ne fait aucun IO — pur calcul.
