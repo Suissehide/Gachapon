@@ -66,6 +66,8 @@ export interface ITeamProgressionRepository {
    * qui fait échouer en sérialisation deux crédits concurrents plutôt que
    * de leur laisser lire le même niveau et créer deux fois le même point.
    */
+  /** Lecture hors transaction, pour les vues. */
+  findProgress(teamId: string): Promise<TeamProgressRow | null>
   findProgressInTx(
     tx: PrimaTransactionClient,
     teamId: string,

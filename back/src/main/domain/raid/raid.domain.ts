@@ -1,11 +1,18 @@
 import Boom from '@hapi/boom'
 
-import type { IocContainer } from '../../types/application/ioc'
+import type { PostgresOrm } from '../../infra/orm/postgres-client'
+import type { TeamRepository } from '../../infra/orm/repositories/team.repository'
+import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
+import type { RaidAttackEvent, WsManager } from '../../interfaces/ws/ws-manager'
 import type { Config } from '../../types/application/config'
+import type { IocContainer } from '../../types/application/ioc'
 import type {
   IRaidDomain,
   RaidAttackResult,
   RaidContribution,
+  RaidHistoryEntry,
+  RaidMemberStatsView,
+  RaidTeamBadge,
   RaidTierView,
   RaidView,
 } from '../../types/domain/raid/raid.domain.interface'
@@ -19,10 +26,6 @@ import type {
 } from '../../types/infra/orm/repositories/raid.repository.interface'
 import type { StorageClientInterface } from '../../types/infra/storage/storage-client'
 import type { Logger } from '../../types/utils/logger'
-import type { PostgresOrm } from '../../infra/orm/postgres-client'
-import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
-import type { TeamRepository } from '../../infra/orm/repositories/team.repository'
-import type { RaidAttackEvent, WsManager } from '../../interfaces/ws/ws-manager'
 import { unitPower } from '../campaign/campaign-power'
 import { resolveEnemyImageUrl } from '../campaign/enemy-appearance'
 import { simulateBattle } from '../combat/battle-simulator.domain'
@@ -46,6 +49,7 @@ import {
   RAID_BOSS_SIM_HP,
   raidElementForWeek,
   raidMaxHp,
+  raidPct,
   raidWeekEndsAt,
   raidWeekKey,
   utcDayStart,
@@ -337,6 +341,106 @@ export class RaidDomain implements IRaidDomain {
     return outcome
   }
 
+  /**
+   * Le raid EN COURS de plusieurs équipes, réduit à ce qu'une liste
+   * affiche. Aucune création paresseuse ici, contrairement à `getRaid` :
+   * afficher la liste de ses équipes ne doit pas ouvrir trois raids et
+   * figer leurs PV sur l'effectif du moment. Une équipe sans raid cette
+   * semaine est simplement absente de la Map.
+   */
+  async currentRaidBadges(
+    teamIds: string[],
+    now: Date = new Date(),
+  ): Promise<Map<string, RaidTeamBadge>> {
+    const raids = await this.#raidRepository.listRaidsForTeams(
+      teamIds,
+      raidWeekKey(now),
+    )
+    return new Map(
+      raids.map((raid) => [
+        raid.teamId,
+        {
+          bossName: raid.boss.name,
+          pct: raidPct(raid.maxHp - raid.hp, raid.maxHp),
+        },
+      ]),
+    )
+  }
+
+  /** Les `limit` dernières semaines révolues, plus récentes d'abord. */
+  async getHistory(
+    teamId: string,
+    limit: number,
+    now: Date = new Date(),
+  ): Promise<RaidHistoryEntry[]> {
+    const raids = await this.#raidRepository.listPastRaids(
+      teamId,
+      raidWeekKey(now),
+      limit,
+    )
+    return raids.map((raid) => ({
+      weekKey: raid.weekKey,
+      endsAt: raidWeekEndsAt(raid.weekKey).toISOString(),
+      bossName: raid.boss.name,
+      bossElement: raid.boss.element as TowerElement,
+      maxHp: raid.maxHp,
+      damage: raid.maxHp - raid.hp,
+      pct: raidPct(raid.maxHp - raid.hp, raid.maxHp),
+      killedAt: raid.killedAt ? raid.killedAt.toISOString() : null,
+    }))
+  }
+
+  /** Nombre de raids de l'équipe achevés par un kill. */
+  countRaidsWon(teamId: string): Promise<number> {
+    return this.#raidRepository.countKills(teamId)
+  }
+
+  /**
+   * Dégâts et attaques restantes de CHAQUE membre sur le raid en cours.
+   *
+   * Repose sur `#contributions`, l'agrégation que la vue de raid utilise
+   * déjà : deux agrégations des mêmes lignes divergeraient au premier
+   * changement de règle. Elle ne renvoie que les membres qui ont attaqué —
+   * l'appelant complète à 0 ceux qui manquent, il a la liste des membres.
+   *
+   * Le quota est GLOBAL au joueur (`countAttacksByUsersSince` ne filtre pas
+   * par raid), exactement comme au site d'attaque : un joueur dans trois
+   * équipes ne dispose pas de trois quotas.
+   */
+  async memberRaidStats(
+    team: TeamWithMembers,
+    now: Date = new Date(),
+  ): Promise<RaidMemberStatsView> {
+    const memberIds = team.members.map((m) => m.userId)
+    const raid = await this.#raidRepository.findRaid(team.id, raidWeekKey(now))
+    const [contributions, cfg, raidBonus, usedByUser] = await Promise.all([
+      raid ? this.#contributions(raid.id, team) : Promise.resolve([]),
+      this.#configService.getMany('raid.attacksPerDay'),
+      this.#teamProgressionDomain.raidAttacksBonusForTeam(team.id),
+      this.#raidRepository.countAttacksByUsersSince(
+        memberIds,
+        utcDayStart(now),
+      ),
+    ])
+    const attacksPerDay = cfg['raid.attacksPerDay'] + raidBonus
+    const byUserId = new Map(contributions.map((c) => [c.user.id, c]))
+    return {
+      attacksPerDay,
+      members: team.members.map((member) => {
+        const contribution = byUserId.get(member.userId)
+        return {
+          userId: member.userId,
+          damage: contribution?.damage ?? 0,
+          attacks: contribution?.attacks ?? 0,
+          attacksRemainingToday: attacksRemaining(
+            usedByUser.get(member.userId) ?? 0,
+            attacksPerDay,
+          ),
+        }
+      }),
+    }
+  }
+
   async #requireMembership(
     teamId: string,
     userId: string,
@@ -359,7 +463,10 @@ export class RaidDomain implements IRaidDomain {
    * Raid de la semaine, créé paresseusement. Le nombre de membres est figé
    * ici ; un membre qui arrive plus tard peut attaquer sans changer les PV.
    */
-  async #ensureRaid(team: TeamWithMembers, now: Date): Promise<TeamRaidWithBoss> {
+  async #ensureRaid(
+    team: TeamWithMembers,
+    now: Date,
+  ): Promise<TeamRaidWithBoss> {
     const weekKey = raidWeekKey(now)
     const existing = await this.#raidRepository.findRaid(team.id, weekKey)
     if (existing) {
@@ -419,14 +526,15 @@ export class RaidDomain implements IRaidDomain {
     // raison qu'au site d'attaque : ce quota appartient à l'équipe dont le
     // boss est affiché, pas au meilleur rang du joueur toutes équipes
     // confondues.
-    const [tiers, contributions, cfg, usedToday, raidBonus] =
-      await Promise.all([
+    const [tiers, contributions, cfg, usedToday, raidBonus] = await Promise.all(
+      [
         this.#raidRepository.listTiers(),
         this.#contributions(raid.id, team),
         this.#configService.getMany('raid.attacksPerDay'),
         this.#raidRepository.countUserAttacksSince(userId, utcDayStart(now)),
         this.#teamProgressionDomain.raidAttacksBonusForTeam(team.id),
-      ])
+      ],
+    )
     const attacksPerDay = cfg['raid.attacksPerDay'] + raidBonus
     const damageDone = raid.maxHp - raid.hp
     const reached = new Set(

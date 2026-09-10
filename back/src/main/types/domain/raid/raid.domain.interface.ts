@@ -4,6 +4,7 @@ import type {
   SimulatorUnit,
 } from '../../../domain/combat/battle-simulator.domain'
 import type { TowerElement } from '../../../domain/tower/tower-slots'
+import type { TeamWithMembers } from '../team/team.types'
 
 export type RaidRewardView = {
   tokens: number
@@ -57,6 +58,41 @@ export type RaidView = {
   contributions: RaidContribution[]
 }
 
+/** Le raid en cours d'une équipe, réduit à ce qu'une liste affiche. */
+export type RaidTeamBadge = {
+  bossName: string
+  pct: number
+}
+
+/** Une semaine révolue, pour la bande d'historique de la fiche d'équipe. */
+export type RaidHistoryEntry = {
+  /** Lundi de la semaine, AAAA-MM-JJ (UTC). */
+  weekKey: string
+  /** ISO 8601 — lundi suivant 00:00 UTC, la fin de cette semaine-là. */
+  endsAt: string
+  bossName: string
+  bossElement: TowerElement
+  maxHp: number
+  damage: number
+  /** Entier 0..100, plancher : un boss encore debout n'affiche jamais 100. */
+  pct: number
+  killedAt: string | null
+}
+
+export type RaidMemberStats = {
+  userId: string
+  damage: number
+  /** Attaques portées sur le raid EN COURS. */
+  attacks: number
+  /** Attaques restantes aujourd'hui — quota GLOBAL au joueur. */
+  attacksRemainingToday: number
+}
+
+export type RaidMemberStatsView = {
+  attacksPerDay: number
+  members: RaidMemberStats[]
+}
+
 export type RaidAttackResult = {
   log: LogEntry[]
   teamA: SimulatorUnit[]
@@ -74,6 +110,29 @@ export type RaidAttackResult = {
 export interface IRaidDomain {
   getRaid(teamId: string, userId: string, now?: Date): Promise<RaidView>
   getContributions(teamId: string, userId: string): Promise<RaidContribution[]>
+  /**
+   * Le raid en cours de plusieurs équipes, indexé par `teamId`. NE CRÉE
+   * RIEN : une équipe sans raid cette semaine est absente de la Map.
+   */
+  currentRaidBadges(
+    teamIds: string[],
+    now?: Date,
+  ): Promise<Map<string, RaidTeamBadge>>
+  /** Les `limit` semaines révolues, plus récentes d'abord. */
+  getHistory(
+    teamId: string,
+    limit: number,
+    now?: Date,
+  ): Promise<RaidHistoryEntry[]>
+  countRaidsWon(teamId: string): Promise<number>
+  /**
+   * Dégâts et attaques restantes de chaque membre sur le raid en cours,
+   * bâtis sur la MÊME agrégation que la vue de raid.
+   */
+  memberRaidStats(
+    team: TeamWithMembers,
+    now?: Date,
+  ): Promise<RaidMemberStatsView>
   attack(
     teamId: string,
     userId: string,

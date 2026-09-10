@@ -52,4 +52,9 @@ export interface ILeaderboardDomain {
   getCombatLeaderboard(
     currentUserId: string,
   ): Promise<LeaderboardResponse<CombatEntry>>
+  /**
+   * Rang de l'équipe dans le classement d'équipes ci-dessus — même barème,
+   * même tri, jamais un second classement. `null` si l'équipe n'existe plus.
+   */
+  getTeamRank(teamId: string): Promise<number | null>
 }

@@ -52,4 +52,26 @@ export interface IRaidRepository {
   listContributions(raidId: string): Promise<RaidContributionRow[]>
   /** Attaques du joueur depuis `since`, TOUS raids confondus (quota global). */
   countUserAttacksSince(userId: string, since: Date): Promise<number>
+  /**
+   * Même compte que `countUserAttacksSince`, mais pour plusieurs joueurs en
+   * UNE requête : la liste des membres d'une équipe en ferait sinon une par
+   * ligne. Les joueurs sans attaque sont absents de la Map (donc `0`).
+   */
+  countAttacksByUsersSince(
+    userIds: string[],
+    since: Date,
+  ): Promise<Map<string, number>>
+  /** Raids d'une semaine donnée pour plusieurs équipes. Ne crée rien. */
+  listRaidsForTeams(
+    teamIds: string[],
+    weekKey: string,
+  ): Promise<TeamRaidWithBoss[]>
+  /** Raids des semaines STRICTEMENT antérieures, plus récentes d'abord. */
+  listPastRaids(
+    teamId: string,
+    weekKey: string,
+    limit: number,
+  ): Promise<TeamRaidWithBoss[]>
+  /** Raids de l'équipe dont le boss est tombé (`killedAt` renseigné). */
+  countKills(teamId: string): Promise<number>
 }

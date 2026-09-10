@@ -299,14 +299,24 @@ export class UserRepository implements UserRepositoryInterface {
     return { suspended: updated.suspended }
   }
 
-  findManyByIds(
-    ids: string[],
-  ): Promise<
-    { id: string; username: string; level: number; avatar: string | null }[]
+  findManyByIds(ids: string[]): Promise<
+    {
+      id: string
+      username: string
+      level: number
+      avatar: string | null
+      lastLoginAt: Date | null
+    }[]
   > {
     return this.#prisma.user.findMany({
       where: { id: { in: ids } },
-      select: { id: true, username: true, level: true, avatar: true },
+      select: {
+        id: true,
+        username: true,
+        level: true,
+        avatar: true,
+        lastLoginAt: true,
+      },
     })
   }
 }

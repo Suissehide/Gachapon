@@ -77,6 +77,13 @@ export class TeamProgressionRepository implements ITeamProgressionRepository {
     return row.points
   }
 
+  findProgress(teamId: string): Promise<TeamProgressRow | null> {
+    return this.#prisma.team.findUnique({
+      where: { id: teamId },
+      select: { level: true, xp: true, perkPoints: true },
+    })
+  }
+
   findProgressInTx(
     tx: PrimaTransactionClient,
     teamId: string,

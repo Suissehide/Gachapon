@@ -5,12 +5,17 @@ import { calculateUserScore } from '../../../../../domain/scoring/scoring.domain
 import type { TeamPerkEvent } from '../../../../ws/ws-manager'
 import {
   teamCreateBodySchema,
+  teamDetailResponseSchema,
   teamIdParamSchema,
   teamInvitationIdParamSchema,
   teamInviteBodySchema,
+  teamListResponseSchema,
+  teamMembersResponseSchema,
   teamPerkSpendBodySchema,
   teamPerksResponseSchema,
+  teamRaidHistoryResponseSchema,
   teamRankingQuerySchema,
+  teamResponseSchema,
   teamTokenParamSchema,
   teamTransferBodySchema,
   teamUpdateBodySchema,
@@ -29,25 +34,31 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
 
   fastify.get(
     '/teams',
-    { onRequest: [fastify.verifySessionCookie] },
-    async (request) => {
-      const teams = await teamDomain.getMyTeams(request.user.userID)
-      return { teams: teams.map(formatTeamSummary) }
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: { tags: ['Team'], response: { 200: teamListResponseSchema } },
     },
+    async (request) => ({
+      teams: await teamDomain.listMyTeams(request.user.userID),
+    }),
   )
 
   fastify.post(
     '/teams',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { body: teamCreateBodySchema },
+      schema: {
+        tags: ['Team'],
+        body: teamCreateBodySchema,
+        response: { 201: teamResponseSchema },
+      },
     },
     async (request, reply) => {
       const team = await teamDomain.createTeam(
         request.user.userID,
         request.body,
       )
-      return reply.status(201).send(formatTeam(team))
+      return reply.status(201).send(team)
     },
   )
 
@@ -55,31 +66,64 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/teams/:id',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: teamIdParamSchema },
+      schema: {
+        tags: ['Team'],
+        params: teamIdParamSchema,
+        response: { 200: teamDetailResponseSchema },
+      },
     },
-    async (request) => {
-      const team = await teamDomain.getTeam(
+    (request) =>
+      teamDomain.getTeamDetail(request.params.id, request.user.userID),
+  )
+
+  fastify.get(
+    '/teams/:id/members',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        tags: ['Team'],
+        params: teamIdParamSchema,
+        response: { 200: teamMembersResponseSchema },
+      },
+    },
+    (request) => teamDomain.listMembers(request.params.id, request.user.userID),
+  )
+
+  fastify.get(
+    '/teams/:id/raids',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        tags: ['Team'],
+        params: teamIdParamSchema,
+        response: { 200: teamRaidHistoryResponseSchema },
+      },
+    },
+    async (request) => ({
+      raids: await teamDomain.listRaidHistory(
         request.params.id,
         request.user.userID,
-      )
-      return formatTeam(team)
-    },
+      ),
+    }),
   )
 
   fastify.patch(
     '/teams/:id',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: teamIdParamSchema, body: teamUpdateBodySchema },
+      schema: {
+        tags: ['Team'],
+        params: teamIdParamSchema,
+        body: teamUpdateBodySchema,
+        response: { 200: teamResponseSchema },
+      },
     },
-    async (request) => {
-      const team = await teamDomain.updateTeam(
+    (request) =>
+      teamDomain.updateTeam(
         request.params.id,
         request.user.userID,
         request.body,
-      )
-      return formatTeam(team)
-    },
+      ),
   )
 
   fastify.delete(
@@ -479,56 +523,4 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request) =>
       teamProgressionDomain.resetPerks(request.params.id, request.user.userID),
   )
-}
-
-interface RawMember {
-  id: string
-  userId: string
-  role: string
-  joinedAt: Date
-  user?: { id: string; username: string; avatar: string | null } | null
-}
-
-interface RawTeam {
-  id: string
-  name: string
-  slug: string
-  description: string | null
-  avatar: string | null
-  ownerId: string
-  createdAt: Date
-  members?: RawMember[]
-  _count?: { members: number }
-}
-
-function formatMember(m: RawMember) {
-  return {
-    id: m.id,
-    userId: m.userId,
-    role: m.role,
-    joinedAt: m.joinedAt,
-    user: m.user
-      ? { id: m.user.id, username: m.user.username, avatar: m.user.avatar }
-      : undefined,
-  }
-}
-
-function formatTeam(team: RawTeam) {
-  return {
-    id: team.id,
-    name: team.name,
-    slug: team.slug,
-    description: team.description,
-    avatar: team.avatar,
-    ownerId: team.ownerId,
-    createdAt: team.createdAt,
-    members: team.members?.map(formatMember) ?? [],
-  }
-}
-
-function formatTeamSummary(team: RawTeam) {
-  return {
-    ...formatTeam(team),
-    memberCount: team._count?.members ?? team.members?.length ?? 0,
-  }
 }

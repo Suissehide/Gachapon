@@ -109,18 +109,23 @@ export class LeaderboardDomain implements ILeaderboardDomain {
     return { entries, currentUserEntry }
   }
 
-  async getTeamsLeaderboard(
-    currentUserId: string,
-  ): Promise<LeaderboardResponse<TeamEntry>> {
+  /**
+   * Le classement d'équipes, trié, SANS troncature ni mise en forme.
+   * Extrait de `getTeamsLeaderboard` pour que `getTeamRank` (le rang global
+   * affiché sur la fiche d'équipe) lise exactement le même barème : deux
+   * classements d'équipes divergeraient au premier ajustement.
+   */
+  async #scoreTeams(): Promise<
+    {
+      team: TeamForRanking
+      cardPercentage: number
+      variantPercentage: number
+      pullsTotal: number
+    }[]
+  > {
     const teams = await this.#leaderboardRepository.getTeamsForRanking()
-    const myTeamId =
-      await this.#leaderboardRepository.getTeamIdForUser(currentUserId)
     if (teams.length === 0) {
-      return {
-        entries: [],
-        currentUserEntry: null,
-        currentUserTeamId: myTeamId,
-      }
+      return []
     }
 
     const { total, variantEligible } =
@@ -167,7 +172,7 @@ export class LeaderboardDomain implements ILeaderboardDomain {
       }
     }
 
-    const scored = teams.map(scoreTeam).sort((a, b) => {
+    return teams.map(scoreTeam).sort((a, b) => {
       if (b.cardPercentage !== a.cardPercentage) {
         return b.cardPercentage - a.cardPercentage
       }
@@ -176,6 +181,32 @@ export class LeaderboardDomain implements ILeaderboardDomain {
       }
       return b.pullsTotal - a.pullsTotal
     })
+  }
+
+  /**
+   * Rang global d'une équipe dans le classement d'équipes — le MÊME que
+   * celui de la page Classement, complétion de collection comprise.
+   * `null` quand l'équipe n'y figure pas (elle vient d'être supprimée).
+   */
+  async getTeamRank(teamId: string): Promise<number | null> {
+    const scored = await this.#scoreTeams()
+    const index = scored.findIndex((s) => s.team.id === teamId)
+    return index >= 0 ? index + 1 : null
+  }
+
+  async getTeamsLeaderboard(
+    currentUserId: string,
+  ): Promise<LeaderboardResponse<TeamEntry>> {
+    const myTeamId =
+      await this.#leaderboardRepository.getTeamIdForUser(currentUserId)
+    const scored = await this.#scoreTeams()
+    if (scored.length === 0) {
+      return {
+        entries: [],
+        currentUserEntry: null,
+        currentUserTeamId: myTeamId,
+      }
+    }
 
     const entries: TeamEntry[] = scored
       .slice(0, LEADERBOARD_TOP_N)

@@ -65,3 +65,127 @@ export const teamPerksResponseSchema = z.object({
   maxRank: z.number().int(),
   perks: z.array(teamPerkStateSchema),
 })
+
+// ── Schémas de RÉPONSE ──────────────────────────────────────────────────
+//
+// `fastify-type-provider-zod` retire SILENCIEUSEMENT toute clé absente du
+// schéma déclaré : un champ oublié ici disparaît de la réponse sans erreur
+// ni avertissement. D'où deux règles pour ce fichier — tout champ servi est
+// listé, et les tests affirment sur `res.json()`, jamais sur la valeur de
+// retour du domaine, qui elle ne passe pas par ce filtre.
+
+export const teamMemberRoleSchema = z.enum(['OWNER', 'ADMIN', 'MEMBER'])
+
+const teamUserMiniSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+  avatar: z.string().nullable(),
+})
+
+const teamMemberSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  role: teamMemberRoleSchema,
+  joinedAt: z.date(),
+  // Absent seulement si la jointure utilisateur n'a rien ramené (compte
+  // supprimé entre deux lectures) — jamais en fonctionnement normal.
+  user: teamUserMiniSchema.optional(),
+})
+
+/** La forme « brute » d'une équipe : création, modification. */
+export const teamResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  slug: z.string(),
+  description: z.string().nullable(),
+  avatar: z.string().nullable(),
+  ownerId: z.string(),
+  createdAt: z.date(),
+  members: z.array(teamMemberSchema),
+})
+
+const teamRaidBadgeSchema = z.object({
+  bossName: z.string(),
+  pct: z.number().int(),
+})
+
+export const teamListResponseSchema = z.object({
+  teams: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      slug: z.string(),
+      description: z.string().nullable(),
+      avatar: z.string().nullable(),
+      ownerId: z.string(),
+      createdAt: z.date(),
+      level: z.number().int(),
+      // Jamais nulle : la vue la résout depuis le nom quand la colonne l'est.
+      hue: z.number().int(),
+      memberCount: z.number().int(),
+      maxMembers: z.number().int(),
+      raid: teamRaidBadgeSchema.nullable(),
+    }),
+  ),
+})
+
+export const teamDetailResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  slug: z.string(),
+  description: z.string().nullable(),
+  avatar: z.string().nullable(),
+  ownerId: z.string(),
+  createdAt: z.date(),
+  members: z.array(teamMemberSchema),
+  memberCount: z.number().int(),
+  maxMembers: z.number().int(),
+  level: z.number().int(),
+  xp: z.number().int(),
+  xpNext: z.number().int(),
+  motto: z.string().nullable(),
+  hue: z.number().int(),
+  perkPoints: z.number().int(),
+  perks: z.array(teamPerkStateSchema),
+  weekPts: z.number().int(),
+  rankGlobal: z.number().int().nullable(),
+  raidsWon: z.number().int(),
+})
+
+export const teamMembersResponseSchema = z.object({
+  weekKey: z.string(),
+  attacksPerDay: z.number().int(),
+  members: z.array(
+    z.object({
+      rank: z.number().int(),
+      id: z.string(),
+      userId: z.string(),
+      user: teamUserMiniSchema,
+      role: teamMemberRoleSchema,
+      roleLabel: z.enum(['Chef', 'Officier', 'Membre', 'Recrue']),
+      joinedAt: z.date(),
+      level: z.number().int(),
+      weekPoints: z.number().int(),
+      raidDamage: z.number().int(),
+      raidAttacksLeft: z.number().int(),
+      // Dernière CONNEXION, pas dernière activité.
+      lastSeenAt: z.date().nullable(),
+      isMe: z.boolean(),
+    }),
+  ),
+})
+
+export const teamRaidHistoryResponseSchema = z.object({
+  raids: z.array(
+    z.object({
+      weekKey: z.string(),
+      endsAt: z.string(),
+      bossName: z.string(),
+      bossElement: z.string(),
+      maxHp: z.number().int(),
+      damage: z.number().int(),
+      pct: z.number().int(),
+      killedAt: z.string().nullable(),
+    }),
+  ),
+})

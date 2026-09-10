@@ -20,6 +20,7 @@ import type {
   ITeamProgressionRepository,
   TeamPerkRow,
   TeamProgressRow,
+  TeamWeeklyRow,
 } from '../../types/infra/orm/repositories/team-progression.repository.interface'
 import { raidWeekKey } from '../raid/raid-rules'
 import { retryOnSerialization } from '../shared/retry-serialization'
@@ -480,6 +481,45 @@ export class TeamProgressionDomain implements ITeamProgressionDomain {
    * d'application ne doit s'en servir — `raidAttacksBonusForTeam` est la
    * lecture correcte pour créditer un quota d'attaques.
    */
+  /**
+   * L'arbre de bonus en LECTURE, composé par le même `toPerksView` que la
+   * dépense et la remise à zéro : les quatre bonus sont donc toujours
+   * présents, y compris au rang 0 et avant leur niveau de déblocage — un
+   * bonus manquant à l'écran serait un trou, pas une information.
+   */
+  async getPerksView(teamId: string): Promise<TeamPerksView> {
+    const [progress, perks, cfg] = await Promise.all([
+      this.#teamProgressionRepository.findProgress(teamId),
+      this.#teamProgressionRepository.listPerks(teamId),
+      this.#configService.getMany(...PERK_CFG_KEYS),
+    ])
+    if (!progress) {
+      throw Boom.notFound('Équipe introuvable')
+    }
+    return toPerksView(teamId, progress, perks, cfg)
+  }
+
+  /**
+   * Points hebdomadaires de la SEMAINE EN COURS : le total de l'équipe et
+   * le détail par membre, en une seule lecture. La semaine est celle du
+   * raid (`raidWeekKey`), comme partout ailleurs dans ce domaine.
+   */
+  async getWeeklyPoints(
+    teamId: string,
+    now: Date = new Date(),
+  ): Promise<{ weekKey: string; total: number; members: TeamWeeklyRow[] }> {
+    const weekKey = raidWeekKey(now)
+    const members = await this.#teamProgressionRepository.listWeeklyPoints(
+      teamId,
+      weekKey,
+    )
+    // Somme en mémoire plutôt qu'un `sumWeeklyPoints` de plus : les lignes
+    // sont déjà là, et une seconde agrégation pourrait renvoyer un total qui
+    // ne correspond pas au détail affiché juste à côté.
+    const total = members.reduce((sum, row) => sum + row.points, 0)
+    return { weekKey, total, members }
+  }
+
   async effectsForUser(userId: string): Promise<TeamPerkEffects> {
     const [rows, cfg] = await Promise.all([
       this.#teamProgressionRepository.bestPerkRanksForUser(userId),

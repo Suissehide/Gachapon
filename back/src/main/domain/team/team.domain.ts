@@ -2,24 +2,46 @@ import Boom from '@hapi/boom'
 import slugify from 'slugify'
 
 import type { IocContainer } from '../../types/application/ioc'
+import type { ILeaderboardDomain } from '../../types/domain/leaderboard/leaderboard.domain.interface'
+import type { IRaidDomain } from '../../types/domain/raid/raid.domain.interface'
 import type { TeamDomainInterface } from '../../types/domain/team/team.domain.interface'
 import type {
   InvitationEntity,
+  TeamDetail,
+  TeamListItem,
+  TeamMembersView,
+  TeamMemberView,
   TeamSummary,
   TeamWithMembers,
 } from '../../types/domain/team/team.types'
+import type { ITeamProgressionDomain } from '../../types/domain/team-progression/team-progression.domain.interface'
+import type { IDuelDomain } from '../../types/domain/wagers/wagers.domain.interface'
+import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
 import type { IMailService } from '../../types/infra/mail/mail.service.interface'
 import type { IInvitationRepository } from '../../types/infra/orm/repositories/invitation.repository.interface'
 import type { ITeamRepository } from '../../types/infra/orm/repositories/team.repository.interface'
 import type { ITeamMemberRepository } from '../../types/infra/orm/repositories/team-member.repository.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
-import type { IDuelDomain } from '../../types/domain/wagers/wagers.domain.interface'
 import { retryOnSerialization } from '../shared/retry-serialization'
+import {
+  hueFromName,
+  roleLabel,
+  xpForTeamLevel,
+} from '../team-progression/team-progression-rules'
 
 const MAX_TEAMS_PER_USER = 3
-const MAX_MEMBERS_PER_TEAM = 100
 const INVITATION_TTL_MS = 48 * 60 * 60 * 1000
+
+/**
+ * Teinte de l'équipe, TOUJOURS résolue. La colonne est nullable (aucune
+ * équipe créée avant la refonte n'en porte) et `hueFromName` fournit un
+ * repli stable et déterministe, testé unitairement. On la résout ici, en
+ * sortie, pour qu'aucun consommateur n'ait à gérer un `null`.
+ */
+function resolveHue(team: { hue: number | null; name: string }): number {
+  return team.hue ?? hueFromName(team.name)
+}
 
 // Défauts Prisma : 5 s pour le corps d'une transaction interactive, 2 s pour
 // acquérir une connexion. La suppression d'une équipe déclenche une cascade
@@ -52,6 +74,10 @@ export class TeamDomain implements TeamDomainInterface {
   readonly #mailService: IMailService
   readonly #achievementsDomain: AchievementsDomainInterface
   readonly #duelDomain: IDuelDomain
+  readonly #configService: ConfigServiceInterface
+  readonly #teamProgressionDomain: ITeamProgressionDomain
+  readonly #raidDomain: IRaidDomain
+  readonly #leaderboardDomain: ILeaderboardDomain
 
   constructor({
     teamRepository,
@@ -62,6 +88,10 @@ export class TeamDomain implements TeamDomainInterface {
     mailService,
     achievementsDomain,
     duelDomain,
+    configService,
+    teamProgressionDomain,
+    raidDomain,
+    leaderboardDomain,
   }: IocContainer) {
     this.#teamRepo = teamRepository
     this.#memberRepo = teamMemberRepository
@@ -71,6 +101,33 @@ export class TeamDomain implements TeamDomainInterface {
     this.#mailService = mailService
     this.#achievementsDomain = achievementsDomain
     this.#duelDomain = duelDomain
+    this.#configService = configService
+    this.#teamProgressionDomain = teamProgressionDomain
+    this.#raidDomain = raidDomain
+    this.#leaderboardDomain = leaderboardDomain
+  }
+
+  /**
+   * Le plafond de membres, lu en config (`team.maxMembers`) et jamais figé
+   * dans le code. Il ne borne QUE l'entrée dans une équipe — invitation et
+   * acceptation. Une équipe déjà au-dessus du plafond (le plafond est passé
+   * de 100 à 35) continue de fonctionner en tout point : on la lit, ses
+   * membres jouent, son raid tourne. Aucune lecture ne doit se mettre à le
+   * vérifier, sous peine de casser les équipes existantes.
+   */
+  async #maxMembers(): Promise<number> {
+    const cfg = await this.#configService.getMany('team.maxMembers')
+    return cfg['team.maxMembers']
+  }
+
+  async #assertHasRoom(teamId: string): Promise<void> {
+    const [memberCount, maxMembers] = await Promise.all([
+      this.#memberRepo.countByTeam(teamId),
+      this.#maxMembers(),
+    ])
+    if (memberCount >= maxMembers) {
+      throw Boom.forbidden(`Cette équipe est complète (${maxMembers} membres)`)
+    }
   }
 
   async createTeam(
@@ -164,10 +221,7 @@ export class TeamDomain implements TeamDomainInterface {
       throw Boom.forbidden('Only ADMIN or OWNER can invite members')
     }
 
-    const memberCount = await this.#memberRepo.countByTeam(teamId)
-    if (memberCount >= MAX_MEMBERS_PER_TEAM) {
-      throw Boom.forbidden(`Maximum ${MAX_MEMBERS_PER_TEAM} membres par équipe`)
-    }
+    await this.#assertHasRoom(teamId)
 
     const { targetUserId, targetEmail } = await this.#resolveInvitationTarget(
       teamId,
@@ -238,6 +292,11 @@ export class TeamDomain implements TeamDomainInterface {
         `Maximum ${MAX_TEAMS_PER_USER} équipes par utilisateur`,
       )
     }
+
+    // Le plafond mord ICI, à l'entrée — pas seulement à l'invitation. Une
+    // invitation émise quand il restait une place, acceptée après que
+    // quelqu'un d'autre a pris la dernière, doit être refusée.
+    await this.#assertHasRoom(invitation.teamId)
 
     await this.#postgresOrm.executeWithTransactionClient(async (tx) => {
       await tx.teamMember.create({
@@ -446,6 +505,203 @@ export class TeamDomain implements TeamDomainInterface {
           timeout: DELETE_TX_TIMEOUT_MS,
         },
       ),
+    )
+  }
+
+  /**
+   * La liste « Mes équipes ». Un seul aller-retour par sujet : les équipes,
+   * le plafond, et le raid en cours de TOUTES les équipes d'un coup — pas
+   * une lecture de raid par ligne.
+   */
+  async listMyTeams(
+    userId: string,
+    now: Date = new Date(),
+  ): Promise<TeamListItem[]> {
+    const teams = await this.#teamRepo.findByUserId(userId)
+    if (teams.length === 0) {
+      return []
+    }
+    const [maxMembers, badges] = await Promise.all([
+      this.#maxMembers(),
+      this.#raidDomain.currentRaidBadges(
+        teams.map((team) => team.id),
+        now,
+      ),
+    ])
+    return teams.map((team) => ({
+      id: team.id,
+      name: team.name,
+      slug: team.slug,
+      description: team.description,
+      avatar: team.avatar,
+      ownerId: team.ownerId,
+      createdAt: team.createdAt,
+      level: team.level,
+      hue: resolveHue(team),
+      memberCount: team._count.members,
+      maxMembers,
+      // `null` quand l'équipe n'a pas encore ouvert son raid de la semaine.
+      // La liste ne le crée pas : ce serait figer les PV du boss sur
+      // l'effectif du moment, juste parce que quelqu'un a ouvert une page.
+      raid: badges.get(team.id) ?? null,
+    }))
+  }
+
+  /**
+   * L'en-tête de la fiche d'équipe : identité, progression, bonus, points
+   * de la semaine, rang global et raids gagnés. `getTeam` d'abord — c'est
+   * lui qui porte le contrôle d'appartenance (et la tolérance pour un
+   * invité en attente), tout le reste n'est que composition.
+   */
+  async getTeamDetail(
+    teamId: string,
+    userId: string,
+    now: Date = new Date(),
+  ): Promise<TeamDetail> {
+    const team = await this.getTeam(teamId, userId)
+    const [cfg, perks, weekly, rankGlobal, raidsWon] = await Promise.all([
+      this.#configService.getMany(
+        'team.maxMembers',
+        'teamLevel.xpBase',
+        'teamLevel.xpExp',
+      ),
+      this.#teamProgressionDomain.getPerksView(teamId),
+      this.#teamProgressionDomain.getWeeklyPoints(teamId, now),
+      // Le classement d'équipes EXISTANT (complétion de collection), pas un
+      // second classement bâti pour cet écran.
+      this.#leaderboardDomain.getTeamRank(teamId),
+      this.#raidDomain.countRaidsWon(teamId),
+    ])
+    return {
+      id: team.id,
+      name: team.name,
+      slug: team.slug,
+      description: team.description,
+      avatar: team.avatar,
+      ownerId: team.ownerId,
+      createdAt: team.createdAt,
+      members: team.members,
+      memberCount: team.members.length,
+      maxMembers: cfg['team.maxMembers'],
+      level: perks.level,
+      xp: perks.xp,
+      // Le SEUIL du niveau courant, pas le reliquat : c'est le dénominateur
+      // de la barre d'XP, et il n'est jamais nul (au niveau maximum, `xp`
+      // reste à 0 et la barre est vide plutôt qu'indéfinie).
+      xpNext: xpForTeamLevel(
+        perks.level,
+        cfg['teamLevel.xpBase'],
+        cfg['teamLevel.xpExp'],
+      ),
+      motto: team.motto,
+      hue: resolveHue(team),
+      perkPoints: perks.perkPoints,
+      perks: perks.perks,
+      weekPts: weekly.total,
+      rankGlobal,
+      raidsWon,
+    }
+  }
+
+  /**
+   * La table des membres de la fiche d'équipe, triée par dégâts de raid
+   * décroissants (le tri de la maquette).
+   *
+   * Les dégâts et les attaques restantes viennent du DOMAINE RAID, qui
+   * possède déjà cette agrégation pour sa propre vue : en écrire une
+   * seconde ici, c'est garantir qu'elles divergeront au premier changement
+   * de règle.
+   */
+  async listMembers(
+    teamId: string,
+    userId: string,
+    now: Date = new Date(),
+  ): Promise<TeamMembersView> {
+    const team = await this.getTeam(teamId, userId)
+    const memberIds = team.members.map((member) => member.userId)
+    const [cfg, weekly, raidStats, users] = await Promise.all([
+      this.#configService.getMany('team.recruitDays'),
+      this.#teamProgressionDomain.getWeeklyPoints(teamId, now),
+      this.#raidDomain.memberRaidStats(team, now),
+      this.#userRepo.findManyByIds(memberIds),
+    ])
+
+    const pointsOf = new Map(
+      weekly.members.map((row) => [row.userId, row.points]),
+    )
+    const statsOf = new Map(raidStats.members.map((row) => [row.userId, row]))
+    const userOf = new Map(users.map((user) => [user.id, user]))
+
+    const rows = team.members.map((member) => {
+      const user = userOf.get(member.userId)
+      const stats = statsOf.get(member.userId)
+      return {
+        id: member.id,
+        userId: member.userId,
+        user: {
+          id: member.userId,
+          username: user?.username ?? member.user?.username ?? 'Inconnu',
+          avatar: user?.avatar ?? member.user?.avatar ?? null,
+        },
+        role: member.role,
+        roleLabel: roleLabel(
+          member.role,
+          member.joinedAt,
+          now,
+          cfg['team.recruitDays'],
+        ),
+        joinedAt: member.joinedAt,
+        level: user?.level ?? 1,
+        weekPoints: pointsOf.get(member.userId) ?? 0,
+        raidDamage: stats?.damage ?? 0,
+        raidAttacksLeft: stats?.attacksRemainingToday ?? 0,
+        // Dernière CONNEXION : voir `TeamMemberView`.
+        lastSeenAt: user?.lastLoginAt ?? null,
+        isMe: member.userId === userId,
+      }
+    })
+
+    // Dégâts décroissants, puis points de la semaine, puis le nom : sans les
+    // deux départages, l'ordre de deux membres à 0 dégât changerait d'une
+    // requête à l'autre.
+    rows.sort((a, b) => {
+      if (b.raidDamage !== a.raidDamage) {
+        return b.raidDamage - a.raidDamage
+      }
+      if (b.weekPoints !== a.weekPoints) {
+        return b.weekPoints - a.weekPoints
+      }
+      return a.user.username.localeCompare(b.user.username)
+    })
+
+    return {
+      weekKey: weekly.weekKey,
+      attacksPerDay: raidStats.attacksPerDay,
+      members: rows.map(
+        (row, index): TeamMemberView => ({
+          rank: index + 1,
+          ...row,
+        }),
+      ),
+    }
+  }
+
+  /**
+   * L'historique des raids : les semaines RÉVOLUES, plus récentes d'abord.
+   * La semaine en cours n'y figure pas — elle a sa propre carte de raid,
+   * vivante, sur le même écran.
+   */
+  async listRaidHistory(
+    teamId: string,
+    userId: string,
+    now: Date = new Date(),
+  ) {
+    await this.getTeam(teamId, userId)
+    const cfg = await this.#configService.getMany('teamRaid.historyLimit')
+    return this.#raidDomain.getHistory(
+      teamId,
+      cfg['teamRaid.historyLimit'],
+      now,
     )
   }
 

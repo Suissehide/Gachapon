@@ -101,3 +101,15 @@ export function utcDayStart(now: Date): Date {
 export function attacksRemaining(used: number, perDay: number): number {
   return Math.max(0, perDay - used)
 }
+
+/**
+ * Avancement de la barre en pourcentage entier, pour les vues qui n'affichent
+ * qu'un pourcentage (liste des équipes, historique). `floor` et pas `round` :
+ * un boss encore debout ne doit jamais s'afficher à 100 %.
+ */
+export function raidPct(damageDone: number, maxHp: number): number {
+  if (maxHp <= 0) {
+    return 0
+  }
+  return Math.max(0, Math.min(100, Math.floor((damageDone * 100) / maxHp)))
+}

@@ -1,4 +1,5 @@
 import type { TeamPerkKey } from '../../../domain/team-progression/team-progression-rules'
+import type { TeamWeeklyRow } from '../../infra/orm/repositories/team-progression.repository.interface'
 
 /**
  * Les quatre sources de points d'équipe. L'appelant passe une QUANTITÉ
@@ -64,6 +65,16 @@ export interface ITeamProgressionDomain {
     amount: number,
     now?: Date,
   ): Promise<TeamAwardResult[]>
+  /**
+   * L'arbre de bonus en lecture. Les QUATRE bonus sont toujours présents,
+   * même au rang 0 et avant leur niveau de déblocage.
+   */
+  getPerksView(teamId: string): Promise<TeamPerksView>
+  /** Points hebdomadaires de la semaine en cours : total et détail par membre. */
+  getWeeklyPoints(
+    teamId: string,
+    now?: Date,
+  ): Promise<{ weekKey: string; total: number; members: TeamWeeklyRow[] }>
   /** Investit un point dans un bonus. Chef et officiers uniquement. */
   spendPerkPoint(
     teamId: string,
