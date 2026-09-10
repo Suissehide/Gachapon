@@ -8,6 +8,7 @@ import {
   RAID_EPOCH_WEEK_KEY,
   raidElementForWeek,
   raidMaxHp,
+  raidPct,
   raidWeekEndsAt,
   raidWeekIndex,
   raidWeekKey,
@@ -150,5 +151,24 @@ describe('raid-rules — quota', () => {
     expect(attacksRemaining(0, 2)).toBe(2)
     expect(attacksRemaining(2, 2)).toBe(0)
     expect(attacksRemaining(5, 2)).toBe(0)
+  })
+})
+
+describe('raid-rules — pourcentage de barre', () => {
+  it('plancher, jamais arrondi : un boss encore debout n\'affiche jamais 100 %', () => {
+    expect(raidPct(9999, 10_000)).toBe(99)
+    expect(raidPct(10_000, 10_000)).toBe(100)
+  })
+
+  it('borné des deux côtés, et 0 quand les PV maximum sont absurdes', () => {
+    expect(raidPct(0, 10_000)).toBe(0)
+    // L'overkill n'est jamais enregistré, mais la borne haute reste vraie.
+    expect(raidPct(12_000, 10_000)).toBe(100)
+    expect(raidPct(-5, 10_000)).toBe(0)
+    expect(raidPct(50, 0)).toBe(0)
+  })
+
+  it('valeur exacte de la maquette : 8 600 dégâts sur 20 000 PV font 43 %', () => {
+    expect(raidPct(8600, 20_000)).toBe(43)
   })
 })
