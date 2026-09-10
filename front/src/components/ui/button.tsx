@@ -27,6 +27,12 @@ const buttonVariants = cva(
         gradient:
           'text-white font-bold shadow-[0_8px_24px_rgba(236,72,153,0.35)] bg-gradient-to-br from-primary to-secondary hover:brightness-105',
         pill: 'bg-card border border-border font-mono font-semibold shadow-[0_2px_0_rgba(27,23,38,0.04),0_12px_30px_-12px_rgba(27,23,38,0.08)] hover:-translate-y-px hover:border-border-dark transition-transform',
+        // Emplacement vide / affordance « en attente » — bordure pointillée,
+        // encre atténuée, teinte ambrée au survol. Introduit pour le slot
+        // libre de « Mes équipes » (docs/design_handoff_equipe/equipe.css,
+        // `.tml-slot`) ; générique, réutilisable ailleurs.
+        dashed:
+          'border-[1.5px] border-dashed border-foreground/16 bg-transparent text-foreground/45 shadow-none hover:border-primary hover:bg-primary/10 hover:text-primary-dark',
       },
       size: {
         default: 'h-9 px-4 py-2',

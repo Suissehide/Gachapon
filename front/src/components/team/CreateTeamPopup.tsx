@@ -1,4 +1,5 @@
-import { Plus, Users } from 'lucide-react'
+import { Users } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { useState } from 'react'
 
 import { useAppForm } from '../../hooks/formConfig.tsx'
@@ -14,7 +15,12 @@ import {
   PopupTrigger,
 } from '../ui/popup.tsx'
 
-export function CreateTeamPopup() {
+// `trigger` permet à « Mes équipes » de rattacher le même flux de création à
+// deux affordances visuellement différentes (le bouton d'en-tête et chaque
+// emplacement libre en pointillés) sans dupliquer la logique du formulaire.
+// Par défaut : le déclencheur historique, désormais aligné sur le libellé du
+// handoff (« Créer une équipe » + icône users, pas l'abrégé « Créer »).
+export function CreateTeamPopup({ trigger }: { trigger?: ReactNode } = {}) {
   const [open, setOpen] = useState(false)
   const [error, setError] = useState('')
   const { mutate: createTeam, isPending } = useCreateTeam()
@@ -49,10 +55,12 @@ export function CreateTeamPopup() {
 
   return (
     <Popup open={open} onOpenChange={handleOpenChange}>
-      <PopupTrigger variant="default" size="sm">
-        <Plus className="h-4 w-4" />
-        Créer
-      </PopupTrigger>
+      {trigger ?? (
+        <PopupTrigger variant="default" className="gap-2">
+          <Users className="h-4 w-4" />
+          Créer une équipe
+        </PopupTrigger>
+      )}
       <PopupContent>
         <PopupHeader>
           <PopupTitle icon={<Users className="h-4 w-4" />}>
