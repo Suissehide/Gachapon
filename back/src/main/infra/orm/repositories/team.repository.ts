@@ -73,7 +73,13 @@ export class TeamRepository implements ITeamRepository {
 
   update(
     id: string,
-    data: { name: string; slug: string; description?: string },
+    data: {
+      name: string
+      slug: string
+      description?: string
+      motto?: string | null
+      hue?: number | null
+    },
   ): Promise<TeamWithMembers> {
     return this.#prisma.team.update({
       where: { id },

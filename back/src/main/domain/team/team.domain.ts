@@ -120,15 +120,16 @@ export class TeamDomain implements TeamDomainInterface {
   }
 
   /**
-   * Appartenance STRICTE, sans la tolérance de `getTeam`.
+   * Appartenance STRICTE, et la SEULE porte de lecture d'une équipe.
    *
-   * `getTeam` laisse passer un invité en attente : c'était juste tant qu'il
-   * ne servait qu'un aperçu d'équipe (nom, effectif, propriétaire) à qui
-   * doit décider s'il accepte. La table des membres, l'historique de raid et
-   * le classement interne sont d'un autre ordre — niveau, points
-   * hebdomadaires, dégâts, dernière connexion et score de collection de
-   * chaque membre. Une invitation ne donne pas droit à ça, et n'importe quel
-   * officier peut en émettre une.
+   * Une version précédente laissait passer un invité en attente : c'était
+   * juste tant qu'elle ne servait qu'un aperçu d'équipe (nom, effectif,
+   * propriétaire) à qui doit décider s'il accepte. La fiche, la table des
+   * membres, l'historique de raid et le classement interne sont d'un autre
+   * ordre — niveau, points hebdomadaires, dégâts, dernière connexion et
+   * score de collection de chaque membre. Une invitation ne donne pas droit
+   * à ça, et n'importe quel officier peut en émettre une. L'aperçu sur
+   * lequel un invité décide vit dans `GET /invitations/:token`.
    *
    * Publique parce que la route de classement interne compose son propre
    * calcul et a besoin de la même porte : deux portes pour la même donnée,
@@ -432,10 +433,21 @@ export class TeamDomain implements TeamDomainInterface {
     ])
   }
 
+  /**
+   * `motto` et `hue` suivent la sémantique de Prisma, et c'est voulu : clé
+   * absente = colonne inchangée, `null` = colonne effacée. Effacer la teinte
+   * n'est pas une perte, c'est un retour au hachage du nom (`hueFromName`),
+   * qui reste le repli de toutes les vues.
+   */
   async updateTeam(
     teamId: string,
     userId: string,
-    data: { name: string; description?: string },
+    data: {
+      name: string
+      description?: string
+      motto?: string | null
+      hue?: number | null
+    },
   ): Promise<TeamWithMembers> {
     const team = await this.#teamRepo.findById(teamId)
     if (!team) {
@@ -450,6 +462,8 @@ export class TeamDomain implements TeamDomainInterface {
       name: data.name,
       slug,
       description: data.description,
+      motto: data.motto,
+      hue: data.hue,
     })
   }
 

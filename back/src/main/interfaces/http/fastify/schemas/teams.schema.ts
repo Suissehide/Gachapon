@@ -27,9 +27,25 @@ export const teamInviteBodySchema = z
     message: 'Provide username or email',
   })
 
+/**
+ * `motto` et `hue` sont les deux colonnes de la migration d'identité
+ * d'équipe. Sans elles ici, elles restaient à jamais nulles : rien d'autre
+ * ne les écrit, et la devise sous le nom de l'équipe ne pouvait donc jamais
+ * s'afficher.
+ *
+ * Les deux acceptent `null` explicitement, et c'est utile : effacer la
+ * devise, et rendre la teinte au hachage du nom (`hueFromName`), qui reste
+ * le repli quand la colonne est nulle. `undefined` (clé absente) ne touche
+ * pas la colonne — c'est la sémantique de Prisma, conservée telle quelle.
+ *
+ * Bornes de la spec : 160 caractères pour la devise, 0-359 pour la teinte
+ * (un tour de roue chromatique, servi tel quel à `hsl()`).
+ */
 export const teamUpdateBodySchema = z.object({
   name: z.string().min(2).max(50),
   description: z.string().max(200).optional(),
+  motto: z.string().max(160).nullish(),
+  hue: z.number().int().min(0).max(359).nullish(),
 })
 
 export const teamTransferBodySchema = z.object({
@@ -102,7 +118,15 @@ const teamMemberSchema = z.object({
   user: teamUserMiniSchema.optional(),
 })
 
-/** La forme « brute » d'une équipe : création, modification. */
+/**
+ * La forme « brute » d'une équipe : création, modification.
+ *
+ * `hue` y est NULLABLE, contrairement à la fiche (`teamDetailResponseSchema`)
+ * qui la résout toujours : c'est la ligne telle qu'elle est en base, et
+ * c'est ce que doit voir celui qui vient de l'écrire — sans quoi remettre la
+ * teinte au hachage du nom lui répondrait par une valeur qu'il n'a pas
+ * choisie.
+ */
 export const teamResponseSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -111,6 +135,8 @@ export const teamResponseSchema = z.object({
   avatar: z.string().nullable(),
   ownerId: z.string(),
   createdAt: z.date(),
+  motto: z.string().nullable(),
+  hue: z.number().int().nullable(),
   members: z.array(teamMemberSchema),
 })
 

@@ -33,7 +33,12 @@ export interface TeamDomainInterface {
   updateTeam(
     teamId: string,
     userId: string,
-    data: { name: string; description?: string },
+    data: {
+      name: string
+      description?: string
+      motto?: string | null
+      hue?: number | null
+    },
   ): Promise<TeamWithMembers>
   deleteTeam(teamId: string, userId: string): Promise<void>
   /**

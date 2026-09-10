@@ -12,9 +12,19 @@ export interface ITeamRepository {
     ownerId: string,
     data: { name: string; slug: string; description?: string },
   ): Promise<TeamWithMembers>
+  /**
+   * `motto` et `hue` absents = colonnes inchangées ; à `null` = colonnes
+   * effacées (la teinte retombe alors sur le hachage du nom).
+   */
   update(
     id: string,
-    data: { name: string; slug: string; description?: string },
+    data: {
+      name: string
+      slug: string
+      description?: string
+      motto?: string | null
+      hue?: number | null
+    },
   ): Promise<TeamWithMembers>
   /**
    * Suppression EN TRANSACTION, seule version exposée : la cascade emporte
