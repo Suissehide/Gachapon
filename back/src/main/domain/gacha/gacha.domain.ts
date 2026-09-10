@@ -10,6 +10,7 @@ import type {
   PullBatchResult,
   PullResult,
 } from '../../types/domain/gacha/gacha.types'
+import type { ITeamProgressionDomain } from '../../types/domain/team-progression/team-progression.domain.interface'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
 import type {
   PostgresORMInterface,
@@ -194,6 +195,9 @@ type PullCfg = {
   pullTokenCost: number
   xpCurve: { base: number; slope: number; levelCap: number }
   refillEnergyOnLevelUp: boolean
+  /** Effet appliqué du bonus d'équipe `loot` (points de pourcentage), résolu
+   *  UNE fois avant la transaction — même motif que `upgrades`. */
+  teamLootBonusPct: number
 }
 
 // ---------------------------------------------------------------------------
@@ -248,6 +252,7 @@ export class GachaDomain implements GachaDomainInterface {
   readonly #userRewardRepository: UserRewardRepositoryInterface
   readonly #userBoostRepository: IUserBoostRepository
   readonly #combatPointsTx: IocContainer['combatPointsTx']
+  readonly #teamProgressionDomain: ITeamProgressionDomain
 
   constructor({
     postgresOrm,
@@ -261,6 +266,7 @@ export class GachaDomain implements GachaDomainInterface {
     userRewardRepository,
     userBoostRepository,
     combatPointsTx,
+    teamProgressionDomain,
   }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#configService = configService
@@ -273,6 +279,7 @@ export class GachaDomain implements GachaDomainInterface {
     this.#userRewardRepository = userRewardRepository
     this.#userBoostRepository = userBoostRepository
     this.#combatPointsTx = combatPointsTx
+    this.#teamProgressionDomain = teamProgressionDomain
   }
 
   async #loadUserAndInitialState(
@@ -288,9 +295,13 @@ export class GachaDomain implements GachaDomainInterface {
     }
   }> {
     const user = await this.#userRepository.findByIdOrThrowInTx(tx, userId)
+    // Bonus d'équipe `loot` : multiplicatif, APRÈS la réduction du skill
+    // tree, `Math.max(1, …)` toujours le dernier mot — même formule que
+    // rewards.domain.ts#claimOne/#claimAll.
     const effectiveInterval = Math.max(
       1,
-      cfg.tokenRegenIntervalMinutes - cfg.upgrades.regenReductionMinutes,
+      (cfg.tokenRegenIntervalMinutes - cfg.upgrades.regenReductionMinutes) /
+        (1 + cfg.teamLootBonusPct / 100),
     )
     const effectiveMaxStock = cfg.tokenMaxStock + cfg.upgrades.tokenVaultBonus
     const { tokens, newLastTokenAt } = calculateTokens(
@@ -606,7 +617,7 @@ export class GachaDomain implements GachaDomainInterface {
   pull(userId: string): Promise<PullResult> {
     const attempt = async (): Promise<PullResult> => {
       // Lire la config AVANT la transaction (pas d'I/O async dans le tx serializable)
-      const [c, upgrades] = await Promise.all([
+      const [c, upgrades, teamEffects] = await Promise.all([
         this.#configService.getMany(
           'tokenRegenIntervalMinutes',
           'tokenMaxStock',
@@ -630,6 +641,7 @@ export class GachaDomain implements GachaDomainInterface {
           'levelup.refillEnergy',
         ),
         this.#skillTreeRepository.getEffectsForUser(userId),
+        this.#teamProgressionDomain.effectsForUser(userId),
       ])
       const cfg: PullCfg = {
         tokenRegenIntervalMinutes: c.tokenRegenIntervalMinutes,
@@ -659,6 +671,7 @@ export class GachaDomain implements GachaDomainInterface {
         },
         upgrades,
         refillEnergyOnLevelUp: c['levelup.refillEnergy'] === 1,
+        teamLootBonusPct: teamEffects.loot,
       }
       return this.#postgresOrm.executeWithTransactionClient(
         (tx) => this.#executePullTx(tx, userId, cfg),
@@ -683,7 +696,7 @@ export class GachaDomain implements GachaDomainInterface {
 
   pullBatch(userId: string, count: number): Promise<PullBatchResult> {
     const attempt = async (): Promise<PullBatchResult> => {
-      const [c, upgrades] = await Promise.all([
+      const [c, upgrades, teamEffects] = await Promise.all([
         this.#configService.getMany(
           'tokenRegenIntervalMinutes',
           'tokenMaxStock',
@@ -707,6 +720,7 @@ export class GachaDomain implements GachaDomainInterface {
           'levelup.refillEnergy',
         ),
         this.#skillTreeRepository.getEffectsForUser(userId),
+        this.#teamProgressionDomain.effectsForUser(userId),
       ])
       const cfg: PullCfg = {
         tokenRegenIntervalMinutes: c.tokenRegenIntervalMinutes,
@@ -736,6 +750,7 @@ export class GachaDomain implements GachaDomainInterface {
         },
         upgrades,
         refillEnergyOnLevelUp: c['levelup.refillEnergy'] === 1,
+        teamLootBonusPct: teamEffects.loot,
       }
       return this.#postgresOrm.executeWithTransactionClient(
         // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: milestone loop added, refactor deferred

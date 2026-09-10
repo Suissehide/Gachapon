@@ -308,6 +308,15 @@ function buildDomain(opts: {
   const decrementInTx = jest.fn().mockResolvedValue({})
   const userBoostRepository = { findActiveByUserInTx, decrementInTx }
 
+  // Bonus d'équipe neutre par défaut : ces tests ne portent pas sur la
+  // progression d'équipe, le rang 0 partout préserve le comportement pinné
+  // avant la tâche 5 (aucun des quatre effets ne bouge une formule à 0).
+  const teamProgressionDomain = {
+    effectsForUser: jest
+      .fn()
+      .mockResolvedValue({ loot: 0, raid: 0, xp: 0, forge: 0 }),
+  }
+
   const domain = new GachaDomain({
     postgresOrm,
     configService,
@@ -318,6 +327,7 @@ function buildDomain(opts: {
     skillTreeRepository,
     achievementsDomain,
     userBoostRepository,
+    teamProgressionDomain,
   } as any)
 
   return {

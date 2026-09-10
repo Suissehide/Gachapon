@@ -262,17 +262,22 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         throw Boom.notFound('User not found')
       }
 
-      const [upgrades, cfg] = await Promise.all([
+      const [upgrades, cfg, teamEffects] = await Promise.all([
         skillTreeRepository.getEffectsForUser(request.user.userID),
         configService.getMany(
           'tokenRegenIntervalMinutes',
           'tokenMaxStock',
           'pityThreshold',
         ),
+        teamProgressionDomain.effectsForUser(request.user.userID),
       ])
+      // Bonus d'équipe `loot` : multiplicatif, APRÈS la réduction du skill
+      // tree, `Math.max(1, …)` toujours le dernier mot — même formule que
+      // gacha.domain.ts#pull et rewards.domain.ts#claimOne/#claimAll.
       const effectiveInterval = Math.max(
         1,
-        cfg.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes,
+        (cfg.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes) /
+          (1 + teamEffects.loot / 100),
       )
       const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
 
@@ -308,13 +313,16 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         throw Boom.notFound('User not found')
       }
 
-      const [upgrades, cfg] = await Promise.all([
+      const [upgrades, cfg, teamEffects] = await Promise.all([
         skillTreeRepository.getEffectsForUser(request.user.userID),
         configService.getMany('tokenRegenIntervalMinutes', 'tokenMaxStock'),
+        teamProgressionDomain.effectsForUser(request.user.userID),
       ])
+      // Même formule que /tokens/balance et gacha.domain.ts#pull.
       const effectiveInterval = Math.max(
         1,
-        cfg.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes,
+        (cfg.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes) /
+          (1 + teamEffects.loot / 100),
       )
       const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
 
