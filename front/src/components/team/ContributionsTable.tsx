@@ -29,6 +29,8 @@ import { useRemoveMember } from '../../queries/useTeams.ts'
 import { MemberAvatar } from '../shared/MemberAvatar.tsx'
 import { Button } from '../ui/button.tsx'
 import { Input } from '../ui/input.tsx'
+import { listRowVariants } from '../ui/listRow.tsx'
+import { SectionLabel } from '../ui/sectionHeading.tsx'
 import { ConfirmPopup } from './ConfirmPopup.tsx'
 
 /** Lignes visibles avant le pied « Voir les N autres membres ». */
@@ -237,11 +239,7 @@ function MemberRow({
     <li
       className={cn(
         rowGrid(canRemove),
-        'rounded-[14px] border p-[12px_18px] transition-[border-color,transform] duration-200 hover:-translate-y-px',
-        member.isMe
-          ? // `.tm-mem--you` : dégradé ambré très clair + liseré ambré.
-            'border-primary/40 bg-gradient-to-br from-primary/10 to-primary/[0.02] hover:border-primary/60'
-          : 'border-foreground/6 bg-card hover:border-foreground/14',
+        listRowVariants({ tone: member.isMe ? 'mine' : 'default' }),
       )}
     >
       <span className="text-center font-mono text-xs font-bold tabular-nums text-foreground/40">
@@ -455,12 +453,8 @@ export function ContributionsTable({
     <section>
       {/* `.tm-sechead` */}
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/50">
-          Contributions
-        </h2>
-        <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/50">
-          Trié par dégâts
-        </span>
+        <SectionLabel as="h2">Contributions</SectionLabel>
+        <SectionLabel className="shrink-0">Trié par dégâts</SectionLabel>
       </div>
 
       {/* `.tm-search` : 12/16 de padding, radius 14, bordure 1,5 px. */}

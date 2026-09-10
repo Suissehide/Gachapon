@@ -22,37 +22,11 @@ import {
 } from '../../queries/useWagers.ts'
 import { ArcadeCard } from '../shared/ArcadeCard.tsx'
 import { Button } from '../ui/button.tsx'
+import { listRowVariants } from '../ui/listRow.tsx'
+import { PanelTitle, SectionLabel } from '../ui/sectionHeading.tsx'
 import { BetPlacePopup } from './BetPlacePopup.tsx'
 import { DuelProposePopup } from './DuelProposePopup.tsx'
 import { DuelResultPopup } from './DuelResultPopup.tsx'
-
-/**
- * Modèle de ligne commun à ce panneau et à la table des contributions :
- * `.tm-mem` du handoff (radius 14, padding 12/18, fond blanc, liseré ténu,
- * léger soulèvement au survol) et `.tm-mem--you` pour la ligne qui me
- * concerne (dégradé ambré très clair, liseré ambré). Les classes sont
- * répétées ici plutôt qu'importées de `ContributionsTable` : ce panneau ne
- * doit pas dépendre d'un composant de la même famille, la tâche 12 ayant
- * déjà payé un cycle d'imports entre deux fichiers voisins.
- */
-const ROW =
-  'rounded-[14px] border p-[12px_18px] transition-[border-color,transform] duration-200 hover:-translate-y-px'
-const ROW_MINE =
-  'border-primary/40 bg-gradient-to-br from-primary/10 to-primary/[0.02] hover:border-primary/60'
-const ROW_OTHER = 'border-foreground/6 bg-card hover:border-foreground/14'
-
-/** En-tête de section, `.tm-lab` : mono 10 px, majuscules, interlettrage .18em. */
-const LAB =
-  'font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/50'
-
-/** Titre de section, calé sur `.tmB-h1` à l'échelle d'un panneau. */
-const TITLE =
-  'font-display text-2xl font-extrabold tracking-[-0.025em] text-text'
-
-/** `.tm-btn--amber` : radius 12, padding 11/18, 700 à 14 px, halo ambré. */
-const ACTION_BTN = 'h-auto rounded-lg px-[18px] py-[11px] text-sm font-bold'
-/** Le halo ne suit que le bouton actif : un bouton grisé qui rayonne ment. */
-const BTN_GLOW = 'shadow-[0_8px_20px_-6px_rgba(245,158,11,0.6)]'
 
 /** Nombre d'entrées réglées (duels + paris confondus) gardées à l'écran. */
 const HISTORY_SIZE = 10
@@ -77,7 +51,10 @@ function ActiveDuelRow({ duel }: { duel: DuelView }) {
   const deadline = duel.deadlineAt
   return (
     <li
-      className={cn('flex flex-col gap-1.5', ROW, mine ? ROW_MINE : ROW_OTHER)}
+      className={cn(
+        'flex flex-col gap-1.5',
+        listRowVariants({ tone: mine ? 'mine' : 'default' }),
+      )}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <ScoreLine duel={duel} />
@@ -125,8 +102,7 @@ function PendingDuelRow({
     <li
       className={cn(
         'flex flex-wrap items-center justify-between gap-2',
-        ROW,
-        mine ? ROW_MINE : ROW_OTHER,
+        listRowVariants({ tone: mine ? 'mine' : 'default' }),
       )}
     >
       <span className="text-sm text-text">{text}</span>
@@ -193,7 +169,10 @@ function ActiveBetRow({ bet }: { bet: BetView }) {
   const rarityLabel = RARITY_LABEL_FR[bet.minRarity] ?? bet.minRarity
   return (
     <li
-      className={cn('flex flex-col gap-1.5', ROW, mine ? ROW_MINE : ROW_OTHER)}
+      className={cn(
+        'flex flex-col gap-1.5',
+        listRowVariants({ tone: mine ? 'mine' : 'default' }),
+      )}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <span className="font-display text-base font-bold text-text">
@@ -387,11 +366,12 @@ export function WagersPanel({
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <div className={LAB}>Duel de tirage</div>
-            <h2 className={cn(TITLE, 'mt-1.5')}>Défis d'équipe</h2>
+            <SectionLabel>Duel de tirage</SectionLabel>
+            <PanelTitle className="mt-1.5">Défis d'équipe</PanelTitle>
           </div>
           <Button
-            className={cn(ACTION_BTN, canChallenge && BTN_GLOW)}
+            variant="amber"
+            size="action"
             disabled={!canChallenge}
             title={challengeLabel}
             onClick={() => setProposeOpen(true)}
@@ -426,11 +406,12 @@ export function WagersPanel({
 
         <div className="flex flex-wrap items-end justify-between gap-3 border-t border-border/60 pt-4">
           <div>
-            <div className={LAB}>Pari sur un tirage</div>
-            <h2 className={cn(TITLE, 'mt-1.5')}>Paris entre coéquipiers</h2>
+            <SectionLabel>Pari sur un tirage</SectionLabel>
+            <PanelTitle className="mt-1.5">Paris entre coéquipiers</PanelTitle>
           </div>
           <Button
-            className={cn(ACTION_BTN, canBet && BTN_GLOW)}
+            variant="amber"
+            size="action"
             disabled={!canBet}
             title={betLabel}
             onClick={() => setBetOpen(true)}
@@ -454,10 +435,10 @@ export function WagersPanel({
         )}
 
         <div>
-          <div className={cn(LAB, 'mb-2 flex items-center gap-1.5')}>
+          <SectionLabel as="h3" className="mb-2 flex items-center gap-1.5">
             <Trophy className="h-3 w-3" />
             Duels & paris réglés
-          </div>
+          </SectionLabel>
           {history.length === 0 ? (
             <p className="text-sm text-text-light">
               Aucun duel ni pari réglé pour l'instant.
