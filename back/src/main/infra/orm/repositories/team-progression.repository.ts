@@ -49,6 +49,18 @@ export class TeamProgressionRepository implements ITeamProgressionRepository {
     return rows.map((row) => row.userId)
   }
 
+  async isMemberInTx(
+    tx: PrimaTransactionClient,
+    teamId: string,
+    userId: string,
+  ): Promise<boolean> {
+    const member = await tx.teamMember.findUnique({
+      where: { teamId_userId: { teamId, userId } },
+      select: { userId: true },
+    })
+    return member !== null
+  }
+
   async addWeeklyPointsInTx(
     tx: PrimaTransactionClient,
     teamId: string,

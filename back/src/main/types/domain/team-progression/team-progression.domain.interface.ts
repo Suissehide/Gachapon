@@ -51,6 +51,11 @@ export interface ITeamProgressionDomain {
    * dont le raid est attaqué), un duel ou un pari (l'équipe de l'enjeu) ;
    * `null` pour un tirage, et alors TOUTES les équipes du joueur sont
    * créditées du montant plein — l'XP d'équipe n'est pas un pot partagé.
+   *
+   * Une équipe NOMMÉE par l'appelant voit l'appartenance du joueur vérifiée
+   * dans la transaction : un non-membre est refusé
+   * (`Boom.forbidden`), jamais crédité en silence. Une équipe dissoute
+   * entre-temps est simplement absente du résultat, sans erreur.
    */
   award(
     userId: string,

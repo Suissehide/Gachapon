@@ -185,6 +185,10 @@ export class TeamProgressionDomain implements ITeamProgressionDomain {
     if (teamIds.length === 0) {
       return []
     }
+    // Une équipe NOMMÉE par l'appelant n'est pas une équipe prouvée : elle
+    // vient d'une URL ou d'une colonne, jamais de l'appartenance du joueur.
+    // Elle se vérifie dans la transaction.
+    const verifyMembership = teamId !== null
 
     const weekKey = raidWeekKey(now)
     const results: TeamAwardResult[] = []
@@ -192,7 +196,14 @@ export class TeamProgressionDomain implements ITeamProgressionDomain {
     // lancées en parallèle depuis le même appel se disputeraient des lignes
     // voisines et se feraient rejouer l'une l'autre pour rien.
     for (const id of teamIds) {
-      const result = await this.#awardToTeam(id, userId, weekKey, points, cfg)
+      const result = await this.#awardToTeam(
+        id,
+        userId,
+        weekKey,
+        points,
+        cfg,
+        verifyMembership,
+      )
       if (result !== null) {
         results.push(result)
       }
@@ -202,16 +213,58 @@ export class TeamProgressionDomain implements ITeamProgressionDomain {
     return results
   }
 
+  /**
+   * L'ORDRE des trois écritures/lectures n'est pas cosmétique.
+   *
+   * La ligne `Team` est lue EN PREMIER, avant l'`upsert` hebdomadaire.
+   * `TeamMemberWeekly.teamId` porte une clé étrangère vers `Team` : dans le
+   * scénario même que garde le `null` ci-dessous — une équipe dissoute entre
+   * la résolution et la transaction — l'`upsert` fait en premier lèverait
+   * une violation de clé étrangère, qui n'est PAS une erreur de
+   * sérialisation et que `retryOnSerialization` laisse donc remonter telle
+   * quelle. Branchée sur le tirage, elle transformerait un tirage réussi en
+   * 500 pour le joueur. Lire d'abord rend la garde réelle au lieu de
+   * décorative : on sort sans avoir rien écrit, et sans laisser derrière soi
+   * une ligne hebdomadaire orpheline d'équipe.
+   *
+   * `verifyMembership` n'est vrai que quand l'appelant a nommé l'équipe
+   * (raid, duel, pari). Sur le chemin du tirage les équipes viennent de
+   * `listTeamIdsForUser`, l'appartenance est acquise et la requête serait
+   * du gaspillage sur un chemin chaud.
+   */
   #awardToTeam(
     teamId: string,
     userId: string,
     weekKey: string,
     points: number,
     cfg: AwardCfg,
+    verifyMembership: boolean,
   ): Promise<TeamAwardResult | null> {
     return retryOnSerialization(() =>
       this.#postgresOrm.executeWithTransactionClient(
         async (tx) => {
+          const progress =
+            await this.#teamProgressionRepository.findProgressInTx(tx, teamId)
+          if (progress === null) {
+            // Équipe dissoute entre la résolution et la transaction. Rien
+            // n'a encore été écrit : on sort proprement.
+            return null
+          }
+          if (
+            verifyMembership &&
+            !(await this.#teamProgressionRepository.isMemberInTx(
+              tx,
+              teamId,
+              userId,
+            ))
+          ) {
+            // Refus franc, pas une ligne silencieuse : la clé étrangère de
+            // `TeamMemberWeekly` pointe vers `User` et laisserait passer un
+            // étranger, qui referait surface bien plus tard dans la table
+            // des contributions de l'équipe.
+            throw Boom.forbidden("Ce joueur n'appartient pas à cette équipe.")
+          }
+
           const memberWeekPoints =
             await this.#teamProgressionRepository.addWeeklyPointsInTx(
               tx,
@@ -220,12 +273,6 @@ export class TeamProgressionDomain implements ITeamProgressionDomain {
               weekKey,
               points,
             )
-          const progress =
-            await this.#teamProgressionRepository.findProgressInTx(tx, teamId)
-          if (progress === null) {
-            // Équipe dissoute entre la résolution et la transaction.
-            return null
-          }
 
           const next = applyTeamXp(
             { level: progress.level, xp: progress.xp },

@@ -34,10 +34,24 @@ export interface ITeamProgressionRepository {
    */
   listMemberIdsForTeam(teamId: string): Promise<string[]>
   /**
+   * Le joueur est-il membre de cette équipe ? Relu DANS la transaction, et
+   * seulement quand l'appelant a nommé l'équipe lui-même (raid, duel,
+   * pari). La clé étrangère de `TeamMemberWeekly` pointe vers `User`, pas
+   * vers `TeamMember` : sans ce contrôle, un appelant mal branché créerait
+   * une ligne hebdomadaire pour un ÉTRANGER à l'équipe, et la faute
+   * apparaîtrait bien plus tard sous forme d'un nom inconnu dans la table
+   * des contributions plutôt que sous forme d'erreur.
+   */
+  isMemberInTx(
+    tx: PrimaTransactionClient,
+    teamId: string,
+    userId: string,
+  ): Promise<boolean>
+  /**
    * Incrémente les points hebdomadaires du membre et renvoie son nouveau
    * total. `upsert` sur `[teamId, userId, weekKey]` : la ligne n'existe pas
    * la première fois de la semaine. Seule version EN TRANSACTION — elle est
-   * indissociable de la relecture de `Team` qui la suit.
+   * indissociable de la relecture de `Team` qui la PRÉCÈDE.
    */
   addWeeklyPointsInTx(
     tx: PrimaTransactionClient,
