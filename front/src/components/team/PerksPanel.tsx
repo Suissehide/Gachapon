@@ -28,6 +28,7 @@ import { cn, plural } from '../../libs/utils.ts'
 import { useResetPerks } from '../../queries/useTeamProgression.ts'
 import { ArcadeCard } from '../shared/ArcadeCard.tsx'
 import { Button } from '../ui/button.tsx'
+import { SectionLabel } from '../ui/sectionHeading.tsx'
 import { ConfirmPopup } from './ConfirmPopup.tsx'
 import { PerkInvestPopup } from './PerkInvestPopup.tsx'
 
@@ -138,9 +139,7 @@ export function PerksPanel({
   return (
     <ArcadeCard>
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/50">
-          Bonus d'équipe
-        </h2>
+        <SectionLabel as="h2">Bonus d'équipe</SectionLabel>
         {perkPoints > 0 && (
           <span className="shrink-0 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 font-mono text-[10px] font-bold tracking-[0.1em] text-primary-dark">
             {perkPoints} POINT{plural(perkPoints).toUpperCase()}

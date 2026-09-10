@@ -12,6 +12,7 @@ import type { TeamRaidHistoryEntry } from '../../api/teamProgression.api.ts'
 import { cn } from '../../libs/utils.ts'
 import { useTeamRaidHistory } from '../../queries/useTeamProgression.ts'
 import { ArcadeCard } from '../shared/ArcadeCard.tsx'
+import { SectionLabel } from '../ui/sectionHeading.tsx'
 
 /**
  * `weekKey` est le lundi UTC de la semaine au format `YYYY-MM-DD`
@@ -70,9 +71,7 @@ export function RaidHistoryPanel({ teamId }: { teamId: string }) {
   return (
     <ArcadeCard>
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/50">
-          Raids passés
-        </h2>
+        <SectionLabel as="h2">Raids passés</SectionLabel>
         {raids.length > 0 && (
           <span className="shrink-0 font-mono text-[10px] tracking-[0.12em] text-foreground/45">
             {won} / {raids.length}
