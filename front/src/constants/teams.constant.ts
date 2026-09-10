@@ -86,28 +86,12 @@ export type TeamInvitation = {
   expiresAt: string
 }
 
-export type RankedMember = {
-  rank: number
-  user: { id: string; username: string; avatar: string | null }
-  role: 'OWNER' | 'ADMIN' | 'MEMBER'
-  score: number
-}
-
-export type TeamRankingPage = {
-  members: RankedMember[]
-  total: number
-  page: number
-  totalPages: number
-}
-
 // Routes
 export const TEAM_ROUTES = {
   teams: '/teams',
   team: (teamId: string) => `/teams/${teamId}`,
   invite: (teamId: string) => `/teams/${teamId}/invite`,
   leave: (teamId: string) => `/teams/${teamId}/leave`,
-  ranking: (teamId: string, page: number, limit: number) =>
-    `/teams/${teamId}/ranking?page=${page}&limit=${limit}`,
   invitations: (teamId: string) => `/teams/${teamId}/invitations`,
   myInvitations: '/me/invitations',
   removeMember: (teamId: string, userId: string) =>
