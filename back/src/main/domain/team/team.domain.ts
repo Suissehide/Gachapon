@@ -590,16 +590,25 @@ export class TeamDomain implements TeamDomainInterface {
 
   /**
    * L'en-tête de la fiche d'équipe : identité, progression, bonus, points
-   * de la semaine, rang global et raids gagnés. `getTeam` d'abord — c'est
-   * lui qui porte le contrôle d'appartenance (et la tolérance pour un
-   * invité en attente), tout le reste n'est que composition.
+   * de la semaine, rang global et raids gagnés. `getTeamAsMember` d'abord —
+   * c'est lui qui porte le contrôle d'appartenance, tout le reste n'est que
+   * composition.
+   *
+   * MEMBRES SEULEMENT, pas la tolérance pour un invité en attente. Elle
+   * datait de l'époque où cette lecture servait un aperçu, et elle ne
+   * laissait plus qu'un écran cassé : les trois autres appels de la fiche
+   * (membres, raids, classement) refusent un invité, donc la carte
+   * d'identité s'affichait au-dessus de deux panneaux en erreur et d'un
+   * historique qui affirmait « aucun raid » faute de branche d'erreur.
+   * Aucun chemin du front n'y envoie un invité — le flux d'invitation passe
+   * par `GET /invitations/:token`, qui rend son propre aperçu.
    */
   async getTeamDetail(
     teamId: string,
     userId: string,
     now: Date = new Date(),
   ): Promise<TeamDetail> {
-    const team = await this.getTeam(teamId, userId)
+    const team = await this.getTeamAsMember(teamId, userId)
     const [cfg, perks, weekly, rankGlobal, raidsWon] = await Promise.all([
       this.#configService.getMany(
         'team.maxMembers',
@@ -745,28 +754,6 @@ export class TeamDomain implements TeamDomainInterface {
       cfg['teamRaid.historyLimit'],
       now,
     )
-  }
-
-  async getTeam(teamId: string, userId: string): Promise<TeamWithMembers> {
-    const team = await this.#teamRepo.findById(teamId)
-    if (!team) {
-      throw Boom.notFound('Team not found')
-    }
-    const isMember = team.members.some((m) => m.userId === userId)
-    if (!isMember) {
-      // Users who have a pending invitation can preview the team they were
-      // invited to (read-only). This unblocks the in-app invitation flow
-      // where clicking the notification opens the inviting team's page
-      // before they decide to accept or decline.
-      const pendingInvite = await this.#invitationRepo.findPendingByTeamAndUser(
-        teamId,
-        userId,
-      )
-      if (!pendingInvite) {
-        throw Boom.forbidden('Not a member of this team')
-      }
-    }
-    return team
   }
 
   async resendInvitationEmail(token: string, actorId: string): Promise<void> {

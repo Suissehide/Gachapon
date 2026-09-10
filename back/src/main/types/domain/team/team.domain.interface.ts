@@ -36,11 +36,12 @@ export interface TeamDomainInterface {
     data: { name: string; description?: string },
   ): Promise<TeamWithMembers>
   deleteTeam(teamId: string, userId: string): Promise<void>
-  /** Un invité en attente y a droit : c'est un aperçu, pas le roster. */
-  getTeam(teamId: string, userId: string): Promise<TeamWithMembers>
   /**
-   * Appartenance STRICTE : tout ce qui expose les MEMBRES (roster, historique
-   * de raid, classement interne) passe par là, jamais par `getTeam`.
+   * Appartenance STRICTE, et la SEULE porte de lecture d'une équipe : fiche,
+   * roster, historique de raid et classement interne y passent tous. Un
+   * invité en attente n'y a pas droit — l'aperçu qui lui permet de décider
+   * est servi par `GET /invitations/:token`, qui ne montre que le nom de
+   * l'équipe et l'inviteur.
    */
   getTeamAsMember(teamId: string, userId: string): Promise<TeamWithMembers>
   /** La liste « Mes équipes », raid de la semaine compris. */

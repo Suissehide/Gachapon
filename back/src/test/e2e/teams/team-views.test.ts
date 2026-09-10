@@ -567,7 +567,7 @@ describe('Vues de la section Équipe', () => {
 
   // ── Accès ──────────────────────────────────────────────────────────────
 
-  it("un invité en attente garde l'aperçu mais n'obtient ni le roster ni l'historique", async () => {
+  it("un invité en attente n'obtient RIEN de la fiche d'équipe", async () => {
     const invitation = await prisma.invitation.create({
       data: {
         teamId: mainTeamId,
@@ -578,12 +578,22 @@ describe('Vues de la section Équipe', () => {
     })
 
     try {
-      // L'aperçu reste ouvert : c'est ce sur quoi on décide d'accepter.
-      const preview = await get(`/teams/${mainTeamId}`, cookiesJoiner)
-      expect(preview.statusCode).toBe(200)
-      expect(preview.json().name).toBe(MAIN_TEAM_NAME)
+      // La fiche non plus, désormais. Elle tolérait un invité quand elle ne
+      // servait qu'un aperçu ; depuis, les trois autres appels de la page
+      // (membres, raids, classement) le refusent, et l'invité n'obtenait
+      // qu'un écran cassé : identité affichée, deux panneaux en erreur, un
+      // historique qui affirmait « aucun raid ». L'aperçu sur lequel on
+      // décide d'accepter vit dans `GET /invitations/:token`.
+      const detail = await get(`/teams/${mainTeamId}`, cookiesJoiner)
+      expect(detail.statusCode).toBe(403)
 
-      // Le roster ne l'est pas : niveau, points, dégâts et dernière
+      // Et l'invitation, elle, reste lisible : c'est bien l'aperçu qui
+      // porte la décision, pas la fiche.
+      const preview = await get(`/invitations/${invitation.token}`, cookiesJoiner)
+      expect(preview.statusCode).toBe(200)
+      expect(preview.json().team.name).toBe(MAIN_TEAM_NAME)
+
+      // Le roster non plus : niveau, points, dégâts et dernière
       // connexion de chaque membre ne se gagnent pas avec une invitation.
       expect(
         (await get(`/teams/${mainTeamId}/members`, cookiesJoiner)).statusCode,
