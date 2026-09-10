@@ -147,7 +147,13 @@ export class RaidDomain implements IRaidDomain {
 
     // Config lue AVANT la transaction (pas d'I/O async étranger dans un tx
     // Serializable) — même motif que tower.domain#fight.
-    const [cfg, teamEffects] = await Promise.all([
+    //
+    // `raidAttacksBonusForTeam(teamId)`, PAS `effectsForUser(userId)` : ce
+    // quota mord sur les PV du boss de CETTE équipe, calibrés par membre.
+    // Le scoper au joueur laisserait un rang acheté dans une équipe A
+    // apporter des attaques en plus sur le boss d'une équipe B qui n'a
+    // jamais investi un point.
+    const [cfg, raidBonus] = await Promise.all([
       this.#configService.getMany(
         'combat.elementAdvantageMult',
         'combat.elementDisadvantageMult',
@@ -160,7 +166,7 @@ export class RaidDomain implements IRaidDomain {
         'raid.timeoutTurns',
         ...SET_BONUS_CONFIG_KEYS,
       ),
-      this.#teamProgressionDomain.effectsForUser(userId),
+      this.#teamProgressionDomain.raidAttacksBonusForTeam(teamId),
     ])
     const setDefs = setBonusesFromConfig(cfg)
     const baseStats: CombatStatsBaseline = {
@@ -169,10 +175,7 @@ export class RaidDomain implements IRaidDomain {
       armorPen: cfg['combat.baseArmorPen'],
       lifesteal: cfg['combat.baseLifesteal'],
     }
-    // Le bonus d'équipe `raid` est un entier ajouté au quota — déjà
-    // plancher par `perkEffect` (team-progression-rules.ts), jamais
-    // recalculé ici.
-    const perDay = cfg['raid.attacksPerDay'] + teamEffects.raid
+    const perDay = cfg['raid.attacksPerDay'] + raidBonus
 
     const outcome = await retryOnSerialization(() =>
       this.#postgresOrm.executeWithTransactionClient(
@@ -412,15 +415,19 @@ export class RaidDomain implements IRaidDomain {
     userId: string,
     now: Date,
   ): Promise<RaidView> {
-    const [tiers, contributions, cfg, usedToday, teamEffects] =
+    // `raidAttacksBonusForTeam(team.id)`, PAS `effectsForUser(userId)` — même
+    // raison qu'au site d'attaque : ce quota appartient à l'équipe dont le
+    // boss est affiché, pas au meilleur rang du joueur toutes équipes
+    // confondues.
+    const [tiers, contributions, cfg, usedToday, raidBonus] =
       await Promise.all([
         this.#raidRepository.listTiers(),
         this.#contributions(raid.id, team),
         this.#configService.getMany('raid.attacksPerDay'),
         this.#raidRepository.countUserAttacksSince(userId, utcDayStart(now)),
-        this.#teamProgressionDomain.effectsForUser(userId),
+        this.#teamProgressionDomain.raidAttacksBonusForTeam(team.id),
       ])
-    const attacksPerDay = cfg['raid.attacksPerDay'] + teamEffects.raid
+    const attacksPerDay = cfg['raid.attacksPerDay'] + raidBonus
     const damageDone = raid.maxHp - raid.hp
     const reached = new Set(
       crossedTiers(damageDone, raid.maxHp, tiers).map((t) => t.pct),

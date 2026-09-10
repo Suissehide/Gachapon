@@ -76,6 +76,18 @@ export interface ITeamProgressionDomain {
    * L'effet appliqué de chaque bonus pour ce joueur, au MEILLEUR rang parmi
    * ses équipes. Une seule requête Postgres : à résoudre UNE fois par
    * requête HTTP et à passer en paramètre, jamais par élément d'une liste.
+   *
+   * Vaut pour `loot`, `xp` et `forge` — ce qu'UN JOUEUR gagne. Le champ
+   * `raid` renvoyé ici n'est PAS la bonne lecture pour créditer un quota
+   * d'attaques : voir `raidAttacksBonusForTeam`.
    */
   effectsForUser(userId: string): Promise<TeamPerkEffects>
+  /**
+   * L'effet du bonus `raid`, scopé à l'équipe dont le boss est attaqué —
+   * jamais au meilleur rang parmi les équipes du joueur. `raid` change ce
+   * qu'UNE ÉQUIPE affronte (des PV calibrés par membre pour cette équipe),
+   * contrairement aux trois autres bonus qui changent ce qu'un joueur
+   * gagne. Une seule requête Postgres, même motif que `effectsForUser`.
+   */
+  raidAttacksBonusForTeam(teamId: string): Promise<number>
 }

@@ -465,9 +465,20 @@ export class TeamProgressionDomain implements ITeamProgressionDomain {
   /**
    * UNE requête Postgres, et c'est un contrat : cette méthode est lue sur
    * des chemins chauds (régénération de jetons, aperçu des récompenses de
-   * campagne). Les tunables viennent du `ConfigService`, servi par Redis.
-   * À résoudre une fois par requête HTTP et à passer en paramètre, jamais
-   * par élément d'une liste.
+   * campagne, coût d'amélioration). Les tunables viennent du
+   * `ConfigService`, servi par Redis. À résoudre une fois par requête HTTP
+   * et à passer en paramètre, jamais par élément d'une liste.
+   *
+   * PORTÉE : `loot`, `xp` et `forge` changent ce que LE JOUEUR gagne — son
+   * régen de jetons, son XP de campagne, son coût d'amélioration — donc le
+   * meilleur rang parmi SES équipes est la bonne règle : sinon rejoindre
+   * plusieurs équipes deviendrait obligatoire pour en profiter pleinement.
+   * `raid` n'est PAS dans cette catégorie : son effet se consomme contre le
+   * boss d'UNE équipe précise, dont les PV sont calibrés par membre. Le
+   * champ `raid` renvoyé ici reste calculé (best-effort, pour un affichage
+   * générique du genre « votre meilleur bonus raid »), mais aucun site
+   * d'application ne doit s'en servir — `raidAttacksBonusForTeam` est la
+   * lecture correcte pour créditer un quota d'attaques.
    */
   async effectsForUser(userId: string): Promise<TeamPerkEffects> {
     const [rows, cfg] = await Promise.all([
@@ -489,6 +500,34 @@ export class TeamProgressionDomain implements ITeamProgressionDomain {
       )
     }
     return effects
+  }
+
+  /**
+   * L'effet du bonus `raid`, scopé à UNE équipe précise — jamais au
+   * meilleur rang parmi les équipes du joueur.
+   *
+   * Les trois autres bonus (`loot`, `xp`, `forge`) changent ce qu'UN JOUEUR
+   * gagne, et `effectsForUser` a raison de prendre son meilleur rang : son
+   * régen de jetons ou son XP de campagne n'appartiennent qu'à lui. `raid`
+   * change ce qu'UNE ÉQUIPE affronte — son quota d'attaques mord sur les PV
+   * d'un boss calibrés par membre pour CETTE équipe. Lu par
+   * `bestPerkRanksForUser`, un joueur au rang 5 dans une équipe A
+   * apporterait deux attaques en plus sur le boss d'une équipe B qui n'a
+   * jamais investi un point — une ressource achetée par une équipe qui
+   * fuit vers le contenu d'une autre. D'où une lecture scopée à l'équipe
+   * attaquée, pas au joueur qui attaque.
+   *
+   * UNE requête Postgres (`listPerks`, déjà utilisée en lecture non
+   * transactionnelle ailleurs) + une lecture de config servie par Redis —
+   * même profil de coût que `effectsForUser`.
+   */
+  async raidAttacksBonusForTeam(teamId: string): Promise<number> {
+    const [rows, cfg] = await Promise.all([
+      this.#teamProgressionRepository.listPerks(teamId),
+      this.#configService.getMany('teamPerk.raid.perRank'),
+    ])
+    const rank = rows.find((row) => row.key === 'raid')?.rank ?? 0
+    return perkEffect('raid', rank, cfg['teamPerk.raid.perRank'])
   }
 
   /**
