@@ -1,11 +1,21 @@
+import type { InvitationWithDetails } from '../../infra/orm/repositories/invitation.repository.interface'
 import type { RaidHistoryEntry } from '../raid/raid.domain.interface'
 import type {
   InvitationEntity,
+  InvitationStatus,
   TeamDetail,
   TeamListItem,
   TeamMembersView,
   TeamWithMembers,
 } from './team.types'
+
+/**
+ * L'aperçu servi à l'invité. `EXPIRED` est dérivé à la lecture — la colonne
+ * `status` en base ne le connaît pas, rien ne balaie les invitations périmées.
+ */
+export type InvitationPreview = Omit<InvitationWithDetails, 'status'> & {
+  status: InvitationStatus | 'EXPIRED'
+}
 
 export interface TeamDomainInterface {
   createTeam(
@@ -17,6 +27,10 @@ export interface TeamDomainInterface {
     actorId: string,
     target: { email?: string; username?: string },
   ): Promise<InvitationEntity>
+  getInvitationForRecipient(
+    token: string,
+    userId: string,
+  ): Promise<InvitationPreview>
   acceptInvitation(token: string, userId: string): Promise<void>
   declineInvitation(token: string, userId: string): Promise<void>
   removeMember(

@@ -1,9 +1,10 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { Check, Loader2, Users, X, XCircle } from 'lucide-react'
+import { Check, Loader2, ShieldAlert, Users, X, XCircle } from 'lucide-react'
 
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
 import { Navbar } from '../components/custom/Navbar.tsx'
 import { Button } from '../components/ui/button.tsx'
+import { isApiError } from '../libs/httpErrorHandler.ts'
 import {
   useAcceptInvitation,
   useDeclineInvitation,
@@ -21,11 +22,14 @@ function InvitationPage() {
   const navigate = useNavigate()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const isLoadingAuth = useAuthStore((s) => s.isLoading)
+  const logout = useAuthStore((s) => s.logout)
   const openLogin = useAuthDialogStore((s) => s.openLogin)
 
-  const { data: invitation, isLoading, error } = useInvitation(
-    isAuthenticated ? token : undefined,
-  )
+  const {
+    data: invitation,
+    isLoading,
+    error,
+  } = useInvitation(isAuthenticated ? token : undefined)
   const accept = useAcceptInvitation()
   const decline = useDeclineInvitation()
 
@@ -42,6 +46,15 @@ function InvitationPage() {
         }
       },
     })
+  }
+
+  // Le lien d'invitation circule par e-mail et atterrit dans le navigateur
+  // tel qu'il est — souvent connecté sur un autre compte. Le back répond 403 ;
+  // ici on offre la seule sortie utile : repartir sur le bon compte.
+  const wrongAccount = isApiError(error) && error.status === 403
+
+  const handleSwitchAccount = () => {
+    void logout().then(openLogin)
   }
 
   const handleDecline = () => {
@@ -92,7 +105,21 @@ function InvitationPage() {
               </>
             )}
 
-            {error && (
+            {wrongAccount && (
+              <>
+                <ShieldAlert className="mx-auto mb-4 h-12 w-12 text-primary" />
+                <h1 className="mb-2 text-2xl font-black text-text">
+                  Ce n'est pas ton invitation
+                </h1>
+                <p className="mb-6 text-text-light">
+                  Ce lien ne concerne pas le compte connecté. Connecte-toi avec
+                  le bon compte pour rejoindre l'équipe.
+                </p>
+                <Button onClick={handleSwitchAccount}>Changer de compte</Button>
+              </>
+            )}
+
+            {error && !wrongAccount && (
               <>
                 <XCircle className="mx-auto mb-4 h-12 w-12 text-destructive" />
                 <h1 className="mb-2 text-2xl font-black text-text">
@@ -137,7 +164,7 @@ function InvitationPage() {
                       t'invite à rejoindre
                     </>
                   ) : (
-                    "Tu es invité(e) à rejoindre"
+                    'Tu es invité(e) à rejoindre'
                   )}
                 </p>
                 <h1 className="mb-6 text-2xl font-black text-text">

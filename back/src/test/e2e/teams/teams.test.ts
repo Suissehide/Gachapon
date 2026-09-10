@@ -7,6 +7,7 @@ describe('Teams routes', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
   let cookiesA: string
   let cookiesB: string
+  let cookiesC: string
   let teamId: string
 
   const suffix = Date.now()
@@ -45,6 +46,21 @@ describe('Teams routes', () => {
       payload: { email: `teamB${suffix}@test.com`, password: 'Password123!' },
     })
     cookiesB = loginB.headers['set-cookie'] as string
+
+    await app.inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: { username: `teamC${suffix}`, email: `teamC${suffix}@test.com`, password: 'Password123!' },
+    })
+    await postgresOrm.prisma.user.update({
+      where: { email: `teamC${suffix}@test.com` },
+      data: { emailVerifiedAt: new Date() },
+    })
+    const loginC = await app.inject({
+      method: 'POST', url: '/auth/login',
+      payload: { email: `teamC${suffix}@test.com`, password: 'Password123!' },
+    })
+    cookiesC = loginC.headers['set-cookie'] as string
   })
 
   afterAll(() => app.close())
@@ -187,6 +203,120 @@ describe('Teams routes', () => {
     })
     expect(res.statusCode).toBe(200)
     expect(res.json().teamId).toBe(teamId)
+  })
+
+  // Un lien d'invitation est un secret partagé, pas un droit d'entrée : il
+  // circule par e-mail et atterrit souvent dans un navigateur connecté sur un
+  // AUTRE compte. Tant que le destinataire n'est pas vérifié, ce compte-là voit
+  // l'équipe et, pour une invitation par e-mail (`invitedUserId` nul), entre
+  // dedans. Les trois tests ci-dessous ferment la lecture et l'écriture.
+  it('GET /invitations/:token — 403 pour un compte tiers', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+    const inv = await postgresOrm.prisma.invitation.findFirst({
+      where: { teamId, status: 'PENDING' },
+    })
+    expect(inv).not.toBeNull()
+
+    const res = await app.inject({
+      method: 'GET',
+      url: `/invitations/${inv!.token}`,
+      headers: { cookie: cookiesC },
+    })
+    expect(res.statusCode).toBe(403)
+    // Aucune fuite : ni le nom de l'équipe, ni le destinataire.
+    expect(res.payload).not.toContain(`Team${suffix}`)
+    expect(res.payload).not.toContain(`teamB${suffix}`)
+  })
+
+  it('invitation par e-mail — seul le titulaire de l\'adresse la voit et l\'accepte', async () => {
+    const resTeam = await app.inject({
+      method: 'POST',
+      url: '/teams',
+      headers: { cookie: cookiesA },
+      payload: { name: `TeamMail${suffix}` },
+    })
+    const mailTeamId = resTeam.json().id
+
+    // `finally` obligatoire : le plafond de 3 équipes par utilisateur fait
+    // casser TOUS les tests suivants si une assertion sort avant le DELETE.
+    try {
+      const resInv = await app.inject({
+        method: 'POST',
+        url: `/teams/${mailTeamId}/invite`,
+        headers: { cookie: cookiesA },
+        payload: { email: `teamC${suffix}@test.com` },
+      })
+      expect(resInv.statusCode).toBe(201)
+      const invToken = resInv.json().token
+
+      // B n'est pas le destinataire : il ne lit pas et n'entre pas.
+      const readByB = await app.inject({
+        method: 'GET',
+        url: `/invitations/${invToken}`,
+        headers: { cookie: cookiesB },
+      })
+      expect(readByB.statusCode).toBe(403)
+
+      const acceptByB = await app.inject({
+        method: 'POST',
+        url: `/invitations/${invToken}/accept`,
+        headers: { cookie: cookiesB },
+      })
+      expect(acceptByB.statusCode).toBe(403)
+
+      const membersAfterB = await app.inject({
+        method: 'GET',
+        url: `/teams/${mailTeamId}`,
+        headers: { cookie: cookiesA },
+      })
+      expect(membersAfterB.json().members).toHaveLength(1)
+
+      // C, titulaire de l'adresse, passe.
+      const readByC = await app.inject({
+        method: 'GET',
+        url: `/invitations/${invToken}`,
+        headers: { cookie: cookiesC },
+      })
+      expect(readByC.statusCode).toBe(200)
+
+      const acceptByC = await app.inject({
+        method: 'POST',
+        url: `/invitations/${invToken}/accept`,
+        headers: { cookie: cookiesC },
+      })
+      expect(acceptByC.statusCode).toBe(200)
+    } finally {
+      await app.inject({ method: 'DELETE', url: `/teams/${mailTeamId}`, headers: { cookie: cookiesA } })
+    }
+  })
+
+  it('POST /invitations/:token/decline — 403 pour un compte tiers', async () => {
+    const resTeam = await app.inject({
+      method: 'POST',
+      url: '/teams',
+      headers: { cookie: cookiesA },
+      payload: { name: `TeamDecline${suffix}` },
+    })
+    const declineTeamId = resTeam.json().id
+
+    try {
+      const resInv = await app.inject({
+        method: 'POST',
+        url: `/teams/${declineTeamId}/invite`,
+        headers: { cookie: cookiesA },
+        payload: { email: `teamC${suffix}@test.com` },
+      })
+      const invToken = resInv.json().token
+
+      const res = await app.inject({
+        method: 'POST',
+        url: `/invitations/${invToken}/decline`,
+        headers: { cookie: cookiesB },
+      })
+      expect(res.statusCode).toBe(403)
+    } finally {
+      await app.inject({ method: 'DELETE', url: `/teams/${declineTeamId}`, headers: { cookie: cookiesA } })
+    }
   })
 
   it('POST /invitations/:token/decline — décliner une invitation', async () => {

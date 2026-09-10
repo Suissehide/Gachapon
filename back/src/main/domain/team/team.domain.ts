@@ -4,7 +4,10 @@ import slugify from 'slugify'
 import type { IocContainer } from '../../types/application/ioc'
 import type { ILeaderboardDomain } from '../../types/domain/leaderboard/leaderboard.domain.interface'
 import type { IRaidDomain } from '../../types/domain/raid/raid.domain.interface'
-import type { TeamDomainInterface } from '../../types/domain/team/team.domain.interface'
+import type {
+  InvitationPreview,
+  TeamDomainInterface,
+} from '../../types/domain/team/team.domain.interface'
 import type {
   InvitationEntity,
   TeamDetail,
@@ -291,6 +294,60 @@ export class TeamDomain implements TeamDomainInterface {
     return invitation
   }
 
+  /**
+   * Un lien d'invitation est un secret partagé, pas un droit d'entrée. Il
+   * circule par e-mail et atterrit souvent dans un navigateur déjà connecté
+   * sur un AUTRE compte : sans cette garde, ce compte-là lit l'invitation, et
+   * — quand elle vise une adresse plutôt qu'un compte existant, `invitedUserId`
+   * étant alors nul — entre dans l'équipe à la place du destinataire.
+   *
+   * La garde couvre donc les deux formes d'invitation, et la lecture autant
+   * que l'écriture : le `GET` doit refuser AVANT d'afficher le nom de l'équipe,
+   * sinon le front propose un bouton « Rejoindre » que le back rejettera.
+   */
+  async #assertIsRecipient(
+    invitation: Pick<InvitationEntity, 'invitedUserId' | 'invitedEmail'>,
+    userId: string,
+  ): Promise<void> {
+    if (invitation.invitedUserId) {
+      if (invitation.invitedUserId !== userId) {
+        throw Boom.forbidden('This invitation is for another user')
+      }
+      return
+    }
+    if (invitation.invitedEmail) {
+      const user = await this.#userRepo.findById(userId)
+      // Comparaison en minuscules par prudence : `normalizerExtension` abaisse
+      // déjà les e-mails à l'écriture, mais la garde ne doit pas en dépendre.
+      if (user?.email.toLowerCase() !== invitation.invitedEmail.toLowerCase()) {
+        throw Boom.forbidden('This invitation is for another user')
+      }
+      return
+    }
+    // Ni compte ni adresse : personne n'en est le destinataire.
+    throw Boom.forbidden('This invitation is for another user')
+  }
+
+  /**
+   * L'aperçu que voit l'invité avant de trancher. Le `EXPIRED` est dérivé ici
+   * plutôt que stocké : rien ne balaie les invitations périmées en base.
+   */
+  async getInvitationForRecipient(
+    token: string,
+    userId: string,
+  ): Promise<InvitationPreview> {
+    const invitation = await this.#invitationRepo.findByTokenWithDetails(token)
+    if (!invitation) {
+      throw Boom.notFound('Invitation not found')
+    }
+    await this.#assertIsRecipient(invitation, userId)
+    const status: InvitationPreview['status'] =
+      invitation.status === 'PENDING' && invitation.expiresAt < new Date()
+        ? 'EXPIRED'
+        : invitation.status
+    return { ...invitation, status }
+  }
+
   async acceptInvitation(token: string, userId: string): Promise<void> {
     const invitation = await this.#invitationRepo.findByToken(token)
     if (!invitation) {
@@ -303,9 +360,7 @@ export class TeamDomain implements TeamDomainInterface {
       throw Boom.resourceGone('Invitation expired')
     }
 
-    if (invitation.invitedUserId && invitation.invitedUserId !== userId) {
-      throw Boom.forbidden('This invitation is for another user')
-    }
+    await this.#assertIsRecipient(invitation, userId)
 
     const alreadyMember = await this.#memberRepo.findByTeamAndUser(
       invitation.teamId,
@@ -347,9 +402,7 @@ export class TeamDomain implements TeamDomainInterface {
     if (invitation.status !== 'PENDING') {
       throw Boom.conflict('Invitation already processed')
     }
-    if (invitation.invitedUserId && invitation.invitedUserId !== userId) {
-      throw Boom.forbidden('This invitation is for another user')
-    }
+    await this.#assertIsRecipient(invitation, userId)
     await this.#invitationRepo.updateStatus(invitation.id, 'DECLINED')
   }
 

@@ -243,6 +243,14 @@ export const TeamsApi = {
       handleHttpError(
         res,
         {
+          // 403 = le lien est valide, mais il vise un autre compte. Le
+          // distinguer du 404 est ce qui permet à la page de proposer un
+          // changement de compte plutôt qu'un « lien invalide » trompeur.
+          403: {
+            title: 'Invitation destinée à un autre compte',
+            message:
+              "Cette invitation n'est pas destinée au compte connecté. Connecte-toi avec le compte invité pour la voir.",
+          },
           404: {
             title: 'Invitation introuvable',
             message: "Ce lien d'invitation est invalide ou a expiré.",

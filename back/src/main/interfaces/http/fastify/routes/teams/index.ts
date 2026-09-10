@@ -204,21 +204,18 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
       schema: { params: teamTokenParamSchema },
     },
     async (request) => {
-      const { invitationRepository } = fastify.iocContainer
-      const inv = await invitationRepository.findByTokenWithDetails(
+      // 403 si le compte connecté n'est pas le destinataire — la lecture est
+      // gardée comme l'écriture, sinon le front affiche le nom de l'équipe et
+      // un bouton « Rejoindre » à quelqu'un qui n'entrera jamais.
+      const inv = await teamDomain.getInvitationForRecipient(
         request.params.token,
+        request.user.userID,
       )
-      if (!inv) {
-        throw Boom.notFound('Invitation not found')
-      }
-      const now = new Date()
-      const status =
-        inv.status === 'PENDING' && inv.expiresAt < now ? 'EXPIRED' : inv.status
       return {
         id: inv.id,
         token: inv.token,
         teamId: inv.teamId,
-        status,
+        status: inv.status,
         expiresAt: inv.expiresAt,
         team: inv.team,
         invitedBy: inv.invitedBy,
