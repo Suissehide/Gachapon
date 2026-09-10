@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 
 import { TeamsApi } from '../api/teams.api.ts'
 import type { DuelView } from '../api/wagers.api.ts'
+import { TEAM_SLOTS } from '../constants/teams.constant.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 import { useWagers, useWagersLive } from './useWagers.ts'
 
@@ -11,7 +12,6 @@ import { useWagers, useWagersLive } from './useWagers.ts'
  * les règles des hooks interdisent une boucle, donc les emplacements sont
  * fixes et ceux sans équipe restent désactivés — aucune requête émise.
  */
-const TEAM_SLOTS = 3
 
 /**
  * Le duel en cours du joueur, vu depuis une page qui n'est pas celle de son

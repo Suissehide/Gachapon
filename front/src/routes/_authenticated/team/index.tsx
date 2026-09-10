@@ -6,6 +6,7 @@ import { PageShell } from '../../../components/shared/PageShell.tsx'
 import { CreateTeamPopup } from '../../../components/team/CreateTeamPopup.tsx'
 import { TeamCard } from '../../../components/team/TeamCard.tsx'
 import { PopupTrigger } from '../../../components/ui/popup.tsx'
+import { TEAM_SLOTS } from '../../../constants/teams.constant.ts'
 import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
@@ -15,8 +16,6 @@ import { useMyTeams } from '../../../queries/useTeams.ts'
 // Plafond d'équipes PAR JOUEUR (pas la taille d'une équipe) : constante
 // domaine côté serveur (`MAX_TEAMS_PER_USER`, back/.../team.domain.ts), donc
 // absente de GlobalConfig / `/economy/config` — reprise en dur ici comme
-// dans `useMyDuel.ts` (`TEAM_SLOTS`), pas une valeur à charger.
-const TEAM_SLOTS = 3
 
 export const Route = createFileRoute('/_authenticated/team/')({
   component: TeamsPage,
@@ -45,12 +44,14 @@ function TeamsPage() {
                 disabled={atCap}
                 title={
                   atCap
-                    ? 'Tu as atteint la limite de 3 équipes par joueur.'
+                    ? `Tu as atteint la limite de ${TEAM_SLOTS} équipes par joueur.`
                     : undefined
                 }
               >
                 <Users className="h-4 w-4" />
-                {atCap ? 'Limite de 3 équipes atteinte' : 'Créer une équipe'}
+                {atCap
+                  ? `Limite de ${TEAM_SLOTS} équipes atteinte`
+                  : 'Créer une équipe'}
               </PopupTrigger>
             }
           />

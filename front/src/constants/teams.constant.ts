@@ -1,3 +1,11 @@
+/**
+ * Emplacements d'équipe par joueur. Constante de domaine côté serveur
+ * (`MAX_TEAMS_PER_USER` dans `team.domain.ts`), jamais exposée par
+ * `/economy/config` : ce n'est donc pas une valeur à charger, mais elle doit
+ * vivre à UN seul endroit côté front plutôt que dans chaque écran qui la lit.
+ */
+export const TEAM_SLOTS = 3
+
 // Types
 export type TeamMember = {
   id: string
