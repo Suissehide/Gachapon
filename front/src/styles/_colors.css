@@ -8,6 +8,10 @@
   --fc-event-border-color: #f59e0b;
 
   --secondary: #ec4899;
+  /* Pendant de --primary-dark côté rose : l'encre des pastilles roses sur
+     fond très clair (bonus « Carte Épique » d'un palier de raid, handoff
+     `.tm-tier-bonus`), où --secondary lui-même manquerait de contraste. */
+  --secondary-dark: #9d174d;
   --secondary-foreground: #ffffff;
 
   --accent: #8b5cf6;
@@ -55,6 +59,23 @@
   --perk-raid: var(--destructive);
   --perk-xp: var(--accent);
   --perk-forge: #3b82f6;
+
+  /* Couleurs des quatre libellés de rôle d'équipe — handoff
+     `docs/design_handoff_equipe`, `ROLE_COLOR` d'`equipe-data.jsx`, injecté
+     par `--rc` sur `.tm-role`. Même parti pris que le bloc `--perk-*`
+     ci-dessus : les quatre teintes sont déclarées ensemble pour se relire
+     d'un bloc, deux reprenant une teinte déjà tokenisée et les deux autres
+     n'en ayant aucune. `--role-recruit` est volontairement une encre
+     atténuée et non une couleur : une recrue n'a pas de teinte propre. */
+  --role-owner: var(--primary);
+  --role-admin: var(--accent);
+  --role-member: #3b82f6;
+  --role-recruit: rgba(27, 23, 38, 0.4);
+
+  /* Encre de la lettre d'un avatar de membre (handoff `.tm-av`) : brun
+     ambré fixe, quelle que soit la teinte du dégradé pastel derrière —
+     c'est ce qui garde les douze avatars d'une liste lisibles ensemble. */
+  --avatar-ink: #7c2d12;
 
   /* Piste des barres graduées (équipe) — handoff `docs/design_handoff_equipe`,
      `.tm-hp-track`. Distincte de --surface-2/3 : plus chaude, réservée aux
