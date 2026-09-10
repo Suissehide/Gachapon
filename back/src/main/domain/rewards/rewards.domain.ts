@@ -12,6 +12,7 @@ import type {
   ClaimResult,
   RewardsDomainInterface,
 } from '../../types/domain/rewards/rewards.domain.interface'
+import type { ITeamProgressionDomain } from '../../types/domain/team-progression/team-progression.domain.interface'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import type { ICardRepository } from '../../types/infra/orm/repositories/card.repository.interface'
@@ -40,6 +41,7 @@ export class RewardsDomain implements RewardsDomainInterface {
   readonly #userCardRepository: IUserCardRepository
   readonly #activityDomain: IActivityDomain
   readonly #combatPointsTx: IocContainer['combatPointsTx']
+  readonly #teamProgressionDomain: ITeamProgressionDomain
 
   constructor({
     userRewardRepository,
@@ -52,6 +54,7 @@ export class RewardsDomain implements RewardsDomainInterface {
     userCardRepository,
     activityDomain,
     combatPointsTx,
+    teamProgressionDomain,
   }: Pick<
     IocContainer,
     | 'userRewardRepository'
@@ -64,6 +67,7 @@ export class RewardsDomain implements RewardsDomainInterface {
     | 'userCardRepository'
     | 'activityDomain'
     | 'combatPointsTx'
+    | 'teamProgressionDomain'
   >) {
     this.#userRewardRepository = userRewardRepository
     this.#userRepository = userRepository
@@ -74,6 +78,7 @@ export class RewardsDomain implements RewardsDomainInterface {
     this.#cardRepository = cardRepository
     this.#userCardRepository = userCardRepository
     this.#activityDomain = activityDomain
+    this.#teamProgressionDomain = teamProgressionDomain
     this.#combatPointsTx = combatPointsTx
   }
 
@@ -180,7 +185,7 @@ export class RewardsDomain implements RewardsDomainInterface {
           gold: rewardGold,
         } = userReward.reward
 
-        const [upgrades, cfg] = await Promise.all([
+        const [upgrades, cfg, teamEffects] = await Promise.all([
           this.#skillTreeRepository.getEffectsForUser(userId),
           this.#configService.getMany(
             'tokenRegenIntervalMinutes',
@@ -190,10 +195,15 @@ export class RewardsDomain implements RewardsDomainInterface {
             'xp.levelCap',
             'levelup.refillEnergy',
           ),
+          this.#teamProgressionDomain.effectsForUser(userId),
         ])
+        // Le bonus d'équipe `loot` est MULTIPLICATIF et vient APRÈS la
+        // réduction du skill tree — jamais l'inverse, sinon les deux
+        // sources divergent selon l'ordre de composition.
         const effectiveInterval = Math.max(
           1,
-          cfg.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes,
+          (cfg.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes) /
+            (1 + teamEffects.loot / 100),
         )
         const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
         const { tokens: regenTokens, newLastTokenAt } = calculateTokens(
@@ -388,7 +398,7 @@ export class RewardsDomain implements RewardsDomainInterface {
         const totalXp = pending.reduce((sum, r) => sum + r.reward.xp, 0)
         const totalGold = pending.reduce((sum, r) => sum + r.reward.gold, 0)
 
-        const [upgrades, cfg] = await Promise.all([
+        const [upgrades, cfg, teamEffects] = await Promise.all([
           this.#skillTreeRepository.getEffectsForUser(userId),
           this.#configService.getMany(
             'tokenRegenIntervalMinutes',
@@ -398,10 +408,14 @@ export class RewardsDomain implements RewardsDomainInterface {
             'xp.levelCap',
             'levelup.refillEnergy',
           ),
+          this.#teamProgressionDomain.effectsForUser(userId),
         ])
+        // Même formule que `claimOne` : le bonus d'équipe `loot` est
+        // MULTIPLICATIF et vient APRÈS la réduction du skill tree.
         const effectiveInterval = Math.max(
           1,
-          cfg.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes,
+          (cfg.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes) /
+            (1 + teamEffects.loot / 100),
         )
         const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
         const { tokens: regenTokens, newLastTokenAt } = calculateTokens(

@@ -3,6 +3,7 @@ import Boom from '@hapi/boom'
 import type { EquipmentSlot, Prisma } from '../../../generated/client'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
+import type { ITeamProgressionDomain } from '../../types/domain/team-progression/team-progression.domain.interface'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import type { EquipmentBonuses } from '../combat/combat-stats.domain'
@@ -122,18 +123,24 @@ export class EquipmentDomain {
   readonly #postgresOrm: PostgresOrm
   readonly #configService: ConfigServiceInterface
   readonly #achievementsDomain: AchievementsDomainInterface
+  readonly #teamProgressionDomain: ITeamProgressionDomain
 
   constructor({
     postgresOrm,
     configService,
     achievementsDomain,
+    teamProgressionDomain,
   }: Pick<
     IocContainer,
-    'postgresOrm' | 'configService' | 'achievementsDomain'
+    | 'postgresOrm'
+    | 'configService'
+    | 'achievementsDomain'
+    | 'teamProgressionDomain'
   >) {
     this.#postgresOrm = postgresOrm
     this.#configService = configService
     this.#achievementsDomain = achievementsDomain
+    this.#teamProgressionDomain = teamProgressionDomain
   }
 
   /**
@@ -339,16 +346,19 @@ export class EquipmentDomain {
     userId: string,
     userEquipmentId: string,
   ): Promise<EquipmentUpgradeResult> {
-    const c = await this.#configService.getMany(
-      'equip.goldCostBase',
-      'equip.goldCostExp',
-      'card.rarityMultCommon',
-      'card.rarityMultUncommon',
-      'card.rarityMultRare',
-      'card.rarityMultEpic',
-      'card.rarityMultLegendary',
-      ...SUBSTAT_RANGE_CONFIG_KEYS,
-    )
+    const [c, teamEffects] = await Promise.all([
+      this.#configService.getMany(
+        'equip.goldCostBase',
+        'equip.goldCostExp',
+        'card.rarityMultCommon',
+        'card.rarityMultUncommon',
+        'card.rarityMultRare',
+        'card.rarityMultEpic',
+        'card.rarityMultLegendary',
+        ...SUBSTAT_RANGE_CONFIG_KEYS,
+      ),
+      this.#teamProgressionDomain.effectsForUser(userId),
+    ])
     const ranges = substatRangesFromConfig(c)
 
     return retryOnSerialization(() =>
@@ -365,11 +375,17 @@ export class EquipmentDomain {
             throw Boom.badRequest('Équipement déjà au niveau maximum')
           }
           const rarityMult = c[RARITY_MULT_KEY[ue.equipment.rarity]]
-          const cost = upgradeGoldCost(
-            ue.level,
-            c['equip.goldCostBase'],
-            c['equip.goldCostExp'],
-            rarityMult,
+          // Bonus d'équipe `forge` : remise multiplicative sur le coût déjà
+          // arrondi par `upgradeGoldCost`, jamais injectée plus tôt dans le
+          // calcul.
+          const cost = Math.round(
+            upgradeGoldCost(
+              ue.level,
+              c['equip.goldCostBase'],
+              c['equip.goldCostExp'],
+              rarityMult,
+            ) *
+              (1 - teamEffects.forge / 100),
           )
           const user = await tx.user.findUnique({
             where: { id: userId },

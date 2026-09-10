@@ -4,6 +4,7 @@ import { z } from 'zod/v4'
 import type { Prisma } from '../../../generated/client'
 import type { EquipmentSet, EquipmentSlot } from '../../../generated/enums'
 import type { IocContainer } from '../../types/application/ioc'
+import type { ITeamProgressionDomain } from '../../types/domain/team-progression/team-progression.domain.interface'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { UserRewardRepositoryInterface } from '../../types/infra/orm/repositories/user-reward.repository.interface'
@@ -164,8 +165,16 @@ export interface RewardPreview {
  * Pure function. The lootTable is a Prisma JsonValue (non-nullable column,
  * always seeded complete) — a top-level guard turns a malformed row into a
  * debuggable error instead of a cryptic property-read crash across getCampaign.
+ *
+ * `teamXpBonusPct` is the caller's team `xp` perk effect (percentage points,
+ * e.g. 4 for +4 %), resolved ONCE by the caller via `effectsForUser` and
+ * passed in — never read from a domain here, that would break purity and
+ * turn a per-stage `.map()` into one Postgres query per stage.
  */
-export function extractRewardPreview(lootTable: unknown): RewardPreview {
+export function extractRewardPreview(
+  lootTable: unknown,
+  teamXpBonusPct: number,
+): RewardPreview {
   const lt = lootTable as LootTable
   if (!lt?.firstClear || !lt?.farm) {
     throw new Error(
@@ -174,9 +183,18 @@ export function extractRewardPreview(lootTable: unknown): RewardPreview {
   }
   const fc = lt.firstClear
   const farm = lt.farm
+  const xpMult = 1 + teamXpBonusPct / 100
   return {
-    firstClear: { gold: fc.gold, dust: fc.dust, xp: fc.xp },
-    farm: { gold: farm.gold, dust: farm.dust, xp: farm.xp },
+    firstClear: {
+      gold: fc.gold,
+      dust: fc.dust,
+      xp: Math.round(fc.xp * xpMult),
+    },
+    farm: {
+      gold: farm.gold,
+      dust: farm.dust,
+      xp: Math.round(farm.xp * xpMult),
+    },
     farmEquipmentChance: farm.equipmentDropChance,
     farmCardChance: farm.cardChance,
     guaranteedEquipment: fc.guaranteedEquipment != null,
@@ -274,6 +292,7 @@ export class CampaignDomain {
   readonly #storageClient
   readonly #userRewardRepository: UserRewardRepositoryInterface
   readonly #skillTreeRepository: ISkillTreeRepository
+  readonly #teamProgressionDomain: ITeamProgressionDomain
 
   constructor({
     postgresOrm,
@@ -284,6 +303,7 @@ export class CampaignDomain {
     storageClient,
     userRewardRepository,
     skillTreeRepository,
+    teamProgressionDomain,
   }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#combatPointsTx = combatPointsTx
@@ -293,6 +313,7 @@ export class CampaignDomain {
     this.#storageClient = storageClient
     this.#userRewardRepository = userRewardRepository
     this.#skillTreeRepository = skillTreeRepository
+    this.#teamProgressionDomain = teamProgressionDomain
   }
 
   /**
@@ -300,11 +321,16 @@ export class CampaignDomain {
    */
   async getCampaign(userId: string): Promise<CampaignView> {
     const orm = this.#postgresOrm
-    const progress = await this.#getOrCreateProgress(userId)
-
-    const stages = await orm.prisma.campaignStage.findMany({
-      orderBy: [{ chapter: 'asc' }, { index: 'asc' }],
-    })
+    // Résolu UNE fois pour toute la requête — jamais dans le `.map()` de
+    // stages ci-dessous, qui tournerait sinon une requête Postgres par
+    // stage sur une route qui rend un chapitre entier.
+    const [progress, stages, teamEffects] = await Promise.all([
+      this.#getOrCreateProgress(userId),
+      orm.prisma.campaignStage.findMany({
+        orderBy: [{ chapter: 'asc' }, { index: 'asc' }],
+      }),
+      this.#teamProgressionDomain.effectsForUser(userId),
+    ])
 
     const byChapter = new Map<number, typeof stages>()
     for (const s of stages) {
@@ -357,7 +383,7 @@ export class CampaignDomain {
           isBoss: s.isBoss,
           status,
           recommendedPower: computeTeamPower(enemyTeam),
-          rewardPreview: extractRewardPreview(s.lootTable),
+          rewardPreview: extractRewardPreview(s.lootTable, teamEffects.xp),
           enemies: enemyTeam.map((e, idx) => ({
             id: `B${idx}`,
             imageUrl: this.#resolveEnemyImage(e.appearance),
@@ -392,25 +418,27 @@ export class CampaignDomain {
   }> {
     return retryOnSerialization(async () => {
       // Lire la config ET les effets AVANT la transaction (évite les I/O async dans un tx Serializable)
-      const [battleCfg, effects, substatRanges] = await Promise.all([
-        this.#configService.getMany(
-          'combat.battleCost',
-          'combat.elementAdvantageMult',
-          'combat.elementDisadvantageMult',
-          'combat.defMitigationRef',
-          'combat.baseCritRate',
-          'combat.baseCritDmg',
-          'combat.baseArmorPen',
-          'combat.baseLifesteal',
-          'xp.base',
-          'xp.slope',
-          'xp.levelCap',
-          'levelup.refillEnergy',
-          ...SET_BONUS_CONFIG_KEYS,
-        ),
-        this.#skillTreeRepository.getEffectsForUser(userId),
-        this.#getSubstatRanges(),
-      ])
+      const [battleCfg, effects, substatRanges, teamEffects] =
+        await Promise.all([
+          this.#configService.getMany(
+            'combat.battleCost',
+            'combat.elementAdvantageMult',
+            'combat.elementDisadvantageMult',
+            'combat.defMitigationRef',
+            'combat.baseCritRate',
+            'combat.baseCritDmg',
+            'combat.baseArmorPen',
+            'combat.baseLifesteal',
+            'xp.base',
+            'xp.slope',
+            'xp.levelCap',
+            'levelup.refillEnergy',
+            ...SET_BONUS_CONFIG_KEYS,
+          ),
+          this.#skillTreeRepository.getEffectsForUser(userId),
+          this.#getSubstatRanges(),
+          this.#teamProgressionDomain.effectsForUser(userId),
+        ])
       // Bonus de set : une seule reconstruction par combat, jamais par carte.
       const setDefs = setBonusesFromConfig(battleCfg)
       return this.#postgresOrm.executeWithTransactionClient(
@@ -516,6 +544,10 @@ export class CampaignDomain {
               },
               effects,
             )
+            // Bonus d'équipe `xp` : multiplicatif, APRÈS le bonus skill-tree,
+            // et seulement sur l'XP — « en campagne » n'inclut ni l'or ni les
+            // chances de drop, contrairement au skill tree.
+            const teamXpMult = 1 + teamEffects.xp / 100
             const loot: LootTable = {
               firstClear: {
                 ...rawLoot.firstClear,
@@ -523,10 +555,16 @@ export class CampaignDomain {
                   rawLoot.firstClear.gold * (1 + effects.goldBonus / 100),
                 ),
                 xp: Math.round(
-                  rawLoot.firstClear.xp * (1 + effects.combatXpBonus / 100),
+                  rawLoot.firstClear.xp *
+                    (1 + effects.combatXpBonus / 100) *
+                    teamXpMult,
                 ),
               },
-              farm: { ...rawLoot.farm, ...bonusedFarm },
+              farm: {
+                ...rawLoot.farm,
+                ...bonusedFarm,
+                xp: Math.round(bonusedFarm.xp * teamXpMult),
+              },
             }
             rewards = await this.#applyRewards(
               tx,
@@ -618,17 +656,19 @@ export class CampaignDomain {
 
     return retryOnSerialization(async () => {
       // Lire la config ET les effets AVANT la transaction (évite les I/O async dans un tx Serializable)
-      const [sweepCfg, effects, substatRanges] = await Promise.all([
-        this.#configService.getMany(
-          'combat.sweepCost',
-          'xp.base',
-          'xp.slope',
-          'xp.levelCap',
-          'levelup.refillEnergy',
-        ),
-        this.#skillTreeRepository.getEffectsForUser(userId),
-        this.#getSubstatRanges(),
-      ])
+      const [sweepCfg, effects, substatRanges, teamEffects] =
+        await Promise.all([
+          this.#configService.getMany(
+            'combat.sweepCost',
+            'xp.base',
+            'xp.slope',
+            'xp.levelCap',
+            'levelup.refillEnergy',
+          ),
+          this.#skillTreeRepository.getEffectsForUser(userId),
+          this.#getSubstatRanges(),
+          this.#teamProgressionDomain.effectsForUser(userId),
+        ])
       return this.#postgresOrm.executeWithTransactionClient(
         // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing, refactor deferred
         async (tx) => {
@@ -680,7 +720,13 @@ export class CampaignDomain {
             },
             effects,
           )
-          const loot: FarmLoot = { ...rawFarm, ...bonusedFarmLoot }
+          // Même bonus d'équipe `xp`, appliqué après le bonus skill-tree,
+          // que le chemin combat unique (`attackStage`).
+          const loot: FarmLoot = {
+            ...rawFarm,
+            ...bonusedFarmLoot,
+            xp: Math.round(bonusedFarmLoot.xp * (1 + teamEffects.xp / 100)),
+          }
           let totalGold = 0
           let totalDust = 0
           let totalXp = 0

@@ -118,6 +118,10 @@ export const CAMPAIGN_SLOT_FILTER_TOWER = reservation('BELT', 'FUREUR')
 // Jamais équipées sur une carte.
 export const EQUIPMENT_QUESTS = reservation('BELT', 'PRECISION')
 
+// team-perk-forge.test.ts — 1 pièce, jamais équipée, sert uniquement au
+// calcul de coût d'amélioration (bonus d'équipe `forge`).
+export const EQUIPMENT_TEAM_PERK_FORGE = reservation('BOOTS', 'PRECISION')
+
 const ALL_RESERVATIONS = [
   EQUIPMENT_TEST_WEAPON,
   EQUIPMENT_TEST_ARMOR,
@@ -130,6 +134,7 @@ const ALL_RESERVATIONS = [
   CAMPAIGN_SLOT_FILTER_CLASSIC,
   CAMPAIGN_SLOT_FILTER_TOWER,
   EQUIPMENT_QUESTS,
+  EQUIPMENT_TEAM_PERK_FORGE,
 ]
 
 const seen = new Set<string>()

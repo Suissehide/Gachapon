@@ -10,6 +10,7 @@ import type {
   RaidView,
 } from '../../types/domain/raid/raid.domain.interface'
 import type { TeamWithMembers } from '../../types/domain/team/team.types'
+import type { ITeamProgressionDomain } from '../../types/domain/team-progression/team-progression.domain.interface'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
 import type {
   IRaidRepository,
@@ -74,6 +75,7 @@ export class RaidDomain implements IRaidDomain {
   readonly #postgresOrm: PostgresOrm
   readonly #wsManager: WsManager
   readonly #logger: Logger
+  readonly #teamProgressionDomain: ITeamProgressionDomain
 
   constructor({
     configService,
@@ -85,6 +87,7 @@ export class RaidDomain implements IRaidDomain {
     postgresOrm,
     wsManager,
     logger,
+    teamProgressionDomain,
   }: IocContainer) {
     this.#configService = configService
     this.#config = config
@@ -93,6 +96,7 @@ export class RaidDomain implements IRaidDomain {
     this.#teamMemberRepository = teamMemberRepository
     this.#raidRepository = raidRepository
     this.#postgresOrm = postgresOrm
+    this.#teamProgressionDomain = teamProgressionDomain
     this.#wsManager = wsManager
     this.#logger = logger
   }
@@ -143,18 +147,21 @@ export class RaidDomain implements IRaidDomain {
 
     // Config lue AVANT la transaction (pas d'I/O async étranger dans un tx
     // Serializable) — même motif que tower.domain#fight.
-    const cfg = await this.#configService.getMany(
-      'combat.elementAdvantageMult',
-      'combat.elementDisadvantageMult',
-      'combat.defMitigationRef',
-      'combat.baseCritRate',
-      'combat.baseCritDmg',
-      'combat.baseArmorPen',
-      'combat.baseLifesteal',
-      'raid.attacksPerDay',
-      'raid.timeoutTurns',
-      ...SET_BONUS_CONFIG_KEYS,
-    )
+    const [cfg, teamEffects] = await Promise.all([
+      this.#configService.getMany(
+        'combat.elementAdvantageMult',
+        'combat.elementDisadvantageMult',
+        'combat.defMitigationRef',
+        'combat.baseCritRate',
+        'combat.baseCritDmg',
+        'combat.baseArmorPen',
+        'combat.baseLifesteal',
+        'raid.attacksPerDay',
+        'raid.timeoutTurns',
+        ...SET_BONUS_CONFIG_KEYS,
+      ),
+      this.#teamProgressionDomain.effectsForUser(userId),
+    ])
     const setDefs = setBonusesFromConfig(cfg)
     const baseStats: CombatStatsBaseline = {
       critRate: cfg['combat.baseCritRate'],
@@ -162,7 +169,10 @@ export class RaidDomain implements IRaidDomain {
       armorPen: cfg['combat.baseArmorPen'],
       lifesteal: cfg['combat.baseLifesteal'],
     }
-    const perDay = cfg['raid.attacksPerDay']
+    // Le bonus d'équipe `raid` est un entier ajouté au quota — déjà
+    // plancher par `perkEffect` (team-progression-rules.ts), jamais
+    // recalculé ici.
+    const perDay = cfg['raid.attacksPerDay'] + teamEffects.raid
 
     const outcome = await retryOnSerialization(() =>
       this.#postgresOrm.executeWithTransactionClient(
@@ -402,12 +412,15 @@ export class RaidDomain implements IRaidDomain {
     userId: string,
     now: Date,
   ): Promise<RaidView> {
-    const [tiers, contributions, cfg, usedToday] = await Promise.all([
-      this.#raidRepository.listTiers(),
-      this.#contributions(raid.id, team),
-      this.#configService.getMany('raid.attacksPerDay'),
-      this.#raidRepository.countUserAttacksSince(userId, utcDayStart(now)),
-    ])
+    const [tiers, contributions, cfg, usedToday, teamEffects] =
+      await Promise.all([
+        this.#raidRepository.listTiers(),
+        this.#contributions(raid.id, team),
+        this.#configService.getMany('raid.attacksPerDay'),
+        this.#raidRepository.countUserAttacksSince(userId, utcDayStart(now)),
+        this.#teamProgressionDomain.effectsForUser(userId),
+      ])
+    const attacksPerDay = cfg['raid.attacksPerDay'] + teamEffects.raid
     const damageDone = raid.maxHp - raid.hp
     const reached = new Set(
       crossedTiers(damageDone, raid.maxHp, tiers).map((t) => t.pct),
@@ -435,8 +448,8 @@ export class RaidDomain implements IRaidDomain {
       killedAt: raid.killedAt ? raid.killedAt.toISOString() : null,
       tiers: tiers.map((t) => tierView(t, reached.has(t.pct))),
       me: {
-        attacksPerDay: cfg['raid.attacksPerDay'],
-        attacksRemainingToday: attacksRemaining(usedToday, cfg['raid.attacksPerDay']),
+        attacksPerDay,
+        attacksRemainingToday: attacksRemaining(usedToday, attacksPerDay),
         damage: mine?.damage ?? 0,
         attacks: mine?.attacks ?? 0,
       },
