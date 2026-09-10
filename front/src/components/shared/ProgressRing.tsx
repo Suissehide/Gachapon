@@ -96,7 +96,7 @@ export function ProgressRing({
             </span>
           )}
           {sublabel !== undefined && (
-            <span className="mt-[3px] font-mono text-[9px] tracking-[0.18em] text-text-light">
+            <span className="mt-[3px] font-mono text-[9px] tracking-[0.18em] text-foreground/45">
               {sublabel}
             </span>
           )}

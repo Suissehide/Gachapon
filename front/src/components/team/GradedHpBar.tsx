@@ -11,13 +11,19 @@
 import { cn } from '../../libs/utils.ts'
 
 type GradedHpBarProps = {
-  /** Progression actuelle (ex : dégâts infligés au boss). */
+  /** Progression actuelle (ex : dégâts infligés au boss). Pilote le remplissage. */
   done: number
   /** Total à atteindre (ex : PV max du boss). */
   max: number
   /** Seuils de palier en pourcentage (0-100), ex : [25, 50, 75, 100]. */
   tiers: number[]
-  /** Affiche le texte `done / max PV` par-dessus la piste. Défaut : true. */
+  /**
+   * Affiche le texte `restant / max PV` par-dessus la piste. Défaut : true.
+   * Le remplissage encode les dégâts infligés (`done`), mais le texte suit
+   * le design et affiche les PV *restants* du boss (`max - done`, jamais
+   * `done` lui-même) — vérifié contre la capture du handoff : une piste
+   * remplie à 43 % y affiche « 11 400/20 000 », soit exactement `max - done`.
+   */
   showValue?: boolean
   className?: string
 }
@@ -31,6 +37,7 @@ export function GradedHpBar({
 }: GradedHpBarProps) {
   const fraction = max > 0 ? Math.min(1, Math.max(0, done / max)) : 0
   const percent = fraction * 100
+  const remaining = Math.min(max, Math.max(0, max - done))
 
   // Un trait par palier, sauf le dernier (100 % = extrémité de la piste) —
   // et défensivement, tout seuil qui atteindrait déjà 100 % ailleurs dans le
@@ -38,7 +45,7 @@ export function GradedHpBar({
   const ticks = tiers.slice(0, -1).filter((t) => t > 0 && t < 100)
 
   return (
-    <div className={cn('relative pt-1', className)}>
+    <div className={cn('relative w-full pt-1', className)}>
       <div className="relative h-[26px] overflow-hidden rounded-[13px] border-[1.5px] border-border bg-track">
         <div
           className="absolute inset-y-0 left-0 rounded-[13px_6px_6px_13px] bg-gradient-to-r from-primary to-destructive shadow-[0_0_18px_-2px_rgba(239,68,68,0.5)] after:absolute after:inset-0 after:bg-[repeating-linear-gradient(115deg,rgba(255,255,255,0.16)_0_8px,transparent_8px_18px)]"
@@ -53,7 +60,8 @@ export function GradedHpBar({
         ))}
         {showValue && (
           <div className="absolute inset-0 flex items-center justify-end pr-3 font-mono text-xs font-bold tracking-[0.06em] text-text-light">
-            {done.toLocaleString('fr-FR')} / {max.toLocaleString('fr-FR')} PV
+            {remaining.toLocaleString('fr-FR')} / {max.toLocaleString('fr-FR')}{' '}
+            PV
           </div>
         )}
       </div>
