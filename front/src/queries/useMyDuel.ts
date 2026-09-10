@@ -7,13 +7,6 @@ import { useAuthStore } from '../stores/auth.store.ts'
 import { useWagers, useWagersLive } from './useWagers.ts'
 
 /**
- * Plafond d'équipes par joueur côté serveur (`MAX_TEAMS_PER_USER`,
- * team.domain.ts). Il borne le nombre d'emplacements `useWagers` ci-dessous :
- * les règles des hooks interdisent une boucle, donc les emplacements sont
- * fixes et ceux sans équipe restent désactivés — aucune requête émise.
- */
-
-/**
  * Le duel en cours du joueur, vu depuis une page qui n'est pas celle de son
  * équipe (Tirage, Collection).
  *

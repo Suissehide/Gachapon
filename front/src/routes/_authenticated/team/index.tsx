@@ -13,10 +13,6 @@ import {
 } from '../../../queries/useEconomyConfig.ts'
 import { useMyTeams } from '../../../queries/useTeams.ts'
 
-// Plafond d'équipes PAR JOUEUR (pas la taille d'une équipe) : constante
-// domaine côté serveur (`MAX_TEAMS_PER_USER`, back/.../team.domain.ts), donc
-// absente de GlobalConfig / `/economy/config` — reprise en dur ici comme
-
 export const Route = createFileRoute('/_authenticated/team/')({
   component: TeamsPage,
 })
