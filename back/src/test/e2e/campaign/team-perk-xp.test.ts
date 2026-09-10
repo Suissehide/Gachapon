@@ -229,4 +229,36 @@ describe('Bonus équipe `xp` — XP de campagne', () => {
     expect(body.rewards.isFirstClear).toBe(true)
     expect(body.rewards.xp).toBe(expectedFirstClear)
   })
+
+  // Site DISTINCT de `attackStage` (revue coordinateur) : `sweepStage` a son
+  // propre calcul de l'XP farm bonusée, jamais exercé par le test de combat
+  // ci-dessus. Le sweep ne simule aucun combat — pas de `deployWinningTeam`
+  // nécessaire — mais exige que le stage soit DÉJÀ marqué comme cleared,
+  // donc `userCampaignProgress.highestIndex` est posé directement à 1.
+  it('sweep (runs=1) : rang 5 augmente aussi l\'XP farm créditée', async () => {
+    expect(xpPct).toBeGreaterThan(0)
+    const expectedFarm = Math.round(FARM_XP * (1 + xpPct / 100))
+
+    const { userId, cookies } = await registerAndLogin('Sweep')
+    const teamId = await makeTeam('Sweep', userId)
+    await prisma.teamPerk.create({
+      data: { teamId, key: 'xp', rank: 5 },
+    })
+    // Stage 98-1 déjà DEFEAT — highestIndex = 1 = index du stage : condition
+    // `isAlreadyCleared` de sweepStage, sans passer par un combat.
+    await prisma.userCampaignProgress.upsert({
+      where: { userId },
+      create: { userId, highestChapter: 98, highestIndex: 1 },
+      update: { highestChapter: 98, highestIndex: 1 },
+    })
+
+    const sweep = await app.inject({
+      method: 'POST',
+      url: `/campaign/stages/${stageId}/sweep`,
+      headers: { cookie: cookies },
+      payload: { runs: 1 },
+    })
+    expect(sweep.statusCode).toBe(200)
+    expect(sweep.json().totalXp).toBe(expectedFarm)
+  })
 })
