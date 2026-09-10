@@ -121,38 +121,103 @@ describe('calculateTokens', () => {
 // Task 5 (refonte équipe) : cinq appelants dupliquaient cette arithmétique
 // avant l'extraction — l'ORDRE (soustraire, diviser, plancher) est
 // l'invariant que ce helper garde. Ce bloc le fixe une fois pour toutes.
+//
+// Objet nommé plutôt que trois nombres positionnels (revue coordinateur) :
+// `intervalMinutes` et `reductionMinutes` sont tous deux des minutes, rien
+// ne les distinguait au type-checking si un site d'appel les inversait —
+// nommer chaque champ rend une transposition visible à la lecture.
 describe('effectiveRegenInterval', () => {
   it('sans réduction ni bonus : identité', () => {
-    expect(effectiveRegenInterval(60, 0, 0)).toBe(60)
+    expect(
+      effectiveRegenInterval({
+        intervalMinutes: 60,
+        reductionMinutes: 0,
+        lootBonusPct: 0,
+      }),
+    ).toBe(60)
   })
 
   it('réduction du skill tree seule : soustraction simple', () => {
-    expect(effectiveRegenInterval(60, 15, 0)).toBe(45)
+    expect(
+      effectiveRegenInterval({
+        intervalMinutes: 60,
+        reductionMinutes: 15,
+        lootBonusPct: 0,
+      }),
+    ).toBe(45)
   })
 
   it('bonus d\'équipe seul : diviseur multiplicatif', () => {
     // 60 / 1.10 = 54.545...
-    expect(effectiveRegenInterval(60, 0, 10)).toBeCloseTo(54.545, 3)
+    expect(
+      effectiveRegenInterval({
+        intervalMinutes: 60,
+        reductionMinutes: 0,
+        lootBonusPct: 10,
+      }),
+    ).toBeCloseTo(54.545, 3)
   })
 
   it('les deux ensemble : la soustraction vient AVANT la division', () => {
     // (60 - 15) / 1.10 = 40.909..., PAS (60 / 1.10) - 15 = 39.545...
-    const result = effectiveRegenInterval(60, 15, 10)
+    const result = effectiveRegenInterval({
+      intervalMinutes: 60,
+      reductionMinutes: 15,
+      lootBonusPct: 10,
+    })
     expect(result).toBeCloseTo(40.909, 3)
     expect(result).not.toBeCloseTo(39.545, 3)
   })
 
+  it("intervalMinutes et reductionMinutes transposés change le résultat (la forme nommée rend l'erreur visible au site d'appel, pas au runtime)", () => {
+    // Transposer les deux minutes divise par une valeur bien plus grande —
+    // le nom du champ, pas le type, est ce qui empêche cette inversion.
+    const correct = effectiveRegenInterval({
+      intervalMinutes: 60,
+      reductionMinutes: 15,
+      lootBonusPct: 0,
+    })
+    const transposed = effectiveRegenInterval({
+      intervalMinutes: 15,
+      reductionMinutes: 60,
+      lootBonusPct: 0,
+    })
+    expect(transposed).not.toBe(correct)
+    // 15 - 60 < 0 → plancher à 1, jamais 45.
+    expect(transposed).toBe(1)
+  })
+
   it('rang 5 du bonus loot (2,5 % au barème par défaut) : baisse de 2,5 %', () => {
-    const base = effectiveRegenInterval(60, 0, 0)
-    const bonused = effectiveRegenInterval(60, 0, 2.5)
+    const base = effectiveRegenInterval({
+      intervalMinutes: 60,
+      reductionMinutes: 0,
+      lootBonusPct: 0,
+    })
+    const bonused = effectiveRegenInterval({
+      intervalMinutes: 60,
+      reductionMinutes: 0,
+      lootBonusPct: 2.5,
+    })
     expect(bonused).toBeCloseTo(base / 1.025, 6)
   })
 
   it('le plancher à 1 minute reste le DERNIER mot, même avec un très gros bonus', () => {
-    expect(effectiveRegenInterval(1, 0, 100000)).toBe(1)
+    expect(
+      effectiveRegenInterval({
+        intervalMinutes: 1,
+        reductionMinutes: 0,
+        lootBonusPct: 100000,
+      }),
+    ).toBe(1)
   })
 
   it('une réduction qui dépasserait l\'intervalle ne passe jamais sous le plancher', () => {
-    expect(effectiveRegenInterval(10, 50, 0)).toBe(1)
+    expect(
+      effectiveRegenInterval({
+        intervalMinutes: 10,
+        reductionMinutes: 50,
+        lootBonusPct: 0,
+      }),
+    ).toBe(1)
   })
 })

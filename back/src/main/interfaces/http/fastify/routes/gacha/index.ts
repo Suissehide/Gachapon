@@ -274,11 +274,11 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         ),
         teamProgressionDomain.effectsForUser(request.user.userID),
       ])
-      const effectiveInterval = effectiveRegenInterval(
-        cfg.tokenRegenIntervalMinutes,
-        upgrades.regenReductionMinutes,
-        teamEffects.loot,
-      )
+      const effectiveInterval = effectiveRegenInterval({
+        intervalMinutes: cfg.tokenRegenIntervalMinutes,
+        reductionMinutes: upgrades.regenReductionMinutes,
+        lootBonusPct: teamEffects.loot,
+      })
       const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
 
       // Lecture seule : pas de roll multiToken (le bonus est roulé et persisté au moment du débit) — évite un compteur qui fluctue entre deux GET
@@ -318,11 +318,11 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         configService.getMany('tokenRegenIntervalMinutes', 'tokenMaxStock'),
         teamProgressionDomain.effectsForUser(request.user.userID),
       ])
-      const effectiveInterval = effectiveRegenInterval(
-        cfg.tokenRegenIntervalMinutes,
-        upgrades.regenReductionMinutes,
-        teamEffects.loot,
-      )
+      const effectiveInterval = effectiveRegenInterval({
+        intervalMinutes: cfg.tokenRegenIntervalMinutes,
+        reductionMinutes: upgrades.regenReductionMinutes,
+        lootBonusPct: teamEffects.loot,
+      })
       const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
 
       // Lecture seule : pas de roll multiToken (le bonus est roulé et persisté au moment du débit) — évite un compteur qui fluctue entre deux GET

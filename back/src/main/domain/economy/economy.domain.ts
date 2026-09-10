@@ -17,11 +17,26 @@ import type { TokenState } from '../../types/domain/economy/economy.types'
  * que deux, les trois autres l'écrivant sur une seule. Un sixième appelant
  * ne peut plus diverger : il importe cette fonction, il ne réécrit rien.
  */
-export function effectiveRegenInterval(
-  intervalMinutes: number,
-  reductionMinutes: number,
-  lootBonusPct: number,
-): number {
+export type EffectiveRegenIntervalInput = {
+  intervalMinutes: number
+  reductionMinutes: number
+  lootBonusPct: number
+}
+
+/**
+ * Objet plutôt que trois nombres positionnels : `intervalMinutes` et
+ * `reductionMinutes` sont tous deux des minutes, rien ne les distingue au
+ * type-checking si un appel les inverse — seuls les tests e2e à réduction
+ * nulle empêchaient une transposition de se voir, et par accident, pas par
+ * garde. Nommer chaque champ à l'appel rend l'inversion visible à la
+ * lecture, et impossible à laisser passer le compilateur par erreur de
+ * position.
+ */
+export function effectiveRegenInterval({
+  intervalMinutes,
+  reductionMinutes,
+  lootBonusPct,
+}: EffectiveRegenIntervalInput): number {
   return Math.max(
     1,
     (intervalMinutes - reductionMinutes) / (1 + lootBonusPct / 100),

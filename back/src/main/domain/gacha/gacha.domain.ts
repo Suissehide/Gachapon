@@ -298,11 +298,11 @@ export class GachaDomain implements GachaDomainInterface {
     }
   }> {
     const user = await this.#userRepository.findByIdOrThrowInTx(tx, userId)
-    const effectiveInterval = effectiveRegenInterval(
-      cfg.tokenRegenIntervalMinutes,
-      cfg.upgrades.regenReductionMinutes,
-      cfg.teamLootBonusPct,
-    )
+    const effectiveInterval = effectiveRegenInterval({
+      intervalMinutes: cfg.tokenRegenIntervalMinutes,
+      reductionMinutes: cfg.upgrades.regenReductionMinutes,
+      lootBonusPct: cfg.teamLootBonusPct,
+    })
     const effectiveMaxStock = cfg.tokenMaxStock + cfg.upgrades.tokenVaultBonus
     const { tokens, newLastTokenAt } = calculateTokens(
       user.lastTokenAt,

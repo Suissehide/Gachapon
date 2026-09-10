@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
+import { perkEffect } from '../../../main/domain/team-progression/team-progression-rules'
 import { buildTestApp } from '../../helpers/build-test-app'
 
 /**
@@ -96,7 +97,10 @@ describe('Bonus équipe `loot` — régénération de jetons', () => {
     )
     intervalMinutes = cfg.tokenRegenIntervalMinutes
     maxStock = cfg.tokenMaxStock
-    lootPct = 5 * cfg['teamPerk.loot.perRank']
+    // Importé depuis les règles pures, jamais réimplémenté ici : `loot`
+    // n'est pas planché aujourd'hui, mais une réimplémentation à la main
+    // resterait fausse sans le détecter si la règle changeait demain.
+    lootPct = perkEffect('loot', 5, cfg['teamPerk.loot.perRank'])
   })
 
   async function makeTeamWithLoot(memberUserId: string, tag: string) {

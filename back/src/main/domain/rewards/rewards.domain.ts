@@ -200,11 +200,11 @@ export class RewardsDomain implements RewardsDomainInterface {
           ),
           this.#teamProgressionDomain.effectsForUser(userId),
         ])
-        const effectiveInterval = effectiveRegenInterval(
-          cfg.tokenRegenIntervalMinutes,
-          upgrades.regenReductionMinutes,
-          teamEffects.loot,
-        )
+        const effectiveInterval = effectiveRegenInterval({
+          intervalMinutes: cfg.tokenRegenIntervalMinutes,
+          reductionMinutes: upgrades.regenReductionMinutes,
+          lootBonusPct: teamEffects.loot,
+        })
         const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
         const { tokens: regenTokens, newLastTokenAt } = calculateTokens(
           user.lastTokenAt,
@@ -410,11 +410,11 @@ export class RewardsDomain implements RewardsDomainInterface {
           ),
           this.#teamProgressionDomain.effectsForUser(userId),
         ])
-        const effectiveInterval = effectiveRegenInterval(
-          cfg.tokenRegenIntervalMinutes,
-          upgrades.regenReductionMinutes,
-          teamEffects.loot,
-        )
+        const effectiveInterval = effectiveRegenInterval({
+          intervalMinutes: cfg.tokenRegenIntervalMinutes,
+          reductionMinutes: upgrades.regenReductionMinutes,
+          lootBonusPct: teamEffects.loot,
+        })
         const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
         const { tokens: regenTokens, newLastTokenAt } = calculateTokens(
           user.lastTokenAt,

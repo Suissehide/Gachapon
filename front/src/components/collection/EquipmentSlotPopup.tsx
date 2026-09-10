@@ -37,10 +37,7 @@ import {
   useUpgradeItem,
 } from '../../queries/useEquipment.ts'
 import { useAuthStore } from '../../stores/auth.store.ts'
-import {
-  equipGoldCostNextLevel,
-  formatBonusKey,
-} from '../../utils/cardStats.ts'
+import { formatBonusKey } from '../../utils/cardStats.ts'
 import { Button } from '../ui/button.tsx'
 import {
   Popup,
@@ -554,10 +551,13 @@ function ItemDetail({
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const isEquippedHere = item.equippedOnId === userCardId
   const isEquippedElsewhere = item.equippedOnId !== null && !isEquippedHere
-  const isMaxLevel = item.level >= economy.equip.maxLevel
-  const cost = isMaxLevel
-    ? 0
-    : equipGoldCostNextLevel(item.level, item.rarity, economy)
+  // Coût d'amélioration : renvoyé PAR LE SERVEUR, remise du bonus d'équipe
+  // forge déjà appliquée (`nextUpgradeCost`, null au niveau maximum).
+  // Jamais recalculé ici — `useEconomyConfig` ne porte aucune donnée de
+  // bonus d'équipe, un recalcul afficherait le prix plein pendant que le
+  // serveur facture le prix remisé.
+  const isMaxLevel = item.nextUpgradeCost === null
+  const cost = item.nextUpgradeCost ?? 0
   const scale = 1 + economy.equip.levelScale * (item.level - 1)
   const nextIsMilestone =
     !isMaxLevel && (item.level + 1) % economy.equip.substatMilestone === 0

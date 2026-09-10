@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
+import { perkEffect } from '../../../main/domain/team-progression/team-progression-rules'
 import { buildTestApp } from '../../helpers/build-test-app'
 
 /**
@@ -118,7 +119,9 @@ describe('Bonus équipe `loot` — chemins gacha (balance, next-at, pull)', () =
     )
     intervalMinutes = cfg.tokenRegenIntervalMinutes
     maxStock = cfg.tokenMaxStock
-    lootPct = 5 * cfg['teamPerk.loot.perRank']
+    // Importé depuis les règles pures, jamais réimplémenté ici — même motif
+    // que team-perk-loot.e2e.test.ts.
+    lootPct = perkEffect('loot', 5, cfg['teamPerk.loot.perRank'])
     pullTokenCost = cfg['gacha.pullTokenCost']
 
     // Catalogue minimal pour que POST /pulls puisse réussir.
