@@ -260,4 +260,48 @@ describe('Routes des bonus d\'équipe', () => {
     })
     expect(team.perkPoints).toBe(6)
   })
+
+  it('reset : chaque membre reçoit un team:perk par bonus remis à zéro', async () => {
+    // La dépense notifiait, la remise à zéro non : les autres membres
+    // gardaient à l'écran des rangs et un quota d'attaques périmés, juste
+    // après une opération dont la confirmation leur promet le contraire.
+    const wsManager = (app as any).iocContainer.wsManager
+    const received: Record<string, any[]> = {
+      [leaderId]: [],
+      [officerId]: [],
+      [memberId]: [],
+    }
+    const sockets = Object.entries(received).map(([userId, sink]) => {
+      const ws = {
+        readyState: 1,
+        send: (data: string) => sink.push(JSON.parse(data)),
+        on: () => {},
+      }
+      wsManager.register(userId, ws as any)
+      return ws
+    })
+    expect(sockets).toHaveLength(3)
+
+    await setTeamState(999, 0, { loot: 2, raid: 1 })
+    const res = await reset(cookiesLeader)
+    expect(res.statusCode).toBe(200)
+
+    for (const userId of [leaderId, officerId, memberId]) {
+      const perkEvents = received[userId]!.filter(
+        (event) => event.type === 'team:perk',
+      )
+      // Un événement par bonus, tous à rang 0, avec les points rendus.
+      expect(perkEvents.map((event) => event.key).sort()).toEqual([
+        'forge',
+        'loot',
+        'raid',
+        'xp',
+      ])
+      for (const event of perkEvents) {
+        expect(event.teamId).toBe(teamId)
+        expect(event.rank).toBe(0)
+        expect(event.perkPoints).toBe(3)
+      }
+    }
+  })
 })

@@ -2,6 +2,8 @@ import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import { calculateUserScore } from '../../../../../domain/scoring/scoring.domain'
+import type { TeamPerkKey } from '../../../../../domain/team-progression/team-progression-rules'
+import type { TeamPerkState } from '../../../../../types/domain/team-progression/team-progression.domain.interface'
 import type { TeamPerkEvent } from '../../../../ws/ws-manager'
 import {
   teamCreateBodySchema,
@@ -31,6 +33,42 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     scoringConfigRepository,
     userCardRepository,
   } = fastify.iocContainer
+
+  /**
+   * Pousse un `team:perk` par bonus touché, à CHAQUE membre de l'équipe —
+   * jamais `broadcast` : un rang de bonus ne regarde que cette équipe.
+   * Strictement APRÈS commit : les deux appelants reçoivent une vue déjà
+   * sortie de sa transaction.
+   *
+   * Une seule fonction pour la dépense et la remise à zéro, parce que la
+   * remise à zéro n'émettait rien du tout tant qu'elle avait son propre
+   * chemin.
+   */
+  async function notifyPerkChange(
+    teamId: string,
+    view: { teamId: string; perkPoints: number; perks: TeamPerkState[] },
+    keys: TeamPerkKey[],
+  ): Promise<void> {
+    if (keys.length === 0) {
+      return
+    }
+    const memberIds =
+      await teamProgressionRepository.listMemberIdsForTeam(teamId)
+    for (const key of keys) {
+      const event: TeamPerkEvent = {
+        type: 'team:perk',
+        teamId: view.teamId,
+        // Le NOUVEAU rang, lu dans la vue rendue par le domaine — jamais
+        // recalculé ici.
+        rank: view.perks.find((perk) => perk.key === key)?.rank ?? 0,
+        key,
+        perkPoints: view.perkPoints,
+      }
+      for (const memberId of memberIds) {
+        wsManager.notify(memberId, event)
+      }
+    }
+  }
 
   fastify.get(
     '/teams',
@@ -494,23 +532,8 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
         request.user.userID,
         key,
       )
-
-      // Strictement APRÈS commit (spendPerkPoint a déjà résolu la
-      // transaction), et par membre — jamais `broadcast` : un rang de bonus
-      // ne regarde que cette équipe.
-      const rank = view.perks.find((perk) => perk.key === key)?.rank ?? 0
-      const event: TeamPerkEvent = {
-        type: 'team:perk',
-        teamId: view.teamId,
-        key,
-        rank,
-        perkPoints: view.perkPoints,
-      }
-      const memberIds = await teamProgressionRepository.listMemberIdsForTeam(id)
-      for (const memberId of memberIds) {
-        wsManager.notify(memberId, event)
-      }
-
+      // Un seul rang a bougé : un seul événement.
+      await notifyPerkChange(id, view, [key])
       return view
     },
   )
@@ -524,7 +547,22 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
         response: { 200: teamPerksResponseSchema },
       },
     },
-    async (request) =>
-      teamProgressionDomain.resetPerks(request.params.id, request.user.userID),
+    async (request) => {
+      const { id } = request.params
+      const view = await teamProgressionDomain.resetPerks(
+        id,
+        request.user.userID,
+      )
+      // La remise à zéro touche les QUATRE rangs d'un coup : sans ces
+      // événements, les autres membres gardaient à l'écran des rangs et un
+      // quota d'attaques périmés — juste après une opération dont la
+      // confirmation leur promet qu'ils perdent immédiatement les effets.
+      await notifyPerkChange(
+        id,
+        view,
+        view.perks.map((perk) => perk.key),
+      )
+      return view
+    },
   )
 }
