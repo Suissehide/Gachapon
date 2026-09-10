@@ -11,7 +11,6 @@ import type {
   TeamListItem,
   TeamMembersView,
   TeamMemberView,
-  TeamSummary,
   TeamWithMembers,
 } from '../../types/domain/team/team.types'
 import type { ITeamProgressionDomain } from '../../types/domain/team-progression/team-progression.domain.interface'
@@ -118,6 +117,30 @@ export class TeamDomain implements TeamDomainInterface {
   async #maxMembers(): Promise<number> {
     const cfg = await this.#configService.getMany('team.maxMembers')
     return cfg['team.maxMembers']
+  }
+
+  /**
+   * Appartenance STRICTE, sans la tolérance de `getTeam`.
+   *
+   * `getTeam` laisse passer un invité en attente : c'était juste tant qu'il
+   * ne servait qu'un aperçu d'équipe (nom, effectif, propriétaire) à qui
+   * doit décider s'il accepte. La table des membres et l'historique de raid
+   * sont d'un autre ordre — niveau, points hebdomadaires, dégâts et
+   * dernière connexion de chaque membre. Une invitation ne donne pas droit
+   * à ça, et n'importe quel officier peut en émettre une.
+   */
+  async #requireMembership(
+    teamId: string,
+    userId: string,
+  ): Promise<TeamWithMembers> {
+    const team = await this.#teamRepo.findById(teamId)
+    if (!team) {
+      throw Boom.notFound('Team not found')
+    }
+    if (!team.members.some((member) => member.userId === userId)) {
+      throw Boom.forbidden('Not a member of this team')
+    }
+    return team
   }
 
   async #assertHasRoom(teamId: string): Promise<void> {
@@ -521,30 +544,43 @@ export class TeamDomain implements TeamDomainInterface {
     if (teams.length === 0) {
       return []
     }
-    const [maxMembers, badges] = await Promise.all([
-      this.#maxMembers(),
+    const [cfg, badges] = await Promise.all([
+      this.#configService.getMany('team.maxMembers', 'team.recruitDays'),
       this.#raidDomain.currentRaidBadges(
         teams.map((team) => team.id),
         now,
       ),
     ])
-    return teams.map((team) => ({
-      id: team.id,
-      name: team.name,
-      slug: team.slug,
-      description: team.description,
-      avatar: team.avatar,
-      ownerId: team.ownerId,
-      createdAt: team.createdAt,
-      level: team.level,
-      hue: resolveHue(team),
-      memberCount: team._count.members,
-      maxMembers,
-      // `null` quand l'équipe n'a pas encore ouvert son raid de la semaine.
-      // La liste ne le crée pas : ce serait figer les PV du boss sur
-      // l'effectif du moment, juste parce que quelqu'un a ouvert une page.
-      raid: badges.get(team.id) ?? null,
-    }))
+    return teams.map((team) => {
+      // Toujours présente : la requête ne renvoie que les équipes dont le
+      // lecteur est membre, et n'inclut que SA ligne d'appartenance.
+      const mine = team.members[0]
+      const role = mine?.role ?? 'MEMBER'
+      return {
+        id: team.id,
+        name: team.name,
+        slug: team.slug,
+        description: team.description,
+        avatar: team.avatar,
+        ownerId: team.ownerId,
+        createdAt: team.createdAt,
+        level: team.level,
+        hue: resolveHue(team),
+        memberCount: team._count.members,
+        maxMembers: cfg['team.maxMembers'],
+        myRole: role,
+        myRoleLabel: roleLabel(
+          role,
+          mine?.joinedAt ?? team.createdAt,
+          now,
+          cfg['team.recruitDays'],
+        ),
+        // `null` quand l'équipe n'a pas encore ouvert son raid de la
+        // semaine. La liste ne le crée pas : ce serait figer les PV du boss
+        // sur l'effectif du moment, juste parce qu'on a ouvert une page.
+        raid: badges.get(team.id) ?? null,
+      }
+    })
   }
 
   /**
@@ -597,6 +633,7 @@ export class TeamDomain implements TeamDomainInterface {
       hue: resolveHue(team),
       perkPoints: perks.perkPoints,
       perks: perks.perks,
+      maxRank: perks.maxRank,
       weekPts: weekly.total,
       rankGlobal,
       raidsWon,
@@ -617,7 +654,7 @@ export class TeamDomain implements TeamDomainInterface {
     userId: string,
     now: Date = new Date(),
   ): Promise<TeamMembersView> {
-    const team = await this.getTeam(teamId, userId)
+    const team = await this.#requireMembership(teamId, userId)
     const memberIds = team.members.map((member) => member.userId)
     const [cfg, weekly, raidStats, users] = await Promise.all([
       this.#configService.getMany('team.recruitDays'),
@@ -696,17 +733,13 @@ export class TeamDomain implements TeamDomainInterface {
     userId: string,
     now: Date = new Date(),
   ) {
-    await this.getTeam(teamId, userId)
+    await this.#requireMembership(teamId, userId)
     const cfg = await this.#configService.getMany('teamRaid.historyLimit')
     return this.#raidDomain.getHistory(
       teamId,
       cfg['teamRaid.historyLimit'],
       now,
     )
-  }
-
-  getMyTeams(userId: string): Promise<TeamSummary[]> {
-    return this.#teamRepo.findByUserId(userId)
   }
 
   async getTeam(teamId: string, userId: string): Promise<TeamWithMembers> {

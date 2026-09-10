@@ -46,6 +46,8 @@ export type TeamWithMembers = TeamEntity & {
 
 export type TeamSummary = TeamEntity & {
   _count: { members: number }
+  /** L'appartenance DU LECTEUR uniquement — la requête la filtre sur lui. */
+  members: { role: TeamMemberRole; joinedAt: Date }[]
 }
 
 export type InvitationEntity = {
@@ -81,6 +83,9 @@ export type TeamListItem = {
   hue: number
   memberCount: number
   maxMembers: number
+  /** Le rôle DU LECTEUR dans cette équipe, et son libellé français. */
+  myRole: TeamMemberRole
+  myRoleLabel: TeamMemberRoleLabel
   raid: TeamRaidBadge | null
 }
 
@@ -105,6 +110,8 @@ export type TeamDetail = {
   hue: number
   perkPoints: number
   perks: TeamPerkState[]
+  /** Rang maximum d'un bonus (config) : le front dessine `rang/maxRank`. */
+  maxRank: number
   /** Points de TOUTE l'équipe sur la semaine en cours. */
   weekPts: number
   /** Rang au classement d'équipes. `null` si l'équipe n'y figure pas. */

@@ -32,6 +32,14 @@ export class TeamRepository implements ITeamRepository {
       where: { members: { some: { userId } } },
       include: {
         _count: { select: { members: true } },
+        // La ligne d'appartenance DU LECTEUR, et elle seule : la liste
+        // affiche son propre rôle à côté du nombre de membres, et charger
+        // les 35 membres de chaque équipe pour en lire un seul serait
+        // absurde. Le `where` de la requête garantit qu'elle existe.
+        members: {
+          where: { userId },
+          select: { role: true, joinedAt: true },
+        },
       },
       orderBy: { createdAt: 'desc' },
     }) as unknown as Promise<TeamSummary[]>

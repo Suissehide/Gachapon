@@ -4,7 +4,6 @@ import type {
   TeamDetail,
   TeamListItem,
   TeamMembersView,
-  TeamSummary,
   TeamWithMembers,
 } from './team.types'
 
@@ -37,19 +36,19 @@ export interface TeamDomainInterface {
     data: { name: string; description?: string },
   ): Promise<TeamWithMembers>
   deleteTeam(teamId: string, userId: string): Promise<void>
-  getMyTeams(userId: string): Promise<TeamSummary[]>
+  /** Un invité en attente y a droit : c'est un aperçu, pas le roster. */
   getTeam(teamId: string, userId: string): Promise<TeamWithMembers>
   /** La liste « Mes équipes », raid de la semaine compris. */
   listMyTeams(userId: string, now?: Date): Promise<TeamListItem[]>
   /** L'en-tête de la fiche d'équipe. */
   getTeamDetail(teamId: string, userId: string, now?: Date): Promise<TeamDetail>
-  /** La table des membres, triée par dégâts de raid décroissants. */
+  /** La table des membres — MEMBRES uniquement, pas les invités en attente. */
   listMembers(
     teamId: string,
     userId: string,
     now?: Date,
   ): Promise<TeamMembersView>
-  /** Les semaines de raid révolues, plus récentes d'abord. */
+  /** Les semaines de raid révolues, plus récentes d'abord. Membres seuls. */
   listRaidHistory(
     teamId: string,
     userId: string,

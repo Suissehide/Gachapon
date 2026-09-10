@@ -1,5 +1,7 @@
 import { z } from 'zod/v4'
 
+import { towerElementSchema } from './tower.schema'
+
 export const teamIdParamSchema = z.object({ id: z.string().uuid() })
 
 export const teamUserIdParamSchema = z.object({
@@ -76,6 +78,14 @@ export const teamPerksResponseSchema = z.object({
 
 export const teamMemberRoleSchema = z.enum(['OWNER', 'ADMIN', 'MEMBER'])
 
+/** Les libellés français produits par `roleLabel` — jamais une chaîne libre. */
+const teamMemberRoleLabelSchema = z.enum([
+  'Chef',
+  'Officier',
+  'Membre',
+  'Recrue',
+])
+
 const teamUserMiniSchema = z.object({
   id: z.string(),
   username: z.string(),
@@ -124,6 +134,10 @@ export const teamListResponseSchema = z.object({
       hue: z.number().int(),
       memberCount: z.number().int(),
       maxMembers: z.number().int(),
+      // Le rôle DU LECTEUR : la carte de la liste l'affiche, et `ownerId`
+      // seul ne distingue pas un officier d'un simple membre.
+      myRole: teamMemberRoleSchema,
+      myRoleLabel: teamMemberRoleLabelSchema,
       raid: teamRaidBadgeSchema.nullable(),
     }),
   ),
@@ -147,6 +161,9 @@ export const teamDetailResponseSchema = z.object({
   hue: z.number().int(),
   perkPoints: z.number().int(),
   perks: z.array(teamPerkStateSchema),
+  // Le front dessine `rang/maxRank` et dimensionne ses pastilles dessus :
+  // c'est une valeur de config, il n'a pas le droit de la coder en dur.
+  maxRank: z.number().int(),
   weekPts: z.number().int(),
   rankGlobal: z.number().int().nullable(),
   raidsWon: z.number().int(),
@@ -162,7 +179,7 @@ export const teamMembersResponseSchema = z.object({
       userId: z.string(),
       user: teamUserMiniSchema,
       role: teamMemberRoleSchema,
-      roleLabel: z.enum(['Chef', 'Officier', 'Membre', 'Recrue']),
+      roleLabel: teamMemberRoleLabelSchema,
       joinedAt: z.date(),
       level: z.number().int(),
       weekPoints: z.number().int(),
@@ -181,7 +198,9 @@ export const teamRaidHistoryResponseSchema = z.object({
       weekKey: z.string(),
       endsAt: z.string(),
       bossName: z.string(),
-      bossElement: z.string(),
+      // Le front branche dessus (icône, couleur) : l'énumération est pinnée
+      // à la frontière plutôt que laissée en chaîne libre.
+      bossElement: towerElementSchema,
       maxHp: z.number().int(),
       damage: z.number().int(),
       pct: z.number().int(),

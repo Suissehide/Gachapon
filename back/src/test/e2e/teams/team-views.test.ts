@@ -1,6 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
-import { raidWeekKey } from '../../../main/domain/raid/raid-rules'
+import {
+  RAID_ROTATION,
+  raidElementForWeek,
+  raidWeekKey,
+} from '../../../main/domain/raid/raid-rules'
 import {
   hueFromName,
   xpForTeamLevel,
@@ -23,10 +27,16 @@ import { buildTestApp } from '../../helpers/build-test-app'
 
 const DAY_MS = 86_400_000
 
-/** Boss sur un élément HORS rotation de raid (FIRE/WATER/NATURE/EARTH) :
- *  aucun autre fichier e2e ne l'écrase, et les raids créés ici le pointent
- *  explicitement — l'élément n'a aucun effet sur ce qui est testé. */
-const BOSS_ELEMENT = 'LIGHT'
+/**
+ * Un élément de la rotation de raid — l'historique renvoie l'élément du boss
+ * et le schéma de réponse le pin sur cette énumération-là — mais NI celui de
+ * la semaine en cours (les deux suites de `e2e/raids` écrasent ce boss-là),
+ * NI WATER (`e2e/admin/admin-raid` le renomme). Les raids créés ici pointent
+ * ce boss explicitement : son élément n'a aucun autre effet.
+ */
+const BOSS_ELEMENT = RAID_ROTATION.filter(
+  (element) => element !== raidElementForWeek(raidWeekKey(new Date())) && element !== 'WATER',
+)[0] as string
 
 describe('Vues de la section Équipe', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
@@ -305,6 +315,31 @@ describe('Vues de la section Équipe', () => {
     expect(main.memberCount).toBe(4)
     expect(main.maxMembers).toBe(maxMembers)
     expect(main.raid).toEqual({ bossName: 'Gardien du Test', pct: 43 })
+    // La carte affiche le rôle du lecteur à côté de l'effectif : `ownerId`
+    // seul ne distinguerait pas un officier d'un simple membre.
+    expect(main.myRole).toBe('OWNER')
+    expect(main.myRoleLabel).toBe('Chef')
+  })
+
+  it('GET /teams : le rôle du lecteur suit son grade, pas seulement la propriété', async () => {
+    // Officier de l'équipe surchargée, propriétaire de la principale : deux
+    // libellés différents pour le même lecteur, dans la même réponse.
+    await prisma.teamMember.update({
+      where: { teamId_userId: { teamId: overTeamId, userId: meId } },
+      data: { role: 'ADMIN', joinedAt: new Date(Date.now() - 30 * DAY_MS) },
+    })
+    const body = (await get('/teams', cookiesMe)).json()
+    const over = body.teams.find((t: any) => t.id === overTeamId)
+    expect(over.myRole).toBe('ADMIN')
+    expect(over.myRoleLabel).toBe('Officier')
+    expect(
+      body.teams.find((t: any) => t.id === mainTeamId).myRoleLabel,
+    ).toBe('Chef')
+
+    await prisma.teamMember.update({
+      where: { teamId_userId: { teamId: overTeamId, userId: meId } },
+      data: { role: 'OWNER' },
+    })
   })
 
   it("GET /teams : raid null quand l'équipe n'a pas ouvert le raid de la semaine", async () => {
@@ -337,6 +372,11 @@ describe('Vues de la section Équipe', () => {
     )
     expect(body.motto).toBe(MAIN_MOTTO)
     expect(body.perkPoints).toBe(MAIN_PERK_POINTS)
+    // Le front dimensionne ses pastilles de rang dessus : sans ce champ il
+    // coderait 5 en dur, alors que c'est un tunable.
+    expect(body.maxRank).toBe(
+      (await configService.getMany('teamPerk.maxRank'))['teamPerk.maxRank'],
+    )
     expect(body.weekPts).toBe(80)
     expect(body.maxMembers).toBe(maxMembers)
     expect(body.memberCount).toBe(4)
@@ -447,6 +487,7 @@ describe('Vues de la section Équipe', () => {
 
     const [last] = body.raids
     expect(last.bossName).toBe('Gardien du Test')
+    expect(last.bossElement).toBe(BOSS_ELEMENT)
     expect(last.maxHp).toBe(RAID_MAX_HP)
     expect(last.damage).toBe(RAID_MAX_HP)
     expect(last.pct).toBe(100)
@@ -525,6 +566,65 @@ describe('Vues de la section Équipe', () => {
   })
 
   // ── Accès ──────────────────────────────────────────────────────────────
+
+  it("un invité en attente garde l'aperçu mais n'obtient ni le roster ni l'historique", async () => {
+    const invitation = await prisma.invitation.create({
+      data: {
+        teamId: mainTeamId,
+        invitedById: meId,
+        invitedUserId: joinerId,
+        expiresAt: new Date(Date.now() + DAY_MS),
+      },
+    })
+
+    try {
+      // L'aperçu reste ouvert : c'est ce sur quoi on décide d'accepter.
+      const preview = await get(`/teams/${mainTeamId}`, cookiesJoiner)
+      expect(preview.statusCode).toBe(200)
+      expect(preview.json().name).toBe(MAIN_TEAM_NAME)
+
+      // Le roster ne l'est pas : niveau, points, dégâts et dernière
+      // connexion de chaque membre ne se gagnent pas avec une invitation.
+      expect(
+        (await get(`/teams/${mainTeamId}/members`, cookiesJoiner)).statusCode,
+      ).toBe(403)
+      expect(
+        (await get(`/teams/${mainTeamId}/raids`, cookiesJoiner)).statusCode,
+      ).toBe(403)
+    } finally {
+      // Dans un `finally` : sans ça, une assertion qui tombe laisse le cas
+      // suivant face à un invité en attente et le fait échouer pour la
+      // mauvaise raison.
+      await prisma.invitation.delete({ where: { id: invitation.id } })
+    }
+  })
+
+  it('rangGlobal : deux chargements rapprochés ne font qu\'UNE passe de classement', async () => {
+    const container = (app as any).iocContainer
+    const repo = container.leaderboardRepository
+    const original = repo.getTeamsForRanking.bind(repo)
+    let passes = 0
+    repo.getTeamsForRanking = () => {
+      passes += 1
+      return original()
+    }
+    // Départ à froid : sans ça, le mémo d'un test précédent rendrait le
+    // comptage muet.
+    await container.redisClient.del('leaderboard:teams:ranking')
+
+    try {
+      const first = await get(`/teams/${mainTeamId}`, cookiesMe)
+      const second = await get(`/teams/${mainTeamId}`, cookiesMe)
+      const third = await get(`/teams/${overTeamId}`, cookiesMe)
+      expect(first.statusCode).toBe(200)
+      expect(first.json().rankGlobal).toBe(second.json().rankGlobal)
+      expect(typeof third.json().rankGlobal).toBe('number')
+      // Trois chargements de page, une seule passe de calcul.
+      expect(passes).toBe(1)
+    } finally {
+      repo.getTeamsForRanking = original
+    }
+  })
 
   it('les trois vues refusent un non-membre', async () => {
     for (const url of [
