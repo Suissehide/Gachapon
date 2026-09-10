@@ -2,11 +2,14 @@ import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import { calculateUserScore } from '../../../../../domain/scoring/scoring.domain'
+import type { TeamPerkEvent } from '../../../../ws/ws-manager'
 import {
   teamCreateBodySchema,
   teamIdParamSchema,
   teamInvitationIdParamSchema,
   teamInviteBodySchema,
+  teamPerkSpendBodySchema,
+  teamPerksResponseSchema,
   teamRankingQuerySchema,
   teamTokenParamSchema,
   teamTransferBodySchema,
@@ -15,8 +18,14 @@ import {
 } from '../../schemas/teams.schema'
 
 export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { teamDomain, scoringConfigRepository, userCardRepository } =
-    fastify.iocContainer
+  const {
+    teamDomain,
+    teamProgressionDomain,
+    teamProgressionRepository,
+    wsManager,
+    scoringConfigRepository,
+    userCardRepository,
+  } = fastify.iocContainer
 
   fastify.get(
     '/teams',
@@ -417,6 +426,58 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
         totalPages,
       }
     },
+  )
+
+  fastify.post(
+    '/teams/:id/perks',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        params: teamIdParamSchema,
+        body: teamPerkSpendBodySchema,
+        response: { 200: teamPerksResponseSchema },
+      },
+    },
+    async (request) => {
+      const { id } = request.params
+      const { key } = request.body
+      const view = await teamProgressionDomain.spendPerkPoint(
+        id,
+        request.user.userID,
+        key,
+      )
+
+      // Strictement APRÈS commit (spendPerkPoint a déjà résolu la
+      // transaction), et par membre — jamais `broadcast` : un rang de bonus
+      // ne regarde que cette équipe.
+      const rank = view.perks.find((perk) => perk.key === key)?.rank ?? 0
+      const event: TeamPerkEvent = {
+        type: 'team:perk',
+        teamId: view.teamId,
+        key,
+        rank,
+        perkPoints: view.perkPoints,
+      }
+      const memberIds = await teamProgressionRepository.listMemberIdsForTeam(id)
+      for (const memberId of memberIds) {
+        wsManager.notify(memberId, event)
+      }
+
+      return view
+    },
+  )
+
+  fastify.post(
+    '/teams/:id/perks/reset',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        params: teamIdParamSchema,
+        response: { 200: teamPerksResponseSchema },
+      },
+    },
+    async (request) =>
+      teamProgressionDomain.resetPerks(request.params.id, request.user.userID),
   )
 }
 
