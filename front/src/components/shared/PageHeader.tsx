@@ -20,7 +20,11 @@ export type Crumb =
 type Props = {
   breadcrumbs?: Crumb[]
   eyebrow?: string
-  title: string
+  // Optionnel : la fiche d'équipe n'a pas de titre de page — le nom de
+  // l'équipe vit dans sa carte d'identité, et le handoff ne montre au-dessus
+  // des deux colonnes que le fil d'Ariane. Toutes les autres pages passent
+  // un titre et sont inchangées.
+  title?: string
   subtitle?: ReactNode
   right?: ReactNode
 }
@@ -28,7 +32,13 @@ type Props = {
 const baseChip =
   'font-mono text-[11px] font-bold uppercase tracking-[0.25em] transition-colors'
 
-export function PageHeader({ breadcrumbs, eyebrow, title, subtitle, right }: Props) {
+export function PageHeader({
+  breadcrumbs,
+  eyebrow,
+  title,
+  subtitle,
+  right,
+}: Props) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
@@ -46,6 +56,7 @@ export function PageHeader({ breadcrumbs, eyebrow, title, subtitle, right }: Pro
               const isLast = i === breadcrumbs.length - 1
               return (
                 <span
+                  // biome-ignore lint/suspicious/noArrayIndexKey: fil d'Ariane statique, ordonné, jamais réordonné — l'index EST l'identité du cran
                   key={`${crumb.label}-${i}`}
                   className="flex items-center gap-x-1.5"
                 >
@@ -79,9 +90,11 @@ export function PageHeader({ breadcrumbs, eyebrow, title, subtitle, right }: Pro
             })}
           </nav>
         )}
-        <h1 className="mt-2 font-display text-[32px] font-extrabold leading-none tracking-[-0.03em] text-text sm:text-[44px] md:text-[48px]">
-          {title}
-        </h1>
+        {title && (
+          <h1 className="mt-2 font-display text-[32px] font-extrabold leading-none tracking-[-0.03em] text-text sm:text-[44px] md:text-[48px]">
+            {title}
+          </h1>
+        )}
         {subtitle && (
           <p className="mt-1 font-body text-sm text-text-light">{subtitle}</p>
         )}
