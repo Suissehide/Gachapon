@@ -13,6 +13,7 @@ import type { ICardRepository } from '../../types/infra/orm/repositories/card.re
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { IUserBoostRepository } from '../../types/infra/orm/repositories/user-boost.repository.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
+import type { ITeamProgressionDomain } from '../../types/domain/team-progression/team-progression.domain.interface'
 import type { Logger } from '../../types/utils/logger'
 import type {
   BetWithParties,
@@ -187,6 +188,7 @@ export class BetDomain implements IBetDomain {
   readonly #postgresOrm: PostgresOrm
   readonly #wsManager: WsManager
   readonly #logger: Logger
+  readonly #teamProgressionDomain: ITeamProgressionDomain
 
   constructor({
     configService,
@@ -200,6 +202,7 @@ export class BetDomain implements IBetDomain {
     postgresOrm,
     wsManager,
     logger,
+    teamProgressionDomain,
   }: IocContainer) {
     this.#configService = configService
     this.#teamRepository = teamRepository
@@ -212,6 +215,7 @@ export class BetDomain implements IBetDomain {
     this.#postgresOrm = postgresOrm
     this.#wsManager = wsManager
     this.#logger = logger
+    this.#teamProgressionDomain = teamProgressionDomain
   }
 
   /**
@@ -543,6 +547,20 @@ export class BetDomain implements IBetDomain {
     this.#wsManager.notify(outcome.bettorId, event)
     if (outcome.targetId !== outcome.bettorId) {
       this.#wsManager.notify(outcome.targetId, event)
+    }
+
+    // Seul un pari WON crédite le parieur — LOST et EXPIRED ne rapportent
+    // rien à la progression d'équipe. Comme les autres hooks de cette
+    // méthode, un échec ne doit jamais remonter : le règlement du pari
+    // lui-même est déjà acquis.
+    if (outcome.status === 'WON') {
+      void this.#teamProgressionDomain
+        .award(outcome.bettorId, outcome.teamId, 'BET_WON', 1)
+        .catch((err) =>
+          this.#logger.error(
+            `Crédit des points d'équipe échoué (pari ${outcome.betId}) : ${err instanceof Error ? err.message : String(err)}`,
+          ),
+        )
     }
   }
 

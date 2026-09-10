@@ -25,6 +25,7 @@ import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
 import type { TeamRepository } from '../../infra/orm/repositories/team.repository'
 import type { IScoringConfigRepository } from '../../types/infra/orm/repositories/scoring-config.repository.interface'
+import type { ITeamProgressionDomain } from '../../types/domain/team-progression/team-progression.domain.interface'
 import type { Logger } from '../../types/utils/logger'
 import type {
   DuelProposedEvent,
@@ -64,6 +65,7 @@ export class DuelDomain implements IDuelDomain {
   readonly #postgresOrm: PostgresOrm
   readonly #wsManager: WsManager
   readonly #logger: Logger
+  readonly #teamProgressionDomain: ITeamProgressionDomain
 
   constructor({
     configService,
@@ -76,6 +78,7 @@ export class DuelDomain implements IDuelDomain {
     postgresOrm,
     wsManager,
     logger,
+    teamProgressionDomain,
   }: IocContainer) {
     this.#configService = configService
     this.#teamRepository = teamRepository
@@ -87,6 +90,7 @@ export class DuelDomain implements IDuelDomain {
     this.#postgresOrm = postgresOrm
     this.#wsManager = wsManager
     this.#logger = logger
+    this.#teamProgressionDomain = teamProgressionDomain
   }
 
   /**
@@ -741,6 +745,20 @@ export class DuelDomain implements IDuelDomain {
     ])
     for (const recipientId of recipientIds) {
       this.#wsManager.notify(recipientId, event)
+    }
+
+    // Le vainqueur SEUL touche des points d'équipe ; le perdant, rien — une
+    // égalité (`winnerId === null`) ne crédite personne non plus. Comme les
+    // autres hooks de cette méthode, un échec ne doit jamais remonter :
+    // le règlement du duel lui-même est déjà acquis.
+    if (outcome.winnerId !== null) {
+      void this.#teamProgressionDomain
+        .award(outcome.winnerId, outcome.teamId, 'DUEL_WON', 1)
+        .catch((err) =>
+          this.#logger.error(
+            `Crédit des points d'équipe échoué (duel ${duelId}) : ${err instanceof Error ? err.message : String(err)}`,
+          ),
+        )
     }
   }
 

@@ -27,6 +27,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     activityDomain,
     duelDomain,
     betDomain,
+    teamProgressionDomain,
   } = fastify.iocContainer
 
   const resolveUrl = (key: string | null) =>
@@ -126,6 +127,13 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         .settleForUser(request.user.userID)
         .catch((err) => fastify.log.error({ err }, 'bet settle failed'))
 
+      // Crédite la progression de TOUTES les équipes du joueur : `teamId:
+      // null` fait résoudre son appartenance dans `award`. Un tirage = 1,
+      // jamais un nombre déjà pondéré.
+      void teamProgressionDomain
+        .award(request.user.userID, null, 'PULL', 1)
+        .catch((err) => fastify.log.error({ err }, 'team points failed'))
+
       return reply.status(201).send({
         card: {
           id: result.card.id,
@@ -224,6 +232,13 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
       void betDomain
         .settleForUser(request.user.userID)
         .catch((err) => fastify.log.error({ err }, 'bet settle failed'))
+
+      // Crédite la progression de TOUTES les équipes du joueur : `teamId:
+      // null` fait résoudre son appartenance dans `award`. La quantité brute
+      // est le nombre de tirages du lot, jamais un nombre déjà pondéré.
+      void teamProgressionDomain
+        .award(request.user.userID, null, 'PULL', count)
+        .catch((err) => fastify.log.error({ err }, 'team points failed'))
 
       return reply.status(201).send({
         pulls: pullsPayload,
