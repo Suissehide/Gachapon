@@ -110,9 +110,16 @@ export interface UserRepositoryInterface {
     id: string,
     suspended: boolean,
   ): Promise<{ suspended: boolean }>
+  /** `lastLoginAt` : dernière CONNEXION, pas dernière activité (cf. la liste des membres d'équipe). */
   findManyByIds(
     ids: string[],
   ): Promise<
-    { id: string; username: string; level: number; avatar: string | null }[]
+    {
+      id: string
+      username: string
+      level: number
+      avatar: string | null
+      lastLoginAt: Date | null
+    }[]
   >
 }

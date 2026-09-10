@@ -3,11 +3,13 @@ import Boom from '@hapi/boom'
 import type { EquipmentSlot, Prisma } from '../../../generated/client'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
+import type { ITeamProgressionDomain } from '../../types/domain/team-progression/team-progression.domain.interface'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import type { EquipmentBonuses } from '../combat/combat-stats.domain'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import {
+  discountedUpgradeGoldCost,
   EQUIP_MAX_LEVEL,
   INITIAL_SUBSTATS_BY_RARITY,
   isSubstatMilestone,
@@ -18,7 +20,6 @@ import {
   type Substat,
   type SubstatRanges,
   substatRangesFromConfig,
-  upgradeGoldCost,
 } from './equipment-progression'
 import {
   SET_BONUS_CONFIG_KEYS,
@@ -93,6 +94,14 @@ export interface EquipmentInstanceView {
   equippedOnId: string | null // UserCard.id when equipped
   equippedOnCardName: string | null
   obtainedAt: string // ISO
+  /**
+   * Le coût EXACT que `POST /equipment/:id/upgrade` facturera, remise du
+   * bonus d'équipe `forge` déjà appliquée — jamais recalculé côté front
+   * depuis la config publique, qui ne porte aucune donnée de bonus
+   * d'équipe. `null` au niveau maximum, où il n'y a plus d'amélioration à
+   * acheter.
+   */
+  nextUpgradeCost: number | null
 }
 
 export interface EquipmentUpgradeResult {
@@ -122,18 +131,24 @@ export class EquipmentDomain {
   readonly #postgresOrm: PostgresOrm
   readonly #configService: ConfigServiceInterface
   readonly #achievementsDomain: AchievementsDomainInterface
+  readonly #teamProgressionDomain: ITeamProgressionDomain
 
   constructor({
     postgresOrm,
     configService,
     achievementsDomain,
+    teamProgressionDomain,
   }: Pick<
     IocContainer,
-    'postgresOrm' | 'configService' | 'achievementsDomain'
+    | 'postgresOrm'
+    | 'configService'
+    | 'achievementsDomain'
+    | 'teamProgressionDomain'
   >) {
     this.#postgresOrm = postgresOrm
     this.#configService = configService
     this.#achievementsDomain = achievementsDomain
+    this.#teamProgressionDomain = teamProgressionDomain
   }
 
   /**
@@ -142,16 +157,29 @@ export class EquipmentDomain {
   async listUserEquipment(
     userId: string,
   ): Promise<{ items: EquipmentInstanceView[] }> {
-    const userEquipment = await this.#postgresOrm.prisma.userEquipment.findMany(
-      {
+    // Résolus UNE fois pour toute la requête — jamais dans le `.map()`
+    // ci-dessous, qui tournerait sinon une requête Postgres par pièce sur
+    // une route qui rend l'inventaire entier.
+    const [userEquipment, c, teamEffects] = await Promise.all([
+      this.#postgresOrm.prisma.userEquipment.findMany({
         where: { userId },
         include: {
           equipment: true,
           equippedOn: { include: { card: true } },
         },
         orderBy: { obtainedAt: 'desc' },
-      },
-    )
+      }),
+      this.#configService.getMany(
+        'equip.goldCostBase',
+        'equip.goldCostExp',
+        'card.rarityMultCommon',
+        'card.rarityMultUncommon',
+        'card.rarityMultRare',
+        'card.rarityMultEpic',
+        'card.rarityMultLegendary',
+      ),
+      this.#teamProgressionDomain.effectsForUser(userId),
+    ])
 
     return {
       items: userEquipment.map((ue) => ({
@@ -171,6 +199,16 @@ export class EquipmentDomain {
         equippedOnId: ue.equippedOnId,
         equippedOnCardName: ue.equippedOn?.card?.name ?? null,
         obtainedAt: ue.obtainedAt.toISOString(),
+        nextUpgradeCost:
+          ue.level >= EQUIP_MAX_LEVEL
+            ? null
+            : discountedUpgradeGoldCost(
+                ue.level,
+                c['equip.goldCostBase'],
+                c['equip.goldCostExp'],
+                c[RARITY_MULT_KEY[ue.equipment.rarity]],
+                teamEffects.forge,
+              ),
       })),
     }
   }
@@ -339,16 +377,19 @@ export class EquipmentDomain {
     userId: string,
     userEquipmentId: string,
   ): Promise<EquipmentUpgradeResult> {
-    const c = await this.#configService.getMany(
-      'equip.goldCostBase',
-      'equip.goldCostExp',
-      'card.rarityMultCommon',
-      'card.rarityMultUncommon',
-      'card.rarityMultRare',
-      'card.rarityMultEpic',
-      'card.rarityMultLegendary',
-      ...SUBSTAT_RANGE_CONFIG_KEYS,
-    )
+    const [c, teamEffects] = await Promise.all([
+      this.#configService.getMany(
+        'equip.goldCostBase',
+        'equip.goldCostExp',
+        'card.rarityMultCommon',
+        'card.rarityMultUncommon',
+        'card.rarityMultRare',
+        'card.rarityMultEpic',
+        'card.rarityMultLegendary',
+        ...SUBSTAT_RANGE_CONFIG_KEYS,
+      ),
+      this.#teamProgressionDomain.effectsForUser(userId),
+    ])
     const ranges = substatRangesFromConfig(c)
 
     return retryOnSerialization(() =>
@@ -365,11 +406,12 @@ export class EquipmentDomain {
             throw Boom.badRequest('Équipement déjà au niveau maximum')
           }
           const rarityMult = c[RARITY_MULT_KEY[ue.equipment.rarity]]
-          const cost = upgradeGoldCost(
+          const cost = discountedUpgradeGoldCost(
             ue.level,
             c['equip.goldCostBase'],
             c['equip.goldCostExp'],
             rarityMult,
+            teamEffects.forge,
           )
           const user = await tx.user.findUnique({
             where: { id: userId },

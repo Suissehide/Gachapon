@@ -17,6 +17,7 @@ import type { InvitationRepository } from '../../infra/orm/repositories/invitati
 import type { OAuthAccountRepository } from '../../infra/orm/repositories/oauth-account.repository'
 import type { SkillTreeRepository } from '../../infra/orm/repositories/skill-tree.repository'
 import type { TeamRepository } from '../../infra/orm/repositories/team.repository'
+import type { TeamProgressionRepository } from '../../infra/orm/repositories/team-progression.repository'
 import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
 import type { UserCardRepository } from '../../infra/orm/repositories/user-card.repository'
 import type { RefreshTokenRepository } from '../../infra/redis/refresh-token.repository'
@@ -43,6 +44,7 @@ import type {
 } from '../domain/skills/skill-tree.domain.interface'
 import type { StreakDomainInterface } from '../domain/streak/streak.domain.interface'
 import type { TeamDomainInterface } from '../domain/team/team.domain.interface'
+import type { ITeamProgressionDomain } from '../domain/team-progression/team-progression.domain.interface'
 import type { UserDomainInterface } from '../domain/user/user.domain.interface'
 import type { IWishlistDomain } from '../domain/wishlist/wishlist.domain.interface'
 import type { JwtServiceInterface } from '../infra/auth/jwt.service'
@@ -117,6 +119,8 @@ export interface IocContainer {
   readonly teamMemberRepository: TeamMemberRepository
   readonly invitationRepository: InvitationRepository
   readonly teamDomain: TeamDomainInterface
+  readonly teamProgressionRepository: TeamProgressionRepository
+  readonly teamProgressionDomain: ITeamProgressionDomain
   readonly mailService: IMailService
   readonly rewardRepository: RewardRepositoryInterface
   readonly streakMilestoneRepository: StreakMilestoneRepositoryInterface

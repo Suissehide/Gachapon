@@ -1,4 +1,4 @@
-import type { CardRarity, CardVariant } from '../../../../../generated/client'
+import type { CardVariant } from '../../../../../generated/client'
 
 export type CollectorRankingRowWithLevel = {
   userId: string
@@ -20,12 +20,11 @@ export type TeamForRanking = {
   memberIds: string[]
 }
 
+/** Le strict nécessaire au score d'équipe : cartes distinctes et variantes. */
 export type UserCardForScoring = {
   cardId: string
   userId: string
   variant: CardVariant
-  quantity: number
-  card: { rarity: CardRarity }
 }
 
 export type CombatTeamCardForPower = {

@@ -15,6 +15,24 @@ export function plural(n: number): string {
   return n > 1 ? 's' : ''
 }
 
+/**
+ * Replie une chaîne pour une comparaison de recherche : minuscules et
+ * diacritiques retirés. `NFD` décompose « é » en « e » + accent combinant,
+ * que la plage U+0300–U+036F (« Combining Diacritical Marks ») supprime —
+ * sur un effectif francophone, chercher « velenne » doit trouver
+ * « Vélenne » et inversement.
+ *
+ * `toLocaleLowerCase()` sans argument suit la locale de l'utilisateur : sur
+ * une locale turque, `I` deviendrait `ı` et ne correspondrait plus à `i`.
+ * D'où le `'fr'` explicite, indépendant du navigateur.
+ */
+export function foldForSearch(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('fr')
+}
+
 export function safeParse<T>(value: string | null, fallback: T): T {
   try {
     return value ? JSON.parse(value) : fallback

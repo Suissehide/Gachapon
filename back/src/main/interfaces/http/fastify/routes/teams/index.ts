@@ -2,12 +2,22 @@ import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import { calculateUserScore } from '../../../../../domain/scoring/scoring.domain'
+import type { TeamPerkKey } from '../../../../../domain/team-progression/team-progression-rules'
+import type { TeamPerkState } from '../../../../../types/domain/team-progression/team-progression.domain.interface'
+import type { TeamPerkEvent } from '../../../../ws/ws-manager'
 import {
   teamCreateBodySchema,
+  teamDetailResponseSchema,
   teamIdParamSchema,
   teamInvitationIdParamSchema,
   teamInviteBodySchema,
+  teamListResponseSchema,
+  teamMembersResponseSchema,
+  teamPerkSpendBodySchema,
+  teamPerksResponseSchema,
+  teamRaidHistoryResponseSchema,
   teamRankingQuerySchema,
+  teamResponseSchema,
   teamTokenParamSchema,
   teamTransferBodySchema,
   teamUpdateBodySchema,
@@ -15,30 +25,78 @@ import {
 } from '../../schemas/teams.schema'
 
 export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { teamDomain, scoringConfigRepository, userCardRepository } =
-    fastify.iocContainer
+  const {
+    teamDomain,
+    teamProgressionDomain,
+    teamProgressionRepository,
+    wsManager,
+    scoringConfigRepository,
+    userCardRepository,
+  } = fastify.iocContainer
+
+  /**
+   * Pousse un `team:perk` par bonus touché, à CHAQUE membre de l'équipe —
+   * jamais `broadcast` : un rang de bonus ne regarde que cette équipe.
+   * Strictement APRÈS commit : les deux appelants reçoivent une vue déjà
+   * sortie de sa transaction.
+   *
+   * Une seule fonction pour la dépense et la remise à zéro, parce que la
+   * remise à zéro n'émettait rien du tout tant qu'elle avait son propre
+   * chemin.
+   */
+  async function notifyPerkChange(
+    teamId: string,
+    view: { teamId: string; perkPoints: number; perks: TeamPerkState[] },
+    keys: TeamPerkKey[],
+  ): Promise<void> {
+    if (keys.length === 0) {
+      return
+    }
+    const memberIds =
+      await teamProgressionRepository.listMemberIdsForTeam(teamId)
+    for (const key of keys) {
+      const event: TeamPerkEvent = {
+        type: 'team:perk',
+        teamId: view.teamId,
+        // Le NOUVEAU rang, lu dans la vue rendue par le domaine — jamais
+        // recalculé ici.
+        rank: view.perks.find((perk) => perk.key === key)?.rank ?? 0,
+        key,
+        perkPoints: view.perkPoints,
+      }
+      for (const memberId of memberIds) {
+        wsManager.notify(memberId, event)
+      }
+    }
+  }
 
   fastify.get(
     '/teams',
-    { onRequest: [fastify.verifySessionCookie] },
-    async (request) => {
-      const teams = await teamDomain.getMyTeams(request.user.userID)
-      return { teams: teams.map(formatTeamSummary) }
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: { tags: ['Team'], response: { 200: teamListResponseSchema } },
     },
+    async (request) => ({
+      teams: await teamDomain.listMyTeams(request.user.userID),
+    }),
   )
 
   fastify.post(
     '/teams',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { body: teamCreateBodySchema },
+      schema: {
+        tags: ['Team'],
+        body: teamCreateBodySchema,
+        response: { 201: teamResponseSchema },
+      },
     },
     async (request, reply) => {
       const team = await teamDomain.createTeam(
         request.user.userID,
         request.body,
       )
-      return reply.status(201).send(formatTeam(team))
+      return reply.status(201).send(team)
     },
   )
 
@@ -46,31 +104,64 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/teams/:id',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: teamIdParamSchema },
+      schema: {
+        tags: ['Team'],
+        params: teamIdParamSchema,
+        response: { 200: teamDetailResponseSchema },
+      },
     },
-    async (request) => {
-      const team = await teamDomain.getTeam(
+    (request) =>
+      teamDomain.getTeamDetail(request.params.id, request.user.userID),
+  )
+
+  fastify.get(
+    '/teams/:id/members',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        tags: ['Team'],
+        params: teamIdParamSchema,
+        response: { 200: teamMembersResponseSchema },
+      },
+    },
+    (request) => teamDomain.listMembers(request.params.id, request.user.userID),
+  )
+
+  fastify.get(
+    '/teams/:id/raids',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        tags: ['Team'],
+        params: teamIdParamSchema,
+        response: { 200: teamRaidHistoryResponseSchema },
+      },
+    },
+    async (request) => ({
+      raids: await teamDomain.listRaidHistory(
         request.params.id,
         request.user.userID,
-      )
-      return formatTeam(team)
-    },
+      ),
+    }),
   )
 
   fastify.patch(
     '/teams/:id',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { params: teamIdParamSchema, body: teamUpdateBodySchema },
+      schema: {
+        tags: ['Team'],
+        params: teamIdParamSchema,
+        body: teamUpdateBodySchema,
+        response: { 200: teamResponseSchema },
+      },
     },
-    async (request) => {
-      const team = await teamDomain.updateTeam(
+    (request) =>
+      teamDomain.updateTeam(
         request.params.id,
         request.user.userID,
         request.body,
-      )
-      return formatTeam(team)
-    },
+      ),
   )
 
   fastify.delete(
@@ -367,7 +458,11 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
       const { id } = request.params
       const { page, limit } = request.query
 
-      const team = await teamDomain.getTeam(id, request.user.userID)
+      // `getTeamAsMember` : cette route rend le pseudo, l'avatar, le rôle
+      // et le score de collection de CHAQUE membre. C'est la même catégorie
+      // de donnée que le roster, et une invitation — que n'importe quel
+      // officier peut émettre — n'ouvre pas le détail des membres.
+      const team = await teamDomain.getTeamAsMember(id, request.user.userID)
       const config = await scoringConfigRepository.get()
 
       const memberIds = team.members.map((m) => m.userId)
@@ -418,56 +513,56 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
       }
     },
   )
-}
 
-interface RawMember {
-  id: string
-  userId: string
-  role: string
-  joinedAt: Date
-  user?: { id: string; username: string; avatar: string | null } | null
-}
+  fastify.post(
+    '/teams/:id/perks',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        params: teamIdParamSchema,
+        body: teamPerkSpendBodySchema,
+        response: { 200: teamPerksResponseSchema },
+      },
+    },
+    async (request) => {
+      const { id } = request.params
+      const { key } = request.body
+      const view = await teamProgressionDomain.spendPerkPoint(
+        id,
+        request.user.userID,
+        key,
+      )
+      // Un seul rang a bougé : un seul événement.
+      await notifyPerkChange(id, view, [key])
+      return view
+    },
+  )
 
-interface RawTeam {
-  id: string
-  name: string
-  slug: string
-  description: string | null
-  avatar: string | null
-  ownerId: string
-  createdAt: Date
-  members?: RawMember[]
-  _count?: { members: number }
-}
-
-function formatMember(m: RawMember) {
-  return {
-    id: m.id,
-    userId: m.userId,
-    role: m.role,
-    joinedAt: m.joinedAt,
-    user: m.user
-      ? { id: m.user.id, username: m.user.username, avatar: m.user.avatar }
-      : undefined,
-  }
-}
-
-function formatTeam(team: RawTeam) {
-  return {
-    id: team.id,
-    name: team.name,
-    slug: team.slug,
-    description: team.description,
-    avatar: team.avatar,
-    ownerId: team.ownerId,
-    createdAt: team.createdAt,
-    members: team.members?.map(formatMember) ?? [],
-  }
-}
-
-function formatTeamSummary(team: RawTeam) {
-  return {
-    ...formatTeam(team),
-    memberCount: team._count?.members ?? team.members?.length ?? 0,
-  }
+  fastify.post(
+    '/teams/:id/perks/reset',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        params: teamIdParamSchema,
+        response: { 200: teamPerksResponseSchema },
+      },
+    },
+    async (request) => {
+      const { id } = request.params
+      const view = await teamProgressionDomain.resetPerks(
+        id,
+        request.user.userID,
+      )
+      // La remise à zéro touche les QUATRE rangs d'un coup : sans ces
+      // événements, les autres membres gardaient à l'écran des rangs et un
+      // quota d'attaques périmés — juste après une opération dont la
+      // confirmation leur promet qu'ils perdent immédiatement les effets.
+      await notifyPerkChange(
+        id,
+        view,
+        view.perks.map((perk) => perk.key),
+      )
+      return view
+    },
+  )
 }

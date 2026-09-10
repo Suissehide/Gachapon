@@ -22,6 +22,8 @@ import {
 } from '../../queries/useWagers.ts'
 import { ArcadeCard } from '../shared/ArcadeCard.tsx'
 import { Button } from '../ui/button.tsx'
+import { listRowVariants } from '../ui/listRow.tsx'
+import { PanelTitle, SectionLabel } from '../ui/sectionHeading.tsx'
 import { BetPlacePopup } from './BetPlacePopup.tsx'
 import { DuelProposePopup } from './DuelProposePopup.tsx'
 import { DuelResultPopup } from './DuelResultPopup.tsx'
@@ -50,8 +52,8 @@ function ActiveDuelRow({ duel }: { duel: DuelView }) {
   return (
     <li
       className={cn(
-        'flex flex-col gap-1.5 rounded-xl border p-3',
-        mine ? 'border-primary/40 bg-primary/10' : 'border-border bg-card/60',
+        'flex flex-col gap-1.5',
+        listRowVariants({ tone: mine ? 'mine' : 'default' }),
       )}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -99,8 +101,8 @@ function PendingDuelRow({
   return (
     <li
       className={cn(
-        'flex flex-wrap items-center justify-between gap-2 rounded-xl border p-3',
-        mine ? 'border-primary/40 bg-primary/10' : 'border-border bg-card/60',
+        'flex flex-wrap items-center justify-between gap-2',
+        listRowVariants({ tone: mine ? 'mine' : 'default' }),
       )}
     >
       <span className="text-sm text-text">{text}</span>
@@ -168,8 +170,8 @@ function ActiveBetRow({ bet }: { bet: BetView }) {
   return (
     <li
       className={cn(
-        'flex flex-col gap-1.5 rounded-xl border p-3',
-        mine ? 'border-primary/40 bg-primary/10' : 'border-border bg-card/60',
+        'flex flex-col gap-1.5',
+        listRowVariants({ tone: mine ? 'mine' : 'default' }),
       )}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -364,15 +366,12 @@ export function WagersPanel({
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <div className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-              Duel de tirage
-            </div>
-            <h2 className="font-display text-2xl font-bold text-text">
-              Défis d'équipe
-            </h2>
+            <SectionLabel>Duel de tirage</SectionLabel>
+            <PanelTitle className="mt-1.5">Défis d'équipe</PanelTitle>
           </div>
           <Button
-            className="gap-2"
+            variant="amber"
+            size="action"
             disabled={!canChallenge}
             title={challengeLabel}
             onClick={() => setProposeOpen(true)}
@@ -407,15 +406,12 @@ export function WagersPanel({
 
         <div className="flex flex-wrap items-end justify-between gap-3 border-t border-border/60 pt-4">
           <div>
-            <div className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-              Pari sur un tirage
-            </div>
-            <h2 className="font-display text-2xl font-bold text-text">
-              Paris entre coéquipiers
-            </h2>
+            <SectionLabel>Pari sur un tirage</SectionLabel>
+            <PanelTitle className="mt-1.5">Paris entre coéquipiers</PanelTitle>
           </div>
           <Button
-            className="gap-2"
+            variant="amber"
+            size="action"
             disabled={!canBet}
             title={betLabel}
             onClick={() => setBetOpen(true)}
@@ -439,10 +435,10 @@ export function WagersPanel({
         )}
 
         <div>
-          <div className="mb-1 flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
+          <SectionLabel as="h3" className="mb-2 flex items-center gap-1.5">
             <Trophy className="h-3 w-3" />
             Duels & paris réglés
-          </div>
+          </SectionLabel>
           {history.length === 0 ? (
             <p className="text-sm text-text-light">
               Aucun duel ni pari réglé pour l'instant.

@@ -2,12 +2,27 @@
   --primary: #f59e0b;
   --primary-light: #fbbf24;
   --primary-dark: #d97706;
+  /* Encre ambrée pour TEXTE sur fond ambré très clair — chip de minuteur
+     (`.tm-chip--amber`, #92400e) et pourcentage d'un palier acquis
+     (`.tm-tier--done .tm-tier-pct`, #b45309) du handoff équipe.
+     --primary-dark (#d97706) n'y tient que 3,0:1, ce qui est illisible sur
+     un libellé mono gras de 10-11 px ; #b45309 monte à 4,7:1 et #92400e à
+     6,7:1. Une seule valeur pour les deux placements, et c'est la plus
+     sombre des deux qui gagne : elle tient la barre partout, là où
+     l'inverse aurait laissé la chip juste au-dessus du minimum. Même parti
+     pris que --secondary-dark plus bas — un token d'ENCRE, pas un token par
+     hexadécimal du handoff. */
+  --primary-darker: #92400e;
   --primary-foreground: #ffffff;
 
   --fc-event-bg-color: #f59e0b;
   --fc-event-border-color: #f59e0b;
 
   --secondary: #ec4899;
+  /* Pendant de --primary-dark côté rose : l'encre des pastilles roses sur
+     fond très clair (bonus « Carte Épique » d'un palier de raid, handoff
+     `.tm-tier-bonus`), où --secondary lui-même manquerait de contraste. */
+  --secondary-dark: #9d174d;
   --secondary-foreground: #ffffff;
 
   --accent: #8b5cf6;
@@ -45,6 +60,38 @@
   --surface-3: #f4f0eb;
   --amber-soft: #fde68a;
   --amber-deep: #d97706;
+
+  /* Couleurs des quatre bonus d'équipe — handoff `docs/design_handoff_equipe`
+     (bloc `PerkRows`, variable `--pc`). Trois reprennent une teinte déjà
+     tokenisée, la quatrième (forge) n'en avait aucune : les quatre sont
+     déclarées ensemble pour que la palette des bonus se relise et se
+     retouche d'un bloc, plutôt que trois alias plus un hex isolé. */
+  --perk-loot: var(--primary);
+  --perk-raid: var(--destructive);
+  --perk-xp: var(--accent);
+  --perk-forge: #3b82f6;
+
+  /* Couleurs des quatre libellés de rôle d'équipe — handoff
+     `docs/design_handoff_equipe`, `ROLE_COLOR` d'`equipe-data.jsx`, injecté
+     par `--rc` sur `.tm-role`. Même parti pris que le bloc `--perk-*`
+     ci-dessus : les quatre teintes sont déclarées ensemble pour se relire
+     d'un bloc, deux reprenant une teinte déjà tokenisée et les deux autres
+     n'en ayant aucune. `--role-recruit` est volontairement une encre
+     atténuée et non une couleur : une recrue n'a pas de teinte propre. */
+  --role-owner: var(--primary);
+  --role-admin: var(--accent);
+  --role-member: #3b82f6;
+  --role-recruit: rgba(27, 23, 38, 0.4);
+
+  /* Encre de la lettre d'un avatar de membre (handoff `.tm-av`) : brun
+     ambré fixe, quelle que soit la teinte du dégradé pastel derrière —
+     c'est ce qui garde les douze avatars d'une liste lisibles ensemble. */
+  --avatar-ink: #7c2d12;
+
+  /* Piste des barres graduées (équipe) — handoff `docs/design_handoff_equipe`,
+     `.tm-hp-track`. Distincte de --surface-2/3 : plus chaude, réservée aux
+     jauges de progression plutôt qu'aux surfaces de carte. */
+  --track: #f3ede4;
 
   --rarity-common: #6b7280;
   --rarity-uncommon: #22c55e;

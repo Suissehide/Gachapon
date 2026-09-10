@@ -1,11 +1,5 @@
-import {
-  useInfiniteQuery,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import type { TeamRankingPage } from '../api/teams.api.ts'
 import { TeamsApi } from '../api/teams.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
@@ -262,16 +256,6 @@ export const useDeclineInvitation = () => {
     },
   })
 }
-
-export const useTeamRanking = (teamId: string) =>
-  useInfiniteQuery({
-    queryKey: ['teamRanking', teamId],
-    queryFn: ({ pageParam }) => TeamsApi.getTeamRanking(teamId, pageParam),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage: TeamRankingPage) =>
-      lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
-    enabled: !!teamId,
-  })
 
 export const useTeamInvitations = (teamId: string | undefined) => {
   const query = useQuery({

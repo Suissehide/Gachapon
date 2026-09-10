@@ -214,15 +214,16 @@ model User {
   towerProgress    UserTowerProgress[]
 
   wishlistCardId      String?
-  wishlistCard        Card?           @relation("UserWishlist", fields: [wishlistCardId], references: [id], onDelete: SetNull)
+  wishlistCard        Card?              @relation("UserWishlist", fields: [wishlistCardId], references: [id], onDelete: SetNull)
   wishlistPurchasedAt DateTime?
   boosts              UserBoost[]
   activityEvents      ActivityEvent[]
   raidAttacks         RaidAttack[]
-  duelsAsChallenger   Duel[]          @relation("DuelChallenger")
-  duelsAsOpponent     Duel[]          @relation("DuelOpponent")
-  betsPlaced          Bet[]           @relation("BetBettor")
-  betsReceived        Bet[]           @relation("BetTarget")
+  duelsAsChallenger   Duel[]             @relation("DuelChallenger")
+  duelsAsOpponent     Duel[]             @relation("DuelOpponent")
+  betsPlaced          Bet[]              @relation("BetBettor")
+  betsReceived        Bet[]              @relation("BetTarget")
+  weeklies            TeamMemberWeekly[]
 }
 
 model UserBoost {
@@ -279,6 +280,15 @@ model Team {
   duels       Duel[]
   bets        Bet[]
 
+  level      Int                @default(1)
+  /// Progression DANS le niveau courant, pas un cumul : à la montée de niveau on retranche le seuil franchi.
+  xp         Int                @default(0)
+  motto      String?
+  hue        Int?
+  perkPoints Int                @default(0)
+  perks      TeamPerk[]
+  weeklies   TeamMemberWeekly[]
+
   @@index([ownerId])
 }
 
@@ -293,6 +303,30 @@ model TeamMember {
 
   @@unique([teamId, userId])
   @@index([userId])
+}
+
+model TeamPerk {
+  id     String @id @default(uuid())
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  key    String
+  rank   Int    @default(0)
+
+  @@unique([teamId, key])
+  @@index([teamId])
+}
+
+model TeamMemberWeekly {
+  id      String @id @default(uuid())
+  teamId  String
+  team    Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weekKey String
+  points  Int    @default(0)
+
+  @@unique([teamId, userId, weekKey])
+  @@index([teamId, weekKey])
 }
 
 model Invitation {

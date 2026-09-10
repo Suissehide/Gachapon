@@ -584,15 +584,13 @@ function EquipmentCard({
     baseBoost: item.baseBoost,
   }
 
-  // Coût d'amélioration — même formule que `upgradeGoldCost` côté serveur
-  // (base × exp^(niveau-1) × multiplicateur de rareté). Le multiplicateur est
-  // celui des cartes, que le domaine réutilise pour l'équipement.
-  const atMaxLevel = item.level >= economy.equip.maxLevel
-  const upgradeCost = Math.round(
-    economy.equip.goldCostBase *
-      economy.equip.goldCostExp ** (item.level - 1) *
-      (economy.card.rarityMult[item.rarity] ?? 1),
-  )
+  // Coût d'amélioration : renvoyé PAR LE SERVEUR, remise du bonus d'équipe
+  // forge déjà appliquée (`nextUpgradeCost`, null au niveau maximum).
+  // Jamais recalculé ici — `useEconomyConfig` ne porte aucune donnée de
+  // bonus d'équipe, un recalcul afficherait le prix plein pendant que le
+  // serveur facture le prix remisé.
+  const atMaxLevel = item.nextUpgradeCost === null
+  const upgradeCost = item.nextUpgradeCost ?? 0
   const salvageGold = economy.equip.salvageGold[item.rarity] ?? 0
   const busy = isPending || upgradeItem.isPending || salvageItems.isPending
   // On ne vend pas une pièce portée : le serveur la refuse, autant le dire

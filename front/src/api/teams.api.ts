@@ -2,11 +2,9 @@ import { apiUrl } from '../constants/config.constant.ts'
 import type {
   Invitation,
   MyInvitation,
-  RankedMember,
   Team,
   TeamInvitation,
   TeamMember,
-  TeamRankingPage,
   TeamSummary,
 } from '../constants/teams.constant.ts'
 import { TEAM_ROUTES } from '../constants/teams.constant.ts'
@@ -21,8 +19,6 @@ export type {
   Invitation,
   MyInvitation,
   TeamInvitation,
-  RankedMember,
-  TeamRankingPage,
 }
 
 export const TeamsApi = {
@@ -55,7 +51,7 @@ export const TeamsApi = {
           },
           403: {
             title: 'Accès refusé',
-            message: "Tu ne fais pas partie de cette équipe.",
+            message: 'Tu ne fais pas partie de cette équipe.',
           },
         },
         "Chargement de l'équipe",
@@ -161,7 +157,7 @@ export const TeamsApi = {
         {
           400: {
             title: 'Utilisateur introuvable',
-            message: "Aucun compte ne correspond à cette recherche.",
+            message: 'Aucun compte ne correspond à cette recherche.',
           },
           403: {
             title: 'Action non autorisée',
@@ -173,7 +169,8 @@ export const TeamsApi = {
           },
           409: {
             title: 'Déjà invité',
-            message: 'Cette personne a déjà une invitation en attente ou fait déjà partie de l\'équipe.',
+            message:
+              "Cette personne a déjà une invitation en attente ou fait déjà partie de l'équipe.",
           },
         },
         'Invitation',
@@ -219,7 +216,8 @@ export const TeamsApi = {
         {
           403: {
             title: 'Impossible de quitter',
-            message: "Le créateur ne peut pas quitter son équipe. Supprime-la à la place.",
+            message:
+              'Le créateur ne peut pas quitter son équipe. Supprime-la à la place.',
           },
           404: {
             title: 'Équipe introuvable',
@@ -316,20 +314,6 @@ export const TeamsApi = {
     return res.json()
   },
 
-  getTeamRanking: async (
-    teamId: string,
-    page: number,
-    limit = 20,
-  ): Promise<TeamRankingPage> => {
-    const res = await fetchWithAuth(
-      `${apiUrl}${TEAM_ROUTES.ranking(teamId, page, limit)}`,
-    )
-    if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la récupération du classement')
-    }
-    return res.json()
-  },
-
   getTeamInvitations: async (
     teamId: string,
   ): Promise<{ invitations: TeamInvitation[] }> => {
@@ -420,7 +404,7 @@ export const TeamsApi = {
             message: 'Le terme de recherche est trop court ou invalide.',
           },
         },
-        'Recherche d\'utilisateurs',
+        "Recherche d'utilisateurs",
       )
     }
     return res.json()

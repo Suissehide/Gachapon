@@ -33,17 +33,18 @@ export class LeaderboardRepository implements ILeaderboardRepository {
     return { total, variantEligible }
   }
 
+  /**
+   * C'est la plus grosse charge de la requête de classement : une ligne par
+   * carte possédée par chaque membre de chaque équipe. On n'y sélectionne
+   * donc QUE ce que le score consomme — l'identité de la carte, son
+   * propriétaire, sa variante. La rareté et la quantité étaient jointes
+   * pour personne.
+   */
   getUserCardsByUserIds(userIds: string[]): Promise<UserCardForScoring[]> {
     return this.#prisma.userCard.findMany({
       where: { userId: { in: userIds } },
-      select: {
-        cardId: true,
-        userId: true,
-        variant: true,
-        quantity: true,
-        card: { select: { rarity: true } },
-      },
-    }) as Promise<UserCardForScoring[]>
+      select: { cardId: true, userId: true, variant: true },
+    })
   }
 
   getCollectorRankingWithLevel(

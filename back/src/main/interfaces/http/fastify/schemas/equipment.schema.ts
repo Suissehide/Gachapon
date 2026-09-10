@@ -31,6 +31,11 @@ export const equipmentInstanceSchema = z.object({
   equippedOnId: z.string().nullable(),
   equippedOnCardName: z.string().nullable(),
   obtainedAt: z.string(),
+  // Coût exact que POST /equipment/:id/upgrade facturera (remise du bonus
+  // d'équipe `forge` déjà appliquée) ; null au niveau maximum. Le front
+  // affiche et désactive le bouton d'amélioration sur ce champ — jamais un
+  // recalcul depuis la config publique, qui ne porte aucun bonus d'équipe.
+  nextUpgradeCost: z.number().int().nullable(),
 })
 
 export const equipmentListResponseSchema = z.object({

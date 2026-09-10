@@ -106,6 +106,17 @@ const economyConfigResponseSchema = z.object({
     minStake: z.number(),
     maxStake: z.number(),
   }),
+  team: z.object({
+    maxMembers: z.number(),
+    recruitDays: z.number(),
+    perkMaxRank: z.number(),
+    perks: z.object({
+      loot: z.object({ perRank: z.number(), unlockLevel: z.number() }),
+      raid: z.object({ perRank: z.number(), unlockLevel: z.number() }),
+      xp: z.object({ perRank: z.number(), unlockLevel: z.number() }),
+      forge: z.object({ perRank: z.number(), unlockLevel: z.number() }),
+    }),
+  }),
 })
 
 export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
@@ -165,6 +176,17 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
         'bet.pullWindow',
         'bet.minStake',
         'bet.maxStake',
+        'team.maxMembers',
+        'team.recruitDays',
+        'teamPerk.maxRank',
+        'teamPerk.loot.perRank',
+        'teamPerk.loot.unlockLevel',
+        'teamPerk.raid.perRank',
+        'teamPerk.raid.unlockLevel',
+        'teamPerk.xp.perRank',
+        'teamPerk.xp.unlockLevel',
+        'teamPerk.forge.perRank',
+        'teamPerk.forge.unlockLevel',
         ...SUBSTAT_RANGE_CONFIG_KEYS,
       )
       return {
@@ -246,6 +268,29 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
           pullWindow: c['bet.pullWindow'],
           minStake: c['bet.minStake'],
           maxStake: c['bet.maxStake'],
+        },
+        team: {
+          maxMembers: c['team.maxMembers'],
+          recruitDays: c['team.recruitDays'],
+          perkMaxRank: c['teamPerk.maxRank'],
+          perks: {
+            loot: {
+              perRank: c['teamPerk.loot.perRank'],
+              unlockLevel: c['teamPerk.loot.unlockLevel'],
+            },
+            raid: {
+              perRank: c['teamPerk.raid.perRank'],
+              unlockLevel: c['teamPerk.raid.unlockLevel'],
+            },
+            xp: {
+              perRank: c['teamPerk.xp.perRank'],
+              unlockLevel: c['teamPerk.xp.unlockLevel'],
+            },
+            forge: {
+              perRank: c['teamPerk.forge.perRank'],
+              unlockLevel: c['teamPerk.forge.unlockLevel'],
+            },
+          },
         },
       }
     },

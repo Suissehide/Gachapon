@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 import { buildTestApp } from '../../helpers/build-test-app'
 import { mondayOfUtcWeek } from '../../../main/domain/quests/quest-matching'
+import { hueFromName } from '../../../main/domain/team-progression/team-progression-rules'
 
 describe('Teams routes', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
@@ -93,6 +94,71 @@ describe('Teams routes', () => {
       headers: { cookie: cookiesB },
     })
     expect(res.statusCode).toBe(403)
+  })
+
+  it('PATCH /teams/:id — écrit la devise et la teinte, et sait les effacer', async () => {
+    // Les deux colonnes de la migration d'identité n'étaient acceptées par
+    // AUCUN corps de requête : la devise restait nulle à jamais et la ligne
+    // sous le nom de l'équipe ne pouvait pas s'afficher. Le test affirme sur
+    // `res.json()` — c'est le seul filet contre le filtre silencieux de
+    // `fastify-type-provider-zod` sur le schéma de réponse.
+    const patched = await app.inject({
+      method: 'PATCH',
+      url: `/teams/${teamId}`,
+      headers: { cookie: cookiesA },
+      payload: {
+        name: `Team${suffix}`,
+        motto: 'On tape le boss le lundi.',
+        hue: 200,
+      },
+    })
+    expect(patched.statusCode).toBe(200)
+    expect(patched.json().motto).toBe('On tape le boss le lundi.')
+    expect(patched.json().hue).toBe(200)
+
+    const detail = await app.inject({
+      method: 'GET',
+      url: `/teams/${teamId}`,
+      headers: { cookie: cookiesA },
+    })
+    expect(detail.json().motto).toBe('On tape le boss le lundi.')
+    expect(detail.json().hue).toBe(200)
+
+    // `null` efface : la devise disparaît, et la teinte retombe sur le
+    // hachage du nom (`hueFromName`), jamais sur un `null` servi à `hsl()`.
+    const cleared = await app.inject({
+      method: 'PATCH',
+      url: `/teams/${teamId}`,
+      headers: { cookie: cookiesA },
+      payload: { name: `Team${suffix}`, motto: null, hue: null },
+    })
+    expect(cleared.statusCode).toBe(200)
+    expect(cleared.json().motto).toBeNull()
+    expect(cleared.json().hue).toBeNull()
+
+    const rederived = await app.inject({
+      method: 'GET',
+      url: `/teams/${teamId}`,
+      headers: { cookie: cookiesA },
+    })
+    expect(rederived.json().motto).toBeNull()
+    expect(rederived.json().hue).toBe(hueFromName(`Team${suffix}`))
+
+    // Bornes de la spec : 160 caractères et 0-359.
+    const tooLong = await app.inject({
+      method: 'PATCH',
+      url: `/teams/${teamId}`,
+      headers: { cookie: cookiesA },
+      payload: { name: `Team${suffix}`, motto: 'a'.repeat(161) },
+    })
+    expect(tooLong.statusCode).toBe(400)
+    const outOfRange = await app.inject({
+      method: 'PATCH',
+      url: `/teams/${teamId}`,
+      headers: { cookie: cookiesA },
+      payload: { name: `Team${suffix}`, hue: 360 },
+    })
+    expect(outOfRange.statusCode).toBe(400)
   })
 
   it('POST /teams/:id/invite — invite par username', async () => {

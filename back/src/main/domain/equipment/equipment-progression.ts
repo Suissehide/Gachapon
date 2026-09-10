@@ -127,6 +127,31 @@ export function upgradeGoldCost(
   return Math.round(base * exp ** (currentLevel - 1) * rarityMult)
 }
 
+/**
+ * Coût d'amélioration APRÈS remise du bonus d'équipe `forge` — multiplicatif
+ * sur le résultat déjà arrondi de `upgradeGoldCost`, jamais injecté plus tôt
+ * dans le calcul.
+ *
+ * UNE SEULE fonction pure derrière laquelle deux appelants doivent se
+ * ranger : la charge réelle (`equipment.domain.ts#upgrade`) et la
+ * prévisualisation renvoyée par `listUserEquipment` pour l'écran d'inventaire.
+ * Avant cette extraction, le front recalculait le prix depuis la config
+ * publique (qui ne porte aucune donnée de bonus d'équipe) — l'écran
+ * affichait le prix plein pendant que le serveur facturait le prix remisé,
+ * et un joueur dont l'or tombait entre les deux se voyait refuser une
+ * amélioration qu'il pouvait pourtant payer.
+ */
+export function discountedUpgradeGoldCost(
+  currentLevel: number,
+  base: number,
+  exp: number,
+  rarityMult: number,
+  forgeBonusPct: number,
+): number {
+  const rawCost = upgradeGoldCost(currentLevel, base, exp, rarityMult)
+  return Math.round(rawCost * (1 - forgeBonusPct / 100))
+}
+
 export function isSubstatMilestone(level: number): boolean {
   return level % EQUIP_SUBSTAT_MILESTONE === 0
 }

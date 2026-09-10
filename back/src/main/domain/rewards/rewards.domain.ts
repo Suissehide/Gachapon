@@ -12,6 +12,7 @@ import type {
   ClaimResult,
   RewardsDomainInterface,
 } from '../../types/domain/rewards/rewards.domain.interface'
+import type { ITeamProgressionDomain } from '../../types/domain/team-progression/team-progression.domain.interface'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import type { ICardRepository } from '../../types/infra/orm/repositories/card.repository.interface'
@@ -25,7 +26,10 @@ import type {
 } from '../../types/infra/orm/repositories/user-reward.repository.interface'
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import type { UnlockedAchievement } from '../achievements/events.types'
-import { calculateTokens } from '../economy/economy.domain'
+import {
+  calculateTokens,
+  effectiveRegenInterval,
+} from '../economy/economy.domain'
 import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
 import { calculateLevel } from '../shared/xp'
 
@@ -40,6 +44,7 @@ export class RewardsDomain implements RewardsDomainInterface {
   readonly #userCardRepository: IUserCardRepository
   readonly #activityDomain: IActivityDomain
   readonly #combatPointsTx: IocContainer['combatPointsTx']
+  readonly #teamProgressionDomain: ITeamProgressionDomain
 
   constructor({
     userRewardRepository,
@@ -52,6 +57,7 @@ export class RewardsDomain implements RewardsDomainInterface {
     userCardRepository,
     activityDomain,
     combatPointsTx,
+    teamProgressionDomain,
   }: Pick<
     IocContainer,
     | 'userRewardRepository'
@@ -64,6 +70,7 @@ export class RewardsDomain implements RewardsDomainInterface {
     | 'userCardRepository'
     | 'activityDomain'
     | 'combatPointsTx'
+    | 'teamProgressionDomain'
   >) {
     this.#userRewardRepository = userRewardRepository
     this.#userRepository = userRepository
@@ -74,6 +81,7 @@ export class RewardsDomain implements RewardsDomainInterface {
     this.#cardRepository = cardRepository
     this.#userCardRepository = userCardRepository
     this.#activityDomain = activityDomain
+    this.#teamProgressionDomain = teamProgressionDomain
     this.#combatPointsTx = combatPointsTx
   }
 
@@ -180,7 +188,7 @@ export class RewardsDomain implements RewardsDomainInterface {
           gold: rewardGold,
         } = userReward.reward
 
-        const [upgrades, cfg] = await Promise.all([
+        const [upgrades, cfg, teamEffects] = await Promise.all([
           this.#skillTreeRepository.getEffectsForUser(userId),
           this.#configService.getMany(
             'tokenRegenIntervalMinutes',
@@ -190,11 +198,13 @@ export class RewardsDomain implements RewardsDomainInterface {
             'xp.levelCap',
             'levelup.refillEnergy',
           ),
+          this.#teamProgressionDomain.effectsForUser(userId),
         ])
-        const effectiveInterval = Math.max(
-          1,
-          cfg.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes,
-        )
+        const effectiveInterval = effectiveRegenInterval({
+          intervalMinutes: cfg.tokenRegenIntervalMinutes,
+          reductionMinutes: upgrades.regenReductionMinutes,
+          lootBonusPct: teamEffects.loot,
+        })
         const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
         const { tokens: regenTokens, newLastTokenAt } = calculateTokens(
           user.lastTokenAt,
@@ -388,7 +398,7 @@ export class RewardsDomain implements RewardsDomainInterface {
         const totalXp = pending.reduce((sum, r) => sum + r.reward.xp, 0)
         const totalGold = pending.reduce((sum, r) => sum + r.reward.gold, 0)
 
-        const [upgrades, cfg] = await Promise.all([
+        const [upgrades, cfg, teamEffects] = await Promise.all([
           this.#skillTreeRepository.getEffectsForUser(userId),
           this.#configService.getMany(
             'tokenRegenIntervalMinutes',
@@ -398,11 +408,13 @@ export class RewardsDomain implements RewardsDomainInterface {
             'xp.levelCap',
             'levelup.refillEnergy',
           ),
+          this.#teamProgressionDomain.effectsForUser(userId),
         ])
-        const effectiveInterval = Math.max(
-          1,
-          cfg.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes,
-        )
+        const effectiveInterval = effectiveRegenInterval({
+          intervalMinutes: cfg.tokenRegenIntervalMinutes,
+          reductionMinutes: upgrades.regenReductionMinutes,
+          lootBonusPct: teamEffects.loot,
+        })
         const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
         const { tokens: regenTokens, newLastTokenAt } = calculateTokens(
           user.lastTokenAt,

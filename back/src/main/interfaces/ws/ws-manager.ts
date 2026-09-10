@@ -119,6 +119,31 @@ export type BetSettledEvent = {
   targetId: string
 }
 
+/**
+ * Une équipe vient de franchir au moins un seuil d'XP. Poussé à CHAQUE
+ * membre après le commit du crédit de points, jamais diffusé : un niveau
+ * d'équipe ne regarde que cette équipe.
+ */
+export type TeamLevelUpEvent = {
+  type: 'team:levelup'
+  teamId: string
+  level: number
+  perkPoints: number
+}
+
+/**
+ * Un point de bonus vient d'être investi. Poussé à CHAQUE membre après le
+ * commit de la dépense, jamais diffusé : un rang de bonus ne regarde que
+ * cette équipe. `rank` est le NOUVEAU rang du bonus visé, pas un delta.
+ */
+export type TeamPerkEvent = {
+  type: 'team:perk'
+  teamId: string
+  key: 'loot' | 'raid' | 'xp' | 'forge'
+  rank: number
+  perkPoints: number
+}
+
 type WsEvent =
   | PullResultEvent
   | PullBatchResultEvent
@@ -130,6 +155,8 @@ type WsEvent =
   | DuelSettledEvent
   | BetPlacedEvent
   | BetSettledEvent
+  | TeamLevelUpEvent
+  | TeamPerkEvent
 
 export class WsManager {
   readonly #connections = new Map<string, WebSocket>()

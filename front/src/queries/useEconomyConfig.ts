@@ -60,6 +60,17 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
   wishlist: { priceMultiplier: 2, cooldownDays: 7 },
   duel: { pullCount: 5 },
   bet: { pullWindow: 10, minStake: 50, maxStake: 2000 },
+  team: {
+    maxMembers: 35,
+    recruitDays: 7,
+    perkMaxRank: 5,
+    perks: {
+      loot: { perRank: 0.5, unlockLevel: 1 },
+      raid: { perRank: 0.5, unlockLevel: 4 },
+      xp: { perRank: 0.8, unlockLevel: 8 },
+      forge: { perRank: 1, unlockLevel: 16 },
+    },
+  },
   equip: {
     goldCostBase: 25,
     goldCostExp: 1.35,

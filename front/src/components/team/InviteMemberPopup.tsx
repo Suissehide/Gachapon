@@ -1,5 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { Ban, RefreshCw, Send, Trash2, UserPlus, X } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { type SyntheticEvent, useMemo, useRef, useState } from 'react'
 
 import type { TeamInvitation } from '../../queries/useTeams.ts'
@@ -46,13 +47,18 @@ const STATUS_CLASSES: Record<TeamInvitation['status'], string> = {
 type Props = {
   teamId: string
   userRole: 'OWNER' | 'ADMIN' | 'MEMBER'
+  // Même mécanique que `CreateTeamPopup` : la fiche d'équipe rattache le
+  // flux d'invitation au bouton pleine largeur de sa carte d'identité, sans
+  // dupliquer le formulaire. Doit rester un `PopupTrigger` — un `Button` nu
+  // n'ouvrirait rien.
+  trigger?: ReactNode
 }
 
 type SelectedTarget =
   | { type: 'username'; value: string }
   | { type: 'email'; value: string }
 
-export function InviteMemberPopup({ teamId, userRole }: Props) {
+export function InviteMemberPopup({ teamId, userRole, trigger }: Props) {
   const { mutateAsync: invite, isPending } = useInviteMember(teamId)
   const { data: invitationsData } = useTeamInvitations(teamId)
   const {
@@ -79,9 +85,7 @@ export function InviteMemberPopup({ teamId, userRole }: Props) {
   const searchResults = (searchData?.users ?? []).slice(0, 5)
 
   const isAlreadySelected = (target: SelectedTarget) =>
-    selected.some(
-      (s) => s.type === target.type && s.value === target.value,
-    )
+    selected.some((s) => s.type === target.type && s.value === target.value)
 
   const addTarget = (target: SelectedTarget) => {
     setErrors([])
@@ -160,7 +164,6 @@ export function InviteMemberPopup({ teamId, userRole }: Props) {
       setShowDropdown(false)
       setActiveIndex(-1)
       setSelected([])
-
     }
     setOpen(value)
   }
@@ -294,10 +297,12 @@ export function InviteMemberPopup({ teamId, userRole }: Props) {
 
   return (
     <Popup open={open} onOpenChange={handleOpenChange}>
-      <PopupTrigger variant="outline" size="sm">
-        <UserPlus className="h-4 w-4" />
-        Inviter un membre
-      </PopupTrigger>
+      {trigger ?? (
+        <PopupTrigger variant="outline" size="sm">
+          <UserPlus className="h-4 w-4" />
+          Inviter un membre
+        </PopupTrigger>
+      )}
       <PopupContent size="xl">
         <PopupHeader>
           <PopupTitle

@@ -14,6 +14,7 @@ import type {
   TeamForRanking,
 } from '../../types/infra/orm/repositories/leaderboard.repository.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
+import type { RedisClientInterface } from '../../types/infra/redis/redis-client'
 import type { EquipmentBonuses } from '../combat/combat-stats.domain'
 import { computeFinalStats } from '../combat/combat-stats.domain'
 import {
@@ -22,19 +23,30 @@ import {
   setBonusesFromConfig,
 } from '../equipment/set-bonuses'
 
+/** Une seule clé, partagée par la page Classement et par le rang de la fiche. */
+const TEAM_RANKING_CACHE_KEY = 'leaderboard:teams:ranking'
+/** Assez court pour qu'un joueur ne voie jamais un rang qu'il sente figé. */
+const TEAM_RANKING_TTL_SECONDS = 60
+
+/** Une équipe notée, réduite à ce que les deux vues affichent. */
+type RankedTeam = Omit<TeamEntry, 'rank'>
+
 export class LeaderboardDomain implements ILeaderboardDomain {
   readonly #leaderboardRepository: ILeaderboardRepository
   readonly #userRepository: UserRepositoryInterface
   readonly #configService: ConfigServiceInterface
+  readonly #redis: RedisClientInterface
 
   constructor({
     leaderboardRepository,
     userRepository,
     configService,
+    redisClient,
   }: IocContainer) {
     this.#leaderboardRepository = leaderboardRepository
     this.#userRepository = userRepository
     this.#configService = configService
+    this.#redis = redisClient
   }
 
   async getCollectorsLeaderboard(
@@ -109,18 +121,51 @@ export class LeaderboardDomain implements ILeaderboardDomain {
     return { entries, currentUserEntry }
   }
 
-  async getTeamsLeaderboard(
-    currentUserId: string,
-  ): Promise<LeaderboardResponse<TeamEntry>> {
-    const teams = await this.#leaderboardRepository.getTeamsForRanking()
-    const myTeamId =
-      await this.#leaderboardRepository.getTeamIdForUser(currentUserId)
-    if (teams.length === 0) {
-      return {
-        entries: [],
-        currentUserEntry: null,
-        currentUserTeamId: myTeamId,
+  /**
+   * Le classement d'équipes, trié, MÉMORISÉ. Une passe de calcul par minute
+   * pour tout le monde, au lieu d'une par chargement de page.
+   *
+   * Le calcul complet est lourd et ne se scope pas : il matérialise en
+   * mémoire les cartes possédées de TOUS les membres de TOUTES les équipes,
+   * plus l'historique de tirages, et il faut tout cela même pour ne rendre
+   * qu'UN rang. Or la fiche d'équipe est devenue la page d'atterrissage de
+   * la section, rechargée au montage et au retour de focus, jusqu'à trois
+   * équipes par joueur. Un rang vieux d'une minute est imperceptible ; le
+   * calcul, lui, ne l'est pas.
+   *
+   * Un seul mémo pour les DEUX appelants (la page Classement et le rang de
+   * la fiche) : deux caches, c'est deux échelles qui divergent.
+   */
+  async #rankedTeams(refresh = false): Promise<RankedTeam[]> {
+    if (!refresh) {
+      const cached = await this.#redis.get(TEAM_RANKING_CACHE_KEY)
+      if (cached !== null) {
+        return JSON.parse(cached) as RankedTeam[]
       }
+    }
+    const scored = await this.#scoreTeams()
+    await this.#redis.set(
+      TEAM_RANKING_CACHE_KEY,
+      JSON.stringify(scored),
+      TEAM_RANKING_TTL_SECONDS,
+    )
+    return scored
+  }
+
+  /**
+   * Le classement d'équipes, trié, SANS troncature ni mise en forme.
+   * Extrait de `getTeamsLeaderboard` pour que `getTeamRank` (le rang global
+   * affiché sur la fiche d'équipe) lise exactement le même barème : deux
+   * classements d'équipes divergeraient au premier ajustement.
+   *
+   * Ne renvoie de chaque équipe que ce que les deux vues consomment — pas
+   * `memberIds`, qui ne sert qu'au calcul et qui gonflerait le mémo autant
+   * qu'il y a de joueurs.
+   */
+  async #scoreTeams(): Promise<RankedTeam[]> {
+    const teams = await this.#leaderboardRepository.getTeamsForRanking()
+    if (teams.length === 0) {
+      return []
     }
 
     const { total, variantEligible } =
@@ -154,7 +199,12 @@ export class LeaderboardDomain implements ILeaderboardDomain {
         pullsTotal += pullsByMember.get(userId) ?? 0
       }
       return {
-        team,
+        team: {
+          id: team.id,
+          name: team.name,
+          slug: team.slug,
+          memberCount: team.memberCount,
+        },
         cardPercentage:
           total > 0 ? Math.round((distinctCardIds.size / total) * 100) : 0,
         variantPercentage:
@@ -167,7 +217,7 @@ export class LeaderboardDomain implements ILeaderboardDomain {
       }
     }
 
-    const scored = teams.map(scoreTeam).sort((a, b) => {
+    return teams.map(scoreTeam).sort((a, b) => {
       if (b.cardPercentage !== a.cardPercentage) {
         return b.cardPercentage - a.cardPercentage
       }
@@ -176,39 +226,60 @@ export class LeaderboardDomain implements ILeaderboardDomain {
       }
       return b.pullsTotal - a.pullsTotal
     })
+  }
+
+  /**
+   * Rang global d'une équipe dans le classement d'équipes — le MÊME que
+   * celui de la page Classement, complétion de collection comprise.
+   * `null` quand l'équipe n'y figure pas (elle vient d'être supprimée).
+   */
+  async getTeamRank(teamId: string): Promise<number | null> {
+    const ranked = await this.#rankedTeams()
+    const index = ranked.findIndex((s) => s.team.id === teamId)
+    if (index >= 0) {
+      return index + 1
+    }
+    // Absente du mémo : l'équipe a été créée depuis qu'il a été calculé. Un
+    // recalcul tranche, et il ne peut pas s'emballer — il rafraîchit le
+    // mémo, et cette route n'est atteinte qu'après un contrôle
+    // d'appartenance, donc sur une équipe qui existe.
+    const fresh = await this.#rankedTeams(true)
+    const freshIndex = fresh.findIndex((s) => s.team.id === teamId)
+    return freshIndex >= 0 ? freshIndex + 1 : null
+  }
+
+  async getTeamsLeaderboard(
+    currentUserId: string,
+  ): Promise<LeaderboardResponse<TeamEntry>> {
+    const myTeamId =
+      await this.#leaderboardRepository.getTeamIdForUser(currentUserId)
+    let scored = await this.#rankedTeams()
+    // Même repli que `getTeamRank`, et pour la même raison : une équipe créée
+    // depuis le calcul du mémo s'afficherait « non classée » ICI pendant que
+    // sa propre fiche, elle, force un rafraîchissement et lui donne un rang.
+    // Deux vues qui divergent, c'est exactement ce que la clé partagée existe
+    // pour empêcher.
+    if (myTeamId !== null && !scored.some((s) => s.team.id === myTeamId)) {
+      scored = await this.#rankedTeams(true)
+    }
+    if (scored.length === 0) {
+      return {
+        entries: [],
+        currentUserEntry: null,
+        currentUserTeamId: myTeamId,
+      }
+    }
 
     const entries: TeamEntry[] = scored
       .slice(0, LEADERBOARD_TOP_N)
-      .map((s, i) => ({
-        rank: i + 1,
-        team: {
-          id: s.team.id,
-          name: s.team.name,
-          slug: s.team.slug,
-          memberCount: s.team.memberCount,
-        },
-        cardPercentage: s.cardPercentage,
-        variantPercentage: s.variantPercentage,
-        pullsTotal: s.pullsTotal,
-      }))
+      .map((s, i) => ({ rank: i + 1, ...s }))
 
     let currentUserEntry: TeamEntry | null = null
     if (myTeamId && !entries.find((e) => e.team.id === myTeamId)) {
       const myIndex = scored.findIndex((s) => s.team.id === myTeamId)
       const myScored = myIndex >= 0 ? scored[myIndex] : undefined
       if (myIndex >= 0 && myScored) {
-        currentUserEntry = {
-          rank: myIndex + 1,
-          team: {
-            id: myScored.team.id,
-            name: myScored.team.name,
-            slug: myScored.team.slug,
-            memberCount: myScored.team.memberCount,
-          },
-          cardPercentage: myScored.cardPercentage,
-          variantPercentage: myScored.variantPercentage,
-          pullsTotal: myScored.pullsTotal,
-        }
+        currentUserEntry = { rank: myIndex + 1, ...myScored }
       }
     }
 

@@ -79,6 +79,25 @@ type WsEvent =
       bettorId: string
       targetId: string
     }
+  | {
+      // Poussé à CHAQUE membre après le commit du crédit de points, jamais
+      // diffusé : un niveau d'équipe ne regarde que cette équipe. Il
+      // n'existe pas de `team:points` — voir la remarque dans
+      // `useTeamLive` (queries/useTeamProgression.ts).
+      type: 'team:levelup'
+      teamId: string
+      level: number
+      perkPoints: number
+    }
+  | {
+      // Poussé à CHAQUE membre après le commit de la dépense, jamais
+      // diffusé. `rank` est le NOUVEAU rang du bonus visé, pas un delta.
+      type: 'team:perk'
+      teamId: string
+      key: 'loot' | 'raid' | 'xp' | 'forge'
+      rank: number
+      perkPoints: number
+    }
   | { type: 'error'; message: string }
   | {
       type: 'admin:activity'

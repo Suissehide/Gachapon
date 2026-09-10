@@ -20,9 +20,11 @@
   --color-primary-light: var(--primary-light);
   --color-primary: var(--primary);
   --color-primary-dark: var(--primary-dark);
+  --color-primary-darker: var(--primary-darker);
   --color-primary-foreground: var(--primary-foreground);
 
   --color-secondary: var(--secondary);
+  --color-secondary-dark: var(--secondary-dark);
   --color-secondary-foreground: var(--secondary-foreground);
 
   --color-accent: var(--accent);
@@ -62,6 +64,7 @@
   --color-rarity-legendary: var(--rarity-legendary);
 
   --color-amber-soft: var(--amber-soft);
+  --color-track: var(--track);
 
   --font-display: "Bricolage Grotesque", "Nunito", system-ui, sans-serif;
   --font-body: "DM Sans", "Figtree", system-ui, sans-serif;

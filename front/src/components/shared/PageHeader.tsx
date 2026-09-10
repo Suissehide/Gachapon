@@ -20,7 +20,18 @@ export type Crumb =
 type Props = {
   breadcrumbs?: Crumb[]
   eyebrow?: string
-  title: string
+  /**
+   * Titre de page. **Optionnel, mais sous contrainte** : une page qui
+   * l'omet doit fournir son `<h1>` ailleurs dans son contenu. Aucune page
+   * ne doit se retrouver sans titre du tout — ni pour le lecteur, ni pour
+   * un lecteur d'écran, ni pour le SEO préconstruit.
+   *
+   * Le seul consommateur qui l'omet aujourd'hui est la fiche d'équipe : le
+   * handoff ne montre au-dessus de ses deux colonnes que le fil d'Ariane, et
+   * le nom de l'équipe est le `<h1>` de sa carte d'identité, dans le rail.
+   * Toutes les autres pages passent un titre et sont inchangées.
+   */
+  title?: string
   subtitle?: ReactNode
   right?: ReactNode
 }
@@ -28,7 +39,13 @@ type Props = {
 const baseChip =
   'font-mono text-[11px] font-bold uppercase tracking-[0.25em] transition-colors'
 
-export function PageHeader({ breadcrumbs, eyebrow, title, subtitle, right }: Props) {
+export function PageHeader({
+  breadcrumbs,
+  eyebrow,
+  title,
+  subtitle,
+  right,
+}: Props) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
@@ -46,6 +63,7 @@ export function PageHeader({ breadcrumbs, eyebrow, title, subtitle, right }: Pro
               const isLast = i === breadcrumbs.length - 1
               return (
                 <span
+                  // biome-ignore lint/suspicious/noArrayIndexKey: fil d'Ariane statique, ordonné, jamais réordonné — l'index EST l'identité du cran
                   key={`${crumb.label}-${i}`}
                   className="flex items-center gap-x-1.5"
                 >
@@ -79,9 +97,11 @@ export function PageHeader({ breadcrumbs, eyebrow, title, subtitle, right }: Pro
             })}
           </nav>
         )}
-        <h1 className="mt-2 font-display text-[32px] font-extrabold leading-none tracking-[-0.03em] text-text sm:text-[44px] md:text-[48px]">
-          {title}
-        </h1>
+        {title && (
+          <h1 className="mt-2 font-display text-[32px] font-extrabold leading-none tracking-[-0.03em] text-text sm:text-[44px] md:text-[48px]">
+            {title}
+          </h1>
+        )}
         {subtitle && (
           <p className="mt-1 font-body text-sm text-text-light">{subtitle}</p>
         )}

@@ -88,4 +88,48 @@ describe('GET /economy/config', () => {
     expect(body.duel).toEqual({ pullCount: 5 })
     expect(body.bet).toEqual({ pullWindow: 10, minStake: 50, maxStake: 2000 })
   })
+
+  it("expose les tunables d'équipe (plafond, délai de recrutement, bonus)", async () => {
+    const { configService } = (app as any).iocContainer
+    const cfg = await configService.getMany(
+      'team.maxMembers',
+      'team.recruitDays',
+      'teamPerk.maxRank',
+      'teamPerk.loot.perRank',
+      'teamPerk.loot.unlockLevel',
+      'teamPerk.raid.perRank',
+      'teamPerk.raid.unlockLevel',
+      'teamPerk.xp.perRank',
+      'teamPerk.xp.unlockLevel',
+      'teamPerk.forge.perRank',
+      'teamPerk.forge.unlockLevel',
+    )
+
+    const res = await app.inject({ method: 'GET', url: '/economy/config' })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.team).toEqual({
+      maxMembers: cfg['team.maxMembers'],
+      recruitDays: cfg['team.recruitDays'],
+      perkMaxRank: cfg['teamPerk.maxRank'],
+      perks: {
+        loot: {
+          perRank: cfg['teamPerk.loot.perRank'],
+          unlockLevel: cfg['teamPerk.loot.unlockLevel'],
+        },
+        raid: {
+          perRank: cfg['teamPerk.raid.perRank'],
+          unlockLevel: cfg['teamPerk.raid.unlockLevel'],
+        },
+        xp: {
+          perRank: cfg['teamPerk.xp.perRank'],
+          unlockLevel: cfg['teamPerk.xp.unlockLevel'],
+        },
+        forge: {
+          perRank: cfg['teamPerk.forge.perRank'],
+          unlockLevel: cfg['teamPerk.forge.unlockLevel'],
+        },
+      },
+    })
+  })
 })

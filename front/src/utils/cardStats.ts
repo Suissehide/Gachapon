@@ -444,18 +444,6 @@ export function dustCostNextLevel(
   )
 }
 
-export function equipGoldCostNextLevel(
-  currentLevel: number,
-  rarity: CardRarity,
-  economy: EconomyConfig,
-): number {
-  return Math.round(
-    economy.equip.goldCostBase *
-      economy.equip.goldCostExp ** (currentLevel - 1) *
-      economy.card.rarityMult[rarity],
-  )
-}
-
 export function maxLevelInPalier(palier: number): number {
   return 10 * palier
 }

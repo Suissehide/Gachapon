@@ -1,19 +1,38 @@
+// RaidPanel — panneau de raid, premier bloc de la colonne droite de la fiche
+// d'équipe. Reprend `docs/design_handoff_equipe/equipe.css` (`.tmB-top`,
+// `.tmB-h1`, `.tm-chip--amber`, `.tm-btn--amber`, `.tm-hp*`, `.tm-tier*`) et
+// la composition de `HpBar` dans `equipe-parts.jsx`.
+//
+// La barre de PV n'est PAS redessinée ici : c'est `GradedHpBar`, la primitive
+// partagée créée pour cet écran. Elle se remplit avec les dégâts infligés et
+// imprime les PV RESTANTS du boss — cette inversion est voulue, vérifiée
+// contre la capture du handoff, et corrigeait un vrai bug (la barre se
+// remplissait autrefois à l'envers des repères de palier). Ne pas la
+// « rétablir ».
+//
+// Les contributions ne sont plus listées ici : elles ont leur propre section
+// sous ce panneau (`ContributionsTable`), comme dans la maquette.
 import { Link } from '@tanstack/react-router'
 import dayjs from 'dayjs'
-import { Clock, Coins, Sparkles, Swords, Ticket } from 'lucide-react'
+import {
+  CalendarDays,
+  Check,
+  Coins,
+  Sparkles,
+  Swords,
+  Ticket,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 
-import type {
-  RaidContribution,
-  RaidTierView,
-  RaidView,
-} from '../../api/raid.api.ts'
+import type { RaidTierView, RaidView } from '../../api/raid.api.ts'
 import { RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { cn } from '../../libs/utils.ts'
 import { useRaid, useRaidLive } from '../../queries/useRaid.ts'
 import { ArcadeCard } from '../shared/ArcadeCard.tsx'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
 import { Button } from '../ui/button.tsx'
+import { PanelTitle, SectionLabel } from '../ui/sectionHeading.tsx'
+import { GradedHpBar } from './GradedHpBar.tsx'
 
 function minutesRemaining(endsAt: string): number {
   return Math.max(0, dayjs(endsAt).diff(dayjs(), 'minute'))
@@ -33,54 +52,77 @@ function formatRemaining(endsAt: string): string {
   return `${minutes} min`
 }
 
-function TierMarker({ tier }: { tier: RaidTierView }) {
-  return (
-    <div
-      className="absolute top-0 flex -translate-x-1/2 flex-col items-center"
-      style={{ left: `${tier.pct}%` }}
-      title={`${tier.pct} % · ${tier.reward.tokens} jetons · ${tier.reward.gold} or · ${tier.reward.dust} poussière${tier.reward.cardRarity ? ` · carte ${RARITY_LABEL_FR[tier.reward.cardRarity] ?? tier.reward.cardRarity}` : ''}`}
-    >
-      <span
-        className={cn(
-          'h-4 w-0.5',
-          tier.reached ? 'bg-primary' : 'bg-text-light/30',
-        )}
-      />
-      <span
-        className={cn(
-          'mt-0.5 font-mono text-[10px]',
-          tier.reached ? 'text-primary-dark' : 'text-text-light/60',
-        )}
-      >
-        {tier.pct}%
-      </span>
-    </div>
-  )
+/**
+ * `weekKey` est le lundi UTC au format `YYYY-MM-DD` (`raidWeekKey`,
+ * back/domain/raid/raid-rules.ts), pas un numéro de semaine. Le
+ * « SEMAINE 36 » de la maquette se calcule donc ici, en semaine ISO — même
+ * dérivation que `RaidHistoryPanel`.
+ */
+function weekNumber(weekKey: string): number {
+  return dayjs.utc(weekKey).isoWeek()
 }
 
-// `dealtPct` (dégâts infligés) est la même valeur que celle affichée en
-// légende ("X % infligés") — seule source de vérité, passée en prop plutôt
-// que recalculée ici. La barre se remplit de gauche à droite vers 100 %,
-// dans le même sens que les paliers (`left: ${tier.pct}%`) : avant ce
-// correctif elle se remplissait avec les PV restants (sens inverse), donc
-// une équipe à 25 % de dégâts voyait le bord de la barre sur le repère
-// "75 %". Dégradé conservé mais inversé : `primary` (départ) → `destructive`
-// au bord d'attaque, qui se rapproche visuellement du rouge à mesure que le
-// boss se rapproche de la mort, plutôt que fixe à gauche comme avant.
-function HpBar({ raid, dealtPct }: { raid: RaidView; dealtPct: number }) {
+// Carte de palier, trois états (`.tm-tier`, `.tm-tier--done`,
+// `.tm-tier--next`). `reached` vient du serveur ; « en cours » est le premier
+// palier non atteint, donc une position dans la liste, pas un champ.
+function TierCard({
+  tier,
+  state,
+}: {
+  tier: RaidTierView
+  state: 'done' | 'next' | 'todo'
+}) {
+  const done = state === 'done'
+  const iconClass = cn(
+    'h-3.5 w-3.5',
+    done ? 'text-primary' : 'text-foreground/40',
+  )
+
   return (
-    <div className="relative pb-6">
-      <div className="h-4 overflow-hidden rounded-full border border-border bg-background">
-        <div
-          className="h-full rounded-full bg-gradient-to-r from-primary to-destructive transition-[width] duration-700"
-          style={{ width: `${dealtPct}%` }}
-        />
+    <div
+      className={cn(
+        'rounded-[15px] border-[1.5px] p-[12px_13px]',
+        done &&
+          'border-primary/40 bg-primary/10 shadow-[0_2px_0_rgba(245,158,11,0.1)]',
+        state === 'next' && 'border-foreground/16 bg-card',
+        state === 'todo' && 'border-foreground/7 bg-muted',
+      )}
+    >
+      <div
+        className={cn(
+          'flex items-center gap-1.5 font-mono text-[11px] font-bold tracking-[0.1em]',
+          done ? 'text-primary-darker' : 'text-foreground/50',
+        )}
+      >
+        {done && (
+          <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+            <Check className="h-2.5 w-2.5" strokeWidth={3} />
+          </span>
+        )}
+        {tier.pct} %{state === 'next' && ' · EN COURS'}
       </div>
-      <div className="absolute inset-x-0 top-4 h-8">
-        {raid.tiers.map((t) => (
-          <TierMarker key={t.pct} tier={t} />
-        ))}
+
+      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs font-semibold text-foreground/75">
+        <span className="inline-flex items-center gap-1.5">
+          <Ticket className={iconClass} />
+          {tier.reward.tokens}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <Coins className={iconClass} />
+          {tier.reward.gold}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <Sparkles className={iconClass} />
+          {tier.reward.dust}
+        </span>
       </div>
+
+      {tier.reward.cardRarity && (
+        <div className="mt-2 inline-flex rounded-full border border-secondary/40 bg-secondary/10 px-2 py-[3px] font-mono text-[10px] tracking-[0.08em] text-secondary-dark">
+          Carte{' '}
+          {RARITY_LABEL_FR[tier.reward.cardRarity] ?? tier.reward.cardRarity}
+        </div>
+      )}
     </div>
   )
 }
@@ -134,7 +176,7 @@ function BossCard({
 
 function BossPowerBadge({ power }: { power: number }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-2.5 py-1 font-mono text-xs text-text-light">
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-1 font-mono text-[10px] font-bold tracking-[0.1em] text-foreground/60">
       <Swords className="h-3.5 w-3.5" />
       {power.toLocaleString('fr-FR')}
     </span>
@@ -192,32 +234,6 @@ function BossCardOverlay({
   )
 }
 
-function ContributionRow({ c, rank }: { c: RaidContribution; rank: number }) {
-  return (
-    <li className="flex items-center gap-3 py-1.5">
-      <span className="w-5 font-mono text-xs text-text-light">{rank}</span>
-      {c.user.avatar ? (
-        <img
-          src={c.user.avatar}
-          alt=""
-          className="h-7 w-7 rounded-full object-cover"
-        />
-      ) : (
-        <span className="h-7 w-7 rounded-full bg-border" />
-      )}
-      <span className="flex-1 truncate text-sm text-text">
-        {c.user.username}
-      </span>
-      <span className="font-mono text-xs text-text-light">
-        {c.attacks} att.
-      </span>
-      <span className="font-mono text-sm font-bold text-text">
-        {c.damage.toLocaleString('fr-FR')}
-      </span>
-    </li>
-  )
-}
-
 export function RaidPanel({ teamId }: { teamId: string }) {
   const { data: raid, isLoading, isError } = useRaid(teamId)
   useRaidLive(teamId)
@@ -258,18 +274,62 @@ export function RaidPanel({ teamId }: { teamId: string }) {
   const killed = raid.killedAt !== null
   const ended = killed || minutesRemaining(raid.endsAt) <= 0
   const noAttackLeft = raid.me.attacksRemainingToday === 0
+  // Un bouton grisé muet ne dit rien : le libellé porte lui-même la raison.
   const attackLabel = killed
     ? 'Boss vaincu'
     : noAttackLeft
       ? "Plus d'attaque aujourd'hui"
       : `Attaquer (${raid.me.attacksRemainingToday}/${raid.me.attacksPerDay})`
-  const dealtPct =
-    raid.maxHp > 0 ? Math.round((raid.damageDone / raid.maxHp) * 100) : 0
+  // « En cours » = le premier palier non atteint. `reached` est servi par le
+  // serveur, la position ne l'est pas.
+  const nextTierIndex = raid.tiers.findIndex((t) => !t.reached)
 
   return (
     <ArcadeCard>
-      <div className="flex flex-col gap-5 md:flex-row">
-        <div className="flex w-36 shrink-0 flex-col items-center gap-2 md:w-40">
+      {/* `.tmB-top` : label + titre à gauche, minuteur et attaque à droite,
+          alignés sur la ligne de base du titre. */}
+      <div className="flex flex-wrap items-end justify-between gap-5">
+        <div className="min-w-0">
+          <SectionLabel>
+            Raid d'équipe · Semaine {weekNumber(raid.weekKey)}
+          </SectionLabel>
+          <PanelTitle size="lg" className="mt-1.5">
+            {raid.boss.name}
+          </PanelTitle>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          {/* `.tm-chip--amber` — encre ambrée foncée sur fond ambré très
+              clair, rendue en opacités du token plutôt qu'en hex, comme le
+              reste de l'écran. */}
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 font-mono text-[10px] font-bold tracking-[0.1em] text-primary-darker">
+            <CalendarDays className="h-3.5 w-3.5" />
+            {ended ? 'Terminé' : formatRemaining(raid.endsAt)}
+          </span>
+
+          {/* `.tm-btn--amber` : radius 12, padding 11/18, 700 à 14 px, halo
+              ambré. La variante `default` du bouton porte déjà le fond. */}
+          {killed || noAttackLeft ? (
+            <Button variant="amber" size="action" disabled>
+              <Swords className="h-4 w-4" />
+              {attackLabel}
+            </Button>
+          ) : (
+            <Button variant="amber" size="action" asChild>
+              <Link to="/team/$id/raid" params={{ id: teamId }}>
+                <Swords className="h-4 w-4" />
+                {attackLabel}
+              </Link>
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Visuel du boss à largeur fixe (176 px, `.tm-boss`), barre et paliers
+          dans le reste. `minmax(0,1fr)` pour que la rangée de paliers puisse
+          rétrécir au lieu d'imposer sa largeur intrinsèque. */}
+      <div className="mt-5 grid grid-cols-1 items-start gap-6 sm:grid-cols-[176px_minmax(0,1fr)]">
+        <div className="flex w-full max-w-[176px] flex-col items-center gap-2">
           <button
             type="button"
             onClick={() => setInspecting(true)}
@@ -284,99 +344,26 @@ export function RaidPanel({ teamId }: { teamId: string }) {
           <BossPowerBadge power={raid.boss.power} />
         </div>
 
-        <div className="flex min-w-0 flex-1 flex-col gap-4">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <div>
-              <div className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-                Raid d'équipe
-              </div>
-              <h2 className="font-display text-2xl font-bold text-text">
-                {raid.boss.name}
-              </h2>
-            </div>
-            <div className="flex items-center gap-1.5 font-mono text-xs text-text-light">
-              <Clock className="h-4 w-4" />
-              {ended ? 'Terminé' : `${formatRemaining(raid.endsAt)} restants`}
-            </div>
-          </div>
+        <div className="min-w-0">
+          <GradedHpBar
+            done={raid.damageDone}
+            max={raid.maxHp}
+            tiers={raid.tiers.map((t) => t.pct)}
+          />
 
-          <HpBar raid={raid} dealtPct={dealtPct} />
-
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="font-mono text-sm text-text">
-              {raid.hp.toLocaleString('fr-FR')} /{' '}
-              {raid.maxHp.toLocaleString('fr-FR')} PV
-              <span className="ml-2 text-text-light">
-                ({dealtPct} % infligés)
-              </span>
-            </span>
-            {killed || noAttackLeft ? (
-              <Button disabled className="gap-2" title={attackLabel}>
-                <Swords className="h-4 w-4" />
-                {attackLabel}
-              </Button>
-            ) : (
-              <Button asChild className="gap-2">
-                <Link to="/team/$id/raid" params={{ id: teamId }}>
-                  <Swords className="h-4 w-4" />
-                  {attackLabel}
-                </Link>
-              </Button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {raid.tiers.map((t) => (
-              <div
-                key={t.pct}
-                className={cn(
-                  'rounded-xl border p-2 text-xs',
-                  t.reached
-                    ? 'border-primary/40 bg-primary/10'
-                    : 'border-border bg-background/60 text-text-light',
-                )}
-              >
-                <div className="font-mono font-bold">{t.pct} %</div>
-                <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5">
-                  <span className="inline-flex items-center gap-1">
-                    <Ticket className="h-3 w-3" />
-                    {t.reward.tokens}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Coins className="h-3 w-3" />
-                    {t.reward.gold}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Sparkles className="h-3 w-3" />
-                    {t.reward.dust}
-                  </span>
-                  {t.reward.cardRarity && (
-                    <span className="w-full">
-                      Carte{' '}
-                      {RARITY_LABEL_FR[t.reward.cardRarity] ??
-                        t.reward.cardRarity}
-                    </span>
-                  )}
-                </div>
-              </div>
+          {/* `.tm-tiers` : quatre colonnes, gap 10 px, 12 px sous la barre.
+              Deux colonnes tant que la place manque — la colonne droite
+              descend à ~628 px entre 1024 et 1280 px de fenêtre. */}
+          <div className="mt-3 grid grid-cols-2 gap-2.5 xl:grid-cols-4">
+            {raid.tiers.map((tier, i) => (
+              <TierCard
+                key={tier.pct}
+                tier={tier}
+                state={
+                  tier.reached ? 'done' : i === nextTierIndex ? 'next' : 'todo'
+                }
+              />
             ))}
-          </div>
-
-          <div>
-            <div className="mb-1 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-              Contributions
-            </div>
-            {raid.contributions.length === 0 ? (
-              <p className="text-sm text-text-light">
-                Personne n'a encore attaqué cette semaine. Lance-toi !
-              </p>
-            ) : (
-              <ul className="divide-y divide-border">
-                {raid.contributions.map((c, i) => (
-                  <ContributionRow key={c.user.id} c={c} rank={i + 1} />
-                ))}
-              </ul>
-            )}
           </div>
         </div>
       </div>

@@ -1,7 +1,10 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
-import { calculateTokens } from '../../../../../domain/economy/economy.domain'
+import {
+  calculateTokens,
+  effectiveRegenInterval,
+} from '../../../../../domain/economy/economy.domain'
 import { computeDropRates } from '../../../../../domain/gacha/drop-rates'
 import { effectivePityThreshold } from '../../../../../domain/gacha/gacha.domain'
 import { wsManager } from '../../../../ws/ws-manager'
@@ -27,6 +30,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     activityDomain,
     duelDomain,
     betDomain,
+    teamProgressionDomain,
   } = fastify.iocContainer
 
   const resolveUrl = (key: string | null) =>
@@ -125,6 +129,13 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
       void betDomain
         .settleForUser(request.user.userID)
         .catch((err) => fastify.log.error({ err }, 'bet settle failed'))
+
+      // Crédite la progression de TOUTES les équipes du joueur : `teamId:
+      // null` fait résoudre son appartenance dans `award`. Un tirage = 1,
+      // jamais un nombre déjà pondéré.
+      void teamProgressionDomain
+        .award(request.user.userID, null, 'PULL', 1)
+        .catch((err) => fastify.log.error({ err }, 'team points failed'))
 
       return reply.status(201).send({
         card: {
@@ -225,6 +236,13 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         .settleForUser(request.user.userID)
         .catch((err) => fastify.log.error({ err }, 'bet settle failed'))
 
+      // Crédite la progression de TOUTES les équipes du joueur : `teamId:
+      // null` fait résoudre son appartenance dans `award`. La quantité brute
+      // est le nombre de tirages du lot, jamais un nombre déjà pondéré.
+      void teamProgressionDomain
+        .award(request.user.userID, null, 'PULL', count)
+        .catch((err) => fastify.log.error({ err }, 'team points failed'))
+
       return reply.status(201).send({
         pulls: pullsPayload,
         tokensRemaining: result.tokensRemaining,
@@ -247,18 +265,20 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         throw Boom.notFound('User not found')
       }
 
-      const [upgrades, cfg] = await Promise.all([
+      const [upgrades, cfg, teamEffects] = await Promise.all([
         skillTreeRepository.getEffectsForUser(request.user.userID),
         configService.getMany(
           'tokenRegenIntervalMinutes',
           'tokenMaxStock',
           'pityThreshold',
         ),
+        teamProgressionDomain.effectsForUser(request.user.userID),
       ])
-      const effectiveInterval = Math.max(
-        1,
-        cfg.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes,
-      )
+      const effectiveInterval = effectiveRegenInterval({
+        intervalMinutes: cfg.tokenRegenIntervalMinutes,
+        reductionMinutes: upgrades.regenReductionMinutes,
+        lootBonusPct: teamEffects.loot,
+      })
       const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
 
       // Lecture seule : pas de roll multiToken (le bonus est roulé et persisté au moment du débit) — évite un compteur qui fluctue entre deux GET
@@ -293,14 +313,16 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
         throw Boom.notFound('User not found')
       }
 
-      const [upgrades, cfg] = await Promise.all([
+      const [upgrades, cfg, teamEffects] = await Promise.all([
         skillTreeRepository.getEffectsForUser(request.user.userID),
         configService.getMany('tokenRegenIntervalMinutes', 'tokenMaxStock'),
+        teamProgressionDomain.effectsForUser(request.user.userID),
       ])
-      const effectiveInterval = Math.max(
-        1,
-        cfg.tokenRegenIntervalMinutes - upgrades.regenReductionMinutes,
-      )
+      const effectiveInterval = effectiveRegenInterval({
+        intervalMinutes: cfg.tokenRegenIntervalMinutes,
+        reductionMinutes: upgrades.regenReductionMinutes,
+        lootBonusPct: teamEffects.loot,
+      })
       const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
 
       // Lecture seule : pas de roll multiToken (le bonus est roulé et persisté au moment du débit) — évite un compteur qui fluctue entre deux GET

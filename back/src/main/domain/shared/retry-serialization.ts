@@ -46,8 +46,45 @@ export function isPrismaSerializationError(err: unknown): boolean {
 const DEFAULT_MAX_RETRIES = 3
 
 /**
+ * Attente entre deux tentatives : exponentielle, plafonnée, et à moitié
+ * ALÉATOIRE.
+ *
+ * Rejouer immédiatement, c'est rejouer EN MÊME TEMPS. Deux transactions qui
+ * viennent d'aborter l'une sur l'autre repartent au même instant, se
+ * disputent la même ligne et s'annulent à nouveau : au-delà de deux ou trois
+ * écrivains simultanés sur la même ligne (le compteur d'XP d'une équipe, un
+ * soir, sur trente-cinq membres), les rejeux s'épuisent et l'appel échoue.
+ * Le délai désynchronise les concurrents, le jitter les empêche de se
+ * resynchroniser au rejeu suivant.
+ *
+ * La moitié fixe garantit un écart minimal (deux tirages aléatoires proches
+ * ne ramènent pas les deux rejeux au même instant), la moitié aléatoire
+ * décorrèle. Les bornes restent petites — 15 ms de base, 120 ms de
+ * plafond — parce que ces transactions sont courtes et qu'elles portent des
+ * requêtes HTTP que personne ne doit attendre : au pire trois attentes,
+ * moins d'un quart de seconde en tout.
+ */
+const BASE_DELAY_MS = 15
+const MAX_DELAY_MS = 120
+
+export function serializationBackoffMs(
+  attempt: number,
+  random: () => number = Math.random,
+): number {
+  const ceiling = Math.min(MAX_DELAY_MS, BASE_DELAY_MS * 2 ** attempt)
+  return Math.round(ceiling / 2 + random() * (ceiling / 2))
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms)
+  })
+}
+
+/**
  * Wrap a TX-running thunk so that a Prisma `P2034` serialization failure is
- * retried up to `maxRetries` times. Any other error propagates immediately.
+ * retried up to `maxRetries` times, waiting a short jittered backoff between
+ * attempts. Any other error propagates immediately.
  */
 export async function retryOnSerialization<T>(
   thunk: () => Promise<T>,
@@ -61,6 +98,7 @@ export async function retryOnSerialization<T>(
       return await thunk()
     } catch (err) {
       if (attempt < maxRetries && isPrismaSerializationError(err)) {
+        await sleep(serializationBackoffMs(attempt))
         attempt += 1
         continue
       }
