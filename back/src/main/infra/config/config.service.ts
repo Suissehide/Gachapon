@@ -169,7 +169,13 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // teamLevel.* = courbe d'XP (xpBase * niveau^xpExp) et plafond de niveau.
   // teamPerk.*  = coût max de rang, gain par rang et niveau de déblocage pour
   // chacun des quatre perks (loot, raid, xp, forge).
-  'teamPoints.damagePerPoint': 2,
+  // Diviseur des degats de raid. Cale sur l'echelle REELLE du jeu, pas sur les
+  // chiffres de la maquette : raid.baseHpPerMember vaut 162000 PAR MEMBRE, donc
+  // la part d'un membre sur sa semaine represente 162000 degats. A 300, cela fait
+  // 540 points, soit ~1060 avec les tirages et les duels — l'ordre de grandeur de
+  // la maquette (1180 pour le meilleur contributeur). A 2, un membre marquait
+  // 81000 points et l'equipe touchait le niveau 50 en moins de deux semaines.
+  'teamPoints.damagePerPoint': 300,
   'teamPoints.duelWon': 50,
   'teamPoints.betWon': 30,
   'teamPoints.perPull': 1,
