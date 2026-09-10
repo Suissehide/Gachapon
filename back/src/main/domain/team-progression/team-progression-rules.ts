@@ -82,3 +82,34 @@ export function hueFromName(name: string): number {
   }
   return h
 }
+
+/**
+ * Combien des `gained` points d'un franchissement de niveau sont réellement
+ * ATTRIBUABLES, c'est-à-dire encore dépensables un jour.
+ *
+ * Le plafond de niveau (50) et le plafond de rangs (4 bonus × 5 rangs = 20)
+ * ne sont pas alignés : à raison d'un point par niveau, une équipe en gagne
+ * 49 pour 20 rangs à remplir. Sans ce plafonnement, du niveau 21 au niveau
+ * 50 chaque point est mort-né — la pastille « N POINTS » du panneau annonce
+ * une ressource que rien ne peut consommer, et le bouton d'investissement
+ * n'ouvre qu'une modale où les quatre rangées disent « rang maximum
+ * atteint ». On préfère ne pas créditer que promettre.
+ *
+ * Les points DÉJÀ EN MAIN comptent dans le calcul : ce qui reste à remplir
+ * n'est pas « 20 − rangs investis » mais « 20 − rangs investis − points en
+ * attente », sinon une équipe qui thésaurise ses points continuerait d'en
+ * accumuler au-delà de ce qu'elle pourra placer.
+ *
+ * Ce qui n'est PAS plafonné, et c'est délibéré : le niveau lui-même. Une
+ * équipe continue de monter au-delà du vingtième niveau — c'est son
+ * ancienneté, elle reste affichée.
+ */
+export function grantablePerkPoints(
+  gained: number,
+  heldPoints: number,
+  investedRanks: number,
+  maxRank: number,
+): number {
+  const capacity = TEAM_PERK_KEYS.length * maxRank - investedRanks - heldPoints
+  return Math.max(0, Math.min(gained, capacity))
+}

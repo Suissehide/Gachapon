@@ -650,4 +650,76 @@ describe("progression d'équipe : les quatre sources de points", () => {
 
     await configService.set('teamPoints.perPull', basePerPull)
   })
+
+  it("une equipe aux vingt rangs investis monte de niveau SANS gagner de point mort", async () => {
+    // Le plafond de niveau (50) donne 49 points, les quatre bonus n'en
+    // prennent que 20 : au-dela, un point credite serait indepensable, et le
+    // panneau afficherait une pastille et un bouton que rien ne peut
+    // consommer. Retirer le plafonnement de `#awardToTeam` fait tomber ce
+    // test sur `after2.perkPoints`.
+    const cfg = await configService.getMany(
+      'teamPerk.maxRank',
+      'teamLevel.xpBase',
+      'teamLevel.xpExp',
+      'teamLevel.maxLevel',
+    )
+    const maxRank = cfg['teamPerk.maxRank']
+
+    // team2 : les quatre bonus au rang maximum, plus une seule place libre.
+    await prisma.teamPerk.deleteMany({ where: { teamId: team2Id } })
+    for (const key of ['loot', 'raid', 'xp', 'forge']) {
+      await prisma.teamPerk.create({
+        data: { teamId: team2Id, key, rank: maxRank },
+      })
+    }
+
+    const before1 = await teamProgress(team1Id)
+    const before2 = await teamProgress(team2Id)
+
+    const boostedPerPull = 5000
+    await configService.set('teamPoints.perPull', boostedPerPull)
+    try {
+      const expected2 = applyTeamXp(
+        { level: before2.level, xp: before2.xp },
+        boostedPerPull,
+        {
+          xpBase: cfg['teamLevel.xpBase'],
+          xpExp: cfg['teamLevel.xpExp'],
+          maxLevel: cfg['teamLevel.maxLevel'],
+        },
+      )
+      // Sans le plafonnement, ce sont AUTANT de points qui seraient credites.
+      expect(expected2.perkPointsGained).toBeGreaterThan(0)
+
+      await activateOnly(pullSetId)
+      await setTokens(userIdP, 5)
+      const res = await app.inject({
+        method: 'POST',
+        url: '/pulls',
+        headers: { cookie: cookiesP },
+      })
+      expect(res.statusCode).toBe(201)
+
+      const after2 = await waitFor(
+        () => teamProgress(team2Id),
+        (v) => v.level >= expected2.level,
+      )
+      // Le NIVEAU monte : c'est l'anciennete de l'equipe, elle est
+      // deliberement conservee au-dela du vingtieme point.
+      expect(after2.level).toBe(expected2.level)
+      // Les POINTS, eux, ne bougent pas : il n'y a plus rien a remplir.
+      expect(after2.perkPoints).toBe(before2.perkPoints)
+
+      // Temoin dans le meme tirage : team1 n'a rien investi et recoit bien
+      // ses points, sinon ce test passerait aussi avec un credit casse.
+      const after1 = await waitFor(
+        () => teamProgress(team1Id),
+        (v) => v.level > before1.level,
+      )
+      expect(after1.perkPoints).toBeGreaterThan(before1.perkPoints)
+    } finally {
+      await configService.set('teamPoints.perPull', basePerPull)
+      await prisma.teamPerk.deleteMany({ where: { teamId: team2Id } })
+    }
+  })
 })

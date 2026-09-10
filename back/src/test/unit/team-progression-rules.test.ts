@@ -2,6 +2,7 @@ import { describe, expect, it } from '@jest/globals'
 
 import {
   applyTeamXp,
+  grantablePerkPoints,
   hueFromName,
   perkEffect,
   roleLabel,
@@ -110,5 +111,45 @@ describe('hueFromName', () => {
 
   it('accepte une chaine vide sans exploser', () => {
     expect(hueFromName('')).toBe(0)
+  })
+})
+
+describe('grantablePerkPoints', () => {
+  // 4 bonus x 5 rangs = 20 rangs a remplir, pour 49 points distribues par la
+  // courbe de niveau (1 -> 50). Le surplus ne doit jamais etre credite.
+  const MAX_RANK = 5
+
+  it('credite tout tant que la capacite le permet', () => {
+    expect(grantablePerkPoints(1, 0, 0, MAX_RANK)).toBe(1)
+    expect(grantablePerkPoints(3, 2, 5, MAX_RANK)).toBe(3)
+  })
+
+  it('ne credite plus rien quand les vingt rangs sont investis', () => {
+    expect(grantablePerkPoints(1, 0, 20, MAX_RANK)).toBe(0)
+    expect(grantablePerkPoints(7, 0, 20, MAX_RANK)).toBe(0)
+  })
+
+  it('compte les points DEJA EN MAIN dans la capacite restante', () => {
+    // 20 rangs, 12 investis, 8 points en attente : plus rien a promettre.
+    expect(grantablePerkPoints(1, 8, 12, MAX_RANK)).toBe(0)
+    // Un rang de moins investi : exactement un point de place.
+    expect(grantablePerkPoints(3, 8, 11, MAX_RANK)).toBe(1)
+  })
+
+  it('tronque une montee multi-niveaux a la place disponible', () => {
+    // Quatre niveaux d'un coup, deux rangs libres : deux points.
+    expect(grantablePerkPoints(4, 0, 18, MAX_RANK)).toBe(2)
+  })
+
+  it("ne rend jamais un nombre negatif, meme sur un etat incoherent", () => {
+    // Etat impossible en fonctionnement normal (points herites d'avant le
+    // plafonnement) : on n'en retire pas non plus.
+    expect(grantablePerkPoints(2, 25, 20, MAX_RANK)).toBe(0)
+  })
+
+  it('suit le plafond de rangs de la config, pas une constante ecrite ici', () => {
+    // maxRank a 3 : 12 rangs en tout, pas 20.
+    expect(grantablePerkPoints(1, 0, 12, 3)).toBe(0)
+    expect(grantablePerkPoints(1, 0, 11, 3)).toBe(1)
   })
 })

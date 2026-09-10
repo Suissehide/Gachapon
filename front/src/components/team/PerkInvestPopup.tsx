@@ -71,9 +71,18 @@ export function PerkInvestPopup({
     variables: pendingKey,
   } = useSpendPerk(teamId)
 
+  // Le déclencheur demande DEUX conditions, pas une : des points en main, et
+  // au moins un bonus capable d'en prendre un. Une équipe qui a rempli ses
+  // vingt rangs n'ouvre plus une modale dont les quatre rangées disent
+  // « rang maximum atteint » — c'est la commande morte que cette page
+  // s'interdit partout ailleurs. Le serveur ne crédite plus de point
+  // au-delà de la capacité (`grantablePerkPoints`) ; cette garde couvre les
+  // équipes qui en avaient déjà accumulé avant.
+  const hasRoom = perks.some((perk) => perk.rank < maxRank)
+
   return (
     <Popup open={open} onOpenChange={setOpen}>
-      {perkPoints > 0 ? (
+      {perkPoints > 0 && hasRoom ? (
         <PopupTrigger
           variant="default"
           className="mt-3 h-auto w-full rounded-lg px-[18px] py-[11px] text-sm font-bold"
@@ -83,7 +92,9 @@ export function PerkInvestPopup({
         </PopupTrigger>
       ) : (
         <p className="mt-3 text-center font-mono text-[10px] leading-[1.5] tracking-[0.06em] text-foreground/45">
-          Aucun point à investir : l'équipe en gagne un à chaque niveau.
+          {hasRoom
+            ? "Aucun point à investir : l'équipe en gagne un à chaque niveau."
+            : 'Tous les bonus sont au rang maximum.'}
         </p>
       )}
 

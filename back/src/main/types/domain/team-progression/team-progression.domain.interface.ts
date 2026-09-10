@@ -22,7 +22,14 @@ export type TeamAwardResult = {
   level: number
   xp: number
   perkPoints: number
+  /**
+   * Points de bonus effectivement crédités — jamais plus que ce qu'il reste
+   * de rangs à remplir (`grantablePerkPoints`). Il peut donc valoir 0 alors
+   * même que l'équipe vient de monter d'un niveau.
+   */
   perkPointsGained: number
+  /** Niveaux franchis par ce crédit. C'est lui qui déclenche `team:levelup`. */
+  levelsGained: number
 }
 
 export type TeamPerkState = {

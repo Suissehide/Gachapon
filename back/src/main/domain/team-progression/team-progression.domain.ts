@@ -26,6 +26,7 @@ import { raidWeekKey } from '../raid/raid-rules'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import {
   applyTeamXp,
+  grantablePerkPoints,
   perkEffect,
   TEAM_PERK_KEYS,
   type TeamPerkKey,
@@ -41,6 +42,9 @@ const AWARD_CFG_KEYS = [
   'teamLevel.xpBase',
   'teamLevel.xpExp',
   'teamLevel.maxLevel',
+  // Le plafond de RANGS : c'est lui qui borne les points attribuables, le
+  // plafond de niveau ne suffit pas (49 niveaux pour 20 rangs).
+  'teamPerk.maxRank',
 ] as const
 
 /** Les tunables nécessaires pour composer une vue complète de l'arbre de bonus. */
@@ -284,10 +288,34 @@ export class TeamProgressionDomain implements ITeamProgressionDomain {
               maxLevel: cfg['teamLevel.maxLevel'],
             },
           )
+          // Un point qu'aucun bonus ne pourra prendre n'est pas crédité.
+          // Les quatre bonus valent 20 rangs en tout et le niveau monte
+          // jusqu'à 50 : passé le vingtième point, créditer reviendrait à
+          // afficher une pastille et un bouton d'investissement que rien ne
+          // peut consommer. Le NIVEAU, lui, continue de monter — c'est
+          // l'ancienneté de l'équipe, elle reste affichée.
+          //
+          // La lecture des rangs n'a lieu QUE sur une montée de niveau :
+          // c'est une requête de plus dans une transaction sérialisable, et
+          // le chemin chaud (un tirage qui ne franchit aucun seuil) ne doit
+          // pas la payer.
+          let perkPointsGained = next.perkPointsGained
+          if (perkPointsGained > 0) {
+            const rows = await this.#teamProgressionRepository.listPerksInTx(
+              tx,
+              teamId,
+            )
+            perkPointsGained = grantablePerkPoints(
+              perkPointsGained,
+              progress.perkPoints,
+              rows.reduce((sum, row) => sum + row.rank, 0),
+              cfg['teamPerk.maxRank'],
+            )
+          }
           const written: TeamProgressRow = {
             level: next.level,
             xp: next.xp,
-            perkPoints: progress.perkPoints + next.perkPointsGained,
+            perkPoints: progress.perkPoints + perkPointsGained,
           }
 
           // ÉCRITURE INCONDITIONNELLE, y compris quand le niveau ne bouge
@@ -310,7 +338,8 @@ export class TeamProgressionDomain implements ITeamProgressionDomain {
             level: written.level,
             xp: written.xp,
             perkPoints: written.perkPoints,
-            perkPointsGained: next.perkPointsGained,
+            perkPointsGained,
+            levelsGained: written.level - progress.level,
           }
         },
         { isolationLevel: 'Serializable' },
@@ -318,10 +347,17 @@ export class TeamProgressionDomain implements ITeamProgressionDomain {
     )
   }
 
-  /** Strictement APRÈS commit, et par membre — jamais `broadcast`. */
+  /**
+   * Strictement APRÈS commit, et par membre — jamais `broadcast`.
+   *
+   * Le déclencheur est la MONTÉE DE NIVEAU, pas le point de bonus gagné :
+   * une équipe qui a déjà rempli ses vingt rangs continue de monter sans
+   * recevoir de point (voir `grantablePerkPoints`), et son nouveau niveau
+   * doit quand même parvenir à ses membres.
+   */
   async #notifyLevelUps(results: TeamAwardResult[]): Promise<void> {
     for (const result of results) {
-      if (result.perkPointsGained <= 0) {
+      if (result.levelsGained <= 0) {
         continue
       }
       const memberIds =
