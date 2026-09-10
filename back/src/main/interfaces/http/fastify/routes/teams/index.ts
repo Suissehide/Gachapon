@@ -420,7 +420,13 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
       const { id } = request.params
       const { page, limit } = request.query
 
-      const team = await teamDomain.getTeam(id, request.user.userID)
+      // `getTeamAsMember`, pas `getTeam` : cette route rend le pseudo,
+      // l'avatar, le rôle et le score de collection de CHAQUE membre. C'est
+      // la même catégorie de donnée que le roster, et la tolérance de
+      // `getTeam` pour un invité en attente n'a rien à y faire — une
+      // invitation, que n'importe quel officier peut émettre, n'ouvre pas
+      // le détail des membres.
+      const team = await teamDomain.getTeamAsMember(id, request.user.userID)
       const config = await scoringConfigRepository.get()
 
       const memberIds = team.members.map((m) => m.userId)

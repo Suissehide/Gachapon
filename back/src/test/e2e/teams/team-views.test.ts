@@ -591,6 +591,11 @@ describe('Vues de la section Équipe', () => {
       expect(
         (await get(`/teams/${mainTeamId}/raids`, cookiesJoiner)).statusCode,
       ).toBe(403)
+      // Le classement interne non plus : pseudo, avatar, rôle et score de
+      // collection de chaque membre, c'est la même catégorie de donnée.
+      expect(
+        (await get(`/teams/${mainTeamId}/ranking`, cookiesJoiner)).statusCode,
+      ).toBe(403)
     } finally {
       // Dans un `finally` : sans ça, une assertion qui tombe laisse le cas
       // suivant face à un invité en attente et le fait échouer pour la
@@ -622,15 +627,48 @@ describe('Vues de la section Équipe', () => {
       // Trois chargements de page, une seule passe de calcul.
       expect(passes).toBe(1)
     } finally {
-      repo.getTeamsForRanking = original
+      // `delete`, pas une réaffectation : réassigner laisserait une
+      // propriété propre liée masquer la méthode du prototype sur un
+      // singleton du conteneur pour tout le reste du run.
+      delete repo.getTeamsForRanking
     }
   })
 
-  it('les trois vues refusent un non-membre', async () => {
+  it('une équipe créée dans la fenêtre du mémo est classée sur les DEUX surfaces', async () => {
+    // Le mémo est chaud AVANT la création : c'est tout le cas de figure.
+    expect((await get('/leaderboard/teams', cookiesMe)).statusCode).toBe(200)
+
+    // Propriétaire sans autre équipe : `currentUserTeamId` du classement est
+    // résolu par un `findFirst` sur l'appartenance, il faut donc que celle-ci
+    // soit sans ambiguïté.
+    const freshTeamId = await createTeam(`Vue Fraiche ${suffix}`, joinerId)
+    try {
+      const board = (await get('/leaderboard/teams', cookiesJoiner)).json()
+      const fromBoard =
+        board.entries.find((e: any) => e.team.id === freshTeamId)?.rank ??
+        (board.currentUserEntry?.team.id === freshTeamId
+          ? board.currentUserEntry.rank
+          : null)
+      const fromDetail = (
+        await get(`/teams/${freshTeamId}`, cookiesJoiner)
+      ).json().rankGlobal
+
+      expect(board.currentUserTeamId).toBe(freshTeamId)
+      expect(typeof fromDetail).toBe('number')
+      // Sans le repli côté classement, la fiche force un rafraîchissement et
+      // affiche un rang pendant que le classement, lui, ignore l'équipe.
+      expect(fromBoard).toBe(fromDetail)
+    } finally {
+      await prisma.team.delete({ where: { id: freshTeamId } })
+    }
+  })
+
+  it('les vues d\'équipe refusent un non-membre', async () => {
     for (const url of [
       `/teams/${mainTeamId}`,
       `/teams/${mainTeamId}/members`,
       `/teams/${mainTeamId}/raids`,
+      `/teams/${mainTeamId}/ranking`,
     ]) {
       const res = await get(url, cookiesJoiner)
       expect(res.statusCode).toBe(403)

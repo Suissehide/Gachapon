@@ -38,6 +38,11 @@ export interface TeamDomainInterface {
   deleteTeam(teamId: string, userId: string): Promise<void>
   /** Un invité en attente y a droit : c'est un aperçu, pas le roster. */
   getTeam(teamId: string, userId: string): Promise<TeamWithMembers>
+  /**
+   * Appartenance STRICTE : tout ce qui expose les MEMBRES (roster, historique
+   * de raid, classement interne) passe par là, jamais par `getTeam`.
+   */
+  getTeamAsMember(teamId: string, userId: string): Promise<TeamWithMembers>
   /** La liste « Mes équipes », raid de la semaine compris. */
   listMyTeams(userId: string, now?: Date): Promise<TeamListItem[]>
   /** L'en-tête de la fiche d'équipe. */

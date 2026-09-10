@@ -124,12 +124,17 @@ export class TeamDomain implements TeamDomainInterface {
    *
    * `getTeam` laisse passer un invité en attente : c'était juste tant qu'il
    * ne servait qu'un aperçu d'équipe (nom, effectif, propriétaire) à qui
-   * doit décider s'il accepte. La table des membres et l'historique de raid
-   * sont d'un autre ordre — niveau, points hebdomadaires, dégâts et
-   * dernière connexion de chaque membre. Une invitation ne donne pas droit
-   * à ça, et n'importe quel officier peut en émettre une.
+   * doit décider s'il accepte. La table des membres, l'historique de raid et
+   * le classement interne sont d'un autre ordre — niveau, points
+   * hebdomadaires, dégâts, dernière connexion et score de collection de
+   * chaque membre. Une invitation ne donne pas droit à ça, et n'importe quel
+   * officier peut en émettre une.
+   *
+   * Publique parce que la route de classement interne compose son propre
+   * calcul et a besoin de la même porte : deux portes pour la même donnée,
+   * c'est celle qu'on oublie qui décide.
    */
-  async #requireMembership(
+  async getTeamAsMember(
     teamId: string,
     userId: string,
   ): Promise<TeamWithMembers> {
@@ -654,7 +659,7 @@ export class TeamDomain implements TeamDomainInterface {
     userId: string,
     now: Date = new Date(),
   ): Promise<TeamMembersView> {
-    const team = await this.#requireMembership(teamId, userId)
+    const team = await this.getTeamAsMember(teamId, userId)
     const memberIds = team.members.map((member) => member.userId)
     const [cfg, weekly, raidStats, users] = await Promise.all([
       this.#configService.getMany('team.recruitDays'),
@@ -733,7 +738,7 @@ export class TeamDomain implements TeamDomainInterface {
     userId: string,
     now: Date = new Date(),
   ) {
-    await this.#requireMembership(teamId, userId)
+    await this.getTeamAsMember(teamId, userId)
     const cfg = await this.#configService.getMany('teamRaid.historyLimit')
     return this.#raidDomain.getHistory(
       teamId,

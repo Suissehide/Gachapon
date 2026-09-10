@@ -253,7 +253,15 @@ export class LeaderboardDomain implements ILeaderboardDomain {
   ): Promise<LeaderboardResponse<TeamEntry>> {
     const myTeamId =
       await this.#leaderboardRepository.getTeamIdForUser(currentUserId)
-    const scored = await this.#rankedTeams()
+    let scored = await this.#rankedTeams()
+    // Même repli que `getTeamRank`, et pour la même raison : une équipe créée
+    // depuis le calcul du mémo s'afficherait « non classée » ICI pendant que
+    // sa propre fiche, elle, force un rafraîchissement et lui donne un rang.
+    // Deux vues qui divergent, c'est exactement ce que la clé partagée existe
+    // pour empêcher.
+    if (myTeamId !== null && !scored.some((s) => s.team.id === myTeamId)) {
+      scored = await this.#rankedTeams(true)
+    }
     if (scored.length === 0) {
       return {
         entries: [],
