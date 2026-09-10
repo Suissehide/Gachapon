@@ -275,7 +275,10 @@ function TeamDetailPage() {
   }
 
   return (
-    <PageShell>
+    // `width="wide"` : la seule page en deux colonnes de l'application. Dans
+    // la largeur par défaut la colonne de droite tombe à 628 px, où le
+    // portrait du boss et la rangée de quatre paliers ne tiennent pas.
+    <PageShell width="wide">
       {/* Pas de titre de page : le handoff ne montre au-dessus des deux
           colonnes que le fil d'Ariane — le nom de l'équipe est le titre de
           sa carte d'identité, dans le rail. */}
