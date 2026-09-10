@@ -62,6 +62,7 @@
   --color-rarity-legendary: var(--rarity-legendary);
 
   --color-amber-soft: var(--amber-soft);
+  --color-track: var(--track);
 
   --font-display: "Bricolage Grotesque", "Nunito", system-ui, sans-serif;
   --font-body: "DM Sans", "Figtree", system-ui, sans-serif;
