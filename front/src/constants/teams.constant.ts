@@ -18,7 +18,33 @@ export type Team = {
   members: TeamMember[]
 }
 
-export type TeamSummary = Team & { memberCount: number }
+export type TeamRaidBadge = {
+  bossName: string
+  pct: number
+}
+
+// Croisé champ par champ avec l'entrée `teams[]` de `teamListResponseSchema`
+// (back/src/main/interfaces/http/fastify/schemas/teams.schema.ts). GET
+// /teams ne renvoie PAS `members` — le back a arrêté de l'envoyer parce que
+// rien ne le lisait — donc ce type ne doit surtout pas étendre `Team`, qui
+// le porte. Pas de champ « tag » ([DLC]…) non plus : la maquette en montre
+// un, mais rien côté serveur ne le produit.
+export type TeamSummary = {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  avatar: string | null
+  ownerId: string
+  createdAt: string
+  level: number
+  hue: number
+  memberCount: number
+  maxMembers: number
+  myRole: 'OWNER' | 'ADMIN' | 'MEMBER'
+  myRoleLabel: 'Chef' | 'Officier' | 'Membre' | 'Recrue'
+  raid: TeamRaidBadge | null
+}
 
 export type Invitation = {
   id: string
@@ -84,4 +110,8 @@ export const TEAM_ROUTES = {
   declineInvitation: (token: string) => `/invitations/${token}/decline`,
   resendInvitation: (token: string) => `/invitations/${token}/resend`,
   cancelInvitation: (token: string) => `/invitations/${token}/cancel`,
+  members: (teamId: string) => `/teams/${teamId}/members`,
+  raids: (teamId: string) => `/teams/${teamId}/raids`,
+  perks: (teamId: string) => `/teams/${teamId}/perks`,
+  perksReset: (teamId: string) => `/teams/${teamId}/perks/reset`,
 } as const

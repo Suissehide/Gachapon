@@ -87,6 +87,20 @@ export interface EconomyConfig {
     minStake: number
     maxStake: number
   }
+  // Effectif max, fenêtre « recrue » et arbre des quatre bonus d'équipe —
+  // vit dans GlobalConfig (`team.*`/`teamPerk.*`), lu ici plutôt que codé
+  // en dur, comme `duel`/`bet` ci-dessus.
+  team: {
+    maxMembers: number
+    recruitDays: number
+    perkMaxRank: number
+    perks: {
+      loot: { perRank: number; unlockLevel: number }
+      raid: { perRank: number; unlockLevel: number }
+      xp: { perRank: number; unlockLevel: number }
+      forge: { perRank: number; unlockLevel: number }
+    }
+  }
   equip: {
     goldCostBase: number
     goldCostExp: number
