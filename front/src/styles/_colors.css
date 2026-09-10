@@ -2,6 +2,17 @@
   --primary: #f59e0b;
   --primary-light: #fbbf24;
   --primary-dark: #d97706;
+  /* Encre ambrée pour TEXTE sur fond ambré très clair — chip de minuteur
+     (`.tm-chip--amber`, #92400e) et pourcentage d'un palier acquis
+     (`.tm-tier--done .tm-tier-pct`, #b45309) du handoff équipe.
+     --primary-dark (#d97706) n'y tient que 3,0:1, ce qui est illisible sur
+     un libellé mono gras de 10-11 px ; #b45309 monte à 4,7:1 et #92400e à
+     6,7:1. Une seule valeur pour les deux placements, et c'est la plus
+     sombre des deux qui gagne : elle tient la barre partout, là où
+     l'inverse aurait laissé la chip juste au-dessus du minimum. Même parti
+     pris que --secondary-dark plus bas — un token d'ENCRE, pas un token par
+     hexadécimal du handoff. */
+  --primary-darker: #92400e;
   --primary-foreground: #ffffff;
 
   --fc-event-bg-color: #f59e0b;

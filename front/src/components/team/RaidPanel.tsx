@@ -31,6 +31,7 @@ import { useRaid, useRaidLive } from '../../queries/useRaid.ts'
 import { ArcadeCard } from '../shared/ArcadeCard.tsx'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
 import { Button } from '../ui/button.tsx'
+import { PanelTitle, SectionLabel } from '../ui/sectionHeading.tsx'
 import { GradedHpBar } from './GradedHpBar.tsx'
 
 function minutesRemaining(endsAt: string): number {
@@ -90,11 +91,11 @@ function TierCard({
       <div
         className={cn(
           'flex items-center gap-1.5 font-mono text-[11px] font-bold tracking-[0.1em]',
-          done ? 'text-primary-dark' : 'text-foreground/50',
+          done ? 'text-primary-darker' : 'text-foreground/50',
         )}
       >
         {done && (
-          <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary text-white">
+          <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
             <Check className="h-2.5 w-2.5" strokeWidth={3} />
           </span>
         )}
@@ -289,19 +290,19 @@ export function RaidPanel({ teamId }: { teamId: string }) {
           alignés sur la ligne de base du titre. */}
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div className="min-w-0">
-          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/50">
+          <SectionLabel>
             Raid d'équipe · Semaine {weekNumber(raid.weekKey)}
-          </span>
-          <h2 className="mt-1.5 font-display text-[34px] font-extrabold leading-tight tracking-[-0.025em] text-text">
+          </SectionLabel>
+          <PanelTitle size="lg" className="mt-1.5">
             {raid.boss.name}
-          </h2>
+          </PanelTitle>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
           {/* `.tm-chip--amber` — encre ambrée foncée sur fond ambré très
               clair, rendue en opacités du token plutôt qu'en hex, comme le
               reste de l'écran. */}
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 font-mono text-[10px] font-bold tracking-[0.1em] text-primary-dark">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 font-mono text-[10px] font-bold tracking-[0.1em] text-primary-darker">
             <CalendarDays className="h-3.5 w-3.5" />
             {ended ? 'Terminé' : formatRemaining(raid.endsAt)}
           </span>
@@ -309,18 +310,12 @@ export function RaidPanel({ teamId }: { teamId: string }) {
           {/* `.tm-btn--amber` : radius 12, padding 11/18, 700 à 14 px, halo
               ambré. La variante `default` du bouton porte déjà le fond. */}
           {killed || noAttackLeft ? (
-            <Button
-              disabled
-              className="h-auto rounded-lg px-[18px] py-[11px] text-sm font-bold"
-            >
+            <Button variant="amber" size="action" disabled>
               <Swords className="h-4 w-4" />
               {attackLabel}
             </Button>
           ) : (
-            <Button
-              asChild
-              className="h-auto rounded-lg px-[18px] py-[11px] text-sm font-bold shadow-[0_8px_20px_-6px_rgba(245,158,11,0.6)]"
-            >
+            <Button variant="amber" size="action" asChild>
               <Link to="/team/$id/raid" params={{ id: teamId }}>
                 <Swords className="h-4 w-4" />
                 {attackLabel}

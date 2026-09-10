@@ -33,6 +33,14 @@ const buttonVariants = cva(
         // `.tml-slot`) ; générique, réutilisable ailleurs.
         dashed:
           'border-[1.5px] border-dashed border-foreground/16 bg-transparent text-foreground/45 shadow-none hover:border-primary hover:bg-primary/10 hover:text-primary-dark',
+        // Action principale d'un panneau — `.tm-btn--amber` du handoff
+        // équipe (docs/design_handoff_equipe/equipe.css) : plein ambré,
+        // texte gras, halo porté. Distinct de `default`, qui est le bouton
+        // ambré courant sans halo ni graisse renforcée.
+        // `disabled:shadow-none` fait partie de la variante : un bouton
+        // grisé qui rayonne encore ment sur sa disponibilité.
+        amber:
+          'bg-primary text-primary-foreground font-bold shadow-[0_8px_20px_-6px_rgba(245,158,11,0.6)] hover:-translate-y-0.5 hover:shadow-[0_12px_26px_-6px_rgba(245,158,11,0.7)] disabled:shadow-none disabled:hover:translate-y-0',
       },
       size: {
         default: 'h-9 px-4 py-2',
@@ -41,6 +49,11 @@ const buttonVariants = cva(
         icon: 'h-9 w-9 rounded-lg',
         'icon-sm': 'h-6 w-6 p-1 rounded-lg',
         pill: 'h-8 px-3 rounded-md text-[13px]',
+        // Gabarit d'action de panneau — `.tm-btn` : padding 11/18, rayon
+        // 12 px (`rounded-lg` sur l'échelle du projet, `rounded-xl` valant
+        // 16), 14 px. `h-auto` parce que le padding fait la hauteur, pas
+        // une hauteur fixe.
+        action: 'h-auto rounded-lg px-[18px] py-[11px] text-sm',
       },
     },
     defaultVariants: {

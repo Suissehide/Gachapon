@@ -20,6 +20,7 @@
   --color-primary-light: var(--primary-light);
   --color-primary: var(--primary);
   --color-primary-dark: var(--primary-dark);
+  --color-primary-darker: var(--primary-darker);
   --color-primary-foreground: var(--primary-foreground);
 
   --color-secondary: var(--secondary);
