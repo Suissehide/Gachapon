@@ -49,6 +49,12 @@ const formatEffect = (n: number) =>
  * `raid` est le seul effet entier (`Math.floor(rang × 0,5)`) : au rang 1 il
  * vaut encore 0, et afficher « +0 attaque » se lirait comme un bug. Ce cas
  * bascule sur la phrase générique, qui dit la règle plutôt que le total.
+ *
+ * Son unité est le JOUR, pas la semaine : le serveur ajoute le bonus à
+ * `raid.attacksPerDay` (`raid.domain.ts`, via `raidAttacksBonusForTeam`),
+ * qui borne un quota QUOTIDIEN. Le rang 5 vaut donc deux attaques par jour
+ * et par membre — quatorze sur la semaine, pas deux. Écrire « par semaine »
+ * ici faisait décliner un rang sept fois plus fort qu'annoncé.
  */
 export function perkDescription(perk: TeamPerkState): string {
   const value = formatEffect(perk.effect)
@@ -59,8 +65,8 @@ export function perkDescription(perk: TeamPerkState): string {
         : 'Accélère la régénération de jetons de chaque membre'
     case 'raid':
       return perk.effect > 0
-        ? `+${value} attaque${plural(perk.effect)} de raid par membre et par semaine`
-        : 'Une attaque de raid de plus par membre tous les deux rangs'
+        ? `+${value} attaque${plural(perk.effect)} de raid par membre et par jour`
+        : 'Une attaque de raid de plus par jour et par membre, tous les deux rangs'
     case 'xp':
       return perk.rank > 0
         ? `+${value} % d'XP de campagne pour chaque membre`
