@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 
 import { TeamsApi } from '../../api/teams.api'
 import { type FeedEntry, useLiveFeed } from '../../hooks/useLiveFeed'
@@ -78,11 +79,11 @@ export function RecentsPanel({ frozen = false }: { frozen?: boolean }) {
       {/* Filtre équipe */}
       {teams.length > 0 && (
         <div className="mt-2.5 flex items-center gap-1 border-b border-border pb-2.5">
-          <span className="mr-1 font-mono text-[9px] font-semibold uppercase tracking-[0.16em] text-text-light/60">
+          <span className="mr-1 shrink-0 font-mono text-[9px] font-semibold uppercase tracking-[0.16em] text-text-light/60">
             Équipe
           </span>
           {teams.length <= MAX_TEAM_CHIPS ? (
-            <>
+            <TeamChipStrip>
               <TeamChip
                 label="Toutes"
                 active={teamId === undefined}
@@ -96,7 +97,7 @@ export function RecentsPanel({ frozen = false }: { frozen?: boolean }) {
                   onClick={() => setTeamId(t.id)}
                 />
               ))}
-            </>
+            </TeamChipStrip>
           ) : (
             <Select
               id="recents-team-select"
@@ -139,6 +140,106 @@ export function RecentsPanel({ frozen = false }: { frozen?: boolean }) {
   )
 }
 
+// Rangée de puces d'équipe : défile horizontalement quand les noms dépassent.
+// Même motif que la bande de chapitres de la campagne — fondu du seul côté
+// réellement coupé, plus un chevron cliquable pour rendre le scroll visible.
+function TeamChipStrip({ children }: { children: ReactNode }) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [edges, setEdges] = useState({ left: false, right: false })
+
+  const update = useCallback(() => {
+    const el = scrollRef.current
+    if (!el) {
+      return
+    }
+    const max = el.scrollWidth - el.clientWidth
+    setEdges({ left: el.scrollLeft > 4, right: el.scrollLeft < max - 4 })
+  }, [])
+
+  useEffect(() => {
+    update()
+    const el = scrollRef.current
+    if (!el) {
+      return
+    }
+    el.addEventListener('scroll', update, { passive: true })
+    window.addEventListener('resize', update)
+    // Les puces arrivent avec la query équipes : le scrollWidth change sans que
+    // la fenêtre bouge, d'où l'observer sur le conteneur lui-même.
+    const observer = new ResizeObserver(update)
+    observer.observe(el)
+    return () => {
+      el.removeEventListener('scroll', update)
+      window.removeEventListener('resize', update)
+      observer.disconnect()
+    }
+  }, [update])
+
+  const nudge = (dir: -1 | 1) => {
+    scrollRef.current?.scrollBy({
+      left: dir * scrollRef.current.clientWidth * 0.7,
+      behavior: 'smooth',
+    })
+  }
+
+  const leftStop = edges.left ? '18px' : '0'
+  const rightStop = edges.right ? 'calc(100% - 18px)' : '100%'
+  const maskImage = `linear-gradient(90deg, transparent 0, #000 ${leftStop}, #000 ${rightStop}, transparent 100%)`
+
+  return (
+    <div className="relative flex min-w-0 flex-1 items-center">
+      <StripArrow
+        direction="left"
+        hidden={!edges.left}
+        onClick={() => nudge(-1)}
+      />
+      <div
+        ref={scrollRef}
+        className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        style={{ maskImage, WebkitMaskImage: maskImage }}
+      >
+        {children}
+      </div>
+      <StripArrow
+        direction="right"
+        hidden={!edges.right}
+        onClick={() => nudge(1)}
+      />
+    </div>
+  )
+}
+
+function StripArrow({
+  direction,
+  hidden,
+  onClick,
+}: {
+  direction: 'left' | 'right'
+  hidden: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={
+        direction === 'left' ? 'Équipes précédentes' : 'Équipes suivantes'
+      }
+      className={cn(
+        'absolute z-[2] flex h-5 w-5 cursor-pointer items-center justify-center rounded-full bg-card text-text-light/70 shadow-sm transition-opacity hover:text-text',
+        direction === 'left' ? '-left-1' : '-right-1',
+        hidden && 'pointer-events-none opacity-0',
+      )}
+    >
+      {direction === 'left' ? (
+        <ChevronLeft className="h-3 w-3" />
+      ) : (
+        <ChevronRight className="h-3 w-3" />
+      )}
+    </button>
+  )
+}
+
 function TeamChip({
   label,
   active,
@@ -152,7 +253,7 @@ function TeamChip({
     <button
       type="button"
       className={cn(
-        'cursor-pointer rounded-full border px-2.5 py-1 text-[12px] font-semibold transition-colors',
+        'shrink-0 cursor-pointer whitespace-nowrap rounded-full border px-2.5 py-1 text-[12px] font-semibold transition-colors',
         active
           ? 'border-amber-soft bg-primary/10 text-primary-dark'
           : 'border-transparent text-text-light hover:bg-muted hover:text-text',
