@@ -96,6 +96,9 @@ export const TEAM_ROUTES = {
   myInvitations: '/me/invitations',
   removeMember: (teamId: string, userId: string) =>
     `/teams/${teamId}/members/${userId}/remove`,
+  memberRole: (teamId: string, userId: string) =>
+    `/teams/${teamId}/members/${userId}/role`,
+  transfer: (teamId: string) => `/teams/${teamId}/transfer`,
   invitation: (token: string) => `/invitations/${token}`,
   invitationById: (id: string) => `/invitations/${id}`,
   acceptInvitation: (token: string) => `/invitations/${token}/accept`,

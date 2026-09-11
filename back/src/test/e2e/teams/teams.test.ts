@@ -581,3 +581,177 @@ describe('Quest join_team — createTeam émet TEAM_JOINED', () => {
     expect(ur!.rewardId).toBe(rewardId)
   })
 })
+
+describe('PATCH /teams/:id/members/:userId/role', () => {
+  let app: Awaited<ReturnType<typeof buildTestApp>>
+  let cookiesOwner: string
+  let cookiesOfficer: string
+  let cookiesMember: string
+  let officerId: string
+  let memberId: string
+  let ownerId: string
+  let outsiderId: string
+  let teamId: string
+
+  const suffix = Date.now() + 2 // distinct from the other suites' suffixes
+
+  /** Inscrit, vérifie l'e-mail, connecte. Renvoie l'id et le cookie. */
+  const signUp = async (name: string): Promise<[string, string]> => {
+    const { postgresOrm } = (app as any).iocContainer
+    const email = `${name}${suffix}@test.com`
+    await app.inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: { username: `${name}${suffix}`, email, password: 'Password123!' },
+    })
+    const user = await postgresOrm.prisma.user.update({
+      where: { email },
+      data: { emailVerifiedAt: new Date() },
+    })
+    const login = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email, password: 'Password123!' },
+    })
+    return [user.id, login.headers['set-cookie'] as string]
+  }
+
+  /** Invite par username et fait accepter : le nouveau membre arrive en MEMBER. */
+  const join = async (name: string, cookies: string): Promise<void> => {
+    const invitation = await app.inject({
+      method: 'POST',
+      url: `/teams/${teamId}/invite`,
+      headers: { cookie: cookiesOwner },
+      payload: { username: `${name}${suffix}` },
+    })
+    await app.inject({
+      method: 'POST',
+      url: `/invitations/${invitation.json().token}/accept`,
+      headers: { cookie: cookies },
+    })
+  }
+
+  const roleOf = async (userId: string): Promise<string | undefined> => {
+    const { postgresOrm } = (app as any).iocContainer
+    const member = await postgresOrm.prisma.teamMember.findUnique({
+      where: { teamId_userId: { teamId, userId } },
+    })
+    return member?.role
+  }
+
+  beforeAll(async () => {
+    app = await buildTestApp()
+    let cookiesOutsider: string
+    ;[ownerId, cookiesOwner] = await signUp('roleOwner')
+    ;[officerId, cookiesOfficer] = await signUp('roleOfficer')
+    ;[memberId, cookiesMember] = await signUp('roleMember')
+    ;[outsiderId, cookiesOutsider] = await signUp('roleOutsider')
+    void cookiesOutsider
+
+    const team = await app.inject({
+      method: 'POST',
+      url: '/teams',
+      headers: { cookie: cookiesOwner },
+      payload: { name: `RoleTeam${suffix}` },
+    })
+    teamId = team.json().id
+
+    await join('roleOfficer', cookiesOfficer)
+    await join('roleMember', cookiesMember)
+  })
+
+  afterAll(async () => {
+    await app.inject({
+      method: 'DELETE',
+      url: `/teams/${teamId}`,
+      headers: { cookie: cookiesOwner },
+    })
+    await app.close()
+  })
+
+  it('le chef promeut un membre en officier', async () => {
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/teams/${teamId}/members/${officerId}/role`,
+      headers: { cookie: cookiesOwner },
+      payload: { role: 'ADMIN' },
+    })
+    expect(res.statusCode).toBe(204)
+    expect(await roleOf(officerId)).toBe('ADMIN')
+  })
+
+  it('la vue des membres sert le libellé « Officier » après promotion', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: `/teams/${teamId}/members`,
+      headers: { cookie: cookiesOwner },
+    })
+    expect(res.statusCode).toBe(200)
+    const members = res.json().members as {
+      userId: string
+      role: string
+      roleLabel: string
+    }[]
+    const officer = members.find((m) => m.userId === officerId)
+    expect(officer).toBeDefined()
+    expect(officer!.role).toBe('ADMIN')
+    expect(officer!.roleLabel).toBe('Officier')
+  })
+
+  it("un officier ne peut pas promouvoir : le changement de rôle est réservé au chef", async () => {
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/teams/${teamId}/members/${memberId}/role`,
+      headers: { cookie: cookiesOfficer },
+      payload: { role: 'ADMIN' },
+    })
+    expect(res.statusCode).toBe(403)
+    expect(await roleOf(memberId)).toBe('MEMBER')
+  })
+
+  it('le chef rétrograde un officier en membre', async () => {
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/teams/${teamId}/members/${officerId}/role`,
+      headers: { cookie: cookiesOwner },
+      payload: { role: 'MEMBER' },
+    })
+    expect(res.statusCode).toBe(204)
+    expect(await roleOf(officerId)).toBe('MEMBER')
+  })
+
+  it('le rôle du chef ne se change pas par cette route', async () => {
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/teams/${teamId}/members/${ownerId}/role`,
+      headers: { cookie: cookiesOwner },
+      payload: { role: 'MEMBER' },
+    })
+    expect(res.statusCode).toBe(403)
+    expect(await roleOf(ownerId)).toBe('OWNER')
+  })
+
+  it('404 quand la cible n\'est pas membre de l\'équipe', async () => {
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/teams/${teamId}/members/${outsiderId}/role`,
+      headers: { cookie: cookiesOwner },
+      payload: { role: 'ADMIN' },
+    })
+    expect(res.statusCode).toBe(404)
+    // Le message distingue un 404 de DOMAINE d'un 404 de ROUTAGE : sans lui
+    // ce test passerait alors même que la route n'existe pas.
+    expect(res.json().message).toBe('Member not found')
+  })
+
+  it('400 quand le corps demande OWNER — la propriété passe par /transfer', async () => {
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/teams/${teamId}/members/${memberId}/role`,
+      headers: { cookie: cookiesOwner },
+      payload: { role: 'OWNER' },
+    })
+    expect(res.statusCode).toBe(400)
+    expect(await roleOf(memberId)).toBe('MEMBER')
+  })
+})

@@ -159,6 +159,73 @@ export const useRemoveMember = (teamId: string) => {
   })
 }
 
+/**
+ * Promotion/rétrogradation d'un membre. `['teams', teamId]` couvre par
+ * PRÉFIXE la clé du roster (`['teams', teamId, 'members']`) : une seule
+ * invalidation rafraîchit la fiche ET la table des contributions, où le
+ * libellé de rôle est affiché.
+ */
+export const useChangeMemberRole = (teamId: string) => {
+  const qc = useQueryClient()
+  const { toast } = useToast()
+  return useMutation({
+    mutationFn: ({
+      userId,
+      role,
+    }: {
+      userId: string
+      role: 'ADMIN' | 'MEMBER'
+    }) => TeamsApi.changeMemberRole(teamId, userId, role),
+    onSuccess: (_data, { role }) => {
+      qc.invalidateQueries({ queryKey: ['teams', teamId] })
+      toast({
+        title: role === 'ADMIN' ? 'Officier nommé' : 'Officier rétrogradé',
+        message:
+          role === 'ADMIN'
+            ? "Ce membre peut désormais exclure et investir les points de l'équipe."
+            : 'Ce membre redevient un membre simple.',
+        severity: TOAST_SEVERITY.SUCCESS,
+      })
+    },
+    onError: (error) => {
+      toast({
+        title: 'Erreur lors du changement de rôle',
+        message: error.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
+    },
+  })
+}
+
+/**
+ * Transmet le rôle de chef. L'appelant y perd le sien dans la même
+ * transaction serveur — d'où `['teams']` en plus : la liste « mes équipes »
+ * affiche le chef de chacune.
+ */
+export const useTransferOwnership = (teamId: string) => {
+  const qc = useQueryClient()
+  const { toast } = useToast()
+  return useMutation({
+    mutationFn: (newOwnerId: string) =>
+      TeamsApi.transferOwnership(teamId, newOwnerId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['teams'] })
+      toast({
+        title: 'Rôle de chef transmis',
+        message: 'Tu es désormais un membre simple de cette équipe.',
+        severity: TOAST_SEVERITY.SUCCESS,
+      })
+    },
+    onError: (error) => {
+      toast({
+        title: 'Erreur lors du transfert',
+        message: error.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
+    },
+  })
+}
+
 export const useLeaveTeam = () => {
   const qc = useQueryClient()
   const { toast } = useToast()

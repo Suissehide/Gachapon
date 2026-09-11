@@ -52,6 +52,16 @@ export const teamTransferBodySchema = z.object({
   newOwnerId: z.string().uuid(),
 })
 
+/**
+ * `OWNER` est volontairement absent de l'énumération : la propriété ne se
+ * donne que par `/teams/:id/transfer`, qui déplace `team.ownerId` en même
+ * temps que les deux lignes de membre. L'accepter ici produirait une équipe
+ * à deux chefs. Un corps qui la demande est donc un 400, pas un 403.
+ */
+export const teamMemberRoleUpdateBodySchema = z.object({
+  role: z.enum(['ADMIN', 'MEMBER']),
+})
+
 export const teamRankingQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),

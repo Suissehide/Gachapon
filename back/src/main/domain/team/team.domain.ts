@@ -12,6 +12,7 @@ import type {
   InvitationEntity,
   TeamDetail,
   TeamListItem,
+  TeamMemberRole,
   TeamMembersView,
   TeamMemberView,
   TeamWithMembers,
@@ -450,6 +451,39 @@ export class TeamDomain implements TeamDomainInterface {
     }
 
     await this.#memberRepo.remove(teamId, userId)
+  }
+
+  /**
+   * Promotion/rétrogradation d'un membre. Réservée au CHEF : un officier qui
+   * pourrait nommer des officiers pourrait se donner un quorum, et un qui
+   * pourrait rétrograder pourrait vider le grade au-dessus de lui. Le rôle
+   * `OWNER` n'entre pas ici — ni comme acteur rétrogradé, ni comme cible :
+   * il porte `team.ownerId`, que seul `transferOwnership` déplace en même
+   * temps que la ligne de membre.
+   */
+  async changeMemberRole(
+    teamId: string,
+    actorId: string,
+    targetUserId: string,
+    role: Exclude<TeamMemberRole, 'OWNER'>,
+  ): Promise<void> {
+    const team = await this.#teamRepo.findById(teamId)
+    if (!team) {
+      throw Boom.notFound('Team not found')
+    }
+    if (team.ownerId !== actorId) {
+      throw Boom.forbidden('Only the owner can change member roles')
+    }
+
+    const target = team.members.find((m) => m.userId === targetUserId)
+    if (!target) {
+      throw Boom.notFound('Member not found')
+    }
+    if (target.role === 'OWNER') {
+      throw Boom.forbidden('Use ownership transfer to change the owner role')
+    }
+
+    await this.#memberRepo.updateRole(teamId, targetUserId, role)
   }
 
   async transferOwnership(

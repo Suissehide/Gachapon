@@ -157,9 +157,10 @@ function TeamDetailPage() {
 
           <WagersPanel teamId={id} members={wagerMembers} />
 
-          {/* `isOwner` et non `canManage` : la colonne d'exclusion n'existe
-              que pour le chef, comme le refus côté serveur. */}
-          <ContributionsTable teamId={id} isOwner={isOwner} />
+          {/* Le rôle BRUT, et non un booléen : la table sert un menu au chef
+              et un autre, plus court, à l'officier — exactement ce que le
+              serveur accorde à chacun. */}
+          <ContributionsTable teamId={id} myRole={myMember?.role} />
         </div>
       </div>
     </PageShell>

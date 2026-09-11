@@ -205,6 +205,72 @@ export const TeamsApi = {
     }
   },
 
+  /**
+   * Promotion/rétrogradation. Le back n'accepte que `ADMIN` et `MEMBER` —
+   * passer le rôle de chef est une AUTRE route (`transferOwnership`), qui
+   * déplace aussi la propriété de l'équipe.
+   */
+  changeMemberRole: async (
+    teamId: string,
+    userId: string,
+    role: 'ADMIN' | 'MEMBER',
+  ): Promise<void> => {
+    const res = await fetchWithAuth(
+      `${apiUrl}${TEAM_ROUTES.memberRole(teamId, userId)}`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role }),
+      },
+    )
+    if (!res.ok) {
+      handleHttpError(
+        res,
+        {
+          403: {
+            title: 'Action non autorisée',
+            message: 'Seul le chef peut changer les rôles.',
+          },
+          404: {
+            title: 'Membre introuvable',
+            message: "Ce membre ne fait plus partie de l'équipe.",
+          },
+        },
+        'Changement de rôle',
+      )
+    }
+  },
+
+  transferOwnership: async (
+    teamId: string,
+    newOwnerId: string,
+  ): Promise<void> => {
+    const res = await fetchWithAuth(
+      `${apiUrl}${TEAM_ROUTES.transfer(teamId)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newOwnerId }),
+      },
+    )
+    if (!res.ok) {
+      handleHttpError(
+        res,
+        {
+          403: {
+            title: 'Action non autorisée',
+            message: 'Seul le chef peut transmettre son rôle.',
+          },
+          404: {
+            title: 'Membre introuvable',
+            message: "Ce membre ne fait plus partie de l'équipe.",
+          },
+        },
+        'Transfert du rôle de chef',
+      )
+    }
+  },
+
   leaveTeam: async (teamId: string): Promise<void> => {
     const res = await fetchWithAuth(`${apiUrl}${TEAM_ROUTES.leave(teamId)}`, {
       method: 'POST',

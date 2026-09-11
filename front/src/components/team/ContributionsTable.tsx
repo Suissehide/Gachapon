@@ -16,18 +16,37 @@
 // quand on tape.
 import { Link } from '@tanstack/react-router'
 import dayjs from 'dayjs'
-import { Search, UserMinus, Users, UserX } from 'lucide-react'
+import {
+  Crown,
+  MoreVertical,
+  Search,
+  Shield,
+  ShieldOff,
+  UserMinus,
+  Users,
+  UserX,
+} from 'lucide-react'
+import { DropdownMenu } from 'radix-ui'
 import { type CSSProperties, useMemo, useState } from 'react'
 
 import type {
+  TeamMemberRole,
   TeamMemberRoleLabel,
   TeamMemberRow,
 } from '../../api/teamProgression.api.ts'
 import { cn, foldForSearch, plural } from '../../libs/utils.ts'
 import { useTeamMembers } from '../../queries/useTeamProgression.ts'
-import { useRemoveMember } from '../../queries/useTeams.ts'
+import {
+  useChangeMemberRole,
+  useRemoveMember,
+  useTransferOwnership,
+} from '../../queries/useTeams.ts'
 import { MemberAvatar } from '../shared/MemberAvatar.tsx'
 import { Button } from '../ui/button.tsx'
+import {
+  DropdownMenuCustomContent,
+  DropdownMenuCustomItem,
+} from '../ui/dropdownMenu.tsx'
 import { Input } from '../ui/input.tsx'
 import { listRowVariants } from '../ui/listRow.tsx'
 import { SectionLabel } from '../ui/sectionHeading.tsx'
@@ -85,7 +104,7 @@ function seenLabel(lastSeenAt: string | null): {
 /**
  * Grille commune à l'en-tête et aux lignes (`.tm-mem-head`, `.tm-mem`) :
  * 34px / 1.2fr / 108px / 1.6fr / 92px / 96px, gap 16px, plus une colonne
- * d'action de 36px quand le lecteur est le chef.
+ * d'action de 36px quand le lecteur est chef ou officier.
  *
  * Sous `md`, les quatre dernières cellules retombent sous l'identité
  * (`col-start-2`) au lieu de se comprimer : la colonne droite de la page
@@ -104,36 +123,146 @@ function rowGrid(withAction: boolean): string {
 /** Chaque cellule après l'identité : empilée sous le nom en dessous de `md`. */
 const STACKED = 'col-start-2 md:col-start-auto'
 
-function RemoveMemberButton({
-  username,
-  userId,
+/**
+ * Ce qu'un lecteur peut faire sur UNE autre ligne. Miroir exact des gardes
+ * serveur — `team.domain.ts` refuse tout le reste, et un item qui mène à un
+ * 403 est un mur, pas une fonctionnalité :
+ *
+ * - changer les rôles et transmettre le grade de chef : le CHEF seul ;
+ * - exclure : le chef sur n'importe qui, l'officier sur les seuls membres.
+ *
+ * Le chef lui-même n'est jamais une cible : il ne se rétrograde pas, et il
+ * ne s'exclut pas. Sa ligne ne porte donc aucun menu.
+ */
+function actionsFor(
+  viewerRole: TeamMemberRole,
+  target: TeamMemberRow,
+): { role: boolean; transfer: boolean; remove: boolean } {
+  if (target.isMe || target.role === 'OWNER') {
+    return { role: false, transfer: false, remove: false }
+  }
+  if (viewerRole === 'OWNER') {
+    return { role: true, transfer: true, remove: true }
+  }
+  return {
+    role: false,
+    transfer: false,
+    remove: viewerRole === 'ADMIN' && target.role === 'MEMBER',
+  }
+}
+
+/**
+ * Menu d'actions d'une ligne : promotion/rétrogradation, transmission du
+ * grade de chef, exclusion. Les deux actions irréversibles passent par une
+ * confirmation ; promouvoir et rétrograder n'en ont pas, l'aller-retour
+ * coûtant un clic.
+ *
+ * L'état de confirmation vit ICI et non dans l'item : Radix démonte le
+ * contenu du menu à la fermeture, et une `Popup` montée dedans disparaîtrait
+ * avec lui au moment même où on la demande.
+ */
+function MemberActionsMenu({
+  member,
+  actions,
   onRemove,
+  onChangeRole,
+  onTransfer,
 }: {
-  username: string
-  userId: string
+  member: TeamMemberRow
+  actions: ReturnType<typeof actionsFor>
   onRemove: (userId: string) => void
+  onChangeRole: (input: { userId: string; role: 'ADMIN' | 'MEMBER' }) => void
+  onTransfer: (userId: string) => void
 }) {
-  const [open, setOpen] = useState(false)
+  const [confirm, setConfirm] = useState<'remove' | 'transfer' | null>(null)
+  const { username } = member.user
+  const isOfficer = member.role === 'ADMIN'
+
   return (
     <>
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        className="rounded-md border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20"
-        onClick={() => setOpen(true)}
-        title={`Exclure ${username}`}
-        aria-label={`Exclure ${username} de l'équipe`}
-      >
-        <UserMinus className="h-4 w-4" />
-      </Button>
+      {/* `modal={false}` : un menu modal pose `pointer-events: none` sur le
+          <body> et le retire à la fermeture. Ouvrir une confirmation DEPUIS
+          un item fait courir les deux ensemble, et la boîte de dialogue
+          hérite parfois d'une page morte au clic. Ici rien à verrouiller —
+          le menu tient sur une ligne. */}
+      <DropdownMenu.Root modal={false}>
+        <DropdownMenu.Trigger asChild>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="rounded-md border border-border bg-transparent text-foreground/55 hover:bg-foreground/6 hover:text-text"
+            title={`Actions sur ${username}`}
+            aria-label={`Actions sur ${username}`}
+          >
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </DropdownMenu.Trigger>
+
+        <DropdownMenuCustomContent align="end" className="min-w-[220px]">
+          {actions.role && (
+            <DropdownMenuCustomItem
+              className="gap-2 px-2.5 py-2 text-[13px]"
+              onSelect={() =>
+                onChangeRole({
+                  userId: member.userId,
+                  role: isOfficer ? 'MEMBER' : 'ADMIN',
+                })
+              }
+            >
+              {isOfficer ? (
+                <ShieldOff className="h-4 w-4" />
+              ) : (
+                <Shield className="h-4 w-4" />
+              )}
+              {isOfficer ? 'Rétrograder en membre' : 'Nommer officier'}
+            </DropdownMenuCustomItem>
+          )}
+
+          {actions.transfer && (
+            <DropdownMenuCustomItem
+              className="gap-2 px-2.5 py-2 text-[13px]"
+              onSelect={() => setConfirm('transfer')}
+            >
+              <Crown className="h-4 w-4" />
+              Transmettre le rôle de chef
+            </DropdownMenuCustomItem>
+          )}
+
+          {actions.remove && (
+            <>
+              {(actions.role || actions.transfer) && (
+                <DropdownMenu.Separator className="my-1 h-px bg-border" />
+              )}
+              <DropdownMenuCustomItem
+                className="gap-2 px-2.5 py-2 text-[13px] text-destructive hover:bg-destructive/15 hover:text-destructive focus:bg-destructive/15 focus:text-destructive"
+                onSelect={() => setConfirm('remove')}
+              >
+                <UserMinus className="h-4 w-4" />
+                Exclure de l'équipe
+              </DropdownMenuCustomItem>
+            </>
+          )}
+        </DropdownMenuCustomContent>
+      </DropdownMenu.Root>
+
       <ConfirmPopup
-        open={open}
-        onOpenChange={setOpen}
+        open={confirm === 'remove'}
+        onOpenChange={(open) => !open && setConfirm(null)}
         icon={<UserX className="h-4 w-4" />}
         title="Exclure le membre"
         description={`Êtes-vous sûr de vouloir exclure ${username} de l'équipe ?`}
         confirmLabel="Exclure"
-        onConfirm={() => onRemove(userId)}
+        onConfirm={() => onRemove(member.userId)}
+      />
+
+      <ConfirmPopup
+        open={confirm === 'transfer'}
+        onOpenChange={(open) => !open && setConfirm(null)}
+        icon={<Crown className="h-4 w-4" />}
+        title="Transmettre le rôle de chef"
+        description={`${username} deviendra le chef de l'équipe, et tu redeviendras un membre simple. Seul le nouveau chef pourra te rendre ce rôle.`}
+        confirmLabel="Transmettre"
+        onConfirm={() => onTransfer(member.userId)}
       />
     </>
   )
@@ -218,27 +347,35 @@ function MemberRow({
   best,
   total,
   attacksPerDay,
-  canRemove,
+  viewerRole,
   onRemove,
+  onChangeRole,
+  onTransfer,
 }: {
   member: TeamMemberRow
   index: number
   best: number
   total: number
   attacksPerDay: number
-  canRemove: boolean
+  /** `null` pour un membre simple : aucune colonne d'action ne lui est servie. */
+  viewerRole: TeamMemberRole | null
   onRemove: (userId: string) => void
+  onChangeRole: (input: { userId: string; role: 'ADMIN' | 'MEMBER' }) => void
+  onTransfer: (userId: string) => void
 }) {
   const seen = seenLabel(member.lastSeenAt)
   const share = total > 0 ? Math.round((member.raidDamage / total) * 100) : 0
-  // Le chef ne s'exclut pas lui-même et n'exclut pas… le chef : le serveur
-  // refuse les deux, un bouton visible serait un mur.
-  const removable = canRemove && !member.isMe && member.role !== 'OWNER'
+  const actions = viewerRole
+    ? actionsFor(viewerRole, member)
+    : { role: false, transfer: false, remove: false }
+  // Un menu vide serait un bouton qui ne fait rien : sur sa propre ligne, sur
+  // celle du chef, ou pour un officier face à un autre officier.
+  const hasActions = actions.role || actions.transfer || actions.remove
 
   return (
     <li
       className={cn(
-        rowGrid(canRemove),
+        rowGrid(viewerRole !== null),
         listRowVariants({ tone: member.isMe ? 'mine' : 'default' }),
       )}
     >
@@ -299,13 +436,15 @@ function MemberRow({
         <AttackDots left={member.raidAttacksLeft} perDay={attacksPerDay} />
       </div>
 
-      {canRemove && (
+      {viewerRole !== null && (
         <div className={cn(STACKED, 'flex md:justify-end')}>
-          {removable && (
-            <RemoveMemberButton
-              username={member.user.username}
-              userId={member.userId}
+          {hasActions && (
+            <MemberActionsMenu
+              member={member}
+              actions={actions}
               onRemove={onRemove}
+              onChangeRole={onChangeRole}
+              onTransfer={onTransfer}
             />
           )}
         </div>
@@ -325,8 +464,10 @@ function Roster({
   best,
   totalDamage,
   attacksPerDay,
-  isOwner,
+  viewerRole,
   onRemove,
+  onChangeRole,
+  onTransfer,
   searchTerm,
   hidden,
   expanded,
@@ -336,8 +477,10 @@ function Roster({
   best: number
   totalDamage: number
   attacksPerDay: number
-  isOwner: boolean
+  viewerRole: TeamMemberRole | null
   onRemove: (userId: string) => void
+  onChangeRole: (input: { userId: string; role: 'ADMIN' | 'MEMBER' }) => void
+  onTransfer: (userId: string) => void
   /** Recherche en cours, déjà rognée. Vide = liste complète. */
   searchTerm: string
   hidden: number
@@ -358,7 +501,7 @@ function Roster({
           des en-têtes de colonnes ne désigneraient plus rien. */}
       <div
         className={cn(
-          rowGrid(isOwner),
+          rowGrid(viewerRole !== null),
           'hidden px-[18px] pb-2.5 font-mono text-[10px] uppercase tracking-[0.16em] text-foreground/45 md:grid',
         )}
       >
@@ -368,7 +511,7 @@ function Roster({
         <span>Dégâts au raid</span>
         <span className="text-right">Pts hebdo</span>
         <span className="text-right">Attaques</span>
-        {isOwner && <span />}
+        {viewerRole !== null && <span />}
       </div>
 
       <ul className="flex flex-col gap-2">
@@ -383,8 +526,10 @@ function Roster({
             best={best}
             total={totalDamage}
             attacksPerDay={attacksPerDay}
-            canRemove={isOwner}
+            viewerRole={viewerRole}
             onRemove={onRemove}
+            onChangeRole={onChangeRole}
+            onTransfer={onTransfer}
           />
         ))}
       </ul>
@@ -408,11 +553,15 @@ function Roster({
 
 export function ContributionsTable({
   teamId,
-  isOwner,
+  myRole,
 }: {
   teamId: string
-  /** Le chef seul peut exclure : la colonne d'action n'existe que pour lui. */
-  isOwner: boolean
+  /**
+   * Rôle du LECTEUR dans cette équipe. La colonne d'action n'est servie
+   * qu'au chef et aux officiers — ce sont les deux seuls rôles auxquels le
+   * serveur accorde quoi que ce soit sur une autre ligne.
+   */
+  myRole: TeamMemberRole | undefined
 }) {
   // Pagination serveur inutile : `useTeamMembers` reçoit la table entière.
   // On demande une page assez grande pour tout couvrir (plafond serveur :
@@ -426,6 +575,9 @@ export function ContributionsTable({
     isError,
   } = useTeamMembers(teamId, 1, ALL_MEMBERS)
   const { mutate: remove } = useRemoveMember(teamId)
+  const { mutate: changeRole } = useChangeMemberRole(teamId)
+  const { mutate: transfer } = useTransferOwnership(teamId)
+  const viewerRole = myRole === 'OWNER' || myRole === 'ADMIN' ? myRole : null
   const [search, setSearch] = useState('')
   const [expanded, setExpanded] = useState(false)
 
@@ -487,8 +639,10 @@ export function ContributionsTable({
           best={best}
           totalDamage={totalDamage}
           attacksPerDay={attacksPerDay}
-          isOwner={isOwner}
+          viewerRole={viewerRole}
           onRemove={remove}
+          onChangeRole={changeRole}
+          onTransfer={transfer}
           searchTerm={search.trim()}
           hidden={hidden}
           expanded={expanded}
