@@ -7,6 +7,7 @@ import type { IocContainer } from '../../types/application/ioc'
 import type {
   IRecruitmentDomain,
   MyJoinRequestView,
+  TeamJoinRequestView,
 } from '../../types/domain/recruitment/recruitment.domain.interface'
 import type { PostgresORMInterface } from '../../types/infra/orm/client'
 import type {
@@ -163,6 +164,35 @@ export class RecruitmentDomain implements IRecruitmentDomain {
       }
       return []
     })
+  }
+
+  /**
+   * Même règle que `inviteMember` (`team.domain.ts:253`) : OWNER ou ADMIN.
+   * Revérifiée à CHAQUE action, jamais seulement à l'affichage — la cloche
+   * peut rester ouverte longtemps après une rétrogradation.
+   */
+  async #assertCanDecide(teamId: string, actorId: string): Promise<void> {
+    const actor = await this.#memberRepo.findByTeamAndUser(teamId, actorId)
+    if (!actor || actor.role === 'MEMBER') {
+      throw Boom.forbidden('Only ADMIN or OWNER can handle join requests')
+    }
+  }
+
+  async listForTeam(
+    teamId: string,
+    actorId: string,
+  ): Promise<TeamJoinRequestView[]> {
+    await this.#assertCanDecide(teamId, actorId)
+    const now = new Date()
+    const pending = await this.#joinRequestRepo.listPendingByTeam(teamId)
+    await this.#sweepExpired(pending, now)
+    return pending
+      .filter((req) => req.status === 'PENDING')
+      .map((req) => ({
+        id: req.id,
+        createdAt: req.createdAt,
+        candidate: req.user,
+      }))
   }
 
   #toView(

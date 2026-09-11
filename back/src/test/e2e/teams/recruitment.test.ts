@@ -290,4 +290,31 @@ describe('Recrutement d équipe', () => {
 
     await prisma.joinRequest.deleteMany({ where: { teamId: targetId } })
   })
+
+  it('GET /teams/:id/join-requests — le chef voit la file', async () => {
+    await app.inject({
+      method: 'POST',
+      url: `/teams/${teamId}/join-requests`,
+      headers: { cookie: cookiesCandidate },
+    })
+    const res = await app.inject({
+      method: 'GET',
+      url: `/teams/${teamId}/join-requests`,
+      headers: { cookie: cookiesOwner },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().requests).toHaveLength(1)
+    expect(res.json().requests[0].candidate.id).toBe(candidateId)
+
+    await prisma.joinRequest.deleteMany({ where: { teamId } })
+  })
+
+  it('un non-membre ne voit pas la file', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: `/teams/${teamId}/join-requests`,
+      headers: { cookie: cookiesCandidate },
+    })
+    expect(res.statusCode).toBe(403)
+  })
 })

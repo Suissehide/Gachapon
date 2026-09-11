@@ -16,3 +16,17 @@ export const myJoinRequestSchema = z.object({
 export const myJoinRequestsResponseSchema = z.object({
   requests: z.array(myJoinRequestSchema),
 })
+
+export const teamJoinRequestsResponseSchema = z.object({
+  requests: z.array(
+    z.object({
+      id: z.string(),
+      createdAt: z.date(),
+      candidate: z.object({
+        id: z.string(),
+        username: z.string(),
+        avatar: z.string().nullable(),
+      }),
+    }),
+  ),
+})

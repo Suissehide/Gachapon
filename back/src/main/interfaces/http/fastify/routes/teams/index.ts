@@ -8,6 +8,7 @@ import type { TeamPerkEvent } from '../../../../ws/ws-manager'
 import {
   myJoinRequestSchema,
   myJoinRequestsResponseSchema,
+  teamJoinRequestsResponseSchema,
 } from '../../schemas/recruitment.schema'
 import {
   teamCreateBodySchema,
@@ -179,6 +180,24 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
       await recruitmentDomain.cancel(request.params.id, request.user.userID)
       return reply.status(204).send()
     },
+  )
+
+  fastify.get(
+    '/teams/:id/join-requests',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        tags: ['Team'],
+        params: teamIdParamSchema,
+        response: { 200: teamJoinRequestsResponseSchema },
+      },
+    },
+    async (request) => ({
+      requests: await recruitmentDomain.listForTeam(
+        request.params.id,
+        request.user.userID,
+      ),
+    }),
   )
 
   fastify.get(
