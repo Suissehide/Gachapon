@@ -5,7 +5,10 @@ import {
   raidElementForWeek,
   raidWeekKey,
 } from '../../../main/domain/raid/raid-rules'
-import { applyTeamXp } from '../../../main/domain/team-progression/team-progression-rules'
+import {
+  applyTeamXp,
+  xpForTeamLevel,
+} from '../../../main/domain/team-progression/team-progression-rules'
 
 /**
  * Boss sans défense et sans risque pour l'attaquant : les dégâts infligés
@@ -617,7 +620,14 @@ describe("progression d'équipe : les quatre sources de points", () => {
     // Pondération temporairement énorme : un seul tirage doit suffire à
     // franchir au moins un seuil, quel que soit l'XP déjà accumulé par
     // team1 dans les tests précédents.
-    const boostedPerPull = 5000
+    //
+    // DÉRIVÉE de la courbe et non écrite en dur : `teamLevel.xpBase` a déjà
+    // été multiplié par six pour allonger la progression, et une constante
+    // cessait alors de franchir le moindre seuil — le test se mettait à
+    // vérifier « zéro point gagné » au lieu du plafonnement.
+    const boostedPerPull =
+      2 *
+      xpForTeamLevel(before.level, cfg['teamLevel.xpBase'], cfg['teamLevel.xpExp'])
     await configService.set('teamPoints.perPull', boostedPerPull)
 
     const expected = applyTeamXp(
@@ -691,7 +701,15 @@ describe("progression d'équipe : les quatre sources de points", () => {
     const before1 = await teamProgress(team1Id)
     const before2 = await teamProgress(team2Id)
 
-    const boostedPerPull = 5000
+    // Même raison qu'au test précédent : dérivé de la courbe, jamais écrit
+    // en dur.
+    const boostedPerPull =
+      2 *
+      xpForTeamLevel(
+        before2.level,
+        cfg['teamLevel.xpBase'],
+        cfg['teamLevel.xpExp'],
+      )
     await configService.set('teamPoints.perPull', boostedPerPull)
     try {
       const expected2 = applyTeamXp(

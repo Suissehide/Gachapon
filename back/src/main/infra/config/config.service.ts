@@ -192,7 +192,24 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'teamPoints.duelWon': 8,
   'teamPoints.betWon': 3,
   'teamPoints.perPull': 1,
-  'teamLevel.xpBase': 175,
+  // Courbe d'XP d'equipe : passer du niveau n au suivant coute
+  // `xpBase * n^xpExp`.
+  //
+  // La base est passee de 175 a 1050 (x6) pour allonger considerablement la
+  // progression. Le niveau qui compte n'est PAS le plafond (50) mais le 18 :
+  // c'est la que les 17 rangs de bonus sont tous achetes, donc la fin de la
+  // progression utile. A 175, une equipe de 35 membres actifs y arrivait en
+  // moins de TROIS semaines, une equipe de 12 en huit. A 1050 il leur faut
+  // respectivement ~17 et ~50 semaines, et le plafond 50 reste ce qu'il etait
+  // deja : du prestige hors d'atteinte a vue humaine.
+  //
+  // C'est la BASE qu'on monte, pas l'exposant, et pas les gains. Monter
+  // l'exposant n'aurait allonge que la queue de courbe, deja interminable,
+  // sans toucher les dix-huit premiers niveaux. Baisser les gains aurait
+  // rouvert l'equilibre entre les quatre sources — degats de raid ~540 points
+  // par membre et par semaine, tirages ~420, duels ~120, paris ~60 — qui a ete
+  // cale a la main. Etirer la courbe ne change aucun de ces rapports.
+  'teamLevel.xpBase': 1050,
   'teamLevel.xpExp': 1.6,
   'teamLevel.maxLevel': 50,
   'teamPerk.loot.perRank': 0.5,
