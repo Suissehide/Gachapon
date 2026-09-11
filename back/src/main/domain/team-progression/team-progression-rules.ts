@@ -108,11 +108,13 @@ export function hueFromName(name: string): number {
  * Combien des `gained` points d'un franchissement de niveau sont réellement
  * ATTRIBUABLES, c'est-à-dire encore dépensables un jour.
  *
- * Le plafond de niveau (50) et le plafond de rangs (`rankCapacity`, la somme
- * des plafonds des quatre bonus) ne sont pas alignés : à raison d'un point
- * par niveau, une équipe en gagne 49 pour 17 rangs à remplir. Sans ce
- * plafonnement, chaque point au-delà est mort-né — la pastille « N POINTS »
- * du panneau annonce
+ * Le plafond de niveau et le plafond de rangs (`rankCapacity`, la somme des
+ * plafonds des quatre bonus) sont désormais ALIGNÉS : 33 niveaux donnent 32
+ * points pour 32 rangs. Ce plafonnement ne mord donc plus en fonctionnement
+ * normal — il reste la garantie que les deux ne peuvent pas diverger en
+ * silence si un admin retouche l'un sans l'autre. Sans lui, un point au-delà
+ * de la capacité serait mort-né — la pastille « N POINTS » du panneau
+ * annonce
  * une ressource que rien ne peut consommer, et le bouton d'investissement
  * n'ouvre qu'une modale où les quatre rangées disent « rang maximum
  * atteint ». On préfère ne pas créditer que promettre.
@@ -127,7 +129,7 @@ export function hueFromName(name: string): number {
  * plus de plafond commun à multiplier.
  *
  * Ce qui n'est PAS plafonné, et c'est délibéré : le niveau lui-même. Une
- * équipe continue de monter au-delà du vingtième niveau — c'est son
+ * équipe qui dépasserait la capacité continuerait de monter — c'est son
  * ancienneté, elle reste affichée.
  */
 export function grantablePerkPoints(

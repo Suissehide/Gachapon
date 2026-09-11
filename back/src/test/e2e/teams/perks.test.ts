@@ -35,6 +35,7 @@ describe('Routes des bonus d\'équipe', () => {
   let raidMaxRank: number
   let lootUnlockLevel: number
   let forgeUnlockLevel: number
+  let baselineForgeUnlock: number
 
   const suffix = Date.now()
   const password = 'Password123!'
@@ -102,6 +103,10 @@ describe('Routes des bonus d\'équipe', () => {
     prisma = container.postgresOrm.prisma
     configService = container.configService
 
+    baselineForgeUnlock = (
+      await configService.getMany('teamPerk.forge.unlockLevel')
+    )['teamPerk.forge.unlockLevel']
+
     const cfg = await configService.getMany(
       'teamPerk.loot.maxRank',
       'teamPerk.raid.maxRank',
@@ -111,13 +116,16 @@ describe('Routes des bonus d\'équipe', () => {
     lootMaxRank = cfg['teamPerk.loot.maxRank']
     raidMaxRank = cfg['teamPerk.raid.maxRank']
     lootUnlockLevel = cfg['teamPerk.loot.unlockLevel']
-    forgeUnlockLevel = cfg['teamPerk.forge.unlockLevel']
-    // Le cas « verrouillé par le niveau » n'a de sens que si `forge` se
-    // débloque STRICTEMENT après le niveau 1 auquel `loot` (et l'équipe à sa
-    // création) sont déjà. Une dérive de config qui l'alignerait rendrait ce
-    // test caduc en silence — on préfère le faire échouer bruyamment.
-    expect(forgeUnlockLevel).toBeGreaterThan(1)
     expect(lootUnlockLevel).toBeLessThanOrEqual(1)
+
+    // Le déblocage par niveau est POSÉ PAR LE TEST, jamais emprunté à la
+    // config de production. Les quatre bonus s'y ouvrent désormais au niveau
+    // 1 — un déblocage tardif décidait de l'ordre à la place du chef — mais
+    // le mécanisme existe toujours et doit rester couvert. Le lire depuis la
+    // config rendait ce test otage d'une valeur d'équilibrage : il s'est
+    // effectivement mis à échouer le jour où elle est passée à 1.
+    forgeUnlockLevel = 7
+    await configService.set('teamPerk.forge.unlockLevel', forgeUnlockLevel)
 
     const leader = await registerAndLogin('Leader')
     const officer = await registerAndLogin('Officer')
@@ -148,6 +156,11 @@ describe('Routes des bonus d\'équipe', () => {
   })
 
   afterAll(async () => {
+    // `GlobalConfig` est partagée entre fichiers e2e : on rend la valeur.
+    await configService.set(
+      'teamPerk.forge.unlockLevel',
+      baselineForgeUnlock,
+    )
     await app.close()
   })
 

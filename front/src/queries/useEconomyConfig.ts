@@ -63,11 +63,14 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
   team: {
     maxMembers: 35,
     recruitDays: 7,
+    // Repli aligné sur `DEFAULTS` (back/infra/config/config.service.ts) : les
+    // quatre bonus ouverts au niveau 1, dix rangs chacun sauf `raid` dont
+    // l'effet est un nombre entier d'attaques.
     perks: {
-      loot: { perRank: 0.5, unlockLevel: 1, maxRank: 5 },
-      raid: { perRank: 0.5, unlockLevel: 4, maxRank: 2 },
-      xp: { perRank: 0.8, unlockLevel: 8, maxRank: 5 },
-      forge: { perRank: 1, unlockLevel: 16, maxRank: 5 },
+      loot: { perRank: 0.25, unlockLevel: 1, maxRank: 10 },
+      raid: { perRank: 0.5, unlockLevel: 1, maxRank: 2 },
+      xp: { perRank: 0.4, unlockLevel: 1, maxRank: 10 },
+      forge: { perRank: 0.5, unlockLevel: 1, maxRank: 10 },
     },
   },
   equip: {

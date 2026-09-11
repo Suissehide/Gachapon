@@ -7,15 +7,21 @@
 // POURQUOI il l'est (bonus verrouillé, rang au maximum, plus aucun point),
 // et le déclencheur lui-même disparaît plutôt que de s'afficher grisé quand
 // il n'y a rien à dépenser.
-import { Sparkles } from 'lucide-react'
+import { ArrowRight, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 
 import type { TeamPerkState } from '../../api/teamProgression.api.ts'
 import {
   PERK_META,
   perkDescription,
+  perkEffectAt,
+  perkValue,
 } from '../../constants/teamPerks.constant.ts'
 import { plural } from '../../libs/utils.ts'
+import {
+  DEFAULT_ECONOMY,
+  useEconomyConfig,
+} from '../../queries/useEconomyConfig.ts'
 import { useSpendPerk } from '../../queries/useTeamProgression.ts'
 import { Button } from '../ui/button.tsx'
 import {
@@ -59,6 +65,10 @@ export function PerkInvestPopup({
   perkPoints,
 }: PerkInvestPopupProps) {
   const [open, setOpen] = useState(false)
+  // L'effet par rang vient de la config serveur : le coder en dur ferait
+  // mentir le « après » au premier ajustement d'équilibrage.
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  const perkConfig = economy.team.perks
   const {
     mutate: spend,
     isPending,
@@ -141,6 +151,33 @@ export function PerkInvestPopup({
                   <p className="mt-1 text-[11.5px] leading-[1.45] text-foreground/60">
                     {perkDescription(perk)}
                   </p>
+                  {/* Ce que ce point CHANGE, chiffré : la phrase au-dessus dit
+                      la règle, cette ligne dit le gain. Masquée quand le rang
+                      ne peut plus monter — un « après » identique à l'« avant »
+                      n'apprend rien, et sur un bonus au maximum il mentirait.
+
+                      L'après se calcule ici (`perkEffectAt`) plutôt que de
+                      s'attendre du serveur : c'est une multiplication, et un
+                      aller-retour par rangée pour l'obtenir serait absurde. */}
+                  {perk.rank < perk.maxRank && (
+                    <p className="mt-1.5 flex items-center gap-1.5 font-mono text-[10px] tracking-[0.06em]">
+                      <span className="text-foreground/45">
+                        {perkValue(perk.key, perk.effect)}
+                      </span>
+                      <ArrowRight className="h-3 w-3 text-foreground/35" />
+                      <span className="font-display text-xs font-extrabold not-italic tabular-nums text-primary-dark">
+                        {perkValue(
+                          perk.key,
+                          perkEffectAt(
+                            perk.key,
+                            perk.rank + 1,
+                            perkConfig[perk.key].perRank,
+                            perk.maxRank,
+                          ),
+                        )}
+                      </span>
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex w-[150px] shrink-0 flex-col items-end gap-1">

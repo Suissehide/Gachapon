@@ -195,26 +195,40 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // Courbe d'XP d'equipe : passer du niveau n au suivant coute
   // `xpBase * n^xpExp`.
   //
-  // La base est passee de 175 a 1050 (x6) pour allonger considerablement la
-  // progression. Le niveau qui compte n'est PAS le plafond (50) mais le 18 :
-  // c'est la que les 17 rangs de bonus sont tous achetes, donc la fin de la
-  // progression utile. A 175, une equipe de 35 membres actifs y arrivait en
-  // moins de TROIS semaines, une equipe de 12 en huit. A 1050 il leur faut
-  // respectivement ~17 et ~50 semaines, et le plafond 50 reste ce qu'il etait
-  // deja : du prestige hors d'atteinte a vue humaine.
+  // La base a fait l'aller-retour 175 -> 1050 -> 210, et ce n'est pas une
+  // hesitation : entre les deux, le nombre de niveaux UTILES a double. La
+  // progression s'arrete quand l'arbre est plein, et l'arbre est passe de 17
+  // a 32 rangs — donc du niveau 18 au niveau 33. A 1050, atteindre 33 aurait
+  // coute cinq fois le trajet qu'on venait de caler.
   //
-  // C'est la BASE qu'on monte, pas l'exposant, et pas les gains. Monter
-  // l'exposant n'aurait allonge que la queue de courbe, deja interminable,
-  // sans toucher les dix-huit premiers niveaux. Baisser les gains aurait
-  // rouvert l'equilibre entre les quatre sources — degats de raid ~540 points
-  // par membre et par semaine, tirages ~420, duels ~120, paris ~60 — qui a ete
-  // cale a la main. Etirer la courbe ne change aucun de ces rapports.
-  'teamLevel.xpBase': 1050,
+  // 210 rend au parcours complet son cout d'avant : ~690 000 XP, soit 17
+  // semaines pour une equipe de 35 membres actifs, 50 pour une de 12, 121
+  // pour une de 5. Le meme temps, reparti sur deux fois plus de paliers.
+  //
+  // C'est le TOTAL qui est cale, jamais le cout d'un niveau isole : ajouter
+  // ou retirer des rangs a l'arbre deplace le dernier niveau utile, donc
+  // cette base. Les deux se relisent ensemble.
+  'teamLevel.xpBase': 210,
   'teamLevel.xpExp': 1.6,
-  'teamLevel.maxLevel': 50,
-  'teamPerk.loot.perRank': 0.5,
+  // Le plafond vaut EXACTEMENT la capacite de l'arbre plus un : 32 rangs
+  // (10 + 2 + 10 + 10) pour 32 points distribues du niveau 1 au niveau 33.
+  // Aucun niveau mort, aucun rang hors d'atteinte. Les faire diverger ramene
+  // l'un des deux defauts precedents — soit des points indepensables, soit
+  // des rangs qu'on ne peut jamais atteindre.
+  'teamLevel.maxLevel': 33,
+  // Dix rangs plutot que cinq, a l'effet par rang divise par deux : le
+  // plafond de chaque bonus est INCHANGE, il s'atteint seulement par paliers
+  // deux fois plus fins. C'est ce qui donne un arbitrage a chaque point
+  // plutot qu'une case a cocher.
+  //
+  // `loot` est un POURCENTAGE, pas des minutes : il divise l'intervalle de
+  // regeneration (`effectiveRegenInterval`, economy.domain.ts). Au plafond il
+  // vaut +2,5 % de vitesse, soit environ quarante-cinq secondes sur un
+  // intervalle de trente minutes — peu, et c'est a relire si l'on veut que ce
+  // bonus pese vraiment.
+  'teamPerk.loot.perRank': 0.25,
   'teamPerk.loot.unlockLevel': 1,
-  'teamPerk.loot.maxRank': 5,
+  'teamPerk.loot.maxRank': 10,
   // `raid.maxRank` a ete ramene de 5 a 2. A 5, le bonus donnait +2 attaques
   // par jour sur les 2 de base : la capacite hebdomadaire d'une equipe de 35
   // passait de 7,2 a 14,4 M de degats contre 5,67 M de PV, soit un boss tombe
@@ -223,14 +237,20 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // attaque tous les DEUX rangs : le rang 1 ne change encore rien, le rang 2
   // donne l'attaque.
   'teamPerk.raid.perRank': 0.5,
-  'teamPerk.raid.unlockLevel': 4,
+  // Ouvert des le premier niveau, comme les trois autres : un deblocage
+  // tardif decidait de l'ordre a la place du chef, et les premiers points
+  // n'avaient alors aucun arbitrage.
+  'teamPerk.raid.unlockLevel': 1,
+  // Seul bonus qui reste a 2 rangs : son effet est un NOMBRE D'ATTAQUES, un
+  // entier, qui ne se decoupe pas en paliers plus fins. Le plafond a 2 vient
+  // de l'equilibrage du raid (voir plus haut), pas de la taille de l'arbre.
   'teamPerk.raid.maxRank': 2,
-  'teamPerk.xp.perRank': 0.8,
-  'teamPerk.xp.unlockLevel': 8,
-  'teamPerk.xp.maxRank': 5,
-  'teamPerk.forge.perRank': 1,
-  'teamPerk.forge.unlockLevel': 16,
-  'teamPerk.forge.maxRank': 5,
+  'teamPerk.xp.perRank': 0.4,
+  'teamPerk.xp.unlockLevel': 1,
+  'teamPerk.xp.maxRank': 10,
+  'teamPerk.forge.perRank': 0.5,
+  'teamPerk.forge.unlockLevel': 1,
+  'teamPerk.forge.maxRank': 10,
   'team.maxMembers': 35,
   'team.recruitDays': 7,
   'teamRaid.historyLimit': 6,
