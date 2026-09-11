@@ -30,3 +30,10 @@ export const teamJoinRequestsResponseSchema = z.object({
     }),
   ),
 })
+
+export const joinRequestIdParamSchema = z.object({ id: z.string().uuid() })
+
+export const joinRequestDecisionResponseSchema = z.object({
+  teamId: z.string(),
+  userId: z.string(),
+})

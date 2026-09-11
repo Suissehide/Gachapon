@@ -317,4 +317,94 @@ describe('Recrutement d équipe', () => {
     })
     expect(res.statusCode).toBe(403)
   })
+
+  it('POST /join-requests/:id/accept — fait entrer le candidat', async () => {
+    // La file a été vidée par le test précédent : on recandidate avant
+    // d'accepter.
+    await app.inject({
+      method: 'POST',
+      url: `/teams/${teamId}/join-requests`,
+      headers: { cookie: cookiesCandidate },
+    })
+
+    const queue = await app.inject({
+      method: 'GET',
+      url: `/teams/${teamId}/join-requests`,
+      headers: { cookie: cookiesOwner },
+    })
+    const requestId = queue.json().requests[0].id
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/join-requests/${requestId}/accept`,
+      headers: { cookie: cookiesOwner },
+    })
+    expect(res.statusCode).toBe(200)
+
+    const members = await app.inject({
+      method: 'GET',
+      url: `/teams/${teamId}/members`,
+      headers: { cookie: cookiesOwner },
+    })
+    expect(
+      members.json().members.some((m: any) => m.userId === candidateId),
+    ).toBe(true)
+
+    const row = await prisma.joinRequest.findUnique({
+      where: { id: requestId },
+    })
+    expect(row.status).toBe('ACCEPTED')
+  })
+
+  it('une seconde acceptation ne fait rien et répond 409', async () => {
+    const row = await prisma.joinRequest.findFirst({
+      where: { teamId, userId: candidateId },
+    })
+    const res = await app.inject({
+      method: 'POST',
+      url: `/join-requests/${row.id}/accept`,
+      headers: { cookie: cookiesOwner },
+    })
+    expect(res.statusCode).toBe(409)
+  })
+
+  it('refuse l acceptation si le candidat a atteint ses 3 équipes, et expire la demande', async () => {
+    const other = await signIn('recruitFull')
+    // Trois équipes pour saturer MAX_TEAMS_PER_USER.
+    for (let i = 0; i < 3; i++) {
+      await app.inject({
+        method: 'POST',
+        url: '/teams',
+        headers: { cookie: other.cookies },
+        payload: { name: `Pleine ${i} ${suffix}` },
+      })
+    }
+    const target = await prisma.team.create({
+      data: {
+        name: `Quatrieme ${suffix}`,
+        slug: `quatrieme-${suffix}`,
+        ownerId: candidateId,
+        members: { create: { userId: candidateId, role: 'OWNER' } },
+      },
+    })
+    const req = await prisma.joinRequest.create({
+      data: {
+        teamId: target.id,
+        userId: other.id,
+        expiresAt: new Date(Date.now() + 7 * 86_400_000),
+      },
+    })
+    const res = await app.inject({
+      method: 'POST',
+      url: `/join-requests/${req.id}/accept`,
+      headers: { cookie: cookiesCandidate },
+    })
+    expect(res.statusCode).toBe(403)
+    const after = await prisma.joinRequest.findUnique({ where: { id: req.id } })
+    expect(after.status).toBe('EXPIRED')
+
+    await prisma.joinRequest.deleteMany({ where: { teamId: target.id } })
+    await prisma.teamMember.deleteMany({ where: { teamId: target.id } })
+    await prisma.team.delete({ where: { id: target.id } })
+  })
 })

@@ -6,6 +6,8 @@ import type { TeamPerkKey } from '../../../../../domain/team-progression/team-pr
 import type { TeamPerkState } from '../../../../../types/domain/team-progression/team-progression.domain.interface'
 import type { TeamPerkEvent } from '../../../../ws/ws-manager'
 import {
+  joinRequestDecisionResponseSchema,
+  joinRequestIdParamSchema,
   myJoinRequestSchema,
   myJoinRequestsResponseSchema,
   teamJoinRequestsResponseSchema,
@@ -212,6 +214,25 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request) => ({
       requests: await recruitmentDomain.listMine(request.user.userID),
     }),
+  )
+
+  fastify.post(
+    '/join-requests/:id/accept',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        tags: ['Team'],
+        params: joinRequestIdParamSchema,
+        response: { 200: joinRequestDecisionResponseSchema },
+      },
+    },
+    async (request) => {
+      const { teamId, userId } = await recruitmentDomain.accept(
+        request.params.id,
+        request.user.userID,
+      )
+      return { teamId, userId }
+    },
   )
 
   fastify.patch(

@@ -9,12 +9,15 @@ import type {
   MyJoinRequestView,
   TeamJoinRequestView,
 } from '../../types/domain/recruitment/recruitment.domain.interface'
+import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
 import type { PostgresORMInterface } from '../../types/infra/orm/client'
 import type {
   IJoinRequestRepository,
   JoinRequestWithTeam,
 } from '../../types/infra/orm/repositories/join-request.repository.interface'
+import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import { retryOnSerialization } from '../shared/retry-serialization'
+import { MAX_TEAMS_PER_USER } from '../team/team.domain'
 import { hueFromName } from '../team-progression/team-progression-rules'
 import {
   countActivePending,
@@ -29,17 +32,23 @@ export class RecruitmentDomain implements IRecruitmentDomain {
   readonly #teamRepo: TeamRepository
   readonly #memberRepo: TeamMemberRepository
   readonly #postgresOrm: PostgresORMInterface
+  readonly #configService: ConfigServiceInterface
+  readonly #achievementsDomain: AchievementsDomainInterface
 
   constructor({
     joinRequestRepository,
     teamRepository,
     teamMemberRepository,
     postgresOrm,
+    configService,
+    achievementsDomain,
   }: IocContainer) {
     this.#joinRequestRepo = joinRequestRepository
     this.#teamRepo = teamRepository
     this.#memberRepo = teamMemberRepository
     this.#postgresOrm = postgresOrm
+    this.#configService = configService
+    this.#achievementsDomain = achievementsDomain
   }
 
   async apply(teamId: string, userId: string): Promise<MyJoinRequestView> {
@@ -131,6 +140,74 @@ export class RecruitmentDomain implements IRecruitmentDomain {
       throw Boom.notFound('No pending join request for this team')
     }
     await this.#joinRequestRepo.setStatus(existing.id, 'CANCELLED')
+  }
+
+  /**
+   * Fait entrer le candidat. Les deux blocages possibles sont volontairement
+   * asymétriques : le candidat qui a atteint ses 3 équipes est bloqué
+   * DÉFINITIVEMENT tant qu'il n'en quitte pas une, donc la demande est
+   * expirée pour épargner au chef de retomber dessus à chaque passage sur
+   * sa file ; l'équipe pleine, elle, PEUT se libérer demain, donc la
+   * demande reste en attente.
+   */
+  async accept(
+    requestId: string,
+    actorId: string,
+  ): Promise<{ teamId: string; userId: string; teamName: string }> {
+    const now = new Date()
+    const req = await this.#joinRequestRepo.findById(requestId)
+    if (!req) {
+      throw Boom.notFound('Join request not found')
+    }
+    if (req.status !== 'PENDING' || isJoinRequestExpired(req, now)) {
+      throw Boom.conflict('Join request already processed')
+    }
+
+    await this.#assertCanDecide(req.teamId, actorId)
+
+    const teamCount = await this.#teamRepo.countByUserId(req.userId)
+    if (teamCount >= MAX_TEAMS_PER_USER) {
+      await this.#joinRequestRepo.setStatus(req.id, 'EXPIRED')
+      throw Boom.forbidden(
+        `@${req.user.username} a atteint sa limite de ${MAX_TEAMS_PER_USER} équipes`,
+      )
+    }
+
+    const [memberCount, config] = await Promise.all([
+      this.#memberRepo.countByTeam(req.teamId),
+      this.#configService.getMany('team.maxMembers'),
+    ])
+    if (memberCount >= config['team.maxMembers']) {
+      throw Boom.forbidden(
+        `Cette équipe est complète (${config['team.maxMembers']} membres)`,
+      )
+    }
+
+    await this.#postgresOrm.executeWithTransactionClient(async (tx) => {
+      // La garde `status: 'PENDING'` du `updateMany` fait le départage
+      // quand deux officiers cliquent en même temps : le perdant touche
+      // zéro ligne.
+      const updated = await this.#joinRequestRepo.decideIfPending(
+        tx,
+        req.id,
+        'ACCEPTED',
+        actorId,
+        now,
+      )
+      if (updated === 0) {
+        throw Boom.conflict('Join request already processed')
+      }
+      await tx.teamMember.create({
+        data: { teamId: req.teamId, userId: req.userId, role: 'MEMBER' },
+      })
+      // Même succès que par invitation (`team.domain.ts:393`) : sans ça la
+      // quête « rejoindre une équipe » ne se valide jamais par candidature.
+      await this.#achievementsDomain.track(tx, req.userId, {
+        kind: 'TEAM_JOINED',
+      })
+    })
+
+    return { teamId: req.teamId, userId: req.userId, teamName: req.team.name }
   }
 
   /**

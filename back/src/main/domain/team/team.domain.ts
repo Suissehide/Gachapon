@@ -32,7 +32,7 @@ import {
   xpForTeamLevel,
 } from '../team-progression/team-progression-rules'
 
-const MAX_TEAMS_PER_USER = 3
+export const MAX_TEAMS_PER_USER = 3
 const INVITATION_TTL_MS = 48 * 60 * 60 * 1000
 
 /**

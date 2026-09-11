@@ -24,4 +24,8 @@ export interface IRecruitmentDomain {
   cancel(teamId: string, userId: string): Promise<void>
   listMine(userId: string): Promise<MyJoinRequestView[]>
   listForTeam(teamId: string, actorId: string): Promise<TeamJoinRequestView[]>
+  accept(
+    requestId: string,
+    actorId: string,
+  ): Promise<{ teamId: string; userId: string; teamName: string }>
 }
