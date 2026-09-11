@@ -9,12 +9,10 @@ import type {
   SettledDuelView,
 } from '../../api/wagers.api.ts'
 import { duelSides } from '../../libs/duel.ts'
-import { RARITY_BADGE_VARIANT, RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { cn, plural } from '../../libs/utils.ts'
 import { useDuelHands } from '../../queries/useMyPendingDuels.ts'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
 import { CardZoomOverlay } from '../shared/tcg-card/CardZoomOverlay.tsx'
-import { Badge } from '../ui/badge.tsx'
 import { Button } from '../ui/button.tsx'
 import {
   Popup,
@@ -29,11 +27,6 @@ function cardCountLabel(count: number): string {
   return `${count} carte${plural(count)}`
 }
 
-const VARIANT_LABEL_FR: Record<string, string> = {
-  BRILLIANT: 'Brillante',
-  HOLOGRAPHIC: 'Holographique',
-}
-
 type Outcome = 'WIN' | 'LOSS' | 'TIE'
 
 const TITLES: Record<Outcome, string> = {
@@ -42,27 +35,67 @@ const TITLES: Record<Outcome, string> = {
   TIE: 'Duel : égalité',
 }
 
+/** Le pseudo, détaché du corps de phrase pour se repérer d'un coup d'œil. */
+function Who({ name, winner }: { name: string; winner: boolean }) {
+  return (
+    <strong
+      className={cn(
+        'font-display font-bold',
+        winner ? 'text-primary' : 'text-text',
+      )}
+    >
+      {name}
+    </strong>
+  )
+}
+
 /**
- * Phrase de verdict. Le cas « zéro carte transférée » est explicite : il
- * arrive quand le perdant n'a fait aucun tirage compté, et un vainqueur qui
- * ne reçoit rien doit savoir que ce n'est pas un bug.
+ * Phrase de verdict.
+ *
+ * Le cas « zéro carte transférée » dit POURQUOI, parce qu'un vainqueur qui ne
+ * reçoit rien croirait sinon à un bug. La mise d'un duel, ce sont les cartes
+ * que le perdant a tirées pendant sa fenêtre comptée ; elle est vide soit
+ * qu'il n'ait fait aucun tirage compté, soit qu'il ne possède plus ces cartes
+ * au règlement — recyclées depuis, ou parties dans un autre duel
+ * (`DuelDomain#transferPull` passe alors son tour).
  */
-function verdictText(
-  outcome: Outcome,
-  themName: string,
-  transferredCount: number,
-): string {
+function Verdict({
+  outcome,
+  themName,
+  transferredCount,
+}: {
+  outcome: Outcome
+  themName: string
+  transferredCount: number
+}) {
+  const them = <Who name={themName} winner={outcome === 'LOSS'} />
+
   if (outcome === 'TIE') {
-    return `Vous finissez à égalité contre ${themName}. Chacun garde ses cartes.`
+    return <>Vous finissez à égalité contre {them}. Chacun garde ses cartes.</>
   }
   if (outcome === 'WIN') {
-    return transferredCount > 0
-      ? `Tu bats ${themName} et rafles ${cardCountLabel(transferredCount)} de sa mise.`
-      : `Tu bats ${themName}, mais il ne restait aucune carte à transférer.`
+    return transferredCount > 0 ? (
+      <>
+        Tu bats {them} et rafles {cardCountLabel(transferredCount)} de sa mise.
+      </>
+    ) : (
+      <>
+        Tu bats {them}, mais sa mise était vide : il ne possédait plus les
+        cartes qu'il avait tirées.
+      </>
+    )
   }
-  return transferredCount > 0
-    ? `${themName} l'emporte et repart avec ${cardCountLabel(transferredCount)} de ta mise.`
-    : `${themName} l'emporte. Aucune carte n'a pu être transférée.`
+  return transferredCount > 0 ? (
+    <>
+      {them} l'emporte et repart avec {cardCountLabel(transferredCount)} de ta
+      mise.
+    </>
+  ) : (
+    <>
+      {them} l'emporte, mais ta mise était vide : tu ne possédais plus les
+      cartes que tu avais tirées.
+    </>
+  )
 }
 
 function OutcomeIcon({ outcome }: { outcome: Outcome }) {
@@ -124,12 +157,10 @@ export function DuelResultPopup({
 export function SettledDuelResultPopup({
   settled,
   myUserId,
-  transferredCount,
   onClose,
 }: {
   settled: SettledDuelView
   myUserId: string
-  transferredCount: number
   onClose: () => void
 }) {
   const iAmChallenger = settled.challenger.id === myUserId
@@ -144,7 +175,7 @@ export function SettledDuelResultPopup({
         iAmChallenger ? settled.opponentScore : settled.challengerScore
       }
       winnerId={settled.winnerId}
-      transferredCount={transferredCount}
+      transferredCount={settled.transferredCount}
       onClose={onClose}
     />
   )
@@ -174,7 +205,6 @@ function DuelResult({
   const outcome: Outcome =
     winnerId === null ? 'TIE' : winnerId === me.id ? 'WIN' : 'LOSS'
   const iWon = outcome === 'WIN'
-  const verdict = verdictText(outcome, them.username, transferredCount)
 
   return (
     <Popup
@@ -213,7 +243,13 @@ function DuelResult({
             />
           </div>
 
-          <p className="text-sm text-text-light">{verdict}</p>
+          <p className="text-sm text-text-light">
+            <Verdict
+              outcome={outcome}
+              themName={them.username}
+              transferredCount={transferredCount}
+            />
+          </p>
 
           <DuelHands
             teamId={teamId}
@@ -415,4 +451,3 @@ function PullCard({
     </li>
   )
 }
-

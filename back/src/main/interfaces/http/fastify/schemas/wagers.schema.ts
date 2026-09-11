@@ -139,6 +139,7 @@ const settledDuelSchema = z.object({
   opponentScore: z.number(),
   winnerId: z.string().nullable(),
   settledAt: z.string().nullable(),
+  transferredCount: z.number().int(),
 })
 
 // Croisé champ par champ avec `PendingDuelView`

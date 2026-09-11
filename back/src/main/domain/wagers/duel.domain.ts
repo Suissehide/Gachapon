@@ -488,6 +488,7 @@ export class DuelDomain implements IDuelDomain {
       opponentScore: duel.opponentScore / 2,
       winnerId: duel.winnerId,
       settledAt: duel.settledAt ? duel.settledAt.toISOString() : null,
+      transferredCount: duel._count.transfers,
     }))
   }
 

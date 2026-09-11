@@ -202,6 +202,40 @@ describe('GET /me/duels', () => {
   // Le resultat d'un duel doit atteindre le joueur MEME s'il a rechargé
   // pendant son animation de tirage : c'est tout l'objet de le sortir de la
   // popup pour le poser dans la pastille.
+  // Le butin doit venir de la BASE, pas de l'evenement `duel:settled` : la
+  // notification existe justement pour le joueur qui a manque l'evenement —
+  // il rechargeait pendant son animation de tirage. Servir 0 par defaut ferait
+  // annoncer « ta mise etait vide » a quelqu'un qui vient de perdre des cartes.
+  it('le duel regle porte le nombre de cartes transferees', async () => {
+    const duelId = await settledDuel(new Date())
+    const set = await prisma.cardSet.create({
+      data: { name: `MeDuelSet${suffix}`, isActive: false },
+    })
+    const card = await prisma.card.create({
+      data: {
+        name: `MeDuelCard${suffix}`,
+        rarity: 'COMMON',
+        dropWeight: 10,
+        setId: set.id,
+      },
+    })
+    for (const variant of ['NORMAL', 'BRILLIANT']) {
+      await prisma.duelTransfer.create({
+        data: {
+          duelId,
+          cardId: card.id,
+          variant,
+          fromUserId: userIdOpponent,
+          toUserId: userIdChallenger,
+        },
+      })
+    }
+
+    const settled = await mySettled(cookiesChallenger)
+    const mine = settled.find((d) => d.id === duelId)
+    expect(mine.transferredCount).toBe(2)
+  })
+
   it('les deux duellistes retrouvent leur duel regle, avec le verdict', async () => {
     const duelId = await settledDuel(new Date())
 

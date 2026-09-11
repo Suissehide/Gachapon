@@ -146,6 +146,8 @@ export type SettledDuelView = {
   opponentScore: number
   winnerId: string | null
   settledAt: string | null
+  /** Cartes effectivement raflées, lues en base — pas 0 par défaut. */
+  transferredCount: number
 }
 
 export type BetStatus = 'ACTIVE' | 'WON' | 'LOST' | 'EXPIRED'

@@ -273,15 +273,12 @@ export function NotificationsBadge() {
 
       {/*
         Monté HORS du panneau : on le ferme au clic pour dégager la vue, et la
-        fenêtre doit lui survivre. `transferredCount` vaut 0 ici — il ne vit
-        que dans l'événement `duel:settled`, que le joueur a pu manquer ; les
-        mains, elles, disent l'essentiel.
+        fenêtre doit lui survivre.
       */}
       {openedDuel !== null && meId !== undefined && (
         <SettledDuelResultPopup
           settled={openedDuel}
           myUserId={meId}
-          transferredCount={0}
           onClose={() => setOpenedDuel(null)}
         />
       )}

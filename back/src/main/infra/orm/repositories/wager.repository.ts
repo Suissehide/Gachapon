@@ -201,6 +201,7 @@ export class WagerRepository implements IWagerRepository {
         team: { select: TEAM_SELECT },
         challenger: { select: PARTY_SELECT },
         opponent: { select: PARTY_SELECT },
+        _count: { select: { transfers: true } },
       },
       orderBy: { settledAt: 'desc' },
     })

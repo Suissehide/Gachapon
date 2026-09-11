@@ -130,6 +130,14 @@ export type SettledDuelView = {
   opponentScore: number
   winnerId: string | null
   settledAt: string | null
+  /**
+   * Cartes effectivement raflées. Lue en base (`_count` sur `DuelTransfer`) et
+   * non reprise de l'événement `duel:settled` : cette vue sert justement le
+   * joueur qui a MANQUÉ l'événement — il rechargeait pendant son animation de
+   * tirage. Servir 0 par défaut annoncerait « ta mise était vide » à quelqu'un
+   * qui vient de perdre des cartes.
+   */
+  transferredCount: number
 }
 
 export type BetView = {

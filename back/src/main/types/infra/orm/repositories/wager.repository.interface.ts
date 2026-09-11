@@ -82,6 +82,8 @@ export type PendingDuelForOpponent = Duel & {
  */
 export type SettledDuelForUser = PendingDuelForOpponent & {
   opponent: { id: string; username: string; avatar: string | null }
+  /** Voir `DuelWithParties._count` : la seule trace DURABLE du butin. */
+  _count: { transfers: number }
 }
 
 /** Un pari en cours, vu depuis la CIBLE : l'equipe et le parieur suffisent. */
