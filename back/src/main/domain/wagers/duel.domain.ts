@@ -7,11 +7,13 @@ import type {
 } from '../../../generated/client'
 import type { IocContainer } from '../../types/application/ioc'
 import type {
+  DuelHandsView,
   DuelTransferView,
   DuelView,
   IBetDomain,
   IDuelDomain,
   PendingDuelView,
+  SettledDuelView,
   WagersView,
 } from '../../types/domain/wagers/wagers.domain.interface'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
@@ -40,6 +42,8 @@ import { betToView } from './bet.domain'
 import { duelScoreHalfPoints, duelVerdict } from './wager-rules'
 
 const HOUR_MS = 60 * 60 * 1000
+/** Duree pendant laquelle un duel regle reste annonce dans la pastille. */
+const SETTLED_NOTICE_MS = 48 * HOUR_MS
 
 // Nombre de duels réglés récents renvoyés par la lecture d'équipe.
 const RECENT_SETTLED_DUELS = 20
@@ -454,6 +458,123 @@ export class DuelDomain implements IDuelDomain {
       createdAt: duel.createdAt.toISOString(),
       expiresAt: new Date(duel.createdAt.getTime() + acceptMs).toISOString(),
     }))
+  }
+
+  /**
+   * Mes duels regles recemment. Fenetre de 48 h : le resultat doit survivre a
+   * un rechargement — c'est tout l'objet de le sortir de la popup, qu'un
+   * joueur perdait s'il rafraichissait pendant son animation de tirage — sans
+   * pour autant s'accumuler indefiniment dans la pastille.
+   *
+   * Les spectateurs sont exclus par la requete : `duel:settled` part vers
+   * toute l'equipe, mais seul un duelliste a un verdict a lire.
+   */
+  async listRecentSettledForUser(
+    userId: string,
+    now: Date = new Date(),
+  ): Promise<SettledDuelView[]> {
+    const duels = await this.#wagerRepository.listRecentSettledDuelsForUser(
+      userId,
+      new Date(now.getTime() - SETTLED_NOTICE_MS),
+    )
+    return duels.map((duel) => ({
+      id: duel.id,
+      teamId: duel.teamId,
+      team: duel.team,
+      challenger: duel.challenger,
+      opponent: duel.opponent,
+      // La colonne stocke des DEMI-points (bareme x1,5 sur les brillantes).
+      challengerScore: duel.challengerScore / 2,
+      opponentScore: duel.opponentScore / 2,
+      winnerId: duel.winnerId,
+      settledAt: duel.settledAt ? duel.settledAt.toISOString() : null,
+    }))
+  }
+
+  /**
+   * Les tirages COMPTES de chaque camp — la main qui a fait le score.
+   *
+   * Reserve aux duels REGLES, et ce n'est pas une commodite : la fenetre de
+   * tirages ne se lit ailleurs qu'EN TRANSACTION, parce que c'est elle qui
+   * decide quelles cartes le reglement saisit chez le perdant. Une fois le
+   * duel regle, `acceptedAt` est fige et plus rien n'entrera dans la fenetre ;
+   * la lecture hors verrou devient alors exacte. Sur un duel ACTIVE elle ne le
+   * serait pas, d'ou le refus explicite plutot qu'une main approximative.
+   *
+   * Ouvert a toute l'equipe, comme `listForTeam` : le panneau montre deja les
+   * duels des autres, le resultat n'est pas un secret entre les deux camps.
+   */
+  async getDuelHands(
+    teamId: string,
+    duelId: string,
+    userId: string,
+  ): Promise<DuelHandsView> {
+    await this.#requireMembership(teamId, userId)
+    const duel = await this.#getTeamDuel(teamId, duelId)
+
+    if (duel.status !== 'SETTLED') {
+      throw Boom.conflict("Ce duel n'est pas encore reglé")
+    }
+    if (!duel.acceptedAt) {
+      throw Boom.badImplementation('Duel réglé sans acceptedAt')
+    }
+    const acceptedAt = duel.acceptedAt
+
+    const [challengerPulls, opponentPulls] = await Promise.all([
+      this.#wagerRepository.findCountedPullsWithCard(
+        duel.challengerId,
+        acceptedAt,
+        duel.pullCount,
+      ),
+      this.#wagerRepository.findCountedPullsWithCard(
+        duel.opponentId,
+        acceptedAt,
+        duel.pullCount,
+      ),
+    ])
+
+    const toPull = (pull: {
+      id: string
+      cardId: string
+      name: string
+      setName: string
+      rarity: DuelHandsView['challenger']['pulls'][number]['rarity']
+      element: DuelHandsView['challenger']['pulls'][number]['element']
+      imageKey: string | null
+      variant: DuelHandsView['challenger']['pulls'][number]['variant']
+      pulledAt: Date
+    }) => ({
+      id: pull.id,
+      cardId: pull.cardId,
+      name: pull.name,
+      setName: pull.setName,
+      rarity: pull.rarity,
+      element: pull.element,
+      imageKey: pull.imageKey,
+      variant: pull.variant,
+      pulledAt: pull.pulledAt.toISOString(),
+    })
+
+    return {
+      duelId: duel.id,
+      teamId: duel.teamId,
+      winnerId: duel.winnerId,
+      settledAt: duel.settledAt ? duel.settledAt.toISOString() : null,
+      challenger: {
+        id: duel.challenger.id,
+        username: duel.challenger.username,
+        avatar: duel.challenger.avatar,
+        score: duel.challengerScore / 2,
+        pulls: challengerPulls.map(toPull),
+      },
+      opponent: {
+        id: duel.opponent.id,
+        username: duel.opponent.username,
+        avatar: duel.opponent.avatar,
+        score: duel.opponentScore / 2,
+        pulls: opponentPulls.map(toPull),
+      },
+    }
   }
 
   async settleForUser(userId: string, now: Date = new Date()): Promise<void> {
@@ -966,6 +1087,7 @@ export class DuelDomain implements IDuelDomain {
         id: transfer.card.id,
         name: transfer.card.name,
         rarity: transfer.card.rarity,
+        element: transfer.card.element,
         imageKey: transfer.card.imageUrl,
         set: transfer.card.set,
       },

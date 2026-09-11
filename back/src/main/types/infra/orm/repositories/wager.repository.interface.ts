@@ -1,6 +1,7 @@
 import type {
   Bet,
   BetStatus,
+  CardElement,
   CardRarity,
   CardVariant,
   Duel,
@@ -11,6 +12,25 @@ export type PullWithRarity = {
   cardId: string
   variant: CardVariant
   rarity: CardRarity
+  pulledAt: Date
+}
+
+/**
+ * Un tirage compte, avec de quoi DESSINER la carte et non seulement
+ * l'identifier. `imageKey` est le chemin de stockage, jamais une URL : c'est
+ * la couche HTTP qui la construit a la lecture.
+ */
+export type CountedPullWithCard = {
+  /** Identite de la LIGNE de tirage : deux tirages de la meme carte existent. */
+  id: string
+  cardId: string
+  name: string
+  /** Nom du set : la carte ne se dessine pas sans sa banniere de famille. */
+  setName: string
+  rarity: CardRarity
+  element: CardElement | null
+  imageKey: string | null
+  variant: CardVariant
   pulledAt: Date
 }
 
@@ -42,6 +62,8 @@ export type DuelTransferWithCard = {
     id: string
     name: string
     rarity: CardRarity
+    /** Dessine la pastille d'element sur la carte agrandie, comme en collection. */
+    element: CardElement | null
     imageUrl: string | null
     /** Requis par `TcgCardFace`, qui l'affiche en fil d'ariane au-dessus du nom. */
     set: { name: string }
@@ -52,6 +74,14 @@ export type DuelTransferWithCard = {
 export type PendingDuelForOpponent = Duel & {
   team: { id: string; name: string; slug: string; avatar: string | null }
   challenger: { id: string; username: string; avatar: string | null }
+}
+
+/**
+ * Un duel regle, vu depuis l'un des deux duellistes : les DEUX camps sont
+ * necessaires, la notification annonce un verdict entre deux joueurs.
+ */
+export type SettledDuelForUser = PendingDuelForOpponent & {
+  opponent: { id: string; username: string; avatar: string | null }
 }
 
 /** Un pari en cours, vu depuis la CIBLE : l'equipe et le parieur suffisent. */
@@ -115,6 +145,28 @@ export interface IWagerRepository {
     userId: string,
     deadlineAfter: Date,
   ): Promise<ActiveBetOnTarget[]>
+  /**
+   * La MEME fenetre que `findPullsSinceInTx`, avec la carte complete, et hors
+   * transaction. A n'appeler que sur un duel REGLE : `acceptedAt` est alors
+   * fige et la fenetre ne peut plus bouger, donc le verrou de serialisation
+   * qui protege l'autre version n'a plus d'objet. Sur un duel en cours, cette
+   * lecture pourrait voir un sous-ensemble different de celui que le
+   * reglement saisira.
+   */
+  findCountedPullsWithCard(
+    userId: string,
+    since: Date,
+    take: number,
+  ): Promise<CountedPullWithCard[]>
+  /**
+   * Les duels REGLES recemment ou le joueur etait partie, toutes equipes
+   * confondues. Sert la notification de resultat : un spectateur n'y figure
+   * pas, seuls les deux duellistes.
+   */
+  listRecentSettledDuelsForUser(
+    userId: string,
+    settledAfter: Date,
+  ): Promise<SettledDuelForUser[]>
   listTeamDuels(teamId: string): Promise<DuelWithParties[]>
   listRecentSettledDuels(
     teamId: string,

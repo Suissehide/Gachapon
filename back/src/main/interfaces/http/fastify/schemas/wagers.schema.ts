@@ -64,11 +64,81 @@ export const duelTransfersResponseSchema = z.object({
         id: z.string(),
         name: z.string(),
         rarity: z.enum(['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY']),
+        element: z
+          .enum(['FIRE', 'WATER', 'NATURE', 'EARTH', 'LIGHT', 'DARK'])
+          .nullable(),
         imageUrl: z.string().nullable(),
         set: z.object({ name: z.string() }),
       }),
     }),
   ),
+})
+
+const cardRaritySchema = z.enum([
+  'COMMON',
+  'UNCOMMON',
+  'RARE',
+  'EPIC',
+  'LEGENDARY',
+])
+
+const cardElementSchema = z.enum([
+  'FIRE',
+  'WATER',
+  'NATURE',
+  'EARTH',
+  'LIGHT',
+  'DARK',
+])
+
+const cardVariantSchema = z.enum(['NORMAL', 'BRILLIANT', 'HOLOGRAPHIC'])
+
+const duelHandSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+  avatar: z.string().nullable(),
+  score: z.number(),
+  pulls: z.array(
+    z.object({
+      id: z.string(),
+      cardId: z.string(),
+      name: z.string(),
+      setName: z.string(),
+      rarity: cardRaritySchema,
+      element: cardElementSchema.nullable(),
+      imageUrl: z.string().nullable(),
+      variant: cardVariantSchema,
+      pulledAt: z.string(),
+    }),
+  ),
+})
+
+// Croisé champ par champ avec `DuelHandsView`
+// (types/domain/wagers/wagers.domain.interface.ts).
+export const duelHandsResponseSchema = z.object({
+  duelId: z.string(),
+  teamId: z.string(),
+  winnerId: z.string().nullable(),
+  settledAt: z.string().nullable(),
+  challenger: duelHandSchema,
+  opponent: duelHandSchema,
+})
+
+const settledDuelSchema = z.object({
+  id: z.string(),
+  teamId: z.string(),
+  team: z.object({
+    id: z.string(),
+    name: z.string(),
+    slug: z.string(),
+    avatar: z.string().nullable(),
+  }),
+  challenger: wagerUserMiniSchema,
+  opponent: wagerUserMiniSchema,
+  challengerScore: z.number(),
+  opponentScore: z.number(),
+  winnerId: z.string().nullable(),
+  settledAt: z.string().nullable(),
 })
 
 // Croisé champ par champ avec `PendingDuelView`
@@ -91,15 +161,8 @@ export const myPendingDuelsResponseSchema = z.object({
       expiresAt: z.string(),
     }),
   ),
+  settled: z.array(settledDuelSchema),
 })
-
-const cardRaritySchema = z.enum([
-  'COMMON',
-  'UNCOMMON',
-  'RARE',
-  'EPIC',
-  'LEGENDARY',
-])
 
 const betStatusSchema = z.enum(['ACTIVE', 'WON', 'LOST', 'EXPIRED'])
 

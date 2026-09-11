@@ -1,4 +1,4 @@
-import type { CardRarity } from '../constants/card.constant.ts'
+import type { CardElement, CardRarity } from '../constants/card.constant.ts'
 import { apiUrl } from '../constants/config.constant.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
@@ -94,9 +94,58 @@ export type DuelTransferView = {
     id: string
     name: string
     rarity: CardRarity
+    element: CardElement | null
     imageUrl: string | null
     set: { name: string }
   }
+}
+
+/** Une carte d'une main de duel, prête à être dessinée. */
+export type DuelPullView = {
+  /** Identité de la ligne de tirage — deux tirages de la même carte existent. */
+  id: string
+  cardId: string
+  name: string
+  setName: string
+  rarity: CardRarity
+  element: CardElement | null
+  imageUrl: string | null
+  variant: 'NORMAL' | 'BRILLIANT' | 'HOLOGRAPHIC'
+  pulledAt: string
+}
+
+export type DuelHandView = {
+  id: string
+  username: string
+  avatar: string | null
+  score: number
+  pulls: DuelPullView[]
+}
+
+/**
+ * Les deux mains d'un duel réglé — les tirages COMPTÉS de chacun, donc ce qui
+ * a fait le score. Croisé champ par champ avec `duelHandsResponseSchema`.
+ */
+export type DuelHandsView = {
+  duelId: string
+  teamId: string
+  winnerId: string | null
+  settledAt: string | null
+  challenger: DuelHandView
+  opponent: DuelHandView
+}
+
+/** Un duel réglé récemment, tel que la pastille l'annonce. */
+export type SettledDuelView = {
+  id: string
+  teamId: string
+  team: { id: string; name: string; slug: string; avatar: string | null }
+  challenger: WagerUserMini
+  opponent: WagerUserMini
+  challengerScore: number
+  opponentScore: number
+  winnerId: string | null
+  settledAt: string | null
 }
 
 export type BetStatus = 'ACTIVE' | 'WON' | 'LOST' | 'EXPIRED'
@@ -203,7 +252,32 @@ export const WagersApi = {
     return res.json()
   },
 
-  getMyPendingDuels: async (): Promise<{ duels: PendingDuelView[] }> => {
+  getDuelHands: async (
+    teamId: string,
+    duelId: string,
+  ): Promise<DuelHandsView> => {
+    const res = await fetchWithAuth(
+      `${apiUrl}/teams/${teamId}/duels/${duelId}/hands`,
+    )
+    if (!res.ok) {
+      handleHttpError(
+        res,
+        {
+          409: {
+            title: 'Duel en cours',
+            message: "Les mains ne s'affichent qu'une fois le duel réglé.",
+          },
+        },
+        'Chargement des mains du duel',
+      )
+    }
+    return res.json()
+  },
+
+  getMyPendingDuels: async (): Promise<{
+    duels: PendingDuelView[]
+    settled: SettledDuelView[]
+  }> => {
     const res = await fetchWithAuth(`${apiUrl}/me/duels`)
     if (!res.ok) {
       handleHttpError(res, {}, 'Chargement des défis reçus')

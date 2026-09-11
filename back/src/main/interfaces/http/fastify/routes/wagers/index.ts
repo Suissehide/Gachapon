@@ -4,6 +4,7 @@ import {
   betQuoteQuerySchema,
   betQuoteResponseSchema,
   betViewSchema,
+  duelHandsResponseSchema,
   duelParamSchema,
   duelTransfersResponseSchema,
   duelViewSchema,
@@ -45,9 +46,13 @@ export const wagersRouter: FastifyPluginCallbackZod = (fastify) => {
         response: { 200: myPendingDuelsResponseSchema },
       },
     },
-    async (request) => ({
-      duels: await duelDomain.listPendingForOpponent(request.user.userID),
-    }),
+    async (request) => {
+      const [duels, settled] = await Promise.all([
+        duelDomain.listPendingForOpponent(request.user.userID),
+        duelDomain.listRecentSettledForUser(request.user.userID),
+      ])
+      return { duels, settled }
+    },
   )
 
   // Pendant de `/me/duels` pour les paris. Purement informatif : la cible
@@ -85,6 +90,41 @@ export const wagersRouter: FastifyPluginCallbackZod = (fastify) => {
         request.body.opponentId,
       )
       return reply.status(201).send(duel)
+    },
+  )
+
+  // Les deux mains d'un duel regle : ce que chacun a sorti, donc POURQUOI
+  // l'un l'emporte. Le compte de cartes transferees ne le disait pas.
+  fastify.get(
+    '/teams/:id/duels/:duelId/hands',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        tags: ['Wagers'],
+        params: duelParamSchema,
+        response: { 200: duelHandsResponseSchema },
+      },
+    },
+    async (request) => {
+      const hands = await duelDomain.getDuelHands(
+        request.params.id,
+        request.params.duelId,
+        request.user.userID,
+      )
+      // Le domaine rend des CHEMINS de stockage ; l'URL se construit ici, au
+      // bord HTTP, comme dans la route collection.
+      const withUrls = (side: (typeof hands)['challenger']) => ({
+        ...side,
+        pulls: side.pulls.map(({ imageKey, ...pull }) => ({
+          ...pull,
+          imageUrl: imageKey ? storageClient.publicUrl(imageKey) : null,
+        })),
+      })
+      return {
+        ...hands,
+        challenger: withUrls(hands.challenger),
+        opponent: withUrls(hands.opponent),
+      }
     },
   )
 

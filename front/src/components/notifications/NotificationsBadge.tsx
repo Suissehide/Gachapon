@@ -1,17 +1,10 @@
 import { useNavigate } from '@tanstack/react-router'
-import {
-  ArrowRight,
-  Bell,
-  Check,
-  Coins,
-  ScrollText,
-  Swords,
-  Users,
-  X,
-} from 'lucide-react'
+import { Bell, Coins, ScrollText, Swords, Trophy, Users } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
+import type { SettledDuelView } from '../../api/wagers.api.ts'
 import { RARITY_LABEL_FR } from '../../libs/rarity.ts'
+import { markDuelSeen, readSeenDuels } from '../../libs/seenDuels.ts'
 import {
   useAcceptPendingDuel,
   useDeclinePendingDuel,
@@ -24,8 +17,29 @@ import {
   useDeclineInvitation,
   useMyInvitations,
 } from '../../queries/useTeams.ts'
+import { useAuthStore } from '../../stores/auth.store.ts'
+import { SettledDuelResultPopup } from '../team/DuelResultPopup.tsx'
 import { Button } from '../ui/button.tsx'
 import { NotificationDot } from './NotificationDot.tsx'
+import { NotificationItem, RespondButtons } from './NotificationItem.tsx'
+
+/** « Tu bats captain 12 – 8 », du point de vue du lecteur. */
+function settledSubtitle(
+  duel: SettledDuelView,
+  meId: string | undefined,
+): string {
+  const iAmChallenger = duel.challenger.id === meId
+  const them = iAmChallenger ? duel.opponent : duel.challenger
+  const myScore = iAmChallenger ? duel.challengerScore : duel.opponentScore
+  const theirScore = iAmChallenger ? duel.opponentScore : duel.challengerScore
+  const verdict =
+    duel.winnerId === null
+      ? `Égalité contre ${them.username}`
+      : duel.winnerId === meId
+        ? `Tu bats ${them.username}`
+        : `${them.username} te bat`
+  return `${verdict} ${myScore.toLocaleString('fr-FR')} – ${theirScore.toLocaleString('fr-FR')}`
+}
 
 export function NotificationsBadge() {
   const [isOpen, setIsOpen] = useState(false)
@@ -33,6 +47,11 @@ export function NotificationsBadge() {
   const { data, isLoading } = useMyInvitations()
   const { data: duelData } = useMyPendingDuels()
   const { data: betData } = useMyTargetedBets()
+  const meId = useAuthStore((state) => state.user?.id)
+  // Lu une fois au montage : `localStorage` ne notifie rien, et la liste ne
+  // bouge que par nos propres clics — qu'on répercute dans l'état.
+  const [seen, setSeen] = useState(readSeenDuels)
+  const [openedDuel, setOpenedDuel] = useState<SettledDuelView | null>(null)
   const questsCount = useClaimableQuestsCount()
   const navigate = useNavigate()
   const accept = useAcceptInvitation()
@@ -43,7 +62,14 @@ export function NotificationsBadge() {
   const invitations = data?.invitations ?? []
   const duels = duelData?.duels ?? []
   const bets = betData?.bets ?? []
-  const count = invitations.length + duels.length + bets.length + questsCount
+  const announced = duelData?.settled ?? []
+  const settled = announced.filter((d) => !seen.has(d.id))
+  const count =
+    invitations.length +
+    duels.length +
+    settled.length +
+    bets.length +
+    questsCount
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -86,9 +112,24 @@ export function NotificationsBadge() {
     declineDuel.mutate({ teamId, duelId })
   }
 
+  const openResult = (duel: SettledDuelView) => {
+    markDuelSeen(
+      duel.id,
+      announced.map((d) => d.id),
+    )
+    setSeen((previous) => new Set(previous).add(duel.id))
+    setIsOpen(false)
+    setOpenedDuel(duel)
+  }
+
   const goToQuests = () => {
     setIsOpen(false)
     void navigate({ to: '/quests' })
+  }
+
+  const goToTeam = (teamId: string) => {
+    setIsOpen(false)
+    void navigate({ to: '/team/$id', params: { id: teamId } })
   }
 
   return (
@@ -136,221 +177,113 @@ export function NotificationsBadge() {
             ) : (
               <ul className="flex flex-col gap-1.5">
                 {questsCount > 0 && (
-                  <li>
-                    <button
-                      type="button"
-                      onClick={goToQuests}
-                      title="Voir mes quêtes"
-                      className="group flex w-full cursor-pointer items-center gap-3 rounded-lg border border-border/60 bg-muted/30 p-3 text-left transition-colors hover:bg-muted/60"
-                    >
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary text-white transition-transform group-hover:scale-105">
-                        <ScrollText className="h-4 w-4" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-display text-sm font-bold text-text transition-colors group-hover:text-primary">
-                          Quêtes à récupérer
-                        </p>
-                        <p className="truncate text-xs text-text-light">
-                          {questsCount > 1
-                            ? `${questsCount} quêtes prêtes à réclamer`
-                            : '1 quête prête à réclamer'}
-                        </p>
-                      </div>
-                      <ArrowRight className="h-4 w-4 shrink-0 text-text-light/50 transition-colors group-hover:text-primary" />
-                    </button>
-                  </li>
+                  <NotificationItem
+                    icon={<ScrollText className="h-4 w-4" />}
+                    title="Quêtes à récupérer"
+                    subtitle={
+                      questsCount > 1
+                        ? `${questsCount} quêtes prêtes à réclamer`
+                        : '1 quête prête à réclamer'
+                    }
+                    onOpen={goToQuests}
+                    openTitle="Voir mes quêtes"
+                  />
                 )}
-                {duels.map((duel) => {
-                  const busy =
-                    (acceptDuel.isPending &&
-                      acceptDuel.variables?.duelId === duel.id) ||
-                    (declineDuel.isPending &&
-                      declineDuel.variables?.duelId === duel.id)
-                  const goToTeam = () => {
-                    setIsOpen(false)
-                    void navigate({
-                      to: '/team/$id',
-                      params: { id: duel.teamId },
-                    })
-                  }
-                  return (
-                    <li
-                      key={duel.id}
-                      className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/30 p-3 transition-colors hover:bg-muted/60"
-                    >
-                      <button
-                        type="button"
-                        onClick={goToTeam}
-                        title="Voir le défi"
-                        className="group flex min-w-0 flex-1 cursor-pointer items-center gap-3 text-left"
-                      >
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary text-white transition-transform group-hover:scale-105">
-                          <Swords className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate font-display text-sm font-bold text-text transition-colors group-hover:text-primary">
-                            {duel.challenger.username} te défie
-                          </p>
-                          <p className="truncate text-xs text-text-light">
-                            {duel.team.name} · {duel.pullCount} tirages
-                          </p>
-                        </div>
-                      </button>
-                      <div className="flex shrink-0 items-center gap-1">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label="Accepter"
-                          title="Relever le défi"
-                          disabled={busy}
-                          onClick={() => handleAcceptDuel(duel.teamId, duel.id)}
-                          className="h-8 w-8 rounded-full text-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-600 disabled:opacity-50"
-                        >
-                          {acceptDuel.isPending &&
-                          acceptDuel.variables?.duelId === duel.id ? (
-                            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                          ) : (
-                            <Check className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label="Refuser"
-                          title="Refuser le défi"
-                          disabled={busy}
-                          onClick={() =>
-                            handleDeclineDuel(duel.teamId, duel.id)
-                          }
-                          className="h-8 w-8 rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
-                        >
-                          {declineDuel.isPending &&
-                          declineDuel.variables?.duelId === duel.id ? (
-                            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                          ) : (
-                            <X className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </li>
-                  )
-                })}
-                {bets.map((bet) => {
-                  const goToTeam = () => {
-                    setIsOpen(false)
-                    void navigate({
-                      to: '/team/$id',
-                      params: { id: bet.teamId },
-                    })
-                  }
-                  // Aucun bouton : un pari placé sur soi ne s'accepte ni ne se
-                  // refuse. La ligne informe, et disparaît au règlement.
-                  return (
-                    <li key={bet.id}>
-                      <button
-                        type="button"
-                        onClick={goToTeam}
-                        title="Voir le pari"
-                        className="group flex w-full cursor-pointer items-center gap-3 rounded-lg border border-border/60 bg-muted/30 p-3 text-left transition-colors hover:bg-muted/60"
-                      >
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary text-white transition-transform group-hover:scale-105">
-                          <Coins className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate font-display text-sm font-bold text-text transition-colors group-hover:text-primary">
-                            {bet.bettor.username} a parié sur toi
-                          </p>
-                          <p className="truncate text-xs text-text-light">
-                            {RARITY_LABEL_FR[bet.minRarity] ?? bet.minRarity} ou
-                            mieux en {bet.pullWindow} tirages
-                          </p>
-                        </div>
-                        <ArrowRight className="h-4 w-4 shrink-0 text-text-light/50 transition-colors group-hover:text-primary" />
-                      </button>
-                    </li>
-                  )
-                })}
-                {invitations.map((inv) => {
-                  const isAccepting =
-                    accept.isPending && accept.variables === inv.token
-                  const isDeclining =
-                    decline.isPending && decline.variables === inv.token
-                  const busy = isAccepting || isDeclining
-                  const goToTeam = () => {
-                    setIsOpen(false)
-                    void navigate({
-                      to: '/team/$id',
-                      params: { id: inv.team.id },
-                    })
-                  }
-                  return (
-                    <li
-                      key={inv.id}
-                      className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/30 p-3 transition-colors hover:bg-muted/60"
-                    >
-                      <button
-                        type="button"
-                        onClick={goToTeam}
-                        title="Voir l'équipe"
-                        className="group flex min-w-0 flex-1 cursor-pointer items-center gap-3 text-left"
-                      >
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary text-white transition-transform group-hover:scale-105">
-                          <Users className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate font-display text-sm font-bold text-text transition-colors group-hover:text-primary">
-                            {inv.team.name}
-                          </p>
-                          <p className="truncate text-xs text-text-light">
-                            {inv.invitedBy
-                              ? `${inv.invitedBy.username} t'invite à rejoindre`
-                              : 'Tu es invité(e) à rejoindre'}
-                          </p>
-                        </div>
-                      </button>
-                      <div className="flex shrink-0 items-center gap-1">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label="Accepter"
-                          title="Accepter et rejoindre"
-                          disabled={busy}
-                          onClick={() => handleAccept(inv.token, inv.team.id)}
-                          className="h-8 w-8 rounded-full text-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-600 disabled:opacity-50"
-                        >
-                          {isAccepting ? (
-                            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                          ) : (
-                            <Check className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label="Refuser"
-                          title="Refuser l'invitation"
-                          disabled={busy}
-                          onClick={() => handleDecline(inv.token)}
-                          className="h-8 w-8 rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
-                        >
-                          {isDeclining ? (
-                            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                          ) : (
-                            <X className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </li>
-                  )
-                })}
+                {settled.map((duel) => (
+                  <NotificationItem
+                    key={duel.id}
+                    icon={<Trophy className="h-4 w-4" />}
+                    title="Duel terminé"
+                    subtitle={settledSubtitle(duel, meId)}
+                    onOpen={() => openResult(duel)}
+                    openTitle="Voir le résultat"
+                  />
+                ))}
+                {duels.map((duel) => (
+                  <NotificationItem
+                    key={duel.id}
+                    icon={<Swords className="h-4 w-4" />}
+                    title={`${duel.challenger.username} te défie`}
+                    subtitle={`${duel.team.name} · ${duel.pullCount} tirages`}
+                    onOpen={() => goToTeam(duel.teamId)}
+                    openTitle="Voir le défi"
+                    actions={
+                      <RespondButtons
+                        onAccept={() => handleAcceptDuel(duel.teamId, duel.id)}
+                        onDecline={() =>
+                          handleDeclineDuel(duel.teamId, duel.id)
+                        }
+                        accepting={
+                          acceptDuel.isPending &&
+                          acceptDuel.variables?.duelId === duel.id
+                        }
+                        declining={
+                          declineDuel.isPending &&
+                          declineDuel.variables?.duelId === duel.id
+                        }
+                        acceptTitle="Relever le défi"
+                        declineTitle="Refuser le défi"
+                      />
+                    }
+                  />
+                ))}
+                {bets.map((bet) => (
+                  <NotificationItem
+                    key={bet.id}
+                    icon={<Coins className="h-4 w-4" />}
+                    title={`${bet.bettor.username} a parié sur toi`}
+                    subtitle={`${RARITY_LABEL_FR[bet.minRarity] ?? bet.minRarity} ou mieux en ${bet.pullWindow} tirages`}
+                    onOpen={() => goToTeam(bet.teamId)}
+                    openTitle="Voir le pari"
+                  />
+                ))}
+                {invitations.map((inv) => (
+                  <NotificationItem
+                    key={inv.id}
+                    icon={<Users className="h-4 w-4" />}
+                    title={inv.team.name}
+                    subtitle={
+                      inv.invitedBy
+                        ? `${inv.invitedBy.username} t'invite à rejoindre`
+                        : 'Tu es invité(e) à rejoindre'
+                    }
+                    onOpen={() => goToTeam(inv.team.id)}
+                    openTitle="Voir l'équipe"
+                    actions={
+                      <RespondButtons
+                        onAccept={() => handleAccept(inv.token, inv.team.id)}
+                        onDecline={() => handleDecline(inv.token)}
+                        accepting={
+                          accept.isPending && accept.variables === inv.token
+                        }
+                        declining={
+                          decline.isPending && decline.variables === inv.token
+                        }
+                        acceptTitle="Accepter et rejoindre"
+                        declineTitle="Refuser l'invitation"
+                      />
+                    }
+                  />
+                ))}
               </ul>
             )}
           </div>
         </div>
+      )}
+
+      {/*
+        Monté HORS du panneau : on le ferme au clic pour dégager la vue, et la
+        fenêtre doit lui survivre. `transferredCount` vaut 0 ici — il ne vit
+        que dans l'événement `duel:settled`, que le joueur a pu manquer ; les
+        mains, elles, disent l'essentiel.
+      */}
+      {openedDuel !== null && meId !== undefined && (
+        <SettledDuelResultPopup
+          settled={openedDuel}
+          myUserId={meId}
+          transferredCount={0}
+          onClose={() => setOpenedDuel(null)}
+        />
       )}
     </div>
   )

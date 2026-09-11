@@ -6,9 +6,7 @@ import { duelSides, pullsLeftLabel } from '../../libs/duel.ts'
 import { RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { plural } from '../../libs/utils.ts'
 import { useMyDuel } from '../../queries/useMyDuel.ts'
-import { useSettledDuel } from '../../queries/useSettledDuel.ts'
 import { useWagers } from '../../queries/useWagers.ts'
-import { DuelResultPopup } from '../team/DuelResultPopup.tsx'
 import { Button } from '../ui/button.tsx'
 
 /**
@@ -36,24 +34,17 @@ function useBetsOnMe(teamIds: string[]): BetView[] {
  * son tirage valent quelque chose — c'est ce qui rend le pari social.
  *
  * Rien à dire = rien à l'écran (pas de squelette qui apparaîtrait puis
- * disparaîtrait, ce qui décalerait la page). La fenêtre de résultat de duel,
- * elle, reste montée même sans duel actif : au règlement le duel quitte la
- * liste des duels en cours, et c'est précisément à ce moment-là qu'il faut
- * l'annoncer.
+ * disparaîtrait, ce qui décalerait la page).
+ *
+ * Le résultat du duel N'EST PLUS annoncé ici. `duel:settled` part au dernier
+ * tirage compté, c'est-à-dire pendant que l'animation de révélation tourne
+ * encore : la fenêtre s'ouvrait par-dessus et gâchait le tirage qu'elle
+ * venait justement de récompenser. Le verdict passe désormais par la pastille
+ * de notification, que le joueur ouvre quand il a fini.
  */
 export function WagerBanner() {
-  const { duel, teamId, teamIds, settledDuels } = useMyDuel()
-  const settled = useSettledDuel(teamIds, settledDuels)
+  const { duel, teamId, teamIds } = useMyDuel()
   const betsOnMe = useBetsOnMe(teamIds)
-
-  const result =
-    settled.duel === null ? null : (
-      <DuelResultPopup
-        duel={settled.duel}
-        transferredCount={settled.transferredCount}
-        onClose={settled.close}
-      />
-    )
 
   const betBanner =
     betsOnMe.length === 0 ? null : (
@@ -86,12 +77,7 @@ export function WagerBanner() {
     )
 
   if (duel === null || teamId === undefined) {
-    return (
-      <>
-        {betBanner}
-        {result}
-      </>
-    )
+    return betBanner
   }
 
   const { me, them, myScore, theirScore, myPulls } = duelSides(duel)
@@ -129,7 +115,6 @@ export function WagerBanner() {
         </div>
       </div>
       {betBanner}
-      {result}
     </>
   )
 }

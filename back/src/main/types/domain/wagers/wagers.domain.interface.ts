@@ -1,5 +1,6 @@
 import type {
   BetStatus,
+  CardElement,
   CardRarity,
   CardVariant,
   DuelStatus,
@@ -53,6 +54,7 @@ export type DuelTransferView = {
     id: string
     name: string
     rarity: CardRarity
+    element: CardElement | null
     /**
      * CHEMIN de stockage, pas une URL. La regle du depot est de ne persister
      * que le chemin relatif et de construire l'URL a la lecture : la route
@@ -79,6 +81,55 @@ export type PendingDuelView = {
   createdAt: string
   /** Instant ou le defi expire faute de reponse — sert le compte a rebours. */
   expiresAt: string
+}
+
+/** Une carte d'une main de duel, prête à être dessinée. */
+export type DuelPullView = {
+  /** Identité de la ligne de tirage — deux tirages de la même carte existent. */
+  id: string
+  cardId: string
+  name: string
+  setName: string
+  rarity: CardRarity
+  element: CardElement | null
+  /** Chemin de stockage ; la couche HTTP en fait une URL. */
+  imageKey: string | null
+  variant: CardVariant
+  pulledAt: string
+}
+
+export type DuelHandView = {
+  id: string
+  username: string
+  avatar: string | null
+  score: number
+  pulls: DuelPullView[]
+}
+
+/**
+ * Les deux mains d'un duel réglé : ce que chacun a sorti, donc POURQUOI l'un
+ * l'emporte. Le compte de cartes transférées ne le dit pas.
+ */
+export type DuelHandsView = {
+  duelId: string
+  teamId: string
+  winnerId: string | null
+  settledAt: string | null
+  challenger: DuelHandView
+  opponent: DuelHandView
+}
+
+/** Un duel réglé récemment, tel que la pastille l'annonce. */
+export type SettledDuelView = {
+  id: string
+  teamId: string
+  team: { id: string; name: string; slug: string; avatar: string | null }
+  challenger: WagerUserMini
+  opponent: WagerUserMini
+  challengerScore: number
+  opponentScore: number
+  winnerId: string | null
+  settledAt: string | null
 }
 
 export type BetView = {
@@ -159,6 +210,17 @@ export interface IDuelDomain {
     userId: string,
     now?: Date,
   ): Promise<PendingDuelView[]>
+  /** Mes duels regles recemment, toutes equipes confondues. */
+  listRecentSettledForUser(
+    userId: string,
+    now?: Date,
+  ): Promise<SettledDuelView[]>
+  /** Les deux mains d'un duel REGLE. Refuse tout autre statut. */
+  getDuelHands(
+    teamId: string,
+    duelId: string,
+    userId: string,
+  ): Promise<DuelHandsView>
   settleForUser(userId: string, now?: Date): Promise<void>
   /**
    * Règle TOUS les duels et paris ACTIVE de l'équipe, pas seulement ceux

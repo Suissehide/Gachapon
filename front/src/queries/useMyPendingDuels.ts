@@ -9,6 +9,8 @@ import { useAuthStore } from '../stores/auth.store.ts'
 import { wagersKey } from './useWagers.ts'
 
 export const myDuelsKey = ['me', 'duels'] as const
+export const duelHandsKey = (teamId: string, duelId: string) =>
+  ['duel-hands', teamId, duelId] as const
 
 /**
  * Les défis en attente de ma réponse, toutes équipes confondues — la source
@@ -29,21 +31,45 @@ export function useMyPendingDuels() {
   })
 
   // `duel:proposed` part déjà vers tous les membres de l'équipe : la notif
-  // apparaît sans rechargement. `duel:update` couvre l'acceptation depuis un
-  // autre écran. Le refus et l'annulation, eux, n'émettent RIEN côté serveur —
-  // un défi annulé par le défieur ne disparaît donc qu'au refetch suivant.
+  // apparaît sans rechargement. `duel:update` couvre l'acceptation, le refus
+  // et l'annulation ; `duel:settled` fait entrer le résultat dans la pastille
+  // à l'instant du règlement — sans attendre la fin de l'animation de tirage,
+  // et sans l'interrompre.
   useEffect(() => {
     if (!isAuthenticated) {
       return
     }
     return wsClient.on((event) => {
-      if (event.type === 'duel:proposed' || event.type === 'duel:update') {
+      if (
+        event.type === 'duel:proposed' ||
+        event.type === 'duel:update' ||
+        event.type === 'duel:settled'
+      ) {
         void queryClient.invalidateQueries({ queryKey: myDuelsKey })
       }
     })
   }, [isAuthenticated, queryClient])
 
   return query
+}
+
+/**
+ * Les deux mains d'un duel réglé. Requête à la demande : elle n'est tirée que
+ * quand le joueur ouvre le résultat, jamais au chargement de la pastille.
+ *
+ * `staleTime: Infinity` — un duel réglé ne bouge plus, ses mains non plus.
+ */
+export function useDuelHands(
+  teamId: string | undefined,
+  duelId: string | undefined,
+) {
+  return useQuery({
+    queryKey: duelHandsKey(teamId ?? '', duelId ?? ''),
+    queryFn: () => WagersApi.getDuelHands(teamId as string, duelId as string),
+    enabled: Boolean(teamId && duelId),
+    staleTime: Number.POSITIVE_INFINITY,
+    retry: false,
+  })
 }
 
 type DuelRef = { teamId: string; duelId: string }

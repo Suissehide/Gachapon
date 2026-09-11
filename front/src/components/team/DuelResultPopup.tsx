@@ -1,9 +1,19 @@
 import { Link } from '@tanstack/react-router'
 import { Handshake, Layers, Swords, Trophy } from 'lucide-react'
+import { useState } from 'react'
 
-import type { DuelView } from '../../api/wagers.api.ts'
+import type {
+  DuelHandView,
+  DuelPullView,
+  DuelView,
+  SettledDuelView,
+} from '../../api/wagers.api.ts'
 import { duelSides } from '../../libs/duel.ts'
+import { RARITY_BADGE_VARIANT, RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { cn, plural } from '../../libs/utils.ts'
+import { useDuelHands } from '../../queries/useMyPendingDuels.ts'
+import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
+import { Badge } from '../ui/badge.tsx'
 import { Button } from '../ui/button.tsx'
 import {
   Popup,
@@ -16,6 +26,11 @@ import {
 
 function cardCountLabel(count: number): string {
   return `${count} carte${plural(count)}`
+}
+
+const VARIANT_LABEL_FR: Record<string, string> = {
+  BRILLIANT: 'Brillante',
+  HOLOGRAPHIC: 'Holographique',
 }
 
 type Outcome = 'WIN' | 'LOSS' | 'TIE'
@@ -63,25 +78,100 @@ function OutcomeIcon({ outcome }: { outcome: Outcome }) {
  * Fenêtre de fin de duel. Elle annonce le verdict, le score final et le
  * nombre de cartes qui ont changé de main.
  *
- * Les cartes transférées ne sont volontairement PAS dessinées une à une :
- * ni `duel:settled` (winnerId + transferredCount) ni `DuelView` ne portent
- * leur identité, et aucune route ne l'expose. Afficher des cartes ici
- * supposerait de les deviner — le compte, lui, vient du serveur. Le bouton
- * « Voir ma collection » renvoie vers la seule vue qui montre vraiment
- * l'état d'après.
+ * Les cartes TRANSFÉRÉES ne sont toujours pas dessinées une à une : ni
+ * `duel:settled` ni `DuelView` ne portent leur identité. Les mains, elles, le
+ * sont quand `teamId` est fourni — `GET /teams/:id/duels/:duelId/hands` rend
+ * les tirages comptés de chaque camp, c'est-à-dire ce qui a fait le score.
+ * Le bouton « Voir ma collection » reste la seule vue de l'état d'après.
  */
 export function DuelResultPopup({
   duel,
   transferredCount,
   onClose,
+  teamId,
 }: {
   duel: DuelView
   transferredCount: number
   onClose: () => void
+  /** Fourni = les mains des deux joueurs sont chargées et affichées. */
+  teamId?: string
 }) {
   const { me, them, myScore, theirScore } = duelSides(duel)
+  return (
+    <DuelResult
+      duelId={duel.id}
+      teamId={teamId}
+      me={me}
+      them={them}
+      myScore={myScore}
+      theirScore={theirScore}
+      winnerId={duel.winnerId}
+      transferredCount={transferredCount}
+      onClose={onClose}
+    />
+  )
+}
+
+/**
+ * Même fenêtre, alimentée par `GET /me/duels` plutôt que par la vue d'équipe.
+ * C'est le chemin de la pastille de notification : il connaît `teamId`, donc
+ * les mains s'affichent toujours ici.
+ *
+ * `duelSides` ne peut pas servir — elle lit `myRole`, que la liste
+ * inter-équipes ne porte pas ; on compare donc les identifiants.
+ */
+export function SettledDuelResultPopup({
+  settled,
+  myUserId,
+  transferredCount,
+  onClose,
+}: {
+  settled: SettledDuelView
+  myUserId: string
+  transferredCount: number
+  onClose: () => void
+}) {
+  const iAmChallenger = settled.challenger.id === myUserId
+  return (
+    <DuelResult
+      duelId={settled.id}
+      teamId={settled.teamId}
+      me={iAmChallenger ? settled.challenger : settled.opponent}
+      them={iAmChallenger ? settled.opponent : settled.challenger}
+      myScore={iAmChallenger ? settled.challengerScore : settled.opponentScore}
+      theirScore={
+        iAmChallenger ? settled.opponentScore : settled.challengerScore
+      }
+      winnerId={settled.winnerId}
+      transferredCount={transferredCount}
+      onClose={onClose}
+    />
+  )
+}
+
+function DuelResult({
+  duelId,
+  teamId,
+  me,
+  them,
+  myScore,
+  theirScore,
+  winnerId,
+  transferredCount,
+  onClose,
+}: {
+  duelId: string
+  teamId: string | undefined
+  me: { id: string; username: string }
+  them: { id: string; username: string }
+  myScore: number
+  theirScore: number
+  winnerId: string | null
+  transferredCount: number
+  onClose: () => void
+}) {
   const outcome: Outcome =
-    duel.winnerId === null ? 'TIE' : duel.winnerId === me.id ? 'WIN' : 'LOSS'
+    winnerId === null ? 'TIE' : winnerId === me.id ? 'WIN' : 'LOSS'
   const iWon = outcome === 'WIN'
   const verdict = verdictText(outcome, them.username, transferredCount)
 
@@ -124,6 +214,13 @@ export function DuelResultPopup({
 
           <p className="text-sm text-text-light">{verdict}</p>
 
+          <DuelHands
+            teamId={teamId}
+            duelId={duelId}
+            meId={me.id}
+            themId={them.id}
+          />
+
           {transferredCount > 0 && (
             <div
               className={cn(
@@ -150,9 +247,18 @@ export function DuelResultPopup({
           <Button variant="outline" onClick={onClose}>
             Fermer
           </Button>
-          <Button asChild onClick={onClose}>
-            <Link to="/collection">Voir ma collection</Link>
-          </Button>
+          {/*
+            Vers l'équipe, pas vers la collection : c'est là que vit le duel,
+            son historique et le reste des enjeux. Absent quand l'appelant ne
+            connaît pas l'équipe — il est alors déjà sur sa page.
+          */}
+          {teamId !== undefined && (
+            <Button asChild onClick={onClose}>
+              <Link to="/team/$id" params={{ id: teamId }}>
+                Voir le duel
+              </Link>
+            </Button>
+          )}
         </PopupFooter>
       </PopupContent>
     </Popup>
@@ -187,5 +293,163 @@ function ScoreSide({
         {score.toLocaleString('fr-FR')}
       </span>
     </div>
+  )
+}
+
+/**
+ * Les deux mains, côte à côte : la mienne d'abord. Rien n'est rendu tant que
+ * `teamId` manque — la route des mains est sous `/teams/:id`, et l'appelant
+ * qui ne le connaît pas garde l'écran d'avant, verdict et score seulement.
+ */
+function DuelHands({
+  teamId,
+  duelId,
+  meId,
+  themId,
+}: {
+  teamId: string | undefined
+  duelId: string
+  meId: string
+  themId: string
+}) {
+  const { data, isLoading, isError } = useDuelHands(teamId, duelId)
+  const [zoomed, setZoomed] = useState<DuelPullView | null>(null)
+
+  if (!teamId || isError) {
+    return null
+  }
+  if (isLoading || !data) {
+    return (
+      <p className="font-mono text-[11px] uppercase tracking-wider text-text-light">
+        Chargement des tirages…
+      </p>
+    )
+  }
+
+  const sideOf = (userId: string) =>
+    data.challenger.id === userId ? data.challenger : data.opponent
+
+  return (
+    <div className="flex flex-col gap-3">
+      <HandRow label="Tes tirages" hand={sideOf(meId)} onZoom={setZoomed} />
+      <HandRow label="Les siens" hand={sideOf(themId)} onZoom={setZoomed} />
+      {zoomed !== null && (
+        <CardZoom pull={zoomed} onClose={() => setZoomed(null)} />
+      )}
+    </div>
+  )
+}
+
+function HandRow({
+  label,
+  hand,
+  onZoom,
+}: {
+  label: string
+  hand: DuelHandView
+  onZoom: (pull: DuelPullView) => void
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
+        {label}
+      </span>
+      {hand.pulls.length === 0 ? (
+        <p className="text-xs text-text-light">Aucun tirage compté.</p>
+      ) : (
+        // Défilement horizontal plutôt que retour à la ligne : la fenêtre est
+        // étroite et une main peut compter une dizaine de cartes.
+        <ul className="flex gap-2 overflow-x-auto pb-1">
+          {hand.pulls.map((pull) => (
+            <PullCard key={pull.id} pull={pull} onZoom={onZoom} />
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+function PullCard({
+  pull,
+  onZoom,
+}: {
+  pull: DuelPullView
+  onZoom: (pull: DuelPullView) => void
+}) {
+  return (
+    <li className="w-28 shrink-0">
+      <button
+        type="button"
+        onClick={() => onZoom(pull)}
+        title={`Agrandir ${pull.name}`}
+        aria-label={`Agrandir ${pull.name}`}
+        className="block w-full cursor-pointer rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <CardDisplay
+          compact
+          rarity={pull.rarity}
+          name={pull.name}
+          setName={pull.setName}
+          imageUrl={pull.imageUrl}
+          variant={pull.variant}
+          element={pull.element}
+        />
+      </button>
+    </li>
+  )
+}
+
+/**
+ * La carte en grand. Volontairement PAS `CardViewModal` : celle-là montre
+ * niveau, stats, emplacements d'équipement et propose recycler ou mettre en
+ * vœu — tout cela n'a pas de sens ici. La main contient aussi les cartes de
+ * l'ADVERSAIRE, que le joueur ne possède pas, et ce sont des tirages passés,
+ * pas un état de collection.
+ *
+ * `interactive` et `showAura` ne s'allument qu'ici : sur la rangée, une
+ * dizaine de cartes qui suivent le curseur coûterait cher pour rien.
+ */
+function CardZoom({
+  pull,
+  onClose,
+}: {
+  pull: DuelPullView
+  onClose: () => void
+}) {
+  return (
+    <Popup
+      open
+      onOpenChange={(open) => {
+        if (!open) {
+          onClose()
+        }
+      }}
+    >
+      <PopupContent className="w-auto max-w-none">
+        <PopupBody className="flex flex-col items-center gap-3">
+          <CardDisplay
+            large
+            interactive
+            showAura
+            rarity={pull.rarity}
+            name={pull.name}
+            setName={pull.setName}
+            imageUrl={pull.imageUrl}
+            variant={pull.variant}
+            element={pull.element}
+          />
+          <div className="flex items-center gap-2">
+            <Badge variant={RARITY_BADGE_VARIANT[pull.rarity] ?? 'common'}>
+              {RARITY_LABEL_FR[pull.rarity] ?? pull.rarity}
+            </Badge>
+            {pull.variant !== 'NORMAL' && (
+              <Badge variant="neutral">
+                {VARIANT_LABEL_FR[pull.variant] ?? pull.variant}
+              </Badge>
+            )}
+          </div>
+        </PopupBody>
+      </PopupContent>
+    </Popup>
   )
 }

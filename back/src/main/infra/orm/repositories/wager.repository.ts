@@ -4,11 +4,13 @@ import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type {
   ActiveBetOnTarget,
   BetWithParties,
+  CountedPullWithCard,
   DuelTransferWithCard,
   DuelWithParties,
   IWagerRepository,
   PendingDuelForOpponent,
   PullWithRarity,
+  SettledDuelForUser,
 } from '../../../types/infra/orm/repositories/wager.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
 
@@ -113,6 +115,7 @@ export class WagerRepository implements IWagerRepository {
             id: true,
             name: true,
             rarity: true,
+            element: true,
             imageUrl: true,
             set: { select: { name: true } },
           },
@@ -143,6 +146,64 @@ export class WagerRepository implements IWagerRepository {
     },
   ): Promise<Duel> {
     return tx.duel.create({ data })
+  }
+
+  findCountedPullsWithCard(
+    userId: string,
+    since: Date,
+    take: number,
+  ): Promise<CountedPullWithCard[]> {
+    return this.#prisma.gachaPull
+      .findMany({
+        ...countedPullsWindow(userId, since, take),
+        select: {
+          id: true,
+          cardId: true,
+          variant: true,
+          pulledAt: true,
+          card: {
+            select: {
+              name: true,
+              rarity: true,
+              element: true,
+              imageUrl: true,
+              set: { select: { name: true } },
+            },
+          },
+        },
+      })
+      .then((rows) =>
+        rows.map((row) => ({
+          id: row.id,
+          cardId: row.cardId,
+          name: row.card.name,
+          setName: row.card.set?.name ?? '',
+          rarity: row.card.rarity,
+          element: row.card.element,
+          imageKey: row.card.imageUrl,
+          variant: row.variant,
+          pulledAt: row.pulledAt,
+        })),
+      )
+  }
+
+  listRecentSettledDuelsForUser(
+    userId: string,
+    settledAfter: Date,
+  ): Promise<SettledDuelForUser[]> {
+    return this.#prisma.duel.findMany({
+      where: {
+        status: 'SETTLED',
+        settledAt: { gt: settledAfter },
+        OR: [{ challengerId: userId }, { opponentId: userId }],
+      },
+      include: {
+        team: { select: TEAM_SELECT },
+        challenger: { select: PARTY_SELECT },
+        opponent: { select: PARTY_SELECT },
+      },
+      orderBy: { settledAt: 'desc' },
+    })
   }
 
   listActiveBetsOnTarget(
@@ -268,6 +329,26 @@ function listActiveDuelsForUserWith(
   })
 }
 
+/**
+ * La fenêtre de tirages comptés d'un duel : `where`, tri et `take`. Extraite
+ * parce que DEUX lectures s'en servent — celle du règlement
+ * (`findPullsSinceWith`) et celle de l'écran de résultat
+ * (`findCountedPullsWithCard`). Si elles divergeaient, l'écran montrerait une
+ * main qui n'est pas celle qui a produit le score.
+ *
+ * `pulledAt` est en précision milliseconde : deux tirages d'un même batch
+ * peuvent tomber sur le même instant. `id` en second tri rend l'ordre — et
+ * donc le sous-ensemble des `take` premiers — déterministe, ce qui compte
+ * puisque c'est lui qui décide quelles cartes sont saisissables au règlement.
+ */
+function countedPullsWindow(userId: string, since: Date, take: number) {
+  return {
+    where: { userId, pulledAt: { gt: since } },
+    orderBy: [{ pulledAt: 'asc' as const }, { id: 'asc' as const }],
+    take,
+  }
+}
+
 function findPullsSinceWith(
   client: PostgresPrismaClient | PrimaTransactionClient,
   userId: string,
@@ -276,20 +357,13 @@ function findPullsSinceWith(
 ): Promise<PullWithRarity[]> {
   return client.gachaPull
     .findMany({
-      where: { userId, pulledAt: { gt: since } },
+      ...countedPullsWindow(userId, since, take),
       select: {
         cardId: true,
         variant: true,
         pulledAt: true,
         card: { select: { rarity: true } },
       },
-      // `pulledAt` est en précision milliseconde : deux tirages d'un même
-      // batch peuvent tomber sur le même instant. `id` en second tri rend
-      // l'ordre — et donc le sous-ensemble des `take` premiers — déterministe,
-      // ce qui compte ici puisque c'est lui qui décide quelles cartes sont
-      // saisissables au règlement du duel.
-      orderBy: [{ pulledAt: 'asc' }, { id: 'asc' }],
-      take,
     })
     .then((pulls) =>
       pulls.map((p) => ({

@@ -79,6 +79,35 @@ describe('GET /me/duels', () => {
     return res.json().duels as { id: string }[]
   }
 
+  async function mySettled(cookie: string) {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/me/duels',
+      headers: { cookie },
+    })
+    expect(res.statusCode).toBe(200)
+    return res.json().settled as any[]
+  }
+
+  /** Duel deja tranche, regle a `settledAt`, entre le defieur et le defie. */
+  async function settledDuel(settledAt: Date) {
+    const duel = await prisma.duel.create({
+      data: {
+        teamId,
+        challengerId: userIdChallenger,
+        opponentId: userIdOpponent,
+        status: 'SETTLED',
+        pullCount: 5,
+        acceptedAt: new Date(settledAt.getTime() - 3600_000),
+        settledAt,
+        winnerId: userIdChallenger,
+        challengerScore: 20,
+        opponentScore: 8,
+      },
+    })
+    return duel.id as string
+  }
+
   beforeAll(async () => {
     app = await buildTestApp()
     const container = (app as any).iocContainer
@@ -168,6 +197,38 @@ describe('GET /me/duels', () => {
 
     expect(await myDuels(cookiesOpponent)).toHaveLength(0)
 
+  })
+
+  // Le resultat d'un duel doit atteindre le joueur MEME s'il a rechargé
+  // pendant son animation de tirage : c'est tout l'objet de le sortir de la
+  // popup pour le poser dans la pastille.
+  it('les deux duellistes retrouvent leur duel regle, avec le verdict', async () => {
+    const duelId = await settledDuel(new Date())
+
+    for (const cookie of [cookiesChallenger, cookiesOpponent]) {
+      const settled = await mySettled(cookie)
+      const mine = settled.find((d) => d.id === duelId)
+      expect(mine).toBeDefined()
+      expect(mine.teamId).toBe(teamId)
+      expect(mine.winnerId).toBe(userIdChallenger)
+      // Scores en points affichables : la colonne stocke des demi-points.
+      expect(mine.challengerScore).toBe(10)
+      expect(mine.opponentScore).toBe(4)
+      expect(mine.challenger.id).toBe(userIdChallenger)
+      expect(mine.opponent.id).toBe(userIdOpponent)
+    }
+  })
+
+  it("un coequipier spectateur n'a pas ce duel dans ses notifications", async () => {
+    const duelId = await settledDuel(new Date())
+    const settled = await mySettled(cookiesBystander)
+    expect(settled.find((d) => d.id === duelId)).toBeUndefined()
+  })
+
+  it('un duel regle il y a plus de 48 h ne remonte plus', async () => {
+    const duelId = await settledDuel(new Date(Date.now() - 49 * 3600_000))
+    const settled = await mySettled(cookiesChallenger)
+    expect(settled.find((d) => d.id === duelId)).toBeUndefined()
   })
 
   // L'expiration d'un PENDING est PARESSEUSE : la ligne reste PENDING en
