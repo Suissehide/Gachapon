@@ -99,6 +99,17 @@ describe('Recrutement d équipe', () => {
   })
 
   it('POST /teams/:id/join-requests — candidate', async () => {
+    // Task 9 : le chef (seul OWNER de cette équipe) apprend la candidature
+    // en direct. On branche un faux socket sur son userId, comme
+    // `perks.test.ts` le fait pour `team:perk`.
+    const wsManager = (app as any).iocContainer.wsManager
+    const received: any[] = []
+    wsManager.register(ownerId, {
+      readyState: 1,
+      send: (data: string) => received.push(JSON.parse(data)),
+      on: () => {},
+    } as any)
+
     const res = await app.inject({
       method: 'POST',
       url: `/teams/${teamId}/join-requests`,
@@ -106,6 +117,13 @@ describe('Recrutement d équipe', () => {
     })
     expect(res.statusCode).toBe(201)
     expect(res.json()).toMatchObject({ teamId, status: 'PENDING' })
+
+    expect(received).toContainEqual({
+      type: 'team:join-request',
+      teamId,
+      requestId: res.json().id,
+      candidate: { id: candidateId, username: expect.any(String) },
+    })
   })
 
   it('GET /me/join-requests — liste mes candidatures', async () => {
@@ -336,12 +354,28 @@ describe('Recrutement d équipe', () => {
     })
     const requestId = queue.json().requests[0].id
 
+    // Task 9 : le candidat apprend la décision en direct, sans recharger.
+    const wsManager = (app as any).iocContainer.wsManager
+    const received: any[] = []
+    wsManager.register(candidateId, {
+      readyState: 1,
+      send: (data: string) => received.push(JSON.parse(data)),
+      on: () => {},
+    } as any)
+
     const res = await app.inject({
       method: 'POST',
       url: `/join-requests/${requestId}/accept`,
       headers: { cookie: cookiesOwner },
     })
     expect(res.statusCode).toBe(200)
+
+    expect(received).toContainEqual({
+      type: 'team:join-decision',
+      teamId,
+      teamName: expect.any(String),
+      status: 'ACCEPTED',
+    })
 
     const members = await app.inject({
       method: 'GET',

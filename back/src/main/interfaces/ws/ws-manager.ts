@@ -144,6 +144,29 @@ export type TeamPerkEvent = {
   perkPoints: number
 }
 
+/**
+ * Une candidature vient d'arriver sur une équipe. Poussé à CHAQUE OWNER/ADMIN
+ * de l'équipe, jamais au candidat lui-même — c'est ce qui fait sonner sa
+ * cloche à lui qui manque, pas la sienne.
+ */
+export type TeamJoinRequestEvent = {
+  type: 'team:join-request'
+  teamId: string
+  requestId: string
+  candidate: { id: string; username: string }
+}
+
+/**
+ * Une candidature vient d'être tranchée. Poussé au seul candidat, jamais
+ * diffusé à l'équipe : la décision ne regarde que lui.
+ */
+export type TeamJoinDecisionEvent = {
+  type: 'team:join-decision'
+  teamId: string
+  teamName: string
+  status: 'ACCEPTED' | 'DECLINED'
+}
+
 type WsEvent =
   | PullResultEvent
   | PullBatchResultEvent
@@ -157,6 +180,8 @@ type WsEvent =
   | BetSettledEvent
   | TeamLevelUpEvent
   | TeamPerkEvent
+  | TeamJoinRequestEvent
+  | TeamJoinDecisionEvent
 
 export class WsManager {
   readonly #connections = new Map<string, WebSocket>()

@@ -187,6 +187,32 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
         request.params.id,
         request.user.userID,
       )
+
+      // Notification strictement après le commit de `apply` : personne ne
+      // doit apprendre une candidature qui finirait par échouer (plafond,
+      // équipe déjà rejointe, etc.). `request.user` ne porte que
+      // `{ userID, role }` (voir jwt.plugin.ts) : le pseudo se relit ici.
+      const { teamRepository, userRepository } = fastify.iocContainer
+      const [team, candidate] = await Promise.all([
+        teamRepository.findById(created.teamId),
+        userRepository.findById(request.user.userID),
+      ])
+      if (team && candidate) {
+        // `getTeamDetail` exige d'être membre de l'équipe ; le candidat qui
+        // vient de postuler ne l'est justement pas. `findById` inclut déjà
+        // `members` sans cette contrainte.
+        for (const member of team.members) {
+          if (member.role !== 'MEMBER') {
+            wsManager.notify(member.userId, {
+              type: 'team:join-request',
+              teamId: created.teamId,
+              requestId: created.id,
+              candidate: { id: candidate.id, username: candidate.username },
+            })
+          }
+        }
+      }
+
       return reply.status(201).send(created)
     },
   )
@@ -246,10 +272,18 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
       },
     },
     async (request) => {
-      const { teamId, userId } = await recruitmentDomain.accept(
+      const { teamId, userId, teamName } = await recruitmentDomain.accept(
         request.params.id,
         request.user.userID,
       )
+      // Après commit uniquement : au seul candidat, jamais à l'équipe — la
+      // décision ne regarde que lui.
+      wsManager.notify(userId, {
+        type: 'team:join-decision',
+        teamId,
+        teamName,
+        status: 'ACCEPTED',
+      })
       return { teamId, userId }
     },
   )
@@ -264,8 +298,19 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
         response: { 200: joinRequestDecisionResponseSchema },
       },
     },
-    (request) =>
-      recruitmentDomain.decline(request.params.id, request.user.userID),
+    async (request) => {
+      const { teamId, userId, teamName } = await recruitmentDomain.decline(
+        request.params.id,
+        request.user.userID,
+      )
+      wsManager.notify(userId, {
+        type: 'team:join-decision',
+        teamId,
+        teamName,
+        status: 'DECLINED',
+      })
+      return { teamId, userId }
+    },
   )
 
   fastify.patch(
