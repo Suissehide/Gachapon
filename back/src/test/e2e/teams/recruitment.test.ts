@@ -1,4 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
+import {
+  JOIN_REQUEST_COOLDOWN_MS,
+  JOIN_REQUEST_TTL_MS,
+} from '../../../main/domain/recruitment/recruitment-rules'
 import { buildTestApp } from '../../helpers/build-test-app'
 
 describe('Recrutement d équipe', () => {
@@ -11,7 +15,14 @@ describe('Recrutement d équipe', () => {
   let teamId: string
 
   const suffix = Date.now()
-  const DAY_MS = 86_400_000
+  const HOUR_MS = 60 * 60 * 1000
+  // Resserrés autour de la coupure réelle (les constantes de la spec), pas
+  // d'une valeur en dur : si la fenêtre change (7 j → 3 j ou 30 j), ces âges
+  // suivent et le test continue de basculer au bon endroit.
+  const JUST_INSIDE_TTL_MS = JOIN_REQUEST_TTL_MS - HOUR_MS
+  const JUST_OUTSIDE_TTL_MS = JOIN_REQUEST_TTL_MS + HOUR_MS
+  const JUST_INSIDE_COOLDOWN_MS = JOIN_REQUEST_COOLDOWN_MS - HOUR_MS
+  const JUST_OUTSIDE_COOLDOWN_MS = JOIN_REQUEST_COOLDOWN_MS + HOUR_MS
 
   const signIn = async (tag: string) => {
     await app.inject({
@@ -194,18 +205,18 @@ describe('Recrutement d équipe', () => {
         teamId: team.id,
         userId: candidateId,
         status,
-        expiresAt: new Date(Date.now() + 7 * DAY_MS),
+        expiresAt: new Date(Date.now() + JOIN_REQUEST_TTL_MS),
         decidedAt,
       },
     })
     return team.id as string
   }
 
-  it('ACCEPTED récent — visible avec le statut ACCEPTED', async () => {
+  it('ACCEPTED juste avant la coupure des 7 jours — visible avec le statut ACCEPTED', async () => {
     const targetId = await seedDecidedRequest(
       'Acceptee recente',
       'ACCEPTED',
-      new Date(Date.now() - 60 * 60 * 1000),
+      new Date(Date.now() - JUST_INSIDE_TTL_MS),
     )
 
     const res = await app.inject({
@@ -220,11 +231,11 @@ describe('Recrutement d équipe', () => {
     await prisma.joinRequest.deleteMany({ where: { teamId: targetId } })
   })
 
-  it('ACCEPTED vieux de plus de 7 jours — absent', async () => {
+  it('ACCEPTED juste après la coupure des 7 jours — absent', async () => {
     const targetId = await seedDecidedRequest(
       'Acceptee vieille',
       'ACCEPTED',
-      new Date(Date.now() - 8 * DAY_MS),
+      new Date(Date.now() - JUST_OUTSIDE_TTL_MS),
     )
 
     const res = await app.inject({
@@ -240,11 +251,11 @@ describe('Recrutement d équipe', () => {
     await prisma.joinRequest.deleteMany({ where: { teamId: targetId } })
   })
 
-  it('DECLINED avec cooldown en cours — visible, reapplyAt renseigné', async () => {
+  it('DECLINED juste avant la fin du cooldown — visible, reapplyAt renseigné', async () => {
     const targetId = await seedDecidedRequest(
       'Refusee recente',
       'DECLINED',
-      new Date(Date.now() - 1 * DAY_MS),
+      new Date(Date.now() - JUST_INSIDE_COOLDOWN_MS),
     )
 
     const res = await app.inject({
@@ -260,11 +271,11 @@ describe('Recrutement d équipe', () => {
     await prisma.joinRequest.deleteMany({ where: { teamId: targetId } })
   })
 
-  it('DECLINED avec cooldown écoulé — absent', async () => {
+  it('DECLINED juste après la fin du cooldown — absent', async () => {
     const targetId = await seedDecidedRequest(
       'Refusee vieille',
       'DECLINED',
-      new Date(Date.now() - 8 * DAY_MS),
+      new Date(Date.now() - JUST_OUTSIDE_COOLDOWN_MS),
     )
 
     const res = await app.inject({

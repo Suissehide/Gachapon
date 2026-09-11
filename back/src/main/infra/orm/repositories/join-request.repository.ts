@@ -51,53 +51,25 @@ export class JoinRequestRepository implements IJoinRequestRepository {
     userId: string
     expiresAt: Date
   }): Promise<JoinRequestRow> {
-    return this.#prisma.joinRequest.upsert({
-      where: { teamId_userId: { teamId: data.teamId, userId: data.userId } },
-      create: data,
-      update: {
-        status: 'PENDING',
-        createdAt: new Date(),
-        expiresAt: data.expiresAt,
-        decidedById: null,
-        decidedAt: null,
-      },
-    })
+    return upsertPendingWith(this.#prisma, data)
   }
 
   upsertPendingInTx(
     tx: PrimaTransactionClient,
     data: { teamId: string; userId: string; expiresAt: Date },
   ): Promise<JoinRequestRow> {
-    return tx.joinRequest.upsert({
-      where: { teamId_userId: { teamId: data.teamId, userId: data.userId } },
-      create: data,
-      update: {
-        status: 'PENDING',
-        createdAt: new Date(),
-        expiresAt: data.expiresAt,
-        decidedById: null,
-        decidedAt: null,
-      },
-    })
+    return upsertPendingWith(tx, data)
   }
 
   listByUser(userId: string): Promise<JoinRequestWithTeam[]> {
-    return this.#prisma.joinRequest.findMany({
-      where: { userId },
-      include: { team: TEAM_SELECT },
-      orderBy: { createdAt: 'desc' },
-    }) as unknown as Promise<JoinRequestWithTeam[]>
+    return listByUserWith(this.#prisma, userId)
   }
 
   listByUserInTx(
     tx: PrimaTransactionClient,
     userId: string,
   ): Promise<JoinRequestWithTeam[]> {
-    return tx.joinRequest.findMany({
-      where: { userId },
-      include: { team: TEAM_SELECT },
-      orderBy: { createdAt: 'desc' },
-    }) as unknown as Promise<JoinRequestWithTeam[]>
+    return listByUserWith(tx, userId)
   }
 
   listPendingByTeam(teamId: string): Promise<JoinRequestWithUser[]> {
@@ -140,4 +112,40 @@ export class JoinRequestRepository implements IJoinRequestRepository {
       })
       .then(() => undefined)
   }
+}
+
+/**
+ * Corps partagé par `upsertPending` et `upsertPendingInTx` : même motif que
+ * `WagerRepository#listActiveDuelsForUser` / `…InTx`, qui délèguent toutes
+ * deux à une fonction de module paramétrée par le client. Un seul endroit
+ * pour la charge utile de l'upsert — la version transactionnelle ne peut pas
+ * diverger de la version simple.
+ */
+function upsertPendingWith(
+  client: PostgresPrismaClient | PrimaTransactionClient,
+  data: { teamId: string; userId: string; expiresAt: Date },
+): Promise<JoinRequestRow> {
+  return client.joinRequest.upsert({
+    where: { teamId_userId: { teamId: data.teamId, userId: data.userId } },
+    create: data,
+    update: {
+      status: 'PENDING',
+      createdAt: new Date(),
+      expiresAt: data.expiresAt,
+      decidedById: null,
+      decidedAt: null,
+    },
+  })
+}
+
+/** Même motif que `upsertPendingWith` ci-dessus, pour `listByUser`/`…InTx`. */
+function listByUserWith(
+  client: PostgresPrismaClient | PrimaTransactionClient,
+  userId: string,
+): Promise<JoinRequestWithTeam[]> {
+  return client.joinRequest.findMany({
+    where: { userId },
+    include: { team: TEAM_SELECT },
+    orderBy: { createdAt: 'desc' },
+  }) as unknown as Promise<JoinRequestWithTeam[]>
 }
