@@ -52,16 +52,6 @@ function formatRemaining(endsAt: string): string {
   return `${minutes} min`
 }
 
-/**
- * `weekKey` est le lundi UTC au format `YYYY-MM-DD` (`raidWeekKey`,
- * back/domain/raid/raid-rules.ts), pas un numéro de semaine. Le
- * « SEMAINE 36 » de la maquette se calcule donc ici, en semaine ISO — même
- * dérivation que `RaidHistoryPanel`.
- */
-function weekNumber(weekKey: string): number {
-  return dayjs.utc(weekKey).isoWeek()
-}
-
 // Carte de palier, trois états (`.tm-tier`, `.tm-tier--done`,
 // `.tm-tier--next`). `reached` vient du serveur ; « en cours » est le premier
 // palier non atteint, donc une position dans la liste, pas un champ.
@@ -290,9 +280,7 @@ export function RaidPanel({ teamId }: { teamId: string }) {
           alignés sur la ligne de base du titre. */}
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div className="min-w-0">
-          <SectionLabel>
-            Raid d'équipe · Semaine {weekNumber(raid.weekKey)}
-          </SectionLabel>
+          <SectionLabel>Raid d'équipe</SectionLabel>
           <PanelTitle size="lg" className="mt-1.5">
             {raid.boss.name}
           </PanelTitle>

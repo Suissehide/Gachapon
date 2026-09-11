@@ -85,7 +85,7 @@ export function RaidHistoryPanel({ teamId }: { teamId: string }) {
         </p>
       ) : raids.length === 0 ? (
         <p className="text-[12.5px] leading-[1.5] text-foreground/55">
-          Aucun raid dans l'historique. Le premier boss apparaît lundi.
+          Aucun raid dans l'historique.
         </p>
       ) : (
         <div className="flex flex-col gap-2">

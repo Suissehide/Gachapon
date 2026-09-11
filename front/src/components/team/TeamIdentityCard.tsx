@@ -8,7 +8,6 @@
 // `.tm-emblem`, dégradé héros fixe, pour cette carte-ci). `TeamEmblem`
 // expose exactement ce choix par la présence ou l'absence de `hue` — c'est
 // pour cette carte que l'option existe.
-import { Link } from '@tanstack/react-router'
 import { Settings, UserPlus } from 'lucide-react'
 import type { ReactNode } from 'react'
 
@@ -17,9 +16,9 @@ import { ArcadeCard } from '../shared/ArcadeCard.tsx'
 import { ProgressRing } from '../shared/ProgressRing.tsx'
 import { StatTile } from '../shared/StatTile.tsx'
 import { TeamEmblem } from '../shared/TeamEmblem.tsx'
-import { Button } from '../ui/button.tsx'
 import { PopupTrigger } from '../ui/popup.tsx'
 import { InviteMemberPopup } from './InviteMemberPopup.tsx'
+import { TeamSettingsPopup } from './TeamSettingsPopup.tsx'
 
 const fr = (n: number) => n.toLocaleString('fr-FR')
 
@@ -27,7 +26,7 @@ type TeamIdentityCardProps = {
   team: TeamDetail
   /** Chef ou officier : le seul rôle qui peut inviter. */
   canManage: boolean
-  /** Chef : la page de réglages est fermée aux officiers côté route. */
+  /** Chef : les réglages et la suppression sont fermés aux officiers. */
   isOwner: boolean
   /** Rôle du lecteur, requis par `InviteMemberPopup`. */
   myRole: 'OWNER' | 'ADMIN' | 'MEMBER' | undefined
@@ -133,22 +132,25 @@ export function TeamIdentityCard({
             />
           )}
           {/* NE PAS ouvrir ce bouton aux officiers. La maquette et le brief le
-              donnent au chef ET aux officiers, mais /team/$id/settings répond
-              « Accès réservé au propriétaire » à tout rôle autre que OWNER :
-              un officier qui cliquerait tomberait sur un mur. Tant que la
-              route n'accepte pas les officiers, ce bouton reste `isOwner`. */}
+              donnent au chef ET aux officiers, mais `PATCH /teams/:id` et
+              `DELETE /teams/:id` répondent « Accès réservé au propriétaire »
+              à tout rôle autre que OWNER : un officier qui cliquerait
+              n'obtiendrait que des erreurs. Tant que l'API n'accepte pas les
+              officiers, ce bouton reste `isOwner`. */}
           {isOwner && (
-            <Button
-              variant="secondary"
-              asChild
-              title="Réglages de l'équipe"
-              className="h-auto shrink-0 rounded-lg border-[1.5px] p-[11px]"
-            >
-              <Link to="/team/$id/settings" params={{ id: team.id }}>
-                <Settings className="h-4 w-4" />
-                <span className="sr-only">Réglages de l'équipe</span>
-              </Link>
-            </Button>
+            <TeamSettingsPopup
+              team={team}
+              trigger={
+                <PopupTrigger
+                  variant="secondary"
+                  title="Réglages de l'équipe"
+                  className="h-auto shrink-0 rounded-lg border-[1.5px] p-[11px]"
+                >
+                  <Settings className="h-4 w-4" />
+                  <span className="sr-only">Réglages de l'équipe</span>
+                </PopupTrigger>
+              }
+            />
           )}
         </div>
       )}

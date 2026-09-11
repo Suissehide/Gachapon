@@ -1,6 +1,8 @@
 // TeamCard — ligne d'équipe de l'écran « Mes équipes ». Reprend
 // `docs/design_handoff_equipe/equipe.css` (`.tml-card` et enfants) : grille
-// 56px/1fr/200px/auto, toute la ligne cliquable, survol ambré.
+// 56px/1fr/200px/auto, toute la ligne cliquable, survol ambré. L'ombre et
+// le décalage au survol de la maquette ont été retirés à la demande : le
+// survol ne change plus que la couleur de bordure.
 //
 // `team` vient tel quel de `GET /teams` (`TeamSummary`) : le rôle affiché est
 // déjà celui du viewer et déjà traduit côté serveur (`myRoleLabel`) — ne pas
@@ -21,7 +23,7 @@ export function TeamCard({ team }: { team: TeamSummary }) {
     <Link
       to="/team/$id"
       params={{ id: team.id }}
-      className="group grid w-full grid-cols-[56px_1fr_200px_auto] items-center gap-5 rounded-[20px] border-[1.5px] border-border bg-card px-5 py-[18px] shadow-[0_2px_0_rgba(27,23,38,0.03),0_14px_30px_-22px_rgba(27,23,38,0.2)] transition-[transform,border-color,box-shadow] duration-[.25s] hover:-translate-y-[3px] hover:border-primary/40 hover:shadow-[0_2px_0_rgba(245,158,11,0.1),0_20px_38px_-22px_rgba(245,158,11,0.5)]"
+      className="group grid w-full grid-cols-[56px_1fr_200px_auto] items-center gap-5 rounded-[20px] border-[1.5px] border-border bg-card px-5 py-[18px] transition-colors duration-[.25s] hover:border-primary/40"
     >
       <TeamEmblem
         hue={team.hue}
