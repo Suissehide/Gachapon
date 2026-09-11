@@ -43,6 +43,8 @@ const config: Config = {
       // non à la racine, sinon `--selectProjects unit` le déclenche aussi et
       // les tests unitaires exigent une base alors qu'ils sont purs.
       globalSetup: '<rootDir>/globalSetup.ts',
+      // Rend le verrou de run pose par globalSetup. Voir helpers/e2e-lock.ts.
+      globalTeardown: '<rootDir>/globalTeardown.ts',
       ...sharedConfig,
     },
     {
