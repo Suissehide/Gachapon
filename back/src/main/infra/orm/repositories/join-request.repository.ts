@@ -64,8 +64,36 @@ export class JoinRequestRepository implements IJoinRequestRepository {
     })
   }
 
+  upsertPendingInTx(
+    tx: PrimaTransactionClient,
+    data: { teamId: string; userId: string; expiresAt: Date },
+  ): Promise<JoinRequestRow> {
+    return tx.joinRequest.upsert({
+      where: { teamId_userId: { teamId: data.teamId, userId: data.userId } },
+      create: data,
+      update: {
+        status: 'PENDING',
+        createdAt: new Date(),
+        expiresAt: data.expiresAt,
+        decidedById: null,
+        decidedAt: null,
+      },
+    })
+  }
+
   listByUser(userId: string): Promise<JoinRequestWithTeam[]> {
     return this.#prisma.joinRequest.findMany({
+      where: { userId },
+      include: { team: TEAM_SELECT },
+      orderBy: { createdAt: 'desc' },
+    }) as unknown as Promise<JoinRequestWithTeam[]>
+  }
+
+  listByUserInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+  ): Promise<JoinRequestWithTeam[]> {
+    return tx.joinRequest.findMany({
       where: { userId },
       include: { team: TEAM_SELECT },
       orderBy: { createdAt: 'desc' },

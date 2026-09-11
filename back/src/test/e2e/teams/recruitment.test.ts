@@ -7,9 +7,11 @@ describe('Recrutement d équipe', () => {
   let cookiesOwner: string
   let cookiesCandidate: string
   let candidateId: string
+  let ownerId: string
   let teamId: string
 
   const suffix = Date.now()
+  const DAY_MS = 86_400_000
 
   const signIn = async (tag: string) => {
     await app.inject({
@@ -39,6 +41,7 @@ describe('Recrutement d équipe', () => {
 
     const owner = await signIn('recruitOwner')
     cookiesOwner = owner.cookies
+    ownerId = owner.id
     const candidate = await signIn('recruitCandidate')
     cookiesCandidate = candidate.cookies
     candidateId = candidate.id
@@ -169,5 +172,111 @@ describe('Recrutement d équipe', () => {
     expect(codes[5]).toBe(409)
 
     await prisma.joinRequest.deleteMany({ where: { userId: candidateId } })
+  })
+
+  // Sème une candidature déjà décidée (ACCEPTED/DECLINED) sur une équipe
+  // dédiée, pour tester les deux fenêtres temporelles de `listMine` sans
+  // attendre les tâches 6/7 (acceptation/refus par le chef).
+  const seedDecidedRequest = async (
+    label: string,
+    status: 'ACCEPTED' | 'DECLINED',
+    decidedAt: Date,
+  ) => {
+    const team = await prisma.team.create({
+      data: {
+        name: `${label} ${suffix}`,
+        slug: `${label.toLowerCase().replace(/\s+/g, '-')}-${suffix}`,
+        ownerId,
+      },
+    })
+    await prisma.joinRequest.create({
+      data: {
+        teamId: team.id,
+        userId: candidateId,
+        status,
+        expiresAt: new Date(Date.now() + 7 * DAY_MS),
+        decidedAt,
+      },
+    })
+    return team.id as string
+  }
+
+  it('ACCEPTED récent — visible avec le statut ACCEPTED', async () => {
+    const targetId = await seedDecidedRequest(
+      'Acceptee recente',
+      'ACCEPTED',
+      new Date(Date.now() - 60 * 60 * 1000),
+    )
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/me/join-requests',
+      headers: { cookie: cookiesCandidate },
+    })
+    expect(res.statusCode).toBe(200)
+    const found = res.json().requests.find((r: any) => r.teamId === targetId)
+    expect(found).toMatchObject({ teamId: targetId, status: 'ACCEPTED' })
+
+    await prisma.joinRequest.deleteMany({ where: { teamId: targetId } })
+  })
+
+  it('ACCEPTED vieux de plus de 7 jours — absent', async () => {
+    const targetId = await seedDecidedRequest(
+      'Acceptee vieille',
+      'ACCEPTED',
+      new Date(Date.now() - 8 * DAY_MS),
+    )
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/me/join-requests',
+      headers: { cookie: cookiesCandidate },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(
+      res.json().requests.find((r: any) => r.teamId === targetId),
+    ).toBeUndefined()
+
+    await prisma.joinRequest.deleteMany({ where: { teamId: targetId } })
+  })
+
+  it('DECLINED avec cooldown en cours — visible, reapplyAt renseigné', async () => {
+    const targetId = await seedDecidedRequest(
+      'Refusee recente',
+      'DECLINED',
+      new Date(Date.now() - 1 * DAY_MS),
+    )
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/me/join-requests',
+      headers: { cookie: cookiesCandidate },
+    })
+    expect(res.statusCode).toBe(200)
+    const found = res.json().requests.find((r: any) => r.teamId === targetId)
+    expect(found).toMatchObject({ teamId: targetId, status: 'DECLINED' })
+    expect(found.reapplyAt).not.toBeNull()
+
+    await prisma.joinRequest.deleteMany({ where: { teamId: targetId } })
+  })
+
+  it('DECLINED avec cooldown écoulé — absent', async () => {
+    const targetId = await seedDecidedRequest(
+      'Refusee vieille',
+      'DECLINED',
+      new Date(Date.now() - 8 * DAY_MS),
+    )
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/me/join-requests',
+      headers: { cookie: cookiesCandidate },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(
+      res.json().requests.find((r: any) => r.teamId === targetId),
+    ).toBeUndefined()
+
+    await prisma.joinRequest.deleteMany({ where: { teamId: targetId } })
   })
 })

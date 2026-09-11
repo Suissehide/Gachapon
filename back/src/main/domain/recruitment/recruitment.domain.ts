@@ -8,10 +8,12 @@ import type {
   IRecruitmentDomain,
   MyJoinRequestView,
 } from '../../types/domain/recruitment/recruitment.domain.interface'
+import type { PostgresORMInterface } from '../../types/infra/orm/client'
 import type {
   IJoinRequestRepository,
   JoinRequestWithTeam,
 } from '../../types/infra/orm/repositories/join-request.repository.interface'
+import { retryOnSerialization } from '../shared/retry-serialization'
 import { hueFromName } from '../team-progression/team-progression-rules'
 import {
   countActivePending,
@@ -25,15 +27,18 @@ export class RecruitmentDomain implements IRecruitmentDomain {
   readonly #joinRequestRepo: IJoinRequestRepository
   readonly #teamRepo: TeamRepository
   readonly #memberRepo: TeamMemberRepository
+  readonly #postgresOrm: PostgresORMInterface
 
   constructor({
     joinRequestRepository,
     teamRepository,
     teamMemberRepository,
+    postgresOrm,
   }: IocContainer) {
     this.#joinRequestRepo = joinRequestRepository
     this.#teamRepo = teamRepository
     this.#memberRepo = teamMemberRepository
+    this.#postgresOrm = postgresOrm
   }
 
   async apply(teamId: string, userId: string): Promise<MyJoinRequestView> {
@@ -71,30 +76,49 @@ export class RecruitmentDomain implements IRecruitmentDomain {
       )
     }
 
-    if (countActivePending(mine, now) >= MAX_PENDING_JOIN_REQUESTS) {
-      throw Boom.conflict(
-        `Maximum ${MAX_PENDING_JOIN_REQUESTS} candidatures en attente`,
-      )
+    const teamSummary = {
+      id: team.id,
+      name: team.name,
+      slug: team.slug,
+      hue: team.hue,
     }
 
-    const created = await this.#joinRequestRepo.upsertPending({
-      teamId,
-      userId,
-      expiresAt: new Date(now.getTime() + JOIN_REQUEST_TTL_MS),
-    })
+    // Le plafond de 5 est un INVARIANT SUR L'ENSEMBLE des candidatures du
+    // joueur, pas sur cette seule équipe : hors transaction, deux `apply()`
+    // concurrents vers deux équipes différentes liraient tous deux un
+    // compteur à 4 et passeraient tous deux, dépassant le plafond. Sous
+    // Serializable, la lecture du compteur et l'écriture qui la contredit
+    // ne peuvent pas toutes les deux survivre — la seconde transaction
+    // échoue en P2034, `retryOnSerialization` la rejoue et elle relit alors
+    // le compteur à jour. Même motif que `DuelDomain#propose`.
+    return retryOnSerialization(() =>
+      this.#postgresOrm.executeWithTransactionClient(
+        async (tx) => {
+          const freshMine = await this.#joinRequestRepo.listByUserInTx(
+            tx,
+            userId,
+          )
+          if (countActivePending(freshMine, now) >= MAX_PENDING_JOIN_REQUESTS) {
+            throw Boom.conflict(
+              `Maximum ${MAX_PENDING_JOIN_REQUESTS} candidatures en attente`,
+            )
+          }
 
-    return {
-      id: created.id,
-      teamId,
-      teamName: team.name,
-      teamSlug: team.slug,
-      hue: team.hue ?? hueFromName(team.name),
-      status: 'PENDING',
-      createdAt: created.createdAt,
-      expiresAt: created.expiresAt,
-      reapplyAt: null,
-      decidedAt: null,
-    }
+          const created = await this.#joinRequestRepo.upsertPendingInTx(tx, {
+            teamId,
+            userId,
+            expiresAt: new Date(now.getTime() + JOIN_REQUEST_TTL_MS),
+          })
+
+          return this.#toView(
+            { ...created, team: teamSummary },
+            'PENDING',
+            null,
+          )
+        },
+        { isolationLevel: 'Serializable' },
+      ),
+    )
   }
 
   async cancel(teamId: string, userId: string): Promise<void> {

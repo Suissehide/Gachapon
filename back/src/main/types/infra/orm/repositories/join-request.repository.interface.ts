@@ -34,7 +34,21 @@ export interface IJoinRequestRepository {
     userId: string
     expiresAt: Date
   }): Promise<JoinRequestRow>
+  /**
+   * Même écriture que `upsertPending`, mais dans la transaction sérialisable
+   * de l'appelant : `RecruitmentDomain#apply` doit relire le plafond de 5 ET
+   * écrire dans le même tour, sous peine de laisser deux candidatures
+   * concurrentes passer toutes les deux le compteur.
+   */
+  upsertPendingInTx(
+    tx: PrimaTransactionClient,
+    data: { teamId: string; userId: string; expiresAt: Date },
+  ): Promise<JoinRequestRow>
   listByUser(userId: string): Promise<JoinRequestWithTeam[]>
+  listByUserInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+  ): Promise<JoinRequestWithTeam[]>
   listPendingByTeam(teamId: string): Promise<JoinRequestWithUser[]>
   /**
    * Transition gardée : le `where` exige `status: 'PENDING'`, donc deux
