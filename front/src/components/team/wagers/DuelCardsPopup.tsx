@@ -9,10 +9,16 @@
 // l'équipe mais pas du duel) obtient partout `false`, ce qui est exact —
 // aucune de ces cartes n'est venue chez lui.
 import { Layers } from 'lucide-react'
+import { useState } from 'react'
 
 import { plural } from '../../../libs/utils.ts'
 import { useDuelTransfers } from '../../../queries/useWagers.ts'
+import {
+  CardZoomPopup,
+  type ZoomableCard,
+} from '../../shared/tcg-card/CardZoomPopup.tsx'
 import { TcgCardFace } from '../../shared/tcg-card/TcgCardFace.tsx'
+import { Button } from '../../ui/button.tsx'
 import {
   Popup,
   PopupBody,
@@ -35,6 +41,7 @@ export function DuelCardsPopup({
 }) {
   const { data, isLoading, isError } = useDuelTransfers(teamId, duelId)
   const transfers = data?.transfers ?? []
+  const [zoomed, setZoomed] = useState<ZoomableCard | null>(null)
 
   return (
     <Popup open={duelId !== null} onOpenChange={(open) => !open && onClose()}>
@@ -70,9 +77,26 @@ export function DuelCardsPopup({
                   // ratio 2/3 il s'étire à la hauteur de la grille et la
                   // carte sort recadrée et démesurée. Même enveloppe que
                   // `MiniCardFace` dans `TeamEditorPopup`.
-                  <div
+                  //
+                  // Le cadre est un vrai `button` et non un `div` cliquable :
+                  // la vignette s'ouvre aussi au clavier, et le focus se voit.
+                  <Button
                     key={transfer.id}
-                    className="relative aspect-[2/3] w-full"
+                    type="button"
+                    variant="ghost"
+                    size="bare"
+                    onClick={() =>
+                      setZoomed({
+                        rarity: transfer.card.rarity,
+                        name: transfer.card.name,
+                        setName: transfer.card.set.name,
+                        imageUrl: transfer.card.imageUrl,
+                        variant: transfer.variant,
+                        element: transfer.card.element,
+                      })
+                    }
+                    aria-label={`Agrandir ${transfer.card.name}`}
+                    className="relative aspect-[2/3] w-full rounded-[8px] hover:-translate-y-0.5 hover:bg-transparent"
                   >
                     <TcgCardFace
                       rarity={transfer.card.rarity}
@@ -83,13 +107,18 @@ export function DuelCardsPopup({
                       isOwned={transfer.toMe}
                       compact
                     />
-                  </div>
+                  </Button>
                 ))}
               </div>
             </>
           )}
         </PopupBody>
       </PopupContent>
+
+      {/* Imbriquée dans celle-ci : la liste reste derrière, et fermer le zoom
+          y ramène — le joueur n'a pas à rouvrir l'historique entre deux
+          cartes. */}
+      <CardZoomPopup card={zoomed} onClose={() => setZoomed(null)} />
     </Popup>
   )
 }

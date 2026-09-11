@@ -41,6 +41,13 @@ const buttonVariants = cva(
         // grisé qui rayonne encore ment sur sa disponibilité.
         amber:
           'bg-primary text-primary-foreground font-bold shadow-[0_8px_20px_-6px_rgba(245,158,11,0.6)] hover:-translate-y-0.5 hover:shadow-[0_12px_26px_-6px_rgba(245,158,11,0.7)] disabled:shadow-none disabled:hover:translate-y-0',
+        // Pilule mono discrète — `.dz-locked` / `.dz-mini` du handoff duels
+        // (docs/design_handoff_duels/equipe-duels.css). Sert aux actions
+        // secondaires d'un panneau (« ANNULER ») et, via `buttonVariants`,
+        // aux étiquettes non cliquables qui partagent la même recette.
+        // L'intention du handoff est qu'une action impossible ou mineure ne
+        // se présente jamais en gros bloc plein.
+        mono: 'rounded-full border border-foreground/10 bg-surface-2 font-mono font-bold tracking-[0.1em] text-foreground/45 hover:border-foreground/25 hover:text-text',
       },
       size: {
         default: 'h-9 px-4 py-2',
@@ -54,6 +61,16 @@ const buttonVariants = cva(
         // 16), 14 px. `h-auto` parce que le padding fait la hauteur, pas
         // une hauteur fixe.
         action: 'h-auto rounded-lg px-[18px] py-[11px] text-sm',
+        // Gabarit de la pilule mono : 10 px, padding 8/12, hauteur portée
+        // par le padding.
+        mono: 'h-auto rounded-full px-3 py-2 text-[10px]',
+        // AUCUNE boîte : ni hauteur, ni padding, ni rayon. Pour un
+        // déclencheur dont le contenu EST la surface — une vignette de
+        // carte, une image. Le reste de la primitive (curseur, focus
+        // visible, état désactivé) continue de s'appliquer, ce qui est
+        // précisément la raison de passer par `Button` plutôt que par un
+        // `<button>` nu.
+        bare: 'h-auto p-0 rounded-none',
       },
     },
     defaultVariants: {

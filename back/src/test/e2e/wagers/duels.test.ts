@@ -571,6 +571,9 @@ describe('cycle de vie du duel', () => {
           // convertir en URL publique avant de servir. Sans image ici, le
           // champ vaudrait null et la conversion ne serait jamais verifiee.
           imageUrl: `staging/cards/duel-${suffix}.png`,
+          // Meme raison : un element nul ne prouverait pas que le champ
+          // traverse le schema Zod jusqu'a la carte agrandie.
+          element: 'WATER',
         },
       })
       legendarySetId = legendarySet.id
@@ -705,6 +708,8 @@ describe('cycle de vie du duel', () => {
         expect(t.card.imageUrl).not.toBe(commonCard.imageUrl)
         expect(t.card.imageUrl).toMatch(/^https?:\/\/.+\/staging\/cards\//)
         expect(t.card).not.toHaveProperty('imageKey')
+        // Dessine la pastille d'element sur la carte agrandie.
+        expect(t.card.element).toBe('WATER')
         // A est le vainqueur : les neuf cartes sont venues CHEZ LUI.
         expect(t.toMe).toBe(true)
         // Les identifiants bruts ne sortent pas : le domaine les a reduits

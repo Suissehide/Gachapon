@@ -16,6 +16,7 @@ import type { LucideIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import { cn } from '../../../libs/utils.ts'
+import { buttonVariants } from '../../ui/button.tsx'
 import { PanelTitle, SectionLabel } from '../../ui/sectionHeading.tsx'
 
 export function WagerCard({
@@ -88,7 +89,16 @@ export function LockedPill({
   children: ReactNode
 }) {
   return (
-    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-foreground/10 bg-surface-2 px-3 py-2 font-mono text-[10px] font-bold tracking-[0.1em] text-foreground/45">
+    <span
+      className={cn(
+        // La MEME recette que le bouton `mono`, empruntée à la primitive
+        // plutôt que recopiée : cette pilule remplace une action, elle doit
+        // lui ressembler au pixel. `span` et non `button` parce qu'elle
+        // n'est justement pas cliquable.
+        buttonVariants({ variant: 'mono', size: 'mono' }),
+        'whitespace-nowrap',
+      )}
+    >
       {Icon && <Icon className="h-3.5 w-3.5" />}
       {children}
     </span>

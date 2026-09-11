@@ -269,14 +269,19 @@ function SentDuel({
           EN ATTENTE DE SA RÉPONSE
         </p>
       </div>
-      <button
+      {/* Teinte d'annulation posée en surcharge de la variante `mono`, comme
+          `DangerZone` le fait sur `outline` : le rouge n'apparaît qu'au
+          survol, une action secondaire ne s'annonce pas en rouge au repos. */}
+      <Button
         type="button"
+        variant="mono"
+        size="mono"
         disabled={busy}
         onClick={() => onCancel(duel.id)}
-        className="shrink-0 rounded-full border border-foreground/10 bg-surface-2 px-3 py-2 font-mono text-[10px] font-bold tracking-[0.1em] text-foreground/45 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
+        className="shrink-0 hover:border-red-300 hover:bg-red-50 hover:text-red-700"
       >
         {busy ? 'ANNULATION…' : 'ANNULER'}
-      </button>
+      </Button>
     </div>
   )
 }
