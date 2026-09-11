@@ -24,11 +24,17 @@ export type TeamPerkMeta = {
   Icon: ComponentType<{ className?: string }>
 }
 
-// Noms et teintes repris du handoff (`equipe-data.jsx`, `PERKS`). Les quatre
-// couleurs sont tokenisées dans `styles/_colors.css` (`--perk-*`) plutôt
-// qu'écrites en hex ici.
+// Teintes reprises du handoff (`equipe-data.jsx`, `PERKS`), tokenisées dans
+// `styles/_colors.css` (`--perk-*`) plutôt qu'écrites en hex ici.
+//
+// ATTENTION à la clé `loot` : elle vient du handoff, où le bonus s'appelait
+// « Butin partagé », et elle est figée en base (`TeamPerk.key`) comme en
+// config (`teamPerk.loot.*`). Elle ne décrit PAS l'effet, qui est une
+// accélération de la régénération de jetons — d'où le nom affiché, qui lui
+// dit vrai. Renommer la clé demanderait une migration de données pour un
+// gain nul côté joueur : c'est le libellé qui compte, et il est ici.
 export const PERK_META: Record<TeamPerkKey, TeamPerkMeta> = {
-  loot: { name: 'Butin partagé', color: 'var(--perk-loot)', Icon: Coins },
+  loot: { name: 'Flux de jetons', color: 'var(--perk-loot)', Icon: Coins },
   raid: { name: 'Cadence de raid', color: 'var(--perk-raid)', Icon: Swords },
   xp: { name: "Bannière d'XP", color: 'var(--perk-xp)', Icon: Star },
   forge: { name: 'Forge commune', color: 'var(--perk-forge)', Icon: Hammer },

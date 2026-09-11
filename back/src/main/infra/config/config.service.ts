@@ -222,11 +222,19 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // plutot qu'une case a cocher.
   //
   // `loot` est un POURCENTAGE, pas des minutes : il divise l'intervalle de
-  // regeneration (`effectiveRegenInterval`, economy.domain.ts). Au plafond il
-  // vaut +2,5 % de vitesse, soit environ quarante-cinq secondes sur un
-  // intervalle de trente minutes — peu, et c'est a relire si l'on veut que ce
-  // bonus pese vraiment.
-  'teamPerk.loot.perRank': 0.25,
+  // regeneration (`effectiveRegenInterval`, economy.domain.ts).
+  //
+  // Passe de 0,25 a 1,5 par rang, soit +15 % au plafond au lieu de +2,5 %.
+  // L'ancienne valeur ne se sentait tout simplement pas : l'intervalle de
+  // base est de 60 minutes, donc 24 jetons par jour, et +2,5 % en ajoutait
+  // 0,6 — quatre par semaine. A +15 % le membre gagne 3,6 jetons par jour,
+  // vingt-cinq sur la semaine : a peu pres une journee de tirages offerte.
+  //
+  // L'ordre de grandeur reste sous celui du bonus de raid (+1 attaque sur 2,
+  // donc +50 %) et au-dessus de `xp` (+4 %) et `forge` (-5 %). C'est voulu :
+  // `loot` touche la boucle centrale du jeu, c'est le bonus que chaque membre
+  // ressent tous les jours.
+  'teamPerk.loot.perRank': 1.5,
   'teamPerk.loot.unlockLevel': 1,
   'teamPerk.loot.maxRank': 10,
   // `raid.maxRank` a ete ramene de 5 a 2. A 5, le bonus donnait +2 attaques
