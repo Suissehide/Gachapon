@@ -13,7 +13,7 @@ import { RARITY_BADGE_VARIANT, RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { cn, plural } from '../../libs/utils.ts'
 import { useDuelHands } from '../../queries/useMyPendingDuels.ts'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
-import { CardZoomPopup } from '../shared/tcg-card/CardZoomPopup.tsx'
+import { CardZoomOverlay } from '../shared/tcg-card/CardZoomOverlay.tsx'
 import { Badge } from '../ui/badge.tsx'
 import { Button } from '../ui/button.tsx'
 import {
@@ -335,10 +335,10 @@ function DuelHands({
       <HandRow label="Tes tirages" hand={sideOf(meId)} onZoom={setZoomed} />
       <HandRow label="Les siens" hand={sideOf(themId)} onZoom={setZoomed} />
       {/* La vue agrandie est partagée avec l'historique réglé des duels et le
-          boss de raid : `shared/tcg-card/CardZoomPopup`. Elle vivait ici en
+          boss de raid : `shared/tcg-card/CardZoomOverlay`. Elle vivait ici en
           copie, et ses badges de rareté et de variante sont ceux de la
           primitive — les mêmes partout. */}
-      <CardZoomPopup
+      <CardZoomOverlay
         card={
           zoomed === null
             ? null

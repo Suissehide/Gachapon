@@ -30,7 +30,7 @@ import { cn } from '../../libs/utils.ts'
 import { useRaid, useRaidLive } from '../../queries/useRaid.ts'
 import { ArcadeCard } from '../shared/ArcadeCard.tsx'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
-import { CardZoomPopup } from '../shared/tcg-card/CardZoomPopup.tsx'
+import { CardZoomOverlay } from '../shared/tcg-card/CardZoomOverlay.tsx'
 import { Button } from '../ui/button.tsx'
 import { PanelTitle, SectionLabel } from '../ui/sectionHeading.tsx'
 import { GradedHpBar } from './GradedHpBar.tsx'
@@ -165,9 +165,28 @@ function BossCard({
   )
 }
 
-function BossPowerBadge({ power }: { power: number }) {
+/**
+ * `onDark` n'est pas un détail cosmétique : la même pastille se pose sur la
+ * carte claire du panneau ET sur la surcouche sombre du zoom, où les jetons
+ * de surface claire (`bg-muted`, `text-foreground/60`) jureraient à côté des
+ * badges blancs. La variante sombre reprend exactement leur langage.
+ */
+function BossPowerBadge({
+  power,
+  onDark = false,
+}: {
+  power: number
+  onDark?: boolean
+}) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-1 font-mono text-[10px] font-bold tracking-[0.1em] text-foreground/60">
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-[10px] font-bold tracking-[0.1em]',
+        onDark
+          ? 'border border-white/25 bg-white/10 text-white/90'
+          : 'border border-border bg-muted text-foreground/60',
+      )}
+    >
       <Swords className="h-3.5 w-3.5" />
       {power.toLocaleString('fr-FR')}
     </span>
@@ -307,11 +326,11 @@ export function RaidPanel({ teamId }: { teamId: string }) {
       </div>
 
       {/* Même vue agrandie que le butin d'un duel et la main d'un duel réglé :
-          `shared/tcg-card/CardZoomPopup`. Le boss y entre comme une carte
+          `shared/tcg-card/CardZoomOverlay`. Le boss y entre comme une carte
           légendaire — c'est déjà ainsi qu'il est dessiné partout ailleurs — et
           sa puissance se pose AU-DESSUS, le dessous étant réservé aux badges
           de rareté et de variante, communs à toutes les cartes. */}
-      <CardZoomPopup
+      <CardZoomOverlay
         card={
           inspecting
             ? {
@@ -325,7 +344,7 @@ export function RaidPanel({ teamId }: { teamId: string }) {
               }
             : null
         }
-        header={<BossPowerBadge power={raid.boss.power} />}
+        header={<BossPowerBadge power={raid.boss.power} onDark />}
         onClose={() => setInspecting(false)}
       />
     </ArcadeCard>

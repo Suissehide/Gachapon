@@ -14,9 +14,9 @@ import { useState } from 'react'
 import { plural } from '../../../libs/utils.ts'
 import { useDuelTransfers } from '../../../queries/useWagers.ts'
 import {
-  CardZoomPopup,
+  CardZoomOverlay,
   type ZoomableCard,
-} from '../../shared/tcg-card/CardZoomPopup.tsx'
+} from '../../shared/tcg-card/CardZoomOverlay.tsx'
 import { TcgCardFace } from '../../shared/tcg-card/TcgCardFace.tsx'
 import { Button } from '../../ui/button.tsx'
 import {
@@ -118,7 +118,7 @@ export function DuelCardsPopup({
       {/* Imbriquée dans celle-ci : la liste reste derrière, et fermer le zoom
           y ramène — le joueur n'a pas à rouvrir l'historique entre deux
           cartes. */}
-      <CardZoomPopup card={zoomed} onClose={() => setZoomed(null)} />
+      <CardZoomOverlay card={zoomed} onClose={() => setZoomed(null)} />
     </Popup>
   )
 }
