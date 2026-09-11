@@ -35,6 +35,23 @@ export type DuelView = {
   myRole: 'CHALLENGER' | 'OPPONENT' | 'SPECTATOR'
 }
 
+/**
+ * Un défi en attente de MA réponse, tel que `GET /me/duels` le sert à la
+ * pastille de notification. Croisé champ par champ avec
+ * `myPendingDuelsResponseSchema` (back/…/schemas/wagers.schema.ts) : le
+ * provider Zod retire silencieusement du JSON toute clé absente de là-bas,
+ * et rien ici ne prévient d'un champ renommé côté serveur.
+ */
+export type PendingDuelView = {
+  id: string
+  teamId: string
+  team: { id: string; name: string; slug: string; avatar: string | null }
+  challenger: WagerUserMini
+  pullCount: number
+  createdAt: string
+  expiresAt: string
+}
+
 export type BetStatus = 'ACTIVE' | 'WON' | 'LOST' | 'EXPIRED'
 
 // Croisé champ par champ avec `betViewSchema`
@@ -131,6 +148,14 @@ const PLACE_BET_ERRORS = {
 }
 
 export const WagersApi = {
+  getMyPendingDuels: async (): Promise<{ duels: PendingDuelView[] }> => {
+    const res = await fetchWithAuth(`${apiUrl}/me/duels`)
+    if (!res.ok) {
+      handleHttpError(res, {}, 'Chargement des défis reçus')
+    }
+    return res.json()
+  },
+
   getWagers: async (teamId: string): Promise<WagersView> => {
     const res = await fetchWithAuth(`${apiUrl}/teams/${teamId}/wagers`)
     if (!res.ok) {

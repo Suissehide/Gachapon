@@ -10,6 +10,7 @@ import type {
   DuelView,
   IBetDomain,
   IDuelDomain,
+  PendingDuelView,
   WagersView,
 } from '../../types/domain/wagers/wagers.domain.interface'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
@@ -238,27 +239,41 @@ export class DuelDomain implements IDuelDomain {
       throw Boom.badImplementation('Duel introuvable juste après acceptation')
     }
 
-    const event: DuelUpdateEvent = {
-      type: 'duel:update',
-      teamId,
-      duelId: duel.id,
-      status: updated.status,
-      challengerScore: updated.challengerScore / 2,
-      opponentScore: updated.opponentScore / 2,
-      challengerPulls: updated.challengerPulls,
-      opponentPulls: updated.opponentPulls,
-      pullCount: updated.pullCount,
-    }
-    for (const member of team.members) {
-      this.#wsManager.notify(member.userId, event)
-    }
+    this.#notifyDuelUpdate(team, updated)
 
     return this.#toView(updated, userId)
   }
 
+  /**
+   * Diffuse l'etat d'un duel a TOUS les membres de l'equipe, pas aux seuls
+   * duellistes : le panneau de l'equipe montre les duels des autres, et un
+   * spectateur qui garderait une ligne PENDING perimee la verrait avec des
+   * boutons morts.
+   *
+   * Appele par accept, decline et cancel. Les trois portent le meme
+   * evenement `duel:update` — seul le statut change — donc le front n'a
+   * qu'un cas a traiter pour les trois sorties de l'etat PENDING.
+   */
+  #notifyDuelUpdate(team: TeamWithMembers, duel: DuelWithParties): void {
+    const event: DuelUpdateEvent = {
+      type: 'duel:update',
+      teamId: team.id,
+      duelId: duel.id,
+      status: duel.status,
+      challengerScore: duel.challengerScore / 2,
+      opponentScore: duel.opponentScore / 2,
+      challengerPulls: duel.challengerPulls,
+      opponentPulls: duel.opponentPulls,
+      pullCount: duel.pullCount,
+    }
+    for (const member of team.members) {
+      this.#wsManager.notify(member.userId, event)
+    }
+  }
+
   /** Seul l'adversaire peut refuser, uniquement tant que le duel est PENDING. */
   async decline(teamId: string, duelId: string, userId: string): Promise<DuelView> {
-    await this.#requireMembership(teamId, userId)
+    const team = await this.#requireMembership(teamId, userId)
     const duel = await this.#getTeamDuel(teamId, duelId)
 
     if (duel.opponentId !== userId) {
@@ -277,12 +292,13 @@ export class DuelDomain implements IDuelDomain {
     if (!updated) {
       throw Boom.badImplementation('Duel introuvable juste après refus')
     }
+    this.#notifyDuelUpdate(team, updated)
     return this.#toView(updated, userId)
   }
 
   /** Seul le défieur peut annuler, uniquement tant que le duel est PENDING. */
   async cancel(teamId: string, duelId: string, userId: string): Promise<DuelView> {
-    await this.#requireMembership(teamId, userId)
+    const team = await this.#requireMembership(teamId, userId)
     const duel = await this.#getTeamDuel(teamId, duelId)
 
     if (duel.challengerId !== userId) {
@@ -301,6 +317,7 @@ export class DuelDomain implements IDuelDomain {
     if (!updated) {
       throw Boom.badImplementation('Duel introuvable juste après annulation')
     }
+    this.#notifyDuelUpdate(team, updated)
     return this.#toView(updated, userId)
   }
 
@@ -404,6 +421,40 @@ export class DuelDomain implements IDuelDomain {
    * doit pas faire avorter la boucle et priver de règlement tous les duels
    * suivants du joueur, à chaque tirage. L'échec est journalisé.
    */
+  /**
+   * Les defis en attente de la reponse du joueur, toutes equipes confondues.
+   *
+   * La fenetre est bornee par `createdAt`, pas par le statut : un PENDING
+   * dont le delai est passe reste PENDING en base — l'expiration n'est
+   * ecrite que par `accept` ou par `listForTeam`, tous deux lies a UNE
+   * equipe. Rien ne garantit donc qu'un defi mort ait deja ete reecrit quand
+   * la pastille interroge cette route ; on l'ecarte a la lecture.
+   *
+   * Volontairement en lecture seule : cette route est appelee depuis la
+   * navbar, sur toutes les pages. Y greffer le reglement paresseux ferait
+   * ecrire en base a chaque affichage.
+   */
+  async listPendingForOpponent(
+    userId: string,
+    now: Date = new Date(),
+  ): Promise<PendingDuelView[]> {
+    const cfg = await this.#configService.getMany('duel.acceptHours')
+    const acceptMs = cfg['duel.acceptHours'] * HOUR_MS
+    const duels = await this.#wagerRepository.listPendingDuelsForOpponent(
+      userId,
+      new Date(now.getTime() - acceptMs),
+    )
+    return duels.map((duel) => ({
+      id: duel.id,
+      teamId: duel.teamId,
+      team: duel.team,
+      challenger: duel.challenger,
+      pullCount: duel.pullCount,
+      createdAt: duel.createdAt.toISOString(),
+      expiresAt: new Date(duel.createdAt.getTime() + acceptMs).toISOString(),
+    }))
+  }
+
   async settleForUser(userId: string, now: Date = new Date()): Promise<void> {
     const activeDuels = await this.#wagerRepository.listActiveDuelsForUser(
       userId,

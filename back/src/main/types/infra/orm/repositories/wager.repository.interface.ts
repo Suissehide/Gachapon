@@ -19,6 +19,12 @@ export type DuelWithParties = Duel & {
   opponent: { id: string; username: string; avatar: string | null }
 }
 
+/** Un defi en attente, vu depuis le defie : l'equipe et le defieur suffisent. */
+export type PendingDuelForOpponent = Duel & {
+  team: { id: string; name: string; slug: string; avatar: string | null }
+  challenger: { id: string; username: string; avatar: string | null }
+}
+
 export type BetWithParties = Bet & {
   bettor: { id: string; username: string; avatar: string | null }
   target: { id: string; username: string; avatar: string | null }
@@ -51,6 +57,17 @@ export interface IWagerRepository {
     userId: string,
   ): Promise<Duel | null>
   findDuelById(id: string): Promise<DuelWithParties | null>
+  /**
+   * Les defis PENDING adresses au joueur, toutes equipes confondues, dont le
+   * delai d'acceptation court encore. `createdAfter` n'est pas un confort :
+   * l'expiration d'un PENDING est PARESSEUSE — la ligne reste PENDING tant
+   * qu'aucun accept ni `listForTeam` ne la reecrit — donc filtrer sur le seul
+   * statut ferait trainer un defi mort dans la pastille de notification.
+   */
+  listPendingDuelsForOpponent(
+    userId: string,
+    createdAfter: Date,
+  ): Promise<PendingDuelForOpponent[]>
   listTeamDuels(teamId: string): Promise<DuelWithParties[]>
   listRecentSettledDuels(
     teamId: string,

@@ -5,11 +5,18 @@ import type {
   BetWithParties,
   DuelWithParties,
   IWagerRepository,
+  PendingDuelForOpponent,
   PullWithRarity,
 } from '../../../types/infra/orm/repositories/wager.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 const PARTY_SELECT = { id: true, username: true, avatar: true } as const
+const TEAM_SELECT = {
+  id: true,
+  name: true,
+  slug: true,
+  avatar: true,
+} as const
 
 export class WagerRepository implements IWagerRepository {
   readonly #prisma: PostgresPrismaClient
@@ -41,6 +48,24 @@ export class WagerRepository implements IWagerRepository {
         challenger: { select: PARTY_SELECT },
         opponent: { select: PARTY_SELECT },
       },
+    })
+  }
+
+  listPendingDuelsForOpponent(
+    userId: string,
+    createdAfter: Date,
+  ): Promise<PendingDuelForOpponent[]> {
+    return this.#prisma.duel.findMany({
+      where: {
+        opponentId: userId,
+        status: 'PENDING',
+        createdAt: { gt: createdAfter },
+      },
+      include: {
+        team: { select: TEAM_SELECT },
+        challenger: { select: PARTY_SELECT },
+      },
+      orderBy: { createdAt: 'desc' },
     })
   }
 

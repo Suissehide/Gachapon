@@ -6,6 +6,7 @@ import {
   betViewSchema,
   duelParamSchema,
   duelViewSchema,
+  myPendingDuelsResponseSchema,
   placeBetBodySchema,
   proposeDuelBodySchema,
   wagersTeamParamSchema,
@@ -27,6 +28,24 @@ export const wagersRouter: FastifyPluginCallbackZod = (fastify) => {
     },
     (request) =>
       duelDomain.listForTeam(request.params.id, request.user.userID),
+  )
+
+  // Jumelle de `GET /me/invitations` : la pastille de notification a besoin
+  // des defis en attente de MA reponse sans savoir dans quelle equipe ils
+  // vivent. La route par equipe (`/teams/:id/wagers`) obligerait la navbar a
+  // interroger les trois equipes du joueur sur chaque page.
+  fastify.get(
+    '/me/duels',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        tags: ['Wagers'],
+        response: { 200: myPendingDuelsResponseSchema },
+      },
+    },
+    async (request) => ({
+      duels: await duelDomain.listPendingForOpponent(request.user.userID),
+    }),
   )
 
   fastify.post(

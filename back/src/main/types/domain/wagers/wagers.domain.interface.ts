@@ -32,6 +32,22 @@ export type DuelView = {
   myRole: 'CHALLENGER' | 'OPPONENT' | 'SPECTATOR'
 }
 
+/**
+ * Un defi en attente de MA reponse, servi par `GET /me/duels` a la pastille
+ * de notification. `teamId` en fait partie : accept et decline vivent sous
+ * /teams/:id/duels/:duelId, et cette liste-ci traverse les equipes.
+ */
+export type PendingDuelView = {
+  id: string
+  teamId: string
+  team: { id: string; name: string; slug: string; avatar: string | null }
+  challenger: WagerUserMini
+  pullCount: number
+  createdAt: string
+  /** Instant ou le defi expire faute de reponse — sert le compte a rebours. */
+  expiresAt: string
+}
+
 export type BetView = {
   id: string
   status: BetStatus
@@ -95,6 +111,11 @@ export interface IDuelDomain {
     userId: string,
     now?: Date,
   ): Promise<WagersView>
+  /** Les defis PENDING adresses au joueur, toutes equipes confondues. */
+  listPendingForOpponent(
+    userId: string,
+    now?: Date,
+  ): Promise<PendingDuelView[]>
   settleForUser(userId: string, now?: Date): Promise<void>
   /**
    * Règle TOUS les duels et paris ACTIVE de l'équipe, pas seulement ceux

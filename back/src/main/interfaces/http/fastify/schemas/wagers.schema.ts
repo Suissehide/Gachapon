@@ -47,6 +47,28 @@ export const duelViewSchema = z.object({
   myRole: z.enum(['CHALLENGER', 'OPPONENT', 'SPECTATOR']),
 })
 
+// Croisé champ par champ avec `PendingDuelView`
+// (types/domain/wagers/wagers.domain.interface.ts) : le provider Zod retire
+// silencieusement du JSON toute clé absente d'ici.
+export const myPendingDuelsResponseSchema = z.object({
+  duels: z.array(
+    z.object({
+      id: z.string(),
+      teamId: z.string(),
+      team: z.object({
+        id: z.string(),
+        name: z.string(),
+        slug: z.string(),
+        avatar: z.string().nullable(),
+      }),
+      challenger: wagerUserMiniSchema,
+      pullCount: z.number().int(),
+      createdAt: z.string(),
+      expiresAt: z.string(),
+    }),
+  ),
+})
+
 const cardRaritySchema = z.enum([
   'COMMON',
   'UNCOMMON',

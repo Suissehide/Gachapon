@@ -1,7 +1,20 @@
 import { useNavigate } from '@tanstack/react-router'
-import { ArrowRight, Bell, Check, ScrollText, Users, X } from 'lucide-react'
+import {
+  ArrowRight,
+  Bell,
+  Check,
+  ScrollText,
+  Swords,
+  Users,
+  X,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
+import {
+  useAcceptPendingDuel,
+  useDeclinePendingDuel,
+  useMyPendingDuels,
+} from '../../queries/useMyPendingDuels.ts'
 import { useClaimableQuestsCount } from '../../queries/useQuests.ts'
 import {
   useAcceptInvitation,
@@ -15,13 +28,17 @@ export function NotificationsBadge() {
   const [isOpen, setIsOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const { data, isLoading } = useMyInvitations()
+  const { data: duelData } = useMyPendingDuels()
   const questsCount = useClaimableQuestsCount()
   const navigate = useNavigate()
   const accept = useAcceptInvitation()
   const decline = useDeclineInvitation()
+  const acceptDuel = useAcceptPendingDuel()
+  const declineDuel = useDeclinePendingDuel()
 
   const invitations = data?.invitations ?? []
-  const count = invitations.length + questsCount
+  const duels = duelData?.duels ?? []
+  const count = invitations.length + duels.length + questsCount
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -46,6 +63,22 @@ export function NotificationsBadge() {
 
   const handleDecline = (token: string) => {
     decline.mutate(token)
+  }
+
+  const handleAcceptDuel = (teamId: string, duelId: string) => {
+    acceptDuel.mutate(
+      { teamId, duelId },
+      {
+        onSuccess: () => {
+          setIsOpen(false)
+          void navigate({ to: '/team/$id', params: { id: teamId } })
+        },
+      },
+    )
+  }
+
+  const handleDeclineDuel = (teamId: string, duelId: string) => {
+    declineDuel.mutate({ teamId, duelId })
   }
 
   const goToQuests = () => {
@@ -122,6 +155,83 @@ export function NotificationsBadge() {
                     </button>
                   </li>
                 )}
+                {duels.map((duel) => {
+                  const busy =
+                    (acceptDuel.isPending &&
+                      acceptDuel.variables?.duelId === duel.id) ||
+                    (declineDuel.isPending &&
+                      declineDuel.variables?.duelId === duel.id)
+                  const goToTeam = () => {
+                    setIsOpen(false)
+                    void navigate({
+                      to: '/team/$id',
+                      params: { id: duel.teamId },
+                    })
+                  }
+                  return (
+                    <li
+                      key={duel.id}
+                      className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/30 p-3 transition-colors hover:bg-muted/60"
+                    >
+                      <button
+                        type="button"
+                        onClick={goToTeam}
+                        title="Voir le défi"
+                        className="group flex min-w-0 flex-1 cursor-pointer items-center gap-3 text-left"
+                      >
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary text-white transition-transform group-hover:scale-105">
+                          <Swords className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-display text-sm font-bold text-text transition-colors group-hover:text-primary">
+                            {duel.challenger.username} te défie
+                          </p>
+                          <p className="truncate text-xs text-text-light">
+                            {duel.team.name} · {duel.pullCount} tirages
+                          </p>
+                        </div>
+                      </button>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label="Accepter"
+                          title="Relever le défi"
+                          disabled={busy}
+                          onClick={() => handleAcceptDuel(duel.teamId, duel.id)}
+                          className="h-8 w-8 rounded-full text-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-600 disabled:opacity-50"
+                        >
+                          {acceptDuel.isPending &&
+                          acceptDuel.variables?.duelId === duel.id ? (
+                            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                          ) : (
+                            <Check className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label="Refuser"
+                          title="Refuser le défi"
+                          disabled={busy}
+                          onClick={() =>
+                            handleDeclineDuel(duel.teamId, duel.id)
+                          }
+                          className="h-8 w-8 rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+                        >
+                          {declineDuel.isPending &&
+                          declineDuel.variables?.duelId === duel.id ? (
+                            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                          ) : (
+                            <X className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </li>
+                  )
+                })}
                 {invitations.map((inv) => {
                   const isAccepting =
                     accept.isPending && accept.variables === inv.token
