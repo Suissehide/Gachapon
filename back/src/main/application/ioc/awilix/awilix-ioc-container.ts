@@ -78,6 +78,7 @@ import { wsManager } from '../../../interfaces/ws/ws-manager'
 import type { IocContainer } from '../../../types/application/ioc'
 import { ErrorHandler } from '../../../utils/error-handler'
 import { recordToString } from '../../../utils/helper'
+import { BackgroundTasks } from '../../background-tasks'
 import type { Config } from '../../config'
 
 declare module '@fastify/awilix' {
@@ -101,6 +102,7 @@ class AwilixIocContainer {
     this.#reg('errorHandler', asClass(ErrorHandler).singleton())
     this.#reg('redisClient', asClass(RedisClient).singleton())
     this.#reg('configService', asClass(ConfigService).singleton())
+    this.#reg('backgroundTasks', asClass(BackgroundTasks).singleton())
     this.#reg('storageClient', asClass(MinioClient).singleton())
     this.#reg('jwtService', asClass(JwtService).singleton())
     this.#reg('userRepository', asClass(UserRepository).singleton())

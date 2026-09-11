@@ -7,8 +7,11 @@ import type { CombatDebugDomain } from '../../domain/combat/combat-debug.domain'
 import type { CombatTeamTx } from '../../domain/combat/combat-team.tx'
 import type { CombatPointsTx } from '../../domain/combat-points/combat-points.tx'
 import type { EquipmentDomain } from '../../domain/equipment/equipment.domain'
+import type { RaidDomain } from '../../domain/raid/raid.domain'
 import type { AdminSkillTreeDomain } from '../../domain/skills/admin-skill-tree.domain'
 import type { TowerDomain } from '../../domain/tower/tower.domain'
+import type { BetDomain } from '../../domain/wagers/bet.domain'
+import type { DuelDomain } from '../../domain/wagers/duel.domain'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { ApiKeyRepository } from '../../infra/orm/repositories/api-key.repository'
 import type { CardRepository } from '../../infra/orm/repositories/card.repository'
@@ -17,8 +20,8 @@ import type { InvitationRepository } from '../../infra/orm/repositories/invitati
 import type { OAuthAccountRepository } from '../../infra/orm/repositories/oauth-account.repository'
 import type { SkillTreeRepository } from '../../infra/orm/repositories/skill-tree.repository'
 import type { TeamRepository } from '../../infra/orm/repositories/team.repository'
-import type { TeamProgressionRepository } from '../../infra/orm/repositories/team-progression.repository'
 import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
+import type { TeamProgressionRepository } from '../../infra/orm/repositories/team-progression.repository'
 import type { UserCardRepository } from '../../infra/orm/repositories/user-card.repository'
 import type { RefreshTokenRepository } from '../../infra/redis/refresh-token.repository'
 import type { WsManager } from '../../interfaces/ws/ws-manager'
@@ -31,9 +34,6 @@ import type { GachaDomainInterface } from '../domain/gacha/gacha.domain.interfac
 import type { ILeaderboardDomain } from '../domain/leaderboard/leaderboard.domain.interface'
 import type { ProfileDomainInterface } from '../domain/profile/profile.domain.interface'
 import type { IQuestsDomain } from '../domain/quests/quests.domain.interface'
-import type { RaidDomain } from '../../domain/raid/raid.domain'
-import type { BetDomain } from '../../domain/wagers/bet.domain'
-import type { DuelDomain } from '../../domain/wagers/duel.domain'
 import type { RewardsDomainInterface } from '../domain/rewards/rewards.domain.interface'
 import type { IShopDomain } from '../domain/shop/shop.domain.interface'
 import type {
@@ -56,12 +56,12 @@ import type { IActivityEventRepository } from '../infra/orm/repositories/activit
 import type { IAdminStatsRepository } from '../infra/orm/repositories/admin-stats.repository.interface'
 import type { ILeaderboardRepository } from '../infra/orm/repositories/leaderboard.repository.interface'
 import type { IQuestRepository } from '../infra/orm/repositories/quest.repository.interface'
+import type { IRaidRepository } from '../infra/orm/repositories/raid.repository.interface'
 import type { RewardRepositoryInterface } from '../infra/orm/repositories/reward.repository.interface'
 import type { IScoringConfigRepository } from '../infra/orm/repositories/scoring-config.repository.interface'
 import type { IShopItemRepository } from '../infra/orm/repositories/shop-item.repository.interface'
 import type { IStatsRepository } from '../infra/orm/repositories/stats.repository.interface'
 import type { StreakMilestoneRepositoryInterface } from '../infra/orm/repositories/streak-milestone.repository.interface'
-import type { IRaidRepository } from '../infra/orm/repositories/raid.repository.interface'
 import type { ITowerRepository } from '../infra/orm/repositories/tower.repository.interface'
 import type { UserRepositoryInterface } from '../infra/orm/repositories/user.repository.interface'
 import type { UserAchievementProgressRepositoryInterface } from '../infra/orm/repositories/user-achievement-progress.repository.interface'
@@ -74,6 +74,7 @@ import type { StorageClientInterface } from '../infra/storage/storage-client'
 import type { HttpServer } from '../interfaces/http/server'
 import type { ErrorHandlerInterface } from '../utils/error-handler'
 import type { Logger } from '../utils/logger'
+import type { BackgroundTasksInterface } from './background-tasks.interface'
 import type { Config } from './config'
 
 export interface IocContainer {
@@ -84,6 +85,7 @@ export interface IocContainer {
   readonly errorHandler: ErrorHandlerInterface
   readonly postgresOrm: PostgresOrm
   readonly configService: ConfigServiceInterface
+  readonly backgroundTasks: BackgroundTasksInterface
   readonly redisClient: RedisClientInterface
   readonly storageClient: StorageClientInterface
   readonly jwtService: JwtServiceInterface

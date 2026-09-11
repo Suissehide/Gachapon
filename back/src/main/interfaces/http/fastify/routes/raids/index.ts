@@ -9,7 +9,8 @@ import {
 } from '../../schemas/raid.schema'
 
 export const raidsRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { raidDomain, teamProgressionDomain } = fastify.iocContainer
+  const { raidDomain, teamProgressionDomain, backgroundTasks } =
+    fastify.iocContainer
 
   fastify.get(
     '/teams/:id/raid',
@@ -64,16 +65,20 @@ export const raidsRouter: FastifyPluginCallbackZod = (fastify) => {
       // d'équipe « active ») des dégâts bruts infligés. `void` + `catch` :
       // un règlement de points en échec ne doit jamais transformer une
       // attaque réussie en erreur pour le joueur.
-      void teamProgressionDomain
-        .award(
-          request.user.userID,
-          request.params.id,
-          'RAID_DAMAGE',
-          result.damage,
-        )
-        .catch((err) =>
-          fastify.log.error({ err }, 'team points failed'),
-        )
+      // Suivie par `backgroundTasks` : la reponse part sans l'attendre, mais
+      // la fermeture du serveur, elle, l'attend. Sans ce suivi un SIGTERM en
+      // pleine attaque perdait les points, et `$disconnect` restait suspendu
+      // 5 s sur la transaction Serializable abandonnee.
+      backgroundTasks.track(
+        teamProgressionDomain
+          .award(
+            request.user.userID,
+            request.params.id,
+            'RAID_DAMAGE',
+            result.damage,
+          )
+          .catch((err) => fastify.log.error({ err }, 'team points failed')),
+      )
 
       return result
     },
