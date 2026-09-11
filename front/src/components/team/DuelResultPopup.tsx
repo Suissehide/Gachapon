@@ -13,6 +13,7 @@ import { RARITY_BADGE_VARIANT, RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { cn, plural } from '../../libs/utils.ts'
 import { useDuelHands } from '../../queries/useMyPendingDuels.ts'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
+import { CardZoomPopup } from '../shared/tcg-card/CardZoomPopup.tsx'
 import { Badge } from '../ui/badge.tsx'
 import { Button } from '../ui/button.tsx'
 import {
@@ -333,9 +334,25 @@ function DuelHands({
     <div className="flex flex-col gap-3">
       <HandRow label="Tes tirages" hand={sideOf(meId)} onZoom={setZoomed} />
       <HandRow label="Les siens" hand={sideOf(themId)} onZoom={setZoomed} />
-      {zoomed !== null && (
-        <CardZoom pull={zoomed} onClose={() => setZoomed(null)} />
-      )}
+      {/* La vue agrandie est partagée avec l'historique réglé des duels et le
+          boss de raid : `shared/tcg-card/CardZoomPopup`. Elle vivait ici en
+          copie, et ses badges de rareté et de variante sont ceux de la
+          primitive — les mêmes partout. */}
+      <CardZoomPopup
+        card={
+          zoomed === null
+            ? null
+            : {
+                rarity: zoomed.rarity,
+                name: zoomed.name,
+                setName: zoomed.setName,
+                imageUrl: zoomed.imageUrl,
+                variant: zoomed.variant,
+                element: zoomed.element,
+              }
+        }
+        onClose={() => setZoomed(null)}
+      />
     </div>
   )
 }
@@ -399,57 +416,3 @@ function PullCard({
   )
 }
 
-/**
- * La carte en grand. Volontairement PAS `CardViewModal` : celle-là montre
- * niveau, stats, emplacements d'équipement et propose recycler ou mettre en
- * vœu — tout cela n'a pas de sens ici. La main contient aussi les cartes de
- * l'ADVERSAIRE, que le joueur ne possède pas, et ce sont des tirages passés,
- * pas un état de collection.
- *
- * `interactive` et `showAura` ne s'allument qu'ici : sur la rangée, une
- * dizaine de cartes qui suivent le curseur coûterait cher pour rien.
- */
-function CardZoom({
-  pull,
-  onClose,
-}: {
-  pull: DuelPullView
-  onClose: () => void
-}) {
-  return (
-    <Popup
-      open
-      onOpenChange={(open) => {
-        if (!open) {
-          onClose()
-        }
-      }}
-    >
-      <PopupContent className="w-auto max-w-none">
-        <PopupBody className="flex flex-col items-center gap-3">
-          <CardDisplay
-            large
-            interactive
-            showAura
-            rarity={pull.rarity}
-            name={pull.name}
-            setName={pull.setName}
-            imageUrl={pull.imageUrl}
-            variant={pull.variant}
-            element={pull.element}
-          />
-          <div className="flex items-center gap-2">
-            <Badge variant={RARITY_BADGE_VARIANT[pull.rarity] ?? 'common'}>
-              {RARITY_LABEL_FR[pull.rarity] ?? pull.rarity}
-            </Badge>
-            {pull.variant !== 'NORMAL' && (
-              <Badge variant="neutral">
-                {VARIANT_LABEL_FR[pull.variant] ?? pull.variant}
-              </Badge>
-            )}
-          </div>
-        </PopupBody>
-      </PopupContent>
-    </Popup>
-  )
-}

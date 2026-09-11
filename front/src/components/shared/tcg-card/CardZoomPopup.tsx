@@ -7,14 +7,20 @@
 // de tout ça n'a de sens pour une carte qu'on regarde sans la posséder — le
 // butin d'un duel, la main de l'adversaire, le boss d'un raid.
 //
-// Cette vue existait déjà en deux exemplaires dans `components/team/`
-// (`DuelResultPopup.CardZoom`, `RaidPanel.BossCardOverlay`). Elle est posée
-// ici pour que la troisième ne soit pas une troisième copie : les deux
-// autres devraient l'adopter — voir la note de fin de chantier.
+// Elle remplace les copies qui vivaient dans `DuelResultPopup.CardZoom` et
+// `RaidPanel.BossCardOverlay`.
+//
+// `RevealInspectOverlay` NE l'utilise pas, et c'est délibéré : cette
+// surcouche-là est sombre, posée sur le canvas 3D du tirage, avec ses
+// propres badges blancs et son bouton de fermeture. L'y plier ferait perdre
+// un moment volontairement différent — l'uniformité sert les écrans qui se
+// ressemblent, pas ceux qui ne se ressemblent pas.
 //
 // `interactive` et `showAura` ne s'allument QUE dans cette vue : sur une
 // grille, une dizaine de cartes qui suivent le curseur coûterait cher pour
 // rien.
+import type { ReactNode } from 'react'
+
 import type { CardElement } from '../../../constants/card.constant.ts'
 import { RARITY_BADGE_VARIANT, RARITY_LABEL_FR } from '../../../libs/rarity.ts'
 import { Badge } from '../../ui/badge.tsx'
@@ -29,19 +35,31 @@ const VARIANT_LABEL_FR: Record<string, string> = {
 export type ZoomableCard = {
   rarity: string
   name: string
+  /** Chaîne vide = pas de fil d'ariane (un boss de raid n'appartient à aucun set). */
   setName: string
   imageUrl?: string | null
   variant?: string | null
   element?: CardElement | null
+  /** Grise la carte quand elle n'est pas (ou plus) à soi. Vrai par défaut. */
+  isOwned?: boolean
+  /** Halo derrière la carte. Vrai par défaut : c'est la vue où il se justifie. */
+  showAura?: boolean
 }
 
 export function CardZoomPopup({
   card,
   onClose,
+  header,
 }: {
   /** `null` ferme la vue : une seule source de vérité pour l'ouverture. */
   card: ZoomableCard | null
   onClose: () => void
+  /**
+   * Ce qui se pose AU-DESSUS de la carte — la puissance d'un boss de raid.
+   * Au-dessus et non dessous : le dessous appartient aux badges de rareté et
+   * de variante, qui sont les mêmes partout et servent de repère commun.
+   */
+  header?: ReactNode
 }) {
   return (
     <Popup
@@ -55,10 +73,12 @@ export function CardZoomPopup({
       {card !== null && (
         <PopupContent className="w-auto max-w-none">
           <PopupBody className="flex flex-col items-center gap-3">
+            {header}
             <CardDisplay
               large
               interactive
-              showAura
+              showAura={card.showAura ?? true}
+              isOwned={card.isOwned ?? true}
               rarity={card.rarity}
               name={card.name}
               setName={card.setName}

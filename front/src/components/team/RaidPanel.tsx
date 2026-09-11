@@ -30,6 +30,7 @@ import { cn } from '../../libs/utils.ts'
 import { useRaid, useRaidLive } from '../../queries/useRaid.ts'
 import { ArcadeCard } from '../shared/ArcadeCard.tsx'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
+import { CardZoomPopup } from '../shared/tcg-card/CardZoomPopup.tsx'
 import { Button } from '../ui/button.tsx'
 import { PanelTitle, SectionLabel } from '../ui/sectionHeading.tsx'
 import { GradedHpBar } from './GradedHpBar.tsx'
@@ -173,57 +174,6 @@ function BossPowerBadge({ power }: { power: number }) {
   )
 }
 
-// Vue agrandie calquée sur CardViewModal (collection) : surcouche plein
-// écran + carte `large`, PAS une Popup à en-tête — c'est la présentation
-// que le joueur connaît déjà pour ses propres cartes.
-function BossCardOverlay({
-  boss,
-  killed,
-  onClose,
-}: {
-  boss: RaidView['boss']
-  killed: boolean
-  onClose: () => void
-}) {
-  return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: motif de fermeture au clic sur le fond, comme CardViewModal
-    <div
-      className="fixed inset-x-0 bottom-0 top-[var(--topbar-h)] z-[100] overflow-y-auto bg-black/55 backdrop-blur-md"
-      role="presentation"
-      onClick={onClose}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') {
-          onClose()
-        }
-      }}
-    >
-      <div className="flex min-h-full items-center justify-center px-4 py-10">
-        <div className="flex flex-col items-center gap-4 animate-in fade-in-0 zoom-in-95 duration-300">
-          {/* biome-ignore lint/a11y/noStaticElementInteractions: wrapper d'arrêt de propagation, pas une zone interactive */}
-          <div
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
-          >
-            <CardDisplay
-              rarity="LEGENDARY"
-              name={boss.name}
-              setName=""
-              showSetName={false}
-              imageUrl={boss.imageUrl}
-              element={boss.element}
-              isOwned={!killed}
-              interactive
-              large
-              showAura={!killed}
-            />
-          </div>
-          <BossPowerBadge power={boss.power} />
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export function RaidPanel({ teamId }: { teamId: string }) {
   const { data: raid, isLoading, isError } = useRaid(teamId)
   useRaidLive(teamId)
@@ -356,13 +306,28 @@ export function RaidPanel({ teamId }: { teamId: string }) {
         </div>
       </div>
 
-      {inspecting && (
-        <BossCardOverlay
-          boss={raid.boss}
-          killed={killed}
-          onClose={() => setInspecting(false)}
-        />
-      )}
+      {/* Même vue agrandie que le butin d'un duel et la main d'un duel réglé :
+          `shared/tcg-card/CardZoomPopup`. Le boss y entre comme une carte
+          légendaire — c'est déjà ainsi qu'il est dessiné partout ailleurs — et
+          sa puissance se pose AU-DESSUS, le dessous étant réservé aux badges
+          de rareté et de variante, communs à toutes les cartes. */}
+      <CardZoomPopup
+        card={
+          inspecting
+            ? {
+                rarity: 'LEGENDARY',
+                name: raid.boss.name,
+                setName: '',
+                imageUrl: raid.boss.imageUrl,
+                element: raid.boss.element,
+                isOwned: !killed,
+                showAura: !killed,
+              }
+            : null
+        }
+        header={<BossPowerBadge power={raid.boss.power} />}
+        onClose={() => setInspecting(false)}
+      />
     </ArcadeCard>
   )
 }
