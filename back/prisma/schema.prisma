@@ -158,6 +158,15 @@ enum BetStatus {
   EXPIRED
 }
 
+/// Sens d'un pari. YES parie que la cible ATTEINDRA la rareté visée dans sa
+/// fenêtre, NO qu'elle ne l'atteindra pas. Les deux se règlent contre la
+/// banque et portent chacun la commission, donc les deux restent à espérance
+/// négative — ce n'est pas un marché entre joueurs.
+enum BetSide {
+  YES
+  NO
+}
+
 model User {
   id                              String     @id @default(uuid())
   username                        String     @unique
@@ -223,6 +232,7 @@ model User {
   duelsAsOpponent     Duel[]             @relation("DuelOpponent")
   betsPlaced          Bet[]              @relation("BetBettor")
   betsReceived        Bet[]              @relation("BetTarget")
+  betEntries          BetEntry[]
   weeklies            TeamMemberWeekly[]
 }
 
@@ -898,14 +908,17 @@ model Bet {
   bettor           User       @relation("BetBettor", fields: [bettorId], references: [id], onDelete: Cascade)
   targetId         String
   target           User       @relation("BetTarget", fields: [targetId], references: [id], onDelete: Cascade)
-  stake            Int
   minRarity        CardRarity
   pullWindow       Int
-  /// Cote annoncée au parieur et figée au placement. Elle sert de PLAFOND au
-  /// règlement : si la cible a amélioré ses vraies chances entre-temps (achat
-  /// d'un boost de poids), le paiement retombe sur une cote recalculée plus
-  /// basse. Voir `BetDomain#settle`.
-  multiplier       Float
+  /// Probabilite que la cible atteigne la rarete visee, figee a l'ouverture
+  /// du marche. On stocke la PROBABILITE et non la cote parce qu'un marche a
+  /// deux camps : les cotes theoriques du OUI et du NON s'en derivent toutes
+  /// les deux, alors qu'une cote arrondie ne se laisse pas inverser.
+  ///
+  /// Elle sert de PLAFOND au reglement : si la cible a ameliore ses vraies
+  /// chances entre-temps (achat d'un boost de poids), le plancher theorique
+  /// retombe sur la valeur recalculee, la moins genereuse des deux.
+  probability      Float
   /// Compteur de pitié de la CIBLE au placement. Gelé ici parce que le
   /// recalcul de la cote au règlement doit repartir des chances telles
   /// qu'elles étaient : le compteur, lui, a avancé pendant la fenêtre même
@@ -927,9 +940,36 @@ model Bet {
   deadlineAt       DateTime
   settledAt        DateTime?
   pullsSeen        Int        @default(0)
-  payout           Int        @default(0)
+
+  entries BetEntry[]
 
   @@index([teamId, status])
   @@index([bettorId, status])
   @@index([targetId, status])
+}
+
+/// Une mise dans le marche d'un pari. Le pari porte l'enonce (cible, rarete,
+/// fenetre), les entrees portent l'argent : celui qui ouvre pose la premiere,
+/// les autres rencherissent du camp qu'ils veulent tant que le marche est
+/// ouvert.
+///
+/// Une seule entree par joueur et par marche. Couvrir les deux camps serait
+/// perdant d'avance (la commission s'applique au pot entier) mais brouillerait
+/// l'ecran pour rien.
+model BetEntry {
+  id        String   @id @default(uuid())
+  betId     String
+  bet       Bet      @relation(fields: [betId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  side      BetSide
+  stake     Int
+  /// Credite au reglement : part du pot, ou cote theorique si elle est plus
+  /// genereuse. Zero du cote perdant, la mise a l'identique si le pari expire.
+  payout    Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@unique([betId, userId])
+  @@index([betId])
+  @@index([userId])
 }

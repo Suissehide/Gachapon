@@ -1558,10 +1558,10 @@ describe('cycle de vie du duel', () => {
           teamId: teamForLostBet,
           bettorId: userIdA,
           targetId: userIdB,
-          stake,
           minRarity: 'RARE',
           pullWindow: 10,
-          multiplier: 1.38,
+          probability: 0.6513215599,
+          entries: { create: { userId: userIdA, side: 'YES', stake } },
           createdAt,
           // Echeance depassee, fenetre ENTAMEE mais incomplete.
           deadlineAt: new Date(Date.now() - 10 * 1000),

@@ -72,8 +72,9 @@ export type TargetedBetView = {
   team: { id: string; name: string; slug: string; avatar: string | null }
   bettor: WagerUserMini
   minRarity: CardRarity
-  stake: number
-  multiplier: number
+  /** Le rapport de forces, pas une mise : le pari est un marche a deux camps. */
+  poolYes: number
+  poolNo: number
   pullWindow: number
   pullsSeen: number
   createdAt: string
@@ -152,32 +153,64 @@ export type SettledDuelView = {
 
 export type BetStatus = 'ACTIVE' | 'WON' | 'LOST' | 'EXPIRED'
 
+/**
+ * Sens du pari. `YES` parie que la cible ATTEINDRA la rarete visee dans sa
+ * fenetre, `NO` qu'elle ne l'atteindra pas. Les deux se reglent contre la
+ * banque et portent chacun la commission : ce n'est pas un marche entre
+ * joueurs, et parier « non » n'exige pas qu'un « oui » existe.
+ */
+export type BetSide = 'YES' | 'NO'
+
 // Croisé champ par champ avec `betViewSchema`
 // (back/src/main/interfaces/http/fastify/schemas/wagers.schema.ts) : le
 // provider Zod retire silencieusement du JSON toute clé absente de là-bas,
 // mais rien ici ne prévient d'un champ renommé côté client — vérifier à la
 // main à chaque évolution du schéma serveur.
+/** Une mise dans le marche d'un pari. */
+export type BetEntryView = {
+  id: string
+  user: WagerUserMini
+  side: BetSide
+  stake: number
+  payout: number
+}
+
+/**
+ * Le MARCHE d'un pari : un enonce (la cible atteindra-t-elle cette rarete ?)
+ * et les mises posees de part et d'autre. Croise champ par champ avec
+ * `betViewSchema` (back/.../schemas/wagers.schema.ts) : le provider Zod
+ * retire silencieusement du JSON toute cle absente de la-bas.
+ */
 export type BetView = {
   id: string
   status: BetStatus
+  /** Celui qui a ouvert le marche — il tient aussi la premiere mise. */
   bettor: WagerUserMini
   target: WagerUserMini
-  stake: number
   minRarity: CardRarity
   pullWindow: number
-  // Cote annoncée au parieur et figée au placement. Elle sert de PLAFOND au
-  // règlement : si la cible améliore ses vraies chances entre-temps (achat
-  // d'un boost), `payout` peut valoir moins que `stake × multiplier`.
-  multiplier: number
+  /** Probabilite de l'EVENEMENT, figee a l'ouverture. */
+  probability: number
+  poolYes: number
+  poolNo: number
+  /**
+   * Cote COURANTE de chaque camp : part du pot, ou cote theorique si elle est
+   * plus genereuse. Elle BOUGE a chaque nouvelle mise tant que le marche est
+   * ouvert — l'ecran doit le dire, sans quoi le joueur croit a un prix ferme.
+   */
+  oddsYes: number
+  oddsNo: number
+  /** Faux des le premier tirage compte de la cible : les mises sont closes. */
+  open: boolean
+  entries: BetEntryView[]
   createdAt: string
   deadlineAt: string
   settledAt: string | null
   pullsSeen: number
-  // Porte trois sens selon `status` : le gain total (mise comprise) si WON,
-  // la mise remboursée à l'identique si EXPIRED, 0 si LOST. Ne jamais
-  // l'afficher sous un libellé « gains » sans distinguer ces trois cas.
-  payout: number
   myRole: 'BETTOR' | 'TARGET' | 'SPECTATOR'
+  mySide: BetSide | null
+  myStake: number
+  myPayout: number
 }
 
 // Croisé champ par champ avec `betQuoteResponseSchema` — devis indicatif,
@@ -226,6 +259,22 @@ const BET_QUOTE_ERRORS = {
   404: {
     title: 'Cote indisponible',
     message: 'Ce joueur est introuvable.',
+  },
+}
+
+const JOIN_BET_ERRORS = {
+  409: {
+    title: 'Mises closes',
+    message:
+      "Ce pari n'accepte plus de mise : la cible a commencé ses tirages, ou tu as déjà misé dessus.",
+  },
+  402: {
+    title: 'Poussière insuffisante',
+    message: "Tu n'as pas assez de poussière pour cette mise.",
+  },
+  400: {
+    title: 'Renchère impossible',
+    message: 'Mise hors bornes, ou camp qui ne rapporterait rien.',
   },
 }
 
@@ -327,6 +376,29 @@ export const WagersApi = {
         },
         'Chargement des cartes du duel',
       )
+    }
+    return res.json()
+  },
+
+  /**
+   * Rencherir sur un marche ouvert. Refuse (409) des que la cible a entame sa
+   * fenetre : au-dela, on miserait en connaissant deja une partie du resultat.
+   */
+  joinBet: async (
+    teamId: string,
+    betId: string,
+    input: { side: BetSide; stake: number },
+  ): Promise<BetView> => {
+    const res = await fetchWithAuth(
+      `${apiUrl}/teams/${teamId}/bets/${betId}/entries`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      },
+    )
+    if (!res.ok) {
+      handleHttpError(res, JOIN_BET_ERRORS, 'Renchere sur le pari')
     }
     return res.json()
   },

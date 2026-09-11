@@ -114,6 +114,12 @@ export type BetSettledEvent = {
   teamId: string
   betId: string
   status: 'WON' | 'LOST' | 'EXPIRED'
+  /**
+   * Ce que touche LE DESTINATAIRE de cette notification, pas le marche
+   * entier : un marche a plusieurs mises, chacune dans une bourse
+   * differente, et annoncer le pot a tout le monde ferait croire a chacun
+   * qu'il a tout gagne. Zero pour la cible, qui n'a rien mise.
+   */
   payout: number
   bettorId: string
   targetId: string

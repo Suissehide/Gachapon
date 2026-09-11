@@ -17,7 +17,7 @@
 import { useMemo, useState } from 'react'
 
 import type { TeamMember } from '../../../api/teams.api.ts'
-import type { DuelView } from '../../../api/wagers.api.ts'
+import type { BetSide, BetView, DuelView } from '../../../api/wagers.api.ts'
 import { busyUserIds } from '../../../libs/duel.ts'
 import { useSettledDuel } from '../../../queries/useSettledDuel.ts'
 import {
@@ -32,6 +32,7 @@ import { BetPlacePopup } from '../BetPlacePopup.tsx'
 import { DuelProposePopup } from '../DuelProposePopup.tsx'
 import { DuelResultPopup } from '../DuelResultPopup.tsx'
 import { BetCard } from './BetCard.tsx'
+import { BetJoinPopup } from './BetJoinPopup.tsx'
 import { DuelCard } from './DuelCard.tsx'
 import { SettledHistory } from './SettledHistory.tsx'
 
@@ -69,6 +70,10 @@ export function WagersPanel({
   useWagersLive(teamId)
   const [proposeOpen, setProposeOpen] = useState(false)
   const [betOpen, setBetOpen] = useState(false)
+  const [joining, setJoining] = useState<{
+    bet: BetView
+    side: BetSide
+  } | null>(null)
   const teamIds = useMemo(() => [teamId], [teamId])
   const settled = useSettledDuel(teamIds, data?.settledDuels)
   const acceptDuel = useAcceptDuel(teamId)
@@ -138,6 +143,7 @@ export function WagersPanel({
           canBet={canBet}
           lockedReason="AUCUN COÉQUIPIER"
           onBet={() => setBetOpen(true)}
+          onJoin={(bet, side) => setJoining({ bet, side })}
         />
 
         <div className="col-span-full">
@@ -162,6 +168,12 @@ export function WagersPanel({
         onOpenChange={setBetOpen}
         teamId={teamId}
         members={members}
+      />
+
+      <BetJoinPopup
+        teamId={teamId}
+        target={joining}
+        onClose={() => setJoining(null)}
       />
 
       {settled.duel !== null && (

@@ -189,7 +189,11 @@ describe('GET /me/bets', () => {
     expect(bet.bettor.id).toBe(userIdBettor)
     expect(bet.bettor.username).toBe(`mbetBet${suffix}`)
     expect(bet.minRarity).toBe('RARE')
-    expect(bet.stake).toBe(STAKE)
+    // La cible voit un RAPPORT DE FORCES, pas une mise : le pari est un
+    // marche, et « 200 misent que tu y arrives, 0 que non » lui dit quelque
+    // chose qu'une cote ne dirait pas. A l'ouverture, tout est du cote OUI.
+    expect(bet.poolYes).toBe(STAKE)
+    expect(bet.poolNo).toBe(0)
     expect(bet.pullWindow).toBeGreaterThan(0)
     expect(typeof bet.deadlineAt).toBe('string')
   })

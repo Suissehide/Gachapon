@@ -15,6 +15,18 @@ import type {
 import type { PostgresPrismaClient } from '../postgres-client'
 
 const PARTY_SELECT = { id: true, username: true, avatar: true } as const
+
+/** Les mises d'un marche, avec leur porteur — jamais lues sans lui. */
+const ENTRY_SELECT = {
+  select: {
+    id: true,
+    userId: true,
+    side: true,
+    stake: true,
+    payout: true,
+    user: { select: PARTY_SELECT },
+  },
+} as const
 const TEAM_SELECT = {
   id: true,
   name: true,
@@ -220,6 +232,7 @@ export class WagerRepository implements IWagerRepository {
       include: {
         team: { select: TEAM_SELECT },
         bettor: { select: PARTY_SELECT },
+        entries: { ...ENTRY_SELECT, orderBy: { createdAt: 'asc' } },
       },
       orderBy: { createdAt: 'desc' },
     })
@@ -234,6 +247,7 @@ export class WagerRepository implements IWagerRepository {
       include: {
         bettor: { select: PARTY_SELECT },
         target: { select: PARTY_SELECT },
+        entries: { ...ENTRY_SELECT, orderBy: { createdAt: 'asc' } },
       },
       orderBy: { createdAt: 'desc' },
     })
@@ -250,6 +264,7 @@ export class WagerRepository implements IWagerRepository {
       include: {
         bettor: { select: PARTY_SELECT },
         target: { select: PARTY_SELECT },
+        entries: { ...ENTRY_SELECT, orderBy: { createdAt: 'asc' } },
       },
       orderBy: { settledAt: 'desc' },
       take,

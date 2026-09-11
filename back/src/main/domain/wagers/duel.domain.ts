@@ -1,11 +1,19 @@
 import Boom from '@hapi/boom'
 
+import type { CardVariant, Duel, DuelStatus } from '../../../generated/client'
+import type { PostgresOrm } from '../../infra/orm/postgres-client'
+import type { TeamRepository } from '../../infra/orm/repositories/team.repository'
+import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
 import type {
-  CardVariant,
-  Duel,
-  DuelStatus,
-} from '../../../generated/client'
+  DuelProposedEvent,
+  DuelSettledEvent,
+  DuelUpdateEvent,
+  WsManager,
+} from '../../interfaces/ws/ws-manager'
+import type { BackgroundTasksInterface } from '../../types/application/background-tasks.interface'
 import type { IocContainer } from '../../types/application/ioc'
+import type { TeamWithMembers } from '../../types/domain/team/team.types'
+import type { ITeamProgressionDomain } from '../../types/domain/team-progression/team-progression.domain.interface'
 import type {
   DuelHandsView,
   DuelTransferView,
@@ -18,25 +26,14 @@ import type {
 } from '../../types/domain/wagers/wagers.domain.interface'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
+import type { IScoringConfigRepository } from '../../types/infra/orm/repositories/scoring-config.repository.interface'
 import type { IUserCardRepository } from '../../types/infra/orm/repositories/user-card.repository.interface'
 import type {
   DuelWithParties,
   IWagerRepository,
   PullWithRarity,
 } from '../../types/infra/orm/repositories/wager.repository.interface'
-import type { TeamWithMembers } from '../../types/domain/team/team.types'
-import type { PostgresOrm } from '../../infra/orm/postgres-client'
-import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
-import type { TeamRepository } from '../../infra/orm/repositories/team.repository'
-import type { IScoringConfigRepository } from '../../types/infra/orm/repositories/scoring-config.repository.interface'
-import type { ITeamProgressionDomain } from '../../types/domain/team-progression/team-progression.domain.interface'
 import type { Logger } from '../../types/utils/logger'
-import type {
-  DuelProposedEvent,
-  DuelSettledEvent,
-  DuelUpdateEvent,
-  WsManager,
-} from '../../interfaces/ws/ws-manager'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import { betToView } from './bet.domain'
 import { duelScoreHalfPoints, duelVerdict } from './wager-rules'
@@ -62,6 +59,7 @@ type SettleOutcome = {
 
 export class DuelDomain implements IDuelDomain {
   readonly #configService: ConfigServiceInterface
+  readonly #backgroundTasks: BackgroundTasksInterface
   readonly #teamRepository: TeamRepository
   readonly #teamMemberRepository: TeamMemberRepository
   readonly #wagerRepository: IWagerRepository
@@ -75,6 +73,7 @@ export class DuelDomain implements IDuelDomain {
 
   constructor({
     configService,
+    backgroundTasks,
     teamRepository,
     teamMemberRepository,
     wagerRepository,
@@ -87,6 +86,7 @@ export class DuelDomain implements IDuelDomain {
     teamProgressionDomain,
   }: IocContainer) {
     this.#configService = configService
+    this.#backgroundTasks = backgroundTasks
     this.#teamRepository = teamRepository
     this.#teamMemberRepository = teamMemberRepository
     this.#wagerRepository = wagerRepository
@@ -168,9 +168,7 @@ export class DuelDomain implements IDuelDomain {
       throw Boom.badImplementation('Duel introuvable juste après sa création')
     }
 
-    const challengerMember = team.members.find(
-      (m) => m.userId === challengerId,
-    )
+    const challengerMember = team.members.find((m) => m.userId === challengerId)
     const event: DuelProposedEvent = {
       type: 'duel:proposed',
       teamId,
@@ -277,7 +275,11 @@ export class DuelDomain implements IDuelDomain {
   }
 
   /** Seul l'adversaire peut refuser, uniquement tant que le duel est PENDING. */
-  async decline(teamId: string, duelId: string, userId: string): Promise<DuelView> {
+  async decline(
+    teamId: string,
+    duelId: string,
+    userId: string,
+  ): Promise<DuelView> {
     const team = await this.#requireMembership(teamId, userId)
     const duel = await this.#getTeamDuel(teamId, duelId)
 
@@ -302,7 +304,11 @@ export class DuelDomain implements IDuelDomain {
   }
 
   /** Seul le défieur peut annuler, uniquement tant que le duel est PENDING. */
-  async cancel(teamId: string, duelId: string, userId: string): Promise<DuelView> {
+  async cancel(
+    teamId: string,
+    duelId: string,
+    userId: string,
+  ): Promise<DuelView> {
     const team = await this.#requireMembership(teamId, userId)
     const duel = await this.#getTeamDuel(teamId, duelId)
 
@@ -316,7 +322,7 @@ export class DuelDomain implements IDuelDomain {
     await this.#writeIfPending(
       duel.id,
       { status: 'CANCELLED' },
-      'Trop tard : ce duel n\'est plus annulable',
+      "Trop tard : ce duel n'est plus annulable",
     )
     const updated = await this.#wagerRepository.findDuelById(duel.id)
     if (!updated) {
@@ -358,7 +364,7 @@ export class DuelDomain implements IDuelDomain {
       ),
       this.#wagerRepository.listTeamBets(teamId, ['ACTIVE']),
       this.#wagerRepository.listRecentSettledBets(teamId, RECENT_SETTLED_BETS),
-      this.#configService.getMany('duel.acceptHours'),
+      this.#configService.getMany('duel.acceptHours', 'bet.houseFeePct'),
     ])
 
     const acceptDeadlineMs = cfg['duel.acceptHours'] * HOUR_MS
@@ -397,9 +403,7 @@ export class DuelDomain implements IDuelDomain {
     // avertissement manquant fait perdre une action. Rendre le badge exact
     // demanderait de porter la variante jusqu'à l'API et la vue collection.
     const engagedCardIds = [
-      ...new Set(
-        [...engagedKeys].map((key) => key.slice(0, key.indexOf(':'))),
-      ),
+      ...new Set([...engagedKeys].map((key) => key.slice(0, key.indexOf(':')))),
     ]
 
     return {
@@ -409,8 +413,10 @@ export class DuelDomain implements IDuelDomain {
       settledDuels: settledDuels.map((d) => this.#toView(d, userId)),
       // Lus APRES le règlement paresseux ci-dessus : un pari qui vient
       // d'expirer a déjà quitté `bets` pour `settledBets`.
-      bets: bets.map((b) => betToView(b, userId)),
-      settledBets: settledBets.map((b) => betToView(b, userId)),
+      bets: bets.map((b) => betToView(b, userId, cfg['bet.houseFeePct'])),
+      settledBets: settledBets.map((b) =>
+        betToView(b, userId, cfg['bet.houseFeePct']),
+      ),
       engagedCardIds,
     }
   }
@@ -579,9 +585,8 @@ export class DuelDomain implements IDuelDomain {
   }
 
   async settleForUser(userId: string, now: Date = new Date()): Promise<void> {
-    const activeDuels = await this.#wagerRepository.listActiveDuelsForUser(
-      userId,
-    )
+    const activeDuels =
+      await this.#wagerRepository.listActiveDuelsForUser(userId)
     for (const duel of activeDuels) {
       try {
         await this.#settle(duel.id, now)
@@ -716,7 +721,10 @@ export class DuelDomain implements IDuelDomain {
    * appeler sur tout ce qui est ACTIVE est sans risque, et la suppression
    * d'équipe est assez rare pour en payer le coût.
    */
-  async settleTeamWagers(teamId: string, now: Date = new Date()): Promise<void> {
+  async settleTeamWagers(
+    teamId: string,
+    now: Date = new Date(),
+  ): Promise<void> {
     const [duels, bets] = await Promise.all([
       this.#wagerRepository.listTeamDuels(teamId),
       this.#wagerRepository.listTeamBets(teamId, ['ACTIVE']),
@@ -926,13 +934,15 @@ export class DuelDomain implements IDuelDomain {
     // autres hooks de cette méthode, un échec ne doit jamais remonter :
     // le règlement du duel lui-même est déjà acquis.
     if (outcome.winnerId !== null) {
-      void this.#teamProgressionDomain
-        .award(outcome.winnerId, outcome.teamId, 'DUEL_WON', 1)
-        .catch((err) =>
-          this.#logger.error(
-            `Crédit des points d'équipe échoué (duel ${duelId}) : ${err instanceof Error ? err.message : String(err)}`,
+      this.#backgroundTasks.track(
+        this.#teamProgressionDomain
+          .award(outcome.winnerId, outcome.teamId, 'DUEL_WON', 1)
+          .catch((err) =>
+            this.#logger.error(
+              `Crédit des points d'équipe échoué (duel ${duelId}) : ${err instanceof Error ? err.message : String(err)}`,
+            ),
           ),
-        )
+      )
     }
   }
 

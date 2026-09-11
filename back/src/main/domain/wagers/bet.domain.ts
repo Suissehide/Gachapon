@@ -1,47 +1,57 @@
 import Boom from '@hapi/boom'
 
 import type { Bet, CardRarity, UserBoost } from '../../../generated/client'
+import type { PostgresOrm } from '../../infra/orm/postgres-client'
+import type { TeamRepository } from '../../infra/orm/repositories/team.repository'
+import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
+import type {
+  BetPlacedEvent,
+  BetSettledEvent,
+  WsManager,
+} from '../../interfaces/ws/ws-manager'
+import type { BackgroundTasksInterface } from '../../types/application/background-tasks.interface'
 import type { IocContainer } from '../../types/application/ioc'
+import type { TeamWithMembers } from '../../types/domain/team/team.types'
+import type { ITeamProgressionDomain } from '../../types/domain/team-progression/team-progression.domain.interface'
 import type {
   BetQuote,
   BetView,
   IBetDomain,
   TargetedBetView,
 } from '../../types/domain/wagers/wagers.domain.interface'
-import type { TeamWithMembers } from '../../types/domain/team/team.types'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
+import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import type { ICardRepository } from '../../types/infra/orm/repositories/card.repository.interface'
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
-import type { IUserBoostRepository } from '../../types/infra/orm/repositories/user-boost.repository.interface'
 import type { UserRepositoryInterface } from '../../types/infra/orm/repositories/user.repository.interface'
-import type { ITeamProgressionDomain } from '../../types/domain/team-progression/team-progression.domain.interface'
-import type { Logger } from '../../types/utils/logger'
+import type { IUserBoostRepository } from '../../types/infra/orm/repositories/user-boost.repository.interface'
 import type {
+  BetEntryWithUser,
   BetWithParties,
   IWagerRepository,
 } from '../../types/infra/orm/repositories/wager.repository.interface'
-import type { PostgresOrm } from '../../infra/orm/postgres-client'
-import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
-import type { TeamRepository } from '../../infra/orm/repositories/team.repository'
-import type {
-  BetPlacedEvent,
-  BetSettledEvent,
-  WsManager,
-} from '../../interfaces/ws/ws-manager'
+import type { Logger } from '../../types/utils/logger'
 import { effectivePityThreshold } from '../gacha/gacha.domain'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import {
+  type BetSideKey,
   betMultiplier,
-  betPayout,
+  betMultiplierForSide,
   betVerdict,
   firstQualifyingIndex,
-  rarityAtLeast,
+  liveOdds,
+  poolOf,
   RARITY_ORDER,
+  rarityAtLeast,
   rarityAtLeastProbability,
+  settleMarket,
   windowProbability,
 } from './wager-rules'
 
 const HOUR_MS = 60 * 60 * 1000
+
+/** Ce qu'on lit d'un joueur dans une vue d'enjeu : de quoi le nommer. */
+const PARTY_MINI = { id: true, username: true, avatar: true } as const
 
 type BetCfg = {
   pullWindow: number
@@ -116,41 +126,33 @@ type BetSettleOutcome = {
   teamId: string
   betId: string
   status: 'WON' | 'LOST' | 'EXPIRED'
-  payout: number
+  /** Un paiement par mise : le marche a plusieurs joueurs. */
+  payouts: Array<{ userId: string; payout: number }>
   bettorId: string
   targetId: string
 } | null
-
-/**
- * Ce que le parieur touche selon le verdict :
- *  - WON : la TOTALITÉ de `mise x cote`, mise comprise — elle a été débitée
- *    au placement, la recréditer fait partie du gain ;
- *  - EXPIRED : la mise seule, remboursée à l'identique ;
- *  - LOST : rien, la mise reste à la maison.
- */
-function betCredit(
-  verdict: 'WON' | 'LOST' | 'EXPIRED',
-  stake: number,
-  multiplier: number,
-): number {
-  if (verdict === 'WON') {
-    return betPayout(stake, multiplier)
-  }
-  return verdict === 'EXPIRED' ? stake : 0
-}
 
 /**
  * Vue publique d'un pari. Exportée pour que `DuelDomain#listForTeam`, qui
  * assemble l'unique `WagersView` de l'équipe, puisse la produire sans
  * dépendre de `BetDomain` (ce qui créerait un cycle d'injection).
  */
-export function betToView(bet: BetWithParties, userId: string): BetView {
+export function betToView(
+  bet: BetWithParties,
+  userId: string,
+  houseFeePct: number,
+): BetView {
   const myRole =
     bet.bettorId === userId
       ? 'BETTOR'
       : bet.targetId === userId
         ? 'TARGET'
         : 'SPECTATOR'
+
+  const poolYes = poolOf(bet.entries, 'YES')
+  const poolNo = poolOf(bet.entries, 'NO')
+  const mine = bet.entries.find((entry) => entry.userId === userId) ?? null
+
   return {
     id: bet.id,
     status: bet.status,
@@ -164,21 +166,45 @@ export function betToView(bet: BetWithParties, userId: string): BetView {
       username: bet.target.username,
       avatar: bet.target.avatar,
     },
-    stake: bet.stake,
     minRarity: bet.minRarity,
     pullWindow: bet.pullWindow,
-    multiplier: bet.multiplier,
+    probability: bet.probability,
+    poolYes,
+    poolNo,
+    oddsYes: liveOdds(poolYes, poolNo, 'YES', bet.probability, houseFeePct),
+    oddsNo: liveOdds(poolYes, poolNo, 'NO', bet.probability, houseFeePct),
+    // Le marche se ferme au PREMIER tirage compte de la cible. `pullsSeen`
+    // est mis a jour a chaque passe de reglement, y compris quand le verdict
+    // reste indecidable, donc il suffit a l'affichage. L'autorite reste la
+    // relecture des tirages DANS la transaction de `join` : entre le tirage
+    // et l'ecriture de ce compteur, il existe une fenetre etroite ou l'ecran
+    // dirait encore « ouvert ».
+    open: bet.status === 'ACTIVE' && bet.pullsSeen === 0,
+    entries: bet.entries.map((entry) => ({
+      id: entry.id,
+      user: {
+        id: entry.user.id,
+        username: entry.user.username,
+        avatar: entry.user.avatar,
+      },
+      side: entry.side,
+      stake: entry.stake,
+      payout: entry.payout,
+    })),
     createdAt: bet.createdAt.toISOString(),
     deadlineAt: bet.deadlineAt.toISOString(),
     settledAt: bet.settledAt ? bet.settledAt.toISOString() : null,
     pullsSeen: bet.pullsSeen,
-    payout: bet.payout,
     myRole,
+    mySide: mine?.side ?? null,
+    myStake: mine?.stake ?? 0,
+    myPayout: mine?.payout ?? 0,
   }
 }
 
 export class BetDomain implements IBetDomain {
   readonly #configService: ConfigServiceInterface
+  readonly #backgroundTasks: BackgroundTasksInterface
   readonly #teamRepository: TeamRepository
   readonly #teamMemberRepository: TeamMemberRepository
   readonly #wagerRepository: IWagerRepository
@@ -193,6 +219,7 @@ export class BetDomain implements IBetDomain {
 
   constructor({
     configService,
+    backgroundTasks,
     teamRepository,
     teamMemberRepository,
     wagerRepository,
@@ -206,6 +233,7 @@ export class BetDomain implements IBetDomain {
     teamProgressionDomain,
   }: IocContainer) {
     this.#configService = configService
+    this.#backgroundTasks = backgroundTasks
     this.#teamRepository = teamRepository
     this.#teamMemberRepository = teamMemberRepository
     this.#wagerRepository = wagerRepository
@@ -245,8 +273,8 @@ export class BetDomain implements IBetDomain {
       team: bet.team,
       bettor: bet.bettor,
       minRarity: bet.minRarity,
-      stake: bet.stake,
-      multiplier: bet.multiplier,
+      poolYes: poolOf(bet.entries, 'YES'),
+      poolNo: poolOf(bet.entries, 'NO'),
       pullWindow: bet.pullWindow,
       pullsSeen: bet.pullsSeen,
       createdAt: bet.createdAt.toISOString(),
@@ -264,13 +292,13 @@ export class BetDomain implements IBetDomain {
     this.#requireValidTarget(team, bettorId, targetId)
 
     const cfg = await this.#readConfig()
-    const { probability, multiplier } = await this.#computeOdds(
-      targetId,
-      minRarity,
-      cfg,
-    )
+    const { probability } = await this.#computeOdds(targetId, minRarity, cfg)
+    // Le devis sert à OUVRIR un marché, et celui qui ouvre tient le « oui ».
+    // `probability` est celle de L'ÉVÈNEMENT — la cible atteint la rareté —,
+    // servie telle quelle : l'écran annonce les chances de la cible, la cote
+    // dit ce qu'elles valent.
     return {
-      multiplier,
+      multiplier: betMultiplierForSide(probability, 'YES', cfg.houseFeePct),
       probability,
       pullWindow: cfg.pullWindow,
       minStake: cfg.minStake,
@@ -312,26 +340,39 @@ export class BetDomain implements IBetDomain {
       team.members.find((m) => m.userId === targetId)?.user?.username ??
       'Ce joueur'
 
+    // Celui qui OUVRE pose la proposition, donc tient le « oui ». Le camp
+    // adverse se prend en renchérissant.
+    const side: BetSideKey = 'YES'
+
     // Recalcul serveur : c'est CETTE valeur qui part en base. `pityCurrent`
     // et `luckMultiplier` sont les entrées de ce calcul qu'il faudra rejouer
     // à l'identique au règlement (voir `FrozenOdds`) : on les gèle sur la
     // ligne plutôt que de les relire là-bas, où elles auront bougé.
-    const { multiplier, pityCurrent, luckMultiplier, weights } =
+    const { probability, pityCurrent, luckMultiplier, weights } =
       await this.#computeOdds(targetId, minRarity, cfg)
+    const multiplier = betMultiplierForSide(probability, side, cfg.houseFeePct)
     // À la cote plancher (voir `betMultiplier`), le gain se réduit à la mise
     // : le pari ne rapporte rien. La fenêtre de placement refuse déjà de
     // soumettre dans ce cas, mais un contrat qui ne vit que dans le client
     // n'est pas un contrat — une requête directe débiterait la mise pour la
     // recréditer à l'identique, ce que personne n'a voulu faire.
     if (multiplier <= 1) {
+      // Le refus vaut pour les DEUX sens, et le message doit dire lequel :
+      // au « oui » on refuse une quasi-certitude, au « non » une quasi-
+      // impossibilité. Un « non » sur une rareté très improbable tombe
+      // toujours ici, et c'est voulu — il n'aurait rien rapporté.
       throw Boom.badRequest(
-        `Ce pari ne rapporterait rien : ${targetName} sortira presque à coup sûr cette rareté sur la fenêtre`,
+        side === 'YES'
+          ? `Ce pari ne rapporterait rien : ${targetName} sortira presque à coup sûr cette rareté sur la fenêtre`
+          : `Ce pari ne rapporterait rien : ${targetName} n'a presque aucune chance de sortir cette rareté sur la fenêtre`,
       )
     }
 
     const deadlineAt = new Date(now.getTime() + cfg.deadlineHours * HOUR_MS)
 
-    const created = await retryOnSerialization<Bet>(() =>
+    const created = await retryOnSerialization<
+      Bet & { entries: BetEntryWithUser[] }
+    >(() =>
       this.#postgresOrm.executeWithTransactionClient(
         async (tx) => {
           // Les deux plafonds sont relus ICI, pas avant : hors transaction,
@@ -366,19 +407,29 @@ export class BetDomain implements IBetDomain {
             where: { id: bettorId },
             data: { dust: { decrement: stake } },
           })
+          // Le marche et sa premiere mise naissent ensemble, dans la MEME
+          // transaction que le debit : un marche sans entree serait un enonce
+          // que personne ne tient, et le reglement n'aurait rien a payer.
           return tx.bet.create({
             data: {
               teamId,
               bettorId,
               targetId,
-              stake,
               minRarity,
               pullWindow: cfg.pullWindow,
-              multiplier,
+              probability,
               placementPity: pityCurrent,
               placementLuck: luckMultiplier,
               placementWeights: weights,
               deadlineAt,
+              entries: {
+                create: { userId: bettorId, side, stake },
+              },
+            },
+            include: {
+              entries: {
+                include: { user: { select: PARTY_MINI } },
+              },
             },
           })
         },
@@ -403,13 +454,131 @@ export class BetDomain implements IBetDomain {
       bettor: { id: bet.bettor.id, username: bet.bettor.username },
       targetId,
       minRarity: bet.minRarity,
-      stake: bet.stake,
-      multiplier: bet.multiplier,
+      stake,
+      multiplier,
       pullWindow: bet.pullWindow,
     }
     this.#wsManager.notify(targetId, event)
 
-    return betToView(bet, bettorId)
+    return betToView(bet, bettorId, cfg.houseFeePct)
+  }
+
+  /**
+   * Renchérir sur un marché déjà ouvert, du camp de son choix.
+   *
+   * LE contrôle qui rend ce marché honnête est la fermeture au premier
+   * tirage compté de la cible, et il est fait DANS la transaction, en
+   * relisant les tirages — pas en se fiant au `pullsSeen` de la ligne.
+   * Ce compteur n'est écrit qu'à la passe de règlement suivante : entre le
+   * tirage de la cible et cette écriture, il existe une fenêtre où la ligne
+   * dit encore « aucun tirage ». Y entrer, ce serait miser en connaissant
+   * déjà une carte que les autres ne connaissent pas.
+   *
+   * Une seule mise par joueur et par marché : la contrainte d'unicité en base
+   * en est l'autorité, ce contrôle-ci ne sert qu'à donner un message lisible.
+   */
+  async join(
+    teamId: string,
+    userId: string,
+    betId: string,
+    side: BetSideKey,
+    stake: number,
+  ): Promise<BetView> {
+    const team = await this.#requireMembership(teamId, userId)
+    const cfg = await this.#readConfig()
+
+    if (!Number.isInteger(stake)) {
+      throw Boom.badRequest('La mise doit être un nombre entier de poussière')
+    }
+    if (stake < cfg.minStake) {
+      throw Boom.badRequest(`La mise minimum est de ${cfg.minStake} poussière`)
+    }
+    if (stake > cfg.maxStake) {
+      throw Boom.badRequest(`La mise maximum est de ${cfg.maxStake} poussière`)
+    }
+
+    const existing = await this.#wagerRepository.findBetById(betId)
+    if (!existing || existing.teamId !== teamId) {
+      throw Boom.notFound('Pari introuvable')
+    }
+    if (existing.targetId === userId) {
+      throw Boom.badRequest('On ne parie pas sur ses propres tirages')
+    }
+
+    const updated = await retryOnSerialization(() =>
+      this.#postgresOrm.executeWithTransactionClient(
+        async (tx) => {
+          const bet = await tx.bet.findUnique({
+            where: { id: betId },
+            include: { entries: true },
+          })
+          if (!bet || bet.status !== 'ACTIVE') {
+            throw Boom.conflict("Ce pari n'est plus ouvert")
+          }
+
+          // La relecture qui ferme le marché. Un seul tirage compté suffit.
+          const pulls = await this.#wagerRepository.findPullsSinceInTx(
+            tx,
+            bet.targetId,
+            bet.createdAt,
+            bet.pullWindow,
+          )
+          if (pulls.length > 0) {
+            throw Boom.conflict(
+              'La cible a commencé ses tirages : les mises sont closes',
+            )
+          }
+
+          await this.#assertCanJoin(tx, bet, userId, side, stake, cfg)
+          await tx.user.update({
+            where: { id: userId },
+            data: { dust: { decrement: stake } },
+          })
+          await tx.betEntry.create({
+            data: { betId, userId, side, stake },
+          })
+
+          return tx.bet.findUniqueOrThrow({
+            where: { id: betId },
+            include: {
+              bettor: { select: PARTY_MINI },
+              target: { select: PARTY_MINI },
+              entries: {
+                include: { user: { select: PARTY_MINI } },
+                orderBy: { createdAt: 'asc' },
+              },
+            },
+          })
+        },
+        { isolationLevel: 'Serializable' },
+      ),
+    )
+
+    // Après le commit : la cible apprend que le marché s'étoffe, et celui
+    // qui l'a ouvert aussi — sa propre cote vient de bouger.
+    const event: BetPlacedEvent = {
+      type: 'bet:placed',
+      teamId,
+      betId,
+      bettor: this.#party(team, userId),
+      targetId: updated.targetId,
+      minRarity: updated.minRarity,
+      stake,
+      multiplier: liveOdds(
+        poolOf(updated.entries, 'YES'),
+        poolOf(updated.entries, 'NO'),
+        side,
+        updated.probability,
+        cfg.houseFeePct,
+      ),
+      pullWindow: updated.pullWindow,
+    }
+    this.#wsManager.notify(updated.targetId, event)
+    if (updated.bettorId !== userId) {
+      this.#wsManager.notify(updated.bettorId, event)
+    }
+
+    return betToView(updated, userId, cfg.houseFeePct)
   }
 
   /**
@@ -483,10 +652,11 @@ export class BetDomain implements IBetDomain {
    * n'aurait plus rien pour la déclencher : le pari serait payé deux fois.
    */
   async #settle(betId: string, now: Date): Promise<void> {
-    const paidMultiplier = await this.#cappedMultiplier(betId)
-    if (paidMultiplier === null) {
+    const floors = await this.#cappedFloors(betId)
+    if (floors === null) {
       return
     }
+    const cfg = await this.#readConfig()
 
     const outcome = await retryOnSerialization<BetSettleOutcome>(() =>
       this.#postgresOrm.executeWithTransactionClient(
@@ -506,6 +676,9 @@ export class BetDomain implements IBetDomain {
             bet.pullWindow,
           )
 
+          // Le verdict porte sur l'ÉVÈNEMENT, pas sur un camp : c'est le
+          // marché entier qui se tranche d'un coup, chaque camp en tirant sa
+          // conclusion.
           const verdict = betVerdict({
             pulls,
             minRarity: bet.minRarity,
@@ -517,6 +690,8 @@ export class BetDomain implements IBetDomain {
           if (verdict === null) {
             // Pari toujours en cours : on écrit quand même la ligne (voir la
             // propriété décrite ci-dessus), avec le seul compteur affichable.
+            // Cette écriture ferme aussi le marché aux nouvelles mises dès le
+            // premier tirage compté — c'est `pullsSeen` que la vue lit.
             await tx.bet.update({
               where: { id: bet.id },
               data: { pullsSeen: pulls.length },
@@ -524,32 +699,32 @@ export class BetDomain implements IBetDomain {
             return null
           }
 
-          const payout = betCredit(verdict, bet.stake, paidMultiplier)
-          if (payout > 0) {
-            await tx.user.update({
-              where: { id: bet.bettorId },
-              data: { dust: { increment: payout } },
-            })
-          }
-
-          // Sur un gain, `pullsSeen` est le rang du tirage qui a conclu, pas
-          // le nombre de tirages lus : c'est ce que le joueur veut lire
-          // (« gagné au 3e tirage »).
+          // `pullsSeen` porte le rang du tirage QUI A CONCLU quand il en
+          // existe un — « gagné au 3e tirage », ce que le joueur veut lire —
+          // et le nombre de tirages lus sinon. Il suit l'ÉVÈNEMENT : un camp
+          // « non » gagne par ABSENCE, sans aucun tirage concluant.
+          const qualifyingIndex = firstQualifyingIndex(pulls, bet.minRarity)
           const pullsSeen =
-            verdict === 'WON'
-              ? firstQualifyingIndex(pulls, bet.minRarity) + 1
-              : pulls.length
+            qualifyingIndex === -1 ? pulls.length : qualifyingIndex + 1
+
+          const payouts = await this.#payMarket(
+            tx,
+            bet.id,
+            verdict,
+            floors,
+            cfg.houseFeePct,
+          )
 
           await tx.bet.update({
             where: { id: bet.id },
-            data: { status: verdict, pullsSeen, settledAt: now, payout },
+            data: { status: verdict, pullsSeen, settledAt: now },
           })
 
           return {
             teamId: bet.teamId,
             betId: bet.id,
             status: verdict,
-            payout,
+            payouts,
             bettorId: bet.bettorId,
             targetId: bet.targetId,
           }
@@ -563,34 +738,50 @@ export class BetDomain implements IBetDomain {
     }
 
     // Après le commit uniquement : un rollback ne doit jamais avoir annoncé
-    // un paiement qui n'a pas eu lieu. Notification par joueur concerné
-    // (jamais `broadcast` : le montant regarde le parieur et sa cible).
-    const event: BetSettledEvent = {
-      type: 'bet:settled',
-      teamId: outcome.teamId,
-      betId: outcome.betId,
-      status: outcome.status,
-      payout: outcome.payout,
-      bettorId: outcome.bettorId,
-      targetId: outcome.targetId,
+    // un paiement qui n'a pas eu lieu. Une notification PAR JOUEUR, portant
+    // SON montant : le pot est commun, les bourses ne le sont pas.
+    const notify = (userId: string, payout: number) => {
+      const event: BetSettledEvent = {
+        type: 'bet:settled',
+        teamId: outcome.teamId,
+        betId: outcome.betId,
+        status: outcome.status,
+        payout,
+        bettorId: outcome.bettorId,
+        targetId: outcome.targetId,
+      }
+      this.#wsManager.notify(userId, event)
     }
-    this.#wsManager.notify(outcome.bettorId, event)
-    if (outcome.targetId !== outcome.bettorId) {
-      this.#wsManager.notify(outcome.targetId, event)
+    const notified = new Set<string>()
+    for (const { userId, payout } of outcome.payouts) {
+      notify(userId, payout)
+      notified.add(userId)
+    }
+    // La cible n'a rien misé, mais le résultat la regarde : c'est sur ses
+    // tirages qu'on a parié.
+    if (!notified.has(outcome.targetId)) {
+      notify(outcome.targetId, 0)
     }
 
-    // Seul un pari WON crédite le parieur — LOST et EXPIRED ne rapportent
-    // rien à la progression d'équipe. Comme les autres hooks de cette
-    // méthode, un échec ne doit jamais remonter : le règlement du pari
-    // lui-même est déjà acquis.
-    if (outcome.status === 'WON') {
-      void this.#teamProgressionDomain
-        .award(outcome.bettorId, outcome.teamId, 'BET_WON', 1)
-        .catch((err) =>
-          this.#logger.error(
-            `Crédit des points d'équipe échoué (pari ${outcome.betId}) : ${err instanceof Error ? err.message : String(err)}`,
-          ),
+    // Les points d'équipe vont à CHAQUE gagnant, pas au seul ouvreur : le
+    // marché récompense d'avoir vu juste, et celui qui a renchéri a vu aussi
+    // juste que celui qui a ouvert. Comme les autres hooks de cette méthode,
+    // un échec ne doit jamais remonter : le règlement est déjà acquis.
+    if (outcome.status !== 'EXPIRED') {
+      for (const { userId, payout } of outcome.payouts) {
+        if (payout <= 0) {
+          continue
+        }
+        this.#backgroundTasks.track(
+          this.#teamProgressionDomain
+            .award(userId, outcome.teamId, 'BET_WON', 1)
+            .catch((err) =>
+              this.#logger.error(
+                `Crédit des points d'équipe échoué (pari ${outcome.betId}) : ${err instanceof Error ? err.message : String(err)}`,
+              ),
+            ),
         )
+      }
     }
   }
 
@@ -609,13 +800,102 @@ export class BetDomain implements IBetDomain {
    * passerait ACTIVE -> réglé entre les deux se fait simplement ignorer par
    * cette relecture, sans rien payer.
    */
-  async #cappedMultiplier(betId: string): Promise<number | null> {
+  /**
+   * Répartit le pot d'un marché tranché et crédite chaque joueur.
+   *
+   * Un crédit par mise, et non un virement au seul ouvreur : les mises
+   * viennent de bourses distinctes, elles y retournent séparément.
+   */
+  async #payMarket(
+    tx: PrimaTransactionClient,
+    betId: string,
+    verdict: 'WON' | 'LOST' | 'EXPIRED',
+    floors: Record<BetSideKey, number>,
+    houseFeePct: number,
+  ): Promise<Array<{ userId: string; payout: number }>> {
+    const entries = await tx.betEntry.findMany({ where: { betId } })
+    const payouts = settleMarket(
+      entries,
+      // `EXPIRED` n'a pas de camp gagnant : la cible n'a rien tiré, tout le
+      // monde est remboursé. C'est ce cas qui empêche de renchérir « non »
+      // contre un coéquipier inactif pour encaisser sans risque.
+      verdict === 'EXPIRED' ? null : verdict === 'WON' ? 'YES' : 'NO',
+      floors,
+      houseFeePct,
+    )
+
+    for (const [entryId, { userId, payout }] of payouts) {
+      await tx.betEntry.update({ where: { id: entryId }, data: { payout } })
+      if (payout > 0) {
+        await tx.user.update({
+          where: { id: userId },
+          data: { dust: { increment: payout } },
+        })
+      }
+    }
+    return [...payouts.values()]
+  }
+
+  /**
+   * Les refus d'une renchère, tous relus DANS la transaction du placement :
+   * hors d'elle, deux mises simultanées franchiraient le même plafond et
+   * verraient le même solde.
+   */
+  async #assertCanJoin(
+    tx: PrimaTransactionClient,
+    bet: {
+      probability: number
+      entries: Array<{ userId: string; side: BetSideKey; stake: number }>
+    },
+    userId: string,
+    side: BetSideKey,
+    stake: number,
+    cfg: BetCfg,
+  ): Promise<void> {
+    if (bet.entries.some((entry) => entry.userId === userId)) {
+      throw Boom.conflict('Tu as déjà misé sur ce pari')
+    }
+
+    const openByBettor = await this.#wagerRepository.countOpenBetsByBettorInTx(
+      tx,
+      userId,
+    )
+    if (openByBettor >= cfg.maxOpenPerBettor) {
+      throw Boom.badRequest(`Tu as déjà ${cfg.maxOpenPerBettor} paris en cours`)
+    }
+
+    const joiner = await this.#userRepository.findByIdOrThrowInTx(tx, userId)
+    if (joiner.dust < stake) {
+      throw Boom.paymentRequired('Poussière insuffisante')
+    }
+
+    // Même refus qu'à l'ouverture, mais sur la cote COURANTE : avec un camp
+    // adverse déjà fourni, la part du pot peut valoir le coup là où la cote
+    // théorique seule ne rapporterait rien. C'est le marché qu'on interroge,
+    // pas le modèle.
+    const odds = liveOdds(
+      poolOf(bet.entries, 'YES') + (side === 'YES' ? stake : 0),
+      poolOf(bet.entries, 'NO') + (side === 'NO' ? stake : 0),
+      side,
+      bet.probability,
+      cfg.houseFeePct,
+    )
+    if (odds <= 1) {
+      throw Boom.badRequest(
+        'Ce camp ne rapporterait rien : personne ne le contredit et les chances lui donnent raison',
+      )
+    }
+  }
+
+  async #cappedFloors(
+    betId: string,
+  ): Promise<Record<BetSideKey, number> | null> {
     const bet = await this.#wagerRepository.findBetById(betId)
     if (!bet || bet.status !== 'ACTIVE') {
       return null
     }
     const cfg = await this.#readConfig()
-    const { multiplier } = await this.#computeOdds(
+    const { probability } = await this.#computeOdds(
       bet.targetId,
       bet.minRarity,
       // La fenêtre est celle du PARI, pas celle de la config du jour : un
@@ -628,7 +908,20 @@ export class BetDomain implements IBetDomain {
         weights: bet.placementWeights as RarityWeights | null,
       },
     )
-    return Math.min(bet.multiplier, multiplier)
+    // Un plancher PAR CAMP, et chacun plafonné par sa valeur d'ouverture.
+    // Le plafond joue dans les deux sens : si la cible améliore ses chances,
+    // le « oui » devient plus probable donc sa cote théorique baisse — c'est
+    // la recalculée qui sert —, tandis que le « non » devient plus improbable
+    // donc sa cote monte — et c'est alors la gelée, plus basse, qui sert.
+    // Dans les deux cas le joueur touche le moins généreux des deux, ce qui
+    // est précisément le point : la cible ne doit tirer aucun profit à
+    // déplacer ses chances après coup.
+    const floor = (side: BetSideKey) =>
+      Math.min(
+        betMultiplierForSide(bet.probability, side, cfg.houseFeePct),
+        betMultiplierForSide(probability, side, cfg.houseFeePct),
+      )
+    return { YES: floor('YES'), NO: floor('NO') }
   }
 
   /**
@@ -673,7 +966,8 @@ export class BetDomain implements IBetDomain {
       effects.pityReduction ?? 0,
     )
     const window = cfg.pullWindow
-    const pityCurrent = frozen === null ? target.pityCurrent : frozen.pityCurrent
+    const pityCurrent =
+      frozen === null ? target.pityCurrent : frozen.pityCurrent
     const luckMultiplier =
       frozen === null ? effects.luckMultiplier : frozen.luckMultiplier
 

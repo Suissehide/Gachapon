@@ -102,12 +102,21 @@ function duelRow(duel: DuelView): Row {
  */
 function betRow(bet: BetView): Row {
   const rarityLabel = RARITY_LABEL_FR[bet.minRarity] ?? bet.minRarity
+  // Le rang du tirage concluant n'existe que si la rareté a été atteinte, ce
+  // qui fait gagner le camp « oui » et perdre le camp « non ». Le détail suit
+  // donc l'ÉVÈNEMENT, jamais mon verdict personnel — sur le même marché, deux
+  // joueurs lisent la même phrase et deux gains différents.
+  const rarityWasReached = bet.status === 'WON'
   const detail =
-    bet.status === 'WON'
-      ? `GAGNÉ · ATTEINT AU ${bet.pullsSeen}${bet.pullsSeen === 1 ? 'ER' : 'E'} TIRAGE`
-      : bet.status === 'EXPIRED'
-        ? `EXPIRÉ · MISE REMBOURSÉE (${fr(bet.payout)})`
-        : `PERDU · ${bet.pullsSeen}/${bet.pullWindow} TIRAGES VUS`
+    bet.status === 'EXPIRED'
+      ? `EXPIRÉ · ${bet.target.username.toUpperCase()} N'A PAS TIRÉ · MISES RENDUES`
+      : rarityWasReached
+        ? `ATTEINT AU ${bet.pullsSeen}${bet.pullsSeen === 1 ? 'ER' : 'E'} TIRAGE`
+        : `${bet.pullsSeen}/${bet.pullWindow} TIRAGES SANS SUCCÈS`
+
+  // `myPayout` est nul pour un spectateur comme pour un perdant : seul celui
+  // qui a misé ET gagné voit un montant.
+  const won = bet.myPayout > 0 && bet.status !== 'EXPIRED'
 
   return {
     key: `bet-${bet.id}`,
@@ -116,10 +125,7 @@ function betRow(bet: BetView): Row {
     title: `Pari sur ${bet.target.username} · ≥ ${rarityLabel}`,
     detail: [detail, shortDate(bet.settledAt)].filter(Boolean).join(' · '),
     transfersDuelId: null,
-    gain:
-      bet.status === 'WON'
-        ? { value: `+${fr(bet.payout)}`, unit: 'dust' }
-        : null,
+    gain: won ? { value: `+${fr(bet.myPayout)}`, unit: 'dust' } : null,
   }
 }
 

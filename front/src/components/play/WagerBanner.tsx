@@ -4,6 +4,9 @@ import { Swords, Target } from 'lucide-react'
 import type { BetView } from '../../api/wagers.api.ts'
 import { duelSides, pullsLeftLabel } from '../../libs/duel.ts'
 import { RARITY_LABEL_FR } from '../../libs/rarity.ts'
+
+const fr = (n: number) => n.toLocaleString('fr-FR')
+
 import { plural } from '../../libs/utils.ts'
 import { useMyDuel } from '../../queries/useMyDuel.ts'
 import { useWagers } from '../../queries/useWagers.ts'
@@ -62,9 +65,13 @@ export function WagerBanner() {
                 key={bet.id}
                 className="flex flex-wrap items-center justify-between gap-2 text-sm text-text"
               >
+                {/* Le RAPPORT DE FORCES, pas une mise : un pari est un
+                    marché, et savoir que l'équipe mise surtout contre toi
+                    n'est pas la même information qu'une cote. */}
                 <span className="truncate">
-                  {bet.bettor.username} parie que tu sors au moins{' '}
+                  {fr(bet.poolYes)} misent que tu sors au moins{' '}
                   {RARITY_LABEL_FR[bet.minRarity] ?? bet.minRarity}
+                  {bet.poolNo > 0 && `, ${fr(bet.poolNo)} que non`}
                 </span>
                 <span className="font-mono text-xs text-text-light">
                   {pullsLeftLabel(bet.pullsSeen, bet.pullWindow)}
