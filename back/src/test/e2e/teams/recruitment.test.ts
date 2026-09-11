@@ -481,4 +481,103 @@ describe('Recrutement d équipe', () => {
     await prisma.teamMember.deleteMany({ where: { teamId: target.id } })
     await prisma.team.delete({ where: { id: target.id } })
   })
+
+  it('POST /join-requests/:id/decline — refuse et arme le cooldown', async () => {
+    const other = await signIn('recruitDeclined')
+    const req = await prisma.joinRequest.create({
+      data: {
+        teamId,
+        userId: other.id,
+        expiresAt: new Date(Date.now() + 7 * 86_400_000),
+      },
+    })
+
+    try {
+      const res = await app.inject({
+        method: 'POST',
+        url: `/join-requests/${req.id}/decline`,
+        headers: { cookie: cookiesOwner },
+      })
+      expect(res.statusCode).toBe(200)
+
+      // Recandidature immédiate : bloquée par le cooldown.
+      const retry = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamId}/join-requests`,
+        headers: { cookie: other.cookies },
+      })
+      expect(retry.statusCode).toBe(409)
+
+      // Le refus reste visible tant que le cooldown court.
+      const mine = await app.inject({
+        method: 'GET',
+        url: '/me/join-requests',
+        headers: { cookie: other.cookies },
+      })
+      expect(mine.json().requests[0]).toMatchObject({ status: 'DECLINED' })
+      expect(mine.json().requests[0].reapplyAt).toBeTruthy()
+
+      // Cooldown écoulé : la recandidature passe, et la ligne disparaît.
+      await prisma.joinRequest.update({
+        where: { id: req.id },
+        data: { decidedAt: new Date(Date.now() - 8 * 86_400_000) },
+      })
+      const later = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamId}/join-requests`,
+        headers: { cookie: other.cookies },
+      })
+      expect(later.statusCode).toBe(201)
+    } finally {
+      await prisma.joinRequest.deleteMany({
+        where: { teamId, userId: other.id },
+      })
+    }
+  })
+
+  it('accepter une invitation clôture la candidature qui dormait', async () => {
+    const other = await signIn('recruitInvited')
+    await prisma.joinRequest.create({
+      data: {
+        teamId,
+        userId: other.id,
+        expiresAt: new Date(Date.now() + 7 * 86_400_000),
+      },
+    })
+
+    try {
+      const invite = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamId}/invite`,
+        headers: { cookie: cookiesOwner },
+        payload: { username: `recruitInvited${suffix}` },
+      })
+      await app.inject({
+        method: 'POST',
+        url: `/invitations/${invite.json().token}/accept`,
+        headers: { cookie: other.cookies },
+      })
+
+      const row = await prisma.joinRequest.findFirst({
+        where: { teamId, userId: other.id },
+      })
+      expect(row.status).toBe('ACCEPTED')
+
+      const queue = await app.inject({
+        method: 'GET',
+        url: `/teams/${teamId}/join-requests`,
+        headers: { cookie: cookiesOwner },
+      })
+      expect(
+        queue.json().requests.some((r: any) => r.candidate.id === other.id),
+      ).toBe(false)
+    } finally {
+      await prisma.teamMember.deleteMany({
+        where: { teamId, userId: other.id },
+      })
+      await prisma.joinRequest.deleteMany({
+        where: { teamId, userId: other.id },
+      })
+    }
+  })
 })

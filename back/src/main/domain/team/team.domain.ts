@@ -4,6 +4,7 @@ import slugify from 'slugify'
 import type { IocContainer } from '../../types/application/ioc'
 import type { ILeaderboardDomain } from '../../types/domain/leaderboard/leaderboard.domain.interface'
 import type { IRaidDomain } from '../../types/domain/raid/raid.domain.interface'
+import type { IRecruitmentDomain } from '../../types/domain/recruitment/recruitment.domain.interface'
 import type {
   InvitationPreview,
   TeamDomainInterface,
@@ -80,6 +81,7 @@ export class TeamDomain implements TeamDomainInterface {
   readonly #teamProgressionDomain: ITeamProgressionDomain
   readonly #raidDomain: IRaidDomain
   readonly #leaderboardDomain: ILeaderboardDomain
+  readonly #recruitmentDomain: IRecruitmentDomain
 
   constructor({
     teamRepository,
@@ -94,6 +96,7 @@ export class TeamDomain implements TeamDomainInterface {
     teamProgressionDomain,
     raidDomain,
     leaderboardDomain,
+    recruitmentDomain,
   }: IocContainer) {
     this.#teamRepo = teamRepository
     this.#memberRepo = teamMemberRepository
@@ -107,6 +110,7 @@ export class TeamDomain implements TeamDomainInterface {
     this.#teamProgressionDomain = teamProgressionDomain
     this.#raidDomain = raidDomain
     this.#leaderboardDomain = leaderboardDomain
+    this.#recruitmentDomain = recruitmentDomain
   }
 
   /**
@@ -390,6 +394,14 @@ export class TeamDomain implements TeamDomainInterface {
         where: { id: invitation.id },
         data: { status: 'ACCEPTED' },
       })
+      // Une candidature peut dormir dans la file du chef pendant que ce
+      // joueur entre par cette autre porte : sans ça, il resterait sans
+      // objet devant l'officier qui décide.
+      await this.#recruitmentDomain.closeForMember(
+        tx,
+        invitation.teamId,
+        userId,
+      )
       await this.#achievementsDomain.track(tx, userId, { kind: 'TEAM_JOINED' })
     })
   }

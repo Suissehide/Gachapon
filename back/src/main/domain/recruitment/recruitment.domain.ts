@@ -10,7 +10,10 @@ import type {
   TeamJoinRequestView,
 } from '../../types/domain/recruitment/recruitment.domain.interface'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
-import type { PostgresORMInterface } from '../../types/infra/orm/client'
+import type {
+  PostgresORMInterface,
+  PrimaTransactionClient,
+} from '../../types/infra/orm/client'
 import type {
   IJoinRequestRepository,
   JoinRequestWithTeam,
@@ -208,6 +211,52 @@ export class RecruitmentDomain implements IRecruitmentDomain {
     })
 
     return { teamId: req.teamId, userId: req.userId, teamName: req.team.name }
+  }
+
+  async decline(
+    requestId: string,
+    actorId: string,
+  ): Promise<{ teamId: string; userId: string; teamName: string }> {
+    const now = new Date()
+    const req = await this.#joinRequestRepo.findById(requestId)
+    if (!req) {
+      throw Boom.notFound('Join request not found')
+    }
+    if (req.status !== 'PENDING' || isJoinRequestExpired(req, now)) {
+      throw Boom.conflict('Join request already processed')
+    }
+    await this.#assertCanDecide(req.teamId, actorId)
+
+    await this.#postgresOrm.executeWithTransactionClient(async (tx) => {
+      const updated = await this.#joinRequestRepo.decideIfPending(
+        tx,
+        req.id,
+        'DECLINED',
+        actorId,
+        now,
+      )
+      if (updated === 0) {
+        throw Boom.conflict('Join request already processed')
+      }
+    })
+
+    return { teamId: req.teamId, userId: req.userId, teamName: req.team.name }
+  }
+
+  /**
+   * Le joueur est entré par une AUTRE porte (invitation) pendant que sa
+   * candidature dormait : elle n'a plus d'objet. Sans cet appel, le chef voit
+   * dans sa file la demande de quelqu'un qui est déjà membre.
+   */
+  async closeForMember(
+    tx: PrimaTransactionClient,
+    teamId: string,
+    userId: string,
+  ): Promise<void> {
+    await tx.joinRequest.updateMany({
+      where: { teamId, userId, status: 'PENDING' },
+      data: { status: 'ACCEPTED', decidedAt: new Date() },
+    })
   }
 
   /**

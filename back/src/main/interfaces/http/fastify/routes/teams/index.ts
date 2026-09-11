@@ -235,6 +235,20 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     },
   )
 
+  fastify.post(
+    '/join-requests/:id/decline',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        tags: ['Team'],
+        params: joinRequestIdParamSchema,
+        response: { 200: joinRequestDecisionResponseSchema },
+      },
+    },
+    (request) =>
+      recruitmentDomain.decline(request.params.id, request.user.userID),
+  )
+
   fastify.patch(
     '/teams/:id',
     {

@@ -1,3 +1,5 @@
+import type { PrimaTransactionClient } from '../../infra/orm/client'
+
 export type MyJoinRequestView = {
   id: string
   teamId: string
@@ -28,4 +30,13 @@ export interface IRecruitmentDomain {
     requestId: string,
     actorId: string,
   ): Promise<{ teamId: string; userId: string; teamName: string }>
+  decline(
+    requestId: string,
+    actorId: string,
+  ): Promise<{ teamId: string; userId: string; teamName: string }>
+  closeForMember(
+    tx: PrimaTransactionClient,
+    teamId: string,
+    userId: string,
+  ): Promise<void>
 }
