@@ -197,6 +197,8 @@ model User {
   teamMemberships     TeamMember[]
   sentInvitations     Invitation[]              @relation("InvitedByUser")
   receivedInvitations Invitation[]              @relation("InvitedUser")
+  joinRequests        JoinRequest[]             @relation("JoinRequestCandidate")
+  joinRequestsDecided JoinRequest[]             @relation("JoinRequestDecider")
   userCards           UserCard[]
   gachaPulls          GachaPull[]
   purchases           Purchase[]
@@ -276,6 +278,7 @@ model Team {
 
   members     TeamMember[]
   invitations Invitation[]
+  joinRequests JoinRequest[]
   raids       TeamRaid[]
   duels       Duel[]
   bets        Bet[]
@@ -288,6 +291,9 @@ model Team {
   perkPoints Int                @default(0)
   perks      TeamPerk[]
   weeklies   TeamMemberWeekly[]
+  /// Vrai par défaut, y compris pour les équipes déjà en base : un annuaire
+  /// vide au lancement ne se remplit jamais.
+  recruiting   Boolean       @default(true)
 
   @@index([ownerId])
 }
@@ -343,6 +349,36 @@ model Invitation {
   expiresAt     DateTime
   createdAt     DateTime         @default(now())
   emailSentAt   DateTime?
+}
+
+enum JoinRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  CANCELLED
+  EXPIRED
+}
+
+/// Une candidature spontanée à une équipe. UNE ligne par couple (équipe,
+/// joueur) : recandidater réécrit la ligne au lieu d'en empiler une, ce qui
+/// laisse la base garantir l'unicité seule. On perd l'historique des refus
+/// successifs ; `decidedAt` suffit au cooldown, seul usage qu'on en fait.
+model JoinRequest {
+  id          String            @id @default(uuid())
+  teamId      String
+  team        Team              @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User              @relation("JoinRequestCandidate", fields: [userId], references: [id], onDelete: Cascade)
+  status      JoinRequestStatus @default(PENDING)
+  createdAt   DateTime          @default(now())
+  expiresAt   DateTime
+  decidedById String?
+  decidedBy   User?             @relation("JoinRequestDecider", fields: [decidedById], references: [id])
+  decidedAt   DateTime?
+
+  @@unique([teamId, userId])
+  @@index([teamId, status])
+  @@index([userId, status])
 }
 
 model CardSet {
