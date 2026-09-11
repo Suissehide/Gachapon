@@ -3,6 +3,7 @@ import {
   ArrowRight,
   Bell,
   Check,
+  Coins,
   ScrollText,
   Swords,
   Users,
@@ -10,11 +11,13 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
+import { RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import {
   useAcceptPendingDuel,
   useDeclinePendingDuel,
   useMyPendingDuels,
 } from '../../queries/useMyPendingDuels.ts'
+import { useMyTargetedBets } from '../../queries/useMyTargetedBets.ts'
 import { useClaimableQuestsCount } from '../../queries/useQuests.ts'
 import {
   useAcceptInvitation,
@@ -29,6 +32,7 @@ export function NotificationsBadge() {
   const ref = useRef<HTMLDivElement>(null)
   const { data, isLoading } = useMyInvitations()
   const { data: duelData } = useMyPendingDuels()
+  const { data: betData } = useMyTargetedBets()
   const questsCount = useClaimableQuestsCount()
   const navigate = useNavigate()
   const accept = useAcceptInvitation()
@@ -38,7 +42,8 @@ export function NotificationsBadge() {
 
   const invitations = data?.invitations ?? []
   const duels = duelData?.duels ?? []
-  const count = invitations.length + duels.length + questsCount
+  const bets = betData?.bets ?? []
+  const count = invitations.length + duels.length + bets.length + questsCount
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -229,6 +234,41 @@ export function NotificationsBadge() {
                           )}
                         </Button>
                       </div>
+                    </li>
+                  )
+                })}
+                {bets.map((bet) => {
+                  const goToTeam = () => {
+                    setIsOpen(false)
+                    void navigate({
+                      to: '/team/$id',
+                      params: { id: bet.teamId },
+                    })
+                  }
+                  // Aucun bouton : un pari placé sur soi ne s'accepte ni ne se
+                  // refuse. La ligne informe, et disparaît au règlement.
+                  return (
+                    <li key={bet.id}>
+                      <button
+                        type="button"
+                        onClick={goToTeam}
+                        title="Voir le pari"
+                        className="group flex w-full cursor-pointer items-center gap-3 rounded-lg border border-border/60 bg-muted/30 p-3 text-left transition-colors hover:bg-muted/60"
+                      >
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary text-white transition-transform group-hover:scale-105">
+                          <Coins className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-display text-sm font-bold text-text transition-colors group-hover:text-primary">
+                            {bet.bettor.username} a parié sur toi
+                          </p>
+                          <p className="truncate text-xs text-text-light">
+                            {RARITY_LABEL_FR[bet.minRarity] ?? bet.minRarity} ou
+                            mieux en {bet.pullWindow} tirages
+                          </p>
+                        </div>
+                        <ArrowRight className="h-4 w-4 shrink-0 text-text-light/50 transition-colors group-hover:text-primary" />
+                      </button>
                     </li>
                   )
                 })}

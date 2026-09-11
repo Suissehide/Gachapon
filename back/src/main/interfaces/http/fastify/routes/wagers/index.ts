@@ -7,6 +7,7 @@ import {
   duelParamSchema,
   duelViewSchema,
   myPendingDuelsResponseSchema,
+  myTargetedBetsResponseSchema,
   placeBetBodySchema,
   proposeDuelBodySchema,
   wagersTeamParamSchema,
@@ -45,6 +46,23 @@ export const wagersRouter: FastifyPluginCallbackZod = (fastify) => {
     },
     async (request) => ({
       duels: await duelDomain.listPendingForOpponent(request.user.userID),
+    }),
+  )
+
+  // Pendant de `/me/duels` pour les paris. Purement informatif : la cible
+  // n'accepte ni ne refuse un pari place sur elle, c'est le reglement qui
+  // retire la ligne de la pastille.
+  fastify.get(
+    '/me/bets',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        tags: ['Wagers'],
+        response: { 200: myTargetedBetsResponseSchema },
+      },
+    },
+    async (request) => ({
+      bets: await betDomain.listActiveForTarget(request.user.userID),
     }),
   )
 

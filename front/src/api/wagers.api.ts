@@ -52,6 +52,27 @@ export type PendingDuelView = {
   expiresAt: string
 }
 
+/**
+ * Un pari en cours placé SUR moi, tel que `GET /me/bets` le sert à la
+ * pastille. Croisé champ par champ avec `myTargetedBetsResponseSchema`
+ * (back/…/schemas/wagers.schema.ts) : le provider Zod retire silencieusement
+ * du JSON toute clé absente de là-bas, et rien ici ne prévient d'un champ
+ * renommé côté serveur.
+ */
+export type TargetedBetView = {
+  id: string
+  teamId: string
+  team: { id: string; name: string; slug: string; avatar: string | null }
+  bettor: WagerUserMini
+  minRarity: CardRarity
+  stake: number
+  multiplier: number
+  pullWindow: number
+  pullsSeen: number
+  createdAt: string
+  deadlineAt: string
+}
+
 export type BetStatus = 'ACTIVE' | 'WON' | 'LOST' | 'EXPIRED'
 
 // Croisé champ par champ avec `betViewSchema`
@@ -148,6 +169,14 @@ const PLACE_BET_ERRORS = {
 }
 
 export const WagersApi = {
+  getMyTargetedBets: async (): Promise<{ bets: TargetedBetView[] }> => {
+    const res = await fetchWithAuth(`${apiUrl}/me/bets`)
+    if (!res.ok) {
+      handleHttpError(res, {}, 'Chargement des paris reçus')
+    }
+    return res.json()
+  },
+
   getMyPendingDuels: async (): Promise<{ duels: PendingDuelView[] }> => {
     const res = await fetchWithAuth(`${apiUrl}/me/duels`)
     if (!res.ok) {

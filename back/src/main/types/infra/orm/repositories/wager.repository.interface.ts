@@ -25,6 +25,12 @@ export type PendingDuelForOpponent = Duel & {
   challenger: { id: string; username: string; avatar: string | null }
 }
 
+/** Un pari en cours, vu depuis la CIBLE : l'equipe et le parieur suffisent. */
+export type ActiveBetOnTarget = Bet & {
+  team: { id: string; name: string; slug: string; avatar: string | null }
+  bettor: { id: string; username: string; avatar: string | null }
+}
+
 export type BetWithParties = Bet & {
   bettor: { id: string; username: string; avatar: string | null }
   target: { id: string; username: string; avatar: string | null }
@@ -68,6 +74,18 @@ export interface IWagerRepository {
     userId: string,
     createdAfter: Date,
   ): Promise<PendingDuelForOpponent[]>
+  /**
+   * Les paris ACTIVE places sur le joueur, toutes equipes confondues, dont
+   * l'echeance court encore. `deadlineAfter` repond au meme besoin que
+   * `createdAfter` cote duels : le reglement d'un pari est PARESSEUX — il est
+   * declenche par un tirage de la cible ou par une lecture de l'equipe — donc
+   * un ACTIVE hors echeance le reste en base, et filtrer sur le seul statut
+   * ferait trainer un pari mort dans la pastille.
+   */
+  listActiveBetsOnTarget(
+    userId: string,
+    deadlineAfter: Date,
+  ): Promise<ActiveBetOnTarget[]>
   listTeamDuels(teamId: string): Promise<DuelWithParties[]>
   listRecentSettledDuels(
     teamId: string,

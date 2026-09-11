@@ -2,6 +2,7 @@ import type { Bet, BetStatus, Duel } from '../../../../generated/client'
 import type { IocContainer } from '../../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type {
+  ActiveBetOnTarget,
   BetWithParties,
   DuelWithParties,
   IWagerRepository,
@@ -116,6 +117,24 @@ export class WagerRepository implements IWagerRepository {
     },
   ): Promise<Duel> {
     return tx.duel.create({ data })
+  }
+
+  listActiveBetsOnTarget(
+    userId: string,
+    deadlineAfter: Date,
+  ): Promise<ActiveBetOnTarget[]> {
+    return this.#prisma.bet.findMany({
+      where: {
+        targetId: userId,
+        status: 'ACTIVE',
+        deadlineAt: { gt: deadlineAfter },
+      },
+      include: {
+        team: { select: TEAM_SELECT },
+        bettor: { select: PARTY_SELECT },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
   }
 
   listTeamBets(

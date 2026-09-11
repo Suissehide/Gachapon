@@ -6,6 +6,7 @@ import type {
   BetQuote,
   BetView,
   IBetDomain,
+  TargetedBetView,
 } from '../../types/domain/wagers/wagers.domain.interface'
 import type { TeamWithMembers } from '../../types/domain/team/team.types'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
@@ -224,6 +225,35 @@ export class BetDomain implements IBetDomain {
    * entre-temps, ses boosts ont expiré) ne peut pas être « encaissé » à un
    * prix qui n'a plus cours.
    */
+  /**
+   * Les paris en cours places sur le joueur, toutes equipes confondues.
+   *
+   * En lecture seule, a dessein : cette route alimente la pastille de la
+   * navbar, donc elle est appelee sur toutes les pages. Y greffer le
+   * reglement paresseux — ce que fait `listForTeam` — ferait ecrire en base a
+   * chaque affichage. Les paris hors echeance sont donc ecartes a la lecture,
+   * pas tranches ici.
+   */
+  async listActiveForTarget(
+    userId: string,
+    now: Date = new Date(),
+  ): Promise<TargetedBetView[]> {
+    const bets = await this.#wagerRepository.listActiveBetsOnTarget(userId, now)
+    return bets.map((bet) => ({
+      id: bet.id,
+      teamId: bet.teamId,
+      team: bet.team,
+      bettor: bet.bettor,
+      minRarity: bet.minRarity,
+      stake: bet.stake,
+      multiplier: bet.multiplier,
+      pullWindow: bet.pullWindow,
+      pullsSeen: bet.pullsSeen,
+      createdAt: bet.createdAt.toISOString(),
+      deadlineAt: bet.deadlineAt.toISOString(),
+    }))
+  }
+
   async quote(
     teamId: string,
     bettorId: string,

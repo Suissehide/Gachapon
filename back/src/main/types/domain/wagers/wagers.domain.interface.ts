@@ -145,7 +145,29 @@ export interface IDuelDomain {
   ): Promise<void>
 }
 
+/**
+ * Un pari en cours place SUR moi, servi par `GET /me/bets` a la pastille de
+ * notification. Purement informatif : contrairement a un defi ou a une
+ * invitation, la cible n'a rien a accepter ni a refuser — c'est le reglement
+ * qui retire la ligne.
+ */
+export type TargetedBetView = {
+  id: string
+  teamId: string
+  team: { id: string; name: string; slug: string; avatar: string | null }
+  bettor: WagerUserMini
+  minRarity: CardRarity
+  stake: number
+  multiplier: number
+  pullWindow: number
+  pullsSeen: number
+  createdAt: string
+  deadlineAt: string
+}
+
 export interface IBetDomain {
+  /** Les paris en cours places sur le joueur, toutes equipes confondues. */
+  listActiveForTarget(userId: string, now?: Date): Promise<TargetedBetView[]>
   /** Cote indicative pour un pari du parieur sur la cible, à la rareté visée. */
   quote(
     teamId: string,

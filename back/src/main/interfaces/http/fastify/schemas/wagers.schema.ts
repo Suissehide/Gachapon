@@ -82,6 +82,32 @@ const betStatusSchema = z.enum(['ACTIVE', 'WON', 'LOST', 'EXPIRED'])
 // Corps du placement d'un pari. Il n'y a VOLONTAIREMENT aucun champ de cote
 // ni de probabilité : la cote est recalculée par le serveur au placement, et
 // on ne veut pas même offrir une clé où le client pourrait l'annoncer.
+// Croisé champ par champ avec `TargetedBetView`
+// (types/domain/wagers/wagers.domain.interface.ts) : le provider Zod retire
+// silencieusement du JSON toute clé absente d'ici.
+export const myTargetedBetsResponseSchema = z.object({
+  bets: z.array(
+    z.object({
+      id: z.string(),
+      teamId: z.string(),
+      team: z.object({
+        id: z.string(),
+        name: z.string(),
+        slug: z.string(),
+        avatar: z.string().nullable(),
+      }),
+      bettor: wagerUserMiniSchema,
+      minRarity: cardRaritySchema,
+      stake: z.number().int(),
+      multiplier: z.number(),
+      pullWindow: z.number().int(),
+      pullsSeen: z.number().int(),
+      createdAt: z.string(),
+      deadlineAt: z.string(),
+    }),
+  ),
+})
+
 export const placeBetBodySchema = z.object({
   targetId: z.string(),
   minRarity: cardRaritySchema,
