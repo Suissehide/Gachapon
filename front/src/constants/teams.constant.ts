@@ -24,6 +24,7 @@ export type Team = {
   ownerId: string
   createdAt: string
   members: TeamMember[]
+  recruiting: boolean
 }
 
 export type TeamRaidBadge = {
@@ -52,6 +53,7 @@ export type TeamSummary = {
   myRole: 'OWNER' | 'ADMIN' | 'MEMBER'
   myRoleLabel: 'Chef' | 'Officier' | 'Membre' | 'Recrue'
   raid: TeamRaidBadge | null
+  recruiting: boolean
 }
 
 export type Invitation = {
@@ -86,6 +88,46 @@ export type TeamInvitation = {
   expiresAt: string
 }
 
+// Croisés champ par champ avec `directoryResponseSchema` / `myJoinRequestSchema`
+// / `teamJoinRequestsResponseSchema`
+// (back/src/main/interfaces/http/fastify/schemas/recruitment.schema.ts).
+export type DirectoryTeam = {
+  id: string
+  name: string
+  slug: string
+  motto: string | null
+  hue: number
+  level: number
+  memberCount: number
+  maxMembers: number
+  activeThisWeek: number
+  hasPendingRequest: boolean
+}
+
+// `status` a trois valeurs, chacune avec sa propre durée de vie côté
+// serveur : PENDING tant que la demande vit, DECLINED tant que le cooldown
+// de recandidature court (`reapplyAt` porte alors la date de fin), ACCEPTED
+// pendant 7 jours le temps que la cloche annonce la bonne nouvelle
+// (`decidedAt` porte la date de la décision).
+export type MyJoinRequest = {
+  id: string
+  teamId: string
+  teamName: string
+  teamSlug: string
+  hue: number
+  status: 'PENDING' | 'DECLINED' | 'ACCEPTED'
+  createdAt: string
+  expiresAt: string
+  reapplyAt: string | null
+  decidedAt: string | null
+}
+
+export type TeamJoinRequest = {
+  id: string
+  createdAt: string
+  candidate: { id: string; username: string; avatar: string | null }
+}
+
 // Routes
 export const TEAM_ROUTES = {
   teams: '/teams',
@@ -106,4 +148,10 @@ export const TEAM_ROUTES = {
   raids: (teamId: string) => `/teams/${teamId}/raids`,
   perks: (teamId: string) => `/teams/${teamId}/perks`,
   perksReset: (teamId: string) => `/teams/${teamId}/perks/reset`,
+  directory: '/teams/directory',
+  joinRequests: (teamId: string) => `/teams/${teamId}/join-requests`,
+  myJoinRequest: (teamId: string) => `/teams/${teamId}/join-requests/me`,
+  myJoinRequests: '/me/join-requests',
+  acceptJoinRequest: (id: string) => `/join-requests/${id}/accept`,
+  declineJoinRequest: (id: string) => `/join-requests/${id}/decline`,
 } as const
