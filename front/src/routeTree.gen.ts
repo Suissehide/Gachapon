@@ -41,6 +41,7 @@ import { Route as AdminAdminRouteImport } from './routes/_admin/admin'
 import { Route as AuthenticatedTeamIndexRouteImport } from './routes/_authenticated/team/index'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin.index'
 import { Route as AuthenticatedTowerElementRouteImport } from './routes/_authenticated/tower_.$element'
+import { Route as AuthenticatedTeamJoinRouteImport } from './routes/_authenticated/team/join'
 import { Route as AuthenticatedTeamIdRouteImport } from './routes/_authenticated/team/$id'
 import { Route as AuthenticatedProfileUsernameRouteImport } from './routes/_authenticated/profile/$username'
 import { Route as AuthenticatedBattleStageIdRouteImport } from './routes/_authenticated/battle.$stageId'
@@ -220,6 +221,11 @@ const AuthenticatedTowerElementRoute =
     path: '/tower/$element',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedTeamJoinRoute = AuthenticatedTeamJoinRouteImport.update({
+  id: '/team/join',
+  path: '/team/join',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedTeamIdRoute = AuthenticatedTeamIdRouteImport.update({
   id: '/team/$id',
   path: '/team/$id',
@@ -352,6 +358,7 @@ export interface FileRoutesByFullPath {
   '/battle/$stageId': typeof AuthenticatedBattleStageIdRoute
   '/profile/$username': typeof AuthenticatedProfileUsernameRoute
   '/team/$id': typeof AuthenticatedTeamIdRoute
+  '/team/join': typeof AuthenticatedTeamJoinRoute
   '/tower/$element': typeof AuthenticatedTowerElementRoute
   '/admin/': typeof AdminAdminIndexRoute
   '/team/': typeof AuthenticatedTeamIndexRoute
@@ -400,6 +407,7 @@ export interface FileRoutesByTo {
   '/battle/$stageId': typeof AuthenticatedBattleStageIdRoute
   '/profile/$username': typeof AuthenticatedProfileUsernameRoute
   '/team/$id': typeof AuthenticatedTeamIdRoute
+  '/team/join': typeof AuthenticatedTeamJoinRoute
   '/tower/$element': typeof AuthenticatedTowerElementRoute
   '/admin': typeof AdminAdminIndexRoute
   '/team': typeof AuthenticatedTeamIndexRoute
@@ -452,6 +460,7 @@ export interface FileRoutesById {
   '/_authenticated/battle/$stageId': typeof AuthenticatedBattleStageIdRoute
   '/_authenticated/profile/$username': typeof AuthenticatedProfileUsernameRoute
   '/_authenticated/team/$id': typeof AuthenticatedTeamIdRoute
+  '/_authenticated/team/join': typeof AuthenticatedTeamJoinRoute
   '/_authenticated/tower_/$element': typeof AuthenticatedTowerElementRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
   '/_authenticated/team/': typeof AuthenticatedTeamIndexRoute
@@ -503,6 +512,7 @@ export interface FileRouteTypes {
     | '/battle/$stageId'
     | '/profile/$username'
     | '/team/$id'
+    | '/team/join'
     | '/tower/$element'
     | '/admin/'
     | '/team/'
@@ -551,6 +561,7 @@ export interface FileRouteTypes {
     | '/battle/$stageId'
     | '/profile/$username'
     | '/team/$id'
+    | '/team/join'
     | '/tower/$element'
     | '/admin'
     | '/team'
@@ -602,6 +613,7 @@ export interface FileRouteTypes {
     | '/_authenticated/battle/$stageId'
     | '/_authenticated/profile/$username'
     | '/_authenticated/team/$id'
+    | '/_authenticated/team/join'
     | '/_authenticated/tower_/$element'
     | '/_admin/admin/'
     | '/_authenticated/team/'
@@ -854,6 +866,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTowerElementRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/team/join': {
+      id: '/_authenticated/team/join'
+      path: '/team/join'
+      fullPath: '/team/join'
+      preLoaderRoute: typeof AuthenticatedTeamJoinRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/team/$id': {
       id: '/_authenticated/team/$id'
       path: '/team/$id'
@@ -1038,6 +1057,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedBattleStageIdRoute: typeof AuthenticatedBattleStageIdRoute
   AuthenticatedProfileUsernameRoute: typeof AuthenticatedProfileUsernameRoute
   AuthenticatedTeamIdRoute: typeof AuthenticatedTeamIdRoute
+  AuthenticatedTeamJoinRoute: typeof AuthenticatedTeamJoinRoute
   AuthenticatedTowerElementRoute: typeof AuthenticatedTowerElementRoute
   AuthenticatedTeamIndexRoute: typeof AuthenticatedTeamIndexRoute
   AuthenticatedProfileUsernameCollectionRoute: typeof AuthenticatedProfileUsernameCollectionRoute
@@ -1060,6 +1080,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBattleStageIdRoute: AuthenticatedBattleStageIdRoute,
   AuthenticatedProfileUsernameRoute: AuthenticatedProfileUsernameRoute,
   AuthenticatedTeamIdRoute: AuthenticatedTeamIdRoute,
+  AuthenticatedTeamJoinRoute: AuthenticatedTeamJoinRoute,
   AuthenticatedTowerElementRoute: AuthenticatedTowerElementRoute,
   AuthenticatedTeamIndexRoute: AuthenticatedTeamIndexRoute,
   AuthenticatedProfileUsernameCollectionRoute:
