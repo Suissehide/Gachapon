@@ -2,6 +2,7 @@ import type { JoinRequestStatus } from '../../../../generated/client'
 import type { IocContainer } from '../../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type {
+  DirectoryRow,
   IJoinRequestRepository,
   JoinRequestRow,
   JoinRequestWithTeam,
@@ -111,6 +112,53 @@ export class JoinRequestRepository implements IJoinRequestRepository {
         data: { status: 'EXPIRED' },
       })
       .then(() => undefined)
+  }
+
+  /**
+   * Tri par ACTIVITÉ de la semaine, pas par niveau : un nouveau cherche une
+   * équipe vivante, pas une équipe forte, et trier par puissance recréerait
+   * l'entonnoir du classement. `_count.weeklies` s'appuie sur l'index
+   * `@@index([teamId, weekKey])` déjà en place.
+   *
+   * `id` en dernier critère : sans lui la pagination par curseur n'est pas
+   * déterministe entre deux équipes à égalité.
+   *
+   * Note d'implémentation : Prisma ne sait pas trier sur un `_count`
+   * filtré. Le tri par activité se fait donc EN MÉMOIRE, après la requête,
+   * sur la page récupérée — ce qui suffit tant que l'annuaire tient en
+   * quelques dizaines d'équipes. Trier par `level` en SQL garde la
+   * pagination stable ; le classement final applique `activeThisWeek`
+   * décroissant puis `level` décroissant (`RecruitmentDomain#listDirectory`).
+   * Si l'annuaire dépasse quelques centaines d'équipes, il faudra une vue
+   * matérialisée — hors périmètre aujourd'hui.
+   */
+  listDirectory(params: {
+    excludeTeamIds: string[]
+    weekKey: string
+    search?: string
+    cursor?: string
+    limit: number
+  }): Promise<DirectoryRow[]> {
+    return this.#prisma.team.findMany({
+      where: {
+        recruiting: true,
+        id: { notIn: params.excludeTeamIds },
+        ...(params.search
+          ? { name: { contains: params.search, mode: 'insensitive' } }
+          : {}),
+      },
+      include: {
+        _count: {
+          select: {
+            members: true,
+            weeklies: { where: { weekKey: params.weekKey } },
+          },
+        },
+      },
+      orderBy: [{ level: 'desc' }, { id: 'asc' }],
+      take: params.limit + 1,
+      ...(params.cursor ? { cursor: { id: params.cursor }, skip: 1 } : {}),
+    }) as unknown as Promise<DirectoryRow[]>
   }
 }
 

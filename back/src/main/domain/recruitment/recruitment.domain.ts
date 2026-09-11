@@ -5,6 +5,7 @@ import type { TeamRepository } from '../../infra/orm/repositories/team.repositor
 import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
 import type { IocContainer } from '../../types/application/ioc'
 import type {
+  DirectoryEntryView,
   IRecruitmentDomain,
   MyJoinRequestView,
   TeamJoinRequestView,
@@ -19,6 +20,7 @@ import type {
   JoinRequestWithTeam,
 } from '../../types/infra/orm/repositories/join-request.repository.interface'
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
+import { raidWeekKey } from '../raid/raid-rules'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import { MAX_TEAMS_PER_USER } from '../team/team.domain'
 import { hueFromName } from '../team-progression/team-progression-rules'
@@ -319,6 +321,66 @@ export class RecruitmentDomain implements IRecruitmentDomain {
         createdAt: req.createdAt,
         candidate: req.user,
       }))
+  }
+
+  /**
+   * L'annuaire : équipes qui recrutent, hors les miennes et hors les
+   * pleines, triées par activité de la semaine puis par niveau. Voir la
+   * note sur `JoinRequestRepository#listDirectory` pour pourquoi ce
+   * classement final se fait en mémoire plutôt qu'en SQL.
+   */
+  async listDirectory(
+    userId: string,
+    opts: { cursor?: string; search?: string },
+  ): Promise<{ teams: DirectoryEntryView[]; nextCursor: string | null }> {
+    const LIMIT = 20
+    const now = new Date()
+    const [myTeams, config] = await Promise.all([
+      this.#teamRepo.findByUserId(userId),
+      this.#configService.getMany('team.maxMembers'),
+    ])
+    const maxMembers = config['team.maxMembers']
+
+    const rows = await this.#joinRequestRepo.listDirectory({
+      excludeTeamIds: myTeams.map((team) => team.id),
+      // Même clé de semaine que les raids, pour que « actifs cette
+      // semaine » désigne la même fenêtre partout.
+      weekKey: raidWeekKey(now),
+      search: opts.search,
+      cursor: opts.cursor,
+      limit: LIMIT,
+    })
+
+    const page = rows.slice(0, LIMIT)
+    const lastOnPage = page.at(-1)
+    const nextCursor = rows.length > LIMIT && lastOnPage ? lastOnPage.id : null
+
+    const mine = await this.#joinRequestRepo.listByUser(userId)
+    const pendingTeamIds = new Set(
+      mine
+        .filter(
+          (req) => req.status === 'PENDING' && !isJoinRequestExpired(req, now),
+        )
+        .map((req) => req.teamId),
+    )
+
+    const teams = page
+      .filter((team) => team._count.members < maxMembers)
+      .map((team) => ({
+        id: team.id,
+        name: team.name,
+        slug: team.slug,
+        motto: team.motto,
+        hue: team.hue ?? hueFromName(team.name),
+        level: team.level,
+        memberCount: team._count.members,
+        maxMembers,
+        activeThisWeek: team._count.weeklies,
+        hasPendingRequest: pendingTeamIds.has(team.id),
+      }))
+      .sort((a, b) => b.activeThisWeek - a.activeThisWeek || b.level - a.level)
+
+    return { teams, nextCursor }
   }
 
   #toView(

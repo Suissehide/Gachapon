@@ -23,6 +23,17 @@ export type JoinRequestWithTeam = JoinRequestRow & {
 export type JoinRequestWithTeamAndUser = JoinRequestWithTeam &
   JoinRequestWithUser
 
+/** Une ligne de l'annuaire des équipes qui recrutent. */
+export type DirectoryRow = {
+  id: string
+  name: string
+  slug: string
+  motto: string | null
+  hue: number | null
+  level: number
+  _count: { members: number; weeklies: number }
+}
+
 export interface IJoinRequestRepository {
   findByTeamAndUser(
     teamId: string,
@@ -64,4 +75,16 @@ export interface IJoinRequestRepository {
   ): Promise<number>
   setStatus(id: string, status: JoinRequestStatus): Promise<void>
   markExpired(ids: string[]): Promise<void>
+  /**
+   * Tri par `level` en SQL (pagination stable), `id` en tie-break. Le
+   * classement final par activité de la semaine se fait en mémoire côté
+   * domaine — voir la note sur `listDirectory` du repository.
+   */
+  listDirectory(params: {
+    excludeTeamIds: string[]
+    weekKey: string
+    search?: string
+    cursor?: string
+    limit: number
+  }): Promise<DirectoryRow[]>
 }

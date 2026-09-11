@@ -46,6 +46,7 @@ export const teamUpdateBodySchema = z.object({
   description: z.string().max(200).optional(),
   motto: z.string().max(160).nullish(),
   hue: z.number().int().min(0).max(359).nullish(),
+  recruiting: z.boolean().optional(),
 })
 
 export const teamTransferBodySchema = z.object({
@@ -168,6 +169,7 @@ export const teamListResponseSchema = z.object({
       myRole: teamMemberRoleSchema,
       myRoleLabel: teamMemberRoleLabelSchema,
       raid: teamRaidBadgeSchema.nullable(),
+      recruiting: z.boolean(),
     }),
   ),
 })
@@ -193,6 +195,7 @@ export const teamDetailResponseSchema = z.object({
   weekPts: z.number().int(),
   rankGlobal: z.number().int().nullable(),
   raidsWon: z.number().int(),
+  recruiting: z.boolean(),
 })
 
 export const teamMembersResponseSchema = z.object({

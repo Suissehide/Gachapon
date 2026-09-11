@@ -37,3 +37,26 @@ export const joinRequestDecisionResponseSchema = z.object({
   teamId: z.string(),
   userId: z.string(),
 })
+
+export const directoryQuerySchema = z.object({
+  cursor: z.string().uuid().optional(),
+  search: z.string().max(50).optional(),
+})
+
+export const directoryResponseSchema = z.object({
+  teams: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      slug: z.string(),
+      motto: z.string().nullable(),
+      hue: z.number().int(),
+      level: z.number().int(),
+      memberCount: z.number().int(),
+      maxMembers: z.number().int(),
+      activeThisWeek: z.number().int(),
+      hasPendingRequest: z.boolean(),
+    }),
+  ),
+  nextCursor: z.string().nullable(),
+})

@@ -14,7 +14,8 @@ export interface ITeamRepository {
   ): Promise<TeamWithMembers>
   /**
    * `motto` et `hue` absents = colonnes inchangées ; à `null` = colonnes
-   * effacées (la teinte retombe alors sur le hachage du nom).
+   * effacées (la teinte retombe alors sur le hachage du nom). `recruiting`
+   * absent laisse le flag inchangé.
    */
   update(
     id: string,
@@ -24,6 +25,7 @@ export interface ITeamRepository {
       description?: string
       motto?: string | null
       hue?: number | null
+      recruiting?: boolean
     },
   ): Promise<TeamWithMembers>
   /**

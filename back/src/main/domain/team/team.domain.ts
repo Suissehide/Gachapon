@@ -512,6 +512,7 @@ export class TeamDomain implements TeamDomainInterface {
       description?: string
       motto?: string | null
       hue?: number | null
+      recruiting?: boolean
     },
   ): Promise<TeamWithMembers> {
     const team = await this.#teamRepo.findById(teamId)
@@ -529,6 +530,7 @@ export class TeamDomain implements TeamDomainInterface {
       description: data.description,
       motto: data.motto,
       hue: data.hue,
+      recruiting: data.recruiting,
     })
   }
 
@@ -663,6 +665,7 @@ export class TeamDomain implements TeamDomainInterface {
         // semaine. La liste ne le crée pas : ce serait figer les PV du boss
         // sur l'effectif du moment, juste parce qu'on a ouvert une page.
         raid: badges.get(team.id) ?? null,
+        recruiting: team.recruiting,
       }
     })
   }
@@ -729,6 +732,7 @@ export class TeamDomain implements TeamDomainInterface {
       weekPts: weekly.total,
       rankGlobal,
       raidsWon,
+      recruiting: team.recruiting,
     }
   }
 

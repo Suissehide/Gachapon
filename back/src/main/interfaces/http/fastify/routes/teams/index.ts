@@ -6,6 +6,8 @@ import type { TeamPerkKey } from '../../../../../domain/team-progression/team-pr
 import type { TeamPerkState } from '../../../../../types/domain/team-progression/team-progression.domain.interface'
 import type { TeamPerkEvent } from '../../../../ws/ws-manager'
 import {
+  directoryQuerySchema,
+  directoryResponseSchema,
   joinRequestDecisionResponseSchema,
   joinRequestIdParamSchema,
   myJoinRequestSchema,
@@ -106,6 +108,23 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
       )
       return reply.status(201).send(team)
     },
+  )
+
+  // Doit être déclarée AVANT `/teams/:id` : sinon Fastify résout
+  // `directory` comme un `:id` et le schéma UUID de ce paramètre rejette la
+  // requête en 400.
+  fastify.get(
+    '/teams/directory',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        tags: ['Team'],
+        querystring: directoryQuerySchema,
+        response: { 200: directoryResponseSchema },
+      },
+    },
+    (request) =>
+      recruitmentDomain.listDirectory(request.user.userID, request.query),
   )
 
   fastify.get(

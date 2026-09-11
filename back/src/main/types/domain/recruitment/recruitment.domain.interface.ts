@@ -21,6 +21,22 @@ export type TeamJoinRequestView = {
   candidate: { id: string; username: string; avatar: string | null }
 }
 
+/** Une entrée de l'annuaire des équipes qui recrutent. */
+export type DirectoryEntryView = {
+  id: string
+  name: string
+  slug: string
+  motto: string | null
+  hue: number
+  level: number
+  memberCount: number
+  maxMembers: number
+  /** Nombre de membres ayant marqué au moins un point cette semaine. */
+  activeThisWeek: number
+  /** Le lecteur a déjà une candidature EN ATTENTE pour cette équipe. */
+  hasPendingRequest: boolean
+}
+
 export interface IRecruitmentDomain {
   apply(teamId: string, userId: string): Promise<MyJoinRequestView>
   cancel(teamId: string, userId: string): Promise<void>
@@ -39,4 +55,8 @@ export interface IRecruitmentDomain {
     teamId: string,
     userId: string,
   ): Promise<void>
+  listDirectory(
+    userId: string,
+    opts: { cursor?: string; search?: string },
+  ): Promise<{ teams: DirectoryEntryView[]; nextCursor: string | null }>
 }
