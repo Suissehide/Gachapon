@@ -178,8 +178,19 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // la maquette (1180 pour le meilleur contributeur). A 2, un membre marquait
   // 81000 points et l'equipe touchait le niveau 50 en moins de deux semaines.
   'teamPoints.damagePerPoint': 300,
-  'teamPoints.duelWon': 50,
-  'teamPoints.betWon': 30,
+  // Duels et paris rapportent DÉLIBÉRÉMENT peu. Ils sont bon marché à
+  // lancer : un duel se règle dès que les deux joueurs ont fait leurs 5
+  // tirages — quelques minutes pour qui en fait 60 par jour — et un parieur
+  // tient 3 paris ouverts dont la fenêtre de 10 tirages se remplit en
+  // heures. Comptés à l'échelle du raid (50 et 30), une quinzaine de duels
+  // et une vingtaine de paris par semaine rapportaient ~1350 points là où
+  // la part de raid d'un membre en vaut 540 et ses tirages ~420 : les deux
+  // mécaniques sociales pesaient plus lourd que tout le reste réuni. À 8 et
+  // 3, la même activité vaut ~180 points, soit environ un sixième du total
+  // hebdomadaire — de quoi récompenser sans faire de l'XP d'équipe une
+  // affaire de spam de paris.
+  'teamPoints.duelWon': 8,
+  'teamPoints.betWon': 3,
   'teamPoints.perPull': 1,
   'teamLevel.xpBase': 175,
   'teamLevel.xpExp': 1.6,
