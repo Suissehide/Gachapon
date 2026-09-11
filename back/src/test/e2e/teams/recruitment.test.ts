@@ -8,6 +8,7 @@ import { buildTestApp } from '../../helpers/build-test-app'
 describe('Recrutement d équipe', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
   let prisma: any
+  let configService: any
   let cookiesOwner: string
   let cookiesCandidate: string
   let candidateId: string
@@ -49,6 +50,7 @@ describe('Recrutement d équipe', () => {
   beforeAll(async () => {
     app = await buildTestApp()
     prisma = (app as any).iocContainer.postgresOrm.prisma
+    configService = (app as any).iocContainer.configService
 
     const owner = await signIn('recruitOwner')
     cookiesOwner = owner.cookies
@@ -354,18 +356,90 @@ describe('Recrutement d équipe', () => {
       where: { id: requestId },
     })
     expect(row.status).toBe('ACCEPTED')
+
+    // Les assertions ci-dessus portent sur l'état laissé par l'acceptation ;
+    // on le nettoie maintenant pour rendre le couple (équipe, candidat) au
+    // beforeAll partagé — sinon les tâches 7/8, qui ajoutent leurs tests à
+    // ce même fichier et réutilisent `teamId`/`candidateId`, buteraient sur
+    // « déjà membre de cette équipe » sans savoir pourquoi.
+    await prisma.teamMember.deleteMany({
+      where: { teamId, userId: candidateId },
+    })
+    await prisma.joinRequest.deleteMany({ where: { id: requestId } })
   })
 
   it('une seconde acceptation ne fait rien et répond 409', async () => {
-    const row = await prisma.joinRequest.findFirst({
-      where: { teamId, userId: candidateId },
+    // Indépendant du test précédent (qui nettoie derrière lui) : on sème
+    // directement en base sa propre demande déjà décidée, sans passer par
+    // un nouveau `signIn` (le register e2e est plafonné à 5 par fenêtre —
+    // ownerId/candidateId suffisent, `decideIfPending` ne vérifie que le
+    // statut de la ligne, jamais une appartenance réelle).
+    const seeded = await prisma.joinRequest.create({
+      data: {
+        teamId,
+        userId: candidateId,
+        status: 'ACCEPTED',
+        decidedById: ownerId,
+        decidedAt: new Date(),
+        expiresAt: new Date(Date.now() + 7 * 86_400_000),
+      },
     })
+
     const res = await app.inject({
       method: 'POST',
-      url: `/join-requests/${row.id}/accept`,
+      url: `/join-requests/${seeded.id}/accept`,
       headers: { cookie: cookiesOwner },
     })
     expect(res.statusCode).toBe(409)
+
+    await prisma.joinRequest.deleteMany({ where: { id: seeded.id } })
+  })
+
+  it('équipe pleine : refuse l acceptation mais laisse la demande PENDING', async () => {
+    // Réutilise les fixtures partagées (owner/candidate) plutôt que de
+    // `signIn` deux nouveaux comptes : le register e2e est plafonné à 5
+    // inscriptions par fenêtre et cette suite y est déjà proche.
+    const baseMaxMembers = (await configService.getMany('team.maxMembers'))[
+      'team.maxMembers'
+    ]
+
+    const created = await app.inject({
+      method: 'POST',
+      url: '/teams',
+      headers: { cookie: cookiesOwner },
+      payload: { name: `Complete ${suffix}` },
+    })
+    const fullTeamId = created.json().id as string
+
+    const applied = await app.inject({
+      method: 'POST',
+      url: `/teams/${fullTeamId}/join-requests`,
+      headers: { cookie: cookiesCandidate },
+    })
+    const requestId = applied.json().id as string
+
+    try {
+      // L'équipe n'a que son chef (l'owner) comme membre : abaisser le
+      // plafond à 1 suffit à la rendre "pleine" sans y insérer 34 figurants.
+      await configService.set('team.maxMembers', 1)
+
+      const res = await app.inject({
+        method: 'POST',
+        url: `/join-requests/${requestId}/accept`,
+        headers: { cookie: cookiesOwner },
+      })
+      expect(res.statusCode).toBe(403)
+
+      const after = await prisma.joinRequest.findUnique({
+        where: { id: requestId },
+      })
+      expect(after.status).toBe('PENDING')
+    } finally {
+      await configService.set('team.maxMembers', baseMaxMembers)
+      // Cascade Prisma sur Team -> TeamMember/JoinRequest : un seul delete
+      // suffit à tout nettoyer (équipe, appartenance de l'owner, demande).
+      await prisma.team.delete({ where: { id: fullTeamId } })
+    }
   })
 
   it('refuse l acceptation si le candidat a atteint ses 3 équipes, et expire la demande', async () => {
