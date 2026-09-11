@@ -16,7 +16,7 @@ import {
 } from '../../schemas/wagers.schema'
 
 export const wagersRouter: FastifyPluginCallbackZod = (fastify) => {
-  const { betDomain, duelDomain } = fastify.iocContainer
+  const { betDomain, duelDomain, storageClient } = fastify.iocContainer
 
   fastify.get(
     '/teams/:id/wagers',
@@ -152,13 +152,27 @@ export const wagersRouter: FastifyPluginCallbackZod = (fastify) => {
         response: { 200: duelTransfersResponseSchema },
       },
     },
-    async (request) => ({
-      transfers: await duelDomain.listTransfers(
+    async (request) => {
+      const transfers = await duelDomain.listTransfers(
         request.params.id,
         request.params.duelId,
         request.user.userID,
-      ),
-    }),
+      )
+      // Meme bord que la route collection : le domaine rend des CHEMINS de
+      // stockage, l'URL publique se construit ici.
+      return {
+        transfers: transfers.map(({ card, ...transfer }) => {
+          const { imageKey, ...rest } = card
+          return {
+            ...transfer,
+            card: {
+              ...rest,
+              imageUrl: imageKey ? storageClient.publicUrl(imageKey) : null,
+            },
+          }
+        }),
+      }
+    },
   )
 
   fastify.get(

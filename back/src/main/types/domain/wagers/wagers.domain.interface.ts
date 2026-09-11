@@ -53,7 +53,14 @@ export type DuelTransferView = {
     id: string
     name: string
     rarity: CardRarity
-    imageUrl: string | null
+    /**
+     * CHEMIN de stockage, pas une URL. La regle du depot est de ne persister
+     * que le chemin relatif et de construire l'URL a la lecture : la route
+     * appelle `storageClient.publicUrl` avant de servir, comme la route
+     * collection. Nommer ce champ `imageUrl` ici avait suffi a le laisser
+     * partir brut jusqu'au navigateur, qui n'affichait rien.
+     */
+    imageKey: string | null
     set: { name: string }
   }
 }

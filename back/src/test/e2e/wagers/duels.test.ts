@@ -567,6 +567,10 @@ describe('cycle de vie du duel', () => {
           rarity: 'COMMON',
           dropWeight: 10,
           setId: commonSet.id,
+          // Un CHEMIN de stockage, comme le seed en pose : la route doit le
+          // convertir en URL publique avant de servir. Sans image ici, le
+          // champ vaudrait null et la conversion ne serait jamais verifiee.
+          imageUrl: `staging/cards/duel-${suffix}.png`,
         },
       })
       legendarySetId = legendarySet.id
@@ -695,6 +699,12 @@ describe('cycle de vie du duel', () => {
         expect(t.card.id).toBe(commonCard.id)
         expect(t.card.name).toBe(commonCard.name)
         expect(t.card.rarity).toBe('COMMON')
+        // L'URL est RESOLUE, pas le chemin brut de la colonne : servir la
+        // valeur stockee telle quelle donnait un <img> mort. Le domaine rend
+        // un `imageKey`, la route en fait une URL absolue.
+        expect(t.card.imageUrl).not.toBe(commonCard.imageUrl)
+        expect(t.card.imageUrl).toMatch(/^https?:\/\/.+\/staging\/cards\//)
+        expect(t.card).not.toHaveProperty('imageKey')
         // A est le vainqueur : les neuf cartes sont venues CHEZ LUI.
         expect(t.toMe).toBe(true)
         // Les identifiants bruts ne sortent pas : le domaine les a reduits

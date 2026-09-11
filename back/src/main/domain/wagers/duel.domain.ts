@@ -960,7 +960,15 @@ export class DuelDomain implements IDuelDomain {
       id: transfer.id,
       variant: transfer.variant,
       toMe: transfer.toUserId === userId,
-      card: transfer.card,
+      // Champ par champ, et `imageUrl` devient `imageKey` : etaler la ligne
+      // Prisma laissait passer le chemin de stockage sous un nom d'URL.
+      card: {
+        id: transfer.card.id,
+        name: transfer.card.name,
+        rarity: transfer.card.rarity,
+        imageKey: transfer.card.imageUrl,
+        set: transfer.card.set,
+      },
     }))
   }
 
