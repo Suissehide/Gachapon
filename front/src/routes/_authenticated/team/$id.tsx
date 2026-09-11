@@ -10,6 +10,7 @@ import { ContributionsTable } from '../../../components/team/ContributionsTable.
 import { PerksPanel } from '../../../components/team/PerksPanel.tsx'
 import { RaidHistoryPanel } from '../../../components/team/RaidHistoryPanel.tsx'
 import { RaidPanel } from '../../../components/team/RaidPanel.tsx'
+import { JoinRequestsPanel } from '../../../components/team/recruitment/JoinRequestsPanel.tsx'
 import { TeamIdentityCard } from '../../../components/team/TeamIdentityCard.tsx'
 import { WagersPanel } from '../../../components/team/wagers/WagersPanel.tsx'
 import { Button } from '../../../components/ui/button.tsx'
@@ -137,6 +138,10 @@ function TeamDetailPage() {
               )
             }
           />
+
+          {/* Gardée par `canManage` : un simple membre ne voit jamais la
+              file, et le panneau se masque lui-même quand elle est vide. */}
+          {canManage && <JoinRequestsPanel teamId={id} />}
 
           <PerksPanel
             teamId={id}
