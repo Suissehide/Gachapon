@@ -21,6 +21,7 @@ import { LeaderboardDomain } from '../../../domain/leaderboard/leaderboard.domai
 import { ProfileDomain } from '../../../domain/profile/profile.domain'
 import { QuestsDomain } from '../../../domain/quests/quests.domain'
 import { RaidDomain } from '../../../domain/raid/raid.domain'
+import { RecruitmentDomain } from '../../../domain/recruitment/recruitment.domain'
 import { RewardsDomain } from '../../../domain/rewards/rewards.domain'
 import { ShopDomain } from '../../../domain/shop/shop.domain'
 import { AdminSkillTreeDomain } from '../../../domain/skills/admin-skill-tree.domain'
@@ -151,6 +152,7 @@ class AwilixIocContainer {
       'joinRequestRepository',
       asClass(JoinRequestRepository).singleton(),
     )
+    this.#reg('recruitmentDomain', asClass(RecruitmentDomain).singleton())
     this.#reg('invitationRepository', asClass(InvitationRepository).singleton())
     this.#reg('teamDomain', asClass(TeamDomain).singleton())
     this.#reg(

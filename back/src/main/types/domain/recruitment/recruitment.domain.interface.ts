@@ -1,0 +1,20 @@
+export type MyJoinRequestView = {
+  id: string
+  teamId: string
+  teamName: string
+  teamSlug: string
+  hue: number
+  status: 'PENDING' | 'DECLINED' | 'ACCEPTED'
+  createdAt: Date
+  expiresAt: Date
+  /** Renseigné seulement sur un refus dont le cooldown court encore. */
+  reapplyAt: Date | null
+  /** Renseigné sur une décision : c'est ce que la cloche affiche. */
+  decidedAt: Date | null
+}
+
+export interface IRecruitmentDomain {
+  apply(teamId: string, userId: string): Promise<MyJoinRequestView>
+  cancel(teamId: string, userId: string): Promise<void>
+  listMine(userId: string): Promise<MyJoinRequestView[]>
+}

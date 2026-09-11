@@ -6,6 +6,10 @@ import type { TeamPerkKey } from '../../../../../domain/team-progression/team-pr
 import type { TeamPerkState } from '../../../../../types/domain/team-progression/team-progression.domain.interface'
 import type { TeamPerkEvent } from '../../../../ws/ws-manager'
 import {
+  myJoinRequestSchema,
+  myJoinRequestsResponseSchema,
+} from '../../schemas/recruitment.schema'
+import {
   teamCreateBodySchema,
   teamDetailResponseSchema,
   teamIdParamSchema,
@@ -32,6 +36,7 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     wsManager,
     scoringConfigRepository,
     userCardRepository,
+    recruitmentDomain,
   } = fastify.iocContainer
 
   /**
@@ -142,6 +147,51 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
         request.params.id,
         request.user.userID,
       ),
+    }),
+  )
+
+  fastify.post(
+    '/teams/:id/join-requests',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        tags: ['Team'],
+        params: teamIdParamSchema,
+        response: { 201: myJoinRequestSchema },
+      },
+    },
+    async (request, reply) => {
+      const created = await recruitmentDomain.apply(
+        request.params.id,
+        request.user.userID,
+      )
+      return reply.status(201).send(created)
+    },
+  )
+
+  fastify.delete(
+    '/teams/:id/join-requests/me',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: { tags: ['Team'], params: teamIdParamSchema },
+    },
+    async (request, reply) => {
+      await recruitmentDomain.cancel(request.params.id, request.user.userID)
+      return reply.status(204).send()
+    },
+  )
+
+  fastify.get(
+    '/me/join-requests',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        tags: ['Team'],
+        response: { 200: myJoinRequestsResponseSchema },
+      },
+    },
+    async (request) => ({
+      requests: await recruitmentDomain.listMine(request.user.userID),
     }),
   )
 
