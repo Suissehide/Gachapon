@@ -18,6 +18,7 @@ import type { TeamDetail } from '../../api/teamProgression.api.ts'
 import { useAppForm } from '../../hooks/formConfig.tsx'
 import { useDeleteTeam, useUpdateTeam } from '../../queries/useTeams.ts'
 import { Button } from '../ui/button.tsx'
+import { Label } from '../ui/label.tsx'
 import {
   Popup,
   PopupBody,
@@ -26,6 +27,7 @@ import {
   PopupHeader,
   PopupTitle,
 } from '../ui/popup.tsx'
+import { Switch } from '../ui/switch.tsx'
 import { DangerZone } from './DangerZone.tsx'
 
 type Props = {
@@ -39,6 +41,12 @@ export function TeamSettingsPopup({ team, trigger }: Props) {
   const [open, setOpen] = useState(false)
   const { mutate: updateTeam, isPending: isUpdating } = useUpdateTeam(team.id)
   const { mutate: deleteTeam } = useDeleteTeam()
+
+  // L'interrupteur vit hors du formulaire nom/description : il se
+  // sauvegarde tout seul dès qu'on le bascule, pas au clic sur « Enregistrer ».
+  // `teamUpdateBodySchema` exige toujours `name` (min 2 caractères) — chaque
+  // bascule renvoie donc le nom courant de l'équipe avec le nouveau statut.
+  const [recruiting, setRecruiting] = useState(team.recruiting)
 
   const form = useAppForm({
     defaultValues: {
@@ -63,8 +71,21 @@ export function TeamSettingsPopup({ team, trigger }: Props) {
   useEffect(() => {
     if (open) {
       form.reset({ name: team.name, description: team.description ?? '' })
+      setRecruiting(team.recruiting)
     }
-  }, [open, team.name, team.description, form])
+  }, [open, team.name, team.description, team.recruiting, form])
+
+  const handleRecruitingChange = (value: boolean) => {
+    setRecruiting(value)
+    updateTeam(
+      {
+        name: team.name,
+        description: team.description ?? undefined,
+        recruiting: value,
+      },
+      { onError: () => setRecruiting(!value) },
+    )
+  }
 
   return (
     <Popup open={open} onOpenChange={setOpen}>
@@ -92,6 +113,21 @@ export function TeamSettingsPopup({ team, trigger }: Props) {
             <form.AppField name="description">
               {(field) => <field.Input label="Description (optionnel)" />}
             </form.AppField>
+
+            <div className="flex items-center justify-between gap-4 rounded-lg border border-border px-4 py-3">
+              <div className="flex flex-col gap-0.5">
+                <Label htmlFor="team-recruiting">Ouvert aux candidatures</Label>
+                <p className="text-xs text-text-light">
+                  Ton équipe apparaît dans l'annuaire des équipes qui recrutent.
+                </p>
+              </div>
+              <Switch
+                id="team-recruiting"
+                checked={recruiting}
+                onCheckedChange={handleRecruitingChange}
+                disabled={isUpdating}
+              />
+            </div>
 
             <DangerZone
               onDelete={() =>

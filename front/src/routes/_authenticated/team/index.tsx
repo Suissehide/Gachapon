@@ -4,6 +4,7 @@ import { Compass, Sparkle, Users } from 'lucide-react'
 import { PageHeader } from '../../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../../components/shared/PageShell.tsx'
 import { CreateTeamPopup } from '../../../components/team/CreateTeamPopup.tsx'
+import { MyJoinRequestsList } from '../../../components/team/recruitment/MyJoinRequestsList.tsx'
 import { TeamCard } from '../../../components/team/TeamCard.tsx'
 import { Button } from '../../../components/ui/button.tsx'
 import { PopupTrigger } from '../../../components/ui/popup.tsx'
@@ -89,6 +90,8 @@ function TeamsPage() {
           ))}
         </div>
       )}
+
+      <MyJoinRequestsList />
     </PageShell>
   )
 }
