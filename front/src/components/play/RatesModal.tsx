@@ -58,7 +58,8 @@ export function RatesModal({ open, onClose }: Props) {
           </div>
           {balance != null && balance.pityThreshold > 0 && (
             <p className="mt-4 text-center font-mono text-[10px] uppercase tracking-[0.14em] text-text-light">
-              Légendaire garanti tous les {balance.pityThreshold} tirages
+              Après {balance.pityThreshold} tirages sans légendaire, le suivant
+              est garanti
             </p>
           )}
           <p className="mt-1.5 text-center text-[10px] text-text-light/60">

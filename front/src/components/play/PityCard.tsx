@@ -7,7 +7,14 @@ export function PityCard() {
 
   const current = balance?.pityCurrent ?? 0
   const threshold = balance?.pityThreshold ?? 0
-  const left = Math.max(0, threshold - current)
+  // Le moteur force le légendaire quand le compteur LU AVANT le tirage a déjà
+  // atteint le seuil (`isPityForced = currentPity >= pityThreshold`, voir
+  // `gacha.domain.ts`), et ce compteur avance d'un par tirage non légendaire :
+  // depuis un compteur persisté P, le tirage n° k voit P + k - 1, donc le
+  // tirage garanti est le n° `seuil - P + 1`. Compter `seuil - P` annoncerait
+  // le légendaire un tirage trop tôt — c'est la même arithmétique que le
+  // `P + N - 1 >= T` du calcul de cote des paris (`bet.domain.ts`).
+  const remaining = Math.max(1, threshold - current + 1)
   const pct = threshold > 0 ? Math.min(100, (current / threshold) * 100) : 0
 
   return (
@@ -20,7 +27,7 @@ export function PityCard() {
         <span className="text-[13px] text-text-light">
           {threshold === 0 ? (
             '—'
-          ) : left === 0 ? (
+          ) : remaining === 1 ? (
             <b className="font-display text-[15px] text-secondary">
               Légendaire au prochain tirage !
             </b>
@@ -28,9 +35,9 @@ export function PityCard() {
             <>
               Légendaire dans{' '}
               <b className="font-display text-[17px] tabular-nums text-secondary">
-                {left}
+                {remaining}
               </b>{' '}
-              tirage{left > 1 ? 's' : ''}
+              tirages
             </>
           )}
         </span>
