@@ -19,7 +19,7 @@
 // rien.
 import { X } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 
 import type { CardElement } from '../../../constants/card.constant.ts'
@@ -64,6 +64,8 @@ export function CardZoomOverlay({
   /** Badges ajoutés à la suite des deux autres — « Nouvelle » sur un tirage. */
   extraBadges?: ReactNode
 }) {
+  const rootRef = useRef<HTMLDivElement>(null)
+
   // Échap est écouté en phase de CAPTURE, et la propagation coupée. Cette vue
   // s'ouvre parfois DANS une modale Radix (le butin d'un duel réglé), qui
   // écoute elle aussi Échap sur le document : sans cette capture, une seule
@@ -81,6 +83,27 @@ export function CardZoomOverlay({
     document.addEventListener('keydown', onKey, true)
     return () => document.removeEventListener('keydown', onKey, true)
   }, [card, onClose])
+
+  // Radix ferme une modale sur un `pointerdown` qu'il juge « en dehors » : il
+  // écoute sur le document et regarde si la cible est dans SA couche. Ce
+  // portail est hors de cette couche, donc chaque clic dans le zoom — y
+  // compris celui qui ne fait que le fermer — passait pour un clic dehors et
+  // fermait la liste derrière.
+  //
+  // L'écouteur est posé sur la RACINE de la surcouche, en phase de remontée,
+  // et non sur le document en capture : couper la propagation en capture
+  // depuis le document empêcherait aussi l'évènement de DESCENDRE jusqu'à la
+  // carte, et plus rien ne serait cliquable à l'intérieur. Ici l'évènement
+  // atteint sa cible normalement, puis s'arrête avant le document.
+  useEffect(() => {
+    const node = rootRef.current
+    if (card === null || node === null) {
+      return
+    }
+    const stop = (e: Event) => e.stopPropagation()
+    node.addEventListener('pointerdown', stop)
+    return () => node.removeEventListener('pointerdown', stop)
+  }, [card])
 
   if (card === null) {
     return null
@@ -102,7 +125,13 @@ export function CardZoomOverlay({
     // s'ouvre par-dessus l'une d'elles.
     // biome-ignore lint/a11y/noStaticElementInteractions: fermeture au clic sur le fond ; Échap est géré par l'écouteur ci-dessus
     <div
-      className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-[fadeIn_200ms_ease-out]"
+      ref={rootRef}
+      // `pointer-events-auto` n'est pas redondant : tant qu'une modale Radix
+      // est ouverte, elle pose `pointer-events: none` sur `document.body`, et
+      // ce portail en hérite. Sans cette ligne la surcouche ne reçoit plus la
+      // souris du tout — pas de survol sur la carte, et les clics traversent
+      // jusqu'à la modale en dessous.
+      className="pointer-events-auto fixed inset-0 z-[110] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-[fadeIn_200ms_ease-out]"
       role="presentation"
       onClick={onClose}
     >
