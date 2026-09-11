@@ -7,6 +7,7 @@ import type {
 } from '../../../generated/client'
 import type { IocContainer } from '../../types/application/ioc'
 import type {
+  DuelTransferView,
   DuelView,
   IBetDomain,
   IDuelDomain,
@@ -931,6 +932,38 @@ export class DuelDomain implements IDuelDomain {
     return team
   }
 
+  /**
+   * Les cartes raflees sur un duel de l'equipe.
+   *
+   * L'appartenance a l'equipe suffit, et c'est deliberé : l'historique regle
+   * est lisible par toute l'equipe, donc son detail aussi. Restreindre aux
+   * deux duellistes aurait donne un bouton qui repond 403 a un spectateur
+   * qui voit pourtant la ligne.
+   *
+   * `toMe` est calcule ICI et non devine cote client : `fromUserId` et
+   * `toUserId` ne sortent pas de cette methode, et un spectateur n'a aucune
+   * raison de recevoir deux identifiants pour afficher une liste de cartes.
+   */
+  async listTransfers(
+    teamId: string,
+    duelId: string,
+    userId: string,
+  ): Promise<DuelTransferView[]> {
+    await this.#requireMembership(teamId, userId)
+    // Verifie que le duel appartient bien a CETTE equipe : sans ce controle,
+    // l'identifiant d'un duel d'une autre equipe servi sur cette route
+    // rendrait ses cartes a un non-membre.
+    await this.#getTeamDuel(teamId, duelId)
+
+    const transfers = await this.#wagerRepository.listDuelTransfers(duelId)
+    return transfers.map((transfer) => ({
+      id: transfer.id,
+      variant: transfer.variant,
+      toMe: transfer.toUserId === userId,
+      card: transfer.card,
+    }))
+  }
+
   async #getTeamDuel(teamId: string, duelId: string): Promise<DuelWithParties> {
     const duel = await this.#wagerRepository.findDuelById(duelId)
     if (!duel || duel.teamId !== teamId) {
@@ -969,6 +1002,7 @@ export class DuelDomain implements IDuelDomain {
       deadlineAt: duel.deadlineAt ? duel.deadlineAt.toISOString() : null,
       settledAt: duel.settledAt ? duel.settledAt.toISOString() : null,
       winnerId: duel.winnerId,
+      transferredCount: duel._count.transfers,
       myRole,
     }
   }

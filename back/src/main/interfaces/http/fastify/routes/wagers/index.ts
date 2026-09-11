@@ -5,6 +5,7 @@ import {
   betQuoteResponseSchema,
   betViewSchema,
   duelParamSchema,
+  duelTransfersResponseSchema,
   duelViewSchema,
   myPendingDuelsResponseSchema,
   myTargetedBetsResponseSchema,
@@ -139,6 +140,25 @@ export const wagersRouter: FastifyPluginCallbackZod = (fastify) => {
         request.params.duelId,
         request.user.userID,
       ),
+  )
+
+  fastify.get(
+    '/teams/:id/duels/:duelId/transfers',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        tags: ['Wagers'],
+        params: duelParamSchema,
+        response: { 200: duelTransfersResponseSchema },
+      },
+    },
+    async (request) => ({
+      transfers: await duelDomain.listTransfers(
+        request.params.id,
+        request.params.duelId,
+        request.user.userID,
+      ),
+    }),
   )
 
   fastify.get(

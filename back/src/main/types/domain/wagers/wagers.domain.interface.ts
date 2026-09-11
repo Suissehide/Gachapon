@@ -29,7 +29,33 @@ export type DuelView = {
   deadlineAt: string | null
   settledAt: string | null
   winnerId: string | null
+  /**
+   * Cartes effectivement raflees au reglement. Vaut 0 sur tout duel non
+   * regle, et sur un duel nul. C'est un COMPTE REEL, pas le nombre de
+   * tirages du perdant : un transfert peut echouer (voir `#transferPull`),
+   * donc les deux nombres peuvent differer.
+   */
+  transferredCount: number
   myRole: 'CHALLENGER' | 'OPPONENT' | 'SPECTATOR'
+}
+
+/**
+ * Une carte raflee au reglement d'un duel. Sert le « voir les cartes » de
+ * l'historique regle : le compte seul (`transferredCount`) dit combien, pas
+ * lesquelles.
+ */
+export type DuelTransferView = {
+  id: string
+  variant: CardVariant
+  /** Vrai si la carte est venue chez MOI ; faux si elle m'a ete prise. */
+  toMe: boolean
+  card: {
+    id: string
+    name: string
+    rarity: CardRarity
+    imageUrl: string | null
+    set: { name: string }
+  }
 }
 
 /**
@@ -111,6 +137,16 @@ export interface IDuelDomain {
     userId: string,
     now?: Date,
   ): Promise<WagersView>
+  /**
+   * Les cartes raflees sur un duel REGLE de l'equipe. Lecture paresseuse :
+   * l'historique en sert vingt, et charger leurs cartes avec la vue ferait
+   * payer a chaque ouverture de la fiche un detail que personne n'ouvre.
+   */
+  listTransfers(
+    teamId: string,
+    duelId: string,
+    userId: string,
+  ): Promise<DuelTransferView[]>
   /** Les defis PENDING adresses au joueur, toutes equipes confondues. */
   listPendingForOpponent(
     userId: string,

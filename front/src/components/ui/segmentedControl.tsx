@@ -6,6 +6,18 @@ export interface SegmentedControlOption<T extends string> {
   value: T
   label: string
   icon?: ReactNode
+  /**
+   * Couleur CSS propre à cette option — typiquement un `var(--rarity-*)`.
+   * Quand elle est fournie, l'option sélectionnée prend cette teinte au lieu
+   * de l'ambre par défaut, et l'option au repos en garde une trace sur son
+   * libellé.
+   *
+   * Passée en style inline et non en classe : la valeur n'est connue qu'à
+   * l'exécution, donc aucune classe Tailwind ne peut être générée pour elle
+   * au build. Les opacités passent par `color-mix` pour rester dérivées
+   * d'une seule teinte plutôt que d'exiger cinq variantes par rareté.
+   */
+  color?: string
 }
 
 interface SegmentedControlProps<T extends string> {
@@ -37,6 +49,7 @@ export function SegmentedControl<T extends string>({
     >
       {options.map((option) => {
         const isActive = option.value === value
+        const tint = option.color
         return (
           <button
             key={option.value}
@@ -49,6 +62,17 @@ export function SegmentedControl<T extends string>({
                 ? 'bg-primary/10 border-primary/25 text-text'
                 : 'text-text-light hover:bg-background/50 hover:text-text',
             )}
+            style={
+              tint === undefined
+                ? undefined
+                : isActive
+                  ? {
+                      background: `color-mix(in srgb, ${tint} 14%, transparent)`,
+                      borderColor: `color-mix(in srgb, ${tint} 40%, transparent)`,
+                      color: tint,
+                    }
+                  : { color: `color-mix(in srgb, ${tint} 70%, transparent)` }
+            }
           >
             {option.icon}
             {option.label}

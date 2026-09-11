@@ -659,6 +659,69 @@ describe('cycle de vie du duel', () => {
         expect(t.fromUserId).toBe(userIdB)
         expect(t.toUserId).toBe(userIdA)
       }
+
+      // Le MEME compte est servi par la vue d'equipe : l'historique regle
+      // affiche « +9 cartes », et l'evenement WebSocket `duel:settled` ne
+      // porte ce nombre qu'au moment du reglement — au rechargement de la
+      // page, il n'existe plus nulle part ailleurs.
+      //
+      // L'assertion porte sur `res.json()` et pas sur la valeur rendue par
+      // le domaine : `fastify-type-provider-zod` retire silencieusement du
+      // JSON toute cle absente du schema, donc un champ ajoute au domaine
+      // mais oublie dans `duelViewSchema` passerait inapercu ici.
+      const wagersView = await app.inject({
+        method: 'GET',
+        url: `/teams/${teamId}/wagers`,
+        headers: { cookie: cookiesA },
+      })
+      expect(wagersView.statusCode).toBe(200)
+      const settledDuel3 = wagersView
+        .json()
+        .settledDuels.find((d: any) => d.id === duel3Id)
+      expect(settledDuel3).toBeDefined()
+      expect(settledDuel3.transferredCount).toBe(9)
+
+      // Le detail derriere le compte : QUELLES cartes, servi a la demande
+      // par le bouton « voir les cartes » de l'historique.
+      const detail = await app.inject({
+        method: 'GET',
+        url: `/teams/${teamId}/duels/${duel3Id}/transfers`,
+        headers: { cookie: cookiesA },
+      })
+      expect(detail.statusCode).toBe(200)
+      const transferRows = detail.json().transfers
+      expect(transferRows).toHaveLength(9)
+      for (const t of transferRows) {
+        expect(t.card.id).toBe(commonCard.id)
+        expect(t.card.name).toBe(commonCard.name)
+        expect(t.card.rarity).toBe('COMMON')
+        // A est le vainqueur : les neuf cartes sont venues CHEZ LUI.
+        expect(t.toMe).toBe(true)
+        // Les identifiants bruts ne sortent pas : le domaine les a reduits
+        // au seul `toMe`, et le schema ne les laisserait pas passer.
+        expect(t.fromUserId).toBeUndefined()
+        expect(t.toUserId).toBeUndefined()
+      }
+
+      // Meme duel lu par le PERDANT : les memes cartes, mais sorties de chez
+      // lui. `toMe` est relatif au lecteur, pas au duel.
+      const loserView = await app.inject({
+        method: 'GET',
+        url: `/teams/${teamId}/duels/${duel3Id}/transfers`,
+        headers: { cookie: cookiesB },
+      })
+      expect(loserView.statusCode).toBe(200)
+      expect(
+        loserView.json().transfers.every((t: any) => t.toMe === false),
+      ).toBe(true)
+
+      // Un non-membre n'obtient rien, meme avec un identifiant de duel valide.
+      const outsider = await app.inject({
+        method: 'GET',
+        url: `/teams/${teamId}/duels/${duel3Id}/transfers`,
+        headers: { cookie: cookiesC },
+      })
+      expect(outsider.statusCode).toBe(403)
     })
 
     it('idempotence : reactiver artificiellement duel3 (deja SETTLED) et rejouer le reglement ne transfere rien de plus', async () => {

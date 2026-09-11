@@ -83,6 +83,35 @@
   --role-member: #3b82f6;
   --role-recruit: rgba(27, 23, 38, 0.4);
 
+  /* Couleur de la poussière. La référence est la page /guide, qui donne à
+     chaque monnaie sa teinte : jetons ambre, poussière bleu ciel, or, points
+     de combat vert. Tokenisée ici parce qu'elle sort désormais du guide —
+     tickets de pari, historique réglé, devis de cote — et qu'une monnaie qui
+     change de couleur d'un écran à l'autre n'est plus reconnaissable.
+     `/guide` porte encore la valeur en dur (`text-sky-400`) : à unifier le
+     jour où on y touche. */
+  --dust: #38bdf8;
+
+  /* Palette des duels et paris — handoff `docs/design_handoff_duels`
+     (`equipe-duels.css`). Le duel emprunte l'ambre déjà tokenisé ; le pari,
+     lui, n'avait aucune teinte : c'est le seul bloc de la fiche d'équipe qui
+     parle violet, et la maquette lui donne quatre valeurs solidaires (trait,
+     encre, fond de puce, bordure de puce) plus la fin du dégradé de fenêtre.
+     Déclarées ensemble pour la même raison que `--perk-*` : une retouche de
+     la palette se relit d'un bloc au lieu de courir dans cinq fichiers.
+
+     Aucun vert de gain ici : un montant gagné s'affiche dans la couleur de
+     SON unité — la poussière en `--dust` avec son icône `Sparkles`, les
+     cartes d'un duel en encre neutre. Un vert
+     générique aurait fait passer deux butins différents pour la même chose. */
+  --wager-bet: #8b5cf6;
+  --wager-bet-ink: #6d28d9;
+  --wager-bet-soft: #f5f3ff;
+  --wager-bet-border: #ddd6fe;
+  /* Fin du dégradé de fenêtre de pari : c'est la couleur de la poussière,
+     pas un rose de plus. Aliasé pour que les deux bougent ensemble. */
+  --wager-window-to: var(--secondary);
+
   /* Encre de la lettre d'un avatar de membre (handoff `.tm-av`) : brun
      ambré fixe, quelle que soit la teinte du dégradé pastel derrière —
      c'est ce qui garde les douze avatars d'une liste lisibles ensemble. */

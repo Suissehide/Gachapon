@@ -32,6 +32,13 @@ export type DuelView = {
   deadlineAt: string | null
   settledAt: string | null
   winnerId: string | null
+  /**
+   * Cartes effectivement raflees au reglement, 0 partout ailleurs. C'est la
+   * seule trace DURABLE du butin : l'evenement WebSocket `duel:settled` le
+   * porte au moment du reglement, puis il disparait — l'historique regle, lu
+   * apres un rechargement, n'a que ce champ.
+   */
+  transferredCount: number
   myRole: 'CHALLENGER' | 'OPPONENT' | 'SPECTATOR'
 }
 
@@ -71,6 +78,25 @@ export type TargetedBetView = {
   pullsSeen: number
   createdAt: string
   deadlineAt: string
+}
+
+/**
+ * Une carte raflee au reglement d'un duel. Croise champ par champ avec
+ * `duelTransfersResponseSchema` — `fromUserId`/`toUserId` ne sont
+ * volontairement PAS servis, le serveur les a deja reduits a `toMe`.
+ */
+export type DuelTransferView = {
+  id: string
+  variant: string
+  /** Relatif au LECTEUR : vrai si la carte est venue chez lui. */
+  toMe: boolean
+  card: {
+    id: string
+    name: string
+    rarity: CardRarity
+    imageUrl: string | null
+    set: { name: string }
+  }
 }
 
 export type BetStatus = 'ACTIVE' | 'WON' | 'LOST' | 'EXPIRED'
@@ -197,6 +223,33 @@ export const WagersApi = {
           },
         },
         'Chargement des duels',
+      )
+    }
+    return res.json()
+  },
+
+  /**
+   * Les cartes raflees sur un duel regle. Appelee a la demande, quand le
+   * joueur ouvre le detail d'une ligne de l'historique : les charger avec la
+   * vue d'equipe ferait payer vingt duels a chaque ouverture de la fiche.
+   */
+  getDuelTransfers: async (
+    teamId: string,
+    duelId: string,
+  ): Promise<{ transfers: DuelTransferView[] }> => {
+    const res = await fetchWithAuth(
+      `${apiUrl}/teams/${teamId}/duels/${duelId}/transfers`,
+    )
+    if (!res.ok) {
+      handleHttpError(
+        res,
+        {
+          403: {
+            title: 'Accès refusé',
+            message: 'Tu ne fais pas partie de cette équipe.',
+          },
+        },
+        'Chargement des cartes du duel',
       )
     }
     return res.json()

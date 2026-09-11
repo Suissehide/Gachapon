@@ -1,10 +1,10 @@
-import { Gem, Target } from 'lucide-react'
+import { Sparkles, Target } from 'lucide-react'
 import { useState } from 'react'
 
 import type { TeamMember } from '../../api/teams.api.ts'
 import type { CardRarity } from '../../constants/card.constant.ts'
 import { fmtMultiplier } from '../../libs/duel.ts'
-import { RARITY_LABEL_FR } from '../../libs/rarity.ts'
+import { RARITY_COLOR_VAR, RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { cn } from '../../libs/utils.ts'
 import {
   DEFAULT_ECONOMY,
@@ -123,7 +123,7 @@ function QuotePanel({
               Cote actuelle : <strong>×{fmtMultiplier(multiplier)}</strong>
             </span>
             <span className="flex items-center gap-1.5 text-sm text-text">
-              <Gem className="h-3.5 w-3.5 text-secondary" />
+              <Sparkles className="h-3.5 w-3.5 text-dust" />
               Gain potentiel si le pari est gagné :{' '}
               <strong>
                 {potentialPayout !== null
@@ -274,9 +274,13 @@ export function BetPlacePopup({ open, onOpenChange, teamId, members }: Props) {
               Rareté visée
             </span>
             <SegmentedControl
+              // Chaque rareté porte SA couleur : c'est le seul repère qui
+              // distingue un pari sûr d'un pari long, et le joueur la
+              // reconnaît déjà de sa collection.
               options={BET_RARITIES.map((rarity) => ({
                 value: rarity,
                 label: RARITY_LABEL_FR[rarity] ?? rarity,
+                color: RARITY_COLOR_VAR[rarity],
               }))}
               value={minRarity}
               onChange={setMinRarity}

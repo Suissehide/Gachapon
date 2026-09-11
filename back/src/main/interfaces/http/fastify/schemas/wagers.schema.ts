@@ -44,7 +44,31 @@ export const duelViewSchema = z.object({
   deadlineAt: z.string().nullable(),
   settledAt: z.string().nullable(),
   winnerId: z.string().nullable(),
+  // Alimente le « +N cartes » de l'historique regle. Sans cette ligne, le
+  // champ existerait cote domaine et disparaitrait du JSON en silence.
+  transferredCount: z.number().int(),
   myRole: z.enum(['CHALLENGER', 'OPPONENT', 'SPECTATOR']),
+})
+
+// Croisé champ par champ avec `DuelTransferView`
+// (types/domain/wagers/wagers.domain.interface.ts). `fromUserId` /
+// `toUserId` ne sont PAS servis : le domaine les a déjà réduits au seul
+// `toMe`, qui est tout ce que l'écran a besoin de savoir.
+export const duelTransfersResponseSchema = z.object({
+  transfers: z.array(
+    z.object({
+      id: z.string(),
+      variant: z.enum(['NORMAL', 'BRILLIANT', 'HOLOGRAPHIC']),
+      toMe: z.boolean(),
+      card: z.object({
+        id: z.string(),
+        name: z.string(),
+        rarity: z.enum(['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY']),
+        imageUrl: z.string().nullable(),
+        set: z.object({ name: z.string() }),
+      }),
+    }),
+  ),
 })
 
 // Croisé champ par champ avec `PendingDuelView`

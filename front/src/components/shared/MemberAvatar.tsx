@@ -27,7 +27,16 @@ type MemberAvatarProps = {
   /** Lettre affichée (généralement la première du pseudo). */
   letter: string
   /** Rang de la ligne dans la liste — c'est lui qui donne la teinte. */
-  index: number
+  index?: number
+  /**
+   * Teinte imposée, qui l'emporte sur `index`. Sert là où la couleur porte
+   * un SENS et non une simple distinction de voisinage : le face-à-face d'un
+   * duel donne 32 (ambre) à celui qui lit et 265 (violet) à son adversaire,
+   * quelle que soit leur position dans une liste. Même parti pris que le
+   * `hue?` de `TeamEmblem` : la présence de la prop dit laquelle des deux
+   * sources de teinte s'applique.
+   */
+  hue?: number
   /** Côté du carré en pixels. Défaut 34 px, la valeur de `.tm-av`. */
   size?: number
   className?: string
@@ -35,11 +44,12 @@ type MemberAvatarProps = {
 
 export function MemberAvatar({
   letter,
-  index,
+  index = 0,
+  hue: forcedHue,
   size = 34,
   className,
 }: MemberAvatarProps) {
-  const hue = (index * HUE_STEP) % 360
+  const hue = forcedHue ?? (index * HUE_STEP) % 360
 
   return (
     <div

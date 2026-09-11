@@ -17,6 +17,35 @@ export type PullWithRarity = {
 export type DuelWithParties = Duel & {
   challenger: { id: string; username: string; avatar: string | null }
   opponent: { id: string; username: string; avatar: string | null }
+  /**
+   * Nombre de lignes `DuelTransfer` du duel, servi par un `_count` Prisma.
+   * Vaut 0 partout sauf sur un duel SETTLED, ce qui est exact : un duel non
+   * regle n'a transfere aucune carte. C'est la SEULE trace durable du
+   * nombre de cartes raflees — l'evenement WebSocket `duel:settled` le porte
+   * au moment du reglement, puis il disparait.
+   */
+  _count: { transfers: number }
+}
+
+/**
+ * Une carte raflee au reglement d'un duel, avec de quoi la DESSINER. Meme
+ * forme imbriquee que `ClaimedCard` cote recompenses : le front rend les
+ * deux avec `TcgCardFace`, et deux formes differentes pour la meme chose
+ * l'auraient oblige a un adaptateur.
+ */
+export type DuelTransferWithCard = {
+  id: string
+  variant: CardVariant
+  fromUserId: string
+  toUserId: string
+  card: {
+    id: string
+    name: string
+    rarity: CardRarity
+    imageUrl: string | null
+    /** Requis par `TcgCardFace`, qui l'affiche en fil d'ariane au-dessus du nom. */
+    set: { name: string }
+  }
 }
 
 /** Un defi en attente, vu depuis le defie : l'equipe et le defieur suffisent. */
@@ -91,6 +120,8 @@ export interface IWagerRepository {
     teamId: string,
     take: number,
   ): Promise<DuelWithParties[]>
+  /** Les cartes raflees sur un duel, dans l'ordre du transfert. */
+  listDuelTransfers(duelId: string): Promise<DuelTransferWithCard[]>
   listActiveDuelsForUser(userId: string): Promise<Duel[]>
   listActiveDuelsForUserInTx(
     tx: PrimaTransactionClient,

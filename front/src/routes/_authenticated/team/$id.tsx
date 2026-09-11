@@ -11,7 +11,7 @@ import { PerksPanel } from '../../../components/team/PerksPanel.tsx'
 import { RaidHistoryPanel } from '../../../components/team/RaidHistoryPanel.tsx'
 import { RaidPanel } from '../../../components/team/RaidPanel.tsx'
 import { TeamIdentityCard } from '../../../components/team/TeamIdentityCard.tsx'
-import { WagersPanel } from '../../../components/team/WagersPanel.tsx'
+import { WagersPanel } from '../../../components/team/wagers/WagersPanel.tsx'
 import { Button } from '../../../components/ui/button.tsx'
 import {
   useTeamDetail,

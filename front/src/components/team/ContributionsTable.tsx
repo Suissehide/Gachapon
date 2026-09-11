@@ -318,7 +318,7 @@ function MemberRow({
  * Corps de la table : en-tête de colonnes, lignes, pied « voir plus ».
  * Extrait du composant principal pour ne pas empiler dans une seule fonction
  * les quatre états de chargement et les deux états de pli — même parti pris
- * que `buildHistory` dans `WagersPanel`.
+ * que l’historique réglé de `components/team/wagers/`.
  */
 function Roster({
   rows,

@@ -53,6 +53,24 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
 
+  /* Ces trois-la etaient declarees dans _colors.css mais JAMAIS mappees ici,
+     donc `bg-surface-2`, `bg-track` et `border-amber-soft` ne produisaient
+     aucune regle : neuf usages repartis sur la collection, l'equipement, la
+     page de tirage et la barre de PV du raid peignaient du transparent en
+     silence. Un jeton non mappe en --color-* est un utilitaire mort, sans
+     erreur ni avertissement. */
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-track: var(--track);
+  --color-amber-soft: var(--amber-soft);
+  --color-amber-deep: var(--amber-deep);
+
+  --color-dust: var(--dust);
+  --color-wager-bet: var(--wager-bet);
+  --color-wager-bet-ink: var(--wager-bet-ink);
+  --color-wager-bet-soft: var(--wager-bet-soft);
+  --color-wager-bet-border: var(--wager-bet-border);
+  --color-wager-window-to: var(--wager-window-to);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-info: var(--info);

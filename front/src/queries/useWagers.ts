@@ -13,6 +13,26 @@ const QUOTE_DEBOUNCE_MS = 300
 
 export const wagersKey = (teamId: string) => ['wagers', teamId] as const
 
+export const duelTransfersKey = (teamId: string, duelId: string) =>
+  ['wagers', teamId, 'duels', duelId, 'transfers'] as const
+
+/**
+ * Les cartes raflées sur un duel réglé, chargées À LA DEMANDE : `enabled`
+ * n'est vrai qu'une fois le détail ouvert.
+ *
+ * `staleTime: Infinity` est correct ici et ne l'est presque jamais ailleurs :
+ * un duel réglé est immuable, ses transferts sont écrits une fois dans la
+ * transaction de règlement et plus rien ne les touche.
+ */
+export function useDuelTransfers(teamId: string, duelId: string | null) {
+  return useQuery({
+    queryKey: duelTransfersKey(teamId, duelId ?? ''),
+    queryFn: () => WagersApi.getDuelTransfers(teamId, duelId as string),
+    enabled: duelId !== null,
+    staleTime: Number.POSITIVE_INFINITY,
+  })
+}
+
 export function useWagers(teamId: string | undefined) {
   return useQuery({
     queryKey: wagersKey(teamId ?? ''),

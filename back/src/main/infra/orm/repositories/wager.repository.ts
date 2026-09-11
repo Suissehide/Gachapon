@@ -4,6 +4,7 @@ import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type {
   ActiveBetOnTarget,
   BetWithParties,
+  DuelTransferWithCard,
   DuelWithParties,
   IWagerRepository,
   PendingDuelForOpponent,
@@ -48,6 +49,7 @@ export class WagerRepository implements IWagerRepository {
       include: {
         challenger: { select: PARTY_SELECT },
         opponent: { select: PARTY_SELECT },
+        _count: { select: { transfers: true } },
       },
     })
   }
@@ -76,6 +78,7 @@ export class WagerRepository implements IWagerRepository {
       include: {
         challenger: { select: PARTY_SELECT },
         opponent: { select: PARTY_SELECT },
+        _count: { select: { transfers: true } },
       },
       orderBy: { createdAt: 'desc' },
     })
@@ -90,9 +93,32 @@ export class WagerRepository implements IWagerRepository {
       include: {
         challenger: { select: PARTY_SELECT },
         opponent: { select: PARTY_SELECT },
+        _count: { select: { transfers: true } },
       },
       orderBy: { settledAt: 'desc' },
       take,
+    })
+  }
+
+  listDuelTransfers(duelId: string): Promise<DuelTransferWithCard[]> {
+    return this.#prisma.duelTransfer.findMany({
+      where: { duelId },
+      select: {
+        id: true,
+        variant: true,
+        fromUserId: true,
+        toUserId: true,
+        card: {
+          select: {
+            id: true,
+            name: true,
+            rarity: true,
+            imageUrl: true,
+            set: { select: { name: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
     })
   }
 
