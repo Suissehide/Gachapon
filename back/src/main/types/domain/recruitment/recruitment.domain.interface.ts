@@ -18,7 +18,12 @@ export type MyJoinRequestView = {
 export type TeamJoinRequestView = {
   id: string
   createdAt: Date
-  candidate: { id: string; username: string; avatar: string | null }
+  candidate: {
+    id: string
+    username: string
+    avatar: string | null
+    level: number
+  }
 }
 
 /** Une entrée de l'annuaire des équipes qui recrutent. */

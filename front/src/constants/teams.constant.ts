@@ -125,7 +125,12 @@ export type MyJoinRequest = {
 export type TeamJoinRequest = {
   id: string
   createdAt: string
-  candidate: { id: string; username: string; avatar: string | null }
+  candidate: {
+    id: string
+    username: string
+    avatar: string | null
+    level: number
+  }
 }
 
 // Routes

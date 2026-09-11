@@ -10,6 +10,7 @@ type CandidateSelection = {
   id: string
   username: string
   avatar: string | null
+  level: number
 }
 
 export type JoinRequestWithUser = JoinRequestRow & {

@@ -8,10 +8,14 @@
 // composant n'a besoin que de `teamId`, et se masque lui-même dès que la
 // file est vide — pas de carte creuse quand personne n'attend.
 //
-// `TeamJoinRequest` (back : `teamJoinRequestsResponseSchema`) ne porte que
-// `id`, `createdAt` et `candidate: { id, username, avatar }` — ni niveau ni
-// taille de collection ne sont exposés par cette route, donc la ligne ne
-// montre que ce que le serveur donne réellement.
+// `TeamJoinRequest` (back : `teamJoinRequestsResponseSchema`) porte
+// `candidate: { id, username, avatar, level }` — la taille de collection,
+// elle, n'est exposée nulle part dans l'app (même la liste des membres ne
+// la montre pas) et reste donc hors de cette ligne.
+//
+// Le niveau reprend la chip établie par `TeamCard.tsx` /
+// `TeamDirectoryCard.tsx` (`NIV. {n}`, pastille arrondie `bg-muted`) plutôt
+// que d'inventer une présentation.
 import dayjs from 'dayjs'
 
 import {
@@ -51,9 +55,14 @@ export function JoinRequestsPanel({ teamId }: { teamId: string }) {
               <p className="truncate text-sm font-bold text-text">
                 @{request.candidate.username}
               </p>
-              <p className="truncate text-xs text-text-light">
-                Candidature envoyée {dayjs(request.createdAt).fromNow()}
-              </p>
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-light">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-1 font-mono text-[10px] font-bold tracking-[0.1em] text-text-light">
+                  NIV. {request.candidate.level}
+                </span>
+                <span className="truncate">
+                  Candidature envoyée {dayjs(request.createdAt).fromNow()}
+                </span>
+              </div>
             </div>
             <RespondButtons
               onAccept={() => accept.mutate(request.id)}

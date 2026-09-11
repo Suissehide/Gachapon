@@ -12,7 +12,7 @@ import type {
 import type { PostgresPrismaClient } from '../postgres-client'
 
 const CANDIDATE_SELECT = {
-  select: { id: true, username: true, avatar: true },
+  select: { id: true, username: true, avatar: true, level: true },
 } as const
 
 const TEAM_SELECT = {

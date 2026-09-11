@@ -26,6 +26,7 @@ export const teamJoinRequestsResponseSchema = z.object({
         id: z.string(),
         username: z.string(),
         avatar: z.string().nullable(),
+        level: z.number().int(),
       }),
     }),
   ),
