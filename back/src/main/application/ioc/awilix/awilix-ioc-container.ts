@@ -49,6 +49,7 @@ import { ApiKeyRepository } from '../../../infra/orm/repositories/api-key.reposi
 import { CardRepository } from '../../../infra/orm/repositories/card.repository'
 import { GachaPullRepository } from '../../../infra/orm/repositories/gacha-pull.repository'
 import { InvitationRepository } from '../../../infra/orm/repositories/invitation.repository'
+import { JoinRequestRepository } from '../../../infra/orm/repositories/join-request.repository'
 import { LeaderboardRepository } from '../../../infra/orm/repositories/leaderboard.repository'
 import { OAuthAccountRepository } from '../../../infra/orm/repositories/oauth-account.repository'
 import { QuestRepository } from '../../../infra/orm/repositories/quest.repository'
@@ -146,6 +147,10 @@ class AwilixIocContainer {
     this.#reg('betDomain', asClass(BetDomain).singleton())
     this.#reg('teamRepository', asClass(TeamRepository).singleton())
     this.#reg('teamMemberRepository', asClass(TeamMemberRepository).singleton())
+    this.#reg(
+      'joinRequestRepository',
+      asClass(JoinRequestRepository).singleton(),
+    )
     this.#reg('invitationRepository', asClass(InvitationRepository).singleton())
     this.#reg('teamDomain', asClass(TeamDomain).singleton())
     this.#reg(

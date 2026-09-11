@@ -1,0 +1,53 @@
+import type {
+  JoinRequest,
+  JoinRequestStatus,
+} from '../../../../../generated/client'
+import type { PrimaTransactionClient } from '../client'
+
+export type JoinRequestRow = JoinRequest
+
+type CandidateSelection = {
+  id: string
+  username: string
+  avatar: string | null
+}
+
+export type JoinRequestWithUser = JoinRequestRow & {
+  user: CandidateSelection
+}
+
+export type JoinRequestWithTeam = JoinRequestRow & {
+  team: { id: string; name: string; slug: string; hue: number | null }
+}
+
+export type JoinRequestWithTeamAndUser = JoinRequestWithTeam &
+  JoinRequestWithUser
+
+export interface IJoinRequestRepository {
+  findByTeamAndUser(
+    teamId: string,
+    userId: string,
+  ): Promise<JoinRequestRow | null>
+  findById(id: string): Promise<JoinRequestWithTeamAndUser | null>
+  upsertPending(data: {
+    teamId: string
+    userId: string
+    expiresAt: Date
+  }): Promise<JoinRequestRow>
+  listByUser(userId: string): Promise<JoinRequestWithTeam[]>
+  listPendingByTeam(teamId: string): Promise<JoinRequestWithUser[]>
+  /**
+   * Transition gardée : le `where` exige `status: 'PENDING'`, donc deux
+   * officiers qui cliquent en même temps produisent un gagnant et un
+   * perdant qui touche zéro ligne. Renvoie le nombre de lignes modifiées.
+   */
+  decideIfPending(
+    tx: PrimaTransactionClient,
+    id: string,
+    status: 'ACCEPTED' | 'DECLINED',
+    decidedById: string,
+    now: Date,
+  ): Promise<number>
+  setStatus(id: string, status: JoinRequestStatus): Promise<void>
+  markExpired(ids: string[]): Promise<void>
+}
