@@ -7,10 +7,19 @@
 
 export type TeamPerkKey = 'loot' | 'raid' | 'xp' | 'forge'
 
-export const TEAM_PERK_KEYS: readonly TeamPerkKey[] = ['loot', 'raid', 'xp', 'forge']
+export const TEAM_PERK_KEYS: readonly TeamPerkKey[] = [
+  'loot',
+  'raid',
+  'xp',
+  'forge',
+]
 
 /** XP nécessaire pour passer DU niveau donné au suivant. */
-export function xpForTeamLevel(level: number, base: number, exp: number): number {
+export function xpForTeamLevel(
+  level: number,
+  base: number,
+  exp: number,
+): number {
   return Math.round(base * level ** exp)
 }
 
@@ -52,9 +61,21 @@ export function applyTeamXp(
  * Effet d'un bonus à un rang donné.
  * `raid` est le seul entier : une attaque tous les deux rangs, d'où le plancher.
  * Les trois autres sont des pourcentages linéaires.
+ *
+ * Le rang est BORNÉ par `maxRank` avant tout calcul, et c'est le seul endroit
+ * où cette borne s'applique. Elle n'est pas redondante avec le refus de
+ * `spendPerkPoint` : les plafonds sont de la config, ils peuvent baisser
+ * (celui de `raid` est passé de 5 à 2), et une équipe qui avait déjà investi
+ * au-dessus continuerait sinon d'encaisser l'effet d'un rang que plus
+ * personne ne peut acheter.
  */
-export function perkEffect(key: TeamPerkKey, rank: number, perRank: number): number {
-  const raw = rank * perRank
+export function perkEffect(
+  key: TeamPerkKey,
+  rank: number,
+  perRank: number,
+  maxRank: number,
+): number {
+  const raw = Math.max(0, Math.min(rank, maxRank)) * perRank
   return key === 'raid' ? Math.floor(raw) : raw
 }
 
@@ -87,18 +108,23 @@ export function hueFromName(name: string): number {
  * Combien des `gained` points d'un franchissement de niveau sont réellement
  * ATTRIBUABLES, c'est-à-dire encore dépensables un jour.
  *
- * Le plafond de niveau (50) et le plafond de rangs (4 bonus × 5 rangs = 20)
- * ne sont pas alignés : à raison d'un point par niveau, une équipe en gagne
- * 49 pour 20 rangs à remplir. Sans ce plafonnement, du niveau 21 au niveau
- * 50 chaque point est mort-né — la pastille « N POINTS » du panneau annonce
+ * Le plafond de niveau (50) et le plafond de rangs (`rankCapacity`, la somme
+ * des plafonds des quatre bonus) ne sont pas alignés : à raison d'un point
+ * par niveau, une équipe en gagne 49 pour 17 rangs à remplir. Sans ce
+ * plafonnement, chaque point au-delà est mort-né — la pastille « N POINTS »
+ * du panneau annonce
  * une ressource que rien ne peut consommer, et le bouton d'investissement
  * n'ouvre qu'une modale où les quatre rangées disent « rang maximum
  * atteint ». On préfère ne pas créditer que promettre.
  *
  * Les points DÉJÀ EN MAIN comptent dans le calcul : ce qui reste à remplir
- * n'est pas « 20 − rangs investis » mais « 20 − rangs investis − points en
- * attente », sinon une équipe qui thésaurise ses points continuerait d'en
- * accumuler au-delà de ce qu'elle pourra placer.
+ * n'est pas « capacité − rangs investis » mais « capacité − rangs investis −
+ * points en attente », sinon une équipe qui thésaurise ses points continuerait
+ * d'en accumuler au-delà de ce qu'elle pourra placer.
+ *
+ * `rankCapacity` est passée en TOTAL, pas en plafond par bonus multiplié par
+ * quatre : depuis que `raid` plafonne plus bas que les trois autres, il n'y a
+ * plus de plafond commun à multiplier.
  *
  * Ce qui n'est PAS plafonné, et c'est délibéré : le niveau lui-même. Une
  * équipe continue de monter au-delà du vingtième niveau — c'est son
@@ -108,8 +134,8 @@ export function grantablePerkPoints(
   gained: number,
   heldPoints: number,
   investedRanks: number,
-  maxRank: number,
+  rankCapacity: number,
 ): number {
-  const capacity = TEAM_PERK_KEYS.length * maxRank - investedRanks - heldPoints
+  const capacity = rankCapacity - investedRanks - heldPoints
   return Math.max(0, Math.min(gained, capacity))
 }

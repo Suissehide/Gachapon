@@ -42,22 +42,28 @@ const AWARD_CFG_KEYS = [
   'teamLevel.xpBase',
   'teamLevel.xpExp',
   'teamLevel.maxLevel',
-  // Le plafond de RANGS : c'est lui qui borne les points attribuables, le
-  // plafond de niveau ne suffit pas (49 niveaux pour 20 rangs).
-  'teamPerk.maxRank',
+  // Les plafonds de RANGS : leur somme borne les points attribuables, le
+  // plafond de niveau ne suffit pas (49 niveaux pour 17 rangs).
+  'teamPerk.loot.maxRank',
+  'teamPerk.raid.maxRank',
+  'teamPerk.xp.maxRank',
+  'teamPerk.forge.maxRank',
 ] as const
 
 /** Les tunables nécessaires pour composer une vue complète de l'arbre de bonus. */
 const PERK_CFG_KEYS = [
-  'teamPerk.maxRank',
   'teamPerk.loot.perRank',
   'teamPerk.loot.unlockLevel',
+  'teamPerk.loot.maxRank',
   'teamPerk.raid.perRank',
   'teamPerk.raid.unlockLevel',
+  'teamPerk.raid.maxRank',
   'teamPerk.xp.perRank',
   'teamPerk.xp.unlockLevel',
+  'teamPerk.xp.maxRank',
   'teamPerk.forge.perRank',
   'teamPerk.forge.unlockLevel',
+  'teamPerk.forge.maxRank',
   'teamLevel.xpBase',
   'teamLevel.xpExp',
   'teamLevel.maxLevel',
@@ -65,6 +71,19 @@ const PERK_CFG_KEYS = [
 
 type AwardCfg = Record<(typeof AWARD_CFG_KEYS)[number], number>
 type PerkCfg = Record<(typeof PERK_CFG_KEYS)[number], number>
+
+/**
+ * Nombre total de rangs qu'une équipe pourra un jour acheter, tous bonus
+ * confondus. C'est le dénominateur de `grantablePerkPoints` : depuis que
+ * `raid` plafonne à 2 quand les trois autres plafonnent à 5, il ne s'obtient
+ * plus en multipliant un plafond commun par quatre.
+ */
+function rankCapacity(cfg: AwardCfg | PerkCfg): number {
+  return TEAM_PERK_KEYS.reduce(
+    (sum, key) => sum + cfg[`teamPerk.${key}.maxRank`],
+    0,
+  )
+}
 
 /**
  * Les trois sources dont le barème est un MULTIPLICATEUR d'une quantité
@@ -124,16 +143,17 @@ function toPerksView(
     xp: progress.xp,
     xpToNext: atMaxLevel ? 0 : Math.max(0, need - progress.xp),
     perkPoints: progress.perkPoints,
-    maxRank: cfg['teamPerk.maxRank'],
     perks: TEAM_PERK_KEYS.map((key) => {
       const rank = rankOf.get(key) ?? 0
       const unlockLevel = cfg[`teamPerk.${key}.unlockLevel`]
+      const maxRank = cfg[`teamPerk.${key}.maxRank`]
       return {
         key,
         rank,
-        effect: perkEffect(key, rank, cfg[`teamPerk.${key}.perRank`]),
+        effect: perkEffect(key, rank, cfg[`teamPerk.${key}.perRank`], maxRank),
         unlockLevel,
         unlocked: progress.level >= unlockLevel,
+        maxRank,
       }
     }),
   }
@@ -309,7 +329,7 @@ export class TeamProgressionDomain implements ITeamProgressionDomain {
               perkPointsGained,
               progress.perkPoints,
               rows.reduce((sum, row) => sum + row.rank, 0),
-              cfg['teamPerk.maxRank'],
+              rankCapacity(cfg),
             )
           }
           const written: TeamProgressRow = {
@@ -388,7 +408,7 @@ export class TeamProgressionDomain implements ITeamProgressionDomain {
       'Seuls le chef et les officiers peuvent investir les points.',
     )
     const cfg = await this.#configService.getMany(...PERK_CFG_KEYS)
-    const maxRank = cfg['teamPerk.maxRank']
+    const maxRank = cfg[`teamPerk.${key}.maxRank`]
     const unlockLevel = cfg[`teamPerk.${key}.unlockLevel`]
 
     const { progress, perks } = await retryOnSerialization(() =>
@@ -561,9 +581,13 @@ export class TeamProgressionDomain implements ITeamProgressionDomain {
       this.#teamProgressionRepository.bestPerkRanksForUser(userId),
       this.#configService.getMany(
         'teamPerk.loot.perRank',
+        'teamPerk.loot.maxRank',
         'teamPerk.raid.perRank',
+        'teamPerk.raid.maxRank',
         'teamPerk.xp.perRank',
+        'teamPerk.xp.maxRank',
         'teamPerk.forge.perRank',
+        'teamPerk.forge.maxRank',
       ),
     ])
     const rankOf = new Map(rows.map((row) => [row.key, row.rank]))
@@ -573,6 +597,7 @@ export class TeamProgressionDomain implements ITeamProgressionDomain {
         key,
         rankOf.get(key) ?? 0,
         cfg[`teamPerk.${key}.perRank`],
+        cfg[`teamPerk.${key}.maxRank`],
       )
     }
     return effects
@@ -600,10 +625,18 @@ export class TeamProgressionDomain implements ITeamProgressionDomain {
   async raidAttacksBonusForTeam(teamId: string): Promise<number> {
     const [rows, cfg] = await Promise.all([
       this.#teamProgressionRepository.listPerks(teamId),
-      this.#configService.getMany('teamPerk.raid.perRank'),
+      this.#configService.getMany(
+        'teamPerk.raid.perRank',
+        'teamPerk.raid.maxRank',
+      ),
     ])
     const rank = rows.find((row) => row.key === 'raid')?.rank ?? 0
-    return perkEffect('raid', rank, cfg['teamPerk.raid.perRank'])
+    return perkEffect(
+      'raid',
+      rank,
+      cfg['teamPerk.raid.perRank'],
+      cfg['teamPerk.raid.maxRank'],
+    )
   }
 
   /**

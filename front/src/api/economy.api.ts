@@ -8,6 +8,13 @@ export type CardRarityKey =
   | 'EPIC'
   | 'LEGENDARY'
 
+/** Un des quatre bonus d'équipe. Le plafond est par bonus, pas global. */
+export type TeamPerkConfig = {
+  perRank: number
+  unlockLevel: number
+  maxRank: number
+}
+
 export type MilestonePackConfig = {
   level: number
   bonusPoints: number
@@ -93,12 +100,11 @@ export interface EconomyConfig {
   team: {
     maxMembers: number
     recruitDays: number
-    perkMaxRank: number
     perks: {
-      loot: { perRank: number; unlockLevel: number }
-      raid: { perRank: number; unlockLevel: number }
-      xp: { perRank: number; unlockLevel: number }
-      forge: { perRank: number; unlockLevel: number }
+      loot: TeamPerkConfig
+      raid: TeamPerkConfig
+      xp: TeamPerkConfig
+      forge: TeamPerkConfig
     }
   }
   equip: {

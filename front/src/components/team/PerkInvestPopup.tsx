@@ -31,7 +31,6 @@ import {
 type PerkInvestPopupProps = {
   teamId: string
   perks: TeamPerkState[]
-  maxRank: number
   perkPoints: number
 }
 
@@ -41,15 +40,11 @@ type PerkInvestPopupProps = {
  * points, et le manque de points ne se dit qu'en dernier — c'est la seule
  * raison qui disparaîtra toute seule au prochain niveau.
  */
-function blockedReason(
-  perk: TeamPerkState,
-  maxRank: number,
-  perkPoints: number,
-): string | null {
+function blockedReason(perk: TeamPerkState, perkPoints: number): string | null {
   if (!perk.unlocked) {
     return `Se débloque au niveau ${perk.unlockLevel} de l'équipe`
   }
-  if (perk.rank >= maxRank) {
+  if (perk.rank >= perk.maxRank) {
     return 'Rang maximum atteint'
   }
   if (perkPoints <= 0) {
@@ -61,7 +56,6 @@ function blockedReason(
 export function PerkInvestPopup({
   teamId,
   perks,
-  maxRank,
   perkPoints,
 }: PerkInvestPopupProps) {
   const [open, setOpen] = useState(false)
@@ -78,7 +72,7 @@ export function PerkInvestPopup({
   // s'interdit partout ailleurs. Le serveur ne crédite plus de point
   // au-delà de la capacité (`grantablePerkPoints`) ; cette garde couvre les
   // équipes qui en avaient déjà accumulé avant.
-  const hasRoom = perks.some((perk) => perk.rank < maxRank)
+  const hasRoom = perks.some((perk) => perk.rank < perk.maxRank)
 
   return (
     <Popup open={open} onOpenChange={setOpen}>
@@ -90,11 +84,12 @@ export function PerkInvestPopup({
           <Sparkles className="h-4 w-4" />
           Investir {perkPoints} point{plural(perkPoints)}
         </PopupTrigger>
-      ) : (
+      ) : hasRoom ? null : (
+        // Une équipe sans point en main ne lit rien : l'absence du bouton dit
+        // déjà tout. Seul le plafond mérite une phrase, parce que lui ne se
+        // lèvera jamais et qu'il explique pourquoi les points cessent d'arriver.
         <p className="mt-3 text-center font-mono text-[10px] leading-[1.5] tracking-[0.06em] text-foreground/45">
-          {hasRoom
-            ? "Aucun point à investir : l'équipe en gagne un à chaque niveau."
-            : 'Tous les bonus sont au rang maximum.'}
+          Tous les bonus sont au rang maximum.
         </p>
       )}
 
@@ -119,7 +114,7 @@ export function PerkInvestPopup({
             // le temps de l'aller-retour — exactement ce que cette page
             // s'interdit.
             const reason =
-              blockedReason(perk, maxRank, perkPoints) ??
+              blockedReason(perk, perkPoints) ??
               (isPending && !thisPending ? 'Investissement en cours…' : null)
 
             return (
@@ -140,7 +135,7 @@ export function PerkInvestPopup({
                       {meta.name}
                     </span>
                     <span className="ml-auto shrink-0 font-mono text-[10px] tracking-[0.18em] text-foreground/50">
-                      {perk.rank}/{maxRank}
+                      {perk.rank}/{perk.maxRank}
                     </span>
                   </div>
                   <p className="mt-1 text-[11.5px] leading-[1.45] text-foreground/60">

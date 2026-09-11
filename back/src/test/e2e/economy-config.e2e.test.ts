@@ -94,15 +94,18 @@ describe('GET /economy/config', () => {
     const cfg = await configService.getMany(
       'team.maxMembers',
       'team.recruitDays',
-      'teamPerk.maxRank',
       'teamPerk.loot.perRank',
       'teamPerk.loot.unlockLevel',
+      'teamPerk.loot.maxRank',
       'teamPerk.raid.perRank',
       'teamPerk.raid.unlockLevel',
+      'teamPerk.raid.maxRank',
       'teamPerk.xp.perRank',
       'teamPerk.xp.unlockLevel',
+      'teamPerk.xp.maxRank',
       'teamPerk.forge.perRank',
       'teamPerk.forge.unlockLevel',
+      'teamPerk.forge.maxRank',
     )
 
     const res = await app.inject({ method: 'GET', url: '/economy/config' })
@@ -111,23 +114,26 @@ describe('GET /economy/config', () => {
     expect(body.team).toEqual({
       maxMembers: cfg['team.maxMembers'],
       recruitDays: cfg['team.recruitDays'],
-      perkMaxRank: cfg['teamPerk.maxRank'],
       perks: {
         loot: {
           perRank: cfg['teamPerk.loot.perRank'],
           unlockLevel: cfg['teamPerk.loot.unlockLevel'],
+          maxRank: cfg['teamPerk.loot.maxRank'],
         },
         raid: {
           perRank: cfg['teamPerk.raid.perRank'],
           unlockLevel: cfg['teamPerk.raid.unlockLevel'],
+          maxRank: cfg['teamPerk.raid.maxRank'],
         },
         xp: {
           perRank: cfg['teamPerk.xp.perRank'],
           unlockLevel: cfg['teamPerk.xp.unlockLevel'],
+          maxRank: cfg['teamPerk.xp.maxRank'],
         },
         forge: {
           perRank: cfg['teamPerk.forge.perRank'],
           unlockLevel: cfg['teamPerk.forge.unlockLevel'],
+          maxRank: cfg['teamPerk.forge.maxRank'],
         },
       },
     })

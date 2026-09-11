@@ -167,8 +167,10 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // Progression d'équipe. teamPoints.* = points hebdo par membre selon la
   // source (dégâts de raid, duel gagné, pari gagné, tirage effectué).
   // teamLevel.* = courbe d'XP (xpBase * niveau^xpExp) et plafond de niveau.
-  // teamPerk.*  = coût max de rang, gain par rang et niveau de déblocage pour
-  // chacun des quatre perks (loot, raid, xp, forge).
+  // teamPerk.*  = plafond de rang, gain par rang et niveau de déblocage pour
+  // chacun des quatre perks (loot, raid, xp, forge). Le plafond est PAR perk :
+  // `raid` est le seul dont l'effet mord sur des PV de boss calibrés à la main,
+  // et il plafonne plus bas que les trois autres (voir sa ligne).
   // Diviseur des degats de raid. Cale sur l'echelle REELLE du jeu, pas sur les
   // chiffres de la maquette : raid.baseHpPerMember vaut 162000 PAR MEMBRE, donc
   // la part d'un membre sur sa semaine represente 162000 degats. A 300, cela fait
@@ -182,15 +184,25 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'teamLevel.xpBase': 175,
   'teamLevel.xpExp': 1.6,
   'teamLevel.maxLevel': 50,
-  'teamPerk.maxRank': 5,
   'teamPerk.loot.perRank': 0.5,
   'teamPerk.loot.unlockLevel': 1,
+  'teamPerk.loot.maxRank': 5,
+  // `raid.maxRank` a ete ramene de 5 a 2. A 5, le bonus donnait +2 attaques
+  // par jour sur les 2 de base : la capacite hebdomadaire d'une equipe de 35
+  // passait de 7,2 a 14,4 M de degats contre 5,67 M de PV, soit un boss tombe
+  // au 3e jour au lieu du 6e. A 2 il donne +1 attaque, x1,5 au lieu de x2.
+  // `perRank` a 0,5 avec le plancher entier de `perkEffect` veut dire une
+  // attaque tous les DEUX rangs : le rang 1 ne change encore rien, le rang 2
+  // donne l'attaque.
   'teamPerk.raid.perRank': 0.5,
   'teamPerk.raid.unlockLevel': 4,
+  'teamPerk.raid.maxRank': 2,
   'teamPerk.xp.perRank': 0.8,
   'teamPerk.xp.unlockLevel': 8,
+  'teamPerk.xp.maxRank': 5,
   'teamPerk.forge.perRank': 1,
   'teamPerk.forge.unlockLevel': 16,
+  'teamPerk.forge.maxRank': 5,
   'team.maxMembers': 35,
   'team.recruitDays': 7,
   'teamRaid.historyLimit': 6,

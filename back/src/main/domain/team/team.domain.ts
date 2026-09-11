@@ -714,7 +714,6 @@ export class TeamDomain implements TeamDomainInterface {
       hue: resolveHue(team),
       perkPoints: perks.perkPoints,
       perks: perks.perks,
-      maxRank: perks.maxRank,
       weekPts: weekly.total,
       rankGlobal,
       raidsWon,

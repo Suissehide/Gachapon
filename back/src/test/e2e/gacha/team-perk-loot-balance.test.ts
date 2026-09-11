@@ -33,6 +33,7 @@ describe('Bonus équipe `loot` — chemins gacha (balance, next-at, pull)', () =
   let intervalMinutes: number
   let maxStock: number
   let lootPct: number
+  let lootMaxRank: number
   let pullTokenCost: number
 
   let baselineUserId: string
@@ -115,13 +116,23 @@ describe('Bonus équipe `loot` — chemins gacha (balance, next-at, pull)', () =
       'tokenRegenIntervalMinutes',
       'tokenMaxStock',
       'teamPerk.loot.perRank',
+      'teamPerk.loot.maxRank',
       'gacha.pullTokenCost',
     )
     intervalMinutes = cfg.tokenRegenIntervalMinutes
     maxStock = cfg.tokenMaxStock
     // Importé depuis les règles pures, jamais réimplémenté ici — même motif
     // que team-perk-loot.e2e.test.ts.
-    lootPct = perkEffect('loot', 5, cfg['teamPerk.loot.perRank'])
+    // Le rang testé est LE PLAFOND de `loot`, lu en config : les plafonds
+    // sont par bonus depuis que `raid` s'arrête plus bas, et ils peuvent
+    // bouger. Écrire 5 ici ferait passer le test à côté du jeu réel.
+    lootMaxRank = cfg['teamPerk.loot.maxRank']
+    lootPct = perkEffect(
+      'loot',
+      lootMaxRank,
+      cfg['teamPerk.loot.perRank'],
+      lootMaxRank,
+    )
     pullTokenCost = cfg['gacha.pullTokenCost']
 
     // Catalogue minimal pour que POST /pulls puisse réussir.
@@ -162,7 +173,7 @@ describe('Bonus équipe `loot` — chemins gacha (balance, next-at, pull)', () =
       data: { teamId: team.id, userId: bonusedUserId, role: 'MEMBER' },
     })
     await prisma.teamPerk.create({
-      data: { teamId: team.id, key: 'loot', rank: 5 },
+      data: { teamId: team.id, key: 'loot', rank: lootMaxRank },
     })
   })
 
@@ -170,7 +181,7 @@ describe('Bonus équipe `loot` — chemins gacha (balance, next-at, pull)', () =
     await app.close()
   })
 
-  it('GET /tokens/balance — rang 5 annonce plus de jetons régénérés, à durée égale', async () => {
+  it('GET /tokens/balance — rang maximum annonce plus de jetons régénérés, à durée égale', async () => {
     const { elapsedMin, baselineTokens, bonusedTokens } = maxStockBoundary()
 
     await setElapsed(baselineUserId, elapsedMin)
@@ -195,7 +206,7 @@ describe('Bonus équipe `loot` — chemins gacha (balance, next-at, pull)', () =
 
   // Site distinct de /tokens/balance : /tokens/next-at a son propre calcul
   // d'`effectiveInterval` dans la route, jamais exercé par le test au-dessus.
-  it('GET /tokens/next-at — rang 5 annonce plus de jetons régénérés, à durée égale', async () => {
+  it('GET /tokens/next-at — rang maximum annonce plus de jetons régénérés, à durée égale', async () => {
     const { elapsedMin, baselineTokens, bonusedTokens } = maxStockBoundary()
 
     await setElapsed(baselineUserId, elapsedMin)
@@ -223,7 +234,7 @@ describe('Bonus équipe `loot` — chemins gacha (balance, next-at, pull)', () =
   // volontairement binaire (échec/réussite) plutôt qu'un compte de jetons :
   // c'est la preuve la plus directe que le bonus atteint le chemin qui
   // décide si le joueur peut réellement tirer.
-  it('POST /pulls — rang 5 permet un tirage que la base refuse, à durée égale', async () => {
+  it('POST /pulls — rang maximum permet un tirage que la base refuse, à durée égale', async () => {
     const elapsedMin = firstTokenBoundary()
 
     await setElapsed(baselineUserId, elapsedMin)

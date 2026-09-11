@@ -39,6 +39,12 @@ export type TeamPerkState = {
   effect: number
   unlockLevel: number
   unlocked: boolean
+  /**
+   * Plafond de rang de CE bonus (config) : le front dessine `rang/maxRank` et
+   * dimensionne ses pastilles dessus. Il est par bonus et non global depuis
+   * que `raid` plafonne à 2 quand les trois autres plafonnent à 5.
+   */
+  maxRank: number
 }
 
 /** Vue de l'arbre de bonus d'une équipe après une dépense ou une remise à zéro. */
@@ -49,7 +55,6 @@ export type TeamPerksView = {
   /** XP restant à faire pour le niveau suivant. `0` au niveau maximum. */
   xpToNext: number
   perkPoints: number
-  maxRank: number
   perks: TeamPerkState[]
 }
 

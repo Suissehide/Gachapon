@@ -141,7 +141,6 @@ function TeamDetailPage() {
           <PerksPanel
             teamId={id}
             perks={team.perks}
-            maxRank={team.maxRank}
             perkPoints={team.perkPoints}
             canManage={canManage}
             isOwner={isOwner}

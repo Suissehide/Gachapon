@@ -651,27 +651,42 @@ describe("progression d'équipe : les quatre sources de points", () => {
     await configService.set('teamPoints.perPull', basePerPull)
   })
 
-  it("une equipe aux vingt rangs investis monte de niveau SANS gagner de point mort", async () => {
+  it("une equipe a tous ses rangs investis monte de niveau SANS gagner de point mort", async () => {
     // Le plafond de niveau (50) donne 49 points, les quatre bonus n'en
-    // prennent que 20 : au-dela, un point credite serait indepensable, et le
-    // panneau afficherait une pastille et un bouton que rien ne peut
-    // consommer. Retirer le plafonnement de `#awardToTeam` fait tomber ce
-    // test sur `after2.perkPoints`.
+    // prennent que 17 (loot 5 + raid 2 + xp 5 + forge 5) : au-dela, un point
+    // credite serait indepensable, et le panneau afficherait une pastille et
+    // un bouton que rien ne peut consommer. Retirer le plafonnement de
+    // `#awardToTeam` fait tomber ce test sur `after2.perkPoints`.
+    //
+    // Chaque bonus est rempli a SON plafond, pas a un plafond commun : c'est
+    // ce qui verifie que la capacite est bien une somme. Remettre un plafond
+    // unique fait croire a une place libre sur `raid` et recredite un point.
     const cfg = await configService.getMany(
-      'teamPerk.maxRank',
+      'teamPerk.loot.maxRank',
+      'teamPerk.raid.maxRank',
+      'teamPerk.xp.maxRank',
+      'teamPerk.forge.maxRank',
       'teamLevel.xpBase',
       'teamLevel.xpExp',
       'teamLevel.maxLevel',
     )
-    const maxRank = cfg['teamPerk.maxRank']
 
     // team2 : les quatre bonus au rang maximum, plus une seule place libre.
     await prisma.teamPerk.deleteMany({ where: { teamId: team2Id } })
-    for (const key of ['loot', 'raid', 'xp', 'forge']) {
+    for (const key of ['loot', 'raid', 'xp', 'forge'] as const) {
       await prisma.teamPerk.create({
-        data: { teamId: team2Id, key, rank: maxRank },
+        data: { teamId: team2Id, key, rank: cfg[`teamPerk.${key}.maxRank`] },
       })
     }
+    // Les points EN MAIN sont remis a zero, et ce n'est pas cosmetique : ils
+    // comptent dans la capacite restante. Tant que team2 en detenait trois ou
+    // plus, la capacite etait saturee par eux seuls et le test passait meme
+    // avec une capacite fausse — verifie en remplacant la somme par un
+    // plafond commun (4 x 5 = 20), qui ne tuait alors aucun test.
+    await prisma.team.update({
+      where: { id: team2Id },
+      data: { perkPoints: 0 },
+    })
 
     const before1 = await teamProgress(team1Id)
     const before2 = await teamProgress(team2Id)

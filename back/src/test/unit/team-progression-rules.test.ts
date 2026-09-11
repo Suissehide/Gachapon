@@ -58,16 +58,30 @@ describe('applyTeamXp', () => {
 
 describe('perkEffect', () => {
   it('la cadence de raid donne une attaque tous les deux rangs', () => {
-    expect(perkEffect('raid', 0, 0.5)).toBe(0)
-    expect(perkEffect('raid', 1, 0.5)).toBe(0)
-    expect(perkEffect('raid', 2, 0.5)).toBe(1)
-    expect(perkEffect('raid', 5, 0.5)).toBe(2)
+    expect(perkEffect('raid', 0, 0.5, 2)).toBe(0)
+    expect(perkEffect('raid', 1, 0.5, 2)).toBe(0)
+    expect(perkEffect('raid', 2, 0.5, 2)).toBe(1)
   })
 
   it('les bonus en pourcentage sont lineaires', () => {
-    expect(perkEffect('loot', 5, 0.5)).toBeCloseTo(2.5, 6)
-    expect(perkEffect('xp', 5, 0.8)).toBeCloseTo(4, 6)
-    expect(perkEffect('forge', 5, 1)).toBeCloseTo(5, 6)
+    expect(perkEffect('loot', 5, 0.5, 5)).toBeCloseTo(2.5, 6)
+    expect(perkEffect('xp', 5, 0.8, 5)).toBeCloseTo(4, 6)
+    expect(perkEffect('forge', 5, 1, 5)).toBeCloseTo(5, 6)
+  })
+
+  // Le plafond de `raid` est passe de 5 a 2. Une equipe qui avait deja
+  // investi 5 rangs garde la ligne en base : sans ce bornage elle
+  // encaisserait encore +2 attaques, un rang que plus personne ne peut
+  // acheter. Le plafond doit mordre a la LECTURE de l'effet, pas seulement
+  // au moment de la depense.
+  it('borne un rang herite au-dessus du plafond courant', () => {
+    expect(perkEffect('raid', 5, 0.5, 2)).toBe(1)
+    expect(perkEffect('loot', 9, 0.5, 5)).toBeCloseTo(2.5, 6)
+  })
+
+  it('ne rend jamais un effet negatif sur un rang aberrant', () => {
+    expect(perkEffect('raid', -3, 0.5, 2)).toBe(0)
+    expect(perkEffect('forge', -1, 1, 5)).toBe(0)
   })
 })
 
@@ -115,41 +129,42 @@ describe('hueFromName', () => {
 })
 
 describe('grantablePerkPoints', () => {
-  // 4 bonus x 5 rangs = 20 rangs a remplir, pour 49 points distribues par la
-  // courbe de niveau (1 -> 50). Le surplus ne doit jamais etre credite.
-  const MAX_RANK = 5
+  // loot 5 + raid 2 + xp 5 + forge 5 = 17 rangs a remplir, pour 49 points
+  // distribues par la courbe de niveau (1 -> 50). Le surplus ne doit jamais
+  // etre credite. La capacite arrive en TOTAL : depuis que `raid` plafonne
+  // plus bas que les trois autres, il n'y a plus de plafond commun.
+  const CAPACITY = 17
 
   it('credite tout tant que la capacite le permet', () => {
-    expect(grantablePerkPoints(1, 0, 0, MAX_RANK)).toBe(1)
-    expect(grantablePerkPoints(3, 2, 5, MAX_RANK)).toBe(3)
+    expect(grantablePerkPoints(1, 0, 0, CAPACITY)).toBe(1)
+    expect(grantablePerkPoints(3, 2, 5, CAPACITY)).toBe(3)
   })
 
-  it('ne credite plus rien quand les vingt rangs sont investis', () => {
-    expect(grantablePerkPoints(1, 0, 20, MAX_RANK)).toBe(0)
-    expect(grantablePerkPoints(7, 0, 20, MAX_RANK)).toBe(0)
+  it('ne credite plus rien quand tous les rangs sont investis', () => {
+    expect(grantablePerkPoints(1, 0, 17, CAPACITY)).toBe(0)
+    expect(grantablePerkPoints(7, 0, 17, CAPACITY)).toBe(0)
   })
 
   it('compte les points DEJA EN MAIN dans la capacite restante', () => {
-    // 20 rangs, 12 investis, 8 points en attente : plus rien a promettre.
-    expect(grantablePerkPoints(1, 8, 12, MAX_RANK)).toBe(0)
+    // 17 rangs, 9 investis, 8 points en attente : plus rien a promettre.
+    expect(grantablePerkPoints(1, 8, 9, CAPACITY)).toBe(0)
     // Un rang de moins investi : exactement un point de place.
-    expect(grantablePerkPoints(3, 8, 11, MAX_RANK)).toBe(1)
+    expect(grantablePerkPoints(3, 8, 8, CAPACITY)).toBe(1)
   })
 
   it('tronque une montee multi-niveaux a la place disponible', () => {
     // Quatre niveaux d'un coup, deux rangs libres : deux points.
-    expect(grantablePerkPoints(4, 0, 18, MAX_RANK)).toBe(2)
+    expect(grantablePerkPoints(4, 0, 15, CAPACITY)).toBe(2)
   })
 
   it("ne rend jamais un nombre negatif, meme sur un etat incoherent", () => {
     // Etat impossible en fonctionnement normal (points herites d'avant le
     // plafonnement) : on n'en retire pas non plus.
-    expect(grantablePerkPoints(2, 25, 20, MAX_RANK)).toBe(0)
+    expect(grantablePerkPoints(2, 25, 17, CAPACITY)).toBe(0)
   })
 
-  it('suit le plafond de rangs de la config, pas une constante ecrite ici', () => {
-    // maxRank a 3 : 12 rangs en tout, pas 20.
-    expect(grantablePerkPoints(1, 0, 12, 3)).toBe(0)
-    expect(grantablePerkPoints(1, 0, 11, 3)).toBe(1)
+  it('suit la capacite passee, pas une constante ecrite ici', () => {
+    expect(grantablePerkPoints(1, 0, 12, 12)).toBe(0)
+    expect(grantablePerkPoints(1, 0, 11, 12)).toBe(1)
   })
 })

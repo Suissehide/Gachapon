@@ -373,10 +373,20 @@ describe('Vues de la section Équipe', () => {
     expect(body.motto).toBe(MAIN_MOTTO)
     expect(body.perkPoints).toBe(MAIN_PERK_POINTS)
     // Le front dimensionne ses pastilles de rang dessus : sans ce champ il
-    // coderait 5 en dur, alors que c'est un tunable.
-    expect(body.maxRank).toBe(
-      (await configService.getMany('teamPerk.maxRank'))['teamPerk.maxRank'],
+    // coderait 5 en dur, alors que c'est un tunable. Le plafond est PAR
+    // bonus — `raid` s'arrête plus bas que les trois autres — donc il voyage
+    // sur chaque entrée de `perks`, plus au niveau de l'équipe.
+    const perkCfg = await configService.getMany(
+      'teamPerk.loot.maxRank',
+      'teamPerk.raid.maxRank',
+      'teamPerk.xp.maxRank',
+      'teamPerk.forge.maxRank',
     )
+    expect(body.maxRank).toBeUndefined()
+    for (const key of ['loot', 'raid', 'xp', 'forge'] as const) {
+      const perk = body.perks.find((p: any) => p.key === key)
+      expect(perk.maxRank).toBe(perkCfg[`teamPerk.${key}.maxRank`])
+    }
     expect(body.weekPts).toBe(80)
     expect(body.maxMembers).toBe(maxMembers)
     expect(body.memberCount).toBe(4)

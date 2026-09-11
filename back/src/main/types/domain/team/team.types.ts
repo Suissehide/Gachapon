@@ -110,8 +110,6 @@ export type TeamDetail = {
   hue: number
   perkPoints: number
   perks: TeamPerkState[]
-  /** Rang maximum d'un bonus (config) : le front dessine `rang/maxRank`. */
-  maxRank: number
   /** Points de TOUTE l'équipe sur la semaine en cours. */
   weekPts: number
   /** Rang au classement d'équipes. `null` si l'équipe n'y figure pas. */

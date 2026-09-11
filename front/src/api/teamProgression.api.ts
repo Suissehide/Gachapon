@@ -17,6 +17,8 @@ export type TeamPerkState = {
   effect: number
   unlockLevel: number
   unlocked: boolean
+  /** Plafond de CE bonus : `raid` plafonne à 2, les trois autres à 5. */
+  maxRank: number
 }
 
 export type TeamDetailMember = {
@@ -51,7 +53,6 @@ export type TeamDetail = {
   hue: number
   perkPoints: number
   perks: TeamPerkState[]
-  maxRank: number
   weekPts: number
   rankGlobal: number | null
   raidsWon: number
@@ -111,7 +112,6 @@ export type TeamPerksView = {
   xp: number
   xpToNext: number
   perkPoints: number
-  maxRank: number
   perks: TeamPerkState[]
 }
 

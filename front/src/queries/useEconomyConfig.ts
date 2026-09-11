@@ -63,12 +63,11 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
   team: {
     maxMembers: 35,
     recruitDays: 7,
-    perkMaxRank: 5,
     perks: {
-      loot: { perRank: 0.5, unlockLevel: 1 },
-      raid: { perRank: 0.5, unlockLevel: 4 },
-      xp: { perRank: 0.8, unlockLevel: 8 },
-      forge: { perRank: 1, unlockLevel: 16 },
+      loot: { perRank: 0.5, unlockLevel: 1, maxRank: 5 },
+      raid: { perRank: 0.5, unlockLevel: 4, maxRank: 2 },
+      xp: { perRank: 0.8, unlockLevel: 8, maxRank: 5 },
+      forge: { perRank: 1, unlockLevel: 16, maxRank: 5 },
     },
   },
   equip: {

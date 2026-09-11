@@ -29,6 +29,12 @@ const rarityRecordSchema = z.object({
   LEGENDARY: z.number(),
 })
 
+const perkConfigSchema = z.object({
+  perRank: z.number(),
+  unlockLevel: z.number(),
+  maxRank: z.number(),
+})
+
 const economyConfigResponseSchema = z.object({
   xp: z.object({
     base: z.number(),
@@ -109,12 +115,13 @@ const economyConfigResponseSchema = z.object({
   team: z.object({
     maxMembers: z.number(),
     recruitDays: z.number(),
-    perkMaxRank: z.number(),
+    // Le plafond de rang est PAR bonus depuis que `raid` plafonne à 2 quand
+    // les trois autres plafonnent à 5 : plus de `perkMaxRank` global.
     perks: z.object({
-      loot: z.object({ perRank: z.number(), unlockLevel: z.number() }),
-      raid: z.object({ perRank: z.number(), unlockLevel: z.number() }),
-      xp: z.object({ perRank: z.number(), unlockLevel: z.number() }),
-      forge: z.object({ perRank: z.number(), unlockLevel: z.number() }),
+      loot: perkConfigSchema,
+      raid: perkConfigSchema,
+      xp: perkConfigSchema,
+      forge: perkConfigSchema,
     }),
   }),
 })
@@ -178,15 +185,18 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
         'bet.maxStake',
         'team.maxMembers',
         'team.recruitDays',
-        'teamPerk.maxRank',
         'teamPerk.loot.perRank',
         'teamPerk.loot.unlockLevel',
+        'teamPerk.loot.maxRank',
         'teamPerk.raid.perRank',
         'teamPerk.raid.unlockLevel',
+        'teamPerk.raid.maxRank',
         'teamPerk.xp.perRank',
         'teamPerk.xp.unlockLevel',
+        'teamPerk.xp.maxRank',
         'teamPerk.forge.perRank',
         'teamPerk.forge.unlockLevel',
+        'teamPerk.forge.maxRank',
         ...SUBSTAT_RANGE_CONFIG_KEYS,
       )
       return {
@@ -272,23 +282,26 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
         team: {
           maxMembers: c['team.maxMembers'],
           recruitDays: c['team.recruitDays'],
-          perkMaxRank: c['teamPerk.maxRank'],
           perks: {
             loot: {
               perRank: c['teamPerk.loot.perRank'],
               unlockLevel: c['teamPerk.loot.unlockLevel'],
+              maxRank: c['teamPerk.loot.maxRank'],
             },
             raid: {
               perRank: c['teamPerk.raid.perRank'],
               unlockLevel: c['teamPerk.raid.unlockLevel'],
+              maxRank: c['teamPerk.raid.maxRank'],
             },
             xp: {
               perRank: c['teamPerk.xp.perRank'],
               unlockLevel: c['teamPerk.xp.unlockLevel'],
+              maxRank: c['teamPerk.xp.maxRank'],
             },
             forge: {
               perRank: c['teamPerk.forge.perRank'],
               unlockLevel: c['teamPerk.forge.unlockLevel'],
+              maxRank: c['teamPerk.forge.maxRank'],
             },
           },
         },

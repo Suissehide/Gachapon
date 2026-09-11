@@ -31,7 +31,8 @@ describe('Routes des bonus d\'équipe', () => {
   let memberId: string
   let teamId: string
 
-  let maxRank: number
+  let lootMaxRank: number
+  let raidMaxRank: number
   let lootUnlockLevel: number
   let forgeUnlockLevel: number
 
@@ -102,11 +103,13 @@ describe('Routes des bonus d\'équipe', () => {
     configService = container.configService
 
     const cfg = await configService.getMany(
-      'teamPerk.maxRank',
+      'teamPerk.loot.maxRank',
+      'teamPerk.raid.maxRank',
       'teamPerk.loot.unlockLevel',
       'teamPerk.forge.unlockLevel',
     )
-    maxRank = cfg['teamPerk.maxRank']
+    lootMaxRank = cfg['teamPerk.loot.maxRank']
+    raidMaxRank = cfg['teamPerk.raid.maxRank']
     lootUnlockLevel = cfg['teamPerk.loot.unlockLevel']
     forgeUnlockLevel = cfg['teamPerk.forge.unlockLevel']
     // Le cas « verrouillé par le niveau » n'a de sens que si `forge` se
@@ -174,10 +177,32 @@ describe('Routes des bonus d\'équipe', () => {
   })
 
   it('un bonus déjà au rang maximum -> 409', async () => {
-    await setTeamState(999, 1, { loot: maxRank })
+    await setTeamState(999, 1, { loot: lootMaxRank })
     const res = await spend(cookiesLeader, 'loot')
     expect(res.statusCode).toBe(409)
     expect(res.json().message).toBe('Ce bonus est déjà au rang maximum.')
+  })
+
+  // Le plafond est PAR bonus : `raid` s'arrête plus bas que les trois autres.
+  // Rebrancher `spendPerkPoint` sur un plafond commun laisserait passer cette
+  // dépense, et l'équipe achèterait des attaques que l'équilibrage refuse.
+  it('le plafond de `raid` est le sien, plus bas que celui des autres bonus', async () => {
+    expect(raidMaxRank).toBeLessThan(lootMaxRank)
+
+    await setTeamState(999, 20, { raid: raidMaxRank })
+    const refused = await spend(cookiesLeader, 'raid')
+    expect(refused.statusCode).toBe(409)
+    expect(refused.json().message).toBe('Ce bonus est déjà au rang maximum.')
+
+    // Au MÊME rang, `loot` a encore de la place : la borne n'est pas globale.
+    await setTeamState(999, 20, { loot: raidMaxRank })
+    const accepted = await spend(cookiesLeader, 'loot')
+    expect(accepted.statusCode).toBe(200)
+    const loot = accepted
+      .json()
+      .perks.find((perk: any) => perk.key === 'loot')
+    expect(loot.rank).toBe(raidMaxRank + 1)
+    expect(loot.maxRank).toBe(lootMaxRank)
   })
 
   it('une dépense valide -> 200, rang +1, perkPoints -1, visible sur la réponse HTTP', async () => {
@@ -187,10 +212,15 @@ describe('Routes des bonus d\'équipe', () => {
     const body = res.json()
     expect(body.teamId).toBe(teamId)
     expect(body.perkPoints).toBe(0)
-    expect(body.maxRank).toBe(maxRank)
     const loot = body.perks.find((p: any) => p.key === 'loot')
     expect(loot.rank).toBe(2)
     expect(loot.unlocked).toBe(true)
+    // Le plafond voyage sur CHAQUE bonus : le front dessine `rang/maxRank`
+    // et il n'y a plus de valeur globale d'où le tirer.
+    expect(loot.maxRank).toBe(lootMaxRank)
+    expect(body.perks.find((p: any) => p.key === 'raid').maxRank).toBe(
+      raidMaxRank,
+    )
 
     // Rendu par le domaine (pas relu en base) : c'est ce que le schéma Zod
     // de réponse doit laisser passer intact, champ par champ.

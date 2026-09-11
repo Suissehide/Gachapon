@@ -72,6 +72,10 @@ const teamPerkStateSchema = z.object({
   effect: z.number(),
   unlockLevel: z.number().int(),
   unlocked: z.boolean(),
+  // Le front dessine `rang/maxRank` et dimensionne ses pastilles dessus :
+  // c'est une valeur de config, il n'a pas le droit de la coder en dur. Elle
+  // est PAR bonus — `raid` plafonne à 2, les trois autres à 5.
+  maxRank: z.number().int(),
 })
 
 export const teamPerksResponseSchema = z.object({
@@ -80,7 +84,6 @@ export const teamPerksResponseSchema = z.object({
   xp: z.number().int(),
   xpToNext: z.number().int(),
   perkPoints: z.number().int(),
-  maxRank: z.number().int(),
   perks: z.array(teamPerkStateSchema),
 })
 
@@ -187,9 +190,6 @@ export const teamDetailResponseSchema = z.object({
   hue: z.number().int(),
   perkPoints: z.number().int(),
   perks: z.array(teamPerkStateSchema),
-  // Le front dessine `rang/maxRank` et dimensionne ses pastilles dessus :
-  // c'est une valeur de config, il n'a pas le droit de la coder en dur.
-  maxRank: z.number().int(),
   weekPts: z.number().int(),
   rankGlobal: z.number().int().nullable(),
   raidsWon: z.number().int(),

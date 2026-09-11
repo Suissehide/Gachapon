@@ -28,6 +28,7 @@ describe('Bonus équipe `loot` — régénération de jetons', () => {
   let intervalMinutes: number
   let maxStock: number
   let lootPct: number
+  let lootMaxRank: number
 
   const suffix = Date.now()
   const password = 'Password123!'
@@ -94,13 +95,23 @@ describe('Bonus équipe `loot` — régénération de jetons', () => {
       'tokenRegenIntervalMinutes',
       'tokenMaxStock',
       'teamPerk.loot.perRank',
+      'teamPerk.loot.maxRank',
     )
     intervalMinutes = cfg.tokenRegenIntervalMinutes
     maxStock = cfg.tokenMaxStock
     // Importé depuis les règles pures, jamais réimplémenté ici : `loot`
     // n'est pas planché aujourd'hui, mais une réimplémentation à la main
     // resterait fausse sans le détecter si la règle changeait demain.
-    lootPct = perkEffect('loot', 5, cfg['teamPerk.loot.perRank'])
+    // Le rang testé est LE PLAFOND de `loot`, lu en config : les plafonds
+    // sont par bonus depuis que `raid` s'arrête plus bas, et ils peuvent
+    // bouger. Écrire 5 ici ferait passer le test à côté du jeu réel.
+    lootMaxRank = cfg['teamPerk.loot.maxRank']
+    lootPct = perkEffect(
+      'loot',
+      lootMaxRank,
+      cfg['teamPerk.loot.perRank'],
+      lootMaxRank,
+    )
   })
 
   async function makeTeamWithLoot(memberUserId: string, tag: string) {
@@ -122,7 +133,7 @@ describe('Bonus équipe `loot` — régénération de jetons', () => {
       data: { teamId: team.id, userId: memberUserId, role: 'MEMBER' },
     })
     await prisma.teamPerk.create({
-      data: { teamId: team.id, key: 'loot', rank: 5 },
+      data: { teamId: team.id, key: 'loot', rank: lootMaxRank },
     })
   }
 
@@ -152,7 +163,7 @@ describe('Bonus équipe `loot` — régénération de jetons', () => {
     await app.close()
   })
 
-  it('POST /rewards/:id/claim (claimOne) — rang 5 augmente les jetons régénérés à durée égale', async () => {
+  it('POST /rewards/:id/claim (claimOne) — rang maximum augmente les jetons régénérés à durée égale', async () => {
     const { elapsedMin, baselineTokens, bonusedTokens } = boundaryWindow()
 
     const baseline = await registerAndLogin('Base')
@@ -181,7 +192,7 @@ describe('Bonus équipe `loot` — régénération de jetons', () => {
 
   // Site distinct de claimOne (revue coordinateur) : claimAll a son propre
   // calcul d'`effectiveInterval`, jamais exercé par le test ci-dessus.
-  it('POST /rewards/claim-all (claimAll) — rang 5 augmente les jetons régénérés à durée égale', async () => {
+  it('POST /rewards/claim-all (claimAll) — rang maximum augmente les jetons régénérés à durée égale', async () => {
     const { elapsedMin, baselineTokens, bonusedTokens } = boundaryWindow()
 
     const baseline = await registerAndLogin('AllBase')

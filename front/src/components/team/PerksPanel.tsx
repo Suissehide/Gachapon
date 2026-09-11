@@ -32,8 +32,11 @@ import { SectionLabel } from '../ui/sectionHeading.tsx'
 import { ConfirmPopup } from './ConfirmPopup.tsx'
 import { PerkInvestPopup } from './PerkInvestPopup.tsx'
 
-function PerkRow({ perk, maxRank }: { perk: TeamPerkState; maxRank: number }) {
+function PerkRow({ perk }: { perk: TeamPerkState }) {
   const meta = PERK_META[perk.key]
+  // Le plafond voyage avec le bonus : `raid` en a 2, les trois autres 5, donc
+  // la rangée du raid dessine deux pastilles là où les autres en dessinent cinq.
+  const { maxRank } = perk
   const locked = !perk.unlocked
   const { Icon } = meta
 
@@ -116,7 +119,6 @@ function PerkRow({ perk, maxRank }: { perk: TeamPerkState; maxRank: number }) {
 type PerksPanelProps = {
   teamId: string
   perks: TeamPerkState[]
-  maxRank: number
   perkPoints: number
   /** Chef ou officier : les seuls rôles autorisés à dépenser un point. */
   canManage: boolean
@@ -127,7 +129,6 @@ type PerksPanelProps = {
 export function PerksPanel({
   teamId,
   perks,
-  maxRank,
   perkPoints,
   canManage,
   isOwner,
@@ -149,7 +150,7 @@ export function PerksPanel({
 
       <div className="flex flex-col gap-2.5">
         {perks.map((perk) => (
-          <PerkRow key={perk.key} perk={perk} maxRank={maxRank} />
+          <PerkRow key={perk.key} perk={perk} />
         ))}
       </div>
 
@@ -161,7 +162,6 @@ export function PerksPanel({
         <PerkInvestPopup
           teamId={teamId}
           perks={perks}
-          maxRank={maxRank}
           perkPoints={perkPoints}
         />
       ) : (

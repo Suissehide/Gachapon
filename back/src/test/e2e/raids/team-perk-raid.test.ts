@@ -17,7 +17,7 @@ import { buildTestApp } from '../../helpers/build-test-app'
  * Second cas (revue du coordinateur) : ce bonus est scopé à L'ÉQUIPE dont
  * le boss est affiché, pas au meilleur rang du joueur toutes équipes
  * confondues — contrairement à `loot`/`xp`/`forge`. Un joueur membre de
- * deux équipes, rang 5 dans l'une, ne doit voir AUCUN bonus sur le raid de
+ * deux équipes, rang maximum dans l'une, ne doit voir AUCUN bonus sur le raid de
  * l'autre.
  *
  * Troisième cas : les deux tests au-dessus n'exercent que `#buildView`
@@ -32,6 +32,7 @@ describe('Bonus équipe `raid` — attaques par jour', () => {
   let configService: any
   let baseAttacksPerDay: number
   let raidPct: number
+  let maxRank: number
   let raidCardId: string
 
   const suffix = Date.now()
@@ -90,12 +91,17 @@ describe('Bonus équipe `raid` — attaques par jour', () => {
     const cfg = await configService.getMany(
       'raid.attacksPerDay',
       'teamPerk.raid.perRank',
+      'teamPerk.raid.maxRank',
     )
     baseAttacksPerDay = cfg['raid.attacksPerDay']
+    // Le rang testé est LE PLAFOND de `raid`, lu en config, jamais 5 écrit
+    // ici : ce plafond a déjà baissé une fois (5 -> 2) et le test doit suivre
+    // le jeu, pas une valeur figée dans son passé.
+    maxRank = cfg['teamPerk.raid.maxRank']
     // Importé depuis les règles pures, jamais réimplémenté ici : un
     // changement du plancher (`Math.floor`) ferait dériver ce test du jeu
     // réel sans que le test ne le détecte.
-    raidPct = perkEffect('raid', 5, cfg['teamPerk.raid.perRank'])
+    raidPct = perkEffect('raid', maxRank, cfg['teamPerk.raid.perRank'], maxRank)
 
     const weekKey = raidWeekKey(new Date())
     const element = raidElementForWeek(weekKey)
@@ -145,19 +151,19 @@ describe('Bonus équipe `raid` — attaques par jour', () => {
     await app.close()
   })
 
-  it("rang 5 : ajoute l'effet ENTIER du bonus au quota de base", async () => {
+  it("au rang maximum : ajoute l'effet ENTIER du bonus au quota de base", async () => {
     expect(raidPct).toBeGreaterThan(0)
 
     const baseline = await registerAndLogin('Base')
     const bonused = await registerAndLogin('Bonus')
 
     // team1 (baseline) : le joueur en est membre mais SANS bonus investi —
-    // rang 0 par défaut (aucune ligne TeamPerk). team2 (bonus) : rang 5 sur
+    // rang 0 par défaut (aucune ligne TeamPerk). team2 (bonus) : rang maximum sur
     // `raid`.
     const team1Id = await makeTeam('Base', baseline.userId)
     const team2Id = await makeTeam('Bonus', bonused.userId)
     await prisma.teamPerk.create({
-      data: { teamId: team2Id, key: 'raid', rank: 5 },
+      data: { teamId: team2Id, key: 'raid', rank: maxRank },
     })
 
     const baselineRes = await app.inject({
@@ -182,7 +188,7 @@ describe('Bonus équipe `raid` — attaques par jour', () => {
   it("un rang investi dans une équipe ne fuit pas vers le raid d'une autre équipe du même joueur", async () => {
     expect(raidPct).toBeGreaterThan(0)
 
-    // UN SEUL joueur, membre des deux équipes : teamRich a le bonus rang 5,
+    // UN SEUL joueur, membre des deux équipes : teamRich a le bonus au rang maximum,
     // teamPoor n'a jamais reçu de point. `effectsForUser` (user-scopé)
     // ferait fuir le bonus de teamRich vers teamPoor ; la lecture correcte
     // (`raidAttacksBonusForTeam`, scopée à l'équipe affichée) ne doit rien
@@ -191,7 +197,7 @@ describe('Bonus équipe `raid` — attaques par jour', () => {
     const teamPoorId = await makeTeam('Poor', player.userId)
     const teamRichId = await makeTeam('Rich', player.userId)
     await prisma.teamPerk.create({
-      data: { teamId: teamRichId, key: 'raid', rank: 5 },
+      data: { teamId: teamRichId, key: 'raid', rank: maxRank },
     })
 
     const poorRes = await app.inject({
@@ -218,7 +224,7 @@ describe('Bonus équipe `raid` — attaques par jour', () => {
     const teamNoBonusId = await makeTeam('AttackNo', player.userId)
     const teamBonusId = await makeTeam('AttackYes', player.userId)
     await prisma.teamPerk.create({
-      data: { teamId: teamBonusId, key: 'raid', rank: 5 },
+      data: { teamId: teamBonusId, key: 'raid', rank: maxRank },
     })
 
     const userCard = await prisma.userCard.create({
