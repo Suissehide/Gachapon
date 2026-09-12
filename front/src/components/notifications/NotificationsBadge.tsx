@@ -14,7 +14,12 @@ import { useEffect, useRef, useState } from 'react'
 import type { SettledDuelView } from '../../api/wagers.api.ts'
 import { RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { markDuelSeen, readSeenDuels } from '../../libs/seenDuels.ts'
-import { markJoinSeen, readSeenJoins } from '../../libs/seenJoinRequests.ts'
+import {
+  isJoinSeen,
+  markJoinSeen,
+  readSeenJoins,
+  seenKey,
+} from '../../libs/seenJoinRequests.ts'
 import {
   useAcceptPendingDuel,
   useDeclinePendingDuel,
@@ -118,7 +123,7 @@ function AcceptedJoinItems({
   onOpen,
 }: {
   requests: MyJoinRequest[]
-  onOpen: (requestId: string, teamId: string) => void
+  onOpen: (request: MyJoinRequest) => void
 }) {
   return (
     <>
@@ -128,7 +133,7 @@ function AcceptedJoinItems({
           icon={<Users className="h-4 w-4" />}
           title={`Tu as rejoint ${request.teamName}`}
           subtitle="Ta candidature a été acceptée"
-          onOpen={() => onOpen(request.id, request.teamId)}
+          onOpen={() => onOpen(request)}
           openTitle="Voir l’équipe"
         />
       ))}
@@ -165,7 +170,9 @@ export function NotificationsBadge() {
   const announced = duelData?.settled ?? []
   const settled = announced.filter((d) => !seen.has(d.id))
   const acceptedJoins = (myJoinData?.requests ?? []).filter(
-    (r) => r.status === 'ACCEPTED' && !seenJoins.has(r.id),
+    (r) =>
+      r.status === 'ACCEPTED' &&
+      !isJoinSeen(seenJoins, r.id, r.decidedAt ?? ''),
   )
   const count =
     invitations.length +
@@ -237,10 +244,13 @@ export function NotificationsBadge() {
     void navigate({ to: '/team/$id', params: { id: teamId } })
   }
 
-  const openJoinAnnouncement = (requestId: string, teamId: string) => {
-    markJoinSeen(requestId)
-    setSeenJoins((previous) => new Set(previous).add(requestId))
-    goToTeam(teamId)
+  const openJoinAnnouncement = (request: MyJoinRequest) => {
+    const decidedAt = request.decidedAt ?? ''
+    markJoinSeen(request.id, decidedAt)
+    setSeenJoins((previous) =>
+      new Set(previous).add(seenKey(request.id, decidedAt)),
+    )
+    goToTeam(request.teamId)
   }
 
   return (

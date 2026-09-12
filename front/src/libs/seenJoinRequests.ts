@@ -15,7 +15,18 @@ const KEY = 'gachapon.seenAcceptedJoinRequests'
  * Chaque accès est protégé : `localStorage` lève dans un contexte restreint
  * (navigation privée stricte, stockage bloqué), et la pastille doit
  * s'afficher quand même.
+ *
+ * La clé n'est PAS le seul `requestId` : `JoinRequest` a une ligne par
+ * couple (équipe, joueur), donc le même id survit à une recandidature. Un
+ * joueur qui rejoint, quitte, recandidate et se fait accepter une seconde
+ * fois retrouverait sinon l'id déjà dans `seen` et ne verrait jamais la
+ * seconde annonce. La clé compose `requestId` et `decidedAt` — la seconde
+ * décision change forcément cette date.
  */
+export function seenKey(requestId: string, decidedAt: string): string {
+  return `${requestId}:${decidedAt}`
+}
+
 export function readSeenJoins(): Set<string> {
   try {
     const raw = localStorage.getItem(KEY)
@@ -27,13 +38,22 @@ export function readSeenJoins(): Set<string> {
 }
 
 /** Marque une candidature acceptée comme lue. */
-export function markJoinSeen(requestId: string): void {
+export function markJoinSeen(requestId: string, decidedAt: string): void {
   try {
-    const kept = new Set([...readSeenJoins(), requestId])
+    const kept = new Set([...readSeenJoins(), seenKey(requestId, decidedAt)])
     localStorage.setItem(KEY, JSON.stringify([...kept]))
   } catch {
     /* stockage indisponible : l'annonce réapparaîtra, ce n'est pas grave */
   }
+}
+
+/** Est-ce que cette DÉCISION précise (pas seulement cette demande) a déjà été vue ? */
+export function isJoinSeen(
+  seen: Set<string>,
+  requestId: string,
+  decidedAt: string,
+): boolean {
+  return seen.has(seenKey(requestId, decidedAt))
 }
 
 function isString(value: unknown): value is string {
