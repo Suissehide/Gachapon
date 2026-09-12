@@ -86,6 +86,30 @@ describe('Annuaire des équipes qui recrutent', () => {
     })
   })
 
+  it('refuse de candidater à une équipe qui ne recrute pas', async () => {
+    // `recruiting` n'est pas qu'un filtre d'annuaire : `apply()` le
+    // revérifie côté serveur, sinon un id d'équipe glané ailleurs suffit à
+    // candidater (et à faire sonner la cloche des officiers) sur une équipe
+    // qui a coupé le robinet.
+    await prisma.team.update({
+      where: { id: teamId },
+      data: { recruiting: false },
+    })
+    const applicant = await signIn('recruitDirClosed')
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/teams/${teamId}/join-requests`,
+      headers: { cookie: applicant.cookies },
+    })
+    expect(res.statusCode).toBe(403)
+
+    await prisma.team.update({
+      where: { id: teamId },
+      data: { recruiting: true },
+    })
+  })
+
   it('marque les équipes où j ai déjà une candidature en attente', async () => {
     const other = await signIn('recruitDirMarker')
     await app.inject({

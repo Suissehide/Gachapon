@@ -311,6 +311,57 @@ describe('Recrutement d équipe', () => {
     await prisma.joinRequest.deleteMany({ where: { teamId: targetId } })
   })
 
+  it('expiration paresseuse : une PENDING expirée disparaît des deux files et devient EXPIRED en base', async () => {
+    // `#sweepExpired` + `markExpired` n'étaient exercés que par le
+    // prédicat pur en unitaire : aucun e2e ne semait de ligne dont
+    // `expiresAt` est déjà passé. Équipe dédiée pour ne dépendre d'aucun
+    // autre test.
+    const team = await prisma.team.create({
+      data: {
+        name: `Expiration ${suffix}`,
+        slug: `expiration-${suffix}`,
+        ownerId,
+        members: { create: { userId: ownerId, role: 'OWNER' } },
+      },
+    })
+    const req = await prisma.joinRequest.create({
+      data: {
+        teamId: team.id,
+        userId: candidateId,
+        status: 'PENDING',
+        expiresAt: new Date(Date.now() - 1000),
+      },
+    })
+
+    try {
+      const mine = await app.inject({
+        method: 'GET',
+        url: '/me/join-requests',
+        headers: { cookie: cookiesCandidate },
+      })
+      expect(mine.statusCode).toBe(200)
+      expect(
+        mine.json().requests.some((r: any) => r.id === req.id),
+      ).toBe(false)
+
+      const queue = await app.inject({
+        method: 'GET',
+        url: `/teams/${team.id}/join-requests`,
+        headers: { cookie: cookiesOwner },
+      })
+      expect(queue.statusCode).toBe(200)
+      expect(queue.json().requests).toHaveLength(0)
+
+      const row = await prisma.joinRequest.findUnique({
+        where: { id: req.id },
+      })
+      expect(row?.status).toBe('EXPIRED')
+    } finally {
+      await prisma.joinRequest.deleteMany({ where: { teamId: team.id } })
+      await prisma.team.delete({ where: { id: team.id } })
+    }
+  })
+
   it('GET /teams/:id/join-requests — le chef voit la file', async () => {
     await app.inject({
       method: 'POST',
@@ -336,6 +387,87 @@ describe('Recrutement d équipe', () => {
       headers: { cookie: cookiesCandidate },
     })
     expect(res.statusCode).toBe(403)
+  })
+
+  it('MEMBER ne voit pas la file ni ne décide ; ADMIN peut les deux', async () => {
+    // `#assertCanDecide` est la règle sur laquelle repose toute la
+    // fonctionnalité (OWNER/ADMIN seulement) ; la suite ne couvrait que
+    // OWNER-ok et non-membre-403, donc l'affaiblir en `!actor` ou la
+    // resserrer en `role !== 'OWNER'` laissait tous les tests verts.
+    //
+    // Comptes existants (`ownerId`/`candidateId`) plutôt que `signIn` : le
+    // register e2e est plafonné à 5 par fichier et cette suite les a déjà
+    // tous consommés. Équipe, appartenance et candidature semées
+    // directement en base — la garde ne regarde que la ligne
+    // `TeamMember`, jamais comment le candidat est arrivé.
+    const team = await prisma.team.create({
+      data: {
+        name: `Permissions ${suffix}`,
+        slug: `permissions-${suffix}`,
+        ownerId,
+        members: { create: { userId: candidateId, role: 'MEMBER' } },
+      },
+    })
+    // `ownerId` comme « candidat » de cette ligne : il n'est pas membre de
+    // CETTE équipe, seule sa ligne `JoinRequest` nous intéresse ici — pas
+    // qui l'a réellement soumise.
+    const req = await prisma.joinRequest.create({
+      data: {
+        teamId: team.id,
+        userId: ownerId,
+        expiresAt: new Date(Date.now() + 7 * 86_400_000),
+      },
+    })
+
+    try {
+      const queueAsMember = await app.inject({
+        method: 'GET',
+        url: `/teams/${team.id}/join-requests`,
+        headers: { cookie: cookiesCandidate },
+      })
+      expect(queueAsMember.statusCode).toBe(403)
+
+      const declineAsMember = await app.inject({
+        method: 'POST',
+        url: `/join-requests/${req.id}/decline`,
+        headers: { cookie: cookiesCandidate },
+      })
+      expect(declineAsMember.statusCode).toBe(403)
+
+      await prisma.teamMember.update({
+        where: { teamId_userId: { teamId: team.id, userId: candidateId } },
+        data: { role: 'ADMIN' },
+      })
+
+      const queueAsAdmin = await app.inject({
+        method: 'GET',
+        url: `/teams/${team.id}/join-requests`,
+        headers: { cookie: cookiesCandidate },
+      })
+      expect(queueAsAdmin.statusCode).toBe(200)
+      expect(queueAsAdmin.json().requests).toHaveLength(1)
+      expect(queueAsAdmin.json().requests[0].id).toBe(req.id)
+
+      // `decline`, pas `accept` : `ownerId` a accumulé bien plus de
+      // `MAX_TEAMS_PER_USER` équipes plus haut dans cette suite (créées
+      // directement en base, hors du garde-fou de `createTeam`), donc un
+      // `accept` échouerait sur le plafond du candidat — un problème de
+      // fixture, pas ce que ce test vérifie.
+      const declineAsAdmin = await app.inject({
+        method: 'POST',
+        url: `/join-requests/${req.id}/decline`,
+        headers: { cookie: cookiesCandidate },
+      })
+      expect(declineAsAdmin.statusCode).toBe(200)
+
+      const after = await prisma.joinRequest.findUnique({
+        where: { id: req.id },
+      })
+      expect(after?.status).toBe('DECLINED')
+    } finally {
+      await prisma.joinRequest.deleteMany({ where: { teamId: team.id } })
+      await prisma.team.delete({ where: { id: team.id } })
+    }
   })
 
   it('POST /join-requests/:id/accept — fait entrer le candidat', async () => {
@@ -462,7 +594,10 @@ describe('Recrutement d équipe', () => {
         url: `/join-requests/${requestId}/accept`,
         headers: { cookie: cookiesOwner },
       })
-      expect(res.statusCode).toBe(403)
+      // 409, pas 403 : l'équipe pleine est un conflit d'état, pas un refus
+      // de droits — sinon le client ne peut pas distinguer ce cas d'un
+      // officier tout juste rétrogradé.
+      expect(res.statusCode).toBe(409)
 
       const after = await prisma.joinRequest.findUnique({
         where: { id: requestId },
@@ -507,7 +642,8 @@ describe('Recrutement d équipe', () => {
       url: `/join-requests/${req.id}/accept`,
       headers: { cookie: cookiesCandidate },
     })
-    expect(res.statusCode).toBe(403)
+    // 409, comme le plafond de l'équipe : même catégorie de conflit d'état.
+    expect(res.statusCode).toBe(409)
     const after = await prisma.joinRequest.findUnique({ where: { id: req.id } })
     expect(after.status).toBe('EXPIRED')
 
@@ -595,7 +731,10 @@ describe('Recrutement d équipe', () => {
       const row = await prisma.joinRequest.findFirst({
         where: { teamId, userId: other.id },
       })
-      expect(row.status).toBe('ACCEPTED')
+      // CANCELLED, pas ACCEPTED : personne n'a statué sur la candidature,
+      // c'est l'invitation qui a fait entrer le joueur — voir
+      // `closeForMember`.
+      expect(row.status).toBe('CANCELLED')
 
       const queue = await app.inject({
         method: 'GET',
@@ -604,6 +743,19 @@ describe('Recrutement d équipe', () => {
       })
       expect(
         queue.json().requests.some((r: any) => r.candidate.id === other.id),
+      ).toBe(false)
+
+      // `listMine` ne doit pas non plus annoncer une acceptation qui n'a
+      // pas eu lieu : CANCELLED n'entre dans aucune des trois fenêtres que
+      // `listMine` surface (PENDING, ACCEPTED récent, DECLINED sous
+      // cooldown).
+      const mine = await app.inject({
+        method: 'GET',
+        url: '/me/join-requests',
+        headers: { cookie: other.cookies },
+      })
+      expect(
+        mine.json().requests.some((r: any) => r.teamId === teamId),
       ).toBe(false)
     } finally {
       await prisma.teamMember.deleteMany({
