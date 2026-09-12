@@ -5,14 +5,46 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
+import { useEffect } from 'react'
 
 import { RecruitmentApi } from '../api/recruitment.api.ts'
 import type { TeamJoinRequest } from '../constants/teams.constant.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
+import { wsClient } from '../lib/ws.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 import { useMyTeams } from './useTeams.ts'
+
+/**
+ * `team:join-request` part vers les officiers, `team:join-decision` vers le
+ * candidat : l'un annonce une nouvelle ligne dans la file du chef, l'autre
+ * une décision dans l'agrégat du candidat. Les deux vivent sous le préfixe
+ * `['recruitment']`, donc une seule invalidation couvre l'annuaire, la file
+ * du chef ET la liste du candidat — même schéma que `useMyPendingDuels`
+ * pour les duels.
+ *
+ * IMPORTANT : `team:join-decision` porte aussi `status: 'DECLINED'`.
+ * Invalider la query est sans risque (elle ne fait que rafraîchir la ligne
+ * dans `MyJoinRequestsList`, lue en passant), mais rien ici ne doit se
+ * transformer en toast ou en pastille pour un refus — la spec est explicite
+ * là-dessus.
+ */
+function useRecruitmentLiveInvalidation(): void {
+  const qc = useQueryClient()
+  useEffect(
+    () =>
+      wsClient.on((event) => {
+        if (
+          event.type === 'team:join-request' ||
+          event.type === 'team:join-decision'
+        ) {
+          void qc.invalidateQueries({ queryKey: ['recruitment'] })
+        }
+      }),
+    [qc],
+  )
+}
 
 export type {
   DirectoryTeam,
@@ -50,6 +82,8 @@ export const useTeamDirectory = (search: string) => {
 }
 
 export const useMyJoinRequests = () => {
+  useRecruitmentLiveInvalidation()
+
   const query = useQuery({
     queryKey: ['recruitment', 'mine'],
     queryFn: () => RecruitmentApi.getMine(),
@@ -192,6 +226,8 @@ export const useDeclineJoinRequest = () => {
  * porte déjà.
  */
 export const useMyTeamsJoinRequests = () => {
+  useRecruitmentLiveInvalidation()
+
   const { data: teamsData, isPending: isTeamsPending } = useMyTeams()
 
   const officerTeams = (teamsData?.teams ?? []).filter(

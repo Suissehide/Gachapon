@@ -98,6 +98,22 @@ type WsEvent =
       rank: number
       perkPoints: number
     }
+  | {
+      // Poussé à chaque OWNER/ADMIN de l'équipe quand un candidat postule.
+      type: 'team:join-request'
+      teamId: string
+      requestId: string
+      candidate: { id: string; username: string }
+    }
+  | {
+      // Poussé au SEUL candidat, après acceptation ou refus de sa
+      // candidature — jamais diffusé à l'équipe : voir
+      // `RecruitmentDomain#accept`/`#decline`.
+      type: 'team:join-decision'
+      teamId: string
+      teamName: string
+      status: 'ACCEPTED' | 'DECLINED'
+    }
   | { type: 'error'; message: string }
   | {
       type: 'admin:activity'
