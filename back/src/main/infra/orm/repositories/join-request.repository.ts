@@ -102,6 +102,15 @@ export class JoinRequestRepository implements IJoinRequestRepository {
       .then(() => undefined)
   }
 
+  setStatusIfPending(
+    id: string,
+    status: 'EXPIRED' | 'CANCELLED',
+  ): Promise<number> {
+    return this.#prisma.joinRequest
+      .updateMany({ where: { id, status: 'PENDING' }, data: { status } })
+      .then((res) => res.count)
+  }
+
   markExpired(ids: string[]): Promise<void> {
     if (ids.length === 0) {
       return Promise.resolve()

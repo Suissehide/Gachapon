@@ -75,6 +75,18 @@ export interface IJoinRequestRepository {
     now: Date,
   ): Promise<number>
   setStatus(id: string, status: JoinRequestStatus): Promise<void>
+  /**
+   * Même garde que `decideIfPending`, pour les transitions qui ne portent
+   * pas de décision (`EXPIRED` depuis le plafond de 3 équipes, `CANCELLED`
+   * depuis une annulation) : sans le `status: 'PENDING'` dans le `where`,
+   * une expiration ou une annulation qui court-circuite un `accept`
+   * concurrent écraserait un `ACCEPTED` tout frais. Renvoie le nombre de
+   * lignes modifiées.
+   */
+  setStatusIfPending(
+    id: string,
+    status: 'EXPIRED' | 'CANCELLED',
+  ): Promise<number>
   markExpired(ids: string[]): Promise<void>
   /**
    * Tri par `level` en SQL (pagination stable), `id` en tie-break. Le

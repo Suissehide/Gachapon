@@ -117,17 +117,17 @@ export const RecruitmentApi = {
         res,
         {
           403: {
-            title: 'Acceptation impossible',
-            message:
-              "L'équipe est complète, ou ce candidat a atteint sa limite de 3 équipes.",
+            title: 'Action non autorisée',
+            message: "Tu n'as pas les droits pour traiter cette candidature.",
           },
           404: {
             title: 'Candidature introuvable',
             message: "Cette candidature n'existe plus.",
           },
           409: {
-            title: 'Déjà traitée',
-            message: 'Cette candidature a déjà été acceptée ou refusée.',
+            title: 'Acceptation impossible',
+            message:
+              "L'équipe est complète, ce candidat a atteint sa limite de 3 équipes, ou cette candidature a déjà été traitée.",
           },
         },
         'Acceptation de la candidature',

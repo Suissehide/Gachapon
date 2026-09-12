@@ -63,6 +63,9 @@ export class RecruitmentDomain implements IRecruitmentDomain {
     if (!team) {
       throw Boom.notFound('Team not found')
     }
+    if (!team.recruiting) {
+      throw Boom.forbidden('Cette équipe ne recrute pas')
+    }
 
     const alreadyMember = await this.#memberRepo.findByTeamAndUser(
       teamId,
@@ -144,7 +147,16 @@ export class RecruitmentDomain implements IRecruitmentDomain {
     if (!existing || existing.status !== 'PENDING') {
       throw Boom.notFound('No pending join request for this team')
     }
-    await this.#joinRequestRepo.setStatus(existing.id, 'CANCELLED')
+    // Gardé sur `status: 'PENDING'` : une annulation qui court-circuite un
+    // `accept` concurrent ne doit pas écraser un `ACCEPTED` tout frais — la
+    // demande a déjà de l'objet, le membre existe déjà.
+    const cancelled = await this.#joinRequestRepo.setStatusIfPending(
+      existing.id,
+      'CANCELLED',
+    )
+    if (cancelled === 0) {
+      throw Boom.conflict('Join request already processed')
+    }
   }
 
   /**
@@ -172,8 +184,17 @@ export class RecruitmentDomain implements IRecruitmentDomain {
 
     const teamCount = await this.#teamRepo.countByUserId(req.userId)
     if (teamCount >= MAX_TEAMS_PER_USER) {
-      await this.#joinRequestRepo.setStatus(req.id, 'EXPIRED')
-      throw Boom.forbidden(
+      // Gardé sur `status: 'PENDING'` : si un autre officier a accepté la
+      // demande pendant ces deux `await`, l'expiration ne doit pas écraser
+      // l'`ACCEPTED` tout frais.
+      const marked = await this.#joinRequestRepo.setStatusIfPending(
+        req.id,
+        'EXPIRED',
+      )
+      if (marked === 0) {
+        throw Boom.conflict('Join request already processed')
+      }
+      throw Boom.conflict(
         `@${req.user.username} a atteint sa limite de ${MAX_TEAMS_PER_USER} équipes`,
       )
     }
@@ -183,7 +204,7 @@ export class RecruitmentDomain implements IRecruitmentDomain {
       this.#configService.getMany('team.maxMembers'),
     ])
     if (memberCount >= config['team.maxMembers']) {
-      throw Boom.forbidden(
+      throw Boom.conflict(
         `Cette équipe est complète (${config['team.maxMembers']} membres)`,
       )
     }
@@ -249,6 +270,14 @@ export class RecruitmentDomain implements IRecruitmentDomain {
    * Le joueur est entré par une AUTRE porte (invitation) pendant que sa
    * candidature dormait : elle n'a plus d'objet. Sans cet appel, le chef voit
    * dans sa file la demande de quelqu'un qui est déjà membre.
+   *
+   * `CANCELLED`, pas `ACCEPTED` : personne n'a statué sur cette candidature,
+   * elle est juste devenue sans objet. La marquer `ACCEPTED` ferait dire à
+   * la cloche « ta candidature a été acceptée », ce qui est faux — c'est
+   * l'invitation qui a fait entrer le joueur. `CANCELLED` n'arme aucun
+   * cooldown, comme une annulation volontaire, et `listMine` ne le
+   * surface pas (seuls `PENDING`, `ACCEPTED` récent et `DECLINED` sous
+   * cooldown le sont).
    */
   async closeForMember(
     tx: PrimaTransactionClient,
@@ -257,7 +286,7 @@ export class RecruitmentDomain implements IRecruitmentDomain {
   ): Promise<void> {
     await tx.joinRequest.updateMany({
       where: { teamId, userId, status: 'PENDING' },
-      data: { status: 'ACCEPTED', decidedAt: new Date() },
+      data: { status: 'CANCELLED', decidedAt: new Date() },
     })
   }
 
