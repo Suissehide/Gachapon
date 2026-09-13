@@ -5,6 +5,7 @@ import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
 import type { ITeamProgressionDomain } from '../../types/domain/team-progression/team-progression.domain.interface'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
+import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import type { EquipmentBonuses } from '../combat/combat-stats.domain'
 import { retryOnSerialization } from '../shared/retry-serialization'
@@ -119,6 +120,18 @@ export interface EquipmentSalvageResult {
   destroyedCount: number
 }
 
+/**
+ * Or rendu par UNE pièce recyclée, skill Ferrailleur (SALVAGE_BONUS) appliqué
+ * pièce par pièce et arrondi — la prévisualisation front (EquipmentSlotPopup)
+ * fait la même somme d'arrondis, le total affiché égale le total crédité.
+ */
+export function salvageGoldWithBonus(
+  baseGold: number,
+  salvageBonusPct: number,
+): number {
+  return Math.round(baseGold * (1 + salvageBonusPct / 100))
+}
+
 const SALVAGE_GOLD_KEY = {
   COMMON: 'equip.salvageGoldCommon',
   UNCOMMON: 'equip.salvageGoldUncommon',
@@ -132,23 +145,41 @@ export class EquipmentDomain {
   readonly #configService: ConfigServiceInterface
   readonly #achievementsDomain: AchievementsDomainInterface
   readonly #teamProgressionDomain: ITeamProgressionDomain
+  readonly #skillTreeRepository: ISkillTreeRepository
 
   constructor({
     postgresOrm,
     configService,
     achievementsDomain,
     teamProgressionDomain,
+    skillTreeRepository,
   }: Pick<
     IocContainer,
     | 'postgresOrm'
     | 'configService'
     | 'achievementsDomain'
     | 'teamProgressionDomain'
+    | 'skillTreeRepository'
   >) {
     this.#postgresOrm = postgresOrm
     this.#configService = configService
     this.#achievementsDomain = achievementsDomain
     this.#teamProgressionDomain = teamProgressionDomain
+    this.#skillTreeRepository = skillTreeRepository
+  }
+
+  /**
+   * Remise totale (%) sur une amélioration : bonus d'équipe `forge` + skill
+   * Forgeron (EQUIP_UPGRADE_DISCOUNT), additifs. Une seule source pour les
+   * deux appelants (`upgrade` et la prévisualisation de `listUserEquipment`),
+   * sinon l'écran annonce un prix et le serveur en facture un autre.
+   */
+  async #upgradeDiscountPct(userId: string): Promise<number> {
+    const [teamEffects, skillEffects] = await Promise.all([
+      this.#teamProgressionDomain.effectsForUser(userId),
+      this.#skillTreeRepository.getEffectsForUser(userId),
+    ])
+    return teamEffects.forge + skillEffects.equipUpgradeDiscount
   }
 
   /**
@@ -160,7 +191,7 @@ export class EquipmentDomain {
     // Résolus UNE fois pour toute la requête — jamais dans le `.map()`
     // ci-dessous, qui tournerait sinon une requête Postgres par pièce sur
     // une route qui rend l'inventaire entier.
-    const [userEquipment, c, teamEffects] = await Promise.all([
+    const [userEquipment, c, discountPct] = await Promise.all([
       this.#postgresOrm.prisma.userEquipment.findMany({
         where: { userId },
         include: {
@@ -178,7 +209,7 @@ export class EquipmentDomain {
         'card.rarityMultEpic',
         'card.rarityMultLegendary',
       ),
-      this.#teamProgressionDomain.effectsForUser(userId),
+      this.#upgradeDiscountPct(userId),
     ])
 
     return {
@@ -207,7 +238,7 @@ export class EquipmentDomain {
                 c['equip.goldCostBase'],
                 c['equip.goldCostExp'],
                 c[RARITY_MULT_KEY[ue.equipment.rarity]],
-                teamEffects.forge,
+                discountPct,
               ),
       })),
     }
@@ -377,7 +408,7 @@ export class EquipmentDomain {
     userId: string,
     userEquipmentId: string,
   ): Promise<EquipmentUpgradeResult> {
-    const [c, teamEffects] = await Promise.all([
+    const [c, discountPct] = await Promise.all([
       this.#configService.getMany(
         'equip.goldCostBase',
         'equip.goldCostExp',
@@ -388,7 +419,7 @@ export class EquipmentDomain {
         'card.rarityMultLegendary',
         ...SUBSTAT_RANGE_CONFIG_KEYS,
       ),
-      this.#teamProgressionDomain.effectsForUser(userId),
+      this.#upgradeDiscountPct(userId),
     ])
     const ranges = substatRangesFromConfig(c)
 
@@ -411,7 +442,7 @@ export class EquipmentDomain {
             c['equip.goldCostBase'],
             c['equip.goldCostExp'],
             rarityMult,
-            teamEffects.forge,
+            discountPct,
           )
           const user = await tx.user.findUnique({
             where: { id: userId },
@@ -487,13 +518,16 @@ export class EquipmentDomain {
     userId: string,
     userEquipmentIds: string[],
   ): Promise<EquipmentSalvageResult> {
-    const c = await this.#configService.getMany(
-      'equip.salvageGoldCommon',
-      'equip.salvageGoldUncommon',
-      'equip.salvageGoldRare',
-      'equip.salvageGoldEpic',
-      'equip.salvageGoldLegendary',
-    )
+    const [c, skillEffects] = await Promise.all([
+      this.#configService.getMany(
+        'equip.salvageGoldCommon',
+        'equip.salvageGoldUncommon',
+        'equip.salvageGoldRare',
+        'equip.salvageGoldEpic',
+        'equip.salvageGoldLegendary',
+      ),
+      this.#skillTreeRepository.getEffectsForUser(userId),
+    ])
     const ids = [...new Set(userEquipmentIds)]
 
     return retryOnSerialization(() =>
@@ -513,7 +547,12 @@ export class EquipmentDomain {
             throw Boom.badRequest('Impossible de détruire un objet équipé')
           }
           const goldEarned = items.reduce(
-            (sum, i) => sum + c[SALVAGE_GOLD_KEY[i.equipment.rarity]],
+            (sum, i) =>
+              sum +
+              salvageGoldWithBonus(
+                c[SALVAGE_GOLD_KEY[i.equipment.rarity]],
+                skillEffects.salvageBonus,
+              ),
             0,
           )
           await tx.userEquipment.deleteMany({ where: { id: { in: ids } } })

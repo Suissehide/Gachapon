@@ -36,6 +36,7 @@ import {
   useUnequipItem,
   useUpgradeItem,
 } from '../../queries/useEquipment.ts'
+import { useSkillTree } from '../../queries/useSkills.ts'
 import { useAuthStore } from '../../stores/auth.store.ts'
 import { formatBonusKey } from '../../utils/cardStats.ts'
 import { Button } from '../ui/button.tsx'
@@ -258,9 +259,30 @@ function ItemRow({
   )
 }
 
+/**
+ * Or annoncé pour le recyclage — même règle que le serveur
+ * (`salvageGoldWithBonus`) : bonus Ferrailleur appliqué pièce par pièce puis
+ * arrondi, pour que le total affiché soit celui crédité.
+ */
+function salvagePreviewGold(
+  items: { rarity: string }[],
+  salvageGoldByRarity: Record<string, number>,
+  salvageBonusPct = 0,
+): number {
+  return items.reduce(
+    (sum, i) =>
+      sum +
+      Math.round(
+        (salvageGoldByRarity[i.rarity] ?? 0) * (1 + salvageBonusPct / 100),
+      ),
+    0,
+  )
+}
+
 export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
   const { data } = useEquipmentList()
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  const { data: skillState } = useSkillTree()
   const gold = useAuthStore((s) => s.user?.gold ?? 0)
   const { toast } = useToast()
 
@@ -290,9 +312,10 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
 
   const selected = items.find((i) => i.id === selectedId) ?? null
   const checkedItems = items.filter((i) => checked.has(i.id))
-  const salvageGold = checkedItems.reduce(
-    (sum, i) => sum + (economy.equip.salvageGold[i.rarity] ?? 0),
-    0,
+  const salvageGold = salvagePreviewGold(
+    checkedItems,
+    economy.equip.salvageGold,
+    skillState?.effects?.salvageBonus,
   )
 
   const toggleChecked = (id: string) => {

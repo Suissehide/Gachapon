@@ -12,12 +12,18 @@ export const updateBranchSchema = createBranchSchema.partial()
 
 export const branchIdParamSchema = z.object({ id: z.string().min(1) })
 
+/**
+ * Plafond de niveaux par nœud. Le seed monte à 7 (Ferveur) : l'ancien 5
+ * rendait ces nœuds ineditables depuis l'admin (validation en 400).
+ */
+const MAX_NODE_LEVEL = 10
+
 export const createNodeSchema = z.object({
   branchId: z.string().min(1),
   name: z.string().min(1),
   description: z.string(),
   icon: z.string().min(1),
-  maxLevel: z.int().min(1).max(5),
+  maxLevel: z.int().min(1).max(MAX_NODE_LEVEL),
   effectType: z.enum([
     'REGEN',
     'LUCK',
@@ -38,11 +44,21 @@ export const createNodeSchema = z.object({
     'GOLD_BONUS',
     'COMBAT_XP_BONUS',
     'DROP_BONUS',
+    'UPGRADE_DUST_DISCOUNT',
+    'GOLD_SHOP_DISCOUNT',
+    'DAILY_SHOP_LUCK',
+    'EQUIP_UPGRADE_DISCOUNT',
+    'SALVAGE_BONUS',
   ]),
   posX: z.int(),
   posY: z.int(),
   levels: z
-    .array(z.object({ level: z.int().min(1).max(5), effect: z.number() }))
+    .array(
+      z.object({
+        level: z.int().min(1).max(MAX_NODE_LEVEL),
+        effect: z.number(),
+      }),
+    )
     .min(1),
 })
 

@@ -27,4 +27,8 @@ export type UserUpgradeEffects = {
   upgradeDustDiscount: number
   goldShopDiscount: number
   dailyShopLuckMultiplier: number
+  /** Remise (%) sur le coût en or d'amélioration d'équipement, additive au bonus d'équipe `forge`. */
+  equipUpgradeDiscount: number
+  /** Bonus (%) d'or au recyclage d'équipement. */
+  salvageBonus: number
 }

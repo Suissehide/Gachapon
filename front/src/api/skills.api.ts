@@ -36,6 +36,8 @@ export type SkillBranch = {
 export type SkillEffects = {
   upgradeDustDiscount: number
   goldShopDiscount: number
+  equipUpgradeDiscount: number
+  salvageBonus: number
   [key: string]: number
 }
 export type SkillTreeState = {

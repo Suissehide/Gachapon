@@ -141,4 +141,18 @@ describe('skill-effects nouveaux effets Collection', () => {
     const fx = getSkillEffects([{ effectType: 'DAILY_SHOP_LUCK', effect: 35 }])
     expect(fx.dailyShopLuckMultiplier).toBeCloseTo(1.35)
   })
+  it('neutre : effets équipement à zéro', () => {
+    const fx = getSkillEffects([])
+    expect(fx.equipUpgradeDiscount).toBe(0)
+    expect(fx.salvageBonus).toBe(0)
+  })
+  it('EQUIP_UPGRADE_DISCOUNT / SALVAGE_BONUS : additionne les %', () => {
+    const fx = getSkillEffects([
+      { effectType: 'EQUIP_UPGRADE_DISCOUNT', effect: 5 },
+      { effectType: 'EQUIP_UPGRADE_DISCOUNT', effect: 10 },
+      { effectType: 'SALVAGE_BONUS', effect: 20 },
+    ])
+    expect(fx.equipUpgradeDiscount).toBe(15)
+    expect(fx.salvageBonus).toBe(20)
+  })
 })

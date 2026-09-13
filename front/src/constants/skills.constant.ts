@@ -22,6 +22,8 @@ export const EFFECT_DESCRIPTIONS: Record<string, string> = {
     "Réduit le coût en poussière d'amélioration des cartes",
   GOLD_SHOP_DISCOUNT: 'Réduction sur les prix en or de la boutique',
   DAILY_SHOP_LUCK: 'Plus de cartes rares dans ta boutique du jour',
+  EQUIP_UPGRADE_DISCOUNT: "Réduit le coût en or d'amélioration des équipements",
+  SALVAGE_BONUS: "Plus d'or au recyclage des équipements",
 }
 
 export const EFFECT_TYPES = Object.keys(EFFECT_DESCRIPTIONS)
@@ -51,6 +53,8 @@ export const EFFECT_FORMATTERS: Record<string, (v: number) => string> = {
   UPGRADE_DUST_DISCOUNT: (v) => `−${v} %`,
   GOLD_SHOP_DISCOUNT: (v) => `−${v} %`,
   DAILY_SHOP_LUCK: (v) => `+${v} %`,
+  EQUIP_UPGRADE_DISCOUNT: (v) => `−${v} %`,
+  SALVAGE_BONUS: (v) => `+${v} %`,
 }
 
 export function formatEffect(effectType: string, value: number): string {

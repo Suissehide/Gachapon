@@ -122,6 +122,10 @@ export const EQUIPMENT_QUESTS = reservation('BELT', 'PRECISION')
 // calcul de coût d'amélioration (bonus d'équipe `forge`).
 export const EQUIPMENT_TEAM_PERK_FORGE = reservation('BOOTS', 'PRECISION')
 
+// equipment-skill-effects.test.ts — 1 pièce par joueur, jamais équipée :
+// coût d'amélioration (Forgeron) et or de recyclage (Ferrailleur).
+export const EQUIPMENT_SKILL_EFFECTS = reservation('AMULET', 'PRECISION')
+
 const ALL_RESERVATIONS = [
   EQUIPMENT_TEST_WEAPON,
   EQUIPMENT_TEST_ARMOR,
@@ -135,6 +139,7 @@ const ALL_RESERVATIONS = [
   CAMPAIGN_SLOT_FILTER_TOWER,
   EQUIPMENT_QUESTS,
   EQUIPMENT_TEAM_PERK_FORGE,
+  EQUIPMENT_SKILL_EFFECTS,
 ]
 
 const seen = new Set<string>()
