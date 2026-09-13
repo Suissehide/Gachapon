@@ -55,15 +55,18 @@ export async function seedSkills(tx: Tx) {
   // ══════════════════════════════════════════════
   //  FLUX — spreads upward from center (top handle)
   //
-  //              [Second souffle]
-  //                    |
-  //    [Ferveur]  [Déferlante]  [Grande réserve]
-  //        |       /        \        |
+  //    [Ferveur]      [Trop-plein]
+  //        |          /        \
   //   [Multi-jetons]      [Tirage gratuit]
   //        \                    /
   //       [Regen]          [Stockage]
   //            \           /
   //             (center)
+  //
+  //  Grande réserve et Second souffle ont disparu : tous deux reprenaient
+  //  l'effectType de leur porte (TOKEN_VAULT, REGEN) en rendant PLUS au
+  //  point, ce qui rendait les paliers 2+ de la porte invendables. Leur
+  //  plafond est reparti dans Stockage et Régénération.
   // ══════════════════════════════════════════════
 
   const regen = await tx.skillNode.create({
@@ -76,13 +79,16 @@ export async function seedSkills(tx: Tx) {
       effectType: 'REGEN',
       posX: -72,
       posY: -168,
+      // Plafond ramené de 30 à 20 min : l'intervalle plancher passe de 30 à
+      // 40 min, soit 36 jetons/jour au lieu de 48. Le buff de Stockage
+      // ci-dessous est ce qui amortit l'absence, pas la vitesse de regen.
       levels: {
         create: [
           { level: 1, effect: 5 },
-          { level: 2, effect: 10 },
-          { level: 3, effect: 15 },
-          { level: 4, effect: 20 },
-          { level: 5, effect: 30 },
+          { level: 2, effect: 9 },
+          { level: 3, effect: 12 },
+          { level: 4, effect: 15 },
+          { level: 5, effect: 20 },
         ],
       },
     },
@@ -93,18 +99,24 @@ export async function seedSkills(tx: Tx) {
       name: 'Stockage',
       description: 'Augmente le stockage max de jetons',
       icon: 'Database',
-      maxLevel: 6,
+      maxLevel: 9,
       effectType: 'TOKEN_VAULT',
       posX: 72,
       posY: -168,
+      // Absorbe Grande réserve ET encaisse un buff : +22 au lieu de +14
+      // (6 + 8 avant). Plafond 32 jetons, soit ~21 h d'accumulation
+      // hors-ligne à 40 min l'unité, contre 10 h auparavant.
       levels: {
         create: [
-          { level: 1, effect: 1 },
-          { level: 2, effect: 2 },
-          { level: 3, effect: 3 },
-          { level: 4, effect: 4 },
-          { level: 5, effect: 5 },
-          { level: 6, effect: 6 },
+          { level: 1, effect: 2 },
+          { level: 2, effect: 4 },
+          { level: 3, effect: 6 },
+          { level: 4, effect: 8 },
+          { level: 5, effect: 10 },
+          { level: 6, effect: 13 },
+          { level: 7, effect: 16 },
+          { level: 8, effect: 19 },
+          { level: 9, effect: 22 },
         ],
       },
     },
@@ -115,15 +127,19 @@ export async function seedSkills(tx: Tx) {
       name: 'Multi-jetons',
       description: 'Chance de recevoir plusieurs jetons à la fois',
       icon: 'Layers',
-      maxLevel: 3,
+      maxLevel: 5,
       effectType: 'MULTI_TOKEN_CHANCE',
       posX: -72,
       posY: -336,
+      // Reprend le plafond de Déferlante (6 + 6 = 12 %), qui change d'effet
+      // ci-dessous : sans ça, la refonte nerferait le multi-jetons de moitié.
       levels: {
         create: [
           { level: 1, effect: 2 },
           { level: 2, effect: 4 },
           { level: 3, effect: 6 },
+          { level: 4, effect: 9 },
+          { level: 5, effect: 12 },
         ],
       },
     },
@@ -149,20 +165,26 @@ export async function seedSkills(tx: Tx) {
       },
     },
   })
-  const tokenSurge = await tx.skillNode.create({
+  const tropPlein = await tx.skillNode.create({
     data: {
       branchId: flux.id,
-      name: 'Déferlante',
-      description: 'Boost massif de chance multi-jetons',
-      icon: 'Flame',
-      maxLevel: 2,
-      effectType: 'MULTI_TOKEN_CHANCE',
+      name: 'Trop-plein',
+      description:
+        'Les jetons régénérés au-delà du plafond reviennent en poussière',
+      icon: 'Droplets',
+      maxLevel: 3,
+      effectType: 'TOKEN_OVERFLOW_DUST',
       posX: 0,
       posY: -504,
+      // En tension volontaire avec Stockage : plus la réserve est grande,
+      // moins on déborde. Qui maxe l'un n'a pas besoin de l'autre — c'est
+      // l'arbitrage que le nœud apporte, à la place du doublon de
+      // MULTI_TOKEN_CHANCE qu'il portait avant.
       levels: {
         create: [
-          { level: 1, effect: 4 },
-          { level: 2, effect: 6 },
+          { level: 1, effect: 10 },
+          { level: 2, effect: 20 },
+          { level: 3, effect: 30 },
         ],
       },
     },
@@ -190,44 +212,6 @@ export async function seedSkills(tx: Tx) {
       },
     },
   })
-  const grandeReserve = await tx.skillNode.create({
-    data: {
-      branchId: flux.id,
-      name: 'Grande réserve',
-      description: 'Augmente encore le stockage max de jetons',
-      icon: 'Warehouse',
-      maxLevel: 3,
-      effectType: 'TOKEN_VAULT',
-      posX: 144,
-      posY: -504,
-      levels: {
-        create: [
-          { level: 1, effect: 2 },
-          { level: 2, effect: 5 },
-          { level: 3, effect: 8 },
-        ],
-      },
-    },
-  })
-  const secondSouffle = await tx.skillNode.create({
-    data: {
-      branchId: flux.id,
-      name: 'Second souffle',
-      description: 'Réduit encore le délai de régénération des jetons',
-      icon: 'Wind',
-      maxLevel: 3,
-      effectType: 'REGEN',
-      posX: 0,
-      posY: -672,
-      levels: {
-        create: [
-          { level: 1, effect: 1 },
-          { level: 2, effect: 2 },
-          { level: 3, effect: 3 },
-        ],
-      },
-    },
-  })
   await tx.skillEdge.createMany({
     data: [
       {
@@ -246,14 +230,14 @@ export async function seedSkills(tx: Tx) {
       },
       {
         fromNodeId: multiToken.id,
-        toNodeId: tokenSurge.id,
+        toNodeId: tropPlein.id,
         minLevel: 1,
         sourceHandle: 's-top',
         targetHandle: 't-left',
       },
       {
         fromNodeId: tirageGratuitFlux.id,
-        toNodeId: tokenSurge.id,
+        toNodeId: tropPlein.id,
         minLevel: 1,
         sourceHandle: 's-top',
         targetHandle: 't-right',
@@ -265,30 +249,22 @@ export async function seedSkills(tx: Tx) {
         sourceHandle: 's-top',
         targetHandle: 't-bottom',
       },
-      {
-        fromNodeId: tirageGratuitFlux.id,
-        toNodeId: grandeReserve.id,
-        minLevel: 1,
-        sourceHandle: 's-top',
-        targetHandle: 't-bottom',
-      },
-      {
-        fromNodeId: tokenSurge.id,
-        toNodeId: secondSouffle.id,
-        minLevel: 1,
-        sourceHandle: 's-top',
-        targetHandle: 't-bottom',
-      },
     ],
   })
 
   // ══════════════════════════════════════════════
   //  FORTUNE — spreads right from center (right handle)
   //
-  //  (center) — [Chance] — [Boule d'or]  — [Apogée de Fortune]
+  //                            [Destin]
+  //                           /
+  //  (center) — [Chance] — [Boule d'or]  — [Opulence]
   //                      \— [Tirage gratuit] —/
-  //                           [Boule d'or] —[Destin]
-  //                       [Tirage gratuit] —[Prisme] — [Kaléidoscope]
+  //                       [Tirage gratuit] —[Prisme]
+  //
+  //  Kaléidoscope a disparu (doublon de VARIANT_LUCK avec Prisme, et plus
+  //  rentable au point que lui). Apogée de Fortune dupliquait LUCK avec
+  //  Chance : elle garde sa place en capstone mais change d'effet — la
+  //  branche n'avait plus aucun levier gacha neuf à offrir.
   // ══════════════════════════════════════════════
 
   const luck = await tx.skillNode.create({
@@ -296,12 +272,15 @@ export async function seedSkills(tx: Tx) {
       branchId: fortune.id,
       name: 'Chance',
       description:
-        "Multiplie les chances de tirer une carte Rare ou mieux (jusqu'à ×1,05)",
+        "Multiplie les chances de tirer une carte Rare ou mieux (jusqu'à ×1,12)",
       icon: 'Star',
-      maxLevel: 5,
+      maxLevel: 8,
       effectType: 'LUCK',
       posX: 216,
       posY: -48,
+      // Reprend le plafond d'Apogée de Fortune (×1,05 + ×1,07 = ×1,12), qui
+      // change d'effet ci-dessous : sans ça, la refonte nerferait le
+      // multiplicateur de rareté de plus de moitié.
       levels: {
         create: [
           { level: 1, effect: 1 },
@@ -309,6 +288,9 @@ export async function seedSkills(tx: Tx) {
           { level: 3, effect: 3 },
           { level: 4, effect: 4 },
           { level: 5, effect: 5 },
+          { level: 6, effect: 7 },
+          { level: 7, effect: 9 },
+          { level: 8, effect: 12 },
         ],
       },
     },
@@ -355,22 +337,25 @@ export async function seedSkills(tx: Tx) {
       },
     },
   })
-  const apexFortune = await tx.skillNode.create({
+  const opulence = await tx.skillNode.create({
     data: {
       branchId: fortune.id,
-      name: 'Apogée de Fortune',
+      name: 'Opulence',
       description:
-        "Multiplie encore les chances de Rare+ (jusqu'à ×1,07, cumulable avec Chance)",
-      icon: 'Crown',
+        "Relève la limite journalière d'achat de packs d'énergie (3 → 6)",
+      icon: 'PackagePlus',
       maxLevel: 3,
-      effectType: 'LUCK',
+      effectType: 'ENERGY_PACK_CAP',
       posX: 600,
       posY: -48,
+      // Fortune au sens richesse, pas au sens hasard : l'espace gacha était
+      // déjà saturé par Chance, Boule d'or, Tirage gratuit, Destin et
+      // Prisme — c'est précisément pourquoi ce nœud était un doublon.
       levels: {
         create: [
-          { level: 1, effect: 2 },
-          { level: 2, effect: 4 },
-          { level: 3, effect: 7 },
+          { level: 1, effect: 1 },
+          { level: 2, effect: 2 },
+          { level: 3, effect: 3 },
         ],
       },
     },
@@ -402,37 +387,23 @@ export async function seedSkills(tx: Tx) {
       name: 'Prisme',
       description: 'Augmente les chances de variantes Brillant/Holo',
       icon: 'Diamond',
-      maxLevel: 5,
+      maxLevel: 8,
       effectType: 'VARIANT_LUCK',
       posX: 600,
       posY: 120,
-      levels: {
-        create: [
-          { level: 1, effect: 1 },
-          { level: 2, effect: 2 },
-          { level: 3, effect: 4 },
-          { level: 4, effect: 6 },
-          { level: 5, effect: 8 },
-        ],
-      },
-    },
-  })
-  const kaleidoscope = await tx.skillNode.create({
-    data: {
-      branchId: fortune.id,
-      name: 'Kaléidoscope',
-      description:
-        'Augmente encore les chances de variantes Brillant/Holo (cumulable avec Prisme)',
-      icon: 'Aperture',
-      maxLevel: 3,
-      effectType: 'VARIANT_LUCK',
-      posX: 792,
-      posY: 120,
+      // Absorbe Kaléidoscope : 8 + 6 = +14 %, même plafond qu'avant, en une
+      // seule courbe décroissante au lieu de deux nœuds dont le second
+      // rendait plus au point que le premier.
       levels: {
         create: [
           { level: 1, effect: 2 },
           { level: 2, effect: 4 },
           { level: 3, effect: 6 },
+          { level: 4, effect: 8 },
+          { level: 5, effect: 10 },
+          { level: 6, effect: 12 },
+          { level: 7, effect: 13 },
+          { level: 8, effect: 14 },
         ],
       },
     },
@@ -455,14 +426,14 @@ export async function seedSkills(tx: Tx) {
       },
       {
         fromNodeId: bouleDor.id,
-        toNodeId: apexFortune.id,
+        toNodeId: opulence.id,
         minLevel: 1,
         sourceHandle: 's-right',
         targetHandle: 't-left',
       },
       {
         fromNodeId: tirageGratuitFortune.id,
-        toNodeId: apexFortune.id,
+        toNodeId: opulence.id,
         minLevel: 1,
         sourceHandle: 's-right',
         targetHandle: 't-left',
@@ -477,13 +448,6 @@ export async function seedSkills(tx: Tx) {
       {
         fromNodeId: tirageGratuitFortune.id,
         toNodeId: prisme.id,
-        minLevel: 1,
-        sourceHandle: 's-right',
-        targetHandle: 't-left',
-      },
-      {
-        fromNodeId: prisme.id,
-        toNodeId: kaleidoscope.id,
         minLevel: 1,
         sourceHandle: 's-right',
         targetHandle: 't-left',
@@ -911,6 +875,6 @@ export async function seedSkills(tx: Tx) {
   })
 
   console.log(
-    '  Skill tree seedé : 4 branches, 30 nœuds, 123 points investissables',
+    '  Skill tree seedé : 4 branches, 27 nœuds, 126 points investissables',
   )
 }

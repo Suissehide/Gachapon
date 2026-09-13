@@ -2,6 +2,7 @@ import { describe, expect, it } from '@jest/globals'
 import {
   calculateTokens,
   effectiveRegenInterval,
+  overflowDust,
 } from '../../main/domain/economy/economy.domain'
 
 const INTERVAL = 120  // minutes (= 2h)
@@ -39,6 +40,36 @@ describe('calculateTokens', () => {
     const result = calculateTokens(lastTokenAt, 0, INTERVAL, MAX)
     expect(result.tokens).toBe(6)
     expect(result.nextTokenAt).toBeNull()
+  })
+
+  it('overflow à 0 quand tout le gain tient dans le stock', () => {
+    const lastTokenAt = new Date(Date.now() - 4 * 60 * 60 * 1000) // 2 jetons
+    const result = calculateTokens(lastTokenAt, 0, INTERVAL, MAX)
+    expect(result.tokens).toBe(2)
+    expect(result.overflow).toBe(0)
+  })
+
+  it('overflow compte les jetons perdus au-dessus du plafond', () => {
+    // 20h à 2h/jeton = 10 jetons gagnés, 6 de plafond depuis 0 → 4 perdus
+    const lastTokenAt = new Date(Date.now() - 20 * 60 * 60 * 1000)
+    const result = calculateTokens(lastTokenAt, 0, INTERVAL, MAX)
+    expect(result.tokens).toBe(6)
+    expect(result.overflow).toBe(4)
+  })
+
+  it('overflow compte aussi quand le stock était DÉJÀ plein au départ', () => {
+    // Le cas que Trop-plein existe pour couvrir : parti à 6/6, absent 10h.
+    // Sans ça, le joueur qui s'absente réserve pleine ne récupère rien.
+    const lastTokenAt = new Date(Date.now() - 10 * 60 * 60 * 1000)
+    const result = calculateTokens(lastTokenAt, MAX, INTERVAL, MAX)
+    expect(result.tokens).toBe(6)
+    expect(result.overflow).toBe(5)
+  })
+
+  it('overflow à 0 si aucun intervalle complet ne s\'est écoulé au plafond', () => {
+    const lastTokenAt = new Date(Date.now() - 30 * 1000)
+    const result = calculateTokens(lastTokenAt, MAX, INTERVAL, MAX)
+    expect(result.overflow).toBe(0)
   })
 
   it('nextTokenAt est null si tokens === maxStock', () => {
@@ -219,5 +250,23 @@ describe('effectiveRegenInterval', () => {
         lootBonusPct: 0,
       }),
     ).toBe(1)
+  })
+})
+
+describe('overflowDust', () => {
+  it('sans Trop-plein, un débordement ne rend rien', () => {
+    expect(overflowDust(40, 0)).toBe(0)
+  })
+
+  it('rend la poussière du palier pour chaque jeton perdu', () => {
+    expect(overflowDust(40, 30)).toBe(1200)
+  })
+
+  it('rend zéro quand rien ne déborde', () => {
+    expect(overflowDust(0, 30)).toBe(0)
+  })
+
+  it('ne rend jamais de poussière négative', () => {
+    expect(overflowDust(-3, 30)).toBe(0)
   })
 })

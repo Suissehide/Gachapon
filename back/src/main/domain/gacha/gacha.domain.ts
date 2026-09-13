@@ -26,6 +26,7 @@ import type { UserRewardRepositoryInterface } from '../../types/infra/orm/reposi
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import {
   calculateTokens,
+  overflowDust,
   effectiveRegenInterval,
 } from '../economy/economy.domain'
 import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
@@ -295,6 +296,8 @@ export class GachaDomain implements GachaDomainInterface {
       currentTokens: number
       currentPity: number
       newLastTokenAt: Date | null
+      /** Poussière due au débordement de jetons, à ajouter au gain du tirage. */
+      overflowDustGained: number
     }
   }> {
     const user = await this.#userRepository.findByIdOrThrowInTx(tx, userId)
@@ -304,7 +307,7 @@ export class GachaDomain implements GachaDomainInterface {
       lootBonusPct: cfg.teamLootBonusPct,
     })
     const effectiveMaxStock = cfg.tokenMaxStock + cfg.upgrades.tokenVaultBonus
-    const { tokens, newLastTokenAt } = calculateTokens(
+    const { tokens, newLastTokenAt, overflow } = calculateTokens(
       user.lastTokenAt,
       user.tokens,
       effectiveInterval,
@@ -317,6 +320,10 @@ export class GachaDomain implements GachaDomainInterface {
         currentTokens: tokens,
         currentPity: user.pityCurrent,
         newLastTokenAt,
+        overflowDustGained: overflowDust(
+          overflow,
+          cfg.upgrades.tokenOverflowDust,
+        ),
       },
     }
   }
@@ -551,7 +558,7 @@ export class GachaDomain implements GachaDomainInterface {
       tx,
       userId,
       finalTokens,
-      step.dustEarned,
+      step.dustEarned + state.overflowDustGained,
       totalXp,
       newLevel,
       step.nextPity,
@@ -854,7 +861,7 @@ export class GachaDomain implements GachaDomainInterface {
             tx,
             userId,
             finalTokens,
-            totalDust,
+            totalDust + state.overflowDustGained,
             totalXp,
             newLevel,
             currentPity,

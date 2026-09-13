@@ -17,6 +17,7 @@ import type { UnlockedAchievement } from '../achievements/events.types'
 import type { CombatPointsTx } from '../combat-points/combat-points.tx'
 import { applyPercentDiscount } from '../shared/discount'
 import { retryOnSerialization } from '../shared/retry-serialization'
+import { effectiveEnergyDailyCap } from './energy-cap'
 
 type BoostValue = {
   multiplier?: number
@@ -92,7 +93,13 @@ export class ShopDomain implements IShopDomain {
           }
 
           await this.#checkItemConflicts(tx, userId, shopItemId, item)
-          await this.#checkEnergyDailyCap(tx, userId, item, cfg)
+          await this.#checkEnergyDailyCap(
+            tx,
+            userId,
+            item,
+            cfg,
+            effects.energyPackCapBonus,
+          )
 
           const purchase = await tx.purchase.create({
             data: {
@@ -183,6 +190,7 @@ export class ShopDomain implements IShopDomain {
     userId: string,
     item: ShopItem,
     cfg: Record<'shop.energyDailyCap', number> | undefined,
+    capBonus: number,
   ): Promise<void> {
     if (item.type !== 'ENERGY_PACK' || !cfg) {
       return
@@ -196,7 +204,9 @@ export class ShopDomain implements IShopDomain {
         shopItem: { type: 'ENERGY_PACK' },
       },
     })
-    if (usedToday >= cfg['shop.energyDailyCap']) {
+    if (
+      usedToday >= effectiveEnergyDailyCap(cfg['shop.energyDailyCap'], capBonus)
+    ) {
       throw Boom.tooManyRequests(
         "Limite quotidienne d'achats d'énergie atteinte",
       )

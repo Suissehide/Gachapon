@@ -31,6 +31,8 @@ const NEUTRAL_EFFECTS: UserUpgradeEffects = {
   dailyShopLuckMultiplier: 1.0,
   equipUpgradeDiscount: 0,
   salvageBonus: 0,
+  tokenOverflowDust: 0,
+  energyPackCapBonus: 0,
 }
 
 export function getSkillEffects(rows: SkillEffectRow[]): UserUpgradeEffects {
@@ -108,6 +110,12 @@ export function getSkillEffects(rows: SkillEffectRow[]): UserUpgradeEffects {
         break
       case 'SALVAGE_BONUS':
         result.salvageBonus += row.effect
+        break
+      case 'TOKEN_OVERFLOW_DUST':
+        result.tokenOverflowDust += row.effect
+        break
+      case 'ENERGY_PACK_CAP':
+        result.energyPackCapBonus += row.effect
         break
     }
   }

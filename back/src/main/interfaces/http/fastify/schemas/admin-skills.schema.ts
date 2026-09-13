@@ -49,6 +49,8 @@ export const createNodeSchema = z.object({
     'DAILY_SHOP_LUCK',
     'EQUIP_UPGRADE_DISCOUNT',
     'SALVAGE_BONUS',
+    'TOKEN_OVERFLOW_DUST',
+    'ENERGY_PACK_CAP',
   ]),
   posX: z.int(),
   posY: z.int(),

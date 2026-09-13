@@ -24,6 +24,8 @@ export const EFFECT_DESCRIPTIONS: Record<string, string> = {
   DAILY_SHOP_LUCK: 'Plus de cartes rares dans ta boutique du jour',
   EQUIP_UPGRADE_DISCOUNT: "Réduit le coût en or d'amélioration des équipements",
   SALVAGE_BONUS: "Plus d'or au recyclage des équipements",
+  TOKEN_OVERFLOW_DUST: 'Poussière rendue par jeton régénéré au-delà du plafond',
+  ENERGY_PACK_CAP: "Relève la limite journalière d'achat de packs d'énergie",
 }
 
 export const EFFECT_TYPES = Object.keys(EFFECT_DESCRIPTIONS)
@@ -55,6 +57,8 @@ export const EFFECT_FORMATTERS: Record<string, (v: number) => string> = {
   DAILY_SHOP_LUCK: (v) => `+${v} %`,
   EQUIP_UPGRADE_DISCOUNT: (v) => `−${v} %`,
   SALVAGE_BONUS: (v) => `+${v} %`,
+  TOKEN_OVERFLOW_DUST: (v) => `${v} poussière / jeton`,
+  ENERGY_PACK_CAP: (v) => `+${v} achat${v > 1 ? 's' : ''} / jour`,
 }
 
 export function formatEffect(effectType: string, value: number): string {

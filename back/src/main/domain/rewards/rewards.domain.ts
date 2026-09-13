@@ -28,6 +28,7 @@ import type { AchievementsDomainInterface } from '../achievements/achievements.d
 import type { UnlockedAchievement } from '../achievements/events.types'
 import {
   calculateTokens,
+  overflowDust,
   effectiveRegenInterval,
 } from '../economy/economy.domain'
 import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
@@ -206,7 +207,11 @@ export class RewardsDomain implements RewardsDomainInterface {
           lootBonusPct: teamEffects.loot,
         })
         const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
-        const { tokens: regenTokens, newLastTokenAt } = calculateTokens(
+        const {
+          tokens: regenTokens,
+          newLastTokenAt,
+          overflow,
+        } = calculateTokens(
           user.lastTokenAt,
           user.tokens,
           effectiveInterval,
@@ -215,7 +220,8 @@ export class RewardsDomain implements RewardsDomainInterface {
         )
 
         const newTokens = regenTokens + rewardTokens
-        const newDust = user.dust + dust
+        const newDust =
+          user.dust + dust + overflowDust(overflow, upgrades.tokenOverflowDust)
         const newXp = user.xp + xp
         const newGold = user.gold + rewardGold
         const newLevel = calculateLevel(
@@ -416,7 +422,11 @@ export class RewardsDomain implements RewardsDomainInterface {
           lootBonusPct: teamEffects.loot,
         })
         const effectiveMaxStock = cfg.tokenMaxStock + upgrades.tokenVaultBonus
-        const { tokens: regenTokens, newLastTokenAt } = calculateTokens(
+        const {
+          tokens: regenTokens,
+          newLastTokenAt,
+          overflow,
+        } = calculateTokens(
           user.lastTokenAt,
           user.tokens,
           effectiveInterval,
@@ -425,7 +435,10 @@ export class RewardsDomain implements RewardsDomainInterface {
         )
 
         const newTokens = regenTokens + totalTokens
-        const newDust = user.dust + totalDust
+        const newDust =
+          user.dust +
+          totalDust +
+          overflowDust(overflow, upgrades.tokenOverflowDust)
         const newXp = user.xp + totalXp
         const newGold = user.gold + totalGold
         const newLevel = calculateLevel(

@@ -155,4 +155,20 @@ describe('skill-effects nouveaux effets Collection', () => {
     expect(fx.equipUpgradeDiscount).toBe(15)
     expect(fx.salvageBonus).toBe(20)
   })
+  it('neutre : trop-plein et cap de packs à zéro', () => {
+    const fx = getSkillEffects([])
+    expect(fx.tokenOverflowDust).toBe(0)
+    expect(fx.energyPackCapBonus).toBe(0)
+  })
+  it('TOKEN_OVERFLOW_DUST : additionne la poussière par jeton débordé', () => {
+    const fx = getSkillEffects([
+      { effectType: 'TOKEN_OVERFLOW_DUST', effect: 10 },
+      { effectType: 'TOKEN_OVERFLOW_DUST', effect: 20 },
+    ])
+    expect(fx.tokenOverflowDust).toBe(30)
+  })
+  it('ENERGY_PACK_CAP : additionne les achats journaliers supplémentaires', () => {
+    const fx = getSkillEffects([{ effectType: 'ENERGY_PACK_CAP', effect: 3 }])
+    expect(fx.energyPackCapBonus).toBe(3)
+  })
 })

@@ -2,6 +2,13 @@ export type TokenState = {
   tokens: number
   newLastTokenAt: Date | null
   nextTokenAt: Date | null
+  /**
+   * Jetons produits par le temps écoulé mais perdus faute de place. Toujours
+   * calculé, même quand la compétence Trop-plein n'est pas montée : c'est un
+   * FAIT sur l'intervalle, pas un effet. La conversion en poussière est la
+   * décision de l'appelant.
+   */
+  overflow: number
 }
 
 export type UserUpgradeEffects = {
@@ -31,4 +38,11 @@ export type UserUpgradeEffects = {
   equipUpgradeDiscount: number
   /** Bonus (%) d'or au recyclage d'équipement. */
   salvageBonus: number
+  /**
+   * Poussière rendue PAR JETON perdu au plafond de stockage. Zéro = le
+   * débordement est jeté en silence, comportement historique.
+   */
+  tokenOverflowDust: number
+  /** Achats de packs d'énergie supplémentaires par jour, au-delà de `shop.energyDailyCap`. */
+  energyPackCapBonus: number
 }

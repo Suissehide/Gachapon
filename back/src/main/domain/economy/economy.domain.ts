@@ -44,6 +44,15 @@ export function effectiveRegenInterval({
 }
 
 /**
+ * Poussière rendue par la compétence Trop-plein pour un débordement donné.
+ * `dustPerToken` est l'effet cumulé du nœud (0 = compétence non montée, donc
+ * comportement historique : le débordement est perdu sec).
+ */
+export function overflowDust(overflow: number, dustPerToken: number): number {
+  return Math.max(0, overflow) * Math.max(0, dustPerToken)
+}
+
+/**
  * Calcul lazy des tokens accumulés depuis lastTokenAt.
  * Si lastTokenAt est null : on initialise le clock à maintenant (0 tokens gagnés, regen commence).
  * Ne fait aucun IO — pur calcul.
@@ -61,10 +70,20 @@ export function calculateTokens(
   // de zéro si un token est ensuite consommé (sinon le calcul lazy
   // re-crédite immédiatement le token perdu à cause du elapsed stale).
   if (currentTokens >= maxStock) {
+    // Le débordement se compte ICI AUSSI, sinon le joueur qui s'absente
+    // réserve pleine ne récupérerait jamais rien : c'est justement son cas.
+    // Pas de double-compte possible — le clock est remis à maintenant à
+    // chaque passage, donc `elapsed` ne couvre jamais deux fois le même
+    // intervalle.
+    const elapsedAtCap = lastTokenAt ? Date.now() - lastTokenAt.getTime() : 0
     return {
       tokens: currentTokens,
       newLastTokenAt: new Date(),
       nextTokenAt: null,
+      overflow: Math.max(
+        0,
+        Math.floor(elapsedAtCap / (regenIntervalMinutes * 60 * 1000)),
+      ),
     }
   }
 
@@ -74,7 +93,7 @@ export function calculateTokens(
     const nextTokenAt = new Date(
       ref.getTime() + regenIntervalMinutes * 60 * 1000,
     )
-    return { tokens: currentTokens, newLastTokenAt: ref, nextTokenAt }
+    return { tokens: currentTokens, newLastTokenAt: ref, nextTokenAt, overflow: 0 }
   }
 
   const now = Date.now()
@@ -84,7 +103,7 @@ export function calculateTokens(
 
   if (gained <= 0) {
     const nextTokenAt = new Date(ref.getTime() + msPerToken)
-    return { tokens: currentTokens, newLastTokenAt: ref, nextTokenAt }
+    return { tokens: currentTokens, newLastTokenAt: ref, nextTokenAt, overflow: 0 }
   }
 
   // Bonus tokens: MULTI_TOKEN_CHANCE — each time-gained token has a chance to grant a free extra.
@@ -114,5 +133,9 @@ export function calculateTokens(
       ? null
       : new Date(newLastTokenAt.getTime() + msPerToken)
 
-  return { tokens: newTokens, newLastTokenAt, nextTokenAt }
+  // Tout ce qui a été produit moins ce qui a trouvé place. Les jetons bonus
+  // comptent : perdus au plafond, ils sont perdus pareil.
+  const overflow = gained + bonus - (newTokens - currentTokens)
+
+  return { tokens: newTokens, newLastTokenAt, nextTokenAt, overflow }
 }
