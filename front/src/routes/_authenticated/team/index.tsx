@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { Compass, Sparkle, Users } from 'lucide-react'
+import { Compass, Users } from 'lucide-react'
 
 import { PageHeader } from '../../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../../components/shared/PageShell.tsx'
@@ -9,10 +9,6 @@ import { TeamCard } from '../../../components/team/TeamCard.tsx'
 import { Button } from '../../../components/ui/button.tsx'
 import { PopupTrigger } from '../../../components/ui/popup.tsx'
 import { TEAM_SLOTS } from '../../../constants/teams.constant.ts'
-import {
-  DEFAULT_ECONOMY,
-  useEconomyConfig,
-} from '../../../queries/useEconomyConfig.ts'
 import { useMyTeams } from '../../../queries/useTeams.ts'
 
 export const Route = createFileRoute('/_authenticated/team/')({
@@ -21,18 +17,15 @@ export const Route = createFileRoute('/_authenticated/team/')({
 
 function TeamsPage() {
   const { data, isLoading } = useMyTeams()
-  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
 
   const teams = data?.teams ?? []
   const atCap = teams.length >= TEAM_SLOTS
-  const freeSlots = Math.max(0, TEAM_SLOTS - teams.length)
 
   return (
     <PageShell>
       <PageHeader
         breadcrumbs={[{ label: 'Gachapon', to: '/play' }, { label: 'Équipes' }]}
         title="Mes équipes"
-        subtitle={`${teams.length} / ${TEAM_SLOTS} emplacements utilisés · une équipe monte à ${economy.team.maxMembers} membres`}
         right={
           <div className="flex gap-2">
             <Button asChild variant="outline">
@@ -72,21 +65,6 @@ function TeamsPage() {
         <div className="flex flex-col gap-3">
           {teams.map((team) => (
             <TeamCard key={team.id} team={team} />
-          ))}
-          {Array.from({ length: freeSlots }, (_, i) => (
-            <CreateTeamPopup
-              // biome-ignore lint/suspicious/noArrayIndexKey: emplacements libres décoratifs, compte fixe, jamais réordonnés
-              key={i}
-              trigger={
-                <PopupTrigger
-                  variant="dashed"
-                  className="h-auto w-full justify-center gap-2.5 rounded-[20px] px-[22px] py-[22px] font-mono text-[11px] uppercase tracking-[0.14em]"
-                >
-                  <Sparkle className="h-[15px] w-[15px]" />
-                  Emplacement libre · Créer une équipe
-                </PopupTrigger>
-              }
-            />
           ))}
         </div>
       )}
