@@ -7,6 +7,7 @@ import {
   withDatabase,
 } from '../helpers/e2e-database'
 import { claimRedisIndex, type RedisClaimClient } from '../helpers/e2e-redis'
+import { parallelRunError } from '../helpers/e2e-workers'
 
 /**
  * L'isolation d'un run e2e : sa propre base Postgres, son propre index Redis.
@@ -108,5 +109,28 @@ describe('isolation du run e2e — Redis', () => {
     await expect(claimRedisIndex(fakeRedis(full), 11, () => true)).rejects.toThrow(
       /index Redis/,
     )
+  })
+})
+
+/**
+ * Un run e2e doit rester SÉQUENTIEL. `globalSetup` réserve UNE base et UN
+ * index Redis pour tout le run et les pose dans `process.env` ; des workers
+ * parallèles en héritent tous et écrivent donc dans la même base, en même
+ * temps. On retombe alors exactement sur la panne que l'isolation par run
+ * avait supprimée — des suites vertes lancées seules, un ensemble d'échecs
+ * différent à chaque run — mais sans le moindre message pour le dire.
+ *
+ * D'où cette garde : mieux vaut refuser de démarrer que rendre un résultat
+ * qu'on croira vrai.
+ */
+describe('isolation du run e2e — séquentialité', () => {
+  it('laisse passer un run à un seul worker', () => {
+    expect(parallelRunError(1)).toBeNull()
+  })
+
+  it('refuse un run à plusieurs workers, en nommant la commande à utiliser', () => {
+    const message = parallelRunError(4)
+    expect(message).toContain('4')
+    expect(message).toContain('npm run test:e2e')
   })
 })

@@ -13,6 +13,7 @@ import {
   withDatabase,
 } from './helpers/e2e-database'
 import { claimRedisIndex } from './helpers/e2e-redis'
+import { parallelRunError } from './helpers/e2e-workers'
 
 /**
  * Chaque run e2e travaille sur SA base et SON index Redis.
@@ -32,7 +33,16 @@ import { claimRedisIndex } from './helpers/e2e-redis'
  * Ce que `globalSetup` pose dans `process.env` vaut pour TOUT le run : lui
  * seul charge `.env.test`, les suites lisent `process.env`.
  */
-export default async function globalSetup() {
+export default async function globalSetup(globalConfig: {
+  maxWorkers: number
+}) {
+  // AVANT tout le reste : ce que ce fichier reserve ne vaut que pour un run
+  // sequentiel. Voir helpers/e2e-workers.ts.
+  const parallel = parallelRunError(globalConfig.maxWorkers)
+  if (parallel) {
+    throw new Error(parallel)
+  }
+
   loadEnv({ path: resolve(__dirname, '../../.env.test'), override: true })
 
   const baseUrl = process.env.DATABASE_URL

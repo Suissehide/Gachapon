@@ -136,7 +136,7 @@
       "command": "rimraf .wireit"
     },
     "cover": {
-      "command": "jest --coverage --runInBand -c src/test/jest.config.ts",
+      "command": "jest --coverage --maxWorkers=1 --workerIdleMemoryLimit=768MB -c src/test/jest.config.ts",
       "files": [
         "src/**"
       ],
@@ -172,7 +172,7 @@
       "command": "npm run with:open dist/coverage/all/index.html"
     },
     "cover:e2e": {
-      "command": "jest --coverage --runInBand -c src/test/jest.config.ts --selectProjects e2e",
+      "command": "jest --coverage --maxWorkers=1 --workerIdleMemoryLimit=768MB -c src/test/jest.config.ts --selectProjects e2e",
       "files": [
         "src/main/**",
         "src/test/e2e/**",
@@ -192,7 +192,7 @@
       "command": "npm run with:open dist/coverage/e2e/index.html"
     },
     "cover:unit": {
-      "command": "jest --coverage --runInBand -c src/test/jest.config.ts --selectProjects unit",
+      "command": "jest --coverage --maxWorkers=1 --workerIdleMemoryLimit=768MB -c src/test/jest.config.ts --selectProjects unit",
       "files": [
         "src/test/unit/**",
         "src/test/*",
@@ -321,7 +321,7 @@
       ]
     },
     "test": {
-      "command": "jest --runInBand -c src/test/jest.config.ts",
+      "command": "jest --maxWorkers=1 --workerIdleMemoryLimit=768MB -c src/test/jest.config.ts",
       "files": [
         "src/main/**",
         "src/test/**"
@@ -343,7 +343,7 @@
       "command": "npm run with:open dist/test/all-tests-report.html"
     },
     "test:e2e": {
-      "command": "jest --runInBand -c src/test/jest.config.ts --selectProjects e2e",
+      "command": "jest --maxWorkers=1 --workerIdleMemoryLimit=768MB -c src/test/jest.config.ts --selectProjects e2e",
       "files": [
         "src/main/**",
         "src/test/e2e/**",
@@ -366,7 +366,7 @@
       "command": "npm run with:open dist/test/e2e-tests-report.html"
     },
     "test:unit": {
-      "command": "jest --runInBand -c src/test/jest.config.ts --selectProjects unit",
+      "command": "jest --maxWorkers=1 --workerIdleMemoryLimit=768MB -c src/test/jest.config.ts --selectProjects unit",
       "files": [
         "src/test/unit/**",
         "src/test/*"

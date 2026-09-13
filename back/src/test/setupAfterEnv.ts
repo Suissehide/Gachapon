@@ -1,3 +1,5 @@
+import { jest } from '@jest/globals'
+
 /**
  * Le budget de temps des suites e2e, HOOKS COMPRIS.
  *
