@@ -57,7 +57,11 @@ describe('Annuaire des équipes qui recrutent', () => {
   it('GET /teams/directory — liste les équipes qui recrutent, pas les miennes', async () => {
     const res = await app.inject({
       method: 'GET',
-      url: '/teams/directory',
+      // Filtré sur le nom unique de CETTE suite : tout le run partage une
+      // base, l'annuaire est paginé à 20, et sans ce filtre l'assertion
+      // dépendrait du nombre d'équipes créées par les autres suites — une
+      // positive échoue dès qu'on passe en page 2, une négative passe à vide.
+      url: `/teams/directory?search=${encodeURIComponent(`Annuaire ${suffix}`)}`,
       headers: { cookie: cookiesOwner },
     })
     expect(res.statusCode).toBe(200)
@@ -74,7 +78,11 @@ describe('Annuaire des équipes qui recrutent', () => {
     const other = await signIn('recruitDirBrowser')
     const res = await app.inject({
       method: 'GET',
-      url: '/teams/directory',
+      // Filtré sur le nom unique de CETTE suite : tout le run partage une
+      // base, l'annuaire est paginé à 20, et sans ce filtre l'assertion
+      // dépendrait du nombre d'équipes créées par les autres suites — une
+      // positive échoue dès qu'on passe en page 2, une négative passe à vide.
+      url: `/teams/directory?search=${encodeURIComponent(`Annuaire ${suffix}`)}`,
       headers: { cookie: other.cookies },
     })
     expect(res.statusCode).toBe(200)
@@ -119,7 +127,11 @@ describe('Annuaire des équipes qui recrutent', () => {
     })
     const res = await app.inject({
       method: 'GET',
-      url: '/teams/directory',
+      // Filtré sur le nom unique de CETTE suite : tout le run partage une
+      // base, l'annuaire est paginé à 20, et sans ce filtre l'assertion
+      // dépendrait du nombre d'équipes créées par les autres suites — une
+      // positive échoue dès qu'on passe en page 2, une négative passe à vide.
+      url: `/teams/directory?search=${encodeURIComponent(`Annuaire ${suffix}`)}`,
       headers: { cookie: other.cookies },
     })
     expect(res.statusCode).toBe(200)
