@@ -1,5 +1,5 @@
 // TeamDirectoryCard — ligne d'équipe de l'annuaire de recrutement
-// (`/team/join`). Reprend l'anatomie de `TeamCard.tsx` (grille
+// (la popup « Parcourir les équipes »). Reprend l'anatomie de `TeamCard.tsx` (grille
 // `56px_1fr_200px_auto`, `rounded-[20px]`, `border-[1.5px] border-border
 // bg-card`, survol ambré limité à la bordure — pas d'ombre, pas de
 // décalage) mais en `<div>` : contrairement à « Mes équipes », cette ligne

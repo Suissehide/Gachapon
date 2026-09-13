@@ -1,12 +1,12 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { Compass, Users } from 'lucide-react'
 
 import { PageHeader } from '../../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../../components/shared/PageShell.tsx'
 import { CreateTeamPopup } from '../../../components/team/CreateTeamPopup.tsx'
 import { MyJoinRequestsList } from '../../../components/team/recruitment/MyJoinRequestsList.tsx'
+import { TeamDirectoryPopup } from '../../../components/team/recruitment/TeamDirectoryPopup.tsx'
 import { TeamCard } from '../../../components/team/TeamCard.tsx'
-import { Button } from '../../../components/ui/button.tsx'
 import { EmptyState } from '../../../components/ui/emptyState.tsx'
 import { PopupTrigger } from '../../../components/ui/popup.tsx'
 import { TEAM_SLOTS } from '../../../constants/teams.constant.ts'
@@ -29,12 +29,14 @@ function TeamsPage() {
         title="Mes équipes"
         right={
           <div className="flex gap-2">
-            <Button asChild variant="outline">
-              <Link to="/team/join">
-                <Compass className="h-4 w-4" />
-                Parcourir les équipes
-              </Link>
-            </Button>
+            <TeamDirectoryPopup
+              trigger={
+                <PopupTrigger variant="outline" className="gap-2">
+                  <Compass className="h-4 w-4" />
+                  Parcourir les équipes
+                </PopupTrigger>
+              }
+            />
             <CreateTeamPopup
               trigger={
                 <PopupTrigger
@@ -69,17 +71,15 @@ function TeamsPage() {
               icon={Users}
               title="Tu n’es dans aucune équipe"
               action={
-                // Les deux mêmes chemins que l'en-tête, redits là où le regard
-                // tombe quand la page est vide, et par les mêmes déclencheurs :
-                // un troisième point d'entrée vers la création finirait par
-                // diverger des deux autres.
                 <div className="mt-1 flex flex-wrap justify-center gap-2">
-                  <Button asChild variant="outline" size="sm">
-                    <Link to="/team/join">
-                      <Compass className="h-4 w-4" />
-                      Parcourir les équipes
-                    </Link>
-                  </Button>
+                  <TeamDirectoryPopup
+                    trigger={
+                      <PopupTrigger variant="outline" size="sm">
+                        <Compass className="h-4 w-4" />
+                        Parcourir les équipes
+                      </PopupTrigger>
+                    }
+                  />
                   <CreateTeamPopup
                     trigger={
                       <PopupTrigger variant="default" size="sm">
