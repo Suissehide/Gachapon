@@ -18,14 +18,16 @@ export function RewardsPopup({ onClose: _ }: RewardsPopupProps) {
   const claimAll = useClaimAllRewards()
 
   return (
-    <div className="absolute right-0 top-10 z-50 min-w-72 max-h-[70vh] flex flex-col overflow-hidden rounded-xl border border-border bg-background shadow-[0_8px_32px_rgba(0,0,0,0.4)] max-lg:fixed max-lg:inset-x-3 max-lg:top-[116px] max-lg:min-w-0">
+    <div className="absolute right-0 top-10 z-50 min-w-80 max-h-[70vh] flex flex-col overflow-hidden rounded-xl border border-border bg-background shadow-[0_8px_32px_rgba(0,0,0,0.4)] max-lg:fixed max-lg:inset-x-3 max-lg:top-[116px] max-lg:min-w-0">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
         <div className="flex items-center gap-2">
           <Gift className="h-4 w-4 text-text-light" />
-          <span className="text-sm font-semibold text-text">Récompenses</span>
+          <span className="font-display text-sm font-bold text-text">
+            Récompenses
+          </span>
           {rewards.length > 0 && (
-            <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary">
+            <span className="rounded-full bg-primary/15 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-primary">
               {rewards.length}
             </span>
           )}
@@ -52,12 +54,12 @@ export function RewardsPopup({ onClose: _ }: RewardsPopupProps) {
         ) : rewards.length === 0 ? (
           <div className="py-6 text-center">
             <Gift className="mx-auto mb-2 h-7 w-7 text-text-light/30" />
-            <p className="text-xs text-text-light">
-              Aucune récompense en attente.
+            <p className="font-mono text-[11px] uppercase tracking-wider text-text-light">
+              Aucune récompense en attente
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-1.5">
+          <ul className="flex flex-col gap-1.5">
             {rewards.map((reward) => (
               <RewardCard
                 key={reward.id}
@@ -66,7 +68,7 @@ export function RewardsPopup({ onClose: _ }: RewardsPopupProps) {
                 isLoading={claimReward.isPending || claimAll.isPending}
               />
             ))}
-          </div>
+          </ul>
         )}
       </div>
     </div>

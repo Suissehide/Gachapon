@@ -15,6 +15,7 @@ import { type ReactNode, useRef, useState } from 'react'
 import type { PendingReward } from '../../api/rewards.api.ts'
 import { RARITY_FR, RARITY_HEX } from '../../constants/achievements.constant.ts'
 import { cn } from '../../libs/utils.ts'
+import { Nom, NotificationItem } from '../notifications/NotificationItem.tsx'
 import { Button } from '../ui/button.tsx'
 import { ClaimParticles } from './ClaimParticles.tsx'
 
@@ -24,91 +25,152 @@ interface RewardCardProps {
   isLoading: boolean
 }
 
-function sourceLabel(reward: PendingReward): string {
-  if (reward.source === 'STREAK' && reward.streakMilestone) {
-    if (reward.streakMilestone.day === 0) {
-      return 'Streak — Connexion quotidienne'
+/** Tête (grasse) et détail (mots de liaison) du titre d'une ligne. */
+function sourceParts(reward: PendingReward): {
+  head: string
+  detail?: string | null
+} {
+  switch (reward.source) {
+    case 'STREAK': {
+      const day = reward.streakMilestone?.day
+      return {
+        head: 'Streak',
+        detail:
+          day === undefined
+            ? null
+            : day === 0
+              ? 'Connexion quotidienne'
+              : `Jour ${day}`,
+      }
     }
-    return `Streak — Jour ${reward.streakMilestone.day}`
+    case 'ACHIEVEMENT':
+      return { head: 'Succès', detail: reward.sourceTitle }
+    case 'QUEST':
+      return { head: 'Quête', detail: reward.sourceTitle }
+    case 'LEVEL_UP':
+      return { head: 'Montée de niveau' }
+    case 'ADMIN':
+      return { head: 'Récompense admin', detail: reward.label }
+    case 'RAID':
+      return { head: reward.label ?? "Raid d'équipe" }
+    default:
+      return { head: 'Récompense' }
   }
-  if (reward.source === 'ACHIEVEMENT') {
-    return reward.sourceTitle ? `Succès — ${reward.sourceTitle}` : 'Succès'
-  }
-  if (reward.source === 'QUEST') {
-    return reward.sourceTitle ? `Quête — ${reward.sourceTitle}` : 'Quête'
-  }
-  if (reward.source === 'LEVEL_UP') {
-    return 'Montée de niveau'
-  }
-  if (reward.source === 'ADMIN') {
-    return 'Récompense admin'
-  }
-  if (reward.source === 'RAID') {
-    return reward.label ?? "Raid d'équipe"
-  }
-  return 'Récompense'
 }
 
-const SOURCE_CONFIG = {
-  STREAK: {
-    icon: <Flame className="h-3.5 w-3.5 text-orange-400" />,
-    gradientFrom:
-      '[background-image:linear-gradient(135deg,rgba(249,115,22,0.06)_0%,transparent_60%)]',
-  },
-  ACHIEVEMENT: {
-    icon: <Trophy className="h-3.5 w-3.5 text-yellow-400" />,
-    gradientFrom:
-      '[background-image:linear-gradient(135deg,rgba(250,204,21,0.06)_0%,transparent_60%)]',
-  },
-  QUEST: {
-    icon: <Zap className="h-3.5 w-3.5 text-purple-400" />,
-    gradientFrom:
-      '[background-image:linear-gradient(135deg,rgba(168,85,247,0.07)_0%,transparent_60%)]',
-  },
-  LEVEL_UP: {
-    icon: <ArrowUp className="h-3.5 w-3.5 text-emerald-400" />,
-    gradientFrom:
-      '[background-image:linear-gradient(135deg,rgba(16,185,129,0.07)_0%,transparent_60%)]',
-  },
-  ADMIN: {
-    icon: <Star className="h-3.5 w-3.5 text-primary" />,
-    gradientFrom:
-      '[background-image:linear-gradient(135deg,rgba(245,158,11,0.07)_0%,transparent_60%)]',
-  },
-  RAID: {
-    icon: <Swords className="h-3.5 w-3.5 text-red-400" />,
-    gradientFrom:
-      '[background-image:linear-gradient(135deg,rgba(248,113,113,0.07)_0%,transparent_60%)]',
-  },
-} as const
+/**
+ * Le titre d'une ligne : la SOURCE en gras (comme un nom de joueur dans la
+ * cloche), le détail en mots de liaison. « Succès · Premier tirage » se lit
+ * comme « captain veut rejoindre Les Rouges » juste au-dessus.
+ */
+function sourceTitle(reward: PendingReward): ReactNode {
+  const { head, detail } = sourceParts(reward)
+  return (
+    <>
+      <Nom>{head}</Nom>
+      {detail ? ` · ${detail}` : null}
+    </>
+  )
+}
 
-function Stat({
+const SOURCE_ICON: Record<PendingReward['source'], ReactNode> = {
+  STREAK: <Flame className="h-4 w-4" />,
+  ACHIEVEMENT: <Trophy className="h-4 w-4" />,
+  QUEST: <Zap className="h-4 w-4" />,
+  LEVEL_UP: <ArrowUp className="h-4 w-4" />,
+  ADMIN: <Star className="h-4 w-4" />,
+  RAID: <Swords className="h-4 w-4" />,
+}
+
+/** Un montant dans le sous-titre : icône colorée, valeur, unité. */
+function Amount({
   icon,
   value,
-  label,
+  unit,
+  className,
 }: {
   icon: ReactNode
-  value: number
-  label: string
+  value: ReactNode
+  unit: string
+  className?: string
 }) {
   return (
-    <div className="flex flex-col items-center gap-px">
-      <div className="flex items-center gap-1">
-        {icon}
-        <span className="text-[15px] font-black tabular-nums leading-none text-text">
-          {value}
-        </span>
-      </div>
-      <span className="text-[9px] font-semibold uppercase tracking-widest text-text-light/50">
-        {label}
+    <span className="inline-flex items-center gap-1">
+      {icon}
+      <span className={cn('font-semibold tabular-nums text-text', className)}>
+        {value}
       </span>
-    </div>
+      {unit}
+    </span>
+  )
+}
+
+/** Les montants, séparés par des points médians comme dans la cloche. */
+function amounts(reward: PendingReward): ReactNode {
+  const parts: ReactNode[] = []
+  const r = reward.reward
+  if (r.tokens > 0) {
+    parts.push(
+      <Amount
+        key="tokens"
+        icon={<Ticket className="h-3 w-3 text-primary" />}
+        value={r.tokens}
+        unit={r.tokens > 1 ? 'jetons' : 'jeton'}
+      />,
+    )
+  }
+  if (r.dust > 0) {
+    parts.push(
+      <Amount
+        key="dust"
+        icon={<Sparkles className="h-3 w-3 text-accent" />}
+        value={r.dust}
+        unit="poussière"
+      />,
+    )
+  }
+  if (r.xp > 0) {
+    parts.push(
+      <Amount
+        key="xp"
+        icon={<Star className="h-3 w-3 text-yellow-400" />}
+        value={r.xp}
+        unit="XP"
+      />,
+    )
+  }
+  if (r.gold > 0) {
+    parts.push(
+      <Amount
+        key="gold"
+        icon={<Coins className="h-3 w-3 text-yellow-400" />}
+        value={r.gold}
+        unit="or"
+      />,
+    )
+  }
+  if (r.cardRarity) {
+    const color = RARITY_HEX[r.cardRarity]
+    parts.push(
+      <span key="card" className="inline-flex items-center gap-1">
+        <Layers className="h-3 w-3" style={{ color }} />
+        carte{' '}
+        <span className="font-semibold" style={{ color }}>
+          {RARITY_FR[r.cardRarity] ?? r.cardRarity}
+        </span>
+      </span>,
+    )
+  }
+  // Le point médian entre deux montants vient du CSS : pas de clé d'index à
+  // inventer pour un séparateur.
+  return (
+    <span className="inline-flex items-center gap-1.5 [&>*+*]:before:mr-1.5 [&>*+*]:before:content-['·']">
+      {parts}
+    </span>
   )
 }
 
 export function RewardCard({ reward, onClaim, isLoading }: RewardCardProps) {
-  const isMilestone = reward.streakMilestone?.isMilestone ?? false
-  const cfg = SOURCE_CONFIG[reward.source] ?? SOURCE_CONFIG.STREAK
   const [burst, setBurst] = useState(false)
   const [claiming, setClaiming] = useState(false)
   const [burstOrigin, setBurstOrigin] = useState({ x: 0, y: 0 })
@@ -128,90 +190,14 @@ export function RewardCard({ reward, onClaim, isLoading }: RewardCardProps) {
   }
 
   return (
-    <div
-      className={cn(
-        'overflow-hidden rounded-md border border-border',
-        cfg.gradientFrom,
-        isMilestone && [
-          '[border-left-color:theme(colors.yellow.400)]',
-          '[background-image:linear-gradient(135deg,rgba(245,158,11,0.10)_0%,transparent_55%)]',
-          'shadow-[0_0_18px_rgba(245,158,11,0.14)]',
-        ],
-        claiming && 'reward-claim',
-      )}
-    >
-      <div className="flex items-center gap-6 px-3 py-2.5">
-        {/* Left: source + amounts */}
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          {/* Source row */}
-          <div className="flex items-center gap-1.5">
-            {cfg.icon}
-            <span className="text-[10px] font-bold uppercase tracking-widest text-text-light/70">
-              {sourceLabel(reward)}
-            </span>
-          </div>
-
-          {/* Admin label */}
-          {reward.label && (
-            <p className="text-[10px] italic text-text-light/70">
-              {reward.label}
-            </p>
-          )}
-
-          {/* Amounts */}
-          <div className="flex items-center gap-4">
-            {reward.reward.tokens > 0 && (
-              <Stat
-                icon={<Ticket className="h-3.5 w-3.5 text-primary" />}
-                value={reward.reward.tokens}
-                label="jeton"
-              />
-            )}
-            {reward.reward.dust > 0 && (
-              <Stat
-                icon={<Sparkles className="h-3.5 w-3.5 text-accent" />}
-                value={reward.reward.dust}
-                label="poussière"
-              />
-            )}
-            {reward.reward.xp > 0 && (
-              <Stat
-                icon={<Star className="h-3.5 w-3.5 text-yellow-400" />}
-                value={reward.reward.xp}
-                label="XP"
-              />
-            )}
-            {reward.reward.gold > 0 && (
-              <Stat
-                icon={<Coins className="h-3.5 w-3.5 text-yellow-400" />}
-                value={reward.reward.gold}
-                label="or"
-              />
-            )}
-            {reward.reward.cardRarity && (
-              <div className="flex flex-col items-center gap-px">
-                <div className="flex items-center gap-1">
-                  <Layers
-                    className="h-3.5 w-3.5"
-                    style={{ color: RARITY_HEX[reward.reward.cardRarity] }}
-                  />
-                  <span
-                    className="text-[13px] font-black uppercase leading-none tracking-wide"
-                    style={{ color: RARITY_HEX[reward.reward.cardRarity] }}
-                  >
-                    {RARITY_FR[reward.reward.cardRarity] ??
-                      reward.reward.cardRarity}
-                  </span>
-                </div>
-                <span className="text-[9px] font-semibold uppercase tracking-widest text-text-light/50">
-                  carte
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Right: claim button */}
+    <NotificationItem
+      icon={SOURCE_ICON[reward.source] ?? SOURCE_ICON.STREAK}
+      title={sourceTitle(reward)}
+      subtitle={amounts(reward)}
+      // Un palier de streak n'est plus distingué : ni dégradé, ni halo, ni
+      // bordure. Les montants plus élevés parlent d'eux-mêmes.
+      className={cn('overflow-hidden', claiming && 'reward-claim')}
+      actions={
         <div ref={buttonRef} className="shrink-0">
           <ClaimParticles
             burst={burst}
@@ -222,18 +208,11 @@ export function RewardCard({ reward, onClaim, isLoading }: RewardCardProps) {
             hasXp={reward.reward.xp > 0}
             hasGold={reward.reward.gold > 0}
           />
-          <Button
-            size="sm"
-            onClick={handleClaim}
-            disabled={isLoading || burst}
-            className={cn(
-              isMilestone && 'shadow-[0_0_12px_rgba(245,158,11,0.3)]',
-            )}
-          >
+          <Button size="sm" onClick={handleClaim} disabled={isLoading || burst}>
             Réclamer
           </Button>
         </div>
-      </div>
-    </div>
+      }
+    />
   )
 }

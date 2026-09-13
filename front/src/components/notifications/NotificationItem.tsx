@@ -65,7 +65,8 @@ export function NotificationItem({
     </>
   )
 
-  const row = 'flex items-center gap-3 rounded-lg border border-border/60 bg-muted/30 p-3'
+  const row =
+    'flex items-center gap-3 rounded-lg border border-border/60 bg-muted/30 p-3'
 
   if (!onOpen) {
     return (
