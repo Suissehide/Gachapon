@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react'
 import type { BetSide, BetView } from '../../../api/wagers.api.ts'
 import { fmtMultiplier } from '../../../libs/duel.ts'
 import { RARITY_LABEL_FR } from '../../../libs/rarity.ts'
+import { cn } from '../../../libs/utils.ts'
 import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
@@ -94,6 +95,59 @@ export function BetJoinPopup({
             <span className="font-display text-xl font-extrabold tabular-nums text-text">
               ×{fmtMultiplier(odds)}
             </span>
+          </div>
+
+          {/* Ce qui FABRIQUE cette cote : qui est déjà sur chaque camp, et pour
+              combien. C'est le moment où l'information compte le plus — on
+              s'apprête à choisir un camp, et la cote seule ne dit pas si on
+              rejoint la foule ou si on la contredit. */}
+          <div className="grid grid-cols-2 gap-3">
+            {(['YES', 'NO'] as const).map((s) => {
+              const sideEntries = bet.entries.filter((e) => e.side === s)
+              const pool = s === 'YES' ? bet.poolYes : bet.poolNo
+              return (
+                <div
+                  key={s}
+                  className={cn(
+                    'flex flex-col gap-1 rounded-xl border px-3 py-2.5',
+                    s === side
+                      ? 'border-primary/40 bg-primary/8'
+                      : 'border-border bg-card',
+                  )}
+                >
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="font-mono text-[10px] font-bold tracking-[0.1em] text-text-light">
+                      {s === 'YES' ? 'OUI' : 'NON'}
+                    </span>
+                    <span className="inline-flex items-center gap-1 font-mono text-[10px] text-text-light">
+                      <Sparkles className="h-3 w-3 text-dust" />
+                      {fr(pool)}
+                    </span>
+                  </div>
+                  {sideEntries.length === 0 ? (
+                    <span className="font-mono text-[10px] text-text-light/60">
+                      personne
+                    </span>
+                  ) : (
+                    <ul className="flex flex-col gap-0.5">
+                      {sideEntries.map((entry) => (
+                        <li
+                          key={entry.id}
+                          className="flex items-baseline justify-between gap-2 font-mono text-[10px] text-text-light"
+                        >
+                          <span className="truncate">
+                            {entry.user.username}
+                          </span>
+                          <span className="shrink-0 tabular-nums">
+                            {fr(entry.stake)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )
+            })}
           </div>
 
           <div className="flex flex-col gap-1.5">

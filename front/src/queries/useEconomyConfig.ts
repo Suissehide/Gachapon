@@ -67,7 +67,7 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
     // quatre bonus ouverts au niveau 1, dix rangs chacun sauf `raid` dont
     // l'effet est un nombre entier d'attaques.
     perks: {
-      loot: { perRank: 1.5, unlockLevel: 1, maxRank: 10 },
+      loot: { perRank: 1, unlockLevel: 1, maxRank: 10 },
       raid: { perRank: 0.5, unlockLevel: 1, maxRank: 2 },
       xp: { perRank: 0.4, unlockLevel: 1, maxRank: 10 },
       forge: { perRank: 0.5, unlockLevel: 1, maxRank: 10 },

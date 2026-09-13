@@ -12,7 +12,7 @@
 // entamée, plus rien ne se pose sur ce marché.
 import { ChevronRight, Sparkles, Target } from 'lucide-react'
 
-import type { BetSide, BetView } from '../../../api/wagers.api.ts'
+import type { BetEntryView, BetSide, BetView } from '../../../api/wagers.api.ts'
 import { fmtMultiplier } from '../../../libs/duel.ts'
 import { RARITY_LABEL_FR } from '../../../libs/rarity.ts'
 import { cn } from '../../../libs/utils.ts'
@@ -22,12 +22,16 @@ import { LockedPill, WagerCard, WagerCardHead, WagerEmpty } from './parts.tsx'
 const fr = (n: number) => n.toLocaleString('fr-FR')
 
 /** Un camp du marché : son pot, sa cote, et le bouton pour le rejoindre. */
+/** Combien de noms on montre avant de replier le reste en « +N ». */
+const NAMES_SHOWN = 3
+
 function SideBlock({
   label,
   pool,
   odds,
   mine,
   tone,
+  entries,
   onJoin,
 }: {
   label: string
@@ -35,6 +39,8 @@ function SideBlock({
   odds: number
   mine: boolean
   tone: 'yes' | 'no'
+  /** Les mises de CE camp, dans l'ordre d'arrivée. */
+  entries: BetEntryView[]
   onJoin: (() => void) | null
 }) {
   return (
@@ -81,6 +87,31 @@ function SideBlock({
           </Button>
         ) : null}
       </div>
+
+      {/* QUI a misé, et combien. Sans ces noms la cote est un chiffre tombé du
+          ciel : c'est la répartition des mises qui la fabrique, et savoir que
+          trois coéquipiers sont en face — ou un seul, très gros — change la
+          lecture qu'on en fait. Les montants individuels s'additionnent
+          exactement au pot affiché au-dessus. */}
+      {entries.length > 0 && (
+        <ul className="mt-1 flex flex-col gap-0.5 border-t border-foreground/8 pt-1.5">
+          {entries.slice(0, NAMES_SHOWN).map((entry) => (
+            <li
+              key={entry.id}
+              className="flex items-baseline justify-between gap-2 font-mono text-[10px] text-foreground/55"
+            >
+              <span className="truncate">{entry.user.username}</span>
+              <span className="shrink-0 tabular-nums">{fr(entry.stake)}</span>
+            </li>
+          ))}
+          {entries.length > NAMES_SHOWN && (
+            <li className="font-mono text-[9px] tracking-[0.1em] text-foreground/40">
+              +{entries.length - NAMES_SHOWN} autre
+              {entries.length - NAMES_SHOWN > 1 ? 's' : ''}
+            </li>
+          )}
+        </ul>
+      )}
     </div>
   )
 }
@@ -127,6 +158,7 @@ function BetTicket({
           odds={bet.oddsYes}
           mine={bet.mySide === 'YES'}
           tone="yes"
+          entries={bet.entries.filter((e) => e.side === 'YES')}
           onJoin={canJoin ? () => onJoin(bet, 'YES') : null}
         />
         <SideBlock
@@ -135,6 +167,7 @@ function BetTicket({
           odds={bet.oddsNo}
           mine={bet.mySide === 'NO'}
           tone="no"
+          entries={bet.entries.filter((e) => e.side === 'NO')}
           onJoin={canJoin ? () => onJoin(bet, 'NO') : null}
         />
       </div>
