@@ -260,7 +260,7 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'teamPerk.forge.unlockLevel': 1,
   'teamPerk.forge.maxRank': 10,
   'team.maxMembers': 35,
-  'team.recruitDays': 7,
+  'team.recruitDays': 1,
   'teamRaid.historyLimit': 6,
 }
 
