@@ -33,6 +33,7 @@ export function levelUpReward(
     (m) => m.level > oldLevel && m.level <= newLevel,
   )
   const bonusPoints = milestones.reduce((sum, m) => sum + m.bonusPoints, 0)
-  const skillPoints = (newLevel - oldLevel) * xpCfg.skillPointsPerLevel + bonusPoints
+  const skillPoints =
+    (newLevel - oldLevel) * xpCfg.skillPointsPerLevel + bonusPoints
   return { skillPoints, milestones }
 }

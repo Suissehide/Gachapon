@@ -10,7 +10,9 @@ export function SetsProgressionCard({ sets }: Props) {
   return (
     <Card className="p-6">
       <div className="flex items-baseline justify-between mb-5">
-        <CardTitle className="text-sm uppercase tracking-wider">Progression par extension</CardTitle>
+        <CardTitle className="text-sm uppercase tracking-wider">
+          Progression par extension
+        </CardTitle>
         <span className="font-mono text-[11px] text-text-light">
           {sets.length} SETS · {totalOwned} / {totalCards}
         </span>
@@ -33,7 +35,9 @@ export function SetsProgressionCard({ sets }: Props) {
                 {s.short}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="font-display font-bold text-text truncate">{s.name}</div>
+                <div className="font-display font-bold text-text truncate">
+                  {s.name}
+                </div>
                 <div className="font-mono text-[10px] uppercase tracking-wider text-text-light">
                   {s.owned} / {s.total} CARTES
                 </div>
@@ -45,7 +49,10 @@ export function SetsProgressionCard({ sets }: Props) {
                 {Math.round(s.percent)}%
               </div>
             </div>
-            <div className="mt-4 h-[6px] rounded-full overflow-hidden" style={{ background: `hsl(${s.hue}, 50%, 92%)` }}>
+            <div
+              className="mt-4 h-[6px] rounded-full overflow-hidden"
+              style={{ background: `hsl(${s.hue}, 50%, 92%)` }}
+            >
               <div
                 className="h-full"
                 style={{

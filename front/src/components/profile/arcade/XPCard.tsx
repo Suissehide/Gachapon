@@ -1,5 +1,8 @@
 import type { UserProfile } from '../../../api/profile.api'
-import { DEFAULT_ECONOMY, useEconomyConfig } from '../../../queries/useEconomyConfig'
+import {
+  DEFAULT_ECONOMY,
+  useEconomyConfig,
+} from '../../../queries/useEconomyConfig'
 import { xpForLevel } from '../../../utils/level'
 import { Card, CardTitle } from '../../ui/card'
 
@@ -9,13 +12,17 @@ export function XPCard({ profile }: Props) {
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const isMax = profile.level >= economy.xp.levelCap
   const xpInLevel = profile.xp - xpForLevel(profile.level, economy.xp)
-  const xpNeeded = xpForLevel(profile.level + 1, economy.xp) - xpForLevel(profile.level, economy.xp)
+  const xpNeeded =
+    xpForLevel(profile.level + 1, economy.xp) -
+    xpForLevel(profile.level, economy.xp)
   const percent = isMax ? 100 : Math.min((xpInLevel / xpNeeded) * 100, 100)
 
   return (
     <Card className="p-6">
       <div className="flex items-baseline justify-between mb-4">
-        <CardTitle className="text-sm uppercase tracking-wider">Expérience</CardTitle>
+        <CardTitle className="text-sm uppercase tracking-wider">
+          Expérience
+        </CardTitle>
         <span
           className="font-mono text-[11px] font-bold uppercase"
           style={{
@@ -30,7 +37,8 @@ export function XPCard({ profile }: Props) {
           className="h-full rounded-full"
           style={{
             width: `${percent}%`,
-            background: 'linear-gradient(90deg, #22c55e, #3b82f6, #8b5cf6, #ec4899, #f59e0b)',
+            background:
+              'linear-gradient(90deg, #22c55e, #3b82f6, #8b5cf6, #ec4899, #f59e0b)',
             backgroundSize: '200% 100%',
             animation: 'shimmer 4s linear infinite',
             boxShadow: '0 0 20px rgba(245, 158, 11, 0.35)',

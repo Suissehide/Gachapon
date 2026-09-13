@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
-import { useSetFeaturedCardsMutation } from '../../../queries/useProfile'
 import { useUserCollection } from '../../../queries/useCollection'
+import { useSetFeaturedCardsMutation } from '../../../queries/useProfile'
 import { useAuthStore } from '../../../stores/auth.store'
 import { CardDisplay } from '../../shared/tcg-card/CardDisplay'
 import { Button } from '../../ui/button'
@@ -21,7 +21,13 @@ type Props = {
   onSaved?: () => void
 }
 
-const RARITY_ORDER = ['LEGENDARY', 'EPIC', 'RARE', 'UNCOMMON', 'COMMON'] as const
+const RARITY_ORDER = [
+  'LEGENDARY',
+  'EPIC',
+  'RARE',
+  'UNCOMMON',
+  'COMMON',
+] as const
 
 type OwnedDisplay = {
   id: string
@@ -32,7 +38,12 @@ type OwnedDisplay = {
   variant: string
 }
 
-export function FeaturedCardsEditorModal({ open, initialIds, onClose, onSaved }: Props) {
+export function FeaturedCardsEditorModal({
+  open,
+  initialIds,
+  onClose,
+  onSaved,
+}: Props) {
   const userId = useAuthStore((s) => s.user?.id)
   const { data: collection } = useUserCollection(userId)
   const mutation = useSetFeaturedCardsMutation()
@@ -79,7 +90,9 @@ export function FeaturedCardsEditorModal({ open, initialIds, onClose, onSaved }:
     <Popup open={open} onOpenChange={(o) => !o && onClose()}>
       <PopupContent size="xl">
         <PopupHeader>
-          <PopupTitle subtitle={`${selected.length} / 5 sélectionnées · clique pour ajouter / retirer`}>
+          <PopupTitle
+            subtitle={`${selected.length} / 5 sélectionnées · clique pour ajouter / retirer`}
+          >
             Cartes vedettes
           </PopupTitle>
         </PopupHeader>
@@ -96,7 +109,9 @@ export function FeaturedCardsEditorModal({ open, initialIds, onClose, onSaved }:
                   className={`relative text-left rounded-xl focus:outline-none focus:ring-2 focus:ring-primary ${
                     isSelected ? 'ring-2 ring-primary' : ''
                   }`}
-                  style={{ opacity: !isSelected && selected.length >= 5 ? 0.4 : 1 }}
+                  style={{
+                    opacity: !isSelected && selected.length >= 5 ? 0.4 : 1,
+                  }}
                   disabled={!isSelected && selected.length >= 5}
                 >
                   <CardDisplay
@@ -122,7 +137,11 @@ export function FeaturedCardsEditorModal({ open, initialIds, onClose, onSaved }:
           <Button variant="outline" onClick={onClose}>
             Annuler
           </Button>
-          <Button variant="gradient" onClick={save} disabled={mutation.isPending}>
+          <Button
+            variant="gradient"
+            onClick={save}
+            disabled={mutation.isPending}
+          >
             {mutation.isPending ? 'Enregistrement…' : 'Enregistrer'}
           </Button>
         </PopupFooter>

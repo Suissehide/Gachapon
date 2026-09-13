@@ -1,9 +1,9 @@
-import { apiUrl } from '../constants/config.constant.ts'
 import type {
   AchievementWithProgress,
   FamilySummary,
 } from '../constants/achievements.constant.ts'
 import { ACHIEVEMENT_ROUTES } from '../constants/achievements.constant.ts'
+import { apiUrl } from '../constants/config.constant.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 

@@ -13,16 +13,10 @@ type Props = HTMLAttributes<HTMLDivElement> & {
 const baseStyle: React.CSSProperties = {
   background: '#fff',
   borderColor: 'rgba(27,23,38,.06)',
-  boxShadow:
-    '0 2px 0 rgba(27,23,38,.03), 0 16px 36px -20px rgba(27,23,38,.12)',
+  boxShadow: '0 2px 0 rgba(27,23,38,.03), 0 16px 36px -20px rgba(27,23,38,.12)',
 }
 
-export function ArcadeCard({
-  className,
-  style,
-  children,
-  ...rest
-}: Props) {
+export function ArcadeCard({ className, style, children, ...rest }: Props) {
   return (
     <div
       {...rest}

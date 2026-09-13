@@ -62,12 +62,16 @@ export const WishlistApi = {
         const body = await res.json().catch(() => ({}))
         throw new CooldownError(body?.availableAt)
       }
-      handleHttpError(res, {
-        402: {
-          title: 'Poussière insuffisante',
-          message: "Tu n'as pas assez de poussière pour acheter ce vœu.",
+      handleHttpError(
+        res,
+        {
+          402: {
+            title: 'Poussière insuffisante',
+            message: "Tu n'as pas assez de poussière pour acheter ce vœu.",
+          },
         },
-      }, "Erreur lors de l'achat du vœu")
+        "Erreur lors de l'achat du vœu",
+      )
     }
     return res.json()
   },

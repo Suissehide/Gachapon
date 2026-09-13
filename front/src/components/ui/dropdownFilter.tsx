@@ -35,7 +35,8 @@ const DropdownFilter = ({
           size="sm"
           className={cn(
             'gap-1.5 font-normal',
-            activeCount > 0 && (activeFilter?.colorClass ?? 'border-primary/40 text-primary'),
+            activeCount > 0 &&
+              (activeFilter?.colorClass ?? 'border-primary/40 text-primary'),
           )}
         >
           {activeFilter?.icon && (

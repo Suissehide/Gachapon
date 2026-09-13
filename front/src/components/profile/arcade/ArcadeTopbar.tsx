@@ -21,7 +21,10 @@ export function ArcadeTopbar({ isOwnProfile, isAdmin, currentLevel }: Props) {
         aria-label="Fil d'Ariane"
         className="flex flex-wrap items-center gap-x-1.5 gap-y-1"
       >
-        <Link to="/play" className={`${baseChip} text-text-light/70 hover:text-text`}>
+        <Link
+          to="/play"
+          className={`${baseChip} text-text-light/70 hover:text-text`}
+        >
           Gachapon
         </Link>
         <span className={`${baseChip} text-text-light/40`} aria-hidden>

@@ -120,17 +120,12 @@ const PopupTitle = React.forwardRef<
     <div className="flex flex-col">
       <Dialog.Title
         ref={ref}
-        className={cn(
-          'text-base font-semibold text-text m-0',
-          className,
-        )}
+        className={cn('text-base font-semibold text-text m-0', className)}
         {...props}
       >
         {children}
       </Dialog.Title>
-      {subtitle && (
-        <p className="text-sm text-text-light m-0">{subtitle}</p>
-      )}
+      {subtitle && <p className="text-sm text-text-light m-0">{subtitle}</p>}
     </div>
   </div>
 ))

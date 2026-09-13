@@ -1,7 +1,9 @@
 // front/src/components/profile/arcade/utils.ts
 
 /** Returns the labels and ISO day-of-week for the current week, Monday-first. */
-export function weekDays(today = new Date()): Array<{ label: string; isToday: boolean; dow: number }> {
+export function weekDays(
+  today = new Date(),
+): Array<{ label: string; isToday: boolean; dow: number }> {
   const labels = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
   const todayDow = (today.getUTCDay() + 6) % 7 // Monday = 0
   return labels.map((label, i) => ({ label, dow: i, isToday: i === todayDow }))

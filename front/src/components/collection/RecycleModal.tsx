@@ -2,8 +2,11 @@ import { Minus, Plus, RefreshCw, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 
 import type { Card, CardVariant } from '../../api/collection.api.ts'
-import { DEFAULT_ECONOMY, useEconomyConfig } from '../../queries/useEconomyConfig.ts'
 import { useRecycle } from '../../queries/useCollection.ts'
+import {
+  DEFAULT_ECONOMY,
+  useEconomyConfig,
+} from '../../queries/useEconomyConfig.ts'
 import { Button } from '../ui/button.tsx'
 import { Input } from '../ui/input.tsx'
 import { Label } from '../ui/label.tsx'
@@ -25,7 +28,13 @@ interface RecycleModalProps {
   variant: CardVariant
 }
 
-export function RecycleModal({ open, onOpenChange, onRecycled, card, variant }: RecycleModalProps) {
+export function RecycleModal({
+  open,
+  onOpenChange,
+  onRecycled,
+  card,
+  variant,
+}: RecycleModalProps) {
   const [quantity, setQuantity] = useState(1)
   const { mutate: recycle, isPending } = useRecycle()
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
@@ -33,7 +42,8 @@ export function RecycleModal({ open, onOpenChange, onRecycled, card, variant }: 
   const maxRecyclable = card.quantity - 1
   const dustPerCard = economy.recycle[card.rarity] ?? 0
   const dustTotal = quantity * dustPerCard
-  const rarityText = RARITY_COLORS[card.rarity]?.split(' ')[1] ?? 'text-text-light'
+  const rarityText =
+    RARITY_COLORS[card.rarity]?.split(' ')[1] ?? 'text-text-light'
 
   const clamp = (v: number) => Math.max(1, Math.min(maxRecyclable, v))
 
@@ -47,7 +57,12 @@ export function RecycleModal({ open, onOpenChange, onRecycled, card, variant }: 
   const handleRecycle = () => {
     recycle(
       { cardId: card.id, quantity, variant },
-      { onSuccess: () => { onOpenChange(false); onRecycled?.() } },
+      {
+        onSuccess: () => {
+          onOpenChange(false)
+          onRecycled?.()
+        },
+      },
     )
   }
 
@@ -79,19 +94,25 @@ export function RecycleModal({ open, onOpenChange, onRecycled, card, variant }: 
               </p>
               {variant !== 'NORMAL' && (
                 <p className="mt-0.5 text-xs font-semibold">
-                  {variant === 'HOLOGRAPHIC' ? '🌈 Holographique' : '✨ Brillante'}
+                  {variant === 'HOLOGRAPHIC'
+                    ? '🌈 Holographique'
+                    : '✨ Brillante'}
                 </p>
               )}
               <p className="mt-1 flex items-center gap-1 text-xs text-text-light">
-                {dustPerCard} <Sparkles className="h-3 w-3 text-primary" /> par copie ·{' '}
-                <span className="font-semibold text-text">{maxRecyclable}</span> exemplaire{maxRecyclable > 1 ? 's' : ''}
+                {dustPerCard} <Sparkles className="h-3 w-3 text-primary" /> par
+                copie ·{' '}
+                <span className="font-semibold text-text">{maxRecyclable}</span>{' '}
+                exemplaire{maxRecyclable > 1 ? 's' : ''}
               </p>
             </div>
           </div>
 
           {/* Quantity stepper */}
           <div className="space-y-2">
-            <Label className="text-xs text-text-light">Quantité à recycler</Label>
+            <Label className="text-xs text-text-light">
+              Quantité à recycler
+            </Label>
             <div className="flex items-center gap-2">
               <Button
                 type="button"
@@ -155,11 +176,7 @@ export function RecycleModal({ open, onOpenChange, onRecycled, card, variant }: 
           >
             Annuler
           </Button>
-          <Button
-            type="button"
-            onClick={handleRecycle}
-            disabled={isPending}
-          >
+          <Button type="button" onClick={handleRecycle} disabled={isPending}>
             <RefreshCw className="h-3.5 w-3.5" />
             {isPending
               ? 'Recyclage…'

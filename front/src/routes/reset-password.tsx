@@ -43,9 +43,15 @@ function ResetPasswordPage() {
         <LandingNavbar />
         <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
           <div className="text-center">
-            <h1 className="mb-3 text-2xl font-black text-text">Mot de passe mis à jour</h1>
-            <p className="mb-6 text-sm text-text-light">Tu peux maintenant te connecter avec ton nouveau mot de passe.</p>
-            <Button onClick={() => void navigate({ to: '/' })}>Retour à l'accueil</Button>
+            <h1 className="mb-3 text-2xl font-black text-text">
+              Mot de passe mis à jour
+            </h1>
+            <p className="mb-6 text-sm text-text-light">
+              Tu peux maintenant te connecter avec ton nouveau mot de passe.
+            </p>
+            <Button onClick={() => void navigate({ to: '/' })}>
+              Retour à l'accueil
+            </Button>
           </div>
         </div>
       </div>
@@ -57,8 +63,12 @@ function ResetPasswordPage() {
       <LandingNavbar />
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
         <div className="w-full max-w-sm">
-          <h1 className="mb-2 text-2xl font-black text-text">Nouveau mot de passe</h1>
-          <p className="mb-6 text-sm text-text-light">Choisis un nouveau mot de passe pour ton compte.</p>
+          <h1 className="mb-2 text-2xl font-black text-text">
+            Nouveau mot de passe
+          </h1>
+          <p className="mb-6 text-sm text-text-light">
+            Choisis un nouveau mot de passe pour ton compte.
+          </p>
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
             <input
               type="password"
@@ -78,7 +88,9 @@ function ResetPasswordPage() {
               className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary focus:outline-none"
             />
             {(validationError || error) && (
-              <p className="text-xs text-destructive">{validationError || error?.message}</p>
+              <p className="text-xs text-destructive">
+                {validationError || error?.message}
+              </p>
             )}
             <Button type="submit" className="w-full" disabled={isPending}>
               {isPending ? 'Mise à jour…' : 'Mettre à jour'}

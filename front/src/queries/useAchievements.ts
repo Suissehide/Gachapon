@@ -3,7 +3,10 @@ import { useQuery } from '@tanstack/react-query'
 import { AchievementsApi } from '../api/achievements.api.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 
-export type { AchievementWithProgress, FamilySummary } from '../api/achievements.api.ts'
+export type {
+  AchievementWithProgress,
+  FamilySummary,
+} from '../api/achievements.api.ts'
 
 export const useAchievements = () => {
   const query = useQuery({

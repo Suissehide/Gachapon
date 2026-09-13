@@ -1,10 +1,16 @@
 import type { SkillConfig } from '../../../api/skills.api.ts'
-import { Button } from '../../ui/button.tsx'
-import { SheetHeader, SheetTitle } from '../../ui/sheet.tsx'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
 import { useAdminUpdateConfig } from '../../../queries/useSkills.ts'
+import { Button } from '../../ui/button.tsx'
+import { SheetHeader, SheetTitle } from '../../ui/sheet.tsx'
 
-export function ConfigSheet({ config, onClose }: { config: SkillConfig; onClose: () => void }) {
+export function ConfigSheet({
+  config,
+  onClose,
+}: {
+  config: SkillConfig
+  onClose: () => void
+}) {
   const updateConfig = useAdminUpdateConfig()
 
   const form = useAppForm({
@@ -24,7 +30,10 @@ export function ConfigSheet({ config, onClose }: { config: SkillConfig; onClose:
       </SheetHeader>
 
       <form
-        onSubmit={(e) => { e.preventDefault(); form.handleSubmit() }}
+        onSubmit={(e) => {
+          e.preventDefault()
+          form.handleSubmit()
+        }}
         className="flex flex-1 flex-col overflow-hidden"
       >
         <div className="flex-1 space-y-4 overflow-y-auto p-4">

@@ -1,10 +1,12 @@
 import type { SkillBranch, SkillNode } from '../../../api/skills.api.ts'
-import { Button } from '../../ui/button.tsx'
-import { SheetHeader, SheetTitle } from '../../ui/sheet.tsx'
+import {
+  EFFECT_DESCRIPTIONS,
+  EFFECT_OPTIONS,
+} from '../../../constants/skills.constant.ts'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
 import { useAdminCreateNode } from '../../../queries/useSkills.ts'
-
-import { EFFECT_DESCRIPTIONS, EFFECT_OPTIONS } from '../../../constants/skills.constant.ts'
+import { Button } from '../../ui/button.tsx'
+import { SheetHeader, SheetTitle } from '../../ui/sheet.tsx'
 
 export function CreateNodeSheet({
   branches,
@@ -53,7 +55,10 @@ export function CreateNodeSheet({
       </SheetHeader>
 
       <form
-        onSubmit={(e) => { e.preventDefault(); form.handleSubmit() }}
+        onSubmit={(e) => {
+          e.preventDefault()
+          form.handleSubmit()
+        }}
         className="flex flex-1 flex-col overflow-hidden"
       >
         <div className="flex-1 space-y-3 overflow-y-auto p-4">
@@ -83,7 +88,8 @@ export function CreateNodeSheet({
             {(f) => <f.Number label="Niveaux max" />}
           </form.AppField>
           <p className="text-xs text-text-light">
-            Le nœud sera créé en (0, 0). Glisse-le ensuite sur le canvas pour le positionner.
+            Le nœud sera créé en (0, 0). Glisse-le ensuite sur le canvas pour le
+            positionner.
           </p>
         </div>
 

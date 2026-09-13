@@ -16,7 +16,10 @@ export function StatCard({ icon: Icon, label, value, rarity, hint }: Props) {
   const color = RARITY_COLORS[rarity]
   return (
     <Card className="group relative overflow-hidden p-[22px] pl-[18px] flex items-center gap-4">
-      <span className="absolute top-0 left-0 right-0 h-1" style={{ background: color }} />
+      <span
+        className="absolute top-0 left-0 right-0 h-1"
+        style={{ background: color }}
+      />
       <span
         className="absolute -right-12 -top-12 w-44 h-44 rounded-full -z-0 transition-all duration-300 group-hover:scale-110 group-hover:opacity-30"
         style={{ background: color, opacity: 0.12 }}

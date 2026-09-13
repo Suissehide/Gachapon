@@ -18,7 +18,10 @@ type BranchInfo = { id: string; name: string; color: string }
 
 export type CenterNodeData = {
   branchByHandle: Record<string, BranchInfo | undefined>
-  onUpdateBranch?: (branchId: string, data: { name?: string; color?: string }) => void
+  onUpdateBranch?: (
+    branchId: string,
+    data: { name?: string; color?: string },
+  ) => void
   onCreateBranch?: (handleKey: string) => void
   onDeleteBranch?: (branchId: string) => void
   isAdmin?: boolean
@@ -28,22 +31,42 @@ const HANDLES = [
   {
     key: 'top',
     position: Position.Top,
-    label: { bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: 6 } as const,
+    label: {
+      bottom: '100%',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      marginBottom: 6,
+    } as const,
   },
   {
     key: 'right',
     position: Position.Right,
-    label: { left: '100%', top: '50%', transform: 'translateY(-50%)', marginLeft: 6 } as const,
+    label: {
+      left: '100%',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      marginLeft: 6,
+    } as const,
   },
   {
     key: 'bottom',
     position: Position.Bottom,
-    label: { top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: 6 } as const,
+    label: {
+      top: '100%',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      marginTop: 6,
+    } as const,
   },
   {
     key: 'left',
     position: Position.Left,
-    label: { right: '100%', top: '50%', transform: 'translateY(-50%)', marginRight: 6 } as const,
+    label: {
+      right: '100%',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      marginRight: 6,
+    } as const,
   },
 ] as const
 
@@ -66,8 +89,10 @@ function DeleteBranchPopup({
         </PopupHeader>
         <PopupBody>
           <p className="text-sm text-text-light">
-            Supprimer la branche <strong style={{ color: branch.color }}>{branch.name}</strong> et
-            tous ses noeuds ? Les points investis par les joueurs seront remboursés.
+            Supprimer la branche{' '}
+            <strong style={{ color: branch.color }}>{branch.name}</strong> et
+            tous ses noeuds ? Les points investis par les joueurs seront
+            remboursés.
           </p>
         </PopupBody>
         <PopupFooter>
@@ -119,7 +144,12 @@ function EditBranchPopup({
         </PopupHeader>
         <PopupBody className="space-y-4">
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-text-light" htmlFor="branch-name">Nom</label>
+            <label
+              className="text-xs font-medium text-text-light"
+              htmlFor="branch-name"
+            >
+              Nom
+            </label>
             <input
               id="branch-name"
               value={name}
@@ -128,7 +158,12 @@ function EditBranchPopup({
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-text-light" htmlFor="branch-color">Couleur</label>
+            <label
+              className="text-xs font-medium text-text-light"
+              htmlFor="branch-color"
+            >
+              Couleur
+            </label>
             <div className="flex items-center gap-2">
               <div className="flex gap-1.5">
                 {BRANCH_PALETTE.map((c) => (
@@ -280,8 +315,13 @@ function AddBranchButton({ onClick }: { onClick: () => void }) {
 }
 
 export function CenterNode({ data }: NodeProps) {
-  const { branchByHandle, onUpdateBranch, onCreateBranch, onDeleteBranch, isAdmin } =
-    (data ?? {}) as CenterNodeData
+  const {
+    branchByHandle,
+    onUpdateBranch,
+    onCreateBranch,
+    onDeleteBranch,
+    isAdmin,
+  } = (data ?? {}) as CenterNodeData
 
   return (
     <div
@@ -306,7 +346,13 @@ export function CenterNode({ data }: NodeProps) {
               position={position}
               style={
                 isAdmin
-                  ? { width: 14, height: 14, background: 'transparent', border: 'none', zIndex: 0 }
+                  ? {
+                      width: 14,
+                      height: 14,
+                      background: 'transparent',
+                      border: 'none',
+                      zIndex: 0,
+                    }
                   : { width: 0, height: 0, opacity: 0, pointerEvents: 'none' }
               }
             />
@@ -316,11 +362,19 @@ export function CenterNode({ data }: NodeProps) {
               position={position}
               style={
                 isAdmin
-                  ? { width: 14, height: 14, background: '#fff', border: `2px solid ${color}`, zIndex: 1 }
+                  ? {
+                      width: 14,
+                      height: 14,
+                      background: '#fff',
+                      border: `2px solid ${color}`,
+                      zIndex: 1,
+                    }
                   : { width: 0, height: 0, opacity: 0, pointerEvents: 'none' }
               }
             />
-            <div style={{ position: 'absolute', ...label, pointerEvents: 'all' }}>
+            <div
+              style={{ position: 'absolute', ...label, pointerEvents: 'all' }}
+            >
               {branch ? (
                 <BranchLabel
                   branch={branch}
@@ -329,7 +383,9 @@ export function CenterNode({ data }: NodeProps) {
                 />
               ) : (
                 isAdmin &&
-                onCreateBranch && <AddBranchButton onClick={() => onCreateBranch(key)} />
+                onCreateBranch && (
+                  <AddBranchButton onClick={() => onCreateBranch(key)} />
+                )
               )}
             </div>
           </span>
@@ -339,8 +395,18 @@ export function CenterNode({ data }: NodeProps) {
   )
 }
 
-const ORDER_TO_HANDLE: Record<number, string> = { 1: 'top', 2: 'right', 3: 'bottom', 4: 'left' }
-const HANDLE_TO_ORDER: Record<string, number> = { top: 1, right: 2, bottom: 3, left: 4 }
+const ORDER_TO_HANDLE: Record<number, string> = {
+  1: 'top',
+  2: 'right',
+  3: 'bottom',
+  4: 'left',
+}
+const HANDLE_TO_ORDER: Record<string, number> = {
+  top: 1,
+  right: 2,
+  bottom: 3,
+  left: 4,
+}
 
 export function handleKeyForBranchOrder(order: number): string | undefined {
   return ORDER_TO_HANDLE[order]

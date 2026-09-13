@@ -28,19 +28,22 @@ function ForgotPasswordPage() {
         <div className="w-full max-w-sm">
           {sent ? (
             <div className="text-center">
-              <h1 className="mb-3 text-2xl font-black text-text">Email envoyé</h1>
+              <h1 className="mb-3 text-2xl font-black text-text">
+                Email envoyé
+              </h1>
               <p className="text-sm text-text-light">
-                Si cette adresse est associée à un compte, tu recevras un email avec un lien de réinitialisation.
+                Si cette adresse est associée à un compte, tu recevras un email
+                avec un lien de réinitialisation.
               </p>
               <div className="mt-6 flex gap-3 justify-center">
-                <Button
-                  variant="outline"
-                  onClick={() => navigate({ to: '/' })}
-                >
+                <Button variant="outline" onClick={() => navigate({ to: '/' })}>
                   Retour
                 </Button>
                 <Button
-                  onClick={() => { navigate({ to: '/' }); openLogin() }}
+                  onClick={() => {
+                    navigate({ to: '/' })
+                    openLogin()
+                  }}
                 >
                   Se connecter
                 </Button>
@@ -48,9 +51,12 @@ function ForgotPasswordPage() {
             </div>
           ) : (
             <>
-              <h1 className="mb-2 text-2xl font-black text-text">Mot de passe oublié</h1>
+              <h1 className="mb-2 text-2xl font-black text-text">
+                Mot de passe oublié
+              </h1>
               <p className="mb-6 text-sm text-text-light">
-                Saisis ton adresse email pour recevoir un lien de réinitialisation.
+                Saisis ton adresse email pour recevoir un lien de
+                réinitialisation.
               </p>
               <form onSubmit={handleSubmit} className="flex flex-col gap-3">
                 <input
@@ -61,7 +67,9 @@ function ForgotPasswordPage() {
                   required
                   className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-sm text-text placeholder:text-text-light focus:border-primary focus:outline-none"
                 />
-                {error && <p className="text-xs text-destructive">{error.message}</p>}
+                {error && (
+                  <p className="text-xs text-destructive">{error.message}</p>
+                )}
                 <Button type="submit" className="w-full" disabled={isPending}>
                   {isPending ? 'Envoi…' : 'Envoyer le lien'}
                 </Button>

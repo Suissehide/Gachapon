@@ -1,7 +1,10 @@
 // Round medal disk for top 3 (gold/silver/bronze), simple mono chip otherwise.
 type Props = { rank: number; size?: number }
 
-const PALETTE: Record<1 | 2 | 3, { a: string; b: string; c: string; txt: string }> = {
+const PALETTE: Record<
+  1 | 2 | 3,
+  { a: string; b: string; c: string; txt: string }
+> = {
   1: { a: '#fde68a', b: '#f59e0b', c: '#b45309', txt: '#5a2e02' },
   2: { a: '#f1f5f9', b: '#cbd5e1', c: '#94a3b8', txt: '#334155' },
   3: { a: '#fed7aa', b: '#fb923c', c: '#c2410c', txt: '#7c2d12' },
@@ -35,7 +38,8 @@ export function MedalRank({ rank, size = 40 }: Props) {
           aria-hidden
           className="absolute inset-0 rounded-full"
           style={{
-            background: 'linear-gradient(135deg, rgba(255,255,255,.5) 0%, transparent 45%)',
+            background:
+              'linear-gradient(135deg, rgba(255,255,255,.5) 0%, transparent 45%)',
           }}
         />
       </div>

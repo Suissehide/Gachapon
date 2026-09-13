@@ -14,7 +14,11 @@ type Props = {
   isDone: boolean
 }
 
-const SPEED_OPTIONS: { value: '1' | '2' | '4'; label: string; icon: React.ReactNode }[] = [
+const SPEED_OPTIONS: {
+  value: '1' | '2' | '4'
+  label: string
+  icon: React.ReactNode
+}[] = [
   { value: '1', label: '×1', icon: null },
   { value: '2', label: '×2', icon: <FastForward className="h-3 w-3" /> },
   { value: '4', label: '×4', icon: <FastForward className="h-3 w-3" /> },
@@ -68,12 +72,7 @@ export function BattleControls({
         <SkipForward className="h-4 w-4" /> Passer
       </Button>
 
-      <Button
-        type="button"
-        variant="outline"
-        onClick={onReplay}
-        size="default"
-      >
+      <Button type="button" variant="outline" onClick={onReplay} size="default">
         <RotateCcw className="h-4 w-4" /> Rejouer
       </Button>
     </div>

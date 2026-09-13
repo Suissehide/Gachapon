@@ -41,7 +41,10 @@ export const useBuyDailyShopItem = () => {
       })
     },
     onError: (error) => {
-      const title = isApiError(error) && error.title ? error.title : "Erreur lors de l'achat"
+      const title =
+        isApiError(error) && error.title
+          ? error.title
+          : "Erreur lors de l'achat"
       toast({
         title,
         message: error.message,

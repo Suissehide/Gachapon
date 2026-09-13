@@ -9,12 +9,7 @@ import { LEADERBOARD_ROUTES } from '../constants/leaderboard.constant.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
-export type {
-  CollectorEntry,
-  CombatEntry,
-  LeaderboardResponse,
-  TeamEntry,
-}
+export type { CollectorEntry, CombatEntry, LeaderboardResponse, TeamEntry }
 
 async function getJson<T>(path: string, errorMsg: string): Promise<T> {
   const res = await fetchWithAuth(`${apiUrl}${path}`)

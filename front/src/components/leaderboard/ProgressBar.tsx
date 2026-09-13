@@ -7,10 +7,10 @@ const FILL: Record<Variant, string> = {
 }
 
 type Props = {
-  value: number               // 0..100
+  value: number // 0..100
   variant: Variant
-  label?: string              // shown above-left in font-mono
-  displayValue?: string       // overrides the default "N%" right-side display
+  label?: string // shown above-left in font-mono
+  displayValue?: string // overrides the default "N%" right-side display
 }
 
 export function ProgressBar({ value, variant, label, displayValue }: Props) {

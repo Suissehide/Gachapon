@@ -1,4 +1,7 @@
-import { DEFAULT_ECONOMY, useEconomyConfig } from '../../queries/useEconomyConfig'
+import {
+  DEFAULT_ECONOMY,
+  useEconomyConfig,
+} from '../../queries/useEconomyConfig'
 
 type Props = { level: number }
 

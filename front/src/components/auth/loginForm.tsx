@@ -7,7 +7,13 @@ import { useAuthStore } from '../../stores/auth.store.ts'
 import { Button } from '../ui/button.tsx'
 import { OAuthButtons, OAuthDivider } from './oauthSection.tsx'
 
-export function LoginForm({ onSuccess, onClose }: { onSuccess: () => void; onClose?: () => void }) {
+export function LoginForm({
+  onSuccess,
+  onClose,
+}: {
+  onSuccess: () => void
+  onClose?: () => void
+}) {
   const navigate = useNavigate()
   const { loginMutation, isPending, error } = useLogin()
   const fetchMe = useAuthStore((state) => state.fetchMe)
@@ -74,7 +80,9 @@ export function LoginForm({ onSuccess, onClose }: { onSuccess: () => void; onClo
       </div>
 
       {error && (
-        <p className="text-sm text-red-500 text-center -mb-1">{error.message}</p>
+        <p className="text-sm text-red-500 text-center -mb-1">
+          {error.message}
+        </p>
       )}
 
       <Button type="submit" className="w-full mt-1" disabled={isPending}>

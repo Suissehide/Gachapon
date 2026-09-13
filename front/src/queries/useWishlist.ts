@@ -6,7 +6,10 @@ import { useToast } from '../hooks/useToast.ts'
 import { isApiError } from '../libs/httpErrorHandler.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 
-export type { WishlistResponse, WishlistPurchaseResult } from '../api/wishlist.api.ts'
+export type {
+  WishlistPurchaseResult,
+  WishlistResponse,
+} from '../api/wishlist.api.ts'
 
 export const useWishlist = () => {
   return useQuery({
@@ -25,7 +28,10 @@ export const useSetWishlist = () => {
       qc.invalidateQueries({ queryKey: ['wishlist'] })
     },
     onError: (error) => {
-      const title = isApiError(error) && error.title ? error.title : 'Erreur lors de la définition du vœu'
+      const title =
+        isApiError(error) && error.title
+          ? error.title
+          : 'Erreur lors de la définition du vœu'
       toast({
         title,
         message: error.message,
@@ -55,7 +61,10 @@ export const usePurchaseWishlist = () => {
       })
     },
     onError: (error) => {
-      const title = isApiError(error) && error.title ? error.title : "Erreur lors de l'achat du vœu"
+      const title =
+        isApiError(error) && error.title
+          ? error.title
+          : "Erreur lors de l'achat du vœu"
       toast({
         title,
         message: error.message,

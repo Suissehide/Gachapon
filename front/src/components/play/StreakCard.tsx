@@ -40,7 +40,9 @@ export function StreakCard() {
                 key={day}
                 className={cn(
                   'h-1.5 flex-1 rounded-full',
-                  i < cycleDay ? 'bg-linear-to-r from-primary to-primary-light' : 'bg-border',
+                  i < cycleDay
+                    ? 'bg-linear-to-r from-primary to-primary-light'
+                    : 'bg-border',
                 )}
               />
             )
@@ -48,7 +50,10 @@ export function StreakCard() {
         </div>
       </button>
 
-      <StreakSummaryModal open={modalOpen} onClose={() => setModalOpen(false)} />
+      <StreakSummaryModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+      />
     </>
   )
 }

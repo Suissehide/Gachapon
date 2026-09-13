@@ -1,6 +1,9 @@
 import { Star } from 'lucide-react'
 
-import { DEFAULT_ECONOMY, useEconomyConfig } from '../../queries/useEconomyConfig.ts'
+import {
+  DEFAULT_ECONOMY,
+  useEconomyConfig,
+} from '../../queries/useEconomyConfig.ts'
 import { useUserProfile } from '../../queries/useProfile.ts'
 import { useAuthStore } from '../../stores/auth.store.ts'
 import { computeLevel, xpForLevel } from '../../utils/level.ts'

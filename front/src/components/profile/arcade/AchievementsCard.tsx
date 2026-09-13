@@ -7,7 +7,9 @@ import { Card, CardTitle } from '../../ui/card'
 
 const VISIBLE_COUNT = 4
 
-function pickHighlights(achievements: AchievementWithProgress[]): AchievementWithProgress[] {
+function pickHighlights(
+  achievements: AchievementWithProgress[],
+): AchievementWithProgress[] {
   const unlocked = achievements
     .filter((a) => a.unlocked)
     .sort((a, b) => (b.unlockedAt ?? '').localeCompare(a.unlockedAt ?? ''))
@@ -23,10 +25,16 @@ function pickHighlights(achievements: AchievementWithProgress[]): AchievementWit
   return [...unlocked, ...inProgress, ...locked].slice(0, VISIBLE_COUNT)
 }
 
-function HighlightRow({ achievement }: { achievement: AchievementWithProgress }) {
+function HighlightRow({
+  achievement,
+}: {
+  achievement: AchievementWithProgress
+}) {
   const pct = Math.min(
     100,
-    Math.round((achievement.progress / Math.max(1, achievement.threshold)) * 100),
+    Math.round(
+      (achievement.progress / Math.max(1, achievement.threshold)) * 100,
+    ),
   )
   const inProgress = !achievement.unlocked && achievement.progress > 0
 
@@ -107,10 +115,13 @@ export function AchievementsCard() {
         to="/achievements"
         className="group -m-2 mb-3 flex items-baseline justify-between rounded-xl p-2 transition-colors hover:bg-muted/30"
       >
-        <CardTitle className="text-sm uppercase tracking-wider">Succès</CardTitle>
+        <CardTitle className="text-sm uppercase tracking-wider">
+          Succès
+        </CardTitle>
         <div className="flex items-center gap-2">
           <span className="font-mono text-[11px] text-text-light">
-            {unlocked} / {total} <span className="hidden sm:inline">DÉBLOQUÉS</span>
+            {unlocked} / {total}{' '}
+            <span className="hidden sm:inline">DÉBLOQUÉS</span>
           </span>
           <ChevronRight
             size={16}
