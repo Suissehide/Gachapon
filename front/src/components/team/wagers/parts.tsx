@@ -17,6 +17,7 @@ import type { ReactNode } from 'react'
 
 import { cn } from '../../../libs/utils.ts'
 import { buttonVariants } from '../../ui/button.tsx'
+import { EmptyState } from '../../ui/emptyState.tsx'
 import { PanelTitle, SectionLabel } from '../../ui/sectionHeading.tsx'
 
 export function WagerCard({
@@ -105,7 +106,11 @@ export function LockedPill({
   )
 }
 
-/** État vide : un carré d'icône et une phrase, dans un encadré pointillé. */
+/**
+ * État vide d'une carte sœur. Enveloppe `EmptyState` pour lui ajouter le
+ * `flex-1` dont ces cartes ont besoin : les deux sœurs partagent leur hauteur,
+ * et l'encadré doit remplir celle que son contenu ne prend pas.
+ */
 export function WagerEmpty({
   icon: Icon,
   children,
@@ -114,13 +119,8 @@ export function WagerEmpty({
   children: ReactNode
 }) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-[18px] border-[1.5px] border-dashed border-foreground/14 px-[18px] py-6 text-center">
-      <span className="flex h-[38px] w-[38px] items-center justify-center rounded-[13px] bg-surface-2 text-foreground/35">
-        <Icon className="h-4 w-4" />
-      </span>
-      <p className="max-w-[30ch] text-[12.5px] leading-[1.45] text-foreground/50 [text-wrap:pretty]">
-        {children}
-      </p>
-    </div>
+    <EmptyState icon={Icon} className="flex-1">
+      {children}
+    </EmptyState>
   )
 }

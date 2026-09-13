@@ -7,6 +7,7 @@ import { CreateTeamPopup } from '../../../components/team/CreateTeamPopup.tsx'
 import { MyJoinRequestsList } from '../../../components/team/recruitment/MyJoinRequestsList.tsx'
 import { TeamCard } from '../../../components/team/TeamCard.tsx'
 import { Button } from '../../../components/ui/button.tsx'
+import { EmptyState } from '../../../components/ui/emptyState.tsx'
 import { PopupTrigger } from '../../../components/ui/popup.tsx'
 import { TEAM_SLOTS } from '../../../constants/teams.constant.ts'
 import { useMyTeams } from '../../../queries/useTeams.ts'
@@ -63,9 +64,40 @@ function TeamsPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {teams.map((team) => (
-            <TeamCard key={team.id} team={team} />
-          ))}
+          {teams.length === 0 ? (
+            <EmptyState
+              icon={Users}
+              title="Tu n’es dans aucune équipe"
+              action={
+                // Les deux mêmes chemins que l'en-tête, redits là où le regard
+                // tombe quand la page est vide, et par les mêmes déclencheurs :
+                // un troisième point d'entrée vers la création finirait par
+                // diverger des deux autres.
+                <div className="mt-1 flex flex-wrap justify-center gap-2">
+                  <Button asChild variant="outline" size="sm">
+                    <Link to="/team/join">
+                      <Compass className="h-4 w-4" />
+                      Parcourir les équipes
+                    </Link>
+                  </Button>
+                  <CreateTeamPopup
+                    trigger={
+                      <PopupTrigger variant="default" size="sm">
+                        <Users className="h-4 w-4" />
+                        Créer une équipe
+                      </PopupTrigger>
+                    }
+                  />
+                </div>
+              }
+            >
+              Une équipe partage un raid hebdomadaire, des duels de tirage et
+              des bonus qui profitent à tous ses membres. Rejoins-en une, ou
+              monte la tienne.
+            </EmptyState>
+          ) : (
+            teams.map((team) => <TeamCard key={team.id} team={team} />)
+          )}
         </div>
       )}
 

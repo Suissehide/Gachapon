@@ -21,6 +21,7 @@ import {
 } from '../../utils/cardStats.ts'
 import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
 import { Button, buttonVariants } from '../ui/button.tsx'
+import { EmptyState } from '../ui/emptyState.tsx'
 import {
   Popup,
   PopupBody,
@@ -206,14 +207,9 @@ export function TeamEditorPopup({ open, onOpenChange }: Props) {
               {roster.length > 1 ? 'cartes' : 'carte'}
             </p>
             {roster.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-border bg-white px-6 py-8 text-center">
-                <p className="font-display text-sm font-bold text-text">
-                  Ta collection est vide.
-                </p>
-                <p className="mt-1 text-xs text-text-light">
-                  Fais quelques tirages pour obtenir tes premières cartes.
-                </p>
-              </div>
+              <EmptyState icon={Sparkles} title="Ta collection est vide">
+                Fais quelques tirages pour obtenir tes premières cartes.
+              </EmptyState>
             ) : (
               // p-2 gives room for the active tile's ring-offset (3px ring +
               // 2px offset) so it isn't clipped by the overflow-hidden that
