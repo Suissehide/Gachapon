@@ -84,7 +84,8 @@ function LeaderboardPage() {
           ? {
               rank:
                 collectorsQ.data.currentUserEntry?.rank ??
-                collectorsQ.data.entries.find((e) => e.user.id === me?.id)?.rank ??
+                collectorsQ.data.entries.find((e) => e.user.id === me?.id)
+                  ?.rank ??
                 null,
               sub: (() => {
                 const e =
@@ -202,9 +203,11 @@ function LeaderboardPage() {
           setActiveTab(next)
           ev.preventDefault()
           // Move focus to the newly active tab button for screen-reader users.
-          const target = (ev.currentTarget as HTMLElement).querySelectorAll<HTMLButtonElement>(
-            '[role="tab"]',
-          )[order.indexOf(next)]
+          const target = (
+            ev.currentTarget as HTMLElement
+          ).querySelectorAll<HTMLButtonElement>('[role="tab"]')[
+            order.indexOf(next)
+          ]
           target?.focus()
         }}
       >
@@ -217,7 +220,9 @@ function LeaderboardPage() {
               active={activeTab === mode}
               onSelect={() => setActiveTab(mode)}
               title={TAB_TITLE[mode]}
-              count={s.data ? totalKnown(s.data as LeaderboardResponse<unknown>) : 0}
+              count={
+                s.data ? totalKnown(s.data as LeaderboardResponse<unknown>) : 0
+              }
               countLabel={countLabelFor(
                 mode,
                 s.data ? totalKnown(s.data as LeaderboardResponse<unknown>) : 0,
@@ -264,21 +269,11 @@ function LeaderboardPage() {
           ))}
         {activeTab === 'teams' &&
           teamsQ.data?.entries.map((e) => (
-            <LeaderRow
-              key={e.team.id}
-              mode="teams"
-              entry={e}
-              isMe={isMe(e)}
-            />
+            <LeaderRow key={e.team.id} mode="teams" entry={e} isMe={isMe(e)} />
           ))}
         {activeTab === 'combat' &&
           combatQ.data?.entries.map((e) => (
-            <LeaderRow
-              key={e.user.id}
-              mode="combat"
-              entry={e}
-              isMe={isMe(e)}
-            />
+            <LeaderRow key={e.user.id} mode="combat" entry={e} isMe={isMe(e)} />
           ))}
       </div>
 
