@@ -89,7 +89,12 @@ function JoinRequestItems({
         <NotificationItem
           key={request.id}
           icon={<UserPlus className="h-4 w-4" />}
-          title={`@${request.candidate.username} veut rejoindre ${request.teamName}`}
+          // Pseudo NU, sans « @ » : les titres de la cloche sont des phrases
+          // (« X te défie », « X a parié sur toi », « X t'invite à rejoindre »)
+          // et aucune ne prefixe son pseudo. Le « @ » reste de mise là où un
+          // pseudo est une étiquette dans une liste — le panneau des
+          // candidatures, par exemple.
+          title={`${request.candidate.username} veut rejoindre ${request.teamName}`}
           subtitle={`Candidature envoyée ${dayjs(request.createdAt).fromNow()}`}
           onOpen={() => onOpen(request.teamId)}
           openTitle="Voir l’équipe"
