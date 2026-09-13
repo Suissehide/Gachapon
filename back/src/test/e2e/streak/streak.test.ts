@@ -14,11 +14,17 @@ describe('Streak routes', () => {
     // Clean up streak data from previous runs and seed fresh data
     await prisma.userReward.deleteMany({ where: { source: 'STREAK' } })
     await prisma.streakMilestone.deleteMany({})
-    // userRewards: none — les rewards LEVEL_UP créés par d'autres suites sont
-    // référencés par UserReward ; les supprimer violerait la FK.
-    await prisma.reward.deleteMany({
-      where: { streakMilestones: { none: {} }, userRewards: { none: {} } },
-    })
+    // On ne supprime PAS les `Reward` orphelins, et c'est volontaire.
+    //
+    // Tout le run partage une base : les autres suites créent des `Reward`
+    // référencés par des tables que celle-ci ne connaît pas. Le filtre a déjà
+    // dû exclure `userRewards`, puis `RaidTier` est arrivé et a cassé la suite
+    // selon l'ordre de passage — un `Foreign key constraint violated` sans
+    // rapport avec ce qu'on teste. Exclure chaque nouvelle relation est une
+    // course perdue d'avance.
+    //
+    // Ces orphelins ne gênent personne : `/streak/summary` se lit depuis
+    // `StreakMilestone`, jamais depuis la table `Reward`.
 
     // Seed: day=0 default reward (tokens=2, dust=3, xp=5)
     const defaultReward = await prisma.reward.create({ data: { tokens: 2, dust: 3, xp: 5 } })
