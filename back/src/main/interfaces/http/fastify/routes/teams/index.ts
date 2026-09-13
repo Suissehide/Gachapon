@@ -6,6 +6,15 @@ import type { TeamPerkKey } from '../../../../../domain/team-progression/team-pr
 import type { TeamPerkState } from '../../../../../types/domain/team-progression/team-progression.domain.interface'
 import type { TeamPerkEvent } from '../../../../ws/ws-manager'
 import {
+  directoryQuerySchema,
+  directoryResponseSchema,
+  joinRequestDecisionResponseSchema,
+  joinRequestIdParamSchema,
+  myJoinRequestSchema,
+  myJoinRequestsResponseSchema,
+  teamJoinRequestsResponseSchema,
+} from '../../schemas/recruitment.schema'
+import {
   teamCreateBodySchema,
   teamDetailResponseSchema,
   teamIdParamSchema,
@@ -33,6 +42,7 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     wsManager,
     scoringConfigRepository,
     userCardRepository,
+    recruitmentDomain,
   } = fastify.iocContainer
 
   /**
@@ -101,6 +111,23 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
     },
   )
 
+  // Doit être déclarée AVANT `/teams/:id` : sinon Fastify résout
+  // `directory` comme un `:id` et le schéma UUID de ce paramètre rejette la
+  // requête en 400.
+  fastify.get(
+    '/teams/directory',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        tags: ['Team'],
+        querystring: directoryQuerySchema,
+        response: { 200: directoryResponseSchema },
+      },
+    },
+    (request) =>
+      recruitmentDomain.listDirectory(request.user.userID, request.query),
+  )
+
   fastify.get(
     '/teams/:id',
     {
@@ -144,6 +171,147 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
         request.user.userID,
       ),
     }),
+  )
+
+  fastify.post(
+    '/teams/:id/join-requests',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        tags: ['Team'],
+        params: teamIdParamSchema,
+        response: { 201: myJoinRequestSchema },
+      },
+    },
+    async (request, reply) => {
+      const created = await recruitmentDomain.apply(
+        request.params.id,
+        request.user.userID,
+      )
+
+      // Notification strictement après le commit de `apply` : personne ne
+      // doit apprendre une candidature qui finirait par échouer (plafond,
+      // équipe déjà rejointe, etc.). `request.user` ne porte que
+      // `{ userID, role }` (voir jwt.plugin.ts) : le pseudo se relit ici.
+      const { teamRepository, userRepository } = fastify.iocContainer
+      const [team, candidate] = await Promise.all([
+        teamRepository.findById(created.teamId),
+        userRepository.findById(request.user.userID),
+      ])
+      if (team && candidate) {
+        // `getTeamDetail` exige d'être membre de l'équipe ; le candidat qui
+        // vient de postuler ne l'est justement pas. `findById` inclut déjà
+        // `members` sans cette contrainte.
+        for (const member of team.members) {
+          if (member.role !== 'MEMBER') {
+            wsManager.notify(member.userId, {
+              type: 'team:join-request',
+              teamId: created.teamId,
+              requestId: created.id,
+              candidate: { id: candidate.id, username: candidate.username },
+            })
+          }
+        }
+      }
+
+      return reply.status(201).send(created)
+    },
+  )
+
+  fastify.delete(
+    '/teams/:id/join-requests/me',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: { tags: ['Team'], params: teamIdParamSchema },
+    },
+    async (request, reply) => {
+      await recruitmentDomain.cancel(request.params.id, request.user.userID)
+      return reply.status(204).send()
+    },
+  )
+
+  fastify.get(
+    '/teams/:id/join-requests',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        tags: ['Team'],
+        params: teamIdParamSchema,
+        response: { 200: teamJoinRequestsResponseSchema },
+      },
+    },
+    async (request) => ({
+      requests: await recruitmentDomain.listForTeam(
+        request.params.id,
+        request.user.userID,
+      ),
+    }),
+  )
+
+  fastify.get(
+    '/me/join-requests',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        tags: ['Team'],
+        response: { 200: myJoinRequestsResponseSchema },
+      },
+    },
+    async (request) => ({
+      requests: await recruitmentDomain.listMine(request.user.userID),
+    }),
+  )
+
+  fastify.post(
+    '/join-requests/:id/accept',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        tags: ['Team'],
+        params: joinRequestIdParamSchema,
+        response: { 200: joinRequestDecisionResponseSchema },
+      },
+    },
+    async (request) => {
+      const { teamId, userId, teamName } = await recruitmentDomain.accept(
+        request.params.id,
+        request.user.userID,
+      )
+      // Après commit uniquement : au seul candidat, jamais à l'équipe — la
+      // décision ne regarde que lui.
+      wsManager.notify(userId, {
+        type: 'team:join-decision',
+        teamId,
+        teamName,
+        status: 'ACCEPTED',
+      })
+      return { teamId, userId }
+    },
+  )
+
+  fastify.post(
+    '/join-requests/:id/decline',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        tags: ['Team'],
+        params: joinRequestIdParamSchema,
+        response: { 200: joinRequestDecisionResponseSchema },
+      },
+    },
+    async (request) => {
+      const { teamId, userId, teamName } = await recruitmentDomain.decline(
+        request.params.id,
+        request.user.userID,
+      )
+      wsManager.notify(userId, {
+        type: 'team:join-decision',
+        teamId,
+        teamName,
+        status: 'DECLINED',
+      })
+      return { teamId, userId }
+    },
   )
 
   fastify.patch(

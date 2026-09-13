@@ -90,7 +90,7 @@ export const TeamsApi = {
 
   updateTeam: async (
     teamId: string,
-    data: { name: string; description?: string },
+    data: { name: string; description?: string; recruiting?: boolean },
   ): Promise<Team> => {
     const res = await fetchWithAuth(`${apiUrl}${TEAM_ROUTES.team(teamId)}`, {
       method: 'PATCH',

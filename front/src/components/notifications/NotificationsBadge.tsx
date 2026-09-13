@@ -1,10 +1,25 @@
 import { useNavigate } from '@tanstack/react-router'
-import { Bell, Coins, ScrollText, Swords, Trophy, Users } from 'lucide-react'
+import dayjs from 'dayjs'
+import {
+  Bell,
+  Coins,
+  ScrollText,
+  Swords,
+  Trophy,
+  UserPlus,
+  Users,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import type { SettledDuelView } from '../../api/wagers.api.ts'
 import { RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { markDuelSeen, readSeenDuels } from '../../libs/seenDuels.ts'
+import {
+  isJoinSeen,
+  markJoinSeen,
+  readSeenJoins,
+  seenKey,
+} from '../../libs/seenJoinRequests.ts'
 import {
   useAcceptPendingDuel,
   useDeclinePendingDuel,
@@ -12,6 +27,16 @@ import {
 } from '../../queries/useMyPendingDuels.ts'
 import { useMyTargetedBets } from '../../queries/useMyTargetedBets.ts'
 import { useClaimableQuestsCount } from '../../queries/useQuests.ts'
+import type {
+  MyJoinRequest,
+  TeamJoinRequestWithTeam,
+} from '../../queries/useRecruitment.ts'
+import {
+  useAcceptJoinRequest,
+  useDeclineJoinRequest,
+  useMyJoinRequests,
+  useMyTeamsJoinRequests,
+} from '../../queries/useRecruitment.ts'
 import {
   useAcceptInvitation,
   useDeclineInvitation,
@@ -41,16 +66,94 @@ function settledSubtitle(
   return `${verdict} ${myScore.toLocaleString('fr-FR')} – ${theirScore.toLocaleString('fr-FR')}`
 }
 
+/**
+ * La file du chef, côté cloche : une ligne par candidature en attente sur
+ * une équipe où le lecteur est OWNER/ADMIN. Extrait à part pour que
+ * `NotificationsBadge` — déjà à cinq sources avant celle-ci — n'accumule
+ * pas un sixième bloc de JSX + mutations en ligne.
+ */
+function JoinRequestItems({
+  requests,
+  onOpen,
+  acceptJoin,
+  declineJoin,
+}: {
+  requests: TeamJoinRequestWithTeam[]
+  onOpen: (teamId: string) => void
+  acceptJoin: ReturnType<typeof useAcceptJoinRequest>
+  declineJoin: ReturnType<typeof useDeclineJoinRequest>
+}) {
+  return (
+    <>
+      {requests.map((request) => (
+        <NotificationItem
+          key={request.id}
+          icon={<UserPlus className="h-4 w-4" />}
+          title={`@${request.candidate.username} veut rejoindre ${request.teamName}`}
+          subtitle={`Candidature envoyée ${dayjs(request.createdAt).fromNow()}`}
+          onOpen={() => onOpen(request.teamId)}
+          openTitle="Voir l’équipe"
+          actions={
+            <RespondButtons
+              onAccept={() => acceptJoin.mutate(request.id)}
+              onDecline={() => declineJoin.mutate(request.id)}
+              accepting={
+                acceptJoin.isPending && acceptJoin.variables === request.id
+              }
+              declining={
+                declineJoin.isPending && declineJoin.variables === request.id
+              }
+              acceptTitle="Accepter la candidature"
+              declineTitle="Refuser la candidature"
+            />
+          }
+        />
+      ))}
+    </>
+  )
+}
+
+/**
+ * L'annonce d'acceptation, côté candidat : la seule bonne nouvelle qu'une
+ * candidature accueille — la file du chef ne le concerne pas une fois
+ * acceptée, et `MyJoinRequestsList` n'affiche que l'attente et le refus.
+ */
+function AcceptedJoinItems({
+  requests,
+  onOpen,
+}: {
+  requests: MyJoinRequest[]
+  onOpen: (request: MyJoinRequest) => void
+}) {
+  return (
+    <>
+      {requests.map((request) => (
+        <NotificationItem
+          key={request.id}
+          icon={<Users className="h-4 w-4" />}
+          title={`Tu as rejoint ${request.teamName}`}
+          subtitle="Ta candidature a été acceptée"
+          onOpen={() => onOpen(request)}
+          openTitle="Voir l’équipe"
+        />
+      ))}
+    </>
+  )
+}
+
 export function NotificationsBadge() {
   const [isOpen, setIsOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const { data, isLoading } = useMyInvitations()
   const { data: duelData } = useMyPendingDuels()
   const { data: betData } = useMyTargetedBets()
+  const { requests: joinRequests } = useMyTeamsJoinRequests()
+  const { data: myJoinData } = useMyJoinRequests()
   const meId = useAuthStore((state) => state.user?.id)
   // Lu une fois au montage : `localStorage` ne notifie rien, et la liste ne
   // bouge que par nos propres clics — qu'on répercute dans l'état.
   const [seen, setSeen] = useState(readSeenDuels)
+  const [seenJoins, setSeenJoins] = useState(readSeenJoins)
   const [openedDuel, setOpenedDuel] = useState<SettledDuelView | null>(null)
   const questsCount = useClaimableQuestsCount()
   const navigate = useNavigate()
@@ -58,18 +161,27 @@ export function NotificationsBadge() {
   const decline = useDeclineInvitation()
   const acceptDuel = useAcceptPendingDuel()
   const declineDuel = useDeclinePendingDuel()
+  const acceptJoin = useAcceptJoinRequest()
+  const declineJoin = useDeclineJoinRequest()
 
   const invitations = data?.invitations ?? []
   const duels = duelData?.duels ?? []
   const bets = betData?.bets ?? []
   const announced = duelData?.settled ?? []
   const settled = announced.filter((d) => !seen.has(d.id))
+  const acceptedJoins = (myJoinData?.requests ?? []).filter(
+    (r) =>
+      r.status === 'ACCEPTED' &&
+      !isJoinSeen(seenJoins, r.id, r.decidedAt ?? ''),
+  )
   const count =
     invitations.length +
     duels.length +
     settled.length +
     bets.length +
-    questsCount
+    questsCount +
+    joinRequests.length +
+    acceptedJoins.length
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -130,6 +242,15 @@ export function NotificationsBadge() {
   const goToTeam = (teamId: string) => {
     setIsOpen(false)
     void navigate({ to: '/team/$id', params: { id: teamId } })
+  }
+
+  const openJoinAnnouncement = (request: MyJoinRequest) => {
+    const decidedAt = request.decidedAt ?? ''
+    markJoinSeen(request.id, decidedAt)
+    setSeenJoins((previous) =>
+      new Set(previous).add(seenKey(request.id, decidedAt)),
+    )
+    goToTeam(request.teamId)
   }
 
   return (
@@ -227,6 +348,16 @@ export function NotificationsBadge() {
                     }
                   />
                 ))}
+                <JoinRequestItems
+                  requests={joinRequests}
+                  onOpen={goToTeam}
+                  acceptJoin={acceptJoin}
+                  declineJoin={declineJoin}
+                />
+                <AcceptedJoinItems
+                  requests={acceptedJoins}
+                  onOpen={openJoinAnnouncement}
+                />
                 {bets.map((bet) => (
                   <NotificationItem
                     key={bet.id}

@@ -83,8 +83,11 @@ export const useUpdateTeam = (teamId: string) => {
   const qc = useQueryClient()
   const { toast } = useToast()
   return useMutation({
-    mutationFn: (data: { name: string; description?: string }) =>
-      TeamsApi.updateTeam(teamId, data),
+    mutationFn: (data: {
+      name: string
+      description?: string
+      recruiting?: boolean
+    }) => TeamsApi.updateTeam(teamId, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['teams', teamId] })
       qc.invalidateQueries({ queryKey: ['teams'] })

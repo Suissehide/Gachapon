@@ -38,6 +38,8 @@ export type TeamEntity = {
    */
   hue: number | null
   perkPoints: number
+  /** Vrai par défaut : c'est ce flag qui fait apparaître l'équipe dans l'annuaire. */
+  recruiting: boolean
 }
 
 export type TeamWithMembers = TeamEntity & {
@@ -87,6 +89,7 @@ export type TeamListItem = {
   myRole: TeamMemberRole
   myRoleLabel: TeamMemberRoleLabel
   raid: TeamRaidBadge | null
+  recruiting: boolean
 }
 
 /** L'en-tête d'identité de la fiche d'équipe. */
@@ -115,6 +118,7 @@ export type TeamDetail = {
   /** Rang au classement d'équipes. `null` si l'équipe n'y figure pas. */
   rankGlobal: number | null
   raidsWon: number
+  recruiting: boolean
 }
 
 export type TeamMemberRoleLabel = 'Chef' | 'Officier' | 'Membre' | 'Recrue'

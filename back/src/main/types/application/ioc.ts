@@ -34,6 +34,7 @@ import type { GachaDomainInterface } from '../domain/gacha/gacha.domain.interfac
 import type { ILeaderboardDomain } from '../domain/leaderboard/leaderboard.domain.interface'
 import type { ProfileDomainInterface } from '../domain/profile/profile.domain.interface'
 import type { IQuestsDomain } from '../domain/quests/quests.domain.interface'
+import type { IRecruitmentDomain } from '../domain/recruitment/recruitment.domain.interface'
 import type { RewardsDomainInterface } from '../domain/rewards/rewards.domain.interface'
 import type { IShopDomain } from '../domain/shop/shop.domain.interface'
 import type {
@@ -54,6 +55,7 @@ import type { IMailService } from '../infra/mail/mail.service.interface'
 import type { IAchievementRepository } from '../infra/orm/repositories/achievement.repository.interface'
 import type { IActivityEventRepository } from '../infra/orm/repositories/activity-event.repository.interface'
 import type { IAdminStatsRepository } from '../infra/orm/repositories/admin-stats.repository.interface'
+import type { IJoinRequestRepository } from '../infra/orm/repositories/join-request.repository.interface'
 import type { ILeaderboardRepository } from '../infra/orm/repositories/leaderboard.repository.interface'
 import type { IQuestRepository } from '../infra/orm/repositories/quest.repository.interface'
 import type { IRaidRepository } from '../infra/orm/repositories/raid.repository.interface'
@@ -120,6 +122,8 @@ export interface IocContainer {
   readonly teamRepository: TeamRepository
   readonly teamMemberRepository: TeamMemberRepository
   readonly invitationRepository: InvitationRepository
+  readonly joinRequestRepository: IJoinRequestRepository
+  readonly recruitmentDomain: IRecruitmentDomain
   readonly teamDomain: TeamDomainInterface
   readonly teamProgressionRepository: TeamProgressionRepository
   readonly teamProgressionDomain: ITeamProgressionDomain

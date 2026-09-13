@@ -56,6 +56,7 @@ export type TeamDetail = {
   weekPts: number
   rankGlobal: number | null
   raidsWon: number
+  recruiting: boolean
 }
 
 // Croisé champ par champ avec l'entrée `members[]` de

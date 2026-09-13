@@ -4,6 +4,7 @@ import slugify from 'slugify'
 import type { IocContainer } from '../../types/application/ioc'
 import type { ILeaderboardDomain } from '../../types/domain/leaderboard/leaderboard.domain.interface'
 import type { IRaidDomain } from '../../types/domain/raid/raid.domain.interface'
+import type { IRecruitmentDomain } from '../../types/domain/recruitment/recruitment.domain.interface'
 import type {
   InvitationPreview,
   TeamDomainInterface,
@@ -33,7 +34,7 @@ import {
   xpForTeamLevel,
 } from '../team-progression/team-progression-rules'
 
-const MAX_TEAMS_PER_USER = 3
+export const MAX_TEAMS_PER_USER = 3
 const INVITATION_TTL_MS = 48 * 60 * 60 * 1000
 
 /**
@@ -81,6 +82,7 @@ export class TeamDomain implements TeamDomainInterface {
   readonly #teamProgressionDomain: ITeamProgressionDomain
   readonly #raidDomain: IRaidDomain
   readonly #leaderboardDomain: ILeaderboardDomain
+  readonly #recruitmentDomain: IRecruitmentDomain
 
   constructor({
     teamRepository,
@@ -95,6 +97,7 @@ export class TeamDomain implements TeamDomainInterface {
     teamProgressionDomain,
     raidDomain,
     leaderboardDomain,
+    recruitmentDomain,
   }: IocContainer) {
     this.#teamRepo = teamRepository
     this.#memberRepo = teamMemberRepository
@@ -108,6 +111,7 @@ export class TeamDomain implements TeamDomainInterface {
     this.#teamProgressionDomain = teamProgressionDomain
     this.#raidDomain = raidDomain
     this.#leaderboardDomain = leaderboardDomain
+    this.#recruitmentDomain = recruitmentDomain
   }
 
   /**
@@ -391,6 +395,14 @@ export class TeamDomain implements TeamDomainInterface {
         where: { id: invitation.id },
         data: { status: 'ACCEPTED' },
       })
+      // Une candidature peut dormir dans la file du chef pendant que ce
+      // joueur entre par cette autre porte : sans ça, il resterait sans
+      // objet devant l'officier qui décide.
+      await this.#recruitmentDomain.closeForMember(
+        tx,
+        invitation.teamId,
+        userId,
+      )
       await this.#achievementsDomain.track(tx, userId, { kind: 'TEAM_JOINED' })
     })
   }
@@ -534,6 +546,7 @@ export class TeamDomain implements TeamDomainInterface {
       description?: string
       motto?: string | null
       hue?: number | null
+      recruiting?: boolean
     },
   ): Promise<TeamWithMembers> {
     const team = await this.#teamRepo.findById(teamId)
@@ -551,6 +564,7 @@ export class TeamDomain implements TeamDomainInterface {
       description: data.description,
       motto: data.motto,
       hue: data.hue,
+      recruiting: data.recruiting,
     })
   }
 
@@ -685,6 +699,7 @@ export class TeamDomain implements TeamDomainInterface {
         // semaine. La liste ne le crée pas : ce serait figer les PV du boss
         // sur l'effectif du moment, juste parce qu'on a ouvert une page.
         raid: badges.get(team.id) ?? null,
+        recruiting: team.recruiting,
       }
     })
   }
@@ -751,6 +766,7 @@ export class TeamDomain implements TeamDomainInterface {
       weekPts: weekly.total,
       rankGlobal,
       raidsWon,
+      recruiting: team.recruiting,
     }
   }
 

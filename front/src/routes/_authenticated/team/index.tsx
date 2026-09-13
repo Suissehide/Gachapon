@@ -1,10 +1,12 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { Sparkle, Users } from 'lucide-react'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { Compass, Sparkle, Users } from 'lucide-react'
 
 import { PageHeader } from '../../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../../components/shared/PageShell.tsx'
 import { CreateTeamPopup } from '../../../components/team/CreateTeamPopup.tsx'
+import { MyJoinRequestsList } from '../../../components/team/recruitment/MyJoinRequestsList.tsx'
 import { TeamCard } from '../../../components/team/TeamCard.tsx'
+import { Button } from '../../../components/ui/button.tsx'
 import { PopupTrigger } from '../../../components/ui/popup.tsx'
 import { TEAM_SLOTS } from '../../../constants/teams.constant.ts'
 import {
@@ -32,25 +34,33 @@ function TeamsPage() {
         title="Mes équipes"
         subtitle={`${teams.length} / ${TEAM_SLOTS} emplacements utilisés · une équipe monte à ${economy.team.maxMembers} membres`}
         right={
-          <CreateTeamPopup
-            trigger={
-              <PopupTrigger
-                variant="default"
-                className="gap-2"
-                disabled={atCap}
-                title={
-                  atCap
-                    ? `Tu as atteint la limite de ${TEAM_SLOTS} équipes par joueur.`
-                    : undefined
-                }
-              >
-                <Users className="h-4 w-4" />
-                {atCap
-                  ? `Limite de ${TEAM_SLOTS} équipes atteinte`
-                  : 'Créer une équipe'}
-              </PopupTrigger>
-            }
-          />
+          <div className="flex gap-2">
+            <Button asChild variant="outline">
+              <Link to="/team/join">
+                <Compass className="h-4 w-4" />
+                Parcourir les équipes
+              </Link>
+            </Button>
+            <CreateTeamPopup
+              trigger={
+                <PopupTrigger
+                  variant="default"
+                  className="gap-2"
+                  disabled={atCap}
+                  title={
+                    atCap
+                      ? `Tu as atteint la limite de ${TEAM_SLOTS} équipes par joueur.`
+                      : undefined
+                  }
+                >
+                  <Users className="h-4 w-4" />
+                  {atCap
+                    ? `Limite de ${TEAM_SLOTS} équipes atteinte`
+                    : 'Créer une équipe'}
+                </PopupTrigger>
+              }
+            />
+          </div>
         }
       />
 
@@ -73,13 +83,15 @@ function TeamsPage() {
                   className="h-auto w-full justify-center gap-2.5 rounded-[20px] px-[22px] py-[22px] font-mono text-[11px] uppercase tracking-[0.14em]"
                 >
                   <Sparkle className="h-[15px] w-[15px]" />
-                  Emplacement libre · Créer ou rejoindre
+                  Emplacement libre · Créer une équipe
                 </PopupTrigger>
               }
             />
           ))}
         </div>
       )}
+
+      <MyJoinRequestsList />
     </PageShell>
   )
 }

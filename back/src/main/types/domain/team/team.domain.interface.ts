@@ -65,6 +65,7 @@ export interface TeamDomainInterface {
       description?: string
       motto?: string | null
       hue?: number | null
+      recruiting?: boolean
     },
   ): Promise<TeamWithMembers>
   deleteTeam(teamId: string, userId: string): Promise<void>
