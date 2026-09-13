@@ -185,13 +185,13 @@ function UserCollectionPage() {
         breadcrumbs={[
           { label: 'Gachapon', to: '/play' },
           {
-            label: `@${username}`,
+            label: username,
             to: '/profile/$username',
             params: { username },
           },
           { label: 'Collection' },
         ]}
-        title={`Collection de @${username}`}
+        title={`Collection de ${username}`}
         subtitle={
           <span className="font-mono">
             {ownedCount} / {totalCount} carte{totalCount > 1 ? 's' : ''}

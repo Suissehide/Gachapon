@@ -159,7 +159,7 @@ function InvitationPage() {
                   {invitation.invitedBy ? (
                     <>
                       <strong className="text-text">
-                        @{invitation.invitedBy.username}
+                        {invitation.invitedBy.username}
                       </strong>{' '}
                       t'invite à rejoindre
                     </>

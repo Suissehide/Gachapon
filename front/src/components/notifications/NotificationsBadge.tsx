@@ -46,7 +46,7 @@ import { useAuthStore } from '../../stores/auth.store.ts'
 import { SettledDuelResultPopup } from '../team/DuelResultPopup.tsx'
 import { Button } from '../ui/button.tsx'
 import { NotificationDot } from './NotificationDot.tsx'
-import { NotificationItem, RespondButtons } from './NotificationItem.tsx'
+import { Nom, NotificationItem, RespondButtons } from './NotificationItem.tsx'
 
 /** « Tu bats captain 12 – 8 », du point de vue du lecteur. */
 function settledSubtitle(
@@ -94,7 +94,12 @@ function JoinRequestItems({
           // et aucune ne prefixe son pseudo. Le « @ » reste de mise là où un
           // pseudo est une étiquette dans une liste — le panneau des
           // candidatures, par exemple.
-          title={`${request.candidate.username} veut rejoindre ${request.teamName}`}
+          title={
+            <>
+              <Nom>{request.candidate.username}</Nom> veut rejoindre{' '}
+              <Nom>{request.teamName}</Nom>
+            </>
+          }
           subtitle={`Candidature envoyée ${dayjs(request.createdAt).fromNow()}`}
           onOpen={() => onOpen(request.teamId)}
           openTitle="Voir l’équipe"
@@ -136,7 +141,11 @@ function AcceptedJoinItems({
         <NotificationItem
           key={request.id}
           icon={<Users className="h-4 w-4" />}
-          title={`Tu as rejoint ${request.teamName}`}
+          title={
+            <>
+              Tu as rejoint <Nom>{request.teamName}</Nom>
+            </>
+          }
           subtitle="Ta candidature a été acceptée"
           onOpen={() => onOpen(request)}
           openTitle="Voir l’équipe"
@@ -305,7 +314,7 @@ export function NotificationsBadge() {
                 {questsCount > 0 && (
                   <NotificationItem
                     icon={<ScrollText className="h-4 w-4" />}
-                    title="Quêtes à récupérer"
+                    title={<Nom>Quêtes à récupérer</Nom>}
                     subtitle={
                       questsCount > 1
                         ? `${questsCount} quêtes prêtes à réclamer`
@@ -319,7 +328,7 @@ export function NotificationsBadge() {
                   <NotificationItem
                     key={duel.id}
                     icon={<Trophy className="h-4 w-4" />}
-                    title="Duel terminé"
+                    title={<Nom>Duel terminé</Nom>}
                     subtitle={settledSubtitle(duel, meId)}
                     onOpen={() => openResult(duel)}
                     openTitle="Voir le résultat"
@@ -329,7 +338,11 @@ export function NotificationsBadge() {
                   <NotificationItem
                     key={duel.id}
                     icon={<Swords className="h-4 w-4" />}
-                    title={`${duel.challenger.username} te défie`}
+                    title={
+                      <>
+                        <Nom>{duel.challenger.username}</Nom> te défie
+                      </>
+                    }
                     subtitle={`${duel.team.name} · ${duel.pullCount} tirages`}
                     onOpen={() => goToTeam(duel.teamId)}
                     openTitle="Voir le défi"
@@ -367,7 +380,11 @@ export function NotificationsBadge() {
                   <NotificationItem
                     key={bet.id}
                     icon={<Coins className="h-4 w-4" />}
-                    title={`${bet.bettor.username} a parié sur toi`}
+                    title={
+                      <>
+                        <Nom>{bet.bettor.username}</Nom> a parié sur toi
+                      </>
+                    }
                     subtitle={`${RARITY_LABEL_FR[bet.minRarity] ?? bet.minRarity} ou mieux en ${bet.pullWindow} tirages`}
                     onOpen={() => goToTeam(bet.teamId)}
                     openTitle="Voir le pari"
@@ -377,7 +394,7 @@ export function NotificationsBadge() {
                   <NotificationItem
                     key={inv.id}
                     icon={<Users className="h-4 w-4" />}
-                    title={inv.team.name}
+                    title={<Nom>{inv.team.name}</Nom>}
                     subtitle={
                       inv.invitedBy
                         ? `${inv.invitedBy.username} t'invite à rejoindre`

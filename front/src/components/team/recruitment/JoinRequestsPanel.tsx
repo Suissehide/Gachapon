@@ -53,7 +53,7 @@ export function JoinRequestsPanel({ teamId }: { teamId: string }) {
             />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-bold text-text">
-                @{request.candidate.username}
+                {request.candidate.username}
               </p>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-light">
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-1 font-mono text-[10px] font-bold tracking-[0.1em] text-text-light">

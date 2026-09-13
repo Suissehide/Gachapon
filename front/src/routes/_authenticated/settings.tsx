@@ -82,7 +82,7 @@ function Settings() {
             {user?.username[0]?.toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="font-semibold text-text">@{user?.username}</p>
+            <p className="font-semibold text-text">{user?.username}</p>
             <p className="text-sm text-text-light">{user?.email}</p>
           </div>
         </div>

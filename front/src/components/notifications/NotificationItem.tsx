@@ -1,6 +1,7 @@
 import { ArrowRight, Check, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 
+import { cn } from '../../libs/utils.ts'
 import { Button } from '../ui/button.tsx'
 
 /**
@@ -12,6 +13,10 @@ import { Button } from '../ui/button.tsx'
  *
  * Les quatre étaient écrites à la main dans `NotificationsBadge`, qui a fini
  * par franchir le seuil de complexité de Biome à force de les accumuler.
+ *
+ * La liste des récompenses (`RewardCard`) s'en sert aussi : même pastille,
+ * même titre, même sous-titre, avec « Réclamer » à la place des réponses. Sans
+ * `onOpen`, la ligne n'est pas cliquable — seule l'action à droite le reste.
  */
 export function NotificationItem({
   icon,
@@ -20,32 +25,36 @@ export function NotificationItem({
   onOpen,
   openTitle,
   actions,
+  className,
 }: {
   icon: ReactNode
-  title: string
+  /**
+   * `ReactNode` et non `string` : les titres nomment un joueur ou une équipe,
+   * et ces noms doivent ressortir de la phrase qui les porte. Voir `Nom` plus
+   * bas — la ligne étant déjà grasse, c'est aux mots de liaison de reculer.
+   */
+  title: ReactNode
   subtitle: ReactNode
-  onOpen: () => void
+  /** Absent = ligne inerte (voir `RewardCard`) ; `actions` est alors requis. */
+  onOpen?: () => void
   /** Infobulle de la zone cliquable. */
-  openTitle: string
+  openTitle?: string
   /** Boutons de réponse. Absents = une flèche, et la ligne entière ouvre. */
   actions?: ReactNode
+  /** Classes supplémentaires sur le `<li>` (état, animation de sortie). */
+  className?: string
 }) {
-  const body = (
-    <button
-      type="button"
-      onClick={onOpen}
-      title={openTitle}
-      className={
-        actions
-          ? 'group flex min-w-0 flex-1 cursor-pointer items-center gap-3 text-left'
-          : 'group flex w-full cursor-pointer items-center gap-3 rounded-lg border border-border/60 bg-muted/30 p-3 text-left transition-colors hover:bg-muted/60'
-      }
-    >
+  const content = (
+    <>
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary text-white transition-transform group-hover:scale-105">
         {icon}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate font-display text-sm font-bold text-text transition-colors group-hover:text-primary">
+        {/* Les mots de liaison RECULENT (graisse normale, `text-text-light`)
+            pour que les noms portés par `Nom` ressortent. L'inverse — ajouter
+            du gras ou de la couleur aux noms — ne marchait pas : la ligne
+            était déjà grasse, et l'ambre est déjà pris par le survol. */}
+        <p className="truncate font-display text-sm font-normal text-text-light transition-colors group-hover:text-primary">
           {title}
         </p>
         <p className="truncate text-xs text-text-light">{subtitle}</p>
@@ -53,14 +62,41 @@ export function NotificationItem({
       {actions ? null : (
         <ArrowRight className="h-4 w-4 shrink-0 text-text-light/50 transition-colors group-hover:text-primary" />
       )}
+    </>
+  )
+
+  const row = 'flex items-center gap-3 rounded-lg border border-border/60 bg-muted/30 p-3'
+
+  if (!onOpen) {
+    return (
+      <li className={cn(row, className)}>
+        <div className="flex min-w-0 flex-1 items-center gap-3">{content}</div>
+        <div className="flex shrink-0 items-center gap-1">{actions}</div>
+      </li>
+    )
+  }
+
+  const body = (
+    <button
+      type="button"
+      onClick={onOpen}
+      title={openTitle}
+      className={cn(
+        'group cursor-pointer text-left',
+        actions
+          ? 'flex min-w-0 flex-1 items-center gap-3'
+          : cn(row, 'w-full transition-colors hover:bg-muted/60'),
+      )}
+    >
+      {content}
     </button>
   )
 
   if (!actions) {
-    return <li>{body}</li>
+    return <li className={className}>{body}</li>
   }
   return (
-    <li className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/30 p-3 transition-colors hover:bg-muted/60">
+    <li className={cn(row, 'transition-colors hover:bg-muted/60', className)}>
       {body}
       <div className="flex shrink-0 items-center gap-1">{actions}</div>
     </li>
@@ -117,5 +153,25 @@ export function RespondButtons({
 function Spinner() {
   return (
     <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+  )
+}
+
+/**
+ * Un nom propre dans un titre de notification — pseudo de joueur ou nom
+ * d'équipe.
+ *
+ * Il portait un « @ » avant ; il ne marquait que les pseudos, laissait les
+ * équipes sans repère, et ne disait rien dans les cinq titres qui ne
+ * l'utilisaient pas. Ici c'est la graisse et la densité qui font le travail,
+ * pour les deux sortes de noms.
+ *
+ * `group-hover:text-primary` est répété : sans lui, ce span garderait son
+ * `text-text` quand la ligne entière vire à l'ambre au survol.
+ */
+export function Nom({ children }: { children: ReactNode }) {
+  return (
+    <span className="font-bold text-text transition-colors group-hover:text-primary">
+      {children}
+    </span>
   )
 }
