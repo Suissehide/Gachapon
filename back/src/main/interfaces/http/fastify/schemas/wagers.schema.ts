@@ -186,8 +186,8 @@ export const myTargetedBetsResponseSchema = z.object({
       }),
       bettor: wagerUserMiniSchema,
       minRarity: cardRaritySchema,
-      stake: z.number().int(),
-      multiplier: z.number(),
+      poolYes: z.number().int(),
+      poolNo: z.number().int(),
       pullWindow: z.number().int(),
       pullsSeen: z.number().int(),
       createdAt: z.string(),
@@ -196,12 +196,32 @@ export const myTargetedBetsResponseSchema = z.object({
   ),
 })
 
+// `YES` par défaut des deux côtés : un client qui ne connaît pas encore le
+// sens continue de parier que la cible atteindra la rareté, comme avant.
+const betSideSchema = z.enum(['YES', 'NO'])
+
+// Pas de `side` : celui qui OUVRE un marché pose la proposition, donc tient
+// le « oui ». Le camp adverse se prend en renchérissant.
 export const placeBetBodySchema = z.object({
   targetId: z.string(),
   minRarity: cardRaritySchema,
   stake: z.number().int(),
 })
 
+/** Renchérir sur un marché déjà ouvert : on choisit son camp et sa mise. */
+export const joinBetBodySchema = z.object({
+  side: betSideSchema,
+  stake: z.number().int(),
+})
+
+export const betParamSchema = z.object({
+  id: z.string(),
+  betId: z.string(),
+})
+
+// Pas de `side` : le devis sert à OUVRIR un marché, et celui qui ouvre tient
+// le « oui ». Les cotes des deux camps d'un marché existant voyagent sur sa
+// vue (`oddsYes` / `oddsNo`), recalculées à chaque mise.
 export const betQuoteQuerySchema = z.object({
   targetId: z.string(),
   minRarity: cardRaritySchema,
@@ -218,21 +238,36 @@ export const betQuoteResponseSchema = z.object({
 // Croisé champ par champ avec `BetView`
 // (types/domain/wagers/wagers.domain.interface.ts) : le provider Zod retire
 // silencieusement du JSON toute clé absente d'ici.
+export const betEntrySchema = z.object({
+  id: z.string(),
+  user: wagerUserMiniSchema,
+  side: betSideSchema,
+  stake: z.number().int(),
+  payout: z.number().int(),
+})
+
 export const betViewSchema = z.object({
   id: z.string(),
   status: betStatusSchema,
   bettor: wagerUserMiniSchema,
   target: wagerUserMiniSchema,
-  stake: z.number().int(),
   minRarity: cardRaritySchema,
   pullWindow: z.number().int(),
-  multiplier: z.number(),
+  probability: z.number(),
+  poolYes: z.number().int(),
+  poolNo: z.number().int(),
+  oddsYes: z.number(),
+  oddsNo: z.number(),
+  open: z.boolean(),
+  entries: z.array(betEntrySchema),
   createdAt: z.string(),
   deadlineAt: z.string(),
   settledAt: z.string().nullable(),
   pullsSeen: z.number().int(),
-  payout: z.number().int(),
   myRole: z.enum(['BETTOR', 'TARGET', 'SPECTATOR']),
+  mySide: betSideSchema.nullable(),
+  myStake: z.number().int(),
+  myPayout: z.number().int(),
 })
 
 export const wagersViewResponseSchema = z.object({

@@ -311,8 +311,10 @@ export function BetPlacePopup({ open, onOpenChange, teamId, members }: Props) {
             La cote porte sur les {pullWindow} prochains tirages
             {targetId !== '' ? ' de la cible' : ''} : au moins un tirage{' '}
             {RARITY_LABEL_FR[minRarity] ?? minRarity} ou mieux dans cette
-            fenêtre gagne le pari. Sinon la mise est perdue — elle n'est
-            remboursée que si la cible n'a fait aucun tirage avant l'échéance.
+            fenêtre te fait gagner. Tes coéquipiers pourront renchérir de ton
+            côté ou contre toi, ce qui déplacera la cote jusqu'au premier tirage
+            de la cible. La mise n'est remboursée, des deux côtés, que si la
+            cible n'a fait aucun tirage avant l'échéance.
           </p>
 
           {targetId !== '' && (

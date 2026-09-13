@@ -1,6 +1,7 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import {
+  betParamSchema,
   betQuoteQuerySchema,
   betQuoteResponseSchema,
   betViewSchema,
@@ -8,6 +9,7 @@ import {
   duelParamSchema,
   duelTransfersResponseSchema,
   duelViewSchema,
+  joinBetBodySchema,
   myPendingDuelsResponseSchema,
   myTargetedBetsResponseSchema,
   placeBetBodySchema,
@@ -29,8 +31,7 @@ export const wagersRouter: FastifyPluginCallbackZod = (fastify) => {
         response: { 200: wagersViewResponseSchema },
       },
     },
-    (request) =>
-      duelDomain.listForTeam(request.params.id, request.user.userID),
+    (request) => duelDomain.listForTeam(request.params.id, request.user.userID),
   )
 
   // Jumelle de `GET /me/invitations` : la pastille de notification a besoin
@@ -212,6 +213,31 @@ export const wagersRouter: FastifyPluginCallbackZod = (fastify) => {
           }
         }),
       }
+    },
+  )
+
+  // Renchérir sur un marché ouvert. Distinct du placement : celui-ci ouvre
+  // une proposition, celui-là prend parti sur une proposition existante.
+  fastify.post(
+    '/teams/:id/bets/:betId/entries',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        tags: ['Wagers'],
+        params: betParamSchema,
+        body: joinBetBodySchema,
+        response: { 201: betViewSchema },
+      },
+    },
+    async (request, reply) => {
+      const bet = await betDomain.join(
+        request.params.id,
+        request.user.userID,
+        request.params.betId,
+        request.body.side,
+        request.body.stake,
+      )
+      return reply.status(201).send(bet)
     },
   )
 

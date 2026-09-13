@@ -23,6 +23,7 @@ import type { TeamPerkState } from '../../api/teamProgression.api.ts'
 import {
   PERK_META,
   perkDescription,
+  perkValue,
 } from '../../constants/teamPerks.constant.ts'
 import { cn, plural } from '../../libs/utils.ts'
 import { useResetPerks } from '../../queries/useTeamProgression.ts'
@@ -82,8 +83,17 @@ function PerkRow({ perk }: { perk: TeamPerkState }) {
               NIV. {perk.unlockLevel}
             </span>
           ) : (
-            <span className="ml-auto shrink-0 font-mono text-[10px] tracking-[0.18em] text-foreground/50">
-              {perk.rank}/{maxRank}
+            <span className="ml-auto flex shrink-0 items-baseline gap-2">
+              {/* La valeur ACTUELLE du bonus, chiffrée et lisible par tous les
+                  membres — pas seulement par le chef dans sa modale. C'est ce
+                  que l'équipe a réellement gagné, et la seule ligne du panneau
+                  qui le dise en clair. */}
+              <span className="font-display text-sm font-extrabold tabular-nums text-[var(--pc)]">
+                {perkValue(perk.key, perk.effect)}
+              </span>
+              <span className="font-mono text-[10px] tracking-[0.18em] text-foreground/50">
+                {perk.rank}/{maxRank}
+              </span>
             </span>
           )}
         </div>

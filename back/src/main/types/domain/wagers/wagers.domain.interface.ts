@@ -1,4 +1,5 @@
 import type {
+  BetSide,
   BetStatus,
   CardElement,
   CardRarity,
@@ -140,24 +141,61 @@ export type SettledDuelView = {
   transferredCount: number
 }
 
+/** Une mise dans le marché d'un pari. */
+export type BetEntryView = {
+  id: string
+  user: WagerUserMini
+  side: BetSide
+  stake: number
+  /** Crédité au règlement ; 0 tant que le pari court. */
+  payout: number
+}
+
+/**
+ * Le MARCHÉ d'un pari : un énoncé (la cible atteindra-t-elle cette rareté
+ * dans sa fenêtre ?) et les mises posées de part et d'autre.
+ */
 export type BetView = {
   id: string
   status: BetStatus
+  /** Celui qui a ouvert le marché — il tient aussi la première mise. */
   bettor: WagerUserMini
   target: WagerUserMini
-  stake: number
   minRarity: CardRarity
   pullWindow: number
-  // Cote annoncée au parieur et figée au placement. Elle sert de PLAFOND au
-  // règlement : si la cible améliore ses vraies chances entre-temps (achat
-  // d'un boost), le paiement retombe sur une cote recalculée plus basse.
-  multiplier: number
+  /**
+   * Probabilité de l'ÉVÈNEMENT, figée à l'ouverture. Sert de plancher de cote
+   * aux deux camps et de plafond au règlement : si la cible améliore ses
+   * vraies chances entre-temps, le plancher retombe sur la valeur recalculée.
+   */
+  probability: number
+  /** Somme des mises de chaque camp. */
+  poolYes: number
+  poolNo: number
+  /**
+   * Cote COURANTE de chaque camp : la part du pot que rapporterait une mise
+   * unitaire, ou la cote théorique si elle est plus généreuse. Elle bouge à
+   * chaque entrée tant que le marché est ouvert — l'écran doit le dire.
+   */
+  oddsYes: number
+  oddsNo: number
+  /**
+   * Le marché accepte-t-il encore des mises ? Faux dès le premier tirage
+   * compté de la cible : au-delà, entrer reviendrait à miser en connaissant
+   * déjà une partie du résultat.
+   */
+  open: boolean
+  entries: BetEntryView[]
   createdAt: string
   deadlineAt: string
   settledAt: string | null
   pullsSeen: number
-  payout: number
   myRole: 'BETTOR' | 'TARGET' | 'SPECTATOR'
+  /** Mon camp dans ce marché, `null` si je n'y ai pas misé. */
+  mySide: BetSide | null
+  /** Ma mise et mon gain, `0` si je n'y ai pas misé. */
+  myStake: number
+  myPayout: number
 }
 
 /**
@@ -270,8 +308,13 @@ export type TargetedBetView = {
   team: { id: string; name: string; slug: string; avatar: string | null }
   bettor: WagerUserMini
   minRarity: CardRarity
-  stake: number
-  multiplier: number
+  /**
+   * Les deux camps du marche. La cible ne voit pas une mise mais un RAPPORT
+   * de forces : « 300 misent que tu y arrives, 150 que non » lui dit quelque
+   * chose qu'une cote ne dit pas.
+   */
+  poolYes: number
+  poolNo: number
   pullWindow: number
   pullsSeen: number
   createdAt: string
@@ -299,6 +342,18 @@ export interface IBetDomain {
     minRarity: CardRarity,
     stake: number,
     now?: Date,
+  ): Promise<BetView>
+  /**
+   * Rencherir sur un marche ouvert, du camp de son choix. Refuse des que la
+   * cible a entame sa fenetre : au-dela, on miserait en connaissant deja une
+   * partie du resultat.
+   */
+  join(
+    teamId: string,
+    userId: string,
+    betId: string,
+    side: BetSide,
+    stake: number,
   ): Promise<BetView>
   /**
    * Règle tous les paris ACTIVE portant sur cette CIBLE — déclenché après

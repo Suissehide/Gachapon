@@ -34,6 +34,8 @@ function expectedMultiplier(probability: number): number {
 // RARE+ : q = (8 + 1 + 1) / 100 = 0,1
 const EXPECTED_PROBABILITY = 1 - 0.9 ** PULL_WINDOW // 0.6513215599
 const EXPECTED_MULTIPLIER = expectedMultiplier(EXPECTED_PROBABILITY) // 1.38
+// Le NON se cote sur l'evenement complementaire : 0,9 / (1 - 0,6513) = 2,58.
+const EXPECTED_NO_MULTIPLIER = expectedMultiplier(1 - EXPECTED_PROBABILITY)
 // EPIC+ : q = (1 + 1) / 100 = 0,02
 const EPIC_PROBABILITY = 1 - 0.98 ** PULL_WINDOW // 0.1829271932
 const EPIC_MULTIPLIER = expectedMultiplier(EPIC_PROBABILITY) // 4.92
@@ -87,6 +89,14 @@ describe('cote et placement du pari', () => {
       userId: user.id as string,
       cookies: login.headers['set-cookie'] as string,
     }
+  }
+
+  /**
+   * La mise d'un joueur dans un marche. Le pari porte l'enonce, les entrees
+   * portent l'argent : ce qui etait `bet.stake` / `bet.payout` vit ici.
+   */
+  function entryOf(betId: string, userId: string) {
+    return prisma.betEntry.findFirstOrThrow({ where: { betId, userId } })
   }
 
   async function createBareUser(tag: string): Promise<string> {
@@ -329,20 +339,29 @@ describe('cote et placement du pari', () => {
     expect(body.status).toBe('ACTIVE')
     expect(body.bettor.id).toBe(userIdA)
     expect(body.target.id).toBe(userIdB)
-    expect(body.stake).toBe(stake)
     expect(body.minRarity).toBe('RARE')
     expect(body.pullWindow).toBe(PULL_WINDOW)
     expect(body.myRole).toBe('BETTOR')
-    // La cote stockee est EXACTEMENT celle annoncee par le devis.
-    expect(body.multiplier).toBe(quoted.multiplier)
+    // Celui qui ouvre tient le « oui » et rien d'autre : un camp, une mise.
+    expect(body.mySide).toBe('YES')
+    expect(body.myStake).toBe(stake)
+    expect(body.poolYes).toBe(stake)
+    expect(body.poolNo).toBe(0)
+    expect(body.entries).toHaveLength(1)
+    // Tant qu'il est seul, le camp garde sa cote theorique — celle du devis.
+    expect(body.oddsYes).toBe(quoted.multiplier)
+    // Et le marche est OUVERT : la cible n'a pas encore tire.
+    expect(body.open).toBe(true)
 
     const a = await prisma.user.findUnique({ where: { id: userIdA } })
     expect(a.dust).toBe(5000 - stake)
 
     const row = await prisma.bet.findUnique({ where: { id: bet1Id } })
     expect(row.status).toBe('ACTIVE')
-    expect(row.multiplier).toBe(quoted.multiplier)
-    expect(row.stake).toBe(stake)
+    // C'est la PROBABILITE qui est gelee, pas la cote : un marche a deux
+    // camps, et les deux cotes theoriques s'en derivent.
+    expect(expectedMultiplier(row.probability)).toBe(quoted.multiplier)
+    expect((await entryOf(bet1Id, userIdA)).stake).toBe(stake)
     expect(row.deadlineAt.getTime()).toBeGreaterThan(Date.now())
   })
 
@@ -371,12 +390,13 @@ describe('cote et placement du pari', () => {
       },
     })
     expect(res.statusCode).toBe(201)
-    expect(res.json().multiplier).toBe(serverMultiplier)
+    expect(res.json().oddsYes).toBe(serverMultiplier)
     expect(res.json().pullWindow).toBe(PULL_WINDOW)
 
     const row = await prisma.bet.findUnique({ where: { id: res.json().id } })
-    expect(row.multiplier).toBe(serverMultiplier)
-    expect(row.multiplier).not.toBe(999)
+    expect(expectedMultiplier(row.probability)).toBe(serverMultiplier)
+    expect(expectedMultiplier(row.probability)).not.toBe(999)
+    expect(row.probability).not.toBe(0.999)
     expect(row.pullWindow).toBe(PULL_WINDOW)
   })
 
@@ -929,11 +949,11 @@ describe('cote et placement du pari', () => {
           teamId,
           bettorId,
           targetId: userIdB,
-          stake: 100,
           minRarity: 'RARE',
           pullWindow: PULL_WINDOW,
-          multiplier: EXPECTED_MULTIPLIER,
+          probability: EXPECTED_PROBABILITY,
           deadlineAt: new Date(Date.now() + 72 * 60 * 60 * 1000),
+          entries: { create: { userId: bettorId, side: 'YES', stake: 100 } },
         },
       })
     }
@@ -971,7 +991,7 @@ describe('cote et placement du pari', () => {
       expect(bet.target.id).toBe(userIdB)
       expect(bet.status).toBe('ACTIVE')
       expect(bet.myRole).toBe('TARGET')
-      expect(bet.multiplier).toBe(EXPECTED_MULTIPLIER)
+      expect(bet.oddsYes).toBe(EXPECTED_MULTIPLIER)
       expect(bet.pullWindow).toBe(PULL_WINDOW)
     }
 
@@ -990,6 +1010,7 @@ describe('cote et placement du pari', () => {
     let rareSetId: string
     let commonSetId: string
     let rareCardId: string
+    let commonCardId: string
     let wonBetId: string
 
     // Deactive tous les CardSet puis n'active que celui donne. Le catalogue
@@ -1006,16 +1027,27 @@ describe('cote et placement du pari', () => {
     // Le declenchement au tirage est fire-and-forget (`void betDomain
     // .settleForUser(...).catch(...)`) : la reponse HTTP du tirage revient
     // avant que le reglement n'ait forcement fini. On sonde donc la ligne.
+    /**
+     * Attend qu'un marche atteigne un statut, et rend sa ligne AUGMENTEE du
+     * paiement de la mise de `bettorId`.
+     *
+     * L'argent vit desormais sur `BetEntry`, une ligne par joueur : rendre le
+     * couple ici evite de doubler chaque assertion d'une seconde lecture,
+     * tout en gardant `payout` au sens que les tests lui donnent — « ce que
+     * CE parieur a touche », jamais le pot entier.
+     */
     async function waitForBetStatus(
       betId: string,
       status: string,
       timeoutMs = 5000,
+      bettorId: string = userIdA,
     ) {
       const start = Date.now()
       while (Date.now() - start < timeoutMs) {
         const row = await prisma.bet.findUnique({ where: { id: betId } })
         if (row?.status === status) {
-          return row
+          const entry = await entryOf(betId, bettorId)
+          return { ...row, payout: entry.payout, stake: entry.stake }
         }
         await new Promise((r) => setTimeout(r, 25))
       }
@@ -1030,12 +1062,14 @@ describe('cote et placement du pari', () => {
       betId: string,
       pullsSeen: number,
       timeoutMs = 5000,
+      bettorId: string = userIdA,
     ) {
       const start = Date.now()
       while (Date.now() - start < timeoutMs) {
         const row = await prisma.bet.findUnique({ where: { id: betId } })
         if (row?.pullsSeen === pullsSeen) {
-          return row
+          const entry = await entryOf(betId, bettorId)
+          return { ...row, payout: entry.payout, stake: entry.stake }
         }
         await new Promise((r) => setTimeout(r, 25))
       }
@@ -1083,7 +1117,7 @@ describe('cote et placement du pari', () => {
       const commonSet = await prisma.cardSet.create({
         data: { name: `BetCommonOnly${suffix}`, isActive: false },
       })
-      await prisma.card.create({
+      const commonCard = await prisma.card.create({
         data: {
           name: `BetCommonOnlyCard${suffix}`,
           rarity: 'COMMON',
@@ -1092,6 +1126,7 @@ describe('cote et placement du pari', () => {
         },
       })
       commonSetId = commonSet.id
+      commonCardId = commonCard.id
 
       await activateOnly(betSetId)
     })
@@ -1116,7 +1151,7 @@ describe('cote et placement du pari', () => {
       })
       expect(placed.statusCode).toBe(201)
       wonBetId = placed.json().id
-      expect(placed.json().multiplier).toBe(EXPECTED_MULTIPLIER)
+      expect(placed.json().oddsYes).toBe(EXPECTED_MULTIPLIER)
 
       const dustAfterPlacement = await dustOf(userIdA)
       expect(dustAfterPlacement).toBe(5000 - stake)
@@ -1155,7 +1190,7 @@ describe('cote et placement du pari', () => {
       const view = body.settledBets.find((b: any) => b.id === wonBetId)
       expect(view).toBeDefined()
       expect(view.status).toBe('WON')
-      expect(view.payout).toBe(expectedPayout)
+      expect(view.myPayout).toBe(expectedPayout)
       expect(view.pullsSeen).toBe(1)
       expect(view.settledAt).not.toBeNull()
       expect(view.myRole).toBe('BETTOR')
@@ -1180,7 +1215,7 @@ describe('cote et placement du pari', () => {
       })
       expect(placed.statusCode).toBe(201)
       const betId = placed.json().id
-      expect(placed.json().multiplier).toBe(EXPECTED_MULTIPLIER)
+      expect(placed.json().oddsYes).toBe(EXPECTED_MULTIPLIER)
       const dustAfterPlacement = await dustOf(userIdA)
 
       const boost = await prisma.userBoost.create({
@@ -1217,14 +1252,15 @@ describe('cote et placement du pari', () => {
 
         const row = await prisma.bet.findUnique({ where: { id: betId } })
         expect(row.status).toBe('WON')
-        expect(row.payout).toBe(Math.round(stake * capped))
+        const paid = (await entryOf(betId, userIdA)).payout
+        expect(paid).toBe(Math.round(stake * capped))
         // Verrou explicite : 214 et non 276.
-        expect(row.payout).toBe(214)
-        expect(row.payout).not.toBe(Math.round(stake * EXPECTED_MULTIPLIER))
-        expect(await dustOf(userIdA)).toBe(dustAfterPlacement + row.payout)
-        // La cote annoncee reste ecrite telle quelle : c'est un PLAFOND, pas
-        // une reecriture de ce qui a ete promis au parieur.
-        expect(row.multiplier).toBe(EXPECTED_MULTIPLIER)
+        expect(paid).toBe(214)
+        expect(paid).not.toBe(Math.round(stake * EXPECTED_MULTIPLIER))
+        expect(await dustOf(userIdA)).toBe(dustAfterPlacement + paid)
+        // La probabilite gelee reste ecrite telle quelle : c'est un PLAFOND,
+        // pas une reecriture de ce qui a ete promis au parieur.
+        expect(expectedMultiplier(row.probability)).toBe(EXPECTED_MULTIPLIER)
       } finally {
         await prisma.userBoost.delete({ where: { id: boost.id } })
       }
@@ -1274,9 +1310,10 @@ describe('cote et placement du pari', () => {
 
       const row = await prisma.bet.findUnique({ where: { id: betId } })
       expect(row.status).toBe('WON')
-      expect(row.payout).toBe(Math.round(stake * EXPECTED_MULTIPLIER))
-      expect(row.payout).toBe(276)
-      expect(await dustOf(userIdA)).toBe(dustAfterPlacement + row.payout)
+      const paid = (await entryOf(betId, userIdA)).payout
+      expect(paid).toBe(Math.round(stake * EXPECTED_MULTIPLIER))
+      expect(paid).toBe(276)
+      expect(await dustOf(userIdA)).toBe(dustAfterPlacement + paid)
     })
 
     it('plafond de la cote : des chances DEGRADEES apres le placement ne rabaissent pas le paiement', async () => {
@@ -1314,7 +1351,7 @@ describe('cote et placement du pari', () => {
       })
       expect(placed.statusCode).toBe(201)
       const betId = placed.json().id
-      expect(placed.json().multiplier).toBe(boostedMultiplier)
+      expect(placed.json().oddsYes).toBe(boostedMultiplier)
       const dustAfterPlacement = await dustOf(userIdA)
 
       // Le boost disparait : les vraies chances retombent au catalogue nu,
@@ -1336,11 +1373,12 @@ describe('cote et placement du pari', () => {
 
       const row = await prisma.bet.findUnique({ where: { id: betId } })
       expect(row.status).toBe('WON')
-      expect(row.payout).toBe(Math.round(stake * boostedMultiplier))
+      const paid = (await entryOf(betId, userIdA)).payout
+      expect(paid).toBe(Math.round(stake * boostedMultiplier))
       // Verrou explicite : 214 (cote annoncee) et non 276 (cote recalculee).
-      expect(row.payout).toBe(214)
-      expect(row.payout).not.toBe(Math.round(stake * EXPECTED_MULTIPLIER))
-      expect(await dustOf(userIdA)).toBe(dustAfterPlacement + row.payout)
+      expect(paid).toBe(214)
+      expect(paid).not.toBe(Math.round(stake * EXPECTED_MULTIPLIER))
+      expect(await dustOf(userIdA)).toBe(dustAfterPlacement + paid)
     })
 
     it('pari LEGENDARY : B fait ses 10 tirages sans legendaire -> LOST, la poussiere de A ne bouge plus', async () => {
@@ -1356,7 +1394,7 @@ describe('cote et placement du pari', () => {
       })
       expect(placed.statusCode).toBe(201)
       const betId = placed.json().id
-      expect(placed.json().multiplier).toBe(LEGENDARY_MULTIPLIER)
+      expect(placed.json().oddsYes).toBe(LEGENDARY_MULTIPLIER)
 
       // La mise est deja debitee au placement : c'est CE solde qui ne doit
       // plus bouger d'un point une fois le pari perdu.
@@ -1388,7 +1426,7 @@ describe('cote et placement du pari', () => {
       const view = body.settledBets.find((b: any) => b.id === betId)
       expect(view).toBeDefined()
       expect(view.status).toBe('LOST')
-      expect(view.payout).toBe(0)
+      expect(view.myPayout).toBe(0)
     })
 
     it("verdict encore indecidable : la ligne est ECRITE quand meme (pullsSeen), sans rien trancher ni crediter", async () => {
@@ -1478,12 +1516,18 @@ describe('cote et placement du pari', () => {
 
       // Tirage insere DIRECTEMENT en base : il ne passe pas par la route,
       // donc aucun reglement automatique ne vient decider avant nous.
+      //
+      // Horodate juste APRES la creation du pari, jamais dans le futur : un
+      // tirage post-date tombe dans la fenetre des paris SUIVANTS, qu'il
+      // ferme alors d'avance — le marche d'un pari se clot au premier tirage
+      // compte de la cible.
+      const opened = await prisma.bet.findUnique({ where: { id: betId } })
       await prisma.gachaPull.create({
         data: {
           userId: userIdB,
           cardId: rareCardId,
           variant: 'NORMAL',
-          pulledAt: new Date(Date.now() + 1000),
+          pulledAt: new Date(opened.createdAt.getTime() + 1),
         },
       })
 
@@ -1496,8 +1540,9 @@ describe('cote et placement du pari', () => {
 
       const row = await prisma.bet.findUnique({ where: { id: betId } })
       expect(row.status).toBe('WON')
-      expect(await dustOf(userIdA)).toBe(dustBefore + row.payout)
-      expect(row.payout).toBe(Math.round(stake * EXPECTED_MULTIPLIER))
+      const entry = await entryOf(betId, userIdA)
+      expect(await dustOf(userIdA)).toBe(dustBefore + entry.payout)
+      expect(entry.payout).toBe(Math.round(stake * EXPECTED_MULTIPLIER))
     })
 
     it('echeance depassee et cible inactive : la LECTURE de GET /teams/:id/wagers passe le pari EXPIRED et REMBOURSE la mise', async () => {
@@ -1561,10 +1606,10 @@ describe('cote et placement du pari', () => {
           teamId,
           bettorId: userIdA,
           targetId: userIdE,
-          stake,
           minRarity: 'RARE',
           pullWindow: PULL_WINDOW,
-          multiplier: EXPECTED_MULTIPLIER,
+          probability: EXPECTED_PROBABILITY,
+          entries: { create: { userId: userIdA, side: 'YES', stake } },
           createdAt,
           deadlineAt: new Date(Date.now() - 60 * 60 * 1000),
         },
@@ -1588,7 +1633,7 @@ describe('cote et placement du pari', () => {
       const view = body.settledBets.find((b: any) => b.id === bet.id)
       expect(view).toBeDefined()
       expect(view.status).toBe('LOST')
-      expect(view.payout).toBe(0)
+      expect(view.myPayout).toBe(0)
       expect(view.pullsSeen).toBe(1)
       // La mise reste a la maison : le solde du parieur ne bouge pas.
       expect(await dustOf(userIdA)).toBe(dustBefore)
@@ -1605,10 +1650,10 @@ describe('cote et placement du pari', () => {
           teamId,
           bettorId: userIdA,
           targetId: userIdF,
-          stake,
           minRarity: 'RARE',
           pullWindow: PULL_WINDOW,
-          multiplier: EXPECTED_MULTIPLIER,
+          probability: EXPECTED_PROBABILITY,
+          entries: { create: { userId: userIdA, side: 'YES', stake } },
           createdAt,
           deadlineAt: new Date(Date.now() - 60 * 60 * 1000),
         },
@@ -1629,10 +1674,229 @@ describe('cote et placement du pari', () => {
       expect(view.status).toBe('WON')
 
       const expectedPayout = Math.round(stake * EXPECTED_MULTIPLIER)
-      expect(view.payout).toBe(expectedPayout)
+      expect(view.myPayout).toBe(expectedPayout)
       expect(await dustOf(userIdA)).toBe(dustBefore + expectedPayout)
       // Et surtout : pas un remboursement de la mise.
       expect(expectedPayout).not.toBe(stake)
     })
+
+    // ── Le camp « non », pris en rencherissant ────────────────────────
+    //
+    // Celui qui OUVRE tient le « oui ». Le camp adverse se prend sur un
+    // marche deja ouvert, et seulement tant que la cible n'a pas tire.
+
+    /** Pose une mise en base, pour les cas ou aucun membre n'a de session. */
+    function addEntry(
+      betId: string,
+      userId: string,
+      side: 'YES' | 'NO',
+      stake: number,
+    ) {
+      return prisma.betEntry.create({ data: { betId, userId, side, stake } })
+    }
+
+    async function openMarket(stake: number, targetId: string = userIdB) {
+      await activateOnly(betSetId)
+      await prisma.user.update({ where: { id: userIdA }, data: { dust: 5000 } })
+      const placed = await app.inject({
+        method: 'POST',
+        url: `/teams/${teamId}/bets`,
+        headers: { cookie: cookiesA },
+        payload: { targetId, minRarity: 'RARE', stake },
+      })
+      expect(placed.statusCode).toBe(201)
+      return placed.json()
+    }
+
+    it('rencherir sur le camp adverse deplace la cote des DEUX camps', async () => {
+      await prisma.bet.deleteMany({
+        where: { targetId: userIdB, status: 'ACTIVE' },
+      })
+      const market = await openMarket(200)
+      // Seul, l'ouvreur garde la cote theorique.
+      expect(market.oddsYes).toBe(EXPECTED_MULTIPLIER)
+      expect(market.poolNo).toBe(0)
+
+      // C n'est pas membre : on l'ajoute le temps du test, puis on le retire.
+      // Les seules autres sessions du fichier sont l'ouvreur et la cible.
+      await prisma.teamMember.create({
+        data: { teamId, userId: userIdC, role: 'MEMBER' },
+      })
+      await prisma.user.update({ where: { id: userIdC }, data: { dust: 5000 } })
+      try {
+        const joined = await app.inject({
+          method: 'POST',
+          url: `/teams/${teamId}/bets/${market.id}/entries`,
+          headers: { cookie: cookiesC },
+          payload: { side: 'NO', stake: 800 },
+        })
+        expect(joined.statusCode).toBe(201)
+        const view = joined.json()
+        expect(view.poolYes).toBe(200)
+        expect(view.poolNo).toBe(800)
+        expect(view.entries).toHaveLength(2)
+        expect(view.mySide).toBe('NO')
+        expect(view.myStake).toBe(800)
+        // Le camp minoritaire rafle le pot : 1000 x 0,9 / 200 = 4,5, bien
+        // au-dessus de sa cote theorique.
+        expect(view.oddsYes).toBe(4.5)
+        expect(view.oddsYes).toBeGreaterThan(EXPECTED_MULTIPLIER)
+        // Le camp majoritaire retombe sur son plancher theorique.
+        expect(view.oddsNo).toBe(EXPECTED_NO_MULTIPLIER)
+        expect(await dustOf(userIdC)).toBe(5000 - 800)
+
+        // Une seule mise par joueur et par marche.
+        const twice = await app.inject({
+          method: 'POST',
+          url: `/teams/${teamId}/bets/${market.id}/entries`,
+          headers: { cookie: cookiesC },
+          payload: { side: 'YES', stake: 100 },
+        })
+        expect(twice.statusCode).toBe(409)
+      } finally {
+        await prisma.teamMember.deleteMany({
+          where: { teamId, userId: userIdC },
+        })
+      }
+    })
+
+    it('le marche se FERME des le premier tirage de la cible', async () => {
+      // LA regle anti-triche : tant qu'on peut entrer, on pourrait aussi
+      // regarder les tirages deja faits et choisir le camp gagnant. La
+      // relecture se fait dans la transaction, pas sur `pullsSeen`.
+      await prisma.bet.deleteMany({
+        where: { targetId: userIdB, status: 'ACTIVE' },
+      })
+      const market = await openMarket(200)
+
+      await prisma.teamMember.create({
+        data: { teamId, userId: userIdC, role: 'MEMBER' },
+      })
+      await prisma.user.update({ where: { id: userIdC }, data: { dust: 5000 } })
+      try {
+        const stored = await prisma.bet.findUnique({
+          where: { id: market.id },
+        })
+        // Un seul tirage, insere directement : il ne tranche rien, il ferme.
+        await prisma.gachaPull.create({
+          data: {
+            userId: userIdB,
+            cardId: commonCardId,
+            variant: 'NORMAL',
+            pulledAt: new Date(stored.createdAt.getTime() + 1),
+          },
+        })
+
+        const tooLate = await app.inject({
+          method: 'POST',
+          url: `/teams/${teamId}/bets/${market.id}/entries`,
+          headers: { cookie: cookiesC },
+          payload: { side: 'NO', stake: 500 },
+        })
+        expect(tooLate.statusCode).toBe(409)
+        expect(tooLate.json().message).toContain('mises sont closes')
+        // Et rien n'a ete debite.
+        expect(await dustOf(userIdC)).toBe(5000)
+      } finally {
+        await prisma.teamMember.deleteMany({
+          where: { teamId, userId: userIdC },
+        })
+      }
+    })
+
+    it('la rarete atteinte fait gagner le OUI et perdre le NON', async () => {
+      await prisma.bet.deleteMany({
+        where: { targetId: userIdB, status: 'ACTIVE' },
+      })
+      await prisma.userBoost.deleteMany({ where: { userId: userIdB } })
+      await prisma.userSkill.deleteMany({ where: { userId: userIdB } })
+      await prisma.user.update({
+        where: { id: userIdB },
+        data: { pityCurrent: 0 },
+      })
+      const market = await openMarket(200)
+      await addEntry(market.id, userIdD, 'NO', 300)
+
+      const stored = await prisma.bet.findUnique({ where: { id: market.id } })
+      await prisma.gachaPull.create({
+        data: {
+          userId: userIdB,
+          cardId: rareCardId,
+          variant: 'NORMAL',
+          pulledAt: new Date(stored.createdAt.getTime() + 1),
+        },
+      })
+      const { betDomain } = (app as any).iocContainer
+      await betDomain.settleBet(market.id)
+
+      // Pot 500, moins 10 % = 450, tout au camp OUI qui n'a qu'un membre.
+      expect((await entryOf(market.id, userIdA)).payout).toBe(450)
+      expect((await entryOf(market.id, userIdD)).payout).toBe(0)
+      // Bien plus que la cote theorique en solitaire (276) : c'est le pot.
+      expect(450).toBeGreaterThan(Math.round(200 * EXPECTED_MULTIPLIER))
+    })
+
+    it('la rarete manquee fait gagner le NON, au PLANCHER si le pot est maigre', async () => {
+      await prisma.bet.deleteMany({
+        where: { targetId: userIdB, status: 'ACTIVE' },
+      })
+      await prisma.userBoost.deleteMany({ where: { userId: userIdB } })
+      await prisma.userSkill.deleteMany({ where: { userId: userIdB } })
+      await prisma.user.update({
+        where: { id: userIdB },
+        data: { pityCurrent: 0 },
+      })
+      // 50 est la mise minimum : un camp OUI aussi maigre que le permet la
+      // config, face a 200 de l'autre cote.
+      const market = await openMarket(50)
+      const stake = 200
+      await addEntry(market.id, userIdD, 'NO', stake)
+
+      const stored = await prisma.bet.findUnique({ where: { id: market.id } })
+      for (let i = 0; i < PULL_WINDOW; i += 1) {
+        await prisma.gachaPull.create({
+          data: {
+            userId: userIdB,
+            cardId: commonCardId,
+            variant: 'NORMAL',
+            pulledAt: new Date(stored.createdAt.getTime() + 1 + i),
+          },
+        })
+      }
+      const { betDomain } = (app as any).iocContainer
+      await betDomain.settleBet(market.id)
+
+      // Pot 250, moins 10 % = 225 pour un camp NON qui a mise 200 : a peine
+      // plus que sa mise. Le plancher theorique du NON (x2,58) prend le
+      // relais — sans lui, avoir raison contre un camp adverse maigre
+      // rapporterait presque rien.
+      const paid = (await entryOf(market.id, userIdD)).payout
+      expect(paid).toBe(Math.round(stake * EXPECTED_NO_MULTIPLIER))
+      expect(paid).toBeGreaterThan(225)
+      expect((await entryOf(market.id, userIdA)).payout).toBe(0)
+    })
+
+    it("sans tirage du tout, les DEUX camps sont rembourses", async () => {
+      // Le garde-fou du « non » : sans lui, rencherir contre un coequipier
+      // inactif serait de l'argent gratuit.
+      await prisma.bet.deleteMany({
+        where: { targetId: userIdD, status: 'ACTIVE' },
+      })
+      const market = await openMarket(200, userIdD)
+      await addEntry(market.id, userIdE, 'NO', 150)
+      const dustA = await dustOf(userIdA)
+
+      await prisma.bet.update({
+        where: { id: market.id },
+        data: { deadlineAt: new Date(Date.now() - 1000) },
+      })
+      await wagersOf(cookiesA)
+
+      const row = await waitForBetStatus(market.id, 'EXPIRED')
+      expect(row.payout).toBe(200)
+      expect((await entryOf(market.id, userIdE)).payout).toBe(150)
+      expect(await dustOf(userIdA)).toBe(dustA + 200)
+    })
+
   })
 })

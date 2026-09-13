@@ -64,7 +64,8 @@ export function duelVerdict(
     input.challengerPulls >= input.pullCount &&
     input.opponentPulls >= input.pullCount
   const expired =
-    input.deadlineAt !== null && input.now.getTime() >= input.deadlineAt.getTime()
+    input.deadlineAt !== null &&
+    input.now.getTime() >= input.deadlineAt.getTime()
   if (!bothDone && !expired) {
     return null
   }
@@ -115,12 +116,144 @@ export function windowProbability(q: number, n: number): number {
  * défavorable au parieur ; le plancher à 1,00 évite une cote nulle quand la
  * pitié rend le succès certain (le front annonce alors « pari sans intérêt »).
  */
+export type BetSideKey = 'YES' | 'NO'
+
 export function betMultiplier(p: number, houseFeePct: number): number {
   if (p <= 0) {
     return 1
   }
-  const raw = ((100 - houseFeePct) / 100) / p
+  const raw = (100 - houseFeePct) / 100 / p
   return Math.max(1, Math.round(raw * 100) / 100)
+}
+
+/**
+ * Cote du sens choisi. Le « non » se cote sur l'évènement complémentaire, et
+ * la commission s'applique des DEUX côtés : c'est elle qui garde les deux
+ * paris à espérance négative. Sans elle, `1/p` et `1/(1-p)` formeraient un
+ * couple parfaitement équitable, et un joueur qui prendrait les deux sens
+ * pour la même mise s'en sortirait à somme nulle plutôt qu'en perdant la
+ * marge — la maison ne gagnerait rien et le pari cesserait d'être un pari.
+ *
+ * Le plancher de `betMultiplier` fait le reste du travail : sur une rareté
+ * très improbable, `1 - p` frôle 1, la cote du « non » tombe sous 1 et se
+ * fait plafonner — le pari est alors refusé au placement, ce qui est voulu.
+ * Le « non » n'a d'intérêt que là où le « oui » a de vraies chances.
+ */
+export function betMultiplierForSide(
+  probability: number,
+  side: BetSideKey,
+  houseFeePct: number,
+): number {
+  return betMultiplier(
+    side === 'YES' ? probability : 1 - probability,
+    houseFeePct,
+  )
+}
+
+/**
+ * Somme des mises d'un camp.
+ */
+export function poolOf(
+  entries: Array<{ side: BetSideKey; stake: number }>,
+  side: BetSideKey,
+): number {
+  return entries
+    .filter((entry) => entry.side === side)
+    .reduce((sum, entry) => sum + entry.stake, 0)
+}
+
+/**
+ * Cote COURANTE d'un camp : ce que rapporterait une mise unitaire si ce camp
+ * l'emportait, dans l'état actuel du marché.
+ *
+ * Deux termes, et c'est le MEILLEUR des deux qui compte :
+ *
+ *  - le pot — le total moins la commission, partagé au prorata du camp
+ *    gagnant. Il récompense d'avoir pris le camp délaissé ;
+ *  - la cote théorique, tirée des vraies chances de la cible. Elle sert de
+ *    PLANCHER, tenu par la maison.
+ *
+ * Le plancher n'est pas un confort, il ferme une marche absurde : sans lui,
+ * un camp adverse VIDE paierait la cote théorique pleine, tandis qu'un camp
+ * adverse à une seule poussière ne paierait presque rien. Le gagnant aurait
+ * intérêt à ce que personne ne le contredise plutôt qu'à peine.
+ *
+ * Conséquence assumée : sur une équipe peu active, la plupart des marchés
+ * n'auront qu'un camp et se comporteront exactement comme les paris à cote
+ * fixe d'avant — c'est le bon repli.
+ */
+export function liveOdds(
+  poolYes: number,
+  poolNo: number,
+  side: BetSideKey,
+  probability: number,
+  houseFeePct: number,
+): number {
+  const theoretical = betMultiplierForSide(probability, side, houseFeePct)
+  const mine = side === 'YES' ? poolYes : poolNo
+  if (mine <= 0) {
+    return theoretical
+  }
+  const total = poolYes + poolNo
+  const share = (total * (100 - houseFeePct)) / 100 / mine
+  return Math.max(theoretical, Math.round(share * 100) / 100)
+}
+
+export type MarketEntry = {
+  id: string
+  userId: string
+  side: BetSideKey
+  stake: number
+}
+
+/**
+ * Répartit le pot d'un marché réglé. Rend une entrée par mise, y compris
+ * celles qui touchent zéro : le règlement écrit `payout` sur chacune, et une
+ * mise perdante à `0` se distingue d'une mise jamais réglée.
+ *
+ * `winner` à `null` signifie que l'évènement n'a pas eu lieu du tout — la
+ * cible n'a fait aucun tirage — et tout le monde est remboursé à l'identique,
+ * quel que soit son camp. C'est ce cas, et lui seul, qui empêche de parier
+ * « non » sur un coéquipier inactif pour encaisser sans risque.
+ *
+ * Chaque gagnant touche le MEILLEUR de deux montants : sa part du pot, ou sa
+ * mise à la cote théorique. Le second est un plancher tenu par la maison —
+ * voir `liveOdds` pour la raison, qui n'est pas la générosité mais la
+ * suppression d'une marche absurde entre « camp adverse vide » et « camp
+ * adverse à une poussière ».
+ */
+export function settleMarket(
+  entries: MarketEntry[],
+  winner: BetSideKey | null,
+  floorMultiplier: Record<BetSideKey, number>,
+  houseFeePct: number,
+): Map<string, { userId: string; payout: number }> {
+  const out = new Map<string, { userId: string; payout: number }>()
+
+  if (winner === null) {
+    for (const entry of entries) {
+      out.set(entry.id, { userId: entry.userId, payout: entry.stake })
+    }
+    return out
+  }
+
+  const poolWin = poolOf(entries, winner)
+  const total = entries.reduce((sum, entry) => sum + entry.stake, 0)
+  const sharable = (total * (100 - houseFeePct)) / 100
+
+  for (const entry of entries) {
+    if (entry.side !== winner || poolWin <= 0) {
+      out.set(entry.id, { userId: entry.userId, payout: 0 })
+      continue
+    }
+    const share = Math.round((entry.stake / poolWin) * sharable)
+    const floor = Math.round(entry.stake * floorMultiplier[entry.side])
+    out.set(entry.id, {
+      userId: entry.userId,
+      payout: Math.max(share, floor),
+    })
+  }
+  return out
 }
 
 export function betPayout(stake: number, multiplier: number): number {
@@ -159,6 +292,30 @@ export type BetVerdictInput = {
  * Deux comptes d'une même équipe en tiraient une imprimante à poussière sans
  * aucun risque. L'objectif de conception l'emporte sur la lettre.
  */
+/**
+ * Le verdict vu du SENS pari. Le calcul reste celui du « oui » —
+ * `betVerdict` ci-dessous — et le « non » se contente de l'inverser.
+ *
+ * `EXPIRED` ne s'inverse PAS, et c'est la règle qui tient tout l'équilibre du
+ * « non ». Une cible qui n'a fait aucun tirage rembourse les deux sens.
+ * L'inverser en `WON` ferait du « non » de l'argent gratuit : on choisit un
+ * coéquipier qui ne joue pas, on parie qu'il ne sortira rien, on encaisse
+ * sans risque — exactement la faille que le remboursement du « oui » avait
+ * déjà ouverte une fois, et qu'il a fallu refermer.
+ *
+ * `null` ne s'inverse pas non plus : indécidable d'un côté l'est de l'autre.
+ */
+export function betVerdictForSide(
+  input: BetVerdictInput,
+  side: BetSideKey,
+): 'WON' | 'LOST' | 'EXPIRED' | null {
+  const verdict = betVerdict(input)
+  if (side === 'YES' || verdict === null || verdict === 'EXPIRED') {
+    return verdict
+  }
+  return verdict === 'WON' ? 'LOST' : 'WON'
+}
+
 export function betVerdict(
   input: BetVerdictInput,
 ): 'WON' | 'LOST' | 'EXPIRED' | null {

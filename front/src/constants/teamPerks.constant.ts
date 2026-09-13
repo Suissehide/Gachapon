@@ -24,11 +24,17 @@ export type TeamPerkMeta = {
   Icon: ComponentType<{ className?: string }>
 }
 
-// Noms et teintes repris du handoff (`equipe-data.jsx`, `PERKS`). Les quatre
-// couleurs sont tokenisées dans `styles/_colors.css` (`--perk-*`) plutôt
-// qu'écrites en hex ici.
+// Teintes reprises du handoff (`equipe-data.jsx`, `PERKS`), tokenisées dans
+// `styles/_colors.css` (`--perk-*`) plutôt qu'écrites en hex ici.
+//
+// ATTENTION à la clé `loot` : elle vient du handoff, où le bonus s'appelait
+// « Butin partagé », et elle est figée en base (`TeamPerk.key`) comme en
+// config (`teamPerk.loot.*`). Elle ne décrit PAS l'effet, qui est une
+// accélération de la régénération de jetons — d'où le nom affiché, qui lui
+// dit vrai. Renommer la clé demanderait une migration de données pour un
+// gain nul côté joueur : c'est le libellé qui compte, et il est ici.
 export const PERK_META: Record<TeamPerkKey, TeamPerkMeta> = {
-  loot: { name: 'Butin partagé', color: 'var(--perk-loot)', Icon: Coins },
+  loot: { name: 'Flux de jetons', color: 'var(--perk-loot)', Icon: Coins },
   raid: { name: 'Cadence de raid', color: 'var(--perk-raid)', Icon: Swords },
   xp: { name: "Bannière d'XP", color: 'var(--perk-xp)', Icon: Star },
   forge: { name: 'Forge commune', color: 'var(--perk-forge)', Icon: Hammer },
@@ -56,6 +62,49 @@ const formatEffect = (n: number) =>
  * et par membre — quatorze sur la semaine, pas deux. Écrire « par semaine »
  * ici faisait décliner un rang sept fois plus fort qu'annoncé.
  */
+/**
+ * L'effet d'un bonus en CHIFFRE, avec son unité et rien d'autre : « +2,5 % »,
+ * « +1 attaque ». Sert là où la phrase complète serait de trop — la valeur
+ * courante sur le panneau, que tous les membres lisent, et le « avant →
+ * après » de la modale d'investissement.
+ *
+ * Prend l'effet brut et non un `TeamPerkState`, précisément pour pouvoir
+ * chiffrer un rang qui n'existe pas encore : celui qu'on s'apprête à acheter.
+ *
+ * `raid` est le seul entier, et le seul à valoir zéro sur un rang investi
+ * (son effet monte tous les DEUX rangs) : un « +0 attaque » se lirait comme
+ * un bug, d'où le tiret.
+ */
+export function perkValue(key: TeamPerkKey, effect: number): string {
+  if (key === 'raid') {
+    return effect > 0 ? `+${effect} attaque${plural(effect)}` : '—'
+  }
+  const value = formatEffect(effect)
+  return key === 'forge' ? `−${value} %` : `+${value} %`
+}
+
+/**
+ * L'effet qu'aurait ce bonus à `rank`, sans interroger le serveur.
+ *
+ * Reproduit `perkEffect` (back/domain/team-progression/team-progression-rules)
+ * — rang × effet par rang, plancher entier pour `raid`, borné au plafond. La
+ * duplication est assumée et minimale : afficher « après » exigerait sinon un
+ * aller-retour réseau par rangée, pour une multiplication.
+ *
+ * Le `perRank` ne se devine pas côté client : il vient de `/economy/config`,
+ * et l'appelant le lui passe. Le coder en dur ici ferait mentir l'écran au
+ * premier ajustement d'équilibrage.
+ */
+export function perkEffectAt(
+  key: TeamPerkKey,
+  rank: number,
+  perRank: number,
+  maxRank: number,
+): number {
+  const raw = Math.max(0, Math.min(rank, maxRank)) * perRank
+  return key === 'raid' ? Math.floor(raw) : raw
+}
+
 export function perkDescription(perk: TeamPerkState): string {
   const value = formatEffect(perk.effect)
   switch (perk.key) {

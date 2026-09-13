@@ -5,6 +5,7 @@ import type {
   InvitationStatus,
   TeamDetail,
   TeamListItem,
+  TeamMemberRole,
   TeamMembersView,
   TeamWithMembers,
 } from './team.types'
@@ -39,6 +40,18 @@ export interface TeamDomainInterface {
     targetUserId: string,
   ): Promise<void>
   leaveTeam(teamId: string, userId: string): Promise<void>
+  /**
+   * Promotion/rétrogradation entre MEMBER et ADMIN. `OWNER` est absent du
+   * type d'entrée : la propriété ne se donne que par `transferOwnership`,
+   * qui déplace aussi `team.ownerId` — l'écrire ici laisserait une équipe
+   * à deux chefs, ou à aucun.
+   */
+  changeMemberRole(
+    teamId: string,
+    actorId: string,
+    targetUserId: string,
+    role: Exclude<TeamMemberRole, 'OWNER'>,
+  ): Promise<void>
   transferOwnership(
     teamId: string,
     ownerId: string,

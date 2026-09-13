@@ -21,6 +21,7 @@ import {
   teamInvitationIdParamSchema,
   teamInviteBodySchema,
   teamListResponseSchema,
+  teamMemberRoleUpdateBodySchema,
   teamMembersResponseSchema,
   teamPerkSpendBodySchema,
   teamPerksResponseSchema,
@@ -460,6 +461,26 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
         request.params.id,
         request.user.userID,
         request.params.userId,
+      )
+      return reply.status(204).send()
+    },
+  )
+
+  fastify.patch(
+    '/teams/:id/members/:userId/role',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        params: teamUserIdParamSchema,
+        body: teamMemberRoleUpdateBodySchema,
+      },
+    },
+    async (request, reply) => {
+      await teamDomain.changeMemberRole(
+        request.params.id,
+        request.user.userID,
+        request.params.userId,
+        request.body.role,
       )
       return reply.status(204).send()
     },

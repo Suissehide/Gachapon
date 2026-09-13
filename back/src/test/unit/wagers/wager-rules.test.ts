@@ -4,7 +4,11 @@ import type { ScoringConfig } from '../../../generated/client'
 import {
   betMultiplier,
   betPayout,
+  betMultiplierForSide,
   betVerdict,
+  betVerdictForSide,
+  liveOdds,
+  settleMarket,
   duelScoreHalfPoints,
   duelVerdict,
   firstQualifyingIndex,
@@ -195,6 +199,159 @@ describe('wager-rules — verdict de pari', () => {
   it('expiré (donc remboursé) seulement si la cible n\'a fait AUCUN tirage', () => {
     const past = { ...base, now: new Date('2026-09-13T12:00:00Z') }
     expect(betVerdict({ ...past, pulls: [] })).toBe('EXPIRED')
+  })
+
+  describe('cote selon le sens', () => {
+    it('le NON se cote sur l\'evenement complementaire', () => {
+      // p = 0,4 : le OUI vaut 0,9/0,4 = 2,25 et le NON 0,9/0,6 = 1,5.
+      expect(betMultiplierForSide(0.4, 'YES', 10)).toBe(2.25)
+      expect(betMultiplierForSide(0.4, 'NO', 10)).toBe(1.5)
+    })
+
+    it('couvrir les DEUX sens reste a esperance negative', () => {
+      // La propriete qui rend le couple de cotes non arbitrable : deux
+      // comptes d'une meme equipe qui prennent chacun un sens pour la meme
+      // mise doivent perdre la commission, pas rentrer dans leurs frais.
+      // C'est une ESPERANCE, pas un gain maximum : le OUI sur un evenement
+      // rare paie tres gros, rarement.
+      const STAKE = 100
+      for (const p of [0.2, 0.4, 0.5, 0.6, 0.75]) {
+        const yes = betMultiplierForSide(p, 'YES', 10)
+        const no = betMultiplierForSide(p, 'NO', 10)
+        // Les deux doivent etre placables, sinon la comparaison ne dit rien :
+        // un sens refuse au placement ne se couvre pas.
+        expect(yes).toBeGreaterThan(1)
+        expect(no).toBeGreaterThan(1)
+        const expected = p * STAKE * yes + (1 - p) * STAKE * no
+        expect(expected).toBeLessThan(2 * STAKE)
+      }
+    })
+
+    it('sur une rarete tres improbable, le NON tombe au plancher', () => {
+      // 1 - p frole 1, la cote brute passe sous 1 et se fait plafonner : le
+      // placement refusera ce pari, et c'est voulu.
+      expect(betMultiplierForSide(0.002, 'NO', 10)).toBe(1)
+    })
+  })
+
+  describe('cote courante du marche', () => {
+    // p = 0,4 : theorique OUI 2,25, theorique NON 1,5.
+    it('un camp seul garde sa cote theorique', () => {
+      expect(liveOdds(100, 0, 'YES', 0.4, 10)).toBe(2.25)
+      expect(liveOdds(0, 0, 'NO', 0.4, 10)).toBe(1.5)
+    })
+
+    it('le camp delaisse rapporte plus a mesure que l\'autre grossit', () => {
+      const petit = liveOdds(100, 900, 'YES', 0.4, 10)
+      const gros = liveOdds(900, 100, 'YES', 0.4, 10)
+      expect(petit).toBeGreaterThan(gros)
+      // 1000 x 0,9 / 100 = 9 pour le camp minoritaire.
+      expect(petit).toBe(9)
+    })
+
+    it('la cote theorique est un PLANCHER, jamais un plafond', () => {
+      // Camp majoritaire ecrasant : le pot ne rendrait que 0,99 par unite,
+      // donc moins que la mise. Sans le plancher, miser du bon cote pourrait
+      // faire PERDRE de la poussiere — et un camp adverse vide paierait mieux
+      // qu'un camp adverse a une poussiere.
+      expect(liveOdds(1000, 1, 'YES', 0.4, 10)).toBe(2.25)
+      expect(liveOdds(1000, 0, 'YES', 0.4, 10)).toBe(2.25)
+    })
+  })
+
+  describe('partage du pot', () => {
+    const FLOOR = { YES: 1.5, NO: 3 }
+    const e = (id: string, side: 'YES' | 'NO', stake: number) => ({
+      id,
+      userId: `u-${id}`,
+      side,
+      stake,
+    })
+
+    it('le camp gagnant se partage le pot au prorata, commission deduite', () => {
+      // 300 sur OUI (200 + 100), 300 sur NON. Pot 600, moins 10 % = 540.
+      const out = settleMarket(
+        [e('a', 'YES', 200), e('b', 'YES', 100), e('c', 'NO', 300)],
+        'YES',
+        FLOOR,
+        10,
+      )
+      expect(out.get('a')?.payout).toBe(360)
+      expect(out.get('b')?.payout).toBe(180)
+      expect(out.get('c')?.payout).toBe(0)
+      // La maison garde bien sa marge : 360 + 180 = 540, pas 600.
+      expect(360 + 180).toBe(540)
+    })
+
+    it('la cote theorique est un plancher quand le pot est maigre', () => {
+      // 1000 sur OUI contre 10 sur NON : la part du pot rendrait moins que la
+      // mise. Le plancher a 1,5 la releve.
+      const out = settleMarket(
+        [e('a', 'YES', 1000), e('b', 'NO', 10)],
+        'YES',
+        FLOOR,
+        10,
+      )
+      expect(out.get('a')?.payout).toBe(1500)
+    })
+
+    it("sans tirage du tout, TOUT le monde est rembourse", () => {
+      // Le garde-fou du « non » : sans lui, parier contre un coequipier
+      // inactif serait de l'argent gratuit. Rendre `winner` non nul ici fait
+      // tomber ce test.
+      const out = settleMarket(
+        [e('a', 'YES', 200), e('b', 'NO', 50)],
+        null,
+        FLOOR,
+        10,
+      )
+      expect(out.get('a')?.payout).toBe(200)
+      expect(out.get('b')?.payout).toBe(50)
+    })
+
+    it('un camp gagnant vide ne paie personne et ne divise pas par zero', () => {
+      const out = settleMarket([e('a', 'YES', 200)], 'NO', FLOOR, 10)
+      expect(out.get('a')?.payout).toBe(0)
+    })
+
+    it('chaque mise recoit une ligne, meme perdante', () => {
+      const out = settleMarket(
+        [e('a', 'YES', 200), e('b', 'NO', 50)],
+        'YES',
+        FLOOR,
+        10,
+      )
+      expect(out.size).toBe(2)
+      expect(out.get('b')).toEqual({ userId: 'u-b', payout: 0 })
+    })
+  })
+
+  describe('sens du pari', () => {
+    it('le NON inverse gagné et perdu', () => {
+      const won = { ...base, pulls: [common, { rarity: 'LEGENDARY' as const }] }
+      expect(betVerdictForSide(won, 'YES')).toBe('WON')
+      expect(betVerdictForSide(won, 'NO')).toBe('LOST')
+
+      const lost = { ...base, pulls: Array(10).fill(common) }
+      expect(betVerdictForSide(lost, 'YES')).toBe('LOST')
+      expect(betVerdictForSide(lost, 'NO')).toBe('WON')
+    })
+
+    it("l'absence totale de tirages rembourse les DEUX sens", () => {
+      // LE point critique du « non ». Sans cette exception, parier « non » sur
+      // un coéquipier qui ne joue pas serait de l'argent gratuit : on choisit
+      // un inactif, on parie qu'il ne sortira rien, on encaisse. Inverser
+      // EXPIRED en WON fait tomber ce test.
+      const past = { ...base, now: new Date('2026-09-13T12:00:00Z'), pulls: [] }
+      expect(betVerdictForSide(past, 'YES')).toBe('EXPIRED')
+      expect(betVerdictForSide(past, 'NO')).toBe('EXPIRED')
+    })
+
+    it("l'indécis reste indécis des deux côtés", () => {
+      const open = { ...base, pulls: [common, common] }
+      expect(betVerdictForSide(open, 'YES')).toBeNull()
+      expect(betVerdictForSide(open, 'NO')).toBeNull()
+    })
   })
 
   it('perdu si la cible a tiré puis s\'est arrêtée avant la fin de la fenêtre', () => {

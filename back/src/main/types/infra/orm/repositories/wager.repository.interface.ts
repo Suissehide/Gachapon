@@ -1,5 +1,6 @@
 import type {
   Bet,
+  BetSide,
   BetStatus,
   CardElement,
   CardRarity,
@@ -90,11 +91,24 @@ export type SettledDuelForUser = PendingDuelForOpponent & {
 export type ActiveBetOnTarget = Bet & {
   team: { id: string; name: string; slug: string; avatar: string | null }
   bettor: { id: string; username: string; avatar: string | null }
+  entries: BetEntryWithUser[]
+}
+
+/** Une mise, avec le joueur qui la tient. */
+export type BetEntryWithUser = {
+  id: string
+  userId: string
+  side: BetSide
+  stake: number
+  payout: number
+  user: { id: string; username: string; avatar: string | null }
 }
 
 export type BetWithParties = Bet & {
   bettor: { id: string; username: string; avatar: string | null }
   target: { id: string; username: string; avatar: string | null }
+  /** Les deux camps du marche, dans l'ordre d'arrivee. */
+  entries: BetEntryWithUser[]
 }
 
 export interface IWagerRepository {

@@ -71,6 +71,14 @@ describe('Bonus équipe `loot` — régénération de jetons', () => {
         lastTokenAt: new Date(Date.now() - elapsedMin * 60 * 1000),
       },
     })
+    // Le test de `claimAll` reclame TOUT ce qui est en attente, pas seulement
+    // la recompense posee ici : une recompense mintee a l'inscription — succes
+    // ou quete debloques par le simple fait de s'enregistrer — ajouterait ses
+    // propres jetons au total et ferait deraper l'assertion. Elle n'existe que
+    // si une suite AMONT a seede les succes ou les quetes, d'ou un echec qui
+    // n'apparait qu'en run complet, jamais quand on lance ce fichier seul.
+    // On part donc d'une ardoise vierge.
+    await prisma.userReward.deleteMany({ where: { userId, claimedAt: null } })
     const reward = await prisma.reward.create({
       data: { tokens: 0, dust: 0, xp: 0, gold: 0 },
     })
@@ -198,6 +206,25 @@ describe('Bonus équipe `loot` — régénération de jetons', () => {
     const baseline = await registerAndLogin('AllBase')
     const bonused = await registerAndLogin('AllBonus')
     await makeTeamWithLoot(bonused.userId, 'All')
+
+    // Le leurre reproduit ce qu'une suite AMONT provoque sans le vouloir : des
+    // succes ou des quetes seedes, donc une recompense mintee a l'inscription.
+    // `claimAll` la reclamerait avec les autres et ses jetons s'ajouteraient au
+    // total. Le poser ICI rend la dependance a l'ordre explicite et permanente,
+    // au lieu d'attendre qu'un run complet la revele une fois sur trois.
+    // `setupClaimant` doit la balayer ; retirer son `deleteMany` fait tomber ce
+    // test.
+    const decoy = await prisma.reward.create({
+      data: { tokens: 2, dust: 0, xp: 0, gold: 0 },
+    })
+    await prisma.userReward.create({
+      data: {
+        userId: baseline.userId,
+        rewardId: decoy.id,
+        source: 'ACHIEVEMENT',
+        sourceId: `decoy-${baseline.userId}`,
+      },
+    })
 
     await setupClaimant(baseline.userId, elapsedMin)
     await setupClaimant(bonused.userId, elapsedMin)

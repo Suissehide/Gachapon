@@ -192,12 +192,51 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'teamPoints.duelWon': 8,
   'teamPoints.betWon': 3,
   'teamPoints.perPull': 1,
-  'teamLevel.xpBase': 175,
+  // Courbe d'XP d'equipe : passer du niveau n au suivant coute
+  // `xpBase * n^xpExp`.
+  //
+  // La base a fait l'aller-retour 175 -> 1050 -> 210, et ce n'est pas une
+  // hesitation : entre les deux, le nombre de niveaux UTILES a double. La
+  // progression s'arrete quand l'arbre est plein, et l'arbre est passe de 17
+  // a 32 rangs — donc du niveau 18 au niveau 33. A 1050, atteindre 33 aurait
+  // coute cinq fois le trajet qu'on venait de caler.
+  //
+  // 210 rend au parcours complet son cout d'avant : ~690 000 XP, soit 17
+  // semaines pour une equipe de 35 membres actifs, 50 pour une de 12, 121
+  // pour une de 5. Le meme temps, reparti sur deux fois plus de paliers.
+  //
+  // C'est le TOTAL qui est cale, jamais le cout d'un niveau isole : ajouter
+  // ou retirer des rangs a l'arbre deplace le dernier niveau utile, donc
+  // cette base. Les deux se relisent ensemble.
+  'teamLevel.xpBase': 210,
   'teamLevel.xpExp': 1.6,
-  'teamLevel.maxLevel': 50,
-  'teamPerk.loot.perRank': 0.5,
+  // Le plafond vaut EXACTEMENT la capacite de l'arbre plus un : 32 rangs
+  // (10 + 2 + 10 + 10) pour 32 points distribues du niveau 1 au niveau 33.
+  // Aucun niveau mort, aucun rang hors d'atteinte. Les faire diverger ramene
+  // l'un des deux defauts precedents — soit des points indepensables, soit
+  // des rangs qu'on ne peut jamais atteindre.
+  'teamLevel.maxLevel': 33,
+  // Dix rangs plutot que cinq, a l'effet par rang divise par deux : le
+  // plafond de chaque bonus est INCHANGE, il s'atteint seulement par paliers
+  // deux fois plus fins. C'est ce qui donne un arbitrage a chaque point
+  // plutot qu'une case a cocher.
+  //
+  // `loot` est un POURCENTAGE, pas des minutes : il divise l'intervalle de
+  // regeneration (`effectiveRegenInterval`, economy.domain.ts).
+  //
+  // Passe de 0,25 a 1,5 par rang, soit +15 % au plafond au lieu de +2,5 %.
+  // L'ancienne valeur ne se sentait tout simplement pas : l'intervalle de
+  // base est de 60 minutes, donc 24 jetons par jour, et +2,5 % en ajoutait
+  // 0,6 — quatre par semaine. A +15 % le membre gagne 3,6 jetons par jour,
+  // vingt-cinq sur la semaine : a peu pres une journee de tirages offerte.
+  //
+  // L'ordre de grandeur reste sous celui du bonus de raid (+1 attaque sur 2,
+  // donc +50 %) et au-dessus de `xp` (+4 %) et `forge` (-5 %). C'est voulu :
+  // `loot` touche la boucle centrale du jeu, c'est le bonus que chaque membre
+  // ressent tous les jours.
+  'teamPerk.loot.perRank': 1.5,
   'teamPerk.loot.unlockLevel': 1,
-  'teamPerk.loot.maxRank': 5,
+  'teamPerk.loot.maxRank': 10,
   // `raid.maxRank` a ete ramene de 5 a 2. A 5, le bonus donnait +2 attaques
   // par jour sur les 2 de base : la capacite hebdomadaire d'une equipe de 35
   // passait de 7,2 a 14,4 M de degats contre 5,67 M de PV, soit un boss tombe
@@ -206,14 +245,20 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // attaque tous les DEUX rangs : le rang 1 ne change encore rien, le rang 2
   // donne l'attaque.
   'teamPerk.raid.perRank': 0.5,
-  'teamPerk.raid.unlockLevel': 4,
+  // Ouvert des le premier niveau, comme les trois autres : un deblocage
+  // tardif decidait de l'ordre a la place du chef, et les premiers points
+  // n'avaient alors aucun arbitrage.
+  'teamPerk.raid.unlockLevel': 1,
+  // Seul bonus qui reste a 2 rangs : son effet est un NOMBRE D'ATTAQUES, un
+  // entier, qui ne se decoupe pas en paliers plus fins. Le plafond a 2 vient
+  // de l'equilibrage du raid (voir plus haut), pas de la taille de l'arbre.
   'teamPerk.raid.maxRank': 2,
-  'teamPerk.xp.perRank': 0.8,
-  'teamPerk.xp.unlockLevel': 8,
-  'teamPerk.xp.maxRank': 5,
-  'teamPerk.forge.perRank': 1,
-  'teamPerk.forge.unlockLevel': 16,
-  'teamPerk.forge.maxRank': 5,
+  'teamPerk.xp.perRank': 0.4,
+  'teamPerk.xp.unlockLevel': 1,
+  'teamPerk.xp.maxRank': 10,
+  'teamPerk.forge.perRank': 0.5,
+  'teamPerk.forge.unlockLevel': 1,
+  'teamPerk.forge.maxRank': 10,
   'team.maxMembers': 35,
   'team.recruitDays': 7,
   'teamRaid.historyLimit': 6,

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
+import type { BetSide } from '../api/wagers.api.ts'
 import { WagersApi } from '../api/wagers.api.ts'
 import type { CardRarity } from '../constants/card.constant.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
@@ -164,6 +165,30 @@ export function useBetQuote(
       ),
     enabled: Boolean(teamId) && debounced.targetId !== '',
     staleTime: 5_000,
+  })
+}
+
+export function useJoinBet(teamId: string) {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+  return useMutation({
+    mutationFn: (input: { betId: string; side: BetSide; stake: number }) =>
+      WagersApi.joinBet(teamId, input.betId, {
+        side: input.side,
+        stake: input.stake,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: wagersKey(teamId) })
+      // La mise sort de la bourse : le solde affiché ailleurs doit suivre.
+      void useAuthStore.getState().fetchMe()
+    },
+    onError: (error) => {
+      toast({
+        title: 'Renchère refusée',
+        message: error.message,
+        severity: TOAST_SEVERITY.ERROR,
+      })
+    },
   })
 }
 

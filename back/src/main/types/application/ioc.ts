@@ -76,6 +76,7 @@ import type { StorageClientInterface } from '../infra/storage/storage-client'
 import type { HttpServer } from '../interfaces/http/server'
 import type { ErrorHandlerInterface } from '../utils/error-handler'
 import type { Logger } from '../utils/logger'
+import type { BackgroundTasksInterface } from './background-tasks.interface'
 import type { Config } from './config'
 
 export interface IocContainer {
@@ -86,6 +87,7 @@ export interface IocContainer {
   readonly errorHandler: ErrorHandlerInterface
   readonly postgresOrm: PostgresOrm
   readonly configService: ConfigServiceInterface
+  readonly backgroundTasks: BackgroundTasksInterface
   readonly redisClient: RedisClientInterface
   readonly storageClient: StorageClientInterface
   readonly jwtService: JwtServiceInterface
