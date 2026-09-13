@@ -19,6 +19,7 @@ import {
   Popup,
   PopupBody,
   PopupContent,
+  PopupFooter,
   PopupHeader,
   PopupTitle,
   PopupTrigger,
@@ -143,6 +144,15 @@ export function TeamDirectoryPopup({ trigger }: { trigger?: ReactNode } = {}) {
             )}
           </div>
         </PopupBody>
+        {/* Le pied n'est pas decoratif : `PopupBody` porte `bg-background`, et
+            sans lui ce fond court jusqu'au bord arrondi de la popup, qui
+            parait alors coupee net. Toutes les popups du toolkit se ferment
+            ainsi. */}
+        <PopupFooter>
+          <Button variant="outline" onClick={() => handleOpenChange(false)}>
+            Fermer
+          </Button>
+        </PopupFooter>
       </PopupContent>
     </Popup>
   )

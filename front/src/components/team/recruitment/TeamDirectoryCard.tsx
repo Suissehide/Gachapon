@@ -50,14 +50,17 @@ export function TeamDirectoryCard({
         </div>
       </div>
 
+      {/* Colonne laissée VIDE sans devise, contrairement à `TeamCard` qui
+          étiquette la sienne « Aucun raid en cours ». Les deux absences ne se
+          valent pas : pas de raid est une information (rien n'est en cours),
+          pas de devise n'apprend rien à qui choisit une équipe. La plupart
+          n'en ont pas, donc l'étiquette remplirait la colonne de bruit — et
+          la devise de celles qui en ont une ressort d'autant mieux. La
+          colonne garde sa largeur, l'alignement des lignes ne bouge pas. */}
       <div className="min-w-0">
-        {team.motto ? (
+        {team.motto && (
           <p className="truncate font-body text-sm italic text-text-light">
             « {team.motto} »
-          </p>
-        ) : (
-          <p className="font-mono text-[10px] text-text-light/60">
-            Aucune devise
           </p>
         )}
       </div>
