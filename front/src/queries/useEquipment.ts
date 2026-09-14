@@ -11,6 +11,7 @@ import {
   aggregateEquipmentBonuses,
   cardStuffStats,
   computeCardSetBonuses,
+  emptyStuffStatBonuses,
   type StatBonuses,
   type StuffStatBonuses,
   withCardSetBonuses,
@@ -116,6 +117,45 @@ export function useCardStuffStats(userCardId: string): StuffStatBonuses {
       ),
     [data, sets, userCardId, economy],
   )
+}
+
+/**
+ * Ce que l'équipement d'une carte lui apporte, en trois parts séparées :
+ * les stats classiques des PIÈCES, leurs stats de stuff, et à part les bonus
+ * des SETS actifs. La ligne « Apport total » de la fiche les affiche comme
+ * des chips distinctes (« VIT +22 » puis « VIT +10 % »), parce que le joueur
+ * arbitre justement entre porter une pièce de plus et compléter un set.
+ *
+ * Aucune baseline n'entre ici : `useCardStuffStats` sert à afficher les
+ * stats FINALES d'une carte, celui-ci ne sert qu'à afficher un écart.
+ */
+export function useCardEquipmentContribution(userCardId: string): {
+  classic: StatBonuses
+  stuff: StuffStatBonuses
+  setBonuses: Record<string, number>
+} {
+  const { data } = useEquipmentList()
+  const { data: sets } = useEquipmentSets()
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  return useMemo(() => {
+    const items = data?.items ?? []
+    const scale = economy.equip.levelScale
+    return {
+      classic: aggregateEquipmentBonuses(items, userCardId, scale),
+      // Sans définitions de set ni baseline : la part des pièces seules.
+      stuff: cardStuffStats(
+        items,
+        userCardId,
+        scale,
+        [],
+        emptyStuffStatBonuses(),
+      ),
+      setBonuses: computeCardSetBonuses(
+        items.filter((i) => i.equippedOnId === userCardId).map((i) => i.setKey),
+        sets?.sets ?? [],
+      ),
+    }
+  }, [data, sets, userCardId, economy.equip.levelScale])
 }
 
 /**

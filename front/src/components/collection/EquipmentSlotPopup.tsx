@@ -6,6 +6,7 @@ import {
   Footprints,
   Gem,
   Hand,
+  Layers,
   Link,
   Shield,
   Sparkles,
@@ -30,15 +31,17 @@ import {
   useEconomyConfig,
 } from '../../queries/useEconomyConfig.ts'
 import {
+  useActiveSetsForCard,
   useEquipItem,
   useEquipmentList,
+  useEquipmentSets,
   useSalvageItems,
   useUnequipItem,
   useUpgradeItem,
 } from '../../queries/useEquipment.ts'
 import { useSkillTree } from '../../queries/useSkills.ts'
 import { useAuthStore } from '../../stores/auth.store.ts'
-import { formatBonusKey } from '../../utils/cardStats.ts'
+import { formatBonusKey, statColorVar } from '../../utils/cardStats.ts'
 import { Button } from '../ui/button.tsx'
 import {
   Popup,
@@ -243,7 +246,23 @@ function ItemRow({
       <RarityDot color={RARITY_COLOR_VAR[item.rarity]} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-text">{item.name}</p>
-        <p className="text-[11px] text-text-light">Nv. {item.level}</p>
+        {/* Le set décide de la composition d'une carte autant que la rareté :
+            il se lit sur CHAQUE ligne, sans avoir à ouvrir le détail. Teinté
+            par la rareté, comme la fiche de pièce (`EquipmentDropCard`). */}
+        <p className="flex items-center gap-1.5 text-[11px] text-text-light">
+          <span className="shrink-0">Nv. {item.level}</span>
+          <span aria-hidden="true" className="shrink-0 opacity-50">
+            ·
+          </span>
+          <span
+            className="truncate font-mono text-[10px] font-bold uppercase tracking-[0.12em]"
+            style={{
+              color: `color-mix(in oklab, ${RARITY_COLOR_VAR[item.rarity]} 72%, var(--text-light))`,
+            }}
+          >
+            {item.setLabel}
+          </span>
+        </p>
       </div>
       {isEquippedHere && (
         <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
@@ -552,6 +571,67 @@ function SubstatSection({
   )
 }
 
+/**
+ * Set de la pièce, avec l'avancement DE CETTE CARTE — c'est l'arbitrage du
+ * joueur au moment d'équiper : « est-ce que cette pièce me rapproche d'un
+ * palier ? ». Le compte vient de `useActiveSetsForCard` (même source que les
+ * pastilles de `EquipmentSlotsPanel`, cachées par la fenêtre), la taille et
+ * le bonus de `GET /equipment/sets` — rien n'est écrit en dur.
+ */
+function SetLine({
+  item,
+  userCardId,
+}: {
+  item: EquipmentInstance
+  userCardId: string
+}) {
+  const { data: setsData } = useEquipmentSets()
+  const activeSets = useActiveSetsForCard(userCardId)
+  const def = setsData?.sets.find((s) => s.key === item.setKey)
+  const count = activeSets.find((s) => s.key === item.setKey)?.count ?? 0
+  const pieces = def?.pieces ?? 0
+  const active = pieces > 0 && count >= pieces
+  // Un set ne porte qu'une stat — même convention que `SetBonusGuide`.
+  const statKey = Object.keys(def?.bonus.bonuses ?? {})[0] ?? ''
+
+  return (
+    <div
+      className="rounded-lg border px-2.5 py-2"
+      style={
+        {
+          '--sc': statColorVar(statKey),
+          background: 'color-mix(in oklab, var(--sc) 8%, var(--card))',
+          borderColor: 'color-mix(in oklab, var(--sc) 28%, transparent)',
+        } as React.CSSProperties
+      }
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="inline-flex min-w-0 items-center gap-1.5">
+          <Layers className="h-3.5 w-3.5 shrink-0 text-[var(--sc)]" />
+          <span className="truncate text-xs font-bold text-text">
+            {item.setLabel}
+          </span>
+        </span>
+        {pieces > 0 && (
+          <span
+            className={cn(
+              'shrink-0 font-mono text-[10px] font-bold tabular-nums',
+              active ? 'text-[var(--sc)]' : 'text-text-light',
+            )}
+          >
+            {count}/{pieces} sur la carte
+          </span>
+        )}
+      </div>
+      {def && (
+        <p className="mt-0.5 font-mono text-[10px] text-text-light">
+          {def.bonus.label} {active ? '· actif' : `· à ${pieces} pièces`}
+        </p>
+      )}
+    </div>
+  )
+}
+
 function ItemDetail({
   item,
   userCardId,
@@ -622,6 +702,8 @@ function ItemDetail({
           ))}
         </ul>
       </div>
+
+      <SetLine item={item} userCardId={userCardId} />
 
       <SubstatSection
         substats={item.substats}

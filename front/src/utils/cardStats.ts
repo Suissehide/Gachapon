@@ -472,6 +472,8 @@ const STAT_COLOR_BY_PREFIX: [string, string][] = [
   ['atk', 'var(--stat-atk)'],
   ['def', 'var(--stat-def)'],
   ['spd', 'var(--stat-spd)'],
+  // Avant 'crit' : 'critDmgPct' commence par 'crit', l'ordre décide.
+  ['critDmg', 'var(--stat-critdmg)'],
   ['crit', 'var(--stat-crit)'],
   ['armorPen', 'var(--stat-armorpen)'],
   ['lifesteal', 'var(--stat-lifesteal)'],
