@@ -119,6 +119,35 @@ interface LootTable {
   farm: FarmLoot
 }
 
+/**
+ * Pièce obtenue en combat. Le même objet sert au combat unique et au balayage :
+ * les deux écrans de résultat rendent la même fiche côté front, donc ils ne
+ * peuvent pas se contenter de charges utiles différentes.
+ */
+export interface EquipmentDropPayload {
+  userEquipmentId: string
+  equipmentId: string
+  name: string
+  rarity: Rarity
+  slot: EquipmentSlot
+  setKey: EquipmentSet
+  level: number
+  bonuses: Record<string, number>
+  substats: { key: string; value: number }[]
+  baseBoost: number
+}
+
+/** Carte obtenue en combat — même remarque que {@link EquipmentDropPayload}. */
+export interface CardDropPayload {
+  cardId: string
+  name: string
+  rarity: Rarity
+  wasDuplicate: boolean
+  imageUrl: string | null
+  element: string | null
+  setName: string
+}
+
 export interface BattleRewards {
   gold: number
   dust: number
@@ -128,27 +157,8 @@ export interface BattleRewards {
   /** User's account level right before this battle's rewards were applied. */
   levelBefore: number
   isFirstClear: boolean
-  equipmentDrop: {
-    userEquipmentId: string
-    equipmentId: string
-    name: string
-    rarity: Rarity
-    slot: EquipmentSlot
-    setKey: EquipmentSet
-    level: number
-    bonuses: Record<string, number>
-    substats: { key: string; value: number }[]
-    baseBoost: number
-  } | null
-  cardDrop: {
-    cardId: string
-    name: string
-    rarity: Rarity
-    wasDuplicate: boolean
-    imageUrl: string | null
-    element: string | null
-    setName: string
-  } | null
+  equipmentDrop: EquipmentDropPayload | null
+  cardDrop: CardDropPayload | null
 }
 
 export interface RewardPreview {
@@ -647,8 +657,8 @@ export class CampaignDomain {
     totalGold: number
     totalDust: number
     totalXp: number
-    equipmentDrops: { equipmentId: string; name: string; rarity: Rarity }[]
-    cardDrops: { cardId: string; name: string; rarity: Rarity }[]
+    equipmentDrops: EquipmentDropPayload[]
+    cardDrops: CardDropPayload[]
   }> {
     if (runs < 1 || runs > 10) {
       throw Boom.badRequest('Sweep runs must be 1-10')
@@ -731,13 +741,8 @@ export class CampaignDomain {
           let totalGold = 0
           let totalDust = 0
           let totalXp = 0
-          const equipmentDrops: {
-            equipmentId: string
-            name: string
-            rarity: Rarity
-          }[] = []
-          const cardDrops: { cardId: string; name: string; rarity: Rarity }[] =
-            []
+          const equipmentDrops: EquipmentDropPayload[] = []
+          const cardDrops: CardDropPayload[] = []
 
           // Catalog snapshots used to pick drops. La campagne ne droppe que
           // les slots classiques : les slots de tour (AMULET/GLOVES/BOOTS/
@@ -799,7 +804,7 @@ export class CampaignDomain {
                 Math.random,
               )
               if (candidate) {
-                await tx.userEquipment.create({
+                const ue = await tx.userEquipment.create({
                   data: {
                     userId,
                     equipmentId: candidate.id,
@@ -811,9 +816,19 @@ export class CampaignDomain {
                   },
                 })
                 equipmentDrops.push({
+                  userEquipmentId: ue.id,
                   equipmentId: candidate.id,
                   name: candidate.name,
                   rarity: droppedRarity,
+                  slot: candidate.slot,
+                  setKey: candidate.setKey,
+                  level: ue.level,
+                  bonuses: candidate.bonuses,
+                  substats: (ue.substats ?? []) as {
+                    key: string
+                    value: number
+                  }[],
+                  baseBoost: ue.baseBoost,
                 })
                 await this.#achievementsDomain.track(tx, userId, {
                   kind: 'EQUIPMENT_OBTAINED',
@@ -826,11 +841,21 @@ export class CampaignDomain {
             if (rollFarmCardDrop(loot, Math.random) && activeCards.length > 0) {
               const picked = this.#pickWeighted(activeCards, Math.random)
               if (picked) {
-                await this.#grantCard(tx, userId, picked.id)
+                const { wasDuplicate } = await this.#grantCard(
+                  tx,
+                  userId,
+                  picked.id,
+                )
                 cardDrops.push({
                   cardId: picked.id,
                   name: picked.name,
                   rarity: picked.rarity,
+                  wasDuplicate,
+                  imageUrl: picked.imageUrl
+                    ? this.#storageClient.publicUrl(picked.imageUrl)
+                    : null,
+                  element: picked.element,
+                  setName: picked.setName,
                 })
               }
             }

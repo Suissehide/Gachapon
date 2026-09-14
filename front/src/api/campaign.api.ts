@@ -49,6 +49,17 @@ export type Campaign = {
   chapters: CampaignChapter[]
 }
 
+/** Carte obtenue en combat — même charge utile au combat unique et au balayage. */
+export type CardDrop = {
+  cardId: string
+  name: string
+  rarity: string
+  wasDuplicate: boolean
+  imageUrl: string | null
+  element: string | null
+  setName: string
+}
+
 export type BattleRewards = {
   gold: number
   dust: number
@@ -57,15 +68,7 @@ export type BattleRewards = {
   levelBefore: number
   isFirstClear: boolean
   equipmentDrop: EquipmentDrop | null
-  cardDrop: {
-    cardId: string
-    name: string
-    rarity: string
-    wasDuplicate: boolean
-    imageUrl: string | null
-    element: string | null
-    setName: string
-  } | null
+  cardDrop: CardDrop | null
 }
 
 export type BattleLogEntry = Record<string, unknown> & { type: string }
@@ -83,8 +86,8 @@ export type SweepResult = {
   totalGold: number
   totalDust: number
   totalXp: number
-  equipmentDrops: { equipmentId: string; name: string; rarity: string }[]
-  cardDrops: { cardId: string; name: string; rarity: string }[]
+  equipmentDrops: EquipmentDrop[]
+  cardDrops: CardDrop[]
 }
 
 export const CampaignApi = {

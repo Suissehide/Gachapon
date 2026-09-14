@@ -33,13 +33,14 @@ import {
 } from '../../components/battle/BattlePrepModal.tsx'
 import { ElementGuidePopup } from '../../components/battle/ElementGuidePopup.tsx'
 import {
-  DropCard,
+  CardDropReward,
   RESULT_BADGE_WIN,
   ResultBadge,
   ResultPanel,
   RewardTile,
 } from '../../components/battle/resultKit.tsx'
 import { TeamDock } from '../../components/battle/TeamDock.tsx'
+import { EquipmentDropReward } from '../../components/equipment/EquipmentDropCard.tsx'
 import { AuroraGrid } from '../../components/shared/decorations/AuroraGrid'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { TeamEditorPopup } from '../../components/team/TeamEditorPopup.tsx'
@@ -372,24 +373,21 @@ function CampaignPage() {
                 />
               </div>
 
-              {sweepResult.equipmentDrops.map((e, i) => (
-                <DropCard
-                  // biome-ignore lint/suspicious/noArrayIndexKey: ephemeral
-                  key={i}
-                  tone="amber"
-                  label="Équipement"
-                  name={e.name}
-                  rarity={e.rarity}
+              {/* Mêmes fiches que l'écran de victoire : la pièce garde ses
+                  stats et son bouton « détruire », la carte se voit. */}
+              {sweepResult.equipmentDrops.map((e) => (
+                <EquipmentDropReward
+                  key={e.userEquipmentId}
+                  className="mt-4"
+                  drop={e}
                 />
               ))}
               {sweepResult.cardDrops.map((c, i) => (
-                <DropCard
-                  // biome-ignore lint/suspicious/noArrayIndexKey: ephemeral
-                  key={i}
-                  tone="sky"
-                  label="Carte"
-                  name={c.name}
-                  rarity={c.rarity}
+                <CardDropReward
+                  // biome-ignore lint/suspicious/noArrayIndexKey: une même carte peut tomber deux fois dans un balayage
+                  key={`${c.cardId}-${i}`}
+                  className="mt-4"
+                  drop={c}
                 />
               ))}
 

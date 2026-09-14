@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react'
 
+import type { CardDrop } from '../../api/campaign.api.ts'
+import type { CardElement } from '../../constants/card.constant.ts'
 import { cn } from '../../libs/utils.ts'
+import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
 
 // Shared visual language for the battle-result popups (victory / defeat) and the
 // campaign farm-result popup, so they stay uniform. The animations referenced
@@ -97,58 +100,35 @@ export function RewardTile({
   )
 }
 
-const DROP_TONES = {
-  amber: {
-    wrap: 'border-amber-400/40 from-amber-50 to-orange-50',
-    label: 'text-amber-700/70',
-    name: 'text-amber-800',
-    rarity: 'text-amber-600/70',
-  },
-  sky: {
-    wrap: 'border-sky-400/40 from-sky-50 to-blue-50',
-    label: 'text-sky-700/70',
-    name: 'text-sky-800',
-    rarity: 'text-sky-600/70',
-  },
-} as const
-
-// A single dropped item (equipment = amber, card = sky).
-export function DropCard({
-  tone,
-  label,
-  name,
-  rarity,
+/**
+ * Carte obtenue, dessinée plutôt que décrite : c'est le seul moment où on la
+ * découvre, la réduire à une ligne de texte gâchait la récompense. Partagé par
+ * l'écran de victoire et le résultat de balayage, qui affichaient jusqu'ici
+ * deux rendus différents pour le même gain.
+ */
+export function CardDropReward({
+  drop,
+  className,
 }: {
-  tone: keyof typeof DROP_TONES
-  label: string
-  name: string
-  rarity: string
+  drop: CardDrop
+  className?: string
 }) {
-  const t = DROP_TONES[tone]
   return (
-    <div
-      className={cn(
-        'mt-3 w-full rounded-2xl border bg-gradient-to-br p-3 text-center',
-        t.wrap,
-      )}
-    >
-      <p
-        className={cn(
-          'font-mono text-[10px] font-bold uppercase tracking-widest',
-          t.label,
-        )}
-      >
-        {label}
-      </p>
-      <p className={cn('mt-1 font-display font-bold', t.name)}>{name}</p>
-      <p
-        className={cn(
-          'font-mono text-[10px] uppercase tracking-widest',
-          t.rarity,
-        )}
-      >
-        {rarity}
-      </p>
+    <div className={cn('flex flex-col items-center gap-2', className)}>
+      <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
+        {drop.wasDuplicate ? 'Carte · doublon' : 'Carte'}
+      </span>
+      <div className="relative aspect-[2/3] w-[150px]">
+        <TcgCardFace
+          rarity={drop.rarity}
+          name={drop.name}
+          setName={drop.setName}
+          imageUrl={drop.imageUrl}
+          variant="NORMAL"
+          isOwned
+          element={(drop.element ?? null) as CardElement | null}
+        />
+      </div>
     </div>
   )
 }

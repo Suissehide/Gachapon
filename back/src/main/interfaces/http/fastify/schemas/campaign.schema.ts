@@ -53,6 +53,32 @@ export const stageIdParamSchema = z.object({
   stageId: z.string().uuid(),
 })
 
+// Fiche de pièce / de carte obtenue. Partagée par le combat unique et le
+// balayage : les deux écrans de résultat rendent le même composant côté front,
+// donc ils ont besoin de la même charge utile.
+export const equipmentDropSchema = z.object({
+  userEquipmentId: z.string(),
+  equipmentId: z.string(),
+  name: z.string(),
+  rarity: z.string(),
+  slot: z.string(),
+  setKey: z.string(),
+  level: z.number().int(),
+  bonuses: z.record(z.string(), z.number()),
+  substats: z.array(z.object({ key: z.string(), value: z.number() })),
+  baseBoost: z.number(),
+})
+
+export const cardDropSchema = z.object({
+  cardId: z.string(),
+  name: z.string(),
+  rarity: z.string(),
+  wasDuplicate: z.boolean(),
+  imageUrl: z.string().nullable(),
+  element: z.string().nullable(),
+  setName: z.string(),
+})
+
 export const battleRewardsSchema = z.object({
   gold: z.number().int(),
   dust: z.number().int(),
@@ -60,31 +86,8 @@ export const battleRewardsSchema = z.object({
   xpBefore: z.number().int(),
   levelBefore: z.number().int(),
   isFirstClear: z.boolean(),
-  equipmentDrop: z
-    .object({
-      userEquipmentId: z.string(),
-      equipmentId: z.string(),
-      name: z.string(),
-      rarity: z.string(),
-      slot: z.string(),
-      setKey: z.string(),
-      level: z.number().int(),
-      bonuses: z.record(z.string(), z.number()),
-      substats: z.array(z.object({ key: z.string(), value: z.number() })),
-      baseBoost: z.number(),
-    })
-    .nullable(),
-  cardDrop: z
-    .object({
-      cardId: z.string(),
-      name: z.string(),
-      rarity: z.string(),
-      wasDuplicate: z.boolean(),
-      imageUrl: z.string().nullable(),
-      element: z.string().nullable(),
-      setName: z.string(),
-    })
-    .nullable(),
+  equipmentDrop: equipmentDropSchema.nullable(),
+  cardDrop: cardDropSchema.nullable(),
 })
 
 const simulatorUnitSchema = z.object({
@@ -122,18 +125,6 @@ export const sweepResponseSchema = z.object({
   totalGold: z.number().int(),
   totalDust: z.number().int(),
   totalXp: z.number().int(),
-  equipmentDrops: z.array(
-    z.object({
-      equipmentId: z.string(),
-      name: z.string(),
-      rarity: z.string(),
-    }),
-  ),
-  cardDrops: z.array(
-    z.object({
-      cardId: z.string(),
-      name: z.string(),
-      rarity: z.string(),
-    }),
-  ),
+  equipmentDrops: z.array(equipmentDropSchema),
+  cardDrops: z.array(cardDropSchema),
 })

@@ -728,4 +728,112 @@ describe('Campaign routes', () => {
     })
     expect(res.statusCode).toBe(403)
   })
+
+  // L'écran de résultat d'un balayage rend EXACTEMENT les mêmes fiches que
+  // l'écran de victoire (pièce avec ses stats et son bouton « détruire »,
+  // carte dessinée). Il lui faut donc la même charge utile : ce test fige les
+  // champs que le rendu partagé consomme, faute de quoi le balayage
+  // retomberait sur l'affichage texte qu'il avait avant.
+  it('POST /sweep — les drops portent la même charge utile que le combat', async () => {
+    const { postgresOrm, storageClient } = (app as any).iocContainer
+
+    // Balayer l'étage 2 en forçant le drop de carte (sa table de ferme est à
+    // cardChance 0), et borner le tirage à la carte de ce fichier en
+    // désactivant les sets des autres — même motif que le test d'URL
+    // publique ci-dessus, la suite e2e partageant une base.
+    const stage = await postgresOrm.prisma.campaignStage.findUnique({
+      where: { id: stage2Id },
+    })
+    const originalLoot = stage.lootTable
+    const otherSets = await postgresOrm.prisma.cardSet.findMany({
+      where: { isActive: true, name: { not: `CampSet${suffix}` } },
+      select: { id: true },
+    })
+    const otherSetIds = otherSets.map((cs: { id: string }) => cs.id)
+
+    try {
+      await postgresOrm.prisma.campaignStage.update({
+        where: { id: stage2Id },
+        data: {
+          lootTable: {
+            ...originalLoot,
+            farm: { ...originalLoot.farm, cardChance: 1.0 },
+          },
+        },
+      })
+      await postgresOrm.prisma.cardSet.updateMany({
+        where: { id: { in: otherSetIds } },
+        data: { isActive: false },
+      })
+
+      const res = await app.inject({
+        method: 'POST',
+        url: `/campaign/stages/${stage2Id}/sweep`,
+        headers: { cookie: cookies, 'content-type': 'application/json' },
+        payload: { runs: 1 },
+      })
+      expect(res.statusCode).toBe(200)
+      const body = res.json() as {
+        equipmentDrops: {
+          userEquipmentId: string
+          equipmentId: string
+          name: string
+          rarity: string
+          slot: string
+          setKey: string
+          level: number
+          bonuses: Record<string, number>
+          substats: { key: string; value: number }[]
+          baseBoost: number
+        }[]
+        cardDrops: {
+          cardId: string
+          name: string
+          rarity: string
+          wasDuplicate: boolean
+          imageUrl: string | null
+          element: string | null
+          setName: string
+        }[]
+      }
+
+      // La pièce : son identifiant d'exemplaire existe vraiment (c'est lui
+      // que le bouton « détruire » envoie au salvage), et elle porte de quoi
+      // dessiner la fiche — emplacement, set, niveau, substats.
+      expect(body.equipmentDrops).toHaveLength(1)
+      const equip = body.equipmentDrops[0]!
+      const userEquip = await postgresOrm.prisma.userEquipment.findUnique({
+        where: { id: equip.userEquipmentId },
+      })
+      expect(userEquip).not.toBeNull()
+      expect(userEquip.equipmentId).toBe(equip.equipmentId)
+      expect(['WEAPON', 'ARMOR', 'RING']).toContain(equip.slot)
+      expect(typeof equip.setKey).toBe('string')
+      expect(equip.level).toBe(userEquip.level)
+      expect(Array.isArray(equip.substats)).toBe(true)
+
+      // La carte : illustration en URL publique (jamais la clé de stockage)
+      // et extension, les deux étant dessinées par la fiche partagée.
+      expect(body.cardDrops).toHaveLength(1)
+      const card = body.cardDrops[0]!
+      const stored = await postgresOrm.prisma.card.findUnique({
+        where: { id: card.cardId },
+        select: { imageUrl: true },
+      })
+      expect(stored.imageUrl).toBe(`staging/cards/camp/${suffix}.png`)
+      expect(card.imageUrl).toBe(storageClient.publicUrl(stored.imageUrl))
+      expect(card.imageUrl).toMatch(/^https?:\/\//)
+      expect(card.setName).toBe(`CampSet${suffix}`)
+      expect(typeof card.wasDuplicate).toBe('boolean')
+    } finally {
+      await postgresOrm.prisma.campaignStage.update({
+        where: { id: stage2Id },
+        data: { lootTable: originalLoot },
+      })
+      await postgresOrm.prisma.cardSet.updateMany({
+        where: { id: { in: otherSetIds } },
+        data: { isActive: true },
+      })
+    }
+  })
 })
