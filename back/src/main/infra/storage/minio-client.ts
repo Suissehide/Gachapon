@@ -16,6 +16,8 @@ import type {
   StorageObject,
 } from '../../types/infra/storage/storage-client'
 
+const CACHE_CONTROL_IMMUTABLE = 'public, max-age=31536000, immutable'
+
 export class MinioClient implements StorageClientInterface {
   readonly #s3: S3Client
   readonly #bucket: string
@@ -46,6 +48,8 @@ export class MinioClient implements StorageClientInterface {
         Key: key,
         Body: body,
         ContentType: contentType,
+        // Les objets ne sont jamais réécrits sous la même clé : cache agressif.
+        CacheControl: CACHE_CONTROL_IMMUTABLE,
       }),
     )
     return key

@@ -9,6 +9,11 @@ import {
   ELEMENT_LABELS,
 } from '../../../constants/card.constant.ts'
 import {
+  type CardImageSize,
+  cardImage,
+  handleCardImageError,
+} from './cardImage.ts'
+import {
   getRarityTone,
   type RarityTone,
   STAT_DEFS,
@@ -38,6 +43,8 @@ type Props = {
   /** BRILLIANT / HOLOGRAPHIC render full-art foil overlays over the image. */
   variant?: string | null
   compact?: boolean
+  /** Largeur d'affichage, pilote l'attribut `sizes` du `<img>` (défaut : déduit de `compact`). */
+  imageSize?: CardImageSize
   /** When provided, renders the level square at the top of the right column. */
   level?: number | null
   /** When provided, renders the vertical stat pill column on the right. */
@@ -101,6 +108,7 @@ export function TcgCardFace({
   isOwned = true,
   variant,
   compact = false,
+  imageSize,
   level,
   stats,
   element,
@@ -117,6 +125,13 @@ export function TcgCardFace({
   // placeholder covers the <img> so a card never flashes a bare white rectangle
   // (or a half-streamed image) — see the placeholder layer below.
   const [loaded, setLoaded] = useState(false)
+
+  const { imgProps, sources } = cardImage(
+    imageUrl,
+    imageSize,
+    compact,
+    placeholderImg,
+  )
 
   const overlayLayers = getFoilLayers(variant, isOwned)
   const isHolo = isOwned && variant === 'HOLOGRAPHIC'
@@ -153,7 +168,7 @@ export function TcgCardFace({
       {...holoHandlers}
     >
       <img
-        src={imageUrl || placeholderImg}
+        {...imgProps}
         alt={name}
         // Defer offscreen art so grids of hundreds of cards don't fire every
         // request at once — that burst is what makes MinIO drop/throttle some
@@ -165,21 +180,17 @@ export function TcgCardFace({
         onLoad={() => setLoaded(true)}
         onError={(e) => {
           const img = e.currentTarget
-          const retries = Number(img.dataset.retries ?? '0')
-          // Retry once (cache-busted, small backoff) before giving up — a
-          // transient failure under load shouldn't permanently show not-found.
-          if (imageUrl && retries < 1) {
-            img.dataset.retries = String(retries + 1)
-            const sep = imageUrl.includes('?') ? '&' : '?'
-            setTimeout(() => {
-              img.src = `${imageUrl}${sep}retry=1`
-            }, 600)
-          } else {
-            // Plus de swap vers l'image « non trouvé » : elle se chargeait,
-            // déclenchait onLoad, effaçait le placeholder teinté et laissait
-            // un aplat blanc. On masque l'image, le fond de rareté reste.
+          // Plus de swap vers l'image « non trouvé » : elle se chargeait,
+          // déclenchait onLoad, effaçait le placeholder teinté et laissait
+          // un aplat blanc. On masque l'image, le fond de rareté reste.
+          const giveUp = () => {
             img.style.visibility = 'hidden'
             setLoaded(false)
+          }
+          if (sources) {
+            handleCardImageError(img, sources, giveUp)
+          } else {
+            giveUp()
           }
         }}
       />

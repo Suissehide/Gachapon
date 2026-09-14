@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef } from 'react'
 
 import type { CardElement } from '../../../constants/card.constant.ts'
 import { CardAura } from './CardAura.tsx'
+import { cardImageSizeOf } from './cardImage.ts'
 import type { StatKey } from './config.ts'
 import { TcgCardFace } from './TcgCardFace.tsx'
 
@@ -244,6 +245,7 @@ export function CardDisplay({
               variant={variant}
               isOwned={isOwned}
               compact={compact}
+              imageSize={cardImageSizeOf(compact, large)}
               level={level}
               stats={stats}
               element={element}
