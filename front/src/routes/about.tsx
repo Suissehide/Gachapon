@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
 import { SeoHead } from '../components/shared/SeoHead.tsx'
+import { discordInviteUrl } from '../constants/config.constant'
 
 export const Route = createFileRoute('/about')({
   component: AboutPage,
@@ -77,7 +78,7 @@ function AboutPage() {
             </p>
             <div className="flex flex-wrap gap-3">
               <a
-                href="https://discord.gg/my-gachapon"
+                href={discordInviteUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-xs font-semibold text-foreground hover:bg-muted transition-colors"

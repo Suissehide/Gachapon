@@ -1,5 +1,7 @@
 export const environment = import.meta.env.VITE_ENVIRONMENT || 'development'
 export const apiUrl = import.meta.env.VITE_API_URL
+export const discordInviteUrl =
+  import.meta.env.VITE_DISCORD_INVITE_URL || 'https://discord.gg/2KYXP8tsFc'
 
 // Types
 export type AdminConfig = {

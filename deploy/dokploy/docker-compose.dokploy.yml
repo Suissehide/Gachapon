@@ -65,6 +65,7 @@ services:
         MIRROR_URL: ${MIRROR_URL}
         VITE_API_URL: ${VITE_API_URL}
         VITE_ENVIRONMENT: ${VITE_ENVIRONMENT}
+        VITE_DISCORD_INVITE_URL: ${VITE_DISCORD_INVITE_URL}
         NODE_VERSION: ${NODE_VERSION}
         NPM_VERSION: ${NPM_VERSION}
     image: ${APP_IMAGE_NAME}-front:${VERSION:-latest}
@@ -73,6 +74,7 @@ services:
       # They appear here as documentation of what was passed at build time.
       - VITE_API_URL=${VITE_API_URL}
       - VITE_ENVIRONMENT=${VITE_ENVIRONMENT}
+      - VITE_DISCORD_INVITE_URL=${VITE_DISCORD_INVITE_URL}
     restart: unless-stopped
 
   postgres:

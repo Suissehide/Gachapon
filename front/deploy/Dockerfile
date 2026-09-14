@@ -17,6 +17,8 @@ ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
 ARG VITE_ENVIRONMENT
 ENV VITE_ENVIRONMENT=$VITE_ENVIRONMENT
+ARG VITE_DISCORD_INVITE_URL
+ENV VITE_DISCORD_INVITE_URL=$VITE_DISCORD_INVITE_URL
 
 COPY package.json package-lock.json ./
 RUN npm ci --prefer-offline --include=dev --ignore-scripts --loglevel verbose

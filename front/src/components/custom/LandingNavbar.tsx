@@ -2,6 +2,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { Bot, ChevronDown, LogOut, Plug, ScrollText } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
+import { discordInviteUrl } from '../../constants/config.constant'
 import { useAuthStore } from '../../stores/auth.store'
 import { useAuthDialogStore } from '../../stores/authDialog.store'
 import { AuthDialog } from '../auth/authDialog'
@@ -143,7 +144,7 @@ export function LandingNavbar() {
             </Link>
 
             <a
-              href="https://discord.gg/my-gachapon"
+              href={discordInviteUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="px-3 py-2 text-sm font-medium text-text-light rounded-lg transition-colors hover:text-text hover:bg-muted"
@@ -245,7 +246,7 @@ export function LandingNavbar() {
         ))}
 
         <MobileNavAnchor
-          href="https://discord.gg/my-gachapon"
+          href={discordInviteUrl}
           label="Communauté"
           index={ALL_MOBILE_ITEMS_COUNT}
           open={menuOpen}
