@@ -179,7 +179,6 @@ function CampaignPage() {
   const battleCost = points.data?.battleCost ?? 1
   const sweepCost = points.data?.sweepCost ?? 1
   const canBattle = currentPC >= battleCost && hasTeam
-  const canSweep = currentPC >= sweepCost * 3 && hasTeam
 
   const handleFight = () => {
     if (!prep) {
@@ -187,12 +186,12 @@ function CampaignPage() {
     }
     navigate({ to: '/battle/$stageId', params: { stageId: prep.id } })
   }
-  const handleSweep = () => {
+  const handleSweep = (runs: number) => {
     if (!prep) {
       return
     }
     sweep.mutate(
-      { stageId: prep.id, runs: 3 },
+      { stageId: prep.id, runs },
       {
         onSuccess: (result) => {
           setSweepResult(result)
@@ -311,7 +310,7 @@ function CampaignPage() {
               battleCost={battleCost}
               sweepCost={sweepCost}
               canBattle={canBattle}
-              canSweep={canSweep}
+              hasTeam={hasTeam}
               sweepPending={sweep.isPending}
               onFight={handleFight}
               onSweep={handleSweep}
@@ -349,7 +348,7 @@ function CampaignPage() {
                 Farm terminé
               </h2>
               <p className="mt-1 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-text-light/70">
-                × {sweepResult.runs} passages
+                × {sweepResult.runs} combats
               </p>
 
               <div className="mt-6 grid w-full grid-cols-3 gap-2.5">
@@ -722,6 +721,10 @@ function LevelCard({
 
 // ── Prep modal ──────────────────────────────────────────────────────────────
 
+// Nombres de passages proposés en combat multiple sur un niveau déjà terminé.
+// Le serveur accepte 1 à 10 passages (campaign.schema.ts).
+const MULTI_RUNS = [1, 5] as const
+
 function PrepModal({
   stage,
   chapter,
@@ -730,7 +733,7 @@ function PrepModal({
   battleCost,
   sweepCost,
   canBattle,
-  canSweep,
+  hasTeam,
   sweepPending,
   onFight,
   onSweep,
@@ -744,17 +747,18 @@ function PrepModal({
   battleCost: number
   sweepCost: number
   canBattle: boolean
-  canSweep: boolean
+  hasTeam: boolean
   sweepPending: boolean
   onFight: () => void
-  onSweep: () => void
+  onSweep: (runs: number) => void
   onEditTeam: () => void
   onClose: () => void
 }) {
   const meta = chapterMeta(chapter)
   const isBoss = stage.isBoss
   const rp = stage.rewardPreview
-  const loot = stage.status !== 'cleared' ? rp.firstClear : rp.farm
+  const isCleared = stage.status === 'cleared'
+  const loot = isCleared ? rp.farm : rp.firstClear
   // Le libellé dit POURQUOI c'est bloqué : une équipe vide prime sur
   // l'énergie, sinon on annoncerait « énergie insuffisante » à tort.
   const fightLabel = team.length
@@ -817,14 +821,14 @@ function PrepModal({
                 icon={Layers}
               />
             )}
-            {stage.status !== 'cleared' && rp.guaranteedEquipment && (
+            {!isCleared && rp.guaranteedEquipment && (
               <RewardPill
                 color="#ec4899"
                 label="Équipement garanti"
                 icon={Shield}
               />
             )}
-            {stage.status !== 'cleared' && rp.guaranteedCard && (
+            {!isCleared && rp.guaranteedCard && (
               <RewardPill
                 color="#10b981"
                 label="Carte garantie"
@@ -835,22 +839,41 @@ function PrepModal({
         </>
       }
       extraActions={
-        stage.status === 'cleared' ? (
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={onSweep}
-            disabled={!canSweep || sweepPending}
-            className="gap-2"
-          >
-            <RotateCcw className="h-4 w-4" />
-            Balayer · {sweepCost}
-          </Button>
+        isCleared ? (
+          // Un seul bouton, deux zones de frappe : le libellé « Combat
+          // multiple » n'est écrit qu'une fois, chaque segment ne porte que ce
+          // qui le distingue — le nombre de passages et son coût.
+          <div className="ml-auto flex h-10 items-stretch overflow-hidden rounded-md border border-primary bg-primary text-primary-foreground shadow-sm">
+            {/* Le libellé n'est pas cliquable : fond blanc cerné d'orange, quand
+                les segments ambrés portent seuls l'affordance. */}
+            <span className="flex shrink-0 items-center gap-1.5 bg-white pl-4 pr-3.5 font-display text-sm font-bold text-text">
+              <Swords className="mr-0.5 h-4 w-4 text-primary" />
+              Combat
+              <span className="hidden sm:inline">multiple</span>
+            </span>
+            {MULTI_RUNS.map((runs) => (
+              <Button
+                key={runs}
+                variant="ghost"
+                onClick={() => onSweep(runs)}
+                disabled={
+                  !hasTeam || currentPC < sweepCost * runs || sweepPending
+                }
+                className="h-full gap-1.5 rounded-none border-l border-white/25 px-3.5 text-primary-foreground hover:bg-white/15 hover:text-primary-foreground"
+              >
+                ×{runs}
+                <span className="inline-flex items-center gap-0.5 rounded bg-white/25 px-1.5 py-0.5 font-mono text-[12px] font-bold tabular-nums">
+                  <Zap className="h-3 w-3" />
+                  {sweepCost * runs}
+                </span>
+              </Button>
+            ))}
+          </div>
         ) : undefined
       }
-      fightLabel={fightLabel}
-      canFight={canBattle}
-      onFight={onFight}
+      fightLabel={isCleared ? undefined : fightLabel}
+      canFight={isCleared ? undefined : canBattle}
+      onFight={isCleared ? undefined : onFight}
       onEditTeam={onEditTeam}
       onClose={onClose}
     />

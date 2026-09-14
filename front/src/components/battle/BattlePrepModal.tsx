@@ -29,7 +29,11 @@ export type PrepEnemy = {
  * points, qui sont donc des emplacements : le fil d'ariane de l'en-tête
  * (`eyebrow`), les pastilles de récompense (`rewards`, absentes en tour faute
  * d'aperçu de butin côté serveur) et les actions supplémentaires du pied de
- * page (`extraActions`, le balayage de campagne).
+ * page (`extraActions`, les combats multiples de campagne).
+ *
+ * Le bouton « Combattre » est lui-même optionnel : un niveau déjà terminé ne se
+ * rejoue qu'en combat multiple, donc on omet `onFight` et le pied de page ne
+ * garde que `extraActions`.
  */
 export function BattlePrepModal({
   eyebrow,
@@ -59,9 +63,10 @@ export function BattlePrepModal({
   hideEnergy?: boolean
   rewards?: ReactNode
   extraActions?: ReactNode
-  fightLabel: string
-  canFight: boolean
-  onFight: () => void
+  fightLabel?: string
+  canFight?: boolean
+  /** Omis = pas de bouton « Combattre » (niveau déjà terminé). */
+  onFight?: () => void
   onEditTeam: () => void
   onClose: () => void
 }) {
@@ -180,15 +185,17 @@ export function BattlePrepModal({
           Retour
         </Button>
         {extraActions}
-        <Button
-          size="lg"
-          onClick={onFight}
-          disabled={!canFight}
-          className="flex-1 gap-2"
-        >
-          <Swords className="h-4 w-4" />
-          {fightLabel}
-        </Button>
+        {onFight && (
+          <Button
+            size="lg"
+            onClick={onFight}
+            disabled={!canFight}
+            className="flex-1 gap-2"
+          >
+            <Swords className="h-4 w-4" />
+            {fightLabel}
+          </Button>
+        )}
       </PopupFooter>
     </>
   )
