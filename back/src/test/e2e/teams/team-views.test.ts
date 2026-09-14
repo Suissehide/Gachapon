@@ -63,9 +63,12 @@ describe('Vues de la section Équipe', () => {
   let attacksPerDay: number
   let previousAttacksPerDay: number
   let previousHistoryLimit: number
+  let previousRecruitDays: number
 
   const suffix = Date.now()
   const password = 'Password123!'
+  /** Seuil « Recrue » figé le temps du fichier (cf. `beforeAll`). */
+  const RECRUIT_DAYS = 7
   const weekKey = raidWeekKey(new Date())
   const MAIN_TEAM_NAME = `Vue Principale ${suffix}`
   const MAIN_LEVEL = 7
@@ -164,8 +167,15 @@ describe('Vues de la section Équipe', () => {
 
     previousAttacksPerDay = await configService.get('raid.attacksPerDay')
     previousHistoryLimit = await configService.get('teamRaid.historyLimit')
+    // `team.recruitDays` est un levier d'équilibrage : le figer ici découple ce
+    // fichier de sa valeur du moment. Il valait 7 à l'écriture de ce test, puis
+    // est passé à 1 (52f1ef5d) — les deux membres fabriqués plus bas (entrés il
+    // y a 1 et 30 jours) se retrouvaient alors du même côté du seuil, et le
+    // test tombait sur un changement qui ne le concernait pas.
+    previousRecruitDays = await configService.get('team.recruitDays')
     await configService.set('raid.attacksPerDay', 2)
     await configService.set('teamRaid.historyLimit', 6)
+    await configService.set('team.recruitDays', RECRUIT_DAYS)
 
     const cfg = await configService.getMany(
       'team.maxMembers',
@@ -298,6 +308,7 @@ describe('Vues de la section Équipe', () => {
   afterAll(async () => {
     await configService.set('raid.attacksPerDay', previousAttacksPerDay)
     await configService.set('teamRaid.historyLimit', previousHistoryLimit)
+    await configService.set('team.recruitDays', previousRecruitDays)
     await app.close()
   })
 
@@ -473,12 +484,14 @@ describe('Vues de la section Équipe', () => {
     const labelOf = (userId: string) =>
       body.members.find((m: any) => m.userId === userId).roleLabel
 
-    expect(recruitDays).toBe(7)
+    // Le seuil figé par `beforeAll` a bien été relu : c'est lui qui place les
+    // deux `joinedAt` ci-dessous de part et d'autre de la limite.
+    expect(recruitDays).toBe(RECRUIT_DAYS)
     expect(labelOf(meId)).toBe('Chef')
     expect(labelOf(adminId)).toBe('Officier')
     // Entré il y a 30 jours : membre installé.
     expect(labelOf(veteranId)).toBe('Membre')
-    // Entré il y a 1 jour, donc sous les 7 jours de `team.recruitDays`.
+    // Entré il y a 1 jour, donc sous les `RECRUIT_DAYS` de `team.recruitDays`.
     expect(labelOf(recruitId)).toBe('Recrue')
   })
 
