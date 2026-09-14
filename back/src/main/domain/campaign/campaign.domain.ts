@@ -1064,7 +1064,9 @@ export class CampaignDomain {
             name: picked.name,
             rarity: picked.rarity as Rarity,
             wasDuplicate,
-            imageUrl: picked.imageUrl,
+            imageUrl: picked.imageUrl
+              ? this.#storageClient.publicUrl(picked.imageUrl)
+              : null,
             element: picked.element,
             setName: picked.set.name,
           }
@@ -1176,7 +1178,9 @@ export class CampaignDomain {
               name: picked.name,
               rarity: picked.rarity,
               wasDuplicate,
-              imageUrl: picked.imageUrl,
+              imageUrl: picked.imageUrl
+                ? this.#storageClient.publicUrl(picked.imageUrl)
+                : null,
               element: picked.element,
               setName: picked.setName,
             }

@@ -8,6 +8,11 @@ import { cn } from '../../libs/utils.ts'
 
 // Outer shell: rounded cream panel that slides in, with an optional amber halo
 // burst behind the badge. Children are stacked and centered.
+//
+// C'est ici que vit la hauteur max : `PopupContent` est seulement centré en
+// `fixed`, sans plafond ni défilement, donc un panneau plus haut que la
+// fenêtre (une victoire avec carte + équipement + barre d'XP, par exemple)
+// débordait hors écran, boutons compris, sans moyen d'y accéder.
 export function ResultPanel({
   halo = false,
   children,
@@ -16,7 +21,7 @@ export function ResultPanel({
   children: ReactNode
 }) {
   return (
-    <div className="relative overflow-hidden rounded-[26px] px-6 py-8 sm:px-8 animate-[battleResultIn_0.4s_ease]">
+    <div className="relative max-h-[calc(100dvh-2rem)] overflow-y-auto overflow-x-hidden overscroll-contain rounded-[26px] px-6 py-8 sm:px-8 animate-[battleResultIn_0.4s_ease]">
       {halo && (
         <div
           className="pointer-events-none absolute inset-x-0 top-0 h-48"

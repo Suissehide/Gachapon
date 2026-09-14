@@ -14,6 +14,7 @@ describe('Campaign routes', () => {
   let userCardId: string
   let stage1Id: string
   let stage2Id: string
+  let stage3Id: string
   let towerSlotPieceId: string
   let userId: string
   let questId: string
@@ -57,6 +58,9 @@ describe('Campaign routes', () => {
         rarity: 'LEGENDARY',
         dropWeight: 1,
         setId: set.id,
+        // Clé de stockage brute, comme en base : c'est le back qui doit la
+        // convertir en URL publique avant de la servir (cf. l'étage 1-3).
+        imageUrl: `staging/cards/camp/${suffix}.png`,
         baseHp: 5000,
         baseAtk: 500,
         baseDef: 100,
@@ -223,6 +227,50 @@ describe('Campaign routes', () => {
       },
     })
     stage2Id = stage2.id
+
+    // Étage 1-3 — le seul à emprunter le chemin du drop de CARTE garanti.
+    // `minRarity: 'LEGENDARY'` borne le tirage au sommet de l'échelle, donc à
+    // la carte de ce fichier une fois les autres sets désactivés (cf. le test
+    // dédié plus bas).
+    const stage3 = await postgresOrm.prisma.campaignStage.create({
+      data: {
+        chapter: 1,
+        index: 3,
+        label: '1-3',
+        isBoss: false,
+        order: 3,
+        enemyTeam: [
+          {
+            baseHp: 10,
+            baseAtk: 1,
+            baseDef: 0,
+            baseSpd: 50,
+            level: 1,
+            palier: 1,
+            attackPattern: 'BASIC',
+            mitigationScale: 1,
+          },
+        ],
+        lootTable: {
+          firstClear: {
+            gold: 10,
+            dust: 1,
+            xp: 1,
+            guaranteedEquipment: null,
+            guaranteedCard: { minRarity: 'LEGENDARY' },
+          },
+          farm: {
+            gold: 10,
+            dust: 1,
+            xp: 1,
+            equipmentDropChance: 0.0,
+            equipmentWeights: { COMMON: 100 },
+            cardChance: 0.0,
+          },
+        },
+      },
+    })
+    stage3Id = stage3.id
 
     // Quête hebdo + achievement STAGES_CLEARED_COUNT (pendant du même setup
     // dans tower.test.ts) : preuve G2 qu'un combat de CAMPAGNE, lui,
@@ -546,6 +594,74 @@ describe('Campaign routes', () => {
       where: { userId, questId: equipQuestId, periodKey: 'oneshot' },
     })
     expect(after!.progress).toBe(before!.progress + 1)
+  })
+
+  // Le front nourrit directement un `<img>` avec `rewards.cardDrop.imageUrl`
+  // (popup de victoire, battle.$stageId.tsx). Servir la clé de stockage brute
+  // au lieu de l'URL publique donne une source relative à la page courante,
+  // donc une carte sans illustration — c'est le bug que ce test verrouille.
+  it('POST /battle — le drop de carte sort en URL publique, pas en clé de stockage', async () => {
+    const { postgresOrm, storageClient } = (app as any).iocContainer
+
+    // Le pool de cartes garanties interroge toute la table Card (filtrée sur
+    // les sets actifs) et la suite e2e partage une base : on désactive le
+    // temps du combat les sets des autres fichiers pour que le tirage ne
+    // puisse retomber que sur la carte de celui-ci.
+    const otherSets = await postgresOrm.prisma.cardSet.findMany({
+      where: { isActive: true, name: { not: `CampSet${suffix}` } },
+      select: { id: true },
+    })
+    const otherSetIds = otherSets.map((cs: { id: string }) => cs.id)
+    await postgresOrm.prisma.cardSet.updateMany({
+      where: { id: { in: otherSetIds } },
+      data: { isActive: false },
+    })
+
+    try {
+      // L'étage 1-3 ne se déverrouille qu'après les deux précédents. Les tests
+      // ci-dessus les franchissent déjà, mais les refranchir ici (rejouer un
+      // étage franchi est sans effet sur la progression) garde ce test
+      // exécutable seul, via `-t`.
+      for (const id of [stage1Id, stage2Id]) {
+        const unlock = await app.inject({
+          method: 'POST',
+          url: `/campaign/stages/${id}/battle`,
+          headers: { cookie: cookies },
+        })
+        expect(unlock.statusCode).toBe(200)
+      }
+
+      const res = await app.inject({
+        method: 'POST',
+        url: `/campaign/stages/${stage3Id}/battle`,
+        headers: { cookie: cookies },
+      })
+      expect(res.statusCode).toBe(200)
+      const body = res.json() as {
+        won: boolean
+        rewards: {
+          isFirstClear: boolean
+          cardDrop: { cardId: string; imageUrl: string | null } | null
+        } | null
+      }
+      expect(body.won).toBe(true)
+      expect(body.rewards?.isFirstClear).toBe(true)
+
+      const drop = body.rewards?.cardDrop
+      expect(drop).not.toBeNull()
+      const stored = await postgresOrm.prisma.card.findUnique({
+        where: { id: drop!.cardId },
+        select: { imageUrl: true },
+      })
+      expect(stored!.imageUrl).toBe(`staging/cards/camp/${suffix}.png`)
+      expect(drop!.imageUrl).toBe(storageClient.publicUrl(stored!.imageUrl))
+      expect(drop!.imageUrl).toMatch(/^https?:\/\//)
+    } finally {
+      await postgresOrm.prisma.cardSet.updateMany({
+        where: { id: { in: otherSetIds } },
+        data: { isActive: true },
+      })
+    }
   })
 
   it('POST /battle — refuses 400 when no team deployed', async () => {
