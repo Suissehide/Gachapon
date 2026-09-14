@@ -1,5 +1,5 @@
 // changelog-sync: dernier commit intégré au changelog. Mis à jour par la commande /changelog.
-// last-synced-commit: b50e9bd1a4f60ae5ea6e1da3d1822a379aa61df3
+// last-synced-commit: 3e118bdbab87dffa99f634666798d449f0af320f
 import { createFileRoute } from '@tanstack/react-router'
 
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
@@ -37,6 +37,72 @@ const TYPE_META: Record<ChangeType, { label: string; className: string }> = {
 }
 
 const RELEASES: ChangelogRelease[] = [
+  {
+    version: '3.0',
+    title: 'Les équipes prennent vie',
+    date: 'Septembre 2026',
+    summary:
+      'Un boss à abattre en groupe chaque semaine, des duels et des paris entre coéquipiers, une progression d’équipe à faire monter — et un annuaire pour trouver les tiens.',
+    entries: [
+      {
+        type: 'new',
+        text: 'Le raid d’équipe : chaque semaine, un boss élémentaire se dresse devant ton équipe — Ignis le Brasier, Nérée la Marée, Sylva la Ronce ou Gorm le Roc — et la rotation change de boss d’une semaine à l’autre. Tout le monde tape sur la même barre de points de vie, deux attaques par jour et par membre, et l’équipe décroche un lot à 25, 50, 75 et 100 % de la barre. La page d’équipe suit les dégâts en direct et montre qui a contribué combien.',
+      },
+      {
+        type: 'new',
+        text: 'Les duels de tirage : défie un coéquipier sur vos cinq prochains tirages, chacun engage des cartes, et le meilleur score rafle la mise. Les cartes engagées sont verrouillées le temps du duel — impossible de les recycler en douce. Tu as 24 h pour accepter, 48 h pour tirer.',
+      },
+      {
+        type: 'new',
+        text: 'Les paris : ouvre un marché sur les dix prochains tirages d’un coéquipier — « est-ce qu’il sortira au moins un rare ? » — et mise ta poussière. Les autres renchérissent du camp qu’ils veulent et la cote bouge à chaque mise, calculée sur les vraies chances de la table de tirage. Avant de choisir ton camp, tu vois qui a misé de l’autre côté, et combien.',
+      },
+      {
+        type: 'new',
+        text: 'La progression d’équipe : tes dégâts de raid, tes duels gagnés, tes paris gagnés et tes tirages rapportent des points chaque semaine, et leur somme fait monter l’équipe de niveau. Chaque niveau donne un point que le chef investit dans l’un des quatre bonus — régénération de jetons, attaques de raid, XP de campagne, coût de reforge — répartis sur 32 rangs, les quatre ouverts dès le premier point.',
+      },
+      {
+        type: 'new',
+        text: 'Le recrutement : un annuaire des équipes qui cherchent du monde s’ouvre depuis « Mes équipes ». Tu peux candidater à cinq équipes à la fois, suivre tes candidatures et les annuler ; côté chef, une file d’attente affiche le niveau de chaque candidat, et la cloche prévient des deux côtés. Une candidature expire au bout de sept jours, et un refus t’écarte de cette équipe une semaine.',
+      },
+      {
+        type: 'improved',
+        text: 'Les deux écrans d’équipe sont refaits : la liste avec ses emblèmes colorés et ses emplacements libres, la fiche en deux colonnes avec le raid, les duels et la table des contributions. Le grade d’officier devient enfin attribuable par le chef, et l’étiquette « Recrue » ne tient plus qu’un jour au lieu d’une semaine.',
+      },
+    ],
+  },
+  {
+    version: '2.1',
+    title: 'Cartes, compétences et réglages',
+    date: 'Septembre 2026',
+    summary:
+      'Cinq familles de cartes de plus, un arbre de compétences qui va jusqu’au niveau 100, des quêtes d’équipement et un combat recalibré.',
+    entries: [
+      {
+        type: 'new',
+        text: 'Cinq familles rejoignent le classeur — Centaures, Dryades, Kitsunes, Draenei et Lamia — soit 170 cartes de plus. Le jeu compte désormais 18 familles et 602 cartes, dont les illustrations sont servies à la taille de ton écran et chargent donc plus vite.',
+      },
+      {
+        type: 'new',
+        text: 'L’arbre de compétences couvre enfin le niveau 100 : les nœuds existants gagnent des paliers, et de nouveaux sommets apparaissent, dont deux qui touchent l’équipement — une remise sur le coût d’amélioration et un bonus au recyclage. Plus aucun effet n’est réparti sur deux nœuds d’une même branche : monter une compétence ne peut plus être un piège.',
+      },
+      {
+        type: 'new',
+        text: 'Des quêtes d’équipement entrent dans la rotation : le pool hebdomadaire passe de 7 à 11 quêtes, et la chaîne à faire une fois gagne les trois gestes de découverte — ramasser, améliorer et recycler une pièce. Environ quatre semaines sur cinq contiennent au moins une quête d’équipement.',
+      },
+      {
+        type: 'new',
+        text: 'Un guide des éléments s’ouvre depuis l’en-tête de la campagne et des tours : la roue des quatre éléments, la paire Lumière / Ténèbres qui se répond hors cycle, et les multiplicateurs exacts.',
+      },
+      {
+        type: 'improved',
+        text: 'Le combat est recalibré. La vitesse ne monte plus avec le niveau — ni chez toi ni chez l’ennemi : c’est l’équipement qui décide de l’ordre des tours. Les autres stats gagnent 9 % par niveau au lieu de 6 %. Et les débuts redeviennent franchissables : le premier étage de tour et le premier combat de campagne se gagnent de nouveau avec une main de départ médiocre.',
+      },
+      {
+        type: 'fixed',
+        text: 'Le compteur de garantie annonçait le légendaire un tirage trop tôt. Et la vue agrandie d’une carte est désormais la même partout — tirage, collection, butin de duel — y compris ouverte depuis une fenêtre.',
+      },
+    ],
+  },
   {
     version: '2.0',
     title: 'Les Tours et l’Équipement',
