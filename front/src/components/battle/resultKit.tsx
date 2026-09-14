@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react'
+import { Star } from 'lucide-react'
+import { Children, isValidElement, type ReactNode } from 'react'
 
 import type { CardDrop } from '../../api/campaign.api.ts'
 import type { CardElement } from '../../constants/card.constant.ts'
@@ -105,6 +106,16 @@ export function RewardTile({
  * découvre, la réduire à une ligne de texte gâchait la récompense. Partagé par
  * l'écran de victoire et le résultat de balayage, qui affichaient jusqu'ici
  * deux rendus différents pour le même gain.
+ *
+ * Rien autour de l'illustration : ni libellé au-dessus, ni cadre derrière. La
+ * carte porte déjà son nom, son extension et sa bordure de rareté ; l'encart
+ * blanc n'ajoutait qu'un second cadre autour du premier. C'est la rangée
+ * (`DropRail`) qui donne aux récompenses leur gabarit commun, pas une boîte.
+ *
+ * Seule marque posée dessus : la pastille « Nouveau » d'une carte encore
+ * inconnue — même pastille, mêmes couleurs et même coin qu'au tirage
+ * (`getSpecialBadges` dans machine/reveal/RevealGrid.tsx), pour que « je viens
+ * de la débloquer » se lise pareil quel que soit l'écran qui l'annonce.
  */
 export function CardDropReward({
   drop,
@@ -114,11 +125,14 @@ export function CardDropReward({
   className?: string
 }) {
   return (
-    <div className={cn('flex flex-col items-center gap-2', className)}>
-      <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-        {drop.wasDuplicate ? 'Carte · doublon' : 'Carte'}
-      </span>
-      <div className="relative aspect-[2/3] w-[150px]">
+    <div className={cn('flex flex-col items-center justify-center', className)}>
+      <div className="relative aspect-[2/3] w-full max-w-[190px]">
+        {!drop.wasDuplicate && (
+          <span className="pointer-events-none absolute top-2 right-2 z-20 flex items-center gap-1 rounded-full bg-emerald-500/95 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-emerald-600/40">
+            <Star className="h-3 w-3" strokeWidth={2.5} />
+            Nouveau
+          </span>
+        )}
         <TcgCardFace
           rarity={drop.rarity}
           name={drop.name}
@@ -128,6 +142,55 @@ export function CardDropReward({
           isOwned
           element={(drop.element ?? null) as CardElement | null}
         />
+      </div>
+    </div>
+  )
+}
+
+// Largeur d'un encart de la rangée. Assez large pour que la fiche de pièce
+// garde ses stats lisibles (elle passe ses sous-stats sur une colonne à cette
+// largeur, cf. la requête de conteneur dans EquipmentDropCard), assez étroite
+// pour qu'un second encart dépasse du bord du panneau et annonce le défilement.
+const DROP_TILE = 'w-[264px] shrink-0 snap-start [&>*]:w-full'
+
+/**
+ * Rangée des récompenses tangibles (pièces, cartes) d'un écran de résultat.
+ *
+ * Empilées verticalement, trois pièces d'équipement repoussaient les boutons
+ * du panneau à plusieurs écrans de défilement vertical. À partir de deux
+ * récompenses, elles deviennent donc des encarts de largeur fixe qui défilent
+ * horizontalement, tous étirés à la même hauteur — une pièce à 4 sous-stats ne
+ * doit pas faire une case deux fois plus haute que sa voisine.
+ *
+ * Une récompense seule garde toute la largeur du panneau : lui imposer la
+ * largeur d'un encart la rétrécirait sans rien ranger.
+ *
+ * Les enfants conditionnels (`{drop && <Fiche />}`) sont attendus : `false` ne
+ * compte pas comme une récompense. En revanche un composant qui rend `null`
+ * de lui-même compte pour un — d'où les gardes chez les appelants.
+ */
+export function DropRail({ children }: { children: ReactNode }) {
+  const items = Children.toArray(children)
+  if (items.length === 0) {
+    return null
+  }
+  if (items.length === 1) {
+    return <div className="mt-4 w-full">{items[0]}</div>
+  }
+  // La rangée déborde jusqu'aux bords du panneau (marges négatives + rembourrage
+  // interne) : le troisième encart est ainsi coupé par le bord au lieu de
+  // s'arrêter pile dedans, et le défilement se voit sans avoir à le deviner.
+  return (
+    <div className="-mx-6 mt-4 w-[calc(100%+3rem)] snap-x snap-mandatory overflow-x-auto overscroll-x-contain px-6 pb-2 sm:-mx-8 sm:w-[calc(100%+4rem)] sm:px-8 [scrollbar-width:thin]">
+      <div className="flex items-stretch gap-3">
+        {items.map((item, index) => (
+          <div
+            key={isValidElement(item) && item.key !== null ? item.key : index}
+            className={cn('flex', DROP_TILE)}
+          >
+            {item}
+          </div>
+        ))}
       </div>
     </div>
   )

@@ -34,6 +34,7 @@ import {
 import { ElementGuidePopup } from '../../components/battle/ElementGuidePopup.tsx'
 import {
   CardDropReward,
+  DropRail,
   RESULT_BADGE_WIN,
   ResultBadge,
   ResultPanel,
@@ -374,22 +375,26 @@ function CampaignPage() {
               </div>
 
               {/* Mêmes fiches que l'écran de victoire : la pièce garde ses
-                  stats et son bouton « détruire », la carte se voit. */}
-              {sweepResult.equipmentDrops.map((e) => (
-                <EquipmentDropReward
-                  key={e.userEquipmentId}
-                  className="mt-4"
-                  drop={e}
-                />
-              ))}
-              {sweepResult.cardDrops.map((c, i) => (
-                <CardDropReward
-                  // biome-ignore lint/suspicious/noArrayIndexKey: une même carte peut tomber deux fois dans un balayage
-                  key={`${c.cardId}-${i}`}
-                  className="mt-4"
-                  drop={c}
-                />
-              ))}
+                  stats et son bouton « détruire », la carte se voit. Un
+                  balayage en rapporte plusieurs : la rangée les met côte à
+                  côte, à la même taille, plutôt que de les empiler jusqu'à
+                  chasser le bouton « Continuer » hors du panneau. */}
+              <DropRail>
+                {sweepResult.equipmentDrops.map((e) => (
+                  <EquipmentDropReward key={e.userEquipmentId} drop={e} />
+                ))}
+              </DropRail>
+              {/* Les cartes ont leur propre rangée, sous les pièces : deux
+                  récompenses de nature différente, deux sections. */}
+              <DropRail>
+                {sweepResult.cardDrops.map((c, i) => (
+                  <CardDropReward
+                    // biome-ignore lint/suspicious/noArrayIndexKey: une même carte peut tomber deux fois dans un balayage
+                    key={`${c.cardId}-${i}`}
+                    drop={c}
+                  />
+                ))}
+              </DropRail>
 
               <div className="mt-6 flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-center">
                 <Button onClick={() => setSweepResult(null)} className="gap-2">

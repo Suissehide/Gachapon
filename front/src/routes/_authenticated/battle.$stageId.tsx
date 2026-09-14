@@ -22,6 +22,7 @@ import type { BattleResult } from '../../api/campaign.api.ts'
 import { BattleScene } from '../../components/battle/BattleScene.tsx'
 import {
   CardDropReward,
+  DropRail,
   RESULT_BADGE_LOSS,
   RESULT_BADGE_TIMEOUT,
   RESULT_BADGE_WIN,
@@ -480,14 +481,16 @@ function VictoryPanel({
         </div>
       )}
 
-      <EquipmentDropReward
-        className="mt-4"
-        drop={rewards?.equipmentDrop ?? null}
-      />
-
-      {rewards?.cardDrop && (
-        <CardDropReward className="mt-4" drop={rewards.cardDrop} />
-      )}
+      {/* Une rangée par nature de récompense : les pièces, puis les cartes en
+          dessous. Un seul gain garde toute la largeur du panneau. */}
+      <DropRail>
+        {rewards?.equipmentDrop && (
+          <EquipmentDropReward drop={rewards.equipmentDrop} />
+        )}
+      </DropRail>
+      <DropRail>
+        {rewards?.cardDrop && <CardDropReward drop={rewards.cardDrop} />}
+      </DropRail>
 
       {rewards && <XpBar rewards={rewards} />}
 

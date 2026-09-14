@@ -139,7 +139,10 @@ export function EquipmentDropCard({
   return (
     <div
       className={cn(
-        'relative flex flex-col rounded-[18px] border-[1.5px] p-4 pt-4 text-left',
+        // `@container` : la fiche s'adapte à SA largeur, pas à celle de la
+        // fenêtre — la même fiche vit en pleine largeur dans un écran de
+        // victoire et dans un encart de 264px d'une rangée de récompenses.
+        '@container relative flex flex-col rounded-[18px] border-[1.5px] p-4 pt-4 text-left',
         'border-[color-mix(in_oklab,var(--rar)_42%,transparent)]',
         'bg-[linear-gradient(165deg,color-mix(in_oklab,var(--rar-light)_26%,var(--card)),var(--card)_62%)]',
         'shadow-[0_12px_30px_-20px_color-mix(in_oklab,var(--rar)_70%,transparent)]',
@@ -147,8 +150,10 @@ export function EquipmentDropCard({
       )}
       style={RARITY_VARS[drop.rarity] as React.CSSProperties}
     >
-      {/* en-tête : icône d'emplacement · titres · (sélection puis) rareté */}
-      <div className="flex items-center gap-3">
+      {/* en-tête : icône d'emplacement · titres · (sélection puis) rareté.
+          Aligné en haut : un nom sur deux lignes ne doit pas décaler l'icône
+          et la pastille de rareté vers le bas. */}
+      <div className="flex items-start gap-3">
         <span className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-[linear-gradient(140deg,var(--rar),var(--rar-dark))] text-white shadow-[0_5px_14px_-6px_color-mix(in_oklab,var(--rar)_70%,transparent)]">
           <SlotIcon className="h-5 w-5" />
         </span>
@@ -156,7 +161,10 @@ export function EquipmentDropCard({
           <div className="font-display text-[19px] font-extrabold leading-[1.1] tracking-[-0.01em] text-text">
             {drop.name}
           </div>
-          <div className="mt-[3px] font-mono text-[9.5px] tracking-[0.14em] text-text-light">
+          {/* Une seule ligne : dans un encart étroit, « ARMURE · NIV. 7 »
+              passait à la ligne sur le seul « 7 ». L'interlettrage se resserre
+              plutôt que de laisser le niveau s'échapper. */}
+          <div className="mt-[3px] font-mono text-[9.5px] whitespace-nowrap tracking-[0.14em] text-text-light @max-[300px]:tracking-[0.05em]">
             {SLOT_LABELS[drop.slot].toUpperCase()} · NIV. {drop.level}
           </div>
           <div className="mt-[3px] font-mono text-[9px] font-bold tracking-[0.14em] text-[color-mix(in_oklab,var(--rar)_72%,var(--text-light))]">
@@ -208,12 +216,14 @@ export function EquipmentDropCard({
         </div>
       )}
 
-      {/* sous-stats : toujours 2 colonnes. À 3 sous-stats, la troisième se
-          place seule sur la seconde rangée et garde la largeur d'une colonne
-          — elle ne s'étire pas sur toute la fiche. Une rangée de 3 colonnes
-          rendait les libellés trop étroits pour rester lisibles. */}
+      {/* sous-stats : 2 colonnes. À 3 sous-stats, la troisième se place seule
+          sur la seconde rangée et garde la largeur d'une colonne — elle ne
+          s'étire pas sur toute la fiche. Une rangée de 3 colonnes rendait les
+          libellés trop étroits pour rester lisibles ; sous 300px de fiche, une
+          seule colonne pour la même raison (« % PÉNÉTRATION ARMURE » n'y tient
+          pas à deux). */}
       {subs.length > 0 && (
-        <div className="mt-2 grid grid-cols-2 gap-[7px]">
+        <div className="mt-2 grid grid-cols-2 gap-[7px] @max-[300px]:grid-cols-1">
           {subs.map((s) => (
             <div
               key={s.key}
