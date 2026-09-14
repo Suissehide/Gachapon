@@ -656,8 +656,8 @@ export class CampaignDomain {
 
     return retryOnSerialization(async () => {
       // Lire la config ET les effets AVANT la transaction (évite les I/O async dans un tx Serializable)
-      const [sweepCfg, effects, substatRanges, teamEffects] =
-        await Promise.all([
+      const [sweepCfg, effects, substatRanges, teamEffects] = await Promise.all(
+        [
           this.#configService.getMany(
             'combat.sweepCost',
             'xp.base',
@@ -668,7 +668,8 @@ export class CampaignDomain {
           this.#skillTreeRepository.getEffectsForUser(userId),
           this.#getSubstatRanges(),
           this.#teamProgressionDomain.effectsForUser(userId),
-        ])
+        ],
+      )
       return this.#postgresOrm.executeWithTransactionClient(
         // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing, refactor deferred
         async (tx) => {
@@ -1147,14 +1148,14 @@ export class CampaignDomain {
         const cardsRaw = await tx.card.findMany({
           where: { set: { isActive: true } },
           select: {
-              id: true,
-              name: true,
-              rarity: true,
-              dropWeight: true,
-              imageUrl: true,
-              element: true,
-              set: { select: { name: true } },
-            },
+            id: true,
+            name: true,
+            rarity: true,
+            dropWeight: true,
+            imageUrl: true,
+            element: true,
+            set: { select: { name: true } },
+          },
         })
         if (cardsRaw.length > 0) {
           const cards: CardCatalogEntry[] = cardsRaw.map((c) => ({
