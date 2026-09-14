@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 /**
- * Import des cartes Gobelins / Elfes / Orcs / Démons / Anges / Dragons / Nains /
- * Morts-vivants / Puazi via l'API admin.
+ * Import des cartes de toutes les familles collectionnables via l'API admin.
+ * La liste des familles, leur dossier de stockage et leur set vivent dans
+ * `../families.json` ; les cartes elles-mêmes dans `cards-data.json`, régénéré
+ * depuis le classeur tcg_kit par `../build-cards-data.py`.
  *
  * Pré-requis : les images sont déjà présentes dans le stockage aux chemins
  *   - prod : cards/<folder>/<ID>.png
  *   - dev  : staging/cards/<folder>/<ID>.png
- * (folder = goblins | elves | orcs | demons | angels | dragons | dwarfs | undeads | puazis)
+ * (folder = la clé d'une entrée de families.json : humans, goblins, …)
  *
  * Le script :
  *   1. crée (ou réutilise) un set par famille via POST /admin/sets
@@ -59,26 +61,18 @@ if (ENV !== 'prod' && ENV !== 'dev') {
   process.exit(1)
 }
 
-// Métadonnées de set par famille (clé = dossier d'image).
-const FAMILIES = {
-  humans: {
-    setName: 'Royaume des Humains',
-    description:
-      'Le set des Humains du Gachapon. 38 combattants à collectionner, de la paysanne au roi.',
-  },
-  goblins: { setName: 'Gobelins', description: 'Le set des Gobelins du Gachapon.' },
-  elves: { setName: 'Elfes', description: 'Le set des Elfes du Gachapon.' },
-  orcs: { setName: 'Orcs', description: 'Le set des Orcs du Gachapon.' },
-  demons: { setName: 'Démons', description: 'Le set des Démons du Gachapon.' },
-  angels: { setName: 'Anges', description: 'Le set des Anges du Gachapon.' },
-  dragons: { setName: 'Dragons', description: 'Le set des Dragons du Gachapon.' },
-  dwarfs: { setName: 'Nains', description: 'Le set des Nains du Gachapon.' },
-  undeads: { setName: 'Morts-vivants', description: 'Le set des Morts-vivants du Gachapon.' },
-  puazis: { setName: 'Puazi', description: 'Le set des Puazi du Gachapon.' },
-  sirens: { setName: 'Sirènes', description: 'Le set des Sirènes du Gachapon.' },
-  tabaxi: { setName: 'Tabaxis', description: 'Le set des Tabaxis du Gachapon.' },
-  fairies: { setName: 'Fées', description: 'Le set des Fées du Gachapon.' },
-}
+// Métadonnées de set par famille (clé = dossier de stockage), depuis
+// ../families.json — source unique partagée avec cards-webp.py et
+// build-cards-data.py, pour qu'un slug ne puisse pas diverger d'un script à
+// l'autre. Les entrées sans `set` (monsters, bestiaire de campagne) ne sont
+// pas des familles collectionnables et n'ont rien à importer.
+const FAMILIES = Object.fromEntries(
+  Object.entries(
+    JSON.parse(await readFile(join(__dirname, '..', 'families.json'), 'utf8')),
+  )
+    .filter(([slug, famille]) => !slug.startsWith('_') && famille.set)
+    .map(([slug, famille]) => [slug, famille.set]),
+)
 
 const imagePrefix = (folder) =>
   ENV === 'prod' ? `cards/${folder}` : `staging/cards/${folder}`
@@ -131,7 +125,7 @@ async function api(method, path, { json, formFactory } = {}) {
 }
 
 async function ensureSet(folder) {
-  const { setName, description } = FAMILIES[folder]
+  const { name: setName, description } = FAMILIES[folder]
   if (DRY_RUN) {
     console.log(`  [dry-run] set « ${setName} » (créé ou réutilisé au réel)`)
     return `dry-run-${folder}`

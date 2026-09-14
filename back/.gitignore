@@ -44,5 +44,8 @@ dist-ssr
 # Jest coverage output
 src/test/coverage/
 
-# Données de cartes générées depuis l'Excel (import-cards)
+# Données de cartes générées depuis le classeur par scripts/build-cards-data.py
 scripts/import-cards/cards-data.json
+
+# Cache des scripts Python (scripts/*.py)
+scripts/__pycache__/

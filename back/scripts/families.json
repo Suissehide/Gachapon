@@ -1,0 +1,162 @@
+{
+  "_doc": [
+    "Source unique des familles de cartes. Trois scripts la lisent :",
+    "cards-webp.py (dir -> dossier de stockage), build-cards-data.py (sheet ->",
+    "onglet Production du classeur) et import-cards/import-cards.mjs (set).",
+    "La clé est le dossier de stockage : cards/<clé>/<ID>.png en prod,",
+    "staging/cards/<clé>/<ID>.png en dev. Une entrée sans `set` n'est pas une",
+    "famille collectionnable : `monsters` est le bestiaire de la campagne, il a",
+    "des images mais ni set ni cartes.",
+    "Renommer une clé casse les cartes déjà importées (leur imageUrl pointe sur",
+    "l'ancien chemin) : c'est un renommage dans MinIO ET en base, pas ici seul."
+  ],
+  "humans": {
+    "dir": "Humains",
+    "sheet": "Humains",
+    "set": {
+      "name": "Royaume des Humains",
+      "description": "Des champs au trône : ni griffes ni magie de naissance, seulement du nombre et de la discipline."
+    }
+  },
+  "goblins": {
+    "dir": "Gobelins",
+    "sheet": "Gobelins",
+    "set": {
+      "name": "Gobelins",
+      "description": "Petits, sales, innombrables : ce qu'ils n'ont pas en force, ils l'ont en embuscades."
+    }
+  },
+  "elves": {
+    "dir": "Elfes",
+    "sheet": "Elfes",
+    "set": {
+      "name": "Elfes",
+      "description": "Arcs anciens et rancunes tenaces : la sylve tue de loin, et sans se presser."
+    }
+  },
+  "orcs": {
+    "dir": "Orcs",
+    "sheet": "Orcs",
+    "set": {
+      "name": "Orcs",
+      "description": "Ni finesse ni repli : les clans avancent tant qu'il reste un ennemi debout."
+    }
+  },
+  "demons": {
+    "dir": "Démons",
+    "sheet": "Démons",
+    "set": {
+      "name": "Démons",
+      "description": "Toute puissance se paie : ils accordent la victoire maintenant et présentent l'addition après."
+    }
+  },
+  "angels": {
+    "dir": "Anges",
+    "sheet": "Anges",
+    "set": {
+      "name": "Anges",
+      "description": "Bannières de lumière et jugement sans appel : ils relèvent les leurs et brûlent le reste."
+    }
+  },
+  "dragons": {
+    "dir": "Dragons",
+    "sheet": "Dragons",
+    "set": {
+      "name": "Dragons",
+      "description": "Écailles, souffle et trésor : les plus vieux prédateurs du monde n'ont jamais eu besoin d'alliés."
+    }
+  },
+  "dwarfs": {
+    "dir": "Nains",
+    "sheet": "Nains",
+    "set": {
+      "name": "Nains",
+      "description": "Sous la montagne on forge, on encaisse et on ne recule pas : la roche a déteint sur eux."
+    }
+  },
+  "undeads": {
+    "dir": "Morts-vivants",
+    "sheet": "Morts-vivants",
+    "set": {
+      "name": "Morts-vivants",
+      "description": "L'armée qui ne compte pas ses pertes : ce qui tombe se relève au tour suivant."
+    }
+  },
+  "puazis": {
+    "dir": "Puazi",
+    "sheet": "Puazi",
+    "set": {
+      "name": "Puazi",
+      "description": "Peau d'ambre et cheveux d'écume : un peuple venu d'ailleurs, ses lances rituelles et sa reine."
+    }
+  },
+  "mermaids": {
+    "dir": "Sirènes",
+    "sheet": "Sirènes",
+    "set": {
+      "name": "Sirènes",
+      "description": "Récifs, courants et chants : on ne les entend qu'une fois, et c'est déjà trop tard."
+    }
+  },
+  "tabaxis": {
+    "dir": "Tabaxis",
+    "sheet": "Tabaxis",
+    "set": {
+      "name": "Tabaxis",
+      "description": "Griffes, équilibre et curiosité : ils frappent avant qu'on ait fini de les regarder."
+    }
+  },
+  "fairies": {
+    "dir": "Fées",
+    "sheet": "Fées",
+    "set": {
+      "name": "Fées",
+      "description": "Minuscules et rarement gentilles : de la rosée, des épines et des tours joués aux géants."
+    }
+  },
+  "centaurs": {
+    "dir": "Centaures",
+    "sheet": "Centaures",
+    "set": {
+      "name": "Centaures",
+      "description": "Sabot, arc et ciel étoilé : la horde galope loin et tire plus loin encore."
+    }
+  },
+  "dryads": {
+    "dir": "Dryades",
+    "sheet": "Dryades",
+    "set": {
+      "name": "Dryades",
+      "description": "Nées d'un arbre et mortes avec lui : elles soignent la forêt et étranglent qui l'entame."
+    }
+  },
+  "kitsunes": {
+    "dir": "Kitsunes",
+    "sheet": "Kitsune",
+    "set": {
+      "name": "Kitsunes",
+      "description": "Une queue par siècle de ruse : rien de ce qu'elles montrent n'est tout à fait réel."
+    }
+  },
+  "draenei": {
+    "dir": "Draenei",
+    "sheet": "Draenei",
+    "set": {
+      "name": "Draenei",
+      "description": "Exilés d'un monde brisé : la foi leur tient lieu d'armure, et l'armure est épaisse."
+    }
+  },
+  "lamias": {
+    "dir": "Lamia",
+    "sheet": "Lamia",
+    "set": {
+      "name": "Lamia",
+      "description": "Anneaux patients et regard fixe : elles enlacent bien avant de mordre."
+    }
+  },
+  "monsters": {
+    "dir": "Monstres",
+    "sheet": null,
+    "set": null
+  }
+}

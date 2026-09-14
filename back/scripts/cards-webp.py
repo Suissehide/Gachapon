@@ -17,6 +17,7 @@ Puis (client mc, alias `qwetle`) :
   mc cp -r --attr "Cache-Control=public,max-age=31536000,immutable" <sortie>/cards/ qwetle/gachapon/cards/
   mc cp -r --attr "Cache-Control=public,max-age=31536000,immutable" <sortie>/cards/ qwetle/gachapon/staging/cards/
 """
+import json
 import re
 import shutil
 import sys
@@ -27,30 +28,14 @@ from PIL import Image
 WIDTHS = (320, 640, 1248)
 QUALITY = 82
 
-# dossier local -> slug MinIO ; le sous-dossier sans_signature/ est préféré s'il existe
-FOLDERS = {
-    'Anges': 'angels',
-    'Centaures': 'centaurs',
-    'Démons': 'demons',
-    'Dragons': 'dragons',
-    'Dryades': 'dryads',
-    'Elfes': 'elves',
-    'Fées': 'fairies',
-    'Gobelins': 'goblins',
-    'Humains': 'humans',
-    'Kitsunes': 'kitsunes',
-    'Morts-vivants': 'undeads',
-    'Nains': 'dwarfs',
-    'Orcs': 'orcs',
-    'Puazi': 'puazis',
-    'Sirènes': 'mermaids',
-    'Tabaxis': 'tabaxis',
-    'Draenei': 'draenei',
-    'Lamia': 'lamias',
-    # Monstres/ contient un sous-dossier par type (Basilics, Boss, …) ; tout
-    # est aplati dans `cards/monsters/` comme en ligne.
-    'Monstres': 'monsters',
-}
+# dossier local -> slug MinIO, depuis families.json (source unique partagée avec
+# build-cards-data.py et import-cards.mjs — un slug qui diverge d'un script à
+# l'autre envoie les variantes à côté des PNG et personne ne s'en aperçoit).
+# Le sous-dossier sans_signature/ est préféré s'il existe ; Monstres/ contient
+# un sous-dossier par type (Basilics, Boss, …), tout est aplati dans
+# `cards/monsters/` comme en ligne.
+FAMILIES = json.loads((Path(__file__).resolve().parent / 'families.json').read_text(encoding='utf-8'))
+FOLDERS = {f['dir']: slug for slug, f in FAMILIES.items() if not slug.startswith('_')}
 
 SUFFIX = re.compile(r'_\d{5}_(?=\.png$)', re.I)
 
