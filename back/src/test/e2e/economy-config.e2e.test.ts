@@ -21,8 +21,10 @@ describe('GET /economy/config', () => {
     const res = await app.inject({ method: 'GET', url: '/economy/config' })
     expect(res.statusCode).toBe(200)
     const body = res.json()
-    expect(body.xp.base).toBe(100)
-    expect(body.xp.slope).toBe(44)
+    // Courbe ×5 du 2026-09-15. Ce test GÈLE volontairement le contrat exposé
+    // au front : il doit casser si la config change, c'est son rôle.
+    expect(body.xp.base).toBe(500)
+    expect(body.xp.slope).toBe(220)
     expect(body.xp.levelCap).toBe(100)
     expect(body.xp.skillPointsPerLevel).toBe(1)
     expect(body.xp.milestones).toHaveLength(5)

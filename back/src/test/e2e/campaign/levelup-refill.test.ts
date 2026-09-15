@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
 import { buildTestApp } from '../../helpers/build-test-app'
+import { xpThresholds } from '../../helpers/xp-thresholds'
 import { LEVELUP_REFILL } from '../../helpers/equipment-fixture-slots'
 
 // Deux cas :
@@ -162,11 +163,12 @@ describe('Campaign battle level-up → refill énergie', () => {
   }
 
   it('battle qui fait level-up remonte combatPoints au cap', async () => {
-    const { postgresOrm } = (app as any).iocContainer
+    const { postgresOrm, configService } = (app as any).iocContainer
     const prisma = postgresOrm.prisma
-    // xp juste sous le niveau 2 pour que le gain XP du combat fasse monter.
+    const xp = await xpThresholds(configService)
+    // 1 XP sous le niveau 2, pour que le gain du combat le fasse monter.
     const { userId, cookies } = await setupUser('a', {
-      xp: 99,
+      xp: xp.justBelow(2),
       combatPoints: 15,
     })
 
@@ -183,10 +185,11 @@ describe('Campaign battle level-up → refill énergie', () => {
   })
 
   it('overfill au-dessus du cap → jamais réduit par le refill', async () => {
-    const { postgresOrm } = (app as any).iocContainer
+    const { postgresOrm, configService } = (app as any).iocContainer
     const prisma = postgresOrm.prisma
+    const xp = await xpThresholds(configService)
     const { userId, cookies } = await setupUser('b', {
-      xp: 99,
+      xp: xp.justBelow(2),
       combatPoints: 100, // overfill (packs) au-dessus du cap 60
     })
 

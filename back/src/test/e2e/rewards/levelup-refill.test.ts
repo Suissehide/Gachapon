@@ -1,8 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
 import { buildTestApp } from '../../helpers/build-test-app'
+import { xpThresholds } from '../../helpers/xp-thresholds'
 
-// user xp=99 → réclamer une récompense de 1 XP → xp=100 = niveau 2 → refill énergie.
+// Joueur 1 XP sous le niveau 2 → réclamer une récompense de 1 XP le fait
+// monter → l'énergie doit être remontée au cap. Seuil dérivé de la config.
 describe('Rewards claim level-up → refill énergie', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
   let cookies: string
@@ -14,8 +16,9 @@ describe('Rewards claim level-up → refill énergie', () => {
 
   beforeAll(async () => {
     app = await buildTestApp()
-    const { postgresOrm } = (app as any).iocContainer
+    const { postgresOrm, configService } = (app as any).iocContainer
     const prisma = postgresOrm.prisma
+    const xp = await xpThresholds(configService)
 
     await app.inject({
       method: 'POST',
@@ -26,7 +29,7 @@ describe('Rewards claim level-up → refill énergie', () => {
       where: { email },
       data: {
         emailVerifiedAt: new Date(),
-        xp: 99,
+        xp: xp.justBelow(2),
         combatPoints: 10,
         lastCombatPointAt: new Date(),
       },

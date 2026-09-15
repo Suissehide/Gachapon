@@ -1,9 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
 import { buildTestApp } from '../../helpers/build-test-app'
+import { xpThresholds } from '../../helpers/xp-thresholds'
 
-// XP defaults : base=100, slope=24 → xpForLevel(2)=100.
-// user à xp=99 + xpPerPull(10) = 109 → niveau 2. combatPoints doit revenir à 60.
+// Les seuils sont DÉRIVÉS de la config (cf. `xpThresholds`) : le joueur part
+// 1 XP sous le niveau visé, si bien que n'importe quel gain le fait monter.
+// Ce test mesure le refill d'énergie, pas la courbe.
 describe('Gacha level-up → refill énergie', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
   let cookies: string
@@ -15,8 +17,9 @@ describe('Gacha level-up → refill énergie', () => {
 
   beforeAll(async () => {
     app = await buildTestApp()
-    const { postgresOrm } = (app as any).iocContainer
+    const { postgresOrm, configService } = (app as any).iocContainer
     const prisma = postgresOrm.prisma
+    const xp = await xpThresholds(configService)
 
     // Une carte par rareté pour que le tirage puisse toujours piocher,
     // quelle que soit la rareté tirée par le RNG.
@@ -47,12 +50,12 @@ describe('Gacha level-up → refill énergie', () => {
     })
     expect(reg.statusCode).toBe(201)
 
-    // xp=99 (juste sous le niveau 2), énergie basse, tokens suffisants.
+    // Juste sous le niveau 2, énergie basse, tokens suffisants.
     const user = await prisma.user.update({
       where: { email },
       data: {
         emailVerifiedAt: new Date(),
-        xp: 99,
+        xp: xp.justBelow(2),
         tokens: 10,
         lastTokenAt: new Date(),
         combatPoints: 12,
@@ -92,6 +95,7 @@ describe('Gacha level-up → refill énergie', () => {
   it('toggle levelup.refillEnergy=0 → pas de refill', async () => {
     const { postgresOrm, configService } = (app as any).iocContainer
     const prisma = postgresOrm.prisma
+    const xp = await xpThresholds(configService)
 
     // Nouvel utilisateur au bord du niveau 3, énergie basse, toggle coupé.
     const suffix2 = `${suffix}b`
@@ -105,10 +109,9 @@ describe('Gacha level-up → refill énergie', () => {
       where: { email: email2 },
       data: {
         emailVerifiedAt: new Date(),
-        // xpForLevel(3) = 100*2 + 44*2*1/2 = 244 avec la config (base=100,
-        // slope=44). À 243, n'importe quel gain d'XP du tirage fait passer
-        // niveau 3 — volontairement insensible au montant exact.
-        xp: 243,
+        // 1 XP sous le niveau 3 : n'importe quel gain du tirage le franchit,
+        // volontairement insensible au montant exact.
+        xp: xp.justBelow(3),
         tokens: 10,
         lastTokenAt: new Date(),
         combatPoints: 7,

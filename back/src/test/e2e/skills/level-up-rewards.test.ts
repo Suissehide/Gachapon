@@ -1,20 +1,20 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
 import { buildTestApp } from '../../helpers/build-test-app'
+import { xpThresholds } from '../../helpers/xp-thresholds'
 import { skillPointsGained } from '../../../main/domain/shared/level-rewards'
 
-// XP math with the configured defaults (xp.base=100, xp.slope=44) :
-//   xpForLevel(n) = 100*(n-1) + 44*(n-1)*(n-2)/2
-//   xpForLevel(10) = 900 + 1584 = 2484
-//   user starts at xp=99 (level 1), adding 2385 → total 2484 = exactly level 10
-// NB : les valeurs par défaut du paramètre de `xpForLevel` (slope=30) sont
-// celles de la signature, pas celles de la config — l'app lit `xp.slope` en base.
-// skillPointsGained(1, 10) = 9 levels + 2 bonus (milestone at level 10) = 11
+// Le joueur part 1 XP sous le niveau 2 et reçoit EXACTEMENT de quoi atteindre
+// le niveau 10 — les deux bornes sont dérivées de la config (`xpThresholds`),
+// jamais écrites en dur : ce test mesure les points de compétence et la
+// récompense de palier, pas la courbe d'XP.
+// skillPointsGained(1, 10) = 9 niveaux + 2 bonus de palier = 11
 
 describe('Level-up: skillPoints + milestone UserReward (claimOne)', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
   let cookies: string
   let userId: string
+  let xp: Awaited<ReturnType<typeof xpThresholds>>
 
   const suffix = Date.now()
   const email = `lvlskill${suffix}@test.com`
@@ -23,8 +23,9 @@ describe('Level-up: skillPoints + milestone UserReward (claimOne)', () => {
 
   beforeAll(async () => {
     app = await buildTestApp()
-    const { postgresOrm } = (app as any).iocContainer
+    const { postgresOrm, configService } = (app as any).iocContainer
     const prisma = postgresOrm.prisma
+    xp = await xpThresholds(configService)
 
     const reg = await app.inject({
       method: 'POST',
@@ -33,10 +34,10 @@ describe('Level-up: skillPoints + milestone UserReward (claimOne)', () => {
     })
     expect(reg.statusCode).toBe(201)
 
-    // Set xp=99: level 1, 1 XP below level 2 threshold (100)
+    // 1 XP sous le seuil du niveau 2.
     const user = await prisma.user.update({
       where: { email },
-      data: { emailVerifiedAt: new Date(), xp: 99 },
+      data: { emailVerifiedAt: new Date(), xp: xp.justBelow(2) },
     })
     userId = user.id
 
@@ -56,9 +57,13 @@ describe('Level-up: skillPoints + milestone UserReward (claimOne)', () => {
     const { postgresOrm } = (app as any).iocContainer
     const prisma = postgresOrm.prisma
 
-    // Reward with 2385 XP: user goes from xp=99 to xp=2484 (level 10)
+    // De quoi passer de « 1 XP sous le niveau 2 » à EXACTEMENT le niveau 10.
     const reward1 = await prisma.reward.create({
-      data: { tokens: 0, dust: 0, xp: 2385 },
+      data: {
+        tokens: 0,
+        dust: 0,
+        xp: xp.forLevel(10) - xp.justBelow(2),
+      },
     })
     const ur1 = await prisma.userReward.create({
       data: {
