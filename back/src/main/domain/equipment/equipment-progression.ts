@@ -158,11 +158,17 @@ export function isSubstatMilestone(level: number): boolean {
   return level % EQUIP_SUBSTAT_MILESTONE === 0
 }
 
+/**
+ * Toute valeur de stat est un ENTIER : un « +19,2 % » n'apporte rien au joueur
+ * et alourdit chaque ligne d'inventaire. L'arrondi se fait ici, à la source,
+ * jamais au rendu — le front recalcule les bonus scalés de son côté, et un
+ * arrondi cosmétique ferait diverger l'affichage de ce que le combat calcule.
+ */
 function rollValue(
   range: { min: number; max: number },
   rng: () => number,
 ): number {
-  return Math.round((range.min + rng() * (range.max - range.min)) * 10) / 10
+  return Math.round(range.min + rng() * (range.max - range.min))
 }
 
 function pickAvailableKey(substats: Substat[], rng: () => number): SubstatKey {
@@ -217,7 +223,9 @@ export function rollMilestone(
   const index = Math.min(Math.floor(rng() * len), len - 1)
   const target = substats[index] as Substat
   const rolledValue = rollValue(ranges[target.key], rng)
-  const newValue = Math.round((target.value + rolledValue) * 10) / 10
+  // `Math.round` par sécurité : les pièces d'avant l'arrondi entier portent
+  // encore des valeurs décimales tant que la migration n'a pas tourné.
+  const newValue = Math.round(target.value + rolledValue)
   return {
     substats: substats.map((s, i) =>
       i === index ? { ...s, value: newValue } : s,
@@ -232,7 +240,7 @@ export function scaleBaseBonuses(
 ): Record<string, number> {
   const mult = 1 + EQUIP_LEVEL_SCALE * (level - 1)
   return Object.fromEntries(
-    Object.entries(bonuses).map(([k, v]) => [k, v * mult]),
+    Object.entries(bonuses).map(([k, v]) => [k, Math.round(v * mult)]),
   )
 }
 
@@ -240,6 +248,9 @@ export function scaleBaseBonuses(
  * Bonus effectifs d'une instance : base du catalogue scalée par le niveau,
  * baseBoost appliqué à la première clé (le bonus de base de l'objet), puis
  * sous-stats sommées par clé.
+ *
+ * Le résultat est entier : la base scalée l'est déjà, les sous-stats aussi, et
+ * le baseBoost (un Float en base) est arrondi avec elle.
  */
 export function effectiveEquipmentBonuses(
   catalogBonuses: Record<string, number>,
@@ -250,7 +261,7 @@ export function effectiveEquipmentBonuses(
   const acc = scaleBaseBonuses(catalogBonuses, level)
   const baseKey = Object.keys(catalogBonuses)[0]
   if (baseKey !== undefined && baseBoost !== 0) {
-    acc[baseKey] = (acc[baseKey] ?? 0) + baseBoost
+    acc[baseKey] = Math.round((acc[baseKey] ?? 0) + baseBoost)
   }
   for (const s of substats) {
     acc[s.key] = (acc[s.key] ?? 0) + s.value

@@ -86,8 +86,17 @@ describe('equipment-progression: scaleBaseBonuses', () => {
 
   it('applique 1 + 0.1 × (niveau − 1)', () => {
     const scaled = scaleBaseBonuses({ atkFlat: 10, hpPct: 4 }, 12)
-    expect(scaled.atkFlat).toBeCloseTo(21) // ×2.1
-    expect(scaled.hpPct).toBeCloseTo(8.4)
+    expect(scaled.atkFlat).toBe(21) // ×2.1
+    expect(scaled.hpPct).toBe(8) // 4 × 2.1 = 8.4, arrondi
+  })
+
+  it('arrondit chaque bonus scalé à l entier', () => {
+    const scaled = scaleBaseBonuses({ hpPct: 12 }, 7)
+    // 12 × 1.6 = 19.2 : c'est le « 19,2 % » qu'on ne veut plus voir.
+    expect(scaled.hpPct).toBe(19)
+    for (const v of Object.values(scaleBaseBonuses({ hpPct: 4.5 }, 5))) {
+      expect(Number.isInteger(v)).toBe(true)
+    }
   })
 })
 
@@ -136,10 +145,21 @@ describe('equipment-progression: rollMilestone', () => {
     expect(result.substats).toHaveLength(4)
   })
 
-  it('arrondit les tirages à 1 décimale', () => {
+  it('arrondit les tirages à l entier', () => {
     const result = rollMilestone([], RANGES, rngFrom([0, 1 / 3]))
-    // 20 + (1/3)×40 = 33.333… → 33.3
-    expect(result.milestone.rolledValue).toBe(33.3)
+    // 20 + (1/3)×40 = 33.333… → 33
+    expect(result.milestone.rolledValue).toBe(33)
+  })
+
+  it('garde une valeur entière en améliorant une sous-stat décimale héritée', () => {
+    const legacy: Substat[] = [
+      { key: 'hpFlat', value: 30 },
+      { key: 'atkPct', value: 5.3 },
+      { key: 'defFlat', value: 8 },
+      { key: 'spdFlat', value: 4 },
+    ]
+    const result = rollMilestone(legacy, RANGES, rngFrom([0.25, 0]))
+    expect(result.milestone.newValue).toBe(8) // 5.3 + 3 = 8.3 → 8
   })
 })
 
@@ -147,21 +167,26 @@ describe('equipment-progression: effectiveEquipmentBonuses', () => {
   it('somme base scalée et sous-stats par clé', () => {
     const result = effectiveEquipmentBonuses({ atkFlat: 10 }, 4, [
       { key: 'atkFlat', value: 5 },
-      { key: 'hpPct', value: 4.5 },
+      { key: 'hpPct', value: 4 },
     ])
-    expect(result.atkFlat).toBeCloseTo(18) // 10 × 1.3 + 5
-    expect(result.hpPct).toBeCloseTo(4.5)
+    expect(result.atkFlat).toBe(18) // round(10 × 1.3) + 5
+    expect(result.hpPct).toBe(4)
   })
 
   it('applique le baseBoost à la première clé du bonus de base', () => {
     const result = effectiveEquipmentBonuses(
       { atkFlat: 10 },
       4,
-      [{ key: 'hpPct', value: 4.5 }],
+      [{ key: 'hpPct', value: 4 }],
       7,
     )
-    expect(result.atkFlat).toBeCloseTo(20) // 10 × 1.3 + 7
-    expect(result.hpPct).toBeCloseTo(4.5)
+    expect(result.atkFlat).toBe(20) // round(10 × 1.3) + 7
+    expect(result.hpPct).toBe(4)
+  })
+
+  it('arrondit le bonus de base même avec un baseBoost décimal hérité', () => {
+    const result = effectiveEquipmentBonuses({ atkFlat: 10 }, 4, [], 7.4)
+    expect(result.atkFlat).toBe(20) // round(13) + 7.4 = 20.4 → 20
   })
 
   it('ne booste que la première clé pour un objet legacy multi-bonus', () => {
@@ -171,8 +196,8 @@ describe('equipment-progression: effectiveEquipmentBonuses', () => {
       [],
       5,
     )
-    expect(result.atkFlat).toBeCloseTo(15)
-    expect(result.spdFlat).toBeCloseTo(4)
+    expect(result.atkFlat).toBe(15)
+    expect(result.spdFlat).toBe(4)
   })
 })
 
@@ -218,7 +243,7 @@ describe('equipment-progression: rollInitialSubstats', () => {
     const substats = rollInitialSubstats(2, RANGES, rngFrom([0, 0.5]))
     expect(substats).toEqual([
       { key: 'hpFlat', value: 40 }, // 20 + 0.5 × 40
-      { key: 'hpPct', value: 5.5 }, // hpFlat pris → hpPct ; 3 + 0.5 × 5
+      { key: 'hpPct', value: 6 }, // hpFlat pris → hpPct ; 3 + 0.5 × 5 = 5.5 → 6
     ])
   })
 
@@ -226,6 +251,7 @@ describe('equipment-progression: rollInitialSubstats', () => {
     const substats = rollInitialSubstats(8, RANGES, rngFrom([0.99, 0.01, 0.37]))
     expect(substats).toHaveLength(8)
     for (const s of substats) {
+      expect(Number.isInteger(s.value)).toBe(true)
       expect(s.value).toBeGreaterThanOrEqual(RANGES[s.key].min)
       expect(s.value).toBeLessThanOrEqual(RANGES[s.key].max)
     }

@@ -41,7 +41,11 @@ import {
 } from '../../queries/useEquipment.ts'
 import { useSkillTree } from '../../queries/useSkills.ts'
 import { useAuthStore } from '../../stores/auth.store.ts'
-import { formatBonusKey, statColorVar } from '../../utils/cardStats.ts'
+import {
+  formatBonusKey,
+  scaledBaseBonus,
+  statColorVar,
+} from '../../utils/cardStats.ts'
 import { Button } from '../ui/button.tsx'
 import {
   Popup,
@@ -74,8 +78,10 @@ const SLOT_ICONS: Record<EquipmentSlot, typeof Sword> = {
   BELT: Link,
 }
 
+// Toute valeur de stat est entière depuis l'arrondi à la source : ce
+// formateur n'a plus qu'à grouper les milliers.
 function formatBonusValue(value: number): string {
-  return (Math.round(value * 10) / 10).toLocaleString('fr-FR')
+  return Math.round(value).toLocaleString('fr-FR')
 }
 
 function upgradeHintTitle(
@@ -661,7 +667,6 @@ function ItemDetail({
   // serveur facture le prix remisé.
   const isMaxLevel = item.nextUpgradeCost === null
   const cost = item.nextUpgradeCost ?? 0
-  const scale = 1 + economy.equip.levelScale * (item.level - 1)
   const nextIsMilestone =
     !isMaxLevel && (item.level + 1) % economy.equip.substatMilestone === 0
   const maxSubstats = economy.equip.maxSubstats
@@ -696,7 +701,15 @@ function ItemDetail({
               key={k}
               className="rounded px-1.5 py-0.5 font-mono text-emerald-600"
             >
-              +{formatBonusValue(v * scale + (idx === 0 ? item.baseBoost : 0))}{' '}
+              +
+              {formatBonusValue(
+                scaledBaseBonus(
+                  v,
+                  item.level,
+                  economy.equip.levelScale,
+                  idx === 0 ? item.baseBoost : 0,
+                ),
+              )}{' '}
               {formatBonusKey(k)}
             </li>
           ))}

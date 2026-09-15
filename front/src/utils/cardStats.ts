@@ -102,6 +102,29 @@ function parseBonusKey(
   return STAT_KEYS.includes(stat) ? { stat, kind } : null
 }
 
+/**
+ * Bonus de base d'une pièce à son niveau — miroir exact de `scaleBaseBonuses`
+ * puis du `baseBoost` côté serveur (domain/equipment/equipment-progression.ts).
+ *
+ * L'API renvoie le bonus catalogue brut et le niveau, jamais leur produit : la
+ * formule doit donc vivre des deux côtés. Elle est centralisée ici pour n'avoir
+ * qu'un seul exemplaire côté front — elle était recopiée dans quatre fichiers,
+ * et un arrondi oublié dans l'un d'eux afficherait autre chose que ce que le
+ * combat calcule.
+ *
+ * Le résultat est entier : toute valeur de stat l'est depuis l'arrondi à la
+ * source, sous-stats comprises.
+ */
+export function scaledBaseBonus(
+  base: number,
+  level: number,
+  equipLevelScale: number,
+  baseBoost = 0,
+): number {
+  const scaled = Math.round(base * (1 + equipLevelScale * (level - 1)))
+  return baseBoost === 0 ? scaled : Math.round(scaled + baseBoost)
+}
+
 // Accumulate equipment item bonuses into the aggregated stats.
 function accumulateItemBonuses(
   acc: StatBonuses,
@@ -113,18 +136,16 @@ function accumulateItemBonuses(
   },
   equipLevelScale: number,
 ): void {
-  const mult = 1 + equipLevelScale * (item.level - 1)
+  const baseKey = Object.keys(item.bonuses)[0]
   for (const [key, value] of Object.entries(item.bonuses)) {
     const parsed = parseBonusKey(key)
     if (parsed) {
-      acc[parsed.stat][parsed.kind] += value * mult
-    }
-  }
-  const baseKey = Object.keys(item.bonuses)[0]
-  if (baseKey !== undefined && item.baseBoost !== 0) {
-    const parsed = parseBonusKey(baseKey)
-    if (parsed) {
-      acc[parsed.stat][parsed.kind] += item.baseBoost
+      acc[parsed.stat][parsed.kind] += scaledBaseBonus(
+        value,
+        item.level,
+        equipLevelScale,
+        key === baseKey ? item.baseBoost : 0,
+      )
     }
   }
   for (const s of item.substats) {
@@ -196,18 +217,16 @@ function accumulateItemStuffBonuses(
   },
   equipLevelScale: number,
 ): void {
-  const mult = 1 + equipLevelScale * (item.level - 1)
+  const baseKey = Object.keys(item.bonuses)[0]
   for (const [key, value] of Object.entries(item.bonuses)) {
     const stat = parseStuffBonusKey(key)
     if (stat) {
-      acc[stat] += value * mult
-    }
-  }
-  const baseKey = Object.keys(item.bonuses)[0]
-  if (baseKey !== undefined && item.baseBoost !== 0) {
-    const stat = parseStuffBonusKey(baseKey)
-    if (stat) {
-      acc[stat] += item.baseBoost
+      acc[stat] += scaledBaseBonus(
+        value,
+        item.level,
+        equipLevelScale,
+        key === baseKey ? item.baseBoost : 0,
+      )
     }
   }
   for (const s of item.substats) {

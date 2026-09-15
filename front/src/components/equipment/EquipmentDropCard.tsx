@@ -15,7 +15,11 @@ import {
   useEconomyConfig,
 } from '../../queries/useEconomyConfig.ts'
 import { useSalvageItems } from '../../queries/useEquipment.ts'
-import { formatBonusKey, statColorVar } from '../../utils/cardStats.ts'
+import {
+  formatBonusKey,
+  scaledBaseBonus,
+  statColorVar,
+} from '../../utils/cardStats.ts'
 import { Button } from '../ui/button.tsx'
 
 // Rang de rareté, pour la jauge de 5 pastilles de l'en-tête (Commune 1/5 …
@@ -72,8 +76,8 @@ function formatValue(key: string, value: number): string {
 /**
  * Stat principale de la pièce : `bonuses` ne porte qu'une seule clé (le seed
  * le garantit, cf. equipment-seed.test.ts), mise à l'échelle par le niveau
- * puis augmentée de `baseBoost`. Même formule que `accumulateItemBonuses`
- * dans utils/cardStats.ts — d'où le passage de `equipLevelScale` par le
+ * puis augmentée de `baseBoost` — via `scaledBaseBonus`, l'unique exemplaire
+ * front de la formule serveur. D'où le passage de `equipLevelScale` par le
  * parent, qui le tient de la config économique du serveur.
  */
 function mainStat(
@@ -86,8 +90,10 @@ function mainStat(
     return null
   }
   const [key, base] = first
-  const mult = 1 + equipLevelScale * (drop.level - 1)
-  return { key, value: base * mult + drop.baseBoost }
+  return {
+    key,
+    value: scaledBaseBonus(base, drop.level, equipLevelScale, drop.baseBoost),
+  }
 }
 
 /**

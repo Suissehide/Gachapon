@@ -78,9 +78,9 @@ const STAT_CHIP_LABELS: Record<string, string> = {
   lifesteal: 'VOL DE VIE',
 }
 
+// Toute valeur de stat est entière depuis l'arrondi à la source.
 function formatChipValue(value: number, pct: boolean): string {
-  const rounded = Math.round(value * 10) / 10
-  return `+${rounded.toLocaleString('fr-FR')}${pct ? ' %' : ''}`
+  return `+${Math.round(value).toLocaleString('fr-FR')}${pct ? ' %' : ''}`
 }
 
 // Clés stables des segments de jauge : un set demande 2, 3 ou 4 pièces, et

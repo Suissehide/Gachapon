@@ -309,10 +309,8 @@ function StatTile({
   accent: string
   suffix?: string
 }) {
-  const displayValue =
-    Number.isInteger(value) || suffix === undefined
-      ? value.toLocaleString('fr-FR')
-      : (Math.round(value * 10) / 10).toLocaleString('fr-FR')
+  // Toute valeur de stat est entière depuis l'arrondi à la source.
+  const displayValue = Math.round(value).toLocaleString('fr-FR')
   return (
     <div className="flex items-center gap-2.5 rounded-[14px] border border-[rgba(27,23,38,0.06)] bg-surface-2 px-4 py-3.5">
       <span className="flex" style={{ color: accent }}>
