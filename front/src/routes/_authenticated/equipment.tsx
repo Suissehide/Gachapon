@@ -8,7 +8,7 @@ import {
   Sword,
   Zap,
 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import type {
   EquipmentDrop,
@@ -174,6 +174,54 @@ function sortItems(
   return sorted
 }
 
+// Réordonne `sorted` selon les rangs figés `ids` : une pièce déjà connue
+// reprend son rang, une pièce nouvelle se glisse derrière la dernière connue
+// qui la précède dans le tri (en tête si elle les devance toutes). Les rangs
+// étant uniques, le tri final est déterministe.
+function applyFrozenOrder(
+  sorted: EquipmentInstance[],
+  ids: string[],
+): EquipmentInstance[] {
+  const rank = new Map(ids.map((id, index) => [id, index]))
+  let lastRank = -1
+  let offset = 0
+  return sorted
+    .map((item) => {
+      const known = rank.get(item.id)
+      if (known !== undefined) {
+        lastRank = known
+        offset = 0
+        return { item, rank: known, offset: 0 }
+      }
+      offset += 1
+      return { item, rank: lastRank, offset }
+    })
+    .sort((a, b) => a.rank - b.rank || a.offset - b.offset)
+    .map((entry) => entry.item)
+}
+
+// Le tri se fige tant que ni le tri ni les filtres ne changent : « Améliorer »
+// monte le niveau d'une pièce, et les tris Rareté et Niveau la feraient sauter
+// ailleurs dans la grille au moment même où on clique dessus. L'ordre se
+// recalcule au prochain changement de tri ou de filtre, et au retour sur la
+// page.
+function useFrozenOrder(
+  sorted: EquipmentInstance[],
+  signature: string,
+): EquipmentInstance[] {
+  const frozen = useRef<{ signature: string; ids: string[] }>({
+    signature: '',
+    ids: [],
+  })
+  if (frozen.current.signature !== signature) {
+    frozen.current = { signature, ids: sorted.map((item) => item.id) }
+    return sorted
+  }
+  const ordered = applyFrozenOrder(sorted, frozen.current.ids)
+  frozen.current.ids = ordered.map((item) => item.id)
+  return ordered
+}
+
 function EquipmentPage() {
   const user = useAuthStore((s) => s.user)
   const equipment = useEquipmentList()
@@ -207,7 +255,7 @@ function EquipmentPage() {
 
   const sets = equipmentSets.data?.sets ?? []
   const items = equipment.data?.items ?? []
-  const filtered = useMemo(() => {
+  const sorted = useMemo(() => {
     // Les quatre filtres suivent la même règle — sélection vide = tout passe,
     // sinon la pièce doit être dans la sélection. Les décrire en table plutôt
     // qu'en quatre `if` évite d'en réécrire la logique à chaque nouveau
@@ -228,6 +276,16 @@ function EquipmentPage() {
       sort,
     )
   }, [items, slotFilter, rarityFilter, setFilter, mainStatFilter, sort])
+  const filtered = useFrozenOrder(
+    sorted,
+    [
+      sort,
+      slotFilter.join(),
+      rarityFilter.join(),
+      setFilter.join(),
+      mainStatFilter.join(),
+    ].join('|'),
+  )
 
   // Une pièce portée ne se vend pas : le serveur la refuse, donc elle n'entre
   // jamais dans la sélection.
