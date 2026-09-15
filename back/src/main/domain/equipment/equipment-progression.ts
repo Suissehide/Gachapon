@@ -22,8 +22,11 @@ export const SUBSTAT_KEYS = [
   'atkPct',
   'defFlat',
   'defPct',
+  // La vitesse n'existe qu'en valeur plate : sous ATB elle multiplie le
+  // rendement de l'unité au lieu de s'y ajouter, donc un pourcentage y serait
+  // hors-échelle face aux autres sous-stats. Elle reste disponible en
+  // pourcentage via le set Célérité, dont la magnitude est fixe.
   'spdFlat',
-  'spdPct',
   // Stats de stuff — pourcentage uniquement, une valeur plate n'aurait pas de sens.
   'critRatePct',
   'critDmgPct',
@@ -91,7 +94,6 @@ export function substatRangesFromConfig(
     hpPct: { ...pct },
     atkPct: { ...pct },
     defPct: { ...pct },
-    spdPct: { ...pct },
     critRatePct: {
       min: c['equip.substatCritRatePctMin'],
       max: c['equip.substatCritRatePctMax'],

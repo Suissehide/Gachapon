@@ -64,7 +64,7 @@ describe('GET /economy/config', () => {
       LEGENDARY: 4,
     })
     expect(body.equip.salvageGold.LEGENDARY).toBe(800)
-    // substatRanges est désormais dérivé de SUBSTAT_KEYS (12 clés) : une
+    // substatRanges est désormais dérivé de SUBSTAT_KEYS (11 clés) : une
     // plage par clé, plus de "pct" partagé.
     expect(body.equip.substatRanges.hpFlat).toEqual({ min: 20, max: 60 })
     expect(body.equip.substatRanges.hpPct).toEqual({ min: 3, max: 8 })

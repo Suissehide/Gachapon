@@ -84,10 +84,10 @@ const SLOT_MAIN_STATS: Record<EquipmentSlot, (keyof EquipmentBonuses)[]> = {
 //   hpFlat 20-60 · atkFlat/defFlat 5-15 · spdFlat 3-9
 //   critRate 2-5 · critDmg 4-10 · armorPen 2-6 · lifesteal 1-4
 //
-// La vitesse ne figure QUE sous forme plate parmi les stats principales : sous
+// La vitesse ne figure QUE sous forme plate, ici comme en sous-stat : sous
 // ATB elle multiplie le rendement de l'unité au lieu de s'y ajouter, donc un
-// pourcentage y serait hors-échelle face aux autres stats. Elle reste
-// disponible en sous-stat (spdPct), où sa magnitude est bornée.
+// pourcentage y serait hors-échelle face aux autres stats. Le seul %VIT du jeu
+// est le bonus du set Célérité, dont la magnitude est fixe.
 //
 // Les barèmes en pourcentage (hpPct/atkPct/defPct) sont calibrés sur
 // le budget que la spec donne déjà à la stat principale : « bonus de base

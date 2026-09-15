@@ -102,7 +102,6 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
       defFlat: { min: 5, max: 15 },
       defPct: { min: 3, max: 8 },
       spdFlat: { min: 3, max: 9 },
-      spdPct: { min: 3, max: 8 },
       critRatePct: { min: 2, max: 5 },
       critDmgPct: { min: 4, max: 10 },
       armorPenPct: { min: 2, max: 6 },

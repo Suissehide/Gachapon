@@ -24,7 +24,6 @@ const RANGES: SubstatRanges = {
   defFlat: { min: 5, max: 15 },
   defPct: { min: 3, max: 8 },
   spdFlat: { min: 3, max: 9 },
-  spdPct: { min: 3, max: 8 },
   critRatePct: { min: 2, max: 5 },
   critDmgPct: { min: 4, max: 10 },
   armorPenPct: { min: 2, max: 6 },
@@ -234,17 +233,26 @@ describe('equipment-progression: rollInitialSubstats', () => {
 
   it('plafonne au nombre de clés du pool', () => {
     expect(rollInitialSubstats(20, RANGES, rngFrom([0.2, 0.6]))).toHaveLength(
-      12,
+      11,
     )
   })
 })
 
 describe('substats étendues', () => {
-  it('expose 12 clés', () => {
-    expect(SUBSTAT_KEYS).toHaveLength(12)
+  it('expose 11 clés', () => {
+    expect(SUBSTAT_KEYS).toHaveLength(11)
     for (const k of ['critRatePct', 'critDmgPct', 'armorPenPct', 'lifestealPct']) {
       expect(SUBSTAT_KEYS).toContain(k)
     }
+  })
+
+  // La vitesse n'existe qu'en valeur plate : sous ATB elle multiplie le
+  // rendement de l'unité au lieu de s'y ajouter, donc un pourcentage y serait
+  // hors-échelle face aux autres sous-stats. Elle reste disponible en
+  // pourcentage via le set Célérité, dont la magnitude est fixe.
+  it('ne propose pas de vitesse en pourcentage', () => {
+    expect(SUBSTAT_KEYS).not.toContain('spdPct')
+    expect(SUBSTAT_KEYS).toContain('spdFlat')
   })
 
   it('aucune nouvelle stat n a de version plate', () => {
@@ -255,7 +263,7 @@ describe('substats étendues', () => {
     }
   })
 
-  it('construit une plage pour chacune des 12 clés', () => {
+  it('construit une plage pour chacune des 11 clés', () => {
     const conf = Object.fromEntries(
       SUBSTAT_RANGE_CONFIG_KEYS.map((k) => [k, k.endsWith('Max') ? 10 : 1]),
     ) as Parameters<typeof substatRangesFromConfig>[0]

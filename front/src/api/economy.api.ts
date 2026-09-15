@@ -32,7 +32,6 @@ export type SubstatRangeKey =
   | 'defFlat'
   | 'defPct'
   | 'spdFlat'
-  | 'spdPct'
   | 'critRatePct'
   | 'critDmgPct'
   | 'armorPenPct'
