@@ -37,7 +37,7 @@ export const createNodeSchema = z.object({
     'PITY_BOOST',
     'VARIANT_LUCK',
     'DAILY_SHOP_SLOT',
-    'WISHLIST_COOLDOWN',
+    'WISHLIST_SLOTS',
     'PC_VAULT',
     'PC_REGEN',
     'SWEEP_COST',

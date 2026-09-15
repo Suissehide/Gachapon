@@ -83,7 +83,7 @@ describe('skill-effects aggregation v2', () => {
     expect(fx.pityReduction).toBe(0)
     expect(fx.variantLuckMultiplier).toBe(1.0)
     expect(fx.dailyShopSlots).toBe(0)
-    expect(fx.wishlistCooldownReductionDays).toBe(0)
+    expect(fx.wishlistSlots).toBe(0)
     expect(fx.pcVaultBonus).toBe(0)
     expect(fx.pcRegenReductionSeconds).toBe(0)
     expect(fx.sweepCostReduction).toBe(0)
@@ -105,7 +105,7 @@ describe('skill-effects aggregation v2', () => {
       { effectType: 'GOLD_BONUS', effect: 30 },
       { effectType: 'COMBAT_XP_BONUS', effect: 10 },
       { effectType: 'DROP_BONUS', effect: 40 },
-      { effectType: 'WISHLIST_COOLDOWN', effect: 2 },
+      { effectType: 'WISHLIST_SLOTS', effect: 2 },
     ])
     expect(fx.pullXpBonus).toBe(30)
     expect(fx.pityReduction).toBe(5)
@@ -117,7 +117,7 @@ describe('skill-effects aggregation v2', () => {
     expect(fx.goldBonus).toBe(30)
     expect(fx.combatXpBonus).toBe(10)
     expect(fx.dropBonus).toBe(40)
-    expect(fx.wishlistCooldownReductionDays).toBe(2)
+    expect(fx.wishlistSlots).toBe(2)
   })
 })
 

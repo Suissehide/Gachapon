@@ -490,15 +490,16 @@ function GuidePage() {
                 <div className="rounded-lg border border-border/50 bg-card px-4 py-3">
                   <p className="font-semibold text-foreground mb-1">Vœu</p>
                   <p>
-                    Choisis{' '}
+                    Garde{' '}
                     <strong className="text-foreground">
-                      une carte de ton choix
+                      plusieurs cartes de ton choix
                     </strong>{' '}
-                    comme vœu, puis achète-la à la poussière. Elle coûte plus
-                    cher qu'en boutique du jour, et un{' '}
-                    <strong className="text-foreground">délai</strong>{' '}
-                    s'applique avant de pouvoir en changer ou racheter. Une
-                    compétence raccourcit ce délai.
+                    en vœu, puis achète-les à la poussière quand tu veux : aucun
+                    délai, mais le plein tarif — plus cher qu'en boutique du
+                    jour, et les remises de boutique ne s'y appliquent pas. Tu
+                    as{' '}
+                    <strong className="text-foreground">2 emplacements</strong>,
+                    et une compétence les porte jusqu'à 5.
                   </p>
                 </div>
               </div>
@@ -590,7 +591,7 @@ function GuidePage() {
                   </p>
                   <p>
                     Augmente l'XP de tirage et de combat, ajoute des
-                    emplacements à la boutique du jour et raccourcit le délai du
+                    emplacements à la boutique du jour et des emplacements de
                     Vœu.
                   </p>
                 </div>

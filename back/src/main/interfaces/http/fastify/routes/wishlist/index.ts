@@ -1,7 +1,7 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import {
-  setWishBodySchema,
+  wishlistCardParamsSchema,
   wishlistPurchaseResponseSchema,
   wishlistStatusResponseSchema,
 } from '../../schemas/wishlist.schema'
@@ -22,33 +22,55 @@ export const wishlistRouter: FastifyPluginCallbackZod = (fastify) => {
       const status = await wishlistDomain.getStatus(request.user.userID)
       return {
         ...status,
-        card: status.card
-          ? { ...status.card, imageUrl: resolveUrl(status.card.imageUrl) }
-          : null,
+        cards: status.cards.map((card) => ({
+          ...card,
+          imageUrl: resolveUrl(card.imageUrl),
+        })),
       }
     },
   )
 
   fastify.put(
-    '/wishlist',
+    '/wishlist/:cardId',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { body: setWishBodySchema },
+      schema: { params: wishlistCardParamsSchema },
     },
     async (request, reply) => {
-      await wishlistDomain.setWish(request.user.userID, request.body.cardId)
+      await wishlistDomain.addWish(request.user.userID, request.params.cardId)
+      return reply.code(204).send()
+    },
+  )
+
+  fastify.delete(
+    '/wishlist/:cardId',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: { params: wishlistCardParamsSchema },
+    },
+    async (request, reply) => {
+      await wishlistDomain.removeWish(
+        request.user.userID,
+        request.params.cardId,
+      )
       return reply.code(204).send()
     },
   )
 
   fastify.post(
-    '/wishlist/purchase',
+    '/wishlist/:cardId/purchase',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { response: { 200: wishlistPurchaseResponseSchema } },
+      schema: {
+        params: wishlistCardParamsSchema,
+        response: { 200: wishlistPurchaseResponseSchema },
+      },
     },
     async (request) => {
-      const result = await wishlistDomain.purchase(request.user.userID)
+      const result = await wishlistDomain.purchase(
+        request.user.userID,
+        request.params.cardId,
+      )
       return {
         ...result,
         card: { ...result.card, imageUrl: resolveUrl(result.card.imageUrl) },

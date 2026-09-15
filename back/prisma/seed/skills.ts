@@ -490,11 +490,11 @@ export async function seedSkills(tx: Tx) {
       posY: 336,
       levels: {
         create: [
-          { level: 1, effect: 8 },
-          { level: 2, effect: 13 },
-          { level: 3, effect: 18 },
-          { level: 4, effect: 22 },
-          { level: 5, effect: 25 },
+          { level: 1, effect: 5 },
+          { level: 2, effect: 9 },
+          { level: 3, effect: 12 },
+          { level: 4, effect: 15 },
+          { level: 5, effect: 18 },
         ],
       },
     },
@@ -532,9 +532,9 @@ export async function seedSkills(tx: Tx) {
       posY: 504,
       levels: {
         create: [
-          { level: 1, effect: 10 },
-          { level: 2, effect: 18 },
-          { level: 3, effect: 25 },
+          { level: 1, effect: 7 },
+          { level: 2, effect: 13 },
+          { level: 3, effect: 18 },
         ],
       },
     },
@@ -559,14 +559,15 @@ export async function seedSkills(tx: Tx) {
       },
     },
   })
-  const negociant = await tx.skillNode.create({
+  const collectionneur = await tx.skillNode.create({
     data: {
       branchId: collection.id,
-      name: 'Négociant',
-      description: 'Réduit le délai du vœu (wishlist)',
-      icon: 'Handshake',
+      name: 'Collectionneur',
+      description:
+        "Emplacements de vœu supplémentaires (2 de base)",
+      icon: 'Heart',
       maxLevel: 3,
-      effectType: 'WISHLIST_COOLDOWN',
+      effectType: 'WISHLIST_SLOTS',
       posX: -144,
       posY: 504,
       levels: {
@@ -607,7 +608,7 @@ export async function seedSkills(tx: Tx) {
       },
       {
         fromNodeId: apexCollection.id,
-        toNodeId: negociant.id,
+        toNodeId: collectionneur.id,
         minLevel: 1,
         sourceHandle: 's-bottom',
         targetHandle: 't-top',

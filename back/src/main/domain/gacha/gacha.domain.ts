@@ -363,19 +363,13 @@ export class GachaDomain implements GachaDomainInterface {
     }
   }
 
-  /**
-   * Cartes souhaitées du joueur, cible de « Vœu exaucé ».
-   *
-   * Renvoie un tableau alors que le modèle n'en porte qu'une aujourd'hui
-   * (`User.wishlistCardId`) : la wishlist multi-cartes est le lot suivant, et
-   * la redirection est déjà écrite pour N vœux.
-   */
+  /** Cartes souhaitées du joueur, cible de « Vœu exaucé ». */
   async #wishedCardIds(userId: string): Promise<string[]> {
-    const user = await this.#postgresOrm.prisma.user.findUnique({
-      where: { id: userId },
-      select: { wishlistCardId: true },
+    const rows = await this.#postgresOrm.prisma.userWishlistCard.findMany({
+      where: { userId },
+      select: { cardId: true },
     })
-    return user?.wishlistCardId ? [user.wishlistCardId] : []
+    return rows.map((row) => row.cardId)
   }
 
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: boost + pity + golden-ball precedence logic, refactor deferred

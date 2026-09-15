@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 import { cardElementEnum } from './admin-cards.schema'
 
-export const setWishBodySchema = z.object({
+export const wishlistCardParamsSchema = z.object({
   cardId: z.string().uuid(),
 })
 
@@ -13,13 +13,12 @@ const wishlistCardSchema = z.object({
   rarity: z.string(),
   element: cardElementEnum.nullable(),
   set: z.object({ id: z.string().uuid(), name: z.string() }),
+  price: z.number(),
 })
 
 export const wishlistStatusResponseSchema = z.object({
-  card: wishlistCardSchema.nullable(),
-  price: z.number().nullable(),
-  availableAt: z.string().nullable(),
-  cooldownDays: z.number(),
+  slots: z.number(),
+  cards: z.array(wishlistCardSchema),
 })
 
 export const wishlistPurchaseResponseSchema = z.object({
@@ -27,5 +26,4 @@ export const wishlistPurchaseResponseSchema = z.object({
   wasDuplicate: z.boolean(),
   dustSpent: z.number(),
   newDustBalance: z.number(),
-  availableAt: z.string(),
 })

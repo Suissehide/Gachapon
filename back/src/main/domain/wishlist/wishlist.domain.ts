@@ -19,6 +19,13 @@ const RARITY_PRICE_KEYS = {
   LEGENDARY: 'dailyShopPriceLegendary',
 } as const
 
+/** Emplacements de vœu sans aucun point d'arbre. « Collectionneur » en ajoute jusqu'à 3. */
+export const BASE_WISHLIST_SLOTS = 2
+
+export function wishlistSlots(bonus: number): number {
+  return BASE_WISHLIST_SLOTS + Math.max(0, bonus)
+}
+
 function isPrismaSerializationError(err: unknown): boolean {
   return (
     typeof err === 'object' &&
@@ -28,46 +35,52 @@ function isPrismaSerializationError(err: unknown): boolean {
   )
 }
 
-function computeAvailableAt(
-  purchasedAt: Date | null,
-  effectiveCooldownDays: number,
-): string | null {
-  if (purchasedAt === null) {
-    return null
-  }
-  const at = new Date(
-    purchasedAt.getTime() + effectiveCooldownDays * 24 * 60 * 60 * 1000,
-  )
-  return new Date() < at ? at.toISOString() : null
-}
-
 export class WishlistDomain implements IWishlistDomain {
   readonly #postgresOrm: PostgresORMInterface
   readonly #configService: ConfigServiceInterface
-  readonly #skillTreeRepository: ISkillTreeRepository
   readonly #userCardRepository: IUserCardRepository
+  readonly #skillTreeRepository: ISkillTreeRepository
 
   constructor({
     postgresOrm,
     configService,
-    skillTreeRepository,
     userCardRepository,
+    skillTreeRepository,
   }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#configService = configService
-    this.#skillTreeRepository = skillTreeRepository
     this.#userCardRepository = userCardRepository
+    this.#skillTreeRepository = skillTreeRepository
+  }
+
+  /**
+   * Prix d'un vœu.
+   *
+   * `shopDiscount` n'est PAS applique : l'achat ciblé est le service premium du
+   * jeu — la seule façon d'obtenir une carte choisie — et il a perdu son délai
+   * d'attente. Le plein tarif est donc devenu son unique frein.
+   */
+  #priceFor(
+    rarity: string,
+    c: Record<string, number>,
+  ): number {
+    const priceKey = RARITY_PRICE_KEYS[rarity as keyof typeof RARITY_PRICE_KEYS]
+    const rarityBasePrice = priceKey ? (c[priceKey] ?? 50) : 50
+    return Math.max(
+      0,
+      Math.round(rarityBasePrice * (c['wishlist.priceMultiplier'] ?? 1)),
+    )
   }
 
   async getStatus(userId: string): Promise<WishlistStatus> {
-    const [user, c, effects] = await Promise.all([
-      this.#postgresOrm.prisma.user.findUniqueOrThrow({
-        where: { id: userId },
-        include: { wishlistCard: { include: { set: true } } },
+    const [rows, c, effects] = await Promise.all([
+      this.#postgresOrm.prisma.userWishlistCard.findMany({
+        where: { userId },
+        include: { card: { include: { set: true } } },
+        orderBy: { addedAt: 'asc' },
       }),
       this.#configService.getMany(
         'wishlist.priceMultiplier',
-        'wishlist.cooldownDays',
         'dailyShopPriceCommon',
         'dailyShopPriceUncommon',
         'dailyShopPriceRare',
@@ -77,144 +90,95 @@ export class WishlistDomain implements IWishlistDomain {
       this.#skillTreeRepository.getEffectsForUser(userId),
     ])
 
-    const cooldownDays = c['wishlist.cooldownDays']
-    const effectiveCooldownDays = Math.max(
-      1,
-      cooldownDays - (effects.wishlistCooldownReductionDays ?? 0),
-    )
-    const availableAt = computeAvailableAt(
-      user.wishlistPurchasedAt,
-      effectiveCooldownDays,
-    )
-
-    if (!user.wishlistCard) {
-      return { card: null, price: null, availableAt, cooldownDays }
-    }
-
-    const card = user.wishlistCard
-    const priceKey =
-      RARITY_PRICE_KEYS[card.rarity as keyof typeof RARITY_PRICE_KEYS]
-    const rarityBasePrice = priceKey ? (c[priceKey] ?? 50) : 50
-    const basePrice = rarityBasePrice * c['wishlist.priceMultiplier']
-    const discount = effects.shopDiscount ?? 0
-    const price = Math.max(0, Math.round(basePrice * (1 - discount / 100)))
-
     return {
-      card: {
-        id: card.id,
-        name: card.name,
-        imageUrl: card.imageUrl,
-        rarity: card.rarity,
-        element: card.element,
-        set: { id: card.set.id, name: card.set.name },
-      },
-      price,
-      availableAt,
-      cooldownDays,
+      slots: wishlistSlots(effects.wishlistSlots ?? 0),
+      cards: rows.map((row) => ({
+        id: row.card.id,
+        name: row.card.name,
+        imageUrl: row.card.imageUrl,
+        rarity: row.card.rarity,
+        element: row.card.element,
+        set: { id: row.card.set.id, name: row.card.set.name },
+        price: this.#priceFor(row.card.rarity, c),
+      })),
     }
   }
 
-  async setWish(userId: string, cardId: string): Promise<void> {
-    const card = await this.#postgresOrm.prisma.card.findUnique({
-      where: { id: cardId },
-      include: { set: true },
-    })
+  async addWish(userId: string, cardId: string): Promise<void> {
+    const [card, effects] = await Promise.all([
+      this.#postgresOrm.prisma.card.findUnique({
+        where: { id: cardId },
+        include: { set: true },
+      }),
+      this.#skillTreeRepository.getEffectsForUser(userId),
+    ])
     if (!card || !card.set.isActive) {
       throw Boom.notFound('Card not found or set is inactive')
     }
-    await this.#postgresOrm.prisma.user.update({
-      where: { id: userId },
-      data: { wishlistCardId: cardId },
+    const slots = wishlistSlots(effects.wishlistSlots ?? 0)
+
+    // Le comptage et l'insertion tiennent dans UNE transaction sérialisable :
+    // deux ajouts concurrents verraient sinon le même compte et dépasseraient
+    // le plafond à deux.
+    await this.#postgresOrm.executeWithTransactionClient(
+      async (tx) => {
+        const already = await tx.userWishlistCard.findUnique({
+          where: { userId_cardId: { userId, cardId } },
+        })
+        if (already) {
+          return
+        }
+        const count = await tx.userWishlistCard.count({ where: { userId } })
+        if (count >= slots) {
+          throw Boom.conflict(`Wishlist pleine (${slots} emplacements)`)
+        }
+        await tx.userWishlistCard.create({ data: { userId, cardId } })
+      },
+      { isolationLevel: 'Serializable' },
+    )
+  }
+
+  async removeWish(userId: string, cardId: string): Promise<void> {
+    await this.#postgresOrm.prisma.userWishlistCard.deleteMany({
+      where: { userId, cardId },
     })
   }
 
-  async purchase(userId: string): Promise<PurchaseWishlistResult> {
-    // Read config + effects OUTSIDE the transaction (gacha pattern)
-    const [user, c, effects] = await Promise.all([
-      this.#postgresOrm.prisma.user.findUniqueOrThrow({
-        where: { id: userId },
-        include: { wishlistCard: { include: { set: true } } },
+  async purchase(
+    userId: string,
+    cardId: string,
+  ): Promise<PurchaseWishlistResult> {
+    const [wish, c] = await Promise.all([
+      this.#postgresOrm.prisma.userWishlistCard.findUnique({
+        where: { userId_cardId: { userId, cardId } },
+        include: { card: { include: { set: true } } },
       }),
       this.#configService.getMany(
         'wishlist.priceMultiplier',
-        'wishlist.cooldownDays',
         'dailyShopPriceCommon',
         'dailyShopPriceUncommon',
         'dailyShopPriceRare',
         'dailyShopPriceEpic',
         'dailyShopPriceLegendary',
       ),
-      this.#skillTreeRepository.getEffectsForUser(userId),
     ])
 
-    if (!user.wishlistCard) {
-      throw Boom.badRequest('No wish set')
+    if (!wish) {
+      throw Boom.badRequest('Card is not in your wishlist')
     }
-
-    const card = user.wishlistCard
-    const cooldownDays = c['wishlist.cooldownDays']
-    const effectiveCooldownDays = Math.max(
-      1,
-      cooldownDays - (effects.wishlistCooldownReductionDays ?? 0),
-    )
-
-    const now = new Date()
-    if (user.wishlistPurchasedAt !== null) {
-      const availableAt = new Date(
-        user.wishlistPurchasedAt.getTime() +
-          effectiveCooldownDays * 24 * 60 * 60 * 1000,
-      )
-      if (now < availableAt) {
-        const err = Boom.tooManyRequests('Cooldown actif')
-        err.output.payload = {
-          ...err.output.payload,
-          availableAt: availableAt.toISOString(),
-        }
-        throw err
-      }
-    }
-
-    const priceKey =
-      RARITY_PRICE_KEYS[card.rarity as keyof typeof RARITY_PRICE_KEYS]
-    const rarityBasePrice = priceKey ? (c[priceKey] ?? 50) : 50
-    const basePrice = rarityBasePrice * c['wishlist.priceMultiplier']
-    const discount = effects.shopDiscount ?? 0
-    const finalPrice = Math.max(0, Math.round(basePrice * (1 - discount / 100)))
+    const card = wish.card
+    const finalPrice = this.#priceFor(card.rarity, c)
 
     const attempt = async (): Promise<PurchaseWishlistResult> => {
-      const purchasedAt = new Date()
-      const newAvailableAt = new Date(
-        purchasedAt.getTime() + effectiveCooldownDays * 24 * 60 * 60 * 1000,
-      )
-
       const result = await this.#postgresOrm.executeWithTransactionClient(
         async (tx) => {
           const u = await tx.user.findUniqueOrThrow({ where: { id: userId } })
-          // Re-check cooldown inside tx to close the race on P2034 retry
-          // (effectiveCooldownDays captured outside tx is stable — it derives from config/effects, not mutable state)
-          if (u.wishlistPurchasedAt !== null) {
-            const availableAt = new Date(
-              u.wishlistPurchasedAt.getTime() +
-                effectiveCooldownDays * 24 * 60 * 60 * 1000,
-            )
-            if (new Date() < availableAt) {
-              const err = Boom.tooManyRequests('Cooldown actif')
-              err.output.payload = {
-                ...err.output.payload,
-                availableAt: availableAt.toISOString(),
-              }
-              throw err
-            }
-          }
           if (u.dust < finalPrice) {
             throw Boom.paymentRequired('Not enough dust')
           }
           const updated = await tx.user.update({
             where: { id: userId },
-            data: {
-              dust: { decrement: finalPrice },
-              wishlistPurchasedAt: purchasedAt,
-            },
+            data: { dust: { decrement: finalPrice } },
           })
           const { wasDuplicate } = await this.#userCardRepository.upsertInTx(
             tx,
@@ -235,11 +199,11 @@ export class WishlistDomain implements IWishlistDomain {
           rarity: card.rarity,
           element: card.element,
           set: { id: card.set.id, name: card.set.name },
+          price: finalPrice,
         },
         wasDuplicate: result.wasDuplicate,
         dustSpent: finalPrice,
         newDustBalance: result.newDustBalance,
-        availableAt: newAvailableAt.toISOString(),
       }
     }
 

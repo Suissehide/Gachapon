@@ -7,13 +7,14 @@ export interface WishlistCardInfo {
   rarity: string
   element: CardElement | null
   set: { id: string; name: string }
+  /** Prix en poussière, hors remise de boutique (le vœu est à plein tarif). */
+  price: number
 }
 
 export interface WishlistStatus {
-  card: WishlistCardInfo | null
-  price: number | null
-  availableAt: string | null
-  cooldownDays: number
+  /** Emplacements disponibles : 2 + le nœud « Collectionneur ». */
+  slots: number
+  cards: WishlistCardInfo[]
 }
 
 export interface PurchaseWishlistResult {
@@ -21,11 +22,11 @@ export interface PurchaseWishlistResult {
   wasDuplicate: boolean
   dustSpent: number
   newDustBalance: number
-  availableAt: string
 }
 
 export interface IWishlistDomain {
   getStatus(userId: string): Promise<WishlistStatus>
-  setWish(userId: string, cardId: string): Promise<void>
-  purchase(userId: string): Promise<PurchaseWishlistResult>
+  addWish(userId: string, cardId: string): Promise<void>
+  removeWish(userId: string, cardId: string): Promise<void>
+  purchase(userId: string, cardId: string): Promise<PurchaseWishlistResult>
 }

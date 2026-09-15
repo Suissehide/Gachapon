@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   CalendarClock,
@@ -68,35 +67,6 @@ function useCountdown() {
 }
 
 // ── Wishlist countdown hook ─────────────────────────────────────────────────
-
-function useWishlistCountdown(availableAt: string | null) {
-  const [, setTick] = useState(0)
-  useEffect(() => {
-    if (!availableAt) {
-      return
-    }
-    const id = setInterval(() => setTick((t) => t + 1), 1000)
-    return () => clearInterval(id)
-  }, [availableAt])
-
-  if (!availableAt) {
-    return null
-  }
-  const target = new Date(availableAt)
-  const diff = Math.max(0, target.getTime() - Date.now())
-  if (diff === 0) {
-    return null
-  }
-  const totalSeconds = Math.floor(diff / 1000)
-  const days = Math.floor(totalSeconds / 86400)
-  const h = Math.floor((totalSeconds % 86400) / 3600)
-  const m = Math.floor((totalSeconds % 3600) / 60)
-  const s = totalSeconds % 60
-  const hh = String(h).padStart(2, '0')
-  const mm = String(m).padStart(2, '0')
-  const ss = String(s).padStart(2, '0')
-  return days > 0 ? `${days}j ${hh}h ${mm}m ${ss}s` : `${hh}h ${mm}m ${ss}s`
-}
 
 // ── Shop item type config ───────────────────────────────────────────────────
 
@@ -351,53 +321,18 @@ function ShopPage() {
 // ── Wishlist section ────────────────────────────────────────────────────────
 
 function WishlistBuyButton({
-  canBuy,
   canAfford,
   purchasing,
   price,
-  availableAt,
   onBuy,
 }: {
-  canBuy: boolean
   canAfford: boolean
   purchasing: boolean
-  price: number | null
-  availableAt: string | null
+  price: number
   onBuy: () => void
 }) {
-  const queryClient = useQueryClient()
-  const countdown = useWishlistCountdown(availableAt)
+  const priceLabel = price.toLocaleString('fr-FR')
 
-  // Invalidate wishlist query when countdown expires to ensure fresh data
-  useEffect(() => {
-    if (availableAt && !countdown) {
-      queryClient.invalidateQueries({ queryKey: ['wishlist'] })
-    }
-  }, [countdown, availableAt, queryClient])
-
-  const priceLabel = price !== null ? price.toLocaleString('fr-FR') : ''
-
-  if (!canBuy && countdown) {
-    return (
-      <Button
-        size="sm"
-        disabled
-        variant="secondary"
-        className="w-full gap-1.5 font-mono"
-      >
-        <Clock className="h-3.5 w-3.5 shrink-0" />
-        <span className="tabular-nums">{countdown}</span>
-      </Button>
-    )
-  }
-  if (!canBuy && !countdown && availableAt) {
-    // Cooldown just expired, waiting for refetch
-    return (
-      <Button size="sm" disabled className="w-full">
-        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-      </Button>
-    )
-  }
   if (purchasing) {
     return (
       <Button size="sm" disabled className="w-full">
@@ -405,25 +340,13 @@ function WishlistBuyButton({
       </Button>
     )
   }
-  if (canAfford) {
-    return (
-      <Button
-        size="sm"
-        variant="gradient"
-        onClick={onBuy}
-        className="w-full gap-1"
-      >
-        <Sparkles className="h-3.5 w-3.5" />
-        <span className="tabular-nums">{priceLabel}</span>
-      </Button>
-    )
-  }
   return (
     <Button
       size="sm"
-      disabled
-      variant="outline"
-      className="w-full gap-1 text-text-light/70"
+      variant={canAfford ? 'gradient' : 'outline'}
+      disabled={!canAfford}
+      onClick={onBuy}
+      className={`w-full gap-1${canAfford ? '' : ' text-text-light/70'}`}
     >
       <Sparkles className="h-3.5 w-3.5" />
       <span className="tabular-nums">{priceLabel}</span>
@@ -434,58 +357,62 @@ function WishlistBuyButton({
 function WishlistSection({ dust }: { dust: number }) {
   const { data: wishlist, isLoading } = useWishlist()
   const { mutate: purchase, isPending: purchasing } = usePurchaseWishlist()
+  const [buyingId, setBuyingId] = useState<string | null>(null)
 
-  const card = wishlist?.card ?? null
-  const price = wishlist?.price ?? null
-  const availableAt = wishlist?.availableAt ?? null
-
-  // canBuy = card is set AND cooldown has expired (availableAt is null)
-  const canBuy = card !== null && availableAt === null && price !== null
-  const canAfford = price !== null && dust >= price
+  const cards = wishlist?.cards ?? []
+  const slots = wishlist?.slots ?? 0
 
   return (
     <Card className="p-6">
       <div className="mb-4 flex items-center gap-2">
         <Star className="h-4 w-4 text-primary" />
-        <CardTitle className="text-sm uppercase tracking-wider">Vœu</CardTitle>
+        <CardTitle className="text-sm uppercase tracking-wider">Vœux</CardTitle>
+        {!isLoading && slots > 0 && (
+          <span className="ml-auto font-mono text-xs text-text-light">
+            {cards.length} / {slots}
+          </span>
+        )}
       </div>
 
       {isLoading ? (
         <div className="flex h-32 items-center justify-center">
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
-      ) : card ? (
+      ) : cards.length > 0 ? (
         <div className="flex flex-wrap justify-center gap-4">
-          <div className="w-[120px] sm:w-[130px] md:w-[140px]">
-            <div className="flex flex-col items-center gap-2.5">
-              <div className="w-full">
-                <CardDisplay
-                  rarity={card.rarity}
-                  name={card.name}
-                  setName={card.set.name}
-                  imageUrl={card.imageUrl}
-                  variant={null}
-                  element={card.element}
-                  isOwned
-                  interactive={canBuy}
-                  compact
+          {cards.map((card) => (
+            <div key={card.id} className="w-[120px] sm:w-[130px] md:w-[140px]">
+              <div className="flex flex-col items-center gap-2.5">
+                <div className="w-full">
+                  <CardDisplay
+                    rarity={card.rarity}
+                    name={card.name}
+                    setName={card.set.name}
+                    imageUrl={card.imageUrl}
+                    variant={null}
+                    element={card.element}
+                    isOwned
+                    interactive={dust >= card.price}
+                    compact
+                  />
+                </div>
+                <WishlistBuyButton
+                  canAfford={dust >= card.price}
+                  purchasing={purchasing && buyingId === card.id}
+                  price={card.price}
+                  onBuy={() => {
+                    setBuyingId(card.id)
+                    purchase(card.id)
+                  }}
                 />
               </div>
-              <WishlistBuyButton
-                canBuy={canBuy}
-                canAfford={canAfford}
-                purchasing={purchasing}
-                price={price}
-                availableAt={availableAt}
-                onBuy={() => purchase()}
-              />
             </div>
-          </div>
+          ))}
         </div>
       ) : (
         <div className="flex h-32 items-center justify-center rounded-xl border border-dashed border-border">
           <p className="text-sm text-text-light">
-            Choisis une carte dans ta{' '}
+            Choisis des cartes dans ta{' '}
             <Link
               to="/collection"
               className="text-primary underline underline-offset-2"

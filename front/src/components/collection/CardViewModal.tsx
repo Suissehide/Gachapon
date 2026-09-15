@@ -9,7 +9,8 @@ import {
 } from '../../constants/card.constant.ts'
 import { describePassive } from '../../constants/passives.constant.ts'
 import { useCardClassicStatsWithSetBonuses } from '../../queries/useEquipment.ts'
-import { useSetWishlist, useWishlist } from '../../queries/useWishlist.ts'
+import type { WishlistResponse } from '../../queries/useWishlist.ts'
+import { useToggleWishlist, useWishlist } from '../../queries/useWishlist.ts'
 import type { DisplayEntry } from '../../routes/_authenticated/collection.tsx'
 import { finalSpeed, finalStatWithBonuses } from '../../utils/cardStats.ts'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
@@ -73,10 +74,19 @@ function WishlistButton({
   )
 }
 
+/** Hors composant : `CardViewModal` frôle le seuil de complexité cognitive. */
+function isWished(
+  wishlist: WishlistResponse | undefined,
+  cardId: string,
+): boolean {
+  return wishlist?.cards.some((c) => c.id === cardId) ?? false
+}
+
 export function CardViewModal({ entry, onClose, onRecycle }: Props) {
   // Hooks must be called unconditionally — before any early return.
   const { data: wishlist } = useWishlist()
-  const { mutate: setWishlist, isPending: settingWishlist } = useSetWishlist()
+  const { mutate: toggleWishlist, isPending: settingWishlist } =
+    useToggleWishlist()
   // Bonus de set (2/4 pièces) inclus : la face de carte doit annoncer les
   // mêmes PV/ATQ/DEF/VIT que CombatPanel, affiché juste en dessous dans la
   // même fenêtre — voir useCardClassicStatsWithSetBonuses.
@@ -87,7 +97,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
   }
 
   const { card, variant, quantity, isOwned, userCard } = entry
-  const isWishlisted = wishlist?.card?.id === card.id
+  const isWishlisted = isWished(wishlist, card.id)
   const rarityHex = RARITY_HEX[card.rarity] ?? RARITY_HEX.COMMON
   const variantInfo = variant !== 'NORMAL' ? VARIANT_LABELS[variant] : null
 
@@ -221,7 +231,9 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
             <WishlistButton
               isWishlisted={isWishlisted}
               loading={settingWishlist}
-              onSet={() => setWishlist(card.id)}
+              onSet={() =>
+                toggleWishlist({ cardId: card.id, wished: isWishlisted })
+              }
             />
 
             {/* Meta — Owned + inline recycle */}

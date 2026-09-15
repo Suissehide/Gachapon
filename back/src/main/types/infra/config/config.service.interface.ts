@@ -45,7 +45,6 @@ export const CONFIG_KEYS = [
   'card.rarityMultEpic',
   'card.rarityMultLegendary',
   'wishlist.priceMultiplier',
-  'wishlist.cooldownDays',
   'shop.energyDailyCap',
   'equip.goldCostBase',
   'equip.goldCostExp',

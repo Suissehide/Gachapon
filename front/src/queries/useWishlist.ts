@@ -7,6 +7,7 @@ import { isApiError } from '../libs/httpErrorHandler.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 
 export type {
+  WishlistCard,
   WishlistPurchaseResult,
   WishlistResponse,
 } from '../api/wishlist.api.ts'
@@ -19,11 +20,13 @@ export const useWishlist = () => {
   })
 }
 
-export const useSetWishlist = () => {
+/** Ajoute ou retire un vœu selon `wished` — le cœur de la carte bascule. */
+export const useToggleWishlist = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
   return useMutation({
-    mutationFn: (cardId: string) => WishlistApi.set(cardId),
+    mutationFn: ({ cardId, wished }: { cardId: string; wished: boolean }) =>
+      wished ? WishlistApi.remove(cardId) : WishlistApi.add(cardId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['wishlist'] })
     },
@@ -31,7 +34,7 @@ export const useSetWishlist = () => {
       const title =
         isApiError(error) && error.title
           ? error.title
-          : 'Erreur lors de la définition du vœu'
+          : 'Erreur lors de la mise à jour des vœux'
       toast({
         title,
         message: error.message,
@@ -47,7 +50,7 @@ export const usePurchaseWishlist = () => {
   const setUser = useAuthStore((s) => s.setUser)
   const user = useAuthStore((s) => s.user)
   return useMutation({
-    mutationFn: () => WishlistApi.purchase(),
+    mutationFn: (cardId: string) => WishlistApi.purchase(cardId),
     onSuccess: (result) => {
       if (user) {
         setUser({ ...user, dust: result.newDustBalance })

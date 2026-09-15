@@ -1,67 +1,68 @@
 import type { Card } from '../constants/card.constant.ts'
 import { apiUrl } from '../constants/config.constant.ts'
-import { ApiError, handleHttpError } from '../libs/httpErrorHandler.ts'
+import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
+export type WishlistCard = Card & {
+  /** Prix en poussière, plein tarif : le vœu échappe à la remise de boutique. */
+  price: number
+}
+
 export type WishlistResponse = {
-  card: Card | null
-  price: number | null
-  /** null = purchasable now (if card is defined); ISO string = on cooldown until that date */
-  availableAt: string | null
-  cooldownDays: number
+  /** Emplacements disponibles : 2 de base, jusqu'à 5 avec « Collectionneur ». */
+  slots: number
+  cards: WishlistCard[]
 }
 
 export type WishlistPurchaseResult = {
-  card: Card
+  card: WishlistCard
   wasDuplicate: boolean
   dustSpent: number
   newDustBalance: number
-  /** ISO string: next available purchase date */
-  availableAt: string
-}
-
-export class CooldownError extends ApiError {
-  availableAt: string | undefined
-  constructor(availableAt?: string) {
-    super(429, 'Cooldown actif', {
-      title: 'Cooldown actif',
-      message: availableAt
-        ? `Ce vœu sera de nouveau disponible le ${new Date(availableAt).toLocaleDateString('fr-FR')}.`
-        : 'Ce vœu est en cooldown. Réessaie plus tard.',
-    })
-    this.availableAt = availableAt
-  }
 }
 
 export const WishlistApi = {
   get: async (): Promise<WishlistResponse> => {
     const res = await fetchWithAuth(`${apiUrl}/wishlist`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la récupération du vœu')
+      handleHttpError(res, {}, 'Erreur lors de la récupération des vœux')
     }
     return res.json()
   },
 
-  set: async (cardId: string): Promise<void> => {
-    const res = await fetchWithAuth(`${apiUrl}/wishlist`, {
+  add: async (cardId: string): Promise<void> => {
+    const res = await fetchWithAuth(`${apiUrl}/wishlist/${cardId}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cardId }),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la définition du vœu')
+      handleHttpError(
+        res,
+        {
+          409: {
+            title: 'Vœux au complet',
+            message:
+              'Retire un vœu ou investis dans « Collectionneur » pour en ajouter un.',
+          },
+        },
+        "Erreur lors de l'ajout du vœu",
+      )
     }
   },
 
-  purchase: async (): Promise<WishlistPurchaseResult> => {
-    const res = await fetchWithAuth(`${apiUrl}/wishlist/purchase`, {
+  remove: async (cardId: string): Promise<void> => {
+    const res = await fetchWithAuth(`${apiUrl}/wishlist/${cardId}`, {
+      method: 'DELETE',
+    })
+    if (!res.ok) {
+      handleHttpError(res, {}, 'Erreur lors du retrait du vœu')
+    }
+  },
+
+  purchase: async (cardId: string): Promise<WishlistPurchaseResult> => {
+    const res = await fetchWithAuth(`${apiUrl}/wishlist/${cardId}/purchase`, {
       method: 'POST',
     })
     if (!res.ok) {
-      if (res.status === 429) {
-        const body = await res.json().catch(() => ({}))
-        throw new CooldownError(body?.availableAt)
-      }
       handleHttpError(
         res,
         {

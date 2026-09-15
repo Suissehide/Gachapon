@@ -252,7 +252,7 @@ function buildDomain(opts: {
     // Lu par `#wishedCardIds` pour « Vœu exaucé ». Sans vœu, la redirection
     // est neutre : ces tests mesurent le tirage brut.
     prisma: {
-      user: { findUnique: jest.fn().mockResolvedValue({ wishlistCardId: null }) },
+      userWishlistCard: { findMany: jest.fn().mockResolvedValue([]) },
     },
   }
 

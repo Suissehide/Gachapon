@@ -121,9 +121,9 @@ const PLAY_TUTORIAL_STEPS: readonly TutorialStep[] = [
     text: (
       <>
         Dépense ta <Poussiere>poussière</Poussiere> dans la boutique du jour
-        pour cibler des cartes précises, ou formule un Vœu pour la carte de tes
-        rêves. La boutique propose aussi des packs de <Jeton>jetons</Jeton> et
-        des recharges d'
+        pour cibler des cartes précises, ou garde en Vœu les cartes de tes rêves
+        pour les acheter directement. La boutique propose aussi des packs de{' '}
+        <Jeton>jetons</Jeton> et des recharges d'
         <Res icon={Zap} className="text-violet-600">
           énergie
         </Res>

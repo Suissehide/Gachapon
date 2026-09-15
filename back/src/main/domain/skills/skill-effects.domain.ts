@@ -19,7 +19,7 @@ const NEUTRAL_EFFECTS: UserUpgradeEffects = {
   pityReduction: 0,
   variantLuckMultiplier: 1.0,
   dailyShopSlots: 0,
-  wishlistCooldownReductionDays: 0,
+  wishlistSlots: 0,
   pcVaultBonus: 0,
   pcRegenReductionSeconds: 0,
   sweepCostReduction: 0,
@@ -76,8 +76,8 @@ export function getSkillEffects(rows: SkillEffectRow[]): UserUpgradeEffects {
       case 'DAILY_SHOP_SLOT':
         result.dailyShopSlots += row.effect
         break
-      case 'WISHLIST_COOLDOWN':
-        result.wishlistCooldownReductionDays += row.effect
+      case 'WISHLIST_SLOTS':
+        result.wishlistSlots += row.effect
         break
       case 'PC_VAULT':
         result.pcVaultBonus += row.effect

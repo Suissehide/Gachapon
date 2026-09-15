@@ -75,7 +75,8 @@ function WishlistAwareCards({
           level={entry.userCard?.level ?? null}
           palier={entry.userCard?.palier ?? null}
           isWishlisted={
-            wishlist?.card?.id === entry.card.id && entry.variant === 'NORMAL'
+            (wishlist?.cards.some((c) => c.id === entry.card.id) ?? false) &&
+            entry.variant === 'NORMAL'
           }
           isEngaged={engagedCardIds?.has(entry.card.id) ?? false}
           onClick={() => onDetail(entry)}

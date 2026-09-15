@@ -68,7 +68,6 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'card.rarityMultEpic': 2.3,
   'card.rarityMultLegendary': 3.0,
   'wishlist.priceMultiplier': 2,
-  'wishlist.cooldownDays': 7,
   'shop.energyDailyCap': 3,
   'equip.goldCostBase': 25,
   'equip.goldCostExp': 1.35,

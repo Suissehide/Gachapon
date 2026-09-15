@@ -94,6 +94,7 @@ enum SkillEffectType {
   TOKEN_OVERFLOW_DUST
   ENERGY_PACK_CAP
   WISHLIST_PULL_CHANCE
+  WISHLIST_SLOTS
 }
 
 enum RewardSource {
@@ -229,9 +230,7 @@ model User {
   battleResults    BattleResult[]
   towerProgress    UserTowerProgress[]
 
-  wishlistCardId      String?
-  wishlistCard        Card?              @relation("UserWishlist", fields: [wishlistCardId], references: [id], onDelete: SetNull)
-  wishlistPurchasedAt DateTime?
+  wishlistCards       UserWishlistCard[]
   boosts              UserBoost[]
   activityEvents      ActivityEvent[]
   raidAttacks         RaidAttack[]
@@ -408,6 +407,19 @@ model CardSet {
   cards Card[]
 }
 
+/// Cartes souhaitées d'un joueur. Remplace `User.wishlistCardId`, qui n'en
+/// portait qu'UNE : le nombre d'emplacements vaut 2 + le nœud « Collectionneur ».
+model UserWishlistCard {
+  userId  String
+  cardId  String
+  addedAt DateTime @default(now())
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card    Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@id([userId, cardId])
+  @@index([userId])
+}
+
 model Card {
   id         String     @id @default(uuid())
   setId      String
@@ -428,7 +440,7 @@ model Card {
   userCards      UserCard[]
   gachaPulls     GachaPull[]
   dailyShopItems DailyShopItem[]
-  wishedBy       User[]          @relation("UserWishlist")
+  wishedBy       UserWishlistCard[]
   duelTransfers  DuelTransfer[]  @relation("DuelTransferCard")
 }
 

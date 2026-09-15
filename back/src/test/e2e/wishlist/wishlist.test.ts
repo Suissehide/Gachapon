@@ -5,18 +5,18 @@ describe('Wishlist routes', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
   let cookies: string
   let userId: string
-  let rareCardId: string
-  let negociantBranchId: string | undefined
+  let cardIds: string[] = []
+  let skillBranchId: string | undefined
 
   const suffix = Date.now()
+  const auth = () => ({ cookie: cookies })
 
   beforeAll(async () => {
     app = await buildTestApp()
-
+    // biome-ignore lint/suspicious/noExplicitAny: accès au conteneur dans les e2e
     const { postgresOrm } = (app as any).iocContainer
     const prisma = postgresOrm.prisma
 
-    // Register user
     await app.inject({
       method: 'POST',
       url: '/auth/register',
@@ -26,29 +26,28 @@ describe('Wishlist routes', () => {
         password: 'Password123!',
       },
     })
-
-    // Verify email and give dust
     const user = await prisma.user.update({
       where: { email: `wishlist${suffix}@test.com` },
       data: { emailVerifiedAt: new Date() },
     })
     userId = user.id
 
-    // Create an active card set with a RARE card
     const set = await prisma.cardSet.create({
       data: { name: `WishlistTestSet${suffix}`, isActive: true },
     })
-    const rareCard = await prisma.card.create({
-      data: {
-        setId: set.id,
-        name: `RARE-wishlist-${suffix}`,
-        rarity: 'RARE',
-        dropWeight: 1.0,
-      },
-    })
-    rareCardId = rareCard.id
+    // Six cartes RARE : de quoi dépasser les 2 emplacements de base et les 5 du plafond.
+    for (let i = 0; i < 6; i++) {
+      const card = await prisma.card.create({
+        data: {
+          setId: set.id,
+          name: `RARE-wishlist-${suffix}-${i}`,
+          rarity: 'RARE',
+          dropWeight: 1.0,
+        },
+      })
+      cardIds.push(card.id)
+    }
 
-    // Login
     const loginRes = await app.inject({
       method: 'POST',
       url: '/auth/login',
@@ -58,134 +57,130 @@ describe('Wishlist routes', () => {
   })
 
   afterAll(async () => {
-    // Clean up skill tree data so it doesn't pollute subsequent test files
-    if (negociantBranchId) {
+    if (skillBranchId) {
+      // biome-ignore lint/suspicious/noExplicitAny: accès au conteneur dans les e2e
       const { postgresOrm } = (app as any).iocContainer
-      await postgresOrm.prisma.skillBranch.delete({ where: { id: negociantBranchId } })
+      await postgresOrm.prisma.skillBranch.delete({ where: { id: skillBranchId } })
     }
     await app.close()
   })
 
-  it('PUT /wishlist — sets the wish (200 or 204)', async () => {
-    const res = await app.inject({
-      method: 'PUT',
-      url: '/wishlist',
-      headers: { cookie: cookies },
-      payload: { cardId: rareCardId },
-    })
-    expect([200, 204]).toContain(res.statusCode)
-  })
-
-  it('GET /wishlist — shows card, price=4800 for RARE, availableAt=null (never purchased)', async () => {
-    const res = await app.inject({
-      method: 'GET',
-      url: '/wishlist',
-      headers: { cookie: cookies },
-    })
+  it('GET /wishlist — vide au départ, 2 emplacements de base', async () => {
+    const res = await app.inject({ method: 'GET', url: '/wishlist', headers: auth() })
     expect(res.statusCode).toBe(200)
     const body = res.json()
-    expect(body.card).not.toBeNull()
-    expect(body.card.id).toBe(rareCardId)
-    expect(body.card.rarity).toBe('RARE')
-    // dailyShopPriceRare = 2400, wishlist.priceMultiplier = 2 → price = 4800
-    expect(body.price).toBe(4800)
-    expect(body.availableAt).toBeNull()
-    expect(body.cooldownDays).toBe(7)
+    expect(body.slots).toBe(2)
+    expect(body.cards).toEqual([])
   })
 
-  it('POST /wishlist/purchase — 402 when user has no dust', async () => {
-    const { postgresOrm } = (app as any).iocContainer
-    await postgresOrm.prisma.user.update({
-      where: { id: userId },
-      data: { dust: 0 },
+  it('PUT /wishlist/:cardId — ajoute un vœu, prix RARE au PLEIN tarif', async () => {
+    const res = await app.inject({
+      method: 'PUT',
+      url: `/wishlist/${cardIds[0]}`,
+      headers: auth(),
     })
+    expect(res.statusCode).toBe(204)
+
+    const get = await app.inject({ method: 'GET', url: '/wishlist', headers: auth() })
+    const body = get.json()
+    expect(body.cards).toHaveLength(1)
+    // 2400 (prix boutique RARE) × 2 (wishlist.priceMultiplier), SANS remise.
+    expect(body.cards[0].price).toBe(4800)
+  })
+
+  it('PUT deux fois la même carte est sans effet (pas de doublon)', async () => {
+    await app.inject({ method: 'PUT', url: `/wishlist/${cardIds[0]}`, headers: auth() })
+    const get = await app.inject({ method: 'GET', url: '/wishlist', headers: auth() })
+    expect(get.json().cards).toHaveLength(1)
+  })
+
+  it('PUT — 409 au-delà des emplacements disponibles', async () => {
+    const second = await app.inject({
+      method: 'PUT',
+      url: `/wishlist/${cardIds[1]}`,
+      headers: auth(),
+    })
+    expect(second.statusCode).toBe(204)
+
+    const third = await app.inject({
+      method: 'PUT',
+      url: `/wishlist/${cardIds[2]}`,
+      headers: auth(),
+    })
+    expect(third.statusCode).toBe(409)
+  })
+
+  it('DELETE /wishlist/:cardId — libère un emplacement', async () => {
+    const del = await app.inject({
+      method: 'DELETE',
+      url: `/wishlist/${cardIds[1]}`,
+      headers: auth(),
+    })
+    expect(del.statusCode).toBe(204)
+
+    const res = await app.inject({
+      method: 'PUT',
+      url: `/wishlist/${cardIds[2]}`,
+      headers: auth(),
+    })
+    expect(res.statusCode).toBe(204)
+  })
+
+  it('POST /:cardId/purchase — 402 sans poussière', async () => {
+    // biome-ignore lint/suspicious/noExplicitAny: accès au conteneur dans les e2e
+    const { postgresOrm } = (app as any).iocContainer
+    await postgresOrm.prisma.user.update({ where: { id: userId }, data: { dust: 0 } })
 
     const res = await app.inject({
       method: 'POST',
-      url: '/wishlist/purchase',
-      headers: { cookie: cookies },
+      url: `/wishlist/${cardIds[0]}/purchase`,
+      headers: auth(),
     })
     expect(res.statusCode).toBe(402)
   })
 
-  it('POST /wishlist/purchase — 200 with enough dust, card NORMAL, availableAt ≈ +7 days', async () => {
+  it('POST /:cardId/purchase — 400 pour une carte hors wishlist', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: `/wishlist/${cardIds[5]}/purchase`,
+      headers: auth(),
+    })
+    expect(res.statusCode).toBe(400)
+  })
+
+  // Le coeur du changement : plus aucun delai entre deux achats.
+  it('POST /:cardId/purchase — deux achats d’affilée passent, sans délai', async () => {
+    // biome-ignore lint/suspicious/noExplicitAny: accès au conteneur dans les e2e
     const { postgresOrm } = (app as any).iocContainer
     await postgresOrm.prisma.user.update({
       where: { id: userId },
-      data: { dust: 10000 },
+      data: { dust: 20000 },
     })
 
-    const before = new Date()
-    const res = await app.inject({
+    const first = await app.inject({
       method: 'POST',
-      url: '/wishlist/purchase',
-      headers: { cookie: cookies },
+      url: `/wishlist/${cardIds[0]}/purchase`,
+      headers: auth(),
     })
-    const after = new Date()
+    expect(first.statusCode).toBe(200)
+    expect(first.json().dustSpent).toBe(4800)
+    expect(first.json().newDustBalance).toBe(15200)
 
-    expect(res.statusCode).toBe(200)
-    const body = res.json()
-    expect(body.card.id).toBe(rareCardId)
-    expect(body.dustSpent).toBe(4800)
-    expect(typeof body.newDustBalance).toBe('number')
-    expect(body.newDustBalance).toBe(5200)
-    expect(typeof body.wasDuplicate).toBe('boolean')
-
-    // availableAt ≈ purchasedAt + 7 days
-    const availableAt = new Date(body.availableAt)
-    const sevenDaysFromBefore = new Date(before.getTime() + 7 * 24 * 60 * 60 * 1000)
-    const sevenDaysFromAfter = new Date(after.getTime() + 7 * 24 * 60 * 60 * 1000)
-    expect(availableAt.getTime()).toBeGreaterThanOrEqual(sevenDaysFromBefore.getTime() - 1000)
-    expect(availableAt.getTime()).toBeLessThanOrEqual(sevenDaysFromAfter.getTime() + 1000)
-
-    // Card should exist in user's collection as NORMAL
-    const userCard = await postgresOrm.prisma.userCard.findUnique({
-      where: {
-        userId_cardId_variant: { userId, cardId: rareCardId, variant: 'NORMAL' },
-      },
-    })
-    expect(userCard).not.toBeNull()
-    expect(userCard!.quantity).toBeGreaterThanOrEqual(1)
-  })
-
-  it('GET /wishlist — shows availableAt after purchase', async () => {
-    const res = await app.inject({
-      method: 'GET',
-      url: '/wishlist',
-      headers: { cookie: cookies },
-    })
-    expect(res.statusCode).toBe(200)
-    const body = res.json()
-    expect(body.availableAt).not.toBeNull()
-    // Should be ~7 days in the future
-    const availableAt = new Date(body.availableAt)
-    expect(availableAt.getTime()).toBeGreaterThan(Date.now())
-  })
-
-  it('POST /wishlist/purchase — 429 on immediate re-purchase', async () => {
-    const { postgresOrm } = (app as any).iocContainer
-    await postgresOrm.prisma.user.update({
-      where: { id: userId },
-      data: { dust: 5000 },
-    })
-
-    const res = await app.inject({
+    const second = await app.inject({
       method: 'POST',
-      url: '/wishlist/purchase',
-      headers: { cookie: cookies },
+      url: `/wishlist/${cardIds[2]}/purchase`,
+      headers: auth(),
     })
-    expect(res.statusCode).toBe(429)
-    const body = res.json()
-    // availableAt is now at the top level of the error payload (not buried in message)
-    expect(typeof body.availableAt).toBe('string')
-    expect(new Date(body.availableAt).getTime()).toBeGreaterThan(Date.now())
+    expect(second.statusCode).toBe(200)
+    expect(second.json().newDustBalance).toBe(10400)
   })
 
-  it('Négociant niv 2 reduces effective cooldown to 5 days', async () => {
+  it('« Collectionneur » niveau 3 porte les emplacements à 5', async () => {
+    // biome-ignore lint/suspicious/noExplicitAny: accès au conteneur dans les e2e
     const { postgresOrm } = (app as any).iocContainer
     const prisma = postgresOrm.prisma
 
-    // Create a SkillBranch and Négociant SkillNode (seed is truncated in globalSetup)
+    // Le seed est tronqué par globalSetup : on recrée branche et nœud.
     const branch = await prisma.skillBranch.create({
       data: {
         name: `Collection${suffix}`,
@@ -195,80 +190,42 @@ describe('Wishlist routes', () => {
         order: 99,
       },
     })
-    negociantBranchId = branch.id
+    skillBranchId = branch.id
 
-    const negociantNode = await prisma.skillNode.create({
+    const node = await prisma.skillNode.create({
       data: {
         branchId: branch.id,
-        name: 'Négociant',
-        description: 'Réduit le délai du vœu (wishlist)',
-        icon: 'Handshake',
-        maxLevel: 2,
-        effectType: 'WISHLIST_COOLDOWN',
+        name: 'Collectionneur',
+        description: 'Emplacements de vœu supplémentaires (2 de base)',
+        icon: 'Heart',
+        maxLevel: 3,
+        effectType: 'WISHLIST_SLOTS',
         posX: 0,
         posY: 0,
         levels: {
           create: [
             { level: 1, effect: 1 },
             { level: 2, effect: 2 },
+            { level: 3, effect: 3 },
           ],
         },
       },
     })
+    await prisma.userSkill.create({ data: { userId, nodeId: node.id, level: 3 } })
 
-    // Invest Négociant at level 2 (INSERT UserSkill by node)
-    await prisma.userSkill.create({
-      data: { userId, nodeId: negociantNode.id, level: 2 },
-    })
+    const res = await app.inject({ method: 'GET', url: '/wishlist', headers: auth() })
+    expect(res.json().slots).toBe(5)
 
-    // Set wishlistPurchasedAt to 6 days ago → effectiveCooldown = max(1, 7-2) = 5d < 6d → available
-    const sixDaysAgo = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000)
-    await prisma.user.update({
-      where: { id: userId },
-      data: { wishlistPurchasedAt: sixDaysAgo, dust: 5000 },
-    })
-
-    // GET should show availableAt=null (cooldown expired)
-    const getRes = await app.inject({
-      method: 'GET',
-      url: '/wishlist',
-      headers: { cookie: cookies },
-    })
-    expect(getRes.statusCode).toBe(200)
-    const getBody = getRes.json()
-    expect(getBody.availableAt).toBeNull()
-
-    // POST /wishlist/purchase should succeed (cooldown elapsed with Négociant)
-    const purchaseRes = await app.inject({
-      method: 'POST',
-      url: '/wishlist/purchase',
-      headers: { cookie: cookies },
-    })
-    expect(purchaseRes.statusCode).toBe(200)
-    const purchaseBody = purchaseRes.json()
-    // availableAt should be ≈ now + 5 days (not +7)
-    const availableAt = new Date(purchaseBody.availableAt)
-    const fiveDaysFromNow = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)
-    // Within ±1 minute of 5 days
-    expect(Math.abs(availableAt.getTime() - fiveDaysFromNow.getTime())).toBeLessThan(60 * 1000)
-  })
-
-  it('PUT /wishlist — 404 for unknown card', async () => {
-    const res = await app.inject({
+    // La wishlist en contenait 2 : trois ajouts de plus doivent passer, le 4e non.
+    for (const id of [cardIds[1], cardIds[3], cardIds[4]]) {
+      const add = await app.inject({ method: 'PUT', url: `/wishlist/${id}`, headers: auth() })
+      expect(add.statusCode).toBe(204)
+    }
+    const overflow = await app.inject({
       method: 'PUT',
-      url: '/wishlist',
-      headers: { cookie: cookies },
-      payload: { cardId: '00000000-0000-0000-0000-000000000000' },
+      url: `/wishlist/${cardIds[5]}`,
+      headers: auth(),
     })
-    expect(res.statusCode).toBe(404)
-  })
-
-  it('GET /economy/config — includes wishlist block', async () => {
-    const res = await app.inject({ method: 'GET', url: '/economy/config' })
-    expect(res.statusCode).toBe(200)
-    const body = res.json()
-    expect(body.wishlist).toBeDefined()
-    expect(body.wishlist.priceMultiplier).toBe(2)
-    expect(body.wishlist.cooldownDays).toBe(7)
+    expect(overflow.statusCode).toBe(409)
   })
 })

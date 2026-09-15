@@ -24,7 +24,8 @@ export type UserUpgradeEffects = {
   pityReduction: number
   variantLuckMultiplier: number
   dailyShopSlots: number
-  wishlistCooldownReductionDays: number
+  /** Emplacements de vœu SUPPLÉMENTAIRES (nœud « Collectionneur »). */
+  wishlistSlots: number
   pcVaultBonus: number
   pcRegenReductionSeconds: number
   sweepCostReduction: number
