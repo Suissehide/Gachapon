@@ -40,6 +40,7 @@ import {
   goldCostNextLevel,
   isAtTopOfPalier,
   maxLevelInPalier,
+  statColorVar,
 } from '../../utils/cardStats'
 import { Button } from '../ui/button'
 
@@ -184,59 +185,61 @@ export function CombatPanel({
         </span>
       </div>
 
-      {/* Stat grid */}
+      {/* Stat grid — accents pris dans `statColorVar`, la même table que
+          l'apport total de l'équipement juste en dessous : les teintes en dur
+          avaient divergé sur les 4 stats de stuff. */}
       <div className="mt-[18px] grid grid-cols-2 gap-2.5">
         <StatTile
           icon={<Heart className="h-4 w-4" />}
           label="PV"
           value={hp}
-          accent="#ef4444"
+          accent={statColorVar('hp')}
         />
         <StatTile
           icon={<Sword className="h-4 w-4" />}
           label="ATQ"
           value={atk}
-          accent="#f59e0b"
+          accent={statColorVar('atk')}
         />
         <StatTile
           icon={<Shield className="h-4 w-4" />}
           label="DEF"
           value={def}
-          accent="#3b82f6"
+          accent={statColorVar('def')}
         />
         <StatTile
           icon={<Zap className="h-4 w-4" />}
           label="VIT"
           value={spd}
-          accent="#8b5cf6"
+          accent={statColorVar('spd')}
         />
         <StatTile
           icon={<Target className="h-4 w-4" />}
           label="TAUX CRIT"
           value={stuffStats.critRate}
           suffix="%"
-          accent="#f43f5e"
+          accent={statColorVar('critRate')}
         />
         <StatTile
           icon={<Flame className="h-4 w-4" />}
           label="DÉGÂTS CRIT"
           value={stuffStats.critDmg}
           suffix="%"
-          accent="#f97316"
+          accent={statColorVar('critDmg')}
         />
         <StatTile
           icon={<Crosshair className="h-4 w-4" />}
           label="PÉNÉ. ARMURE"
           value={stuffStats.armorPen}
           suffix="%"
-          accent="#0ea5e9"
+          accent={statColorVar('armorPen')}
         />
         <StatTile
           icon={<Droplets className="h-4 w-4" />}
           label="VOL DE VIE"
           value={stuffStats.lifesteal}
           suffix="%"
-          accent="#22c55e"
+          accent={statColorVar('lifesteal')}
         />
       </div>
 
