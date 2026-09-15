@@ -6,6 +6,8 @@ import {
   towerBattleResponseSchema,
   towerElementParamSchema,
   towerFloorParamSchema,
+  towerSweepBodySchema,
+  towerSweepResponseSchema,
   towersResponseSchema,
   towerViewResponseSchema,
 } from '../../schemas/tower.schema'
@@ -41,6 +43,25 @@ export const towerRouter: FastifyPluginCallbackZod = (fastify) => {
     },
     (request) =>
       towerDomain.getTower(request.user.userID, request.params.element),
+  )
+
+  fastify.post(
+    '/tower/:element/:floor/sweep',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        params: towerFloorParamSchema,
+        body: towerSweepBodySchema,
+        response: { 200: towerSweepResponseSchema },
+      },
+    },
+    (request) =>
+      towerDomain.sweepFloor(
+        request.user.userID,
+        request.params.element,
+        request.params.floor,
+        request.body.runs,
+      ),
   )
 
   fastify.post(

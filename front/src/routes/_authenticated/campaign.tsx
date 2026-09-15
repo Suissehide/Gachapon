@@ -29,19 +29,12 @@ import type {
 import type { TeamUnit } from '../../api/combat.api.ts'
 import {
   BattlePrepModal,
+  MultiRunActions,
   RewardPill,
 } from '../../components/battle/BattlePrepModal.tsx'
 import { ElementGuidePopup } from '../../components/battle/ElementGuidePopup.tsx'
-import {
-  CardDropReward,
-  DropRail,
-  RESULT_BADGE_WIN,
-  ResultBadge,
-  ResultPanel,
-  RewardTile,
-} from '../../components/battle/resultKit.tsx'
+import { FarmResultPopup } from '../../components/battle/resultKit.tsx'
 import { TeamDock } from '../../components/battle/TeamDock.tsx'
-import { EquipmentDropReward } from '../../components/equipment/EquipmentDropCard.tsx'
 import { AuroraGrid } from '../../components/shared/decorations/AuroraGrid'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { TeamEditorPopup } from '../../components/team/TeamEditorPopup.tsx'
@@ -326,85 +319,17 @@ function CampaignPage() {
         </Popup>
       )}
 
-      {/* Sweep result popup */}
+      {/* Fin de combat multiple — même fenêtre que les tours. */}
       {sweepResult && (
-        <Popup
-          open
-          onOpenChange={(v) => {
-            if (!v) {
-              setSweepResult(null)
-            }
-          }}
-        >
-          <PopupContent
-            size="lg"
-            className="border-0 bg-[#fbf8f3] p-0 shadow-[0_30px_80px_-12px_rgba(0,0,0,0.4)]"
-          >
-            <Dialog.Title className="sr-only">Farm terminé</Dialog.Title>
-            <ResultPanel halo>
-              <ResultBadge
-                className={RESULT_BADGE_WIN}
-                icon={<Zap className="h-8 w-8" />}
-              />
-              <h2 className="mt-4 font-display text-3xl font-bold text-text">
-                Farm terminé
-              </h2>
-              <p className="mt-1 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-text-light/70">
-                × {sweepResult.runs} combats
-              </p>
-
-              <div className="mt-6 grid w-full grid-cols-3 gap-2.5">
-                <RewardTile
-                  icon={<Coins className="h-5 w-5" />}
-                  label="Pièces"
-                  value={sweepResult.totalGold}
-                  tone="#f59e0b"
-                />
-                <RewardTile
-                  icon={<Sparkles className="h-5 w-5" />}
-                  label="Poussière"
-                  value={sweepResult.totalDust}
-                  tone="#38bdf8"
-                />
-                <RewardTile
-                  icon={<Star className="h-5 w-5" />}
-                  label="XP"
-                  value={sweepResult.totalXp}
-                  tone="#8b5cf6"
-                />
-              </div>
-
-              {/* Mêmes fiches que l'écran de victoire : la pièce garde ses
-                  stats et son bouton « détruire », la carte se voit. Un
-                  balayage en rapporte plusieurs : la rangée les met côte à
-                  côte, à la même taille, plutôt que de les empiler jusqu'à
-                  chasser le bouton « Continuer » hors du panneau. */}
-              <DropRail>
-                {sweepResult.equipmentDrops.map((e) => (
-                  <EquipmentDropReward key={e.userEquipmentId} drop={e} />
-                ))}
-              </DropRail>
-              {/* Les cartes ont leur propre rangée, sous les pièces : deux
-                  récompenses de nature différente, deux sections. */}
-              <DropRail>
-                {sweepResult.cardDrops.map((c, i) => (
-                  <CardDropReward
-                    // biome-ignore lint/suspicious/noArrayIndexKey: une même carte peut tomber deux fois dans un balayage
-                    key={`${c.cardId}-${i}`}
-                    drop={c}
-                  />
-                ))}
-              </DropRail>
-
-              <div className="mt-6 flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-center">
-                <Button onClick={() => setSweepResult(null)} className="gap-2">
-                  Continuer
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </ResultPanel>
-          </PopupContent>
-        </Popup>
+        <FarmResultPopup
+          runs={sweepResult.runs}
+          totalGold={sweepResult.totalGold}
+          totalDust={sweepResult.totalDust}
+          totalXp={sweepResult.totalXp}
+          equipmentDrops={sweepResult.equipmentDrops}
+          cardDrops={sweepResult.cardDrops}
+          onClose={() => setSweepResult(null)}
+        />
       )}
     </div>
   )
@@ -724,10 +649,6 @@ function LevelCard({
 
 // ── Prep modal ──────────────────────────────────────────────────────────────
 
-// Nombres de passages proposés en combat multiple sur un niveau déjà terminé.
-// Le serveur accepte 1 à 10 passages (campaign.schema.ts).
-const MULTI_RUNS = [1, 5] as const
-
 function PrepModal({
   stage,
   chapter,
@@ -843,35 +764,12 @@ function PrepModal({
       }
       extraActions={
         isCleared ? (
-          // Un seul bouton, deux zones de frappe : le libellé « Combat
-          // multiple » n'est écrit qu'une fois, chaque segment ne porte que ce
-          // qui le distingue — le nombre de passages et son coût.
-          <div className="ml-auto flex h-10 items-stretch overflow-hidden rounded-md border border-primary bg-primary text-primary-foreground shadow-sm">
-            {/* Le libellé n'est pas cliquable : fond blanc cerné d'orange, quand
-                les segments ambrés portent seuls l'affordance. */}
-            <span className="flex shrink-0 items-center gap-1.5 bg-white pl-4 pr-3.5 font-display text-sm font-bold text-text">
-              <Swords className="mr-0.5 h-4 w-4 text-primary" />
-              Combat
-              <span className="hidden sm:inline">multiple</span>
-            </span>
-            {MULTI_RUNS.map((runs) => (
-              <Button
-                key={runs}
-                variant="ghost"
-                onClick={() => onSweep(runs)}
-                disabled={
-                  !hasTeam || currentPC < sweepCost * runs || sweepPending
-                }
-                className="h-full gap-1.5 rounded-none border-l border-white/25 px-3.5 text-primary-foreground hover:bg-white/15 hover:text-primary-foreground"
-              >
-                ×{runs}
-                <span className="inline-flex items-center gap-0.5 rounded bg-white/25 px-1.5 py-0.5 font-mono text-[12px] font-bold tabular-nums">
-                  <Zap className="h-3 w-3" />
-                  {sweepCost * runs}
-                </span>
-              </Button>
-            ))}
-          </div>
+          <MultiRunActions
+            sweepCost={sweepCost}
+            currentPC={currentPC}
+            disabled={!hasTeam || sweepPending}
+            onRun={onSweep}
+          />
         ) : undefined
       }
       fightLabel={isCleared ? undefined : fightLabel}

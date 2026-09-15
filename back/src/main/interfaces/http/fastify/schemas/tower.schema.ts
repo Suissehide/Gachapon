@@ -84,6 +84,25 @@ export const towerBattleBodySchema = z.object({
   userCardIds: z.array(z.string()),
 })
 
+/**
+ * Pièce obtenue en tour. Partagée par le combat unique et le balayage — la
+ * fiche de récompense du front est la même des deux côtés, la charge utile
+ * doit l'être aussi (la campagne a déjà payé le prix de deux formes
+ * divergentes pour un même gain).
+ */
+const towerEquipmentDropSchema = z.object({
+  userEquipmentId: z.string(),
+  equipmentId: z.string(),
+  name: z.string(),
+  rarity: z.string(),
+  slot: z.string(),
+  setKey: z.string(),
+  level: z.number().int(),
+  bonuses: z.record(z.string(), z.number()),
+  substats: z.array(z.object({ key: z.string(), value: z.number() })),
+  baseBoost: z.number(),
+})
+
 const towerBattleRewardsSchema = z.object({
   gold: z.number().int(),
   dust: z.number().int(),
@@ -95,18 +114,24 @@ const towerBattleRewardsSchema = z.object({
   // cas de victoire (§6 design spec : « une pièce garantie par run, jamais
   // zéro ») — seul `rewards` lui-même est nullable (défaite = pas de
   // récompense), pas `equipmentDrop` à l'intérieur.
-  equipmentDrop: z.object({
-    userEquipmentId: z.string(),
-    equipmentId: z.string(),
-    name: z.string(),
-    rarity: z.string(),
-    slot: z.string(),
-    setKey: z.string(),
-    level: z.number().int(),
-    bonuses: z.record(z.string(), z.number()),
-    substats: z.array(z.object({ key: z.string(), value: z.number() })),
-    baseBoost: z.number(),
-  }),
+  equipmentDrop: towerEquipmentDropSchema,
+})
+
+export const towerSweepBodySchema = z.object({
+  runs: z.number().int().min(1).max(10),
+})
+
+/**
+ * Résultat d'un balayage. Pas de `cardDrops` ici, contrairement à la
+ * campagne : une tour ne droppe que de l'équipement. Et `equipmentDrops`
+ * porte toujours autant d'entrées que de passages — la pièce est garantie.
+ */
+export const towerSweepResponseSchema = z.object({
+  runs: z.number().int(),
+  totalGold: z.number().int(),
+  totalDust: z.number().int(),
+  totalXp: z.number().int(),
+  equipmentDrops: z.array(towerEquipmentDropSchema),
 })
 
 // Même forme que `simulatorUnitSchema` de campaign.schema.ts (type

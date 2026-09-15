@@ -67,6 +67,19 @@ export type TowerBattleRewards = {
   equipmentDrop: EquipmentDrop
 }
 
+/**
+ * Résultat d'un balayage de tour. Pas de cartes, contrairement à la campagne :
+ * une tour ne droppe que de l'équipement. Et autant de pièces que de passages
+ * — la tour en garantit une par combat.
+ */
+export type TowerSweepResult = {
+  runs: number
+  totalGold: number
+  totalDust: number
+  totalXp: number
+  equipmentDrops: EquipmentDrop[]
+}
+
 export type TowerBattleResult = {
   won: boolean
   log: BattleLogEntry[]
@@ -106,6 +119,22 @@ export async function postTowerBattle(
   )
   if (!res.ok) {
     handleHttpError(res, {}, 'Erreur lors du combat')
+  }
+  return res.json()
+}
+
+export async function postTowerSweep(
+  element: string,
+  floor: number,
+  runs: number,
+): Promise<TowerSweepResult> {
+  const res = await fetchWithAuth(`${apiUrl}/tower/${element}/${floor}/sweep`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ runs }),
+  })
+  if (!res.ok) {
+    handleHttpError(res, {}, 'Erreur lors du combat multiple')
   }
   return res.json()
 }

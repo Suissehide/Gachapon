@@ -1,10 +1,15 @@
-import { Star } from 'lucide-react'
+import { ArrowRight, Coins, Sparkles, Star, Zap } from 'lucide-react'
+import { Dialog } from 'radix-ui'
 import { Children, isValidElement, type ReactNode } from 'react'
 
 import type { CardDrop } from '../../api/campaign.api.ts'
+import type { EquipmentDrop } from '../../api/equipment.api.ts'
 import type { CardElement } from '../../constants/card.constant.ts'
 import { cn } from '../../libs/utils.ts'
+import { EquipmentDropReward } from '../equipment/EquipmentDropCard.tsx'
 import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
+import { Button } from '../ui/button.tsx'
+import { Popup, PopupContent } from '../ui/popup.tsx'
 
 // Shared visual language for the battle-result popups (victory / defeat) and the
 // campaign farm-result popup, so they stay uniform. The animations referenced
@@ -193,5 +198,107 @@ export function DropRail({ children }: { children: ReactNode }) {
         ))}
       </div>
     </div>
+  )
+}
+
+/**
+ * Fenêtre de fin de combat multiple, partagée par la campagne et les tours.
+ *
+ * Les deux annoncent la même chose — le nombre de passages, les trois totaux,
+ * puis les gains en rangées — et ne divergent que sur ce qui peut tomber : la
+ * tour ne droppe pas de carte, elle passe donc `cardDrops` vide (ou pas du
+ * tout) et la rangée correspondante disparaît d'elle-même.
+ */
+export function FarmResultPopup({
+  runs,
+  totalGold,
+  totalDust,
+  totalXp,
+  equipmentDrops,
+  cardDrops = [],
+  onClose,
+}: {
+  runs: number
+  totalGold: number
+  totalDust: number
+  totalXp: number
+  equipmentDrops: EquipmentDrop[]
+  cardDrops?: CardDrop[]
+  onClose: () => void
+}) {
+  return (
+    <Popup
+      open
+      onOpenChange={(v) => {
+        if (!v) {
+          onClose()
+        }
+      }}
+    >
+      <PopupContent
+        size="lg"
+        className="border-0 bg-[#fbf8f3] p-0 shadow-[0_30px_80px_-12px_rgba(0,0,0,0.4)]"
+      >
+        <Dialog.Title className="sr-only">Farm terminé</Dialog.Title>
+        <ResultPanel halo>
+          <ResultBadge
+            className={RESULT_BADGE_WIN}
+            icon={<Zap className="h-8 w-8" />}
+          />
+          <h2 className="mt-4 font-display text-3xl font-bold text-text">
+            Farm terminé
+          </h2>
+          <p className="mt-1 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-text-light/70">
+            × {runs} combats
+          </p>
+
+          <div className="mt-6 grid w-full grid-cols-3 gap-2.5">
+            <RewardTile
+              icon={<Coins className="h-5 w-5" />}
+              label="Pièces"
+              value={totalGold}
+              tone="#f59e0b"
+            />
+            <RewardTile
+              icon={<Sparkles className="h-5 w-5" />}
+              label="Poussière"
+              value={totalDust}
+              tone="#38bdf8"
+            />
+            <RewardTile
+              icon={<Star className="h-5 w-5" />}
+              label="XP"
+              value={totalXp}
+              tone="#8b5cf6"
+            />
+          </div>
+
+          {/* Mêmes fiches que l'écran de victoire : la pièce garde ses stats
+              et son bouton « détruire », la carte se voit. Une rangée par
+              nature de gain, qui défile dès qu'il y en a plusieurs. */}
+          <DropRail>
+            {equipmentDrops.map((e) => (
+              <EquipmentDropReward key={e.userEquipmentId} drop={e} />
+            ))}
+          </DropRail>
+          <DropRail>
+            {cardDrops.map((c, i) => (
+              <CardDropReward
+                // biome-ignore lint/suspicious/noArrayIndexKey: une même carte peut tomber deux fois dans un balayage
+                key={`${c.cardId}-${i}`}
+                drop={c}
+              />
+            ))}
+          </DropRail>
+
+          <div className="mt-6 flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-center">
+            <Button onClick={onClose} className="gap-2">
+              Continuer
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </ResultPanel>
+      </PopupContent>
+    </Popup>
   )
 }

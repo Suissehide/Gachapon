@@ -30,6 +30,7 @@ import {
   buildPlayerSimUnits,
   enemySpecSchema,
 } from '../combat/sim-units'
+import { effectiveSweepCost } from '../combat-points/combat-points.tx'
 import {
   INITIAL_SUBSTATS_BY_RARITY,
   rollInitialSubstats,
@@ -84,6 +85,24 @@ interface TowerLootTable {
   farm: TowerFarmLoot
 }
 
+/**
+ * Pièce obtenue dans une tour, telle que la reçoit le front. Une seule forme
+ * pour le combat unique et le balayage : les deux la produisent par le même
+ * chemin (#grantEquipmentDrop), donc elles ne peuvent plus diverger.
+ */
+export interface TowerEquipmentDrop {
+  userEquipmentId: string
+  equipmentId: string
+  name: string
+  rarity: Rarity
+  slot: EquipmentSlot
+  setKey: EquipmentSet
+  level: number
+  bonuses: Record<string, number>
+  substats: { key: string; value: number }[]
+  baseBoost: number
+}
+
 export interface TowerBattleRewards {
   gold: number
   dust: number
@@ -91,18 +110,16 @@ export interface TowerBattleRewards {
   xpBefore: number
   levelBefore: number
   isFirstClear: boolean
-  equipmentDrop: {
-    userEquipmentId: string
-    equipmentId: string
-    name: string
-    rarity: Rarity
-    slot: EquipmentSlot
-    setKey: EquipmentSet
-    level: number
-    bonuses: Record<string, number>
-    substats: { key: string; value: number }[]
-    baseBoost: number
-  }
+  equipmentDrop: TowerEquipmentDrop
+}
+
+/** Résultat d'un balayage : les totaux, et une pièce par passage. */
+export interface TowerSweepResult {
+  runs: number
+  totalGold: number
+  totalDust: number
+  totalXp: number
+  equipmentDrops: TowerEquipmentDrop[]
 }
 
 export interface TowerFloorView {
@@ -151,6 +168,9 @@ export interface TowerSummary {
 
 /** Une équipe de tour ne peut pas dépasser la taille d'équipe du jeu. */
 const MAX_TOWER_TEAM_SIZE = 3
+
+/** Plafond de passages par balayage — même limite que la campagne. */
+const SWEEP_MAX_RUNS = 10
 
 export class TowerDomain {
   readonly #postgresOrm
@@ -414,47 +434,12 @@ export class TowerDomain {
             // suffisait. Le `dropWeight` du seed est déjà divisé par la
             // taille du pool, donc la probabilité du triplet est inchangée :
             // seule la stat principale est tirée au sort ici.
-            const variants = await tx.equipment.findMany({
-              where: {
-                slot: drop.slot as EquipmentSlot,
-                setKey: drop.setKey,
-                rarity: drop.rarity as CardRarity,
-              },
-            })
-            const equipment = pickEquipmentForRarity(
-              variants,
-              drop.rarity as CardRarity,
-              Math.random,
+            const equipmentDrop = await this.#grantEquipmentDrop(
+              tx,
+              userId,
+              drop,
+              substatRanges,
             )
-            if (!equipment) {
-              // Ne doit jamais arriver : la contrainte d'unicité et le
-              // catalogue généré couvrent toutes les combinaisons
-              // (slot, setKey, rarity). Si ça arrive, le catalogue est
-              // incomplet — on le signale plutôt que de l'avaler
-              // silencieusement.
-              throw new Error(
-                `Pièce de tour introuvable pour ${drop.slot}/${drop.setKey}/${drop.rarity} — catalogue incomplet`,
-              )
-            }
-            const ue = await tx.userEquipment.create({
-              data: {
-                userId,
-                equipmentId: equipment.id,
-                substats: rollInitialSubstats(
-                  INITIAL_SUBSTATS_BY_RARITY[
-                    drop.rarity as keyof typeof INITIAL_SUBSTATS_BY_RARITY
-                  ],
-                  substatRanges,
-                  Math.random,
-                ) as unknown as Prisma.InputJsonValue,
-              },
-            })
-
-            await this.#achievementsDomain.track(tx, userId, {
-              kind: 'EQUIPMENT_OBTAINED',
-              equipmentId: equipment.id,
-              rarity: equipment.rarity,
-            })
 
             // Alimente les quêtes (STAGE_CLEARED, filtrées sur le seul
             // `kind` — quest-matching.ts) sans faire progresser les succès
@@ -506,21 +491,7 @@ export class TowerDomain {
               xpBefore,
               levelBefore,
               isFirstClear,
-              equipmentDrop: {
-                userEquipmentId: ue.id,
-                equipmentId: equipment.id,
-                name: equipment.name,
-                rarity: drop.rarity as Rarity,
-                slot: equipment.slot,
-                setKey: equipment.setKey,
-                level: ue.level,
-                bonuses: (equipment.bonuses ?? {}) as Record<string, number>,
-                substats: (ue.substats ?? []) as {
-                  key: string
-                  value: number
-                }[],
-                baseBoost: ue.baseBoost,
-              },
+              equipmentDrop,
             }
           }
 
@@ -544,6 +515,217 @@ export class TowerDomain {
         { isolationLevel: 'Serializable' },
       )
     })
+  }
+
+  /**
+   * Balaye un étage DÉJÀ franchi, N fois, en une transaction.
+   *
+   * Le pendant tour de `campaign.domain#sweepStage`, à trois différences
+   * près, toutes dictées par ce qu'est une tour :
+   *  - le butin est toujours celui de FARM, jamais celui du premier passage
+   *    (on ne balaye que ce qu'on a déjà battu) ;
+   *  - la pièce est GARANTIE à chaque passage, pas tirée à la chance : N
+   *    passages donnent N pièces, jamais moins ;
+   *  - aucune carte ne tombe, la tour n'en droppe pas.
+   *
+   * Le prix est celui du balayage de campagne (`combat.sweepCost`, remise de
+   * l'arbre comprise) : les deux modes puisent dans le même stock de points
+   * de combat, ils paient le même tarif.
+   */
+  sweepFloor(
+    userId: string,
+    element: TowerElement,
+    floor: number,
+    runs: number,
+  ): Promise<TowerSweepResult> {
+    if (runs < 1 || runs > SWEEP_MAX_RUNS) {
+      throw Boom.badRequest(
+        `Le balayage accepte de 1 à ${SWEEP_MAX_RUNS} passages`,
+      )
+    }
+
+    return retryOnSerialization(async () => {
+      // Config et effets lus AVANT la transaction (pas d'I/O async dans un
+      // tx Serializable) — même motif que `fight` et campaign.domain.
+      const [sweepCfg, effects, substatRanges] = await Promise.all([
+        this.#configService.getMany(
+          'combat.sweepCost',
+          'xp.base',
+          'xp.slope',
+          'xp.levelCap',
+          'levelup.refillEnergy',
+        ),
+        this.#skillTreeRepository.getEffectsForUser(userId),
+        this.#getSubstatRanges(),
+      ])
+
+      return this.#postgresOrm.executeWithTransactionClient(
+        async (tx) => {
+          const towerFloor = await tx.towerFloor.findUnique({
+            where: { element_index: { element, index: floor } },
+          })
+          if (!towerFloor) {
+            throw Boom.notFound('Étage de tour introuvable')
+          }
+
+          // Éligibilité AVANT le débit : un étage qu'on n'a pas le droit de
+          // balayer ne doit pas commencer par regarder le porte-monnaie, sinon
+          // un joueur à sec reçoit « pas assez de points » là où le vrai
+          // refus est « étage pas encore franchi ».
+          const progress = await tx.userTowerProgress.findUnique({
+            where: { userId_element: { userId, element } },
+          })
+          if (floor > (progress?.highestFloor ?? 0)) {
+            throw Boom.forbidden(
+              'Étage de tour pas encore franchi — rien à balayer',
+            )
+          }
+
+          const sweepCostPerRun = effectiveSweepCost(
+            sweepCfg['combat.sweepCost'],
+            effects.sweepCostReduction,
+          )
+          await this.#combatPointsTx.debitInTx(
+            tx,
+            userId,
+            sweepCostPerRun * runs,
+            effects,
+          )
+
+          const farm = (towerFloor.lootTable as unknown as TowerLootTable).farm
+          // Bonus d'arbre sur or/xp — poussière exclue par design (parité
+          // campagne). La pièce n'étant pas un tirage à chance, `dropBonus`
+          // n'a aucune prise : les deux champs de chance sont passés en
+          // valeurs neutres et ne sont pas relus.
+          const bonused = applyCombatBonuses(
+            {
+              gold: farm.gold,
+              xp: farm.xp,
+              equipmentDropChance: 1,
+              cardChance: 0,
+            },
+            effects,
+          )
+
+          const equipmentDrops: TowerEquipmentDrop[] = []
+          for (let i = 0; i < runs; i++) {
+            equipmentDrops.push(
+              await this.#grantEquipmentDrop(
+                tx,
+                userId,
+                rollTowerDrop({
+                  element,
+                  weights: farm.equipmentWeights,
+                  prng: Math.random,
+                }),
+                substatRanges,
+              ),
+            )
+            // Un passage balayé reste un étage franchi pour les quêtes, sans
+            // toucher aux compteurs de campagne (`source: 'TOWER'`). Pas de
+            // simulation ici, donc ni sans-faute ni sous-effectif à déduire.
+            await this.#achievementsDomain.track(tx, userId, {
+              kind: 'STAGE_CLEARED',
+              source: 'TOWER',
+              isBoss: floor === TOWER_FLOOR_COUNT,
+              viaSweep: true,
+              flawless: false,
+              understaffed: false,
+            })
+          }
+
+          const totalGold = bonused.gold * runs
+          const totalDust = farm.dust * runs
+          const totalXp = bonused.xp * runs
+          await this.#applyRewards(
+            tx,
+            userId,
+            totalGold,
+            totalDust,
+            totalXp,
+            sweepCfg['xp.base'],
+            sweepCfg['xp.slope'],
+            sweepCfg['xp.levelCap'],
+            sweepCfg['levelup.refillEnergy'],
+            effects,
+          )
+
+          return { runs, totalGold, totalDust, totalXp, equipmentDrops }
+        },
+        { isolationLevel: 'Serializable' },
+      )
+    })
+  }
+
+  /**
+   * Matérialise une pièce tirée : choisit la variante (stat principale),
+   * la crée chez le joueur, alimente les succès, et renvoie la charge utile
+   * que le front affiche. Chemin unique du combat unique ET du balayage.
+   */
+  async #grantEquipmentDrop(
+    tx: PrimaTransactionClient,
+    userId: string,
+    drop: { slot: string; setKey: EquipmentSet; rarity: string },
+    substatRanges: SubstatRanges,
+  ): Promise<TowerEquipmentDrop> {
+    // Un (slot, set, rareté) porte PLUSIEURS pièces, une par stat principale
+    // possible de l'emplacement — d'où un findMany suivi d'un tirage pondéré
+    // là où un findUnique suffisait. Le `dropWeight` du seed est déjà divisé
+    // par la taille du pool, donc la probabilité du triplet est inchangée :
+    // seule la stat principale est tirée au sort ici.
+    const variants = await tx.equipment.findMany({
+      where: {
+        slot: drop.slot as EquipmentSlot,
+        setKey: drop.setKey,
+        rarity: drop.rarity as CardRarity,
+      },
+    })
+    const equipment = pickEquipmentForRarity(
+      variants,
+      drop.rarity as CardRarity,
+      Math.random,
+    )
+    if (!equipment) {
+      // Ne doit jamais arriver : la contrainte d'unicité et le catalogue
+      // généré couvrent toutes les combinaisons (slot, setKey, rarity). Si ça
+      // arrive, le catalogue est incomplet — on le signale plutôt que de
+      // l'avaler silencieusement.
+      throw new Error(
+        `Pièce de tour introuvable pour ${drop.slot}/${drop.setKey}/${drop.rarity} — catalogue incomplet`,
+      )
+    }
+    const ue = await tx.userEquipment.create({
+      data: {
+        userId,
+        equipmentId: equipment.id,
+        substats: rollInitialSubstats(
+          INITIAL_SUBSTATS_BY_RARITY[
+            drop.rarity as keyof typeof INITIAL_SUBSTATS_BY_RARITY
+          ],
+          substatRanges,
+          Math.random,
+        ) as unknown as Prisma.InputJsonValue,
+      },
+    })
+
+    await this.#achievementsDomain.track(tx, userId, {
+      kind: 'EQUIPMENT_OBTAINED',
+      equipmentId: equipment.id,
+      rarity: equipment.rarity,
+    })
+
+    return {
+      userEquipmentId: ue.id,
+      equipmentId: equipment.id,
+      name: equipment.name,
+      rarity: drop.rarity as Rarity,
+      slot: equipment.slot,
+      setKey: equipment.setKey,
+      level: ue.level,
+      bonuses: (equipment.bonuses ?? {}) as Record<string, number>,
+      substats: (ue.substats ?? []) as { key: string; value: number }[],
+      baseBoost: ue.baseBoost,
+    }
   }
 
   async #getSubstatRanges(): Promise<SubstatRanges> {

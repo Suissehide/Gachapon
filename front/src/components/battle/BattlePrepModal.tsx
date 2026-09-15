@@ -201,6 +201,59 @@ export function BattlePrepModal({
   )
 }
 
+/** Passages proposés pour un combat multiple. */
+const MULTI_RUNS = [1, 5] as const
+
+/**
+ * Bloc « Combat multiple » du pied de la fenêtre de préparation, partagé par
+ * la campagne et les tours : un seul bouton, deux zones de frappe. Le libellé
+ * n'est écrit qu'une fois, chaque segment ne porte que ce qui le distingue —
+ * le nombre de passages et son coût.
+ *
+ * Ne s'affiche que sur un niveau déjà terminé : on ne balaye que ce qu'on a
+ * déjà battu. C'est l'appelant qui en décide, et qui omet alors `onFight` —
+ * un niveau terminé ne se rejoue qu'ici.
+ */
+export function MultiRunActions({
+  sweepCost,
+  currentPC,
+  disabled = false,
+  onRun,
+}: {
+  sweepCost: number
+  currentPC: number
+  /** Équipe vide ou balayage déjà en vol — tous les segments sont bloqués. */
+  disabled?: boolean
+  onRun: (runs: number) => void
+}) {
+  return (
+    <div className="ml-auto flex h-10 items-stretch overflow-hidden rounded-md border border-primary bg-primary text-primary-foreground shadow-sm">
+      {/* Le libellé n'est pas cliquable : fond blanc cerné d'orange, quand
+          les segments ambrés portent seuls l'affordance. */}
+      <span className="flex shrink-0 items-center gap-1.5 bg-white pl-4 pr-3.5 font-display text-sm font-bold text-text">
+        <Swords className="mr-0.5 h-4 w-4 text-primary" />
+        Combat
+        <span className="hidden sm:inline">multiple</span>
+      </span>
+      {MULTI_RUNS.map((runs) => (
+        <Button
+          key={runs}
+          variant="ghost"
+          onClick={() => onRun(runs)}
+          disabled={disabled || currentPC < sweepCost * runs}
+          className="h-full gap-1.5 rounded-none border-l border-white/25 px-3.5 text-primary-foreground hover:bg-white/15 hover:text-primary-foreground"
+        >
+          ×{runs}
+          <span className="inline-flex items-center gap-0.5 rounded bg-white/25 px-1.5 py-0.5 font-mono text-[12px] font-bold tabular-nums">
+            <Zap className="h-3 w-3" />
+            {sweepCost * runs}
+          </span>
+        </Button>
+      ))}
+    </div>
+  )
+}
+
 export function EnemyCard({
   boss,
   power,

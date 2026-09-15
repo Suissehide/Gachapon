@@ -508,6 +508,88 @@ describe('routes de tour', () => {
     expect(body.rewards?.xp).toBe(3)
   })
 
+  it('POST .../sweep exige une session', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/tower/FIRE/1/sweep',
+      headers: { 'content-type': 'application/json' },
+      payload: { runs: 3 },
+    })
+    expect(res.statusCode).toBe(401)
+  })
+
+  it('refuse de balayer un étage jamais franchi', async () => {
+    // L'étage 5 n'a jamais été nettoyé : on ne balaye que ce qu'on a déjà
+    // battu, comme la campagne. C'est 403 et non 400 (le verrou d'étage du
+    // combat) : l'étage existe et serait jouable un jour, il n'est juste pas
+    // encore acquis.
+    const res = await app.inject({
+      method: 'POST',
+      url: '/tower/FIRE/5/sweep',
+      headers: { cookie: cookies, 'content-type': 'application/json' },
+      payload: { runs: 3 },
+    })
+    expect(res.statusCode).toBe(403)
+  })
+
+  it('POST /tower/FIRE/1/sweep — 3 passages de farm, 3 pièces garanties', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/tower/FIRE/1/sweep',
+      headers: { cookie: cookies, 'content-type': 'application/json' },
+      payload: { runs: 3 },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json() as {
+      runs: number
+      totalGold: number
+      totalDust: number
+      totalXp: number
+      equipmentDrops: {
+        userEquipmentId: string
+        rarity: string
+        slot: string
+        substats: { key: string; value: number }[]
+      }[]
+    }
+    expect(body.runs).toBe(3)
+    // Butin de FARM (20/5/3), jamais celui de premier passage (200/50/30) :
+    // un étage déjà franchi ne redonne pas sa prime de découverte.
+    expect(body.totalGold).toBe(60)
+    expect(body.totalDust).toBe(15)
+    expect(body.totalXp).toBe(9)
+    // La tour garantit UNE pièce par passage — pas un tirage à chance comme
+    // la campagne : autant de pièces que de passages, jamais moins.
+    expect(body.equipmentDrops).toHaveLength(3)
+    for (const drop of body.equipmentDrops) {
+      expect(drop.rarity).toBe('LEGENDARY')
+      // Slot de la tour FEU, jamais un slot de campagne (§5/§6 design spec).
+      expect(drop.slot).toBe('GLOVES')
+      // Charge utile complète, celle que la fiche de récompense consomme.
+      expect(drop.userEquipmentId).toEqual(expect.any(String))
+      expect(drop.substats.length).toBeGreaterThan(0)
+    }
+  })
+
+  it('refuse un balayage que le joueur ne peut pas payer', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+    await postgresOrm.prisma.user.update({
+      where: { id: userId },
+      data: { combatPoints: 0, lastCombatPointAt: new Date() },
+    })
+    const res = await app.inject({
+      method: 'POST',
+      url: '/tower/FIRE/1/sweep',
+      headers: { cookie: cookies, 'content-type': 'application/json' },
+      payload: { runs: 5 },
+    })
+    expect(res.statusCode).toBe(402)
+    await postgresOrm.prisma.user.update({
+      where: { id: userId },
+      data: { combatPoints: 100 },
+    })
+  })
+
   it('refuse toujours un étage verrouillé après avoir franchi le 1', async () => {
     const res = await app.inject({
       method: 'POST',

@@ -1,6 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { fetchTower, fetchTowers, postTowerBattle } from '../api/tower.api.ts'
+import {
+  fetchTower,
+  fetchTowers,
+  postTowerBattle,
+  postTowerSweep,
+} from '../api/tower.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useToast } from '../hooks/useToast.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
@@ -56,6 +61,41 @@ export function useTowerBattle() {
     onError: (e: Error) =>
       toast({
         title: 'Combat impossible',
+        message: e.message,
+        severity: TOAST_SEVERITY.ERROR,
+      }),
+  })
+}
+
+type TowerSweepInput = {
+  element: string
+  floor: number
+  runs: number
+}
+
+/**
+ * Combat multiple sur un étage déjà franchi. Invalide exactement ce que
+ * `useTowerBattle` invalide, moins la progression de tour : un balayage ne
+ * fait jamais avancer `highestFloor`, il rejoue un étage déjà acquis.
+ */
+export function useTowerSweep() {
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
+  return useMutation({
+    mutationFn: ({ element, floor, runs }: TowerSweepInput) =>
+      postTowerSweep(element, floor, runs),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['equipment'] })
+      queryClient.invalidateQueries({ queryKey: ['combat', 'points'] })
+      queryClient.invalidateQueries({ queryKey: ['profile'] })
+      queryClient.invalidateQueries({ queryKey: ['achievements'] })
+      queryClient.invalidateQueries({ queryKey: ['quests'] })
+      // Or/poussière du topbar viennent du store Zustand, pas d'une query.
+      void useAuthStore.getState().fetchMe()
+    },
+    onError: (e: Error) =>
+      toast({
+        title: 'Combat multiple impossible',
         message: e.message,
         severity: TOAST_SEVERITY.ERROR,
       }),

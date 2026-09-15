@@ -15,14 +15,20 @@ import { Dialog } from 'radix-ui'
 import { useState } from 'react'
 
 import type { TeamUnit } from '../../api/combat.api.ts'
-import type { TowerBattleResult, TowerFloorView } from '../../api/tower.api.ts'
+import type {
+  TowerBattleResult,
+  TowerFloorView,
+  TowerSweepResult,
+} from '../../api/tower.api.ts'
 import {
   BattlePrepModal,
+  MultiRunActions,
   RewardPill,
 } from '../../components/battle/BattlePrepModal.tsx'
 import { BattleScene } from '../../components/battle/BattleScene.tsx'
 import {
   DropRail,
+  FarmResultPopup,
   RESULT_BADGE_LOSS,
   RESULT_BADGE_WIN,
   ResultBadge,
@@ -43,7 +49,12 @@ import { ELEMENT_LABELS } from '../../constants/card.constant.ts'
 import { RARITY_COLOR_VAR, RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
 import { useCombatTeam } from '../../queries/useCombatTeam.ts'
-import { useTower, useTowerBattle, useTowers } from '../../queries/useTower.ts'
+import {
+  useTower,
+  useTowerBattle,
+  useTowerSweep,
+  useTowers,
+} from '../../queries/useTower.ts'
 
 export const Route = createFileRoute('/_authenticated/tower_/$element')({
   component: TowerFloorsPage,
@@ -60,6 +71,7 @@ function TowerFloorsPage() {
   const combatPoints = useCombatPoints()
   const team = useCombatTeam()
   const battle = useTowerBattle()
+  const sweep = useTowerSweep()
 
   const [editorOpen, setEditorOpen] = useState(false)
   const [result, setResult] = useState<TowerBattleResult | null>(null)
@@ -69,6 +81,10 @@ function TowerFloorsPage() {
   // Étage en préparation : cliquer « Combattre » ouvre d'abord un aperçu
   // équipe / ennemis, comme la campagne, plutôt que de lancer le combat sec.
   const [prep, setPrep] = useState<TowerFloorView | null>(null)
+  // Résultat d'un combat multiple. Pas d'animation à jouer — le balayage ne
+  // simule rien à l'écran —, donc pas de `sceneDone` ici : la fenêtre s'ouvre
+  // dès la réponse.
+  const [sweepResult, setSweepResult] = useState<TowerSweepResult | null>(null)
   // Le combat de tour se joue SUR PLACE, contrairement à la campagne qui part
   // sur sa propre route : tout ce qui appartient à l'écran de sélection doit
   // donc se retirer explicitement pendant l'animation.
@@ -77,6 +93,7 @@ function TowerFloorsPage() {
   const userCardIds = (team.data?.team ?? []).map((u) => u.userCardId)
   const currentPC = combatPoints.data?.combatPoints ?? 0
   const battleCost = combatPoints.data?.battleCost ?? 0
+  const sweepCost = combatPoints.data?.sweepCost ?? 1
   const hasTeam = userCardIds.length > 0
   const canBattle = currentPC >= battleCost && hasTeam && !battle.isPending
 
@@ -91,6 +108,11 @@ function TowerFloorsPage() {
         },
       },
     )
+  }
+
+  const handleSweep = (floor: number, runs: number) => {
+    setPrep(null)
+    sweep.mutate({ element, floor, runs }, { onSuccess: setSweepResult })
   }
 
   const closeResult = () => {
@@ -170,7 +192,11 @@ function TowerFloorsPage() {
         currentPC={currentPC}
         battleCost={battleCost}
         isPending={battle.isPending}
+        sweepCost={sweepCost}
+        sweepPending={sweep.isPending}
+        hasTeam={hasTeam}
         onFight={() => prep && handleFight(prep.index)}
+        onSweep={(runs) => prep && handleSweep(prep.index, runs)}
         onEditTeam={() => {
           setPrep(null)
           setEditorOpen(true)
@@ -199,6 +225,18 @@ function TowerFloorsPage() {
         result={sceneDone ? result : null}
         onClose={closeResult}
       />
+
+      {/* Fin de combat multiple — même fenêtre que la campagne. */}
+      {sweepResult && (
+        <FarmResultPopup
+          runs={sweepResult.runs}
+          totalGold={sweepResult.totalGold}
+          totalDust={sweepResult.totalDust}
+          totalXp={sweepResult.totalXp}
+          equipmentDrops={sweepResult.equipmentDrops}
+          onClose={() => setSweepResult(null)}
+        />
+      )}
     </PageShell>
   )
 }
@@ -216,7 +254,11 @@ function TowerPrepPopup({
   currentPC,
   battleCost,
   isPending,
+  sweepCost,
+  sweepPending,
+  hasTeam,
   onFight,
+  onSweep,
   onEditTeam,
   onClose,
 }: {
@@ -226,13 +268,22 @@ function TowerPrepPopup({
   currentPC: number
   battleCost: number
   isPending: boolean
+  sweepCost: number
+  sweepPending: boolean
+  hasTeam: boolean
   onFight: () => void
+  onSweep: (runs: number) => void
   onEditTeam: () => void
   onClose: () => void
 }) {
   if (!floor) {
     return null
   }
+
+  // Un étage déjà franchi ne se rejoue qu'en combat multiple, comme un niveau
+  // de campagne terminé : le bouton « Combattre » cède sa place au bloc de
+  // passages, et l'animation de combat avec lui.
+  const isCleared = floor.status === 'cleared'
 
   const rp = floor.rewardPreview
   // Les poids de rareté ne sont renseignés qu'en farm : au premier passage,
@@ -317,9 +368,23 @@ function TowerPrepPopup({
               )}
             </>
           }
-          fightLabel={fightLabel}
-          canFight={team.length > 0 && currentPC >= battleCost && !isPending}
-          onFight={onFight}
+          extraActions={
+            isCleared ? (
+              <MultiRunActions
+                sweepCost={sweepCost}
+                currentPC={currentPC}
+                disabled={!hasTeam || sweepPending}
+                onRun={onSweep}
+              />
+            ) : undefined
+          }
+          fightLabel={isCleared ? undefined : fightLabel}
+          canFight={
+            isCleared
+              ? undefined
+              : team.length > 0 && currentPC >= battleCost && !isPending
+          }
+          onFight={isCleared ? undefined : onFight}
           onEditTeam={onEditTeam}
           onClose={onClose}
         />
