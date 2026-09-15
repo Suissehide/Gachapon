@@ -548,15 +548,25 @@ function SubstatSection({
       <p className="mb-1 text-[10px] uppercase tracking-widest text-text-light/60">
         Sous-stats
       </p>
+      {/* Une teinte PAR STAT (`statColorVar`), comme la fiche de pièce et
+          l'apport total : le violet uniforme d'avant ne disait rien de la
+          stat et contredisait les mêmes lignes ailleurs dans la fenêtre. */}
       <ul className="flex flex-col gap-1 text-xs">
         {substats.map((s) => (
           <li
             key={s.key}
             className={cn(
-              'rounded px-1.5 py-0.5 font-mono text-violet-600',
+              'flex items-center gap-1.5 rounded px-1.5 py-0.5 font-mono',
               highlight === s.key && 'bg-primary/15',
             )}
+            style={
+              {
+                '--sc': statColorVar(s.key),
+                color: 'color-mix(in oklab, var(--sc) 75%, var(--text))',
+              } as React.CSSProperties
+            }
           >
+            <span className="h-[6px] w-[6px] shrink-0 rounded-full bg-[var(--sc)]" />
             +{formatBonusValue(s.value)} {formatBonusKey(s.key)}
           </li>
         ))}
@@ -695,12 +705,21 @@ function ItemDetail({
         <p className="mb-1 text-[10px] uppercase tracking-widest text-text-light/60">
           Bonus de base
         </p>
+        {/* Même règle que les sous-stats ci-dessous : la couleur porte la
+            stat, pas le rôle de la ligne. */}
         <ul className="text-xs">
           {Object.entries(item.bonuses).map(([k, v], idx) => (
             <li
               key={k}
-              className="rounded px-1.5 py-0.5 font-mono text-emerald-600"
+              className="flex items-center gap-1.5 rounded px-1.5 py-0.5 font-mono"
+              style={
+                {
+                  '--sc': statColorVar(k),
+                  color: 'color-mix(in oklab, var(--sc) 75%, var(--text))',
+                } as React.CSSProperties
+              }
             >
+              <span className="h-[6px] w-[6px] shrink-0 rounded-full bg-[var(--sc)]" />
               +
               {formatBonusValue(
                 scaledBaseBonus(
