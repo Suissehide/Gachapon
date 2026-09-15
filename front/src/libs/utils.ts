@@ -26,6 +26,21 @@ export function plural(n: number): string {
  * une locale turque, `I` deviendrait `ı` et ne correspondrait plus à `i`.
  * D'où le `'fr'` explicite, indépendant du navigateur.
  */
+/**
+ * Pourcentage affiché, à précision décroissante : entier au-dessus de 10,
+ * une décimale entre 1 et 10, deux en dessous.
+ *
+ * Un « 19,23 % » n'apprend rien au joueur, mais un taux de tirage vaut
+ * 0,20 % et une dérive de contrôle 0,03 point — les arrondir à l'entier les
+ * afficherait tous à 0. Les zéros de queue sont supprimés, donc 0,5 reste
+ * « 0,5 » et ne devient pas « 0,50 ». Le signe « % » revient à l'appelant.
+ */
+export function formatPct(value: number): string {
+  const abs = Math.abs(value)
+  const digits = abs >= 10 ? 0 : abs >= 1 ? 1 : 2
+  return value.toLocaleString('fr-FR', { maximumFractionDigits: digits })
+}
+
 export function foldForSearch(value: string): string {
   return value
     .normalize('NFD')

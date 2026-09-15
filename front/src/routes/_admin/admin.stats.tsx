@@ -9,6 +9,7 @@ import {
   RARITY_COLOR_VAR,
   RARITY_LABEL_FR,
 } from '../../libs/rarity.ts'
+import { formatPct } from '../../libs/utils.ts'
 import { useAdminStats } from '../../queries/useAdminStats'
 
 export const Route = createFileRoute('/_admin/admin/stats')({
@@ -113,13 +114,13 @@ function AdminStats() {
                           <span>
                             théo.{' '}
                             <span className="font-mono text-text">
-                              {theoreticalPct.toFixed(2)}%
+                              {formatPct(theoreticalPct)}%
                             </span>
                           </span>
                           <span>
                             réel{' '}
                             <span className="font-mono text-text">
-                              {realPct.toFixed(2)}%
+                              {formatPct(realPct)}%
                             </span>{' '}
                             <span className="text-xs text-text-light">
                               ({realCount.toLocaleString('fr-FR')})
@@ -129,7 +130,7 @@ function AdminStats() {
                             className={`font-mono font-bold ${Math.abs(drift) > 2 ? 'text-destructive' : 'text-text-light'}`}
                           >
                             {drift >= 0 ? '+' : ''}
-                            {drift.toFixed(2)}%
+                            {formatPct(drift)}%
                           </span>
                         </div>
                       </div>

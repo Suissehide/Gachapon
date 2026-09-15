@@ -40,6 +40,7 @@ import { PageShell } from '../../components/shared/PageShell.tsx'
 import { TeamEditorPopup } from '../../components/team/TeamEditorPopup.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import { Popup, PopupContent } from '../../components/ui/popup.tsx'
+import { formatPct } from '../../libs/utils.ts'
 import { useCampaign, useSweepStage } from '../../queries/useCampaign.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
 import { useCombatTeam } from '../../queries/useCombatTeam.ts'
@@ -690,12 +691,9 @@ function PrepModal({
       ? 'Énergie insuffisante'
       : 'Combattre'
     : 'Équipe requise'
-  // Sub-1% chances (ex. cardChance 0.005) : une décimale pour ne pas afficher
-  // « 1% » (le double) ni masquer la pastille en arrondissant à 0.
-  const fmtPct = (frac: number) => {
-    const pct = frac * 100
-    return pct > 0 && pct < 1 ? pct.toFixed(1) : String(Math.round(pct))
-  }
+  // `formatPct` garde deux décimales sous 1 % : une chance à 0,005 s'affiche
+  // « 0,5 » au lieu d'être masquée par un arrondi à 0.
+  const fmtPct = (frac: number) => formatPct(frac * 100)
   const equipPct = rp.farmEquipmentChance * 100
   const cardPct = rp.farmCardChance * 100
 
