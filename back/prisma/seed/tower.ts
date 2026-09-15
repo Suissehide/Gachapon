@@ -107,7 +107,9 @@ export function towerFloorLoot(floor: number) {
     firstClear: {
       gold: Math.round(200 * s),
       dust: Math.round(120 * s),
-      xp: Math.round(60 * s),
+      // ÷3 avec le premier passage de campagne (2026-09-15) : les 4 tours
+      // offraient 22 416 XP de one-shot, plus que le coût du niveau 30.
+      xp: Math.round(20 * s),
       guaranteedEquipment: { minRarity: floor >= 7 ? 'RARE' : 'UNCOMMON' },
     },
     farm: {

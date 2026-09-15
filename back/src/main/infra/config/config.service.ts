@@ -48,8 +48,14 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'combat.baseArmorPen': 0,
   'combat.baseLifesteal': 0,
   'gacha.pullTokenCost': 1,
-  'xp.base': 100,
-  'xp.slope': 44,
+  // Courbe ×5 (2026-09-15) : un joueur actif atteignait le niveau 30 en un
+  // jour. La cause mesurée est `levelup.refillEnergy`, qui remet l'énergie au
+  // max à CHAQUE montée et fait passer la journée de 31 à 213 combats — la
+  // boucle XP → niveau → énergie → combats → XP. Le refill est conservé par
+  // choix de design, la courbe le compense donc frontalement : niveau 30 vers
+  // J15, niveau 100 vers J134 (simulation dans economy-progression.test.ts).
+  'xp.base': 500,
+  'xp.slope': 220,
   'xp.levelCap': 100,
   'levelup.refillEnergy': 1,
   'card.goldCostBase': 5,

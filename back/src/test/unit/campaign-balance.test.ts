@@ -159,7 +159,7 @@ describe('lootTableNormal — butin lissé sur la difficulté', () => {
     const fc = lootTableNormal(1, 1).firstClear
     expect(fc.gold).toBe(120)
     expect(fc.dust).toBe(30)
-    expect(fc.xp).toBe(22)
+    expect(fc.xp).toBe(7)
     expect(fc.guaranteedEquipment).toBeUndefined()
   })
 
@@ -260,7 +260,7 @@ describe('bossLoot — prime de farm alignée sur la difficulté réelle', () =>
     const fc = bossLoot(1).firstClear
     expect(fc.gold).toBe(1650)
     expect(fc.dust).toBe(1000)
-    expect(fc.xp).toBe(200)
+    expect(fc.xp).toBe(65)
     expect(fc.guaranteedEquipment).toEqual({ minRarity: 'RARE' })
     // carte garantie : RARE ch.1-3, EPIC ch.4-8, LEGENDARY ch.9
     expect(fc.guaranteedCard).toEqual({ minRarity: 'RARE' })

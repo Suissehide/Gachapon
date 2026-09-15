@@ -1,6 +1,10 @@
 import { describe, expect, it } from '@jest/globals'
 
-import { calculateLevel, xpForLevel } from '../../main/domain/shared/xp'
+import {
+  calculateLevel,
+  levelAfterXpGain,
+  xpForLevel,
+} from '../../main/domain/shared/xp'
 
 describe('xp arithmetic curve', () => {
   // XP(n→n+1) = base + slope·(n−1) ; cumulée C(n) = base·(n−1) + slope·(n−1)(n−2)/2
@@ -44,6 +48,30 @@ describe('xp arithmetic curve', () => {
         expect(calculateLevel(xpForLevel(n))).toBe(n)
         if (n > 1) expect(calculateLevel(xpForLevel(n) - 1)).toBe(n - 1)
       }
+    })
+  })
+
+  describe('levelAfterXpGain', () => {
+    it('suit la courbe quand le niveau monte', () => {
+      expect(levelAfterXpGain(2, 230, 100, 30, 100)).toBe(3)
+    })
+
+    it('rend le niveau stocké quand rien ne change', () => {
+      expect(levelAfterXpGain(3, 230, 100, 30, 100)).toBe(3)
+    })
+
+    // Un durcissement de `xp.base`/`xp.slope` recalcule un niveau PLUS BAS
+    // pour la même XP. Comme `skillPointsGained` compare au niveau STOCKÉ, un
+    // niveau qui redescend fait regagner au joueur les points déjà dépensés en
+    // remontant — d'où le plancher.
+    it('ne redescend jamais sous le niveau déjà atteint', () => {
+      const xp = xpForLevel(30, 100, 44)
+      expect(calculateLevel(xp, 500, 220, 100)).toBeLessThan(30)
+      expect(levelAfterXpGain(30, xp, 500, 220, 100)).toBe(30)
+    })
+
+    it('respecte le plafond de niveau', () => {
+      expect(levelAfterXpGain(1, 10_000_000, 100, 30, 50)).toBe(50)
     })
   })
 })

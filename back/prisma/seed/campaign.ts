@@ -2,8 +2,8 @@ import type { PrismaClient } from '../../src/generated/client'
 import { MAX_PALIER } from '../../src/main/domain/card-leveling/card-leveling.domain'
 import type { Element } from '../../src/main/domain/combat/element'
 
-const CHAPTER_COUNT = 9
-const STAGES_PER_CHAPTER = 10
+export const CHAPTER_COUNT = 9
+export const STAGES_PER_CHAPTER = 10
 
 // Courbe de difficulté CONTINUE et CONCAVE sur le n° de stage global
 // n = (chapitre-1)×10 + index (1..90) : mult(n) = (1 + 0.08·(n-1))^2.5.
@@ -137,7 +137,12 @@ const FARM_DUST_BASE = 4
 const FARM_XP_BASE = 6
 const FIRST_CLEAR_GOLD_BASE = 120
 const FIRST_CLEAR_DUST_BASE = 30
-const FIRST_CLEAR_XP_BASE = 22
+// ÷3 (2026-09-15). Le premier passage était le carburant du levelling : à lui
+// seul, campagne + tours offraient ~72 800 XP de one-shot, soit 3,5 fois le
+// coût du niveau 30 sous l'ancienne courbe — nettoyer le contenu une fois
+// suffisait à atteindre le niveau 56. Ramené à ~38 % du niveau 30 sous la
+// courbe actuelle, le farm quotidien redevient la colonne vertébrale.
+const FIRST_CLEAR_XP_BASE = 7
 
 // Prime de farm du boss par rapport à un stage normal de même position.
 // Alignée sur son surcoût de difficulté réel (+2 à +5 niveaux requis, fight
@@ -483,7 +488,10 @@ export function bossLoot(chapter: number) {
       // ÷3 (spec 2026-07-20) : l'or des boss finançait ~900 jetons en boutique
       gold: Math.round(1650 * m),
       dust: Math.round(1000 * m),
-      xp: Math.round(200 * m),
+      // ÷3 avec FIRST_CLEAR_XP_BASE (2026-09-15) : le facteur géométrique
+      // 1.5^(chapitre-1) n'est pas borné, le boss 9 valait 5 126 XP à lui
+      // seul — autant que les 30 premiers niveaux réunis.
+      xp: Math.round(65 * m),
       guaranteedEquipment: { minRarity: bossFloor(chapter) },
       guaranteedCard: { minRarity: bossFloor(chapter) },
     },

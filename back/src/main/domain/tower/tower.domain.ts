@@ -44,7 +44,7 @@ import {
 } from '../equipment/set-bonuses'
 import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
 import { retryOnSerialization } from '../shared/retry-serialization'
-import { calculateLevel } from '../shared/xp'
+import { levelAfterXpGain } from '../shared/xp'
 import { rollTowerDrop, rollTowerFirstClearDrop } from './tower-drop'
 import {
   TOWER_ELEMENTS,
@@ -757,7 +757,13 @@ export class TowerDomain {
     })
     const oldLevel = userBefore?.level ?? 1
     const newXp = (userBefore?.xp ?? 0) + xp
-    const newLevel = calculateLevel(newXp, xpBase, xpSlope, xpLevelCap)
+    const newLevel = levelAfterXpGain(
+      oldLevel,
+      newXp,
+      xpBase,
+      xpSlope,
+      xpLevelCap,
+    )
     const gained = skillPointsGained(oldLevel, newLevel)
     await tx.user.update({
       where: { id: userId },

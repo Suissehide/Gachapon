@@ -43,7 +43,7 @@ import {
 } from '../equipment/set-bonuses'
 import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
 import { retryOnSerialization } from '../shared/retry-serialization'
-import { calculateLevel } from '../shared/xp'
+import { levelAfterXpGain } from '../shared/xp'
 import { CAMPAIGN_EQUIPMENT_SLOTS } from '../tower/tower-slots'
 import { deriveClearFlags } from './campaign-clear-flags'
 import { computeTeamPower, unitPower } from './campaign-power'
@@ -881,7 +881,8 @@ export class CampaignDomain {
           })
           const oldLevel = userBefore?.level ?? 1
           const newXp = (userBefore?.xp ?? 0) + totalXp
-          const newLevel = calculateLevel(
+          const newLevel = levelAfterXpGain(
+            oldLevel,
             newXp,
             sweepCfg['xp.base'],
             sweepCfg['xp.slope'],
@@ -1228,7 +1229,13 @@ export class CampaignDomain {
     })
     const oldLevel = userBefore?.level ?? 1
     const newXp = (userBefore?.xp ?? 0) + xp
-    const newLevel = calculateLevel(newXp, xpBase, xpSlope, xpLevelCap)
+    const newLevel = levelAfterXpGain(
+      oldLevel,
+      newXp,
+      xpBase,
+      xpSlope,
+      xpLevelCap,
+    )
     const battleGained = skillPointsGained(oldLevel, newLevel)
     await tx.user.update({
       where: { id: userId },

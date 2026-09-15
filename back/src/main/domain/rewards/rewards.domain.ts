@@ -28,11 +28,11 @@ import type { AchievementsDomainInterface } from '../achievements/achievements.d
 import type { UnlockedAchievement } from '../achievements/events.types'
 import {
   calculateTokens,
-  overflowDust,
   effectiveRegenInterval,
+  overflowDust,
 } from '../economy/economy.domain'
 import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
-import { calculateLevel } from '../shared/xp'
+import { levelAfterXpGain } from '../shared/xp'
 
 export class RewardsDomain implements RewardsDomainInterface {
   readonly #userRewardRepository: UserRewardRepositoryInterface
@@ -224,7 +224,8 @@ export class RewardsDomain implements RewardsDomainInterface {
           user.dust + dust + overflowDust(overflow, upgrades.tokenOverflowDust)
         const newXp = user.xp + xp
         const newGold = user.gold + rewardGold
-        const newLevel = calculateLevel(
+        const newLevel = levelAfterXpGain(
+          user.level,
           newXp,
           cfg['xp.base'],
           cfg['xp.slope'],
@@ -441,14 +442,15 @@ export class RewardsDomain implements RewardsDomainInterface {
           overflowDust(overflow, upgrades.tokenOverflowDust)
         const newXp = user.xp + totalXp
         const newGold = user.gold + totalGold
-        const newLevel = calculateLevel(
+        const initialLevel = user.level
+        const newLevel = levelAfterXpGain(
+          initialLevel,
           newXp,
           cfg['xp.base'],
           cfg['xp.slope'],
           cfg['xp.levelCap'],
         )
 
-        const initialLevel = user.level
         const gained = skillPointsGained(initialLevel, newLevel)
         await this.#userRepository.updateAfterClaimInTx(tx, userId, {
           tokens: newTokens,

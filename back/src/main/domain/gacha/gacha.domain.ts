@@ -26,11 +26,11 @@ import type { UserRewardRepositoryInterface } from '../../types/infra/orm/reposi
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import {
   calculateTokens,
-  overflowDust,
   effectiveRegenInterval,
+  overflowDust,
 } from '../economy/economy.domain'
 import { milestonesCrossed, skillPointsGained } from '../shared/level-rewards'
-import { calculateLevel } from '../shared/xp'
+import { levelAfterXpGain } from '../shared/xp'
 
 // ---------------------------------------------------------------------------
 // Boost weight helper (exported for unit tests)
@@ -539,13 +539,15 @@ export class GachaDomain implements GachaDomainInterface {
     const totalXp = Math.round(
       cfg.xpPerPull * (1 + (cfg.upgrades.pullXpBonus ?? 0) / 100),
     )
-    const oldLevel = calculateLevel(
+    const oldLevel = levelAfterXpGain(
+      user.level,
       user.xp,
       cfg.xpCurve.base,
       cfg.xpCurve.slope,
       cfg.xpCurve.levelCap,
     )
-    const newLevel = calculateLevel(
+    const newLevel = levelAfterXpGain(
+      user.level,
       user.xp + totalXp,
       cfg.xpCurve.base,
       cfg.xpCurve.slope,
@@ -791,7 +793,8 @@ export class GachaDomain implements GachaDomainInterface {
           if (state.currentTokens < paidCount * cfg.pullTokenCost) {
             throw Boom.paymentRequired('Not enough tokens')
           }
-          const oldLevel = calculateLevel(
+          const oldLevel = levelAfterXpGain(
+            user.level,
             user.xp,
             cfg.xpCurve.base,
             cfg.xpCurve.slope,
@@ -823,14 +826,16 @@ export class GachaDomain implements GachaDomainInterface {
               },
               boosts,
             )
-            const levelBefore = calculateLevel(
+            const levelBefore = levelAfterXpGain(
+              user.level,
               runningXp,
               cfg.xpCurve.base,
               cfg.xpCurve.slope,
               cfg.xpCurve.levelCap,
             )
             runningXp += xpPerPullBonused
-            const levelAfter = calculateLevel(
+            const levelAfter = levelAfterXpGain(
+              user.level,
               runningXp,
               cfg.xpCurve.base,
               cfg.xpCurve.slope,
@@ -850,7 +855,8 @@ export class GachaDomain implements GachaDomainInterface {
           await this.#persistBoostDecrements(tx, boosts)
 
           const finalTokens = state.currentTokens - totalActualCost
-          const newLevel = calculateLevel(
+          const newLevel = levelAfterXpGain(
+            user.level,
             user.xp + totalXp,
             cfg.xpCurve.base,
             cfg.xpCurve.slope,

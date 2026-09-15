@@ -235,17 +235,19 @@ describe('economy-progression — partie complète en ~3 mois', () => {
     }
   })
 
-  it('niveau 100 atteint entre J80 et J95', () => {
-    const doneDay = traj.find((s) => s.level >= 100)?.day
-    if (doneDay == null) {
-      const ext = simulate(95)
-      const extDay = ext.find((s) => s.level >= 100)?.day
-      expect(extDay).toBeDefined()
-      expect(extDay).toBeLessThanOrEqual(95)
-    } else {
-      expect(doneDay).toBeGreaterThanOrEqual(80)
-    }
-  })
+  // La cadence du NIVEAU JOUEUR a quitté ce fichier le 2026-09-15 pour
+  // `xp-pacing.test.ts`. Deux raisons.
+  //
+  // 1. Ce modèle-ci est la borne BASSE : il suppose une barrière de parité de
+  //    niveau (`levelRequired`) qui n'existe pas dans le code — le seul verrou
+  //    d'un étage est SÉQUENTIEL (`campaign.domain.ts`), il suffit de gagner.
+  // 2. Il ne modélise pas `levelup.refillEnergy`, qui remet l'énergie au max à
+  //    chaque montée et fait passer la journée de 31 à ~146 combats. C'est
+  //    précisément la boucle qui amenait un joueur au niveau 30 en un jour,
+  //    donc le phénomène à surveiller est invisible ici.
+  //
+  // Ce fichier reste le garde-fou de l'ÉCONOMIE (or, jetons, poussière,
+  // légendaires), où ces deux angles morts ne portent pas à conséquence.
 
   it('le boost épique du seed est bien ×2 / 800 / 10 tirages', () => {
     const boost = SHOP_ITEMS.find((i) => i.name === 'Boost Épique')
