@@ -18,6 +18,12 @@
 -- chacun de reinvestir. Ecreter en silence ferait perdre des points sans
 -- explication.
 --
+-- Les INSERT passent par un CROSS JOIN sur le noeud cible plutot que par un
+-- sous-select scalaire : sur une base VIERGE (shadow database de Prisma, ou
+-- premier deploiement) l'arbre n'existe pas encore, le scalaire vaudrait NULL
+-- et l'INSERT violerait la contrainte NOT NULL. Le CROSS JOIN n'insere alors
+-- simplement rien, et le seed fera le travail.
+--
 -- Migration de DONNEES : le seed recree l'arbre mais part d'un deleteMany qui
 -- emporte cartes, combats et progression. Idempotente (les UPDATE convergent,
 -- et UserSkill vide ne rembourse plus rien).
@@ -118,83 +124,161 @@ WHERE id=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchI
 
 -- 3. Courbes : rebaties a l'identique du seed.
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Régénération');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Régénération'), l.lvl, l.eff FROM (VALUES (1,5),(2,9),(3,12),(4,15),(5,20)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,5),(2,9),(3,12),(4,15),(5,20)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Régénération') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Stockage');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Stockage'), l.lvl, l.eff FROM (VALUES (1,4),(2,8),(3,12),(4,16),(5,19),(6,22)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,4),(2,8),(3,12),(4,16),(5,19),(6,22)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Stockage') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Multi-jetons');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Multi-jetons'), l.lvl, l.eff FROM (VALUES (1,2),(2,4),(3,6),(4,9),(5,12)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,2),(2,4),(3,6),(4,9),(5,12)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Multi-jetons') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Tirage gratuit');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Tirage gratuit'), l.lvl, l.eff FROM (VALUES (1,1),(2,2),(3,4),(4,6),(5,10)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,1),(2,2),(3,4),(4,6),(5,10)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Tirage gratuit') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Trop-plein');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Trop-plein'), l.lvl, l.eff FROM (VALUES (1,10),(2,20),(3,30)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,10),(2,20),(3,30)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Trop-plein') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Ferveur');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Ferveur'), l.lvl, l.eff FROM (VALUES (1,3),(2,6),(3,9),(4,12)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,3),(2,6),(3,9),(4,12)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Ferveur') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Chance');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Chance'), l.lvl, l.eff FROM (VALUES (1,2),(2,4),(3,6),(4,9),(5,12)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,2),(2,4),(3,6),(4,9),(5,12)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Chance') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Boule d''or');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Boule d''or'), l.lvl, l.eff FROM (VALUES (1,2),(2,4),(3,6),(4,8)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,2),(2,4),(3,6),(4,8)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Boule d''or') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Vœu exaucé');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Vœu exaucé'), l.lvl, l.eff FROM (VALUES (1,10),(2,20),(3,30),(4,40)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,10),(2,20),(3,30),(4,40)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Vœu exaucé') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Opulence');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Opulence'), l.lvl, l.eff FROM (VALUES (1,1),(2,2)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,1),(2,2)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Opulence') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Destin');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Destin'), l.lvl, l.eff FROM (VALUES (1,5),(2,10),(3,20),(4,30),(5,40)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,5),(2,10),(3,20),(4,30),(5,40)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Destin') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Prisme');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Prisme'), l.lvl, l.eff FROM (VALUES (1,4),(2,7),(3,10),(4,12),(5,14)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,4),(2,7),(3,10),(4,12),(5,14)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Prisme') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Recyclage');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Recyclage'), l.lvl, l.eff FROM (VALUES (1,8),(2,14),(3,20),(4,25),(5,30)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,8),(2,14),(3,20),(4,25),(5,30)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Recyclage') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Réduction');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Réduction'), l.lvl, l.eff FROM (VALUES (1,8),(2,13),(3,18),(4,22),(5,25)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,8),(2,13),(3,18),(4,22),(5,25)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Réduction') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Artisan');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Artisan'), l.lvl, l.eff FROM (VALUES (1,8),(2,15),(3,21),(4,26),(5,30)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,8),(2,15),(3,21),(4,26),(5,30)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Artisan') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Marchandeur');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Marchandeur'), l.lvl, l.eff FROM (VALUES (1,10),(2,18),(3,25)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,10),(2,18),(3,25)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Marchandeur') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Apogée de Collection');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Apogée de Collection'), l.lvl, l.eff FROM (VALUES (1,10),(2,20),(3,35),(4,50)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,10),(2,20),(3,35),(4,50)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Apogée de Collection') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Négociant');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Négociant'), l.lvl, l.eff FROM (VALUES (1,1),(2,2),(3,3)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,1),(2,2),(3,3)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Négociant') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Étal élargi');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Étal élargi'), l.lvl, l.eff FROM (VALUES (1,1),(2,2)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,1),(2,2)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Étal élargi') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Endurance');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Endurance'), l.lvl, l.eff FROM (VALUES (1,5),(2,10),(3,15),(4,20),(5,25)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,5),(2,10),(3,15),(4,20),(5,25)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Endurance') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Récupération');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Récupération'), l.lvl, l.eff FROM (VALUES (1,60),(2,120),(3,180),(4,210)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,60),(2,120),(3,180),(4,210)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Récupération') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Butin doré');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Butin doré'), l.lvl, l.eff FROM (VALUES (1,3),(2,6),(3,10),(4,13)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,3),(2,6),(3,10),(4,13)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Butin doré') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Logistique');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Logistique'), l.lvl, l.eff FROM (VALUES (1,1)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,1)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Logistique') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Vétéran');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Vétéran'), l.lvl, l.eff FROM (VALUES (1,3),(2,7),(3,10),(4,14),(5,17)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,3),(2,7),(3,10),(4,14),(5,17)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Vétéran') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Apogée de Combat');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Apogée de Combat'), l.lvl, l.eff FROM (VALUES (1,12),(2,22),(3,31),(4,40)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,12),(2,22),(3,31),(4,40)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Apogée de Combat') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Forgeron');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Forgeron'), l.lvl, l.eff FROM (VALUES (1,5),(2,10),(3,15)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,5),(2,10),(3,15)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Forgeron') AS src(id);
 DELETE FROM "SkillNodeLevel" WHERE "nodeId"=(SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Ferrailleur');
-INSERT INTO "SkillNodeLevel" ("nodeId", level, effect) SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Ferrailleur'), l.lvl, l.eff FROM (VALUES (1,10),(2,20),(3,30)) AS l(lvl,eff);
+INSERT INTO "SkillNodeLevel" ("nodeId", level, effect)
+SELECT src.id, l.lvl, l.eff FROM (VALUES (1,10),(2,20),(3,30)) AS l(lvl,eff)
+CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Ferrailleur') AS src(id);
 
 -- 4. Aretes : la topologie de Collection change, on rebatit tout le graphe.
 DELETE FROM "SkillEdge";
-INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle") SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Régénération'), (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Multi-jetons'), 1, 's-top', 't-bottom';
-INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle") SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Stockage'), (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Tirage gratuit'), 1, 's-top', 't-bottom';
-INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle") SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Multi-jetons'), (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Trop-plein'), 1, 's-top', 't-left';
-INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle") SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Tirage gratuit'), (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Trop-plein'), 1, 's-top', 't-right';
-INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle") SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Multi-jetons'), (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Ferveur'), 1, 's-top', 't-bottom';
-INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle") SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Chance'), (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Boule d''or'), 1, 's-right', 't-left';
-INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle") SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Chance'), (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Vœu exaucé'), 1, 's-right', 't-left';
-INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle") SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Boule d''or'), (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Opulence'), 1, 's-right', 't-left';
-INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle") SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Vœu exaucé'), (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Opulence'), 1, 's-right', 't-left';
-INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle") SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Boule d''or'), (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Destin'), 1, 's-right', 't-left';
-INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle") SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Vœu exaucé'), (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Prisme'), 1, 's-right', 't-left';
-INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle") SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Étal élargi'), (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Apogée de Collection'), 1, 's-bottom', 't-top';
-INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle") SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Apogée de Collection'), (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Négociant'), 1, 's-bottom', 't-top';
-INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle") SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Recyclage'), (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Artisan'), 1, 's-bottom', 't-right';
-INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle") SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Recyclage'), (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Réduction'), 1, 's-bottom', 't-left';
-INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle") SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Artisan'), (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Marchandeur'), 1, 's-bottom', 't-left';
-INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle") SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Réduction'), (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Marchandeur'), 1, 's-bottom', 't-right';
-INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle") SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Endurance'), (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Butin doré'), 1, 's-left', 't-right';
-INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle") SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Endurance'), (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Logistique'), 1, 's-left', 't-right';
-INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle") SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Récupération'), (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Vétéran'), 1, 's-left', 't-right';
-INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle") SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Butin doré'), (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Apogée de Combat'), 1, 's-left', 't-right';
-INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle") SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Vétéran'), (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Apogée de Combat'), 1, 's-left', 't-right';
-INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle") SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Apogée de Combat'), (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Forgeron'), 1, 's-left', 't-right';
-INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle") SELECT (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Vétéran'), (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Ferrailleur'), 1, 's-left', 't-right';
+INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle")
+SELECT f.id, t.id, 1, 's-top', 't-bottom' FROM (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Régénération') AS f(id) CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Multi-jetons') AS t(id);
+INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle")
+SELECT f.id, t.id, 1, 's-top', 't-bottom' FROM (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Stockage') AS f(id) CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Tirage gratuit') AS t(id);
+INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle")
+SELECT f.id, t.id, 1, 's-top', 't-left' FROM (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Multi-jetons') AS f(id) CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Trop-plein') AS t(id);
+INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle")
+SELECT f.id, t.id, 1, 's-top', 't-right' FROM (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Tirage gratuit') AS f(id) CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Trop-plein') AS t(id);
+INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle")
+SELECT f.id, t.id, 1, 's-top', 't-bottom' FROM (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Multi-jetons') AS f(id) CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Flux' AND n.name='Ferveur') AS t(id);
+INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle")
+SELECT f.id, t.id, 1, 's-right', 't-left' FROM (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Chance') AS f(id) CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Boule d''or') AS t(id);
+INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle")
+SELECT f.id, t.id, 1, 's-right', 't-left' FROM (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Chance') AS f(id) CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Vœu exaucé') AS t(id);
+INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle")
+SELECT f.id, t.id, 1, 's-right', 't-left' FROM (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Boule d''or') AS f(id) CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Opulence') AS t(id);
+INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle")
+SELECT f.id, t.id, 1, 's-right', 't-left' FROM (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Vœu exaucé') AS f(id) CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Opulence') AS t(id);
+INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle")
+SELECT f.id, t.id, 1, 's-right', 't-left' FROM (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Boule d''or') AS f(id) CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Destin') AS t(id);
+INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle")
+SELECT f.id, t.id, 1, 's-right', 't-left' FROM (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Vœu exaucé') AS f(id) CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Fortune' AND n.name='Prisme') AS t(id);
+INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle")
+SELECT f.id, t.id, 1, 's-bottom', 't-top' FROM (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Étal élargi') AS f(id) CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Apogée de Collection') AS t(id);
+INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle")
+SELECT f.id, t.id, 1, 's-bottom', 't-top' FROM (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Apogée de Collection') AS f(id) CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Négociant') AS t(id);
+INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle")
+SELECT f.id, t.id, 1, 's-bottom', 't-right' FROM (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Recyclage') AS f(id) CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Artisan') AS t(id);
+INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle")
+SELECT f.id, t.id, 1, 's-bottom', 't-left' FROM (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Recyclage') AS f(id) CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Réduction') AS t(id);
+INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle")
+SELECT f.id, t.id, 1, 's-bottom', 't-left' FROM (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Artisan') AS f(id) CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Marchandeur') AS t(id);
+INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle")
+SELECT f.id, t.id, 1, 's-bottom', 't-right' FROM (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Réduction') AS f(id) CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Collection' AND n.name='Marchandeur') AS t(id);
+INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle")
+SELECT f.id, t.id, 1, 's-left', 't-right' FROM (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Endurance') AS f(id) CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Butin doré') AS t(id);
+INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle")
+SELECT f.id, t.id, 1, 's-left', 't-right' FROM (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Endurance') AS f(id) CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Logistique') AS t(id);
+INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle")
+SELECT f.id, t.id, 1, 's-left', 't-right' FROM (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Récupération') AS f(id) CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Vétéran') AS t(id);
+INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle")
+SELECT f.id, t.id, 1, 's-left', 't-right' FROM (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Butin doré') AS f(id) CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Apogée de Combat') AS t(id);
+INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle")
+SELECT f.id, t.id, 1, 's-left', 't-right' FROM (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Vétéran') AS f(id) CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Apogée de Combat') AS t(id);
+INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle")
+SELECT f.id, t.id, 1, 's-left', 't-right' FROM (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Apogée de Combat') AS f(id) CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Forgeron') AS t(id);
+INSERT INTO "SkillEdge" ("fromNodeId","toNodeId","minLevel","sourceHandle","targetHandle")
+SELECT f.id, t.id, 1, 's-left', 't-right' FROM (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Vétéran') AS f(id) CROSS JOIN (SELECT n.id FROM "SkillNode" n JOIN "SkillBranch" b ON b.id=n."branchId" WHERE b.name='Combat' AND n.name='Ferrailleur') AS t(id);
