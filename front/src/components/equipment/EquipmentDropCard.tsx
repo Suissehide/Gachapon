@@ -285,7 +285,11 @@ export function EquipmentDropCard({
   )
 }
 
-/** Confirmation compacte qui remplace la fiche une fois la pièce détruite. */
+/**
+ * Confirmation qui remplace la fiche une fois la pièce détruite. Elle se cale
+ * sur la place que la fiche occupait (`h-full` + contenu centré) : c'est le
+ * gabarit posé par l'appelant qui décide de la taille, pas ce texte.
+ */
 export function EquipmentScrapped({
   gold,
   className,
@@ -296,7 +300,7 @@ export function EquipmentScrapped({
   return (
     <div
       className={cn(
-        'rounded-[14px] border border-emerald-200 bg-emerald-50 p-3.5 text-center font-mono text-xs font-bold tracking-[0.08em] text-emerald-800',
+        'flex h-full items-center justify-center rounded-[14px] border border-emerald-200 bg-emerald-50 p-3.5 text-center font-mono text-xs font-bold tracking-[0.08em] text-emerald-800',
         className,
       )}
     >
@@ -326,11 +330,28 @@ export function EquipmentDropReward({
   if (!drop) {
     return null
   }
-  if (scrappedGold !== null) {
-    return <EquipmentScrapped className={className} gold={scrappedGold} />
-  }
 
   const scrapGold = economy.equip.salvageGold[drop.rarity] ?? 0
+
+  if (scrappedGold !== null) {
+    // La confirmation garde EXACTEMENT l'encombrement de la fiche détruite :
+    // la fiche reste rendue, invisible, comme gabarit, et la confirmation se
+    // superpose dans la même cellule de grille. Sans ce gabarit, une rangée
+    // dont toutes les pièces ont été détruites s'effondrait d'un coup et le
+    // panneau de résultat sautait à une hauteur minuscule sous le curseur.
+    return (
+      <div className={cn('grid w-full', className)}>
+        <div className="invisible [grid-area:1/1]" aria-hidden>
+          <EquipmentDropCard
+            drop={drop}
+            scrapGold={scrapGold}
+            equipLevelScale={economy.equip.levelScale}
+          />
+        </div>
+        <EquipmentScrapped className="[grid-area:1/1]" gold={scrappedGold} />
+      </div>
+    )
+  }
 
   const handleScrap = () => {
     salvageItems.mutate([drop.userEquipmentId], {
