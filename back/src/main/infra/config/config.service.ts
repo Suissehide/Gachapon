@@ -50,10 +50,15 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'gacha.pullTokenCost': 1,
   // Courbe ×5 (2026-09-15) : un joueur actif atteignait le niveau 30 en un
   // jour. La cause mesurée est `levelup.refillEnergy`, qui remet l'énergie au
-  // max à CHAQUE montée et fait passer la journée de 31 à 213 combats — la
+  // max à CHAQUE montée et fait passer la journée de 31 à ~146 combats — la
   // boucle XP → niveau → énergie → combats → XP. Le refill est conservé par
-  // choix de design, la courbe le compense donc frontalement : niveau 30 vers
-  // J15, niveau 100 vers J134 (simulation dans economy-progression.test.ts).
+  // choix de design, la courbe le compense donc frontalement.
+  //
+  // Cadence en BORNE HAUTE (`xp-pacing.test.ts`, joueur qui ne perd jamais et
+  // n'est freiné que par l'énergie) : J1 niveau 14, J15 niveau 30, J30 niveau
+  // 45, J90 niveau 76, J200 niveau 100. La borne BASSE
+  // (`economy-progression.test.ts`, joueur freiné par la difficulté) donne
+  // niveau 48 à J90 : la cadence réelle vit entre les deux.
   'xp.base': 500,
   'xp.slope': 220,
   'xp.levelCap': 100,

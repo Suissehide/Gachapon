@@ -863,7 +863,11 @@ export async function seedSkills(tx: Tx) {
     ],
   })
 
+  // Compté, jamais recopié : le total annonçait encore 126 points alors que
+  // l'arbre était passé à 109.
+  const noeuds = await tx.skillNode.findMany({ select: { maxLevel: true } })
+  const points = noeuds.reduce((somme, n) => somme + n.maxLevel, 0)
   console.log(
-    '  Skill tree seedé : 4 branches, 27 nœuds, 126 points investissables',
+    `  Skill tree seedé : 4 branches, ${noeuds.length} nœuds, ${points} points investissables`,
   )
 }

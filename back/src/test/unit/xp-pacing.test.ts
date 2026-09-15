@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals'
+import { beforeAll, describe, expect, it } from '@jest/globals'
 
 import {
   CHAPTER_COUNT,
@@ -10,6 +10,7 @@ import { towerFloorLoot } from '../../../prisma/seed/tower'
 import { TOWER_ELEMENTS, TOWER_FLOOR_COUNT } from '../../main/domain/tower/tower-slots'
 import { calculateLevel, xpForLevel } from '../../main/domain/shared/xp'
 import { DEFAULTS } from '../../main/infra/config/config.service'
+import { effectAtRank } from '../helpers/skill-tree-seed'
 
 /**
  * Cadence du NIVEAU JOUEUR. Garde-fou du ralentissement du 2026-09-15, où un
@@ -37,8 +38,11 @@ const XP_CAP = DEFAULTS['xp.levelCap']
 
 // MODEL: rangs de compétences supposés acquis à partir de ce jour (mêmes
 // hypothèses que economy-progression.test.ts : Récupération r3, Logistique r1,
-// Vétéran r3).
+// Vétéran r3). L'effet de Vétéran est LU dans le seed, jamais recopié : il y
+// était écrit 0.3 en dur et y est resté quand la courbe du nœud est passée à
+// 3/7/10/14/17, si bien que le modèle surestimait l'XP de combat.
 const SKILL_MATURITY_DAY = 15
+const VETERAN_RANK = 3
 const PULLS_PER_DAY = 60 // MODEL: régime établi mesuré par economy-progression
 const QUEST_XP_PER_DAY = 450 / 7
 const STREAK_XP_PER_DAY = 875 / 30
@@ -60,7 +64,7 @@ type Jour = { day: number; level: number; battles: number; stage: number }
  * XP → niveau → énergie → combats → XP, conservée par choix de design et
  * compensée par la raideur de la courbe.
  */
-function simuler(days: number): Jour[] {
+function simuler(days: number, veteranPct: number): Jour[] {
   const out: Jour[] = []
   let xp = 0
   let level = 1
@@ -76,7 +80,7 @@ function simuler(days: number): Jour[] {
     )
     const cost = Math.max(1, DEFAULTS['combat.sweepCost'] - (mature ? 1 : 0))
     const cap = DEFAULTS['combat.pointsMax']
-    const xpBonus = mature ? 0.3 : 0
+    const xpBonus = mature ? veteranPct / 100 : 0
     const ticks = Math.round(86400 / regenSeconds)
 
     let battles = 0
@@ -132,11 +136,14 @@ function poolPremierPassage(): number {
 }
 
 describe('cadence du niveau joueur', () => {
-  const traj = simuler(400)
+  let traj: Jour[] = []
+  beforeAll(async () => {
+    traj = simuler(400, await effectAtRank('COMBAT_XP_BONUS', VETERAN_RANK))
+  })
   const jourDuNiveau = (n: number) => traj.find((j) => j.level >= n)?.day
 
   it('loggue la trajectoire pour calibration', () => {
-    for (const d of [1, 7, 15, 30, 60, 90, 120, 150]) {
+    for (const d of [1, 7, 15, 30, 60, 90, 120, 150, 200]) {
       const j = traj[d - 1]
       if (j) {
         console.info(
