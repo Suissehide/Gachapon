@@ -27,7 +27,9 @@ import {
 import {
   type ActiveSetSummary,
   type StatBonuses,
+  type StatKey,
   type StuffStatBonuses,
+  type StuffStatKey,
   statColorVar,
 } from '../../utils/cardStats.ts'
 import { Button } from '../ui/button.tsx'
@@ -90,10 +92,29 @@ const SEGMENT_KEYS = ['pc-1', 'pc-2', 'pc-3', 'pc-4']
 
 type GainChip = { id: string; label: string; value: string; color: string }
 
+// Ordre des pastilles : celui des tuiles du `CombatPanel` juste au-dessus,
+// pour qu'une carte n'annonce pas ses stats dans deux ordres différents.
+const CLASSIC_CHIP_ORDER: StatKey[] = ['hp', 'atk', 'def', 'spd']
+const STUFF_CHIP_ORDER: StuffStatKey[] = [
+  'critRate',
+  'critDmg',
+  'armorPen',
+  'lifesteal',
+]
+
 /**
- * Chips d'apport total : la part des pièces (plats puis pourcentages), puis
- * celle des sets actifs. Les deux restent séparées — « VIT +22 » et
- * « VIT +10 % » ne viennent pas de la même décision de jeu.
+ * Une pastille par stat, jamais plus : le plat et le pourcentage cohabitent
+ * dans la même (« PV +540 · +12 % »), et la part des sets est sommée au
+ * pourcentage de la stat qu'elle buffe au lieu de former ses propres
+ * pastilles en fin de ligne.
+ *
+ * Les trois blocs reçus sont disjoints — `classic` et `stuff` ne portent que
+ * la part des pièces, `setBonuses` que celle des sets (cf.
+ * `useCardEquipmentContribution`) — et le serveur les somme de la même façon
+ * dans `computeStat` : la fusion n'invente ni ne double aucune valeur.
+ *
+ * Elle ne masque pas non plus l'apport des sets : le `SetBanner` au-dessus
+ * annonce déjà le bonus de chaque set actif en toutes lettres.
  */
 function buildGainChips(
   classic: StatBonuses,
@@ -101,45 +122,41 @@ function buildGainChips(
   setBonuses: Record<string, number>,
 ): GainChip[] {
   const chips: GainChip[] = []
-  for (const [stat, bonus] of Object.entries(classic)) {
-    const color = statColorVar(stat)
-    const label = STAT_CHIP_LABELS[stat] ?? stat.toUpperCase()
-    if (bonus.flat !== 0) {
-      chips.push({
-        id: `${stat}-flat`,
-        label,
-        value: formatChipValue(bonus.flat, false),
-        color,
-      })
+  const pushChip = (stat: string, flat: number, pct: number) => {
+    if (flat === 0 && pct === 0) {
+      return
     }
-    if (bonus.pct !== 0) {
-      chips.push({
-        id: `${stat}-pct`,
-        label,
-        value: formatChipValue(bonus.pct, true),
-        color,
-      })
+    const parts: string[] = []
+    if (flat !== 0) {
+      parts.push(formatChipValue(flat, false))
     }
+    if (pct !== 0) {
+      parts.push(formatChipValue(pct, true))
+    }
+    chips.push({
+      id: stat,
+      label: STAT_CHIP_LABELS[stat] ?? stat.toUpperCase(),
+      value: parts.join(' · '),
+      color: statColorVar(stat),
+    })
   }
-  for (const [stat, value] of Object.entries(stuff)) {
-    if (value !== 0) {
-      chips.push({
-        id: `${stat}-stuff`,
-        label: STAT_CHIP_LABELS[stat] ?? stat.toUpperCase(),
-        value: formatChipValue(value, true),
-        color: statColorVar(stat),
-      })
-    }
+
+  const setPct = (stat: string) => setBonuses[`${stat}Pct`] ?? 0
+  for (const stat of CLASSIC_CHIP_ORDER) {
+    pushChip(stat, classic[stat].flat, classic[stat].pct + setPct(stat))
   }
+  for (const stat of STUFF_CHIP_ORDER) {
+    pushChip(stat, 0, stuff[stat] + setPct(stat))
+  }
+
+  // Filet de sécurité : un set dont le bonus porterait sur une stat hors des
+  // deux listes ci-dessus disparaîtrait sans bruit. Il garde sa pastille.
+  const couverts = new Set<string>([...CLASSIC_CHIP_ORDER, ...STUFF_CHIP_ORDER])
   for (const [key, value] of Object.entries(setBonuses)) {
-    if (value !== 0) {
-      const stat = key.replace(/Pct$|Flat$/, '')
-      chips.push({
-        id: `${key}-set`,
-        label: STAT_CHIP_LABELS[stat] ?? stat.toUpperCase(),
-        value: formatChipValue(value, key.endsWith('Pct')),
-        color: statColorVar(key),
-      })
+    const stat = key.replace(/Pct$|Flat$/, '')
+    if (value !== 0 && !couverts.has(stat)) {
+      const pct = key.endsWith('Pct')
+      pushChip(stat, pct ? 0 : value, pct ? value : 0)
     }
   }
   return chips
@@ -227,28 +244,37 @@ function SetBanner({
   )
 }
 
-function GainRow({ chips }: { chips: GainChip[] }) {
+/**
+ * Apport total, une stat par ligne : le libellé à gauche, la valeur alignée à
+ * droite. En pastilles enroulées, l'œil devait sauter d'une largeur à l'autre
+ * pour comparer deux stats ; en colonne, les valeurs se lisent dans un seul
+ * axe.
+ */
+function GainList({ chips }: { chips: GainChip[] }) {
   return (
-    <div className="mt-3.5 flex flex-wrap gap-1.5 border-t border-[rgba(27,23,38,0.07)] pt-3">
-      <p className="mb-0.5 w-full font-mono text-[11px] uppercase tracking-[0.12em] text-[rgba(27,23,38,0.42)]">
+    <div className="mt-3.5 border-t border-[rgba(27,23,38,0.07)] pt-3">
+      <p className="mb-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-[rgba(27,23,38,0.42)]">
         Apport total
       </p>
-      {chips.map((chip) => (
-        <span
-          key={chip.id}
-          className="inline-flex items-center gap-[5px] rounded-lg px-[9px] py-1 font-mono text-xs font-bold tabular-nums"
-          style={
-            {
-              '--c': chip.color,
-              background: 'color-mix(in oklab, var(--c) 9%, white)',
-              color: 'color-mix(in oklab, var(--c) 85%, var(--text))',
-            } as React.CSSProperties
-          }
-        >
-          <i className="h-1.5 w-1.5 rounded-full bg-[var(--c)]" />
-          {chip.label} {chip.value}
-        </span>
-      ))}
+      <ul className="flex flex-col gap-1">
+        {chips.map((chip) => (
+          <li
+            key={chip.id}
+            className="flex items-center gap-2 rounded-lg px-[9px] py-1 font-mono text-xs font-bold tabular-nums"
+            style={
+              {
+                '--c': chip.color,
+                background: 'color-mix(in oklab, var(--c) 9%, white)',
+                color: 'color-mix(in oklab, var(--c) 85%, var(--text))',
+              } as React.CSSProperties
+            }
+          >
+            <i className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--c)]" />
+            <span className="truncate">{chip.label}</span>
+            <span className="ml-auto shrink-0">{chip.value}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }
@@ -385,7 +411,7 @@ export function EquipmentSlotsPanel({ userCardId, rarityHex }: Props) {
         })}
       </div>
 
-      {gainChips.length > 0 && <GainRow chips={gainChips} />}
+      {gainChips.length > 0 && <GainList chips={gainChips} />}
 
       {pickerSlot !== null && (
         <EquipmentSlotPopup
