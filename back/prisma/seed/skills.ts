@@ -465,7 +465,7 @@ export async function seedSkills(tx: Tx) {
       icon: 'RefreshCw',
       maxLevel: 5,
       effectType: 'DUST_HARVEST',
-      posX: 72,
+      posX: -72,
       posY: 168,
       levels: {
         create: [
@@ -486,7 +486,7 @@ export async function seedSkills(tx: Tx) {
       icon: 'BadgePercent',
       maxLevel: 5,
       effectType: 'SHOP_DISCOUNT',
-      posX: 144,
+      posX: 0,
       posY: 336,
       levels: {
         create: [
@@ -507,7 +507,7 @@ export async function seedSkills(tx: Tx) {
       icon: 'Hammer',
       maxLevel: 5,
       effectType: 'UPGRADE_DUST_DISCOUNT',
-      posX: 0,
+      posX: -144,
       posY: 336,
       levels: {
         create: [
@@ -528,7 +528,7 @@ export async function seedSkills(tx: Tx) {
       icon: 'ShoppingBag',
       maxLevel: 3,
       effectType: 'GOLD_SHOP_DISCOUNT',
-      posX: 72,
+      posX: -72,
       posY: 504,
       levels: {
         create: [
@@ -547,7 +547,7 @@ export async function seedSkills(tx: Tx) {
       icon: 'Gem',
       maxLevel: 4,
       effectType: 'DAILY_SHOP_LUCK',
-      posX: -144,
+      posX: 144,
       posY: 336,
       levels: {
         create: [
@@ -568,7 +568,7 @@ export async function seedSkills(tx: Tx) {
       icon: 'Heart',
       maxLevel: 3,
       effectType: 'WISHLIST_SLOTS',
-      posX: -144,
+      posX: 144,
       posY: 504,
       levels: {
         create: [
@@ -587,7 +587,7 @@ export async function seedSkills(tx: Tx) {
       icon: 'Store',
       maxLevel: 2,
       effectType: 'DAILY_SHOP_SLOT',
-      posX: -144,
+      posX: 144,
       posY: 168,
       levels: {
         create: [
