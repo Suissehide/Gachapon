@@ -467,14 +467,15 @@ export function maxLevelInPalier(palier: number): number {
   return 10 * palier
 }
 
-/**
- * Formate une clé de bonus d'équipement (`hpFlat`, `atkPct`, …) en libellé
- * lisible : `hpFlat` → `PV`, `atkPct` → `% ATK`, etc.
- */
-// Les 4 stats de stuff (report explicite du plan précédent) n'ont pas de
-// forme "Flat", et leur nom composé ne se lit pas bien en simple majuscules
-// (`CRITRATE`) : un libellé dédié, dans le même esprit que `HP` → `PV`.
-const STUFF_STAT_LABELS: Record<string, string> = {
+// Code de stat → libellé affiché. Deux raisons de ne pas se contenter des
+// majuscules de la clé : les stats de stuff ne se lisent pas ainsi
+// (`CRITRATE`), et les stats de base doivent porter le MÊME mot que les
+// tuiles du `CombatPanel` — une pièce annonçait « ATK »/« SPD » là où la
+// carte affiche « ATQ »/« VIT » pour la stat qu'elle fait bouger.
+const STAT_LABELS: Record<string, string> = {
+  HP: 'PV',
+  ATK: 'ATQ',
+  SPD: 'VIT',
   CRITRATE: 'TAUX CRIT',
   CRITDMG: 'DÉGÂTS CRIT',
   ARMORPEN: 'PÉNÉTRATION ARMURE',
@@ -504,16 +505,18 @@ export function statColorVar(key: string): string {
   return hit ? hit[1] : 'var(--stat-def)'
 }
 
+/**
+ * Formate une clé de bonus d'équipement (`hpFlat`, `atkPct`, …) en libellé
+ * lisible : `hpFlat` → `PV`, `atkPct` → `% ATQ`, etc.
+ */
 export function formatBonusKey(key: string): string {
-  if (key.endsWith('Flat')) {
-    const base = key.replace('Flat', '').toUpperCase()
-    return base === 'HP' ? 'PV' : base
+  const pct = key.endsWith('Pct')
+  if (!pct && !key.endsWith('Flat')) {
+    return key
   }
-  if (key.endsWith('Pct')) {
-    const base = key.replace('Pct', '').toUpperCase()
-    return `% ${STUFF_STAT_LABELS[base] ?? (base === 'HP' ? 'PV' : base)}`
-  }
-  return key
+  const base = key.replace(/Flat$|Pct$/, '').toUpperCase()
+  const label = STAT_LABELS[base] ?? base
+  return pct ? `% ${label}` : label
 }
 
 export function isAtTopOfPalier(level: number, palier: number): boolean {

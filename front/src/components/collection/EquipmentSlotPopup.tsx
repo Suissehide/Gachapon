@@ -304,6 +304,25 @@ function salvagePreviewGold(
   )
 }
 
+/**
+ * Pièce montrée dans le panneau de détail : celle qu'on vient de cliquer,
+ * sinon celle portée sur ce slot. La fenêtre s'ouvrait sur « Sélectionne un
+ * objet pour voir le détail » alors que l'objet dont on veut les stats en
+ * premier est connu. Dérivé à chaque rendu plutôt que posé dans un effet :
+ * `items` arrive de façon asynchrone, et le premier clic sur une autre ligne
+ * reprend la main pour de bon.
+ */
+function shownItemId(
+  items: EquipmentInstance[],
+  userCardId: string,
+  selectedId: string | null,
+): string | null {
+  if (selectedId !== null) {
+    return selectedId
+  }
+  return items.find((i) => i.equippedOnId === userCardId)?.id ?? null
+}
+
 export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
   const { data } = useEquipmentList()
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
@@ -335,7 +354,8 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
     [data, slot, userCardId],
   )
 
-  const selected = items.find((i) => i.id === selectedId) ?? null
+  const shownId = shownItemId(items, userCardId, selectedId)
+  const selected = items.find((i) => i.id === shownId) ?? null
   const checkedItems = items.filter((i) => checked.has(i.id))
   const salvageGold = salvagePreviewGold(
     checkedItems,
@@ -412,6 +432,10 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
 
   const handleUnequipSelected = () => {
     if (selected) {
+      // Épingle la sélection : sans ça, déséquiper la pièce affichée par
+      // défaut la ferait disparaître du panneau de détail au lieu de
+      // montrer son nouvel état.
+      setSelectedId(selected.id)
       unequipItem.mutate(selected.id)
     }
   }
@@ -468,7 +492,7 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
                       key={item.id}
                       item={item}
                       userCardId={userCardId}
-                      selectedId={selectedId}
+                      selectedId={shownId}
                       selectMode={selectMode}
                       checked={checked}
                       onSelect={handleSelect}
