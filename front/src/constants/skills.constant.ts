@@ -17,7 +17,7 @@ export const EFFECT_DESCRIPTIONS: Record<string, string> = {
   SWEEP_COST: 'Réduit le coût du farm',
   GOLD_BONUS: "Bonus d'or sur les victoires",
   COMBAT_XP_BONUS: "Bonus d'XP de combat",
-  DROP_BONUS: 'Chance de butin bonus en combat',
+  DROP_BONUS: "Chance d'équipement bonus en combat",
   UPGRADE_DUST_DISCOUNT:
     "Réduit le coût en poussière d'amélioration des cartes",
   GOLD_SHOP_DISCOUNT: 'Réduction sur les prix en or de la boutique',

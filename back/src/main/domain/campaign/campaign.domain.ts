@@ -265,7 +265,11 @@ interface CardCatalogEntry {
  *
  * - gold ×(1 + goldBonus/100), rounded
  * - xp  ×(1 + combatXpBonus/100), rounded
- * - equipmentDropChance/cardChance ×(1 + dropBonus/100), capped at 1
+ * - equipmentDropChance ×(1 + dropBonus/100), capped at 1
+ * - cardChance is intentionally NOT bonused : une carte gagnée en combat
+ *   concurrence directement le gacha (0,20 % de légendaire au tirage), un
+ *   nœud d'arbre ne doit pas en doubler le débit. `dropBonus` ne porte
+ *   donc que sur l'équipement.
  * - dust is intentionally NOT bonused (economy design)
  */
 export function applyCombatBonuses(
@@ -289,7 +293,7 @@ export function applyCombatBonuses(
       1,
       loot.equipmentDropChance * (1 + effects.dropBonus / 100),
     ),
-    cardChance: Math.min(1, loot.cardChance * (1 + effects.dropBonus / 100)),
+    cardChance: loot.cardChance,
   }
 }
 
