@@ -33,6 +33,7 @@ const NEUTRAL_EFFECTS: UserUpgradeEffects = {
   salvageBonus: 0,
   tokenOverflowDust: 0,
   energyPackCapBonus: 0,
+  wishlistPullChance: 0,
 }
 
 export function getSkillEffects(rows: SkillEffectRow[]): UserUpgradeEffects {
@@ -116,6 +117,9 @@ export function getSkillEffects(rows: SkillEffectRow[]): UserUpgradeEffects {
         break
       case 'ENERGY_PACK_CAP':
         result.energyPackCapBonus += row.effect
+        break
+      case 'WISHLIST_PULL_CHANCE':
+        result.wishlistPullChance += row.effect
         break
     }
   }

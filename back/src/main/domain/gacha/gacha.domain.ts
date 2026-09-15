@@ -43,6 +43,38 @@ import { levelAfterXpGain } from '../shared/xp'
  *
  * Null weightRarity is silently ignored (no multiplication, no crash).
  */
+/**
+ * « Vœu exaucé » (`WISHLIST_PULL_CHANCE`) : réoriente un tirage vers une carte
+ * souhaitée — à rareté CONSTANTE.
+ *
+ * C'est tout l'intérêt de la mécanique : la rareté tirée n'est jamais
+ * modifiée, seule l'identité de la carte l'est. Souhaiter une légendaire ne
+ * fait donc pas fuiter du légendaire, il faut toujours en tirer une d'abord.
+ * Aucun taux de l'économie ne bouge, quel que soit le niveau du nœud.
+ *
+ * Fonction pure — le rng est injecté.
+ */
+export function applyWishlistRedirect<T extends { id: string; rarity: string }>(
+  card: T,
+  wishedCards: readonly T[],
+  chancePct: number,
+  rng: () => number = Math.random,
+): T {
+  if (chancePct <= 0) {
+    return card
+  }
+  const candidates = wishedCards.filter(
+    (w) => w.rarity === card.rarity && w.id !== card.id,
+  )
+  if (candidates.length === 0) {
+    return card
+  }
+  if (rng() >= chancePct / 100) {
+    return card
+  }
+  return candidates[Math.floor(rng() * candidates.length)] ?? card
+}
+
 export function weightFor(
   card: CardWithSet,
   luckMultiplier: number,
@@ -202,6 +234,9 @@ type PullCfg = {
   /** Effet appliqué du bonus d'équipe `loot` (points de pourcentage), résolu
    *  UNE fois avant la transaction — même motif que `upgrades`. */
   teamLootBonusPct: number
+  /** Cartes souhaitées, résolues UNE fois avant la transaction. Cible de la
+   *  redirection « Vœu exaucé » (cf. `applyWishlistRedirect`). */
+  wishedCardIds: readonly string[]
 }
 
 // ---------------------------------------------------------------------------
@@ -328,6 +363,21 @@ export class GachaDomain implements GachaDomainInterface {
     }
   }
 
+  /**
+   * Cartes souhaitées du joueur, cible de « Vœu exaucé ».
+   *
+   * Renvoie un tableau alors que le modèle n'en porte qu'une aujourd'hui
+   * (`User.wishlistCardId`) : la wishlist multi-cartes est le lot suivant, et
+   * la redirection est déjà écrite pour N vœux.
+   */
+  async #wishedCardIds(userId: string): Promise<string[]> {
+    const user = await this.#postgresOrm.prisma.user.findUnique({
+      where: { id: userId },
+      select: { wishlistCardId: true },
+    })
+    return user?.wishlistCardId ? [user.wishlistCardId] : []
+  }
+
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: boost + pity + golden-ball precedence logic, refactor deferred
   async #executeSinglePullStep(
     tx: PrimaTransactionClient,
@@ -398,7 +448,7 @@ export class GachaDomain implements GachaDomainInterface {
     const weightBoostArg =
       weightBoostArgs.length > 0 ? weightBoostArgs : undefined
 
-    const card =
+    const drawn =
       cfg.upgrades.luckMultiplier === 1.0
         ? pickWeightedRandom(activeCards, weightBoostArg)
         : pickWeightedRandomWithLuck(
@@ -406,6 +456,15 @@ export class GachaDomain implements GachaDomainInterface {
             cfg.upgrades.luckMultiplier,
             weightBoostArg,
           )
+
+    // « Vœu exaucé » : réoriente vers un vœu de MÊME rareté. Les candidats se
+    // prennent dans `activeCards` — déjà filtré par la pitié, la garantie ou la
+    // boule d'or — pour ne jamais faire sortir une carte hors du pool du tirage.
+    const card = applyWishlistRedirect(
+      drawn,
+      activeCards.filter((c) => cfg.wishedCardIds.includes(c.id)),
+      cfg.upgrades.wishlistPullChance ?? 0,
+    )
 
     // Update boost states in memory (decrement all active boosts, set satisfied on guarantee)
     for (const boost of boosts) {
@@ -626,7 +685,7 @@ export class GachaDomain implements GachaDomainInterface {
   pull(userId: string): Promise<PullResult> {
     const attempt = async (): Promise<PullResult> => {
       // Lire la config AVANT la transaction (pas d'I/O async dans le tx serializable)
-      const [c, upgrades, teamEffects] = await Promise.all([
+      const [c, upgrades, teamEffects, wishedCardIds] = await Promise.all([
         this.#configService.getMany(
           'tokenRegenIntervalMinutes',
           'tokenMaxStock',
@@ -651,6 +710,7 @@ export class GachaDomain implements GachaDomainInterface {
         ),
         this.#skillTreeRepository.getEffectsForUser(userId),
         this.#teamProgressionDomain.effectsForUser(userId),
+        this.#wishedCardIds(userId),
       ])
       const cfg: PullCfg = {
         tokenRegenIntervalMinutes: c.tokenRegenIntervalMinutes,
@@ -681,6 +741,7 @@ export class GachaDomain implements GachaDomainInterface {
         upgrades,
         refillEnergyOnLevelUp: c['levelup.refillEnergy'] === 1,
         teamLootBonusPct: teamEffects.loot,
+        wishedCardIds,
       }
       return this.#postgresOrm.executeWithTransactionClient(
         (tx) => this.#executePullTx(tx, userId, cfg),
@@ -705,7 +766,7 @@ export class GachaDomain implements GachaDomainInterface {
 
   pullBatch(userId: string, count: number): Promise<PullBatchResult> {
     const attempt = async (): Promise<PullBatchResult> => {
-      const [c, upgrades, teamEffects] = await Promise.all([
+      const [c, upgrades, teamEffects, wishedCardIds] = await Promise.all([
         this.#configService.getMany(
           'tokenRegenIntervalMinutes',
           'tokenMaxStock',
@@ -730,6 +791,7 @@ export class GachaDomain implements GachaDomainInterface {
         ),
         this.#skillTreeRepository.getEffectsForUser(userId),
         this.#teamProgressionDomain.effectsForUser(userId),
+        this.#wishedCardIds(userId),
       ])
       const cfg: PullCfg = {
         tokenRegenIntervalMinutes: c.tokenRegenIntervalMinutes,
@@ -760,6 +822,7 @@ export class GachaDomain implements GachaDomainInterface {
         upgrades,
         refillEnergyOnLevelUp: c['levelup.refillEnergy'] === 1,
         teamLootBonusPct: teamEffects.loot,
+        wishedCardIds,
       }
       return this.#postgresOrm.executeWithTransactionClient(
         // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: milestone loop added, refactor deferred

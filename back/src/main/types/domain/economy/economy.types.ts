@@ -45,4 +45,6 @@ export type UserUpgradeEffects = {
   tokenOverflowDust: number
   /** Achats de packs d'énergie supplémentaires par jour, au-delà de `shop.energyDailyCap`. */
   energyPackCapBonus: number
+  /** « Vœu exaucé » : % de chance de réorienter un tirage vers un vœu de MÊME rareté. */
+  wishlistPullChance: number
 }

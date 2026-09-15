@@ -26,6 +26,8 @@ export const EFFECT_DESCRIPTIONS: Record<string, string> = {
   SALVAGE_BONUS: "Plus d'or au recyclage des équipements",
   TOKEN_OVERFLOW_DUST: 'Poussière rendue par jeton régénéré au-delà du plafond',
   ENERGY_PACK_CAP: "Relève la limite journalière d'achat de packs d'énergie",
+  WISHLIST_PULL_CHANCE:
+    'Chance qu’un tirage donne une carte souhaitée de même rareté',
 }
 
 export const EFFECT_TYPES = Object.keys(EFFECT_DESCRIPTIONS)
@@ -59,6 +61,7 @@ export const EFFECT_FORMATTERS: Record<string, (v: number) => string> = {
   SALVAGE_BONUS: (v) => `+${v} %`,
   TOKEN_OVERFLOW_DUST: (v) => `${v} poussière / jeton`,
   ENERGY_PACK_CAP: (v) => `+${v} achat${v > 1 ? 's' : ''} / jour`,
+  WISHLIST_PULL_CHANCE: (v) => `+${v} %`,
 }
 
 export function formatEffect(effectType: string, value: number): string {

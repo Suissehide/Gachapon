@@ -99,7 +99,7 @@ export async function seedSkills(tx: Tx) {
       name: 'Stockage',
       description: 'Augmente le stockage max de jetons',
       icon: 'Database',
-      maxLevel: 9,
+      maxLevel: 6,
       effectType: 'TOKEN_VAULT',
       posX: 72,
       posY: -168,
@@ -108,15 +108,12 @@ export async function seedSkills(tx: Tx) {
       // hors-ligne à 40 min l'unité, contre 10 h auparavant.
       levels: {
         create: [
-          { level: 1, effect: 2 },
-          { level: 2, effect: 4 },
-          { level: 3, effect: 6 },
-          { level: 4, effect: 8 },
-          { level: 5, effect: 10 },
-          { level: 6, effect: 13 },
-          { level: 7, effect: 16 },
-          { level: 8, effect: 19 },
-          { level: 9, effect: 22 },
+          { level: 1, effect: 4 },
+          { level: 2, effect: 8 },
+          { level: 3, effect: 12 },
+          { level: 4, effect: 16 },
+          { level: 5, effect: 19 },
+          { level: 6, effect: 22 },
         ],
       },
     },
@@ -195,19 +192,16 @@ export async function seedSkills(tx: Tx) {
       name: 'Ferveur',
       description: "Bonus d'XP par tirage",
       icon: 'BookOpen',
-      maxLevel: 7,
+      maxLevel: 4,
       effectType: 'PULL_XP_BONUS',
       posX: -144,
       posY: -504,
       levels: {
         create: [
-          { level: 1, effect: 1 },
-          { level: 2, effect: 2 },
-          { level: 3, effect: 3 },
-          { level: 4, effect: 4 },
-          { level: 5, effect: 7 },
-          { level: 6, effect: 9 },
-          { level: 7, effect: 12 },
+          { level: 1, effect: 3 },
+          { level: 2, effect: 6 },
+          { level: 3, effect: 9 },
+          { level: 4, effect: 12 },
         ],
       },
     },
@@ -274,7 +268,7 @@ export async function seedSkills(tx: Tx) {
       description:
         "Multiplie les chances de tirer une carte Rare ou mieux (jusqu'à ×1,12)",
       icon: 'Star',
-      maxLevel: 8,
+      maxLevel: 5,
       effectType: 'LUCK',
       posX: 216,
       posY: -48,
@@ -283,14 +277,11 @@ export async function seedSkills(tx: Tx) {
       // multiplicateur de rareté de plus de moitié.
       levels: {
         create: [
-          { level: 1, effect: 1 },
-          { level: 2, effect: 2 },
-          { level: 3, effect: 3 },
-          { level: 4, effect: 4 },
-          { level: 5, effect: 5 },
-          { level: 6, effect: 7 },
-          { level: 7, effect: 9 },
-          { level: 8, effect: 12 },
+          { level: 1, effect: 2 },
+          { level: 2, effect: 4 },
+          { level: 3, effect: 6 },
+          { level: 4, effect: 9 },
+          { level: 5, effect: 12 },
         ],
       },
     },
@@ -315,24 +306,23 @@ export async function seedSkills(tx: Tx) {
       },
     },
   })
-  const tirageGratuitFortune = await tx.skillNode.create({
+  const voeuExauce = await tx.skillNode.create({
     data: {
       branchId: fortune.id,
-      name: 'Tirage gratuit',
-      description: 'Chance de tirage gratuit via Fortune',
-      icon: 'Ticket',
-      maxLevel: 6,
-      effectType: 'FREE_PULL_CHANCE',
+      name: 'Vœu exaucé',
+      description:
+        "Chance qu'un tirage donne une carte souhaitée de même rareté",
+      icon: 'Star',
+      maxLevel: 4,
+      effectType: 'WISHLIST_PULL_CHANCE',
       posX: 408,
       posY: 24,
       levels: {
         create: [
-          { level: 1, effect: 2 },
-          { level: 2, effect: 3 },
-          { level: 3, effect: 5 },
-          { level: 4, effect: 7 },
-          { level: 5, effect: 12 },
-          { level: 6, effect: 14 },
+          { level: 1, effect: 10 },
+          { level: 2, effect: 20 },
+          { level: 3, effect: 30 },
+          { level: 4, effect: 40 },
         ],
       },
     },
@@ -344,7 +334,7 @@ export async function seedSkills(tx: Tx) {
       description:
         "Relève la limite journalière d'achat de packs d'énergie (3 → 6)",
       icon: 'PackagePlus',
-      maxLevel: 3,
+      maxLevel: 2,
       effectType: 'ENERGY_PACK_CAP',
       posX: 600,
       posY: -48,
@@ -355,7 +345,6 @@ export async function seedSkills(tx: Tx) {
         create: [
           { level: 1, effect: 1 },
           { level: 2, effect: 2 },
-          { level: 3, effect: 3 },
         ],
       },
     },
@@ -387,7 +376,7 @@ export async function seedSkills(tx: Tx) {
       name: 'Prisme',
       description: 'Augmente les chances de variantes Brillant/Holo',
       icon: 'Diamond',
-      maxLevel: 8,
+      maxLevel: 5,
       effectType: 'VARIANT_LUCK',
       posX: 600,
       posY: 120,
@@ -396,14 +385,11 @@ export async function seedSkills(tx: Tx) {
       // rendait plus au point que le premier.
       levels: {
         create: [
-          { level: 1, effect: 2 },
-          { level: 2, effect: 4 },
-          { level: 3, effect: 6 },
-          { level: 4, effect: 8 },
-          { level: 5, effect: 10 },
-          { level: 6, effect: 12 },
-          { level: 7, effect: 13 },
-          { level: 8, effect: 14 },
+          { level: 1, effect: 4 },
+          { level: 2, effect: 7 },
+          { level: 3, effect: 10 },
+          { level: 4, effect: 12 },
+          { level: 5, effect: 14 },
         ],
       },
     },
@@ -419,7 +405,7 @@ export async function seedSkills(tx: Tx) {
       },
       {
         fromNodeId: luck.id,
-        toNodeId: tirageGratuitFortune.id,
+        toNodeId: voeuExauce.id,
         minLevel: 1,
         sourceHandle: 's-right',
         targetHandle: 't-left',
@@ -432,7 +418,7 @@ export async function seedSkills(tx: Tx) {
         targetHandle: 't-left',
       },
       {
-        fromNodeId: tirageGratuitFortune.id,
+        fromNodeId: voeuExauce.id,
         toNodeId: opulence.id,
         minLevel: 1,
         sourceHandle: 's-right',
@@ -446,7 +432,7 @@ export async function seedSkills(tx: Tx) {
         targetHandle: 't-left',
       },
       {
-        fromNodeId: tirageGratuitFortune.id,
+        fromNodeId: voeuExauce.id,
         toNodeId: prisme.id,
         minLevel: 1,
         sourceHandle: 's-right',
@@ -458,13 +444,17 @@ export async function seedSkills(tx: Tx) {
   // ══════════════════════════════════════════════
   //  COLLECTION — spreads downward from center (bottom handle)
   //
+  //  Les deux racines sont les nœuds les plus DÉSIRABLES : la branche était
+  //  délaissée parce qu'elle s'ouvrait sur des remises, effet invisible au
+  //  premier point. « Étal élargi » se voit dès la boutique du lendemain.
+  //
   //              (center)
-  //               /   \
-  //       [Recyclage]  [Réduction]
-  //            /           \
-  //       [Artisan]    [Marchandeur]
-  //        /    \         /    \
-  //  [Négociant] [Apogée Collection] [Étal élargi]
+  //               /        \
+  //    [Étal élargi]        [Recyclage]
+  //          |               /        \
+  //  [Apogée Collection] [Artisan]  [Réduction]
+  //          |                \      /
+  //    [Négociant]           [Marchandeur]
   // ══════════════════════════════════════════════
 
   const recyclage = await tx.skillNode.create({
@@ -475,15 +465,15 @@ export async function seedSkills(tx: Tx) {
       icon: 'RefreshCw',
       maxLevel: 5,
       effectType: 'DUST_HARVEST',
-      posX: -72,
+      posX: 72,
       posY: 168,
       levels: {
         create: [
-          { level: 1, effect: 4 },
-          { level: 2, effect: 7 },
-          { level: 3, effect: 10 },
-          { level: 4, effect: 13 },
-          { level: 5, effect: 16 },
+          { level: 1, effect: 8 },
+          { level: 2, effect: 14 },
+          { level: 3, effect: 20 },
+          { level: 4, effect: 25 },
+          { level: 5, effect: 30 },
         ],
       },
     },
@@ -496,15 +486,15 @@ export async function seedSkills(tx: Tx) {
       icon: 'BadgePercent',
       maxLevel: 5,
       effectType: 'SHOP_DISCOUNT',
-      posX: 72,
-      posY: 168,
+      posX: 144,
+      posY: 336,
       levels: {
         create: [
-          { level: 1, effect: 5 },
-          { level: 2, effect: 8 },
-          { level: 3, effect: 10 },
-          { level: 4, effect: 12 },
-          { level: 5, effect: 15 },
+          { level: 1, effect: 8 },
+          { level: 2, effect: 13 },
+          { level: 3, effect: 18 },
+          { level: 4, effect: 22 },
+          { level: 5, effect: 25 },
         ],
       },
     },
@@ -517,15 +507,15 @@ export async function seedSkills(tx: Tx) {
       icon: 'Hammer',
       maxLevel: 5,
       effectType: 'UPGRADE_DUST_DISCOUNT',
-      posX: -72,
+      posX: 0,
       posY: 336,
       levels: {
         create: [
-          { level: 1, effect: 5 },
-          { level: 2, effect: 10 },
-          { level: 3, effect: 15 },
-          { level: 4, effect: 18 },
-          { level: 5, effect: 20 },
+          { level: 1, effect: 8 },
+          { level: 2, effect: 15 },
+          { level: 3, effect: 21 },
+          { level: 4, effect: 26 },
+          { level: 5, effect: 30 },
         ],
       },
     },
@@ -539,12 +529,12 @@ export async function seedSkills(tx: Tx) {
       maxLevel: 3,
       effectType: 'GOLD_SHOP_DISCOUNT',
       posX: 72,
-      posY: 336,
+      posY: 504,
       levels: {
         create: [
-          { level: 1, effect: 5 },
-          { level: 2, effect: 10 },
-          { level: 3, effect: 15 },
+          { level: 1, effect: 10 },
+          { level: 2, effect: 18 },
+          { level: 3, effect: 25 },
         ],
       },
     },
@@ -557,8 +547,8 @@ export async function seedSkills(tx: Tx) {
       icon: 'Gem',
       maxLevel: 4,
       effectType: 'DAILY_SHOP_LUCK',
-      posX: 0,
-      posY: 504,
+      posX: -144,
+      posY: 336,
       levels: {
         create: [
           { level: 1, effect: 10 },
@@ -596,8 +586,8 @@ export async function seedSkills(tx: Tx) {
       icon: 'Store',
       maxLevel: 2,
       effectType: 'DAILY_SHOP_SLOT',
-      posX: 144,
-      posY: 504,
+      posX: -144,
+      posY: 168,
       levels: {
         create: [
           { level: 1, effect: 1 },
@@ -609,46 +599,46 @@ export async function seedSkills(tx: Tx) {
   await tx.skillEdge.createMany({
     data: [
       {
-        fromNodeId: recyclage.id,
-        toNodeId: artisan.id,
+        fromNodeId: etalElargi.id,
+        toNodeId: apexCollection.id,
         minLevel: 1,
         sourceHandle: 's-bottom',
         targetHandle: 't-top',
       },
       {
-        fromNodeId: reduction.id,
-        toNodeId: marchandeur.id,
-        minLevel: 1,
-        sourceHandle: 's-bottom',
-        targetHandle: 't-top',
-      },
-      {
-        fromNodeId: artisan.id,
-        toNodeId: apexCollection.id,
-        minLevel: 1,
-        sourceHandle: 's-bottom',
-        targetHandle: 't-left',
-      },
-      {
-        fromNodeId: marchandeur.id,
-        toNodeId: apexCollection.id,
-        minLevel: 1,
-        sourceHandle: 's-bottom',
-        targetHandle: 't-right',
-      },
-      {
-        fromNodeId: artisan.id,
+        fromNodeId: apexCollection.id,
         toNodeId: negociant.id,
         minLevel: 1,
         sourceHandle: 's-bottom',
         targetHandle: 't-top',
       },
       {
-        fromNodeId: marchandeur.id,
-        toNodeId: etalElargi.id,
+        fromNodeId: recyclage.id,
+        toNodeId: artisan.id,
         minLevel: 1,
         sourceHandle: 's-bottom',
-        targetHandle: 't-top',
+        targetHandle: 't-right',
+      },
+      {
+        fromNodeId: recyclage.id,
+        toNodeId: reduction.id,
+        minLevel: 1,
+        sourceHandle: 's-bottom',
+        targetHandle: 't-left',
+      },
+      {
+        fromNodeId: artisan.id,
+        toNodeId: marchandeur.id,
+        minLevel: 1,
+        sourceHandle: 's-bottom',
+        targetHandle: 't-left',
+      },
+      {
+        fromNodeId: reduction.id,
+        toNodeId: marchandeur.id,
+        minLevel: 1,
+        sourceHandle: 's-bottom',
+        targetHandle: 't-right',
       },
     ],
   })
@@ -766,18 +756,16 @@ export async function seedSkills(tx: Tx) {
       name: 'Apogée de Combat',
       description: "Bonus de chance d'équipement en combat",
       icon: 'Swords',
-      maxLevel: 6,
+      maxLevel: 4,
       effectType: 'DROP_BONUS',
       posX: -600,
       posY: 0,
       levels: {
         create: [
-          { level: 1, effect: 7 },
-          { level: 2, effect: 13 },
-          { level: 3, effect: 20 },
-          { level: 4, effect: 27 },
-          { level: 5, effect: 33 },
-          { level: 6, effect: 40 },
+          { level: 1, effect: 12 },
+          { level: 2, effect: 22 },
+          { level: 3, effect: 31 },
+          { level: 4, effect: 40 },
         ],
       },
     },

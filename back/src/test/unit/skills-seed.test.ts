@@ -59,29 +59,31 @@ async function collectTree() {
 }
 
 describe('seed de l’arbre de compétences', () => {
-  it('déclare 4 branches, 27 nœuds et 126 points investissables', async () => {
+  // 109 = exactement ce qu'un joueur niveau 100 possède (1 par niveau + 2 par
+  // palier franchi). L'arbre en coûtait 126 : les 17 points manquants ne
+  // créaient pas d'arbitrage, ils forçaient toujours le sacrifice des mêmes
+  // nœuds — les plus chers et les moins rentables.
+  it('déclare 4 branches, 27 nœuds et 109 points investissables', async () => {
     const { branches, nodes } = await collectTree()
     expect(branches).toHaveLength(4)
     expect(nodes).toHaveLength(27)
-    expect(nodes.reduce((sum, n) => sum + n.maxLevel, 0)).toBe(126)
+    expect(nodes.reduce((sum, n) => sum + n.maxLevel, 0)).toBe(109)
   })
 
-  it('ne place jamais deux nœuds du même effectType dans une même branche', async () => {
+  it('ne place jamais deux nœuds du même effectType dans TOUT l’arbre', async () => {
     // L'invariant que la refonte installe. Le violer recrée le bug d'origine :
     // un nœud plus profond qui rend PLUS au point que sa porte rend les
     // paliers 2+ de la porte invendables, donc l'ordre de montée piégeux.
+    //
+    // La portée est l'ARBRE ENTIER, pas la branche : borné à la branche, cet
+    // invariant a laissé passer deux « Tirage gratuit » (Flux 10 %, Fortune
+    // 14 %) dont `getSkillEffects` ADDITIONNAIT les effets, soit 24 % de
+    // tirages gratuits pour un effet censé plafonner bien plus bas.
     const { nodes } = await collectTree()
-    const doublons: string[] = []
-    for (const branchId of new Set(nodes.map((n) => n.branchId))) {
-      const types = nodes
-        .filter((n) => n.branchId === branchId)
-        .map((n) => n.effectType)
-      for (const t of new Set(types)) {
-        if (types.filter((x) => x === t).length > 1) {
-          doublons.push(t)
-        }
-      }
-    }
+    const types = nodes.map((n) => n.effectType)
+    const doublons = [...new Set(types)].filter(
+      (t) => types.filter((x) => x === t).length > 1,
+    )
     expect(doublons).toEqual([])
   })
 

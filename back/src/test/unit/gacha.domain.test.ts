@@ -249,6 +249,11 @@ function buildDomain(opts: {
 
   const postgresOrm = {
     executeWithTransactionClient: jest.fn().mockImplementation((fn: any) => fn(tx)),
+    // Lu par `#wishedCardIds` pour « Vœu exaucé ». Sans vœu, la redirection
+    // est neutre : ces tests mesurent le tirage brut.
+    prisma: {
+      user: { findUnique: jest.fn().mockResolvedValue({ wishlistCardId: null }) },
+    },
   }
 
   const configService = {

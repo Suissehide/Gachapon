@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "SkillEffectType" ADD VALUE 'WISHLIST_PULL_CHANCE';
