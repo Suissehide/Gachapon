@@ -142,7 +142,13 @@ export function EquipmentDropCard({
         // `@container` : la fiche s'adapte à SA largeur, pas à celle de la
         // fenêtre — la même fiche vit en pleine largeur dans un écran de
         // victoire et dans un encart de 264px d'une rangée de récompenses.
-        '@container relative flex flex-col rounded-[18px] border-[1.5px] p-4 pt-4 text-left',
+        //
+        // `w-full` n'est pas décoratif : `container-type: inline-size` isole la
+        // largeur de la fiche de son contenu, donc dans un parent qui laisse
+        // ses enfants se dimensionner eux-mêmes (une colonne `items-center`,
+        // comme le panneau de victoire des tours) elle tombait à 0 pixel. Elle
+        // doit tenir sa largeur de son parent, jamais de ce qu'il y a dedans.
+        '@container relative flex w-full flex-col rounded-[18px] border-[1.5px] p-4 pt-4 text-left',
         'border-[color-mix(in_oklab,var(--rar)_42%,transparent)]',
         'bg-[linear-gradient(165deg,color-mix(in_oklab,var(--rar-light)_26%,var(--card)),var(--card)_62%)]',
         'shadow-[0_12px_30px_-20px_color-mix(in_oklab,var(--rar)_70%,transparent)]',

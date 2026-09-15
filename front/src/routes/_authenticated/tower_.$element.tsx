@@ -22,6 +22,7 @@ import {
 } from '../../components/battle/BattlePrepModal.tsx'
 import { BattleScene } from '../../components/battle/BattleScene.tsx'
 import {
+  DropRail,
   RESULT_BADGE_LOSS,
   RESULT_BADGE_WIN,
   ResultBadge,
@@ -422,10 +423,13 @@ function BattleResultPopup({
                   tone="#8b5cf6"
                 />
               </div>
-              <EquipmentDropReward
-                className="mt-4"
-                drop={result.rewards.equipmentDrop}
-              />
+              {/* Même rangée que la campagne et la victoire de niveau : seule,
+                  la pièce garde toute la largeur du panneau. */}
+              <DropRail>
+                {result.rewards.equipmentDrop && (
+                  <EquipmentDropReward drop={result.rewards.equipmentDrop} />
+                )}
+              </DropRail>
             </>
           )}
 
