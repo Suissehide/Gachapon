@@ -667,6 +667,50 @@ describe('Shop routes', () => {
     expect(body.energyDaily.used).toBeGreaterThanOrEqual(1)
   })
 
+  it("GET /shop — energyDaily.cap inclut le bonus de la compétence ENERGY_PACK_CAP", async () => {
+    const { postgresOrm } = (app as any).iocContainer
+
+    const branch = await postgresOrm.prisma.skillBranch.create({
+      data: {
+        name: `Opulence${suffix}`,
+        description: 'Test branch',
+        icon: 'battery',
+        color: '#f59e0b',
+        order: 98,
+      },
+    })
+    const node = await postgresOrm.prisma.skillNode.create({
+      data: {
+        branchId: branch.id,
+        name: 'Opulence Lv1',
+        description: 'Relève le plafond de packs',
+        icon: 'battery',
+        maxLevel: 1,
+        effectType: 'ENERGY_PACK_CAP',
+        posX: 0,
+        posY: 0,
+        levels: { create: [{ level: 1, effect: 3 }] },
+      },
+    })
+    await postgresOrm.prisma.userSkill.create({
+      data: { userId, nodeId: node.id, level: 1 },
+    })
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/shop',
+      headers: { cookie: cookies },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().energyDaily.cap).toBe(6) // 3 de config + 3 de compétence
+
+    await postgresOrm.prisma.userSkill.delete({
+      where: { userId_nodeId: { userId, nodeId: node.id } },
+    })
+    await postgresOrm.prisma.skillNode.delete({ where: { id: node.id } })
+    await postgresOrm.prisma.skillBranch.delete({ where: { id: branch.id } })
+  })
+
   it('POST /shop/:id/buy — Marchandeur 15 % : amountSpent = 850, gold débité de 850, GET /shop affiche cost = 850', async () => {
     const { postgresOrm } = (app as any).iocContainer
 

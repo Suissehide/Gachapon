@@ -1,6 +1,7 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import { applyPercentDiscount } from '../../../../../domain/shared/discount'
+import { effectiveEnergyDailyCap } from '../../../../../domain/shop/energy-cap'
 import {
   buyShopItemResponseSchema,
   getShopResponseSchema,
@@ -37,7 +38,13 @@ export const shopRouter: FastifyPluginCallbackZod = (fastify) => {
         ],
       )
       return {
-        energyDaily: { cap: cfg['shop.energyDailyCap'], used: energyUsed },
+        energyDaily: {
+          cap: effectiveEnergyDailyCap(
+            cfg['shop.energyDailyCap'],
+            effects.energyPackCapBonus,
+          ),
+          used: energyUsed,
+        },
         items: items.map((item) => {
           let activeBoost: { pullsRemaining: number } | null = null
           if (item.type === 'BOOST') {
