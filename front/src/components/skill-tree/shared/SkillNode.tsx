@@ -42,17 +42,18 @@ function NodeTooltip({
   const currentEffect = node.levels.find((l) => l.level === userLevel)
   const nextEffect = node.levels.find((l) => l.level === userLevel + 1)
   const isMaxed = userLevel >= node.maxLevel
-  const effectDesc = EFFECT_DESCRIPTIONS[node.effectType] ?? node.effectType
+  // La description du nœud PRIME : c'est la donnée, editable depuis l'admin.
+  // `EFFECT_DESCRIPTIONS` ne sert plus que de repli — les deux disaient la
+  // même chose sur 21 nœuds sur 27, parfois mot pour mot.
+  const blurb =
+    node.description || EFFECT_DESCRIPTIONS[node.effectType] || node.effectType
 
   return (
     <>
       <p className="font-semibold text-white">{node.name}</p>
-      {node.description && (
-        <p className="mt-0.5 text-gray-400">{node.description}</p>
-      )}
+      {blurb && <p className="mt-0.5 text-gray-400">{blurb}</p>}
 
       <div className="mt-1.5 border-t border-gray-700 pt-1.5">
-        <p className="text-gray-400">{effectDesc}</p>
         {currentEffect && userLevel > 0 && (
           <p className="mt-0.5">
             Actuel :{' '}
