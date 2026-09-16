@@ -204,7 +204,6 @@ model User {
   gold              Int       @default(0)
   combatPoints      Int       @default(60)
   lastCombatPointAt DateTime?
-  combatTeam        String[]  @default([])
 
   oauthAccounts       OAuthAccount[]
   apiKeys             ApiKey[]
