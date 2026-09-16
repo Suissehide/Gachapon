@@ -239,6 +239,36 @@ describe('Combat teams per mode routes', () => {
     expect(res.statusCode).toBe(400)
   })
 
+  it('la forme percent-encodée (celle envoyée par le front) rend la même équipe que la forme brute', async () => {
+    // Le front appelle encodeURIComponent('tower:FIRE'), donc
+    // /combat/teams/tower%3AFIRE — jamais la forme brute avec le ':' nu.
+    // Rien ne garantit que Fastify continue de redécoder %3A avant
+    // validation ; ce test attaque littéralement le chemin que le client
+    // emprunte, pas une approximation.
+    await setCombatTeam(app, cookies, 'campaign', [userCard2Id])
+    await setCombatTeam(app, cookies, 'tower:FIRE', [userCard1Id])
+
+    const raw = await app.inject({
+      method: 'GET',
+      url: '/combat/teams/tower:FIRE',
+      headers: { cookie: cookies },
+    })
+    const percentEncoded = await app.inject({
+      method: 'GET',
+      url: '/combat/teams/tower%3AFIRE',
+      headers: { cookie: cookies },
+    })
+
+    expect(raw.statusCode).toBe(200)
+    expect(percentEncoded.statusCode).toBe(200)
+    expect(percentEncoded.json()).toEqual(raw.json())
+    expect(
+      percentEncoded
+        .json()
+        .team.map((u: { userCardId: string }) => u.userCardId),
+    ).toEqual([userCard1Id])
+  })
+
   it('GET /combat/teams rend les six modes', async () => {
     const res = await app.inject({
       method: 'GET',

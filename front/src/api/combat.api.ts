@@ -114,7 +114,7 @@ export const CombatApi = {
       { method: 'DELETE' },
     )
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors du retour à l’équipe de campagne')
+      handleHttpError(res, {}, "Erreur lors du retour à l'équipe de campagne")
     }
   },
 

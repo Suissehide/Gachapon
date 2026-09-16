@@ -127,8 +127,14 @@ export function TeamEditorPopup({
   const isDirty =
     initialIds.length !== selectedIds.length ||
     initialIds.some((id, i) => id !== selectedIds[i])
+  // Un mode hérité doit pouvoir se figer AVEC LES MÊMES CARTES : valider sans
+  // rien changer, c'est justement l'action qui lui crée sa propre ligne et
+  // l'affranchit des futures modifications de la campagne. `isDirty` seul
+  // bloquerait ce cas.
   const canSave =
-    selectedIds.length >= 1 && selectedIds.length <= MAX_TEAM_SIZE && isDirty
+    selectedIds.length >= 1 &&
+    selectedIds.length <= MAX_TEAM_SIZE &&
+    (isDirty || inherited)
 
   const toggle = (userCardId: string) => {
     setSelectedIds((cur) => {
@@ -166,7 +172,12 @@ export function TeamEditorPopup({
         <PopupHeader>
           <PopupTitle
             icon={<Sparkles className="h-4 w-4" />}
-            subtitle={`Choisis jusqu'à ${MAX_TEAM_SIZE} cartes pour ${modeLabel}`}
+            // « pour {modeLabel} » ne s'accorde pas sur les six modes (« pour
+            // Campagne », « pour Raid d'équipe » manquent leur article, et
+            // rien ne permet de deviner le bon genre à la volée). Le séparateur
+            // « · », déjà utilisé par le titre juste au-dessus, contourne le
+            // problème sans avoir à articuler chaque libellé à la source.
+            subtitle={`Choisis jusqu'à ${MAX_TEAM_SIZE} cartes · ${modeLabel}`}
           >
             {`Mon équipe · ${modeLabel}`}
             <span className="ml-2 font-mono text-sm font-bold text-text-light/50">
@@ -281,7 +292,7 @@ export function TeamEditorPopup({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={setTeam.isPending}
+            disabled={setTeam.isPending || clearTeam.isPending}
           >
             Annuler
           </Button>
