@@ -166,10 +166,18 @@ describe('Leaderboard routes', () => {
           rarity: 'RARE',
           dropWeight: 10,
           setId: set.id,
-          baseHp: 200,
-          baseAtk: 20,
-          baseDef: 10,
-          baseSpd: 100,
+          // Statistiques de base délibérément écrasantes : la suite e2e
+          // complète compte, à ce stade, 8 à 9 comptes avec une équipe de
+          // campagne non vide (posés par d'autres fichiers e2e partageant la
+          // même base) — une marge d'un seul compte pour tenir dans le top
+          // N, donc un échec intermittent et mal attribué. En dominant
+          // largement toute carte réaliste (même niveau 60 stuffée), ce
+          // joueur est TOUJOURS classé premier, donc toujours dans le top N,
+          // quel que soit le nombre total de comptes classés.
+          baseHp: 200_000_000,
+          baseAtk: 20_000_000,
+          baseDef: 10_000_000,
+          baseSpd: 100_000_000,
         },
       })
 

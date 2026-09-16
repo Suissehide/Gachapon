@@ -218,7 +218,7 @@ function TowerFloorsPage() {
         <TeamDock
           team={team.data?.team ?? []}
           onEdit={() => setEditorOpen(true)}
-          modeLabel={tower.data?.name ?? 'Tour'}
+          modeLabel={towerName}
           inherited={team.data?.inherited}
         />
       )}
@@ -227,7 +227,7 @@ function TowerFloorsPage() {
         open={editorOpen}
         onOpenChange={setEditorOpen}
         teamKey={teamKey}
-        modeLabel={tower.data?.name ?? 'Tour'}
+        modeLabel={towerName}
       />
 
       <BattleResultPopup

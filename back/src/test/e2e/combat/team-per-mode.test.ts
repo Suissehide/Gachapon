@@ -8,7 +8,6 @@ describe('Combat teams per mode routes', () => {
   let cookies: string
   let userCard1Id: string
   let userCard2Id: string
-  let otherUserCardId: string
 
   const suffix = Date.now()
   const email = `perMode${suffix}@test.com`
@@ -81,26 +80,6 @@ describe('Combat teams per mode routes', () => {
     })
     userCard1Id = uc1.id
     userCard2Id = uc2.id
-
-    // Other user
-    const other = await postgresOrm.prisma.user.create({
-      data: {
-        email: `perMode-other${suffix}@test.com`,
-        username: `perMode-other${suffix}`,
-        emailVerifiedAt: new Date(),
-      },
-    })
-    const otherUc = await postgresOrm.prisma.userCard.create({
-      data: {
-        userId: other.id,
-        cardId: card1.id,
-        variant: 'NORMAL',
-        quantity: 1,
-        level: 1,
-        palier: 1,
-      },
-    })
-    otherUserCardId = otherUc.id
 
     const loginRes = await app.inject({
       method: 'POST',

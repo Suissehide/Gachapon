@@ -25,7 +25,7 @@ describe('pickTeam', () => {
     ).toEqual({ userCardIds: ['c'], inherited: true })
   })
 
-  it('rend une équipe vide, non héritée, quand rien n\'existe', () => {
+  it("rend une équipe vide, héritée, quand rien n'existe (ni le mode, ni la campagne)", () => {
     expect(pickTeam(TOWER_FIRE, null, null)).toEqual({
       userCardIds: [],
       inherited: true,

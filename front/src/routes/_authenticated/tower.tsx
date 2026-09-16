@@ -61,6 +61,7 @@ function TowerListPage() {
               tower={tower}
               teamView={teams.data?.teams[towerTeamKey(tower.element)]}
               teamLoading={teams.isLoading}
+              teamError={teams.isError}
             />
           ))}
         </div>
@@ -76,10 +77,12 @@ function TowerCard({
   tower,
   teamView,
   teamLoading,
+  teamError,
 }: {
   tower: TowerSummary
   teamView?: CombatTeamView
   teamLoading?: boolean
+  teamError?: boolean
 }) {
   const ElementIcon = ELEMENT_ICON[tower.element] ?? Flame
   const SlotIcon = SLOT_ICONS[tower.slot]
@@ -146,6 +149,10 @@ function TowerCard({
                 />
               ))}
             </div>
+          ) : teamError ? (
+            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-destructive/70">
+              Impossible de charger l'équipe
+            </span>
           ) : (
             <span className="font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-text-light/50">
               Aucune équipe
