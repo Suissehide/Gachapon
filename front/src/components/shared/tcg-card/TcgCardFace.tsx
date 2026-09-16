@@ -32,9 +32,6 @@ const STAT_ICONS: Record<StatKey, LucideIcon> = {
 // ── Props ──────────────────────────────────────────────────────────────────────
 
 export type CardStats = Record<StatKey, number>
-/** Mêmes stats SANS l'équipement. La barre à droite de chaque pastille porte
- *  alors l'apport, c'est-à-dire l'écart entre les deux. */
-export type CardStatBases = Partial<Record<StatKey, number>>
 
 type Props = {
   rarity: string
@@ -52,7 +49,6 @@ type Props = {
   level?: number | null
   /** When provided, renders the vertical stat pill column on the right. */
   stats?: CardStats | null
-  statBases?: CardStatBases | null
   /** When provided, renders the element badge under the level square. */
   element?: CardElement | null
   /** Description / lore / passive effect shown in the bottom area. */
@@ -115,7 +111,6 @@ export function TcgCardFace({
   imageSize,
   level,
   stats,
-  statBases,
   element,
   description,
   artPosition,
@@ -252,7 +247,6 @@ export function TcgCardFace({
                 icon={STAT_ICONS[def.key]}
                 color={def.color}
                 value={stats[def.key]}
-                base={statBases?.[def.key]}
               />
             ))}
           </div>
@@ -420,18 +414,11 @@ function StatLine({
   icon: Icon,
   color,
   value,
-  base,
 }: {
   icon: LucideIcon
   color: string
   value: number
-  base?: number
 }) {
-  // La pastille porte la stat PROPRE à la carte, la barre l'apport de
-  // l'équipement. Sans équipement (ou sans base fournie) la pastille garde le
-  // total et la barre reste décorative, comme avant.
-  const apport = base === undefined ? 0 : value - base
-  const pastille = apport === 0 ? value : base
   return (
     <div className="flex items-center">
       {/* Icon on the left */}
@@ -445,24 +432,14 @@ function StatLine({
         />
         {/* Value badge */}
         <span className="absolute -bottom-1.5 -left-1.5 flex h-6 w-6 items-center justify-center rounded-full border-[0.5px] border-white bg-[#1b1726] font-display text-[10px] font-bold leading-none tabular-nums text-white shadow-[0_2px_4px_rgba(0,0,0,0.55)]">
-          {pastille}
+          {value}
         </span>
       </div>
-      {/* Thick black line — porte l'apport de l'équipement quand il y en a un */}
+      {/* Thick black line */}
       <div
-        className="-ml-5 flex h-4.5 w-11 items-center justify-end pr-1 bg-[#1b1726] shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
+        className="-ml-5 h-4.5 w-11 bg-[#1b1726] shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
         style={{ clipPath: 'polygon(0 0, 100% 0, 100% 100%, 10px 100%)' }}
-      >
-        {apport !== 0 && (
-          <span
-            className="font-display text-[8px] font-bold leading-none tabular-nums"
-            style={{ color }}
-          >
-            {apport > 0 ? '+' : '−'}
-            {Math.abs(apport)}
-          </span>
-        )}
-      </div>
+      />
     </div>
   )
 }

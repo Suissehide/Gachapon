@@ -14,7 +14,7 @@ import type { WishlistResponse } from '../../queries/useWishlist.ts'
 import { useToggleWishlist, useWishlist } from '../../queries/useWishlist.ts'
 import type { DisplayEntry } from '../../routes/_authenticated/collection.tsx'
 import type { StatBonuses } from '../../utils/cardStats.ts'
-import { displayStatBases, displayStats } from '../../utils/cardStats.ts'
+import { displayStats } from '../../utils/cardStats.ts'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
 import type { CardStats } from '../shared/tcg-card/TcgCardFace.tsx'
 import { Button } from '../ui/button.tsx'
@@ -85,7 +85,7 @@ function isWished(
 }
 
 /**
- * Stats de la face de carte, finales et hors équipement. Hors composant comme
+ * Stats de la face de carte, équipement compris. Hors composant comme
  * `isWished` : `CardViewModal` frôle le seuil de complexité cognitive.
  */
 function faceStats(
@@ -96,18 +96,12 @@ function faceStats(
     palier: number
     bonuses: StatBonuses
   } | null,
-): {
-  stats: CardStats | null
-  statBases: ReturnType<typeof displayStatBases> | null
-} {
+): CardStats | null {
   if (input === null) {
-    return { stats: null, statBases: null }
+    return null
   }
   const { card, level, variant, palier, bonuses } = input
-  return {
-    stats: displayStats(card, level, variant, palier, bonuses),
-    statBases: displayStatBases(card, level, variant, palier),
-  }
+  return displayStats(card, level, variant, palier, bonuses)
 }
 
 export function CardViewModal({ entry, onClose, onRecycle }: Props) {
@@ -131,7 +125,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
 
   const panelStyle = { '--rar': rarityHex } as CSSProperties
 
-  const { stats, statBases } = faceStats(
+  const stats = faceStats(
     isOwned && userCard
       ? {
           card,
@@ -181,7 +175,6 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
               showAura
               level={userCard?.level ?? null}
               stats={stats}
-              statBases={statBases}
               element={card.element}
               description={description}
             />

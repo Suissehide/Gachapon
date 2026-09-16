@@ -58,7 +58,6 @@ type Props = {
   // Forwarded to TcgCardFace
   level?: number | null
   stats?: Record<StatKey, number> | null
-  statBases?: Partial<Record<StatKey, number>> | null
   element?: CardElement | null
   description?: string | null
   artPosition?: string
@@ -87,7 +86,6 @@ export function CardDisplay({
   backFace,
   level,
   stats,
-  statBases,
   element,
   description,
   artPosition,
@@ -250,7 +248,6 @@ export function CardDisplay({
               imageSize={cardImageSizeOf(compact, large)}
               level={level}
               stats={stats}
-              statBases={statBases}
               element={element}
               description={description}
               artPosition={artPosition}

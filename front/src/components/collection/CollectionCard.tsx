@@ -4,11 +4,7 @@ import type { Card, CardVariant } from '../../api/collection.api.ts'
 import { describePassive } from '../../constants/passives.constant.ts'
 import { useCardEquipmentBonuses } from '../../queries/useEquipment.ts'
 import type { StatBonuses } from '../../utils/cardStats.ts'
-import {
-  computePower,
-  displayStatBases,
-  displayStats,
-} from '../../utils/cardStats.ts'
+import { computePower, displayStats } from '../../utils/cardStats.ts'
 import type { CardStats } from '../shared/tcg-card/TcgCardFace.tsx'
 import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
 
@@ -79,17 +75,15 @@ function cardFaceStats(
   } | null,
 ): {
   stats: CardStats | null
-  statBases: ReturnType<typeof displayStatBases> | null
   power: number | null
 } {
   if (input === null) {
-    return { stats: null, statBases: null, power: null }
+    return { stats: null, power: null }
   }
   const { card, level, variant, palier, bonuses } = input
   const stats = displayStats(card, level, variant, palier, bonuses)
   return {
     stats,
-    statBases: displayStatBases(card, level, variant, palier),
     power: computePower({
       hp: stats.pv,
       atk: stats.atq,
@@ -115,7 +109,7 @@ export function CollectionCard({
   // Bonus d'équipement de cette carte (vides si non possédée ou si l'équipement
   // n'est pas le nôtre — ex. collection d'un autre joueur).
   const bonuses = useCardEquipmentBonuses(userCardId ?? '')
-  const { stats, statBases, power } = cardFaceStats(
+  const { stats, power } = cardFaceStats(
     isOwned && level && palier
       ? { card, level, variant, palier, bonuses }
       : null,
@@ -144,7 +138,6 @@ export function CollectionCard({
           level={shownLevel}
           element={card.element}
           stats={isOwned ? stats : null}
-          statBases={isOwned ? statBases : null}
           description={isOwned ? description : null}
         />
 

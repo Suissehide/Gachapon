@@ -34,9 +34,9 @@ import { useSkillTree } from '../../queries/useSkills.ts'
 import { useAuthStore } from '../../stores/auth.store'
 import {
   computePower,
+  displayStatBases,
   dustCostNextLevel,
   finalSpeed,
-  finalStat,
   finalStatWithBonuses,
   goldCostNextLevel,
   isAtTopOfPalier,
@@ -134,9 +134,7 @@ export function CombatPanel({
   // joueur voit ce qu'il doit à son stuff et ce qu'il garde en le retirant.
   // La bascule est en CSS (`group-hover`) et non en état React : un `<div>`
   // porteur de onMouseEnter serait un élément statique rendu interactif.
-  const baseHp = Math.round(finalStat(card.baseHp, level, variant, palier))
-  const baseAtk = Math.round(finalStat(card.baseAtk, level, variant, palier))
-  const baseDef = Math.round(finalStat(card.baseDef, level, variant, palier))
+  const bases = displayStatBases(card, level, variant, palier)
 
   const onLevelUp = async () => {
     setWorking(true)
@@ -203,28 +201,28 @@ export function CombatPanel({
           icon={<Heart className="h-4 w-4" />}
           label="PV"
           value={hp}
-          base={baseHp}
+          base={bases.pv}
           accent={statColorVar('hp')}
         />
         <StatTile
           icon={<Sword className="h-4 w-4" />}
           label="ATQ"
           value={atk}
-          base={baseAtk}
+          base={bases.atq}
           accent={statColorVar('atk')}
         />
         <StatTile
           icon={<Shield className="h-4 w-4" />}
           label="DEF"
           value={def}
-          base={baseDef}
+          base={bases.def}
           accent={statColorVar('def')}
         />
         <StatTile
           icon={<Zap className="h-4 w-4" />}
           label="VIT"
           value={spd}
-          base={card.baseSpd}
+          base={bases.vit}
           accent={statColorVar('spd')}
         />
         <StatTile
@@ -341,15 +339,18 @@ function StatTile({
   // carte sans équipement garderait une ligne bruyante.
   const scindable = apport !== 0
 
+  // Nom en haut, valeur en dessous et alignée à GAUCHE : au survol, l'apport
+  // s'ajoute à droite du nombre au lieu de pousser toute la ligne, le socle
+  // gardant le plus souvent le nombre de chiffres du total (tabular-nums).
   return (
-    <div className="flex items-center gap-2.5 rounded-[14px] border border-[rgba(27,23,38,0.06)] bg-surface-2 px-4 py-3.5">
-      <span className="flex" style={{ color: accent }}>
-        {icon}
-      </span>
-      <span className="font-mono text-[12px] uppercase tracking-[0.1em] text-[rgba(27,23,38,0.5)]">
+    <div className="flex flex-col gap-1.5 rounded-[14px] border border-[rgba(27,23,38,0.06)] bg-surface-2 px-4 py-3">
+      <span className="flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.1em] text-[rgba(27,23,38,0.5)]">
+        <span className="flex" style={{ color: accent }}>
+          {icon}
+        </span>
         {label}
       </span>
-      <span className="ml-auto font-display text-[22px] font-extrabold tabular-nums text-text">
+      <span className="font-display text-[22px] font-extrabold leading-none tabular-nums text-text">
         <span className={scindable ? 'group-hover:hidden' : undefined}>
           {total.toLocaleString('fr-FR')}
           {suffix}

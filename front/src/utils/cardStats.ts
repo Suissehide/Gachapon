@@ -433,9 +433,8 @@ export function displayStats(
 /**
  * Stats d'une carte SANS son équipement, aux clés d'AFFICHAGE (pv/atq/def/vit).
  *
- * La face de carte montre la base dans la pastille et l'apport de l'équipement
- * dans la barre à côté ; il lui faut donc les deux. Ce calcul était dupliqué
- * entre la tuile de collection et la fiche de carte.
+ * La grille de la fiche de combat scinde chaque tuile en « socle + apport » au
+ * survol ; il lui faut donc les deux.
  *
  * La vitesse n'a ni niveau, ni variante, ni palier (cf. `finalSpeed`) : sa base
  * est celle du catalogue.
