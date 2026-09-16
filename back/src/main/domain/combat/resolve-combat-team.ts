@@ -1,4 +1,4 @@
-import { CAMPAIGN_TEAM_KEY } from './combat-team-keys'
+import { CAMPAIGN_TEAM_KEY, type CombatTeamKey } from './combat-team-keys'
 
 export type CombatTeamRow = { userCardIds: string[] } | null
 
@@ -17,7 +17,7 @@ export type ResolvedTeamIds = {
  * que de se déclarer héritée.
  */
 export function pickTeam(
-  key: string,
+  key: CombatTeamKey,
   modeRow: CombatTeamRow,
   campaignRow: CombatTeamRow,
 ): ResolvedTeamIds {

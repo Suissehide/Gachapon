@@ -11,7 +11,11 @@ import {
 } from '../equipment/set-bonuses'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import type { CombatStatsBaseline } from './combat-stats.domain'
-import { CAMPAIGN_TEAM_KEY, COMBAT_TEAM_KEYS } from './combat-team-keys'
+import {
+  CAMPAIGN_TEAM_KEY,
+  type CombatTeamKey,
+  COMBAT_TEAM_KEYS,
+} from './combat-team-keys'
 import { computeEquippedCardStats } from './equipped-card-stats'
 import { getPassive } from './passives'
 import {
@@ -55,8 +59,11 @@ export class CombatTeamTx {
   async resolveIdsInTx(
     tx: PrimaTransactionClient,
     userId: string,
-    key: string,
+    key: CombatTeamKey,
   ): Promise<ResolvedTeamIds> {
+    if (!COMBAT_TEAM_KEYS.includes(key)) {
+      throw Boom.badRequest(`Mode d'équipe inconnu : ${key}`)
+    }
     const rows = await tx.userCombatTeam.findMany({
       where: { userId, key: { in: [key, CAMPAIGN_TEAM_KEY] } },
       select: { key: true, userCardIds: true },
@@ -68,7 +75,7 @@ export class CombatTeamTx {
 
   async getResolved(
     userId: string,
-    key: string,
+    key: CombatTeamKey,
   ): Promise<{ team: TeamUnit[]; inherited: boolean }> {
     const { baseStats, setDefs } = await this.#loadTeamViewConfig()
     return this.#postgresOrm.executeWithTransactionClient(async (tx) => {
@@ -97,7 +104,7 @@ export class CombatTeamTx {
    */
   async getAllResolved(
     userId: string,
-  ): Promise<Record<string, { team: TeamUnit[]; inherited: boolean }>> {
+  ): Promise<Record<CombatTeamKey, { team: TeamUnit[]; inherited: boolean }>> {
     const { baseStats, setDefs } = await this.#loadTeamViewConfig()
     return this.#postgresOrm.executeWithTransactionClient(async (tx) => {
       const rows = await tx.userCombatTeam.findMany({
@@ -120,19 +127,25 @@ export class CombatTeamTx {
         return view
       }
 
-      const out: Record<string, { team: TeamUnit[]; inherited: boolean }> = {}
+      const entries: [
+        CombatTeamKey,
+        { team: TeamUnit[]; inherited: boolean },
+      ][] = []
       for (const key of COMBAT_TEAM_KEYS) {
         const modeRow = rowByKey.get(key) ?? null
         const { userCardIds, inherited } = pickTeam(key, modeRow, campaignRow)
-        out[key] = { team: await viewFor(userCardIds), inherited }
+        entries.push([key, { team: await viewFor(userCardIds), inherited }])
       }
-      return out
+      return Object.fromEntries(entries) as Record<
+        CombatTeamKey,
+        { team: TeamUnit[]; inherited: boolean }
+      >
     })
   }
 
   async setForKey(
     userId: string,
-    key: string,
+    key: CombatTeamKey,
     userCardIds: string[],
   ): Promise<{ team: TeamUnit[]; inherited: boolean }> {
     if (!COMBAT_TEAM_KEYS.includes(key)) {
@@ -188,7 +201,7 @@ export class CombatTeamTx {
    * campagne elle-même est la racine du repli, elle ne peut hériter de
    * personne — la refuser ici évite un état où plus aucun mode n'a d'équipe.
    */
-  async clearForKey(userId: string, key: string): Promise<void> {
+  async clearForKey(userId: string, key: CombatTeamKey): Promise<void> {
     if (!COMBAT_TEAM_KEYS.includes(key)) {
       throw Boom.badRequest(`Mode d'équipe inconnu : ${key}`)
     }
