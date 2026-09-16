@@ -229,6 +229,7 @@ model User {
   campaignProgress UserCampaignProgress?
   battleResults    BattleResult[]
   towerProgress    UserTowerProgress[]
+  combatTeams      UserCombatTeam[]
 
   wishlistCards       UserWishlistCard[]
   boosts              UserBoost[]
@@ -240,6 +241,23 @@ model User {
   betsReceived        Bet[]              @relation("BetTarget")
   betEntries          BetEntry[]
   weeklies            TeamMemberWeekly[]
+}
+
+/// Une équipe de combat par mode de jeu. `key` vaut 'campaign', 'raid' ou
+/// 'tower:<ELEMENT>' — la liste fait foi dans domain/combat/combat-team-keys.ts,
+/// volontairement PAS une enum Prisma : une cinquième tour ne doit pas coûter
+/// une migration. Une ligne n'existe que si le joueur a édité ce mode ; sinon
+/// il joue l'équipe de campagne.
+model UserCombatTeam {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key         String
+  userCardIds String[] @default([])
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, key])
+  @@index([userId])
 }
 
 model UserBoost {
