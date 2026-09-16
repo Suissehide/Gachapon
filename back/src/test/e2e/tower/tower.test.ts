@@ -5,6 +5,7 @@ import { buildTestApp } from '../../helpers/build-test-app'
 import { setCombatTeam } from '../../helpers/combat-team-fixture'
 import {
   TOWER_FIRE_ALL_SETS,
+  TOWER_WATER_ALL_SETS,
 } from '../../helpers/equipment-fixture-slots'
 
 describe('routes de tour', () => {
@@ -15,6 +16,11 @@ describe('routes de tour', () => {
   // campagne de l'équipe de tour dans le test « la tour de Braise combat
   // avec SON équipe ».
   let otherUserCardId: string
+  // Troisième UserCard du MÊME joueur — équipe propre à la tour de l'ONDE
+  // (WATER), distincte à la fois de `userCardId` (tour de Braise) et de
+  // `otherUserCardId` (campagne). Garde contre une régression qui figerait
+  // `towerTeamKey(element)` sur un seul élément.
+  let waterUserCardId: string
   let userId: string
   // Cookies d'un joueur inscrit dans ce fichier et n'ayant JAMAIS posé
   // d'équipe (ni tour, ni campagne dont hériter) — sert le test « refuse le
@@ -147,6 +153,58 @@ describe('routes de tour', () => {
       })
     }
 
+    // Étage 1 de la tour de l'ONDE (WATER) — GARDE contre une régression qui
+    // figerait `towerTeamKey(element)` sur une seule valeur : sans un second
+    // élément qui combat réellement, la suite resterait verte même si toutes
+    // les tours finissaient par lire la même équipe (voir le test plus bas).
+    await postgresOrm.prisma.towerFloor.create({
+      data: {
+        element: 'WATER',
+        index: 1,
+        label: 'Étage 1',
+        order: 1,
+        enemyTeam: [
+          {
+            baseHp: 10,
+            baseAtk: 1,
+            baseDef: 0,
+            baseSpd: 50,
+            level: 1,
+            palier: 1,
+            attackPattern: 'BASIC',
+            mitigationScale: 1,
+          },
+        ],
+        lootTable: {
+          firstClear: {
+            gold: 200,
+            dust: 50,
+            xp: 30,
+            guaranteedEquipment: { minRarity: 'LEGENDARY' },
+          },
+          farm: {
+            gold: 20,
+            dust: 5,
+            xp: 3,
+            equipmentWeights: { LEGENDARY: 1 },
+          },
+        },
+      },
+    })
+
+    // Pool de drop garanti — slot BOOTS (tour de l'ONDE), TOUS les setKeys.
+    for (const reservation of TOWER_WATER_ALL_SETS) {
+      await postgresOrm.prisma.equipment.create({
+        data: {
+          name: `TowerEq-${reservation.setKey}-${suffix}`,
+          ...reservation,
+          rarity: 'LEGENDARY',
+          bonuses: { defFlat: 50 },
+          dropWeight: 1,
+        },
+      })
+    }
+
     // Quête hebdo STAGE_CLEARED (comme les vraies, quests.ts:128) — doit
     // compter le combat de tour ci-dessous puisqu'elle ne filtre que sur
     // `kind` (quest-matching.ts). Créée AVANT tout combat de la suite pour
@@ -230,6 +288,21 @@ describe('routes de tour', () => {
       },
     })
     otherUserCardId = uc2.id
+
+    // Troisième variant encore : équipe dédiée à la tour de l'ONDE, niveau et
+    // variant distincts des deux autres (30/BRILLIANT vs 60/NORMAL et
+    // 1/HOLOGRAPHIC) pour qu'aucune paire ne puisse se confondre.
+    const uc3 = await postgresOrm.prisma.userCard.create({
+      data: {
+        userId: user.id,
+        cardId: card.id,
+        variant: 'BRILLIANT',
+        quantity: 1,
+        level: 30,
+        palier: 4,
+      },
+    })
+    waterUserCardId = uc3.id
 
     const loginRes = await app.inject({
       method: 'POST',
@@ -535,6 +608,32 @@ describe('routes de tour', () => {
     expect(res.json().teamA).toHaveLength(1)
     expect(res.json().teamA[0].level).toBe(60)
     expect(res.json().teamA[0].variant).toBe('NORMAL')
+  })
+
+  // GARDE contre une régression de `towerTeamKey` : si cette fonction se
+  // figeait un jour sur un élément constant (ex. `towerTeamKey('FIRE')`),
+  // TOUTES les tours combattraient avec la même équipe et la fonctionnalité
+  // serait vidée de son sens SANS qu'aucun test ne le remarque — le seul
+  // autre fichier qui manipule une clé `tower:WATER`
+  // (`combat/team.test.ts` / `combat/team-per-mode.test.ts`) ne déclenche
+  // jamais de combat. Trois équipes distinctes sont en jeu au moment de ce
+  // test : campagne = `otherUserCardId` (niveau 1, HOLOGRAPHIC),
+  // `tower:FIRE` = `userCardId` (niveau 60, NORMAL, posée par les deux tests
+  // ci-dessus), `tower:WATER` = `waterUserCardId` (niveau 30, BRILLIANT,
+  // posée juste en dessous). Un combat WATER qui lirait FIRE ou la campagne
+  // par erreur ferait mordre CETTE assertion.
+  it("la tour de l'Onde combat avec SA PROPRE équipe (ni le Feu, ni la campagne)", async () => {
+    await setCombatTeam(app, cookies, 'tower:WATER', [waterUserCardId])
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/tower/WATER/1/battle',
+      headers: { cookie: cookies },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().teamA).toHaveLength(1)
+    expect(res.json().teamA[0].level).toBe(30)
+    expect(res.json().teamA[0].variant).toBe('BRILLIANT')
   })
 
   it('GET /tower/FIRE après la victoire — étage 1 franchi, étage 5 toujours verrouillé', async () => {

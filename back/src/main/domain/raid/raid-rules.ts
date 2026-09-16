@@ -24,8 +24,6 @@ export const RAID_TIER_PCTS = [25, 50, 75, 100] as const
 /** PV simulés du boss : jamais atteints en 10 tours, la bataille finit en TIMEOUT ou par la mort des alliés. */
 export const RAID_BOSS_SIM_HP = 1_000_000_000
 
-export const MAX_RAID_TEAM_SIZE = 3
-
 /** Le boss est la seule unité du camp B. */
 export const RAID_BOSS_UNIT_ID = 'B0'
 
@@ -56,7 +54,10 @@ export function raidElementForWeek(weekKey: string): TowerElement {
   return RAID_ROTATION[idx] as TowerElement
 }
 
-export function raidMaxHp(baseHpPerMember: number, memberCount: number): number {
+export function raidMaxHp(
+  baseHpPerMember: number,
+  memberCount: number,
+): number {
   return Math.max(1, Math.round(baseHpPerMember * Math.max(1, memberCount)))
 }
 

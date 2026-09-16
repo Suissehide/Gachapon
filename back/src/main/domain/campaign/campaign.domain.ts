@@ -516,7 +516,7 @@ export class CampaignDomain {
             CAMPAIGN_TEAM_KEY,
           )
           if (userCardIds.length === 0) {
-            throw Boom.badRequest('Deploy a combat team first')
+            throw Boom.badRequest('Composez une équipe avant de combattre')
           }
 
           const baseStats: CombatStatsBaseline = {

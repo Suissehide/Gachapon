@@ -265,6 +265,10 @@ describe('routes de raid', () => {
       headers: { cookie: cookiesB },
     })
     expect(res.statusCode).toBe(400)
+    // Épingle la RAISON du refus (motif tower.test.ts) : sans ça, n'importe
+    // quel autre 400 du chemin (raid introuvable, boss déjà vaincu, …) ferait
+    // passer ce test à tort.
+    expect(res.json().message).toContain('équipe')
   })
 
   it('POST attack : la 3e attaque du jour est refusée (429), quota partagé entre équipes', async () => {
