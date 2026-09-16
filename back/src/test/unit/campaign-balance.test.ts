@@ -1,7 +1,10 @@
 import { ELEMENTS } from '../../main/domain/combat/element'
 import {
-  BOSS_ELEMENT_BY_CHAPTER,
   FAMILY_ELEMENTS,
+  type FamilySlug,
+} from '../../../prisma/seed/bestiary'
+import {
+  BOSS_ELEMENT_BY_CHAPTER,
   bossEnemyTeam,
   bossLoot,
   difficultyMult,
@@ -270,7 +273,7 @@ describe('bossLoot — prime de farm alignée sur la difficulté réelle', () =>
 
 describe('éléments des monstres — un élément par famille de bestiaire', () => {
   it('chaque famille du bestiaire a un élément valide', () => {
-    const families = Object.keys(FAMILY_ELEMENTS)
+    const families = Object.keys(FAMILY_ELEMENTS) as FamilySlug[]
     expect(families.length).toBe(14)
     for (const fam of families) {
       expect(ELEMENTS).toContain(FAMILY_ELEMENTS[fam])
@@ -323,6 +326,9 @@ describe('chapitres 6 à 9', () => {
     expect(BOSS_ELEMENT_BY_CHAPTER).toHaveLength(9)
     for (let chapter = 1; chapter <= 9; chapter++) {
       const bossElement = BOSS_ELEMENT_BY_CHAPTER[chapter - 1]
+      if (!bossElement) {
+        throw new Error(`Pas d'élément de boss pour le chapitre ${chapter}`)
+      }
       expect(ELEMENTS).toContain(bossElement)
       const mobElements = new Set(
         [1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((index) =>

@@ -1,5 +1,11 @@
 import { describe, expect, it } from '@jest/globals'
 
+import {
+  FAMILIES,
+  FAMILIES_BY_ELEMENT,
+  FAMILY_ELEMENTS,
+  type FamilySlug,
+} from '../../../prisma/seed/bestiary'
 import { RARITY_BASE } from '../../../prisma/seed/campaign'
 import {
   TOWER_ELEMENTS,
@@ -117,6 +123,139 @@ describe('seed des tours', () => {
         expect(typeof ennemi.mitigationScale).toBe('number')
         expect(ennemi.mitigationScale).toBeGreaterThan(0)
       }
+    }
+  })
+})
+
+describe('apparences des monstres de tour', () => {
+  const etages = buildTowerFloors()
+
+  // `monsters/{famille}/{PREFIX}-{numero}` — découpé une fois ici pour que
+  // chaque test dise ce qu'il vérifie et non comment lire un chemin.
+  const lire = (appearance: string) => {
+    const m = /^monsters\/([a-z]+)\/([A-Z]+)-(\d{3})$/.exec(appearance)
+    if (!m) {
+      throw new Error(`Apparence mal formée : ${appearance}`)
+    }
+    return { famille: m[1] as FamilySlug, prefix: m[2], numero: Number(m[3]) }
+  }
+
+  // Le garde-fou qui manquait : le seed écrivait `appearance: null` pour les
+  // 120 ennemis de tour, et aucun test ne le voyait — l'écran affichait un
+  // placeholder sans rien signaler. Cf. seed/campaign.ts, qui lui seede bien
+  // ses sprites.
+  it('chaque ennemi de tour porte un sprite', () => {
+    expect(etages).toHaveLength(40)
+    for (const etage of etages) {
+      expect(etage.enemyTeam).toHaveLength(3)
+      for (const ennemi of etage.enemyTeam) {
+        expect(typeof ennemi.appearance).toBe('string')
+        expect(ennemi.appearance).toMatch(/^monsters\/[a-z]+\/[A-Z]+-\d{3}$/)
+      }
+    }
+  })
+
+  it("le sprite d'un ennemi appartient à une famille de l'élément de sa tour", () => {
+    // Décision de design : une tour peut aligner plusieurs FAMILLES, mais
+    // toutes de son élément — le contre-pick reste lisible (« une tour = un
+    // élément à contrer ») et la règle « une famille = un élément » que la
+    // campagne enseigne n'est pas contredite.
+    for (const etage of etages) {
+      for (const ennemi of etage.enemyTeam) {
+        expect(FAMILY_ELEMENTS[lire(ennemi.appearance).famille]).toBe(
+          etage.element,
+        )
+        expect(ennemi.element).toBe(etage.element)
+      }
+    }
+  })
+
+  it('ne pointe jamais vers un fichier qui n’existe pas', () => {
+    // Le numéro du sprite doit rester dans 1..count de sa famille : au-delà,
+    // l'image est un 404 silencieux côté MinIO.
+    for (const etage of etages) {
+      for (const ennemi of etage.enemyTeam) {
+        const { famille, prefix, numero } = lire(ennemi.appearance)
+        const fam = FAMILIES[famille]
+        expect(fam).toBeDefined()
+        expect(prefix).toBe(fam.prefix)
+        expect(numero).toBeGreaterThanOrEqual(1)
+        expect(numero).toBeLessThanOrEqual(fam.count)
+      }
+    }
+  })
+
+  it('n’affiche jamais deux fois le même sprite dans un étage', () => {
+    for (const etage of etages) {
+      const sprites = etage.enemyTeam.map((e) => e.appearance)
+      expect(new Set(sprites).size).toBe(3)
+    }
+  })
+
+  it('alterne entre plusieurs familles, toutes de l’élément de la tour', () => {
+    // Chaque tour doit MÉLANGER ses familles, pas s'en tenir à une seule —
+    // sauf Monolithe, à qui TERRE n'en offre qu'une (les basilics).
+    for (const element of TOWER_ELEMENTS) {
+      const familles = new Set(
+        etages
+          .filter((e) => e.element === element)
+          .flatMap((e) => e.enemyTeam.map((x) => lire(x.appearance).famille)),
+      )
+      expect(familles).toEqual(new Set(FAMILIES_BY_ELEMENT[element]))
+    }
+  })
+
+  it('tient la répartition mesurée à la conception', () => {
+    // Une tour = 30 emplacements. La rotation `(étage + slot) % familles`
+    // (celle de la campagne, reprise telle quelle) donne la répartition
+    // ci-dessous. Elle est VERROUILLÉE ici : c'est le compromis retenu —
+    // 3 familles différentes par étage plutôt qu'un maximum de sprites
+    // distincts. Une répartition pondérée par la taille des familles
+    // monterait NATURE à 19/30, au prix d'étages mono-famille.
+    //
+    // La répétition n'est pas un défaut d'algorithme mais une pénurie
+    // d'images : NATURE compte deux familles de 3 sprites (champignons,
+    // mimics) et TERRE n'a que 7 basilics. Uploader des sprites et monter le
+    // `count` correspondant dans `bestiary.ts` fera monter ces chiffres tout
+    // seul — ce test le signalera alors, et c'est voulu.
+    const attendu: Record<
+      (typeof TOWER_ELEMENTS)[number],
+      { distincts: number; max: number }
+    > = {
+      FIRE: { distincts: 29, max: 2 },
+      WATER: { distincts: 24, max: 2 },
+      NATURE: { distincts: 16, max: 4 },
+      EARTH: { distincts: 7, max: 5 },
+    }
+    for (const element of TOWER_ELEMENTS) {
+      const sprites = etages
+        .filter((e) => e.element === element)
+        .flatMap((e) => e.enemyTeam.map((x) => x.appearance))
+      expect(sprites).toHaveLength(30)
+      const compte = new Map<string, number>()
+      for (const sprite of sprites) {
+        compte.set(sprite, (compte.get(sprite) ?? 0) + 1)
+      }
+      const cible = attendu[element]
+      expect(compte.size).toBe(cible.distincts)
+      expect(Math.max(...compte.values())).toBe(cible.max)
+    }
+  })
+
+  it('ne consomme jamais plus de sprites qu’il n’en existe', () => {
+    // Filet indépendant de la table ci-dessus : le nombre de sprites
+    // distincts utilisés ne peut pas dépasser ce que l'élément possède.
+    for (const element of TOWER_ELEMENTS) {
+      const dispo = FAMILIES_BY_ELEMENT[element].reduce(
+        (total, slug) => total + FAMILIES[slug].count,
+        0,
+      )
+      const distincts = new Set(
+        etages
+          .filter((e) => e.element === element)
+          .flatMap((e) => e.enemyTeam.map((x) => x.appearance)),
+      ).size
+      expect(distincts).toBeLessThanOrEqual(Math.min(dispo, 30))
     }
   })
 })

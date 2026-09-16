@@ -1,6 +1,7 @@
 import type { PrismaClient } from '../../src/generated/client'
 import { MAX_PALIER } from '../../src/main/domain/card-leveling/card-leveling.domain'
 import type { Element } from '../../src/main/domain/combat/element'
+import { FAMILY_ELEMENTS, type FamilySlug, makeSpriteCursor } from './bestiary'
 
 export const CHAPTER_COUNT = 9
 export const STAGES_PER_CHAPTER = 10
@@ -159,51 +160,15 @@ export function difficultyMult(chapter: number, stageIndex: number): number {
   return (1 + CURVE_A * (globalStage(chapter, stageIndex) - 1)) ** CURVE_B
 }
 
-// Bestiaire cosmétique. Chaque famille = un dossier MinIO sous cards/monsters/
-// contenant PREFIX-001..PREFIX-{count}.png. `slug` = nom du dossier tel qu'uploadé.
-type MonsterFamily = { slug: string; prefix: string; count: number }
-const FAMILIES: Record<string, MonsterFamily> = {
-  slimes: { slug: 'slimes', prefix: 'SLIME', count: 9 },
-  champignons: { slug: 'mushrooms', prefix: 'MYCO', count: 3 },
-  kobolds: { slug: 'kobolds', prefix: 'KOBO', count: 6 },
-  feuxfollets: { slug: 'wisps', prefix: 'WISP', count: 11 },
-  gnolls: { slug: 'gnolls', prefix: 'GNOL', count: 12 },
-  loups: { slug: 'wolves', prefix: 'WOLF', count: 13 },
-  mimics: { slug: 'mimics', prefix: 'MIMC', count: 3 },
-  spectres: { slug: 'specters', prefix: 'SPEC', count: 10 },
-  elementaires: { slug: 'elementals', prefix: 'ELEM', count: 16 },
-  minotaures: { slug: 'minotaurs', prefix: 'MINO', count: 13 },
-  basilics: { slug: 'basilisks', prefix: 'BSLK', count: 7 },
-  hydres: { slug: 'hydras', prefix: 'HYDRA', count: 5 },
-  krakens: { slug: 'krakens', prefix: 'KRAK', count: 12 },
-  wyvernes: { slug: 'wyverns', prefix: 'WYVN', count: 18 },
-}
-
-// Élément par famille de bestiaire. Une famille = un élément fixe : le joueur
-// apprend « les loups sont NATURE » et c'est vrai partout. Comme chaque étage
-// tire ses 3 slots dans 3 familles différentes (voir STAGE_LOOKS), les étages
-// des chapitres 1-4 et 6-9 présentent naturellement 3 éléments distincts.
-// Exception : le chapitre 5 (CHAPTER_FAMILIES) n'a que 2 familles (krakens,
-// wyvernes), donc ses étages ne présentent que 2 éléments distincts sur 3
-// slots.
-// Clé = fam.slug (le dossier MinIO), pas la clé française de FAMILIES : c'est
-// le slug qui apparaît dans `appearance` et sert de source commune sprite/élément.
-export const FAMILY_ELEMENTS: Record<string, Element> = {
-  slimes: 'WATER',
-  mushrooms: 'NATURE',
-  kobolds: 'FIRE',
-  wisps: 'LIGHT',
-  gnolls: 'DARK',
-  wolves: 'NATURE',
-  mimics: 'NATURE',
-  specters: 'DARK',
-  elementals: 'FIRE',
-  minotaurs: 'FIRE',
-  basilisks: 'EARTH',
-  hydras: 'WATER',
-  krakens: 'WATER',
-  wyverns: 'FIRE',
-}
+// Le bestiaire (familles, sprites, élément par famille) vit dans
+// `seed/bestiary.ts` : les tours y puisent aussi, et une seule table évite
+// qu'un monstre ait un élément en campagne et un autre en tour.
+//
+// Comme chaque étage tire ses 3 slots dans 3 familles différentes (voir
+// STAGE_LOOKS), les étages des chapitres 1-4 et 6-9 présentent naturellement
+// 3 éléments distincts. Exception : le chapitre 5 (CHAPTER_FAMILIES) n'a que
+// 2 familles (krakens, wyverns), donc ses étages ne présentent que 2 éléments
+// distincts sur 3 slots.
 
 // Élément du boss de chaque chapitre (index 0 = chapitre 1). Chaque fois un
 // élément absent des mobs du chapitre : le boss demande un ajustement d'équipe
@@ -221,16 +186,16 @@ export const BOSS_ELEMENT_BY_CHAPTER: readonly Element[] = [
 ]
 
 // Familles peuplant chaque chapitre (difficulté croissante), étages 1-9.
-const CHAPTER_FAMILIES: string[][] = [
-  ['slimes', 'champignons', 'kobolds'],
-  ['feuxfollets', 'gnolls', 'loups'],
-  ['mimics', 'spectres', 'elementaires'],
-  ['minotaures', 'basilics', 'hydres'],
-  ['krakens', 'wyvernes'],
-  ['wyvernes', 'basilics', 'spectres'], // FIRE · EARTH · DARK
-  ['krakens', 'minotaures', 'feuxfollets'], // WATER · FIRE · LIGHT
-  ['hydres', 'elementaires', 'gnolls'], // WATER · FIRE · DARK
-  ['basilics', 'spectres', 'krakens'], // EARTH · DARK · WATER
+const CHAPTER_FAMILIES: FamilySlug[][] = [
+  ['slimes', 'mushrooms', 'kobolds'],
+  ['wisps', 'gnolls', 'wolves'],
+  ['mimics', 'specters', 'elementals'],
+  ['minotaurs', 'basilisks', 'hydras'],
+  ['krakens', 'wyverns'],
+  ['wyverns', 'basilisks', 'specters'], // FIRE · EARTH · DARK
+  ['krakens', 'minotaurs', 'wisps'], // WATER · FIRE · LIGHT
+  ['hydras', 'elementals', 'gnolls'], // WATER · FIRE · DARK
+  ['basilisks', 'specters', 'krakens'], // EARTH · DARK · WATER
 ]
 
 // Boss (étage 10 de chaque chapitre) : cards/monsters/bosses/BOSS-001..019.
@@ -243,21 +208,15 @@ const BOSS_COUNT = 19
 // Vrai pour les étages 1-9 : le sprite et l'élément sortent du même tirage et
 // ne peuvent pas diverger. Faux pour les boss (étage 10) : leur élément vient
 // de BOSS_ELEMENT_BY_CHAPTER, pas de `family` — voir `family` optionnel ci-dessous.
-type StageLook = { appearance: string; family?: string }
+type StageLook = { appearance: string; family?: FamilySlug }
 
 const STAGE_LOOKS: Record<string, StageLook[]> = (() => {
   const looks: Record<string, StageLook[]> = {}
-  const cursor: Record<string, number> = {}
-  const nextLook = (famKey: string): StageLook => {
-    const fam = FAMILIES[famKey]
-    const i = cursor[famKey] ?? 0
-    cursor[famKey] = i + 1
-    const num = String((i % fam.count) + 1).padStart(3, '0')
-    return {
-      appearance: `monsters/${fam.slug}/${fam.prefix}-${num}`,
-      family: fam.slug,
-    }
-  }
+  const nextSprite = makeSpriteCursor()
+  const nextLook = (slug: FamilySlug): StageLook => ({
+    appearance: nextSprite(slug),
+    family: slug,
+  })
   CHAPTER_FAMILIES.forEach((fams, ci) => {
     const chapter = ci + 1
     for (let stage = 1; stage <= 9; stage++) {
@@ -507,7 +466,11 @@ export function bossLoot(chapter: number) {
       // Le boss garde par ailleurs le double de chance de drop et sa prime
       // d'or/poussière.
       equipmentWeights: farmWeightsAt(
-        Math.min(1, campaignProgress(chapter, STAGES_PER_CHAPTER) + BOSS_LOOT_PROGRESS_BONUS),
+        Math.min(
+          1,
+          campaignProgress(chapter, STAGES_PER_CHAPTER) +
+            BOSS_LOOT_PROGRESS_BONUS,
+        ),
       ),
       cardChance: 0.02,
     },

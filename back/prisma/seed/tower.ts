@@ -8,6 +8,11 @@ import {
   TOWER_NAME_BY_ELEMENT,
   type TowerElement,
 } from '../../src/main/domain/tower/tower-slots'
+import {
+  FAMILIES_BY_ELEMENT,
+  type FamilySlug,
+  makeSpriteCursor,
+} from './bestiary'
 import { RARITY_BASE } from './campaign'
 
 export { TOWER_ELEMENTS, TOWER_FLOOR_COUNT }
@@ -38,9 +43,7 @@ type Tx = Parameters<Parameters<PrismaClient['$transaction']>[0]>[0]
  * (prime de menace ×7 dans la jauge) alors que ses stats réelles ne montent
  * que de 6 % par rapport à l'étage 9.
  */
-const FLOOR_SCALE = [
-  1, 2.2, 4, 6.2, 8.6, 11, 13, 14.6, 15.9, 16.9,
-] as const
+const FLOOR_SCALE = [1, 2.2, 4, 6.2, 8.6, 11, 13, 14.6, 15.9, 16.9] as const
 
 // Profil épique de campagne (source unique : RARITY_BASE.EPIC dans
 // campaign.ts) — pas de littéral recopié, sinon un futur rééquilibrage de
@@ -70,15 +73,73 @@ export function towerEnemyPower(floor: number) {
   }
 }
 
+// Un triplet, pas un `string[]` : l'étage a EXACTEMENT trois ennemis, et le
+// dire au type évite que `appearance` remonte en `string | undefined` jusque
+// dans le JSON seedé — c'est précisément ce champ optionnel qui a permis au
+// `null` de passer inaperçu.
+type FloorSprites = readonly [string, string, string]
+
+/**
+ * Sprites d'une tour — mêmes règles que la campagne, source commune
+ * (`seed/bestiary.ts`), mais curseur SÉPARÉ : les tours ne doivent pas
+ * décaler les monstres des 90 étages de campagne déjà en base.
+ *
+ * Une tour ne puise que dans les familles de SON élément (`FAMILIES_BY_ELEMENT`),
+ * si bien que le sprite et l'`element` de l'ennemi ne peuvent pas diverger et
+ * que le contre-pick reste lisible : une tour = un élément à contrer. Elle
+ * alterne en revanche entre plusieurs familles — la Tour de Braise aligne
+ * kobolds, élémentaires, minotaures et wyvernes.
+ *
+ * Le décalage `(floor + slot) % fams.length` est celui de la campagne : il
+ * garantit 3 familles différentes par étage dès que l'élément en compte au
+ * moins 3. La Tour de Monolithe fait exception — TERRE n'a que les basilics,
+ * donc ses 30 emplacements recyclent 7 sprites (jamais deux fois le même dans
+ * un étage, `count` étant supérieur au nombre d'emplacements).
+ */
+const TOWER_LOOKS: Record<TowerElement, readonly FloorSprites[]> = (() => {
+  const nextSprite = makeSpriteCursor()
+  const looks = {} as Record<TowerElement, readonly FloorSprites[]>
+  for (const element of TOWER_ELEMENTS) {
+    const fams: readonly FamilySlug[] = FAMILIES_BY_ELEMENT[element]
+    if (fams.length === 0) {
+      throw new Error(
+        `Aucune famille de bestiaire pour la tour ${element} : ses ennemis n'auraient pas de sprite.`,
+      )
+    }
+    looks[element] = Array.from({ length: TOWER_FLOOR_COUNT }, (_, i) => {
+      const floor = i + 1
+      const spriteAt = (slot: number): string => {
+        const slug = fams[(floor + slot) % fams.length]
+        if (!slug) {
+          throw new Error(
+            `Famille introuvable pour la tour ${element}, étage ${floor}, emplacement ${slot}.`,
+          )
+        }
+        return nextSprite(slug)
+      }
+      return [spriteAt(0), spriteAt(1), spriteAt(2)] as const
+    })
+  }
+  return looks
+})()
+
 export function towerEnemyTeam(element: TowerElement, floor: number) {
+  assertFloorInRange(floor)
   const p = towerEnemyPower(floor)
-  return [0, 1, 2].map(() => ({
+  const sprites = TOWER_LOOKS[element][floor - 1]
+  if (!sprites) {
+    throw new Error(`Aucun sprite pour la tour ${element}, étage ${floor}.`)
+  }
+  return sprites.map((appearance) => ({
     ...p,
     level: 1,
     palier: 1,
     attackPattern: floor === TOWER_FLOOR_COUNT ? 'AOE_3' : 'BASIC',
-    appearance: null,
-    element, // couleur seule : aucune restriction sur l'équipe du joueur
+    appearance,
+    // L'élément de la tour, qui est aussi celui de la famille du sprite
+    // (voir TOWER_LOOKS) : aucune restriction sur l'équipe du joueur, mais
+    // le contre-pick garde du sens.
+    element,
   }))
 }
 
