@@ -100,7 +100,7 @@ export const combatRouter: FastifyPluginCallbackZod = (fastify) => {
     },
     async (request, reply) => {
       await combatTeamTx.clearForKey(request.user.userID, request.params.key)
-      return reply.code(204).send()
+      return reply.code(204).send(null)
     },
   )
 

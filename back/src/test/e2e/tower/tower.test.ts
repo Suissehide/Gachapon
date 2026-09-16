@@ -525,12 +525,16 @@ describe('routes de tour', () => {
     expect(res.statusCode).toBe(200)
     // `SimulatorUnit.id` n'est qu'un label de bataille ('A0', 'A1', …), pas
     // le userCardId — impossible de distinguer les deux équipes dessus. On
-    // épingle plutôt le niveau : `userCardId` est niveau 60 (fixture
-    // ci-dessus), `otherUserCardId` niveau 1. Si le combat avait hérité de
-    // la campagne (otherUserCardId) au lieu de lire 'tower:FIRE', ce niveau
-    // serait 1.
+    // épingle donc DEUX champs qui divergent entre les deux UserCard de la
+    // fixture ci-dessus (même carte sous-jacente, donc même nom/rareté/
+    // élément — ces champs-là ne distingueraient rien) : `level` (60 contre
+    // 1) ET `variant` ('NORMAL' contre 'HOLOGRAPHIC'). Un seul champ qui
+    // coïnciderait par accident entre les deux fixtures laisserait passer
+    // une résolution d'équipe erronée sans que le test ne morde ; les deux
+    // ensemble ne peuvent pas coïncider par accident.
     expect(res.json().teamA).toHaveLength(1)
     expect(res.json().teamA[0].level).toBe(60)
+    expect(res.json().teamA[0].variant).toBe('NORMAL')
   })
 
   it('GET /tower/FIRE après la victoire — étage 1 franchi, étage 5 toujours verrouillé', async () => {
