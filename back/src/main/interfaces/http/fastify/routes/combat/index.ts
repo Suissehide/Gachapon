@@ -1,5 +1,6 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
+import { CAMPAIGN_TEAM_KEY } from '../../../../../domain/combat/combat-team-keys'
 import {
   combatDebugBattleBodySchema,
   combatDebugBattleResponseSchema,
@@ -39,7 +40,10 @@ export const combatRouter: FastifyPluginCallbackZod = (fastify) => {
       schema: { response: { 200: combatTeamResponseSchema } },
     },
     async (request) => {
-      const { team } = await combatTeamTx.getTeam(request.user.userID)
+      const { team } = await combatTeamTx.getResolved(
+        request.user.userID,
+        CAMPAIGN_TEAM_KEY,
+      )
       return { team: team.map(withPublicImage) }
     },
   )
@@ -54,8 +58,9 @@ export const combatRouter: FastifyPluginCallbackZod = (fastify) => {
       },
     },
     async (request) => {
-      const { team } = await combatTeamTx.setTeam(
+      const { team } = await combatTeamTx.setForKey(
         request.user.userID,
+        CAMPAIGN_TEAM_KEY,
         request.body.userCardIds,
       )
       return { team: team.map(withPublicImage) }

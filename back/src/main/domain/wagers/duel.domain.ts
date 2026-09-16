@@ -987,13 +987,14 @@ export class DuelDomain implements IDuelDomain {
         data: { equippedOnId: null },
       })
       await tx.userCard.delete({ where: { id: owned.id } })
-      // ...et on retire l'identifiant de l'équipe de combat, DANS la même
-      // transaction. Le tableau `combatTeam` porte des identifiants de
-      // UserCard : sans ce nettoyage il garde une référence morte, que la
-      // lecture d'équipe filtre en silence — l'équipe du perdant rétrécit
-      // sans qu'il en soit prévenu. Le recyclage a la même propriété, mais
-      // il est volontaire ; perdre un duel ne l'est pas.
-      await this.#pruneFromCombatTeam(tx, loserId, owned.id)
+      // ...et on retire l'identifiant de TOUTES les équipes de combat, DANS
+      // la même transaction. Les tableaux `userCardIds` portent des
+      // identifiants de UserCard : sans ce nettoyage ils gardent une
+      // référence morte, que la lecture d'équipe filtre en silence —
+      // l'équipe du perdant rétrécit sans qu'il en soit prévenu. Le
+      // recyclage a la même propriété, mais il est volontaire ; perdre un
+      // duel ne l'est pas.
+      await this.#pruneFromCombatTeams(tx, loserId, owned.id)
     }
 
     await this.#userCardRepository.upsertInTx(
@@ -1023,27 +1024,31 @@ export class DuelDomain implements IDuelDomain {
   }
 
   /**
-   * Retire un UserCard supprimé de l'équipe de combat de son ancien
-   * propriétaire. Lecture puis réécriture du tableau complet : Postgres ne
-   * sait pas retirer un élément d'un `text[]` par valeur via Prisma, et on
-   * est déjà dans la transaction du transfert.
+   * Retire un UserCard supprimé de TOUTES les équipes de son ancien
+   * propriétaire — les six modes, pas seulement celui qu'il jouait. Une
+   * référence morte oubliée dans la tour de Braise y ferait combattre une
+   * équipe à deux cartes, silencieusement, des semaines plus tard.
    */
-  async #pruneFromCombatTeam(
+  async #pruneFromCombatTeams(
     tx: PrimaTransactionClient,
     userId: string,
     userCardId: string,
   ): Promise<void> {
-    const user = await tx.user.findUnique({
-      where: { id: userId },
-      select: { combatTeam: true },
+    const rows = await tx.userCombatTeam.findMany({
+      where: { userId },
+      select: { id: true, userCardIds: true },
     })
-    if (!user || !user.combatTeam.includes(userCardId)) {
-      return
+    for (const row of rows) {
+      if (!row.userCardIds.includes(userCardId)) {
+        continue
+      }
+      await tx.userCombatTeam.update({
+        where: { id: row.id },
+        data: {
+          userCardIds: row.userCardIds.filter((id) => id !== userCardId),
+        },
+      })
     }
-    await tx.user.update({
-      where: { id: userId },
-      data: { combatTeam: user.combatTeam.filter((id) => id !== userCardId) },
-    })
   }
 
   async #requireMembership(

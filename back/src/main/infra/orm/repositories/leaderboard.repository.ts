@@ -1,3 +1,4 @@
+import { CAMPAIGN_TEAM_KEY } from '../../../domain/combat/combat-team-keys'
 import {
   effectiveEquipmentBonuses,
   type Substat,
@@ -205,13 +206,14 @@ export class LeaderboardRepository implements ILeaderboardRepository {
   }
 
   async getActiveUserIds(): Promise<string[]> {
-    // Users with at least one combat-team slot.
-    // The combat leaderboard only makes sense for users who can fight.
-    const rows = await this.#prisma.user.findMany({
-      where: { combatTeam: { isEmpty: false } },
-      select: { id: true },
+    // Le classement de combat ne range que les joueurs qui peuvent se battre.
+    // L'équipe de CAMPAGNE fait foi : c'est la vitrine, et c'est la racine du
+    // repli — les autres modes en héritent tant qu'ils n'ont pas été édités.
+    const rows = await this.#prisma.userCombatTeam.findMany({
+      where: { key: CAMPAIGN_TEAM_KEY, userCardIds: { isEmpty: false } },
+      select: { userId: true },
     })
-    return rows.map((r) => r.id)
+    return rows.map((r) => r.userId)
   }
 
   async getCombatTeamCardsByUsers(
@@ -220,12 +222,12 @@ export class LeaderboardRepository implements ILeaderboardRepository {
     if (userIds.length === 0) {
       return new Map()
     }
-    // 1) Get users' combatTeam (array of UserCard IDs).
-    const users = await this.#prisma.user.findMany({
-      where: { id: { in: userIds } },
-      select: { id: true, combatTeam: true },
+    // 1) Get users' campaign team (array of UserCard IDs).
+    const teams = await this.#prisma.userCombatTeam.findMany({
+      where: { userId: { in: userIds }, key: CAMPAIGN_TEAM_KEY },
+      select: { userId: true, userCardIds: true },
     })
-    const allUserCardIds = users.flatMap((u) => u.combatTeam)
+    const allUserCardIds = teams.flatMap((t) => t.userCardIds)
     if (allUserCardIds.length === 0) {
       return new Map(userIds.map((id) => [id, []]))
     }

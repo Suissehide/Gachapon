@@ -18,6 +18,7 @@ import {
   computeFinalStats,
   mitigationRefFor,
 } from '../combat/combat-stats.domain'
+import { CAMPAIGN_TEAM_KEY } from '../combat/combat-team-keys'
 import {
   pickEquipmentForRarity,
   rollFarmCardDrop,
@@ -300,6 +301,7 @@ export function applyCombatBonuses(
 export class CampaignDomain {
   readonly #postgresOrm
   readonly #combatPointsTx
+  readonly #combatTeamTx
   readonly #configService
   readonly #config
   readonly #achievementsDomain
@@ -311,6 +313,7 @@ export class CampaignDomain {
   constructor({
     postgresOrm,
     combatPointsTx,
+    combatTeamTx,
     configService,
     config,
     achievementsDomain,
@@ -321,6 +324,7 @@ export class CampaignDomain {
   }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#combatPointsTx = combatPointsTx
+    this.#combatTeamTx = combatTeamTx
     this.#configService = configService
     this.#config = config
     this.#achievementsDomain = achievementsDomain
@@ -509,7 +513,12 @@ export class CampaignDomain {
             throw Boom.forbidden('Stage is locked')
           }
 
-          if (user.combatTeam.length === 0) {
+          const { userCardIds } = await this.#combatTeamTx.resolveIdsInTx(
+            tx,
+            userId,
+            CAMPAIGN_TEAM_KEY,
+          )
+          if (userCardIds.length === 0) {
             throw Boom.badRequest('Deploy a combat team first')
           }
 
@@ -522,7 +531,7 @@ export class CampaignDomain {
           const teamUnits = await this.#buildPlayerSimUnits(
             tx,
             userId,
-            user.combatTeam,
+            userCardIds,
             battleCfg['combat.defMitigationRef'],
             baseStats,
             setDefs,

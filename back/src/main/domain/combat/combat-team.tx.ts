@@ -8,8 +8,10 @@ import {
   setBonusesFromConfig,
 } from '../equipment/set-bonuses'
 import { retryOnSerialization } from '../shared/retry-serialization'
+import { CAMPAIGN_TEAM_KEY, COMBAT_TEAM_KEYS } from './combat-team-keys'
 import { computeEquippedCardStats } from './equipped-card-stats'
 import { getPassive } from './passives'
+import { pickTeam, type ResolvedTeamIds } from './resolve-combat-team'
 
 const MAX_TEAM_SIZE = 3
 
@@ -37,17 +39,67 @@ export class CombatTeamTx {
     this.#configService = configService
   }
 
-  getTeam(userId: string): Promise<{ team: TeamUnit[] }> {
+  /**
+   * Résout l'équipe d'un mode DANS une transaction en cours — même motif que
+   * `combatPointsTx.debitInTx`. Les domaines de combat tournent déjà dans
+   * leur propre transaction sérialisable ; en ouvrir une seconde ici casserait
+   * leur atomicité.
+   */
+  async resolveIdsInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+    key: string,
+  ): Promise<ResolvedTeamIds> {
+    const rows = await tx.userCombatTeam.findMany({
+      where: { userId, key: { in: [key, CAMPAIGN_TEAM_KEY] } },
+      select: { key: true, userCardIds: true },
+    })
+    const modeRow = rows.find((r) => r.key === key) ?? null
+    const campaignRow = rows.find((r) => r.key === CAMPAIGN_TEAM_KEY) ?? null
+    return pickTeam(key, modeRow, campaignRow)
+  }
+
+  getResolved(
+    userId: string,
+    key: string,
+  ): Promise<{ team: TeamUnit[]; inherited: boolean }> {
     return this.#postgresOrm.executeWithTransactionClient(async (tx) => {
-      const team = await this.#buildTeamView(tx, userId)
-      return { team }
+      const { userCardIds, inherited } = await this.resolveIdsInTx(
+        tx,
+        userId,
+        key,
+      )
+      const team = await this.#buildTeamView(tx, userId, userCardIds)
+      return { team, inherited }
     })
   }
 
-  setTeam(
+  /** Les six modes d'un coup — sert la vue d'ensemble du hub des tours. */
+  getAllResolved(
     userId: string,
+  ): Promise<Record<string, { team: TeamUnit[]; inherited: boolean }>> {
+    return this.#postgresOrm.executeWithTransactionClient(async (tx) => {
+      const out: Record<string, { team: TeamUnit[]; inherited: boolean }> = {}
+      for (const key of COMBAT_TEAM_KEYS) {
+        const { userCardIds, inherited } = await this.resolveIdsInTx(
+          tx,
+          userId,
+          key,
+        )
+        out[key] = {
+          team: await this.#buildTeamView(tx, userId, userCardIds),
+          inherited,
+        }
+      }
+      return out
+    })
+  }
+
+  setForKey(
+    userId: string,
+    key: string,
     userCardIds: string[],
-  ): Promise<{ team: TeamUnit[] }> {
+  ): Promise<{ team: TeamUnit[]; inherited: boolean }> {
     if (userCardIds.length < 1 || userCardIds.length > MAX_TEAM_SIZE) {
       throw Boom.badRequest(
         `Team must contain 1 to ${MAX_TEAM_SIZE} cards (got ${userCardIds.length})`,
@@ -69,28 +121,41 @@ export class CombatTeamTx {
             throw Boom.badRequest('One or more cards are not owned by the user')
           }
 
-          await tx.user.update({
-            where: { id: userId },
-            data: { combatTeam: userCardIds },
+          await tx.userCombatTeam.upsert({
+            where: { userId_key: { userId, key } },
+            create: { userId, key, userCardIds },
+            update: { userCardIds },
           })
 
-          const team = await this.#buildTeamView(tx, userId)
-          return { team }
+          const team = await this.#buildTeamView(tx, userId, userCardIds)
+          return { team, inherited: false }
         },
         { isolationLevel: 'Serializable' },
       ),
     )
   }
 
+  /**
+   * Supprime la ligne d'un mode : il se remet à hériter de la campagne. La
+   * campagne elle-même est la racine du repli, elle ne peut hériter de
+   * personne — la refuser ici évite un état où plus aucun mode n'a d'équipe.
+   */
+  async clearForKey(userId: string, key: string): Promise<void> {
+    if (key === CAMPAIGN_TEAM_KEY) {
+      throw Boom.badRequest(
+        "L'équipe de campagne ne peut pas hériter d'un autre mode",
+      )
+    }
+    await this.#postgresOrm.prisma.userCombatTeam.deleteMany({
+      where: { userId, key },
+    })
+  }
+
   async #buildTeamView(
     tx: PrimaTransactionClient,
     userId: string,
+    userCardIds: string[],
   ): Promise<TeamUnit[]> {
-    const user = await tx.user.findUnique({ where: { id: userId } })
-    if (!user) {
-      throw Boom.notFound('User not found')
-    }
-    const userCardIds = user.combatTeam
     if (userCardIds.length === 0) {
       return []
     }
