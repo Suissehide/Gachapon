@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
+import { CAMPAIGN_TEAM_KEY } from '../../../main/domain/combat/combat-team-keys'
 import { buildTestApp } from '../../helpers/build-test-app'
+import { setCombatTeam } from '../../helpers/combat-team-fixture'
 import { xpThresholds } from '../../helpers/xp-thresholds'
 import { LEVELUP_REFILL } from '../../helpers/equipment-fixture-slots'
 
@@ -144,13 +146,7 @@ describe('Campaign battle level-up → refill énergie', () => {
       },
     })
 
-    const teamRes = await app.inject({
-      method: 'PUT',
-      url: '/combat/team',
-      headers: { cookie: cookies, 'content-type': 'application/json' },
-      payload: { userCardIds: [uc.id] },
-    })
-    expect(teamRes.statusCode).toBe(200)
+    await setCombatTeam(app, cookies, CAMPAIGN_TEAM_KEY, [uc.id])
 
     // Seed progress row so chapter-99 stage is unlocked (index=1 = highestIndex+1)
     await prisma.userCampaignProgress.upsert({

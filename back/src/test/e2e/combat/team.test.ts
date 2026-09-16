@@ -113,20 +113,20 @@ describe('Combat team routes', () => {
     await app.close()
   })
 
-  it('GET /combat/team — empty by default', async () => {
+  it('GET /combat/teams/:key — empty by default', async () => {
     const res = await app.inject({
       method: 'GET',
-      url: '/combat/team',
+      url: '/combat/teams/campaign',
       headers: { cookie: cookies },
     })
     expect(res.statusCode).toBe(200)
-    expect(res.json()).toEqual({ team: [] })
+    expect(res.json()).toEqual({ team: [], inherited: false })
   })
 
-  it('PUT /combat/team — sets 2 owned cards and returns full team with stats', async () => {
+  it('PUT /combat/teams/:key — sets 2 owned cards and returns full team with stats', async () => {
     const res = await app.inject({
       method: 'PUT',
-      url: '/combat/team',
+      url: '/combat/teams/campaign',
       headers: { cookie: cookies, 'content-type': 'application/json' },
       payload: { userCardIds: [userCard1Id, userCard2Id] },
     })
@@ -143,10 +143,10 @@ describe('Combat team routes', () => {
     expect(body.team[1].stats.hp).toBeGreaterThan(550)
   })
 
-  it('GET /combat/team — returns the team set in the previous test', async () => {
+  it('GET /combat/teams/:key — returns the team set in the previous test', async () => {
     const res = await app.inject({
       method: 'GET',
-      url: '/combat/team',
+      url: '/combat/teams/campaign',
       headers: { cookie: cookies },
     })
     expect(res.statusCode).toBe(200)
@@ -157,20 +157,20 @@ describe('Combat team routes', () => {
     ])
   })
 
-  it('PUT /combat/team — refuses empty array', async () => {
+  it('PUT /combat/teams/:key — refuses empty array', async () => {
     const res = await app.inject({
       method: 'PUT',
-      url: '/combat/team',
+      url: '/combat/teams/campaign',
       headers: { cookie: cookies, 'content-type': 'application/json' },
       payload: { userCardIds: [] },
     })
     expect(res.statusCode).toBe(400)
   })
 
-  it('PUT /combat/team — refuses more than 3', async () => {
+  it('PUT /combat/teams/:key — refuses more than 3', async () => {
     const res = await app.inject({
       method: 'PUT',
-      url: '/combat/team',
+      url: '/combat/teams/campaign',
       headers: { cookie: cookies, 'content-type': 'application/json' },
       payload: {
         userCardIds: [userCard1Id, userCard2Id, userCard1Id, userCard2Id],
@@ -179,20 +179,20 @@ describe('Combat team routes', () => {
     expect(res.statusCode).toBe(400)
   })
 
-  it('PUT /combat/team — refuses duplicates', async () => {
+  it('PUT /combat/teams/:key — refuses duplicates', async () => {
     const res = await app.inject({
       method: 'PUT',
-      url: '/combat/team',
+      url: '/combat/teams/campaign',
       headers: { cookie: cookies, 'content-type': 'application/json' },
       payload: { userCardIds: [userCard1Id, userCard1Id] },
     })
     expect(res.statusCode).toBe(400)
   })
 
-  it("PUT /combat/team — refuses other user's card", async () => {
+  it("PUT /combat/teams/:key — refuses other user's card", async () => {
     const res = await app.inject({
       method: 'PUT',
-      url: '/combat/team',
+      url: '/combat/teams/campaign',
       headers: { cookie: cookies, 'content-type': 'application/json' },
       payload: { userCardIds: [otherUserCardId] },
     })

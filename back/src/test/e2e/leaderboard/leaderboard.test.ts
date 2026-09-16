@@ -1,5 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
+import { CAMPAIGN_TEAM_KEY } from '../../../main/domain/combat/combat-team-keys'
 import { buildTestApp } from '../../helpers/build-test-app'
+import { setCombatTeam } from '../../helpers/combat-team-fixture'
 
 describe('Leaderboard routes', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
@@ -170,8 +172,7 @@ describe('Leaderboard routes', () => {
         },
       })
 
-      // Joueur A : équipe de CAMPAGNE posée via la route publique encore en
-      // place à ce stade (les routes par clé arrivent en Task 5).
+      // Joueur A : équipe de CAMPAGNE posée via la route par clé.
       const emailA = `lbcombat-a${suffix}@test.com`
       const regA = await app.inject({
         method: 'POST',
@@ -204,17 +205,11 @@ describe('Leaderboard routes', () => {
         payload: { email: emailA, password: 'Password123!' },
       })
       const cookiesA = loginA.headers['set-cookie'] as string
-      const putRes = await app.inject({
-        method: 'PUT',
-        url: '/combat/team',
-        headers: { cookie: cookiesA, 'content-type': 'application/json' },
-        payload: { userCardIds: [ucA.id] },
-      })
-      expect(putRes.statusCode).toBe(200)
+      await setCombatTeam(app, cookiesA, CAMPAIGN_TEAM_KEY, [ucA.id])
 
       // Joueur B : équipe posée UNIQUEMENT sur la tour de Braise, jamais sur
-      // la campagne — écrite directement en base, aucune route ne l'expose
-      // encore (Task 5).
+      // la campagne — écrite directement en base pour ne pas dépendre de la
+      // route (Task 6, qui met la tour derrière un contrat différent).
       const emailB = `lbcombat-b${suffix}@test.com`
       const userB = await postgresOrm.prisma.user.create({
         data: {

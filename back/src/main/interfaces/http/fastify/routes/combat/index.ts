@@ -1,12 +1,14 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
+import { z } from 'zod/v4'
 
-import { CAMPAIGN_TEAM_KEY } from '../../../../../domain/combat/combat-team-keys'
 import {
   combatDebugBattleBodySchema,
   combatDebugBattleResponseSchema,
   combatPointsResponseSchema,
+  combatTeamKeyParamSchema,
   combatTeamPutBodySchema,
   combatTeamResponseSchema,
+  combatTeamsResponseSchema,
 } from '../../schemas/combat.schema'
 
 export const combatRouter: FastifyPluginCallbackZod = (fastify) => {
@@ -34,36 +36,71 @@ export const combatRouter: FastifyPluginCallbackZod = (fastify) => {
   )
 
   fastify.get(
-    '/combat/team',
+    '/combat/teams',
     {
       onRequest: [fastify.verifySessionCookie],
-      schema: { response: { 200: combatTeamResponseSchema } },
+      schema: { response: { 200: combatTeamsResponseSchema } },
     },
     async (request) => {
-      const { team } = await combatTeamTx.getResolved(
+      const all = await combatTeamTx.getAllResolved(request.user.userID)
+      return {
+        teams: Object.fromEntries(
+          Object.entries(all).map(([key, value]) => [
+            key,
+            { ...value, team: value.team.map(withPublicImage) },
+          ]),
+        ),
+      }
+    },
+  )
+
+  fastify.get(
+    '/combat/teams/:key',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        params: combatTeamKeyParamSchema,
+        response: { 200: combatTeamResponseSchema },
+      },
+    },
+    async (request) => {
+      const { team, inherited } = await combatTeamTx.getResolved(
         request.user.userID,
-        CAMPAIGN_TEAM_KEY,
+        request.params.key,
       )
-      return { team: team.map(withPublicImage) }
+      return { team: team.map(withPublicImage), inherited }
     },
   )
 
   fastify.put(
-    '/combat/team',
+    '/combat/teams/:key',
     {
       onRequest: [fastify.verifySessionCookie],
       schema: {
+        params: combatTeamKeyParamSchema,
         body: combatTeamPutBodySchema,
         response: { 200: combatTeamResponseSchema },
       },
     },
     async (request) => {
-      const { team } = await combatTeamTx.setForKey(
+      const { team, inherited } = await combatTeamTx.setForKey(
         request.user.userID,
-        CAMPAIGN_TEAM_KEY,
+        request.params.key,
         request.body.userCardIds,
       )
-      return { team: team.map(withPublicImage) }
+      return { team: team.map(withPublicImage), inherited }
+    },
+  )
+
+  fastify.delete(
+    '/combat/teams/:key',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: { params: combatTeamKeyParamSchema, response: { 204: z.null() } },
+    },
+    async (request, reply) => {
+      await combatTeamTx.clearForKey(request.user.userID, request.params.key)
+      return reply.code(204).send()
     },
   )
 

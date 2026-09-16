@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
+import { CAMPAIGN_TEAM_KEY } from '../../../main/domain/combat/combat-team-keys'
 import { buildTestApp } from '../../helpers/build-test-app'
+import { setCombatTeam } from '../../helpers/combat-team-fixture'
 
 describe('Combat points routes & debit', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
@@ -118,12 +120,7 @@ describe('Combat points routes & debit', () => {
     })
     cookies = loginRes.headers['set-cookie'] as string
 
-    await app.inject({
-      method: 'PUT',
-      url: '/combat/team',
-      headers: { cookie: cookies, 'content-type': 'application/json' },
-      payload: { userCardIds: [uc.id] },
-    })
+    await setCombatTeam(app, cookies, CAMPAIGN_TEAM_KEY, [uc.id])
 
     // CampaignProgress: pretend we already cleared up to chapter 98 stage 1 by upserting later
     await postgresOrm.prisma.userCampaignProgress.upsert({
