@@ -22,7 +22,7 @@ export function useRaidAttack(teamId: string) {
   const queryClient = useQueryClient()
   const { toast } = useToast()
   return useMutation({
-    mutationFn: (userCardIds: string[]) => RaidApi.attack(teamId, userCardIds),
+    mutationFn: () => RaidApi.attack(teamId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: raidKey(teamId) })
       // Inconditionnel, pas seulement quand newTiers n'est pas vide :

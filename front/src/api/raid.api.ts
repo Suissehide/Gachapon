@@ -81,14 +81,9 @@ export const RaidApi = {
     return res.json()
   },
 
-  attack: async (
-    teamId: string,
-    userCardIds: string[],
-  ): Promise<RaidAttackResult> => {
+  attack: async (teamId: string): Promise<RaidAttackResult> => {
     const res = await fetchWithAuth(`${apiUrl}/teams/${teamId}/raid/attack`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userCardIds }),
     })
     if (!res.ok) {
       handleHttpError(

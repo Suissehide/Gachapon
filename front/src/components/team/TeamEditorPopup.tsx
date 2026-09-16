@@ -1,12 +1,17 @@
-import { Check, Save, Sparkles, Swords, X } from 'lucide-react'
+import { Check, Info, RotateCcw, Save, Sparkles, Swords, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
+import { CAMPAIGN_TEAM_KEY } from '../../constants/combatTeam.constant.ts'
 import { cn } from '../../libs/utils.ts'
 import {
   type UserCard,
   useUserCollection,
 } from '../../queries/useCollection.ts'
-import { useCombatTeam, useSetCombatTeam } from '../../queries/useCombatTeam.ts'
+import {
+  useClearCombatTeam,
+  useCombatTeam,
+  useSetCombatTeam,
+} from '../../queries/useCombatTeam.ts'
 import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
@@ -40,12 +45,24 @@ function fmt(n: number): string {
 type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
+  /** Clé du mode édité — voir constants/combatTeam.constant.ts */
+  teamKey: string
+  /** Nom du mode montré au joueur : « Campagne », « Tour de Braise »… */
+  modeLabel: string
 }
 
-export function TeamEditorPopup({ open, onOpenChange }: Props) {
+export function TeamEditorPopup({
+  open,
+  onOpenChange,
+  teamKey,
+  modeLabel,
+}: Props) {
   const userId = useAuthStore((s) => s.user?.id)
-  const teamQuery = useCombatTeam()
-  const setTeam = useSetCombatTeam()
+  const teamQuery = useCombatTeam(teamKey)
+  const setTeam = useSetCombatTeam(teamKey)
+  const clearTeam = useClearCombatTeam(teamKey)
+  const inherited = teamQuery.data?.inherited ?? false
+  const isCampaign = teamKey === CAMPAIGN_TEAM_KEY
   const collection = useUserCollection(userId)
   const { data: equipData } = useEquipmentList()
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
@@ -149,9 +166,9 @@ export function TeamEditorPopup({ open, onOpenChange }: Props) {
         <PopupHeader>
           <PopupTitle
             icon={<Sparkles className="h-4 w-4" />}
-            subtitle={`Choisis jusqu'à ${MAX_TEAM_SIZE} cartes pour ton équipe`}
+            subtitle={`Choisis jusqu'à ${MAX_TEAM_SIZE} cartes pour ${modeLabel}`}
           >
-            Mon équipe
+            {`Mon équipe · ${modeLabel}`}
             <span className="ml-2 font-mono text-sm font-bold text-text-light/50">
               {selectedIds.length}/{MAX_TEAM_SIZE}
             </span>
@@ -159,6 +176,16 @@ export function TeamEditorPopup({ open, onOpenChange }: Props) {
         </PopupHeader>
 
         <PopupBody className="flex flex-col gap-5">
+          {inherited && !isCampaign && (
+            <div className="flex items-start gap-2 rounded-xl border border-border bg-card px-3.5 py-2.5">
+              <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <p className="text-sm text-text-light">
+                {modeLabel} utilise ton équipe de campagne. Modifie-la ici pour
+                lui en donner une à elle — la campagne ne bougera pas.
+              </p>
+            </div>
+          )}
+
           {/* Slots — kept smaller by constraining the row width so the 3 slots
               don't take the full popup width. */}
           <div className="mx-auto grid w-full max-w-[420px] grid-cols-3 gap-3">
@@ -236,6 +263,21 @@ export function TeamEditorPopup({ open, onOpenChange }: Props) {
         </PopupBody>
 
         <PopupFooter>
+          {!inherited && !isCampaign && (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                clearTeam.mutate(undefined, {
+                  onSuccess: () => onOpenChange(false),
+                })
+              }
+              disabled={clearTeam.isPending}
+              className="mr-auto gap-2"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Revenir à l'équipe de campagne
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}

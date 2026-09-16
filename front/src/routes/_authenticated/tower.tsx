@@ -15,6 +15,10 @@ import { TeamEditorPopup } from '../../components/team/TeamEditorPopup.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import { Card, CardTitle } from '../../components/ui/card.tsx'
 import { ELEMENT_COLOR, ELEMENT_ICON } from '../../constants/card.constant.ts'
+import {
+  CAMPAIGN_TEAM_KEY,
+  CAMPAIGN_TEAM_LABEL,
+} from '../../constants/combatTeam.constant.ts'
 import { useCombatTeam } from '../../queries/useCombatTeam.ts'
 import { useTowers } from '../../queries/useTower.ts'
 
@@ -24,7 +28,9 @@ export const Route = createFileRoute('/_authenticated/tower')({
 
 function TowerListPage() {
   const towers = useTowers()
-  const team = useCombatTeam()
+  // Rustine minimale : ce hub sera refait par la Task 10 avec une équipe par
+  // tour. En attendant, il retombe sur l'équipe de campagne.
+  const team = useCombatTeam(CAMPAIGN_TEAM_KEY)
   const [editorOpen, setEditorOpen] = useState(false)
   const [elementsOpen, setElementsOpen] = useState(false)
 
@@ -63,9 +69,15 @@ function TowerListPage() {
       <TeamDock
         team={team.data?.team ?? []}
         onEdit={() => setEditorOpen(true)}
+        modeLabel={CAMPAIGN_TEAM_LABEL}
       />
 
-      <TeamEditorPopup open={editorOpen} onOpenChange={setEditorOpen} />
+      <TeamEditorPopup
+        open={editorOpen}
+        onOpenChange={setEditorOpen}
+        teamKey={CAMPAIGN_TEAM_KEY}
+        modeLabel={CAMPAIGN_TEAM_LABEL}
+      />
 
       {/* Éléments & priorité de ciblage */}
       <ElementGuidePopup open={elementsOpen} onOpenChange={setElementsOpen} />

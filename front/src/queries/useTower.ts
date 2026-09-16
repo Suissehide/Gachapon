@@ -27,15 +27,14 @@ export function useTower(element: string) {
 type TowerBattleInput = {
   element: string
   floor: number
-  userCardIds: string[]
 }
 
 export function useTowerBattle() {
   const queryClient = useQueryClient()
   const { toast } = useToast()
   return useMutation({
-    mutationFn: ({ element, floor, userCardIds }: TowerBattleInput) =>
-      postTowerBattle(element, floor, userCardIds),
+    mutationFn: ({ element, floor }: TowerBattleInput) =>
+      postTowerBattle(element, floor),
     onSuccess: (_res, { element }) => {
       // Progression de la tour (highestFloor a pu avancer).
       queryClient.invalidateQueries({ queryKey: TOWERS_KEY })
