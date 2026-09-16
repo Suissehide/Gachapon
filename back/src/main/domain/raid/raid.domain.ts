@@ -209,7 +209,9 @@ export class RaidDomain implements IRaidDomain {
             RAID_TEAM_KEY,
           )
           if (userCardIds.length === 0) {
-            throw Boom.badRequest('Composez une équipe avant d’attaquer')
+            throw Boom.badRequest(
+              "Composez une équipe dans l'éditeur avant de combattre",
+            )
           }
           const teamUnits = await buildPlayerSimUnits(tx, {
             userId,

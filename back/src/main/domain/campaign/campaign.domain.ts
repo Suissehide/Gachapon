@@ -516,7 +516,9 @@ export class CampaignDomain {
             CAMPAIGN_TEAM_KEY,
           )
           if (userCardIds.length === 0) {
-            throw Boom.badRequest('Composez une équipe avant de combattre')
+            throw Boom.badRequest(
+              "Composez une équipe dans l'éditeur avant de combattre",
+            )
           }
 
           const baseStats: CombatStatsBaseline = {

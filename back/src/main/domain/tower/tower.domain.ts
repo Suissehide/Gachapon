@@ -355,7 +355,7 @@ export class TowerDomain {
           )
           if (userCardIds.length === 0) {
             throw Boom.badRequest(
-              'Composez une équipe de 1 à 3 cartes pour la tour',
+              "Composez une équipe dans l'éditeur avant de combattre",
             )
           }
           const teamUnits = await buildPlayerSimUnits(tx, {
