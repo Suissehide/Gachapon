@@ -2,24 +2,21 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { ArrowRight, Flame, Swords } from 'lucide-react'
 import { useState } from 'react'
 
+import type { CombatTeamView } from '../../api/combat.api.ts'
 import type { TowerSummary } from '../../api/tower.api.ts'
 import { ElementGuidePopup } from '../../components/battle/ElementGuidePopup.tsx'
-import { TeamDock } from '../../components/battle/TeamDock.tsx'
+import { MiniCard } from '../../components/battle/MiniCard.tsx'
 import {
   SLOT_ICONS,
   SLOT_LABELS,
 } from '../../components/collection/EquipmentSlotsPanel.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
-import { TeamEditorPopup } from '../../components/team/TeamEditorPopup.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import { Card, CardTitle } from '../../components/ui/card.tsx'
 import { ELEMENT_COLOR, ELEMENT_ICON } from '../../constants/card.constant.ts'
-import {
-  CAMPAIGN_TEAM_KEY,
-  CAMPAIGN_TEAM_LABEL,
-} from '../../constants/combatTeam.constant.ts'
-import { useCombatTeam } from '../../queries/useCombatTeam.ts'
+import { towerTeamKey } from '../../constants/combatTeam.constant.ts'
+import { useAllCombatTeams } from '../../queries/useCombatTeam.ts'
 import { useTowers } from '../../queries/useTower.ts'
 
 export const Route = createFileRoute('/_authenticated/tower')({
@@ -28,10 +25,7 @@ export const Route = createFileRoute('/_authenticated/tower')({
 
 function TowerListPage() {
   const towers = useTowers()
-  // Rustine minimale : ce hub sera refait par la Task 10 avec une équipe par
-  // tour. En attendant, il retombe sur l'équipe de campagne.
-  const team = useCombatTeam(CAMPAIGN_TEAM_KEY)
-  const [editorOpen, setEditorOpen] = useState(false)
+  const teams = useAllCombatTeams()
   const [elementsOpen, setElementsOpen] = useState(false)
 
   return (
@@ -62,22 +56,15 @@ function TowerListPage() {
       ) : (
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
           {(towers.data?.towers ?? []).map((tower) => (
-            <TowerCard key={tower.element} tower={tower} />
+            <TowerCard
+              key={tower.element}
+              tower={tower}
+              teamView={teams.data?.teams[towerTeamKey(tower.element)]}
+              teamLoading={teams.isLoading}
+            />
           ))}
         </div>
       )}
-      <TeamDock
-        team={team.data?.team ?? []}
-        onEdit={() => setEditorOpen(true)}
-        modeLabel={CAMPAIGN_TEAM_LABEL}
-      />
-
-      <TeamEditorPopup
-        open={editorOpen}
-        onOpenChange={setEditorOpen}
-        teamKey={CAMPAIGN_TEAM_KEY}
-        modeLabel={CAMPAIGN_TEAM_LABEL}
-      />
 
       {/* Éléments & priorité de ciblage */}
       <ElementGuidePopup open={elementsOpen} onOpenChange={setElementsOpen} />
@@ -85,7 +72,15 @@ function TowerListPage() {
   )
 }
 
-function TowerCard({ tower }: { tower: TowerSummary }) {
+function TowerCard({
+  tower,
+  teamView,
+  teamLoading,
+}: {
+  tower: TowerSummary
+  teamView?: CombatTeamView
+  teamLoading?: boolean
+}) {
   const ElementIcon = ELEMENT_ICON[tower.element] ?? Flame
   const SlotIcon = SLOT_ICONS[tower.slot]
   const percent = Math.min((tower.highestFloor / tower.totalFloors) * 100, 100)
@@ -126,6 +121,41 @@ function TowerCard({ tower }: { tower: TowerSummary }) {
             className="h-full rounded-full bg-primary"
             style={{ width: `${percent}%` }}
           />
+        </div>
+
+        {/* L'équipe qui monte CETTE tour — d'un coup d'œil, on voit laquelle est
+            contre-pickée et laquelle suit encore la campagne. */}
+        <div className="mt-3 flex items-center gap-2 border-t border-border pt-3">
+          {teamLoading ? (
+            <div className="flex flex-wrap gap-1.5">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="aspect-[2/3] w-[34px] animate-pulse rounded-md bg-border"
+                />
+              ))}
+            </div>
+          ) : teamView && teamView.team.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {teamView.team.map((unit) => (
+                <MiniCard
+                  key={unit.userCardId}
+                  unit={unit}
+                  width="w-[34px]"
+                  showName={false}
+                />
+              ))}
+            </div>
+          ) : (
+            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-text-light/50">
+              Aucune équipe
+            </span>
+          )}
+          {teamView?.inherited && teamView.team.length > 0 && (
+            <span className="ml-auto rounded-full border border-border px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.1em] text-text-light/60">
+              Équipe de campagne
+            </span>
+          )}
         </div>
       </Card>
     </Link>
