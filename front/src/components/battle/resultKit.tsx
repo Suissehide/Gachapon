@@ -167,8 +167,10 @@ const DROP_TILE = 'w-[264px] shrink-0 snap-start [&>*]:w-full'
  * horizontalement, tous étirés à la même hauteur — une pièce à 4 sous-stats ne
  * doit pas faire une case deux fois plus haute que sa voisine.
  *
- * Une récompense seule garde toute la largeur du panneau : lui imposer la
- * largeur d'un encart la rétrécirait sans rien ranger.
+ * Une récompense seule prend le même encart, centré : une fiche qui s'étirait
+ * sur toute la largeur du panneau n'avait pas le même gabarit que ses voisines
+ * dès qu'une deuxième récompense arrivait, et la même pièce changeait de forme
+ * d'un combat à l'autre.
  *
  * Les enfants conditionnels (`{drop && <Fiche />}`) sont attendus : `false` ne
  * compte pas comme une récompense. En revanche un composant qui rend `null`
@@ -180,7 +182,11 @@ export function DropRail({ children }: { children: ReactNode }) {
     return null
   }
   if (items.length === 1) {
-    return <div className="mt-4 w-full">{items[0]}</div>
+    return (
+      <div className="mt-4 flex w-full justify-center">
+        <div className={cn('flex max-w-full', DROP_TILE)}>{items[0]}</div>
+      </div>
+    )
   }
   // La rangée déborde jusqu'aux bords du panneau (marges négatives + rembourrage
   // interne) : le troisième encart est ainsi coupé par le bord au lieu de

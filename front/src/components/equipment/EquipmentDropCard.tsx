@@ -146,8 +146,8 @@ export function EquipmentDropCard({
     <div
       className={cn(
         // `@container` : la fiche s'adapte à SA largeur, pas à celle de la
-        // fenêtre — la même fiche vit en pleine largeur dans un écran de
-        // victoire et dans un encart de 264px d'une rangée de récompenses.
+        // fenêtre — la même fiche vit dans un encart de 264px des écrans de
+        // résultat et dans une cellule de la grille de l'inventaire.
         //
         // `w-full` n'est pas décoratif : `container-type: inline-size` isole la
         // largeur de la fiche de son contenu, donc dans un parent qui laisse
