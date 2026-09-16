@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
 import { mondayOfUtcWeek } from '../../../main/domain/quests/quest-matching'
 import { buildTestApp } from '../../helpers/build-test-app'
+import { setCombatTeam } from '../../helpers/combat-team-fixture'
 import {
   TOWER_FIRE_ALL_SETS,
 } from '../../helpers/equipment-fixture-slots'
@@ -10,7 +11,15 @@ describe('routes de tour', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
   let cookies: string
   let userCardId: string
+  // Deuxième UserCard du MÊME joueur — sert à distinguer l'équipe de
+  // campagne de l'équipe de tour dans le test « la tour de Braise combat
+  // avec SON équipe ».
+  let otherUserCardId: string
   let userId: string
+  // Cookies d'un joueur inscrit dans ce fichier et n'ayant JAMAIS posé
+  // d'équipe (ni tour, ni campagne dont hériter) — sert le test « refuse le
+  // combat quand aucune équipe n'est enregistrée ».
+  let freshCookies: string
 
   const suffix = Date.now()
   const email = `tower${suffix}@test.com`
@@ -208,12 +217,50 @@ describe('routes de tour', () => {
     })
     userCardId = uc.id
 
+    // Variant différente (contrainte unique [userId, cardId, variant]) : même
+    // carte, même joueur, une ligne UserCard distincte.
+    const uc2 = await postgresOrm.prisma.userCard.create({
+      data: {
+        userId: user.id,
+        cardId: card.id,
+        variant: 'HOLOGRAPHIC',
+        quantity: 1,
+        level: 1,
+        palier: 1,
+      },
+    })
+    otherUserCardId = uc2.id
+
     const loginRes = await app.inject({
       method: 'POST',
       url: '/auth/login',
       payload: { email, password },
     })
     cookies = loginRes.headers['set-cookie'] as string
+
+    // Joueur neuf, jamais passé par PUT /combat/teams/:key : sert le test
+    // « refuse le combat quand aucune équipe n'est enregistrée ».
+    const freshEmail = `tower-fresh${suffix}@test.com`
+    const freshReg = await app.inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: {
+        username: `towerfresh${suffix}`,
+        email: freshEmail,
+        password,
+      },
+    })
+    expect(freshReg.statusCode).toBe(201)
+    await postgresOrm.prisma.user.update({
+      where: { email: freshEmail },
+      data: { emailVerifiedAt: new Date() },
+    })
+    const freshLogin = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email: freshEmail, password },
+    })
+    freshCookies = freshLogin.headers['set-cookie'] as string
   })
 
   afterAll(async () => {
@@ -257,7 +304,6 @@ describe('routes de tour', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/tower/FIRE/1/battle',
-      payload: { userCardIds: [] },
     })
     expect(res.statusCode).toBe(401)
   })
@@ -312,8 +358,7 @@ describe('routes de tour', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/tower/LIGHT/1/battle',
-      headers: { cookie: cookies, 'content-type': 'application/json' },
-      payload: { userCardIds: [userCardId] },
+      headers: { cookie: cookies },
     })
     expect(res.statusCode).toBe(400)
   })
@@ -322,34 +367,29 @@ describe('routes de tour', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/tower/FIRE/5/battle',
-      headers: { cookie: cookies, 'content-type': 'application/json' },
-      payload: { userCardIds: [userCardId] },
+      headers: { cookie: cookies },
     })
     expect(res.statusCode).toBe(400)
   })
 
-  it('refuse une équipe vide', async () => {
+  // Les cas de validation de la composition d'équipe (vide, doublons, plus de
+  // 3 cartes) vivent désormais sur PUT /combat/teams/:key — déjà couverts par
+  // team.test.ts — puisque `setForKey` est le SEUL point d'écriture d'une
+  // équipe. Ici, on ne teste plus que l'ABSENCE d'équipe.
+  it('refuse le combat quand aucune équipe n’est enregistrée', async () => {
+    // Joueur neuf : ni équipe de tour, ni équipe de campagne dont hériter.
     const res = await app.inject({
       method: 'POST',
       url: '/tower/FIRE/1/battle',
-      headers: { cookie: cookies, 'content-type': 'application/json' },
-      payload: { userCardIds: [] },
+      headers: { cookie: freshCookies },
     })
     expect(res.statusCode).toBe(400)
-  })
-
-  it('refuse une équipe avec des cartes en double', async () => {
-    const res = await app.inject({
-      method: 'POST',
-      url: '/tower/FIRE/1/battle',
-      headers: { cookie: cookies, 'content-type': 'application/json' },
-      payload: { userCardIds: [userCardId, userCardId, userCardId] },
-    })
-    expect(res.statusCode).toBe(400)
-    // Épingle la RAISON du refus : sans ça, un futur changement de la taille
-    // maximale d'équipe garderait ce test au vert tout en cessant
-    // silencieusement de tester la déduplication.
-    expect(res.json().message).toContain('distinct')
+    // Épingle la RAISON du refus : un 400 générique (énergie insuffisante,
+    // étage verrouillé) ne prouverait rien sur l'absence d'équipe. Ce joueur
+    // neuf a 60 points de combat par défaut (largement assez) et l'étage 1
+    // n'est jamais verrouillé pour un premier passage — seule l'absence
+    // d'équipe peut expliquer ce refus.
+    expect(res.json().message).toContain('équipe')
   })
 
   it('GET /tower/FIRE — étage 1 disponible, étage 5 verrouillé', async () => {
@@ -410,11 +450,11 @@ describe('routes de tour', () => {
   })
 
   it('POST /tower/FIRE/1/battle — gagne, récompenses de premier passage et pièce garantie', async () => {
+    await setCombatTeam(app, cookies, 'tower:FIRE', [userCardId])
     const res = await app.inject({
       method: 'POST',
       url: '/tower/FIRE/1/battle',
-      headers: { cookie: cookies, 'content-type': 'application/json' },
-      payload: { userCardIds: [userCardId] },
+      headers: { cookie: cookies },
     })
     expect(res.statusCode).toBe(200)
     const body = res.json() as {
@@ -473,6 +513,26 @@ describe('routes de tour', () => {
     expect(uq!.completed).toBe(true)
   })
 
+  it('la tour de Braise combat avec SON équipe, pas celle de la campagne', async () => {
+    await setCombatTeam(app, cookies, 'campaign', [otherUserCardId])
+    await setCombatTeam(app, cookies, 'tower:FIRE', [userCardId])
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/tower/FIRE/1/battle',
+      headers: { cookie: cookies },
+    })
+    expect(res.statusCode).toBe(200)
+    // `SimulatorUnit.id` n'est qu'un label de bataille ('A0', 'A1', …), pas
+    // le userCardId — impossible de distinguer les deux équipes dessus. On
+    // épingle plutôt le niveau : `userCardId` est niveau 60 (fixture
+    // ci-dessus), `otherUserCardId` niveau 1. Si le combat avait hérité de
+    // la campagne (otherUserCardId) au lieu de lire 'tower:FIRE', ce niveau
+    // serait 1.
+    expect(res.json().teamA).toHaveLength(1)
+    expect(res.json().teamA[0].level).toBe(60)
+  })
+
   it('GET /tower/FIRE après la victoire — étage 1 franchi, étage 5 toujours verrouillé', async () => {
     const res = await app.inject({
       method: 'GET',
@@ -493,8 +553,7 @@ describe('routes de tour', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/tower/FIRE/1/battle',
-      headers: { cookie: cookies, 'content-type': 'application/json' },
-      payload: { userCardIds: [userCardId] },
+      headers: { cookie: cookies },
     })
     expect(res.statusCode).toBe(200)
     const body = res.json() as {
@@ -594,8 +653,7 @@ describe('routes de tour', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/tower/FIRE/5/battle',
-      headers: { cookie: cookies, 'content-type': 'application/json' },
-      payload: { userCardIds: [userCardId] },
+      headers: { cookie: cookies },
     })
     expect(res.statusCode).toBe(400)
   })

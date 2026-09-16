@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
 import { buildTestApp } from '../../helpers/build-test-app'
+import { setCombatTeam } from '../../helpers/combat-team-fixture'
 import {
   raidElementForWeek,
   raidWeekKey,
@@ -386,6 +387,7 @@ describe("progression d'équipe : les quatre sources de points", () => {
   })
 
   it("une attaque de raid crédite l'équipe ATTAQUÉE, et elle seule", async () => {
+    await setCombatTeam(app, cookiesP, 'raid', [raidUserCardId])
     const before1 = await weeklyPoints(team1Id, userIdP)
     const before2 = await weeklyPoints(team2Id, userIdP)
 
@@ -393,7 +395,6 @@ describe("progression d'équipe : les quatre sources de points", () => {
       method: 'POST',
       url: `/teams/${team1Id}/raid/attack`,
       headers: { cookie: cookiesP },
-      payload: { userCardIds: [raidUserCardId] },
     })
     expect(res.statusCode).toBe(200)
     const damage = res.json().damage as number

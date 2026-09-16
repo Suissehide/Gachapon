@@ -80,10 +80,6 @@ export const towerViewResponseSchema = z.object({
   floors: z.array(towerFloorViewSchema),
 })
 
-export const towerBattleBodySchema = z.object({
-  userCardIds: z.array(z.string()),
-})
-
 /**
  * Pièce obtenue en tour. Partagée par le combat unique et le balayage — la
  * fiche de récompense du front est la même des deux côtés, la charge utile

@@ -1,6 +1,5 @@
 import { z } from 'zod/v4'
 
-import { MAX_RAID_TEAM_SIZE } from '../../../../domain/raid/raid-rules'
 import { towerElementSchema } from './tower.schema'
 
 export const raidTeamParamSchema = z.object({ id: z.string() })
@@ -58,10 +57,6 @@ export const raidViewResponseSchema = z.object({
 
 export const raidContributionsResponseSchema = z.object({
   contributions: z.array(raidContributionSchema),
-})
-
-export const raidAttackBodySchema = z.object({
-  userCardIds: z.array(z.string()).min(1).max(MAX_RAID_TEAM_SIZE),
 })
 
 // Même forme que simulatorUnitSchema de tower.schema.ts (non exporté là-bas).

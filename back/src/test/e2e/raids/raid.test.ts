@@ -5,6 +5,7 @@ import {
   raidWeekKey,
 } from '../../../main/domain/raid/raid-rules'
 import { buildTestApp } from '../../helpers/build-test-app'
+import { setCombatTeam } from '../../helpers/combat-team-fixture'
 
 /**
  * Boss volontairement inoffensif et sans défense : le joueur ne meurt
@@ -219,11 +220,11 @@ describe('routes de raid', () => {
   })
 
   it('POST attack : inflige des dégâts, décrémente hp, enregistre la contribution', async () => {
+    await setCombatTeam(app, cookiesA, 'raid', [cardIdA])
     const res = await app.inject({
       method: 'POST',
       url: `/teams/${teamId}/raid/attack`,
       headers: { cookie: cookiesA },
-      payload: { userCardIds: [cardIdA] },
     })
     expect(res.statusCode).toBe(200)
     const body = res.json()
@@ -252,12 +253,16 @@ describe('routes de raid', () => {
     expect(v.contributions[0].attacks).toBe(1)
   })
 
-  it('POST attack : refuse une carte qui n’appartient pas au joueur', async () => {
+  // L'équipe de raid se lit désormais côté serveur (PUT /combat/teams/raid) :
+  // un joueur ne peut plus soumettre une carte qui ne lui appartient pas dans
+  // le corps de la requête (setForKey valide déjà la propriété à l'écriture,
+  // couvert par team.test.ts). Ici, B n'a JAMAIS posé d'équipe de raid — le
+  // même 400 se déclenche, mais pour cette raison : aucune équipe à résoudre.
+  it('POST attack : refuse quand le joueur n’a pas encore d’équipe de raid', async () => {
     const res = await app.inject({
       method: 'POST',
       url: `/teams/${teamId}/raid/attack`,
       headers: { cookie: cookiesB },
-      payload: { userCardIds: [cardIdA] },
     })
     expect(res.statusCode).toBe(400)
   })
@@ -267,7 +272,6 @@ describe('routes de raid', () => {
       method: 'POST',
       url: `/teams/${teamId}/raid/attack`,
       headers: { cookie: cookiesA },
-      payload: { userCardIds: [cardIdA] },
     })
     expect(second.statusCode).toBe(200)
     expect(second.json().attacksRemainingToday).toBe(0)
@@ -276,7 +280,6 @@ describe('routes de raid', () => {
       method: 'POST',
       url: `/teams/${teamId}/raid/attack`,
       headers: { cookie: cookiesA },
-      payload: { userCardIds: [cardIdA] },
     })
     expect(third.statusCode).toBe(429)
 
@@ -292,7 +295,6 @@ describe('routes de raid', () => {
       method: 'POST',
       url: `/teams/${team2Id}/raid/attack`,
       headers: { cookie: cookiesA },
-      payload: { userCardIds: [cardIdA] },
     })
     expect(other.statusCode).toBe(429)
   })
@@ -308,11 +310,11 @@ describe('routes de raid', () => {
     })
     await prisma.teamRaid.update({ where: { id: raid.id }, data: { hp: 1 } })
 
+    await setCombatTeam(app, cookiesB, 'raid', [cardIdB])
     const res = await app.inject({
       method: 'POST',
       url: `/teams/${teamId}/raid/attack`,
       headers: { cookie: cookiesB },
-      payload: { userCardIds: [cardIdB] },
     })
     expect(res.statusCode).toBe(200)
     const body = res.json()
@@ -351,7 +353,6 @@ describe('routes de raid', () => {
       method: 'POST',
       url: `/teams/${teamId}/raid/attack`,
       headers: { cookie: cookiesB },
-      payload: { userCardIds: [cardIdB] },
     })
     expect(again.statusCode).toBe(409)
   })

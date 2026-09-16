@@ -7,6 +7,7 @@ import {
 } from '../../../main/domain/raid/raid-rules'
 import { perkEffect } from '../../../main/domain/team-progression/team-progression-rules'
 import { buildTestApp } from '../../helpers/build-test-app'
+import { setCombatTeam } from '../../helpers/combat-team-fixture'
 
 /**
  * E2E : le bonus d'équipe `raid` (task 5, refonte équipe) s'ajoute en ENTIER
@@ -238,11 +239,12 @@ describe('Bonus équipe `raid` — attaques par jour', () => {
       },
     })
 
+    await setCombatTeam(app, player.cookies, 'raid', [userCard.id])
+
     const noBonusRes = await app.inject({
       method: 'POST',
       url: `/teams/${teamNoBonusId}/raid/attack`,
       headers: { cookie: player.cookies },
-      payload: { userCardIds: [userCard.id] },
     })
     expect(noBonusRes.statusCode).toBe(200)
     expect(noBonusRes.json().attacksRemainingToday).toBe(
@@ -253,7 +255,6 @@ describe('Bonus équipe `raid` — attaques par jour', () => {
       method: 'POST',
       url: `/teams/${teamBonusId}/raid/attack`,
       headers: { cookie: player.cookies },
-      payload: { userCardIds: [userCard.id] },
     })
     expect(bonusRes.statusCode).toBe(200)
     // `used` compte les attaques du JOUEUR sur la journée, tous raids

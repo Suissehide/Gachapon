@@ -30,6 +30,8 @@ import { unitPower } from '../campaign/campaign-power'
 import { resolveEnemyImageUrl } from '../campaign/enemy-appearance'
 import { simulateBattle } from '../combat/battle-simulator.domain'
 import type { CombatStatsBaseline } from '../combat/combat-stats.domain'
+import type { CombatTeamTx } from '../combat/combat-team.tx'
+import { RAID_TEAM_KEY } from '../combat/combat-team-keys'
 import {
   buildEnemySimUnits,
   buildPlayerSimUnits,
@@ -45,7 +47,6 @@ import {
   attacksRemaining,
   crossedTiers,
   damageDealtToBoss,
-  MAX_RAID_TEAM_SIZE,
   RAID_BOSS_SIM_HP,
   raidElementForWeek,
   raidMaxHp,
@@ -80,6 +81,7 @@ export class RaidDomain implements IRaidDomain {
   readonly #wsManager: WsManager
   readonly #logger: Logger
   readonly #teamProgressionDomain: ITeamProgressionDomain
+  readonly #combatTeamTx: CombatTeamTx
 
   constructor({
     configService,
@@ -92,6 +94,7 @@ export class RaidDomain implements IRaidDomain {
     wsManager,
     logger,
     teamProgressionDomain,
+    combatTeamTx,
   }: IocContainer) {
     this.#configService = configService
     this.#config = config
@@ -103,6 +106,7 @@ export class RaidDomain implements IRaidDomain {
     this.#teamProgressionDomain = teamProgressionDomain
     this.#wsManager = wsManager
     this.#logger = logger
+    this.#combatTeamTx = combatTeamTx
   }
 
   async getRaid(
@@ -136,16 +140,8 @@ export class RaidDomain implements IRaidDomain {
   async attack(
     teamId: string,
     userId: string,
-    userCardIds: string[],
     now: Date = new Date(),
   ): Promise<RaidAttackResult> {
-    if (userCardIds.length === 0 || userCardIds.length > MAX_RAID_TEAM_SIZE) {
-      throw Boom.badRequest('Compose une équipe de 1 à 3 cartes pour le raid')
-    }
-    if (new Set(userCardIds).size !== userCardIds.length) {
-      throw Boom.badRequest('Les cartes doivent être distinctes')
-    }
-
     const team = await this.#requireMembership(teamId, userId)
     const raidId = (await this.#ensureRaid(team, now)).id
 
@@ -207,6 +203,14 @@ export class RaidDomain implements IRaidDomain {
             )
           }
 
+          const { userCardIds } = await this.#combatTeamTx.resolveIdsInTx(
+            tx,
+            userId,
+            RAID_TEAM_KEY,
+          )
+          if (userCardIds.length === 0) {
+            throw Boom.badRequest('Composez une équipe avant d’attaquer')
+          }
           const teamUnits = await buildPlayerSimUnits(tx, {
             userId,
             userCardIds,

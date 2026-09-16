@@ -2,7 +2,6 @@ import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import { TOWER_SLOT_BY_ELEMENT } from '../../../../../domain/tower/tower-slots'
 import {
-  towerBattleBodySchema,
   towerBattleResponseSchema,
   towerElementParamSchema,
   towerFloorParamSchema,
@@ -70,7 +69,6 @@ export const towerRouter: FastifyPluginCallbackZod = (fastify) => {
       onRequest: [fastify.verifySessionCookie],
       schema: {
         params: towerFloorParamSchema,
-        body: towerBattleBodySchema,
         response: { 200: towerBattleResponseSchema },
       },
     },
@@ -79,7 +77,6 @@ export const towerRouter: FastifyPluginCallbackZod = (fastify) => {
         request.user.userID,
         request.params.element,
         request.params.floor,
-        request.body.userCardIds,
       ),
   )
 }

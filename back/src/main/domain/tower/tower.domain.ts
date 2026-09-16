@@ -21,6 +21,8 @@ import {
   simulateBattle,
 } from '../combat/battle-simulator.domain'
 import type { CombatStatsBaseline } from '../combat/combat-stats.domain'
+import type { CombatTeamTx } from '../combat/combat-team.tx'
+import { towerTeamKey } from '../combat/combat-team-keys'
 import {
   type FirstClearLoot,
   pickEquipmentForRarity,
@@ -166,15 +168,13 @@ export interface TowerSummary {
   totalFloors: number
 }
 
-/** Une équipe de tour ne peut pas dépasser la taille d'équipe du jeu. */
-const MAX_TOWER_TEAM_SIZE = 3
-
 /** Plafond de passages par balayage — même limite que la campagne. */
 const SWEEP_MAX_RUNS = 10
 
 export class TowerDomain {
   readonly #postgresOrm
   readonly #combatPointsTx
+  readonly #combatTeamTx: CombatTeamTx
   readonly #configService
   readonly #config
   readonly #achievementsDomain
@@ -186,6 +186,7 @@ export class TowerDomain {
   constructor({
     postgresOrm,
     combatPointsTx,
+    combatTeamTx,
     configService,
     config,
     achievementsDomain,
@@ -196,6 +197,7 @@ export class TowerDomain {
   }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#combatPointsTx = combatPointsTx
+    this.#combatTeamTx = combatTeamTx
     this.#configService = configService
     this.#config = config
     this.#achievementsDomain = achievementsDomain
@@ -286,7 +288,6 @@ export class TowerDomain {
     userId: string,
     element: TowerElement,
     floor: number,
-    userCardIds: string[],
   ): Promise<{
     won: boolean
     log: unknown[]
@@ -294,14 +295,6 @@ export class TowerDomain {
     teamA: SimulatorUnit[]
     teamB: SimulatorUnit[]
   }> {
-    if (userCardIds.length === 0 || userCardIds.length > MAX_TOWER_TEAM_SIZE) {
-      throw Boom.badRequest('Composez une équipe de 1 à 3 cartes pour la tour')
-    }
-    const uniqueUserCardIds = new Set(userCardIds)
-    if (uniqueUserCardIds.size !== userCardIds.length) {
-      throw Boom.badRequest('Team cards must be distinct')
-    }
-
     return retryOnSerialization(async () => {
       // Lire la config ET les effets AVANT la transaction (évite les I/O
       // async dans un tx Serializable) — même motif que campaign.domain.
@@ -354,6 +347,16 @@ export class TowerDomain {
             critDmg: battleCfg['combat.baseCritDmg'],
             armorPen: battleCfg['combat.baseArmorPen'],
             lifesteal: battleCfg['combat.baseLifesteal'],
+          }
+          const { userCardIds } = await this.#combatTeamTx.resolveIdsInTx(
+            tx,
+            userId,
+            towerTeamKey(element),
+          )
+          if (userCardIds.length === 0) {
+            throw Boom.badRequest(
+              'Composez une équipe de 1 à 3 cartes pour la tour',
+            )
           }
           const teamUnits = await buildPlayerSimUnits(tx, {
             userId,
