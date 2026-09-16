@@ -1,5 +1,5 @@
 // changelog-sync: dernier commit intégré au changelog. Mis à jour par la commande /changelog.
-// last-synced-commit: 3e118bdbab87dffa99f634666798d449f0af320f
+// last-synced-commit: 82900c68d5f4bf302ec7f0a5872cc72e586e8c10
 import { createFileRoute } from '@tanstack/react-router'
 
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
@@ -37,6 +37,39 @@ const TYPE_META: Record<ChangeType, { label: string; className: string }> = {
 }
 
 const RELEASES: ChangelogRelease[] = [
+  {
+    version: '3.1',
+    title: 'Rejouer sans y passer la soirée',
+    date: 'Septembre 2026',
+    summary:
+      'Un étage déjà battu se relance cinq fois d’un clic, l’équipement se lit d’un coup d’œil, le vœu porte plusieurs cartes — et la courbe de niveau redevient une courbe.',
+    entries: [
+      {
+        type: 'new',
+        text: 'Le combat multiple remplace « Balayer » : un niveau de campagne déjà terminé ne propose plus qu’un bouton, avec ses segments ×1 et ×5 qui affichent chacun leur coût en énergie — le prix montré est celui qui sera débité. Les tours y ont droit à leur tour : un étage franchi se rejoue en série, chaque passage garantit une pièce, et le tarif est le même qu’en campagne.',
+      },
+      {
+        type: 'new',
+        text: 'Le vœu porte désormais plusieurs cartes — deux emplacements au départ, jusqu’à cinq avec la compétence « Collectionneur » — et le délai de sept jours entre deux achats disparaît. En échange, le prix redevient le vrai frein : les remises de boutique ne s’appliquent plus au vœu, et elles passent de 25 à 18 %. Les points investis dans l’ancien « Négociant » te sont rendus.',
+      },
+      {
+        type: 'improved',
+        text: 'L’écran de récompenses encaisse enfin les gros butins : les pièces défilent sur une rangée, les cartes sur une autre, toutes les fiches à la même hauteur, et « Continuer » reste à portée de pouce. La carte gagnée s’affiche nue, avec la même pastille « Nouveau » qu’au tirage.',
+      },
+      {
+        type: 'improved',
+        text: 'L’équipement se lit sans ouvrir trois écrans : chaque ligne du sélecteur annonce son set, la fiche montre l’avancement du set sur cette carte-là, les tuiles portent la rareté par leur dégradé et affichent « n / 7 équipées » plus l’apport total en stats. La fenêtre d’un emplacement s’ouvre directement sur la pièce portée, les bonus parlent en ATQ et VIT au lieu de ATK et SPD, et les valeurs de stat sont des nombres entiers.',
+      },
+      {
+        type: 'improved',
+        text: 'Gros coup de règle sur l’équilibrage. La courbe de niveau joueur est multipliée par cinq et l’XP de premier passage divisée par trois : monter au niveau 30 ne tient plus dans une journée. L’arbre de compétences coûte maintenant 109 points — exactement ce qu’un niveau 100 possède — donc plus aucun nœud n’est un sacrifice obligé ; la branche Collection devient enfin désirable (recyclage +30 %, et elle s’ouvre désormais sur ses meilleurs nœuds), les nœuds de butin de Combat redescendent d’un tiers, et le bonus de butin ne gonfle plus la chance de carte, seulement celle d’équipement. « Opulence » ne double plus le plafond d’achat de packs d’énergie : elle le porte à cinq par jour au lieu de six. Enfin, la vitesse ne se tire plus qu’en valeur plate : les pièces qui portaient du % VIT ont été retirées au profit d’une autre sous-stat.',
+      },
+      {
+        type: 'fixed',
+        text: 'Avec la compétence « Opulence », la boutique annonçait « Limite atteinte » dès trois packs d’énergie alors que la compétence en autorisait davantage. Côté campagne, la carte gagnée manquait à l’appel en fin de combat et le résultat d’un balayage n’affichait pas les mêmes fiches qu’une victoire. La fiche de pièce ne s’écrase plus dans les récompenses de tour, la grille d’équipement ne se réordonne plus quand tu améliores une pièce, et deux nœuds de l’arbre ne se chevauchent plus.',
+      },
+    ],
+  },
   {
     version: '3.0',
     title: 'Les équipes prennent vie',
