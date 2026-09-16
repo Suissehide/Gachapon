@@ -142,6 +142,132 @@ describe('Leaderboard routes', () => {
     expect(res.statusCode).toBe(401)
   })
 
+  // ── COMBAT : la table UserCombatTeam remplace User.combatTeam ───────────
+  // Le classement range sur l'équipe de CAMPAGNE, jamais sur les autres
+  // modes — c'est une décision assumée (voir leaderboard.repository.ts) et
+  // elle doit être verrouillée par un test, pas seulement par la lecture du
+  // code.
+  describe('classement combat — bascule sur UserCombatTeam', () => {
+    let campaignUserId: string
+    let towerOnlyUserId: string
+
+    beforeAll(async () => {
+      const { postgresOrm } = (app as any).iocContainer
+
+      const set = await postgresOrm.prisma.cardSet.create({
+        data: { name: `LbCombatSet${suffix}`, isActive: false },
+      })
+      const card = await postgresOrm.prisma.card.create({
+        data: {
+          name: `LbCombatCard${suffix}`,
+          rarity: 'RARE',
+          dropWeight: 10,
+          setId: set.id,
+          baseHp: 200,
+          baseAtk: 20,
+          baseDef: 10,
+          baseSpd: 100,
+        },
+      })
+
+      // Joueur A : équipe de CAMPAGNE posée via la route publique encore en
+      // place à ce stade (les routes par clé arrivent en Task 5).
+      const emailA = `lbcombat-a${suffix}@test.com`
+      const regA = await app.inject({
+        method: 'POST',
+        url: '/auth/register',
+        payload: {
+          username: `lbcombata${suffix}`,
+          email: emailA,
+          password: 'Password123!',
+        },
+      })
+      expect(regA.statusCode).toBe(201)
+      const userA = await postgresOrm.prisma.user.update({
+        where: { email: emailA },
+        data: { emailVerifiedAt: new Date() },
+      })
+      campaignUserId = userA.id
+      const ucA = await postgresOrm.prisma.userCard.create({
+        data: {
+          userId: userA.id,
+          cardId: card.id,
+          variant: 'NORMAL',
+          quantity: 1,
+          level: 1,
+          palier: 1,
+        },
+      })
+      const loginA = await app.inject({
+        method: 'POST',
+        url: '/auth/login',
+        payload: { email: emailA, password: 'Password123!' },
+      })
+      const cookiesA = loginA.headers['set-cookie'] as string
+      const putRes = await app.inject({
+        method: 'PUT',
+        url: '/combat/team',
+        headers: { cookie: cookiesA, 'content-type': 'application/json' },
+        payload: { userCardIds: [ucA.id] },
+      })
+      expect(putRes.statusCode).toBe(200)
+
+      // Joueur B : équipe posée UNIQUEMENT sur la tour de Braise, jamais sur
+      // la campagne — écrite directement en base, aucune route ne l'expose
+      // encore (Task 5).
+      const emailB = `lbcombat-b${suffix}@test.com`
+      const userB = await postgresOrm.prisma.user.create({
+        data: {
+          email: emailB,
+          username: `lbcombatb${suffix}`,
+          emailVerifiedAt: new Date(),
+        },
+      })
+      towerOnlyUserId = userB.id
+      const ucB = await postgresOrm.prisma.userCard.create({
+        data: {
+          userId: userB.id,
+          cardId: card.id,
+          variant: 'NORMAL',
+          quantity: 1,
+          level: 1,
+          palier: 1,
+        },
+      })
+      await postgresOrm.prisma.userCombatTeam.create({
+        data: { userId: userB.id, key: 'tower:FIRE', userCardIds: [ucB.id] },
+      })
+    })
+
+    it('un joueur avec une equipe de CAMPAGNE apparait au classement, puissance non nulle', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/leaderboard/combat',
+        headers: { cookie: cookies },
+      })
+      expect(res.statusCode).toBe(200)
+      const body = res.json() as {
+        entries: Array<{ user: { id: string }; combatPower: number }>
+      }
+      const entry = body.entries.find((e) => e.user.id === campaignUserId)
+      expect(entry).toBeDefined()
+      expect(entry?.combatPower).toBeGreaterThan(0)
+    })
+
+    it("un joueur avec SEULEMENT une equipe de tour n'apparait PAS au classement (la campagne fait foi)", async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/leaderboard/combat',
+        headers: { cookie: cookies },
+      })
+      expect(res.statusCode).toBe(200)
+      const body = res.json() as { entries: Array<{ user: { id: string } }> }
+      expect(
+        body.entries.find((e) => e.user.id === towerOnlyUserId),
+      ).toBeUndefined()
+    })
+  })
+
   // ── OLD ENDPOINT IS GONE ────────────────────────────────────────────────
   it('GET /leaderboard — 404 (old endpoint removed)', async () => {
     const res = await app.inject({

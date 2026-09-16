@@ -469,14 +469,11 @@ export class CampaignDomain {
             throw Boom.notFound('Stage not found')
           }
 
-          // Debit PC (cost from GlobalConfig, default 5)
+          // Debit PC (cost from GlobalConfig, default 5). Vérifie déjà
+          // l'existence de l'utilisateur (Boom.notFound sinon) — inutile de
+          // le relire ici pour la même garde.
           const battleCost = battleCfg['combat.battleCost']
           await this.#combatPointsTx.debitInTx(tx, userId, battleCost, effects)
-
-          const user = await tx.user.findUnique({ where: { id: userId } })
-          if (!user) {
-            throw Boom.notFound('User not found')
-          }
 
           // Ensure progress row exists (avoid race with the read-side check)
           const progress = await tx.userCampaignProgress.upsert({
