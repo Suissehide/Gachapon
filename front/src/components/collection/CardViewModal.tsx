@@ -1,6 +1,7 @@
 import { Recycle, Star, X } from 'lucide-react'
 import type { CSSProperties } from 'react'
 
+import type { CardVariant } from '../../constants/card.constant'
 import {
   type CardElement,
   ELEMENT_COLOR,
@@ -12,7 +13,8 @@ import { useCardClassicStatsWithSetBonuses } from '../../queries/useEquipment.ts
 import type { WishlistResponse } from '../../queries/useWishlist.ts'
 import { useToggleWishlist, useWishlist } from '../../queries/useWishlist.ts'
 import type { DisplayEntry } from '../../routes/_authenticated/collection.tsx'
-import { finalSpeed, finalStatWithBonuses } from '../../utils/cardStats.ts'
+import type { StatBonuses } from '../../utils/cardStats.ts'
+import { displayStatBases, displayStats } from '../../utils/cardStats.ts'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
 import type { CardStats } from '../shared/tcg-card/TcgCardFace.tsx'
 import { Button } from '../ui/button.tsx'
@@ -82,6 +84,32 @@ function isWished(
   return wishlist?.cards.some((c) => c.id === cardId) ?? false
 }
 
+/**
+ * Stats de la face de carte, finales et hors équipement. Hors composant comme
+ * `isWished` : `CardViewModal` frôle le seuil de complexité cognitive.
+ */
+function faceStats(
+  input: {
+    card: DisplayEntry['card']
+    level: number
+    variant: CardVariant
+    palier: number
+    bonuses: StatBonuses
+  } | null,
+): {
+  stats: CardStats | null
+  statBases: ReturnType<typeof displayStatBases> | null
+} {
+  if (input === null) {
+    return { stats: null, statBases: null }
+  }
+  const { card, level, variant, palier, bonuses } = input
+  return {
+    stats: displayStats(card, level, variant, palier, bonuses),
+    statBases: displayStatBases(card, level, variant, palier),
+  }
+}
+
 export function CardViewModal({ entry, onClose, onRecycle }: Props) {
   // Hooks must be called unconditionally — before any early return.
   const { data: wishlist } = useWishlist()
@@ -103,39 +131,17 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
 
   const panelStyle = { '--rar': rarityHex } as CSSProperties
 
-  const stats: CardStats | null =
+  const { stats, statBases } = faceStats(
     isOwned && userCard
       ? {
-          pv: Math.round(
-            finalStatWithBonuses(
-              card.baseHp,
-              userCard.level,
-              variant,
-              userCard.palier,
-              bonuses.hp,
-            ),
-          ),
-          atq: Math.round(
-            finalStatWithBonuses(
-              card.baseAtk,
-              userCard.level,
-              variant,
-              userCard.palier,
-              bonuses.atk,
-            ),
-          ),
-          def: Math.round(
-            finalStatWithBonuses(
-              card.baseDef,
-              userCard.level,
-              variant,
-              userCard.palier,
-              bonuses.def,
-            ),
-          ),
-          vit: Math.round(finalSpeed(card.baseSpd, bonuses.spd)),
+          card,
+          level: userCard.level,
+          variant,
+          palier: userCard.palier,
+          bonuses,
         }
-      : null
+      : null,
+  )
 
   const description =
     isOwned && userCard
@@ -175,6 +181,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
               showAura
               level={userCard?.level ?? null}
               stats={stats}
+              statBases={statBases}
               element={card.element}
               description={description}
             />

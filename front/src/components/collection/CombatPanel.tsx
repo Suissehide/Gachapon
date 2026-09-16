@@ -36,6 +36,7 @@ import {
   computePower,
   dustCostNextLevel,
   finalSpeed,
+  finalStat,
   finalStatWithBonuses,
   goldCostNextLevel,
   isAtTopOfPalier,
@@ -128,6 +129,15 @@ export function CombatPanel({
   const spd = Math.round(finalSpeed(card.baseSpd, classicBonuses.spd))
   const power = computePower({ hp, atk, def, spd })
 
+  // Part propre à la CARTE (niveau, variante, palier), équipement exclu. Au
+  // survol de la grille, chaque tuile se scinde en « base + apport » : le
+  // joueur voit ce qu'il doit à son stuff et ce qu'il garde en le retirant.
+  // La bascule est en CSS (`group-hover`) et non en état React : un `<div>`
+  // porteur de onMouseEnter serait un élément statique rendu interactif.
+  const baseHp = Math.round(finalStat(card.baseHp, level, variant, palier))
+  const baseAtk = Math.round(finalStat(card.baseAtk, level, variant, palier))
+  const baseDef = Math.round(finalStat(card.baseDef, level, variant, palier))
+
   const onLevelUp = async () => {
     setWorking(true)
     try {
@@ -188,35 +198,40 @@ export function CombatPanel({
       {/* Stat grid — accents pris dans `statColorVar`, la même table que
           l'apport total de l'équipement juste en dessous : les teintes en dur
           avaient divergé sur les 4 stats de stuff. */}
-      <div className="mt-[18px] grid grid-cols-2 gap-2.5">
+      <div className="group mt-[18px] grid grid-cols-2 gap-2.5">
         <StatTile
           icon={<Heart className="h-4 w-4" />}
           label="PV"
           value={hp}
+          base={baseHp}
           accent={statColorVar('hp')}
         />
         <StatTile
           icon={<Sword className="h-4 w-4" />}
           label="ATQ"
           value={atk}
+          base={baseAtk}
           accent={statColorVar('atk')}
         />
         <StatTile
           icon={<Shield className="h-4 w-4" />}
           label="DEF"
           value={def}
+          base={baseDef}
           accent={statColorVar('def')}
         />
         <StatTile
           icon={<Zap className="h-4 w-4" />}
           label="VIT"
           value={spd}
+          base={card.baseSpd}
           accent={statColorVar('spd')}
         />
         <StatTile
           icon={<Target className="h-4 w-4" />}
           label="TAUX CRIT"
           value={stuffStats.critRate}
+          base={economy.combat.baseCritRate}
           suffix="%"
           accent={statColorVar('critRate')}
         />
@@ -224,6 +239,7 @@ export function CombatPanel({
           icon={<Flame className="h-4 w-4" />}
           label="DÉGÂTS CRIT"
           value={stuffStats.critDmg}
+          base={economy.combat.baseCritDmg}
           suffix="%"
           accent={statColorVar('critDmg')}
         />
@@ -231,6 +247,7 @@ export function CombatPanel({
           icon={<Crosshair className="h-4 w-4" />}
           label="PÉNÉ. ARMURE"
           value={stuffStats.armorPen}
+          base={economy.combat.baseArmorPen}
           suffix="%"
           accent={statColorVar('armorPen')}
         />
@@ -238,6 +255,7 @@ export function CombatPanel({
           icon={<Droplets className="h-4 w-4" />}
           label="VOL DE VIE"
           value={stuffStats.lifesteal}
+          base={economy.combat.baseLifesteal}
           suffix="%"
           accent={statColorVar('lifesteal')}
         />
@@ -303,17 +321,26 @@ function StatTile({
   icon,
   label,
   value,
+  base,
   accent,
   suffix,
 }: {
   icon: ReactNode
   label: string
   value: number
+  /** Valeur hors équipement. Sert la lecture « base + apport » au survol. */
+  base?: number
   accent: string
   suffix?: string
 }) {
   // Toute valeur de stat est entière depuis l'arrondi à la source.
-  const displayValue = Math.round(value).toLocaleString('fr-FR')
+  const total = Math.round(value)
+  const socle = base === undefined ? total : Math.round(base)
+  const apport = total - socle
+  // On ne scinde que s'il y a un apport : « 250 + 0 » n'apprend rien, et une
+  // carte sans équipement garderait une ligne bruyante.
+  const scindable = apport !== 0
+
   return (
     <div className="flex items-center gap-2.5 rounded-[14px] border border-[rgba(27,23,38,0.06)] bg-surface-2 px-4 py-3.5">
       <span className="flex" style={{ color: accent }}>
@@ -323,8 +350,22 @@ function StatTile({
         {label}
       </span>
       <span className="ml-auto font-display text-[22px] font-extrabold tabular-nums text-text">
-        {displayValue}
-        {suffix}
+        <span className={scindable ? 'group-hover:hidden' : undefined}>
+          {total.toLocaleString('fr-FR')}
+          {suffix}
+        </span>
+        {scindable && (
+          <span className="hidden group-hover:inline">
+            {socle.toLocaleString('fr-FR')}
+            {suffix}
+            <span className="text-[16px]" style={{ color: accent }}>
+              {' '}
+              {apport > 0 ? '+' : '−'}
+              {Math.abs(apport).toLocaleString('fr-FR')}
+              {suffix}
+            </span>
+          </span>
+        )}
       </span>
     </div>
   )

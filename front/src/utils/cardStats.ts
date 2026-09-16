@@ -396,6 +396,69 @@ export function withCardSetBonuses(
  * Same as `finalStat` but folds in equipment flat + percent bonuses, matching
  * the backend's `(raw + flat) * (1 + pct/100)` order.
  */
+/**
+ * Stats FINALES d'une carte, aux clés d'AFFICHAGE (pv/atq/def/vit),
+ * équipement compris. Pendant de `displayStatBases`, qui donne la part hors
+ * équipement : leur écart est l'apport du stuff.
+ *
+ * La source des bonus reste au choix de l'appelant — la tuile de collection
+ * passe ceux des pièces seules, la fiche y ajoute les bonus de set.
+ */
+export function displayStats(
+  card: {
+    baseHp: number
+    baseAtk: number
+    baseDef: number
+    baseSpd: number
+  },
+  level: number,
+  variant: CardVariant,
+  palier: number,
+  bonuses: StatBonuses,
+): { pv: number; atq: number; def: number; vit: number } {
+  return {
+    pv: Math.round(
+      finalStatWithBonuses(card.baseHp, level, variant, palier, bonuses.hp),
+    ),
+    atq: Math.round(
+      finalStatWithBonuses(card.baseAtk, level, variant, palier, bonuses.atk),
+    ),
+    def: Math.round(
+      finalStatWithBonuses(card.baseDef, level, variant, palier, bonuses.def),
+    ),
+    vit: Math.round(finalSpeed(card.baseSpd, bonuses.spd)),
+  }
+}
+
+/**
+ * Stats d'une carte SANS son équipement, aux clés d'AFFICHAGE (pv/atq/def/vit).
+ *
+ * La face de carte montre la base dans la pastille et l'apport de l'équipement
+ * dans la barre à côté ; il lui faut donc les deux. Ce calcul était dupliqué
+ * entre la tuile de collection et la fiche de carte.
+ *
+ * La vitesse n'a ni niveau, ni variante, ni palier (cf. `finalSpeed`) : sa base
+ * est celle du catalogue.
+ */
+export function displayStatBases(
+  card: {
+    baseHp: number
+    baseAtk: number
+    baseDef: number
+    baseSpd: number
+  },
+  level: number,
+  variant: CardVariant,
+  palier: number,
+): { pv: number; atq: number; def: number; vit: number } {
+  return {
+    pv: Math.round(finalStat(card.baseHp, level, variant, palier)),
+    atq: Math.round(finalStat(card.baseAtk, level, variant, palier)),
+    def: Math.round(finalStat(card.baseDef, level, variant, palier)),
+    vit: Math.round(card.baseSpd),
+  }
+}
+
 export function finalStatWithBonuses(
   baseStat: number,
   level: number,

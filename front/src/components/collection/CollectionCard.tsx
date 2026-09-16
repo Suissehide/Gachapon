@@ -3,10 +3,11 @@ import { Sparkles, Star, Swords } from 'lucide-react'
 import type { Card, CardVariant } from '../../api/collection.api.ts'
 import { describePassive } from '../../constants/passives.constant.ts'
 import { useCardEquipmentBonuses } from '../../queries/useEquipment.ts'
+import type { StatBonuses } from '../../utils/cardStats.ts'
 import {
   computePower,
-  finalSpeed,
-  finalStatWithBonuses,
+  displayStatBases,
+  displayStats,
 } from '../../utils/cardStats.ts'
 import type { CardStats } from '../shared/tcg-card/TcgCardFace.tsx'
 import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
@@ -62,6 +63,42 @@ type Props = {
   onClick: () => void
 }
 
+/**
+ * Stats de la face de carte : finales, base hors équipement, et puissance.
+ *
+ * Hors composant à dessein — ces trois calculs conditionnels faisaient franchir
+ * à `CollectionCard` le seuil de complexité cognitive.
+ */
+function cardFaceStats(
+  input: {
+    card: Props['card']
+    level: number
+    variant: CardVariant
+    palier: number
+    bonuses: StatBonuses
+  } | null,
+): {
+  stats: CardStats | null
+  statBases: ReturnType<typeof displayStatBases> | null
+  power: number | null
+} {
+  if (input === null) {
+    return { stats: null, statBases: null, power: null }
+  }
+  const { card, level, variant, palier, bonuses } = input
+  const stats = displayStats(card, level, variant, palier, bonuses)
+  return {
+    stats,
+    statBases: displayStatBases(card, level, variant, palier),
+    power: computePower({
+      hp: stats.pv,
+      atk: stats.atq,
+      def: stats.def,
+      spd: stats.vit,
+    }),
+  }
+}
+
 export function CollectionCard({
   card,
   variant,
@@ -78,49 +115,11 @@ export function CollectionCard({
   // Bonus d'équipement de cette carte (vides si non possédée ou si l'équipement
   // n'est pas le nôtre — ex. collection d'un autre joueur).
   const bonuses = useCardEquipmentBonuses(userCardId ?? '')
-  const stats: CardStats | null =
+  const { stats, statBases, power } = cardFaceStats(
     isOwned && level && palier
-      ? {
-          pv: Math.round(
-            finalStatWithBonuses(
-              card.baseHp,
-              level,
-              variant,
-              palier,
-              bonuses.hp,
-            ),
-          ),
-          atq: Math.round(
-            finalStatWithBonuses(
-              card.baseAtk,
-              level,
-              variant,
-              palier,
-              bonuses.atk,
-            ),
-          ),
-          def: Math.round(
-            finalStatWithBonuses(
-              card.baseDef,
-              level,
-              variant,
-              palier,
-              bonuses.def,
-            ),
-          ),
-          vit: Math.round(finalSpeed(card.baseSpd, bonuses.spd)),
-        }
-      : null
-
-  const power =
-    stats !== null
-      ? computePower({
-          hp: stats.pv,
-          atk: stats.atq,
-          def: stats.def,
-          spd: stats.vit,
-        })
-      : null
+      ? { card, level, variant, palier, bonuses }
+      : null,
+  )
 
   const description =
     isOwned && palier ? describePassive(card.passiveKey, palier) : null
@@ -145,6 +144,7 @@ export function CollectionCard({
           level={shownLevel}
           element={card.element}
           stats={isOwned ? stats : null}
+          statBases={isOwned ? statBases : null}
           description={isOwned ? description : null}
         />
 
