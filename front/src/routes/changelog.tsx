@@ -62,6 +62,10 @@ const RELEASES: ChangelogRelease[] = [
       },
       {
         type: 'improved',
+        text: 'Le set « Précision » s’appelle désormais « Affût », et il s’active à trois pièces au lieu de quatre. Son ancien nom promettait de la justesse alors qu’il donne du taux de critique, et il était déjà celui d’un passif de combat. Surtout, à quatre pièces le build critique complet était impossible : Fureur et lui réclamaient huit emplacements pour sept. Fureur (4) et Affût (3) tiennent maintenant pile sur la même carte — dégâts critiques et taux de critique enfin ensemble. Le bonus, lui, ne change pas, pas plus que les noms de tes pièces.',
+      },
+      {
+        type: 'improved',
         text: 'Gros coup de règle sur l’équilibrage. La courbe de niveau joueur est multipliée par cinq et l’XP de premier passage divisée par trois : monter au niveau 30 ne tient plus dans une journée. L’arbre de compétences coûte maintenant 109 points — exactement ce qu’un niveau 100 possède — donc plus aucun nœud n’est un sacrifice obligé ; la branche Collection devient enfin désirable (recyclage +30 %, et elle s’ouvre désormais sur ses meilleurs nœuds), les nœuds de butin de Combat redescendent d’un tiers, et le bonus de butin ne gonfle plus la chance de carte, seulement celle d’équipement. « Opulence » ne double plus le plafond d’achat de packs d’énergie : elle le porte à cinq par jour au lieu de six. Enfin, la vitesse ne se tire plus qu’en valeur plate : les pièces qui portaient du % VIT ont été retirées au profit d’une autre sous-stat.',
       },
       {
@@ -153,7 +157,7 @@ const RELEASES: ChangelogRelease[] = [
       },
       {
         type: 'new',
-        text: 'Les sets : sept sets, mais tous n’ont pas la même taille. Célérité et Colosse s’activent à deux pièces, Assaut et Percée à trois, Fureur, Précision et Sangsue à quatre — de quoi en porter deux à la fois sur une même carte. Attention : le compte se fait carte par carte, pas sur ton inventaire. Le bouton « Bonus de sets » récapitule tout.',
+        text: 'Les sets : sept sets, mais tous n’ont pas la même taille. Célérité et Colosse s’activent à deux pièces, Affût, Assaut et Percée à trois, Fureur et Sangsue à quatre — de quoi en porter deux à la fois sur une même carte. Attention : le compte se fait carte par carte, pas sur ton inventaire. Le bouton « Bonus de sets » récapitule tout.',
       },
       {
         type: 'new',

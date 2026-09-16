@@ -124,18 +124,20 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   //    il ne s'applique qu'à un coup sur vingt. Sa force vient d'un build
   //    monté en taux de crit ailleurs (stat principale des bottes, sous-stats
   //    critRatePct), pas de sa propre magnitude — la monter ne corrige rien,
-  //    même à 280 % il restait sous Précision à 25 %.
+  //    même à 280 % il restait sous Affût à 25 %.
   //  - Percée (pénétration d'armure) ronge une DÉF ennemie aujourd'hui
   //    petite devant `combat.defMitigationRef`. Elle prendra sa valeur quand
   //    la campagne et les tours auront des ennemis lourdement blindés ; la
   //    gonfler d'ici là ne ferait que la rendre absurde contre tout le reste.
   'set.fureurCritDmgPct': 55,
-  // Précision et Sangsue restent sous la cible, volontairement. Précision
-  // perd de la valeur à mesure que le build monte en crit (rendements
-  // décroissants en approchant 100 % : 37 pt à 5 % de crit de base, 18 pt
-  // dans un build déjà à 75 %), donc la monter n'aiderait que les builds qui
-  // en ont le moins besoin. Sangsue à 16 % rend déjà 27 pt.
-  'set.precisionCritRatePct': 25,
+  // Affût exige 3 pièces (set-bonuses.ts), sa cible est donc 27 pt et non 36.
+  // Sa valeur mesurée l'encadre au lieu de rester dessous : 37 pt à 5 % de
+  // crit de base, 18 pt dans un build déjà à 75 % — le taux de crit a des
+  // rendements décroissants en approchant 100 %. D'où la magnitude inchangée
+  // au passage de 4 à 3 pièces : la monter n'aiderait que les builds qui en
+  // ont le moins besoin, la baisser punirait ceux qui démarrent.
+  // Sangsue, elle, reste sous sa cible de set de 4, volontairement : 27 pt.
+  'set.affutCritRatePct': 25,
   'set.sangsueLifestealPct': 16,
   'set.perceeArmorPenPct': 25,
   'set.assautAtkPct': 16,

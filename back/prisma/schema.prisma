@@ -126,7 +126,7 @@ enum EquipmentSlot {
 /// ne sont pas liés à une tour (une tour droppe un slot, tous sets confondus).
 enum EquipmentSet {
   FUREUR
-  PRECISION
+  AFFUT
   PERCEE
   SANGSUE
   // Sets purs : les deux paliers portent la meme stat. CELERITE s'arrete a

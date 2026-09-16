@@ -72,7 +72,7 @@ export const CONFIG_KEYS = [
   'equip.substatLifestealPctMin',
   'equip.substatLifestealPctMax',
   'set.fureurCritDmgPct',
-  'set.precisionCritRatePct',
+  'set.affutCritRatePct',
   'set.sangsueLifestealPct',
   'set.perceeArmorPenPct',
   'set.assautAtkPct',

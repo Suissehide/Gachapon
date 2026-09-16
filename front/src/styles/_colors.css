@@ -151,7 +151,7 @@
   /* Le jeu compte 12 clés de sous-stat, pas les 5 de la maquette : la
      pénétration d'armure et le vol de vie ont besoin de leur propre teinte.
      Les dégâts crit aussi : deux SETS portent une stat « crit » (Fureur les
-     dégâts, Précision le taux), et leurs pastilles de couleur seraient
+     dégâts, Affût le taux), et leurs pastilles de couleur seraient
      indiscernables sur une seule teinte. */
   --stat-critdmg: #d946ef;
   --stat-armorpen: #14b8a6;

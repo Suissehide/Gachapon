@@ -32,7 +32,7 @@ import {
 /** Libellés français des 4 sets — seule source, réutilisée par l'inventaire et `listSets`. */
 export const SET_LABELS: Record<SetKey, string> = {
   FUREUR: 'Fureur',
-  PRECISION: 'Précision',
+  AFFUT: 'Affût',
   PERCEE: 'Percée',
   SANGSUE: 'Sangsue',
   ASSAUT: 'Assaut',

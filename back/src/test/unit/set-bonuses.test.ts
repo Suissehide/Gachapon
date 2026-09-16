@@ -8,7 +8,7 @@ import {
 
 const CONF = {
   'set.fureurCritDmgPct': 35,
-  'set.precisionCritRatePct': 25,
+  'set.affutCritRatePct': 25,
   'set.sangsueLifestealPct': 16,
   'set.perceeArmorPenPct': 20,
   'set.assautAtkPct': 16,
@@ -67,10 +67,18 @@ describe('bonus de set', () => {
   it('combine un 4-set et un 2-set, la 7e pièce étant perdue', () => {
     expect(
       computeSetBonuses(
-        [...q('PRECISION', 4), ...q('COLOSSE', 2), 'PERCEE'],
+        [...q('SANGSUE', 4), ...q('COLOSSE', 2), 'PERCEE'],
         DEFS,
       ),
-    ).toEqual({ critRatePct: 25, hpPct: 12 })
+    ).toEqual({ lifestealPct: 16, hpPct: 12 })
+  })
+
+  // La raison d'être du passage d'Affût de 4 à 3 pièces : les deux moitiés du
+  // build critique tiennent désormais ensemble sur une même carte.
+  it('combine Fureur (4) et Affût (3) sur les 7 emplacements', () => {
+    expect(
+      computeSetBonuses([...q('FUREUR', 4), ...q('AFFUT', 3)], DEFS),
+    ).toEqual({ critDmgPct: 35, critRatePct: 25 })
   })
 
   it('combine un 3-set et deux 2-sets', () => {

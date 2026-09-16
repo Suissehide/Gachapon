@@ -20,7 +20,7 @@ const SLOTS: EquipmentSlot[] = [
 ]
 const SETS: EquipmentSet[] = [
   EquipmentSet.FUREUR,
-  EquipmentSet.PRECISION,
+  EquipmentSet.AFFUT,
   EquipmentSet.PERCEE,
   EquipmentSet.SANGSUE,
   EquipmentSet.ASSAUT,
@@ -125,7 +125,7 @@ const RARITY_DROP_WEIGHT: Record<CardRarity, number> = {
 
 const SET_LABEL: Record<EquipmentSet, string> = {
   FUREUR: 'Fureur',
-  PRECISION: 'Précision',
+  AFFUT: 'Affût',
   PERCEE: 'Percée',
   SANGSUE: 'Sangsue',
   ASSAUT: 'Assaut',
@@ -161,7 +161,7 @@ const PIECE_NAME: Record<EquipmentSet, Record<EquipmentSlot, string>> = {
     BOOTS: 'Grèves du Fracas',
     BELT: 'Ceinturon du Berserk',
   },
-  PRECISION: {
+  AFFUT: {
     WEAPON: 'Lame du Guetteur',
     ARMOR: 'Plastron du Tireur',
     RING: "Anneau de l'Œil Juste",

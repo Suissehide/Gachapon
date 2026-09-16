@@ -20,7 +20,7 @@ export type EquipmentRarity =
 // Miroir de EquipmentSet (prisma/schema.prisma).
 export type EquipmentSetKey =
   | 'FUREUR'
-  | 'PRECISION'
+  | 'AFFUT'
   | 'PERCEE'
   | 'SANGSUE'
   | 'ASSAUT'

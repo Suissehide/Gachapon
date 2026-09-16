@@ -21,7 +21,7 @@ import type { EquipmentBonuses } from '../combat/combat-stats.domain'
 
 export const SET_KEYS = [
   'FUREUR',
-  'PRECISION',
+  'AFFUT',
   'PERCEE',
   'SANGSUE',
   'ASSAUT',
@@ -35,7 +35,7 @@ export type SetSize = 2 | 3 | 4
 
 export const SET_BONUS_CONFIG_KEYS = [
   'set.fureurCritDmgPct',
-  'set.precisionCritRatePct',
+  'set.affutCritRatePct',
   'set.perceeArmorPenPct',
   'set.sangsueLifestealPct',
   'set.assautAtkPct',
@@ -65,15 +65,22 @@ export function setBonusesFromConfig(
       pieces: 4,
       bonuses: { critDmgPct: c['set.fureurCritDmgPct'] },
     },
-    PRECISION: {
-      pieces: 4,
-      bonuses: { critRatePct: c['set.precisionCritRatePct'] },
-    },
     SANGSUE: {
       pieces: 4,
       bonuses: { lifestealPct: c['set.sangsueLifestealPct'] },
     },
     // 3 pièces — laissent 4 emplacements libres pour un second set.
+    //
+    // Affût est passé de 4 à 3 pièces : à 4, le build critique complet était
+    // impossible — Fureur (4) et Affût (4) demandaient 8 emplacements pour 7.
+    // Fureur ne vaut rien sans taux de crit, et le seul moyen d'en monter
+    // était les sous-stats et la stat principale des bottes. À 3, la paire
+    // Fureur + Affût tient pile dans les 7 emplacements, et le set qui
+    // débloque Fureur devient enfin accessible en même temps que lui.
+    AFFUT: {
+      pieces: 3,
+      bonuses: { critRatePct: c['set.affutCritRatePct'] },
+    },
     PERCEE: {
       pieces: 3,
       bonuses: { armorPenPct: c['set.perceeArmorPenPct'] },

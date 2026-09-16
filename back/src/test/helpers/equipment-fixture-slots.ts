@@ -81,8 +81,8 @@ export const EQUIPMENT_INITIAL_SUBSTATS = reservation('BOOTS', 'FUREUR')
 // fichiers. Doivent rester sur un slot CLASSIQUE (cf. exception ci-dessus) :
 // campaign.domain.ts filtre le pool de drop sur CAMPAIGN_EQUIPMENT_SLOTS,
 // une pièce AMULET/GLOVES/BOOTS/BELT n'y serait jamais tirée.
-export const CAMPAIGN = reservation('WEAPON', 'PRECISION')
-export const LEVELUP_REFILL = reservation('ARMOR', 'PRECISION')
+export const CAMPAIGN = reservation('WEAPON', 'AFFUT')
+export const LEVELUP_REFILL = reservation('ARMOR', 'AFFUT')
 
 // tower.test.ts — pool de drop garanti de la tour FEU (élément FIRE → slot
 // GLOVES, cf. TOWER_SLOT_BY_ELEMENT). Le tirage de tour pioche le set
@@ -110,21 +110,21 @@ export const TOWER_FIRE_ALL_SETS = SET_KEYS.map((setKey) =>
 // un slot de tour : une pièce classique et une pièce de tour, même rareté,
 // dans le même catalogue ; le filtre CAMPAIGN_EQUIPMENT_SLOTS doit rendre la
 // pièce de tour invisible au tirage.
-export const CAMPAIGN_SLOT_FILTER_CLASSIC = reservation('RING', 'PRECISION')
+export const CAMPAIGN_SLOT_FILTER_CLASSIC = reservation('RING', 'AFFUT')
 export const CAMPAIGN_SLOT_FILTER_TOWER = reservation('BELT', 'FUREUR')
 
 // equipment-quest-progress.e2e.test.ts — pièces améliorées puis recyclées
 // pour vérifier que les événements équipement alimentent bien les quêtes.
 // Jamais équipées sur une carte.
-export const EQUIPMENT_QUESTS = reservation('BELT', 'PRECISION')
+export const EQUIPMENT_QUESTS = reservation('BELT', 'AFFUT')
 
 // team-perk-forge.test.ts — 1 pièce, jamais équipée, sert uniquement au
 // calcul de coût d'amélioration (bonus d'équipe `forge`).
-export const EQUIPMENT_TEAM_PERK_FORGE = reservation('BOOTS', 'PRECISION')
+export const EQUIPMENT_TEAM_PERK_FORGE = reservation('BOOTS', 'AFFUT')
 
 // equipment-skill-effects.test.ts — 1 pièce par joueur, jamais équipée :
 // coût d'amélioration (Forgeron) et or de recyclage (Ferrailleur).
-export const EQUIPMENT_SKILL_EFFECTS = reservation('AMULET', 'PRECISION')
+export const EQUIPMENT_SKILL_EFFECTS = reservation('AMULET', 'AFFUT')
 
 const ALL_RESERVATIONS = [
   EQUIPMENT_TEST_WEAPON,

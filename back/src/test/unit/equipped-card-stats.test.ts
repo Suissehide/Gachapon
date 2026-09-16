@@ -20,7 +20,7 @@ const BASES_COMBAT = { critRate: 5, critDmg: 150, armorPen: 0, lifesteal: 0 }
 
 const setDefs = setBonusesFromConfig({
   'set.fureurCritDmgPct': 35,
-  'set.precisionCritRatePct': 25,
+  'set.affutCritRatePct': 25,
   'set.sangsueLifestealPct': 16,
   'set.perceeArmorPenPct': 20,
   'set.assautAtkPct': 16,
