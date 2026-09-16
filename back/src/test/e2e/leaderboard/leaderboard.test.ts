@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
+
 import { CAMPAIGN_TEAM_KEY } from '../../../main/domain/combat/combat-team-keys'
 import { buildTestApp } from '../../helpers/build-test-app'
 import { setCombatTeam } from '../../helpers/combat-team-fixture'

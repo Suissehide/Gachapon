@@ -131,6 +131,9 @@ describe('Combat teams per mode routes', () => {
   })
 
   it('éditer une tour ne touche pas les autres modes', async () => {
+    // Équipe de campagne posée ici, pas empruntée au test précédent : ce
+    // test doit rester vrai même joué seul.
+    await setCombatTeam(app, cookies, 'campaign', [userCard1Id])
     await setCombatTeam(app, cookies, 'tower:FIRE', [userCard2Id])
 
     const fire = await app.inject({
@@ -179,6 +182,22 @@ describe('Combat teams per mode routes', () => {
   })
 
   it('DELETE refait hériter le mode', async () => {
+    // État posé ici, pas hérité d'un test précédent : la campagne et
+    // tower:FIRE reçoivent des équipes DIFFÉRENTES, pour distinguer sans
+    // ambiguïté « hérite de la campagne » de « garde son ancienne équipe ».
+    await setCombatTeam(app, cookies, 'campaign', [userCard2Id])
+    await setCombatTeam(app, cookies, 'tower:FIRE', [userCard1Id])
+
+    const before = await app.inject({
+      method: 'GET',
+      url: '/combat/teams/tower:FIRE',
+      headers: { cookie: cookies },
+    })
+    expect(before.json().inherited).toBe(false)
+    expect(
+      before.json().team.map((u: { userCardId: string }) => u.userCardId),
+    ).toEqual([userCard1Id])
+
     const del = await app.inject({
       method: 'DELETE',
       url: '/combat/teams/tower:FIRE',
@@ -186,12 +205,20 @@ describe('Combat teams per mode routes', () => {
     })
     expect(del.statusCode).toBe(204)
 
-    const fire = await app.inject({
+    const after = await app.inject({
       method: 'GET',
       url: '/combat/teams/tower:FIRE',
       headers: { cookie: cookies },
     })
-    expect(fire.json().inherited).toBe(true)
+    expect(after.json().inherited).toBe(true)
+    // Pas seulement `inherited === true` : on vérifie que la ligne effacée
+    // est bien celle de tower:FIRE, en confirmant que l'équipe rendue est
+    // EXACTEMENT celle de la campagne — une suppression qui aurait aussi
+    // effacé la mauvaise ligne (ou une route qui rendrait 204 sans agir)
+    // serait détectée ici.
+    expect(
+      after.json().team.map((u: { userCardId: string }) => u.userCardId),
+    ).toEqual([userCard2Id])
   })
 
   it('DELETE sur la campagne est refusé — elle est la racine du repli', async () => {
