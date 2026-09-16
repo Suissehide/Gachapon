@@ -187,8 +187,13 @@ export function DropRail({ children }: { children: ReactNode }) {
   // s'arrêter pile dedans, et le défilement se voit sans avoir à le deviner.
   // Le rembourrage de fin est plus large que celui de début pour que le dernier
   // encart ne vienne pas coller au bord du panneau en fin de défilement.
+  //
+  // `scroll-pl-*` doit reprendre le rembourrage de début de la piste : sans
+  // lui, le premier point d'accrochage tombe à 24 px du début du contenu,
+  // `scrollLeft: 0` n'est plus une position valide, et l'accrochage obligatoire
+  // décalait la rangée vers la droite de lui-même à l'ouverture de la fenêtre.
   return (
-    <div className="-mx-6 mt-4 w-[calc(100%+3rem)] snap-x snap-mandatory overflow-x-auto overscroll-x-contain pb-2 sm:-mx-8 sm:w-[calc(100%+4rem)] [scrollbar-width:thin]">
+    <div className="-mx-6 mt-4 w-[calc(100%+3rem)] snap-x snap-mandatory scroll-pl-6 overflow-x-auto overscroll-x-contain pb-2 sm:-mx-8 sm:w-[calc(100%+4rem)] sm:scroll-pl-8 [scrollbar-width:thin]">
       {/* Le rembourrage vit sur la piste, pas sur le conteneur de défilement :
           un `padding-right` posé sur ce dernier n'est pas toujours compté dans
           la zone défilable, et le dernier encart collerait au bord. */}
