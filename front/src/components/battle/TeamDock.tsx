@@ -18,12 +18,10 @@ export function TeamDock({
   team,
   onEdit,
   modeLabel,
-  inherited = false,
 }: {
   team: TeamUnit[]
   onEdit: () => void
   modeLabel: string
-  inherited?: boolean
 }) {
   const total = team.reduce((acc, u) => acc + computePower(u.stats), 0)
 
@@ -41,11 +39,6 @@ export function TeamDock({
             <div className="font-display text-base font-extrabold text-white">
               {modeLabel}
             </div>
-            {inherited && (
-              <span className="mt-0.5 inline-block rounded-full border border-white/20 bg-white/10 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.1em] text-white/70">
-                Équipe de campagne
-              </span>
-            )}
             <div className="mt-0.5 inline-flex items-center gap-1 font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-white/60">
               <Swords className="h-3 w-3 text-amber-400" />
               <b className="tabular-nums text-[13px] text-amber-400">

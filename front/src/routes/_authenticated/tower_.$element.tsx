@@ -219,7 +219,6 @@ function TowerFloorsPage() {
           team={team.data?.team ?? []}
           onEdit={() => setEditorOpen(true)}
           modeLabel={towerName}
-          inherited={team.data?.inherited}
         />
       )}
 

@@ -202,7 +202,6 @@ function RaidAttackPage() {
           team={combatTeam.data?.team ?? []}
           onEdit={() => setEditorOpen(true)}
           modeLabel={RAID_TEAM_LABEL}
-          inherited={combatTeam.data?.inherited}
         />
       )}
 

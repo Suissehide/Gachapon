@@ -1,4 +1,4 @@
-import { Check, Info, RotateCcw, Save, Sparkles, Swords, X } from 'lucide-react'
+import { Check, RotateCcw, Save, Sparkles, Swords, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { CAMPAIGN_TEAM_KEY } from '../../constants/combatTeam.constant.ts'
@@ -187,16 +187,6 @@ export function TeamEditorPopup({
         </PopupHeader>
 
         <PopupBody className="flex flex-col gap-5">
-          {inherited && !isCampaign && (
-            <div className="flex items-start gap-2 rounded-xl border border-border bg-card px-3.5 py-2.5">
-              <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-              <p className="text-sm text-text-light">
-                {modeLabel} utilise ton équipe de campagne. Modifie-la ici pour
-                lui en donner une à elle — la campagne ne bougera pas.
-              </p>
-            </div>
-          )}
-
           {/* Slots — kept smaller by constraining the row width so the 3 slots
               don't take the full popup width. */}
           <div className="mx-auto grid w-full max-w-[420px] grid-cols-3 gap-3">

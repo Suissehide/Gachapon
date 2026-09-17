@@ -128,13 +128,13 @@ function TowerCard({
 
         {/* L'équipe qui monte CETTE tour — d'un coup d'œil, on voit laquelle est
             contre-pickée et laquelle suit encore la campagne. */}
-        <div className="mt-3 flex items-center gap-2 border-t border-border pt-3">
+        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
           {teamLoading ? (
             <div className="flex flex-wrap gap-1.5">
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
-                  className="aspect-[2/3] w-[34px] animate-pulse rounded-md bg-border"
+                  className="aspect-[2/3] w-[72px] animate-pulse rounded-md bg-border"
                 />
               ))}
             </div>
@@ -144,7 +144,7 @@ function TowerCard({
                 <MiniCard
                   key={unit.userCardId}
                   unit={unit}
-                  width="w-[34px]"
+                  width="w-[72px]"
                   showName={false}
                 />
               ))}
@@ -156,11 +156,6 @@ function TowerCard({
           ) : (
             <span className="font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-text-light/50">
               Aucune équipe
-            </span>
-          )}
-          {teamView?.inherited && teamView.team.length > 0 && (
-            <span className="ml-auto rounded-full border border-border px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.1em] text-text-light/60">
-              Équipe de campagne
             </span>
           )}
         </div>
