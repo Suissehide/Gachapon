@@ -10,9 +10,9 @@ import {
   SLOT_ICONS,
   SLOT_LABELS,
 } from '../../components/collection/EquipmentSlotsPanel.tsx'
+import { InfoButton } from '../../components/shared/InfoButton.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
-import { Button } from '../../components/ui/button.tsx'
 import { Card, CardTitle } from '../../components/ui/card.tsx'
 import { ELEMENT_COLOR, ELEMENT_ICON } from '../../constants/card.constant.ts'
 import { towerTeamKey } from '../../constants/combatTeam.constant.ts'
@@ -35,15 +35,13 @@ function TowerListPage() {
         title="Tours élémentaires"
         subtitle="Gravis les étages pour augmenter le taux de rareté des pièces obtenues."
         right={
-          <Button
-            variant="pill"
-            size="pill"
+          <InfoButton
+            icon={Swords}
             onClick={() => setElementsOpen(true)}
             title="Comprendre les éléments"
           >
-            <Swords className="h-3.5 w-3.5 text-amber-600" />
             Éléments
-          </Button>
+          </InfoButton>
         }
       />
 

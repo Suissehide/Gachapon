@@ -36,10 +36,10 @@ import { ElementGuidePopup } from '../../components/battle/ElementGuidePopup.tsx
 import { FarmResultPopup } from '../../components/battle/resultKit.tsx'
 import { TeamDock } from '../../components/battle/TeamDock.tsx'
 import { AuroraGrid } from '../../components/shared/decorations/AuroraGrid'
+import { InfoButton } from '../../components/shared/InfoButton.tsx'
 import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { TeamEditorPopup } from '../../components/team/TeamEditorPopup.tsx'
-import { Button } from '../../components/ui/button.tsx'
 import { Popup, PopupContent } from '../../components/ui/popup.tsx'
 import {
   CAMPAIGN_TEAM_KEY,
@@ -220,15 +220,13 @@ function CampaignPage() {
           title="Campagne"
           subtitle="Progresse à travers les chapitres pour débloquer drops et puissance"
           right={
-            <Button
-              variant="pill"
-              size="pill"
+            <InfoButton
+              icon={Swords}
               onClick={() => setElementsOpen(true)}
               title="Comprendre les éléments"
             >
-              <Swords className="h-3.5 w-3.5 text-amber-600" />
               Éléments
-            </Button>
+            </InfoButton>
           }
         />
 

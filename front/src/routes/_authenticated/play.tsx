@@ -38,6 +38,8 @@ import { StreakCard } from '../../components/play/StreakCard.tsx'
 import { TokenCard } from '../../components/play/TokenCard.tsx'
 import { WagerBanner } from '../../components/play/WagerBanner.tsx'
 import { AuroraGrid } from '../../components/shared/decorations/AuroraGrid'
+import { InfoButton } from '../../components/shared/InfoButton.tsx'
+import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import { apiUrl as API_URL } from '../../constants/config.constant.ts'
 import { TOAST_SEVERITY } from '../../constants/ui.constant.ts'
@@ -432,23 +434,21 @@ function Play() {
       <AuroraGrid />
 
       {/* En-tête */}
-      <header className="relative z-1 mx-auto flex w-full max-w-5xl items-end justify-between px-4">
-        <div>
-          <p className="font-mono text-[11px] font-bold uppercase tracking-[0.25em] text-text-light/60">
-            Gachapon / Tirage
-          </p>
-          <h1 className="mt-2 font-display text-4xl font-bold tracking-tight text-text sm:text-5xl">
-            Tirage
-          </h1>
-        </div>
-        <Button
-          variant="outline"
-          className="rounded-full text-text-light hover:border-amber-soft hover:text-primary-dark"
-          onClick={() => setRatesOpen(true)}
-        >
-          <Gem className="h-3.5 w-3.5 text-secondary" />
-          Taux de drop
-        </Button>
+      <header className="relative z-1 mx-auto w-full max-w-5xl px-4">
+        <PageHeader
+          breadcrumbs={[{ label: 'Gachapon' }, { label: 'Tirage' }]}
+          title="Tirage"
+          subtitle="Dépense tes jetons pour tirer de nouvelles cartes."
+          right={
+            <InfoButton
+              icon={Gem}
+              onClick={() => setRatesOpen(true)}
+              title="Voir les taux de drop"
+            >
+              Taux de drop
+            </InfoButton>
+          }
+        />
       </header>
 
       <WagerBanner />

@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 
 import type { EquipmentSetDefinition } from '../../api/equipment.api'
 import { statColorVar } from '../../utils/cardStats.ts'
+import { InfoButton } from '../shared/InfoButton.tsx'
 import { Button } from '../ui/button.tsx'
 import {
   Popup,
@@ -39,16 +40,13 @@ export function SetBonusGuide({ sets }: { sets: EquipmentSetDefinition[] }) {
 
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        className="gap-1.5"
+      <InfoButton
+        icon={Layers}
         onClick={() => setOpen(true)}
+        title="Comprendre les bonus de sets"
       >
-        <Layers className="h-4 w-4" />
         Bonus de sets
-      </Button>
+      </InfoButton>
 
       <Popup open={open} onOpenChange={setOpen}>
         <PopupContent size="lg">
