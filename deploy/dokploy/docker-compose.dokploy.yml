@@ -37,8 +37,13 @@ services:
       - REDIS_URL=${REDIS_URL}
       - RATE_LIMIT_MAX=${RATE_LIMIT_MAX}
       - RATE_LIMIT_TIME_WINDOW=${RATE_LIMIT_TIME_WINDOW}
-      - SMTP_HOST=${SMTP_HOST:-mailpit}
-      - SMTP_PORT=${SMTP_PORT:-1025}
+      # Pas de fallback vers mailpit : un SMTP_HOST absent doit se solder par un
+      # envoi qui echoue, jamais par un attrape-mail qui avale silencieusement
+      # les liens de verification et de reinitialisation de mot de passe.
+      # Attention : config.ts retombe sur 'localhost' si la variable est vide,
+      # donc l'echec survient a l'envoi et non au demarrage du back.
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
       - SMTP_SECURE=${SMTP_SECURE:-false}
       - SMTP_USER=${SMTP_USER:-}
       - SMTP_PASS=${SMTP_PASS:-}
@@ -53,8 +58,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      mailpit:
-        condition: service_started
     restart: unless-stopped
 
   front:
@@ -103,11 +106,15 @@ services:
       timeout: 3s
       interval: 5s
 
+  # Staging uniquement : attrape-mail, jamais en prod (il avalerait les emails
+  # de verification et de reinitialisation). Active avec COMPOSE_PROFILES=mailpit
+  # dans les variables de l'app Dokploy staging, et la seulement.
   mailpit:
     image: axllent/mailpit:latest
+    profiles: ["mailpit"]
     restart: unless-stopped
     ports:
-      - "8025:8025"
+      - "${MAILPIT_PORT:-8025}:8025"
     environment:
       - MP_MAX_MESSAGES=500
 
