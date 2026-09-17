@@ -1,5 +1,5 @@
 // changelog-sync: dernier commit intégré au changelog. Mis à jour par la commande /changelog.
-// last-synced-commit: 82900c68d5f4bf302ec7f0a5872cc72e586e8c10
+// last-synced-commit: f86bba614378019d4c0fce4fa098091b7ede28de
 import { createFileRoute } from '@tanstack/react-router'
 
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
@@ -37,6 +37,27 @@ const TYPE_META: Record<ChangeType, { label: string; className: string }> = {
 }
 
 const RELEASES: ChangelogRelease[] = [
+  {
+    version: '3.2',
+    title: 'Chaque mode garde son équipe',
+    date: 'Septembre 2026',
+    summary:
+      'Une équipe pour la tour de Braise, une autre pour celle de Prisme, une troisième pour la campagne — chacune t’attend là où tu l’as laissée. Et les monstres des tours ont enfin un visage.',
+    entries: [
+      {
+        type: 'new',
+        text: 'La campagne, chacune des quatre tours et le raid ont désormais leur propre équipe. Tu montes une composition contre le feu, tu passes à la tour de Prisme, tu reviens : ta composition anti-feu est toujours là. Plus rien à recomposer à chaque aller-retour. Tant que tu n’as pas touché à un écran, il joue ton équipe de campagne — un nouveau venu n’a donc qu’une équipe à faire, et elle sert partout. Dès que tu modifies celle d’une tour, cette tour devient indépendante et la campagne ne la fait plus bouger ; le bouton « Revenir à l’équipe de campagne », dans l’éditeur, défait ce choix quand tu veux. La liste des tours affiche les trois cartes que chacune emmène, et ton équipe actuelle a été reprise telle quelle : tu ne repars pas de zéro.',
+      },
+      {
+        type: 'fixed',
+        text: 'Les monstres des tours ont enfin un visage. Les 120 ennemis des quarante étages s’affichaient avec une image manquante et s’appelaient tous « Ennemi 1 », en préparation comme en combat. Chaque tour puise maintenant dans les familles de son élément — élémentaires, minotaures, wyvernes et kobolds pour Braise, basilics pour Monolithe — sans jamais répéter deux fois le même sprite dans un étage. Le contre-pick reste donc lisible : une tour, un élément à contrer.',
+      },
+      {
+        type: 'improved',
+        text: 'Le classement de puissance se lit sur ton équipe de campagne. Avec six équipes possibles, il fallait en désigner une : c’est celle-là qui te représente. Si tu ne soignes que tes équipes de tour, pense à garder une campagne à jour.',
+      },
+    ],
+  },
   {
     version: '3.1',
     title: 'Rejouer sans y passer la soirée',
