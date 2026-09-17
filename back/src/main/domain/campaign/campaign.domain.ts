@@ -18,6 +18,7 @@ import {
   computeFinalStats,
   mitigationRefFor,
 } from '../combat/combat-stats.domain'
+import { CAMPAIGN_TEAM_KEY } from '../combat/combat-team-keys'
 import {
   pickEquipmentForRarity,
   rollFarmCardDrop,
@@ -300,6 +301,7 @@ export function applyCombatBonuses(
 export class CampaignDomain {
   readonly #postgresOrm
   readonly #combatPointsTx
+  readonly #combatTeamTx
   readonly #configService
   readonly #config
   readonly #achievementsDomain
@@ -311,6 +313,7 @@ export class CampaignDomain {
   constructor({
     postgresOrm,
     combatPointsTx,
+    combatTeamTx,
     configService,
     config,
     achievementsDomain,
@@ -321,6 +324,7 @@ export class CampaignDomain {
   }: IocContainer) {
     this.#postgresOrm = postgresOrm
     this.#combatPointsTx = combatPointsTx
+    this.#combatTeamTx = combatTeamTx
     this.#configService = configService
     this.#config = config
     this.#achievementsDomain = achievementsDomain
@@ -465,14 +469,11 @@ export class CampaignDomain {
             throw Boom.notFound('Stage not found')
           }
 
-          // Debit PC (cost from GlobalConfig, default 5)
+          // Debit PC (cost from GlobalConfig, default 5). Vérifie déjà
+          // l'existence de l'utilisateur (Boom.notFound sinon) — inutile de
+          // le relire ici pour la même garde.
           const battleCost = battleCfg['combat.battleCost']
           await this.#combatPointsTx.debitInTx(tx, userId, battleCost, effects)
-
-          const user = await tx.user.findUnique({ where: { id: userId } })
-          if (!user) {
-            throw Boom.notFound('User not found')
-          }
 
           // Ensure progress row exists (avoid race with the read-side check)
           const progress = await tx.userCampaignProgress.upsert({
@@ -509,8 +510,15 @@ export class CampaignDomain {
             throw Boom.forbidden('Stage is locked')
           }
 
-          if (user.combatTeam.length === 0) {
-            throw Boom.badRequest('Deploy a combat team first')
+          const { userCardIds } = await this.#combatTeamTx.resolveIdsInTx(
+            tx,
+            userId,
+            CAMPAIGN_TEAM_KEY,
+          )
+          if (userCardIds.length === 0) {
+            throw Boom.badRequest(
+              "Composez une équipe dans l'éditeur avant de combattre",
+            )
           }
 
           const baseStats: CombatStatsBaseline = {
@@ -522,7 +530,7 @@ export class CampaignDomain {
           const teamUnits = await this.#buildPlayerSimUnits(
             tx,
             userId,
-            user.combatTeam,
+            userCardIds,
             battleCfg['combat.defMitigationRef'],
             baseStats,
             setDefs,

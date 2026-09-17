@@ -998,12 +998,15 @@ describe('cycle de vie du duel', () => {
         },
       })
 
-      // Et la meme carte est dans l'equipe de combat de D : perdre un duel
-      // ne doit pas y laisser une reference morte, que la lecture d'equipe
-      // filtre ensuite en silence.
-      await prisma.user.update({
-        where: { id: userIdD },
-        data: { combatTeam: [dCard.id] },
+      // La carte est dans l'équipe de campagne ET dans celle de la tour de
+      // Braise : une carte perdue en duel doit quitter TOUTES les mémoires,
+      // sinon le joueur découvre une équipe à deux cartes sans avoir été
+      // prévenu — perdre un duel n'est pas un geste volontaire.
+      await prisma.userCombatTeam.createMany({
+        data: [
+          { userId: userIdD, key: 'campaign', userCardIds: [dCard.id] },
+          { userId: userIdD, key: 'tower:FIRE', userCardIds: [dCard.id] },
+        ],
       })
 
       // E ne tire que du LEGENDARY : score largement superieur, D perd et
@@ -1043,11 +1046,17 @@ describe('cycle de vie du duel', () => {
       expect(equipmentAfter).not.toBeNull()
       expect(equipmentAfter?.equippedOnId).toBeNull()
 
-      // L'identifiant a quitte l'equipe de combat du perdant, dans la meme
-      // transaction que la suppression : pas de reference morte.
-      const dAfter = await prisma.user.findUnique({ where: { id: userIdD } })
-      expect(dAfter.combatTeam).not.toContain(dCard.id)
-      expect(dAfter.combatTeam).toHaveLength(0)
+      // L'identifiant a quitte TOUTES les equipes de combat du perdant,
+      // dans la meme transaction que la suppression : pas de reference
+      // morte, sur aucun mode.
+      const dRows = await prisma.userCombatTeam.findMany({
+        where: { userId: userIdD },
+      })
+      expect(dRows).toHaveLength(2)
+      for (const row of dRows) {
+        expect(row.userCardIds).not.toContain(dCard.id)
+        expect(row.userCardIds).toHaveLength(0)
+      }
     })
   })
 

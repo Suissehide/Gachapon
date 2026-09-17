@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
+import { CAMPAIGN_TEAM_KEY } from '../../../main/domain/combat/combat-team-keys'
 import { buildTestApp } from '../../helpers/build-test-app'
+import { setCombatTeam } from '../../helpers/combat-team-fixture'
 
 /**
  * E2E : le bonus d'équipe `xp` (task 5, refonte équipe) multiplie l'XP DE
@@ -86,13 +88,7 @@ describe('Bonus équipe `xp` — XP de campagne', () => {
         palier: 6,
       },
     })
-    const res = await app.inject({
-      method: 'PUT',
-      url: '/combat/team',
-      headers: { cookie: cookies, 'content-type': 'application/json' },
-      payload: { userCardIds: [uc.id] },
-    })
-    expect(res.statusCode).toBe(200)
+    await setCombatTeam(app, cookies, CAMPAIGN_TEAM_KEY, [uc.id])
     // Stage 98-1 = highestIndex(0) + 1 → 'current', attaquable.
     await prisma.userCampaignProgress.upsert({
       where: { userId },

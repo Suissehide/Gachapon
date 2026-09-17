@@ -33,6 +33,10 @@ import { TeamEditorPopup } from '../../../components/team/TeamEditorPopup.tsx'
 import { Button } from '../../../components/ui/button.tsx'
 import { Popup, PopupContent } from '../../../components/ui/popup.tsx'
 import { ELEMENT_LABELS } from '../../../constants/card.constant.ts'
+import {
+  RAID_TEAM_KEY,
+  RAID_TEAM_LABEL,
+} from '../../../constants/combatTeam.constant.ts'
 import { isApiError } from '../../../libs/httpErrorHandler.ts'
 import { RARITY_LABEL_FR } from '../../../libs/rarity.ts'
 import { useCombatTeam } from '../../../queries/useCombatTeam.ts'
@@ -106,7 +110,7 @@ function RaidAttackPage() {
   const navigate = useNavigate()
   const { data: team } = useTeam(id)
   const raid = useRaid(id)
-  const combatTeam = useCombatTeam()
+  const combatTeam = useCombatTeam(RAID_TEAM_KEY)
   const attack = useRaidAttack(id)
 
   const [prepOpen, setPrepOpen] = useState(true)
@@ -137,15 +141,14 @@ function RaidAttackPage() {
     return <RaidGate raid={raid} id={id} />
   }
 
-  const userCardIds = (combatTeam.data?.team ?? []).map((u) => u.userCardId)
-  const hasTeam = userCardIds.length > 0
+  const hasTeam = (combatTeam.data?.team.length ?? 0) > 0
   const remaining = raid.data?.me.attacksRemainingToday ?? 0
   const killed = raid.data?.killedAt != null
   const canAttack = hasTeam && remaining > 0 && !killed && !attack.isPending
 
   const handleAttack = () => {
     setPrepOpen(false)
-    attack.mutate(userCardIds, {
+    attack.mutate(undefined, {
       onSuccess: (res) => {
         setSceneDone(false)
         setResult(res)
@@ -198,6 +201,8 @@ function RaidAttackPage() {
         <TeamDock
           team={combatTeam.data?.team ?? []}
           onEdit={() => setEditorOpen(true)}
+          modeLabel={RAID_TEAM_LABEL}
+          inherited={combatTeam.data?.inherited}
         />
       )}
 
@@ -248,6 +253,8 @@ function RaidAttackPage() {
             setPrepOpen(true)
           }
         }}
+        teamKey={RAID_TEAM_KEY}
+        modeLabel={RAID_TEAM_LABEL}
       />
 
       <RaidResultPopup

@@ -35,6 +35,7 @@ import { ArcadeCard } from '../../components/shared/ArcadeCard.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import { Popup, PopupContent } from '../../components/ui/popup.tsx'
+import { CAMPAIGN_TEAM_KEY } from '../../constants/combatTeam.constant.ts'
 import { isApiError } from '../../libs/httpErrorHandler.ts'
 import { useAttackStage, useCampaign } from '../../queries/useCampaign.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
@@ -70,7 +71,7 @@ export const Route = createFileRoute('/_authenticated/battle/$stageId')({
 
 function BattlePage() {
   const { stageId } = Route.useParams()
-  const team = useCombatTeam()
+  const team = useCombatTeam(CAMPAIGN_TEAM_KEY)
   const campaign = useCampaign()
   const combatPoints = useCombatPoints()
   const navigate = useNavigate()

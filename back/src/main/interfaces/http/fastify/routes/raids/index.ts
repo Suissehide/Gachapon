@@ -1,7 +1,6 @@
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import {
-  raidAttackBodySchema,
   raidAttackResponseSchema,
   raidContributionsResponseSchema,
   raidTeamParamSchema,
@@ -50,7 +49,6 @@ export const raidsRouter: FastifyPluginCallbackZod = (fastify) => {
       schema: {
         tags: ['Raid'],
         params: raidTeamParamSchema,
-        body: raidAttackBodySchema,
         response: { 200: raidAttackResponseSchema },
       },
     },
@@ -58,7 +56,6 @@ export const raidsRouter: FastifyPluginCallbackZod = (fastify) => {
       const result = await raidDomain.attack(
         request.params.id,
         request.user.userID,
-        request.body.userCardIds,
       )
 
       // Crédite l'équipe DONT LE RAID A ÉTÉ ATTAQUÉ (l'URL, pas une notion

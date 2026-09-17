@@ -133,10 +133,5 @@ export interface IRaidDomain {
     team: TeamWithMembers,
     now?: Date,
   ): Promise<RaidMemberStatsView>
-  attack(
-    teamId: string,
-    userId: string,
-    userCardIds: string[],
-    now?: Date,
-  ): Promise<RaidAttackResult>
+  attack(teamId: string, userId: string, now?: Date): Promise<RaidAttackResult>
 }

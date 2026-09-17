@@ -186,7 +186,9 @@ export function useEquipItem() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: EQUIPMENT_KEY })
       qc.invalidateQueries({ queryKey: ['collection'] })
-      qc.invalidateQueries({ queryKey: ['combat', 'team'] })
+      // ['combat'] entier : couvre les équipes par mode (['combat','team',*])
+      // ET l'agrégat (['combat','teams']) que le hub des tours consommera.
+      qc.invalidateQueries({ queryKey: ['combat'] })
       // Equipped stats changed → drop the cached battle replay cache.
       invalidateBattleCache(qc)
     },
@@ -201,7 +203,9 @@ export function useUnequipItem() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: EQUIPMENT_KEY })
       qc.invalidateQueries({ queryKey: ['collection'] })
-      qc.invalidateQueries({ queryKey: ['combat', 'team'] })
+      // ['combat'] entier : couvre les équipes par mode (['combat','team',*])
+      // ET l'agrégat (['combat','teams']) que le hub des tours consommera.
+      qc.invalidateQueries({ queryKey: ['combat'] })
       // Equipped stats changed → drop the cached battle replay cache.
       invalidateBattleCache(qc)
     },
@@ -216,7 +220,9 @@ export function useUpgradeItem() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: EQUIPMENT_KEY })
       qc.invalidateQueries({ queryKey: ['collection'] })
-      qc.invalidateQueries({ queryKey: ['combat', 'team'] })
+      // ['combat'] entier : couvre les équipes par mode (['combat','team',*])
+      // ET l'agrégat (['combat','teams']) que le hub des tours consommera.
+      qc.invalidateQueries({ queryKey: ['combat'] })
       invalidateBattleCache(qc)
       // L'or affiché dans la navbar vient de fetchMe.
       void useAuthStore.getState().fetchMe()

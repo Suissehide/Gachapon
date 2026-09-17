@@ -1,7 +1,15 @@
 import { z } from 'zod/v4'
 
+import { COMBAT_TEAM_KEY_TUPLE } from '../../../../domain/combat/combat-team-keys'
+
 export const combatTeamPutBodySchema = z.object({
   userCardIds: z.array(z.string().uuid()).min(1).max(3),
+})
+
+export const combatTeamKeyParamSchema = z.object({
+  // La clé est validée contre la liste de référence : une clé inconnue est un
+  // 400, jamais une ligne parasite en base.
+  key: z.enum(COMBAT_TEAM_KEY_TUPLE),
 })
 
 export const combatPointsResponseSchema = z.object({
@@ -35,6 +43,12 @@ export const teamUnitSchema = z.object({
 
 export const combatTeamResponseSchema = z.object({
   team: z.array(teamUnitSchema),
+  /** Vrai quand ce mode n'a pas d'équipe à lui et joue celle de la campagne. */
+  inherited: z.boolean(),
+})
+
+export const combatTeamsResponseSchema = z.object({
+  teams: z.record(z.string(), combatTeamResponseSchema),
 })
 
 const attackPatternEnum = z.enum([

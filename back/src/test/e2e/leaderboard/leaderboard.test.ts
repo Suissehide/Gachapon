@@ -1,5 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
+
+import { CAMPAIGN_TEAM_KEY } from '../../../main/domain/combat/combat-team-keys'
 import { buildTestApp } from '../../helpers/build-test-app'
+import { setCombatTeam } from '../../helpers/combat-team-fixture'
 
 describe('Leaderboard routes', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
@@ -140,6 +143,133 @@ describe('Leaderboard routes', () => {
       url: '/leaderboard/combat',
     })
     expect(res.statusCode).toBe(401)
+  })
+
+  // ── COMBAT : la table UserCombatTeam remplace User.combatTeam ───────────
+  // Le classement range sur l'équipe de CAMPAGNE, jamais sur les autres
+  // modes — c'est une décision assumée (voir leaderboard.repository.ts) et
+  // elle doit être verrouillée par un test, pas seulement par la lecture du
+  // code.
+  describe('classement combat — bascule sur UserCombatTeam', () => {
+    let campaignUserId: string
+    let towerOnlyUserId: string
+
+    beforeAll(async () => {
+      const { postgresOrm } = (app as any).iocContainer
+
+      const set = await postgresOrm.prisma.cardSet.create({
+        data: { name: `LbCombatSet${suffix}`, isActive: false },
+      })
+      const card = await postgresOrm.prisma.card.create({
+        data: {
+          name: `LbCombatCard${suffix}`,
+          rarity: 'RARE',
+          dropWeight: 10,
+          setId: set.id,
+          // Statistiques de base délibérément écrasantes : la suite e2e
+          // complète compte, à ce stade, 8 à 9 comptes avec une équipe de
+          // campagne non vide (posés par d'autres fichiers e2e partageant la
+          // même base) — une marge d'un seul compte pour tenir dans le top
+          // N, donc un échec intermittent et mal attribué. En dominant
+          // largement toute carte réaliste (même niveau 60 stuffée), ce
+          // joueur est TOUJOURS classé premier, donc toujours dans le top N,
+          // quel que soit le nombre total de comptes classés.
+          baseHp: 200_000_000,
+          baseAtk: 20_000_000,
+          baseDef: 10_000_000,
+          baseSpd: 100_000_000,
+        },
+      })
+
+      // Joueur A : équipe de CAMPAGNE posée via la route par clé.
+      const emailA = `lbcombat-a${suffix}@test.com`
+      const regA = await app.inject({
+        method: 'POST',
+        url: '/auth/register',
+        payload: {
+          username: `lbcombata${suffix}`,
+          email: emailA,
+          password: 'Password123!',
+        },
+      })
+      expect(regA.statusCode).toBe(201)
+      const userA = await postgresOrm.prisma.user.update({
+        where: { email: emailA },
+        data: { emailVerifiedAt: new Date() },
+      })
+      campaignUserId = userA.id
+      const ucA = await postgresOrm.prisma.userCard.create({
+        data: {
+          userId: userA.id,
+          cardId: card.id,
+          variant: 'NORMAL',
+          quantity: 1,
+          level: 1,
+          palier: 1,
+        },
+      })
+      const loginA = await app.inject({
+        method: 'POST',
+        url: '/auth/login',
+        payload: { email: emailA, password: 'Password123!' },
+      })
+      const cookiesA = loginA.headers['set-cookie'] as string
+      await setCombatTeam(app, cookiesA, CAMPAIGN_TEAM_KEY, [ucA.id])
+
+      // Joueur B : équipe posée UNIQUEMENT sur la tour de Braise, jamais sur
+      // la campagne — écrite directement en base pour ne pas dépendre de la
+      // route (Task 6, qui met la tour derrière un contrat différent).
+      const emailB = `lbcombat-b${suffix}@test.com`
+      const userB = await postgresOrm.prisma.user.create({
+        data: {
+          email: emailB,
+          username: `lbcombatb${suffix}`,
+          emailVerifiedAt: new Date(),
+        },
+      })
+      towerOnlyUserId = userB.id
+      const ucB = await postgresOrm.prisma.userCard.create({
+        data: {
+          userId: userB.id,
+          cardId: card.id,
+          variant: 'NORMAL',
+          quantity: 1,
+          level: 1,
+          palier: 1,
+        },
+      })
+      await postgresOrm.prisma.userCombatTeam.create({
+        data: { userId: userB.id, key: 'tower:FIRE', userCardIds: [ucB.id] },
+      })
+    })
+
+    it('un joueur avec une equipe de CAMPAGNE apparait au classement, puissance non nulle', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/leaderboard/combat',
+        headers: { cookie: cookies },
+      })
+      expect(res.statusCode).toBe(200)
+      const body = res.json() as {
+        entries: Array<{ user: { id: string }; combatPower: number }>
+      }
+      const entry = body.entries.find((e) => e.user.id === campaignUserId)
+      expect(entry).toBeDefined()
+      expect(entry?.combatPower).toBeGreaterThan(0)
+    })
+
+    it("un joueur avec SEULEMENT une equipe de tour n'apparait PAS au classement (la campagne fait foi)", async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/leaderboard/combat',
+        headers: { cookie: cookies },
+      })
+      expect(res.statusCode).toBe(200)
+      const body = res.json() as { entries: Array<{ user: { id: string } }> }
+      expect(
+        body.entries.find((e) => e.user.id === towerOnlyUserId),
+      ).toBeUndefined()
+    })
   })
 
   // ── OLD ENDPOINT IS GONE ────────────────────────────────────────────────

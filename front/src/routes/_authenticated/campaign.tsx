@@ -40,6 +40,10 @@ import { PageShell } from '../../components/shared/PageShell.tsx'
 import { TeamEditorPopup } from '../../components/team/TeamEditorPopup.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import { Popup, PopupContent } from '../../components/ui/popup.tsx'
+import {
+  CAMPAIGN_TEAM_KEY,
+  CAMPAIGN_TEAM_LABEL,
+} from '../../constants/combatTeam.constant.ts'
 import { formatPct } from '../../libs/utils.ts'
 import { useCampaign, useSweepStage } from '../../queries/useCampaign.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
@@ -98,7 +102,7 @@ function CampaignPage() {
   const navigate = useNavigate()
   const search = Route.useSearch()
   const campaign = useCampaign()
-  const team = useCombatTeam()
+  const team = useCombatTeam(CAMPAIGN_TEAM_KEY)
   const points = useCombatPoints()
   const sweep = useSweepStage()
 
@@ -266,6 +270,7 @@ function CampaignPage() {
       <TeamDock
         team={team.data?.team ?? []}
         onEdit={() => setEditorOpen(true)}
+        modeLabel={CAMPAIGN_TEAM_LABEL}
       />
 
       {/* Team editor popup — mirrors the mockup's TeamEditor modal. When it was
@@ -279,6 +284,8 @@ function CampaignPage() {
             setEditorReturnStage(null)
           }
         }}
+        teamKey={CAMPAIGN_TEAM_KEY}
+        modeLabel={CAMPAIGN_TEAM_LABEL}
       />
 
       {/* Prep modal */}

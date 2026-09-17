@@ -17,6 +17,8 @@ export type TeamUnit = {
   stats: { hp: number; atk: number; def: number; spd: number }
 }
 
+export type CombatTeamView = { team: TeamUnit[]; inherited: boolean }
+
 export type AttackPattern =
   | 'BASIC'
   | 'AOE_3'
@@ -70,24 +72,50 @@ export const CombatApi = {
     return res.json()
   },
 
-  getTeam: async (): Promise<{ team: TeamUnit[] }> => {
-    const res = await fetchWithAuth(`${apiUrl}/combat/team`)
+  getTeam: async (key: string): Promise<CombatTeamView> => {
+    const res = await fetchWithAuth(
+      `${apiUrl}/combat/teams/${encodeURIComponent(key)}`,
+    )
     if (!res.ok) {
       handleHttpError(res, {}, "Erreur lors du chargement de l'équipe")
     }
     return res.json()
   },
 
-  setTeam: async (userCardIds: string[]): Promise<{ team: TeamUnit[] }> => {
-    const res = await fetchWithAuth(`${apiUrl}/combat/team`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userCardIds }),
-    })
+  getAllTeams: async (): Promise<{ teams: Record<string, CombatTeamView> }> => {
+    const res = await fetchWithAuth(`${apiUrl}/combat/teams`)
+    if (!res.ok) {
+      handleHttpError(res, {}, 'Erreur lors du chargement des équipes')
+    }
+    return res.json()
+  },
+
+  setTeam: async (
+    key: string,
+    userCardIds: string[],
+  ): Promise<CombatTeamView> => {
+    const res = await fetchWithAuth(
+      `${apiUrl}/combat/teams/${encodeURIComponent(key)}`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userCardIds }),
+      },
+    )
     if (!res.ok) {
       handleHttpError(res, {}, "Erreur lors de l'enregistrement de l'équipe")
     }
     return res.json()
+  },
+
+  clearTeam: async (key: string): Promise<void> => {
+    const res = await fetchWithAuth(
+      `${apiUrl}/combat/teams/${encodeURIComponent(key)}`,
+      { method: 'DELETE' },
+    )
+    if (!res.ok) {
+      handleHttpError(res, {}, "Erreur lors du retour à l'équipe de campagne")
+    }
   },
 
   debugBattle: async (input: {

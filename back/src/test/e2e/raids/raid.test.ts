@@ -5,6 +5,7 @@ import {
   raidWeekKey,
 } from '../../../main/domain/raid/raid-rules'
 import { buildTestApp } from '../../helpers/build-test-app'
+import { setCombatTeam } from '../../helpers/combat-team-fixture'
 
 /**
  * Boss volontairement inoffensif et sans défense : le joueur ne meurt
@@ -219,11 +220,11 @@ describe('routes de raid', () => {
   })
 
   it('POST attack : inflige des dégâts, décrémente hp, enregistre la contribution', async () => {
+    await setCombatTeam(app, cookiesA, 'raid', [cardIdA])
     const res = await app.inject({
       method: 'POST',
       url: `/teams/${teamId}/raid/attack`,
       headers: { cookie: cookiesA },
-      payload: { userCardIds: [cardIdA] },
     })
     expect(res.statusCode).toBe(200)
     const body = res.json()
@@ -252,14 +253,61 @@ describe('routes de raid', () => {
     expect(v.contributions[0].attacks).toBe(1)
   })
 
-  it('POST attack : refuse une carte qui n’appartient pas au joueur', async () => {
+  // L'équipe de raid se lit désormais côté serveur (PUT /combat/teams/raid) :
+  // un joueur ne peut plus soumettre une carte qui ne lui appartient pas dans
+  // le corps de la requête (setForKey valide déjà la propriété à l'écriture,
+  // couvert par team.test.ts). Ici, B n'a JAMAIS posé d'équipe de raid — le
+  // même 400 se déclenche, mais pour cette raison : aucune équipe à résoudre.
+  it('POST attack : refuse quand le joueur n’a pas encore d’équipe de raid', async () => {
     const res = await app.inject({
       method: 'POST',
       url: `/teams/${teamId}/raid/attack`,
       headers: { cookie: cookiesB },
-      payload: { userCardIds: [cardIdA] },
     })
     expect(res.statusCode).toBe(400)
+    // Épingle la RAISON du refus (motif tower.test.ts) : sans ça, n'importe
+    // quel autre 400 du chemin (raid introuvable, boss déjà vaincu, …) ferait
+    // passer ce test à tort.
+    expect(res.json().message).toContain('équipe')
+  })
+
+  // GARDE contre une régression de `RAID_TEAM_KEY` (motif tower.test.ts) : si
+  // l'attaque de raid lisait par erreur `CAMPAIGN_TEAM_KEY`, elle jouerait la
+  // carte de campagne de B (niveau 1, HOLOGRAPHIC) plutôt que sa carte de
+  // raid (niveau 60, NORMAL) sans qu'aucun autre test ne le remarque — B n'a
+  // jamais d'équipe de campagne ailleurs dans ce fichier, la garantie tient
+  // sur CE test. Preuve rouge/vert dans final-fixes-report.md : ce test a été
+  // vérifié en échec en substituant temporairement `CAMPAIGN_TEAM_KEY` à
+  // `RAID_TEAM_KEY` dans raid.domain.ts, puis en succès après restauration.
+  it("l'attaque de raid emploie l'équipe RAID, jamais celle de CAMPAGNE", async () => {
+    const raidUserCard = await prisma.userCard.findUniqueOrThrow({
+      where: { id: cardIdB },
+    })
+    const campaignCard = await prisma.userCard.create({
+      data: {
+        userId: userIdB,
+        cardId: raidUserCard.cardId,
+        variant: 'HOLOGRAPHIC',
+        quantity: 1,
+        level: 1,
+        palier: 1,
+      },
+    })
+    await setCombatTeam(app, cookiesB, 'campaign', [campaignCard.id])
+    await setCombatTeam(app, cookiesB, 'raid', [cardIdB])
+
+    const res = await app.inject({
+      method: 'POST',
+      url: `/teams/${teamId}/raid/attack`,
+      headers: { cookie: cookiesB },
+    })
+    expect(res.statusCode).toBe(200)
+    // Même motif de double-épingle que tower.test.ts : `level` ET `variant`
+    // divergent entre les deux fixtures (60/NORMAL vs 1/HOLOGRAPHIC), un seul
+    // des deux champs pourrait coïncider par accident.
+    expect(res.json().teamA).toHaveLength(1)
+    expect(res.json().teamA[0].level).toBe(60)
+    expect(res.json().teamA[0].variant).toBe('NORMAL')
   })
 
   it('POST attack : la 3e attaque du jour est refusée (429), quota partagé entre équipes', async () => {
@@ -267,7 +315,6 @@ describe('routes de raid', () => {
       method: 'POST',
       url: `/teams/${teamId}/raid/attack`,
       headers: { cookie: cookiesA },
-      payload: { userCardIds: [cardIdA] },
     })
     expect(second.statusCode).toBe(200)
     expect(second.json().attacksRemainingToday).toBe(0)
@@ -276,7 +323,6 @@ describe('routes de raid', () => {
       method: 'POST',
       url: `/teams/${teamId}/raid/attack`,
       headers: { cookie: cookiesA },
-      payload: { userCardIds: [cardIdA] },
     })
     expect(third.statusCode).toBe(429)
 
@@ -292,7 +338,6 @@ describe('routes de raid', () => {
       method: 'POST',
       url: `/teams/${team2Id}/raid/attack`,
       headers: { cookie: cookiesA },
-      payload: { userCardIds: [cardIdA] },
     })
     expect(other.statusCode).toBe(429)
   })
@@ -308,11 +353,11 @@ describe('routes de raid', () => {
     })
     await prisma.teamRaid.update({ where: { id: raid.id }, data: { hp: 1 } })
 
+    await setCombatTeam(app, cookiesB, 'raid', [cardIdB])
     const res = await app.inject({
       method: 'POST',
       url: `/teams/${teamId}/raid/attack`,
       headers: { cookie: cookiesB },
-      payload: { userCardIds: [cardIdB] },
     })
     expect(res.statusCode).toBe(200)
     const body = res.json()
@@ -351,7 +396,6 @@ describe('routes de raid', () => {
       method: 'POST',
       url: `/teams/${teamId}/raid/attack`,
       headers: { cookie: cookiesB },
-      payload: { userCardIds: [cardIdB] },
     })
     expect(again.statusCode).toBe(409)
   })

@@ -46,6 +46,7 @@ import { Popup, PopupContent } from '../../components/ui/popup.tsx'
 import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
 import type { CardElement } from '../../constants/card.constant.ts'
 import { ELEMENT_LABELS } from '../../constants/card.constant.ts'
+import { towerTeamKey } from '../../constants/combatTeam.constant.ts'
 import { RARITY_COLOR_VAR, RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
 import { useCombatTeam } from '../../queries/useCombatTeam.ts'
@@ -69,7 +70,8 @@ function TowerFloorsPage() {
   const towers = useTowers()
   const tower = useTower(element)
   const combatPoints = useCombatPoints()
-  const team = useCombatTeam()
+  const teamKey = towerTeamKey(element)
+  const team = useCombatTeam(teamKey)
   const battle = useTowerBattle()
   const sweep = useTowerSweep()
 
@@ -90,17 +92,16 @@ function TowerFloorsPage() {
   // donc se retirer explicitement pendant l'animation.
   const inBattle = result !== null && !sceneDone
 
-  const userCardIds = (team.data?.team ?? []).map((u) => u.userCardId)
   const currentPC = combatPoints.data?.combatPoints ?? 0
   const battleCost = combatPoints.data?.battleCost ?? 0
   const sweepCost = combatPoints.data?.sweepCost ?? 1
-  const hasTeam = userCardIds.length > 0
+  const hasTeam = (team.data?.team.length ?? 0) > 0
   const canBattle = currentPC >= battleCost && hasTeam && !battle.isPending
 
   const handleFight = (floor: number) => {
     setPrep(null)
     battle.mutate(
-      { element, floor, userCardIds },
+      { element, floor },
       {
         onSuccess: (res) => {
           setSceneDone(false)
@@ -204,8 +205,9 @@ function TowerFloorsPage() {
         onClose={() => setPrep(null)}
       />
 
-      {/* Même bandeau d'équipe qu'en campagne : les deux se jouent avec la
-          même équipe de combat. Il remplace le résumé d'équipe local, qui
+      {/* Même bandeau qu'en campagne, mais avec l'équipe DE CETTE TOUR : elle
+          hérite de la campagne tant que la tour n'a pas la sienne (le
+          bandeau le signale). Il remplace le résumé d'équipe local, qui
           disait moins pour la même place.
 
           Masqué pendant l'animation de combat : il servait à composer son
@@ -216,10 +218,17 @@ function TowerFloorsPage() {
         <TeamDock
           team={team.data?.team ?? []}
           onEdit={() => setEditorOpen(true)}
+          modeLabel={towerName}
+          inherited={team.data?.inherited}
         />
       )}
 
-      <TeamEditorPopup open={editorOpen} onOpenChange={setEditorOpen} />
+      <TeamEditorPopup
+        open={editorOpen}
+        onOpenChange={setEditorOpen}
+        teamKey={teamKey}
+        modeLabel={towerName}
+      />
 
       <BattleResultPopup
         result={sceneDone ? result : null}

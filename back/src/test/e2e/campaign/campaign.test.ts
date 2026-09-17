@@ -1,7 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
+import { CAMPAIGN_TEAM_KEY } from '../../../main/domain/combat/combat-team-keys'
 import { mondayOfUtcWeek } from '../../../main/domain/quests/quest-matching'
 import { buildTestApp } from '../../helpers/build-test-app'
+import { setCombatTeam } from '../../helpers/combat-team-fixture'
 import {
   CAMPAIGN,
   CAMPAIGN_SLOT_FILTER_CLASSIC,
@@ -347,13 +349,7 @@ describe('Campaign routes', () => {
     cookies = loginRes.headers['set-cookie'] as string
 
     // Deploy team
-    const teamRes = await app.inject({
-      method: 'PUT',
-      url: '/combat/team',
-      headers: { cookie: cookies, 'content-type': 'application/json' },
-      payload: { userCardIds: [userCardId] },
-    })
-    expect(teamRes.statusCode).toBe(200)
+    await setCombatTeam(app, cookies, CAMPAIGN_TEAM_KEY, [userCardId])
   })
 
   afterAll(async () => {

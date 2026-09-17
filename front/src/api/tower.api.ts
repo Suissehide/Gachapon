@@ -107,15 +107,10 @@ export async function fetchTower(element: string): Promise<TowerView> {
 export async function postTowerBattle(
   element: string,
   floor: number,
-  userCardIds: string[],
 ): Promise<TowerBattleResult> {
   const res = await fetchWithAuth(
     `${apiUrl}/tower/${element}/${floor}/battle`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userCardIds }),
-    },
+    { method: 'POST' },
   )
   if (!res.ok) {
     handleHttpError(res, {}, 'Erreur lors du combat')

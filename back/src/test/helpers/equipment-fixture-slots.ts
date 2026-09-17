@@ -106,6 +106,18 @@ export const TOWER_FIRE_ALL_SETS = SET_KEYS.map((setKey) =>
   reservation('GLOVES', setKey),
 )
 
+// tower.test.ts — même besoin que TOWER_FIRE_ALL_SETS, pour la preuve que la
+// tour de l'Onde (WATER → slot BOOTS) combat avec SA PROPRE équipe, distincte
+// de celle de FEU. `mainStat: 'defFlat'` (au lieu du défaut `atkFlat`) plutôt
+// que LEGENDARY : BOOTS+FUREUR+atkFlat+LEGENDARY est déjà pris par
+// `EQUIPMENT_INITIAL_SUBSTATS` (equipment-initial-substats.test.ts). Un
+// `mainStat` différent rend le triplet (slot, setKey, mainStat) unique pour
+// les 7 entrées — elles peuvent donc rejoindre `ALL_RESERVATIONS` sans
+// exception, contrairement à TOWER_FIRE_ALL_SETS.
+export const TOWER_WATER_ALL_SETS = SET_KEYS.map((setKey) =>
+  reservation('BOOTS', setKey, 'defFlat'),
+)
+
 // campaign.test.ts — preuve G1 qu'un drop de campagne ne peut jamais sortir
 // un slot de tour : une pièce classique et une pièce de tour, même rareté,
 // dans le même catalogue ; le filtre CAMPAIGN_EQUIPMENT_SLOTS doit rendre la
@@ -140,6 +152,7 @@ const ALL_RESERVATIONS = [
   EQUIPMENT_QUESTS,
   EQUIPMENT_TEAM_PERK_FORGE,
   EQUIPMENT_SKILL_EFFECTS,
+  ...TOWER_WATER_ALL_SETS,
 ]
 
 const seen = new Set<string>()
