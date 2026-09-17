@@ -36,13 +36,14 @@ const NODE_POS = [
   { left: '18%', top: '50%' },
 ]
 
-// Arcs orientés entre deux nœuds voisins, tronqués de 22° de chaque côté pour
-// ne pas passer sous les pastilles.
+// Arcs orientés entre deux nœuds voisins, tronqués de 25° de chaque côté pour
+// ne pas passer sous les pastilles. La pointe déborde de l'arc (cf. `refX` du
+// marqueur), d'où les 25° plutôt que les 22° du rayon utile.
 const ARCS = [
-  'M 61.99 20.33 A 32 32 0 0 1 79.67 38.01',
-  'M 79.67 61.99 A 32 32 0 0 1 61.99 79.67',
-  'M 38.01 79.67 A 32 32 0 0 1 20.33 61.99',
-  'M 20.33 38.01 A 32 32 0 0 1 38.01 20.33',
+  'M 63.52 21.00 A 32 32 0 0 1 79.00 36.48',
+  'M 79.00 63.52 A 32 32 0 0 1 63.52 79.00',
+  'M 36.48 79.00 A 32 32 0 0 1 21.00 63.52',
+  'M 21.00 36.48 A 32 32 0 0 1 36.48 21.00',
 ]
 
 function fmtMult(mult: number): string {
@@ -80,22 +81,34 @@ function ElementChip({
 function ElementWheel() {
   return (
     <div className="relative mx-auto aspect-square w-full max-w-[288px]">
+      {/* Trois pièges de rendu, trois parades :
+          — l'encre des flèches est OPAQUE (`color-mix` du texte sur la carte)
+            et non un alpha : deux peintures translucides se cumulent là où
+            tige et tête se chevauchent, et laissent en plus remonter les
+            pointillés du cercle repère au travers de la pointe ;
+          — `refX` en retrait du sommet (2,9 sur 4,2) pour que le bout de la
+            tige, capuchon rond compris, tombe DANS le triangle : à hauteur
+            du sommet la tête est plus fine que le trait et le laisserait
+            dépasser en oreilles ;
+          — `currentColor` partout, pour que le cercle repère, les arcs et
+            les pointes se retouchent d'une seule valeur. */}
       <svg
         viewBox="0 0 100 100"
         className="absolute inset-0 h-full w-full"
+        style={{ color: 'color-mix(in srgb, var(--text) 55%, var(--card))' }}
         aria-hidden
       >
         <title>Roue élémentaire</title>
         <defs>
           <marker
             id="element-wheel-arrow"
-            markerWidth="5"
-            markerHeight="5"
-            refX="3.6"
-            refY="2.5"
+            markerWidth="6"
+            markerHeight="6"
+            refX="2.9"
+            refY="3"
             orient="auto"
           >
-            <path d="M 0 0.6 L 4 2.5 L 0 4.4 z" fill="rgba(27,23,38,0.28)" />
+            <path d="M 0 1.1 L 4.2 3 L 0 4.9 z" fill="currentColor" />
           </marker>
         </defs>
         <circle
@@ -103,7 +116,8 @@ function ElementWheel() {
           cy="50"
           r="32"
           fill="none"
-          stroke="rgba(27,23,38,0.07)"
+          stroke="currentColor"
+          strokeOpacity="0.16"
           strokeWidth="1"
           strokeDasharray="2 3"
         />
@@ -112,7 +126,7 @@ function ElementWheel() {
             key={d}
             d={d}
             fill="none"
-            stroke="rgba(27,23,38,0.28)"
+            stroke="currentColor"
             strokeWidth="1.6"
             strokeLinecap="round"
             markerEnd="url(#element-wheel-arrow)"
