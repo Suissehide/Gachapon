@@ -36,6 +36,7 @@ import { ElementGuidePopup } from '../../components/battle/ElementGuidePopup.tsx
 import { FarmResultPopup } from '../../components/battle/resultKit.tsx'
 import { TeamDock } from '../../components/battle/TeamDock.tsx'
 import { AuroraGrid } from '../../components/shared/decorations/AuroraGrid'
+import { PageHeader } from '../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../components/shared/PageShell.tsx'
 import { TeamEditorPopup } from '../../components/team/TeamEditorPopup.tsx'
 import { Button } from '../../components/ui/button.tsx'
@@ -211,30 +212,25 @@ function CampaignPage() {
 
       <div className="relative z-10 mx-auto max-w-5xl px-4 pt-8">
         {/* Header */}
-        <header className="flex flex-wrap items-end justify-between gap-4">
-          <div className="min-w-0">
-            <p className="font-mono text-[11px] font-bold uppercase tracking-[0.25em] text-text-light/60">
-              Gachapon / Campagne
-            </p>
-            <h1 className="mt-2 font-display text-4xl font-bold tracking-tight text-text sm:text-5xl">
-              Campagne
-            </h1>
-            <p className="mt-2.5 text-[15px] text-text-light">
-              Progresse à travers les chapitres pour débloquer drops et
-              puissance
-            </p>
-          </div>
-          <Button
-            variant="pill"
-            size="pill"
-            onClick={() => setElementsOpen(true)}
-            title="Comprendre les éléments"
-            className="shrink-0"
-          >
-            <Swords className="h-3.5 w-3.5 text-amber-600" />
-            Éléments
-          </Button>
-        </header>
+        <PageHeader
+          breadcrumbs={[
+            { label: 'Gachapon', to: '/play' },
+            { label: 'Campagne' },
+          ]}
+          title="Campagne"
+          subtitle="Progresse à travers les chapitres pour débloquer drops et puissance"
+          right={
+            <Button
+              variant="pill"
+              size="pill"
+              onClick={() => setElementsOpen(true)}
+              title="Comprendre les éléments"
+            >
+              <Swords className="h-3.5 w-3.5 text-amber-600" />
+              Éléments
+            </Button>
+          }
+        />
 
         {/* Chapter strip */}
         <div className="mt-7">
