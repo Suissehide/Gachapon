@@ -57,7 +57,6 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
     baseArmorPen: 0,
     baseLifesteal: 0,
   },
-  wishlist: { priceMultiplier: 2, cooldownDays: 7 },
   duel: { pullCount: 5 },
   bet: { pullWindow: 10, minStake: 50, maxStake: 2000 },
   team: {

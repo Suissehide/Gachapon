@@ -75,10 +75,6 @@ export interface EconomyConfig {
     baseArmorPen: number
     baseLifesteal: number
   }
-  wishlist: {
-    priceMultiplier: number
-    cooldownDays: number
-  }
   // Nombre de tirages comptés par duelliste dans un duel de tirage. Lu ici
   // plutot que codé en dur dans la fenêtre de défi : la valeur vit dans
   // GlobalConfig et peut bouger sans redéploiement du front.

@@ -29,11 +29,21 @@ export const SHOP_ITEMS = [
   // Packs d'énergie — points de combat achetés avec la poussière.
   // L'énergie achetée peut dépasser le plafond (overcap) ; la regen naturelle
   // reste en pause tant qu'on est au-dessus.
+  //
+  // ×3 le 2026-09-21. À 18-20 poussière par point d'énergie, les packs
+  // coûtaient MOINS que ce que cette énergie rapporte en farmant : 21,6
+  // poussière par point au boss 9-10, soit 120 % remboursés dès le chapitre 8.
+  // Acheter de l'énergie était donc un gain net de poussière, et
+  // `shop.energyDailyCap` restait le seul frein du jeu. Le prix vise désormais
+  // ~2,5× le meilleur rendement de farm : on paie de la poussière pour de
+  // l'or, de l'XP et de l'équipement, plus jamais pour de la poussière.
+  // Gardé par `src/test/unit/energy-pack-pricing.test.ts`, qui relit la courbe
+  // de butin réelle — rebuffer le farm sans retoucher ces prix le fera échouer.
   {
     name: 'Petite recharge',
     description: '+15 points de combat, même au-delà du plafond.',
     type: 'ENERGY_PACK' as const,
-    cost: 300,
+    cost: 900,
     currency: 'DUST' as const,
     value: { combatPoints: 15 },
   },
@@ -41,7 +51,7 @@ export const SHOP_ITEMS = [
     name: 'Recharge',
     description: '+40 points de combat — le bon compromis.',
     type: 'ENERGY_PACK' as const,
-    cost: 760,
+    cost: 2280,
     currency: 'DUST' as const,
     value: { combatPoints: 40 },
   },
@@ -49,7 +59,7 @@ export const SHOP_ITEMS = [
     name: 'Grande recharge',
     description: '+90 points de combat pour enchaîner les batailles.',
     type: 'ENERGY_PACK' as const,
-    cost: 1620,
+    cost: 4860,
     currency: 'DUST' as const,
     value: { combatPoints: 90 },
   },

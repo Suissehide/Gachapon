@@ -19,6 +19,41 @@ const RARITY_PRICE_KEYS = {
   LEGENDARY: 'dailyShopPriceLegendary',
 } as const
 
+const RARITY_MULTIPLIER_KEYS = {
+  COMMON: 'wishlist.priceMultiplierCommon',
+  UNCOMMON: 'wishlist.priceMultiplierUncommon',
+  RARE: 'wishlist.priceMultiplierRare',
+  EPIC: 'wishlist.priceMultiplierEpic',
+  LEGENDARY: 'wishlist.priceMultiplierLegendary',
+} as const
+
+/** Clés de config nécessaires au calcul d'un prix de vœu, quelle que soit la rareté. */
+export const WISHLIST_PRICE_CONFIG_KEYS = [
+  ...Object.values(RARITY_PRICE_KEYS),
+  ...Object.values(RARITY_MULTIPLIER_KEYS),
+] as const
+
+/**
+ * Prix d'un vœu : prix de la boutique du jour pour la rareté × le facteur de
+ * CETTE rareté. Le facteur mesure ce que coûte le fait de CHOISIR la carte
+ * plutôt que de la subir au hasard — il est donc toujours > 1.
+ *
+ * `shopDiscount` n'est PAS appliqué : l'achat ciblé est le service premium du
+ * jeu — la seule façon d'obtenir une carte choisie — et il a perdu son délai
+ * d'attente. Le plein tarif est devenu son unique frein.
+ */
+export function wishlistPriceFor(
+  rarity: string,
+  c: Record<string, number>,
+): number {
+  const priceKey = RARITY_PRICE_KEYS[rarity as keyof typeof RARITY_PRICE_KEYS]
+  const multiplierKey =
+    RARITY_MULTIPLIER_KEYS[rarity as keyof typeof RARITY_MULTIPLIER_KEYS]
+  const rarityBasePrice = priceKey ? (c[priceKey] ?? 50) : 50
+  const multiplier = multiplierKey ? (c[multiplierKey] ?? 1) : 1
+  return Math.max(0, Math.round(rarityBasePrice * multiplier))
+}
+
 /** Emplacements de vœu sans aucun point d'arbre. « Collectionneur » en ajoute jusqu'à 3. */
 export const BASE_WISHLIST_SLOTS = 2
 
@@ -53,25 +88,6 @@ export class WishlistDomain implements IWishlistDomain {
     this.#skillTreeRepository = skillTreeRepository
   }
 
-  /**
-   * Prix d'un vœu.
-   *
-   * `shopDiscount` n'est PAS applique : l'achat ciblé est le service premium du
-   * jeu — la seule façon d'obtenir une carte choisie — et il a perdu son délai
-   * d'attente. Le plein tarif est donc devenu son unique frein.
-   */
-  #priceFor(
-    rarity: string,
-    c: Record<string, number>,
-  ): number {
-    const priceKey = RARITY_PRICE_KEYS[rarity as keyof typeof RARITY_PRICE_KEYS]
-    const rarityBasePrice = priceKey ? (c[priceKey] ?? 50) : 50
-    return Math.max(
-      0,
-      Math.round(rarityBasePrice * (c['wishlist.priceMultiplier'] ?? 1)),
-    )
-  }
-
   async getStatus(userId: string): Promise<WishlistStatus> {
     const [rows, c, effects] = await Promise.all([
       this.#postgresOrm.prisma.userWishlistCard.findMany({
@@ -79,14 +95,7 @@ export class WishlistDomain implements IWishlistDomain {
         include: { card: { include: { set: true } } },
         orderBy: { addedAt: 'asc' },
       }),
-      this.#configService.getMany(
-        'wishlist.priceMultiplier',
-        'dailyShopPriceCommon',
-        'dailyShopPriceUncommon',
-        'dailyShopPriceRare',
-        'dailyShopPriceEpic',
-        'dailyShopPriceLegendary',
-      ),
+      this.#configService.getMany(...WISHLIST_PRICE_CONFIG_KEYS),
       this.#skillTreeRepository.getEffectsForUser(userId),
     ])
 
@@ -99,7 +108,7 @@ export class WishlistDomain implements IWishlistDomain {
         rarity: row.card.rarity,
         element: row.card.element,
         set: { id: row.card.set.id, name: row.card.set.name },
-        price: this.#priceFor(row.card.rarity, c),
+        price: wishlistPriceFor(row.card.rarity, c),
       })),
     }
   }
@@ -153,21 +162,14 @@ export class WishlistDomain implements IWishlistDomain {
         where: { userId_cardId: { userId, cardId } },
         include: { card: { include: { set: true } } },
       }),
-      this.#configService.getMany(
-        'wishlist.priceMultiplier',
-        'dailyShopPriceCommon',
-        'dailyShopPriceUncommon',
-        'dailyShopPriceRare',
-        'dailyShopPriceEpic',
-        'dailyShopPriceLegendary',
-      ),
+      this.#configService.getMany(...WISHLIST_PRICE_CONFIG_KEYS),
     ])
 
     if (!wish) {
       throw Boom.badRequest('Card is not in your wishlist')
     }
     const card = wish.card
-    const finalPrice = this.#priceFor(card.rarity, c)
+    const finalPrice = wishlistPriceFor(card.rarity, c)
 
     const attempt = async (): Promise<PurchaseWishlistResult> => {
       const result = await this.#postgresOrm.executeWithTransactionClient(

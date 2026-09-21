@@ -84,8 +84,8 @@ describe('Wishlist routes', () => {
     const get = await app.inject({ method: 'GET', url: '/wishlist', headers: auth() })
     const body = get.json()
     expect(body.cards).toHaveLength(1)
-    // 2400 (prix boutique RARE) × 2 (wishlist.priceMultiplier), SANS remise.
-    expect(body.cards[0].price).toBe(4800)
+    // 2400 (prix boutique RARE) × 5 (wishlist.priceMultiplierRare), SANS remise.
+    expect(body.cards[0].price).toBe(12000)
   })
 
   it('PUT deux fois la même carte est sans effet (pas de doublon)', async () => {
@@ -154,7 +154,7 @@ describe('Wishlist routes', () => {
     const { postgresOrm } = (app as any).iocContainer
     await postgresOrm.prisma.user.update({
       where: { id: userId },
-      data: { dust: 20000 },
+      data: { dust: 40000 },
     })
 
     const first = await app.inject({
@@ -163,8 +163,8 @@ describe('Wishlist routes', () => {
       headers: auth(),
     })
     expect(first.statusCode).toBe(200)
-    expect(first.json().dustSpent).toBe(4800)
-    expect(first.json().newDustBalance).toBe(15200)
+    expect(first.json().dustSpent).toBe(12000)
+    expect(first.json().newDustBalance).toBe(28000)
 
     const second = await app.inject({
       method: 'POST',
@@ -172,7 +172,7 @@ describe('Wishlist routes', () => {
       headers: auth(),
     })
     expect(second.statusCode).toBe(200)
-    expect(second.json().newDustBalance).toBe(10400)
+    expect(second.json().newDustBalance).toBe(16000)
   })
 
   it('« Collectionneur » niveau 3 porte les emplacements à 5', async () => {

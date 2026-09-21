@@ -317,12 +317,18 @@ export async function seedSkills(tx: Tx) {
       effectType: 'WISHLIST_PULL_CHANCE',
       posX: 408,
       posY: 24,
+      // Aligné sur « Boule d'or » le 2026-09-21 — même branche, même nombre
+      // de niveaux, désormais même courbe. Le nœud ne touche JAMAIS aux cotes
+      // de rareté : il choisit LAQUELLE des cartes de la rareté tirée on
+      // reçoit. À 40 %, il divisait par deux le nombre de tirages d'une
+      // ascension ciblée (6 doublons de la carte exacte), soit cinq fois
+      // l'effet de son voisin direct. À 8 % il influence sans décider.
       levels: {
         create: [
-          { level: 1, effect: 10 },
-          { level: 2, effect: 20 },
-          { level: 3, effect: 30 },
-          { level: 4, effect: 40 },
+          { level: 1, effect: 2 },
+          { level: 2, effect: 4 },
+          { level: 3, effect: 6 },
+          { level: 4, effect: 8 },
         ],
       },
     },

@@ -81,9 +81,6 @@ const economyConfigResponseSchema = z.object({
     baseArmorPen: z.number(),
     baseLifesteal: z.number(),
   }),
-  wishlist: z.object({
-    priceMultiplier: z.number(),
-  }),
   equip: z.object({
     goldCostBase: z.number(),
     goldCostExp: z.number(),
@@ -167,7 +164,6 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
         'combat.baseCritDmg',
         'combat.baseArmorPen',
         'combat.baseLifesteal',
-        'wishlist.priceMultiplier',
         'equip.goldCostBase',
         'equip.goldCostExp',
         'equip.salvageGoldCommon',
@@ -245,9 +241,6 @@ export const economyRouter: FastifyPluginCallbackZod = (fastify) => {
           baseCritDmg: c['combat.baseCritDmg'],
           baseArmorPen: c['combat.baseArmorPen'],
           baseLifesteal: c['combat.baseLifesteal'],
-        },
-        wishlist: {
-          priceMultiplier: c['wishlist.priceMultiplier'],
         },
         equip: {
           goldCostBase: c['equip.goldCostBase'],

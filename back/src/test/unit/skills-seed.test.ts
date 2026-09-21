@@ -73,4 +73,26 @@ describe('seed de l’arbre de compétences', () => {
     }
     expect(nodes.filter((n) => !vus.has(n.id))).toEqual([])
   })
+
+  // « Vœu exaucé » ne change JAMAIS les cotes de rareté : il décide seulement
+  // QUELLE carte de la rareté tirée on reçoit. À 40 %, il divisait par deux le
+  // nombre de tirages nécessaires à une ascension ciblée — cinq fois l'effet de
+  // « Boule d'or », son voisin direct de branche à nombre de niveaux égal.
+  // L'aligner sur ce voisin est le calibrage, pas un chiffre rond arbitraire.
+  it('aligne « Vœu exaucé » sur la courbe de « Boule d’or »', async () => {
+    const { nodes } = await collectSkillTree()
+    const voeu = nodes.find((n) => n.effectType === 'WISHLIST_PULL_CHANCE')
+    const bouleDOr = nodes.find((n) => n.effectType === 'GOLDEN_BALL_CHANCE')
+    expect(voeu).toBeDefined()
+    expect(bouleDOr).toBeDefined()
+    expect(voeu?.branchId).toBe(bouleDOr?.branchId)
+    expect(voeu?.levels).toEqual(bouleDOr?.levels)
+  })
+
+  it('plafonne « Vœu exaucé » à 8 % de redirection', async () => {
+    const { nodes } = await collectSkillTree()
+    const voeu = nodes.find((n) => n.effectType === 'WISHLIST_PULL_CHANCE')
+    const max = Math.max(...(voeu?.levels ?? []).map((l) => l.effect))
+    expect(max).toBe(8)
+  })
 })

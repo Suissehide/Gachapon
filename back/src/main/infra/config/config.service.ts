@@ -72,7 +72,19 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'card.rarityMultRare': 1.7,
   'card.rarityMultEpic': 2.3,
   'card.rarityMultLegendary': 3.0,
-  'wishlist.priceMultiplier': 2,
+  // Prix d'un vœu = prix de la boutique du jour pour la rareté × ce facteur.
+  // Il mesure une seule chose : ce que coûte le fait de CHOISIR la carte
+  // plutôt que de la subir au hasard.
+  //
+  // Par rareté depuis le 2026-09-21. Le facteur unique à 2 ne pouvait pas
+  // tenir les deux bouts du barème : le monter assez pour que le rare cesse
+  // d'être une journée de revenu envoyait le légendaire à 80 jours d'épargne.
+  // Le légendaire descend donc à 2,5 là où le milieu de barème monte à 5.
+  'wishlist.priceMultiplierCommon': 4,
+  'wishlist.priceMultiplierUncommon': 4,
+  'wishlist.priceMultiplierRare': 5,
+  'wishlist.priceMultiplierEpic': 5,
+  'wishlist.priceMultiplierLegendary': 2.5,
   'shop.energyDailyCap': 3,
   'equip.goldCostBase': 25,
   'equip.goldCostExp': 1.35,
