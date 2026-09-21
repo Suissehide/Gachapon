@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
 import { ACHIEVEMENT_DEFINITIONS } from '../../main/domain/content/achievements.definitions'
 import { campaignStageLabel } from '../../main/domain/content/campaign.definitions'
-import { CARDS } from '../../main/domain/content/cards.definitions'
+import { CARDS, HUMAN_CARD_SET } from '../../main/domain/content/cards.definitions'
 import { RAID_BOSS_NAME, RAID_BOSS_NAME_EN } from '../../main/domain/content/raid.definitions'
 import { runWithLocale } from '../../main/infra/i18n/locale-context'
 import { buildTestApp } from '../helpers/build-test-app'
@@ -176,6 +176,51 @@ describe('backfill des traductions au démarrage', () => {
       expect(card.name).toBe('Carte créée en production')
 
       await postgresOrm.prisma.card.delete({ where: { id } })
+    })
+  })
+
+  // -----------------------------------------------------------------------
+  // CardSet — pas de clé stable en base (id = uuid seedé) : rapprochement par
+  // `nameFr` via `findByNameFr` (couverture unitaire dédiée par ailleurs,
+  // voir `content-translations-find-by-name-fr.test.ts`, dont le cas
+  // d'ambiguïté). Ce test-ci prouve le chemin d'écriture de bout en bout sur
+  // le contenu réel : `HUMAN_CARD_SET.nameFr` (« Royaume des Humains ») n'est
+  // utilisé par aucun autre fichier e2e (vérifié par recherche), donc pas de
+  // risque de collision comme il y en aurait sur ShopItem/SkillBranch (voir
+  // le rapport de tâche : `shop.test.ts` crée déjà des ShopItem nommés
+  // « Boost Rare+ »/« Boost Épique », les noms réels de production).
+  // -----------------------------------------------------------------------
+  describe('CardSet (clé : nameFr, via findByNameFr)', () => {
+    it("backfille name et description quand l'anglais est la recopie du français", async () => {
+      const { postgresOrm, contentTranslationsBootstrap } = app.iocContainer
+
+      // Une seule ligne CardSet porte ce nameFr dans une base réelle : on
+      // force son état post-migration (recopie), en la créant si un run
+      // antérieur ne l'a pas laissée (CardSet n'a pas de clé unique sur
+      // laquelle upserter directement).
+      const existing = await postgresOrm.prisma.cardSet.findFirst({
+        where: { nameFr: HUMAN_CARD_SET.nameFr },
+      })
+      const recopy = {
+        nameFr: HUMAN_CARD_SET.nameFr,
+        nameEn: HUMAN_CARD_SET.nameFr,
+        descriptionFr: HUMAN_CARD_SET.descriptionFr,
+        descriptionEn: HUMAN_CARD_SET.descriptionFr,
+      }
+      if (existing) {
+        await postgresOrm.prisma.cardSet.update({ where: { id: existing.id }, data: recopy })
+      } else {
+        await postgresOrm.prisma.cardSet.create({ data: recopy })
+      }
+
+      const result = await contentTranslationsBootstrap.bootstrap()
+      expect(result.updated).toBeGreaterThan(0)
+
+      const row = await postgresOrm.prisma.cardSet.findFirstOrThrow({
+        where: { nameFr: HUMAN_CARD_SET.nameFr },
+      })
+      expect(row.nameEn).toBe(HUMAN_CARD_SET.nameEn)
+      expect(row.descriptionEn).toBe(HUMAN_CARD_SET.descriptionEn)
     })
   })
 

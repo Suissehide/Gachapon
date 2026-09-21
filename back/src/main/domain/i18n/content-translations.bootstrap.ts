@@ -16,6 +16,36 @@ import { QUEST_DEFINITIONS } from '../quests/quest-definitions'
 import { TOWER_ELEMENTS } from '../tower/tower-slots'
 
 /**
+ * Sélectionne l'unique ligne dont `nameFr` correspond, pour les quatre
+ * entités sans clé stable en base (`CardSet`, `ShopItem`, `SkillBranch`,
+ * `SkillNode`) : la colonne n'est contrainte `@unique` par aucune d'elles,
+ * donc plusieurs lignes pourraient en théorie partager le même `nameFr`. Dans
+ * ce cas on ignore plutôt que de risquer d'écrire sur la mauvaise ligne.
+ *
+ * Fonction pure et exportée (plutôt qu'une méthode privée de la classe) pour
+ * être testable en unitaire sans base de données — c'est le seul mécanisme
+ * de rapprochement pour ces quatre entités, celles où le brief d'origine se
+ * trompait le plus sur la clé de ciblage (voir le rapport de la tâche).
+ * `onAmbiguous` prend la place du logger : la fonction n'a besoin que de
+ * savoir QUOI signaler, pas comment.
+ */
+export function findByNameFr<T extends { nameFr: string }>(
+  rows: T[],
+  nameFr: string,
+  entity: string,
+  onAmbiguous: (message: string) => void,
+): T | undefined {
+  const matches = rows.filter((row) => row.nameFr === nameFr)
+  if (matches.length > 1) {
+    onAmbiguous(
+      `[i18n bootstrap] ${entity}: plusieurs lignes portent nameFr="${nameFr}", ignoré (clé ambiguë)`,
+    )
+    return undefined
+  }
+  return matches[0]
+}
+
+/**
  * Pose les traductions connues sur une base déjà peuplée. Update-only et
  * idempotent : ne réécrit que les colonnes qu'aucun administrateur n'a
  * touchées, jamais celles saisies à la main en production.
@@ -116,26 +146,14 @@ export class ContentTranslationsBootstrap {
     return true
   }
 
-  /**
-   * Sélectionne l'unique ligne dont `nameFr` correspond, pour les entités
-   * sans clé stable en base (`CardSet`, `ShopItem`, `SkillBranch`,
-   * `SkillNode`) : la colonne n'est pas contrainte `@unique` en base, donc
-   * plusieurs lignes pourraient en théorie partager le même `nameFr`. Dans
-   * ce cas on ignore plutôt que de risquer d'écrire sur la mauvaise ligne.
-   */
   #findByNameFr<T extends { nameFr: string }>(
     rows: T[],
     nameFr: string,
     entity: string,
   ): T | undefined {
-    const matches = rows.filter((row) => row.nameFr === nameFr)
-    if (matches.length > 1) {
-      this.#logger.warn(
-        `[i18n bootstrap] ${entity}: plusieurs lignes portent nameFr="${nameFr}", ignoré (clé ambiguë)`,
-      )
-      return undefined
-    }
-    return matches[0]
+    return findByNameFr(rows, nameFr, entity, (message) =>
+      this.#logger.warn(message),
+    )
   }
 
   // ---------------------------------------------------------------------
