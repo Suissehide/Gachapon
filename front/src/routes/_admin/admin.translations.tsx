@@ -129,7 +129,7 @@ function AdminTranslations() {
                 {filteredEntries.map((entry) => (
                   <tr
                     key={rowKey(entry)}
-                    className="border-b border-border/60 last:border-0 hover:bg-surface/50"
+                    className="border-b border-border/60 last:border-0 hover:bg-surface-2/50"
                   >
                     <td className="px-4 py-3">
                       <Badge variant="primary">
@@ -156,7 +156,10 @@ function AdminTranslations() {
                           : 'Anglais manquant'}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-text-light">
+                    <td
+                      className="max-w-[320px] truncate px-4 py-3 text-text-light"
+                      title={entry.value || undefined}
+                    >
                       {entry.value || (
                         <span className="italic text-text-light/60">
                           (vide)
