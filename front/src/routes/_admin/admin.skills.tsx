@@ -117,7 +117,7 @@ function AdminSkillsPage() {
       >
         <SheetContent
           side="right"
-          className="flex w-120 flex-col overflow-hidden p-0"
+          className="flex w-[min(480px,100vw)] flex-col overflow-hidden p-0"
         >
           {sheetMode === 'help' && <HelpSheetContent />}
 

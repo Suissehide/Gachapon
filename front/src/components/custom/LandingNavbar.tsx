@@ -222,6 +222,7 @@ export function LandingNavbar() {
         id="landing-mobile-menu"
         open={menuOpen}
         onClose={closeMenu}
+        topOffset="4rem"
       >
         {NAV_ITEMS.map((item, i) => (
           <MobileNavLink

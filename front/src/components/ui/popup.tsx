@@ -8,6 +8,9 @@ import { type ButtonProps, buttonVariants } from './button.tsx'
 
 const popupVariants = cva(
   'fixed z-100 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ' +
+    // Le contenu ne doit jamais deborder du viewport : sinon, en `fixed`, il devient
+    // impossible a faire defiler et la croix de fermeture sort de l'ecran (mobile).
+    'flex flex-col overflow-hidden max-h-[calc(100dvh-2rem)] ' +
     'bg-card border border-primary/20 rounded-xl shadow-[0_0_60px_rgba(245,158,11,0.08),0_24px_48px_rgba(0,0,0,0.4)] ' +
     'data-[state=open]:animate-in data-[state=closed]:animate-out ' +
     'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 ' +
@@ -19,7 +22,8 @@ const popupVariants = cva(
       size: {
         default: 'w-[440px] max-w-[calc(100vw-2rem)]',
         lg: 'w-[600px] max-w-[calc(100vw-2rem)]',
-        xl: 'w-[80vw] max-w-[900px]',
+        // `max-sm` : sans plancher, 80vw est plus etroit que les tailles default/lg sur mobile.
+        xl: 'w-[80vw] max-sm:w-[calc(100vw-2rem)] max-w-[900px]',
       },
     },
     defaultVariants: {
@@ -58,8 +62,11 @@ const PopupContent = React.forwardRef<
       className={cn(popupVariants({ size }), className)}
       {...props}
     >
-      {children}
-      <PopupClose className="cursor-pointer absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-lg text-text-light ring-offset-background transition-all duration-200 hover:bg-primary/10 hover:text-primary focus:outline-none disabled:pointer-events-none">
+      {/* Conteneur defilant : garde la croix de fermeture epinglee hors du flux scrollable */}
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
+        {children}
+      </div>
+      <PopupClose className="cursor-pointer absolute right-4 top-4 z-10 flex h-7 w-7 items-center justify-center rounded-lg text-text-light ring-offset-background transition-all duration-200 hover:bg-primary/10 hover:text-primary focus:outline-none disabled:pointer-events-none">
         <X className="h-4 w-4" />
         <span className="sr-only">Fermer</span>
       </PopupClose>
@@ -101,7 +108,10 @@ const PopupHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn('px-6 pt-6 pb-4 border-b border-border/60', className)}
+    className={cn(
+      'shrink-0 px-6 pt-6 pb-4 border-b border-border/60',
+      className,
+    )}
     {...props}
   />
 ))
@@ -149,7 +159,10 @@ const PopupBody = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn('px-6 py-4 bg-background', className)}
+    className={cn(
+      'min-h-0 flex-1 overflow-y-auto px-6 py-4 bg-background',
+      className,
+    )}
     {...props}
   />
 ))
@@ -162,7 +175,7 @@ const PopupFooter = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      'flex justify-end gap-2 px-6 py-4 border-t border-border/60',
+      'flex shrink-0 justify-end gap-2 px-6 py-4 border-t border-border/60',
       className,
     )}
     {...props}

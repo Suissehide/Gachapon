@@ -165,7 +165,12 @@ export function Navbar() {
         </div>
       </nav>
 
-      <MobileMenuShell id="mobile-menu" open={menuOpen} onClose={closeMenu}>
+      <MobileMenuShell
+        id="mobile-menu"
+        open={menuOpen}
+        onClose={closeMenu}
+        topOffset="var(--topbar-h)"
+      >
         {navItems.map((item, i) => (
           <MobileNavLink
             key={item.to}

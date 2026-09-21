@@ -49,14 +49,18 @@ export function useMobileMenu() {
     return () => window.removeEventListener('keydown', handler)
   }, [menuOpen, closeMenu])
 
+  // Doit rester cale sur le breakpoint `lg` de Tailwind (64rem), celui qui pilote
+  // les `lg:hidden` du menu mobile — sinon le menu reste ouvert en vue bureau.
   useEffect(() => {
+    const desktop = window.matchMedia('(min-width: 64rem)')
     const handler = () => {
-      if (window.innerWidth >= 935) {
+      if (desktop.matches) {
         closeMenu()
       }
     }
-    window.addEventListener('resize', handler)
-    return () => window.removeEventListener('resize', handler)
+    handler()
+    desktop.addEventListener('change', handler)
+    return () => desktop.removeEventListener('change', handler)
   }, [closeMenu])
 
   return { menuOpen, setMenuOpen, closeMenu }
@@ -67,11 +71,15 @@ export function MobileMenuShell({
   id,
   open,
   onClose,
+  topOffset,
   children,
 }: {
   id: string
   open: boolean
   onClose: () => void
+  /** Hauteur de la barre fixe sous laquelle le panneau se déroule (ex. `var(--topbar-h)`).
+      Doit correspondre à la navbar du contexte, sinon le haut du menu passe dessous. */
+  topOffset: string
   children: ReactNode
 }) {
   return (
@@ -87,12 +95,13 @@ export function MobileMenuShell({
       />
       <div
         id={id}
-        className={`fixed top-16 left-0 right-0 z-40 lg:hidden grid transition-[grid-template-rows] duration-[420ms] ease-spring-soft ${
+        style={{ top: topOffset, maxHeight: `calc(100dvh - ${topOffset})` }}
+        className={`fixed left-0 right-0 z-40 lg:hidden grid transition-[grid-template-rows] duration-[420ms] ease-spring-soft ${
           open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
         }`}
       >
-        <div className="overflow-hidden">
-          <div className="bg-background/95 backdrop-blur-xl border-b border-border shadow-[0_8px_32px_rgba(0,0,0,0.1)]">
+        <div className="min-h-0 overflow-hidden">
+          <div className="max-h-full overflow-y-auto overscroll-contain bg-background/95 backdrop-blur-xl border-b border-border shadow-[0_8px_32px_rgba(0,0,0,0.1)]">
             <div className="mx-auto max-w-7xl px-6 py-3 flex flex-col gap-0.5">
               {children}
             </div>
