@@ -40,4 +40,9 @@ export const FR_MESSAGES = {
   'auth.noRefreshToken': 'Aucun jeton de rafraîchissement',
   'auth.oauthMissingCodeOrState': 'Code ou état manquant',
   'auth.oauthInvalidState': 'État OAuth invalide',
+
+  // --- profile / admin users ---
+  'profile.cardNotInCollection': 'Cette carte n’est pas dans ta collection',
+  'admin.cannotChangeOwnRole': 'Impossible de modifier son propre rôle',
+  'admin.cannotSuspendSelf': 'Impossible de suspendre son propre compte',
 } as const

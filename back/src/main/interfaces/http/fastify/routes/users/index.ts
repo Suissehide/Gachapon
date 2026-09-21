@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
+import { errorMessage } from '../../errors/messages'
 import {
   featuredCardsResponseSchema,
   setFeaturedCardsBodySchema,
@@ -53,7 +54,7 @@ export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request) => {
       const user = await userRepository.findByUsername(request.params.username)
       if (!user) {
-        throw Boom.notFound('User not found')
+        throw Boom.notFound(errorMessage('user.notFound'))
       }
 
       const [totalPulls, ownedCards, legendaryCount] = await Promise.all([

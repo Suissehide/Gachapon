@@ -32,4 +32,9 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'auth.noRefreshToken': 'No refresh token',
   'auth.oauthMissingCodeOrState': 'Missing code or state',
   'auth.oauthInvalidState': 'Invalid OAuth state',
+
+  // --- profile / admin users ---
+  'profile.cardNotInCollection': 'Card not in your collection',
+  'admin.cannotChangeOwnRole': 'Cannot change your own role',
+  'admin.cannotSuspendSelf': 'Cannot suspend your own account',
 }
