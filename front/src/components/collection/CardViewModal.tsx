@@ -48,29 +48,34 @@ const VARIANT_LABELS: Record<string, { label: string; className: string }> = {
   },
 }
 
+/**
+ * Bouton bascule : c'est la SEULE façon de retirer un vœu dans toute l'app.
+ * Le désactiver quand la carte est souhaitée rendrait les emplacements
+ * définitifs — plus aucun moyen de changer de carte une fois pleins.
+ */
 function WishlistButton({
   isWishlisted,
   loading,
-  onSet,
+  onToggle,
 }: {
   isWishlisted: boolean
   loading: boolean
-  onSet: () => void
+  onToggle: () => void
 }) {
   return (
     <div className="mt-3 flex">
       <Button
         variant={isWishlisted ? 'secondary' : 'outline'}
         size="sm"
-        disabled={loading || isWishlisted}
-        onClick={onSet}
+        disabled={loading}
+        onClick={onToggle}
         className="h-auto gap-1.5 rounded-[11px] border-[rgba(27,23,38,0.14)] px-[15px] py-[9px] text-[13.5px] font-semibold"
       >
         <Star
           className="h-[15px] w-[15px]"
           fill={isWishlisted ? 'currentColor' : 'none'}
         />
-        {isWishlisted ? 'Vœu actif' : 'Définir comme vœu'}
+        {isWishlisted ? 'Retirer le vœu' : 'Définir comme vœu'}
       </Button>
     </div>
   )
@@ -231,7 +236,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
             <WishlistButton
               isWishlisted={isWishlisted}
               loading={settingWishlist}
-              onSet={() =>
+              onToggle={() =>
                 toggleWishlist({ cardId: card.id, wished: isWishlisted })
               }
             />
