@@ -6,7 +6,18 @@ import { getCurrentLocale } from '../i18n/locale-context'
  * elle est vide. Un contenu créé en production hors des seeds n'a pas
  * toujours ses deux langues : mieux vaut un nom dans la mauvaise langue
  * qu'une carte sans nom.
+ *
+ * Deux signatures : sur des colonnes `NOT NULL` (comme `Quest.nameFr`/
+ * `nameEn`), le résultat ne peut jamais être `null` — seule une chaîne vide
+ * est possible si les deux langues sont vides — donc le type de retour doit
+ * rester `string`, pas `string | null`. Sans ça, tout appelant (comme
+ * `QuestStateItem.name: string` dans `quests.domain.ts`) serait forcé de
+ * caster ou de lire les colonnes brutes lui-même, ce qui est exactement ce
+ * que ce helper existe pour éviter. La deuxième signature couvre les
+ * colonnes nullable (ex. `CardSet.description`, tâche 5).
  */
+function pick(fr: string, en: string): string
+function pick(fr: string | null, en: string | null): string | null
 function pick(fr: string | null, en: string | null): string | null {
   const current = getCurrentLocale() === 'FR' ? fr : en
   if (current !== null && current !== '') {

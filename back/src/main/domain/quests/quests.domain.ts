@@ -10,7 +10,7 @@
  * an explicit `clearQuestCache()` call from the admin route.
  */
 
-import type { Prisma, Quest, Reward } from '../../../generated/client'
+import type { Prisma, Reward } from '../../../generated/client'
 import type { QuestPeriod } from '../../../generated/enums'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
@@ -20,6 +20,7 @@ import type {
   QuestStateItem,
 } from '../../types/domain/quests/quests.domain.interface'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
+import type { LocalizedQuest } from '../../types/infra/orm/localized'
 import type { IUserQuestRepository } from '../../types/infra/orm/repositories/user-quest.repository.interface'
 import type { UserRewardRepositoryInterface } from '../../types/infra/orm/repositories/user-reward.repository.interface'
 import type { Logger } from '../../types/utils/logger'
@@ -41,7 +42,10 @@ import {
 // Internal types
 // ---------------------------------------------------------------------------
 
-type QuestWithReward = Quest & {
+// LocalizedQuest (pas le `Quest` brut de generated/client) : c'est le seul
+// type qui porte les champs calculés `name`/`description` de
+// localized.extension.ts — voir src/main/types/infra/orm/localized.ts.
+type QuestWithReward = LocalizedQuest & {
   period: QuestPeriod
   reward: Pick<Reward, 'id' | 'tokens' | 'dust' | 'xp' | 'gold'> | null
 }
