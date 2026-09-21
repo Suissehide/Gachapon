@@ -1,9 +1,9 @@
-import type { Achievement } from '../../../generated/client'
 import type { CardRarity, CardVariant } from '../../../generated/enums'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
 import type { IQuestsDomain } from '../../types/domain/quests/quests.domain.interface'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
+import type { LocalizedAchievement } from '../../types/infra/orm/localized'
 import {
   MAX_PALIER,
   maxLevelInPalier,
@@ -30,7 +30,7 @@ import {
   type UserAchievementState,
 } from './state-dispatcher'
 
-type AchievementWithReward = Achievement & {
+type AchievementWithReward = LocalizedAchievement & {
   reward: {
     id: string
     tokens: number

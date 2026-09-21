@@ -1,4 +1,4 @@
-import type { ShopItem } from '../../../../../generated/client'
+import type { LocalizedShopItem } from '../localized'
 
 export type CreateShopItemInput = {
   name: string
@@ -13,10 +13,10 @@ export type CreateShopItemInput = {
 export type UpdateShopItemInput = Partial<CreateShopItemInput>
 
 export interface IShopItemRepository {
-  findAll(): Promise<ShopItem[]>
-  findActive(): Promise<ShopItem[]>
-  findById(id: string): Promise<ShopItem | null>
-  create(data: CreateShopItemInput): Promise<ShopItem>
-  update(id: string, data: UpdateShopItemInput): Promise<ShopItem>
+  findAll(): Promise<LocalizedShopItem[]>
+  findActive(): Promise<LocalizedShopItem[]>
+  findById(id: string): Promise<LocalizedShopItem | null>
+  create(data: CreateShopItemInput): Promise<LocalizedShopItem>
+  update(id: string, data: UpdateShopItemInput): Promise<LocalizedShopItem>
   delete(id: string): Promise<void>
 }

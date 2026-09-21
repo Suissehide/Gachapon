@@ -7,6 +7,11 @@ import type {
 } from '../../../types/domain/gacha/gacha.types'
 import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type { ICardRepository } from '../../../types/infra/orm/repositories/card.repository.interface'
+import { localizedNameOrder } from '../../i18n/locale-order'
+import {
+  descriptionToBothLocales,
+  nameToBothLocales,
+} from '../../i18n/monolingual-write'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 const WITH_SET = { set: true } as const
@@ -42,19 +47,19 @@ export class CardRepository implements ICardRepository {
         ...(filter?.rarity ? { rarity: filter.rarity } : {}),
       },
       include: WITH_SET,
-      orderBy: [{ rarity: 'desc' }, { name: 'asc' }],
+      orderBy: [{ rarity: 'desc' }, localizedNameOrder()],
     }) as Promise<CardWithSet[]>
   }
 
   findActiveSets(): Promise<CardSetEntity[]> {
     return this.#prisma.cardSet.findMany({
       where: { isActive: true },
-      orderBy: { name: 'asc' },
+      orderBy: localizedNameOrder(),
     })
   }
 
   findAllSets(): Promise<CardSetEntity[]> {
-    return this.#prisma.cardSet.findMany({ orderBy: { name: 'asc' } })
+    return this.#prisma.cardSet.findMany({ orderBy: localizedNameOrder() })
   }
 
   findSetById(id: string): Promise<CardSetEntity | null> {
@@ -97,8 +102,9 @@ export class CardRepository implements ICardRepository {
     passiveKey?: string | null
     element?: CardElement | null
   }): Promise<CardWithSet> {
+    const { name, ...rest } = data
     return this.#prisma.card.create({
-      data,
+      data: { ...rest, ...nameToBothLocales(name) },
       include: WITH_SET,
     }) as Promise<CardWithSet>
   }
@@ -119,9 +125,10 @@ export class CardRepository implements ICardRepository {
       element: CardElement | null
     }>,
   ): Promise<CardWithSet> {
+    const { name, ...rest } = data
     return this.#prisma.card.update({
       where: { id },
-      data,
+      data: { ...rest, ...nameToBothLocales(name) },
       include: WITH_SET,
     }) as Promise<CardWithSet>
   }
@@ -135,14 +142,29 @@ export class CardRepository implements ICardRepository {
     description?: string
     isActive?: boolean
   }): Promise<CardSetEntity> {
-    return this.#prisma.cardSet.create({ data })
+    const { name, description, ...rest } = data
+    return this.#prisma.cardSet.create({
+      data: {
+        ...rest,
+        ...nameToBothLocales(name),
+        ...descriptionToBothLocales(description),
+      },
+    })
   }
 
   updateSet(
     id: string,
     data: { name?: string; description?: string; isActive?: boolean },
   ): Promise<CardSetEntity> {
-    return this.#prisma.cardSet.update({ where: { id }, data })
+    const { name, description, ...rest } = data
+    return this.#prisma.cardSet.update({
+      where: { id },
+      data: {
+        ...rest,
+        ...nameToBothLocales(name),
+        ...descriptionToBothLocales(description),
+      },
+    })
   }
 
   async deleteSet(id: string): Promise<void> {

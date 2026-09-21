@@ -1,4 +1,4 @@
-import type { Achievement } from '../../../../../generated/client'
+import type { LocalizedAchievement } from '../localized'
 
 export type CreateAchievementInput = {
   key: string
@@ -17,9 +17,12 @@ export type CreateAchievementInput = {
 export type UpdateAchievementInput = Partial<CreateAchievementInput>
 
 export interface IAchievementRepository {
-  findAll(): Promise<Achievement[]>
-  findById(id: string): Promise<Achievement | null>
-  create(data: CreateAchievementInput): Promise<Achievement>
-  update(id: string, data: UpdateAchievementInput): Promise<Achievement>
+  findAll(): Promise<LocalizedAchievement[]>
+  findById(id: string): Promise<LocalizedAchievement | null>
+  create(data: CreateAchievementInput): Promise<LocalizedAchievement>
+  update(
+    id: string,
+    data: UpdateAchievementInput,
+  ): Promise<LocalizedAchievement>
   delete(id: string): Promise<void>
 }

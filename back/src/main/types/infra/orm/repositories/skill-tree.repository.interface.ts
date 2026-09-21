@@ -1,20 +1,19 @@
 import type {
-  SkillBranch,
   SkillConfig,
   SkillEdge,
-  SkillNode,
   SkillNodeLevel,
   UserSkill,
 } from '../../../../../generated/client'
 import type { UserUpgradeEffects } from '../../../domain/economy/economy.types'
+import type { LocalizedSkillBranch, LocalizedSkillNode } from '../localized'
 
-export type SkillNodeWithLevelsAndEdges = SkillNode & {
+export type SkillNodeWithLevelsAndEdges = LocalizedSkillNode & {
   levels: SkillNodeLevel[]
   edgesFrom: SkillEdge[]
   edgesTo: SkillEdge[]
 }
 
-export type SkillBranchWithNodes = SkillBranch & {
+export type SkillBranchWithNodes = LocalizedSkillBranch & {
   nodes: SkillNodeWithLevelsAndEdges[]
 }
 
@@ -38,7 +37,7 @@ export interface ISkillTreeRepository {
     icon: string
     color: string
     order: number
-  }): Promise<SkillBranch>
+  }): Promise<LocalizedSkillBranch>
   updateBranch(
     id: string,
     data: Partial<{
@@ -48,7 +47,7 @@ export interface ISkillTreeRepository {
       color: string
       order: number
     }>,
-  ): Promise<SkillBranch>
+  ): Promise<LocalizedSkillBranch>
   deleteBranch(id: string): Promise<void>
   createNode(data: {
     branchId: string
@@ -60,7 +59,7 @@ export interface ISkillTreeRepository {
     posX: number
     posY: number
     levels: { level: number; effect: number }[]
-  }): Promise<SkillNode>
+  }): Promise<LocalizedSkillNode>
   updateNode(
     id: string,
     data: Partial<{
@@ -74,7 +73,7 @@ export interface ISkillTreeRepository {
       posY: number
       levels: { level: number; effect: number }[]
     }>,
-  ): Promise<SkillNode>
+  ): Promise<LocalizedSkillNode>
   deleteNode(id: string): Promise<void>
   createEdge(
     fromNodeId: string,

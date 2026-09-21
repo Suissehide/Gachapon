@@ -5,7 +5,7 @@ import type {
   IQuestRepository,
   UpdateQuestInput,
 } from '../../../types/infra/orm/repositories/quest.repository.interface'
-import { getCurrentLocale } from '../../i18n/locale-context'
+import { localizedNameOrder } from '../../i18n/locale-order'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 export class QuestRepository implements IQuestRepository {
@@ -16,11 +16,7 @@ export class QuestRepository implements IQuestRepository {
   }
 
   findAll(): Promise<LocalizedQuest[]> {
-    const orderBy =
-      getCurrentLocale() === 'FR'
-        ? ({ nameFr: 'asc' } as const)
-        : ({ nameEn: 'asc' } as const)
-    return this.#prisma.quest.findMany({ orderBy })
+    return this.#prisma.quest.findMany({ orderBy: localizedNameOrder() })
   }
 
   findById(id: string): Promise<LocalizedQuest | null> {

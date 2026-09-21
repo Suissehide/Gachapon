@@ -5,6 +5,10 @@ import type {
   ISkillTreeRepository,
   SkillBranchWithNodes,
 } from '../../../types/infra/orm/repositories/skill-tree.repository.interface'
+import {
+  descriptionToBothLocales,
+  nameToBothLocales,
+} from '../../i18n/monolingual-write'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 export class SkillTreeRepository implements ISkillTreeRepository {
@@ -80,7 +84,14 @@ export class SkillTreeRepository implements ISkillTreeRepository {
     color: string
     order: number
   }) {
-    return this.#prisma.skillBranch.create({ data })
+    const { name, description, ...rest } = data
+    return this.#prisma.skillBranch.create({
+      data: {
+        ...rest,
+        ...nameToBothLocales(name),
+        ...descriptionToBothLocales(description),
+      },
+    })
   }
 
   updateBranch(
@@ -93,7 +104,15 @@ export class SkillTreeRepository implements ISkillTreeRepository {
       order: number
     }>,
   ) {
-    return this.#prisma.skillBranch.update({ where: { id }, data })
+    const { name, description, ...rest } = data
+    return this.#prisma.skillBranch.update({
+      where: { id },
+      data: {
+        ...rest,
+        ...nameToBothLocales(name),
+        ...descriptionToBothLocales(description),
+      },
+    })
   }
 
   async deleteBranch(id: string): Promise<void> {
@@ -111,10 +130,13 @@ export class SkillTreeRepository implements ISkillTreeRepository {
     posY: number
     levels: { level: number; effect: number }[]
   }) {
-    const { levels, ...nodeData } = data
+    const { levels, name, description, ...nodeData } = data
     return this.#prisma.skillNode.create({
       data: {
         ...nodeData,
+        ...nameToBothLocales(name),
+        ...descriptionToBothLocales(description),
+        // biome-ignore lint/suspicious/noExplicitAny: l'enum Prisma arrive en `string` depuis le schema Zod du routeur admin
         effectType: nodeData.effectType as any,
         levels: { create: levels },
       },
@@ -135,14 +157,22 @@ export class SkillTreeRepository implements ISkillTreeRepository {
       levels: { level: number; effect: number }[]
     }>,
   ) {
-    const { levels, ...rest } = data
+    const { levels, name, description, ...rest } = data
     if (levels !== undefined) {
       await this.#prisma.skillNodeLevel.deleteMany({ where: { nodeId: id } })
       await this.#prisma.skillNodeLevel.createMany({
         data: levels.map((l) => ({ ...l, nodeId: id })),
       })
     }
-    return this.#prisma.skillNode.update({ where: { id }, data: rest as any })
+    return this.#prisma.skillNode.update({
+      where: { id },
+      data: {
+        // biome-ignore lint/suspicious/noExplicitAny: `effectType` arrive en `string`, l'enum Prisma le refuse sans cast
+        ...(rest as any),
+        ...nameToBothLocales(name),
+        ...descriptionToBothLocales(description),
+      },
+    })
   }
 
   async deleteNode(id: string): Promise<void> {

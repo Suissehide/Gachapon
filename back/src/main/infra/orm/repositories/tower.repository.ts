@@ -1,9 +1,9 @@
 import type {
   CardElement,
-  TowerFloor,
   UserTowerProgress,
 } from '../../../../generated/client'
 import type { IocContainer } from '../../../types/application/ioc'
+import type { LocalizedTowerFloor } from '../../../types/infra/orm/localized'
 import type { ITowerRepository } from '../../../types/infra/orm/repositories/tower.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
 
@@ -14,7 +14,7 @@ export class TowerRepository implements ITowerRepository {
     this.#prisma = postgresOrm.prisma
   }
 
-  listFloors(element: CardElement): Promise<TowerFloor[]> {
+  listFloors(element: CardElement): Promise<LocalizedTowerFloor[]> {
     return this.#prisma.towerFloor.findMany({
       where: { element },
       orderBy: { index: 'asc' },
