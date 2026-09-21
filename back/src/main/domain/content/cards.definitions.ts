@@ -28,7 +28,7 @@ export const CARDS = [
   {
     id: 'HUM-001',
     nameFr: 'Aurore la Paysanne',
-    nameEn: 'Aurore la Paysanne',
+    nameEn: 'Aurore the Peasant',
     rarity: 'COMMON',
     dropWeight: 85,
     baseHp: 116,
@@ -41,7 +41,7 @@ export const CARDS = [
   {
     id: 'HUM-002',
     nameFr: 'Roland le Garde',
-    nameEn: 'Roland le Garde',
+    nameEn: 'Roland the Guard',
     rarity: 'COMMON',
     dropWeight: 85,
     baseHp: 123,
@@ -54,7 +54,7 @@ export const CARDS = [
   {
     id: 'HUM-003',
     nameFr: 'Mira la Voleuse',
-    nameEn: 'Mira la Voleuse',
+    nameEn: 'Mira the Thief',
     rarity: 'COMMON',
     dropWeight: 85,
     baseHp: 85,
@@ -67,7 +67,7 @@ export const CARDS = [
   {
     id: 'HUM-004',
     nameFr: 'Frère Anselme',
-    nameEn: 'Frère Anselme',
+    nameEn: 'Brother Anselme',
     rarity: 'COMMON',
     dropWeight: 85,
     baseHp: 81,
@@ -80,7 +80,7 @@ export const CARDS = [
   {
     id: 'HUM-005',
     nameFr: 'Gauthier le Forgeron',
-    nameEn: 'Gauthier le Forgeron',
+    nameEn: 'Gauthier the Blacksmith',
     rarity: 'COMMON',
     dropWeight: 85,
     baseHp: 130,
@@ -93,7 +93,7 @@ export const CARDS = [
   {
     id: 'HUM-006',
     nameFr: "Léna l'Archère",
-    nameEn: "Léna l'Archère",
+    nameEn: 'Léna the Archer',
     rarity: 'COMMON',
     dropWeight: 85,
     baseHp: 82,
@@ -262,7 +262,7 @@ export const CARDS = [
   {
     id: 'HUM-019',
     nameFr: 'Lyra la Vive',
-    nameEn: 'Lyra la Vive',
+    nameEn: 'Lyra the Lively',
     rarity: 'COMMON',
     dropWeight: 85,
     baseHp: 106,
@@ -354,7 +354,7 @@ export const CARDS = [
   {
     id: 'HUM-026',
     nameFr: 'Kenji le Ronin',
-    nameEn: 'Kenji le Ronin',
+    nameEn: 'Kenji the Ronin',
     rarity: 'UNCOMMON',
     dropWeight: 38,
     baseHp: 106,
@@ -367,7 +367,7 @@ export const CARDS = [
   {
     id: 'HUM-027',
     nameFr: 'Dame Coralie',
-    nameEn: 'Dame Coralie',
+    nameEn: 'Lady Coralie',
     rarity: 'UNCOMMON',
     dropWeight: 38,
     baseHp: 149,
@@ -380,7 +380,7 @@ export const CARDS = [
   {
     id: 'HUM-028',
     nameFr: 'Séléné au Fouet',
-    nameEn: 'Séléné au Fouet',
+    nameEn: 'Séléné of the Whip',
     rarity: 'UNCOMMON',
     dropWeight: 38,
     baseHp: 119,
@@ -394,7 +394,7 @@ export const CARDS = [
   {
     id: 'HUM-029',
     nameFr: 'Capitaine Hélène',
-    nameEn: 'Capitaine Hélène',
+    nameEn: 'Captain Hélène',
     rarity: 'RARE',
     dropWeight: 16,
     baseHp: 249,
@@ -407,7 +407,7 @@ export const CARDS = [
   {
     id: 'HUM-030',
     nameFr: 'Dame Ysolde la Paladine',
-    nameEn: 'Dame Ysolde la Paladine',
+    nameEn: 'Lady Ysolde the Paladin',
     rarity: 'RARE',
     dropWeight: 16,
     baseHp: 250,
@@ -420,7 +420,7 @@ export const CARDS = [
   {
     id: 'HUM-031',
     nameFr: 'Séraphine la Magicienne',
-    nameEn: 'Séraphine la Magicienne',
+    nameEn: 'Séraphine the Sorceress',
     rarity: 'RARE',
     dropWeight: 16,
     baseHp: 159,
@@ -459,7 +459,7 @@ export const CARDS = [
   {
     id: 'HUM-034',
     nameFr: 'Akira Double-Lame',
-    nameEn: 'Akira Double-Lame',
+    nameEn: 'Akira Double-Blade',
     rarity: 'RARE',
     dropWeight: 16,
     baseHp: 164,
@@ -473,7 +473,7 @@ export const CARDS = [
   {
     id: 'HUM-035',
     nameFr: 'Archimage Cael',
-    nameEn: 'Archimage Cael',
+    nameEn: 'Archmage Cael',
     rarity: 'EPIC',
     dropWeight: 8,
     baseHp: 254,
@@ -500,7 +500,7 @@ export const CARDS = [
   {
     id: 'HUM-037',
     nameFr: 'Roi Aldric',
-    nameEn: 'Roi Aldric',
+    nameEn: 'King Aldric',
     rarity: 'LEGENDARY',
     dropWeight: 2,
     baseHp: 597,
@@ -513,7 +513,7 @@ export const CARDS = [
   {
     id: 'HUM-038',
     nameFr: 'Reine Isaure',
-    nameEn: 'Reine Isaure',
+    nameEn: 'Queen Isaure',
     rarity: 'LEGENDARY',
     dropWeight: 2,
     baseHp: 584,
@@ -529,12 +529,10 @@ export const CARDS = [
  * Le set qui contient les 38 cartes ci-dessus.
  */
 export const HUMAN_CARD_SET = {
-  // nameEn/descriptionEn recopient provisoirement le français : la tâche 8
-  // y mettra la vraie traduction.
   nameFr: 'Royaume des Humains',
-  nameEn: 'Royaume des Humains',
+  nameEn: 'Kingdom of Humans',
   descriptionFr:
     'Le set des Humains du Gachapon. 38 combattants à collectionner, de la paysanne au roi.',
   descriptionEn:
-    'Le set des Humains du Gachapon. 38 combattants à collectionner, de la paysanne au roi.',
+    'The Gachapon Humans set. 38 collectible fighters, from peasant to king.',
 }
