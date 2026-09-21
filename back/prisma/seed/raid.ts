@@ -1,6 +1,7 @@
 import type { PrismaClient } from '../../src/generated/client'
 import {
   RAID_BOSS_NAME,
+  RAID_BOSS_NAME_EN,
   RAID_TIERS,
   raidBossSpec,
   raidTierLabelEn,
@@ -21,14 +22,13 @@ export async function seedRaid(tx: Tx): Promise<void> {
       where: { element },
       create: {
         element,
-        // nameEn recopie le francais : la tache 8 traduira.
         nameFr: RAID_BOSS_NAME[element],
-        nameEn: RAID_BOSS_NAME[element],
+        nameEn: RAID_BOSS_NAME_EN[element],
         spec: raidBossSpec(element),
       },
       update: {
         nameFr: RAID_BOSS_NAME[element],
-        nameEn: RAID_BOSS_NAME[element],
+        nameEn: RAID_BOSS_NAME_EN[element],
         spec: raidBossSpec(element),
       },
     })

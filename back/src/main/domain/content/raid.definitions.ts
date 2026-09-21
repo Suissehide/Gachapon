@@ -43,6 +43,14 @@ export const RAID_BOSS_NAME: Record<TowerElement, string> = {
   EARTH: 'Gorm, le Roc',
 }
 
+/** Traduction anglaise de `RAID_BOSS_NAME`. Prénoms conservés, épithètes traduites. */
+export const RAID_BOSS_NAME_EN: Record<TowerElement, string> = {
+  FIRE: 'Ignis, the Blaze',
+  WATER: 'Nérée, the Tide',
+  NATURE: 'Sylva, the Bramble',
+  EARTH: 'Gorm, the Rock',
+}
+
 /** Même forme que towerEnemyTeam (tower.definitions.ts), une seule unité. */
 export function raidBossSpec(element: TowerElement) {
   return {
@@ -80,11 +88,14 @@ export const RAID_TIERS = [
  * Libellé de la récompense d'un palier de raid — le gabarit, jamais
  * l'occurrence : les quatre paliers ne diffèrent que par leur pourcentage.
  */
-// labelEn recopie le francais : la tache 8 traduira.
 export function raidTierLabelFr(pct: number): string {
   return `Raid d'équipe — palier ${pct} %`
 }
 
+// « tier », pas « palier » : aligné sur `raid.tierNotFound` du catalogue
+// d'erreurs (infra/i18n/error-messages/en.ts), qui a déjà tranché ce mot pour
+// le raid — à ne pas confondre avec le « palier » de progression de carte,
+// gardé tel quel en anglais ailleurs (cardAscension.*).
 export function raidTierLabelEn(pct: number): string {
-  return `Raid d'équipe — palier ${pct} %`
+  return `Team Raid — tier ${pct}%`
 }
