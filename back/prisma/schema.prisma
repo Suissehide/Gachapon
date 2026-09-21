@@ -12,6 +12,11 @@ enum GlobalRole {
   SUPER_ADMIN
 }
 
+enum Locale {
+  FR
+  EN
+}
+
 enum OAuthProvider {
   GOOGLE
   DISCORD
@@ -634,15 +639,17 @@ model UserAchievementProgress {
 }
 
 model Quest {
-  id          String      @id @default(uuid())
-  key         String      @unique
-  name        String
-  description String
-  criterion   Json
-  period      QuestPeriod @default(ONESHOT)
-  rewardId    String?
-  reward      Reward?     @relation(fields: [rewardId], references: [id])
-  isActive    Boolean     @default(true)
+  id            String      @id @default(uuid())
+  key           String      @unique
+  nameFr        String
+  nameEn        String
+  descriptionFr String
+  descriptionEn String
+  criterion     Json
+  period        QuestPeriod @default(ONESHOT)
+  rewardId      String?
+  reward        Reward?     @relation(fields: [rewardId], references: [id])
+  isActive      Boolean     @default(true)
 
   userQuests UserQuest[]
 }

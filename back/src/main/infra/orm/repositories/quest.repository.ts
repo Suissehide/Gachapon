@@ -1,10 +1,12 @@
 import type { Quest } from '../../../../generated/client'
 import type { IocContainer } from '../../../types/application/ioc'
+import type { LocalizedQuest } from '../../../types/infra/orm/localized'
 import type {
   CreateQuestInput,
   IQuestRepository,
   UpdateQuestInput,
 } from '../../../types/infra/orm/repositories/quest.repository.interface'
+import { getCurrentLocale } from '../../i18n/locale-context'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 export class QuestRepository implements IQuestRepository {
@@ -14,8 +16,12 @@ export class QuestRepository implements IQuestRepository {
     this.#prisma = postgresOrm.prisma
   }
 
-  findAll(): Promise<Quest[]> {
-    return this.#prisma.quest.findMany({ orderBy: { name: 'asc' } })
+  findAll(): Promise<LocalizedQuest[]> {
+    const orderBy =
+      getCurrentLocale() === 'FR'
+        ? ({ nameFr: 'asc' } as const)
+        : ({ nameEn: 'asc' } as const)
+    return this.#prisma.quest.findMany({ orderBy })
   }
 
   findById(id: string): Promise<Quest | null> {
