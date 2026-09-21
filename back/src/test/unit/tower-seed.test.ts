@@ -8,8 +8,14 @@ import {
 } from '../../../prisma/seed/bestiary'
 import { RARITY_BASE } from '../../../prisma/seed/campaign'
 import {
+  towerFloorProfile,
+  towerReferenceWinRate,
+} from '../../../prisma/seed/balance-calibration'
+import {
   TOWER_ELEMENTS,
+  TOWER_FLOOR_COUNT,
   buildTowerFloors,
+  towerAoeUnitCount,
   towerEnemyPower,
   towerFloorLoot,
 } from '../../../prisma/seed/tower'
@@ -69,27 +75,103 @@ describe('seed des tours', () => {
     expect(partEpicPlus(10)).toBeGreaterThan(partEpicPlus(1))
   })
 
-  it('la difficulté monte vite en bas et par paliers fins en haut', () => {
-    // Troisième forme demandée pour cette courbe, après « marches franches »
-    // puis « linéaire » : montée RAPIDE au début, qui filtre, puis paliers de
-    // plus en plus FINS, pour qu'un niveau de carte ou une pièce suffise à
-    // franchir la marche suivante.
-    const puissance = (f: number) => towerEnemyPower(f).baseAtk
-    const rapports = Array.from(
-      { length: 9 },
-      (_, i) => puissance(i + 2) / puissance(i + 1),
-    )
-    // Strictement croissante, et les rapports DÉCROISSENT : chaque marche est
-    // relativement plus douce que la précédente.
-    for (let i = 0; i < rapports.length; i++) {
-      expect(rapports[i]).toBeGreaterThan(1)
-      if (i > 0) {
-        expect(rapports[i]).toBeLessThanOrEqual(rapports[i - 1])
-      }
+  it('la difficulté est STRICTEMENT croissante d’un étage au suivant', () => {
+    // Remplace l'ancien contrat « montée rapide puis paliers fins » (rapports
+    // décroissants, du ×2,2 au ×1,06). Cette forme-là tassait les étages 6 à
+    // 10 dans 30 % d'écart : une fois l'étage 6 franchi, les quatre suivants
+    // tombaient sans rien demander de plus. La courbe est désormais fixée
+    // étage par étage sur le joueur qu'il doit accueillir
+    // (TOWER_FLOOR_PROFILES), et la seule forme imposée est la monotonie.
+    for (let f = 2; f <= TOWER_FLOOR_COUNT; f++) {
+      expect(towerEnemyPower(f).baseHp).toBeGreaterThan(
+        towerEnemyPower(f - 1).baseHp,
+      )
+      expect(towerEnemyPower(f).baseAtk).toBeGreaterThan(
+        towerEnemyPower(f - 1).baseAtk,
+      )
     }
-    // Le bas filtre (premier rapport large), le haut se joue à peu de chose.
-    expect(rapports[0]).toBeGreaterThan(2)
-    expect(rapports[rapports.length - 1]).toBeLessThan(1.15)
+  })
+
+  it('un seul ennemi frappe en AOE_3, et seulement au dernier étage', () => {
+    // Trois AOE_3 simultanés, c'est neuf fois les dégâts entrants d'un trio
+    // normal : mesuré au simulateur, une équipe épique n12 gagne 100 % contre
+    // trois BASIC et 0 % contre trois AOE_3 AUX MÊMES STATS. Ce n'était pas un
+    // cran de difficulté mais un interrupteur — et c'est lui, pas la courbe,
+    // qui produisait le saut de 98 % à 0 % entre les étages 9 et 10.
+    for (let f = 1; f < TOWER_FLOOR_COUNT; f++) {
+      expect(towerAoeUnitCount(f)).toBe(0)
+    }
+    expect(towerAoeUnitCount(TOWER_FLOOR_COUNT)).toBe(1)
+    for (const etage of etages) {
+      const aoe = etage.enemyTeam.filter((e) => e.attackPattern === 'AOE_3')
+      expect(aoe).toHaveLength(etage.index === TOWER_FLOOR_COUNT ? 1 : 0)
+    }
+  })
+
+  it('chaque étage tient la cible de victoire de son profil de référence', () => {
+    // LE test d'équilibrage de la tour : pour chaque étage, le joueur que cet
+    // étage vise doit le gagner à peu près `target` fois sur dix. C'est ce
+    // qu'aucun test ne vérifiait — la courbe précédente avait été calibrée sur
+    // la JAUGE affichée (`campaign-power.ts`), dont la prime de menace ×7 pour
+    // AOE_3, appliquée à trois unités, gonflait l'étage 10 d'un facteur 7 :
+    // il affichait la puissance du boss 8-10 avec les stats du stage 5-1.
+    //
+    // Bande large (±15 points) : 80 combats donnent un écart-type
+    // d'échantillonnage d'environ 5,6 points, et le test doit signaler une
+    // DÉRIVE, pas du bruit.
+    for (let f = 1; f <= TOWER_FLOOR_COUNT; f++) {
+      const { target } = towerFloorProfile(f)
+      const mesure = towerReferenceWinRate(f, 80)
+      expect(mesure).toBeGreaterThanOrEqual(target - 0.15)
+      expect(mesure).toBeLessThanOrEqual(target + 0.15)
+    }
+  })
+
+  it('le profil de référence exige de plus en plus, étage après étage', () => {
+    // La cible n'a de sens que si les profils montent : niveau de carte
+    // jamais décroissant, nombre de pièces jamais décroissant, et taux visé
+    // jamais croissant (le bas est une porte, le haut un contrôle de build).
+    for (let f = 2; f <= TOWER_FLOOR_COUNT; f++) {
+      const avant = towerFloorProfile(f - 1)
+      const apres = towerFloorProfile(f)
+      expect(apres.level).toBeGreaterThanOrEqual(avant.level)
+      expect(apres.gearCount).toBeGreaterThanOrEqual(avant.gearCount)
+      expect(apres.target).toBeLessThanOrEqual(avant.target)
+    }
+    // Au-delà de l'étage 6 le joueur est au plafond de niveau : la tour ne
+    // demande plus que de l'ÉQUIPEMENT, comme la phase 2 de la campagne.
+    expect(towerFloorProfile(TOWER_FLOOR_COUNT).level).toBe(70)
+  })
+
+  it('le butin ne suit PAS la difficulté : il reste celui d’avant le recalibrage', () => {
+    // `towerFloorLoot` lisait la même constante que la difficulté. Multiplier
+    // les échelles par quatre aurait multiplié or, poussière et XP d'autant —
+    // un rééquilibrage de difficulté n'a pas à déplacer l'économie. Les
+    // valeurs ci-dessous sont celles en production avant le recalibrage.
+    const attendu: Record<number, [number, number, number, number]> = {
+      1: [200, 120, 40, 25],
+      5: [1720, 1032, 344, 215],
+      10: [3380, 2028, 676, 422],
+    }
+    for (const [floor, [fcGold, fcDust, farmGold, farmDust]] of Object.entries(
+      attendu,
+    )) {
+      const loot = towerFloorLoot(Number(floor))
+      expect(loot.firstClear.gold).toBe(fcGold)
+      expect(loot.firstClear.dust).toBe(fcDust)
+      expect(loot.farm.gold).toBe(farmGold)
+      expect(loot.farm.dust).toBe(farmDust)
+    }
+  })
+
+  it('le butin monte moins vite que la difficulté', () => {
+    // Conséquence directe du gel : progresser reste payant (le butin croît),
+    // mais farmer le haut de la tour ne devient pas la seule option rentable.
+    const rapportButin =
+      towerFloorLoot(TOWER_FLOOR_COUNT).farm.gold / towerFloorLoot(1).farm.gold
+    const rapportDifficulte =
+      towerEnemyPower(TOWER_FLOOR_COUNT).baseHp / towerEnemyPower(1).baseHp
+    expect(rapportButin).toBeLessThan(rapportDifficulte)
   })
 
   it('chaque étage a ses propres taux de rareté', () => {

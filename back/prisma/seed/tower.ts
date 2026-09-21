@@ -24,26 +24,46 @@ export type { TowerElement }
 type Tx = Parameters<Parameters<PrismaClient['$transaction']>[0]>[0]
 
 /**
- * Difficulté par étage — montée RAPIDE puis paliers FINS.
+ * Difficulté par étage — un étage, un profil de joueur.
  *
- * Ancrage : l'étage 10 pèse autant que l'étage 80 de la campagne (50 943 de
- * puissance d'équipe), et l'étage 1 reste franchissable par un joueur qui
- * sort du début de campagne.
+ * Chaque valeur est FITTÉE au simulateur (`scripts/tower-sim.ts`, mode
+ * `fit`) : c'est l'échelle pour laquelle le joueur que l'étage vise le gagne
+ * environ `target` fois sur dix. Les profils et les cibles vivent dans
+ * `balance-calibration.ts` — la courbe ci-dessous n'est que leur résultat, et
+ * `tower-seed.test.ts` remesure le couple à chaque exécution.
  *
- * La courbe précédente visait 537 943 — la valeur de l'étage 80 AVANT le gel
- * de la vitesse. Le gel a divisé les puissances de campagne par dix sans
- * toucher celles de la tour, dont la vitesse ne suivait déjà pas l'échelle :
- * l'ancrage pointait donc dans le vide, et l'étage 1 était infranchissable
- * même à niveau 30 avec de l'équipement.
+ * La montée suit la campagne : +10 niveaux de joueur par étage jusqu'au
+ * plafond de 70 (étages 1-6), puis c'est l'équipement seul qui décide
+ * (étages 7-10) — la phase 2 de `seed/campaign.ts`, transposée.
  *
- * La forme suit la demande : les rapports entre étages consécutifs partent de
- * ×2,2 et retombent à ×1,06. Le bas filtre, le haut se joue à peu de chose.
+ * POURQUOI ces valeurs et pas les précédentes ([1, 2.2, … 16.9]) : l'ancienne
+ * courbe était ancrée sur la JAUGE affichée (`campaign-power.ts`) et non sur
+ * les stats. Or la jauge applique une prime de menace ×7 aux attaques AOE_3,
+ * et l'étage 10 en alignait TROIS : il atteignait donc les 50 943 points du
+ * boss 8-10 avec les stats réelles du stage 5-1. Mesurés, les étages 1 à 9
+ * tombaient tous face à une équipe niveau 20 correctement équipée, et le
+ * seul mur du jeu était le changement de pattern au sommet.
  *
- * L'étage 10 aligne trois ennemis en AOE_3 : sa puissance AFFICHÉE bondit
- * (prime de menace ×7 dans la jauge) alors que ses stats réelles ne montent
- * que de 6 % par rapport à l'étage 9.
+ * La jauge reste un outil d'AFFICHAGE. Pour calibrer, le simulateur.
  */
-const FLOOR_SCALE = [1, 2.2, 4, 6.2, 8.6, 11, 13, 14.6, 15.9, 16.9] as const
+const FLOOR_SCALE = [2.5, 5.4, 9.5, 13.5, 26.5, 39.5, 45, 51, 59, 67.5] as const
+
+/**
+ * Échelle du BUTIN — délibérément découplée de la difficulté, et gelée sur
+ * les valeurs d'avant le recalibrage.
+ *
+ * `towerFloorLoot` lisait `FLOOR_SCALE` : durcir la tour aurait multiplié or,
+ * poussière et XP par quatre au passage. Un rééquilibrage de difficulté n'a
+ * pas à déplacer l'économie — celle-ci est réglée ailleurs, et son rythme
+ * (packs d'énergie, boutique du jour, courbe d'XP) ne suppose pas que la tour
+ * se mette soudain à payer quatre fois plus.
+ *
+ * Conséquence voulue : la difficulté croît plus vite que le butin, donc
+ * farmer un étage déjà franchi reste digne au lieu de devenir la seule
+ * option rentable. Même principe que `FARM_EXP` en campagne, obtenu ici par
+ * deux courbes séparées plutôt que par un exposant.
+ */
+const LOOT_SCALE = [1, 2.2, 4, 6.2, 8.6, 11, 13, 14.6, 15.9, 16.9] as const
 
 // Profil épique de campagne (source unique : RARITY_BASE.EPIC dans
 // campaign.ts) — pas de littéral recopié, sinon un futur rééquilibrage de
@@ -61,16 +81,41 @@ function assertFloorInRange(floor: number): void {
   }
 }
 
+/**
+ * Stats d'un ennemi à une échelle ARBITRAIRE. Exportée pour que le
+ * simulateur d'équilibrage (`scripts/tower-sim.ts`, via
+ * `balance-calibration.ts`) puisse essayer une courbe candidate sans recopier
+ * la formule — une copie divergerait du seed en silence, exactement comme
+ * l'a fait la table élément → slot avant `tower-slots.ts`.
+ */
+export function towerEnemyStatsAtScale(scale: number, floor: number) {
+  return {
+    baseHp: Math.round(BASE.hp * scale),
+    baseAtk: Math.round(BASE.atk * scale),
+    baseDef: Math.round(BASE.def * scale),
+    baseSpd: Math.round(BASE.spd * (1 + 0.02 * (floor - 1))),
+    mitigationScale: scale,
+  }
+}
+
 export function towerEnemyPower(floor: number) {
   assertFloorInRange(floor)
-  const s = FLOOR_SCALE[floor - 1]
-  return {
-    baseHp: Math.round(BASE.hp * s),
-    baseAtk: Math.round(BASE.atk * s),
-    baseDef: Math.round(BASE.def * s),
-    baseSpd: Math.round(BASE.spd * (1 + 0.02 * (floor - 1))),
-    mitigationScale: s,
-  }
+  return towerEnemyStatsAtScale(FLOOR_SCALE[floor - 1], floor)
+}
+
+/**
+ * Combien des trois ennemis d'un étage frappent en AOE_3.
+ *
+ * Une unité AOE_3 touche les trois cartes du joueur à chaque tour : en
+ * aligner trois, c'est neuf fois les dégâts entrants d'un trio normal. Ce
+ * n'est pas un cran de difficulté, c'est un interrupteur — mesuré au
+ * simulateur, une équipe épique n12 gagne 100 % contre trois BASIC et 0 %
+ * contre trois AOE_3 AUX MÊMES STATS. D'où une seule unité AOE_3 au sommet :
+ * le dernier étage reste distinct sans être binaire.
+ */
+export function towerAoeUnitCount(floor: number): number {
+  assertFloorInRange(floor)
+  return floor === TOWER_FLOOR_COUNT ? 1 : 0
 }
 
 // Un triplet, pas un `string[]` : l'étage a EXACTEMENT trois ennemis, et le
@@ -130,11 +175,12 @@ export function towerEnemyTeam(element: TowerElement, floor: number) {
   if (!sprites) {
     throw new Error(`Aucun sprite pour la tour ${element}, étage ${floor}.`)
   }
-  return sprites.map((appearance) => ({
+  const aoeUnits = towerAoeUnitCount(floor)
+  return sprites.map((appearance, slot) => ({
     ...p,
     level: 1,
     palier: 1,
-    attackPattern: floor === TOWER_FLOOR_COUNT ? 'AOE_3' : 'BASIC',
+    attackPattern: slot < aoeUnits ? 'AOE_3' : 'BASIC',
     appearance,
     // L'élément de la tour, qui est aussi celui de la famille du sprite
     // (voir TOWER_LOOKS) : aucune restriction sur l'équipe du joueur, mais
@@ -163,7 +209,7 @@ const RARITY_WEIGHTS: Record<number, Record<string, number>> = {
 
 export function towerFloorLoot(floor: number) {
   assertFloorInRange(floor)
-  const s = FLOOR_SCALE[floor - 1]
+  const s = LOOT_SCALE[floor - 1]
   return {
     firstClear: {
       gold: Math.round(200 * s),
