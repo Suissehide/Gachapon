@@ -214,8 +214,10 @@ describe('routes de tour', () => {
     const quest = await postgresOrm.prisma.quest.create({
       data: {
         key: questKey,
-        name: `Quête tour ${suffix}`,
-        description: 'Test: un combat de tour compte pour une quête',
+        nameFr: `Quête tour ${suffix}`,
+        nameEn: `Quête tour ${suffix}`,
+        descriptionFr: 'Test: un combat de tour compte pour une quête',
+        descriptionEn: 'Test: un combat de tour compte pour une quête',
         period: 'WEEKLY',
         criterion: { event: 'STAGE_CLEARED', target: 1 },
         isActive: true,
@@ -226,8 +228,10 @@ describe('routes de tour', () => {
     const equipQuest = await postgresOrm.prisma.quest.create({
       data: {
         key: equipQuestKey,
-        name: `Quête butin tour ${suffix}`,
-        description: 'Test: un drop de tour compte pour une quête équipement',
+        nameFr: `Quête butin tour ${suffix}`,
+        nameEn: `Quête butin tour ${suffix}`,
+        descriptionFr: 'Test: un drop de tour compte pour une quête équipement',
+        descriptionEn: 'Test: un drop de tour compte pour une quête équipement',
         period: 'ONESHOT',
         criterion: { event: 'EQUIPMENT_OBTAINED', target: 1 },
         isActive: true,

@@ -282,8 +282,10 @@ describe('Campaign routes', () => {
     const quest = await postgresOrm.prisma.quest.create({
       data: {
         key: questKey,
-        name: `Quête campagne ${suffix}`,
-        description: 'Test: un combat de campagne compte pour une quête',
+        nameFr: `Quête campagne ${suffix}`,
+        nameEn: `Quête campagne ${suffix}`,
+        descriptionFr: 'Test: un combat de campagne compte pour une quête',
+        descriptionEn: 'Test: un combat de campagne compte pour une quête',
         period: 'WEEKLY',
         criterion: { event: 'STAGE_CLEARED', target: 1 },
         isActive: true,
@@ -294,8 +296,10 @@ describe('Campaign routes', () => {
     const equipQuest = await postgresOrm.prisma.quest.create({
       data: {
         key: equipQuestKey,
-        name: `Quête butin campagne ${suffix}`,
-        description: 'Test: les drops de campagne comptent pour une quête',
+        nameFr: `Quête butin campagne ${suffix}`,
+        nameEn: `Quête butin campagne ${suffix}`,
+        descriptionFr: 'Test: les drops de campagne comptent pour une quête',
+        descriptionEn: 'Test: les drops de campagne comptent pour une quête',
         period: 'ONESHOT',
         criterion: { event: 'EQUIPMENT_OBTAINED', target: 999 },
         isActive: true,

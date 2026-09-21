@@ -37,8 +37,10 @@ describe('GET /quests — état utilisateur e2e', () => {
     const quest = await postgresOrm.prisma.quest.create({
       data: {
         key: questKey,
-        name: `State Test Weekly ${suffix}`,
-        description: 'State test quest',
+        nameFr: `State Test Weekly ${suffix}`,
+        nameEn: `State Test Weekly ${suffix}`,
+        descriptionFr: 'State test quest',
+        descriptionEn: 'State test quest',
         period: 'WEEKLY',
         criterion: { event: 'PULL_COMPLETED', target: 10 },
         isActive: true,

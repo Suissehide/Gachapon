@@ -89,7 +89,11 @@ describe('Bootstrap des quêtes e2e', () => {
     await ioc.questsDomain.bootstrap()
     await ioc.postgresOrm.prisma.quest.update({
       where: { key: 'weekly_equip_drops_12' },
-      data: { name: 'Nom retouché à la main', isActive: false },
+      data: {
+        nameFr: 'Nom retouché à la main',
+        nameEn: 'Nom retouché à la main',
+        isActive: false,
+      },
     })
 
     await ioc.questsDomain.bootstrap()

@@ -3,8 +3,10 @@ import type { LocalizedQuest } from '../localized'
 
 export type CreateQuestInput = {
   key: string
-  name: string
-  description: string
+  nameFr: string
+  nameEn: string
+  descriptionFr: string
+  descriptionEn: string
   criterion: Record<string, unknown>
   isActive?: boolean
 }

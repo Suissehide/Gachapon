@@ -53,8 +53,10 @@ describe('Progression des quêtes équipement e2e', () => {
       await orm.prisma.quest.create({
         data: {
           key,
-          name: key,
-          description: key,
+          nameFr: key,
+          nameEn: key,
+          descriptionFr: key,
+          descriptionEn: key,
           period: 'ONESHOT',
           criterion: { event, target },
           isActive: true,

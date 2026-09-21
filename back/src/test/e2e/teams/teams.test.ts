@@ -510,8 +510,10 @@ describe('Quest join_team — createTeam émet TEAM_JOINED', () => {
     const quest = await postgresOrm.prisma.quest.create({
       data: {
         key: `join_team_${suffix}`,
-        name: 'Force du Groupe (test)',
-        description: 'Rejoins ou crée une équipe.',
+        nameFr: 'Force du Groupe (test)',
+        nameEn: 'Force du Groupe (test)',
+        descriptionFr: 'Rejoins ou crée une équipe.',
+        descriptionEn: 'Rejoins ou crée une équipe.',
         period: 'ONESHOT',
         criterion: { event: 'TEAM_JOINED', target: 1 },
         isActive: true,
