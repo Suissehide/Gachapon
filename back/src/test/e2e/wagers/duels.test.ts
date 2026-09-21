@@ -1499,10 +1499,13 @@ describe('cycle de vie du duel', () => {
       expect(propose.statusCode).toBe(201)
       const duelId = propose.json().id as string
 
+      // 'accept-language': 'fr' — les deux assertions plus bas vérifient le
+      // texte français d'origine ; depuis le catalogue bilingue (tâche 6),
+      // une requête sans en-tête reçoit l'anglais (locale par défaut).
       const refused = await app.inject({
         method: 'DELETE',
         url: `/teams/${delTeamId}`,
-        headers: { cookie: cookiesA },
+        headers: { cookie: cookiesA, 'accept-language': 'fr' },
       })
       expect(refused.statusCode).toBe(409)
       // Le message ENUMERE ce qui bloque (sa fin explique pourquoi et
@@ -1532,7 +1535,7 @@ describe('cycle de vie du duel', () => {
       const stillRefused = await app.inject({
         method: 'DELETE',
         url: `/teams/${delTeamId}`,
-        headers: { cookie: cookiesA },
+        headers: { cookie: cookiesA, 'accept-language': 'fr' },
       })
       expect(stillRefused.statusCode).toBe(409)
       expect(stillRefused.json().message).toContain('1 pari en cours')

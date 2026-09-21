@@ -260,10 +260,13 @@ describe('routes de raid', () => {
   // couvert par team.test.ts). Ici, B n'a JAMAIS posé d'équipe de raid — le
   // même 400 se déclenche, mais pour cette raison : aucune équipe à résoudre.
   it('POST attack : refuse quand le joueur n’a pas encore d’équipe de raid', async () => {
+    // 'accept-language': 'fr' — motif tower.test.ts : le message vérifié
+    // plus bas est le texte français d'origine, et une requête sans en-tête
+    // reçoit l'anglais depuis le catalogue bilingue (tâche 6).
     const res = await app.inject({
       method: 'POST',
       url: `/teams/${teamId}/raid/attack`,
-      headers: { cookie: cookiesB },
+      headers: { cookie: cookiesB, 'accept-language': 'fr' },
     })
     expect(res.statusCode).toBe(400)
     // Épingle la RAISON du refus (motif tower.test.ts) : sans ça, n'importe

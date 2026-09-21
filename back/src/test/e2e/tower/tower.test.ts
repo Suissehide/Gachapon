@@ -463,10 +463,14 @@ describe('routes de tour', () => {
   // équipe. Ici, on ne teste plus que l'ABSENCE d'équipe.
   it('refuse le combat quand aucune équipe n’est enregistrée', async () => {
     // Joueur neuf : ni équipe de tour, ni équipe de campagne dont hériter.
+    // 'accept-language': 'fr' — le message vérifié plus bas est le texte
+    // français d'origine (task-6-brief.md « reprends les messages à
+    // l'identique ») ; depuis le catalogue bilingue (tâche 6), une requête
+    // sans en-tête reçoit l'anglais (locale par défaut).
     const res = await app.inject({
       method: 'POST',
       url: '/tower/FIRE/1/battle',
-      headers: { cookie: freshCookies },
+      headers: { cookie: freshCookies, 'accept-language': 'fr' },
     })
     expect(res.statusCode).toBe(400)
     // Épingle la RAISON du refus : un 400 générique (énergie insuffisante,

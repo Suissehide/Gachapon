@@ -107,9 +107,17 @@ describe('Admin media routes', () => {
     })
 
     // Essayer de supprimer la clé correspondante
+    // 'accept-language': 'fr' — le message vérifié plus bas est le texte
+    // français d'origine ; depuis le catalogue bilingue (tâche 6), une
+    // requête sans en-tête reçoit l'anglais (locale par défaut) et ne
+    // matcherait plus /utilisée/i.
     const res = await app.inject({
       method: 'DELETE', url: '/admin/media',
-      headers: { cookie: adminCookies, 'content-type': 'application/json' },
+      headers: {
+        cookie: adminCookies,
+        'content-type': 'application/json',
+        'accept-language': 'fr',
+      },
       payload: { keys: [`cards/used-image-${suffix}.png`] },
     })
     expect(res.statusCode).toBe(400)

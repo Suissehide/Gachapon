@@ -1801,10 +1801,13 @@ describe('cote et placement du pari', () => {
           },
         })
 
+        // 'accept-language': 'fr' — le message vérifié plus bas est le texte
+        // français d'origine ; depuis le catalogue bilingue (tâche 6), une
+        // requête sans en-tête reçoit l'anglais (locale par défaut).
         const tooLate = await app.inject({
           method: 'POST',
           url: `/teams/${teamId}/bets/${market.id}/entries`,
-          headers: { cookie: cookiesC },
+          headers: { cookie: cookiesC, 'accept-language': 'fr' },
           payload: { side: 'NO', stake: 500 },
         })
         expect(tooLate.statusCode).toBe(409)
