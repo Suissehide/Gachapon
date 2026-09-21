@@ -7,6 +7,8 @@ const _dirname = dirname(fileURLToPath(import.meta.url))
 
 import type { IocContainer } from '../../types/application/ioc'
 import type { IMailService } from '../../types/infra/mail/mail.service.interface'
+import type { Locale } from '../i18n/locale'
+import { MAIL_COPY } from './mail-copy'
 
 export class MailService implements IMailService {
   readonly #transporter: nodemailer.Transporter
@@ -26,8 +28,22 @@ export class MailService implements IMailService {
     })
   }
 
-  #render(templateName: string, vars: Record<string, string>): string {
-    const path = join(_dirname, 'templates', templateName)
+  /**
+   * Le corps HTML vit dans `templates/<nom>.<locale>.html` — un fichier par
+   * langue, pas de substitution de texte à l'intérieur d'un template unique
+   * (voir task-7-brief.md). `locale.toLowerCase()` retombe sur les noms de
+   * fichiers déjà en place (`.fr.html`/`.en.html`).
+   */
+  #render(
+    templateName: string,
+    locale: Locale,
+    vars: Record<string, string>,
+  ): string {
+    const path = join(
+      _dirname,
+      'templates',
+      `${templateName}.${locale.toLowerCase()}.html`,
+    )
     let html = readFileSync(path, 'utf-8')
     for (const [key, value] of Object.entries(vars)) {
       html = html.replaceAll(`{{${key}}}`, value)
@@ -35,27 +51,35 @@ export class MailService implements IMailService {
     return html
   }
 
-  async sendVerificationEmail(to: string, token: string): Promise<void> {
+  async sendVerificationEmail(
+    to: string,
+    token: string,
+    locale: Locale,
+  ): Promise<void> {
     const verifyUrl = `${this.#frontUrl}/verify-email?token=${token}`
-    const html = this.#render('verify-email.html', { VERIFY_URL: verifyUrl })
+    const copy = MAIL_COPY[locale]
     await this.#transporter.sendMail({
       from: this.#from,
       to,
-      subject: 'Confirme ton adresse — Gachapon',
-      html,
-      text: `Confirme ton adresse email Gachapon en ouvrant ce lien : ${verifyUrl}`,
+      subject: copy.verifySubject,
+      html: this.#render('verify-email', locale, { VERIFY_URL: verifyUrl }),
+      text: copy.verifyText(verifyUrl),
     })
   }
 
-  async sendPasswordResetEmail(to: string, token: string): Promise<void> {
+  async sendPasswordResetEmail(
+    to: string,
+    token: string,
+    locale: Locale,
+  ): Promise<void> {
     const resetUrl = `${this.#frontUrl}/reset-password?token=${token}`
-    const html = this.#render('reset-password.html', { RESET_URL: resetUrl })
+    const copy = MAIL_COPY[locale]
     await this.#transporter.sendMail({
       from: this.#from,
       to,
-      subject: 'Réinitialisation de ton mot de passe — Gachapon',
-      html,
-      text: `Réinitialise ton mot de passe Gachapon en ouvrant ce lien : ${resetUrl}\n\nCe lien est valable 1 heure. Si tu n'as pas fait cette demande, ignore ce message.`,
+      subject: copy.resetSubject,
+      html: this.#render('reset-password', locale, { RESET_URL: resetUrl }),
+      text: copy.resetText(resetUrl),
     })
   }
 
@@ -64,19 +88,20 @@ export class MailService implements IMailService {
     teamName: string
     inviterName: string
     token: string
+    locale: Locale
   }): Promise<void> {
     const inviteUrl = `${this.#frontUrl}/invitations/${opts.token}`
-    const html = this.#render('team-invitation.html', {
-      TEAM_NAME: opts.teamName,
-      INVITER_NAME: opts.inviterName,
-      INVITE_URL: inviteUrl,
-    })
+    const copy = MAIL_COPY[opts.locale]
     await this.#transporter.sendMail({
       from: this.#from,
       to: opts.to,
-      subject: `@${opts.inviterName} t'invite à rejoindre ${opts.teamName} — Gachapon`,
-      html,
-      text: `@${opts.inviterName} t'invite à rejoindre ${opts.teamName} sur Gachapon.\n\nAccepte l'invitation ici : ${inviteUrl}`,
+      subject: copy.invitationSubject(opts.inviterName, opts.teamName),
+      html: this.#render('team-invitation', opts.locale, {
+        TEAM_NAME: opts.teamName,
+        INVITER_NAME: opts.inviterName,
+        INVITE_URL: inviteUrl,
+      }),
+      text: copy.invitationText(opts.inviterName, opts.teamName, inviteUrl),
     })
   }
 }

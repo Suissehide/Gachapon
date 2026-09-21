@@ -110,7 +110,15 @@ export class AuthDomain implements AuthDomainInterface {
       emailVerificationTokenExpiresAt: expiresAt,
     })
 
-    await this.#mailService.sendVerificationEmail(input.email, token)
+    // `user` vient d'être créé : le mail part dans sa locale (celle du
+    // destinataire), pas dans `getCurrentLocale()` (celle du navigateur qui
+    // a déclenché l'inscription — le même compte ici, mais la règle est
+    // uniforme dès qu'un `User` existe, voir task-7-brief.md).
+    await this.#mailService.sendVerificationEmail(
+      input.email,
+      token,
+      user.locale,
+    )
 
     return { email: input.email }
   }
@@ -218,7 +226,8 @@ export class AuthDomain implements AuthDomainInterface {
       emailVerificationTokenExpiresAt: expiresAt,
     })
 
-    await this.#mailService.sendVerificationEmail(email, newToken)
+    // `user` est le destinataire — locale prise sur son compte.
+    await this.#mailService.sendVerificationEmail(email, newToken, user.locale)
   }
 
   async forgotPassword(email: string): Promise<void> {
@@ -251,7 +260,15 @@ export class AuthDomain implements AuthDomainInterface {
       passwordResetTokenExpiresAt: expiresAt,
     })
 
-    await this.#mailService.sendPasswordResetEmail(email, resetToken)
+    // `user` est le destinataire — locale prise sur son compte, pas sur la
+    // requête courante (voir la garde silencieuse plus haut : sans compte,
+    // aucun mail ne part de toute façon, donc pas de cas « adresse
+    // inconnue » à couvrir ici).
+    await this.#mailService.sendPasswordResetEmail(
+      email,
+      resetToken,
+      user.locale,
+    )
   }
 
   async resetPassword(token: string, newPassword: string): Promise<void> {

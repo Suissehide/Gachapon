@@ -2,6 +2,8 @@ import Boom from '@hapi/boom'
 import slugify from 'slugify'
 
 import { errorMessage } from '../../infra/i18n/error-messages'
+import { getCurrentLocale } from '../../infra/i18n/locale-context'
+import { MAIL_COPY } from '../../infra/mail/mail-copy'
 import type { IocContainer } from '../../types/application/ioc'
 import type { ILeaderboardDomain } from '../../types/domain/leaderboard/leaderboard.domain.interface'
 import type { IRaidDomain } from '../../types/domain/raid/raid.domain.interface'
@@ -296,12 +298,19 @@ export class TeamDomain implements TeamDomainInterface {
 
     // Send invitation email (non-fatal)
     const inviterUser = await this.#userRepo.findById(actorId)
+    // Invitation par pseudo → un `User` cible existe déjà : le mail part
+    // dans SA locale, pas celle de l'invitant qui a déclenché l'envoi
+    // (voir task-7-brief.md — le cas concret est un invitant FR et un
+    // invité EN). Invitation par adresse email → aucun `User` en base pour
+    // ce destinataire : seule `getCurrentLocale()` (celle de la requête de
+    // l'invitant) est disponible, exactement la nuance « aucun User
+    // n'existe » du brief.
+    const recipientUser = invitation.invitedUserId
+      ? await this.#userRepo.findById(invitation.invitedUserId)
+      : null
     const recipientEmail =
-      invitation.invitedEmail ??
-      (invitation.invitedUserId
-        ? ((await this.#userRepo.findById(invitation.invitedUserId))?.email ??
-          null)
-        : null)
+      invitation.invitedEmail ?? recipientUser?.email ?? null
+    const recipientLocale = recipientUser?.locale ?? getCurrentLocale()
 
     if (recipientEmail && inviterUser) {
       try {
@@ -310,6 +319,7 @@ export class TeamDomain implements TeamDomainInterface {
           teamName: team.name,
           inviterName: inviterUser.username,
           token: invitation.token,
+          locale: recipientLocale,
         })
         await this.#invitationRepo.updateEmailSentAt(invitation.id, new Date())
       } catch {
@@ -924,16 +934,20 @@ export class TeamDomain implements TeamDomainInterface {
       }
     }
 
+    // Même logique que `inviteMember` : locale du destinataire quand un
+    // `User` existe (invitation par pseudo), locale de la requête courante
+    // sinon (invitation par adresse email, aucun `User` à interroger).
+    const recipientUser = invitation.invitedUserId
+      ? await this.#userRepo.findById(invitation.invitedUserId)
+      : null
     const recipientEmail =
-      invitation.invitedEmail ??
-      (invitation.invitedUserId
-        ? ((await this.#userRepo.findById(invitation.invitedUserId))?.email ??
-          null)
-        : null)
+      invitation.invitedEmail ?? recipientUser?.email ?? null
 
     if (!recipientEmail) {
       throw Boom.badRequest(errorMessage('team.noRecipientEmail'))
     }
+
+    const recipientLocale = recipientUser?.locale ?? getCurrentLocale()
 
     const inviter = invitation.invitedById
       ? await this.#userRepo.findById(invitation.invitedById)
@@ -942,8 +956,10 @@ export class TeamDomain implements TeamDomainInterface {
     await this.#mailService.sendTeamInvitationEmail({
       to: recipientEmail,
       teamName: team.name,
-      inviterName: inviter?.username ?? "Quelqu'un",
+      inviterName:
+        inviter?.username ?? MAIL_COPY[recipientLocale].unknownInviter,
       token: invitation.token,
+      locale: recipientLocale,
     })
 
     await this.#invitationRepo.updateEmailSentAt(invitation.id, new Date())
