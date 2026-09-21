@@ -17,6 +17,7 @@ import { CombatPointsTx } from '../../../domain/combat-points/combat-points.tx'
 import { DailyShopDomain } from '../../../domain/daily-shop/daily-shop.domain'
 import { EquipmentDomain } from '../../../domain/equipment/equipment.domain'
 import { GachaDomain } from '../../../domain/gacha/gacha.domain'
+import { ContentTranslationsBootstrap } from '../../../domain/i18n/content-translations.bootstrap'
 import { LeaderboardDomain } from '../../../domain/leaderboard/leaderboard.domain'
 import { ProfileDomain } from '../../../domain/profile/profile.domain'
 import { QuestsDomain } from '../../../domain/quests/quests.domain'
@@ -219,6 +220,10 @@ class AwilixIocContainer {
     )
     this.#reg('wsManager', asValue(wsManager))
     this.#reg('activityDomain', asClass(ActivityDomain).singleton())
+    this.#reg(
+      'contentTranslationsBootstrap',
+      asClass(ContentTranslationsBootstrap).singleton(),
+    )
     logger.info('IoC container initialized.')
   }
 

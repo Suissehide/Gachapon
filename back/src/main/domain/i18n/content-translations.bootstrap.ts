@@ -1,0 +1,658 @@
+import type { IocContainer } from '../../types/application/ioc'
+import type { PostgresORMInterface } from '../../types/infra/orm/client'
+import type { Logger } from '../../types/utils/logger'
+import { ACHIEVEMENT_DEFINITIONS } from '../content/achievements.definitions'
+import { campaignStageLabel } from '../content/campaign.definitions'
+import { CARDS, HUMAN_CARD_SET } from '../content/cards.definitions'
+import { buildEquipmentCatalog } from '../content/equipment.definitions'
+import { RAID_BOSS_NAME_EN } from '../content/raid.definitions'
+import { SHOP_ITEMS } from '../content/shop.definitions'
+import {
+  SKILL_BRANCH_TEXT,
+  SKILL_NODE_TEXT,
+} from '../content/skills.definitions'
+import { buildTowerFloors } from '../content/tower.definitions'
+import { QUEST_DEFINITIONS } from '../quests/quest-definitions'
+import { TOWER_ELEMENTS } from '../tower/tower-slots'
+
+/**
+ * Pose les traductions connues sur une base déjà peuplée. Update-only et
+ * idempotent : ne réécrit que les colonnes qu'aucun administrateur n'a
+ * touchées, jamais celles saisies à la main en production.
+ *
+ * Existe parce que le déploiement ne rejoue jamais les seeds — c'est le seul
+ * chemin par lequel une traduction ajoutée au code atteint la production.
+ * Même rôle que `configService.bootstrap()` et `questsDomain.bootstrap()`,
+ * appelés juste avant dans `application/starter.ts`.
+ *
+ * ATTENTION à l'erreur du brief d'origine de cette tâche : la migration
+ * `20260921151247_i18n_content_columns` a recopié le FRANÇAIS dans les deux
+ * colonnes (`UPDATE "Card" SET "nameFr" = "name", "nameEn" = "name"`), pas
+ * une chaîne vide. Un critère `nameEn: ''` ne matcherait donc RIEN en
+ * production et ce bootstrap ne ferait rien tout en ayant l'air de
+ * fonctionner. Une ligne à backfiller est une ligne dont la colonne anglaise
+ * est vide OU identique à la colonne française.
+ *
+ * Cette égalité n'est cependant pas toujours un artefact de migration : une
+ * poignée de traductions sont LÉGITIMEMENT identiques dans les deux langues
+ * (un prénom nu comme « Aldric », un cognat comme « Expert », le nom d'une
+ * branche de compétence comme « Flux », le gabarit `campaignStageLabel`,
+ * volontairement identique FR/EN). Filtrer côté SQL sur « nameEn = nameFr »
+ * réécrirait ces lignes à l'identique À CHAQUE démarrage — count > 0 pour
+ * toujours, ce qui casse l'idempotence sans jamais rien changer en base.
+ *
+ * D'où le choix : lire la ligne, comparer en TypeScript à la traduction
+ * cible, et n'écrire (et ne compter) que si la cible diffère RÉELLEMENT de
+ * la valeur actuelle. Prisma ne sait pas comparer deux colonnes du même
+ * modèle dans un `where` typé sans SQL brut ; cette approche est plus
+ * verbeuse mais reste explicite et types tout du long. Voir
+ * `#applyIfEligible`.
+ */
+export class ContentTranslationsBootstrap {
+  readonly #orm: PostgresORMInterface
+  readonly #logger: Logger
+
+  constructor({ postgresOrm, logger }: IocContainer) {
+    this.#orm = postgresOrm
+    this.#logger = logger
+  }
+
+  async bootstrap(): Promise<{ updated: number }> {
+    let updated = 0
+
+    updated += await this.#backfillCards()
+    updated += await this.#backfillCardSet()
+    updated += await this.#backfillAchievements()
+    updated += await this.#backfillQuests()
+    updated += await this.#backfillShopItems()
+    updated += await this.#backfillSkillBranches()
+    updated += await this.#backfillSkillNodes()
+    updated += await this.#backfillEquipment()
+    updated += await this.#backfillCampaignStages()
+    updated += await this.#backfillTowerFloors()
+    updated += await this.#backfillRaidBosses()
+
+    // Reward.label est hors périmètre : les récompenses sont créées à la
+    // volée par les domaines qui les émettent (achievements, quêtes, raid,
+    // streak, admin) et n'ont pas de clé stable à laquelle rattacher une
+    // traduction. `rewards.domain.ts` pose déjà les deux colonnes à
+    // l'écriture, et `localized.extension.ts#pick` fait replier une colonne
+    // vide sur l'autre à la lecture — les lignes antérieures à cette tâche
+    // restent donc lisibles sans backfill.
+
+    this.#logger.info(`Content translations bootstrap: ${updated} rows updated`)
+    return { updated }
+  }
+
+  /**
+   * Décide si `target` doit être écrit à la place de `current`, et
+   * l'applique le cas échéant.
+   *
+   * Deux conditions, toutes les deux nécessaires :
+   *  1. `current` est une valeur que ce backfill a le droit de toucher —
+   *     vide, ou identique au français (la signature de la recopie faite par
+   *     la migration). Toute autre valeur est une traduction saisie à la
+   *     main : on ne la touche jamais, quelle que soit la cible.
+   *  2. `target` diffère réellement de `current` — sinon écrire ne changerait
+   *     rien et ne ferait que gonfler le compteur (le cas des traductions
+   *     légitimement identiques FR/EN, voir le commentaire de classe).
+   */
+  async #applyIfEligible(args: {
+    current: string | null
+    currentFr: string | null
+    target: string
+    write: () => Promise<unknown>
+  }): Promise<boolean> {
+    const current = args.current ?? ''
+    const currentFr = args.currentFr ?? ''
+    const isMigrationArtifact = current === '' || current === currentFr
+    if (!isMigrationArtifact) {
+      return false
+    }
+    if (current === args.target) {
+      return false
+    }
+    await args.write()
+    return true
+  }
+
+  /**
+   * Sélectionne l'unique ligne dont `nameFr` correspond, pour les entités
+   * sans clé stable en base (`CardSet`, `ShopItem`, `SkillBranch`,
+   * `SkillNode`) : la colonne n'est pas contrainte `@unique` en base, donc
+   * plusieurs lignes pourraient en théorie partager le même `nameFr`. Dans
+   * ce cas on ignore plutôt que de risquer d'écrire sur la mauvaise ligne.
+   */
+  #findByNameFr<T extends { nameFr: string }>(
+    rows: T[],
+    nameFr: string,
+    entity: string,
+  ): T | undefined {
+    const matches = rows.filter((row) => row.nameFr === nameFr)
+    if (matches.length > 1) {
+      this.#logger.warn(
+        `[i18n bootstrap] ${entity}: plusieurs lignes portent nameFr="${nameFr}", ignoré (clé ambiguë)`,
+      )
+      return undefined
+    }
+    return matches[0]
+  }
+
+  // ---------------------------------------------------------------------
+  // Card — clé stable : id (ex. 'HUM-001', fixé par le seed).
+  // ---------------------------------------------------------------------
+  async #backfillCards(): Promise<number> {
+    const rows = await this.#orm.prisma.card.findMany({
+      where: { id: { in: CARDS.map((c) => c.id) } },
+      select: { id: true, nameFr: true, nameEn: true },
+    })
+    const byId = new Map(rows.map((r) => [r.id, r]))
+
+    let updated = 0
+    for (const def of CARDS) {
+      const row = byId.get(def.id)
+      if (!row) {
+        continue
+      }
+      const wrote = await this.#applyIfEligible({
+        current: row.nameEn,
+        currentFr: row.nameFr,
+        target: def.nameEn,
+        write: () =>
+          this.#orm.prisma.card.update({
+            where: { id: row.id },
+            data: { nameEn: def.nameEn },
+          }),
+      })
+      if (wrote) {
+        updated++
+      }
+    }
+    return updated
+  }
+
+  // ---------------------------------------------------------------------
+  // CardSet — pas de clé stable en base (id = uuid seedé) : une seule
+  // définition existe (`HUMAN_CARD_SET`), rapprochée par nameFr comme
+  // SkillBranch/SkillNode/ShopItem ci-dessous.
+  // ---------------------------------------------------------------------
+  async #backfillCardSet(): Promise<number> {
+    const rows = await this.#orm.prisma.cardSet.findMany({
+      where: { nameFr: HUMAN_CARD_SET.nameFr },
+      select: {
+        id: true,
+        nameFr: true,
+        nameEn: true,
+        descriptionFr: true,
+        descriptionEn: true,
+      },
+    })
+    const row = this.#findByNameFr(rows, HUMAN_CARD_SET.nameFr, 'cardSet')
+    if (!row) {
+      return 0
+    }
+
+    let updated = 0
+    if (
+      await this.#applyIfEligible({
+        current: row.nameEn,
+        currentFr: row.nameFr,
+        target: HUMAN_CARD_SET.nameEn,
+        write: () =>
+          this.#orm.prisma.cardSet.update({
+            where: { id: row.id },
+            data: { nameEn: HUMAN_CARD_SET.nameEn },
+          }),
+      })
+    ) {
+      updated++
+    }
+    if (
+      await this.#applyIfEligible({
+        current: row.descriptionEn,
+        currentFr: row.descriptionFr,
+        target: HUMAN_CARD_SET.descriptionEn,
+        write: () =>
+          this.#orm.prisma.cardSet.update({
+            where: { id: row.id },
+            data: { descriptionEn: HUMAN_CARD_SET.descriptionEn },
+          }),
+      })
+    ) {
+      updated++
+    }
+    return updated
+  }
+
+  // ---------------------------------------------------------------------
+  // Achievement — clé stable : key.
+  // ---------------------------------------------------------------------
+  async #backfillAchievements(): Promise<number> {
+    const rows = await this.#orm.prisma.achievement.findMany({
+      where: { key: { in: ACHIEVEMENT_DEFINITIONS.map((a) => a.key) } },
+      select: {
+        id: true,
+        key: true,
+        nameFr: true,
+        nameEn: true,
+        descriptionFr: true,
+        descriptionEn: true,
+      },
+    })
+    const byKey = new Map(rows.map((r) => [r.key, r]))
+
+    let updated = 0
+    for (const def of ACHIEVEMENT_DEFINITIONS) {
+      const row = byKey.get(def.key)
+      if (!row) {
+        continue
+      }
+      if (
+        await this.#applyIfEligible({
+          current: row.nameEn,
+          currentFr: row.nameFr,
+          target: def.nameEn,
+          write: () =>
+            this.#orm.prisma.achievement.update({
+              where: { id: row.id },
+              data: { nameEn: def.nameEn },
+            }),
+        })
+      ) {
+        updated++
+      }
+      if (
+        await this.#applyIfEligible({
+          current: row.descriptionEn,
+          currentFr: row.descriptionFr,
+          target: def.descriptionEn,
+          write: () =>
+            this.#orm.prisma.achievement.update({
+              where: { id: row.id },
+              data: { descriptionEn: def.descriptionEn },
+            }),
+        })
+      ) {
+        updated++
+      }
+    }
+    return updated
+  }
+
+  // ---------------------------------------------------------------------
+  // Quest — clé stable : key.
+  // ---------------------------------------------------------------------
+  async #backfillQuests(): Promise<number> {
+    const rows = await this.#orm.prisma.quest.findMany({
+      where: { key: { in: QUEST_DEFINITIONS.map((q) => q.key) } },
+      select: {
+        id: true,
+        key: true,
+        nameFr: true,
+        nameEn: true,
+        descriptionFr: true,
+        descriptionEn: true,
+      },
+    })
+    const byKey = new Map(rows.map((r) => [r.key, r]))
+
+    let updated = 0
+    for (const def of QUEST_DEFINITIONS) {
+      const row = byKey.get(def.key)
+      if (!row) {
+        continue
+      }
+      if (
+        await this.#applyIfEligible({
+          current: row.nameEn,
+          currentFr: row.nameFr,
+          target: def.nameEn,
+          write: () =>
+            this.#orm.prisma.quest.update({
+              where: { id: row.id },
+              data: { nameEn: def.nameEn },
+            }),
+        })
+      ) {
+        updated++
+      }
+      if (
+        await this.#applyIfEligible({
+          current: row.descriptionEn,
+          currentFr: row.descriptionFr,
+          target: def.descriptionEn,
+          write: () =>
+            this.#orm.prisma.quest.update({
+              where: { id: row.id },
+              data: { descriptionEn: def.descriptionEn },
+            }),
+        })
+      ) {
+        updated++
+      }
+    }
+    return updated
+  }
+
+  // ---------------------------------------------------------------------
+  // ShopItem — pas de clé stable en base : rapprochement par nameFr (10
+  // articles, noms distincts dans `SHOP_ITEMS`).
+  // ---------------------------------------------------------------------
+  async #backfillShopItems(): Promise<number> {
+    const rows = await this.#orm.prisma.shopItem.findMany({
+      where: { nameFr: { in: SHOP_ITEMS.map((i) => i.nameFr) } },
+      select: {
+        id: true,
+        nameFr: true,
+        nameEn: true,
+        descriptionFr: true,
+        descriptionEn: true,
+      },
+    })
+
+    let updated = 0
+    for (const def of SHOP_ITEMS) {
+      const row = this.#findByNameFr(rows, def.nameFr, 'shopItem')
+      if (!row) {
+        continue
+      }
+      if (
+        await this.#applyIfEligible({
+          current: row.nameEn,
+          currentFr: row.nameFr,
+          target: def.nameEn,
+          write: () =>
+            this.#orm.prisma.shopItem.update({
+              where: { id: row.id },
+              data: { nameEn: def.nameEn },
+            }),
+        })
+      ) {
+        updated++
+      }
+      if (
+        await this.#applyIfEligible({
+          current: row.descriptionEn,
+          currentFr: row.descriptionFr,
+          target: def.descriptionEn,
+          write: () =>
+            this.#orm.prisma.shopItem.update({
+              where: { id: row.id },
+              data: { descriptionEn: def.descriptionEn },
+            }),
+        })
+      ) {
+        updated++
+      }
+    }
+    return updated
+  }
+
+  // ---------------------------------------------------------------------
+  // SkillBranch — pas de colonne `key` en base (voir skills.definitions.ts) :
+  // rapprochement par nameFr, comme le fait le seed lui-même.
+  // ---------------------------------------------------------------------
+  async #backfillSkillBranches(): Promise<number> {
+    const defs = Object.values(SKILL_BRANCH_TEXT)
+    const rows = await this.#orm.prisma.skillBranch.findMany({
+      where: { nameFr: { in: defs.map((d) => d.nameFr) } },
+      select: {
+        id: true,
+        nameFr: true,
+        nameEn: true,
+        descriptionFr: true,
+        descriptionEn: true,
+      },
+    })
+
+    let updated = 0
+    for (const def of defs) {
+      const row = this.#findByNameFr(rows, def.nameFr, 'skillBranch')
+      if (!row) {
+        continue
+      }
+      if (
+        await this.#applyIfEligible({
+          current: row.nameEn,
+          currentFr: row.nameFr,
+          target: def.nameEn,
+          write: () =>
+            this.#orm.prisma.skillBranch.update({
+              where: { id: row.id },
+              data: { nameEn: def.nameEn },
+            }),
+        })
+      ) {
+        updated++
+      }
+      if (
+        await this.#applyIfEligible({
+          current: row.descriptionEn,
+          currentFr: row.descriptionFr,
+          target: def.descriptionEn,
+          write: () =>
+            this.#orm.prisma.skillBranch.update({
+              where: { id: row.id },
+              data: { descriptionEn: def.descriptionEn },
+            }),
+        })
+      ) {
+        updated++
+      }
+    }
+    return updated
+  }
+
+  // ---------------------------------------------------------------------
+  // SkillNode — même absence de `key` que SkillBranch, même rapprochement
+  // par nameFr (27 nœuds, noms distincts dans `SKILL_NODE_TEXT`).
+  // ---------------------------------------------------------------------
+  async #backfillSkillNodes(): Promise<number> {
+    const defs = Object.values(SKILL_NODE_TEXT)
+    const rows = await this.#orm.prisma.skillNode.findMany({
+      where: { nameFr: { in: defs.map((d) => d.nameFr) } },
+      select: {
+        id: true,
+        nameFr: true,
+        nameEn: true,
+        descriptionFr: true,
+        descriptionEn: true,
+      },
+    })
+
+    let updated = 0
+    for (const def of defs) {
+      const row = this.#findByNameFr(rows, def.nameFr, 'skillNode')
+      if (!row) {
+        continue
+      }
+      if (
+        await this.#applyIfEligible({
+          current: row.nameEn,
+          currentFr: row.nameFr,
+          target: def.nameEn,
+          write: () =>
+            this.#orm.prisma.skillNode.update({
+              where: { id: row.id },
+              data: { nameEn: def.nameEn },
+            }),
+        })
+      ) {
+        updated++
+      }
+      if (
+        await this.#applyIfEligible({
+          current: row.descriptionEn,
+          currentFr: row.descriptionFr,
+          target: def.descriptionEn,
+          write: () =>
+            this.#orm.prisma.skillNode.update({
+              where: { id: row.id },
+              data: { descriptionEn: def.descriptionEn },
+            }),
+        })
+      ) {
+        updated++
+      }
+    }
+    return updated
+  }
+
+  // ---------------------------------------------------------------------
+  // Equipment — clé stable : [slot, setKey, rarity, mainStat] (contrainte
+  // @@unique du schéma). 665 lignes générées par `buildEquipmentCatalog()` :
+  // un seul findMany sans filtre plutôt que 665 clauses OR.
+  // ---------------------------------------------------------------------
+  async #backfillEquipment(): Promise<number> {
+    const rows = await this.#orm.prisma.equipment.findMany({
+      select: {
+        id: true,
+        slot: true,
+        setKey: true,
+        rarity: true,
+        mainStat: true,
+        nameFr: true,
+        nameEn: true,
+      },
+    })
+    const byKey = new Map(
+      rows.map((r) => [`${r.slot}|${r.setKey}|${r.rarity}|${r.mainStat}`, r]),
+    )
+
+    let updated = 0
+    for (const def of buildEquipmentCatalog()) {
+      const key = `${def.slot}|${def.setKey}|${def.rarity}|${def.mainStat}`
+      const row = byKey.get(key)
+      if (!row) {
+        continue
+      }
+      const wrote = await this.#applyIfEligible({
+        current: row.nameEn,
+        currentFr: row.nameFr,
+        target: def.nameEn,
+        write: () =>
+          this.#orm.prisma.equipment.update({
+            where: { id: row.id },
+            data: { nameEn: def.nameEn },
+          }),
+      })
+      if (wrote) {
+        updated++
+      }
+    }
+    return updated
+  }
+
+  // ---------------------------------------------------------------------
+  // CampaignStage — clé stable : [chapter, index]. Pas de table de
+  // définitions bilingues séparée : `campaignStageLabel(chapter, index)`
+  // EST la source, volontairement identique FR/EN (« 3-10 Boss » se lit
+  // pareil dans les deux langues, voir campaign.definitions.ts). On
+  // recalcule donc la cible à partir des coordonnées de chaque ligne
+  // existante plutôt que d'itérer une liste séparée.
+  // ---------------------------------------------------------------------
+  async #backfillCampaignStages(): Promise<number> {
+    const rows = await this.#orm.prisma.campaignStage.findMany({
+      select: {
+        id: true,
+        chapter: true,
+        index: true,
+        labelFr: true,
+        labelEn: true,
+      },
+    })
+
+    let updated = 0
+    for (const row of rows) {
+      const target = campaignStageLabel(row.chapter, row.index)
+      const wrote = await this.#applyIfEligible({
+        current: row.labelEn,
+        currentFr: row.labelFr,
+        target,
+        write: () =>
+          this.#orm.prisma.campaignStage.update({
+            where: { id: row.id },
+            data: { labelEn: target },
+          }),
+      })
+      if (wrote) {
+        updated++
+      }
+    }
+    return updated
+  }
+
+  // ---------------------------------------------------------------------
+  // TowerFloor — clé stable : [element, index]. `buildTowerFloors()` donne
+  // les 40 lignes (4 éléments × 10 étages) avec leur labelEn déjà calculé.
+  // ---------------------------------------------------------------------
+  async #backfillTowerFloors(): Promise<number> {
+    const rows = await this.#orm.prisma.towerFloor.findMany({
+      select: {
+        id: true,
+        element: true,
+        index: true,
+        labelFr: true,
+        labelEn: true,
+      },
+    })
+    const byKey = new Map(rows.map((r) => [`${r.element}|${r.index}`, r]))
+
+    let updated = 0
+    for (const def of buildTowerFloors()) {
+      const row = byKey.get(`${def.element}|${def.index}`)
+      if (!row) {
+        continue
+      }
+      const wrote = await this.#applyIfEligible({
+        current: row.labelEn,
+        currentFr: row.labelFr,
+        target: def.labelEn,
+        write: () =>
+          this.#orm.prisma.towerFloor.update({
+            where: { id: row.id },
+            data: { labelEn: def.labelEn },
+          }),
+      })
+      if (wrote) {
+        updated++
+      }
+    }
+    return updated
+  }
+
+  // ---------------------------------------------------------------------
+  // RaidBoss — clé stable : element (contrainte @unique du schéma ; ce
+  // n'est PAS un champ `key`, contrairement à ce que suggérait le brief).
+  // ---------------------------------------------------------------------
+  async #backfillRaidBosses(): Promise<number> {
+    const rows = await this.#orm.prisma.raidBoss.findMany({
+      where: { element: { in: [...TOWER_ELEMENTS] } },
+      select: { id: true, element: true, nameFr: true, nameEn: true },
+    })
+    const byElement = new Map(rows.map((r) => [r.element, r]))
+
+    let updated = 0
+    for (const element of TOWER_ELEMENTS) {
+      const row = byElement.get(element)
+      if (!row) {
+        continue
+      }
+      const target = RAID_BOSS_NAME_EN[element]
+      const wrote = await this.#applyIfEligible({
+        current: row.nameEn,
+        currentFr: row.nameFr,
+        target,
+        write: () =>
+          this.#orm.prisma.raidBoss.update({
+            where: { id: row.id },
+            data: { nameEn: target },
+          }),
+      })
+      if (wrote) {
+        updated++
+      }
+    }
+    return updated
+  }
+}

@@ -7,6 +7,7 @@ import type { CombatDebugDomain } from '../../domain/combat/combat-debug.domain'
 import type { CombatTeamTx } from '../../domain/combat/combat-team.tx'
 import type { CombatPointsTx } from '../../domain/combat-points/combat-points.tx'
 import type { EquipmentDomain } from '../../domain/equipment/equipment.domain'
+import type { ContentTranslationsBootstrap } from '../../domain/i18n/content-translations.bootstrap'
 import type { RaidDomain } from '../../domain/raid/raid.domain'
 import type { AdminSkillTreeDomain } from '../../domain/skills/admin-skill-tree.domain'
 import type { TowerDomain } from '../../domain/tower/tower.domain'
@@ -160,4 +161,5 @@ export interface IocContainer {
   readonly activityEventRepository: IActivityEventRepository
   readonly wsManager: WsManager
   readonly activityDomain: IActivityDomain
+  readonly contentTranslationsBootstrap: ContentTranslationsBootstrap
 }

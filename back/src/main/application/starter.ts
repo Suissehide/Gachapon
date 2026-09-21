@@ -12,13 +12,22 @@ const startIocContainer = (config: Config): AwilixIocContainer => {
 const startApp = async (): Promise<IocContainer> => {
   const config = loadConfig()
   const iocContainer = startIocContainer(config)
-  const { httpServer, configService, questsDomain } = iocContainer.instances
+  const {
+    httpServer,
+    configService,
+    questsDomain,
+    contentTranslationsBootstrap,
+  } = iocContainer.instances
 
   await httpServer.configure()
   await configService.bootstrap()
   // Ajoute les quêtes manquantes avant d'ouvrir le trafic : le seed Prisma
   // vide toutes les tables, il ne peut pas servir sur une base vivante.
   await questsDomain.bootstrap()
+  // Pose les traductions anglaises connues sur une base déjà peuplée : le
+  // déploiement ne rejoue jamais les seeds, c'est le seul chemin par lequel
+  // une traduction ajoutée au code atteint la production.
+  await contentTranslationsBootstrap.bootstrap()
   await httpServer.start()
 
   const { activityDomain, logger } = iocContainer.instances
