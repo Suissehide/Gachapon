@@ -8,10 +8,6 @@ import type {
 import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type { ICardRepository } from '../../../types/infra/orm/repositories/card.repository.interface'
 import { localizedNameOrder } from '../../i18n/locale-order'
-import {
-  descriptionToBothLocales,
-  nameToBothLocales,
-} from '../../i18n/monolingual-write'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 const WITH_SET = { set: true } as const
@@ -90,7 +86,8 @@ export class CardRepository implements ICardRepository {
   }
 
   create(data: {
-    name: string
+    nameFr: string
+    nameEn: string
     setId: string
     rarity: CardRarity
     dropWeight: number
@@ -102,9 +99,8 @@ export class CardRepository implements ICardRepository {
     passiveKey?: string | null
     element?: CardElement | null
   }): Promise<CardWithSet> {
-    const { name, ...rest } = data
     return this.#prisma.card.create({
-      data: { ...rest, ...nameToBothLocales(name) },
+      data,
       include: WITH_SET,
     }) as Promise<CardWithSet>
   }
@@ -112,7 +108,8 @@ export class CardRepository implements ICardRepository {
   update(
     id: string,
     data: Partial<{
-      name: string
+      nameFr: string
+      nameEn: string
       rarity: CardRarity
       dropWeight: number
       setId: string
@@ -125,10 +122,9 @@ export class CardRepository implements ICardRepository {
       element: CardElement | null
     }>,
   ): Promise<CardWithSet> {
-    const { name, ...rest } = data
     return this.#prisma.card.update({
       where: { id },
-      data: { ...rest, ...nameToBothLocales(name) },
+      data,
       include: WITH_SET,
     }) as Promise<CardWithSet>
   }
@@ -138,33 +134,26 @@ export class CardRepository implements ICardRepository {
   }
 
   createSet(data: {
-    name: string
-    description?: string
+    nameFr: string
+    nameEn: string
+    descriptionFr?: string
+    descriptionEn?: string
     isActive?: boolean
   }): Promise<CardSetEntity> {
-    const { name, description, ...rest } = data
-    return this.#prisma.cardSet.create({
-      data: {
-        ...rest,
-        ...nameToBothLocales(name),
-        ...descriptionToBothLocales(description),
-      },
-    })
+    return this.#prisma.cardSet.create({ data })
   }
 
   updateSet(
     id: string,
-    data: { name?: string; description?: string; isActive?: boolean },
+    data: Partial<{
+      nameFr: string
+      nameEn: string
+      descriptionFr: string
+      descriptionEn: string
+      isActive: boolean
+    }>,
   ): Promise<CardSetEntity> {
-    const { name, description, ...rest } = data
-    return this.#prisma.cardSet.update({
-      where: { id },
-      data: {
-        ...rest,
-        ...nameToBothLocales(name),
-        ...descriptionToBothLocales(description),
-      },
-    })
+    return this.#prisma.cardSet.update({ where: { id }, data })
   }
 
   async deleteSet(id: string): Promise<void> {

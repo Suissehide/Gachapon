@@ -5,10 +5,6 @@ import type {
   IShopItemRepository,
   UpdateShopItemInput,
 } from '../../../types/infra/orm/repositories/shop-item.repository.interface'
-import {
-  descriptionToBothLocales,
-  nameToBothLocales,
-} from '../../i18n/monolingual-write'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 export class ShopItemRepository implements IShopItemRepository {
@@ -34,26 +30,11 @@ export class ShopItemRepository implements IShopItemRepository {
   }
 
   create(data: CreateShopItemInput): Promise<LocalizedShopItem> {
-    const { name, description, ...rest } = data
-    return this.#prisma.shopItem.create({
-      data: {
-        ...rest,
-        ...nameToBothLocales(name),
-        ...descriptionToBothLocales(description),
-      },
-    })
+    return this.#prisma.shopItem.create({ data })
   }
 
   update(id: string, data: UpdateShopItemInput): Promise<LocalizedShopItem> {
-    const { name, description, ...rest } = data
-    return this.#prisma.shopItem.update({
-      where: { id },
-      data: {
-        ...rest,
-        ...nameToBothLocales(name),
-        ...descriptionToBothLocales(description),
-      },
-    })
+    return this.#prisma.shopItem.update({ where: { id }, data })
   }
 
   async delete(id: string): Promise<void> {

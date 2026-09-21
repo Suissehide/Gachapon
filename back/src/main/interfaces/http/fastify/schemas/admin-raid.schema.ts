@@ -19,13 +19,18 @@ const raidBossSpecSchema = enemySpecSchema.extend({
 
 export const adminRaidBossPatchBodySchema = z
   .object({
-    name: z.string().min(1).max(60).optional(),
+    nameFr: z.string().min(1).max(60).optional(),
+    nameEn: z.string().min(1).max(60).optional(),
     spec: raidBossSpecSchema.optional(),
   })
-  .refine((b) => b.name !== undefined || b.spec !== undefined, {
-    message: 'Rien à modifier',
-    path: ['name'],
-  })
+  .refine(
+    (b) =>
+      b.nameFr !== undefined || b.nameEn !== undefined || b.spec !== undefined,
+    {
+      message: 'Rien à modifier',
+      path: ['nameFr'],
+    },
+  )
 
 export const adminRaidTierParamSchema = z.object({
   pct: z.coerce.number().int().min(1).max(100),

@@ -37,8 +37,10 @@ export interface ISkillTreeRepository {
   getTotalInvestedPoints(userId: string): Promise<number>
   // Admin CRUD
   createBranch(data: {
-    name: string
-    description: string
+    nameFr: string
+    nameEn: string
+    descriptionFr: string
+    descriptionEn: string
     icon: string
     color: string
     order: number
@@ -46,8 +48,10 @@ export interface ISkillTreeRepository {
   updateBranch(
     id: string,
     data: Partial<{
-      name: string
-      description: string
+      nameFr: string
+      nameEn: string
+      descriptionFr: string
+      descriptionEn: string
       icon: string
       color: string
       order: number
@@ -56,8 +60,10 @@ export interface ISkillTreeRepository {
   deleteBranch(id: string): Promise<void>
   createNode(data: {
     branchId: string
-    name: string
-    description: string
+    nameFr: string
+    nameEn: string
+    descriptionFr: string
+    descriptionEn: string
     icon: string
     maxLevel: number
     effectType: SkillEffectType
@@ -69,8 +75,10 @@ export interface ISkillTreeRepository {
     id: string,
     data: Partial<{
       branchId: string
-      name: string
-      description: string
+      nameFr: string
+      nameEn: string
+      descriptionFr: string
+      descriptionEn: string
       icon: string
       maxLevel: number
       effectType: SkillEffectType

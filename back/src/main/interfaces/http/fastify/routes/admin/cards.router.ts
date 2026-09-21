@@ -79,10 +79,13 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
 
     let imageKey: string
     if (imageBuffer) {
+      // La clé de stockage n'a qu'une langue : l'anglais, cohérent avec
+      // DEFAULT_LOCALE — un choix arbitraire mais stable, le nom sert
+      // uniquement à générer un slug lisible, pas de contenu affiché.
       imageKey = (
         await uploadCardImage(
           storageClient,
-          parsed.data.name,
+          parsed.data.nameEn,
           imageBuffer,
           imageMime,
         )

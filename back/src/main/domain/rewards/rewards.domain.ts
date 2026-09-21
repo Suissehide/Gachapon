@@ -4,7 +4,6 @@ import Boom from '@hapi/boom'
 import type { UserReward } from '../../../generated/client'
 import type { CardRarity, CardVariant } from '../../../generated/enums'
 import { errorMessage } from '../../infra/i18n/error-messages'
-import { labelToBothLocales } from '../../infra/i18n/monolingual-write'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
 import type { IActivityDomain } from '../../types/domain/activity/activity.domain.interface'
@@ -316,7 +315,8 @@ export class RewardsDomain implements RewardsDomainInterface {
     xp: number
     gold: number
     cardRarity?: CardRarity
-    label?: string
+    labelFr?: string
+    labelEn?: string
   }): Promise<{ count: number }> {
     const hasContent =
       input.tokens > 0 ||
@@ -347,7 +347,8 @@ export class RewardsDomain implements RewardsDomainInterface {
             xp: input.xp,
             gold: input.gold,
             cardRarity: input.cardRarity ?? null,
-            ...labelToBothLocales(input.label ?? null),
+            labelFr: input.labelFr ?? null,
+            labelEn: input.labelEn ?? null,
           },
         })
         const created = await tx.userReward.createMany({

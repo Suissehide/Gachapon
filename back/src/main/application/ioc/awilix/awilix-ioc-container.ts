@@ -46,6 +46,7 @@ import { PostgresOrm } from '../../../infra/orm/postgres-client'
 import { AchievementRepository } from '../../../infra/orm/repositories/achievement.repository'
 import { ActivityEventRepository } from '../../../infra/orm/repositories/activity-event.repository'
 import { AdminStatsRepository } from '../../../infra/orm/repositories/admin-stats.repository'
+import { AdminTranslationsRepository } from '../../../infra/orm/repositories/admin-translations.repository'
 import { ApiKeyRepository } from '../../../infra/orm/repositories/api-key.repository'
 import { CardRepository } from '../../../infra/orm/repositories/card.repository'
 import { GachaPullRepository } from '../../../infra/orm/repositories/gacha-pull.repository'
@@ -192,6 +193,10 @@ class AwilixIocContainer {
     this.#reg('leaderboardDomain', asClass(LeaderboardDomain).singleton())
     this.#reg('statsRepository', asClass(StatsRepository).singleton())
     this.#reg('adminStatsRepository', asClass(AdminStatsRepository).singleton())
+    this.#reg(
+      'adminTranslationsRepository',
+      asClass(AdminTranslationsRepository).singleton(),
+    )
     this.#reg('collectionDomain', asClass(CollectionDomain).singleton())
     this.#reg('profileDomain', asClass(ProfileDomain).singleton())
     this.#reg('shopDomain', asClass(ShopDomain).singleton())

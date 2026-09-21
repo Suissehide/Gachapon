@@ -2,8 +2,10 @@ import type { Prisma } from '../../../../../generated/client'
 import type { LocalizedShopItem } from '../localized'
 
 export type CreateShopItemInput = {
-  name: string
-  description: string
+  nameFr: string
+  nameEn: string
+  descriptionFr: string
+  descriptionEn: string
   type: 'TOKEN_PACK' | 'ENERGY_PACK' | 'BOOST' | 'COSMETIC' | 'MACHINE'
   cost: number
   currency?: 'DUST' | 'GOLD'

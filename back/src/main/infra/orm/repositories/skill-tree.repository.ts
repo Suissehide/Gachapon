@@ -7,10 +7,6 @@ import type {
   ISkillTreeRepository,
   SkillBranchWithNodes,
 } from '../../../types/infra/orm/repositories/skill-tree.repository.interface'
-import {
-  descriptionToBothLocales,
-  nameToBothLocales,
-} from '../../i18n/monolingual-write'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 export class SkillTreeRepository implements ISkillTreeRepository {
@@ -90,41 +86,30 @@ export class SkillTreeRepository implements ISkillTreeRepository {
   }
 
   createBranch(data: {
-    name: string
-    description: string
+    nameFr: string
+    nameEn: string
+    descriptionFr: string
+    descriptionEn: string
     icon: string
     color: string
     order: number
   }) {
-    const { name, description, ...rest } = data
-    return this.#prisma.skillBranch.create({
-      data: {
-        ...rest,
-        ...nameToBothLocales(name),
-        ...descriptionToBothLocales(description),
-      },
-    })
+    return this.#prisma.skillBranch.create({ data })
   }
 
   updateBranch(
     id: string,
     data: Partial<{
-      name: string
-      description: string
+      nameFr: string
+      nameEn: string
+      descriptionFr: string
+      descriptionEn: string
       icon: string
       color: string
       order: number
     }>,
   ) {
-    const { name, description, ...rest } = data
-    return this.#prisma.skillBranch.update({
-      where: { id },
-      data: {
-        ...rest,
-        ...nameToBothLocales(name),
-        ...descriptionToBothLocales(description),
-      },
-    })
+    return this.#prisma.skillBranch.update({ where: { id }, data })
   }
 
   async deleteBranch(id: string): Promise<void> {
@@ -133,8 +118,10 @@ export class SkillTreeRepository implements ISkillTreeRepository {
 
   createNode(data: {
     branchId: string
-    name: string
-    description: string
+    nameFr: string
+    nameEn: string
+    descriptionFr: string
+    descriptionEn: string
     icon: string
     maxLevel: number
     effectType: SkillEffectType
@@ -142,12 +129,10 @@ export class SkillTreeRepository implements ISkillTreeRepository {
     posY: number
     levels: { level: number; effect: number }[]
   }) {
-    const { levels, name, description, ...nodeData } = data
+    const { levels, ...nodeData } = data
     return this.#prisma.skillNode.create({
       data: {
         ...nodeData,
-        ...nameToBothLocales(name),
-        ...descriptionToBothLocales(description),
         levels: { create: levels },
       },
     })
@@ -157,8 +142,10 @@ export class SkillTreeRepository implements ISkillTreeRepository {
     id: string,
     data: Partial<{
       branchId: string
-      name: string
-      description: string
+      nameFr: string
+      nameEn: string
+      descriptionFr: string
+      descriptionEn: string
       icon: string
       maxLevel: number
       effectType: SkillEffectType
@@ -167,7 +154,7 @@ export class SkillTreeRepository implements ISkillTreeRepository {
       levels: { level: number; effect: number }[]
     }>,
   ) {
-    const { levels, name, description, ...rest } = data
+    const { levels, ...rest } = data
     if (levels !== undefined) {
       await this.#prisma.skillNodeLevel.deleteMany({ where: { nodeId: id } })
       await this.#prisma.skillNodeLevel.createMany({
@@ -176,11 +163,7 @@ export class SkillTreeRepository implements ISkillTreeRepository {
     }
     return this.#prisma.skillNode.update({
       where: { id },
-      data: {
-        ...rest,
-        ...nameToBothLocales(name),
-        ...descriptionToBothLocales(description),
-      },
+      data: rest,
     })
   }
 

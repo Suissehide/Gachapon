@@ -8,7 +8,6 @@ import type {
   RaidTierWithReward,
   TeamRaidWithBoss,
 } from '../../../types/infra/orm/repositories/raid.repository.interface'
-import { nameToBothLocales } from '../../i18n/monolingual-write'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 export class RaidRepository implements IRaidRepository {
@@ -28,13 +27,13 @@ export class RaidRepository implements IRaidRepository {
 
   updateBoss(
     element: CardElement,
-    data: { name?: string; spec?: Prisma.InputJsonValue },
+    data: {
+      nameFr?: string
+      nameEn?: string
+      spec?: Prisma.InputJsonValue
+    },
   ): Promise<LocalizedRaidBoss> {
-    const { name, ...rest } = data
-    return this.#prisma.raidBoss.update({
-      where: { element },
-      data: { ...rest, ...nameToBothLocales(name) },
-    })
+    return this.#prisma.raidBoss.update({ where: { element }, data })
   }
 
   listTiers(): Promise<RaidTierWithReward[]> {

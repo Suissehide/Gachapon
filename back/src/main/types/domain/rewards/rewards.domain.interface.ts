@@ -59,6 +59,7 @@ export interface RewardsDomainInterface {
     xp: number
     gold: number
     cardRarity?: CardRarity
-    label?: string
+    labelFr?: string
+    labelEn?: string
   }): Promise<{ count: number }>
 }

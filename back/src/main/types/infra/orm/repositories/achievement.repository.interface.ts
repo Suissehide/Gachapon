@@ -3,8 +3,10 @@ import type { LocalizedAchievement } from '../localized'
 
 export type CreateAchievementInput = {
   key: string
-  name: string
-  description: string
+  nameFr: string
+  nameEn: string
+  descriptionFr: string
+  descriptionEn: string
   criterion: Prisma.InputJsonValue
   family?: string | null
   tier?: number

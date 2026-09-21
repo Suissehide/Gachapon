@@ -29,7 +29,11 @@ export interface IRaidRepository {
   findBossByElement(element: CardElement): Promise<LocalizedRaidBoss | null>
   updateBoss(
     element: CardElement,
-    data: { name?: string; spec?: Prisma.InputJsonValue },
+    data: {
+      nameFr?: string
+      nameEn?: string
+      spec?: Prisma.InputJsonValue
+    },
   ): Promise<LocalizedRaidBoss>
   /** Paliers triés par pct croissant. */
   listTiers(): Promise<RaidTierWithReward[]>

@@ -55,6 +55,7 @@ import type { IMailService } from '../infra/mail/mail.service.interface'
 import type { IAchievementRepository } from '../infra/orm/repositories/achievement.repository.interface'
 import type { IActivityEventRepository } from '../infra/orm/repositories/activity-event.repository.interface'
 import type { IAdminStatsRepository } from '../infra/orm/repositories/admin-stats.repository.interface'
+import type { IAdminTranslationsRepository } from '../infra/orm/repositories/admin-translations.repository.interface'
 import type { IJoinRequestRepository } from '../infra/orm/repositories/join-request.repository.interface'
 import type { ILeaderboardRepository } from '../infra/orm/repositories/leaderboard.repository.interface'
 import type { IQuestRepository } from '../infra/orm/repositories/quest.repository.interface'
@@ -144,6 +145,7 @@ export interface IocContainer {
   readonly leaderboardDomain: ILeaderboardDomain
   readonly statsRepository: IStatsRepository
   readonly adminStatsRepository: IAdminStatsRepository
+  readonly adminTranslationsRepository: IAdminTranslationsRepository
   readonly collectionDomain: ICollectionDomain
   readonly profileDomain: ProfileDomainInterface
   readonly shopDomain: IShopDomain

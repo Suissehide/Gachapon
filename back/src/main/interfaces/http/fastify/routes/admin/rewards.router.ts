@@ -9,7 +9,7 @@ export const adminRewardsRouter: FastifyPluginCallbackZod = (fastify) => {
     '/bulk',
     { schema: { body: adminBulkRewardBodySchema } },
     async (request, reply) => {
-      const { target, reward, message } = request.body
+      const { target, reward, labelFr, labelEn } = request.body
       const { count } = await rewardsDomain.grantBulk({
         userIds: target === 'ALL' ? 'ALL' : target.userIds,
         tokens: reward.tokens,
@@ -17,7 +17,8 @@ export const adminRewardsRouter: FastifyPluginCallbackZod = (fastify) => {
         xp: reward.xp,
         gold: reward.gold,
         cardRarity: reward.cardRarity,
-        label: message,
+        labelFr,
+        labelEn,
       })
       void activityDomain.record('BULK_REWARD', {
         payload: {

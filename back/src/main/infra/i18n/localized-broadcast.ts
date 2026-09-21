@@ -1,7 +1,9 @@
 import { DEFAULT_LOCALE } from './locale'
 
 /**
- * PONT DE LECTURE — miroir de `monolingual-write.ts`, côté lecture.
+ * PONT DE LECTURE — même logique que l'ancien pont d'écriture mono-langue
+ * (supprimé en tâche 10 : l'API d'administration est bilingue), en miroir
+ * côté lecture.
  *
  * Partout ailleurs dans ce dépôt, lire une colonne `*Fr`/`*En` directement
  * est interdit : `localized.extension.ts` expose un champ calculé (`name`,
@@ -12,9 +14,9 @@ import { DEFAULT_LOCALE } from './locale'
  * job de fond. `wsManager.broadcast` la brise : un seul message part vers
  * TOUTES les connexions ouvertes, donc potentiellement vers des locales
  * différentes à la fois. Un champ mono-locale ne peut pas servir cette
- * frontière — c'est la même logique que `monolingual-write.ts` en miroir, où
- * un seul champ mono-locale en ENTRÉE ne peut pas remplir deux colonnes sans
- * aide explicite.
+ * frontière — même logique en miroir que l'ancien pont d'écriture : un seul
+ * champ mono-locale en ENTRÉE ne pouvait pas remplir deux colonnes sans aide
+ * explicite.
  *
  * Envelopper la construction du message dans `runWithLocale(...)` ne suffit
  * PAS : le champ calculé Prisma est MÉMORISÉ par objet et par propriété dès

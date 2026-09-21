@@ -1,8 +1,10 @@
 import { z } from 'zod/v4'
 
 export const createBranchSchema = z.object({
-  name: z.string().min(1),
-  description: z.string(),
+  nameFr: z.string().min(1),
+  nameEn: z.string().min(1),
+  descriptionFr: z.string(),
+  descriptionEn: z.string(),
   icon: z.string().min(1),
   color: z.string().min(1),
   order: z.int().nonnegative(),
@@ -20,8 +22,10 @@ const MAX_NODE_LEVEL = 10
 
 export const createNodeSchema = z.object({
   branchId: z.string().min(1),
-  name: z.string().min(1),
-  description: z.string(),
+  nameFr: z.string().min(1),
+  nameEn: z.string().min(1),
+  descriptionFr: z.string(),
+  descriptionEn: z.string(),
   icon: z.string().min(1),
   maxLevel: z.int().min(1).max(MAX_NODE_LEVEL),
   effectType: z.enum([

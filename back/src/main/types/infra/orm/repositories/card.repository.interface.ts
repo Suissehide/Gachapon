@@ -25,7 +25,8 @@ export interface ICardRepository {
     rarity: CardRarity,
   ): Promise<CardWithSet[]>
   create(data: {
-    name: string
+    nameFr: string
+    nameEn: string
     setId: string
     rarity: CardRarity
     dropWeight: number
@@ -40,7 +41,8 @@ export interface ICardRepository {
   update(
     id: string,
     data: Partial<{
-      name: string
+      nameFr: string
+      nameEn: string
       rarity: CardRarity
       dropWeight: number
       setId: string
@@ -55,13 +57,21 @@ export interface ICardRepository {
   ): Promise<CardWithSet>
   delete(id: string): Promise<void>
   createSet(data: {
-    name: string
-    description?: string
+    nameFr: string
+    nameEn: string
+    descriptionFr?: string
+    descriptionEn?: string
     isActive?: boolean
   }): Promise<CardSetEntity>
   updateSet(
     id: string,
-    data: { name?: string; description?: string; isActive?: boolean },
+    data: Partial<{
+      nameFr: string
+      nameEn: string
+      descriptionFr: string
+      descriptionEn: string
+      isActive: boolean
+    }>,
   ): Promise<CardSetEntity>
   deleteSet(id: string): Promise<void>
   findAllSetsWithCount(): Promise<

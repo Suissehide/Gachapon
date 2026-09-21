@@ -6,10 +6,6 @@ import type {
   UpdateAchievementInput,
 } from '../../../types/infra/orm/repositories/achievement.repository.interface'
 import { localizedNameOrder } from '../../i18n/locale-order'
-import {
-  descriptionToBothLocales,
-  nameToBothLocales,
-} from '../../i18n/monolingual-write'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 export class AchievementRepository implements IAchievementRepository {
@@ -30,29 +26,14 @@ export class AchievementRepository implements IAchievementRepository {
   }
 
   create(data: CreateAchievementInput): Promise<LocalizedAchievement> {
-    const { name, description, ...rest } = data
-    return this.#prisma.achievement.create({
-      data: {
-        ...rest,
-        ...nameToBothLocales(name),
-        ...descriptionToBothLocales(description),
-      },
-    })
+    return this.#prisma.achievement.create({ data })
   }
 
   update(
     id: string,
     data: UpdateAchievementInput,
   ): Promise<LocalizedAchievement> {
-    const { name, description, ...rest } = data
-    return this.#prisma.achievement.update({
-      where: { id },
-      data: {
-        ...rest,
-        ...nameToBothLocales(name),
-        ...descriptionToBothLocales(description),
-      },
-    })
+    return this.#prisma.achievement.update({ where: { id }, data })
   }
 
   async delete(id: string): Promise<void> {
