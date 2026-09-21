@@ -96,7 +96,6 @@ function TowerFloorsPage() {
   const battleCost = combatPoints.data?.battleCost ?? 0
   const sweepCost = combatPoints.data?.sweepCost ?? 1
   const hasTeam = (team.data?.team.length ?? 0) > 0
-  const canBattle = currentPC >= battleCost && hasTeam && !battle.isPending
 
   const handleFight = (floor: number) => {
     setPrep(null)
@@ -179,8 +178,6 @@ function TowerFloorsPage() {
           <FloorList
             status={tower.status}
             floors={tower.data?.floors ?? []}
-            canBattle={canBattle}
-            isPending={battle.isPending}
             onFight={setPrep}
           />
         </>
@@ -324,7 +321,7 @@ function TowerPrepPopup({
           recommendedPower={floor.recommendedPower}
           team={team}
           currentPC={currentPC}
-          battleCost={battleCost}
+          energyCost={isCleared ? sweepCost : battleCost}
           rewards={
             <>
               <div className="mb-3 flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
@@ -381,7 +378,8 @@ function TowerPrepPopup({
               <MultiRunActions
                 sweepCost={sweepCost}
                 currentPC={currentPC}
-                disabled={!hasTeam || sweepPending}
+                hasTeam={hasTeam}
+                pending={sweepPending}
                 onRun={onSweep}
               />
             ) : undefined
@@ -404,14 +402,10 @@ function TowerPrepPopup({
 function FloorList({
   status,
   floors,
-  canBattle,
-  isPending,
   onFight,
 }: {
   status: 'pending' | 'error' | 'success'
   floors: TowerFloorView[]
-  canBattle: boolean
-  isPending: boolean
   onFight: (floor: TowerFloorView) => void
 }) {
   if (status === 'pending') {
@@ -433,8 +427,6 @@ function FloorList({
         <FloorRow
           key={floor.index}
           floor={floor}
-          canBattle={canBattle}
-          isPending={isPending}
           onFight={() => onFight(floor)}
         />
       ))}
@@ -559,15 +551,18 @@ function floorButtonLabel(floor: TowerFloorView): string {
   return 'Refaire'
 }
 
+/**
+ * Un étage non verrouillé s'ouvre TOUJOURS, comme une carte de niveau en
+ * campagne : c'est la fenêtre de préparation qui arbitre et qui dit pourquoi
+ * c'est bloqué. La rangée verrouillait sur le prix d'un combat, alors qu'un
+ * étage franchi se rejoue au prix d'un balayage — remisé par « Logistique » :
+ * à 4 énergies, « Refaire » était mort pendant que le farm ×1 restait payable.
+ */
 function FloorRow({
   floor,
-  canBattle,
-  isPending,
   onFight,
 }: {
   floor: TowerFloorView
-  canBattle: boolean
-  isPending: boolean
   onFight: () => void
 }) {
   const isLocked = floor.status === 'locked'
@@ -590,12 +585,7 @@ function FloorRow({
       </div>
 
       {!isLocked && (
-        <Button
-          size="sm"
-          onClick={onFight}
-          disabled={!canBattle || isPending}
-          className="shrink-0 gap-1.5"
-        >
+        <Button size="sm" onClick={onFight} className="shrink-0 gap-1.5">
           <Swords className="h-3.5 w-3.5" />
           {floorButtonLabel(floor)}
         </Button>

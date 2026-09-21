@@ -228,7 +228,7 @@ function RaidAttackPage() {
               recommendedPower={raid.data.boss.power}
               team={combatTeam.data?.team ?? []}
               currentPC={0}
-              battleCost={0}
+              energyCost={0}
               hideEnergy
               rewards={<RaidRewardPreview raid={raid.data} />}
               fightLabel={fightLabel}

@@ -711,7 +711,7 @@ function PrepModal({
       recommendedPower={stage.recommendedPower}
       team={team}
       currentPC={currentPC}
-      battleCost={battleCost}
+      energyCost={isCleared ? sweepCost : battleCost}
       rewards={
         <>
           <div className="mb-3 flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
@@ -766,7 +766,8 @@ function PrepModal({
           <MultiRunActions
             sweepCost={sweepCost}
             currentPC={currentPC}
-            disabled={!hasTeam || sweepPending}
+            hasTeam={hasTeam}
+            pending={sweepPending}
             onRun={onSweep}
           />
         ) : undefined

@@ -42,7 +42,7 @@ export function BattlePrepModal({
   recommendedPower,
   team,
   currentPC,
-  battleCost,
+  energyCost,
   hideEnergy = false,
   rewards,
   extraActions,
@@ -58,7 +58,12 @@ export function BattlePrepModal({
   recommendedPower: number
   team: TeamUnit[]
   currentPC: number
-  battleCost: number
+  /**
+   * Coût en énergie de l'action RÉELLEMENT proposée : le combat sur un niveau
+   * à franchir, le balayage sur un niveau déjà terminé — les deux n'ont pas le
+   * même prix dès que l'arbre de compétences remise le balayage.
+   */
+  energyCost: number
   /** Masque la ligne « coût en énergie » — pour les modes sans énergie (raid, gratuit). */
   hideEnergy?: boolean
   rewards?: ReactNode
@@ -125,7 +130,7 @@ export function BattlePrepModal({
                   Coût
                 </span>
                 <b className="font-display text-xl font-extrabold text-text">
-                  {battleCost}
+                  {energyCost}
                 </b>
                 <span className="ml-auto font-mono text-[11px] text-text-light/50">
                   énergie {currentPC}
@@ -217,15 +222,36 @@ const MULTI_RUNS = [1, 5] as const
 export function MultiRunActions({
   sweepCost,
   currentPC,
-  disabled = false,
+  hasTeam,
+  pending = false,
   onRun,
 }: {
   sweepCost: number
   currentPC: number
-  /** Équipe vide ou balayage déjà en vol — tous les segments sont bloqués. */
-  disabled?: boolean
+  hasTeam: boolean
+  /** Balayage déjà en vol — tous les segments sont bloqués, sans motif. */
+  pending?: boolean
   onRun: (runs: number) => void
 }) {
+  // Un niveau terminé ne se rejoue QUE par ici : si aucun passage n'est
+  // payable, ce bloc est la seule action de la fenêtre et doit dire POURQUOI,
+  // comme le bouton « Combattre » le fait sur un niveau non terminé. Sans ce
+  // motif, la fenêtre n'était qu'une rangée de segments gris.
+  const reason = hasTeam
+    ? currentPC < sweepCost
+      ? 'Énergie insuffisante'
+      : null
+    : 'Équipe requise'
+
+  if (reason) {
+    return (
+      <Button size="lg" disabled className="ml-auto gap-2">
+        <Swords className="h-4 w-4" />
+        {reason}
+      </Button>
+    )
+  }
+
   return (
     <div className="ml-auto flex h-10 items-stretch overflow-hidden rounded-md border border-primary bg-primary text-primary-foreground shadow-sm">
       {/* Le libellé n'est pas cliquable : fond blanc cerné d'orange, quand
@@ -240,7 +266,7 @@ export function MultiRunActions({
           key={runs}
           variant="ghost"
           onClick={() => onRun(runs)}
-          disabled={disabled || currentPC < sweepCost * runs}
+          disabled={pending || currentPC < sweepCost * runs}
           className="h-full gap-1.5 rounded-none border-l border-white/25 px-3.5 text-primary-foreground hover:bg-white/15 hover:text-primary-foreground"
         >
           ×{runs}
