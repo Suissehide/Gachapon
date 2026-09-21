@@ -5,8 +5,8 @@ import {
   FAMILIES_BY_ELEMENT,
   FAMILY_ELEMENTS,
   type FamilySlug,
-} from '../../../prisma/seed/bestiary'
-import { RARITY_BASE } from '../../../prisma/seed/campaign'
+} from '../../main/domain/content/bestiary.definitions'
+import { RARITY_BASE } from '../../main/domain/content/campaign.definitions'
 import {
   towerFloorProfile,
   towerReferenceWinRate,
@@ -18,7 +18,7 @@ import {
   towerAoeUnitCount,
   towerEnemyPower,
   towerFloorLoot,
-} from '../../../prisma/seed/tower'
+} from '../../main/domain/content/tower.definitions'
 import { EquipmentSlot } from '../../generated/client'
 import {
   CAMPAIGN_EQUIPMENT_SLOTS,

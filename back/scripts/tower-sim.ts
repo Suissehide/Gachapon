@@ -25,16 +25,6 @@ import {
   towerFloorProfile,
   towerWinRate,
 } from '../prisma/seed/balance-calibration'
-import {
-  bossEnemyTeam,
-  normalEnemyTeam,
-  type RARITY_BASE,
-} from '../prisma/seed/campaign'
-import {
-  TOWER_FLOOR_COUNT,
-  towerAoeUnitCount,
-  towerEnemyPower,
-} from '../prisma/seed/tower'
 import type { CardRarity } from '../src/generated/client'
 import {
   type SimulatorUnit,
@@ -46,6 +36,16 @@ import {
   elementRelation,
 } from '../src/main/domain/combat/element'
 import { buildEnemySimUnits } from '../src/main/domain/combat/sim-units'
+import {
+  bossEnemyTeam,
+  normalEnemyTeam,
+  type RARITY_BASE,
+} from '../src/main/domain/content/campaign.definitions'
+import {
+  TOWER_FLOOR_COUNT,
+  towerAoeUnitCount,
+  towerEnemyPower,
+} from '../src/main/domain/content/tower.definitions'
 
 const RUNS = Number(process.env.SIM_RUNS ?? 200)
 const BASE_STATS = { critRate: 5, critDmg: 150, armorPen: 0, lifesteal: 0 }

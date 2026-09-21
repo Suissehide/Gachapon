@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals'
 
-import { buildEquipmentCatalog } from '../../../prisma/seed/equipment'
+import { buildEquipmentCatalog } from '../../main/domain/content/equipment.definitions'
 
 describe('catalogue d équipement', () => {
   const catalogue = buildEquipmentCatalog()

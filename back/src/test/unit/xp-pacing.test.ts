@@ -5,8 +5,8 @@ import {
   STAGES_PER_CHAPTER,
   bossLoot,
   lootTableNormal,
-} from '../../../prisma/seed/campaign'
-import { towerFloorLoot } from '../../../prisma/seed/tower'
+} from '../../main/domain/content/campaign.definitions'
+import { towerFloorLoot } from '../../main/domain/content/tower.definitions'
 import { TOWER_ELEMENTS, TOWER_FLOOR_COUNT } from '../../main/domain/tower/tower-slots'
 import { calculateLevel, xpForLevel } from '../../main/domain/shared/xp'
 import { DEFAULTS } from '../../main/infra/config/config.service'

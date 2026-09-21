@@ -1,11 +1,6 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-import {
-  bossEnemyTeam,
-  normalEnemyTeam,
-  RARITY_BASE as SEED_RARITY_BASE,
-} from '../prisma/seed/campaign'
 import { MAX_PALIER } from '../src/main/domain/card-leveling/card-leveling.domain'
 import {
   type AttackPattern,
@@ -23,11 +18,16 @@ import {
 } from '../src/main/domain/combat/element'
 import { buildEnemySimUnits } from '../src/main/domain/combat/sim-units'
 import {
+  bossEnemyTeam,
+  normalEnemyTeam,
+  RARITY_BASE as SEED_RARITY_BASE,
+} from '../src/main/domain/content/campaign.definitions'
+import { raidBossSpec } from '../src/main/domain/content/raid.definitions'
+import {
   damageDealtToBoss,
   RAID_BOSS_SIM_HP,
   RAID_ROTATION,
 } from '../src/main/domain/raid/raid-rules'
-import { raidBossSpec } from '../prisma/seed/raid'
 
 type BaseBlock = {
   baseHp: number
