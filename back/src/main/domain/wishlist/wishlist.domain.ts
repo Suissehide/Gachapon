@@ -1,5 +1,6 @@
 import Boom from '@hapi/boom'
 
+import { errorMessage } from '../../interfaces/http/fastify/errors/messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type {
   IWishlistDomain,
@@ -122,7 +123,7 @@ export class WishlistDomain implements IWishlistDomain {
       this.#skillTreeRepository.getEffectsForUser(userId),
     ])
     if (!card || !card.set.isActive) {
-      throw Boom.notFound('Card not found or set is inactive')
+      throw Boom.notFound(errorMessage('wishlist.cardNotFoundOrInactive'))
     }
     const slots = wishlistSlots(effects.wishlistSlots ?? 0)
 
@@ -139,7 +140,7 @@ export class WishlistDomain implements IWishlistDomain {
         }
         const count = await tx.userWishlistCard.count({ where: { userId } })
         if (count >= slots) {
-          throw Boom.conflict(`Wishlist pleine (${slots} emplacements)`)
+          throw Boom.conflict(errorMessage('wishlist.full', { slots }))
         }
         await tx.userWishlistCard.create({ data: { userId, cardId } })
       },
@@ -166,7 +167,7 @@ export class WishlistDomain implements IWishlistDomain {
     ])
 
     if (!wish) {
-      throw Boom.badRequest('Card is not in your wishlist')
+      throw Boom.badRequest(errorMessage('wishlist.cardNotInWishlist'))
     }
     const card = wish.card
     const finalPrice = wishlistPriceFor(card.rarity, c)
@@ -176,7 +177,7 @@ export class WishlistDomain implements IWishlistDomain {
         async (tx) => {
           const u = await tx.user.findUniqueOrThrow({ where: { id: userId } })
           if (u.dust < finalPrice) {
-            throw Boom.paymentRequired('Not enough dust')
+            throw Boom.paymentRequired(errorMessage('economy.notEnoughDust'))
           }
           const updated = await tx.user.update({
             where: { id: userId },

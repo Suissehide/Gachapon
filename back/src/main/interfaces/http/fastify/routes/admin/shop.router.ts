@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
+import { errorMessage } from '../../errors/messages'
 import {
   adminShopCreateBodySchema,
   adminShopItemIdParamSchema,
@@ -35,7 +36,7 @@ export const adminShopRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request) => {
       const item = await shopItemRepository.findById(request.params.id)
       if (!item) {
-        throw Boom.notFound('Shop item not found')
+        throw Boom.notFound(errorMessage('shop.shopItemNotFound'))
       }
       return shopItemRepository.update(request.params.id, request.body)
     },
@@ -47,7 +48,7 @@ export const adminShopRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request, reply) => {
       const item = await shopItemRepository.findById(request.params.id)
       if (!item) {
-        throw Boom.notFound('Shop item not found')
+        throw Boom.notFound(errorMessage('shop.shopItemNotFound'))
       }
       await shopItemRepository.delete(request.params.id)
       return reply.status(204).send()

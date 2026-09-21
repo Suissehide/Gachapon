@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import type { CardElement } from '../../../generated/client'
+import { errorMessage } from '../../interfaces/http/fastify/errors/messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type {
   BuyDailyShopItemResult,
@@ -130,7 +131,7 @@ export class DailyShopDomain implements IDailyShopDomain {
     const slots = 4 + (effects.dailyShopSlots ?? 0)
 
     if (activeCards.length < slots) {
-      throw Boom.conflict('Not enough active cards to generate daily shop')
+      throw Boom.conflict(errorMessage('dailyShop.notEnoughActiveCards'))
     }
 
     const picked: typeof activeCards = []
@@ -215,10 +216,10 @@ export class DailyShopDomain implements IDailyShopDomain {
       item.dailyShop.userId !== userId ||
       item.dailyShop.date.getTime() !== date.getTime()
     ) {
-      throw Boom.notFound('Item not found')
+      throw Boom.notFound(errorMessage('shop.itemNotFound'))
     }
     if (item.purchased) {
-      throw Boom.badRequest('Item already purchased')
+      throw Boom.badRequest(errorMessage('dailyShop.itemAlreadyPurchased'))
     }
 
     const effects = await this.#skillTreeRepository.getEffectsForUser(userId)
@@ -232,7 +233,7 @@ export class DailyShopDomain implements IDailyShopDomain {
       async (tx) => {
         const user = await tx.user.findUniqueOrThrow({ where: { id: userId } })
         if (user.dust < finalPrice) {
-          throw Boom.paymentRequired('Not enough dust')
+          throw Boom.paymentRequired(errorMessage('economy.notEnoughDust'))
         }
 
         await tx.dailyShopItem.update({

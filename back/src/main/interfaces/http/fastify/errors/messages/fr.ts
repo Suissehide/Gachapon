@@ -75,4 +75,31 @@ export const FR_MESSAGES = {
   // --- gacha ---
   'gacha.noActiveCards': 'Aucune carte active dans un set',
   'gacha.notEnoughTokens': 'Jetons insuffisants',
+
+  // --- shop / daily-shop / wishlist ---
+  'shop.itemNotFound': 'Article introuvable',
+  'economy.notEnoughGold': "Pas assez d'or",
+  'economy.notEnoughDust': 'Poussière insuffisante',
+  'shop.machineAlreadyOwned': 'Machine déjà possédée',
+  'shop.energyDailyCapReached':
+    "Limite quotidienne d'achats d'énergie atteinte",
+  'shop.boostMissingEffect':
+    'La valeur du BOOST n’a ni multiplicateur ni rareté garantie',
+  'shop.boostMissingPulls':
+    'La valeur du BOOST n’a pas de nombre de tirages positif',
+  'shop.boostRarityConflict':
+    'Un boost différent est déjà actif sur cette rareté',
+  'shop.boostGuaranteeConflict': 'Un boost de ce type est déjà actif',
+  'shop.boostInvalidRarity':
+    'La valeur du BOOST a une rareté invalide : {{rarity}}',
+  'shop.energyPackMissingCombatPoints':
+    'La valeur de l’ENERGY_PACK n’a pas d’entier positif de points de combat',
+  'dailyShop.notEnoughActiveCards':
+    'Pas assez de cartes actives pour générer la boutique du jour',
+  'dailyShop.itemAlreadyPurchased': 'Article déjà acheté',
+  'wishlist.cardNotFoundOrInactive': 'Carte introuvable ou set inactif',
+  'wishlist.full': 'Wishlist pleine ({{slots}} emplacements)',
+  'wishlist.cardNotInWishlist':
+    'Cette carte n’est pas dans ta liste de souhaits',
+  'shop.shopItemNotFound': 'Article de boutique introuvable',
 } as const

@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 
 import { CardRarity, type ShopItem } from '../../../generated/client'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
+import { errorMessage } from '../../interfaces/http/fastify/errors/messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type {
   BuyShopItemResult,
@@ -60,7 +61,7 @@ export class ShopDomain implements IShopDomain {
   async buy(userId: string, shopItemId: string): Promise<BuyShopItemResult> {
     const item = await this.#shopItemRepository.findById(shopItemId)
     if (!item || !item.isActive) {
-      throw Boom.notFound('Item not found')
+      throw Boom.notFound(errorMessage('shop.itemNotFound'))
     }
 
     // Validate shop item structure early (before transaction)
@@ -88,7 +89,9 @@ export class ShopDomain implements IShopDomain {
           const balance = item.currency === 'GOLD' ? user.gold : user.dust
           if (balance < effectiveCost) {
             throw Boom.paymentRequired(
-              item.currency === 'GOLD' ? 'Not enough gold' : 'Not enough dust',
+              item.currency === 'GOLD'
+                ? errorMessage('economy.notEnoughGold')
+                : errorMessage('economy.notEnoughDust'),
             )
           }
 
@@ -180,7 +183,7 @@ export class ShopDomain implements IShopDomain {
         where: { userId, shopItemId },
       })
       if (existing) {
-        throw Boom.conflict('Machine already owned')
+        throw Boom.conflict(errorMessage('shop.machineAlreadyOwned'))
       }
     }
   }
@@ -207,9 +210,7 @@ export class ShopDomain implements IShopDomain {
     if (
       usedToday >= effectiveEnergyDailyCap(cfg['shop.energyDailyCap'], capBonus)
     ) {
-      throw Boom.tooManyRequests(
-        "Limite quotidienne d'achats d'énergie atteinte",
-      )
+      throw Boom.tooManyRequests(errorMessage('shop.energyDailyCapReached'))
     }
   }
 
@@ -240,15 +241,13 @@ export class ShopDomain implements IShopDomain {
 
     // Guard: ensure at least one boost type is specified
     if (boostValue.multiplier == null && boostValue.guaranteedRarity == null) {
-      throw Boom.internal(
-        'BOOST item value has neither multiplier nor guaranteedRarity',
-      )
+      throw Boom.internal(errorMessage('shop.boostMissingEffect'))
     }
 
     // Guard: ensure pulls count is positive
     const pulls = boostValue.pulls ?? 0
     if (pulls <= 0) {
-      throw Boom.internal('BOOST item value has no positive pulls count')
+      throw Boom.internal(errorMessage('shop.boostMissingPulls'))
     }
 
     const activeBoosts = await this.#userBoostRepository.findActiveByUserInTx(
@@ -267,9 +266,7 @@ export class ShopDomain implements IShopDomain {
         // Même article racheté → on prolonge. Multiplicateur différent sur la
         // même rareté : ambigu (lequel appliquer ?), on refuse.
         if (sameRarity.weightMultiplier !== boostValue.multiplier) {
-          throw Boom.conflict(
-            'Un boost différent est déjà actif sur cette rareté',
-          )
+          throw Boom.conflict(errorMessage('shop.boostRarityConflict'))
         }
         await this.#userBoostRepository.extendInTx(tx, sameRarity.id, pulls)
         return
@@ -285,7 +282,7 @@ export class ShopDomain implements IShopDomain {
       this.#validateRarity(boostValue.guaranteedRarity)
       const hasGuarantee = activeBoosts.some((b) => b.guaranteedRarity != null)
       if (hasGuarantee) {
-        throw Boom.conflict('Un boost de ce type est déjà actif')
+        throw Boom.conflict(errorMessage('shop.boostGuaranteeConflict'))
       }
       await this.#userBoostRepository.createInTx(tx, {
         userId,
@@ -298,7 +295,7 @@ export class ShopDomain implements IShopDomain {
   #validateRarity(rarity?: string): void {
     const validRarities = Object.values(CardRarity)
     if (rarity && !validRarities.includes(rarity as CardRarity)) {
-      throw Boom.internal(`BOOST item has invalid rarity: ${rarity}`)
+      throw Boom.internal(errorMessage('shop.boostInvalidRarity', { rarity }))
     }
   }
 
@@ -310,22 +307,18 @@ export class ShopDomain implements IShopDomain {
         boostValue.multiplier == null &&
         boostValue.guaranteedRarity == null
       ) {
-        throw Boom.internal(
-          'BOOST item value has neither multiplier nor guaranteedRarity',
-        )
+        throw Boom.internal(errorMessage('shop.boostMissingEffect'))
       }
       // Validate that pulls count is positive
       if ((boostValue.pulls ?? 0) <= 0) {
-        throw Boom.internal('BOOST item value has no positive pulls count')
+        throw Boom.internal(errorMessage('shop.boostMissingPulls'))
       }
     }
     if (item.type === 'ENERGY_PACK') {
       const energyValue = item.value as EnergyValue
       const pc = energyValue.combatPoints
       if (pc == null || !Number.isInteger(pc) || pc <= 0) {
-        throw Boom.internal(
-          'ENERGY_PACK item value has no positive integer combatPoints',
-        )
+        throw Boom.internal(errorMessage('shop.energyPackMissingCombatPoints'))
       }
     }
   }

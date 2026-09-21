@@ -66,4 +66,27 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   // --- gacha ---
   'gacha.noActiveCards': 'No active cards in any set',
   'gacha.notEnoughTokens': 'Not enough tokens',
+
+  // --- shop / daily-shop / wishlist ---
+  'shop.itemNotFound': 'Item not found',
+  'economy.notEnoughGold': 'Not enough gold',
+  'economy.notEnoughDust': 'Not enough dust',
+  'shop.machineAlreadyOwned': 'Machine already owned',
+  'shop.energyDailyCapReached': 'Daily energy purchase limit reached',
+  'shop.boostMissingEffect':
+    'BOOST item value has neither multiplier nor guaranteedRarity',
+  'shop.boostMissingPulls': 'BOOST item value has no positive pulls count',
+  'shop.boostRarityConflict':
+    'A different boost is already active on this rarity',
+  'shop.boostGuaranteeConflict': 'A boost of this type is already active',
+  'shop.boostInvalidRarity': 'BOOST item has invalid rarity: {{rarity}}',
+  'shop.energyPackMissingCombatPoints':
+    'ENERGY_PACK item value has no positive integer combatPoints',
+  'dailyShop.notEnoughActiveCards':
+    'Not enough active cards to generate daily shop',
+  'dailyShop.itemAlreadyPurchased': 'Item already purchased',
+  'wishlist.cardNotFoundOrInactive': 'Card not found or set is inactive',
+  'wishlist.full': 'Wishlist full ({{slots}} slots)',
+  'wishlist.cardNotInWishlist': 'Card is not in your wishlist',
+  'shop.shopItemNotFound': 'Shop item not found',
 }
