@@ -3,6 +3,7 @@ import Boom from '@hapi/boom'
 import { OAuthProvider } from '../../../generated/enums'
 import type { Config } from '../../application/config'
 import { errorMessage } from '../../infra/i18n/error-messages'
+import { getCurrentLocale } from '../../infra/i18n/locale-context'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { OAuthAccountRepository } from '../../infra/orm/repositories/oauth-account.repository'
 import type { IocContainer } from '../../types/application/ioc'
@@ -119,10 +120,17 @@ export class OAuthDomain implements OAuthDomainInterface {
     if (!user) {
       const username = await this.#availableUsername(userInfo.username)
       const tokenMaxStock = await this.#configService.get('tokenMaxStock')
+      // Même raisonnement que `auth.domain.ts#register` : la locale du
+      // callback OAuth (résolue par le hook de tâche 4, ici depuis
+      // l'`Accept-Language` que le navigateur envoie en revenant de
+      // Google/Discord) est le seul signal disponible sur la langue de ce
+      // nouveau compte — second et dernier chemin de création d'utilisateur
+      // dans `src/main` (voir `userRepository.create(` — 2 call sites).
       user = await this.#userRepository.create({
         username,
         email: userInfo.email,
         tokens: tokenMaxStock,
+        locale: getCurrentLocale(),
       })
       isNew = true
     }

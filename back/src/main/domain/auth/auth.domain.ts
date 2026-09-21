@@ -3,6 +3,7 @@ import Boom from '@hapi/boom'
 import bcrypt from 'bcrypt'
 
 import { errorMessage } from '../../infra/i18n/error-messages'
+import { getCurrentLocale } from '../../infra/i18n/locale-context'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { RefreshTokenRepository } from '../../infra/redis/refresh-token.repository'
 import type { IocContainer } from '../../types/application/ioc'
@@ -92,11 +93,20 @@ export class AuthDomain implements AuthDomainInterface {
     const expiresAt = new Date(Date.now() + VERIFICATION_TOKEN_TTL_MS)
 
     const tokenMaxStock = await this.#configService.get('tokenMaxStock')
+    // `getCurrentLocale()` : la locale de LA REQUÊTE D'INSCRIPTION —
+    // résolue par le hook de tâche 4 depuis `?lang` ou `Accept-Language` du
+    // navigateur qui s'inscrit. C'est le meilleur signal disponible sur la
+    // langue du nouveau compte, et il n'existe pas d'autre moyen de la
+    // renseigner tant que le changement de langue depuis le profil (lot 2)
+    // n'existe pas — sans ça, tout compte naît et reste en `EN` (défaut
+    // Prisma), et les mails de la tâche 7 ne partiraient jamais en
+    // français.
     const user = await this.#userRepository.create({
       username: input.username,
       email: input.email,
       passwordHash,
       tokens: tokenMaxStock,
+      locale: getCurrentLocale(),
     })
 
     void this.#activityDomain.record('USER_SIGNUP', {
