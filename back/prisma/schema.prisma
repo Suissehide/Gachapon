@@ -203,6 +203,7 @@ model User {
   emailVerificationTokenExpiresAt DateTime?
   passwordResetToken              String?    @unique
   passwordResetTokenExpiresAt     DateTime?
+  locale                          Locale     @default(EN)
 
   bestStreak Int @default(0)
 

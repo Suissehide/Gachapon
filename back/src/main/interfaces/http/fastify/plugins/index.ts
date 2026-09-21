@@ -9,6 +9,7 @@ import { registerPlugin } from '../util/fastify-plugin.registerer'
 import { awilixPlugin } from './awilix.plugin'
 import { cookiePlugin } from './cookie.plugin'
 import { jwtPlugin } from './jwt.plugin'
+import { localePlugin } from './locale.plugin'
 import { ormPlugin } from './orm.plugin'
 import { rateLimitPlugin } from './rate-limit.plugin'
 import { redisPlugin } from './redis.plugin'
@@ -31,6 +32,7 @@ const plugins: FastifyPluginAsync = fastifyPlugin(
         shutdownOptions,
       )
     }
+    await registerPlugin(fastify, 'locale', localePlugin)
     await registerPlugin(fastify, 'cookie', cookiePlugin)
     await registerPlugin(fastify, 'jwt', jwtPlugin)
     await registerPlugin(fastify, 'role', rolePlugin)
