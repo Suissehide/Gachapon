@@ -1,17 +1,18 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
+import type { PostgresPrismaClient } from '../../../main/infra/orm/postgres-client'
 import { buildTestApp } from '../../helpers/build-test-app'
 
 describe('admin raid routes', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
-  let prisma: any
+  let prisma: PostgresPrismaClient
   let cookies: string
   const suffix = Date.now()
   const email = `raidadmin${suffix}@test.com`
 
   beforeAll(async () => {
     app = await buildTestApp()
-    prisma = (app as any).iocContainer.postgresOrm.prisma
+    prisma = app.iocContainer.postgresOrm.prisma
     await app.inject({
       method: 'POST',
       url: '/auth/register',
@@ -73,7 +74,8 @@ describe('admin raid routes', () => {
       url: '/admin/raid/bosses/WATER',
       headers: { cookie: cookies },
       payload: {
-        name: 'Nérée, la Marée',
+        nameFr: 'Nérée, la Marée',
+        nameEn: 'Nérée, la Marée',
         spec: {
           baseHp: 100, baseAtk: 20, baseDef: 5, baseSpd: 100, level: 1, palier: 1,
           attackPattern: 'AOE_3', passiveKey: null, element: 'WATER',
@@ -92,7 +94,7 @@ describe('admin raid routes', () => {
       method: 'PATCH',
       url: '/admin/raid/bosses/LIGHT',
       headers: { cookie: cookies },
-      payload: { name: 'x' },
+      payload: { nameFr: 'x', nameEn: 'x' },
     })
     expect(res.statusCode).toBe(400)
   })

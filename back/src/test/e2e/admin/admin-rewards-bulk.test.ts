@@ -9,7 +9,7 @@ describe('Admin bulk rewards', () => {
 
   beforeAll(async () => {
     app = await buildTestApp()
-    const prisma = (app as any).iocContainer.postgresOrm.prisma
+    const prisma = app.iocContainer.postgresOrm.prisma
 
     // Create admin
     await app.inject({
@@ -51,13 +51,13 @@ describe('Admin bulk rewards', () => {
   afterAll(async () => { await app.close() })
 
   it('POST /admin/rewards/bulk target ALL — exclut les suspendus', async () => {
-    const prisma = (app as any).iocContainer.postgresOrm.prisma
+    const prisma = app.iocContainer.postgresOrm.prisma
     const activeCountBefore = await prisma.user.count({ where: { suspended: false } })
 
     const res = await app.inject({
       method: 'POST', url: '/admin/rewards/bulk',
       headers: { cookie: adminCookies },
-      payload: { target: 'ALL', reward: { tokens: 5 }, message: 'Compensation' },
+      payload: { target: 'ALL', reward: { tokens: 5 }, labelFr: 'Compensation', labelEn: 'Compensation' },
     })
     expect(res.statusCode).toBe(201)
     expect(res.json().count).toBe(activeCountBefore)

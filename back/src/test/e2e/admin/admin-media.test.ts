@@ -12,7 +12,7 @@ describe('Admin media routes', () => {
       method: 'POST', url: '/auth/register',
       payload: { username: `mediaadmin${suffix}`, email: `mediaadmin${suffix}@test.com`, password: 'Password123!' },
     })
-    await (app as any).iocContainer.postgresOrm.prisma.user.update({
+    await app.iocContainer.postgresOrm.prisma.user.update({
       where: { email: `mediaadmin${suffix}@test.com` }, data: { role: 'SUPER_ADMIN', emailVerifiedAt: new Date() },
     })
     const loginRes = await app.inject({
@@ -89,13 +89,13 @@ describe('Admin media routes', () => {
     const setRes = await app.inject({
       method: 'POST', url: '/admin/sets',
       headers: { cookie: adminCookies },
-      payload: { name: `MediaSet${suffix}`, isActive: false },
+      payload: { nameFr: `MediaSet${suffix}`, nameEn: `MediaSet${suffix}`, isActive: false },
     })
     const setId = setRes.json().id
 
     // Insérer directement en DB une carte avec imageUrl connue (pas besoin de vrai Minio)
     const imageKey = `cards/used-image-${suffix}.png`
-    await (app as any).iocContainer.postgresOrm.prisma.card.create({
+    await app.iocContainer.postgresOrm.prisma.card.create({
       data: {
         nameFr: `MediaCard${suffix}`,
         nameEn: `MediaCard${suffix}`,
