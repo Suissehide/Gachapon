@@ -24,13 +24,11 @@ export class QuestRepository implements IQuestRepository {
   }
 
   create(data: CreateQuestInput): Promise<LocalizedQuest> {
-    // biome-ignore lint/suspicious/noExplicitAny: Prisma JSON field requires cast
-    return this.#prisma.quest.create({ data: data as any })
+    return this.#prisma.quest.create({ data })
   }
 
   update(id: string, data: UpdateQuestInput): Promise<LocalizedQuest> {
-    // biome-ignore lint/suspicious/noExplicitAny: Prisma JSON field requires cast
-    return this.#prisma.quest.update({ where: { id }, data: data as any })
+    return this.#prisma.quest.update({ where: { id }, data })
   }
 
   async delete(id: string): Promise<void> {

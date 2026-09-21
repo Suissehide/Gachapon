@@ -23,7 +23,7 @@
  */
 
 import type { Prisma, Reward } from '../../../generated/client'
-import type { QuestPeriod } from '../../../generated/enums'
+import { CardRarity, type QuestPeriod } from '../../../generated/enums'
 import { getCurrentLocale } from '../../infra/i18n/locale-context'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
@@ -76,6 +76,17 @@ interface CacheEntry {
 // ---------------------------------------------------------------------------
 // QuestsDomain
 // ---------------------------------------------------------------------------
+
+/**
+ * `criterion` est une colonne Json : rien ne garantit que `filter.rarity`
+ * contienne une rarete connue. Cette garde restreint le `string` brut a
+ * l'enum Prisma — a la place d'un cast, qui laissait passer `"BOGUS"` dans un
+ * critere en apparence valide, dont le filtre n'aurait alors jamais matche,
+ * silencieusement.
+ */
+function isCardRarity(value: unknown): value is CardRarity {
+  return typeof value === 'string' && Object.hasOwn(CardRarity, value)
+}
 
 export class QuestsDomain implements IQuestsDomain {
   readonly #postgresOrm: PostgresOrm
@@ -578,9 +589,8 @@ export class QuestsDomain implements IQuestsDomain {
     ) {
       const f = j.filter as Record<string, unknown>
       criterion.filter = {}
-      if (typeof f.rarity === 'string') {
-        // biome-ignore lint/suspicious/noExplicitAny: casting Json string to enum
-        criterion.filter.rarity = f.rarity as any
+      if (isCardRarity(f.rarity)) {
+        criterion.filter.rarity = f.rarity
       }
       if (f.uniqueOnly === true) {
         criterion.filter.uniqueOnly = true

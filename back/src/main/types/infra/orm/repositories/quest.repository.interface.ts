@@ -1,3 +1,4 @@
+import type { Prisma } from '../../../../../generated/client'
 import type { LocalizedQuest } from '../localized'
 
 export type CreateQuestInput = {
@@ -6,7 +7,7 @@ export type CreateQuestInput = {
   nameEn: string
   descriptionFr: string
   descriptionEn: string
-  criterion: Record<string, unknown>
+  criterion: Prisma.InputJsonObject
   isActive?: boolean
 }
 

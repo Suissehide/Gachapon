@@ -12,11 +12,13 @@
  * colonnes. C'est exactement la politique du backfill de la migration et des
  * seeds : le français dans les deux langues, aucune traduction inventée.
  *
- * Pourquoi ici et pas un `as any` sur le `data` de Prisma : un cast ferait
+ * Pourquoi ici et pas un cast sur le `data` de Prisma : un cast ferait
  * compiler l'écriture et la ferait échouer à l'EXÉCUTION, sur une colonne
- * `name` qui n'existe plus. C'est déjà le cas de `achievement.repository`,
- * dont le `data as any` (nécessaire au champ JSON `criterion`) masquait
- * complètement le problème au compilateur.
+ * `name` qui n'existe plus. C'était précisément le cas d'`achievement` et de
+ * `shopItem`, dont le `data as any` — posé pour leur champ JSON — masquait
+ * complètement le problème au compilateur. Ces casts ont depuis disparu :
+ * les champs JSON sont typés `Prisma.InputJsonValue`/`InputJsonObject`, et
+ * `src/main` ne contient plus aucun `as any`.
  *
  * LIMITE ASSUMÉE, et c'est pourquoi ce pont doit mourir en tâche 10 : une
  * mise à jour admin réécrit les DEUX colonnes. Tant qu'aucune traduction
