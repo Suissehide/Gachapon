@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import type { RaidTierWithReward } from '../../../../../types/infra/orm/repositories/raid.repository.interface'
+import { errorMessage } from '../../errors/messages'
 import {
   adminRaidBossParamSchema,
   adminRaidBossPatchBodySchema,
@@ -41,7 +42,7 @@ export const adminRaidRouter: FastifyPluginCallbackZod = (fastify) => {
         request.params.element,
       )
       if (!existing) {
-        throw Boom.notFound('Boss de raid introuvable — lancer le seed')
+        throw Boom.notFound(errorMessage('raid.bossNotFoundSeedFirst'))
       }
       return raidRepository.updateBoss(request.params.element, request.body)
     },
@@ -62,7 +63,7 @@ export const adminRaidRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request) => {
       const tier = await raidRepository.findTierByPct(request.params.pct)
       if (!tier) {
-        throw Boom.notFound('Palier introuvable')
+        throw Boom.notFound(errorMessage('raid.tierNotFound'))
       }
       return formatTier(
         await raidRepository.updateTierReward(request.params.pct, request.body),

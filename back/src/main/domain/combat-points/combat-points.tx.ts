@@ -1,5 +1,6 @@
 import Boom from '@hapi/boom'
 
+import { errorMessage } from '../../interfaces/http/fastify/errors/messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type { ConfigServiceInterface } from '../../types/infra/config/config.service.interface'
 import type {
@@ -116,7 +117,7 @@ export class CombatPointsTx {
       select: { combatPoints: true, lastCombatPointAt: true },
     })
     if (!user) {
-      throw Boom.notFound('User not found')
+      throw Boom.notFound(errorMessage('user.notFound'))
     }
 
     const state = calculateCombatPoints(
@@ -166,7 +167,7 @@ export class CombatPointsTx {
       select: { combatPoints: true, lastCombatPointAt: true },
     })
     if (!user) {
-      throw Boom.notFound('User not found')
+      throw Boom.notFound(errorMessage('user.notFound'))
     }
 
     // Apply regen first so the user sees their current effective stock.
@@ -179,7 +180,10 @@ export class CombatPointsTx {
 
     if (state.combatPoints < cost) {
       throw Boom.paymentRequired(
-        `Not enough combat points (need ${cost}, have ${state.combatPoints})`,
+        errorMessage('combatPoints.notEnough', {
+          need: cost,
+          have: state.combatPoints,
+        }),
       )
     }
 
@@ -222,7 +226,7 @@ export class CombatPointsTx {
       select: { combatPoints: true, lastCombatPointAt: true },
     })
     if (!user) {
-      throw Boom.notFound('User not found')
+      throw Boom.notFound(errorMessage('user.notFound'))
     }
 
     const state = calculateCombatPoints(
@@ -269,7 +273,7 @@ export class CombatPointsTx {
       select: { combatPoints: true, lastCombatPointAt: true },
     })
     if (!user) {
-      throw Boom.notFound('User not found')
+      throw Boom.notFound(errorMessage('user.notFound'))
     }
 
     const state = calculateCombatPoints(

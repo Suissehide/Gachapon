@@ -161,4 +161,49 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
     '@{{username}} has reached their limit of {{max}} teams',
   'recruitment.onlyAdminOrOwnerCanHandleRequests':
     'Only ADMIN or OWNER can handle join requests',
+
+  // --- combat / equipment / skills / tower / campaign / raid ---
+  'combatTeam.unknownMode': 'Unknown team mode: {{key}}',
+  'combatTeam.sizeOutOfRange':
+    'Team must contain 1 to {{max}} cards (got {{got}})',
+  'combatTeam.cardsMustBeDistinct': 'Team cards must be distinct',
+  'combatTeam.cardsNotOwned': 'One or more cards are not owned by the user',
+  'combatTeam.campaignCannotInherit':
+    'The campaign team cannot inherit from another mode',
+  'combatPoints.notEnough':
+    'Not enough combat points (need {{need}}, have {{have}})',
+  'equipment.userEquipmentNotFound': 'UserEquipment not found',
+  'equipment.catalogNotSeeded': 'No equipment catalog seeded',
+  'equipment.notFound': 'Equipment not found',
+  'equipment.alreadyMaxLevel': 'Equipment already at max level',
+  'equipment.cannotSalvageEquipped': 'Cannot salvage an equipped item',
+  'skills.noPointsAvailable': 'No skill points available',
+  'skills.nodeNotFound': 'Skill node not found',
+  'skills.nodeAlreadyMaxLevel': 'Node already at max level',
+  'skills.prerequisiteNotMet':
+    'Prerequisite not met: node {{node}} requires level {{level}}',
+  'skills.noAllocationsProvided': 'No allocations provided',
+  'skills.notEnoughSkillPoints': 'Not enough skill points',
+  'skills.nodeNotFoundWithId': 'Skill node not found: {{nodeId}}',
+  'skills.nodeExceedsMaxLevel': 'Node {{nodeId}} exceeds max level',
+  'skills.noPointsInvested': 'No skill points invested',
+  'tower.floorNotFound': 'Tower floor not found',
+  'tower.floorLocked': 'Tower floor locked',
+  'combat.noTeamComposed': 'Build a team in the editor before fighting',
+  'combat.cardsNotOwnedByPlayer':
+    'None of the provided cards belong to this player',
+  'tower.sweepRunsOutOfRange': 'Sweeping accepts 1 to {{max}} runs',
+  'tower.floorNotClearedYet': 'Tower floor not cleared yet — nothing to sweep',
+  'campaign.stageNotFound': 'Stage not found',
+  'campaign.stageLocked': 'Stage is locked',
+  'campaign.sweepRunsOutOfRange': 'Sweep runs must be 1-10',
+  'campaign.stageNotClearedYet': 'Stage not cleared yet — cannot sweep',
+  'raid.notFound': 'Raid not found',
+  'raid.bossAlreadyDefeated':
+    'The boss is already defeated, come back next week',
+  'raid.noAttacksLeftToday': 'No attacks left today, come back tomorrow',
+  'raid.invalidBossSpec': 'Invalid boss spec',
+  'raid.unavailable': 'Raid unavailable right now, try again later',
+  'raid.bossNotFoundSeedFirst': 'Raid boss not found — run the seed',
+  'raid.tierNotFound': 'Tier not found',
 }

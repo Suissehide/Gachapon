@@ -3,6 +3,7 @@ import { z } from 'zod/v4'
 
 import type { Prisma } from '../../../generated/client'
 import type { EquipmentSet, EquipmentSlot } from '../../../generated/enums'
+import { errorMessage } from '../../interfaces/http/fastify/errors/messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type { ITeamProgressionDomain } from '../../types/domain/team-progression/team-progression.domain.interface'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
@@ -466,7 +467,7 @@ export class CampaignDomain {
             where: { id: stageId },
           })
           if (!stage) {
-            throw Boom.notFound('Stage not found')
+            throw Boom.notFound(errorMessage('campaign.stageNotFound'))
           }
 
           // Debit PC (cost from GlobalConfig, default 5). Vérifie déjà
@@ -507,7 +508,7 @@ export class CampaignDomain {
             }
           }
           if (!isAlreadyCleared && !isCurrent && !isNewChapterFirst) {
-            throw Boom.forbidden('Stage is locked')
+            throw Boom.forbidden(errorMessage('campaign.stageLocked'))
           }
 
           const { userCardIds } = await this.#combatTeamTx.resolveIdsInTx(
@@ -516,9 +517,7 @@ export class CampaignDomain {
             CAMPAIGN_TEAM_KEY,
           )
           if (userCardIds.length === 0) {
-            throw Boom.badRequest(
-              "Composez une équipe dans l'éditeur avant de combattre",
-            )
+            throw Boom.badRequest(errorMessage('combat.noTeamComposed'))
           }
 
           const baseStats: CombatStatsBaseline = {
@@ -673,7 +672,7 @@ export class CampaignDomain {
     cardDrops: CardDropPayload[]
   }> {
     if (runs < 1 || runs > 10) {
-      throw Boom.badRequest('Sweep runs must be 1-10')
+      throw Boom.badRequest(errorMessage('campaign.sweepRunsOutOfRange'))
     }
 
     return retryOnSerialization(async () => {
@@ -699,7 +698,7 @@ export class CampaignDomain {
             where: { id: stageId },
           })
           if (!stage) {
-            throw Boom.notFound('Stage not found')
+            throw Boom.notFound(errorMessage('campaign.stageNotFound'))
           }
 
           // Debit PC par run (coût réduit par skill tree, minimum 1, depuis
@@ -721,7 +720,7 @@ export class CampaignDomain {
             where: { userId },
           })
           if (!progress) {
-            throw Boom.forbidden('Stage not cleared yet — cannot sweep')
+            throw Boom.forbidden(errorMessage('campaign.stageNotClearedYet'))
           }
 
           const isInActiveChapter = stage.chapter === progress.highestChapter
@@ -729,7 +728,7 @@ export class CampaignDomain {
             stage.chapter < progress.highestChapter ||
             (isInActiveChapter && stage.index <= progress.highestIndex)
           if (!isAlreadyCleared) {
-            throw Boom.forbidden('Stage not cleared yet — cannot sweep')
+            throw Boom.forbidden(errorMessage('campaign.stageNotClearedYet'))
           }
 
           const rawFarm = (stage.lootTable as unknown as LootTable).farm

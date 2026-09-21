@@ -181,4 +181,53 @@ export const FR_MESSAGES = {
     '@{{username}} a atteint sa limite de {{max}} équipes',
   'recruitment.onlyAdminOrOwnerCanHandleRequests':
     'Seuls ADMIN ou OWNER peuvent traiter les candidatures',
+
+  // --- combat / équipement / compétences / tour / campagne / raid ---
+  'combatTeam.unknownMode': "Mode d'équipe inconnu : {{key}}",
+  'combatTeam.sizeOutOfRange':
+    'L’équipe doit contenir de 1 à {{max}} cartes (reçu {{got}})',
+  'combatTeam.cardsMustBeDistinct':
+    'Les cartes de l’équipe doivent être distinctes',
+  'combatTeam.cardsNotOwned':
+    'Une ou plusieurs cartes n’appartiennent pas à cet utilisateur',
+  'combatTeam.campaignCannotInherit':
+    "L'équipe de campagne ne peut pas hériter d'un autre mode",
+  'combatPoints.notEnough':
+    'Points de combat insuffisants (besoin de {{need}}, tu en as {{have}})',
+  'equipment.userEquipmentNotFound': 'Équipement du joueur introuvable',
+  'equipment.catalogNotSeeded': 'Aucun catalogue d’équipement seedé',
+  'equipment.notFound': 'Équipement introuvable',
+  'equipment.alreadyMaxLevel': 'Équipement déjà au niveau maximum',
+  'equipment.cannotSalvageEquipped': 'Impossible de détruire un objet équipé',
+  'skills.noPointsAvailable': 'Aucun point de compétence disponible',
+  'skills.nodeNotFound': 'Nœud de compétence introuvable',
+  'skills.nodeAlreadyMaxLevel': 'Nœud déjà au niveau maximum',
+  'skills.prerequisiteNotMet':
+    'Prérequis non rempli : le nœud {{node}} exige le niveau {{level}}',
+  'skills.noAllocationsProvided': 'Aucune allocation fournie',
+  'skills.notEnoughSkillPoints': 'Points de compétence insuffisants',
+  'skills.nodeNotFoundWithId': 'Nœud de compétence introuvable : {{nodeId}}',
+  'skills.nodeExceedsMaxLevel': 'Le nœud {{nodeId}} dépasse le niveau maximum',
+  'skills.noPointsInvested': 'Aucun point de compétence investi',
+  'tower.floorNotFound': 'Étage de tour introuvable',
+  'tower.floorLocked': 'Étage de tour verrouillé',
+  'combat.noTeamComposed':
+    "Composez une équipe dans l'éditeur avant de combattre",
+  'combat.cardsNotOwnedByPlayer':
+    'Aucune des cartes fournies n’appartient à ce joueur',
+  'tower.sweepRunsOutOfRange': 'Le balayage accepte de 1 à {{max}} passages',
+  'tower.floorNotClearedYet':
+    'Étage de tour pas encore franchi — rien à balayer',
+  'campaign.stageNotFound': 'Étape introuvable',
+  'campaign.stageLocked': 'Étape verrouillée',
+  'campaign.sweepRunsOutOfRange': 'Le balayage doit être compris entre 1 et 10',
+  'campaign.stageNotClearedYet': 'Étape pas encore terminée — rien à balayer',
+  'raid.notFound': 'Raid introuvable',
+  'raid.bossAlreadyDefeated':
+    'Le boss est déjà vaincu, rendez-vous la semaine prochaine',
+  'raid.noAttacksLeftToday': "Plus d'attaque aujourd'hui, reviens demain",
+  'raid.invalidBossSpec': 'Spec de boss invalide',
+  'raid.unavailable': 'Raid indisponible pour le moment, réessaie plus tard',
+  'raid.bossNotFoundSeedFirst': 'Boss de raid introuvable — lancer le seed',
+  'raid.tierNotFound': 'Palier introuvable',
 } as const

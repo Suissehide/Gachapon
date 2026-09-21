@@ -3,6 +3,7 @@ import Boom from '@hapi/boom'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { TeamRepository } from '../../infra/orm/repositories/team.repository'
 import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
+import { errorMessage } from '../../interfaces/http/fastify/errors/messages'
 import type { RaidAttackEvent, WsManager } from '../../interfaces/ws/ws-manager'
 import type { Config } from '../../types/application/config'
 import type { IocContainer } from '../../types/application/ioc'
@@ -186,21 +187,17 @@ export class RaidDomain implements IRaidDomain {
             include: { boss: true },
           })
           if (!raid) {
-            throw Boom.notFound('Raid introuvable')
+            throw Boom.notFound(errorMessage('raid.notFound'))
           }
           if (raid.killedAt || raid.hp <= 0) {
-            throw Boom.conflict(
-              'Le boss est déjà vaincu, rendez-vous la semaine prochaine',
-            )
+            throw Boom.conflict(errorMessage('raid.bossAlreadyDefeated'))
           }
 
           const used = await tx.raidAttack.count({
             where: { userId, createdAt: { gte: utcDayStart(now) } },
           })
           if (used >= perDay) {
-            throw Boom.tooManyRequests(
-              "Plus d'attaque aujourd'hui, reviens demain",
-            )
+            throw Boom.tooManyRequests(errorMessage('raid.noAttacksLeftToday'))
           }
 
           const { userCardIds } = await this.#combatTeamTx.resolveIdsInTx(
@@ -209,9 +206,7 @@ export class RaidDomain implements IRaidDomain {
             RAID_TEAM_KEY,
           )
           if (userCardIds.length === 0) {
-            throw Boom.badRequest(
-              "Composez une équipe dans l'éditeur avant de combattre",
-            )
+            throw Boom.badRequest(errorMessage('combat.noTeamComposed'))
           }
           const teamUnits = await buildPlayerSimUnits(tx, {
             userId,
@@ -222,9 +217,7 @@ export class RaidDomain implements IRaidDomain {
             publicUrl: (key) => this.#storageClient.publicUrl(key),
           })
           if (teamUnits.length === 0) {
-            throw Boom.badRequest(
-              'Aucune des cartes fournies n’appartient à ce joueur',
-            )
+            throw Boom.badRequest(errorMessage('combat.cardsNotOwnedByPlayer'))
           }
 
           const spec = enemySpecSchema.parse(raid.boss.spec)
@@ -239,7 +232,7 @@ export class RaidDomain implements IRaidDomain {
               ),
           })
           if (!bossUnit) {
-            throw Boom.badImplementation('Spec de boss invalide')
+            throw Boom.badImplementation(errorMessage('raid.invalidBossSpec'))
           }
           bossUnit.hp = RAID_BOSS_SIM_HP
           bossUnit.name = raid.boss.name
@@ -456,11 +449,11 @@ export class RaidDomain implements IRaidDomain {
       userId,
     )
     if (!membership) {
-      throw Boom.forbidden('Tu ne fais pas partie de cette équipe')
+      throw Boom.forbidden(errorMessage('team.notMember'))
     }
     const team = await this.#teamRepository.findById(teamId)
     if (!team) {
-      throw Boom.notFound('Équipe introuvable')
+      throw Boom.notFound(errorMessage('team.notFound'))
     }
     return team
   }
@@ -488,9 +481,7 @@ export class RaidDomain implements IRaidDomain {
       this.#logger.error(
         `Raid : boss manquant pour l'élément ${element} (semaine ${weekKey}) — vérifier la migration seed_raid_content`,
       )
-      throw Boom.serverUnavailable(
-        'Raid indisponible pour le moment, réessaie plus tard',
-      )
+      throw Boom.serverUnavailable(errorMessage('raid.unavailable'))
     }
     const cfg = await this.#configService.getMany('raid.baseHpPerMember')
     const memberCount = team.members.length

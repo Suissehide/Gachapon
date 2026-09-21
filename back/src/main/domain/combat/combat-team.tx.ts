@@ -1,5 +1,6 @@
 import Boom from '@hapi/boom'
 
+import { errorMessage } from '../../interfaces/http/fastify/errors/messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import type { Substat } from '../equipment/equipment-progression'
@@ -13,8 +14,8 @@ import { retryOnSerialization } from '../shared/retry-serialization'
 import type { CombatStatsBaseline } from './combat-stats.domain'
 import {
   CAMPAIGN_TEAM_KEY,
-  type CombatTeamKey,
   COMBAT_TEAM_KEYS,
+  type CombatTeamKey,
 } from './combat-team-keys'
 import { computeEquippedCardStats } from './equipped-card-stats'
 import { getPassive } from './passives'
@@ -62,7 +63,7 @@ export class CombatTeamTx {
     key: CombatTeamKey,
   ): Promise<ResolvedTeamIds> {
     if (!COMBAT_TEAM_KEYS.includes(key)) {
-      throw Boom.badRequest(`Mode d'équipe inconnu : ${key}`)
+      throw Boom.badRequest(errorMessage('combatTeam.unknownMode', { key }))
     }
     const rows = await tx.userCombatTeam.findMany({
       where: { userId, key: { in: [key, CAMPAIGN_TEAM_KEY] } },
@@ -149,16 +150,19 @@ export class CombatTeamTx {
     userCardIds: string[],
   ): Promise<{ team: TeamUnit[]; inherited: boolean }> {
     if (!COMBAT_TEAM_KEYS.includes(key)) {
-      throw Boom.badRequest(`Mode d'équipe inconnu : ${key}`)
+      throw Boom.badRequest(errorMessage('combatTeam.unknownMode', { key }))
     }
     if (userCardIds.length < 1 || userCardIds.length > MAX_TEAM_SIZE) {
       throw Boom.badRequest(
-        `Team must contain 1 to ${MAX_TEAM_SIZE} cards (got ${userCardIds.length})`,
+        errorMessage('combatTeam.sizeOutOfRange', {
+          max: MAX_TEAM_SIZE,
+          got: userCardIds.length,
+        }),
       )
     }
     const unique = new Set(userCardIds)
     if (unique.size !== userCardIds.length) {
-      throw Boom.badRequest('Team cards must be distinct')
+      throw Boom.badRequest(errorMessage('combatTeam.cardsMustBeDistinct'))
     }
 
     // Lue UNE fois, avant les tentatives de la transaction sérialisable — un
@@ -173,7 +177,7 @@ export class CombatTeamTx {
             select: { id: true },
           })
           if (owned.length !== userCardIds.length) {
-            throw Boom.badRequest('One or more cards are not owned by the user')
+            throw Boom.badRequest(errorMessage('combatTeam.cardsNotOwned'))
           }
 
           await tx.userCombatTeam.upsert({
@@ -203,12 +207,10 @@ export class CombatTeamTx {
    */
   async clearForKey(userId: string, key: CombatTeamKey): Promise<void> {
     if (!COMBAT_TEAM_KEYS.includes(key)) {
-      throw Boom.badRequest(`Mode d'équipe inconnu : ${key}`)
+      throw Boom.badRequest(errorMessage('combatTeam.unknownMode', { key }))
     }
     if (key === CAMPAIGN_TEAM_KEY) {
-      throw Boom.badRequest(
-        "L'équipe de campagne ne peut pas hériter d'un autre mode",
-      )
+      throw Boom.badRequest(errorMessage('combatTeam.campaignCannotInherit'))
     }
     await this.#postgresOrm.prisma.userCombatTeam.deleteMany({
       where: { userId, key },

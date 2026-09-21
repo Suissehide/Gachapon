@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
+import { errorMessage } from '../../interfaces/http/fastify/errors/messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type {
   ISkillResetDomain,
@@ -32,15 +33,15 @@ export class SkillResetDomain implements ISkillResetDomain {
     ])
 
     if (!user) {
-      throw Boom.notFound('User not found')
+      throw Boom.notFound(errorMessage('user.notFound'))
     }
     if (totalInvested === 0) {
-      throw Boom.badRequest('No skill points invested')
+      throw Boom.badRequest(errorMessage('skills.noPointsInvested'))
     }
 
     const dustCost = totalInvested * config.resetCostPerPoint
     if (user.dust < dustCost) {
-      throw Boom.paymentRequired('Not enough dust')
+      throw Boom.paymentRequired(errorMessage('economy.notEnoughDust'))
     }
 
     const result = await this.#postgresOrm.executeWithTransactionClient(

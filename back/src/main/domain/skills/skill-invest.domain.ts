@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
+import { errorMessage } from '../../interfaces/http/fastify/errors/messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type {
   InvestResult,
@@ -27,16 +28,16 @@ export class SkillInvestDomain implements ISkillInvestDomain {
   async invest(userId: string, nodeId: string): Promise<InvestResult> {
     const user = await this.#userRepository.findById(userId)
     if (!user) {
-      throw Boom.notFound('User not found')
+      throw Boom.notFound(errorMessage('user.notFound'))
     }
     if (user.skillPoints < 1) {
-      throw Boom.paymentRequired('No skill points available')
+      throw Boom.paymentRequired(errorMessage('skills.noPointsAvailable'))
     }
 
     const tree = await this.#skillTreeRepository.getFullTree()
     const node = tree.flatMap((b) => b.nodes).find((n) => n.id === nodeId)
     if (!node) {
-      throw Boom.notFound('Skill node not found')
+      throw Boom.notFound(errorMessage('skills.nodeNotFound'))
     }
 
     const userSkills = await this.#skillTreeRepository.getUserSkills(userId)
@@ -46,7 +47,7 @@ export class SkillInvestDomain implements ISkillInvestDomain {
 
     const currentLevel = skillMap[nodeId] ?? 0
     if (currentLevel >= node.maxLevel) {
-      throw Boom.conflict('Node already at max level')
+      throw Boom.conflict(errorMessage('skills.nodeAlreadyMaxLevel'))
     }
 
     // Verify prerequisites: all parent nodes must have >= minLevel
@@ -54,7 +55,10 @@ export class SkillInvestDomain implements ISkillInvestDomain {
       const parentLevel = skillMap[edge.fromNodeId] ?? 0
       if (parentLevel < edge.minLevel) {
         throw Boom.forbidden(
-          `Prerequisite not met: node ${edge.fromNodeId} requires level ${edge.minLevel}`,
+          errorMessage('skills.prerequisiteNotMet', {
+            node: edge.fromNodeId,
+            level: edge.minLevel,
+          }),
         )
       }
     }
