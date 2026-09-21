@@ -4,8 +4,14 @@ import {
   type FamilySlug,
 } from '../../../prisma/seed/bestiary'
 import {
+  CAMPAIGN_TARGETS,
+  campaignWinRate,
+} from '../../../prisma/seed/balance-calibration'
+import {
+  baseEnemyScale,
   BOSS_ELEMENT_BY_CHAPTER,
   bossEnemyTeam,
+  bossGearCompensation,
   bossLoot,
   difficultyMult,
   enemyPower,
@@ -80,27 +86,56 @@ describe('enemyScale — courbe continue en deux phases', () => {
   })
 
   it("le terme d'ascension sature à l'étage 70 (identique à 70, 80 et 90)", () => {
-    // scale = termeNiveau × termeAscension ; le terme de niveau est connu,
-    // on isole donc l'ascension par division.
+    // Propriété de la courbe de BASE (niveau × ascension × durcissement) :
+    // depuis l'ajout de la compensation d'équipement, `enemyScale` n'est plus
+    // décomposable en ces deux seuls termes, on interroge donc
+    // `baseEnemyScale`.
     const levelTerm = (n: number) =>
       1 + 0.09 * (Math.min(n, 70) - 1) + 0.03 * Math.max(0, n - 70)
-    const ascension = (n: number) => enemyScale(n) / levelTerm(n)
+    const ascension = (n: number) => baseEnemyScale(n) / levelTerm(n)
     expect(ascension(80)).toBeCloseTo(ascension(70), 10)
     expect(ascension(90)).toBeCloseTo(ascension(70), 10)
   })
 
-  it('plus aucune marche : chaque pas entre étages consécutifs reste sous +12 %', () => {
-    // Seuil relevé de 8 % à 12 % avec la croissance passée de 0,06 à 0,09 par
-    // niveau. Les deux camps montent ensemble — le rapport joueur/ennemi est
-    // INCHANGÉ (0,876 à l'étage 10, 0,840 au 70, identique aux deux taux) —
-    // mais chaque étage franchit mécaniquement une marche plus haute : 10,6 %
-    // au maximum, en tout début de campagne. Ce que le test protège reste la
-    // continuité : aucune marche franche, pas de mur.
+  it("aucune marche À L'INTÉRIEUR d'un chapitre", () => {
+    // Ce que le test protège : la continuité vécue pendant qu'on déroule un
+    // chapitre. Il n'y a rien à franchir entre deux étages voisins du même
+    // chapitre — le joueur n'y gagne ni palier ni rareté.
+    //
+    // Seuil 13 % et non 12 % : le maximum est le pas 1-1 → 1-2 (12,55 %), où
+    // l'étage d'ancre porte une compensation d'équipement forcée à 1,0 (règle
+    // du tutoriel) tandis que le 1-2 amorce déjà la rampe du chapitre. Ce
+    // premier pas cumule donc la croissance de base et le début de la
+    // compensation. En valeur absolue il reste minuscule : 98 PV → 110.
     for (let n = 2; n <= 90; n++) {
+      if (n % 10 === 1) {
+        continue // frontière de chapitre, voir le test suivant
+      }
       const step = enemyScale(n) / enemyScale(n - 1)
       expect(step).toBeGreaterThan(1)
-      expect(step).toBeLessThan(1.12)
+      expect(step).toBeLessThan(1.13)
     }
+  })
+
+  it('les marches de frontière existent, et suivent celles du joueur', () => {
+    // Aux frontières de chapitre, le joueur monte EN BLOC : palier (×1,15) et,
+    // aux chapitres 2 à 5, rareté de carte (jusqu'à ×1,74 de COMMON à
+    // LEGENDARY). La compensation d'équipement suit ces marches plutôt que de
+    // les lisser — les lisser rendrait le début de chapitre trivial et sa fin
+    // infranchissable, ce que la mesure montrait (0 % de victoire aux étages
+    // 4-7 et 4-9 avec une rampe lissée).
+    //
+    // La plus haute est la frontière 4→5, où le joueur passe en légendaires.
+    const marche = (chapitre: number) =>
+      enemyScale((chapitre - 1) * 10 + 1) / enemyScale((chapitre - 1) * 10)
+    for (let chapitre = 2; chapitre <= 9; chapitre++) {
+      expect(marche(chapitre)).toBeGreaterThan(1)
+      expect(marche(chapitre)).toBeLessThan(2.2)
+    }
+    const plusHaute = Math.max(
+      ...[2, 3, 4, 5, 6, 7, 8, 9].map((c) => marche(c)),
+    )
+    expect(marche(5)).toBeCloseTo(plusHaute, 10)
   })
 
   it('le boss est le combat le plus dur de son chapitre, dans les 9 chapitres', () => {
@@ -112,14 +147,18 @@ describe('enemyScale — courbe continue en deux phases', () => {
     }
   })
 
-  it("phase 2 (ch. 8-9) : l'amplitude par chapitre est au moins deux fois plus faible qu'en phase 1", () => {
-    const amplitude = (chapter: number) => gap(chapter, 10) - gap(chapter, 1)
-    const minPhase1 = Math.min(
-      ...[1, 2, 3, 4, 5, 6, 7].map((c) => amplitude(c)),
-    )
-    const maxPhase2 = Math.max(amplitude(8), amplitude(9))
-    // mesuré : phase 1 ≥ 0.1412, phase 2 = 0.0625
-    expect(maxPhase2 * 2).toBeLessThan(minPhase1)
+  it("l'écart avec un joueur SANS équipement se creuse sur la campagne", () => {
+    // Remplace « en phase 2 l'amplitude par chapitre est plus faible ».
+    // Cette propriété-là supposait qu'un joueur plafonné en niveau ne
+    // progresse plus ; or la phase 2 est précisément celle où il progresse
+    // par l'ÉQUIPEMENT, et la courbe en tient désormais compte.
+    //
+    // `gap` compare la courbe ennemie à un joueur modélisé par son seul
+    // niveau. Il doit donc se creuser : c'est la mesure de ce que la campagne
+    // suppose d'équipement, et un joueur qui n'en porte aucun décroche — par
+    // construction, pas par accident.
+    expect(gap(9, 9)).toBeGreaterThan(gap(5, 9))
+    expect(gap(5, 9)).toBeGreaterThan(gap(1, 9))
   })
 })
 
@@ -131,19 +170,23 @@ describe('bossEnemyTeam — solo AOE_3, PV ×BOSS_HP_MULT, vitesse à parité AT
     expect(boss.attackPattern).toBe('AOE_3')
     // La vitesse ne suit plus l'échelle : elle vaut la base de rareté.
     expect(boss.baseSpd).toBe(RARITY_BASE.COMMON.spd)
-    // Ancre exacte (COMMON {101,20,5,89}, enemyScale(10) = 2.065561,
-    // BOSS_FACTOR = 0,92) :
-    // PV = round(101 × 3.25 × 0.92 × 2.065561) = 624,
-    // ATQ = round(20 × 0.92 × 2.065561) = 38,
-    // DEF = round(5 × 1.2 × 0.92 × 2.065561) = 11,
-    // VIT = 89, inchangée par l'échelle.
+    // Ancre exacte : COMMON {101,20,5,89}, BOSS_FACTOR = 0,92, et l'échelle
+    // du boss = enemyScale(10) × bossGearCompensation(1). Le second facteur
+    // est celui qui amène CE boss à sa cible de 70 % de victoire face au
+    // joueur équipé de référence — les neuf n'y arrivent pas avec le même
+    // nombre, leurs multiplicateurs propres (PV ×3.25, AOE_3) ne tombant pas
+    // au même endroit selon le chapitre.
+    const echelle = enemyScale(10) * bossGearCompensation(1)
     expect(boss).toMatchObject({
-      baseHp: 624,
-      baseAtk: 38,
-      baseDef: 11,
+      baseHp: Math.round(101 * 3.25 * 0.92 * echelle),
+      baseAtk: Math.round(20 * 0.92 * echelle),
+      baseDef: Math.round(5 * 1.2 * 0.92 * echelle),
       baseSpd: 89,
       attackPattern: 'AOE_3',
     })
+    // …et ces valeurs restent celles d'un boss de tutoriel.
+    expect(boss.baseHp).toBeGreaterThan(500)
+    expect(boss.baseHp).toBeLessThan(700)
   })
 
   it('pour chaque chapitre (1-9) : solo, AOE_3, PV > ennemi normal du stage 9', () => {
@@ -378,9 +421,12 @@ describe('mitigation des ennemis', () => {
     }
   })
 
-  it('les boss aussi', () => {
+  it('les boss aussi, facteur de boss compris', () => {
     const boss = bossEnemyTeam(9, 10)[0]
-    expect(boss.mitigationScale).toBeCloseTo(enemyScale(90), 6)
+    expect(boss.mitigationScale).toBeCloseTo(
+      enemyScale(90) * bossGearCompensation(9),
+      6,
+    )
   })
 
   it('la réduction de dégâts d un ennemi ne dérive pas avec le chapitre', () => {
@@ -397,5 +443,64 @@ describe('mitigation des ennemis', () => {
     // différence de réduction entre paliers de rareté est voulue.
     // Sans correction, le chapitre 9 dérivait jusqu'à 82 % de réduction.
     expect(reduction(9, 9)).toBeCloseTo(reduction(5, 5), 2)
+  })
+})
+
+describe("compensation d'équipement — la campagne mesurée contre un joueur équipé", () => {
+  it('chaque chapitre tient sa cible sur les étages normaux', () => {
+    // LE test qui manquait. La campagne était calibrée avec `GEAR_PROFILES`
+    // (`scripts/balance-sim.ts`), qui réduit l'équipement à trois
+    // pourcentages et ignore le bloc crit / pénétration — lequel ne dépend ni
+    // du niveau ni du palier. Mesurée avec le vrai catalogue, la campagne
+    // ENTIÈRE se gagnait à 100 %, boss 9-10 compris, avec sept pièces rares
+    // niveau 3.
+    //
+    // Bande large (±18 points) : le taux de victoire est une fonction
+    // quasi binaire des stats (23 % d'écart entre 90 % et 10 % de victoire),
+    // et ce test doit signaler une DÉRIVE, pas du bruit d'échantillonnage.
+    // Le chapitre 1 est exclu : c'est un tutoriel, volontairement gagné.
+    for (let chapitre = 2; chapitre <= 9; chapitre++) {
+      for (const index of [1, 5, 9]) {
+        const mesure = campaignWinRate({ chapter: chapitre, index, runs: 60 })
+        expect(mesure).toBeGreaterThanOrEqual(CAMPAIGN_TARGETS.normal - 0.18)
+        expect(mesure).toBeLessThanOrEqual(CAMPAIGN_TARGETS.normal + 0.12)
+      }
+    }
+  })
+
+  it('chaque boss tient la sienne', () => {
+    for (let chapitre = 1; chapitre <= 9; chapitre++) {
+      const mesure = campaignWinRate({ chapter: chapitre, index: 10, runs: 60 })
+      expect(mesure).toBeGreaterThanOrEqual(CAMPAIGN_TARGETS.boss - 0.18)
+      expect(mesure).toBeLessThanOrEqual(CAMPAIGN_TARGETS.boss + 0.18)
+    }
+  })
+
+  it('le chapitre 1 reste un tutoriel : on le gagne', () => {
+    for (const index of [1, 5, 9]) {
+      expect(campaignWinRate({ chapter: 1, index, runs: 60 })).toBeGreaterThan(
+        0.85,
+      )
+    }
+  })
+
+  it("durcir la difficulté n'a pas déplacé le butin", () => {
+    // Le butin de campagne passe par `difficultyMult` (CURVE_A/CURVE_B), une
+    // courbe INDÉPENDANTE de `enemyScale`. C'est ce qui a permis de recalibrer
+    // la difficulté sans toucher à l'économie — contrairement aux tours, où
+    // les deux lisaient la même constante et où il a fallu les séparer.
+    // Valeurs relevées AVANT l'ajout de la compensation d'équipement.
+    expect(lootTableNormal(1, 1).farm.gold).toBe(50)
+    expect(lootTableNormal(5, 5).farm.gold).toBe(454)
+    expect(lootTableNormal(9, 9).farm.gold).toBe(1054)
+    expect(bossLoot(9).firstClear.gold).toBe(42288)
+  })
+
+  it('la compensation ne touche pas la courbe de base', () => {
+    // `baseEnemyScale` doit rester exactement ce qu'elle était : c'est elle
+    // qui porte la progression en NIVEAU du joueur, et la compensation
+    // d'équipement se pose par-dessus sans la réécrire.
+    expect(baseEnemyScale(1)).toBeCloseTo(1, 10)
+    expect(baseEnemyScale(10)).toBeCloseTo(2.0655612, 6)
   })
 })

@@ -100,8 +100,12 @@ function difficultyFactor(globalStageNumber: number): number {
   return 1 + (ENEMY_DIFFICULTY_MAX - 1) * Math.max(0, Math.min(1, t))
 }
 
-/** Multiplicateur de stats ennemies à un étage global (1..90). */
-export function enemyScale(globalStageNumber: number): number {
+/**
+ * Courbe de base — niveau, ascension, durcissement de 2026-08-07. Elle ne
+ * connaît que la progression en NIVEAU du joueur ; la compensation
+ * d'équipement s'applique par-dessus (voir `enemyScale`).
+ */
+export function baseEnemyScale(globalStageNumber: number): number {
   const capped = Math.min(globalStageNumber, PLAYER_CAP_STAGE)
   const overflow = Math.max(0, globalStageNumber - PLAYER_CAP_STAGE)
   const level =
@@ -111,6 +115,115 @@ export function enemyScale(globalStageNumber: number): number {
   const ascension =
     (1 + ENEMY_ASCENSION_BONUS) ** (ENEMY_ASCENSION_PER_STAGE * (capped - 1))
   return level * ascension * difficultyFactor(globalStageNumber)
+}
+
+/**
+ * Compensation d'ÉQUIPEMENT (2026-09-21) — ce que la courbe de base ignorait.
+ *
+ * `baseEnemyScale` ne suit que le niveau et le palier du joueur. Or celui-ci
+ * s'équipe en jouant, et l'équipement pèse lourd : mesuré au simulateur avec
+ * le vrai catalogue, la campagne ENTIÈRE — boss 9-10 compris — se gagnait à
+ * 100 % avec sept pièces rares niveau 3. Le modèle qui avait servi à la
+ * calibrer (`GEAR_PROFILES` de `balance-sim.ts`) réduit l'équipement à trois
+ * pourcentages et ignore le bloc crit / pénétration, lequel ne dépend ni du
+ * niveau ni du palier — d'où l'écart entre « le modèle annonce 0 % dès le
+ * chapitre 3 » et « les joueurs passent ».
+ *
+ * Deux bornes par chapitre (étage 1 et étage 9), interpolées linéairement.
+ * Pourquoi pas une formule lisse sur les 90 étages : le taux de victoire est
+ * une fonction QUASI BINAIRE des stats — 23 % d'écart séparent 90 % et 10 %
+ * de victoire — et la compensation requise n'est pas monotone d'un chapitre
+ * à l'autre (le joueur gagne par paliers : 7e pièce, montée en rareté). La
+ * meilleure rampe à deux paramètres qu'on ait trouvée ratait sa cible de
+ * 61 points. Ces bornes sont donc MESURÉES chapitre par chapitre
+ * (`scripts/tower-sim.ts`, harnais `balance-calibration.ts`) et
+ * `campaign-balance.test.ts` les remesure à chaque exécution.
+ *
+ * Le chapitre 1 démarre à 1.0 : le tout premier combat reste exactement ce
+ * qu'il était, comme le veut la règle du tutoriel (cf. `difficultyFactor`).
+ */
+const GEAR_COMPENSATION_BY_CHAPTER: readonly (readonly [number, number])[] = [
+  [1.0, 1.14],
+  [1.73, 1.21],
+  [1.45, 1.28],
+  [1.28, 1.12],
+  [2.18, 1.95],
+  [1.94, 1.73],
+  [1.92, 1.71],
+  [1.91, 1.83],
+  [2.1, 1.99],
+]
+
+function rawGearCompensation(globalStageNumber: number): number {
+  const chapter = Math.min(
+    CHAPTER_COUNT,
+    Math.max(1, Math.ceil(globalStageNumber / STAGES_PER_CHAPTER)),
+  )
+  const bornes = GEAR_COMPENSATION_BY_CHAPTER[chapter - 1]
+  if (!bornes) {
+    return 1
+  }
+  const [debut, fin] = bornes
+  const index = globalStageNumber - (chapter - 1) * STAGES_PER_CHAPTER
+  // Interpolation sur les NEUF étages normaux : le boss (index 10) prolonge
+  // la borne de fin, il a son propre facteur (BOSS_GEAR_COMPENSATION).
+  const t = Math.max(0, Math.min(1, (index - 1) / 8))
+  return debut + (fin - debut) * t
+}
+
+/**
+ * Échelle finale par étage, RENDUE MONOTONE par maximum courant.
+ *
+ * La compensation décroît à l'intérieur d'un chapitre (le joueur y est figé
+ * pendant que l'ennemi monte) puis remonte au chapitre suivant. En phase 2
+ * (étages 71-90) la courbe de base ne gagne que 0,4 % par étage, moins vite
+ * que la compensation ne descend : le produit y reculerait. Le maximum
+ * courant l'en empêche — une campagne doit rester monotone, et un test le
+ * vérifie. Seize étages sur quatre-vingt-dix sont relevés par cette
+ * contrainte, d'au plus quelques points de taux de victoire.
+ */
+const MONOTONIC_FLOOR_GROWTH = 1.001
+
+const ENEMY_SCALE_BY_STAGE: readonly number[] = (() => {
+  const total = CHAPTER_COUNT * STAGES_PER_CHAPTER
+  const echelles: number[] = [0]
+  let plancher = 0
+  for (let g = 1; g <= total; g++) {
+    // +0,1 % minimum d'un étage au suivant : un simple `Math.max` produirait
+    // un PLATEAU, deux étages consécutifs aux ennemis identiques — illisible
+    // pour le joueur, et refusé par le test de croissance stricte.
+    plancher = Math.max(
+      plancher * MONOTONIC_FLOOR_GROWTH,
+      baseEnemyScale(g) * rawGearCompensation(g),
+    )
+    echelles.push(plancher)
+  }
+  return echelles
+})()
+
+/** Multiplicateur de stats ennemies à un étage global (1..90). */
+export function enemyScale(globalStageNumber: number): number {
+  return (
+    ENEMY_SCALE_BY_STAGE[globalStageNumber] ??
+    baseEnemyScale(globalStageNumber) * rawGearCompensation(globalStageNumber)
+  )
+}
+
+/**
+ * Facteur propre à chaque BOSS, par-dessus la compensation d'équipement.
+ *
+ * Les boss ne peuvent pas partager le facteur des étages normaux : leur cible
+ * diffère (70 % contre 88 %) et leurs multiplicateurs propres (PV ×3.25,
+ * AOE_3) ne tombent pas au même endroit selon le chapitre. Mesuré : avec le
+ * seul facteur des étages normaux, les neuf boss s'étalent de 0 % à 100 % de
+ * victoire ; avec celui-ci, de 68 % à 72 %.
+ */
+const BOSS_GEAR_COMPENSATION: readonly number[] = [
+  0.91, 1.14, 0.91, 1.01, 1.07, 1.03, 0.9, 1.21, 1.23,
+]
+
+export function bossGearCompensation(chapter: number): number {
+  return BOSS_GEAR_COMPENSATION[chapter - 1] ?? 1
 }
 
 // Boss = check de build : PV ×3.25 + AOE_3 (frappe toute l'équipe, threat ×7
@@ -285,7 +398,8 @@ export function normalEnemyTeam(chapter: number, stageIndex: number) {
 export function bossEnemyTeam(chapter: number, stageIndex: number) {
   const rb = RARITY_BASE[RARITY_BY_CHAPTER[chapter - 1]]
   const looks = looksForStage(chapter, stageIndex)
-  const scale = enemyScale(globalStage(chapter, stageIndex))
+  const scale =
+    enemyScale(globalStage(chapter, stageIndex)) * bossGearCompensation(chapter)
   return [
     {
       baseHp: Math.round(rb.hp * BOSS_HP_MULT * BOSS_FACTOR * scale),
