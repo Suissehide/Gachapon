@@ -1,5 +1,6 @@
 import Boom from '@hapi/boom'
 
+import { errorMessage } from '../../../interfaces/http/fastify/errors/messages'
 import type { IocContainer } from '../../../types/application/ioc'
 import type {
   CardVariant,
@@ -138,7 +139,7 @@ export class UserCardRepository implements IUserCardRepository {
       where: { userId_cardId_variant: { userId, cardId, variant } },
     })
     if (!uc || uc.quantity < quantity) {
-      throw Boom.badRequest('You do not own this card')
+      throw Boom.badRequest(errorMessage('collection.cardNotOwned'))
     }
     if (uc.quantity - quantity <= 0) {
       await tx.userCard.delete({

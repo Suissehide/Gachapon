@@ -1,5 +1,6 @@
 import Boom from '@hapi/boom'
 
+import { errorMessage } from '../../interfaces/http/fastify/errors/messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type { IDuelDomain } from '../../types/domain/wagers/wagers.domain.interface'
 import {
@@ -35,19 +36,28 @@ export class CardAscensionTx {
             where: { id: userCardId },
           })
           if (!userCard || userCard.userId !== userId) {
-            throw Boom.notFound('UserCard not found')
+            throw Boom.notFound(errorMessage('collection.userCardNotFound'))
           }
           if (userCard.palier >= MAX_PALIER) {
-            throw Boom.badRequest(`Card already at max palier (${MAX_PALIER})`)
+            throw Boom.badRequest(
+              errorMessage('cardAscension.maxPalierReached', {
+                max: MAX_PALIER,
+              }),
+            )
           }
           if (!isAtTopOfPalier(userCard.level, userCard.palier)) {
             throw Boom.badRequest(
-              `Card must be at top of palier (level ${10 * userCard.palier}) to ascend — currently level ${userCard.level}`,
+              errorMessage('cardAscension.notTopOfPalier', {
+                requiredLevel: 10 * userCard.palier,
+                currentLevel: userCard.level,
+              }),
             )
           }
           if (userCard.quantity < 2) {
             throw Boom.badRequest(
-              `Need at least 1 duplicate (quantity > 1) to ascend — current quantity is ${userCard.quantity}`,
+              errorMessage('cardAscension.needDuplicate', {
+                quantity: userCard.quantity,
+              }),
             )
           }
           await this.#duelDomain.assertCardNotEngagedInTx(

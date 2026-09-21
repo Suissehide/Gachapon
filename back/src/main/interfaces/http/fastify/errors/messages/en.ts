@@ -37,4 +37,29 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'profile.cardNotInCollection': 'Card not in your collection',
   'admin.cannotChangeOwnRole': 'Cannot change your own role',
   'admin.cannotSuspendSelf': 'Cannot suspend your own account',
+
+  // --- collection / cards ---
+  'collection.cardNotFound': 'Card not found',
+  'collection.cardNotOwned': 'You do not own this card',
+  'collection.userCardNotFound': 'UserCard not found',
+  'cardAscension.maxPalierReached': 'Card already at max palier ({{max}})',
+  'cardAscension.notTopOfPalier':
+    'Card must be at top of palier (level {{requiredLevel}}) to ascend — currently level {{currentLevel}}',
+  'cardAscension.needDuplicate':
+    'Need at least 1 duplicate (quantity > 1) to ascend — current quantity is {{quantity}}',
+  'cardDust.amountTooLow': 'amount must be at least 1',
+  'cardDust.wouldLeaveZeroCopies':
+    'Cannot convert {{amount}} — would leave 0 copies (have {{quantity}})',
+  'cardLeveling.targetBelowCurrent':
+    'targetLevel ({{target}}) must be greater than current level ({{current}})',
+  'cardLeveling.targetExceedsPalierCap':
+    'targetLevel ({{target}}) exceeds palier cap ({{cap}}) — ascend the card to unlock the next palier',
+  'cardLeveling.notEnoughGold':
+    'Not enough gold (need {{need}}, have {{have}})',
+  'cardLeveling.notEnoughDust':
+    'Not enough dust (need {{need}}, have {{have}})',
+  'media.imageMustBeJpegPngWebp': 'Image must be jpeg, png or webp',
+  'media.imageTooLarge': 'Image too large (max 5 MB)',
+  'cards.imageOrUrlRequired': 'Either an image file or imageUrl is required',
+  'cards.noImageProvided': 'No image provided',
 }

@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import type { CardRarity } from '../../../../../types/domain/gacha/gacha.types'
+import { errorMessage } from '../../errors/messages'
 import {
   collectionCardIdParamSchema,
   collectionCardsQuerySchema,
@@ -66,7 +67,7 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request) => {
       const card = await cardRepository.findById(request.params.id)
       if (!card) {
-        throw Boom.notFound('Card not found')
+        throw Boom.notFound(errorMessage('collection.cardNotFound'))
       }
       return { ...card, imageUrl: resolveUrl(card.imageUrl) }
     },
@@ -81,7 +82,7 @@ export const collectionRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request) => {
       const user = await userRepository.findById(request.params.id)
       if (!user) {
-        throw Boom.notFound('User not found')
+        throw Boom.notFound(errorMessage('user.notFound'))
       }
 
       const userCards = await userCardRepository.findByUser(request.params.id)

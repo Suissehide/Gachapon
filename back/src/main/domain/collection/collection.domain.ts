@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
+import { errorMessage } from '../../interfaces/http/fastify/errors/messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type {
   ICollectionDomain,
@@ -9,6 +10,7 @@ import type {
   RecycleResult,
 } from '../../types/domain/collection/collection.domain.interface'
 import type { CardRarity } from '../../types/domain/gacha/gacha.types'
+import type { IDuelDomain } from '../../types/domain/wagers/wagers.domain.interface'
 import type {
   ConfigKey,
   ConfigServiceInterface,
@@ -16,7 +18,6 @@ import type {
 import type { ICardRepository } from '../../types/infra/orm/repositories/card.repository.interface'
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
-import type { IDuelDomain } from '../../types/domain/wagers/wagers.domain.interface'
 import { retryOnSerialization } from '../shared/retry-serialization'
 
 const RARITY_ORDER: CardRarity[] = [
@@ -87,7 +88,7 @@ export class CollectionDomain implements ICollectionDomain {
 
     const card = await this.#cardRepository.findById(cardId)
     if (!card) {
-      throw Boom.notFound('Card not found')
+      throw Boom.notFound(errorMessage('collection.cardNotFound'))
     }
 
     const dustKey =
@@ -111,7 +112,7 @@ export class CollectionDomain implements ICollectionDomain {
             where: { userId_cardId_variant: { userId, cardId, variant } },
           })
           if (!uc || uc.quantity < quantity) {
-            throw Boom.badRequest('You do not own this card')
+            throw Boom.badRequest(errorMessage('collection.cardNotOwned'))
           }
 
           await this.#duelDomain.assertCardNotEngagedInTx(
