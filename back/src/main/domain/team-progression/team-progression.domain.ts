@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
+import { errorMessage } from '../../interfaces/http/fastify/errors/messages'
 import type {
   TeamLevelUpEvent,
   WsManager,
@@ -287,7 +288,7 @@ export class TeamProgressionDomain implements ITeamProgressionDomain {
             // `TeamMemberWeekly` pointe vers `User` et laisserait passer un
             // étranger, qui referait surface bien plus tard dans la table
             // des contributions de l'équipe.
-            throw Boom.forbidden("Ce joueur n'appartient pas à cette équipe.")
+            throw Boom.forbidden(errorMessage('teamProgression.notMember'))
           }
 
           const memberWeekPoints =
@@ -405,7 +406,7 @@ export class TeamProgressionDomain implements ITeamProgressionDomain {
       teamId,
       userId,
       ['OWNER', 'ADMIN'],
-      'Seuls le chef et les officiers peuvent investir les points.',
+      errorMessage('teamProgression.onlyLeaderAndOfficersCanSpend'),
     )
     const cfg = await this.#configService.getMany(...PERK_CFG_KEYS)
     const maxRank = cfg[`teamPerk.${key}.maxRank`]
@@ -421,7 +422,7 @@ export class TeamProgressionDomain implements ITeamProgressionDomain {
           const current =
             await this.#teamProgressionRepository.findProgressInTx(tx, teamId)
           if (current === null) {
-            throw Boom.notFound('Équipe introuvable.')
+            throw Boom.notFound(errorMessage('team.notFound'))
           }
           const rows = await this.#teamProgressionRepository.listPerksInTx(
             tx,
@@ -430,14 +431,20 @@ export class TeamProgressionDomain implements ITeamProgressionDomain {
           const rank = rows.find((row) => row.key === key)?.rank ?? 0
 
           if (current.perkPoints <= 0) {
-            throw Boom.conflict('Aucun point de bonus disponible.')
+            throw Boom.conflict(
+              errorMessage('teamProgression.noPerkPointsAvailable'),
+            )
           }
           if (rank >= maxRank) {
-            throw Boom.conflict('Ce bonus est déjà au rang maximum.')
+            throw Boom.conflict(
+              errorMessage('teamProgression.perkAlreadyMaxRank'),
+            )
           }
           if (current.level < unlockLevel) {
             throw Boom.conflict(
-              `Ce bonus se débloque au niveau ${unlockLevel}.`,
+              errorMessage('teamProgression.perkLocked', {
+                level: unlockLevel,
+              }),
             )
           }
 
@@ -480,7 +487,7 @@ export class TeamProgressionDomain implements ITeamProgressionDomain {
       teamId,
       userId,
       ['OWNER'],
-      'Seul le chef peut réinitialiser les bonus.',
+      errorMessage('teamProgression.onlyLeaderCanReset'),
     )
     const cfg = await this.#configService.getMany(...PERK_CFG_KEYS)
 
@@ -490,7 +497,7 @@ export class TeamProgressionDomain implements ITeamProgressionDomain {
           const current =
             await this.#teamProgressionRepository.findProgressInTx(tx, teamId)
           if (current === null) {
-            throw Boom.notFound('Équipe introuvable.')
+            throw Boom.notFound(errorMessage('team.notFound'))
           }
           const rows = await this.#teamProgressionRepository.listPerksInTx(
             tx,
@@ -550,7 +557,7 @@ export class TeamProgressionDomain implements ITeamProgressionDomain {
       this.#configService.getMany(...PERK_CFG_KEYS),
     ])
     if (!progress) {
-      throw Boom.notFound('Équipe introuvable')
+      throw Boom.notFound(errorMessage('team.notFound'))
     }
     return toPerksView(teamId, progress, perks, cfg)
   }

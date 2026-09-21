@@ -89,4 +89,76 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'wishlist.full': 'Wishlist full ({{slots}} slots)',
   'wishlist.cardNotInWishlist': 'Card is not in your wishlist',
   'shop.shopItemNotFound': 'Shop item not found',
+
+  // --- team ---
+  'team.notFound': 'Team not found',
+  'team.notMember': 'Not a member of this team',
+  'team.full': 'This team is full ({{max}} members)',
+  'team.userAlreadyMember': 'User is already a member',
+  'team.invitationAlreadyPendingForUser':
+    'Invitation already pending for this user',
+  'team.invitationAlreadyPendingForEmail':
+    'Invitation already pending for this email',
+  'team.provideEmailOrUsername': 'Provide email or username',
+  'team.onlyAdminOrOwnerCanInvite': 'Only ADMIN or OWNER can invite members',
+  'team.invitationForAnotherUser': 'This invitation is for another user',
+  'team.invitationNotFound': 'Invitation not found',
+  'team.invitationAlreadyProcessed': 'Invitation already processed',
+  'team.invitationExpired': 'Invitation expired',
+  'team.alreadyMemberOfTeam': 'Already a member of this team',
+  'team.memberNotFound': 'Member not found',
+  'team.cannotRemoveOwner': 'Cannot remove the owner',
+  'team.adminCannotRemoveAdmin': 'ADMIN cannot remove another ADMIN',
+  'team.ownerMustTransferBeforeLeaving':
+    'Owner must transfer ownership before leaving',
+  'team.onlyOwnerCanChangeRoles': 'Only the owner can change member roles',
+  'team.useOwnershipTransferForOwnerRole':
+    'Use ownership transfer to change the owner role',
+  'team.onlyOwnerCanTransferOwnership': 'Only the owner can transfer ownership',
+  'team.newOwnerMustBeMember': 'New owner must be a member of the team',
+  'team.onlyOwnerCanUpdateTeam': 'Only the owner can update the team',
+  'team.onlyOwnerCanDeleteTeam': 'Only the owner can delete the team',
+  'team.invitationNotFoundOrNotPending': 'Invitation not found or not pending',
+  'team.onlyAdminOrOwnerCanResendInvitations':
+    'Only ADMIN or OWNER can resend invitations',
+  'team.cooldownActive': 'Cooldown active',
+  'team.noRecipientEmail': 'No recipient email found',
+  'team.pendingWagers.betSingular': '{{count}} bet',
+  'team.pendingWagers.betPlural': '{{count}} bets',
+  'team.pendingWagers.duelSingular': '{{count}} duel',
+  'team.pendingWagers.duelPlural': '{{count}} duels',
+  'team.pendingWagers.joiner': ' and ',
+  'team.pendingWagers.message':
+    'This team still has {{parts}} in progress: wait for them to be resolved before deleting it. A placed stake cannot be refunded, and duel cards must go to the winner.',
+  'team.onlyAdminOrOwner': 'Only ADMIN or OWNER',
+  'team.onlyOwnerCanCancelInvitation': 'Only OWNER can cancel an invitation',
+  'team.invitationNotPending': 'Invitation is not PENDING',
+  'team.onlyOwnerCanDeleteInvitation': 'Only OWNER can delete an invitation',
+  'team.cancelInvitationBeforeDeleting':
+    'Cancel the invitation before deleting it',
+
+  // --- team-progression (team bonuses) ---
+  'teamProgression.notMember': 'This player is not part of this team.',
+  'teamProgression.noPerkPointsAvailable': 'No bonus point available.',
+  'teamProgression.perkAlreadyMaxRank': 'This bonus is already at max rank.',
+  'teamProgression.perkLocked': 'This bonus unlocks at level {{level}}.',
+  'teamProgression.onlyLeaderAndOfficersCanSpend':
+    'Only the leader and officers can spend points.',
+  'teamProgression.onlyLeaderCanReset':
+    'Only the leader can reset the bonuses.',
+
+  // --- recruitment ---
+  'recruitment.teamNotRecruiting': 'This team is not recruiting',
+  'recruitment.joinRequestAlreadyPending':
+    'Join request already pending for this team',
+  'recruitment.reapplyBlocked':
+    'Application recently declined; try again after {{until}}',
+  'recruitment.maxPendingRequests': 'Maximum {{max}} pending applications',
+  'recruitment.noPendingJoinRequest': 'No pending join request for this team',
+  'recruitment.joinRequestAlreadyProcessed': 'Join request already processed',
+  'recruitment.joinRequestNotFound': 'Join request not found',
+  'recruitment.userReachedTeamLimit':
+    '@{{username}} has reached their limit of {{max}} teams',
+  'recruitment.onlyAdminOrOwnerCanHandleRequests':
+    'Only ADMIN or OWNER can handle join requests',
 }

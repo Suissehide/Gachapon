@@ -5,6 +5,7 @@ import { calculateUserScore } from '../../../../../domain/scoring/scoring.domain
 import type { TeamPerkKey } from '../../../../../domain/team-progression/team-progression-rules'
 import type { TeamPerkState } from '../../../../../types/domain/team-progression/team-progression.domain.interface'
 import type { TeamPerkEvent } from '../../../../ws/ws-manager'
+import { errorMessage } from '../../errors/messages'
 import {
   directoryQuerySchema,
   directoryResponseSchema,
@@ -399,7 +400,7 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
       const { invitationRepository, userRepository } = fastify.iocContainer
       const me = await userRepository.findById(request.user.userID)
       if (!me) {
-        throw Boom.notFound('User not found')
+        throw Boom.notFound(errorMessage('user.notFound'))
       }
       const invitations = await invitationRepository.findPendingForUser(
         me.id,
@@ -525,11 +526,11 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
       const invitationRepo = fastify.iocContainer.invitationRepository
       const team = await teamRepo.findById(request.params.id)
       if (!team) {
-        throw Boom.notFound('Team not found')
+        throw Boom.notFound(errorMessage('team.notFound'))
       }
       const actor = team.members.find((m) => m.userId === request.user.userID)
       if (!actor || actor.role === 'MEMBER') {
-        throw Boom.forbidden('Only ADMIN or OWNER')
+        throw Boom.forbidden(errorMessage('team.onlyAdminOrOwner'))
       }
 
       const now = new Date()
@@ -577,20 +578,20 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
       const { invitationRepository, teamRepository } = fastify.iocContainer
       const inv = await invitationRepository.findByToken(request.params.token)
       if (!inv) {
-        throw Boom.notFound('Invitation not found')
+        throw Boom.notFound(errorMessage('team.invitationNotFound'))
       }
 
       const team = await teamRepository.findById(inv.teamId)
       if (!team) {
-        throw Boom.notFound('Team not found')
+        throw Boom.notFound(errorMessage('team.notFound'))
       }
 
       const actor = team.members.find((m) => m.userId === request.user.userID)
       if (!actor || actor.role !== 'OWNER') {
-        throw Boom.forbidden('Only OWNER can cancel an invitation')
+        throw Boom.forbidden(errorMessage('team.onlyOwnerCanCancelInvitation'))
       }
       if (inv.status !== 'PENDING') {
-        throw Boom.conflict('Invitation is not PENDING')
+        throw Boom.conflict(errorMessage('team.invitationNotPending'))
       }
 
       await invitationRepository.cancelById(inv.id)
@@ -608,22 +609,22 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
       const { invitationRepository, teamRepository } = fastify.iocContainer
       const inv = await invitationRepository.findById(request.params.id)
       if (!inv) {
-        throw Boom.notFound('Invitation not found')
+        throw Boom.notFound(errorMessage('team.invitationNotFound'))
       }
 
       const team = await teamRepository.findById(inv.teamId)
       if (!team) {
-        throw Boom.notFound('Team not found')
+        throw Boom.notFound(errorMessage('team.notFound'))
       }
 
       const actor = team.members.find((m) => m.userId === request.user.userID)
       if (!actor || actor.role !== 'OWNER') {
-        throw Boom.forbidden('Only OWNER can delete an invitation')
+        throw Boom.forbidden(errorMessage('team.onlyOwnerCanDeleteInvitation'))
       }
 
       const isExpired = inv.status === 'PENDING' && inv.expiresAt < new Date()
       if (inv.status === 'PENDING' && !isExpired) {
-        throw Boom.conflict('Cancel the invitation before deleting it')
+        throw Boom.conflict(errorMessage('team.cancelInvitationBeforeDeleting'))
       }
 
       await invitationRepository.deleteById(request.params.id)

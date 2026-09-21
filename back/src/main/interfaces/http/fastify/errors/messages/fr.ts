@@ -102,4 +102,83 @@ export const FR_MESSAGES = {
   'wishlist.cardNotInWishlist':
     'Cette carte n’est pas dans ta liste de souhaits',
   'shop.shopItemNotFound': 'Article de boutique introuvable',
+
+  // --- team ---
+  'team.notFound': 'Équipe introuvable',
+  'team.notMember': 'Tu ne fais pas partie de cette équipe',
+  'team.full': 'Cette équipe est complète ({{max}} membres)',
+  'team.userAlreadyMember': 'Cet utilisateur est déjà membre',
+  'team.invitationAlreadyPendingForUser':
+    'Une invitation est déjà en attente pour cet utilisateur',
+  'team.invitationAlreadyPendingForEmail':
+    'Une invitation est déjà en attente pour cet email',
+  'team.provideEmailOrUsername': 'Indique un email ou un pseudo',
+  'team.onlyAdminOrOwnerCanInvite':
+    'Seuls ADMIN ou OWNER peuvent inviter des membres',
+  'team.invitationForAnotherUser':
+    'Cette invitation est pour un autre utilisateur',
+  'team.invitationNotFound': 'Invitation introuvable',
+  'team.invitationAlreadyProcessed': 'Invitation déjà traitée',
+  'team.invitationExpired': 'Invitation expirée',
+  'team.alreadyMemberOfTeam': 'Déjà membre de cette équipe',
+  'team.memberNotFound': 'Membre introuvable',
+  'team.cannotRemoveOwner': 'Impossible de retirer le chef',
+  'team.adminCannotRemoveAdmin': 'Un ADMIN ne peut pas retirer un autre ADMIN',
+  'team.ownerMustTransferBeforeLeaving':
+    'Le chef doit transférer la propriété avant de partir',
+  'team.onlyOwnerCanChangeRoles':
+    'Seul le chef peut modifier les rôles des membres',
+  'team.useOwnershipTransferForOwnerRole':
+    'Utilise le transfert de propriété pour changer le rôle du chef',
+  'team.onlyOwnerCanTransferOwnership':
+    'Seul le chef peut transférer la propriété',
+  'team.newOwnerMustBeMember': 'Le nouveau chef doit être membre de l’équipe',
+  'team.onlyOwnerCanUpdateTeam': 'Seul le chef peut modifier l’équipe',
+  'team.onlyOwnerCanDeleteTeam': 'Seul le chef peut supprimer l’équipe',
+  'team.invitationNotFoundOrNotPending':
+    'Invitation introuvable ou déjà traitée',
+  'team.onlyAdminOrOwnerCanResendInvitations':
+    'Seuls ADMIN ou OWNER peuvent renvoyer des invitations',
+  'team.cooldownActive': 'Cooldown actif',
+  'team.noRecipientEmail': 'Aucun email destinataire trouvé',
+  'team.pendingWagers.betSingular': '{{count}} pari',
+  'team.pendingWagers.betPlural': '{{count}} paris',
+  'team.pendingWagers.duelSingular': '{{count}} duel',
+  'team.pendingWagers.duelPlural': '{{count}} duels',
+  'team.pendingWagers.joiner': ' et ',
+  'team.pendingWagers.message':
+    'Cette équipe a encore {{parts}} en cours : attends leur résolution avant de la supprimer. Une mise engagée ne peut pas être rendue, et les cartes d’un duel doivent revenir à son vainqueur.',
+  'team.onlyAdminOrOwner': 'Seuls ADMIN ou OWNER',
+  'team.onlyOwnerCanCancelInvitation': 'Seul OWNER peut annuler une invitation',
+  'team.invitationNotPending': 'L’invitation n’est pas PENDING',
+  'team.onlyOwnerCanDeleteInvitation':
+    'Seul OWNER peut supprimer une invitation',
+  'team.cancelInvitationBeforeDeleting':
+    'Annule l’invitation avant de la supprimer',
+
+  // --- team-progression (bonus d'équipe) ---
+  'teamProgression.notMember': 'Ce joueur n’appartient pas à cette équipe.',
+  'teamProgression.noPerkPointsAvailable': 'Aucun point de bonus disponible.',
+  'teamProgression.perkAlreadyMaxRank': 'Ce bonus est déjà au rang maximum.',
+  'teamProgression.perkLocked': 'Ce bonus se débloque au niveau {{level}}.',
+  'teamProgression.onlyLeaderAndOfficersCanSpend':
+    'Seuls le chef et les officiers peuvent investir les points.',
+  'teamProgression.onlyLeaderCanReset':
+    'Seul le chef peut réinitialiser les bonus.',
+
+  // --- recruitment (recrutement) ---
+  'recruitment.teamNotRecruiting': 'Cette équipe ne recrute pas',
+  'recruitment.joinRequestAlreadyPending':
+    'Une candidature est déjà en attente pour cette équipe',
+  'recruitment.reapplyBlocked':
+    'Candidature refusée récemment ; réessaie après le {{until}}',
+  'recruitment.maxPendingRequests': 'Maximum {{max}} candidatures en attente',
+  'recruitment.noPendingJoinRequest':
+    'Aucune candidature en attente pour cette équipe',
+  'recruitment.joinRequestAlreadyProcessed': 'Candidature déjà traitée',
+  'recruitment.joinRequestNotFound': 'Candidature introuvable',
+  'recruitment.userReachedTeamLimit':
+    '@{{username}} a atteint sa limite de {{max}} équipes',
+  'recruitment.onlyAdminOrOwnerCanHandleRequests':
+    'Seuls ADMIN ou OWNER peuvent traiter les candidatures',
 } as const
