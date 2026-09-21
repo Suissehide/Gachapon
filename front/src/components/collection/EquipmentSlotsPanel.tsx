@@ -9,7 +9,7 @@ import {
   Shield,
   Sword,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import type {
   EquipmentInstance,
@@ -23,6 +23,7 @@ import {
   useCardEquipmentContribution,
   useEquipmentList,
   useEquipmentSets,
+  useSetColorByKey,
 } from '../../queries/useEquipment.ts'
 import {
   type ActiveSetSummary,
@@ -291,20 +292,10 @@ export function EquipmentSlotsPanel({ userCardId, rarityHex }: Props) {
   const contribution = useCardEquipmentContribution(userCardId)
   const [pickerSlot, setPickerSlot] = useState<EquipmentSlot | null>(null)
 
-  // Couleur d'un set = couleur de la stat qu'il buffe (règle du handoff).
-  // Elle se déduit donc de `GET /equipment/sets`, pas d'une table de teintes
-  // recopiée côté front : un set dont le bonus changerait de stat change de
-  // couleur tout seul.
-  const setColorByKey = useMemo(() => {
-    const byKey = new Map<string, string>()
-    for (const def of sets.data?.sets ?? []) {
-      const statKey = Object.keys(def.bonus.bonuses)[0]
-      if (statKey !== undefined) {
-        byKey.set(def.key, statColorVar(statKey))
-      }
-    }
-    return byKey
-  }, [sets.data])
+  // Couleur d'un set = couleur de la stat qu'il buffe (règle du handoff),
+  // dérivée de `GET /equipment/sets` — même source que les en-têtes de set de
+  // la fenêtre de slot.
+  const setColorByKey = useSetColorByKey()
 
   const items = equipment.data?.items ?? []
   const equippedOnCard = items.filter((i) => i.equippedOnId === userCardId)
@@ -371,14 +362,16 @@ export function EquipmentSlotsPanel({ userCardId, rarityHex }: Props) {
                 // bordure de rareté à 35 %, lévitation de 2 px au survol.
                 className="relative h-auto flex-col gap-0 overflow-hidden rounded-[13px] border border-[color-mix(in_oklab,var(--rar)_35%,white)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--rar)_13%,white),white_70%)] px-2 pb-[9px] pt-[11px] text-center transition-[transform,box-shadow] hover:-translate-y-0.5 hover:border-[color-mix(in_oklab,var(--rar)_35%,white)] hover:bg-[linear-gradient(180deg,color-mix(in_oklab,var(--rar)_13%,white),white_70%)] hover:text-text hover:shadow-[0_10px_22px_-12px_color-mix(in_oklab,var(--rar)_80%,transparent)]"
               >
-                {/* Set de la pièce : pastille de 6 px à la couleur du set,
+                {/* Set de la pièce : pastille de 10 px à la couleur du set,
                     cerclée de blanc pour se détacher du dégradé de rareté.
-                    Pas de bandeau de couleur en haut de tuile — le handoff
-                    l'a testé puis retiré. */}
+                    À 6 px elle se lisait mal sur une tuile de cette taille —
+                    le set est l'information qu'on cherche du regard quand on
+                    compose une carte. Pas de bandeau de couleur en haut de
+                    tuile — le handoff l'a testé puis retiré. */}
                 {setColorByKey.has(item.setKey) && (
                   <span
                     aria-hidden="true"
-                    className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[var(--set)] shadow-[0_0_0_2px_white]"
+                    className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-[var(--set)] shadow-[0_0_0_2px_white]"
                   />
                 )}
                 {/* La rareté ne s'écrit plus : elle est portée par le fond,

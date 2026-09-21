@@ -14,6 +14,7 @@ import {
   emptyStuffStatBonuses,
   type StatBonuses,
   type StuffStatBonuses,
+  statColorVar,
   withCardSetBonuses,
 } from '../utils/cardStats'
 import { invalidateBattleCache } from './useCampaign.ts'
@@ -38,6 +39,29 @@ export function useEquipmentSets() {
     queryFn: EquipmentApi.sets,
     staleTime: Number.POSITIVE_INFINITY,
   })
+}
+
+/**
+ * Couleur de chaque set, indexée par clé. La couleur d'un set est celle de la
+ * stat qu'il buffe (règle du handoff) : elle se déduit donc de
+ * `GET /equipment/sets`, pas d'une table de teintes recopiée côté front — un
+ * set dont le bonus changerait de stat change de couleur tout seul. Partagé
+ * par les tuiles de la fiche de carte (`EquipmentSlotsPanel`) et les en-têtes
+ * de set de la fenêtre de slot (`EquipmentSlotPopup`), pour que les deux
+ * n'en tiennent pas deux copies.
+ */
+export function useSetColorByKey(): Map<string, string> {
+  const { data } = useEquipmentSets()
+  return useMemo(() => {
+    const byKey = new Map<string, string>()
+    for (const def of data?.sets ?? []) {
+      const statKey = Object.keys(def.bonus.bonuses)[0]
+      if (statKey !== undefined) {
+        byKey.set(def.key, statColorVar(statKey))
+      }
+    }
+    return byKey
+  }, [data])
 }
 
 /**

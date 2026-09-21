@@ -36,6 +36,7 @@ import {
   useEquipmentList,
   useEquipmentSets,
   useSalvageItems,
+  useSetColorByKey,
   useUnequipItem,
   useUpgradeItem,
 } from '../../queries/useEquipment.ts'
@@ -138,14 +139,31 @@ function SelectionHint({ selectMode }: { selectMode: boolean }) {
   )
 }
 
+function batchSalvageMessage(count: number): string {
+  const plural = count > 1 ? 's' : ''
+  return `Tu vas détruire définitivement ${count} objet${plural}. Cette action est irréversible.`
+}
+
+/**
+ * Confirmation d'un recyclage — la même pour les deux chemins qui y mènent :
+ * la destruction en lot depuis la liste, et la vente d'UNE pièce depuis le
+ * panneau de détail. Seuls les mots changent, l'or annoncé se calcule
+ * toujours par `salvagePreviewGold`.
+ */
 function ConfirmSalvagePopup({
-  checkedCount,
+  icon,
+  title,
+  message,
+  confirmLabel,
   salvageGold,
   busy,
   onConfirm,
   onCancel,
 }: {
-  checkedCount: number
+  icon: React.ReactNode
+  title: string
+  message: string
+  confirmLabel: string
   salvageGold: number
   busy: boolean
   onConfirm: () => void
@@ -155,15 +173,10 @@ function ConfirmSalvagePopup({
     <Popup open onOpenChange={(v) => !v && onCancel()}>
       <PopupContent>
         <PopupHeader>
-          <PopupTitle icon={<Trash2 className="h-4 w-4" />}>
-            Confirmer la destruction
-          </PopupTitle>
+          <PopupTitle icon={icon}>{title}</PopupTitle>
         </PopupHeader>
         <PopupBody className="space-y-4">
-          <p className="text-sm text-text-light">
-            Tu vas détruire définitivement {checkedCount} objet
-            {checkedCount > 1 ? 's' : ''}. Cette action est irréversible.
-          </p>
+          <p className="text-sm text-text-light">{message}</p>
           <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-center">
             <p className="mb-1 text-[11px] uppercase tracking-widest text-text-light/60">
               Tu obtiendras
@@ -179,7 +192,7 @@ function ConfirmSalvagePopup({
             Annuler
           </Button>
           <Button variant="destructive" disabled={busy} onClick={onConfirm}>
-            Détruire
+            {confirmLabel}
           </Button>
         </PopupFooter>
       </PopupContent>
@@ -252,9 +265,9 @@ function ItemRow({
       <RarityDot color={RARITY_COLOR_VAR[item.rarity]} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-text">{item.name}</p>
-        {/* Le set décide de la composition d'une carte autant que la rareté :
-            il se lit sur CHAQUE ligne, sans avoir à ouvrir le détail. Teinté
-            par la rareté, comme la fiche de pièce (`EquipmentDropCard`). */}
+        {/* Le set n'est plus répété ici : il nomme la section qui contient la
+            ligne, et son en-tête reste collé en haut pendant le défilement.
+            La place sert à écrire la rareté, qui n'était qu'une pastille. */}
         <p className="flex items-center gap-1.5 text-[11px] text-text-light">
           <span className="shrink-0">Nv. {item.level}</span>
           <span aria-hidden="true" className="shrink-0 opacity-50">
@@ -266,7 +279,7 @@ function ItemRow({
               color: `color-mix(in oklab, ${RARITY_COLOR_VAR[item.rarity]} 72%, var(--text-light))`,
             }}
           >
-            {item.setLabel}
+            {RARITY_LABEL_FR[item.rarity]}
           </span>
         </p>
       </div>
@@ -281,6 +294,151 @@ function ItemRow({
         </span>
       )}
     </button>
+  )
+}
+
+type SetGroup = {
+  key: string
+  label: string
+  color: string
+  /** Pièces de ce set déjà portées par la carte. */
+  count: number
+  /** Pièces que le set demande pour activer son bonus. */
+  pieces: number
+  items: EquipmentInstance[]
+}
+
+/**
+ * Découpe la liste d'un slot en sections, une par set. Les sets dont la carte
+ * porte déjà des pièces passent devant — c'est l'arbitrage du joueur au
+ * moment d'équiper : « laquelle me rapproche d'un palier ? » — puis les
+ * autres par ordre alphabétique.
+ *
+ * L'ordre À L'INTÉRIEUR d'une section est celui reçu (`sortItems` : équipé
+ * ici, puis rareté, niveau, nom), donc la pièce portée reste en tête de sa
+ * section.
+ */
+function groupBySet(
+  items: EquipmentInstance[],
+  colorByKey: Map<string, string>,
+  metaByKey: Map<string, { count: number; pieces: number }>,
+): SetGroup[] {
+  const groups = new Map<string, SetGroup>()
+  for (const item of items) {
+    let group = groups.get(item.setKey)
+    if (group === undefined) {
+      const meta = metaByKey.get(item.setKey)
+      group = {
+        key: item.setKey,
+        label: item.setLabel,
+        color: colorByKey.get(item.setKey) ?? 'var(--stat-def)',
+        count: meta?.count ?? 0,
+        pieces: meta?.pieces ?? 0,
+        items: [],
+      }
+      groups.set(item.setKey, group)
+    }
+    group.items.push(item)
+  }
+  return [...groups.values()].sort(
+    (a, b) => b.count - a.count || a.label.localeCompare(b.label, 'fr'),
+  )
+}
+
+/**
+ * Sections de set d'un slot, prêtes à rendre. Isolé en hook parce que
+ * l'avancement de la carte se lit sur CHAQUE set (pas seulement ceux qu'elle
+ * porte) : la taille vient des définitions publiques, le compte de la carte.
+ */
+function useSetGroups(
+  items: EquipmentInstance[],
+  userCardId: string,
+): SetGroup[] {
+  const { data: setsData } = useEquipmentSets()
+  const activeSets = useActiveSetsForCard(userCardId)
+  const colorByKey = useSetColorByKey()
+  const metaByKey = useMemo(() => {
+    const counts = new Map(activeSets.map((s) => [s.key, s.count]))
+    const meta = new Map<string, { count: number; pieces: number }>()
+    for (const def of setsData?.sets ?? []) {
+      meta.set(def.key, { count: counts.get(def.key) ?? 0, pieces: def.pieces })
+    }
+    return meta
+  }, [activeSets, setsData])
+  return useMemo(
+    () => groupBySet(items, colorByKey, metaByKey),
+    [items, colorByKey, metaByKey],
+  )
+}
+
+/**
+ * En-tête d'une section de set : même vocabulaire visuel que `SetLine` du
+ * panneau de détail (icône `Layers`, libellé à la couleur du set, avancement
+ * sur la carte). Collé en haut de la zone défilante tant que sa section est
+ * visible, pour que le set de la ligne survolée reste lisible.
+ */
+function SetGroupHeader({ group }: { group: SetGroup }) {
+  const active = group.pieces > 0 && group.count >= group.pieces
+  return (
+    <div
+      className="sticky top-0 z-10 flex items-center gap-1.5 bg-background py-1"
+      style={{ '--sc': group.color } as React.CSSProperties}
+    >
+      <Layers className="h-3.5 w-3.5 shrink-0 text-[var(--sc)]" />
+      <span className="truncate font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--sc)]">
+        {group.label}
+      </span>
+      {group.pieces > 0 && (
+        <span
+          className={cn(
+            'ml-auto shrink-0 whitespace-nowrap font-mono text-[10px] tabular-nums',
+            active ? 'text-[var(--sc)]' : 'text-text-light',
+          )}
+        >
+          {group.count}/{group.pieces} sur la carte
+        </span>
+      )}
+    </div>
+  )
+}
+
+function SlotItemList({
+  groups,
+  userCardId,
+  shownId,
+  selectMode,
+  checked,
+  onSelect,
+  onToggle,
+}: {
+  groups: SetGroup[]
+  userCardId: string
+  shownId: string | null
+  selectMode: boolean
+  checked: Set<string>
+  onSelect: (id: string) => void
+  onToggle: (id: string) => void
+}) {
+  return (
+    <div className="flex max-h-[50vh] flex-col gap-3 overflow-y-auto pr-1">
+      {groups.map((group) => (
+        <section key={group.key} className="flex flex-col gap-2">
+          <SetGroupHeader group={group} />
+          {group.items.map((item) => (
+            <ItemRow
+              key={item.id}
+              item={item}
+              userCardId={userCardId}
+              selectedId={shownId}
+              selectMode={selectMode}
+              checked={checked}
+              onSelect={onSelect}
+              onToggle={onToggle}
+            />
+          ))}
+        </section>
+      ))}
+    </div>
   )
 }
 
@@ -317,7 +475,7 @@ function shownItemId(
   userCardId: string,
   selectedId: string | null,
 ): string | null {
-  if (selectedId !== null) {
+  if (selectedId !== null && items.some((i) => i.id === selectedId)) {
     return selectedId
   }
   return items.find((i) => i.equippedOnId === userCardId)?.id ?? null
@@ -353,6 +511,8 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
         .sort((a, b) => sortItems(a, b, userCardId)),
     [data, slot, userCardId],
   )
+
+  const groups = useSetGroups(items, userCardId)
 
   const shownId = shownItemId(items, userCardId, selectedId)
   const selected = items.find((i) => i.id === shownId) ?? null
@@ -486,20 +646,15 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
               </p>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="flex max-h-[50vh] flex-col gap-2 overflow-y-auto pr-1">
-                  {items.map((item) => (
-                    <ItemRow
-                      key={item.id}
-                      item={item}
-                      userCardId={userCardId}
-                      selectedId={shownId}
-                      selectMode={selectMode}
-                      checked={checked}
-                      onSelect={handleSelect}
-                      onToggle={toggleChecked}
-                    />
-                  ))}
-                </div>
+                <SlotItemList
+                  groups={groups}
+                  userCardId={userCardId}
+                  shownId={shownId}
+                  selectMode={selectMode}
+                  checked={checked}
+                  onSelect={handleSelect}
+                  onToggle={toggleChecked}
+                />
 
                 {selected && !selectMode ? (
                   <ItemDetail
@@ -546,7 +701,10 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
 
       {confirmOpen && (
         <ConfirmSalvagePopup
-          checkedCount={checked.size}
+          icon={<Trash2 className="h-4 w-4" />}
+          title="Confirmer la destruction"
+          message={batchSalvageMessage(checked.size)}
+          confirmLabel="Détruire"
           salvageGold={salvageGold}
           busy={busy}
           onConfirm={handleSalvage}
@@ -669,6 +827,79 @@ function SetLine({
         </p>
       )}
     </div>
+  )
+}
+
+/**
+ * Vente d'UNE pièce depuis le panneau de détail, sans repasser par la
+ * sélection multiple de la liste. Porte sa propre confirmation et sa propre
+ * mutation : le panneau de détail n'a rien à savoir du recyclage.
+ *
+ * Une pièce portée ne peut pas être recyclée — le serveur la refuse
+ * (« Impossible de détruire un objet équipé ») — d'où le bouton désactivé,
+ * avec la raison écrite en dessous : un bouton désactivé n'affiche pas son
+ * `title`.
+ */
+function SellItemButton({
+  item,
+  busy,
+}: {
+  item: EquipmentInstance
+  busy: boolean
+}) {
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  const { data: skillState } = useSkillTree()
+  const { toast } = useToast()
+  const salvageItems = useSalvageItems()
+  const equipped = item.equippedOnId !== null
+  const gold = salvagePreviewGold(
+    [item],
+    economy.equip.salvageGold,
+    skillState?.effects?.salvageBonus,
+  )
+
+  const handleConfirm = () => {
+    salvageItems.mutate([item.id], {
+      onSuccess: (res) => {
+        toast({
+          title: 'Objet vendu',
+          message: `+${res.goldEarned.toLocaleString('fr-FR')} or`,
+          severity: TOAST_SEVERITY.SUCCESS,
+        })
+        setConfirmOpen(false)
+      },
+    })
+  }
+
+  return (
+    <>
+      <Button
+        variant="destructive"
+        disabled={busy || equipped || salvageItems.isPending}
+        onClick={() => setConfirmOpen(true)}
+      >
+        <Coins className="mr-1.5 h-4 w-4" />
+        Vendre (+{gold.toLocaleString('fr-FR')} or)
+      </Button>
+      {equipped && (
+        <p className="text-center text-[10px] text-text-light">
+          Déséquipe la pièce pour la vendre.
+        </p>
+      )}
+      {confirmOpen && (
+        <ConfirmSalvagePopup
+          icon={<Coins className="h-4 w-4" />}
+          title="Vendre cette pièce ?"
+          message={`« ${item.name} » sera définitivement détruite. Cette action est irréversible.`}
+          confirmLabel="Vendre"
+          salvageGold={gold}
+          busy={salvageItems.isPending}
+          onConfirm={handleConfirm}
+          onCancel={() => setConfirmOpen(false)}
+        />
+      )}
+    </>
   )
 }
 
@@ -796,6 +1027,7 @@ function ItemDetail({
             : `Améliorer (${cost.toLocaleString('fr-FR')} or)`}
           {nextIsMilestone && <Sparkles className="ml-1.5 h-3.5 w-3.5" />}
         </Button>
+        <SellItemButton item={item} busy={busy} />
       </div>
     </div>
   )
