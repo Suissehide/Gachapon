@@ -13,11 +13,18 @@ export function CreateSetSheet({
   const createSet = useAdminCreateSet()
 
   const form = useAppForm({
-    defaultValues: { name: '', description: '' },
+    defaultValues: {
+      nameFr: '',
+      nameEn: '',
+      descriptionFr: '',
+      descriptionEn: '',
+    },
     onSubmit: ({ value }) => {
       createSet.mutate({
-        name: value.name,
-        description: value.description || undefined,
+        nameFr: value.nameFr,
+        nameEn: value.nameEn,
+        descriptionFr: value.descriptionFr || undefined,
+        descriptionEn: value.descriptionEn || undefined,
         isActive: false,
       })
       onOpenChange(false)
@@ -38,11 +45,17 @@ export function CreateSetSheet({
             }}
             className="space-y-3"
           >
-            <form.AppField name="name">
-              {(f) => <f.Input label="Nom" />}
+            <form.AppField name="nameFr">
+              {(f) => <f.Input label="Nom (français)" />}
             </form.AppField>
-            <form.AppField name="description">
-              {(f) => <f.Input label="Description (optionnelle)" />}
+            <form.AppField name="nameEn">
+              {(f) => <f.Input label="Nom (anglais)" />}
+            </form.AppField>
+            <form.AppField name="descriptionFr">
+              {(f) => <f.Input label="Description (français, optionnelle)" />}
+            </form.AppField>
+            <form.AppField name="descriptionEn">
+              {(f) => <f.Input label="Description (anglais, optionnelle)" />}
             </form.AppField>
             <Button type="submit" className="w-full">
               Créer

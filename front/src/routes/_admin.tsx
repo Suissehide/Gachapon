@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Flame,
   Images,
+  Languages,
   LayoutDashboard,
   Package,
   Settings,
@@ -53,6 +54,7 @@ const NAV_SECTIONS: NavSection[] = [
       { to: '/admin/cards', label: 'Cartes', icon: Package },
       { to: '/admin/media', label: 'Médias', icon: Images },
       { to: '/admin/shop', label: 'Boutique', icon: ShoppingBag },
+      { to: '/admin/translations', label: 'Traductions', icon: Languages },
     ],
   },
   {

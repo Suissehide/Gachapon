@@ -11,7 +11,8 @@ export type BulkRewardBody = {
     gold?: number
     cardRarity?: string
   }
-  message?: string
+  labelFr?: string
+  labelEn?: string
 }
 
 export const AdminRewardsApi = {

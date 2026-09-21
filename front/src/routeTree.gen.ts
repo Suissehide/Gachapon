@@ -45,6 +45,7 @@ import { Route as AuthenticatedTeamIdRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedProfileUsernameRouteImport } from './routes/_authenticated/profile/$username'
 import { Route as AuthenticatedBattleStageIdRouteImport } from './routes/_authenticated/battle.$stageId'
 import { Route as AdminAdminUsersRouteImport } from './routes/_admin/admin.users'
+import { Route as AdminAdminTranslationsRouteImport } from './routes/_admin/admin.translations'
 import { Route as AdminAdminStreakRouteImport } from './routes/_admin/admin.streak'
 import { Route as AdminAdminStatsRouteImport } from './routes/_admin/admin.stats'
 import { Route as AdminAdminSkillsRouteImport } from './routes/_admin/admin.skills'
@@ -242,6 +243,11 @@ const AdminAdminUsersRoute = AdminAdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AdminAdminRoute,
 } as any)
+const AdminAdminTranslationsRoute = AdminAdminTranslationsRouteImport.update({
+  id: '/translations',
+  path: '/translations',
+  getParentRoute: () => AdminAdminRoute,
+} as any)
 const AdminAdminStreakRoute = AdminAdminStreakRouteImport.update({
   id: '/streak',
   path: '/streak',
@@ -348,6 +354,7 @@ export interface FileRoutesByFullPath {
   '/admin/skills': typeof AdminAdminSkillsRoute
   '/admin/stats': typeof AdminAdminStatsRoute
   '/admin/streak': typeof AdminAdminStreakRoute
+  '/admin/translations': typeof AdminAdminTranslationsRoute
   '/admin/users': typeof AdminAdminUsersRoute
   '/battle/$stageId': typeof AuthenticatedBattleStageIdRoute
   '/profile/$username': typeof AuthenticatedProfileUsernameRoute
@@ -396,6 +403,7 @@ export interface FileRoutesByTo {
   '/admin/skills': typeof AdminAdminSkillsRoute
   '/admin/stats': typeof AdminAdminStatsRoute
   '/admin/streak': typeof AdminAdminStreakRoute
+  '/admin/translations': typeof AdminAdminTranslationsRoute
   '/admin/users': typeof AdminAdminUsersRoute
   '/battle/$stageId': typeof AuthenticatedBattleStageIdRoute
   '/profile/$username': typeof AuthenticatedProfileUsernameRoute
@@ -448,6 +456,7 @@ export interface FileRoutesById {
   '/_admin/admin/skills': typeof AdminAdminSkillsRoute
   '/_admin/admin/stats': typeof AdminAdminStatsRoute
   '/_admin/admin/streak': typeof AdminAdminStreakRoute
+  '/_admin/admin/translations': typeof AdminAdminTranslationsRoute
   '/_admin/admin/users': typeof AdminAdminUsersRoute
   '/_authenticated/battle/$stageId': typeof AuthenticatedBattleStageIdRoute
   '/_authenticated/profile/$username': typeof AuthenticatedProfileUsernameRoute
@@ -499,6 +508,7 @@ export interface FileRouteTypes {
     | '/admin/skills'
     | '/admin/stats'
     | '/admin/streak'
+    | '/admin/translations'
     | '/admin/users'
     | '/battle/$stageId'
     | '/profile/$username'
@@ -547,6 +557,7 @@ export interface FileRouteTypes {
     | '/admin/skills'
     | '/admin/stats'
     | '/admin/streak'
+    | '/admin/translations'
     | '/admin/users'
     | '/battle/$stageId'
     | '/profile/$username'
@@ -598,6 +609,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/skills'
     | '/_admin/admin/stats'
     | '/_admin/admin/streak'
+    | '/_admin/admin/translations'
     | '/_admin/admin/users'
     | '/_authenticated/battle/$stageId'
     | '/_authenticated/profile/$username'
@@ -882,6 +894,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminUsersRouteImport
       parentRoute: typeof AdminAdminRoute
     }
+    '/_admin/admin/translations': {
+      id: '/_admin/admin/translations'
+      path: '/translations'
+      fullPath: '/admin/translations'
+      preLoaderRoute: typeof AdminAdminTranslationsRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
     '/_admin/admin/streak': {
       id: '/_admin/admin/streak'
       path: '/streak'
@@ -988,6 +1007,7 @@ interface AdminAdminRouteChildren {
   AdminAdminSkillsRoute: typeof AdminAdminSkillsRoute
   AdminAdminStatsRoute: typeof AdminAdminStatsRoute
   AdminAdminStreakRoute: typeof AdminAdminStreakRoute
+  AdminAdminTranslationsRoute: typeof AdminAdminTranslationsRoute
   AdminAdminUsersRoute: typeof AdminAdminUsersRoute
   AdminAdminIndexRoute: typeof AdminAdminIndexRoute
 }
@@ -1004,6 +1024,7 @@ const AdminAdminRouteChildren: AdminAdminRouteChildren = {
   AdminAdminSkillsRoute: AdminAdminSkillsRoute,
   AdminAdminStatsRoute: AdminAdminStatsRoute,
   AdminAdminStreakRoute: AdminAdminStreakRoute,
+  AdminAdminTranslationsRoute: AdminAdminTranslationsRoute,
   AdminAdminUsersRoute: AdminAdminUsersRoute,
   AdminAdminIndexRoute: AdminAdminIndexRoute,
 }

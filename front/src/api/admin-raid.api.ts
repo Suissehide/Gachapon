@@ -31,6 +31,8 @@ export type AdminRaidBoss = {
   id: string
   element: TowerElement
   name: string
+  nameFr: string
+  nameEn: string
   spec: RaidBossSpec
   updatedAt: string
 }
@@ -57,7 +59,7 @@ export const AdminRaidApi = {
   },
   patchBoss: async (
     element: TowerElement,
-    data: { name?: string; spec?: RaidBossSpec },
+    data: { nameFr?: string; nameEn?: string; spec?: RaidBossSpec },
   ): Promise<AdminRaidBoss> => {
     const res = await fetchWithAuth(`${apiUrl}/admin/raid/bosses/${element}`, {
       method: 'PATCH',

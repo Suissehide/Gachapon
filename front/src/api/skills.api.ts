@@ -14,7 +14,11 @@ export type SkillNode = {
   id: string
   branchId: string
   name: string
+  nameFr: string
+  nameEn: string
   description: string
+  descriptionFr: string
+  descriptionEn: string
   icon: string
   maxLevel: number
   effectType: string
@@ -27,12 +31,30 @@ export type SkillNode = {
 export type SkillBranch = {
   id: string
   name: string
+  nameFr: string
+  nameEn: string
   description: string
+  descriptionFr: string
+  descriptionEn: string
   icon: string
   color: string
   order: number
   nodes: SkillNode[]
 }
+
+// `name`/`description` sont des champs calculés côté back (voir
+// localized.extension.ts) : jamais soumis en écriture, seules les paires
+// Fr/En le sont.
+export type CreateSkillBranchInput = Omit<
+  SkillBranch,
+  'id' | 'nodes' | 'name' | 'description'
+>
+export type UpdateSkillBranchInput = Partial<CreateSkillBranchInput>
+export type CreateSkillNodeInput = Omit<
+  SkillNode,
+  'id' | 'edgesFrom' | 'edgesTo' | 'name' | 'description'
+>
+export type UpdateSkillNodeInput = Partial<CreateSkillNodeInput>
 export type SkillEffects = {
   upgradeDustDiscount: number
   goldShopDiscount: number
@@ -135,7 +157,7 @@ export const SkillsApi = {
   },
 
   adminCreateBranch: async (
-    data: Omit<SkillBranch, 'id' | 'nodes'>,
+    data: CreateSkillBranchInput,
   ): Promise<SkillBranch> => {
     const res = await fetchWithAuth(`${apiUrl}/admin/skills/branches`, {
       method: 'POST',
@@ -150,7 +172,7 @@ export const SkillsApi = {
 
   adminUpdateBranch: async (
     id: string,
-    data: Partial<SkillBranch>,
+    data: UpdateSkillBranchInput,
   ): Promise<SkillBranch> => {
     const res = await fetchWithAuth(`${apiUrl}/admin/skills/branches/${id}`, {
       method: 'PUT',
@@ -172,9 +194,7 @@ export const SkillsApi = {
     }
   },
 
-  adminCreateNode: async (
-    data: Omit<SkillNode, 'id' | 'edgesFrom' | 'edgesTo'>,
-  ): Promise<SkillNode> => {
+  adminCreateNode: async (data: CreateSkillNodeInput): Promise<SkillNode> => {
     const res = await fetchWithAuth(`${apiUrl}/admin/skills/nodes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -188,7 +208,7 @@ export const SkillsApi = {
 
   adminUpdateNode: async (
     id: string,
-    data: Partial<SkillNode>,
+    data: UpdateSkillNodeInput,
   ): Promise<SkillNode> => {
     const res = await fetchWithAuth(`${apiUrl}/admin/skills/nodes/${id}`, {
       method: 'PUT',

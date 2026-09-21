@@ -28,8 +28,10 @@ export function useAdminCreateSet() {
   const { toast } = useToast()
   return useMutation({
     mutationFn: (data: {
-      name: string
-      description?: string
+      nameFr: string
+      nameEn: string
+      descriptionFr?: string
+      descriptionEn?: string
       isActive: boolean
     }) => AdminCardsApi.createSet(data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'sets'] }),
@@ -52,8 +54,10 @@ export function useAdminUpdateSet() {
       ...data
     }: {
       id: string
-      name?: string
-      description?: string
+      nameFr?: string
+      nameEn?: string
+      descriptionFr?: string
+      descriptionEn?: string
       isActive?: boolean
     }) => AdminCardsApi.updateSet(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'sets'] }),
@@ -127,7 +131,8 @@ export function useAdminUpdateCard() {
       ...data
     }: {
       id: string
-      name?: string
+      nameFr?: string
+      nameEn?: string
       rarity?: string
       dropWeight?: number
       imageUrl?: string | null

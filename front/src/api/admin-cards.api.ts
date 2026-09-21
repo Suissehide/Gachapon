@@ -20,8 +20,10 @@ export const AdminCardsApi = {
   },
 
   createSet: async (data: {
-    name: string
-    description?: string
+    nameFr: string
+    nameEn: string
+    descriptionFr?: string
+    descriptionEn?: string
     isActive: boolean
   }): Promise<unknown> => {
     const res = await fetchWithAuth(`${apiUrl}${CARD_ROUTES.admin.sets}`, {
@@ -37,7 +39,13 @@ export const AdminCardsApi = {
 
   updateSet: async (
     id: string,
-    data: { name?: string; description?: string; isActive?: boolean },
+    data: {
+      nameFr?: string
+      nameEn?: string
+      descriptionFr?: string
+      descriptionEn?: string
+      isActive?: boolean
+    },
   ): Promise<unknown> => {
     const res = await fetchWithAuth(`${apiUrl}${CARD_ROUTES.admin.set(id)}`, {
       method: 'PATCH',
@@ -87,7 +95,8 @@ export const AdminCardsApi = {
   updateCard: async (
     id: string,
     data: {
-      name?: string
+      nameFr?: string
+      nameEn?: string
       rarity?: string
       dropWeight?: number
       imageUrl?: string | null

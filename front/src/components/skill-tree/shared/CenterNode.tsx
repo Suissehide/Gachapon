@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 
 import { BRANCH_PALETTE } from '../../../constants/skills.constant.ts'
 import { Button } from '../../ui/button.tsx'
+import { Input } from '../../ui/input.tsx'
 import {
   Popup,
   PopupBody,
@@ -14,13 +15,19 @@ import {
   PopupTitle,
 } from '../../ui/popup.tsx'
 
-type BranchInfo = { id: string; name: string; color: string }
+type BranchInfo = {
+  id: string
+  name: string
+  nameFr: string
+  nameEn: string
+  color: string
+}
 
 export type CenterNodeData = {
   branchByHandle: Record<string, BranchInfo | undefined>
   onUpdateBranch?: (
     branchId: string,
-    data: { name?: string; color?: string },
+    data: { nameFr?: string; nameEn?: string; color?: string },
   ) => void
   onCreateBranch?: (handleKey: string) => void
   onDeleteBranch?: (branchId: string) => void
@@ -124,17 +131,19 @@ function EditBranchPopup({
   branch: BranchInfo
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSave: (data: { name?: string; color?: string }) => void
+  onSave: (data: { nameFr?: string; nameEn?: string; color?: string }) => void
 }) {
-  const [name, setName] = useState(branch.name)
+  const [nameFr, setNameFr] = useState(branch.nameFr)
+  const [nameEn, setNameEn] = useState(branch.nameEn)
   const [color, setColor] = useState(branch.color)
 
   useEffect(() => {
     if (open) {
-      setName(branch.name)
+      setNameFr(branch.nameFr)
+      setNameEn(branch.nameEn)
       setColor(branch.color)
     }
-  }, [open, branch.name, branch.color])
+  }, [open, branch.nameFr, branch.nameEn, branch.color])
 
   return createPortal(
     <Popup open={open} onOpenChange={onOpenChange}>
@@ -146,15 +155,27 @@ function EditBranchPopup({
           <div className="flex flex-col gap-1">
             <label
               className="text-xs font-medium text-text-light"
-              htmlFor="branch-name"
+              htmlFor="branch-name-fr"
             >
-              Nom
+              Nom (français)
             </label>
-            <input
-              id="branch-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-text"
+            <Input
+              id="branch-name-fr"
+              value={nameFr}
+              onChange={(e) => setNameFr(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label
+              className="text-xs font-medium text-text-light"
+              htmlFor="branch-name-en"
+            >
+              Nom (anglais)
+            </label>
+            <Input
+              id="branch-name-en"
+              value={nameEn}
+              onChange={(e) => setNameEn(e.target.value)}
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -202,7 +223,7 @@ function EditBranchPopup({
               className="rounded bg-white px-2 py-0.5 text-xs font-semibold shadow-sm"
               style={{ color, border: `1px solid ${color}22` }}
             >
-              {name || 'Sans nom'}
+              {nameFr || nameEn || 'Sans nom'}
             </span>
           </div>
         </PopupBody>
@@ -212,9 +233,16 @@ function EditBranchPopup({
           </Button>
           <Button
             onClick={() => {
-              const updates: { name?: string; color?: string } = {}
-              if (name.trim() && name.trim() !== branch.name) {
-                updates.name = name.trim()
+              const updates: {
+                nameFr?: string
+                nameEn?: string
+                color?: string
+              } = {}
+              if (nameFr.trim() && nameFr.trim() !== branch.nameFr) {
+                updates.nameFr = nameFr.trim()
+              }
+              if (nameEn.trim() && nameEn.trim() !== branch.nameEn) {
+                updates.nameEn = nameEn.trim()
               }
               if (color !== branch.color) {
                 updates.color = color
@@ -224,7 +252,7 @@ function EditBranchPopup({
               }
               onOpenChange(false)
             }}
-            disabled={!name.trim()}
+            disabled={!nameFr.trim() || !nameEn.trim()}
           >
             Enregistrer
           </Button>
@@ -241,7 +269,10 @@ function BranchLabel({
   onDelete,
 }: {
   branch: BranchInfo
-  onUpdate?: (id: string, data: { name?: string; color?: string }) => void
+  onUpdate?: (
+    id: string,
+    data: { nameFr?: string; nameEn?: string; color?: string },
+  ) => void
   onDelete?: (id: string) => void
 }) {
   const [editOpen, setEditOpen] = useState(false)

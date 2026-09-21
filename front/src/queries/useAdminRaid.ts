@@ -29,7 +29,7 @@ export function useAdminPatchRaidBoss() {
       data,
     }: {
       element: TowerElement
-      data: { name?: string; spec?: RaidBossSpec }
+      data: { nameFr?: string; nameEn?: string; spec?: RaidBossSpec }
     }) => AdminRaidApi.patchBoss(element, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: BOSSES_KEY })

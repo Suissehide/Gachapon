@@ -15,15 +15,19 @@ function EditSetForm({
 
   const form = useAppForm({
     defaultValues: {
-      name: set.name,
-      description: set.description ?? '',
+      nameFr: set.nameFr,
+      nameEn: set.nameEn,
+      descriptionFr: set.descriptionFr ?? '',
+      descriptionEn: set.descriptionEn ?? '',
       isActive: set.isActive,
     },
     onSubmit: ({ value }) => {
       updateSet.mutate({
         id: set.id,
-        name: value.name,
-        description: value.description || undefined,
+        nameFr: value.nameFr,
+        nameEn: value.nameEn,
+        descriptionFr: value.descriptionFr || undefined,
+        descriptionEn: value.descriptionEn || undefined,
         isActive: value.isActive,
       })
       onClose()
@@ -41,11 +45,17 @@ function EditSetForm({
       <form.AppField name="isActive">
         {(f) => <f.Toggle label="Statut" options={['Actif', 'Inactif']} />}
       </form.AppField>
-      <form.AppField name="name">
-        {(f) => <f.Input label="Nom" />}
+      <form.AppField name="nameFr">
+        {(f) => <f.Input label="Nom (français)" />}
       </form.AppField>
-      <form.AppField name="description">
-        {(f) => <f.Input label="Description" />}
+      <form.AppField name="nameEn">
+        {(f) => <f.Input label="Nom (anglais)" />}
+      </form.AppField>
+      <form.AppField name="descriptionFr">
+        {(f) => <f.Input label="Description (français)" />}
+      </form.AppField>
+      <form.AppField name="descriptionEn">
+        {(f) => <f.Input label="Description (anglais)" />}
       </form.AppField>
       <Button type="submit" className="w-full">
         Sauvegarder

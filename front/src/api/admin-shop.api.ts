@@ -6,6 +6,15 @@ import { fetchWithAuth } from './fetchWithAuth.ts'
 
 export type { AdminShopItem }
 
+// `name`/`description` sont des champs calculés côté back (voir
+// localized.extension.ts) : ils ne se soumettent jamais, seules les paires
+// Fr/En existent en écriture.
+export type CreateShopItemInput = Omit<
+  AdminShopItem,
+  'id' | 'createdAt' | 'name' | 'description'
+>
+export type UpdateShopItemInput = Partial<CreateShopItemInput>
+
 export const AdminShopApi = {
   getItems: async (): Promise<{ items: AdminShopItem[] }> => {
     const res = await fetchWithAuth(`${apiUrl}${SHOP_ROUTES.admin.items}`)
@@ -15,9 +24,7 @@ export const AdminShopApi = {
     return res.json()
   },
 
-  createItem: async (
-    data: Omit<AdminShopItem, 'id' | 'createdAt'>,
-  ): Promise<unknown> => {
+  createItem: async (data: CreateShopItemInput): Promise<unknown> => {
     const res = await fetchWithAuth(`${apiUrl}${SHOP_ROUTES.admin.items}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -31,7 +38,7 @@ export const AdminShopApi = {
 
   updateItem: async (
     id: string,
-    data: Partial<AdminShopItem>,
+    data: UpdateShopItemInput,
   ): Promise<unknown> => {
     const res = await fetchWithAuth(`${apiUrl}${SHOP_ROUTES.admin.item(id)}`, {
       method: 'PATCH',

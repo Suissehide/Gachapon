@@ -48,18 +48,36 @@ export function AdminSkillTreeCanvas({ branches, onNodeSelect }: Props) {
 
   // Map branches to center handles by order (1=top, 2=right, 3=bottom, 4=left)
   const branchByHandle = useMemo(() => {
-    const map: Record<string, { id: string; name: string; color: string }> = {}
+    const map: Record<
+      string,
+      {
+        id: string
+        name: string
+        nameFr: string
+        nameEn: string
+        color: string
+      }
+    > = {}
     for (const b of branches) {
       const key = handleKeyForBranchOrder(b.order)
       if (key) {
-        map[key] = { id: b.id, name: b.name, color: b.color }
+        map[key] = {
+          id: b.id,
+          name: b.name,
+          nameFr: b.nameFr,
+          nameEn: b.nameEn,
+          color: b.color,
+        }
       }
     }
     return map
   }, [branches])
 
   const handleUpdateBranch = useCallback(
-    (branchId: string, data: { name?: string; color?: string }) => {
+    (
+      branchId: string,
+      data: { nameFr?: string; nameEn?: string; color?: string },
+    ) => {
       updateBranch.mutate({ id: branchId, data })
     },
     [updateBranch],
@@ -69,7 +87,8 @@ export function AdminSkillTreeCanvas({ branches, onNodeSelect }: Props) {
   const updateBranchRef = useRef(handleUpdateBranch)
   updateBranchRef.current = handleUpdateBranch
   const stableUpdateBranch = useCallback(
-    (id: string, data: { name?: string; color?: string }) => updateBranchRef.current(id, data),
+    (id: string, data: { nameFr?: string; nameEn?: string; color?: string }) =>
+      updateBranchRef.current(id, data),
     [],
   )
 
@@ -80,8 +99,10 @@ export function AdminSkillTreeCanvas({ branches, onNodeSelect }: Props) {
         return
       }
       createBranch.mutate({
-        name: `Branche ${order}`,
-        description: '',
+        nameFr: `Branche ${order}`,
+        nameEn: `Branch ${order}`,
+        descriptionFr: '',
+        descriptionEn: '',
         icon: 'Star',
         color: BRANCH_PALETTE[(order - 1) % BRANCH_PALETTE.length],
         order,
@@ -281,8 +302,10 @@ export function AdminSkillTreeCanvas({ branches, onNodeSelect }: Props) {
 
       if (!branch) {
         branch = await createBranch.mutateAsync({
-          name: `Branche ${order}`,
-          description: '',
+          nameFr: `Branche ${order}`,
+          nameEn: `Branch ${order}`,
+          descriptionFr: '',
+          descriptionEn: '',
           icon: 'Star',
           color: BRANCH_PALETTE[(order - 1) % BRANCH_PALETTE.length],
           order,

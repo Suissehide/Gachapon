@@ -127,7 +127,11 @@ export type UserCard = {
 export type AdminCardSet = {
   id: string
   name: string
+  nameFr: string
+  nameEn: string
   description?: string
+  descriptionFr: string | null
+  descriptionEn: string | null
   isActive: boolean
   createdAt: string
   _count: { cards: number }
@@ -136,6 +140,8 @@ export type AdminCardSet = {
 export type AdminCard = {
   id: string
   name: string
+  nameFr: string
+  nameEn: string
   imageUrl: string | null
   rarity: string
   variant?: string
