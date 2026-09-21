@@ -1,4 +1,3 @@
-import type { Quest } from '../../../../generated/client'
 import type { IocContainer } from '../../../types/application/ioc'
 import type { LocalizedQuest } from '../../../types/infra/orm/localized'
 import type {
@@ -24,16 +23,16 @@ export class QuestRepository implements IQuestRepository {
     return this.#prisma.quest.findMany({ orderBy })
   }
 
-  findById(id: string): Promise<Quest | null> {
+  findById(id: string): Promise<LocalizedQuest | null> {
     return this.#prisma.quest.findUnique({ where: { id } })
   }
 
-  create(data: CreateQuestInput): Promise<Quest> {
+  create(data: CreateQuestInput): Promise<LocalizedQuest> {
     // biome-ignore lint/suspicious/noExplicitAny: Prisma JSON field requires cast
     return this.#prisma.quest.create({ data: data as any })
   }
 
-  update(id: string, data: UpdateQuestInput): Promise<Quest> {
+  update(id: string, data: UpdateQuestInput): Promise<LocalizedQuest> {
     // biome-ignore lint/suspicious/noExplicitAny: Prisma JSON field requires cast
     return this.#prisma.quest.update({ where: { id }, data: data as any })
   }

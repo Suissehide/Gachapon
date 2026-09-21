@@ -2,16 +2,29 @@
  * QuestsDomain — orchestrates quest progress tracking and reward delivery.
  *
  * ## Quest cache
- * Active Quest rows are cached in a process-level Map keyed by periodKey with
- * a TTL of 60 s.  When the calendar week rolls over the periodKey changes and
- * the new key causes a fresh DB load.  Admin CRUD (create/update/delete Quest)
- * invalidates the cache naively through TTL expiry — changes will be visible
- * within 60 s.  If you need immediate invalidation, restart the process or add
- * an explicit `clearQuestCache()` call from the admin route.
+ * Active Quest rows are cached in a process-level Map keyed by
+ * `${locale}:${periodKey}` with a TTL of 60 s. When the calendar week rolls
+ * over the periodKey changes and the new key causes a fresh DB load. Admin
+ * CRUD (create/update/delete Quest) invalidates the cache naively through TTL
+ * expiry — changes will be visible within 60 s. If you need immediate
+ * invalidation, restart the process or add an explicit `clearQuestCache()`
+ * call from the admin route.
+ *
+ * The locale is part of the key — not an afterthought — because Prisma's
+ * `result` extension computed fields (`name`/`description`, see
+ * `localized.extension.ts`) are memoized on first read: the getter computes
+ * once per object, then the value is frozen on that instance for every
+ * subsequent access, whatever locale is active at read time. `QuestsDomain`
+ * is an Awilix singleton, so a `periodKey`-only cache would let the first
+ * request that warms an entry freeze every other player's language on it for
+ * up to 60 s — a cross-request locale leak, not a typing detail. Keying by
+ * locale means each locale gets its own cached objects, each memoized to
+ * itself.
  */
 
 import type { Prisma, Reward } from '../../../generated/client'
 import type { QuestPeriod } from '../../../generated/enums'
+import { getCurrentLocale } from '../../infra/i18n/locale-context'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
 import type {
@@ -70,7 +83,7 @@ export class QuestsDomain implements IQuestsDomain {
   readonly #userRewardRepository: UserRewardRepositoryInterface
   readonly #logger: Logger | undefined
 
-  /** Process-level cache keyed by periodKey. TTL = 60 s (see module doc). */
+  /** Process-level cache keyed by `${locale}:${periodKey}`. TTL = 60 s (see module doc). */
   readonly #cache = new Map<string, CacheEntry>()
   static readonly CACHE_TTL_MS = 60_000
 
@@ -494,10 +507,17 @@ export class QuestsDomain implements IQuestsDomain {
 
   /**
    * Loads active quests from the DB (or returns from cache).
-   * Cache key = periodKey; TTL = 60 s.
+   * Cache key = `${locale}:${periodKey}`; TTL = 60 s.
+   *
+   * Locale is part of the key, not just periodKey: the Quest rows cached
+   * here carry the computed `name`/`description` fields from
+   * `localized.extension.ts`, which memoize on first read (see the module
+   * doc). Caching by periodKey alone would let whichever locale warms an
+   * entry freeze that language on it for every locale, for up to 60 s.
    */
   async #getActiveQuestPool(periodKey: string): Promise<ActiveQuestPool> {
-    const cached = this.#cache.get(periodKey)
+    const cacheKey = `${getCurrentLocale()}:${periodKey}`
+    const cached = this.#cache.get(cacheKey)
     if (cached && Date.now() < cached.expiresAt) {
       return cached.pool
     }
@@ -518,14 +538,14 @@ export class QuestsDomain implements IQuestsDomain {
       weekly: quests.filter((q) => q.period === 'WEEKLY') as QuestWithReward[],
     }
 
-    this.#cache.set(periodKey, {
+    this.#cache.set(cacheKey, {
       pool,
       expiresAt: Date.now() + QuestsDomain.CACHE_TTL_MS,
     })
 
-    // Evict expired entries for old period keys
+    // Evict expired entries for old (locale, periodKey) pairs
     for (const [key, entry] of this.#cache) {
-      if (key !== periodKey && Date.now() >= entry.expiresAt) {
+      if (key !== cacheKey && Date.now() >= entry.expiresAt) {
         this.#cache.delete(key)
       }
     }
