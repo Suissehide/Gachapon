@@ -204,7 +204,7 @@ function CampaignPage() {
 
   return (
     <div
-      className="relative min-h-[calc(100vh-var(--topbar-h))] pb-32"
+      className="relative min-h-[calc(100vh-var(--topbar-h))]"
       style={{ background: '#fbf8f3', color: '#1b1726' }}
     >
       {/* Fond partagé « Arcade clair » (halos + grille) — cf. /collection */}
