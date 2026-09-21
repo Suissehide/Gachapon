@@ -12,15 +12,20 @@
 //   For each route declared in `seo-routes.mjs`, it writes
 //   `dist/<route>/index.html` (or overwrites `dist/index.html` for `/`) with
 //   the right <title>, description, canonical, and OpenGraph tags rewritten
-//   into the static HTML. Asset references are kept absolute so they still
-//   resolve from any URL depth.
+//   into the static HTML, plus a `#seo-static` body block carrying the page's
+//   real copy and the links to the other public routes. It also emits
+//   `dist/sitemap.xml` from the same source.
+//
+// Why the body block matters as much as the meta tags:
+//   Without it nginx serves a <body> that contains nothing but an empty
+//   #root — no text to judge, and no <a href> at all, so Search Console
+//   reports zero internal links and treats every URL as an orphan.
 //
 // What it doesn't do:
 //   It does NOT execute the React app. We don't want a headless browser in
-//   the build pipeline. Per-route body content still hydrates client-side —
-//   only the metadata is pre-baked. That's enough for Google to:
-//     (1) see distinct titles/descriptions for each URL (no more dedup),
-//     (2) compute a meaningful first-byte signal for ranking.
+//   the build pipeline. The real page still hydrates client-side, and
+//   `src/main.tsx` drops #seo-static on mount — the static copy is a
+//   crawler-facing stand-in, never a second rendering of the app.
 //
 // Usage:
 //   `npm run build` (wired via the `postbuild` hook in package.json).
@@ -58,6 +63,45 @@ const ROOT_DIV = '<div id="root"></div>'
 const STATIC_BLOCK_RE = /<div id="seo-static"[\s\S]*?<\/div><!--\/seo-static-->/
 
 /**
+ * Liens vers les autres routes publiques.
+ *
+ * La navigation de l'app est rendue par React : sans ces ancres, le HTML servi
+ * ne contient aucun <a href> et Google n'a aucun chemin d'une page à l'autre.
+ * La route courante est omise — un lien vers soi-même n'apporte rien.
+ */
+function renderNav(currentPath) {
+  const links = SEO_ROUTES.filter((r) => r.path !== currentPath)
+    .map(
+      (r) =>
+        `<a href="${r.path}" style="color:inherit">${escapeHtml(r.navLabel)}</a>`,
+    )
+    .join(' · ')
+
+  return (
+    '<nav aria-label="Pages du site" style="margin-top:3rem;padding-top:1.5rem;border-top:1px solid rgba(128,128,128,.25);font-size:.9rem;opacity:.75">' +
+    links +
+    '</nav>'
+  )
+}
+
+function renderSection(section) {
+  const heading = `<h2 style="font-size:1.05rem;margin:1.75rem 0 .5rem">${escapeHtml(section.h)}</h2>`
+
+  if (section.items) {
+    return (
+      heading +
+      '<ul style="margin:0;padding-left:1.25rem;opacity:.8">' +
+      section.items
+        .map((item) => `<li style="margin:.2rem 0">${escapeHtml(item)}</li>`)
+        .join('') +
+      '</ul>'
+    )
+  }
+
+  return `${heading}<p style="margin:0;opacity:.8">${escapeHtml(section.p)}</p>`
+}
+
+/**
  * Contenu lisible sans exécuter le JS.
  *
  * Émis en frère de #root, jamais dedans : `src/main.tsx` ne monte l'app que si
@@ -66,7 +110,11 @@ const STATIC_BLOCK_RE = /<div id="seo-static"[\s\S]*?<\/div><!--\/seo-static-->/
  * Volontairement pas `hidden` — Google dévalue le texte masqué. D'où les
  * styles inline : le bloc reste visible le temps que le JS démarre.
  */
-function renderStaticBlock(block) {
+function renderStaticBlock(route) {
+  const block = route.staticBlock
+
+  const sections = (block.sections ?? []).map(renderSection).join('')
+
   const faq = block.faq
     ? FAQ_ITEMS.map(
         (item) =>
@@ -75,11 +123,15 @@ function renderStaticBlock(block) {
       ).join('')
     : ''
 
+  const nav = block.nav === false ? '' : renderNav(route.path)
+
   return (
     '<div id="seo-static" style="max-width:44rem;margin:0 auto;padding:4rem 1.5rem;line-height:1.6">' +
     `<h1 style="font-size:2rem;margin:0 0 1rem">${escapeHtml(block.heading)}</h1>` +
     `<p style="margin:0 0 2rem;opacity:.8">${escapeHtml(block.lead)}</p>` +
+    sections +
     faq +
+    nav +
     '</div><!--/seo-static-->'
   )
 }
@@ -140,10 +192,50 @@ function patchHtml(template, route) {
   // Retiré d'abord pour rester idempotent sur un HTML déjà patché.
   html = html.replace(STATIC_BLOCK_RE, '')
   if (route.staticBlock) {
-    html = html.replace(ROOT_DIV, renderStaticBlock(route.staticBlock) + ROOT_DIV)
+    html = html.replace(ROOT_DIV, renderStaticBlock(route) + ROOT_DIV)
   }
 
   return html
+}
+
+/**
+ * dist/sitemap.xml, dérivé de SEO_ROUTES.
+ *
+ * Généré plutôt que versionné dans public/ : la liste des routes existait en
+ * double et le sitemap prenait du retard à chaque ajout.
+ *
+ * `lastmod` vaut la date du build. C'est la seule date honnête dont on
+ * dispose ici : l'image de prod ne reçoit pas le .git (voir deploy/Dockerfile),
+ * et un déploiement republie de toute façon l'intégralité du bundle.
+ */
+async function writeSitemap() {
+  const lastmod = new Date().toISOString().slice(0, 10)
+
+  const urls = SEO_ROUTES.map((route) => {
+    const { changefreq, priority } = route.sitemap
+    return [
+      '  <url>',
+      `    <loc>${SITE_ORIGIN}${route.path}</loc>`,
+      `    <lastmod>${lastmod}</lastmod>`,
+      `    <changefreq>${changefreq}</changefreq>`,
+      `    <priority>${priority}</priority>`,
+      '  </url>',
+    ].join('\n')
+  }).join('\n')
+
+  const xml = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    urls,
+    '</urlset>',
+    '',
+  ].join('\n')
+
+  const target = path.join(DIST_DIR, 'sitemap.xml')
+  await fs.writeFile(target, xml, 'utf8')
+  console.log(
+    `[prerender-seo] sitemap     → ${path.relative(process.cwd(), target)} (${SEO_ROUTES.length} URL, lastmod ${lastmod})`,
+  )
 }
 
 async function main() {
@@ -180,6 +272,8 @@ async function main() {
       `[prerender-seo] ${route.path.padEnd(12)} → ${path.relative(process.cwd(), target)}`,
     )
   }
+
+  await writeSitemap()
 
   console.log(`[prerender-seo] ${written} route(s) prerendered.`)
 }
