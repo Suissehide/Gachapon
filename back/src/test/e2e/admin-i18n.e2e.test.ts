@@ -98,4 +98,63 @@ describe('administration bilingue', () => {
     expect(res.statusCode).toBe(200)
     expect(Array.isArray(res.json().entries)).toBe(true)
   })
+
+  it("détecte un trou de traduction dans les deux sens, mais pas le contenu légitimement vide des deux côtés", async () => {
+    const prisma = app.iocContainer.postgresOrm.prisma
+
+    // L'API admin impose les deux langues à la création (voir plus haut) :
+    // un déséquilibre ne peut naître que d'une donnée insérée hors API
+    // (legacy, script) — d'où l'écriture directe en base ici, exactement le
+    // scénario que la route sert à détecter après déploiement.
+    const missingEnglish = await prisma.cardSet.create({
+      data: { nameFr: `Sans anglais ${suffix}`, nameEn: '', isActive: false },
+    })
+    const missingFrench = await prisma.cardSet.create({
+      data: { nameFr: '', nameEn: `Missing french ${suffix}`, isActive: false },
+    })
+    // Les deux langues sont pleines pour le nom ; la description, elle,
+    // n'a jamais été renseignée ni en français ni en anglais — état normal
+    // d'un champ facultatif, pas un trou de traduction.
+    const legitimatelyEmpty = await prisma.cardSet.create({
+      data: {
+        nameFr: `Complet ${suffix}`,
+        nameEn: `Complete ${suffix}`,
+        isActive: false,
+      },
+    })
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/admin/translations/missing',
+      headers: { cookie },
+    })
+    expect(res.statusCode).toBe(200)
+    const entries = res.json().entries as {
+      entity: string
+      id: string
+      field: string
+      missingLocale: 'FR' | 'EN'
+      value: string
+    }[]
+
+    const englishGap = entries.find(
+      (e) => e.entity === 'cardSet' && e.id === missingEnglish.id,
+    )
+    expect(englishGap).toMatchObject({
+      field: 'name',
+      missingLocale: 'EN',
+      value: `Sans anglais ${suffix}`,
+    })
+
+    const frenchGap = entries.find(
+      (e) => e.entity === 'cardSet' && e.id === missingFrench.id,
+    )
+    expect(frenchGap).toMatchObject({
+      field: 'name',
+      missingLocale: 'FR',
+      value: `Missing french ${suffix}`,
+    })
+
+    expect(entries.some((e) => e.id === legitimatelyEmpty.id)).toBe(false)
+  })
 })

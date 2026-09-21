@@ -5,14 +5,36 @@ import type {
 } from '../../../types/infra/orm/repositories/admin-translations.repository.interface'
 import type { PostgresPrismaClient } from '../postgres-client'
 
+/**
+ * Décide quelle langue manque à partir d'une paire dont on sait déjà
+ * (par construction du `where` de l'appelant) qu'exactement une des deux
+ * est vide. `null` et `''` comptent tous les deux comme vide, pour couvrir
+ * aussi bien les colonnes facultatives (`String?`, peuvent être `null`)
+ * que les colonnes obligatoires (`String`, ne peuvent être que `''`).
+ */
+function pickMissingSide(
+  fr: string | null,
+  en: string | null,
+): { missingLocale: 'FR' | 'EN'; value: string } {
+  const frEmpty = fr === null || fr === ''
+  return frEmpty
+    ? { missingLocale: 'FR', value: en ?? '' }
+    : { missingLocale: 'EN', value: fr ?? '' }
+}
+
 function collect(
   entries: MissingTranslationEntry[],
   entity: string,
   field: string,
-  rows: { id: string; valueFr: string }[],
+  rows: { id: string; fr: string | null; en: string | null }[],
 ): void {
   for (const row of rows) {
-    entries.push({ entity, id: row.id, field, valueFr: row.valueFr })
+    entries.push({
+      entity,
+      id: row.id,
+      field,
+      ...pickMissingSide(row.fr, row.en),
+    })
   }
 }
 
@@ -28,8 +50,9 @@ export class AdminTranslationsRepository
   async findMissingTranslations(): Promise<MissingTranslationEntry[]> {
     const entries: MissingTranslationEntry[] = []
 
-    // Colonnes obligatoires (String, jamais NULL) : une colonne anglaise
-    // vide est déjà une anomalie, il suffit de la chercher.
+    // Colonnes obligatoires (String, jamais NULL) : seule '' compte comme
+    // vide. Une paire déséquilibrée — une langue pleine, l'autre '' — est
+    // en soi une anomalie (l'API l'interdit), quel que soit le sens.
     const [
       quests,
       questsDesc,
@@ -49,207 +72,334 @@ export class AdminTranslationsRepository
       raidBosses,
     ] = await Promise.all([
       this.#prisma.quest.findMany({
-        where: { nameEn: '' },
-        select: { id: true, nameFr: true },
+        where: {
+          OR: [
+            { AND: [{ nameFr: { not: '' } }, { nameEn: '' }] },
+            { AND: [{ nameEn: { not: '' } }, { nameFr: '' }] },
+          ],
+        },
+        select: { id: true, nameFr: true, nameEn: true },
       }),
       this.#prisma.quest.findMany({
-        where: { descriptionEn: '' },
-        select: { id: true, descriptionFr: true },
+        where: {
+          OR: [
+            { AND: [{ descriptionFr: { not: '' } }, { descriptionEn: '' }] },
+            { AND: [{ descriptionEn: { not: '' } }, { descriptionFr: '' }] },
+          ],
+        },
+        select: { id: true, descriptionFr: true, descriptionEn: true },
       }),
       this.#prisma.cardSet.findMany({
-        where: { nameEn: '' },
-        select: { id: true, nameFr: true },
+        where: {
+          OR: [
+            { AND: [{ nameFr: { not: '' } }, { nameEn: '' }] },
+            { AND: [{ nameEn: { not: '' } }, { nameFr: '' }] },
+          ],
+        },
+        select: { id: true, nameFr: true, nameEn: true },
       }),
       this.#prisma.card.findMany({
-        where: { nameEn: '' },
-        select: { id: true, nameFr: true },
+        where: {
+          OR: [
+            { AND: [{ nameFr: { not: '' } }, { nameEn: '' }] },
+            { AND: [{ nameEn: { not: '' } }, { nameFr: '' }] },
+          ],
+        },
+        select: { id: true, nameFr: true, nameEn: true },
       }),
       this.#prisma.equipment.findMany({
-        where: { nameEn: '' },
-        select: { id: true, nameFr: true },
+        where: {
+          OR: [
+            { AND: [{ nameFr: { not: '' } }, { nameEn: '' }] },
+            { AND: [{ nameEn: { not: '' } }, { nameFr: '' }] },
+          ],
+        },
+        select: { id: true, nameFr: true, nameEn: true },
       }),
       this.#prisma.shopItem.findMany({
-        where: { nameEn: '' },
-        select: { id: true, nameFr: true },
+        where: {
+          OR: [
+            { AND: [{ nameFr: { not: '' } }, { nameEn: '' }] },
+            { AND: [{ nameEn: { not: '' } }, { nameFr: '' }] },
+          ],
+        },
+        select: { id: true, nameFr: true, nameEn: true },
       }),
       this.#prisma.shopItem.findMany({
-        where: { descriptionEn: '' },
-        select: { id: true, descriptionFr: true },
+        where: {
+          OR: [
+            { AND: [{ descriptionFr: { not: '' } }, { descriptionEn: '' }] },
+            { AND: [{ descriptionEn: { not: '' } }, { descriptionFr: '' }] },
+          ],
+        },
+        select: { id: true, descriptionFr: true, descriptionEn: true },
       }),
       this.#prisma.achievement.findMany({
-        where: { nameEn: '' },
-        select: { id: true, nameFr: true },
+        where: {
+          OR: [
+            { AND: [{ nameFr: { not: '' } }, { nameEn: '' }] },
+            { AND: [{ nameEn: { not: '' } }, { nameFr: '' }] },
+          ],
+        },
+        select: { id: true, nameFr: true, nameEn: true },
       }),
       this.#prisma.achievement.findMany({
-        where: { descriptionEn: '' },
-        select: { id: true, descriptionFr: true },
+        where: {
+          OR: [
+            { AND: [{ descriptionFr: { not: '' } }, { descriptionEn: '' }] },
+            { AND: [{ descriptionEn: { not: '' } }, { descriptionFr: '' }] },
+          ],
+        },
+        select: { id: true, descriptionFr: true, descriptionEn: true },
       }),
       this.#prisma.skillBranch.findMany({
-        where: { nameEn: '' },
-        select: { id: true, nameFr: true },
+        where: {
+          OR: [
+            { AND: [{ nameFr: { not: '' } }, { nameEn: '' }] },
+            { AND: [{ nameEn: { not: '' } }, { nameFr: '' }] },
+          ],
+        },
+        select: { id: true, nameFr: true, nameEn: true },
       }),
       this.#prisma.skillBranch.findMany({
-        where: { descriptionEn: '' },
-        select: { id: true, descriptionFr: true },
+        where: {
+          OR: [
+            { AND: [{ descriptionFr: { not: '' } }, { descriptionEn: '' }] },
+            { AND: [{ descriptionEn: { not: '' } }, { descriptionFr: '' }] },
+          ],
+        },
+        select: { id: true, descriptionFr: true, descriptionEn: true },
       }),
       this.#prisma.skillNode.findMany({
-        where: { nameEn: '' },
-        select: { id: true, nameFr: true },
+        where: {
+          OR: [
+            { AND: [{ nameFr: { not: '' } }, { nameEn: '' }] },
+            { AND: [{ nameEn: { not: '' } }, { nameFr: '' }] },
+          ],
+        },
+        select: { id: true, nameFr: true, nameEn: true },
       }),
       this.#prisma.skillNode.findMany({
-        where: { descriptionEn: '' },
-        select: { id: true, descriptionFr: true },
+        where: {
+          OR: [
+            { AND: [{ descriptionFr: { not: '' } }, { descriptionEn: '' }] },
+            { AND: [{ descriptionEn: { not: '' } }, { descriptionFr: '' }] },
+          ],
+        },
+        select: { id: true, descriptionFr: true, descriptionEn: true },
       }),
       this.#prisma.campaignStage.findMany({
-        where: { labelEn: '' },
-        select: { id: true, labelFr: true },
+        where: {
+          OR: [
+            { AND: [{ labelFr: { not: '' } }, { labelEn: '' }] },
+            { AND: [{ labelEn: { not: '' } }, { labelFr: '' }] },
+          ],
+        },
+        select: { id: true, labelFr: true, labelEn: true },
       }),
       this.#prisma.towerFloor.findMany({
-        where: { labelEn: '' },
-        select: { id: true, labelFr: true },
+        where: {
+          OR: [
+            { AND: [{ labelFr: { not: '' } }, { labelEn: '' }] },
+            { AND: [{ labelEn: { not: '' } }, { labelFr: '' }] },
+          ],
+        },
+        select: { id: true, labelFr: true, labelEn: true },
       }),
       this.#prisma.raidBoss.findMany({
-        where: { nameEn: '' },
-        select: { id: true, nameFr: true },
+        where: {
+          OR: [
+            { AND: [{ nameFr: { not: '' } }, { nameEn: '' }] },
+            { AND: [{ nameEn: { not: '' } }, { nameFr: '' }] },
+          ],
+        },
+        select: { id: true, nameFr: true, nameEn: true },
       }),
     ])
 
     collect(
       entries,
       'quest',
-      'nameEn',
-      quests.map((r) => ({ id: r.id, valueFr: r.nameFr })),
+      'name',
+      quests.map((r) => ({ id: r.id, fr: r.nameFr, en: r.nameEn })),
     )
     collect(
       entries,
       'quest',
-      'descriptionEn',
-      questsDesc.map((r) => ({ id: r.id, valueFr: r.descriptionFr })),
+      'description',
+      questsDesc.map((r) => ({
+        id: r.id,
+        fr: r.descriptionFr,
+        en: r.descriptionEn,
+      })),
     )
     collect(
       entries,
       'cardSet',
-      'nameEn',
-      sets.map((r) => ({ id: r.id, valueFr: r.nameFr })),
+      'name',
+      sets.map((r) => ({ id: r.id, fr: r.nameFr, en: r.nameEn })),
     )
     collect(
       entries,
       'card',
-      'nameEn',
-      cards.map((r) => ({ id: r.id, valueFr: r.nameFr })),
+      'name',
+      cards.map((r) => ({ id: r.id, fr: r.nameFr, en: r.nameEn })),
     )
     collect(
       entries,
       'equipment',
-      'nameEn',
-      equipments.map((r) => ({ id: r.id, valueFr: r.nameFr })),
+      'name',
+      equipments.map((r) => ({ id: r.id, fr: r.nameFr, en: r.nameEn })),
     )
     collect(
       entries,
       'shopItem',
-      'nameEn',
-      shopItems.map((r) => ({ id: r.id, valueFr: r.nameFr })),
+      'name',
+      shopItems.map((r) => ({ id: r.id, fr: r.nameFr, en: r.nameEn })),
     )
     collect(
       entries,
       'shopItem',
-      'descriptionEn',
-      shopItemsDesc.map((r) => ({ id: r.id, valueFr: r.descriptionFr })),
+      'description',
+      shopItemsDesc.map((r) => ({
+        id: r.id,
+        fr: r.descriptionFr,
+        en: r.descriptionEn,
+      })),
     )
     collect(
       entries,
       'achievement',
-      'nameEn',
-      achievements.map((r) => ({ id: r.id, valueFr: r.nameFr })),
+      'name',
+      achievements.map((r) => ({ id: r.id, fr: r.nameFr, en: r.nameEn })),
     )
     collect(
       entries,
       'achievement',
-      'descriptionEn',
-      achievementsDesc.map((r) => ({ id: r.id, valueFr: r.descriptionFr })),
+      'description',
+      achievementsDesc.map((r) => ({
+        id: r.id,
+        fr: r.descriptionFr,
+        en: r.descriptionEn,
+      })),
     )
     collect(
       entries,
       'skillBranch',
-      'nameEn',
-      skillBranches.map((r) => ({ id: r.id, valueFr: r.nameFr })),
+      'name',
+      skillBranches.map((r) => ({ id: r.id, fr: r.nameFr, en: r.nameEn })),
     )
     collect(
       entries,
       'skillBranch',
-      'descriptionEn',
-      skillBranchesDesc.map((r) => ({ id: r.id, valueFr: r.descriptionFr })),
+      'description',
+      skillBranchesDesc.map((r) => ({
+        id: r.id,
+        fr: r.descriptionFr,
+        en: r.descriptionEn,
+      })),
     )
     collect(
       entries,
       'skillNode',
-      'nameEn',
-      skillNodes.map((r) => ({ id: r.id, valueFr: r.nameFr })),
+      'name',
+      skillNodes.map((r) => ({ id: r.id, fr: r.nameFr, en: r.nameEn })),
     )
     collect(
       entries,
       'skillNode',
-      'descriptionEn',
-      skillNodesDesc.map((r) => ({ id: r.id, valueFr: r.descriptionFr })),
+      'description',
+      skillNodesDesc.map((r) => ({
+        id: r.id,
+        fr: r.descriptionFr,
+        en: r.descriptionEn,
+      })),
     )
     collect(
       entries,
       'campaignStage',
-      'labelEn',
-      campaignStages.map((r) => ({ id: r.id, valueFr: r.labelFr })),
+      'label',
+      campaignStages.map((r) => ({ id: r.id, fr: r.labelFr, en: r.labelEn })),
     )
     collect(
       entries,
       'towerFloor',
-      'labelEn',
-      towerFloors.map((r) => ({ id: r.id, valueFr: r.labelFr })),
+      'label',
+      towerFloors.map((r) => ({ id: r.id, fr: r.labelFr, en: r.labelEn })),
     )
     collect(
       entries,
       'raidBoss',
-      'nameEn',
-      raidBosses.map((r) => ({ id: r.id, valueFr: r.nameFr })),
+      'name',
+      raidBosses.map((r) => ({ id: r.id, fr: r.nameFr, en: r.nameEn })),
     )
 
-    // Colonnes facultatives (String?) : une colonne anglaise vide n'est une
-    // anomalie QUE si le français porte du contenu — sinon un set sans
-    // description (état normal, le champ est optionnel) remonterait ici à
-    // chaque appel.
-    const setsMissingDescription = await this.#prisma.cardSet.findMany({
+    // Colonnes facultatives (String?) : `null` compte comme vide au même
+    // titre que `''`. Une paire dont les DEUX langues sont vides (jamais
+    // renseignées) est un état normal — le filtre exige explicitement
+    // qu'un côté porte du contenu, dans un sens comme dans l'autre.
+    const setsUnbalancedDescription = await this.#prisma.cardSet.findMany({
       where: {
-        AND: [
-          { descriptionFr: { not: null } },
-          { descriptionFr: { not: '' } },
-          { OR: [{ descriptionEn: null }, { descriptionEn: '' }] },
+        OR: [
+          {
+            AND: [
+              { descriptionFr: { not: null } },
+              { descriptionFr: { not: '' } },
+              { OR: [{ descriptionEn: null }, { descriptionEn: '' }] },
+            ],
+          },
+          {
+            AND: [
+              { descriptionEn: { not: null } },
+              { descriptionEn: { not: '' } },
+              { OR: [{ descriptionFr: null }, { descriptionFr: '' }] },
+            ],
+          },
         ],
       },
-      select: { id: true, descriptionFr: true },
+      select: { id: true, descriptionFr: true, descriptionEn: true },
     })
     collect(
       entries,
       'cardSet',
-      'descriptionEn',
-      setsMissingDescription.map((r) => ({
+      'description',
+      setsUnbalancedDescription.map((r) => ({
         id: r.id,
-        valueFr: r.descriptionFr ?? '',
+        fr: r.descriptionFr,
+        en: r.descriptionEn,
       })),
     )
 
-    const rewardsMissingLabel = await this.#prisma.reward.findMany({
+    const rewardsUnbalancedLabel = await this.#prisma.reward.findMany({
       where: {
-        AND: [
-          { labelFr: { not: null } },
-          { labelFr: { not: '' } },
-          { OR: [{ labelEn: null }, { labelEn: '' }] },
+        OR: [
+          {
+            AND: [
+              { labelFr: { not: null } },
+              { labelFr: { not: '' } },
+              { OR: [{ labelEn: null }, { labelEn: '' }] },
+            ],
+          },
+          {
+            AND: [
+              { labelEn: { not: null } },
+              { labelEn: { not: '' } },
+              { OR: [{ labelFr: null }, { labelFr: '' }] },
+            ],
+          },
         ],
       },
-      select: { id: true, labelFr: true },
+      select: { id: true, labelFr: true, labelEn: true },
     })
     collect(
       entries,
       'reward',
-      'labelEn',
-      rewardsMissingLabel.map((r) => ({ id: r.id, valueFr: r.labelFr ?? '' })),
+      'label',
+      rewardsUnbalancedLabel.map((r) => ({
+        id: r.id,
+        fr: r.labelFr,
+        en: r.labelEn,
+      })),
     )
 
     return entries
