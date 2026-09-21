@@ -39,4 +39,20 @@ describe('négociation de la langue', () => {
     expect(parseLocale('de')).toBeNull()
     expect(parseLocale(undefined)).toBeNull()
   })
+
+  // Deuxième ligne de défense : la signature déclare `string | undefined`,
+  // mais les types s'effacent à l'exécution. Un paramètre de querystring
+  // répété (`?lang=fr&lang=en`) arrive côté Fastify comme un tableau — le
+  // hook `onRequest` de `locale.plugin.ts` filtre déjà ce cas avant
+  // d'appeler `parseLocale`, mais cette fonction est exportée et pourrait
+  // être appelée ailleurs sans cette garde. Elle ne doit jamais lever, quel
+  // que soit ce qu'on lui passe.
+  it('ne lève pas sur une entrée non-string — traitée comme absente', () => {
+    // biome-ignore lint/suspicious/noExplicitAny: simule un appelant qui ne passe pas par le typage TS
+    expect(parseLocale(['fr', 'en'] as any)).toBeNull()
+    // biome-ignore lint/suspicious/noExplicitAny: idem
+    expect(parseLocale(42 as any)).toBeNull()
+    // biome-ignore lint/suspicious/noExplicitAny: idem
+    expect(parseLocale(null as any)).toBeNull()
+  })
 })

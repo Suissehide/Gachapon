@@ -10,7 +10,17 @@ export const SUPPORTED_LOCALES: readonly Locale[] = ['FR', 'EN'] as const
 export const DEFAULT_LOCALE: Locale = 'EN'
 
 export function parseLocale(value: string | undefined): Locale | null {
-  if (!value) {
+  // Deuxième ligne de défense, pas une garde principale : la signature dit
+  // `string | undefined`, donc c'est l'appelant qui est en faute s'il passe
+  // autre chose (voir locale.plugin.ts pour la garde qui doit réellement
+  // filtrer). Mais les types TS s'effacent à l'exécution — un paramètre de
+  // querystring répété (`?lang=fr&lang=en`) arrive par exemple comme un
+  // tableau — et cette fonction est exportée depuis `infra/i18n`, donc
+  // appelable par du code futur qui n'aura pas forcément cette garde.
+  // `typeof` coûte une comparaison et évite un crash sur `.trim()` pour
+  // n'importe quelle entrée non-string, silencieusement traitée comme
+  // absente plutôt que de lever.
+  if (typeof value !== 'string' || !value) {
     return null
   }
   const upper = value.trim().toUpperCase()

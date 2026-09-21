@@ -22,8 +22,19 @@ const localePlugin: FastifyPluginAsync = fastifyPlugin(
     fastify.log.trace('Registering locale plugin')
 
     fastify.addHook('onRequest', (request) => {
-      const query = request.query as { lang?: string } | undefined
-      const explicit = parseLocale(query?.lang)
+      // `request.query` n'est pas fiable au type : le parseur de
+      // querystring de Fastify renvoie un tableau pour un paramètre répété
+      // (`?lang=fr&lang=en` → `{ lang: ['fr', 'en'] }`). Une simple
+      // assertion `as { lang?: string }` laissait passer ce tableau
+      // jusqu'à `parseLocale`, qui plantait sur `value.trim`. Un `lang`
+      // répété doit être traité comme absent — pas rejeté, pas résolu
+      // arbitrairement — donc on ne le retient que s'il s'agit bien d'une
+      // string.
+      const query = request.query as Record<string, unknown> | undefined
+      const rawLang = query?.lang
+      const explicit = parseLocale(
+        typeof rawLang === 'string' ? rawLang : undefined,
+      )
       const locale =
         explicit ?? resolveLocaleFromHeader(request.headers['accept-language'])
       enterLocale(locale)

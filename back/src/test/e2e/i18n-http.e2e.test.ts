@@ -105,4 +105,20 @@ describe('locale de la requête HTTP', () => {
     )
     expect(names).toContain('Créatures des profondeurs')
   })
+
+  // Régression : le parseur de querystring de Fastify renvoie un tableau
+  // pour un paramètre répété (`?lang=fr&lang=en` → `{ lang: ['fr', 'en'] }`).
+  // Une assertion de type sans garde d'exécution laissait ce tableau
+  // atteindre `parseLocale`, qui plantait sur `value.trim` — 500 sur
+  // n'importe quelle route, sans authentification. Un `lang` répété doit
+  // être traité comme absent : 200, et la langue servie est celle de
+  // l'en-tête `Accept-Language`, pas une valeur prise arbitrairement dans
+  // le tableau.
+  it('ne plante pas sur un ?lang répété — retombe sur l’en-tête', async () => {
+    const names = await questNames(
+      { 'accept-language': 'fr-FR,fr;q=0.9' },
+      '/quests?lang=fr&lang=en',
+    )
+    expect(names).toContain('Créatures des profondeurs')
+  })
 })
