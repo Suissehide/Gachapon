@@ -17,8 +17,10 @@ export async function seedSkills(tx: Tx) {
 
   const flux = await tx.skillBranch.create({
     data: {
-      name: 'Flux',
-      description: 'Tickets & Énergie',
+      nameFr: 'Flux',
+      nameEn: 'Flux',
+      descriptionFr: 'Tickets & Énergie',
+      descriptionEn: 'Tickets & Énergie',
       icon: 'Zap',
       color: '#6c47ff',
       order: 1,
@@ -26,8 +28,10 @@ export async function seedSkills(tx: Tx) {
   })
   const fortune = await tx.skillBranch.create({
     data: {
-      name: 'Fortune',
-      description: 'Gacha & Chance',
+      nameFr: 'Fortune',
+      nameEn: 'Fortune',
+      descriptionFr: 'Gacha & Chance',
+      descriptionEn: 'Gacha & Chance',
       icon: 'Sparkles',
       color: '#f59e0b',
       order: 2,
@@ -35,8 +39,10 @@ export async function seedSkills(tx: Tx) {
   })
   const collection = await tx.skillBranch.create({
     data: {
-      name: 'Collection',
-      description: 'Dust & Boutique',
+      nameFr: 'Collection',
+      nameEn: 'Collection',
+      descriptionFr: 'Dust & Boutique',
+      descriptionEn: 'Dust & Boutique',
       icon: 'Gem',
       color: '#10b981',
       order: 3,
@@ -44,8 +50,10 @@ export async function seedSkills(tx: Tx) {
   })
   const combat = await tx.skillBranch.create({
     data: {
-      name: 'Combat',
-      description: 'Énergie & Butin',
+      nameFr: 'Combat',
+      nameEn: 'Combat',
+      descriptionFr: 'Énergie & Butin',
+      descriptionEn: 'Énergie & Butin',
       icon: 'Swords',
       color: '#ef4444',
       order: 4,
@@ -72,8 +80,10 @@ export async function seedSkills(tx: Tx) {
   const regen = await tx.skillNode.create({
     data: {
       branchId: flux.id,
-      name: 'Régénération',
-      description: 'Réduit le délai de régénération des jetons',
+      nameFr: 'Régénération',
+      nameEn: 'Régénération',
+      descriptionFr: 'Réduit le délai de régénération des jetons',
+      descriptionEn: 'Réduit le délai de régénération des jetons',
       icon: 'Timer',
       maxLevel: 5,
       effectType: 'REGEN',
@@ -96,8 +106,10 @@ export async function seedSkills(tx: Tx) {
   const stockage = await tx.skillNode.create({
     data: {
       branchId: flux.id,
-      name: 'Stockage',
-      description: 'Augmente le stockage max de jetons',
+      nameFr: 'Stockage',
+      nameEn: 'Stockage',
+      descriptionFr: 'Augmente le stockage max de jetons',
+      descriptionEn: 'Augmente le stockage max de jetons',
       icon: 'Database',
       maxLevel: 6,
       effectType: 'TOKEN_VAULT',
@@ -121,8 +133,10 @@ export async function seedSkills(tx: Tx) {
   const multiToken = await tx.skillNode.create({
     data: {
       branchId: flux.id,
-      name: 'Multi-jetons',
-      description: 'Chance de recevoir plusieurs jetons à la fois',
+      nameFr: 'Multi-jetons',
+      nameEn: 'Multi-jetons',
+      descriptionFr: 'Chance de recevoir plusieurs jetons à la fois',
+      descriptionEn: 'Chance de recevoir plusieurs jetons à la fois',
       icon: 'Layers',
       maxLevel: 5,
       effectType: 'MULTI_TOKEN_CHANCE',
@@ -144,8 +158,10 @@ export async function seedSkills(tx: Tx) {
   const tirageGratuitFlux = await tx.skillNode.create({
     data: {
       branchId: flux.id,
-      name: 'Tirage gratuit',
-      description: 'Chance de tirer sans consommer de jeton',
+      nameFr: 'Tirage gratuit',
+      nameEn: 'Tirage gratuit',
+      descriptionFr: 'Chance de tirer sans consommer de jeton',
+      descriptionEn: 'Chance de tirer sans consommer de jeton',
       icon: 'Gift',
       maxLevel: 5,
       effectType: 'FREE_PULL_CHANCE',
@@ -165,8 +181,11 @@ export async function seedSkills(tx: Tx) {
   const tropPlein = await tx.skillNode.create({
     data: {
       branchId: flux.id,
-      name: 'Trop-plein',
-      description:
+      nameFr: 'Trop-plein',
+      nameEn: 'Trop-plein',
+      descriptionFr:
+        'Les jetons régénérés au-delà du plafond reviennent en poussière',
+      descriptionEn:
         'Les jetons régénérés au-delà du plafond reviennent en poussière',
       icon: 'Droplets',
       maxLevel: 3,
@@ -189,8 +208,10 @@ export async function seedSkills(tx: Tx) {
   const ferveur = await tx.skillNode.create({
     data: {
       branchId: flux.id,
-      name: 'Ferveur',
-      description: "Bonus d'XP par tirage",
+      nameFr: 'Ferveur',
+      nameEn: 'Ferveur',
+      descriptionFr: "Bonus d'XP par tirage",
+      descriptionEn: "Bonus d'XP par tirage",
       icon: 'BookOpen',
       maxLevel: 4,
       effectType: 'PULL_XP_BONUS',
@@ -264,8 +285,11 @@ export async function seedSkills(tx: Tx) {
   const luck = await tx.skillNode.create({
     data: {
       branchId: fortune.id,
-      name: 'Chance',
-      description:
+      nameFr: 'Chance',
+      nameEn: 'Chance',
+      descriptionFr:
+        "Multiplie les chances de tirer une carte Rare ou mieux (jusqu'à ×1,12)",
+      descriptionEn:
         "Multiplie les chances de tirer une carte Rare ou mieux (jusqu'à ×1,12)",
       icon: 'Star',
       maxLevel: 5,
@@ -289,8 +313,10 @@ export async function seedSkills(tx: Tx) {
   const bouleDor = await tx.skillNode.create({
     data: {
       branchId: fortune.id,
-      name: "Boule d'or",
-      description: "Chance d'obtenir une boule en or",
+      nameFr: "Boule d'or",
+      nameEn: "Boule d'or",
+      descriptionFr: "Chance d'obtenir une boule en or",
+      descriptionEn: "Chance d'obtenir une boule en or",
       icon: 'Trophy',
       maxLevel: 4,
       effectType: 'GOLDEN_BALL_CHANCE',
@@ -309,8 +335,11 @@ export async function seedSkills(tx: Tx) {
   const voeuExauce = await tx.skillNode.create({
     data: {
       branchId: fortune.id,
-      name: 'Vœu exaucé',
-      description:
+      nameFr: 'Vœu exaucé',
+      nameEn: 'Vœu exaucé',
+      descriptionFr:
+        "Chance qu'un tirage donne une carte souhaitée de même rareté",
+      descriptionEn:
         "Chance qu'un tirage donne une carte souhaitée de même rareté",
       icon: 'Star',
       maxLevel: 4,
@@ -336,8 +365,11 @@ export async function seedSkills(tx: Tx) {
   const opulence = await tx.skillNode.create({
     data: {
       branchId: fortune.id,
-      name: 'Opulence',
-      description:
+      nameFr: 'Opulence',
+      nameEn: 'Opulence',
+      descriptionFr:
+        "Relève la limite journalière d'achat de packs d'énergie (3 → 6)",
+      descriptionEn:
         "Relève la limite journalière d'achat de packs d'énergie (3 → 6)",
       icon: 'PackagePlus',
       maxLevel: 2,
@@ -358,8 +390,10 @@ export async function seedSkills(tx: Tx) {
   const destin = await tx.skillNode.create({
     data: {
       branchId: fortune.id,
-      name: 'Destin',
-      description: 'Abaisse le seuil de pitié',
+      nameFr: 'Destin',
+      nameEn: 'Destin',
+      descriptionFr: 'Abaisse le seuil de pitié',
+      descriptionEn: 'Abaisse le seuil de pitié',
       icon: 'Compass',
       maxLevel: 5,
       effectType: 'PITY_BOOST',
@@ -379,8 +413,10 @@ export async function seedSkills(tx: Tx) {
   const prisme = await tx.skillNode.create({
     data: {
       branchId: fortune.id,
-      name: 'Prisme',
-      description: 'Augmente les chances de variantes Brillant/Holo',
+      nameFr: 'Prisme',
+      nameEn: 'Prisme',
+      descriptionFr: 'Augmente les chances de variantes Brillant/Holo',
+      descriptionEn: 'Augmente les chances de variantes Brillant/Holo',
       icon: 'Diamond',
       maxLevel: 5,
       effectType: 'VARIANT_LUCK',
@@ -466,8 +502,10 @@ export async function seedSkills(tx: Tx) {
   const recyclage = await tx.skillNode.create({
     data: {
       branchId: collection.id,
-      name: 'Recyclage',
-      description: 'Plus de poussière lors du recyclage de doublons',
+      nameFr: 'Recyclage',
+      nameEn: 'Recyclage',
+      descriptionFr: 'Plus de poussière lors du recyclage de doublons',
+      descriptionEn: 'Plus de poussière lors du recyclage de doublons',
       icon: 'RefreshCw',
       maxLevel: 5,
       effectType: 'DUST_HARVEST',
@@ -487,8 +525,10 @@ export async function seedSkills(tx: Tx) {
   const reduction = await tx.skillNode.create({
     data: {
       branchId: collection.id,
-      name: 'Réduction',
-      description: 'Réduit les prix en poussière de la boutique',
+      nameFr: 'Réduction',
+      nameEn: 'Réduction',
+      descriptionFr: 'Réduit les prix en poussière de la boutique',
+      descriptionEn: 'Réduit les prix en poussière de la boutique',
       icon: 'BadgePercent',
       maxLevel: 5,
       effectType: 'SHOP_DISCOUNT',
@@ -508,8 +548,10 @@ export async function seedSkills(tx: Tx) {
   const artisan = await tx.skillNode.create({
     data: {
       branchId: collection.id,
-      name: 'Artisan',
-      description: "Réduit le coût en poussière d'amélioration des cartes",
+      nameFr: 'Artisan',
+      nameEn: 'Artisan',
+      descriptionFr: "Réduit le coût en poussière d'amélioration des cartes",
+      descriptionEn: "Réduit le coût en poussière d'amélioration des cartes",
       icon: 'Hammer',
       maxLevel: 5,
       effectType: 'UPGRADE_DUST_DISCOUNT',
@@ -529,8 +571,10 @@ export async function seedSkills(tx: Tx) {
   const marchandeur = await tx.skillNode.create({
     data: {
       branchId: collection.id,
-      name: 'Marchandeur',
-      description: 'Réduit les prix en or de la boutique',
+      nameFr: 'Marchandeur',
+      nameEn: 'Marchandeur',
+      descriptionFr: 'Réduit les prix en or de la boutique',
+      descriptionEn: 'Réduit les prix en or de la boutique',
       icon: 'ShoppingBag',
       maxLevel: 3,
       effectType: 'GOLD_SHOP_DISCOUNT',
@@ -548,8 +592,10 @@ export async function seedSkills(tx: Tx) {
   const apexCollection = await tx.skillNode.create({
     data: {
       branchId: collection.id,
-      name: 'Apogée de Collection',
-      description: 'Plus de cartes rares dans ta boutique du jour',
+      nameFr: 'Apogée de Collection',
+      nameEn: 'Apogée de Collection',
+      descriptionFr: 'Plus de cartes rares dans ta boutique du jour',
+      descriptionEn: 'Plus de cartes rares dans ta boutique du jour',
       icon: 'Gem',
       maxLevel: 4,
       effectType: 'DAILY_SHOP_LUCK',
@@ -568,9 +614,10 @@ export async function seedSkills(tx: Tx) {
   const collectionneur = await tx.skillNode.create({
     data: {
       branchId: collection.id,
-      name: 'Collectionneur',
-      description:
-        "Emplacements de vœu supplémentaires (2 de base)",
+      nameFr: 'Collectionneur',
+      nameEn: 'Collectionneur',
+      descriptionFr: 'Emplacements de vœu supplémentaires (2 de base)',
+      descriptionEn: 'Emplacements de vœu supplémentaires (2 de base)',
       icon: 'Heart',
       maxLevel: 3,
       effectType: 'WISHLIST_SLOTS',
@@ -588,8 +635,10 @@ export async function seedSkills(tx: Tx) {
   const etalElargi = await tx.skillNode.create({
     data: {
       branchId: collection.id,
-      name: 'Étal élargi',
-      description: 'Cartes supplémentaires à la boutique du jour',
+      nameFr: 'Étal élargi',
+      nameEn: 'Étal élargi',
+      descriptionFr: 'Cartes supplémentaires à la boutique du jour',
+      descriptionEn: 'Cartes supplémentaires à la boutique du jour',
       icon: 'Store',
       maxLevel: 2,
       effectType: 'DAILY_SHOP_SLOT',
@@ -663,8 +712,10 @@ export async function seedSkills(tx: Tx) {
   const endurance = await tx.skillNode.create({
     data: {
       branchId: combat.id,
-      name: 'Endurance',
-      description: "Augmente le stock maximum d'énergie",
+      nameFr: 'Endurance',
+      nameEn: 'Endurance',
+      descriptionFr: "Augmente le stock maximum d'énergie",
+      descriptionEn: "Augmente le stock maximum d'énergie",
       icon: 'BatteryCharging',
       maxLevel: 5,
       effectType: 'PC_VAULT',
@@ -684,8 +735,10 @@ export async function seedSkills(tx: Tx) {
   const recuperation = await tx.skillNode.create({
     data: {
       branchId: combat.id,
-      name: 'Récupération',
-      description: "Réduit le délai de régénération de l'énergie",
+      nameFr: 'Récupération',
+      nameEn: 'Récupération',
+      descriptionFr: "Réduit le délai de régénération de l'énergie",
+      descriptionEn: "Réduit le délai de régénération de l'énergie",
       icon: 'Timer',
       maxLevel: 4,
       effectType: 'PC_REGEN',
@@ -704,8 +757,10 @@ export async function seedSkills(tx: Tx) {
   const butinDore = await tx.skillNode.create({
     data: {
       branchId: combat.id,
-      name: 'Butin doré',
-      description: 'Bonus de gold sur les victoires',
+      nameFr: 'Butin doré',
+      nameEn: 'Butin doré',
+      descriptionFr: 'Bonus de gold sur les victoires',
+      descriptionEn: 'Bonus de gold sur les victoires',
       icon: 'Coins',
       maxLevel: 4,
       effectType: 'GOLD_BONUS',
@@ -724,8 +779,10 @@ export async function seedSkills(tx: Tx) {
   const logistique = await tx.skillNode.create({
     data: {
       branchId: combat.id,
-      name: 'Logistique',
-      description: 'Réduit le coût du farm',
+      nameFr: 'Logistique',
+      nameEn: 'Logistique',
+      descriptionFr: 'Réduit le coût du farm',
+      descriptionEn: 'Réduit le coût du farm',
       icon: 'Truck',
       maxLevel: 1,
       effectType: 'SWEEP_COST',
@@ -739,8 +796,10 @@ export async function seedSkills(tx: Tx) {
   const veteran = await tx.skillNode.create({
     data: {
       branchId: combat.id,
-      name: 'Vétéran',
-      description: "Bonus d'XP combat",
+      nameFr: 'Vétéran',
+      nameEn: 'Vétéran',
+      descriptionFr: "Bonus d'XP combat",
+      descriptionEn: "Bonus d'XP combat",
       icon: 'Medal',
       maxLevel: 5,
       effectType: 'COMBAT_XP_BONUS',
@@ -760,8 +819,10 @@ export async function seedSkills(tx: Tx) {
   const apexCombat = await tx.skillNode.create({
     data: {
       branchId: combat.id,
-      name: 'Apogée de Combat',
-      description: "Bonus de chance d'équipement en combat",
+      nameFr: 'Apogée de Combat',
+      nameEn: 'Apogée de Combat',
+      descriptionFr: "Bonus de chance d'équipement en combat",
+      descriptionEn: "Bonus de chance d'équipement en combat",
       icon: 'Swords',
       maxLevel: 4,
       effectType: 'DROP_BONUS',
@@ -780,8 +841,10 @@ export async function seedSkills(tx: Tx) {
   const forgeron = await tx.skillNode.create({
     data: {
       branchId: combat.id,
-      name: 'Forgeron',
-      description: "Réduit le coût en or d'amélioration des équipements",
+      nameFr: 'Forgeron',
+      nameEn: 'Forgeron',
+      descriptionFr: "Réduit le coût en or d'amélioration des équipements",
+      descriptionEn: "Réduit le coût en or d'amélioration des équipements",
       icon: 'Anvil',
       maxLevel: 3,
       effectType: 'EQUIP_UPGRADE_DISCOUNT',
@@ -799,8 +862,10 @@ export async function seedSkills(tx: Tx) {
   const ferrailleur = await tx.skillNode.create({
     data: {
       branchId: combat.id,
-      name: 'Ferrailleur',
-      description: "Plus d'or au recyclage des équipements",
+      nameFr: 'Ferrailleur',
+      nameEn: 'Ferrailleur',
+      descriptionFr: "Plus d'or au recyclage des équipements",
+      descriptionEn: "Plus d'or au recyclage des équipements",
       icon: 'Recycle',
       maxLevel: 3,
       effectType: 'SALVAGE_BONUS',

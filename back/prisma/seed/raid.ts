@@ -79,10 +79,16 @@ export async function seedRaid(tx: Tx): Promise<void> {
       where: { element },
       create: {
         element,
-        name: RAID_BOSS_NAME[element],
+        // nameEn recopie le francais : la tache 8 traduira.
+        nameFr: RAID_BOSS_NAME[element],
+        nameEn: RAID_BOSS_NAME[element],
         spec: raidBossSpec(element),
       },
-      update: { name: RAID_BOSS_NAME[element], spec: raidBossSpec(element) },
+      update: {
+        nameFr: RAID_BOSS_NAME[element],
+        nameEn: RAID_BOSS_NAME[element],
+        spec: raidBossSpec(element),
+      },
     })
   }
 

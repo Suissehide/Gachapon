@@ -238,7 +238,9 @@ export function buildTowerFloors() {
       etages.push({
         element,
         index,
-        label: `${TOWER_NAME_BY_ELEMENT[element]} — étage ${index}`,
+        // labelEn recopie le francais : la tache 8 traduira.
+        labelFr: `${TOWER_NAME_BY_ELEMENT[element]} — étage ${index}`,
+        labelEn: `${TOWER_NAME_BY_ELEMENT[element]} — étage ${index}`,
         enemyTeam: towerEnemyTeam(element, index),
         lootTable: towerFloorLoot(index),
         order: ordre++,
@@ -254,7 +256,8 @@ export async function seedTowerFloors(tx: Tx): Promise<void> {
       where: { element_index: { element: etage.element, index: etage.index } },
       create: etage,
       update: {
-        label: etage.label,
+        labelFr: etage.labelFr,
+        labelEn: etage.labelEn,
         enemyTeam: etage.enemyTeam,
         lootTable: etage.lootTable,
         order: etage.order,

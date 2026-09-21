@@ -602,7 +602,9 @@ export async function seedCampaign(
       const data = {
         chapter,
         index: i,
-        label: isBoss ? `${chapter}-${i} Boss` : `${chapter}-${i}`,
+        // labelEn recopie le francais : la tache 8 traduira.
+        labelFr: isBoss ? `${chapter}-${i} Boss` : `${chapter}-${i}`,
+        labelEn: isBoss ? `${chapter}-${i} Boss` : `${chapter}-${i}`,
         isBoss,
         enemyTeam: isBoss
           ? bossEnemyTeam(chapter, i)
@@ -614,7 +616,8 @@ export async function seedCampaign(
         where: { chapter_index: { chapter, index: i } },
         create: data,
         update: {
-          label: data.label,
+          labelFr: data.labelFr,
+          labelEn: data.labelEn,
           isBoss: data.isBoss,
           enemyTeam: data.enemyTeam,
           lootTable: data.lootTable,

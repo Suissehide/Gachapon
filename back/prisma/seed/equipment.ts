@@ -218,7 +218,9 @@ const PIECE_NAME: Record<EquipmentSet, Record<EquipmentSlot, string>> = {
 }
 
 export interface EquipmentSeedRow {
-  name: string
+  /** nameEn recopie le francais : la tache 8 traduira. */
+  nameFr: string
+  nameEn: string
   slot: EquipmentSlot
   setKey: EquipmentSet
   rarity: CardRarity
@@ -254,7 +256,8 @@ export function buildEquipmentCatalog(): EquipmentSeedRow[] {
       for (const stat of pool) {
         for (const rarity of RARITIES) {
           rows.push({
-            name: PIECE_NAME[setKey][slot],
+            nameFr: PIECE_NAME[setKey][slot],
+            nameEn: PIECE_NAME[setKey][slot],
             slot,
             setKey,
             rarity,
@@ -291,7 +294,8 @@ export async function seedEquipment(
       },
       create: row,
       update: {
-        name: row.name,
+        nameFr: row.nameFr,
+        nameEn: row.nameEn,
         bonuses: row.bonuses,
         dropWeight: row.dropWeight,
       },
