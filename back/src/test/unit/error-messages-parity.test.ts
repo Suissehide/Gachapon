@@ -1,9 +1,24 @@
 import { describe, expect, it } from '@jest/globals'
 
 import { runWithLocale } from '../../main/infra/i18n/locale-context'
-import { errorMessage } from '../../main/interfaces/http/fastify/errors/messages'
+import {
+  errorMessage,
+  type ErrorMessageKey,
+} from '../../main/interfaces/http/fastify/errors/messages'
 import { EN_MESSAGES } from '../../main/interfaces/http/fastify/errors/messages/en'
 import { FR_MESSAGES } from '../../main/interfaces/http/fastify/errors/messages/fr'
+
+/**
+ * Liste des noms de variables `{{nom}}` d'un message, sans doublons.
+ * Sert à comparer le gabarit d'interpolation entre les deux langues : une
+ * traduction qui oublie un `{{max}}` produit un message amputé au rendu,
+ * et rien d'autre ne le signale.
+ */
+function placeholders(message: string): string[] {
+  return [...message.matchAll(/\{\{(\w+)\}\}/g)]
+    .map((m) => m[1] as string)
+    .sort()
+}
 
 describe('catalogue des messages d’erreur', () => {
   it('porte exactement les mêmes clés dans les deux langues', () => {
@@ -12,13 +27,23 @@ describe('catalogue des messages d’erreur', () => {
     )
   })
 
-  it('n’a aucun message vide', () => {
-    for (const [key, value] of Object.entries({
-      ...FR_MESSAGES,
-      ...EN_MESSAGES,
-    })) {
+  it('n’a aucun message vide côté français', () => {
+    for (const value of Object.values(FR_MESSAGES)) {
       expect(value.trim().length).toBeGreaterThan(0)
-      expect(key.length).toBeGreaterThan(0)
+    }
+  })
+
+  it('n’a aucun message vide côté anglais', () => {
+    for (const value of Object.values(EN_MESSAGES)) {
+      expect(value.trim().length).toBeGreaterThan(0)
+    }
+  })
+
+  it('interpole les mêmes variables des deux côtés pour chaque clé', () => {
+    for (const key of Object.keys(FR_MESSAGES) as ErrorMessageKey[]) {
+      expect(placeholders(EN_MESSAGES[key])).toEqual(
+        placeholders(FR_MESSAGES[key]),
+      )
     }
   })
 

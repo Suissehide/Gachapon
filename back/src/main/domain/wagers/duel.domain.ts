@@ -124,7 +124,9 @@ export class DuelDomain implements IDuelDomain {
       throw Boom.badRequest(errorMessage('wagers.opponentNotInTeam'))
     }
 
-    const opponentName = opponentMember.user?.username ?? 'Ce joueur'
+    const opponentName =
+      opponentMember.user?.username ??
+      errorMessage('wagers.unknownPlayerFallback')
 
     // Config lue AVANT la transaction sérialisable : aucune I/O async
     // supplémentaire ne doit s'y glisser.

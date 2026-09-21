@@ -147,7 +147,7 @@ export const FR_MESSAGES = {
   'team.pendingWagers.duelPlural': '{{count}} duels',
   'team.pendingWagers.joiner': ' et ',
   'team.pendingWagers.message':
-    'Cette équipe a encore {{parts}} en cours : attends leur résolution avant de la supprimer. Une mise engagée ne peut pas être rendue, et les cartes d’un duel doivent revenir à son vainqueur.',
+    "Cette équipe a encore {{parts}} en cours : attends leur résolution avant de la supprimer. Une mise engagée ne peut pas être rendue, et les cartes d'un duel doivent revenir à son vainqueur.",
   'team.onlyAdminOrOwner': 'Seuls ADMIN ou OWNER',
   'team.onlyOwnerCanCancelInvitation': 'Seul OWNER peut annuler une invitation',
   'team.invitationNotPending': 'L’invitation n’est pas PENDING',
@@ -157,7 +157,7 @@ export const FR_MESSAGES = {
     'Annule l’invitation avant de la supprimer',
 
   // --- team-progression (bonus d'équipe) ---
-  'teamProgression.notMember': 'Ce joueur n’appartient pas à cette équipe.',
+  'teamProgression.notMember': "Ce joueur n'appartient pas à cette équipe.",
   'teamProgression.noPerkPointsAvailable': 'Aucun point de bonus disponible.',
   'teamProgression.perkAlreadyMaxRank': 'Ce bonus est déjà au rang maximum.',
   'teamProgression.perkLocked': 'Ce bonus se débloque au niveau {{level}}.',
@@ -287,6 +287,11 @@ export const FR_MESSAGES = {
   'wagers.duelSettledWithoutAcceptedAt': 'Duel réglé sans acceptedAt',
   'wagers.cardEngagedInActiveDuel': 'Carte engagée dans un duel en cours',
   'wagers.duelNotFound': 'Duel introuvable',
+  // Nom de repli quand le pseudo est absent (garde défensive, cas quasi
+  // mort) — interpolé dans {{target}}/{{opponent}} d'autres messages, donc
+  // doit lui-même passer par le catalogue pour ne jamais injecter du
+  // français dans un message anglais.
+  'wagers.unknownPlayerFallback': 'Ce joueur',
 
   // --- rewards / streak ---
   'rewards.notFound': 'Récompense introuvable',

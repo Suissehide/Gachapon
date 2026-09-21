@@ -343,7 +343,7 @@ export class BetDomain implements IBetDomain {
 
     const targetName =
       team.members.find((m) => m.userId === targetId)?.user?.username ??
-      'Ce joueur'
+      errorMessage('wagers.unknownPlayerFallback')
 
     // Celui qui OUVRE pose la proposition, donc tient le « oui ». Le camp
     // adverse se prend en renchérissant.

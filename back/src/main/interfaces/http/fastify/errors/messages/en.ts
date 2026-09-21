@@ -258,6 +258,7 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'wagers.duelSettledWithoutAcceptedAt': 'Duel settled without acceptedAt',
   'wagers.cardEngagedInActiveDuel': 'Card engaged in an active duel',
   'wagers.duelNotFound': 'Duel not found',
+  'wagers.unknownPlayerFallback': 'This player',
 
   // --- rewards / streak ---
   'rewards.notFound': 'Reward not found',

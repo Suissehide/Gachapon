@@ -229,10 +229,16 @@ describe('cycle de vie du duel', () => {
     // verifie que l'ADVERSAIRE (B, deja opponent de duel1 PENDING) est
     // deja engage. Un domaine qui n'appellerait findOpenDuelForUserInTx que
     // sur le defieur laisserait passer cette requete en 201.
+    // 'accept-language': 'fr' — les deux assertions plus bas comparent au
+    // texte français d'origine ; depuis le catalogue bilingue (tâche 6),
+    // une requête sans en-tête reçoit l'anglais (locale par défaut), et la
+    // négation `not.toBe('Tu as déjà un duel en cours')` deviendrait
+    // toujours vraie pour la mauvaise raison (langue différente) plutôt que
+    // pour la bonne (branche différente).
     const res = await app.inject({
       method: 'POST',
       url: `/teams/${teamId}/duels`,
-      headers: { cookie: cookiesD },
+      headers: { cookie: cookiesD, 'accept-language': 'fr' },
       payload: { opponentId: userIdB },
     })
     expect(res.statusCode).toBe(409)
