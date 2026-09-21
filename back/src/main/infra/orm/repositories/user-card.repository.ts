@@ -1,6 +1,5 @@
 import Boom from '@hapi/boom'
 
-import { errorMessage } from '../../../interfaces/http/fastify/errors/messages'
 import type { IocContainer } from '../../../types/application/ioc'
 import type {
   CardVariant,
@@ -8,6 +7,7 @@ import type {
 } from '../../../types/domain/gacha/gacha.types'
 import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type { IUserCardRepository } from '../../../types/infra/orm/repositories/user-card.repository.interface'
+import { errorMessage } from '../../i18n/error-messages'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 export class UserCardRepository implements IUserCardRepository {

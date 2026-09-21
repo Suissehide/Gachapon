@@ -1,4 +1,4 @@
-import { getCurrentLocale } from '../../../../../infra/i18n/locale-context'
+import { getCurrentLocale } from '../locale-context'
 import { EN_MESSAGES } from './en'
 import { FR_MESSAGES } from './fr'
 import type { ErrorMessageKey } from './keys'

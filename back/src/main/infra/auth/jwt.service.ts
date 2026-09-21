@@ -1,7 +1,7 @@
 import Boom from '@hapi/boom'
 import jwt, { type SignOptions } from 'jsonwebtoken'
 
-import { errorMessage } from '../../interfaces/http/fastify/errors/messages'
+import { errorMessage } from '../../infra/i18n/error-messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type { JwtServiceInterface } from '../../types/infra/auth/jwt.service'
 

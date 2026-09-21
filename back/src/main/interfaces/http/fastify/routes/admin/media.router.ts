@@ -1,8 +1,8 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
+import { errorMessage } from '../../../../../infra/i18n/error-messages'
 import type { StorageClientInterface } from '../../../../../types/infra/storage/storage-client'
-import { errorMessage } from '../../errors/messages'
 import {
   adminMediaDeleteBodySchema,
   adminMediaRenameBodySchema,

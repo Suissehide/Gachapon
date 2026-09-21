@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto'
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
-import { errorMessage } from '../../../errors/messages'
+import { errorMessage } from '../../../../../../infra/i18n/error-messages'
 import {
   discordOAuthCallbackQuerySchema,
   oauthAuthorizeQuerySchema,

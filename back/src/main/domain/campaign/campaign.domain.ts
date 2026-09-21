@@ -3,7 +3,7 @@ import { z } from 'zod/v4'
 
 import type { Prisma } from '../../../generated/client'
 import type { EquipmentSet, EquipmentSlot } from '../../../generated/enums'
-import { errorMessage } from '../../interfaces/http/fastify/errors/messages'
+import { errorMessage } from '../../infra/i18n/error-messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type { ITeamProgressionDomain } from '../../types/domain/team-progression/team-progression.domain.interface'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'

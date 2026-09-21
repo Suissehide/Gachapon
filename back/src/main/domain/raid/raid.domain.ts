@@ -1,9 +1,9 @@
 import Boom from '@hapi/boom'
 
+import { errorMessage } from '../../infra/i18n/error-messages'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { TeamRepository } from '../../infra/orm/repositories/team.repository'
 import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
-import { errorMessage } from '../../interfaces/http/fastify/errors/messages'
 import type { RaidAttackEvent, WsManager } from '../../interfaces/ws/ws-manager'
 import type { Config } from '../../types/application/config'
 import type { IocContainer } from '../../types/application/ioc'

@@ -3,7 +3,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify'
 import fp from 'fastify-plugin'
 
 import type { GlobalRole } from '../../../../../generated/client'
-import { errorMessage } from '../errors/messages'
+import { errorMessage } from '../../../../infra/i18n/error-messages'
 
 declare module 'fastify' {
   interface FastifyRequest {

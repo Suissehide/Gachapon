@@ -1,7 +1,7 @@
 import Boom from '@hapi/boom'
 
+import { errorMessage } from '../../../../../infra/i18n/error-messages'
 import type { StorageClientInterface } from '../../../../../types/infra/storage/storage-client'
-import { errorMessage } from '../../errors/messages'
 
 export const ALLOWED_IMAGE_MIME = new Set([
   'image/jpeg',

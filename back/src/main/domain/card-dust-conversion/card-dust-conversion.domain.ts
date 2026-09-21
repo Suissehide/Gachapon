@@ -1,6 +1,6 @@
 import Boom from '@hapi/boom'
 
-import { errorMessage } from '../../interfaces/http/fastify/errors/messages'
+import { errorMessage } from '../../infra/i18n/error-messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type { IDuelDomain } from '../../types/domain/wagers/wagers.domain.interface'
 import { retryOnSerialization } from '../shared/retry-serialization'

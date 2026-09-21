@@ -1,12 +1,12 @@
 import { describe, expect, it } from '@jest/globals'
 
-import { runWithLocale } from '../../main/infra/i18n/locale-context'
 import {
   errorMessage,
   type ErrorMessageKey,
-} from '../../main/interfaces/http/fastify/errors/messages'
-import { EN_MESSAGES } from '../../main/interfaces/http/fastify/errors/messages/en'
-import { FR_MESSAGES } from '../../main/interfaces/http/fastify/errors/messages/fr'
+} from '../../main/infra/i18n/error-messages'
+import { EN_MESSAGES } from '../../main/infra/i18n/error-messages/en'
+import { FR_MESSAGES } from '../../main/infra/i18n/error-messages/fr'
+import { runWithLocale } from '../../main/infra/i18n/locale-context'
 
 /**
  * Liste des noms de variables `{{nom}}` d'un message, sans doublons.

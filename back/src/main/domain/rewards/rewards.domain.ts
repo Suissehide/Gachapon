@@ -3,9 +3,9 @@ import Boom from '@hapi/boom'
 
 import type { UserReward } from '../../../generated/client'
 import type { CardRarity, CardVariant } from '../../../generated/enums'
+import { errorMessage } from '../../infra/i18n/error-messages'
 import { labelToBothLocales } from '../../infra/i18n/monolingual-write'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
-import { errorMessage } from '../../interfaces/http/fastify/errors/messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type { IActivityDomain } from '../../types/domain/activity/activity.domain.interface'
 import type {

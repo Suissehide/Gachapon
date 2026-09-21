@@ -3,9 +3,9 @@ import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import { calculateUserScore } from '../../../../../domain/scoring/scoring.domain'
 import type { TeamPerkKey } from '../../../../../domain/team-progression/team-progression-rules'
+import { errorMessage } from '../../../../../infra/i18n/error-messages'
 import type { TeamPerkState } from '../../../../../types/domain/team-progression/team-progression.domain.interface'
 import type { TeamPerkEvent } from '../../../../ws/ws-manager'
-import { errorMessage } from '../../errors/messages'
 import {
   directoryQuerySchema,
   directoryResponseSchema,

@@ -7,12 +7,12 @@ import {
 } from '../../../../../domain/economy/economy.domain'
 import { computeDropRates } from '../../../../../domain/gacha/drop-rates'
 import { effectivePityThreshold } from '../../../../../domain/gacha/gacha.domain'
+import { errorMessage } from '../../../../../infra/i18n/error-messages'
 import {
   defaultLocaleName,
   readNameInBothLocales,
 } from '../../../../../infra/i18n/localized-broadcast'
 import { wsManager } from '../../../../ws/ws-manager'
-import { errorMessage } from '../../errors/messages'
 import {
   dropRatesResponseSchema,
   pullBatchBodySchema,

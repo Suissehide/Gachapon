@@ -1,6 +1,6 @@
 import Boom from '@hapi/boom'
 
-import { errorMessage } from '../../interfaces/http/fastify/errors/messages'
+import { errorMessage } from '../../infra/i18n/error-messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import type { Substat } from '../equipment/equipment-progression'

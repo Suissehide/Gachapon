@@ -3,7 +3,7 @@ import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import type { CardRarity } from '../../../../../../generated/enums'
-import { errorMessage } from '../../errors/messages'
+import { errorMessage } from '../../../../../infra/i18n/error-messages'
 import {
   adminCardFieldsSchema,
   adminCardIdParamSchema,

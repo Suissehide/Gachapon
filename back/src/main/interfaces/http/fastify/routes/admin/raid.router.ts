@@ -1,8 +1,8 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
+import { errorMessage } from '../../../../../infra/i18n/error-messages'
 import type { RaidTierWithReward } from '../../../../../types/infra/orm/repositories/raid.repository.interface'
-import { errorMessage } from '../../errors/messages'
 import {
   adminRaidBossParamSchema,
   adminRaidBossPatchBodySchema,

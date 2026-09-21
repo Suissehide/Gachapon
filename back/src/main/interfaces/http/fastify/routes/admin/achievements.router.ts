@@ -2,7 +2,7 @@ import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import { listCustomHandlerKeys } from '../../../../../domain/achievements/custom-handlers/index'
-import { errorMessage } from '../../errors/messages'
+import { errorMessage } from '../../../../../infra/i18n/error-messages'
 import {
   adminAchievementCreateBodySchema,
   adminAchievementIdParamSchema,

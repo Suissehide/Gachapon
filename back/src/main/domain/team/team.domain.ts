@@ -1,7 +1,7 @@
 import Boom from '@hapi/boom'
 import slugify from 'slugify'
 
-import { errorMessage } from '../../interfaces/http/fastify/errors/messages'
+import { errorMessage } from '../../infra/i18n/error-messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type { ILeaderboardDomain } from '../../types/domain/leaderboard/leaderboard.domain.interface'
 import type { IRaidDomain } from '../../types/domain/raid/raid.domain.interface'

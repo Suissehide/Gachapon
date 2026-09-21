@@ -2,7 +2,7 @@ import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import type { UnlockedAchievement } from '../../../../../domain/achievements/events.types'
-import { errorMessage } from '../../errors/messages'
+import { errorMessage } from '../../../../../infra/i18n/error-messages'
 import { userResponseSchema } from '../../schemas/auth.schemas'
 import { sanitizeUser } from './helpers'
 

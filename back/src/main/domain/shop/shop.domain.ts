@@ -1,8 +1,8 @@
 import Boom from '@hapi/boom'
 
 import { CardRarity, type ShopItem } from '../../../generated/client'
+import { errorMessage } from '../../infra/i18n/error-messages'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
-import { errorMessage } from '../../interfaces/http/fastify/errors/messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type {
   BuyShopItemResult,
