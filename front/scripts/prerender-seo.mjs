@@ -35,10 +35,43 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { FAQ_ITEMS } from './faq-items.mjs'
-import { SEO_ROUTES, SITE_ORIGIN } from './seo-routes.mjs'
+import { SEO_ROUTES, SITE_ORIGIN as DEFAULT_ORIGIN } from './seo-routes.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const DIST_DIR = path.resolve(__dirname, '../dist')
+
+/**
+ * Origine publique du site, surchargeable au build par la variable SITE_ORIGIN.
+ *
+ * Paramétrable plutôt qu'en dur parce qu'un changement de domaine doit être
+ * atomique avec la bascule DNS : tant que la variable n'est pas posée, tout
+ * continue de pointer vers DEFAULT_ORIGIN. Un canonical qui désigne un domaine
+ * qui ne résout pas encore est bien pire que pas de canonical du tout.
+ *
+ * Reste dans ce script et non dans seo-routes.mjs : ce dernier est aussi
+ * importé par SeoHead.tsx, donc embarqué dans le bundle navigateur, où
+ * `process.env` n'existe pas.
+ */
+const ORIGIN = (process.env.SITE_ORIGIN ?? DEFAULT_ORIGIN).replace(/\/+$/, '')
+const DEFAULT_HOST = new URL(DEFAULT_ORIGIN).host
+const HOST = new URL(ORIGIN).host
+
+/**
+ * Réécrit les URL absolues que patchHtml ne cible pas nommément : og:image,
+ * twitter:image, le bloc JSON-LD et le `data-domains` d'Umami (qui cesse
+ * d'enregistrer si l'hôte ne correspond pas). Remplacement global plutôt que
+ * balise par balise, pour couvrir aussi ce qu'on ajoutera plus tard dans
+ * index.html.
+ *
+ * L'origine complète d'abord, l'hôte nu ensuite. `umami.qwetle.fr` n'est pas
+ * touché : ce n'est pas la même chaîne que l'hôte du site.
+ */
+function rewriteOrigin(html) {
+  if (ORIGIN === DEFAULT_ORIGIN) {
+    return html
+  }
+  return html.split(DEFAULT_ORIGIN).join(ORIGIN).split(DEFAULT_HOST).join(HOST)
+}
 
 /**
  * Replace, or insert before </head>, a tag matching `matcher`.
@@ -137,11 +170,11 @@ function renderStaticBlock(route) {
 }
 
 function patchHtml(template, route) {
-  const url = `${SITE_ORIGIN}${route.path}`
+  const url = `${ORIGIN}${route.path}`
   const title = escapeHtml(route.title)
   const desc = escapeHtml(route.description)
 
-  let html = template
+  let html = rewriteOrigin(template)
 
   // <title>
   html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${title}</title>`)
@@ -215,7 +248,7 @@ async function writeSitemap() {
     const { changefreq, priority } = route.sitemap
     return [
       '  <url>',
-      `    <loc>${SITE_ORIGIN}${route.path}</loc>`,
+      `    <loc>${ORIGIN}${route.path}</loc>`,
       `    <lastmod>${lastmod}</lastmod>`,
       `    <changefreq>${changefreq}</changefreq>`,
       `    <priority>${priority}</priority>`,
@@ -236,6 +269,17 @@ async function writeSitemap() {
   console.log(
     `[prerender-seo] sitemap     → ${path.relative(process.cwd(), target)} (${SEO_ROUTES.length} URL, lastmod ${lastmod})`,
   )
+}
+
+/**
+ * dist/robots.txt, généré pour la même raison que le sitemap : il portait la
+ * seule autre occurrence en dur du domaine hors index.html.
+ */
+async function writeRobots() {
+  const txt = ['User-agent: *', 'Allow: /', '', `Sitemap: ${ORIGIN}/sitemap.xml`, ''].join('\n')
+  const target = path.join(DIST_DIR, 'robots.txt')
+  await fs.writeFile(target, txt, 'utf8')
+  console.log(`[prerender-seo] robots      → ${path.relative(process.cwd(), target)}`)
 }
 
 async function main() {
@@ -274,8 +318,12 @@ async function main() {
   }
 
   await writeSitemap()
+  await writeRobots()
 
-  console.log(`[prerender-seo] ${written} route(s) prerendered.`)
+  console.log(
+    `[prerender-seo] ${written} route(s) prerendered for ${ORIGIN}` +
+      (ORIGIN === DEFAULT_ORIGIN ? '' : ' (SITE_ORIGIN surchargée)'),
+  )
 }
 
 main().catch((err) => {

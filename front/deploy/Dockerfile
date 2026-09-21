@@ -19,6 +19,11 @@ ARG VITE_ENVIRONMENT
 ENV VITE_ENVIRONMENT=$VITE_ENVIRONMENT
 ARG VITE_DISCORD_INVITE_URL
 ENV VITE_DISCORD_INVITE_URL=$VITE_DISCORD_INVITE_URL
+# Origine publique du site, lue par scripts/prerender-seo.mjs (canonicals, og:*,
+# JSON-LD, sitemap, robots). Non prefixee VITE_ : elle ne sert qu'au script de
+# postbuild, jamais au bundle navigateur.
+ARG SITE_ORIGIN
+ENV SITE_ORIGIN=$SITE_ORIGIN
 
 COPY package.json package-lock.json ./
 RUN npm ci --prefer-offline --include=dev --ignore-scripts --loglevel verbose
