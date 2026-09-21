@@ -33,8 +33,7 @@ export class AchievementRepository implements IAchievementRepository {
     const { name, description, ...rest } = data
     return this.#prisma.achievement.create({
       data: {
-        // biome-ignore lint/suspicious/noExplicitAny: Prisma JSON field requires cast
-        ...(rest as any),
+        ...rest,
         ...nameToBothLocales(name),
         ...descriptionToBothLocales(description),
       },
@@ -49,8 +48,7 @@ export class AchievementRepository implements IAchievementRepository {
     return this.#prisma.achievement.update({
       where: { id },
       data: {
-        // biome-ignore lint/suspicious/noExplicitAny: Prisma JSON field requires cast
-        ...(rest as any),
+        ...rest,
         ...nameToBothLocales(name),
         ...descriptionToBothLocales(description),
       },

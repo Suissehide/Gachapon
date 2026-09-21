@@ -1,10 +1,12 @@
 import type {
   SkillConfig,
   SkillEdge,
+  SkillEffectType,
   SkillNodeLevel,
   UserSkill,
 } from '../../../../../generated/client'
 import type { UserUpgradeEffects } from '../../../domain/economy/economy.types'
+import type { PrimaTransactionClient } from '../client'
 import type { LocalizedSkillBranch, LocalizedSkillNode } from '../localized'
 
 export type SkillNodeWithLevelsAndEdges = LocalizedSkillNode & {
@@ -23,12 +25,15 @@ export interface ISkillTreeRepository {
   getUserSkills(userId: string): Promise<UserSkill[]>
   getSkillConfig(): Promise<SkillConfig>
   upsertUserSkillInTx(
-    tx: any,
+    tx: PrimaTransactionClient,
     userId: string,
     nodeId: string,
     level: number,
   ): Promise<UserSkill>
-  deleteUserSkillsInTx(tx: any, userId: string): Promise<void>
+  deleteUserSkillsInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+  ): Promise<void>
   getTotalInvestedPoints(userId: string): Promise<number>
   // Admin CRUD
   createBranch(data: {
@@ -55,7 +60,7 @@ export interface ISkillTreeRepository {
     description: string
     icon: string
     maxLevel: number
-    effectType: string
+    effectType: SkillEffectType
     posX: number
     posY: number
     levels: { level: number; effect: number }[]
@@ -68,7 +73,7 @@ export interface ISkillTreeRepository {
       description: string
       icon: string
       maxLevel: number
-      effectType: string
+      effectType: SkillEffectType
       posX: number
       posY: number
       levels: { level: number; effect: number }[]

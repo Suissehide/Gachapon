@@ -23,9 +23,3 @@ export function localizedNameOrder(): { nameFr: 'asc' } | { nameEn: 'asc' } {
     ? ({ nameFr: 'asc' } as const)
     : ({ nameEn: 'asc' } as const)
 }
-
-export function localizedLabelOrder(): { labelFr: 'asc' } | { labelEn: 'asc' } {
-  return getCurrentLocale() === 'FR'
-    ? ({ labelFr: 'asc' } as const)
-    : ({ labelEn: 'asc' } as const)
-}

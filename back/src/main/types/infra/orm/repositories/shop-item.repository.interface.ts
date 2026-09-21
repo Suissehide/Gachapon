@@ -1,3 +1,4 @@
+import type { Prisma } from '../../../../../generated/client'
 import type { LocalizedShopItem } from '../localized'
 
 export type CreateShopItemInput = {
@@ -6,7 +7,7 @@ export type CreateShopItemInput = {
   type: 'TOKEN_PACK' | 'ENERGY_PACK' | 'BOOST' | 'COSMETIC' | 'MACHINE'
   cost: number
   currency?: 'DUST' | 'GOLD'
-  value: Record<string, unknown>
+  value: Prisma.InputJsonObject
   isActive?: boolean
 }
 

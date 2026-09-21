@@ -49,10 +49,10 @@ describe('négociation de la langue', () => {
   // que soit ce qu'on lui passe.
   it('ne lève pas sur une entrée non-string — traitée comme absente', () => {
     // biome-ignore lint/suspicious/noExplicitAny: simule un appelant qui ne passe pas par le typage TS
-    expect(parseLocale(['fr', 'en'] as any)).toBeNull()
+    expect(parseLocale(['fr', 'en'] as unknown as string)).toBeNull()
     // biome-ignore lint/suspicious/noExplicitAny: idem
-    expect(parseLocale(42 as any)).toBeNull()
+    expect(parseLocale(42 as unknown as string)).toBeNull()
     // biome-ignore lint/suspicious/noExplicitAny: idem
-    expect(parseLocale(null as any)).toBeNull()
+    expect(parseLocale(null as unknown as string)).toBeNull()
   })
 })

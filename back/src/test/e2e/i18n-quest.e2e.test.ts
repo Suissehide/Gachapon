@@ -2,17 +2,17 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 import { z } from 'zod/v4'
 
 import { runWithLocale } from '../../main/infra/i18n/locale-context'
+import type { PostgresPrismaClient } from '../../main/infra/orm/postgres-client'
+import type { IocContainer } from '../../main/types/application/ioc'
 import { buildTestApp } from '../helpers/build-test-app'
 
 describe('localisation du contenu — Quest', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
-  // biome-ignore lint/suspicious/noExplicitAny: le cradle n'est pas typé sur l'instance Fastify
-  let prisma: any
+  let prisma: PostgresPrismaClient
 
   beforeAll(async () => {
     app = await buildTestApp()
-    // biome-ignore lint/suspicious/noExplicitAny: idem
-    prisma = (app as any).iocContainer.postgresOrm.prisma
+    prisma = app.iocContainer.postgresOrm.prisma
 
     await prisma.quest.createMany({
       data: [
@@ -175,16 +175,14 @@ describe('localisation du contenu — Quest', () => {
 // avec un en-tête `Accept-Language`.
 describe('cache de QuestsDomain — clé par locale', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
-  // biome-ignore lint/suspicious/noExplicitAny: le cradle n'est pas typé sur l'instance Fastify
-  let ioc: any
+  let ioc: IocContainer
   let userId: string
   const suffix = Date.now()
   const questKey = `i18n-cache-probe-${suffix}`
 
   beforeAll(async () => {
     app = await buildTestApp()
-    // biome-ignore lint/suspicious/noExplicitAny: idem
-    ioc = (app as any).iocContainer
+    ioc = app.iocContainer
 
     await ioc.postgresOrm.prisma.quest.create({
       data: {

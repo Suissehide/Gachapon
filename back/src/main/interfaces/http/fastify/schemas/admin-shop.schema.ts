@@ -6,7 +6,7 @@ export const shopItemSchema = z.object({
   type: z.enum(['TOKEN_PACK', 'ENERGY_PACK', 'BOOST', 'COSMETIC', 'MACHINE']),
   cost: z.number().int().min(0),
   currency: z.enum(['DUST', 'GOLD']).default('DUST'),
-  value: z.record(z.string(), z.unknown()),
+  value: z.record(z.string(), z.json()),
   isActive: z.boolean().default(true),
 })
 

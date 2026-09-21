@@ -3,6 +3,7 @@ import { serializerCompiler } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
 import { runWithLocale } from '../../main/infra/i18n/locale-context'
+import type { PostgresPrismaClient } from '../../main/infra/orm/postgres-client'
 import { buildTestApp } from '../helpers/build-test-app'
 
 /**
@@ -26,8 +27,7 @@ import { buildTestApp } from '../helpers/build-test-app'
  */
 describe('localisation du contenu — CardSet (tri et sérialisation)', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
-  // biome-ignore lint/suspicious/noExplicitAny: le cradle n'est pas typé sur l'instance Fastify
-  let prisma: any
+  let prisma: PostgresPrismaClient
   let cookies: string
   let userId: string
 
@@ -51,8 +51,7 @@ describe('localisation du contenu — CardSet (tri et sérialisation)', () => {
 
   beforeAll(async () => {
     app = await buildTestApp()
-    // biome-ignore lint/suspicious/noExplicitAny: idem
-    prisma = (app as any).iocContainer.postgresOrm.prisma
+    prisma = app.iocContainer.postgresOrm.prisma
 
     const alpha = await prisma.cardSet.create({
       data: { nameFr: alphaFr, nameEn: alphaEn, isActive: true },
@@ -142,23 +141,25 @@ describe('localisation du contenu — CardSet (tri et sérialisation)', () => {
     // leurs propres sets actifs dans la base partagée. Seule compte la
     // position RELATIVE des deux sondes, dont les ordres FR et EN sont
     // inverses par construction.
-    const positions = (sets: { id: string }[]) => [
-      sets.findIndex((s) => s.id === alphaId),
-      sets.findIndex((s) => s.id === betaId),
-    ]
+    const positions = (
+      sets: { id: string }[],
+    ): { alpha: number; beta: number } => ({
+      alpha: sets.findIndex((s) => s.id === alphaId),
+      beta: sets.findIndex((s) => s.id === betaId),
+    })
 
-    const [frAlpha, frBeta] = positions(
+    const fr = positions(
       await fetchSets({ 'accept-language': 'fr-FR,fr;q=0.9' }),
     )
-    const [enAlpha, enBeta] = positions(await fetchSets({ 'accept-language': 'en' }))
+    const en = positions(await fetchSets({ 'accept-language': 'en' }))
 
-    expect(frAlpha).toBeGreaterThanOrEqual(0)
-    expect(frBeta).toBeGreaterThanOrEqual(0)
+    expect(fr.alpha).toBeGreaterThanOrEqual(0)
+    expect(fr.beta).toBeGreaterThanOrEqual(0)
 
     // FR : `AAA-i18n-deux` (beta) avant `ZZZ-i18n-un` (alpha).
-    expect(frBeta).toBeLessThan(frAlpha)
+    expect(fr.beta).toBeLessThan(fr.alpha)
     // EN : `AAA-i18n-one` (alpha) avant `ZZZ-i18n-two` (beta) — l'inverse.
-    expect(enAlpha).toBeLessThan(enBeta)
+    expect(en.alpha).toBeLessThan(en.beta)
   })
 
   // La « jambe Zod » : les routes de ce dépôt qui rendent une ligne
@@ -178,9 +179,11 @@ describe('localisation du contenu — CardSet (tri et sérialisation)', () => {
       isActive: z.boolean(),
     })
     const serialize = serializerCompiler({
-      // biome-ignore lint/suspicious/noExplicitAny: le compilateur n'attend qu'un `schema`
       schema: responseSchema,
-    } as any)
+      method: 'GET',
+      url: '/sets',
+      httpStatus: '200',
+    })
 
     const payload = await runWithLocale('FR', async () => {
       const set = await prisma.cardSet.findUniqueOrThrow({

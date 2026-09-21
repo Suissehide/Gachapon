@@ -37,8 +37,7 @@ export class ShopItemRepository implements IShopItemRepository {
     const { name, description, ...rest } = data
     return this.#prisma.shopItem.create({
       data: {
-        // biome-ignore lint/suspicious/noExplicitAny: Prisma JSON field requires cast
-        ...(rest as any),
+        ...rest,
         ...nameToBothLocales(name),
         ...descriptionToBothLocales(description),
       },
@@ -50,8 +49,7 @@ export class ShopItemRepository implements IShopItemRepository {
     return this.#prisma.shopItem.update({
       where: { id },
       data: {
-        // biome-ignore lint/suspicious/noExplicitAny: Prisma JSON field requires cast
-        ...(rest as any),
+        ...rest,
         ...nameToBothLocales(name),
         ...descriptionToBothLocales(description),
       },

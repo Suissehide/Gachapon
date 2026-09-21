@@ -99,7 +99,9 @@ export async function seedRaid(tx: Tx): Promise<void> {
       dust: t.dust,
       xp: t.xp,
       cardRarity: t.cardRarity,
-      label: `Raid d'équipe — palier ${t.pct} %`,
+      // labelEn recopie le francais : la tache 8 traduira.
+      labelFr: `Raid d'équipe — palier ${t.pct} %`,
+      labelEn: `Raid d'équipe — palier ${t.pct} %`,
     }
     const existing = await tx.raidTier.findUnique({ where: { pct: t.pct } })
     if (existing) {

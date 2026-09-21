@@ -1,10 +1,11 @@
+import type { Prisma } from '../../../../../generated/client'
 import type { LocalizedAchievement } from '../localized'
 
 export type CreateAchievementInput = {
   key: string
   name: string
   description: string
-  criterion: Record<string, unknown>
+  criterion: Prisma.InputJsonValue
   family?: string | null
   tier?: number
   hidden?: boolean

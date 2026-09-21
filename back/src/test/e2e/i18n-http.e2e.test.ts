@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
+import type { PostgresPrismaClient } from '../../main/infra/orm/postgres-client'
 import { buildTestApp } from '../helpers/build-test-app'
 
 /**
@@ -15,8 +16,7 @@ import { buildTestApp } from '../helpers/build-test-app'
  */
 describe('locale de la requête HTTP', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
-  // biome-ignore lint/suspicious/noExplicitAny: le cradle n'est pas typé sur l'instance Fastify
-  let prisma: any
+  let prisma: PostgresPrismaClient
   let cookies: string
   let userId: string
 
@@ -28,8 +28,7 @@ describe('locale de la requête HTTP', () => {
 
   beforeAll(async () => {
     app = await buildTestApp()
-    // biome-ignore lint/suspicious/noExplicitAny: idem
-    prisma = (app as any).iocContainer.postgresOrm.prisma
+    prisma = app.iocContainer.postgresOrm.prisma
 
     await prisma.quest.create({
       data: {
