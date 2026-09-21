@@ -206,4 +206,56 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'raid.unavailable': 'Raid unavailable right now, try again later',
   'raid.bossNotFoundSeedFirst': 'Raid boss not found — run the seed',
   'raid.tierNotFound': 'Tier not found',
+
+  // --- wagers (bets and duels) ---
+  'wagers.stakeMustBeInteger': 'The stake must be a whole number of dust',
+  'wagers.stakeBelowMin': 'The minimum stake is {{min}} dust',
+  'wagers.stakeAboveMax': 'The maximum stake is {{max}} dust',
+  'wagers.wouldPayNothingYes':
+    'This bet would pay nothing: {{target}} will almost certainly pull this rarity within the window',
+  'wagers.wouldPayNothingNo':
+    'This bet would pay nothing: {{target}} has almost no chance of pulling this rarity within the window',
+  'wagers.betNotFound': 'Bet not found',
+  'wagers.cannotBetOnOwnPulls': 'You cannot bet on your own pulls',
+  'wagers.betNoLongerOpen': 'This bet is no longer open',
+  'wagers.targetStartedPulling':
+    'The target has started pulling: betting is closed',
+  'wagers.alreadyBetOnThisBet': 'You have already bet on this bet',
+  'wagers.maxOpenBetsPerBettor': 'You already have {{max}} open bets',
+  'wagers.maxOpenBetsOnTarget':
+    '{{target}} already has {{max}} open bets on them',
+  'wagers.sideWouldPayNothing':
+    'This side would pay nothing: nobody is against it and the odds already favor it',
+  'wagers.playerNotFound': 'Player not found',
+  'wagers.noActiveCardsOddsIncalculable':
+    'No active cards: odds cannot be computed',
+  'wagers.teamMemberNotFound': 'Team member not found',
+  'wagers.cannotBetOnSelf': 'You cannot bet on yourself',
+  'wagers.playerNotInTeam': 'This player is not part of the team',
+  'wagers.cannotDuelSelf': 'You cannot challenge yourself',
+  'wagers.opponentNotInTeam': 'This opponent is not part of the team',
+  'wagers.alreadyHaveDuelInProgress': 'You already have a duel in progress',
+  'wagers.opponentAlreadyHasDuelInProgress':
+    '{{opponent}} already has a duel in progress',
+  'wagers.duelNotFoundAfterCreation': 'Duel not found right after creation',
+  'wagers.onlyChallengedCanAccept':
+    'Only the challenged player can accept this duel',
+  'wagers.duelNotPendingAcceptance':
+    'This duel is no longer awaiting acceptance',
+  'wagers.acceptDeadlinePassed': 'The deadline to accept this duel has passed',
+  'wagers.duelTooLateNotPendingAcceptance':
+    'Too late: this duel is no longer awaiting acceptance',
+  'wagers.duelNotFoundAfterAcceptance': 'Duel not found right after acceptance',
+  'wagers.onlyChallengedCanDecline':
+    'Only the challenged player can decline this duel',
+  'wagers.duelNotFoundAfterDecline': 'Duel not found right after decline',
+  'wagers.duelTooLateNotCancellable':
+    'Too late: this duel can no longer be cancelled',
+  'wagers.onlyChallengerCanCancel': 'Only the challenger can cancel this duel',
+  'wagers.duelNotFoundAfterCancellation':
+    'Duel not found right after cancellation',
+  'wagers.duelNotSettledYet': 'This duel is not settled yet',
+  'wagers.duelSettledWithoutAcceptedAt': 'Duel settled without acceptedAt',
+  'wagers.cardEngagedInActiveDuel': 'Card engaged in an active duel',
+  'wagers.duelNotFound': 'Duel not found',
 }

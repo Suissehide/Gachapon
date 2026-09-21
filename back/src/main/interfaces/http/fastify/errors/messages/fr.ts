@@ -230,4 +230,61 @@ export const FR_MESSAGES = {
   'raid.unavailable': 'Raid indisponible pour le moment, réessaie plus tard',
   'raid.bossNotFoundSeedFirst': 'Boss de raid introuvable — lancer le seed',
   'raid.tierNotFound': 'Palier introuvable',
+
+  // --- wagers (paris et duels) ---
+  'wagers.stakeMustBeInteger':
+    'La mise doit être un nombre entier de poussière',
+  'wagers.stakeBelowMin': 'La mise minimum est de {{min}} poussière',
+  'wagers.stakeAboveMax': 'La mise maximum est de {{max}} poussière',
+  'wagers.wouldPayNothingYes':
+    'Ce pari ne rapporterait rien : {{target}} sortira presque à coup sûr cette rareté sur la fenêtre',
+  'wagers.wouldPayNothingNo':
+    "Ce pari ne rapporterait rien : {{target}} n'a presque aucune chance de sortir cette rareté sur la fenêtre",
+  'wagers.betNotFound': 'Pari introuvable',
+  'wagers.cannotBetOnOwnPulls': 'On ne parie pas sur ses propres tirages',
+  'wagers.betNoLongerOpen': "Ce pari n'est plus ouvert",
+  'wagers.targetStartedPulling':
+    'La cible a commencé ses tirages : les mises sont closes',
+  'wagers.alreadyBetOnThisBet': 'Tu as déjà misé sur ce pari',
+  'wagers.maxOpenBetsPerBettor': 'Tu as déjà {{max}} paris en cours',
+  'wagers.maxOpenBetsOnTarget':
+    '{{target}} a déjà {{max}} paris ouverts sur lui',
+  'wagers.sideWouldPayNothing':
+    'Ce camp ne rapporterait rien : personne ne le contredit et les chances lui donnent raison',
+  'wagers.playerNotFound': 'Joueur introuvable',
+  'wagers.noActiveCardsOddsIncalculable':
+    'Aucune carte active : cote incalculable',
+  'wagers.teamMemberNotFound': "Membre d'équipe introuvable",
+  'wagers.cannotBetOnSelf': 'Tu ne peux pas parier sur toi-même',
+  'wagers.playerNotInTeam': "Ce joueur ne fait pas partie de l'équipe",
+  'wagers.cannotDuelSelf': 'Tu ne peux pas te défier toi-même',
+  'wagers.opponentNotInTeam': "Cet adversaire ne fait pas partie de l'équipe",
+  'wagers.alreadyHaveDuelInProgress': 'Tu as déjà un duel en cours',
+  'wagers.opponentAlreadyHasDuelInProgress':
+    '{{opponent}} a déjà un duel en cours',
+  'wagers.duelNotFoundAfterCreation':
+    'Duel introuvable juste après sa création',
+  'wagers.onlyChallengedCanAccept':
+    'Seul le joueur défié peut accepter ce duel',
+  'wagers.duelNotPendingAcceptance':
+    "Ce duel n'est plus en attente d'acceptation",
+  'wagers.acceptDeadlinePassed': 'Le délai pour accepter ce duel est dépassé',
+  'wagers.duelTooLateNotPendingAcceptance':
+    "Trop tard : ce duel n'est plus en attente d'acceptation",
+  'wagers.duelNotFoundAfterAcceptance':
+    'Duel introuvable juste après acceptation',
+  'wagers.onlyChallengedCanDecline':
+    'Seul le joueur défié peut refuser ce duel',
+  'wagers.duelNotFoundAfterDecline': 'Duel introuvable juste après refus',
+  'wagers.duelTooLateNotCancellable':
+    "Trop tard : ce duel n'est plus annulable",
+  'wagers.onlyChallengerCanCancel': 'Seul le défieur peut annuler ce duel',
+  'wagers.duelNotFoundAfterCancellation':
+    'Duel introuvable juste après annulation',
+  // "reglé" sans accent : littéral, pas une faute à corriger — voir
+  // task-6-brief.md « cette tâche déplace le texte, elle ne le réécrit pas ».
+  'wagers.duelNotSettledYet': "Ce duel n'est pas encore reglé",
+  'wagers.duelSettledWithoutAcceptedAt': 'Duel réglé sans acceptedAt',
+  'wagers.cardEngagedInActiveDuel': 'Carte engagée dans un duel en cours',
+  'wagers.duelNotFound': 'Duel introuvable',
 } as const
