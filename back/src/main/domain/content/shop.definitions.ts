@@ -11,9 +11,9 @@ export const SHOP_ITEMS = [
   // Packs de jetons — achetés avec l'or gagné en campagne
   {
     nameFr: 'Pack Starter',
-    nameEn: 'Pack Starter',
+    nameEn: 'Starter Pack',
     descriptionFr: '10 jetons pour démarrer ton aventure.',
-    descriptionEn: '10 jetons pour démarrer ton aventure.',
+    descriptionEn: '10 tokens to kick off your adventure.',
     type: 'TOKEN_PACK' as const,
     cost: 5000,
     currency: 'GOLD' as const,
@@ -21,9 +21,9 @@ export const SHOP_ITEMS = [
   },
   {
     nameFr: 'Pack Aventurier',
-    nameEn: 'Pack Aventurier',
+    nameEn: 'Adventurer Pack',
     descriptionFr: '50 jetons — le bon compromis.',
-    descriptionEn: '50 jetons — le bon compromis.',
+    descriptionEn: '50 tokens — the solid middle ground.',
     type: 'TOKEN_PACK' as const,
     cost: 22500,
     currency: 'GOLD' as const,
@@ -31,9 +31,9 @@ export const SHOP_ITEMS = [
   },
   {
     nameFr: 'Pack Légende',
-    nameEn: 'Pack Légende',
+    nameEn: 'Legend Pack',
     descriptionFr: '150 jetons — le meilleur rapport or/jeton.',
-    descriptionEn: '150 jetons — le meilleur rapport or/jeton.',
+    descriptionEn: '150 tokens — the best gold-per-token value.',
     type: 'TOKEN_PACK' as const,
     cost: 60000,
     currency: 'GOLD' as const,
@@ -54,9 +54,9 @@ export const SHOP_ITEMS = [
   // de butin réelle — rebuffer le farm sans retoucher ces prix le fera échouer.
   {
     nameFr: 'Petite recharge',
-    nameEn: 'Petite recharge',
+    nameEn: 'Small Refill',
     descriptionFr: '+15 points de combat, même au-delà du plafond.',
-    descriptionEn: '+15 points de combat, même au-delà du plafond.',
+    descriptionEn: '+15 combat points, even above the cap.',
     type: 'ENERGY_PACK' as const,
     cost: 900,
     currency: 'DUST' as const,
@@ -64,9 +64,9 @@ export const SHOP_ITEMS = [
   },
   {
     nameFr: 'Recharge',
-    nameEn: 'Recharge',
+    nameEn: 'Refill',
     descriptionFr: '+40 points de combat — le bon compromis.',
-    descriptionEn: '+40 points de combat — le bon compromis.',
+    descriptionEn: '+40 combat points — the solid middle ground.',
     type: 'ENERGY_PACK' as const,
     cost: 2280,
     currency: 'DUST' as const,
@@ -74,9 +74,9 @@ export const SHOP_ITEMS = [
   },
   {
     nameFr: 'Grande recharge',
-    nameEn: 'Grande recharge',
+    nameEn: 'Large Refill',
     descriptionFr: '+90 points de combat pour enchaîner les batailles.',
-    descriptionEn: '+90 points de combat pour enchaîner les batailles.',
+    descriptionEn: '+90 combat points to chain battles back-to-back.',
     type: 'ENERGY_PACK' as const,
     cost: 4860,
     currency: 'DUST' as const,
@@ -85,11 +85,10 @@ export const SHOP_ITEMS = [
   // Boosts
   {
     nameFr: 'Boost Rare+',
-    nameEn: 'Boost Rare+',
+    nameEn: 'Rare+ Boost',
     descriptionFr:
       "Multiplie par 2 les chances d'obtenir des cartes RARE pendant 10 tirages.",
-    descriptionEn:
-      "Multiplie par 2 les chances d'obtenir des cartes RARE pendant 10 tirages.",
+    descriptionEn: 'Doubles your odds of pulling RARE cards for 10 pulls.',
     type: 'BOOST' as const,
     cost: 200,
     currency: 'DUST' as const,
@@ -97,11 +96,10 @@ export const SHOP_ITEMS = [
   },
   {
     nameFr: 'Boost Épique',
-    nameEn: 'Boost Épique',
+    nameEn: 'Epic Boost',
     descriptionFr:
       "Multiplie par 2 les chances d'obtenir des cartes EPIC pendant 10 tirages.",
-    descriptionEn:
-      "Multiplie par 2 les chances d'obtenir des cartes EPIC pendant 10 tirages.",
+    descriptionEn: 'Doubles your odds of pulling EPIC cards for 10 pulls.',
     type: 'BOOST' as const,
     cost: 800,
     currency: 'DUST' as const,
@@ -110,9 +108,9 @@ export const SHOP_ITEMS = [
   // Cosmétiques
   {
     nameFr: 'Cadre Doré',
-    nameEn: 'Cadre Doré',
+    nameEn: 'Golden Frame',
     descriptionFr: 'Un cadre doré pour mettre en valeur ta carte préférée.',
-    descriptionEn: 'Un cadre doré pour mettre en valeur ta carte préférée.',
+    descriptionEn: 'A golden frame to showcase your favorite card.',
     type: 'COSMETIC' as const,
     cost: 300,
     currency: 'DUST' as const,
@@ -120,9 +118,9 @@ export const SHOP_ITEMS = [
   },
   {
     nameFr: 'Fond Étoilé',
-    nameEn: 'Fond Étoilé',
+    nameEn: 'Starry Background',
     descriptionFr: 'Un fond étoilé pour personnaliser ton profil.',
-    descriptionEn: 'Un fond étoilé pour personnaliser ton profil.',
+    descriptionEn: 'A starry background to customize your profile.',
     type: 'COSMETIC' as const,
     cost: 150,
     currency: 'DUST' as const,

@@ -206,8 +206,77 @@ const PIECE_NAME: Record<EquipmentSet, Record<EquipmentSlot, string>> = {
   },
 }
 
+/**
+ * Traduction anglaise de `PIECE_NAME` — même clé (set, slot), même
+ * intention de nommage : le nom de l'objet, pas la ligne du tableau.
+ */
+const PIECE_NAME_EN: Record<EquipmentSet, Record<EquipmentSlot, string>> = {
+  FUREUR: {
+    WEAPON: 'Axe of Wrath',
+    ARMOR: 'Blazing Cuirass',
+    RING: 'Ring of the Blaze',
+    AMULET: 'Amulet of Rage',
+    GLOVES: 'Incandescent Fists',
+    BOOTS: 'Greaves of Uproar',
+    BELT: "Berserker's Belt",
+  },
+  AFFUT: {
+    WEAPON: "Watcher's Blade",
+    ARMOR: "Marksman's Breastplate",
+    RING: 'Ring of the True Eye',
+    AMULET: 'Amulet of the Scope',
+    GLOVES: "Duelist's Gloves",
+    BOOTS: "Tracker's Boots",
+    BELT: 'Belt of Poise',
+  },
+  PERCEE: {
+    WEAPON: 'Scale-Breaker Rapier',
+    ARMOR: 'Piercing Harness',
+    RING: 'Ring of the Breach',
+    AMULET: 'Amulet of the Drill',
+    GLOVES: 'Armor-Piercer Gloves',
+    BOOTS: 'Boots of the Charge',
+    BELT: "Ram's Belt",
+  },
+  SANGSUE: {
+    WEAPON: 'Thirsting Fang',
+    ARMOR: 'Voracious Carapace',
+    RING: 'Leech Ring',
+    AMULET: 'Amulet of the Chalice',
+    GLOVES: 'Greedy Talons',
+    BOOTS: 'Boots of the Shroud',
+    BELT: 'Belt of the Feast',
+  },
+  ASSAUT: {
+    WEAPON: 'Siege Greatsword',
+    ARMOR: "Ram's Mail",
+    RING: 'Ring of Momentum',
+    AMULET: 'Amulet of the Offensive',
+    GLOVES: 'Siege Gauntlets',
+    BOOTS: 'Boots of the Rush',
+    BELT: 'Belt of Assault',
+  },
+  COLOSSE: {
+    WEAPON: "Colossus's Mace",
+    ARMOR: 'Wall of Stone',
+    RING: 'Monolith Ring',
+    AMULET: 'Amulet of the Menhir',
+    GLOVES: 'Fists of Granite',
+    BOOTS: 'Basalt Hooves',
+    BELT: 'Belt of the Titan',
+  },
+  CELERITE: {
+    WEAPON: 'Fleeting Dagger',
+    ARMOR: 'Light Jerkin',
+    RING: 'Ring of the Zephyr',
+    AMULET: 'Amulet of the Wake',
+    GLOVES: 'Swift Mittens',
+    BOOTS: 'Boots of Celerity',
+    BELT: 'Belt of the Swift',
+  },
+}
+
 export interface EquipmentSeedRow {
-  /** nameEn recopie le francais : la tache 8 traduira. */
   nameFr: string
   nameEn: string
   slot: EquipmentSlot
@@ -256,7 +325,7 @@ export function buildEquipmentCatalog(): EquipmentSeedRow[] {
         for (const rarity of RARITIES) {
           rows.push({
             nameFr: PIECE_NAME[setKey][slot],
-            nameEn: PIECE_NAME[setKey][slot],
+            nameEn: PIECE_NAME_EN[setKey][slot],
             slot,
             setKey,
             rarity,
