@@ -71,4 +71,8 @@ export const FR_MESSAGES = {
   'media.imageTooLarge': 'Image trop volumineuse (5 Mo max)',
   'cards.imageOrUrlRequired': 'Un fichier image ou une URL d’image est requis',
   'cards.noImageProvided': 'Aucune image fournie',
+
+  // --- gacha ---
+  'gacha.noActiveCards': 'Aucune carte active dans un set',
+  'gacha.notEnoughTokens': 'Jetons insuffisants',
 } as const

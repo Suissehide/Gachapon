@@ -62,4 +62,8 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'media.imageTooLarge': 'Image too large (max 5 MB)',
   'cards.imageOrUrlRequired': 'Either an image file or imageUrl is required',
   'cards.noImageProvided': 'No image provided',
+
+  // --- gacha ---
+  'gacha.noActiveCards': 'No active cards in any set',
+  'gacha.notEnoughTokens': 'Not enough tokens',
 }

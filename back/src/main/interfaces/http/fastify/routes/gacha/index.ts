@@ -12,6 +12,7 @@ import {
   readNameInBothLocales,
 } from '../../../../../infra/i18n/localized-broadcast'
 import { wsManager } from '../../../../ws/ws-manager'
+import { errorMessage } from '../../errors/messages'
 import {
   dropRatesResponseSchema,
   pullBatchBodySchema,
@@ -297,7 +298,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request) => {
       const user = await userRepository.findById(request.user.userID)
       if (!user) {
-        throw Boom.notFound('User not found')
+        throw Boom.notFound(errorMessage('user.notFound'))
       }
 
       const [upgrades, cfg, teamEffects] = await Promise.all([
@@ -345,7 +346,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request) => {
       const user = await userRepository.findById(request.user.userID)
       if (!user) {
-        throw Boom.notFound('User not found')
+        throw Boom.notFound(errorMessage('user.notFound'))
       }
 
       const [upgrades, cfg, teamEffects] = await Promise.all([
