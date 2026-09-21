@@ -209,11 +209,12 @@ describe('GET /me/duels', () => {
   it('le duel regle porte le nombre de cartes transferees', async () => {
     const duelId = await settledDuel(new Date())
     const set = await prisma.cardSet.create({
-      data: { name: `MeDuelSet${suffix}`, isActive: false },
+      data: { nameFr: `MeDuelSet${suffix}`, nameEn: `MeDuelSet${suffix}`, isActive: false },
     })
     const card = await prisma.card.create({
       data: {
-        name: `MeDuelCard${suffix}`,
+        nameFr: `MeDuelCard${suffix}`,
+        nameEn: `MeDuelCard${suffix}`,
         rarity: 'COMMON',
         dropWeight: 10,
         setId: set.id,

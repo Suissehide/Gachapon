@@ -29,12 +29,12 @@ describe('GET /users/:username/profile/featured-cards — manual selection', () 
     const user = await prisma.user.findUnique({ where: { email } })
 
     const set = await prisma.cardSet.create({
-      data: { name: `ManSet${suffix}`, isActive: true },
+      data: { nameFr: `ManSet${suffix}`, nameEn: `ManSet${suffix}`, isActive: true },
     })
     const ids: string[] = []
     for (const rarity of ['COMMON', 'COMMON', 'EPIC', 'LEGENDARY', 'RARE'] as const) {
       const card = await prisma.card.create({
-        data: { name: `${rarity}-${suffix}-${ids.length}`, rarity, dropWeight: 10, setId: set.id },
+        data: { nameFr: `${rarity}-${suffix}-${ids.length}`, nameEn: `${rarity}-${suffix}-${ids.length}`, rarity, dropWeight: 10, setId: set.id },
       })
       await prisma.userCard.create({
         data: { userId: user!.id, cardId: card.id, variant: 'NORMAL', quantity: 1 },

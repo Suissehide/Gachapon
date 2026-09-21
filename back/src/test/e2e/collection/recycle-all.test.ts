@@ -16,16 +16,16 @@ describe('POST /collection/recycle-all', () => {
     const { postgresOrm } = (app as any).iocContainer
 
     const set = await postgresOrm.prisma.cardSet.create({
-      data: { name: `BulkSet${suffix}`, isActive: true },
+      data: { nameFr: `BulkSet${suffix}`, nameEn: `BulkSet${suffix}`, isActive: true },
     })
     const common = await postgresOrm.prisma.card.create({
-      data: { name: `BulkCommon${suffix}`, rarity: 'COMMON', dropWeight: 10, setId: set.id },
+      data: { nameFr: `BulkCommon${suffix}`, nameEn: `BulkCommon${suffix}`, rarity: 'COMMON', dropWeight: 10, setId: set.id },
     })
     const rare = await postgresOrm.prisma.card.create({
-      data: { name: `BulkRare${suffix}`, rarity: 'RARE', dropWeight: 5, setId: set.id },
+      data: { nameFr: `BulkRare${suffix}`, nameEn: `BulkRare${suffix}`, rarity: 'RARE', dropWeight: 5, setId: set.id },
     })
     const epic = await postgresOrm.prisma.card.create({
-      data: { name: `BulkEpic${suffix}`, rarity: 'EPIC', dropWeight: 2, setId: set.id },
+      data: { nameFr: `BulkEpic${suffix}`, nameEn: `BulkEpic${suffix}`, rarity: 'EPIC', dropWeight: 2, setId: set.id },
     })
     commonId = common.id
     rareId = rare.id

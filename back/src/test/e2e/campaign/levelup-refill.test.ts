@@ -23,11 +23,12 @@ describe('Campaign battle level-up → refill énergie', () => {
 
     // Card set + 1 high-stat card so player wins deterministically
     const set = await prisma.cardSet.create({
-      data: { name: `LvlRefillSet${suffix}`, isActive: true },
+      data: { nameFr: `LvlRefillSet${suffix}`, nameEn: `LvlRefillSet${suffix}`, isActive: true },
     })
     const card = await prisma.card.create({
       data: {
-        name: `LvlRefillCard${suffix}`,
+        nameFr: `LvlRefillCard${suffix}`,
+        nameEn: `LvlRefillCard${suffix}`,
         rarity: 'LEGENDARY',
         dropWeight: 1,
         setId: set.id,
@@ -46,11 +47,11 @@ describe('Campaign battle level-up → refill énergie', () => {
     // equipment-fixture-slots.ts (LEVELUP_REFILL).
     await prisma.equipment.createMany({
       data: [
-        { name: `LvlRefEqC${suffix}`, ...LEVELUP_REFILL, rarity: 'COMMON', bonuses: { atkFlat: 1 }, dropWeight: 10 },
-        { name: `LvlRefEqU${suffix}`, ...LEVELUP_REFILL, rarity: 'UNCOMMON', bonuses: { atkFlat: 2 }, dropWeight: 10 },
-        { name: `LvlRefEqR${suffix}`, ...LEVELUP_REFILL, rarity: 'RARE', bonuses: { atkFlat: 5 }, dropWeight: 10 },
-        { name: `LvlRefEqE${suffix}`, ...LEVELUP_REFILL, rarity: 'EPIC', bonuses: { atkFlat: 20 }, dropWeight: 1 },
-        { name: `LvlRefEqL${suffix}`, ...LEVELUP_REFILL, rarity: 'LEGENDARY', bonuses: { atkFlat: 50 }, dropWeight: 1 },
+        { nameFr: `LvlRefEqC${suffix}`, nameEn: `LvlRefEqC${suffix}`, ...LEVELUP_REFILL, rarity: 'COMMON', bonuses: { atkFlat: 1 }, dropWeight: 10 },
+        { nameFr: `LvlRefEqU${suffix}`, nameEn: `LvlRefEqU${suffix}`, ...LEVELUP_REFILL, rarity: 'UNCOMMON', bonuses: { atkFlat: 2 }, dropWeight: 10 },
+        { nameFr: `LvlRefEqR${suffix}`, nameEn: `LvlRefEqR${suffix}`, ...LEVELUP_REFILL, rarity: 'RARE', bonuses: { atkFlat: 5 }, dropWeight: 10 },
+        { nameFr: `LvlRefEqE${suffix}`, nameEn: `LvlRefEqE${suffix}`, ...LEVELUP_REFILL, rarity: 'EPIC', bonuses: { atkFlat: 20 }, dropWeight: 1 },
+        { nameFr: `LvlRefEqL${suffix}`, nameEn: `LvlRefEqL${suffix}`, ...LEVELUP_REFILL, rarity: 'LEGENDARY', bonuses: { atkFlat: 50 }, dropWeight: 1 },
       ],
     })
 
@@ -62,7 +63,8 @@ describe('Campaign battle level-up → refill énergie', () => {
       create: {
         chapter: 99,
         index: 1,
-        label: '99-1 lvlrefill',
+        labelFr: '99-1 lvlrefill',
+        labelEn: '99-1 lvlrefill',
         isBoss: false,
         order: 9901,
         enemyTeam: [

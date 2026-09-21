@@ -120,19 +120,21 @@ describe('GET /me/bets', () => {
     baselineActiveSetIds = active.map((s: { id: string }) => s.id)
 
     const set = await prisma.cardSet.create({
-      data: { name: `MeBetSet${suffix}`, isActive: false },
+      data: { nameFr: `MeBetSet${suffix}`, nameEn: `MeBetSet${suffix}`, isActive: false },
     })
     betSetId = set.id
     await prisma.card.createMany({
       data: [
         {
-          name: `MeBetCommon${suffix}`,
+          nameFr: `MeBetCommon${suffix}`,
+          nameEn: `MeBetCommon${suffix}`,
           rarity: 'COMMON',
           dropWeight: 90,
           setId: betSetId,
         },
         {
-          name: `MeBetRare${suffix}`,
+          nameFr: `MeBetRare${suffix}`,
+          nameEn: `MeBetRare${suffix}`,
           rarity: 'RARE',
           dropWeight: 10,
           setId: betSetId,

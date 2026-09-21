@@ -3,7 +3,8 @@ import { seedSkills } from '../../../prisma/seed/skills'
 export type SeededNode = {
   id: string
   branchId: string
-  name: string
+  nameFr: string
+  nameEn: string
   effectType: string
   maxLevel: number
   levels: { level: number; effect: number }[]
@@ -20,7 +21,7 @@ export type SeededEdge = {
  * base, et permet d'assertir sur les données RÉELLES du seed.
  */
 export async function collectSkillTree() {
-  const branches: { id: string; name: string }[] = []
+  const branches: { id: string; nameFr: string }[] = []
   const nodes: SeededNode[] = []
   const edges: SeededEdge[] = []
   let seq = 0
@@ -28,9 +29,9 @@ export async function collectSkillTree() {
   const tx = {
     skillConfig: { upsert: async () => ({}) },
     skillBranch: {
-      create: async ({ data }: { data: { name: string } }) => {
+      create: async ({ data }: { data: { nameFr: string } }) => {
         const id = `b${++seq}`
-        branches.push({ id, name: data.name })
+        branches.push({ id, nameFr: data.nameFr })
         return { id }
       },
     },

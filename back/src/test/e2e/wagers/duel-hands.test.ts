@@ -121,12 +121,13 @@ describe('GET /teams/:id/duels/:duelId/hands', () => {
     })
 
     const set = await prisma.cardSet.create({
-      data: { name: `HandSet${suffix}`, isActive: false },
+      data: { nameFr: `HandSet${suffix}`, nameEn: `HandSet${suffix}`, isActive: false },
     })
     for (const rarity of ['COMMON', 'RARE', 'LEGENDARY']) {
       const card = await prisma.card.create({
         data: {
-          name: `Hand${rarity}${suffix}`,
+          nameFr: `Hand${rarity}${suffix}`,
+          nameEn: `Hand${rarity}${suffix}`,
           rarity,
           dropWeight: 10,
           setId: set.id,

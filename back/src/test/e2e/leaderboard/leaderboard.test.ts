@@ -158,11 +158,12 @@ describe('Leaderboard routes', () => {
       const { postgresOrm } = (app as any).iocContainer
 
       const set = await postgresOrm.prisma.cardSet.create({
-        data: { name: `LbCombatSet${suffix}`, isActive: false },
+        data: { nameFr: `LbCombatSet${suffix}`, nameEn: `LbCombatSet${suffix}`, isActive: false },
       })
       const card = await postgresOrm.prisma.card.create({
         data: {
-          name: `LbCombatCard${suffix}`,
+          nameFr: `LbCombatCard${suffix}`,
+          nameEn: `LbCombatCard${suffix}`,
           rarity: 'RARE',
           dropWeight: 10,
           setId: set.id,

@@ -169,31 +169,35 @@ describe('cote et placement du pari', () => {
     baselineActiveSetIds = active.map((s: { id: string }) => s.id)
 
     const set = await prisma.cardSet.create({
-      data: { name: `BetSet${suffix}`, isActive: false },
+      data: { nameFr: `BetSet${suffix}`, nameEn: `BetSet${suffix}`, isActive: false },
     })
     betSetId = set.id
     await prisma.card.createMany({
       data: [
         {
-          name: `BetCommon${suffix}`,
+          nameFr: `BetCommon${suffix}`,
+          nameEn: `BetCommon${suffix}`,
           rarity: 'COMMON',
           dropWeight: WEIGHT_COMMON,
           setId: betSetId,
         },
         {
-          name: `BetRare${suffix}`,
+          nameFr: `BetRare${suffix}`,
+          nameEn: `BetRare${suffix}`,
           rarity: 'RARE',
           dropWeight: WEIGHT_RARE,
           setId: betSetId,
         },
         {
-          name: `BetEpic${suffix}`,
+          nameFr: `BetEpic${suffix}`,
+          nameEn: `BetEpic${suffix}`,
           rarity: 'EPIC',
           dropWeight: WEIGHT_EPIC,
           setId: betSetId,
         },
         {
-          name: `BetLegendary${suffix}`,
+          nameFr: `BetLegendary${suffix}`,
+          nameEn: `BetLegendary${suffix}`,
           rarity: 'LEGENDARY',
           dropWeight: WEIGHT_LEGENDARY,
           setId: betSetId,
@@ -704,8 +708,10 @@ describe('cote et placement du pari', () => {
     // aux deux joueurs exactement les memes effets par defaut.
     const branch = await prisma.skillBranch.create({
       data: {
-        name: `BetLuckBranch${suffix}`,
-        description: 'test',
+        nameFr: `BetLuckBranch${suffix}`,
+        nameEn: `BetLuckBranch${suffix}`,
+        descriptionFr: 'test',
+        descriptionEn: 'test',
         icon: 'x',
         color: '#fff',
         order: 999,
@@ -714,8 +720,10 @@ describe('cote et placement du pari', () => {
     const node = await prisma.skillNode.create({
       data: {
         branchId: branch.id,
-        name: `BetLuckNode${suffix}`,
-        description: 'test',
+        nameFr: `BetLuckNode${suffix}`,
+        nameEn: `BetLuckNode${suffix}`,
+        descriptionFr: 'test',
+        descriptionEn: 'test',
         icon: 'x',
         maxLevel: 1,
         effectType: 'LUCK',
@@ -823,8 +831,10 @@ describe('cote et placement du pari', () => {
     // les chances des joueurs sur qui les autres voudront justement parier.
     const branch = await prisma.skillBranch.create({
       data: {
-        name: `BetGoldBranch${suffix}`,
-        description: 'test',
+        nameFr: `BetGoldBranch${suffix}`,
+        nameEn: `BetGoldBranch${suffix}`,
+        descriptionFr: 'test',
+        descriptionEn: 'test',
         icon: 'x',
         color: '#fff',
         order: 998,
@@ -833,8 +843,10 @@ describe('cote et placement du pari', () => {
     const node = await prisma.skillNode.create({
       data: {
         branchId: branch.id,
-        name: `BetGoldNode${suffix}`,
-        description: 'test',
+        nameFr: `BetGoldNode${suffix}`,
+        nameEn: `BetGoldNode${suffix}`,
+        descriptionFr: 'test',
+        descriptionEn: 'test',
         icon: 'x',
         maxLevel: 1,
         effectType: 'GOLDEN_BALL_CHANCE',
@@ -1101,11 +1113,12 @@ describe('cote et placement du pari', () => {
       await prisma.bet.deleteMany({ where: { teamId } })
 
       const rareSet = await prisma.cardSet.create({
-        data: { name: `BetRareOnly${suffix}`, isActive: false },
+        data: { nameFr: `BetRareOnly${suffix}`, nameEn: `BetRareOnly${suffix}`, isActive: false },
       })
       const rareCard = await prisma.card.create({
         data: {
-          name: `BetRareOnlyCard${suffix}`,
+          nameFr: `BetRareOnlyCard${suffix}`,
+          nameEn: `BetRareOnlyCard${suffix}`,
           rarity: 'RARE',
           dropWeight: 10,
           setId: rareSet.id,
@@ -1115,11 +1128,12 @@ describe('cote et placement du pari', () => {
       rareCardId = rareCard.id
 
       const commonSet = await prisma.cardSet.create({
-        data: { name: `BetCommonOnly${suffix}`, isActive: false },
+        data: { nameFr: `BetCommonOnly${suffix}`, nameEn: `BetCommonOnly${suffix}`, isActive: false },
       })
       const commonCard = await prisma.card.create({
         data: {
-          name: `BetCommonOnlyCard${suffix}`,
+          nameFr: `BetCommonOnlyCard${suffix}`,
+          nameEn: `BetCommonOnlyCard${suffix}`,
           rarity: 'COMMON',
           dropWeight: 10,
           setId: commonSet.id,

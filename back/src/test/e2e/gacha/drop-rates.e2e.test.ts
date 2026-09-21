@@ -12,11 +12,12 @@ describe('GET /pulls/rates', () => {
 
     // Un set actif avec une LEGENDARY garantit un pct > 0 sur cette rareté
     const set = await postgresOrm.prisma.cardSet.create({
-      data: { name: `RatesSet${suffix}`, isActive: true },
+      data: { nameFr: `RatesSet${suffix}`, nameEn: `RatesSet${suffix}`, isActive: true },
     })
     await postgresOrm.prisma.card.create({
       data: {
-        name: `RatesLegendary${suffix}`,
+        nameFr: `RatesLegendary${suffix}`,
+        nameEn: `RatesLegendary${suffix}`,
         rarity: 'LEGENDARY',
         dropWeight: 5,
         setId: set.id,
@@ -24,11 +25,12 @@ describe('GET /pulls/rates', () => {
     })
     // Set inactif : ne doit PAS compter dans les taux
     const inactive = await postgresOrm.prisma.cardSet.create({
-      data: { name: `RatesInactive${suffix}`, isActive: false },
+      data: { nameFr: `RatesInactive${suffix}`, nameEn: `RatesInactive${suffix}`, isActive: false },
     })
     await postgresOrm.prisma.card.create({
       data: {
-        name: `RatesGhost${suffix}`,
+        nameFr: `RatesGhost${suffix}`,
+        nameEn: `RatesGhost${suffix}`,
         rarity: 'COMMON',
         dropWeight: 1_000_000,
         setId: inactive.id,

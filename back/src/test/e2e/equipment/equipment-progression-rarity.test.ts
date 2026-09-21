@@ -34,7 +34,8 @@ describe('Equipment milestone cascade by rarity', () => {
     // dans equipment-fixture-slots.ts (EQUIPMENT_PROGRESSION_RARITY).
     const commonWeapon = await postgresOrm.prisma.equipment.create({
       data: {
-        name: `RarC-${suffix}`,
+        nameFr: `RarC-${suffix}`,
+        nameEn: `RarC-${suffix}`,
         ...EQUIPMENT_PROGRESSION_RARITY,
         rarity: 'COMMON',
         bonuses: { atkFlat: 5 },
@@ -49,7 +50,8 @@ describe('Equipment milestone cascade by rarity', () => {
 
     const epicWeapon = await postgresOrm.prisma.equipment.create({
       data: {
-        name: `RarE-${suffix}`,
+        nameFr: `RarE-${suffix}`,
+        nameEn: `RarE-${suffix}`,
         ...EQUIPMENT_PROGRESSION_RARITY,
         rarity: 'EPIC',
         bonuses: { atkFlat: 25 },

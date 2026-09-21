@@ -19,11 +19,12 @@ describe('Combat teams per mode routes', () => {
     const { postgresOrm } = (app as any).iocContainer
 
     const set = await postgresOrm.prisma.cardSet.create({
-      data: { name: `PerModeSet${suffix}`, isActive: false },
+      data: { nameFr: `PerModeSet${suffix}`, nameEn: `PerModeSet${suffix}`, isActive: false },
     })
     const card1 = await postgresOrm.prisma.card.create({
       data: {
-        name: `PerModeCard1${suffix}`,
+        nameFr: `PerModeCard1${suffix}`,
+        nameEn: `PerModeCard1${suffix}`,
         rarity: 'RARE',
         dropWeight: 10,
         setId: set.id,
@@ -35,7 +36,8 @@ describe('Combat teams per mode routes', () => {
     })
     const card2 = await postgresOrm.prisma.card.create({
       data: {
-        name: `PerModeCard2${suffix}`,
+        nameFr: `PerModeCard2${suffix}`,
+        nameEn: `PerModeCard2${suffix}`,
         rarity: 'EPIC',
         dropWeight: 5,
         setId: set.id,

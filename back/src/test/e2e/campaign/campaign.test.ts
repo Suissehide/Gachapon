@@ -52,11 +52,12 @@ describe('Campaign routes', () => {
 
     // Card set + 1 high-stat card so player wins
     const set = await postgresOrm.prisma.cardSet.create({
-      data: { name: `CampSet${suffix}`, isActive: true },
+      data: { nameFr: `CampSet${suffix}`, nameEn: `CampSet${suffix}`, isActive: true },
     })
     const card = await postgresOrm.prisma.card.create({
       data: {
-        name: `CampCard${suffix}`,
+        nameFr: `CampCard${suffix}`,
+        nameEn: `CampCard${suffix}`,
         rarity: 'LEGENDARY',
         dropWeight: 1,
         setId: set.id,
@@ -78,7 +79,8 @@ describe('Campaign routes', () => {
     // (CAMPAIGN).
     await postgresOrm.prisma.equipment.create({
       data: {
-        name: `CampEqC${suffix}`,
+        nameFr: `CampEqC${suffix}`,
+        nameEn: `CampEqC${suffix}`,
         ...CAMPAIGN,
         rarity: 'COMMON',
         bonuses: { atkFlat: 1 },
@@ -87,7 +89,8 @@ describe('Campaign routes', () => {
     })
     await postgresOrm.prisma.equipment.create({
       data: {
-        name: `CampEqU${suffix}`,
+        nameFr: `CampEqU${suffix}`,
+        nameEn: `CampEqU${suffix}`,
         ...CAMPAIGN,
         rarity: 'UNCOMMON',
         bonuses: { atkFlat: 2 },
@@ -96,7 +99,8 @@ describe('Campaign routes', () => {
     })
     await postgresOrm.prisma.equipment.create({
       data: {
-        name: `CampEqR${suffix}`,
+        nameFr: `CampEqR${suffix}`,
+        nameEn: `CampEqR${suffix}`,
         ...CAMPAIGN,
         rarity: 'RARE',
         bonuses: { atkFlat: 5 },
@@ -105,7 +109,8 @@ describe('Campaign routes', () => {
     })
     await postgresOrm.prisma.equipment.create({
       data: {
-        name: `CampEqE${suffix}`,
+        nameFr: `CampEqE${suffix}`,
+        nameEn: `CampEqE${suffix}`,
         ...CAMPAIGN,
         rarity: 'EPIC',
         bonuses: { atkFlat: 20 },
@@ -114,7 +119,8 @@ describe('Campaign routes', () => {
     })
     await postgresOrm.prisma.equipment.create({
       data: {
-        name: `CampEqL${suffix}`,
+        nameFr: `CampEqL${suffix}`,
+        nameEn: `CampEqL${suffix}`,
         ...CAMPAIGN,
         rarity: 'LEGENDARY',
         bonuses: { atkFlat: 50 },
@@ -127,7 +133,8 @@ describe('Campaign routes', () => {
       data: {
         chapter: 1,
         index: 1,
-        label: '1-1',
+        labelFr: '1-1',
+        labelEn: '1-1',
         isBoss: false,
         order: 1,
         enemyTeam: [
@@ -171,7 +178,8 @@ describe('Campaign routes', () => {
     // tour redeviendrait un candidat valide et ce test la verrait sortir.
     await postgresOrm.prisma.equipment.create({
       data: {
-        name: `SlotFilterClassic${suffix}`,
+        nameFr: `SlotFilterClassic${suffix}`,
+        nameEn: `SlotFilterClassic${suffix}`,
         ...CAMPAIGN_SLOT_FILTER_CLASSIC,
         rarity: 'COMMON',
         bonuses: { atkFlat: 1 },
@@ -180,7 +188,8 @@ describe('Campaign routes', () => {
     })
     const towerPiece = await postgresOrm.prisma.equipment.create({
       data: {
-        name: `SlotFilterTower${suffix}`,
+        nameFr: `SlotFilterTower${suffix}`,
+        nameEn: `SlotFilterTower${suffix}`,
         ...CAMPAIGN_SLOT_FILTER_TOWER,
         rarity: 'COMMON',
         bonuses: { atkFlat: 1 },
@@ -193,7 +202,8 @@ describe('Campaign routes', () => {
       data: {
         chapter: 1,
         index: 2,
-        label: '1-2',
+        labelFr: '1-2',
+        labelEn: '1-2',
         isBoss: false,
         order: 2,
         enemyTeam: [
@@ -238,7 +248,8 @@ describe('Campaign routes', () => {
       data: {
         chapter: 1,
         index: 3,
-        label: '1-3',
+        labelFr: '1-3',
+        labelEn: '1-3',
         isBoss: false,
         order: 3,
         enemyTeam: [
@@ -309,8 +320,10 @@ describe('Campaign routes', () => {
     const achievement = await postgresOrm.prisma.achievement.create({
       data: {
         key: achievementKey,
-        name: `Étages franchis (test campagne) ${suffix}`,
-        description: 'Test: un combat de campagne doit compter ici',
+        nameFr: `Étages franchis (test campagne) ${suffix}`,
+        nameEn: `Étages franchis (test campagne) ${suffix}`,
+        descriptionFr: 'Test: un combat de campagne doit compter ici',
+        descriptionEn: 'Test: un combat de campagne doit compter ici',
         criterion: { type: 'STAGES_CLEARED_COUNT', threshold: 100 },
         isActive: true,
       },
@@ -608,7 +621,7 @@ describe('Campaign routes', () => {
     // temps du combat les sets des autres fichiers pour que le tirage ne
     // puisse retomber que sur la carte de celui-ci.
     const otherSets = await postgresOrm.prisma.cardSet.findMany({
-      where: { isActive: true, name: { not: `CampSet${suffix}` } },
+      where: { isActive: true, nameFr: { not: `CampSet${suffix}` } },
       select: { id: true },
     })
     const otherSetIds = otherSets.map((cs: { id: string }) => cs.id)
@@ -746,7 +759,7 @@ describe('Campaign routes', () => {
     })
     const originalLoot = stage.lootTable
     const otherSets = await postgresOrm.prisma.cardSet.findMany({
-      where: { isActive: true, name: { not: `CampSet${suffix}` } },
+      where: { isActive: true, nameFr: { not: `CampSet${suffix}` } },
       select: { id: true },
     })
     const otherSetIds = otherSets.map((cs: { id: string }) => cs.id)
@@ -777,7 +790,8 @@ describe('Campaign routes', () => {
         equipmentDrops: {
           userEquipmentId: string
           equipmentId: string
-          name: string
+          nameFr: string,
+          nameEn: string,
           rarity: string
           slot: string
           setKey: string
@@ -788,7 +802,8 @@ describe('Campaign routes', () => {
         }[]
         cardDrops: {
           cardId: string
-          name: string
+          nameFr: string,
+          nameEn: string,
           rarity: string
           wasDuplicate: boolean
           imageUrl: string | null

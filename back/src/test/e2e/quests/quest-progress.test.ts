@@ -30,10 +30,10 @@ describe('Quest progress e2e', () => {
 
     // Seed a card set + card so pulls can succeed
     const set = await postgresOrm.prisma.cardSet.create({
-      data: { name: `QuestSet${suffix}`, isActive: true },
+      data: { nameFr: `QuestSet${suffix}`, nameEn: `QuestSet${suffix}`, isActive: true },
     })
     await postgresOrm.prisma.card.create({
-      data: { name: `QuestCard${suffix}`, rarity: 'COMMON', dropWeight: 10, setId: set.id },
+      data: { nameFr: `QuestCard${suffix}`, nameEn: `QuestCard${suffix}`, rarity: 'COMMON', dropWeight: 10, setId: set.id },
     })
 
     // Seed a Reward template for the quest

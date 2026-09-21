@@ -17,10 +17,10 @@ describe('Gacha routes', () => {
 
     // Seed a card set + card so pulls can succeed
     const set = await postgresOrm.prisma.cardSet.create({
-      data: { name: `GachaSet${suffix}`, isActive: true },
+      data: { nameFr: `GachaSet${suffix}`, nameEn: `GachaSet${suffix}`, isActive: true },
     })
     await postgresOrm.prisma.card.create({
-      data: { name: `GachaCard${suffix}`, rarity: 'COMMON', dropWeight: 10, setId: set.id },
+      data: { nameFr: `GachaCard${suffix}`, nameEn: `GachaCard${suffix}`, rarity: 'COMMON', dropWeight: 10, setId: set.id },
     })
 
     // Register + verify + login
@@ -266,7 +266,7 @@ describe('Gacha routes', () => {
     // restore the snapshot at the end so later e2e files see the same active
     // sets they would have without this test.
     const otherActive = await postgresOrm.prisma.cardSet.findMany({
-      where: { isActive: true, name: { not: `GachaSet${suffix}` } },
+      where: { isActive: true, nameFr: { not: `GachaSet${suffix}` } },
       select: { id: true },
     })
     await postgresOrm.prisma.cardSet.updateMany({

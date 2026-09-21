@@ -83,8 +83,8 @@ describe('routes de raid', () => {
     const element = raidElementForWeek(raidWeekKey(new Date()))
     await prisma.raidBoss.upsert({
       where: { element },
-      create: { element, name: 'Boss de test', spec: { ...WEAK_BOSS_SPEC, element } },
-      update: { name: 'Boss de test', spec: { ...WEAK_BOSS_SPEC, element } },
+      create: { element, nameFr: 'Boss de test', nameEn: 'Boss de test', spec: { ...WEAK_BOSS_SPEC, element } },
+      update: { nameFr: 'Boss de test', nameEn: 'Boss de test', spec: { ...WEAK_BOSS_SPEC, element } },
     })
     for (const t of TIERS) {
       const existing = await prisma.raidTier.findUnique({ where: { pct: t.pct } })
@@ -102,11 +102,12 @@ describe('routes de raid', () => {
     }
 
     const set = await prisma.cardSet.create({
-      data: { name: `RaidSet${suffix}`, isActive: true },
+      data: { nameFr: `RaidSet${suffix}`, nameEn: `RaidSet${suffix}`, isActive: true },
     })
     const card = await prisma.card.create({
       data: {
-        name: `RaidCard${suffix}`,
+        nameFr: `RaidCard${suffix}`,
+        nameEn: `RaidCard${suffix}`,
         rarity: 'LEGENDARY',
         dropWeight: 1,
         setId: set.id,

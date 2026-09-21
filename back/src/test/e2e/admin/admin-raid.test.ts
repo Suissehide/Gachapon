@@ -32,7 +32,8 @@ describe('admin raid routes', () => {
       where: { element: 'WATER' },
       create: {
         element: 'WATER',
-        name: 'Nérée',
+        nameFr: 'Nérée',
+        nameEn: 'Nérée',
         spec: {
           baseHp: 100, baseAtk: 10, baseDef: 5, baseSpd: 100, level: 1, palier: 1,
           attackPattern: 'BASIC', passiveKey: null, element: 'WATER',
@@ -40,7 +41,8 @@ describe('admin raid routes', () => {
         },
       },
       update: {
-        name: 'Nérée',
+        nameFr: 'Nérée',
+        nameEn: 'Nérée',
         spec: {
           baseHp: 100, baseAtk: 10, baseDef: 5, baseSpd: 100, level: 1, palier: 1,
           attackPattern: 'BASIC', passiveKey: null, element: 'WATER',

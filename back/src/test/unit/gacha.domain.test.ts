@@ -6,12 +6,14 @@ function makeCard(name: string, weight: number, rarity = 'COMMON'): CardWithSet 
   return {
     id: name,
     name,
+    nameFr: name,
+    nameEn: name,
     rarity: rarity as any,
     dropWeight: weight,
     imageUrl: '',
     setId: 'set1',
     createdAt: new Date(),
-    set: { id: 'set1', name: 'Test', description: null, coverImage: null, isActive: true, createdAt: new Date(), hue: null },
+    set: { id: 'set1', name: 'Test', nameFr: 'Test', nameEn: 'Test', description: null, descriptionFr: null, descriptionEn: null, coverImage: null, isActive: true, createdAt: new Date(), hue: null },
   }
 }
 
@@ -147,6 +149,8 @@ function makeCardWithSet(id: string, rarity: string): CardWithSet {
   return {
     id,
     name: id,
+    nameFr: id,
+    nameEn: id,
     rarity: rarity as any,
     dropWeight: 10,
     imageUrl: null as any,
@@ -155,7 +159,11 @@ function makeCardWithSet(id: string, rarity: string): CardWithSet {
     set: {
       id: 'set1',
       name: 'Test Set',
+      nameFr: 'Test Set',
+      nameEn: 'Test Set',
       description: null,
+      descriptionFr: null,
+      descriptionEn: null,
       coverImage: null,
       isActive: true,
       createdAt: new Date(),

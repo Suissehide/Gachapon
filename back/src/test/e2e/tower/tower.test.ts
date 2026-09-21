@@ -55,11 +55,12 @@ describe('routes de tour', () => {
     // Carte + équipe très forte pour garantir la victoire (motif de
     // campaign.test.ts).
     const set = await postgresOrm.prisma.cardSet.create({
-      data: { name: `TowerSet${suffix}`, isActive: true },
+      data: { nameFr: `TowerSet${suffix}`, nameEn: `TowerSet${suffix}`, isActive: true },
     })
     const card = await postgresOrm.prisma.card.create({
       data: {
-        name: `TowerCard${suffix}`,
+        nameFr: `TowerCard${suffix}`,
+        nameEn: `TowerCard${suffix}`,
         rarity: 'LEGENDARY',
         dropWeight: 1,
         setId: set.id,
@@ -79,7 +80,8 @@ describe('routes de tour', () => {
       data: {
         element: 'FIRE',
         index: 1,
-        label: 'Étage 1',
+        labelFr: 'Étage 1',
+        labelEn: 'Étage 1',
         order: 1,
         enemyTeam: [
           {
@@ -117,7 +119,8 @@ describe('routes de tour', () => {
       data: {
         element: 'FIRE',
         index: 5,
-        label: 'Étage 5',
+        labelFr: 'Étage 5',
+        labelEn: 'Étage 5',
         order: 5,
         enemyTeam: [
           {
@@ -144,7 +147,8 @@ describe('routes de tour', () => {
     for (const reservation of TOWER_FIRE_ALL_SETS) {
       await postgresOrm.prisma.equipment.create({
         data: {
-          name: `TowerEq-${reservation.setKey}-${suffix}`,
+          nameFr: `TowerEq-${reservation.setKey}-${suffix}`,
+          nameEn: `TowerEq-${reservation.setKey}-${suffix}`,
           ...reservation,
           rarity: 'LEGENDARY',
           bonuses: { atkFlat: 50 },
@@ -161,7 +165,8 @@ describe('routes de tour', () => {
       data: {
         element: 'WATER',
         index: 1,
-        label: 'Étage 1',
+        labelFr: 'Étage 1',
+        labelEn: 'Étage 1',
         order: 1,
         enemyTeam: [
           {
@@ -196,7 +201,8 @@ describe('routes de tour', () => {
     for (const reservation of TOWER_WATER_ALL_SETS) {
       await postgresOrm.prisma.equipment.create({
         data: {
-          name: `TowerEq-${reservation.setKey}-${suffix}`,
+          nameFr: `TowerEq-${reservation.setKey}-${suffix}`,
+          nameEn: `TowerEq-${reservation.setKey}-${suffix}`,
           ...reservation,
           rarity: 'LEGENDARY',
           bonuses: { defFlat: 50 },
@@ -247,8 +253,10 @@ describe('routes de tour', () => {
     const achievement = await postgresOrm.prisma.achievement.create({
       data: {
         key: achievementKey,
-        name: `Étages franchis (test tour) ${suffix}`,
-        description: 'Test: un combat de tour ne compte pas ici',
+        nameFr: `Étages franchis (test tour) ${suffix}`,
+        nameEn: `Étages franchis (test tour) ${suffix}`,
+        descriptionFr: 'Test: un combat de tour ne compte pas ici',
+        descriptionEn: 'Test: un combat de tour ne compte pas ici',
         criterion: { type: 'STAGES_CLEARED_COUNT', threshold: 100 },
         isActive: true,
       },

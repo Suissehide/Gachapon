@@ -18,11 +18,12 @@ describe('POST /cards/:userCardId/dust', () => {
     const { postgresOrm } = (app as any).iocContainer
 
     const set = await postgresOrm.prisma.cardSet.create({
-      data: { name: `DustSet${suffix}`, isActive: false },
+      data: { nameFr: `DustSet${suffix}`, nameEn: `DustSet${suffix}`, isActive: false },
     })
     const card = await postgresOrm.prisma.card.create({
       data: {
-        name: `DustCard${suffix}`,
+        nameFr: `DustCard${suffix}`,
+        nameEn: `DustCard${suffix}`,
         rarity: 'RARE',
         dropWeight: 10,
         setId: set.id,
@@ -112,7 +113,7 @@ describe('POST /cards/:userCardId/dust', () => {
       },
     })
     const set = await postgresOrm.prisma.cardSet.findFirst({
-      where: { name: `DustSet${suffix}` },
+      where: { nameFr: `DustSet${suffix}` },
     })
     const card = await postgresOrm.prisma.card.findFirst({
       where: { setId: set!.id },
@@ -140,11 +141,12 @@ describe('POST /cards/:userCardId/dust', () => {
     const { postgresOrm } = (app as any).iocContainer
 
     const lockSet = await postgresOrm.prisma.cardSet.create({
-      data: { name: `DustLockSet${suffix}`, isActive: false },
+      data: { nameFr: `DustLockSet${suffix}`, nameEn: `DustLockSet${suffix}`, isActive: false },
     })
     const lockCard = await postgresOrm.prisma.card.create({
       data: {
-        name: `DustLockCard${suffix}`,
+        nameFr: `DustLockCard${suffix}`,
+        nameEn: `DustLockCard${suffix}`,
         rarity: 'RARE',
         dropWeight: 10,
         setId: lockSet.id,

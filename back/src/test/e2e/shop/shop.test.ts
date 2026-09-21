@@ -52,8 +52,10 @@ describe('Shop routes', () => {
     // Create a simple TOKEN_PACK item for testing
     const item = await postgresOrm.prisma.shopItem.create({
       data: {
-        name: 'Test Token Pack',
-        description: 'A test token pack',
+        nameFr: 'Test Token Pack',
+        nameEn: 'Test Token Pack',
+        descriptionFr: 'A test token pack',
+        descriptionEn: 'A test token pack',
         type: 'TOKEN_PACK',
         cost: 1000,
         value: { tokens: 100 },
@@ -76,8 +78,10 @@ describe('Shop routes', () => {
     // Create a simple TOKEN_PACK item for testing
     const item = await postgresOrm.prisma.shopItem.create({
       data: {
-        name: 'Test Token Pack 2',
-        description: 'Another test token pack',
+        nameFr: 'Test Token Pack 2',
+        nameEn: 'Test Token Pack 2',
+        descriptionFr: 'Another test token pack',
+        descriptionEn: 'Another test token pack',
         type: 'TOKEN_PACK',
         cost: 100,
         value: { tokens: 50 },
@@ -107,8 +111,10 @@ describe('Shop routes', () => {
 
     const item = await postgresOrm.prisma.shopItem.create({
       data: {
-        name: 'Gold Pack',
-        description: 'Token pack bought with gold',
+        nameFr: 'Gold Pack',
+        nameEn: 'Gold Pack',
+        descriptionFr: 'Token pack bought with gold',
+        descriptionEn: 'Token pack bought with gold',
         type: 'TOKEN_PACK',
         cost: 1000,
         currency: 'GOLD',
@@ -136,8 +142,10 @@ describe('Shop routes', () => {
 
     const item = await postgresOrm.prisma.shopItem.create({
       data: {
-        name: 'Gold Pack 2',
-        description: 'Token pack bought with gold',
+        nameFr: 'Gold Pack 2',
+        nameEn: 'Gold Pack 2',
+        descriptionFr: 'Token pack bought with gold',
+        descriptionEn: 'Token pack bought with gold',
         type: 'TOKEN_PACK',
         cost: 500,
         currency: 'GOLD',
@@ -186,8 +194,10 @@ describe('Shop routes', () => {
     // Create a MACHINE shop item
     const machineItem = await postgresOrm.prisma.shopItem.create({
       data: {
-        name: 'Gashapon',
-        description: 'Machine Gashapon',
+        nameFr: 'Gashapon',
+        nameEn: 'Gashapon',
+        descriptionFr: 'Machine Gashapon',
+        descriptionEn: 'Machine Gashapon',
         type: 'MACHINE',
         cost: 500,
         value: { machineId: 'gashapon' },
@@ -237,8 +247,10 @@ describe('Shop routes', () => {
     // Create a weight multiplier BOOST item
     const boostItem = await postgresOrm.prisma.shopItem.create({
       data: {
-        name: 'Boost Rare+',
-        description: 'Boost with weight multiplier',
+        nameFr: 'Boost Rare+',
+        nameEn: 'Boost Rare+',
+        descriptionFr: 'Boost with weight multiplier',
+        descriptionEn: 'Boost with weight multiplier',
         type: 'BOOST',
         cost: 500,
         value: { multiplier: 2, rarity: 'RARE', pulls: 10 },
@@ -276,8 +288,10 @@ describe('Shop routes', () => {
     // Create another weight multiplier BOOST item to test conflict
     const boostItem = await postgresOrm.prisma.shopItem.create({
       data: {
-        name: 'Boost Rare+ Conflict',
-        description: 'Another boost with weight multiplier',
+        nameFr: 'Boost Rare+ Conflict',
+        nameEn: 'Boost Rare+ Conflict',
+        descriptionFr: 'Another boost with weight multiplier',
+        descriptionEn: 'Another boost with weight multiplier',
         type: 'BOOST',
         cost: 500,
         value: { multiplier: 1.5, rarity: 'RARE', pulls: 5 },
@@ -304,8 +318,10 @@ describe('Shop routes', () => {
 
     const boostItem = await postgresOrm.prisma.shopItem.create({
       data: {
-        name: 'Boost Rare+ Cumul',
-        description: 'Boost with weight multiplier',
+        nameFr: 'Boost Rare+ Cumul',
+        nameEn: 'Boost Rare+ Cumul',
+        descriptionFr: 'Boost with weight multiplier',
+        descriptionEn: 'Boost with weight multiplier',
         type: 'BOOST',
         cost: 200,
         value: { multiplier: 2, rarity: 'RARE', pulls: 10 },
@@ -344,8 +360,10 @@ describe('Shop routes', () => {
 
     const epicBoost = await postgresOrm.prisma.shopItem.create({
       data: {
-        name: 'Boost Épique Coexist',
-        description: 'Boost with weight multiplier on EPIC',
+        nameFr: 'Boost Épique Coexist',
+        nameEn: 'Boost Épique Coexist',
+        descriptionFr: 'Boost with weight multiplier on EPIC',
+        descriptionEn: 'Boost with weight multiplier on EPIC',
         type: 'BOOST',
         cost: 500,
         value: { multiplier: 3, rarity: 'EPIC', pulls: 10 },
@@ -378,8 +396,10 @@ describe('Shop routes', () => {
     // Create a guaranteed rarity BOOST item
     const boostItem = await postgresOrm.prisma.shopItem.create({
       data: {
-        name: 'Boost Épique',
-        description: 'Boost with guaranteed epic rarity',
+        nameFr: 'Boost Épique',
+        nameEn: 'Boost Épique',
+        descriptionFr: 'Boost with guaranteed epic rarity',
+        descriptionEn: 'Boost with guaranteed epic rarity',
         type: 'BOOST',
         cost: 800,
         value: { guaranteedRarity: 'EPIC', pulls: 5 },
@@ -416,8 +436,10 @@ describe('Shop routes', () => {
     // Create a malformed BOOST item with empty value
     const malformedItem = await postgresOrm.prisma.shopItem.create({
       data: {
-        name: 'Malformed Boost',
-        description: 'A boost with invalid value',
+        nameFr: 'Malformed Boost',
+        nameEn: 'Malformed Boost',
+        descriptionFr: 'A boost with invalid value',
+        descriptionEn: 'A boost with invalid value',
         type: 'BOOST',
         cost: 100,
         value: {}, // Empty object — no multiplier, no guaranteedRarity
@@ -455,8 +477,10 @@ describe('Shop routes', () => {
 
     const item = await postgresOrm.prisma.shopItem.create({
       data: {
-        name: 'Petite recharge test',
-        description: '+15 points de combat',
+        nameFr: 'Petite recharge test',
+        nameEn: 'Petite recharge test',
+        descriptionFr: '+15 points de combat',
+        descriptionEn: '+15 points de combat',
         type: 'ENERGY_PACK',
         cost: 75,
         currency: 'DUST',
@@ -492,8 +516,10 @@ describe('Shop routes', () => {
 
     const item = await postgresOrm.prisma.shopItem.create({
       data: {
-        name: 'Recharge test',
-        description: '+40 points de combat',
+        nameFr: 'Recharge test',
+        nameEn: 'Recharge test',
+        descriptionFr: '+40 points de combat',
+        descriptionEn: '+40 points de combat',
         type: 'ENERGY_PACK',
         cost: 180,
         currency: 'DUST',
@@ -520,8 +546,10 @@ describe('Shop routes', () => {
 
     const item = await postgresOrm.prisma.shopItem.create({
       data: {
-        name: 'Recharge cassée',
-        description: 'value invalide',
+        nameFr: 'Recharge cassée',
+        nameEn: 'Recharge cassée',
+        descriptionFr: 'value invalide',
+        descriptionEn: 'value invalide',
         type: 'ENERGY_PACK',
         cost: 10,
         currency: 'DUST',
@@ -548,8 +576,10 @@ describe('Shop routes', () => {
 
     const item = await postgresOrm.prisma.shopItem.create({
       data: {
-        name: 'Recharge cap test',
-        description: '+15 points de combat',
+        nameFr: 'Recharge cap test',
+        nameEn: 'Recharge cap test',
+        descriptionFr: '+15 points de combat',
+        descriptionEn: '+15 points de combat',
         type: 'ENERGY_PACK',
         cost: 10,
         currency: 'DUST',
@@ -618,8 +648,10 @@ describe('Shop routes', () => {
     })
     const rareItem = await postgresOrm.prisma.shopItem.create({
       data: {
-        name: 'Boost Rare+ Compteur',
-        description: 'x2 RARE',
+        nameFr: 'Boost Rare+ Compteur',
+        nameEn: 'Boost Rare+ Compteur',
+        descriptionFr: 'x2 RARE',
+        descriptionEn: 'x2 RARE',
         type: 'BOOST',
         cost: 200,
         value: { multiplier: 2, rarity: 'RARE', pulls: 10 },
@@ -628,8 +660,10 @@ describe('Shop routes', () => {
     })
     const epicItem = await postgresOrm.prisma.shopItem.create({
       data: {
-        name: 'Boost Épique Compteur',
-        description: 'x3 EPIC',
+        nameFr: 'Boost Épique Compteur',
+        nameEn: 'Boost Épique Compteur',
+        descriptionFr: 'x3 EPIC',
+        descriptionEn: 'x3 EPIC',
         type: 'BOOST',
         cost: 500,
         value: { multiplier: 3, rarity: 'EPIC', pulls: 10 },
@@ -672,8 +706,10 @@ describe('Shop routes', () => {
 
     const branch = await postgresOrm.prisma.skillBranch.create({
       data: {
-        name: `Opulence${suffix}`,
-        description: 'Test branch',
+        nameFr: `Opulence${suffix}`,
+        nameEn: `Opulence${suffix}`,
+        descriptionFr: 'Test branch',
+        descriptionEn: 'Test branch',
         icon: 'battery',
         color: '#f59e0b',
         order: 98,
@@ -682,8 +718,10 @@ describe('Shop routes', () => {
     const node = await postgresOrm.prisma.skillNode.create({
       data: {
         branchId: branch.id,
-        name: 'Opulence Lv1',
-        description: 'Relève le plafond de packs',
+        nameFr: 'Opulence Lv1',
+        nameEn: 'Opulence Lv1',
+        descriptionFr: 'Relève le plafond de packs',
+        descriptionEn: 'Relève le plafond de packs',
         icon: 'battery',
         maxLevel: 1,
         effectType: 'ENERGY_PACK_CAP',
@@ -717,8 +755,10 @@ describe('Shop routes', () => {
     // Seed skill tree: branch → node GOLD_SHOP_DISCOUNT → level 1 effect 15 → UserSkill
     const branch = await postgresOrm.prisma.skillBranch.create({
       data: {
-        name: `Marchandeur${suffix}`,
-        description: 'Test branch',
+        nameFr: `Marchandeur${suffix}`,
+        nameEn: `Marchandeur${suffix}`,
+        descriptionFr: 'Test branch',
+        descriptionEn: 'Test branch',
         icon: 'tag',
         color: '#f59e0b',
         order: 99,
@@ -727,8 +767,10 @@ describe('Shop routes', () => {
     const node = await postgresOrm.prisma.skillNode.create({
       data: {
         branchId: branch.id,
-        name: 'Marchandeur Lv1',
-        description: 'Remise gold shop',
+        nameFr: 'Marchandeur Lv1',
+        nameEn: 'Marchandeur Lv1',
+        descriptionFr: 'Remise gold shop',
+        descriptionEn: 'Remise gold shop',
         icon: 'tag',
         maxLevel: 1,
         effectType: 'GOLD_SHOP_DISCOUNT',
@@ -744,8 +786,10 @@ describe('Shop routes', () => {
     // Create a GOLD TOKEN_PACK priced at 1000
     const item = await postgresOrm.prisma.shopItem.create({
       data: {
-        name: `Marchandeur Pack${suffix}`,
-        description: 'Pack gold avec remise',
+        nameFr: `Marchandeur Pack${suffix}`,
+        nameEn: `Marchandeur Pack${suffix}`,
+        descriptionFr: 'Pack gold avec remise',
+        descriptionEn: 'Pack gold avec remise',
         type: 'TOKEN_PACK',
         cost: 1000,
         currency: 'GOLD',

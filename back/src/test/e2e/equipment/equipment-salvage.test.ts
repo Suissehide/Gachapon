@@ -34,11 +34,12 @@ describe('Equipment salvage route', () => {
     userId = user.id
 
     const set = await postgresOrm.prisma.cardSet.create({
-      data: { name: `SalvSet${suffix}`, isActive: false },
+      data: { nameFr: `SalvSet${suffix}`, nameEn: `SalvSet${suffix}`, isActive: false },
     })
     const card = await postgresOrm.prisma.card.create({
       data: {
-        name: `SalvCard${suffix}`,
+        nameFr: `SalvCard${suffix}`,
+        nameEn: `SalvCard${suffix}`,
         rarity: 'RARE',
         dropWeight: 10,
         setId: set.id,
@@ -58,7 +59,8 @@ describe('Equipment salvage route', () => {
     const mkPiece = (name: string, rarity: string) =>
       postgresOrm.prisma.equipment.create({
         data: {
-          name: `${name}-${suffix}`,
+          nameFr: `${name}-${suffix}`,
+          nameEn: `${name}-${suffix}`,
           ...EQUIPMENT_SALVAGE,
           rarity,
           bonuses: { atkFlat: 5 },

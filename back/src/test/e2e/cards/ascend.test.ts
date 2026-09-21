@@ -23,11 +23,12 @@ describe('POST /cards/:userCardId/ascend', () => {
     const { postgresOrm } = (app as any).iocContainer
 
     const set = await postgresOrm.prisma.cardSet.create({
-      data: { name: `AscendSet${suffix}`, isActive: false },
+      data: { nameFr: `AscendSet${suffix}`, nameEn: `AscendSet${suffix}`, isActive: false },
     })
     const card = await postgresOrm.prisma.card.create({
       data: {
-        name: `AscendCard${suffix}`,
+        nameFr: `AscendCard${suffix}`,
+        nameEn: `AscendCard${suffix}`,
         rarity: 'RARE',
         dropWeight: 10,
         setId: set.id,
@@ -180,11 +181,12 @@ describe('POST /cards/:userCardId/ascend', () => {
     const { postgresOrm } = (app as any).iocContainer
 
     const lockSet = await postgresOrm.prisma.cardSet.create({
-      data: { name: `AscendLockSet${suffix}`, isActive: false },
+      data: { nameFr: `AscendLockSet${suffix}`, nameEn: `AscendLockSet${suffix}`, isActive: false },
     })
     const lockCard = await postgresOrm.prisma.card.create({
       data: {
-        name: `AscendLockCard${suffix}`,
+        nameFr: `AscendLockCard${suffix}`,
+        nameEn: `AscendLockCard${suffix}`,
         rarity: 'RARE',
         dropWeight: 10,
         setId: lockSet.id,

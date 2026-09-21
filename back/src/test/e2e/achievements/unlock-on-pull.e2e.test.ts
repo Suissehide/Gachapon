@@ -18,10 +18,10 @@ describe('Achievement unlock on pull', () => {
 
     // Seed a card set + card so pulls can succeed
     const set = await postgresOrm.prisma.cardSet.create({
-      data: { name: `AchPullSet${suffix}`, isActive: true },
+      data: { nameFr: `AchPullSet${suffix}`, nameEn: `AchPullSet${suffix}`, isActive: true },
     })
     await postgresOrm.prisma.card.create({
-      data: { name: `AchPullCard${suffix}`, rarity: 'COMMON', dropWeight: 10, setId: set.id },
+      data: { nameFr: `AchPullCard${suffix}`, nameEn: `AchPullCard${suffix}`, rarity: 'COMMON', dropWeight: 10, setId: set.id },
     })
 
     // Create an achievement with PULL_COUNT criterion, threshold=1, with a reward
@@ -31,8 +31,10 @@ describe('Achievement unlock on pull', () => {
     await postgresOrm.prisma.achievement.create({
       data: {
         key: achievementKey,
-        name: 'First Pull',
-        description: 'Complete your first pull',
+        nameFr: 'First Pull',
+        nameEn: 'First Pull',
+        descriptionFr: 'Complete your first pull',
+        descriptionEn: 'Complete your first pull',
         criterion: { type: 'PULL_COUNT', threshold: 1 },
         isActive: true,
         rewardId: reward.id,

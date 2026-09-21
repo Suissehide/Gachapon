@@ -97,7 +97,8 @@ describe('Admin media routes', () => {
     const imageKey = `cards/used-image-${suffix}.png`
     await (app as any).iocContainer.postgresOrm.prisma.card.create({
       data: {
-        name: `MediaCard${suffix}`,
+        nameFr: `MediaCard${suffix}`,
+        nameEn: `MediaCard${suffix}`,
         setId,
         rarity: 'COMMON',
         dropWeight: 1,

@@ -18,11 +18,12 @@ describe('POST /cards/:userCardId/level-up', () => {
     const { postgresOrm } = (app as any).iocContainer
 
     const set = await postgresOrm.prisma.cardSet.create({
-      data: { name: `LvlSet${suffix}`, isActive: false },
+      data: { nameFr: `LvlSet${suffix}`, nameEn: `LvlSet${suffix}`, isActive: false },
     })
     const card = await postgresOrm.prisma.card.create({
       data: {
-        name: `LvlCard${suffix}`,
+        nameFr: `LvlCard${suffix}`,
+        nameEn: `LvlCard${suffix}`,
         rarity: 'RARE',
         dropWeight: 10,
         setId: set.id,
@@ -136,7 +137,7 @@ describe('POST /cards/:userCardId/level-up', () => {
       },
     })
     const set = await postgresOrm.prisma.cardSet.findFirst({
-      where: { name: `LvlSet${suffix}` },
+      where: { nameFr: `LvlSet${suffix}` },
     })
     const card = await postgresOrm.prisma.card.findFirst({
       where: { setId: set!.id },
@@ -167,8 +168,10 @@ describe('POST /cards/:userCardId/level-up', () => {
     // Seed skill: UPGRADE_DUST_DISCOUNT effect 15
     const branch = await postgresOrm.prisma.skillBranch.create({
       data: {
-        name: `Artisan${suffix}`,
-        description: 'Test branch',
+        nameFr: `Artisan${suffix}`,
+        nameEn: `Artisan${suffix}`,
+        descriptionFr: 'Test branch',
+        descriptionEn: 'Test branch',
         icon: 'hammer',
         color: '#10b981',
         order: 98,
@@ -177,8 +180,10 @@ describe('POST /cards/:userCardId/level-up', () => {
     const node = await postgresOrm.prisma.skillNode.create({
       data: {
         branchId: branch.id,
-        name: 'Artisan Lv1',
-        description: 'Remise dust upgrade',
+        nameFr: 'Artisan Lv1',
+        nameEn: 'Artisan Lv1',
+        descriptionFr: 'Remise dust upgrade',
+        descriptionEn: 'Remise dust upgrade',
         icon: 'hammer',
         maxLevel: 1,
         effectType: 'UPGRADE_DUST_DISCOUNT',
@@ -193,11 +198,12 @@ describe('POST /cards/:userCardId/level-up', () => {
 
     // Create a LEGENDARY card + UserCard at level 1, palier 1
     const set2 = await postgresOrm.prisma.cardSet.create({
-      data: { name: `ArtisanSet${suffix}`, isActive: false },
+      data: { nameFr: `ArtisanSet${suffix}`, nameEn: `ArtisanSet${suffix}`, isActive: false },
     })
     const legendCard = await postgresOrm.prisma.card.create({
       data: {
-        name: `ArtisanCard${suffix}`,
+        nameFr: `ArtisanCard${suffix}`,
+        nameEn: `ArtisanCard${suffix}`,
         rarity: 'LEGENDARY',
         dropWeight: 1,
         setId: set2.id,

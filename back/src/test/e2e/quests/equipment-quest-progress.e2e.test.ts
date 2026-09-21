@@ -79,7 +79,8 @@ describe('Progression des quêtes équipement e2e', () => {
     const mkPiece = (name: string, rarity: string) =>
       orm.prisma.equipment.create({
         data: {
-          name: `${name}-${suffix}`,
+          nameFr: `${name}-${suffix}`,
+          nameEn: `${name}-${suffix}`,
           ...EQUIPMENT_QUESTS,
           rarity,
           bonuses: { atkFlat: 5 },

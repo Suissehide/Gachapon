@@ -53,13 +53,14 @@ describe('Rewards card grant e2e', () => {
       data: { isActive: false },
     })
     const set = await postgresOrm.prisma.cardSet.create({
-      data: { name: `Card reward set ${suffix}`, isActive: true },
+      data: { nameFr: `Card reward set ${suffix}`, nameEn: `Card reward set ${suffix}`, isActive: true },
     })
     setId = set.id
     const card = await postgresOrm.prisma.card.create({
       data: {
         setId: set.id,
-        name: `Reward EPIC ${suffix}`,
+        nameFr: `Reward EPIC ${suffix}`,
+        nameEn: `Reward EPIC ${suffix}`,
         rarity: 'EPIC',
         // Cards store a storage key; the route must resolve it to a public URL.
         imageUrl: `cards/epic-${suffix}.png`,

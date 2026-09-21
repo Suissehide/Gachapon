@@ -19,11 +19,12 @@ describe('Combat team routes', () => {
     const { postgresOrm } = (app as any).iocContainer
 
     const set = await postgresOrm.prisma.cardSet.create({
-      data: { name: `TeamSet${suffix}`, isActive: false },
+      data: { nameFr: `TeamSet${suffix}`, nameEn: `TeamSet${suffix}`, isActive: false },
     })
     const card1 = await postgresOrm.prisma.card.create({
       data: {
-        name: `TeamCard1${suffix}`,
+        nameFr: `TeamCard1${suffix}`,
+        nameEn: `TeamCard1${suffix}`,
         rarity: 'RARE',
         dropWeight: 10,
         setId: set.id,
@@ -35,7 +36,8 @@ describe('Combat team routes', () => {
     })
     const card2 = await postgresOrm.prisma.card.create({
       data: {
-        name: `TeamCard2${suffix}`,
+        nameFr: `TeamCard2${suffix}`,
+        nameEn: `TeamCard2${suffix}`,
         rarity: 'EPIC',
         dropWeight: 5,
         setId: set.id,

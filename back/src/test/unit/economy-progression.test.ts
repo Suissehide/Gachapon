@@ -282,7 +282,7 @@ describe('economy-progression — partie complète en ~3 mois', () => {
   // légendaires), où ces deux angles morts ne portent pas à conséquence.
 
   it('le boost épique du seed est bien ×2 / 800 / 10 tirages', () => {
-    const boost = SHOP_ITEMS.find((i) => i.name === 'Boost Épique')
+    const boost = SHOP_ITEMS.find((i) => i.nameFr === 'Boost Épique')
     expect(boost?.cost).toBe(800)
     expect(boost?.value).toEqual({ multiplier: 2, rarity: 'EPIC', pulls: 10 })
   })

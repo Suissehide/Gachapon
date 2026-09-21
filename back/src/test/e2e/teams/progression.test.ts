@@ -228,12 +228,13 @@ describe("progression d'équipe : les quatre sources de points", () => {
     // mixedSet : COMMON 90 / RARE 10, sert à figer une cote de pari > 1 au
     // placement (une cote à 1 ferait échouer `place` avant même le test).
     const pullSet = await prisma.cardSet.create({
-      data: { name: `ProgPullSet${suffix}`, isActive: false },
+      data: { nameFr: `ProgPullSet${suffix}`, nameEn: `ProgPullSet${suffix}`, isActive: false },
     })
     pullSetId = pullSet.id
     await prisma.card.create({
       data: {
-        name: `ProgPullCard${suffix}`,
+        nameFr: `ProgPullCard${suffix}`,
+        nameEn: `ProgPullCard${suffix}`,
         rarity: 'COMMON',
         dropWeight: 1,
         setId: pullSetId,
@@ -241,12 +242,13 @@ describe("progression d'équipe : les quatre sources de points", () => {
     })
 
     const hotSet = await prisma.cardSet.create({
-      data: { name: `ProgHotSet${suffix}`, isActive: false },
+      data: { nameFr: `ProgHotSet${suffix}`, nameEn: `ProgHotSet${suffix}`, isActive: false },
     })
     hotSetId = hotSet.id
     await prisma.card.create({
       data: {
-        name: `ProgHotCard${suffix}`,
+        nameFr: `ProgHotCard${suffix}`,
+        nameEn: `ProgHotCard${suffix}`,
         rarity: 'RARE',
         dropWeight: 1,
         setId: hotSetId,
@@ -254,19 +256,21 @@ describe("progression d'équipe : les quatre sources de points", () => {
     })
 
     const mixedSet = await prisma.cardSet.create({
-      data: { name: `ProgMixedSet${suffix}`, isActive: false },
+      data: { nameFr: `ProgMixedSet${suffix}`, nameEn: `ProgMixedSet${suffix}`, isActive: false },
     })
     mixedSetId = mixedSet.id
     await prisma.card.createMany({
       data: [
         {
-          name: `ProgMixedCommon${suffix}`,
+          nameFr: `ProgMixedCommon${suffix}`,
+          nameEn: `ProgMixedCommon${suffix}`,
           rarity: 'COMMON',
           dropWeight: 90,
           setId: mixedSetId,
         },
         {
-          name: `ProgMixedRare${suffix}`,
+          nameFr: `ProgMixedRare${suffix}`,
+          nameEn: `ProgMixedRare${suffix}`,
           rarity: 'RARE',
           dropWeight: 10,
           setId: mixedSetId,
@@ -280,11 +284,12 @@ describe("progression d'équipe : les quatre sources de points", () => {
     // boss sans défense pour que les dégâts d'une seule attaque dépassent
     // largement `teamPoints.damagePerPoint` (300 par défaut).
     const raidCardSet = await prisma.cardSet.create({
-      data: { name: `ProgRaidSet${suffix}`, isActive: false },
+      data: { nameFr: `ProgRaidSet${suffix}`, nameEn: `ProgRaidSet${suffix}`, isActive: false },
     })
     const raidCard = await prisma.card.create({
       data: {
-        name: `ProgRaidCard${suffix}`,
+        nameFr: `ProgRaidCard${suffix}`,
+        nameEn: `ProgRaidCard${suffix}`,
         rarity: 'LEGENDARY',
         dropWeight: 1,
         setId: raidCardSet.id,
@@ -312,11 +317,13 @@ describe("progression d'équipe : les quatre sources de points", () => {
       where: { element },
       create: {
         element,
-        name: 'Boss de progression',
+        nameFr: 'Boss de progression',
+        nameEn: 'Boss de progression',
         spec: { ...WEAK_BOSS_SPEC, element },
       },
       update: {
-        name: 'Boss de progression',
+        nameFr: 'Boss de progression',
+        nameEn: 'Boss de progression',
         spec: { ...WEAK_BOSS_SPEC, element },
       },
     })
