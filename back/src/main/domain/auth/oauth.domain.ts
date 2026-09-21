@@ -4,6 +4,7 @@ import { OAuthProvider } from '../../../generated/enums'
 import type { Config } from '../../application/config'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { OAuthAccountRepository } from '../../infra/orm/repositories/oauth-account.repository'
+import { errorMessage } from '../../interfaces/http/fastify/errors/messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type { AuthDomainInterface } from '../../types/domain/auth/auth.domain.interface'
 import type { TokenPair } from '../../types/domain/auth/auth.types'
@@ -77,7 +78,7 @@ export class OAuthDomain implements OAuthDomainInterface {
         prompt: mode === 'register' ? 'consent' : 'none',
       })}`
     }
-    throw Boom.badRequest('Unknown provider')
+    throw Boom.badRequest(errorMessage('auth.unknownProvider'))
   }
 
   async handleCallback(
@@ -99,7 +100,7 @@ export class OAuthDomain implements OAuthDomainInterface {
     if (existingAccount) {
       const user = await this.#userRepository.findById(existingAccount.userId)
       if (!user) {
-        throw Boom.notFound('User not found')
+        throw Boom.notFound(errorMessage('user.notFound'))
       }
       try {
         await this.#postgresOrm.executeWithTransactionClient(async (tx) => {
@@ -157,7 +158,7 @@ export class OAuthDomain implements OAuthDomainInterface {
       }),
     })
     if (!tokenRes.ok) {
-      throw Boom.badGateway('OAuth provider token exchange failed')
+      throw Boom.badGateway(errorMessage('auth.oauthTokenExchangeFailed'))
     }
     const tokenData = (await tokenRes.json()) as { access_token: string }
     const userRes = await fetch(
@@ -167,7 +168,7 @@ export class OAuthDomain implements OAuthDomainInterface {
       },
     )
     if (!userRes.ok) {
-      throw Boom.badGateway('OAuth provider userinfo fetch failed')
+      throw Boom.badGateway(errorMessage('auth.oauthUserinfoFailed'))
     }
     const u = (await userRes.json()) as {
       id: string
@@ -194,14 +195,14 @@ export class OAuthDomain implements OAuthDomainInterface {
       }),
     })
     if (!tokenRes.ok) {
-      throw Boom.badGateway('OAuth provider token exchange failed')
+      throw Boom.badGateway(errorMessage('auth.oauthTokenExchangeFailed'))
     }
     const tokenData = (await tokenRes.json()) as { access_token: string }
     const userRes = await fetch('https://discord.com/api/users/@me', {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     })
     if (!userRes.ok) {
-      throw Boom.badGateway('OAuth provider userinfo fetch failed')
+      throw Boom.badGateway(errorMessage('auth.oauthUserinfoFailed'))
     }
     const u = (await userRes.json()) as {
       id: string

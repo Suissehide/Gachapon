@@ -4,6 +4,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify'
 import fp from 'fastify-plugin'
 
 import type { GlobalRole } from '../../../../../generated/client'
+import { errorMessage } from '../errors/messages'
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -19,10 +20,14 @@ export const rolePlugin = fp((fastify: FastifyInstance) => {
     (role: GlobalRole) =>
       (request: FastifyRequest): Promise<void> => {
         if (!request.user) {
-          return Promise.reject(Boom.unauthorized('Not authenticated'))
+          return Promise.reject(
+            Boom.unauthorized(errorMessage('auth.notAuthenticated')),
+          )
         }
         if (request.user.role !== role) {
-          return Promise.reject(Boom.forbidden('Insufficient permissions'))
+          return Promise.reject(
+            Boom.forbidden(errorMessage('auth.insufficientPermissions')),
+          )
         }
         return Promise.resolve()
       },

@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
+import { errorMessage } from '../../errors/messages'
 import { setTokenCookies } from './helpers'
 
 export const refreshRouter: FastifyPluginCallbackZod = (fastify) => {
@@ -15,7 +16,7 @@ export const refreshRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request, reply) => {
       const refreshToken = request.cookies.refresh_token
       if (!refreshToken) {
-        throw Boom.unauthorized('No refresh token')
+        throw Boom.unauthorized(errorMessage('auth.noRefreshToken'))
       }
       const tokens = await authDomain.refreshTokens(refreshToken)
       setTokenCookies(reply, tokens)

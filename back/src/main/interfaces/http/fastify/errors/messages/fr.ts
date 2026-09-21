@@ -11,5 +11,33 @@
  */
 export const FR_MESSAGES = {
   'user.notFound': 'Utilisateur introuvable',
+  'user.usernameTaken': 'Ce pseudo est déjà pris',
   'team.maxTeamsPerUser': 'Maximum {{max}} équipes par utilisateur',
+
+  // --- auth ---
+  'auth.emailAlreadyInUse': 'Email déjà utilisé',
+  'auth.unverifiedAccountPending':
+    'Un compte est en attente de vérification pour cet email',
+  'auth.invalidCredentials': 'Identifiants invalides',
+  // Code technique lu par le front (voir front/src/api/auth.api.ts), pas un
+  // message affiché — identique dans les deux langues, comme tout sentinel.
+  'auth.emailNotVerified': 'EMAIL_NOT_VERIFIED',
+  'auth.invalidOrExpiredToken': 'Token invalide ou expiré',
+  'auth.invalidOrExpiredRefreshToken':
+    'Jeton de rafraîchissement invalide ou expiré',
+  'auth.refreshTokenRevoked': 'Le jeton de rafraîchissement a été révoqué',
+  'auth.resendCooldown': 'Veuillez patienter avant de renvoyer un email',
+  'auth.unknownProvider': 'Fournisseur inconnu',
+  'auth.oauthTokenExchangeFailed':
+    'Échec de l’échange du jeton auprès du fournisseur OAuth',
+  'auth.oauthUserinfoFailed':
+    'Échec de récupération du profil auprès du fournisseur OAuth',
+  'auth.invalidApiKey': 'Clé API invalide',
+  'auth.accountSuspended': 'Compte suspendu',
+  'auth.noAccessToken': 'Aucun jeton d’accès',
+  'auth.notAuthenticated': 'Non authentifié',
+  'auth.insufficientPermissions': 'Permissions insuffisantes',
+  'auth.noRefreshToken': 'Aucun jeton de rafraîchissement',
+  'auth.oauthMissingCodeOrState': 'Code ou état manquant',
+  'auth.oauthInvalidState': 'État OAuth invalide',
 } as const

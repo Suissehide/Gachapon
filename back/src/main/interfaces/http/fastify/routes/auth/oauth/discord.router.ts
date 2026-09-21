@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto'
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
+import { errorMessage } from '../../../errors/messages'
 import {
   discordOAuthCallbackQuerySchema,
   oauthAuthorizeQuerySchema,
@@ -63,13 +64,13 @@ export const discordOAuthRouter: FastifyPluginCallbackZod = (fastify) => {
       }
 
       if (!code || !state) {
-        throw Boom.badRequest('Missing code or state')
+        throw Boom.badRequest(errorMessage('auth.oauthMissingCodeOrState'))
       }
       if (
         !request.cookies.oauth_state ||
         request.cookies.oauth_state !== state
       ) {
-        throw Boom.forbidden('Invalid OAuth state')
+        throw Boom.forbidden(errorMessage('auth.oauthInvalidState'))
       }
       const { tokens } = await oauthDomain.handleCallback('discord', code)
       setTokenCookies(reply, tokens)

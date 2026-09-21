@@ -3,6 +3,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify'
 import fp from 'fastify-plugin'
 
 import type { GlobalRole } from '../../../../../generated/client'
+import { errorMessage } from '../errors/messages'
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -21,14 +22,14 @@ async function verifyApiKey(
   const { apiKeyRepository, userRepository } = fastify.iocContainer
   const keyRecord = await apiKeyRepository.findByKey(apiKey)
   if (!keyRecord) {
-    throw Boom.unauthorized('Invalid API key')
+    throw Boom.unauthorized(errorMessage('auth.invalidApiKey'))
   }
   const user = await userRepository.findById(keyRecord.userId)
   if (!user) {
-    throw Boom.unauthorized('User not found')
+    throw Boom.unauthorized(errorMessage('user.notFound'))
   }
   if (user.suspended) {
-    throw Boom.forbidden('Account suspended')
+    throw Boom.forbidden(errorMessage('auth.accountSuspended'))
   }
   request.user = { userID: user.id, role: user.role }
   void apiKeyRepository.updateLastUsed(keyRecord.id)
@@ -42,15 +43,15 @@ async function verifyJwtCookie(
   const { jwtService, userRepository } = fastify.iocContainer
   const token = request.cookies.access_token
   if (!token) {
-    throw Boom.unauthorized('No access token')
+    throw Boom.unauthorized(errorMessage('auth.noAccessToken'))
   }
   const payload = jwtService.verify<{ sub: string; role: GlobalRole }>(token)
   const user = await userRepository.findById(payload.sub)
   if (!user) {
-    throw Boom.unauthorized('User not found')
+    throw Boom.unauthorized(errorMessage('user.notFound'))
   }
   if (user.suspended) {
-    throw Boom.forbidden('Account suspended')
+    throw Boom.forbidden(errorMessage('auth.accountSuspended'))
   }
   request.user = { userID: user.id, role: user.role }
 }

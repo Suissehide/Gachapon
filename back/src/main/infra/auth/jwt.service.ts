@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 import jwt, { type SignOptions } from 'jsonwebtoken'
 
+import { errorMessage } from '../../interfaces/http/fastify/errors/messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type { JwtServiceInterface } from '../../types/infra/auth/jwt.service'
 
@@ -31,7 +32,7 @@ export class JwtService implements JwtServiceInterface {
     try {
       return jwt.verify(token, this.#secret) as T
     } catch {
-      throw Boom.unauthorized('Invalid or expired token')
+      throw Boom.unauthorized(errorMessage('auth.invalidOrExpiredToken'))
     }
   }
 
@@ -39,7 +40,7 @@ export class JwtService implements JwtServiceInterface {
     try {
       return jwt.verify(token, this.#refreshSecret) as T
     } catch {
-      throw Boom.unauthorized('Invalid or expired refresh token')
+      throw Boom.unauthorized(errorMessage('auth.invalidOrExpiredRefreshToken'))
     }
   }
 }
