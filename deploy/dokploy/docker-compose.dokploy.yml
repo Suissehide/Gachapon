@@ -69,7 +69,10 @@ services:
         VITE_API_URL: ${VITE_API_URL}
         VITE_ENVIRONMENT: ${VITE_ENVIRONMENT}
         VITE_DISCORD_INVITE_URL: ${VITE_DISCORD_INVITE_URL}
-        SITE_ORIGIN: ${SITE_ORIGIN}
+        # Origine publique du site pour le prerendu SEO : meme valeur que
+        # celle dont le back se sert pour les liens d'e-mail, jamais une
+        # seconde variable a garder synchronisee.
+        SITE_ORIGIN: ${FRONT_URL}
         NODE_VERSION: ${NODE_VERSION}
         NPM_VERSION: ${NPM_VERSION}
     image: ${APP_IMAGE_NAME}-front:${VERSION:-latest}
