@@ -2,6 +2,7 @@ import { TextDecoder } from 'node:util'
 import Boom from '@hapi/boom'
 import { detect } from 'chardet'
 
+import { errorMessage } from '../../interfaces/http/fastify/errors/messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type {
   HandleResponseReturn,
@@ -58,9 +59,9 @@ class HttpClient implements HttpClientInterface {
       return { data, headers: response.headers }
     }
     const { status: statusCode, statusText } = response
-    const errorMessage = `HTTP Error: ${statusCode} ${statusText}`
-    this.logger.debug(errorMessage)
-    throw new Boom.Boom(errorMessage, { statusCode, data })
+    const httpErrorMessage = `HTTP Error: ${statusCode} ${statusText}`
+    this.logger.debug(httpErrorMessage)
+    throw new Boom.Boom(httpErrorMessage, { statusCode, data })
   }
 
   async get<T>(
@@ -84,7 +85,7 @@ class HttpClient implements HttpClientInterface {
     } catch (error) {
       const { message } = error as Error
       this.logger.debug(message)
-      throw Boom.serverUnavailable('Error getting data')
+      throw Boom.serverUnavailable(errorMessage('httpClient.getFailed'))
     }
     return this.handleResponse(response)
   }
@@ -112,7 +113,7 @@ class HttpClient implements HttpClientInterface {
     } catch (error) {
       const { message } = error as Error
       this.logger.debug(message)
-      throw Boom.serverUnavailable('Error posting data')
+      throw Boom.serverUnavailable(errorMessage('httpClient.postFailed'))
     }
     return this.handleResponse(response)
   }
@@ -139,7 +140,7 @@ class HttpClient implements HttpClientInterface {
     } catch (error) {
       const { message } = error as Error
       this.logger.debug(message)
-      throw Boom.serverUnavailable('Error delete resource')
+      throw Boom.serverUnavailable(errorMessage('httpClient.deleteFailed'))
     }
     return this.handleResponse(response)
   }

@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
+import { errorMessage } from '../../errors/messages'
 import { streakSummaryResponseSchema } from '../../schemas/streak.schemas'
 
 export const streakRouter: FastifyPluginCallbackZod = (fastify) => {
@@ -16,7 +17,7 @@ export const streakRouter: FastifyPluginCallbackZod = (fastify) => {
 
       const user = await userRepository.findById(userId)
       if (!user) {
-        throw Boom.notFound('User not found')
+        throw Boom.notFound(errorMessage('user.notFound'))
       }
 
       const [defaultMilestone, activeMilestones] = await Promise.all([

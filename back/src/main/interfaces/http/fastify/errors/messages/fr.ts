@@ -287,4 +287,40 @@ export const FR_MESSAGES = {
   'wagers.duelSettledWithoutAcceptedAt': 'Duel réglé sans acceptedAt',
   'wagers.cardEngagedInActiveDuel': 'Carte engagée dans un duel en cours',
   'wagers.duelNotFound': 'Duel introuvable',
+
+  // --- rewards / streak ---
+  'rewards.notFound': 'Récompense introuvable',
+  'rewards.alreadyClaimed': 'Récompense déjà réclamée',
+  'rewards.mustGrantAtLeastOneResource':
+    'La récompense doit accorder au moins une ressource',
+  'rewards.noTargetUsers': 'Aucun utilisateur cible',
+  'streak.defaultMilestoneNotFound':
+    'Palier de série par défaut introuvable. Lance d’abord la migration.',
+  'streak.milestoneAlreadyExistsForDay':
+    'Un palier pour le jour {{day}} existe déjà.',
+  'streak.milestoneNotFound': 'Palier introuvable',
+  'streak.cannotDeleteDefaultMilestone':
+    'Impossible de supprimer le palier quotidien par défaut.',
+
+  // --- admin : médias / succès / sets / quêtes ---
+  'media.invalidKey': 'Clé invalide',
+  'media.nameCannotContainDot': 'Le nom ne peut pas contenir de point',
+  'media.invalidName': 'Nom invalide',
+  'media.sourceKeyNoValidExtension': 'Clé source sans extension valide',
+  'media.invalidDestinationKey': 'Clé destination invalide',
+  'media.nameIsIdentical': 'Le nom est identique',
+  'media.invalidKeyWithValue': 'Clé invalide : {{key}}',
+  'media.imagesUsedBy': 'Image(s) utilisée(s) par : {{names}}',
+  'media.deletionFailedFor': 'Échec de suppression pour : {{failed}}',
+  'media.notFound': 'Média introuvable',
+  'media.nameAlreadyUsed': 'Ce nom est déjà utilisé',
+  'admin.achievementNotFound': 'Succès introuvable',
+  'admin.setNotFound': 'Set introuvable',
+  'admin.questNotFound': 'Quête introuvable',
+
+  // --- infra ---
+  'httpClient.getFailed': 'Erreur lors de la récupération des données',
+  'httpClient.postFailed': 'Erreur lors de l’envoi des données',
+  'httpClient.deleteFailed': 'Erreur lors de la suppression de la ressource',
+  'http.routeNotFound': 'Route {{method}} {{url}} introuvable',
 } as const

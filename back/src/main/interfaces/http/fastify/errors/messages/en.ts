@@ -258,4 +258,40 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'wagers.duelSettledWithoutAcceptedAt': 'Duel settled without acceptedAt',
   'wagers.cardEngagedInActiveDuel': 'Card engaged in an active duel',
   'wagers.duelNotFound': 'Duel not found',
+
+  // --- rewards / streak ---
+  'rewards.notFound': 'Reward not found',
+  'rewards.alreadyClaimed': 'Reward already claimed',
+  'rewards.mustGrantAtLeastOneResource':
+    'Reward must grant at least one resource',
+  'rewards.noTargetUsers': 'No target users',
+  'streak.defaultMilestoneNotFound':
+    'Default streak milestone not found. Run the migration first.',
+  'streak.milestoneAlreadyExistsForDay':
+    'A milestone for day {{day}} already exists.',
+  'streak.milestoneNotFound': 'Milestone not found',
+  'streak.cannotDeleteDefaultMilestone':
+    'Cannot delete the default daily milestone.',
+
+  // --- admin: media / achievements / sets / quests ---
+  'media.invalidKey': 'Invalid key',
+  'media.nameCannotContainDot': 'Name cannot contain a dot',
+  'media.invalidName': 'Invalid name',
+  'media.sourceKeyNoValidExtension': 'Source key has no valid extension',
+  'media.invalidDestinationKey': 'Invalid destination key',
+  'media.nameIsIdentical': 'The name is unchanged',
+  'media.invalidKeyWithValue': 'Invalid key: {{key}}',
+  'media.imagesUsedBy': 'Image(s) used by: {{names}}',
+  'media.deletionFailedFor': 'Deletion failed for: {{failed}}',
+  'media.notFound': 'Media not found',
+  'media.nameAlreadyUsed': 'This name is already in use',
+  'admin.achievementNotFound': 'Achievement not found',
+  'admin.setNotFound': 'Set not found',
+  'admin.questNotFound': 'Quest not found',
+
+  // --- infra ---
+  'httpClient.getFailed': 'Error getting data',
+  'httpClient.postFailed': 'Error posting data',
+  'httpClient.deleteFailed': 'Error delete resource',
+  'http.routeNotFound': 'Route {{method}} {{url}} not found',
 }

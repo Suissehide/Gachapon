@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
+import { errorMessage } from '../../errors/messages'
 import {
   adminStreakCreateMilestoneBodySchema,
   adminStreakDefaultBodySchema,
@@ -43,9 +44,7 @@ export const adminStreakRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request) => {
       const defaultMilestone = await streakMilestoneRepository.findDefault()
       if (!defaultMilestone) {
-        throw Boom.notFound(
-          'Default streak milestone not found. Run the migration first.',
-        )
+        throw Boom.notFound(errorMessage('streak.defaultMilestoneNotFound'))
       }
       const updated = await rewardRepository.update(
         defaultMilestone.rewardId,
@@ -68,7 +67,9 @@ export const adminStreakRouter: FastifyPluginCallbackZod = (fastify) => {
 
       const existing = await streakMilestoneRepository.findByDay(day)
       if (existing) {
-        throw Boom.conflict(`A milestone for day ${day} already exists.`)
+        throw Boom.conflict(
+          errorMessage('streak.milestoneAlreadyExistsForDay', { day }),
+        )
       }
 
       const reward = await rewardRepository.create({
@@ -108,7 +109,7 @@ export const adminStreakRouter: FastifyPluginCallbackZod = (fastify) => {
         request.params.id,
       )
       if (!milestone) {
-        throw Boom.notFound('Milestone not found')
+        throw Boom.notFound(errorMessage('streak.milestoneNotFound'))
       }
 
       const updated = await rewardRepository.update(
@@ -134,10 +135,12 @@ export const adminStreakRouter: FastifyPluginCallbackZod = (fastify) => {
         request.params.id,
       )
       if (!milestone) {
-        throw Boom.notFound('Milestone not found')
+        throw Boom.notFound(errorMessage('streak.milestoneNotFound'))
       }
       if (milestone.day === 0) {
-        throw Boom.forbidden('Cannot delete the default daily milestone.')
+        throw Boom.forbidden(
+          errorMessage('streak.cannotDeleteDefaultMilestone'),
+        )
       }
 
       await streakMilestoneRepository.update(request.params.id, {
