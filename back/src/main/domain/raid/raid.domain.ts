@@ -531,20 +531,12 @@ export class RaidDomain implements IRaidDomain {
    * aussi bien à l'affichage qu'à l'attaque : sans cela, un joueur verrait
    * des lots calculés à la volée et en recevrait d'autres, persistés.
    */
-  #tiersFor(level: number): Promise<RaidTierWithReward[]> {
-    return this.#configService
-      .getMany(
-        'raid.levelRewardTokens',
-        'raid.levelRewardGold',
-        'raid.levelRewardDust',
-      )
-      .then((cfg) =>
-        this.#raidRepository.ensureTiersForLevel(level, {
-          tokens: cfg['raid.levelRewardTokens'],
-          gold: cfg['raid.levelRewardGold'],
-          dust: cfg['raid.levelRewardDust'],
-        }),
-      )
+  async #tiersFor(level: number): Promise<RaidTierWithReward[]> {
+    const cfg = await this.#configService.getMany('raid.levelRewardPct')
+    return this.#raidRepository.ensureTiersForLevel(
+      level,
+      cfg['raid.levelRewardPct'],
+    )
   }
 
   async #contributions(

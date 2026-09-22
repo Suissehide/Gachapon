@@ -7,7 +7,6 @@ import type {
   Reward,
   TeamRaid,
 } from '../../../../../generated/client'
-import type { RaidRewardAmounts } from '../../../../domain/raid/raid-rules'
 
 export type RaidTierWithReward = RaidTier & { reward: Reward }
 export type TeamRaidWithBoss = TeamRaid & { boss: RaidBoss }
@@ -38,7 +37,7 @@ export interface IRaidRepository {
   /** Paliers du niveau, créés à la demande depuis le niveau 0. Hors transaction. */
   ensureTiersForLevel(
     level: number,
-    perLevel: RaidRewardAmounts,
+    bonusPct: number,
   ): Promise<RaidTierWithReward[]>
   findTierByPct(pct: number): Promise<RaidTierWithReward | null>
   updateTierReward(

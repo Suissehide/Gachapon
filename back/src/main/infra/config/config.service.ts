@@ -182,13 +182,11 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   // de plafond. À 10, une équipe assidue plafonne vers le niveau 2 (niveau 6
   // avec le bonus d'équipe `raid` au rang 2).
   'raid.levelHpBonusPct': 10,
-  // Bonus ADDITIF par niveau, appliqué à chacun des quatre paliers. Additif
-  // face à des PV exponentiels : la récompense par point de dégât décroît
-  // strictement avec le niveau, donc monter est un défi et jamais un farm
-  // plus rentable. C'est l'invariant économique du chantier.
-  'raid.levelRewardTokens': 2,
-  'raid.levelRewardGold': 100,
-  'raid.levelRewardDust': 30,
+  // Bonus de lot par niveau, en POINTS DE POURCENTAGE de la base de chaque
+  // palier. DOIT rester strictement sous `raid.levelHpBonusPct` : au-dessus,
+  // les lots croissent plus vite que les PV et monter en difficulté devient
+  // un farm plus rentable. L'invariant est gardé par un test unitaire.
+  'raid.levelRewardPct': 5,
   // Duel de tirage : chaque joueur engage ses `pullCount` prochains tirages,
   // a `acceptHours` pour accepter et `deadlineHours` pour les faire.
   'duel.pullCount': 5,

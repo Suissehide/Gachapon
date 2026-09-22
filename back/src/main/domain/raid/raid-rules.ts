@@ -111,22 +111,30 @@ export type RaidRewardAmounts = {
 }
 
 /**
- * Lot d'un palier à un niveau donné. Le bonus est ADDITIF là où les PV sont
- * exponentiels : la récompense par point de dégât décroît donc strictement
- * avec le niveau, et monter reste un défi plutôt qu'un farm plus rentable.
- * `xp` et `cardRarity` ne sont pas touchés — l'XP de raid vaut 0 et la
+ * Lot d'un palier à un niveau donné : un pourcentage de la base de CE palier,
+ * par niveau. Proportionnel et non additif, c'est ce qui fait tenir
+ * l'invariant économique du raid — un montant plat partagé par des paliers
+ * aux bases très différentes faisait croître les petits paliers de 40 % par
+ * cran, bien au-dessus des 10 % des PV, et rendait la montée en difficulté
+ * PLUS rentable par point d'effort au lieu de moins.
+ *
+ * `bonusPct` doit rester strictement sous `raid.levelHpBonusPct`, sans quoi
+ * l'invariant se casse dès le premier cran. Gardé par le test
+ * « la récompense par point de dégât décroît » (test/unit/raid/raid-rules.test.ts).
+ *
+ * `xp` et `cardRarity` ne sont pas touchés : l'XP de raid vaut 0 et la
  * rareté n'a pas d'échelle continue.
  */
 export function raidTierRewardAtLevel(
   base: RaidRewardAmounts,
   level: number,
-  perLevel: RaidRewardAmounts,
+  bonusPct: number,
 ): RaidRewardAmounts {
-  const n = Math.max(0, level)
+  const mult = 1 + (Math.max(0, level) * bonusPct) / 100
   return {
-    tokens: base.tokens + n * perLevel.tokens,
-    gold: base.gold + n * perLevel.gold,
-    dust: base.dust + n * perLevel.dust,
+    tokens: Math.round(base.tokens * mult),
+    gold: Math.round(base.gold * mult),
+    dust: Math.round(base.dust * mult),
   }
 }
 

@@ -225,18 +225,70 @@ describe('raid-rules — niveau de difficulté', () => {
 })
 
 describe('raid-rules — lots par niveau', () => {
-  const perLevel = { tokens: 2, gold: 100, dust: 30 }
-  const base = { tokens: 25, gold: 1000, dust: 300 }
+  const base = { tokens: 13, gold: 1000, dust: 300 }
 
   it('le niveau 0 laisse le lot de base intact', () => {
-    expect(raidTierRewardAtLevel(base, 0, perLevel)).toEqual(base)
+    expect(raidTierRewardAtLevel(base, 0, 5)).toEqual(base)
   })
 
-  it('le bonus est additif, jamais multiplicatif', () => {
-    expect(raidTierRewardAtLevel(base, 3, perLevel)).toEqual({
-      tokens: 31,
-      gold: 1300,
-      dust: 390,
+  it('le bonus est un pourcentage de la base du palier', () => {
+    expect(raidTierRewardAtLevel(base, 2, 5)).toEqual({
+      tokens: 14,
+      gold: 1100,
+      dust: 330,
     })
   })
+
+  it('un petit palier monte proportionnellement, pas par bonds', () => {
+    // Base 3 jetons : +5 % par cran ne fait franchir l'entier qu'au niveau 4.
+    expect(raidTierRewardAtLevel({ tokens: 3, gold: 200, dust: 50 }, 1, 5).tokens).toBe(3)
+    expect(raidTierRewardAtLevel({ tokens: 3, gold: 200, dust: 50 }, 4, 5).tokens).toBe(4)
+  })
+})
+
+/**
+ * L'INVARIANT ÉCONOMIQUE du raid, rendu exécutable. Les PV du boss croissent
+ * de `raid.levelHpBonusPct` % composés par niveau, les lots de
+ * `raid.levelRewardPct` % de leur base — donc la récompense par point de
+ * dégât doit décroître STRICTEMENT à chaque cran. Sans quoi monter en
+ * difficulté deviendrait un farm plus rentable, exactement le contraire du
+ * but de la mécanique.
+ *
+ * Ce test a été écrit après coup : le barème additif précédent (+2 jetons par
+ * niveau sur une base de 5) violait l'invariant du niveau 1 au niveau 8, et
+ * rien ne l'a signalé.
+ */
+describe('raid-rules — invariant : la récompense par point de dégât décroît', () => {
+  const HP_BONUS_PCT = 10
+  const REWARD_BONUS_PCT = 5
+  // Barème de référence, celui du seed (prisma/seed/raid.ts).
+  const TIERS = [
+    { tokens: 3, gold: 200, dust: 50 },
+    { tokens: 5, gold: 400, dust: 100 },
+    { tokens: 8, gold: 600, dust: 150 },
+    { tokens: 13, gold: 1000, dust: 300 },
+  ]
+
+  it.each(['tokens', 'gold', 'dust'] as const)(
+    'la ressource %s rapporte strictement moins par PV à chaque niveau',
+    (field) => {
+      const ratios = Array.from({ length: 11 }, (_, level) => {
+        const total = TIERS.reduce(
+          (sum, tier) =>
+            sum + raidTierRewardAtLevel(tier, level, REWARD_BONUS_PCT)[field],
+          0,
+        )
+        const hp = raidMaxHp(162000, 10, {
+          minMembers: 10,
+          levelBonusPct: HP_BONUS_PCT,
+          level,
+        })
+        return total / hp
+      })
+
+      for (let level = 1; level < ratios.length; level++) {
+        expect(ratios[level]).toBeLessThan(ratios[level - 1] as number)
+      }
+    },
+  )
 })

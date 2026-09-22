@@ -107,15 +107,13 @@ describe('raid — difficulté progressive', () => {
     await configService.set('raid.baseHpPerMember', HP_PER_MEMBER)
     await configService.set('raid.minMembers', 10)
     await configService.set('raid.levelHpBonusPct', 10)
-    await configService.set('raid.levelRewardTokens', 2)
-    await configService.set('raid.levelRewardGold', 100)
-    await configService.set('raid.levelRewardDust', 30)
+    await configService.set('raid.levelRewardPct', 5)
 
     for (const t of [
-      { pct: 25, tokens: 5, gold: 200, dust: 50 },
-      { pct: 50, tokens: 10, gold: 400, dust: 100 },
-      { pct: 75, tokens: 15, gold: 600, dust: 150 },
-      { pct: 100, tokens: 25, gold: 1000, dust: 300 },
+      { pct: 25, tokens: 3, gold: 200, dust: 50 },
+      { pct: 50, tokens: 5, gold: 400, dust: 100 },
+      { pct: 75, tokens: 8, gold: 600, dust: 150 },
+      { pct: 100, tokens: 13, gold: 1000, dust: 300 },
     ]) {
       const existing = await prisma.raidTier.findUnique({
         where: { pct_level: { pct: t.pct, level: 0 } },
@@ -243,11 +241,11 @@ describe('raid — difficulté progressive', () => {
       headers: { cookie: cookies },
     })
     const tier100 = res.json().tiers.find((t: any) => t.pct === 100)
-    // 25 + 2×2, 1000 + 2×100, 300 + 2×30
+    // round(13 × 1,10), round(1000 × 1,10), round(300 × 1,10)
     expect(tier100.reward).toMatchObject({
-      tokens: 29,
-      gold: 1200,
-      dust: 360,
+      tokens: 14,
+      gold: 1100,
+      dust: 330,
     })
   })
 
@@ -282,9 +280,7 @@ describe('raid — difficulté progressive', () => {
     expect(res.json().raid).toMatchObject({
       minMembers: 10,
       levelHpBonusPct: 10,
-      levelRewardTokens: 2,
-      levelRewardGold: 100,
-      levelRewardDust: 30,
+      levelRewardPct: 5,
     })
   })
 })

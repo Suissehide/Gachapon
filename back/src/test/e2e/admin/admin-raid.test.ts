@@ -52,7 +52,7 @@ describe('admin raid routes', () => {
       where: { pct_level: { pct: 50, level: 0 } },
     })
     if (!existing) {
-      const reward = await prisma.reward.create({ data: { tokens: 10, gold: 400, dust: 100 } })
+      const reward = await prisma.reward.create({ data: { tokens: 5, gold: 400, dust: 100 } })
       await prisma.raidTier.create({ data: { pct: 50, rewardId: reward.id } })
     }
   })
@@ -109,7 +109,7 @@ describe('admin raid routes', () => {
       payload: { gold: 450, cardRarity: 'RARE' },
     })
     expect(patch.statusCode).toBe(200)
-    expect(patch.json()).toMatchObject({ pct: 50, gold: 450, cardRarity: 'RARE', tokens: 10 })
+    expect(patch.json()).toMatchObject({ pct: 50, gold: 450, cardRarity: 'RARE', tokens: 5 })
   })
 
   it('PATCH /admin/raid/tiers/50 purge les paliers dérivés (niveau > 0) sans supprimer leurs Reward, régénérés à la nouvelle valeur au prochain franchissement', async () => {
@@ -117,10 +117,8 @@ describe('admin raid routes', () => {
     // Pct dédié à ce test, pour ne pas interférer avec les pct 25/50/75/100
     // partagés par les suites src/test/e2e/raids/*.ts.
     const pct = 61
-    const perLevel = { tokens: 2, gold: 100, dust: 30 }
-    await configService.set('raid.levelRewardTokens', perLevel.tokens)
-    await configService.set('raid.levelRewardGold', perLevel.gold)
-    await configService.set('raid.levelRewardDust', perLevel.dust)
+    const bonusPct = 5
+    await configService.set('raid.levelRewardPct', bonusPct)
 
     const baseReward = await prisma.reward.create({
       data: { tokens: 20, gold: 800, dust: 200 },
@@ -140,12 +138,12 @@ describe('admin raid routes', () => {
       // 1. Paliers dérivés niveau 1 et 2, comme le ferait le jeu en
       // franchissant ces niveaux (`RaidRepository#ensureTiersForLevel`,
       // appelée par `raid.domain.ts#tiersFor`).
-      const level1 = await raidRepository.ensureTiersForLevel(1, perLevel)
-      const level2 = await raidRepository.ensureTiersForLevel(2, perLevel)
+      const level1 = await raidRepository.ensureTiersForLevel(1, bonusPct)
+      const level2 = await raidRepository.ensureTiersForLevel(2, bonusPct)
       const tier1 = level1.find((t: any) => t.pct === pct)
       const tier2 = level2.find((t: any) => t.pct === pct)
-      expect(tier1.reward.gold).toBe(900) // 800 + 1 × 100
-      expect(tier2.reward.gold).toBe(1000) // 800 + 2 × 100
+      expect(tier1.reward.gold).toBe(840) // round(800 × 1,05)
+      expect(tier2.reward.gold).toBe(880) // round(800 × 1,10)
       const rewardId1 = tier1.rewardId
       const rewardId2 = tier2.rewardId
       rewardIds.add(rewardId1).add(rewardId2)
@@ -173,14 +171,14 @@ describe('admin raid routes', () => {
       const survivingReward2 = await prisma.reward.findUnique({ where: { id: rewardId2 } })
       expect(survivingReward1).not.toBeNull()
       expect(survivingReward2).not.toBeNull()
-      expect(survivingReward1.gold).toBe(900)
+      expect(survivingReward1.gold).toBe(840)
 
       // 4. Le prochain franchissement du niveau 1 régénère une nouvelle
       // ligne, à la NOUVELLE valeur patchée + le bonus de niveau — pas
       // l'ancienne ressuscitée.
-      const regenerated = await raidRepository.ensureTiersForLevel(1, perLevel)
+      const regenerated = await raidRepository.ensureTiersForLevel(1, bonusPct)
       const regeneratedTier = regenerated.find((t: any) => t.pct === pct)
-      expect(regeneratedTier.reward.gold).toBe(950) // 850 (patché) + 1 × 100
+      expect(regeneratedTier.reward.gold).toBe(893) // round(850 (patché) × 1,05)
       expect(regeneratedTier.rewardId).not.toBe(rewardId1)
       rewardIds.add(regeneratedTier.rewardId)
     } finally {

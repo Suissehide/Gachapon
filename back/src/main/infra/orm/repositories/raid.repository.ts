@@ -4,7 +4,6 @@ import type {
   RaidBoss,
   TeamRaid,
 } from '../../../../generated/client'
-import type { RaidRewardAmounts } from '../../../domain/raid/raid-rules'
 import { raidTierRewardAtLevel } from '../../../domain/raid/raid-rules'
 import type { IocContainer } from '../../../types/application/ioc'
 import type {
@@ -63,7 +62,7 @@ export class RaidRepository implements IRaidRepository {
    */
   async ensureTiersForLevel(
     level: number,
-    perLevel: RaidRewardAmounts,
+    bonusPct: number,
   ): Promise<RaidTierWithReward[]> {
     if (level <= 0) {
       return this.listTiers(0)
@@ -72,14 +71,12 @@ export class RaidRepository implements IRaidRepository {
       this.listTiers(0),
       this.listTiers(level),
     ])
-    const missing = base.filter(
-      (b) => !existing.some((e) => e.pct === b.pct),
-    )
+    const missing = base.filter((b) => !existing.some((e) => e.pct === b.pct))
     if (missing.length === 0) {
       return existing
     }
     for (const tier of missing) {
-      const amounts = raidTierRewardAtLevel(tier.reward, level, perLevel)
+      const amounts = raidTierRewardAtLevel(tier.reward, level, bonusPct)
       const reward = await this.#prisma.reward.create({
         data: {
           ...amounts,

@@ -83,9 +83,7 @@ export interface EconomyConfig {
     timeoutTurns: number
     minMembers: number
     levelHpBonusPct: number
-    levelRewardTokens: number
-    levelRewardGold: number
-    levelRewardDust: number
+    levelRewardPct: number
   }
   // Nombre de tirages comptés par duelliste dans un duel de tirage. Lu ici
   // plutot que codé en dur dans la fenêtre de défi : la valeur vit dans

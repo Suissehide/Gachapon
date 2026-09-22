@@ -60,12 +60,12 @@ export function raidBossSpec(element: TowerElement) {
 }
 
 export const RAID_TIERS = [
-  { pct: 25, tokens: 5, gold: 200, dust: 50, xp: 0, cardRarity: null },
-  { pct: 50, tokens: 10, gold: 400, dust: 100, xp: 0, cardRarity: null },
-  { pct: 75, tokens: 15, gold: 600, dust: 150, xp: 0, cardRarity: null },
+  { pct: 25, tokens: 3, gold: 200, dust: 50, xp: 0, cardRarity: null },
+  { pct: 50, tokens: 5, gold: 400, dust: 100, xp: 0, cardRarity: null },
+  { pct: 75, tokens: 8, gold: 600, dust: 150, xp: 0, cardRarity: null },
   {
     pct: 100,
-    tokens: 25,
+    tokens: 13,
     gold: 1000,
     dust: 300,
     xp: 0,
