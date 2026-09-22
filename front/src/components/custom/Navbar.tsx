@@ -1,6 +1,7 @@
 import { Link, useNavigate } from '@tanstack/react-router'
 import { ArrowRight, Coins, LogOut, Sparkles, Ticket, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { currentLocale } from '../../i18n/index.ts'
 import { formatNumber } from '../../libs/utils.ts'
@@ -20,27 +21,29 @@ import {
   useMobileMenu,
 } from './MobileMenu.tsx'
 
-const navItemsBeforeProfile = [
-  { to: '/play', label: 'Jouer' },
-  { to: '/collection', label: 'Collection' },
-  { to: '/equipment', label: 'Équipement' },
-  { to: '/campaign', label: 'Campagne' },
-  { to: '/tower', label: 'Tours' },
-  { to: '/skills', label: 'Compétences' },
-] as const
-
-const navItemsAfterProfile = [
-  { to: '/shop', label: 'Boutique' },
-  { to: '/leaderboard', label: 'Classement' },
-  { to: '/team', label: 'Équipes' },
-] as const
-
-const navItems = [...navItemsBeforeProfile, ...navItemsAfterProfile]
-
 const tabClass =
   'relative whitespace-nowrap px-[18px] pt-[15px] pb-[14px] text-[15.5px] font-semibold text-text-light/70 transition-colors hover:text-text [&.active]:text-primary-dark [&.active>span:last-child]:bg-linear-to-r [&.active>span:last-child]:from-primary [&.active>span:last-child]:to-secondary'
 
 export function Navbar() {
+  const { t } = useTranslation(['layout', 'combat', 'home'])
+
+  const navItemsBeforeProfile = [
+    { to: '/play', label: t('layout:appNav.play') },
+    { to: '/collection', label: t('layout:appNav.collection') },
+    { to: '/equipment', label: t('layout:appNav.equipment') },
+    { to: '/campaign', label: t('combat:teamLabel.campaign') },
+    { to: '/tower', label: t('layout:appNav.tower') },
+    { to: '/skills', label: t('layout:admin.nav.skills') },
+  ] as const
+
+  const navItemsAfterProfile = [
+    { to: '/shop', label: t('layout:admin.nav.shop') },
+    { to: '/leaderboard', label: t('layout:appNav.leaderboard') },
+    { to: '/team', label: t('home:community.teams.title') },
+  ] as const
+
+  const navItems = [...navItemsBeforeProfile, ...navItemsAfterProfile]
+
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
   const navigate = useNavigate()
@@ -77,7 +80,11 @@ export function Navbar() {
             )}
             <button
               type="button"
-              aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+              aria-label={
+                menuOpen
+                  ? t('layout:appNav.closeMenuAriaLabel')
+                  : t('layout:appNav.openMenuAriaLabel')
+              }
               aria-expanded={menuOpen}
               aria-controls="mobile-menu"
               className="relative flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted"
@@ -149,7 +156,7 @@ export function Navbar() {
                   <Link
                     to="/profile/$username"
                     params={{ username: user.username }}
-                    title="Mon profil"
+                    title={t('layout:appNav.myProfileTitle')}
                     className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary text-xs font-bold text-white ring-2 ring-primary/20 transition-all hover:ring-primary/50"
                   >
                     {user.username[0]?.toUpperCase()}
@@ -158,8 +165,8 @@ export function Navbar() {
                     variant="ghost"
                     size="icon"
                     onClick={() => void handleLogout()}
-                    aria-label="Déconnexion"
-                    title="Déconnexion"
+                    aria-label={t('layout:appNav.logoutAriaLabel')}
+                    title={t('layout:appNav.logoutAriaLabel')}
                     className="my-2 h-10 w-10 rounded-[11px] text-text-light/40 hover:bg-text/[0.06] hover:text-destructive"
                   >
                     <LogOut className="h-[19px] w-[19px]" />
@@ -196,7 +203,7 @@ export function Navbar() {
           style={{ transitionDelay: `${navItems.length * 45 + 120}ms` }}
         >
           <span className="px-2 text-sm font-semibold uppercase tracking-wide text-text-light/60">
-            Langue
+            {t('layout:appNav.languageLabel')}
           </span>
           <LocaleSwitcher />
         </div>
@@ -220,7 +227,7 @@ export function Navbar() {
                 void handleLogout()
                 closeMenu()
               }}
-              title="Déconnexion"
+              title={t('layout:appNav.logoutAriaLabel')}
               className="rounded-full p-2 hover:bg-destructive/10 hover:text-destructive"
             >
               <LogOut className="h-7 w-7 font-semibold text-text-light" />
@@ -256,12 +263,13 @@ function BrandLink({
 }
 
 function Wallet({ user }: { user: AuthUser }) {
+  const { t } = useTranslation('layout')
   const locale = currentLocale()
   const fmt = (n: number) => formatNumber(n, locale)
   return (
     <div className="contents lg:flex lg:items-center lg:gap-2">
       <CoinPill
-        title={`Poussière — ${fmt(user.dust)}`}
+        title={t('appNav.dustTitle', { amount: fmt(user.dust) })}
         icon={<Sparkles size={15} strokeWidth={1.8} />}
         value={fmt(user.dust)}
         bgClassName="bg-[#e0f2fe]"
@@ -271,7 +279,7 @@ function Wallet({ user }: { user: AuthUser }) {
         shadowClassName="shadow-[0_2px_6px_rgba(2,132,199,0.1)]"
       />
       <CoinPill
-        title={`Or — ${fmt(user.gold)}`}
+        title={t('appNav.goldTitle', { amount: fmt(user.gold) })}
         icon={<Coins size={15} strokeWidth={1.8} />}
         value={fmt(user.gold)}
         bgClassName="bg-[#fef9c3]"
@@ -296,6 +304,7 @@ function formatCountdown(secondsLeft: number): string {
 }
 
 function TokensPill() {
+  const { t } = useTranslation('layout')
   const balance = useTokenBalance()
   // 1s tick for live regen countdown
   const [, setNow] = useState(0)
@@ -319,7 +328,10 @@ function TokensPill() {
   return (
     <Link
       to="/play"
-      title={`Jetons — ${data.tokens}/${data.maxStock}${timer ? ` · prochain dans ${timer}` : ''}`}
+      title={
+        t('appNav.tokensTitle', { current: data.tokens, max: data.maxStock }) +
+        (timer ? t('appNav.nextInSuffix', { timer }) : '')
+      }
       className="relative inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-[13px] border border-[#fdba74] bg-[#ffedd5] px-2 py-2 shadow-[0_2px_6px_rgba(234,88,12,0.1)] lg:flex-none lg:justify-start lg:gap-2 lg:pr-3 lg:pl-[11px]"
     >
       <span className="flex text-[#ea580c]">
@@ -376,6 +388,7 @@ function CoinPill({
 }
 
 function Energy() {
+  const { t } = useTranslation('layout')
   const points = useCombatPoints()
   // 1s tick to keep the regen countdown live
   const [, setNow] = useState(0)
@@ -399,7 +412,12 @@ function Energy() {
   return (
     <Link
       to="/campaign"
-      title={`Énergie — ${data.combatPoints}/${data.maxStock}${timer ? ` · prochain dans ${timer}` : ''}`}
+      title={
+        t('appNav.energyTitle', {
+          current: data.combatPoints,
+          max: data.maxStock,
+        }) + (timer ? t('appNav.nextInSuffix', { timer }) : '')
+      }
       className="relative inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-[13px] border border-[#ddd0ff] bg-[#f3efff] px-2 py-2 shadow-[0_2px_6px_rgba(139,92,246,0.1)] lg:flex-none lg:justify-start lg:gap-2 lg:pr-3 lg:pl-[11px]"
     >
       <span className="flex text-[#7c3aed]">

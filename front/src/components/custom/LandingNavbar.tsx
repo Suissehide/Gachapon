@@ -1,6 +1,7 @@
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Bot, ChevronDown, LogOut, Plug, ScrollText } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { discordInviteUrl } from '../../constants/config.constant'
 import { useAuthStore } from '../../stores/auth.store'
@@ -16,36 +17,38 @@ import {
   useMobileMenu,
 } from './MobileMenu.tsx'
 
-const NAV_ITEMS = [
-  { to: '/guide' as const, label: 'Guide du joueur' },
-  { to: '/stats' as const, label: 'Statistiques' },
-  { to: '/about' as const, label: 'À propos' },
-]
-
-const RESSOURCES_ITEMS = [
-  {
-    icon: Plug,
-    label: 'Référence API',
-    desc: 'Documentation OpenAPI interactive',
-    to: '/api-docs' as const,
-  },
-  {
-    icon: Bot,
-    label: 'Intégration Discord',
-    desc: "Créer un bot avec l'API Gachapon",
-    to: '/discord' as const,
-  },
-  {
-    icon: ScrollText,
-    label: 'Changelog',
-    desc: 'Historique des mises à jour et nouvelles cartes',
-    to: '/changelog' as const,
-  },
-]
-
-const ALL_MOBILE_ITEMS_COUNT = NAV_ITEMS.length + RESSOURCES_ITEMS.length
-
 export function LandingNavbar() {
+  const { t } = useTranslation(['layout', 'about', 'home'])
+
+  const NAV_ITEMS = [
+    { to: '/guide' as const, label: t('layout:landingNav.guide') },
+    { to: '/stats' as const, label: t('layout:landingNav.stats') },
+    { to: '/about' as const, label: t('about:page.title') },
+  ]
+
+  const RESSOURCES_ITEMS = [
+    {
+      icon: Plug,
+      label: t('layout:landingNav.resources.apiReference.label'),
+      desc: t('layout:landingNav.resources.apiReference.desc'),
+      to: '/api-docs' as const,
+    },
+    {
+      icon: Bot,
+      label: t('layout:landingNav.resources.discordIntegration.label'),
+      desc: t('layout:landingNav.resources.discordIntegration.desc'),
+      to: '/discord' as const,
+    },
+    {
+      icon: ScrollText,
+      label: t('layout:landingNav.resources.changelog.label'),
+      desc: t('layout:landingNav.resources.changelog.desc'),
+      to: '/changelog' as const,
+    },
+  ]
+
+  const ALL_MOBILE_ITEMS_COUNT = NAV_ITEMS.length + RESSOURCES_ITEMS.length
+
   const user = useAuthStore((s) => s.user)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const logout = useAuthStore((s) => s.logout)
@@ -92,14 +95,14 @@ export function LandingNavbar() {
               to="/guide"
               className="px-3 py-2 text-sm font-medium text-text-light rounded-lg transition-colors hover:text-text hover:bg-muted [&.active]:text-primary [&.active]:font-semibold"
             >
-              Guide du joueur
+              {t('layout:landingNav.guide')}
             </Link>
 
             <Link
               to="/stats"
               className="px-3 py-2 text-sm font-medium text-text-light rounded-lg transition-colors hover:text-text hover:bg-muted [&.active]:text-primary [&.active]:font-semibold"
             >
-              Statistiques
+              {t('layout:landingNav.stats')}
             </Link>
 
             {/* Ressources dropdown */}
@@ -109,7 +112,7 @@ export function LandingNavbar() {
                 onClick={() => setRessourcesOpen((o) => !o)}
                 className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-text-light rounded-lg transition-colors hover:text-text hover:bg-muted"
               >
-                Ressources
+                {t('layout:landingNav.resources.menuLabel')}
                 <ChevronDown
                   className={`h-3.5 w-3.5 transition-transform duration-200 ${ressourcesOpen ? 'rotate-180' : ''}`}
                 />
@@ -141,7 +144,7 @@ export function LandingNavbar() {
               to="/about"
               className="px-3 py-2 text-sm font-medium text-text-light rounded-lg transition-colors hover:text-text hover:bg-muted [&.active]:text-primary [&.active]:font-semibold"
             >
-              À propos
+              {t('about:page.title')}
             </Link>
 
             <a
@@ -150,7 +153,7 @@ export function LandingNavbar() {
               rel="noopener noreferrer"
               className="px-3 py-2 text-sm font-medium text-text-light rounded-lg transition-colors hover:text-text hover:bg-muted"
             >
-              Communauté
+              {t('layout:landingNav.community')}
             </a>
           </nav>
 
@@ -163,7 +166,7 @@ export function LandingNavbar() {
                   onClick={() => void navigate({ to: '/play' })}
                   className="flex rounded-full h-9 text-sm px-4 lg:px-5 shadow-sm shadow-primary/20"
                 >
-                  Jouer →
+                  {t('layout:landingNav.playButton')}
                 </Button>
                 <div className="hidden lg:block h-5 w-px bg-border" />
                 <div className="hidden lg:flex items-center gap-3">
@@ -180,7 +183,7 @@ export function LandingNavbar() {
                     onClick={() =>
                       void logout().then(() => navigate({ to: '/' }))
                     }
-                    title="Déconnexion"
+                    title={t('layout:landingNav.logoutAriaLabel')}
                     className="text-text-light hover:text-destructive hover:bg-destructive/10"
                   >
                     <LogOut className="h-4 w-4" />
@@ -194,13 +197,13 @@ export function LandingNavbar() {
                   onClick={openLogin}
                   className="text-sm text-text-light flex"
                 >
-                  Se connecter
+                  {t('home:footer.login')}
                 </Button>
                 <Button
                   onClick={openRegister}
                   className="flex rounded-full h-9 text-sm px-4 lg:px-5 shadow-sm shadow-primary/20"
                 >
-                  S'inscrire →
+                  {t('layout:landingNav.signUpButton')}
                 </Button>
               </>
             )}
@@ -208,7 +211,11 @@ export function LandingNavbar() {
             {/* Capsule burger — mobile only */}
             <button
               type="button"
-              aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+              aria-label={
+                menuOpen
+                  ? t('layout:landingNav.closeMenuAriaLabel')
+                  : t('layout:landingNav.openMenuAriaLabel')
+              }
               aria-expanded={menuOpen}
               aria-controls="landing-mobile-menu"
               className="relative lg:hidden flex items-center justify-center w-9 h-9 rounded-full hover:bg-muted transition-colors"
@@ -250,7 +257,7 @@ export function LandingNavbar() {
 
         <MobileNavAnchor
           href={discordInviteUrl}
-          label="Communauté"
+          label={t('layout:landingNav.community')}
           index={ALL_MOBILE_ITEMS_COUNT}
           open={menuOpen}
           onClick={closeMenu}
@@ -262,7 +269,7 @@ export function LandingNavbar() {
           style={{ transitionDelay: '300ms' }}
         >
           <span className="px-2 text-sm font-semibold uppercase tracking-wide text-text-light/60">
-            Langue
+            {t('layout:landingNav.languageLabel')}
           </span>
           <LocaleSwitcher />
         </div>
@@ -287,7 +294,7 @@ export function LandingNavbar() {
                 void logout().then(() => navigate({ to: '/' }))
                 closeMenu()
               }}
-              title="Déconnexion"
+              title={t('layout:landingNav.logoutAriaLabel')}
               className="p-2 rounded-full hover:text-destructive hover:bg-destructive/10 transition-colors"
             >
               <LogOut className="font-semibold text-text-light h-7 w-7" />

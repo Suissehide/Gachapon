@@ -24,5 +24,54 @@
       "health": "Health",
       "combatDebug": "Combat — Debug"
     }
+  },
+  "notFound": {
+    "title": "This page doesn't exist",
+    "description": "The capsule you're looking for may have gotten lost along the way, or the machine never dispensed it.",
+    "backHome": "Back to home",
+    "exploreCollection": "Explore the collection"
+  },
+  "landingNav": {
+    "guide": "Player guide",
+    "stats": "Statistics",
+    "resources": {
+      "menuLabel": "Resources",
+      "apiReference": {
+        "label": "API Reference",
+        "desc": "Interactive OpenAPI documentation"
+      },
+      "discordIntegration": {
+        "label": "Discord Integration",
+        "desc": "Build a bot with the Gachapon API"
+      },
+      "changelog": {
+        "label": "Changelog",
+        "desc": "History of updates and new cards"
+      }
+    },
+    "community": "Community",
+    "playButton": "Play →",
+    "signUpButton": "Sign up →",
+    "logoutAriaLabel": "Log out",
+    "openMenuAriaLabel": "Open menu",
+    "closeMenuAriaLabel": "Close menu",
+    "languageLabel": "Language"
+  },
+  "appNav": {
+    "play": "Play",
+    "collection": "Collection",
+    "equipment": "Equipment",
+    "tower": "Tower",
+    "leaderboard": "Leaderboard",
+    "openMenuAriaLabel": "Open menu",
+    "closeMenuAriaLabel": "Close menu",
+    "logoutAriaLabel": "Log out",
+    "myProfileTitle": "My profile",
+    "languageLabel": "Language",
+    "dustTitle": "Dust — {{amount}}",
+    "goldTitle": "Gold — {{amount}}",
+    "tokensTitle": "Tokens — {{current}}/{{max}}",
+    "energyTitle": "Energy — {{current}}/{{max}}",
+    "nextInSuffix": " · next in {{timer}}"
   }
 }

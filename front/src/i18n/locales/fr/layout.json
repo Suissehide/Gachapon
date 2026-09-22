@@ -24,5 +24,54 @@
       "health": "Santé",
       "combatDebug": "Combat — Debug"
     }
+  },
+  "notFound": {
+    "title": "Cette page n'existe pas",
+    "description": "La capsule que tu cherches s'est peut-être perdue en route, ou la machine ne l'a jamais distribuée.",
+    "backHome": "Retour à l'accueil",
+    "exploreCollection": "Explorer la collection"
+  },
+  "landingNav": {
+    "guide": "Guide du joueur",
+    "stats": "Statistiques",
+    "resources": {
+      "menuLabel": "Ressources",
+      "apiReference": {
+        "label": "Référence API",
+        "desc": "Documentation OpenAPI interactive"
+      },
+      "discordIntegration": {
+        "label": "Intégration Discord",
+        "desc": "Créer un bot avec l'API Gachapon"
+      },
+      "changelog": {
+        "label": "Changelog",
+        "desc": "Historique des mises à jour et nouvelles cartes"
+      }
+    },
+    "community": "Communauté",
+    "playButton": "Jouer →",
+    "signUpButton": "S'inscrire →",
+    "logoutAriaLabel": "Déconnexion",
+    "openMenuAriaLabel": "Ouvrir le menu",
+    "closeMenuAriaLabel": "Fermer le menu",
+    "languageLabel": "Langue"
+  },
+  "appNav": {
+    "play": "Jouer",
+    "collection": "Collection",
+    "equipment": "Équipement",
+    "tower": "Tours",
+    "leaderboard": "Classement",
+    "openMenuAriaLabel": "Ouvrir le menu",
+    "closeMenuAriaLabel": "Fermer le menu",
+    "logoutAriaLabel": "Déconnexion",
+    "myProfileTitle": "Mon profil",
+    "languageLabel": "Langue",
+    "dustTitle": "Poussière — {{amount}}",
+    "goldTitle": "Or — {{amount}}",
+    "tokensTitle": "Jetons — {{current}}/{{max}}",
+    "energyTitle": "Énergie — {{current}}/{{max}}",
+    "nextInSuffix": " · prochain dans {{timer}}"
   }
 }

@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { Home, Search } from 'lucide-react'
 import { type CSSProperties, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { AuroraGrid } from '../shared/decorations/AuroraGrid.tsx'
 import { Button } from '../ui/button.tsx'
@@ -56,7 +57,12 @@ function FloatingCapsule({ index }: { index: number }) {
 
 function OpenCapsule() {
   return (
-    <svg viewBox="0 0 200 160" className="h-40 w-52 drop-shadow-md" fill="none">
+    <svg
+      viewBox="0 0 200 160"
+      className="h-40 w-52 drop-shadow-md"
+      fill="none"
+      aria-hidden="true"
+    >
       <ellipse cx="100" cy="148" rx="60" ry="6" className="fill-text/[0.04]" />
       <g>
         <path d="M60 82 A40 40 0 0 0 140 82" fill="url(#bottomGrad)" />
@@ -197,6 +203,7 @@ function OpenCapsule() {
 }
 
 export function NotFoundPage() {
+  const { t } = useTranslation('layout')
   const [show, setShow] = useState(false)
 
   useEffect(() => {
@@ -211,6 +218,7 @@ export function NotFoundPage() {
       {/* Floating capsules */}
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         {Array.from({ length: 14 }).map((_, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: liste statique de longueur fixe, jamais réordonnée — l'index EST l'identité de la capsule
           <FloatingCapsule key={i} index={i} />
         ))}
       </div>
@@ -243,13 +251,12 @@ export function NotFoundPage() {
 
           {/* Title */}
           <p className="mt-2 font-display text-2xl font-extrabold tracking-tight text-text sm:text-3xl">
-            Cette page n'existe pas
+            {t('notFound.title')}
           </p>
 
           {/* Description */}
           <p className="mt-4 max-w-md font-body text-sm leading-relaxed text-text-light">
-            La capsule que tu cherches s'est peut-être perdue en route, ou la
-            machine ne l'a jamais distribuée.
+            {t('notFound.description')}
           </p>
 
           {/* Actions */}
@@ -257,13 +264,13 @@ export function NotFoundPage() {
             <Button asChild variant="gradient" size="lg">
               <Link to="/">
                 <Home size={16} />
-                Retour à l'accueil
+                {t('notFound.backHome')}
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg">
               <Link to="/collection">
                 <Search size={16} />
-                Explorer la collection
+                {t('notFound.exploreCollection')}
               </Link>
             </Button>
           </div>
