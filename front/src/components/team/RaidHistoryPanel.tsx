@@ -7,6 +7,8 @@
 // Le nombre de lignes n'est pas un choix d'affichage : le serveur en renvoie
 // au plus `teamRaid.historyLimit` (6 aujourd'hui). On rend ce qui arrive.
 import dayjs from 'dayjs'
+import type { TFunction } from 'i18next'
+import { useTranslation } from 'react-i18next'
 
 import type { TeamRaidHistoryEntry } from '../../api/teamProgression.api.ts'
 import { cn } from '../../libs/utils.ts'
@@ -20,18 +22,19 @@ import { SectionLabel } from '../ui/sectionHeading.tsx'
  * semaine. Le « S36 » de la maquette se calcule donc ici, en semaine ISO
  * (le plugin `isoWeek` est déjà branché dans `main.tsx`).
  */
-function weekLabel(weekKey: string): string {
-  return `S${dayjs.utc(weekKey).isoWeek()}`
+function weekLabel(weekKey: string, t: TFunction<'team'>): string {
+  return t('raidHistory.weekLabel', { week: dayjs.utc(weekKey).isoWeek() })
 }
 
 function HistoryRow({ raid }: { raid: TeamRaidHistoryEntry }) {
+  const { t } = useTranslation('team')
   const pct = Math.min(100, Math.max(0, raid.pct))
   const killed = pct >= 100
 
   return (
     <div className="grid grid-cols-[38px_minmax(0,1fr)_46px] items-center gap-2.5">
       <span className="font-mono text-[10px] tracking-[0.14em] text-foreground/45">
-        {weekLabel(raid.weekKey)}
+        {weekLabel(raid.weekKey, t)}
       </span>
 
       <div className="min-w-0">
@@ -57,6 +60,7 @@ function HistoryRow({ raid }: { raid: TeamRaidHistoryEntry }) {
 }
 
 export function RaidHistoryPanel({ teamId }: { teamId: string }) {
+  const { t } = useTranslation('team')
   const { data, isLoading } = useTeamRaidHistory(teamId)
   const raids = data?.raids ?? []
   // `killedAt` plutôt que `pct === 100`. Non pas parce que les deux
@@ -71,7 +75,7 @@ export function RaidHistoryPanel({ teamId }: { teamId: string }) {
   return (
     <ArcadeCard>
       <div className="mb-3 flex items-center justify-between gap-3">
-        <SectionLabel as="h2">Raids passés</SectionLabel>
+        <SectionLabel as="h2">{t('raidHistory.title')}</SectionLabel>
         {raids.length > 0 && (
           <span className="shrink-0 font-mono text-[10px] tracking-[0.12em] text-foreground/45">
             {won} / {raids.length}
@@ -81,11 +85,11 @@ export function RaidHistoryPanel({ teamId }: { teamId: string }) {
 
       {isLoading ? (
         <p className="font-mono text-[10px] tracking-[0.06em] text-foreground/45">
-          Chargement de l'historique…
+          {t('raidHistory.loading')}
         </p>
       ) : raids.length === 0 ? (
         <p className="text-[12.5px] leading-[1.5] text-foreground/55">
-          Aucun raid dans l'historique.
+          {t('raidHistory.empty')}
         </p>
       ) : (
         <div className="flex flex-col gap-2">

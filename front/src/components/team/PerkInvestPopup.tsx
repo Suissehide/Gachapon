@@ -7,8 +7,10 @@
 // POURQUOI il l'est (bonus verrouillé, rang au maximum, plus aucun point),
 // et le déclencheur lui-même disparaît plutôt que de s'afficher grisé quand
 // il n'y a rien à dépenser.
+import type { TFunction } from 'i18next'
 import { ArrowRight, Sparkles } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { TeamPerkState } from '../../api/teamProgression.api.ts'
 import {
@@ -17,7 +19,6 @@ import {
   perkEffectAt,
   perkValue,
 } from '../../constants/teamPerks.constant.ts'
-import { plural } from '../../libs/utils.ts'
 import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
@@ -46,15 +47,19 @@ type PerkInvestPopupProps = {
  * points, et le manque de points ne se dit qu'en dernier — c'est la seule
  * raison qui disparaîtra toute seule au prochain niveau.
  */
-function blockedReason(perk: TeamPerkState, perkPoints: number): string | null {
+function blockedReason(
+  perk: TeamPerkState,
+  perkPoints: number,
+  t: TFunction<'team'>,
+): string | null {
   if (!perk.unlocked) {
-    return `Se débloque au niveau ${perk.unlockLevel} de l'équipe`
+    return t('perkInvest.lockedUntilLevel', { level: perk.unlockLevel })
   }
   if (perk.rank >= perk.maxRank) {
-    return 'Rang maximum atteint'
+    return t('perkInvest.maxRankReached')
   }
   if (perkPoints <= 0) {
-    return 'Aucun point de bonus disponible'
+    return t('perkInvest.noPointsAvailable')
   }
   return null
 }
@@ -64,6 +69,7 @@ export function PerkInvestPopup({
   perks,
   perkPoints,
 }: PerkInvestPopupProps) {
+  const { t } = useTranslation('team')
   const [open, setOpen] = useState(false)
   // L'effet par rang vient de la config serveur : le coder en dur ferait
   // mentir le « après » au premier ajustement d'équilibrage.
@@ -92,14 +98,14 @@ export function PerkInvestPopup({
           className="mt-3 h-auto w-full rounded-lg px-[18px] py-[11px] text-sm font-bold"
         >
           <Sparkles className="h-4 w-4" />
-          Investir {perkPoints} point{plural(perkPoints)}
+          {t('perkInvest.investPoints', { count: perkPoints })}
         </PopupTrigger>
       ) : hasRoom ? null : (
         // Une équipe sans point en main ne lit rien : l'absence du bouton dit
         // déjà tout. Seul le plafond mérite une phrase, parce que lui ne se
         // lèvera jamais et qu'il explique pourquoi les points cessent d'arriver.
         <p className="mt-3 text-center font-mono text-[10px] leading-[1.5] tracking-[0.06em] text-foreground/45">
-          Tous les bonus sont au rang maximum.
+          {t('perkInvest.allMaxed')}
         </p>
       )}
 
@@ -107,9 +113,9 @@ export function PerkInvestPopup({
         <PopupHeader>
           <PopupTitle
             icon={<Sparkles className="h-4 w-4" />}
-            subtitle="Un point monte un bonus d'un rang. Seul le chef peut ensuite tout remettre à zéro, depuis le pied du panneau des bonus."
+            subtitle={t('perkInvest.subtitle')}
           >
-            Investir un point de bonus
+            {t('perkInvest.title')}
           </PopupTitle>
         </PopupHeader>
 
@@ -124,8 +130,10 @@ export function PerkInvestPopup({
             // le temps de l'aller-retour — exactement ce que cette page
             // s'interdit.
             const reason =
-              blockedReason(perk, perkPoints) ??
-              (isPending && !thisPending ? 'Investissement en cours…' : null)
+              blockedReason(perk, perkPoints, t) ??
+              (isPending && !thisPending
+                ? t('perkInvest.pendingElsewhere')
+                : null)
 
             return (
               <div
@@ -187,7 +195,9 @@ export function PerkInvestPopup({
                     disabled={reason !== null || isPending}
                     onClick={() => spend(perk.key)}
                   >
-                    {thisPending ? 'Investissement…' : 'Investir'}
+                    {thisPending
+                      ? t('perkInvest.investing')
+                      : t('perkInvest.investButton')}
                   </Button>
                   {reason && (
                     <span className="text-right text-[10px] leading-[1.3] text-text-light">
@@ -202,15 +212,14 @@ export function PerkInvestPopup({
 
         <PopupFooter className="items-center justify-between">
           <span className="font-mono text-[10px] tracking-[0.12em] text-foreground/50">
-            {perkPoints} POINT{plural(perkPoints).toUpperCase()} RESTANT
-            {plural(perkPoints).toUpperCase()}
+            {t('perkInvest.remainingPoints', { count: perkPoints })}
           </span>
           <Button
             type="button"
             variant="outline"
             onClick={() => setOpen(false)}
           >
-            Fermer
+            {t('perkInvest.close')}
           </Button>
         </PopupFooter>
       </PopupContent>

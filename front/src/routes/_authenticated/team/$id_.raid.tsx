@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import type { TFunction } from 'i18next'
 import {
   ArrowLeft,
   ArrowRight,
@@ -12,6 +13,7 @@ import {
 } from 'lucide-react'
 import { Dialog } from 'radix-ui'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { RaidAttackResult, RaidView } from '../../../api/raid.api.ts'
 import {
@@ -54,17 +56,18 @@ function getFightLabel(
   hasTeam: boolean,
   killed: boolean,
   remaining: number,
+  t: TFunction<'team'>,
 ): string {
   if (!hasTeam) {
-    return 'Équipe requise'
+    return t('raidPage.fightLabelTeamRequired')
   }
   if (killed) {
-    return 'Boss vaincu'
+    return t('raidPage.fightLabelDefeated')
   }
   if (remaining === 0) {
-    return "Plus d'attaque aujourd'hui"
+    return t('raidPage.fightLabelNoAttacksToday')
   }
-  return 'Attaquer'
+  return t('raidPage.fightLabelAttack')
 }
 
 /**
@@ -79,6 +82,7 @@ function RaidGate({
   raid: ReturnType<typeof useRaid>
   id: string
 }) {
+  const { t } = useTranslation('team')
   if (raid.isPending) {
     return (
       <div className="flex min-h-[calc(100vh-var(--topbar-h))] items-center justify-center">
@@ -92,14 +96,14 @@ function RaidGate({
         <p className="text-text-light">
           {isApiError(raid.error)
             ? raid.error.message
-            : 'Impossible de charger ce raid.'}
+            : t('raidPage.loadError')}
         </p>
         <Link
           to="/team/$id"
           params={{ id }}
           className="text-sm text-primary underline"
         >
-          Retour à l'équipe
+          {t('raidPage.backToTeam')}
         </Link>
       </div>
     )
@@ -108,6 +112,7 @@ function RaidGate({
 }
 
 function RaidAttackPage() {
+  const { t } = useTranslation('team')
   const { id } = Route.useParams()
   const navigate = useNavigate()
   const { data: team } = useTeam(id)
@@ -169,24 +174,32 @@ function RaidAttackPage() {
     }
   }
 
-  const fightLabel = getFightLabel(hasTeam, killed, remaining)
+  const fightLabel = getFightLabel(hasTeam, killed, remaining, t)
 
   return (
     <PageShell>
       <PageHeader
         breadcrumbs={[
-          { label: 'Gachapon', to: '/play' },
-          { label: 'Équipes', to: '/team' },
-          { label: team?.name ?? 'Équipe', to: '/team/$id', params: { id } },
-          { label: 'Raid' },
+          { label: t('page.breadcrumbHome'), to: '/play' },
+          { label: t('page.breadcrumbTeams'), to: '/team' },
+          {
+            label: team?.name ?? t('raidPage.breadcrumbTeamFallback'),
+            to: '/team/$id',
+            params: { id },
+          },
+          { label: t('raidPage.breadcrumbRaid') },
         ]}
-        title={raid.data ? `Raid · ${raid.data.boss.name}` : 'Raid'}
-        subtitle="Une bataille de 10 tours : tout ce que tu infliges est retiré de la barre commune."
+        title={
+          raid.data
+            ? t('raidPage.pageTitle', { bossName: raid.data.boss.name })
+            : t('raidPage.pageTitleFallback')
+        }
+        subtitle={t('raidPage.subtitle')}
         right={
           <Button asChild variant="outline" className="gap-2">
             <Link to="/team/$id" params={{ id }}>
               <ArrowLeft className="h-4 w-4" />
-              Retour à l'équipe
+              {t('raidPage.backToTeam')}
             </Link>
           </Button>
         }
@@ -211,13 +224,10 @@ function RaidAttackPage() {
         <Popup open={prepOpen} onOpenChange={setPrepOpen}>
           <PopupContent size="lg">
             <BattlePrepModal
-              eyebrow={
-                <>
-                  Raid d'équipe · boss {ELEMENT_LABELS[raid.data.boss.element]}{' '}
-                  · {remaining} attaque{remaining > 1 ? 's' : ''} restante
-                  {remaining > 1 ? 's' : ''}
-                </>
-              }
+              eyebrow={t('raidPage.prepEyebrow', {
+                element: ELEMENT_LABELS[raid.data.boss.element],
+                count: remaining,
+              })}
               enemies={[
                 {
                   id: 'B0',
@@ -268,46 +278,51 @@ function RaidAttackPage() {
 
 /** Les attaques sont gratuites : pas d'énergie affichée, seulement les paliers restants. */
 function RaidRewardPreview({ raid }: { raid: RaidView }) {
-  const next = raid.tiers.find((t) => !t.reached)
+  const { t } = useTranslation('team')
+  const next = raid.tiers.find((tier) => !tier.reached)
   return (
     <>
       <div className="mb-3 flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
         <Sparkles className="h-3 w-3 text-amber-600" />
-        Prochain palier
+        {t('raidPage.nextTier')}
       </div>
       {next ? (
         <div className="flex flex-wrap gap-2">
           <RewardPill
             color="#ef4444"
-            label={`${next.pct} % des PV`}
+            label={t('raidPage.rewardHpPct', { pct: next.pct })}
             icon={Skull}
           />
           <RewardPill
             color="#10b981"
-            label={`${next.reward.tokens} Jetons`}
+            label={t('raidPage.rewardTokens', { count: next.reward.tokens })}
             icon={Ticket}
           />
           <RewardPill
             color="#f59e0b"
-            label={`${next.reward.gold} Or`}
+            label={t('raidPage.rewardGold', { count: next.reward.gold })}
             icon={Coins}
           />
           <RewardPill
             color="#38bdf8"
-            label={`${next.reward.dust} Poussière`}
+            label={t('raidPage.rewardDust', { count: next.reward.dust })}
             icon={Sparkles}
           />
           {next.reward.cardRarity && (
             <RewardPill
               color="#ec4899"
-              label={`Carte ${RARITY_LABEL_FR[next.reward.cardRarity] ?? next.reward.cardRarity}`}
+              label={t('raidPage.rewardCard', {
+                rarity:
+                  RARITY_LABEL_FR[next.reward.cardRarity] ??
+                  next.reward.cardRarity,
+              })}
               icon={Trophy}
             />
           )}
         </div>
       ) : (
         <p className="text-sm text-text-light">
-          Tous les paliers sont atteints.
+          {t('raidPage.allTiersReached')}
         </p>
       )}
     </>
@@ -321,6 +336,7 @@ function RaidResultPopup({
   result: RaidAttackResult | null
   onClose: (again: boolean) => void
 }) {
+  const { t } = useTranslation('team')
   if (!result) {
     return null
   }
@@ -332,7 +348,9 @@ function RaidResultPopup({
         size="lg"
         className="border-0 bg-[#fbf8f3] p-0 shadow-[0_30px_80px_-12px_rgba(0,0,0,0.4)]"
       >
-        <Dialog.Title className="sr-only">Résultat de l'attaque</Dialog.Title>
+        <Dialog.Title className="sr-only">
+          {t('raidPage.resultTitle')}
+        </Dialog.Title>
         <ResultPanel halo={result.killed}>
           <ResultBadge
             className={result.killed ? RESULT_BADGE_WIN : RESULT_BADGE_TIMEOUT}
@@ -346,8 +364,10 @@ function RaidResultPopup({
           />
           <h2 className="mt-4 font-display text-3xl font-bold text-text">
             {result.killed
-              ? 'Boss vaincu !'
-              : `${formatNumber(result.damage, currentLocale())} dégâts`}
+              ? t('raidPage.bossDefeatedExclaim')
+              : t('raidPage.damageDealt', {
+                  count: formatNumber(result.damage, currentLocale()),
+                })}
           </h2>
 
           <div className="mt-5 w-full">
@@ -366,54 +386,59 @@ function RaidResultPopup({
           {result.newTiers.length > 0 && (
             <div className="mt-6 w-full">
               <div className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-                Palier{result.newTiers.length > 1 ? 's' : ''} franchi
-                {result.newTiers.length > 1 ? 's' : ''} pour toute l'équipe
+                {t('raidPage.tiersCrossed', { count: result.newTiers.length })}
               </div>
-              {result.newTiers.map((t) => (
-                <div key={t.pct} className="mb-2 flex w-full flex-col gap-2">
+              {result.newTiers.map((tier) => (
+                <div key={tier.pct} className="mb-2 flex w-full flex-col gap-2">
                   <div
                     className={`grid w-full gap-2.5 ${
-                      t.reward.xp > 0 ? 'grid-cols-4' : 'grid-cols-3'
+                      tier.reward.xp > 0 ? 'grid-cols-4' : 'grid-cols-3'
                     }`}
                   >
                     <RewardTile
                       icon={<Ticket className="h-5 w-5" />}
-                      label={`${t.pct} % · Jetons`}
-                      value={t.reward.tokens}
+                      label={t('raidPage.tierRewardTokens', {
+                        pct: tier.pct,
+                      })}
+                      value={tier.reward.tokens}
                       tone="#10b981"
                     />
                     <RewardTile
                       icon={<Coins className="h-5 w-5" />}
-                      label="Pièces"
-                      value={t.reward.gold}
+                      label={t('raidPage.coins')}
+                      value={tier.reward.gold}
                       tone="#f59e0b"
                     />
                     <RewardTile
                       icon={<Sparkles className="h-5 w-5" />}
-                      label="Poussière"
-                      value={t.reward.dust}
+                      label={t('raidPage.dust')}
+                      value={tier.reward.dust}
                       tone="#38bdf8"
                     />
-                    {t.reward.xp > 0 && (
+                    {tier.reward.xp > 0 && (
                       <RewardTile
                         icon={<Star className="h-5 w-5" />}
-                        label="XP"
-                        value={t.reward.xp}
+                        label={t('raidPage.xp')}
+                        value={tier.reward.xp}
                         tone="#8b5cf6"
                       />
                     )}
                   </div>
-                  {t.reward.cardRarity && (
+                  {tier.reward.cardRarity && (
                     <RewardPill
                       color="#ec4899"
-                      label={`Carte ${RARITY_LABEL_FR[t.reward.cardRarity] ?? t.reward.cardRarity}`}
+                      label={t('raidPage.rewardCard', {
+                        rarity:
+                          RARITY_LABEL_FR[tier.reward.cardRarity] ??
+                          tier.reward.cardRarity,
+                      })}
                       icon={Trophy}
                     />
                   )}
                 </div>
               ))}
               <p className="text-xs text-text-light">
-                À réclamer dans tes Récompenses.
+                {t('raidPage.claimHint')}
               </p>
             </div>
           )}
@@ -425,11 +450,13 @@ function RaidResultPopup({
               className="gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              Retour à l'équipe
+              {t('raidPage.backToTeam')}
             </Button>
             {!result.killed && result.attacksRemainingToday > 0 && (
               <Button onClick={() => onClose(true)} className="gap-2">
-                Réattaquer ({result.attacksRemainingToday})
+                {t('raidPage.attackAgain', {
+                  count: result.attacksRemainingToday,
+                })}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             )}

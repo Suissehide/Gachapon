@@ -18,6 +18,7 @@
 import { Lock, RotateCcw } from 'lucide-react'
 import type { CSSProperties } from 'react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { TeamPerkState } from '../../api/teamProgression.api.ts'
 import {
@@ -25,7 +26,7 @@ import {
   perkDescription,
   perkValue,
 } from '../../constants/teamPerks.constant.ts'
-import { cn, plural } from '../../libs/utils.ts'
+import { cn } from '../../libs/utils.ts'
 import { useResetPerks } from '../../queries/useTeamProgression.ts'
 import { ArcadeCard } from '../shared/ArcadeCard.tsx'
 import { Button } from '../ui/button.tsx'
@@ -34,6 +35,7 @@ import { ConfirmPopup } from './ConfirmPopup.tsx'
 import { PerkInvestPopup } from './PerkInvestPopup.tsx'
 
 function PerkRow({ perk }: { perk: TeamPerkState }) {
+  const { t } = useTranslation('team')
   const meta = PERK_META[perk.key]
   // Le plafond voyage avec le bonus : `raid` en a 2, les trois autres 5, donc
   // la rangée du raid dessine deux pastilles là où les autres en dessinent cinq.
@@ -80,7 +82,7 @@ function PerkRow({ perk }: { perk: TeamPerkState }) {
             // Badge `.tm-perk-lock` : le niveau qui déverrouille le bonus,
             // pas le niveau actuel de l'équipe.
             <span className="ml-auto shrink-0 rounded-full border border-primary/40 bg-primary/10 px-[7px] py-[3px] font-mono text-[9px] tracking-[0.12em] text-primary-dark">
-              NIV. {perk.unlockLevel}
+              {t('perks.lockedBadge', { level: perk.unlockLevel })}
             </span>
           ) : (
             <span className="ml-auto flex shrink-0 items-baseline gap-2">
@@ -143,6 +145,7 @@ export function PerksPanel({
   canManage,
   isOwner,
 }: PerksPanelProps) {
+  const { t } = useTranslation('team')
   const [resetOpen, setResetOpen] = useState(false)
   const { mutate: reset, isPending: isResetting } = useResetPerks(teamId)
   const investedRanks = perks.reduce((sum, perk) => sum + perk.rank, 0)
@@ -150,10 +153,10 @@ export function PerksPanel({
   return (
     <ArcadeCard>
       <div className="mb-3 flex items-center justify-between gap-3">
-        <SectionLabel as="h2">Bonus d'équipe</SectionLabel>
+        <SectionLabel as="h2">{t('perks.sectionLabel')}</SectionLabel>
         {perkPoints > 0 && (
           <span className="shrink-0 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 font-mono text-[10px] font-bold tracking-[0.1em] text-primary-dark">
-            {perkPoints} POINT{plural(perkPoints).toUpperCase()}
+            {t('perks.pointsBadge', { count: perkPoints })}
           </span>
         )}
       </div>
@@ -176,7 +179,7 @@ export function PerksPanel({
         />
       ) : (
         <p className="mt-3 text-center font-mono text-[10px] leading-[1.5] tracking-[0.06em] text-foreground/45">
-          Seuls le chef et les officiers investissent les points de bonus.
+          {t('perks.onlyManagersNote')}
         </p>
       )}
 
@@ -197,15 +200,17 @@ export function PerksPanel({
             onClick={() => setResetOpen(true)}
           >
             <RotateCcw className="h-3.5 w-3.5" />
-            {isResetting ? 'Réinitialisation…' : 'Réinitialiser les bonus'}
+            {isResetting ? t('perks.resetting') : t('perks.resetButton')}
           </Button>
           <ConfirmPopup
             open={resetOpen}
             onOpenChange={setResetOpen}
             icon={<RotateCcw className="h-4 w-4" />}
-            title="Réinitialiser les bonus"
-            description={`Les ${investedRanks} rang${plural(investedRanks)} investi${plural(investedRanks)} repartent à zéro et l'équipe récupère ses ${investedRanks} point${plural(investedRanks)} de bonus. L'opération est gratuite et sans limite, mais tous les membres perdent immédiatement les effets en cours.`}
-            confirmLabel="Tout réinitialiser"
+            title={t('perks.resetConfirmTitle')}
+            description={t('perks.resetConfirmDescription', {
+              count: investedRanks,
+            })}
+            confirmLabel={t('perks.resetConfirmLabel')}
             onConfirm={() => reset()}
           />
         </>

@@ -16,6 +16,7 @@
 // quand on tape.
 import { Link } from '@tanstack/react-router'
 import dayjs from 'dayjs'
+import type { TFunction } from 'i18next'
 import {
   Crown,
   MoreVertical,
@@ -100,7 +101,7 @@ const ROLE_COLOR: Record<TeamMemberRoleLabel, string> = {
  */
 function seenLabel(
   lastSeenAt: string | null,
-  t: (key: string) => string,
+  t: TFunction<'team'>,
 ): {
   text: string
   fresh: boolean

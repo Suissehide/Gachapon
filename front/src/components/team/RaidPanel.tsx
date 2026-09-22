@@ -14,6 +14,7 @@
 // sous ce panneau (`ContributionsTable`), comme dans la maquette.
 import { Link } from '@tanstack/react-router'
 import dayjs from 'dayjs'
+import type { TFunction } from 'i18next'
 import {
   CalendarDays,
   Check,
@@ -23,6 +24,7 @@ import {
   Ticket,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { RaidTierView, RaidView } from '../../api/raid.api.ts'
 import { currentLocale } from '../../i18n/index.ts'
@@ -40,18 +42,22 @@ function minutesRemaining(endsAt: string): number {
   return Math.max(0, dayjs(endsAt).diff(dayjs(), 'minute'))
 }
 
-function formatRemaining(endsAt: string): string {
+function formatRemaining(endsAt: string, t: TFunction<'team'>): string {
   const diffMin = minutesRemaining(endsAt)
   const days = Math.floor(diffMin / 1440)
   const hours = Math.floor((diffMin % 1440) / 60)
   const minutes = diffMin % 60
   if (days > 0) {
-    return hours > 0 ? `${days} j ${hours} h` : `${days} j`
+    return hours > 0
+      ? t('raidPanel.remainingDaysHours', { days, hours })
+      : t('raidPanel.remainingDaysOnly', { days })
   }
   if (hours > 0) {
-    return minutes > 0 ? `${hours} h ${minutes} min` : `${hours} h`
+    return minutes > 0
+      ? t('raidPanel.remainingHoursMinutes', { hours, minutes })
+      : t('raidPanel.remainingHoursOnly', { hours })
   }
-  return `${minutes} min`
+  return t('raidPanel.remainingMinutesOnly', { minutes })
 }
 
 // Carte de palier, trois états (`.tm-tier`, `.tm-tier--done`,
@@ -64,6 +70,7 @@ function TierCard({
   tier: RaidTierView
   state: 'done' | 'next' | 'todo'
 }) {
+  const { t } = useTranslation('team')
   const done = state === 'done'
   const iconClass = cn(
     'h-3.5 w-3.5',
@@ -91,7 +98,7 @@ function TierCard({
             <Check className="h-2.5 w-2.5" strokeWidth={3} />
           </span>
         )}
-        {tier.pct} %{state === 'next' && ' · EN COURS'}
+        {tier.pct} %{state === 'next' && t('raidPanel.tierInProgress')}
       </div>
 
       <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs font-semibold text-foreground/75">
@@ -111,8 +118,10 @@ function TierCard({
 
       {tier.reward.cardRarity && (
         <div className="mt-2 inline-flex rounded-full border border-secondary/40 bg-secondary/10 px-2 py-[3px] font-mono text-[10px] tracking-[0.08em] text-secondary-dark">
-          Carte{' '}
-          {RARITY_LABEL_FR[tier.reward.cardRarity] ?? tier.reward.cardRarity}
+          {t('raidPanel.tierRewardCard', {
+            rarity:
+              RARITY_LABEL_FR[tier.reward.cardRarity] ?? tier.reward.cardRarity,
+          })}
         </div>
       )}
     </div>
@@ -136,6 +145,7 @@ function BossCard({
   boss: RaidView['boss']
   killed: boolean
 }) {
+  const { t } = useTranslation('team')
   return (
     // `w-full` est obligatoire, pas cosmetique : la colonne parente est un
     // flex `items-center`, qui dimensionne ses enfants sur leur contenu. Or
@@ -159,7 +169,7 @@ function BossCard({
       />
       {killed && (
         <div className="absolute inset-0 z-30 flex items-center justify-center rounded-[10px] bg-black/50 font-display text-lg font-bold text-white">
-          Vaincu
+          {t('raidPanel.bossDefeatedOverlay')}
         </div>
       )}
     </div>
@@ -195,6 +205,7 @@ function BossPowerBadge({
 }
 
 export function RaidPanel({ teamId }: { teamId: string }) {
+  const { t } = useTranslation('team')
   const { data: raid, isLoading, isError } = useRaid(teamId)
   useRaidLive(teamId)
   // Declare avant toute sortie anticipee : les hooks doivent s'executer dans
@@ -217,7 +228,7 @@ export function RaidPanel({ teamId }: { teamId: string }) {
   if (isLoading) {
     return (
       <ArcadeCard>
-        <p className="text-center text-text-light">Chargement du raid…</p>
+        <p className="text-center text-text-light">{t('raidPanel.loading')}</p>
       </ArcadeCard>
     )
   }
@@ -225,7 +236,7 @@ export function RaidPanel({ teamId }: { teamId: string }) {
     return (
       <ArcadeCard>
         <p className="text-center text-destructive">
-          Impossible de charger le raid de la semaine.
+          {t('raidPanel.loadError')}
         </p>
       </ArcadeCard>
     )
@@ -236,10 +247,13 @@ export function RaidPanel({ teamId }: { teamId: string }) {
   const noAttackLeft = raid.me.attacksRemainingToday === 0
   // Un bouton grisé muet ne dit rien : le libellé porte lui-même la raison.
   const attackLabel = killed
-    ? 'Boss vaincu'
+    ? t('raidPanel.attackDefeated')
     : noAttackLeft
-      ? "Plus d'attaque aujourd'hui"
-      : `Attaquer (${raid.me.attacksRemainingToday}/${raid.me.attacksPerDay})`
+      ? t('raidPanel.attackNoneLeft')
+      : t('raidPanel.attackAvailable', {
+          remaining: raid.me.attacksRemainingToday,
+          perDay: raid.me.attacksPerDay,
+        })
   // « En cours » = le premier palier non atteint. `reached` est servi par le
   // serveur, la position ne l'est pas.
   const nextTierIndex = raid.tiers.findIndex((t) => !t.reached)
@@ -250,7 +264,7 @@ export function RaidPanel({ teamId }: { teamId: string }) {
           alignés sur la ligne de base du titre. */}
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div className="min-w-0">
-          <SectionLabel>Raid d'équipe</SectionLabel>
+          <SectionLabel>{t('raidPanel.sectionLabel')}</SectionLabel>
           <PanelTitle size="lg" className="mt-1.5">
             {raid.boss.name}
           </PanelTitle>
@@ -262,7 +276,7 @@ export function RaidPanel({ teamId }: { teamId: string }) {
               reste de l'écran. */}
           <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 font-mono text-[10px] font-bold tracking-[0.1em] text-primary-darker">
             <CalendarDays className="h-3.5 w-3.5" />
-            {ended ? 'Terminé' : formatRemaining(raid.endsAt)}
+            {ended ? t('raidPanel.ended') : formatRemaining(raid.endsAt, t)}
           </span>
 
           {/* `.tm-btn--amber` : radius 12, padding 11/18, 700 à 14 px, halo
@@ -291,7 +305,9 @@ export function RaidPanel({ teamId }: { teamId: string }) {
           <button
             type="button"
             onClick={() => setInspecting(true)}
-            aria-label={`Voir la carte du boss ${raid.boss.name} en grand`}
+            aria-label={t('raidPanel.viewBossCardAriaLabel', {
+              bossName: raid.boss.name,
+            })}
             // `block w-full` obligatoire : un <button> se dimensionne sur son
             // contenu, or la carte est en largeur relative — sans largeur
             // imposée la référence est circulaire et tout s'effondre à 0x0.

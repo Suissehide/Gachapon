@@ -8,6 +8,8 @@
 // la piste. Y dessiner un trait de graduation dessinerait une bordure
 // parasite collée au bord droit : on l'exclut systématiquement, quelle que
 // soit sa position dans le tableau `tiers`.
+import { useTranslation } from 'react-i18next'
+
 import { currentLocale } from '../../i18n/index.ts'
 import { cn, formatNumber } from '../../libs/utils.ts'
 
@@ -36,6 +38,7 @@ export function GradedHpBar({
   showValue = true,
   className,
 }: GradedHpBarProps) {
+  const { t } = useTranslation('team')
   const locale = currentLocale()
   const fraction = max > 0 ? Math.min(1, Math.max(0, done / max)) : 0
   const percent = fraction * 100
@@ -62,7 +65,10 @@ export function GradedHpBar({
         ))}
         {showValue && (
           <div className="absolute inset-0 flex items-center justify-end pr-3 font-mono text-xs font-bold tracking-[0.06em] text-text-light">
-            {formatNumber(remaining, locale)} / {formatNumber(max, locale)} PV
+            {t('hpBar.remainingOfMax', {
+              remaining: formatNumber(remaining, locale),
+              max: formatNumber(max, locale),
+            })}
           </div>
         )}
       </div>
