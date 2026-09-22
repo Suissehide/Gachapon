@@ -294,7 +294,7 @@
     "atCapLabel": "{{max}}-team limit reached",
     "createTeam": "Create a team",
     "emptyTitle": "You're not in any team",
-    "emptyBody": "A team shares a weekly raid, gacha duels, and bonuses that benefit every member. Join one, or start your own."
+    "emptyBody": "A team shares a weekly raid, pull duels, and bonuses that benefit every member. Join one, or start your own."
   },
   "detail": {
     "notFound": "Team not found or access denied.",
