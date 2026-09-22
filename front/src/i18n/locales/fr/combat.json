@@ -2,5 +2,9 @@
   "teamLabel": {
     "campaign": "Campagne",
     "raid": "Raid d'équipe"
+  },
+  "toasts": {
+    "setTeamErrorTitle": "Erreur lors de l'enregistrement de l'équipe",
+    "clearTeamErrorTitle": "Erreur lors du retour à l'équipe de campagne"
   }
 }

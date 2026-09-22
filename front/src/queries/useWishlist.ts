@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 
 import { WishlistApi } from '../api/wishlist.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
@@ -26,6 +27,7 @@ export const useWishlist = () => {
 export const useToggleWishlist = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('wishlist')
   return useMutation({
     mutationFn: ({ cardId, wished }: { cardId: string; wished: boolean }) =>
       wished ? WishlistApi.remove(cardId) : WishlistApi.add(cardId),
@@ -36,7 +38,7 @@ export const useToggleWishlist = () => {
       const title =
         isApiError(error) && error.title
           ? error.title
-          : 'Erreur lors de la mise à jour des vœux'
+          : t('toasts.toggleErrorTitle')
       toast({
         title,
         message: error.message,
@@ -49,6 +51,7 @@ export const useToggleWishlist = () => {
 export const usePurchaseWishlist = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('wishlist')
   const setUser = useAuthStore((s) => s.setUser)
   const user = useAuthStore((s) => s.user)
   return useMutation({
@@ -61,7 +64,9 @@ export const usePurchaseWishlist = () => {
       qc.invalidateQueries({ queryKey: ['collection'] })
       toast({
         title: result.card.name,
-        message: `Obtenue ! −${formatNumber(result.dustSpent, currentLocale())} poussière`,
+        message: t('toasts.purchasedMessage', {
+          dust: formatNumber(result.dustSpent, currentLocale()),
+        }),
         severity: TOAST_SEVERITY.SUCCESS,
       })
     },
@@ -69,7 +74,7 @@ export const usePurchaseWishlist = () => {
       const title =
         isApiError(error) && error.title
           ? error.title
-          : "Erreur lors de l'achat du vœu"
+          : t('toasts.purchaseErrorTitle')
       toast({
         title,
         message: error.message,

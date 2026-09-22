@@ -1,0 +1,9 @@
+{
+  "toasts": {
+    "apiKeyCreatedTitle": "API key created",
+    "createErrorTitle": "Error creating",
+    "deleteErrorTitle": "Error deleting",
+    "usernameChangeFallbackTitle": "Error",
+    "usernameChangeFallbackMessage": "Could not change the username."
+  }
+}

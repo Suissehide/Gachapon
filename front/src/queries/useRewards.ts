@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 
 import { RewardsApi } from '../api/rewards.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
@@ -34,6 +35,7 @@ export const usePendingRewards = () => {
 export const useClaimReward = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('rewards')
   const fetchMe = useAuthStore((s) => s.fetchMe)
   const triggerLevelUp = useLevelUpStore((s) => s.triggerLevelUp)
   const enqueueAchievementUnlock = useAchievementUnlockStore((s) => s.enqueue)
@@ -68,7 +70,7 @@ export const useClaimReward = () => {
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la réclamation',
+        title: t('toasts.claimErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -79,6 +81,7 @@ export const useClaimReward = () => {
 export const useClaimAllRewards = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('rewards')
   const fetchMe = useAuthStore((s) => s.fetchMe)
   const triggerLevelUp = useLevelUpStore((s) => s.triggerLevelUp)
   const enqueueAchievementUnlock = useAchievementUnlockStore((s) => s.enqueue)
@@ -109,7 +112,7 @@ export const useClaimAllRewards = () => {
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la réclamation',
+        title: t('toasts.claimErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })

@@ -1,5 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 
 import { CombatApi } from '../api/combat.api'
 import { CAMPAIGN_TEAM_KEY } from '../constants/combatTeam.constant'
@@ -43,6 +44,7 @@ export function useAllCombatTeams() {
 export function useSetCombatTeam(key: string) {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('combat')
   return useMutation({
     mutationFn: (userCardIds: string[]) => CombatApi.setTeam(key, userCardIds),
     onSuccess: (data) => {
@@ -51,7 +53,7 @@ export function useSetCombatTeam(key: string) {
     },
     onError: (error) => {
       toast({
-        title: "Erreur lors de l'enregistrement de l'équipe",
+        title: t('toasts.setTeamErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -62,12 +64,13 @@ export function useSetCombatTeam(key: string) {
 export function useClearCombatTeam(key: string) {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('combat')
   return useMutation({
     mutationFn: () => CombatApi.clearTeam(key),
     onSuccess: () => invalidateAfterWrite(qc, key),
     onError: (error) => {
       toast({
-        title: "Erreur lors du retour à l'équipe de campagne",
+        title: t('toasts.clearTeamErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })

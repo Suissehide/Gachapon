@@ -2,5 +2,9 @@
   "teamLabel": {
     "campaign": "Campaign",
     "raid": "Team raid"
+  },
+  "toasts": {
+    "setTeamErrorTitle": "Error saving the team",
+    "clearTeamErrorTitle": "Error reverting to the campaign team"
   }
 }

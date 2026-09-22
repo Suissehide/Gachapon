@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 
 import {
   type BulkRecycleMaxRarity,
@@ -8,8 +9,8 @@ import {
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
-import { currentLocale } from '../i18n/index.ts'
-import { formatNumber, plural } from '../libs/utils.ts'
+import i18n, { currentLocale } from '../i18n/index.ts'
+import { formatNumber } from '../libs/utils.ts'
 import { useAchievementUnlockStore } from '../stores/achievementUnlock.store.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 
@@ -69,6 +70,7 @@ export const useUserCollection = (userId: string | undefined) => {
 export const useRecycle = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('collection')
   const setUser = useAuthStore((s) => s.setUser)
   const user = useAuthStore((s) => s.user)
   const enqueueAchievementUnlock = useAchievementUnlockStore((s) => s.enqueue)
@@ -100,7 +102,7 @@ export const useRecycle = () => {
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors du recyclage',
+        title: t('recycle.errorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -111,6 +113,7 @@ export const useRecycle = () => {
 export const useRecycleAll = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('collection')
   const setUser = useAuthStore((s) => s.setUser)
   const user = useAuthStore((s) => s.user)
   const enqueueAchievementUnlock = useAchievementUnlockStore((s) => s.enqueue)
@@ -132,12 +135,16 @@ export const useRecycleAll = () => {
       const skipped = data.skippedEngaged
       const engagedNote =
         skipped > 0
-          ? ` · ${skipped} carte${plural(skipped)} ignorée${plural(skipped)} car engagée${plural(skipped)} dans ton duel`
+          ? i18n.t('collection:recycleAll.engagedNote', { count: skipped })
           : ''
       const recycled = data.cardsRecycled
       toast({
-        title: 'Recyclage terminé',
-        message: `${recycled} carte${plural(recycled)} recyclée${plural(recycled)} → ${formatNumber(data.dustEarned, currentLocale())} poussière${engagedNote}`,
+        title: t('recycleAll.completedTitle'),
+        message: t('recycleAll.message', {
+          count: recycled,
+          dust: formatNumber(data.dustEarned, currentLocale()),
+          engagedNote,
+        }),
         severity: TOAST_SEVERITY.SUCCESS,
       })
       if (data.unlockedAchievements?.length) {
@@ -148,7 +155,7 @@ export const useRecycleAll = () => {
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors du recyclage en masse',
+        title: t('recycleAll.errorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })

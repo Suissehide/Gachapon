@@ -1,0 +1,9 @@
+{
+  "toasts": {
+    "apiKeyCreatedTitle": "Clé API créée",
+    "createErrorTitle": "Erreur lors de la création",
+    "deleteErrorTitle": "Erreur lors de la suppression",
+    "usernameChangeFallbackTitle": "Erreur",
+    "usernameChangeFallbackMessage": "Changement de pseudo impossible."
+  }
+}

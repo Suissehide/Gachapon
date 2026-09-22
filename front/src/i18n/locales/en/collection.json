@@ -1,0 +1,13 @@
+{
+  "recycle": {
+    "errorTitle": "Error while recycling"
+  },
+  "recycleAll": {
+    "errorTitle": "Error during bulk recycling",
+    "completedTitle": "Recycling complete",
+    "engagedNote_one": " · {{count}} card skipped, engaged in your duel",
+    "engagedNote_other": " · {{count}} cards skipped, engaged in your duel",
+    "message_one": "{{count}} card recycled → {{dust}} dust{{engagedNote}}",
+    "message_other": "{{count}} cards recycled → {{dust}} dust{{engagedNote}}"
+  }
+}

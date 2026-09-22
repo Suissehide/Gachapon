@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 
 import type { ApiLocale } from '../api/profile.api.ts'
 import { ProfileApi } from '../api/profile.api.ts'
@@ -45,18 +46,19 @@ export const useApiKeys = () => {
 export const useCreateApiKey = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('profile')
   return useMutation({
     mutationFn: (name: string) => ProfileApi.createApiKey(name),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['api-keys'] })
       toast({
-        title: 'Clé API créée',
+        title: t('toasts.apiKeyCreatedTitle'),
         severity: TOAST_SEVERITY.SUCCESS,
       })
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la création',
+        title: t('toasts.createErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -67,6 +69,7 @@ export const useCreateApiKey = () => {
 export const useDeleteApiKey = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('profile')
   return useMutation({
     mutationFn: (id: string) => ProfileApi.deleteApiKey(id),
     onSuccess: () => {
@@ -74,7 +77,7 @@ export const useDeleteApiKey = () => {
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la suppression',
+        title: t('toasts.deleteErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -114,6 +117,7 @@ export function useUpdateUsernameMutation() {
   const navigate = useNavigate()
   const fetchMe = useAuthStore((s) => s.fetchMe)
   const { toast } = useToast()
+  const { t } = useTranslation('profile')
   return useMutation({
     mutationFn: (username: string) => ProfileApi.updateUsername(username),
     onSuccess: async ({ username }) => {
@@ -130,7 +134,10 @@ export function useUpdateUsernameMutation() {
     onError: (err) => {
       const info = isApiError(err)
         ? { title: err.title, message: err.message }
-        : { title: 'Erreur', message: 'Changement de pseudo impossible.' }
+        : {
+            title: t('toasts.usernameChangeFallbackTitle'),
+            message: t('toasts.usernameChangeFallbackMessage'),
+          }
       toast({
         title: info.title,
         message: info.message,

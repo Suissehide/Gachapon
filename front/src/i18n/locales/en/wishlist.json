@@ -1,0 +1,7 @@
+{
+  "toasts": {
+    "toggleErrorTitle": "Error updating your wishes",
+    "purchasedMessage": "Obtained! −{{dust}} dust",
+    "purchaseErrorTitle": "Error buying the wish"
+  }
+}

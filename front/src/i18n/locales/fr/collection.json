@@ -1,0 +1,13 @@
+{
+  "recycle": {
+    "errorTitle": "Erreur lors du recyclage"
+  },
+  "recycleAll": {
+    "errorTitle": "Erreur lors du recyclage en masse",
+    "completedTitle": "Recyclage terminé",
+    "engagedNote_one": " · {{count}} carte ignorée car engagée dans ton duel",
+    "engagedNote_other": " · {{count}} cartes ignorées car engagées dans ton duel",
+    "message_one": "{{count}} carte recyclée → {{dust}} poussière{{engagedNote}}",
+    "message_other": "{{count}} cartes recyclées → {{dust}} poussière{{engagedNote}}"
+  }
+}

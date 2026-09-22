@@ -1,0 +1,7 @@
+{
+  "toasts": {
+    "toggleErrorTitle": "Erreur lors de la mise à jour des vœux",
+    "purchasedMessage": "Obtenue ! −{{dust}} poussière",
+    "purchaseErrorTitle": "Erreur lors de l'achat du vœu"
+  }
+}
