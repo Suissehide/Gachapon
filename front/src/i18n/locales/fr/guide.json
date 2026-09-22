@@ -68,6 +68,13 @@
       "topbarBullet": "La <strong>topbar</strong> affiche ton solde et le délai avant le prochain jeton.",
       "info": "Tu peux aussi obtenir des jetons via la <strong>Boutique</strong> (packs de tokens) ou des événements. Certaines compétences accélèrent la régénération, augmentent le plafond, ou donnent une chance de jeton bonus.",
       "tip": "Conseil : connecte-toi régulièrement pour éviter de dépasser le plafond et de perdre des jetons accumulés."
+    },
+    "pulls": {
+      "intro": "Un tirage consomme 1 jeton et te donne une carte aléatoire issue du pool actif. Chaque carte possède un <strong>poids de drop</strong> : plus le poids est élevé, plus la carte est probable.",
+      "instantBullet": "Le tirage est instantané, le résultat s'affiche en direct via WebSocket.",
+      "resultBullet": "Le résultat inclut la carte, sa variante, si c'est un doublon, et la poussière gagnée.",
+      "pityBullet": "Ton compteur de <strong>pitié</strong> est mis à jour après chaque tirage (voir section dédiée).",
+      "skillsParagraph": "Plusieurs compétences influencent le tirage : elles multiplient les chances des raretés <rareBadge></rareBadge> <epicBadge></epicBadge> <legendaryBadge></legendaryBadge>, dopent les variantes, offrent une chance de <freePull>tirage gratuit</freePull>, ou déclenchent une <goldenBall>boule dorée</goldenBall> qui force une rareté minimale."
     }
   }
 }

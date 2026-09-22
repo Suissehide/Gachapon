@@ -315,48 +315,57 @@ function GuidePage() {
             </Section>
 
             {/* Pulls */}
-            <Section id="pulls" icon={Zap} title="Tirer une capsule">
+            <Section id="pulls" icon={Zap} title={t('sectionLabels.pulls')}>
               <p>
-                Un tirage consomme 1 jeton et te donne une carte aléatoire issue
-                du pool actif. Chaque carte possède un{' '}
-                <strong className="text-foreground">poids de drop</strong> :
-                plus le poids est élevé, plus la carte est probable.
+                <Trans
+                  t={t}
+                  i18nKey="sections.pulls.intro"
+                  components={{
+                    strong: <strong className="text-foreground" />,
+                  }}
+                />
               </p>
               <ul className="space-y-1.5">
+                <li>• {t('sections.pulls.instantBullet')}</li>
+                <li>• {t('sections.pulls.resultBullet')}</li>
                 <li>
-                  • Le tirage est instantané, le résultat s'affiche en direct
-                  via WebSocket.
-                </li>
-                <li>
-                  • Le résultat inclut la carte, sa variante, si c'est un
-                  doublon, et la poussière gagnée.
-                </li>
-                <li>
-                  • Ton compteur de{' '}
-                  <strong className="text-foreground">pitié</strong> est mis à
-                  jour après chaque tirage (voir section dédiée).
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.pulls.pityBullet"
+                    components={{
+                      strong: <strong className="text-foreground" />,
+                    }}
+                  />
                 </li>
               </ul>
               <p>
-                Plusieurs compétences influencent le tirage : elles multiplient
-                les chances des raretés{' '}
-                <RarityBadge
-                  rarity="RARE"
-                  color="border-blue-500/30 bg-blue-500/10 text-blue-400"
-                />{' '}
-                <RarityBadge
-                  rarity="EPIC"
-                  color="border-violet-500/30 bg-violet-500/10 text-violet-400"
-                />{' '}
-                <RarityBadge
-                  rarity="LEGENDARY"
-                  color="border-amber-500/30 bg-amber-500/10 text-amber-400"
+                <Trans
+                  t={t}
+                  i18nKey="sections.pulls.skillsParagraph"
+                  components={{
+                    rareBadge: (
+                      <RarityBadge
+                        rarity="RARE"
+                        color="border-blue-500/30 bg-blue-500/10 text-blue-400"
+                      />
+                    ),
+                    epicBadge: (
+                      <RarityBadge
+                        rarity="EPIC"
+                        color="border-violet-500/30 bg-violet-500/10 text-violet-400"
+                      />
+                    ),
+                    legendaryBadge: (
+                      <RarityBadge
+                        rarity="LEGENDARY"
+                        color="border-amber-500/30 bg-amber-500/10 text-amber-400"
+                      />
+                    ),
+                    freePull: <strong className="text-foreground" />,
+                    goldenBall: <strong className="text-foreground" />,
+                  }}
                 />
-                , dopent les variantes, offrent une chance de{' '}
-                <strong className="text-foreground">tirage gratuit</strong>, ou
-                déclenchent une{' '}
-                <strong className="text-foreground">boule dorée</strong> qui
-                force une rareté minimale.
               </p>
             </Section>
 

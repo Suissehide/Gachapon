@@ -68,6 +68,13 @@
       "topbarBullet": "The <strong>topbar</strong> shows your balance and the time until your next token.",
       "info": "You can also get tokens from the <strong>Shop</strong> (token packs) or events. Some skills speed up regeneration, raise the cap, or give a chance at a bonus token.",
       "tip": "Tip: log in regularly to avoid hitting the cap and losing accumulated tokens."
+    },
+    "pulls": {
+      "intro": "A pull uses 1 token and gives you a random card from the active pool. Every card has a <strong>drop weight</strong>: the higher the weight, the more likely the card.",
+      "instantBullet": "The pull is instant — the result shows up live over WebSocket.",
+      "resultBullet": "The result includes the card, its variant, whether it's a duplicate, and the dust earned.",
+      "pityBullet": "Your <strong>pity</strong> counter updates after every pull (see the dedicated section).",
+      "skillsParagraph": "Several skills affect pulls: they boost the odds of <rareBadge></rareBadge> <epicBadge></epicBadge> <legendaryBadge></legendaryBadge> rarities, buff variant odds, give a chance at a <freePull>free pull</freePull>, or trigger a <goldenBall>golden ball</goldenBall> that forces a minimum rarity."
     }
   }
 }
