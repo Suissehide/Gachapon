@@ -30,5 +30,36 @@
     "collection": "Collection",
     "equipes": "Équipes",
     "api": "API & Discord"
+  },
+  "sections": {
+    "monnaies": {
+      "intro": "Cinq ressources rythment la partie. Ton solde de chacune est affiché en temps réel dans la <strong>topbar</strong>.",
+      "currencies": {
+        "gachaTokens": {
+          "name": "Jetons gacha",
+          "description": "La monnaie des tirages. Chaque capsule coûte un jeton. Ils se régénèrent tout seuls jusqu'à un plafond."
+        },
+        "dust": {
+          "name": "Poussière",
+          "description": "Obtenue via les doublons. Sert à la boutique du jour, au Vœu, à monter tes cartes et à réinitialiser l'arbre de compétences."
+        },
+        "gold": {
+          "name": "Or",
+          "description": "Gagné en combat et via les quêtes. Sert principalement à monter le <strong>niveau</strong> de tes cartes."
+        },
+        "combatPoints": {
+          "name": "Points de combat",
+          "description": "L'énergie de la campagne. Se régénère avec le temps jusqu'à un plafond ; chaque combat ou farm en consomme."
+        },
+        "xp": {
+          "name": "XP & niveau",
+          "description": "Gagnée en tirant et en combattant. Monter de niveau débloque des points de compétence et des récompenses de palier."
+        },
+        "skillPoints": {
+          "name": "Points de compétence",
+          "description": "Obtenus en montant de niveau. À investir dans l'arbre de compétences pour des bonus passifs permanents."
+        }
+      }
+    }
   }
 }

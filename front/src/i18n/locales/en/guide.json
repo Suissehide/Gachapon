@@ -30,5 +30,36 @@
     "collection": "Collection",
     "equipes": "Teams",
     "api": "API & Discord"
+  },
+  "sections": {
+    "monnaies": {
+      "intro": "Five resources drive the game. Your balance of each is shown live in the <strong>topbar</strong>.",
+      "currencies": {
+        "gachaTokens": {
+          "name": "Gacha tokens",
+          "description": "The currency for pulls. Every capsule costs one token. They regenerate on their own up to a cap."
+        },
+        "dust": {
+          "name": "Dust",
+          "description": "Earned from duplicates. Used in the daily shop, for wishes, to level up your cards, and to reset your skill tree."
+        },
+        "gold": {
+          "name": "Gold",
+          "description": "Earned in battle and from quests. Mainly used to raise the <strong>level</strong> of your cards."
+        },
+        "combatPoints": {
+          "name": "Combat points",
+          "description": "The campaign's energy. Regenerates over time up to a cap; every battle or farm run uses some."
+        },
+        "xp": {
+          "name": "XP & level",
+          "description": "Earned by pulling and battling. Leveling up unlocks skill points and milestone rewards."
+        },
+        "skillPoints": {
+          "name": "Skill points",
+          "description": "Earned by leveling up. Invest them in the skill tree for permanent passive bonuses."
+        }
+      }
+    }
   }
 }

@@ -200,53 +200,68 @@ function GuidePage() {
           {/* Content */}
           <main className="flex-1 min-w-0">
             {/* Les monnaies */}
-            <Section id="monnaies" icon={Wallet} title="Les monnaies">
+            <Section
+              id="monnaies"
+              icon={Wallet}
+              title={t('sectionLabels.monnaies')}
+            >
               <p>
-                Cinq ressources rythment la partie. Ton solde de chacune est
-                affiché en temps réel dans la{' '}
-                <strong className="text-foreground">topbar</strong>.
+                <Trans
+                  t={t}
+                  i18nKey="sections.monnaies.intro"
+                  components={{
+                    strong: <strong className="text-foreground" />,
+                  }}
+                />
               </p>
               <div className="grid gap-3 sm:grid-cols-2 mt-1">
                 <Currency
                   icon={Ticket}
-                  name="Jetons gacha"
+                  name={t('sections.monnaies.currencies.gachaTokens.name')}
                   color="text-primary"
                 >
-                  La monnaie des tirages. Chaque capsule coûte un jeton. Ils se
-                  régénèrent tout seuls jusqu'à un plafond.
+                  {t('sections.monnaies.currencies.gachaTokens.description')}
                 </Currency>
-                <Currency icon={Sparkles} name="Poussière" color="text-sky-400">
-                  Obtenue via les doublons. Sert à la boutique du jour, au Vœu,
-                  à monter tes cartes et à réinitialiser l'arbre de compétences.
+                <Currency
+                  icon={Sparkles}
+                  name={t('sections.monnaies.currencies.dust.name')}
+                  color="text-sky-400"
+                >
+                  {t('sections.monnaies.currencies.dust.description')}
                 </Currency>
-                <Currency icon={Coins} name="Or" color="text-amber-400">
-                  Gagné en combat et via les quêtes. Sert principalement à
-                  monter le <strong className="text-foreground">niveau</strong>{' '}
-                  de tes cartes.
+                <Currency
+                  icon={Coins}
+                  name={t('sections.monnaies.currencies.gold.name')}
+                  color="text-amber-400"
+                >
+                  <Trans
+                    t={t}
+                    i18nKey="sections.monnaies.currencies.gold.description"
+                    components={{
+                      strong: <strong className="text-foreground" />,
+                    }}
+                  />
                 </Currency>
                 <Currency
                   icon={BatteryCharging}
-                  name="Points de combat"
+                  name={t('sections.monnaies.currencies.combatPoints.name')}
                   color="text-emerald-400"
                 >
-                  L'énergie de la campagne. Se régénère avec le temps jusqu'à un
-                  plafond ; chaque combat ou farm en consomme.
+                  {t('sections.monnaies.currencies.combatPoints.description')}
                 </Currency>
                 <Currency
                   icon={Gauge}
-                  name="XP & niveau"
+                  name={t('sections.monnaies.currencies.xp.name')}
                   color="text-violet-400"
                 >
-                  Gagnée en tirant et en combattant. Monter de niveau débloque
-                  des points de compétence et des récompenses de palier.
+                  {t('sections.monnaies.currencies.xp.description')}
                 </Currency>
                 <Currency
                   icon={Network}
-                  name="Points de compétence"
+                  name={t('sections.monnaies.currencies.skillPoints.name')}
                   color="text-fuchsia-400"
                 >
-                  Obtenus en montant de niveau. À investir dans l'arbre de
-                  compétences pour des bonus passifs permanents.
+                  {t('sections.monnaies.currencies.skillPoints.description')}
                 </Currency>
               </div>
             </Section>
