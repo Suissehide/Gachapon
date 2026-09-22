@@ -69,6 +69,49 @@
     "ENERGY_PACK_CAP_other": "+{{value}} purchases / day",
     "WISHLIST_PULL_CHANCE": "+{{value}}%"
   },
+  "page": {
+    "breadcrumb": "Skills",
+    "title": "Skill tree",
+    "loading": "Loading…",
+    "pointsLabel": "points",
+    "cancel": "Cancel",
+    "save_one": "Save · {{count}} pt",
+    "save_other": "Save · {{count}} pts",
+    "resetButton": "Reset · {{cost}} dust",
+    "saveSuccessTitle": "Skills saved",
+    "saveSuccessMessage_one": "{{count}} point allocated",
+    "saveSuccessMessage_other": "{{count}} points allocated",
+    "uninvestBlockedTitle": "Can't remove",
+    "uninvestBlockedMessage": "First remove the skills that depend on it.",
+    "resetPopup": {
+      "title": "Reset the tree",
+      "cost": "Cost",
+      "dust": "dust",
+      "pointsReturned": "Points returned",
+      "warning": "All your invested points will be redistributed. This action is final.",
+      "confirm": "Reset"
+    }
+  },
+  "nodeTooltip": {
+    "current": "Current:",
+    "nextLevel": "Lvl. {{level}}:",
+    "maxLevel": "Max level",
+    "missingPrereqs": "Requires: {{list}}"
+  },
+  "branchEditor": {
+    "deletePopupTitle": "Delete the branch",
+    "deleteConfirmMessage": "Delete the branch <strong>{{name}}</strong> and all its nodes? Points invested by players will be refunded.",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "editPopupTitle": "Edit the branch",
+    "nameFrLabel": "Name (French)",
+    "nameEnLabel": "Name (English)",
+    "colorLabel": "Color",
+    "customColorTitle": "Custom color",
+    "previewLabel": "Preview:",
+    "noNameFallback": "No name",
+    "save": "Save"
+  },
   "apiTitles": {
     "operations": {
       "loadTree": "Error loading the skill tree",

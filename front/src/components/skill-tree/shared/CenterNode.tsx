@@ -2,6 +2,7 @@ import { Handle, type NodeProps, Position } from '@xyflow/react'
 import { Hexagon, Plus, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { BRANCH_PALETTE } from '../../../constants/skills.constant.ts'
 import { Button } from '../../ui/button.tsx'
@@ -88,23 +89,27 @@ function DeleteBranchPopup({
   onOpenChange: (open: boolean) => void
   onConfirm: () => void
 }) {
+  const { t } = useTranslation('skills')
   return createPortal(
     <Popup open={open} onOpenChange={onOpenChange}>
       <PopupContent>
         <PopupHeader>
-          <PopupTitle>Supprimer la branche</PopupTitle>
+          <PopupTitle>{t('skills:branchEditor.deletePopupTitle')}</PopupTitle>
         </PopupHeader>
         <PopupBody>
           <p className="text-sm text-text-light">
-            Supprimer la branche{' '}
-            <strong style={{ color: branch.color }}>{branch.name}</strong> et
-            tous ses noeuds ? Les points investis par les joueurs seront
-            remboursés.
+            <Trans
+              i18nKey="skills:branchEditor.deleteConfirmMessage"
+              values={{ name: branch.name }}
+              components={{
+                strong: <strong style={{ color: branch.color }} />,
+              }}
+            />
           </p>
         </PopupBody>
         <PopupFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Annuler
+            {t('skills:branchEditor.cancel')}
           </Button>
           <Button
             variant="destructive"
@@ -113,7 +118,7 @@ function DeleteBranchPopup({
               onOpenChange(false)
             }}
           >
-            Supprimer
+            {t('skills:branchEditor.delete')}
           </Button>
         </PopupFooter>
       </PopupContent>
@@ -133,6 +138,7 @@ function EditBranchPopup({
   onOpenChange: (open: boolean) => void
   onSave: (data: { nameFr?: string; nameEn?: string; color?: string }) => void
 }) {
+  const { t } = useTranslation('skills')
   const [nameFr, setNameFr] = useState(branch.nameFr)
   const [nameEn, setNameEn] = useState(branch.nameEn)
   const [color, setColor] = useState(branch.color)
@@ -149,7 +155,7 @@ function EditBranchPopup({
     <Popup open={open} onOpenChange={onOpenChange}>
       <PopupContent>
         <PopupHeader>
-          <PopupTitle>Modifier la branche</PopupTitle>
+          <PopupTitle>{t('skills:branchEditor.editPopupTitle')}</PopupTitle>
         </PopupHeader>
         <PopupBody className="space-y-4">
           <div className="flex flex-col gap-1">
@@ -157,7 +163,7 @@ function EditBranchPopup({
               className="text-xs font-medium text-text-light"
               htmlFor="branch-name-fr"
             >
-              Nom (français)
+              {t('skills:branchEditor.nameFrLabel')}
             </label>
             <Input
               id="branch-name-fr"
@@ -170,7 +176,7 @@ function EditBranchPopup({
               className="text-xs font-medium text-text-light"
               htmlFor="branch-name-en"
             >
-              Nom (anglais)
+              {t('skills:branchEditor.nameEnLabel')}
             </label>
             <Input
               id="branch-name-en"
@@ -183,7 +189,7 @@ function EditBranchPopup({
               className="text-xs font-medium text-text-light"
               htmlFor="branch-color"
             >
-              Couleur
+              {t('skills:branchEditor.colorLabel')}
             </label>
             <div className="flex items-center gap-2">
               <div className="flex gap-1.5">
@@ -204,7 +210,7 @@ function EditBranchPopup({
               <label
                 htmlFor="branch-color"
                 className="relative flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border-2 border-dashed border-gray-400 bg-white transition-colors hover:border-purple-400"
-                title="Couleur personnalisée"
+                title={t('skills:branchEditor.customColorTitle')}
               >
                 <Plus size={12} className="text-gray-400" />
                 <input
@@ -218,18 +224,20 @@ function EditBranchPopup({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-text-light">Aperçu :</span>
+            <span className="text-xs text-text-light">
+              {t('skills:branchEditor.previewLabel')}
+            </span>
             <span
               className="rounded bg-white px-2 py-0.5 text-xs font-semibold shadow-sm"
               style={{ color, border: `1px solid ${color}22` }}
             >
-              {nameFr || nameEn || 'Sans nom'}
+              {nameFr || nameEn || t('skills:branchEditor.noNameFallback')}
             </span>
           </div>
         </PopupBody>
         <PopupFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Annuler
+            {t('skills:branchEditor.cancel')}
           </Button>
           <Button
             onClick={() => {
@@ -254,7 +262,7 @@ function EditBranchPopup({
             }}
             disabled={!nameFr.trim() || !nameEn.trim()}
           >
-            Enregistrer
+            {t('skills:branchEditor.save')}
           </Button>
         </PopupFooter>
       </PopupContent>

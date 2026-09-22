@@ -3,6 +3,7 @@ import type { LucideIcon } from 'lucide-react'
 import * as Icons from 'lucide-react'
 import { RotateCcw, Sparkles, TriangleAlert, Zap } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 const iconMap = Icons as unknown as Record<string, LucideIcon>
 
@@ -24,6 +25,7 @@ export const Route = createFileRoute('/_authenticated/skills')({
 })
 
 function SkillsPage() {
+  const { t } = useTranslation('skills')
   const { data: state, isLoading } = useSkillTree()
   const reset = useResetSkills()
   const investBatch = useInvestBatch()
@@ -43,8 +45,8 @@ function SkillsPage() {
       onSuccess: () => {
         draft.clear()
         toast({
-          title: 'Compétences enregistrées',
-          message: `${count} point${count > 1 ? 's' : ''} attribué${count > 1 ? 's' : ''}`,
+          title: t('skills:page.saveSuccessTitle'),
+          message: t('skills:page.saveSuccessMessage', { count }),
           severity: TOAST_SEVERITY.SUCCESS,
         })
       },
@@ -54,8 +56,8 @@ function SkillsPage() {
   const handleUninvest = (nodeId: string) => {
     if (draft.removePoint(nodeId) === 'blocked') {
       toast({
-        title: 'Retrait impossible',
-        message: 'Retire d’abord les compétences qui en dépendent.',
+        title: t('skills:page.uninvestBlockedTitle'),
+        message: t('skills:page.uninvestBlockedMessage'),
         severity: TOAST_SEVERITY.WARNING,
       })
     }
@@ -64,7 +66,7 @@ function SkillsPage() {
   if (isLoading || !state) {
     return (
       <div className="flex h-64 items-center justify-center text-gray-400">
-        Chargement…
+        {t('skills:page.loading')}
       </div>
     )
   }
@@ -81,9 +83,9 @@ function SkillsPage() {
         <PageHeader
           breadcrumbs={[
             { label: 'Gachapon', to: '/play' },
-            { label: 'Compétences' },
+            { label: t('skills:page.breadcrumb') },
           ]}
-          title="Arbre de compétences"
+          title={t('skills:page.title')}
           right={
             <div className="flex items-center gap-4">
               <span
@@ -96,7 +98,7 @@ function SkillsPage() {
                 >
                   {view.skillPoints}
                 </span>{' '}
-                points
+                {t('skills:page.pointsLabel')}
               </span>
               {draft.isDirty && (
                 <>
@@ -106,15 +108,14 @@ function SkillsPage() {
                     onClick={draft.clear}
                     disabled={investBatch.isPending}
                   >
-                    Annuler
+                    {t('skills:page.cancel')}
                   </Button>
                   <Button
                     size="sm"
                     onClick={handleSave}
                     disabled={investBatch.isPending}
                   >
-                    Sauvegarder · {draft.pendingCount} pt
-                    {draft.pendingCount > 1 ? 's' : ''}
+                    {t('skills:page.save', { count: draft.pendingCount })}
                   </Button>
                 </>
               )}
@@ -125,7 +126,7 @@ function SkillsPage() {
                   onClick={() => setResetOpen(true)}
                   disabled={reset.isPending || investBatch.isPending}
                 >
-                  Reset · {state.resetCost} poussière
+                  {t('skills:page.resetButton', { cost: state.resetCost })}
                 </Button>
               )}
             </div>
@@ -165,35 +166,35 @@ function SkillsPage() {
         open={resetOpen}
         onOpenChange={setResetOpen}
         icon={<RotateCcw className="h-4 w-4" />}
-        title="Réinitialiser l'arbre"
+        title={t('skills:page.resetPopup.title')}
         description={
           <div className="flex flex-col gap-3">
             <div className="grid grid-cols-2 gap-2">
               <div className="rounded-xl border border-border bg-muted/40 p-3">
                 <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-text-light">
                   <Sparkles className="h-3 w-3 text-violet-400" />
-                  Coût
+                  {t('skills:page.resetPopup.cost')}
                 </div>
                 <div className="mt-1 flex items-baseline gap-1">
                   <span className="font-display text-2xl font-extrabold tabular-nums text-text">
                     {state.resetCost}
                   </span>
                   <span className="font-mono text-[10px] uppercase tracking-wider text-text-light">
-                    poussière
+                    {t('skills:page.resetPopup.dust')}
                   </span>
                 </div>
               </div>
               <div className="rounded-xl border border-border bg-muted/40 p-3">
                 <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-text-light">
                   <Zap className="h-3 w-3 text-amber-400" />
-                  Points rendus
+                  {t('skills:page.resetPopup.pointsReturned')}
                 </div>
                 <div className="mt-1 flex items-baseline gap-1">
                   <span className="font-display text-2xl font-extrabold tabular-nums text-text">
                     {state.totalInvested}
                   </span>
                   <span className="font-mono text-[10px] uppercase tracking-wider text-text-light">
-                    points
+                    {t('skills:page.pointsLabel')}
                   </span>
                 </div>
               </div>
@@ -201,13 +202,12 @@ function SkillsPage() {
             <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-text">
               <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
               <p className="leading-snug">
-                Tous tes points investis seront redistribués. Cette action est
-                définitive.
+                {t('skills:page.resetPopup.warning')}
               </p>
             </div>
           </div>
         }
-        confirmLabel="Réinitialiser"
+        confirmLabel={t('skills:page.resetPopup.confirm')}
         onConfirm={() => reset.mutate()}
       />
     </div>

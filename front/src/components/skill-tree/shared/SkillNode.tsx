@@ -2,6 +2,7 @@ import { Handle, type NodeProps, Position } from '@xyflow/react'
 import * as Icons from 'lucide-react'
 import { type ComponentType, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useTranslation } from 'react-i18next'
 
 import type { SkillNode as SkillNodeType } from '../../../api/skills.api.ts'
 import {
@@ -39,6 +40,7 @@ function NodeTooltip({
   missingPrereqs: string[]
   branchColor: string
 }) {
+  const { t } = useTranslation('skills')
   const currentEffect = node.levels.find((l) => l.level === userLevel)
   const nextEffect = node.levels.find((l) => l.level === userLevel + 1)
   const isMaxed = userLevel >= node.maxLevel
@@ -56,7 +58,7 @@ function NodeTooltip({
       <div className="mt-1.5 border-t border-gray-700 pt-1.5">
         {currentEffect && userLevel > 0 && (
           <p className="mt-0.5">
-            Actuel :{' '}
+            {t('skills:nodeTooltip.current')}{' '}
             <span className="font-semibold" style={{ color: branchColor }}>
               {formatEffect(node.effectType, currentEffect.effect)}
             </span>
@@ -64,20 +66,24 @@ function NodeTooltip({
         )}
         {!isMaxed && nextEffect && (
           <p className="mt-0.5">
-            Niv. {userLevel + 1} :{' '}
+            {t('skills:nodeTooltip.nextLevel', { level: userLevel + 1 })}{' '}
             <span className="font-semibold text-green-400">
               {formatEffect(node.effectType, nextEffect.effect)}
             </span>
           </p>
         )}
         {isMaxed && (
-          <p className="mt-0.5 font-semibold text-yellow-400">Niveau max</p>
+          <p className="mt-0.5 font-semibold text-yellow-400">
+            {t('skills:nodeTooltip.maxLevel')}
+          </p>
         )}
       </div>
 
       {isLocked && missingPrereqs.length > 0 && (
         <div className="mt-1.5 border-t border-gray-700 pt-1.5 text-red-400">
-          Prérequis : {missingPrereqs.join(', ')}
+          {t('skills:nodeTooltip.missingPrereqs', {
+            list: missingPrereqs.join(', '),
+          })}
         </div>
       )}
 

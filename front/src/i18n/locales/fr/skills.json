@@ -69,6 +69,49 @@
     "ENERGY_PACK_CAP_other": "+{{value}} achats / jour",
     "WISHLIST_PULL_CHANCE": "+{{value}} %"
   },
+  "page": {
+    "breadcrumb": "Compétences",
+    "title": "Arbre de compétences",
+    "loading": "Chargement…",
+    "pointsLabel": "points",
+    "cancel": "Annuler",
+    "save_one": "Sauvegarder · {{count}} pt",
+    "save_other": "Sauvegarder · {{count}} pts",
+    "resetButton": "Reset · {{cost}} poussière",
+    "saveSuccessTitle": "Compétences enregistrées",
+    "saveSuccessMessage_one": "{{count}} point attribué",
+    "saveSuccessMessage_other": "{{count}} points attribués",
+    "uninvestBlockedTitle": "Retrait impossible",
+    "uninvestBlockedMessage": "Retire d’abord les compétences qui en dépendent.",
+    "resetPopup": {
+      "title": "Réinitialiser l'arbre",
+      "cost": "Coût",
+      "dust": "poussière",
+      "pointsReturned": "Points rendus",
+      "warning": "Tous tes points investis seront redistribués. Cette action est définitive.",
+      "confirm": "Réinitialiser"
+    }
+  },
+  "nodeTooltip": {
+    "current": "Actuel :",
+    "nextLevel": "Niv. {{level}} :",
+    "maxLevel": "Niveau max",
+    "missingPrereqs": "Prérequis : {{list}}"
+  },
+  "branchEditor": {
+    "deletePopupTitle": "Supprimer la branche",
+    "deleteConfirmMessage": "Supprimer la branche <strong>{{name}}</strong> et tous ses noeuds ? Les points investis par les joueurs seront remboursés.",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "editPopupTitle": "Modifier la branche",
+    "nameFrLabel": "Nom (français)",
+    "nameEnLabel": "Nom (anglais)",
+    "colorLabel": "Couleur",
+    "customColorTitle": "Couleur personnalisée",
+    "previewLabel": "Aperçu :",
+    "noNameFallback": "Sans nom",
+    "save": "Enregistrer"
+  },
   "apiTitles": {
     "operations": {
       "loadTree": "Erreur lors du chargement de l'arbre de compétences",
