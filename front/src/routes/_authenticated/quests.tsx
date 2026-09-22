@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import dayjs from 'dayjs'
 import { CheckCircle2, Gift, Star, Target, Trophy } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { PageHeader } from '../../components/shared/PageHeader'
 import { PageShell } from '../../components/shared/PageShell'
@@ -37,6 +38,7 @@ function getNextMondayUTC(): string {
 }
 
 function QuestsPage() {
+  const { t } = useTranslation(['quests', 'collection'])
   const { data, isLoading } = useQuests()
   const username = useAuthStore((s) => s.user?.username ?? '')
   const nextMonday = getNextMondayUTC()
@@ -49,13 +51,17 @@ function QuestsPage() {
       <PageHeader
         breadcrumbs={[
           { label: 'Gachapon', to: '/play' },
-          { label: 'Profil', to: '/profile/$username', params: { username } },
-          { label: 'Quêtes' },
+          {
+            label: t('collection:breadcrumbProfile'),
+            to: '/profile/$username',
+            params: { username },
+          },
+          { label: t('quests:title') },
         ]}
-        title="Quêtes"
+        title={t('quests:title')}
         subtitle={
           <span className="flex items-center gap-1.5">
-            <span>Nouvelles quêtes le</span>
+            <span>{t('quests:subtitle')}</span>
             <span className="font-semibold text-text">{nextMonday}</span>
           </span>
         }
@@ -71,11 +77,11 @@ function QuestsPage() {
           <QuestSection
             icon={<Target className="h-4 w-4" />}
             hue={210}
-            title="Hebdomadaires"
+            title={t('quests:sections.weekly')}
             count={`${weeklyDone} / ${data.weekly.length}`}
           >
             {data.weekly.length === 0 ? (
-              <EmptySlate label="Aucune quête hebdomadaire disponible." />
+              <EmptySlate label={t('quests:emptyWeekly')} />
             ) : (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {data.weekly.map((q) => (
@@ -89,7 +95,7 @@ function QuestsPage() {
           <QuestSection
             icon={<Trophy className="h-4 w-4" />}
             hue={45}
-            title="Bonus semaine parfaite"
+            title={t('quests:sections.perfectWeekBonus')}
           >
             <WeeklyBonusCard bonus={data.weeklyBonus} />
           </QuestSection>
@@ -99,7 +105,7 @@ function QuestsPage() {
             <QuestSection
               icon={<Star className="h-4 w-4" />}
               hue={265}
-              title="One-shot"
+              title={t('quests:sections.oneshot')}
               count={`${oneshotDone} / ${data.oneshot.length}`}
             >
               <div className="flex flex-col gap-2.5">
@@ -266,6 +272,7 @@ function RewardChips({ reward }: { reward: RewardLike }) {
 // ─── Claim action (button / claimed badge) ────────────────────────────────────
 
 function ClaimAction({ claim }: { claim: QuestClaim | null }) {
+  const { t } = useTranslation('quests')
   const claimReward = useClaimReward()
   if (!claim) {
     return null
@@ -277,7 +284,7 @@ function ClaimAction({ claim }: { claim: QuestClaim | null }) {
         style={{ background: 'rgba(34,197,94,.14)', color: '#16a34a' }}
       >
         <CheckCircle2 className="h-3 w-3" />
-        Récupéré
+        {t('quests:claim.claimed')}
       </span>
     )
   }
@@ -293,7 +300,7 @@ function ClaimAction({ claim }: { claim: QuestClaim | null }) {
       ) : (
         <>
           <Gift className="h-3.5 w-3.5" />
-          Réclamer
+          {t('quests:claim.claim')}
         </>
       )}
     </Button>
@@ -361,6 +368,7 @@ function WeeklyQuestCard({ quest }: { quest: QuestEntry }) {
 // ─── Weekly bonus card ────────────────────────────────────────────────────────
 
 function WeeklyBonusCard({ bonus }: { bonus: WeeklyBonus }) {
+  const { t } = useTranslation('quests')
   const { completed, reward, claim } = bonus
   return (
     <div
@@ -389,15 +397,15 @@ function WeeklyBonusCard({ bonus }: { bonus: WeeklyBonus }) {
             className="font-display text-[15px] font-bold"
             style={{ color: '#1b1726' }}
           >
-            Semaine parfaite
+            {t('quests:perfectWeek.title')}
           </p>
           <p
             className="font-body text-xs"
             style={{ color: 'rgba(27,23,38,.5)' }}
           >
             {completed
-              ? 'Toutes les quêtes hebdomadaires complétées !'
-              : 'Complète toutes les quêtes hebdomadaires pour débloquer le bonus.'}
+              ? t('quests:perfectWeek.completed')
+              : t('quests:perfectWeek.incomplete')}
           </p>
         </div>
       </div>

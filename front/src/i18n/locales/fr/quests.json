@@ -3,5 +3,22 @@
     "operations": {
       "loadQuests": "Erreur lors de la récupération des quêtes"
     }
+  },
+  "title": "Quêtes",
+  "subtitle": "Nouvelles quêtes le",
+  "sections": {
+    "weekly": "Hebdomadaires",
+    "perfectWeekBonus": "Bonus semaine parfaite",
+    "oneshot": "One-shot"
+  },
+  "emptyWeekly": "Aucune quête hebdomadaire disponible.",
+  "perfectWeek": {
+    "title": "Semaine parfaite",
+    "completed": "Toutes les quêtes hebdomadaires complétées !",
+    "incomplete": "Complète toutes les quêtes hebdomadaires pour débloquer le bonus."
+  },
+  "claim": {
+    "claimed": "Récupéré",
+    "claim": "Réclamer"
   }
 }

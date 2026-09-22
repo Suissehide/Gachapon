@@ -3,5 +3,22 @@
     "operations": {
       "loadQuests": "Error loading the quests"
     }
+  },
+  "title": "Quests",
+  "subtitle": "New quests on",
+  "sections": {
+    "weekly": "Weekly",
+    "perfectWeekBonus": "Perfect week bonus",
+    "oneshot": "One-shot"
+  },
+  "emptyWeekly": "No weekly quest available.",
+  "perfectWeek": {
+    "title": "Perfect week",
+    "completed": "All weekly quests completed!",
+    "incomplete": "Complete all weekly quests to unlock the bonus."
+  },
+  "claim": {
+    "claimed": "Claimed",
+    "claim": "Claim"
   }
 }
