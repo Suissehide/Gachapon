@@ -1,15 +1,29 @@
 #!/usr/bin/env node
-// Garde-fou de parité FR/EN — lot 2, tâche 2.
+// Garde-fou de parité FR/EN — lot 2, tâche 2. Étendu tâche 7b (marqueurs JSX).
 //
 // Compare, espace de noms par espace de noms, les arbres de clés sous
 // `src/i18n/locales/fr/` et `src/i18n/locales/en/`. Échoue si :
 //   - une clé existe d'un côté et pas de l'autre (dans les deux sens) ;
 //   - une valeur est vide (des deux côtés, vérifiés séparément) ;
-//   - les placeholders `{{...}}` d'une clé diffèrent entre les deux langues.
+//   - les placeholders `{{...}}` d'une clé diffèrent entre les deux langues ;
+//   - les marqueurs JSX (`<strong>`, `<freePull>`, `<rareBadge></rareBadge>`…)
+//     d'une clé diffèrent entre les deux langues.
 //
-// Ce dernier point est celui qui compte le plus : une traduction qui perd un
-// `{{count}}` produit un message amputé à l'exécution, et rien ne le signale
-// autrement.
+// Le premier de ces deux derniers points est celui qui compte le plus : une
+// traduction qui perd un `{{count}}` produit un message amputé à
+// l'exécution, et rien ne le signale autrement.
+//
+// Le second (marqueurs JSX) a été ajouté à la tâche 7b, qui introduit
+// `<Trans>` avec des `components` nommés dans ce dépôt (`guide.tsx`) : une
+// clé traduite avec `<Trans i18nKey="…" components={{ strong: <strong /> }}>`
+// dont la chaîne EN renomme, retire ou ajoute une balise par rapport au FR
+// casse le rendu à l'exécution — une balise sans `components` correspondant
+// s'affiche en texte brut échappé (`&lt;em&gt;…&lt;/em&gt;`), silencieusement,
+// sans avertissement ni erreur (vérifié en exécutant `<Trans>` hors
+// navigateur, react-i18next 17.0.15 de ce dépôt). Comme pour les
+// placeholders, seul le JEU de noms de balises est comparé (pas l'ordre —
+// c'est justement ce que `<Trans>` autorise à changer entre langues — ni le
+// nombre d'occurrences).
 //
 // Piège à ne pas reproduire (constaté sur l'équivalent back,
 // back/src/test/unit/error-messages-parity.test.ts, dans une version
@@ -94,6 +108,22 @@ function flatten(obj, prefix, out, shapeErrors) {
 /** Noms de variables `{{nom}}` d'une chaîne, uniques et triés. */
 function placeholders(value) {
   return [...new Set([...value.matchAll(/\{\{\s*(\w+)\s*\}\}/g)].map((m) => m[1]))].sort()
+}
+
+/**
+ * Noms de balises JSX d'une chaîne (`<strong>`, `</strong>`, `<x/>`, `<x />`,
+ * `<x></x>`), uniques et triés — ouvrante, fermante et auto-fermante comptent
+ * pour le même nom, seule la présence de la balise importe. Comme pour
+ * `placeholders()`, ni l'ordre ni le nombre d'occurrences ne sont retenus :
+ * `<Trans>` autorise justement une langue à réordonner ses balises par
+ * rapport à l'autre, donc les comparer casserait des traductions correctes.
+ */
+function jsxTags(value) {
+  return [
+    ...new Set(
+      [...value.matchAll(/<\/?([a-zA-Z][a-zA-Z0-9_]*)\s*\/?>/g)].map((m) => m[1]),
+    ),
+  ].sort()
 }
 
 async function readNamespace(locale, relPath) {
@@ -199,6 +229,15 @@ async function main() {
           `${relPath}: placeholders différents pour la clé "${key}" — fr: [${frPh.join(', ')}] / en: [${enPh.join(', ')}]`,
         )
       }
+
+      const frTags = jsxTags(fr.flat[key])
+      const enTags = jsxTags(en.flat[key])
+      if (frTags.join(',') !== enTags.join(',')) {
+        problems.push(
+          `${relPath}: marqueurs JSX différents pour la clé "${key}" — fr: [${frTags.join(', ')}] / en: [${enTags.join(', ')}]`,
+        )
+      }
+
       keysCompared++
     }
   }
