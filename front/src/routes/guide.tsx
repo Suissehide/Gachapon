@@ -146,7 +146,7 @@ function Currency({
 
 function GuidePage() {
   const { openRegister } = useAuthDialogStore()
-  const { t } = useTranslation('guide')
+  const { t } = useTranslation(['guide', 'discord'])
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -1123,27 +1123,36 @@ function GuidePage() {
             </Section>
 
             {/* API & Discord */}
-            <Section
-              id="api"
-              icon={BookOpen}
-              title="API publique & bot Discord"
-            >
+            <Section id="api" icon={BookOpen} title={t('sections.api.title')}>
               <p>
-                Gachapon expose une{' '}
-                <strong className="text-foreground">API publique</strong>{' '}
-                documentée en OpenAPI 3.1. Tu peux l'utiliser pour créer ton
-                propre bot Discord, des outils de suivi, ou intégrer Gachapon
-                dans d'autres services.
+                <Trans
+                  t={t}
+                  i18nKey="sections.api.intro"
+                  components={{
+                    strong: <strong className="text-foreground" />,
+                  }}
+                />
               </p>
               <ul className="space-y-1.5">
                 <li>
-                  • L'authentification se fait via un header{' '}
-                  <Pill>X-API-Key</Pill> — génère ta clé dans Paramètres.
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.api.authBullet"
+                    components={{ apiKeyPill: <Pill>X-API-Key</Pill> }}
+                  />
                 </li>
                 <li>
-                  • Endpoints disponibles : <Pill>POST /pulls</Pill>,{' '}
-                  <Pill>GET /collection</Pill>, <Pill>GET /leaderboard</Pill> et
-                  plus.
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.api.endpointsBullet"
+                    components={{
+                      pullsPill: <Pill>POST /pulls</Pill>,
+                      collectionPill: <Pill>GET /collection</Pill>,
+                      leaderboardPill: <Pill>GET /leaderboard</Pill>,
+                    }}
+                  />
                 </li>
               </ul>
               <div className="flex flex-wrap gap-3 mt-2">
@@ -1151,13 +1160,13 @@ function GuidePage() {
                   to="/api-docs"
                   className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
                 >
-                  Référence API →
+                  {t('discord:header.apiReferenceLink')}
                 </Link>
                 <Link
                   to="/discord"
                   className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-xs font-semibold text-foreground hover:bg-muted transition-colors"
                 >
-                  Guide bot Discord →
+                  {t('sections.api.discordGuideLink')}
                 </Link>
               </div>
             </Section>

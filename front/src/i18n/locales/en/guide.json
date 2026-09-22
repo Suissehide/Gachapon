@@ -233,6 +233,13 @@
       "inviteBullet": "The owner can invite players by username.",
       "invitationBullet": "Invitations have a validity period; the member accepts or declines them.",
       "leaderboardBullet": "The team's collective completion appears on the <strong>Teams leaderboard</strong>."
+    },
+    "api": {
+      "title": "Public API & Discord bot",
+      "intro": "Gachapon exposes a <strong>public API</strong> documented with OpenAPI 3.1. You can use it to build your own Discord bot, tracking tools, or integrate Gachapon into other services.",
+      "authBullet": "Authentication goes through an <apiKeyPill></apiKeyPill> header — generate your key in Settings.",
+      "endpointsBullet": "Available endpoints: <pullsPill></pullsPill>, <collectionPill></collectionPill>, <leaderboardPill></leaderboardPill>, and more.",
+      "discordGuideLink": "Discord Bot Guide →"
     }
   }
 }
