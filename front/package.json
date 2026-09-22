@@ -9,7 +9,10 @@
     "build": "tsc -b && vite build",
     "postbuild": "node scripts/prerender-seo.mjs",
     "lint": "biome lint src",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check:i18n": "npm run check:i18n:parity && npm run check:i18n:hardcoded",
+    "check:i18n:parity": "node scripts/check-i18n-parity.mjs",
+    "check:i18n:hardcoded": "node scripts/check-i18n-hardcoded.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
