@@ -121,6 +121,13 @@
         "description": "Keep <strong1>several cards of your choice</strong1> on your wishlist, then buy them with dust whenever you want: no waiting, but full price — pricier than the daily shop, and shop discounts don't apply. You start with <strong2>2 slots</strong2>, and a skill raises that to 5."
       },
       "info": "The Shop also carries <strong1>token packs</strong1> and temporary <strong2>boosts</strong2> to speed up your progress."
+    },
+    "niveaux": {
+      "intro": "Your <strong>account level</strong> rises with the <strong2>XP</strong2> you earn by pulling capsules and winning battles.",
+      "curveBullet": "The XP required increases with each level, following a curve.",
+      "skillPointsBullet": "Leveling up grants <strong>skill points</strong> and milestone rewards to claim.",
+      "xpBoostBullet": "Some skills increase the XP earned per pull and per battle.",
+      "info": "Don't confuse your <strong1>account level</strong1> (your overall progress) with a <strong2>card's level</strong2> (its combat power, see \"Upgrading your cards\")."
     }
   }
 }

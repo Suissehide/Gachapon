@@ -121,6 +121,13 @@
         "description": "Garde <strong1>plusieurs cartes de ton choix</strong1> en vœu, puis achète-les à la poussière quand tu veux : aucun délai, mais le plein tarif — plus cher qu'en boutique du jour, et les remises de boutique ne s'y appliquent pas. Tu as <strong2>2 emplacements</strong2>, et une compétence les porte jusqu'à 5."
       },
       "info": "La Boutique héberge aussi les <strong1>packs de tokens</strong1> et des <strong2>boosts</strong2> temporaires pour accélérer ta progression."
+    },
+    "niveaux": {
+      "intro": "Ton <strong>niveau de compte</strong> progresse avec l'<strong2>XP</strong2> que tu gagnes en tirant des capsules et en remportant des combats.",
+      "curveBullet": "La quantité d'XP requise augmente à chaque palier selon une courbe.",
+      "skillPointsBullet": "Monter de niveau octroie des <strong>points de compétence</strong> et des récompenses de palier à récupérer.",
+      "xpBoostBullet": "Des compétences augmentent l'XP gagnée par tirage et par combat.",
+      "info": "Ne confonds pas le <strong1>niveau de ton compte</strong1> (ta progression globale) et le <strong2>niveau d'une carte</strong2> (sa puissance en combat, voir « Améliorer ses cartes »)."
     }
   }
 }

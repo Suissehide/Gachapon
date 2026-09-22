@@ -590,35 +590,44 @@ function GuidePage() {
             </Section>
 
             {/* Niveaux & XP */}
-            <Section id="niveaux" icon={Gauge} title="Niveaux & XP">
+            <Section
+              id="niveaux"
+              icon={Gauge}
+              title={t('sectionLabels.niveaux')}
+            >
               <p>
-                Ton{' '}
-                <strong className="text-foreground">niveau de compte</strong>{' '}
-                progresse avec l'<strong className="text-foreground">XP</strong>{' '}
-                que tu gagnes en tirant des capsules et en remportant des
-                combats.
+                <Trans
+                  t={t}
+                  i18nKey="sections.niveaux.intro"
+                  components={{
+                    strong: <strong className="text-foreground" />,
+                    strong2: <strong className="text-foreground" />,
+                  }}
+                />
               </p>
               <ul className="space-y-1.5">
+                <li>• {t('sections.niveaux.curveBullet')}</li>
                 <li>
-                  • La quantité d'XP requise augmente à chaque palier selon une
-                  courbe.
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.niveaux.skillPointsBullet"
+                    components={{
+                      strong: <strong className="text-foreground" />,
+                    }}
+                  />
                 </li>
-                <li>
-                  • Monter de niveau octroie des{' '}
-                  <strong className="text-foreground">
-                    points de compétence
-                  </strong>{' '}
-                  et des récompenses de palier à récupérer.
-                </li>
-                <li>
-                  • Des compétences augmentent l'XP gagnée par tirage et par
-                  combat.
-                </li>
+                <li>• {t('sections.niveaux.xpBoostBullet')}</li>
               </ul>
               <InfoBox>
-                Ne confonds pas le <strong>niveau de ton compte</strong> (ta
-                progression globale) et le <strong>niveau d'une carte</strong>{' '}
-                (sa puissance en combat, voir « Améliorer ses cartes »).
+                <Trans
+                  t={t}
+                  i18nKey="sections.niveaux.info"
+                  components={{
+                    strong1: <strong />,
+                    strong2: <strong />,
+                  }}
+                />
               </InfoBox>
             </Section>
 
