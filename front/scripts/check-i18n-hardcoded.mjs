@@ -116,16 +116,142 @@ const EXCEPTIONS = [
 ]
 
 /**
+ * Mots-clés après lesquels un `/` commence quasi certainement un littéral
+ * regex plutôt qu'une division (`return /foo/`, `case /foo/:`…). Liste non
+ * exhaustive — voir `canStartRegex`.
+ */
+const REGEX_PRECEDING_KEYWORDS = new Set([
+  'return',
+  'typeof',
+  'instanceof',
+  'in',
+  'of',
+  'case',
+  'new',
+  'delete',
+  'void',
+  'throw',
+  'yield',
+  'await',
+  'do',
+  'else',
+])
+
+/**
+ * Heuristique « un `/` peut-il ouvrir un littéral regex ici ? », basée sur le
+ * dernier caractère significatif déjà émis dans `out`. Pas un vrai lexer JS
+ * (qui suivrait le type du token précédent, pas juste son dernier caractère)
+ * mais suffisant pour les deux familles de cas qui comptent :
+ *   - après un opérateur/une ponctuation ouvrante (`(`, `{`, `,`, `=`, `!`,
+ *     `&&`, début de fichier…) → un `/` est presque toujours un regex ;
+ *   - après un identifiant, un nombre, `)` ou `]` → c'est presque toujours
+ *     une division, SAUF si l'identifiant est un mot-clé de
+ *     `REGEX_PRECEDING_KEYWORDS` (`return /foo/`, `case /foo/:`).
+ * Faux négatif accepté : `if (x) /foo/.test(y)` (regex juste après `)`,
+ * syntaxiquement valide mais jamais écrit ainsi en pratique) sera traité
+ * comme une division — sans conséquence : voir `tryConsumeRegex`, le pire
+ * cas est de ne pas reconnaître un vrai regex, jamais de sur-consommer du
+ * code.
+ */
+function canStartRegex(out) {
+  let j = out.length - 1
+  while (j >= 0 && /\s/.test(out[j])) {
+    j -= 1
+  }
+  if (j < 0) {
+    return true
+  }
+  const ch = out[j]
+  if (ch === ')' || ch === ']') {
+    return false
+  }
+  if (/[A-Za-z0-9_$]/.test(ch)) {
+    let k = j
+    while (k >= 0 && /[A-Za-z0-9_$]/.test(out[k])) {
+      k -= 1
+    }
+    const word = out.slice(k + 1, j + 1)
+    return REGEX_PRECEDING_KEYWORDS.has(word)
+  }
+  return true
+}
+
+/**
+ * Tente de consommer un littéral regex démarrant en `source[start]` (`/`).
+ * Respecte les classes de caractères (`[...]`, où un `/` nu ne ferme pas le
+ * littéral) et les échappements (`\/`). Un littéral regex JS ne peut pas
+ * contenir de retour à la ligne non échappé : rencontrer `\n` avant la
+ * fermeture signifie que ce n'était pas un regex (probablement une division
+ * mal classée par `canStartRegex`) → renvoie `null`, et l'appelant retombe
+ * sur le traitement caractère par caractère normal.
+ *
+ * Renvoie l'index (exclusif) juste après les flags (`i`, `g`, `u`…), ou
+ * `null` si aucune fermeture valide n'a été trouvée sur la ligne.
+ */
+function tryConsumeRegex(source, start) {
+  let i = start + 1
+  let inCharClass = false
+  while (i < source.length) {
+    const c = source[i]
+    if (c === '\n') {
+      return null
+    }
+    if (c === '\\') {
+      i += 2
+      continue
+    }
+    if (c === '[') {
+      inCharClass = true
+      i += 1
+      continue
+    }
+    if (c === ']') {
+      inCharClass = false
+      i += 1
+      continue
+    }
+    if (c === '/' && !inCharClass) {
+      i += 1
+      while (i < source.length && /[A-Za-z]/.test(source[i])) {
+        i += 1
+      }
+      return i
+    }
+    i += 1
+  }
+  return null
+}
+
+/**
  * Retire le contenu des commentaires (`//…`, `/* … *\/`, JSDoc inclus) d'une
  * source TS/TSX tout en conservant le nombre de lignes ET le contenu des
  * chaînes/template literals (c'est justement là que vit le texte à détecter).
  *
- * Tokenizer volontairement simple, pas un parseur TS complet : il ne gère pas
- * les expressions `${...}` imbriquées dans un template literal (le contenu
- * entre backticks est traité comme opaque), ni un `//` à l'intérieur d'un
- * littéral regex (`/\/\//`). Ces deux cas sont rares dans ce dépôt et
- * documentés comme limite connue plutôt que silencieusement ignorés — voir
- * le rapport de tâche.
+ * Tokenizer volontairement simple, pas un parseur TS complet. Deux angles
+ * morts documentés plutôt que silencieusement ignorés :
+ *   - **texte JSX brut hors chaîne** (ex. `<a>https://exemple.fr</a>`) : un
+ *     `//` y est en état `code`, pas dans une chaîne — sans précaution il
+ *     serait pris pour un début de commentaire et tout le français qui suit
+ *     sur la même ligne serait blanchi sans le signaler. Round 1 de revue :
+ *     un `//` immédiatement précédé de `:` (`https://`, `http://`, tout
+ *     schéma `xxx://`) est désormais traité comme faisant partie d'une URL,
+ *     jamais comme un commentaire — c'est le cas dominant, celui qui arrive
+ *     réellement dans du texte produit. Angle mort résiduel, accepté : une
+ *     URL protocol-relative SANS le `:` (`//cdn.exemple.fr`, rare hors d'une
+ *     chaîne) ne serait pas reconnue. Risque inverse accepté aussi : un
+ *     `//commentaire` collé sans espace directement après un `:` de code
+ *     (`default://commentaire`, un `case` sans espace) serait à tort traité
+ *     comme une URL et donc PAS retiré — un faux positif (le commentaire
+ *     serait signalé comme français en dur) plutôt qu'un faux négatif ; ce
+ *     dépôt est formaté par Biome, qui insère systématiquement un espace
+ *     avant `//`, donc ce cas ne devrait pas se produire dans du code réel.
+ *   - **template literals** : le contenu entre backticks est traité comme
+ *     opaque, donc un commentaire à l'intérieur d'une expression `${...}`
+ *     imbriquée n'est pas retiré. Pas de cas trouvé dans ce dépôt à ce jour.
+ * Le troisième angle mort initial (`//` à l'intérieur d'un littéral regex,
+ * `/^\/\//`) est traité via `canStartRegex`/`tryConsumeRegex` ci-dessus —
+ * heuristique basée sur le dernier token, pas un vrai lexer JS, dont les
+ * limites sont documentées sur `canStartRegex`.
  */
 function stripComments(source) {
   let out = ''
@@ -139,6 +265,14 @@ function stripComments(source) {
 
     if (state === 'code') {
       if (c === '/' && c2 === '/') {
+        // `xxx://` — schéma d'URL, jamais un commentaire. Voir la doc de
+        // stripComments pour l'angle mort résiduel (protocol-relative sans
+        // `:`) et le compromis inverse assumé.
+        if (i > 0 && source[i - 1] === ':') {
+          out += c + c2
+          i += 2
+          continue
+        }
         state = 'lineComment'
         out += '  '
         i += 2
@@ -149,6 +283,14 @@ function stripComments(source) {
         out += '  '
         i += 2
         continue
+      }
+      if (c === '/' && canStartRegex(out)) {
+        const end = tryConsumeRegex(source, i)
+        if (end !== null) {
+          out += source.slice(i, end)
+          i = end
+          continue
+        }
       }
       if (c === "'") {
         state = 'singleQuote'
