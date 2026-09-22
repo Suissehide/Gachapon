@@ -62,6 +62,34 @@ export function currentLocale(): Locale {
 }
 
 /**
+ * En-tête `Accept-Language` à poser sur CHAQUE appel réseau du front, sans
+ * quoi le back résout la langue du contenu (cartes, quêtes, compétences,
+ * messages d'erreur, mails déclenchés par la requête…) depuis l'en-tête du
+ * NAVIGATEUR plutôt que celle du site — la langue de l'inscription en
+ * particulier scelle `User.locale`, donc la langue des mails transactionnels
+ * pour tout le compte (lot 1). Point unique de cette construction : avant
+ * la tâche 5 round 2, `fetchWithAuth.ts`, `api/auth.api.ts`, `api/stats.api.ts`
+ * et `lib/api.ts` la recopiaient chacun (ou, pour les trois derniers, ne la
+ * posaient pas du tout).
+ *
+ * `currentLocale()` est lue ICI, à l'appel — jamais mémorisée — pour la même
+ * raison que `currentLocale()` elle-même : un en-tête calculé une fois au
+ * chargement d'un module servirait la langue du premier onglet ouvert à
+ * toutes les requêtes suivantes de la session, y compris depuis un autre
+ * onglet resté sous un préfixe différent.
+ *
+ * Ne remplace jamais un `Accept-Language` déjà présent dans `init` : un
+ * appelant qui aurait une raison de forcer une langue reste prioritaire.
+ */
+export function withAcceptLanguage(init?: HeadersInit): Headers {
+  const headers = new Headers(init)
+  if (!headers.has('Accept-Language')) {
+    headers.set('Accept-Language', currentLocale())
+  }
+  return headers
+}
+
+/**
  * Pluriels (tâches 6 à 11) : i18next résout `key_one`/`key_other` via
  * `Intl.PluralRules(locale).select(count)` — voir `t(key, { count })`.
  * Vérifié avec la version d'i18next de ce dépôt : la catégorie "one" du

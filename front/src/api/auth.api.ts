@@ -1,5 +1,6 @@
 import { AUTH_ROUTES } from '../constants/auth.constant.ts'
 import { apiUrl } from '../constants/config.constant.ts'
+import { withAcceptLanguage } from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import type { RegisterInput, User } from '../types/auth.ts'
 
@@ -17,7 +18,7 @@ export const AuthApi = {
     const response = await fetch(`${apiUrl}${AUTH_ROUTES.login}`, {
       method: 'POST',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: withAcceptLanguage({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ email, password }),
     })
     if (!response.ok) {
@@ -49,6 +50,7 @@ export const AuthApi = {
     const response = await fetch(`${apiUrl}${AUTH_ROUTES.refresh}`, {
       method: 'POST',
       credentials: 'include',
+      headers: withAcceptLanguage(),
     })
     if (!response.ok) {
       handleHttpError(response, {}, 'Erreur lors de la mise à jour du cookie')
@@ -59,7 +61,7 @@ export const AuthApi = {
   register: async (registerInput: RegisterInput): Promise<Response> => {
     const response = await fetch(`${apiUrl}${AUTH_ROUTES.register}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: withAcceptLanguage({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(registerInput),
     })
     if (!response.ok) {
@@ -84,7 +86,7 @@ export const AuthApi = {
   verifyEmail: async (token: string): Promise<void> => {
     const res = await fetch(`${apiUrl}${AUTH_ROUTES.verifyEmail}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: withAcceptLanguage({ 'Content-Type': 'application/json' }),
       credentials: 'include',
       body: JSON.stringify({ token }),
     })
@@ -105,7 +107,7 @@ export const AuthApi = {
   resendVerification: async (email: string): Promise<void> => {
     const res = await fetch(`${apiUrl}${AUTH_ROUTES.resendVerification}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: withAcceptLanguage({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ email }),
     })
     if (!res.ok) {
@@ -125,7 +127,7 @@ export const AuthApi = {
   forgotPassword: async (email: string): Promise<void> => {
     const res = await fetch(`${apiUrl}${AUTH_ROUTES.forgotPassword}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: withAcceptLanguage({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ email }),
     })
     if (!res.ok) {
@@ -145,7 +147,7 @@ export const AuthApi = {
   resetPassword: async (token: string, newPassword: string): Promise<void> => {
     const res = await fetch(`${apiUrl}${AUTH_ROUTES.resetPassword}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: withAcceptLanguage({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ token, newPassword }),
     })
     if (!res.ok) {

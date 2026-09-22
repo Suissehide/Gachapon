@@ -1,4 +1,5 @@
 import { apiUrl } from '../constants/config.constant.ts'
+import { withAcceptLanguage } from '../i18n/index.ts'
 
 const BASE_URL = apiUrl
 
@@ -11,16 +12,17 @@ async function request<T>(
   const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
     credentials: 'include',
-    headers: {
+    headers: withAcceptLanguage({
       ...(options.body != null ? { 'Content-Type': 'application/json' } : {}),
       ...options.headers,
-    },
+    }),
   })
 
   if (res.status === 401 && !options.skipRefresh) {
     const refreshRes = await fetch(`${BASE_URL}/auth/refresh`, {
       method: 'POST',
       credentials: 'include',
+      headers: withAcceptLanguage(),
     })
     if (refreshRes.ok) {
       return request<T>(path, { ...options, skipRefresh: true })
