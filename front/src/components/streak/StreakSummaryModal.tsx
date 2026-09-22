@@ -1,5 +1,7 @@
+import type { TFunction } from 'i18next'
 import { Check, Crown, Flame, Gem, Sparkles, Star, Ticket } from 'lucide-react'
 import type { ComponentType, SVGProps } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import type { CardRarity } from '../../constants/card.constant.ts'
 import type {
@@ -22,15 +24,14 @@ type Props = {
 
 type LucideIcon = ComponentType<SVGProps<SVGSVGElement>>
 
-const plural = (n: number, suffix = 's') => (n !== 1 ? suffix : '')
-
 // ── Rarity visual config ──────────────────────────────────────────────────
-const RARITY_LABEL: Record<CardRarity, string> = {
-  COMMON: 'Commune',
-  UNCOMMON: 'Peu commune',
-  RARE: 'Rare',
-  EPIC: 'Épique',
-  LEGENDARY: 'Légendaire',
+/** Clé `common:rarity.*` (accord féminin, "Carte Commune") associée à chaque rareté. */
+const RARITY_I18N_KEY: Record<CardRarity, string> = {
+  COMMON: 'common',
+  UNCOMMON: 'uncommon',
+  RARE: 'rare',
+  EPIC: 'epic',
+  LEGENDARY: 'legendary',
 }
 
 const RARITY_ICON_COLOR: Record<CardRarity, string> = {
@@ -59,6 +60,7 @@ type DisplayReward = {
 
 function getDisplayRewards(
   entry: Pick<StreakDayEntry, 'tokens' | 'dust' | 'xp' | 'cardRarity'>,
+  t: TFunction,
 ): DisplayReward[] {
   const rewards: DisplayReward[] = []
   if (entry.cardRarity) {
@@ -66,7 +68,9 @@ function getDisplayRewards(
       key: 'card',
       icon: RARITY_ICON[entry.cardRarity],
       iconClass: RARITY_ICON_COLOR[entry.cardRarity],
-      label: `Carte ${RARITY_LABEL[entry.cardRarity]}`,
+      label: t('streak:rewards.card', {
+        rarity: t(`common:rarity.${RARITY_I18N_KEY[entry.cardRarity]}`),
+      }),
     })
   }
   if (entry.tokens > 0) {
@@ -74,7 +78,7 @@ function getDisplayRewards(
       key: 'tokens',
       icon: Ticket,
       iconClass: 'text-amber-400',
-      label: `${entry.tokens} Jeton${plural(entry.tokens)}`,
+      label: t('streak:rewards.tokens', { count: entry.tokens }),
     })
   }
   if (entry.dust > 0) {
@@ -82,7 +86,7 @@ function getDisplayRewards(
       key: 'dust',
       icon: Sparkles,
       iconClass: 'text-violet-400',
-      label: `${entry.dust} poussière`,
+      label: t('streak:rewards.dust', { count: entry.dust }),
     })
   }
   if (entry.xp > 0) {
@@ -90,7 +94,7 @@ function getDisplayRewards(
       key: 'xp',
       icon: Star,
       iconClass: 'text-pink-400',
-      label: `${entry.xp} XP`,
+      label: t('streak:rewards.xp', { count: entry.xp }),
     })
   }
   return rewards
@@ -101,6 +105,7 @@ const WINDOW_SIZE = 7
 
 function buildWindow(
   summary: StreakSummary,
+  t: TFunction,
 ): { day: number; entry: StreakDayEntry; label: string }[] {
   const cycleDay =
     summary.streakDays === 0 ? 1 : ((summary.streakDays - 1) % 30) + 1
@@ -120,23 +125,24 @@ function buildWindow(
     if (!entry) {
       continue
     }
-    slots.push({ day, entry, label: labelForDay(day, cycleDay) })
+    slots.push({ day, entry, label: labelForDay(day, cycleDay, t) })
   }
   return slots
 }
 
-function labelForDay(day: number, cycleDay: number): string {
+function labelForDay(day: number, cycleDay: number, t: TFunction): string {
   if (day === cycleDay) {
-    return "AUJOURD'HUI"
+    return t('streak:tile.today')
   }
   if (day === cycleDay + 1) {
-    return 'DEMAIN'
+    return t('streak:tile.tomorrow')
   }
-  return `J${day}`
+  return t('streak:tile.dayShort', { day })
 }
 
 // ── Modal ─────────────────────────────────────────────────────────────────
 export function StreakSummaryModal({ open, onClose }: Props) {
+  const { t } = useTranslation(['streak', 'common'])
   const { data, isLoading } = useStreakSummary()
 
   return (
@@ -152,10 +158,10 @@ export function StreakSummaryModal({ open, onClose }: Props) {
         <PopupHeader className="border-b-0 pb-2">
           <PopupTitle
             icon={<Flame className="h-4 w-4" />}
-            subtitle="Connecte-toi chaque jour pour des bonus exclusifs"
+            subtitle={t('streak:modal.subtitle')}
           >
             <span className="font-display tracking-tight">
-              Streak de connexion
+              {t('streak:modal.title')}
             </span>
           </PopupTitle>
         </PopupHeader>
@@ -166,7 +172,7 @@ export function StreakSummaryModal({ open, onClose }: Props) {
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
             </div>
           ) : (
-            <StreakBody summary={data} />
+            <StreakBody summary={data} t={t} />
           )}
         </PopupBody>
       </PopupContent>
@@ -174,8 +180,8 @@ export function StreakSummaryModal({ open, onClose }: Props) {
   )
 }
 
-function StreakBody({ summary }: { summary: StreakSummary }) {
-  const slots = buildWindow(summary)
+function StreakBody({ summary, t }: { summary: StreakSummary; t: TFunction }) {
+  const slots = buildWindow(summary, t)
   const cycleDay =
     summary.streakDays === 0 ? 0 : ((summary.streakDays - 1) % 30) + 1
   const daysToNextMilestone = summary.nextMilestone
@@ -205,23 +211,28 @@ function StreakBody({ summary }: { summary: StreakSummary }) {
           </div>
           <div className="min-w-0 flex-1">
             <div className="font-mono text-[10px] font-bold uppercase tracking-[0.25em] text-amber-700/80">
-              Tu es en feu
+              {t('streak:hero.onFire')}
             </div>
             <div className="flex items-baseline gap-2 mt-0.5">
               <span className="font-display text-4xl font-black leading-none tabular-nums text-text">
                 {summary.streakDays}
               </span>
               <span className="font-mono text-[11px] uppercase tracking-wider text-text-light">
-                jour{plural(summary.streakDays)} consécutif
-                {plural(summary.streakDays)}
+                {t('streak:hero.streakDaysLabel', {
+                  count: summary.streakDays,
+                })}
               </span>
             </div>
             {daysToNextMilestone !== null && daysToNextMilestone > 0 && (
               <div className="font-mono text-[10px] uppercase tracking-wider text-text-light/80 mt-1">
-                Prochain jalon dans{' '}
-                <span className="font-bold text-amber-600">
-                  {daysToNextMilestone} jour{plural(daysToNextMilestone)}
-                </span>
+                <Trans
+                  t={t}
+                  i18nKey="streak:hero.nextMilestoneIn"
+                  count={daysToNextMilestone}
+                  components={{
+                    strong: <span className="font-bold text-amber-600" />,
+                  }}
+                />
               </div>
             )}
           </div>
@@ -232,16 +243,21 @@ function StreakBody({ summary }: { summary: StreakSummary }) {
       <div>
         <div className="mb-2 flex items-baseline justify-between">
           <span className="font-mono text-[10px] font-bold uppercase tracking-[0.25em] text-text-light">
-            Cycle en cours
+            {t('streak:cycle.title')}
           </span>
           <span className="font-mono text-[10px] uppercase tracking-wider text-text-light/70 tabular-nums">
-            Jour {cycleDay} / 30
+            {t('streak:cycle.dayOfTotal', { day: cycleDay, total: 30 })}
           </span>
         </div>
         <div className="-mx-1 overflow-x-auto px-1 pt-2.5 pb-1">
           <div className="grid min-w-[420px] grid-cols-7 gap-1.5">
             {slots.map((slot) => (
-              <DayTile key={slot.day} entry={slot.entry} label={slot.label} />
+              <DayTile
+                key={slot.day}
+                entry={slot.entry}
+                label={slot.label}
+                t={t}
+              />
             ))}
           </div>
         </div>
@@ -264,8 +280,16 @@ function tileKind(entry: StreakDayEntry): TileKind {
   return entry.isMilestone ? (`${base}-milestone` as TileKind) : base
 }
 
-function DayTile({ entry, label }: { entry: StreakDayEntry; label: string }) {
-  const rewards = getDisplayRewards(entry)
+function DayTile({
+  entry,
+  label,
+  t,
+}: {
+  entry: StreakDayEntry
+  label: string
+  t: TFunction
+}) {
+  const rewards = getDisplayRewards(entry, t)
   const primary = rewards[0]
   const kind = tileKind(entry)
 
@@ -315,7 +339,7 @@ function DayTile({ entry, label }: { entry: StreakDayEntry; label: string }) {
             background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
           }}
         >
-          Jalon
+          {t('streak:tile.milestoneBadge')}
         </span>
       )}
 

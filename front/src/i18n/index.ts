@@ -17,6 +17,7 @@ import guideEn from './locales/en/guide.json'
 import homeEn from './locales/en/home.json'
 import layoutEn from './locales/en/layout.json'
 import leaderboardEn from './locales/en/leaderboard.json'
+import levelEn from './locales/en/level.json'
 import notificationsEn from './locales/en/notifications.json'
 import passivesEn from './locales/en/passives.json'
 import profileEn from './locales/en/profile.json'
@@ -46,6 +47,7 @@ import guideFr from './locales/fr/guide.json'
 import homeFr from './locales/fr/home.json'
 import layoutFr from './locales/fr/layout.json'
 import leaderboardFr from './locales/fr/leaderboard.json'
+import levelFr from './locales/fr/level.json'
 import notificationsFr from './locales/fr/notifications.json'
 import passivesFr from './locales/fr/passives.json'
 import profileFr from './locales/fr/profile.json'
@@ -192,6 +194,7 @@ void i18next.use(initReactI18next).init({
       home: homeFr,
       guide: guideFr,
       changelog: changelogFr,
+      level: levelFr,
     },
     en: {
       about: aboutEn,
@@ -223,6 +226,7 @@ void i18next.use(initReactI18next).init({
       home: homeEn,
       guide: guideEn,
       changelog: changelogEn,
+      level: levelEn,
     },
   },
   lng: localeFromPath(window.location.pathname),
@@ -257,6 +261,7 @@ void i18next.use(initReactI18next).init({
     'home',
     'guide',
     'changelog',
+    'level',
   ],
   interpolation: {
     // React échappe déjà le rendu — un double échappement casserait les

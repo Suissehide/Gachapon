@@ -1,0 +1,14 @@
+{
+  "overlay": {
+    "dialogAriaLabel": "Niveau supérieur",
+    "title": "Niveau supérieur",
+    "skillPoints_one": "+{{count}} point de compétence",
+    "skillPoints_other": "+{{count}} points de compétence",
+    "milestoneTitle": "Palier {{level}} !",
+    "milestoneTokens_one": "{{count}} jeton",
+    "milestoneTokens_other": "{{count}} jetons",
+    "milestoneDust": "{{count}} poussière",
+    "milestoneBonusPoints_one": "+{{count}} point bonus",
+    "milestoneBonusPoints_other": "+{{count}} points bonus"
+  }
+}

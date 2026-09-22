@@ -3,5 +3,33 @@
     "operations": {
       "loadSummary": "Erreur lors de la récupération du résumé streak"
     }
+  },
+  "modal": {
+    "title": "Streak de connexion",
+    "subtitle": "Connecte-toi chaque jour pour des bonus exclusifs"
+  },
+  "hero": {
+    "onFire": "Tu es en feu",
+    "streakDaysLabel_one": "jour consécutif",
+    "streakDaysLabel_other": "jours consécutifs",
+    "nextMilestoneIn_one": "Prochain jalon dans <strong>{{count}} jour</strong>",
+    "nextMilestoneIn_other": "Prochain jalon dans <strong>{{count}} jours</strong>"
+  },
+  "cycle": {
+    "title": "Cycle en cours",
+    "dayOfTotal": "Jour {{day}} / {{total}}"
+  },
+  "tile": {
+    "milestoneBadge": "Jalon",
+    "today": "AUJOURD'HUI",
+    "tomorrow": "DEMAIN",
+    "dayShort": "J{{day}}"
+  },
+  "rewards": {
+    "card": "Carte {{rarity}}",
+    "tokens_one": "{{count}} Jeton",
+    "tokens_other": "{{count}} Jetons",
+    "dust": "{{count}} poussière",
+    "xp": "{{count}} XP"
   }
 }

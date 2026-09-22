@@ -1,5 +1,6 @@
 import { Star, Ticket, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { useLevelUpStore } from '../../stores/levelUp.store.ts'
 
@@ -32,6 +33,7 @@ const particles = Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
 }))
 
 export function LevelUpOverlay() {
+  const { t } = useTranslation(['level', 'common'])
   const level = useLevelUpStore((s) => s.level)
   const reward = useLevelUpStore((s) => s.reward)
   const dismiss = useLevelUpStore((s) => s.dismiss)
@@ -67,7 +69,7 @@ export function LevelUpOverlay() {
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Niveau supérieur"
+      aria-label={t('level:overlay.dialogAriaLabel')}
       className="fixed inset-0 z-[200] flex items-center justify-center"
       style={{
         animation: fadingOut
@@ -78,7 +80,7 @@ export function LevelUpOverlay() {
       {/* Clickable backdrop */}
       <button
         type="button"
-        aria-label="Fermer"
+        aria-label={t('common:a11y.close')}
         className="absolute inset-0 bg-black/50"
         onClick={dismiss}
       />
@@ -105,7 +107,7 @@ export function LevelUpOverlay() {
           }}
         >
           <span className="text-xs font-bold uppercase tracking-[0.25em] text-amber-200">
-            Niveau supérieur
+            {t('level:overlay.title')}
           </span>
           <span className="text-5xl font-black tabular-nums text-white drop-shadow-[0_2px_12px_rgba(255,215,0,0.5)]">
             {level}
@@ -125,8 +127,7 @@ export function LevelUpOverlay() {
             <div className="flex items-center gap-1.5 rounded-full bg-amber-500/20 px-3 py-1 ring-1 ring-amber-400/40">
               <Zap className="h-3.5 w-3.5 text-amber-300" />
               <span className="text-sm font-bold text-amber-200">
-                +{reward.skillPoints} point{reward.skillPoints > 1 ? 's' : ''}{' '}
-                de compétence
+                {t('level:overlay.skillPoints', { count: reward.skillPoints })}
               </span>
             </div>
 
@@ -137,20 +138,24 @@ export function LevelUpOverlay() {
                 className="flex flex-col items-center gap-1 rounded-xl bg-white/10 px-4 py-2 ring-1 ring-white/20"
               >
                 <span className="text-xs font-bold uppercase tracking-widest text-amber-300">
-                  Palier {m.level} !
+                  {t('level:overlay.milestoneTitle', { level: m.level })}
                 </span>
                 <div className="flex items-center gap-3 text-xs text-white/80">
                   <span className="flex items-center gap-1">
                     <Ticket className="h-3 w-3 text-amber-400" />
-                    {m.tokens} jetons
+                    {t('level:overlay.milestoneTokens', { count: m.tokens })}
                   </span>
                   <span className="text-white/40">·</span>
-                  <span>{m.dust} poussière</span>
+                  <span>
+                    {t('level:overlay.milestoneDust', { count: m.dust })}
+                  </span>
                   {m.bonusPoints > 0 && (
                     <>
                       <span className="text-white/40">·</span>
                       <span className="font-semibold text-amber-200">
-                        +{m.bonusPoints} points bonus
+                        {t('level:overlay.milestoneBonusPoints', {
+                          count: m.bonusPoints,
+                        })}
                       </span>
                     </>
                   )}

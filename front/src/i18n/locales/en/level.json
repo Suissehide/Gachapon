@@ -1,0 +1,14 @@
+{
+  "overlay": {
+    "dialogAriaLabel": "Level up",
+    "title": "Level up",
+    "skillPoints_one": "+{{count}} skill point",
+    "skillPoints_other": "+{{count}} skill points",
+    "milestoneTitle": "Milestone {{level}}!",
+    "milestoneTokens_one": "{{count}} token",
+    "milestoneTokens_other": "{{count}} tokens",
+    "milestoneDust": "{{count}} dust",
+    "milestoneBonusPoints_one": "+{{count}} bonus point",
+    "milestoneBonusPoints_other": "+{{count}} bonus points"
+  }
+}

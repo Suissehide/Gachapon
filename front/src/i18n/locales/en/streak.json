@@ -3,5 +3,33 @@
     "operations": {
       "loadSummary": "Error loading the streak summary"
     }
+  },
+  "modal": {
+    "title": "Login streak",
+    "subtitle": "Log in every day for exclusive bonuses"
+  },
+  "hero": {
+    "onFire": "You're on fire",
+    "streakDaysLabel_one": "day streak",
+    "streakDaysLabel_other": "day streak",
+    "nextMilestoneIn_one": "Next milestone in <strong>{{count}} day</strong>",
+    "nextMilestoneIn_other": "Next milestone in <strong>{{count}} days</strong>"
+  },
+  "cycle": {
+    "title": "Current cycle",
+    "dayOfTotal": "Day {{day}} / {{total}}"
+  },
+  "tile": {
+    "milestoneBadge": "Milestone",
+    "today": "TODAY",
+    "tomorrow": "TOMORROW",
+    "dayShort": "D{{day}}"
+  },
+  "rewards": {
+    "card": "{{rarity}} card",
+    "tokens_one": "{{count}} Token",
+    "tokens_other": "{{count}} Tokens",
+    "dust": "{{count}} dust",
+    "xp": "{{count}} XP"
   }
 }
