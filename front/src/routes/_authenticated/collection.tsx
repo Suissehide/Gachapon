@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { RefreshCw } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { Card, CardVariant } from '../../api/collection.api.ts'
 import { CardViewModal } from '../../components/collection/CardViewModal.tsx'
@@ -29,6 +30,7 @@ import { PageShell } from '../../components/shared/PageShell.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import { ELEMENT_LABELS, ELEMENT_ORDER } from '../../constants/card.constant.ts'
 import { useStoredState } from '../../hooks/useStoredState.ts'
+import { currentLocale } from '../../i18n/index.ts'
 import {
   type UserCard,
   useCards,
@@ -95,7 +97,9 @@ export function sortEntries(
   } else if (sort === 'copies') {
     sorted.sort((a, b) => b.quantity - a.quantity)
   } else {
-    sorted.sort((a, b) => a.card.name.localeCompare(b.card.name, 'fr'))
+    sorted.sort((a, b) =>
+      a.card.name.localeCompare(b.card.name, currentLocale()),
+    )
   }
   return sorted
 }
@@ -105,6 +109,7 @@ export const Route = createFileRoute('/_authenticated/collection')({
 })
 
 function Collection() {
+  const { t } = useTranslation('collection')
   const user = useAuthStore((s) => s.user)
   // Cartes verrouillées par un duel en cours : sans équipe, `useMyDuel`
   // n'émet aucune requête de duel et l'ensemble reste vide.
@@ -315,20 +320,20 @@ function Collection() {
         breadcrumbs={[
           { label: 'Gachapon', to: '/play' },
           {
-            label: 'Profil',
+            label: t('collection:page.breadcrumbProfile'),
             to: '/profile/$username',
             params: { username: user?.username ?? '' },
           },
-          { label: 'Collection' },
+          { label: t('collection:page.breadcrumbCollection') },
         ]}
-        title="Ma collection"
+        title={t('collection:page.title')}
         subtitle={
           <span className="font-mono">
-            Cartes :{' '}
+            {t('collection:page.statsCards')}{' '}
             <b className="font-bold text-text">
               {collectionStats.distinctCards}/{collectionStats.totalCards}
             </b>{' '}
-            · Variantes :{' '}
+            {t('collection:page.statsVariants')}{' '}
             <b className="font-bold text-text">
               {collectionStats.totalOwnedVariants}/
               {collectionStats.totalPossibleVariants}
@@ -360,7 +365,7 @@ function Collection() {
             onClick={() => setRecycleAllOpen(true)}
           >
             <RefreshCw className="h-4 w-4" />
-            Tout recycler
+            {t('collection:page.recycleAll')}
           </Button>
         </div>
       </ArcadeCard>
@@ -368,7 +373,7 @@ function Collection() {
       {sections.length === 0 ? (
         <ArcadeCard>
           <p className="py-14 text-center font-mono text-sm tracking-[0.04em] text-text-light/60">
-            Aucune carte ne correspond à ces filtres.
+            {t('collection:page.noMatch')}
           </p>
         </ArcadeCard>
       ) : (

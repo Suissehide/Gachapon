@@ -162,5 +162,14 @@
     "sellConfirmTitle": "Vendre cette pièce ?",
     "sellConfirmMessage": "« {{name}} » sera définitivement détruite. Cette action est irréversible.",
     "sellConfirmLabel": "Vendre"
+  },
+  "page": {
+    "breadcrumbProfile": "Profil",
+    "breadcrumbCollection": "Collection",
+    "title": "Ma collection",
+    "statsCards": "Cartes :",
+    "statsVariants": "· Variantes :",
+    "recycleAll": "Tout recycler",
+    "noMatch": "Aucune carte ne correspond à ces filtres."
   }
 }

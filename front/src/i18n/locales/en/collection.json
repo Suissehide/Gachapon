@@ -162,5 +162,14 @@
     "sellConfirmTitle": "Sell this piece?",
     "sellConfirmMessage": "“{{name}}” will be permanently destroyed. This action cannot be undone.",
     "sellConfirmLabel": "Sell"
+  },
+  "page": {
+    "breadcrumbProfile": "Profile",
+    "breadcrumbCollection": "Collection",
+    "title": "My collection",
+    "statsCards": "Cards:",
+    "statsVariants": "· Variants:",
+    "recycleAll": "Recycle everything",
+    "noMatch": "No card matches these filters."
   }
 }
