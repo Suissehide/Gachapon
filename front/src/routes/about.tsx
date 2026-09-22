@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
 import { SeoHead } from '../components/shared/SeoHead.tsx'
@@ -9,6 +10,7 @@ export const Route = createFileRoute('/about')({
 })
 
 function AboutPage() {
+  const { t } = useTranslation('about')
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SeoHead path="/about" />
@@ -18,45 +20,44 @@ function AboutPage() {
         {/* Header */}
         <div className="mb-12">
           <p className="text-[11px] font-semibold text-text-light/50 uppercase tracking-[0.2em] mb-4">
-            Le projet
+            {t('page.eyebrow')}
           </p>
-          <h1 className="text-5xl font-black tracking-tight mb-4">À propos</h1>
+          <h1 className="text-5xl font-black tracking-tight mb-4">
+            {t('page.title')}
+          </h1>
           <p className="text-base text-text-light leading-relaxed">
-            Gachapon est un jeu de cartes à collectionner en ligne, inspiré des
-            distributeurs automatiques de capsules japonaises.
+            {t('page.description')}
           </p>
         </div>
 
         {/* Content */}
         <div className="space-y-10 text-sm text-text-light leading-relaxed">
           <section>
-            <h2 className="text-lg font-black text-foreground mb-3">L'idée</h2>
+            <h2 className="text-lg font-black text-foreground mb-3">
+              {t('idea.title')}
+            </h2>
             <p>
-              L'idée est simple : chaque capsule que tu ouvres peut contenir une
-              carte commune ou un trésor légendaire. Mais Gachapon ne s'arrête
-              pas à la collection — tu fais aussi{' '}
-              <strong className="text-foreground">combattre</strong> tes cartes
-              dans une campagne. La chance ouvre les capsules, la stratégie fait
-              le reste : compétences, montée en puissance des cartes et
-              composition d'équipe font toute la différence.
+              {t('idea.textBefore')}{' '}
+              <strong className="text-foreground">{t('idea.emphasis')}</strong>
+              {t('idea.textAfter')}
             </p>
           </section>
 
           <section>
             <h2 className="text-lg font-black text-foreground mb-3">
-              Fonctionnalités
+              {t('features.title')}
             </h2>
             <ul className="space-y-2">
               {[
-                'Tirage de capsules avec système de rareté (Common → Legendary) et variantes Brillantes & Holographiques',
-                'Campagne et combats au tour par tour avec ton équipe de cartes',
-                'Amélioration des cartes : niveau, ascension par palier et équipement',
-                'Arbre de compétences pour des bonus passifs permanents',
-                'Quêtes, succès, chaîne de connexion et récompenses à récupérer',
-                'Boutique du jour et Vœu pour cibler les cartes qui te manquent',
-                'Classements collectionneurs, équipes et combats',
-                'Équipes pour jouer avec tes amis',
-                'API publique pour créer ton propre bot Discord',
+                t('features.items.pulls'),
+                t('features.items.campaign'),
+                t('features.items.cardProgression'),
+                t('features.items.skillTree'),
+                t('features.items.questsAndRewards'),
+                t('features.items.dailyShopAndWish'),
+                t('features.items.leaderboards'),
+                t('features.items.teams'),
+                t('features.items.publicApi'),
               ].map((f) => (
                 <li key={f} className="flex items-start gap-2.5">
                   <span className="mt-0.5 h-4 w-4 shrink-0 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
@@ -70,12 +71,9 @@ function AboutPage() {
 
           <section>
             <h2 className="text-lg font-black text-foreground mb-3">
-              Communauté
+              {t('community.title')}
             </h2>
-            <p className="mb-4">
-              Rejoins le serveur Discord pour suivre les mises à jour, partager
-              tes pulls et rencontrer d'autres collectionneurs.
-            </p>
+            <p className="mb-4">{t('community.description')}</p>
             <div className="flex flex-wrap gap-3">
               <a
                 href={discordInviteUrl}
@@ -83,13 +81,13 @@ function AboutPage() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-xs font-semibold text-foreground hover:bg-muted transition-colors"
               >
-                Discord →
+                {t('community.discordLink')}
               </a>
               <Link
                 to="/discord"
                 className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-xs font-semibold text-foreground hover:bg-muted transition-colors"
               >
-                Intégration bot →
+                {t('community.botLink')}
               </Link>
             </div>
           </section>

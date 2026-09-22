@@ -1,0 +1,33 @@
+{
+  "page": {
+    "eyebrow": "Le projet",
+    "title": "À propos",
+    "description": "Gachapon est un jeu de cartes à collectionner en ligne, inspiré des distributeurs automatiques de capsules japonaises."
+  },
+  "idea": {
+    "title": "L'idée",
+    "textBefore": "L'idée est simple : chaque capsule que tu ouvres peut contenir une carte commune ou un trésor légendaire. Mais Gachapon ne s'arrête pas à la collection — tu fais aussi",
+    "emphasis": "combattre",
+    "textAfter": " tes cartes dans une campagne. La chance ouvre les capsules, la stratégie fait le reste : compétences, montée en puissance des cartes et composition d'équipe font toute la différence."
+  },
+  "features": {
+    "title": "Fonctionnalités",
+    "items": {
+      "pulls": "Tirage de capsules avec système de rareté (Common → Legendary) et variantes Brillantes & Holographiques",
+      "campaign": "Campagne et combats au tour par tour avec ton équipe de cartes",
+      "cardProgression": "Amélioration des cartes : niveau, ascension par palier et équipement",
+      "skillTree": "Arbre de compétences pour des bonus passifs permanents",
+      "questsAndRewards": "Quêtes, succès, chaîne de connexion et récompenses à récupérer",
+      "dailyShopAndWish": "Boutique du jour et Vœu pour cibler les cartes qui te manquent",
+      "leaderboards": "Classements collectionneurs, équipes et combats",
+      "teams": "Équipes pour jouer avec tes amis",
+      "publicApi": "API publique pour créer ton propre bot Discord"
+    }
+  },
+  "community": {
+    "title": "Communauté",
+    "description": "Rejoins le serveur Discord pour suivre les mises à jour, partager tes pulls et rencontrer d'autres collectionneurs.",
+    "discordLink": "Discord →",
+    "botLink": "Intégration bot →"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "page": {
+    "eyebrow": "The project",
+    "title": "About",
+    "description": "Gachapon is an online trading card game, inspired by Japanese capsule vending machines."
+  },
+  "idea": {
+    "title": "The idea",
+    "textBefore": "The idea is simple: every capsule you open can contain a common card or a legendary treasure. But Gachapon doesn't stop at collecting — you also",
+    "emphasis": "battle",
+    "textAfter": " with your cards in a campaign. Luck opens the capsules, strategy does the rest: skills, card power progression, and team composition make all the difference."
+  },
+  "features": {
+    "title": "Features",
+    "items": {
+      "pulls": "Capsule pulls with a rarity system (Common → Legendary) and Brilliant & Holographic variants",
+      "campaign": "Turn-based campaign and battles with your card team",
+      "cardProgression": "Card progression: leveling, tiered ascension, and equipment",
+      "skillTree": "A skill tree for permanent passive bonuses",
+      "questsAndRewards": "Quests, achievements, a login streak, and rewards to claim",
+      "dailyShopAndWish": "Daily shop and Wish to target the cards you're missing",
+      "leaderboards": "Collector, team, and battle leaderboards",
+      "teams": "Teams to play with your friends",
+      "publicApi": "A public API to build your own Discord bot"
+    }
+  },
+  "community": {
+    "title": "Community",
+    "description": "Join the Discord server to follow updates, share your pulls, and meet other collectors.",
+    "discordLink": "Discord →",
+    "botLink": "Bot integration →"
+  }
+}
