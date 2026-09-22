@@ -1,0 +1,7 @@
+{
+  "role": {
+    "NONE": "Aucun",
+    "USER": "Utilisateur",
+    "ADMIN": "Administrateur"
+  }
+}

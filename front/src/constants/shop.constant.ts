@@ -1,16 +1,20 @@
+import i18n from '../i18n/index.ts'
 import type { UnlockedAchievement } from './achievements.constant.ts'
 
+// Résolu une fois au chargement du module — sûr ici parce que
+// `useLocale().switchTo` fait toujours un rechargement dur de la page (voir
+// `i18n/useLocale.ts`).
 export const ITEM_TYPE_OPTIONS = [
-  { value: 'TOKEN_PACK', label: 'Token Pack' },
-  { value: 'ENERGY_PACK', label: "Pack d'énergie" },
-  { value: 'BOOST', label: 'Boost' },
-  { value: 'COSMETIC', label: 'Cosmétique' },
-  { value: 'MACHINE', label: 'Machine' },
+  { value: 'TOKEN_PACK', label: i18n.t('shop:itemType.TOKEN_PACK') },
+  { value: 'ENERGY_PACK', label: i18n.t('shop:itemType.ENERGY_PACK') },
+  { value: 'BOOST', label: i18n.t('shop:itemType.BOOST') },
+  { value: 'COSMETIC', label: i18n.t('shop:itemType.COSMETIC') },
+  { value: 'MACHINE', label: i18n.t('shop:itemType.MACHINE') },
 ]
 
 export const CURRENCY_OPTIONS = [
-  { value: 'DUST', label: 'Poussière' },
-  { value: 'GOLD', label: 'Or' },
+  { value: 'DUST', label: i18n.t('shop:currency.DUST') },
+  { value: 'GOLD', label: i18n.t('shop:currency.GOLD') },
 ]
 
 // Types

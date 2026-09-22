@@ -1,0 +1,90 @@
+{
+  "VAMPIRISM": {
+    "name": "Vampirism",
+    "describe": "Below 50% HP, its lifesteal is doubled."
+  },
+  "AEGIS": {
+    "name": "Aegis",
+    "describe": "{{value}}% chance to ignore an attack."
+  },
+  "BANNER": {
+    "name": "Banner",
+    "describe": "+{{value}}% ATK to the whole team."
+  },
+  "RIPOSTE": {
+    "name": "Riposte",
+    "describe": "Reflects {{value}}% of damage taken."
+  },
+  "REBIRTH": {
+    "name": "Rebirth",
+    "describe": "Revives once at {{value}}% HP."
+  },
+  "EXECUTION": {
+    "name": "Execution",
+    "describe": "+{{value}}% damage against targets under 30% HP."
+  },
+  "VIGOR": {
+    "name": "Second Wind",
+    "describe": "The first time its HP drops below 50% (even on a hit that would normally be fatal, which is then cancelled), it recovers {{value}}% of its max HP."
+  },
+  "HASTE": {
+    "name": "Haste",
+    "describe": "Every 3 actions, it acts again immediately."
+  },
+  "FORTIFY": {
+    "name": "Fortification",
+    "describe": "Each hit taken grants +{{value}}% DEF, stacking up to 5 times."
+  },
+  "EMPOWER": {
+    "name": "Empowerment",
+    "describe": "Each attack landed grants +{{value}}% ATK, stacking up to 5 times."
+  },
+  "BULWARK": {
+    "name": "Bulwark",
+    "describe": "Absorbs a shield worth {{value}}% of max HP."
+  },
+  "FURY": {
+    "name": "Fury",
+    "describe": "+{{value}}% ATK below 50% HP."
+  },
+  "CRIT": {
+    "name": "Precision",
+    "describe": "Every 3 attacks, deals a guaranteed critical hit."
+  },
+  "PIERCE": {
+    "name": "Armor Piercer",
+    "describe": "The first hit on each target ignores all of its defense."
+  },
+  "NEMESIS": {
+    "name": "Vengeance",
+    "describe": "+{{value}}% ATK per fallen ally."
+  },
+  "RAMPART": {
+    "name": "Rampart",
+    "describe": "Reduces damage taken by {{value}}%."
+  },
+  "REGEN": {
+    "name": "Regeneration",
+    "describe": "Heals {{value}}% of max HP at the end of the turn."
+  },
+  "BLESSING": {
+    "name": "Blessing",
+    "describe": "Heals the weakest ally for {{value}}% of their max HP at the end of the turn."
+  },
+  "SANCTUARY": {
+    "name": "Sanctuary",
+    "describe": "Heals the whole team for {{value}}% of max HP at the end of the turn."
+  },
+  "BURN": {
+    "name": "Burn",
+    "describe": "Inflicts a burn: {{value}}% of ATK per turn for 2 turns."
+  },
+  "POISON": {
+    "name": "Poison",
+    "describe": "Poisons the target: {{value}}% of its max HP per turn for 2 turns."
+  },
+  "BLOODLUST": {
+    "name": "Bloodlust",
+    "describe": "Heals for {{value}}% of max HP when finishing off an enemy."
+  }
+}

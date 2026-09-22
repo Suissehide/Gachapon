@@ -1,3 +1,5 @@
+import i18n from '../i18n/index.ts'
+
 export type PassiveLabel = {
   name: string
   describe: (palier: number) => string
@@ -23,153 +25,152 @@ function clampPalierForPassiveDisplay(palier: number): number {
 
 export const PASSIVE_LABELS: Record<string, PassiveLabel> = {
   VAMPIRISM: {
-    name: 'Vampirisme',
+    name: i18n.t('passives:VAMPIRISM.name'),
     // La magnitude du vol de vie appartient désormais au stuff (lifesteal) :
     // ce passif ne dépend plus du palier, il apporte un doublement
     // conditionnel sous 50 % de PV.
-    describe: () => 'Sous 50 % de ses PV, son vol de vie est doublé.',
+    describe: () => i18n.t('passives:VAMPIRISM.describe'),
   },
   AEGIS: {
-    name: 'Égide',
+    name: i18n.t('passives:AEGIS.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return `${5 + 2 * p} % de chance d'ignorer une attaque.`
+      return i18n.t('passives:AEGIS.describe', { value: 5 + 2 * p })
     },
   },
   BANNER: {
-    name: 'Bannière',
+    name: i18n.t('passives:BANNER.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return `+${6 + 3 * p} % d'ATQ à toute l'équipe.`
+      return i18n.t('passives:BANNER.describe', { value: 6 + 3 * p })
     },
   },
   RIPOSTE: {
-    name: 'Riposte',
+    name: i18n.t('passives:RIPOSTE.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return `Renvoie ${8 + 4 * p} % des dégâts subis.`
+      return i18n.t('passives:RIPOSTE.describe', { value: 8 + 4 * p })
     },
   },
   REBIRTH: {
-    name: 'Renaissance',
+    name: i18n.t('passives:REBIRTH.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return `Ressuscite une fois à ${20 + 5 * p} % de PV.`
+      return i18n.t('passives:REBIRTH.describe', { value: 20 + 5 * p })
     },
   },
   EXECUTION: {
-    name: 'Exécution',
+    name: i18n.t('passives:EXECUTION.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return `+${20 + 5 * p} % de dégâts sous 30 % de PV cible.`
+      return i18n.t('passives:EXECUTION.describe', { value: 20 + 5 * p })
     },
   },
   VIGOR: {
-    name: 'Second souffle',
+    name: i18n.t('passives:VIGOR.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return `La première fois que ses PV passent sous 50 % (y compris sur un coup normalement fatal, alors annulé), il récupère ${20 + 4 * p} % de ses PV max.`
+      return i18n.t('passives:VIGOR.describe', { value: 20 + 4 * p })
     },
   },
   HASTE: {
-    name: 'Célérité',
+    name: i18n.t('passives:HASTE.name'),
     // La cadence est fixe (toutes les 3 actions), plus de palier.
-    describe: () => 'Toutes les 3 actions, il rejoue immédiatement.',
+    describe: () => i18n.t('passives:HASTE.describe'),
   },
   FORTIFY: {
-    name: 'Fortification',
+    name: i18n.t('passives:FORTIFY.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return `Chaque coup encaissé lui donne +${4 + 2 * p} % de défense, cumulable 5 fois.`
+      return i18n.t('passives:FORTIFY.describe', { value: 4 + 2 * p })
     },
   },
   EMPOWER: {
-    name: 'Puissance',
+    name: i18n.t('passives:EMPOWER.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return `Chaque attaque portée lui donne +${3 + p} % d'attaque, cumulable 5 fois.`
+      return i18n.t('passives:EMPOWER.describe', { value: 3 + p })
     },
   },
   BULWARK: {
-    name: 'Bouclier',
+    name: i18n.t('passives:BULWARK.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return `Absorbe un bouclier de ${12 + 3 * p} % des PV max.`
+      return i18n.t('passives:BULWARK.describe', { value: 12 + 3 * p })
     },
   },
   FURY: {
-    name: 'Furie',
+    name: i18n.t('passives:FURY.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return `+${12 + 4 * p} % d'ATQ sous 50 % de PV.`
+      return i18n.t('passives:FURY.describe', { value: 12 + 4 * p })
     },
   },
   CRIT: {
-    name: 'Précision',
+    name: i18n.t('passives:CRIT.name'),
     // La magnitude du critique appartient désormais aux stats (critRate/critDmg) :
     // ce passif ne dépend plus du palier, il apporte la certitude.
-    describe: () => 'Toutes les 3 attaques, inflige un coup critique garanti.',
+    describe: () => i18n.t('passives:CRIT.describe'),
   },
   PIERCE: {
-    name: 'Perce-armure',
+    name: i18n.t('passives:PIERCE.name'),
     // Ne dépend plus du palier : le premier coup ignore toute la défense.
-    describe: () =>
-      'Le premier coup porté à chaque cible ignore toute sa défense.',
+    describe: () => i18n.t('passives:PIERCE.describe'),
   },
   NEMESIS: {
-    name: 'Vengeance',
+    name: i18n.t('passives:NEMESIS.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return `+${6 + 2 * p} % d'ATQ par allié tombé.`
+      return i18n.t('passives:NEMESIS.describe', { value: 6 + 2 * p })
     },
   },
   RAMPART: {
-    name: 'Rempart',
+    name: i18n.t('passives:RAMPART.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return `Réduit de ${6 + 2 * p} % les dégâts subis.`
+      return i18n.t('passives:RAMPART.describe', { value: 6 + 2 * p })
     },
   },
   REGEN: {
-    name: 'Régénération',
+    name: i18n.t('passives:REGEN.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return `Soigne ${4 + 2 * p} % des PV max en fin de tour.`
+      return i18n.t('passives:REGEN.describe', { value: 4 + 2 * p })
     },
   },
   BLESSING: {
-    name: 'Bénédiction',
+    name: i18n.t('passives:BLESSING.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return `Soigne l'allié le plus faible de ${6 + 2 * p} % de ses PV max en fin de tour.`
+      return i18n.t('passives:BLESSING.describe', { value: 6 + 2 * p })
     },
   },
   SANCTUARY: {
-    name: 'Sanctuaire',
+    name: i18n.t('passives:SANCTUARY.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return `Soigne toute l'équipe de ${3 + p} % des PV max en fin de tour.`
+      return i18n.t('passives:SANCTUARY.describe', { value: 3 + p })
     },
   },
   BURN: {
-    name: 'Brûlure',
+    name: i18n.t('passives:BURN.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return `Inflige une brûlure : ${15 + 5 * p} % de l'ATQ par tour pendant 2 tours.`
+      return i18n.t('passives:BURN.describe', { value: 15 + 5 * p })
     },
   },
   POISON: {
-    name: 'Poison',
+    name: i18n.t('passives:POISON.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return `Empoisonne la cible : ${4 + 2 * p} % de ses PV max par tour pendant 2 tours.`
+      return i18n.t('passives:POISON.describe', { value: 4 + 2 * p })
     },
   },
   BLOODLUST: {
-    name: 'Soif de sang',
+    name: i18n.t('passives:BLOODLUST.name'),
     describe: (palier) => {
       const p = clampPalierForPassiveDisplay(palier)
-      return `Se soigne de ${15 + 5 * p} % des PV max en éliminant un ennemi.`
+      return i18n.t('passives:BLOODLUST.describe', { value: 15 + 5 * p })
     },
   },
 }

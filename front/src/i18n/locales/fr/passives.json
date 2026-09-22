@@ -1,0 +1,90 @@
+{
+  "VAMPIRISM": {
+    "name": "Vampirisme",
+    "describe": "Sous 50 % de ses PV, son vol de vie est doublé."
+  },
+  "AEGIS": {
+    "name": "Égide",
+    "describe": "{{value}} % de chance d'ignorer une attaque."
+  },
+  "BANNER": {
+    "name": "Bannière",
+    "describe": "+{{value}} % d'ATQ à toute l'équipe."
+  },
+  "RIPOSTE": {
+    "name": "Riposte",
+    "describe": "Renvoie {{value}} % des dégâts subis."
+  },
+  "REBIRTH": {
+    "name": "Renaissance",
+    "describe": "Ressuscite une fois à {{value}} % de PV."
+  },
+  "EXECUTION": {
+    "name": "Exécution",
+    "describe": "+{{value}} % de dégâts sous 30 % de PV cible."
+  },
+  "VIGOR": {
+    "name": "Second souffle",
+    "describe": "La première fois que ses PV passent sous 50 % (y compris sur un coup normalement fatal, alors annulé), il récupère {{value}} % de ses PV max."
+  },
+  "HASTE": {
+    "name": "Célérité",
+    "describe": "Toutes les 3 actions, il rejoue immédiatement."
+  },
+  "FORTIFY": {
+    "name": "Fortification",
+    "describe": "Chaque coup encaissé lui donne +{{value}} % de défense, cumulable 5 fois."
+  },
+  "EMPOWER": {
+    "name": "Puissance",
+    "describe": "Chaque attaque portée lui donne +{{value}} % d'attaque, cumulable 5 fois."
+  },
+  "BULWARK": {
+    "name": "Bouclier",
+    "describe": "Absorbe un bouclier de {{value}} % des PV max."
+  },
+  "FURY": {
+    "name": "Furie",
+    "describe": "+{{value}} % d'ATQ sous 50 % de PV."
+  },
+  "CRIT": {
+    "name": "Précision",
+    "describe": "Toutes les 3 attaques, inflige un coup critique garanti."
+  },
+  "PIERCE": {
+    "name": "Perce-armure",
+    "describe": "Le premier coup porté à chaque cible ignore toute sa défense."
+  },
+  "NEMESIS": {
+    "name": "Vengeance",
+    "describe": "+{{value}} % d'ATQ par allié tombé."
+  },
+  "RAMPART": {
+    "name": "Rempart",
+    "describe": "Réduit de {{value}} % les dégâts subis."
+  },
+  "REGEN": {
+    "name": "Régénération",
+    "describe": "Soigne {{value}} % des PV max en fin de tour."
+  },
+  "BLESSING": {
+    "name": "Bénédiction",
+    "describe": "Soigne l'allié le plus faible de {{value}} % de ses PV max en fin de tour."
+  },
+  "SANCTUARY": {
+    "name": "Sanctuaire",
+    "describe": "Soigne toute l'équipe de {{value}} % des PV max en fin de tour."
+  },
+  "BURN": {
+    "name": "Brûlure",
+    "describe": "Inflige une brûlure : {{value}} % de l'ATQ par tour pendant 2 tours."
+  },
+  "POISON": {
+    "name": "Poison",
+    "describe": "Empoisonne la cible : {{value}} % de ses PV max par tour pendant 2 tours."
+  },
+  "BLOODLUST": {
+    "name": "Soif de sang",
+    "describe": "Se soigne de {{value}} % des PV max en éliminant un ennemi."
+  }
+}

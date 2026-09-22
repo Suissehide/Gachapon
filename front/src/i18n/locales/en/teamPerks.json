@@ -1,0 +1,26 @@
+{
+  "meta": {
+    "loot": "Token flow",
+    "raid": "Raid cadence",
+    "xp": "XP banner",
+    "forge": "Shared forge"
+  },
+  "value": {
+    "raidNone": "—",
+    "raid_one": "+{{value}} attack",
+    "raid_other": "+{{value}} attacks",
+    "percentDown": "−{{value}}%",
+    "percentUp": "+{{value}}%"
+  },
+  "description": {
+    "lootActive": "Token regeneration +{{value}}% for each member",
+    "lootInactive": "Speeds up token regeneration for each member",
+    "raidActive_one": "+{{value}} raid attack per member and per day",
+    "raidActive_other": "+{{value}} raid attacks per member and per day",
+    "raidInactive": "One more raid attack per day and per member, every two ranks",
+    "xpActive": "+{{value}}% campaign XP for each member",
+    "xpInactive": "Increases campaign XP for each member",
+    "forgeActive": "Equipment upgrade cost −{{value}}%",
+    "forgeInactive": "Reduces the equipment upgrade cost"
+  }
+}

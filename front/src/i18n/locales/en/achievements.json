@@ -1,0 +1,13 @@
+{
+  "family": {
+    "pulls": "Pulls",
+    "dust": "Economy",
+    "collectionRarity": "Collection — Rarities",
+    "collectionVariants": "Collection — Variants",
+    "collectionComplete": "Collection — Completion",
+    "collectionSets": "Collection — Sets",
+    "streak": "Loyalty",
+    "machines": "Machines",
+    "hidden": "Hidden achievements"
+  }
+}

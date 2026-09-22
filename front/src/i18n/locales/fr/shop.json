@@ -1,0 +1,13 @@
+{
+  "itemType": {
+    "TOKEN_PACK": "Token Pack",
+    "ENERGY_PACK": "Pack d'énergie",
+    "BOOST": "Boost",
+    "COSMETIC": "Cosmétique",
+    "MACHINE": "Machine"
+  },
+  "currency": {
+    "DUST": "Poussière",
+    "GOLD": "Or"
+  }
+}

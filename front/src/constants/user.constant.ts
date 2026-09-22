@@ -1,9 +1,13 @@
+import i18n from '../i18n/index.ts'
 import { toSelectOptions } from '../libs/utils.ts'
 
+// Résolu une fois au chargement du module — sûr ici parce que
+// `useLocale().switchTo` fait toujours un rechargement dur de la page (voir
+// `i18n/useLocale.ts`).
 export const ROLE = {
-  NONE: 'Aucun',
-  USER: 'Utilisateur',
-  ADMIN: 'Administrateur',
+  NONE: i18n.t('admin:role.NONE'),
+  USER: i18n.t('admin:role.USER'),
+  ADMIN: i18n.t('admin:role.ADMIN'),
 }
 
 export const ROLE_OPTIONS = toSelectOptions(ROLE)

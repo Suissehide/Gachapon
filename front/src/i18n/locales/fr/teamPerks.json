@@ -1,0 +1,26 @@
+{
+  "meta": {
+    "loot": "Flux de jetons",
+    "raid": "Cadence de raid",
+    "xp": "Bannière d'XP",
+    "forge": "Forge commune"
+  },
+  "value": {
+    "raidNone": "—",
+    "raid_one": "+{{value}} attaque",
+    "raid_other": "+{{value}} attaques",
+    "percentDown": "−{{value}} %",
+    "percentUp": "+{{value}} %"
+  },
+  "description": {
+    "lootActive": "Régénération de jetons +{{value}} % pour chaque membre",
+    "lootInactive": "Accélère la régénération de jetons de chaque membre",
+    "raidActive_one": "+{{value}} attaque de raid par membre et par jour",
+    "raidActive_other": "+{{value}} attaques de raid par membre et par jour",
+    "raidInactive": "Une attaque de raid de plus par jour et par membre, tous les deux rangs",
+    "xpActive": "+{{value}} % d'XP de campagne pour chaque membre",
+    "xpInactive": "Augmente l'XP de campagne de chaque membre",
+    "forgeActive": "Coût d'amélioration d'équipement −{{value}} %",
+    "forgeInactive": "Réduit le coût d'amélioration d'équipement"
+  }
+}

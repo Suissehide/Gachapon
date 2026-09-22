@@ -1,67 +1,101 @@
+import i18n, { currentLocale } from '../i18n/index.ts'
+import { formatNumber } from '../libs/utils.ts'
+
+// Résolu une fois au chargement du module — sûr ici parce que
+// `useLocale().switchTo` fait toujours un rechargement dur de la page (voir
+// `i18n/useLocale.ts`).
 export const EFFECT_DESCRIPTIONS: Record<string, string> = {
-  REGEN: 'Réduit le temps de régénération des jetons',
-  LUCK: 'Multiplie les chances de tirer une carte Rare ou mieux',
-  DUST_HARVEST: 'Augmente la poussière obtenue au recyclage',
-  TOKEN_VAULT: 'Augmente la capacité max de jetons',
-  FREE_PULL_CHANCE: "Chance d'obtenir un tirage gratuit",
-  MULTI_TOKEN_CHANCE: 'Chance de gagner plusieurs jetons à la fois',
-  GOLDEN_BALL_CHANCE: "Chance d'obtenir une boule dorée (rareté garantie)",
-  SHOP_DISCOUNT: 'Réduction sur les prix en poussière de la boutique',
-  PULL_XP_BONUS: "Bonus d'XP par tirage",
-  PITY_BOOST: 'Réduction du seuil de pitié',
-  VARIANT_LUCK: 'Augmente les chances de variantes Brillant/Holo',
-  DAILY_SHOP_SLOT: 'Emplacement bonus à la boutique du jour',
-  WISHLIST_SLOTS: 'Emplacements de vœu supplémentaires (2 de base)',
-  PC_VAULT: "Augmente le stock max d'énergie",
-  PC_REGEN: "Accélère la régénération de l'énergie",
-  SWEEP_COST: 'Réduit le coût du farm',
-  GOLD_BONUS: "Bonus d'or sur les victoires",
-  COMBAT_XP_BONUS: "Bonus d'XP de combat",
-  DROP_BONUS: "Chance d'équipement bonus en combat",
-  UPGRADE_DUST_DISCOUNT:
-    "Réduit le coût en poussière d'amélioration des cartes",
-  GOLD_SHOP_DISCOUNT: 'Réduction sur les prix en or de la boutique',
-  DAILY_SHOP_LUCK: 'Plus de cartes rares dans ta boutique du jour',
-  EQUIP_UPGRADE_DISCOUNT: "Réduit le coût en or d'amélioration des équipements",
-  SALVAGE_BONUS: "Plus d'or au recyclage des équipements",
-  TOKEN_OVERFLOW_DUST: 'Poussière rendue par jeton régénéré au-delà du plafond',
-  ENERGY_PACK_CAP: "Relève la limite journalière d'achat de packs d'énergie",
-  WISHLIST_PULL_CHANCE:
-    'Chance qu’un tirage donne une carte souhaitée de même rareté',
+  REGEN: i18n.t('skills:effectDescriptions.REGEN'),
+  LUCK: i18n.t('skills:effectDescriptions.LUCK'),
+  DUST_HARVEST: i18n.t('skills:effectDescriptions.DUST_HARVEST'),
+  TOKEN_VAULT: i18n.t('skills:effectDescriptions.TOKEN_VAULT'),
+  FREE_PULL_CHANCE: i18n.t('skills:effectDescriptions.FREE_PULL_CHANCE'),
+  MULTI_TOKEN_CHANCE: i18n.t('skills:effectDescriptions.MULTI_TOKEN_CHANCE'),
+  GOLDEN_BALL_CHANCE: i18n.t('skills:effectDescriptions.GOLDEN_BALL_CHANCE'),
+  SHOP_DISCOUNT: i18n.t('skills:effectDescriptions.SHOP_DISCOUNT'),
+  PULL_XP_BONUS: i18n.t('skills:effectDescriptions.PULL_XP_BONUS'),
+  PITY_BOOST: i18n.t('skills:effectDescriptions.PITY_BOOST'),
+  VARIANT_LUCK: i18n.t('skills:effectDescriptions.VARIANT_LUCK'),
+  DAILY_SHOP_SLOT: i18n.t('skills:effectDescriptions.DAILY_SHOP_SLOT'),
+  WISHLIST_SLOTS: i18n.t('skills:effectDescriptions.WISHLIST_SLOTS'),
+  PC_VAULT: i18n.t('skills:effectDescriptions.PC_VAULT'),
+  PC_REGEN: i18n.t('skills:effectDescriptions.PC_REGEN'),
+  SWEEP_COST: i18n.t('skills:effectDescriptions.SWEEP_COST'),
+  GOLD_BONUS: i18n.t('skills:effectDescriptions.GOLD_BONUS'),
+  COMBAT_XP_BONUS: i18n.t('skills:effectDescriptions.COMBAT_XP_BONUS'),
+  DROP_BONUS: i18n.t('skills:effectDescriptions.DROP_BONUS'),
+  UPGRADE_DUST_DISCOUNT: i18n.t(
+    'skills:effectDescriptions.UPGRADE_DUST_DISCOUNT',
+  ),
+  GOLD_SHOP_DISCOUNT: i18n.t('skills:effectDescriptions.GOLD_SHOP_DISCOUNT'),
+  DAILY_SHOP_LUCK: i18n.t('skills:effectDescriptions.DAILY_SHOP_LUCK'),
+  EQUIP_UPGRADE_DISCOUNT: i18n.t(
+    'skills:effectDescriptions.EQUIP_UPGRADE_DISCOUNT',
+  ),
+  SALVAGE_BONUS: i18n.t('skills:effectDescriptions.SALVAGE_BONUS'),
+  TOKEN_OVERFLOW_DUST: i18n.t('skills:effectDescriptions.TOKEN_OVERFLOW_DUST'),
+  ENERGY_PACK_CAP: i18n.t('skills:effectDescriptions.ENERGY_PACK_CAP'),
+  WISHLIST_PULL_CHANCE: i18n.t(
+    'skills:effectDescriptions.WISHLIST_PULL_CHANCE',
+  ),
 }
 
 export const EFFECT_TYPES = Object.keys(EFFECT_DESCRIPTIONS)
 
 export const EFFECT_OPTIONS = EFFECT_TYPES.map((t) => ({ value: t, label: t }))
 
+// Les clés `_one`/`_other` (voir skills.json) reproduisent EXACTEMENT le
+// seuil `v > 1` du code d'origine : au singulier pour v <= 1 (donc aussi
+// pour v = 0), pluriel au-delà — i18next choisit `_one` pour v = 0 ou 1 en
+// français (catégorie CLDR "one" = i ∈ {0,1}) et seulement pour v = 1 en
+// anglais, ce qui correspond à ce comportement dans les deux langues.
 export const EFFECT_FORMATTERS: Record<string, (v: number) => string> = {
-  REGEN: (v) => `−${v} min`,
-  LUCK: (v) => `×${(1 + v / 100).toFixed(2).replace('.', ',')}`,
-  DUST_HARVEST: (v) => `+${v} %`,
-  TOKEN_VAULT: (v) => `+${v} jeton${v > 1 ? 's' : ''}`,
-  FREE_PULL_CHANCE: (v) => `${v} %`,
-  MULTI_TOKEN_CHANCE: (v) => `${v} %`,
-  GOLDEN_BALL_CHANCE: (v) => `${v} %`,
-  SHOP_DISCOUNT: (v) => `−${v} %`,
-  PULL_XP_BONUS: (v) => `+${v} %`,
-  PITY_BOOST: (v) => `−${v} tirage${v > 1 ? 's' : ''}`,
-  VARIANT_LUCK: (v) => `+${v} %`,
-  DAILY_SHOP_SLOT: (v) => `+${v}`,
-  WISHLIST_SLOTS: (v) => `+${v} vœu${v > 1 ? 'x' : ''}`,
-  PC_VAULT: (v) => `+${v} énergie`,
-  PC_REGEN: (v) => `−${v} s`,
-  SWEEP_COST: (v) => `−${v} énergie`,
-  GOLD_BONUS: (v) => `+${v} %`,
-  COMBAT_XP_BONUS: (v) => `+${v} %`,
-  DROP_BONUS: (v) => `+${v} %`,
-  UPGRADE_DUST_DISCOUNT: (v) => `−${v} %`,
-  GOLD_SHOP_DISCOUNT: (v) => `−${v} %`,
-  DAILY_SHOP_LUCK: (v) => `+${v} %`,
-  EQUIP_UPGRADE_DISCOUNT: (v) => `−${v} %`,
-  SALVAGE_BONUS: (v) => `+${v} %`,
-  TOKEN_OVERFLOW_DUST: (v) => `${v} poussière / jeton`,
-  ENERGY_PACK_CAP: (v) => `+${v} achat${v > 1 ? 's' : ''} / jour`,
-  WISHLIST_PULL_CHANCE: (v) => `+${v} %`,
+  REGEN: (v) => i18n.t('skills:formatters.REGEN', { value: v }),
+  LUCK: (v) =>
+    i18n.t('skills:formatters.LUCK', {
+      value: formatNumber(1 + v / 100, currentLocale(), {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+    }),
+  DUST_HARVEST: (v) => i18n.t('skills:formatters.DUST_HARVEST', { value: v }),
+  TOKEN_VAULT: (v) => i18n.t('skills:formatters.TOKEN_VAULT', { count: v }),
+  FREE_PULL_CHANCE: (v) =>
+    i18n.t('skills:formatters.FREE_PULL_CHANCE', { value: v }),
+  MULTI_TOKEN_CHANCE: (v) =>
+    i18n.t('skills:formatters.MULTI_TOKEN_CHANCE', { value: v }),
+  GOLDEN_BALL_CHANCE: (v) =>
+    i18n.t('skills:formatters.GOLDEN_BALL_CHANCE', { value: v }),
+  SHOP_DISCOUNT: (v) => i18n.t('skills:formatters.SHOP_DISCOUNT', { value: v }),
+  PULL_XP_BONUS: (v) => i18n.t('skills:formatters.PULL_XP_BONUS', { value: v }),
+  PITY_BOOST: (v) => i18n.t('skills:formatters.PITY_BOOST', { count: v }),
+  VARIANT_LUCK: (v) => i18n.t('skills:formatters.VARIANT_LUCK', { value: v }),
+  DAILY_SHOP_SLOT: (v) =>
+    i18n.t('skills:formatters.DAILY_SHOP_SLOT', { value: v }),
+  WISHLIST_SLOTS: (v) =>
+    i18n.t('skills:formatters.WISHLIST_SLOTS', { count: v }),
+  PC_VAULT: (v) => i18n.t('skills:formatters.PC_VAULT', { value: v }),
+  PC_REGEN: (v) => i18n.t('skills:formatters.PC_REGEN', { value: v }),
+  SWEEP_COST: (v) => i18n.t('skills:formatters.SWEEP_COST', { value: v }),
+  GOLD_BONUS: (v) => i18n.t('skills:formatters.GOLD_BONUS', { value: v }),
+  COMBAT_XP_BONUS: (v) =>
+    i18n.t('skills:formatters.COMBAT_XP_BONUS', { value: v }),
+  DROP_BONUS: (v) => i18n.t('skills:formatters.DROP_BONUS', { value: v }),
+  UPGRADE_DUST_DISCOUNT: (v) =>
+    i18n.t('skills:formatters.UPGRADE_DUST_DISCOUNT', { value: v }),
+  GOLD_SHOP_DISCOUNT: (v) =>
+    i18n.t('skills:formatters.GOLD_SHOP_DISCOUNT', { value: v }),
+  DAILY_SHOP_LUCK: (v) =>
+    i18n.t('skills:formatters.DAILY_SHOP_LUCK', { value: v }),
+  EQUIP_UPGRADE_DISCOUNT: (v) =>
+    i18n.t('skills:formatters.EQUIP_UPGRADE_DISCOUNT', { value: v }),
+  SALVAGE_BONUS: (v) => i18n.t('skills:formatters.SALVAGE_BONUS', { value: v }),
+  TOKEN_OVERFLOW_DUST: (v) =>
+    i18n.t('skills:formatters.TOKEN_OVERFLOW_DUST', { value: v }),
+  ENERGY_PACK_CAP: (v) =>
+    i18n.t('skills:formatters.ENERGY_PACK_CAP', { count: v }),
+  WISHLIST_PULL_CHANCE: (v) =>
+    i18n.t('skills:formatters.WISHLIST_PULL_CHANCE', { value: v }),
 }
 
 export function formatEffect(effectType: string, value: number): string {

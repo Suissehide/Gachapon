@@ -15,8 +15,8 @@ import { Coins, Hammer, Star, Swords } from 'lucide-react'
 import type { ComponentType } from 'react'
 
 import type { TeamPerkKey, TeamPerkState } from '../api/teamProgression.api.ts'
-import { currentLocale } from '../i18n/index.ts'
-import { formatNumber, plural } from '../libs/utils.ts'
+import i18n, { currentLocale } from '../i18n/index.ts'
+import { formatNumber } from '../libs/utils.ts'
 
 export type TeamPerkMeta = {
   name: string
@@ -34,11 +34,30 @@ export type TeamPerkMeta = {
 // accélération de la régénération de jetons — d'où le nom affiché, qui lui
 // dit vrai. Renommer la clé demanderait une migration de données pour un
 // gain nul côté joueur : c'est le libellé qui compte, et il est ici.
+// Noms résolus une fois au chargement du module — sûr ici parce que
+// `useLocale().switchTo` fait toujours un rechargement dur de la page (voir
+// `i18n/useLocale.ts`).
 export const PERK_META: Record<TeamPerkKey, TeamPerkMeta> = {
-  loot: { name: 'Flux de jetons', color: 'var(--perk-loot)', Icon: Coins },
-  raid: { name: 'Cadence de raid', color: 'var(--perk-raid)', Icon: Swords },
-  xp: { name: "Bannière d'XP", color: 'var(--perk-xp)', Icon: Star },
-  forge: { name: 'Forge commune', color: 'var(--perk-forge)', Icon: Hammer },
+  loot: {
+    name: i18n.t('teamPerks:meta.loot'),
+    color: 'var(--perk-loot)',
+    Icon: Coins,
+  },
+  raid: {
+    name: i18n.t('teamPerks:meta.raid'),
+    color: 'var(--perk-raid)',
+    Icon: Swords,
+  },
+  xp: {
+    name: i18n.t('teamPerks:meta.xp'),
+    color: 'var(--perk-xp)',
+    Icon: Star,
+  },
+  forge: {
+    name: i18n.t('teamPerks:meta.forge'),
+    color: 'var(--perk-forge)',
+    Icon: Hammer,
+  },
 }
 
 // `currentLocale()` lu ici, au moment du formatage — pas mémorisé au niveau
@@ -82,10 +101,14 @@ const formatEffect = (n: number) =>
  */
 export function perkValue(key: TeamPerkKey, effect: number): string {
   if (key === 'raid') {
-    return effect > 0 ? `+${effect} attaque${plural(effect)}` : '—'
+    return effect > 0
+      ? i18n.t('teamPerks:value.raid', { value: effect, count: effect })
+      : i18n.t('teamPerks:value.raidNone')
   }
   const value = formatEffect(effect)
-  return key === 'forge' ? `−${value} %` : `+${value} %`
+  return key === 'forge'
+    ? i18n.t('teamPerks:value.percentDown', { value })
+    : i18n.t('teamPerks:value.percentUp', { value })
 }
 
 /**
@@ -115,19 +138,22 @@ export function perkDescription(perk: TeamPerkState): string {
   switch (perk.key) {
     case 'loot':
       return perk.rank > 0
-        ? `Régénération de jetons +${value} % pour chaque membre`
-        : 'Accélère la régénération de jetons de chaque membre'
+        ? i18n.t('teamPerks:description.lootActive', { value })
+        : i18n.t('teamPerks:description.lootInactive')
     case 'raid':
       return perk.effect > 0
-        ? `+${value} attaque${plural(perk.effect)} de raid par membre et par jour`
-        : 'Une attaque de raid de plus par jour et par membre, tous les deux rangs'
+        ? i18n.t('teamPerks:description.raidActive', {
+            value,
+            count: perk.effect,
+          })
+        : i18n.t('teamPerks:description.raidInactive')
     case 'xp':
       return perk.rank > 0
-        ? `+${value} % d'XP de campagne pour chaque membre`
-        : "Augmente l'XP de campagne de chaque membre"
+        ? i18n.t('teamPerks:description.xpActive', { value })
+        : i18n.t('teamPerks:description.xpInactive')
     case 'forge':
       return perk.rank > 0
-        ? `Coût d'amélioration d'équipement −${value} %`
-        : "Réduit le coût d'amélioration d'équipement"
+        ? i18n.t('teamPerks:description.forgeActive', { value })
+        : i18n.t('teamPerks:description.forgeInactive')
   }
 }

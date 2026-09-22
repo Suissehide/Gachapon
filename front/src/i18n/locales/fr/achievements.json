@@ -1,0 +1,13 @@
+{
+  "family": {
+    "pulls": "Tirages",
+    "dust": "Économie",
+    "collectionRarity": "Collection — Raretés",
+    "collectionVariants": "Collection — Variantes",
+    "collectionComplete": "Collection — Complétion",
+    "collectionSets": "Collection — Sets",
+    "streak": "Fidélité",
+    "machines": "Machines",
+    "hidden": "Succès cachés"
+  }
+}

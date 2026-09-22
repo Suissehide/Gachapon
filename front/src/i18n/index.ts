@@ -1,14 +1,30 @@
 import i18next from 'i18next'
 import { initReactI18next } from 'react-i18next'
 
+import achievementsEn from './locales/en/achievements.json'
+import adminEn from './locales/en/admin.json'
+import authEn from './locales/en/auth.json'
+import combatEn from './locales/en/combat.json'
 import commonEn from './locales/en/common.json'
 import errorsEn from './locales/en/errors.json'
 import layoutEn from './locales/en/layout.json'
 import notificationsEn from './locales/en/notifications.json'
+import passivesEn from './locales/en/passives.json'
+import shopEn from './locales/en/shop.json'
+import skillsEn from './locales/en/skills.json'
+import teamPerksEn from './locales/en/teamPerks.json'
+import achievementsFr from './locales/fr/achievements.json'
+import adminFr from './locales/fr/admin.json'
+import authFr from './locales/fr/auth.json'
+import combatFr from './locales/fr/combat.json'
 import commonFr from './locales/fr/common.json'
 import errorsFr from './locales/fr/errors.json'
 import layoutFr from './locales/fr/layout.json'
 import notificationsFr from './locales/fr/notifications.json'
+import passivesFr from './locales/fr/passives.json'
+import shopFr from './locales/fr/shop.json'
+import skillsFr from './locales/fr/skills.json'
+import teamPerksFr from './locales/fr/teamPerks.json'
 
 /** Langues supportées, dans l'ordre d'affichage voulu pour un futur sélecteur. */
 export const SUPPORTED_LOCALES = ['fr', 'en'] as const
@@ -117,17 +133,46 @@ void i18next.use(initReactI18next).init({
       errors: errorsFr,
       notifications: notificationsFr,
       layout: layoutFr,
+      passives: passivesFr,
+      achievements: achievementsFr,
+      skills: skillsFr,
+      teamPerks: teamPerksFr,
+      shop: shopFr,
+      admin: adminFr,
+      auth: authFr,
+      combat: combatFr,
     },
     en: {
       common: commonEn,
       errors: errorsEn,
       notifications: notificationsEn,
       layout: layoutEn,
+      passives: passivesEn,
+      achievements: achievementsEn,
+      skills: skillsEn,
+      teamPerks: teamPerksEn,
+      shop: shopEn,
+      admin: adminEn,
+      auth: authEn,
+      combat: combatEn,
     },
   },
   lng: localeFromPath(window.location.pathname),
   defaultNS: 'common',
-  ns: ['common', 'errors', 'notifications', 'layout'],
+  ns: [
+    'common',
+    'errors',
+    'notifications',
+    'layout',
+    'passives',
+    'achievements',
+    'skills',
+    'teamPerks',
+    'shop',
+    'admin',
+    'auth',
+    'combat',
+  ],
   interpolation: {
     // React échappe déjà le rendu — un double échappement casserait les
     // apostrophes/accents dans les traductions.

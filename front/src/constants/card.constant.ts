@@ -8,6 +8,8 @@ import {
   Sun,
 } from 'lucide-react'
 
+import i18n from '../i18n/index.ts'
+
 export const RARITY_OPTIONS = [
   { value: 'COMMON', label: 'Common' },
   { value: 'UNCOMMON', label: 'Uncommon' },
@@ -57,13 +59,16 @@ export const ELEMENT_ORDER: CardElement[] = [
   'DARK',
 ]
 
+// Résolu une fois au chargement du module — sûr ici parce que
+// `useLocale().switchTo` fait toujours un rechargement dur de la page (voir
+// `i18n/useLocale.ts`).
 export const ELEMENT_LABELS: Record<CardElement, string> = {
-  FIRE: 'Feu',
-  WATER: 'Eau',
-  NATURE: 'Nature',
-  EARTH: 'Terre',
-  LIGHT: 'Lumière',
-  DARK: 'Ténèbres',
+  FIRE: i18n.t('common:elements.fire'),
+  WATER: i18n.t('common:elements.water'),
+  NATURE: i18n.t('common:elements.nature'),
+  EARTH: i18n.t('common:elements.earth'),
+  LIGHT: i18n.t('common:elements.light'),
+  DARK: i18n.t('common:elements.dark'),
 }
 
 /** Couleur d'accent (hex) par élément — pastilles et badges. */
