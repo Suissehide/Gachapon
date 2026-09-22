@@ -1,4 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
+import dayjs from 'dayjs'
 import { Ban, RefreshCw, Send, Trash2, UserPlus, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { type SyntheticEvent, useMemo, useRef, useState } from 'react'
@@ -213,7 +214,7 @@ export function InviteMemberPopup({ teamId, userRole, trigger }: Props) {
         size: 120,
         cell: ({ getValue }) => (
           <span className="text-text-light">
-            {new Date(getValue<string>()).toLocaleDateString('fr-FR')}
+            {dayjs(getValue<string>()).format('L')}
           </span>
         ),
       },

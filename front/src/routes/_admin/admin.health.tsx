@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import dayjs from 'dayjs'
 import { Activity, Database, HardDrive, Radio, Server } from 'lucide-react'
 
 import { AdminPageHeader } from '../../components/admin/shared/AdminPageHeader'
@@ -45,7 +46,7 @@ function AdminHealth() {
         title="Santé système"
         subtitle={
           dataUpdatedAt
-            ? `Dernière vérification : ${new Date(dataUpdatedAt).toLocaleTimeString('fr-FR')} — rafraîchi toutes les 15 s`
+            ? `Dernière vérification : ${dayjs(dataUpdatedAt).format('LT')} — rafraîchi toutes les 15 s`
             : 'Vérification en cours…'
         }
       />

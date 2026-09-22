@@ -2,7 +2,8 @@ import { Check, RotateCcw, Save, Sparkles, Swords, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { CAMPAIGN_TEAM_KEY } from '../../constants/combatTeam.constant.ts'
-import { cn } from '../../libs/utils.ts'
+import { currentLocale } from '../../i18n/index.ts'
+import { cn, formatNumber } from '../../libs/utils.ts'
 import {
   type UserCard,
   useUserCollection,
@@ -39,7 +40,7 @@ import {
 const MAX_TEAM_SIZE = 3
 
 function fmt(n: number): string {
-  return n.toLocaleString('fr-FR')
+  return formatNumber(n, currentLocale())
 }
 
 type Props = {

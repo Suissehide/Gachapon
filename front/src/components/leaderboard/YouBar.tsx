@@ -6,6 +6,8 @@ import type {
   CombatEntry,
   TeamEntry,
 } from '../../constants/leaderboard.constant'
+import { currentLocale } from '../../i18n/index.ts'
+import { formatNumber } from '../../libs/utils.ts'
 import { FoilAvatar } from '../profile/arcade/FoilAvatar'
 import { MedalRank } from './MedalRank'
 
@@ -30,7 +32,7 @@ type Props =
     }
 
 const ordinalFr = (n: number) => (n === 1 ? '1er' : `${n}e`)
-const fmt = (n: number) => n.toLocaleString('fr-FR')
+const fmt = (n: number) => formatNumber(n, currentLocale())
 
 function refAbove<E extends { rank: number }>(
   entry: E,

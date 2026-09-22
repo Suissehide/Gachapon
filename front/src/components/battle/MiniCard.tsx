@@ -2,11 +2,13 @@ import { Swords } from 'lucide-react'
 
 import type { TeamUnit } from '../../api/combat.api.ts'
 import type { CardElement } from '../../constants/card.constant.ts'
+import { currentLocale } from '../../i18n/index.ts'
+import { formatNumber } from '../../libs/utils.ts'
 import { computePower } from '../../utils/cardStats.ts'
 import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
 
 function fmt(n: number): string {
-  return n.toLocaleString('fr-FR')
+  return formatNumber(n, currentLocale())
 }
 
 // ── Mini card (used in dock + prep modal) ────────────────────────────────────

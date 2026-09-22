@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import dayjs from 'dayjs'
 import { CheckCircle2, Gift, Star, Target, Trophy } from 'lucide-react'
 
 import { PageHeader } from '../../components/shared/PageHeader'
@@ -21,7 +22,9 @@ export const Route = createFileRoute('/_authenticated/quests')({
   component: QuestsPage,
 })
 
-// Compute the date of the next Monday in UTC (e.g. "lundi 13 juillet").
+// Compute the date of the next Monday in UTC (e.g. "lundi 13 juillet" in
+// French, "Monday 13 July" in English — `dayjs.locale()` suit la locale du
+// site depuis main.tsx, voir le piège transverse du lot 2).
 // If today is already Monday, the next reset is one week away.
 function getNextMondayUTC(): string {
   const now = new Date()
@@ -30,12 +33,7 @@ function getNextMondayUTC(): string {
   const next = new Date(now)
   next.setUTCDate(now.getUTCDate() + daysUntil)
   next.setUTCHours(0, 0, 0, 0)
-  return next.toLocaleDateString('fr-FR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    timeZone: 'UTC',
-  })
+  return dayjs.utc(next).format('dddd D MMMM')
 }
 
 function QuestsPage() {

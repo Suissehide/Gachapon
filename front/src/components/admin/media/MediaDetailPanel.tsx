@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import {
   Check,
   Copy,
@@ -91,11 +92,9 @@ export function MediaDetailPanel({
     }
   }
   const sizeKb = (item.size / 1024).toFixed(0)
-  const date = new Date(item.lastModified).toLocaleDateString('fr-FR', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
+  // `dayjs.locale()` suit la locale du site depuis main.tsx (voir le piège
+  // transverse du lot 2) : ce format n'a plus besoin de connaître la langue.
+  const date = dayjs(item.lastModified).format('D MMM YYYY')
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(item.url)

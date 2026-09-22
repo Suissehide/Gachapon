@@ -2,6 +2,8 @@ import { Sparkles, Star, Swords } from 'lucide-react'
 
 import type { Card, CardVariant } from '../../api/collection.api.ts'
 import { describePassive } from '../../constants/passives.constant.ts'
+import { currentLocale } from '../../i18n/index.ts'
+import { formatNumber } from '../../libs/utils.ts'
 import { useCardEquipmentBonuses } from '../../queries/useEquipment.ts'
 import type { StatBonuses } from '../../utils/cardStats.ts'
 import { computePower, displayStats } from '../../utils/cardStats.ts'
@@ -106,6 +108,7 @@ export function CollectionCard({
   isEngaged,
   onClick,
 }: Props) {
+  const locale = currentLocale()
   // Bonus d'équipement de cette carte (vides si non possédée ou si l'équipement
   // n'est pas le nôtre — ex. collection d'un autre joueur).
   const bonuses = useCardEquipmentBonuses(userCardId ?? '')
@@ -144,7 +147,7 @@ export function CollectionCard({
         {isOwned && power !== null && (
           <span className="pointer-events-none absolute top-1.5 left-1/2 z-[6] inline-flex -translate-x-1/2 items-center gap-1 rounded-sm border-[0.5px] border-white bg-[#1b1726]/92 px-2 py-[3px] font-display text-[10px] font-extrabold leading-none tabular-nums text-white shadow-[0_2px_6px_rgba(27,23,38,0.45)]">
             <Swords className="h-2.5 w-2.5 text-primary" />
-            {power.toLocaleString('fr-FR')}
+            {formatNumber(power, locale)}
           </span>
         )}
 

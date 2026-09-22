@@ -3,7 +3,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { WishlistApi } from '../api/wishlist.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useToast } from '../hooks/useToast.ts'
+import { currentLocale } from '../i18n/index.ts'
 import { isApiError } from '../libs/httpErrorHandler.ts'
+import { formatNumber } from '../libs/utils.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 
 export type {
@@ -59,7 +61,7 @@ export const usePurchaseWishlist = () => {
       qc.invalidateQueries({ queryKey: ['collection'] })
       toast({
         title: result.card.name,
-        message: `Obtenue ! −${result.dustSpent.toLocaleString('fr-FR')} poussière`,
+        message: `Obtenue ! −${formatNumber(result.dustSpent, currentLocale())} poussière`,
         severity: TOAST_SEVERITY.SUCCESS,
       })
     },

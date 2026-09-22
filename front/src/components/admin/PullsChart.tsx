@@ -9,6 +9,8 @@ import {
   YAxis,
 } from 'recharts'
 
+import { currentLocale } from '../../i18n/index.ts'
+import { formatNumber } from '../../libs/utils.ts'
 import { Card } from '../ui/card'
 
 type PullsChartProps = {
@@ -38,7 +40,9 @@ function ChartTooltip({
     <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-md">
       <p className="mb-0.5 text-[11px] font-bold text-text">{label}</p>
       <p className="text-[11px] text-text-light">
-        {payload[0].value?.toLocaleString('fr-FR')} {unit}
+        {payload[0].value !== undefined &&
+          formatNumber(payload[0].value, currentLocale())}{' '}
+        {unit}
       </p>
     </div>
   )
@@ -50,6 +54,7 @@ export function PullsChart({
   color = 'var(--primary)',
   unit = 'pulls',
 }: PullsChartProps) {
+  const locale = currentLocale()
   const total = data.reduce((s, d) => s + d.count, 0)
 
   const last7 = data.slice(-7).reduce((s, d) => s + d.count, 0)
@@ -74,7 +79,7 @@ export function PullsChart({
         <div className="flex items-center gap-3">
           <div className="text-right">
             <p className="text-xl font-black text-text">
-              {total.toLocaleString('fr-FR')}
+              {formatNumber(total, locale)}
             </p>
             <p className="text-[10px] text-text-light">total</p>
           </div>

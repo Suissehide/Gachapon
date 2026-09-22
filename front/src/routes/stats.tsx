@@ -14,6 +14,8 @@ import { type ComponentType, useEffect, useRef, useState } from 'react'
 import type { PublicStats } from '../api/stats.api.ts'
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
 import { SeoHead } from '../components/shared/SeoHead.tsx'
+import { currentLocale } from '../i18n/index.ts'
+import { formatNumber } from '../libs/utils.ts'
 import { usePublicStats } from '../queries/usePublicStats.ts'
 import { useAuthDialogStore } from '../stores/authDialog.store'
 
@@ -76,6 +78,7 @@ function StatCard({
   iconColor: string
   delay?: number
 }) {
+  const locale = currentLocale()
   const [visible, setVisible] = useState(false)
   const count = useCountUp(visible ? value : 0, 1800)
 
@@ -98,7 +101,7 @@ function StatCard({
           <Icon className={`h-6 w-6 ${iconColor}`} />
         </div>
         <p className="text-4xl font-black tracking-tight text-foreground tabular-nums">
-          {count.toLocaleString('fr-FR')}
+          {formatNumber(count, locale)}
           {suffix}
         </p>
         <p className="text-sm text-text-light mt-2 font-medium">{label}</p>

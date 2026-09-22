@@ -34,7 +34,8 @@ import type {
   TeamMemberRoleLabel,
   TeamMemberRow,
 } from '../../api/teamProgression.api.ts'
-import { cn, foldForSearch, plural } from '../../libs/utils.ts'
+import { currentLocale } from '../../i18n/index.ts'
+import { cn, foldForSearch, formatNumber, plural } from '../../libs/utils.ts'
 import { useTeamMembers } from '../../queries/useTeamProgression.ts'
 import {
   useChangeMemberRole,
@@ -64,7 +65,7 @@ const VISIBLE_ROWS = 9
  */
 const ALL_MEMBERS = 1000
 
-const fr = (n: number) => n.toLocaleString('fr-FR')
+const fr = (n: number) => formatNumber(n, currentLocale())
 
 /**
  * Teintes de `ROLE_COLOR` (handoff `equipe-data.jsx`), tokenisées dans

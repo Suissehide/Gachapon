@@ -39,7 +39,9 @@ import {
 } from '../../components/ui/popup.tsx'
 import { SelectMulti } from '../../components/ui/selectMulti.tsx'
 import { useStoredState } from '../../hooks/useStoredState.ts'
+import { currentLocale } from '../../i18n/index.ts'
 import { RARITY_COLOR_VAR, RARITY_LABEL_FR } from '../../libs/rarity.ts'
+import { formatNumber } from '../../libs/utils.ts'
 import { useUserCollection } from '../../queries/useCollection.ts'
 import {
   DEFAULT_ECONOMY,
@@ -223,6 +225,7 @@ function useFrozenOrder(
 }
 
 function EquipmentPage() {
+  const locale = currentLocale()
   const user = useAuthStore((s) => s.user)
   const equipment = useEquipmentList()
   const equipmentSets = useEquipmentSets()
@@ -469,7 +472,7 @@ function EquipmentPage() {
             <Coins className="h-3.5 w-3.5" />
             Vendre la sélection
             <span className="font-mono text-[10px] opacity-70">
-              +{selectionGold.toLocaleString('fr-FR')} or
+              +{formatNumber(selectionGold, locale)} or
             </span>
           </Button>
         </div>
@@ -519,7 +522,7 @@ function EquipmentPage() {
               </span>{' '}
               sur {selectedItems.length}. Vendre rapportera{' '}
               <span className="font-semibold text-text">
-                {selectionGold.toLocaleString('fr-FR')} or
+                {formatNumber(selectionGold, locale)} or
               </span>
               .
             </p>
@@ -610,6 +613,7 @@ function EquipmentCard({
   selected: boolean
   onSelectedChange: (checked: boolean) => void
 }) {
+  const locale = currentLocale()
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const upgradeItem = useUpgradeItem()
   const salvageItems = useSalvageItems()
@@ -729,7 +733,7 @@ function EquipmentCard({
               {/* Le prix se lit SOUS le libellé : l'action d'abord, son coût
                   ensuite. */}
               <span className="font-mono text-[10px] opacity-70">
-                {atMaxLevel ? '—' : `${upgradeCost.toLocaleString('fr-FR')} or`}
+                {atMaxLevel ? '—' : `${formatNumber(upgradeCost, locale)} or`}
               </span>
             </Button>
             <Button
@@ -749,7 +753,7 @@ function EquipmentCard({
                 Vendre
               </span>
               <span className="font-mono text-[10px] opacity-70">
-                +{salvageGold.toLocaleString('fr-FR')} or
+                +{formatNumber(salvageGold, locale)} or
               </span>
             </Button>
           </div>

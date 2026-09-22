@@ -12,6 +12,8 @@ import type {
   LeaderboardResponse,
   TeamEntry,
 } from '../../constants/leaderboard.constant'
+import { currentLocale } from '../../i18n/index.ts'
+import { formatNumber } from '../../libs/utils.ts'
 import {
   useCollectorsLeaderboard,
   useCombatLeaderboard,
@@ -63,6 +65,7 @@ function totalKnown<E>(data: LeaderboardResponse<E> | undefined): number {
 }
 
 function LeaderboardPage() {
+  const locale = currentLocale()
   const [activeTab, setActiveTab] = useState<Tab>('collectors')
   const me = useAuthStore((s) => s.user)
   const collectorsQ = useCollectorsLeaderboard()
@@ -130,7 +133,7 @@ function LeaderboardPage() {
         leader: combatQ.data?.entries[0]
           ? {
               name: combatQ.data.entries[0].user.username,
-              metric: `Palier ${combatQ.data.entries[0].palier} · force ${combatQ.data.entries[0].combatPower.toLocaleString('fr-FR')}`,
+              metric: `Palier ${combatQ.data.entries[0].palier} · force ${formatNumber(combatQ.data.entries[0].combatPower, locale)}`,
             }
           : null,
         mine: combatQ.data
@@ -141,7 +144,7 @@ function LeaderboardPage() {
               return {
                 rank: e?.rank ?? null,
                 sub: e
-                  ? `Palier ${e.palier} · force ${e.combatPower.toLocaleString('fr-FR')}`
+                  ? `Palier ${e.palier} · force ${formatNumber(e.combatPower, locale)}`
                   : 'Équipe-toi pour entrer au classement',
               }
             })()
@@ -156,6 +159,7 @@ function LeaderboardPage() {
       combatQ.data,
       combatQ.isLoading,
       me?.id,
+      locale,
     ],
   )
 

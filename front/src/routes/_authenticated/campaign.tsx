@@ -45,6 +45,7 @@ import {
   CAMPAIGN_TEAM_KEY,
   CAMPAIGN_TEAM_LABEL,
 } from '../../constants/combatTeam.constant.ts'
+import { currentLocale } from '../../i18n/index.ts'
 import { formatPct } from '../../libs/utils.ts'
 import { useCampaign, useSweepStage } from '../../queries/useCampaign.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
@@ -680,6 +681,7 @@ function PrepModal({
   onEditTeam: () => void
   onClose: () => void
 }) {
+  const locale = currentLocale()
   const meta = chapterMeta(chapter)
   const isBoss = stage.isBoss
   const rp = stage.rewardPreview
@@ -694,7 +696,7 @@ function PrepModal({
     : 'Équipe requise'
   // `formatPct` garde deux décimales sous 1 % : une chance à 0,005 s'affiche
   // « 0,5 » au lieu d'être masquée par un arrondi à 0.
-  const fmtPct = (frac: number) => formatPct(frac * 100)
+  const fmtPct = (frac: number) => formatPct(frac * 100, locale)
   const equipPct = rp.farmEquipmentChance * 100
   const cardPct = rp.farmCardChance * 100
 

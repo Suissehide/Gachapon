@@ -1,6 +1,8 @@
 import { Skull } from 'lucide-react'
 
 import type { CardElement } from '../../constants/card.constant'
+import { currentLocale } from '../../i18n/index.ts'
+import { formatNumber } from '../../libs/utils.ts'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
 import type { SceneUnit } from './types'
 
@@ -25,6 +27,7 @@ type Props = {
 const PLACEHOLDER_RARITY = 'COMMON' as const
 
 export function UnitPortrait({ unit, isActing, isTargeted, enlarged }: Props) {
+  const locale = currentLocale()
   const hpPct = Math.max(0, (unit.currentHp / unit.maxHp) * 100)
   const isDead = !unit.alive
   const isAlly = unit.side === 'A'
@@ -96,9 +99,9 @@ export function UnitPortrait({ unit, isActing, isTargeted, enlarged }: Props) {
           />
         </div>
         <p className="mt-1 text-center font-mono text-[11px] tabular-nums text-text-light">
-          {Math.max(0, Math.round(unit.currentHp)).toLocaleString('fr-FR')}{' '}
+          {formatNumber(Math.max(0, Math.round(unit.currentHp)), locale)}{' '}
           <span className="opacity-60">
-            / {unit.maxHp.toLocaleString('fr-FR')}
+            / {formatNumber(unit.maxHp, locale)}
           </span>
         </p>
       </div>

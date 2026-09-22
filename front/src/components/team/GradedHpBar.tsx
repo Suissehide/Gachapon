@@ -8,7 +8,8 @@
 // la piste. Y dessiner un trait de graduation dessinerait une bordure
 // parasite collée au bord droit : on l'exclut systématiquement, quelle que
 // soit sa position dans le tableau `tiers`.
-import { cn } from '../../libs/utils.ts'
+import { currentLocale } from '../../i18n/index.ts'
+import { cn, formatNumber } from '../../libs/utils.ts'
 
 type GradedHpBarProps = {
   /** Progression actuelle (ex : dégâts infligés au boss). Pilote le remplissage. */
@@ -35,6 +36,7 @@ export function GradedHpBar({
   showValue = true,
   className,
 }: GradedHpBarProps) {
+  const locale = currentLocale()
   const fraction = max > 0 ? Math.min(1, Math.max(0, done / max)) : 0
   const percent = fraction * 100
   const remaining = Math.min(max, Math.max(0, max - done))
@@ -60,8 +62,7 @@ export function GradedHpBar({
         ))}
         {showValue && (
           <div className="absolute inset-0 flex items-center justify-end pr-3 font-mono text-xs font-bold tracking-[0.06em] text-text-light">
-            {remaining.toLocaleString('fr-FR')} / {max.toLocaleString('fr-FR')}{' '}
-            PV
+            {formatNumber(remaining, locale)} / {formatNumber(max, locale)} PV
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 const LIVE_ENTRIES_CAP = 50
+
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 
 import { GachaApi } from '../api/gacha.api'
@@ -15,11 +16,11 @@ const LIMIT = 20
 export function useLiveFeed(opts?: { teamId?: string; rarities?: string[] }) {
   const teamId = opts?.teamId
   const rarities = opts?.rarities
-  const raritiesKey =
-    rarities && rarities.length > 0 ? rarities.join(',') : ''
+  const raritiesKey = rarities && rarities.length > 0 ? rarities.join(',') : ''
   const [liveEntries, setLiveEntries] = useState<FeedEntry[]>([])
 
   // Réinitialiser les entrées live quand le filtre change
+  // biome-ignore lint/correctness/useExhaustiveDependencies: teamId/raritiesKey sont le DÉCLENCHEUR du reset, jamais lus dans le corps — motif pré-existant, hors périmètre de la tâche 5
   useEffect(() => {
     setLiveEntries([])
   }, [teamId, raritiesKey])
@@ -30,20 +31,23 @@ export function useLiveFeed(opts?: { teamId?: string; rarities?: string[] }) {
   raritiesSetRef.current =
     rarities && rarities.length > 0 ? new Set(rarities) : null
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: ['pulls', 'recent', teamId ?? 'global', raritiesKey],
-    queryFn: ({ pageParam }: { pageParam: string | undefined }) =>
-      GachaApi.getRecentPulls({
-        limit: LIMIT,
-        before: pageParam,
-        teamId,
-        rarities,
-      }),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? lastPage.entries[lastPage.entries.length - 1]?.pulledAt : undefined,
-    staleTime: 60_000,
-  })
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfiniteQuery({
+      queryKey: ['pulls', 'recent', teamId ?? 'global', raritiesKey],
+      queryFn: ({ pageParam }: { pageParam: string | undefined }) =>
+        GachaApi.getRecentPulls({
+          limit: LIMIT,
+          before: pageParam,
+          teamId,
+          rarities,
+        }),
+      initialPageParam: undefined as string | undefined,
+      getNextPageParam: (lastPage) =>
+        lastPage.hasMore
+          ? lastPage.entries[lastPage.entries.length - 1]?.pulledAt
+          : undefined,
+      staleTime: 60_000,
+    })
 
   // Membres de la team pour filtrer les events WS
   const { data: teamData } = useQuery({
@@ -70,21 +74,34 @@ export function useLiveFeed(opts?: { teamId?: string; rarities?: string[] }) {
 
   useEffect(() => {
     return wsClient.on((event) => {
-      if (event.type !== 'feed:pull') return
+      if (event.type !== 'feed:pull') {
+        return
+      }
       const names = teamUsernamesRef.current
       // Si filtre actif et membres chargés : exclure les non-membres
-      if (names !== null && (!teamDataLoadedRef.current || !names.has(event.username))) return
+      if (
+        names !== null &&
+        (!teamDataLoadedRef.current || !names.has(event.username))
+      ) {
+        return
+      }
       // Si filtre par rareté actif : exclure les autres raretés
       const allowedRarities = raritiesSetRef.current
-      if (allowedRarities !== null && !allowedRarities.has(event.rarity)) return
+      if (allowedRarities !== null && !allowedRarities.has(event.rarity)) {
+        return
+      }
       const entry: FeedEntry = {
         username: event.username,
         cardName: event.cardName,
+        cardNameFr: event.cardNameFr,
+        cardNameEn: event.cardNameEn,
         rarity: event.rarity,
         variant: event.variant,
         cardId: event.cardId,
         imageUrl: event.imageUrl,
         setName: event.setName,
+        setNameFr: event.setNameFr,
+        setNameEn: event.setNameEn,
         pulledAt: event.pulledAt,
       }
       setLiveEntries((prev) => [entry, ...prev].slice(0, LIVE_ENTRIES_CAP))
@@ -95,7 +112,9 @@ export function useLiveFeed(opts?: { teamId?: string; rarities?: string[] }) {
   const seen = new Set<string>()
   const entries = [...liveEntries, ...historicalEntries].filter((e) => {
     const key = `${e.username}-${e.cardId}-${e.pulledAt}`
-    if (seen.has(key)) return false
+    if (seen.has(key)) {
+      return false
+    }
     seen.add(key)
     return true
   })

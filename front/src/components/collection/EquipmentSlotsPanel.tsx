@@ -16,8 +16,9 @@ import type {
   EquipmentSetDefinition,
   EquipmentSlot,
 } from '../../api/equipment.api.ts'
+import { currentLocale } from '../../i18n/index.ts'
 import { RARITY_COLOR_VAR, RARITY_LABEL_FR } from '../../libs/rarity.ts'
-import { cn } from '../../libs/utils.ts'
+import { cn, formatNumber } from '../../libs/utils.ts'
 import {
   useActiveSetsForCard,
   useCardEquipmentContribution,
@@ -83,7 +84,7 @@ const STAT_CHIP_LABELS: Record<string, string> = {
 
 // Toute valeur de stat est entière depuis l'arrondi à la source.
 function formatChipValue(value: number, pct: boolean): string {
-  return `+${Math.round(value).toLocaleString('fr-FR')}${pct ? ' %' : ''}`
+  return `+${formatNumber(Math.round(value), currentLocale())}${pct ? ' %' : ''}`
 }
 
 // Clés stables des segments de jauge : un set demande 2, 3 ou 4 pièces, et

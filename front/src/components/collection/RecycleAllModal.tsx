@@ -5,7 +5,9 @@ import type {
   BulkRecycleMaxRarity,
   UserCard,
 } from '../../api/collection.api.ts'
+import { currentLocale } from '../../i18n/index.ts'
 import { RARITY_COLOR_VAR } from '../../libs/rarity.ts'
+import { formatNumber } from '../../libs/utils.ts'
 import { useRecycleAll } from '../../queries/useCollection.ts'
 import {
   DEFAULT_ECONOMY,
@@ -46,6 +48,7 @@ export function RecycleAllModal({
   onOpenChange,
   userCards,
 }: RecycleAllModalProps) {
+  const locale = currentLocale()
   const [maxRarity, setMaxRarity] = useState<BulkRecycleMaxRarity>('COMMON')
   const { mutate: recycleAll, isPending } = useRecycleAll()
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
@@ -106,7 +109,7 @@ export function RecycleAllModal({
               Tu obtiendras
             </p>
             <p className="text-3xl font-black text-primary tabular-nums">
-              {preview.dust.toLocaleString('fr-FR')}
+              {formatNumber(preview.dust, locale)}
               <Sparkles className="ml-1.5 inline h-6 w-6 text-primary" />
             </p>
             <p className="mt-1 text-[11px] text-text-light/50">

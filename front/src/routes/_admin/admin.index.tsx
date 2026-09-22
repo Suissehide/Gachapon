@@ -15,6 +15,8 @@ import { PullsChart } from '../../components/admin/PullsChart'
 import { AdminPageHeader } from '../../components/admin/shared/AdminPageHeader.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import { Card, CardContent } from '../../components/ui/card.tsx'
+import { currentLocale } from '../../i18n/index.ts'
+import { formatNumber } from '../../libs/utils.ts'
 import { useAdminDashboard } from '../../queries/useAdminStats'
 
 type DashboardKpis = Awaited<
@@ -65,7 +67,7 @@ const KPI_META = [
     color: 'text-success',
     bg: 'bg-success/10',
     sub: (kpis: DashboardKpis) =>
-      `7 derniers jours : ${kpis.signups7d.toLocaleString('fr-FR')}`,
+      `7 derniers jours : ${formatNumber(kpis.signups7d, currentLocale())}`,
   },
   {
     key: 'activeUsers7d' as const,
@@ -74,7 +76,7 @@ const KPI_META = [
     color: 'text-info',
     bg: 'bg-info/10',
     sub: (kpis: DashboardKpis) =>
-      `30 j : ${kpis.activeUsers30d.toLocaleString('fr-FR')}`,
+      `30 j : ${formatNumber(kpis.activeUsers30d, currentLocale())}`,
   },
   {
     key: 'dustSpent' as const,
@@ -95,6 +97,7 @@ const KPI_META = [
 ]
 
 function AdminDashboard() {
+  const locale = currentLocale()
   const { data, isLoading } = useAdminDashboard()
 
   return (
@@ -140,7 +143,7 @@ function AdminDashboard() {
                   <div className="h-7 w-20 animate-pulse rounded bg-border" />
                 ) : (
                   <p className="text-2xl font-black text-text">
-                    {data.kpis[key].toLocaleString('fr-FR')}
+                    {formatNumber(data.kpis[key], locale)}
                   </p>
                 )}
                 <p className="mt-0.5 text-xs text-text-light/70">

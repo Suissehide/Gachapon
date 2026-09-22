@@ -9,9 +9,10 @@ import { Sparkles } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import type { BetSide, BetView } from '../../../api/wagers.api.ts'
+import { currentLocale } from '../../../i18n/index.ts'
 import { fmtMultiplier } from '../../../libs/duel.ts'
 import { RARITY_LABEL_FR } from '../../../libs/rarity.ts'
-import { cn } from '../../../libs/utils.ts'
+import { cn, formatNumber } from '../../../libs/utils.ts'
 import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
@@ -28,7 +29,7 @@ import {
   PopupTitle,
 } from '../../ui/popup.tsx'
 
-const fr = (n: number) => n.toLocaleString('fr-FR')
+const fr = (n: number) => formatNumber(n, currentLocale())
 
 export function BetJoinPopup({
   teamId,

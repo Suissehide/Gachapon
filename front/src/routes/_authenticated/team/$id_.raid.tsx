@@ -37,8 +37,10 @@ import {
   RAID_TEAM_KEY,
   RAID_TEAM_LABEL,
 } from '../../../constants/combatTeam.constant.ts'
+import { currentLocale } from '../../../i18n/index.ts'
 import { isApiError } from '../../../libs/httpErrorHandler.ts'
 import { RARITY_LABEL_FR } from '../../../libs/rarity.ts'
+import { formatNumber } from '../../../libs/utils.ts'
 import { useCombatTeam } from '../../../queries/useCombatTeam.ts'
 import { useRaid, useRaidAttack } from '../../../queries/useRaid.ts'
 import { useTeam } from '../../../queries/useTeams.ts'
@@ -345,7 +347,7 @@ function RaidResultPopup({
           <h2 className="mt-4 font-display text-3xl font-bold text-text">
             {result.killed
               ? 'Boss vaincu !'
-              : `${result.damage.toLocaleString('fr-FR')} dégâts`}
+              : `${formatNumber(result.damage, currentLocale())} dégâts`}
           </h2>
 
           <div className="mt-5 w-full">

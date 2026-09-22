@@ -2,7 +2,12 @@ import dayjs from 'dayjs'
 import { HoverCard } from 'radix-ui'
 
 import { RARITY_TEXT_COLORS } from '../../constants/card.constant'
-import type { FeedEntry } from '../../types/feed'
+import { currentLocale } from '../../i18n/index.ts'
+import {
+  type FeedEntry,
+  localizedFeedCardName,
+  localizedFeedSetName,
+} from '../../types/feed'
 import { TcgCardFace } from '../shared/tcg-card/TcgCardFace'
 
 const VARIANT_TAGS: Record<string, { label: string; cls: string }> = {
@@ -30,10 +35,13 @@ type Props = {
 }
 
 export function FeedEntryRow({ entry, index = 0 }: Props) {
+  const locale = currentLocale()
   const rarityText = RARITY_TEXT_COLORS[entry.rarity] ?? 'text-text'
   const variant =
     entry.variant !== 'NORMAL' ? VARIANT_TAGS[entry.variant] : null
   const isLegendary = entry.rarity === 'LEGENDARY'
+  const cardName = localizedFeedCardName(entry, locale)
+  const setName = localizedFeedSetName(entry, locale)
 
   return (
     <HoverCard.Root openDelay={200} closeDelay={100}>
@@ -58,7 +66,7 @@ export function FeedEntryRow({ entry, index = 0 }: Props) {
                 isLegendary ? 'legendary-text' : rarityText
               }`}
             >
-              {entry.cardName}
+              {cardName}
             </span>
             <span className="block truncate text-[9px] text-text-light/60">
               {entry.username}
@@ -88,8 +96,8 @@ export function FeedEntryRow({ entry, index = 0 }: Props) {
           <div className="relative w-[120px] aspect-[2/3]">
             <TcgCardFace
               rarity={entry.rarity}
-              name={entry.cardName}
-              setName={entry.setName}
+              name={cardName}
+              setName={setName}
               imageUrl={entry.imageUrl}
               variant={entry.variant}
               compact

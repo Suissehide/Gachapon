@@ -2,15 +2,15 @@ import { Link } from '@tanstack/react-router'
 import { Swords, Target } from 'lucide-react'
 
 import type { BetView } from '../../api/wagers.api.ts'
+import { currentLocale } from '../../i18n/index.ts'
 import { duelSides, pullsLeftLabel } from '../../libs/duel.ts'
 import { RARITY_LABEL_FR } from '../../libs/rarity.ts'
-
-const fr = (n: number) => n.toLocaleString('fr-FR')
-
-import { plural } from '../../libs/utils.ts'
+import { formatNumber, plural } from '../../libs/utils.ts'
 import { useMyDuel } from '../../queries/useMyDuel.ts'
 import { useWagers } from '../../queries/useWagers.ts'
 import { Button } from '../ui/button.tsx'
+
+const fr = (n: number) => formatNumber(n, currentLocale())
 
 /**
  * Paris ACTIVE posés sur MOI, toutes équipes confondues. Rappelle chaque
@@ -101,9 +101,9 @@ export function WagerBanner() {
                 Duel en cours
               </div>
               <div className="truncate font-display text-base font-bold text-text">
-                {me.username} {myScore.toLocaleString('fr-FR')}
+                {me.username} {fr(myScore)}
                 <span className="mx-1.5 text-text-light">–</span>
-                {them.username} {theirScore.toLocaleString('fr-FR')}
+                {them.username} {fr(theirScore)}
               </div>
             </div>
           </div>

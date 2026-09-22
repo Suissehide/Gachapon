@@ -2,6 +2,8 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { ArrowRight, Coins, LogOut, Sparkles, Ticket, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
+import { currentLocale } from '../../i18n/index.ts'
+import { formatNumber } from '../../libs/utils.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
 import { useTokenBalance } from '../../queries/useGacha.ts'
 import type { AuthUser } from '../../stores/auth.store'
@@ -254,7 +256,8 @@ function BrandLink({
 }
 
 function Wallet({ user }: { user: AuthUser }) {
-  const fmt = (n: number) => n.toLocaleString('fr-FR')
+  const locale = currentLocale()
+  const fmt = (n: number) => formatNumber(n, locale)
   return (
     <div className="contents lg:flex lg:items-center lg:gap-2">
       <CoinPill

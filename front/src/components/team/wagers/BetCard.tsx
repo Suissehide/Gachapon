@@ -13,13 +13,14 @@
 import { ChevronRight, Sparkles, Target } from 'lucide-react'
 
 import type { BetEntryView, BetSide, BetView } from '../../../api/wagers.api.ts'
+import { currentLocale } from '../../../i18n/index.ts'
 import { fmtMultiplier } from '../../../libs/duel.ts'
 import { RARITY_LABEL_FR } from '../../../libs/rarity.ts'
-import { cn } from '../../../libs/utils.ts'
+import { cn, formatNumber } from '../../../libs/utils.ts'
 import { Button } from '../../ui/button.tsx'
 import { LockedPill, WagerCard, WagerCardHead, WagerEmpty } from './parts.tsx'
 
-const fr = (n: number) => n.toLocaleString('fr-FR')
+const fr = (n: number) => formatNumber(n, currentLocale())
 
 /** Un camp du marché : son pot, sa cote, et le bouton pour le rejoindre. */
 /** Combien de noms on montre avant de replier le reste en « +N ». */

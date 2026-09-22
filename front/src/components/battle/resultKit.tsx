@@ -5,7 +5,8 @@ import { Children, isValidElement, type ReactNode } from 'react'
 import type { CardDrop } from '../../api/campaign.api.ts'
 import type { EquipmentDrop } from '../../api/equipment.api.ts'
 import type { CardElement } from '../../constants/card.constant.ts'
-import { cn } from '../../libs/utils.ts'
+import { currentLocale } from '../../i18n/index.ts'
+import { cn, formatNumber } from '../../libs/utils.ts'
 import { EquipmentDropReward } from '../equipment/EquipmentDropCard.tsx'
 import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
 import { Button } from '../ui/button.tsx'
@@ -97,7 +98,7 @@ export function RewardTile({
         {icon}
       </span>
       <b className="font-display text-lg tabular-nums text-text">
-        +{value.toLocaleString('fr-FR')}
+        +{formatNumber(value, currentLocale())}
       </b>
       <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-text-light/70">
         {label}

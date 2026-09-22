@@ -17,8 +17,9 @@ import { Eye, Layers, Sparkles, Swords, Target, Trophy } from 'lucide-react'
 import { useState } from 'react'
 
 import type { BetView, DuelView } from '../../../api/wagers.api.ts'
+import { currentLocale } from '../../../i18n/index.ts'
 import { RARITY_LABEL_FR } from '../../../libs/rarity.ts'
-import { cn, plural } from '../../../libs/utils.ts'
+import { cn, formatNumber, plural } from '../../../libs/utils.ts'
 import { Button } from '../../ui/button.tsx'
 import { SectionLabel } from '../../ui/sectionHeading.tsx'
 import { DuelCardsPopup } from './DuelCardsPopup.tsx'
@@ -27,7 +28,7 @@ import { WagerCard, WagerEmpty } from './parts.tsx'
 /** Entrées gardées à l'écran, duels et paris confondus. */
 const HISTORY_SIZE = 20
 
-const fr = (n: number) => n.toLocaleString('fr-FR')
+const fr = (n: number) => formatNumber(n, currentLocale())
 
 function shortDate(iso: string | null): string {
   return iso === null ? '' : dayjs(iso).format('D MMM').toUpperCase()
@@ -61,7 +62,8 @@ type Row = {
 }
 
 function duelRow(duel: DuelView): Row {
-  const score = `${duel.challengerScore.toLocaleString('fr-FR')} – ${duel.opponentScore.toLocaleString('fr-FR')}`
+  const locale = currentLocale()
+  const score = `${formatNumber(duel.challengerScore, locale)} – ${formatNumber(duel.opponentScore, locale)}`
   const title = `${duel.challenger.username} ${score} ${duel.opponent.username}`
   const iWon =
     duel.myRole !== 'SPECTATOR' &&

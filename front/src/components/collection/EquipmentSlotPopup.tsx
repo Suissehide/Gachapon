@@ -24,8 +24,9 @@ import type {
 } from '../../api/equipment.api.ts'
 import { TOAST_SEVERITY } from '../../constants/ui.constant.ts'
 import { useToast } from '../../hooks/useToast.ts'
+import { currentLocale } from '../../i18n/index.ts'
 import { RARITY_COLOR_VAR, RARITY_LABEL_FR } from '../../libs/rarity.ts'
-import { cn } from '../../libs/utils.ts'
+import { cn, formatNumber } from '../../libs/utils.ts'
 import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
@@ -82,7 +83,7 @@ const SLOT_ICONS: Record<EquipmentSlot, typeof Sword> = {
 // Toute valeur de stat est entière depuis l'arrondi à la source : ce
 // formateur n'a plus qu'à grouper les milliers.
 function formatBonusValue(value: number): string {
-  return Math.round(value).toLocaleString('fr-FR')
+  return formatNumber(Math.round(value), currentLocale())
 }
 
 function upgradeHintTitle(
@@ -169,6 +170,7 @@ function ConfirmSalvagePopup({
   onConfirm: () => void
   onCancel: () => void
 }) {
+  const locale = currentLocale()
   return (
     <Popup open onOpenChange={(v) => !v && onCancel()}>
       <PopupContent>
@@ -182,7 +184,7 @@ function ConfirmSalvagePopup({
               Tu obtiendras
             </p>
             <p className="text-3xl font-black text-primary tabular-nums">
-              {salvageGold.toLocaleString('fr-FR')}
+              {formatNumber(salvageGold, locale)}
               <Coins className="ml-1.5 inline h-6 w-6 text-primary" />
             </p>
           </div>
@@ -487,6 +489,7 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
   const { data: skillState } = useSkillTree()
   const gold = useAuthStore((s) => s.user?.gold ?? 0)
   const { toast } = useToast()
+  const locale = currentLocale()
 
   const equipItem = useEquipItem()
   const unequipItem = useUnequipItem()
@@ -565,7 +568,7 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
     const plural = res.destroyedCount > 1 ? 's' : ''
     toast({
       title: 'Objets détruits',
-      message: `+${res.goldEarned.toLocaleString('fr-FR')} or (${res.destroyedCount} objet${plural})`,
+      message: `+${formatNumber(res.goldEarned, locale)} or (${res.destroyedCount} objet${plural})`,
       severity: TOAST_SEVERITY.SUCCESS,
     })
     setConfirmOpen(false)
@@ -626,7 +629,7 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
               <p className="flex items-center gap-1.5 text-sm text-text-light">
                 <Coins className="h-4 w-4 text-amber-500" />
                 <span className="font-semibold tabular-nums text-text">
-                  {gold.toLocaleString('fr-FR')}
+                  {formatNumber(gold, locale)}
                 </span>
                 or
               </p>
@@ -687,7 +690,7 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
                   onClick={() => setConfirmOpen(true)}
                 >
                   <Trash2 className="mr-1.5 h-4 w-4" />
-                  Détruire (+{salvageGold.toLocaleString('fr-FR')} or)
+                  Détruire (+{formatNumber(salvageGold, locale)} or)
                 </Button>
               </>
             ) : (
@@ -851,6 +854,7 @@ function SellItemButton({
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const { data: skillState } = useSkillTree()
   const { toast } = useToast()
+  const locale = currentLocale()
   const salvageItems = useSalvageItems()
   const equipped = item.equippedOnId !== null
   const gold = salvagePreviewGold(
@@ -864,7 +868,7 @@ function SellItemButton({
       onSuccess: (res) => {
         toast({
           title: 'Objet vendu',
-          message: `+${res.goldEarned.toLocaleString('fr-FR')} or`,
+          message: `+${formatNumber(res.goldEarned, locale)} or`,
           severity: TOAST_SEVERITY.SUCCESS,
         })
         setConfirmOpen(false)
@@ -880,7 +884,7 @@ function SellItemButton({
         onClick={() => setConfirmOpen(true)}
       >
         <Coins className="mr-1.5 h-4 w-4" />
-        Vendre (+{gold.toLocaleString('fr-FR')} or)
+        Vendre (+{formatNumber(gold, locale)} or)
       </Button>
       {equipped && (
         <p className="text-center text-[10px] text-text-light">
@@ -923,6 +927,7 @@ function ItemDetail({
   onUpgrade: () => void
 }) {
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  const locale = currentLocale()
   const isEquippedHere = item.equippedOnId === userCardId
   const isEquippedElsewhere = item.equippedOnId !== null && !isEquippedHere
   // Coût d'amélioration : renvoyé PAR LE SERVEUR, remise du bonus d'équipe
@@ -1024,7 +1029,7 @@ function ItemDetail({
           <ArrowUpCircle className="mr-1.5 h-4 w-4" />
           {isMaxLevel
             ? 'Niveau max'
-            : `Améliorer (${cost.toLocaleString('fr-FR')} or)`}
+            : `Améliorer (${formatNumber(cost, locale)} or)`}
           {nextIsMilestone && <Sparkles className="ml-1.5 h-3.5 w-3.5" />}
         </Button>
         <SellItemButton item={item} busy={busy} />

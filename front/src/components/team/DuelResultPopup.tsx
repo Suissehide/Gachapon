@@ -8,8 +8,9 @@ import type {
   DuelView,
   SettledDuelView,
 } from '../../api/wagers.api.ts'
+import { currentLocale } from '../../i18n/index.ts'
 import { duelSides } from '../../libs/duel.ts'
-import { cn, plural } from '../../libs/utils.ts'
+import { cn, formatNumber, plural } from '../../libs/utils.ts'
 import { useDuelHands } from '../../queries/useMyPendingDuels.ts'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
 import { CardZoomOverlay } from '../shared/tcg-card/CardZoomOverlay.tsx'
@@ -327,7 +328,7 @@ function ScoreSide({
       </span>
       <span className="truncate text-sm text-text">{name}</span>
       <span className="font-display text-2xl font-bold text-text">
-        {score.toLocaleString('fr-FR')}
+        {formatNumber(score, currentLocale())}
       </span>
     </div>
   )

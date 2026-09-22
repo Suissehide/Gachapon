@@ -5,12 +5,14 @@ import {
   RARITY_FR,
   RARITY_HEX,
 } from '../../constants/achievements.constant'
+import { currentLocale } from '../../i18n/index.ts'
+import { formatNumber } from '../../libs/utils.ts'
 
 interface Props {
   achievement: AchievementWithProgress
 }
 
-const fmt = (n: number) => n.toLocaleString('fr-FR')
+const fmt = (n: number) => formatNumber(n, currentLocale())
 
 export function AchievementCard({ achievement }: Props) {
   const pct = Math.min(

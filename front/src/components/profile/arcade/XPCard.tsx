@@ -1,4 +1,6 @@
 import type { UserProfile } from '../../../api/profile.api'
+import { currentLocale } from '../../../i18n/index.ts'
+import { formatNumber } from '../../../libs/utils.ts'
 import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
@@ -9,6 +11,7 @@ import { Card, CardTitle } from '../../ui/card'
 type Props = { profile: UserProfile }
 
 export function XPCard({ profile }: Props) {
+  const locale = currentLocale()
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const isMax = profile.level >= economy.xp.levelCap
   const xpInLevel = profile.xp - xpForLevel(profile.level, economy.xp)
@@ -57,7 +60,7 @@ export function XPCard({ profile }: Props) {
       <div className="font-mono text-[11px] mt-3 text-text-light">
         {isMax
           ? '00 / MAX'
-          : `${xpInLevel.toLocaleString('fr-FR')} / ${xpNeeded.toLocaleString('fr-FR')}`}
+          : `${formatNumber(xpInLevel, locale)} / ${formatNumber(xpNeeded, locale)}`}
       </div>
     </Card>
   )

@@ -1,5 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 
+import { currentLocale } from '../../../i18n/index.ts'
+import { formatNumber } from '../../../libs/utils.ts'
 import { Card } from '../../ui/card'
 import type { ArcadeRarity } from './utils'
 import { RARITY_COLORS } from './utils'
@@ -13,6 +15,7 @@ type Props = {
 }
 
 export function StatCard({ icon: Icon, label, value, rarity, hint }: Props) {
+  const locale = currentLocale()
   const color = RARITY_COLORS[rarity]
   return (
     <Card className="group relative overflow-hidden p-[22px] pl-[18px] flex items-center gap-4">
@@ -38,7 +41,7 @@ export function StatCard({ icon: Icon, label, value, rarity, hint }: Props) {
           {label}
         </span>
         <span className="font-display text-[48px] font-extrabold leading-none tabular-nums text-text">
-          {value.toLocaleString('fr-FR')}
+          {formatNumber(value, locale)}
         </span>
         {hint && (
           <span className="italic text-xs text-text-light mt-1">{hint}</span>

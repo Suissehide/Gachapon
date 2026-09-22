@@ -30,15 +30,6 @@ import utc from 'dayjs/plugin/utc'
 
 import './styles/_globals.css'
 
-dayjs.extend(isoWeek)
-dayjs.extend(advancedFormat)
-dayjs.extend(isSameOrBefore)
-dayjs.extend(isSameOrAfter)
-dayjs.extend(relativeTime)
-dayjs.extend(utc)
-dayjs.extend(localizedFormat)
-dayjs.locale('fr')
-
 import { queryClient } from './lib/queryClient'
 
 /**
@@ -53,10 +44,28 @@ import { queryClient } from './lib/queryClient'
  * `pathname` et `pathLocaleSegment` sont calculés une seule fois ici — via
  * `firstPathSegment`/`localeFromPath` de `./i18n/index.ts`, seul endroit qui
  * sait découper un chemin — et réutilisés plus bas, plutôt que recalculés.
+ *
+ * Calculé AVANT `dayjs.locale(locale)` juste en dessous : dayjs est un
+ * singleton global (pas un formateur par composant), donc sa locale ne peut
+ * être fixée qu'une fois, ici, au tout premier chargement du module — mais
+ * elle doit suivre `locale`, pas être figée en dur sur `'fr'` (piège
+ * transverse du lot 2 : un formateur qui capture la langue du premier rendu
+ * la sert ensuite à tout le monde, pour toujours).
  */
 const pathname = window.location.pathname
 const pathLocaleSegment = firstPathSegment(pathname)
 const locale = localeFromPath(pathname)
+
+dayjs.extend(isoWeek)
+dayjs.extend(advancedFormat)
+dayjs.extend(isSameOrBefore)
+dayjs.extend(isSameOrAfter)
+dayjs.extend(relativeTime)
+dayjs.extend(utc)
+dayjs.extend(localizedFormat)
+// 'en' est la locale intégrée par défaut de dayjs (aucun import requis) ;
+// 'fr' vient de l'import statique `dayjs/locale/fr` ci-dessus.
+dayjs.locale(locale)
 
 const router = createRouter({
   routeTree,

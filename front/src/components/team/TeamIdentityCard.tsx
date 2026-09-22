@@ -12,6 +12,8 @@ import { Settings, UserPlus } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import type { TeamDetail } from '../../api/teamProgression.api.ts'
+import { currentLocale } from '../../i18n/index.ts'
+import { formatNumber } from '../../libs/utils.ts'
 import { ArcadeCard } from '../shared/ArcadeCard.tsx'
 import { ProgressRing } from '../shared/ProgressRing.tsx'
 import { StatTile } from '../shared/StatTile.tsx'
@@ -20,7 +22,7 @@ import { PopupTrigger } from '../ui/popup.tsx'
 import { InviteMemberPopup } from './InviteMemberPopup.tsx'
 import { TeamSettingsPopup } from './TeamSettingsPopup.tsx'
 
-const fr = (n: number) => n.toLocaleString('fr-FR')
+const fr = (n: number) => formatNumber(n, currentLocale())
 
 type TeamIdentityCardProps = {
   team: TeamDetail

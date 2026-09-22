@@ -6,7 +6,8 @@ import type {
   CombatEntry,
   TeamEntry,
 } from '../../constants/leaderboard.constant'
-import { cn } from '../../libs/utils'
+import { currentLocale } from '../../i18n/index.ts'
+import { cn, formatNumber } from '../../libs/utils'
 import { FoilAvatar } from '../profile/arcade/FoilAvatar'
 import { LevelChip } from './LevelChip'
 import { MedalRank } from './MedalRank'
@@ -17,7 +18,7 @@ type Props =
   | { mode: 'teams'; entry: TeamEntry; isMe: boolean }
   | { mode: 'combat'; entry: CombatEntry; isMe: boolean }
 
-const fmt = (n: number) => n.toLocaleString('fr-FR')
+const fmt = (n: number) => formatNumber(n, currentLocale())
 
 export function LeaderRow(props: Props) {
   const { mode, entry, isMe } = props

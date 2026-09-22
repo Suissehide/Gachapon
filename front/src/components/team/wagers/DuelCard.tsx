@@ -21,8 +21,9 @@ import dayjs from 'dayjs'
 import { Sparkles, Swords } from 'lucide-react'
 
 import type { DuelView } from '../../../api/wagers.api.ts'
+import { currentLocale } from '../../../i18n/index.ts'
 import { duelSides, pullsLeft } from '../../../libs/duel.ts'
-import { cn } from '../../../libs/utils.ts'
+import { cn, formatNumber } from '../../../libs/utils.ts'
 import { MemberAvatar } from '../../shared/MemberAvatar.tsx'
 import { Button } from '../../ui/button.tsx'
 import { LockedPill, WagerCard, WagerCardHead, WagerEmpty } from './parts.tsx'
@@ -33,7 +34,7 @@ const THEIR_HUE = 265
 
 /** Les scores peuvent tomber sur un demi-point (bonus brillante ×1,5). */
 function fmtScore(score: number): string {
-  return score.toLocaleString('fr-FR')
+  return formatNumber(score, currentLocale())
 }
 
 /**

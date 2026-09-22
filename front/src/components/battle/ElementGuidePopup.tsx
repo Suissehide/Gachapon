@@ -7,6 +7,8 @@ import {
   ELEMENT_ICON,
   ELEMENT_LABELS,
 } from '../../constants/card.constant.ts'
+import { currentLocale } from '../../i18n/index.ts'
+import { formatNumber } from '../../libs/utils.ts'
 import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
@@ -47,7 +49,7 @@ const ARCS = [
 ]
 
 function fmtMult(mult: number): string {
-  return mult.toLocaleString('fr-FR', { maximumFractionDigits: 2 })
+  return formatNumber(mult, currentLocale(), { maximumFractionDigits: 2 })
 }
 
 function ElementChip({

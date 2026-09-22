@@ -21,6 +21,8 @@ import { Card, CardTitle } from '../../components/ui/card'
 import type { DailyShopItem } from '../../constants/daily-shop.constant'
 import { TOAST_SEVERITY } from '../../constants/ui.constant'
 import { useToast } from '../../hooks/useToast'
+import { currentLocale } from '../../i18n/index.ts'
+import { formatNumber } from '../../libs/utils.ts'
 import { useBuyDailyShopItem, useDailyShop } from '../../queries/useDailyShop'
 import type { ShopItem } from '../../queries/useShop'
 import {
@@ -331,7 +333,7 @@ function WishlistBuyButton({
   price: number
   onBuy: () => void
 }) {
-  const priceLabel = price.toLocaleString('fr-FR')
+  const priceLabel = formatNumber(price, currentLocale())
 
   if (purchasing) {
     return (
@@ -439,6 +441,7 @@ function DailyShopCard({
   buying: boolean
   onBuy: () => void
 }) {
+  const locale = currentLocale()
   const canAfford = dust >= item.dustPrice
 
   return (
@@ -480,7 +483,7 @@ function DailyShopCard({
         >
           <Sparkles className="h-3.5 w-3.5" />
           <span className="tabular-nums">
-            {item.dustPrice.toLocaleString('fr-FR')}
+            {formatNumber(item.dustPrice, locale)}
           </span>
         </Button>
       ) : (
@@ -492,7 +495,7 @@ function DailyShopCard({
         >
           <Sparkles className="h-3.5 w-3.5" />
           <span className="tabular-nums">
-            {item.dustPrice.toLocaleString('fr-FR')}
+            {formatNumber(item.dustPrice, locale)}
           </span>
         </Button>
       )}
@@ -598,6 +601,7 @@ function StaticShopCard({
   capReached?: boolean
   onBuy: () => void
 }) {
+  const locale = currentLocale()
   const isGold = item.currency === 'GOLD'
   const canAfford = (isGold ? gold : dust) >= item.cost
   const supported =
@@ -635,7 +639,7 @@ function StaticShopCard({
             <Sparkles className="h-3.5 w-3.5" />
           )}
           <span className="tabular-nums">
-            {item.cost.toLocaleString('fr-FR')}
+            {formatNumber(item.cost, locale)}
           </span>
         </span>
         <StaticShopCardAction

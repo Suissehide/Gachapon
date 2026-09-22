@@ -15,7 +15,8 @@ import { Coins, Hammer, Star, Swords } from 'lucide-react'
 import type { ComponentType } from 'react'
 
 import type { TeamPerkKey, TeamPerkState } from '../api/teamProgression.api.ts'
-import { plural } from '../libs/utils.ts'
+import { currentLocale } from '../i18n/index.ts'
+import { formatNumber, plural } from '../libs/utils.ts'
 
 export type TeamPerkMeta = {
   name: string
@@ -40,8 +41,12 @@ export const PERK_META: Record<TeamPerkKey, TeamPerkMeta> = {
   forge: { name: 'Forge commune', color: 'var(--perk-forge)', Icon: Hammer },
 }
 
+// `currentLocale()` lu ici, au moment du formatage — pas mémorisé au niveau
+// module — car cette constante est importée par deux composants distincts
+// (`PerksPanel`, `PerkInvestPopup`) qui n'ont pas de variable `locale` en
+// commun à leur faire traverser.
 const formatEffect = (n: number) =>
-  n.toLocaleString('fr-FR', { maximumFractionDigits: 1 })
+  formatNumber(n, currentLocale(), { maximumFractionDigits: 1 })
 
 /**
  * Description d'un bonus, à son rang courant.

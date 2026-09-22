@@ -1,5 +1,6 @@
 import type { DuelView } from '../api/wagers.api.ts'
-import { plural } from './utils.ts'
+import { currentLocale } from '../i18n/index.ts'
+import { formatNumber, plural } from './utils.ts'
 
 /**
  * Les deux camps d'un duel vus depuis MOI. `myRole` est la seule source :
@@ -73,12 +74,14 @@ export function pullsLeftLabel(done: number, total: number): string {
 }
 
 /**
- * Cote d'un pari, formatée en français à 2 décimales (`×2,35`, `1,00`).
- * Partagée par `WagersPanel` (ligne de pari active) et `BetPlacePopup`
- * (devis en direct) — même formule, ne pas la recopier une troisième fois.
+ * Cote d'un pari, à 2 décimales selon la locale courante (`×2,35` en
+ * français, `×2.35` en anglais). Partagée par `WagersPanel` (ligne de pari
+ * active) et `BetPlacePopup` (devis en direct) — même formule, ne pas la
+ * recopier une troisième fois. Locale lue ici, à l'appel, plutôt que reçue
+ * en paramètre : les deux appelants n'ont rien d'autre en commun.
  */
 export function fmtMultiplier(multiplier: number): string {
-  return multiplier.toLocaleString('fr-FR', {
+  return formatNumber(multiplier, currentLocale(), {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })

@@ -25,8 +25,9 @@ import {
 import { useEffect, useState } from 'react'
 
 import type { RaidTierView, RaidView } from '../../api/raid.api.ts'
+import { currentLocale } from '../../i18n/index.ts'
 import { RARITY_LABEL_FR } from '../../libs/rarity.ts'
-import { cn } from '../../libs/utils.ts'
+import { cn, formatNumber } from '../../libs/utils.ts'
 import { useRaid, useRaidLive } from '../../queries/useRaid.ts'
 import { ArcadeCard } from '../shared/ArcadeCard.tsx'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
@@ -188,7 +189,7 @@ function BossPowerBadge({
       )}
     >
       <Swords className="h-3.5 w-3.5" />
-      {power.toLocaleString('fr-FR')}
+      {formatNumber(power, currentLocale())}
     </span>
   )
 }

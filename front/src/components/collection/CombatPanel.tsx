@@ -20,6 +20,8 @@ import { useState } from 'react'
 
 import type { Card, CardVariant } from '../../constants/card.constant'
 import { PASSIVE_LABELS } from '../../constants/passives.constant'
+import { currentLocale } from '../../i18n/index.ts'
+import { formatNumber } from '../../libs/utils.ts'
 import { useAscendCard } from '../../queries/useAscendCard'
 import {
   DEFAULT_ECONOMY,
@@ -62,6 +64,7 @@ export function CombatPanel({
   level,
   palier,
 }: Props) {
+  const locale = currentLocale()
   const user = useAuthStore((s) => s.user)
   const fetchMe = useAuthStore((s) => s.fetchMe)
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
@@ -189,7 +192,7 @@ export function CombatPanel({
           Puissance
         </span>
         <span className="font-display text-[22px] font-extrabold tabular-nums text-[#d97706]">
-          {power.toLocaleString('fr-FR')}
+          {formatNumber(power, locale)}
         </span>
       </div>
 
@@ -331,6 +334,7 @@ function StatTile({
   accent: string
   suffix?: string
 }) {
+  const locale = currentLocale()
   // Toute valeur de stat est entière depuis l'arrondi à la source.
   const total = Math.round(value)
   const socle = base === undefined ? total : Math.round(base)
@@ -352,17 +356,17 @@ function StatTile({
       </span>
       <span className="font-display text-[22px] font-extrabold leading-none tabular-nums text-text">
         <span className={scindable ? 'group-hover:hidden' : undefined}>
-          {total.toLocaleString('fr-FR')}
+          {formatNumber(total, locale)}
           {suffix}
         </span>
         {scindable && (
           <span className="hidden group-hover:inline">
-            {socle.toLocaleString('fr-FR')}
+            {formatNumber(socle, locale)}
             {suffix}
             <span className="text-[16px]" style={{ color: accent }}>
               {' '}
               {apport > 0 ? '+' : '−'}
-              {Math.abs(apport).toLocaleString('fr-FR')}
+              {formatNumber(Math.abs(apport), locale)}
               {suffix}
             </span>
           </span>

@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import dayjs from 'dayjs'
 import { Check, Copy, Eye, EyeOff, Key, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -176,9 +177,9 @@ function Settings() {
                     {k.name}
                   </p>
                   <p className="text-xs text-text-light">
-                    Créée le {new Date(k.createdAt).toLocaleDateString('fr-FR')}
+                    Créée le {dayjs(k.createdAt).format('L')}
                     {k.lastUsedAt &&
-                      ` · Utilisée le ${new Date(k.lastUsedAt).toLocaleDateString('fr-FR')}`}
+                      ` · Utilisée le ${dayjs(k.lastUsedAt).format('L')}`}
                   </p>
                 </div>
                 <Button

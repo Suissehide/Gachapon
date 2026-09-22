@@ -4,12 +4,13 @@ import { AlertTriangle, BarChart2, Users } from 'lucide-react'
 import { AdminPageHeader } from '../../components/admin/shared/AdminPageHeader.tsx'
 import { Badge } from '../../components/ui/badge.tsx'
 import { Card, CardContent } from '../../components/ui/card.tsx'
+import { currentLocale } from '../../i18n/index.ts'
 import {
   RARITY_BADGE_VARIANT,
   RARITY_COLOR_VAR,
   RARITY_LABEL_FR,
 } from '../../libs/rarity.ts'
-import { formatPct } from '../../libs/utils.ts'
+import { formatNumber, formatPct } from '../../libs/utils.ts'
 import { useAdminStats } from '../../queries/useAdminStats'
 
 export const Route = createFileRoute('/_admin/admin/stats')({
@@ -17,6 +18,7 @@ export const Route = createFileRoute('/_admin/admin/stats')({
 })
 
 function AdminStats() {
+  const locale = currentLocale()
   const { data, isLoading } = useAdminStats()
 
   if (isLoading || !data) {
@@ -55,7 +57,7 @@ function AdminStats() {
                   </span>
                 </div>
                 <p className="text-3xl font-black text-text">
-                  {data.activeUsers.sevenDays.toLocaleString('fr-FR')}
+                  {formatNumber(data.activeUsers.sevenDays, locale)}
                 </p>
                 {totalUsers > 0 && (
                   <p className="mt-1 text-xs text-text-light">
@@ -74,7 +76,7 @@ function AdminStats() {
                   </span>
                 </div>
                 <p className="text-3xl font-black text-text">
-                  {data.activeUsers.thirtyDays.toLocaleString('fr-FR')}
+                  {formatNumber(data.activeUsers.thirtyDays, locale)}
                 </p>
                 {totalUsers > 0 && (
                   <p className="mt-1 text-xs text-text-light">
@@ -114,23 +116,23 @@ function AdminStats() {
                           <span>
                             théo.{' '}
                             <span className="font-mono text-text">
-                              {formatPct(theoreticalPct)}%
+                              {formatPct(theoreticalPct, locale)}%
                             </span>
                           </span>
                           <span>
                             réel{' '}
                             <span className="font-mono text-text">
-                              {formatPct(realPct)}%
+                              {formatPct(realPct, locale)}%
                             </span>{' '}
                             <span className="text-xs text-text-light">
-                              ({realCount.toLocaleString('fr-FR')})
+                              ({formatNumber(realCount, locale)})
                             </span>
                           </span>
                           <span
                             className={`font-mono font-bold ${Math.abs(drift) > 2 ? 'text-destructive' : 'text-text-light'}`}
                           >
                             {drift >= 0 ? '+' : ''}
-                            {formatPct(drift)}%
+                            {formatPct(drift, locale)}%
                           </span>
                         </div>
                       </div>

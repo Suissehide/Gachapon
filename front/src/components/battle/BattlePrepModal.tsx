@@ -4,6 +4,8 @@ import type { ReactNode } from 'react'
 
 import type { TeamUnit } from '../../api/combat.api.ts'
 import type { CardElement } from '../../constants/card.constant.ts'
+import { currentLocale } from '../../i18n/index.ts'
+import { formatNumber } from '../../libs/utils.ts'
 import { computePower } from '../../utils/cardStats.ts'
 import { TcgCardFace } from '../shared/tcg-card/TcgCardFace.tsx'
 import { Button } from '../ui/button.tsx'
@@ -11,7 +13,7 @@ import { PopupBody, PopupFooter, PopupHeader } from '../ui/popup.tsx'
 import { MiniCard } from './MiniCard.tsx'
 
 function fmt(n: number): string {
-  return n.toLocaleString('fr-FR')
+  return formatNumber(n, currentLocale())
 }
 
 export type PrepEnemy = {

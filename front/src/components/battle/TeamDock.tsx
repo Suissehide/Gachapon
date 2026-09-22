@@ -2,12 +2,14 @@ import { Settings, Shield, Swords } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import type { TeamUnit } from '../../api/combat.api.ts'
+import { currentLocale } from '../../i18n/index.ts'
+import { formatNumber } from '../../libs/utils.ts'
 import { computePower } from '../../utils/cardStats.ts'
 import { Button } from '../ui/button.tsx'
 import { MiniCard } from './MiniCard.tsx'
 
 function fmt(n: number): string {
-  return n.toLocaleString('fr-FR')
+  return formatNumber(n, currentLocale())
 }
 
 /**

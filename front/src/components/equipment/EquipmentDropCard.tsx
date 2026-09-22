@@ -8,8 +8,9 @@ import {
 } from '../../components/collection/EquipmentSlotsPanel.tsx'
 import { TOAST_SEVERITY } from '../../constants/ui.constant.ts'
 import { useToast } from '../../hooks/useToast.ts'
+import { currentLocale } from '../../i18n/index.ts'
 import { RARITY_LABEL_FR } from '../../libs/rarity.ts'
-import { cn } from '../../libs/utils.ts'
+import { cn, formatNumber } from '../../libs/utils.ts'
 import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
@@ -137,6 +138,7 @@ export function EquipmentDropCard({
    */
   highlight?: { key: string; delta: number } | null
 }) {
+  const locale = currentLocale()
   const tier = RARITY_TIER[drop.rarity] ?? 1
   const SlotIcon = SLOT_ICONS[drop.slot]
   const main = mainStat(drop, equipLevelScale)
@@ -282,7 +284,7 @@ export function EquipmentDropCard({
             <Trash2 className="h-[15px] w-[15px]" />
             Détruire
             <span className="font-mono text-[11px] whitespace-nowrap opacity-80">
-              +{(scrapGold ?? 0).toLocaleString('fr-FR')} or
+              +{formatNumber(scrapGold ?? 0, locale)} or
             </span>
           </Button>
         </div>
@@ -310,7 +312,7 @@ export function EquipmentScrapped({
         className,
       )}
     >
-      ✓ Détruit · +{gold.toLocaleString('fr-FR')} or
+      ✓ Détruit · +{formatNumber(gold, currentLocale())} or
     </div>
   )
 }
@@ -364,7 +366,7 @@ export function EquipmentDropReward({
       onSuccess: (res) => {
         toast({
           title: 'Objet détruit',
-          message: `+${res.goldEarned.toLocaleString('fr-FR')} or`,
+          message: `+${formatNumber(res.goldEarned, currentLocale())} or`,
           severity: TOAST_SEVERITY.SUCCESS,
         })
         setScrappedGold(res.goldEarned)

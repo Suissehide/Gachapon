@@ -44,6 +44,36 @@ export function localeFromPath(pathname: string): Locale {
   return isSupportedLocale(first) ? first : DEFAULT_LOCALE
 }
 
+/**
+ * Locale actuelle, à lire à CHAQUE appel (jamais mémorisée dans une variable
+ * de module ou fermée dans un formateur construit une seule fois au
+ * chargement) : un `Intl.NumberFormat`/`Intl.DateTimeFormat` capturé au
+ * niveau module figerait la langue du tout premier rendu pour tout le monde,
+ * pour toujours — voir `dayjs.locale(locale)` dans `main.tsx` pour le même
+ * piège côté dates. Volontairement une fonction simple et non un hook `use…`
+ * React : elle ne lit rien de réactif (changer de langue déclenche une
+ * navigation dure, voir `useLocale.switchTo`), donc les composants qui n'ont
+ * besoin que de lire la langue pour formater — pas de la changer — peuvent
+ * l'appeler directement à chaque rendu sans payer le coût de `useLocale()`
+ * (store auth + mutation de préférence).
+ */
+export function currentLocale(): Locale {
+  return localeFromPath(window.location.pathname)
+}
+
+/**
+ * Pluriels (tâches 6 à 11) : i18next résout `key_one`/`key_other` via
+ * `Intl.PluralRules(locale).select(count)` — voir `t(key, { count })`.
+ * Vérifié avec la version d'i18next de ce dépôt : la catégorie "one" du
+ * français CLDR couvre 0 ET 1 (`i = 0,1`), donc `key_one` affiche déjà
+ * "0 carte" au singulier ; l'anglais ne classe que 1 dans "one", donc
+ * `key_other` affiche "0 cards" au pluriel. Aucun suffixe `_zero` n'est
+ * nécessaire ni supporté par ce résolveur — fournir seulement `_one` et
+ * `_other` sur toute clé comptée, et tester explicitement le cas 0 (c'est le
+ * seul endroit où FR et EN divergent structurellement, pas seulement sur
+ * l'orthographe du mot).
+ */
+
 // Chargement statique des ressources : pas de lazy-loading, le gain sur le
 // bundle est marginal ici et un flash de clés brutes coûte plus cher.
 void i18next.use(initReactI18next).init({

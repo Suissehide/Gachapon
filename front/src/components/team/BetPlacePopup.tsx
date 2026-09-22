@@ -3,9 +3,10 @@ import { useState } from 'react'
 
 import type { TeamMember } from '../../api/teams.api.ts'
 import type { CardRarity } from '../../constants/card.constant.ts'
+import { currentLocale } from '../../i18n/index.ts'
 import { fmtMultiplier } from '../../libs/duel.ts'
 import { RARITY_COLOR_VAR, RARITY_LABEL_FR } from '../../libs/rarity.ts'
-import { cn } from '../../libs/utils.ts'
+import { cn, formatNumber } from '../../libs/utils.ts'
 import {
   DEFAULT_ECONOMY,
   useEconomyConfig,
@@ -101,6 +102,7 @@ function QuotePanel({
   multiplier: number
   potentialPayout: number | null
 }) {
+  const locale = currentLocale()
   return (
     <div
       className={cn(
@@ -127,7 +129,7 @@ function QuotePanel({
               Gain potentiel si le pari est gagné :{' '}
               <strong>
                 {potentialPayout !== null
-                  ? potentialPayout.toLocaleString('fr-FR')
+                  ? formatNumber(potentialPayout, locale)
                   : '—'}{' '}
                 poussière
               </strong>
@@ -155,6 +157,7 @@ function QuotePanel({
  * peuvent produire ce court-circuit côté serveur (voir `bet.domain.ts`).
  */
 export function BetPlacePopup({ open, onOpenChange, teamId, members }: Props) {
+  const locale = currentLocale()
   const [targetId, setTargetId] = useState('')
   const [minRarity, setMinRarity] = useState<CardRarity>('RARE')
   const [stakeInput, setStakeInput] = useState('')
@@ -302,8 +305,8 @@ export function BetPlacePopup({ open, onOpenChange, teamId, members }: Props) {
               placeholder={`Entre ${minStake} et ${maxStake} poussière`}
             />
             <span className="text-xs text-text-light">
-              Mise entre {minStake.toLocaleString('fr-FR')} et{' '}
-              {maxStake.toLocaleString('fr-FR')} poussière.
+              Mise entre {formatNumber(minStake, locale)} et{' '}
+              {formatNumber(maxStake, locale)} poussière.
             </span>
           </div>
 

@@ -24,7 +24,8 @@ import {
   useState,
 } from 'react'
 
-import { safeParse } from '../../libs/utils.ts'
+import { currentLocale } from '../../i18n/index.ts'
+import { formatNumber, safeParse } from '../../libs/utils.ts'
 import {
   dateFilterFn,
   dateRangeFilterFn,
@@ -212,7 +213,7 @@ export function ReactTable<TData extends { id: string }>({
 
       <div className="flex items-center justify-end gap-1.5 border-t border-border/40 px-5 py-2">
         <span className="text-[11px] font-bold tabular-nums text-primary">
-          {totalRows.toLocaleString('fr-FR')}
+          {formatNumber(totalRows, currentLocale())}
         </span>
         <span className="text-[11px] text-text-light">
           {totalRows > 1 ? 'résultats' : 'résultat'}

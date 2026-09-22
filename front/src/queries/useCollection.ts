@@ -8,7 +8,8 @@ import {
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
-import { plural } from '../libs/utils.ts'
+import { currentLocale } from '../i18n/index.ts'
+import { formatNumber, plural } from '../libs/utils.ts'
 import { useAchievementUnlockStore } from '../stores/achievementUnlock.store.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 
@@ -136,7 +137,7 @@ export const useRecycleAll = () => {
       const recycled = data.cardsRecycled
       toast({
         title: 'Recyclage terminé',
-        message: `${recycled} carte${plural(recycled)} recyclée${plural(recycled)} → ${data.dustEarned.toLocaleString('fr-FR')} poussière${engagedNote}`,
+        message: `${recycled} carte${plural(recycled)} recyclée${plural(recycled)} → ${formatNumber(data.dustEarned, currentLocale())} poussière${engagedNote}`,
         severity: TOAST_SEVERITY.SUCCESS,
       })
       if (data.unlockedAchievements?.length) {

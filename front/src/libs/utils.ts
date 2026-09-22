@@ -2,8 +2,29 @@ import { type ClassValue, clsx } from 'clsx'
 import dayjs from 'dayjs'
 import { twMerge } from 'tailwind-merge'
 
+import type { Locale } from '../i18n/index.ts'
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
+}
+
+/** Tag BCP 47 associé à chaque locale du site, pour `Intl.NumberFormat`. */
+const INTL_LOCALE_TAG: Record<Locale, string> = { fr: 'fr-FR', en: 'en-US' }
+
+/**
+ * Formatte un nombre selon la locale COURANTE, reçue en paramètre — jamais
+ * lue depuis une variable capturée au niveau module. « 5 000 » (espace
+ * insécable) en français, « 5,000 » en anglais : les séparateurs de milliers
+ * diffèrent, et un `toLocaleString('fr-FR')` en dur affiche du français à un
+ * visiteur sur `/en` (bug relevé sur ~45 fichiers de ce dépôt — voir le
+ * rapport de la tâche 5).
+ */
+export function formatNumber(
+  value: number,
+  locale: Locale,
+  options?: Intl.NumberFormatOptions,
+): string {
+  return new Intl.NumberFormat(INTL_LOCALE_TAG[locale], options).format(value)
 }
 
 /**
@@ -35,10 +56,10 @@ export function plural(n: number): string {
  * afficherait tous à 0. Les zéros de queue sont supprimés, donc 0,5 reste
  * « 0,5 » et ne devient pas « 0,50 ». Le signe « % » revient à l'appelant.
  */
-export function formatPct(value: number): string {
+export function formatPct(value: number, locale: Locale): string {
   const abs = Math.abs(value)
   const digits = abs >= 10 ? 0 : abs >= 1 ? 1 : 2
-  return value.toLocaleString('fr-FR', { maximumFractionDigits: digits })
+  return formatNumber(value, locale, { maximumFractionDigits: digits })
 }
 
 export function foldForSearch(value: string): string {

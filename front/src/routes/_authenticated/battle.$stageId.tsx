@@ -36,7 +36,9 @@ import { PageShell } from '../../components/shared/PageShell.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import { Popup, PopupContent } from '../../components/ui/popup.tsx'
 import { CAMPAIGN_TEAM_KEY } from '../../constants/combatTeam.constant.ts'
+import { currentLocale } from '../../i18n/index.ts'
 import { isApiError } from '../../libs/httpErrorHandler.ts'
+import { formatNumber } from '../../libs/utils.ts'
 import { useAttackStage, useCampaign } from '../../queries/useCampaign.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
 import { useCombatTeam } from '../../queries/useCombatTeam.ts'
@@ -626,6 +628,7 @@ function XpBar({
     levelBefore: number
   }
 }) {
+  const locale = currentLocale()
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const xpBefore = rewards.xpBefore
   const xpAfter = xpBefore + rewards.xp
@@ -647,8 +650,8 @@ function XpBar({
       <div className="mb-1.5 flex items-baseline justify-between font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/70">
         <span>Niveau {level}</span>
         <span className="tabular-nums">
-          {xpAfter.toLocaleString('fr-FR')} /{' '}
-          {xpAtLevelEnd.toLocaleString('fr-FR')} XP
+          {formatNumber(xpAfter, locale)} / {formatNumber(xpAtLevelEnd, locale)}{' '}
+          XP
         </span>
       </div>
       <div className="relative h-2 w-full overflow-hidden rounded-full bg-[rgba(27,23,38,0.08)]">
@@ -671,7 +674,7 @@ function XpBar({
         />
       </div>
       <p className="mt-1 text-right font-mono text-[11px] font-bold tabular-nums text-emerald-600">
-        +{rewards.xp.toLocaleString('fr-FR')} XP
+        +{formatNumber(rewards.xp, locale)} XP
       </p>
     </div>
   )

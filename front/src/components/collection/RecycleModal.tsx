@@ -2,6 +2,8 @@ import { Minus, Plus, RefreshCw, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 
 import type { Card, CardVariant } from '../../api/collection.api.ts'
+import { currentLocale } from '../../i18n/index.ts'
+import { formatNumber } from '../../libs/utils.ts'
 import { useRecycle } from '../../queries/useCollection.ts'
 import {
   DEFAULT_ECONOMY,
@@ -39,6 +41,7 @@ export function RecycleModal({
   const { mutate: recycle, isPending } = useRecycle()
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
 
+  const locale = currentLocale()
   const maxRecyclable = card.quantity - 1
   const dustPerCard = economy.recycle[card.rarity] ?? 0
   const dustTotal = quantity * dustPerCard
@@ -159,7 +162,7 @@ export function RecycleModal({
               Tu obtiendras
             </p>
             <p className="text-3xl font-black text-primary tabular-nums">
-              {dustTotal.toLocaleString('fr-FR')}
+              {formatNumber(dustTotal, locale)}
               <Sparkles className="ml-1.5 inline h-6 w-6 text-primary" />
             </p>
             <p className="mt-1 text-[11px] text-text-light/50">

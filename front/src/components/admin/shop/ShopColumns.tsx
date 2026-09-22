@@ -2,6 +2,8 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { Pencil } from 'lucide-react'
 import { useMemo } from 'react'
 
+import { currentLocale } from '../../../i18n/index.ts'
+import { formatNumber } from '../../../libs/utils.ts'
 import type { AdminShopItem } from '../../../queries/useAdminShop'
 import { Button } from '../../ui/button'
 
@@ -16,7 +18,7 @@ export function useShopColumns(onEdit: (item: AdminShopItem) => void) {
         size: 130,
         cell: ({ row }) => (
           <span className="tabular-nums">
-            {row.original.cost.toLocaleString('fr-FR')}{' '}
+            {formatNumber(row.original.cost, currentLocale())}{' '}
             <span className="text-text-light">
               {row.original.currency === 'GOLD' ? 'or' : 'poussière'}
             </span>

@@ -12,6 +12,7 @@ import {
 import { useEffect, useRef, useState } from 'react'
 
 import type { SettledDuelView } from '../../api/wagers.api.ts'
+import { currentLocale } from '../../i18n/index.ts'
 import { RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { markDuelSeen, readSeenDuels } from '../../libs/seenDuels.ts'
 import {
@@ -20,6 +21,7 @@ import {
   readSeenJoins,
   seenKey,
 } from '../../libs/seenJoinRequests.ts'
+import { formatNumber } from '../../libs/utils.ts'
 import {
   useAcceptPendingDuel,
   useDeclinePendingDuel,
@@ -63,7 +65,8 @@ function settledSubtitle(
       : duel.winnerId === meId
         ? `Tu bats ${them.username}`
         : `${them.username} te bat`
-  return `${verdict} ${myScore.toLocaleString('fr-FR')} – ${theirScore.toLocaleString('fr-FR')}`
+  const locale = currentLocale()
+  return `${verdict} ${formatNumber(myScore, locale)} – ${formatNumber(theirScore, locale)}`
 }
 
 /**
