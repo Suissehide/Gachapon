@@ -1,6 +1,7 @@
 import type { CardElement, CardRarity } from '../constants/card.constant.ts'
 import { apiUrl } from '../constants/config.constant.ts'
-import { handleHttpError } from '../libs/httpErrorHandler.ts'
+import i18n from '../i18n/index.ts'
+import { handleHttpErrorFromServer } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
 export type WagerUserMini = {
@@ -232,73 +233,45 @@ export type WagersView = {
   engagedCardIds: string[]
 }
 
+// Les `message` détaillés de ces catalogues doublonnaient le catalogue
+// d'erreurs du back (`back/src/main/infra/i18n/error-messages/`, domaine
+// `wagers.*`) — voir la note équivalente sur `teams.api.ts` et
+// task-6-report.md. `handleHttpErrorFromServer` lit désormais le message
+// déjà résolu par le serveur ; seuls les TITRES de toast restent ici
+// (`wagers:apiTitles.*`).
 const PROPOSE_DUEL_ERRORS = {
-  403: {
-    title: 'Accès refusé',
-    message: 'Tu ne fais pas partie de cette équipe.',
-  },
-  409: {
-    title: 'Duel en cours',
-    message: 'Tu as déjà un duel en cours.',
-  },
-  400: {
-    title: 'Adversaire invalide',
-    message: "Cet adversaire ne fait pas partie de l'équipe.",
-  },
+  403: i18n.t('wagers:apiTitles.accessDenied'),
+  409: i18n.t('wagers:apiTitles.duelInProgress'),
+  400: i18n.t('wagers:apiTitles.invalidOpponent'),
 }
 
 const BET_QUOTE_ERRORS = {
-  403: {
-    title: 'Accès refusé',
-    message: 'Tu ne fais pas partie de cette équipe.',
-  },
-  400: {
-    title: 'Cote indisponible',
-    message: "Cette cible ne fait pas partie de l'équipe.",
-  },
-  404: {
-    title: 'Cote indisponible',
-    message: 'Ce joueur est introuvable.',
-  },
+  403: i18n.t('wagers:apiTitles.accessDenied'),
+  400: i18n.t('wagers:apiTitles.oddsUnavailable'),
+  404: i18n.t('wagers:apiTitles.oddsUnavailable'),
 }
 
 const JOIN_BET_ERRORS = {
-  409: {
-    title: 'Mises closes',
-    message:
-      "Ce pari n'accepte plus de mise : la cible a commencé ses tirages, ou tu as déjà misé dessus.",
-  },
-  402: {
-    title: 'Poussière insuffisante',
-    message: "Tu n'as pas assez de poussière pour cette mise.",
-  },
-  400: {
-    title: 'Renchère impossible',
-    message: 'Mise hors bornes, ou camp qui ne rapporterait rien.',
-  },
+  409: i18n.t('wagers:apiTitles.bettingClosed'),
+  402: i18n.t('wagers:apiTitles.insufficientDust'),
+  400: i18n.t('wagers:apiTitles.wagerNotPossible'),
 }
 
 const PLACE_BET_ERRORS = {
-  403: {
-    title: 'Accès refusé',
-    message: 'Tu ne fais pas partie de cette équipe.',
-  },
-  402: {
-    title: 'Poussière insuffisante',
-    message: "Tu n'as pas assez de poussière pour cette mise.",
-  },
-  400: {
-    title: 'Pari impossible',
-    message:
-      'Mise, cible ou nombre de paris déjà ouverts : le serveur a refusé ce pari.',
-  },
+  403: i18n.t('wagers:apiTitles.accessDenied'),
+  402: i18n.t('wagers:apiTitles.insufficientDust'),
+  400: i18n.t('wagers:apiTitles.betNotPossible'),
 }
 
 export const WagersApi = {
   getMyTargetedBets: async (): Promise<{ bets: TargetedBetView[] }> => {
     const res = await fetchWithAuth(`${apiUrl}/me/bets`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Chargement des paris reçus')
+      await handleHttpErrorFromServer(
+        res,
+        {},
+        i18n.t('wagers:apiTitles.operations.loadReceivedBets'),
+      )
     }
     return res.json()
   },
@@ -311,15 +284,10 @@ export const WagersApi = {
       `${apiUrl}/teams/${teamId}/duels/${duelId}/hands`,
     )
     if (!res.ok) {
-      handleHttpError(
+      await handleHttpErrorFromServer(
         res,
-        {
-          409: {
-            title: 'Duel en cours',
-            message: "Les mains ne s'affichent qu'une fois le duel réglé.",
-          },
-        },
-        'Chargement des mains du duel',
+        { 409: i18n.t('wagers:apiTitles.duelInProgress') },
+        i18n.t('wagers:apiTitles.operations.loadDuelHands'),
       )
     }
     return res.json()
@@ -331,7 +299,11 @@ export const WagersApi = {
   }> => {
     const res = await fetchWithAuth(`${apiUrl}/me/duels`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Chargement des défis reçus')
+      await handleHttpErrorFromServer(
+        res,
+        {},
+        i18n.t('wagers:apiTitles.operations.loadReceivedChallenges'),
+      )
     }
     return res.json()
   },
@@ -339,15 +311,10 @@ export const WagersApi = {
   getWagers: async (teamId: string): Promise<WagersView> => {
     const res = await fetchWithAuth(`${apiUrl}/teams/${teamId}/wagers`)
     if (!res.ok) {
-      handleHttpError(
+      await handleHttpErrorFromServer(
         res,
-        {
-          403: {
-            title: 'Accès refusé',
-            message: 'Tu ne fais pas partie de cette équipe.',
-          },
-        },
-        'Chargement des duels',
+        { 403: i18n.t('wagers:apiTitles.accessDenied') },
+        i18n.t('wagers:apiTitles.operations.loadDuels'),
       )
     }
     return res.json()
@@ -366,15 +333,10 @@ export const WagersApi = {
       `${apiUrl}/teams/${teamId}/duels/${duelId}/transfers`,
     )
     if (!res.ok) {
-      handleHttpError(
+      await handleHttpErrorFromServer(
         res,
-        {
-          403: {
-            title: 'Accès refusé',
-            message: 'Tu ne fais pas partie de cette équipe.',
-          },
-        },
-        'Chargement des cartes du duel',
+        { 403: i18n.t('wagers:apiTitles.accessDenied') },
+        i18n.t('wagers:apiTitles.operations.loadDuelCards'),
       )
     }
     return res.json()
@@ -398,7 +360,11 @@ export const WagersApi = {
       },
     )
     if (!res.ok) {
-      handleHttpError(res, JOIN_BET_ERRORS, 'Renchere sur le pari')
+      await handleHttpErrorFromServer(
+        res,
+        JOIN_BET_ERRORS,
+        i18n.t('wagers:apiTitles.operations.joinBet'),
+      )
     }
     return res.json()
   },
@@ -413,7 +379,11 @@ export const WagersApi = {
       body: JSON.stringify({ opponentId }),
     })
     if (!res.ok) {
-      handleHttpError(res, PROPOSE_DUEL_ERRORS, 'Proposition de duel')
+      await handleHttpErrorFromServer(
+        res,
+        PROPOSE_DUEL_ERRORS,
+        i18n.t('wagers:apiTitles.operations.proposeDuel'),
+      )
     }
     return res.json()
   },
@@ -424,19 +394,13 @@ export const WagersApi = {
       { method: 'POST' },
     )
     if (!res.ok) {
-      handleHttpError(
+      await handleHttpErrorFromServer(
         res,
         {
-          403: {
-            title: 'Accès refusé',
-            message: 'Tu ne fais pas partie de cette équipe.',
-          },
-          409: {
-            title: 'Duel expiré',
-            message: "Ce duel n'est plus en attente d'acceptation.",
-          },
+          403: i18n.t('wagers:apiTitles.accessDenied'),
+          409: i18n.t('wagers:apiTitles.duelExpired'),
         },
-        'Acceptation du duel',
+        i18n.t('wagers:apiTitles.operations.acceptDuel'),
       )
     }
     return res.json()
@@ -448,19 +412,13 @@ export const WagersApi = {
       { method: 'POST' },
     )
     if (!res.ok) {
-      handleHttpError(
+      await handleHttpErrorFromServer(
         res,
         {
-          403: {
-            title: 'Accès refusé',
-            message: 'Tu ne fais pas partie de cette équipe.',
-          },
-          409: {
-            title: 'Duel expiré',
-            message: "Ce duel n'est plus en attente d'acceptation.",
-          },
+          403: i18n.t('wagers:apiTitles.accessDenied'),
+          409: i18n.t('wagers:apiTitles.duelExpired'),
         },
-        'Refus du duel',
+        i18n.t('wagers:apiTitles.operations.declineDuel'),
       )
     }
     return res.json()
@@ -472,19 +430,13 @@ export const WagersApi = {
       { method: 'POST' },
     )
     if (!res.ok) {
-      handleHttpError(
+      await handleHttpErrorFromServer(
         res,
         {
-          403: {
-            title: 'Accès refusé',
-            message: 'Tu ne fais pas partie de cette équipe.',
-          },
-          409: {
-            title: 'Duel expiré',
-            message: "Ce duel n'est plus en attente d'acceptation.",
-          },
+          403: i18n.t('wagers:apiTitles.accessDenied'),
+          409: i18n.t('wagers:apiTitles.duelExpired'),
         },
-        'Annulation du duel',
+        i18n.t('wagers:apiTitles.operations.cancelDuel'),
       )
     }
     return res.json()
@@ -505,7 +457,11 @@ export const WagersApi = {
       `${apiUrl}/teams/${teamId}/bets/quote?${params.toString()}`,
     )
     if (!res.ok) {
-      handleHttpError(res, BET_QUOTE_ERRORS, 'Calcul de la cote')
+      await handleHttpErrorFromServer(
+        res,
+        BET_QUOTE_ERRORS,
+        i18n.t('wagers:apiTitles.operations.getQuote'),
+      )
     }
     return res.json()
   },
@@ -520,7 +476,11 @@ export const WagersApi = {
       body: JSON.stringify(input),
     })
     if (!res.ok) {
-      handleHttpError(res, PLACE_BET_ERRORS, 'Placement du pari')
+      await handleHttpErrorFromServer(
+        res,
+        PLACE_BET_ERRORS,
+        i18n.t('wagers:apiTitles.operations.placeBet'),
+      )
     }
     return res.json()
   },

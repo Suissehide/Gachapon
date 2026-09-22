@@ -9,7 +9,8 @@ import type {
 } from '../constants/teams.constant.ts'
 import { TEAM_ROUTES } from '../constants/teams.constant.ts'
 import { USER_ROUTES } from '../constants/user.constant.ts'
-import { handleHttpError } from '../libs/httpErrorHandler.ts'
+import i18n from '../i18n/index.ts'
+import { handleHttpErrorFromServer } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
 export type {
@@ -21,19 +22,24 @@ export type {
   TeamInvitation,
 }
 
+/**
+ * Les messages détaillés de ce fichier doublonnaient le catalogue d'erreurs
+ * du back (`back/src/main/infra/i18n/error-messages/`, domaine `team.*`) —
+ * une traduction manuelle maintenue en parallèle d'un catalogue déjà
+ * bilingue, condamnée à diverger. `handleHttpErrorFromServer` lit le
+ * `message` que le serveur a déjà résolu dans la langue de la requête (voir
+ * `withAcceptLanguage` dans `i18n/index.ts`) ; seuls les TITRES de toast,
+ * qui n'ont pas d'équivalent côté back, restent traduits ici
+ * (`team:apiTitles.*`, voir task-6-report.md).
+ */
 export const TeamsApi = {
   getMyTeams: async (): Promise<{ teams: TeamSummary[] }> => {
     const res = await fetchWithAuth(`${apiUrl}${TEAM_ROUTES.teams}`)
     if (!res.ok) {
-      handleHttpError(
+      await handleHttpErrorFromServer(
         res,
-        {
-          404: {
-            title: 'Équipes introuvables',
-            message: 'Impossible de charger tes équipes.',
-          },
-        },
-        'Chargement des équipes',
+        { 404: i18n.t('team:apiTitles.teamsNotFound') },
+        i18n.t('team:apiTitles.operations.loadTeams'),
       )
     }
     return res.json()
@@ -42,19 +48,13 @@ export const TeamsApi = {
   getTeam: async (teamId: string): Promise<Team> => {
     const res = await fetchWithAuth(`${apiUrl}${TEAM_ROUTES.team(teamId)}`)
     if (!res.ok) {
-      handleHttpError(
+      await handleHttpErrorFromServer(
         res,
         {
-          404: {
-            title: 'Équipe introuvable',
-            message: "Cette équipe n'existe pas ou a été supprimée.",
-          },
-          403: {
-            title: 'Accès refusé',
-            message: 'Tu ne fais pas partie de cette équipe.',
-          },
+          404: i18n.t('team:apiTitles.teamNotFound'),
+          403: i18n.t('team:apiTitles.accessDenied'),
         },
-        "Chargement de l'équipe",
+        i18n.t('team:apiTitles.operations.loadTeam'),
       )
     }
     return res.json()
@@ -70,19 +70,13 @@ export const TeamsApi = {
       body: JSON.stringify(data),
     })
     if (!res.ok) {
-      handleHttpError(
+      await handleHttpErrorFromServer(
         res,
         {
-          400: {
-            title: 'Nom invalide',
-            message: 'Vérifie le nom de ton équipe.',
-          },
-          409: {
-            title: 'Nom déjà pris',
-            message: 'Une équipe avec ce nom existe déjà.',
-          },
+          400: i18n.t('team:apiTitles.invalidName'),
+          409: i18n.t('team:apiTitles.nameTaken'),
         },
-        "Création de l'équipe",
+        i18n.t('team:apiTitles.operations.createTeam'),
       )
     }
     return res.json()
@@ -98,23 +92,14 @@ export const TeamsApi = {
       body: JSON.stringify(data),
     })
     if (!res.ok) {
-      handleHttpError(
+      await handleHttpErrorFromServer(
         res,
         {
-          400: {
-            title: 'Données invalides',
-            message: 'Vérifie les informations saisies.',
-          },
-          403: {
-            title: 'Action non autorisée',
-            message: "Seul le créateur peut modifier l'équipe.",
-          },
-          409: {
-            title: 'Nom déjà pris',
-            message: 'Une équipe avec ce nom existe déjà.',
-          },
+          400: i18n.t('team:apiTitles.invalidData'),
+          403: i18n.t('team:apiTitles.actionNotAllowed'),
+          409: i18n.t('team:apiTitles.nameTaken'),
         },
-        "Modification de l'équipe",
+        i18n.t('team:apiTitles.operations.updateTeam'),
       )
     }
     return res.json()
@@ -125,19 +110,13 @@ export const TeamsApi = {
       method: 'DELETE',
     })
     if (!res.ok) {
-      handleHttpError(
+      await handleHttpErrorFromServer(
         res,
         {
-          403: {
-            title: 'Action non autorisée',
-            message: "Seul le créateur peut supprimer l'équipe.",
-          },
-          404: {
-            title: 'Équipe introuvable',
-            message: "Cette équipe n'existe plus.",
-          },
+          403: i18n.t('team:apiTitles.actionNotAllowed'),
+          404: i18n.t('team:apiTitles.teamNotFound'),
         },
-        "Suppression de l'équipe",
+        i18n.t('team:apiTitles.operations.deleteTeam'),
       )
     }
   },
@@ -152,28 +131,15 @@ export const TeamsApi = {
       body: JSON.stringify(data),
     })
     if (!res.ok) {
-      handleHttpError(
+      await handleHttpErrorFromServer(
         res,
         {
-          400: {
-            title: 'Utilisateur introuvable',
-            message: 'Aucun compte ne correspond à cette recherche.',
-          },
-          403: {
-            title: 'Action non autorisée',
-            message: "Tu n'as pas la permission d'inviter des membres.",
-          },
-          404: {
-            title: 'Utilisateur introuvable',
-            message: "Aucun compte ne correspond à ce nom d'utilisateur.",
-          },
-          409: {
-            title: 'Déjà invité',
-            message:
-              "Cette personne a déjà une invitation en attente ou fait déjà partie de l'équipe.",
-          },
+          400: i18n.t('team:apiTitles.userNotFound'),
+          403: i18n.t('team:apiTitles.actionNotAllowed'),
+          404: i18n.t('team:apiTitles.userNotFound'),
+          409: i18n.t('team:apiTitles.alreadyInvited'),
         },
-        'Invitation',
+        i18n.t('team:apiTitles.operations.invite'),
       )
     }
     return res.json()
@@ -188,19 +154,13 @@ export const TeamsApi = {
       },
     )
     if (!res.ok) {
-      handleHttpError(
+      await handleHttpErrorFromServer(
         res,
         {
-          403: {
-            title: 'Action non autorisée',
-            message: 'Seul le créateur peut exclure des membres.',
-          },
-          404: {
-            title: 'Membre introuvable',
-            message: "Ce membre ne fait plus partie de l'équipe.",
-          },
+          403: i18n.t('team:apiTitles.actionNotAllowed'),
+          404: i18n.t('team:apiTitles.memberNotFound'),
         },
-        'Exclusion du membre',
+        i18n.t('team:apiTitles.operations.removeMember'),
       )
     }
   },
@@ -224,19 +184,13 @@ export const TeamsApi = {
       },
     )
     if (!res.ok) {
-      handleHttpError(
+      await handleHttpErrorFromServer(
         res,
         {
-          403: {
-            title: 'Action non autorisée',
-            message: 'Seul le chef peut changer les rôles.',
-          },
-          404: {
-            title: 'Membre introuvable',
-            message: "Ce membre ne fait plus partie de l'équipe.",
-          },
+          403: i18n.t('team:apiTitles.actionNotAllowed'),
+          404: i18n.t('team:apiTitles.memberNotFound'),
         },
-        'Changement de rôle',
+        i18n.t('team:apiTitles.operations.changeRole'),
       )
     }
   },
@@ -254,19 +208,13 @@ export const TeamsApi = {
       },
     )
     if (!res.ok) {
-      handleHttpError(
+      await handleHttpErrorFromServer(
         res,
         {
-          403: {
-            title: 'Action non autorisée',
-            message: 'Seul le chef peut transmettre son rôle.',
-          },
-          404: {
-            title: 'Membre introuvable',
-            message: "Ce membre ne fait plus partie de l'équipe.",
-          },
+          403: i18n.t('team:apiTitles.actionNotAllowed'),
+          404: i18n.t('team:apiTitles.memberNotFound'),
         },
-        'Transfert du rôle de chef',
+        i18n.t('team:apiTitles.operations.transferOwnership'),
       )
     }
   },
@@ -277,20 +225,13 @@ export const TeamsApi = {
       headers: { 'Content-Type': 'application/json' },
     })
     if (!res.ok) {
-      handleHttpError(
+      await handleHttpErrorFromServer(
         res,
         {
-          403: {
-            title: 'Impossible de quitter',
-            message:
-              'Le créateur ne peut pas quitter son équipe. Supprime-la à la place.',
-          },
-          404: {
-            title: 'Équipe introuvable',
-            message: "Cette équipe n'existe plus.",
-          },
+          403: i18n.t('team:apiTitles.cannotLeave'),
+          404: i18n.t('team:apiTitles.teamNotFound'),
         },
-        "Départ de l'équipe",
+        i18n.t('team:apiTitles.operations.leaveTeam'),
       )
     }
   },
@@ -298,7 +239,11 @@ export const TeamsApi = {
   getMyInvitations: async (): Promise<{ invitations: MyInvitation[] }> => {
     const res = await fetchWithAuth(`${apiUrl}${TEAM_ROUTES.myInvitations}`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Chargement des invitations')
+      await handleHttpErrorFromServer(
+        res,
+        {},
+        i18n.t('team:apiTitles.operations.loadInvitations'),
+      )
     }
     return res.json()
   },
@@ -306,27 +251,17 @@ export const TeamsApi = {
   getInvitation: async (token: string): Promise<Invitation> => {
     const res = await fetchWithAuth(`${apiUrl}${TEAM_ROUTES.invitation(token)}`)
     if (!res.ok) {
-      handleHttpError(
+      await handleHttpErrorFromServer(
         res,
         {
           // 403 = le lien est valide, mais il vise un autre compte. Le
           // distinguer du 404 est ce qui permet à la page de proposer un
           // changement de compte plutôt qu'un « lien invalide » trompeur.
-          403: {
-            title: 'Invitation destinée à un autre compte',
-            message:
-              "Cette invitation n'est pas destinée au compte connecté. Connecte-toi avec le compte invité pour la voir.",
-          },
-          404: {
-            title: 'Invitation introuvable',
-            message: "Ce lien d'invitation est invalide ou a expiré.",
-          },
-          410: {
-            title: 'Invitation expirée',
-            message: "Cette invitation n'est plus valide.",
-          },
+          403: i18n.t('team:apiTitles.invitationForOtherAccount'),
+          404: i18n.t('team:apiTitles.invitationNotFound'),
+          410: i18n.t('team:apiTitles.invitationExpired'),
         },
-        "Chargement de l'invitation",
+        i18n.t('team:apiTitles.operations.loadInvitation'),
       )
     }
     return res.json()
@@ -340,23 +275,14 @@ export const TeamsApi = {
       },
     )
     if (!res.ok) {
-      handleHttpError(
+      await handleHttpErrorFromServer(
         res,
         {
-          404: {
-            title: 'Invitation introuvable',
-            message: "Ce lien d'invitation est invalide ou a expiré.",
-          },
-          409: {
-            title: 'Déjà membre',
-            message: 'Tu fais déjà partie de cette équipe.',
-          },
-          410: {
-            title: 'Invitation expirée',
-            message: "Cette invitation n'est plus valide.",
-          },
+          404: i18n.t('team:apiTitles.invitationNotFound'),
+          409: i18n.t('team:apiTitles.alreadyMember'),
+          410: i18n.t('team:apiTitles.invitationExpired'),
         },
-        "Acceptation de l'invitation",
+        i18n.t('team:apiTitles.operations.acceptInvitation'),
       )
     }
     return res.json()
@@ -370,19 +296,13 @@ export const TeamsApi = {
       },
     )
     if (!res.ok) {
-      handleHttpError(
+      await handleHttpErrorFromServer(
         res,
         {
-          404: {
-            title: 'Invitation introuvable',
-            message: "Cette invitation n'existe plus.",
-          },
-          409: {
-            title: 'Déjà traitée',
-            message: 'Cette invitation a déjà été acceptée ou refusée.',
-          },
+          404: i18n.t('team:apiTitles.invitationNotFound'),
+          409: i18n.t('team:apiTitles.alreadyProcessed'),
         },
-        "Refus de l'invitation",
+        i18n.t('team:apiTitles.operations.declineInvitation'),
       )
     }
     return res.json()
@@ -395,7 +315,11 @@ export const TeamsApi = {
       `${apiUrl}${TEAM_ROUTES.invitations(teamId)}`,
     )
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors du chargement des invitations')
+      await handleHttpErrorFromServer(
+        res,
+        {},
+        i18n.t('team:apiTitles.operations.loadTeamInvitations'),
+      )
     }
     return res.json()
   },
@@ -408,15 +332,10 @@ export const TeamsApi = {
       },
     )
     if (!res.ok) {
-      handleHttpError(
+      await handleHttpErrorFromServer(
         res,
-        {
-          429: {
-            title: 'Trop tôt',
-            message: 'Attends 5 minutes avant de renvoyer.',
-          },
-        },
-        'Erreur lors du renvoi',
+        { 429: i18n.t('team:apiTitles.tooSoon') },
+        i18n.t('team:apiTitles.operations.resendInvitation'),
       )
     }
   },
@@ -429,15 +348,10 @@ export const TeamsApi = {
       },
     )
     if (!res.ok) {
-      handleHttpError(
+      await handleHttpErrorFromServer(
         res,
-        {
-          409: {
-            title: 'Impossible',
-            message: "L'invitation n'est plus en attente.",
-          },
-        },
-        "Erreur lors de l'annulation",
+        { 409: i18n.t('team:apiTitles.impossible') },
+        i18n.t('team:apiTitles.operations.cancelInvitation'),
       )
     }
   },
@@ -450,15 +364,10 @@ export const TeamsApi = {
       },
     )
     if (!res.ok) {
-      handleHttpError(
+      await handleHttpErrorFromServer(
         res,
-        {
-          409: {
-            title: 'Impossible',
-            message: "Annulez d'abord l'invitation.",
-          },
-        },
-        'Erreur lors de la suppression',
+        { 409: i18n.t('team:apiTitles.impossible') },
+        i18n.t('team:apiTitles.operations.deleteInvitation'),
       )
     }
   },
@@ -470,15 +379,10 @@ export const TeamsApi = {
   }> => {
     const res = await fetchWithAuth(`${apiUrl}${USER_ROUTES.search(q)}`)
     if (!res.ok) {
-      handleHttpError(
+      await handleHttpErrorFromServer(
         res,
-        {
-          400: {
-            title: 'Recherche invalide',
-            message: 'Le terme de recherche est trop court ou invalide.',
-          },
-        },
-        "Recherche d'utilisateurs",
+        { 400: i18n.t('team:apiTitles.invalidSearch') },
+        i18n.t('team:apiTitles.operations.searchUsers'),
       )
     }
     return res.json()

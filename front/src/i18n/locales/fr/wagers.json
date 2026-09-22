@@ -1,5 +1,30 @@
 {
   "toasts": {
     "joinRefusedTitle": "Renchère refusée"
+  },
+  "apiTitles": {
+    "accessDenied": "Accès refusé",
+    "duelInProgress": "Duel en cours",
+    "invalidOpponent": "Adversaire invalide",
+    "oddsUnavailable": "Cote indisponible",
+    "bettingClosed": "Mises closes",
+    "insufficientDust": "Poussière insuffisante",
+    "wagerNotPossible": "Renchère impossible",
+    "betNotPossible": "Pari impossible",
+    "duelExpired": "Duel expiré",
+    "operations": {
+      "loadReceivedBets": "Chargement des paris reçus",
+      "loadDuelHands": "Chargement des mains du duel",
+      "loadReceivedChallenges": "Chargement des défis reçus",
+      "loadDuels": "Chargement des duels",
+      "loadDuelCards": "Chargement des cartes du duel",
+      "joinBet": "Renchere sur le pari",
+      "proposeDuel": "Proposition de duel",
+      "acceptDuel": "Acceptation du duel",
+      "declineDuel": "Refus du duel",
+      "cancelDuel": "Annulation du duel",
+      "getQuote": "Calcul de la cote",
+      "placeBet": "Placement du pari"
+    }
   }
 }

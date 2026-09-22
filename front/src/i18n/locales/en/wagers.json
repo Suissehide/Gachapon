@@ -1,5 +1,30 @@
 {
   "toasts": {
     "joinRefusedTitle": "Bet refused"
+  },
+  "apiTitles": {
+    "accessDenied": "Access denied",
+    "duelInProgress": "Duel in progress",
+    "invalidOpponent": "Invalid opponent",
+    "oddsUnavailable": "Odds unavailable",
+    "bettingClosed": "Betting closed",
+    "insufficientDust": "Not enough dust",
+    "wagerNotPossible": "Bet not possible",
+    "betNotPossible": "Bet not possible",
+    "duelExpired": "Duel expired",
+    "operations": {
+      "loadReceivedBets": "Loading received bets",
+      "loadDuelHands": "Loading the duel hands",
+      "loadReceivedChallenges": "Loading received challenges",
+      "loadDuels": "Loading duels",
+      "loadDuelCards": "Loading the duel cards",
+      "joinBet": "Joining the bet",
+      "proposeDuel": "Proposing a duel",
+      "acceptDuel": "Accepting the duel",
+      "declineDuel": "Declining the duel",
+      "cancelDuel": "Cancelling the duel",
+      "getQuote": "Computing the odds",
+      "placeBet": "Placing the bet"
+    }
   }
 }
