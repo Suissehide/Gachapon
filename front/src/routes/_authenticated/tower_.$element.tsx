@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { Dialog } from 'radix-ui'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { TeamUnit } from '../../api/combat.api.ts'
 import type {
@@ -47,6 +48,7 @@ import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
 import type { CardElement } from '../../constants/card.constant.ts'
 import { ELEMENT_LABELS } from '../../constants/card.constant.ts'
 import { towerTeamKey } from '../../constants/combatTeam.constant.ts'
+import i18n from '../../i18n/index.ts'
 import { RARITY_COLOR_VAR, RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
 import { useCombatTeam } from '../../queries/useCombatTeam.ts'
@@ -62,6 +64,7 @@ export const Route = createFileRoute('/_authenticated/tower_/$element')({
 })
 
 function TowerFloorsPage() {
+  const { t } = useTranslation('combat')
   // L'URL porte l'élément en minuscules ; l'API attend la valeur d'enum.
   const { element: elementParam } = Route.useParams()
   const element = elementParam.toUpperCase()
@@ -134,18 +137,20 @@ function TowerFloorsPage() {
   // Nom propre de la tour, renvoyé par le back. Le titre disait « Tour Feu »
   // pendant que ses étages s'appelaient « Tour de Braise — étage 1 ».
   const towerName =
-    currentTower?.name ?? tower.data?.name ?? `Tour ${elementLabel}`
+    currentTower?.name ??
+    tower.data?.name ??
+    t('combat:towerFloors.nameFallback', { element: elementLabel })
   const slotLabel = currentTower ? SLOT_LABELS[currentTower.slot] : null
   const subtitle = slotLabel
-    ? `Permet d'obtenir des pièces « ${slotLabel} ». Plus l'étage est haut, meilleures sont les raretés.`
-    : "Plus l'étage est haut, meilleures sont les raretés."
+    ? t('combat:towerFloors.subtitleWithSlot', { slot: slotLabel })
+    : t('combat:towerFloors.subtitleNoSlot')
 
   return (
     <PageShell>
       <PageHeader
         breadcrumbs={[
           { label: 'Gachapon', to: '/play' },
-          { label: 'Tours', to: '/tower' },
+          { label: t('combat:towerList.breadcrumb'), to: '/tower' },
           { label: towerName },
         ]}
         title={towerName}
@@ -281,6 +286,7 @@ function TowerPrepPopup({
   onEditTeam: () => void
   onClose: () => void
 }) {
+  const { t } = useTranslation('combat')
   if (!floor) {
     return null
   }
@@ -298,9 +304,9 @@ function TowerPrepPopup({
   // Le libellé dit POURQUOI c'est bloqué, comme en campagne.
   const fightLabel = team.length
     ? currentPC < battleCost
-      ? 'Énergie insuffisante'
-      : 'Combattre'
-    : 'Équipe requise'
+      ? t('combat:battlePrep.reason.energyInsufficient')
+      : t('combat:campaign.fight')
+    : t('combat:battlePrep.reason.teamRequired')
 
   return (
     <Popup open onOpenChange={(v) => !v && onClose()}>
@@ -312,8 +318,14 @@ function TowerPrepPopup({
         <BattlePrepModal
           eyebrow={
             <>
-              {floor.isBoss ? 'Combat de boss' : 'Préparation'} · {towerName} ·
-              étage {floor.index}
+              {floor.isBoss
+                ? t('combat:campaign.bossPrepEyebrow')
+                : t('combat:campaign.prepEyebrow')}{' '}
+              ·{' '}
+              {t('combat:towerFloors.prepEyebrowSuffix', {
+                towerName,
+                floor: floor.index,
+              })}
             </>
           }
           enemies={floor.enemies}
@@ -326,28 +338,36 @@ function TowerPrepPopup({
             <>
               <div className="mb-3 flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
                 <Sparkles className="h-3 w-3 text-amber-600" />
-                Récompenses
+                {t('combat:campaign.rewardsLabel')}
               </div>
               <div className="flex flex-wrap gap-2">
                 <RewardPill
                   color="#f59e0b"
-                  label={`${rp.gold} Or`}
+                  label={t('combat:campaign.goldLabel', { amount: rp.gold })}
                   icon={Coins}
                 />
                 <RewardPill
                   color="#38bdf8"
-                  label={`${rp.dust} Poussière`}
+                  label={t('combat:campaign.dustLabel', { amount: rp.dust })}
                   icon={Sparkles}
                 />
-                <RewardPill color="#8b5cf6" label={`${rp.xp} XP`} icon={Star} />
+                <RewardPill
+                  color="#8b5cf6"
+                  label={t('combat:campaign.xpLabel', { amount: rp.xp })}
+                  icon={Star}
+                />
                 {/* La tour garantit TOUJOURS une pièce : ce qui change d'un
                     étage à l'autre, c'est sa rareté. */}
                 <RewardPill
                   color="#ec4899"
                   label={
                     rp.guaranteedMinRarity
-                      ? `Équipement garanti · ${RARITY_LABEL_FR[rp.guaranteedMinRarity] ?? rp.guaranteedMinRarity} min.`
-                      : 'Équipement garanti'
+                      ? t('combat:towerFloors.guaranteedEquipmentMin', {
+                          rarity:
+                            RARITY_LABEL_FR[rp.guaranteedMinRarity] ??
+                            rp.guaranteedMinRarity,
+                        })
+                      : t('combat:campaign.guaranteedEquipment')
                   }
                   icon={Shield}
                 />
@@ -408,15 +428,20 @@ function FloorList({
   floors: TowerFloorView[]
   onFight: (floor: TowerFloorView) => void
 }) {
+  const { t } = useTranslation('combat')
   if (status === 'pending') {
-    return <p className="mt-10 text-center text-text-light">Chargement…</p>
+    return (
+      <p className="mt-10 text-center text-text-light">
+        {t('combat:towerFloors.loading')}
+      </p>
+    )
   }
   if (status === 'error') {
     return (
       <div className="mt-10 text-center text-destructive">
-        <p>Impossible de charger cette tour.</p>
+        <p>{t('combat:towerFloors.loadError')}</p>
         <Link to="/tower" className="mt-2 inline-block text-sm underline">
-          Retour aux tours
+          {t('combat:towerFloors.backToTowers')}
         </Link>
       </div>
     )
@@ -441,6 +466,7 @@ function BattleResultPopup({
   result: TowerBattleResult | null
   onClose: () => void
 }) {
+  const { t } = useTranslation('combat')
   if (!result) {
     return null
   }
@@ -450,7 +476,9 @@ function BattleResultPopup({
         size="lg"
         className="border-0 bg-[#fbf8f3] p-0 shadow-[0_30px_80px_-12px_rgba(0,0,0,0.4)]"
       >
-        <Dialog.Title className="sr-only">Résultat du combat</Dialog.Title>
+        <Dialog.Title className="sr-only">
+          {t('combat:towerFloors.resultTitle')}
+        </Dialog.Title>
         <ResultPanel halo={result.won}>
           <ResultBadge
             className={result.won ? RESULT_BADGE_WIN : RESULT_BADGE_LOSS}
@@ -463,7 +491,9 @@ function BattleResultPopup({
             }
           />
           <h2 className="mt-4 font-display text-3xl font-bold text-text">
-            {result.won ? 'Victoire !' : 'Défaite'}
+            {result.won
+              ? t('combat:battle.victoryTitle')
+              : t('combat:battle.result.defeat')}
           </h2>
 
           {result.rewards && (
@@ -471,13 +501,13 @@ function BattleResultPopup({
               <div className="mt-6 grid w-full grid-cols-3 gap-2.5">
                 <RewardTile
                   icon={<Coins className="h-5 w-5" />}
-                  label="Pièces"
+                  label={t('combat:battle.rewards.gold')}
                   value={result.rewards.gold}
                   tone="#f59e0b"
                 />
                 <RewardTile
                   icon={<Sparkles className="h-5 w-5" />}
-                  label="Poussière"
+                  label={t('combat:battle.rewards.dust')}
                   value={result.rewards.dust}
                   tone="#38bdf8"
                 />
@@ -500,7 +530,7 @@ function BattleResultPopup({
 
           <div className="mt-6 flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-center">
             <Button onClick={onClose} className="gap-2">
-              Continuer
+              {t('combat:farmResult.continue')}
               <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
@@ -543,12 +573,12 @@ function FloorStatusIcon({ floor }: { floor: TowerFloorView }) {
 
 function floorButtonLabel(floor: TowerFloorView): string {
   if (floor.status === 'current') {
-    return 'Combattre'
+    return i18n.t('combat:towerFloors.floorLabel.fight')
   }
   if (floor.isBoss) {
-    return 'Farmer'
+    return i18n.t('combat:towerFloors.floorLabel.farm')
   }
-  return 'Refaire'
+  return i18n.t('combat:towerFloors.floorLabel.redo')
 }
 
 /**

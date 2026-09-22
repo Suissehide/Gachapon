@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { ArrowRight, Flame, Swords } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { CombatTeamView } from '../../api/combat.api.ts'
 import type { TowerSummary } from '../../api/tower.api.ts'
@@ -24,6 +25,7 @@ export const Route = createFileRoute('/_authenticated/tower')({
 })
 
 function TowerListPage() {
+  const { t } = useTranslation('combat')
   const towers = useTowers()
   const teams = useAllCombatTeams()
   const [elementsOpen, setElementsOpen] = useState(false)
@@ -31,25 +33,30 @@ function TowerListPage() {
   return (
     <PageShell>
       <PageHeader
-        breadcrumbs={[{ label: 'Gachapon', to: '/play' }, { label: 'Tours' }]}
-        title="Tours élémentaires"
-        subtitle="Gravis les étages pour augmenter le taux de rareté des pièces obtenues."
+        breadcrumbs={[
+          { label: 'Gachapon', to: '/play' },
+          { label: t('combat:towerList.breadcrumb') },
+        ]}
+        title={t('combat:towerList.title')}
+        subtitle={t('combat:towerList.subtitle')}
         right={
           <InfoButton
             icon={Swords}
             onClick={() => setElementsOpen(true)}
-            title="Comprendre les éléments"
+            title={t('combat:campaign.understandElements')}
           >
-            Éléments
+            {t('combat:elementGuide.title')}
           </InfoButton>
         }
       />
 
       {towers.isLoading ? (
-        <p className="mt-10 text-center text-text-light">Chargement…</p>
+        <p className="mt-10 text-center text-text-light">
+          {t('combat:towerList.loading')}
+        </p>
       ) : towers.isError ? (
         <p className="mt-10 text-center text-destructive">
-          Impossible de charger les tours.
+          {t('combat:towerList.loadError')}
         </p>
       ) : (
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -82,6 +89,7 @@ function TowerCard({
   teamLoading?: boolean
   teamError?: boolean
 }) {
+  const { t } = useTranslation('combat')
   const ElementIcon = ELEMENT_ICON[tower.element] ?? Flame
   const SlotIcon = SLOT_ICONS[tower.slot]
   const percent = Math.min((tower.highestFloor / tower.totalFloors) * 100, 100)
@@ -106,14 +114,19 @@ function TowerCard({
             <CardTitle className="text-lg">{tower.name}</CardTitle>
             <p className="flex items-center gap-1 text-xs text-text-light">
               <SlotIcon className="h-3.5 w-3.5" />
-              Permet d'obtenir des pièces « {SLOT_LABELS[tower.slot]} »
+              {t('combat:towerList.unlocksSlot', {
+                slot: SLOT_LABELS[tower.slot],
+              })}
             </p>
           </div>
         </div>
 
         <div className="mt-4 flex items-center justify-between gap-2">
           <span className="font-mono text-sm text-text-light">
-            Étage {tower.highestFloor} / {tower.totalFloors}
+            {t('combat:towerList.floorProgress', {
+              current: tower.highestFloor,
+              total: tower.totalFloors,
+            })}
           </span>
           <ArrowRight className="h-4 w-4 shrink-0 text-text-light" />
         </div>
@@ -149,11 +162,11 @@ function TowerCard({
             </div>
           ) : teamError ? (
             <span className="font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-destructive/70">
-              Impossible de charger l'équipe
+              {t('combat:towerList.teamLoadError')}
             </span>
           ) : (
             <span className="font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-text-light/50">
-              Aucune équipe
+              {t('combat:towerList.noTeam')}
             </span>
           )}
         </div>

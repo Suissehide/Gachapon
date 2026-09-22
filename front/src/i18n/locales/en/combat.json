@@ -82,6 +82,33 @@
     "guaranteedEquipment": "Guaranteed equipment",
     "guaranteedCard": "Guaranteed card"
   },
+  "towerList": {
+    "breadcrumb": "Towers",
+    "title": "Elemental towers",
+    "subtitle": "Climb the floors to raise the rarity odds of the pieces you get.",
+    "loading": "Loading…",
+    "loadError": "Couldn't load the towers.",
+    "unlocksSlot": "Unlocks \"{{slot}}\" pieces",
+    "floorProgress": "Floor {{current}} / {{total}}",
+    "teamLoadError": "Couldn't load the team",
+    "noTeam": "No team"
+  },
+  "towerFloors": {
+    "nameFallback": "{{element}} Tower",
+    "subtitleWithSlot": "Unlocks \"{{slot}}\" pieces. The higher the floor, the better the rarity odds.",
+    "subtitleNoSlot": "The higher the floor, the better the rarity odds.",
+    "prepEyebrowSuffix": "{{towerName}} · floor {{floor}}",
+    "guaranteedEquipmentMin": "Guaranteed equipment · {{rarity}} min.",
+    "loading": "Loading…",
+    "loadError": "Couldn't load this tower.",
+    "backToTowers": "Back to the towers",
+    "resultTitle": "Battle result",
+    "floorLabel": {
+      "fight": "Fight",
+      "farm": "Farm",
+      "redo": "Redo"
+    }
+  },
   "battle": {
     "actionCounter": "Action {{count}}",
     "loading": "Loading…",

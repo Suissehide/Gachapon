@@ -82,6 +82,33 @@
     "guaranteedEquipment": "Équipement garanti",
     "guaranteedCard": "Carte garantie"
   },
+  "towerList": {
+    "breadcrumb": "Tours",
+    "title": "Tours élémentaires",
+    "subtitle": "Gravis les étages pour augmenter le taux de rareté des pièces obtenues.",
+    "loading": "Chargement…",
+    "loadError": "Impossible de charger les tours.",
+    "unlocksSlot": "Permet d'obtenir des pièces « {{slot}} »",
+    "floorProgress": "Étage {{current}} / {{total}}",
+    "teamLoadError": "Impossible de charger l'équipe",
+    "noTeam": "Aucune équipe"
+  },
+  "towerFloors": {
+    "nameFallback": "Tour {{element}}",
+    "subtitleWithSlot": "Permet d'obtenir des pièces « {{slot}} ». Plus l'étage est haut, meilleures sont les raretés.",
+    "subtitleNoSlot": "Plus l'étage est haut, meilleures sont les raretés.",
+    "prepEyebrowSuffix": "{{towerName}} · étage {{floor}}",
+    "guaranteedEquipmentMin": "Équipement garanti · {{rarity}} min.",
+    "loading": "Chargement…",
+    "loadError": "Impossible de charger cette tour.",
+    "backToTowers": "Retour aux tours",
+    "resultTitle": "Résultat du combat",
+    "floorLabel": {
+      "fight": "Combattre",
+      "farm": "Farmer",
+      "redo": "Refaire"
+    }
+  },
   "battle": {
     "actionCounter": "Action {{count}}",
     "loading": "Chargement…",
