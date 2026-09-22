@@ -44,7 +44,7 @@ export class RaidRepository implements IRaidRepository {
 
   findTierByPct(pct: number): Promise<RaidTierWithReward | null> {
     return this.#prisma.raidTier.findUnique({
-      where: { pct },
+      where: { pct_level: { pct, level: 0 } },
       include: { reward: true },
     })
   }
@@ -54,11 +54,11 @@ export class RaidRepository implements IRaidRepository {
     data: RaidTierRewardPatch,
   ): Promise<RaidTierWithReward> {
     const tier = await this.#prisma.raidTier.findUniqueOrThrow({
-      where: { pct },
+      where: { pct_level: { pct, level: 0 } },
     })
     await this.#prisma.reward.update({ where: { id: tier.rewardId }, data })
     return this.#prisma.raidTier.findUniqueOrThrow({
-      where: { pct },
+      where: { pct_level: { pct, level: 0 } },
       include: { reward: true },
     })
   }

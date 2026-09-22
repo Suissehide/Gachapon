@@ -87,7 +87,9 @@ describe('routes de raid', () => {
       update: { name: 'Boss de test', spec: { ...WEAK_BOSS_SPEC, element } },
     })
     for (const t of TIERS) {
-      const existing = await prisma.raidTier.findUnique({ where: { pct: t.pct } })
+      const existing = await prisma.raidTier.findUnique({
+        where: { pct_level: { pct: t.pct, level: 0 } },
+      })
       if (!existing) {
         const reward = await prisma.reward.create({
           data: {

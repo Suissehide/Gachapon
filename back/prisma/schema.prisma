@@ -888,6 +888,11 @@ model TeamRaid {
   maxHp              Int
   hp                 Int
   memberCountAtStart Int
+  /// Niveau de difficulté de l'équipe, figé à la création comme
+  /// `memberCountAtStart`. Multiplie les PV du boss et majore les lots.
+  /// Dérivé du dernier raid joué (raid-rules.ts#nextRaidLevel), jamais
+  /// stocké sur l'équipe : l'historique reste lisible semaine par semaine.
+  level              Int       @default(0)
   killedAt           DateTime?
   createdAt          DateTime  @default(now())
 
@@ -914,9 +919,15 @@ model RaidAttack {
 /// Palier de récompense (25/50/75/100 %), calqué sur StreakMilestone.
 model RaidTier {
   id       String @id @default(uuid())
-  pct      Int    @unique
+  pct      Int
+  /// 0 = ligne de référence, la seule éditée depuis /admin/raid. Les
+  /// niveaux > 0 sont dérivés à la demande (base + niveau × bonus) et
+  /// partagés par toutes les équipes.
+  level    Int    @default(0)
   rewardId String
   reward   Reward @relation(fields: [rewardId], references: [id])
+
+  @@unique([pct, level])
 }
 
 /// Un duel de tirage entre deux membres d'une même équipe. Aucun état de

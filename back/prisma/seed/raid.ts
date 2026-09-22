@@ -95,7 +95,9 @@ export async function seedRaid(tx: Tx): Promise<void> {
       cardRarity: t.cardRarity,
       label: `Raid d'équipe — palier ${t.pct} %`,
     }
-    const existing = await tx.raidTier.findUnique({ where: { pct: t.pct } })
+    const existing = await tx.raidTier.findUnique({
+      where: { pct_level: { pct: t.pct, level: 0 } },
+    })
     if (existing) {
       await tx.reward.update({
         where: { id: existing.rewardId },

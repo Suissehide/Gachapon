@@ -48,7 +48,9 @@ describe('admin raid routes', () => {
         },
       },
     })
-    const existing = await prisma.raidTier.findUnique({ where: { pct: 50 } })
+    const existing = await prisma.raidTier.findUnique({
+      where: { pct_level: { pct: 50, level: 0 } },
+    })
     if (!existing) {
       const reward = await prisma.reward.create({ data: { tokens: 10, gold: 400, dust: 100 } })
       await prisma.raidTier.create({ data: { pct: 50, rewardId: reward.id } })
