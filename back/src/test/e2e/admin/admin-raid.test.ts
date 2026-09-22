@@ -112,6 +112,83 @@ describe('admin raid routes', () => {
     expect(patch.json()).toMatchObject({ pct: 50, gold: 450, cardRarity: 'RARE', tokens: 10 })
   })
 
+  it('PATCH /admin/raid/tiers/50 purge les paliers dérivés (niveau > 0) sans supprimer leurs Reward, régénérés à la nouvelle valeur au prochain franchissement', async () => {
+    const { raidRepository, configService } = (app as any).iocContainer
+    // Pct dédié à ce test, pour ne pas interférer avec les pct 25/50/75/100
+    // partagés par les suites src/test/e2e/raids/*.ts.
+    const pct = 61
+    const perLevel = { tokens: 2, gold: 100, dust: 30 }
+    await configService.set('raid.levelRewardTokens', perLevel.tokens)
+    await configService.set('raid.levelRewardGold', perLevel.gold)
+    await configService.set('raid.levelRewardDust', perLevel.dust)
+
+    const baseReward = await prisma.reward.create({
+      data: { tokens: 20, gold: 800, dust: 200 },
+    })
+    await prisma.raidTier.upsert({
+      where: { pct_level: { pct, level: 0 } },
+      create: { pct, level: 0, rewardId: baseReward.id },
+      update: { rewardId: baseReward.id },
+    })
+
+    // Les `RaidTier` de niveau > 0 sont partagées par toutes les équipes,
+    // toutes suites confondues (ex. `raid-difficulte.test.ts` compte les
+    // lignes de niveau 2 pour l'ensemble de la base). Ce `try/finally` évite
+    // que le pct dédié à ce test pollue ces comptages une fois le test fini.
+    const rewardIds = new Set<string>([baseReward.id])
+    try {
+      // 1. Paliers dérivés niveau 1 et 2, comme le ferait le jeu en
+      // franchissant ces niveaux (`RaidRepository#ensureTiersForLevel`,
+      // appelée par `raid.domain.ts#tiersFor`).
+      const level1 = await raidRepository.ensureTiersForLevel(1, perLevel)
+      const level2 = await raidRepository.ensureTiersForLevel(2, perLevel)
+      const tier1 = level1.find((t: any) => t.pct === pct)
+      const tier2 = level2.find((t: any) => t.pct === pct)
+      expect(tier1.reward.gold).toBe(900) // 800 + 1 × 100
+      expect(tier2.reward.gold).toBe(1000) // 800 + 2 × 100
+      const rewardId1 = tier1.rewardId
+      const rewardId2 = tier2.rewardId
+      rewardIds.add(rewardId1).add(rewardId2)
+
+      // 2. PATCH du palier de référence (niveau 0) — c'est lui qui doit
+      // déclencher la purge des lignes dérivées.
+      const patch = await app.inject({
+        method: 'PATCH',
+        url: `/admin/raid/tiers/${pct}`,
+        headers: { cookie: cookies },
+        payload: { gold: 850 },
+      })
+      expect(patch.statusCode).toBe(200)
+      expect(patch.json().gold).toBe(850)
+
+      // Les lignes RaidTier de niveau > 0 pour ce pct ont bien disparu.
+      const remainingTiers = await prisma.raidTier.findMany({
+        where: { pct, level: { gt: 0 } },
+      })
+      expect(remainingTiers).toHaveLength(0)
+
+      // 3. Mais les Reward qu'elles pointaient survivent — ils sont pointés
+      // par des UserReward déjà distribués, donc de l'historique immuable.
+      const survivingReward1 = await prisma.reward.findUnique({ where: { id: rewardId1 } })
+      const survivingReward2 = await prisma.reward.findUnique({ where: { id: rewardId2 } })
+      expect(survivingReward1).not.toBeNull()
+      expect(survivingReward2).not.toBeNull()
+      expect(survivingReward1.gold).toBe(900)
+
+      // 4. Le prochain franchissement du niveau 1 régénère une nouvelle
+      // ligne, à la NOUVELLE valeur patchée + le bonus de niveau — pas
+      // l'ancienne ressuscitée.
+      const regenerated = await raidRepository.ensureTiersForLevel(1, perLevel)
+      const regeneratedTier = regenerated.find((t: any) => t.pct === pct)
+      expect(regeneratedTier.reward.gold).toBe(950) // 850 (patché) + 1 × 100
+      expect(regeneratedTier.rewardId).not.toBe(rewardId1)
+      rewardIds.add(regeneratedTier.rewardId)
+    } finally {
+      await prisma.raidTier.deleteMany({ where: { pct } })
+      await prisma.reward.deleteMany({ where: { id: { in: [...rewardIds] } } })
+    }
+  })
+
   it('PATCH /admin/raid/tiers/33 → 404', async () => {
     const res = await app.inject({
       method: 'PATCH',
