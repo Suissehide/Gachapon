@@ -47,6 +47,7 @@ export interface IRaidRepository {
     bossId: string
     maxHp: number
     memberCountAtStart: number
+    level: number
   }): Promise<TeamRaidWithBoss>
   /** Dégâts cumulés et nombre d'attaques par joueur, triés par dégâts décroissants. */
   listContributions(raidId: string): Promise<RaidContributionRow[]>
@@ -74,4 +75,6 @@ export interface IRaidRepository {
   ): Promise<TeamRaidWithBoss[]>
   /** Raids de l'équipe dont le boss est tombé (`killedAt` renseigné). */
   countKills(teamId: string): Promise<number>
+  /** Dernier raid strictement antérieur à `weekKey`, référence du niveau. */
+  findLastRaidBefore(teamId: string, weekKey: string): Promise<TeamRaid | null>
 }

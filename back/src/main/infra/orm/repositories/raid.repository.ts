@@ -2,6 +2,7 @@ import type {
   CardElement,
   Prisma,
   RaidBoss,
+  TeamRaid,
 } from '../../../../generated/client'
 import type { IocContainer } from '../../../types/application/ioc'
 import type {
@@ -76,6 +77,7 @@ export class RaidRepository implements IRaidRepository {
     bossId: string
     maxHp: number
     memberCountAtStart: number
+    level: number
   }): Promise<TeamRaidWithBoss> {
     return this.#prisma.teamRaid.upsert({
       where: { teamId_weekKey: { teamId: data.teamId, weekKey: data.weekKey } },
@@ -155,6 +157,22 @@ export class RaidRepository implements IRaidRepository {
   countKills(teamId: string): Promise<number> {
     return this.#prisma.teamRaid.count({
       where: { teamId, killedAt: { not: null } },
+    })
+  }
+
+  /**
+   * Dernier raid STRICTEMENT antérieur à `weekKey`, quelle que soit son
+   * ancienneté — c'est la référence de `nextRaidLevel`. Même remarque que
+   * `listPastRaids` : la clé de semaine est une date ISO, donc l'ordre
+   * lexicographique EST l'ordre chronologique.
+   */
+  findLastRaidBefore(
+    teamId: string,
+    weekKey: string,
+  ): Promise<TeamRaid | null> {
+    return this.#prisma.teamRaid.findFirst({
+      where: { teamId, weekKey: { lt: weekKey } },
+      orderBy: { weekKey: 'desc' },
     })
   }
 }

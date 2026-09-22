@@ -5,6 +5,7 @@ import {
   attacksRemaining,
   crossedTiers,
   damageDealtToBoss,
+  nextRaidLevel,
   RAID_EPOCH_WEEK_KEY,
   raidElementForWeek,
   raidMaxHp,
@@ -170,5 +171,39 @@ describe('raid-rules — pourcentage de barre', () => {
 
   it('valeur exacte de la maquette : 8 600 dégâts sur 20 000 PV font 43 %', () => {
     expect(raidPct(8600, 20_000)).toBe(43)
+  })
+})
+
+describe('raid-rules — niveau de difficulté', () => {
+  const killed = new Date('2026-09-18T12:00:00.000Z')
+
+  it('une équipe sans passé part au niveau 0', () => {
+    expect(nextRaidLevel(null, '2026-09-21')).toBe(0)
+  })
+
+  it('une victoire la semaine dernière monte d’un cran', () => {
+    expect(
+      nextRaidLevel({ weekKey: '2026-09-14', level: 2, killedAt: killed }, '2026-09-21'),
+    ).toBe(3)
+  })
+
+  it('une semaine jouée sans victoire fait redescendre d’un cran', () => {
+    expect(
+      nextRaidLevel({ weekKey: '2026-09-14', level: 2, killedAt: null }, '2026-09-21'),
+    ).toBe(1)
+  })
+
+  it('ne descend jamais sous 0', () => {
+    expect(
+      nextRaidLevel({ weekKey: '2026-09-14', level: 0, killedAt: null }, '2026-09-21'),
+    ).toBe(0)
+  })
+
+  it('chaque semaine entièrement sautée coûte un cran de plus', () => {
+    // Victoire au niveau 3 la semaine du 31 août, puis deux semaines sans
+    // aucun raid : +1 pour la victoire, −2 pour les semaines sautées.
+    expect(
+      nextRaidLevel({ weekKey: '2026-08-31', level: 3, killedAt: killed }, '2026-09-21'),
+    ).toBe(2)
   })
 })

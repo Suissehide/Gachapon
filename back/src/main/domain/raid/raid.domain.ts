@@ -47,6 +47,7 @@ import {
   attacksRemaining,
   crossedTiers,
   damageDealtToBoss,
+  nextRaidLevel,
   RAID_BOSS_SIM_HP,
   raidElementForWeek,
   raidMaxHp,
@@ -492,12 +493,16 @@ export class RaidDomain implements IRaidDomain {
         'Raid indisponible pour le moment, réessaie plus tard',
       )
     }
-    const cfg = await this.#configService.getMany('raid.baseHpPerMember')
+    const [cfg, last] = await Promise.all([
+      this.#configService.getMany('raid.baseHpPerMember'),
+      this.#raidRepository.findLastRaidBefore(team.id, weekKey),
+    ])
     const memberCount = team.members.length
     return this.#raidRepository.upsertRaid({
       teamId: team.id,
       weekKey,
       bossId: boss.id,
+      level: nextRaidLevel(last, weekKey),
       maxHp: raidMaxHp(cfg['raid.baseHpPerMember'], memberCount),
       memberCountAtStart: memberCount,
     })

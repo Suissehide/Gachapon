@@ -62,6 +62,33 @@ export function raidMaxHp(
 }
 
 /**
+ * Niveau du raid qu'on s'apprête à créer, dérivé du DERNIER raid joué par
+ * l'équipe — quelle que soit son ancienneté. Une victoire monte d'un cran,
+ * une semaine sans victoire fait redescendre d'un cran.
+ *
+ * Les semaines entièrement sautées comptent chacune comme un échec. Sans
+ * cette clause, il suffirait de ne pas ouvrir la page de raid pour figer son
+ * niveau : le raid est créé paresseusement (raid.domain#ensureRaid), donc
+ * une équipe qui ne regarde pas n'enregistre aucun échec.
+ *
+ * Aucun plafond : le niveau ne monte que sur une victoire, il s'arrête donc
+ * de lui-même là où l'équipe ne suit plus.
+ */
+export function nextRaidLevel(
+  last: { weekKey: string; level: number; killedAt: Date | null } | null,
+  weekKey: string,
+): number {
+  if (!last) {
+    return 0
+  }
+  const skipped = Math.max(
+    0,
+    raidWeekIndex(weekKey) - raidWeekIndex(last.weekKey) - 1,
+  )
+  return Math.max(0, last.level + (last.killedAt ? 1 : -1) - skipped)
+}
+
+/**
  * Somme des dégâts finaux infligés par le camp A à l'unité boss. Les
  * esquives ont `final: 0`, les frappes du boss (attackerId 'B…') et les
  * dégâts sur d'autres cibles sont ignorés.
