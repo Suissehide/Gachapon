@@ -8,7 +8,11 @@ import {
 } from '../../main/domain/content/campaign.definitions'
 import { CARDS, HUMAN_CARD_SET } from '../../main/domain/content/cards.definitions'
 import { ENEMY_FAMILIES } from '../../main/domain/content/enemies.definitions'
-import { buildEquipmentCatalog } from '../../main/domain/content/equipment.definitions'
+import {
+  SET_LABEL_EN,
+  SET_LABEL_FR,
+  buildEquipmentCatalog,
+} from '../../main/domain/content/equipment.definitions'
 import { PASSIVE_TEXT } from '../../main/domain/content/passives.definitions'
 import {
   RAID_BOSS_NAME,
@@ -252,6 +256,21 @@ describe('traductions du contenu — équipement', () => {
     for (const row of rows) {
       expectBothLanguages(row.nameFr, row.nameFr, row.nameEn)
       expect(row.nameFr).not.toBe(row.nameEn)
+    }
+  })
+})
+
+// Tâche 4 du lot i18n (amendement A4), round 2 — `SET_LABEL_FR`/`SET_LABEL_EN`
+// nomment un EFFET (drain, percée, guet), pas une entité : contrairement aux
+// branches de compétences (Flux/Fortune/Collection/Combat, cognates
+// identiques dans les deux langues), ces libellés se traduisent, sans
+// exception connue.
+describe('traductions du contenu — sets d’équipement', () => {
+  it('donne deux langues à chaque set, sans recopie', () => {
+    for (const [key, labelFr] of Object.entries(SET_LABEL_FR)) {
+      const labelEn = SET_LABEL_EN[key as keyof typeof SET_LABEL_EN]
+      expectBothLanguages(`set ${key}`, labelFr, labelEn)
+      expect(labelFr).not.toBe(labelEn)
     }
   })
 })

@@ -36,6 +36,48 @@ const SETS: EquipmentSet[] = [
   EquipmentSet.COLOSSE,
   EquipmentSet.CELERITE,
 ]
+
+/**
+ * Libellés des 7 sets — mots communs DESCRIPTIFS (un effet de drain, une
+ * poussée, une percée), pas des noms propres : contrairement aux branches de
+ * compétences (Flux/Fortune/Collection/Combat, cognates identiques dans les
+ * deux langues, voir `content-translations.test.ts`), ils se traduisent.
+ * Seule source, consommée par `equipment.domain.ts` (`listSets`, inventaire).
+ */
+export const SET_LABEL_FR: Record<EquipmentSet, string> = {
+  FUREUR: 'Fureur',
+  AFFUT: 'Affût',
+  PERCEE: 'Percée',
+  SANGSUE: 'Sangsue',
+  ASSAUT: 'Assaut',
+  COLOSSE: 'Colosse',
+  CELERITE: 'Célérité',
+}
+
+/**
+ * Traduction anglaise de `SET_LABEL_FR`. Choisie pour ne PAS entrer en
+ * collision avec un libellé de passif déjà traduit dans ce lot :
+ * - FUREUR -> "Wrath" (pas "Fury", déjà pris par le passif FURY) — la
+ *   thématique des pièces (Axe of Wrath, Amulet of Rage) le confirme.
+ * - AFFUT -> "Vigilance" (pas "Precision", déjà pris par le passif CRIT) —
+ *   les pièces (Watcher's Blade, Ring of the True Eye) confirment le thème
+ *   du guet, pas de la certitude du coup.
+ * - CELERITE -> "Celerity" (le passif HASTE, dont le libellé français est
+ *   LUI AUSSI « Célérité », est traduit "Haste" — donc pas de collision une
+ *   fois en anglais, alors qu'il y en a une en français, déjà présente
+ *   avant cette tâche).
+ * Les autres suivent directement le thème des pièces du set
+ * (`PIECE_NAME_EN` ci-dessous) : Breakthrough, Leech, Assault, Colossus.
+ */
+export const SET_LABEL_EN: Record<EquipmentSet, string> = {
+  FUREUR: 'Wrath',
+  AFFUT: 'Vigilance',
+  PERCEE: 'Breakthrough',
+  SANGSUE: 'Leech',
+  ASSAUT: 'Assault',
+  COLOSSE: 'Colossus',
+  CELERITE: 'Celerity',
+}
 const RARITIES: CardRarity[] = [
   CardRarity.COMMON,
   CardRarity.UNCOMMON,

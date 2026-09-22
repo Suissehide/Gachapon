@@ -10,6 +10,7 @@ import type { ConfigServiceInterface } from '../../types/infra/config/config.ser
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
 import type { AchievementsDomainInterface } from '../achievements/achievements.domain.interface'
 import type { EquipmentBonuses } from '../combat/combat-stats.domain'
+import { SET_LABEL_EN, SET_LABEL_FR } from '../content/equipment.definitions'
 import { retryOnSerialization } from '../shared/retry-serialization'
 import {
   discountedUpgradeGoldCost,
@@ -32,21 +33,13 @@ import {
 } from './set-bonuses'
 
 /**
- * Libellés des 7 sets — seule source, réutilisée par l'inventaire et
- * `listSets`. Délibérément NON traduits (comme les 4 branches de compétences,
- * voir `content-translations.test.ts`) : ce sont des noms propres de gameplay,
- * pas du texte descriptif — un joueur anglophone apprend « Affût » comme il
- * apprendrait le nom d'un sort. Seul `SET_STAT_LABELS`, qui décrit ce que le
- * bonus FAIT (pas comment il s'appelle), se traduit.
+ * Libellé d'un set dans la locale de la requête courante — voir
+ * `SET_LABEL_FR`/`SET_LABEL_EN` (`content/equipment.definitions.ts`) pour le
+ * pourquoi de la traduction. `SetKey` (littéraux) et `EquipmentSet` (enum
+ * Prisma) portent les mêmes valeurs, d'où l'indexation directe.
  */
-export const SET_LABELS: Record<SetKey, string> = {
-  FUREUR: 'Fureur',
-  AFFUT: 'Affût',
-  PERCEE: 'Percée',
-  SANGSUE: 'Sangsue',
-  ASSAUT: 'Assaut',
-  COLOSSE: 'Colosse',
-  CELERITE: 'Célérité',
+function setLabel(key: SetKey): string {
+  return getCurrentLocale() === 'FR' ? SET_LABEL_FR[key] : SET_LABEL_EN[key]
 }
 
 /** Libellés français des stats portées par les bonus de set (clé technique → nom affiché). */
@@ -246,7 +239,7 @@ export class EquipmentDomain {
         slot: ue.equipment.slot,
         rarity: ue.equipment.rarity,
         setKey: ue.equipment.setKey,
-        setLabel: SET_LABELS[ue.equipment.setKey],
+        setLabel: setLabel(ue.equipment.setKey),
         imageUrl: ue.equipment.imageUrl,
         mainStat: ue.equipment.mainStat,
         bonuses: (ue.equipment.bonuses ?? {}) as Record<string, number>,
@@ -281,7 +274,7 @@ export class EquipmentDomain {
     return {
       sets: SET_KEYS.map((key) => ({
         key,
-        label: SET_LABELS[key],
+        label: setLabel(key),
         pieces: defs[key].pieces,
         bonus: {
           label: formatSetTierLabel(defs[key].bonuses),

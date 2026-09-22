@@ -23,9 +23,12 @@ describe('GET /equipment/sets', () => {
     const tailles = new Set(body.sets.map((s: { pieces: number }) => s.pieces))
     expect([...tailles].sort()).toEqual([2, 3, 4])
 
-    // Vérifié sur Fureur, sans recopier la valeur sous arbitrage.
+    // Vérifié sur FUREUR, sans recopier la valeur sous arbitrage. Depuis la
+    // tâche 4 (round 2, lot i18n 2), le libellé de set se traduit comme les
+    // noms d'ennemis et de passifs — 'Wrath' est le texte anglais (locale
+    // par défaut, aucun accept-language sur cette requête), pas 'Fureur'.
     const fureur = body.sets.find((s: { key: string }) => s.key === 'FUREUR')
-    expect(fureur.label).toBe('Fureur')
+    expect(fureur.label).toBe('Wrath')
     expect(fureur.pieces).toBe(4)
     expect(fureur.bonus.bonuses.critDmgPct).toBeGreaterThan(0)
     await app.close()
