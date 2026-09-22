@@ -1,5 +1,6 @@
 import { Trash2 } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { EquipmentDrop } from '../../api/equipment.api.ts'
 import {
@@ -8,7 +9,7 @@ import {
 } from '../../components/collection/EquipmentSlotsPanel.tsx'
 import { TOAST_SEVERITY } from '../../constants/ui.constant.ts'
 import { useToast } from '../../hooks/useToast.ts'
-import { currentLocale } from '../../i18n/index.ts'
+import i18n, { currentLocale } from '../../i18n/index.ts'
 import { RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { cn, formatNumber } from '../../libs/utils.ts'
 import {
@@ -138,6 +139,7 @@ export function EquipmentDropCard({
    */
   highlight?: { key: string; delta: number } | null
 }) {
+  const { t } = useTranslation('equipment')
   const locale = currentLocale()
   const tier = RARITY_TIER[drop.rarity] ?? 1
   const SlotIcon = SLOT_ICONS[drop.slot]
@@ -179,7 +181,10 @@ export function EquipmentDropCard({
               passait à la ligne sur le seul « 7 ». L'interlettrage se resserre
               plutôt que de laisser le niveau s'échapper. */}
           <div className="mt-[3px] font-mono text-[9.5px] whitespace-nowrap tracking-[0.14em] text-text-light @max-[300px]:tracking-[0.05em]">
-            {SLOT_LABELS[drop.slot].toUpperCase()} · NIV. {drop.level}
+            {t('equipment:drop.slotAndLevel', {
+              slot: SLOT_LABELS[drop.slot].toUpperCase(),
+              level: drop.level,
+            })}
           </div>
           <div className="mt-[3px] font-mono text-[9px] font-bold tracking-[0.14em] text-[color-mix(in_oklab,var(--rar)_72%,var(--text-light))]">
             {drop.setKey.toUpperCase()}
@@ -192,7 +197,10 @@ export function EquipmentDropCard({
           </span>
           <span
             className="inline-flex gap-[3px]"
-            title={`Rareté ${tier}/${TIER_MAX}`}
+            title={t('equipment:drop.rarityTierTitle', {
+              tier,
+              max: TIER_MAX,
+            })}
           >
             {Array.from({ length: TIER_MAX }, (_, i) => i + 1).map((i) => (
               <i
@@ -282,9 +290,11 @@ export function EquipmentDropCard({
             className="h-auto flex-1 rounded-[13px] border-[1.5px] border-destructive/25 bg-destructive/10 p-3 text-[15px] text-destructive hover:bg-destructive/15 motion-reduce:transition-none"
           >
             <Trash2 className="h-[15px] w-[15px]" />
-            Détruire
+            {t('equipment:drop.destroy')}
             <span className="font-mono text-[11px] whitespace-nowrap opacity-80">
-              +{formatNumber(scrapGold ?? 0, locale)} or
+              {t('equipment:gold.amountPlus', {
+                amount: formatNumber(scrapGold ?? 0, locale),
+              })}
             </span>
           </Button>
         </div>
@@ -312,7 +322,9 @@ export function EquipmentScrapped({
         className,
       )}
     >
-      ✓ Détruit · +{formatNumber(gold, currentLocale())} or
+      {i18n.t('equipment:drop.scrapped', {
+        amount: formatNumber(gold, currentLocale()),
+      })}
     </div>
   )
 }
@@ -365,8 +377,10 @@ export function EquipmentDropReward({
     salvageItems.mutate([drop.userEquipmentId], {
       onSuccess: (res) => {
         toast({
-          title: 'Objet détruit',
-          message: `+${formatNumber(res.goldEarned, currentLocale())} or`,
+          title: i18n.t('equipment:drop.destroyedToastTitle'),
+          message: i18n.t('equipment:gold.amountPlus', {
+            amount: formatNumber(res.goldEarned, currentLocale()),
+          }),
           severity: TOAST_SEVERITY.SUCCESS,
         })
         setScrappedGold(res.goldEarned)

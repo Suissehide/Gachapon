@@ -9,6 +9,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import type {
   EquipmentDrop,
@@ -39,7 +40,7 @@ import {
 } from '../../components/ui/popup.tsx'
 import { SelectMulti } from '../../components/ui/selectMulti.tsx'
 import { useStoredState } from '../../hooks/useStoredState.ts'
-import { currentLocale } from '../../i18n/index.ts'
+import i18n, { currentLocale } from '../../i18n/index.ts'
 import { RARITY_COLOR_VAR, RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { formatNumber } from '../../libs/utils.ts'
 import { useUserCollection } from '../../queries/useCollection.ts'
@@ -86,13 +87,13 @@ export const Route = createFileRoute('/_authenticated/equipment')({
 })
 
 const SLOT_LABELS: Record<EquipmentSlot, string> = {
-  WEAPON: 'Arme',
-  ARMOR: 'Armure',
-  RING: 'Anneau',
-  AMULET: 'Amulette',
-  GLOVES: 'Gants',
-  BOOTS: 'Bottes',
-  BELT: 'Ceinture',
+  WEAPON: i18n.t('equipment:slots.weapon'),
+  ARMOR: i18n.t('equipment:slots.armor'),
+  RING: i18n.t('equipment:slots.ring'),
+  AMULET: i18n.t('equipment:slots.amulet'),
+  GLOVES: i18n.t('equipment:slots.gloves'),
+  BOOTS: i18n.t('equipment:slots.boots'),
+  BELT: i18n.t('equipment:slots.belt'),
 }
 // Ordre d'affichage du filtre de slot, dérivé de SLOT_LABELS plutôt que
 // recopié : une seule liste des 7 slots dans ce fichier.
@@ -133,12 +134,12 @@ const MAIN_STAT_FILTER_OPTIONS = MAIN_STAT_ORDER.map((key) => ({
 type SortMode = 'default' | 'rarity' | 'level' | 'slot' | 'set' | 'name'
 
 const SORT_OPTIONS: { value: SortMode; label: string }[] = [
-  { value: 'default', label: 'Plus récentes' },
-  { value: 'rarity', label: 'Rareté' },
-  { value: 'level', label: 'Niveau' },
-  { value: 'slot', label: 'Emplacement' },
-  { value: 'set', label: 'Set' },
-  { value: 'name', label: 'Nom' },
+  { value: 'default', label: i18n.t('equipment:sort.default') },
+  { value: 'rarity', label: i18n.t('equipment:sort.rarity') },
+  { value: 'level', label: i18n.t('equipment:sort.level') },
+  { value: 'slot', label: i18n.t('equipment:sort.slot') },
+  { value: 'set', label: i18n.t('equipment:sort.set') },
+  { value: 'name', label: i18n.t('equipment:sort.name') },
 ]
 const SORT_VALUES = SORT_OPTIONS.map((o) => o.value)
 
@@ -168,10 +169,11 @@ function sortItems(
   } else if (sort === 'set') {
     sorted.sort(
       (a, b) =>
-        a.setLabel.localeCompare(b.setLabel, 'fr') || byRarityDesc(a, b),
+        a.setLabel.localeCompare(b.setLabel, currentLocale()) ||
+        byRarityDesc(a, b),
     )
   } else {
-    sorted.sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+    sorted.sort((a, b) => a.name.localeCompare(b.name, currentLocale()))
   }
   return sorted
 }
@@ -225,6 +227,7 @@ function useFrozenOrder(
 }
 
 function EquipmentPage() {
+  const { t } = useTranslation(['equipment', 'common'])
   const locale = currentLocale()
   const user = useAuthStore((s) => s.user)
   const equipment = useEquipmentList()
@@ -383,10 +386,10 @@ function EquipmentPage() {
       <PageHeader
         breadcrumbs={[
           { label: 'Gachapon', to: '/play' },
-          { label: 'Équipement' },
+          { label: t('equipment:page.breadcrumbEquipment') },
         ]}
-        title="Mon équipement"
-        subtitle="Pièces collectées via les combats"
+        title={t('equipment:page.title')}
+        subtitle={t('equipment:page.subtitle')}
         // Aide de référence, pas un filtre : elle se lit une fois, au niveau
         // du titre, plutôt que d'occuper une place dans la barre de filtres.
         right={<SetBonusGuide sets={sets} />}
@@ -395,7 +398,7 @@ function EquipmentPage() {
       <div className="mt-6 flex flex-wrap items-end gap-x-4 gap-y-3">
         {/* Tri — même contrôle et mêmes intitulés que la page Collection.
             Choix unique, donc Select et non SelectMulti. */}
-        <FilterField id="filter-equip-sort" label="Tri">
+        <FilterField id="filter-equip-sort" label={t('equipment:filters.sort')}>
           <Select
             id="filter-equip-sort"
             options={SORT_OPTIONS}
@@ -407,7 +410,7 @@ function EquipmentPage() {
         {/* Type : même forme que le filtre de sets — déroulant, multi-choix,
             et son libellé porté par le déclencheur. C'était un contrôle
             segmenté sans intitulé. */}
-        <FilterField id="filter-equip-slot" label="Type">
+        <FilterField id="filter-equip-slot" label={t('equipment:filters.slot')}>
           <SelectMulti
             id="filter-equip-slot"
             options={SLOT_FILTER_OPTIONS}
@@ -419,7 +422,10 @@ function EquipmentPage() {
             avec une pastille de couleur par option. Il affichait auparavant
             « Co / Pc / R / E / L » sans intitulé, illisible pour qui ne
             connaît pas déjà l'ordre des raretés. */}
-        <FilterField id="filter-equip-rarity" label="Rareté">
+        <FilterField
+          id="filter-equip-rarity"
+          label={t('equipment:filters.rarity')}
+        >
           <SelectMulti
             id="filter-equip-rarity"
             options={RARITY_FILTER_OPTIONS}
@@ -427,7 +433,7 @@ function EquipmentPage() {
             onChange={(v) => setRarityFilter(v as EquipmentRarity[])}
           />
         </FilterField>
-        <FilterField id="filter-equip-set" label="Set">
+        <FilterField id="filter-equip-set" label={t('equipment:filters.set')}>
           <SelectMulti
             id="filter-equip-set"
             options={sets.map((st) => ({ value: st.key, label: st.label }))}
@@ -435,7 +441,10 @@ function EquipmentPage() {
             onChange={(v) => setSetFilter(v as EquipmentSetKey[])}
           />
         </FilterField>
-        <FilterField id="filter-equip-mainstat" label="Stat principale">
+        <FilterField
+          id="filter-equip-mainstat"
+          label={t('equipment:filters.mainStat')}
+        >
           <SelectMulti
             id="filter-equip-mainstat"
             options={MAIN_STAT_FILTER_OPTIONS}
@@ -459,8 +468,8 @@ function EquipmentPage() {
           />
           <span className="text-sm text-text-light">
             {selected.size > 0
-              ? `${selected.size} pièce${selected.size > 1 ? 's' : ''} sélectionnée${selected.size > 1 ? 's' : ''}`
-              : 'Tout sélectionner'}
+              ? t('equipment:bulk.selectedCount', { count: selected.size })
+              : t('equipment:bulk.selectAll')}
           </span>
           <Button
             size="sm"
@@ -470,9 +479,11 @@ function EquipmentPage() {
             onClick={handleSellSelection}
           >
             <Coins className="h-3.5 w-3.5" />
-            Vendre la sélection
+            {t('equipment:bulk.sellSelection')}
             <span className="font-mono text-[10px] opacity-70">
-              +{formatNumber(selectionGold, locale)} or
+              {t('equipment:gold.amountPlus', {
+                amount: formatNumber(selectionGold, locale),
+              })}
             </span>
           </Button>
         </div>
@@ -481,9 +492,9 @@ function EquipmentPage() {
       {items.length === 0 ? (
         <div className="mt-12 rounded-2xl border border-dashed border-border bg-muted/20 p-8 text-center text-text-light">
           <CircleHelp className="mx-auto mb-2 h-8 w-8" />
-          Aucune pièce d'équipement collectée pour l'instant.
+          {t('equipment:page.emptyTitle')}
           <br />
-          Combats et boss en laissent tomber !
+          {t('equipment:page.emptyHint')}
         </div>
       ) : (
         <div className="mt-6 grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -506,25 +517,28 @@ function EquipmentPage() {
           <PopupHeader>
             <PopupTitle
               icon={<AlertTriangle className="h-4 w-4" />}
-              subtitle="Cette action est définitive."
+              subtitle={t('equipment:sellConfirm.subtitle')}
             >
-              Vendre {legendariesSelected.length} légendaire
-              {legendariesSelected.length > 1 ? 's' : ''} ?
+              {t('equipment:sellConfirm.title', {
+                count: legendariesSelected.length,
+              })}
             </PopupTitle>
           </PopupHeader>
           <PopupBody>
             <p className="text-sm text-text-light">
-              La sélection contient{' '}
-              <span className="font-semibold text-text">
-                {legendariesSelected.length} pièce
-                {legendariesSelected.length > 1 ? 's' : ''} légendaire
-                {legendariesSelected.length > 1 ? 's' : ''}
-              </span>{' '}
-              sur {selectedItems.length}. Vendre rapportera{' '}
-              <span className="font-semibold text-text">
-                {formatNumber(selectionGold, locale)} or
-              </span>
-              .
+              <Trans
+                t={t}
+                i18nKey="equipment:sellConfirm.body"
+                count={legendariesSelected.length}
+                values={{
+                  total: selectedItems.length,
+                  gold: formatNumber(selectionGold, locale),
+                }}
+                components={{
+                  pieces: <span className="font-semibold text-text" />,
+                  gold: <span className="font-semibold text-text" />,
+                }}
+              />
             </p>
             <ul className="mt-3 max-h-40 space-y-1 overflow-y-auto">
               {legendariesSelected.map((i) => (
@@ -536,14 +550,14 @@ function EquipmentPage() {
           </PopupBody>
           <PopupFooter className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={() => setConfirmSell(false)}>
-              Annuler
+              {t('equipment:actions.cancel')}
             </Button>
             <Button
               variant="destructive"
               disabled={salvageItems.isPending}
               onClick={sellSelection}
             >
-              Vendre quand même
+              {t('equipment:sellConfirm.confirm')}
             </Button>
           </PopupFooter>
         </PopupContent>
@@ -555,9 +569,9 @@ function EquipmentPage() {
             <PopupHeader>
               <PopupTitle
                 icon={<Sword className="h-4 w-4" />}
-                subtitle="Sélectionne la carte qui recevra cette pièce."
+                subtitle={t('equipment:picker.subtitle')}
               >
-                Équiper "{pickerFor.name}" sur…
+                {t('equipment:picker.title', { name: pickerFor.name })}
               </PopupTitle>
             </PopupHeader>
             <PopupBody className="flex flex-col gap-4">
@@ -580,7 +594,10 @@ function EquipmentPage() {
                       compact
                     />
                     <p className="mt-1 text-center text-[10px] text-text-light">
-                      Niv. {uc.level} · P{uc.palier}
+                      {t('equipment:picker.cardLine', {
+                        level: uc.level,
+                        palier: uc.palier,
+                      })}
                     </p>
                   </button>
                 ))}
@@ -588,7 +605,7 @@ function EquipmentPage() {
             </PopupBody>
             <PopupFooter>
               <Button variant="outline" onClick={() => setPickerFor(null)}>
-                Annuler
+                {t('equipment:actions.cancel')}
               </Button>
             </PopupFooter>
           </PopupContent>
@@ -613,6 +630,7 @@ function EquipmentCard({
   selected: boolean
   onSelectedChange: (checked: boolean) => void
 }) {
+  const { t } = useTranslation('equipment')
   const locale = currentLocale()
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const upgradeItem = useUpgradeItem()
@@ -668,7 +686,7 @@ function EquipmentCard({
       trailing={
         item.equippedOnId ? undefined : (
           <Checkbox
-            aria-label={`Sélectionner ${item.name}`}
+            aria-label={t('equipment:card.selectAria', { name: item.name })}
             checked={selected}
             onChange={(e) => onSelectedChange(e.target.checked)}
           />
@@ -683,7 +701,9 @@ function EquipmentCard({
             <div className="flex items-center justify-between gap-2">
               <span className="min-w-0 truncate font-mono text-[11px] text-text-light">
                 <Zap className="mr-0.5 inline h-3 w-3" />
-                Sur {item.equippedOnCardName ?? '…'}
+                {t('equipment:card.equippedOn', {
+                  name: item.equippedOnCardName ?? '…',
+                })}
               </span>
               <Button
                 size="sm"
@@ -693,7 +713,7 @@ function EquipmentCard({
                 className="shrink-0"
               >
                 <ShieldOff className="mr-1 h-3 w-3" />
-                Retirer
+                {t('equipment:card.unequip')}
               </Button>
             </div>
           ) : (
@@ -703,7 +723,7 @@ function EquipmentCard({
               disabled={busy}
               className="w-full"
             >
-              Équiper
+              {t('equipment:card.equip')}
             </Button>
           )}
 
@@ -728,12 +748,18 @@ function EquipmentCard({
             >
               <span className="inline-flex items-center gap-1">
                 <ChevronsUp className="h-3.5 w-3.5" />
-                {atMaxLevel ? 'Niveau max' : 'Améliorer'}
+                {atMaxLevel
+                  ? t('equipment:card.maxLevel')
+                  : t('equipment:card.upgrade')}
               </span>
               {/* Le prix se lit SOUS le libellé : l'action d'abord, son coût
                   ensuite. */}
               <span className="font-mono text-[10px] opacity-70">
-                {atMaxLevel ? '—' : `${formatNumber(upgradeCost, locale)} or`}
+                {atMaxLevel
+                  ? '—'
+                  : t('equipment:gold.amount', {
+                      amount: formatNumber(upgradeCost, locale),
+                    })}
               </span>
             </Button>
             <Button
@@ -744,16 +770,18 @@ function EquipmentCard({
               onClick={() => salvageItems.mutate([item.id])}
               title={
                 item.equippedOnId
-                  ? 'Retire la pièce de sa carte avant de la vendre'
+                  ? t('equipment:card.sellBlockedTitle')
                   : undefined
               }
             >
               <span className="inline-flex items-center gap-1">
                 <Coins className="h-3.5 w-3.5" />
-                Vendre
+                {t('equipment:card.sell')}
               </span>
               <span className="font-mono text-[10px] opacity-70">
-                +{formatNumber(salvageGold, locale)} or
+                {t('equipment:gold.amountPlus', {
+                  amount: formatNumber(salvageGold, locale),
+                })}
               </span>
             </Button>
           </div>

@@ -1,5 +1,6 @@
 import { Layers } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import type { EquipmentSetDefinition } from '../../api/equipment.api'
 import { statColorVar } from '../../utils/cardStats.ts'
@@ -24,6 +25,7 @@ import {
  * ce qu'on peut combiner sur les 7 emplacements d'une carte.
  */
 export function SetBonusGuide({ sets }: { sets: EquipmentSetDefinition[] }) {
+  const { t } = useTranslation(['equipment', 'common'])
   const [open, setOpen] = useState(false)
 
   // Groupé par nombre de pièces, du plus petit au plus grand — l'ordre dans
@@ -43,9 +45,9 @@ export function SetBonusGuide({ sets }: { sets: EquipmentSetDefinition[] }) {
       <InfoButton
         icon={Layers}
         onClick={() => setOpen(true)}
-        title="Comprendre les bonus de sets"
+        title={t('equipment:setGuide.infoTitle')}
       >
-        Bonus de sets
+        {t('equipment:setGuide.label')}
       </InfoButton>
 
       <Popup open={open} onOpenChange={setOpen}>
@@ -53,22 +55,24 @@ export function SetBonusGuide({ sets }: { sets: EquipmentSetDefinition[] }) {
           <PopupHeader>
             <PopupTitle
               icon={<Layers className="h-4 w-4" />}
-              subtitle="Chaque set demande un nombre de pièces et donne un bonus."
+              subtitle={t('equipment:setGuide.subtitle')}
             >
-              Bonus de sets
+              {t('equipment:setGuide.label')}
             </PopupTitle>
           </PopupHeader>
           <PopupBody className="flex flex-col gap-4">
             {/* Les deux règles qui se devinent le moins, hors de la zone
                 défilante : elles valent pour tous les sets. */}
             <p className="rounded-xl border border-border bg-muted/20 px-3.5 py-3 text-sm text-text-light">
-              Le compte se fait <b className="text-text">carte par carte</b> :
-              deux pièces d'un set sur la même carte comptent, réparties sur
-              deux cartes elles ne comptent pas. Chaque carte a{' '}
-              <b className="text-text">7 emplacements</b>, de quoi porter deux
-              sets à la fois — un 4 et un 3, ou un 4 et un 2. Porter plus de
-              pièces que le set n'en demande n'apporte{' '}
-              <b className="text-text">rien de plus</b>.
+              <Trans
+                t={t}
+                i18nKey="equipment:setGuide.rule"
+                components={{
+                  perCard: <b className="text-text" />,
+                  slots: <b className="text-text" />,
+                  nothing: <b className="text-text" />,
+                }}
+              />
             </p>
 
             {/* Sept sets ne tiennent pas dans une fenêtre : la liste défile
@@ -77,7 +81,7 @@ export function SetBonusGuide({ sets }: { sets: EquipmentSetDefinition[] }) {
               {groupes.map(([pieces, sets]) => (
                 <div key={pieces}>
                   <p className="mb-2 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-text-light">
-                    Sets de {pieces} pièces
+                    {t('equipment:setGuide.groupTitle', { count: pieces })}
                   </p>
                   <div className="flex flex-col gap-2">
                     {sets.map((set) => (
@@ -90,7 +94,7 @@ export function SetBonusGuide({ sets }: { sets: EquipmentSetDefinition[] }) {
           </PopupBody>
           <PopupFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
-              Fermer
+              {t('common:a11y.close')}
             </Button>
           </PopupFooter>
         </PopupContent>
@@ -100,6 +104,7 @@ export function SetBonusGuide({ sets }: { sets: EquipmentSetDefinition[] }) {
 }
 
 function SetRow({ set }: { set: EquipmentSetDefinition }) {
+  const { t } = useTranslation('equipment')
   // Un set ne porte qu'une stat — même convention que la stat principale
   // d'une pièce, dont la fiche lit aussi la première clé de `bonuses`.
   const statKey = Object.keys(set.bonus.bonuses)[0] ?? ''
@@ -117,7 +122,7 @@ function SetRow({ set }: { set: EquipmentSetDefinition }) {
       {/* Le nombre de pièces est l'information qu'on vient chercher : il est
           porté par une pastille, pas noyé dans une phrase. */}
       <span className="flex h-7 w-10 shrink-0 items-center justify-center rounded-md bg-[var(--sc)] font-mono text-[10px] font-extrabold tracking-[0.06em] text-white">
-        {set.pieces} PC
+        {t('equipment:setGuide.piecesBadge', { count: set.pieces })}
       </span>
       <span className="min-w-0 flex-1 truncate font-display text-base font-extrabold text-text">
         {set.label}

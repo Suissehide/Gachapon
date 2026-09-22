@@ -11,5 +11,88 @@
   },
   "toasts": {
     "destroyErrorTitle": "Error destroying"
+  },
+  "slots": {
+    "weapon": "Weapon",
+    "armor": "Armor",
+    "ring": "Ring",
+    "amulet": "Amulet",
+    "gloves": "Gloves",
+    "boots": "Boots",
+    "belt": "Belt"
+  },
+  "page": {
+    "breadcrumbEquipment": "Equipment",
+    "title": "My equipment",
+    "subtitle": "Pieces collected through battles",
+    "emptyTitle": "No equipment collected yet.",
+    "emptyHint": "Battles and bosses drop some!"
+  },
+  "filters": {
+    "sort": "Sort",
+    "slot": "Type",
+    "rarity": "Rarity",
+    "set": "Set",
+    "mainStat": "Main stat"
+  },
+  "sort": {
+    "default": "Most recent",
+    "rarity": "Rarity",
+    "level": "Level",
+    "slot": "Slot",
+    "set": "Set",
+    "name": "Name"
+  },
+  "bulk": {
+    "selectAll": "Select all",
+    "selectedCount_one": "{{count}} piece selected",
+    "selectedCount_other": "{{count}} pieces selected",
+    "sellSelection": "Sell selection"
+  },
+  "sellConfirm": {
+    "subtitle": "This action is final.",
+    "title_one": "Sell {{count}} legendary?",
+    "title_other": "Sell {{count}} legendaries?",
+    "body_one": "The selection contains <pieces>{{count}} legendary piece</pieces> out of {{total}}. Selling will earn <gold>{{gold}} gold</gold>.",
+    "body_other": "The selection contains <pieces>{{count}} legendary pieces</pieces> out of {{total}}. Selling will earn <gold>{{gold}} gold</gold>.",
+    "confirm": "Sell anyway"
+  },
+  "picker": {
+    "subtitle": "Pick the card that will receive this piece.",
+    "title": "Equip \"{{name}}\" on…",
+    "cardLine": "Lvl. {{level}} · P{{palier}}"
+  },
+  "card": {
+    "selectAria": "Select {{name}}",
+    "equippedOn": "On {{name}}",
+    "unequip": "Unequip",
+    "equip": "Equip",
+    "maxLevel": "Max level",
+    "upgrade": "Upgrade",
+    "sell": "Sell",
+    "sellBlockedTitle": "Unequip the piece from its card before selling it"
+  },
+  "drop": {
+    "slotAndLevel": "{{slot}} · LVL. {{level}}",
+    "rarityTierTitle": "Rarity {{tier}}/{{max}}",
+    "destroy": "Destroy",
+    "scrapped": "✓ Destroyed · +{{amount}} gold",
+    "destroyedToastTitle": "Item destroyed"
+  },
+  "setGuide": {
+    "infoTitle": "Understanding set bonuses",
+    "label": "Set bonuses",
+    "subtitle": "Each set asks for a number of pieces and grants a bonus.",
+    "rule": "Counting happens <perCard>card by card</perCard>: two pieces of a set on the same card count, split across two cards they don't. Each card has <slots>7 slots</slots>, enough to wear two sets at once — a 4 and a 3, or a 4 and a 2. Wearing more pieces than the set asks for brings <nothing>nothing extra</nothing>.",
+    "groupTitle_one": "{{count}}-piece sets",
+    "groupTitle_other": "{{count}}-piece sets",
+    "piecesBadge": "{{count}} PC"
+  },
+  "gold": {
+    "amount": "{{amount}} gold",
+    "amountPlus": "+{{amount}} gold"
+  },
+  "actions": {
+    "cancel": "Cancel"
   }
 }

@@ -16,7 +16,7 @@ import type {
   EquipmentSetDefinition,
   EquipmentSlot,
 } from '../../api/equipment.api.ts'
-import { currentLocale } from '../../i18n/index.ts'
+import i18n, { currentLocale } from '../../i18n/index.ts'
 import { RARITY_COLOR_VAR, RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { cn, formatNumber } from '../../libs/utils.ts'
 import {
@@ -51,13 +51,13 @@ const SLOT_ORDER: EquipmentSlot[] = [
 // troisième version — equipment.tsx en garde malheureusement déjà une copie
 // séparée (dette existante, hors périmètre de la tour).
 export const SLOT_LABELS: Record<EquipmentSlot, string> = {
-  WEAPON: 'Arme',
-  ARMOR: 'Armure',
-  RING: 'Anneau',
-  AMULET: 'Amulette',
-  GLOVES: 'Gants',
-  BOOTS: 'Bottes',
-  BELT: 'Ceinture',
+  WEAPON: i18n.t('equipment:slots.weapon'),
+  ARMOR: i18n.t('equipment:slots.armor'),
+  RING: i18n.t('equipment:slots.ring'),
+  AMULET: i18n.t('equipment:slots.amulet'),
+  GLOVES: i18n.t('equipment:slots.gloves'),
+  BOOTS: i18n.t('equipment:slots.boots'),
+  BELT: i18n.t('equipment:slots.belt'),
 }
 export const SLOT_ICONS: Record<EquipmentSlot, typeof Sword> = {
   WEAPON: Sword,

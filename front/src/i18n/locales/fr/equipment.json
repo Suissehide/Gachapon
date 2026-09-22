@@ -11,5 +11,88 @@
   },
   "toasts": {
     "destroyErrorTitle": "Erreur lors de la destruction"
+  },
+  "slots": {
+    "weapon": "Arme",
+    "armor": "Armure",
+    "ring": "Anneau",
+    "amulet": "Amulette",
+    "gloves": "Gants",
+    "boots": "Bottes",
+    "belt": "Ceinture"
+  },
+  "page": {
+    "breadcrumbEquipment": "Équipement",
+    "title": "Mon équipement",
+    "subtitle": "Pièces collectées via les combats",
+    "emptyTitle": "Aucune pièce d'équipement collectée pour l'instant.",
+    "emptyHint": "Combats et boss en laissent tomber !"
+  },
+  "filters": {
+    "sort": "Tri",
+    "slot": "Type",
+    "rarity": "Rareté",
+    "set": "Set",
+    "mainStat": "Stat principale"
+  },
+  "sort": {
+    "default": "Plus récentes",
+    "rarity": "Rareté",
+    "level": "Niveau",
+    "slot": "Emplacement",
+    "set": "Set",
+    "name": "Nom"
+  },
+  "bulk": {
+    "selectAll": "Tout sélectionner",
+    "selectedCount_one": "{{count}} pièce sélectionnée",
+    "selectedCount_other": "{{count}} pièces sélectionnées",
+    "sellSelection": "Vendre la sélection"
+  },
+  "sellConfirm": {
+    "subtitle": "Cette action est définitive.",
+    "title_one": "Vendre {{count}} légendaire ?",
+    "title_other": "Vendre {{count}} légendaires ?",
+    "body_one": "La sélection contient <pieces>{{count}} pièce légendaire</pieces> sur {{total}}. Vendre rapportera <gold>{{gold}} or</gold>.",
+    "body_other": "La sélection contient <pieces>{{count}} pièces légendaires</pieces> sur {{total}}. Vendre rapportera <gold>{{gold}} or</gold>.",
+    "confirm": "Vendre quand même"
+  },
+  "picker": {
+    "subtitle": "Sélectionne la carte qui recevra cette pièce.",
+    "title": "Équiper \"{{name}}\" sur…",
+    "cardLine": "Niv. {{level}} · P{{palier}}"
+  },
+  "card": {
+    "selectAria": "Sélectionner {{name}}",
+    "equippedOn": "Sur {{name}}",
+    "unequip": "Retirer",
+    "equip": "Équiper",
+    "maxLevel": "Niveau max",
+    "upgrade": "Améliorer",
+    "sell": "Vendre",
+    "sellBlockedTitle": "Retire la pièce de sa carte avant de la vendre"
+  },
+  "drop": {
+    "slotAndLevel": "{{slot}} · NIV. {{level}}",
+    "rarityTierTitle": "Rareté {{tier}}/{{max}}",
+    "destroy": "Détruire",
+    "scrapped": "✓ Détruit · +{{amount}} or",
+    "destroyedToastTitle": "Objet détruit"
+  },
+  "setGuide": {
+    "infoTitle": "Comprendre les bonus de sets",
+    "label": "Bonus de sets",
+    "subtitle": "Chaque set demande un nombre de pièces et donne un bonus.",
+    "rule": "Le compte se fait <perCard>carte par carte</perCard> : deux pièces d'un set sur la même carte comptent, réparties sur deux cartes elles ne comptent pas. Chaque carte a <slots>7 emplacements</slots>, de quoi porter deux sets à la fois — un 4 et un 3, ou un 4 et un 2. Porter plus de pièces que le set n'en demande n'apporte <nothing>rien de plus</nothing>.",
+    "groupTitle_one": "Sets de {{count}} pièce",
+    "groupTitle_other": "Sets de {{count}} pièces",
+    "piecesBadge": "{{count}} PC"
+  },
+  "gold": {
+    "amount": "{{amount}} or",
+    "amountPlus": "+{{amount}} or"
+  },
+  "actions": {
+    "cancel": "Annuler"
   }
 }
