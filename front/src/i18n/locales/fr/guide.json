@@ -94,6 +94,13 @@
         }
       },
       "ratesOutro": "Les taux de variante dépendent de la rareté : une Legendary a plus de chances d'être Holographique qu'une Rare. Les taux exacts sont configurés par les administrateurs."
+    },
+    "piete": {
+      "intro": "Le système de pitié garantit qu'aucun joueur ne peut tirer indéfiniment sans obtenir de carte Legendary. Un compteur s'incrémente à chaque tirage sans Legendary.",
+      "thresholdBullet": "Quand le compteur <strong>atteint le seuil</strong>, le prochain tirage est garanti Legendary.",
+      "resetBullet": "Obtenir une Legendary — avant le seuil ou grâce à la pitié — <strong>remet le compteur à zéro</strong>.",
+      "personalBullet": "La pitié est personnelle : elle ne se partage pas et persiste entre les sessions.",
+      "info": "Ton compteur de pitié est visible dans ton profil. Une compétence dédiée permet d'<strong>abaisser le seuil</strong> pour tomber sur des Legendary plus souvent."
     }
   }
 }

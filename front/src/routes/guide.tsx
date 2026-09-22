@@ -428,34 +428,41 @@ function GuidePage() {
             </Section>
 
             {/* Pitié */}
-            <Section id="piete" icon={LifeBuoy} title="Système de pitié">
-              <p>
-                Le système de pitié garantit qu'aucun joueur ne peut tirer
-                indéfiniment sans obtenir de carte Legendary. Un compteur
-                s'incrémente à chaque tirage sans Legendary.
-              </p>
+            <Section
+              id="piete"
+              icon={LifeBuoy}
+              title={t('sectionLabels.piete')}
+            >
+              <p>{t('sections.piete.intro')}</p>
               <ul className="space-y-1.5">
                 <li>
-                  • Quand le compteur{' '}
-                  <strong className="text-foreground">atteint le seuil</strong>,
-                  le prochain tirage est garanti Legendary.
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.piete.thresholdBullet"
+                    components={{
+                      strong: <strong className="text-foreground" />,
+                    }}
+                  />
                 </li>
                 <li>
-                  • Obtenir une Legendary — avant le seuil ou grâce à la pitié —{' '}
-                  <strong className="text-foreground">
-                    remet le compteur à zéro
-                  </strong>
-                  .
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.piete.resetBullet"
+                    components={{
+                      strong: <strong className="text-foreground" />,
+                    }}
+                  />
                 </li>
-                <li>
-                  • La pitié est personnelle : elle ne se partage pas et
-                  persiste entre les sessions.
-                </li>
+                <li>• {t('sections.piete.personalBullet')}</li>
               </ul>
               <InfoBox>
-                Ton compteur de pitié est visible dans ton profil. Une
-                compétence dédiée permet d'<strong>abaisser le seuil</strong>{' '}
-                pour tomber sur des Legendary plus souvent.
+                <Trans
+                  t={t}
+                  i18nKey="sections.piete.info"
+                  components={{ strong: <strong /> }}
+                />
               </InfoBox>
             </Section>
 

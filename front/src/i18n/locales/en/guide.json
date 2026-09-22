@@ -94,6 +94,13 @@
         }
       },
       "ratesOutro": "Variant odds depend on rarity: a Legendary is more likely to be Holographic than a Rare. Exact rates are configured by the admins."
+    },
+    "piete": {
+      "intro": "The pity system guarantees that no player can pull forever without getting a Legendary card. A counter increases with every pull that isn't a Legendary.",
+      "thresholdBullet": "When the counter <strong>reaches the threshold</strong>, the next pull is guaranteed Legendary.",
+      "resetBullet": "Getting a Legendary — before the threshold or thanks to pity — <strong>resets the counter to zero</strong>.",
+      "personalBullet": "Pity is personal: it isn't shared, and it persists across sessions.",
+      "info": "Your pity counter is visible on your profile. A dedicated skill lets you <strong>lower the threshold</strong> to hit Legendaries more often."
     }
   }
 }
