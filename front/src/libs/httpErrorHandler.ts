@@ -6,6 +6,23 @@ export type ApiErrorInfo = {
 }
 export type ErrorMessages = Partial<Record<number, ApiErrorInfo>>
 
+/**
+ * Un statut explicitement DÉCLARÉ par l'appelant de
+ * `handleHttpErrorFromServer`, et qui dit qui possède le message affiché :
+ *
+ * - `string` — le SERVEUR le possède. La chaîne n'est que le titre du toast
+ *   (le back n'en produit pas) ; le corps du message vient du `message` de la
+ *   réponse, que `errorMessage()` a déjà résolu dans la langue de la requête.
+ * - `ApiErrorInfo` — le FRONT le possède : titre ET message viennent d'ici.
+ *   À réserver aux statuts où le serveur ne produit PAS de message du
+ *   catalogue (validation Zod, limiteur de débit : voir les normalizers de
+ *   `back/src/main/interfaces/http/fastify/errors/`, dont le texte est
+ *   technique et unilingue anglais), ou à ceux où le message du front porte
+ *   une consigne que le serveur n'a pas.
+ */
+export type ServerErrorOverride = string | ApiErrorInfo
+export type ServerErrorMessages = Partial<Record<number, ServerErrorOverride>>
+
 export const isApiError = (error: unknown): error is ApiError => {
   return error instanceof ApiError
 }
@@ -22,46 +39,61 @@ export function handleHttpError(
 }
 
 /**
- * Variante async de `handleHttpError` : lit le corps JSON de la réponse et
- * préfère le `message` du serveur (déjà bilingue — `errorMessage()` côté
- * back résout la locale depuis `Accept-Language`, voir `i18n/index.ts`)
- * plutôt qu'une seconde copie traduite à la main côté front. Réservée aux
- * endpoints dont les messages d'erreur doublonnaient le catalogue back
- * (`teams.api.ts`, `wagers.api.ts` — voir task-6-report.md) : les autres
- * fichiers `api/*.api.ts` gardent `handleHttpError` tel quel.
+ * Variante async de `handleHttpError` : pour les statuts que l'appelant
+ * déclare SERVEUR (voir `ServerErrorOverride`), lit le corps JSON de la
+ * réponse et affiche le `message` que le back a déjà résolu dans la langue de
+ * la requête, plutôt qu'une seconde copie traduite à la main côté front —
+ * deux sources pour la même information finissent par diverger.
  *
- * `titleOverrides` ne couvre QUE le titre du toast (court, propre à l'UX) —
- * jamais le message, qui vient du corps de la réponse ou, à défaut, du
- * catalogue générique par statut ci-dessus.
+ * Le message du serveur n'est lu QUE sur un statut déclaré. C'est la
+ * condition qui rend ce repli sûr : le `message` d'une réponse d'erreur ne
+ * vient pas toujours du catalogue bilingue. Selon le normalizer qui gagne
+ * (`back/src/main/interfaces/http/fastify/errors/normalizers/`, premier
+ * match : Prisma, puis Fastify, puis Boom), ce peut être une erreur de
+ * validation Zod (`body/email Invalid email`), un message Prisma brut, ou le
+ * `'Unknown error'` par défaut — tous techniques et unilingues anglais.
+ * Déclarer un statut, c'est affirmer qu'un `Boom` de domaine le produit.
+ * Un statut non déclaré retombe donc sur le message générique traduit de
+ * `ApiError.defaultErrorCases` : conservateur du bon côté — jamais de texte
+ * technique anglais dans un toast, au prix d'un message moins précis sur un
+ * statut que l'appelant n'avait pas prévu.
  */
 export async function handleHttpErrorFromServer(
   response: Response,
-  titleOverrides: Partial<Record<number, string>> = {},
+  overrides: ServerErrorMessages = {},
   fallbackTitle?: string,
 ): Promise<never> {
   const status = response.status
+  const declared = overrides[status]
+  const frontOwned = typeof declared === 'object' ? declared : undefined
+  const serverOwned = typeof declared === 'string'
+
   let serverMessage: string | undefined
-  try {
-    const body: unknown = await response.clone().json()
-    if (
-      body &&
-      typeof body === 'object' &&
-      'message' in body &&
-      typeof (body as { message: unknown }).message === 'string'
-    ) {
-      serverMessage = (body as { message: string }).message
+  if (serverOwned) {
+    try {
+      const body: unknown = await response.clone().json()
+      if (
+        body &&
+        typeof body === 'object' &&
+        'message' in body &&
+        typeof (body as { message: unknown }).message === 'string'
+      ) {
+        serverMessage = (body as { message: string }).message
+      }
+    } catch {
+      // Corps non JSON (page d'erreur HTML, réponse vide, serveur
+      // injoignable…) — on retombe sur le message générique par statut, géré
+      // par ApiError.defaultErrorCases. C'est le vrai repli : celui-là est
+      // traduit côté front, puisque aucun serveur ne l'a produit.
     }
-  } catch {
-    // Corps non JSON (page d'erreur HTML, réponse vide…) — on retombe sur
-    // le message générique par statut, géré par ApiError.defaultErrorCases.
   }
 
   throw new ApiError(
     status,
     fallbackTitle ?? i18n.t('errors:generic.defaultMessage'),
     {
-      title: titleOverrides[status],
-      message: serverMessage,
+      title: serverOwned ? declared : frontOwned?.title,
+      message: frontOwned?.message ?? serverMessage,
     },
   )
 }
