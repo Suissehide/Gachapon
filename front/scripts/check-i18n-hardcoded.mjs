@@ -100,7 +100,7 @@ const FRENCH_WORDS = [
   // scan déclarait propre.
   'erreur', // EN: error
   'lors', // aucun équivalent EN
-  'chargement', // EN: loading // EN: deletion
+  'chargement', // EN: loading
   'enregistrement', // EN: saving
   'echec', // EN: failure — « échec » est déjà pris par l'accent ; la forme
   // sans accent garde le filet en cas de coquille
