@@ -187,6 +187,12 @@
       "typesBullet": "Les <strong1>Hebdomadaires</strong1> se renouvellent chaque lundi ; les <strong2>One-shot</strong2> ne se font qu'une seule fois.",
       "claimBullet": "Une quête terminée passe « Récupéré » une fois que tu as cliqué sur <strong>Réclamer</strong>.",
       "perfectWeekBullet": "Compléter toutes les hebdomadaires débloque le bonus <strong>Semaine parfaite</strong>."
+    },
+    "succes": {
+      "intro": "Les <strong>succès</strong> sont des objectifs à long terme débloqués par tes actions : tirages, montées de niveau, chaîne de connexion, appartenance à une équipe, et bien d'autres.",
+      "progressBullet": "Leur progression est visible (par ex. « 4 / 10 »).",
+      "filterBullet": "Filtre-les par <allPill>Tous</allPill> <unlockedPill>Réussis</unlockedPill> <lockedPill>À débloquer</lockedPill>.",
+      "rewardsBullet": "Les récompenses peuvent inclure des cartes, des jetons, de la poussière et de l'XP."
     }
   }
 }

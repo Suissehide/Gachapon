@@ -904,23 +904,31 @@ function GuidePage() {
             </Section>
 
             {/* Succès */}
-            <Section id="succes" icon={Award} title="Succès">
+            <Section id="succes" icon={Award} title={t('sectionLabels.succes')}>
               <p>
-                Les <strong className="text-foreground">succès</strong> sont des
-                objectifs à long terme débloqués par tes actions : tirages,
-                montées de niveau, chaîne de connexion, appartenance à une
-                équipe, et bien d'autres.
+                <Trans
+                  t={t}
+                  i18nKey="sections.succes.intro"
+                  components={{
+                    strong: <strong className="text-foreground" />,
+                  }}
+                />
               </p>
               <ul className="space-y-1.5">
-                <li>• Leur progression est visible (par ex. « 4 / 10 »).</li>
+                <li>• {t('sections.succes.progressBullet')}</li>
                 <li>
-                  • Filtre-les par <Pill>Tous</Pill> <Pill>Réussis</Pill>{' '}
-                  <Pill>À débloquer</Pill>.
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.succes.filterBullet"
+                    components={{
+                      allPill: <Pill />,
+                      unlockedPill: <Pill />,
+                      lockedPill: <Pill />,
+                    }}
+                  />
                 </li>
-                <li>
-                  • Les récompenses peuvent inclure des cartes, des jetons, de
-                  la poussière et de l'XP.
-                </li>
+                <li>• {t('sections.succes.rewardsBullet')}</li>
               </ul>
             </Section>
 

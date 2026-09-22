@@ -187,6 +187,12 @@
       "typesBullet": "<strong1>Weekly</strong1> quests reset every Monday; <strong2>One-shot</strong2> quests are done just once.",
       "claimBullet": "A completed quest switches to \"Claimed\" once you click <strong>Claim</strong>.",
       "perfectWeekBullet": "Completing every weekly quest unlocks the <strong>Perfect Week</strong> bonus."
+    },
+    "succes": {
+      "intro": "<strong>Achievements</strong> are long-term goals unlocked by your actions: pulls, leveling up, login streaks, team membership, and many more.",
+      "progressBullet": "Their progress is shown (e.g. \"4 / 10\").",
+      "filterBullet": "Filter them by <allPill>All</allPill> <unlockedPill>Unlocked</unlockedPill> <lockedPill>Locked</lockedPill>.",
+      "rewardsBullet": "Rewards can include cards, tokens, dust, and XP."
     }
   }
 }
