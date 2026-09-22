@@ -1,4 +1,14 @@
 {
+  "page": {
+    "eyebrow": "Mises à jour",
+    "title": "Changelog",
+    "description": "Tout ce qui a changé dans Gachapon, de la première capsule aux dernières nouveautés."
+  },
+  "types": {
+    "new": "Nouveau",
+    "improved": "Amélioré",
+    "fixed": "Corrigé"
+  },
   "releases": {
     "v3_2": {
       "title": "Chaque mode garde son équipe",
@@ -132,6 +142,41 @@
         "e2": "Combat et batailles contre des adversaires.",
         "e3": "Mode campagne avec une progression par étapes.",
         "e4": "Équipement pour renforcer tes cartes au combat."
+      }
+    },
+    "v1_2": {
+      "title": "Compétences & classements",
+      "date": "Avril – Mai 2026",
+      "summary": "Personnalise ton style de jeu et grimpe dans les classements.",
+      "entries": {
+        "e1": "Arbre de compétences pour faire évoluer ton profil de joueur.",
+        "e2": "Boutique quotidienne avec une sélection renouvelée chaque jour.",
+        "e3": "Classements repensés avec un système de score global.",
+        "e4": "Révélation des cartes retravaillée avec des effets propres à chaque rareté."
+      }
+    },
+    "v1_1": {
+      "title": "Profils & récompenses",
+      "date": "Mars 2026",
+      "summary": "Ta vitrine personnelle et de quoi être récompensé pour ta régularité.",
+      "entries": {
+        "e1": "Pages de profil publiques pour montrer ta collection.",
+        "e2": "Séries de connexion (streak) et paliers de récompenses.",
+        "e3": "Recyclage des cartes en double en poussière.",
+        "e4": "Améliorations permanentes (gain de jetons, chance, récolte de poussière…).",
+        "e5": "Flux en direct des tirages de toute la communauté."
+      }
+    },
+    "v1_0": {
+      "title": "Le lancement",
+      "date": "Mars 2026",
+      "summary": "La première version de Gachapon : joue, collectionne, rejoins une équipe.",
+      "entries": {
+        "e1": "Machines 3D à pince et à capsule pour tes tirages.",
+        "e2": "Collection de cartes TCG avec variantes Holo et Brillante.",
+        "e3": "Comptes par e-mail ou via Google et Discord.",
+        "e4": "Équipes, invitations et classements entre membres.",
+        "e5": "Backoffice d’administration pour gérer cartes, sets et médias."
       }
     }
   }

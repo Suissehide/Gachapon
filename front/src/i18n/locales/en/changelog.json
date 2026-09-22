@@ -1,4 +1,14 @@
 {
+  "page": {
+    "eyebrow": "Updates",
+    "title": "Changelog",
+    "description": "Everything that's changed in Gachapon, from the very first capsule to the latest news."
+  },
+  "types": {
+    "new": "New",
+    "improved": "Improved",
+    "fixed": "Fixed"
+  },
   "releases": {
     "v3_2": {
       "title": "Each mode keeps its own team",
@@ -132,6 +142,41 @@
         "e2": "Combat and battles against opponents.",
         "e3": "Campaign mode with stage-by-stage progression.",
         "e4": "Equipment to strengthen your cards in battle."
+      }
+    },
+    "v1_2": {
+      "title": "Skills & leaderboards",
+      "date": "April – May 2026",
+      "summary": "Customize your playstyle and climb the leaderboards.",
+      "entries": {
+        "e1": "Skill tree to grow your player profile.",
+        "e2": "Daily shop with a selection that renews every day.",
+        "e3": "Leaderboards redesigned with a global score system.",
+        "e4": "Card reveal reworked with effects specific to each rarity."
+      }
+    },
+    "v1_1": {
+      "title": "Profiles & rewards",
+      "date": "March 2026",
+      "summary": "Your personal showcase, and something to reward your consistency.",
+      "entries": {
+        "e1": "Public profile pages to show off your collection.",
+        "e2": "Login streaks and reward milestones.",
+        "e3": "Recycling duplicate cards into dust.",
+        "e4": "Permanent upgrades (token gain, luck, dust harvesting…).",
+        "e5": "Live feed of pulls from the whole community."
+      }
+    },
+    "v1_0": {
+      "title": "The launch",
+      "date": "March 2026",
+      "summary": "The first version of Gachapon: play, collect, join a team.",
+      "entries": {
+        "e1": "3D claw and capsule machines for your pulls.",
+        "e2": "TCG card collection with Holo and Brilliant variants.",
+        "e3": "Accounts via email or through Google and Discord.",
+        "e4": "Teams, invitations and leaderboards between members.",
+        "e5": "Admin backoffice to manage cards, sets and media."
       }
     }
   }
