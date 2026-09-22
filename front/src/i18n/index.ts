@@ -3,9 +3,11 @@ import { initReactI18next } from 'react-i18next'
 
 import commonEn from './locales/en/common.json'
 import errorsEn from './locales/en/errors.json'
+import layoutEn from './locales/en/layout.json'
 import notificationsEn from './locales/en/notifications.json'
 import commonFr from './locales/fr/common.json'
 import errorsFr from './locales/fr/errors.json'
+import layoutFr from './locales/fr/layout.json'
 import notificationsFr from './locales/fr/notifications.json'
 
 /** Langues supportées, dans l'ordre d'affichage voulu pour un futur sélecteur. */
@@ -110,12 +112,22 @@ export function withAcceptLanguage(init?: HeadersInit): Headers {
 // bundle est marginal ici et un flash de clés brutes coûte plus cher.
 void i18next.use(initReactI18next).init({
   resources: {
-    fr: { common: commonFr, errors: errorsFr, notifications: notificationsFr },
-    en: { common: commonEn, errors: errorsEn, notifications: notificationsEn },
+    fr: {
+      common: commonFr,
+      errors: errorsFr,
+      notifications: notificationsFr,
+      layout: layoutFr,
+    },
+    en: {
+      common: commonEn,
+      errors: errorsEn,
+      notifications: notificationsEn,
+      layout: layoutEn,
+    },
   },
   lng: localeFromPath(window.location.pathname),
   defaultNS: 'common',
-  ns: ['common', 'errors', 'notifications'],
+  ns: ['common', 'errors', 'notifications', 'layout'],
   interpolation: {
     // React échappe déjà le rendu — un double échappement casserait les
     // apostrophes/accents dans les traductions.

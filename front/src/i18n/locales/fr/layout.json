@@ -1,0 +1,28 @@
+{
+  "admin": {
+    "sidebarLabel": "Admin",
+    "backToSite": "Retour au site",
+    "sections": {
+      "content": "Contenu",
+      "economy": "Économie",
+      "players": "Joueurs",
+      "system": "Système"
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "cards": "Cartes",
+      "media": "Médias",
+      "shop": "Boutique",
+      "translations": "Traductions",
+      "config": "Config",
+      "scoring": "Scoring",
+      "streak": "Streak",
+      "raid": "Raid",
+      "skills": "Compétences",
+      "users": "Joueurs",
+      "stats": "Stats",
+      "health": "Santé",
+      "combatDebug": "Combat — Debug"
+    }
+  }
+}

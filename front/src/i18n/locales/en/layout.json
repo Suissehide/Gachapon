@@ -1,0 +1,28 @@
+{
+  "admin": {
+    "sidebarLabel": "Admin",
+    "backToSite": "Back to site",
+    "sections": {
+      "content": "Content",
+      "economy": "Economy",
+      "players": "Players",
+      "system": "System"
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "cards": "Cards",
+      "media": "Media",
+      "shop": "Shop",
+      "translations": "Translations",
+      "config": "Config",
+      "scoring": "Scoring",
+      "streak": "Streak",
+      "raid": "Raid",
+      "skills": "Skills",
+      "users": "Players",
+      "stats": "Stats",
+      "health": "Health",
+      "combatDebug": "Combat — Debug"
+    }
+  }
+}
