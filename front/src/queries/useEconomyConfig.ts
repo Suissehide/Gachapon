@@ -57,6 +57,15 @@ export const DEFAULT_ECONOMY: EconomyConfig = {
     baseArmorPen: 0,
     baseLifesteal: 0,
   },
+  raid: {
+    attacksPerDay: 2,
+    timeoutTurns: 10,
+    minMembers: 10,
+    levelHpBonusPct: 10,
+    levelRewardTokens: 2,
+    levelRewardGold: 100,
+    levelRewardDust: 30,
+  },
   duel: { pullCount: 5 },
   bet: { pullWindow: 10, minStake: 50, maxStake: 2000 },
   team: {

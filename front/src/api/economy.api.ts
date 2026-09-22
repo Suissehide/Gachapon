@@ -75,6 +75,18 @@ export interface EconomyConfig {
     baseArmorPen: number
     baseLifesteal: number
   }
+  // Raid d'équipe. `minMembers` et `levelHpBonusPct` servent la copie du
+  // panneau de raid (« boss calibré pour 10 », « +10 % par victoire ») :
+  // vit dans GlobalConfig, lu ici plutôt que codé en dur, comme `duel`/`bet`.
+  raid: {
+    attacksPerDay: number
+    timeoutTurns: number
+    minMembers: number
+    levelHpBonusPct: number
+    levelRewardTokens: number
+    levelRewardGold: number
+    levelRewardDust: number
+  }
   // Nombre de tirages comptés par duelliste dans un duel de tirage. Lu ici
   // plutot que codé en dur dans la fenêtre de défi : la valeur vit dans
   // GlobalConfig et peut bouger sans redéploiement du front.
