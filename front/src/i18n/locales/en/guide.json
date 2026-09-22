@@ -198,6 +198,12 @@
       "intro": "Log in <strong>every day</strong> to extend your streak. A missed day resets it to zero, but your <strong2>best streak</strong2> stays saved.",
       "milestonesBullet": "<strong>Streak milestones</strong> grant rewards (tokens, dust, gold, XP).",
       "consistencyBullet": "It's the simplest way to build up resources over time: consistency pays off."
+    },
+    "recompenses": {
+      "intro": "Many systems drop off <strong>rewards to claim</strong>: quests, leveling up, login streaks, achievements, and events. They pile up in the notification <strong2>bell</strong2>.",
+      "claimBullet": "Claim them one by one, or all at once — quest rewards are claimed separately, from the Quests page.",
+      "cardBullet": "Some contain a <strong>card</strong> revealed when you claim it.",
+      "info": "Remember to go claim them: the bell's badge shows how many rewards are waiting for you."
     }
   }
 }

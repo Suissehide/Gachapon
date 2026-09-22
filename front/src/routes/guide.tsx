@@ -960,32 +960,35 @@ function GuidePage() {
             </Section>
 
             {/* Récompenses */}
-            <Section id="recompenses" icon={Gift} title="Récompenses">
+            <Section
+              id="recompenses"
+              icon={Gift}
+              title={t('sectionLabels.recompenses')}
+            >
               <p>
-                De nombreux systèmes déposent des{' '}
-                <strong className="text-foreground">
-                  récompenses à récupérer
-                </strong>{' '}
-                : quêtes, montées de niveau, chaîne de connexion, succès et
-                événements. Elles s'accumulent dans la{' '}
-                <strong className="text-foreground">cloche</strong> de
-                notifications.
+                <Trans
+                  t={t}
+                  i18nKey="sections.recompenses.intro"
+                  components={{
+                    strong: <strong className="text-foreground" />,
+                    strong2: <strong className="text-foreground" />,
+                  }}
+                />
               </p>
               <ul className="space-y-1.5">
+                <li>• {t('sections.recompenses.claimBullet')}</li>
                 <li>
-                  • Réclame-les une par une, ou tout d'un coup — les récompenses
-                  de quête se réclament séparément, depuis la page Quêtes.
-                </li>
-                <li>
-                  • Certaines contiennent une{' '}
-                  <strong className="text-foreground">carte</strong> révélée à
-                  la réclamation.
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.recompenses.cardBullet"
+                    components={{
+                      strong: <strong className="text-foreground" />,
+                    }}
+                  />
                 </li>
               </ul>
-              <InfoBox>
-                Pense à passer les récupérer : la pastille de la cloche
-                t'indique combien de récompenses t'attendent.
-              </InfoBox>
+              <InfoBox>{t('sections.recompenses.info')}</InfoBox>
             </Section>
 
             {/* Classements */}

@@ -198,6 +198,12 @@
       "intro": "Connecte-toi <strong>chaque jour</strong> pour allonger ta chaîne. Un jour manqué la remet à zéro, mais ta <strong2>meilleure chaîne</strong2> reste conservée.",
       "milestonesBullet": "Des <strong>paliers de chaîne</strong> octroient des récompenses (jetons, poussière, or, XP).",
       "consistencyBullet": "C'est le moyen le plus simple d'accumuler des ressources sur la durée : la régularité paie."
+    },
+    "recompenses": {
+      "intro": "De nombreux systèmes déposent des <strong>récompenses à récupérer</strong> : quêtes, montées de niveau, chaîne de connexion, succès et événements. Elles s'accumulent dans la <strong2>cloche</strong2> de notifications.",
+      "claimBullet": "Réclame-les une par une, ou tout d'un coup — les récompenses de quête se réclament séparément, depuis la page Quêtes.",
+      "cardBullet": "Certaines contiennent une <strong>carte</strong> révélée à la réclamation.",
+      "info": "Pense à passer les récupérer : la pastille de la cloche t'indique combien de récompenses t'attendent."
     }
   }
 }
