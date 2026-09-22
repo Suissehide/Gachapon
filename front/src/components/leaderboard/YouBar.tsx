@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { ChevronRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import type {
   CollectorEntry,
@@ -7,7 +8,7 @@ import type {
   TeamEntry,
 } from '../../constants/leaderboard.constant'
 import { currentLocale } from '../../i18n/index.ts'
-import { formatNumber } from '../../libs/utils.ts'
+import { formatNumber, ordinal } from '../../libs/utils.ts'
 import { FoilAvatar } from '../profile/arcade/FoilAvatar'
 import { MedalRank } from './MedalRank'
 
@@ -31,7 +32,6 @@ type Props =
       total: number
     }
 
-const ordinalFr = (n: number) => (n === 1 ? '1er' : `${n}e`)
 const fmt = (n: number) => formatNumber(n, currentLocale())
 
 function refAbove<E extends { rank: number }>(
@@ -49,6 +49,8 @@ function refAbove<E extends { rank: number }>(
 }
 
 export function YouBar(props: Props) {
+  const { t } = useTranslation('leaderboard')
+  const locale = currentLocale()
   const { mode, entry, entries, total } = props
   if (entry.rank === 1) {
     return null
@@ -65,10 +67,16 @@ export function YouBar(props: Props) {
         (above as CollectorEntry | TeamEntry).cardPercentage -
           (entry as CollectorEntry | TeamEntry).cardPercentage,
       )
-      gapText = `à ${g}% du ${ordinalFr(aboveRank)}`
+      gapText = t('youBar.gapPercent', {
+        gap: g,
+        ordinal: ordinal(aboveRank, locale),
+      })
     } else {
       const g = Math.max(0, (above as CombatEntry).palier - entry.palier)
-      gapText = `à ${g} palier${g > 1 ? 's' : ''} du ${ordinalFr(aboveRank)}`
+      gapText = t('youBar.gapTiers', {
+        gap: g,
+        ordinal: ordinal(aboveRank, locale),
+      })
     }
   }
 
@@ -78,12 +86,18 @@ export function YouBar(props: Props) {
   const stats =
     mode === 'collectors' || mode === 'teams'
       ? [
-          { lab: 'CARTES', val: `${entry.cardPercentage}%` },
-          { lab: 'VARIANTES', val: `${entry.variantPercentage}%` },
+          { lab: t('leaderRow.cardsLabel'), val: `${entry.cardPercentage}%` },
+          {
+            lab: t('leaderRow.variantsLabel'),
+            val: `${entry.variantPercentage}%`,
+          },
         ]
       : [
-          { lab: 'PALIER', val: `${entry.palier} / ${entry.maxPalier}` },
-          { lab: 'FORCE', val: fmt(entry.combatPower) },
+          {
+            lab: t('youBar.tierLabel'),
+            val: `${entry.palier} / ${entry.maxPalier}`,
+          },
+          { lab: t('youBar.powerLabel'), val: fmt(entry.combatPower) },
         ]
 
   const ctaTo: '/play' | '/combat' = mode === 'combat' ? '/combat' : '/play'
@@ -102,11 +116,14 @@ export function YouBar(props: Props) {
           <div className="inline-flex items-center gap-2 truncate text-[16px] font-bold text-white">
             {displayName}
             <span className="rounded-full border border-[#fed7aa] bg-[#fff7ed] px-[7px] py-[2px] font-mono text-[10px] font-bold tracking-[0.08em] text-[#d97706]">
-              moi
+              {t('leaderRow.me')}
             </span>
           </div>
           <div className="font-mono text-[11px] tracking-[0.04em] text-white/60">
-            {ordinalFr(entry.rank)} sur {total}
+            {t('youBar.rankOfTotal', {
+              ordinal: ordinal(entry.rank, locale),
+              total,
+            })}
             {gapText && ` · ${gapText}`}
           </div>
         </div>
@@ -130,7 +147,7 @@ export function YouBar(props: Props) {
             background: 'linear-gradient(135deg, #f59e0b, #ec4899)',
           }}
         >
-          Grimper
+          {t('youBar.climb')}
           <ChevronRight size={16} />
         </Link>
       </div>

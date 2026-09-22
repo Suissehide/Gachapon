@@ -1,3 +1,9 @@
+import type { TFunction } from 'i18next'
+import { useTranslation } from 'react-i18next'
+
+import { currentLocale } from '../../i18n/index.ts'
+import { ordinal } from '../../libs/utils.ts'
+
 // Round medal disk for top 3 (gold/silver/bronze), simple mono chip otherwise.
 type Props = { rank: number; size?: number }
 
@@ -10,15 +16,35 @@ const PALETTE: Record<
   3: { a: '#fed7aa', b: '#fb923c', c: '#c2410c', txt: '#7c2d12' },
 }
 
-const ARIA = (rank: number) =>
-  rank === 1 ? '1ère place' : rank <= 3 ? `${rank}e place` : `Rang ${rank}`
+/**
+ * « 1ère place » distingue le rang 1 des autres : accord féminin sur
+ * « place », qui ne se déduit pas de l'ordinal générique (`ordinal()`,
+ * masculin par défaut — « 1er »). Les rangs 2 et 3 reprennent en revanche cet
+ * ordinal partagé (« 2e »/« 2nd »), sans avoir besoin du même accord.
+ */
+function medalAriaLabel(
+  rank: number,
+  locale: ReturnType<typeof currentLocale>,
+  t: TFunction<'leaderboard'>,
+): string {
+  if (rank > 3) {
+    return t('medalRank.rankOther', { rank })
+  }
+  if (rank === 1) {
+    return t('medalRank.rankFirst')
+  }
+  return t('medalRank.rankPlace', { ordinal: ordinal(rank, locale) })
+}
 
 export function MedalRank({ rank, size = 40 }: Props) {
+  const { t } = useTranslation('leaderboard')
+  const locale = currentLocale()
+  const ariaLabel = medalAriaLabel(rank, locale, t)
   if (rank <= 3) {
     const p = PALETTE[rank as 1 | 2 | 3]
     return (
       <div
-        aria-label={ARIA(rank)}
+        aria-label={ariaLabel}
         role="img"
         className="relative flex shrink-0 items-center justify-center rounded-full"
         style={{
@@ -47,7 +73,7 @@ export function MedalRank({ rank, size = 40 }: Props) {
   }
   return (
     <div
-      aria-label={ARIA(rank)}
+      aria-label={ariaLabel}
       role="img"
       className="flex shrink-0 items-center justify-center rounded-[12px] border border-[rgba(27,23,38,0.08)] bg-[#fafaf7] font-mono text-[14px] font-bold text-[rgba(27,23,38,0.6)]"
       style={{ width: size, height: size }}

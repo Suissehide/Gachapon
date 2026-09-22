@@ -5,5 +5,69 @@
       "loadTeams": "Erreur lors de la récupération du classement Équipes",
       "loadCombat": "Erreur lors de la récupération du classement Combats"
     }
+  },
+  "page": {
+    "title": "Classement",
+    "eyebrow": "GACHAPON · SAISON 1",
+    "tabsAriaLabel": "Choix du classement",
+    "headRightCollectors": "COMPLÉTION DE COLLECTION",
+    "headRightTeams": "COMPLÉTION D'ÉQUIPE",
+    "headRightCombat": "PROGRESSION EN COMBAT",
+    "rankedPlayersCount_one": "joueur classé",
+    "rankedPlayersCount_other": "joueurs classés",
+    "rankedTeamsCount_one": "équipe en lice",
+    "rankedTeamsCount_other": "équipes en lice",
+    "rankedCombatantsCount_one": "combattant",
+    "rankedCombatantsCount_other": "combattants",
+    "tabTitleCollectors": "Collectionneurs",
+    "tabTitleTeams": "Équipes",
+    "tabTitleCombat": "Combats",
+    "leaderMetricCollection": "{{pct}}% de collection",
+    "leaderMetricCombat": "Palier {{palier}} · force {{power}}",
+    "noRankYetCollectors": "Joue une carte pour entrer au classement",
+    "mineSubCollectors": "sur {{total}} · {{pct}}% complété",
+    "mineSubTeams_one": "{{teamName}} · {{count}} membre",
+    "mineSubTeams_other": "{{teamName}} · {{count}} membres",
+    "noTeamYet": "Aucune équipe — rejoins-en une",
+    "mineSubCombat": "Palier {{palier}} · force {{power}}",
+    "noRankYetCombat": "Équipe-toi pour entrer au classement",
+    "entriesCountHeader": "{{count}} {{tabTitle}}",
+    "loading": "Chargement…",
+    "emptyState": "Pas encore de classement — reviens après les premiers tirages."
+  },
+  "scopeCard": {
+    "inTheLead": "EN TÊTE",
+    "yourPosition": "TA POSITION",
+    "displayed": "AFFICHÉ",
+    "viewThisLeaderboard": "VOIR CE CLASSEMENT ›"
+  },
+  "leaderRow": {
+    "me": "moi",
+    "memberCount_one": "{{count}} membre",
+    "memberCount_other": "{{count}} membres",
+    "tierReachedLabel": "PALIER ATTEINT",
+    "cardsLabel": "CARTES",
+    "variantsLabel": "VARIANTES",
+    "pullsLabel": "TIRAGES",
+    "totalPullsLabel": "TIRAGES CUMULÉS",
+    "teamPowerLabel": "FORCE D'ÉQUIPE"
+  },
+  "levelChip": {
+    "maxLevel": "NIV. MAX",
+    "level": "NIV. {{level}}"
+  },
+  "medalRank": {
+    "rankFirst": "1ère place",
+    "rankPlace": "{{ordinal}} place",
+    "rankOther": "Rang {{rank}}"
+  },
+  "youBar": {
+    "gapPercent": "à {{gap}}% du {{ordinal}}",
+    "gapTiers_one": "à {{gap}} palier du {{ordinal}}",
+    "gapTiers_other": "à {{gap}} paliers du {{ordinal}}",
+    "rankOfTotal": "{{ordinal}} sur {{total}}",
+    "tierLabel": "PALIER",
+    "powerLabel": "FORCE",
+    "climb": "Grimper"
   }
 }

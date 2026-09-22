@@ -1,6 +1,8 @@
 import { Crown, Layers, Swords, Trophy } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
-import { cn } from '../../libs/utils'
+import { currentLocale } from '../../i18n/index.ts'
+import { cn, ordinal } from '../../libs/utils'
 
 export type ScopeMode = 'collectors' | 'teams' | 'combat'
 
@@ -25,8 +27,6 @@ const ICON: Record<ScopeMode, typeof Trophy> = {
   combat: Swords,
 }
 
-const ordinalFr = (n: number) => (n === 1 ? '1er' : `${n}e`)
-
 export function ScopeCard({
   mode,
   active,
@@ -41,6 +41,8 @@ export function ScopeCard({
   mineIsTop,
   isLoading,
 }: Props) {
+  const { t } = useTranslation('leaderboard')
+  const locale = currentLocale()
   const Icon = ICON[mode]
   return (
     <button
@@ -108,7 +110,7 @@ export function ScopeCard({
           </span>
           <div className="flex min-w-0 flex-col gap-[1px]">
             <span className="block font-mono text-[9px] tracking-[0.16em] text-[rgba(27,23,38,0.45)]">
-              EN TÊTE
+              {t('scopeCard.inTheLead')}
             </span>
             <span className="truncate text-[14px] font-bold text-[#1b1726]">
               {isLoading ? '…' : (leaderName ?? '—')}
@@ -129,10 +131,14 @@ export function ScopeCard({
           )}
         >
           <span className="block font-mono text-[9px] tracking-[0.16em] text-[rgba(27,23,38,0.45)]">
-            TA POSITION
+            {t('scopeCard.yourPosition')}
           </span>
           <span className="mt-[2px] font-display text-[28px] font-extrabold leading-none tabular-nums text-[#b45309]">
-            {isLoading ? '…' : mineRank === null ? '—' : ordinalFr(mineRank)}
+            {isLoading
+              ? '…'
+              : mineRank === null
+                ? '—'
+                : ordinal(mineRank, locale)}
           </span>
           <span className="truncate font-mono text-[10px] tracking-[0.02em] text-[rgba(27,23,38,0.55)]">
             {mineSub}
@@ -149,7 +155,7 @@ export function ScopeCard({
             : 'text-[rgba(27,23,38,0.4)] group-hover:text-[rgba(27,23,38,0.7)]',
         )}
       >
-        {active ? 'AFFICHÉ' : 'VOIR CE CLASSEMENT ›'}
+        {active ? t('scopeCard.displayed') : t('scopeCard.viewThisLeaderboard')}
       </span>
     </button>
   )

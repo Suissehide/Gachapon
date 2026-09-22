@@ -37,6 +37,34 @@ export function plural(n: number): string {
 }
 
 /**
+ * Rang ordinal abrégé, selon la locale : « 1er »/« 5e » en français,
+ * « 1st »/« 2nd »/« 3rd »/« 5th » en anglais. Contrairement au pluriel, cette
+ * grammaire n'a pas d'équivalent i18next intégré (`_one`/`_other` ne portent
+ * que l'accord de nombre, pas la position) — d'où ce calcul explicite plutôt
+ * que la seule règle française codée en dur (bug relevé sur trois copies du
+ * classement, `components/leaderboard/`, avant la tâche 8).
+ */
+export function ordinal(n: number, locale: Locale): string {
+  if (locale === 'fr') {
+    return `${n}${n === 1 ? 'er' : 'e'}`
+  }
+  const mod100 = n % 100
+  if (mod100 >= 11 && mod100 <= 13) {
+    return `${n}th`
+  }
+  switch (n % 10) {
+    case 1:
+      return `${n}st`
+    case 2:
+      return `${n}nd`
+    case 3:
+      return `${n}rd`
+    default:
+      return `${n}th`
+  }
+}
+
+/**
  * Replie une chaîne pour une comparaison de recherche : minuscules et
  * diacritiques retirés. `NFD` décompose « é » en « e » + accent combinant,
  * que la plage U+0300–U+036F (« Combining Diacritical Marks ») supprime —

@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { LeaderRow } from '../../components/leaderboard/LeaderRow'
 import { ScopeCard } from '../../components/leaderboard/ScopeCard'
@@ -27,31 +28,22 @@ export const Route = createFileRoute('/_authenticated/leaderboard')({
 
 type Tab = 'collectors' | 'teams' | 'combat'
 
-const HEAD_RIGHT: Record<Tab, string> = {
-  collectors: 'COMPLÉTION DE COLLECTION',
-  teams: 'COMPLÉTION D’ÉQUIPE',
-  combat: 'PROGRESSION EN COMBAT',
+const HEAD_RIGHT_KEY: Record<Tab, string> = {
+  collectors: 'page.headRightCollectors',
+  teams: 'page.headRightTeams',
+  combat: 'page.headRightCombat',
 }
 
-const COUNT_LABEL_SINGULAR: Record<Tab, string> = {
-  collectors: 'joueur classé',
-  teams: 'équipe en lice',
-  combat: 'combattant',
+const COUNT_LABEL_KEY: Record<Tab, string> = {
+  collectors: 'page.rankedPlayersCount',
+  teams: 'page.rankedTeamsCount',
+  combat: 'page.rankedCombatantsCount',
 }
 
-const COUNT_LABEL_PLURAL: Record<Tab, string> = {
-  collectors: 'joueurs classés',
-  teams: 'équipes en lice',
-  combat: 'combattants',
-}
-
-const countLabelFor = (mode: Tab, count: number) =>
-  count === 1 ? COUNT_LABEL_SINGULAR[mode] : COUNT_LABEL_PLURAL[mode]
-
-const TAB_TITLE: Record<Tab, string> = {
-  collectors: 'Collectionneurs',
-  teams: 'Équipes',
-  combat: 'Combats',
+const TAB_TITLE_KEY: Record<Tab, string> = {
+  collectors: 'page.tabTitleCollectors',
+  teams: 'page.tabTitleTeams',
+  combat: 'page.tabTitleCombat',
 }
 
 function totalKnown<E>(data: LeaderboardResponse<E> | undefined): number {
@@ -65,8 +57,12 @@ function totalKnown<E>(data: LeaderboardResponse<E> | undefined): number {
 }
 
 function LeaderboardPage() {
+  const { t } = useTranslation('leaderboard')
   const locale = currentLocale()
   const [activeTab, setActiveTab] = useState<Tab>('collectors')
+  const tabTitle = (mode: Tab) => t(TAB_TITLE_KEY[mode])
+  const countLabelFor = (mode: Tab, count: number) =>
+    t(COUNT_LABEL_KEY[mode], { count })
   const me = useAuthStore((s) => s.user)
   const collectorsQ = useCollectorsLeaderboard()
   const teamsQ = useTeamsLeaderboard()
@@ -80,7 +76,9 @@ function LeaderboardPage() {
         leader: collectorsQ.data?.entries[0]
           ? {
               name: collectorsQ.data.entries[0].user.username,
-              metric: `${collectorsQ.data.entries[0].cardPercentage}% de collection`,
+              metric: t('page.leaderMetricCollection', {
+                pct: collectorsQ.data.entries[0].cardPercentage,
+              }),
             }
           : null,
         mine: collectorsQ.data
@@ -95,9 +93,12 @@ function LeaderboardPage() {
                   collectorsQ.data?.currentUserEntry ??
                   collectorsQ.data?.entries.find((x) => x.user.id === me?.id)
                 if (!e) {
-                  return 'Joue une carte pour entrer au classement'
+                  return t('page.noRankYetCollectors')
                 }
-                return `sur ${totalKnown(collectorsQ.data)} · ${e.cardPercentage}% complété`
+                return t('page.mineSubCollectors', {
+                  total: totalKnown(collectorsQ.data),
+                  pct: e.cardPercentage,
+                })
               })(),
             }
           : null,
@@ -108,7 +109,9 @@ function LeaderboardPage() {
         leader: teamsQ.data?.entries[0]
           ? {
               name: teamsQ.data.entries[0].team.name,
-              metric: `${teamsQ.data.entries[0].cardPercentage}% de collection`,
+              metric: t('page.leaderMetricCollection', {
+                pct: teamsQ.data.entries[0].cardPercentage,
+              }),
             }
           : null,
         mine: teamsQ.data
@@ -121,8 +124,11 @@ function LeaderboardPage() {
               return {
                 rank: mineEntry?.rank ?? null,
                 sub: mineEntry
-                  ? `${mineEntry.team.name} · ${mineEntry.team.memberCount} membres`
-                  : 'Aucune équipe — rejoins-en une',
+                  ? t('page.mineSubTeams', {
+                      teamName: mineEntry.team.name,
+                      count: mineEntry.team.memberCount,
+                    })
+                  : t('page.noTeamYet'),
               }
             })()
           : null,
@@ -133,7 +139,13 @@ function LeaderboardPage() {
         leader: combatQ.data?.entries[0]
           ? {
               name: combatQ.data.entries[0].user.username,
-              metric: `Palier ${combatQ.data.entries[0].palier} · force ${formatNumber(combatQ.data.entries[0].combatPower, locale)}`,
+              metric: t('page.leaderMetricCombat', {
+                palier: combatQ.data.entries[0].palier,
+                power: formatNumber(
+                  combatQ.data.entries[0].combatPower,
+                  locale,
+                ),
+              }),
             }
           : null,
         mine: combatQ.data
@@ -144,8 +156,11 @@ function LeaderboardPage() {
               return {
                 rank: e?.rank ?? null,
                 sub: e
-                  ? `Palier ${e.palier} · force ${formatNumber(e.combatPower, locale)}`
-                  : 'Équipe-toi pour entrer au classement',
+                  ? t('page.mineSubCombat', {
+                      palier: e.palier,
+                      power: formatNumber(e.combatPower, locale),
+                    })
+                  : t('page.noRankYetCombat'),
               }
             })()
           : null,
@@ -160,6 +175,7 @@ function LeaderboardPage() {
       combatQ.isLoading,
       me?.id,
       locale,
+      t,
     ],
   )
 
@@ -188,11 +204,11 @@ function LeaderboardPage() {
 
   return (
     <PageShell>
-      <PageHeader title="Classement" eyebrow="GACHAPON · SAISON 1" />
+      <PageHeader title={t('page.title')} eyebrow={t('page.eyebrow')} />
 
       <div
         role="tablist"
-        aria-label="Choix du classement"
+        aria-label={t('page.tabsAriaLabel')}
         className="grid grid-cols-1 gap-[14px] md:grid-cols-3"
         onKeyDown={(ev) => {
           if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') {
@@ -223,7 +239,7 @@ function LeaderboardPage() {
               mode={mode}
               active={activeTab === mode}
               onSelect={() => setActiveTab(mode)}
-              title={TAB_TITLE[mode]}
+              title={tabTitle(mode)}
               count={
                 s.data ? totalKnown(s.data as LeaderboardResponse<unknown>) : 0
               }
@@ -244,20 +260,23 @@ function LeaderboardPage() {
 
       <div className="mx-1 mt-[26px] mb-3 flex items-center justify-between font-mono text-[10px] tracking-[0.18em] text-[rgba(27,23,38,0.55)]">
         <span>
-          {activeData?.entries.length ?? 0} {TAB_TITLE[activeTab].toUpperCase()}
+          {t('page.entriesCountHeader', {
+            count: activeData?.entries.length ?? 0,
+            tabTitle: tabTitle(activeTab).toUpperCase(),
+          })}
         </span>
-        <span className="opacity-[0.55]">{HEAD_RIGHT[activeTab]}</span>
+        <span className="opacity-[0.55]">{t(HEAD_RIGHT_KEY[activeTab])}</span>
       </div>
 
       <div className="flex flex-col gap-[10px]">
         {activeLoading && !activeData && (
           <div className="flex h-32 items-center justify-center text-sm text-[rgba(27,23,38,0.5)]">
-            Chargement…
+            {t('page.loading')}
           </div>
         )}
         {activeData?.entries.length === 0 && !activeLoading && (
           <div className="rounded-[16px] border border-[rgba(27,23,38,0.06)] bg-white p-10 text-center text-sm text-[rgba(27,23,38,0.5)]">
-            Pas encore de classement — reviens après les premiers tirages.
+            {t('page.emptyState')}
           </div>
         )}
 

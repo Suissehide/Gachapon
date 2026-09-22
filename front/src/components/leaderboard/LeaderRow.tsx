@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { Swords } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import type {
   CollectorEntry,
@@ -21,6 +22,7 @@ type Props =
 const fmt = (n: number) => formatNumber(n, currentLocale())
 
 export function LeaderRow(props: Props) {
+  const { t } = useTranslation('leaderboard')
   const { mode, entry, isMe } = props
   const displayName = mode === 'teams' ? entry.team.name : entry.user.username
   const initials = displayName.slice(0, 1).toUpperCase()
@@ -51,13 +53,13 @@ export function LeaderRow(props: Props) {
             {displayName}
             {isMe && (
               <span className="rounded-full border border-[#fed7aa] bg-[#fff7ed] px-[7px] py-[2px] font-mono text-[10px] font-bold tracking-[0.08em] text-[#d97706]">
-                moi
+                {t('leaderRow.me')}
               </span>
             )}
           </span>
           {mode === 'teams' ? (
             <span className="font-mono text-[11px] tracking-[0.04em] text-[rgba(27,23,38,0.5)]">
-              {entry.team.memberCount} membres
+              {t('leaderRow.memberCount', { count: entry.team.memberCount })}
             </span>
           ) : (
             <LevelChip level={entry.user.level} />
@@ -73,7 +75,7 @@ export function LeaderRow(props: Props) {
             value={
               entry.maxPalier > 0 ? (entry.palier / entry.maxPalier) * 100 : 0
             }
-            label="PALIER ATTEINT"
+            label={t('leaderRow.tierReachedLabel')}
             displayValue={`${entry.palier} / ${entry.maxPalier}`}
           />
         ) : (
@@ -81,13 +83,13 @@ export function LeaderRow(props: Props) {
             <ProgressBar
               variant="cards"
               value={entry.cardPercentage}
-              label="CARTES"
+              label={t('leaderRow.cardsLabel')}
               displayValue={`${entry.cardPercentage}%`}
             />
             <ProgressBar
               variant="variants"
               value={entry.variantPercentage}
-              label="VARIANTES"
+              label={t('leaderRow.variantsLabel')}
               displayValue={`${entry.variantPercentage}%`}
             />
           </div>
@@ -102,7 +104,7 @@ export function LeaderRow(props: Props) {
               {fmt(entry.pulls)}
             </span>
             <span className="font-mono text-[9px] tracking-[0.12em] text-[rgba(27,23,38,0.5)]">
-              TIRAGES
+              {t('leaderRow.pullsLabel')}
             </span>
           </>
         )}
@@ -112,7 +114,7 @@ export function LeaderRow(props: Props) {
               {fmt(entry.pullsTotal)}
             </span>
             <span className="font-mono text-[9px] tracking-[0.12em] text-[rgba(27,23,38,0.5)]">
-              TIRAGES CUMULÉS
+              {t('leaderRow.totalPullsLabel')}
             </span>
           </>
         )}
@@ -123,7 +125,7 @@ export function LeaderRow(props: Props) {
               {fmt(entry.combatPower)}
             </span>
             <span className="font-mono text-[9px] tracking-[0.12em] text-[rgba(27,23,38,0.5)]">
-              FORCE D'ÉQUIPE
+              {t('leaderRow.teamPowerLabel')}
             </span>
           </>
         )}

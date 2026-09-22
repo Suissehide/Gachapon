@@ -5,5 +5,69 @@
       "loadTeams": "Error loading the Teams leaderboard",
       "loadCombat": "Error loading the Combat leaderboard"
     }
+  },
+  "page": {
+    "title": "Leaderboard",
+    "eyebrow": "GACHAPON · SEASON 1",
+    "tabsAriaLabel": "Choose a leaderboard",
+    "headRightCollectors": "COLLECTION COMPLETION",
+    "headRightTeams": "TEAM COMPLETION",
+    "headRightCombat": "COMBAT PROGRESSION",
+    "rankedPlayersCount_one": "ranked player",
+    "rankedPlayersCount_other": "ranked players",
+    "rankedTeamsCount_one": "team in the running",
+    "rankedTeamsCount_other": "teams in the running",
+    "rankedCombatantsCount_one": "combatant",
+    "rankedCombatantsCount_other": "combatants",
+    "tabTitleCollectors": "Collectors",
+    "tabTitleTeams": "Teams",
+    "tabTitleCombat": "Combat",
+    "leaderMetricCollection": "{{pct}}% collection",
+    "leaderMetricCombat": "Tier {{palier}} · power {{power}}",
+    "noRankYetCollectors": "Play a card to enter the leaderboard",
+    "mineSubCollectors": "out of {{total}} · {{pct}}% complete",
+    "mineSubTeams_one": "{{teamName}} · {{count}} member",
+    "mineSubTeams_other": "{{teamName}} · {{count}} members",
+    "noTeamYet": "No team — join one",
+    "mineSubCombat": "Tier {{palier}} · power {{power}}",
+    "noRankYetCombat": "Get a team to enter the leaderboard",
+    "entriesCountHeader": "{{count}} {{tabTitle}}",
+    "loading": "Loading…",
+    "emptyState": "No ranking yet — check back after the first pulls."
+  },
+  "scopeCard": {
+    "inTheLead": "IN THE LEAD",
+    "yourPosition": "YOUR POSITION",
+    "displayed": "SHOWN",
+    "viewThisLeaderboard": "VIEW THIS LEADERBOARD ›"
+  },
+  "leaderRow": {
+    "me": "you",
+    "memberCount_one": "{{count}} member",
+    "memberCount_other": "{{count}} members",
+    "tierReachedLabel": "TIER REACHED",
+    "cardsLabel": "CARDS",
+    "variantsLabel": "VARIANTS",
+    "pullsLabel": "PULLS",
+    "totalPullsLabel": "TOTAL PULLS",
+    "teamPowerLabel": "TEAM POWER"
+  },
+  "levelChip": {
+    "maxLevel": "MAX LVL",
+    "level": "LVL. {{level}}"
+  },
+  "medalRank": {
+    "rankFirst": "1st place",
+    "rankPlace": "{{ordinal}} place",
+    "rankOther": "Rank {{rank}}"
+  },
+  "youBar": {
+    "gapPercent": "{{gap}}% behind {{ordinal}}",
+    "gapTiers_one": "{{gap}} tier behind {{ordinal}}",
+    "gapTiers_other": "{{gap}} tiers behind {{ordinal}}",
+    "rankOfTotal": "{{ordinal}} out of {{total}}",
+    "tierLabel": "TIER",
+    "powerLabel": "POWER",
+    "climb": "Climb"
   }
 }
