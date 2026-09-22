@@ -1,0 +1,27 @@
+{
+  "breadcrumb": "Settings",
+  "title": "Settings",
+  "account": {
+    "heading": "Account"
+  },
+  "apiKeys": {
+    "heading": "API keys",
+    "description": "Used to access the public API. The key is only shown once, at creation.",
+    "namePlaceholder": "Key name (e.g. bot-discord)",
+    "create": "Create",
+    "newKeyWarning": "⚠️ Copy this key now — it won't be shown again.",
+    "hide": "Hide",
+    "show": "Show",
+    "copy": "Copy",
+    "loading": "Loading…",
+    "empty": "No API key created.",
+    "createdOn": "Created on {{date}}",
+    "usedOn": " · Used on {{date}}",
+    "delete": "Delete",
+    "deletePopup": {
+      "title": "Delete the key",
+      "description": "Delete the key \"{{name}}\"? This action cannot be undone.",
+      "confirm": "Delete"
+    }
+  }
+}

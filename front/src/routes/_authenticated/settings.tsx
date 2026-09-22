@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import dayjs from 'dayjs'
 import { Check, Copy, Eye, EyeOff, Key, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { PageHeader } from '../../components/shared/PageHeader'
 import { PageShell } from '../../components/shared/PageShell'
@@ -21,6 +22,7 @@ export const Route = createFileRoute('/_authenticated/settings')({
 })
 
 function Settings() {
+  const { t } = useTranslation(['settings', 'collection'])
   const user = useAuthStore((s) => s.user)
   const { data: apiKeys, isLoading } = useApiKeys()
   const { mutate: createKey, isPending: creating } = useCreateApiKey()
@@ -64,19 +66,19 @@ function Settings() {
         breadcrumbs={[
           { label: 'Gachapon', to: '/play' },
           {
-            label: 'Profil',
+            label: t('collection:breadcrumbProfile'),
             to: '/profile/$username',
             params: { username: user?.username ?? '' },
           },
-          { label: 'Paramètres' },
+          { label: t('settings:breadcrumb') },
         ]}
-        title="Paramètres"
+        title={t('settings:title')}
       />
 
       {/* Infos compte */}
       <section className="rounded-xl border border-border bg-card p-6">
         <h2 className="mb-5 text-sm font-bold uppercase tracking-wide text-text-light">
-          Compte
+          {t('settings:account.heading')}
         </h2>
         <div className="flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-primary/30 to-secondary/30 text-xl font-black text-primary">
@@ -92,11 +94,10 @@ function Settings() {
       {/* API Keys */}
       <section className="rounded-xl border border-border bg-card p-6">
         <h2 className="mb-1 text-sm font-bold uppercase tracking-wide text-text-light">
-          Clés API
+          {t('settings:apiKeys.heading')}
         </h2>
         <p className="mb-5 text-xs text-text-light">
-          Utilisées pour accéder à l'API publique. La clé n'est affichée qu'une
-          seule fois à la création.
+          {t('settings:apiKeys.description')}
         </p>
 
         {/* Formulaire création */}
@@ -109,7 +110,7 @@ function Settings() {
                 handleCreate()
               }
             }}
-            placeholder="Nom de la clé (ex: bot-discord)"
+            placeholder={t('settings:apiKeys.namePlaceholder')}
             maxLength={50}
           />
           <Button
@@ -117,7 +118,7 @@ function Settings() {
             disabled={creating || !newKeyName.trim()}
           >
             <Plus className="h-4 w-4" />
-            Créer
+            {t('settings:apiKeys.create')}
           </Button>
         </div>
 
@@ -125,7 +126,7 @@ function Settings() {
         {createdKey && (
           <div className="mb-5 rounded-lg border border-primary/30 bg-primary/5 p-4">
             <p className="mb-3 text-xs font-semibold text-primary">
-              ⚠️ Copiez cette clé maintenant — elle ne sera plus affichée.
+              {t('settings:apiKeys.newKeyWarning')}
             </p>
             <div className="flex items-center gap-2">
               <code className="flex-1 overflow-hidden text-ellipsis rounded bg-background px-2 py-1.5 font-mono text-xs text-text">
@@ -135,7 +136,11 @@ function Settings() {
                 variant="ghost"
                 size="icon-sm"
                 onClick={() => setVisible((v) => !v)}
-                title={visible ? 'Masquer' : 'Afficher'}
+                title={
+                  visible
+                    ? t('settings:apiKeys.hide')
+                    : t('settings:apiKeys.show')
+                }
               >
                 {visible ? (
                   <EyeOff className="h-4 w-4" />
@@ -147,7 +152,7 @@ function Settings() {
                 variant="ghost"
                 size="icon-sm"
                 onClick={handleCopy}
-                title="Copier"
+                title={t('settings:apiKeys.copy')}
               >
                 {copied ? (
                   <Check className="h-4 w-4 text-green-500" />
@@ -161,9 +166,13 @@ function Settings() {
 
         {/* Liste des clés */}
         {isLoading ? (
-          <p className="text-xs text-text-light">Chargement…</p>
+          <p className="text-xs text-text-light">
+            {t('settings:apiKeys.loading')}
+          </p>
         ) : apiKeys?.length === 0 ? (
-          <p className="text-xs text-text-light">Aucune clé API créée.</p>
+          <p className="text-xs text-text-light">
+            {t('settings:apiKeys.empty')}
+          </p>
         ) : (
           <ul className="space-y-2">
             {apiKeys?.map((k) => (
@@ -177,16 +186,20 @@ function Settings() {
                     {k.name}
                   </p>
                   <p className="text-xs text-text-light">
-                    Créée le {dayjs(k.createdAt).format('L')}
+                    {t('settings:apiKeys.createdOn', {
+                      date: dayjs(k.createdAt).format('L'),
+                    })}
                     {k.lastUsedAt &&
-                      ` · Utilisée le ${dayjs(k.lastUsedAt).format('L')}`}
+                      t('settings:apiKeys.usedOn', {
+                        date: dayjs(k.lastUsedAt).format('L'),
+                      })}
                   </p>
                 </div>
                 <Button
                   variant="ghost"
                   size="icon-sm"
                   onClick={() => setDeleteTarget({ id: k.id, name: k.name })}
-                  title="Supprimer"
+                  title={t('settings:apiKeys.delete')}
                   className="text-text-light hover:bg-destructive/10 hover:text-destructive"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -205,13 +218,15 @@ function Settings() {
           }
         }}
         icon={<Trash2 className="h-4 w-4" />}
-        title="Supprimer la clé"
+        title={t('settings:apiKeys.deletePopup.title')}
         description={
           deleteTarget
-            ? `Supprimer la clé "${deleteTarget.name}" ? Cette action est irréversible.`
+            ? t('settings:apiKeys.deletePopup.description', {
+                name: deleteTarget.name,
+              })
             : ''
         }
-        confirmLabel="Supprimer"
+        confirmLabel={t('settings:apiKeys.deletePopup.confirm')}
         onConfirm={() => {
           if (!deleteTarget) {
             return

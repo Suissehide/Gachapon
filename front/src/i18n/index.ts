@@ -24,6 +24,7 @@ import passivesEn from './locales/en/passives.json'
 import profileEn from './locales/en/profile.json'
 import questsEn from './locales/en/quests.json'
 import rewardsEn from './locales/en/rewards.json'
+import settingsEn from './locales/en/settings.json'
 import shopEn from './locales/en/shop.json'
 import skillsEn from './locales/en/skills.json'
 import statsEn from './locales/en/stats.json'
@@ -55,6 +56,7 @@ import passivesFr from './locales/fr/passives.json'
 import profileFr from './locales/fr/profile.json'
 import questsFr from './locales/fr/quests.json'
 import rewardsFr from './locales/fr/rewards.json'
+import settingsFr from './locales/fr/settings.json'
 import shopFr from './locales/fr/shop.json'
 import skillsFr from './locales/fr/skills.json'
 import statsFr from './locales/fr/stats.json'
@@ -198,6 +200,7 @@ void i18next.use(initReactI18next).init({
       changelog: changelogFr,
       level: levelFr,
       machine: machineFr,
+      settings: settingsFr,
     },
     en: {
       about: aboutEn,
@@ -231,6 +234,7 @@ void i18next.use(initReactI18next).init({
       changelog: changelogEn,
       level: levelEn,
       machine: machineEn,
+      settings: settingsEn,
     },
   },
   lng: localeFromPath(window.location.pathname),
@@ -267,6 +271,7 @@ void i18next.use(initReactI18next).init({
     'changelog',
     'level',
     'machine',
+    'settings',
   ],
   interpolation: {
     // React échappe déjà le rendu — un double échappement casserait les

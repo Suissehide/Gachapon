@@ -1,0 +1,27 @@
+{
+  "breadcrumb": "Paramètres",
+  "title": "Paramètres",
+  "account": {
+    "heading": "Compte"
+  },
+  "apiKeys": {
+    "heading": "Clés API",
+    "description": "Utilisées pour accéder à l'API publique. La clé n'est affichée qu'une seule fois à la création.",
+    "namePlaceholder": "Nom de la clé (ex: bot-discord)",
+    "create": "Créer",
+    "newKeyWarning": "⚠️ Copiez cette clé maintenant — elle ne sera plus affichée.",
+    "hide": "Masquer",
+    "show": "Afficher",
+    "copy": "Copier",
+    "loading": "Chargement…",
+    "empty": "Aucune clé API créée.",
+    "createdOn": "Créée le {{date}}",
+    "usedOn": " · Utilisée le {{date}}",
+    "delete": "Supprimer",
+    "deletePopup": {
+      "title": "Supprimer la clé",
+      "description": "Supprimer la clé \"{{name}}\" ? Cette action est irréversible.",
+      "confirm": "Supprimer"
+    }
+  }
+}
