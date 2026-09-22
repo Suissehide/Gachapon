@@ -75,5 +75,39 @@
     "skipAnimations": "Sauter les animations",
     "pullingTitle": "Tirage en cours…",
     "serverNotResponding": "Le serveur ne répond pas."
+  },
+  "tutorial": {
+    "stepCounter": "Étape {{current}} sur {{total}}",
+    "guideLink": "En savoir plus dans le guide complet →",
+    "skip": "Passer",
+    "previous": "Précédent",
+    "start": "C'est parti !",
+    "next": "Suivant",
+    "steps": {
+      "welcome": {
+        "title": "Bienvenue sur Gachapon !",
+        "text": "Tire des cartes, complète ta collection et fais combattre tes meilleures cartes dans la campagne."
+      },
+      "tokens": {
+        "title": "Jetons & tirages",
+        "text": "Chaque tirage consomme un <token>jeton</token>. Tes jetons se régénèrent automatiquement avec le temps, jusqu'à un plafond. Tire une carte à la fois ou plusieurs d'un coup avec le tirage multiple."
+      },
+      "rarities": {
+        "title": "Raretés & garantie",
+        "text": "Cinq raretés, de <common>commune</common> à <legendary1>légendaire</legendary1>, et des variantes brillantes ou holographiques qui rapportent plus de <dust>poussière</dust>. La garantie (pitié) t'assure une <legendary2>légendaire</legendary2> au bout d'un certain nombre de tirages."
+      },
+      "duplicates": {
+        "title": "Doublons & poussière",
+        "text": "Un doublon est automatiquement converti en <dust>poussière</dust>. Cette monnaie sert à la boutique du jour, au Vœu et à l'amélioration de tes cartes : aucun tirage n'est jamais perdu."
+      },
+      "shop": {
+        "title": "Boutique",
+        "text": "Dépense ta <dust>poussière</dust> dans la boutique du jour pour cibler des cartes précises, ou garde en Vœu les cartes de tes rêves pour les acheter directement. La boutique propose aussi des packs de <token>jetons</token> et des recharges d'<energy>énergie</energy>."
+      },
+      "campaign": {
+        "title": "Équipe & campagne",
+        "text": "Compose une équipe avec tes cartes et lance-toi dans la campagne : des combats qui rapportent de l'<gold>or</gold>, de l'expérience et de l'équipement pour aller toujours plus loin."
+      }
+    }
   }
 }

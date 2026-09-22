@@ -75,5 +75,39 @@
     "skipAnimations": "Skip animations",
     "pullingTitle": "Pull in progress…",
     "serverNotResponding": "The server is not responding."
+  },
+  "tutorial": {
+    "stepCounter": "Step {{current}} of {{total}}",
+    "guideLink": "Learn more in the full guide →",
+    "skip": "Skip",
+    "previous": "Previous",
+    "start": "Let's go!",
+    "next": "Next",
+    "steps": {
+      "welcome": {
+        "title": "Welcome to Gachapon!",
+        "text": "Pull cards, complete your collection and send your best cards into battle in the campaign."
+      },
+      "tokens": {
+        "title": "Tokens & pulls",
+        "text": "Every pull costs one <token>token</token>. Your tokens regenerate automatically over time, up to a cap. Pull one card at a time, or several at once with the multi-pull."
+      },
+      "rarities": {
+        "title": "Rarities & pity",
+        "text": "Five rarities, from <common>common</common> to <legendary1>legendary</legendary1>, plus brilliant and holographic variants that give more <dust>dust</dust>. The pity guarantee gets you a <legendary2>legendary</legendary2> after a certain number of pulls."
+      },
+      "duplicates": {
+        "title": "Duplicates & dust",
+        "text": "A duplicate is automatically turned into <dust>dust</dust>. That currency is spent in the daily shop, on wishes and on upgrading your cards: no pull is ever wasted."
+      },
+      "shop": {
+        "title": "Shop",
+        "text": "Spend your <dust>dust</dust> in the daily shop to target specific cards, or keep the cards of your dreams as wishes to buy them outright. The shop also offers <token>token</token> packs and <energy>energy</energy> refills."
+      },
+      "campaign": {
+        "title": "Team & campaign",
+        "text": "Build a team with your cards and dive into the campaign: battles that earn <gold>gold</gold>, experience and equipment to push ever further."
+      }
+    }
   }
 }
