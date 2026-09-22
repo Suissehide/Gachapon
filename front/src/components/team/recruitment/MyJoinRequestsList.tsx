@@ -18,6 +18,7 @@
 // Se masque entièrement si la liste finale est vide — pas de titre
 // affiché sans rien dessous.
 import dayjs from 'dayjs'
+import { useTranslation } from 'react-i18next'
 
 import {
   useCancelJoinRequest,
@@ -26,6 +27,7 @@ import {
 import { Button } from '../../ui/button.tsx'
 
 export function MyJoinRequestsList() {
+  const { t } = useTranslation('team')
   const { data } = useMyJoinRequests()
   const cancel = useCancelJoinRequest()
 
@@ -47,8 +49,10 @@ export function MyJoinRequestsList() {
               className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-muted/30 px-3 py-2.5 text-sm"
             >
               <span className="truncate text-text">
-                Candidature en attente · {request.teamName} · envoyée{' '}
-                {dayjs(request.createdAt).fromNow()}
+                {t('recruitment.myRequests.pending', {
+                  teamName: request.teamName,
+                  timeAgo: dayjs(request.createdAt).fromNow(),
+                })}
               </span>
               <Button
                 variant="ghost"
@@ -58,7 +62,7 @@ export function MyJoinRequestsList() {
                 }
                 onClick={() => cancel.mutate(request.teamId)}
               >
-                Annuler
+                {t('recruitment.myRequests.cancel')}
               </Button>
             </div>
           )
@@ -77,9 +81,11 @@ export function MyJoinRequestsList() {
 
         return (
           <div key={request.id} className="px-3 py-2.5 text-sm text-text-light">
-            Candidature déclinée · {request.teamName}
+            {t('recruitment.myRequests.declined', {
+              teamName: request.teamName,
+            })}
             {daysLeft !== null &&
-              ` · tu pourras recandidater dans ${daysLeft} j`}
+              t('recruitment.myRequests.reapplyIn', { count: daysLeft })}
           </div>
         )
       })}

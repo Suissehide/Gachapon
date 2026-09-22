@@ -7,6 +7,7 @@
 import { Compass, Search } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import {
   useApplyToTeam,
@@ -27,6 +28,7 @@ import {
 import { TeamDirectoryCard } from './TeamDirectoryCard.tsx'
 
 export function TeamDirectoryPopup({ trigger }: { trigger?: ReactNode } = {}) {
+  const { t } = useTranslation('team')
   const [open, setOpen] = useState(false)
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
@@ -81,20 +83,20 @@ export function TeamDirectoryPopup({ trigger }: { trigger?: ReactNode } = {}) {
       {trigger ?? (
         <PopupTrigger variant="outline" className="gap-2">
           <Compass className="h-4 w-4" />
-          Parcourir les équipes
+          {t('recruitment.directory.trigger')}
         </PopupTrigger>
       )}
       <PopupContent size="xl">
         <PopupHeader>
           <PopupTitle icon={<Compass className="h-4 w-4" />}>
-            Rejoindre une équipe
+            {t('recruitment.directory.title')}
           </PopupTitle>
         </PopupHeader>
         <PopupBody className="flex flex-col gap-4">
           <div className="relative w-full max-w-sm">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-light/50" />
             <Input
-              placeholder="Rechercher une équipe…"
+              placeholder={t('recruitment.directory.searchPlaceholder')}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               className="pl-9"
@@ -115,8 +117,8 @@ export function TeamDirectoryPopup({ trigger }: { trigger?: ReactNode } = {}) {
                     croire à un annuaire désert alors qu'il suffit d'effacer
                     la recherche. */}
                 {search
-                  ? `Aucune équipe ne correspond à « ${search} ».`
-                  : 'Aucune équipe ne recrute pour l’instant.'}
+                  ? t('recruitment.directory.noResultsForSearch', { search })
+                  : t('recruitment.directory.noneRecruiting')}
               </p>
             ) : (
               <div className="flex flex-col gap-3">
@@ -137,7 +139,9 @@ export function TeamDirectoryPopup({ trigger }: { trigger?: ReactNode } = {}) {
                     disabled={isFetchingNextPage}
                     className="self-center"
                   >
-                    {isFetchingNextPage ? 'Chargement…' : 'Charger plus'}
+                    {isFetchingNextPage
+                      ? t('recruitment.directory.loading')
+                      : t('recruitment.directory.loadMore')}
                   </Button>
                 )}
               </div>
@@ -150,7 +154,7 @@ export function TeamDirectoryPopup({ trigger }: { trigger?: ReactNode } = {}) {
             ainsi. */}
         <PopupFooter>
           <Button variant="outline" onClick={() => handleOpenChange(false)}>
-            Fermer
+            {t('recruitment.directory.close')}
           </Button>
         </PopupFooter>
       </PopupContent>

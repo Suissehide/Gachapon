@@ -10,6 +10,7 @@
 // pour cette carte que l'option existe.
 import { Settings, UserPlus } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { TeamDetail } from '../../api/teamProgression.api.ts'
 import { currentLocale } from '../../i18n/index.ts'
@@ -43,6 +44,7 @@ export function TeamIdentityCard({
   myRole,
   footer,
 }: TeamIdentityCardProps) {
+  const { t } = useTranslation('team')
   return (
     <ArcadeCard className="text-center">
       <TeamEmblem
@@ -72,7 +74,7 @@ export function TeamIdentityCard({
         value={team.xp}
         max={team.xpNext}
         label={team.level}
-        sublabel="NIVEAU"
+        sublabel={t('identityCard.levelSublabel')}
       />
       <p className="mt-2 font-mono text-[10px] tracking-[0.06em] text-foreground/50">
         {fr(team.xp)} / {fr(team.xpNext)} XP
@@ -86,7 +88,7 @@ export function TeamIdentityCard({
               <span className="text-foreground/40">/{team.maxMembers}</span>
             </>
           }
-          label="MEMBRES"
+          label={t('identityCard.membersLabel')}
         />
         <StatTile
           // `rankGlobal` est nul tant que l'équipe n'est pas classée : un tiret
@@ -101,10 +103,16 @@ export function TeamIdentityCard({
               </>
             )
           }
-          label="CLASSEMENT"
+          label={t('identityCard.rankLabel')}
         />
-        <StatTile value={fr(team.weekPts)} label="PTS HEBDO" />
-        <StatTile value={fr(team.raidsWon)} label="RAIDS VAINCUS" />
+        <StatTile
+          value={fr(team.weekPts)}
+          label={t('identityCard.weeklyPointsLabel')}
+        />
+        <StatTile
+          value={fr(team.raidsWon)}
+          label={t('identityCard.raidsWonLabel')}
+        />
       </div>
 
       {/* `canManage` suffit : `isOwner` est un sous-ensemble strict — un chef
@@ -128,7 +136,7 @@ export function TeamIdentityCard({
                   className="h-auto w-full flex-1 gap-2 rounded-lg border-[1.5px] px-[18px] py-[11px] text-sm font-bold"
                 >
                   <UserPlus className="h-4 w-4" />
-                  Inviter
+                  {t('identityCard.inviteButton')}
                 </PopupTrigger>
               }
             />
@@ -145,11 +153,13 @@ export function TeamIdentityCard({
               trigger={
                 <PopupTrigger
                   variant="secondary"
-                  title="Réglages de l'équipe"
+                  title={t('identityCard.settingsTitle')}
                   className="h-auto shrink-0 rounded-lg border-[1.5px] p-[11px]"
                 >
                   <Settings className="h-4 w-4" />
-                  <span className="sr-only">Réglages de l'équipe</span>
+                  <span className="sr-only">
+                    {t('identityCard.settingsTitle')}
+                  </span>
                 </PopupTrigger>
               }
             />

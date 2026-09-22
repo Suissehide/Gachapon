@@ -6,6 +6,7 @@
 // n'est pas cliquable. L'action est le bouton de droite, jamais imbriqué
 // dans un lien.
 import { UserPlus } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import type { DirectoryTeam } from '../../../queries/useRecruitment.ts'
 import { TeamEmblem } from '../../shared/TeamEmblem.tsx'
@@ -26,6 +27,7 @@ export function TeamDirectoryCard({
   isApplyPending,
   isCancelPending,
 }: TeamDirectoryCardProps) {
+  const { t } = useTranslation('team')
   return (
     <div className="grid w-full grid-cols-[56px_1fr_200px_auto] items-center gap-5 rounded-[20px] border-[1.5px] border-border bg-card px-5 py-[18px] transition-colors duration-[.25s] hover:border-primary/40">
       <TeamEmblem
@@ -40,13 +42,20 @@ export function TeamDirectoryCard({
         </div>
         <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-text-light">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-1 font-mono text-[10px] font-bold tracking-[0.1em] text-text-light">
-            NIV. {team.level}
+            {t('card.levelBadge', { level: team.level })}
           </span>
           <span>
-            {team.memberCount}/{team.maxMembers} membres
+            {t('card.memberCount', {
+              count: team.memberCount,
+              max: team.maxMembers,
+            })}
           </span>
           <span>·</span>
-          <span>{team.activeThisWeek} actifs cette semaine</span>
+          <span>
+            {t('recruitment.directory.activeThisWeek', {
+              count: team.activeThisWeek,
+            })}
+          </span>
         </div>
       </div>
 
@@ -60,7 +69,7 @@ export function TeamDirectoryCard({
       <div className="min-w-0">
         {team.motto && (
           <p className="truncate font-body text-sm italic text-text-light">
-            « {team.motto} »
+            {t('recruitment.directory.mottoQuote', { motto: team.motto })}
           </p>
         )}
       </div>
@@ -68,7 +77,7 @@ export function TeamDirectoryCard({
       {team.hasPendingRequest ? (
         <div className="flex items-center gap-2">
           <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-text-light">
-            En attente
+            {t('recruitment.directory.pending')}
           </span>
           <Button
             variant="ghost"
@@ -76,7 +85,7 @@ export function TeamDirectoryCard({
             onClick={() => onCancel(team.id)}
             disabled={isCancelPending}
           >
-            Annuler
+            {t('recruitment.directory.cancel')}
           </Button>
         </div>
       ) : (
@@ -86,7 +95,7 @@ export function TeamDirectoryCard({
           disabled={isApplyPending}
         >
           <UserPlus className="h-4 w-4" />
-          Candidater
+          {t('recruitment.directory.apply')}
         </Button>
       )}
     </div>

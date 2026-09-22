@@ -10,11 +10,13 @@
 // comme simple membre.
 import { Link } from '@tanstack/react-router'
 import { ChevronRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import type { TeamSummary } from '../../queries/useTeams.ts'
 import { TeamEmblem } from '../shared/TeamEmblem.tsx'
 
 export function TeamCard({ team }: { team: TeamSummary }) {
+  const { t } = useTranslation('team')
   return (
     // `block w-full` : même piège que CollectionCard.tsx — un lien est
     // shrink-to-fit par défaut, or la grille ci-dessous n'a aucune colonne
@@ -37,10 +39,13 @@ export function TeamCard({ team }: { team: TeamSummary }) {
         </div>
         <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-text-light">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-1 font-mono text-[10px] font-bold tracking-[0.1em] text-text-light">
-            NIV. {team.level}
+            {t('card.levelBadge', { level: team.level })}
           </span>
           <span>
-            {team.memberCount}/{team.maxMembers} membres
+            {t('card.memberCount', {
+              count: team.memberCount,
+              max: team.maxMembers,
+            })}
           </span>
           <span>·</span>
           <span>{team.myRoleLabel}</span>
@@ -63,7 +68,7 @@ export function TeamCard({ team }: { team: TeamSummary }) {
           </>
         ) : (
           <p className="font-mono text-[10px] text-text-light/60">
-            Aucun raid en cours
+            {t('card.noActiveRaid')}
           </p>
         )}
       </div>

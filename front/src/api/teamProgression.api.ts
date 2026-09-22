@@ -6,7 +6,18 @@ import { fetchWithAuth } from './fetchWithAuth.ts'
 import type { TowerElement } from './tower.api.ts'
 
 export type TeamMemberRole = 'OWNER' | 'ADMIN' | 'MEMBER'
-export type TeamMemberRoleLabel = 'Chef' | 'Officier' | 'Membre' | 'Recrue'
+// `roleLabel` (`team-progression-rules.ts`, back) répond dans la locale de la
+// requête : les 4 valeurs françaises ET leurs 4 équivalents anglais sont donc
+// tous des libellés possibles à l'exécution, jamais seulement les français.
+export type TeamMemberRoleLabel =
+  | 'Chef'
+  | 'Officier'
+  | 'Membre'
+  | 'Recrue'
+  | 'Leader'
+  | 'Officer'
+  | 'Member'
+  | 'Recruit'
 
 export type TeamPerkKey = 'loot' | 'raid' | 'xp' | 'forge'
 

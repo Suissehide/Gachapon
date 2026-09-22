@@ -1,5 +1,6 @@
 import { Check, RotateCcw, Save, Sparkles, Swords, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { CAMPAIGN_TEAM_KEY } from '../../constants/combatTeam.constant.ts'
 import { currentLocale } from '../../i18n/index.ts'
@@ -58,6 +59,7 @@ export function TeamEditorPopup({
   teamKey,
   modeLabel,
 }: Props) {
+  const { t } = useTranslation('team')
   const userId = useAuthStore((s) => s.user?.id)
   const teamQuery = useCombatTeam(teamKey)
   const setTeam = useSetCombatTeam(teamKey)
@@ -178,9 +180,12 @@ export function TeamEditorPopup({
             // rien ne permet de deviner le bon genre à la volée). Le séparateur
             // « · », déjà utilisé par le titre juste au-dessus, contourne le
             // problème sans avoir à articuler chaque libellé à la source.
-            subtitle={`Choisis jusqu'à ${MAX_TEAM_SIZE} cartes · ${modeLabel}`}
+            subtitle={t('combatTeamPopup.subtitle', {
+              max: MAX_TEAM_SIZE,
+              mode: modeLabel,
+            })}
           >
-            {`Mon équipe · ${modeLabel}`}
+            {t('combatTeamPopup.title', { mode: modeLabel })}
             <span className="ml-2 font-mono text-sm font-bold text-text-light/50">
               {selectedIds.length}/{MAX_TEAM_SIZE}
             </span>
@@ -210,7 +215,7 @@ export function TeamEditorPopup({
           {/* Power + auto */}
           <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-white px-4 py-3">
             <span className="font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-              Puissance totale
+              {t('combatTeamPopup.totalPower')}
             </span>
             <span className="inline-flex items-center gap-1 font-display text-xl font-extrabold tabular-nums text-text">
               <Swords className="h-4 w-4 text-amber-500" />
@@ -225,19 +230,21 @@ export function TeamEditorPopup({
               className="ml-auto gap-1.5"
             >
               <Sparkles className="h-3.5 w-3.5" />
-              Auto-équipe
+              {t('combatTeamPopup.autoTeam')}
             </Button>
           </div>
 
           {/* Roster */}
           <div>
             <p className="mb-2.5 font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-              Ma collection · {roster.length}{' '}
-              {roster.length > 1 ? 'cartes' : 'carte'}
+              {t('combatTeamPopup.collectionCount', { count: roster.length })}
             </p>
             {roster.length === 0 ? (
-              <EmptyState icon={Sparkles} title="Ta collection est vide">
-                Fais quelques tirages pour obtenir tes premières cartes.
+              <EmptyState
+                icon={Sparkles}
+                title={t('combatTeamPopup.emptyCollectionTitle')}
+              >
+                {t('combatTeamPopup.emptyCollectionBody')}
               </EmptyState>
             ) : (
               // p-2 gives room for the active tile's ring-offset (3px ring +
@@ -277,7 +284,7 @@ export function TeamEditorPopup({
               className="mr-auto gap-2"
             >
               <RotateCcw className="h-4 w-4" />
-              Revenir à l'équipe de campagne
+              {t('combatTeamPopup.revertToCampaign')}
             </Button>
           )}
           <Button
@@ -285,7 +292,7 @@ export function TeamEditorPopup({
             onClick={() => onOpenChange(false)}
             disabled={setTeam.isPending || clearTeam.isPending}
           >
-            Annuler
+            {t('actions.cancel')}
           </Button>
           <Button
             onClick={handleSave}
@@ -293,7 +300,9 @@ export function TeamEditorPopup({
             className="gap-2"
           >
             <Save className="h-4 w-4" />
-            {setTeam.isPending ? 'Enregistrement…' : "Valider l'équipe"}
+            {setTeam.isPending
+              ? t('combatTeamPopup.saving')
+              : t('combatTeamPopup.validate')}
           </Button>
         </PopupFooter>
       </PopupContent>
@@ -350,12 +359,13 @@ function Slot({
   power?: number
   onRemove: () => void
 }) {
+  const { t } = useTranslation('team')
   if (!card) {
     return (
       <div className="flex aspect-[2/3] w-full flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-[rgba(27,23,38,0.18)] bg-white text-text-light/40">
         <Sparkles className="h-4 w-4" />
         <span className="font-mono text-[9px] font-bold uppercase tracking-[0.14em]">
-          Slot {index + 1}
+          {t('combatTeamPopup.slotLabel', { n: index + 1 })}
         </span>
       </div>
     )
@@ -371,7 +381,7 @@ function Slot({
           variant="destructive"
           size="icon-sm"
           onClick={onRemove}
-          aria-label="Retirer la carte"
+          aria-label={t('combatTeamPopup.removeCardAriaLabel')}
           className="absolute right-1.5 top-1.5 z-30 rounded-full shadow-md hover:scale-105"
         >
           <X className="h-3 w-3" />

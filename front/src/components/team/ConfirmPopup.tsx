@@ -1,4 +1,5 @@
 import type React from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '../ui/button.tsx'
 import {
@@ -28,9 +29,10 @@ export function ConfirmPopup({
   title,
   description,
   icon,
-  confirmLabel = 'Confirmer',
+  confirmLabel,
   onConfirm,
 }: ConfirmPopupProps) {
+  const { t } = useTranslation('team')
   return (
     <Popup open={open} onOpenChange={onOpenChange}>
       <PopupContent>
@@ -46,7 +48,7 @@ export function ConfirmPopup({
         </PopupBody>
         <PopupFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Annuler
+            {t('actions.cancel')}
           </Button>
           <Button
             variant="destructive"
@@ -55,7 +57,7 @@ export function ConfirmPopup({
               onOpenChange(false)
             }}
           >
-            {confirmLabel}
+            {confirmLabel ?? t('actions.confirm')}
           </Button>
         </PopupFooter>
       </PopupContent>

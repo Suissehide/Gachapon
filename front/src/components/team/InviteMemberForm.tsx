@@ -1,11 +1,13 @@
 import { Send } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { useInviteMember } from '../../queries/useTeams.ts'
 import { Button } from '../ui/button.tsx'
 import { Input } from '../ui/input.tsx'
 
 export function InviteMemberForm({ teamId }: { teamId: string }) {
+  const { t } = useTranslation('team')
   const { mutate: invite, isPending } = useInviteMember(teamId)
   const [input, setInput] = useState('')
   const [error, setError] = useState('')
@@ -25,7 +27,9 @@ export function InviteMemberForm({ teamId }: { teamId: string }) {
 
   return (
     <div className="mb-6 rounded-xl border border-border bg-card p-4">
-      <h2 className="mb-3 text-sm font-bold text-text">Inviter un membre</h2>
+      <h2 className="mb-3 text-sm font-bold text-text">
+        {t('inviteForm.title')}
+      </h2>
       <div className="flex gap-2">
         <Input
           value={input}
@@ -40,11 +44,11 @@ export function InviteMemberForm({ teamId }: { teamId: string }) {
               handleInvite()
             }
           }}
-          placeholder="@pseudo ou email"
+          placeholder={t('inviteForm.placeholder')}
         />
         <Button onClick={handleInvite} disabled={isPending || !input.trim()}>
           <Send className="h-4 w-4" />
-          Inviter
+          {t('inviteForm.submit')}
         </Button>
       </div>
       {error && <p className="mt-2 text-xs text-destructive">{error}</p>}

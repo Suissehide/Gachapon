@@ -3,6 +3,7 @@ import dayjs from 'dayjs'
 import { Ban, RefreshCw, Send, Trash2, UserPlus, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { type SyntheticEvent, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { TeamInvitation } from '../../queries/useTeams.ts'
 import {
@@ -29,14 +30,6 @@ import {
 
 const RESEND_COOLDOWN_MS = 5 * 60 * 1000
 
-const STATUS_LABELS: Record<TeamInvitation['status'], string> = {
-  PENDING: 'Envoyé',
-  EXPIRED: 'Expiré',
-  CANCELLED: 'Annulé',
-  ACCEPTED: 'Accepté',
-  DECLINED: 'Refusé',
-}
-
 const STATUS_CLASSES: Record<TeamInvitation['status'], string> = {
   PENDING: 'bg-blue-500/15 text-blue-400',
   EXPIRED: 'bg-orange-500/15 text-orange-400',
@@ -60,6 +53,7 @@ type SelectedTarget =
   | { type: 'email'; value: string }
 
 export function InviteMemberPopup({ teamId, userRole, trigger }: Props) {
+  const { t } = useTranslation('team')
   const { mutateAsync: invite, isPending } = useInviteMember(teamId)
   const { data: invitationsData } = useTeamInvitations(teamId)
   const {
@@ -135,7 +129,8 @@ export function InviteMemberPopup({ teamId, userRole, trigger }: Props) {
             : { username: target.value },
         )
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Erreur'
+        const message =
+          err instanceof Error ? err.message : t('invitePopup.genericError')
         errs.push(`${target.value}: ${message}`)
       }
     }
@@ -199,7 +194,7 @@ export function InviteMemberPopup({ teamId, userRole, trigger }: Props) {
     () => [
       {
         id: 'recipient',
-        header: 'Destinataire',
+        header: t('invitePopup.columnRecipient'),
         accessorFn: (row) =>
           row.invitedUsername
             ? `${row.invitedUsername}`
@@ -210,7 +205,7 @@ export function InviteMemberPopup({ teamId, userRole, trigger }: Props) {
       },
       {
         accessorKey: 'createdAt',
-        header: "Date d'envoi",
+        header: t('invitePopup.columnSentAt'),
         size: 120,
         cell: ({ getValue }) => (
           <span className="text-text-light">
@@ -220,7 +215,7 @@ export function InviteMemberPopup({ teamId, userRole, trigger }: Props) {
       },
       {
         accessorKey: 'status',
-        header: 'Statut',
+        header: t('invitePopup.columnStatus'),
         size: 110,
         cell: ({ getValue }) => {
           const status = getValue<TeamInvitation['status']>()
@@ -228,7 +223,7 @@ export function InviteMemberPopup({ teamId, userRole, trigger }: Props) {
             <span
               className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLASSES[status]}`}
             >
-              {STATUS_LABELS[status]}
+              {t(`invitePopup.statusLabels.${status}`)}
             </span>
           )
         },
@@ -261,7 +256,9 @@ export function InviteMemberPopup({ teamId, userRole, trigger }: Props) {
                   <RefreshCw
                     className={`h-3 w-3 ${isThisResending ? 'animate-spin' : ''}`}
                   />
-                  {cooldownActive ? 'Patienter' : 'Renvoyer'}
+                  {cooldownActive
+                    ? t('invitePopup.waitButton')
+                    : t('invitePopup.resendButton')}
                 </Button>
               )}
               {canCancel && (
@@ -273,7 +270,7 @@ export function InviteMemberPopup({ teamId, userRole, trigger }: Props) {
                   onClick={() => cancel(inv.token)}
                 >
                   <Ban className="h-3 w-3" />
-                  Annuler
+                  {t('invitePopup.cancelButton')}
                 </Button>
               )}
               {canDelete && (
@@ -285,7 +282,7 @@ export function InviteMemberPopup({ teamId, userRole, trigger }: Props) {
                   onClick={() => deleteInv(inv.id)}
                 >
                   <Trash2 className="h-3 w-3" />
-                  Supprimer
+                  {t('invitePopup.deleteButton')}
                 </Button>
               )}
             </div>
@@ -293,7 +290,7 @@ export function InviteMemberPopup({ teamId, userRole, trigger }: Props) {
         },
       },
     ],
-    [isResending, resendToken, isOwner, resend, cancel, deleteInv],
+    [isResending, resendToken, isOwner, resend, cancel, deleteInv, t],
   )
 
   return (
@@ -301,23 +298,25 @@ export function InviteMemberPopup({ teamId, userRole, trigger }: Props) {
       {trigger ?? (
         <PopupTrigger variant="outline" size="sm">
           <UserPlus className="h-4 w-4" />
-          Inviter un membre
+          {t('invitePopup.trigger')}
         </PopupTrigger>
       )}
       <PopupContent size="xl">
         <PopupHeader>
           <PopupTitle
             icon={<UserPlus className="h-4 w-4" />}
-            subtitle="Entrez le pseudo ou l'adresse e-mail du joueur à inviter."
+            subtitle={t('invitePopup.subtitle')}
           >
-            Inviter un membre
+            {t('invitePopup.title')}
           </PopupTitle>
         </PopupHeader>
         <form onSubmit={(e) => void handleSubmit(e)}>
           <PopupBody className="flex flex-col gap-4">
             <div className="flex flex-col gap-3">
               <div className="relative flex flex-col gap-1">
-                <Label htmlFor="invite-identifier">Pseudo ou e-mail</Label>
+                <Label htmlFor="invite-identifier">
+                  {t('invitePopup.identifierLabel')}
+                </Label>
                 <Input
                   ref={inputRef}
                   id="invite-identifier"
@@ -421,7 +420,7 @@ export function InviteMemberPopup({ teamId, userRole, trigger }: Props) {
                       {target.value}
                       <button
                         type="button"
-                        aria-label="Retirer"
+                        aria-label={t('invitePopup.removeTargetAriaLabel')}
                         className="rounded-full hover:bg-primary/20"
                         onClick={() => removeTarget(target)}
                       >
@@ -445,7 +444,7 @@ export function InviteMemberPopup({ teamId, userRole, trigger }: Props) {
             {invitations.length > 0 && (
               <div className="flex flex-col gap-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-text-light">
-                  Invitations
+                  {t('invitePopup.invitationsSectionTitle')}
                 </p>
                 <div className="h-[280px] overflow-hidden rounded-lg border border-border">
                   <ReactTable
@@ -468,10 +467,10 @@ export function InviteMemberPopup({ teamId, userRole, trigger }: Props) {
             >
               <Send className="h-4 w-4" />
               {isPending
-                ? 'Envoi…'
+                ? t('invitePopup.sending')
                 : selected.length > 1
-                  ? `Envoyer ${selected.length} invitations`
-                  : "Envoyer l'invitation"}
+                  ? t('invitePopup.sendMultiple', { count: selected.length })
+                  : t('invitePopup.sendOne')}
             </Button>
           </PopupFooter>
         </form>

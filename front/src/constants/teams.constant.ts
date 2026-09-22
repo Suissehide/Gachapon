@@ -51,7 +51,19 @@ export type TeamSummary = {
   memberCount: number
   maxMembers: number
   myRole: 'OWNER' | 'ADMIN' | 'MEMBER'
-  myRoleLabel: 'Chef' | 'Officier' | 'Membre' | 'Recrue'
+  // `roleLabel` (back, `team-progression-rules.ts`) répond dans la locale de
+  // la requête — les 4 valeurs françaises ET leurs 4 équivalents anglais sont
+  // donc tous possibles à l'exécution (voir `TeamMemberRoleLabel` dans
+  // `teamProgression.api.ts`, même correction).
+  myRoleLabel:
+    | 'Chef'
+    | 'Officier'
+    | 'Membre'
+    | 'Recrue'
+    | 'Leader'
+    | 'Officer'
+    | 'Member'
+    | 'Recruit'
   raid: TeamRaidBadge | null
   recruiting: boolean
 }

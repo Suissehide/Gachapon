@@ -34,7 +34,36 @@
     "acceptedTitle": "Candidature acceptée",
     "acceptErrorTitle": "Erreur lors de l'acceptation de la candidature",
     "declinedTitle": "Candidature refusée",
-    "declineErrorTitle": "Erreur lors du refus de la candidature"
+    "declineErrorTitle": "Erreur lors du refus de la candidature",
+    "directory": {
+      "trigger": "Parcourir les équipes",
+      "title": "Rejoindre une équipe",
+      "activeThisWeek_one": "{{count}} actif cette semaine",
+      "activeThisWeek_other": "{{count}} actifs cette semaine",
+      "searchPlaceholder": "Rechercher une équipe…",
+      "pending": "En attente",
+      "cancel": "Annuler",
+      "apply": "Candidater",
+      "noResultsForSearch": "Aucune équipe ne correspond à « {{search}} ».",
+      "noneRecruiting": "Aucune équipe ne recrute pour l’instant.",
+      "loadMore": "Charger plus",
+      "loading": "Chargement…",
+      "close": "Fermer",
+      "mottoQuote": "« {{motto}} »"
+    },
+    "requestsPanel": {
+      "levelBadge": "NIV. {{level}}",
+      "sentAgo": "Candidature envoyée {{timeAgo}}",
+      "acceptTitle": "Accepter la candidature",
+      "declineTitle": "Refuser la candidature",
+      "title": "Candidatures ({{count}})"
+    },
+    "myRequests": {
+      "pending": "Candidature en attente · {{teamName}} · envoyée {{timeAgo}}",
+      "cancel": "Annuler",
+      "declined": "Candidature déclinée · {{teamName}}",
+      "reapplyIn": " · tu pourras recandidater dans {{count}} j"
+    }
   },
   "apiTitles": {
     "teamsNotFound": "Équipes introuvables",
@@ -128,5 +157,150 @@
       "spendPerk": "Investissement du bonus",
       "resetPerks": "Réinitialisation des bonus"
     }
+  },
+  "fields": {
+    "name": "Nom de l'équipe",
+    "description": "Description (optionnel)"
+  },
+  "actions": {
+    "cancel": "Annuler",
+    "confirm": "Confirmer"
+  },
+  "card": {
+    "levelBadge": "NIV. {{level}}",
+    "memberCount_one": "{{count}}/{{max}} membre",
+    "memberCount_other": "{{count}}/{{max}} membres",
+    "noActiveRaid": "Aucun raid en cours"
+  },
+  "createPopup": {
+    "trigger": "Créer une équipe",
+    "title": "Nouvelle équipe",
+    "creating": "Création...",
+    "create": "Créer"
+  },
+  "combatTeamPopup": {
+    "subtitle": "Choisis jusqu'à {{max}} cartes · {{mode}}",
+    "title": "Mon équipe · {{mode}}",
+    "totalPower": "Puissance totale",
+    "autoTeam": "Auto-équipe",
+    "collectionCount_one": "Ma collection · {{count}} carte",
+    "collectionCount_other": "Ma collection · {{count}} cartes",
+    "emptyCollectionTitle": "Ta collection est vide",
+    "emptyCollectionBody": "Fais quelques tirages pour obtenir tes premières cartes.",
+    "revertToCampaign": "Revenir à l'équipe de campagne",
+    "saving": "Enregistrement…",
+    "validate": "Valider l'équipe",
+    "slotLabel": "Slot {{n}}",
+    "removeCardAriaLabel": "Retirer la carte"
+  },
+  "settingsPopup": {
+    "subtitle": "Le nom et la description sont visibles par tous les membres.",
+    "title": "Réglages de l'équipe",
+    "recruitingLabel": "Ouvert aux candidatures",
+    "recruitingHint": "Ton équipe apparaît dans l'annuaire des équipes qui recrutent.",
+    "saving": "Enregistrement…",
+    "save": "Enregistrer"
+  },
+  "dangerZone": {
+    "title": "Zone dangereuse",
+    "deleteButton": "Supprimer l'équipe",
+    "confirmTitle": "Supprimer l'équipe",
+    "confirmDescription": "Cette action est irréversible. L'équipe sera définitivement supprimée.",
+    "confirmLabel": "Supprimer"
+  },
+  "identityCard": {
+    "levelSublabel": "NIVEAU",
+    "membersLabel": "MEMBRES",
+    "rankLabel": "CLASSEMENT",
+    "weeklyPointsLabel": "PTS HEBDO",
+    "raidsWonLabel": "RAIDS VAINCUS",
+    "inviteButton": "Inviter",
+    "settingsTitle": "Réglages de l'équipe"
+  },
+  "inviteForm": {
+    "title": "Inviter un membre",
+    "placeholder": "@pseudo ou email",
+    "submit": "Inviter"
+  },
+  "invitePopup": {
+    "statusLabels": {
+      "PENDING": "Envoyé",
+      "EXPIRED": "Expiré",
+      "CANCELLED": "Annulé",
+      "ACCEPTED": "Accepté",
+      "DECLINED": "Refusé"
+    },
+    "genericError": "Erreur",
+    "trigger": "Inviter un membre",
+    "title": "Inviter un membre",
+    "subtitle": "Entrez le pseudo ou l'adresse e-mail du joueur à inviter.",
+    "identifierLabel": "Pseudo ou e-mail",
+    "removeTargetAriaLabel": "Retirer",
+    "invitationsSectionTitle": "Invitations",
+    "columnRecipient": "Destinataire",
+    "columnSentAt": "Date d'envoi",
+    "columnStatus": "Statut",
+    "waitButton": "Patienter",
+    "resendButton": "Renvoyer",
+    "cancelButton": "Annuler",
+    "deleteButton": "Supprimer",
+    "sending": "Envoi…",
+    "sendOne": "Envoyer l'invitation",
+    "sendMultiple": "Envoyer {{count}} invitations"
+  },
+  "contributions": {
+    "title": "Contributions",
+    "sortedByDamage": "Trié par dégâts",
+    "searchPlaceholder": "Rechercher un membre…",
+    "searchAriaLabel": "Rechercher un membre",
+    "loading": "Chargement des membres…",
+    "loadError": "Impossible de charger les membres de l'équipe.",
+    "empty": "Aucun membre à afficher pour l'instant.",
+    "noSearchResults": "Aucun membre ne correspond à « {{search}} ».",
+    "columnPlayer": "Joueur",
+    "columnRole": "Rôle",
+    "columnRaidDamage": "Dégâts au raid",
+    "columnWeeklyPoints": "Pts hebdo",
+    "columnAttacks": "Attaques",
+    "you": " (moi)",
+    "levelAndSeen": "Niv. {{level}} · {{seen}}",
+    "neverSeen": "jamais connecté",
+    "seenToday": "connecté aujourd'hui",
+    "noAttack": "aucune attaque",
+    "shareOfTotal": "{{share}} % du total",
+    "weeklyPointsUnit": "PTS",
+    "attackDotsTitle_one": "{{count}} attaque restante sur {{perDay}}",
+    "attackDotsTitle_other": "{{count}} attaques restantes sur {{perDay}}",
+    "actionsMenuTitle": "Actions sur {{username}}",
+    "demoteToMember": "Rétrograder en membre",
+    "promoteToOfficer": "Nommer officier",
+    "transferLeaderRole": "Transmettre le rôle de chef",
+    "removeFromTeam": "Exclure de l'équipe",
+    "removeConfirmTitle": "Exclure le membre",
+    "removeConfirmDescription": "Êtes-vous sûr de vouloir exclure {{username}} de l'équipe ?",
+    "removeConfirmLabel": "Exclure",
+    "transferConfirmTitle": "Transmettre le rôle de chef",
+    "transferConfirmDescription": "{{username}} deviendra le chef de l'équipe, et tu redeviendras un membre simple. Seul le nouveau chef pourra te rendre ce rôle.",
+    "transferConfirmLabel": "Transmettre",
+    "showMoreMembers": "Voir les {{count}} autres membres",
+    "collapse": "Réduire la liste"
+  },
+  "page": {
+    "breadcrumbHome": "Gachapon",
+    "breadcrumbTeams": "Équipes",
+    "title": "Mes équipes",
+    "browseTeams": "Parcourir les équipes",
+    "atCapTitle": "Tu as atteint la limite de {{max}} équipes par joueur.",
+    "atCapLabel": "Limite de {{max}} équipes atteinte",
+    "createTeam": "Créer une équipe",
+    "emptyTitle": "Tu n’es dans aucune équipe",
+    "emptyBody": "Une équipe partage un raid hebdomadaire, des duels de tirage et des bonus qui profitent à tous ses membres. Rejoins-en une, ou monte la tienne."
+  },
+  "detail": {
+    "notFound": "Équipe introuvable ou accès refusé.",
+    "leaveButton": "Quitter l'équipe",
+    "leaveConfirmTitle": "Quitter l'équipe",
+    "leaveConfirmDescription": "Êtes-vous sûr de vouloir quitter {{teamName}} ?",
+    "leaveConfirmLabel": "Quitter"
   }
 }

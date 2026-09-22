@@ -28,6 +28,7 @@ import {
 } from 'lucide-react'
 import { DropdownMenu } from 'radix-ui'
 import { type CSSProperties, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type {
   TeamMemberRole,
@@ -35,7 +36,7 @@ import type {
   TeamMemberRow,
 } from '../../api/teamProgression.api.ts'
 import { currentLocale } from '../../i18n/index.ts'
-import { cn, foldForSearch, formatNumber, plural } from '../../libs/utils.ts'
+import { cn, foldForSearch, formatNumber } from '../../libs/utils.ts'
 import { useTeamMembers } from '../../queries/useTeamProgression.ts'
 import {
   useChangeMemberRole,
@@ -69,15 +70,24 @@ const fr = (n: number) => formatNumber(n, currentLocale())
 
 /**
  * Teintes de `ROLE_COLOR` (handoff `equipe-data.jsx`), tokenisées dans
- * `_colors.css`. La clé est le libellé français servi par le serveur
- * (`roleLabel`), pas le rôle brut : « Recrue » n'existe QUE comme libellé —
+ * `_colors.css`. La clé est le libellé servi par le serveur (`roleLabel`),
+ * pas le rôle brut : « Recrue »/« Recruit » n'existe QUE comme libellé —
  * c'est un MEMBER arrivé depuis moins de `team.recruitDays` jours.
+ *
+ * `roleLabel` répond dans la locale de la requête (`team-progression-rules.ts`,
+ * back) : les 8 valeurs (4 FR + 4 EN, voir `TeamMemberRoleLabel`) doivent
+ * toutes résoudre une teinte, sinon la pastille perd sa couleur pour tout
+ * lecteur en anglais.
  */
 const ROLE_COLOR: Record<TeamMemberRoleLabel, string> = {
   Chef: 'var(--role-owner)',
   Officier: 'var(--role-admin)',
   Membre: 'var(--role-member)',
   Recrue: 'var(--role-recruit)',
+  Leader: 'var(--role-owner)',
+  Officer: 'var(--role-admin)',
+  Member: 'var(--role-member)',
+  Recruit: 'var(--role-recruit)',
 }
 
 /**
@@ -88,16 +98,19 @@ const ROLE_COLOR: Record<TeamMemberRoleLabel, string> = {
  * (`.tm-mem-seen.on`) qu'au seul fait que la donnée soutient réellement :
  * s'être connecté aujourd'hui.
  */
-function seenLabel(lastSeenAt: string | null): {
+function seenLabel(
+  lastSeenAt: string | null,
+  t: (key: string) => string,
+): {
   text: string
   fresh: boolean
 } {
   if (lastSeenAt === null) {
-    return { text: 'jamais connecté', fresh: false }
+    return { text: t('contributions.neverSeen'), fresh: false }
   }
   const at = dayjs(lastSeenAt)
   if (at.isSame(dayjs(), 'day')) {
-    return { text: "connecté aujourd'hui", fresh: true }
+    return { text: t('contributions.seenToday'), fresh: true }
   }
   return { text: at.fromNow(), fresh: false }
 }
@@ -175,6 +188,7 @@ function MemberActionsMenu({
   onChangeRole: (input: { userId: string; role: 'ADMIN' | 'MEMBER' }) => void
   onTransfer: (userId: string) => void
 }) {
+  const { t } = useTranslation('team')
   const [confirm, setConfirm] = useState<'remove' | 'transfer' | null>(null)
   const { username } = member.user
   const isOfficer = member.role === 'ADMIN'
@@ -192,8 +206,8 @@ function MemberActionsMenu({
             variant="ghost"
             size="icon-sm"
             className="rounded-md border border-border bg-transparent text-foreground/55 hover:bg-foreground/6 hover:text-text"
-            title={`Actions sur ${username}`}
-            aria-label={`Actions sur ${username}`}
+            title={t('contributions.actionsMenuTitle', { username })}
+            aria-label={t('contributions.actionsMenuTitle', { username })}
           >
             <MoreVertical className="h-4 w-4" />
           </Button>
@@ -215,7 +229,9 @@ function MemberActionsMenu({
               ) : (
                 <Shield className="h-4 w-4" />
               )}
-              {isOfficer ? 'Rétrograder en membre' : 'Nommer officier'}
+              {isOfficer
+                ? t('contributions.demoteToMember')
+                : t('contributions.promoteToOfficer')}
             </DropdownMenuCustomItem>
           )}
 
@@ -225,7 +241,7 @@ function MemberActionsMenu({
               onSelect={() => setConfirm('transfer')}
             >
               <Crown className="h-4 w-4" />
-              Transmettre le rôle de chef
+              {t('contributions.transferLeaderRole')}
             </DropdownMenuCustomItem>
           )}
 
@@ -239,7 +255,7 @@ function MemberActionsMenu({
                 onSelect={() => setConfirm('remove')}
               >
                 <UserMinus className="h-4 w-4" />
-                Exclure de l'équipe
+                {t('contributions.removeFromTeam')}
               </DropdownMenuCustomItem>
             </>
           )}
@@ -250,9 +266,11 @@ function MemberActionsMenu({
         open={confirm === 'remove'}
         onOpenChange={(open) => !open && setConfirm(null)}
         icon={<UserX className="h-4 w-4" />}
-        title="Exclure le membre"
-        description={`Êtes-vous sûr de vouloir exclure ${username} de l'équipe ?`}
-        confirmLabel="Exclure"
+        title={t('contributions.removeConfirmTitle')}
+        description={t('contributions.removeConfirmDescription', {
+          username,
+        })}
+        confirmLabel={t('contributions.removeConfirmLabel')}
         onConfirm={() => onRemove(member.userId)}
       />
 
@@ -260,9 +278,11 @@ function MemberActionsMenu({
         open={confirm === 'transfer'}
         onOpenChange={(open) => !open && setConfirm(null)}
         icon={<Crown className="h-4 w-4" />}
-        title="Transmettre le rôle de chef"
-        description={`${username} deviendra le chef de l'équipe, et tu redeviendras un membre simple. Seul le nouveau chef pourra te rendre ce rôle.`}
-        confirmLabel="Transmettre"
+        title={t('contributions.transferConfirmTitle')}
+        description={t('contributions.transferConfirmDescription', {
+          username,
+        })}
+        confirmLabel={t('contributions.transferConfirmLabel')}
         onConfirm={() => onTransfer(member.userId)}
       />
     </>
@@ -284,6 +304,7 @@ function ContributionBar({
   best: number
   share: number
 }) {
+  const { t } = useTranslation('team')
   const zero = damage === 0
   const width = zero ? 100 : Math.max(4, Math.round((damage / best) * 100))
 
@@ -291,7 +312,11 @@ function ContributionBar({
     <div>
       <div className="mb-[5px] flex justify-between gap-2 font-mono text-[10px] tabular-nums text-foreground/50">
         <span>{zero ? '—' : fr(damage)}</span>
-        <span>{zero ? 'aucune attaque' : `${share} % du total`}</span>
+        <span>
+          {zero
+            ? t('contributions.noAttack')
+            : t('contributions.shareOfTotal', { share })}
+        </span>
       </div>
       <div className="h-[7px] overflow-hidden rounded-[4px] bg-foreground/7">
         <div
@@ -310,6 +335,7 @@ function ContributionBar({
 
 /** `.tm-atk-dots` : une pastille par attaque quotidienne, allumée si restante. */
 function AttackDots({ left, perDay }: { left: number; perDay: number }) {
+  const { t } = useTranslation('team')
   if (perDay <= 0) {
     return (
       <span className="font-mono text-[10px] tabular-nums text-foreground/45">
@@ -317,17 +343,13 @@ function AttackDots({ left, perDay }: { left: number; perDay: number }) {
       </span>
     )
   }
+  const title = t('contributions.attackDotsTitle', { count: left, perDay })
   return (
     // `role="img"` : la rangée de pastilles est UNE image de jauge, pas une
     // liste de puces. C'est ce rôle qui rend `aria-label` valide sur un
     // <span> et qui fait lire « 2 attaques restantes sur 2 » d'un bloc au
     // lieu d'annoncer deux éléments vides.
-    <span
-      role="img"
-      className="flex gap-1"
-      title={`${left} attaque${plural(left)} restante${plural(left)} sur ${perDay}`}
-      aria-label={`${left} attaque${plural(left)} restante${plural(left)} sur ${perDay}`}
-    >
+    <span role="img" className="flex gap-1" title={title} aria-label={title}>
       {Array.from({ length: perDay }, (_, i) => (
         <i
           // biome-ignore lint/suspicious/noArrayIndexKey: pastilles anonymes en nombre fixe, jamais réordonnées — l'index EST l'identité du cran
@@ -364,7 +386,8 @@ function MemberRow({
   onChangeRole: (input: { userId: string; role: 'ADMIN' | 'MEMBER' }) => void
   onTransfer: (userId: string) => void
 }) {
-  const seen = seenLabel(member.lastSeenAt)
+  const { t } = useTranslation('team')
+  const seen = seenLabel(member.lastSeenAt, t)
   const share = total > 0 ? Math.round((member.raidDamage / total) * 100) : 0
   const actions = viewerRole
     ? actionsFor(viewerRole, member)
@@ -396,7 +419,7 @@ function MemberRow({
             className="block truncate text-[15px] font-bold text-text hover:text-primary-dark"
           >
             {member.user.username}
-            {member.isMe && ' (moi)'}
+            {member.isMe && t('contributions.you')}
           </Link>
           <div
             className={cn(
@@ -404,7 +427,10 @@ function MemberRow({
               seen.fresh ? 'text-success' : 'text-foreground/45',
             )}
           >
-            Niv. {member.level} · {seen.text}
+            {t('contributions.levelAndSeen', {
+              level: member.level,
+              seen: seen.text,
+            })}
           </div>
         </div>
       </div>
@@ -429,7 +455,7 @@ function MemberRow({
           {fr(member.weekPoints)}
         </span>
         <span className="block font-mono text-[9px] font-semibold tracking-[0.12em] text-foreground/45">
-          PTS
+          {t('contributions.weeklyPointsUnit')}
         </span>
       </div>
 
@@ -488,10 +514,11 @@ function Roster({
   expanded: boolean
   onToggleExpanded: () => void
 }) {
+  const { t } = useTranslation('team')
   if (rows.length === 0) {
     return (
       <p className="text-[12.5px] leading-[1.5] text-foreground/55">
-        Aucun membre ne correspond à « {searchTerm} ».
+        {t('contributions.noSearchResults', { search: searchTerm })}
       </p>
     )
   }
@@ -507,11 +534,13 @@ function Roster({
         )}
       >
         <span className="text-center">#</span>
-        <span>Joueur</span>
-        <span>Rôle</span>
-        <span>Dégâts au raid</span>
-        <span className="text-right">Pts hebdo</span>
-        <span className="text-right">Attaques</span>
+        <span>{t('contributions.columnPlayer')}</span>
+        <span>{t('contributions.columnRole')}</span>
+        <span>{t('contributions.columnRaidDamage')}</span>
+        <span className="text-right">
+          {t('contributions.columnWeeklyPoints')}
+        </span>
+        <span className="text-right">{t('contributions.columnAttacks')}</span>
         {viewerRole !== null && <span />}
       </div>
 
@@ -545,7 +574,9 @@ function Roster({
           className="mt-2.5 h-auto w-full rounded-[14px] py-3 font-mono text-[11px] uppercase tracking-[0.12em]"
         >
           <Users className="h-3.5 w-3.5" />
-          {expanded ? 'Réduire la liste' : `Voir les ${hidden} autres membres`}
+          {expanded
+            ? t('contributions.collapse')
+            : t('contributions.showMoreMembers', { count: hidden })}
         </Button>
       )}
     </>
@@ -564,6 +595,7 @@ export function ContributionsTable({
    */
   myRole: TeamMemberRole | undefined
 }) {
+  const { t } = useTranslation('team')
   // Pagination serveur inutile : `useTeamMembers` reçoit la table entière.
   // On demande une page assez grande pour tout couvrir (plafond serveur :
   // `team.maxMembers`) et on découpe nous-mêmes, la recherche devant porter
@@ -606,8 +638,10 @@ export function ContributionsTable({
     <section>
       {/* `.tm-sechead` */}
       <div className="mb-3 flex items-center justify-between gap-3">
-        <SectionLabel as="h2">Contributions</SectionLabel>
-        <SectionLabel className="shrink-0">Trié par dégâts</SectionLabel>
+        <SectionLabel as="h2">{t('contributions.title')}</SectionLabel>
+        <SectionLabel className="shrink-0">
+          {t('contributions.sortedByDamage')}
+        </SectionLabel>
       </div>
 
       {/* `.tm-search` : 12/16 de padding, radius 14, bordure 1,5 px. */}
@@ -616,23 +650,23 @@ export function ContributionsTable({
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Rechercher un membre…"
-          aria-label="Rechercher un membre"
+          placeholder={t('contributions.searchPlaceholder')}
+          aria-label={t('contributions.searchAriaLabel')}
           className="h-auto rounded-[14px] border-[1.5px] py-3 pl-11 pr-4 text-sm"
         />
       </div>
 
       {isLoading ? (
         <p className="font-mono text-[10px] tracking-[0.06em] text-foreground/45">
-          Chargement des membres…
+          {t('contributions.loading')}
         </p>
       ) : isError ? (
         <p className="text-sm text-destructive">
-          Impossible de charger les membres de l'équipe.
+          {t('contributions.loadError')}
         </p>
       ) : total === 0 ? (
         <p className="text-[12.5px] leading-[1.5] text-foreground/55">
-          Aucun membre à afficher pour l'instant.
+          {t('contributions.empty')}
         </p>
       ) : (
         <Roster

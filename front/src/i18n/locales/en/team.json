@@ -34,7 +34,36 @@
     "acceptedTitle": "Application accepted",
     "acceptErrorTitle": "Error accepting the application",
     "declinedTitle": "Application declined",
-    "declineErrorTitle": "Error declining the application"
+    "declineErrorTitle": "Error declining the application",
+    "directory": {
+      "trigger": "Browse teams",
+      "title": "Join a team",
+      "searchPlaceholder": "Search a team…",
+      "activeThisWeek_one": "{{count}} active this week",
+      "activeThisWeek_other": "{{count}} active this week",
+      "pending": "Pending",
+      "cancel": "Cancel",
+      "apply": "Apply",
+      "noResultsForSearch": "No team matches “{{search}}”.",
+      "noneRecruiting": "No team is recruiting right now.",
+      "loadMore": "Load more",
+      "loading": "Loading…",
+      "close": "Close",
+      "mottoQuote": "“{{motto}}”"
+    },
+    "requestsPanel": {
+      "levelBadge": "LVL. {{level}}",
+      "sentAgo": "Application sent {{timeAgo}}",
+      "acceptTitle": "Accept the application",
+      "declineTitle": "Decline the application",
+      "title": "Applications ({{count}})"
+    },
+    "myRequests": {
+      "pending": "Application pending · {{teamName}} · sent {{timeAgo}}",
+      "cancel": "Cancel",
+      "declined": "Application declined · {{teamName}}",
+      "reapplyIn": " · you can reapply in {{count}} d"
+    }
   },
   "apiTitles": {
     "teamsNotFound": "Teams not found",
@@ -128,5 +157,150 @@
       "spendPerk": "Investing the bonus",
       "resetPerks": "Resetting bonuses"
     }
+  },
+  "fields": {
+    "name": "Team name",
+    "description": "Description (optional)"
+  },
+  "actions": {
+    "cancel": "Cancel",
+    "confirm": "Confirm"
+  },
+  "card": {
+    "levelBadge": "LVL. {{level}}",
+    "memberCount_one": "{{count}}/{{max}} member",
+    "memberCount_other": "{{count}}/{{max}} members",
+    "noActiveRaid": "No raid in progress"
+  },
+  "createPopup": {
+    "trigger": "Create a team",
+    "title": "New team",
+    "creating": "Creating...",
+    "create": "Create"
+  },
+  "combatTeamPopup": {
+    "subtitle": "Choose up to {{max}} cards · {{mode}}",
+    "title": "My team · {{mode}}",
+    "totalPower": "Total power",
+    "autoTeam": "Auto-team",
+    "collectionCount_one": "My collection · {{count}} card",
+    "collectionCount_other": "My collection · {{count}} cards",
+    "emptyCollectionTitle": "Your collection is empty",
+    "emptyCollectionBody": "Do a few pulls to get your first cards.",
+    "revertToCampaign": "Revert to the campaign team",
+    "saving": "Saving…",
+    "validate": "Confirm team",
+    "slotLabel": "Slot {{n}}",
+    "removeCardAriaLabel": "Remove the card"
+  },
+  "settingsPopup": {
+    "subtitle": "The name and description are visible to all members.",
+    "title": "Team settings",
+    "recruitingLabel": "Open to applications",
+    "recruitingHint": "Your team shows up in the directory of teams that are recruiting.",
+    "saving": "Saving…",
+    "save": "Save"
+  },
+  "dangerZone": {
+    "title": "Danger zone",
+    "deleteButton": "Delete team",
+    "confirmTitle": "Delete team",
+    "confirmDescription": "This action can't be undone. The team will be permanently deleted.",
+    "confirmLabel": "Delete"
+  },
+  "identityCard": {
+    "levelSublabel": "LEVEL",
+    "membersLabel": "MEMBERS",
+    "rankLabel": "RANK",
+    "weeklyPointsLabel": "WEEKLY PTS",
+    "raidsWonLabel": "RAIDS DEFEATED",
+    "inviteButton": "Invite",
+    "settingsTitle": "Team settings"
+  },
+  "inviteForm": {
+    "title": "Invite a member",
+    "placeholder": "@username or email",
+    "submit": "Invite"
+  },
+  "invitePopup": {
+    "statusLabels": {
+      "PENDING": "Sent",
+      "EXPIRED": "Expired",
+      "CANCELLED": "Cancelled",
+      "ACCEPTED": "Accepted",
+      "DECLINED": "Declined"
+    },
+    "genericError": "Error",
+    "trigger": "Invite a member",
+    "title": "Invite a member",
+    "subtitle": "Enter the username or email of the player to invite.",
+    "identifierLabel": "Username or email",
+    "removeTargetAriaLabel": "Remove",
+    "invitationsSectionTitle": "Invitations",
+    "columnRecipient": "Recipient",
+    "columnSentAt": "Sent on",
+    "columnStatus": "Status",
+    "waitButton": "Wait",
+    "resendButton": "Resend",
+    "cancelButton": "Cancel",
+    "deleteButton": "Delete",
+    "sending": "Sending…",
+    "sendOne": "Send invitation",
+    "sendMultiple": "Send {{count}} invitations"
+  },
+  "contributions": {
+    "title": "Contributions",
+    "sortedByDamage": "Sorted by damage",
+    "searchPlaceholder": "Search a member…",
+    "searchAriaLabel": "Search a member",
+    "loading": "Loading members…",
+    "loadError": "Couldn't load the team's members.",
+    "empty": "No members to show yet.",
+    "noSearchResults": "No member matches “{{search}}”.",
+    "columnPlayer": "Player",
+    "columnRole": "Role",
+    "columnRaidDamage": "Raid damage",
+    "columnWeeklyPoints": "Weekly pts",
+    "columnAttacks": "Attacks",
+    "you": " (you)",
+    "levelAndSeen": "Lvl. {{level}} · {{seen}}",
+    "neverSeen": "never logged in",
+    "seenToday": "logged in today",
+    "noAttack": "no attack",
+    "shareOfTotal": "{{share}}% of the total",
+    "weeklyPointsUnit": "PTS",
+    "attackDotsTitle_one": "{{count}} attack left out of {{perDay}}",
+    "attackDotsTitle_other": "{{count}} attacks left out of {{perDay}}",
+    "actionsMenuTitle": "Actions on {{username}}",
+    "demoteToMember": "Demote to member",
+    "promoteToOfficer": "Appoint officer",
+    "transferLeaderRole": "Transfer leader role",
+    "removeFromTeam": "Remove from team",
+    "removeConfirmTitle": "Remove member",
+    "removeConfirmDescription": "Are you sure you want to remove {{username}} from the team?",
+    "removeConfirmLabel": "Remove",
+    "transferConfirmTitle": "Transfer leader role",
+    "transferConfirmDescription": "{{username}} will become the team's leader, and you'll go back to being a regular member. Only the new leader can give you the role back.",
+    "transferConfirmLabel": "Transfer",
+    "showMoreMembers": "Show {{count}} more members",
+    "collapse": "Collapse list"
+  },
+  "page": {
+    "breadcrumbHome": "Gachapon",
+    "breadcrumbTeams": "Teams",
+    "title": "My teams",
+    "browseTeams": "Browse teams",
+    "atCapTitle": "You've reached the limit of {{max}} teams per player.",
+    "atCapLabel": "{{max}}-team limit reached",
+    "createTeam": "Create a team",
+    "emptyTitle": "You're not in any team",
+    "emptyBody": "A team shares a weekly raid, gacha duels, and bonuses that benefit every member. Join one, or start your own."
+  },
+  "detail": {
+    "notFound": "Team not found or access denied.",
+    "leaveButton": "Leave team",
+    "leaveConfirmTitle": "Leave team",
+    "leaveConfirmDescription": "Are you sure you want to leave {{teamName}}?",
+    "leaveConfirmLabel": "Leave"
   }
 }

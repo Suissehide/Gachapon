@@ -13,6 +13,7 @@
 import { useNavigate } from '@tanstack/react-router'
 import { Settings } from 'lucide-react'
 import { type ReactNode, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { TeamDetail } from '../../api/teamProgression.api.ts'
 import { useAppForm } from '../../hooks/formConfig.tsx'
@@ -37,6 +38,7 @@ type Props = {
 }
 
 export function TeamSettingsPopup({ team, trigger }: Props) {
+  const { t } = useTranslation('team')
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const { mutate: updateTeam, isPending: isUpdating } = useUpdateTeam(team.id)
@@ -94,9 +96,9 @@ export function TeamSettingsPopup({ team, trigger }: Props) {
         <PopupHeader>
           <PopupTitle
             icon={<Settings className="h-4 w-4" />}
-            subtitle="Le nom et la description sont visibles par tous les membres."
+            subtitle={t('settingsPopup.subtitle')}
           >
-            Réglages de l'équipe
+            {t('settingsPopup.title')}
           </PopupTitle>
         </PopupHeader>
 
@@ -108,17 +110,19 @@ export function TeamSettingsPopup({ team, trigger }: Props) {
         >
           <PopupBody className="flex flex-col gap-4">
             <form.AppField name="name">
-              {(field) => <field.Input label="Nom de l'équipe" />}
+              {(field) => <field.Input label={t('fields.name')} />}
             </form.AppField>
             <form.AppField name="description">
-              {(field) => <field.Input label="Description (optionnel)" />}
+              {(field) => <field.Input label={t('fields.description')} />}
             </form.AppField>
 
             <div className="flex items-center justify-between gap-4 rounded-lg border border-border px-4 py-3">
               <div className="flex flex-col gap-0.5">
-                <Label htmlFor="team-recruiting">Ouvert aux candidatures</Label>
+                <Label htmlFor="team-recruiting">
+                  {t('settingsPopup.recruitingLabel')}
+                </Label>
                 <p className="text-xs text-text-light">
-                  Ton équipe apparaît dans l'annuaire des équipes qui recrutent.
+                  {t('settingsPopup.recruitingHint')}
                 </p>
               </div>
               <Switch
@@ -148,10 +152,10 @@ export function TeamSettingsPopup({ team, trigger }: Props) {
               onClick={() => setOpen(false)}
               disabled={isUpdating}
             >
-              Annuler
+              {t('actions.cancel')}
             </Button>
             <Button type="submit" disabled={isUpdating}>
-              {isUpdating ? 'Enregistrement…' : 'Enregistrer'}
+              {isUpdating ? t('settingsPopup.saving') : t('settingsPopup.save')}
             </Button>
           </PopupFooter>
         </form>

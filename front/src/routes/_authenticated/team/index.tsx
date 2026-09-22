@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Compass, Users } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { PageHeader } from '../../../components/shared/PageHeader.tsx'
 import { PageShell } from '../../../components/shared/PageShell.tsx'
@@ -17,6 +18,7 @@ export const Route = createFileRoute('/_authenticated/team/')({
 })
 
 function TeamsPage() {
+  const { t } = useTranslation('team')
   const { data, isLoading } = useMyTeams()
 
   const teams = data?.teams ?? []
@@ -25,15 +27,18 @@ function TeamsPage() {
   return (
     <PageShell>
       <PageHeader
-        breadcrumbs={[{ label: 'Gachapon', to: '/play' }, { label: 'Équipes' }]}
-        title="Mes équipes"
+        breadcrumbs={[
+          { label: t('page.breadcrumbHome'), to: '/play' },
+          { label: t('page.breadcrumbTeams') },
+        ]}
+        title={t('page.title')}
         right={
           <div className="flex gap-2">
             <TeamDirectoryPopup
               trigger={
                 <PopupTrigger variant="outline" className="gap-2">
                   <Compass className="h-4 w-4" />
-                  Parcourir les équipes
+                  {t('page.browseTeams')}
                 </PopupTrigger>
               }
             />
@@ -45,14 +50,14 @@ function TeamsPage() {
                   disabled={atCap}
                   title={
                     atCap
-                      ? `Tu as atteint la limite de ${TEAM_SLOTS} équipes par joueur.`
+                      ? t('page.atCapTitle', { max: TEAM_SLOTS })
                       : undefined
                   }
                 >
                   <Users className="h-4 w-4" />
                   {atCap
-                    ? `Limite de ${TEAM_SLOTS} équipes atteinte`
-                    : 'Créer une équipe'}
+                    ? t('page.atCapLabel', { max: TEAM_SLOTS })
+                    : t('page.createTeam')}
                 </PopupTrigger>
               }
             />
@@ -69,14 +74,14 @@ function TeamsPage() {
           {teams.length === 0 ? (
             <EmptyState
               icon={Users}
-              title="Tu n’es dans aucune équipe"
+              title={t('page.emptyTitle')}
               action={
                 <div className="mt-1 flex flex-wrap justify-center gap-2">
                   <TeamDirectoryPopup
                     trigger={
                       <PopupTrigger variant="outline" size="sm">
                         <Compass className="h-4 w-4" />
-                        Parcourir les équipes
+                        {t('page.browseTeams')}
                       </PopupTrigger>
                     }
                   />
@@ -84,16 +89,14 @@ function TeamsPage() {
                     trigger={
                       <PopupTrigger variant="default" size="sm">
                         <Users className="h-4 w-4" />
-                        Créer une équipe
+                        {t('page.createTeam')}
                       </PopupTrigger>
                     }
                   />
                 </div>
               }
             >
-              Une équipe partage un raid hebdomadaire, des duels de tirage et
-              des bonus qui profitent à tous ses membres. Rejoins-en une, ou
-              monte la tienne.
+              {t('page.emptyBody')}
             </EmptyState>
           ) : (
             teams.map((team) => <TeamCard key={team.id} team={team} />)

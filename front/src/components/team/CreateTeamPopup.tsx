@@ -1,6 +1,7 @@
 import { Users } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { useAppForm } from '../../hooks/formConfig.tsx'
 import { useCreateTeam } from '../../queries/useTeams.ts'
@@ -21,6 +22,7 @@ import {
 // Par défaut : le déclencheur historique, désormais aligné sur le libellé du
 // handoff (« Créer une équipe » + icône users, pas l'abrégé « Créer »).
 export function CreateTeamPopup({ trigger }: { trigger?: ReactNode } = {}) {
+  const { t } = useTranslation('team')
   const [open, setOpen] = useState(false)
   const [error, setError] = useState('')
   const { mutate: createTeam, isPending } = useCreateTeam()
@@ -58,13 +60,13 @@ export function CreateTeamPopup({ trigger }: { trigger?: ReactNode } = {}) {
       {trigger ?? (
         <PopupTrigger variant="default" className="gap-2">
           <Users className="h-4 w-4" />
-          Créer une équipe
+          {t('createPopup.trigger')}
         </PopupTrigger>
       )}
       <PopupContent>
         <PopupHeader>
           <PopupTitle icon={<Users className="h-4 w-4" />}>
-            Nouvelle équipe
+            {t('createPopup.title')}
           </PopupTitle>
         </PopupHeader>
         <form
@@ -75,10 +77,10 @@ export function CreateTeamPopup({ trigger }: { trigger?: ReactNode } = {}) {
         >
           <PopupBody className="flex flex-col gap-3">
             <form.AppField name="name">
-              {(field) => <field.Input label="Nom de l'équipe" />}
+              {(field) => <field.Input label={t('fields.name')} />}
             </form.AppField>
             <form.AppField name="description">
-              {(field) => <field.Input label="Description (optionnel)" />}
+              {(field) => <field.Input label={t('fields.description')} />}
             </form.AppField>
             {error && <p className="text-xs text-destructive">{error}</p>}
           </PopupBody>
@@ -88,10 +90,10 @@ export function CreateTeamPopup({ trigger }: { trigger?: ReactNode } = {}) {
               variant="outline"
               onClick={() => handleOpenChange(false)}
             >
-              Annuler
+              {t('actions.cancel')}
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? 'Création...' : 'Créer'}
+              {isPending ? t('createPopup.creating') : t('createPopup.create')}
             </Button>
           </PopupFooter>
         </form>

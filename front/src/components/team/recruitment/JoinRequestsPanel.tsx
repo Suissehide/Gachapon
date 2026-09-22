@@ -17,6 +17,7 @@
 // `TeamDirectoryCard.tsx` (`NIV. {n}`, pastille arrondie `bg-muted`) plutôt
 // que d'inventer une présentation.
 import dayjs from 'dayjs'
+import { useTranslation } from 'react-i18next'
 
 import {
   useAcceptJoinRequest,
@@ -27,6 +28,7 @@ import { RespondButtons } from '../../notifications/NotificationItem.tsx'
 import { MemberAvatar } from '../../shared/MemberAvatar.tsx'
 
 export function JoinRequestsPanel({ teamId }: { teamId: string }) {
+  const { t } = useTranslation('team')
   const { data } = useTeamJoinRequests(teamId)
   const accept = useAcceptJoinRequest()
   const decline = useDeclineJoinRequest()
@@ -39,7 +41,7 @@ export function JoinRequestsPanel({ teamId }: { teamId: string }) {
   return (
     <div className="rounded-xl border border-border bg-card p-4">
       <h2 className="mb-3 text-sm font-bold text-text">
-        Candidatures ({requests.length})
+        {t('recruitment.requestsPanel.title', { count: requests.length })}
       </h2>
       <ul className="flex flex-col gap-2">
         {requests.map((request, index) => (
@@ -57,10 +59,14 @@ export function JoinRequestsPanel({ teamId }: { teamId: string }) {
               </p>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-light">
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-1 font-mono text-[10px] font-bold tracking-[0.1em] text-text-light">
-                  NIV. {request.candidate.level}
+                  {t('recruitment.requestsPanel.levelBadge', {
+                    level: request.candidate.level,
+                  })}
                 </span>
                 <span className="truncate">
-                  Candidature envoyée {dayjs(request.createdAt).fromNow()}
+                  {t('recruitment.requestsPanel.sentAgo', {
+                    timeAgo: dayjs(request.createdAt).fromNow(),
+                  })}
                 </span>
               </div>
             </div>
@@ -69,8 +75,8 @@ export function JoinRequestsPanel({ teamId }: { teamId: string }) {
               onDecline={() => decline.mutate(request.id)}
               accepting={accept.isPending && accept.variables === request.id}
               declining={decline.isPending && decline.variables === request.id}
-              acceptTitle="Accepter la candidature"
-              declineTitle="Refuser la candidature"
+              acceptTitle={t('recruitment.requestsPanel.acceptTitle')}
+              declineTitle={t('recruitment.requestsPanel.declineTitle')}
             />
           </li>
         ))}

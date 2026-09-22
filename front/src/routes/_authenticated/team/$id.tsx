@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { LogOut } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { TeamMember } from '../../../api/teams.api.ts'
 import { PageHeader } from '../../../components/shared/PageHeader.tsx'
@@ -26,6 +27,7 @@ export const Route = createFileRoute('/_authenticated/team/$id')({
 })
 
 function TeamDetailPage() {
+  const { t } = useTranslation('team')
   const { id } = Route.useParams()
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
@@ -76,7 +78,7 @@ function TeamDetailPage() {
   if (isError || !team) {
     return (
       <div className="flex min-h-[calc(100vh-var(--topbar-h))] items-center justify-center">
-        <p className="text-text-light">Équipe introuvable ou accès refusé.</p>
+        <p className="text-text-light">{t('detail.notFound')}</p>
       </div>
     )
   }
@@ -91,8 +93,8 @@ function TeamDetailPage() {
           sa carte d'identité, dans le rail. */}
       <PageHeader
         breadcrumbs={[
-          { label: 'Gachapon', to: '/play' },
-          { label: 'Équipes', to: '/team' },
+          { label: t('page.breadcrumbHome'), to: '/play' },
+          { label: t('page.breadcrumbTeams'), to: '/team' },
           { label: team.name },
         ]}
       />
@@ -121,15 +123,17 @@ function TeamDetailPage() {
                     onClick={() => setLeaveOpen(true)}
                   >
                     <LogOut className="h-4 w-4" />
-                    Quitter l'équipe
+                    {t('detail.leaveButton')}
                   </Button>
                   <ConfirmPopup
                     open={leaveOpen}
                     onOpenChange={setLeaveOpen}
                     icon={<LogOut className="h-4 w-4" />}
-                    title="Quitter l'équipe"
-                    description={`Êtes-vous sûr de vouloir quitter ${team.name} ?`}
-                    confirmLabel="Quitter"
+                    title={t('detail.leaveConfirmTitle')}
+                    description={t('detail.leaveConfirmDescription', {
+                      teamName: team.name,
+                    })}
+                    confirmLabel={t('detail.leaveConfirmLabel')}
                     onConfirm={() =>
                       leave(id, { onSuccess: () => navigate({ to: '/team' }) })
                     }
