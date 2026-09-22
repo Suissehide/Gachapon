@@ -193,6 +193,11 @@
       "progressBullet": "Leur progression est visible (par ex. « 4 / 10 »).",
       "filterBullet": "Filtre-les par <allPill>Tous</allPill> <unlockedPill>Réussis</unlockedPill> <lockedPill>À débloquer</lockedPill>.",
       "rewardsBullet": "Les récompenses peuvent inclure des cartes, des jetons, de la poussière et de l'XP."
+    },
+    "chaine": {
+      "intro": "Connecte-toi <strong>chaque jour</strong> pour allonger ta chaîne. Un jour manqué la remet à zéro, mais ta <strong2>meilleure chaîne</strong2> reste conservée.",
+      "milestonesBullet": "Des <strong>paliers de chaîne</strong> octroient des récompenses (jetons, poussière, or, XP).",
+      "consistencyBullet": "C'est le moyen le plus simple d'accumuler des ressources sur la durée : la régularité paie."
     }
   }
 }

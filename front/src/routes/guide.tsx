@@ -933,24 +933,29 @@ function GuidePage() {
             </Section>
 
             {/* Chaîne de connexion */}
-            <Section id="chaine" icon={Flame} title="Chaîne de connexion">
+            <Section id="chaine" icon={Flame} title={t('sectionLabels.chaine')}>
               <p>
-                Connecte-toi{' '}
-                <strong className="text-foreground">chaque jour</strong> pour
-                allonger ta chaîne. Un jour manqué la remet à zéro, mais ta{' '}
-                <strong className="text-foreground">meilleure chaîne</strong>{' '}
-                reste conservée.
+                <Trans
+                  t={t}
+                  i18nKey="sections.chaine.intro"
+                  components={{
+                    strong: <strong className="text-foreground" />,
+                    strong2: <strong className="text-foreground" />,
+                  }}
+                />
               </p>
               <ul className="space-y-1.5">
                 <li>
-                  • Des{' '}
-                  <strong className="text-foreground">paliers de chaîne</strong>{' '}
-                  octroient des récompenses (jetons, poussière, or, XP).
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.chaine.milestonesBullet"
+                    components={{
+                      strong: <strong className="text-foreground" />,
+                    }}
+                  />
                 </li>
-                <li>
-                  • C'est le moyen le plus simple d'accumuler des ressources sur
-                  la durée : la régularité paie.
-                </li>
+                <li>• {t('sections.chaine.consistencyBullet')}</li>
               </ul>
             </Section>
 

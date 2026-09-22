@@ -193,6 +193,11 @@
       "progressBullet": "Their progress is shown (e.g. \"4 / 10\").",
       "filterBullet": "Filter them by <allPill>All</allPill> <unlockedPill>Unlocked</unlockedPill> <lockedPill>Locked</lockedPill>.",
       "rewardsBullet": "Rewards can include cards, tokens, dust, and XP."
+    },
+    "chaine": {
+      "intro": "Log in <strong>every day</strong> to extend your streak. A missed day resets it to zero, but your <strong2>best streak</strong2> stays saved.",
+      "milestonesBullet": "<strong>Streak milestones</strong> grant rewards (tokens, dust, gold, XP).",
+      "consistencyBullet": "It's the simplest way to build up resources over time: consistency pays off."
     }
   }
 }
