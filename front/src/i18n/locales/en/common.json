@@ -87,10 +87,10 @@
     "emptyHint": "No result to display"
   },
   "stats": {
-    "hp": "PV",
-    "atk": "ATQ",
+    "hp": "HP",
+    "atk": "ATK",
     "def": "DEF",
-    "spd": "VIT",
+    "spd": "SPD",
     "critRate": "CRIT RATE",
     "critDmg": "CRIT DMG",
     "critDmgShort": "CRIT DMG",
