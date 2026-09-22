@@ -19,5 +19,51 @@
       "levelUp": "Error leveling up",
       "ascend": "Error ascending"
     }
+  },
+  "filters": {
+    "group": {
+      "rarity": "By rarity",
+      "element": "By element",
+      "set": "By set"
+    },
+    "ownership": {
+      "owned": "Owned",
+      "all": "All"
+    },
+    "allMasculine": "All",
+    "allFeminine": "All",
+    "variant": {
+      "normal": "Normal",
+      "holographic": "Holo",
+      "brilliant": "Golden"
+    },
+    "sort": {
+      "default": "Default",
+      "power": "Power",
+      "level": "Level",
+      "copies": "Duplicates",
+      "name": "Name"
+    },
+    "labels": {
+      "rarity": "Rarity",
+      "variant": "Type",
+      "element": "Element",
+      "sort": "Sort"
+    }
+  },
+  "section": {
+    "counts": "CARDS {{distinctCards}}/{{totalCards}} · VARIANTS {{ownedVariants}}/{{totalVariants}}"
+  },
+  "card": {
+    "newBadge": "NEW",
+    "wishlistedTitle": "Wish active",
+    "engagedTitle": "Card engaged in a duel: it cannot be recycled while the duel lasts",
+    "engagedBadge": "IN DUEL"
+  },
+  "detail": {
+    "removeWish": "Remove wish",
+    "setWish": "Set as wish",
+    "ownedLabel": "Owned",
+    "recycle": "Recycle"
   }
 }

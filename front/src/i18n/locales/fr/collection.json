@@ -19,5 +19,51 @@
       "levelUp": "Erreur lors du level up",
       "ascend": "Erreur lors de l'ascension"
     }
+  },
+  "filters": {
+    "group": {
+      "rarity": "Par rareté",
+      "element": "Par élément",
+      "set": "Par set"
+    },
+    "ownership": {
+      "owned": "Possédées",
+      "all": "Toutes"
+    },
+    "allMasculine": "Tous",
+    "allFeminine": "Toutes",
+    "variant": {
+      "normal": "Normal",
+      "holographic": "Holo",
+      "brilliant": "Doré"
+    },
+    "sort": {
+      "default": "Par défaut",
+      "power": "Puissance",
+      "level": "Niveau",
+      "copies": "Doublons",
+      "name": "Nom"
+    },
+    "labels": {
+      "rarity": "Rareté",
+      "variant": "Type",
+      "element": "Élément",
+      "sort": "Tri"
+    }
+  },
+  "section": {
+    "counts": "CARTES {{distinctCards}}/{{totalCards}} · VARIANTES {{ownedVariants}}/{{totalVariants}}"
+  },
+  "card": {
+    "newBadge": "NOUVEAU",
+    "wishlistedTitle": "Vœu actif",
+    "engagedTitle": "Carte engagée dans un duel : elle ne peut pas être recyclée tant qu'il dure",
+    "engagedBadge": "EN DUEL"
+  },
+  "detail": {
+    "removeWish": "Retirer le vœu",
+    "setWish": "Définir comme vœu",
+    "ownedLabel": "Possédées",
+    "recycle": "Recycler"
   }
 }

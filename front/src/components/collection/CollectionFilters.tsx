@@ -1,4 +1,5 @@
 import type React from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { Card, CardVariant } from '../../api/collection.api.ts'
 import {
@@ -7,11 +8,12 @@ import {
   ELEMENT_LABELS,
   ELEMENT_ORDER,
 } from '../../constants/card.constant.ts'
+import i18n from '../../i18n/index.ts'
 import { RARITY_COLOR_VAR } from '../../libs/rarity.ts'
 import { Select } from '../ui/input.tsx'
 import { Label } from '../ui/label.tsx'
 import { SegmentedControl } from '../ui/segmentedControl.tsx'
-import { RARITY_LABELS, RARITY_ORDER } from './CollectionCard.tsx'
+import { RARITY_ORDER } from './CollectionCard.tsx'
 
 type Rarity = Card['rarity']
 export type RarityFilter = Rarity | 'all'
@@ -22,13 +24,19 @@ export type OwnershipFilter = 'all' | 'owned'
 export type SortMode = 'default' | 'power' | 'level' | 'copies' | 'name'
 
 const GROUP_OPTIONS = [
-  { value: 'rarity' as const, label: 'Par rareté' },
-  { value: 'element' as const, label: 'Par élément' },
-  { value: 'set' as const, label: 'Par set' },
+  {
+    value: 'rarity' as const,
+    label: i18n.t('collection:filters.group.rarity'),
+  },
+  {
+    value: 'element' as const,
+    label: i18n.t('collection:filters.group.element'),
+  },
+  { value: 'set' as const, label: i18n.t('collection:filters.group.set') },
 ]
 
 const ELEMENT_OPTIONS = [
-  { value: 'all', label: 'Tous' },
+  { value: 'all', label: i18n.t('collection:filters.allMasculine') },
   ...ELEMENT_ORDER.map((el) => ({
     value: el,
     label: ELEMENT_LABELS[el],
@@ -37,32 +45,47 @@ const ELEMENT_OPTIONS = [
 ]
 
 const VARIANT_OPTIONS = [
-  { value: 'all', label: 'Tous' },
-  { value: 'NORMAL', label: 'Normal' },
-  { value: 'HOLOGRAPHIC', label: 'Holo', icon: <Swatch kind="holo" /> },
-  { value: 'BRILLIANT', label: 'Doré', icon: <Swatch kind="dore" /> },
+  { value: 'all', label: i18n.t('collection:filters.allMasculine') },
+  { value: 'NORMAL', label: i18n.t('collection:filters.variant.normal') },
+  {
+    value: 'HOLOGRAPHIC',
+    label: i18n.t('collection:filters.variant.holographic'),
+    icon: <Swatch kind="holo" />,
+  },
+  {
+    value: 'BRILLIANT',
+    label: i18n.t('collection:filters.variant.brilliant'),
+    icon: <Swatch kind="dore" />,
+  },
 ]
 
 const OWNERSHIP_OPTIONS = [
-  { value: 'owned' as const, label: 'Possédées' },
-  { value: 'all' as const, label: 'Toutes' },
+  {
+    value: 'owned' as const,
+    label: i18n.t('collection:filters.ownership.owned'),
+  },
+  { value: 'all' as const, label: i18n.t('collection:filters.ownership.all') },
 ]
 
+// Copie locale de `RARITY_OPTIONS` (constants/card.constant.ts) : ces options
+// qualifient une RARETÉ, donc accord au féminin — `common:rarity.*`
+// (« Commune », « Peu commune »), comme la constante partagée corrigée en
+// tâche 6, et non `common:cardRarity.*` (masculin) qu'elle lisait avant.
 const RARITY_OPTIONS = [
-  { value: 'all', label: 'Toutes' },
+  { value: 'all', label: i18n.t('collection:filters.allFeminine') },
   ...RARITY_ORDER.map((r) => ({
     value: r,
-    label: RARITY_LABELS[r],
+    label: i18n.t(`common:rarity.${r.toLowerCase()}`),
     icon: <RarityDot color={RARITY_COLOR_VAR[r]} />,
   })),
 ]
 
 const SORT_OPTIONS = [
-  { value: 'default', label: 'Par défaut' },
-  { value: 'power', label: 'Puissance' },
-  { value: 'level', label: 'Niveau' },
-  { value: 'copies', label: 'Doublons' },
-  { value: 'name', label: 'Nom' },
+  { value: 'default', label: i18n.t('collection:filters.sort.default') },
+  { value: 'power', label: i18n.t('collection:filters.sort.power') },
+  { value: 'level', label: i18n.t('collection:filters.sort.level') },
+  { value: 'copies', label: i18n.t('collection:filters.sort.copies') },
+  { value: 'name', label: i18n.t('collection:filters.sort.name') },
 ]
 
 interface Props {
@@ -94,6 +117,7 @@ export function CollectionFilters({
   sort,
   onSortChange,
 }: Props) {
+  const { t } = useTranslation('collection')
   return (
     <div className="flex flex-col gap-3">
       {/* Row 1 — Ownership + Grouping */}
@@ -113,7 +137,10 @@ export function CollectionFilters({
 
       {/* Row 2 — Rarity / Variant / Sort selects */}
       <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
-        <FilterField id="filter-rarity" label="Rareté">
+        <FilterField
+          id="filter-rarity"
+          label={t('collection:filters.labels.rarity')}
+        >
           <Select
             id="filter-rarity"
             options={RARITY_OPTIONS}
@@ -122,7 +149,10 @@ export function CollectionFilters({
             clearable={false}
           />
         </FilterField>
-        <FilterField id="filter-variant" label="Type">
+        <FilterField
+          id="filter-variant"
+          label={t('collection:filters.labels.variant')}
+        >
           <Select
             id="filter-variant"
             options={VARIANT_OPTIONS}
@@ -131,7 +161,10 @@ export function CollectionFilters({
             clearable={false}
           />
         </FilterField>
-        <FilterField id="filter-element" label="Élément">
+        <FilterField
+          id="filter-element"
+          label={t('collection:filters.labels.element')}
+        >
           <Select
             id="filter-element"
             options={ELEMENT_OPTIONS}
@@ -140,7 +173,10 @@ export function CollectionFilters({
             clearable={false}
           />
         </FilterField>
-        <FilterField id="filter-sort" label="Tri">
+        <FilterField
+          id="filter-sort"
+          label={t('collection:filters.labels.sort')}
+        >
           <Select
             id="filter-sort"
             options={SORT_OPTIONS}

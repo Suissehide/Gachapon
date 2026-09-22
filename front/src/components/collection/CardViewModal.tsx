@@ -1,5 +1,6 @@
 import { Recycle, Star, X } from 'lucide-react'
 import type { CSSProperties } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { CardVariant } from '../../constants/card.constant'
 import {
@@ -9,6 +10,7 @@ import {
   ELEMENT_LABELS,
 } from '../../constants/card.constant.ts'
 import { describePassive } from '../../constants/passives.constant.ts'
+import i18n from '../../i18n/index.ts'
 import { useCardClassicStatsWithSetBonuses } from '../../queries/useEquipment.ts'
 import type { WishlistResponse } from '../../queries/useWishlist.ts'
 import { useToggleWishlist, useWishlist } from '../../queries/useWishlist.ts'
@@ -37,13 +39,16 @@ const RARITY_HEX: Record<string, string> = {
   LEGENDARY: '#f59e0b',
 }
 
+// `common:cardVariant.*` : accord MASCULIN, comme le libellé sous la carte de
+// l'écran de révélation. Le féminin (« Brillante ») vit dans
+// `common:variant.*`, lu par CardZoomOverlay.
 const VARIANT_LABELS: Record<string, { label: string; className: string }> = {
   BRILLIANT: {
-    label: 'Brillant',
+    label: i18n.t('common:cardVariant.brilliant'),
     className: 'bg-amber-400/25 border border-amber-500/50 text-amber-700',
   },
   HOLOGRAPHIC: {
-    label: 'Holographique',
+    label: i18n.t('common:cardVariant.holographic'),
     className: 'bg-cyan-400/20 border border-cyan-500/40 text-cyan-700',
   },
 }
@@ -62,6 +67,7 @@ function WishlistButton({
   loading: boolean
   onToggle: () => void
 }) {
+  const { t } = useTranslation('collection')
   return (
     <div className="mt-3 flex">
       <Button
@@ -75,7 +81,9 @@ function WishlistButton({
           className="h-[15px] w-[15px]"
           fill={isWishlisted ? 'currentColor' : 'none'}
         />
-        {isWishlisted ? 'Retirer le vœu' : 'Définir comme vœu'}
+        {isWishlisted
+          ? t('collection:detail.removeWish')
+          : t('collection:detail.setWish')}
       </Button>
     </div>
   )
@@ -111,6 +119,7 @@ function faceStats(
 
 export function CardViewModal({ entry, onClose, onRecycle }: Props) {
   // Hooks must be called unconditionally — before any early return.
+  const { t } = useTranslation(['collection', 'common'])
   const { data: wishlist } = useWishlist()
   const { mutate: toggleWishlist, isPending: settingWishlist } =
     useToggleWishlist()
@@ -225,7 +234,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
                 variant="ghost"
                 size="icon"
                 onClick={onClose}
-                aria-label="Fermer"
+                aria-label={t('common:a11y.close')}
                 className="shrink-0 rounded-[10px] bg-[rgba(27,23,38,0.06)] text-[rgba(27,23,38,0.55)] hover:bg-[rgba(27,23,38,0.12)] hover:text-text"
               >
                 <X className="h-4 w-4" />
@@ -246,7 +255,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
               <div className="mt-[14px] flex items-center justify-between border-y border-[rgba(27,23,38,0.08)] py-4">
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-[13px] text-text-light">
-                    Possédées
+                    {t('collection:detail.ownedLabel')}
                   </span>
                   <b className="font-display text-xl font-extrabold tabular-nums text-text">
                     ×{quantity}
@@ -260,7 +269,7 @@ export function CardViewModal({ entry, onClose, onRecycle }: Props) {
                     className="h-auto rounded-[11px] border-[rgba(27,23,38,0.14)] bg-card px-[15px] py-[9px] text-[13.5px] font-semibold text-[rgba(27,23,38,0.7)] hover:bg-surface-2 hover:text-text"
                   >
                     <Recycle className="h-[15px] w-[15px]" />
-                    Recycler
+                    {t('collection:detail.recycle')}
                   </Button>
                 )}
               </div>

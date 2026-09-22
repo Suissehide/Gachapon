@@ -1,8 +1,9 @@
 import { Sparkles, Star, Swords } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import type { Card, CardVariant } from '../../api/collection.api.ts'
 import { describePassive } from '../../constants/passives.constant.ts'
-import { currentLocale } from '../../i18n/index.ts'
+import i18n, { currentLocale } from '../../i18n/index.ts'
 import { formatNumber } from '../../libs/utils.ts'
 import { useCardEquipmentBonuses } from '../../queries/useEquipment.ts'
 import type { StatBonuses } from '../../utils/cardStats.ts'
@@ -26,12 +27,16 @@ export const RARITY_COLORS: Record<string, string> = {
   LEGENDARY: 'border-primary/50 text-primary',
 }
 
+// `common:cardRarity.*` : l'accord MASCULIN (« Commun »), celui qui qualifie
+// une CARTE. Les listes d'options qui qualifient une « rareté » lisent
+// `common:rarity.*` au féminin — deux jeux volontaires, voir le rapport de la
+// tâche 6.
 export const RARITY_LABELS: Record<string, string> = {
-  COMMON: 'Commun',
-  UNCOMMON: 'Peu commun',
-  RARE: 'Rare',
-  EPIC: 'Épique',
-  LEGENDARY: 'Légendaire',
+  COMMON: i18n.t('common:cardRarity.common'),
+  UNCOMMON: i18n.t('common:cardRarity.uncommon'),
+  RARE: i18n.t('common:cardRarity.rare'),
+  EPIC: i18n.t('common:cardRarity.epic'),
+  LEGENDARY: i18n.t('common:cardRarity.legendary'),
 }
 
 export const RARITY_CHIP_ACTIVE: Record<string, string> = {
@@ -108,6 +113,7 @@ export function CollectionCard({
   isEngaged,
   onClick,
 }: Props) {
+  const { t } = useTranslation('collection')
   const locale = currentLocale()
   // Bonus d'équipement de cette carte (vides si non possédée ou si l'équipement
   // n'est pas le nôtre — ex. collection d'un autre joueur).
@@ -154,13 +160,13 @@ export function CollectionCard({
         {isOwned && isNew && (
           <span className="absolute -left-2 -top-2 z-[6] inline-flex items-center gap-1.5 rounded-full bg-[linear-gradient(135deg,#34d399,#16a34a)] px-[10px] py-[5px] font-mono text-[9.5px] font-extrabold leading-none tracking-[0.1em] text-white shadow-[0_5px_14px_-3px_rgba(22,163,74,0.65),0_0_0_2px_#fcfbf9]">
             <Sparkles className="h-2.5 w-2.5" />
-            NOUVEAU
+            {t('collection:card.newBadge')}
           </span>
         )}
 
         {isWishlisted && (
           <span
-            title="Vœu actif"
+            title={t('collection:card.wishlistedTitle')}
             className="absolute -left-1.5 -top-1.5 z-[6] inline-flex h-6 w-6 items-center justify-center rounded-full bg-[linear-gradient(135deg,#fbbf24,#d97706)] text-white shadow-[0_3px_8px_rgba(217,119,6,0.5),0_0_0_1.5px_#fcfbf9]"
           >
             <Star className="h-3 w-3" fill="currentColor" />
@@ -175,11 +181,11 @@ export function CollectionCard({
 
         {isEngaged && (
           <span
-            title="Carte engagée dans un duel : elle ne peut pas être recyclée tant qu'il dure"
+            title={t('collection:card.engagedTitle')}
             className="pointer-events-none absolute -bottom-2 left-1/2 z-[6] inline-flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full border border-primary/50 bg-card px-2 py-[4px] font-mono text-[9.5px] font-extrabold leading-none tracking-[0.08em] text-primary shadow-[0_3px_8px_rgba(27,23,38,0.25)]"
           >
             <Swords className="h-2.5 w-2.5" />
-            EN DUEL
+            {t('collection:card.engagedBadge')}
           </span>
         )}
       </div>

@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 import type { Card } from '../../api/collection.api.ts'
 import type { UserCard } from '../../queries/useCollection.ts'
 import { useWishlist } from '../../queries/useWishlist.ts'
@@ -94,6 +96,7 @@ export function CollectionSection({
   showWishlist = false,
   engagedCardIds,
 }: Props) {
+  const { t } = useTranslation('collection')
   const { distinctCards, totalCards, ownedVariants, totalVariants } = stats
 
   return (
@@ -103,8 +106,12 @@ export function CollectionSection({
           {title}
         </h2>
         <span className="font-mono text-[11px] tracking-[0.08em] text-text-light/60 whitespace-nowrap">
-          CARTES {distinctCards}/{totalCards} · VARIANTES {ownedVariants}/
-          {totalVariants}
+          {t('collection:section.counts', {
+            distinctCards,
+            totalCards,
+            ownedVariants,
+            totalVariants,
+          })}
         </span>
         <span className="h-px flex-1 bg-[rgba(27,23,38,0.12)]" />
       </div>
