@@ -18,6 +18,7 @@ import {
 import { Dialog } from 'radix-ui'
 import type { CSSProperties } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { z } from 'zod/v4'
 
 import type {
@@ -45,7 +46,7 @@ import {
   CAMPAIGN_TEAM_KEY,
   CAMPAIGN_TEAM_LABEL,
 } from '../../constants/combatTeam.constant.ts'
-import { currentLocale } from '../../i18n/index.ts'
+import i18n, { currentLocale } from '../../i18n/index.ts'
 import { formatPct } from '../../libs/utils.ts'
 import { useCampaign, useSweepStage } from '../../queries/useCampaign.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
@@ -65,21 +66,20 @@ export const Route = createFileRoute('/_authenticated/campaign')({
 
 // Per-chapter theme (hue + title). Fallback for chapters beyond the known list
 // keeps a deterministic hue derived from the chapter number so themes stay
-// stable across sessions.
-const CHAPTER_META: { title: string; hue: number }[] = [
-  { title: 'Plaines', hue: 35 },
-  { title: 'Forêt des Murmures', hue: 150 },
-  { title: 'Cendres', hue: 320 },
-  { title: 'Océan', hue: 200 },
-  { title: 'Cristaux', hue: 280 },
-  { title: 'Volcan', hue: 12 },
-  { title: 'Toundra', hue: 195 },
-  { title: 'Abysses', hue: 235 },
-  { title: 'Faille', hue: 355 },
-]
+// stable across sessions. Titles come from the shared
+// `combat:campaign.chapterTitles.<n>` i18n keys, also read by
+// battle.$stageId.tsx's chapterTitle() — a single source keeps both screens'
+// chapter lists in sync.
+const CHAPTER_HUES = [35, 150, 320, 200, 280, 12, 195, 235, 355]
 
 function chapterMeta(n: number): { title: string; hue: number } {
-  return CHAPTER_META[n - 1] ?? { title: `Chapitre ${n}`, hue: (n * 47) % 360 }
+  const key = `combat:campaign.chapterTitles.${n}`
+  const translated = i18n.t(key)
+  const title =
+    translated === key
+      ? i18n.t('combat:campaign.chapterFallback', { n })
+      : translated
+  return { title, hue: CHAPTER_HUES[n - 1] ?? (n * 47) % 360 }
 }
 
 // The "frontier" chapter is the one holding the player's next playable stage
@@ -101,6 +101,7 @@ function _fmt(n: number): string {
 }
 
 function CampaignPage() {
+  const { t } = useTranslation('combat')
   const navigate = useNavigate()
   const search = Route.useSearch()
   const campaign = useCampaign()
@@ -162,14 +163,14 @@ function CampaignPage() {
   if (campaign.isLoading || activeChapter == null) {
     return (
       <PageShell>
-        <p className="text-text-light">Chargement de la campagne…</p>
+        <p className="text-text-light">{t('combat:campaign.loading')}</p>
       </PageShell>
     )
   }
   if (campaign.isError || !campaign.data) {
     return (
       <PageShell>
-        <p className="text-rose-500">Erreur de chargement de la campagne.</p>
+        <p className="text-rose-500">{t('combat:campaign.loadError')}</p>
       </PageShell>
     )
   }
@@ -216,17 +217,17 @@ function CampaignPage() {
         <PageHeader
           breadcrumbs={[
             { label: 'Gachapon', to: '/play' },
-            { label: 'Campagne' },
+            { label: t('combat:teamLabel.campaign') },
           ]}
-          title="Campagne"
-          subtitle="Progresse à travers les chapitres pour débloquer drops et puissance"
+          title={t('combat:teamLabel.campaign')}
+          subtitle={t('combat:campaign.subtitle')}
           right={
             <InfoButton
               icon={Swords}
               onClick={() => setElementsOpen(true)}
-              title="Comprendre les éléments"
+              title={t('combat:campaign.understandElements')}
             >
-              Éléments
+              {t('combat:elementGuide.title')}
             </InfoButton>
           }
         />
@@ -298,7 +299,7 @@ function CampaignPage() {
             className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden bg-[#fbf8f3] shadow-[0_40px_90px_-30px_rgba(0,0,0,0.6)]"
           >
             <Dialog.Title className="sr-only">
-              Préparation du combat
+              {t('combat:campaign.prepTitle')}
             </Dialog.Title>
             <PrepModal
               stage={prep}
@@ -446,13 +447,16 @@ function StripArrow({
   onClick: () => void
   hidden: boolean
 }) {
+  const { t } = useTranslation('combat')
   const marginClass = direction === 'left' ? '-mr-3.5' : '-ml-3.5'
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label={
-        direction === 'left' ? 'Chapitres précédents' : 'Chapitres suivants'
+        direction === 'left'
+          ? t('combat:campaign.prevChapters')
+          : t('combat:campaign.nextChapters')
       }
       className={`z-[2] flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[rgba(27,23,38,0.12)] bg-white text-text-light/70 shadow-[0_6px_16px_-8px_rgba(27,23,38,0.3)] transition-all hover:scale-105 hover:bg-[#fafaf7] hover:text-text ${marginClass} ${
         hidden ? 'pointer-events-none opacity-0' : ''
@@ -478,6 +482,7 @@ function ChapterTab({
   isCurrent: boolean
   onClick: () => void
 }) {
+  const { t } = useTranslation('combat')
   const meta = chapterMeta(chapter.chapter)
   const cleared = chapter.stages.filter((s) => s.status === 'cleared').length
   const total = chapter.stages.length
@@ -521,7 +526,7 @@ function ChapterTab({
           {meta.title}
         </span>
         <span className="font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-text-light/60">
-          {isLocked ? 'Verrouillé' : `${cleared}/${total}`}
+          {isLocked ? t('combat:campaign.locked') : `${cleared}/${total}`}
         </span>
       </span>
       {isLocked && <Lock className="h-3.5 w-3.5 shrink-0 text-text-light/50" />}
@@ -544,6 +549,7 @@ function LevelCard({
   onOpen: () => void
   battleCost: number
 }) {
+  const { t } = useTranslation('combat')
   const isLocked = stage.status === 'locked'
   const isCleared = stage.status === 'cleared'
   const isCurrent = stage.status === 'current'
@@ -600,30 +606,30 @@ function LevelCard({
           }`}
         >
           {stage.label}
-          {isBoss ? ' · Boss' : ''}
+          {isBoss ? ` · ${t('combat:campaign.bossLabel')}` : ''}
         </span>
         {isCurrent && (
           <span className="ml-auto rounded-full border border-sky-200 bg-sky-100 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-sky-700">
-            Actuel
+            {t('combat:campaign.current')}
           </span>
         )}
         {isLocked && (
           <span className="ml-auto rounded-full border border-[rgba(27,23,38,0.08)] bg-[rgba(27,23,38,0.05)] px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-text-light/50">
-            Verrou.
+            {t('combat:campaign.lockedShort')}
           </span>
         )}
       </div>
 
       {isBoss && !isLocked && (
         <div className="mt-2 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-amber-700">
-          Boss · 1v3
+          {t('combat:campaign.bossVs')}
         </div>
       )}
 
       {isCurrent && (
         <span className="mt-3.5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 px-4 py-3 font-display text-[15px] font-bold text-white shadow-[0_10px_22px_-10px_rgba(245,158,11,0.6)] transition-transform">
           <Swords className="h-4 w-4" />
-          Combattre
+          {t('combat:campaign.fight')}
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
         </span>
       )}
@@ -643,7 +649,7 @@ function LevelCard({
           aria-hidden
         >
           <RotateCcw className="h-3 w-3" />
-          Rejouer
+          {t('combat:battle.replay')}
         </span>
       )}
     </button>
@@ -681,6 +687,7 @@ function PrepModal({
   onEditTeam: () => void
   onClose: () => void
 }) {
+  const { t } = useTranslation('combat')
   const locale = currentLocale()
   const meta = chapterMeta(chapter)
   const isBoss = stage.isBoss
@@ -691,9 +698,9 @@ function PrepModal({
   // l'énergie, sinon on annoncerait « énergie insuffisante » à tort.
   const fightLabel = team.length
     ? currentPC < battleCost
-      ? 'Énergie insuffisante'
-      : 'Combattre'
-    : 'Équipe requise'
+      ? t('combat:battlePrep.reason.energyInsufficient')
+      : t('combat:campaign.fight')
+    : t('combat:battlePrep.reason.teamRequired')
   // `formatPct` garde deux décimales sous 1 % : une chance à 0,005 s'affiche
   // « 0,5 » au lieu d'être masquée par un arrondi à 0.
   const fmtPct = (frac: number) => formatPct(frac * 100, locale)
@@ -704,7 +711,10 @@ function PrepModal({
     <BattlePrepModal
       eyebrow={
         <>
-          {isBoss ? 'Combat de boss' : 'Préparation'} · Niveau {stage.label}
+          {isBoss
+            ? t('combat:campaign.bossPrepEyebrow')
+            : t('combat:campaign.prepEyebrow')}{' '}
+          · {t('combat:campaign.stageLabel', { label: stage.label })}
           {isBoss ? ` · ${meta.title}` : ''}
         </>
       }
@@ -718,45 +728,53 @@ function PrepModal({
         <>
           <div className="mb-3 flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
             <Sparkles className="h-3 w-3 text-amber-600" />
-            Récompenses
+            {t('combat:campaign.rewardsLabel')}
           </div>
           <div className="flex flex-wrap gap-2">
             <RewardPill
               color="#f59e0b"
-              label={`${loot.gold} Or`}
+              label={t('combat:campaign.goldLabel', { amount: loot.gold })}
               icon={Coins}
             />
             <RewardPill
               color="#38bdf8"
-              label={`${loot.dust} Poussière`}
+              label={t('combat:campaign.dustLabel', { amount: loot.dust })}
               icon={Sparkles}
             />
-            <RewardPill color="#8b5cf6" label={`${loot.xp} XP`} icon={Star} />
+            <RewardPill
+              color="#8b5cf6"
+              label={t('combat:campaign.xpLabel', { amount: loot.xp })}
+              icon={Star}
+            />
             {equipPct > 0 && (
               <RewardPill
                 color="#ec4899"
-                label={`Drop équipement ${fmtPct(rp.farmEquipmentChance)}%`}
+                label={t('combat:campaign.equipmentDropChance', {
+                  pct: fmtPct(rp.farmEquipmentChance),
+                })}
                 icon={Shield}
               />
             )}
             {cardPct > 0 && (
               <RewardPill
                 color="#10b981"
-                label={`Drop carte ${fmtPct(rp.farmCardChance)}%`}
+                label={t('combat:campaign.cardDropChance', {
+                  pct: fmtPct(rp.farmCardChance),
+                })}
                 icon={Layers}
               />
             )}
             {!isCleared && rp.guaranteedEquipment && (
               <RewardPill
                 color="#ec4899"
-                label="Équipement garanti"
+                label={t('combat:campaign.guaranteedEquipment')}
                 icon={Shield}
               />
             )}
             {!isCleared && rp.guaranteedCard && (
               <RewardPill
                 color="#10b981"
-                label="Carte garantie"
+                label={t('combat:campaign.guaranteedCard')}
                 icon={Layers}
               />
             )}
