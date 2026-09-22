@@ -1,5 +1,6 @@
 import { Gift } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { NotificationDot } from '../notifications/NotificationDot.tsx'
 import { Button } from '../ui/button.tsx'
@@ -10,6 +11,7 @@ interface RewardsBadgeProps {
 }
 
 export function RewardsBadge({ pendingRewardsCount }: RewardsBadgeProps) {
+  const { t } = useTranslation('rewards')
   const [isOpen, setIsOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -31,7 +33,7 @@ export function RewardsBadge({ pendingRewardsCount }: RewardsBadgeProps) {
         variant="ghost"
         size="icon"
         onClick={() => setIsOpen(!isOpen)}
-        aria-label="Récompenses"
+        aria-label={t('rewards:title')}
         className="h-10 w-10 rounded-[11px] text-text-light/60 hover:bg-text/[0.06] hover:text-text"
       >
         <Gift className="h-5 w-5" />

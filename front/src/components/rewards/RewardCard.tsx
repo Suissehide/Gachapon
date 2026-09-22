@@ -11,9 +11,11 @@ import {
   Zap,
 } from 'lucide-react'
 import { type ReactNode, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { PendingReward } from '../../api/rewards.api.ts'
 import { RARITY_FR, RARITY_HEX } from '../../constants/achievements.constant.ts'
+import i18n from '../../i18n/index.ts'
 import { cn } from '../../libs/utils.ts'
 import { Nom, NotificationItem } from '../notifications/NotificationItem.tsx'
 import { Button } from '../ui/button.tsx'
@@ -34,27 +36,33 @@ function sourceParts(reward: PendingReward): {
     case 'STREAK': {
       const day = reward.streakMilestone?.day
       return {
-        head: 'Streak',
+        head: i18n.t('rewards:source.streak'),
         detail:
           day === undefined
             ? null
             : day === 0
-              ? 'Connexion quotidienne'
-              : `Jour ${day}`,
+              ? i18n.t('rewards:source.dailyConnection')
+              : i18n.t('rewards:source.day', { day }),
       }
     }
     case 'ACHIEVEMENT':
-      return { head: 'Succès', detail: reward.sourceTitle }
+      return {
+        head: i18n.t('rewards:source.achievement'),
+        detail: reward.sourceTitle,
+      }
     case 'QUEST':
-      return { head: 'Quête', detail: reward.sourceTitle }
+      return {
+        head: i18n.t('rewards:source.quest'),
+        detail: reward.sourceTitle,
+      }
     case 'LEVEL_UP':
-      return { head: 'Montée de niveau' }
+      return { head: i18n.t('rewards:source.levelUp') }
     case 'ADMIN':
-      return { head: 'Récompense admin', detail: reward.label }
+      return { head: i18n.t('rewards:source.admin'), detail: reward.label }
     case 'RAID':
-      return { head: reward.label ?? "Raid d'équipe" }
+      return { head: reward.label ?? i18n.t('rewards:source.raid') }
     default:
-      return { head: 'Récompense' }
+      return { head: i18n.t('rewards:source.fallback') }
   }
 }
 
@@ -115,7 +123,11 @@ function amounts(reward: PendingReward): ReactNode {
         key="tokens"
         icon={<Ticket className="h-3 w-3 text-primary" />}
         value={r.tokens}
-        unit={r.tokens > 1 ? 'jetons' : 'jeton'}
+        unit={i18n.t(
+          r.tokens > 1
+            ? 'common:currency.tokens.plural'
+            : 'common:currency.tokens.singular',
+        )}
       />,
     )
   }
@@ -125,7 +137,7 @@ function amounts(reward: PendingReward): ReactNode {
         key="dust"
         icon={<Sparkles className="h-3 w-3 text-accent" />}
         value={r.dust}
-        unit="poussière"
+        unit={i18n.t('common:currency.dust.singular')}
       />,
     )
   }
@@ -135,7 +147,7 @@ function amounts(reward: PendingReward): ReactNode {
         key="xp"
         icon={<Star className="h-3 w-3 text-yellow-400" />}
         value={r.xp}
-        unit="XP"
+        unit={i18n.t('common:currency.xp.singular')}
       />,
     )
   }
@@ -145,7 +157,7 @@ function amounts(reward: PendingReward): ReactNode {
         key="gold"
         icon={<Coins className="h-3 w-3 text-yellow-400" />}
         value={r.gold}
-        unit="or"
+        unit={i18n.t('common:currency.gold.singular')}
       />,
     )
   }
@@ -154,7 +166,7 @@ function amounts(reward: PendingReward): ReactNode {
     parts.push(
       <span key="card" className="inline-flex items-center gap-1">
         <Layers className="h-3 w-3" style={{ color }} />
-        carte{' '}
+        {i18n.t('rewards:card.prefix')}{' '}
         <span className="font-semibold" style={{ color }}>
           {RARITY_FR[r.cardRarity] ?? r.cardRarity}
         </span>
@@ -171,6 +183,7 @@ function amounts(reward: PendingReward): ReactNode {
 }
 
 export function RewardCard({ reward, onClaim, isLoading }: RewardCardProps) {
+  const { t } = useTranslation('rewards')
   const [burst, setBurst] = useState(false)
   const [claiming, setClaiming] = useState(false)
   const [burstOrigin, setBurstOrigin] = useState({ x: 0, y: 0 })
@@ -209,7 +222,7 @@ export function RewardCard({ reward, onClaim, isLoading }: RewardCardProps) {
             hasGold={reward.reward.gold > 0}
           />
           <Button size="sm" onClick={handleClaim} disabled={isLoading || burst}>
-            Réclamer
+            {t('rewards:claim')}
           </Button>
         </div>
       }

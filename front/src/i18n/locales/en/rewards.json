@@ -2,6 +2,24 @@
   "toasts": {
     "claimErrorTitle": "Error claiming"
   },
+  "source": {
+    "streak": "Streak",
+    "dailyConnection": "Daily connection",
+    "day": "Day {{day}}",
+    "achievement": "Achievement",
+    "quest": "Quest",
+    "levelUp": "Level up",
+    "admin": "Admin reward",
+    "raid": "Team raid",
+    "fallback": "Reward"
+  },
+  "card": {
+    "prefix": "card"
+  },
+  "claim": "Claim",
+  "title": "Rewards",
+  "claimAll": "Claim all",
+  "empty": "No reward pending",
   "apiTitles": {
     "operations": {
       "loadRewards": "Error loading the rewards",

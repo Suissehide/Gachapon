@@ -1,4 +1,5 @@
 import { Gift } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import {
   useClaimAllRewards,
@@ -13,6 +14,7 @@ interface RewardsPopupProps {
 }
 
 export function RewardsPopup({ onClose: _ }: RewardsPopupProps) {
+  const { t } = useTranslation('rewards')
   const { data: rewards = [], isLoading } = usePendingRewards()
   const claimReward = useClaimReward()
   const claimAll = useClaimAllRewards()
@@ -24,7 +26,7 @@ export function RewardsPopup({ onClose: _ }: RewardsPopupProps) {
         <div className="flex items-center gap-2">
           <Gift className="h-4 w-4 text-text-light" />
           <span className="font-display text-sm font-bold text-text">
-            Récompenses
+            {t('rewards:title')}
           </span>
           {rewards.length > 0 && (
             <span className="rounded-full bg-primary/15 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-primary">
@@ -40,7 +42,7 @@ export function RewardsPopup({ onClose: _ }: RewardsPopupProps) {
             disabled={claimAll.isPending}
             className="h-7 shrink-0 whitespace-nowrap px-2 text-xs text-primary hover:bg-primary/10 hover:text-primary"
           >
-            Tout réclamer
+            {t('rewards:claimAll')}
           </Button>
         )}
       </div>
@@ -55,7 +57,7 @@ export function RewardsPopup({ onClose: _ }: RewardsPopupProps) {
           <div className="py-6 text-center">
             <Gift className="mx-auto mb-2 h-7 w-7 text-text-light/30" />
             <p className="font-mono text-[11px] uppercase tracking-wider text-text-light">
-              Aucune récompense en attente
+              {t('rewards:empty')}
             </p>
           </div>
         ) : (

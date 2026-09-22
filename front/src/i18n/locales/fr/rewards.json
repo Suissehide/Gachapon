@@ -2,6 +2,24 @@
   "toasts": {
     "claimErrorTitle": "Erreur lors de la réclamation"
   },
+  "source": {
+    "streak": "Streak",
+    "dailyConnection": "Connexion quotidienne",
+    "day": "Jour {{day}}",
+    "achievement": "Succès",
+    "quest": "Quête",
+    "levelUp": "Montée de niveau",
+    "admin": "Récompense admin",
+    "raid": "Raid d'équipe",
+    "fallback": "Récompense"
+  },
+  "card": {
+    "prefix": "carte"
+  },
+  "claim": "Réclamer",
+  "title": "Récompenses",
+  "claimAll": "Tout réclamer",
+  "empty": "Aucune récompense en attente",
   "apiTitles": {
     "operations": {
       "loadRewards": "Erreur lors de la récupération des récompenses",
