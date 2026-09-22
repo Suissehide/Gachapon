@@ -1,8 +1,10 @@
 import { Gem } from 'lucide-react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { useTokenBalance } from '../../queries/useGacha.ts'
 
 export function PityCard() {
+  const { t } = useTranslation('gacha')
   const { data: balance } = useTokenBalance()
 
   const current = balance?.pityCurrent ?? 0
@@ -22,23 +24,26 @@ export function PityCard() {
       <div className="flex flex-col gap-1">
         <span className="flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-text-light">
           <Gem className="h-3.5 w-3.5 text-secondary" />
-          Garantie
+          {t('gacha:cards.pity')}
         </span>
         <span className="text-[13px] text-text-light">
           {threshold === 0 ? (
-            '—'
+            t('gacha:cards.pityNone')
           ) : remaining === 1 ? (
             <b className="font-display text-[15px] text-secondary">
-              Légendaire au prochain tirage !
+              {t('gacha:cards.pityNext')}
             </b>
           ) : (
-            <>
-              Légendaire dans{' '}
-              <b className="font-display text-[17px] tabular-nums text-secondary">
-                {remaining}
-              </b>{' '}
-              tirages
-            </>
+            <Trans
+              t={t}
+              i18nKey="gacha:cards.pityIn"
+              count={remaining}
+              components={{
+                count: (
+                  <b className="font-display text-[17px] tabular-nums text-secondary" />
+                ),
+              }}
+            />
           )}
         </span>
       </div>

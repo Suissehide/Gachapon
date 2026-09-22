@@ -10,5 +10,70 @@
   },
   "toasts": {
     "pullErrorTitle": "Erreur lors du tirage"
+  },
+  "cards": {
+    "tokens": "Jetons",
+    "tokensFull": "Stockage plein",
+    "tokensNextIn": "+1 jeton dans <time>{{time}}</time>",
+    "tokensSoon": "bientôt",
+    "pity": "Garantie",
+    "pityNone": "—",
+    "pityNext": "Légendaire au prochain tirage !",
+    "pityIn_one": "Légendaire dans <count>{{count}}</count> tirage",
+    "pityIn_other": "Légendaire dans <count>{{count}}</count> tirages",
+    "streak": "Streak",
+    "level": "Niveau",
+    "levelMax": "MAX",
+    "xpToNext": "{{xp}} XP avant niveau {{level}}",
+    "quests": "Quêtes",
+    "achievements": "Succès",
+    "boost": "Boost",
+    "boostPulls_one": "{{count}} tirage",
+    "boostPulls_other": "{{count}} tirages"
+  },
+  "feed": {
+    "variantBrilliant": "DORÉ",
+    "variantHolographic": "HOLO"
+  },
+  "recents": {
+    "title": "Tirages récents",
+    "epicPlus": "ÉPIQUE+",
+    "teamLabel": "Équipe",
+    "allTeams": "Toutes",
+    "empty": "Aucun tirage récent…",
+    "prevTeamsAria": "Équipes précédentes",
+    "nextTeamsAria": "Équipes suivantes"
+  },
+  "rates": {
+    "title": "Taux de drop",
+    "pityNote": "Après {{count}} tirages sans légendaire, le suivant est garanti",
+    "baseNote": "Taux de base, hors bonus de l'arbre de compétences."
+  },
+  "wagerBanner": {
+    "betsOnYou_one": "Un pari posé sur toi",
+    "betsOnYou_other": "{{count}} paris posés sur toi",
+    "betLine": "{{yes}} misent que tu sors au moins {{rarity}}",
+    "betLineAgainst": ", {{no}} que non",
+    "duelInProgress": "Duel en cours",
+    "duelDone": "Tes tirages comptés sont faits, on attend l'adversaire",
+    "duelLeft_one": "Il te reste {{count}} tirage compté",
+    "duelLeft_other": "Il te reste {{count}} tirages comptés",
+    "viewDuel": "Voir le duel"
+  },
+  "page": {
+    "breadcrumbPull": "Tirage",
+    "title": "Tirage",
+    "subtitle": "Dépense tes jetons pour tirer de nouvelles cartes.",
+    "ratesButtonTitle": "Voir les taux de drop",
+    "ratesButton": "Taux de drop",
+    "pullX1": "Tirage x1",
+    "pullX10": "Tirage x10",
+    "soundOff": "Couper le son",
+    "soundOn": "Activer le son du tirage",
+    "soundOnShort": "Activer le son",
+    "replayTutorial": "Revoir le tutoriel",
+    "skipAnimations": "Sauter les animations",
+    "pullingTitle": "Tirage en cours…",
+    "serverNotResponding": "Le serveur ne répond pas."
   }
 }

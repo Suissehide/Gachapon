@@ -1,9 +1,11 @@
 import { useNavigate } from '@tanstack/react-router'
 import { ChevronRight, Zap } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { useShopItems } from '../../queries/useShop.ts'
 
 export function BoostCard() {
+  const { t } = useTranslation('gacha')
   const navigate = useNavigate()
   const { data } = useShopItems()
 
@@ -27,7 +29,7 @@ export function BoostCard() {
       <div className="flex items-baseline justify-between gap-2">
         <span className="flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-text-light">
           <Zap className="h-3.5 w-3.5 text-amber-400" />
-          Boost
+          {t('gacha:cards.boost')}
         </span>
         <ChevronRight className="h-3 w-3 text-text-light/40 transition-colors group-hover:text-text-light" />
       </div>
@@ -39,7 +41,9 @@ export function BoostCard() {
           >
             <span className="flex-1 truncate text-text-light">{item.name}</span>
             <span className="flex-shrink-0 font-mono text-[11px] tabular-nums text-text-light/60">
-              {item.activeBoost?.pullsRemaining} tirages
+              {t('gacha:cards.boostPulls', {
+                count: item.activeBoost?.pullsRemaining ?? 0,
+              })}
             </span>
           </div>
         ))}

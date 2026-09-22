@@ -1,9 +1,11 @@
 import { useNavigate } from '@tanstack/react-router'
 import { Check, ChevronRight, Circle, Target } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { useQuests } from '../../queries/useQuests.ts'
 
 export function QuestsCard() {
+  const { t } = useTranslation('gacha')
   const navigate = useNavigate()
   const { data: quests, isPending } = useQuests()
 
@@ -22,7 +24,7 @@ export function QuestsCard() {
       <div className="flex items-baseline justify-between gap-2">
         <span className="flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-text-light">
           <Target className="h-3.5 w-3.5 text-emerald-500" />
-          Quêtes
+          {t('gacha:cards.quests')}
         </span>
         <span className="flex items-center gap-1 font-display text-xl font-extrabold tabular-nums leading-none">
           {completedCount}

@@ -1,11 +1,13 @@
 import { ChevronRight, Flame } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { cn } from '../../libs/utils.ts'
 import { useStreakSummary } from '../../queries/useStreak.ts'
 import { StreakSummaryModal } from '../streak/StreakSummaryModal.tsx'
 
 export function StreakCard() {
+  const { t } = useTranslation('gacha')
   const [modalOpen, setModalOpen] = useState(false)
   const { data: streak } = useStreakSummary()
 
@@ -22,7 +24,7 @@ export function StreakCard() {
         <div className="flex items-baseline justify-between gap-2">
           <span className="flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-text-light">
             <Flame className="h-3.5 w-3.5 text-orange-400" />
-            Streak
+            {t('gacha:cards.streak')}
           </span>
           <span className="flex items-center gap-1 font-display text-xl font-extrabold tabular-nums leading-none">
             {cycleDay}

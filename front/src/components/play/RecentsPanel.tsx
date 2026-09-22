@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { TeamsApi } from '../../api/teams.api'
 import { type FeedEntry, useLiveFeed } from '../../hooks/useLiveFeed'
@@ -12,6 +13,7 @@ const EPIC_PLUS = ['EPIC', 'LEGENDARY']
 const MAX_TEAM_CHIPS = 4
 
 export function RecentsPanel({ frozen = false }: { frozen?: boolean }) {
+  const { t } = useTranslation('gacha')
   const [epicOnly, setEpicOnly] = useState(false)
   const [teamId, setTeamId] = useState<string | undefined>()
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -60,7 +62,7 @@ export function RecentsPanel({ frozen = false }: { frozen?: boolean }) {
       <div className="flex items-center justify-between gap-2">
         <span className="flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-text-light">
           <span className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_0_3px_rgba(34,197,94,0.18)]" />
-          Tirages récents
+          {t('gacha:recents.title')}
         </span>
         <button
           type="button"
@@ -72,7 +74,7 @@ export function RecentsPanel({ frozen = false }: { frozen?: boolean }) {
           )}
           onClick={() => setEpicOnly((e) => !e)}
         >
-          ÉPIQUE+
+          {t('gacha:recents.epicPlus')}
         </button>
       </div>
 
@@ -80,21 +82,21 @@ export function RecentsPanel({ frozen = false }: { frozen?: boolean }) {
       {teams.length > 0 && (
         <div className="mt-2.5 flex items-center gap-1 border-b border-border pb-2.5">
           <span className="mr-1 shrink-0 font-mono text-[9px] font-semibold uppercase tracking-[0.16em] text-text-light/60">
-            Équipe
+            {t('gacha:recents.teamLabel')}
           </span>
           {teams.length <= MAX_TEAM_CHIPS ? (
             <TeamChipStrip>
               <TeamChip
-                label="Toutes"
+                label={t('gacha:recents.allTeams')}
                 active={teamId === undefined}
                 onClick={() => setTeamId(undefined)}
               />
-              {teams.map((t) => (
+              {teams.map((team) => (
                 <TeamChip
-                  key={t.id}
-                  label={t.name}
-                  active={teamId === t.id}
-                  onClick={() => setTeamId(t.id)}
+                  key={team.id}
+                  label={team.name}
+                  active={teamId === team.id}
+                  onClick={() => setTeamId(team.id)}
                 />
               ))}
             </TeamChipStrip>
@@ -102,8 +104,8 @@ export function RecentsPanel({ frozen = false }: { frozen?: boolean }) {
             <Select
               id="recents-team-select"
               options={[
-                { value: 'all', label: 'Toutes' },
-                ...teams.map((t) => ({ value: t.id, label: t.name })),
+                { value: 'all', label: t('gacha:recents.allTeams') },
+                ...teams.map((team) => ({ value: team.id, label: team.name })),
               ]}
               value={teamId ?? 'all'}
               onValueChange={(v) => setTeamId(v === 'all' ? undefined : v)}
@@ -117,7 +119,7 @@ export function RecentsPanel({ frozen = false }: { frozen?: boolean }) {
       {/* Liste scrollable + fondu bas */}
       {shownEntries.length === 0 ? (
         <p className="flex flex-1 items-center justify-center py-6 text-[13px] italic text-text-light/60">
-          Aucun tirage récent…
+          {t('gacha:recents.empty')}
         </p>
       ) : (
         <div className="mt-1 min-h-0 flex-1 overflow-y-auto pb-3.5 [mask-image:linear-gradient(180deg,#000_calc(100%-26px),transparent_100%)] [scrollbar-width:thin]">
@@ -218,12 +220,15 @@ function StripArrow({
   hidden: boolean
   onClick: () => void
 }) {
+  const { t } = useTranslation('gacha')
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label={
-        direction === 'left' ? 'Équipes précédentes' : 'Équipes suivantes'
+        direction === 'left'
+          ? t('gacha:recents.prevTeamsAria')
+          : t('gacha:recents.nextTeamsAria')
       }
       className={cn(
         'absolute z-[2] flex h-5 w-5 cursor-pointer items-center justify-center rounded-full bg-card text-text-light/70 shadow-sm transition-opacity hover:text-text',

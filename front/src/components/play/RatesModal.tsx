@@ -1,4 +1,5 @@
 import { Gem } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { RARITY_FR } from '../../constants/achievements.constant.ts'
 import { useDropRates, useTokenBalance } from '../../queries/useGacha.ts'
@@ -16,6 +17,7 @@ type Props = {
 }
 
 export function RatesModal({ open, onClose }: Props) {
+  const { t } = useTranslation('gacha')
   const { data } = useDropRates()
   const { data: balance } = useTokenBalance()
   const rates = data?.rates ?? []
@@ -25,7 +27,7 @@ export function RatesModal({ open, onClose }: Props) {
       <PopupContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden">
         <PopupHeader>
           <PopupTitle icon={<Gem className="h-4 w-4 text-secondary" />}>
-            Taux de drop
+            {t('gacha:rates.title')}
           </PopupTitle>
         </PopupHeader>
         <PopupBody className="min-h-0 overflow-y-auto rounded-b-xl">
@@ -58,12 +60,11 @@ export function RatesModal({ open, onClose }: Props) {
           </div>
           {balance != null && balance.pityThreshold > 0 && (
             <p className="mt-4 text-center font-mono text-[10px] uppercase tracking-[0.14em] text-text-light">
-              Après {balance.pityThreshold} tirages sans légendaire, le suivant
-              est garanti
+              {t('gacha:rates.pityNote', { count: balance.pityThreshold })}
             </p>
           )}
           <p className="mt-1.5 text-center text-[10px] text-text-light/60">
-            Taux de base, hors bonus de l'arbre de compétences.
+            {t('gacha:rates.baseNote')}
           </p>
         </PopupBody>
       </PopupContent>

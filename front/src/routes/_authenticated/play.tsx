@@ -15,6 +15,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { CapsuleStage } from '../../components/machine/capsule/CapsuleStage'
 import { capsuleAudio } from '../../components/machine/capsule/capsuleAudio'
@@ -45,6 +46,7 @@ import { apiUrl as API_URL } from '../../constants/config.constant.ts'
 import { TOAST_SEVERITY } from '../../constants/ui.constant.ts'
 import { useStoredState } from '../../hooks/useStoredState.ts'
 import { useToast } from '../../hooks/useToast'
+import i18n from '../../i18n/index.ts'
 import { wsClient } from '../../lib/ws'
 import { preloadImages } from '../../libs/preloadImages.ts'
 import { cn } from '../../libs/utils.ts'
@@ -107,6 +109,7 @@ const SKIP_KEY = 'play.skipAnimations'
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: page-level orchestrator coordinates multiple state machines and phase branches
 function Play() {
+  const { t } = useTranslation('gacha')
   const [phase, setPhase] = useState<Phase>('idle')
   const [result, setResult] = useState<PullBatchResult | null>(null)
   // Palier de rareté teasé par la capsule (meilleure rareté du lot) — null
@@ -209,8 +212,8 @@ function Play() {
       attempts++
       if (attempts > 200) {
         toast({
-          title: 'Tirage en cours…',
-          message: 'Le serveur ne répond pas.',
+          title: i18n.t('gacha:page.pullingTitle'),
+          message: i18n.t('gacha:page.serverNotResponding'),
           severity: TOAST_SEVERITY.ERROR,
         })
         setPhase('idle')
@@ -436,16 +439,19 @@ function Play() {
       {/* En-tête */}
       <header className="relative z-1 mx-auto w-full max-w-5xl px-4">
         <PageHeader
-          breadcrumbs={[{ label: 'Gachapon' }, { label: 'Tirage' }]}
-          title="Tirage"
-          subtitle="Dépense tes jetons pour tirer de nouvelles cartes."
+          breadcrumbs={[
+            { label: 'Gachapon' },
+            { label: t('gacha:page.breadcrumbPull') },
+          ]}
+          title={t('gacha:page.title')}
+          subtitle={t('gacha:page.subtitle')}
           right={
             <InfoButton
               icon={Gem}
               onClick={() => setRatesOpen(true)}
-              title="Voir les taux de drop"
+              title={t('gacha:page.ratesButtonTitle')}
             >
-              Taux de drop
+              {t('gacha:page.ratesButton')}
             </InfoButton>
           }
         />
@@ -508,7 +514,7 @@ function Play() {
               variant="none"
               className="h-auto flex-1 whitespace-nowrap rounded-2xl border-solid border-[1.5px] border-border-dark bg-card px-7 py-4 text-[17px] font-bold text-text transition-all hover:-translate-y-0.5 hover:border-text-light disabled:opacity-50 sm:flex-none"
             >
-              Tirage x1
+              {t('gacha:page.pullX1')}
               <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-text/6 px-2.5 py-1 font-mono text-xs text-text-light">
                 <Ticket className="h-3.5 w-3.5" />
                 {pullCost}
@@ -520,7 +526,7 @@ function Play() {
               variant="none"
               className="h-auto flex-1 whitespace-nowrap rounded-2xl bg-linear-to-br from-primary to-orange-500 px-7 py-4 text-[17px] font-bold text-white shadow-[0_14px_30px_-12px_rgba(245,158,11,0.65)] transition-all hover:-translate-y-0.5 disabled:opacity-50 sm:flex-none"
             >
-              Tirage x10
+              {t('gacha:page.pullX10')}
               <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-white/25 px-2.5 py-1 font-mono text-xs text-white">
                 <Ticket className="h-3.5 w-3.5" />
                 {pullCost * 10}
@@ -542,10 +548,14 @@ function Play() {
         <button
           type="button"
           aria-label={
-            soundOn === 'true' ? 'Couper le son' : 'Activer le son du tirage'
+            soundOn === 'true'
+              ? t('gacha:page.soundOff')
+              : t('gacha:page.soundOn')
           }
           title={
-            soundOn === 'true' ? 'Couper le son' : 'Activer le son du tirage'
+            soundOn === 'true'
+              ? t('gacha:page.soundOff')
+              : t('gacha:page.soundOn')
           }
           className={cn(
             'inline-flex cursor-pointer items-center rounded-full border bg-card p-2.5 shadow-md transition-colors',
@@ -563,8 +573,8 @@ function Play() {
         </button>
         <button
           type="button"
-          aria-label="Revoir le tutoriel"
-          title="Revoir le tutoriel"
+          aria-label={t('gacha:page.replayTutorial')}
+          title={t('gacha:page.replayTutorial')}
           className="inline-flex cursor-pointer items-center rounded-full border border-border-dark bg-card p-2.5 text-text-light shadow-md transition-colors hover:text-text"
           onClick={() => setTutorialOpen(true)}
         >
@@ -572,7 +582,7 @@ function Play() {
         </button>
         <button
           type="button"
-          title="Sauter les animations"
+          title={t('gacha:page.skipAnimations')}
           className={cn(
             'inline-flex cursor-pointer items-center gap-2 rounded-full border bg-card px-3.5 py-2.5 text-[12.5px] font-semibold shadow-md transition-colors',
             skipAnimations
@@ -583,7 +593,7 @@ function Play() {
         >
           <SkipForward className="h-3.5 w-3.5" />
           <span className="hidden min-[721px]:inline">
-            Sauter les animations
+            {t('gacha:page.skipAnimations')}
           </span>
         </button>
       </div>
@@ -647,8 +657,16 @@ function Play() {
           {/* Mute — visible pendant tout le cycle de tirage */}
           <button
             type="button"
-            aria-label={soundOn === 'true' ? 'Couper le son' : 'Activer le son'}
-            title={soundOn === 'true' ? 'Couper le son' : 'Activer le son'}
+            aria-label={
+              soundOn === 'true'
+                ? t('gacha:page.soundOff')
+                : t('gacha:page.soundOnShort')
+            }
+            title={
+              soundOn === 'true'
+                ? t('gacha:page.soundOff')
+                : t('gacha:page.soundOnShort')
+            }
             className="absolute bottom-4 left-4 z-50 inline-flex cursor-pointer items-center rounded-full border border-white/20 bg-white/10 p-2.5 text-white/80 backdrop-blur transition-colors hover:text-white"
             onClick={() => setSoundOn(soundOn === 'true' ? 'false' : 'true')}
           >
@@ -662,7 +680,9 @@ function Play() {
           {/* Pulling spinner (skip-anim path) */}
           {phase === 'pulling' && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <p className="text-sm text-white/70">Tirage en cours…</p>
+              <p className="text-sm text-white/70">
+                {t('gacha:page.pullingTitle')}
+              </p>
             </div>
           )}
 

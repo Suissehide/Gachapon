@@ -2,7 +2,7 @@ import dayjs from 'dayjs'
 import { HoverCard } from 'radix-ui'
 
 import { RARITY_TEXT_COLORS } from '../../constants/card.constant'
-import { currentLocale } from '../../i18n/index.ts'
+import i18n, { currentLocale } from '../../i18n/index.ts'
 import {
   type FeedEntry,
   localizedFeedCardName,
@@ -12,11 +12,11 @@ import { TcgCardFace } from '../shared/tcg-card/TcgCardFace'
 
 const VARIANT_TAGS: Record<string, { label: string; cls: string }> = {
   BRILLIANT: {
-    label: 'DORÉ',
+    label: i18n.t('gacha:feed.variantBrilliant'),
     cls: 'border-primary/40 bg-primary/10 text-primary-dark',
   },
   HOLOGRAPHIC: {
-    label: 'HOLO',
+    label: i18n.t('gacha:feed.variantHolographic'),
     cls: 'border-cyan-500/40 bg-cyan-500/10 text-cyan-600',
   },
 }

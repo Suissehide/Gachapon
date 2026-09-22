@@ -10,5 +10,70 @@
   },
   "toasts": {
     "pullErrorTitle": "Error during the pull"
+  },
+  "cards": {
+    "tokens": "Tokens",
+    "tokensFull": "Storage full",
+    "tokensNextIn": "+1 token in <time>{{time}}</time>",
+    "tokensSoon": "soon",
+    "pity": "Pity",
+    "pityNone": "—",
+    "pityNext": "Legendary on the next pull!",
+    "pityIn_one": "Legendary in <count>{{count}}</count> pull",
+    "pityIn_other": "Legendary in <count>{{count}}</count> pulls",
+    "streak": "Streak",
+    "level": "Level",
+    "levelMax": "MAX",
+    "xpToNext": "{{xp}} XP to level {{level}}",
+    "quests": "Quests",
+    "achievements": "Achievements",
+    "boost": "Boost",
+    "boostPulls_one": "{{count}} pull",
+    "boostPulls_other": "{{count}} pulls"
+  },
+  "feed": {
+    "variantBrilliant": "GOLDEN",
+    "variantHolographic": "HOLO"
+  },
+  "recents": {
+    "title": "Recent pulls",
+    "epicPlus": "EPIC+",
+    "teamLabel": "Team",
+    "allTeams": "All",
+    "empty": "No recent pull…",
+    "prevTeamsAria": "Previous teams",
+    "nextTeamsAria": "Next teams"
+  },
+  "rates": {
+    "title": "Drop rates",
+    "pityNote": "After {{count}} pulls without a legendary, the next one is guaranteed",
+    "baseNote": "Base rates, skill tree bonuses excluded."
+  },
+  "wagerBanner": {
+    "betsOnYou_one": "One bet placed on you",
+    "betsOnYou_other": "{{count}} bets placed on you",
+    "betLine": "{{yes}} betting you pull at least {{rarity}}",
+    "betLineAgainst": ", {{no}} betting you don't",
+    "duelInProgress": "Duel in progress",
+    "duelDone": "Your counted pulls are done, waiting for your opponent",
+    "duelLeft_one": "You have {{count}} counted pull left",
+    "duelLeft_other": "You have {{count}} counted pulls left",
+    "viewDuel": "View the duel"
+  },
+  "page": {
+    "breadcrumbPull": "Pull",
+    "title": "Pull",
+    "subtitle": "Spend your tokens to pull new cards.",
+    "ratesButtonTitle": "See the drop rates",
+    "ratesButton": "Drop rates",
+    "pullX1": "Pull x1",
+    "pullX10": "Pull x10",
+    "soundOff": "Mute the sound",
+    "soundOn": "Turn on the pull sound",
+    "soundOnShort": "Turn on the sound",
+    "replayTutorial": "Replay the tutorial",
+    "skipAnimations": "Skip animations",
+    "pullingTitle": "Pull in progress…",
+    "serverNotResponding": "The server is not responding."
   }
 }

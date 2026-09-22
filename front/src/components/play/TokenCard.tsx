@@ -1,10 +1,13 @@
 import { Ticket } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 
+import i18n from '../../i18n/index.ts'
 import { cn } from '../../libs/utils.ts'
 import { useTokenBalance } from '../../queries/useGacha.ts'
 
 export function TokenCard() {
+  const { t } = useTranslation('gacha')
   const { data: balance } = useTokenBalance()
   const [now, setNow] = useState(() => Date.now())
 
@@ -30,7 +33,7 @@ export function TokenCard() {
       <div className="flex items-baseline justify-between gap-2">
         <span className="flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-text-light">
           <Ticket className="h-3.5 w-3.5 text-primary" />
-          Jetons
+          {t('gacha:cards.tokens')}
         </span>
         <span className="font-display text-2xl font-extrabold tabular-nums leading-none">
           {tokens}
@@ -57,11 +60,14 @@ export function TokenCard() {
       </div>
       <p className="mt-2.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text-light">
         {isFull ? (
-          'Stockage plein'
+          t('gacha:cards.tokensFull')
         ) : timeLeft ? (
-          <>
-            +1 jeton dans <b className="text-primary-dark">{timeLeft}</b>
-          </>
+          <Trans
+            t={t}
+            i18nKey="gacha:cards.tokensNextIn"
+            values={{ time: timeLeft }}
+            components={{ time: <b className="text-primary-dark" /> }}
+          />
         ) : null}
       </p>
     </div>
@@ -71,7 +77,7 @@ export function TokenCard() {
 function formatTimeLeft(isoDate: string, now = Date.now()): string {
   const diff = new Date(isoDate).getTime() - now
   if (diff <= 0) {
-    return 'bientôt'
+    return i18n.t('gacha:cards.tokensSoon')
   }
   const secondsLeft = Math.floor(diff / 1000)
   const h = Math.floor(secondsLeft / 3600)

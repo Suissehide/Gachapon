@@ -1,9 +1,11 @@
 import { useNavigate } from '@tanstack/react-router'
 import { Award, ChevronRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { useAchievements } from '../../queries/useAchievements.ts'
 
 export function AchievementsCard() {
+  const { t } = useTranslation('gacha')
   const navigate = useNavigate()
   const { data, isPending } = useAchievements()
 
@@ -23,7 +25,7 @@ export function AchievementsCard() {
       <div className="flex items-baseline justify-between gap-2">
         <span className="flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-text-light">
           <Award className="h-3.5 w-3.5 text-amber-500" />
-          Succès
+          {t('gacha:cards.achievements')}
         </span>
         <span className="flex items-center gap-1 font-display text-xl font-extrabold tabular-nums leading-none">
           {unlocked}

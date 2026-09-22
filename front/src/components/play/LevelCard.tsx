@@ -1,4 +1,5 @@
 import { Star } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import {
   DEFAULT_ECONOMY,
@@ -9,6 +10,7 @@ import { useAuthStore } from '../../stores/auth.store.ts'
 import { computeLevel, xpForLevel } from '../../utils/level.ts'
 
 export function LevelCard() {
+  const { t } = useTranslation('gacha')
   const username = useAuthStore((s) => s.user?.username ?? '')
   const { data: profile } = useUserProfile(username)
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
@@ -30,13 +32,13 @@ export function LevelCard() {
       <div className="flex items-baseline justify-between gap-2">
         <span className="flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-text-light">
           <Star className="h-3.5 w-3.5 text-accent" />
-          Niveau
+          {t('gacha:cards.level')}
         </span>
         <span className="flex items-center gap-1.5 font-display text-xl font-extrabold tabular-nums leading-none">
           {level}
           {isMaxLevel && (
             <em className="rounded-full bg-linear-to-br from-primary to-secondary px-1.5 py-0.5 font-mono text-[8.5px] font-bold not-italic tracking-[0.14em] text-white">
-              MAX
+              {t('gacha:cards.levelMax')}
             </em>
           )}
         </span>
@@ -49,7 +51,10 @@ export function LevelCard() {
       </div>
       {!isMaxLevel && (
         <p className="mt-1 text-right font-mono text-[9px] tabular-nums text-text-light/60">
-          {xpNext - xp} XP avant niveau {level + 1}
+          {t('gacha:cards.xpToNext', {
+            xp: xpNext - xp,
+            level: level + 1,
+          })}
         </p>
       )}
     </div>

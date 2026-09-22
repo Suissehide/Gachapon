@@ -1,11 +1,12 @@
 import { Link } from '@tanstack/react-router'
 import { Swords, Target } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import type { BetView } from '../../api/wagers.api.ts'
 import { currentLocale } from '../../i18n/index.ts'
 import { duelSides, pullsLeftLabel } from '../../libs/duel.ts'
 import { RARITY_LABEL_FR } from '../../libs/rarity.ts'
-import { formatNumber, plural } from '../../libs/utils.ts'
+import { formatNumber } from '../../libs/utils.ts'
 import { useMyDuel } from '../../queries/useMyDuel.ts'
 import { useWagers } from '../../queries/useWagers.ts'
 import { Button } from '../ui/button.tsx'
@@ -46,6 +47,7 @@ function useBetsOnMe(teamIds: string[]): BetView[] {
  * de notification, que le joueur ouvre quand il a fini.
  */
 export function WagerBanner() {
+  const { t } = useTranslation('gacha')
   const { duel, teamId, teamIds } = useMyDuel()
   const betsOnMe = useBetsOnMe(teamIds)
 
@@ -55,9 +57,7 @@ export function WagerBanner() {
         <div className="flex flex-col gap-2 rounded-2xl border border-primary/30 bg-card px-4 py-3">
           <div className="flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
             <Target className="h-3.5 w-3.5 shrink-0 text-primary" />
-            {betsOnMe.length > 1
-              ? `${betsOnMe.length} paris posés sur toi`
-              : 'Un pari posé sur toi'}
+            {t('gacha:wagerBanner.betsOnYou', { count: betsOnMe.length })}
           </div>
           <ul className="flex flex-col gap-1">
             {betsOnMe.map((bet) => (
@@ -69,9 +69,14 @@ export function WagerBanner() {
                     marché, et savoir que l'équipe mise surtout contre toi
                     n'est pas la même information qu'une cote. */}
                 <span className="truncate">
-                  {fr(bet.poolYes)} misent que tu sors au moins{' '}
-                  {RARITY_LABEL_FR[bet.minRarity] ?? bet.minRarity}
-                  {bet.poolNo > 0 && `, ${fr(bet.poolNo)} que non`}
+                  {t('gacha:wagerBanner.betLine', {
+                    yes: fr(bet.poolYes),
+                    rarity: RARITY_LABEL_FR[bet.minRarity] ?? bet.minRarity,
+                  })}
+                  {bet.poolNo > 0 &&
+                    t('gacha:wagerBanner.betLineAgainst', {
+                      no: fr(bet.poolNo),
+                    })}
                 </span>
                 <span className="font-mono text-xs text-text-light">
                   {pullsLeftLabel(bet.pullsSeen, bet.pullWindow)}
@@ -98,7 +103,7 @@ export function WagerBanner() {
             <Swords className="h-5 w-5 shrink-0 text-primary" />
             <div className="min-w-0">
               <div className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-                Duel en cours
+                {t('gacha:wagerBanner.duelInProgress')}
               </div>
               <div className="truncate font-display text-base font-bold text-text">
                 {me.username} {fr(myScore)}
@@ -110,12 +115,12 @@ export function WagerBanner() {
           <div className="flex items-center gap-3">
             <span className="font-mono text-xs text-text-light">
               {left === 0
-                ? "Tes tirages comptés sont faits, on attend l'adversaire"
-                : `Il te reste ${left} tirage${plural(left)} compté${plural(left)}`}
+                ? t('gacha:wagerBanner.duelDone')
+                : t('gacha:wagerBanner.duelLeft', { count: left })}
             </span>
             <Button variant="outline" size="sm" asChild>
               <Link to="/team/$id" params={{ id: teamId }}>
-                Voir le duel
+                {t('gacha:wagerBanner.viewDuel')}
               </Link>
             </Button>
           </div>
