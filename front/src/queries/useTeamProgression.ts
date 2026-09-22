@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { TeamPerkKey } from '../api/teamProgression.api.ts'
 import { TeamProgressionApi } from '../api/teamProgression.api.ts'
@@ -80,6 +81,7 @@ export function useTeamRaidHistory(teamId: string | undefined) {
 export function useSpendPerk(teamId: string) {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('team')
   return useMutation({
     mutationFn: (key: TeamPerkKey) => TeamProgressionApi.spendPerk(teamId, key),
     onSuccess: () => {
@@ -87,7 +89,7 @@ export function useSpendPerk(teamId: string) {
     },
     onError: (e: Error) =>
       toast({
-        title: 'Investissement impossible',
+        title: t('toasts.spendPerkErrorTitle'),
         message: e.message,
         severity: TOAST_SEVERITY.ERROR,
       }),
@@ -98,6 +100,7 @@ export function useSpendPerk(teamId: string) {
 export function useResetPerks(teamId: string) {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('team')
   return useMutation({
     mutationFn: () => TeamProgressionApi.resetPerks(teamId),
     onSuccess: () => {
@@ -105,7 +108,7 @@ export function useResetPerks(teamId: string) {
     },
     onError: (e: Error) =>
       toast({
-        title: 'Réinitialisation impossible',
+        title: t('toasts.resetPerksErrorTitle'),
         message: e.message,
         severity: TOAST_SEVERITY.ERROR,
       }),

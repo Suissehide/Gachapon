@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { BetSide } from '../api/wagers.api.ts'
 import { WagersApi } from '../api/wagers.api.ts'
@@ -171,6 +172,7 @@ export function useBetQuote(
 export function useJoinBet(teamId: string) {
   const queryClient = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('wagers')
   return useMutation({
     mutationFn: (input: { betId: string; side: BetSide; stake: number }) =>
       WagersApi.joinBet(teamId, input.betId, {
@@ -184,7 +186,7 @@ export function useJoinBet(teamId: string) {
     },
     onError: (error) => {
       toast({
-        title: 'Renchère refusée',
+        title: t('toasts.joinRefusedTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })

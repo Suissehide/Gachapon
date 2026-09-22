@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 
 import { TeamsApi } from '../api/teams.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
@@ -49,6 +50,7 @@ export const useTeam = (teamId: string | undefined) => {
 export const useCreateTeam = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('team')
   const fetchMe = useAuthStore((s) => s.fetchMe)
   return useMutation({
     mutationFn: (data: { name: string; description?: string }) =>
@@ -65,13 +67,13 @@ export const useCreateTeam = () => {
       qc.invalidateQueries({ queryKey: ['rewards', 'pending'] })
       void fetchMe()
       toast({
-        title: 'Équipe créée',
+        title: t('toasts.createdTitle'),
         severity: TOAST_SEVERITY.SUCCESS,
       })
     },
     onError: (error) => {
       toast({
-        title: "Erreur lors de la création de l'équipe",
+        title: t('toasts.createErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -82,6 +84,7 @@ export const useCreateTeam = () => {
 export const useUpdateTeam = (teamId: string) => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('team')
   return useMutation({
     mutationFn: (data: {
       name: string
@@ -92,14 +95,14 @@ export const useUpdateTeam = (teamId: string) => {
       qc.invalidateQueries({ queryKey: ['teams', teamId] })
       qc.invalidateQueries({ queryKey: ['teams'] })
       toast({
-        title: 'Équipe mise à jour',
-        message: 'Les modifications ont été enregistrées.',
+        title: t('toasts.updatedTitle'),
+        message: t('toasts.updatedMessage'),
         severity: TOAST_SEVERITY.SUCCESS,
       })
     },
     onError: (error) => {
       toast({
-        title: 'Erreur',
+        title: t('toasts.genericErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -110,6 +113,7 @@ export const useUpdateTeam = (teamId: string) => {
 export const useDeleteTeam = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('team')
   return useMutation({
     mutationFn: (teamId: string) => TeamsApi.deleteTeam(teamId),
     onSuccess: () => {
@@ -117,7 +121,7 @@ export const useDeleteTeam = () => {
     },
     onError: (error) => {
       toast({
-        title: "Erreur lors de la suppression de l'équipe",
+        title: t('toasts.deleteErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -128,6 +132,7 @@ export const useDeleteTeam = () => {
 export const useInviteMember = (teamId: string) => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('team')
   return useMutation({
     mutationFn: (data: { username?: string; email?: string }) =>
       TeamsApi.inviteMember(teamId, data),
@@ -136,7 +141,7 @@ export const useInviteMember = (teamId: string) => {
     },
     onError: (error) => {
       toast({
-        title: "Erreur lors de l'invitation",
+        title: t('toasts.inviteErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -147,6 +152,7 @@ export const useInviteMember = (teamId: string) => {
 export const useRemoveMember = (teamId: string) => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('team')
   return useMutation({
     mutationFn: (userId: string) => TeamsApi.removeMember(teamId, userId),
     onSuccess: () => {
@@ -154,7 +160,7 @@ export const useRemoveMember = (teamId: string) => {
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors du retrait du membre',
+        title: t('toasts.removeMemberErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -171,6 +177,7 @@ export const useRemoveMember = (teamId: string) => {
 export const useChangeMemberRole = (teamId: string) => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('team')
   return useMutation({
     mutationFn: ({
       userId,
@@ -182,17 +189,20 @@ export const useChangeMemberRole = (teamId: string) => {
     onSuccess: (_data, { role }) => {
       qc.invalidateQueries({ queryKey: ['teams', teamId] })
       toast({
-        title: role === 'ADMIN' ? 'Officier nommé' : 'Officier rétrogradé',
+        title:
+          role === 'ADMIN'
+            ? t('toasts.officerPromotedTitle')
+            : t('toasts.officerDemotedTitle'),
         message:
           role === 'ADMIN'
-            ? "Ce membre peut désormais exclure et investir les points de l'équipe."
-            : 'Ce membre redevient un membre simple.',
+            ? t('toasts.officerPromotedMessage')
+            : t('toasts.officerDemotedMessage'),
         severity: TOAST_SEVERITY.SUCCESS,
       })
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors du changement de rôle',
+        title: t('toasts.changeRoleErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -208,20 +218,21 @@ export const useChangeMemberRole = (teamId: string) => {
 export const useTransferOwnership = (teamId: string) => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('team')
   return useMutation({
     mutationFn: (newOwnerId: string) =>
       TeamsApi.transferOwnership(teamId, newOwnerId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['teams'] })
       toast({
-        title: 'Rôle de chef transmis',
-        message: 'Tu es désormais un membre simple de cette équipe.',
+        title: t('toasts.ownershipTransferredTitle'),
+        message: t('toasts.ownershipTransferredMessage'),
         severity: TOAST_SEVERITY.SUCCESS,
       })
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors du transfert',
+        title: t('toasts.transferErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -232,6 +243,7 @@ export const useTransferOwnership = (teamId: string) => {
 export const useLeaveTeam = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('team')
   return useMutation({
     mutationFn: (teamId: string) => TeamsApi.leaveTeam(teamId),
     onSuccess: () => {
@@ -239,7 +251,7 @@ export const useLeaveTeam = () => {
     },
     onError: (error) => {
       toast({
-        title: "Erreur lors du départ de l'équipe",
+        title: t('toasts.leaveErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -285,6 +297,7 @@ export const useMyInvitations = (enabled = true) => {
 export const useAcceptInvitation = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('team')
   const fetchMe = useAuthStore((s) => s.fetchMe)
   return useMutation({
     mutationFn: (token: string) => TeamsApi.acceptInvitation(token),
@@ -301,7 +314,7 @@ export const useAcceptInvitation = () => {
     },
     onError: (error) => {
       toast({
-        title: "Erreur lors de l'acceptation",
+        title: t('toasts.acceptInvitationErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -312,6 +325,7 @@ export const useAcceptInvitation = () => {
 export const useDeclineInvitation = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('team')
   return useMutation({
     mutationFn: (token: string) => TeamsApi.declineInvitation(token),
     onSuccess: () => {
@@ -319,7 +333,7 @@ export const useDeclineInvitation = () => {
     },
     onError: (error) => {
       toast({
-        title: "Erreur lors du refus de l'invitation",
+        title: t('toasts.declineInvitationErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -346,6 +360,7 @@ export const useTeamInvitations = (teamId: string | undefined) => {
 export const useResendInvitation = (teamId: string) => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('team')
   return useMutation({
     mutationFn: (token: string) => TeamsApi.resendInvitation(token),
     onSuccess: () => {
@@ -353,7 +368,7 @@ export const useResendInvitation = (teamId: string) => {
     },
     onError: (error) => {
       toast({
-        title: "Erreur lors du renvoi de l'invitation",
+        title: t('toasts.resendInvitationErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -382,6 +397,7 @@ export const useUserSearch = (q: string) => {
 export const useCancelInvitation = (teamId: string) => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('team')
   return useMutation({
     mutationFn: (token: string) => TeamsApi.cancelInvitation(token),
     onSuccess: () => {
@@ -389,7 +405,7 @@ export const useCancelInvitation = (teamId: string) => {
     },
     onError: (error) => {
       toast({
-        title: "Erreur lors de l'annulation",
+        title: t('toasts.cancelInvitationErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -400,6 +416,7 @@ export const useCancelInvitation = (teamId: string) => {
 export const useDeleteInvitation = (teamId: string) => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('team')
   return useMutation({
     mutationFn: (id: string) => TeamsApi.deleteInvitation(id),
     onSuccess: () => {
@@ -407,7 +424,7 @@ export const useDeleteInvitation = (teamId: string) => {
     },
     onError: (error) => {
       toast({
-        title: "Erreur lors de la suppression de l'invitation",
+        title: t('toasts.deleteInvitationErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })

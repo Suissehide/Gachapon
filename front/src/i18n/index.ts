@@ -4,27 +4,39 @@ import { initReactI18next } from 'react-i18next'
 import achievementsEn from './locales/en/achievements.json'
 import adminEn from './locales/en/admin.json'
 import authEn from './locales/en/auth.json'
+import collectionEn from './locales/en/collection.json'
 import combatEn from './locales/en/combat.json'
 import commonEn from './locales/en/common.json'
 import errorsEn from './locales/en/errors.json'
 import layoutEn from './locales/en/layout.json'
 import notificationsEn from './locales/en/notifications.json'
 import passivesEn from './locales/en/passives.json'
+import profileEn from './locales/en/profile.json'
+import rewardsEn from './locales/en/rewards.json'
 import shopEn from './locales/en/shop.json'
 import skillsEn from './locales/en/skills.json'
+import teamEn from './locales/en/team.json'
 import teamPerksEn from './locales/en/teamPerks.json'
+import wagersEn from './locales/en/wagers.json'
+import wishlistEn from './locales/en/wishlist.json'
 import achievementsFr from './locales/fr/achievements.json'
 import adminFr from './locales/fr/admin.json'
 import authFr from './locales/fr/auth.json'
+import collectionFr from './locales/fr/collection.json'
 import combatFr from './locales/fr/combat.json'
 import commonFr from './locales/fr/common.json'
 import errorsFr from './locales/fr/errors.json'
 import layoutFr from './locales/fr/layout.json'
 import notificationsFr from './locales/fr/notifications.json'
 import passivesFr from './locales/fr/passives.json'
+import profileFr from './locales/fr/profile.json'
+import rewardsFr from './locales/fr/rewards.json'
 import shopFr from './locales/fr/shop.json'
 import skillsFr from './locales/fr/skills.json'
+import teamFr from './locales/fr/team.json'
 import teamPerksFr from './locales/fr/teamPerks.json'
+import wagersFr from './locales/fr/wagers.json'
+import wishlistFr from './locales/fr/wishlist.json'
 
 /** Langues supportées, dans l'ordre d'affichage voulu pour un futur sélecteur. */
 export const SUPPORTED_LOCALES = ['fr', 'en'] as const
@@ -141,6 +153,12 @@ void i18next.use(initReactI18next).init({
       admin: adminFr,
       auth: authFr,
       combat: combatFr,
+      team: teamFr,
+      wagers: wagersFr,
+      collection: collectionFr,
+      wishlist: wishlistFr,
+      profile: profileFr,
+      rewards: rewardsFr,
     },
     en: {
       common: commonEn,
@@ -155,6 +173,12 @@ void i18next.use(initReactI18next).init({
       admin: adminEn,
       auth: authEn,
       combat: combatEn,
+      team: teamEn,
+      wagers: wagersEn,
+      collection: collectionEn,
+      wishlist: wishlistEn,
+      profile: profileEn,
+      rewards: rewardsEn,
     },
   },
   lng: localeFromPath(window.location.pathname),
@@ -172,6 +196,12 @@ void i18next.use(initReactI18next).init({
     'admin',
     'auth',
     'combat',
+    'team',
+    'wagers',
+    'collection',
+    'wishlist',
+    'profile',
+    'rewards',
   ],
   interpolation: {
     // React échappe déjà le rendu — un double échappement casserait les

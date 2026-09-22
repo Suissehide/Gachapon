@@ -6,6 +6,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { RecruitmentApi } from '../api/recruitment.api.ts'
 import type { TeamJoinRequest } from '../constants/teams.constant.ts'
@@ -117,20 +118,21 @@ export const useTeamJoinRequests = (teamId: string | undefined) => {
 export const useApplyToTeam = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('team')
   return useMutation({
     mutationFn: (teamId: string) => RecruitmentApi.apply(teamId),
     onSuccess: (request) => {
       qc.invalidateQueries({ queryKey: ['teams'] })
       qc.invalidateQueries({ queryKey: ['recruitment'] })
       toast({
-        title: 'Candidature envoyée',
-        message: `${request.teamName} recevra ta demande.`,
+        title: t('recruitment.appliedTitle'),
+        message: t('recruitment.appliedMessage', { team: request.teamName }),
         severity: TOAST_SEVERITY.SUCCESS,
       })
     },
     onError: (error) => {
       toast({
-        title: "Erreur lors de l'envoi de la candidature",
+        title: t('recruitment.applyErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -141,19 +143,20 @@ export const useApplyToTeam = () => {
 export const useCancelJoinRequest = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('team')
   return useMutation({
     mutationFn: (teamId: string) => RecruitmentApi.cancel(teamId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['teams'] })
       qc.invalidateQueries({ queryKey: ['recruitment'] })
       toast({
-        title: 'Candidature annulée',
+        title: t('recruitment.cancelledTitle'),
         severity: TOAST_SEVERITY.SUCCESS,
       })
     },
     onError: (error) => {
       toast({
-        title: "Erreur lors de l'annulation de la candidature",
+        title: t('recruitment.cancelErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -164,6 +167,7 @@ export const useCancelJoinRequest = () => {
 export const useAcceptJoinRequest = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('team')
   const fetchMe = useAuthStore((s) => s.fetchMe)
   return useMutation({
     mutationFn: (requestId: string) => RecruitmentApi.accept(requestId),
@@ -181,13 +185,13 @@ export const useAcceptJoinRequest = () => {
       qc.invalidateQueries({ queryKey: ['rewards', 'pending'] })
       void fetchMe()
       toast({
-        title: 'Candidature acceptée',
+        title: t('recruitment.acceptedTitle'),
         severity: TOAST_SEVERITY.SUCCESS,
       })
     },
     onError: (error) => {
       toast({
-        title: "Erreur lors de l'acceptation de la candidature",
+        title: t('recruitment.acceptErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -198,19 +202,20 @@ export const useAcceptJoinRequest = () => {
 export const useDeclineJoinRequest = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('team')
   return useMutation({
     mutationFn: (requestId: string) => RecruitmentApi.decline(requestId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['teams'] })
       qc.invalidateQueries({ queryKey: ['recruitment'] })
       toast({
-        title: 'Candidature refusée',
+        title: t('recruitment.declinedTitle'),
         severity: TOAST_SEVERITY.SUCCESS,
       })
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors du refus de la candidature',
+        title: t('recruitment.declineErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })

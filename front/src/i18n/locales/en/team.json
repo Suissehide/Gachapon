@@ -1,0 +1,39 @@
+{
+  "toasts": {
+    "createdTitle": "Team created",
+    "createErrorTitle": "Error creating the team",
+    "updatedTitle": "Team updated",
+    "updatedMessage": "Your changes have been saved.",
+    "genericErrorTitle": "Error",
+    "deleteErrorTitle": "Error deleting the team",
+    "inviteErrorTitle": "Error inviting",
+    "removeMemberErrorTitle": "Error removing the member",
+    "officerPromotedTitle": "Officer promoted",
+    "officerPromotedMessage": "This member can now kick members and spend the team's points.",
+    "officerDemotedTitle": "Officer demoted",
+    "officerDemotedMessage": "This member is now a regular member.",
+    "changeRoleErrorTitle": "Error changing the role",
+    "ownershipTransferredTitle": "Leader role transferred",
+    "ownershipTransferredMessage": "You are now a regular member of this team.",
+    "transferErrorTitle": "Error transferring",
+    "leaveErrorTitle": "Error leaving the team",
+    "acceptInvitationErrorTitle": "Error accepting",
+    "declineInvitationErrorTitle": "Error declining the invitation",
+    "resendInvitationErrorTitle": "Error resending the invitation",
+    "cancelInvitationErrorTitle": "Error cancelling",
+    "deleteInvitationErrorTitle": "Error deleting the invitation",
+    "spendPerkErrorTitle": "Could not invest",
+    "resetPerksErrorTitle": "Could not reset"
+  },
+  "recruitment": {
+    "appliedTitle": "Application sent",
+    "appliedMessage": "{{team}} will receive your request.",
+    "applyErrorTitle": "Error sending the application",
+    "cancelledTitle": "Application cancelled",
+    "cancelErrorTitle": "Error cancelling the application",
+    "acceptedTitle": "Application accepted",
+    "acceptErrorTitle": "Error accepting the application",
+    "declinedTitle": "Application declined",
+    "declineErrorTitle": "Error declining the application"
+  }
+}

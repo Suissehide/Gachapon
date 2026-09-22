@@ -1,0 +1,39 @@
+{
+  "toasts": {
+    "createdTitle": "Équipe créée",
+    "createErrorTitle": "Erreur lors de la création de l'équipe",
+    "updatedTitle": "Équipe mise à jour",
+    "updatedMessage": "Les modifications ont été enregistrées.",
+    "genericErrorTitle": "Erreur",
+    "deleteErrorTitle": "Erreur lors de la suppression de l'équipe",
+    "inviteErrorTitle": "Erreur lors de l'invitation",
+    "removeMemberErrorTitle": "Erreur lors du retrait du membre",
+    "officerPromotedTitle": "Officier nommé",
+    "officerPromotedMessage": "Ce membre peut désormais exclure et investir les points de l'équipe.",
+    "officerDemotedTitle": "Officier rétrogradé",
+    "officerDemotedMessage": "Ce membre redevient un membre simple.",
+    "changeRoleErrorTitle": "Erreur lors du changement de rôle",
+    "ownershipTransferredTitle": "Rôle de chef transmis",
+    "ownershipTransferredMessage": "Tu es désormais un membre simple de cette équipe.",
+    "transferErrorTitle": "Erreur lors du transfert",
+    "leaveErrorTitle": "Erreur lors du départ de l'équipe",
+    "acceptInvitationErrorTitle": "Erreur lors de l'acceptation",
+    "declineInvitationErrorTitle": "Erreur lors du refus de l'invitation",
+    "resendInvitationErrorTitle": "Erreur lors du renvoi de l'invitation",
+    "cancelInvitationErrorTitle": "Erreur lors de l'annulation",
+    "deleteInvitationErrorTitle": "Erreur lors de la suppression de l'invitation",
+    "spendPerkErrorTitle": "Investissement impossible",
+    "resetPerksErrorTitle": "Réinitialisation impossible"
+  },
+  "recruitment": {
+    "appliedTitle": "Candidature envoyée",
+    "appliedMessage": "{{team}} recevra ta demande.",
+    "applyErrorTitle": "Erreur lors de l'envoi de la candidature",
+    "cancelledTitle": "Candidature annulée",
+    "cancelErrorTitle": "Erreur lors de l'annulation de la candidature",
+    "acceptedTitle": "Candidature acceptée",
+    "acceptErrorTitle": "Erreur lors de l'acceptation de la candidature",
+    "declinedTitle": "Candidature refusée",
+    "declineErrorTitle": "Erreur lors du refus de la candidature"
+  }
+}
