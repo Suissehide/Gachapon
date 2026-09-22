@@ -1,5 +1,6 @@
 import { ArrowRight, Check, X } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { cn } from '../../libs/utils.ts'
 import { Button } from '../ui/button.tsx'
@@ -120,6 +121,7 @@ export function RespondButtons({
   acceptTitle: string
   declineTitle: string
 }) {
+  const { t } = useTranslation('notifications')
   const busy = accepting || declining
   return (
     <>
@@ -127,7 +129,7 @@ export function RespondButtons({
         type="button"
         variant="ghost"
         size="icon-sm"
-        aria-label="Accepter"
+        aria-label={t('respond.acceptAriaLabel')}
         title={acceptTitle}
         disabled={busy}
         onClick={onAccept}
@@ -139,7 +141,7 @@ export function RespondButtons({
         type="button"
         variant="ghost"
         size="icon-sm"
-        aria-label="Refuser"
+        aria-label={t('respond.declineAriaLabel')}
         title={declineTitle}
         disabled={busy}
         onClick={onDecline}

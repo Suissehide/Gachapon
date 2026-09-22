@@ -1,0 +1,54 @@
+{
+  "bellAriaLabel": "Notifications",
+  "panelTitle": "Notifications",
+  "empty": "Aucune notification",
+  "pendingAriaLabel": "{{count}} en attente",
+  "respond": {
+    "acceptAriaLabel": "Accepter",
+    "declineAriaLabel": "Refuser"
+  },
+  "quests": {
+    "title": "Quêtes à récupérer",
+    "openTitle": "Voir mes quêtes",
+    "subtitle_one": "1 quête prête à réclamer",
+    "subtitle_other": "{{count}} quêtes prêtes à réclamer"
+  },
+  "duelSettled": {
+    "title": "Duel terminé",
+    "openTitle": "Voir le résultat",
+    "draw": "Égalité contre {{opponent}}",
+    "win": "Tu bats {{opponent}}",
+    "loss": "{{opponent}} te bat"
+  },
+  "duelChallenge": {
+    "challengedBySuffix": "te défie",
+    "openTitle": "Voir le défi",
+    "subtitle": "{{team}} · {{count}} tirages",
+    "acceptTitle": "Relever le défi",
+    "declineTitle": "Refuser le défi"
+  },
+  "joinRequest": {
+    "wantsToJoin": "veut rejoindre",
+    "sentAgo": "Candidature envoyée {{time}}",
+    "openTitle": "Voir l’équipe",
+    "acceptTitle": "Accepter la candidature",
+    "declineTitle": "Refuser la candidature"
+  },
+  "acceptedJoin": {
+    "joinedPrefix": "Tu as rejoint",
+    "subtitle": "Ta candidature a été acceptée",
+    "openTitle": "Voir l’équipe"
+  },
+  "bet": {
+    "betOnYouSuffix": "a parié sur toi",
+    "subtitle": "{{rarity}} ou mieux en {{count}} tirages",
+    "openTitle": "Voir le pari"
+  },
+  "invitation": {
+    "invitedBySuffix": "t'invite à rejoindre",
+    "invitedGeneric": "Tu es invité(e) à rejoindre",
+    "openTitle": "Voir l'équipe",
+    "acceptTitle": "Accepter et rejoindre",
+    "declineTitle": "Refuser l'invitation"
+  }
+}

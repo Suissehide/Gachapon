@@ -1,0 +1,54 @@
+{
+  "bellAriaLabel": "Notifications",
+  "panelTitle": "Notifications",
+  "empty": "No notifications",
+  "pendingAriaLabel": "{{count}} pending",
+  "respond": {
+    "acceptAriaLabel": "Accept",
+    "declineAriaLabel": "Decline"
+  },
+  "quests": {
+    "title": "Quests to claim",
+    "openTitle": "View my quests",
+    "subtitle_one": "1 quest ready to claim",
+    "subtitle_other": "{{count}} quests ready to claim"
+  },
+  "duelSettled": {
+    "title": "Duel finished",
+    "openTitle": "View the result",
+    "draw": "Draw against {{opponent}}",
+    "win": "You beat {{opponent}}",
+    "loss": "{{opponent}} beats you"
+  },
+  "duelChallenge": {
+    "challengedBySuffix": "is challenging you",
+    "openTitle": "View the challenge",
+    "subtitle": "{{team}} · {{count}} pulls",
+    "acceptTitle": "Take up the challenge",
+    "declineTitle": "Decline the challenge"
+  },
+  "joinRequest": {
+    "wantsToJoin": "wants to join",
+    "sentAgo": "Application sent {{time}}",
+    "openTitle": "View the team",
+    "acceptTitle": "Accept the application",
+    "declineTitle": "Decline the application"
+  },
+  "acceptedJoin": {
+    "joinedPrefix": "You joined",
+    "subtitle": "Your application was accepted",
+    "openTitle": "View the team"
+  },
+  "bet": {
+    "betOnYouSuffix": "bet on you",
+    "subtitle": "{{rarity}} or better in {{count}} pulls",
+    "openTitle": "View the wager"
+  },
+  "invitation": {
+    "invitedBySuffix": "invites you to join",
+    "invitedGeneric": "You've been invited to join",
+    "openTitle": "View the team",
+    "acceptTitle": "Accept and join",
+    "declineTitle": "Decline the invitation"
+  }
+}

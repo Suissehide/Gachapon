@@ -10,9 +10,10 @@ import {
   Users,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { SettledDuelView } from '../../api/wagers.api.ts'
-import { currentLocale } from '../../i18n/index.ts'
+import i18n, { currentLocale } from '../../i18n/index.ts'
 import { RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { markDuelSeen, readSeenDuels } from '../../libs/seenDuels.ts'
 import {
@@ -61,10 +62,12 @@ function settledSubtitle(
   const theirScore = iAmChallenger ? duel.opponentScore : duel.challengerScore
   const verdict =
     duel.winnerId === null
-      ? `Égalité contre ${them.username}`
+      ? i18n.t('notifications:duelSettled.draw', { opponent: them.username })
       : duel.winnerId === meId
-        ? `Tu bats ${them.username}`
-        : `${them.username} te bat`
+        ? i18n.t('notifications:duelSettled.win', { opponent: them.username })
+        : i18n.t('notifications:duelSettled.loss', {
+            opponent: them.username,
+          })
   const locale = currentLocale()
   return `${verdict} ${formatNumber(myScore, locale)} – ${formatNumber(theirScore, locale)}`
 }
@@ -86,6 +89,7 @@ function JoinRequestItems({
   acceptJoin: ReturnType<typeof useAcceptJoinRequest>
   declineJoin: ReturnType<typeof useDeclineJoinRequest>
 }) {
+  const { t } = useTranslation('notifications')
   return (
     <>
       {requests.map((request) => (
@@ -99,13 +103,15 @@ function JoinRequestItems({
           // candidatures, par exemple.
           title={
             <>
-              <Nom>{request.candidate.username}</Nom> veut rejoindre{' '}
-              <Nom>{request.teamName}</Nom>
+              <Nom>{request.candidate.username}</Nom>{' '}
+              {t('joinRequest.wantsToJoin')} <Nom>{request.teamName}</Nom>
             </>
           }
-          subtitle={`Candidature envoyée ${dayjs(request.createdAt).fromNow()}`}
+          subtitle={t('joinRequest.sentAgo', {
+            time: dayjs(request.createdAt).fromNow(),
+          })}
           onOpen={() => onOpen(request.teamId)}
-          openTitle="Voir l’équipe"
+          openTitle={t('joinRequest.openTitle')}
           actions={
             <RespondButtons
               onAccept={() => acceptJoin.mutate(request.id)}
@@ -116,8 +122,8 @@ function JoinRequestItems({
               declining={
                 declineJoin.isPending && declineJoin.variables === request.id
               }
-              acceptTitle="Accepter la candidature"
-              declineTitle="Refuser la candidature"
+              acceptTitle={t('joinRequest.acceptTitle')}
+              declineTitle={t('joinRequest.declineTitle')}
             />
           }
         />
@@ -138,6 +144,7 @@ function AcceptedJoinItems({
   requests: MyJoinRequest[]
   onOpen: (request: MyJoinRequest) => void
 }) {
+  const { t } = useTranslation('notifications')
   return (
     <>
       {requests.map((request) => (
@@ -146,12 +153,12 @@ function AcceptedJoinItems({
           icon={<Users className="h-4 w-4" />}
           title={
             <>
-              Tu as rejoint <Nom>{request.teamName}</Nom>
+              {t('acceptedJoin.joinedPrefix')} <Nom>{request.teamName}</Nom>
             </>
           }
-          subtitle="Ta candidature a été acceptée"
+          subtitle={t('acceptedJoin.subtitle')}
           onOpen={() => onOpen(request)}
-          openTitle="Voir l’équipe"
+          openTitle={t('acceptedJoin.openTitle')}
         />
       ))}
     </>
@@ -159,6 +166,7 @@ function AcceptedJoinItems({
 }
 
 export function NotificationsBadge() {
+  const { t } = useTranslation('notifications')
   const [isOpen, setIsOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const { data, isLoading } = useMyInvitations()
@@ -276,7 +284,7 @@ export function NotificationsBadge() {
         variant="ghost"
         size="icon"
         onClick={() => setIsOpen(!isOpen)}
-        aria-label="Notifications"
+        aria-label={t('bellAriaLabel')}
         className="h-10 w-10 rounded-[11px] text-text-light/60 hover:bg-text/[0.06] hover:text-text"
       >
         <Bell className="h-5 w-5" />
@@ -290,7 +298,7 @@ export function NotificationsBadge() {
             <div className="flex items-center gap-2">
               <Bell className="h-4 w-4 text-text-light" />
               <span className="font-display text-sm font-bold text-text">
-                Notifications
+                {t('panelTitle')}
               </span>
               {count > 0 && (
                 <span className="rounded-full bg-primary/15 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-primary">
@@ -309,7 +317,7 @@ export function NotificationsBadge() {
               <div className="py-6 text-center">
                 <Bell className="mx-auto mb-2 h-7 w-7 text-text-light/30" />
                 <p className="font-mono text-[11px] uppercase tracking-wider text-text-light">
-                  Aucune notification
+                  {t('empty')}
                 </p>
               </div>
             ) : (
@@ -317,24 +325,20 @@ export function NotificationsBadge() {
                 {questsCount > 0 && (
                   <NotificationItem
                     icon={<ScrollText className="h-4 w-4" />}
-                    title={<Nom>Quêtes à récupérer</Nom>}
-                    subtitle={
-                      questsCount > 1
-                        ? `${questsCount} quêtes prêtes à réclamer`
-                        : '1 quête prête à réclamer'
-                    }
+                    title={<Nom>{t('quests.title')}</Nom>}
+                    subtitle={t('quests.subtitle', { count: questsCount })}
                     onOpen={goToQuests}
-                    openTitle="Voir mes quêtes"
+                    openTitle={t('quests.openTitle')}
                   />
                 )}
                 {settled.map((duel) => (
                   <NotificationItem
                     key={duel.id}
                     icon={<Trophy className="h-4 w-4" />}
-                    title={<Nom>Duel terminé</Nom>}
+                    title={<Nom>{t('duelSettled.title')}</Nom>}
                     subtitle={settledSubtitle(duel, meId)}
                     onOpen={() => openResult(duel)}
-                    openTitle="Voir le résultat"
+                    openTitle={t('duelSettled.openTitle')}
                   />
                 ))}
                 {duels.map((duel) => (
@@ -343,12 +347,16 @@ export function NotificationsBadge() {
                     icon={<Swords className="h-4 w-4" />}
                     title={
                       <>
-                        <Nom>{duel.challenger.username}</Nom> te défie
+                        <Nom>{duel.challenger.username}</Nom>{' '}
+                        {t('duelChallenge.challengedBySuffix')}
                       </>
                     }
-                    subtitle={`${duel.team.name} · ${duel.pullCount} tirages`}
+                    subtitle={t('duelChallenge.subtitle', {
+                      team: duel.team.name,
+                      count: duel.pullCount,
+                    })}
                     onOpen={() => goToTeam(duel.teamId)}
-                    openTitle="Voir le défi"
+                    openTitle={t('duelChallenge.openTitle')}
                     actions={
                       <RespondButtons
                         onAccept={() => handleAcceptDuel(duel.teamId, duel.id)}
@@ -363,8 +371,8 @@ export function NotificationsBadge() {
                           declineDuel.isPending &&
                           declineDuel.variables?.duelId === duel.id
                         }
-                        acceptTitle="Relever le défi"
-                        declineTitle="Refuser le défi"
+                        acceptTitle={t('duelChallenge.acceptTitle')}
+                        declineTitle={t('duelChallenge.declineTitle')}
                       />
                     }
                   />
@@ -385,12 +393,16 @@ export function NotificationsBadge() {
                     icon={<Coins className="h-4 w-4" />}
                     title={
                       <>
-                        <Nom>{bet.bettor.username}</Nom> a parié sur toi
+                        <Nom>{bet.bettor.username}</Nom>{' '}
+                        {t('bet.betOnYouSuffix')}
                       </>
                     }
-                    subtitle={`${RARITY_LABEL_FR[bet.minRarity] ?? bet.minRarity} ou mieux en ${bet.pullWindow} tirages`}
+                    subtitle={t('bet.subtitle', {
+                      rarity: RARITY_LABEL_FR[bet.minRarity] ?? bet.minRarity,
+                      count: bet.pullWindow,
+                    })}
                     onOpen={() => goToTeam(bet.teamId)}
-                    openTitle="Voir le pari"
+                    openTitle={t('bet.openTitle')}
                   />
                 ))}
                 {invitations.map((inv) => (
@@ -399,12 +411,17 @@ export function NotificationsBadge() {
                     icon={<Users className="h-4 w-4" />}
                     title={<Nom>{inv.team.name}</Nom>}
                     subtitle={
-                      inv.invitedBy
-                        ? `${inv.invitedBy.username} t'invite à rejoindre`
-                        : 'Tu es invité(e) à rejoindre'
+                      inv.invitedBy ? (
+                        <>
+                          {inv.invitedBy.username}{' '}
+                          {t('invitation.invitedBySuffix')}
+                        </>
+                      ) : (
+                        t('invitation.invitedGeneric')
+                      )
                     }
                     onOpen={() => goToTeam(inv.team.id)}
-                    openTitle="Voir l'équipe"
+                    openTitle={t('invitation.openTitle')}
                     actions={
                       <RespondButtons
                         onAccept={() => handleAccept(inv.token, inv.team.id)}
@@ -415,8 +432,8 @@ export function NotificationsBadge() {
                         declining={
                           decline.isPending && decline.variables === inv.token
                         }
-                        acceptTitle="Accepter et rejoindre"
-                        declineTitle="Refuser l'invitation"
+                        acceptTitle={t('invitation.acceptTitle')}
+                        declineTitle={t('invitation.declineTitle')}
                       />
                     }
                   />

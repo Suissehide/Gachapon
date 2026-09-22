@@ -3,11 +3,14 @@
 // taille, position et couleur strictement identiques entre les deux.
 // `className` permet un léger réglage de position par appelant (cn/twMerge).
 
+import { useTranslation } from 'react-i18next'
+
 import { cn } from '../../libs/utils.ts'
 
 type Props = { count: number; className?: string }
 
 export function NotificationDot({ count, className }: Props) {
+  const { t } = useTranslation('notifications')
   if (count <= 0) {
     return null
   }
@@ -19,7 +22,7 @@ export function NotificationDot({ count, className }: Props) {
         className,
       )}
       role="img"
-      aria-label={`${count} en attente`}
+      aria-label={t('pendingAriaLabel', { count })}
     >
       {display}
     </span>
