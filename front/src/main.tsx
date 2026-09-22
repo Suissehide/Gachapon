@@ -10,6 +10,7 @@ import { I18nextProvider } from 'react-i18next'
 
 import i18n, {
   DEFAULT_LOCALE,
+  firstPathSegment,
   isSupportedLocale,
   LOCALE_STORAGE_KEY,
   type Locale,
@@ -48,8 +49,14 @@ import { queryClient } from './lib/queryClient'
  * pas une langue supportée (racine sans préfixe, ancienne URL...), on retombe
  * sur la langue par défaut — sans conséquence puisque ce cas déclenche une
  * redirection plus bas, avant tout rendu.
+ *
+ * `pathname` et `pathLocaleSegment` sont calculés une seule fois ici — via
+ * `firstPathSegment`/`localeFromPath` de `./i18n/index.ts`, seul endroit qui
+ * sait découper un chemin — et réutilisés plus bas, plutôt que recalculés.
  */
-const locale = localeFromPath(window.location.pathname)
+const pathname = window.location.pathname
+const pathLocaleSegment = firstPathSegment(pathname)
+const locale = localeFromPath(pathname)
 
 const router = createRouter({
   routeTree,
@@ -93,7 +100,42 @@ function resolveRedirectLocale(): Locale {
   return DEFAULT_LOCALE
 }
 
-const pathLocaleSegment = window.location.pathname.split('/')[1]
+/**
+ * Un segment qui "ressemble" à un code de langue BCP 47 simplifié : deux
+ * lettres minuscules (ISO 639-1), éventuellement suivies d'un tiret et d'une
+ * variante régionale/script (`de`, `es`, `pt-BR`, `zh-Hans`). Sert seulement
+ * à décider, pour une URL sans préfixe `fr`/`en` reconnu, si le premier
+ * segment doit être REMPLACÉ (`/de/shop` → `/en/shop` : quelqu'un a
+ * visiblement tenté un préfixe de langue qu'on ne sert pas) plutôt que
+ * PRÉSERVÉ ET PRÉFIXÉ (`/shop` → `/en/shop` : c'est un vrai segment de
+ * route).
+ *
+ * Volontairement permissive : l'objectif n'est pas de valider une langue,
+ * seulement de la distinguer d'un segment de route. Sûre aujourd'hui parce
+ * qu'aucune route de ce dépôt n'a un premier segment de deux lettres
+ * (vérifié dans `src/routes/`) — elle cesserait de l'être si une route à
+ * deux lettres était ajoutée un jour (ex. `/ok`, `/hi`) : dans ce cas,
+ * resserrer l'heuristique (liste blanche de codes plausibles, ou
+ * vérification contre les routes déclarées) plutôt que la supprimer.
+ */
+function isPlausibleLanguageCode(segment: string): boolean {
+  return /^[a-z]{2}(-[A-Za-z]{2,4})?$/.test(segment)
+}
+
+/**
+ * Calcule ce qui doit survivre du chemin d'origine une fois le préfixe de
+ * langue posé. Deux cas (voir `isPlausibleLanguageCode`) : le premier
+ * segment est remplacé s'il ressemble à un code de langue non supporté,
+ * sinon le chemin entier est préservé et simplement préfixé.
+ */
+function redirectRest(currentPathname: string, localeSegment: string): string {
+  if (isPlausibleLanguageCode(localeSegment)) {
+    // "/de/shop" → "/shop" ; "/de" seul → ""
+    return currentPathname.slice(1 + localeSegment.length)
+  }
+  // "/shop" → "/shop" (inchangé) ; "/" → "" (pas de double slash)
+  return currentPathname === '/' ? '' : currentPathname
+}
 
 if (isSupportedLocale(pathLocaleSegment)) {
   // Ce que lisent les lecteurs d'écran et les moteurs — posé au démarrage
@@ -126,13 +168,14 @@ if (isSupportedLocale(pathLocaleSegment)) {
     )
   }
 } else {
-  // Pas de préfixe de langue dans l'URL : on redirige avant tout rendu React,
-  // par remplacement d'historique (`replace`, pas `assign`). Un rendu suivi
-  // d'une navigation produirait un clignotement visible et une entrée
-  // d'historique parasite — le bouton « précédent » ramènerait l'utilisateur
-  // sur la redirection elle-même plutôt que sur la page d'avant.
+  // Pas de préfixe de langue reconnu dans l'URL : on redirige avant tout
+  // rendu React, par remplacement d'historique (`replace`, pas `assign`).
+  // Un rendu suivi d'une navigation produirait un clignotement visible et
+  // une entrée d'historique parasite — le bouton « précédent » ramènerait
+  // l'utilisateur sur la redirection elle-même plutôt que sur la page
+  // d'avant.
   const target = resolveRedirectLocale()
-  const rest = window.location.pathname === '/' ? '' : window.location.pathname
+  const rest = redirectRest(pathname, pathLocaleSegment)
   window.location.replace(
     `/${target}${rest}${window.location.search}${window.location.hash}`,
   )

@@ -1,16 +1,6 @@
 import { useCallback } from 'react'
 
-import {
-  DEFAULT_LOCALE,
-  isSupportedLocale,
-  LOCALE_STORAGE_KEY,
-  type Locale,
-} from './index.ts'
-
-function currentLocale(): Locale {
-  const first = window.location.pathname.split('/')[1]
-  return isSupportedLocale(first) ? first : DEFAULT_LOCALE
-}
+import { LOCALE_STORAGE_KEY, type Locale, localeFromPath } from './index.ts'
 
 export type UseLocaleResult = {
   locale: Locale
@@ -43,5 +33,5 @@ export function useLocale(): UseLocaleResult {
     )
   }, [])
 
-  return { locale: currentLocale(), switchTo }
+  return { locale: localeFromPath(window.location.pathname), switchTo }
 }

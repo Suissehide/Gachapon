@@ -25,12 +25,22 @@ export function isSupportedLocale(value: string | undefined): value is Locale {
 }
 
 /**
+ * Premier segment d'un chemin (`/fr/shop` → `fr`, `/` → `''`). Point unique
+ * de cette extraction : `localeFromPath` ci-dessous, `main.tsx` (pour décider
+ * s'il faut rediriger) et `useLocale.ts` en dépendent tous — ne pas
+ * réimplémenter `pathname.split('/')[1]` ailleurs.
+ */
+export function firstPathSegment(pathname: string): string {
+  return pathname.split('/')[1] ?? ''
+}
+
+/**
  * La langue vit dans le premier segment de l'URL (voir main.tsx, qui en fait
  * le `basepath` du routeur) : i18next doit démarrer synchronisé dessus pour
  * que le tout premier rendu soit déjà dans la bonne langue.
  */
 export function localeFromPath(pathname: string): Locale {
-  const first = pathname.split('/')[1]
+  const first = firstPathSegment(pathname)
   return isSupportedLocale(first) ? first : DEFAULT_LOCALE
 }
 
