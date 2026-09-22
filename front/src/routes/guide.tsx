@@ -370,11 +370,8 @@ function GuidePage() {
             </Section>
 
             {/* Raretés & variantes */}
-            <Section id="rarete" icon={Star} title="Raretés & variantes">
-              <p>
-                Chaque carte appartient à une des cinq raretés, du plus commun
-                au plus rare :
-              </p>
+            <Section id="rarete" icon={Star} title={t('sectionLabels.rarete')}>
+              <p>{t('sections.rarete.intro')}</p>
               <div className="flex flex-wrap gap-2 my-2">
                 <RarityBadge
                   rarity="COMMON"
@@ -398,37 +395,36 @@ function GuidePage() {
                 />
               </div>
               <p className="mt-3">
-                Les cartes de rareté{' '}
-                <strong className="text-foreground">
-                  RARE, EPIC et LEGENDARY
-                </strong>{' '}
-                peuvent apparaître en version spéciale appelée{' '}
-                <strong className="text-foreground">variante</strong> :
+                <Trans
+                  t={t}
+                  i18nKey="sections.rarete.variantIntro"
+                  components={{
+                    strong1: <strong className="text-foreground" />,
+                    strong2: <strong className="text-foreground" />,
+                  }}
+                />
               </p>
               <div className="space-y-2 mt-2">
                 <div className="flex items-start gap-2">
-                  <Pill>NORMAL</Pill>
-                  <span>Version standard de la carte, la plus fréquente.</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Pill>BRILLANT</Pill>
+                  <Pill>{t('sections.rarete.variants.normal.name')}</Pill>
                   <span>
-                    Version brillante — génère plus de poussière en doublon.
+                    {t('sections.rarete.variants.normal.description')}
                   </span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <Pill>HOLOGRAPHIQUE</Pill>
+                  <Pill>{t('sections.rarete.variants.brilliant.name')}</Pill>
                   <span>
-                    Version holographique — la plus rare des variantes, génère
-                    encore plus de poussière.
+                    {t('sections.rarete.variants.brilliant.description')}
+                  </span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Pill>{t('sections.rarete.variants.holographic.name')}</Pill>
+                  <span>
+                    {t('sections.rarete.variants.holographic.description')}
                   </span>
                 </div>
               </div>
-              <p className="mt-2">
-                Les taux de variante dépendent de la rareté : une Legendary a
-                plus de chances d'être Holographique qu'une Rare. Les taux
-                exacts sont configurés par les administrateurs.
-              </p>
+              <p className="mt-2">{t('sections.rarete.ratesOutro')}</p>
             </Section>
 
             {/* Pitié */}

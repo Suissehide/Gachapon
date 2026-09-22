@@ -75,6 +75,25 @@
       "resultBullet": "Le résultat inclut la carte, sa variante, si c'est un doublon, et la poussière gagnée.",
       "pityBullet": "Ton compteur de <strong>pitié</strong> est mis à jour après chaque tirage (voir section dédiée).",
       "skillsParagraph": "Plusieurs compétences influencent le tirage : elles multiplient les chances des raretés <rareBadge></rareBadge> <epicBadge></epicBadge> <legendaryBadge></legendaryBadge>, dopent les variantes, offrent une chance de <freePull>tirage gratuit</freePull>, ou déclenchent une <goldenBall>boule dorée</goldenBall> qui force une rareté minimale."
+    },
+    "rarete": {
+      "intro": "Chaque carte appartient à une des cinq raretés, du plus commun au plus rare :",
+      "variantIntro": "Les cartes de rareté <strong1>RARE, EPIC et LEGENDARY</strong1> peuvent apparaître en version spéciale appelée <strong2>variante</strong2> :",
+      "variants": {
+        "normal": {
+          "name": "NORMAL",
+          "description": "Version standard de la carte, la plus fréquente."
+        },
+        "brilliant": {
+          "name": "BRILLANT",
+          "description": "Version brillante — génère plus de poussière en doublon."
+        },
+        "holographic": {
+          "name": "HOLOGRAPHIQUE",
+          "description": "Version holographique — la plus rare des variantes, génère encore plus de poussière."
+        }
+      },
+      "ratesOutro": "Les taux de variante dépendent de la rareté : une Legendary a plus de chances d'être Holographique qu'une Rare. Les taux exacts sont configurés par les administrateurs."
     }
   }
 }

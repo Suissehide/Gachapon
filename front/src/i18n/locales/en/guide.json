@@ -75,6 +75,25 @@
       "resultBullet": "The result includes the card, its variant, whether it's a duplicate, and the dust earned.",
       "pityBullet": "Your <strong>pity</strong> counter updates after every pull (see the dedicated section).",
       "skillsParagraph": "Several skills affect pulls: they boost the odds of <rareBadge></rareBadge> <epicBadge></epicBadge> <legendaryBadge></legendaryBadge> rarities, buff variant odds, give a chance at a <freePull>free pull</freePull>, or trigger a <goldenBall>golden ball</goldenBall> that forces a minimum rarity."
+    },
+    "rarete": {
+      "intro": "Every card belongs to one of five rarities, from most common to rarest:",
+      "variantIntro": "Cards of <strong1>RARE, EPIC, and LEGENDARY</strong1> rarity can appear in a special version called a <strong2>variant</strong2>:",
+      "variants": {
+        "normal": {
+          "name": "NORMAL",
+          "description": "The card's standard version, the most common one."
+        },
+        "brilliant": {
+          "name": "BRILLIANT",
+          "description": "The brilliant version — generates more dust as a duplicate."
+        },
+        "holographic": {
+          "name": "HOLOGRAPHIC",
+          "description": "The holographic version — the rarest variant, generates even more dust."
+        }
+      },
+      "ratesOutro": "Variant odds depend on rarity: a Legendary is more likely to be Holographic than a Rare. Exact rates are configured by the admins."
     }
   }
 }
