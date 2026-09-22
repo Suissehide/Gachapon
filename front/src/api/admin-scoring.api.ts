@@ -1,5 +1,6 @@
 import type { ScoringConfig } from '../constants/config.constant.ts'
 import { apiUrl, CONFIG_ROUTES } from '../constants/config.constant.ts'
+import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
@@ -11,11 +12,7 @@ export const AdminScoringApi = {
       `${apiUrl}${CONFIG_ROUTES.admin.scoringConfig}`,
     )
     if (!res.ok) {
-      handleHttpError(
-        res,
-        {},
-        'Erreur lors de la récupération de la config de scoring',
-      )
+      handleHttpError(res, {}, i18n.t('admin:apiTitles.scoring.load'))
     }
     return res.json()
   },
@@ -30,11 +27,7 @@ export const AdminScoringApi = {
       },
     )
     if (!res.ok) {
-      handleHttpError(
-        res,
-        {},
-        'Erreur lors de la mise à jour de la config de scoring',
-      )
+      handleHttpError(res, {}, i18n.t('admin:apiTitles.scoring.update'))
     }
     return res.json()
   },

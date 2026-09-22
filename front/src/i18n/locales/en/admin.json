@@ -45,5 +45,65 @@
     "scoring": {
       "updateErrorTitle": "Error updating scoring"
     }
+  },
+  "apiTitles": {
+    "activity": {
+      "loadActivity": "Error loading the activity"
+    },
+    "cards": {
+      "loadSets": "Error loading the sets",
+      "loadCards": "Error loading the cards",
+      "changeImage": "Error changing the image"
+    },
+    "config": {
+      "load": "Error loading the configuration",
+      "save": "Error saving the configuration"
+    },
+    "health": {
+      "load": "Error loading the system health"
+    },
+    "media": {
+      "load": "Error loading the media",
+      "upload": "Error uploading",
+      "delete": "Error deleting",
+      "rename": "Error renaming"
+    },
+    "raid": {
+      "loadBosses": "Loading raid bosses",
+      "updateBoss": "Updating the boss",
+      "loadTiers": "Loading raid tiers",
+      "updateTier": "Updating the tier"
+    },
+    "rewards": {
+      "send": "Error sending the rewards"
+    },
+    "scoring": {
+      "load": "Error loading the scoring config",
+      "update": "Error updating the scoring config"
+    },
+    "shop": {
+      "loadItems": "Error loading the items"
+    },
+    "stats": {
+      "loadDashboard": "Error loading the dashboard",
+      "loadStats": "Error loading the statistics"
+    },
+    "streak": {
+      "loadConfig": "Error loading the streak config",
+      "updateDefaultReward": "Error updating the default reward",
+      "milestoneAlreadyExists": "Milestone already exists",
+      "createMilestone": "Error creating the milestone",
+      "updateMilestone": "Error updating the milestone",
+      "deleteMilestone": "Error deleting the milestone"
+    },
+    "translations": {
+      "loadMissing": "Error loading the missing translations"
+    },
+    "users": {
+      "loadUsers": "Error loading the users",
+      "exportCsv": "Error exporting the CSV",
+      "loadUser": "Error loading the user",
+      "updateSuspension": "Error updating the suspension"
+    }
   }
 }

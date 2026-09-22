@@ -5,6 +5,7 @@ import type {
 } from '../constants/card.constant.ts'
 import { CARD_ROUTES } from '../constants/card.constant.ts'
 import { apiUrl } from '../constants/config.constant.ts'
+import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
@@ -14,7 +15,7 @@ export const AdminCardsApi = {
   getSets: async (): Promise<{ sets: AdminCardSet[] }> => {
     const res = await fetchWithAuth(`${apiUrl}${CARD_ROUTES.admin.sets}`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la récupération des sets')
+      handleHttpError(res, {}, i18n.t('admin:apiTitles.cards.loadSets'))
     }
     return res.json()
   },
@@ -32,7 +33,7 @@ export const AdminCardsApi = {
       body: JSON.stringify(data),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la création du set')
+      handleHttpError(res, {}, i18n.t('admin:toasts.cards.createSetErrorTitle'))
     }
     return res.json()
   },
@@ -53,7 +54,7 @@ export const AdminCardsApi = {
       body: JSON.stringify(data),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la mise à jour du set')
+      handleHttpError(res, {}, i18n.t('admin:toasts.cards.updateSetErrorTitle'))
     }
     return res.json()
   },
@@ -63,7 +64,7 @@ export const AdminCardsApi = {
       method: 'DELETE',
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la suppression du set')
+      handleHttpError(res, {}, i18n.t('admin:toasts.cards.deleteSetErrorTitle'))
     }
   },
 
@@ -76,7 +77,7 @@ export const AdminCardsApi = {
     )
     const res = await fetchWithAuth(`${apiUrl}${CARD_ROUTES.admin.cards}?${qs}`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la récupération des cartes')
+      handleHttpError(res, {}, i18n.t('admin:apiTitles.cards.loadCards'))
     }
     return res.json()
   },
@@ -87,7 +88,11 @@ export const AdminCardsApi = {
       body: formData,
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la création de la carte')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('admin:toasts.cards.createCardErrorTitle'),
+      )
     }
     return res.json()
   },
@@ -114,7 +119,11 @@ export const AdminCardsApi = {
       body: JSON.stringify(data),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la mise à jour de la carte')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('admin:toasts.cards.updateCardErrorTitle'),
+      )
     }
     return res.json()
   },
@@ -130,7 +139,7 @@ export const AdminCardsApi = {
       },
     )
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors du changement d'image")
+      handleHttpError(res, {}, i18n.t('admin:apiTitles.cards.changeImage'))
     }
     return res.json()
   },
@@ -140,7 +149,11 @@ export const AdminCardsApi = {
       method: 'DELETE',
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la suppression de la carte')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('admin:toasts.cards.deleteCardErrorTitle'),
+      )
     }
   },
 }

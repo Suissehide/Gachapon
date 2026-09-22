@@ -45,5 +45,65 @@
     "scoring": {
       "updateErrorTitle": "Erreur lors de la mise à jour du scoring"
     }
+  },
+  "apiTitles": {
+    "activity": {
+      "loadActivity": "Erreur lors de la récupération de l'activité"
+    },
+    "cards": {
+      "loadSets": "Erreur lors de la récupération des sets",
+      "loadCards": "Erreur lors de la récupération des cartes",
+      "changeImage": "Erreur lors du changement d'image"
+    },
+    "config": {
+      "load": "Erreur lors de la récupération de la configuration",
+      "save": "Erreur lors de la sauvegarde de la configuration"
+    },
+    "health": {
+      "load": "Erreur lors de la récupération de la santé système"
+    },
+    "media": {
+      "load": "Erreur lors de la récupération des médias",
+      "upload": "Erreur lors de l'upload",
+      "delete": "Erreur lors de la suppression",
+      "rename": "Erreur lors du renommage"
+    },
+    "raid": {
+      "loadBosses": "Chargement des boss de raid",
+      "updateBoss": "Mise à jour du boss",
+      "loadTiers": "Chargement des paliers de raid",
+      "updateTier": "Mise à jour du palier"
+    },
+    "rewards": {
+      "send": "Erreur lors de l'envoi des récompenses"
+    },
+    "scoring": {
+      "load": "Erreur lors de la récupération de la config de scoring",
+      "update": "Erreur lors de la mise à jour de la config de scoring"
+    },
+    "shop": {
+      "loadItems": "Erreur lors de la récupération des articles"
+    },
+    "stats": {
+      "loadDashboard": "Erreur lors de la récupération du dashboard",
+      "loadStats": "Erreur lors de la récupération des statistiques"
+    },
+    "streak": {
+      "loadConfig": "Erreur lors de la récupération de la config streak",
+      "updateDefaultReward": "Erreur lors de la mise à jour de la récompense par défaut",
+      "milestoneAlreadyExists": "Jalon déjà existant",
+      "createMilestone": "Erreur lors de la création du jalon",
+      "updateMilestone": "Erreur lors de la mise à jour du jalon",
+      "deleteMilestone": "Erreur lors de la suppression du jalon"
+    },
+    "translations": {
+      "loadMissing": "Erreur lors de la récupération des traductions manquantes"
+    },
+    "users": {
+      "loadUsers": "Erreur lors de la récupération des utilisateurs",
+      "exportCsv": "Erreur lors de l'export CSV",
+      "loadUser": "Erreur lors de la récupération de l'utilisateur",
+      "updateSuspension": "Erreur lors de la mise à jour de la suspension"
+    }
   }
 }

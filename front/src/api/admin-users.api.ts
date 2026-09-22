@@ -1,6 +1,7 @@
 import { apiUrl } from '../constants/config.constant.ts'
 import type { AdminUser, UserStats } from '../constants/user.constant.ts'
 import { USER_ROUTES } from '../constants/user.constant.ts'
+import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
@@ -38,11 +39,7 @@ export const AdminUsersApi = {
     })
     const res = await fetchWithAuth(`${apiUrl}${USER_ROUTES.admin.users}?${qs}`)
     if (!res.ok) {
-      handleHttpError(
-        res,
-        {},
-        'Erreur lors de la récupération des utilisateurs',
-      )
+      handleHttpError(res, {}, i18n.t('admin:apiTitles.users.loadUsers'))
     }
     return res.json()
   },
@@ -57,7 +54,7 @@ export const AdminUsersApi = {
       `${apiUrl}${USER_ROUTES.admin.usersExport}?${qs}`,
     )
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors de l'export CSV")
+      handleHttpError(res, {}, i18n.t('admin:apiTitles.users.exportCsv'))
     }
     return res.blob()
   },
@@ -67,11 +64,7 @@ export const AdminUsersApi = {
   ): Promise<{ user: AdminUser; stats: UserStats }> => {
     const res = await fetchWithAuth(`${apiUrl}${USER_ROUTES.admin.user(id)}`)
     if (!res.ok) {
-      handleHttpError(
-        res,
-        {},
-        "Erreur lors de la récupération de l'utilisateur",
-      )
+      handleHttpError(res, {}, i18n.t('admin:apiTitles.users.loadUser'))
     }
     return res.json()
   },
@@ -86,7 +79,11 @@ export const AdminUsersApi = {
       },
     )
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la mise à jour des tokens')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('admin:toasts.users.updateTokensErrorTitle'),
+      )
     }
     return res.json()
   },
@@ -98,7 +95,11 @@ export const AdminUsersApi = {
       body: JSON.stringify({ amount }),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la mise à jour de la poussière')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('admin:toasts.users.updateDustErrorTitle'),
+      )
     }
     return res.json()
   },
@@ -113,7 +114,11 @@ export const AdminUsersApi = {
       body: JSON.stringify({ role }),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la mise à jour du rôle')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('admin:toasts.users.updateRoleErrorTitle'),
+      )
     }
     return res.json()
   },
@@ -128,7 +133,7 @@ export const AdminUsersApi = {
       },
     )
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la mise à jour de la suspension')
+      handleHttpError(res, {}, i18n.t('admin:apiTitles.users.updateSuspension'))
     }
     return res.json()
   },

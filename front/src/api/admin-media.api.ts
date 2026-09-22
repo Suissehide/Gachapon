@@ -4,6 +4,7 @@ import type {
   UploadMediaResult,
 } from '../constants/media.constant.ts'
 import { MEDIA_ROUTES } from '../constants/media.constant.ts'
+import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
@@ -13,7 +14,7 @@ export const AdminMediaApi = {
   getMedia: async (): Promise<MediaItem[]> => {
     const res = await fetchWithAuth(`${apiUrl}${MEDIA_ROUTES.admin.media}`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la récupération des médias')
+      handleHttpError(res, {}, i18n.t('admin:apiTitles.media.load'))
     }
     return res.json()
   },
@@ -28,7 +29,7 @@ export const AdminMediaApi = {
       body: form,
     })
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors de l'upload")
+      handleHttpError(res, {}, i18n.t('admin:apiTitles.media.upload'))
     }
     return res.json()
   },
@@ -40,7 +41,7 @@ export const AdminMediaApi = {
       body: JSON.stringify({ keys }),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la suppression')
+      handleHttpError(res, {}, i18n.t('admin:apiTitles.media.delete'))
     }
     return res.json()
   },
@@ -55,7 +56,7 @@ export const AdminMediaApi = {
       body: JSON.stringify({ from, newName }),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors du renommage')
+      handleHttpError(res, {}, i18n.t('admin:apiTitles.media.rename'))
     }
     return res.json()
   },

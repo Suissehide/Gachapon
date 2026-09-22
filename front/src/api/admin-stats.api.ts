@@ -1,4 +1,5 @@
 import { apiUrl, CONFIG_ROUTES } from '../constants/config.constant.ts'
+import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
@@ -21,7 +22,7 @@ export const AdminStatsApi = {
   }> => {
     const res = await fetchWithAuth(`${apiUrl}${CONFIG_ROUTES.admin.dashboard}`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la récupération du dashboard')
+      handleHttpError(res, {}, i18n.t('admin:apiTitles.stats.loadDashboard'))
     }
     return res.json()
   },
@@ -48,11 +49,7 @@ export const AdminStatsApi = {
   }> => {
     const res = await fetchWithAuth(`${apiUrl}${CONFIG_ROUTES.admin.stats}`)
     if (!res.ok) {
-      handleHttpError(
-        res,
-        {},
-        'Erreur lors de la récupération des statistiques',
-      )
+      handleHttpError(res, {}, i18n.t('admin:apiTitles.stats.loadStats'))
     }
     return res.json()
   },

@@ -1,4 +1,5 @@
 import { apiUrl } from '../constants/config.constant.ts'
+import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
@@ -30,7 +31,7 @@ export const AdminTranslationsApi = {
       handleHttpError(
         res,
         {},
-        'Erreur lors de la récupération des traductions manquantes',
+        i18n.t('admin:apiTitles.translations.loadMissing'),
       )
     }
     return res.json()

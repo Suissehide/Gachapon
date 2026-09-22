@@ -1,4 +1,5 @@
 import { apiUrl } from '../constants/config.constant.ts'
+import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
@@ -21,7 +22,7 @@ export const AdminActivityApi = {
     })
     const res = await fetchWithAuth(`${apiUrl}/admin/activity?${qs}`)
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors de la récupération de l'activité")
+      handleHttpError(res, {}, i18n.t('admin:apiTitles.activity.loadActivity'))
     }
     return res.json()
   },

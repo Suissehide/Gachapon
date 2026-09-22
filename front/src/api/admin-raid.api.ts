@@ -1,5 +1,6 @@
 import type { CardRarity } from '../constants/card.constant.ts'
 import { apiUrl } from '../constants/config.constant.ts'
+import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 import type { TowerElement } from './tower.api.ts'
@@ -53,7 +54,7 @@ export const AdminRaidApi = {
   getBosses: async (): Promise<{ bosses: AdminRaidBoss[] }> => {
     const res = await fetchWithAuth(`${apiUrl}/admin/raid/bosses`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Chargement des boss de raid')
+      handleHttpError(res, {}, i18n.t('admin:apiTitles.raid.loadBosses'))
     }
     return res.json()
   },
@@ -67,14 +68,14 @@ export const AdminRaidApi = {
       body: JSON.stringify(data),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Mise à jour du boss')
+      handleHttpError(res, {}, i18n.t('admin:apiTitles.raid.updateBoss'))
     }
     return res.json()
   },
   getTiers: async (): Promise<{ tiers: AdminRaidTier[] }> => {
     const res = await fetchWithAuth(`${apiUrl}/admin/raid/tiers`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Chargement des paliers de raid')
+      handleHttpError(res, {}, i18n.t('admin:apiTitles.raid.loadTiers'))
     }
     return res.json()
   },
@@ -88,7 +89,7 @@ export const AdminRaidApi = {
       body: JSON.stringify(data),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Mise à jour du palier')
+      handleHttpError(res, {}, i18n.t('admin:apiTitles.raid.updateTier'))
     }
     return res.json()
   },

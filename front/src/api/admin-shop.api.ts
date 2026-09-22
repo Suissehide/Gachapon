@@ -1,6 +1,7 @@
 import { apiUrl } from '../constants/config.constant.ts'
 import type { AdminShopItem } from '../constants/shop.constant.ts'
 import { SHOP_ROUTES } from '../constants/shop.constant.ts'
+import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
@@ -19,7 +20,7 @@ export const AdminShopApi = {
   getItems: async (): Promise<{ items: AdminShopItem[] }> => {
     const res = await fetchWithAuth(`${apiUrl}${SHOP_ROUTES.admin.items}`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la récupération des articles')
+      handleHttpError(res, {}, i18n.t('admin:apiTitles.shop.loadItems'))
     }
     return res.json()
   },
@@ -31,7 +32,7 @@ export const AdminShopApi = {
       body: JSON.stringify(data),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors de la création de l'article")
+      handleHttpError(res, {}, i18n.t('admin:toasts.shop.createItemErrorTitle'))
     }
     return res.json()
   },
@@ -46,7 +47,7 @@ export const AdminShopApi = {
       body: JSON.stringify(data),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors de la mise à jour de l'article")
+      handleHttpError(res, {}, i18n.t('admin:toasts.shop.updateItemErrorTitle'))
     }
     return res.json()
   },
@@ -56,7 +57,7 @@ export const AdminShopApi = {
       method: 'DELETE',
     })
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors de la suppression de l'article")
+      handleHttpError(res, {}, i18n.t('admin:toasts.shop.deleteItemErrorTitle'))
     }
   },
 }

@@ -1,4 +1,5 @@
 import { apiUrl } from '../constants/config.constant.ts'
+import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
@@ -23,7 +24,7 @@ export const AdminRewardsApi = {
       body: JSON.stringify(body),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors de l'envoi des récompenses")
+      handleHttpError(res, {}, i18n.t('admin:apiTitles.rewards.send'))
     }
     return res.json()
   },

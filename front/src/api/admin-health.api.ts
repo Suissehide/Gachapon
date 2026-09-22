@@ -1,4 +1,5 @@
 import { apiUrl } from '../constants/config.constant.ts'
+import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
@@ -21,11 +22,7 @@ export const AdminHealthApi = {
   getHealth: async (): Promise<AdminHealth> => {
     const res = await fetchWithAuth(`${apiUrl}/admin/health`)
     if (!res.ok) {
-      handleHttpError(
-        res,
-        {},
-        'Erreur lors de la récupération de la santé système',
-      )
+      handleHttpError(res, {}, i18n.t('admin:apiTitles.health.load'))
     }
     return res.json()
   },

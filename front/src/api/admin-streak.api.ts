@@ -5,7 +5,11 @@ import type {
   StreakReward,
 } from '../constants/streak.constant.ts'
 import { STREAK_ROUTES } from '../constants/streak.constant.ts'
-import { handleHttpError } from '../libs/httpErrorHandler.ts'
+import i18n from '../i18n/index.ts'
+import {
+  handleHttpError,
+  handleHttpErrorFromServer,
+} from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
 export type { AdminMilestone, AdminStreakConfig }
@@ -22,11 +26,7 @@ export const AdminStreakApi = {
   getConfig: async (): Promise<AdminStreakConfig> => {
     const response = await fetchWithAuth(`${apiUrl}${STREAK_ROUTES.admin.root}`)
     if (!response.ok) {
-      handleHttpError(
-        response,
-        {},
-        'Erreur lors de la récupération de la config streak',
-      )
+      handleHttpError(response, {}, i18n.t('admin:apiTitles.streak.loadConfig'))
     }
     return response.json()
   },
@@ -44,7 +44,7 @@ export const AdminStreakApi = {
       handleHttpError(
         response,
         {},
-        'Erreur lors de la mise à jour de la récompense par défaut',
+        i18n.t('admin:apiTitles.streak.updateDefaultReward'),
       )
     }
     return response.json()
@@ -60,15 +60,13 @@ export const AdminStreakApi = {
       },
     )
     if (!response.ok) {
-      handleHttpError(
+      // 409 : `streak.milestoneAlreadyExistsForDay` côté back, qui nomme le
+      // jour en cause — le message du serveur en dit plus que la copie
+      // française qui vivait ici.
+      await handleHttpErrorFromServer(
         response,
-        {
-          409: {
-            title: 'Jalon déjà existant',
-            message: 'Un jalon pour ce jour existe déjà',
-          },
-        },
-        'Erreur lors de la création du jalon',
+        { 409: i18n.t('admin:apiTitles.streak.milestoneAlreadyExists') },
+        i18n.t('admin:apiTitles.streak.createMilestone'),
       )
     }
     return response.json()
@@ -84,7 +82,11 @@ export const AdminStreakApi = {
       },
     )
     if (!response.ok) {
-      handleHttpError(response, {}, 'Erreur lors de la mise à jour du jalon')
+      handleHttpError(
+        response,
+        {},
+        i18n.t('admin:apiTitles.streak.updateMilestone'),
+      )
     }
     return response.json()
   },
@@ -97,7 +99,11 @@ export const AdminStreakApi = {
       },
     )
     if (!response.ok) {
-      handleHttpError(response, {}, 'Erreur lors de la suppression du jalon')
+      handleHttpError(
+        response,
+        {},
+        i18n.t('admin:apiTitles.streak.deleteMilestone'),
+      )
     }
   },
 }
