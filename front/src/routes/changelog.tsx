@@ -1,5 +1,5 @@
 // changelog-sync: dernier commit intégré au changelog. Mis à jour par la commande /changelog.
-// last-synced-commit: f86bba614378019d4c0fce4fa098091b7ede28de
+// last-synced-commit: cc36e4de9536e882a1351170d70442c896dc5c02
 import { createFileRoute } from '@tanstack/react-router'
 
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
@@ -37,6 +37,39 @@ const TYPE_META: Record<ChangeType, { label: string; className: string }> = {
 }
 
 const RELEASES: ChangelogRelease[] = [
+  {
+    version: '3.3',
+    title: 'Le boss d’équipe monte d’un cran',
+    date: 'Septembre 2026',
+    summary:
+      'Le boss du raid se renforce à chaque fois que tu le mets à terre, les tirages rares se méritent davantage, et l’équipement se vend sans quitter la fiche de carte.',
+    entries: [
+      {
+        type: 'new',
+        text: 'Le boss de raid devient une échelle, plus une routine. Il est désormais calibré pour dix membres au minimum : monter une équipe à un seul joueur pour rafler les quatre paliers, c’est fini — il faut du monde, et actif. Chaque semaine où tu l’abats, il revient avec 10 % de points de vie en plus, et ses lots grossissent avec lui ; chaque semaine sans mise à mort, il redescend d’un cran. Ton équipe trouve donc toute seule le palier qui lui correspond, et il remonte à mesure que tu montes en niveau et en équipement. Le niveau s’affiche à côté du nom du boss et dans l’historique des raids passés.',
+      },
+      {
+        type: 'improved',
+        text: 'Les épiques et les légendaires sont deux fois plus rares. Elles tombaient trop souvent pour ce qu’elles valent : leur poids de tirage est divisé par deux. La pitié, elle, ne bouge pas — le filet qui te garantit une épique après une longue série de malchance reste exactement où il était.',
+      },
+      {
+        type: 'improved',
+        text: 'L’économie se resserre là où elle fuyait. Les packs d’énergie coûtent trois fois plus cher : acheter de l’énergie doit rester un dépannage, jamais une façon de contourner le farm. Les vœux sont retarifés, avec un prix qui dépend de la rareté visée. Et les lots du raid suivent la même logique : un peu plus à chaque niveau de difficulté, mais toujours moins que l’effort supplémentaire qu’il demande.',
+      },
+      {
+        type: 'improved',
+        text: 'La difficulté PvE a été recalibrée sur de vrais profils de joueur. Chaque étage de tour est désormais taillé pour le niveau et l’équipement qu’on a raisonnablement à ce moment-là, au lieu d’une courbe unique appliquée de bas en haut. La campagne, elle, tient enfin compte de ton équipement : un chapitre ne s’effondre plus parce que tu arrives avec sept pièces posées.',
+      },
+      {
+        type: 'new',
+        text: 'Vendre une pièce d’équipement ne demande plus de la chercher. Le bouton est directement sur sa fiche, et la liste regroupe tes pièces par set — les quatre du Fureur ensemble, les trois de l’Affût ensemble — pour voir d’un coup d’œil ce qui te manque pour compléter un bonus.',
+      },
+      {
+        type: 'fixed',
+        text: 'Trois accrocs du quotidien. Sur mobile, le menu n’est plus coupé et les fenêtres trop hautes défilent au lieu de se laisser tronquer. Le bouton de vœu, sur la fiche d’une carte, permet maintenant de retirer un vœu et plus seulement d’en poser un. Et un étage de tour déjà franchi se refarme au prix du balayage, pas à celui d’un combat complet.',
+      },
+    ],
+  },
   {
     version: '3.2',
     title: 'Chaque mode garde son équipe',
