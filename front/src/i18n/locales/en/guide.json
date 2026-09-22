@@ -219,6 +219,13 @@
         "title": "Combat",
         "description": "Ranks by the furthest chapter and stage reached in the campaign."
       }
+    },
+    "collection": {
+      "intro": "Your <strong>collection</strong> gathers every unique card you've obtained. Each card appears there only once, no matter how many times you've pulled it.",
+      "filterBullet": "You can filter by <strong>rarity, variant, or set</strong>.",
+      "variantsLookBullet": "Brilliant and Holographic cards have a distinct visual look.",
+      "cardSheetBullet": "A card's detail sheet lets you set it as a <strong1>wish</strong1>, <strong2>recycle</strong2> it, level it up, and ascend it.",
+      "publicProfileBullet": "Your public profile is accessible to everyone via <profilePill></profilePill>."
     }
   }
 }

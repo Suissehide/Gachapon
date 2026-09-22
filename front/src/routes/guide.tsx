@@ -1025,34 +1025,52 @@ function GuidePage() {
             </Section>
 
             {/* Collection */}
-            <Section id="collection" icon={Layers} title="Collection">
+            <Section
+              id="collection"
+              icon={Layers}
+              title={t('sectionLabels.collection')}
+            >
               <p>
-                Ta <strong className="text-foreground">collection</strong>{' '}
-                regroupe toutes les cartes uniques que tu as obtenues. Chaque
-                carte n'y apparaît qu'une fois, quel que soit le nombre de fois
-                où tu l'as tirée.
+                <Trans
+                  t={t}
+                  i18nKey="sections.collection.intro"
+                  components={{
+                    strong: <strong className="text-foreground" />,
+                  }}
+                />
               </p>
               <ul className="space-y-1.5">
                 <li>
-                  • Tu peux filtrer par{' '}
-                  <strong className="text-foreground">
-                    rareté, variante ou set
-                  </strong>
-                  .
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.collection.filterBullet"
+                    components={{
+                      strong: <strong className="text-foreground" />,
+                    }}
+                  />
+                </li>
+                <li>• {t('sections.collection.variantsLookBullet')}</li>
+                <li>
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.collection.cardSheetBullet"
+                    components={{
+                      strong1: <strong className="text-foreground" />,
+                      strong2: <strong className="text-foreground" />,
+                    }}
+                  />
                 </li>
                 <li>
-                  • Les cartes Brillant et Holographique ont une apparence
-                  visuelle distincte.
-                </li>
-                <li>
-                  • La fiche d'une carte permet de la définir comme{' '}
-                  <strong className="text-foreground">Vœu</strong>, de la{' '}
-                  <strong className="text-foreground">recycler</strong>, de la
-                  monter en niveau et de l'ascensionner.
-                </li>
-                <li>
-                  • Ton profil public est accessible à tous via{' '}
-                  <Pill>/profile/&lt;username&gt;</Pill>.
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.collection.publicProfileBullet"
+                    components={{
+                      profilePill: <Pill>/profile/&lt;username&gt;</Pill>,
+                    }}
+                  />
                 </li>
               </ul>
             </Section>
