@@ -1,0 +1,34 @@
+{
+  "meta": {
+    "eyebrow": "Documentation"
+  },
+  "header": {
+    "title": "Player guide",
+    "intro": "Gachapon blends two game loops: <collect>collecting</collect> cards by pulling capsules, and <battle>battling</battle> with them in the campaign to progress. Here's everything you need to get started and play smart."
+  },
+  "toc": {
+    "heading": "Contents"
+  },
+  "sectionLabels": {
+    "monnaies": "Currencies",
+    "tokens": "Tokens & regen",
+    "pulls": "Pulling a capsule",
+    "rarete": "Rarities & variants",
+    "piete": "Pity system",
+    "doublon": "Duplicates & dust",
+    "boutique": "Daily shop & wishlist",
+    "niveaux": "Levels & XP",
+    "competences": "Skill tree",
+    "campagne": "Campaign & battles",
+    "combat-points": "Combat points",
+    "cartes": "Upgrading your cards",
+    "quetes": "Quests",
+    "succes": "Achievements",
+    "chaine": "Login streak",
+    "recompenses": "Rewards",
+    "classements": "Leaderboards",
+    "collection": "Collection",
+    "equipes": "Teams",
+    "api": "API & Discord"
+  }
+}

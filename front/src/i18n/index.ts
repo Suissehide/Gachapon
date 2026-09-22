@@ -12,6 +12,7 @@ import discordEn from './locales/en/discord.json'
 import equipmentEn from './locales/en/equipment.json'
 import errorsEn from './locales/en/errors.json'
 import gachaEn from './locales/en/gacha.json'
+import guideEn from './locales/en/guide.json'
 import homeEn from './locales/en/home.json'
 import layoutEn from './locales/en/layout.json'
 import leaderboardEn from './locales/en/leaderboard.json'
@@ -39,6 +40,7 @@ import discordFr from './locales/fr/discord.json'
 import equipmentFr from './locales/fr/equipment.json'
 import errorsFr from './locales/fr/errors.json'
 import gachaFr from './locales/fr/gacha.json'
+import guideFr from './locales/fr/guide.json'
 import homeFr from './locales/fr/home.json'
 import layoutFr from './locales/fr/layout.json'
 import leaderboardFr from './locales/fr/leaderboard.json'
@@ -186,6 +188,7 @@ void i18next.use(initReactI18next).init({
       quests: questsFr,
       leaderboard: leaderboardFr,
       home: homeFr,
+      guide: guideFr,
     },
     en: {
       about: aboutEn,
@@ -215,6 +218,7 @@ void i18next.use(initReactI18next).init({
       quests: questsEn,
       leaderboard: leaderboardEn,
       home: homeEn,
+      guide: guideEn,
     },
   },
   lng: localeFromPath(window.location.pathname),
@@ -247,6 +251,7 @@ void i18next.use(initReactI18next).init({
     'quests',
     'leaderboard',
     'home',
+    'guide',
   ],
   interpolation: {
     // React échappe déjà le rendu — un double échappement casserait les

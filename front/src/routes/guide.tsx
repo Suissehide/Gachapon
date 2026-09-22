@@ -24,6 +24,7 @@ import {
   Zap,
 } from 'lucide-react'
 import type { ComponentType, ReactNode } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { LandingNavbar } from '../components/custom/LandingNavbar'
 import { SeoHead } from '../components/shared/SeoHead.tsx'
@@ -33,28 +34,30 @@ export const Route = createFileRoute('/guide')({
   component: GuidePage,
 })
 
-const SECTIONS = [
-  { id: 'monnaies', label: 'Les monnaies' },
-  { id: 'tokens', label: 'Jetons & régénération' },
-  { id: 'pulls', label: 'Tirer une capsule' },
-  { id: 'rarete', label: 'Raretés & variantes' },
-  { id: 'piete', label: 'Système de pitié' },
-  { id: 'doublon', label: 'Doublons & poussière' },
-  { id: 'boutique', label: 'Boutique du jour & Vœu' },
-  { id: 'niveaux', label: 'Niveaux & XP' },
-  { id: 'competences', label: 'Arbre de compétences' },
-  { id: 'campagne', label: 'Campagne & combats' },
-  { id: 'combat-points', label: 'Points de combat' },
-  { id: 'cartes', label: 'Améliorer ses cartes' },
-  { id: 'quetes', label: 'Quêtes' },
-  { id: 'succes', label: 'Succès' },
-  { id: 'chaine', label: 'Chaîne de connexion' },
-  { id: 'recompenses', label: 'Récompenses' },
-  { id: 'classements', label: 'Classements' },
-  { id: 'collection', label: 'Collection' },
-  { id: 'equipes', label: 'Équipes' },
-  { id: 'api', label: 'API & Discord' },
-]
+// Les ids sont stables : ils pilotent les ancres `#<id>` et sont indépendants
+// de la langue. Les libellés viennent de `guide:sectionLabels.<id>`.
+const SECTION_IDS = [
+  'monnaies',
+  'tokens',
+  'pulls',
+  'rarete',
+  'piete',
+  'doublon',
+  'boutique',
+  'niveaux',
+  'competences',
+  'campagne',
+  'combat-points',
+  'cartes',
+  'quetes',
+  'succes',
+  'chaine',
+  'recompenses',
+  'classements',
+  'collection',
+  'equipes',
+  'api',
+] as const
 
 function Section({
   id,
@@ -143,6 +146,7 @@ function Currency({
 
 function GuidePage() {
   const { openRegister } = useAuthDialogStore()
+  const { t } = useTranslation('guide')
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -153,16 +157,20 @@ function GuidePage() {
         {/* Header */}
         <header className="mb-12">
           <p className="text-[11px] font-semibold text-text-light/50 uppercase tracking-[0.2em] mb-4">
-            Documentation
+            {t('meta.eyebrow')}
           </p>
           <h1 className="text-5xl font-black tracking-tight mb-4">
-            Guide du joueur
+            {t('header.title')}
           </h1>
           <p className="text-base text-text-light leading-relaxed max-w-xl">
-            Gachapon mêle deux boucles de jeu : <strong>collectionner</strong>{' '}
-            des cartes en tirant des capsules, et les{' '}
-            <strong>faire combattre</strong> dans la campagne pour progresser.
-            Voici tout ce qu'il faut savoir pour débuter et optimiser.
+            <Trans
+              t={t}
+              i18nKey="header.intro"
+              components={{
+                collect: <strong />,
+                battle: <strong />,
+              }}
+            />
           </p>
         </header>
 
@@ -171,17 +179,17 @@ function GuidePage() {
           <aside className="lg:w-52 shrink-0">
             <nav className="lg:sticky lg:top-24">
               <p className="text-[10px] font-semibold text-text-light/40 uppercase tracking-widest mb-3">
-                Sommaire
+                {t('toc.heading')}
               </p>
               <ul className="space-y-1">
-                {SECTIONS.map((s) => (
-                  <li key={s.id}>
+                {SECTION_IDS.map((id) => (
+                  <li key={id}>
                     <a
-                      href={`#${s.id}`}
+                      href={`#${id}`}
                       className="flex items-center gap-1.5 text-xs text-text-light hover:text-foreground transition-colors py-0.5"
                     >
                       <ChevronRight className="h-3 w-3 shrink-0 text-primary/40" />
-                      {s.label}
+                      {t(`sectionLabels.${id}`)}
                     </a>
                   </li>
                 ))}

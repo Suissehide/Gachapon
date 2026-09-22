@@ -1,0 +1,34 @@
+{
+  "meta": {
+    "eyebrow": "Documentation"
+  },
+  "header": {
+    "title": "Guide du joueur",
+    "intro": "Gachapon mêle deux boucles de jeu : <collect>collectionner</collect> des cartes en tirant des capsules, et les <battle>faire combattre</battle> dans la campagne pour progresser. Voici tout ce qu'il faut savoir pour débuter et optimiser."
+  },
+  "toc": {
+    "heading": "Sommaire"
+  },
+  "sectionLabels": {
+    "monnaies": "Les monnaies",
+    "tokens": "Jetons & régénération",
+    "pulls": "Tirer une capsule",
+    "rarete": "Raretés & variantes",
+    "piete": "Système de pitié",
+    "doublon": "Doublons & poussière",
+    "boutique": "Boutique du jour & Vœu",
+    "niveaux": "Niveaux & XP",
+    "competences": "Arbre de compétences",
+    "campagne": "Campagne & combats",
+    "combat-points": "Points de combat",
+    "cartes": "Améliorer ses cartes",
+    "quetes": "Quêtes",
+    "succes": "Succès",
+    "chaine": "Chaîne de connexion",
+    "recompenses": "Récompenses",
+    "classements": "Classements",
+    "collection": "Collection",
+    "equipes": "Équipes",
+    "api": "API & Discord"
+  }
+}
