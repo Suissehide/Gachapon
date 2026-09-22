@@ -399,6 +399,7 @@ export class RaidDomain implements IRaidDomain {
       bossName: raid.boss.name,
       bossElement: raid.boss.element as TowerElement,
       maxHp: raid.maxHp,
+      level: raid.level,
       damage: raid.maxHp - raid.hp,
       pct: raidPct(raid.maxHp - raid.hp, raid.maxHp),
       killedAt: raid.killedAt ? raid.killedAt.toISOString() : null,
@@ -609,6 +610,7 @@ export class RaidDomain implements IRaidDomain {
       hp: raid.hp,
       damageDone,
       memberCountAtStart: raid.memberCountAtStart,
+      level: raid.level,
       killedAt: raid.killedAt ? raid.killedAt.toISOString() : null,
       tiers: tiers.map((t) => tierView(t, reached.has(t.pct))),
       me: {

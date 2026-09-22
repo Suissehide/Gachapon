@@ -264,4 +264,27 @@ describe('raid — difficulté progressive', () => {
     const count = await prisma.raidTier.count({ where: { level: 2 } })
     expect(count).toBe(4)
   })
+
+  it('GET /teams/:id/raid expose le niveau', async () => {
+    const { teamId, cookies } = await freshTeam('VIEW')
+    await pastRaid(teamId, 1, 4, true)
+    const res = await app.inject({
+      method: 'GET',
+      url: `/teams/${teamId}/raid`,
+      headers: { cookie: cookies },
+    })
+    expect(res.json().level).toBe(5)
+  })
+
+  it('GET /economy/config publie les réglages de difficulté', async () => {
+    const res = await app.inject({ method: 'GET', url: '/economy/config' })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().raid).toMatchObject({
+      minMembers: 10,
+      levelHpBonusPct: 10,
+      levelRewardTokens: 2,
+      levelRewardGold: 100,
+      levelRewardDust: 30,
+    })
+  })
 })
