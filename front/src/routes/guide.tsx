@@ -531,52 +531,61 @@ function GuidePage() {
             </Section>
 
             {/* Boutique du jour & Vœu */}
-            <Section id="boutique" icon={Store} title="Boutique du jour & Vœu">
+            <Section
+              id="boutique"
+              icon={Store}
+              title={t('sectionLabels.boutique')}
+            >
               <p>
-                La <strong className="text-foreground">Boutique</strong> te
-                permet de dépenser ta poussière pour cibler des cartes précises,
-                plutôt que de compter uniquement sur le hasard des tirages.
+                <Trans
+                  t={t}
+                  i18nKey="sections.boutique.intro"
+                  components={{
+                    strong: <strong className="text-foreground" />,
+                  }}
+                />
               </p>
               <div className="space-y-3 mt-1">
                 <div className="rounded-lg border border-border/50 bg-card px-4 py-3">
                   <p className="font-semibold text-foreground mb-1">
-                    Boutique du jour
+                    {t('sections.boutique.dailyShop.title')}
                   </p>
                   <p>
-                    Une sélection de cartes renouvelée chaque jour, achetables à
-                    la poussière (prix selon la rareté). Le compteur « Nouveau
-                    tirage dans… » indique le renouvellement. Des compétences
-                    peuvent{' '}
-                    <strong className="text-foreground">
-                      ajouter des emplacements
-                    </strong>{' '}
-                    et{' '}
-                    <strong className="text-foreground">
-                      réduire les prix
-                    </strong>
-                    .
+                    <Trans
+                      t={t}
+                      i18nKey="sections.boutique.dailyShop.description"
+                      components={{
+                        strong1: <strong className="text-foreground" />,
+                        strong2: <strong className="text-foreground" />,
+                      }}
+                    />
                   </p>
                 </div>
                 <div className="rounded-lg border border-border/50 bg-card px-4 py-3">
-                  <p className="font-semibold text-foreground mb-1">Vœu</p>
+                  <p className="font-semibold text-foreground mb-1">
+                    {t('sections.boutique.wish.title')}
+                  </p>
                   <p>
-                    Garde{' '}
-                    <strong className="text-foreground">
-                      plusieurs cartes de ton choix
-                    </strong>{' '}
-                    en vœu, puis achète-les à la poussière quand tu veux : aucun
-                    délai, mais le plein tarif — plus cher qu'en boutique du
-                    jour, et les remises de boutique ne s'y appliquent pas. Tu
-                    as{' '}
-                    <strong className="text-foreground">2 emplacements</strong>,
-                    et une compétence les porte jusqu'à 5.
+                    <Trans
+                      t={t}
+                      i18nKey="sections.boutique.wish.description"
+                      components={{
+                        strong1: <strong className="text-foreground" />,
+                        strong2: <strong className="text-foreground" />,
+                      }}
+                    />
                   </p>
                 </div>
               </div>
               <InfoBox>
-                La Boutique héberge aussi les <strong>packs de tokens</strong>{' '}
-                et des <strong>boosts</strong> temporaires pour accélérer ta
-                progression.
+                <Trans
+                  t={t}
+                  i18nKey="sections.boutique.info"
+                  components={{
+                    strong1: <strong />,
+                    strong2: <strong />,
+                  }}
+                />
               </InfoBox>
             </Section>
 

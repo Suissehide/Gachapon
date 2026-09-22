@@ -109,6 +109,18 @@
       "recycleBullet": "You can also <strong>recycle</strong> extra copies from your collection to convert duplicates into dust.",
       "usesParagraph": "Dust is an all-purpose currency: it's used for the <strong1>daily shop</strong1>, for <strong2>wishes</strong2>, to <strong3>level up your cards</strong3>, and to <strong4>reset</strong4> your skill tree.",
       "tip": "A skill multiplies the dust received on every duplicate. It's one of the best investments once your collection is well-stocked and duplicates start piling up."
+    },
+    "boutique": {
+      "intro": "The <strong>Shop</strong> lets you spend your dust to target specific cards, instead of relying only on pull luck.",
+      "dailyShop": {
+        "title": "Daily shop",
+        "description": "A card selection that refreshes every day, buyable with dust (price based on rarity). The \"New pull in…\" counter shows when it refreshes. Some skills can <strong1>add slots</strong1> and <strong2>lower prices</strong2>."
+      },
+      "wish": {
+        "title": "Wishlist",
+        "description": "Keep <strong1>several cards of your choice</strong1> on your wishlist, then buy them with dust whenever you want: no waiting, but full price — pricier than the daily shop, and shop discounts don't apply. You start with <strong2>2 slots</strong2>, and a skill raises that to 5."
+      },
+      "info": "The Shop also carries <strong1>token packs</strong1> and temporary <strong2>boosts</strong2> to speed up your progress."
     }
   }
 }

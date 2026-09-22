@@ -109,6 +109,18 @@
       "recycleBullet": "Tu peux aussi <strong>recycler</strong> des exemplaires en trop depuis la collection pour convertir des doublons en poussière.",
       "usesParagraph": "La poussière est une monnaie polyvalente : elle sert à la <strong1>boutique du jour</strong1>, au <strong2>Vœu</strong2>, à <strong3>monter tes cartes</strong3> et à <strong4>réinitialiser</strong4> ton arbre de compétences.",
       "tip": "Une compétence multiplie la poussière reçue sur chaque doublon. C'est l'un des meilleurs investissements quand ta collection est déjà bien fournie et que les doublons s'accumulent."
+    },
+    "boutique": {
+      "intro": "La <strong>Boutique</strong> te permet de dépenser ta poussière pour cibler des cartes précises, plutôt que de compter uniquement sur le hasard des tirages.",
+      "dailyShop": {
+        "title": "Boutique du jour",
+        "description": "Une sélection de cartes renouvelée chaque jour, achetables à la poussière (prix selon la rareté). Le compteur « Nouveau tirage dans… » indique le renouvellement. Des compétences peuvent <strong1>ajouter des emplacements</strong1> et <strong2>réduire les prix</strong2>."
+      },
+      "wish": {
+        "title": "Vœu",
+        "description": "Garde <strong1>plusieurs cartes de ton choix</strong1> en vœu, puis achète-les à la poussière quand tu veux : aucun délai, mais le plein tarif — plus cher qu'en boutique du jour, et les remises de boutique ne s'y appliquent pas. Tu as <strong2>2 emplacements</strong2>, et une compétence les porte jusqu'à 5."
+      },
+      "info": "La Boutique héberge aussi les <strong1>packs de tokens</strong1> et des <strong2>boosts</strong2> temporaires pour accélérer ta progression."
     }
   }
 }
