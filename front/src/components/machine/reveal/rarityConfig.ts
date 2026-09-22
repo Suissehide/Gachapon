@@ -1,4 +1,5 @@
 import type { CardRarity } from '../../../constants/card.constant'
+import i18n from '../../../i18n/index.ts'
 
 export type { CardRarity as Rarity }
 
@@ -31,6 +32,8 @@ export interface WaveConfig {
 }
 
 export interface EffectConfig {
+  // Résolu une fois au chargement du module : le changement de langue passe
+  // toujours par un rechargement dur de la page (voir `i18n/useLocale.ts`).
   impactText: string | null
   impactSize: string
   impactColor: string
@@ -106,7 +109,7 @@ export const EFFECT_CONFIG: Record<EffectKey, EffectConfig> = {
   },
 
   UNCOMMON: {
-    impactText: 'JOLI!',
+    impactText: i18n.t('machine:impact.uncommon'),
     impactSize: '54px',
     impactColor: '#22c55e',
     impactStroke: '#14532d',
@@ -135,7 +138,7 @@ export const EFFECT_CONFIG: Record<EffectKey, EffectConfig> = {
   },
 
   RARE: {
-    impactText: 'SUPERBE!',
+    impactText: i18n.t('machine:impact.rare'),
     impactSize: '64px',
     impactColor: '#3b82f6',
     impactStroke: '#1e3a8a',
@@ -164,7 +167,7 @@ export const EFFECT_CONFIG: Record<EffectKey, EffectConfig> = {
   },
 
   EPIC: {
-    impactText: 'ÉNORME!',
+    impactText: i18n.t('machine:impact.epic'),
     impactSize: '68px',
     impactColor: '#8b5cf6',
     impactStroke: '#4c1d95',
@@ -198,7 +201,7 @@ export const EFFECT_CONFIG: Record<EffectKey, EffectConfig> = {
   },
 
   LEGENDARY: {
-    impactText: 'INCROYABLE!',
+    impactText: i18n.t('machine:impact.legendary'),
     impactSize: '72px',
     impactColor: '#f59e0b',
     impactStroke: '#78350f',
@@ -240,7 +243,7 @@ export const EFFECT_CONFIG: Record<EffectKey, EffectConfig> = {
   BRILLIANT: {
     // Le mot affiché pour une variante est en réalité IMPACT_VARIANT
     // (RevealGrid) — dégradé animé. Ces valeurs restent pour cohérence.
-    impactText: 'SCINTILLANT!',
+    impactText: i18n.t('machine:impact.brilliant'),
     impactSize: '68px',
     impactColor: '#f59e0b',
     impactStroke: '#78350f',
@@ -276,7 +279,7 @@ export const EFFECT_CONFIG: Record<EffectKey, EffectConfig> = {
   },
 
   HOLOGRAPHIC: {
-    impactText: 'CHROMATIQUE!',
+    impactText: i18n.t('machine:impact.holographic'),
     impactSize: '72px',
     impactColor: '#a855f7',
     impactStroke: '#4c1d95',

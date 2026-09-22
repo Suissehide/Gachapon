@@ -1,4 +1,5 @@
 import { Sparkles } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import type { CardRarity } from '../../../constants/card.constant'
 import type { PullBatchEntry } from '../../../queries/useGacha'
@@ -21,6 +22,7 @@ type Props = {
  * encore à cet instant.
  */
 export function RevealInspectOverlay({ entry, onClose }: Props) {
+  const { t } = useTranslation('machine')
   return (
     <CardZoomOverlay
       card={{
@@ -36,7 +38,7 @@ export function RevealInspectOverlay({ entry, onClose }: Props) {
         entry.wasDuplicate ? undefined : (
           <span className="flex items-center gap-1.5 rounded-full bg-amber-400/95 px-3 py-0.5 text-[11px] font-black uppercase tracking-widest text-[#1b1726]">
             <Sparkles className="h-3 w-3" strokeWidth={2.5} />
-            Nouvelle
+            {t('machine:badges.newFeminine')}
           </span>
         )
       }

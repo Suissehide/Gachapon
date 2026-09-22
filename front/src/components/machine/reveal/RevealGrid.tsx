@@ -7,9 +7,11 @@ import {
   useRef,
   useState,
 } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import cardBackImg from '../../../assets/data/card-back/star.png'
 import type { CardRarity } from '../../../constants/card.constant'
+import i18n from '../../../i18n/index.ts'
 import type { PullBatchEntry } from '../../../queries/useGacha'
 import { CardDisplay } from '../../shared/tcg-card/CardDisplay'
 import { getRarityTone } from '../../shared/tcg-card/config'
@@ -63,6 +65,7 @@ export function RevealGrid({
   onCardRevealed,
   onAllRevealed,
 }: Props) {
+  const { t } = useTranslation(['machine', 'common'])
   const showPullAgain = onPullAgain !== undefined
   const [flipped, setFlipped] = useState<Set<number>>(() => new Set())
   const [revealAllTriggered, setRevealAllTriggered] = useState(false)
@@ -330,7 +333,7 @@ export function RevealGrid({
                   onClick={revealAll}
                   className="rounded-full px-8 uppercase tracking-widest"
                 >
-                  Tout révéler
+                  {t('machine:grid.revealAll')}
                 </Button>
               )}
             </div>
@@ -360,7 +363,7 @@ export function RevealGrid({
                   <Ticket className="h-5 w-5 text-amber-400" />
                   <div>
                     <div className="font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-white/50">
-                      Jetons restants
+                      {t('machine:grid.tokensRemaining')}
                     </div>
                     <div className="font-display text-lg font-extrabold tabular-nums text-amber-400 leading-none">
                       {tokensRemaining}
@@ -376,7 +379,7 @@ export function RevealGrid({
                       disabled={(tokensRemaining ?? 0) < 1}
                       className="gap-2 border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white"
                     >
-                      Nouveau tirage x1
+                      {t('machine:grid.pullAgainX1')}
                     </Button>
                     <Button
                       variant="gradient"
@@ -384,14 +387,14 @@ export function RevealGrid({
                       disabled={(tokensRemaining ?? 0) < 10}
                       className="gap-2"
                     >
-                      Tirage x10
+                      {t('machine:grid.pullAgainX10')}
                     </Button>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={onClose}
-                    aria-label="Fermer"
+                    aria-label={t('common:a11y.close')}
                     className="border border-white/15 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
                   >
                     <X size={16} />
@@ -404,7 +407,7 @@ export function RevealGrid({
                 onClick={onClose}
                 className="gap-2 px-8 uppercase tracking-widest"
               >
-                Génial !
+                {t('machine:grid.great')}
               </Button>
             )}
           </div>
@@ -517,6 +520,7 @@ function StackReveal({
   onDismiss,
   onSkip,
 }: StackRevealProps) {
+  const { t } = useTranslation('machine')
   const entry = results[index]
   const tone = getRarityTone(entry.card.rarity as CardRarity)
   const impact = impactParams(entry)
@@ -544,7 +548,7 @@ function StackReveal({
           <button
             type="button"
             onClick={onRevealNext}
-            aria-label="Révéler la carte suivante"
+            aria-label={t('machine:a11y.revealNextCard')}
             className="group relative aspect-[2/3] w-64 cursor-pointer bg-transparent"
           >
             {/* Ordre inversé : la prochaine carte à révéler (index) est peinte
@@ -575,7 +579,7 @@ function StackReveal({
               ))}
           </button>
           <p className="mt-10 font-mono text-xs font-bold uppercase tracking-[0.2em] text-white/60">
-            {remaining} {remaining > 1 ? 'cartes restantes' : 'carte restante'}
+            {t('machine:grid.cardsRemaining', { count: remaining })}
           </p>
         </>
       ) : (
@@ -584,7 +588,7 @@ function StackReveal({
            *  carte suivante (la carte elle-même avance via onInspect). */}
           <button
             type="button"
-            aria-label="Carte suivante"
+            aria-label={t('machine:a11y.nextCard')}
             onClick={onDismiss}
             className="absolute inset-0 z-0 cursor-pointer bg-transparent"
           />
@@ -625,7 +629,7 @@ function StackReveal({
           onClick={onSkip}
           className="rounded-full border-white/20 bg-transparent px-8 uppercase tracking-widest text-white hover:bg-white/10 hover:text-white"
         >
-          Passer
+          {t('machine:grid.skip')}
         </Button>
       </div>
     </div>
@@ -700,14 +704,14 @@ const IMPACT_VARIANT: Record<
   { text: string; gradient: string; stroke: string; dur: string }
 > = {
   brilliant: {
-    text: 'SCINTILLANT!',
+    text: i18n.t('machine:impact.brilliant'),
     gradient:
       'linear-gradient(120deg, #b45309, #fde68a, #f59e0b, #fffbe6, #f59e0b, #b45309)',
     stroke: '#78350f',
     dur: '1.1s',
   },
   holo: {
-    text: 'CHROMATIQUE!',
+    text: i18n.t('machine:impact.holographic'),
     gradient:
       'linear-gradient(120deg, #22d3ee, #a855f7, #f59e0b, #ec4899, #38bdf8, #22d3ee)',
     stroke: '#4c1d95',
@@ -850,28 +854,28 @@ function getSpecialBadges(entry: PullBatchEntry): SpecialBadge[] {
   const badges: SpecialBadge[] = []
   if (!entry.wasDuplicate) {
     badges.push({
-      label: 'Nouveau',
+      label: i18n.t('machine:badges.newMasculine'),
       Icon: Star,
       cls: 'bg-emerald-500/95 shadow-emerald-600/40',
     })
   }
   if (entry.wasBoostGuarantee) {
     badges.push({
-      label: 'EPIC garanti',
+      label: i18n.t('machine:badges.boostGuarantee'),
       Icon: Sparkles,
       cls: 'bg-violet-600/95 shadow-violet-700/40',
     })
   }
   if (entry.wasGoldenBall) {
     badges.push({
-      label: "Boule d'or",
+      label: i18n.t('machine:badges.goldenBall'),
       Icon: Trophy,
       cls: 'bg-amber-500/95 shadow-amber-600/40',
     })
   }
   if (entry.wasFreePull) {
     badges.push({
-      label: 'Gratuit',
+      label: i18n.t('machine:badges.freePull'),
       Icon: Gift,
       cls: 'bg-sky-500/95 shadow-sky-600/40',
     })
@@ -893,9 +897,12 @@ type CardProps = {
   registerRef: (el: HTMLDivElement | null) => void
 }
 
+// `common:cardVariant.*` porte l'accord MASCULIN (« Brillant ») ; la variante
+// féminine vit dans `common:variant.*` (« Brillante », CardZoomOverlay). Deux
+// jeux volontaires, même motif que `cardRarity`/`rarity` (rapport tâche 6).
 const VARIANT_LABELS: Record<string, string> = {
-  BRILLIANT: 'Brillant',
-  HOLOGRAPHIC: 'Holographique',
+  BRILLIANT: i18n.t('common:cardVariant.brilliant'),
+  HOLOGRAPHIC: i18n.t('common:cardVariant.holographic'),
 }
 
 // Variant name under the card (mirrors the rarity label on top). Gold for
@@ -950,6 +957,7 @@ function RevealCard({
   entryDelay,
   registerRef,
 }: CardProps) {
+  const { t } = useTranslation('machine')
   const rarity = entry.card.rarity as CardRarity
   const tone = getRarityTone(rarity)
   const [showLabel, setShowLabel] = useState(false)
@@ -1008,9 +1016,9 @@ function RevealCard({
         aria-label={
           flipped
             ? inspectable
-              ? `Inspecter ${entry.card.name}`
-              : 'Carte suivante'
-            : 'Révéler la carte'
+              ? t('machine:a11y.inspectCard', { name: entry.card.name })
+              : t('machine:a11y.nextCard')
+            : t('machine:a11y.revealCard')
         }
         className={`relative h-full w-full rounded-2xl bg-transparent ${
           flipped
@@ -1023,7 +1031,7 @@ function RevealCard({
         {!flipped && (
           <img
             src={cardBackImg}
-            alt="dos de carte"
+            alt={t('machine:a11y.cardBackAlt')}
             className="h-full w-full rounded-2xl object-cover"
             draggable={false}
           />

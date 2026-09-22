@@ -1,0 +1,48 @@
+{
+  "registry": {
+    "none": {
+      "name": "No machine",
+      "description": "Direct pull, no animation"
+    },
+    "gashapon": {
+      "name": "Gashapon",
+      "description": "The classic capsule machine"
+    },
+    "claw": {
+      "name": "Claw Machine",
+      "description": "The claw grabber"
+    }
+  },
+  "impact": {
+    "uncommon": "NICE!",
+    "rare": "SUPERB!",
+    "epic": "HUGE!",
+    "legendary": "INCREDIBLE!",
+    "brilliant": "SPARKLING!",
+    "holographic": "CHROMATIC!"
+  },
+  "badges": {
+    "newMasculine": "New",
+    "newFeminine": "New",
+    "boostGuarantee": "Guaranteed EPIC",
+    "goldenBall": "Golden ball",
+    "freePull": "Free"
+  },
+  "grid": {
+    "revealAll": "Reveal all",
+    "cardsRemaining_one": "{{count}} card left",
+    "cardsRemaining_other": "{{count}} cards left",
+    "skip": "Skip",
+    "tokensRemaining": "Tokens left",
+    "pullAgainX1": "New pull x1",
+    "pullAgainX10": "Pull x10",
+    "great": "Great!"
+  },
+  "a11y": {
+    "revealNextCard": "Reveal the next card",
+    "nextCard": "Next card",
+    "revealCard": "Reveal the card",
+    "inspectCard": "Inspect {{name}}",
+    "cardBackAlt": "card back"
+  }
+}

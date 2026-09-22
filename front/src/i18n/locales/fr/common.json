@@ -70,6 +70,10 @@
     "brilliant": "Brillante",
     "holographic": "Holographique"
   },
+  "cardVariant": {
+    "brilliant": "Brillant",
+    "holographic": "Holographique"
+  },
   "a11y": {
     "close": "Fermer"
   },

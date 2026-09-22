@@ -1,0 +1,48 @@
+{
+  "registry": {
+    "none": {
+      "name": "Sans machine",
+      "description": "Tirage direct sans animation"
+    },
+    "gashapon": {
+      "name": "Gashapon",
+      "description": "La machine à capsules classique"
+    },
+    "claw": {
+      "name": "Claw Machine",
+      "description": "La pince à grappins"
+    }
+  },
+  "impact": {
+    "uncommon": "JOLI!",
+    "rare": "SUPERBE!",
+    "epic": "ÉNORME!",
+    "legendary": "INCROYABLE!",
+    "brilliant": "SCINTILLANT!",
+    "holographic": "CHROMATIQUE!"
+  },
+  "badges": {
+    "newMasculine": "Nouveau",
+    "newFeminine": "Nouvelle",
+    "boostGuarantee": "EPIC garanti",
+    "goldenBall": "Boule d'or",
+    "freePull": "Gratuit"
+  },
+  "grid": {
+    "revealAll": "Tout révéler",
+    "cardsRemaining_one": "{{count}} carte restante",
+    "cardsRemaining_other": "{{count}} cartes restantes",
+    "skip": "Passer",
+    "tokensRemaining": "Jetons restants",
+    "pullAgainX1": "Nouveau tirage x1",
+    "pullAgainX10": "Tirage x10",
+    "great": "Génial !"
+  },
+  "a11y": {
+    "revealNextCard": "Révéler la carte suivante",
+    "nextCard": "Carte suivante",
+    "revealCard": "Révéler la carte",
+    "inspectCard": "Inspecter {{name}}",
+    "cardBackAlt": "dos de carte"
+  }
+}

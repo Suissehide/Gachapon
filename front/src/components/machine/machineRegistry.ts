@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react'
 import { CircleOff, Cog, GripVertical } from 'lucide-react'
 import type { ForwardRefExoticComponent, RefAttributes } from 'react'
 
+import i18n from '../../i18n/index.ts'
 import { ClawMachine } from './type/ClawMachine'
 import { GashaponMachine } from './type/GashaponMachine'
 
@@ -19,34 +20,38 @@ export type MachineDefinition = {
 }
 
 // 'none' is always available (free), no animation
+// Libellés résolus une fois au chargement du module : sûr ici parce que
+// `useLocale().switchTo` fait toujours un rechargement dur de la page (voir
+// `i18n/useLocale.ts`), donc ce module est réévalué à chaque changement de
+// langue. Même motif que `constants/card.constant.ts` et `libs/rarity.ts`.
 export const MACHINE_REGISTRY: MachineDefinition[] = [
   {
     id: 'none',
-    name: 'Sans machine',
+    name: i18n.t('machine:registry.none.name'),
     component: null,
     price: 0,
     icon: CircleOff,
-    description: 'Tirage direct sans animation',
+    description: i18n.t('machine:registry.none.description'),
   },
   {
     id: 'gashapon',
-    name: 'Gashapon',
+    name: i18n.t('machine:registry.gashapon.name'),
     component: GashaponMachine as ForwardRefExoticComponent<
       RefAttributes<MachineHandle>
     >,
     price: 500,
     icon: Cog,
-    description: 'La machine à capsules classique',
+    description: i18n.t('machine:registry.gashapon.description'),
   },
   {
     id: 'claw',
-    name: 'Claw Machine',
+    name: i18n.t('machine:registry.claw.name'),
     component: ClawMachine as ForwardRefExoticComponent<
       RefAttributes<MachineHandle>
     >,
     price: 1500,
     icon: GripVertical,
-    description: 'La pince à grappins',
+    description: i18n.t('machine:registry.claw.description'),
   },
 ]
 
