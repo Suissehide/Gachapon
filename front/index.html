@@ -1,5 +1,12 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
+  <!--
+    lang par défaut : posé en dur ici pour l'instant très court avant que
+    src/main.tsx ne prenne la main et l'écrase avec la locale résolue depuis
+    l'URL (document.documentElement.lang = locale). "en" et non "fr" parce que
+    c'est la langue servie par défaut (voir CLAUDE.md / spec bilingue) ; le
+    prerender SEO du lot 3 écrira un lang correct par arbre dist/fr, dist/en.
+  -->
   <head>
     <meta charset="UTF-8" />
     <link href="/src/assets/favicon.ico" rel="icon" type="image/svg+xml" />
