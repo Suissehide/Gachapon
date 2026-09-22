@@ -2,6 +2,10 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 import { serializerCompiler } from 'fastify-type-provider-zod'
 import { z } from 'zod/v4'
 
+import {
+  TOWER_NAME_BY_ELEMENT,
+  TOWER_NAME_EN_BY_ELEMENT,
+} from '../../main/domain/tower/tower-slots'
 import { runWithLocale } from '../../main/infra/i18n/locale-context'
 import type { PostgresPrismaClient } from '../../main/infra/orm/postgres-client'
 import { buildTestApp } from '../helpers/build-test-app'
@@ -205,5 +209,42 @@ describe('localisation du contenu — CardSet (tri et sérialisation)', () => {
     // Le schéma ne déclare pas les colonnes brutes : Zod les retire, donc
     // aucune réponse ainsi typée ne fuit `nameFr`/`nameEn` au client.
     expect('nameFr' in inEnglish).toBe(false)
+  })
+
+  // ---------------------------------------------------------------------
+  // Nom de tour — pas du contenu de base : il est calculé en code
+  // (`tower-slots.ts`). Sa traduction existait mais n'était consommée que
+  // par le libellé d'étage, si bien qu'un anglophone lisait
+  // « Ember Tower — floor 3 » sous un titre « Tour de Braise ».
+  // ---------------------------------------------------------------------
+  it('sert le nom de tour dans la langue demandée', async () => {
+    const fetchTowers = async (headers: Record<string, string>) => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/tower',
+        headers: { ...headers, cookie: cookies },
+      })
+      expect(res.statusCode).toBe(200)
+      return res.json().towers as { element: string; name: string }[]
+    }
+
+    const fr = await fetchTowers({ 'accept-language': 'fr-FR,fr;q=0.9' })
+    expect(fr.find((t) => t.element === 'FIRE')?.name).toBe(
+      TOWER_NAME_BY_ELEMENT.FIRE,
+    )
+
+    const en = await fetchTowers({ 'accept-language': 'en' })
+    expect(en.find((t) => t.element === 'FIRE')?.name).toBe(
+      TOWER_NAME_EN_BY_ELEMENT.FIRE,
+    )
+    // Les deux noms sont bien distincts : l'assertion ci-dessus ne peut pas
+    // passer par accident.
+    expect(TOWER_NAME_EN_BY_ELEMENT.FIRE).not.toBe(TOWER_NAME_BY_ELEMENT.FIRE)
+
+    // Sans en-tête : DEFAULT_LOCALE, donc l'anglais.
+    const none = await fetchTowers({})
+    expect(none.find((t) => t.element === 'FIRE')?.name).toBe(
+      TOWER_NAME_EN_BY_ELEMENT.FIRE,
+    )
   })
 })

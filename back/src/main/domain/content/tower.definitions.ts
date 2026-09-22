@@ -15,6 +15,7 @@ import {
   TOWER_ELEMENTS,
   TOWER_FLOOR_COUNT,
   TOWER_NAME_BY_ELEMENT,
+  TOWER_NAME_EN_BY_ELEMENT,
   type TowerElement,
 } from '../tower/tower-slots'
 import {
@@ -26,22 +27,6 @@ import { RARITY_BASE } from './campaign.definitions'
 
 export { TOWER_ELEMENTS, TOWER_FLOOR_COUNT }
 export type { TowerElement }
-
-/**
- * Traduction anglaise de `TOWER_NAME_BY_ELEMENT` (`tower-slots.ts`).
- *
- * Reste locale à ce fichier plutôt que d'être ajoutée à `tower-slots.ts` :
- * seul le libellé d'étage (`buildTowerFloors`, ci-dessous) est bilingue,
- * le nom de tour renvoyé par `tower.domain.ts` (`TowerSummary.name`,
- * `TowerView.name`) ne l'est pas — hors périmètre de cette tâche, qui ne
- * traduit que le contenu déjà `*Fr`/`*En`.
- */
-const TOWER_NAME_EN_BY_ELEMENT: Record<TowerElement, string> = {
-  FIRE: 'Ember Tower',
-  WATER: 'Prism Tower',
-  NATURE: 'Sap Tower',
-  EARTH: 'Monolith Tower',
-}
 
 /**
  * Difficulté par étage — un étage, un profil de joueur.

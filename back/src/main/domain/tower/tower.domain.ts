@@ -52,8 +52,8 @@ import { rollTowerDrop, rollTowerFirstClearDrop } from './tower-drop'
 import {
   TOWER_ELEMENTS,
   TOWER_FLOOR_COUNT,
-  TOWER_NAME_BY_ELEMENT,
   type TowerElement,
+  towerName,
 } from './tower-slots'
 
 type Rarity = 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
@@ -218,7 +218,7 @@ export class TowerDomain {
     )
     return TOWER_ELEMENTS.map((element) => ({
       element,
-      name: TOWER_NAME_BY_ELEMENT[element],
+      name: towerName(element),
       highestFloor: byElement.get(element) ?? 0,
       totalFloors: TOWER_FLOOR_COUNT,
     }))
@@ -275,7 +275,7 @@ export class TowerDomain {
 
     return {
       element,
-      name: TOWER_NAME_BY_ELEMENT[element],
+      name: towerName(element),
       highestFloor,
       floors: floorViews,
     }

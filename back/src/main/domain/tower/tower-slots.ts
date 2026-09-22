@@ -1,4 +1,5 @@
 import { CardElement, EquipmentSlot } from '../../../generated/client'
+import { getCurrentLocale } from '../../infra/i18n/locale-context'
 
 /**
  * Les quatre tours élémentaires du cycle (§6 design spec). `LIGHT` et `DARK`
@@ -47,6 +48,34 @@ export const TOWER_NAME_BY_ELEMENT: Record<TowerElement, string> = {
   [CardElement.WATER]: 'Tour de Prisme',
   [CardElement.NATURE]: 'Tour de Sève',
   [CardElement.EARTH]: 'Tour de Monolithe',
+}
+
+/**
+ * Traduction anglaise de `TOWER_NAME_BY_ELEMENT`. Vit ici, à côté du
+ * français, et non dans `content/tower.definitions.ts` où elle était
+ * née : elle y servait au seul libellé d'étage, si bien qu'un joueur
+ * anglophone lisait « Ember Tower — floor 3 » sous un titre
+ * « Tour de Braise », le nom de tour n'étant pas traduit.
+ */
+export const TOWER_NAME_EN_BY_ELEMENT: Record<TowerElement, string> = {
+  [CardElement.FIRE]: 'Ember Tower',
+  [CardElement.WATER]: 'Prism Tower',
+  [CardElement.NATURE]: 'Sap Tower',
+  [CardElement.EARTH]: 'Monolith Tower',
+}
+
+/**
+ * Nom de tour dans la locale de la requête courante.
+ *
+ * Le nom de tour n'est pas du contenu de base : il est calculé en code, il
+ * n'a donc ni colonne `*Fr`/`*En` ni repli à faire — les deux langues
+ * existent toujours. `getCurrentLocale()` retombe sur `DEFAULT_LOCALE` hors
+ * requête (tâches de fond, scripts), ce qui est le bon défaut ici.
+ */
+export function towerName(element: TowerElement): string {
+  return getCurrentLocale() === 'FR'
+    ? TOWER_NAME_BY_ELEMENT[element]
+    : TOWER_NAME_EN_BY_ELEMENT[element]
 }
 
 /**
