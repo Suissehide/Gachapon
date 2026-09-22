@@ -104,6 +104,32 @@ export function nextRaidLevel(
   return Math.max(0, last.level + (last.killedAt ? 1 : -1) - skipped)
 }
 
+export type RaidRewardAmounts = {
+  tokens: number
+  gold: number
+  dust: number
+}
+
+/**
+ * Lot d'un palier à un niveau donné. Le bonus est ADDITIF là où les PV sont
+ * exponentiels : la récompense par point de dégât décroît donc strictement
+ * avec le niveau, et monter reste un défi plutôt qu'un farm plus rentable.
+ * `xp` et `cardRarity` ne sont pas touchés — l'XP de raid vaut 0 et la
+ * rareté n'a pas d'échelle continue.
+ */
+export function raidTierRewardAtLevel(
+  base: RaidRewardAmounts,
+  level: number,
+  perLevel: RaidRewardAmounts,
+): RaidRewardAmounts {
+  const n = Math.max(0, level)
+  return {
+    tokens: base.tokens + n * perLevel.tokens,
+    gold: base.gold + n * perLevel.gold,
+    dust: base.dust + n * perLevel.dust,
+  }
+}
+
 /**
  * Somme des dégâts finaux infligés par le camp A à l'unité boss. Les
  * esquives ont `final: 0`, les frappes du boss (attackerId 'B…') et les

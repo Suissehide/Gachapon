@@ -107,6 +107,28 @@ describe('raid — difficulté progressive', () => {
     await configService.set('raid.baseHpPerMember', HP_PER_MEMBER)
     await configService.set('raid.minMembers', 10)
     await configService.set('raid.levelHpBonusPct', 10)
+    await configService.set('raid.levelRewardTokens', 2)
+    await configService.set('raid.levelRewardGold', 100)
+    await configService.set('raid.levelRewardDust', 30)
+
+    for (const t of [
+      { pct: 25, tokens: 5, gold: 200, dust: 50 },
+      { pct: 50, tokens: 10, gold: 400, dust: 100 },
+      { pct: 75, tokens: 15, gold: 600, dust: 150 },
+      { pct: 100, tokens: 25, gold: 1000, dust: 300 },
+    ]) {
+      const existing = await prisma.raidTier.findUnique({
+        where: { pct_level: { pct: t.pct, level: 0 } },
+      })
+      if (!existing) {
+        const reward = await prisma.reward.create({
+          data: { tokens: t.tokens, gold: t.gold, dust: t.dust },
+        })
+        await prisma.raidTier.create({
+          data: { pct: t.pct, level: 0, rewardId: reward.id },
+        })
+      }
+    }
 
     const element = raidElementForWeek(raidWeekKey(new Date()))
     const boss = await prisma.raidBoss.upsert({
@@ -210,5 +232,36 @@ describe('raid — difficulté progressive', () => {
     })
     // 1000 × 10 × 1,1² = 12 100
     expect(res.json().maxHp).toBe(12100)
+  })
+
+  it('les lots affichés sont majorés du bonus de niveau', async () => {
+    const { teamId, cookies } = await freshTeam('LOOT')
+    await pastRaid(teamId, 1, 1, true) // victoire au niveau 1 → niveau 2
+    const res = await app.inject({
+      method: 'GET',
+      url: `/teams/${teamId}/raid`,
+      headers: { cookie: cookies },
+    })
+    const tier100 = res.json().tiers.find((t: any) => t.pct === 100)
+    // 25 + 2×2, 1000 + 2×100, 300 + 2×30
+    expect(tier100.reward).toMatchObject({
+      tokens: 29,
+      gold: 1200,
+      dust: 360,
+    })
+  })
+
+  it('les paliers d’un niveau ne sont créés qu’une fois', async () => {
+    const { teamId, cookies } = await freshTeam('IDEM')
+    await pastRaid(teamId, 1, 1, true)
+    for (let i = 0; i < 3; i++) {
+      await app.inject({
+        method: 'GET',
+        url: `/teams/${teamId}/raid`,
+        headers: { cookie: cookies },
+      })
+    }
+    const count = await prisma.raidTier.count({ where: { level: 2 } })
+    expect(count).toBe(4)
   })
 })

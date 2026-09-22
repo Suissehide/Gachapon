@@ -10,6 +10,7 @@ import {
   raidElementForWeek,
   raidMaxHp,
   raidPct,
+  raidTierRewardAtLevel,
   raidWeekEndsAt,
   raidWeekIndex,
   raidWeekKey,
@@ -220,5 +221,22 @@ describe('raid-rules — niveau de difficulté', () => {
     expect(
       nextRaidLevel({ weekKey: '2026-08-31', level: 3, killedAt: killed }, '2026-09-21'),
     ).toBe(2)
+  })
+})
+
+describe('raid-rules — lots par niveau', () => {
+  const perLevel = { tokens: 2, gold: 100, dust: 30 }
+  const base = { tokens: 25, gold: 1000, dust: 300 }
+
+  it('le niveau 0 laisse le lot de base intact', () => {
+    expect(raidTierRewardAtLevel(base, 0, perLevel)).toEqual(base)
+  })
+
+  it('le bonus est additif, jamais multiplicatif', () => {
+    expect(raidTierRewardAtLevel(base, 3, perLevel)).toEqual({
+      tokens: 31,
+      gold: 1300,
+      dust: 390,
+    })
   })
 })

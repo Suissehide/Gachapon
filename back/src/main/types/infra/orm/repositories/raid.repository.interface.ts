@@ -7,6 +7,7 @@ import type {
   Reward,
   TeamRaid,
 } from '../../../../../generated/client'
+import type { RaidRewardAmounts } from '../../../../domain/raid/raid-rules'
 
 export type RaidTierWithReward = RaidTier & { reward: Reward }
 export type TeamRaidWithBoss = TeamRaid & { boss: RaidBoss }
@@ -32,8 +33,13 @@ export interface IRaidRepository {
     element: CardElement,
     data: { name?: string; spec?: Prisma.InputJsonValue },
   ): Promise<RaidBoss>
-  /** Paliers triés par pct croissant. */
-  listTiers(): Promise<RaidTierWithReward[]>
+  /** Paliers d'un niveau donné (défaut 0), triés par pct croissant. */
+  listTiers(level?: number): Promise<RaidTierWithReward[]>
+  /** Paliers du niveau, créés à la demande depuis le niveau 0. Hors transaction. */
+  ensureTiersForLevel(
+    level: number,
+    perLevel: RaidRewardAmounts,
+  ): Promise<RaidTierWithReward[]>
   findTierByPct(pct: number): Promise<RaidTierWithReward | null>
   updateTierReward(
     pct: number,

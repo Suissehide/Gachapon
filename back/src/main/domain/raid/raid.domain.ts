@@ -144,7 +144,14 @@ export class RaidDomain implements IRaidDomain {
     now: Date = new Date(),
   ): Promise<RaidAttackResult> {
     const team = await this.#requireMembership(teamId, userId)
-    const raidId = (await this.#ensureRaid(team, now)).id
+    // `ensured` et pas `raid` : la transaction ci-dessous déclare déjà un
+    // `raid`, la ligne rechargée sous verrou. Deux noms distincts pour deux
+    // lectures distinctes.
+    const ensured = await this.#ensureRaid(team, now)
+    const raidId = ensured.id
+    // AVANT la transaction : une création de `Reward` dedans lèverait un
+    // P2002 non rattrapé par `retryOnSerialization` (qui ne voit que P2034).
+    await this.#tiersFor(ensured.level)
 
     // Config lue AVANT la transaction (pas d'I/O async étranger dans un tx
     // Serializable) — même motif que tower.domain#fight.
@@ -275,6 +282,7 @@ export class RaidDomain implements IRaidDomain {
           })
 
           const tiers = await tx.raidTier.findMany({
+            where: { level: raid.level },
             include: { reward: true },
             orderBy: { pct: 'asc' },
           })
@@ -517,6 +525,27 @@ export class RaidDomain implements IRaidDomain {
     })
   }
 
+  /**
+   * Paliers applicables à un raid de niveau `level`, créés au besoin. Appelée
+   * aussi bien à l'affichage qu'à l'attaque : sans cela, un joueur verrait
+   * des lots calculés à la volée et en recevrait d'autres, persistés.
+   */
+  #tiersFor(level: number): Promise<RaidTierWithReward[]> {
+    return this.#configService
+      .getMany(
+        'raid.levelRewardTokens',
+        'raid.levelRewardGold',
+        'raid.levelRewardDust',
+      )
+      .then((cfg) =>
+        this.#raidRepository.ensureTiersForLevel(level, {
+          tokens: cfg['raid.levelRewardTokens'],
+          gold: cfg['raid.levelRewardGold'],
+          dust: cfg['raid.levelRewardDust'],
+        }),
+      )
+  }
+
   async #contributions(
     raidId: string,
     team: TeamWithMembers,
@@ -548,7 +577,7 @@ export class RaidDomain implements IRaidDomain {
     // confondues.
     const [tiers, contributions, cfg, usedToday, raidBonus] = await Promise.all(
       [
-        this.#raidRepository.listTiers(),
+        this.#tiersFor(raid.level),
         this.#contributions(raid.id, team),
         this.#configService.getMany('raid.attacksPerDay'),
         this.#raidRepository.countUserAttacksSince(userId, utcDayStart(now)),
