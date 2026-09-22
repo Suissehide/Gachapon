@@ -43,5 +43,6 @@ export type UpdateUserInput = Partial<
     | 'passwordResetToken'
     | 'passwordResetTokenExpiresAt'
     | 'passwordHash'
+    | 'locale'
   >
 >

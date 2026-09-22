@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { errorMessage } from '../../infra/i18n/error-messages'
+import type { Locale } from '../../infra/i18n/locale'
 import type { IocContainer } from '../../types/application/ioc'
 import type { UserDomainInterface } from '../../types/domain/user/user.domain.interface'
 import type {
@@ -42,5 +43,13 @@ export class UserDomain implements UserDomainInterface {
       throw Boom.conflict(errorMessage('user.usernameTaken'))
     }
     return this.#repo.update(id, { username })
+  }
+
+  async updateLocale(id: string, locale: Locale): Promise<UserEntity> {
+    const current = await this.#repo.findById(id)
+    if (!current) {
+      throw Boom.notFound(errorMessage('user.notFound'))
+    }
+    return this.#repo.update(id, { locale })
   }
 }

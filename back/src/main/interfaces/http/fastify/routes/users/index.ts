@@ -7,6 +7,8 @@ import {
   setFeaturedCardsBodySchema,
   setFeaturedCardsResponseSchema,
   setsProgressionResponseSchema,
+  updateLocaleBodySchema,
+  updateLocaleResponseSchema,
   updateUsernameBodySchema,
   updateUsernameResponseSchema,
   userProfileResponseSchema,
@@ -150,6 +152,24 @@ export const usersRouter: FastifyPluginCallbackZod = (fastify) => {
         request.body.username,
       )
       return { username: user.username }
+    },
+  )
+
+  fastify.patch(
+    '/users/me/locale',
+    {
+      onRequest: [fastify.verifySessionCookie],
+      schema: {
+        body: updateLocaleBodySchema,
+        response: { 200: updateLocaleResponseSchema },
+      },
+    },
+    async (request) => {
+      const user = await userDomain.updateLocale(
+        request.user.userID,
+        request.body.locale,
+      )
+      return { locale: user.locale }
     },
   )
 }

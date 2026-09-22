@@ -48,6 +48,9 @@ export type SetProgression = {
   percent: number
 }
 
+/** Locale telle qu'attendue/renvoyée par l'API (`back/src/main/infra/i18n/locale.ts`) — en majuscules, à ne pas confondre avec `Locale` de `src/i18n/index.ts` (préfixe d'URL, en minuscules). */
+export type ApiLocale = 'FR' | 'EN'
+
 // Routes
 export const PROFILE_ROUTES = {
   profile: (username: string) => `/users/${username}/profile`,
@@ -57,6 +60,7 @@ export const PROFILE_ROUTES = {
     `/users/${username}/profile/sets-progression`,
   mySetFeaturedCards: '/users/me/featured-cards',
   myUsername: '/users/me/username',
+  myLocale: '/users/me/locale',
   apiKeys: '/api-keys',
   apiKey: (id: string) => `/api-keys/${id}`,
 } as const

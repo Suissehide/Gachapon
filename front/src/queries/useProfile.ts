@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 
+import type { ApiLocale } from '../api/profile.api.ts'
 import { ProfileApi } from '../api/profile.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
@@ -136,5 +137,17 @@ export function useUpdateUsernameMutation() {
         severity: TOAST_SEVERITY.ERROR,
       })
     },
+  })
+}
+
+/**
+ * Pas d'invalidation ni de toast ici : appelée uniquement depuis
+ * `useLocale().switchTo` (voir `src/i18n/useLocale.ts`), qui enchaîne
+ * toujours sur une navigation dure — une éventuelle erreur reste silencieuse
+ * côté appelant, jamais bloquante pour la bascule d'affichage.
+ */
+export function useUpdateLocaleMutation() {
+  return useMutation({
+    mutationFn: (locale: ApiLocale) => ProfileApi.updateLocale(locale),
   })
 }

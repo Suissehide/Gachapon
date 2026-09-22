@@ -74,3 +74,11 @@ export const updateUsernameBodySchema = z.object({
 })
 
 export const updateUsernameResponseSchema = z.object({ username: z.string() })
+
+export const updateLocaleBodySchema = z.object({
+  locale: z.enum(['FR', 'EN']),
+})
+
+export const updateLocaleResponseSchema = z.object({
+  locale: z.enum(['FR', 'EN']),
+})

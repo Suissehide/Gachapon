@@ -6,6 +6,7 @@ import { discordInviteUrl } from '../../constants/config.constant'
 import { useAuthStore } from '../../stores/auth.store'
 import { useAuthDialogStore } from '../../stores/authDialog.store'
 import { AuthDialog } from '../auth/authDialog'
+import { LocaleSwitcher } from '../shared/LocaleSwitcher.tsx'
 import { Button } from '../ui/button'
 import {
   CapsuleIcon,
@@ -153,8 +154,9 @@ export function LandingNavbar() {
             </a>
           </nav>
 
-          {/* Right: CTA + auth */}
+          {/* Right: locale · CTA + auth */}
           <div className="flex items-center gap-3">
+            <LocaleSwitcher className="hidden lg:inline-flex" />
             {isAuthenticated && user ? (
               <>
                 <Button
@@ -253,6 +255,17 @@ export function LandingNavbar() {
           open={menuOpen}
           onClick={closeMenu}
         />
+
+        {/* Langue — visible que le visiteur soit connecté ou non */}
+        <div
+          className={`mt-1 pt-3 border-t border-border/60 flex items-center justify-between transition-opacity duration-300 ${menuOpen ? 'opacity-100' : 'opacity-0'}`}
+          style={{ transitionDelay: '300ms' }}
+        >
+          <span className="px-2 text-sm font-semibold uppercase tracking-wide text-text-light/60">
+            Langue
+          </span>
+          <LocaleSwitcher />
+        </div>
 
         {/* Auth section — authenticated only */}
         {isAuthenticated && user && (

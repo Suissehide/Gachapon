@@ -9,6 +9,7 @@ import { useAuthStore } from '../../stores/auth.store'
 import { NotificationDot } from '../notifications/NotificationDot.tsx'
 import { NotificationsBadge } from '../notifications/NotificationsBadge.tsx'
 import { RewardsBadge } from '../rewards/RewardsBadge.tsx'
+import { LocaleSwitcher } from '../shared/LocaleSwitcher.tsx'
 import { Button } from '../ui/button.tsx'
 import {
   CapsuleIcon,
@@ -139,28 +140,31 @@ export function Navbar() {
                 </Link>
               ))}
             </nav>
-            {user && (
-              <div className="flex items-center gap-3 self-center">
-                <Link
-                  to="/profile/$username"
-                  params={{ username: user.username }}
-                  title="Mon profil"
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary text-xs font-bold text-white ring-2 ring-primary/20 transition-all hover:ring-primary/50"
-                >
-                  {user.username[0]?.toUpperCase()}
-                </Link>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => void handleLogout()}
-                  aria-label="Déconnexion"
-                  title="Déconnexion"
-                  className="my-2 h-10 w-10 rounded-[11px] text-text-light/40 hover:bg-text/[0.06] hover:text-destructive"
-                >
-                  <LogOut className="h-[19px] w-[19px]" />
-                </Button>
-              </div>
-            )}
+            <div className="flex items-center gap-3 self-center">
+              <LocaleSwitcher />
+              {user && (
+                <>
+                  <Link
+                    to="/profile/$username"
+                    params={{ username: user.username }}
+                    title="Mon profil"
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary text-xs font-bold text-white ring-2 ring-primary/20 transition-all hover:ring-primary/50"
+                  >
+                    {user.username[0]?.toUpperCase()}
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => void handleLogout()}
+                    aria-label="Déconnexion"
+                    title="Déconnexion"
+                    className="my-2 h-10 w-10 rounded-[11px] text-text-light/40 hover:bg-text/[0.06] hover:text-destructive"
+                  >
+                    <LogOut className="h-[19px] w-[19px]" />
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </nav>
@@ -185,10 +189,20 @@ export function Navbar() {
           />
         ))}
 
+        <div
+          className={`mt-1 flex items-center justify-between border-t border-border/60 pt-3 transition-opacity duration-300 ${menuOpen ? 'opacity-100' : 'opacity-0'}`}
+          style={{ transitionDelay: `${navItems.length * 45 + 120}ms` }}
+        >
+          <span className="px-2 text-sm font-semibold uppercase tracking-wide text-text-light/60">
+            Langue
+          </span>
+          <LocaleSwitcher />
+        </div>
+
         {user && (
           <div
             className={`mt-1 flex items-center justify-between border-t border-border/60 pt-1 transition-opacity duration-300 ${menuOpen ? 'opacity-100' : 'opacity-0'}`}
-            style={{ transitionDelay: `${navItems.length * 45 + 120}ms` }}
+            style={{ transitionDelay: `${navItems.length * 45 + 160}ms` }}
           >
             <Link
               to="/profile/$username"

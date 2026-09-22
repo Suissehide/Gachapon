@@ -2,6 +2,7 @@ import { apiUrl } from '../constants/config.constant.ts'
 import type {
   ApiKey,
   ApiKeyCreated,
+  ApiLocale,
   FeaturedCard,
   SetProgression,
   UserProfile,
@@ -10,7 +11,14 @@ import { PROFILE_ROUTES } from '../constants/profile.constant.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
-export type { UserProfile, ApiKey, ApiKeyCreated, FeaturedCard, SetProgression }
+export type {
+  UserProfile,
+  ApiKey,
+  ApiKeyCreated,
+  ApiLocale,
+  FeaturedCard,
+  SetProgression,
+}
 
 export const ProfileApi = {
   getUserProfile: async (username: string): Promise<UserProfile> => {
@@ -122,6 +130,18 @@ export const ProfileApi = {
         },
         'Erreur lors du changement de pseudo',
       )
+    }
+    return res.json()
+  },
+
+  updateLocale: async (locale: ApiLocale): Promise<{ locale: ApiLocale }> => {
+    const res = await fetchWithAuth(`${apiUrl}${PROFILE_ROUTES.myLocale}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ locale }),
+    })
+    if (!res.ok) {
+      handleHttpError(res, {}, 'Erreur lors du changement de langue')
     }
     return res.json()
   },
