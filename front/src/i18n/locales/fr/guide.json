@@ -165,6 +165,22 @@
       "insufficientBullet": "Chaque combat et chaque farm en consomme. Sans énergie, le bouton indique <strong>« Énergie insuffisante »</strong>.",
       "skillsBullet": "Des compétences accélèrent leur régénération, augmentent le plafond, et réduisent le coût du farm.",
       "tip": "Dépense ton énergie avant qu'elle n'atteigne le plafond : au-delà, les points régénérés sont perdus, exactement comme les jetons."
+    },
+    "cartes": {
+      "intro": "Pour tenir face aux étapes avancées, tes cartes doivent gagner en puissance. Trois leviers se combinent, gérés depuis la fiche d'une carte.",
+      "level": {
+        "title": "Niveau",
+        "description": "Monte le <strong>niveau</strong> d'une carte contre de l'or et de la poussière : ses stats (PV, ATQ, DEF, VIT) augmentent à chaque niveau, jusqu'au plafond de son palier."
+      },
+      "ascension": {
+        "title": "Palier & ascension",
+        "description": "Une fois une carte au sommet de son <strong1>palier</strong1>, <strong2>l'ascensionner</strong2> consomme un <strong3>doublon</strong3> pour passer au palier suivant et relever son plafond de niveau. Son <strong4>passif</strong4> gagne aussi en puissance à chaque palier, jusqu'à un certain point : au-delà, il reste fixe et seules les stats continuent de progresser. Une fois le palier maximum atteint, la progression passe par <strong5>l'équipement</strong5>."
+      },
+      "equipment": {
+        "title": "Équipement",
+        "description": "Chaque carte dispose de 3 emplacements — <weaponPill>Arme</weaponPill> <armorPill>Armure</armorPill> <accessoryPill>Accessoire</accessoryPill>. Les pièces tombent en combat (et sur les boss), ont une rareté, et ajoutent des bonus de stats. Équipe-les ou retire-les depuis la page <strong>Équipement</strong>."
+      },
+      "tip": "Après une défaite, deux réflexes : revoir la composition de ton équipe, ou monter le niveau de tes cartes avant de retourner au front."
     }
   }
 }

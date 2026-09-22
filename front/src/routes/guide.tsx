@@ -793,60 +793,64 @@ function GuidePage() {
             </Section>
 
             {/* Améliorer ses cartes */}
-            <Section id="cartes" icon={ChevronsUp} title="Améliorer ses cartes">
-              <p>
-                Pour tenir face aux étapes avancées, tes cartes doivent gagner
-                en puissance. Trois leviers se combinent, gérés depuis la fiche
-                d'une carte.
-              </p>
+            <Section
+              id="cartes"
+              icon={ChevronsUp}
+              title={t('sectionLabels.cartes')}
+            >
+              <p>{t('sections.cartes.intro')}</p>
               <div className="space-y-3 mt-1">
                 <div className="rounded-lg border border-border/50 bg-card px-4 py-3">
-                  <p className="font-semibold text-foreground mb-1">Niveau</p>
+                  <p className="font-semibold text-foreground mb-1">
+                    {t('sections.cartes.level.title')}
+                  </p>
                   <p>
-                    Monte le <strong className="text-foreground">niveau</strong>{' '}
-                    d'une carte contre de l'or et de la poussière : ses stats
-                    (PV, ATQ, DEF, VIT) augmentent à chaque niveau, jusqu'au
-                    plafond de son palier.
+                    <Trans
+                      t={t}
+                      i18nKey="sections.cartes.level.description"
+                      components={{
+                        strong: <strong className="text-foreground" />,
+                      }}
+                    />
                   </p>
                 </div>
                 <div className="rounded-lg border border-border/50 bg-card px-4 py-3">
                   <p className="font-semibold text-foreground mb-1">
-                    Palier & ascension
+                    {t('sections.cartes.ascension.title')}
                   </p>
                   <p>
-                    Une fois une carte au sommet de son{' '}
-                    <strong className="text-foreground">palier</strong>,{' '}
-                    <strong className="text-foreground">l'ascensionner</strong>{' '}
-                    consomme un{' '}
-                    <strong className="text-foreground">doublon</strong> pour
-                    passer au palier suivant et relever son plafond de niveau.
-                    Son <strong className="text-foreground">passif</strong>{' '}
-                    gagne aussi en puissance à chaque palier, jusqu'à un certain
-                    point : au-delà, il reste fixe et seules les stats
-                    continuent de progresser. Une fois le palier maximum
-                    atteint, la progression passe par{' '}
-                    <strong className="text-foreground">l'équipement</strong>.
+                    <Trans
+                      t={t}
+                      i18nKey="sections.cartes.ascension.description"
+                      components={{
+                        strong1: <strong className="text-foreground" />,
+                        strong2: <strong className="text-foreground" />,
+                        strong3: <strong className="text-foreground" />,
+                        strong4: <strong className="text-foreground" />,
+                        strong5: <strong className="text-foreground" />,
+                      }}
+                    />
                   </p>
                 </div>
                 <div className="rounded-lg border border-border/50 bg-card px-4 py-3">
                   <p className="font-semibold text-foreground mb-1">
-                    Équipement
+                    {t('sections.cartes.equipment.title')}
                   </p>
                   <p>
-                    Chaque carte dispose de 3 emplacements — <Pill>Arme</Pill>{' '}
-                    <Pill>Armure</Pill> <Pill>Accessoire</Pill>. Les pièces
-                    tombent en combat (et sur les boss), ont une rareté, et
-                    ajoutent des bonus de stats. Équipe-les ou retire-les depuis
-                    la page{' '}
-                    <strong className="text-foreground">Équipement</strong>.
+                    <Trans
+                      t={t}
+                      i18nKey="sections.cartes.equipment.description"
+                      components={{
+                        weaponPill: <Pill />,
+                        armorPill: <Pill />,
+                        accessoryPill: <Pill />,
+                        strong: <strong className="text-foreground" />,
+                      }}
+                    />
                   </p>
                 </div>
               </div>
-              <TipBox>
-                Après une défaite, deux réflexes : revoir la composition de ton
-                équipe, ou monter le niveau de tes cartes avant de retourner au
-                front.
-              </TipBox>
+              <TipBox>{t('sections.cartes.tip')}</TipBox>
             </Section>
 
             {/* Quêtes */}

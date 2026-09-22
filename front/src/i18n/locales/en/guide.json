@@ -165,6 +165,22 @@
       "insufficientBullet": "Every battle and every farm run uses some. With no energy left, the button reads <strong>\"Not enough energy\"</strong>.",
       "skillsBullet": "Some skills speed up their regeneration, raise the cap, and reduce the farm cost.",
       "tip": "Spend your energy before it hits the cap: beyond that, regenerated points are lost, just like tokens."
+    },
+    "cartes": {
+      "intro": "To hold up against advanced stages, your cards need to grow stronger. Three levers combine, all managed from a card's detail sheet.",
+      "level": {
+        "title": "Level",
+        "description": "Raise a card's <strong>level</strong> with gold and dust: its stats (PV, ATQ, DEF, VIT) increase with every level, up to its palier's cap."
+      },
+      "ascension": {
+        "title": "Palier & ascension",
+        "description": "Once a card is at the top of its <strong1>palier</strong1>, <strong2>ascending it</strong2> consumes a <strong3>duplicate</strong3> to move to the next palier and raise its level cap. Its <strong4>passive</strong4> also grows stronger with each palier, up to a point — beyond that, it stays fixed and only the stats keep improving. Once the max palier is reached, progression continues through <strong5>equipment</strong5>."
+      },
+      "equipment": {
+        "title": "Equipment",
+        "description": "Every card has 3 slots — <weaponPill>Weapon</weaponPill> <armorPill>Armor</armorPill> <accessoryPill>Accessory</accessoryPill>. Pieces drop in battle (and from bosses), have a rarity, and add stat bonuses. Equip or remove them from the <strong>Equipment</strong> page."
+      },
+      "tip": "After a defeat, two reflexes: rethink your team composition, or level up your cards before heading back to the front."
     }
   }
 }
