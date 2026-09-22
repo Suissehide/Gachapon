@@ -1076,36 +1076,48 @@ function GuidePage() {
             </Section>
 
             {/* Équipes */}
-            <Section id="equipes" icon={Users} title="Équipes">
+            <Section
+              id="equipes"
+              icon={Users}
+              title={t('sectionLabels.equipes')}
+            >
               <p>
-                Les <strong className="text-foreground">équipes</strong> te
-                permettent de jouer avec tes amis. Tu peux créer ou rejoindre
-                une équipe via la page{' '}
-                <Link
-                  to="/team"
-                  className="text-primary underline underline-offset-2"
-                >
-                  Équipes
-                </Link>
-                .
+                <Trans
+                  t={t}
+                  i18nKey="sections.equipes.intro"
+                  components={{
+                    strong: <strong className="text-foreground" />,
+                    teamLink: (
+                      <Link
+                        to="/team"
+                        className="text-primary underline underline-offset-2"
+                      />
+                    ),
+                  }}
+                />
               </p>
               <ul className="space-y-1.5">
                 <li>
-                  • Chaque équipe a un{' '}
-                  <strong className="text-foreground">owner</strong> et des
-                  membres.
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.equipes.ownerBullet"
+                    components={{
+                      strong: <strong className="text-foreground" />,
+                    }}
+                  />
                 </li>
-                <li>• L'owner peut inviter des joueurs par username.</li>
+                <li>• {t('sections.equipes.inviteBullet')}</li>
+                <li>• {t('sections.equipes.invitationBullet')}</li>
                 <li>
-                  • Les invitations ont une durée de validité ; le membre les
-                  accepte ou les refuse.
-                </li>
-                <li>
-                  • La complétion collective de l'équipe apparaît dans le{' '}
-                  <strong className="text-foreground">
-                    classement Équipes
-                  </strong>
-                  .
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.equipes.leaderboardBullet"
+                    components={{
+                      strong: <strong className="text-foreground" />,
+                    }}
+                  />
                 </li>
               </ul>
             </Section>

@@ -226,6 +226,13 @@
       "variantsLookBullet": "Les cartes Brillant et Holographique ont une apparence visuelle distincte.",
       "cardSheetBullet": "La fiche d'une carte permet de la définir comme <strong1>Vœu</strong1>, de la <strong2>recycler</strong2>, de la monter en niveau et de l'ascensionner.",
       "publicProfileBullet": "Ton profil public est accessible à tous via <profilePill></profilePill>."
+    },
+    "equipes": {
+      "intro": "Les <strong>équipes</strong> te permettent de jouer avec tes amis. Tu peux créer ou rejoindre une équipe via la page <teamLink>Équipes</teamLink>.",
+      "ownerBullet": "Chaque équipe a un <strong>owner</strong> et des membres.",
+      "inviteBullet": "L'owner peut inviter des joueurs par username.",
+      "invitationBullet": "Les invitations ont une durée de validité ; le membre les accepte ou les refuse.",
+      "leaderboardBullet": "La complétion collective de l'équipe apparaît dans le <strong>classement Équipes</strong>."
     }
   }
 }

@@ -226,6 +226,13 @@
       "variantsLookBullet": "Brilliant and Holographic cards have a distinct visual look.",
       "cardSheetBullet": "A card's detail sheet lets you set it as a <strong1>wish</strong1>, <strong2>recycle</strong2> it, level it up, and ascend it.",
       "publicProfileBullet": "Your public profile is accessible to everyone via <profilePill></profilePill>."
+    },
+    "equipes": {
+      "intro": "<strong>Teams</strong> let you play with your friends. You can create or join a team from the <teamLink>Teams</teamLink> page.",
+      "ownerBullet": "Every team has an <strong>owner</strong> and members.",
+      "inviteBullet": "The owner can invite players by username.",
+      "invitationBullet": "Invitations have a validity period; the member accepts or declines them.",
+      "leaderboardBullet": "The team's collective completion appears on the <strong>Teams leaderboard</strong>."
     }
   }
 }
