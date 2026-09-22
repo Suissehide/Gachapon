@@ -1,0 +1,114 @@
+{
+  "hero": {
+    "tagline": "Catch. Collect. Trade.",
+    "titleLine1": "A new way",
+    "titleLine2": "to collect.",
+    "subtitle": "Gachapon turns the joy of collecting into an elegant, immersive, and deeply social experience. Every pull, memorable.",
+    "joinButton": "Join Gachapon",
+    "scrollAriaLabel": "Scroll down"
+  },
+  "marquee": {
+    "rarity": "RARITY",
+    "discovery": "DISCOVERY"
+  },
+  "experience": {
+    "eyebrow": "The experience",
+    "titleLine1": "An",
+    "titleHighlight": "experience",
+    "titleLine3": "mastered.",
+    "phrases": {
+      "gesture": "A gesture.",
+      "capture": "A capture.",
+      "discovery": "A discovery."
+    },
+    "description": "Every day, claim your tokens and step up to a 3D claw machine, built for a moment of tension and revelation like no other. Nothing is left to chance — except what has to be."
+  },
+  "rarity": {
+    "eyebrow": "The variants",
+    "titleLine1": "Rarity,",
+    "titleHighlight": "redefined.",
+    "description": "Got duplicates? Turn them into dust or trade them with other players to complete your collection faster. The real challenge isn't collecting icons... it's collecting the right ones.",
+    "variants": {
+      "standard": {
+        "name": "Standard",
+        "description": "The essential form. A clean base where every detail counts."
+      },
+      "holographic": {
+        "name": "Holographic",
+        "description": "Subtle shimmer that shifts with the light. A more vivid presence."
+      },
+      "brilliant": {
+        "name": "Brilliant",
+        "description": "Rare intensity. Animation, shine, and depth for an unforgettable reveal."
+      }
+    }
+  },
+  "community": {
+    "eyebrow": "Together",
+    "titleLine1": "Built for",
+    "titleHighlight": "the collective.",
+    "teams": {
+      "title": "Teams",
+      "description": "Create a small team, compare, and progress together. Gachapon isn't just a solo experience — it's a space for exchange, strategy, and observation."
+    },
+    "collection": {
+      "title": "A living collection",
+      "description": "Build it over time, complete full sets. Missing pieces stay visible, waiting — a reminder of what's left to achieve."
+    },
+    "economy": {
+      "title": "A balanced economy",
+      "points": {
+        "duplicates": "Duplicates become dust",
+        "dust": "Dust unlocks new possibilities",
+        "impact": "Every decision matters"
+      }
+    },
+    "identity": {
+      "title": "A visible identity",
+      "description": "Every profile is a signature. Visible collections, rare pieces on display, measurable progress. You're not just collecting icons — you're building a presence."
+    }
+  },
+  "explainer": {
+    "eyebrow": "How it works",
+    "title": "A collection game inspired by Japanese capsule toys.",
+    "intro": {
+      "strong": "Gachapon",
+      "rest": " is a free trading card game, playable directly in your browser. Inspired by the capsule vending machines (\"gashapon\") popular in Japan, it brings the mechanics of random draws into a digital experience: you get tokens every day, use them to open a capsule, and discover what's inside — a common, uncommon, rare, epic, or legendary card."
+    },
+    "dust": {
+      "before": "The more you play, the more your collection grows. Duplicates turn into",
+      "dustTerm": "dust",
+      "middle": ", a secondary resource that lets you buy specific cards from the daily shop, upgrade your skill tree, or convert certain variants. The",
+      "pityTerm": "pity",
+      "after": "system guarantees that no unlucky streak lasts forever: the longer you go without pulling a rare card, the more the next pull guarantees a rarity tier."
+    },
+    "variants": {
+      "before": "Three visual variants exist —",
+      "standardTerm": "standard",
+      "comma": ",",
+      "brilliantTerm": "brilliant",
+      "andJoin": " and ",
+      "holographicTerm": "holographic",
+      "after": " — each with its own reveal effect. Holographic and brilliant cards are only available from higher rarities, making them the most sought-after pieces in any collection."
+    },
+    "outro": "Gachapon is also built to be played with others: you can join a team, compare your progress, and access a public API as well as a Discord bot to track your pulls from outside the site. Access is instant, with nothing to download, and completely free.",
+    "guideLink": "Read the full guide"
+  },
+  "faq": {
+    "eyebrow": "FAQ",
+    "title": "Frequently asked questions."
+  },
+  "finalCta": {
+    "title": "Get started.",
+    "line1": "Access is instant.",
+    "line2": "Ready to try your luck?"
+  },
+  "footer": {
+    "tagline": "Catch. Collect. Trade. An elegant, immersive, and social experience.",
+    "accessHeading": "Access",
+    "createAccount": "Create an account",
+    "login": "Log in",
+    "variantsHeading": "Variants",
+    "copyright": "© 2026 Gachapon. All rights reserved."
+  }
+}

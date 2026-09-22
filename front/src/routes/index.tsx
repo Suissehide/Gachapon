@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { ChevronDown, Package, Sparkles, User, Users } from 'lucide-react'
 import type { CSSProperties } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { FAQ_ITEMS } from '../../scripts/faq-items.mjs'
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
@@ -164,6 +165,7 @@ const FLOATING_BALLS: Array<{
 // ── Component ─────────────────────────────────────────────────────────────────
 
 function LandingPage() {
+  const { t } = useTranslation('home')
   const { openLogin, openRegister } = useAuthDialogStore()
 
   return (
@@ -221,17 +223,17 @@ function LandingPage() {
               className="text-[11px] font-semibold text-text-light/50 uppercase tracking-[0.2em] mb-6 animate-in fade-in-0 duration-700 fill-mode-both"
               style={{ animationDelay: '100ms' }}
             >
-              Attrape. Collectionne. Échange.
+              {t('hero.tagline')}
             </p>
 
             <h1
               className="mb-6 max-w-3xl font-black leading-[0.95] tracking-tight text-[clamp(3.2rem,8vw,6rem)] animate-in fade-in-0 slide-in-from-bottom-6 duration-700 fill-mode-both"
               style={{ animationDelay: '220ms' }}
             >
-              Une nouvelle manière
+              {t('hero.titleLine1')}
               <br />
               <span className="bg-linear-to-r from-primary via-yellow-500 to-primary-light bg-clip-text text-transparent">
-                de collectionner.
+                {t('hero.titleLine2')}
               </span>
             </h1>
 
@@ -239,9 +241,7 @@ function LandingPage() {
               className="mb-10 max-w-md text-base lg:text-lg leading-relaxed text-text-light animate-in fade-in-0 slide-in-from-bottom-6 duration-700 fill-mode-both"
               style={{ animationDelay: '380ms' }}
             >
-              Gachapon transforme le plaisir de collection en une expérience
-              élégante, immersive et profondément sociale. Chaque tirage,
-              mémorable.
+              {t('hero.subtitle')}
             </p>
 
             <div
@@ -253,7 +253,7 @@ function LandingPage() {
                 onClick={openRegister}
                 className="rounded-full px-8 shadow-lg shadow-primary/20"
               >
-                Rejoindre Gachapon
+                {t('hero.joinButton')}
               </Button>
             </div>
           </div>
@@ -261,7 +261,7 @@ function LandingPage() {
           <a
             href="#experience"
             className="flex flex-col items-center gap-1.5 text-xs text-text-light/50 hover:text-text-light transition-colors"
-            aria-label="Défiler vers la suite"
+            aria-label={t('hero.scrollAriaLabel')}
           >
             <ChevronDown className="h-5 w-5 animate-bounce" />
           </a>
@@ -277,14 +277,16 @@ function LandingPage() {
           {/* Left: heading */}
           <div className="lg:sticky lg:top-32">
             <p className="text-[11px] font-semibold text-text-light/50 uppercase tracking-[0.15em] mb-4">
-              L'expérience
+              {t('experience.eyebrow')}
             </p>
             <h2 className="font-black leading-[0.88] tracking-tight text-[clamp(3rem,7vw,6rem)] text-foreground">
-              Une
+              {t('experience.titleLine1')}
               <br />
-              <span className="text-primary">expérience</span>
+              <span className="text-primary">
+                {t('experience.titleHighlight')}
+              </span>
               <br />
-              maîtrisée.
+              {t('experience.titleLine3')}
             </h2>
 
             {/* Ball cluster */}
@@ -306,23 +308,25 @@ function LandingPage() {
 
           {/* Right: stacked phrases + body */}
           <div className="flex flex-col">
-            {(['Un geste.', 'Une capture.', 'Une découverte.'] as const).map(
-              (phrase) => (
-                <div
-                  key={phrase}
-                  className="border-t border-border/40 py-5 last:border-b last:border-border/40"
-                >
-                  <p className="text-[clamp(1.8rem,4vw,2.8rem)] font-black text-foreground leading-none tracking-tight">
-                    {phrase}
-                  </p>
-                </div>
-              ),
-            )}
+            {(
+              [
+                t('experience.phrases.gesture'),
+                t('experience.phrases.capture'),
+                t('experience.phrases.discovery'),
+              ] as const
+            ).map((phrase) => (
+              <div
+                key={phrase}
+                className="border-t border-border/40 py-5 last:border-b last:border-border/40"
+              >
+                <p className="text-[clamp(1.8rem,4vw,2.8rem)] font-black text-foreground leading-none tracking-tight">
+                  {phrase}
+                </p>
+              </div>
+            ))}
 
             <p className="mt-8 text-sm leading-relaxed text-text-light max-w-sm">
-              Chaque jour, recevez vos tokens et accédez à une machine à pince
-              3D, conçue pour offrir un moment de tension et de révélation
-              unique. Rien n'est laissé au hasard, sauf ce qui doit l'être.
+              {t('experience.description')}
             </p>
           </div>
         </div>
@@ -333,18 +337,17 @@ function LandingPage() {
         <div className="max-w-5xl mx-auto">
           <div className="mb-12">
             <p className="text-[11px] font-semibold text-text-light/50 uppercase tracking-[0.15em] mb-4">
-              Les variantes
+              {t('rarity.eyebrow')}
             </p>
             <h2 className="font-black leading-[0.88] tracking-tight text-[clamp(3rem,7vw,6rem)] text-foreground">
-              La rareté,
+              {t('rarity.titleLine1')}
               <br />
-              <span className="text-secondary">redéfinie.</span>
+              <span className="text-secondary">
+                {t('rarity.titleHighlight')}
+              </span>
             </h2>
             <p className="mt-6 text-sm text-text-light max-w-sm leading-relaxed">
-              Tu as des doublons ? Transforme-les en poussière ou échange-les
-              avec d’autres joueurs pour compléter ta collection plus vite. Le
-              vrai défi, ce n’est pas d’obtenir des icônes... c’est d’obtenir
-              les bonnes.
+              {t('rarity.description')}
             </p>
           </div>
 
@@ -352,18 +355,18 @@ function LandingPage() {
             {[
               {
                 ball: BALLS.silver,
-                name: 'Standard',
-                desc: 'La forme essentielle. Une base soignée, où chaque détail compte.',
+                name: t('rarity.variants.standard.name'),
+                desc: t('rarity.variants.standard.description'),
               },
               {
                 ball: BALLS.holo,
-                name: 'Holographique',
-                desc: 'Des reflets subtils qui évoluent avec la lumière. Une présence plus vivante.',
+                name: t('rarity.variants.holographic.name'),
+                desc: t('rarity.variants.holographic.description'),
               },
               {
                 ball: BALLS.amber,
-                name: 'Brillante',
-                desc: 'Une intensité rare. Animations, éclat et profondeur pour une révélation inoubliable.',
+                name: t('rarity.variants.brilliant.name'),
+                desc: t('rarity.variants.brilliant.description'),
               },
             ].map(({ ball, name, desc }) => (
               <Card
@@ -392,7 +395,7 @@ function LandingPage() {
 
       {/* ── MARQUEE 2 ─────────────────────────────────────────────── */}
       <MarqueeStrip
-        words={['COLLECTION', 'RARETÉ', 'DÉCOUVERTE']}
+        words={['COLLECTION', t('marquee.rarity'), t('marquee.discovery')]}
         reverse
         speed={24}
       />
@@ -402,12 +405,14 @@ function LandingPage() {
         <div className="max-w-5xl mx-auto">
           <div className="mb-12">
             <p className="text-[11px] font-semibold text-text-light/50 uppercase tracking-[0.15em] mb-4">
-              Ensemble
+              {t('community.eyebrow')}
             </p>
             <h2 className="font-black leading-[0.88] tracking-tight text-[clamp(3rem,7vw,6rem)] text-foreground">
-              Pensé pour
+              {t('community.titleLine1')}
               <br />
-              <span className="text-accent">le collectif.</span>
+              <span className="text-accent">
+                {t('community.titleHighlight')}
+              </span>
             </h2>
           </div>
 
@@ -420,12 +425,10 @@ function LandingPage() {
               />
               <Users className="h-5 w-5 text-secondary mb-5 relative z-10" />
               <h3 className="text-base font-black text-foreground mb-3 relative z-10">
-                Équipes
+                {t('community.teams.title')}
               </h3>
               <p className="text-sm leading-relaxed text-text-light relative z-10 max-w-sm">
-                Créez une équipe restreinte, comparez, progressez ensemble.
-                Gachapon n'est pas seulement une expérience individuelle — c'est
-                un espace d'échange, de stratégie et d'observation.
+                {t('community.teams.description')}
               </p>
             </Card>
 
@@ -437,12 +440,10 @@ function LandingPage() {
               />
               <Package className="h-5 w-5 text-accent mb-5 relative z-10" />
               <h3 className="text-sm font-black text-foreground mb-3 relative z-10">
-                Collection vivante
+                {t('community.collection.title')}
               </h3>
               <p className="text-sm leading-relaxed text-text-light relative z-10">
-                Construisez au fil du temps, complétez des ensembles. Les pièces
-                manquantes restent visibles, en attente — elles racontent ce
-                qu'il reste à accomplir.
+                {t('community.collection.description')}
               </p>
             </Card>
 
@@ -450,13 +451,13 @@ function LandingPage() {
             <Card className="lg:col-span-2 p-7 border-border/50">
               <Sparkles className="h-5 w-5 text-foreground/60 mb-4" />
               <h3 className="text-sm font-black text-foreground mb-3">
-                Une économie maîtrisée
+                {t('community.economy.title')}
               </h3>
               <div className="flex flex-col gap-2">
                 {[
-                  'Les doublons deviennent de la poussière',
-                  'La poussière ouvre de nouvelles possibilités',
-                  'Chaque décision a un impact',
+                  t('community.economy.points.duplicates'),
+                  t('community.economy.points.dust'),
+                  t('community.economy.points.impact'),
                 ].map((line) => (
                   <p
                     key={line}
@@ -477,13 +478,10 @@ function LandingPage() {
               />
               <User className="h-5 w-5 text-amber-600 mb-4" />
               <h3 className="text-sm font-black text-foreground mb-3 relative z-10">
-                Une identité visible
+                {t('community.identity.title')}
               </h3>
               <p className="text-sm leading-relaxed text-text-light relative z-10">
-                Chaque profil est une signature. Collections visibles, pièces
-                rares mises en avant, progression mesurable. Vous ne
-                collectionnez pas seulement des icônes — vous construisez une
-                présence.
+                {t('community.identity.description')}
               </p>
             </Card>
           </div>
@@ -503,56 +501,45 @@ function LandingPage() {
       >
         <div className="max-w-3xl mx-auto">
           <p className="text-[11px] font-semibold text-text-light/50 uppercase tracking-[0.15em] mb-4">
-            Comment ça marche
+            {t('explainer.eyebrow')}
           </p>
           <h2 className="font-black leading-[0.95] tracking-tight text-[clamp(2.4rem,5vw,4rem)] text-foreground mb-8">
-            Un jeu de collection inspiré des capsules japonaises.
+            {t('explainer.title')}
           </h2>
 
           <div className="space-y-6 text-sm lg:text-base text-text-light leading-relaxed">
             <p>
-              <strong className="text-foreground">Gachapon</strong> est un jeu
-              de cartes à collectionner gratuit, jouable directement dans le
-              navigateur. Inspiré des distributeurs automatiques de capsules
-              ("gashapon") populaires au Japon, il transpose la mécanique de
-              tirage aléatoire dans une expérience numérique : tu reçois des
-              jetons chaque jour, tu les utilises pour tirer une capsule, et tu
-              découvres ce qu'elle contient — une carte commune, peu commune,
-              rare, épique ou légendaire.
+              <strong className="text-foreground">
+                {t('explainer.intro.strong')}
+              </strong>
+              {t('explainer.intro.rest')}
             </p>
             <p>
-              Plus tu joues, plus ta collection grandit. Les doublons se
-              transforment en{' '}
-              <strong className="text-foreground">poussière</strong>, une
-              ressource secondaire qui te permet d'acheter des cartes
-              spécifiques dans la boutique quotidienne, d'améliorer ton arbre de
-              compétences, ou de convertir certaines variantes. Le système de{' '}
-              <em>pitié</em> garantit qu'aucune série de tirages malchanceux ne
-              dure éternellement : plus tu tires sans obtenir de carte rare,
-              plus la prochaine pull garantit un palier de rareté.
+              {t('explainer.dust.before')}{' '}
+              <strong className="text-foreground">
+                {t('explainer.dust.dustTerm')}
+              </strong>
+              {t('explainer.dust.middle')}{' '}
+              <em>{t('explainer.dust.pityTerm')}</em>{' '}
+              {t('explainer.dust.after')}
             </p>
             <p>
-              Trois variantes visuelles existent — <em>standard</em>,{' '}
-              <em>brillante</em> et <em>holographique</em> — chacune avec ses
-              propres effets de révélation. Les cartes holographiques et
-              brillantes sont disponibles uniquement à partir des raretés
-              élevées, ce qui en fait les pièces les plus recherchées des
-              collections.
+              {t('explainer.variants.before')}{' '}
+              <em>{t('explainer.variants.standardTerm')}</em>
+              {t('explainer.variants.comma')}{' '}
+              <em>{t('explainer.variants.brilliantTerm')}</em>
+              {t('explainer.variants.andJoin')}
+              <em>{t('explainer.variants.holographicTerm')}</em>
+              {t('explainer.variants.after')}
             </p>
-            <p>
-              Gachapon est aussi pensé pour être joué en groupe : tu peux
-              rejoindre une équipe, comparer tes progrès, et accéder à une API
-              publique ainsi qu'à un bot Discord pour suivre tes tirages depuis
-              l'extérieur du site. L'accès est immédiat, sans téléchargement, et
-              entièrement gratuit.
-            </p>
+            <p>{t('explainer.outro')}</p>
 
             <div className="pt-4">
               <Link
                 to="/guide"
                 className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary-light transition-colors"
               >
-                Lire le guide complet
+                {t('explainer.guideLink')}
                 <ChevronDown className="h-4 w-4 -rotate-90" />
               </Link>
             </div>
@@ -566,10 +553,10 @@ function LandingPage() {
       <section className="relative z-10 px-6 lg:px-10 pb-16">
         <div className="max-w-3xl mx-auto">
           <p className="text-[11px] font-semibold text-text-light/50 uppercase tracking-[0.15em] mb-4">
-            FAQ
+            {t('faq.eyebrow')}
           </p>
           <h2 className="font-black leading-[0.95] tracking-tight text-[clamp(2.4rem,5vw,4rem)] text-foreground mb-10">
-            Les questions fréquentes.
+            {t('faq.title')}
           </h2>
 
           <div className="divide-y divide-border/40 border-y border-border/40">
@@ -635,20 +622,20 @@ function LandingPage() {
 
           <Card className="text-center p-14 bg-linear-to-b from-card to-background border-border/50 relative z-10">
             <h2 className="font-black leading-[0.9] tracking-tight text-[clamp(2.8rem,6vw,4.5rem)] text-foreground mb-4">
-              Commencez.
+              {t('finalCta.title')}
             </h2>
             <p className="text-base text-text-light mb-2">
-              L'accès est immédiat.
+              {t('finalCta.line1')}
             </p>
             <p className="text-base text-text-light mb-10">
-              Prêt à tenter ta chance ?
+              {t('finalCta.line2')}
             </p>
             <Button
               size="lg"
               onClick={openRegister}
               className="rounded-full px-10 shadow-lg shadow-primary/20"
             >
-              Rejoindre Gachapon
+              {t('hero.joinButton')}
             </Button>
           </Card>
         </div>
@@ -673,15 +660,14 @@ function LandingPage() {
                 </span>
               </div>
               <p className="text-xs text-text-light leading-relaxed max-w-50">
-                Attrape. Collectionne. Échange. Une expérience élégante,
-                immersive et sociale.
+                {t('footer.tagline')}
               </p>
             </div>
 
             {/* Links */}
             <div>
               <p className="text-[11px] font-semibold text-text-light/50 uppercase tracking-[0.12em] mb-3">
-                Accès
+                {t('footer.accessHeading')}
               </p>
               <nav className="flex flex-col items-start gap-0.5">
                 <Button
@@ -690,7 +676,7 @@ function LandingPage() {
                   onClick={openRegister}
                   className="h-auto px-0 py-1 text-xs text-text-light justify-start"
                 >
-                  Créer un compte
+                  {t('footer.createAccount')}
                 </Button>
                 <Button
                   variant="ghost"
@@ -698,7 +684,7 @@ function LandingPage() {
                   onClick={openLogin}
                   className="h-auto px-0 py-1 text-xs text-text-light justify-start"
                 >
-                  Se connecter
+                  {t('footer.login')}
                 </Button>
               </nav>
             </div>
@@ -706,13 +692,22 @@ function LandingPage() {
             {/* Variants */}
             <div>
               <p className="text-[11px] font-semibold text-text-light/50 uppercase tracking-[0.12em] mb-3">
-                Variantes
+                {t('footer.variantsHeading')}
               </p>
               <div className="flex flex-col gap-2">
                 {[
-                  { label: 'Standard', ball: BALLS.silver },
-                  { label: 'Holographique', ball: BALLS.holo },
-                  { label: 'Brillante', ball: BALLS.amber },
+                  {
+                    label: t('rarity.variants.standard.name'),
+                    ball: BALLS.silver,
+                  },
+                  {
+                    label: t('rarity.variants.holographic.name'),
+                    ball: BALLS.holo,
+                  },
+                  {
+                    label: t('rarity.variants.brilliant.name'),
+                    ball: BALLS.amber,
+                  },
                 ].map(({ label, ball }) => (
                   <div key={label} className="flex items-center gap-2">
                     <div
@@ -729,7 +724,7 @@ function LandingPage() {
           {/* Bottom */}
           <div className="pt-6 border-t border-border/30 flex items-center justify-between flex-wrap gap-3">
             <p className="text-xs text-text-light/40">
-              © 2026 Gachapon. Tous droits réservés.
+              {t('footer.copyright')}
             </p>
             <div className="flex items-center gap-3">
               {(['amber', 'purple', 'cyan', 'pink', 'holo'] as const).map(
