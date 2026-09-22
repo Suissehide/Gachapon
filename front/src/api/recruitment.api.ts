@@ -5,6 +5,7 @@ import type {
   TeamJoinRequest,
 } from '../constants/teams.constant.ts'
 import { TEAM_ROUTES } from '../constants/teams.constant.ts'
+import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
@@ -27,7 +28,11 @@ export const RecruitmentApi = {
       `${apiUrl}${TEAM_ROUTES.directory}${query ? `?${query}` : ''}`,
     )
     if (!res.ok) {
-      handleHttpError(res, {}, "Chargement de l'annuaire")
+      handleHttpError(
+        res,
+        {},
+        i18n.t('team:recruitmentApi.operations.loadDirectory'),
+      )
     }
     return res.json()
   },
@@ -42,16 +47,15 @@ export const RecruitmentApi = {
         res,
         {
           409: {
-            title: 'Candidature impossible',
-            message:
-              'Tu as déjà candidaté à cette équipe, tu es en cooldown après un refus récent, ou tu as atteint tes 5 candidatures en attente.',
+            title: i18n.t('team:recruitmentApi.applyImpossibleTitle'),
+            message: i18n.t('team:recruitmentApi.applyImpossibleMessage'),
           },
           404: {
-            title: 'Équipe introuvable',
-            message: "Cette équipe n'existe pas ou a été supprimée.",
+            title: i18n.t('team:recruitmentApi.teamNotFoundTitle'),
+            message: i18n.t('team:recruitmentApi.teamNotFoundMessage'),
           },
         },
-        'Envoi de la candidature',
+        i18n.t('team:recruitmentApi.operations.applyToTeam'),
       )
     }
     return res.json()
@@ -67,11 +71,13 @@ export const RecruitmentApi = {
         res,
         {
           404: {
-            title: 'Candidature introuvable',
-            message: "Tu n'as pas de candidature en attente pour cette équipe.",
+            title: i18n.t('team:recruitmentApi.requestNotFoundTitle'),
+            message: i18n.t(
+              'team:recruitmentApi.requestNotFoundNoPendingMessage',
+            ),
           },
         },
-        'Annulation de la candidature',
+        i18n.t('team:recruitmentApi.operations.cancelApplication'),
       )
     }
   },
@@ -79,7 +85,11 @@ export const RecruitmentApi = {
   getMine: async (): Promise<{ requests: MyJoinRequest[] }> => {
     const res = await fetchWithAuth(`${apiUrl}${TEAM_ROUTES.myJoinRequests}`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Chargement de tes candidatures')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('team:recruitmentApi.operations.loadMyApplications'),
+      )
     }
     return res.json()
   },
@@ -95,11 +105,13 @@ export const RecruitmentApi = {
         res,
         {
           403: {
-            title: 'Action non autorisée',
-            message: 'Seuls le chef et les officiers voient les candidatures.',
+            title: i18n.t('team:recruitmentApi.actionNotAllowedTitle'),
+            message: i18n.t(
+              'team:recruitmentApi.onlyOfficersSeeRequestsMessage',
+            ),
           },
         },
-        'Chargement des candidatures',
+        i18n.t('team:recruitmentApi.operations.loadTeamApplications'),
       )
     }
     return res.json()
@@ -117,20 +129,19 @@ export const RecruitmentApi = {
         res,
         {
           403: {
-            title: 'Action non autorisée',
-            message: "Tu n'as pas les droits pour traiter cette candidature.",
+            title: i18n.t('team:recruitmentApi.actionNotAllowedTitle'),
+            message: i18n.t('team:recruitmentApi.noRightsToProcessMessage'),
           },
           404: {
-            title: 'Candidature introuvable',
-            message: "Cette candidature n'existe plus.",
+            title: i18n.t('team:recruitmentApi.requestNotFoundTitle'),
+            message: i18n.t('team:recruitmentApi.requestNoLongerExistsMessage'),
           },
           409: {
-            title: 'Acceptation impossible',
-            message:
-              "L'équipe est complète, ce candidat a atteint sa limite de 3 équipes, ou cette candidature a déjà été traitée.",
+            title: i18n.t('team:recruitmentApi.acceptImpossibleTitle'),
+            message: i18n.t('team:recruitmentApi.acceptImpossibleMessage'),
           },
         },
-        'Acceptation de la candidature',
+        i18n.t('team:recruitmentApi.operations.acceptApplication'),
       )
     }
     return res.json()
@@ -148,15 +159,15 @@ export const RecruitmentApi = {
         res,
         {
           404: {
-            title: 'Candidature introuvable',
-            message: "Cette candidature n'existe plus.",
+            title: i18n.t('team:recruitmentApi.requestNotFoundTitle'),
+            message: i18n.t('team:recruitmentApi.requestNoLongerExistsMessage'),
           },
           409: {
-            title: 'Déjà traitée',
-            message: 'Cette candidature a déjà été acceptée ou refusée.',
+            title: i18n.t('team:recruitmentApi.alreadyProcessedTitle'),
+            message: i18n.t('team:recruitmentApi.alreadyProcessedMessage'),
           },
         },
-        'Refus de la candidature',
+        i18n.t('team:recruitmentApi.operations.declineApplication'),
       )
     }
     return res.json()

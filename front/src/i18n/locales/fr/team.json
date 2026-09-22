@@ -77,5 +77,47 @@
       "deleteInvitation": "Erreur lors de la suppression",
       "searchUsers": "Recherche d'utilisateurs"
     }
+  },
+  "recruitmentApi": {
+    "applyImpossibleTitle": "Candidature impossible",
+    "applyImpossibleMessage": "Tu as déjà candidaté à cette équipe, tu es en cooldown après un refus récent, ou tu as atteint tes 5 candidatures en attente.",
+    "teamNotFoundTitle": "Équipe introuvable",
+    "teamNotFoundMessage": "Cette équipe n'existe pas ou a été supprimée.",
+    "requestNotFoundTitle": "Candidature introuvable",
+    "requestNotFoundNoPendingMessage": "Tu n'as pas de candidature en attente pour cette équipe.",
+    "requestNoLongerExistsMessage": "Cette candidature n'existe plus.",
+    "actionNotAllowedTitle": "Action non autorisée",
+    "onlyOfficersSeeRequestsMessage": "Seuls le chef et les officiers voient les candidatures.",
+    "noRightsToProcessMessage": "Tu n'as pas les droits pour traiter cette candidature.",
+    "acceptImpossibleTitle": "Acceptation impossible",
+    "acceptImpossibleMessage": "L'équipe est complète, ce candidat a atteint sa limite de 3 équipes, ou cette candidature a déjà été traitée.",
+    "alreadyProcessedTitle": "Déjà traitée",
+    "alreadyProcessedMessage": "Cette candidature a déjà été acceptée ou refusée.",
+    "operations": {
+      "loadDirectory": "Chargement de l'annuaire",
+      "applyToTeam": "Envoi de la candidature",
+      "cancelApplication": "Annulation de la candidature",
+      "loadMyApplications": "Chargement de tes candidatures",
+      "loadTeamApplications": "Chargement des candidatures",
+      "acceptApplication": "Acceptation de la candidature",
+      "declineApplication": "Refus de la candidature"
+    }
+  },
+  "progressionApi": {
+    "accessDeniedTitle": "Accès refusé",
+    "notInTeamMessage": "Tu ne fais pas partie de cette équipe.",
+    "teamNotFoundTitle": "Équipe introuvable",
+    "teamNotFoundMessage": "Cette équipe n'existe pas ou a été supprimée.",
+    "onlyOfficersCanSpendMessage": "Seuls le chef et les officiers peuvent investir les points.",
+    "spendImpossibleTitle": "Investissement impossible",
+    "spendImpossibleMessage": "Ce bonus est déjà au rang maximum, verrouillé à ce niveau, ou aucun point de bonus disponible.",
+    "onlyLeaderCanResetMessage": "Seul le chef peut réinitialiser les bonus.",
+    "operations": {
+      "loadTeam": "Chargement de l'équipe",
+      "loadMembers": "Chargement des membres",
+      "loadRaidHistory": "Chargement de l'historique des raids",
+      "spendPerk": "Investissement du bonus",
+      "resetPerks": "Réinitialisation des bonus"
+    }
   }
 }

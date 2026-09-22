@@ -77,5 +77,47 @@
       "deleteInvitation": "Error deleting",
       "searchUsers": "Searching users"
     }
+  },
+  "recruitmentApi": {
+    "applyImpossibleTitle": "Can't apply",
+    "applyImpossibleMessage": "You already applied to this team, you're on cooldown after a recent rejection, or you've reached your 5 pending applications.",
+    "teamNotFoundTitle": "Team not found",
+    "teamNotFoundMessage": "This team doesn't exist or was deleted.",
+    "requestNotFoundTitle": "Application not found",
+    "requestNotFoundNoPendingMessage": "You have no pending application for this team.",
+    "requestNoLongerExistsMessage": "This application no longer exists.",
+    "actionNotAllowedTitle": "Action not allowed",
+    "onlyOfficersSeeRequestsMessage": "Only the leader and officers can see applications.",
+    "noRightsToProcessMessage": "You don't have the rights to process this application.",
+    "acceptImpossibleTitle": "Can't accept",
+    "acceptImpossibleMessage": "The team is full, this applicant has reached their 3-team limit, or this application was already processed.",
+    "alreadyProcessedTitle": "Already processed",
+    "alreadyProcessedMessage": "This application was already accepted or declined.",
+    "operations": {
+      "loadDirectory": "Loading the directory",
+      "applyToTeam": "Sending the application",
+      "cancelApplication": "Cancelling the application",
+      "loadMyApplications": "Loading your applications",
+      "loadTeamApplications": "Loading applications",
+      "acceptApplication": "Accepting the application",
+      "declineApplication": "Declining the application"
+    }
+  },
+  "progressionApi": {
+    "accessDeniedTitle": "Access denied",
+    "notInTeamMessage": "You're not part of this team.",
+    "teamNotFoundTitle": "Team not found",
+    "teamNotFoundMessage": "This team doesn't exist or was deleted.",
+    "onlyOfficersCanSpendMessage": "Only the leader and officers can spend points.",
+    "spendImpossibleTitle": "Can't invest",
+    "spendImpossibleMessage": "This bonus is already at max rank, locked at this level, or no bonus points are available.",
+    "onlyLeaderCanResetMessage": "Only the leader can reset bonuses.",
+    "operations": {
+      "loadTeam": "Loading the team",
+      "loadMembers": "Loading members",
+      "loadRaidHistory": "Loading raid history",
+      "spendPerk": "Investing the bonus",
+      "resetPerks": "Resetting bonuses"
+    }
   }
 }

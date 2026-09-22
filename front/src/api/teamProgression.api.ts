@@ -1,5 +1,6 @@
 import { apiUrl } from '../constants/config.constant.ts'
 import { TEAM_ROUTES } from '../constants/teams.constant.ts'
+import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 import type { TowerElement } from './tower.api.ts'
@@ -118,39 +119,38 @@ export type TeamPerksView = {
 
 const TEAM_ACCESS_ERRORS = {
   403: {
-    title: 'Accès refusé',
-    message: 'Tu ne fais pas partie de cette équipe.',
+    title: i18n.t('team:progressionApi.accessDeniedTitle'),
+    message: i18n.t('team:progressionApi.notInTeamMessage'),
   },
   404: {
-    title: 'Équipe introuvable',
-    message: "Cette équipe n'existe pas ou a été supprimée.",
+    title: i18n.t('team:progressionApi.teamNotFoundTitle'),
+    message: i18n.t('team:progressionApi.teamNotFoundMessage'),
   },
 }
 
 const SPEND_PERK_ERRORS = {
   403: {
-    title: 'Accès refusé',
-    message: 'Seuls le chef et les officiers peuvent investir les points.',
+    title: i18n.t('team:progressionApi.accessDeniedTitle'),
+    message: i18n.t('team:progressionApi.onlyOfficersCanSpendMessage'),
   },
   404: {
-    title: 'Équipe introuvable',
-    message: "Cette équipe n'existe pas ou a été supprimée.",
+    title: i18n.t('team:progressionApi.teamNotFoundTitle'),
+    message: i18n.t('team:progressionApi.teamNotFoundMessage'),
   },
   409: {
-    title: 'Investissement impossible',
-    message:
-      'Ce bonus est déjà au rang maximum, verrouillé à ce niveau, ou aucun point de bonus disponible.',
+    title: i18n.t('team:progressionApi.spendImpossibleTitle'),
+    message: i18n.t('team:progressionApi.spendImpossibleMessage'),
   },
 }
 
 const RESET_PERK_ERRORS = {
   403: {
-    title: 'Accès refusé',
-    message: 'Seul le chef peut réinitialiser les bonus.',
+    title: i18n.t('team:progressionApi.accessDeniedTitle'),
+    message: i18n.t('team:progressionApi.onlyLeaderCanResetMessage'),
   },
   404: {
-    title: 'Équipe introuvable',
-    message: "Cette équipe n'existe pas ou a été supprimée.",
+    title: i18n.t('team:progressionApi.teamNotFoundTitle'),
+    message: i18n.t('team:progressionApi.teamNotFoundMessage'),
   },
 }
 
@@ -158,7 +158,11 @@ export const TeamProgressionApi = {
   getTeamDetail: async (teamId: string): Promise<TeamDetail> => {
     const res = await fetchWithAuth(`${apiUrl}${TEAM_ROUTES.team(teamId)}`)
     if (!res.ok) {
-      handleHttpError(res, TEAM_ACCESS_ERRORS, "Chargement de l'équipe")
+      handleHttpError(
+        res,
+        TEAM_ACCESS_ERRORS,
+        i18n.t('team:progressionApi.operations.loadTeam'),
+      )
     }
     return res.json()
   },
@@ -166,7 +170,11 @@ export const TeamProgressionApi = {
   getTeamMembers: async (teamId: string): Promise<TeamMembersView> => {
     const res = await fetchWithAuth(`${apiUrl}${TEAM_ROUTES.members(teamId)}`)
     if (!res.ok) {
-      handleHttpError(res, TEAM_ACCESS_ERRORS, 'Chargement des membres')
+      handleHttpError(
+        res,
+        TEAM_ACCESS_ERRORS,
+        i18n.t('team:progressionApi.operations.loadMembers'),
+      )
     }
     return res.json()
   },
@@ -177,7 +185,7 @@ export const TeamProgressionApi = {
       handleHttpError(
         res,
         TEAM_ACCESS_ERRORS,
-        "Chargement de l'historique des raids",
+        i18n.t('team:progressionApi.operations.loadRaidHistory'),
       )
     }
     return res.json()
@@ -193,7 +201,11 @@ export const TeamProgressionApi = {
       body: JSON.stringify({ key }),
     })
     if (!res.ok) {
-      handleHttpError(res, SPEND_PERK_ERRORS, 'Investissement du bonus')
+      handleHttpError(
+        res,
+        SPEND_PERK_ERRORS,
+        i18n.t('team:progressionApi.operations.spendPerk'),
+      )
     }
     return res.json()
   },
@@ -204,7 +216,11 @@ export const TeamProgressionApi = {
       { method: 'POST' },
     )
     if (!res.ok) {
-      handleHttpError(res, RESET_PERK_ERRORS, 'Réinitialisation des bonus')
+      handleHttpError(
+        res,
+        RESET_PERK_ERRORS,
+        i18n.t('team:progressionApi.operations.resetPerks'),
+      )
     }
     return res.json()
   },
