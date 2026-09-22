@@ -101,6 +101,14 @@
       "resetBullet": "Obtenir une Legendary — avant le seuil ou grâce à la pitié — <strong>remet le compteur à zéro</strong>.",
       "personalBullet": "La pitié est personnelle : elle ne se partage pas et persiste entre les sessions.",
       "info": "Ton compteur de pitié est visible dans ton profil. Une compétence dédiée permet d'<strong>abaisser le seuil</strong> pour tomber sur des Legendary plus souvent."
+    },
+    "doublon": {
+      "intro": "Si tu tires une carte que tu possèdes déjà, c'est un <strong>doublon</strong>. Tu ne l'ajoutes pas une deuxième fois à ta collection : à la place, tu reçois de la <strong2>poussière</strong2>.",
+      "rarityBullet": "Le montant dépend de la <strong>rareté</strong> de la carte doublonnée : une Legendary rapporte bien plus qu'une Common.",
+      "variantsBullet": "Les variantes <brilliantPill>BRILLANT</brilliantPill> et <holoPill>HOLOGRAPHIQUE</holoPill> multiplient la poussière gagnée.",
+      "recycleBullet": "Tu peux aussi <strong>recycler</strong> des exemplaires en trop depuis la collection pour convertir des doublons en poussière.",
+      "usesParagraph": "La poussière est une monnaie polyvalente : elle sert à la <strong1>boutique du jour</strong1>, au <strong2>Vœu</strong2>, à <strong3>monter tes cartes</strong3> et à <strong4>réinitialiser</strong4> ton arbre de compétences.",
+      "tip": "Une compétence multiplie la poussière reçue sur chaque doublon. C'est l'un des meilleurs investissements quand ta collection est déjà bien fournie et que les doublons s'accumulent."
     }
   }
 }

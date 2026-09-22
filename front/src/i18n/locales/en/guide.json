@@ -101,6 +101,14 @@
       "resetBullet": "Getting a Legendary — before the threshold or thanks to pity — <strong>resets the counter to zero</strong>.",
       "personalBullet": "Pity is personal: it isn't shared, and it persists across sessions.",
       "info": "Your pity counter is visible on your profile. A dedicated skill lets you <strong>lower the threshold</strong> to hit Legendaries more often."
+    },
+    "doublon": {
+      "intro": "If you pull a card you already own, that's a <strong>duplicate</strong>. It isn't added a second time to your collection — instead, you get <strong2>dust</strong2>.",
+      "rarityBullet": "The amount depends on the <strong>rarity</strong> of the duplicated card: a Legendary yields far more than a Common.",
+      "variantsBullet": "The <brilliantPill>BRILLIANT</brilliantPill> and <holoPill>HOLOGRAPHIC</holoPill> variants multiply the dust earned.",
+      "recycleBullet": "You can also <strong>recycle</strong> extra copies from your collection to convert duplicates into dust.",
+      "usesParagraph": "Dust is an all-purpose currency: it's used for the <strong1>daily shop</strong1>, for <strong2>wishes</strong2>, to <strong3>level up your cards</strong3>, and to <strong4>reset</strong4> your skill tree.",
+      "tip": "A skill multiplies the dust received on every duplicate. It's one of the best investments once your collection is well-stocked and duplicates start piling up."
     }
   }
 }

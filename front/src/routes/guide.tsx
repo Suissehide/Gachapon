@@ -467,45 +467,67 @@ function GuidePage() {
             </Section>
 
             {/* Doublons & poussière */}
-            <Section id="doublon" icon={Sparkles} title="Doublons & poussière">
+            <Section
+              id="doublon"
+              icon={Sparkles}
+              title={t('sectionLabels.doublon')}
+            >
               <p>
-                Si tu tires une carte que tu possèdes déjà, c'est un{' '}
-                <strong className="text-foreground">doublon</strong>. Tu ne
-                l'ajoutes pas une deuxième fois à ta collection : à la place, tu
-                reçois de la{' '}
-                <strong className="text-foreground">poussière</strong>.
+                <Trans
+                  t={t}
+                  i18nKey="sections.doublon.intro"
+                  components={{
+                    strong: <strong className="text-foreground" />,
+                    strong2: <strong className="text-foreground" />,
+                  }}
+                />
               </p>
               <ul className="space-y-1.5">
                 <li>
-                  • Le montant dépend de la{' '}
-                  <strong className="text-foreground">rareté</strong> de la
-                  carte doublonnée : une Legendary rapporte bien plus qu'une
-                  Common.
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.doublon.rarityBullet"
+                    components={{
+                      strong: <strong className="text-foreground" />,
+                    }}
+                  />
                 </li>
                 <li>
-                  • Les variantes <Pill>BRILLANT</Pill> et{' '}
-                  <Pill>HOLOGRAPHIQUE</Pill> multiplient la poussière gagnée.
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.doublon.variantsBullet"
+                    components={{
+                      brilliantPill: <Pill />,
+                      holoPill: <Pill />,
+                    }}
+                  />
                 </li>
                 <li>
-                  • Tu peux aussi{' '}
-                  <strong className="text-foreground">recycler</strong> des
-                  exemplaires en trop depuis la collection pour convertir des
-                  doublons en poussière.
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.doublon.recycleBullet"
+                    components={{
+                      strong: <strong className="text-foreground" />,
+                    }}
+                  />
                 </li>
               </ul>
               <p>
-                La poussière est une monnaie polyvalente : elle sert à la{' '}
-                <strong className="text-foreground">boutique du jour</strong>,
-                au <strong className="text-foreground">Vœu</strong>, à{' '}
-                <strong className="text-foreground">monter tes cartes</strong>{' '}
-                et à <strong className="text-foreground">réinitialiser</strong>{' '}
-                ton arbre de compétences.
+                <Trans
+                  t={t}
+                  i18nKey="sections.doublon.usesParagraph"
+                  components={{
+                    strong1: <strong className="text-foreground" />,
+                    strong2: <strong className="text-foreground" />,
+                    strong3: <strong className="text-foreground" />,
+                    strong4: <strong className="text-foreground" />,
+                  }}
+                />
               </p>
-              <TipBox>
-                Une compétence multiplie la poussière reçue sur chaque doublon.
-                C'est l'un des meilleurs investissements quand ta collection est
-                déjà bien fournie et que les doublons s'accumulent.
-              </TipBox>
+              <TipBox>{t('sections.doublon.tip')}</TipBox>
             </Section>
 
             {/* Boutique du jour & Vœu */}
