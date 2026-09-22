@@ -187,7 +187,7 @@
     "duelLost": "DUEL LOST",
     "betTitle": "Bet on {{target}} · ≥ {{rarity}}",
     "betExpired": "EXPIRED · {{target}} DIDN'T PULL · STAKES REFUNDED",
-    "betReachedAt": "REACHED ON THE {{ordinal}} PULL",
+    "betReachedAt": "REACHED ON THE {{rankOrdinal}} PULL",
     "betNoSuccess": "{{seen}}/{{window}} PULLS WITHOUT SUCCESS"
   }
 }

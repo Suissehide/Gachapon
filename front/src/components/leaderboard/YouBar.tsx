@@ -69,13 +69,14 @@ export function YouBar(props: Props) {
       )
       gapText = t('youBar.gapPercent', {
         gap: g,
-        ordinal: ordinal(aboveRank, locale),
+        rankOrdinal: ordinal(aboveRank, locale),
       })
     } else {
       const g = Math.max(0, (above as CombatEntry).palier - entry.palier)
       gapText = t('youBar.gapTiers', {
+        count: g,
         gap: g,
-        ordinal: ordinal(aboveRank, locale),
+        rankOrdinal: ordinal(aboveRank, locale),
       })
     }
   }
@@ -121,7 +122,7 @@ export function YouBar(props: Props) {
           </div>
           <div className="font-mono text-[11px] tracking-[0.04em] text-white/60">
             {t('youBar.rankOfTotal', {
-              ordinal: ordinal(entry.rank, locale),
+              rankOrdinal: ordinal(entry.rank, locale),
               total,
             })}
             {gapText && ` · ${gapText}`}

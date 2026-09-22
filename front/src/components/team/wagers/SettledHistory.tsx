@@ -19,9 +19,9 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { BetView, DuelView } from '../../../api/wagers.api.ts'
-import { currentLocale, type Locale } from '../../../i18n/index.ts'
+import { currentLocale } from '../../../i18n/index.ts'
 import { RARITY_LABEL_FR } from '../../../libs/rarity.ts'
-import { cn, formatNumber } from '../../../libs/utils.ts'
+import { cn, formatNumber, ordinal } from '../../../libs/utils.ts'
 import { Button } from '../../ui/button.tsx'
 import { SectionLabel } from '../../ui/sectionHeading.tsx'
 import { DuelCardsPopup } from './DuelCardsPopup.tsx'
@@ -34,32 +34,6 @@ const fr = (n: number) => formatNumber(n, currentLocale())
 
 function shortDate(iso: string | null): string {
   return iso === null ? '' : dayjs(iso).format('D MMM').toUpperCase()
-}
-
-/**
- * Suffixe ordinal du rang de tirage concluant (« 1er »/« 5e » en français,
- * « 1st »/« 5th » en anglais) : contrairement à `plural()`, cette grammaire
- * n'a pas d'équivalent i18next intégré (ce n'est pas un pluriel), donc on la
- * calcule ici plutôt que de coder en dur la seule règle française.
- */
-function ordinal(n: number, locale: Locale): string {
-  if (locale === 'fr') {
-    return `${n}${n === 1 ? 'er' : 'e'}`
-  }
-  const mod100 = n % 100
-  if (mod100 >= 11 && mod100 <= 13) {
-    return `${n}th`
-  }
-  switch (n % 10) {
-    case 1:
-      return `${n}st`
-    case 2:
-      return `${n}nd`
-    case 3:
-      return `${n}rd`
-    default:
-      return `${n}th`
-  }
 }
 
 /**
@@ -150,7 +124,7 @@ function betRow(bet: BetView, t: TFunction<'wagers'>): Row {
         })
       : rarityWasReached
         ? t('settledHistory.betReachedAt', {
-            ordinal: ordinal(bet.pullsSeen, locale),
+            rankOrdinal: ordinal(bet.pullsSeen, locale),
           })
         : t('settledHistory.betNoSuccess', {
             seen: bet.pullsSeen,

@@ -58,14 +58,14 @@
   },
   "medalRank": {
     "rankFirst": "1ère place",
-    "rankPlace": "{{ordinal}} place",
+    "rankPlace": "{{rankOrdinal}} place",
     "rankOther": "Rang {{rank}}"
   },
   "youBar": {
-    "gapPercent": "à {{gap}}% du {{ordinal}}",
-    "gapTiers_one": "à {{gap}} palier du {{ordinal}}",
-    "gapTiers_other": "à {{gap}} paliers du {{ordinal}}",
-    "rankOfTotal": "{{ordinal}} sur {{total}}",
+    "gapPercent": "à {{gap}}% du {{rankOrdinal}}",
+    "gapTiers_one": "à {{gap}} palier du {{rankOrdinal}}",
+    "gapTiers_other": "à {{gap}} paliers du {{rankOrdinal}}",
+    "rankOfTotal": "{{rankOrdinal}} sur {{total}}",
     "tierLabel": "PALIER",
     "powerLabel": "FORCE",
     "climb": "Grimper"

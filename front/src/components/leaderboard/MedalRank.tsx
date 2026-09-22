@@ -33,7 +33,7 @@ function medalAriaLabel(
   if (rank === 1) {
     return t('medalRank.rankFirst')
   }
-  return t('medalRank.rankPlace', { ordinal: ordinal(rank, locale) })
+  return t('medalRank.rankPlace', { rankOrdinal: ordinal(rank, locale) })
 }
 
 export function MedalRank({ rank, size = 40 }: Props) {

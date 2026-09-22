@@ -58,14 +58,14 @@
   },
   "medalRank": {
     "rankFirst": "1st place",
-    "rankPlace": "{{ordinal}} place",
+    "rankPlace": "{{rankOrdinal}} place",
     "rankOther": "Rank {{rank}}"
   },
   "youBar": {
-    "gapPercent": "{{gap}}% behind {{ordinal}}",
-    "gapTiers_one": "{{gap}} tier behind {{ordinal}}",
-    "gapTiers_other": "{{gap}} tiers behind {{ordinal}}",
-    "rankOfTotal": "{{ordinal}} out of {{total}}",
+    "gapPercent": "{{gap}}% behind {{rankOrdinal}}",
+    "gapTiers_one": "{{gap}} tier behind {{rankOrdinal}}",
+    "gapTiers_other": "{{gap}} tiers behind {{rankOrdinal}}",
+    "rankOfTotal": "{{rankOrdinal}} out of {{total}}",
     "tierLabel": "TIER",
     "powerLabel": "POWER",
     "climb": "Climb"

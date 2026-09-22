@@ -187,7 +187,7 @@
     "duelLost": "DUEL PERDU",
     "betTitle": "Pari sur {{target}} · ≥ {{rarity}}",
     "betExpired": "EXPIRÉ · {{target}} N'A PAS TIRÉ · MISES RENDUES",
-    "betReachedAt": "ATTEINT AU {{ordinal}} TIRAGE",
+    "betReachedAt": "ATTEINT AU {{rankOrdinal}} TIRAGE",
     "betNoSuccess": "{{seen}}/{{window}} TIRAGES SANS SUCCÈS"
   }
 }
