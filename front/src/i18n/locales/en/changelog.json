@@ -97,6 +97,42 @@
         "e5": "A six-step tutorial greets you on the pull page, and your energy fills up completely every time you level up.",
         "e6": "Shop rebalanced (token packs, refills, daily shop), base token storage raised to 10, and resource display made consistent everywhere."
       }
+    },
+    "v1_5": {
+      "title": "Equipment, combat & campaign",
+      "date": "July 2026",
+      "summary": "Your equipment progresses, combat gains depth, and the campaign grows.",
+      "entries": {
+        "e1": "Equipment progression: upgrade your pieces up to level 12, substats based on rarity, and bulk destruction for gold.",
+        "e2": "Combat reimagined: every card acts according to its speed (action gauge), and attacks hit random targets.",
+        "e3": "Campaign enriched: chapters 4 and 5, enemies with portraits, and families with unique passives (poison, burn, blessing…).",
+        "e4": "Collection: power now shown on your cards, sort and filters remembered, and bulk recycling of duplicates.",
+        "e5": "Shop: energy packs for the campaign, and stackable pull boosts.",
+        "e6": "More spectacular reveals: dedicated animations for the Brilliant and Holo variants, and click-to-inspect on the card."
+      }
+    },
+    "v1_4": {
+      "title": "Quests, wishes & economy",
+      "date": "July 2026",
+      "summary": "New daily objectives, a wishlist, and an economy overhauled from the ground up.",
+      "entries": {
+        "e1": "Daily and weekly quests with rewards to claim.",
+        "e2": "Wishlist: flag the cards you're after on your profile.",
+        "e3": "Public stats page to follow the community's activity.",
+        "e4": "Economy overhaul: tokens, dust and pity rebalanced.",
+        "e5": "Pull and reveal screen refined."
+      }
+    },
+    "v1_3": {
+      "title": "Combat & progression",
+      "date": "June 2026",
+      "summary": "PvE arrives: achievements, campaign, battles and equipment for your cards.",
+      "entries": {
+        "e1": "Achievement system: unlock rewards as you play.",
+        "e2": "Combat and battles against opponents.",
+        "e3": "Campaign mode with stage-by-stage progression.",
+        "e4": "Equipment to strengthen your cards in battle."
+      }
     }
   }
 }

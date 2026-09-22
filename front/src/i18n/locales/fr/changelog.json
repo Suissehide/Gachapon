@@ -97,6 +97,42 @@
         "e5": "Un tutoriel en six étapes t’accueille sur la page de tirage, et ton énergie se remplit à bloc à chaque montée de niveau.",
         "e6": "Boutique rééquilibrée (packs de jetons, recharges, boutique du jour), stockage de jetons de base porté à 10, et affichage des ressources uniformisé partout."
       }
+    },
+    "v1_5": {
+      "title": "Équipement, combat & campagne",
+      "date": "Juillet 2026",
+      "summary": "Ton équipement progresse, le combat gagne en profondeur et la campagne s’agrandit.",
+      "entries": {
+        "e1": "Progression d’équipement : améliore tes pièces jusqu’au niveau 12, sous-stats selon la rareté, et destruction en masse contre de l’or.",
+        "e2": "Combat repensé : chaque carte agit selon sa vitesse (jauge d’action) et les attaques touchent des cibles aléatoires.",
+        "e3": "Campagne enrichie : chapitres 4 et 5, ennemis avec portraits et familles aux passifs uniques (poison, brûlure, bénédiction…).",
+        "e4": "Collection : puissance affichée sur tes cartes, tri et filtres mémorisés, et recyclage des doublons en masse.",
+        "e5": "Boutique : packs d’énergie pour la campagne et boosts de tirage cumulables.",
+        "e6": "Révélations plus spectaculaires : animations dédiées aux variantes Brillante et Holo, et inspection de la carte au clic."
+      }
+    },
+    "v1_4": {
+      "title": "Quêtes, souhaits & économie",
+      "date": "Juillet 2026",
+      "summary": "De nouveaux objectifs quotidiens, une liste de souhaits et une économie remise à plat.",
+      "entries": {
+        "e1": "Quêtes quotidiennes et hebdomadaires avec récompenses à réclamer.",
+        "e2": "Liste de souhaits : marque les cartes que tu convoites sur ton profil.",
+        "e3": "Page de statistiques publique pour suivre l’activité de la communauté.",
+        "e4": "Refonte de l’économie : jetons, poussière et pitié rééquilibrés.",
+        "e5": "Écran de tirage et de révélation affiné."
+      }
+    },
+    "v1_3": {
+      "title": "Combat & progression",
+      "date": "Juin 2026",
+      "summary": "Le PvE arrive : succès, campagne, batailles et équipement pour tes cartes.",
+      "entries": {
+        "e1": "Système de succès : débloque des récompenses en jouant.",
+        "e2": "Combat et batailles contre des adversaires.",
+        "e3": "Mode campagne avec une progression par étapes.",
+        "e4": "Équipement pour renforcer tes cartes au combat."
+      }
     }
   }
 }
