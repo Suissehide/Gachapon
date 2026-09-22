@@ -22,6 +22,43 @@
     }
   },
   "toasts": {
-    "purchaseErrorTitle": "Erreur lors de l'achat"
+    "purchaseErrorTitle": "Erreur lors de l'achat",
+    "boughtMessage": "Acheté ! −{{amount}} {{currency}}",
+    "currencyGold": "or",
+    "currencyDust": "poussière"
+  },
+  "title": "Dépense ta poussière",
+  "breadcrumb": "Boutique",
+  "typeLabels": {
+    "TOKEN_PACK": "Packs de jetons",
+    "ENERGY_PACK": "Énergie",
+    "BOOST": "Boosts",
+    "COSMETIC": "Cosmétiques",
+    "MACHINE": "Machines"
+  },
+  "sections": {
+    "wishlistTitle": "Vœux",
+    "dailyShopTitle": "Boutique du jour",
+    "nextRefreshIn": "Nouveau tirage dans",
+    "noCardAvailable": "Aucune carte disponible",
+    "noItemAvailable": "Aucun article disponible pour l'instant",
+    "itemCount_one": "{{count}} ARTICLE",
+    "itemCount_other": "{{count}} ARTICLES"
+  },
+  "wishlistSection": {
+    "emptyPrefix": "Choisis des cartes dans ta",
+    "emptyLink": "collection"
+  },
+  "dailyCard": {
+    "bought": "Achetée"
+  },
+  "staticCard": {
+    "purchaseSuccess": "Achat réussi",
+    "owned": "Possédée",
+    "comingSoon": "Bientôt",
+    "buy": "Acheter",
+    "insufficient": "Insuffisant",
+    "activeBoost_one": "Actif — {{count}} tirage restant",
+    "activeBoost_other": "Actif — {{count}} tirages restants"
   }
 }

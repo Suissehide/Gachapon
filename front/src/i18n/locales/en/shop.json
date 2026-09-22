@@ -22,6 +22,43 @@
     }
   },
   "toasts": {
-    "purchaseErrorTitle": "Error during the purchase"
+    "purchaseErrorTitle": "Error during the purchase",
+    "boughtMessage": "Bought! −{{amount}} {{currency}}",
+    "currencyGold": "gold",
+    "currencyDust": "dust"
+  },
+  "title": "Spend your dust",
+  "breadcrumb": "Shop",
+  "typeLabels": {
+    "TOKEN_PACK": "Token packs",
+    "ENERGY_PACK": "Energy",
+    "BOOST": "Boosts",
+    "COSMETIC": "Cosmetics",
+    "MACHINE": "Machines"
+  },
+  "sections": {
+    "wishlistTitle": "Wishes",
+    "dailyShopTitle": "Daily shop",
+    "nextRefreshIn": "New pull in",
+    "noCardAvailable": "No card available",
+    "noItemAvailable": "No item available yet",
+    "itemCount_one": "{{count}} ITEM",
+    "itemCount_other": "{{count}} ITEMS"
+  },
+  "wishlistSection": {
+    "emptyPrefix": "Pick cards from your",
+    "emptyLink": "collection"
+  },
+  "dailyCard": {
+    "bought": "Bought"
+  },
+  "staticCard": {
+    "purchaseSuccess": "Purchase successful",
+    "owned": "Owned",
+    "comingSoon": "Coming soon",
+    "buy": "Buy",
+    "insufficient": "Not enough",
+    "activeBoost_one": "Active — {{count}} pull remaining",
+    "activeBoost_other": "Active — {{count}} pulls remaining"
   }
 }

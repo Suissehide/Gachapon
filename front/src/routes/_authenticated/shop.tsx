@@ -12,6 +12,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { PageHeader } from '../../components/shared/PageHeader'
 import { PageShell } from '../../components/shared/PageShell'
@@ -21,7 +22,7 @@ import { Card, CardTitle } from '../../components/ui/card'
 import type { DailyShopItem } from '../../constants/daily-shop.constant'
 import { TOAST_SEVERITY } from '../../constants/ui.constant'
 import { useToast } from '../../hooks/useToast'
-import { currentLocale } from '../../i18n/index.ts'
+import i18n, { currentLocale } from '../../i18n/index.ts'
 import { formatNumber } from '../../libs/utils.ts'
 import { useBuyDailyShopItem, useDailyShop } from '../../queries/useDailyShop'
 import type { ShopItem } from '../../queries/useShop'
@@ -77,29 +78,29 @@ const TYPE_CONFIG: Record<
   { label: string; icon: React.ReactNode; color: string }
 > = {
   TOKEN_PACK: {
-    label: 'Packs de jetons',
+    label: i18n.t('shop:typeLabels.TOKEN_PACK'),
     icon: <Zap className="h-4 w-4 text-primary" />,
     color: 'border-primary/30 bg-primary/5',
   },
   ENERGY_PACK: {
     // Zap violet = identité visuelle de l'énergie sur la page campagne
     // (campaign.tsx utilise Zap text-violet-500 pour le coût en PC).
-    label: 'Énergie',
+    label: i18n.t('shop:typeLabels.ENERGY_PACK'),
     icon: <Zap className="h-4 w-4 text-violet-500" />,
     color: 'border-violet-500/30 bg-violet-500/5',
   },
   BOOST: {
-    label: 'Boosts',
+    label: i18n.t('shop:typeLabels.BOOST'),
     icon: <Sparkles className="h-4 w-4 text-secondary" />,
     color: 'border-secondary/30 bg-secondary/5',
   },
   COSMETIC: {
-    label: 'Cosmétiques',
+    label: i18n.t('shop:typeLabels.COSMETIC'),
     icon: <Package className="h-4 w-4 text-accent" />,
     color: 'border-accent/30 bg-accent/5',
   },
   MACHINE: {
-    label: 'Machines',
+    label: i18n.t('shop:typeLabels.MACHINE'),
     icon: <Cog className="h-4 w-4 text-primary" />,
     color: 'border-primary/30 bg-primary/5',
   },
@@ -108,6 +109,7 @@ const TYPE_CONFIG: Record<
 // ── Main page ───────────────────────────────────────────────────────────────
 
 function ShopPage() {
+  const { t } = useTranslation(['shop', 'wishlist'])
   const user = useAuthStore((s) => s.user)
   const setUser = useAuthStore((s) => s.setUser)
   const { toast } = useToast()
@@ -151,10 +153,16 @@ function ShopPage() {
             tokens: result.newTokenTotal,
           })
         }
-        const currencyLabel = result.currency === 'GOLD' ? 'or' : 'poussière'
+        const currencyLabel =
+          result.currency === 'GOLD'
+            ? t('shop:toasts.currencyGold')
+            : t('shop:toasts.currencyDust')
         notifySuccess(
           item.name,
-          `Acheté ! −${result.amountSpent} ${currencyLabel}`,
+          t('shop:toasts.boughtMessage', {
+            amount: result.amountSpent,
+            currency: currencyLabel,
+          }),
         )
         const remaining = Math.max(0, MIN_SPIN_MS - (Date.now() - clickedAt))
         setTimeout(() => {
@@ -181,7 +189,7 @@ function ShopPage() {
         }
         notifySuccess(
           result.card.name,
-          `Obtenue ! −${result.dustSpent} poussière`,
+          t('wishlist:toasts.purchasedMessage', { dust: result.dustSpent }),
         )
         const remaining = Math.max(0, MIN_SPIN_MS - (Date.now() - clickedAt))
         setTimeout(() => {
@@ -205,9 +213,9 @@ function ShopPage() {
       <PageHeader
         breadcrumbs={[
           { label: 'Gachapon', to: '/play' },
-          { label: 'Boutique' },
+          { label: t('shop:breadcrumb') },
         ]}
-        title="Dépense ta poussière"
+        title={t('shop:title')}
       />
 
       {/* ── Wishlist Section ──────────────────────────────────── */}
@@ -219,11 +227,11 @@ function ShopPage() {
           <div className="flex items-center gap-2">
             <CalendarClock className="h-4 w-4 text-accent" />
             <CardTitle className="text-sm uppercase tracking-wider">
-              Boutique du jour
+              {t('shop:sections.dailyShopTitle')}
             </CardTitle>
           </div>
           <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-text-light">
-            <span>Nouveau tirage dans</span>
+            <span>{t('shop:sections.nextRefreshIn')}</span>
             <span className="font-bold tabular-nums text-accent">
               {timeLeft}
             </span>
@@ -237,7 +245,7 @@ function ShopPage() {
         ) : dailyItems.length === 0 ? (
           <div className="flex h-32 items-center justify-center rounded-xl border border-dashed border-border">
             <p className="font-mono text-xs uppercase tracking-wider text-text-light">
-              Aucune carte disponible
+              {t('shop:sections.noCardAvailable')}
             </p>
           </div>
         ) : (
@@ -267,7 +275,7 @@ function ShopPage() {
       ) : shopItems.length === 0 ? (
         <Card className="flex h-48 items-center justify-center p-6">
           <p className="font-mono text-xs uppercase tracking-wider text-text-light">
-            Aucun article disponible pour l'instant
+            {t('shop:sections.noItemAvailable')}
           </p>
         </Card>
       ) : (
@@ -283,7 +291,7 @@ function ShopPage() {
                   </CardTitle>
                 </div>
                 <span className="font-mono text-[11px] text-text-light">
-                  {typeItems.length} ARTICLE{typeItems.length > 1 ? 'S' : ''}
+                  {t('shop:sections.itemCount', { count: typeItems.length })}
                 </span>
               </div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -357,6 +365,7 @@ function WishlistBuyButton({
 }
 
 function WishlistSection({ dust }: { dust: number }) {
+  const { t } = useTranslation('shop')
   const { data: wishlist, isLoading } = useWishlist()
   const { mutate: purchase, isPending: purchasing } = usePurchaseWishlist()
   const [buyingId, setBuyingId] = useState<string | null>(null)
@@ -368,7 +377,9 @@ function WishlistSection({ dust }: { dust: number }) {
     <Card className="p-6">
       <div className="mb-4 flex items-center gap-2">
         <Star className="h-4 w-4 text-primary" />
-        <CardTitle className="text-sm uppercase tracking-wider">Vœux</CardTitle>
+        <CardTitle className="text-sm uppercase tracking-wider">
+          {t('shop:sections.wishlistTitle')}
+        </CardTitle>
         {!isLoading && slots > 0 && (
           <span className="ml-auto font-mono text-xs text-text-light">
             {cards.length} / {slots}
@@ -414,12 +425,12 @@ function WishlistSection({ dust }: { dust: number }) {
       ) : (
         <div className="flex h-32 items-center justify-center rounded-xl border border-dashed border-border">
           <p className="text-sm text-text-light">
-            Choisis des cartes dans ta{' '}
+            {t('shop:wishlistSection.emptyPrefix')}{' '}
             <Link
               to="/collection"
               className="text-primary underline underline-offset-2"
             >
-              collection
+              {t('shop:wishlistSection.emptyLink')}
             </Link>
           </p>
         </div>
@@ -441,6 +452,7 @@ function DailyShopCard({
   buying: boolean
   onBuy: () => void
 }) {
+  const { t } = useTranslation('shop')
   const locale = currentLocale()
   const canAfford = dust >= item.dustPrice
 
@@ -472,7 +484,7 @@ function DailyShopCard({
           className="w-full gap-1.5"
         >
           <Check className="h-3.5 w-3.5" />
-          Achetée
+          {t('shop:dailyCard.bought')}
         </Button>
       ) : canAfford ? (
         <Button
@@ -522,6 +534,7 @@ function StaticShopCardAction({
   capReached?: boolean
   onBuy: () => void
 }) {
+  const { t } = useTranslation('shop')
   if (justBought) {
     return (
       <Button
@@ -531,7 +544,7 @@ function StaticShopCardAction({
         className="gap-1.5 animate-[shop-success-pop_0.4s_var(--ease-spring)]"
       >
         <Check className="h-3.5 w-3.5" />
-        Achat réussi
+        {t('shop:staticCard.purchaseSuccess')}
       </Button>
     )
   }
@@ -539,7 +552,7 @@ function StaticShopCardAction({
     return (
       <Button size="sm" variant="secondary" disabled className="gap-1.5">
         <Check className="h-3.5 w-3.5" />
-        Possédée
+        {t('shop:staticCard.owned')}
       </Button>
     )
   }
@@ -547,7 +560,7 @@ function StaticShopCardAction({
     return (
       <Button size="sm" variant="secondary" disabled className="gap-1.5">
         <Lock className="h-3.5 w-3.5" />
-        Bientôt
+        {t('shop:staticCard.comingSoon')}
       </Button>
     )
   }
@@ -562,20 +575,20 @@ function StaticShopCardAction({
     return (
       <Button size="sm" variant="secondary" disabled className="gap-1.5">
         <Clock className="h-3.5 w-3.5" />
-        Limite atteinte
+        {t('shop:apiTitles.dailyLimitTitle')}
       </Button>
     )
   }
   if (canAfford) {
     return (
       <Button size="sm" variant="gradient" onClick={onBuy}>
-        Acheter
+        {t('shop:staticCard.buy')}
       </Button>
     )
   }
   return (
     <Button size="sm" disabled variant="outline" className="text-text-light/70">
-      Insuffisant
+      {t('shop:staticCard.insufficient')}
     </Button>
   )
 }
@@ -601,6 +614,7 @@ function StaticShopCard({
   capReached?: boolean
   onBuy: () => void
 }) {
+  const { t } = useTranslation('shop')
   const locale = currentLocale()
   const isGold = item.currency === 'GOLD'
   const canAfford = (isGold ? gold : dust) >= item.cost
@@ -622,8 +636,7 @@ function StaticShopCard({
         {isBoostActive && (
           <div className="mt-2 flex items-center gap-1.5 rounded-md bg-secondary/15 px-2 py-1 text-xs font-semibold text-secondary">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-secondary" />
-            Actif — {pulls} tirage{pulls > 1 ? 's' : ''} restant
-            {pulls > 1 ? 's' : ''}
+            {t('shop:staticCard.activeBoost', { count: pulls })}
           </div>
         )}
       </div>
