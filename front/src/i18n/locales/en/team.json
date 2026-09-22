@@ -75,8 +75,13 @@
       "resendInvitation": "Error resending",
       "cancelInvitation": "Error cancelling",
       "deleteInvitation": "Error deleting",
-      "searchUsers": "Searching users"
-    }
+      "searchUsers": "Searching users",
+      "loadRaid": "Loading the raid",
+      "raidAttack": "Raid attack"
+    },
+    "raidBossDefeated": "Boss defeated",
+    "raidNoAttacksLeft": "No attacks left today",
+    "raidComeBackTomorrowMessage": "Come back tomorrow to attack again."
   },
   "recruitmentApi": {
     "applyImpossibleTitle": "Can't apply",

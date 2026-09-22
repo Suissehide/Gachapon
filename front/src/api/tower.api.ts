@@ -1,4 +1,5 @@
 import { apiUrl } from '../constants/config.constant.ts'
+import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import type { BattleLogEntry, SimulatorUnit } from './combat.api.ts'
 import type { EquipmentDrop, EquipmentSlot } from './equipment.api.ts'
@@ -91,7 +92,7 @@ export type TowerBattleResult = {
 export async function fetchTowers(): Promise<{ towers: TowerSummary[] }> {
   const res = await fetchWithAuth(`${apiUrl}/tower`)
   if (!res.ok) {
-    handleHttpError(res, {}, 'Erreur lors du chargement des tours')
+    handleHttpError(res, {}, i18n.t('combat:apiTitles.tower.loadTowers'))
   }
   return res.json()
 }
@@ -99,7 +100,7 @@ export async function fetchTowers(): Promise<{ towers: TowerSummary[] }> {
 export async function fetchTower(element: string): Promise<TowerView> {
   const res = await fetchWithAuth(`${apiUrl}/tower/${element}`)
   if (!res.ok) {
-    handleHttpError(res, {}, 'Erreur lors du chargement de la tour')
+    handleHttpError(res, {}, i18n.t('combat:apiTitles.tower.loadTower'))
   }
   return res.json()
 }
@@ -113,7 +114,7 @@ export async function postTowerBattle(
     { method: 'POST' },
   )
   if (!res.ok) {
-    handleHttpError(res, {}, 'Erreur lors du combat')
+    handleHttpError(res, {}, i18n.t('combat:apiTitles.battle'))
   }
   return res.json()
 }
@@ -129,7 +130,7 @@ export async function postTowerSweep(
     body: JSON.stringify({ runs }),
   })
   if (!res.ok) {
-    handleHttpError(res, {}, 'Erreur lors du combat multiple')
+    handleHttpError(res, {}, i18n.t('combat:apiTitles.tower.battleMultiple'))
   }
   return res.json()
 }

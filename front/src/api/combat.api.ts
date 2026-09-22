@@ -1,4 +1,5 @@
 import { apiUrl } from '../constants/config.constant.ts'
+import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
@@ -67,7 +68,11 @@ export const CombatApi = {
   getPoints: async (): Promise<CombatPointsView> => {
     const res = await fetchWithAuth(`${apiUrl}/combat/points`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors du chargement des points de combat')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('combat:apiTitles.operations.loadCombatPoints'),
+      )
     }
     return res.json()
   },
@@ -77,7 +82,7 @@ export const CombatApi = {
       `${apiUrl}/combat/teams/${encodeURIComponent(key)}`,
     )
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors du chargement de l'équipe")
+      handleHttpError(res, {}, i18n.t('combat:apiTitles.operations.loadTeam'))
     }
     return res.json()
   },
@@ -85,7 +90,7 @@ export const CombatApi = {
   getAllTeams: async (): Promise<{ teams: Record<string, CombatTeamView> }> => {
     const res = await fetchWithAuth(`${apiUrl}/combat/teams`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors du chargement des équipes')
+      handleHttpError(res, {}, i18n.t('combat:apiTitles.operations.loadTeams'))
     }
     return res.json()
   },
@@ -103,7 +108,7 @@ export const CombatApi = {
       },
     )
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors de l'enregistrement de l'équipe")
+      handleHttpError(res, {}, i18n.t('combat:toasts.setTeamErrorTitle'))
     }
     return res.json()
   },
@@ -114,7 +119,7 @@ export const CombatApi = {
       { method: 'DELETE' },
     )
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors du retour à l'équipe de campagne")
+      handleHttpError(res, {}, i18n.t('combat:toasts.clearTeamErrorTitle'))
     }
   },
 
@@ -130,7 +135,7 @@ export const CombatApi = {
       body: JSON.stringify(input),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la simulation de combat')
+      handleHttpError(res, {}, i18n.t('combat:apiTitles.operations.simulate'))
     }
     return res.json()
   },

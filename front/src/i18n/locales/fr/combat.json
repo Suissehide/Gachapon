@@ -6,5 +6,23 @@
   "toasts": {
     "setTeamErrorTitle": "Erreur lors de l'enregistrement de l'équipe",
     "clearTeamErrorTitle": "Erreur lors du retour à l'équipe de campagne"
+  },
+  "apiTitles": {
+    "battle": "Erreur lors du combat",
+    "campaign": {
+      "load": "Erreur lors du chargement de la campagne",
+      "sweep": "Erreur lors du sweep"
+    },
+    "tower": {
+      "loadTowers": "Erreur lors du chargement des tours",
+      "loadTower": "Erreur lors du chargement de la tour",
+      "battleMultiple": "Erreur lors du combat multiple"
+    },
+    "operations": {
+      "loadCombatPoints": "Erreur lors du chargement des points de combat",
+      "loadTeam": "Erreur lors du chargement de l'équipe",
+      "loadTeams": "Erreur lors du chargement des équipes",
+      "simulate": "Erreur lors de la simulation de combat"
+    }
   }
 }

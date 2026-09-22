@@ -1,6 +1,7 @@
 import type { CardRarity } from '../constants/card.constant.ts'
 import { apiUrl } from '../constants/config.constant.ts'
-import { handleHttpError } from '../libs/httpErrorHandler.ts'
+import i18n from '../i18n/index.ts'
+import { handleHttpErrorFromServer } from '../libs/httpErrorHandler.ts'
 import type { BattleLogEntry, SimulatorUnit } from './combat.api.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 import type { TowerElement } from './tower.api.ts'
@@ -67,15 +68,13 @@ export const RaidApi = {
   getRaid: async (teamId: string): Promise<RaidView> => {
     const res = await fetchWithAuth(`${apiUrl}/teams/${teamId}/raid`)
     if (!res.ok) {
-      handleHttpError(
+      // 403 : `team.notMember` du catalogue back (le bannissement du
+      // limiteur de débit, seule autre source possible d'un 403, n'est pas
+      // activé — voir rate-limit.plugin.ts).
+      await handleHttpErrorFromServer(
         res,
-        {
-          403: {
-            title: 'Accès refusé',
-            message: 'Tu ne fais pas partie de cette équipe.',
-          },
-        },
-        'Chargement du raid',
+        { 403: i18n.t('team:apiTitles.accessDenied') },
+        i18n.t('team:apiTitles.operations.loadRaid'),
       )
     }
     return res.json()
@@ -86,20 +85,19 @@ export const RaidApi = {
       method: 'POST',
     })
     if (!res.ok) {
-      handleHttpError(
+      // 409 : `raid.bossAlreadyDefeated`, seule source de ce statut.
+      // 429 : partagé avec le limiteur de débit GLOBAL, dont le message est
+      // anglais — le front garde le sien.
+      await handleHttpErrorFromServer(
         res,
         {
-          409: {
-            title: 'Boss vaincu',
-            message:
-              'Le boss est déjà à terre, rendez-vous la semaine prochaine.',
-          },
+          409: i18n.t('team:apiTitles.raidBossDefeated'),
           429: {
-            title: "Plus d'attaque aujourd'hui",
-            message: 'Reviens demain pour attaquer à nouveau.',
+            title: i18n.t('team:apiTitles.raidNoAttacksLeft'),
+            message: i18n.t('team:apiTitles.raidComeBackTomorrowMessage'),
           },
         },
-        'Attaque de raid',
+        i18n.t('team:apiTitles.operations.raidAttack'),
       )
     }
     return res.json()

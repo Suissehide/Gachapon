@@ -6,5 +6,23 @@
   "toasts": {
     "setTeamErrorTitle": "Error saving the team",
     "clearTeamErrorTitle": "Error reverting to the campaign team"
+  },
+  "apiTitles": {
+    "battle": "Error during the battle",
+    "campaign": {
+      "load": "Error loading the campaign",
+      "sweep": "Error during the sweep"
+    },
+    "tower": {
+      "loadTowers": "Error loading the towers",
+      "loadTower": "Error loading the tower",
+      "battleMultiple": "Error during the multiple battle"
+    },
+    "operations": {
+      "loadCombatPoints": "Error loading the combat points",
+      "loadTeam": "Error loading the team",
+      "loadTeams": "Error loading the teams",
+      "simulate": "Error simulating the battle"
+    }
   }
 }

@@ -1,4 +1,5 @@
 import { apiUrl } from '../constants/config.constant.ts'
+import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import type { SimulatorUnit } from './combat.api.ts'
 import type { EquipmentDrop } from './equipment.api.ts'
@@ -94,7 +95,7 @@ export const CampaignApi = {
   get: async (): Promise<Campaign> => {
     const res = await fetchWithAuth(`${apiUrl}/campaign`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors du chargement de la campagne')
+      handleHttpError(res, {}, i18n.t('combat:apiTitles.campaign.load'))
     }
     return res.json()
   },
@@ -105,7 +106,7 @@ export const CampaignApi = {
       { method: 'POST' },
     )
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors du combat')
+      handleHttpError(res, {}, i18n.t('combat:apiTitles.battle'))
     }
     return res.json()
   },
@@ -120,7 +121,7 @@ export const CampaignApi = {
       },
     )
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors du sweep')
+      handleHttpError(res, {}, i18n.t('combat:apiTitles.campaign.sweep'))
     }
     return res.json()
   },

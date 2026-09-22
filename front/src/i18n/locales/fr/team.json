@@ -75,8 +75,13 @@
       "resendInvitation": "Erreur lors du renvoi",
       "cancelInvitation": "Erreur lors de l'annulation",
       "deleteInvitation": "Erreur lors de la suppression",
-      "searchUsers": "Recherche d'utilisateurs"
-    }
+      "searchUsers": "Recherche d'utilisateurs",
+      "loadRaid": "Chargement du raid",
+      "raidAttack": "Attaque de raid"
+    },
+    "raidBossDefeated": "Boss vaincu",
+    "raidNoAttacksLeft": "Plus d'attaque aujourd'hui",
+    "raidComeBackTomorrowMessage": "Reviens demain pour attaquer à nouveau."
   },
   "recruitmentApi": {
     "applyImpossibleTitle": "Candidature impossible",
