@@ -241,5 +241,10 @@
       "endpointsBullet": "Endpoints disponibles : <pullsPill></pullsPill>, <collectionPill></collectionPill>, <leaderboardPill></leaderboardPill> et plus.",
       "discordGuideLink": "Guide bot Discord →"
     }
+  },
+  "cta": {
+    "title": "Prêt à commencer ?",
+    "subtitle": "Crée ton compte gratuitement et tire ta première capsule.",
+    "button": "Jouer gratuitement →"
   }
 }

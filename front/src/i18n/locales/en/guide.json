@@ -241,5 +241,10 @@
       "endpointsBullet": "Available endpoints: <pullsPill></pullsPill>, <collectionPill></collectionPill>, <leaderboardPill></leaderboardPill>, and more.",
       "discordGuideLink": "Discord Bot Guide →"
     }
+  },
+  "cta": {
+    "title": "Ready to get started?",
+    "subtitle": "Create your account for free and pull your first capsule.",
+    "button": "Play for free →"
   }
 }

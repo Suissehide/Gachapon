@@ -1177,18 +1177,16 @@ function GuidePage() {
         <div className="mt-16 rounded-2xl border border-primary/20 bg-linear-to-br from-primary/5 to-secondary/5 p-8 flex items-center justify-between gap-6 flex-wrap">
           <div>
             <p className="text-base font-black text-foreground mb-1">
-              Prêt à commencer ?
+              {t('cta.title')}
             </p>
-            <p className="text-xs text-text-light">
-              Crée ton compte gratuitement et tire ta première capsule.
-            </p>
+            <p className="text-xs text-text-light">{t('cta.subtitle')}</p>
           </div>
           <button
             type="button"
             onClick={openRegister}
             className="shrink-0 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-white hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
           >
-            Jouer gratuitement →
+            {t('cta.button')}
           </button>
         </div>
       </div>
