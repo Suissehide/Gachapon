@@ -36,6 +36,32 @@
         "e5": "Recruitment: a directory of teams looking for members opens from \"My teams\". You can apply to five teams at once, track your applications and cancel them; on the leader's side, a queue shows each applicant's level, and the bell notifies both sides. An application expires after seven days, and a decline keeps you away from that team for a week.",
         "e6": "Both team screens are redone: the list with its colored emblems and open slots, the sheet in two columns with the raid, duels, and the contribution table. The officer rank finally becomes assignable by the leader, and the \"Recruit\" tag now only lasts a day instead of a week."
       }
+    },
+    "v2_1": {
+      "title": "Cards, skills and tuning",
+      "date": "September 2026",
+      "summary": "Five more card families, a skill tree that now reaches level 100, equipment quests, and recalibrated combat.",
+      "entries": {
+        "e1": "Five families join the binder — Centaurs, Dryads, Kitsune, Draenei and Lamia — for 170 more cards. The game now counts 18 families and 602 cards, whose artwork is now served at your screen's size and therefore loads faster.",
+        "e2": "The skill tree finally covers level 100: existing nodes gain tiers, and new peaks appear, including two that touch equipment — a discount on the upgrade cost and a bonus to recycling. No effect is split across two nodes of the same branch anymore: leveling a skill can no longer be a trap.",
+        "e3": "Equipment quests enter the rotation: the weekly pool grows from 7 to 11 quests, and the one-time chain gains the three discovery actions — picking up, upgrading and recycling a piece of equipment. About four weeks out of five now contain at least one equipment quest.",
+        "e4": "An elements guide opens from the campaign and tower headers: the wheel of the four elements, the Light / Dark pair that answers each other outside the cycle, and the exact multipliers.",
+        "e5": "Combat is recalibrated. Speed no longer scales with level — neither yours nor the enemy's: equipment now decides turn order. Other stats gain 9% per level instead of 6%. And the early game becomes beatable again: the first tower floor and the first campaign battle can be won again with a mediocre starting hand.",
+        "e6": "The pity counter announced the Legendary one pull too early. And a card's enlarged view is now the same everywhere — pulls, collection, duel loot — including when opened from within a modal."
+      }
+    },
+    "v2_0": {
+      "title": "The Towers and Equipment",
+      "date": "September 2026",
+      "summary": "Four elemental towers to climb, and everything you need to gear your cards head to toe: seven slots, sets to build around, and substats to chase.",
+      "entries": {
+        "e1": "Elemental Towers: four ten-floor towers — Fire, Water, Nature and Earth. Each tower feeds a specific slot (gloves from Fire, boots from Water, amulet from Nature, belt from Earth), so you climb whichever one drops the piece you're missing. Every run guarantees a piece, and the higher you climb, the rarer it comes out.",
+        "e2": "Equipment: every card wears seven pieces — weapon, armor, ring, amulet, gloves, boots, belt. A piece has one main stat and up to four substats, and levels up to 12: every three levels, a substat appears or gets stronger.",
+        "e3": "Sets: seven sets, but they don't all share the same size. Celerity and Colossus activate at two pieces, Vigilance, Assault and Breakthrough at three, Wrath and Leech at four — enough to wear two at once on the same card. Careful: the count is per card, not across your inventory. The \"Set bonuses\" button sums it all up.",
+        "e4": "Two pieces of the same slot are no longer equal: an armor piece can roll as DEF, PV, % DEF or % PV. There's now a right version of a piece to chase, not just a good rarity.",
+        "e5": "Your equipment inventory now sorts and filters: by rarity, level, slot, set or main stat. You can select several pieces at once to sell them — with a confirmation if a Legendary is hiding in the batch.",
+        "e6": "Campaign loot finally follows your progress: Commons dominate the early floors then fade out completely by the end of the campaign, while high rarities climb. A first clear guarantees a piece of equipment on almost every floor, and bosses keep a head start."
+      }
     }
   }
 }

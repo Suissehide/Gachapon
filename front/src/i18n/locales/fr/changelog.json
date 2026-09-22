@@ -36,6 +36,32 @@
         "e5": "Le recrutement : un annuaire des équipes qui cherchent du monde s’ouvre depuis « Mes équipes ». Tu peux candidater à cinq équipes à la fois, suivre tes candidatures et les annuler ; côté chef, une file d’attente affiche le niveau de chaque candidat, et la cloche prévient des deux côtés. Une candidature expire au bout de sept jours, et un refus t’écarte de cette équipe une semaine.",
         "e6": "Les deux écrans d’équipe sont refaits : la liste avec ses emblèmes colorés et ses emplacements libres, la fiche en deux colonnes avec le raid, les duels et la table des contributions. Le grade d’officier devient enfin attribuable par le chef, et l’étiquette « Recrue » ne tient plus qu’un jour au lieu d’une semaine."
       }
+    },
+    "v2_1": {
+      "title": "Cartes, compétences et réglages",
+      "date": "Septembre 2026",
+      "summary": "Cinq familles de cartes de plus, un arbre de compétences qui va jusqu’au niveau 100, des quêtes d’équipement et un combat recalibré.",
+      "entries": {
+        "e1": "Cinq familles rejoignent le classeur — Centaures, Dryades, Kitsunes, Draenei et Lamia — soit 170 cartes de plus. Le jeu compte désormais 18 familles et 602 cartes, dont les illustrations sont servies à la taille de ton écran et chargent donc plus vite.",
+        "e2": "L’arbre de compétences couvre enfin le niveau 100 : les nœuds existants gagnent des paliers, et de nouveaux sommets apparaissent, dont deux qui touchent l’équipement — une remise sur le coût d’amélioration et un bonus au recyclage. Plus aucun effet n’est réparti sur deux nœuds d’une même branche : monter une compétence ne peut plus être un piège.",
+        "e3": "Des quêtes d’équipement entrent dans la rotation : le pool hebdomadaire passe de 7 à 11 quêtes, et la chaîne à faire une fois gagne les trois gestes de découverte — ramasser, améliorer et recycler une pièce. Environ quatre semaines sur cinq contiennent au moins une quête d’équipement.",
+        "e4": "Un guide des éléments s’ouvre depuis l’en-tête de la campagne et des tours : la roue des quatre éléments, la paire Lumière / Ténèbres qui se répond hors cycle, et les multiplicateurs exacts.",
+        "e5": "Le combat est recalibré. La vitesse ne monte plus avec le niveau — ni chez toi ni chez l’ennemi : c’est l’équipement qui décide de l’ordre des tours. Les autres stats gagnent 9 % par niveau au lieu de 6 %. Et les débuts redeviennent franchissables : le premier étage de tour et le premier combat de campagne se gagnent de nouveau avec une main de départ médiocre.",
+        "e6": "Le compteur de garantie annonçait le légendaire un tirage trop tôt. Et la vue agrandie d’une carte est désormais la même partout — tirage, collection, butin de duel — y compris ouverte depuis une fenêtre."
+      }
+    },
+    "v2_0": {
+      "title": "Les Tours et l’Équipement",
+      "date": "Septembre 2026",
+      "summary": "Quatre tours élémentaires à gravir, et de quoi équiper tes cartes de pied en cap : sept emplacements, des sets à composer et des sous-stats à chasser.",
+      "entries": {
+        "e1": "Les Tours élémentaires : quatre tours de dix étages — Feu, Eau, Nature et Terre. Chaque tour alimente un emplacement précis (les gants au Feu, les bottes à l’Eau, l’amulette à la Nature, la ceinture à la Terre), donc tu montes celle qui lâche la pièce qui te manque. Chaque passage garantit une pièce, et plus tu grimpes, plus elle sort rare.",
+        "e2": "L’équipement : chaque carte porte sept pièces — arme, armure, anneau, amulette, gants, bottes, ceinture. Une pièce a une stat principale et jusqu’à quatre sous-stats, et monte jusqu’au niveau 12 : tous les trois niveaux, une sous-stat apparaît ou se renforce.",
+        "e3": "Les sets : sept sets, mais tous n’ont pas la même taille. Célérité et Colosse s’activent à deux pièces, Affût, Assaut et Percée à trois, Fureur et Sangsue à quatre — de quoi en porter deux à la fois sur une même carte. Attention : le compte se fait carte par carte, pas sur ton inventaire. Le bouton « Bonus de sets » récapitule tout.",
+        "e4": "Deux pièces du même emplacement ne se valent plus : une armure peut sortir en DÉF, en PV, en % DÉF ou en % PV. Il y a désormais une bonne version d’une pièce à chercher, pas seulement une bonne rareté.",
+        "e5": "Ton inventaire d’équipement se trie et se filtre : par rareté, niveau, emplacement, set ou stat principale. Tu peux sélectionner plusieurs pièces d’un coup pour les vendre — avec une confirmation si un légendaire traîne dans le lot.",
+        "e6": "Le butin de campagne suit enfin ta progression : les communes dominent aux premiers étages puis s’éteignent complètement en fin de campagne, pendant que les hautes raretés montent. Un premier passage garantit une pièce sur presque tous les étages, et les boss gardent une longueur d’avance."
+      }
     }
   }
 }
