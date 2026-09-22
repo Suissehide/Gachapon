@@ -88,7 +88,10 @@ function Section({
   )
 }
 
-function Pill({ children }: { children: ReactNode }) {
+// `children` optionnel : <Trans> passe certaines instances sans enfants au
+// JSX statique (`components={{ brilliantPill: <Pill /> }}`) — c'est <Trans>
+// qui injecte le contenu traduit à l'exécution, TypeScript ne le voit pas.
+function Pill({ children }: { children?: ReactNode }) {
   return (
     <span className="inline-block text-xs font-mono font-semibold px-2 py-0.5 rounded bg-muted border border-border/50 text-foreground/70">
       {children}
