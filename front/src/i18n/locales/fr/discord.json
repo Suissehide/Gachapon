@@ -1,0 +1,93 @@
+{
+  "copyButton": {
+    "copy": "Copier",
+    "copied": "Copié ✓"
+  },
+  "header": {
+    "eyebrow": "Intégrations",
+    "title": "Bot Discord",
+    "description": "Connecte ton serveur Discord à Gachapon via l'API publique. Tes membres pourront tirer des capsules, consulter leur collection et suivre le classement — sans quitter Discord.",
+    "apiReferenceLink": "Référence API →"
+  },
+  "steps": {
+    "step1": {
+      "title": "Créer l'application Discord",
+      "item1": "1. Ouvre le",
+      "item2Before": "2. Clique sur",
+      "item2After": ", donne un nom à ton bot",
+      "item3Before": "3. Dans l'onglet",
+      "item3Middle": ", clique",
+      "item3After": "et note le token",
+      "item4Before": "4. Active",
+      "item4And": "et",
+      "item5Before": "5. Dans",
+      "item5Middle": ", coche",
+      "item5Plus": "+",
+      "item5After": ", puis invite le bot sur ton serveur"
+    },
+    "step2": {
+      "title": "Générer ta clé API Gachapon",
+      "textBefore": "Connecte-toi à Gachapon, va dans",
+      "settingsLink": "Paramètres → Clés API",
+      "textMiddle": "et génère une nouvelle clé. Elle sera passée dans le header",
+      "textAfter": "de chaque requête.",
+      "warning": "⚠ Stocke ta clé dans une variable d'environnement, jamais en clair dans le code."
+    },
+    "step3": {
+      "title": "Initialiser le projet",
+      "envFileIntro": "Crée un fichier",
+      "envFileColon": ":"
+    },
+    "step4": {
+      "title": "Enregistrer les commandes slash",
+      "textBefore": "Crée",
+      "textAfter": "pour déclarer les commandes auprès de Discord :"
+    },
+    "step5": {
+      "title": "Commande /pull",
+      "textBefore": "La commande principale : elle appelle",
+      "textAfter": "et affiche le résultat."
+    },
+    "step6": {
+      "title": "Commandes /collection et /classement"
+    },
+    "step7": {
+      "title": "Assembler le bot"
+    },
+    "step8": {
+      "title": "Aller plus loin",
+      "intro1": "L'API expose bien plus que le trio pull / collection / classement. Voici les endpoints les plus utiles pour enrichir ton bot. Les endpoints",
+      "publicLabel": "publics",
+      "intro2": " ne demandent aucune clé ; les autres passent par le header",
+      "period": ".",
+      "example1Before": "Exemple —",
+      "example1Via": "via",
+      "example1After": ":",
+      "example2Before": "Exemple —",
+      "example2Command": "/taux",
+      "example2ViaEndpoint": "via l'endpoint",
+      "example2Requirement": "(aucune clé requise) :",
+      "tipBefore": "💡 Pense à déclarer chaque nouvelle commande dans",
+      "tipMiddle": "(Étape 4) et à router son interaction dans",
+      "tipAfter": "(Étape 7)."
+    }
+  },
+  "endpoints": {
+    "pullsBatch": {
+      "before": "Tire de 1 à 10 capsules d'un coup —",
+      "middle": ", renvoie",
+      "after": "."
+    },
+    "tokensBalance": "Solde de jetons, date du prochain jeton et pitié courante.",
+    "streakSummary": "Série quotidienne, meilleur streak et paliers de récompense.",
+    "pullsRecent": "Feed des derniers tirages (nom, rareté, variante, joueur).",
+    "pullsHistory": "Historique paginé des tirages du compte.",
+    "stats": "Statistiques globales : joueurs, tirages, cartes, tirages du jour…",
+    "pullsRates": "Taux de drop de base par rareté.",
+    "economyConfig": "Toute la config d'économie : coûts, pitié, taux de variantes, XP."
+  },
+  "footerCta": {
+    "title": "Endpoints disponibles",
+    "description": "Consulte la documentation interactive pour voir tous les endpoints et leurs paramètres."
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "copyButton": {
+    "copy": "Copy",
+    "copied": "Copied ✓"
+  },
+  "header": {
+    "eyebrow": "Integrations",
+    "title": "Discord Bot",
+    "description": "Connect your Discord server to Gachapon through the public API. Your members can pull capsules, check their collection, and follow the leaderboard — without leaving Discord.",
+    "apiReferenceLink": "API Reference →"
+  },
+  "steps": {
+    "step1": {
+      "title": "Create the Discord application",
+      "item1": "1. Open the",
+      "item2Before": "2. Click",
+      "item2After": ", give your bot a name",
+      "item3Before": "3. In the",
+      "item3Middle": " tab, click",
+      "item3After": "and note the token",
+      "item4Before": "4. Enable",
+      "item4And": "and",
+      "item5Before": "5. In",
+      "item5Middle": ", check",
+      "item5Plus": "+",
+      "item5After": ", then invite the bot to your server"
+    },
+    "step2": {
+      "title": "Generate your Gachapon API key",
+      "textBefore": "Log in to Gachapon, go to",
+      "settingsLink": "Settings → API Keys",
+      "textMiddle": "and generate a new key. It will be sent in the",
+      "textAfter": "header of every request.",
+      "warning": "⚠ Store your key in an environment variable, never hard-coded in your source."
+    },
+    "step3": {
+      "title": "Set up the project",
+      "envFileIntro": "Create a",
+      "envFileColon": "file:"
+    },
+    "step4": {
+      "title": "Register the slash commands",
+      "textBefore": "Create",
+      "textAfter": "to declare the commands with Discord:"
+    },
+    "step5": {
+      "title": "The /pull command",
+      "textBefore": "The main command: it calls",
+      "textAfter": "and displays the result."
+    },
+    "step6": {
+      "title": "The /collection and /classement commands"
+    },
+    "step7": {
+      "title": "Assemble the bot"
+    },
+    "step8": {
+      "title": "Going further",
+      "intro1": "The API exposes much more than the pull / collection / classement trio. Here are the most useful endpoints to enrich your bot. Endpoints marked",
+      "publicLabel": "public",
+      "intro2": " require no key; the others go through the",
+      "period": ".",
+      "example1Before": "Example —",
+      "example1Via": "via",
+      "example1After": ":",
+      "example2Before": "Example —",
+      "example2Command": "/rates",
+      "example2ViaEndpoint": "via the",
+      "example2Requirement": "(no key required):",
+      "tipBefore": "💡 Remember to declare every new command in",
+      "tipMiddle": "(Step 4) and route its interaction in",
+      "tipAfter": "(Step 7)."
+    }
+  },
+  "endpoints": {
+    "pullsBatch": {
+      "before": "Pull 1 to 10 capsules at once —",
+      "middle": ", returns",
+      "after": "."
+    },
+    "tokensBalance": "Token balance, next token date, and current pity.",
+    "streakSummary": "Daily streak, best streak, and reward milestones.",
+    "pullsRecent": "Feed of recent pulls (name, rarity, variant, player).",
+    "pullsHistory": "Paginated pull history for the account.",
+    "stats": "Global stats: players, pulls, cards, pulls today…",
+    "pullsRates": "Base drop rates by rarity.",
+    "economyConfig": "The full economy config: costs, pity, variant rates, XP."
+  },
+  "footerCta": {
+    "title": "Available endpoints",
+    "description": "Check the interactive documentation to see every endpoint and its parameters."
+  }
+}

@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
 import { SeoHead } from '../components/shared/SeoHead.tsx'
@@ -17,6 +18,7 @@ function CodeBlock({
   code: string
   language?: string
 }) {
+  const { t } = useTranslation('discord')
   const [copied, setCopied] = useState(false)
 
   const copy = async () => {
@@ -34,7 +36,7 @@ function CodeBlock({
           onClick={() => void copy()}
           className="text-xs text-text-light/60 hover:text-foreground transition-colors px-2 py-0.5 rounded hover:bg-muted"
         >
-          {copied ? 'Copié ✓' : 'Copier'}
+          {copied ? t('copyButton.copied') : t('copyButton.copy')}
         </button>
       </div>
       <pre className="p-4 overflow-x-auto text-sm font-mono text-foreground/90 leading-relaxed">
@@ -103,6 +105,7 @@ function EndpointRef({
 }
 
 function DiscordIntegrationPage() {
+  const { t } = useTranslation('discord')
   const baseUrl = apiUrl ?? 'https://api.gachapon.app'
 
   return (
@@ -114,15 +117,13 @@ function DiscordIntegrationPage() {
         {/* Header */}
         <div className="mb-12">
           <p className="text-[11px] font-semibold text-text-light/50 uppercase tracking-[0.2em] mb-4">
-            Intégrations
+            {t('header.eyebrow')}
           </p>
           <h1 className="text-5xl font-black tracking-tight mb-4">
-            Bot Discord
+            {t('header.title')}
           </h1>
           <p className="text-base text-text-light leading-relaxed max-w-xl">
-            Connecte ton serveur Discord à Gachapon via l'API publique. Tes
-            membres pourront tirer des capsules, consulter leur collection et
-            suivre le classement — sans quitter Discord.
+            {t('header.description')}
           </p>
           <div className="flex items-center gap-3 mt-6">
             <span className="text-xs font-mono px-2 py-1 rounded-md bg-muted border border-border/50 text-text-light">
@@ -135,17 +136,17 @@ function DiscordIntegrationPage() {
               to="/api-docs"
               className="text-xs font-mono px-2 py-1 rounded-md bg-primary/10 border border-primary/20 text-primary hover:bg-primary/15 transition-colors"
             >
-              Référence API →
+              {t('header.apiReferenceLink')}
             </Link>
           </div>
         </div>
 
         {/* Steps */}
         <div>
-          <Step n={1} title="Créer l'application Discord">
+          <Step n={1} title={t('steps.step1.title')}>
             <ol className="space-y-2 text-sm text-text-light">
               <li>
-                1. Ouvre le{' '}
+                {t('steps.step1.item1')}{' '}
                 <a
                   href="https://discord.com/developers/applications"
                   target="_blank"
@@ -156,66 +157,66 @@ function DiscordIntegrationPage() {
                 </a>
               </li>
               <li>
-                2. Clique sur{' '}
-                <strong className="text-foreground">New Application</strong>,
-                donne un nom à ton bot
+                {t('steps.step1.item2Before')}{' '}
+                <strong className="text-foreground">New Application</strong>
+                {t('steps.step1.item2After')}
               </li>
               <li>
-                3. Dans l'onglet{' '}
-                <strong className="text-foreground">Bot</strong>, clique{' '}
-                <strong className="text-foreground">Reset Token</strong> et note
-                le token
+                {t('steps.step1.item3Before')}{' '}
+                <strong className="text-foreground">Bot</strong>
+                {t('steps.step1.item3Middle')}{' '}
+                <strong className="text-foreground">Reset Token</strong>{' '}
+                {t('steps.step1.item3After')}
               </li>
               <li>
-                4. Active{' '}
+                {t('steps.step1.item4Before')}{' '}
                 <strong className="text-foreground">
                   Server Members Intent
                 </strong>{' '}
-                et{' '}
+                {t('steps.step1.item4And')}{' '}
                 <strong className="text-foreground">
                   Message Content Intent
                 </strong>
               </li>
               <li>
-                5. Dans{' '}
+                {t('steps.step1.item5Before')}{' '}
                 <strong className="text-foreground">
                   OAuth2 → URL Generator
                 </strong>
-                , coche{' '}
+                {t('steps.step1.item5Middle')}{' '}
                 <code className="text-xs bg-muted px-1 py-0.5 rounded">
                   bot
                 </code>{' '}
-                +{' '}
+                {t('steps.step1.item5Plus')}{' '}
                 <code className="text-xs bg-muted px-1 py-0.5 rounded">
                   applications.commands
                 </code>
-                , puis invite le bot sur ton serveur
+                {t('steps.step1.item5After')}
               </li>
             </ol>
           </Step>
 
-          <Step n={2} title="Générer ta clé API Gachapon">
+          <Step n={2} title={t('steps.step2.title')}>
             <p className="text-sm text-text-light mb-3">
-              Connecte-toi à Gachapon, va dans{' '}
+              {t('steps.step2.textBefore')}{' '}
               <Link
                 to="/settings"
                 className="text-primary underline underline-offset-2"
               >
-                Paramètres → Clés API
+                {t('steps.step2.settingsLink')}
               </Link>{' '}
-              et génère une nouvelle clé. Elle sera passée dans le header{' '}
+              {t('steps.step2.textMiddle')}{' '}
               <code className="text-xs bg-muted px-1 py-0.5 rounded">
                 X-API-Key
               </code>{' '}
-              de chaque requête.
+              {t('steps.step2.textAfter')}
             </p>
             <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs text-amber-600">
-              ⚠ Stocke ta clé dans une variable d'environnement, jamais en clair
-              dans le code.
+              {t('steps.step2.warning')}
             </div>
           </Step>
 
-          <Step n={3} title="Initialiser le projet">
+          <Step n={3} title={t('steps.step3.title')}>
             <CodeBlock
               language="bash"
               code={`mkdir gachapon-bot && cd gachapon-bot
@@ -223,9 +224,9 @@ npm init -y
 npm install discord.js dotenv`}
             />
             <p className="text-sm text-text-light mb-2">
-              Crée un fichier{' '}
+              {t('steps.step3.envFileIntro')}{' '}
               <code className="text-xs bg-muted px-1 py-0.5 rounded">.env</code>{' '}
-              :
+              {t('steps.step3.envFileColon')}
             </p>
             <CodeBlock
               language=".env"
@@ -236,13 +237,13 @@ GACHAPON_API_URL=${baseUrl}`}
             />
           </Step>
 
-          <Step n={4} title="Enregistrer les commandes slash">
+          <Step n={4} title={t('steps.step4.title')}>
             <p className="text-sm text-text-light mb-2">
-              Crée{' '}
+              {t('steps.step4.textBefore')}{' '}
               <code className="text-xs bg-muted px-1 py-0.5 rounded">
                 deploy-commands.js
               </code>{' '}
-              pour déclarer les commandes auprès de Discord :
+              {t('steps.step4.textAfter')}
             </p>
             <CodeBlock
               language="javascript"
@@ -273,13 +274,13 @@ console.log('Commandes enregistrées ✓')`}
             <CodeBlock language="bash" code="node deploy-commands.js" />
           </Step>
 
-          <Step n={5} title="Commande /pull">
+          <Step n={5} title={t('steps.step5.title')}>
             <p className="text-sm text-text-light mb-2">
-              La commande principale : elle appelle{' '}
+              {t('steps.step5.textBefore')}{' '}
               <code className="text-xs bg-muted px-1 py-0.5 rounded">
                 POST /pulls
               </code>{' '}
-              et affiche le résultat.
+              {t('steps.step5.textAfter')}
             </p>
             <CodeBlock
               language="javascript"
@@ -331,7 +332,7 @@ export async function handlePull(interaction) {
             />
           </Step>
 
-          <Step n={6} title="Commandes /collection et /classement">
+          <Step n={6} title={t('steps.step6.title')}>
             <CodeBlock
               language="javascript"
               code={`// handlers/collection.js
@@ -391,7 +392,7 @@ export async function handleLeaderboard(interaction) {
             />
           </Step>
 
-          <Step n={7} title="Assembler le bot">
+          <Step n={7} title={t('steps.step7.title')}>
             <CodeBlock
               language="javascript"
               code={`// index.js
@@ -420,66 +421,64 @@ client.login(process.env.DISCORD_TOKEN)`}
             <CodeBlock language="bash" code="node index.js" />
           </Step>
 
-          <Step n={8} title="Aller plus loin">
+          <Step n={8} title={t('steps.step8.title')}>
             <p className="text-sm text-text-light mb-4">
-              L'API expose bien plus que le trio pull / collection / classement.
-              Voici les endpoints les plus utiles pour enrichir ton bot. Les
-              endpoints{' '}
-              <span className="text-green-600 font-semibold">publics</span> ne
-              demandent aucune clé ; les autres passent par le header{' '}
+              {t('steps.step8.intro1')}{' '}
+              <span className="text-green-600 font-semibold">
+                {t('steps.step8.publicLabel')}
+              </span>
+              {t('steps.step8.intro2')}{' '}
               <code className="text-xs bg-muted px-1 py-0.5 rounded">
                 X-API-Key
               </code>
-              .
+              {t('steps.step8.period')}
             </p>
 
             <div className="rounded-xl border border-border/50 bg-card px-4 my-4">
               <EndpointRef method="post" path="/pulls/batch" auth="key">
-                Tire de 1 à 10 capsules d'un coup —{' '}
+                {t('endpoints.pullsBatch.before')}{' '}
                 <code className="text-[11px] bg-muted px-1 rounded">
                   {'{ count: 1-10 }'}
                 </code>
-                , renvoie{' '}
+                {t('endpoints.pullsBatch.middle')}{' '}
                 <code className="text-[11px] bg-muted px-1 rounded">
                   {'{ pulls, tokensRemaining, xpGained }'}
                 </code>
-                .
+                {t('endpoints.pullsBatch.after')}
               </EndpointRef>
               <EndpointRef method="get" path="/tokens/balance" auth="key">
-                Solde de jetons, date du prochain jeton et pitié courante.
+                {t('endpoints.tokensBalance')}
               </EndpointRef>
               <EndpointRef method="get" path="/streak/summary" auth="key">
-                Série quotidienne, meilleur streak et paliers de récompense.
+                {t('endpoints.streakSummary')}
               </EndpointRef>
               <EndpointRef method="get" path="/pulls/recent" auth="key">
-                Feed des derniers tirages (nom, rareté, variante, joueur).
+                {t('endpoints.pullsRecent')}
               </EndpointRef>
               <EndpointRef method="get" path="/pulls/history" auth="key">
-                Historique paginé des tirages du compte.
+                {t('endpoints.pullsHistory')}
               </EndpointRef>
               <EndpointRef method="get" path="/stats" auth="public">
-                Statistiques globales : joueurs, tirages, cartes, tirages du
-                jour…
+                {t('endpoints.stats')}
               </EndpointRef>
               <EndpointRef method="get" path="/pulls/rates" auth="public">
-                Taux de drop de base par rareté.
+                {t('endpoints.pullsRates')}
               </EndpointRef>
               <EndpointRef method="get" path="/economy/config" auth="public">
-                Toute la config d'économie : coûts, pitié, taux de variantes,
-                XP.
+                {t('endpoints.economyConfig')}
               </EndpointRef>
             </div>
 
             <p className="text-sm text-text-light mt-6 mb-2">
-              Exemple —{' '}
+              {t('steps.step8.example1Before')}{' '}
               <code className="text-xs bg-muted px-1 py-0.5 rounded">
                 /pull10
               </code>{' '}
-              via{' '}
+              {t('steps.step8.example1Via')}{' '}
               <code className="text-xs bg-muted px-1 py-0.5 rounded">
                 POST /pulls/batch
               </code>{' '}
-              :
+              {t('steps.step8.example1After')}
             </p>
             <CodeBlock
               language="javascript"
@@ -520,15 +519,16 @@ export async function handlePull10(interaction) {
             />
 
             <p className="text-sm text-text-light mt-6 mb-2">
-              Exemple —{' '}
+              {t('steps.step8.example2Before')}{' '}
               <code className="text-xs bg-muted px-1 py-0.5 rounded">
-                /taux
+                {t('steps.step8.example2Command')}
               </code>{' '}
-              via l'endpoint <strong className="text-foreground">public</strong>{' '}
+              {t('steps.step8.example2ViaEndpoint')}{' '}
+              <strong className="text-foreground">public</strong>{' '}
               <code className="text-xs bg-muted px-1 py-0.5 rounded">
                 GET /pulls/rates
               </code>{' '}
-              (aucune clé requise) :
+              {t('steps.step8.example2Requirement')}
             </p>
             <CodeBlock
               language="javascript"
@@ -551,15 +551,15 @@ export async function handleRates(interaction) {
             />
 
             <div className="rounded-lg border border-border/50 bg-muted/30 px-4 py-3 text-xs text-text-light mt-4">
-              💡 Pense à déclarer chaque nouvelle commande dans{' '}
+              {t('steps.step8.tipBefore')}{' '}
               <code className="text-[11px] bg-muted px-1 py-0.5 rounded">
                 deploy-commands.js
               </code>{' '}
-              (Étape 4) et à router son interaction dans{' '}
+              {t('steps.step8.tipMiddle')}{' '}
               <code className="text-[11px] bg-muted px-1 py-0.5 rounded">
                 index.js
               </code>{' '}
-              (Étape 7).
+              {t('steps.step8.tipAfter')}
             </div>
           </Step>
         </div>
@@ -568,18 +568,17 @@ export async function handleRates(interaction) {
         <div className="mt-12 rounded-xl border border-primary/20 bg-primary/5 p-6 flex items-center justify-between gap-4 flex-wrap">
           <div>
             <p className="text-sm font-semibold text-foreground mb-1">
-              Endpoints disponibles
+              {t('footerCta.title')}
             </p>
             <p className="text-xs text-text-light">
-              Consulte la documentation interactive pour voir tous les endpoints
-              et leurs paramètres.
+              {t('footerCta.description')}
             </p>
           </div>
           <Link
             to="/api-docs"
             className="shrink-0 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white hover:bg-primary/90 transition-colors"
           >
-            Référence API →
+            {t('header.apiReferenceLink')}
           </Link>
         </div>
       </div>
