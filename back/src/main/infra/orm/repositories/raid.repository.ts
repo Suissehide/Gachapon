@@ -54,8 +54,12 @@ export class RaidRepository implements IRaidRepository {
    * À n'appeler QUE hors transaction. Une création de `Reward` dans la
    * transaction Serializable de l'attaque produirait un `P2002` quand deux
    * coéquipiers attaquent en même temps, et `retryOnSerialization` ne
-   * rattrape que `P2034`. Ici, `skipDuplicates` absorbe la course — au prix
-   * d'une ligne `Reward` orpheline pour le perdant, sans conséquence.
+   * rattrape que `P2034`. Ici, `skipDuplicates` absorbe la course — la
+   * collision oppose deux ÉQUIPES atteignant le niveau N pour la première
+   * fois en même temps (les lignes sont partagées par toutes les équipes,
+   * pas propres à un raid), et coûte jusqu'à 4 lignes `Reward` orphelines
+   * par équipe perdante, sans conséquence : `missing.length === 0`
+   * court-circuite tous les appels suivants sur ce niveau.
    */
   async ensureTiersForLevel(
     level: number,
