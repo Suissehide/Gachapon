@@ -3,5 +3,27 @@
     "operations": {
       "loadPublicStats": "Error loading the statistics"
     }
+  },
+  "page": {
+    "eyebrow": "Platform",
+    "title": "By the numbers",
+    "description": "Thousands of players, millions of capsules, legendary cards changing hands every day.",
+    "cards": {
+      "registeredUsers": "Registered players",
+      "openedCapsules": "Capsules opened",
+      "activeUsersThisWeek": "Active players this week",
+      "availableCards": "Available cards",
+      "legendaryPullsObtained": "Legendary cards pulled",
+      "capsulesOpenedToday": "Capsules opened today",
+      "totalDustAccumulated": "Total dust accumulated",
+      "availableSets": "Available sets",
+      "existingLegendaryCards": "Existing legendary cards"
+    },
+    "cta": {
+      "eyebrow": "Join the adventure",
+      "title": "Your next legendary is waiting",
+      "description": "Build your collection, level up, and take on the best players.",
+      "button": "Start for free →"
+    }
   }
 }

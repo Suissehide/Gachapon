@@ -10,6 +10,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { type ComponentType, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { PublicStats } from '../api/stats.api.ts'
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
@@ -111,6 +112,7 @@ function StatCard({
 }
 
 function StatsPage() {
+  const { t } = useTranslation('stats')
   const { openRegister } = useAuthDialogStore()
   const { data: stats } = usePublicStats()
 
@@ -125,14 +127,13 @@ function StatsPage() {
         {/* Header */}
         <div className="mb-16">
           <p className="text-[11px] font-semibold text-text-light/50 uppercase tracking-[0.2em] mb-4">
-            Plateforme
+            {t('page.eyebrow')}
           </p>
           <h1 className="text-5xl font-black tracking-tight mb-4">
-            En chiffres
+            {t('page.title')}
           </h1>
           <p className="text-base text-text-light leading-relaxed max-w-lg">
-            Des milliers de joueurs, des millions de capsules, des cartes
-            légendaires qui changent de mains chaque jour.
+            {t('page.description')}
           </p>
         </div>
 
@@ -140,7 +141,7 @@ function StatsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-16">
           <StatCard
             icon={Users}
-            label="Joueurs inscrits"
+            label={t('page.cards.registeredUsers')}
             value={s.totalUsers}
             bgColor="bg-primary/10"
             iconColor="text-primary"
@@ -148,7 +149,7 @@ function StatsPage() {
           />
           <StatCard
             icon={Zap}
-            label="Capsules ouvertes"
+            label={t('page.cards.openedCapsules')}
             value={s.totalPulls}
             bgColor="bg-secondary/10"
             iconColor="text-secondary"
@@ -156,7 +157,7 @@ function StatsPage() {
           />
           <StatCard
             icon={Sparkles}
-            label="Joueurs actifs cette semaine"
+            label={t('page.cards.activeUsersThisWeek')}
             value={s.activeUsers}
             bgColor="bg-accent/10"
             iconColor="text-accent"
@@ -164,7 +165,7 @@ function StatsPage() {
           />
           <StatCard
             icon={Star}
-            label="Cartes disponibles"
+            label={t('page.cards.availableCards')}
             value={s.totalCards}
             bgColor="bg-primary/10"
             iconColor="text-primary"
@@ -172,7 +173,7 @@ function StatsPage() {
           />
           <StatCard
             icon={Trophy}
-            label="Cartes légendaires obtenues"
+            label={t('page.cards.legendaryPullsObtained')}
             value={s.legendaryPulls}
             bgColor="bg-amber-500/10"
             iconColor="text-amber-500"
@@ -180,7 +181,7 @@ function StatsPage() {
           />
           <StatCard
             icon={CalendarClock}
-            label="Capsules ouvertes aujourd'hui"
+            label={t('page.cards.capsulesOpenedToday')}
             value={s.pullsToday}
             bgColor="bg-secondary/10"
             iconColor="text-secondary"
@@ -188,7 +189,7 @@ function StatsPage() {
           />
           <StatCard
             icon={Sparkles}
-            label="Poussière totale accumulée"
+            label={t('page.cards.totalDustAccumulated')}
             value={s.totalDust}
             bgColor="bg-accent/10"
             iconColor="text-accent"
@@ -196,7 +197,7 @@ function StatsPage() {
           />
           <StatCard
             icon={Layers}
-            label="Sets disponibles"
+            label={t('page.cards.availableSets')}
             value={s.setsCount}
             bgColor="bg-primary/10"
             iconColor="text-primary"
@@ -204,7 +205,7 @@ function StatsPage() {
           />
           <StatCard
             icon={Crown}
-            label="Cartes légendaires existantes"
+            label={t('page.cards.existingLegendaryCards')}
             value={s.legendaryCardsCount}
             bgColor="bg-amber-500/10"
             iconColor="text-amber-500"
@@ -215,21 +216,20 @@ function StatsPage() {
         {/* CTA */}
         <div className="rounded-2xl border border-primary/20 bg-linear-to-br from-primary/5 to-secondary/5 p-10 text-center">
           <p className="text-xs font-semibold text-primary/60 uppercase tracking-widest mb-3">
-            Rejoins l'aventure
+            {t('page.cta.eyebrow')}
           </p>
           <h2 className="text-3xl font-black tracking-tight mb-3">
-            Ta prochaine légendaire t'attend
+            {t('page.cta.title')}
           </h2>
           <p className="text-text-light text-sm mb-8 max-w-sm mx-auto">
-            Construis ta collection, monte en niveau et affronte les meilleurs
-            joueurs.
+            {t('page.cta.description')}
           </p>
           <button
             type="button"
             onClick={openRegister}
             className="inline-flex items-center gap-2 rounded-full bg-primary px-8 py-3 text-sm font-semibold text-white hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
           >
-            Commencer gratuitement →
+            {t('page.cta.button')}
           </button>
         </div>
       </main>

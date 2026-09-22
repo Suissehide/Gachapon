@@ -3,5 +3,27 @@
     "operations": {
       "loadPublicStats": "Erreur lors de la récupération des statistiques"
     }
+  },
+  "page": {
+    "eyebrow": "Plateforme",
+    "title": "En chiffres",
+    "description": "Des milliers de joueurs, des millions de capsules, des cartes légendaires qui changent de mains chaque jour.",
+    "cards": {
+      "registeredUsers": "Joueurs inscrits",
+      "openedCapsules": "Capsules ouvertes",
+      "activeUsersThisWeek": "Joueurs actifs cette semaine",
+      "availableCards": "Cartes disponibles",
+      "legendaryPullsObtained": "Cartes légendaires obtenues",
+      "capsulesOpenedToday": "Capsules ouvertes aujourd'hui",
+      "totalDustAccumulated": "Poussière totale accumulée",
+      "availableSets": "Sets disponibles",
+      "existingLegendaryCards": "Cartes légendaires existantes"
+    },
+    "cta": {
+      "eyebrow": "Rejoins l'aventure",
+      "title": "Ta prochaine légendaire t'attend",
+      "description": "Construis ta collection, monte en niveau et affronte les meilleurs joueurs.",
+      "button": "Commencer gratuitement →"
+    }
   }
 }
