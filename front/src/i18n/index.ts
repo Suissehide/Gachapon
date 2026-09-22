@@ -1,15 +1,18 @@
 import i18next from 'i18next'
 import { initReactI18next } from 'react-i18next'
 
+import aboutEn from './locales/en/about.json'
 import achievementsEn from './locales/en/achievements.json'
 import adminEn from './locales/en/admin.json'
 import authEn from './locales/en/auth.json'
 import collectionEn from './locales/en/collection.json'
 import combatEn from './locales/en/combat.json'
 import commonEn from './locales/en/common.json'
+import discordEn from './locales/en/discord.json'
 import equipmentEn from './locales/en/equipment.json'
 import errorsEn from './locales/en/errors.json'
 import gachaEn from './locales/en/gacha.json'
+import homeEn from './locales/en/home.json'
 import layoutEn from './locales/en/layout.json'
 import leaderboardEn from './locales/en/leaderboard.json'
 import notificationsEn from './locales/en/notifications.json'
@@ -25,15 +28,18 @@ import teamEn from './locales/en/team.json'
 import teamPerksEn from './locales/en/teamPerks.json'
 import wagersEn from './locales/en/wagers.json'
 import wishlistEn from './locales/en/wishlist.json'
+import aboutFr from './locales/fr/about.json'
 import achievementsFr from './locales/fr/achievements.json'
 import adminFr from './locales/fr/admin.json'
 import authFr from './locales/fr/auth.json'
 import collectionFr from './locales/fr/collection.json'
 import combatFr from './locales/fr/combat.json'
 import commonFr from './locales/fr/common.json'
+import discordFr from './locales/fr/discord.json'
 import equipmentFr from './locales/fr/equipment.json'
 import errorsFr from './locales/fr/errors.json'
 import gachaFr from './locales/fr/gacha.json'
+import homeFr from './locales/fr/home.json'
 import layoutFr from './locales/fr/layout.json'
 import leaderboardFr from './locales/fr/leaderboard.json'
 import notificationsFr from './locales/fr/notifications.json'
@@ -153,6 +159,8 @@ export function withAcceptLanguage(init?: HeadersInit): Headers {
 void i18next.use(initReactI18next).init({
   resources: {
     fr: {
+      about: aboutFr,
+      discord: discordFr,
       common: commonFr,
       errors: errorsFr,
       notifications: notificationsFr,
@@ -177,8 +185,11 @@ void i18next.use(initReactI18next).init({
       gacha: gachaFr,
       quests: questsFr,
       leaderboard: leaderboardFr,
+      home: homeFr,
     },
     en: {
+      about: aboutEn,
+      discord: discordEn,
       common: commonEn,
       errors: errorsEn,
       notifications: notificationsEn,
@@ -203,11 +214,14 @@ void i18next.use(initReactI18next).init({
       gacha: gachaEn,
       quests: questsEn,
       leaderboard: leaderboardEn,
+      home: homeEn,
     },
   },
   lng: localeFromPath(window.location.pathname),
   defaultNS: 'common',
   ns: [
+    'about',
+    'discord',
     'common',
     'errors',
     'notifications',
@@ -232,6 +246,7 @@ void i18next.use(initReactI18next).init({
     'gacha',
     'quests',
     'leaderboard',
+    'home',
   ],
   interpolation: {
     // React échappe déjà le rendu — un double échappement casserait les
