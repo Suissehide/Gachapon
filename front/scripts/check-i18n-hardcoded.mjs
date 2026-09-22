@@ -53,6 +53,7 @@ const ACCENT_RE = /[àâäéèêëïîôöùûüÿçœæÀÂÄÉÈÊËÏÎÔÖÙ
  * Recherchés comme mots entiers uniquement — voir buildWordRegex.
  */
 const FRENCH_WORDS = [
+  // --- particules et déterminants (liste d'origine, tâche 2) ---
   'vous', // pronom, très fréquent dans la copie UI ("vous avez obtenu…")
   'votre', // idem, déterminant possessif
   'vos',
@@ -87,7 +88,142 @@ const FRENCH_WORDS = [
   'est', // verbe être, 3e pers. — risque connu : "EST" (fuseau horaire),
   // pas rencontré dans ce dépôt à ce jour ; à surveiller si un jour du
   // code touche des fuseaux horaires US.
+
+  // --- vocabulaire des MESSAGES D'ERREUR (tâche 6, round 1) ---
+  // Le trou que cette famille comble : « Erreur lors de … » est le motif le
+  // plus fréquent du dépôt (c'est la forme des 153 messages de repli de
+  // `src/api/`), et AUCUN de ses mots n'était couvert. « Erreur lors du
+  // chargement de la campagne » ne porte pas un seul accent et pas un seul
+  // mot de la liste d'origine : le garde-fou était aveugle à sa cible la
+  // plus courante. Constaté pour de bon : `queries/useGacha.ts` et
+  // `queries/useAdminMedia.ts` gardaient du français non extrait que le
+  // scan déclarait propre.
+  'erreur', // EN: error
+  'lors', // aucun équivalent EN
+  'chargement', // EN: loading
+  'suppression', // EN: deletion
+  'enregistrement', // EN: saving
+  'echec', // EN: failure — « échec » est déjà pris par l'accent ; la forme
+  // sans accent garde le filet en cas de coquille
+  'ajout', // EN: addition
+  'envoi', // EN: sending
+  'changement', // EN: change
+
+  // --- noms et verbes d'interface fréquents (tâche 6, round 1) ---
+  'retour', // EN: back
+  'connexion', // EN: connection (orthographe différente)
+  'niveau', // EN: level
+  'joueur',
+  'joueurs',
+  'carte',
+  'cartes',
+  'jour',
+  'jours',
+  'autre',
+  'autres',
+  'depuis',
+  'voir',
+  'utilisateur',
+  'utilisateurs',
+  'administrateur',
+  'invalide', // EN: invalid (orthographe différente)
+  'invalides',
+  'identifiants',
+  'compte',
+  'comptes',
+  'existant',
+  'trop',
+  'tentatives',
+  'avant',
+  'connecter',
+  'campagne', // EN: campaign (orthographe différente)
+  'tirage',
+  'tirages',
+  'variantes',
+  'ajouter',
+  'supprimer',
+  'modifier',
+  'afficher',
+  'enregistrer',
+  'envoyer',
+  'annuler',
+  'valider',
+  'confirmer',
+  'continuer',
+  'commencer',
+  'fermer',
+  'choisir',
+  'essaie',
+  'essayer',
+  'attends',
+  'actuel',
+  'actuelle',
+  'prochain',
+  'prochaine',
+  'dernier',
+  'suivant',
+  'suivante',
+  'disponible',
+  'disponibles',
+  'manquant',
+  'pleine',
+
+  // --- mots COURTS (tâche 6, round 1) ---
+  // Deux seulement ont survécu, et pas au flair : chacun a été mesuré deux
+  // fois. (1) faux positifs — on relance le scan complet et on lit les
+  // lignes NOUVELLEMENT signalées ; (2) gain réel — on retire le mot de la
+  // liste et on compte ce qu'on perd sur les 561 chaînes françaises déjà
+  // extraites dans `locales/fr/`. Un mot qui ne fait perdre personne ne
+  // sert à rien, quel que soit son air français.
+  'du', // gain 39 chaînes sur 561 — de loin le plus rentable de la liste ;
+  // 23 lignes nouvelles au scan, toutes du français réel
+  'ou', // gain 1 ; 7 lignes nouvelles, toutes du français réel
 ]
+
+/**
+ * Mots COURTS essayés et REJETÉS, avec le contre-exemple qui les disqualifie.
+ * Ne pas les réintroduire sans traiter le cas cité.
+ *
+ *   'en'  → 62 lignes, dont de vrais faux positifs : `missingLocale: 'FR' | 'EN'`
+ *           (api/admin-translations.api.ts), `id="branch-name-en"`,
+ *           `{ fr: 'FR', en: 'EN' }`. « en » est le CODE de la langue
+ *           anglaise : impossible à distinguer du mot français.
+ *   'on'  → 15 lignes, dont `wsClient.on((event) => …)` dans six fichiers :
+ *           c'est un nom de méthode JS. Et « on » est un mot anglais.
+ *   'aux' → FAUX POSITIF DÉMONTRÉ sur `'aux-input'` (comme « aux cable »,
+ *           « aux port ») : abréviation anglaise courante d'auxiliary, et
+ *           exactement la même forme que `sans-serif`. Gain mesuré : 0.
+ *   'si'  → FAUX POSITIF DÉMONTRÉ sur `'SI units'` (et Si, le silicium).
+ *           Gain mesuré : 0.
+ *   'ce'  → FAUX POSITIF DÉMONTRÉ sur `'CE marking'`. Gain mesuré : 1.
+ *   'au'  → symbole chimique de l'or. Gain mesuré : 1. Pas de contrepartie.
+ *   'ne', 'pas' → aucun faux positif trouvé, mais gain mesuré NUL : toute
+ *           chaîne qui les contient porte déjà un autre mot de la liste.
+ *           Du risque sans bénéfice.
+ *   'la', 'le', 'et', 'un' → écartés sur le critère (« un mot qui n'existe
+ *           pas en anglais, ou qui s'y écrit autrement ») : « LA »,
+ *           « et al. », « Le » dans un patronyme, « un- » en préfixe.
+ *           Mesuré quand même : 0 faux positif sur ce dépôt AUJOURD'HUI
+ *           (32 et 22 lignes nouvelles pour 'la' et 'et'). À rouvrir avec
+ *           cette mesure si le besoin revient, pas à l'aveugle.
+ *
+ * Mots écartés parce qu'ils s'écrivent PAREIL en anglais — les ajouter
+ * signalerait de l'anglais légitime : 'impossible', 'combat', 'modification',
+ * 'creation', 'boutique', 'nouveau', 'nouvelle', 'mise', 'charger' (a phone
+ * charger), 'vide' (vide supra), 'machines', 'notifications', 'admin',
+ * 'config', 'stats', 'raid', 'nature', 'rare'.
+ *
+ * LIMITE STRUCTURELLE, mesurée. Sur les 561 chaînes françaises réellement
+ * extraites dans `src/i18n/locales/fr/`, ce détecteur en reconnaît 431
+ * (76,8 %), contre 321 (57,2 %) avant ce round. Les 130 restantes sont
+ * presque toutes des LIBELLÉS D'UN SEUL MOT dont l'orthographe est la même
+ * dans les deux langues : « Rare », « Nature », « Admin », « Config »,
+ * « Stats », « Raid », « Machines », « Notifications », « Boutique »,
+ * « Dashboard ». Aucune liste de mots ne peut les distinguer de l'anglais.
+ * **Ce script attrape des phrases, pas des étiquettes** : un `OK` sur un
+ * répertoire ne prouve pas l'absence de français, il prouve l'absence de
+ * français *en phrases*. Relire les libellés courts à la main.
+ */
 
 function buildWordRegex() {
   const alternatives = FRENCH_WORDS.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))

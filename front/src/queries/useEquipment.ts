@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { EquipmentApi } from '../api/equipment.api'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useToast } from '../hooks/useToast.ts'
+import i18n from '../i18n/index.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 import {
   type ActiveSetSummary,
@@ -266,7 +267,7 @@ export function useSalvageItems() {
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la destruction',
+        title: i18n.t('equipment:toasts.destroyErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })

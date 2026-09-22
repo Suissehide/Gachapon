@@ -8,5 +8,8 @@
       "upgrade": "Error upgrading",
       "destroy": "Error destroying"
     }
+  },
+  "toasts": {
+    "destroyErrorTitle": "Error destroying"
   }
 }

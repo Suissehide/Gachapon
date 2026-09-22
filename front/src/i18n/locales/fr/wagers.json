@@ -26,5 +26,7 @@
       "getQuote": "Calcul de la cote",
       "placeBet": "Placement du pari"
     }
-  }
+  },
+  "pullsLeft_one": "{{count}} tirage restant",
+  "pullsLeft_other": "{{count}} tirages restants"
 }

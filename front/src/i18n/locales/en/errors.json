@@ -2,7 +2,8 @@
   "generic": {
     "defaultMessage": "An unknown error occurred",
     "fallbackMessage": "An unknown error occurred.",
-    "fallbackTitle": "Error"
+    "fallbackTitle": "Error",
+    "unknownTitle": "Unknown error"
   },
   "status": {
     "0": {

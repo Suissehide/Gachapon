@@ -20,5 +20,8 @@
       "loadMachines": "Error loading the machines",
       "loadDailyShop": "Error loading the daily shop"
     }
+  },
+  "toasts": {
+    "purchaseErrorTitle": "Error during the purchase"
   }
 }

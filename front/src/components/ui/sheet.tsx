@@ -3,6 +3,7 @@ import { X } from 'lucide-react'
 import { Dialog } from 'radix-ui'
 import React from 'react'
 
+import i18n from '../../i18n/index.ts'
 import { cn } from '../../libs/utils.ts'
 import { type ButtonProps, buttonVariants } from './button.tsx'
 
@@ -99,7 +100,7 @@ const SheetContent = React.forwardRef<
 
         <SheetClose className="absolute right-4 top-4 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-border/60 bg-muted/50 text-text-light opacity-80 transition-all hover:border-primary/40 hover:bg-primary/10 hover:text-primary hover:opacity-100 focus:outline-none">
           <X className="h-4 w-4" />
-          <span className="sr-only">Fermer</span>
+          <span className="sr-only">{i18n.t('common:a11y.close')}</span>
         </SheetClose>
       </Dialog.Content>
     </SheetPortal>

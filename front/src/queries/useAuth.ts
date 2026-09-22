@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query'
 import { AuthApi } from '../api/auth.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useToast } from '../hooks/useToast.ts'
+import i18n from '../i18n/index.ts'
 import type { LoginInput, RegisterInput } from '../types/auth.ts'
 
 // * QUERIES
@@ -23,7 +24,7 @@ export const useLogin = () => {
     },
     onError: (error) => {
       toast({
-        title: 'Erreur de connexion',
+        title: i18n.t('auth:toasts.loginErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -43,7 +44,7 @@ export const useRegister = () => {
     },
     onError: (error) => {
       toast({
-        title: "Erreur lors de l'inscription",
+        title: i18n.t('auth:toasts.registerErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })

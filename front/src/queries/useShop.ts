@@ -4,6 +4,7 @@ import { ShopApi } from '../api/shop.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
+import i18n from '../i18n/index.ts'
 import { isApiError } from '../libs/httpErrorHandler.ts'
 import { useAchievementUnlockStore } from '../stores/achievementUnlock.store.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
@@ -54,7 +55,7 @@ export const useBuyItem = () => {
       const title =
         isApiError(error) && error.title
           ? error.title
-          : "Erreur lors de l'achat"
+          : i18n.t('shop:toasts.purchaseErrorTitle')
       toast({
         title,
         message: error.message,

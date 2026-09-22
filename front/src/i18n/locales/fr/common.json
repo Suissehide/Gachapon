@@ -22,10 +22,22 @@
     "dark": "Ténèbres"
   },
   "currency": {
-    "tokens": { "singular": "jeton", "plural": "jetons" },
-    "dust": { "singular": "poussière", "plural": "poussière" },
-    "xp": { "singular": "XP", "plural": "XP" },
-    "gold": { "singular": "or", "plural": "or" }
+    "tokens": {
+      "singular": "jeton",
+      "plural": "jetons"
+    },
+    "dust": {
+      "singular": "poussière",
+      "plural": "poussière"
+    },
+    "xp": {
+      "singular": "XP",
+      "plural": "XP"
+    },
+    "gold": {
+      "singular": "or",
+      "plural": "or"
+    }
   },
   "multiSelect": {
     "searchPlaceholder": "Rechercher..."
@@ -57,5 +69,11 @@
   "variant": {
     "brilliant": "Brillante",
     "holographic": "Holographique"
+  },
+  "a11y": {
+    "close": "Fermer"
+  },
+  "form": {
+    "submitting": "Envoi..."
   }
 }

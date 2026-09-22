@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
+import i18n from '../i18n/index.ts'
 import { type ApiError, isApiError } from '../libs/httpErrorHandler.ts'
 import { useToast } from './useToast.ts'
 
@@ -18,7 +19,9 @@ export const useErrorNotification = (
       if (errorShownRef.current !== errorId) {
         errorShownRef.current = errorId
 
-        const title = isApiError(error) ? error.title : 'Erreur inconnue'
+        const title = isApiError(error)
+          ? error.title
+          : i18n.t('errors:generic.unknownTitle')
         const message = error.message
 
         toast({

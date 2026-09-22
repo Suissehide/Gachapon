@@ -7,5 +7,8 @@
       "loadFeed": "Erreur lors du chargement du fil",
       "loadDropRates": "Erreur lors du chargement des taux de drop"
     }
+  },
+  "toasts": {
+    "pullErrorTitle": "Erreur lors du tirage"
   }
 }

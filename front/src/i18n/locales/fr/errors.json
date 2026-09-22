@@ -2,7 +2,8 @@
   "generic": {
     "defaultMessage": "Une erreur inconnue est survenue",
     "fallbackMessage": "Une erreur inconnue est survenue.",
-    "fallbackTitle": "Erreur"
+    "fallbackTitle": "Erreur",
+    "unknownTitle": "Erreur inconnue"
   },
   "status": {
     "0": {

@@ -1,6 +1,6 @@
 import type { DuelView } from '../api/wagers.api.ts'
-import { currentLocale } from '../i18n/index.ts'
-import { formatNumber, plural } from './utils.ts'
+import i18n, { currentLocale } from '../i18n/index.ts'
+import { formatNumber } from './utils.ts'
 
 /**
  * Les deux camps d'un duel vus depuis MOI. `myRole` est la seule source :
@@ -69,8 +69,11 @@ export function pullsLeft(done: number, total: number): number {
 }
 
 export function pullsLeftLabel(done: number, total: number): string {
-  const left = pullsLeft(done, total)
-  return `${left} tirage${plural(left)} restant${plural(left)}`
+  // Pluriel délégué à i18next (`_one`/`_other`, résolus par Intl.PluralRules) :
+  // la règle française n'est pas celle de l'anglais sur 0 — « 0 tirage restant »
+  // au singulier, « 0 pulls left » au pluriel. Voir la note sur les pluriels
+  // dans `i18n/index.ts`.
+  return i18n.t('wagers:pullsLeft', { count: pullsLeft(done, total) })
 }
 
 /**

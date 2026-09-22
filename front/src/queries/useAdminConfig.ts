@@ -4,6 +4,7 @@ import { AdminConfigApi } from '../api/admin-config.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
+import i18n from '../i18n/index.ts'
 
 export type { AdminConfig } from '../api/admin-config.api.ts'
 
@@ -31,7 +32,7 @@ export function useAdminSaveConfig() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'config'] }),
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la sauvegarde',
+        title: i18n.t('admin:toasts.config.saveErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })

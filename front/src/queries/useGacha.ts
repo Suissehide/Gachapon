@@ -4,6 +4,7 @@ import { GachaApi } from '../api/gacha.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
+import i18n from '../i18n/index.ts'
 import { useAchievementUnlockStore } from '../stores/achievementUnlock.store.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 import { useLevelUpStore } from '../stores/levelUp.store.ts'
@@ -88,7 +89,7 @@ export const usePull = () => {
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors du tirage',
+        title: i18n.t('gacha:toasts.pullErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -141,7 +142,7 @@ export const usePullBatch = () => {
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors du tirage',
+        title: i18n.t('gacha:toasts.pullErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })

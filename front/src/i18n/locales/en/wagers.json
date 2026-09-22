@@ -26,5 +26,7 @@
       "getQuote": "Computing the odds",
       "placeBet": "Placing the bet"
     }
-  }
+  },
+  "pullsLeft_one": "{{count}} pull left",
+  "pullsLeft_other": "{{count}} pulls left"
 }

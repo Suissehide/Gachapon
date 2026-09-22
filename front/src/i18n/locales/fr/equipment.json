@@ -8,5 +8,8 @@
       "upgrade": "Erreur lors de l'amélioration",
       "destroy": "Erreur lors de la destruction"
     }
+  },
+  "toasts": {
+    "destroyErrorTitle": "Erreur lors de la destruction"
   }
 }

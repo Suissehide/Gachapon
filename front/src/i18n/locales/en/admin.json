@@ -44,6 +44,14 @@
     },
     "scoring": {
       "updateErrorTitle": "Error updating scoring"
+    },
+    "config": {
+      "saveErrorTitle": "Error saving"
+    },
+    "media": {
+      "uploadErrorTitle": "Error uploading",
+      "deleteErrorTitle": "Error deleting",
+      "renameErrorTitle": "Error renaming"
     }
   },
   "apiTitles": {

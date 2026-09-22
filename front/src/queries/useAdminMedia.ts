@@ -4,6 +4,7 @@ import { AdminMediaApi, type MediaItem } from '../api/admin-media.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
 import { useDataFetching } from '../hooks/useDataFetching.ts'
 import { useToast } from '../hooks/useToast.ts'
+import i18n from '../i18n/index.ts'
 
 export type { MediaItem } from '../api/admin-media.api.ts'
 
@@ -37,7 +38,7 @@ export function useUploadMedia() {
     },
     onError: (error) => {
       toast({
-        title: "Erreur lors de l'upload",
+        title: i18n.t('admin:toasts.media.uploadErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -57,7 +58,7 @@ export function useDeleteMedia() {
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la suppression',
+        title: i18n.t('admin:toasts.media.deleteErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -76,7 +77,7 @@ export function useRenameMedia() {
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors du renommage',
+        title: i18n.t('admin:toasts.media.renameErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })

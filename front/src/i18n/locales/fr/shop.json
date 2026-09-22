@@ -20,5 +20,8 @@
       "loadMachines": "Erreur lors de la récupération des machines",
       "loadDailyShop": "Erreur lors de la récupération de la boutique du jour"
     }
+  },
+  "toasts": {
+    "purchaseErrorTitle": "Erreur lors de l'achat"
   }
 }

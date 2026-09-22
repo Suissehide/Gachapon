@@ -22,10 +22,22 @@
     "dark": "Dark"
   },
   "currency": {
-    "tokens": { "singular": "token", "plural": "tokens" },
-    "dust": { "singular": "dust", "plural": "dust" },
-    "xp": { "singular": "XP", "plural": "XP" },
-    "gold": { "singular": "gold", "plural": "gold" }
+    "tokens": {
+      "singular": "token",
+      "plural": "tokens"
+    },
+    "dust": {
+      "singular": "dust",
+      "plural": "dust"
+    },
+    "xp": {
+      "singular": "XP",
+      "plural": "XP"
+    },
+    "gold": {
+      "singular": "gold",
+      "plural": "gold"
+    }
   },
   "multiSelect": {
     "searchPlaceholder": "Search..."
@@ -57,5 +69,11 @@
   "variant": {
     "brilliant": "Brilliant",
     "holographic": "Holographic"
+  },
+  "a11y": {
+    "close": "Close"
+  },
+  "form": {
+    "submitting": "Submitting..."
   }
 }

@@ -12,6 +12,7 @@ import { FieldInfo } from '../components/ui/fieldInfo.tsx'
 import { Checkbox, Input, Select, TextArea } from '../components/ui/input.tsx'
 import { Label } from '../components/ui/label.tsx'
 import { TimePicker } from '../components/ui/timePicker.tsx'
+import i18n from '../i18n/index.ts'
 import { cn } from '../libs/utils.ts'
 import {
   fieldContext,
@@ -484,7 +485,7 @@ function SubmitButton({
       {({ isSubmitting, canSubmit }) => (
         <Button type="submit" disabled={isSubmitting || !canSubmit}>
           {children}
-          {isSubmitting ? 'Envoi...' : label}
+          {isSubmitting ? i18n.t('common:form.submitting') : label}
         </Button>
       )}
     </form.Subscribe>

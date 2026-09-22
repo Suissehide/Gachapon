@@ -3,6 +3,7 @@ import { X } from 'lucide-react'
 import { Dialog } from 'radix-ui'
 import React from 'react'
 
+import i18n from '../../i18n/index.ts'
 import { cn } from '../../libs/utils.ts'
 import { type ButtonProps, buttonVariants } from './button.tsx'
 
@@ -68,7 +69,7 @@ const PopupContent = React.forwardRef<
       </div>
       <PopupClose className="cursor-pointer absolute right-4 top-4 z-10 flex h-7 w-7 items-center justify-center rounded-lg text-text-light ring-offset-background transition-all duration-200 hover:bg-primary/10 hover:text-primary focus:outline-none disabled:pointer-events-none">
         <X className="h-4 w-4" />
-        <span className="sr-only">Fermer</span>
+        <span className="sr-only">{i18n.t('common:a11y.close')}</span>
       </PopupClose>
     </Dialog.Content>
   </PopupPortal>
