@@ -151,6 +151,14 @@
         }
       },
       "info": "You can <strong>reset</strong> the tree at any time for dust: all your points are returned and can be redistributed. Handy for trying a new build."
+    },
+    "campagne": {
+      "intro": "The <strong>Campaign</strong> is the battle loop. You progress through themed <strong2>chapters</strong2> — Plains, Whispering Forest, Ashes, Ocean, Crystals, Volcano, Tundra, Abyss, Rift — each split into increasingly difficult <strong3>stages</strong3>.",
+      "teamBullet": "Every stage is played with your <strong>battle team</strong> (up to 3 cards). Some stages are <strong2>Boss</strong2> fights (1v3).",
+      "prepBullet": "The <strong>Preparation</strong> screen shows the opponents, rewards, energy cost, and a power verdict: <advantagePill>Advantage</advantagePill> <evenPill>Even</evenPill> <riskyPill>Risky</riskyPill>.",
+      "turnBasedBullet": "Battles are <strong>turn-based</strong>: your cards use their stats (PV, ATQ, DEF, VIT), passives, and equipment.",
+      "firstClearParagraph": "The <strong>first clear</strong> of a stage gives guaranteed rewards (gold, dust, XP, and sometimes a guaranteed piece of equipment or card). Replaying an already-cleared stage gives repeatable rewards, with a chance to drop equipment and cards.",
+      "info": "<strong>Farm ×3</strong> (sweep) automatically replays an already-cleared stage several times at once, for energy — great for stacking up gold and dust without replaying every battle."
     }
   }
 }

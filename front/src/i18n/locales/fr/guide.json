@@ -151,6 +151,14 @@
         }
       },
       "info": "Tu peux <strong>réinitialiser</strong> l'arbre à tout moment contre de la poussière : tous tes points sont rendus et redistribuables. Pratique pour tester une nouvelle orientation."
+    },
+    "campagne": {
+      "intro": "La <strong>Campagne</strong> est la boucle de combat. Tu progresses à travers des <strong2>chapitres</strong2> thématiques — Plaines, Forêt des Murmures, Cendres, Océan, Cristaux, Volcan, Toundra, Abysses, Faille — chacun découpé en <strong3>étapes</strong3> de plus en plus difficiles.",
+      "teamBullet": "Chaque étape se joue avec ton <strong>équipe de combat</strong> (jusqu'à 3 cartes). Certaines étapes sont des <strong2>Boss</strong2> (1v3).",
+      "prepBullet": "L'écran de <strong>Préparation</strong> affiche les adversaires, les récompenses, le coût en énergie et un verdict de puissance : <advantagePill>Avantage</advantagePill> <evenPill>Équilibré</evenPill> <riskyPill>Risqué</riskyPill>.",
+      "turnBasedBullet": "Le combat est <strong>au tour par tour</strong> : tes cartes utilisent leurs stats (PV, ATQ, DEF, VIT), leurs passifs et leur équipement.",
+      "firstClearParagraph": "Le <strong>premier passage</strong> d'une étape offre des récompenses garanties (or, poussière, XP, et parfois un équipement ou une carte garantis). Rejouer une étape déjà nettoyée rapporte des récompenses répétables, avec des chances de drop d'équipement et de cartes.",
+      "info": "<strong>Farm ×3</strong> (balayage) rejoue automatiquement une étape déjà nettoyée plusieurs fois d'un coup, contre de l'énergie — idéal pour accumuler or et poussière sans rejouer chaque combat."
     }
   }
 }

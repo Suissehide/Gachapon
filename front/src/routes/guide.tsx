@@ -691,49 +691,73 @@ function GuidePage() {
             </Section>
 
             {/* Campagne & combats */}
-            <Section id="campagne" icon={Swords} title="Campagne & combats">
+            <Section
+              id="campagne"
+              icon={Swords}
+              title={t('sectionLabels.campagne')}
+            >
               <p>
-                La <strong className="text-foreground">Campagne</strong> est la
-                boucle de combat. Tu progresses à travers des{' '}
-                <strong className="text-foreground">chapitres</strong>{' '}
-                thématiques — Plaines, Forêt des Murmures, Cendres, Océan,
-                Cristaux, Volcan, Toundra, Abysses, Faille — chacun découpé en{' '}
-                <strong className="text-foreground">étapes</strong> de plus en
-                plus difficiles.
+                <Trans
+                  t={t}
+                  i18nKey="sections.campagne.intro"
+                  components={{
+                    strong: <strong className="text-foreground" />,
+                    strong2: <strong className="text-foreground" />,
+                    strong3: <strong className="text-foreground" />,
+                  }}
+                />
               </p>
               <ul className="space-y-1.5">
                 <li>
-                  • Chaque étape se joue avec ton{' '}
-                  <strong className="text-foreground">équipe de combat</strong>{' '}
-                  (jusqu'à 3 cartes). Certaines étapes sont des{' '}
-                  <strong className="text-foreground">Boss</strong> (1v3).
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.campagne.teamBullet"
+                    components={{
+                      strong: <strong className="text-foreground" />,
+                      strong2: <strong className="text-foreground" />,
+                    }}
+                  />
                 </li>
                 <li>
-                  • L'écran de{' '}
-                  <strong className="text-foreground">Préparation</strong>{' '}
-                  affiche les adversaires, les récompenses, le coût en énergie
-                  et un verdict de puissance : <Pill>Avantage</Pill>{' '}
-                  <Pill>Équilibré</Pill> <Pill>Risqué</Pill>.
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.campagne.prepBullet"
+                    components={{
+                      strong: <strong className="text-foreground" />,
+                      advantagePill: <Pill />,
+                      evenPill: <Pill />,
+                      riskyPill: <Pill />,
+                    }}
+                  />
                 </li>
                 <li>
-                  • Le combat est{' '}
-                  <strong className="text-foreground">au tour par tour</strong>{' '}
-                  : tes cartes utilisent leurs stats (PV, ATQ, DEF, VIT), leurs
-                  passifs et leur équipement.
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.campagne.turnBasedBullet"
+                    components={{
+                      strong: <strong className="text-foreground" />,
+                    }}
+                  />
                 </li>
               </ul>
               <p>
-                Le <strong className="text-foreground">premier passage</strong>{' '}
-                d'une étape offre des récompenses garanties (or, poussière, XP,
-                et parfois un équipement ou une carte garantis). Rejouer une
-                étape déjà nettoyée rapporte des récompenses répétables, avec
-                des chances de drop d'équipement et de cartes.
+                <Trans
+                  t={t}
+                  i18nKey="sections.campagne.firstClearParagraph"
+                  components={{
+                    strong: <strong className="text-foreground" />,
+                  }}
+                />
               </p>
               <InfoBox>
-                <strong>Farm ×3</strong> (balayage) rejoue automatiquement une
-                étape déjà nettoyée plusieurs fois d'un coup, contre de
-                l'énergie — idéal pour accumuler or et poussière sans rejouer
-                chaque combat.
+                <Trans
+                  t={t}
+                  i18nKey="sections.campagne.info"
+                  components={{ strong: <strong /> }}
+                />
               </InfoBox>
             </Section>
 
