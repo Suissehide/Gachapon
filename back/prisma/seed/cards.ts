@@ -54,12 +54,12 @@ export const CARDS = [
   { id: 'HUM-032', name: 'Josselin', rarity: 'RARE', dropWeight: 16, baseHp: 192, baseAtk: 38, baseDef: 10, baseSpd: 93, element: 'FIRE', passiveKey: null },  // Équilibré
   { id: 'HUM-033', name: 'Oriane', rarity: 'RARE', dropWeight: 16, baseHp: 155, baseAtk: 44, baseDef: 7, baseSpd: 135, element: 'NATURE', passiveKey: null },  // Assassin
   { id: 'HUM-034', name: 'Akira Double-Lame', rarity: 'RARE', dropWeight: 16, baseHp: 164, baseAtk: 44, baseDef: 8, baseSpd: 131, element: 'FIRE', passiveKey: null },  // Assassin
-  // EPIC — dropWeight 8 chacune
-  { id: 'HUM-035', name: 'Archimage Cael', rarity: 'EPIC', dropWeight: 8, baseHp: 254, baseAtk: 83, baseDef: 11, baseSpd: 96, element: 'FIRE', passiveKey: 'PIERCE' },  // Mage
-  { id: 'HUM-036', name: 'Garnier', rarity: 'EPIC', dropWeight: 8, baseHp: 408, baseAtk: 47, baseDef: 22, baseSpd: 88, element: 'NATURE', passiveKey: 'AEGIS' },  // Tank
-  // LEGENDARY — dropWeight 2 chacune
-  { id: 'HUM-037', name: 'Roi Aldric', rarity: 'LEGENDARY', dropWeight: 2, baseHp: 597, baseAtk: 96, baseDef: 30, baseSpd: 106, element: 'LIGHT', passiveKey: 'NEMESIS' },  // Combattant
-  { id: 'HUM-038', name: 'Reine Isaure', rarity: 'LEGENDARY', dropWeight: 2, baseHp: 584, baseAtk: 102, baseDef: 27, baseSpd: 107, element: 'WATER', passiveKey: 'BANNER' },  // Combattant
+  // EPIC — dropWeight 4 chacune
+  { id: 'HUM-035', name: 'Archimage Cael', rarity: 'EPIC', dropWeight: 4, baseHp: 254, baseAtk: 83, baseDef: 11, baseSpd: 96, element: 'FIRE', passiveKey: 'PIERCE' },  // Mage
+  { id: 'HUM-036', name: 'Garnier', rarity: 'EPIC', dropWeight: 4, baseHp: 408, baseAtk: 47, baseDef: 22, baseSpd: 88, element: 'NATURE', passiveKey: 'AEGIS' },  // Tank
+  // LEGENDARY — dropWeight 1 chacune
+  { id: 'HUM-037', name: 'Roi Aldric', rarity: 'LEGENDARY', dropWeight: 1, baseHp: 597, baseAtk: 96, baseDef: 30, baseSpd: 106, element: 'LIGHT', passiveKey: 'NEMESIS' },  // Combattant
+  { id: 'HUM-038', name: 'Reine Isaure', rarity: 'LEGENDARY', dropWeight: 1, baseHp: 584, baseAtk: 102, baseDef: 27, baseSpd: 107, element: 'WATER', passiveKey: 'BANNER' },  // Combattant
 ] as const
 
 export async function seedCards(

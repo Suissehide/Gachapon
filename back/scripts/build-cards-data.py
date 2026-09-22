@@ -35,10 +35,11 @@ RARETES = {
     'Légendaire': 'LEGENDARY',
 }
 
-# dropWeight imposé par rareté (spec rééquilibrage 2026-07-20). import-cards.mjs
-# applique le même barème et ignore le champ ; on l'écrit pour que le JSON soit
-# lisible seul, pas pour qu'il fasse foi.
-DROP_WEIGHT = {'COMMON': 85, 'UNCOMMON': 38, 'RARE': 16, 'EPIC': 8, 'LEGENDARY': 2}
+# dropWeight imposé par rareté (spec rééquilibrage 2026-07-20, EPIC et
+# LEGENDARY divisés par deux le 2026-09-22). import-cards.mjs applique le même
+# barème et ignore le champ ; on l'écrit pour que le JSON soit lisible seul,
+# pas pour qu'il fasse foi.
+DROP_WEIGHT = {'COMMON': 85, 'UNCOMMON': 38, 'RARE': 16, 'EPIC': 4, 'LEGENDARY': 1}
 
 # Les colonnes Élément et Passif sont au format « Libellé (CLÉ) » ; la clé fait foi.
 CLE_ENTRE_PARENTHESES = re.compile(r'\(([A-Z_]+)\)\s*$')
