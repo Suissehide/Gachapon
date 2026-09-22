@@ -85,5 +85,21 @@
     "results_other": "résultats",
     "emptyTitle": "Aucune donnée",
     "emptyHint": "Aucun résultat à afficher"
+  },
+  "stats": {
+    "hp": "PV",
+    "atk": "ATQ",
+    "def": "DEF",
+    "spd": "VIT",
+    "critRate": "TAUX CRIT",
+    "critDmg": "DÉGÂTS CRIT",
+    "critDmgShort": "DÉG. CRIT",
+    "armorPen": "PÉNÉTRATION ARMURE",
+    "armorPenShort": "PÉNÉ. ARMURE",
+    "lifesteal": "VOL DE VIE"
+  },
+  "gold": {
+    "amount": "{{amount}} or",
+    "amountPlus": "+{{amount}} or"
   }
 }

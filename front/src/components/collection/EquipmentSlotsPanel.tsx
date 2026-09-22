@@ -10,6 +10,7 @@ import {
   Sword,
 } from 'lucide-react'
 import { useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import type {
   EquipmentInstance,
@@ -72,14 +73,14 @@ export const SLOT_ICONS: Record<EquipmentSlot, typeof Sword> = {
 // par le panneau de combat juste au-dessus, pour qu'une carte ne nomme pas la
 // même stat de deux façons.
 const STAT_CHIP_LABELS: Record<string, string> = {
-  hp: 'PV',
-  atk: 'ATQ',
-  def: 'DEF',
-  spd: 'VIT',
-  critRate: 'TAUX CRIT',
-  critDmg: 'DÉG. CRIT',
-  armorPen: 'PÉNÉ. ARMURE',
-  lifesteal: 'VOL DE VIE',
+  hp: i18n.t('common:stats.hp'),
+  atk: i18n.t('common:stats.atk'),
+  def: i18n.t('common:stats.def'),
+  spd: i18n.t('common:stats.spd'),
+  critRate: i18n.t('common:stats.critRate'),
+  critDmg: i18n.t('common:stats.critDmgShort'),
+  armorPen: i18n.t('common:stats.armorPenShort'),
+  lifesteal: i18n.t('common:stats.lifesteal'),
 }
 
 // Toute valeur de stat est entière depuis l'arrondi à la source.
@@ -182,6 +183,7 @@ function SetBanner({
   color: string
   bonusLabel: string | undefined
 }) {
+  const { t } = useTranslation('collection')
   // Porter plus de pièces que le set n'en demande n'apporte rien : la jauge
   // plafonne, sinon elle déborderait de segments allumés.
   const filled = Math.min(summary.count, summary.pieces)
@@ -202,7 +204,10 @@ function SetBanner({
           {summary.label}
         </span>
         <span className="ml-auto shrink-0 whitespace-nowrap font-mono text-[11px] tabular-nums text-[color-mix(in_oklab,var(--s)_70%,var(--text))]">
-          {filled} / {summary.pieces} pièces
+          {t('collection:slotsPanel.setPieces', {
+            filled,
+            pieces: summary.pieces,
+          })}
         </span>
       </div>
 
@@ -287,6 +292,7 @@ type Props = {
 }
 
 export function EquipmentSlotsPanel({ userCardId, rarityHex }: Props) {
+  const { t } = useTranslation('collection')
   const equipment = useEquipmentList()
   const activeSets = useActiveSetsForCard(userCardId)
   const sets = useEquipmentSets()
@@ -318,11 +324,16 @@ export function EquipmentSlotsPanel({ userCardId, rarityHex }: Props) {
     <div className="mt-5">
       <div className="mb-3 flex items-baseline justify-between gap-2">
         <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[rgba(27,23,38,0.45)]">
-          Équipement
+          {t('collection:slotsPanel.title')}
         </p>
         <p className="font-mono text-[11px] tabular-nums tracking-[0.08em] text-[rgba(27,23,38,0.38)]">
-          <b className="text-text">{equippedOnCard.length}</b> /{' '}
-          {SLOT_ORDER.length} équipés
+          <Trans
+            t={t}
+            i18nKey="collection:slotsPanel.equippedCount"
+            count={equippedOnCard.length}
+            values={{ total: SLOT_ORDER.length }}
+            components={{ equipped: <b className="text-text" /> }}
+          />
         </p>
       </div>
 
@@ -352,7 +363,12 @@ export function EquipmentSlotsPanel({ userCardId, rarityHex }: Props) {
                 // La rareté et le set ne sont plus écrits sur la tuile : le
                 // survol et les lecteurs d'écran les redonnent en toutes
                 // lettres.
-                title={`${item.name} — ${RARITY_LABEL_FR[item.rarity] ?? item.rarity} · set ${item.setLabel} · Nv. ${item.level}`}
+                title={t('collection:slotsPanel.slotTitle', {
+                  name: item.name,
+                  rarity: RARITY_LABEL_FR[item.rarity] ?? item.rarity,
+                  set: item.setLabel,
+                  level: item.level,
+                })}
                 style={
                   {
                     '--rar': RARITY_COLOR_VAR[item.rarity],
@@ -382,7 +398,8 @@ export function EquipmentSlotsPanel({ userCardId, rarityHex }: Props) {
                   {item.name}
                 </p>
                 <p className="mt-1 font-mono text-[9.5px] tracking-[0.1em] text-[rgba(27,23,38,0.45)]">
-                  NV. <b className="text-[var(--rar)]">{item.level}</b>
+                  {t('collection:slotsPanel.itemLevel')}{' '}
+                  <b className="text-[var(--rar)]">{item.level}</b>
                 </p>
               </Button>
             )

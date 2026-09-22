@@ -88,10 +88,6 @@
     "groupTitle_other": "Sets de {{count}} pièces",
     "piecesBadge": "{{count}} PC"
   },
-  "gold": {
-    "amount": "{{amount}} or",
-    "amountPlus": "+{{amount}} or"
-  },
   "actions": {
     "cancel": "Annuler"
   }

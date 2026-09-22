@@ -139,7 +139,7 @@ export function EquipmentDropCard({
    */
   highlight?: { key: string; delta: number } | null
 }) {
-  const { t } = useTranslation('equipment')
+  const { t } = useTranslation(['equipment', 'common'])
   const locale = currentLocale()
   const tier = RARITY_TIER[drop.rarity] ?? 1
   const SlotIcon = SLOT_ICONS[drop.slot]
@@ -292,7 +292,7 @@ export function EquipmentDropCard({
             <Trash2 className="h-[15px] w-[15px]" />
             {t('equipment:drop.destroy')}
             <span className="font-mono text-[11px] whitespace-nowrap opacity-80">
-              {t('equipment:gold.amountPlus', {
+              {t('common:gold.amountPlus', {
                 amount: formatNumber(scrapGold ?? 0, locale),
               })}
             </span>
@@ -378,7 +378,7 @@ export function EquipmentDropReward({
       onSuccess: (res) => {
         toast({
           title: i18n.t('equipment:drop.destroyedToastTitle'),
-          message: i18n.t('equipment:gold.amountPlus', {
+          message: i18n.t('common:gold.amountPlus', {
             amount: formatNumber(res.goldEarned, currentLocale()),
           }),
           severity: TOAST_SEVERITY.SUCCESS,

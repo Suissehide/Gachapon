@@ -4,6 +4,7 @@ import type {
   EquipmentSetKey,
 } from '../api/equipment.api'
 import type { CardRarity, CardVariant } from '../constants/card.constant'
+import i18n from '../i18n/index.ts'
 
 const VARIANT_MULT: Record<CardVariant, number> = {
   NORMAL: 1.0,
@@ -535,13 +536,13 @@ export function maxLevelInPalier(palier: number): number {
 // tuiles du `CombatPanel` — une pièce annonçait « ATK »/« SPD » là où la
 // carte affiche « ATQ »/« VIT » pour la stat qu'elle fait bouger.
 const STAT_LABELS: Record<string, string> = {
-  HP: 'PV',
-  ATK: 'ATQ',
-  SPD: 'VIT',
-  CRITRATE: 'TAUX CRIT',
-  CRITDMG: 'DÉGÂTS CRIT',
-  ARMORPEN: 'PÉNÉTRATION ARMURE',
-  LIFESTEAL: 'VOL DE VIE',
+  HP: i18n.t('common:stats.hp'),
+  ATK: i18n.t('common:stats.atk'),
+  SPD: i18n.t('common:stats.spd'),
+  CRITRATE: i18n.t('common:stats.critRate'),
+  CRITDMG: i18n.t('common:stats.critDmg'),
+  ARMORPEN: i18n.t('common:stats.armorPen'),
+  LIFESTEAL: i18n.t('common:stats.lifesteal'),
 }
 
 // Clé de bonus → couleur de stat. Les clés portent leur stat en préfixe

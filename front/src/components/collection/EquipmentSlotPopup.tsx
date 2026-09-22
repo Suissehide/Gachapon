@@ -14,6 +14,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type {
   EquipmentInstance,
@@ -95,8 +96,8 @@ function upgradeHintTitle(
     return undefined
   }
   return substatsCount >= maxSubstats
-    ? 'Prochain niveau : sous-stat améliorée !'
-    : 'Prochain niveau : sous-stat bonus !'
+    ? i18n.t('collection:slotPopup.upgradeHintImproved')
+    : i18n.t('collection:slotPopup.upgradeHintNew')
 }
 
 function sortItems(
@@ -131,18 +132,18 @@ function toggleSet(prev: Set<string>, id: string): Set<string> {
 }
 
 function SelectionHint({ selectMode }: { selectMode: boolean }) {
+  const { t } = useTranslation('collection')
   return (
     <p className="hidden items-center justify-center rounded-xl border border-dashed border-border p-6 text-center text-sm text-text-light sm:flex">
       {selectMode
-        ? 'Coche les objets non équipés à détruire.'
-        : 'Sélectionne un objet pour voir le détail.'}
+        ? t('collection:slotPopup.hintSelectToDestroy')
+        : t('collection:slotPopup.hintSelectToView')}
     </p>
   )
 }
 
 function batchSalvageMessage(count: number): string {
-  const plural = count > 1 ? 's' : ''
-  return `Tu vas détruire définitivement ${count} objet${plural}. Cette action est irréversible.`
+  return i18n.t('collection:slotPopup.confirmBatchMessage', { count })
 }
 
 /**
@@ -170,6 +171,7 @@ function ConfirmSalvagePopup({
   onConfirm: () => void
   onCancel: () => void
 }) {
+  const { t } = useTranslation('collection')
   const locale = currentLocale()
   return (
     <Popup open onOpenChange={(v) => !v && onCancel()}>
@@ -181,7 +183,7 @@ function ConfirmSalvagePopup({
           <p className="text-sm text-text-light">{message}</p>
           <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-center">
             <p className="mb-1 text-[11px] uppercase tracking-widest text-text-light/60">
-              Tu obtiendras
+              {t('collection:slotPopup.youWillGet')}
             </p>
             <p className="text-3xl font-black text-primary tabular-nums">
               {formatNumber(salvageGold, locale)}
@@ -191,7 +193,7 @@ function ConfirmSalvagePopup({
         </PopupBody>
         <PopupFooter className="flex justify-between">
           <Button variant="outline" onClick={onCancel}>
-            Annuler
+            {t('collection:slotPopup.cancel')}
           </Button>
           <Button variant="destructive" disabled={busy} onClick={onConfirm}>
             {confirmLabel}
@@ -225,6 +227,7 @@ function ItemRow({
   onSelect: (id: string) => void
   onToggle: (id: string) => void
 }) {
+  const { t } = useTranslation('collection')
   const isEquippedHere = item.equippedOnId === userCardId
   const isEquippedElsewhere = item.equippedOnId !== null && !isEquippedHere
   const checkable = selectMode && item.equippedOnId === null
@@ -271,7 +274,9 @@ function ItemRow({
             ligne, et son en-tête reste collé en haut pendant le défilement.
             La place sert à écrire la rareté, qui n'était qu'une pastille. */}
         <p className="flex items-center gap-1.5 text-[11px] text-text-light">
-          <span className="shrink-0">Nv. {item.level}</span>
+          <span className="shrink-0">
+            {t('collection:slotPopup.itemLevel', { level: item.level })}
+          </span>
           <span aria-hidden="true" className="shrink-0 opacity-50">
             ·
           </span>
@@ -287,12 +292,14 @@ function ItemRow({
       </div>
       {isEquippedHere && (
         <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-          Équipé
+          {t('collection:slotPopup.equippedHere')}
         </span>
       )}
       {isEquippedElsewhere && (
         <span className="max-w-[90px] shrink-0 truncate rounded-full bg-border/40 px-2 py-0.5 text-[10px] text-text-light">
-          Sur {item.equippedOnCardName}
+          {t('collection:slotPopup.equippedOn', {
+            name: item.equippedOnCardName,
+          })}
         </span>
       )}
     </button>
@@ -380,6 +387,7 @@ function useSetGroups(
  * visible, pour que le set de la ligne survolée reste lisible.
  */
 function SetGroupHeader({ group }: { group: SetGroup }) {
+  const { t } = useTranslation('collection')
   const active = group.pieces > 0 && group.count >= group.pieces
   return (
     <div
@@ -397,7 +405,10 @@ function SetGroupHeader({ group }: { group: SetGroup }) {
             active ? 'text-[var(--sc)]' : 'text-text-light',
           )}
         >
-          {group.count}/{group.pieces} sur la carte
+          {t('collection:slotPopup.setOnCard', {
+            count: group.count,
+            pieces: group.pieces,
+          })}
         </span>
       )}
     </div>
@@ -484,6 +495,7 @@ function shownItemId(
 }
 
 export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
+  const { t } = useTranslation(['collection', 'common'])
   const { data } = useEquipmentList()
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const { data: skillState } = useSkillTree()
@@ -547,8 +559,8 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
     setHighlight(res.milestone.key)
     const milestoneTitle =
       res.milestone.type === 'added'
-        ? 'Nouvelle sous-stat !'
-        : 'Sous-stat améliorée !'
+        ? t('collection:slotPopup.toastNewSubstat')
+        : t('collection:slotPopup.toastImprovedSubstat')
     toast({
       title: milestoneTitle,
       message: `+${formatBonusValue(res.milestone.rolledValue)} ${formatBonusKey(res.milestone.key)}`,
@@ -565,10 +577,12 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
     goldEarned: number
     destroyedCount: number
   }) => {
-    const plural = res.destroyedCount > 1 ? 's' : ''
     toast({
-      title: 'Objets détruits',
-      message: `+${formatNumber(res.goldEarned, locale)} or (${res.destroyedCount} objet${plural})`,
+      title: t('collection:slotPopup.toastDestroyedTitle'),
+      message: t('collection:slotPopup.toastDestroyedMessage', {
+        count: res.destroyedCount,
+        amount: formatNumber(res.goldEarned, locale),
+      }),
       severity: TOAST_SEVERITY.SUCCESS,
     })
     setConfirmOpen(false)
@@ -618,7 +632,7 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
           <PopupHeader>
             <PopupTitle
               icon={<SlotIcon className="h-4 w-4" />}
-              subtitle="Équipe, améliore ou détruis les objets de ce slot."
+              subtitle={t('collection:slotPopup.subtitle')}
             >
               {SLOT_LABELS[slot]}
             </PopupTitle>
@@ -631,7 +645,7 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
                 <span className="font-semibold tabular-nums text-text">
                   {formatNumber(gold, locale)}
                 </span>
-                or
+                {t('common:currency.gold.singular')}
               </p>
               <Button
                 variant={selectMode ? 'secondary' : 'ghost'}
@@ -639,13 +653,15 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
                 onClick={handleToggleSelectMode}
               >
                 <Trash2 className="mr-1.5 h-4 w-4" />
-                {selectMode ? 'Annuler la sélection' : 'Détruire des objets'}
+                {selectMode
+                  ? t('collection:slotPopup.cancelSelection')
+                  : t('collection:slotPopup.destroyMode')}
               </Button>
             </div>
 
             {items.length === 0 ? (
               <p className="py-6 text-center text-sm text-text-light">
-                Aucun objet pour ce slot dans ton inventaire.
+                {t('collection:slotPopup.emptyInventory')}
               </p>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
@@ -681,8 +697,9 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
             {selectMode ? (
               <>
                 <p className="self-center text-sm text-text-light">
-                  {checked.size} objet{checked.size > 1 ? 's' : ''} sélectionné
-                  {checked.size > 1 ? 's' : ''}
+                  {t('collection:slotPopup.selectedCount', {
+                    count: checked.size,
+                  })}
                 </p>
                 <Button
                   variant="destructive"
@@ -690,12 +707,14 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
                   onClick={() => setConfirmOpen(true)}
                 >
                   <Trash2 className="mr-1.5 h-4 w-4" />
-                  Détruire (+{formatNumber(salvageGold, locale)} or)
+                  {t('collection:slotPopup.destroyWithGold', {
+                    amount: formatNumber(salvageGold, locale),
+                  })}
                 </Button>
               </>
             ) : (
               <Button variant="outline" onClick={onClose} className="ml-auto">
-                Fermer
+                {t('collection:slotPopup.close')}
               </Button>
             )}
           </PopupFooter>
@@ -705,9 +724,9 @@ export function EquipmentSlotPopup({ slot, userCardId, onClose }: Props) {
       {confirmOpen && (
         <ConfirmSalvagePopup
           icon={<Trash2 className="h-4 w-4" />}
-          title="Confirmer la destruction"
+          title={t('collection:slotPopup.confirmBatchTitle')}
           message={batchSalvageMessage(checked.size)}
-          confirmLabel="Détruire"
+          confirmLabel={t('collection:slotPopup.confirmDestroyLabel')}
           salvageGold={salvageGold}
           busy={busy}
           onConfirm={handleSalvage}
@@ -727,11 +746,12 @@ function SubstatSection({
   maxSubstats: number
   highlight: SubstatKey | null
 }) {
+  const { t } = useTranslation('collection')
   const emptySlots = Math.max(0, maxSubstats - substats.length)
   return (
     <div>
       <p className="mb-1 text-[10px] uppercase tracking-widest text-text-light/60">
-        Sous-stats
+        {t('collection:slotPopup.substats')}
       </p>
       {/* Une teinte PAR STAT (`statColorVar`), comme la fiche de pièce et
           l'apport total : le violet uniforme d'avant ne disait rien de la
@@ -763,7 +783,7 @@ function SubstatSection({
               key={`empty-slot-${slotIndex}`}
               className="rounded border border-dashed border-border px-1.5 py-0.5 text-text-light/40"
             >
-              Emplacement vide
+              {t('collection:slotPopup.emptySubstatSlot')}
             </li>
           )
         })}
@@ -786,6 +806,7 @@ function SetLine({
   item: EquipmentInstance
   userCardId: string
 }) {
+  const { t } = useTranslation('collection')
   const { data: setsData } = useEquipmentSets()
   const activeSets = useActiveSetsForCard(userCardId)
   const def = setsData?.sets.find((s) => s.key === item.setKey)
@@ -820,13 +841,16 @@ function SetLine({
               active ? 'text-[var(--sc)]' : 'text-text-light',
             )}
           >
-            {count}/{pieces} sur la carte
+            {t('collection:slotPopup.setOnCard', { count, pieces })}
           </span>
         )}
       </div>
       {def && (
         <p className="mt-0.5 font-mono text-[10px] text-text-light">
-          {def.bonus.label} {active ? '· actif' : `· à ${pieces} pièces`}
+          {def.bonus.label}{' '}
+          {active
+            ? t('collection:slotPopup.setActive')
+            : t('collection:slotPopup.setAtPieces', { pieces })}
         </p>
       )}
     </div>
@@ -850,6 +874,7 @@ function SellItemButton({
   item: EquipmentInstance
   busy: boolean
 }) {
+  const { t } = useTranslation(['collection', 'common'])
   const [confirmOpen, setConfirmOpen] = useState(false)
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const { data: skillState } = useSkillTree()
@@ -867,8 +892,10 @@ function SellItemButton({
     salvageItems.mutate([item.id], {
       onSuccess: (res) => {
         toast({
-          title: 'Objet vendu',
-          message: `+${formatNumber(res.goldEarned, locale)} or`,
+          title: t('collection:slotPopup.toastSoldTitle'),
+          message: t('common:gold.amountPlus', {
+            amount: formatNumber(res.goldEarned, locale),
+          }),
           severity: TOAST_SEVERITY.SUCCESS,
         })
         setConfirmOpen(false)
@@ -884,19 +911,23 @@ function SellItemButton({
         onClick={() => setConfirmOpen(true)}
       >
         <Coins className="mr-1.5 h-4 w-4" />
-        Vendre (+{formatNumber(gold, locale)} or)
+        {t('collection:slotPopup.sellWithGold', {
+          amount: formatNumber(gold, locale),
+        })}
       </Button>
       {equipped && (
         <p className="text-center text-[10px] text-text-light">
-          Déséquipe la pièce pour la vendre.
+          {t('collection:slotPopup.unequipToSell')}
         </p>
       )}
       {confirmOpen && (
         <ConfirmSalvagePopup
           icon={<Coins className="h-4 w-4" />}
-          title="Vendre cette pièce ?"
-          message={`« ${item.name} » sera définitivement détruite. Cette action est irréversible.`}
-          confirmLabel="Vendre"
+          title={t('collection:slotPopup.sellConfirmTitle')}
+          message={t('collection:slotPopup.sellConfirmMessage', {
+            name: item.name,
+          })}
+          confirmLabel={t('collection:slotPopup.sellConfirmLabel')}
           salvageGold={gold}
           busy={salvageItems.isPending}
           onConfirm={handleConfirm}
@@ -926,6 +957,7 @@ function ItemDetail({
   onUnequip: () => void
   onUpgrade: () => void
 }) {
+  const { t } = useTranslation('collection')
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const locale = currentLocale()
   const isEquippedHere = item.equippedOnId === userCardId
@@ -951,7 +983,9 @@ function ItemDetail({
       <div>
         <div className="flex items-center justify-between gap-2">
           <p className="font-semibold text-text">{item.name}</p>
-          <span className="text-xs font-bold text-text">Nv. {item.level}</span>
+          <span className="text-xs font-bold text-text">
+            {t('collection:slotPopup.itemLevel', { level: item.level })}
+          </span>
         </div>
         <p
           className="text-[11px] font-bold uppercase tracking-wider"
@@ -963,7 +997,7 @@ function ItemDetail({
 
       <div>
         <p className="mb-1 text-[10px] uppercase tracking-widest text-text-light/60">
-          Bonus de base
+          {t('collection:slotPopup.baseBonus')}
         </p>
         {/* Même règle que les sous-stats ci-dessous : la couleur porte la
             stat, pas le rôle de la ligne. */}
@@ -1006,16 +1040,18 @@ function ItemDetail({
       <div className="mt-auto flex flex-col gap-2">
         {isEquippedHere ? (
           <Button variant="outline" disabled={busy} onClick={onUnequip}>
-            Déséquiper
+            {t('collection:slotPopup.unequip')}
           </Button>
         ) : (
           <>
             <Button disabled={busy} onClick={onEquip}>
-              {isEquippedElsewhere ? 'Remplacer' : 'Équiper'}
+              {isEquippedElsewhere
+                ? t('collection:slotPopup.replace')
+                : t('collection:slotPopup.equip')}
             </Button>
             {isEquippedElsewhere && (
               <Button variant="outline" disabled={busy} onClick={onUnequip}>
-                Déséquiper
+                {t('collection:slotPopup.unequip')}
               </Button>
             )}
           </>
@@ -1028,8 +1064,10 @@ function ItemDetail({
         >
           <ArrowUpCircle className="mr-1.5 h-4 w-4" />
           {isMaxLevel
-            ? 'Niveau max'
-            : `Améliorer (${formatNumber(cost, locale)} or)`}
+            ? t('collection:slotPopup.maxLevel')
+            : t('collection:slotPopup.upgradeWithCost', {
+                amount: formatNumber(cost, locale),
+              })}
           {nextIsMilestone && <Sparkles className="ml-1.5 h-3.5 w-3.5" />}
         </Button>
         <SellItemButton item={item} busy={busy} />

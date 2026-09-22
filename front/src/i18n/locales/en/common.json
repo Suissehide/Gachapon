@@ -85,5 +85,21 @@
     "results_other": "results",
     "emptyTitle": "No data",
     "emptyHint": "No result to display"
+  },
+  "stats": {
+    "hp": "PV",
+    "atk": "ATQ",
+    "def": "DEF",
+    "spd": "VIT",
+    "critRate": "CRIT RATE",
+    "critDmg": "CRIT DMG",
+    "critDmgShort": "CRIT DMG",
+    "armorPen": "ARMOR PEN",
+    "armorPenShort": "ARM. PEN",
+    "lifesteal": "LIFESTEAL"
+  },
+  "gold": {
+    "amount": "{{amount}} gold",
+    "amountPlus": "+{{amount}} gold"
   }
 }

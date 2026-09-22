@@ -481,7 +481,7 @@ function EquipmentPage() {
             <Coins className="h-3.5 w-3.5" />
             {t('equipment:bulk.sellSelection')}
             <span className="font-mono text-[10px] opacity-70">
-              {t('equipment:gold.amountPlus', {
+              {t('common:gold.amountPlus', {
                 amount: formatNumber(selectionGold, locale),
               })}
             </span>
@@ -630,7 +630,7 @@ function EquipmentCard({
   selected: boolean
   onSelectedChange: (checked: boolean) => void
 }) {
-  const { t } = useTranslation('equipment')
+  const { t } = useTranslation(['equipment', 'common'])
   const locale = currentLocale()
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const upgradeItem = useUpgradeItem()
@@ -757,7 +757,7 @@ function EquipmentCard({
               <span className="font-mono text-[10px] opacity-70">
                 {atMaxLevel
                   ? '—'
-                  : t('equipment:gold.amount', {
+                  : t('common:gold.amount', {
                       amount: formatNumber(upgradeCost, locale),
                     })}
               </span>
@@ -779,7 +779,7 @@ function EquipmentCard({
                 {t('equipment:card.sell')}
               </span>
               <span className="font-mono text-[10px] opacity-70">
-                {t('equipment:gold.amountPlus', {
+                {t('common:gold.amountPlus', {
                   amount: formatNumber(salvageGold, locale),
                 })}
               </span>
