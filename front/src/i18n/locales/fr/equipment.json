@@ -1,0 +1,12 @@
+{
+  "apiTitles": {
+    "operations": {
+      "loadEquipment": "Erreur lors du chargement de l'équipement",
+      "loadSets": "Erreur lors du chargement des sets",
+      "equip": "Erreur lors de l'équipement",
+      "unequip": "Erreur lors du déséquipement",
+      "upgrade": "Erreur lors de l'amélioration",
+      "destroy": "Erreur lors de la destruction"
+    }
+  }
+}

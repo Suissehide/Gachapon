@@ -1,0 +1,12 @@
+{
+  "apiTitles": {
+    "operations": {
+      "loadEquipment": "Error loading the equipment",
+      "loadSets": "Error loading the sets",
+      "equip": "Error equipping",
+      "unequip": "Error unequipping",
+      "upgrade": "Error upgrading",
+      "destroy": "Error destroying"
+    }
+  }
+}

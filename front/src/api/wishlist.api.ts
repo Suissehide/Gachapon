@@ -1,6 +1,10 @@
 import type { Card } from '../constants/card.constant.ts'
 import { apiUrl } from '../constants/config.constant.ts'
-import { handleHttpError } from '../libs/httpErrorHandler.ts'
+import i18n from '../i18n/index.ts'
+import {
+  handleHttpError,
+  handleHttpErrorFromServer,
+} from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
 export type WishlistCard = Card & {
@@ -25,7 +29,11 @@ export const WishlistApi = {
   get: async (): Promise<WishlistResponse> => {
     const res = await fetchWithAuth(`${apiUrl}/wishlist`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la récupération des vœux')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('wishlist:apiTitles.operations.loadWishlist'),
+      )
     }
     return res.json()
   },
@@ -39,12 +47,11 @@ export const WishlistApi = {
         res,
         {
           409: {
-            title: 'Vœux au complet',
-            message:
-              'Retire un vœu ou investis dans « Collectionneur » pour en ajouter un.',
+            title: i18n.t('wishlist:apiTitles.wishlistFullTitle'),
+            message: i18n.t('wishlist:apiTitles.wishlistFullMessage'),
           },
         },
-        "Erreur lors de l'ajout du vœu",
+        i18n.t('wishlist:apiTitles.operations.addWish'),
       )
     }
   },
@@ -54,7 +61,11 @@ export const WishlistApi = {
       method: 'DELETE',
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors du retrait du vœu')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('wishlist:apiTitles.operations.removeWish'),
+      )
     }
   },
 
@@ -63,15 +74,13 @@ export const WishlistApi = {
       method: 'POST',
     })
     if (!res.ok) {
-      handleHttpError(
+      // 402 : `economy.notEnoughDust` du catalogue back, seule source de ce
+      // statut. Le 409 juste au-dessus reste au front, lui : le serveur dit
+      // « Wishlist pleine », le front dit COMMENT faire de la place.
+      await handleHttpErrorFromServer(
         res,
-        {
-          402: {
-            title: 'Poussière insuffisante',
-            message: "Tu n'as pas assez de poussière pour acheter ce vœu.",
-          },
-        },
-        "Erreur lors de l'achat du vœu",
+        { 402: i18n.t('wishlist:apiTitles.notEnoughDustTitle') },
+        i18n.t('wishlist:toasts.purchaseErrorTitle'),
       )
     }
     return res.json()

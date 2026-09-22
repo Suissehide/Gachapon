@@ -1,4 +1,5 @@
 import { apiUrl } from '../constants/config.constant.ts'
+import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
@@ -114,7 +115,11 @@ export const EquipmentApi = {
   list: async (): Promise<{ items: EquipmentInstance[] }> => {
     const res = await fetchWithAuth(`${apiUrl}/equipment`)
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors du chargement de l'équipement")
+      handleHttpError(
+        res,
+        {},
+        i18n.t('equipment:apiTitles.operations.loadEquipment'),
+      )
     }
     return res.json()
   },
@@ -122,7 +127,11 @@ export const EquipmentApi = {
   sets: async (): Promise<{ sets: EquipmentSetDefinition[] }> => {
     const res = await fetchWithAuth(`${apiUrl}/equipment/sets`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors du chargement des sets')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('equipment:apiTitles.operations.loadSets'),
+      )
     }
     return res.json()
   },
@@ -140,7 +149,7 @@ export const EquipmentApi = {
       },
     )
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors de l'équipement")
+      handleHttpError(res, {}, i18n.t('equipment:apiTitles.operations.equip'))
     }
     return res.json()
   },
@@ -153,7 +162,7 @@ export const EquipmentApi = {
       { method: 'POST' },
     )
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors du déséquipement')
+      handleHttpError(res, {}, i18n.t('equipment:apiTitles.operations.unequip'))
     }
     return res.json()
   },
@@ -173,7 +182,7 @@ export const EquipmentApi = {
       { method: 'POST' },
     )
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors de l'amélioration")
+      handleHttpError(res, {}, i18n.t('equipment:apiTitles.operations.upgrade'))
     }
     return res.json()
   },
@@ -191,7 +200,7 @@ export const EquipmentApi = {
       body: JSON.stringify({ userEquipmentIds }),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la destruction')
+      handleHttpError(res, {}, i18n.t('equipment:apiTitles.operations.destroy'))
     }
     return res.json()
   },

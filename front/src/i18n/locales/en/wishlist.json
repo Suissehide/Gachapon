@@ -3,5 +3,15 @@
     "toggleErrorTitle": "Error updating your wishes",
     "purchasedMessage": "Obtained! −{{dust}} dust",
     "purchaseErrorTitle": "Error buying the wish"
+  },
+  "apiTitles": {
+    "wishlistFullTitle": "Wishlist full",
+    "wishlistFullMessage": "Remove a wish or invest in \"Collector\" to add one.",
+    "notEnoughDustTitle": "Not enough dust",
+    "operations": {
+      "loadWishlist": "Error loading the wishlist",
+      "addWish": "Error adding the wish",
+      "removeWish": "Error removing the wish"
+    }
   }
 }

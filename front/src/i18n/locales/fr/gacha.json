@@ -1,0 +1,11 @@
+{
+  "apiTitles": {
+    "operations": {
+      "loadTokenBalance": "Erreur lors de la récupération du solde de jetons",
+      "pull": "Erreur lors du tirage",
+      "loadHistory": "Erreur lors de la récupération de l'historique",
+      "loadFeed": "Erreur lors du chargement du fil",
+      "loadDropRates": "Erreur lors du chargement des taux de drop"
+    }
+  }
+}

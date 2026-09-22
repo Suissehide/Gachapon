@@ -8,6 +8,7 @@ import type {
   TokenBalance,
 } from '../constants/gacha.constant.ts'
 import { GACHA_ROUTES } from '../constants/gacha.constant.ts'
+import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import type { FeedEntry } from '../types/feed'
 import { fetchWithAuth } from './fetchWithAuth.ts'
@@ -28,7 +29,7 @@ export const GachaApi = {
       handleHttpError(
         res,
         {},
-        'Erreur lors de la récupération du solde de jetons',
+        i18n.t('gacha:apiTitles.operations.loadTokenBalance'),
       )
     }
     return res.json()
@@ -39,7 +40,7 @@ export const GachaApi = {
       method: 'POST',
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors du tirage')
+      handleHttpError(res, {}, i18n.t('gacha:apiTitles.operations.pull'))
     }
     return res.json()
   },
@@ -47,7 +48,7 @@ export const GachaApi = {
   getPullHistory: async (page: number): Promise<PullHistory> => {
     const res = await fetchWithAuth(`${apiUrl}${GACHA_ROUTES.history(page)}`)
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors de la récupération de l'historique")
+      handleHttpError(res, {}, i18n.t('gacha:apiTitles.operations.loadHistory'))
     }
     return res.json()
   },
@@ -59,7 +60,7 @@ export const GachaApi = {
       body: JSON.stringify({ count }),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors du tirage')
+      handleHttpError(res, {}, i18n.t('gacha:apiTitles.operations.pull'))
     }
     return res.json()
   },
@@ -72,7 +73,7 @@ export const GachaApi = {
   }): Promise<{ entries: FeedEntry[]; hasMore: boolean }> => {
     const res = await fetchWithAuth(`${apiUrl}${GACHA_ROUTES.recent(opts)}`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors du chargement du fil')
+      handleHttpError(res, {}, i18n.t('gacha:apiTitles.operations.loadFeed'))
     }
     return res.json()
   },
@@ -80,7 +81,11 @@ export const GachaApi = {
   getDropRates: async (): Promise<{ rates: DropRate[] }> => {
     const res = await fetchWithAuth(`${apiUrl}${GACHA_ROUTES.rates}`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors du chargement des taux de drop')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('gacha:apiTitles.operations.loadDropRates'),
+      )
     }
     return res.json()
   },

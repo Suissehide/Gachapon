@@ -7,6 +7,7 @@ import type {
 } from '../constants/card.constant.ts'
 import { CARD_ROUTES } from '../constants/card.constant.ts'
 import { apiUrl } from '../constants/config.constant.ts'
+import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
@@ -18,7 +19,11 @@ export const CollectionApi = {
   getSets: async (): Promise<{ sets: CardSet[] }> => {
     const res = await fetchWithAuth(`${apiUrl}${CARD_ROUTES.sets}`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la récupération des sets')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('collection:apiTitles.operations.loadSets'),
+      )
     }
     return res.json()
   },
@@ -39,7 +44,11 @@ export const CollectionApi = {
       `${apiUrl}${CARD_ROUTES.cards}${qs ? `?${qs}` : ''}`,
     )
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la récupération des cartes')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('collection:apiTitles.operations.loadCards'),
+      )
     }
     return res.json()
   },
@@ -52,7 +61,7 @@ export const CollectionApi = {
       handleHttpError(
         res,
         {},
-        'Erreur lors de la récupération de la collection',
+        i18n.t('collection:apiTitles.operations.loadCollection'),
       )
     }
     return res.json()
@@ -73,7 +82,7 @@ export const CollectionApi = {
       body: JSON.stringify({ cardId, quantity, variant }),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors du recyclage')
+      handleHttpError(res, {}, i18n.t('collection:recycle.errorTitle'))
     }
     return res.json()
   },
@@ -96,7 +105,7 @@ export const CollectionApi = {
       body: JSON.stringify({ maxRarity }),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors du recyclage en masse')
+      handleHttpError(res, {}, i18n.t('collection:recycleAll.errorTitle'))
     }
     return res.json()
   },
@@ -111,7 +120,11 @@ export const CollectionApi = {
       body: JSON.stringify({ amount }),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la conversion en poussière')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('collection:apiTitles.operations.convertToDust'),
+      )
     }
     return res.json()
   },
@@ -132,7 +145,11 @@ export const CollectionApi = {
       body: JSON.stringify({ targetLevel }),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors du level up')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('collection:apiTitles.operations.levelUp'),
+      )
     }
     return res.json()
   },
@@ -150,7 +167,7 @@ export const CollectionApi = {
       body: JSON.stringify({}),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors de l'ascension")
+      handleHttpError(res, {}, i18n.t('collection:apiTitles.operations.ascend'))
     }
     return res.json()
   },

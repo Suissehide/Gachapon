@@ -9,5 +9,15 @@
     "engagedNote_other": " · {{count}} cartes ignorées car engagées dans ton duel",
     "message_one": "{{count}} carte recyclée → {{dust}} poussière{{engagedNote}}",
     "message_other": "{{count}} cartes recyclées → {{dust}} poussière{{engagedNote}}"
+  },
+  "apiTitles": {
+    "operations": {
+      "loadSets": "Erreur lors de la récupération des sets",
+      "loadCards": "Erreur lors de la récupération des cartes",
+      "loadCollection": "Erreur lors de la récupération de la collection",
+      "convertToDust": "Erreur lors de la conversion en poussière",
+      "levelUp": "Erreur lors du level up",
+      "ascend": "Erreur lors de l'ascension"
+    }
   }
 }

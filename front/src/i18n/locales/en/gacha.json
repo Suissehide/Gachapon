@@ -1,0 +1,11 @@
+{
+  "apiTitles": {
+    "operations": {
+      "loadTokenBalance": "Error loading the token balance",
+      "pull": "Error during the pull",
+      "loadHistory": "Error loading the history",
+      "loadFeed": "Error loading the feed",
+      "loadDropRates": "Error loading the drop rates"
+    }
+  }
+}

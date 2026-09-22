@@ -9,5 +9,15 @@
     "engagedNote_other": " · {{count}} cards skipped, engaged in your duel",
     "message_one": "{{count}} card recycled → {{dust}} dust{{engagedNote}}",
     "message_other": "{{count}} cards recycled → {{dust}} dust{{engagedNote}}"
+  },
+  "apiTitles": {
+    "operations": {
+      "loadSets": "Error loading the sets",
+      "loadCards": "Error loading the cards",
+      "loadCollection": "Error loading the collection",
+      "convertToDust": "Error converting to dust",
+      "levelUp": "Error leveling up",
+      "ascend": "Error ascending"
+    }
   }
 }
