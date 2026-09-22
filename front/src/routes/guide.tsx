@@ -992,29 +992,34 @@ function GuidePage() {
             </Section>
 
             {/* Classements */}
-            <Section id="classements" icon={Crown} title="Classements">
+            <Section
+              id="classements"
+              icon={Crown}
+              title={t('sectionLabels.classements')}
+            >
               <p>
-                Les <strong className="text-foreground">classements</strong> te
-                situent face aux autres joueurs sur trois axes :
+                <Trans
+                  t={t}
+                  i18nKey="sections.classements.intro"
+                  components={{
+                    strong: <strong className="text-foreground" />,
+                  }}
+                />
               </p>
               <div className="space-y-2 mt-1">
                 <div className="flex items-start gap-2">
-                  <Pill>Collectionneurs</Pill>
+                  <Pill>{t('sections.classements.collectors.title')}</Pill>
                   <span>
-                    Classe par taux de complétion, cartes distinctes et
-                    variantes.
+                    {t('sections.classements.collectors.description')}
                   </span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <Pill>Équipes</Pill>
-                  <span>Classe les équipes par complétion collective.</span>
+                  <Pill>{t('sections.classements.teams.title')}</Pill>
+                  <span>{t('sections.classements.teams.description')}</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <Pill>Combats</Pill>
-                  <span>
-                    Classe par chapitre et étape les plus avancés atteints en
-                    campagne.
-                  </span>
+                  <Pill>{t('sections.classements.combat.title')}</Pill>
+                  <span>{t('sections.classements.combat.description')}</span>
                 </div>
               </div>
             </Section>

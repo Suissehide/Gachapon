@@ -204,6 +204,21 @@
       "claimBullet": "Claim them one by one, or all at once — quest rewards are claimed separately, from the Quests page.",
       "cardBullet": "Some contain a <strong>card</strong> revealed when you claim it.",
       "info": "Remember to go claim them: the bell's badge shows how many rewards are waiting for you."
+    },
+    "classements": {
+      "intro": "<strong>Leaderboards</strong> show where you stand against other players, across three categories:",
+      "collectors": {
+        "title": "Collectors",
+        "description": "Ranks by completion rate, distinct cards, and variants."
+      },
+      "teams": {
+        "title": "Teams",
+        "description": "Ranks teams by collective completion."
+      },
+      "combat": {
+        "title": "Combat",
+        "description": "Ranks by the furthest chapter and stage reached in the campaign."
+      }
     }
   }
 }

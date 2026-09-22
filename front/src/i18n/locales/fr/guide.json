@@ -204,6 +204,21 @@
       "claimBullet": "Réclame-les une par une, ou tout d'un coup — les récompenses de quête se réclament séparément, depuis la page Quêtes.",
       "cardBullet": "Certaines contiennent une <strong>carte</strong> révélée à la réclamation.",
       "info": "Pense à passer les récupérer : la pastille de la cloche t'indique combien de récompenses t'attendent."
+    },
+    "classements": {
+      "intro": "Les <strong>classements</strong> te situent face aux autres joueurs sur trois axes :",
+      "collectors": {
+        "title": "Collectionneurs",
+        "description": "Classe par taux de complétion, cartes distinctes et variantes."
+      },
+      "teams": {
+        "title": "Équipes",
+        "description": "Classe les équipes par complétion collective."
+      },
+      "combat": {
+        "title": "Combats",
+        "description": "Classe par chapitre et étape les plus avancés atteints en campagne."
+      }
     }
   }
 }
