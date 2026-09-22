@@ -75,5 +75,11 @@
   },
   "form": {
     "submitting": "Submitting..."
+  },
+  "table": {
+    "results_one": "result",
+    "results_other": "results",
+    "emptyTitle": "No data",
+    "emptyHint": "No result to display"
   }
 }

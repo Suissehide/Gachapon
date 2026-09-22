@@ -25,7 +25,11 @@
       "cancelDuel": "Cancelling the duel",
       "getQuote": "Computing the odds",
       "placeBet": "Placing the bet"
-    }
+    },
+    "invalidOpponentMessage": "This opponent is not part of the team.",
+    "oddsUnavailableMessage": "This target is not part of the team.",
+    "wagerNotPossibleMessage": "Stake out of bounds, or a side that would pay nothing.",
+    "betNotPossibleMessage": "Stake, target or number of open bets: the server refused this bet."
   },
   "pullsLeft_one": "{{count}} pull left",
   "pullsLeft_other": "{{count}} pulls left"

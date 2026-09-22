@@ -10,12 +10,25 @@ import {
 
 import i18n from '../i18n/index.ts'
 
+/**
+ * Options de rareté des `<Select>` d'administration. Les libellés étaient
+ * restés en ANGLAIS (« Common », « Uncommon »…) et s'affichaient tels quels
+ * dans l'interface française, sur six écrans — un défaut que le garde-fou ne
+ * pouvait structurellement pas voir : ce sont des libellés d'UN SEUL MOT,
+ * anglais, donc rien à détecter (voir la limite documentée dans
+ * `scripts/check-i18n-hardcoded.mjs`).
+ *
+ * Branché sur `common:rarity.*` (accord au FÉMININ — « Commune », « Peu
+ * commune ») et non sur `common:cardRarity.*` (masculin — « Commun »), parce
+ * que ces options qualifient une « rareté ». Les deux jeux coexistent
+ * volontairement, voir la note du rapport de tâche 6.
+ */
 export const RARITY_OPTIONS = [
-  { value: 'COMMON', label: 'Common' },
-  { value: 'UNCOMMON', label: 'Uncommon' },
-  { value: 'RARE', label: 'Rare' },
-  { value: 'EPIC', label: 'Epic' },
-  { value: 'LEGENDARY', label: 'Legendary' },
+  { value: 'COMMON', label: i18n.t('common:rarity.common') },
+  { value: 'UNCOMMON', label: i18n.t('common:rarity.uncommon') },
+  { value: 'RARE', label: i18n.t('common:rarity.rare') },
+  { value: 'EPIC', label: i18n.t('common:rarity.epic') },
+  { value: 'LEGENDARY', label: i18n.t('common:rarity.legendary') },
 ]
 
 export const RARITY_COLORS: Record<string, string> = {

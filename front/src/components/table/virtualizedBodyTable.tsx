@@ -8,6 +8,7 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import type React from 'react'
 import { type RefObject, useEffect } from 'react'
 
+import i18n from '../../i18n/index.ts'
 import type { CustomMeta } from './reactTable.tsx'
 
 type VirtualizedBodyTableProps<TData> = {
@@ -57,10 +58,10 @@ export function VirtualizedBodyTable<TData>({
           >
             <div className="flex flex-col items-center gap-1.5">
               <p className="text-sm font-medium text-text-light">
-                Aucune donnée
+                {i18n.t('common:table.emptyTitle')}
               </p>
               <p className="text-xs text-text-light/50">
-                Aucun résultat à afficher
+                {i18n.t('common:table.emptyHint')}
               </p>
             </div>
           </td>

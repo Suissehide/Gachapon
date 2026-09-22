@@ -237,30 +237,46 @@ export type WagersView = {
 // d'erreurs du back (`back/src/main/infra/i18n/error-messages/`, domaine
 // `wagers.*`) — voir la note équivalente sur `teams.api.ts` et
 // task-6-report.md. `handleHttpErrorFromServer` lit désormais le message
-// déjà résolu par le serveur ; seuls les TITRES de toast restent ici
-// (`wagers:apiTitles.*`).
+// déjà résolu par le serveur ; les TITRES de toast restent ici
+// (`wagers:apiTitles.*`), ET les messages de 400 : ce statut est aussi celui
+// de la validation Zod (`teams.schema.ts` : `z.string().min(2).max(50)` sur
+// le nom d'équipe), dont le message — « body/name Too small: … » — est
+// technique et unilingue anglais. Un statut n'est déclaré « serveur » que
+// s'il ne peut venir QUE d'un Boom de domaine.
 const PROPOSE_DUEL_ERRORS = {
   403: i18n.t('wagers:apiTitles.accessDenied'),
   409: i18n.t('wagers:apiTitles.duelInProgress'),
-  400: i18n.t('wagers:apiTitles.invalidOpponent'),
+  400: {
+    title: i18n.t('wagers:apiTitles.invalidOpponent'),
+    message: i18n.t('wagers:apiTitles.invalidOpponentMessage'),
+  },
 }
 
 const BET_QUOTE_ERRORS = {
   403: i18n.t('wagers:apiTitles.accessDenied'),
-  400: i18n.t('wagers:apiTitles.oddsUnavailable'),
+  400: {
+    title: i18n.t('wagers:apiTitles.oddsUnavailable'),
+    message: i18n.t('wagers:apiTitles.oddsUnavailableMessage'),
+  },
   404: i18n.t('wagers:apiTitles.oddsUnavailable'),
 }
 
 const JOIN_BET_ERRORS = {
   409: i18n.t('wagers:apiTitles.bettingClosed'),
   402: i18n.t('wagers:apiTitles.insufficientDust'),
-  400: i18n.t('wagers:apiTitles.wagerNotPossible'),
+  400: {
+    title: i18n.t('wagers:apiTitles.wagerNotPossible'),
+    message: i18n.t('wagers:apiTitles.wagerNotPossibleMessage'),
+  },
 }
 
 const PLACE_BET_ERRORS = {
   403: i18n.t('wagers:apiTitles.accessDenied'),
   402: i18n.t('wagers:apiTitles.insufficientDust'),
-  400: i18n.t('wagers:apiTitles.betNotPossible'),
+  400: {
+    title: i18n.t('wagers:apiTitles.betNotPossible'),
+    message: i18n.t('wagers:apiTitles.betNotPossibleMessage'),
+  },
 }
 
 export const WagersApi = {

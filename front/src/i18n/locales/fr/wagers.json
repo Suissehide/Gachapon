@@ -25,7 +25,11 @@
       "cancelDuel": "Annulation du duel",
       "getQuote": "Calcul de la cote",
       "placeBet": "Placement du pari"
-    }
+    },
+    "invalidOpponentMessage": "Cet adversaire ne fait pas partie de l'équipe.",
+    "oddsUnavailableMessage": "Cette cible ne fait pas partie de l'équipe.",
+    "wagerNotPossibleMessage": "Mise hors bornes, ou camp qui ne rapporterait rien.",
+    "betNotPossibleMessage": "Mise, cible ou nombre de paris déjà ouverts : le serveur a refusé ce pari."
   },
   "pullsLeft_one": "{{count}} tirage restant",
   "pullsLeft_other": "{{count}} tirages restants"

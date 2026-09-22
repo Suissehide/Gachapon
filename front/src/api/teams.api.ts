@@ -28,8 +28,9 @@ export type {
  * une traduction manuelle maintenue en parallèle d'un catalogue déjà
  * bilingue, condamnée à diverger. `handleHttpErrorFromServer` lit le
  * `message` que le serveur a déjà résolu dans la langue de la requête (voir
- * `withAcceptLanguage` dans `i18n/index.ts`) ; seuls les TITRES de toast,
- * qui n'ont pas d'équivalent côté back, restent traduits ici
+ * `withAcceptLanguage` dans `i18n/index.ts`) ; les TITRES de toast, qui
+ * n'ont pas d'équivalent côté back, restent traduits ici — ET les 400,
+ * partagés avec la validation Zod (voir la note sur chaque site)
  * (`team:apiTitles.*`, voir task-6-report.md).
  */
 export const TeamsApi = {
@@ -73,7 +74,10 @@ export const TeamsApi = {
       await handleHttpErrorFromServer(
         res,
         {
-          400: i18n.t('team:apiTitles.invalidName'),
+          400: {
+            title: i18n.t('team:apiTitles.invalidName'),
+            message: i18n.t('team:apiTitles.invalidNameMessage'),
+          },
           409: i18n.t('team:apiTitles.nameTaken'),
         },
         i18n.t('team:apiTitles.operations.createTeam'),
@@ -95,7 +99,10 @@ export const TeamsApi = {
       await handleHttpErrorFromServer(
         res,
         {
-          400: i18n.t('team:apiTitles.invalidData'),
+          400: {
+            title: i18n.t('team:apiTitles.invalidData'),
+            message: i18n.t('team:apiTitles.invalidDataMessage'),
+          },
           403: i18n.t('team:apiTitles.actionNotAllowed'),
           409: i18n.t('team:apiTitles.nameTaken'),
         },
@@ -134,7 +141,10 @@ export const TeamsApi = {
       await handleHttpErrorFromServer(
         res,
         {
-          400: i18n.t('team:apiTitles.userNotFound'),
+          400: {
+            title: i18n.t('team:apiTitles.userNotFound'),
+            message: i18n.t('team:apiTitles.userNotFoundMessage'),
+          },
           403: i18n.t('team:apiTitles.actionNotAllowed'),
           404: i18n.t('team:apiTitles.userNotFound'),
           409: i18n.t('team:apiTitles.alreadyInvited'),
@@ -381,7 +391,12 @@ export const TeamsApi = {
     if (!res.ok) {
       await handleHttpErrorFromServer(
         res,
-        { 400: i18n.t('team:apiTitles.invalidSearch') },
+        {
+          400: {
+            title: i18n.t('team:apiTitles.invalidSearch'),
+            message: i18n.t('team:apiTitles.invalidSearchMessage'),
+          },
+        },
         i18n.t('team:apiTitles.operations.searchUsers'),
       )
     }

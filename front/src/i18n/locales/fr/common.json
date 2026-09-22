@@ -75,5 +75,11 @@
   },
   "form": {
     "submitting": "Envoi..."
+  },
+  "table": {
+    "results_one": "résultat",
+    "results_other": "résultats",
+    "emptyTitle": "Aucune donnée",
+    "emptyHint": "Aucun résultat à afficher"
   }
 }

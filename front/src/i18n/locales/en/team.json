@@ -81,7 +81,11 @@
     },
     "raidBossDefeated": "Boss defeated",
     "raidNoAttacksLeft": "No attacks left today",
-    "raidComeBackTomorrowMessage": "Come back tomorrow to attack again."
+    "raidComeBackTomorrowMessage": "Come back tomorrow to attack again.",
+    "invalidNameMessage": "Check your team name.",
+    "invalidDataMessage": "Check the information you entered.",
+    "userNotFoundMessage": "No account matches this search.",
+    "invalidSearchMessage": "The search term is too short or invalid."
   },
   "recruitmentApi": {
     "applyImpossibleTitle": "Can't apply",

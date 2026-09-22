@@ -100,8 +100,7 @@ const FRENCH_WORDS = [
   // scan déclarait propre.
   'erreur', // EN: error
   'lors', // aucun équivalent EN
-  'chargement', // EN: loading
-  'suppression', // EN: deletion
+  'chargement', // EN: loading // EN: deletion
   'enregistrement', // EN: saving
   'echec', // EN: failure — « échec » est déjà pris par l'accent ; la forme
   // sans accent garde le filet en cas de coquille
@@ -115,9 +114,10 @@ const FRENCH_WORDS = [
   'niveau', // EN: level
   'joueur',
   'joueurs',
-  'carte',
   'cartes',
-  'jour',
+  'jour', // se déclencherait sur « jour fixe » / « soup du jour », emprunts
+  // anglais rares ; gardé pour un apport marginal de 4, le seul des cinq
+  // mots à risque qui en avait un
   'jours',
   'autre',
   'autres',
@@ -134,7 +134,6 @@ const FRENCH_WORDS = [
   'existant',
   'trop',
   'tentatives',
-  'avant',
   'connecter',
   'campagne', // EN: campaign (orthographe différente)
   'tirage',
@@ -142,7 +141,6 @@ const FRENCH_WORDS = [
   'variantes',
   'ajouter',
   'supprimer',
-  'modifier',
   'afficher',
   'enregistrer',
   'envoyer',
@@ -168,16 +166,21 @@ const FRENCH_WORDS = [
   'manquant',
   'pleine',
 
-  // --- mots COURTS (tâche 6, round 1) ---
-  // Deux seulement ont survécu, et pas au flair : chacun a été mesuré deux
-  // fois. (1) faux positifs — on relance le scan complet et on lit les
-  // lignes NOUVELLEMENT signalées ; (2) gain réel — on retire le mot de la
-  // liste et on compte ce qu'on perd sur les 561 chaînes françaises déjà
-  // extraites dans `locales/fr/`. Un mot qui ne fait perdre personne ne
-  // sert à rien, quel que soit son air français.
-  'du', // gain 39 chaînes sur 561 — de loin le plus rentable de la liste ;
+  // --- mots COURTS (tâche 6, rounds 1 et 2) ---
+  // Deux seulement ont survécu, et pas au flair. Chaque candidat a été jugé
+  // sur trois mesures, pas une :
+  //   (1) FAUX POSITIFS — scan complet, lecture des lignes NOUVELLEMENT
+  //       signalées, une par une ;
+  //   (2) APPORT SEUL — le mot ajouté à la liste d'ORIGINE (32 mots) : ce
+  //       qu'il rattrape que personne d'autre ne rattrapait ;
+  //   (3) APPORT MARGINAL — le mot retiré de la liste FINALE : ce qu'on perd
+  //       vraiment à s'en passer, une fois tout le reste en place.
+  // Les deux derniers divergent beaucoup et répondent à des questions
+  // différentes : (2) dit si le mot est un bon détecteur de français, (3) dit
+  // s'il mérite sa ligne dans CETTE liste. Ne pas citer l'un pour l'autre.
+  'du', // seul +36 · marginal +6 — le plus rentable des mots courts ;
   // 23 lignes nouvelles au scan, toutes du français réel
-  'ou', // gain 1 ; 7 lignes nouvelles, toutes du français réel
+  'ou', // seul +3 · marginal +2 ; 7 lignes nouvelles, toutes du français réel
 ]
 
 /**
@@ -192,20 +195,24 @@ const FRENCH_WORDS = [
  *           c'est un nom de méthode JS. Et « on » est un mot anglais.
  *   'aux' → FAUX POSITIF DÉMONTRÉ sur `'aux-input'` (comme « aux cable »,
  *           « aux port ») : abréviation anglaise courante d'auxiliary, et
- *           exactement la même forme que `sans-serif`. Gain mesuré : 0.
+ *           exactement la même forme que `sans-serif`. Apport seul : 0.
  *   'si'  → FAUX POSITIF DÉMONTRÉ sur `'SI units'` (et Si, le silicium).
- *           Gain mesuré : 0.
- *   'ce'  → FAUX POSITIF DÉMONTRÉ sur `'CE marking'`. Gain mesuré : 1.
- *   'au'  → symbole chimique de l'or. Gain mesuré : 1. Pas de contrepartie.
- *   'ne', 'pas' → aucun faux positif trouvé, mais gain mesuré NUL : toute
+ *           Apport seul : 0.
+ *   'ce'  → FAUX POSITIF DÉMONTRÉ sur `'CE marking'`. Apport seul : 1.
+ *   'au'  → symbole chimique de l'or. Apport seul : 1.
+ *   'ne', 'pas' → aucun faux positif trouvé, mais apport seul NUL : toute
  *           chaîne qui les contient porte déjà un autre mot de la liste.
  *           Du risque sans bénéfice.
- *   'la', 'le', 'et', 'un' → écartés sur le critère (« un mot qui n'existe
- *           pas en anglais, ou qui s'y écrit autrement ») : « LA »,
- *           « et al. », « Le » dans un patronyme, « un- » en préfixe.
- *           Mesuré quand même : 0 faux positif sur ce dépôt AUJOURD'HUI
- *           (32 et 22 lignes nouvelles pour 'la' et 'et'). À rouvrir avec
- *           cette mesure si le besoin revient, pas à l'aveugle.
+ *   'la'  → rejeté sur le CRITÈRE seulement : « LA » (Los Angeles), « la »
+ *           (la note de musique) sont de l'anglais courant. ATTENTION, ne pas
+ *           le croire sans valeur pour autant : son apport SEUL est de **35**,
+ *           soit quasiment celui de `du` (36) — c'est le meilleur mot court
+ *           de la langue après `du`. Son apport marginal, lui, tombe à 7.
+ *           Si une session future veut le réhabiliter, le bon geste est de
+ *           lui écrire une EXCEPTION (comme `sans-serif` en a une), pas de
+ *           l'ajouter nu.
+ *   'et', 'le', 'un' → même critère (« et al. », « Le » patronymique,
+ *           « un- » préfixe anglais). Apport seul faible pour 'et' (3).
  *
  * Mots écartés parce qu'ils s'écrivent PAREIL en anglais — les ajouter
  * signalerait de l'anglais légitime : 'impossible', 'combat', 'modification',
@@ -213,16 +220,41 @@ const FRENCH_WORDS = [
  * charger), 'vide' (vide supra), 'machines', 'notifications', 'admin',
  * 'config', 'stats', 'raid', 'nature', 'rare'.
  *
- * LIMITE STRUCTURELLE, mesurée. Sur les 561 chaînes françaises réellement
- * extraites dans `src/i18n/locales/fr/`, ce détecteur en reconnaît 431
- * (76,8 %), contre 321 (57,2 %) avant ce round. Les 130 restantes sont
- * presque toutes des LIBELLÉS D'UN SEUL MOT dont l'orthographe est la même
- * dans les deux langues : « Rare », « Nature », « Admin », « Config »,
+ * Quatre mots ont été RETIRÉS au round 2 après avoir été testés contre une
+ * fixture d'anglais technique réaliste — ils violaient ce même critère :
+ *   'modifier'    → « access modifier »
+ *   'suppression' → « noise suppression »
+ *   'avant'       → « avant-garde » (exactement le motif de `sans-serif`,
+ *                   qui a dû se payer une exception)
+ *   'carte'       → « à la carte »
+ * Leur apport marginal était de 0 pour les quatre : les retirer ne coûte
+ * rien. Le pluriel 'cartes' reste, lui : apport 1, et « à la carte » est au
+ * singulier. Garder une fixture d'anglais technique sous la main et la
+ * repasser à chaque ajout — c'est elle qui a fait tomber ces quatre-là, pas
+ * la relecture.
+ *
+ * LIMITE STRUCTURELLE, mesurée. Sur les 587 chaînes françaises réellement
+ * extraites dans `src/i18n/locales/fr/`, ce détecteur en reconnaît 456
+ * (77,7 %), contre 332 (56,6 %) avec la liste d'origine (32 mots → 96). Les
+ * 131 restantes
+ * sont presque toutes des LIBELLÉS D'UN SEUL MOT dont l'orthographe est la
+ * même dans les deux langues : « Rare », « Nature », « Admin », « Config »,
  * « Stats », « Raid », « Machines », « Notifications », « Boutique »,
  * « Dashboard ». Aucune liste de mots ne peut les distinguer de l'anglais.
  * **Ce script attrape des phrases, pas des étiquettes** : un `OK` sur un
  * répertoire ne prouve pas l'absence de français, il prouve l'absence de
- * français *en phrases*. Relire les libellés courts à la main.
+ * français *en phrases*. Relire les libellés courts à la main — c'est ainsi
+ * qu'a été trouvé `RARITY_OPTIONS`, qui affichait « Common / Uncommon /
+ * Epic / Legendary » en français sur six écrans sans que rien ne crie.
+ *
+ * ET CE 77,7 % EST UNE BORNE OPTIMISTE, pas un taux de couverture. Le
+ * corpus de validation, c'est `locales/fr/` : le français que nous avons
+ * DÉJÀ SU EXTRAIRE. Il ne contient, par construction, rien de ce que
+ * personne n'a jamais repéré — ni les tournures qu'aucune tâche n'a encore
+ * lues, ni les libellés d'un mot qui n'ont jamais été reconnus comme du
+ * français. Mesurer un détecteur sur ce qu'il a aidé à trouver le flatte.
+ * Le vrai rappel sur du français inconnu est inférieur ; de combien, ce
+ * corpus ne peut pas le dire.
  */
 
 function buildWordRegex() {
@@ -416,11 +448,55 @@ function tryConsumeRegex(source, start) {
  *     avant `//`, donc ce cas ne devrait pas se produire dans du code réel.
  *   - **template literals** : le contenu entre backticks est traité comme
  *     opaque, donc un commentaire à l'intérieur d'une expression `${...}`
- *     imbriquée n'est pas retiré. Pas de cas trouvé dans ce dépôt à ce jour.
+ *     imbriquée n'est pas retiré. Un cas EXISTE dans ce dépôt —
+ *     `components/shared/tcg-card/TcgCardFace.tsx:354`, 4 occurrences
+ *     signalées à tort. Faux positif assumé, pas un faux négatif.
  * Le troisième angle mort initial (`//` à l'intérieur d'un littéral regex,
  * `/^\/\//`) est traité via `canStartRegex`/`tryConsumeRegex` ci-dessus —
  * heuristique basée sur le dernier token, pas un vrai lexer JS, dont les
  * limites sont documentées sur `canStartRegex`.
+ *
+ * ---
+ *
+ * L'APOSTROPHE DU FRANÇAIS EN TEXTE JSX (corrigé, tâche 6 round 2). C'était
+ * l'angle mort le plus grave du lot, et il invalidait une garantie écrite
+ * ici même — « aucun texte n'est perdu », qui était FAUSSE. Dans
+ * `<span>Retour à l'équipe</span>`, le `'` de `l'` n'ouvre pas une chaîne :
+ * c'est du texte. L'ancien tokenizer entrait pourtant en état `singleQuote`
+ * et n'en ressortait qu'au `'` suivant — potentiellement la fin du fichier.
+ * **24 fichiers sur 401** finissaient ainsi désynchronisés. Les deux
+ * directions ont été reproduites, puis mesurées :
+ *
+ *   - FAUX POSITIF (se produit vraiment ici) : les commentaires cessent
+ *     d'être retirés, donc du français de COMMENTAIRE est signalé comme du
+ *     texte en dur. 14 fichiers, 145 occurrences fantômes — dont 51 lignes
+ *     dans `RaidPanel.tsx`, `DuelResultPopup.tsx`, `ContributionsTable.tsx`,
+ *     toutes vérifiées une par une comme étant des lignes de commentaire.
+ *   - FAUX NÉGATIF (démontré sur fixture, absent du dépôt aujourd'hui) : si
+ *     une vraie chaîne `'…'` vient après, son quote OUVRANT ferme la chaîne
+ *     fantôme, donc son CONTENU est lu comme du code — et un `//` qui s'y
+ *     trouve déclenche un commentaire qui blanchit la fin de la ligne.
+ *     Fixture vérifiée : `{cond ? 'Erreur 50//50 lors du chargement des
+ *     cartes' : null}` après une ligne portant `l'accueil` ne remontait
+ *     qu'UNE occurrence (« Erreur ») au lieu de SIX — cinq mots français
+ *     effacés. Après correction : 6. Mesuré sur le dépôt entier, ce sens ne
+ *     se matérialise nulle part aujourd'hui (0 ligne gagnée) : c'est une
+ *     bombe amorcée, pas une fuite en cours.
+ *
+ * La correction tient en une règle, la même que `tryConsumeRegex` applique
+ * déjà : **une chaîne `'…'` ou `"…"` ne peut pas contenir un saut de ligne
+ * nu**, donc en rencontrer un prouve que l'état était faux — on repasse en
+ * `code`. Les backticks franchissent légitimement les lignes et ne sont pas
+ * touchés. Après correction, 0 fichier sur 401 termine hors de l'état
+ * `code`.
+ *
+ * Ce que ce tokenizer garantit RÉELLEMENT, maintenant (remplace la garantie
+ * fausse) : **aucune désynchronisation ne franchit une fin de ligne**, sauf
+ * à l'intérieur d'un template literal, où c'est voulu. Une mauvaise
+ * classification reste donc bornée à la ligne où elle démarre — elle peut y
+ * faire crier le script à tort (`data.in / total // commentaire`, voir
+ * `canStartRegex`) ou y blanchir la fin d'une ligne, mais elle ne peut plus
+ * contaminer le reste du fichier.
  */
 function stripComments(source) {
   let out = ''
@@ -511,6 +587,23 @@ function stripComments(source) {
     // texte qu'on veut pouvoir détecter), en sautant correctement les
     // échappements pour ne pas fermer la chaîne trop tôt sur un `\'` etc.
     const closing = state === 'singleQuote' ? "'" : state === 'doubleQuote' ? '"' : '`'
+
+    // RESYNCHRONISATION EN FIN DE LIGNE. Une chaîne `'…'` ou `"…"` de JS ne
+    // peut PAS contenir un saut de ligne nu : en rencontrer un prouve que ce
+    // qui a ouvert l'état n'était pas un délimiteur de chaîne. Le cas qui
+    // arrive vraiment, et massivement, c'est l'APOSTROPHE DU FRANÇAIS en
+    // texte JSX brut — `<span>Retour à l'équipe</span>` — où `l'` faisait
+    // entrer le tokenizer en `singleQuote` pour tout le RESTE DU FICHIER.
+    // Même raisonnement que `tryConsumeRegex`, qui rend `null` sur un `\n`
+    // pour la même raison. Les backticks, eux, franchissent légitimement les
+    // lignes : l'état `template` n'est pas concerné.
+    if (c === '\n' && state !== 'template') {
+      state = 'code'
+      out += '\n'
+      i += 1
+      continue
+    }
+
     if (c === '\\') {
       out += c + c2
       i += 2

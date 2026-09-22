@@ -24,7 +24,7 @@ import {
   useState,
 } from 'react'
 
-import { currentLocale } from '../../i18n/index.ts'
+import i18n, { currentLocale } from '../../i18n/index.ts'
 import { formatNumber, safeParse } from '../../libs/utils.ts'
 import {
   dateFilterFn,
@@ -216,7 +216,11 @@ export function ReactTable<TData extends { id: string }>({
           {formatNumber(totalRows, currentLocale())}
         </span>
         <span className="text-[11px] text-text-light">
-          {totalRows > 1 ? 'résultats' : 'résultat'}
+          {/* Pluriel délégué à i18next plutôt qu'à un ternaire `> 1` : la
+              règle française met 0 au singulier (« 0 résultat »), l'anglaise
+              au pluriel (« 0 results »). Voir la note sur les pluriels dans
+              `i18n/index.ts`. */}
+          {i18n.t('common:table.results', { count: totalRows })}
         </span>
       </div>
     </div>
