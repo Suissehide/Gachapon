@@ -9,6 +9,7 @@ import type { ErrorMessageKey } from './keys'
 export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'user.notFound': 'User not found',
   'user.usernameTaken': 'This username is already taken',
+  'user.unknownUsernameFallback': 'Unknown',
   'team.maxTeamsPerUser': 'Maximum {{max}} teams per user',
 
   // --- auth ---
@@ -17,6 +18,7 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
     'An account is pending verification for this email',
   'auth.invalidCredentials': 'Invalid credentials',
   'auth.emailNotVerified': 'EMAIL_NOT_VERIFIED',
+  'auth.emailNotVerifiedMessage': 'Email not verified',
   'auth.invalidOrExpiredToken': 'Invalid or expired token',
   'auth.invalidOrExpiredRefreshToken': 'Invalid or expired refresh token',
   'auth.refreshTokenRevoked': 'Refresh token revoked',
@@ -60,6 +62,7 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
     'Not enough dust (need {{need}}, have {{have}})',
   'media.imageMustBeJpegPngWebp': 'Image must be jpeg, png or webp',
   'media.imageTooLarge': 'Image too large (max 5 MB)',
+  'media.uploadFailed': 'Upload failed',
   'cards.imageOrUrlRequired': 'Either an image file or imageUrl is required',
   'cards.noImageProvided': 'No image provided',
 
@@ -206,6 +209,8 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'raid.unavailable': 'Raid unavailable right now, try again later',
   'raid.bossNotFoundSeedFirst': 'Raid boss not found — run the seed',
   'raid.tierNotFound': 'Tier not found',
+  'raid.formerMemberFallback': 'Former member',
+  'raid.adminPatchNothingToUpdate': 'Nothing to update',
 
   // --- wagers (bets and duels) ---
   'wagers.stakeMustBeInteger': 'The stake must be a whole number of dust',
@@ -287,6 +292,8 @@ export const EN_MESSAGES: Record<ErrorMessageKey, string> = {
   'media.notFound': 'Media not found',
   'media.nameAlreadyUsed': 'This name is already in use',
   'admin.achievementNotFound': 'Achievement not found',
+  'achievements.rarityOrVariantRequired':
+    'rarity or variant required (at least one)',
   'admin.setNotFound': 'Set not found',
   'admin.questNotFound': 'Quest not found',
 

@@ -1,7 +1,10 @@
 import { z } from 'zod/v4'
 
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
-import { enemyNameFromAppearance } from '../campaign/enemy-appearance'
+import {
+  enemyNameFromAppearance,
+  genericEnemyName,
+} from '../campaign/enemy-appearance'
 import { computeEquippedCardStats } from '../combat/equipped-card-stats'
 import type { Substat } from '../equipment/equipment-progression'
 import type { SetDefinition, SetKey } from '../equipment/set-bonuses'
@@ -144,7 +147,7 @@ export function buildEnemySimUnits(
     })
     return {
       id: `B${idx}`,
-      name: enemyNameFromAppearance(e.appearance) ?? `Ennemi ${idx + 1}`,
+      name: enemyNameFromAppearance(e.appearance) ?? genericEnemyName(idx + 1),
       imageUrl: opts.resolveImage(e.appearance),
       hp: stats.hp,
       atk: stats.atk,

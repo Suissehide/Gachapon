@@ -32,14 +32,16 @@ async function processUploadPart(
     await drainFilePart(part)
     return {
       ok: false,
-      reason: 'Format non supporté (jpeg, png, webp uniquement)',
+      // Même clé que `uploadCardImage` (card-image.helpers.ts) — c'est le
+      // même contrôle, dupliqué ici pour drainer le flux avant l'échec.
+      reason: errorMessage('media.imageMustBeJpegPngWebp'),
     }
   }
 
   const buffer = await readFilePart(part)
 
   if (part.file.truncated || buffer.length > MAX_IMAGE_SIZE) {
-    return { ok: false, reason: 'Fichier trop grand (max 5 MB)' }
+    return { ok: false, reason: errorMessage('media.imageTooLarge') }
   }
 
   const name = filename.replace(/\.[^.]+$/, '')
@@ -63,7 +65,7 @@ async function processUploadPart(
       },
     }
   } catch {
-    return { ok: false, reason: "Erreur lors de l'upload" }
+    return { ok: false, reason: errorMessage('media.uploadFailed') }
   }
 }
 

@@ -1,5 +1,6 @@
 import { z } from 'zod/v4'
 
+import { errorMessage } from '../../../../infra/i18n/error-messages'
 import { towerElementSchema } from './tower.schema'
 
 export const teamIdParamSchema = z.object({ id: z.string().uuid() })
@@ -24,7 +25,11 @@ export const teamInviteBodySchema = z
     email: z.string().email().optional(),
   })
   .refine((b) => b.username || b.email, {
-    message: 'Provide username or email',
+    // `error` (pas `message`) : une fonction, résolue à chaque validation —
+    // donc dans la locale DE LA REQUÊTE, pas figée à l'import du module.
+    // Même clé que le garde-fou identique de `team.domain.ts:266`
+    // (`inviteMember`) — même validation, deux endroits.
+    error: () => errorMessage('team.provideEmailOrUsername'),
   })
 
 /**
@@ -108,12 +113,19 @@ export const teamPerksResponseSchema = z.object({
 
 export const teamMemberRoleSchema = z.enum(['OWNER', 'ADMIN', 'MEMBER'])
 
-/** Les libellés français produits par `roleLabel` — jamais une chaîne libre. */
+/**
+ * Les 8 libellés (4 par langue) produits par `roleLabel` — jamais une chaîne
+ * libre, voir `TeamRoleLabel` (`team-progression-rules.ts`).
+ */
 const teamMemberRoleLabelSchema = z.enum([
   'Chef',
   'Officier',
   'Membre',
   'Recrue',
+  'Leader',
+  'Officer',
+  'Member',
+  'Recruit',
 ])
 
 const teamUserMiniSchema = z.object({

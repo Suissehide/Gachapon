@@ -51,6 +51,7 @@ import { deriveClearFlags } from './campaign-clear-flags'
 import { computeTeamPower, unitPower } from './campaign-power'
 import {
   enemyNameFromAppearance,
+  genericEnemyName,
   resolveEnemyImageUrl,
 } from './enemy-appearance'
 
@@ -1437,7 +1438,8 @@ export class CampaignDomain {
       })
       return {
         id: `B${idx}`,
-        name: enemyNameFromAppearance(e.appearance) ?? `Ennemi ${idx + 1}`,
+        name:
+          enemyNameFromAppearance(e.appearance) ?? genericEnemyName(idx + 1),
         imageUrl: this.#resolveEnemyImage(e.appearance),
         hp: stats.hp,
         atk: stats.atk,

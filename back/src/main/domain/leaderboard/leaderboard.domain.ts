@@ -1,3 +1,4 @@
+import { errorMessage } from '../../infra/i18n/error-messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type {
   CollectorEntry,
@@ -85,7 +86,7 @@ export class LeaderboardDomain implements ILeaderboardDomain {
         rank,
         user: {
           id: row.userId,
-          username: u?.username ?? 'Unknown',
+          username: u?.username ?? errorMessage('user.unknownUsernameFallback'),
           level: row.level,
           avatar: u?.avatar ?? null,
         },
@@ -369,7 +370,7 @@ export class LeaderboardDomain implements ILeaderboardDomain {
         rank,
         user: {
           id: s.userId,
-          username: u?.username ?? 'Unknown',
+          username: u?.username ?? errorMessage('user.unknownUsernameFallback'),
           level: u?.level ?? 1,
           avatar: u?.avatar ?? null,
         },

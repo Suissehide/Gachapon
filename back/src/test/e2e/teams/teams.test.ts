@@ -686,7 +686,10 @@ describe('PATCH /teams/:id/members/:userId/role', () => {
     const res = await app.inject({
       method: 'GET',
       url: `/teams/${teamId}/members`,
-      headers: { cookie: cookiesOwner },
+      headers: {
+        cookie: cookiesOwner,
+        'accept-language': 'fr-FR,fr;q=0.9',
+      },
     })
     expect(res.statusCode).toBe(200)
     const members = res.json().members as {

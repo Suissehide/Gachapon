@@ -12,6 +12,11 @@
 export const FR_MESSAGES = {
   'user.notFound': 'Utilisateur introuvable',
   'user.usernameTaken': 'Ce pseudo est déjà pris',
+  // Repli d'affichage pour un compte manquant (compte supprimé, membre parti
+  // de l'équipe dont la ligne reste référencée) — jamais une chaîne libre en
+  // dur au call site (voir `leaderboard.domain.ts`, `team.domain.ts`,
+  // `routes/teams/index.ts`).
+  'user.unknownUsernameFallback': 'Inconnu',
   'team.maxTeamsPerUser': 'Maximum {{max}} équipes par utilisateur',
 
   // --- auth ---
@@ -22,6 +27,9 @@ export const FR_MESSAGES = {
   // Code technique lu par le front (voir front/src/api/auth.api.ts), pas un
   // message affiché — identique dans les deux langues, comme tout sentinel.
   'auth.emailNotVerified': 'EMAIL_NOT_VERIFIED',
+  // Celui-ci EST affiché (`routes/auth/login.router.ts`) — distinct du
+  // sentinel ci-dessus, qui ne l'est jamais.
+  'auth.emailNotVerifiedMessage': 'Email non vérifié',
   'auth.invalidOrExpiredToken': 'Token invalide ou expiré',
   'auth.invalidOrExpiredRefreshToken':
     'Jeton de rafraîchissement invalide ou expiré',
@@ -69,6 +77,7 @@ export const FR_MESSAGES = {
   'media.imageMustBeJpegPngWebp':
     'L’image doit être au format jpeg, png ou webp',
   'media.imageTooLarge': 'Image trop volumineuse (5 Mo max)',
+  'media.uploadFailed': "Échec de l'upload",
   'cards.imageOrUrlRequired': 'Un fichier image ou une URL d’image est requis',
   'cards.noImageProvided': 'Aucune image fournie',
 
@@ -230,6 +239,11 @@ export const FR_MESSAGES = {
   'raid.unavailable': 'Raid indisponible pour le moment, réessaie plus tard',
   'raid.bossNotFoundSeedFirst': 'Boss de raid introuvable — lancer le seed',
   'raid.tierNotFound': 'Palier introuvable',
+  // Repli d'affichage pour un membre parti de l'équipe dont la contribution
+  // de raid reste au tableau (`raid.domain.ts#contributions`).
+  'raid.formerMemberFallback': 'Ancien membre',
+  // PATCH admin sans aucun champ renseigné (`admin-raid.schema.ts`).
+  'raid.adminPatchNothingToUpdate': 'Rien à modifier',
 
   // --- wagers (paris et duels) ---
   'wagers.stakeMustBeInteger':
@@ -320,6 +334,10 @@ export const FR_MESSAGES = {
   'media.notFound': 'Média introuvable',
   'media.nameAlreadyUsed': 'Ce nom est déjà utilisé',
   'admin.achievementNotFound': 'Succès introuvable',
+  // Validation du critère OWN_RARITY_COUNT à la création/édition d'un succès
+  // (`domain/achievements/criterion.types.ts`).
+  'achievements.rarityOrVariantRequired':
+    'rarity ou variant requis (au moins un)',
   'admin.setNotFound': 'Set introuvable',
   'admin.questNotFound': 'Quête introuvable',
 

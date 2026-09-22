@@ -1,3 +1,5 @@
+import { getCurrentLocale } from '../../infra/i18n/locale-context'
+
 /**
  * Courbe d'XP exponentielle : passer du niveau n au niveau n+1 coûte
  * `base·n^exp` XP. Contrairement à la courbe joueur (`shared/xp.ts`, arithmétique),
@@ -79,20 +81,41 @@ export function perkEffect(
   return key === 'raid' ? Math.floor(raw) : raw
 }
 
+/**
+ * Les huit valeurs possibles — quatre par langue — que `roleLabel` peut
+ * renvoyer. Un littéral, pas `string` : `teamMemberRoleLabelSchema`
+ * (`teams.schema.ts`) valide la réponse HTTP contre exactement ces valeurs,
+ * jamais une chaîne libre (voir son commentaire).
+ */
+export type TeamRoleLabel =
+  | 'Chef'
+  | 'Officier'
+  | 'Membre'
+  | 'Recrue'
+  | 'Leader'
+  | 'Officer'
+  | 'Member'
+  | 'Recruit'
+
 export function roleLabel(
   role: 'OWNER' | 'ADMIN' | 'MEMBER',
   joinedAt: Date,
   now: Date,
   recruitDays: number,
-): 'Chef' | 'Officier' | 'Membre' | 'Recrue' {
+): TeamRoleLabel {
+  const fr = getCurrentLocale() === 'FR'
   if (role === 'OWNER') {
-    return 'Chef'
+    return fr ? 'Chef' : 'Leader'
   }
   if (role === 'ADMIN') {
-    return 'Officier'
+    return fr ? 'Officier' : 'Officer'
   }
   const elapsedDays = (now.getTime() - joinedAt.getTime()) / 86_400_000
-  return elapsedDays < recruitDays ? 'Recrue' : 'Membre'
+  const isRecruit = elapsedDays < recruitDays
+  if (fr) {
+    return isRecruit ? 'Recrue' : 'Membre'
+  }
+  return isRecruit ? 'Recruit' : 'Member'
 }
 
 /** Teinte stable dérivée du nom, pour les équipes sans `hue` explicite. */

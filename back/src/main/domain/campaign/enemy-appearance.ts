@@ -1,3 +1,10 @@
+import { getCurrentLocale } from '../../infra/i18n/locale-context'
+import {
+  ENEMY_FAMILIES,
+  GENERIC_ENEMY_NAME_EN,
+  GENERIC_ENEMY_NAME_FR,
+} from '../content/enemies.definitions'
+
 // Enemy images live alongside cards in MinIO, under the same env-based prefix as
 // the card import (import-cards.mjs): dev => `staging/cards/…`, prod => `cards/…`.
 // `appearance` holds the sub-path after `cards/`, without the .png extension,
@@ -14,27 +21,10 @@ export function resolveEnemyImageUrl(
   return publicUrl(`${keyPrefix}cards/${appearance}.png`)
 }
 
-// Nom d'affichage FR par famille (slug MinIO -> libellé singulier).
-const FAMILY_LABELS: Record<string, string> = {
-  slimes: 'Slime',
-  mushrooms: 'Champignon',
-  kobolds: 'Kobold',
-  wisps: 'Feu follet',
-  gnolls: 'Gnoll',
-  wolves: 'Loup',
-  mimics: 'Mimic',
-  specters: 'Spectre',
-  elementals: 'Élémentaire',
-  minotaurs: 'Minotaure',
-  basilisks: 'Basilic',
-  hydras: 'Hydre',
-  krakens: 'Kraken',
-  wyverns: 'Wyverne',
-  bosses: 'Boss',
-}
-
-// Nom d'affichage d'un ennemi depuis son apparence "monsters/{slug}/{CODE}".
-// null si pas d'apparence ou slug inconnu (l'appelant met un nom générique).
+// Nom d'affichage d'un ennemi depuis son apparence "monsters/{slug}/{CODE}",
+// dans la locale de la requête courante (voir `ENEMY_FAMILIES`).
+// null si pas d'apparence ou slug inconnu (l'appelant met un nom générique,
+// voir `genericEnemyName`).
 export function enemyNameFromAppearance(
   appearance: string | null | undefined,
 ): string | null {
@@ -42,5 +32,20 @@ export function enemyNameFromAppearance(
     return null
   }
   const slug = appearance.split('/')[1]
-  return (slug && FAMILY_LABELS[slug]) || null
+  const family = slug ? ENEMY_FAMILIES[slug] : undefined
+  if (!family) {
+    return null
+  }
+  return getCurrentLocale() === 'FR' ? family.nameFr : family.nameEn
+}
+
+/**
+ * Repli générique d'un ennemi sans nom résoluble — "Ennemi 3" / "Enemy 3".
+ * Source UNIQUE du gabarit : avant cette tâche, `sim-units.ts` et
+ * `campaign.domain.ts` recopiaient chacun `Ennemi ${idx + 1}` en dur.
+ */
+export function genericEnemyName(index: number): string {
+  const label =
+    getCurrentLocale() === 'FR' ? GENERIC_ENEMY_NAME_FR : GENERIC_ENEMY_NAME_EN
+  return `${label} ${index}`
 }

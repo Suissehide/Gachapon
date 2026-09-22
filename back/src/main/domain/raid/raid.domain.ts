@@ -329,7 +329,11 @@ export class RaidDomain implements IRaidDomain {
       raidId,
       hp: outcome.hpAfter,
       maxHp: outcome.maxHp,
-      attacker: { id: userId, username: attacker?.username ?? 'Un coéquipier' },
+      attacker: {
+        id: userId,
+        username:
+          attacker?.username ?? errorMessage('wagers.unknownPlayerFallback'),
+      },
       damage: outcome.damage,
       killed: outcome.killed,
     }
@@ -506,7 +510,11 @@ export class RaidDomain implements IRaidDomain {
         // Un membre parti en cours de semaine garde ses dégâts au tableau.
         user: u
           ? { id: u.id, username: u.username, avatar: u.avatar }
-          : { id: r.userId, username: 'Ancien membre', avatar: null },
+          : {
+              id: r.userId,
+              username: errorMessage('raid.formerMemberFallback'),
+              avatar: null,
+            },
         damage: r.damage,
         attacks: r.attacks,
       }

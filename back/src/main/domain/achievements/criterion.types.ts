@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { CardRarity, CardVariant } from '../../../generated/enums'
+import { errorMessage } from '../../infra/i18n/error-messages'
 
 const RaritySchema = z.nativeEnum(CardRarity)
 const VariantSchema = z.nativeEnum(CardVariant)
@@ -34,7 +35,9 @@ export const AchievementCriterionSchema = z.discriminatedUnion('type', [
       threshold: z.number().int().positive(),
     })
     .refine((c) => c.rarity !== undefined || c.variant !== undefined, {
-      message: 'rarity ou variant requis (au moins un)',
+      // `error`, pas `message` : fonction résolue à chaque validation, dans
+      // la locale de la requête — pas figée à l'import du module.
+      error: () => errorMessage('achievements.rarityOrVariantRequired'),
     }),
   z.object({
     type: z.literal('COLLECTION_COMPLETE'),

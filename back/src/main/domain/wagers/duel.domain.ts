@@ -186,7 +186,9 @@ export class DuelDomain implements IDuelDomain {
       duelId: duel.id,
       challenger: {
         id: challengerId,
-        username: challengerMember?.user?.username ?? 'Un coéquipier',
+        username:
+          challengerMember?.user?.username ??
+          errorMessage('wagers.unknownPlayerFallback'),
       },
     }
     for (const member of team.members) {

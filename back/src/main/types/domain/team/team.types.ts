@@ -2,6 +2,7 @@ import type {
   InvitationStatus,
   TeamMemberRole,
 } from '../../../../generated/client'
+import type { TeamRoleLabel } from '../../../domain/team-progression/team-progression-rules'
 import type { TeamPerkState } from '../team-progression/team-progression.domain.interface'
 
 export type {
@@ -85,7 +86,7 @@ export type TeamListItem = {
   hue: number
   memberCount: number
   maxMembers: number
-  /** Le rôle DU LECTEUR dans cette équipe, et son libellé français. */
+  /** Le rôle DU LECTEUR dans cette équipe, et son libellé dans la locale de la requête. */
   myRole: TeamMemberRole
   myRoleLabel: TeamMemberRoleLabel
   raid: TeamRaidBadge | null
@@ -121,7 +122,8 @@ export type TeamDetail = {
   recruiting: boolean
 }
 
-export type TeamMemberRoleLabel = 'Chef' | 'Officier' | 'Membre' | 'Recrue'
+/** Libellé du rôle, dans la locale de la requête qui l'a produit (voir `roleLabel`). */
+export type TeamMemberRoleLabel = TeamRoleLabel
 
 export type TeamMemberView = {
   /** 1 pour le premier de la liste, triée par dégâts de raid décroissants. */

@@ -1,6 +1,7 @@
 import type { FastifyReply } from 'fastify'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
+import { errorMessage } from '../../../../../infra/i18n/error-messages'
 import { loginBodySchema, userResponseSchema } from '../../schemas/auth.schemas'
 import { sanitizeUser, setTokenCookies } from './helpers'
 
@@ -43,7 +44,7 @@ export const loginRouter: FastifyPluginCallbackZod = (fastify) => {
         ) {
           const rawReply = reply as unknown as FastifyReply
           return rawReply.status(403).send({
-            message: 'Email non vérifié',
+            message: errorMessage('auth.emailNotVerifiedMessage'),
             code: 'EMAIL_NOT_VERIFIED',
             email: request.body.email,
           })

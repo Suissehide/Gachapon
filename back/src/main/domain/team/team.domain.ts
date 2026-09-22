@@ -840,7 +840,10 @@ export class TeamDomain implements TeamDomainInterface {
         userId: member.userId,
         user: {
           id: member.userId,
-          username: user?.username ?? member.user?.username ?? 'Inconnu',
+          username:
+            user?.username ??
+            member.user?.username ??
+            errorMessage('user.unknownUsernameFallback'),
           avatar: user?.avatar ?? member.user?.avatar ?? null,
         },
         role: member.role,

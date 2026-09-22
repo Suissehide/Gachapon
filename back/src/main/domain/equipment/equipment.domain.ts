@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 
 import type { EquipmentSlot, Prisma } from '../../../generated/client'
 import { errorMessage } from '../../infra/i18n/error-messages'
+import { getCurrentLocale } from '../../infra/i18n/locale-context'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
 import type { ITeamProgressionDomain } from '../../types/domain/team-progression/team-progression.domain.interface'
@@ -30,7 +31,14 @@ import {
   setBonusesFromConfig,
 } from './set-bonuses'
 
-/** Libellés français des 4 sets — seule source, réutilisée par l'inventaire et `listSets`. */
+/**
+ * Libellés des 7 sets — seule source, réutilisée par l'inventaire et
+ * `listSets`. Délibérément NON traduits (comme les 4 branches de compétences,
+ * voir `content-translations.test.ts`) : ce sont des noms propres de gameplay,
+ * pas du texte descriptif — un joueur anglophone apprend « Affût » comme il
+ * apprendrait le nom d'un sort. Seul `SET_STAT_LABELS`, qui décrit ce que le
+ * bonus FAIT (pas comment il s'appelle), se traduit.
+ */
 export const SET_LABELS: Record<SetKey, string> = {
   FUREUR: 'Fureur',
   AFFUT: 'Affût',
@@ -42,7 +50,7 @@ export const SET_LABELS: Record<SetKey, string> = {
 }
 
 /** Libellés français des stats portées par les bonus de set (clé technique → nom affiché). */
-const SET_STAT_LABELS: Record<string, string> = {
+const SET_STAT_LABELS_FR: Record<string, string> = {
   hpPct: 'PV',
   atkPct: 'ATQ',
   defPct: 'DEF',
@@ -53,13 +61,30 @@ const SET_STAT_LABELS: Record<string, string> = {
   lifestealPct: 'vol de vie',
 }
 
-/** Décrit un palier de set à partir de son unique bonus, ex. `+10 % ATQ`. */
+/** Traduction anglaise de `SET_STAT_LABELS_FR` — même clés techniques. */
+const SET_STAT_LABELS_EN: Record<string, string> = {
+  hpPct: 'HP',
+  atkPct: 'ATK',
+  defPct: 'DEF',
+  spdPct: 'SPD',
+  critRatePct: 'crit rate',
+  critDmgPct: 'crit damage',
+  armorPenPct: 'armor penetration',
+  lifestealPct: 'lifesteal',
+}
+
+/**
+ * Décrit un palier de set à partir de son unique bonus, ex. `+10 % ATQ`
+ * (FR) / `+10% ATK` (EN) — dans la locale de la requête courante.
+ */
 function formatSetTierLabel(bonuses: EquipmentBonuses): string {
   const [key, value] = Object.entries(bonuses)[0] ?? []
   if (key === undefined || value === undefined) {
     return ''
   }
-  return `+${value} % ${SET_STAT_LABELS[key] ?? key}`
+  return getCurrentLocale() === 'FR'
+    ? `+${value} % ${SET_STAT_LABELS_FR[key] ?? key}`
+    : `+${value}% ${SET_STAT_LABELS_EN[key] ?? key}`
 }
 
 export interface SetDefinitionView {

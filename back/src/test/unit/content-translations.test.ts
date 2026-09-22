@@ -7,7 +7,9 @@ import {
   campaignStageLabel,
 } from '../../main/domain/content/campaign.definitions'
 import { CARDS, HUMAN_CARD_SET } from '../../main/domain/content/cards.definitions'
+import { ENEMY_FAMILIES } from '../../main/domain/content/enemies.definitions'
 import { buildEquipmentCatalog } from '../../main/domain/content/equipment.definitions'
+import { PASSIVE_TEXT } from '../../main/domain/content/passives.definitions'
 import {
   RAID_BOSS_NAME,
   RAID_BOSS_NAME_EN,
@@ -90,6 +92,32 @@ const SKILL_NODE_LEGITIMATE_IDENTICAL = new Set([
   'opulence', // "Opulence" — cognat, même orthographe FR/EN
   'artisan', // "Artisan" — cognat, même orthographe FR/EN
   'endurance', // "Endurance" — cognat, même orthographe FR/EN
+])
+
+// -----------------------------------------------------------------------
+// Ennemis — familles dont le nom est un emprunt direct, identique dans les
+// deux langues (bestiaire fantastique : le mot anglais/générique est aussi
+// le mot français d'usage).
+// -----------------------------------------------------------------------
+const ENEMY_FAMILY_LEGITIMATE_IDENTICAL = new Set([
+  'slimes', // "Slime" — emprunt, même mot dans les deux langues
+  'kobolds', // "Kobold" — emprunt d20/fantasy, même mot
+  'gnolls', // "Gnoll" — emprunt d20/fantasy, même mot
+  'mimics', // "Mimic" — emprunt d20/fantasy, même mot
+  'krakens', // "Kraken" — nom propre mythologique, même mot
+  'bosses', // "Boss" — emprunt courant, même mot
+])
+
+// -----------------------------------------------------------------------
+// Passifs — libellés courts qui sont des cognats stricts (même orthographe
+// FR/EN). Les descriptions, elles, sont toujours des phrases complètes,
+// jamais identiques.
+// -----------------------------------------------------------------------
+const PASSIVE_LABEL_LEGITIMATE_IDENTICAL = new Set([
+  'RIPOSTE', // "Riposte" — cognat (terme d'escrime déjà anglais)
+  'FORTIFY', // "Fortification" — cognat, même orthographe FR/EN
+  'NEMESIS', // "Vengeance" — cognat, même orthographe FR/EN
+  'POISON', // "Poison" — cognat, même orthographe FR/EN
 ])
 
 function expectBothLanguages(
@@ -303,5 +331,53 @@ describe('traductions du contenu — campagne', () => {
   it('marque le boss de fin de chapitre', () => {
     expect(campaignStageLabel(3, STAGES_PER_CHAPTER)).toBe('3-10 Boss')
     expect(campaignStageLabel(3, 1)).toBe('3-1')
+  })
+})
+
+// Tâche 4 du lot i18n (amendement A4) — noms d'ennemis et libellés de
+// passifs, jusque-là calculés en code et servis en français quelle que soit
+// la locale demandée.
+describe('traductions du contenu — ennemis', () => {
+  it('donne deux langues à chaque famille du bestiaire', () => {
+    for (const [slug, family] of Object.entries(ENEMY_FAMILIES)) {
+      expectBothLanguages(`famille ${slug}`, family.nameFr, family.nameEn)
+    }
+  })
+
+  it('ne laisse pas l’anglais recopier le français, hors emprunts déclarés', () => {
+    const copied = Object.entries(ENEMY_FAMILIES).filter(
+      ([slug, family]) =>
+        family.nameFr === family.nameEn &&
+        !ENEMY_FAMILY_LEGITIMATE_IDENTICAL.has(slug),
+    )
+    expect(copied.map(([slug]) => slug)).toEqual([])
+  })
+})
+
+describe('traductions du contenu — passifs', () => {
+  it('donne deux langues au libellé de chaque passif', () => {
+    for (const [key, text] of Object.entries(PASSIVE_TEXT)) {
+      expectBothLanguages(`passif ${key} (label)`, text.labelFr, text.labelEn)
+    }
+  })
+
+  it('ne laisse pas l’anglais recopier le français, hors cognats déclarés', () => {
+    const copied = Object.entries(PASSIVE_TEXT).filter(
+      ([key, text]) =>
+        text.labelFr === text.labelEn &&
+        !PASSIVE_LABEL_LEGITIMATE_IDENTICAL.has(key),
+    )
+    expect(copied.map(([key]) => key)).toEqual([])
+  })
+
+  it('donne deux langues et jamais la même phrase à la description de chaque passif, sur toute la plage de paliers', () => {
+    for (const [key, text] of Object.entries(PASSIVE_TEXT)) {
+      for (let palier = 1; palier <= 6; palier++) {
+        const fr = text.describeFr(palier)
+        const en = text.describeEn(palier)
+        expectBothLanguages(`passif ${key} (describe, palier ${palier})`, fr, en)
+        expect(fr).not.toBe(en)
+      }
+    }
   })
 })

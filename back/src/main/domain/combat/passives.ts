@@ -1,4 +1,6 @@
+import { getCurrentLocale } from '../../infra/i18n/locale-context'
 import type { CardRarity } from '../../types/domain/gacha/gacha.types'
+import { PASSIVE_TEXT } from '../content/passives.definitions'
 
 export type PassiveKey =
   | 'VAMPIRISM'
@@ -38,11 +40,11 @@ export interface PassiveEffect {
 export interface PassiveDefinition {
   key: PassiveKey
   rarityHint: Extract<CardRarity, 'EPIC' | 'LEGENDARY'>
-  /** Short label for UI */
+  /** Short label for UI, dans la locale de la requête courante. */
   label: string
   /** Compute the passive's effect for a given palier (1..6) */
   compute(palier: number): PassiveEffect
-  /** Human-readable description (uses palier-resolved value) */
+  /** Human-readable description (uses palier-resolved value), dans la locale de la requête courante. */
   describe(palier: number): string
 }
 
@@ -56,11 +58,32 @@ function clampPalier(palier: number): number {
   return palier
 }
 
+/**
+ * Résout le libellé/la description d'un passif dans la locale de la requête
+ * courante. Lu à l'accès (getter pour `label`, appel pour `describe()`), pas
+ * mémorisé : `PASSIVES` est un singleton de module partagé par toutes les
+ * requêtes, donc rien ici ne doit figer une valeur au premier lecteur — voir
+ * l'ATTENTION de `localized.extension.ts` sur ce même piège côté Prisma.
+ */
+function localizedLabel(key: PassiveKey): string {
+  const text = PASSIVE_TEXT[key]
+  return getCurrentLocale() === 'FR' ? text.labelFr : text.labelEn
+}
+
+function localizedDescribe(key: PassiveKey, palier: number): string {
+  const text = PASSIVE_TEXT[key]
+  return getCurrentLocale() === 'FR'
+    ? text.describeFr(palier)
+    : text.describeEn(palier)
+}
+
 export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
   VAMPIRISM: {
     key: 'VAMPIRISM',
     rarityHint: 'EPIC',
-    label: 'Vampirisme',
+    get label() {
+      return localizedLabel('VAMPIRISM')
+    },
     // La magnitude du vol de vie appartient désormais au stuff (lifesteal).
     // Le passif apporte ce qu'aucun équipement ne peut donner : un doublement
     // conditionnel, sous 50 % de PV.
@@ -68,67 +91,77 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
       return { valuePct: 100 } // bonus de lifesteal en pourcentage relatif
     },
     describe() {
-      return 'Sous 50 % de ses PV, son vol de vie est doublé'
+      return localizedDescribe('VAMPIRISM', 0)
     },
   },
   AEGIS: {
     key: 'AEGIS',
     rarityHint: 'EPIC',
-    label: 'Égide',
+    get label() {
+      return localizedLabel('AEGIS')
+    },
     compute(palier) {
       const p = clampPalier(palier)
       return { valuePct: 5 + 2 * p }
     },
     describe(palier) {
-      return `${5 + 2 * clampPalier(palier)} % de chance d'ignorer une attaque`
+      return localizedDescribe('AEGIS', clampPalier(palier))
     },
   },
   BANNER: {
     key: 'BANNER',
     rarityHint: 'EPIC',
-    label: 'Bannière',
+    get label() {
+      return localizedLabel('BANNER')
+    },
     compute(palier) {
       const p = clampPalier(palier)
       return { valuePct: 6 + 3 * p }
     },
     describe(palier) {
-      return `+${6 + 3 * clampPalier(palier)} % d'ATQ à toute l'équipe`
+      return localizedDescribe('BANNER', clampPalier(palier))
     },
   },
   RIPOSTE: {
     key: 'RIPOSTE',
     rarityHint: 'EPIC',
-    label: 'Riposte',
+    get label() {
+      return localizedLabel('RIPOSTE')
+    },
     compute(palier) {
       const p = clampPalier(palier)
       return { valuePct: 8 + 4 * p }
     },
     describe(palier) {
-      return `Renvoie ${8 + 4 * clampPalier(palier)} % des dégâts subis`
+      return localizedDescribe('RIPOSTE', clampPalier(palier))
     },
   },
   REBIRTH: {
     key: 'REBIRTH',
     rarityHint: 'LEGENDARY',
-    label: 'Renaissance',
+    get label() {
+      return localizedLabel('REBIRTH')
+    },
     compute(palier) {
       const p = clampPalier(palier)
       return { valuePct: 20 + 5 * p }
     },
     describe(palier) {
-      return `Ressuscite une fois à ${20 + 5 * clampPalier(palier)} % de PV`
+      return localizedDescribe('REBIRTH', clampPalier(palier))
     },
   },
   EXECUTION: {
     key: 'EXECUTION',
     rarityHint: 'LEGENDARY',
-    label: 'Exécution',
+    get label() {
+      return localizedLabel('EXECUTION')
+    },
     compute(palier) {
       const p = clampPalier(palier)
       return { valuePct: 20 + 5 * p }
     },
     describe(palier) {
-      return `+${20 + 5 * clampPalier(palier)} % de dégâts sous 30 % de PV cible`
+      return localizedDescribe('EXECUTION', clampPalier(palier))
     },
   },
 
@@ -145,48 +178,56 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
   VIGOR: {
     key: 'VIGOR',
     rarityHint: 'EPIC',
-    label: 'Second souffle',
+    get label() {
+      return localizedLabel('VIGOR')
+    },
     compute(palier) {
       const p = clampPalier(palier)
       return { valuePct: 20 + 4 * p } // part des PV max rendue
     },
     describe(palier) {
-      return `La première fois que ses PV passent sous 50 % (y compris sur un coup normalement fatal, alors annulé), il récupère ${20 + 4 * clampPalier(palier)} % de ses PV max`
+      return localizedDescribe('VIGOR', clampPalier(palier))
     },
   },
   HASTE: {
     key: 'HASTE',
     rarityHint: 'EPIC',
-    label: 'Célérité',
+    get label() {
+      return localizedLabel('HASTE')
+    },
     compute() {
       return { valuePct: 3 } // cadence, en nombre d'actions
     },
     describe() {
-      return 'Toutes les 3 actions, il rejoue immédiatement'
+      return localizedDescribe('HASTE', 0)
     },
   },
   FORTIFY: {
     key: 'FORTIFY',
     rarityHint: 'EPIC',
-    label: 'Fortification',
+    get label() {
+      return localizedLabel('FORTIFY')
+    },
     compute(palier) {
       const p = clampPalier(palier)
       return { valuePct: 4 + 2 * p } // DEF gagnée par charge
     },
     describe(palier) {
-      return `Chaque coup encaissé lui donne +${4 + 2 * clampPalier(palier)} % de défense, cumulable 5 fois`
+      return localizedDescribe('FORTIFY', clampPalier(palier))
     },
   },
   EMPOWER: {
     key: 'EMPOWER',
     rarityHint: 'EPIC',
-    label: 'Puissance',
+    get label() {
+      return localizedLabel('EMPOWER')
+    },
     compute(palier) {
       const p = clampPalier(palier)
       return { valuePct: 3 + p } // ATQ gagnée par charge
     },
     describe(palier) {
-      return `Chaque attaque portée lui donne +${3 + clampPalier(palier)} % d'attaque, cumulable 5 fois`
+      return localizedDescribe('EMPOWER', clampPalier(palier))
     },
   },
 
@@ -194,13 +235,15 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
   BULWARK: {
     key: 'BULWARK',
     rarityHint: 'LEGENDARY',
-    label: 'Bouclier',
+    get label() {
+      return localizedLabel('BULWARK')
+    },
     compute(palier) {
       const p = clampPalier(palier)
       return { valuePct: 12 + 3 * p }
     },
     describe(palier) {
-      return `Absorbe un bouclier de ${12 + 3 * clampPalier(palier)} % des PV max`
+      return localizedDescribe('BULWARK', clampPalier(palier))
     },
   },
 
@@ -208,49 +251,57 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
   FURY: {
     key: 'FURY',
     rarityHint: 'EPIC',
-    label: 'Furie',
+    get label() {
+      return localizedLabel('FURY')
+    },
     compute(palier) {
       const p = clampPalier(palier)
       return { valuePct: 12 + 4 * p }
     },
     describe(palier) {
-      return `+${12 + 4 * clampPalier(palier)} % d'ATQ sous 50 % de PV`
+      return localizedDescribe('FURY', clampPalier(palier))
     },
   },
   CRIT: {
     key: 'CRIT',
     rarityHint: 'EPIC',
-    label: 'Précision',
+    get label() {
+      return localizedLabel('CRIT')
+    },
     // La magnitude du critique appartient désormais aux stats (critRate/critDmg).
     // Le passif apporte ce qu'aucun équipement ne peut donner : la certitude.
     compute() {
       return { valuePct: 3 } // cadence, en nombre d'actions
     },
     describe() {
-      return 'Toutes les 3 attaques, inflige un coup critique garanti'
+      return localizedDescribe('CRIT', 0)
     },
   },
   PIERCE: {
     key: 'PIERCE',
     rarityHint: 'EPIC',
-    label: 'Perce-armure',
+    get label() {
+      return localizedLabel('PIERCE')
+    },
     compute() {
       return { valuePct: 100 } // part de DEF ignorée au premier coup
     },
     describe() {
-      return 'Le premier coup porté à chaque cible ignore toute sa défense'
+      return localizedDescribe('PIERCE', 0)
     },
   },
   NEMESIS: {
     key: 'NEMESIS',
     rarityHint: 'LEGENDARY',
-    label: 'Vengeance',
+    get label() {
+      return localizedLabel('NEMESIS')
+    },
     compute(palier) {
       const p = clampPalier(palier)
       return { valuePct: 6 + 2 * p }
     },
     describe(palier) {
-      return `+${6 + 2 * clampPalier(palier)} % d'ATQ par allié tombé`
+      return localizedDescribe('NEMESIS', clampPalier(palier))
     },
   },
 
@@ -258,13 +309,15 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
   RAMPART: {
     key: 'RAMPART',
     rarityHint: 'EPIC',
-    label: 'Rempart',
+    get label() {
+      return localizedLabel('RAMPART')
+    },
     compute(palier) {
       const p = clampPalier(palier)
       return { valuePct: 6 + 2 * p }
     },
     describe(palier) {
-      return `Réduit de ${6 + 2 * clampPalier(palier)} % les dégâts subis`
+      return localizedDescribe('RAMPART', clampPalier(palier))
     },
   },
 
@@ -272,13 +325,15 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
   REGEN: {
     key: 'REGEN',
     rarityHint: 'EPIC',
-    label: 'Régénération',
+    get label() {
+      return localizedLabel('REGEN')
+    },
     compute(palier) {
       const p = clampPalier(palier)
       return { valuePct: 4 + 2 * p }
     },
     describe(palier) {
-      return `Soigne ${4 + 2 * clampPalier(palier)} % des PV max en fin de tour`
+      return localizedDescribe('REGEN', clampPalier(palier))
     },
   },
 
@@ -290,25 +345,29 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
   BLESSING: {
     key: 'BLESSING',
     rarityHint: 'LEGENDARY',
-    label: 'Bénédiction',
+    get label() {
+      return localizedLabel('BLESSING')
+    },
     compute(palier) {
       const p = clampPalier(palier)
       return { valuePct: 6 + 2 * p }
     },
     describe(palier) {
-      return `Soigne l'allié le plus faible de ${6 + 2 * clampPalier(palier)} % de ses PV max en fin de tour`
+      return localizedDescribe('BLESSING', clampPalier(palier))
     },
   },
   SANCTUARY: {
     key: 'SANCTUARY',
     rarityHint: 'EPIC',
-    label: 'Sanctuaire',
+    get label() {
+      return localizedLabel('SANCTUARY')
+    },
     compute(palier) {
       const p = clampPalier(palier)
       return { valuePct: 3 + p }
     },
     describe(palier) {
-      return `Soigne toute l'équipe de ${3 + clampPalier(palier)} % des PV max en fin de tour`
+      return localizedDescribe('SANCTUARY', clampPalier(palier))
     },
   },
 
@@ -316,25 +375,29 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
   BURN: {
     key: 'BURN',
     rarityHint: 'EPIC',
-    label: 'Brûlure',
+    get label() {
+      return localizedLabel('BURN')
+    },
     compute(palier) {
       const p = clampPalier(palier)
       return { valuePct: 15 + 5 * p }
     },
     describe(palier) {
-      return `Inflige une brûlure : ${15 + 5 * clampPalier(palier)} % de l'ATQ par tour pendant 2 tours`
+      return localizedDescribe('BURN', clampPalier(palier))
     },
   },
   POISON: {
     key: 'POISON',
     rarityHint: 'EPIC',
-    label: 'Poison',
+    get label() {
+      return localizedLabel('POISON')
+    },
     compute(palier) {
       const p = clampPalier(palier)
       return { valuePct: 4 + 2 * p }
     },
     describe(palier) {
-      return `Empoisonne la cible : ${4 + 2 * clampPalier(palier)} % de ses PV max par tour pendant 2 tours`
+      return localizedDescribe('POISON', clampPalier(palier))
     },
   },
 
@@ -342,13 +405,15 @@ export const PASSIVES: Record<PassiveKey, PassiveDefinition> = {
   BLOODLUST: {
     key: 'BLOODLUST',
     rarityHint: 'LEGENDARY',
-    label: 'Soif de sang',
+    get label() {
+      return localizedLabel('BLOODLUST')
+    },
     compute(palier) {
       const p = clampPalier(palier)
       return { valuePct: 15 + 5 * p }
     },
     describe(palier) {
-      return `Se soigne de ${15 + 5 * clampPalier(palier)} % des PV max en éliminant un ennemi`
+      return localizedDescribe('BLOODLUST', clampPalier(palier))
     },
   },
 }

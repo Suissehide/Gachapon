@@ -130,9 +130,15 @@ describe('Admin media routes', () => {
     // Créer un buffer > 5MB
     const bigBuffer = Buffer.alloc(6 * 1024 * 1024, 0)
     form.append('images[]', bigBuffer, { filename: 'big.png', contentType: 'image/png' })
+    // accept-language:fr — le message vérifié plus bas est le texte
+    // français ; depuis la tâche 4 (lot i18n 2), `processUploadPart` route
+    // cette raison par le catalogue bilingue (`media.imageTooLarge`, déjà
+    // utilisé par `card-image.helpers.ts`) au lieu d'une chaîne française
+    // en dur propre à ce endpoint — d'où le changement de formulation
+    // ('trop volumineuse', pas 'trop grand') en plus du besoin de l'en-tête.
     const res = await app.inject({
       method: 'POST', url: '/admin/media/upload',
-      headers: { ...form.getHeaders(), cookie: adminCookies },
+      headers: { ...form.getHeaders(), cookie: adminCookies, 'accept-language': 'fr' },
       payload: form.getBuffer(),
     })
     // Should return 200 with errors (not throw)
@@ -140,7 +146,7 @@ describe('Admin media routes', () => {
     const body = res.json()
     expect(body.errors).toBeDefined()
     expect(body.errors.length).toBeGreaterThan(0)
-    expect(body.errors[0].reason).toMatch(/trop grand/i)
+    expect(body.errors[0].reason).toMatch(/volumineuse/i)
   })
 
   it('PATCH /admin/media/rename — 401 sans cookie', async () => {

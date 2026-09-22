@@ -1,5 +1,6 @@
 import { describe, expect, it } from '@jest/globals'
 
+import { runWithLocale } from '../../main/infra/i18n/locale-context'
 import {
   applyTeamXp,
   grantablePerkPoints,
@@ -89,14 +90,32 @@ describe('roleLabel', () => {
   const now = new Date('2026-09-10T12:00:00Z')
   const days = (n: number) => new Date(now.getTime() - n * 86_400_000)
 
-  it("Chef et Officier ne dependent pas de l'anciennete", () => {
-    expect(roleLabel('OWNER', days(0), now, 7)).toBe('Chef')
-    expect(roleLabel('ADMIN', days(0), now, 7)).toBe('Officier')
+  it("Chef et Officier ne dependent pas de l'anciennete (FR)", () => {
+    runWithLocale('FR', () => {
+      expect(roleLabel('OWNER', days(0), now, 7)).toBe('Chef')
+      expect(roleLabel('ADMIN', days(0), now, 7)).toBe('Officier')
+    })
   })
 
-  it('bascule Recrue -> Membre exactement au seuil', () => {
-    expect(roleLabel('MEMBER', days(6), now, 7)).toBe('Recrue')
-    expect(roleLabel('MEMBER', days(7), now, 7)).toBe('Membre')
+  it('bascule Recrue -> Membre exactement au seuil (FR)', () => {
+    runWithLocale('FR', () => {
+      expect(roleLabel('MEMBER', days(6), now, 7)).toBe('Recrue')
+      expect(roleLabel('MEMBER', days(7), now, 7)).toBe('Membre')
+    })
+  })
+
+  // Tâche 4 du lot i18n — roleLabel bascule aussi côté EN, locale par défaut
+  // hors de tout contexte de requête.
+  it('Leader et Officer en EN par défaut', () => {
+    expect(roleLabel('OWNER', days(0), now, 7)).toBe('Leader')
+    expect(roleLabel('ADMIN', days(0), now, 7)).toBe('Officer')
+  })
+
+  it('bascule Recruit -> Member exactement au seuil (EN)', () => {
+    runWithLocale('EN', () => {
+      expect(roleLabel('MEMBER', days(6), now, 7)).toBe('Recruit')
+      expect(roleLabel('MEMBER', days(7), now, 7)).toBe('Member')
+    })
   })
 })
 

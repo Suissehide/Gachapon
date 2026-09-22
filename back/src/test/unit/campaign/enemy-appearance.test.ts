@@ -1,7 +1,9 @@
 import {
   enemyNameFromAppearance,
+  genericEnemyName,
   resolveEnemyImageUrl,
 } from '../../../main/domain/campaign/enemy-appearance'
+import { runWithLocale } from '../../../main/infra/i18n/locale-context'
 
 const fakePublicUrl = (key: string) => `https://cdn.test/gachapon/${key}`
 
@@ -33,15 +35,37 @@ describe('resolveEnemyImageUrl', () => {
 })
 
 describe('enemyNameFromAppearance', () => {
-  it('déduit le libellé FR depuis le slug de famille', () => {
+  it('déduit le libellé EN par défaut, hors de tout contexte de requête', () => {
     expect(enemyNameFromAppearance('monsters/slimes/SLIME-001')).toBe('Slime')
-    expect(enemyNameFromAppearance('monsters/wolves/WOLF-003')).toBe('Loup')
+    expect(enemyNameFromAppearance('monsters/wolves/WOLF-003')).toBe('Wolf')
     expect(enemyNameFromAppearance('monsters/bosses/BOSS-001')).toBe('Boss')
+  })
+
+  it('déduit le libellé FR depuis le slug de famille sous runWithLocale', () => {
+    runWithLocale('FR', () => {
+      expect(enemyNameFromAppearance('monsters/slimes/SLIME-001')).toBe(
+        'Slime',
+      )
+      expect(enemyNameFromAppearance('monsters/wolves/WOLF-003')).toBe('Loup')
+      expect(enemyNameFromAppearance('monsters/bosses/BOSS-001')).toBe('Boss')
+    })
   })
 
   it('retourne null sans apparence ou pour un slug inconnu', () => {
     expect(enemyNameFromAppearance(null)).toBeNull()
     expect(enemyNameFromAppearance(undefined)).toBeNull()
     expect(enemyNameFromAppearance('monsters/unknown/XXX-001')).toBeNull()
+  })
+})
+
+describe('genericEnemyName', () => {
+  it('repli générique EN par défaut', () => {
+    expect(genericEnemyName(3)).toBe('Enemy 3')
+  })
+
+  it('repli générique FR sous runWithLocale', () => {
+    runWithLocale('FR', () => {
+      expect(genericEnemyName(3)).toBe('Ennemi 3')
+    })
   })
 })

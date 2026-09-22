@@ -155,8 +155,12 @@ describe('Vues de la section Équipe', () => {
     })
   }
 
-  function get(url: string, cookies: string) {
-    return app.inject({ method: 'GET', url, headers: { cookie: cookies } })
+  function get(url: string, cookies: string, extraHeaders?: Record<string, string>) {
+    return app.inject({
+      method: 'GET',
+      url,
+      headers: { cookie: cookies, ...extraHeaders },
+    })
   }
 
   beforeAll(async () => {
@@ -316,7 +320,11 @@ describe('Vues de la section Équipe', () => {
   // ── GET /teams ─────────────────────────────────────────────────────────
 
   it('GET /teams porte level, hue, memberCount, maxMembers et le raid en cours', async () => {
-    const res = await get('/teams', cookiesMe)
+    // `myRoleLabel` ci-dessous est asserté en français — accept-language:fr
+    // explicite, sinon la réponse par défaut est EN (voir DEFAULT_LOCALE).
+    const res = await get('/teams', cookiesMe, {
+      'accept-language': 'fr-FR,fr;q=0.9',
+    })
     expect(res.statusCode).toBe(200)
     const body = res.json()
 
@@ -340,7 +348,9 @@ describe('Vues de la section Équipe', () => {
       where: { teamId_userId: { teamId: overTeamId, userId: meId } },
       data: { role: 'ADMIN', joinedAt: new Date(Date.now() - 30 * DAY_MS) },
     })
-    const body = (await get('/teams', cookiesMe)).json()
+    const body = (
+      await get('/teams', cookiesMe, { 'accept-language': 'fr-FR,fr;q=0.9' })
+    ).json()
     const over = body.teams.find((t: any) => t.id === overTeamId)
     expect(over.myRole).toBe('ADMIN')
     expect(over.myRoleLabel).toBe('Officier')
@@ -481,7 +491,11 @@ describe('Vues de la section Équipe', () => {
   })
 
   it('GET /teams/:id/members : roleLabel — Chef, Officier, Membre, et Recrue en dessous du seuil', async () => {
-    const body = (await get(`/teams/${mainTeamId}/members`, cookiesMe)).json()
+    const body = (
+      await get(`/teams/${mainTeamId}/members`, cookiesMe, {
+        'accept-language': 'fr-FR,fr;q=0.9',
+      })
+    ).json()
     const labelOf = (userId: string) =>
       body.members.find((m: any) => m.userId === userId).roleLabel
 

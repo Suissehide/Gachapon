@@ -5,6 +5,7 @@ import {
   PASSIVES,
   type PassiveKey,
 } from '../../main/domain/combat/passives'
+import { runWithLocale } from '../../main/infra/i18n/locale-context'
 
 describe('passives', () => {
   describe('VAMPIRISM', () => {
@@ -160,20 +161,45 @@ describe('passives', () => {
 
   describe('describe()', () => {
     it('returns localized French strings with the palier value', () => {
-      expect(PASSIVES.AEGIS.describe(3)).toContain('11 %')
+      runWithLocale('FR', () => {
+        expect(PASSIVES.AEGIS.describe(3)).toContain('11 %')
+      })
     })
     // Tâche 9 : CRIT, PIERCE et VAMPIRISM n'ont plus de magnitude
     // palier-dépendante — leur describe() est un texte fixe.
     it('CRIT, PIERCE et VAMPIRISM décrivent un comportement fixe, sans pourcentage de palier', () => {
-      expect(PASSIVES.CRIT.describe(1)).toBe(
-        'Toutes les 3 attaques, inflige un coup critique garanti',
-      )
-      expect(PASSIVES.PIERCE.describe(1)).toBe(
-        'Le premier coup porté à chaque cible ignore toute sa défense',
-      )
-      expect(PASSIVES.VAMPIRISM.describe(1)).toBe(
-        'Sous 50 % de ses PV, son vol de vie est doublé',
-      )
+      runWithLocale('FR', () => {
+        expect(PASSIVES.CRIT.describe(1)).toBe(
+          'Toutes les 3 attaques, inflige un coup critique garanti',
+        )
+        expect(PASSIVES.PIERCE.describe(1)).toBe(
+          'Le premier coup porté à chaque cible ignore toute sa défense',
+        )
+        expect(PASSIVES.VAMPIRISM.describe(1)).toBe(
+          'Sous 50 % de ses PV, son vol de vie est doublé',
+        )
+      })
+    })
+  })
+
+  // Tâche 4 du lot i18n — libellé et description sont désormais résolus
+  // dans la locale de la requête courante (voir `passives.definitions.ts`).
+  describe('label et describe() par locale', () => {
+    it('EN par défaut, hors de tout contexte de requête', () => {
+      expect(PASSIVES.AEGIS.label).toBe('Aegis')
+      expect(PASSIVES.AEGIS.describe(3)).toContain('11%')
+    })
+    it('FR sous runWithLocale', () => {
+      runWithLocale('FR', () => {
+        expect(PASSIVES.AEGIS.label).toBe('Égide')
+      })
+    })
+    it('EN explicite sous runWithLocale', () => {
+      runWithLocale('EN', () => {
+        expect(PASSIVES.VAMPIRISM.describe(1)).toBe(
+          'Below 50% HP, its lifesteal is doubled',
+        )
+      })
     })
   })
 

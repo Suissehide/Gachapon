@@ -690,7 +690,11 @@ export const teamsRouter: FastifyPluginCallbackZod = (fastify) => {
                 username: entry.member.user.username,
                 avatar: entry.member.user.avatar,
               }
-            : { id: entry.member.userId, username: 'Unknown', avatar: null },
+            : {
+                id: entry.member.userId,
+                username: errorMessage('user.unknownUsernameFallback'),
+                avatar: null,
+              },
           role: entry.member.role,
           score: entry.score,
         })),

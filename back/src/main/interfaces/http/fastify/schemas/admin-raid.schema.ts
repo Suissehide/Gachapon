@@ -1,6 +1,7 @@
 import { z } from 'zod/v4'
 
 import { enemySpecSchema } from '../../../../domain/combat/sim-units'
+import { errorMessage } from '../../../../infra/i18n/error-messages'
 import { cardRaritySchema } from './admin-streak.schema'
 import { towerElementSchema } from './tower.schema'
 
@@ -27,7 +28,9 @@ export const adminRaidBossPatchBodySchema = z
     (b) =>
       b.nameFr !== undefined || b.nameEn !== undefined || b.spec !== undefined,
     {
-      message: 'Rien à modifier',
+      // `error`, pas `message` : fonction résolue à chaque validation, dans
+      // la locale de la requête — pas figée à l'import du module.
+      error: () => errorMessage('raid.adminPatchNothingToUpdate'),
       path: ['nameFr'],
     },
   )
