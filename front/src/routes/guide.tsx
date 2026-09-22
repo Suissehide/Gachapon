@@ -267,38 +267,51 @@ function GuidePage() {
             </Section>
 
             {/* Tokens */}
-            <Section id="tokens" icon={Ticket} title="Jetons & régénération">
+            <Section
+              id="tokens"
+              icon={Ticket}
+              title={t('sectionLabels.tokens')}
+            >
               <p>
-                Les <strong className="text-foreground">jetons gacha</strong>{' '}
-                sont la monnaie d'action du jeu — chaque tirage de capsule en
-                consomme un. Ils se régénèrent automatiquement au fil du temps,
-                sans rien faire de ta part.
+                <Trans
+                  t={t}
+                  i18nKey="sections.tokens.intro"
+                  components={{
+                    strong: <strong className="text-foreground" />,
+                  }}
+                />
               </p>
               <ul className="space-y-1.5">
                 <li>
-                  • Le stock de jetons a un{' '}
-                  <strong className="text-foreground">plafond</strong> : les
-                  jetons accumulés au-delà sont perdus. Reviens régulièrement.
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.tokens.capBullet"
+                    components={{
+                      strong: <strong className="text-foreground" />,
+                    }}
+                  />
                 </li>
+                <li>• {t('sections.tokens.regenBullet')}</li>
                 <li>
-                  • La régénération est continue : le solde est recalculé à la
-                  volée à chaque connexion.
-                </li>
-                <li>
-                  • La <strong className="text-foreground">topbar</strong>{' '}
-                  affiche ton solde et le délai avant le prochain jeton.
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.tokens.topbarBullet"
+                    components={{
+                      strong: <strong className="text-foreground" />,
+                    }}
+                  />
                 </li>
               </ul>
               <InfoBox>
-                Tu peux aussi obtenir des jetons via la{' '}
-                <strong>Boutique</strong> (packs de tokens) ou des événements.
-                Certaines compétences accélèrent la régénération, augmentent le
-                plafond, ou donnent une chance de jeton bonus.
+                <Trans
+                  t={t}
+                  i18nKey="sections.tokens.info"
+                  components={{ strong: <strong /> }}
+                />
               </InfoBox>
-              <TipBox>
-                Conseil : connecte-toi régulièrement pour éviter de dépasser le
-                plafond et de perdre des jetons accumulés.
-              </TipBox>
+              <TipBox>{t('sections.tokens.tip')}</TipBox>
             </Section>
 
             {/* Pulls */}

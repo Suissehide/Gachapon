@@ -60,6 +60,14 @@
           "description": "Earned by leveling up. Invest them in the skill tree for permanent passive bonuses."
         }
       }
+    },
+    "tokens": {
+      "intro": "<strong>Gacha tokens</strong> are the game's action currency — every capsule pull uses one. They regenerate automatically over time, with nothing to do on your end.",
+      "capBullet": "Your token stock has a <strong>cap</strong>: tokens earned beyond it are lost. Come back regularly.",
+      "regenBullet": "Regeneration is continuous: your balance is recalculated on the fly every time you log in.",
+      "topbarBullet": "The <strong>topbar</strong> shows your balance and the time until your next token.",
+      "info": "You can also get tokens from the <strong>Shop</strong> (token packs) or events. Some skills speed up regeneration, raise the cap, or give a chance at a bonus token.",
+      "tip": "Tip: log in regularly to avoid hitting the cap and losing accumulated tokens."
     }
   }
 }

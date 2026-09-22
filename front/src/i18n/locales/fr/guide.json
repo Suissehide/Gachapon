@@ -60,6 +60,14 @@
           "description": "Obtenus en montant de niveau. À investir dans l'arbre de compétences pour des bonus passifs permanents."
         }
       }
+    },
+    "tokens": {
+      "intro": "Les <strong>jetons gacha</strong> sont la monnaie d'action du jeu — chaque tirage de capsule en consomme un. Ils se régénèrent automatiquement au fil du temps, sans rien faire de ta part.",
+      "capBullet": "Le stock de jetons a un <strong>plafond</strong> : les jetons accumulés au-delà sont perdus. Reviens régulièrement.",
+      "regenBullet": "La régénération est continue : le solde est recalculé à la volée à chaque connexion.",
+      "topbarBullet": "La <strong>topbar</strong> affiche ton solde et le délai avant le prochain jeton.",
+      "info": "Tu peux aussi obtenir des jetons via la <strong>Boutique</strong> (packs de tokens) ou des événements. Certaines compétences accélèrent la régénération, augmentent le plafond, ou donnent une chance de jeton bonus.",
+      "tip": "Conseil : connecte-toi régulièrement pour éviter de dépasser le plafond et de perdre des jetons accumulés."
     }
   }
 }
