@@ -15,6 +15,23 @@ export const Route = createFileRoute('/_admin/admin/translations')({
 const ALL = 'ALL'
 
 /**
+ * Deux défauts, deux volumes très différents.
+ *
+ * `identical` est l'état que la migration i18n a laissé sur TOUTE la base
+ * (elle a recopié le français dans la colonne anglaise) et celui que produit
+ * l'import de cartes, qui n'a qu'un nom français à envoyer. Il s'en compte
+ * donc des centaines, là où `empty` ne peut naître que d'une écriture hors
+ * API. Les mélanger dans une seule liste noierait les seconds : d'où le
+ * filtre, et `empty` par défaut n'aurait pas de sens non plus — on ouvre sur
+ * tout, mais chaque ligne dit de quel défaut il s'agit.
+ */
+const KIND_OPTIONS = [
+  { value: ALL, label: 'Tous les défauts' },
+  { value: 'empty', label: 'Langue vide' },
+  { value: 'identical', label: 'Identique FR/EN' },
+]
+
+/**
  * Les douze modèles traduits balayés par le back (voir
  * `localized.extension.ts` / `admin-translations.repository.ts`), en
  * français pour l'affichage. Une entité qui n'existe pas dans la réponse ne
@@ -53,11 +70,32 @@ function rowKey(entry: MissingTranslationEntry): string {
   return `${entry.entity}-${entry.id}-${entry.field}`
 }
 
+function defectLabel(entry: MissingTranslationEntry): string {
+  if (entry.kind === 'identical') {
+    return 'Anglais = français'
+  }
+  return entry.missingLocale === 'FR' ? 'Français manquant' : 'Anglais manquant'
+}
+
+function defectVariant(
+  entry: MissingTranslationEntry,
+): 'warning' | 'info' | 'neutral' {
+  if (entry.kind === 'identical') {
+    return 'neutral'
+  }
+  return entry.missingLocale === 'FR' ? 'warning' : 'info'
+}
+
 function AdminTranslations() {
   const { data, isLoading } = useAdminMissingTranslations()
   const [entityFilter, setEntityFilter] = useState<string>(ALL)
+  const [kindFilter, setKindFilter] = useState<string>(ALL)
 
-  const entries = data?.entries ?? []
+  const allEntries = data?.entries ?? []
+  const entries =
+    kindFilter === ALL
+      ? allEntries
+      : allEntries.filter((e) => e.kind === kindFilter)
 
   const entityOptions = useMemo(() => {
     const present = Array.from(new Set(entries.map((e) => e.entity))).sort(
@@ -72,10 +110,16 @@ function AdminTranslations() {
     ]
   }, [entries])
 
+  // Changer de défaut peut faire disparaître l'entité sélectionnée : on
+  // retombe sur « toutes » plutôt que d'afficher un tableau vide sans
+  // explication.
+  const effectiveEntity = entityOptions.some((o) => o.value === entityFilter)
+    ? entityFilter
+    : ALL
   const filteredEntries =
-    entityFilter === ALL
+    effectiveEntity === ALL
       ? entries
-      : entries.filter((e) => e.entity === entityFilter)
+      : entries.filter((e) => e.entity === effectiveEntity)
 
   return (
     <div className="flex h-screen flex-col p-8">
@@ -83,30 +127,46 @@ function AdminTranslations() {
         icon={Languages}
         kicker="Contenu"
         title="Traductions manquantes"
-        subtitle="Contenu créé ou édité dans une seule langue — le repli de lecture le rend invisible côté joueur sans que personne ne le sache."
+        subtitle="Contenu dont une langue manque, ou dont l'anglais n'est que la recopie du français — le repli de lecture le rend invisible côté joueur sans que personne ne le sache."
       />
 
       {isLoading ? (
         <div className="flex h-full items-center justify-center text-text-light">
           Chargement…
         </div>
-      ) : entries.length === 0 ? (
+      ) : allEntries.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-border bg-card text-center">
           <CheckCircle2 className="h-10 w-10 text-success" />
           <p className="text-base font-semibold text-text">
             Aucune traduction manquante
           </p>
           <p className="max-w-sm text-sm text-text-light">
-            Toutes les paires français/anglais sont complètes sur les douze
-            modèles surveillés.
+            Sur les douze modèles surveillés, aucune paire n'a de langue vide ni
+            d'anglais recopié du français. Les identités volontaires (prénoms
+            nus, cognats, gabarits bilingues) ne sont pas comptées.
           </p>
         </div>
       ) : (
         <>
+          <div className="mt-4">
+            <SegmentedControl
+              value={kindFilter}
+              onChange={setKindFilter}
+              options={KIND_OPTIONS.map((o) => ({
+                ...o,
+                label:
+                  o.value === ALL
+                    ? `${o.label} (${allEntries.length})`
+                    : `${o.label} (${allEntries.filter((e) => e.kind === o.value).length})`,
+              }))}
+              wrap
+            />
+          </div>
+
           {entityOptions.length > 2 && (
-            <div className="mt-4">
+            <div className="mt-3">
               <SegmentedControl
-                value={entityFilter}
+                value={effectiveEntity}
                 onChange={setEntityFilter}
                 options={entityOptions}
                 wrap
@@ -121,7 +181,7 @@ function AdminTranslations() {
                   <th className="px-4 py-3">Entité</th>
                   <th className="px-4 py-3">Identifiant</th>
                   <th className="px-4 py-3">Champ</th>
-                  <th className="px-4 py-3">Langue manquante</th>
+                  <th className="px-4 py-3">Défaut</th>
                   <th className="px-4 py-3">Valeur disponible</th>
                 </tr>
               </thead>
@@ -146,14 +206,8 @@ function AdminTranslations() {
                       {fieldLabel(entry.field)}
                     </td>
                     <td className="px-4 py-3">
-                      <Badge
-                        variant={
-                          entry.missingLocale === 'FR' ? 'warning' : 'info'
-                        }
-                      >
-                        {entry.missingLocale === 'FR'
-                          ? 'Français manquant'
-                          : 'Anglais manquant'}
+                      <Badge variant={defectVariant(entry)}>
+                        {defectLabel(entry)}
                       </Badge>
                     </td>
                     <td

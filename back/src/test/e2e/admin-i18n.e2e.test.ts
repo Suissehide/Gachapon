@@ -1,7 +1,17 @@
 // back/src/test/e2e/admin-i18n.e2e.test.ts
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
+import { SKILL_BRANCH_TEXT } from '../../main/domain/content/skills.definitions'
 import { buildTestApp } from '../helpers/build-test-app'
+
+type MissingEntry = {
+  entity: string
+  id: string
+  field: string
+  kind: 'empty' | 'identical'
+  missingLocale: 'FR' | 'EN'
+  value: string
+}
 
 describe('administration bilingue', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
@@ -129,19 +139,14 @@ describe('administration bilingue', () => {
       headers: { cookie },
     })
     expect(res.statusCode).toBe(200)
-    const entries = res.json().entries as {
-      entity: string
-      id: string
-      field: string
-      missingLocale: 'FR' | 'EN'
-      value: string
-    }[]
+    const entries = res.json().entries as MissingEntry[]
 
     const englishGap = entries.find(
       (e) => e.entity === 'cardSet' && e.id === missingEnglish.id,
     )
     expect(englishGap).toMatchObject({
       field: 'name',
+      kind: 'empty',
       missingLocale: 'EN',
       value: `Sans anglais ${suffix}`,
     })
@@ -151,10 +156,85 @@ describe('administration bilingue', () => {
     )
     expect(frenchGap).toMatchObject({
       field: 'name',
+      kind: 'empty',
       missingLocale: 'FR',
       value: `Missing french ${suffix}`,
     })
 
     expect(entries.some((e) => e.id === legitimatelyEmpty.id)).toBe(false)
+  })
+
+  it("remonte une ligne dans l'état EXACT que la migration a produit : les deux colonnes identiques", async () => {
+    const prisma = app.iocContainer.postgresOrm.prisma
+
+    // Ce que `20260921151247_i18n_content_columns` a écrit sur toute la base :
+    // `UPDATE "CardSet" SET "nameFr" = "name", "nameEn" = "name"`. Aucune
+    // colonne n'est vide — c'est PRÉCISÉMENT ce que l'ancienne détection ne
+    // voyait pas, d'où un écran affirmant « aucune traduction manquante » sur
+    // une base où presque rien n'était traduit.
+    const recopie = `Recopie de la migration ${suffix}`
+    const postMigration = await prisma.cardSet.create({
+      data: {
+        nameFr: recopie,
+        nameEn: recopie,
+        descriptionFr: `Description recopiée ${suffix}`,
+        descriptionEn: `Description recopiée ${suffix}`,
+        isActive: false,
+      },
+    })
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/admin/translations/missing',
+      headers: { cookie },
+    })
+    expect(res.statusCode).toBe(200)
+    const entries = res.json().entries as MissingEntry[]
+
+    const name = entries.find(
+      (e) => e.id === postMigration.id && e.field === 'name',
+    )
+    expect(name).toMatchObject({
+      entity: 'cardSet',
+      kind: 'identical',
+      missingLocale: 'EN',
+      value: recopie,
+    })
+
+    // La colonne facultative recopiée remonte elle aussi : son `where`
+    // nullable a sa propre clause d'égalité.
+    const description = entries.find(
+      (e) => e.id === postMigration.id && e.field === 'description',
+    )
+    expect(description).toMatchObject({
+      entity: 'cardSet',
+      kind: 'identical',
+      value: `Description recopiée ${suffix}`,
+    })
+  })
+
+  it('ne crie pas au loup sur une identité délibérée du contenu', async () => {
+    const prisma = app.iocContainer.postgresOrm.prisma
+
+    // « Flux » est le nom d'une branche de compétence, identique en français
+    // et en anglais dans les définitions — et le test unitaire
+    // `content-translations.test.ts` l'assume explicitement. Une ligne qui
+    // porte cette valeur des deux côtés n'est pas une traduction oubliée.
+    const legitimate = await prisma.cardSet.create({
+      data: {
+        nameFr: SKILL_BRANCH_TEXT.flux.nameFr,
+        nameEn: SKILL_BRANCH_TEXT.flux.nameEn,
+        isActive: false,
+      },
+    })
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/admin/translations/missing',
+      headers: { cookie },
+    })
+    const entries = res.json().entries as MissingEntry[]
+
+    expect(entries.some((e) => e.id === legitimate.id)).toBe(false)
   })
 })

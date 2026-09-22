@@ -1,3 +1,4 @@
+import { deliberateIdenticalValues } from '../../../domain/i18n/deliberate-identical'
 import type { IocContainer } from '../../../types/application/ioc'
 import type {
   IAdminTranslationsRepository,
@@ -6,20 +7,49 @@ import type {
 import type { PostgresPrismaClient } from '../postgres-client'
 
 /**
- * Décide quelle langue manque à partir d'une paire dont on sait déjà
- * (par construction du `where` de l'appelant) qu'exactement une des deux
- * est vide. `null` et `''` comptent tous les deux comme vide, pour couvrir
- * aussi bien les colonnes facultatives (`String?`, peuvent être `null`)
- * que les colonnes obligatoires (`String`, ne peuvent être que `''`).
+ * Qualifie une paire Fr/En remontée par les `where` ci-dessous, ou la
+ * rejette.
+ *
+ * Deux défauts, pas un :
+ *  - `empty` — une langue porte du contenu, l'autre est vide. `null` et `''`
+ *    comptent tous les deux comme vide, pour couvrir aussi bien les colonnes
+ *    facultatives (`String?`) que les obligatoires (`String`).
+ *  - `identical` — les deux langues sont pleines et STRICTEMENT égales.
+ *    C'est l'état que la migration `20260921151247_i18n_content_columns`
+ *    a produit sur TOUTE la base (elle a recopié le français dans les deux
+ *    colonnes, qui passaient `NOT NULL`), et celui que produit tout import
+ *    qui envoie `nameEn = nameFr`. Sans cette catégorie, l'écran affichait
+ *    « aucune traduction manquante » sur une base où presque rien n'était
+ *    traduit.
+ *
+ * `missingLocale` reste la langue À REMPLIR. Pour `identical`, c'est
+ * toujours `EN` : les deux producteurs connus de paires identiques
+ * (la migration, et les clients de l'API admin qui recopient le français)
+ * copient le FRANÇAIS vers l'anglais.
  */
-function pickMissingSide(
+function classify(
   fr: string | null,
   en: string | null,
-): { missingLocale: 'FR' | 'EN'; value: string } {
+): {
+  kind: 'empty' | 'identical'
+  missingLocale: 'FR' | 'EN'
+  value: string
+} | null {
   const frEmpty = fr === null || fr === ''
-  return frEmpty
-    ? { missingLocale: 'FR', value: en ?? '' }
-    : { missingLocale: 'EN', value: fr ?? '' }
+  const enEmpty = en === null || en === ''
+  if (frEmpty && enEmpty) {
+    return null
+  }
+  if (frEmpty) {
+    return { kind: 'empty', missingLocale: 'FR', value: en ?? '' }
+  }
+  if (enEmpty) {
+    return { kind: 'empty', missingLocale: 'EN', value: fr ?? '' }
+  }
+  if (fr === en) {
+    return { kind: 'identical', missingLocale: 'EN', value: fr ?? '' }
+  }
+  return null
 }
 
 function collect(
@@ -28,13 +58,18 @@ function collect(
   field: string,
   rows: { id: string; fr: string | null; en: string | null }[],
 ): void {
+  // Les identités délibérées (prénoms nus, cognats, gabarits bilingues)
+  // sont écartées : voir `deliberate-identical.ts`.
+  const deliberate = deliberateIdenticalValues()
   for (const row of rows) {
-    entries.push({
-      entity,
-      id: row.id,
-      field,
-      ...pickMissingSide(row.fr, row.en),
-    })
+    const verdict = classify(row.fr, row.en)
+    if (verdict === null) {
+      continue
+    }
+    if (verdict.kind === 'identical' && deliberate.has(verdict.value)) {
+      continue
+    }
+    entries.push({ entity, id: row.id, field, ...verdict })
   }
 }
 
@@ -76,6 +111,14 @@ export class AdminTranslationsRepository
           OR: [
             { AND: [{ nameFr: { not: '' } }, { nameEn: '' }] },
             { AND: [{ nameEn: { not: '' } }, { nameFr: '' }] },
+            // Post-migration : les deux colonnes portent la MÊME valeur,
+            // aucune n'est vide. C'est l'état réel de la production.
+            {
+              AND: [
+                { nameFr: { not: '' } },
+                { nameEn: { equals: this.#prisma.quest.fields.nameFr } },
+              ],
+            },
           ],
         },
         select: { id: true, nameFr: true, nameEn: true },
@@ -85,6 +128,18 @@ export class AdminTranslationsRepository
           OR: [
             { AND: [{ descriptionFr: { not: '' } }, { descriptionEn: '' }] },
             { AND: [{ descriptionEn: { not: '' } }, { descriptionFr: '' }] },
+            // Post-migration : les deux colonnes portent la MÊME valeur,
+            // aucune n'est vide. C'est l'état réel de la production.
+            {
+              AND: [
+                { descriptionFr: { not: '' } },
+                {
+                  descriptionEn: {
+                    equals: this.#prisma.quest.fields.descriptionFr,
+                  },
+                },
+              ],
+            },
           ],
         },
         select: { id: true, descriptionFr: true, descriptionEn: true },
@@ -94,6 +149,14 @@ export class AdminTranslationsRepository
           OR: [
             { AND: [{ nameFr: { not: '' } }, { nameEn: '' }] },
             { AND: [{ nameEn: { not: '' } }, { nameFr: '' }] },
+            // Post-migration : les deux colonnes portent la MÊME valeur,
+            // aucune n'est vide. C'est l'état réel de la production.
+            {
+              AND: [
+                { nameFr: { not: '' } },
+                { nameEn: { equals: this.#prisma.cardSet.fields.nameFr } },
+              ],
+            },
           ],
         },
         select: { id: true, nameFr: true, nameEn: true },
@@ -103,6 +166,14 @@ export class AdminTranslationsRepository
           OR: [
             { AND: [{ nameFr: { not: '' } }, { nameEn: '' }] },
             { AND: [{ nameEn: { not: '' } }, { nameFr: '' }] },
+            // Post-migration : les deux colonnes portent la MÊME valeur,
+            // aucune n'est vide. C'est l'état réel de la production.
+            {
+              AND: [
+                { nameFr: { not: '' } },
+                { nameEn: { equals: this.#prisma.card.fields.nameFr } },
+              ],
+            },
           ],
         },
         select: { id: true, nameFr: true, nameEn: true },
@@ -112,6 +183,14 @@ export class AdminTranslationsRepository
           OR: [
             { AND: [{ nameFr: { not: '' } }, { nameEn: '' }] },
             { AND: [{ nameEn: { not: '' } }, { nameFr: '' }] },
+            // Post-migration : les deux colonnes portent la MÊME valeur,
+            // aucune n'est vide. C'est l'état réel de la production.
+            {
+              AND: [
+                { nameFr: { not: '' } },
+                { nameEn: { equals: this.#prisma.equipment.fields.nameFr } },
+              ],
+            },
           ],
         },
         select: { id: true, nameFr: true, nameEn: true },
@@ -121,6 +200,14 @@ export class AdminTranslationsRepository
           OR: [
             { AND: [{ nameFr: { not: '' } }, { nameEn: '' }] },
             { AND: [{ nameEn: { not: '' } }, { nameFr: '' }] },
+            // Post-migration : les deux colonnes portent la MÊME valeur,
+            // aucune n'est vide. C'est l'état réel de la production.
+            {
+              AND: [
+                { nameFr: { not: '' } },
+                { nameEn: { equals: this.#prisma.shopItem.fields.nameFr } },
+              ],
+            },
           ],
         },
         select: { id: true, nameFr: true, nameEn: true },
@@ -130,6 +217,18 @@ export class AdminTranslationsRepository
           OR: [
             { AND: [{ descriptionFr: { not: '' } }, { descriptionEn: '' }] },
             { AND: [{ descriptionEn: { not: '' } }, { descriptionFr: '' }] },
+            // Post-migration : les deux colonnes portent la MÊME valeur,
+            // aucune n'est vide. C'est l'état réel de la production.
+            {
+              AND: [
+                { descriptionFr: { not: '' } },
+                {
+                  descriptionEn: {
+                    equals: this.#prisma.shopItem.fields.descriptionFr,
+                  },
+                },
+              ],
+            },
           ],
         },
         select: { id: true, descriptionFr: true, descriptionEn: true },
@@ -139,6 +238,14 @@ export class AdminTranslationsRepository
           OR: [
             { AND: [{ nameFr: { not: '' } }, { nameEn: '' }] },
             { AND: [{ nameEn: { not: '' } }, { nameFr: '' }] },
+            // Post-migration : les deux colonnes portent la MÊME valeur,
+            // aucune n'est vide. C'est l'état réel de la production.
+            {
+              AND: [
+                { nameFr: { not: '' } },
+                { nameEn: { equals: this.#prisma.achievement.fields.nameFr } },
+              ],
+            },
           ],
         },
         select: { id: true, nameFr: true, nameEn: true },
@@ -148,6 +255,18 @@ export class AdminTranslationsRepository
           OR: [
             { AND: [{ descriptionFr: { not: '' } }, { descriptionEn: '' }] },
             { AND: [{ descriptionEn: { not: '' } }, { descriptionFr: '' }] },
+            // Post-migration : les deux colonnes portent la MÊME valeur,
+            // aucune n'est vide. C'est l'état réel de la production.
+            {
+              AND: [
+                { descriptionFr: { not: '' } },
+                {
+                  descriptionEn: {
+                    equals: this.#prisma.achievement.fields.descriptionFr,
+                  },
+                },
+              ],
+            },
           ],
         },
         select: { id: true, descriptionFr: true, descriptionEn: true },
@@ -157,6 +276,14 @@ export class AdminTranslationsRepository
           OR: [
             { AND: [{ nameFr: { not: '' } }, { nameEn: '' }] },
             { AND: [{ nameEn: { not: '' } }, { nameFr: '' }] },
+            // Post-migration : les deux colonnes portent la MÊME valeur,
+            // aucune n'est vide. C'est l'état réel de la production.
+            {
+              AND: [
+                { nameFr: { not: '' } },
+                { nameEn: { equals: this.#prisma.skillBranch.fields.nameFr } },
+              ],
+            },
           ],
         },
         select: { id: true, nameFr: true, nameEn: true },
@@ -166,6 +293,18 @@ export class AdminTranslationsRepository
           OR: [
             { AND: [{ descriptionFr: { not: '' } }, { descriptionEn: '' }] },
             { AND: [{ descriptionEn: { not: '' } }, { descriptionFr: '' }] },
+            // Post-migration : les deux colonnes portent la MÊME valeur,
+            // aucune n'est vide. C'est l'état réel de la production.
+            {
+              AND: [
+                { descriptionFr: { not: '' } },
+                {
+                  descriptionEn: {
+                    equals: this.#prisma.skillBranch.fields.descriptionFr,
+                  },
+                },
+              ],
+            },
           ],
         },
         select: { id: true, descriptionFr: true, descriptionEn: true },
@@ -175,6 +314,14 @@ export class AdminTranslationsRepository
           OR: [
             { AND: [{ nameFr: { not: '' } }, { nameEn: '' }] },
             { AND: [{ nameEn: { not: '' } }, { nameFr: '' }] },
+            // Post-migration : les deux colonnes portent la MÊME valeur,
+            // aucune n'est vide. C'est l'état réel de la production.
+            {
+              AND: [
+                { nameFr: { not: '' } },
+                { nameEn: { equals: this.#prisma.skillNode.fields.nameFr } },
+              ],
+            },
           ],
         },
         select: { id: true, nameFr: true, nameEn: true },
@@ -184,6 +331,18 @@ export class AdminTranslationsRepository
           OR: [
             { AND: [{ descriptionFr: { not: '' } }, { descriptionEn: '' }] },
             { AND: [{ descriptionEn: { not: '' } }, { descriptionFr: '' }] },
+            // Post-migration : les deux colonnes portent la MÊME valeur,
+            // aucune n'est vide. C'est l'état réel de la production.
+            {
+              AND: [
+                { descriptionFr: { not: '' } },
+                {
+                  descriptionEn: {
+                    equals: this.#prisma.skillNode.fields.descriptionFr,
+                  },
+                },
+              ],
+            },
           ],
         },
         select: { id: true, descriptionFr: true, descriptionEn: true },
@@ -193,6 +352,18 @@ export class AdminTranslationsRepository
           OR: [
             { AND: [{ labelFr: { not: '' } }, { labelEn: '' }] },
             { AND: [{ labelEn: { not: '' } }, { labelFr: '' }] },
+            // Post-migration : les deux colonnes portent la MÊME valeur,
+            // aucune n'est vide. C'est l'état réel de la production.
+            {
+              AND: [
+                { labelFr: { not: '' } },
+                {
+                  labelEn: {
+                    equals: this.#prisma.campaignStage.fields.labelFr,
+                  },
+                },
+              ],
+            },
           ],
         },
         select: { id: true, labelFr: true, labelEn: true },
@@ -202,6 +373,14 @@ export class AdminTranslationsRepository
           OR: [
             { AND: [{ labelFr: { not: '' } }, { labelEn: '' }] },
             { AND: [{ labelEn: { not: '' } }, { labelFr: '' }] },
+            // Post-migration : les deux colonnes portent la MÊME valeur,
+            // aucune n'est vide. C'est l'état réel de la production.
+            {
+              AND: [
+                { labelFr: { not: '' } },
+                { labelEn: { equals: this.#prisma.towerFloor.fields.labelFr } },
+              ],
+            },
           ],
         },
         select: { id: true, labelFr: true, labelEn: true },
@@ -211,6 +390,14 @@ export class AdminTranslationsRepository
           OR: [
             { AND: [{ nameFr: { not: '' } }, { nameEn: '' }] },
             { AND: [{ nameEn: { not: '' } }, { nameFr: '' }] },
+            // Post-migration : les deux colonnes portent la MÊME valeur,
+            // aucune n'est vide. C'est l'état réel de la production.
+            {
+              AND: [
+                { nameFr: { not: '' } },
+                { nameEn: { equals: this.#prisma.raidBoss.fields.nameFr } },
+              ],
+            },
           ],
         },
         select: { id: true, nameFr: true, nameEn: true },
@@ -337,8 +524,10 @@ export class AdminTranslationsRepository
     // Colonnes facultatives (String?) : `null` compte comme vide au même
     // titre que `''`. Une paire dont les DEUX langues sont vides (jamais
     // renseignées) est un état normal — le filtre exige explicitement
-    // qu'un côté porte du contenu, dans un sens comme dans l'autre.
-    const setsUnbalancedDescription = await this.#prisma.cardSet.findMany({
+    // qu'un côté porte du contenu, dans un sens comme dans l'autre. La
+    // troisième clause couvre, ici aussi, les deux langues pleines et
+    // identiques.
+    const setsDefectiveDescription = await this.#prisma.cardSet.findMany({
       where: {
         OR: [
           {
@@ -355,6 +544,18 @@ export class AdminTranslationsRepository
               { OR: [{ descriptionFr: null }, { descriptionFr: '' }] },
             ],
           },
+          // Post-migration : les deux colonnes portent la MÊME valeur.
+          {
+            AND: [
+              { descriptionFr: { not: null } },
+              { descriptionFr: { not: '' } },
+              {
+                descriptionEn: {
+                  equals: this.#prisma.cardSet.fields.descriptionFr,
+                },
+              },
+            ],
+          },
         ],
       },
       select: { id: true, descriptionFr: true, descriptionEn: true },
@@ -363,14 +564,14 @@ export class AdminTranslationsRepository
       entries,
       'cardSet',
       'description',
-      setsUnbalancedDescription.map((r) => ({
+      setsDefectiveDescription.map((r) => ({
         id: r.id,
         fr: r.descriptionFr,
         en: r.descriptionEn,
       })),
     )
 
-    const rewardsUnbalancedLabel = await this.#prisma.reward.findMany({
+    const rewardsDefectiveLabel = await this.#prisma.reward.findMany({
       where: {
         OR: [
           {
@@ -387,6 +588,14 @@ export class AdminTranslationsRepository
               { OR: [{ labelFr: null }, { labelFr: '' }] },
             ],
           },
+          // Post-migration : les deux colonnes portent la MÊME valeur.
+          {
+            AND: [
+              { labelFr: { not: null } },
+              { labelFr: { not: '' } },
+              { labelEn: { equals: this.#prisma.reward.fields.labelFr } },
+            ],
+          },
         ],
       },
       select: { id: true, labelFr: true, labelEn: true },
@@ -395,7 +604,7 @@ export class AdminTranslationsRepository
       entries,
       'reward',
       'label',
-      rewardsUnbalancedLabel.map((r) => ({
+      rewardsDefectiveLabel.map((r) => ({
         id: r.id,
         fr: r.labelFr,
         en: r.labelEn,
