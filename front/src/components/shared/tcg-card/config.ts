@@ -1,3 +1,5 @@
+import i18n from '../../../i18n/index.ts'
+
 // ── Rarity tokens ──────────────────────────────────────────────────────────────
 // Drives --rar / --rar-light / --rar-dark CSS vars on the card root.
 
@@ -10,26 +12,44 @@ export type RarityTone = {
   label: string
 }
 
+// `label` vient de `common:cardRarity.*` — une entrée séparée de
+// `common:rarity.*` (libs/rarity.ts) : le texte source diffère réellement
+// ("Commun" ici, "Commune" là-bas, un accord de genre resté incohérent entre
+// les deux copies avant cette extraction — signalé tel quel dans le rapport
+// de la tâche 6, pas corrigé ici, cette étape déplace le texte sans le
+// réécrire). Résolu une fois au chargement du module — sûr ici parce que
+// `useLocale().switchTo` fait toujours un rechargement dur de la page (voir
+// `i18n/useLocale.ts`).
 export const RARITY_TONES: Record<RarityKey, RarityTone> = {
   COMMON: {
     hex: '#6b7280',
     light: '#d1d5db',
     dark: '#374151',
-    label: 'Commun',
+    label: i18n.t('common:cardRarity.common'),
   },
   UNCOMMON: {
     hex: '#22c55e',
     light: '#86efac',
     dark: '#14532d',
-    label: 'Peu commun',
+    label: i18n.t('common:cardRarity.uncommon'),
   },
-  RARE: { hex: '#3b82f6', light: '#93c5fd', dark: '#1e3a8a', label: 'Rare' },
-  EPIC: { hex: '#8b5cf6', light: '#c4b5fd', dark: '#4c1d95', label: 'Épique' },
+  RARE: {
+    hex: '#3b82f6',
+    light: '#93c5fd',
+    dark: '#1e3a8a',
+    label: i18n.t('common:cardRarity.rare'),
+  },
+  EPIC: {
+    hex: '#8b5cf6',
+    light: '#c4b5fd',
+    dark: '#4c1d95',
+    label: i18n.t('common:cardRarity.epic'),
+  },
   LEGENDARY: {
     hex: '#f59e0b',
     light: '#fcd34d',
     dark: '#78350f',
-    label: 'Légendaire',
+    label: i18n.t('common:cardRarity.legendary'),
   },
 }
 

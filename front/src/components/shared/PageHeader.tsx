@@ -9,6 +9,7 @@
 
 import { Link, type LinkOptions } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 
 // A crumb is either a label (current page) or a label + route info (link).
 // We piggy-back on TanStack Router's LinkOptions so callers can pass any
@@ -46,6 +47,7 @@ export function PageHeader({
   subtitle,
   right,
 }: Props) {
+  const { t } = useTranslation('common')
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
@@ -56,7 +58,7 @@ export function PageHeader({
         )}
         {breadcrumbs && breadcrumbs.length > 0 && (
           <nav
-            aria-label="Fil d'Ariane"
+            aria-label={t('pageHeader.breadcrumbAriaLabel')}
             className="flex flex-wrap items-center gap-x-1.5 gap-y-1"
           >
             {breadcrumbs.map((crumb, i) => {

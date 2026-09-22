@@ -21,15 +21,20 @@ import { X } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import { useTranslation } from 'react-i18next'
 
 import type { CardElement } from '../../../constants/card.constant.ts'
+import i18n from '../../../i18n/index.ts'
 import { Button } from '../../ui/button.tsx'
 import { CardDisplay } from './CardDisplay.tsx'
 import { getRarityTone } from './config.ts'
 
+// Nommé `_FR` par cohérence avec `RARITY_LABEL_FR` (libs/rarity.ts), lu dans
+// la langue courante — sûr au chargement du module car `useLocale().switchTo`
+// recharge toujours la page en dur (voir `i18n/useLocale.ts`).
 const VARIANT_LABEL_FR: Record<string, string> = {
-  BRILLIANT: 'Brillante',
-  HOLOGRAPHIC: 'Holographique',
+  BRILLIANT: i18n.t('common:variant.brilliant'),
+  HOLOGRAPHIC: i18n.t('common:variant.holographic'),
 }
 
 export type ZoomableCard = {
@@ -64,6 +69,7 @@ export function CardZoomOverlay({
   /** Badges ajoutés à la suite des deux autres — « Nouvelle » sur un tirage. */
   extraBadges?: ReactNode
 }) {
+  const { t } = useTranslation('common')
   const rootRef = useRef<HTMLDivElement>(null)
 
   // Échap est écouté en phase de CAPTURE, et la propagation coupée. Cette vue
@@ -139,7 +145,7 @@ export function CardZoomOverlay({
         variant="ghost"
         size="icon"
         onClick={onClose}
-        aria-label="Fermer"
+        aria-label={t('cardZoom.closeAriaLabel')}
         className="absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
       >
         <X size={18} />

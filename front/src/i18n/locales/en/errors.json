@@ -1,0 +1,37 @@
+{
+  "generic": {
+    "defaultMessage": "An unknown error occurred",
+    "fallbackMessage": "An unknown error occurred.",
+    "fallbackTitle": "Error"
+  },
+  "status": {
+    "0": {
+      "title": "Connection error",
+      "message": "Could not reach the server. Check your internet connection."
+    },
+    "400": {
+      "title": "Invalid request",
+      "message": "The server couldn't process the request. Check the data sent."
+    },
+    "401": {
+      "title": "Unauthorized",
+      "message": "You must be logged in to do this."
+    },
+    "402": {
+      "title": "Payment required",
+      "message": "Not enough resources for this action (gold, dust, tokens or combat points)."
+    },
+    "403": {
+      "title": "Access denied",
+      "message": "You don't have the permissions needed."
+    },
+    "404": {
+      "title": "Not found",
+      "message": "The requested item doesn't exist or was removed."
+    },
+    "500": {
+      "title": "Server error",
+      "message": "An internal error occurred. Try again later."
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "generic": {
+    "defaultMessage": "Une erreur inconnue est survenue",
+    "fallbackMessage": "Une erreur inconnue est survenue.",
+    "fallbackTitle": "Erreur"
+  },
+  "status": {
+    "0": {
+      "title": "Erreur de connexion",
+      "message": "Impossible de contacter le serveur. Vérifiez votre connexion internet."
+    },
+    "400": {
+      "title": "Requête invalide",
+      "message": "Le serveur n’a pas pu traiter la requête. Vérifiez les données envoyées."
+    },
+    "401": {
+      "title": "Non autorisé",
+      "message": "Vous devez être connecté pour effectuer cette action."
+    },
+    "402": {
+      "title": "Paiement requis",
+      "message": "Ressources insuffisantes pour cette action (or, poussière, jetons ou points de combat)."
+    },
+    "403": {
+      "title": "Accès interdit",
+      "message": "Vous n’avez pas les permissions nécessaires."
+    },
+    "404": {
+      "title": "Introuvable",
+      "message": "L'élément demandé n'existe pas ou a été supprimé."
+    },
+    "500": {
+      "title": "Erreur serveur",
+      "message": "Une erreur interne est survenue. Réessayez plus tard."
+    }
+  }
+}
