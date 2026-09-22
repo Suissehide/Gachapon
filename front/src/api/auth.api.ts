@@ -1,7 +1,10 @@
 import { AUTH_ROUTES } from '../constants/auth.constant.ts'
 import { apiUrl } from '../constants/config.constant.ts'
-import { withAcceptLanguage } from '../i18n/index.ts'
-import { handleHttpError } from '../libs/httpErrorHandler.ts'
+import i18n, { withAcceptLanguage } from '../i18n/index.ts'
+import {
+  handleHttpError,
+  handleHttpErrorFromServer,
+} from '../libs/httpErrorHandler.ts'
 import type { RegisterInput, User } from '../types/auth.ts'
 
 export class EmailNotVerifiedError extends Error {
@@ -28,19 +31,19 @@ export const AuthApi = {
           throw new EmailNotVerifiedError(body.email ?? email)
         }
       }
-      handleHttpError(
+      // 400 : la seule source est la validation Zod du corps (email/mot de
+      // passe), dont le message est technique et anglais — le front garde le
+      // sien. 401 : `auth.invalidCredentials` du catalogue back, bilingue.
+      await handleHttpErrorFromServer(
         response,
         {
           400: {
-            title: 'Format invalide',
-            message: 'Vérifie ton email et ton mot de passe',
+            title: i18n.t('auth:apiTitles.invalidFormatTitle'),
+            message: i18n.t('auth:apiTitles.invalidFormatMessage'),
           },
-          401: {
-            title: 'Identifiants incorrects',
-            message: "L'email ou le mot de passe est incorrect",
-          },
+          401: i18n.t('auth:apiTitles.invalidCredentialsTitle'),
         },
-        'Impossible de se connecter',
+        i18n.t('auth:apiTitles.operations.login'),
       )
     }
     return response.json()
@@ -53,7 +56,7 @@ export const AuthApi = {
       headers: withAcceptLanguage(),
     })
     if (!response.ok) {
-      handleHttpError(response, {}, 'Erreur lors de la mise à jour du cookie')
+      handleHttpError(response, {}, i18n.t('auth:apiTitles.operations.refresh'))
     }
     return response
   },
@@ -65,19 +68,19 @@ export const AuthApi = {
       body: JSON.stringify(registerInput),
     })
     if (!response.ok) {
-      handleHttpError(
+      // 409 : le back distingue `auth.emailAlreadyInUse` et
+      // `user.usernameTaken` ; la copie française qui vivait ici parlait
+      // d'email dans les deux cas, donc mentait sur un pseudo déjà pris.
+      await handleHttpErrorFromServer(
         response,
         {
           400: {
-            title: 'Informations invalides',
-            message: 'Certains champs sont incorrects ou manquants',
+            title: i18n.t('auth:apiTitles.invalidInfoTitle'),
+            message: i18n.t('auth:apiTitles.invalidInfoMessage'),
           },
-          409: {
-            title: 'Compte existant',
-            message: 'Un utilisateur avec cet email existe déjà',
-          },
+          409: i18n.t('auth:apiTitles.accountExistsTitle'),
         },
-        "Erreur lors de l'inscription",
+        i18n.t('auth:apiTitles.operations.register'),
       )
     }
     return response
@@ -95,11 +98,11 @@ export const AuthApi = {
         res,
         {
           400: {
-            title: 'Lien invalide',
-            message: 'Ce lien est invalide ou a expiré.',
+            title: i18n.t('auth:apiTitles.invalidLinkTitle'),
+            message: i18n.t('auth:apiTitles.invalidLinkMessage'),
           },
         },
-        'Erreur de vérification',
+        i18n.t('auth:apiTitles.operations.verifyEmail'),
       )
     }
   },
@@ -115,11 +118,11 @@ export const AuthApi = {
         res,
         {
           429: {
-            title: 'Trop de tentatives',
-            message: 'Attends avant de renvoyer un email.',
+            title: i18n.t('auth:apiTitles.tooManyAttemptsTitle'),
+            message: i18n.t('auth:apiTitles.resendCooldownMessage'),
           },
         },
-        'Erreur lors du renvoi',
+        i18n.t('auth:apiTitles.operations.resendVerification'),
       )
     }
   },
@@ -135,11 +138,11 @@ export const AuthApi = {
         res,
         {
           429: {
-            title: 'Trop de tentatives',
-            message: 'Attends 2 minutes avant de réessayer.',
+            title: i18n.t('auth:apiTitles.tooManyAttemptsTitle'),
+            message: i18n.t('auth:apiTitles.forgotPasswordCooldownMessage'),
           },
         },
-        'Erreur lors de la demande',
+        i18n.t('auth:apiTitles.operations.forgotPassword'),
       )
     }
   },
@@ -155,11 +158,11 @@ export const AuthApi = {
         res,
         {
           400: {
-            title: 'Lien invalide',
-            message: 'Ce lien est invalide ou a expiré.',
+            title: i18n.t('auth:apiTitles.invalidLinkTitle'),
+            message: i18n.t('auth:apiTitles.invalidLinkMessage'),
           },
         },
-        'Erreur lors de la réinitialisation',
+        i18n.t('auth:apiTitles.operations.resetPassword'),
       )
     }
   },
