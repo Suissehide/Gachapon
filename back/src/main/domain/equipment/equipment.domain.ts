@@ -69,8 +69,13 @@ const SET_STAT_LABELS_EN: Record<string, string> = {
 /**
  * Décrit un palier de set à partir de son unique bonus, ex. `+10 % ATQ`
  * (FR) / `+10% ATK` (EN) — dans la locale de la requête courante.
+ *
+ * Exportée (et non `function` privée du module) pour être couverte en
+ * unitaire — voir `src/test/unit/set-tier-label.test.ts` : c'est elle qui
+ * assemble le libellé final, `SET_STAT_LABELS_FR`/`_EN` ne sont que sa table
+ * source, jamais servies telles quelles.
  */
-function formatSetTierLabel(bonuses: EquipmentBonuses): string {
+export function formatSetTierLabel(bonuses: EquipmentBonuses): string {
   const [key, value] = Object.entries(bonuses)[0] ?? []
   if (key === undefined || value === undefined) {
     return ''
