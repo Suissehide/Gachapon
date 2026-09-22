@@ -494,16 +494,25 @@ export class RaidDomain implements IRaidDomain {
       )
     }
     const [cfg, last] = await Promise.all([
-      this.#configService.getMany('raid.baseHpPerMember'),
+      this.#configService.getMany(
+        'raid.baseHpPerMember',
+        'raid.minMembers',
+        'raid.levelHpBonusPct',
+      ),
       this.#raidRepository.findLastRaidBefore(team.id, weekKey),
     ])
     const memberCount = team.members.length
+    const level = nextRaidLevel(last, weekKey)
     return this.#raidRepository.upsertRaid({
       teamId: team.id,
       weekKey,
       bossId: boss.id,
-      level: nextRaidLevel(last, weekKey),
-      maxHp: raidMaxHp(cfg['raid.baseHpPerMember'], memberCount),
+      level,
+      maxHp: raidMaxHp(cfg['raid.baseHpPerMember'], memberCount, {
+        minMembers: cfg['raid.minMembers'],
+        levelBonusPct: cfg['raid.levelHpBonusPct'],
+        level,
+      }),
       memberCountAtStart: memberCount,
     })
   }

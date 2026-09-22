@@ -54,11 +54,27 @@ export function raidElementForWeek(weekKey: string): TowerElement {
   return RAID_ROTATION[idx] as TowerElement
 }
 
+export type RaidHpParams = {
+  /** Effectif MINIMUM facturé, même si l'équipe est plus petite. */
+  minMembers: number
+  /** Points de pourcentage de PV ajoutés par niveau, composés (10 = 10 %). */
+  levelBonusPct: number
+  level: number
+}
+
+/**
+ * PV du boss, figés à la création du raid. Le plancher d'effectif empêche
+ * l'équipe montée à un joueur d'affronter un boss à sa taille ; le niveau
+ * compose par-dessus, sans plafond (voir `nextRaidLevel`).
+ */
 export function raidMaxHp(
   baseHpPerMember: number,
   memberCount: number,
+  { minMembers, levelBonusPct, level }: RaidHpParams,
 ): number {
-  return Math.max(1, Math.round(baseHpPerMember * Math.max(1, memberCount)))
+  const members = Math.max(minMembers, memberCount)
+  const levelMult = (1 + levelBonusPct / 100) ** Math.max(0, level)
+  return Math.max(1, Math.round(baseHpPerMember * members * levelMult))
 }
 
 /**

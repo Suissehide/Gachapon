@@ -72,10 +72,25 @@ describe('raid-rules — rotation', () => {
 })
 
 describe('raid-rules — PV', () => {
-  it('PV = base × membres, plancher à 1 membre', () => {
-    expect(raidMaxHp(20000, 5)).toBe(100000)
-    expect(raidMaxHp(20000, 1)).toBe(20000)
-    expect(raidMaxHp(20000, 0)).toBe(20000)
+  const base = { minMembers: 10, levelBonusPct: 10, level: 0 }
+
+  it('facture au moins `minMembers`, même pour une équipe solo', () => {
+    expect(raidMaxHp(20000, 1, base)).toBe(200000)
+    expect(raidMaxHp(20000, 0, base)).toBe(200000)
+  })
+
+  it('au-delà du plancher, les PV suivent l’effectif réel', () => {
+    expect(raidMaxHp(20000, 14, base)).toBe(280000)
+  })
+
+  it('chaque niveau compose le bonus de PV', () => {
+    expect(raidMaxHp(20000, 10, { ...base, level: 1 })).toBe(220000)
+    expect(raidMaxHp(20000, 10, { ...base, level: 3 })).toBe(266200)
+  })
+
+  it('arrondit à l’entier', () => {
+    // 162000 × 10 × 1,1^5 = 2 609 026,2
+    expect(raidMaxHp(162000, 10, { ...base, level: 5 })).toBe(2609026)
   })
 })
 

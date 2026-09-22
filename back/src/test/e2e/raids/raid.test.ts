@@ -80,6 +80,12 @@ describe('routes de raid', () => {
     await configService.set('raid.baseHpPerMember', HUGE_HP_PER_MEMBER)
     await configService.set('raid.attacksPerDay', 2)
 
+    // Cette suite couvre le raid nominal, pas la difficulté progressive
+    // (raid-difficulte.test.ts s'en charge) : plancher et bonus neutralisés
+    // pour que `maxHp` reste `HUGE_HP_PER_MEMBER × effectif`.
+    await configService.set('raid.minMembers', 1)
+    await configService.set('raid.levelHpBonusPct', 0)
+
     const element = raidElementForWeek(raidWeekKey(new Date()))
     await prisma.raidBoss.upsert({
       where: { element },

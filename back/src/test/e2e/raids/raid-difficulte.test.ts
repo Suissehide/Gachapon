@@ -27,6 +27,8 @@ describe('raid — difficulté progressive', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
   let prisma: any
   let bossId: string
+  let cookies: string
+  let userId: string
   const suffix = Date.now()
   const password = 'Password123!'
 
@@ -38,7 +40,7 @@ describe('raid — difficulté progressive', () => {
       payload: { username: `raiddiff${tag}${suffix}`, email, password },
     })
     expect(reg.statusCode).toBe(201)
-    await prisma.user.update({
+    const user = await prisma.user.update({
       where: { email },
       data: { emailVerifiedAt: new Date() },
     })
@@ -48,20 +50,31 @@ describe('raid — difficulté progressive', () => {
       payload: { email, password },
     })
     expect(login.statusCode).toBe(200)
-    return login.headers['set-cookie'] as string
+    return {
+      userId: user.id as string,
+      cookies: login.headers['set-cookie'] as string,
+    }
   }
 
-  /** Une équipe neuve par test : le niveau se dérive de SON historique. */
+  /**
+   * Une équipe neuve par test : le niveau se dérive de SON historique.
+   * Créée en base plutôt que par `POST /teams` — la suite dépasse à la fois
+   * la limite de 5 inscriptions par quart d'heure (register.router.ts) et le
+   * plafond de 3 équipes par joueur (MAX_TEAMS_PER_USER). Ce que ces tests
+   * exercent est la règle de difficulté, pas la création d'équipe.
+   */
   async function freshTeam(tag: string) {
-    const cookies = await registerAndLogin(tag)
-    const res = await app.inject({
-      method: 'POST',
-      url: '/teams',
-      headers: { cookie: cookies },
-      payload: { name: `RaidDiff${tag}${suffix}` },
+    const team = await prisma.team.create({
+      data: {
+        name: `RaidDiff${tag}${suffix}`,
+        slug: `raid-diff-${tag}-${suffix}`.toLowerCase(),
+        ownerId: userId,
+      },
     })
-    expect(res.statusCode).toBe(201)
-    return { teamId: res.json().id as string, cookies }
+    await prisma.teamMember.create({
+      data: { teamId: team.id, userId, role: 'OWNER' },
+    })
+    return { teamId: team.id, cookies }
   }
 
   /** Raid d'une semaine révolue, posé directement en base. */
@@ -109,6 +122,10 @@ describe('raid — difficulté progressive', () => {
       },
     })
     bossId = boss.id
+
+    const account = await registerAndLogin('OWNER')
+    cookies = account.cookies
+    userId = account.userId
   })
 
   afterAll(async () => {
@@ -169,5 +186,29 @@ describe('raid — difficulté progressive', () => {
       where: { teamId_weekKey: { teamId, weekKey: raidWeekKey(new Date()) } },
     })
     expect(row.level).toBe(2)
+  })
+
+  it('une équipe solo affronte un boss calibré pour `minMembers`', async () => {
+    const { teamId, cookies } = await freshTeam('SOLO')
+    const res = await app.inject({
+      method: 'GET',
+      url: `/teams/${teamId}/raid`,
+      headers: { cookie: cookies },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().memberCountAtStart).toBe(1)
+    expect(res.json().maxHp).toBe(HP_PER_MEMBER * 10)
+  })
+
+  it('le niveau compose le bonus de PV par-dessus le plancher', async () => {
+    const { teamId, cookies } = await freshTeam('HP2')
+    await pastRaid(teamId, 1, 1, true) // victoire au niveau 1 → niveau 2
+    const res = await app.inject({
+      method: 'GET',
+      url: `/teams/${teamId}/raid`,
+      headers: { cookie: cookies },
+    })
+    // 1000 × 10 × 1,1² = 12 100
+    expect(res.json().maxHp).toBe(12100)
   })
 })
