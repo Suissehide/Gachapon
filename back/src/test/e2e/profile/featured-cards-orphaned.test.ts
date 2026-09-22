@@ -28,12 +28,12 @@ describe('GET /users/:username/profile/featured-cards — orphaned ids', () => {
 
     const user = await prisma.user.findUnique({ where: { email } })
     const set = await prisma.cardSet.create({
-      data: { name: `OrphSet${suffix}`, isActive: true },
+      data: { nameFr: `OrphSet${suffix}`, nameEn: `OrphSet${suffix}`, isActive: true },
     })
     const ids: string[] = []
     for (const rarity of ['RARE', 'EPIC', 'LEGENDARY'] as const) {
       const card = await prisma.card.create({
-        data: { name: `${rarity}-${suffix}`, rarity, dropWeight: 10, setId: set.id },
+        data: { nameFr: `${rarity}-${suffix}`, nameEn: `${rarity}-${suffix}`, rarity, dropWeight: 10, setId: set.id },
       })
       await prisma.userCard.create({
         data: { userId: user!.id, cardId: card.id, variant: 'NORMAL', quantity: 1 },

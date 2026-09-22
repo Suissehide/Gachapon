@@ -51,7 +51,8 @@ describe('Equipment initial substats on grant', () => {
     legendaryId = (
       await postgresOrm.prisma.equipment.create({
         data: {
-          name: `InitL-${suffix}`,
+          nameFr: `InitL-${suffix}`,
+          nameEn: `InitL-${suffix}`,
           ...EQUIPMENT_INITIAL_SUBSTATS,
           rarity: 'LEGENDARY',
           bonuses: { atkFlat: 40 },
@@ -62,7 +63,8 @@ describe('Equipment initial substats on grant', () => {
     commonId = (
       await postgresOrm.prisma.equipment.create({
         data: {
-          name: `InitC-${suffix}`,
+          nameFr: `InitC-${suffix}`,
+          nameEn: `InitC-${suffix}`,
           ...EQUIPMENT_INITIAL_SUBSTATS,
           rarity: 'COMMON',
           bonuses: { atkFlat: 5 },

@@ -66,7 +66,8 @@ function BossForm({ boss }: { boss: AdminRaidBoss }) {
   const patch = useAdminPatchRaidBoss()
   const form = useAppForm({
     defaultValues: {
-      name: boss.name,
+      nameFr: boss.nameFr,
+      nameEn: boss.nameEn,
       appearance: boss.spec.appearance ?? '',
       baseAtk: boss.spec.baseAtk as number | undefined,
       baseDef: boss.spec.baseDef as number | undefined,
@@ -104,7 +105,8 @@ function BossForm({ boss }: { boss: AdminRaidBoss }) {
       patch.mutate({
         element: boss.element,
         data: {
-          name: value.name,
+          nameFr: value.nameFr,
+          nameEn: value.nameEn,
           // On repart du spec chargé (`...boss.spec`) pour ne jamais perdre
           // un champ que ce formulaire n'expose pas (level, palier, crit…) —
           // le PATCH remplace tout l'objet spec côté back.
@@ -133,8 +135,11 @@ function BossForm({ boss }: { boss: AdminRaidBoss }) {
         {ELEMENT_LABELS[boss.element]}
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <form.AppField name="name">
-          {(f) => <f.Input label="Nom" />}
+        <form.AppField name="nameFr">
+          {(f) => <f.Input label="Nom (français)" />}
+        </form.AppField>
+        <form.AppField name="nameEn">
+          {(f) => <f.Input label="Nom (anglais)" />}
         </form.AppField>
         <form.AppField name="appearance">
           {(f) => (

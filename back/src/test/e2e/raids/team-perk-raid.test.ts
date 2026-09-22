@@ -110,7 +110,8 @@ describe('Bonus équipe `raid` — attaques par jour', () => {
       where: { element },
       create: {
         element,
-        name: 'Boss bonus raid',
+        nameFr: 'Boss bonus raid',
+        nameEn: 'Boss bonus raid',
         spec: {
           baseHp: 100,
           baseAtk: 1,
@@ -131,11 +132,12 @@ describe('Bonus équipe `raid` — attaques par jour', () => {
     // Carte à stats énormes pour le test d'attaque : le boss ci-dessus est
     // sans défense, une seule attaque suffit à infliger des dégâts positifs.
     const raidCardSet = await prisma.cardSet.create({
-      data: { name: `TpRaidAttackSet${suffix}`, isActive: false },
+      data: { nameFr: `TpRaidAttackSet${suffix}`, nameEn: `TpRaidAttackSet${suffix}`, isActive: false },
     })
     const raidCard = await prisma.card.create({
       data: {
-        name: `TpRaidAttackCard${suffix}`,
+        nameFr: `TpRaidAttackCard${suffix}`,
+        nameEn: `TpRaidAttackCard${suffix}`,
         rarity: 'LEGENDARY',
         dropWeight: 1,
         setId: raidCardSet.id,

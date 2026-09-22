@@ -137,11 +137,12 @@ describe('Bonus équipe `loot` — chemins gacha (balance, next-at, pull)', () =
 
     // Catalogue minimal pour que POST /pulls puisse réussir.
     const set = await prisma.cardSet.create({
-      data: { name: `TpLootPullSet${suffix}`, isActive: true },
+      data: { nameFr: `TpLootPullSet${suffix}`, nameEn: `TpLootPullSet${suffix}`, isActive: true },
     })
     await prisma.card.create({
       data: {
-        name: `TpLootPullCard${suffix}`,
+        nameFr: `TpLootPullCard${suffix}`,
+        nameEn: `TpLootPullCard${suffix}`,
         rarity: 'COMMON',
         dropWeight: 10,
         setId: set.id,

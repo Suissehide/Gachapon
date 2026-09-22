@@ -1,5 +1,6 @@
 import Boom from '@hapi/boom'
 
+import { errorMessage } from '../../../../../infra/i18n/error-messages'
 import type { StorageClientInterface } from '../../../../../types/infra/storage/storage-client'
 
 export const ALLOWED_IMAGE_MIME = new Set([
@@ -29,10 +30,10 @@ export async function uploadCardImage(
   mimetype: string,
 ): Promise<{ key: string }> {
   if (!ALLOWED_IMAGE_MIME.has(mimetype)) {
-    throw Boom.badRequest('Image must be jpeg, png or webp')
+    throw Boom.badRequest(errorMessage('media.imageMustBeJpegPngWebp'))
   }
   if (buffer.length > MAX_IMAGE_SIZE) {
-    throw Boom.badRequest('Image too large (max 5 MB)')
+    throw Boom.badRequest(errorMessage('media.imageTooLarge'))
   }
   const ext = mimetype.split('/')[1]
   const key = `cards/${sanitizeName(name)}.${ext}`

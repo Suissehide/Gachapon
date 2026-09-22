@@ -199,10 +199,11 @@ describe('Vues de la section Équipe', () => {
       where: { element: BOSS_ELEMENT },
       create: {
         element: BOSS_ELEMENT,
-        name: 'Gardien du Test',
+        nameFr: 'Gardien du Test',
+        nameEn: 'Gardien du Test',
         spec: { baseHp: 1, baseAtk: 1, baseDef: 0, baseSpd: 1, level: 1 },
       },
-      update: { name: 'Gardien du Test' },
+      update: { nameFr: 'Gardien du Test', nameEn: 'Gardien du Test'},
     })
     bossId = boss.id
 

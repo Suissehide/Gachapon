@@ -1,5 +1,5 @@
-import type { Reward } from '../../../../generated/client'
 import type { IocContainer } from '../../../types/application/ioc'
+import type { LocalizedReward } from '../../../types/infra/orm/localized'
 import type {
   RewardRepositoryInterface,
   RewardWriteData,
@@ -13,11 +13,11 @@ export class RewardRepository implements RewardRepositoryInterface {
     this.#prisma = postgresOrm.prisma
   }
 
-  create(data: RewardWriteData): Promise<Reward> {
+  create(data: RewardWriteData): Promise<LocalizedReward> {
     return this.#prisma.reward.create({ data })
   }
 
-  update(id: string, data: Partial<RewardWriteData>): Promise<Reward> {
+  update(id: string, data: Partial<RewardWriteData>): Promise<LocalizedReward> {
     return this.#prisma.reward.update({ where: { id }, data })
   }
 }

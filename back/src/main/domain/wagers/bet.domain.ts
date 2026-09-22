@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import type { Bet, CardRarity, UserBoost } from '../../../generated/client'
+import { errorMessage } from '../../infra/i18n/error-messages'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { TeamRepository } from '../../infra/orm/repositories/team.repository'
 import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
@@ -327,18 +328,22 @@ export class BetDomain implements IBetDomain {
     const cfg = await this.#readConfig()
 
     if (!Number.isInteger(stake)) {
-      throw Boom.badRequest('La mise doit être un nombre entier de poussière')
+      throw Boom.badRequest(errorMessage('wagers.stakeMustBeInteger'))
     }
     if (stake < cfg.minStake) {
-      throw Boom.badRequest(`La mise minimum est de ${cfg.minStake} poussière`)
+      throw Boom.badRequest(
+        errorMessage('wagers.stakeBelowMin', { min: cfg.minStake }),
+      )
     }
     if (stake > cfg.maxStake) {
-      throw Boom.badRequest(`La mise maximum est de ${cfg.maxStake} poussière`)
+      throw Boom.badRequest(
+        errorMessage('wagers.stakeAboveMax', { max: cfg.maxStake }),
+      )
     }
 
     const targetName =
       team.members.find((m) => m.userId === targetId)?.user?.username ??
-      'Ce joueur'
+      errorMessage('wagers.unknownPlayerFallback')
 
     // Celui qui OUVRE pose la proposition, donc tient le « oui ». Le camp
     // adverse se prend en renchérissant.
@@ -363,8 +368,8 @@ export class BetDomain implements IBetDomain {
       // toujours ici, et c'est voulu — il n'aurait rien rapporté.
       throw Boom.badRequest(
         side === 'YES'
-          ? `Ce pari ne rapporterait rien : ${targetName} sortira presque à coup sûr cette rareté sur la fenêtre`
-          : `Ce pari ne rapporterait rien : ${targetName} n'a presque aucune chance de sortir cette rareté sur la fenêtre`,
+          ? errorMessage('wagers.wouldPayNothingYes', { target: targetName })
+          : errorMessage('wagers.wouldPayNothingNo', { target: targetName }),
       )
     }
 
@@ -387,12 +392,17 @@ export class BetDomain implements IBetDomain {
           ])
           if (openByBettor >= cfg.maxOpenPerBettor) {
             throw Boom.badRequest(
-              `Tu as déjà ${cfg.maxOpenPerBettor} paris en cours`,
+              errorMessage('wagers.maxOpenBetsPerBettor', {
+                max: cfg.maxOpenPerBettor,
+              }),
             )
           }
           if (openOnTarget >= cfg.maxOpenPerTarget) {
             throw Boom.badRequest(
-              `${targetName} a déjà ${cfg.maxOpenPerTarget} paris ouverts sur lui`,
+              errorMessage('wagers.maxOpenBetsOnTarget', {
+                target: targetName,
+                max: cfg.maxOpenPerTarget,
+              }),
             )
           }
 
@@ -401,7 +411,7 @@ export class BetDomain implements IBetDomain {
             bettorId,
           )
           if (bettor.dust < stake) {
-            throw Boom.paymentRequired('Poussière insuffisante')
+            throw Boom.paymentRequired(errorMessage('economy.notEnoughDust'))
           }
           await tx.user.update({
             where: { id: bettorId },
@@ -488,21 +498,25 @@ export class BetDomain implements IBetDomain {
     const cfg = await this.#readConfig()
 
     if (!Number.isInteger(stake)) {
-      throw Boom.badRequest('La mise doit être un nombre entier de poussière')
+      throw Boom.badRequest(errorMessage('wagers.stakeMustBeInteger'))
     }
     if (stake < cfg.minStake) {
-      throw Boom.badRequest(`La mise minimum est de ${cfg.minStake} poussière`)
+      throw Boom.badRequest(
+        errorMessage('wagers.stakeBelowMin', { min: cfg.minStake }),
+      )
     }
     if (stake > cfg.maxStake) {
-      throw Boom.badRequest(`La mise maximum est de ${cfg.maxStake} poussière`)
+      throw Boom.badRequest(
+        errorMessage('wagers.stakeAboveMax', { max: cfg.maxStake }),
+      )
     }
 
     const existing = await this.#wagerRepository.findBetById(betId)
     if (!existing || existing.teamId !== teamId) {
-      throw Boom.notFound('Pari introuvable')
+      throw Boom.notFound(errorMessage('wagers.betNotFound'))
     }
     if (existing.targetId === userId) {
-      throw Boom.badRequest('On ne parie pas sur ses propres tirages')
+      throw Boom.badRequest(errorMessage('wagers.cannotBetOnOwnPulls'))
     }
 
     const updated = await retryOnSerialization(() =>
@@ -513,7 +527,7 @@ export class BetDomain implements IBetDomain {
             include: { entries: true },
           })
           if (!bet || bet.status !== 'ACTIVE') {
-            throw Boom.conflict("Ce pari n'est plus ouvert")
+            throw Boom.conflict(errorMessage('wagers.betNoLongerOpen'))
           }
 
           // La relecture qui ferme le marché. Un seul tirage compté suffit.
@@ -524,9 +538,7 @@ export class BetDomain implements IBetDomain {
             bet.pullWindow,
           )
           if (pulls.length > 0) {
-            throw Boom.conflict(
-              'La cible a commencé ses tirages : les mises sont closes',
-            )
+            throw Boom.conflict(errorMessage('wagers.targetStartedPulling'))
           }
 
           await this.#assertCanJoin(tx, bet, userId, side, stake, cfg)
@@ -853,7 +865,7 @@ export class BetDomain implements IBetDomain {
     cfg: BetCfg,
   ): Promise<void> {
     if (bet.entries.some((entry) => entry.userId === userId)) {
-      throw Boom.conflict('Tu as déjà misé sur ce pari')
+      throw Boom.conflict(errorMessage('wagers.alreadyBetOnThisBet'))
     }
 
     const openByBettor = await this.#wagerRepository.countOpenBetsByBettorInTx(
@@ -861,12 +873,16 @@ export class BetDomain implements IBetDomain {
       userId,
     )
     if (openByBettor >= cfg.maxOpenPerBettor) {
-      throw Boom.badRequest(`Tu as déjà ${cfg.maxOpenPerBettor} paris en cours`)
+      throw Boom.badRequest(
+        errorMessage('wagers.maxOpenBetsPerBettor', {
+          max: cfg.maxOpenPerBettor,
+        }),
+      )
     }
 
     const joiner = await this.#userRepository.findByIdOrThrowInTx(tx, userId)
     if (joiner.dust < stake) {
-      throw Boom.paymentRequired('Poussière insuffisante')
+      throw Boom.paymentRequired(errorMessage('economy.notEnoughDust'))
     }
 
     // Même refus qu'à l'ouverture, mais sur la cote COURANTE : avec un camp
@@ -881,9 +897,7 @@ export class BetDomain implements IBetDomain {
       cfg.houseFeePct,
     )
     if (odds <= 1) {
-      throw Boom.badRequest(
-        'Ce camp ne rapporterait rien : personne ne le contredit et les chances lui donnent raison',
-      )
+      throw Boom.badRequest(errorMessage('wagers.sideWouldPayNothing'))
     }
   }
 
@@ -950,10 +964,12 @@ export class BetDomain implements IBetDomain {
       this.#userRepository.findById(targetId),
     ])
     if (!target) {
-      throw Boom.notFound('Joueur introuvable')
+      throw Boom.notFound(errorMessage('wagers.playerNotFound'))
     }
     if (activeCards.length === 0) {
-      throw Boom.badImplementation('Aucune carte active : cote incalculable')
+      throw Boom.badImplementation(
+        errorMessage('wagers.noActiveCardsOddsIncalculable'),
+      )
     }
     // Catalogue gelé s'il y en a un sur la ligne (règlement), catalogue actif
     // sinon (placement, devis, et paris antérieurs à la colonne).
@@ -1280,7 +1296,7 @@ export class BetDomain implements IBetDomain {
   ): { id: string; username: string; avatar: string | null } {
     const user = team.members.find((m) => m.userId === userId)?.user
     if (!user) {
-      throw Boom.badImplementation("Membre d'équipe introuvable")
+      throw Boom.badImplementation(errorMessage('wagers.teamMemberNotFound'))
     }
     return { id: user.id, username: user.username, avatar: user.avatar }
   }
@@ -1291,10 +1307,10 @@ export class BetDomain implements IBetDomain {
     targetId: string,
   ): void {
     if (targetId === bettorId) {
-      throw Boom.badRequest('Tu ne peux pas parier sur toi-même')
+      throw Boom.badRequest(errorMessage('wagers.cannotBetOnSelf'))
     }
     if (!team.members.some((m) => m.userId === targetId)) {
-      throw Boom.badRequest("Ce joueur ne fait pas partie de l'équipe")
+      throw Boom.badRequest(errorMessage('wagers.playerNotInTeam'))
     }
   }
 
@@ -1307,11 +1323,11 @@ export class BetDomain implements IBetDomain {
       userId,
     )
     if (!membership) {
-      throw Boom.forbidden('Tu ne fais pas partie de cette équipe')
+      throw Boom.forbidden(errorMessage('team.notMember'))
     }
     const team = await this.#teamRepository.findById(teamId)
     if (!team) {
-      throw Boom.notFound('Équipe introuvable')
+      throw Boom.notFound(errorMessage('team.notFound'))
     }
     return team
   }

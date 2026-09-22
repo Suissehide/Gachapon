@@ -8,6 +8,7 @@ import type {
 } from '../../types/infra/orm/client'
 import type { Logger } from '../../types/utils/logger'
 import { normalizeEmail, normalizePhone } from '../../utils/helper'
+import { localizedExtension } from './localized.extension'
 
 const normalizerExtension = Prisma.defineExtension({
   name: 'normalizer',
@@ -32,7 +33,9 @@ const normalizerExtension = Prisma.defineExtension({
 
 function getExtendedClient() {
   const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
-  return new PrismaClient({ adapter }).$extends(normalizerExtension)
+  return new PrismaClient({ adapter })
+    .$extends(normalizerExtension)
+    .$extends(localizedExtension)
 }
 
 export type PostgresPrismaClient = ReturnType<typeof getExtendedClient>

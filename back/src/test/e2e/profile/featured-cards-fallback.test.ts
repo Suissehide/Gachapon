@@ -36,12 +36,12 @@ describe('GET /users/:username/profile/featured-cards — fallback', () => {
 
     // Seed a set + 5 cards (one per rarity) and give them to the user
     const set = await prisma.cardSet.create({
-      data: { name: `FbSet${suffix}`, isActive: true },
+      data: { nameFr: `FbSet${suffix}`, nameEn: `FbSet${suffix}`, isActive: true },
     })
     const rarities = ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY'] as const
     for (const rarity of rarities) {
       const card = await prisma.card.create({
-        data: { name: `${rarity}-${suffix}`, rarity, dropWeight: 10, setId: set.id },
+        data: { nameFr: `${rarity}-${suffix}`, nameEn: `${rarity}-${suffix}`, rarity, dropWeight: 10, setId: set.id },
       })
       await prisma.userCard.create({
         data: { userId: user!.id, cardId: card.id, variant: 'NORMAL', quantity: 1 },

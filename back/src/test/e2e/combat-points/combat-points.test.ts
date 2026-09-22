@@ -21,11 +21,12 @@ describe('Combat points routes & debit', () => {
 
     // Set + winning card
     const set = await postgresOrm.prisma.cardSet.create({
-      data: { name: `CPSet${suffix}`, isActive: false },
+      data: { nameFr: `CPSet${suffix}`, nameEn: `CPSet${suffix}`, isActive: false },
     })
     const card = await postgresOrm.prisma.card.create({
       data: {
-        name: `CPCard${suffix}`,
+        nameFr: `CPCard${suffix}`,
+        nameEn: `CPCard${suffix}`,
         rarity: 'LEGENDARY',
         dropWeight: 1,
         setId: set.id,
@@ -63,7 +64,8 @@ describe('Combat points routes & debit', () => {
         // d'exécution — un fichier de test = son propre chapitre.
         chapter: 98,
         index: 1,
-        label: 'CP-1',
+        labelFr: 'CP-1',
+        labelEn: 'CP-1',
         isBoss: false,
         order: 9801,
         enemyTeam: [

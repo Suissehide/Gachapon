@@ -1,4 +1,4 @@
-import type { SkillBranch, SkillNode } from '../../../api/skills.api.ts'
+import type { SkillBranch } from '../../../api/skills.api.ts'
 import {
   EFFECT_DESCRIPTIONS,
   EFFECT_OPTIONS,
@@ -22,8 +22,10 @@ export function CreateNodeSheet({
   const form = useAppForm({
     defaultValues: {
       branchId: branches[0]?.id ?? '',
-      name: '',
-      description: '',
+      nameFr: '',
+      nameEn: '',
+      descriptionFr: '',
+      descriptionEn: '',
       icon: 'Star',
       effectType: 'LUCK' as string,
       maxLevel: 3 as number | undefined,
@@ -38,11 +40,11 @@ export function CreateNodeSheet({
       createNode.mutate(
         {
           ...value,
-          effectType: value.effectType,
+          maxLevel: max,
           posX: 0,
           posY: 0,
           levels,
-        } as Omit<SkillNode, 'id' | 'edgesFrom' | 'edgesTo'>,
+        },
         { onSuccess: onClose },
       )
     },
@@ -65,11 +67,17 @@ export function CreateNodeSheet({
           <form.AppField name="branchId">
             {(f) => <f.Select label="Branche" options={branchOptions} />}
           </form.AppField>
-          <form.AppField name="name">
-            {(f) => <f.Input label="Nom" />}
+          <form.AppField name="nameFr">
+            {(f) => <f.Input label="Nom (français)" />}
           </form.AppField>
-          <form.AppField name="description">
-            {(f) => <f.Input label="Description" />}
+          <form.AppField name="nameEn">
+            {(f) => <f.Input label="Nom (anglais)" />}
+          </form.AppField>
+          <form.AppField name="descriptionFr">
+            {(f) => <f.Input label="Description (français)" />}
+          </form.AppField>
+          <form.AppField name="descriptionEn">
+            {(f) => <f.Input label="Description (anglais)" />}
           </form.AppField>
           <form.AppField name="icon">
             {(f) => <f.Input label="Icône Lucide" />}
@@ -97,7 +105,10 @@ export function CreateNodeSheet({
         <div className="flex shrink-0 justify-end gap-4 px-4 py-4">
           <form.Subscribe
             selector={(s) =>
-              !s.values.name || !s.values.branchId || createNode.isPending
+              !s.values.nameFr ||
+              !s.values.nameEn ||
+              !s.values.branchId ||
+              createNode.isPending
             }
           >
             {(disabled) => (

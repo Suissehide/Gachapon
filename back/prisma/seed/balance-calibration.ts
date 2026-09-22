@@ -37,6 +37,18 @@ import {
 import { computeEquippedCardStats } from '../../src/main/domain/combat/equipped-card-stats'
 import { buildEnemySimUnits } from '../../src/main/domain/combat/sim-units'
 import {
+  bossEnemyTeam,
+  normalEnemyTeam,
+  RARITY_BASE,
+} from '../../src/main/domain/content/campaign.definitions'
+import { buildEquipmentCatalog } from '../../src/main/domain/content/equipment.definitions'
+import {
+  TOWER_FLOOR_COUNT,
+  towerAoeUnitCount,
+  towerEnemyPower,
+  towerEnemyStatsAtScale,
+} from '../../src/main/domain/content/tower.definitions'
+import {
   EQUIP_SUBSTAT_MILESTONE,
   INITIAL_SUBSTATS_BY_RARITY,
   rollInitialSubstats,
@@ -45,14 +57,6 @@ import {
   type SubstatRanges,
 } from '../../src/main/domain/equipment/equipment-progression'
 import { setBonusesFromConfig } from '../../src/main/domain/equipment/set-bonuses'
-import { bossEnemyTeam, normalEnemyTeam, RARITY_BASE } from './campaign'
-import { buildEquipmentCatalog } from './equipment'
-import {
-  TOWER_FLOOR_COUNT,
-  towerAoeUnitCount,
-  towerEnemyPower,
-  towerEnemyStatsAtScale,
-} from './tower'
 
 // --- Valeurs de GlobalConfig -----------------------------------------------
 // Recopiées des DEFAULTS de `config.service.ts` : un module pur ne lit pas la

@@ -55,11 +55,12 @@ describe('routes de tour', () => {
     // Carte + équipe très forte pour garantir la victoire (motif de
     // campaign.test.ts).
     const set = await postgresOrm.prisma.cardSet.create({
-      data: { name: `TowerSet${suffix}`, isActive: true },
+      data: { nameFr: `TowerSet${suffix}`, nameEn: `TowerSet${suffix}`, isActive: true },
     })
     const card = await postgresOrm.prisma.card.create({
       data: {
-        name: `TowerCard${suffix}`,
+        nameFr: `TowerCard${suffix}`,
+        nameEn: `TowerCard${suffix}`,
         rarity: 'LEGENDARY',
         dropWeight: 1,
         setId: set.id,
@@ -79,7 +80,8 @@ describe('routes de tour', () => {
       data: {
         element: 'FIRE',
         index: 1,
-        label: 'Étage 1',
+        labelFr: 'Étage 1',
+        labelEn: 'Étage 1',
         order: 1,
         enemyTeam: [
           {
@@ -117,7 +119,8 @@ describe('routes de tour', () => {
       data: {
         element: 'FIRE',
         index: 5,
-        label: 'Étage 5',
+        labelFr: 'Étage 5',
+        labelEn: 'Étage 5',
         order: 5,
         enemyTeam: [
           {
@@ -144,7 +147,8 @@ describe('routes de tour', () => {
     for (const reservation of TOWER_FIRE_ALL_SETS) {
       await postgresOrm.prisma.equipment.create({
         data: {
-          name: `TowerEq-${reservation.setKey}-${suffix}`,
+          nameFr: `TowerEq-${reservation.setKey}-${suffix}`,
+          nameEn: `TowerEq-${reservation.setKey}-${suffix}`,
           ...reservation,
           rarity: 'LEGENDARY',
           bonuses: { atkFlat: 50 },
@@ -161,7 +165,8 @@ describe('routes de tour', () => {
       data: {
         element: 'WATER',
         index: 1,
-        label: 'Étage 1',
+        labelFr: 'Étage 1',
+        labelEn: 'Étage 1',
         order: 1,
         enemyTeam: [
           {
@@ -196,7 +201,8 @@ describe('routes de tour', () => {
     for (const reservation of TOWER_WATER_ALL_SETS) {
       await postgresOrm.prisma.equipment.create({
         data: {
-          name: `TowerEq-${reservation.setKey}-${suffix}`,
+          nameFr: `TowerEq-${reservation.setKey}-${suffix}`,
+          nameEn: `TowerEq-${reservation.setKey}-${suffix}`,
           ...reservation,
           rarity: 'LEGENDARY',
           bonuses: { defFlat: 50 },
@@ -214,8 +220,10 @@ describe('routes de tour', () => {
     const quest = await postgresOrm.prisma.quest.create({
       data: {
         key: questKey,
-        name: `Quête tour ${suffix}`,
-        description: 'Test: un combat de tour compte pour une quête',
+        nameFr: `Quête tour ${suffix}`,
+        nameEn: `Quête tour ${suffix}`,
+        descriptionFr: 'Test: un combat de tour compte pour une quête',
+        descriptionEn: 'Test: un combat de tour compte pour une quête',
         period: 'WEEKLY',
         criterion: { event: 'STAGE_CLEARED', target: 1 },
         isActive: true,
@@ -226,8 +234,10 @@ describe('routes de tour', () => {
     const equipQuest = await postgresOrm.prisma.quest.create({
       data: {
         key: equipQuestKey,
-        name: `Quête butin tour ${suffix}`,
-        description: 'Test: un drop de tour compte pour une quête équipement',
+        nameFr: `Quête butin tour ${suffix}`,
+        nameEn: `Quête butin tour ${suffix}`,
+        descriptionFr: 'Test: un drop de tour compte pour une quête équipement',
+        descriptionEn: 'Test: un drop de tour compte pour une quête équipement',
         period: 'ONESHOT',
         criterion: { event: 'EQUIPMENT_OBTAINED', target: 1 },
         isActive: true,
@@ -243,8 +253,10 @@ describe('routes de tour', () => {
     const achievement = await postgresOrm.prisma.achievement.create({
       data: {
         key: achievementKey,
-        name: `Étages franchis (test tour) ${suffix}`,
-        description: 'Test: un combat de tour ne compte pas ici',
+        nameFr: `Étages franchis (test tour) ${suffix}`,
+        nameEn: `Étages franchis (test tour) ${suffix}`,
+        descriptionFr: 'Test: un combat de tour ne compte pas ici',
+        descriptionEn: 'Test: un combat de tour ne compte pas ici',
         criterion: { type: 'STAGES_CLEARED_COUNT', threshold: 100 },
         isActive: true,
       },
@@ -451,10 +463,14 @@ describe('routes de tour', () => {
   // équipe. Ici, on ne teste plus que l'ABSENCE d'équipe.
   it('refuse le combat quand aucune équipe n’est enregistrée', async () => {
     // Joueur neuf : ni équipe de tour, ni équipe de campagne dont hériter.
+    // 'accept-language': 'fr' — le message vérifié plus bas est le texte
+    // français d'origine (task-6-brief.md « reprends les messages à
+    // l'identique ») ; depuis le catalogue bilingue (tâche 6), une requête
+    // sans en-tête reçoit l'anglais (locale par défaut).
     const res = await app.inject({
       method: 'POST',
       url: '/tower/FIRE/1/battle',
-      headers: { cookie: freshCookies },
+      headers: { cookie: freshCookies, 'accept-language': 'fr' },
     })
     expect(res.statusCode).toBe(400)
     // Épingle la RAISON du refus : un 400 générique (énergie insuffisante,

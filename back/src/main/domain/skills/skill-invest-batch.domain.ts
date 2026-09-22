@@ -1,5 +1,6 @@
 import Boom from '@hapi/boom'
 
+import { errorMessage } from '../../infra/i18n/error-messages'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
 import type {
@@ -40,15 +41,15 @@ export class SkillInvestBatchDomain implements ISkillInvestBatchDomain {
 
     const totalPoints = [...addByNode.values()].reduce((a, b) => a + b, 0)
     if (totalPoints < 1) {
-      throw Boom.badRequest('No allocations provided')
+      throw Boom.badRequest(errorMessage('skills.noAllocationsProvided'))
     }
 
     const user = await this.#userRepository.findById(userId)
     if (!user) {
-      throw Boom.notFound('User not found')
+      throw Boom.notFound(errorMessage('user.notFound'))
     }
     if (user.skillPoints < totalPoints) {
-      throw Boom.paymentRequired('Not enough skill points')
+      throw Boom.paymentRequired(errorMessage('skills.notEnoughSkillPoints'))
     }
 
     const [tree, userSkills] = await Promise.all([
@@ -94,11 +95,15 @@ export class SkillInvestBatchDomain implements ISkillInvestBatchDomain {
     for (const [nodeId, added] of addByNode) {
       const node = nodeById.get(nodeId)
       if (!node) {
-        throw Boom.notFound(`Skill node not found: ${nodeId}`)
+        throw Boom.notFound(
+          errorMessage('skills.nodeNotFoundWithId', { nodeId }),
+        )
       }
       const target = (finalLevel.get(nodeId) ?? 0) + added
       if (target > node.maxLevel) {
-        throw Boom.conflict(`Node ${nodeId} exceeds max level`)
+        throw Boom.conflict(
+          errorMessage('skills.nodeExceedsMaxLevel', { nodeId }),
+        )
       }
       finalLevel.set(nodeId, target)
     }
@@ -122,7 +127,10 @@ export class SkillInvestBatchDomain implements ISkillInvestBatchDomain {
       for (const edge of node.edgesTo) {
         if ((finalLevel.get(edge.fromNodeId) ?? 0) < edge.minLevel) {
           throw Boom.forbidden(
-            `Prerequisite not met: node ${edge.fromNodeId} requires level ${edge.minLevel}`,
+            errorMessage('skills.prerequisiteNotMet', {
+              node: edge.fromNodeId,
+              level: edge.minLevel,
+            }),
           )
         }
       }

@@ -89,7 +89,8 @@ describe('Bonus équipe `forge` — coût d\'amélioration', () => {
 
     const weapon = await prisma.equipment.create({
       data: {
-        name: `TpForgeW-${suffix}`,
+        nameFr: `TpForgeW-${suffix}`,
+        nameEn: `TpForgeW-${suffix}`,
         ...EQUIPMENT_TEAM_PERK_FORGE,
         rarity: 'RARE',
         bonuses: { atkFlat: 10 },

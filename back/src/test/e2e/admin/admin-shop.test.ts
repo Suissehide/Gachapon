@@ -15,7 +15,7 @@ describe('Admin shop routes', () => {
       payload: { username: `shopadmin${suffix}`, email: `shopadmin${suffix}@test.com`, password: 'Password123!' },
     })
     adminCookies = res.headers['set-cookie'] as string
-    await (app as any).iocContainer.postgresOrm.prisma.user.update({
+    await app.iocContainer.postgresOrm.prisma.user.update({
       where: { email: `shopadmin${suffix}@test.com` }, data: { role: 'SUPER_ADMIN', emailVerifiedAt: new Date() },
     })
     const loginRes = await app.inject({
@@ -31,7 +31,7 @@ describe('Admin shop routes', () => {
     const res = await app.inject({
       method: 'POST', url: '/admin/shop-items',
       headers: { cookie: adminCookies },
-      payload: { name: 'Test Pack', description: 'desc', type: 'TOKEN_PACK', cost: 1000, currency: 'GOLD', value: { tokens: 3 }, isActive: true },
+      payload: { nameFr: 'Test Pack', nameEn: 'Test Pack', descriptionFr: 'desc', descriptionEn: 'desc', type: 'TOKEN_PACK', cost: 1000, currency: 'GOLD', value: { tokens: 3 }, isActive: true },
     })
     expect(res.statusCode).toBe(201)
     itemId = res.json().id

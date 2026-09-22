@@ -5,8 +5,8 @@ import {
   STAGES_PER_CHAPTER,
   bossLoot,
   lootTableNormal,
-} from '../../../prisma/seed/campaign'
-import { SHOP_ITEMS } from '../../../prisma/seed/shop'
+} from '../../main/domain/content/campaign.definitions'
+import { SHOP_ITEMS } from '../../main/domain/content/shop.definitions'
 import { DEFAULTS } from '../../main/infra/config/config.service'
 
 /**

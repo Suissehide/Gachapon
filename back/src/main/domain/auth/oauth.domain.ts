@@ -2,6 +2,8 @@ import Boom from '@hapi/boom'
 
 import { OAuthProvider } from '../../../generated/enums'
 import type { Config } from '../../application/config'
+import { errorMessage } from '../../infra/i18n/error-messages'
+import { getCurrentLocale } from '../../infra/i18n/locale-context'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { OAuthAccountRepository } from '../../infra/orm/repositories/oauth-account.repository'
 import type { IocContainer } from '../../types/application/ioc'
@@ -77,7 +79,7 @@ export class OAuthDomain implements OAuthDomainInterface {
         prompt: mode === 'register' ? 'consent' : 'none',
       })}`
     }
-    throw Boom.badRequest('Unknown provider')
+    throw Boom.badRequest(errorMessage('auth.unknownProvider'))
   }
 
   async handleCallback(
@@ -99,7 +101,7 @@ export class OAuthDomain implements OAuthDomainInterface {
     if (existingAccount) {
       const user = await this.#userRepository.findById(existingAccount.userId)
       if (!user) {
-        throw Boom.notFound('User not found')
+        throw Boom.notFound(errorMessage('user.notFound'))
       }
       try {
         await this.#postgresOrm.executeWithTransactionClient(async (tx) => {
@@ -118,10 +120,17 @@ export class OAuthDomain implements OAuthDomainInterface {
     if (!user) {
       const username = await this.#availableUsername(userInfo.username)
       const tokenMaxStock = await this.#configService.get('tokenMaxStock')
+      // Même raisonnement que `auth.domain.ts#register` : la locale du
+      // callback OAuth (résolue par le hook de tâche 4, ici depuis
+      // l'`Accept-Language` que le navigateur envoie en revenant de
+      // Google/Discord) est le seul signal disponible sur la langue de ce
+      // nouveau compte — second et dernier chemin de création d'utilisateur
+      // dans `src/main` (voir `userRepository.create(` — 2 call sites).
       user = await this.#userRepository.create({
         username,
         email: userInfo.email,
         tokens: tokenMaxStock,
+        locale: getCurrentLocale(),
       })
       isNew = true
     }
@@ -157,7 +166,7 @@ export class OAuthDomain implements OAuthDomainInterface {
       }),
     })
     if (!tokenRes.ok) {
-      throw Boom.badGateway('OAuth provider token exchange failed')
+      throw Boom.badGateway(errorMessage('auth.oauthTokenExchangeFailed'))
     }
     const tokenData = (await tokenRes.json()) as { access_token: string }
     const userRes = await fetch(
@@ -167,7 +176,7 @@ export class OAuthDomain implements OAuthDomainInterface {
       },
     )
     if (!userRes.ok) {
-      throw Boom.badGateway('OAuth provider userinfo fetch failed')
+      throw Boom.badGateway(errorMessage('auth.oauthUserinfoFailed'))
     }
     const u = (await userRes.json()) as {
       id: string
@@ -194,14 +203,14 @@ export class OAuthDomain implements OAuthDomainInterface {
       }),
     })
     if (!tokenRes.ok) {
-      throw Boom.badGateway('OAuth provider token exchange failed')
+      throw Boom.badGateway(errorMessage('auth.oauthTokenExchangeFailed'))
     }
     const tokenData = (await tokenRes.json()) as { access_token: string }
     const userRes = await fetch('https://discord.com/api/users/@me', {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     })
     if (!userRes.ok) {
-      throw Boom.badGateway('OAuth provider userinfo fetch failed')
+      throw Boom.badGateway(errorMessage('auth.oauthUserinfoFailed'))
     }
     const u = (await userRes.json()) as {
       id: string

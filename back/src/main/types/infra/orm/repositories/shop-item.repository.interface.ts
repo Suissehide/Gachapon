@@ -1,22 +1,25 @@
-import type { ShopItem } from '../../../../../generated/client'
+import type { Prisma } from '../../../../../generated/client'
+import type { LocalizedShopItem } from '../localized'
 
 export type CreateShopItemInput = {
-  name: string
-  description: string
+  nameFr: string
+  nameEn: string
+  descriptionFr: string
+  descriptionEn: string
   type: 'TOKEN_PACK' | 'ENERGY_PACK' | 'BOOST' | 'COSMETIC' | 'MACHINE'
   cost: number
   currency?: 'DUST' | 'GOLD'
-  value: Record<string, unknown>
+  value: Prisma.InputJsonObject
   isActive?: boolean
 }
 
 export type UpdateShopItemInput = Partial<CreateShopItemInput>
 
 export interface IShopItemRepository {
-  findAll(): Promise<ShopItem[]>
-  findActive(): Promise<ShopItem[]>
-  findById(id: string): Promise<ShopItem | null>
-  create(data: CreateShopItemInput): Promise<ShopItem>
-  update(id: string, data: UpdateShopItemInput): Promise<ShopItem>
+  findAll(): Promise<LocalizedShopItem[]>
+  findActive(): Promise<LocalizedShopItem[]>
+  findById(id: string): Promise<LocalizedShopItem | null>
+  create(data: CreateShopItemInput): Promise<LocalizedShopItem>
+  update(id: string, data: UpdateShopItemInput): Promise<LocalizedShopItem>
   delete(id: string): Promise<void>
 }

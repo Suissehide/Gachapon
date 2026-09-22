@@ -2,7 +2,7 @@ import { ELEMENTS } from '../../main/domain/combat/element'
 import {
   FAMILY_ELEMENTS,
   type FamilySlug,
-} from '../../../prisma/seed/bestiary'
+} from '../../main/domain/content/bestiary.definitions'
 import {
   CAMPAIGN_TARGETS,
   campaignWinRate,
@@ -19,7 +19,7 @@ import {
   enemyScale,
   lootTableNormal,
   normalEnemyTeam,
-} from '../../../prisma/seed/campaign'
+} from '../../main/domain/content/campaign.definitions'
 
 describe('enemyPower — aligné sur le joueur attendu (rareté + enemyScale)', () => {
   it('stage 1-1 : valeur ancre exacte (scale=1, NORMAL_FACTOR=0.971)', () => {

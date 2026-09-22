@@ -3,6 +3,7 @@ import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import type { CardRarity } from '../../../../../../generated/enums'
+import { errorMessage } from '../../../../../infra/i18n/error-messages'
 import {
   adminCardFieldsSchema,
   adminCardIdParamSchema,
@@ -26,7 +27,7 @@ async function parseMultipartCard(request: {
   for await (const part of parts) {
     if (part.type === 'file') {
       if (!ALLOWED_IMAGE_MIME.has(part.mimetype)) {
-        throw Boom.badRequest('Image must be jpeg, png or webp')
+        throw Boom.badRequest(errorMessage('media.imageMustBeJpegPngWebp'))
       }
       imageMime = part.mimetype
       const chunks: Buffer[] = []
@@ -35,7 +36,7 @@ async function parseMultipartCard(request: {
       }
       imageBuffer = Buffer.concat(chunks)
       if (imageBuffer.length > 5 * 1024 * 1024) {
-        throw Boom.badRequest('Image too large (max 5 MB)')
+        throw Boom.badRequest(errorMessage('media.imageTooLarge'))
       }
     } else {
       fields[part.fieldname] = part.value as string
@@ -78,10 +79,13 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
 
     let imageKey: string
     if (imageBuffer) {
+      // La clé de stockage n'a qu'une langue : l'anglais, cohérent avec
+      // DEFAULT_LOCALE — un choix arbitraire mais stable, le nom sert
+      // uniquement à générer un slug lisible, pas de contenu affiché.
       imageKey = (
         await uploadCardImage(
           storageClient,
-          parsed.data.name,
+          parsed.data.nameEn,
           imageBuffer,
           imageMime,
         )
@@ -89,7 +93,7 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
     } else if (fields.imageUrl) {
       imageKey = storageClient.toKey(fields.imageUrl)
     } else {
-      throw Boom.badRequest('Either an image file or imageUrl is required')
+      throw Boom.badRequest(errorMessage('cards.imageOrUrlRequired'))
     }
 
     const card = await cardRepository.create({
@@ -110,7 +114,7 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request) => {
       const card = await cardRepository.findById(request.params.id)
       if (!card) {
-        throw Boom.notFound('Card not found')
+        throw Boom.notFound(errorMessage('collection.cardNotFound'))
       }
 
       const data = { ...request.body }
@@ -128,12 +132,12 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request, reply) => {
       const card = await cardRepository.findById(request.params.id)
       if (!card) {
-        throw Boom.notFound('Card not found')
+        throw Boom.notFound(errorMessage('collection.cardNotFound'))
       }
 
       const { imageBuffer, imageMime } = await parseMultipartCard(request)
       if (!imageBuffer) {
-        throw Boom.badRequest('No image provided')
+        throw Boom.badRequest(errorMessage('cards.noImageProvided'))
       }
       const { key: imageKey } = await uploadCardImage(
         storageClient,
@@ -155,7 +159,7 @@ export const adminCardsRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request, reply) => {
       const card = await cardRepository.findById(request.params.id)
       if (!card) {
-        throw Boom.notFound('Card not found')
+        throw Boom.notFound(errorMessage('collection.cardNotFound'))
       }
       await cardRepository.delete(request.params.id)
       return reply.status(204).send()

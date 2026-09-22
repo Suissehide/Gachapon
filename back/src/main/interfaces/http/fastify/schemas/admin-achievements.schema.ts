@@ -4,8 +4,10 @@ import { AchievementCriterionSchema } from '../../../../domain/achievements/crit
 
 export const achievementSchema = z.object({
   key: z.string().min(1),
-  name: z.string().min(1),
-  description: z.string().min(1),
+  nameFr: z.string().min(1),
+  nameEn: z.string().min(1),
+  descriptionFr: z.string().min(1),
+  descriptionEn: z.string().min(1),
   criterion: AchievementCriterionSchema,
   family: z.string().nullish(),
   tier: z.number().int().optional(),

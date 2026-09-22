@@ -53,7 +53,8 @@ describe('Equipment upgrade route', () => {
     // equipment-fixture-slots.ts (EQUIPMENT_PROGRESSION).
     const weapon = await postgresOrm.prisma.equipment.create({
       data: {
-        name: `UpgradeW-${suffix}`,
+        nameFr: `UpgradeW-${suffix}`,
+        nameEn: `UpgradeW-${suffix}`,
         ...EQUIPMENT_PROGRESSION,
         rarity: 'RARE',
         bonuses: { atkFlat: 10 },

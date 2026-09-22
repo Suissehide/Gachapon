@@ -16,8 +16,10 @@ import type { QuestCriterion } from './quest-matching'
 
 export interface QuestDefinition {
   key: string
-  name: string
-  description: string
+  nameFr: string
+  nameEn: string
+  descriptionFr: string
+  descriptionEn: string
   criterion: QuestCriterion
   period: 'ONESHOT' | 'WEEKLY'
   rewardTokens: number
@@ -50,8 +52,10 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
   // -------------------------------------------------------------------------
   {
     key: 'first_pull',
-    name: 'Premier Tirage',
-    description: 'Effectue ton premier tirage au Gachapon.',
+    nameFr: 'Premier Tirage',
+    nameEn: 'First Pull',
+    descriptionFr: 'Effectue ton premier tirage au Gachapon.',
+    descriptionEn: 'Complete your first pull at the Gachapon.',
     criterion: { event: 'PULL_COMPLETED', target: 1 },
     period: 'ONESHOT',
     rewardTokens: 3,
@@ -59,8 +63,10 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
   },
   {
     key: 'first_battle',
-    name: 'Baptême du Feu',
-    description: 'Remporte ton premier combat en campagne.',
+    nameFr: 'Baptême du Feu',
+    nameEn: 'Baptism by Fire',
+    descriptionFr: 'Remporte ton premier combat en campagne.',
+    descriptionEn: 'Win your first campaign battle.',
     criterion: { event: 'STAGE_CLEARED', target: 1 },
     period: 'ONESHOT',
     rewardTokens: 5,
@@ -68,8 +74,10 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
   },
   {
     key: 'first_card_level',
-    name: 'Première Évolution',
-    description: "Monte le niveau d'une carte pour la première fois.",
+    nameFr: 'Première Évolution',
+    nameEn: 'First Evolution',
+    descriptionFr: "Monte le niveau d'une carte pour la première fois.",
+    descriptionEn: 'Level up a card for the first time.',
     criterion: { event: 'CARD_LEVELED', target: 1 },
     period: 'ONESHOT',
     rewardTokens: 5,
@@ -77,8 +85,10 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
   },
   {
     key: 'first_recycle',
-    name: 'Premier Recyclage',
-    description: 'Recycle ta première carte en poussière.',
+    nameFr: 'Premier Recyclage',
+    nameEn: 'First Recycling',
+    descriptionFr: 'Recycle ta première carte en poussière.',
+    descriptionEn: 'Recycle your first card into dust.',
     criterion: { event: 'CARD_RECYCLED', target: 1 },
     period: 'ONESHOT',
     rewardTokens: 3,
@@ -86,8 +96,10 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
   },
   {
     key: 'first_gold_spent',
-    name: 'Premier Achat',
-    description: "Dépense de l'or pour la première fois.",
+    nameFr: 'Premier Achat',
+    nameEn: 'First Purchase',
+    descriptionFr: "Dépense de l'or pour la première fois.",
+    descriptionEn: 'Spend gold for the first time.',
     criterion: { event: 'GOLD_SPENT', target: 1 },
     period: 'ONESHOT',
     rewardTokens: 3,
@@ -95,8 +107,10 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
   },
   {
     key: 'collect_10_unique',
-    name: 'Collectionneur Débutant',
-    description: 'Possède 10 cartes uniques dans ta collection.',
+    nameFr: 'Collectionneur Débutant',
+    nameEn: 'Budding Collector',
+    descriptionFr: 'Possède 10 cartes uniques dans ta collection.',
+    descriptionEn: 'Own 10 unique cards in your collection.',
     criterion: {
       event: 'PULL_COMPLETED',
       target: 10,
@@ -108,8 +122,10 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
   },
   {
     key: 'join_team',
-    name: 'Force du Groupe',
-    description: 'Rejoins ou crée une équipe.',
+    nameFr: 'Force du Groupe',
+    nameEn: 'Strength in Numbers',
+    descriptionFr: 'Rejoins ou crée une équipe.',
+    descriptionEn: 'Join or create a team.',
     criterion: { event: 'TEAM_JOINED', target: 1 },
     period: 'ONESHOT',
     rewardTokens: 4,
@@ -121,8 +137,10 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
   // le slot de son premier drop.
   {
     key: 'first_equipment',
-    name: 'Premier Butin',
-    description: 'Obtiens ta première pièce d’équipement en combat.',
+    nameFr: 'Premier Butin',
+    nameEn: 'First Loot',
+    descriptionFr: 'Obtiens ta première pièce d’équipement en combat.',
+    descriptionEn: 'Get your first piece of equipment in battle.',
     criterion: { event: 'EQUIPMENT_OBTAINED', target: 1 },
     period: 'ONESHOT',
     rewardTokens: 3,
@@ -130,8 +148,10 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
   },
   {
     key: 'first_equip_upgrade',
-    name: 'Premier Affûtage',
-    description: 'Améliore une pièce d’équipement pour la première fois.',
+    nameFr: 'Premier Affûtage',
+    nameEn: 'First Upgrade',
+    descriptionFr: 'Améliore une pièce d’équipement pour la première fois.',
+    descriptionEn: 'Upgrade a piece of equipment for the first time.',
     criterion: { event: 'EQUIPMENT_UPGRADED', target: 1 },
     period: 'ONESHOT',
     rewardTokens: 4,
@@ -139,8 +159,10 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
   },
   {
     key: 'first_equip_salvage',
-    name: 'Première Ferraille',
-    description: 'Recycle ta première pièce d’équipement contre de l’or.',
+    nameFr: 'Première Ferraille',
+    nameEn: 'First Scrap',
+    descriptionFr: 'Recycle ta première pièce d’équipement contre de l’or.',
+    descriptionEn: 'Salvage your first piece of equipment for gold.',
     criterion: { event: 'EQUIPMENT_SALVAGED', target: 1 },
     period: 'ONESHOT',
     rewardTokens: 3,
@@ -154,16 +176,20 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
   // -------------------------------------------------------------------------
   {
     key: 'weekly_pulls_30',
-    name: 'Semaine Explosive',
-    description: 'Effectue 30 tirages cette semaine.',
+    nameFr: 'Semaine Explosive',
+    nameEn: 'Explosive Week',
+    descriptionFr: 'Effectue 30 tirages cette semaine.',
+    descriptionEn: 'Complete 30 pulls this week.',
     criterion: { event: 'PULL_COMPLETED', target: 30 },
     period: 'WEEKLY',
     ...WEEKLY_REWARD,
   },
   {
     key: 'weekly_uniques_5',
-    name: 'Nouvelles Trouvailles',
-    description: 'Obtiens 5 nouvelles cartes uniques cette semaine.',
+    nameFr: 'Nouvelles Trouvailles',
+    nameEn: 'New Finds',
+    descriptionFr: 'Obtiens 5 nouvelles cartes uniques cette semaine.',
+    descriptionEn: 'Get 5 new unique cards this week.',
     criterion: {
       event: 'PULL_COMPLETED',
       target: 5,
@@ -174,8 +200,10 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
   },
   {
     key: 'weekly_rares_3',
-    name: 'Éclat Hebdomadaire',
-    description: 'Obtiens 3 cartes RARE cette semaine.',
+    nameFr: 'Éclat Hebdomadaire',
+    nameEn: 'Weekly Sparkle',
+    descriptionFr: 'Obtiens 3 cartes RARE cette semaine.',
+    descriptionEn: 'Get 3 RARE cards this week.',
     criterion: {
       event: 'PULL_COMPLETED',
       target: 3,
@@ -186,32 +214,40 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
   },
   {
     key: 'weekly_battles_15',
-    name: 'Combattant Acharné',
-    description: 'Remporte 15 combats cette semaine.',
+    nameFr: 'Combattant Acharné',
+    nameEn: 'Relentless Fighter',
+    descriptionFr: 'Remporte 15 combats cette semaine.',
+    descriptionEn: 'Win 15 battles this week.',
     criterion: { event: 'STAGE_CLEARED', target: 15 },
     period: 'WEEKLY',
     ...WEEKLY_REWARD,
   },
   {
     key: 'weekly_recycle_15',
-    name: 'Alchimiste',
-    description: 'Recycle 15 exemplaires de cartes cette semaine.',
+    nameFr: 'Alchimiste',
+    nameEn: 'Alchemist',
+    descriptionFr: 'Recycle 15 exemplaires de cartes cette semaine.',
+    descriptionEn: 'Recycle 15 card copies this week.',
     criterion: { event: 'CARD_RECYCLED', target: 15 },
     period: 'WEEKLY',
     ...WEEKLY_REWARD,
   },
   {
     key: 'weekly_card_levels_8',
-    name: "Maître d'Évolution",
-    description: 'Monte le niveau de 8 cartes cette semaine.',
+    nameFr: "Maître d'Évolution",
+    nameEn: 'Master of Evolution',
+    descriptionFr: 'Monte le niveau de 8 cartes cette semaine.',
+    descriptionEn: 'Level up 8 cards this week.',
     criterion: { event: 'CARD_LEVELED', target: 8 },
     period: 'WEEKLY',
     ...WEEKLY_REWARD,
   },
   {
     key: 'weekly_gold_spent_4000',
-    name: 'Dépensier',
-    description: 'Dépense 4 000 or cette semaine.',
+    nameFr: 'Dépensier',
+    nameEn: 'Big Spender',
+    descriptionFr: 'Dépense 4 000 or cette semaine.',
+    descriptionEn: 'Spend 4,000 gold this week.',
     criterion: { event: 'GOLD_SPENT', target: 4000 },
     period: 'WEEKLY',
     ...WEEKLY_REWARD,
@@ -222,8 +258,10 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
   // les 15 combats de « Combattant Acharné ».
   {
     key: 'weekly_equip_drops_12',
-    name: 'Chasseur de Trésors',
-    description: 'Obtiens 12 pièces d’équipement cette semaine.',
+    nameFr: 'Chasseur de Trésors',
+    nameEn: 'Treasure Hunter',
+    descriptionFr: 'Obtiens 12 pièces d’équipement cette semaine.',
+    descriptionEn: 'Get 12 pieces of equipment this week.',
     criterion: { event: 'EQUIPMENT_OBTAINED', target: 12 },
     period: 'WEEKLY',
     ...WEEKLY_REWARD,
@@ -234,8 +272,10 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
   // sur 12 drops, la cible de 3 est atteignable sans farm supplémentaire.
   {
     key: 'weekly_equip_rare_3',
-    name: 'Butin de Qualité',
-    description: 'Obtiens 3 pièces d’équipement RARE cette semaine.',
+    nameFr: 'Butin de Qualité',
+    nameEn: 'Quality Loot',
+    descriptionFr: 'Obtiens 3 pièces d’équipement RARE cette semaine.',
+    descriptionEn: 'Get 3 RARE pieces of equipment this week.',
     criterion: {
       event: 'EQUIPMENT_OBTAINED',
       target: 3,
@@ -249,16 +289,20 @@ export const QUEST_DEFINITIONS: QuestDefinition[] = [
   // les 4 000 or de « Dépensier ».
   {
     key: 'weekly_equip_levels_12',
-    name: 'Forgeron',
-    description: 'Gagne 12 niveaux d’équipement cette semaine.',
+    nameFr: 'Forgeron',
+    nameEn: 'Blacksmith',
+    descriptionFr: 'Gagne 12 niveaux d’équipement cette semaine.',
+    descriptionEn: 'Gain 12 equipment levels this week.',
     criterion: { event: 'EQUIPMENT_UPGRADED', target: 12 },
     period: 'WEEKLY',
     ...WEEKLY_REWARD,
   },
   {
     key: 'weekly_equip_salvage_15',
-    name: 'Ferrailleur',
-    description: 'Recycle 15 pièces d’équipement cette semaine.',
+    nameFr: 'Ferrailleur',
+    nameEn: 'Scrapper',
+    descriptionFr: 'Recycle 15 pièces d’équipement cette semaine.',
+    descriptionEn: 'Salvage 15 pieces of equipment this week.',
     criterion: { event: 'EQUIPMENT_SALVAGED', target: 15 },
     period: 'WEEKLY',
     ...WEEKLY_REWARD,

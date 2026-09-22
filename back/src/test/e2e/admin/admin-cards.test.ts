@@ -15,7 +15,7 @@ describe('Admin cards routes', () => {
       payload: { username: `cardadmin${suffix}`, email: `cardadmin${suffix}@test.com`, password: 'Password123!' },
     })
     adminCookies = res.headers['set-cookie'] as string
-    await (app as any).iocContainer.postgresOrm.prisma.user.update({
+    await app.iocContainer.postgresOrm.prisma.user.update({
       where: { email: `cardadmin${suffix}@test.com` }, data: { role: 'SUPER_ADMIN', emailVerifiedAt: new Date() },
     })
     // Re-login for SUPER_ADMIN JWT
@@ -32,7 +32,7 @@ describe('Admin cards routes', () => {
     const res = await app.inject({
       method: 'POST', url: '/admin/sets',
       headers: { cookie: adminCookies },
-      payload: { name: `TestSet${suffix}`, description: 'Test', isActive: false },
+      payload: { nameFr: `TestSet${suffix}`, nameEn: `TestSet${suffix}`, descriptionFr: 'Test', descriptionEn: 'Test', isActive: false },
     })
     expect(res.statusCode).toBe(201)
     const body = res.json()
@@ -62,7 +62,7 @@ describe('Admin cards routes', () => {
     const createRes = await app.inject({
       method: 'POST', url: '/admin/sets',
       headers: { cookie: adminCookies },
-      payload: { name: `ToDelete${suffix}`, isActive: false },
+      payload: { nameFr: `ToDelete${suffix}`, nameEn: `ToDelete${suffix}`, isActive: false },
     })
     const tmpId = createRes.json().id
     const res = await app.inject({ method: 'DELETE', url: `/admin/sets/${tmpId}`, headers: { cookie: adminCookies } })
@@ -72,7 +72,8 @@ describe('Admin cards routes', () => {
   it('POST /admin/cards — crée une carte (multipart)', async () => {
     const FormData = (await import('form-data')).default
     const form = new FormData()
-    form.append('name', `TestCard${suffix}`)
+    form.append('nameFr', `TestCard${suffix}`)
+    form.append('nameEn', `TestCard${suffix}`)
     form.append('setId', setId)
     form.append('rarity', 'COMMON')
     form.append('dropWeight', '10')

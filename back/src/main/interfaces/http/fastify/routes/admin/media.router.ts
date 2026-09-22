@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
+import { errorMessage } from '../../../../../infra/i18n/error-messages'
 import type { StorageClientInterface } from '../../../../../types/infra/storage/storage-client'
 import {
   adminMediaDeleteBodySchema,
@@ -89,28 +90,28 @@ function buildRenameKeys(
   newName: string,
 ): { sanitized: string; ext: string; to: string } {
   if (!SAFE_KEY_RE.test(from)) {
-    throw Boom.badRequest('Clé invalide')
+    throw Boom.badRequest(errorMessage('media.invalidKey'))
   }
   if (newName.includes('.')) {
-    throw Boom.badRequest('Le nom ne peut pas contenir de point')
+    throw Boom.badRequest(errorMessage('media.nameCannotContainDot'))
   }
 
   const sanitized = sanitizeName(newName)
   if (!sanitized || sanitized.replace(/-/g, '').length === 0) {
-    throw Boom.badRequest('Nom invalide')
+    throw Boom.badRequest(errorMessage('media.invalidName'))
   }
 
   const ext = from.split('.').pop()
   if (!ext || ext.includes('/')) {
-    throw Boom.badRequest('Clé source sans extension valide')
+    throw Boom.badRequest(errorMessage('media.sourceKeyNoValidExtension'))
   }
 
   const to = `cards/${sanitized}.${ext}`
   if (!SAFE_KEY_RE.test(to)) {
-    throw Boom.badRequest('Clé destination invalide')
+    throw Boom.badRequest(errorMessage('media.invalidDestinationKey'))
   }
   if (to === from) {
-    throw Boom.badRequest('Le nom est identique')
+    throw Boom.badRequest(errorMessage('media.nameIsIdentical'))
   }
 
   return { sanitized, ext, to }
@@ -171,7 +172,9 @@ export const adminMediaRouter: FastifyPluginCallbackZod = (fastify) => {
 
       for (const key of keys) {
         if (!SAFE_KEY_RE.test(key)) {
-          throw Boom.badRequest(`Clé invalide : ${key}`)
+          throw Boom.badRequest(
+            errorMessage('media.invalidKeyWithValue', { key }),
+          )
         }
       }
 
@@ -179,7 +182,7 @@ export const adminMediaRouter: FastifyPluginCallbackZod = (fastify) => {
 
       if (usedCards.length > 0) {
         const names = usedCards.map((c) => c.name).join(', ')
-        throw Boom.badRequest(`Image(s) utilisée(s) par : ${names}`)
+        throw Boom.badRequest(errorMessage('media.imagesUsedBy', { names }))
       }
 
       const results = await Promise.allSettled(
@@ -189,7 +192,11 @@ export const adminMediaRouter: FastifyPluginCallbackZod = (fastify) => {
       const failed = keys.filter((_, i) => results[i]?.status === 'rejected')
 
       if (failed.length > 0) {
-        throw Boom.internal(`Échec de suppression pour : ${failed.join(', ')}`)
+        throw Boom.internal(
+          errorMessage('media.deletionFailedFor', {
+            failed: failed.join(', '),
+          }),
+        )
       }
 
       return { deleted }
@@ -204,10 +211,10 @@ export const adminMediaRouter: FastifyPluginCallbackZod = (fastify) => {
       const { to } = buildRenameKeys(from, newName)
 
       if (!(await storageClient.exists(from))) {
-        throw Boom.notFound('Média introuvable')
+        throw Boom.notFound(errorMessage('media.notFound'))
       }
       if (await storageClient.exists(to)) {
-        throw Boom.conflict('Ce nom est déjà utilisé')
+        throw Boom.conflict(errorMessage('media.nameAlreadyUsed'))
       }
 
       await storageClient.copy(from, to)

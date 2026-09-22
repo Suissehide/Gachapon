@@ -27,7 +27,8 @@ const DEFAULT_RARITY = 'COMMON'
 const DEFAULT_STATS = STATS_BY_RARITY[DEFAULT_RARITY]
 
 type CardFormValues = {
-  name: string
+  nameFr: string
+  nameEn: string
   setId: string
   rarity: string
   dropWeight?: number
@@ -51,7 +52,8 @@ function buildCardFormData(
   pickedUrl: string | null,
 ): FormData {
   const fd = new FormData()
-  fd.append('name', value.name)
+  fd.append('nameFr', value.nameFr)
+  fd.append('nameEn', value.nameEn)
   fd.append('setId', value.setId)
   fd.append('rarity', value.rarity)
   fd.append('dropWeight', String(value.dropWeight ?? 1))
@@ -137,7 +139,8 @@ function CreateCardForm({
 
   const form = useAppForm({
     defaultValues: {
-      name: '',
+      nameFr: '',
+      nameEn: '',
       setId: defaultSetId ?? sets[0]?.id ?? '',
       rarity: DEFAULT_RARITY,
       dropWeight: 1 as number | undefined,
@@ -189,8 +192,11 @@ function CreateCardForm({
       }}
       className="space-y-3"
     >
-      <form.AppField name="name">
-        {(f) => <f.Input label="Nom" />}
+      <form.AppField name="nameFr">
+        {(f) => <f.Input label="Nom (français)" />}
+      </form.AppField>
+      <form.AppField name="nameEn">
+        {(f) => <f.Input label="Nom (anglais)" />}
       </form.AppField>
       <form.AppField name="setId">
         {(f) => <f.Select label="Set" options={setOptions} />}

@@ -1,9 +1,6 @@
-import type {
-  CardElement,
-  Prisma,
-  RaidBoss,
-} from '../../../../generated/client'
+import type { CardElement, Prisma } from '../../../../generated/client'
 import type { IocContainer } from '../../../types/application/ioc'
+import type { LocalizedRaidBoss } from '../../../types/infra/orm/localized'
 import type {
   IRaidRepository,
   RaidContributionRow,
@@ -20,18 +17,22 @@ export class RaidRepository implements IRaidRepository {
     this.#prisma = postgresOrm.prisma
   }
 
-  listBosses(): Promise<RaidBoss[]> {
+  listBosses(): Promise<LocalizedRaidBoss[]> {
     return this.#prisma.raidBoss.findMany({ orderBy: { element: 'asc' } })
   }
 
-  findBossByElement(element: CardElement): Promise<RaidBoss | null> {
+  findBossByElement(element: CardElement): Promise<LocalizedRaidBoss | null> {
     return this.#prisma.raidBoss.findUnique({ where: { element } })
   }
 
   updateBoss(
     element: CardElement,
-    data: { name?: string; spec?: Prisma.InputJsonValue },
-  ): Promise<RaidBoss> {
+    data: {
+      nameFr?: string
+      nameEn?: string
+      spec?: Prisma.InputJsonValue
+    },
+  ): Promise<LocalizedRaidBoss> {
     return this.#prisma.raidBoss.update({ where: { element }, data })
   }
 

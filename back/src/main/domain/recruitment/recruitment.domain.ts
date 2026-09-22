@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import type { JoinRequestStatus } from '../../../generated/client'
+import { errorMessage } from '../../infra/i18n/error-messages'
 import type { TeamRepository } from '../../infra/orm/repositories/team.repository'
 import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
 import type { IocContainer } from '../../types/application/ioc'
@@ -61,10 +62,10 @@ export class RecruitmentDomain implements IRecruitmentDomain {
 
     const team = await this.#teamRepo.findById(teamId)
     if (!team) {
-      throw Boom.notFound('Team not found')
+      throw Boom.notFound(errorMessage('team.notFound'))
     }
     if (!team.recruiting) {
-      throw Boom.forbidden('Cette équipe ne recrute pas')
+      throw Boom.forbidden(errorMessage('recruitment.teamNotRecruiting'))
     }
 
     const alreadyMember = await this.#memberRepo.findByTeamAndUser(
@@ -72,7 +73,7 @@ export class RecruitmentDomain implements IRecruitmentDomain {
       userId,
     )
     if (alreadyMember) {
-      throw Boom.conflict('Already a member of this team')
+      throw Boom.conflict(errorMessage('team.alreadyMemberOfTeam'))
     }
 
     const mine = await this.#joinRequestRepo.listByUser(userId)
@@ -84,13 +85,15 @@ export class RecruitmentDomain implements IRecruitmentDomain {
       existing.status === 'PENDING' &&
       !isJoinRequestExpired(existing, now)
     ) {
-      throw Boom.conflict('Join request already pending for this team')
+      throw Boom.conflict(errorMessage('recruitment.joinRequestAlreadyPending'))
     }
 
     const blockedUntil = reapplyBlockedUntil(existing)
     if (blockedUntil && blockedUntil > now) {
       throw Boom.conflict(
-        `Candidature refusée récemment ; réessaie après le ${blockedUntil.toISOString()}`,
+        errorMessage('recruitment.reapplyBlocked', {
+          until: blockedUntil.toISOString(),
+        }),
       )
     }
 
@@ -118,7 +121,9 @@ export class RecruitmentDomain implements IRecruitmentDomain {
           )
           if (countActivePending(freshMine, now) >= MAX_PENDING_JOIN_REQUESTS) {
             throw Boom.conflict(
-              `Maximum ${MAX_PENDING_JOIN_REQUESTS} candidatures en attente`,
+              errorMessage('recruitment.maxPendingRequests', {
+                max: MAX_PENDING_JOIN_REQUESTS,
+              }),
             )
           }
 
@@ -145,7 +150,7 @@ export class RecruitmentDomain implements IRecruitmentDomain {
       userId,
     )
     if (!existing || existing.status !== 'PENDING') {
-      throw Boom.notFound('No pending join request for this team')
+      throw Boom.notFound(errorMessage('recruitment.noPendingJoinRequest'))
     }
     // Gardé sur `status: 'PENDING'` : une annulation qui court-circuite un
     // `accept` concurrent ne doit pas écraser un `ACCEPTED` tout frais — la
@@ -155,7 +160,9 @@ export class RecruitmentDomain implements IRecruitmentDomain {
       'CANCELLED',
     )
     if (cancelled === 0) {
-      throw Boom.conflict('Join request already processed')
+      throw Boom.conflict(
+        errorMessage('recruitment.joinRequestAlreadyProcessed'),
+      )
     }
   }
 
@@ -174,10 +181,12 @@ export class RecruitmentDomain implements IRecruitmentDomain {
     const now = new Date()
     const req = await this.#joinRequestRepo.findById(requestId)
     if (!req) {
-      throw Boom.notFound('Join request not found')
+      throw Boom.notFound(errorMessage('recruitment.joinRequestNotFound'))
     }
     if (req.status !== 'PENDING' || isJoinRequestExpired(req, now)) {
-      throw Boom.conflict('Join request already processed')
+      throw Boom.conflict(
+        errorMessage('recruitment.joinRequestAlreadyProcessed'),
+      )
     }
 
     await this.#assertCanDecide(req.teamId, actorId)
@@ -192,10 +201,15 @@ export class RecruitmentDomain implements IRecruitmentDomain {
         'EXPIRED',
       )
       if (marked === 0) {
-        throw Boom.conflict('Join request already processed')
+        throw Boom.conflict(
+          errorMessage('recruitment.joinRequestAlreadyProcessed'),
+        )
       }
       throw Boom.conflict(
-        `@${req.user.username} a atteint sa limite de ${MAX_TEAMS_PER_USER} équipes`,
+        errorMessage('recruitment.userReachedTeamLimit', {
+          username: req.user.username,
+          max: MAX_TEAMS_PER_USER,
+        }),
       )
     }
 
@@ -205,7 +219,7 @@ export class RecruitmentDomain implements IRecruitmentDomain {
     ])
     if (memberCount >= config['team.maxMembers']) {
       throw Boom.conflict(
-        `Cette équipe est complète (${config['team.maxMembers']} membres)`,
+        errorMessage('team.full', { max: config['team.maxMembers'] }),
       )
     }
 
@@ -221,7 +235,9 @@ export class RecruitmentDomain implements IRecruitmentDomain {
         now,
       )
       if (updated === 0) {
-        throw Boom.conflict('Join request already processed')
+        throw Boom.conflict(
+          errorMessage('recruitment.joinRequestAlreadyProcessed'),
+        )
       }
       await tx.teamMember.create({
         data: { teamId: req.teamId, userId: req.userId, role: 'MEMBER' },
@@ -243,10 +259,12 @@ export class RecruitmentDomain implements IRecruitmentDomain {
     const now = new Date()
     const req = await this.#joinRequestRepo.findById(requestId)
     if (!req) {
-      throw Boom.notFound('Join request not found')
+      throw Boom.notFound(errorMessage('recruitment.joinRequestNotFound'))
     }
     if (req.status !== 'PENDING' || isJoinRequestExpired(req, now)) {
-      throw Boom.conflict('Join request already processed')
+      throw Boom.conflict(
+        errorMessage('recruitment.joinRequestAlreadyProcessed'),
+      )
     }
     await this.#assertCanDecide(req.teamId, actorId)
 
@@ -259,7 +277,9 @@ export class RecruitmentDomain implements IRecruitmentDomain {
         now,
       )
       if (updated === 0) {
-        throw Boom.conflict('Join request already processed')
+        throw Boom.conflict(
+          errorMessage('recruitment.joinRequestAlreadyProcessed'),
+        )
       }
     })
 
@@ -331,7 +351,9 @@ export class RecruitmentDomain implements IRecruitmentDomain {
   async #assertCanDecide(teamId: string, actorId: string): Promise<void> {
     const actor = await this.#memberRepo.findByTeamAndUser(teamId, actorId)
     if (!actor || actor.role === 'MEMBER') {
-      throw Boom.forbidden('Only ADMIN or OWNER can handle join requests')
+      throw Boom.forbidden(
+        errorMessage('recruitment.onlyAdminOrOwnerCanHandleRequests'),
+      )
     }
   }
 

@@ -12,7 +12,7 @@ describe('Admin media routes', () => {
       method: 'POST', url: '/auth/register',
       payload: { username: `mediaadmin${suffix}`, email: `mediaadmin${suffix}@test.com`, password: 'Password123!' },
     })
-    await (app as any).iocContainer.postgresOrm.prisma.user.update({
+    await app.iocContainer.postgresOrm.prisma.user.update({
       where: { email: `mediaadmin${suffix}@test.com` }, data: { role: 'SUPER_ADMIN', emailVerifiedAt: new Date() },
     })
     const loginRes = await app.inject({
@@ -89,15 +89,16 @@ describe('Admin media routes', () => {
     const setRes = await app.inject({
       method: 'POST', url: '/admin/sets',
       headers: { cookie: adminCookies },
-      payload: { name: `MediaSet${suffix}`, isActive: false },
+      payload: { nameFr: `MediaSet${suffix}`, nameEn: `MediaSet${suffix}`, isActive: false },
     })
     const setId = setRes.json().id
 
     // Insérer directement en DB une carte avec imageUrl connue (pas besoin de vrai Minio)
     const imageKey = `cards/used-image-${suffix}.png`
-    await (app as any).iocContainer.postgresOrm.prisma.card.create({
+    await app.iocContainer.postgresOrm.prisma.card.create({
       data: {
-        name: `MediaCard${suffix}`,
+        nameFr: `MediaCard${suffix}`,
+        nameEn: `MediaCard${suffix}`,
         setId,
         rarity: 'COMMON',
         dropWeight: 1,
@@ -106,9 +107,17 @@ describe('Admin media routes', () => {
     })
 
     // Essayer de supprimer la clé correspondante
+    // 'accept-language': 'fr' — le message vérifié plus bas est le texte
+    // français d'origine ; depuis le catalogue bilingue (tâche 6), une
+    // requête sans en-tête reçoit l'anglais (locale par défaut) et ne
+    // matcherait plus /utilisée/i.
     const res = await app.inject({
       method: 'DELETE', url: '/admin/media',
-      headers: { cookie: adminCookies, 'content-type': 'application/json' },
+      headers: {
+        cookie: adminCookies,
+        'content-type': 'application/json',
+        'accept-language': 'fr',
+      },
       payload: { keys: [`cards/used-image-${suffix}.png`] },
     })
     expect(res.statusCode).toBe(400)

@@ -36,7 +36,8 @@ type RewardFormValues = {
   xp: number | undefined
   gold: number | undefined
   cardRarity: string
-  message: string
+  labelFr: string
+  labelEn: string
 }
 
 function isRewardEmpty(value: RewardFormValues): boolean {
@@ -96,7 +97,8 @@ export function BulkRewardPopup({
       xp: undefined as number | undefined,
       gold: undefined as number | undefined,
       cardRarity: NO_RARITY,
-      message: '',
+      labelFr: '',
+      labelEn: '',
     },
     onSubmit: ({ value }) => {
       if (isRewardEmpty(value)) {
@@ -111,7 +113,8 @@ export function BulkRewardPopup({
         {
           target: isAll ? 'ALL' : { userIds: target as string[] },
           reward: buildReward(value),
-          message: value.message || undefined,
+          labelFr: value.labelFr || undefined,
+          labelEn: value.labelEn || undefined,
         },
         {
           onSuccess: () => {
@@ -172,8 +175,11 @@ export function BulkRewardPopup({
               )}
             </form.AppField>
 
-            <form.AppField name="message">
-              {(field) => <field.Input label="Message (optionnel)" />}
+            <form.AppField name="labelFr">
+              {(field) => <field.Input label="Message (français, optionnel)" />}
+            </form.AppField>
+            <form.AppField name="labelEn">
+              {(field) => <field.Input label="Message (anglais, optionnel)" />}
             </form.AppField>
 
             {isAll && (

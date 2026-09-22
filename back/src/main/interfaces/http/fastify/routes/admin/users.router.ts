@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import { toCsv } from '../../../../../domain/shared/csv'
+import { errorMessage } from '../../../../../infra/i18n/error-messages'
 import {
   adminUserDustBodySchema,
   adminUserIdParamSchema,
@@ -119,7 +120,7 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
       const { id } = request.params
       const user = await userRepository.findById(id)
       if (!user) {
-        throw Boom.notFound('User not found')
+        throw Boom.notFound(errorMessage('user.notFound'))
       }
 
       const [pullsTotal, cardsOwned] = await Promise.all([
@@ -150,7 +151,7 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request) => {
       const user = await userRepository.findById(request.params.id)
       if (!user) {
-        throw Boom.notFound('User not found')
+        throw Boom.notFound(errorMessage('user.notFound'))
       }
 
       const userCards = await userCardRepository.findByUser(request.params.id)
@@ -182,7 +183,7 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request) => {
       const user = await userRepository.findById(request.params.id)
       if (!user) {
-        throw Boom.notFound('User not found')
+        throw Boom.notFound(errorMessage('user.notFound'))
       }
       const result = await userRepository.incrementTokens(
         request.params.id,
@@ -209,7 +210,7 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request) => {
       const user = await userRepository.findById(request.params.id)
       if (!user) {
-        throw Boom.notFound('User not found')
+        throw Boom.notFound(errorMessage('user.notFound'))
       }
       const result = await userRepository.incrementDust(
         request.params.id,
@@ -235,11 +236,11 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
     },
     async (request) => {
       if (request.params.id === request.user.userID) {
-        throw Boom.forbidden('Cannot change your own role')
+        throw Boom.forbidden(errorMessage('admin.cannotChangeOwnRole'))
       }
       const user = await userRepository.findById(request.params.id)
       if (!user) {
-        throw Boom.notFound('User not found')
+        throw Boom.notFound(errorMessage('user.notFound'))
       }
       return userRepository.updateRole(request.params.id, request.body.role)
     },
@@ -283,11 +284,11 @@ export const adminUsersRouter: FastifyPluginCallbackZod = (fastify) => {
     },
     async (request) => {
       if (request.params.id === request.user.userID) {
-        throw Boom.forbidden('Cannot suspend your own account')
+        throw Boom.forbidden(errorMessage('admin.cannotSuspendSelf'))
       }
       const user = await userRepository.findById(request.params.id)
       if (!user) {
-        throw Boom.notFound('User not found')
+        throw Boom.notFound(errorMessage('user.notFound'))
       }
       const result = await userRepository.updateSuspended(
         request.params.id,

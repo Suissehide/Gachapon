@@ -12,6 +12,11 @@ enum GlobalRole {
   SUPER_ADMIN
 }
 
+enum Locale {
+  FR
+  EN
+}
+
 enum OAuthProvider {
   GOOGLE
   DISCORD
@@ -198,6 +203,7 @@ model User {
   emailVerificationTokenExpiresAt DateTime?
   passwordResetToken              String?    @unique
   passwordResetTokenExpiresAt     DateTime?
+  locale                          Locale     @default(EN)
 
   bestStreak Int @default(0)
 
@@ -413,13 +419,15 @@ model JoinRequest {
 }
 
 model CardSet {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  coverImage  String?
-  hue         Int?
-  isActive    Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  id            String   @id @default(uuid())
+  nameFr        String
+  nameEn        String
+  descriptionFr String?
+  descriptionEn String?
+  coverImage    String?
+  hue           Int?
+  isActive      Boolean  @default(false)
+  createdAt     DateTime @default(now())
 
   cards Card[]
 }
@@ -441,7 +449,8 @@ model Card {
   id         String     @id @default(uuid())
   setId      String
   set        CardSet    @relation(fields: [setId], references: [id], onDelete: Cascade)
-  name       String
+  nameFr     String
+  nameEn     String
   imageUrl   String?
   rarity     CardRarity
   dropWeight Float      @default(1.0)
@@ -480,7 +489,8 @@ model UserCard {
 
 model Equipment {
   id         String          @id @default(uuid())
-  name       String
+  nameFr     String
+  nameEn     String
   slot       EquipmentSlot
   setKey     EquipmentSet
   rarity     CardRarity
@@ -536,15 +546,17 @@ model GachaPull {
 }
 
 model ShopItem {
-  id          String       @id @default(uuid())
-  name        String
-  description String
-  type        ShopItemType
-  cost        Int
-  currency    ShopCurrency @default(DUST)
-  value       Json
-  isActive    Boolean      @default(true)
-  createdAt   DateTime     @default(now())
+  id            String       @id @default(uuid())
+  nameFr        String
+  nameEn        String
+  descriptionFr String
+  descriptionEn String
+  type          ShopItemType
+  cost          Int
+  currency      ShopCurrency @default(DUST)
+  value         Json
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
 
   purchases Purchase[]
 }
@@ -588,19 +600,21 @@ model DailyShopItem {
 }
 
 model Achievement {
-  id          String  @id @default(uuid())
-  key         String  @unique
-  name        String
-  description String
-  family      String?
-  tier        Int     @default(0)
-  hidden      Boolean @default(false)
-  iconKey     String?
-  criterion   Json
-  sortOrder   Int     @default(0)
-  isActive    Boolean @default(true)
-  rewardId    String?
-  reward      Reward? @relation(fields: [rewardId], references: [id])
+  id            String  @id @default(uuid())
+  key           String  @unique
+  nameFr        String
+  nameEn        String
+  descriptionFr String
+  descriptionEn String
+  family        String?
+  tier          Int     @default(0)
+  hidden        Boolean @default(false)
+  iconKey       String?
+  criterion     Json
+  sortOrder     Int     @default(0)
+  isActive      Boolean @default(true)
+  rewardId      String?
+  reward        Reward? @relation(fields: [rewardId], references: [id])
 
   userAchievements UserAchievement[]
   progress         UserAchievementProgress[]
@@ -634,15 +648,17 @@ model UserAchievementProgress {
 }
 
 model Quest {
-  id          String      @id @default(uuid())
-  key         String      @unique
-  name        String
-  description String
-  criterion   Json
-  period      QuestPeriod @default(ONESHOT)
-  rewardId    String?
-  reward      Reward?     @relation(fields: [rewardId], references: [id])
-  isActive    Boolean     @default(true)
+  id            String      @id @default(uuid())
+  key           String      @unique
+  nameFr        String
+  nameEn        String
+  descriptionFr String
+  descriptionEn String
+  criterion     Json
+  period        QuestPeriod @default(ONESHOT)
+  rewardId      String?
+  reward        Reward?     @relation(fields: [rewardId], references: [id])
+  isActive      Boolean     @default(true)
 
   userQuests UserQuest[]
 }
@@ -669,7 +685,8 @@ model Reward {
   xp         Int         @default(0)
   gold       Int         @default(0)
   cardRarity CardRarity?
-  label      String?
+  labelFr    String?
+  labelEn    String?
   createdAt  DateTime    @default(now())
 
   streakMilestones StreakMilestone[]
@@ -721,30 +738,34 @@ model SkillConfig {
 }
 
 model SkillBranch {
-  id          String      @id @default(cuid())
-  name        String
-  description String
-  icon        String
-  color       String
-  order       Int
-  nodes       SkillNode[]
+  id            String      @id @default(cuid())
+  nameFr        String
+  nameEn        String
+  descriptionFr String
+  descriptionEn String
+  icon          String
+  color         String
+  order         Int
+  nodes         SkillNode[]
 }
 
 model SkillNode {
-  id          String           @id @default(cuid())
-  branchId    String
-  branch      SkillBranch      @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  name        String
-  description String
-  icon        String
-  maxLevel    Int
-  effectType  SkillEffectType
-  posX        Int
-  posY        Int
-  levels      SkillNodeLevel[]
-  edgesFrom   SkillEdge[]      @relation("EdgeFrom")
-  edgesTo     SkillEdge[]      @relation("EdgeTo")
-  userSkills  UserSkill[]
+  id            String           @id @default(cuid())
+  branchId      String
+  branch        SkillBranch      @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  nameFr        String
+  nameEn        String
+  descriptionFr String
+  descriptionEn String
+  icon          String
+  maxLevel      Int
+  effectType    SkillEffectType
+  posX          Int
+  posY          Int
+  levels        SkillNodeLevel[]
+  edgesFrom     SkillEdge[]      @relation("EdgeFrom")
+  edgesTo       SkillEdge[]      @relation("EdgeTo")
+  userSkills    UserSkill[]
 }
 
 model SkillNodeLevel {
@@ -794,7 +815,8 @@ model CampaignStage {
   id        String  @id @default(uuid())
   chapter   Int
   index     Int
-  label     String
+  labelFr   String
+  labelEn   String
   isBoss    Boolean @default(false)
   enemyTeam Json
   lootTable Json
@@ -818,7 +840,8 @@ model TowerFloor {
   id        String      @id @default(uuid())
   element   CardElement // FIRE | WATER | NATURE | EARTH uniquement
   index     Int // 1..10
-  label     String
+  labelFr   String
+  labelEn   String
   enemyTeam Json
   lootTable Json
   order     Int
@@ -869,7 +892,8 @@ model ActivityEvent {
 model RaidBoss {
   id        String      @id @default(uuid())
   element   CardElement @unique
-  name      String
+  nameFr    String
+  nameEn    String
   spec      Json
   updatedAt DateTime    @updatedAt
 

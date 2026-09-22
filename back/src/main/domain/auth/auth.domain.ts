@@ -2,6 +2,8 @@ import { randomUUID } from 'node:crypto'
 import Boom from '@hapi/boom'
 import bcrypt from 'bcrypt'
 
+import { errorMessage } from '../../infra/i18n/error-messages'
+import { getCurrentLocale } from '../../infra/i18n/locale-context'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { RefreshTokenRepository } from '../../infra/redis/refresh-token.repository'
 import type { IocContainer } from '../../types/application/ioc'
@@ -68,15 +70,13 @@ export class AuthDomain implements AuthDomainInterface {
     // Check for existing verified account
     const existing = await this.#userRepository.findByEmail(input.email)
     if (existing?.emailVerifiedAt) {
-      throw Boom.conflict('Email already in use')
+      throw Boom.conflict(errorMessage('auth.emailAlreadyInUse'))
     }
     // If unverified account exists with expired token, delete it
     if (existing && !existing.emailVerifiedAt) {
       const expiresAt = existing.emailVerificationTokenExpiresAt
       if (expiresAt && expiresAt > new Date()) {
-        throw Boom.conflict(
-          'Un compte est en attente de vérification pour cet email',
-        )
+        throw Boom.conflict(errorMessage('auth.unverifiedAccountPending'))
       }
       await this.#userRepository.deleteUnverifiedByEmail(input.email)
     }
@@ -85,7 +85,7 @@ export class AuthDomain implements AuthDomainInterface {
       input.username,
     )
     if (existingUsername) {
-      throw Boom.conflict('Username already taken')
+      throw Boom.conflict(errorMessage('user.usernameTaken'))
     }
 
     const passwordHash = await this.hashPassword(input.password)
@@ -93,11 +93,20 @@ export class AuthDomain implements AuthDomainInterface {
     const expiresAt = new Date(Date.now() + VERIFICATION_TOKEN_TTL_MS)
 
     const tokenMaxStock = await this.#configService.get('tokenMaxStock')
+    // `getCurrentLocale()` : la locale de LA REQUÊTE D'INSCRIPTION —
+    // résolue par le hook de tâche 4 depuis `?lang` ou `Accept-Language` du
+    // navigateur qui s'inscrit. C'est le meilleur signal disponible sur la
+    // langue du nouveau compte, et il n'existe pas d'autre moyen de la
+    // renseigner tant que le changement de langue depuis le profil (lot 2)
+    // n'existe pas — sans ça, tout compte naît et reste en `EN` (défaut
+    // Prisma), et les mails de la tâche 7 ne partiraient jamais en
+    // français.
     const user = await this.#userRepository.create({
       username: input.username,
       email: input.email,
       passwordHash,
       tokens: tokenMaxStock,
+      locale: getCurrentLocale(),
     })
 
     void this.#activityDomain.record('USER_SIGNUP', {
@@ -111,7 +120,15 @@ export class AuthDomain implements AuthDomainInterface {
       emailVerificationTokenExpiresAt: expiresAt,
     })
 
-    await this.#mailService.sendVerificationEmail(input.email, token)
+    // `user` vient d'être créé : le mail part dans sa locale (celle du
+    // destinataire), pas dans `getCurrentLocale()` (celle du navigateur qui
+    // a déclenché l'inscription — le même compte ici, mais la règle est
+    // uniforme dès qu'un `User` existe, voir task-7-brief.md).
+    await this.#mailService.sendVerificationEmail(
+      input.email,
+      token,
+      user.locale,
+    )
 
     return { email: input.email }
   }
@@ -127,14 +144,14 @@ export class AuthDomain implements AuthDomainInterface {
         input.password,
         '$2b$12$invalidhashfortimingsafety.00000000000000000000000000U',
       )
-      throw Boom.unauthorized('Invalid credentials')
+      throw Boom.unauthorized(errorMessage('auth.invalidCredentials'))
     }
     const valid = await this.verifyPassword(input.password, user.passwordHash)
     if (!valid) {
-      throw Boom.unauthorized('Invalid credentials')
+      throw Boom.unauthorized(errorMessage('auth.invalidCredentials'))
     }
     if (!user.emailVerifiedAt) {
-      throw Boom.forbidden('EMAIL_NOT_VERIFIED')
+      throw Boom.forbidden(errorMessage('auth.emailNotVerified'))
     }
     let unlockedAchievements: UnlockedAchievement[] = []
     try {
@@ -158,13 +175,13 @@ export class AuthDomain implements AuthDomainInterface {
   }> {
     const user = await this.#userRepository.findByEmailVerificationToken(token)
     if (!user) {
-      throw Boom.badRequest('Token invalide ou expiré')
+      throw Boom.badRequest(errorMessage('auth.invalidOrExpiredToken'))
     }
     if (
       !user.emailVerificationTokenExpiresAt ||
       user.emailVerificationTokenExpiresAt < new Date()
     ) {
-      throw Boom.badRequest('Token invalide ou expiré')
+      throw Boom.badRequest(errorMessage('auth.invalidOrExpiredToken'))
     }
 
     const verified = await this.#userRepository.update(user.id, {
@@ -205,10 +222,9 @@ export class AuthDomain implements AuthDomainInterface {
         const retryAfterSeconds = Math.ceil(
           (COOLDOWN_MS - (Date.now() - generatedAt.getTime())) / 1000,
         )
-        throw Boom.tooManyRequests(
-          'Veuillez patienter avant de renvoyer un email',
-          { retryAfterSeconds },
-        )
+        throw Boom.tooManyRequests(errorMessage('auth.resendCooldown'), {
+          retryAfterSeconds,
+        })
       }
     }
 
@@ -220,7 +236,8 @@ export class AuthDomain implements AuthDomainInterface {
       emailVerificationTokenExpiresAt: expiresAt,
     })
 
-    await this.#mailService.sendVerificationEmail(email, newToken)
+    // `user` est le destinataire — locale prise sur son compte.
+    await this.#mailService.sendVerificationEmail(email, newToken, user.locale)
   }
 
   async forgotPassword(email: string): Promise<void> {
@@ -239,10 +256,9 @@ export class AuthDomain implements AuthDomainInterface {
         const retryAfterSeconds = Math.ceil(
           (COOLDOWN_MS - (Date.now() - generatedAt.getTime())) / 1000,
         )
-        throw Boom.tooManyRequests(
-          'Veuillez patienter avant de renvoyer un email',
-          { retryAfterSeconds },
-        )
+        throw Boom.tooManyRequests(errorMessage('auth.resendCooldown'), {
+          retryAfterSeconds,
+        })
       }
     }
 
@@ -254,19 +270,27 @@ export class AuthDomain implements AuthDomainInterface {
       passwordResetTokenExpiresAt: expiresAt,
     })
 
-    await this.#mailService.sendPasswordResetEmail(email, resetToken)
+    // `user` est le destinataire — locale prise sur son compte, pas sur la
+    // requête courante (voir la garde silencieuse plus haut : sans compte,
+    // aucun mail ne part de toute façon, donc pas de cas « adresse
+    // inconnue » à couvrir ici).
+    await this.#mailService.sendPasswordResetEmail(
+      email,
+      resetToken,
+      user.locale,
+    )
   }
 
   async resetPassword(token: string, newPassword: string): Promise<void> {
     const user = await this.#userRepository.findByPasswordResetToken(token)
     if (!user) {
-      throw Boom.badRequest('Token invalide ou expiré')
+      throw Boom.badRequest(errorMessage('auth.invalidOrExpiredToken'))
     }
     if (
       !user.passwordResetTokenExpiresAt ||
       user.passwordResetTokenExpiresAt < new Date()
     ) {
-      throw Boom.badRequest('Token invalide ou expiré')
+      throw Boom.badRequest(errorMessage('auth.invalidOrExpiredToken'))
     }
 
     const passwordHash = await this.hashPassword(newPassword)
@@ -285,11 +309,11 @@ export class AuthDomain implements AuthDomainInterface {
       refreshToken,
     )
     if (!valid) {
-      throw Boom.unauthorized('Refresh token revoked')
+      throw Boom.unauthorized(errorMessage('auth.refreshTokenRevoked'))
     }
     const user = await this.#userRepository.findById(payload.sub)
     if (!user) {
-      throw Boom.unauthorized('User not found')
+      throw Boom.unauthorized(errorMessage('user.notFound'))
     }
     await this.#refreshTokenRepository.revoke(payload.sub, refreshToken)
     return this.generateTokenPair(user)

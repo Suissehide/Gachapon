@@ -15,10 +15,10 @@ describe('Collection routes', () => {
 
     // Seed a card set + card so collection endpoints return data
     const set = await postgresOrm.prisma.cardSet.create({
-      data: { name: `CollSet${suffix}`, isActive: true },
+      data: { nameFr: `CollSet${suffix}`, nameEn: `CollSet${suffix}`, isActive: true },
     })
     await postgresOrm.prisma.card.create({
-      data: { name: `CollCard${suffix}`, rarity: 'COMMON', dropWeight: 10, setId: set.id },
+      data: { nameFr: `CollCard${suffix}`, nameEn: `CollCard${suffix}`, rarity: 'COMMON', dropWeight: 10, setId: set.id },
     })
 
     await app.inject({
@@ -133,10 +133,10 @@ describe('Collection routes', () => {
 
     // Créer un set et une carte RARE dédiés pour ce test
     const recycleSet = await postgresOrm.prisma.cardSet.create({
-      data: { name: `RecycleSet${suffix}`, isActive: true },
+      data: { nameFr: `RecycleSet${suffix}`, nameEn: `RecycleSet${suffix}`, isActive: true },
     })
     const rareCard = await postgresOrm.prisma.card.create({
-      data: { name: `RecycleRare${suffix}`, rarity: 'RARE', dropWeight: 5, setId: recycleSet.id },
+      data: { nameFr: `RecycleRare${suffix}`, nameEn: `RecycleRare${suffix}`, rarity: 'RARE', dropWeight: 5, setId: recycleSet.id },
     })
 
     // Insérer directement une copie BRILLIANT de cette carte RARE
@@ -172,10 +172,10 @@ describe('Collection routes', () => {
 
     // Carte RARE dédiée + une copie NORMAL à recycler
     const genSet = await postgresOrm.prisma.cardSet.create({
-      data: { name: `GenSet${suffix}`, isActive: true },
+      data: { nameFr: `GenSet${suffix}`, nameEn: `GenSet${suffix}`, isActive: true },
     })
     const genCard = await postgresOrm.prisma.card.create({
-      data: { name: `GenRare${suffix}`, rarity: 'RARE', dropWeight: 5, setId: genSet.id },
+      data: { nameFr: `GenRare${suffix}`, nameEn: `GenRare${suffix}`, rarity: 'RARE', dropWeight: 5, setId: genSet.id },
     })
     await postgresOrm.prisma.userCard.create({
       data: { userId, cardId: genCard.id, variant: 'NORMAL', quantity: 1 },

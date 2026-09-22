@@ -1,8 +1,9 @@
-import type { Element } from '../../src/main/domain/combat/element'
+import type { Element } from '../combat/element'
 
 /**
  * Le bestiaire cosmétique — source UNIQUE des sprites de monstres, partagée
- * par la campagne (`seed/campaign.ts`) et les tours (`seed/tower.ts`).
+ * par la campagne (`campaign.definitions.ts`) et les tours
+ * (`tower.definitions.ts`).
  *
  * Chaque famille = un dossier MinIO sous `cards/monsters/` contenant
  * `PREFIX-001..PREFIX-{count}.png`. La clé du Record EST le nom du dossier :

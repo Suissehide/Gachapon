@@ -229,10 +229,16 @@ describe('cycle de vie du duel', () => {
     // verifie que l'ADVERSAIRE (B, deja opponent de duel1 PENDING) est
     // deja engage. Un domaine qui n'appellerait findOpenDuelForUserInTx que
     // sur le defieur laisserait passer cette requete en 201.
+    // 'accept-language': 'fr' — les deux assertions plus bas comparent au
+    // texte français d'origine ; depuis le catalogue bilingue (tâche 6),
+    // une requête sans en-tête reçoit l'anglais (locale par défaut), et la
+    // négation `not.toBe('Tu as déjà un duel en cours')` deviendrait
+    // toujours vraie pour la mauvaise raison (langue différente) plutôt que
+    // pour la bonne (branche différente).
     const res = await app.inject({
       method: 'POST',
       url: `/teams/${teamId}/duels`,
-      headers: { cookie: cookiesD },
+      headers: { cookie: cookiesD, 'accept-language': 'fr' },
       payload: { opponentId: userIdB },
     })
     expect(res.statusCode).toBe(409)
@@ -548,22 +554,24 @@ describe('cycle de vie du duel', () => {
 
     it('duel3 (A vs B, 9 tirages) : A rafle du LEGENDARY, B du COMMON -> reglement automatique au dernier tirage, cartes transferees, B garde sa poussiere', async () => {
       const legendarySet = await prisma.cardSet.create({
-        data: { name: `DuelLegendarySet${suffix}`, isActive: false },
+        data: { nameFr: `DuelLegendarySet${suffix}`, nameEn: `DuelLegendarySet${suffix}`, isActive: false },
       })
       const legendaryCard = await prisma.card.create({
         data: {
-          name: `DuelLegendaryCard${suffix}`,
+          nameFr: `DuelLegendaryCard${suffix}`,
+          nameEn: `DuelLegendaryCard${suffix}`,
           rarity: 'LEGENDARY',
           dropWeight: 10,
           setId: legendarySet.id,
         },
       })
       const commonSet = await prisma.cardSet.create({
-        data: { name: `DuelCommonSet${suffix}`, isActive: false },
+        data: { nameFr: `DuelCommonSet${suffix}`, nameEn: `DuelCommonSet${suffix}`, isActive: false },
       })
       const commonCard = await prisma.card.create({
         data: {
-          name: `DuelCommonCard${suffix}`,
+          nameFr: `DuelCommonCard${suffix}`,
+          nameEn: `DuelCommonCard${suffix}`,
           rarity: 'COMMON',
           dropWeight: 10,
           setId: commonSet.id,
@@ -921,11 +929,12 @@ describe('cycle de vie du duel', () => {
       // sans copies residuelles d'un test precedent qui fausseraient le
       // compte.
       const equipSet = await prisma.cardSet.create({
-        data: { name: `DuelEquipSet${suffix}`, isActive: false },
+        data: { nameFr: `DuelEquipSet${suffix}`, nameEn: `DuelEquipSet${suffix}`, isActive: false },
       })
       const equipCard = await prisma.card.create({
         data: {
-          name: `DuelEquipCard${suffix}`,
+          nameFr: `DuelEquipCard${suffix}`,
+          nameEn: `DuelEquipCard${suffix}`,
           rarity: 'COMMON',
           dropWeight: 10,
           setId: equipSet.id,
@@ -982,7 +991,8 @@ describe('cycle de vie du duel', () => {
       // elle qui doit se retrouver detachee, pas supprimee, au reglement.
       const equipment = await prisma.equipment.create({
         data: {
-          name: `DuelEquipPiece${suffix}`,
+          nameFr: `DuelEquipPiece${suffix}`,
+          nameEn: `DuelEquipPiece${suffix}`,
           slot: 'WEAPON',
           setKey: 'FUREUR',
           rarity: 'COMMON',
@@ -1082,11 +1092,12 @@ describe('cycle de vie du duel', () => {
       await configService.set('duel.pullCount', 2)
 
       const engagedSet = await prisma.cardSet.create({
-        data: { name: `LockEngagedSet${suffix}`, isActive: false },
+        data: { nameFr: `LockEngagedSet${suffix}`, nameEn: `LockEngagedSet${suffix}`, isActive: false },
       })
       const engagedCard = await prisma.card.create({
         data: {
-          name: `LockEngagedCard${suffix}`,
+          nameFr: `LockEngagedCard${suffix}`,
+          nameEn: `LockEngagedCard${suffix}`,
           // UNCOMMON, pas LEGENDARY, et c'est structurel : seules RARE, EPIC
           // et LEGENDARY sont eligibles aux variantes (pickVariant), avec
           // 5 % de brillante et 2 % d'holo sur une legendaire. Les
@@ -1104,11 +1115,12 @@ describe('cycle de vie du duel', () => {
       engagedCardId = engagedCard.id
 
       const extraSet = await prisma.cardSet.create({
-        data: { name: `LockExtraSet${suffix}`, isActive: false },
+        data: { nameFr: `LockExtraSet${suffix}`, nameEn: `LockExtraSet${suffix}`, isActive: false },
       })
       const extraCard = await prisma.card.create({
         data: {
-          name: `LockExtraCard${suffix}`,
+          nameFr: `LockExtraCard${suffix}`,
+          nameEn: `LockExtraCard${suffix}`,
           rarity: 'COMMON',
           dropWeight: 10,
           setId: extraSet.id,
@@ -1118,11 +1130,12 @@ describe('cycle de vie du duel', () => {
       extraCardId = extraCard.id
 
       const loserSet = await prisma.cardSet.create({
-        data: { name: `LockLoserSet${suffix}`, isActive: false },
+        data: { nameFr: `LockLoserSet${suffix}`, nameEn: `LockLoserSet${suffix}`, isActive: false },
       })
       await prisma.card.create({
         data: {
-          name: `LockLoserCard${suffix}`,
+          nameFr: `LockLoserCard${suffix}`,
+          nameEn: `LockLoserCard${suffix}`,
           rarity: 'COMMON',
           dropWeight: 10,
           setId: loserSet.id,
@@ -1241,11 +1254,12 @@ describe('cycle de vie du duel', () => {
 
     it('POST /collection/recycle-all : la carte engagee est ignoree, le lot aboutit quand meme, skippedEngaged la compte', async () => {
       const dupSet = await prisma.cardSet.create({
-        data: { name: `LockDupSet${suffix}`, isActive: false },
+        data: { nameFr: `LockDupSet${suffix}`, nameEn: `LockDupSet${suffix}`, isActive: false },
       })
       const dupCard = await prisma.card.create({
         data: {
-          name: `LockDupCard${suffix}`,
+          nameFr: `LockDupCard${suffix}`,
+          nameEn: `LockDupCard${suffix}`,
           rarity: 'COMMON',
           dropWeight: 10,
           setId: dupSet.id,
@@ -1362,19 +1376,21 @@ describe('cycle de vie du duel', () => {
       // Catalogue mixte : la cote doit exister ET ne pas tomber au plancher
       // de 1,00, sinon le placement est refuse (voir BetDomain#place).
       const set = await prisma.cardSet.create({
-        data: { name: `DuelDelSet${suffix}`, isActive: false },
+        data: { nameFr: `DuelDelSet${suffix}`, nameEn: `DuelDelSet${suffix}`, isActive: false },
       })
       delSetId = set.id
       await prisma.card.createMany({
         data: [
           {
-            name: `DuelDelCommon${suffix}`,
+            nameFr: `DuelDelCommon${suffix}`,
+            nameEn: `DuelDelCommon${suffix}`,
             rarity: 'COMMON',
             dropWeight: 90,
             setId: delSetId,
           },
           {
-            name: `DuelDelRare${suffix}`,
+            nameFr: `DuelDelRare${suffix}`,
+            nameEn: `DuelDelRare${suffix}`,
             rarity: 'RARE',
             dropWeight: 10,
             setId: delSetId,
@@ -1390,19 +1406,20 @@ describe('cycle de vie du duel', () => {
       // Deux catalogues purs pour rendre le duel deterministe : A ne tire
       // que de la RARE, B que de la COMMUNE, donc A gagne aux points.
       const rareOnly = await prisma.cardSet.create({
-        data: { name: `DuelDelRareOnly${suffix}`, isActive: false },
+        data: { nameFr: `DuelDelRareOnly${suffix}`, nameEn: `DuelDelRareOnly${suffix}`, isActive: false },
       })
       delRareOnlySetId = rareOnly.id
       await prisma.card.create({
         data: {
-          name: `DuelDelRareOnlyCard${suffix}`,
+          nameFr: `DuelDelRareOnlyCard${suffix}`,
+          nameEn: `DuelDelRareOnlyCard${suffix}`,
           rarity: 'RARE',
           dropWeight: 10,
           setId: delRareOnlySetId,
         },
       })
       const commonOnly = await prisma.cardSet.create({
-        data: { name: `DuelDelCommonOnly${suffix}`, isActive: false },
+        data: { nameFr: `DuelDelCommonOnly${suffix}`, nameEn: `DuelDelCommonOnly${suffix}`, isActive: false },
       })
       delCommonOnlySetId = commonOnly.id
       // Carte NEUVE, jamais tiree ailleurs dans ce fichier : c'est elle qui
@@ -1411,7 +1428,8 @@ describe('cycle de vie du duel', () => {
       delLoserCardId = (
         await prisma.card.create({
           data: {
-            name: `DuelDelLoserCard${suffix}`,
+            nameFr: `DuelDelLoserCard${suffix}`,
+            nameEn: `DuelDelLoserCard${suffix}`,
             rarity: 'COMMON',
             dropWeight: 10,
             setId: delCommonOnlySetId,
@@ -1487,10 +1505,13 @@ describe('cycle de vie du duel', () => {
       expect(propose.statusCode).toBe(201)
       const duelId = propose.json().id as string
 
+      // 'accept-language': 'fr' — les deux assertions plus bas vérifient le
+      // texte français d'origine ; depuis le catalogue bilingue (tâche 6),
+      // une requête sans en-tête reçoit l'anglais (locale par défaut).
       const refused = await app.inject({
         method: 'DELETE',
         url: `/teams/${delTeamId}`,
-        headers: { cookie: cookiesA },
+        headers: { cookie: cookiesA, 'accept-language': 'fr' },
       })
       expect(refused.statusCode).toBe(409)
       // Le message ENUMERE ce qui bloque (sa fin explique pourquoi et
@@ -1520,7 +1541,7 @@ describe('cycle de vie du duel', () => {
       const stillRefused = await app.inject({
         method: 'DELETE',
         url: `/teams/${delTeamId}`,
-        headers: { cookie: cookiesA },
+        headers: { cookie: cookiesA, 'accept-language': 'fr' },
       })
       expect(stillRefused.statusCode).toBe(409)
       expect(stillRefused.json().message).toContain('1 pari en cours')

@@ -4,6 +4,7 @@ import type {
   DetailedStats,
   IAdminStatsRepository,
 } from '../../../types/infra/orm/repositories/admin-stats.repository.interface'
+import { localizedNameOrder } from '../../i18n/locale-order'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 const RARITIES = ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY']
@@ -138,7 +139,7 @@ export class AdminStatsRepository implements IAdminStatsRepository {
           rarity: true,
           set: { select: { name: true } },
         },
-        orderBy: [{ rarity: 'asc' }, { name: 'asc' }],
+        orderBy: [{ rarity: 'asc' }, localizedNameOrder()],
       }),
       this.#prisma.$queryRaw<{ count: bigint }[]>`
         SELECT COUNT(DISTINCT "userId") AS count

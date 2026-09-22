@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto'
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
+import { errorMessage } from '../../../../../../infra/i18n/error-messages'
 import {
   oauthAuthorizeQuerySchema,
   oauthCallbackQuerySchema,
@@ -40,7 +41,7 @@ export const googleOAuthRouter: FastifyPluginCallbackZod = (fastify) => {
         !request.cookies.oauth_state ||
         request.cookies.oauth_state !== state
       ) {
-        throw Boom.forbidden('Invalid OAuth state')
+        throw Boom.forbidden(errorMessage('auth.oauthInvalidState'))
       }
       const { tokens } = await oauthDomain.handleCallback('google', code)
       setTokenCookies(reply, tokens)

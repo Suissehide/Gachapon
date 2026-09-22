@@ -29,12 +29,12 @@ describe('PUT /users/me/featured-cards', () => {
     const user = await prisma.user.findUnique({ where: { email } })
 
     const set = await prisma.cardSet.create({
-      data: { name: `PutSet${suffix}`, isActive: true },
+      data: { nameFr: `PutSet${suffix}`, nameEn: `PutSet${suffix}`, isActive: true },
     })
     ownedIds = []
     for (let i = 0; i < 6; i++) {
       const card = await prisma.card.create({
-        data: { name: `C${i}-${suffix}`, rarity: 'COMMON', dropWeight: 10, setId: set.id },
+        data: { nameFr: `C${i}-${suffix}`, nameEn: `C${i}-${suffix}`, rarity: 'COMMON', dropWeight: 10, setId: set.id },
       })
       await prisma.userCard.create({
         data: { userId: user!.id, cardId: card.id, variant: 'NORMAL', quantity: 1 },

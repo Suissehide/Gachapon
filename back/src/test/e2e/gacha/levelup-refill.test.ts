@@ -24,7 +24,7 @@ describe('Gacha level-up → refill énergie', () => {
     // Une carte par rareté pour que le tirage puisse toujours piocher,
     // quelle que soit la rareté tirée par le RNG.
     const cardSet = await prisma.cardSet.create({
-      data: { name: `RefillSet${suffix}`, isActive: true },
+      data: { nameFr: `RefillSet${suffix}`, nameEn: `RefillSet${suffix}`, isActive: true },
     })
     for (const rarity of [
       'COMMON',
@@ -35,7 +35,8 @@ describe('Gacha level-up → refill énergie', () => {
     ] as const) {
       await prisma.card.create({
         data: {
-          name: `RefillCard${rarity}${suffix}`,
+          nameFr: `RefillCard${rarity}${suffix}`,
+          nameEn: `RefillCard${rarity}${suffix}`,
           rarity,
           dropWeight: 10,
           setId: cardSet.id,

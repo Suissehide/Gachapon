@@ -1,5 +1,6 @@
 import Boom from '@hapi/boom'
 
+import { errorMessage } from '../../infra/i18n/error-messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type { UserUpgradeEffects } from '../../types/domain/economy/economy.types'
 import type { GachaDomainInterface } from '../../types/domain/gacha/gacha.domain.interface'
@@ -390,7 +391,7 @@ export class GachaDomain implements GachaDomainInterface {
       isPityForced,
     )
     if (activeCards.length === 0) {
-      throw Boom.internal('No active cards in any set')
+      throw Boom.internal(errorMessage('gacha.noActiveCards'))
     }
 
     let wasBoostGuarantee = false
@@ -560,7 +561,7 @@ export class GachaDomain implements GachaDomainInterface {
     const { user, state } = await this.#loadUserAndInitialState(tx, userId, cfg)
     const isFreePull = Math.random() < (cfg.upgrades.freePullChance ?? 0) / 100
     if (!isFreePull && state.currentTokens < cfg.pullTokenCost) {
-      throw Boom.paymentRequired('Not enough tokens')
+      throw Boom.paymentRequired(errorMessage('gacha.notEnoughTokens'))
     }
 
     // Load boosts in TX at step start (single-pull path)
@@ -848,7 +849,7 @@ export class GachaDomain implements GachaDomainInterface {
           )
           const paidCount = preRolledFree.filter((f) => !f).length
           if (state.currentTokens < paidCount * cfg.pullTokenCost) {
-            throw Boom.paymentRequired('Not enough tokens')
+            throw Boom.paymentRequired(errorMessage('gacha.notEnoughTokens'))
           }
           const oldLevel = levelAfterXpGain(
             user.level,

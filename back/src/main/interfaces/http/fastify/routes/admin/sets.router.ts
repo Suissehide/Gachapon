@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
+import { errorMessage } from '../../../../../infra/i18n/error-messages'
 import {
   adminSetCreateBodySchema,
   adminSetIdParamSchema,
@@ -32,7 +33,7 @@ export const adminSetsRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request) => {
       const set = await cardRepository.findSetById(request.params.id)
       if (!set) {
-        throw Boom.notFound('Set not found')
+        throw Boom.notFound(errorMessage('admin.setNotFound'))
       }
       return cardRepository.updateSet(request.params.id, request.body)
     },
@@ -44,7 +45,7 @@ export const adminSetsRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request, reply) => {
       const set = await cardRepository.findSetById(request.params.id)
       if (!set) {
-        throw Boom.notFound('Set not found')
+        throw Boom.notFound(errorMessage('admin.setNotFound'))
       }
       await cardRepository.deleteSet(request.params.id)
       return reply.status(204).send()

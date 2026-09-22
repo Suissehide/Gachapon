@@ -7,6 +7,7 @@ import type { CombatDebugDomain } from '../../domain/combat/combat-debug.domain'
 import type { CombatTeamTx } from '../../domain/combat/combat-team.tx'
 import type { CombatPointsTx } from '../../domain/combat-points/combat-points.tx'
 import type { EquipmentDomain } from '../../domain/equipment/equipment.domain'
+import type { ContentTranslationsBootstrap } from '../../domain/i18n/content-translations.bootstrap'
 import type { RaidDomain } from '../../domain/raid/raid.domain'
 import type { AdminSkillTreeDomain } from '../../domain/skills/admin-skill-tree.domain'
 import type { TowerDomain } from '../../domain/tower/tower.domain'
@@ -55,6 +56,7 @@ import type { IMailService } from '../infra/mail/mail.service.interface'
 import type { IAchievementRepository } from '../infra/orm/repositories/achievement.repository.interface'
 import type { IActivityEventRepository } from '../infra/orm/repositories/activity-event.repository.interface'
 import type { IAdminStatsRepository } from '../infra/orm/repositories/admin-stats.repository.interface'
+import type { IAdminTranslationsRepository } from '../infra/orm/repositories/admin-translations.repository.interface'
 import type { IJoinRequestRepository } from '../infra/orm/repositories/join-request.repository.interface'
 import type { ILeaderboardRepository } from '../infra/orm/repositories/leaderboard.repository.interface'
 import type { IQuestRepository } from '../infra/orm/repositories/quest.repository.interface'
@@ -144,6 +146,7 @@ export interface IocContainer {
   readonly leaderboardDomain: ILeaderboardDomain
   readonly statsRepository: IStatsRepository
   readonly adminStatsRepository: IAdminStatsRepository
+  readonly adminTranslationsRepository: IAdminTranslationsRepository
   readonly collectionDomain: ICollectionDomain
   readonly profileDomain: ProfileDomainInterface
   readonly shopDomain: IShopDomain
@@ -158,4 +161,5 @@ export interface IocContainer {
   readonly activityEventRepository: IActivityEventRepository
   readonly wsManager: WsManager
   readonly activityDomain: IActivityDomain
+  readonly contentTranslationsBootstrap: ContentTranslationsBootstrap
 }

@@ -59,8 +59,10 @@ describe('Compétences équipement — Forgeron et Ferrailleur', () => {
   ) {
     const branch = await prisma.skillBranch.create({
       data: {
-        name: `EquipSkill${effectType}${suffix}`,
-        description: '',
+        nameFr: `EquipSkill${effectType}${suffix}`,
+        nameEn: `EquipSkill${effectType}${suffix}`,
+        descriptionFr: '',
+        descriptionEn: '',
         icon: 'Anvil',
         color: '#000000',
         order: 99,
@@ -70,8 +72,10 @@ describe('Compétences équipement — Forgeron et Ferrailleur', () => {
     const node = await prisma.skillNode.create({
       data: {
         branchId: branch.id,
-        name: effectType,
-        description: '',
+        nameFr: effectType,
+        nameEn: effectType,
+        descriptionFr: '',
+        descriptionEn: '',
         icon: 'Anvil',
         maxLevel: 1,
         effectType,
@@ -102,7 +106,8 @@ describe('Compétences équipement — Forgeron et Ferrailleur', () => {
 
     const piece = await prisma.equipment.create({
       data: {
-        name: `EquipSkill-${suffix}`,
+        nameFr: `EquipSkill-${suffix}`,
+        nameEn: `EquipSkill-${suffix}`,
         ...EQUIPMENT_SKILL_EFFECTS,
         rarity: 'RARE',
         bonuses: { atkFlat: 10 },

@@ -80,11 +80,17 @@ describe('Routes des bonus d\'équipe', () => {
     }
   }
 
+  // Ce fichier épingle les messages FRANÇAIS d'origine (task-6-brief.md :
+  // « reprends les messages à l'identique »). Depuis la migration vers le
+  // catalogue bilingue (tâche 6), la locale par défaut d'une requête sans
+  // en-tête est EN — sans ce header explicite, ces assertions recevraient
+  // le texte anglais et casseraient pour une raison hors sujet ici (langue),
+  // pas la garde métier que ce fichier vérifie.
   function spend(cookies: string, key: string) {
     return app.inject({
       method: 'POST',
       url: `/teams/${teamId}/perks`,
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'accept-language': 'fr' },
       payload: { key },
     })
   }
@@ -93,7 +99,7 @@ describe('Routes des bonus d\'équipe', () => {
     return app.inject({
       method: 'POST',
       url: `/teams/${teamId}/perks/reset`,
-      headers: { cookie: cookies },
+      headers: { cookie: cookies, 'accept-language': 'fr' },
     })
   }
 

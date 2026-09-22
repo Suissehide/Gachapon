@@ -1,6 +1,8 @@
+import type { SkillEffectType } from '../../../../generated/client'
 import { getSkillEffects } from '../../../domain/skills/skill-effects.domain'
 import type { IocContainer } from '../../../types/application/ioc'
 import type { UserUpgradeEffects } from '../../../types/domain/economy/economy.types'
+import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type {
   ISkillTreeRepository,
   SkillBranchWithNodes,
@@ -61,7 +63,12 @@ export class SkillTreeRepository implements ISkillTreeRepository {
     return skills.reduce((sum, s) => sum + s.level, 0)
   }
 
-  upsertUserSkillInTx(tx: any, userId: string, nodeId: string, level: number) {
+  upsertUserSkillInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+    nodeId: string,
+    level: number,
+  ) {
     return tx.userSkill.upsert({
       where: { userId_nodeId: { userId, nodeId } },
       create: { userId, nodeId, level },
@@ -69,13 +76,20 @@ export class SkillTreeRepository implements ISkillTreeRepository {
     })
   }
 
-  deleteUserSkillsInTx(tx: any, userId: string) {
-    return tx.userSkill.deleteMany({ where: { userId } })
+  // `Promise<void>` et non le `GetBatchResult` de `deleteMany` : c'est ce que
+  // l'interface declare, et le `tx: any` d'avant masquait l'ecart.
+  async deleteUserSkillsInTx(
+    tx: PrimaTransactionClient,
+    userId: string,
+  ): Promise<void> {
+    await tx.userSkill.deleteMany({ where: { userId } })
   }
 
   createBranch(data: {
-    name: string
-    description: string
+    nameFr: string
+    nameEn: string
+    descriptionFr: string
+    descriptionEn: string
     icon: string
     color: string
     order: number
@@ -86,8 +100,10 @@ export class SkillTreeRepository implements ISkillTreeRepository {
   updateBranch(
     id: string,
     data: Partial<{
-      name: string
-      description: string
+      nameFr: string
+      nameEn: string
+      descriptionFr: string
+      descriptionEn: string
       icon: string
       color: string
       order: number
@@ -102,11 +118,13 @@ export class SkillTreeRepository implements ISkillTreeRepository {
 
   createNode(data: {
     branchId: string
-    name: string
-    description: string
+    nameFr: string
+    nameEn: string
+    descriptionFr: string
+    descriptionEn: string
     icon: string
     maxLevel: number
-    effectType: string
+    effectType: SkillEffectType
     posX: number
     posY: number
     levels: { level: number; effect: number }[]
@@ -115,7 +133,6 @@ export class SkillTreeRepository implements ISkillTreeRepository {
     return this.#prisma.skillNode.create({
       data: {
         ...nodeData,
-        effectType: nodeData.effectType as any,
         levels: { create: levels },
       },
     })
@@ -125,11 +142,13 @@ export class SkillTreeRepository implements ISkillTreeRepository {
     id: string,
     data: Partial<{
       branchId: string
-      name: string
-      description: string
+      nameFr: string
+      nameEn: string
+      descriptionFr: string
+      descriptionEn: string
       icon: string
       maxLevel: number
-      effectType: string
+      effectType: SkillEffectType
       posX: number
       posY: number
       levels: { level: number; effect: number }[]
@@ -142,7 +161,10 @@ export class SkillTreeRepository implements ISkillTreeRepository {
         data: levels.map((l) => ({ ...l, nodeId: id })),
       })
     }
-    return this.#prisma.skillNode.update({ where: { id }, data: rest as any })
+    return this.#prisma.skillNode.update({
+      where: { id },
+      data: rest,
+    })
   }
 
   async deleteNode(id: string): Promise<void> {

@@ -15,7 +15,7 @@ describe('Admin achievements routes', () => {
       payload: { username: `achadmin${suffix}`, email: `achadmin${suffix}@test.com`, password: 'Password123!' },
     })
     adminCookies = res.headers['set-cookie'] as string
-    await (app as any).iocContainer.postgresOrm.prisma.user.update({
+    await app.iocContainer.postgresOrm.prisma.user.update({
       where: { email: `achadmin${suffix}@test.com` }, data: { role: 'SUPER_ADMIN', emailVerifiedAt: new Date() },
     })
     const loginRes = await app.inject({
@@ -31,7 +31,7 @@ describe('Admin achievements routes', () => {
     const res = await app.inject({
       method: 'POST', url: '/admin/achievements',
       headers: { cookie: adminCookies },
-      payload: { key: `ach_${suffix}`, name: 'Test Achievement', description: 'desc', criterion: { type: 'PULL_COUNT', threshold: 10 } },
+      payload: { key: `ach_${suffix}`, nameFr: 'Test Achievement', nameEn: 'Test Achievement', descriptionFr: 'desc', descriptionEn: 'desc', criterion: { type: 'PULL_COUNT', threshold: 10 } },
     })
     expect(res.statusCode).toBe(201)
     achievementId = res.json().id
@@ -47,7 +47,7 @@ describe('Admin achievements routes', () => {
     const res = await app.inject({
       method: 'PATCH', url: `/admin/achievements/${achievementId}`,
       headers: { cookie: adminCookies },
-      payload: { name: 'Updated Achievement' },
+      payload: { nameFr: 'Updated Achievement', nameEn: 'Updated Achievement' },
     })
     expect(res.statusCode).toBe(200)
     expect(res.json().name).toBe('Updated Achievement')

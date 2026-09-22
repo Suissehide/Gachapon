@@ -36,15 +36,27 @@ type PullBatchResultEvent = {
   xpGained: number
 }
 
+/**
+ * `cardName`/`setName` restent remplis (locale par défaut) pour le front
+ * actuel ; `*Fr`/`*En` portent les deux langues explicitement. Nécessaire
+ * parce que `broadcast` part vers TOUTES les connexions ouvertes, donc
+ * potentiellement plusieurs locales à la fois — voir
+ * `infra/i18n/localized-broadcast.ts`, qui est le seul endroit autorisé à
+ * produire ces deux colonnes.
+ */
 export type FeedPullEvent = {
   type: 'feed:pull'
   username: string
   cardName: string
+  cardNameFr: string
+  cardNameEn: string
   rarity: string
   variant: string
   cardId: string
   imageUrl: string | null
   setName: string
+  setNameFr: string
+  setNameEn: string
   pulledAt: string
 }
 

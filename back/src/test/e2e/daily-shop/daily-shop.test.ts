@@ -42,13 +42,14 @@ describe('Daily shop routes', () => {
 
     // Create a card set with cards to populate the shop
     const set = await postgresOrm.prisma.cardSet.create({
-      data: { name: `DailyShopTestSet${suffix}`, isActive: true },
+      data: { nameFr: `DailyShopTestSet${suffix}`, nameEn: `DailyShopTestSet${suffix}`, isActive: true },
     })
     for (const rarity of ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY']) {
       await postgresOrm.prisma.card.create({
         data: {
           setId: set.id,
-          name: `${rarity}-card-${suffix}`,
+          nameFr: `${rarity}-card-${suffix}`,
+          nameEn: `${rarity}-card-${suffix}`,
           rarity,
           dropWeight: 1.0,
         },

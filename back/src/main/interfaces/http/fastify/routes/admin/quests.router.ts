@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
+import { errorMessage } from '../../../../../infra/i18n/error-messages'
 import {
   adminQuestCreateBodySchema,
   adminQuestIdParamSchema,
@@ -35,7 +36,7 @@ export const adminQuestsRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request) => {
       const quest = await questRepository.findById(request.params.id)
       if (!quest) {
-        throw Boom.notFound('Quest not found')
+        throw Boom.notFound(errorMessage('admin.questNotFound'))
       }
       return questRepository.update(request.params.id, request.body)
     },
@@ -47,7 +48,7 @@ export const adminQuestsRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request, reply) => {
       const quest = await questRepository.findById(request.params.id)
       if (!quest) {
-        throw Boom.notFound('Quest not found')
+        throw Boom.notFound(errorMessage('admin.questNotFound'))
       }
       await questRepository.delete(request.params.id)
       return reply.status(204).send()

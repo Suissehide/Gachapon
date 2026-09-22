@@ -39,6 +39,7 @@ export class UserRepository implements UserRepositoryInterface {
         email: input.email,
         passwordHash: input.passwordHash,
         tokens: input.tokens,
+        locale: input.locale,
       },
     })
   }

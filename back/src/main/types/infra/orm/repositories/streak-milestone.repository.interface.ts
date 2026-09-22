@@ -1,6 +1,9 @@
-import type { Reward, StreakMilestone } from '../../../../../generated/client'
+import type { StreakMilestone } from '../../../../../generated/client'
+import type { LocalizedReward } from '../localized'
 
-export type StreakMilestoneWithReward = StreakMilestone & { reward: Reward }
+export type StreakMilestoneWithReward = StreakMilestone & {
+  reward: LocalizedReward
+}
 
 export interface StreakMilestoneRepositoryInterface {
   /** Returns the active milestone with day === targetDay and isMilestone = true, or null */

@@ -14,11 +14,15 @@ const FEED_EVENT: FeedPullEvent = {
   type: 'feed:pull',
   username: 'Alice',
   cardName: 'Mion',
+  cardNameFr: 'Mion',
+  cardNameEn: 'Mion',
   rarity: 'LEGENDARY',
   variant: 'NORMAL',
   cardId: 'card-1',
   imageUrl: null,
   setName: 'Set A',
+  setNameFr: 'Set A',
+  setNameEn: 'Set A',
   pulledAt: '2026-01-01T00:00:00.000Z',
 }
 

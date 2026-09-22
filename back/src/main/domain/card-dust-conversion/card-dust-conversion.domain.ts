@@ -1,5 +1,6 @@
 import Boom from '@hapi/boom'
 
+import { errorMessage } from '../../infra/i18n/error-messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type { IDuelDomain } from '../../types/domain/wagers/wagers.domain.interface'
 import { retryOnSerialization } from '../shared/retry-serialization'
@@ -37,7 +38,9 @@ export class CardDustConversionDomain {
     amount: number,
   ): Promise<{ dustEarned: number; remainingQuantity: number }> {
     if (amount < 1) {
-      return Promise.reject(Boom.badRequest('amount must be at least 1'))
+      return Promise.reject(
+        Boom.badRequest(errorMessage('cardDust.amountTooLow')),
+      )
     }
 
     return retryOnSerialization(async () => {
@@ -69,7 +72,7 @@ export class CardDustConversionDomain {
             include: { card: true },
           })
           if (!userCard || userCard.userId !== userId) {
-            throw Boom.notFound('UserCard not found')
+            throw Boom.notFound(errorMessage('collection.userCardNotFound'))
           }
           await this.#duelDomain.assertCardNotEngagedInTx(
             tx,
@@ -79,7 +82,10 @@ export class CardDustConversionDomain {
           )
           if (userCard.quantity - amount < 1) {
             throw Boom.badRequest(
-              `Cannot convert ${amount} — would leave 0 copies (have ${userCard.quantity})`,
+              errorMessage('cardDust.wouldLeaveZeroCopies', {
+                amount,
+                quantity: userCard.quantity,
+              }),
             )
           }
 

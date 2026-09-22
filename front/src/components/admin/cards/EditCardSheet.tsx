@@ -13,7 +13,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../../ui/sheet'
 import { MediaPickerModal } from '../media/MediaPickerModal'
 
 export type EditCardPayload = {
-  name: string
+  nameFr: string
+  nameEn: string
   rarity: string
   dropWeight: number
   baseHp: number
@@ -98,7 +99,8 @@ function EditCardForm({
 
   const form = useAppForm({
     defaultValues: {
-      name: item.name,
+      nameFr: item.nameFr,
+      nameEn: item.nameEn,
       rarity: item.rarity,
       dropWeight: item.dropWeight as number | undefined,
       baseHp: item.baseHp as number | undefined,
@@ -112,7 +114,8 @@ function EditCardForm({
     onSubmit: ({ value }) => {
       const trimmedPassive = value.passiveKey.trim()
       onSave({
-        name: value.name,
+        nameFr: value.nameFr,
+        nameEn: value.nameEn,
         rarity: value.rarity,
         dropWeight: value.dropWeight ?? 1,
         baseHp: value.baseHp ?? item.baseHp,
@@ -141,8 +144,11 @@ function EditCardForm({
       }}
       className="space-y-3"
     >
-      <form.AppField name="name">
-        {(f) => <f.Input label="Nom" />}
+      <form.AppField name="nameFr">
+        {(f) => <f.Input label="Nom (français)" />}
+      </form.AppField>
+      <form.AppField name="nameEn">
+        {(f) => <f.Input label="Nom (anglais)" />}
       </form.AppField>
       <form.AppField name="rarity">
         {(f) => <f.Select label="Rareté" options={RARITY_OPTIONS} />}

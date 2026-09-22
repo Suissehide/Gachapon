@@ -1,106 +1,11 @@
 import type { PrismaClient } from '../../src/generated/client'
+import { SHOP_ITEMS } from '../../src/main/domain/content/shop.definitions'
 
-export const SHOP_ITEMS = [
-  // Packs de jetons — achetés avec l'or gagné en campagne
-  {
-    name: 'Pack Starter',
-    description: '10 jetons pour démarrer ton aventure.',
-    type: 'TOKEN_PACK' as const,
-    cost: 5000,
-    currency: 'GOLD' as const,
-    value: { tokens: 10 },
-  },
-  {
-    name: 'Pack Aventurier',
-    description: '50 jetons — le bon compromis.',
-    type: 'TOKEN_PACK' as const,
-    cost: 22500,
-    currency: 'GOLD' as const,
-    value: { tokens: 50 },
-  },
-  {
-    name: 'Pack Légende',
-    description: '150 jetons — le meilleur rapport or/jeton.',
-    type: 'TOKEN_PACK' as const,
-    cost: 60000,
-    currency: 'GOLD' as const,
-    value: { tokens: 150 },
-  },
-  // Packs d'énergie — points de combat achetés avec la poussière.
-  // L'énergie achetée peut dépasser le plafond (overcap) ; la regen naturelle
-  // reste en pause tant qu'on est au-dessus.
-  //
-  // ×3 le 2026-09-21. À 18-20 poussière par point d'énergie, les packs
-  // coûtaient MOINS que ce que cette énergie rapporte en farmant : 21,6
-  // poussière par point au boss 9-10, soit 120 % remboursés dès le chapitre 8.
-  // Acheter de l'énergie était donc un gain net de poussière, et
-  // `shop.energyDailyCap` restait le seul frein du jeu. Le prix vise désormais
-  // ~2,5× le meilleur rendement de farm : on paie de la poussière pour de
-  // l'or, de l'XP et de l'équipement, plus jamais pour de la poussière.
-  // Gardé par `src/test/unit/energy-pack-pricing.test.ts`, qui relit la courbe
-  // de butin réelle — rebuffer le farm sans retoucher ces prix le fera échouer.
-  {
-    name: 'Petite recharge',
-    description: '+15 points de combat, même au-delà du plafond.',
-    type: 'ENERGY_PACK' as const,
-    cost: 900,
-    currency: 'DUST' as const,
-    value: { combatPoints: 15 },
-  },
-  {
-    name: 'Recharge',
-    description: '+40 points de combat — le bon compromis.',
-    type: 'ENERGY_PACK' as const,
-    cost: 2280,
-    currency: 'DUST' as const,
-    value: { combatPoints: 40 },
-  },
-  {
-    name: 'Grande recharge',
-    description: '+90 points de combat pour enchaîner les batailles.',
-    type: 'ENERGY_PACK' as const,
-    cost: 4860,
-    currency: 'DUST' as const,
-    value: { combatPoints: 90 },
-  },
-  // Boosts
-  {
-    name: 'Boost Rare+',
-    description:
-      "Multiplie par 2 les chances d'obtenir des cartes RARE pendant 10 tirages.",
-    type: 'BOOST' as const,
-    cost: 200,
-    currency: 'DUST' as const,
-    value: { multiplier: 2, rarity: 'RARE', pulls: 10 },
-  },
-  {
-    name: 'Boost Épique',
-    description:
-      "Multiplie par 2 les chances d'obtenir des cartes EPIC pendant 10 tirages.",
-    type: 'BOOST' as const,
-    cost: 800,
-    currency: 'DUST' as const,
-    value: { multiplier: 2, rarity: 'EPIC', pulls: 10 },
-  },
-  // Cosmétiques
-  {
-    name: 'Cadre Doré',
-    description: 'Un cadre doré pour mettre en valeur ta carte préférée.',
-    type: 'COSMETIC' as const,
-    cost: 300,
-    currency: 'DUST' as const,
-    value: { frame: 'golden' },
-  },
-  {
-    name: 'Fond Étoilé',
-    description: 'Un fond étoilé pour personnaliser ton profil.',
-    type: 'COSMETIC' as const,
-    cost: 150,
-    currency: 'DUST' as const,
-    value: { background: 'starfield' },
-  },
-] as const
-
+/**
+ * Écrit les articles de boutique. Les données elles-mêmes vivent dans
+ * `src/main/domain/content/shop.definitions.ts` : elles sont partagées avec
+ * le backfill de traductions, qui est du code de production.
+ */
 export async function seedShop(
   tx: Parameters<Parameters<PrismaClient['$transaction']>[0]>[0],
 ) {

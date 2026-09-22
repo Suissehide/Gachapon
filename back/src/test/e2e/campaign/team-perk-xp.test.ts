@@ -106,11 +106,12 @@ describe('Bonus équipe `xp` — XP de campagne', () => {
     xpPct = 5 * (await configService.getMany('teamPerk.xp.perRank'))['teamPerk.xp.perRank']
 
     const set = await prisma.cardSet.create({
-      data: { name: `TpXpSet${suffix}`, isActive: false },
+      data: { nameFr: `TpXpSet${suffix}`, nameEn: `TpXpSet${suffix}`, isActive: false },
     })
     const card = await prisma.card.create({
       data: {
-        name: `TpXpCard${suffix}`,
+        nameFr: `TpXpCard${suffix}`,
+        nameEn: `TpXpCard${suffix}`,
         rarity: 'LEGENDARY',
         dropWeight: 1,
         setId: set.id,
@@ -128,7 +129,8 @@ describe('Bonus équipe `xp` — XP de campagne', () => {
       create: {
         chapter: 98,
         index: 1,
-        label: '98-1 team-perk-xp',
+        labelFr: '98-1 team-perk-xp',
+        labelEn: '98-1 team-perk-xp',
         isBoss: false,
         order: 9801,
         enemyTeam: [

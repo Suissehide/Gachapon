@@ -7,6 +7,7 @@ import type {
 } from '../../../types/domain/gacha/gacha.types'
 import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type { IUserCardRepository } from '../../../types/infra/orm/repositories/user-card.repository.interface'
+import { errorMessage } from '../../i18n/error-messages'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 export class UserCardRepository implements IUserCardRepository {
@@ -138,7 +139,7 @@ export class UserCardRepository implements IUserCardRepository {
       where: { userId_cardId_variant: { userId, cardId, variant } },
     })
     if (!uc || uc.quantity < quantity) {
-      throw Boom.badRequest('You do not own this card')
+      throw Boom.badRequest(errorMessage('collection.cardNotOwned'))
     }
     if (uc.quantity - quantity <= 0) {
       await tx.userCard.delete({

@@ -70,9 +70,9 @@ describe('GET /teams/:id/ranking', () => {
 
     // Give the owner a LEGENDARY card to ensure they score higher
     const owner = await prisma.user.findUnique({ where: { email: `rankowner${suffix}@test.com` } })
-    const set = await prisma.cardSet.create({ data: { name: `RankSet${suffix}`, isActive: true } })
+    const set = await prisma.cardSet.create({ data: { nameFr: `RankSet${suffix}`, nameEn: `RankSet${suffix}`, isActive: true } })
     const card = await prisma.card.create({
-      data: { name: `RankCard${suffix}`, rarity: 'LEGENDARY', setId: set.id },
+      data: { nameFr: `RankCard${suffix}`, nameEn: `RankCard${suffix}`, rarity: 'LEGENDARY', setId: set.id },
     })
     await prisma.userCard.upsert({
       where: { userId_cardId_variant: { userId: owner.id, cardId: card.id, variant: 'NORMAL' } },

@@ -1,6 +1,9 @@
 import Boom from '@hapi/boom'
 import slugify from 'slugify'
 
+import { errorMessage } from '../../infra/i18n/error-messages'
+import { getCurrentLocale } from '../../infra/i18n/locale-context'
+import { MAIL_COPY } from '../../infra/mail/mail-copy'
 import type { IocContainer } from '../../types/application/ioc'
 import type { ILeaderboardDomain } from '../../types/domain/leaderboard/leaderboard.domain.interface'
 import type { IRaidDomain } from '../../types/domain/raid/raid.domain.interface'
@@ -61,12 +64,28 @@ const DELETE_TX_MAX_WAIT_MS = 10_000
 function pendingWagersMessage(openBets: number, openDuels: number): string {
   const parts: string[] = []
   if (openBets > 0) {
-    parts.push(`${openBets} pari${openBets > 1 ? 's' : ''}`)
+    parts.push(
+      errorMessage(
+        openBets > 1
+          ? 'team.pendingWagers.betPlural'
+          : 'team.pendingWagers.betSingular',
+        { count: openBets },
+      ),
+    )
   }
   if (openDuels > 0) {
-    parts.push(`${openDuels} duel${openDuels > 1 ? 's' : ''}`)
+    parts.push(
+      errorMessage(
+        openDuels > 1
+          ? 'team.pendingWagers.duelPlural'
+          : 'team.pendingWagers.duelSingular',
+        { count: openDuels },
+      ),
+    )
   }
-  return `Cette équipe a encore ${parts.join(' et ')} en cours : attends leur résolution avant de la supprimer. Une mise engagée ne peut pas être rendue, et les cartes d'un duel doivent revenir à son vainqueur.`
+  return errorMessage('team.pendingWagers.message', {
+    parts: parts.join(errorMessage('team.pendingWagers.joiner')),
+  })
 }
 
 export class TeamDomain implements TeamDomainInterface {
@@ -149,10 +168,10 @@ export class TeamDomain implements TeamDomainInterface {
   ): Promise<TeamWithMembers> {
     const team = await this.#teamRepo.findById(teamId)
     if (!team) {
-      throw Boom.notFound('Team not found')
+      throw Boom.notFound(errorMessage('team.notFound'))
     }
     if (!team.members.some((member) => member.userId === userId)) {
-      throw Boom.forbidden('Not a member of this team')
+      throw Boom.forbidden(errorMessage('team.notMember'))
     }
     return team
   }
@@ -163,7 +182,7 @@ export class TeamDomain implements TeamDomainInterface {
       this.#maxMembers(),
     ])
     if (memberCount >= maxMembers) {
-      throw Boom.forbidden(`Cette équipe est complète (${maxMembers} membres)`)
+      throw Boom.forbidden(errorMessage('team.full', { max: maxMembers }))
     }
   }
 
@@ -174,7 +193,7 @@ export class TeamDomain implements TeamDomainInterface {
     const count = await this.#teamRepo.countByUserId(ownerId)
     if (count >= MAX_TEAMS_PER_USER) {
       throw Boom.forbidden(
-        `Maximum ${MAX_TEAMS_PER_USER} équipes par utilisateur`,
+        errorMessage('team.maxTeamsPerUser', { max: MAX_TEAMS_PER_USER }),
       )
     }
 
@@ -212,21 +231,23 @@ export class TeamDomain implements TeamDomainInterface {
     if (target.username) {
       const user = await this.#userRepo.findByUsername(target.username)
       if (!user) {
-        throw Boom.notFound('User not found')
+        throw Boom.notFound(errorMessage('user.notFound'))
       }
       const alreadyMember = await this.#memberRepo.findByTeamAndUser(
         teamId,
         user.id,
       )
       if (alreadyMember) {
-        throw Boom.conflict('User is already a member')
+        throw Boom.conflict(errorMessage('team.userAlreadyMember'))
       }
       const existing = await this.#invitationRepo.findPendingByTeamAndUser(
         teamId,
         user.id,
       )
       if (existing) {
-        throw Boom.conflict('Invitation already pending for this user')
+        throw Boom.conflict(
+          errorMessage('team.invitationAlreadyPendingForUser'),
+        )
       }
       return { targetUserId: user.id }
     }
@@ -236,11 +257,13 @@ export class TeamDomain implements TeamDomainInterface {
         target.email,
       )
       if (existing) {
-        throw Boom.conflict('Invitation already pending for this email')
+        throw Boom.conflict(
+          errorMessage('team.invitationAlreadyPendingForEmail'),
+        )
       }
       return { targetEmail: target.email }
     }
-    throw Boom.badRequest('Provide email or username')
+    throw Boom.badRequest(errorMessage('team.provideEmailOrUsername'))
   }
 
   async inviteMember(
@@ -250,12 +273,12 @@ export class TeamDomain implements TeamDomainInterface {
   ): Promise<InvitationEntity> {
     const team = await this.#teamRepo.findById(teamId)
     if (!team) {
-      throw Boom.notFound('Team not found')
+      throw Boom.notFound(errorMessage('team.notFound'))
     }
 
     const actor = team.members.find((m) => m.userId === actorId)
     if (!actor || actor.role === 'MEMBER') {
-      throw Boom.forbidden('Only ADMIN or OWNER can invite members')
+      throw Boom.forbidden(errorMessage('team.onlyAdminOrOwnerCanInvite'))
     }
 
     await this.#assertHasRoom(teamId)
@@ -275,12 +298,19 @@ export class TeamDomain implements TeamDomainInterface {
 
     // Send invitation email (non-fatal)
     const inviterUser = await this.#userRepo.findById(actorId)
+    // Invitation par pseudo → un `User` cible existe déjà : le mail part
+    // dans SA locale, pas celle de l'invitant qui a déclenché l'envoi
+    // (voir task-7-brief.md — le cas concret est un invitant FR et un
+    // invité EN). Invitation par adresse email → aucun `User` en base pour
+    // ce destinataire : seule `getCurrentLocale()` (celle de la requête de
+    // l'invitant) est disponible, exactement la nuance « aucun User
+    // n'existe » du brief.
+    const recipientUser = invitation.invitedUserId
+      ? await this.#userRepo.findById(invitation.invitedUserId)
+      : null
     const recipientEmail =
-      invitation.invitedEmail ??
-      (invitation.invitedUserId
-        ? ((await this.#userRepo.findById(invitation.invitedUserId))?.email ??
-          null)
-        : null)
+      invitation.invitedEmail ?? recipientUser?.email ?? null
+    const recipientLocale = recipientUser?.locale ?? getCurrentLocale()
 
     if (recipientEmail && inviterUser) {
       try {
@@ -289,6 +319,7 @@ export class TeamDomain implements TeamDomainInterface {
           teamName: team.name,
           inviterName: inviterUser.username,
           token: invitation.token,
+          locale: recipientLocale,
         })
         await this.#invitationRepo.updateEmailSentAt(invitation.id, new Date())
       } catch {
@@ -316,7 +347,7 @@ export class TeamDomain implements TeamDomainInterface {
   ): Promise<void> {
     if (invitation.invitedUserId) {
       if (invitation.invitedUserId !== userId) {
-        throw Boom.forbidden('This invitation is for another user')
+        throw Boom.forbidden(errorMessage('team.invitationForAnotherUser'))
       }
       return
     }
@@ -325,12 +356,12 @@ export class TeamDomain implements TeamDomainInterface {
       // Comparaison en minuscules par prudence : `normalizerExtension` abaisse
       // déjà les e-mails à l'écriture, mais la garde ne doit pas en dépendre.
       if (user?.email.toLowerCase() !== invitation.invitedEmail.toLowerCase()) {
-        throw Boom.forbidden('This invitation is for another user')
+        throw Boom.forbidden(errorMessage('team.invitationForAnotherUser'))
       }
       return
     }
     // Ni compte ni adresse : personne n'en est le destinataire.
-    throw Boom.forbidden('This invitation is for another user')
+    throw Boom.forbidden(errorMessage('team.invitationForAnotherUser'))
   }
 
   /**
@@ -343,7 +374,7 @@ export class TeamDomain implements TeamDomainInterface {
   ): Promise<InvitationPreview> {
     const invitation = await this.#invitationRepo.findByTokenWithDetails(token)
     if (!invitation) {
-      throw Boom.notFound('Invitation not found')
+      throw Boom.notFound(errorMessage('team.invitationNotFound'))
     }
     await this.#assertIsRecipient(invitation, userId)
     const status: InvitationPreview['status'] =
@@ -356,13 +387,13 @@ export class TeamDomain implements TeamDomainInterface {
   async acceptInvitation(token: string, userId: string): Promise<void> {
     const invitation = await this.#invitationRepo.findByToken(token)
     if (!invitation) {
-      throw Boom.notFound('Invitation not found')
+      throw Boom.notFound(errorMessage('team.invitationNotFound'))
     }
     if (invitation.status !== 'PENDING') {
-      throw Boom.conflict('Invitation already processed')
+      throw Boom.conflict(errorMessage('team.invitationAlreadyProcessed'))
     }
     if (invitation.expiresAt < new Date()) {
-      throw Boom.resourceGone('Invitation expired')
+      throw Boom.resourceGone(errorMessage('team.invitationExpired'))
     }
 
     await this.#assertIsRecipient(invitation, userId)
@@ -372,13 +403,13 @@ export class TeamDomain implements TeamDomainInterface {
       userId,
     )
     if (alreadyMember) {
-      throw Boom.conflict('Already a member of this team')
+      throw Boom.conflict(errorMessage('team.alreadyMemberOfTeam'))
     }
 
     const userCount = await this.#teamRepo.countByUserId(userId)
     if (userCount >= MAX_TEAMS_PER_USER) {
       throw Boom.forbidden(
-        `Maximum ${MAX_TEAMS_PER_USER} équipes par utilisateur`,
+        errorMessage('team.maxTeamsPerUser', { max: MAX_TEAMS_PER_USER }),
       )
     }
 
@@ -410,10 +441,10 @@ export class TeamDomain implements TeamDomainInterface {
   async declineInvitation(token: string, userId: string): Promise<void> {
     const invitation = await this.#invitationRepo.findByToken(token)
     if (!invitation) {
-      throw Boom.notFound('Invitation not found')
+      throw Boom.notFound(errorMessage('team.invitationNotFound'))
     }
     if (invitation.status !== 'PENDING') {
-      throw Boom.conflict('Invitation already processed')
+      throw Boom.conflict(errorMessage('team.invitationAlreadyProcessed'))
     }
     await this.#assertIsRecipient(invitation, userId)
     await this.#invitationRepo.updateStatus(invitation.id, 'DECLINED')
@@ -426,23 +457,23 @@ export class TeamDomain implements TeamDomainInterface {
   ): Promise<void> {
     const team = await this.#teamRepo.findById(teamId)
     if (!team) {
-      throw Boom.notFound('Team not found')
+      throw Boom.notFound(errorMessage('team.notFound'))
     }
 
     const actor = team.members.find((m) => m.userId === actorId)
     if (!actor || actor.role === 'MEMBER') {
-      throw Boom.forbidden('Insufficient permissions')
+      throw Boom.forbidden(errorMessage('auth.insufficientPermissions'))
     }
 
     const target = team.members.find((m) => m.userId === targetUserId)
     if (!target) {
-      throw Boom.notFound('Member not found')
+      throw Boom.notFound(errorMessage('team.memberNotFound'))
     }
     if (target.role === 'OWNER') {
-      throw Boom.forbidden('Cannot remove the owner')
+      throw Boom.forbidden(errorMessage('team.cannotRemoveOwner'))
     }
     if (actor.role === 'ADMIN' && target.role === 'ADMIN') {
-      throw Boom.forbidden('ADMIN cannot remove another ADMIN')
+      throw Boom.forbidden(errorMessage('team.adminCannotRemoveAdmin'))
     }
 
     await this.#memberRepo.remove(teamId, targetUserId)
@@ -451,15 +482,15 @@ export class TeamDomain implements TeamDomainInterface {
   async leaveTeam(teamId: string, userId: string): Promise<void> {
     const team = await this.#teamRepo.findById(teamId)
     if (!team) {
-      throw Boom.notFound('Team not found')
+      throw Boom.notFound(errorMessage('team.notFound'))
     }
 
     const member = team.members.find((m) => m.userId === userId)
     if (!member) {
-      throw Boom.notFound('Not a member of this team')
+      throw Boom.notFound(errorMessage('team.notMember'))
     }
     if (member.role === 'OWNER') {
-      throw Boom.forbidden('Owner must transfer ownership before leaving')
+      throw Boom.forbidden(errorMessage('team.ownerMustTransferBeforeLeaving'))
     }
 
     await this.#memberRepo.remove(teamId, userId)
@@ -481,18 +512,20 @@ export class TeamDomain implements TeamDomainInterface {
   ): Promise<void> {
     const team = await this.#teamRepo.findById(teamId)
     if (!team) {
-      throw Boom.notFound('Team not found')
+      throw Boom.notFound(errorMessage('team.notFound'))
     }
     if (team.ownerId !== actorId) {
-      throw Boom.forbidden('Only the owner can change member roles')
+      throw Boom.forbidden(errorMessage('team.onlyOwnerCanChangeRoles'))
     }
 
     const target = team.members.find((m) => m.userId === targetUserId)
     if (!target) {
-      throw Boom.notFound('Member not found')
+      throw Boom.notFound(errorMessage('team.memberNotFound'))
     }
     if (target.role === 'OWNER') {
-      throw Boom.forbidden('Use ownership transfer to change the owner role')
+      throw Boom.forbidden(
+        errorMessage('team.useOwnershipTransferForOwnerRole'),
+      )
     }
 
     await this.#memberRepo.updateRole(teamId, targetUserId, role)
@@ -505,15 +538,15 @@ export class TeamDomain implements TeamDomainInterface {
   ): Promise<void> {
     const team = await this.#teamRepo.findById(teamId)
     if (!team) {
-      throw Boom.notFound('Team not found')
+      throw Boom.notFound(errorMessage('team.notFound'))
     }
     if (team.ownerId !== ownerId) {
-      throw Boom.forbidden('Only the owner can transfer ownership')
+      throw Boom.forbidden(errorMessage('team.onlyOwnerCanTransferOwnership'))
     }
 
     const newOwner = team.members.find((m) => m.userId === newOwnerId)
     if (!newOwner) {
-      throw Boom.notFound('New owner must be a member of the team')
+      throw Boom.notFound(errorMessage('team.newOwnerMustBeMember'))
     }
 
     await this.#postgresOrm.prisma.$transaction([
@@ -551,10 +584,10 @@ export class TeamDomain implements TeamDomainInterface {
   ): Promise<TeamWithMembers> {
     const team = await this.#teamRepo.findById(teamId)
     if (!team) {
-      throw Boom.notFound('Team not found')
+      throw Boom.notFound(errorMessage('team.notFound'))
     }
     if (team.ownerId !== userId) {
-      throw Boom.forbidden('Only the owner can update the team')
+      throw Boom.forbidden(errorMessage('team.onlyOwnerCanUpdateTeam'))
     }
 
     const slug = slugify(data.name, { lower: true, strict: true })
@@ -606,10 +639,10 @@ export class TeamDomain implements TeamDomainInterface {
   async deleteTeam(teamId: string, userId: string): Promise<void> {
     const team = await this.#teamRepo.findById(teamId)
     if (!team) {
-      throw Boom.notFound('Team not found')
+      throw Boom.notFound(errorMessage('team.notFound'))
     }
     if (team.ownerId !== userId) {
-      throw Boom.forbidden('Only the owner can delete the team')
+      throw Boom.forbidden(errorMessage('team.onlyOwnerCanDeleteTeam'))
     }
 
     // Hors transaction, exprès : chaque règlement ouvre la sienne.
@@ -875,17 +908,19 @@ export class TeamDomain implements TeamDomainInterface {
   async resendInvitationEmail(token: string, actorId: string): Promise<void> {
     const invitation = await this.#invitationRepo.findByToken(token)
     if (!invitation || invitation.status !== 'PENDING') {
-      throw Boom.notFound('Invitation not found or not pending')
+      throw Boom.notFound(errorMessage('team.invitationNotFoundOrNotPending'))
     }
 
     const team = await this.#teamRepo.findById(invitation.teamId)
     if (!team) {
-      throw Boom.internal('Team not found')
+      throw Boom.internal(errorMessage('team.notFound'))
     }
 
     const actor = team.members.find((m) => m.userId === actorId)
     if (!actor || actor.role === 'MEMBER') {
-      throw Boom.forbidden('Only ADMIN or OWNER can resend invitations')
+      throw Boom.forbidden(
+        errorMessage('team.onlyAdminOrOwnerCanResendInvitations'),
+      )
     }
 
     // Cooldown: 5 minutes since last emailSentAt
@@ -893,20 +928,26 @@ export class TeamDomain implements TeamDomainInterface {
       const elapsed = Date.now() - invitation.emailSentAt.getTime()
       if (elapsed < 5 * 60 * 1000) {
         const retryAfterSeconds = Math.ceil((5 * 60 * 1000 - elapsed) / 1000)
-        throw Boom.tooManyRequests('Cooldown actif', { retryAfterSeconds })
+        throw Boom.tooManyRequests(errorMessage('team.cooldownActive'), {
+          retryAfterSeconds,
+        })
       }
     }
 
+    // Même logique que `inviteMember` : locale du destinataire quand un
+    // `User` existe (invitation par pseudo), locale de la requête courante
+    // sinon (invitation par adresse email, aucun `User` à interroger).
+    const recipientUser = invitation.invitedUserId
+      ? await this.#userRepo.findById(invitation.invitedUserId)
+      : null
     const recipientEmail =
-      invitation.invitedEmail ??
-      (invitation.invitedUserId
-        ? ((await this.#userRepo.findById(invitation.invitedUserId))?.email ??
-          null)
-        : null)
+      invitation.invitedEmail ?? recipientUser?.email ?? null
 
     if (!recipientEmail) {
-      throw Boom.badRequest('No recipient email found')
+      throw Boom.badRequest(errorMessage('team.noRecipientEmail'))
     }
+
+    const recipientLocale = recipientUser?.locale ?? getCurrentLocale()
 
     const inviter = invitation.invitedById
       ? await this.#userRepo.findById(invitation.invitedById)
@@ -915,8 +956,10 @@ export class TeamDomain implements TeamDomainInterface {
     await this.#mailService.sendTeamInvitationEmail({
       to: recipientEmail,
       teamName: team.name,
-      inviterName: inviter?.username ?? "Quelqu'un",
+      inviterName:
+        inviter?.username ?? MAIL_COPY[recipientLocale].unknownInviter,
       token: invitation.token,
+      locale: recipientLocale,
     })
 
     await this.#invitationRepo.updateEmailSentAt(invitation.id, new Date())

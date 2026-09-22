@@ -78,8 +78,10 @@ function NodeForm({
 }: {
   node: SkillNode
   onSubmit: (value: {
-    name: string
-    description: string
+    nameFr: string
+    nameEn: string
+    descriptionFr: string
+    descriptionEn: string
     icon: string
     effectType: string
     maxLevel: number
@@ -89,8 +91,10 @@ function NodeForm({
 }) {
   const form = useAppForm({
     defaultValues: {
-      name: node.name,
-      description: node.description,
+      nameFr: node.nameFr,
+      nameEn: node.nameEn,
+      descriptionFr: node.descriptionFr,
+      descriptionEn: node.descriptionEn,
       icon: node.icon,
       effectType: node.effectType,
       maxLevel: node.maxLevel,
@@ -113,11 +117,17 @@ function NodeForm({
       className="flex flex-1 flex-col overflow-hidden"
     >
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
-        <form.AppField name="name">
-          {(f) => <f.Input label="Nom" />}
+        <form.AppField name="nameFr">
+          {(f) => <f.Input label="Nom (français)" />}
         </form.AppField>
-        <form.AppField name="description">
-          {(f) => <f.Input label="Description" />}
+        <form.AppField name="nameEn">
+          {(f) => <f.Input label="Nom (anglais)" />}
+        </form.AppField>
+        <form.AppField name="descriptionFr">
+          {(f) => <f.Input label="Description (français)" />}
+        </form.AppField>
+        <form.AppField name="descriptionEn">
+          {(f) => <f.Input label="Description (anglais)" />}
         </form.AppField>
         <form.AppField name="icon">
           {(f) => <f.Input label="Icône Lucide" />}
@@ -142,11 +152,16 @@ function NodeForm({
               <p className="pt-2 text-xs font-semibold uppercase text-text-light">
                 Valeurs par niveau
               </p>
-              {Array.from({ length: maxLevel }, (_, i) => (
-                <form.AppField key={i} name={`levels[${i}].effect`}>
-                  {(f) => <f.Number label={`Niveau ${i + 1}`} />}
-                </form.AppField>
-              ))}
+              {Array.from({ length: maxLevel }, (_, i) => i + 1).map(
+                (level) => (
+                  <form.AppField
+                    key={`level-${level}`}
+                    name={`levels[${level - 1}].effect`}
+                  >
+                    {(f) => <f.Number label={`Niveau ${level}`} />}
+                  </form.AppField>
+                ),
+              )}
             </>
           )}
         </form.Subscribe>
@@ -181,19 +196,19 @@ export function EditNodeSheet({ node, branch, onClose }: Props) {
         node={node}
         isPending={updateNode.isPending}
         onSubmit={(value) => {
-          const levels = value.levels
-            .slice(0, value.maxLevel)
-            .map((l, i) => ({
-              nodeId: node.id,
-              level: i + 1,
-              effect: l.effect ?? 0,
-            }))
+          const levels = value.levels.slice(0, value.maxLevel).map((l, i) => ({
+            nodeId: node.id,
+            level: i + 1,
+            effect: l.effect ?? 0,
+          }))
           updateNode.mutate(
             {
               id: node.id,
               data: {
-                name: value.name,
-                description: value.description,
+                nameFr: value.nameFr,
+                nameEn: value.nameEn,
+                descriptionFr: value.descriptionFr,
+                descriptionEn: value.descriptionEn,
                 icon: value.icon,
                 effectType: value.effectType,
                 maxLevel: value.maxLevel,

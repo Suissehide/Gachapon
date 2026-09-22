@@ -1,10 +1,6 @@
-import type {
-  Card,
-  CardSet,
-  GachaPull,
-  UserCard,
-} from '../../../../generated/client'
+import type { GachaPull, UserCard } from '../../../../generated/client'
 import type { UnlockedAchievement } from '../../../domain/achievements/events.types'
+import type { LocalizedCard, LocalizedCardSet } from '../../infra/orm/localized'
 
 export type {
   CardElement,
@@ -12,12 +8,19 @@ export type {
   CardVariant,
 } from '../../../../generated/client'
 
-export type CardEntity = Card
-export type CardSetEntity = CardSet
+/**
+ * `LocalizedCard`/`LocalizedCardSet` et non les types Prisma bruts : depuis
+ * l'i18n, `name`/`description` sont des champs CALCULÉS de
+ * `localized.extension.ts`, absents du type brut. Toute la chaîne qui part
+ * d'ici (CardWithSet → routes gacha/collection/profil) lit `card.name` sans
+ * savoir qu'il y a deux colonnes derrière, et c'est le but.
+ */
+export type CardEntity = LocalizedCard
+export type CardSetEntity = LocalizedCardSet
 export type UserCardEntity = UserCard
 export type GachaPullEntity = GachaPull
 
-export type CardWithSet = Card & { set: CardSet }
+export type CardWithSet = LocalizedCard & { set: LocalizedCardSet }
 export type UserCardWithCard = UserCard & { card: CardWithSet }
 export type GachaPullWithCard = GachaPull & { card: CardWithSet }
 

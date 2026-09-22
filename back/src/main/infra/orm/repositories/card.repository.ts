@@ -7,6 +7,7 @@ import type {
 } from '../../../types/domain/gacha/gacha.types'
 import type { PrimaTransactionClient } from '../../../types/infra/orm/client'
 import type { ICardRepository } from '../../../types/infra/orm/repositories/card.repository.interface'
+import { localizedNameOrder } from '../../i18n/locale-order'
 import type { PostgresPrismaClient } from '../postgres-client'
 
 const WITH_SET = { set: true } as const
@@ -42,19 +43,19 @@ export class CardRepository implements ICardRepository {
         ...(filter?.rarity ? { rarity: filter.rarity } : {}),
       },
       include: WITH_SET,
-      orderBy: [{ rarity: 'desc' }, { name: 'asc' }],
+      orderBy: [{ rarity: 'desc' }, localizedNameOrder()],
     }) as Promise<CardWithSet[]>
   }
 
   findActiveSets(): Promise<CardSetEntity[]> {
     return this.#prisma.cardSet.findMany({
       where: { isActive: true },
-      orderBy: { name: 'asc' },
+      orderBy: localizedNameOrder(),
     })
   }
 
   findAllSets(): Promise<CardSetEntity[]> {
-    return this.#prisma.cardSet.findMany({ orderBy: { name: 'asc' } })
+    return this.#prisma.cardSet.findMany({ orderBy: localizedNameOrder() })
   }
 
   findSetById(id: string): Promise<CardSetEntity | null> {
@@ -85,7 +86,8 @@ export class CardRepository implements ICardRepository {
   }
 
   create(data: {
-    name: string
+    nameFr: string
+    nameEn: string
     setId: string
     rarity: CardRarity
     dropWeight: number
@@ -106,7 +108,8 @@ export class CardRepository implements ICardRepository {
   update(
     id: string,
     data: Partial<{
-      name: string
+      nameFr: string
+      nameEn: string
       rarity: CardRarity
       dropWeight: number
       setId: string
@@ -131,8 +134,10 @@ export class CardRepository implements ICardRepository {
   }
 
   createSet(data: {
-    name: string
-    description?: string
+    nameFr: string
+    nameEn: string
+    descriptionFr?: string
+    descriptionEn?: string
     isActive?: boolean
   }): Promise<CardSetEntity> {
     return this.#prisma.cardSet.create({ data })
@@ -140,7 +145,13 @@ export class CardRepository implements ICardRepository {
 
   updateSet(
     id: string,
-    data: { name?: string; description?: string; isActive?: boolean },
+    data: Partial<{
+      nameFr: string
+      nameEn: string
+      descriptionFr: string
+      descriptionEn: string
+      isActive: boolean
+    }>,
   ): Promise<CardSetEntity> {
     return this.#prisma.cardSet.update({ where: { id }, data })
   }

@@ -16,6 +16,14 @@
  *      `imageUrl` = clé de stockage (l'API le convertit via storageClient.toKey,
  *      donc aucune image n'est ré-uploadée)
  *
+ * API BILINGUE : depuis le lot i18n, /admin/sets et /admin/cards exigent
+ * `nameFr` ET `nameEn` (le pont d'écriture mono-langue `name` a disparu, un
+ * `name` seul renvoie 400). families.json et cards-data.json ne portent
+ * qu'un nom français : on envoie donc la même chaîne dans les deux langues.
+ * Le contenu importé apparaîtra alors dans l'écran d'administration des
+ * traductions manquantes, catégorie « identique » — c'est exactement son
+ * rôle, et le seul moyen de garder une trace de ce qui reste à traduire.
+ *
  * Idempotent : une carte dont la clé d'image (…/<ID>.png) existe déjà dans le
  * set est ignorée. Relancer le script ne crée pas de doublons.
  *
@@ -131,13 +139,23 @@ async function ensureSet(folder) {
     return `dry-run-${folder}`
   }
   const { sets } = await api('GET', '/admin/sets')
-  const existing = (sets ?? []).find((s) => s.name === setName)
+  // Comparaison sur `nameFr`, la colonne, et NON sur `name`, le champ calculé :
+  // celui-ci est résolu dans la locale par défaut (EN), si bien que le set
+  // « Royaume des Humains » posé par le seed se présente comme
+  // « Kingdom of Humans » — le comparer au nom français créait un doublon.
+  const existing = (sets ?? []).find((s) => s.nameFr === setName)
   if (existing) {
     console.log(`  set « ${setName} » déjà présent (${existing.id})`)
     return existing.id
   }
   const created = await api('POST', '/admin/sets', {
-    json: { name: setName, description, isActive: true },
+    json: {
+      nameFr: setName,
+      nameEn: setName,
+      descriptionFr: description,
+      descriptionEn: description,
+      isActive: true,
+    },
   })
   console.log(`  set « ${setName} » créé (${created.id})`)
   return created.id
@@ -169,7 +187,8 @@ async function createCard(setId, card) {
   const key = `${imagePrefix(card.folder)}/${card.id}.png`
   const buildForm = () => {
     const form = new FormData()
-    form.append('name', card.name)
+    form.append('nameFr', card.name)
+    form.append('nameEn', card.name)
     form.append('setId', setId)
     form.append('rarity', card.rarity)
     form.append('dropWeight', String(dropWeightFor(card)))

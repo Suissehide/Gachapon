@@ -3,6 +3,7 @@ import Boom from '@hapi/boom'
 
 import type { UserReward } from '../../../generated/client'
 import type { CardRarity, CardVariant } from '../../../generated/enums'
+import { errorMessage } from '../../infra/i18n/error-messages'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
 import type { IActivityDomain } from '../../types/domain/activity/activity.domain.interface'
@@ -160,10 +161,10 @@ export class RewardsDomain implements RewardsDomainInterface {
       userId,
     )
     if (!preCheck) {
-      throw Boom.notFound('Reward not found')
+      throw Boom.notFound(errorMessage('rewards.notFound'))
     }
     if (preCheck.claimedAt !== null) {
-      throw Boom.conflict('Reward already claimed')
+      throw Boom.conflict(errorMessage('rewards.alreadyClaimed'))
     }
 
     const result = await this.#postgresOrm.executeWithTransactionClient(
@@ -175,10 +176,10 @@ export class RewardsDomain implements RewardsDomainInterface {
           include: { reward: true },
         })
         if (!userReward || userReward.userId !== userId) {
-          throw Boom.notFound('Reward not found')
+          throw Boom.notFound(errorMessage('rewards.notFound'))
         }
         if (userReward.claimedAt !== null) {
-          throw Boom.conflict('Reward already claimed')
+          throw Boom.conflict(errorMessage('rewards.alreadyClaimed'))
         }
 
         const user = await this.#userRepository.findByIdOrThrowInTx(tx, userId)
@@ -314,7 +315,8 @@ export class RewardsDomain implements RewardsDomainInterface {
     xp: number
     gold: number
     cardRarity?: CardRarity
-    label?: string
+    labelFr?: string
+    labelEn?: string
   }): Promise<{ count: number }> {
     const hasContent =
       input.tokens > 0 ||
@@ -323,7 +325,7 @@ export class RewardsDomain implements RewardsDomainInterface {
       input.gold > 0 ||
       !!input.cardRarity
     if (!hasContent) {
-      throw Boom.badRequest('Reward must grant at least one resource')
+      throw Boom.badRequest(errorMessage('rewards.mustGrantAtLeastOneResource'))
     }
 
     const targetIds =
@@ -332,7 +334,7 @@ export class RewardsDomain implements RewardsDomainInterface {
         : input.userIds
     const deduplicatedIds = [...new Set(targetIds)]
     if (deduplicatedIds.length === 0) {
-      throw Boom.badRequest('No target users')
+      throw Boom.badRequest(errorMessage('rewards.noTargetUsers'))
     }
 
     const sourceId = randomUUID()
@@ -345,7 +347,8 @@ export class RewardsDomain implements RewardsDomainInterface {
             xp: input.xp,
             gold: input.gold,
             cardRarity: input.cardRarity ?? null,
-            label: input.label ?? null,
+            labelFr: input.labelFr ?? null,
+            labelEn: input.labelEn ?? null,
           },
         })
         const created = await tx.userReward.createMany({
@@ -368,7 +371,7 @@ export class RewardsDomain implements RewardsDomainInterface {
   ): Promise<UserReward> {
     const user = await this.#userRepository.findById(userId)
     if (!user) {
-      throw Boom.notFound('User not found')
+      throw Boom.notFound(errorMessage('user.notFound'))
     }
 
     return this.#userRewardRepository.create({

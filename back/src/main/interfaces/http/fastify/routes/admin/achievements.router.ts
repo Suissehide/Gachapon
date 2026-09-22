@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import { listCustomHandlerKeys } from '../../../../../domain/achievements/custom-handlers/index'
+import { errorMessage } from '../../../../../infra/i18n/error-messages'
 import {
   adminAchievementCreateBodySchema,
   adminAchievementIdParamSchema,
@@ -39,7 +40,7 @@ export const adminAchievementsRouter: FastifyPluginCallbackZod = (fastify) => {
         request.params.id,
       )
       if (!achievement) {
-        throw Boom.notFound('Achievement not found')
+        throw Boom.notFound(errorMessage('admin.achievementNotFound'))
       }
       return achievementRepository.update(request.params.id, request.body)
     },
@@ -53,7 +54,7 @@ export const adminAchievementsRouter: FastifyPluginCallbackZod = (fastify) => {
         request.params.id,
       )
       if (!achievement) {
-        throw Boom.notFound('Achievement not found')
+        throw Boom.notFound(errorMessage('admin.achievementNotFound'))
       }
       await achievementRepository.delete(request.params.id)
       return reply.status(204).send()

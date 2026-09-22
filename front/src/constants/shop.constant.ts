@@ -42,7 +42,11 @@ export type PurchaseResult = {
 export type AdminShopItem = {
   id: string
   name: string
+  nameFr: string
+  nameEn: string
   description: string
+  descriptionFr: string
+  descriptionEn: string
   type: string
   cost: number
   currency: ShopCurrency

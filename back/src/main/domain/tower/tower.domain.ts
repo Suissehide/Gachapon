@@ -7,6 +7,7 @@ import type {
   EquipmentSet,
   EquipmentSlot,
 } from '../../../generated/enums'
+import { errorMessage } from '../../infra/i18n/error-messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
 import type { ISkillTreeRepository } from '../../types/infra/orm/repositories/skill-tree.repository.interface'
@@ -51,8 +52,8 @@ import { rollTowerDrop, rollTowerFirstClearDrop } from './tower-drop'
 import {
   TOWER_ELEMENTS,
   TOWER_FLOOR_COUNT,
-  TOWER_NAME_BY_ELEMENT,
   type TowerElement,
+  towerName,
 } from './tower-slots'
 
 type Rarity = 'COMMON' | 'UNCOMMON' | 'RARE' | 'EPIC' | 'LEGENDARY'
@@ -217,7 +218,7 @@ export class TowerDomain {
     )
     return TOWER_ELEMENTS.map((element) => ({
       element,
-      name: TOWER_NAME_BY_ELEMENT[element],
+      name: towerName(element),
       highestFloor: byElement.get(element) ?? 0,
       totalFloors: TOWER_FLOOR_COUNT,
     }))
@@ -274,7 +275,7 @@ export class TowerDomain {
 
     return {
       element,
-      name: TOWER_NAME_BY_ELEMENT[element],
+      name: towerName(element),
       highestFloor,
       floors: floorViews,
     }
@@ -326,7 +327,7 @@ export class TowerDomain {
             where: { element_index: { element, index: floor } },
           })
           if (!towerFloor) {
-            throw Boom.notFound('Étage de tour introuvable')
+            throw Boom.notFound(errorMessage('tower.floorNotFound'))
           }
 
           // Débit des points de combat (coût GlobalConfig). Pas d'énergie
@@ -339,7 +340,7 @@ export class TowerDomain {
           })
           const currentHighest = progress?.highestFloor ?? 0
           if (floor > currentHighest + 1) {
-            throw Boom.badRequest('Étage de tour verrouillé')
+            throw Boom.badRequest(errorMessage('tower.floorLocked'))
           }
 
           const baseStats: CombatStatsBaseline = {
@@ -354,9 +355,7 @@ export class TowerDomain {
             towerTeamKey(element),
           )
           if (userCardIds.length === 0) {
-            throw Boom.badRequest(
-              "Composez une équipe dans l'éditeur avant de combattre",
-            )
+            throw Boom.badRequest(errorMessage('combat.noTeamComposed'))
           }
           const teamUnits = await buildPlayerSimUnits(tx, {
             userId,
@@ -367,9 +366,7 @@ export class TowerDomain {
             publicUrl: (key) => this.#storageClient.publicUrl(key),
           })
           if (teamUnits.length === 0) {
-            throw Boom.badRequest(
-              'Aucune des cartes fournies n’appartient à ce joueur',
-            )
+            throw Boom.badRequest(errorMessage('combat.cardsNotOwnedByPlayer'))
           }
           const enemyUnits = buildEnemySimUnits(
             towerEnemyTeamSchema.parse(towerFloor.enemyTeam),
@@ -543,7 +540,7 @@ export class TowerDomain {
   ): Promise<TowerSweepResult> {
     if (runs < 1 || runs > SWEEP_MAX_RUNS) {
       throw Boom.badRequest(
-        `Le balayage accepte de 1 à ${SWEEP_MAX_RUNS} passages`,
+        errorMessage('tower.sweepRunsOutOfRange', { max: SWEEP_MAX_RUNS }),
       )
     }
 
@@ -568,7 +565,7 @@ export class TowerDomain {
             where: { element_index: { element, index: floor } },
           })
           if (!towerFloor) {
-            throw Boom.notFound('Étage de tour introuvable')
+            throw Boom.notFound(errorMessage('tower.floorNotFound'))
           }
 
           // Éligibilité AVANT le débit : un étage qu'on n'a pas le droit de
@@ -579,9 +576,7 @@ export class TowerDomain {
             where: { userId_element: { userId, element } },
           })
           if (floor > (progress?.highestFloor ?? 0)) {
-            throw Boom.forbidden(
-              'Étage de tour pas encore franchi — rien à balayer',
-            )
+            throw Boom.forbidden(errorMessage('tower.floorNotClearedYet'))
           }
 
           const sweepCostPerRun = effectiveSweepCost(

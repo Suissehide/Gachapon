@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 
 import type { UnlockedAchievement } from '../../../../../domain/achievements/events.types'
+import { errorMessage } from '../../../../../infra/i18n/error-messages'
 import { userResponseSchema } from '../../schemas/auth.schemas'
 import { sanitizeUser } from './helpers'
 
@@ -29,7 +30,7 @@ export const meRouter: FastifyPluginCallbackZod = (fastify) => {
 
       const user = await userDomain.findById(userId)
       if (!user) {
-        throw Boom.notFound('User not found')
+        throw Boom.notFound(errorMessage('user.notFound'))
       }
       const pendingRewardsCount = await userRewardRepository.countPendingByUser(
         user.id,

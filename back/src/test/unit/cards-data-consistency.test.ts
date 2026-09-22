@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 
 import { describe, expect, it } from '@jest/globals'
 
-import { CARDS as HUMAN_CARDS } from '../../../prisma/seed/cards'
+import { CARDS as HUMAN_CARDS } from '../../main/domain/content/cards.definitions'
 
 // `cards-data.json` (généré depuis le classeur tcg_kit par import-cards) et
 // `prisma/seed/cards.ts` (suivi par git) décrivent tous les deux les 38

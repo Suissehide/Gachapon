@@ -1,9 +1,9 @@
-import type { Achievement } from '../../../generated/client'
 import type { CardRarity, CardVariant } from '../../../generated/enums'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
 import type { IQuestsDomain } from '../../types/domain/quests/quests.domain.interface'
 import type { PrimaTransactionClient } from '../../types/infra/orm/client'
+import type { LocalizedAchievement } from '../../types/infra/orm/localized'
 import {
   MAX_PALIER,
   maxLevelInPalier,
@@ -30,7 +30,7 @@ import {
   type UserAchievementState,
 } from './state-dispatcher'
 
-type AchievementWithReward = Achievement & {
+type AchievementWithReward = LocalizedAchievement & {
   reward: {
     id: string
     tokens: number
@@ -431,9 +431,13 @@ export class AchievementsDomain implements AchievementsDomainInterface {
     })
 
     // Owned distinct cards per rarity (quantity > 0 means at least one copy owned)
-    const ownedDistinctByRarity: Record<string, number> = {}
+    // `Partial<Record<CardRarity, …>>` et non `Record<string, …>` : la rareté
+    // vient déjà typée de Prisma des DEUX côtés (le paramètre `ownedCards` et
+    // le `groupBy` ci-dessus). L'élargir en `string` était la seule raison du
+    // `as any` sur l'écriture indexée plus bas.
+    const ownedDistinctByRarity: Partial<Record<CardRarity, number>> = {}
     for (const uc of ownedCards) {
-      const rarity = uc.card.rarity as string
+      const rarity = uc.card.rarity
       // Count distinct card/variant combos — but for COLLECTION_COMPLETE we track by card
       // We use quantity > 0 as "owned" signal; deduplicate by rarity
       if (uc.quantity > 0) {
@@ -445,12 +449,11 @@ export class AchievementsDomain implements AchievementsDomainInterface {
     let allComplete = true
 
     for (const row of totalByRarity) {
-      const rarity = row.rarity as string
+      const rarity = row.rarity
       const total = row._count.id
       const owned = ownedDistinctByRarity[rarity] ?? 0
       const complete = owned >= total
-      // biome-ignore lint/suspicious/noExplicitAny: dynamic rarity key
-      ;(result as any)[rarity] = complete
+      result[rarity] = complete
       if (!complete) {
         allComplete = false
       }

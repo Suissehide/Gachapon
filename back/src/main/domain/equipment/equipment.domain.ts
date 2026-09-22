@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import type { EquipmentSlot, Prisma } from '../../../generated/client'
+import { errorMessage } from '../../infra/i18n/error-messages'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { IocContainer } from '../../types/application/ioc'
 import type { ITeamProgressionDomain } from '../../types/domain/team-progression/team-progression.domain.interface'
@@ -282,13 +283,13 @@ export class EquipmentDomain {
             include: { equipment: true },
           })
           if (!ue || ue.userId !== userId) {
-            throw Boom.notFound('UserEquipment not found')
+            throw Boom.notFound(errorMessage('equipment.userEquipmentNotFound'))
           }
           const card = await tx.userCard.findUnique({
             where: { id: targetUserCardId },
           })
           if (!card || card.userId !== userId) {
-            throw Boom.notFound('UserCard not found')
+            throw Boom.notFound(errorMessage('collection.userCardNotFound'))
           }
 
           const occupant = await tx.userEquipment.findFirst({
@@ -335,7 +336,7 @@ export class EquipmentDomain {
             where: { id: userEquipmentId },
           })
           if (!ue || ue.userId !== userId) {
-            throw Boom.notFound('UserEquipment not found')
+            throw Boom.notFound(errorMessage('equipment.userEquipmentNotFound'))
           }
           if (ue.equippedOnId === null) {
             return { unequipped: false }
@@ -371,11 +372,11 @@ export class EquipmentDomain {
       if (!chosenId) {
         const all = await tx.equipment.findMany({ select: { id: true } })
         if (all.length === 0) {
-          throw Boom.notFound('No equipment catalog seeded')
+          throw Boom.notFound(errorMessage('equipment.catalogNotSeeded'))
         }
         const picked = all[Math.floor(Math.random() * all.length)]
         if (!picked) {
-          throw Boom.notFound('No equipment catalog seeded')
+          throw Boom.notFound(errorMessage('equipment.catalogNotSeeded'))
         }
         chosenId = picked.id
       }
@@ -383,7 +384,7 @@ export class EquipmentDomain {
         where: { id: chosenId },
       })
       if (!catalog) {
-        throw Boom.notFound('Equipment not found')
+        throw Boom.notFound(errorMessage('equipment.notFound'))
       }
       const ue = await tx.userEquipment.create({
         data: {
@@ -431,10 +432,10 @@ export class EquipmentDomain {
             include: { equipment: true },
           })
           if (!ue || ue.userId !== userId) {
-            throw Boom.notFound('UserEquipment not found')
+            throw Boom.notFound(errorMessage('equipment.userEquipmentNotFound'))
           }
           if (ue.level >= EQUIP_MAX_LEVEL) {
-            throw Boom.badRequest('Équipement déjà au niveau maximum')
+            throw Boom.badRequest(errorMessage('equipment.alreadyMaxLevel'))
           }
           const rarityMult = c[RARITY_MULT_KEY[ue.equipment.rarity]]
           const cost = discountedUpgradeGoldCost(
@@ -506,7 +507,7 @@ export class EquipmentDomain {
 
   #assertGold(gold: number | undefined, cost: number): void {
     if (gold === undefined || gold < cost) {
-      throw Boom.badRequest("Pas assez d'or")
+      throw Boom.badRequest(errorMessage('economy.notEnoughGold'))
     }
   }
 
@@ -541,10 +542,12 @@ export class EquipmentDomain {
             items.length !== ids.length ||
             items.some((i) => i.userId !== userId)
           ) {
-            throw Boom.notFound('UserEquipment not found')
+            throw Boom.notFound(errorMessage('equipment.userEquipmentNotFound'))
           }
           if (items.some((i) => i.equippedOnId !== null)) {
-            throw Boom.badRequest('Impossible de détruire un objet équipé')
+            throw Boom.badRequest(
+              errorMessage('equipment.cannotSalvageEquipped'),
+            )
           }
           const goldEarned = items.reduce(
             (sum, i) =>

@@ -7,6 +7,11 @@ import {
 } from '../../../../../domain/economy/economy.domain'
 import { computeDropRates } from '../../../../../domain/gacha/drop-rates'
 import { effectivePityThreshold } from '../../../../../domain/gacha/gacha.domain'
+import { errorMessage } from '../../../../../infra/i18n/error-messages'
+import {
+  defaultLocaleName,
+  readNameInBothLocales,
+} from '../../../../../infra/i18n/localized-broadcast'
 import { wsManager } from '../../../../ws/ws-manager'
 import {
   dropRatesResponseSchema,
@@ -98,15 +103,26 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
       })
 
       if (user) {
+        // Lecture bilingue explicite : `broadcast` part vers toutes les
+        // connexions ouvertes, pas seulement le tireur — voir
+        // `localized-broadcast.ts` pour pourquoi `result.card.name` (déjà lu
+        // plus haut, dans la locale du tireur, et donc mémorisé) ne suffit
+        // pas.
+        const cardName = readNameInBothLocales(result.card)
+        const setName = readNameInBothLocales(result.card.set)
         wsManager.broadcast({
           type: 'feed:pull',
           username: user.username,
-          cardName: result.card.name,
+          cardName: defaultLocaleName(cardName),
+          cardNameFr: cardName.fr,
+          cardNameEn: cardName.en,
           rarity: result.card.rarity,
           variant: result.pull.variant,
           cardId: result.card.id,
           imageUrl: resolveUrl(result.card.imageUrl),
-          setName: result.card.set.name,
+          setName: defaultLocaleName(setName),
+          setNameFr: setName.fr,
+          setNameEn: setName.en,
           pulledAt: result.pull.pulledAt.toISOString(),
         })
         recordRarityActivity(
@@ -210,16 +226,23 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
 
       if (user) {
         result.pulls.forEach((p, idx) => {
+          // Même contournement que /pulls : voir `localized-broadcast.ts`.
+          const cardName = readNameInBothLocales(p.card)
+          const setName = readNameInBothLocales(p.card.set)
           setTimeout(() => {
             wsManager.broadcast({
               type: 'feed:pull',
               username: user.username,
-              cardName: p.card.name,
+              cardName: defaultLocaleName(cardName),
+              cardNameFr: cardName.fr,
+              cardNameEn: cardName.en,
               rarity: p.card.rarity,
               variant: p.pull.variant,
               cardId: p.card.id,
               imageUrl: resolveUrl(p.card.imageUrl),
-              setName: p.card.set.name,
+              setName: defaultLocaleName(setName),
+              setNameFr: setName.fr,
+              setNameEn: setName.en,
               pulledAt: p.pull.pulledAt.toISOString(),
             })
           }, idx * 50)
@@ -275,7 +298,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request) => {
       const user = await userRepository.findById(request.user.userID)
       if (!user) {
-        throw Boom.notFound('User not found')
+        throw Boom.notFound(errorMessage('user.notFound'))
       }
 
       const [upgrades, cfg, teamEffects] = await Promise.all([
@@ -323,7 +346,7 @@ export const gachaRouter: FastifyPluginCallbackZod = (fastify) => {
     async (request) => {
       const user = await userRepository.findById(request.user.userID)
       if (!user) {
-        throw Boom.notFound('User not found')
+        throw Boom.notFound(errorMessage('user.notFound'))
       }
 
       const [upgrades, cfg, teamEffects] = await Promise.all([

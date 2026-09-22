@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import type { CardVariant, Duel, DuelStatus } from '../../../generated/client'
+import { errorMessage } from '../../infra/i18n/error-messages'
 import type { PostgresOrm } from '../../infra/orm/postgres-client'
 import type { TeamRepository } from '../../infra/orm/repositories/team.repository'
 import type { TeamMemberRepository } from '../../infra/orm/repositories/team-member.repository'
@@ -116,14 +117,16 @@ export class DuelDomain implements IDuelDomain {
     const team = await this.#requireMembership(teamId, challengerId)
 
     if (opponentId === challengerId) {
-      throw Boom.badRequest('Tu ne peux pas te défier toi-même')
+      throw Boom.badRequest(errorMessage('wagers.cannotDuelSelf'))
     }
     const opponentMember = team.members.find((m) => m.userId === opponentId)
     if (!opponentMember) {
-      throw Boom.badRequest("Cet adversaire ne fait pas partie de l'équipe")
+      throw Boom.badRequest(errorMessage('wagers.opponentNotInTeam'))
     }
 
-    const opponentName = opponentMember.user?.username ?? 'Ce joueur'
+    const opponentName =
+      opponentMember.user?.username ??
+      errorMessage('wagers.unknownPlayerFallback')
 
     // Config lue AVANT la transaction sérialisable : aucune I/O async
     // supplémentaire ne doit s'y glisser.
@@ -146,10 +149,16 @@ export class DuelDomain implements IDuelDomain {
             this.#wagerRepository.findOpenDuelForUserInTx(tx, opponentId),
           ])
           if (challengerOpen) {
-            throw Boom.conflict('Tu as déjà un duel en cours')
+            throw Boom.conflict(
+              errorMessage('wagers.alreadyHaveDuelInProgress'),
+            )
           }
           if (opponentOpen) {
-            throw Boom.conflict(`${opponentName} a déjà un duel en cours`)
+            throw Boom.conflict(
+              errorMessage('wagers.opponentAlreadyHasDuelInProgress', {
+                opponent: opponentName,
+              }),
+            )
           }
 
           return this.#wagerRepository.createDuelInTx(tx, {
@@ -165,7 +174,9 @@ export class DuelDomain implements IDuelDomain {
 
     const full = await this.#wagerRepository.findDuelById(duel.id)
     if (!full) {
-      throw Boom.badImplementation('Duel introuvable juste après sa création')
+      throw Boom.badImplementation(
+        errorMessage('wagers.duelNotFoundAfterCreation'),
+      )
     }
 
     const challengerMember = team.members.find((m) => m.userId === challengerId)
@@ -207,10 +218,10 @@ export class DuelDomain implements IDuelDomain {
     const duel = await this.#getTeamDuel(teamId, duelId)
 
     if (duel.opponentId !== userId) {
-      throw Boom.forbidden('Seul le joueur défié peut accepter ce duel')
+      throw Boom.forbidden(errorMessage('wagers.onlyChallengedCanAccept'))
     }
     if (duel.status !== 'PENDING') {
-      throw Boom.conflict("Ce duel n'est plus en attente d'acceptation")
+      throw Boom.conflict(errorMessage('wagers.duelNotPendingAcceptance'))
     }
 
     const cfg = await this.#configService.getMany(
@@ -226,7 +237,7 @@ export class DuelDomain implements IDuelDomain {
         where: { id: duel.id, status: 'PENDING' },
         data: { status: 'EXPIRED' },
       })
-      throw Boom.conflict('Le délai pour accepter ce duel est dépassé')
+      throw Boom.conflict(errorMessage('wagers.acceptDeadlinePassed'))
     }
 
     const deadlineAt = new Date(
@@ -235,11 +246,13 @@ export class DuelDomain implements IDuelDomain {
     await this.#writeIfPending(
       duel.id,
       { status: 'ACTIVE', acceptedAt: now, deadlineAt },
-      "Trop tard : ce duel n'est plus en attente d'acceptation",
+      errorMessage('wagers.duelTooLateNotPendingAcceptance'),
     )
     const updated = await this.#wagerRepository.findDuelById(duel.id)
     if (!updated) {
-      throw Boom.badImplementation('Duel introuvable juste après acceptation')
+      throw Boom.badImplementation(
+        errorMessage('wagers.duelNotFoundAfterAcceptance'),
+      )
     }
 
     this.#notifyDuelUpdate(team, updated)
@@ -284,20 +297,22 @@ export class DuelDomain implements IDuelDomain {
     const duel = await this.#getTeamDuel(teamId, duelId)
 
     if (duel.opponentId !== userId) {
-      throw Boom.forbidden('Seul le joueur défié peut refuser ce duel')
+      throw Boom.forbidden(errorMessage('wagers.onlyChallengedCanDecline'))
     }
     if (duel.status !== 'PENDING') {
-      throw Boom.conflict("Ce duel n'est plus en attente d'acceptation")
+      throw Boom.conflict(errorMessage('wagers.duelNotPendingAcceptance'))
     }
 
     await this.#writeIfPending(
       duel.id,
       { status: 'DECLINED' },
-      "Trop tard : ce duel n'est plus en attente d'acceptation",
+      errorMessage('wagers.duelTooLateNotPendingAcceptance'),
     )
     const updated = await this.#wagerRepository.findDuelById(duel.id)
     if (!updated) {
-      throw Boom.badImplementation('Duel introuvable juste après refus')
+      throw Boom.badImplementation(
+        errorMessage('wagers.duelNotFoundAfterDecline'),
+      )
     }
     this.#notifyDuelUpdate(team, updated)
     return this.#toView(updated, userId)
@@ -313,20 +328,22 @@ export class DuelDomain implements IDuelDomain {
     const duel = await this.#getTeamDuel(teamId, duelId)
 
     if (duel.challengerId !== userId) {
-      throw Boom.forbidden('Seul le défieur peut annuler ce duel')
+      throw Boom.forbidden(errorMessage('wagers.onlyChallengerCanCancel'))
     }
     if (duel.status !== 'PENDING') {
-      throw Boom.conflict("Ce duel n'est plus en attente d'acceptation")
+      throw Boom.conflict(errorMessage('wagers.duelNotPendingAcceptance'))
     }
 
     await this.#writeIfPending(
       duel.id,
       { status: 'CANCELLED' },
-      "Trop tard : ce duel n'est plus annulable",
+      errorMessage('wagers.duelTooLateNotCancellable'),
     )
     const updated = await this.#wagerRepository.findDuelById(duel.id)
     if (!updated) {
-      throw Boom.badImplementation('Duel introuvable juste après annulation')
+      throw Boom.badImplementation(
+        errorMessage('wagers.duelNotFoundAfterCancellation'),
+      )
     }
     this.#notifyDuelUpdate(team, updated)
     return this.#toView(updated, userId)
@@ -520,10 +537,12 @@ export class DuelDomain implements IDuelDomain {
     const duel = await this.#getTeamDuel(teamId, duelId)
 
     if (duel.status !== 'SETTLED') {
-      throw Boom.conflict("Ce duel n'est pas encore reglé")
+      throw Boom.conflict(errorMessage('wagers.duelNotSettledYet'))
     }
     if (!duel.acceptedAt) {
-      throw Boom.badImplementation('Duel réglé sans acceptedAt')
+      throw Boom.badImplementation(
+        errorMessage('wagers.duelSettledWithoutAcceptedAt'),
+      )
     }
     const acceptedAt = duel.acceptedAt
 
@@ -642,7 +661,7 @@ export class DuelDomain implements IDuelDomain {
   ): Promise<void> {
     const engagedKeys = await this.listEngagedCardKeysInTx(tx, userId)
     if (engagedKeys.has(`${cardId}:${variant}`)) {
-      throw Boom.conflict('Carte engagée dans un duel en cours')
+      throw Boom.conflict(errorMessage('wagers.cardEngagedInActiveDuel'))
     }
   }
 
@@ -1060,11 +1079,11 @@ export class DuelDomain implements IDuelDomain {
       userId,
     )
     if (!membership) {
-      throw Boom.forbidden('Tu ne fais pas partie de cette équipe')
+      throw Boom.forbidden(errorMessage('team.notMember'))
     }
     const team = await this.#teamRepository.findById(teamId)
     if (!team) {
-      throw Boom.notFound('Équipe introuvable')
+      throw Boom.notFound(errorMessage('team.notFound'))
     }
     return team
   }
@@ -1113,7 +1132,7 @@ export class DuelDomain implements IDuelDomain {
   async #getTeamDuel(teamId: string, duelId: string): Promise<DuelWithParties> {
     const duel = await this.#wagerRepository.findDuelById(duelId)
     if (!duel || duel.teamId !== teamId) {
-      throw Boom.notFound('Duel introuvable')
+      throw Boom.notFound(errorMessage('wagers.duelNotFound'))
     }
     return duel
   }

@@ -33,14 +33,15 @@ describe('Wishlist routes', () => {
     userId = user.id
 
     const set = await prisma.cardSet.create({
-      data: { name: `WishlistTestSet${suffix}`, isActive: true },
+      data: { nameFr: `WishlistTestSet${suffix}`, nameEn: `WishlistTestSet${suffix}`, isActive: true },
     })
     // Six cartes RARE : de quoi dépasser les 2 emplacements de base et les 5 du plafond.
     for (let i = 0; i < 6; i++) {
       const card = await prisma.card.create({
         data: {
           setId: set.id,
-          name: `RARE-wishlist-${suffix}-${i}`,
+          nameFr: `RARE-wishlist-${suffix}-${i}`,
+          nameEn: `RARE-wishlist-${suffix}-${i}`,
           rarity: 'RARE',
           dropWeight: 1.0,
         },
@@ -183,8 +184,10 @@ describe('Wishlist routes', () => {
     // Le seed est tronqué par globalSetup : on recrée branche et nœud.
     const branch = await prisma.skillBranch.create({
       data: {
-        name: `Collection${suffix}`,
-        description: 'Dust & Boutique',
+        nameFr: `Collection${suffix}`,
+        nameEn: `Collection${suffix}`,
+        descriptionFr: 'Dust & Boutique',
+        descriptionEn: 'Dust & Boutique',
         icon: 'Gem',
         color: '#10b981',
         order: 99,
@@ -195,8 +198,10 @@ describe('Wishlist routes', () => {
     const node = await prisma.skillNode.create({
       data: {
         branchId: branch.id,
-        name: 'Collectionneur',
-        description: 'Emplacements de vœu supplémentaires (2 de base)',
+        nameFr: 'Collectionneur',
+        nameEn: 'Collectionneur',
+        descriptionFr: 'Emplacements de vœu supplémentaires (2 de base)',
+        descriptionEn: 'Emplacements de vœu supplémentaires (2 de base)',
         icon: 'Heart',
         maxLevel: 3,
         effectType: 'WISHLIST_SLOTS',

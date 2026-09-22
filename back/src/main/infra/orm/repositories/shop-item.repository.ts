@@ -1,5 +1,5 @@
-import type { ShopItem } from '../../../../generated/client'
 import type { IocContainer } from '../../../types/application/ioc'
+import type { LocalizedShopItem } from '../../../types/infra/orm/localized'
 import type {
   CreateShopItemInput,
   IShopItemRepository,
@@ -14,29 +14,27 @@ export class ShopItemRepository implements IShopItemRepository {
     this.#prisma = postgresOrm.prisma
   }
 
-  findAll(): Promise<ShopItem[]> {
+  findAll(): Promise<LocalizedShopItem[]> {
     return this.#prisma.shopItem.findMany({ orderBy: { createdAt: 'desc' } })
   }
 
-  findActive(): Promise<ShopItem[]> {
+  findActive(): Promise<LocalizedShopItem[]> {
     return this.#prisma.shopItem.findMany({
       where: { isActive: true },
       orderBy: [{ type: 'asc' }, { cost: 'asc' }],
     })
   }
 
-  findById(id: string): Promise<ShopItem | null> {
+  findById(id: string): Promise<LocalizedShopItem | null> {
     return this.#prisma.shopItem.findUnique({ where: { id } })
   }
 
-  create(data: CreateShopItemInput): Promise<ShopItem> {
-    // biome-ignore lint/suspicious/noExplicitAny: Prisma JSON field requires cast
-    return this.#prisma.shopItem.create({ data: data as any })
+  create(data: CreateShopItemInput): Promise<LocalizedShopItem> {
+    return this.#prisma.shopItem.create({ data })
   }
 
-  update(id: string, data: UpdateShopItemInput): Promise<ShopItem> {
-    // biome-ignore lint/suspicious/noExplicitAny: Prisma JSON field requires cast
-    return this.#prisma.shopItem.update({ where: { id }, data: data as any })
+  update(id: string, data: UpdateShopItemInput): Promise<LocalizedShopItem> {
+    return this.#prisma.shopItem.update({ where: { id }, data })
   }
 
   async delete(id: string): Promise<void> {

@@ -25,7 +25,8 @@ export const adminCardsQuerySchema = z.object({
 export const adminCardIdParamSchema = z.object({ id: z.string().uuid() })
 
 export const adminCardFieldsSchema = z.object({
-  name: z.string().min(1),
+  nameFr: z.string().min(1),
+  nameEn: z.string().min(1),
   setId: z.string().uuid(),
   rarity: cardRarityEnum,
   dropWeight: z.coerce.number().positive(),
@@ -38,7 +39,8 @@ export const adminCardFieldsSchema = z.object({
 })
 
 export const adminCardUpdateBodySchema = z.object({
-  name: z.string().min(1).optional(),
+  nameFr: z.string().min(1).optional(),
+  nameEn: z.string().min(1).optional(),
   rarity: cardRarityEnum.optional(),
   dropWeight: z.number().positive().optional(),
   setId: z.string().uuid().optional(),

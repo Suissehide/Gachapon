@@ -25,11 +25,12 @@ describe('Equipment routes', () => {
     const { postgresOrm } = (app as any).iocContainer
 
     const set = await postgresOrm.prisma.cardSet.create({
-      data: { name: `EquipSet${suffix}`, isActive: false },
+      data: { nameFr: `EquipSet${suffix}`, nameEn: `EquipSet${suffix}`, isActive: false },
     })
     const card = await postgresOrm.prisma.card.create({
       data: {
-        name: `EquipCard${suffix}`,
+        nameFr: `EquipCard${suffix}`,
+        nameEn: `EquipCard${suffix}`,
         rarity: 'RARE',
         dropWeight: 10,
         setId: set.id,
@@ -71,7 +72,8 @@ describe('Equipment routes', () => {
     // (EQUIPMENT_TEST_WEAPON / EQUIPMENT_TEST_ARMOR).
     const w1 = await postgresOrm.prisma.equipment.create({
       data: {
-        name: `EquipW1-${suffix}`,
+        nameFr: `EquipW1-${suffix}`,
+        nameEn: `EquipW1-${suffix}`,
         ...EQUIPMENT_TEST_WEAPON,
         rarity: 'COMMON',
         bonuses: { atkFlat: 5 },
@@ -80,7 +82,8 @@ describe('Equipment routes', () => {
     })
     const w2 = await postgresOrm.prisma.equipment.create({
       data: {
-        name: `EquipW2-${suffix}`,
+        nameFr: `EquipW2-${suffix}`,
+        nameEn: `EquipW2-${suffix}`,
         ...EQUIPMENT_TEST_WEAPON,
         rarity: 'UNCOMMON',
         bonuses: { atkFlat: 8 },
@@ -89,7 +92,8 @@ describe('Equipment routes', () => {
     })
     const a1 = await postgresOrm.prisma.equipment.create({
       data: {
-        name: `EquipA1-${suffix}`,
+        nameFr: `EquipA1-${suffix}`,
+        nameEn: `EquipA1-${suffix}`,
         ...EQUIPMENT_TEST_ARMOR,
         rarity: 'COMMON',
         bonuses: { defFlat: 3, hpPct: 2 },
@@ -228,7 +232,8 @@ describe('Equipment routes', () => {
     // @@unique([slot, setKey, rarity]).
     const fakeEquip = await postgresOrm.prisma.equipment.create({
       data: {
-        name: `OtherEquip-${suffix}`,
+        nameFr: `OtherEquip-${suffix}`,
+        nameEn: `OtherEquip-${suffix}`,
         ...EQUIPMENT_TEST_WEAPON,
         rarity: 'RARE',
         bonuses: { atkFlat: 1 },
@@ -258,7 +263,7 @@ describe('Equipment routes', () => {
       },
     })
     const set = await postgresOrm.prisma.cardSet.findFirst({
-      where: { name: `EquipSet${suffix}` },
+      where: { nameFr: `EquipSet${suffix}` },
     })
     const card = await postgresOrm.prisma.card.findFirst({
       where: { setId: set!.id },

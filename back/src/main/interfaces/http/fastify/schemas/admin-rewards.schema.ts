@@ -14,5 +14,6 @@ export const adminBulkRewardBodySchema = z.object({
       .enum(['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY'])
       .optional(),
   }),
-  message: z.string().max(200).optional(),
+  labelFr: z.string().max(200).optional(),
+  labelEn: z.string().max(200).optional(),
 })

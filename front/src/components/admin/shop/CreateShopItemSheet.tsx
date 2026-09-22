@@ -9,8 +9,10 @@ import { Button } from '../../ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../../ui/sheet'
 
 export type CreateShopItemPayload = {
-  name: string
-  description: string
+  nameFr: string
+  nameEn: string
+  descriptionFr: string
+  descriptionEn: string
   type: string
   cost: number
   currency: string
@@ -52,8 +54,10 @@ function CreateShopItemForm({
 
   const form = useAppForm({
     defaultValues: {
-      name: '',
-      description: '',
+      nameFr: '',
+      nameEn: '',
+      descriptionFr: '',
+      descriptionEn: '',
       type: 'TOKEN_PACK',
       cost: 0 as number,
       currency: 'DUST',
@@ -81,11 +85,17 @@ function CreateShopItemForm({
       }}
       className="space-y-3"
     >
-      <form.AppField name="name">
-        {(field) => <field.Input label="Nom" />}
+      <form.AppField name="nameFr">
+        {(field) => <field.Input label="Nom (français)" />}
       </form.AppField>
-      <form.AppField name="description">
-        {(field) => <field.Input label="Description" />}
+      <form.AppField name="nameEn">
+        {(field) => <field.Input label="Nom (anglais)" />}
+      </form.AppField>
+      <form.AppField name="descriptionFr">
+        {(field) => <field.Input label="Description (français)" />}
+      </form.AppField>
+      <form.AppField name="descriptionEn">
+        {(field) => <field.Input label="Description (anglais)" />}
       </form.AppField>
       <form.AppField name="type">
         {(field) => <field.Select label="Type" options={ITEM_TYPE_OPTIONS} />}

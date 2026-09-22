@@ -1,5 +1,6 @@
 import Boom from '@hapi/boom'
 
+import { errorMessage } from '../../infra/i18n/error-messages'
 import type { IocContainer } from '../../types/application/ioc'
 import { applyPercentDiscount } from '../shared/discount'
 import { retryOnSerialization } from '../shared/retry-serialization'
@@ -68,7 +69,7 @@ export class CardLevelingTx {
             include: { card: true },
           })
           if (!userCard || userCard.userId !== userId) {
-            throw Boom.notFound('UserCard not found')
+            throw Boom.notFound(errorMessage('collection.userCardNotFound'))
           }
 
           const currentLevel = userCard.level
@@ -77,12 +78,18 @@ export class CardLevelingTx {
 
           if (targetLevel <= currentLevel) {
             throw Boom.badRequest(
-              `targetLevel (${targetLevel}) must be greater than current level (${currentLevel})`,
+              errorMessage('cardLeveling.targetBelowCurrent', {
+                target: targetLevel,
+                current: currentLevel,
+              }),
             )
           }
           if (targetLevel > palierMax) {
             throw Boom.badRequest(
-              `targetLevel (${targetLevel}) exceeds palier cap (${palierMax}) — ascend the card to unlock the next palier`,
+              errorMessage('cardLeveling.targetExceedsPalierCap', {
+                target: targetLevel,
+                cap: palierMax,
+              }),
             )
           }
 
@@ -109,16 +116,22 @@ export class CardLevelingTx {
 
           const user = await tx.user.findUnique({ where: { id: userId } })
           if (!user) {
-            throw Boom.notFound('User not found')
+            throw Boom.notFound(errorMessage('user.notFound'))
           }
           if (user.gold < goldCost) {
             throw Boom.paymentRequired(
-              `Not enough gold (need ${goldCost}, have ${user.gold})`,
+              errorMessage('cardLeveling.notEnoughGold', {
+                need: goldCost,
+                have: user.gold,
+              }),
             )
           }
           if (user.dust < dustCost) {
             throw Boom.paymentRequired(
-              `Not enough dust (need ${dustCost}, have ${user.dust})`,
+              errorMessage('cardLeveling.notEnoughDust', {
+                need: dustCost,
+                have: user.dust,
+              }),
             )
           }
 

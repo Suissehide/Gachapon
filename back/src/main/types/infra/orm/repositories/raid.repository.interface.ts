@@ -2,14 +2,13 @@ import type {
   CardElement,
   CardRarity,
   Prisma,
-  RaidBoss,
   RaidTier,
-  Reward,
   TeamRaid,
 } from '../../../../../generated/client'
+import type { LocalizedRaidBoss, LocalizedReward } from '../localized'
 
-export type RaidTierWithReward = RaidTier & { reward: Reward }
-export type TeamRaidWithBoss = TeamRaid & { boss: RaidBoss }
+export type RaidTierWithReward = RaidTier & { reward: LocalizedReward }
+export type TeamRaidWithBoss = TeamRaid & { boss: LocalizedRaidBoss }
 
 export type RaidContributionRow = {
   userId: string
@@ -26,12 +25,16 @@ export type RaidTierRewardPatch = Partial<{
 }>
 
 export interface IRaidRepository {
-  listBosses(): Promise<RaidBoss[]>
-  findBossByElement(element: CardElement): Promise<RaidBoss | null>
+  listBosses(): Promise<LocalizedRaidBoss[]>
+  findBossByElement(element: CardElement): Promise<LocalizedRaidBoss | null>
   updateBoss(
     element: CardElement,
-    data: { name?: string; spec?: Prisma.InputJsonValue },
-  ): Promise<RaidBoss>
+    data: {
+      nameFr?: string
+      nameEn?: string
+      spec?: Prisma.InputJsonValue
+    },
+  ): Promise<LocalizedRaidBoss>
   /** Paliers triés par pct croissant. */
   listTiers(): Promise<RaidTierWithReward[]>
   findTierByPct(pct: number): Promise<RaidTierWithReward | null>

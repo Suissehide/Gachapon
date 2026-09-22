@@ -2,6 +2,7 @@
 
 import Boom from '@hapi/boom'
 
+import { errorMessage } from '../../infra/i18n/error-messages'
 import type { IocContainer } from '../../types/application/ioc'
 import type { ProfileDomainInterface } from '../../types/domain/profile/profile.domain.interface'
 import type {
@@ -158,7 +159,7 @@ export class ProfileDomain implements ProfileDomainInterface {
   async getFeaturedCards(username: string): Promise<FeaturedCardDto[]> {
     const user = await this.#userRepository.findByUsername(username)
     if (!user) {
-      throw Boom.notFound('User not found')
+      throw Boom.notFound(errorMessage('user.notFound'))
     }
     const owned = await this.#userCardRepository.findByUser(user.id)
     // Prefer the rarer variant when the same cardId is owned in multiple variants.
@@ -194,7 +195,7 @@ export class ProfileDomain implements ProfileDomainInterface {
   async getSetsProgression(username: string): Promise<SetProgressionDto[]> {
     const user = await this.#userRepository.findByUsername(username)
     if (!user) {
-      throw Boom.notFound('User not found')
+      throw Boom.notFound(errorMessage('user.notFound'))
     }
     const [sets, counts, allActiveCards] = await Promise.all([
       this.#cardRepository.findActiveSets(),
@@ -233,7 +234,9 @@ export class ProfileDomain implements ProfileDomainInterface {
     const ownedIds = new Set(owned.map((uc) => uc.card.id))
     const invalidIds = deduped.filter((id) => !ownedIds.has(id))
     if (invalidIds.length > 0) {
-      throw Boom.badData('Card not in your collection', { invalidIds })
+      throw Boom.badData(errorMessage('profile.cardNotInCollection'), {
+        invalidIds,
+      })
     }
     await this.#userRepository.updateFeaturedCardIds(userId, deduped)
     return deduped
