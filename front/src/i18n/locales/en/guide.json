@@ -128,6 +128,29 @@
       "skillPointsBullet": "Leveling up grants <strong>skill points</strong> and milestone rewards to claim.",
       "xpBoostBullet": "Some skills increase the XP earned per pull and per battle.",
       "info": "Don't confuse your <strong1>account level</strong1> (your overall progress) with a <strong2>card's level</strong2> (its combat power, see \"Upgrading your cards\")."
+    },
+    "competences": {
+      "intro": "The <strong>skill tree</strong> replaces the old upgrades. You invest the <strong2>skill points</strong2> earned from leveling up in it; every node unlocks a <strong3>permanent passive bonus</strong3>.",
+      "domainsIntro": "Skills cover four broad areas:",
+      "domains": {
+        "luck": {
+          "title": "Pulls & luck",
+          "description": "Boosts rarities, variants, the golden ball, the free-pull chance, and lowers the pity threshold."
+        },
+        "economy": {
+          "title": "Economy",
+          "description": "Speeds up regeneration and raises the token cap, grants bonus tokens, multiplies dust, lowers shop prices, and increases gold earned."
+        },
+        "progression": {
+          "title": "Progression",
+          "description": "Increases pull and battle XP, and adds daily shop slots and wishlist slots."
+        },
+        "combat": {
+          "title": "Combat",
+          "description": "Increases the cap and regeneration of combat points, reduces the farm cost, and improves the equipment drop rate."
+        }
+      },
+      "info": "You can <strong>reset</strong> the tree at any time for dust: all your points are returned and can be redistributed. Handy for trying a new build."
     }
   }
 }

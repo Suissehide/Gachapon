@@ -635,69 +635,58 @@ function GuidePage() {
             <Section
               id="competences"
               icon={Network}
-              title="Arbre de compétences"
+              title={t('sectionLabels.competences')}
             >
               <p>
-                L'
-                <strong className="text-foreground">
-                  arbre de compétences
-                </strong>{' '}
-                remplace les anciennes améliorations. Tu y investis les{' '}
-                <strong className="text-foreground">
-                  points de compétence
-                </strong>{' '}
-                gagnés en montant de niveau ; chaque nœud débloque un{' '}
-                <strong className="text-foreground">
-                  bonus passif permanent
-                </strong>
-                .
+                <Trans
+                  t={t}
+                  i18nKey="sections.competences.intro"
+                  components={{
+                    strong: <strong className="text-foreground" />,
+                    strong2: <strong className="text-foreground" />,
+                    strong3: <strong className="text-foreground" />,
+                  }}
+                />
               </p>
-              <p>Les compétences couvrent quatre grands domaines :</p>
+              <p>{t('sections.competences.domainsIntro')}</p>
               <div className="space-y-3 mt-1">
                 <div className="rounded-lg border border-border/50 bg-card px-4 py-3">
                   <p className="font-semibold text-foreground mb-1 flex items-center gap-2">
-                    <Star className="h-4 w-4 text-primary" /> Tirage & chance
+                    <Star className="h-4 w-4 text-primary" />{' '}
+                    {t('sections.competences.domains.luck.title')}
+                  </p>
+                  <p>{t('sections.competences.domains.luck.description')}</p>
+                </div>
+                <div className="rounded-lg border border-border/50 bg-card px-4 py-3">
+                  <p className="font-semibold text-foreground mb-1 flex items-center gap-2">
+                    <Coins className="h-4 w-4 text-amber-400" />{' '}
+                    {t('sections.competences.domains.economy.title')}
+                  </p>
+                  <p>{t('sections.competences.domains.economy.description')}</p>
+                </div>
+                <div className="rounded-lg border border-border/50 bg-card px-4 py-3">
+                  <p className="font-semibold text-foreground mb-1 flex items-center gap-2">
+                    <Gauge className="h-4 w-4 text-violet-400" />{' '}
+                    {t('sections.competences.domains.progression.title')}
                   </p>
                   <p>
-                    Booste les raretés, les variantes, la boule dorée, la chance
-                    de tirage gratuit, et abaisse le seuil de pitié.
+                    {t('sections.competences.domains.progression.description')}
                   </p>
                 </div>
                 <div className="rounded-lg border border-border/50 bg-card px-4 py-3">
                   <p className="font-semibold text-foreground mb-1 flex items-center gap-2">
-                    <Coins className="h-4 w-4 text-amber-400" /> Économie
+                    <Swords className="h-4 w-4 text-emerald-400" />{' '}
+                    {t('sections.competences.domains.combat.title')}
                   </p>
-                  <p>
-                    Accélère la régénération et augmente le plafond de jetons,
-                    donne des jetons bonus, multiplie la poussière, réduit les
-                    prix de boutique et augmente l'or gagné.
-                  </p>
-                </div>
-                <div className="rounded-lg border border-border/50 bg-card px-4 py-3">
-                  <p className="font-semibold text-foreground mb-1 flex items-center gap-2">
-                    <Gauge className="h-4 w-4 text-violet-400" /> Progression
-                  </p>
-                  <p>
-                    Augmente l'XP de tirage et de combat, ajoute des
-                    emplacements à la boutique du jour et des emplacements de
-                    Vœu.
-                  </p>
-                </div>
-                <div className="rounded-lg border border-border/50 bg-card px-4 py-3">
-                  <p className="font-semibold text-foreground mb-1 flex items-center gap-2">
-                    <Swords className="h-4 w-4 text-emerald-400" /> Combat
-                  </p>
-                  <p>
-                    Augmente le plafond et la régénération des points de combat,
-                    réduit le coût du farm et améliore le taux de drop
-                    d'équipement.
-                  </p>
+                  <p>{t('sections.competences.domains.combat.description')}</p>
                 </div>
               </div>
               <InfoBox>
-                Tu peux <strong>réinitialiser</strong> l'arbre à tout moment
-                contre de la poussière : tous tes points sont rendus et
-                redistribuables. Pratique pour tester une nouvelle orientation.
+                <Trans
+                  t={t}
+                  i18nKey="sections.competences.info"
+                  components={{ strong: <strong /> }}
+                />
               </InfoBox>
             </Section>
 

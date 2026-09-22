@@ -128,6 +128,29 @@
       "skillPointsBullet": "Monter de niveau octroie des <strong>points de compétence</strong> et des récompenses de palier à récupérer.",
       "xpBoostBullet": "Des compétences augmentent l'XP gagnée par tirage et par combat.",
       "info": "Ne confonds pas le <strong1>niveau de ton compte</strong1> (ta progression globale) et le <strong2>niveau d'une carte</strong2> (sa puissance en combat, voir « Améliorer ses cartes »)."
+    },
+    "competences": {
+      "intro": "L'<strong>arbre de compétences</strong> remplace les anciennes améliorations. Tu y investis les <strong2>points de compétence</strong2> gagnés en montant de niveau ; chaque nœud débloque un <strong3>bonus passif permanent</strong3>.",
+      "domainsIntro": "Les compétences couvrent quatre grands domaines :",
+      "domains": {
+        "luck": {
+          "title": "Tirage & chance",
+          "description": "Booste les raretés, les variantes, la boule dorée, la chance de tirage gratuit, et abaisse le seuil de pitié."
+        },
+        "economy": {
+          "title": "Économie",
+          "description": "Accélère la régénération et augmente le plafond de jetons, donne des jetons bonus, multiplie la poussière, réduit les prix de boutique et augmente l'or gagné."
+        },
+        "progression": {
+          "title": "Progression",
+          "description": "Augmente l'XP de tirage et de combat, ajoute des emplacements à la boutique du jour et des emplacements de Vœu."
+        },
+        "combat": {
+          "title": "Combat",
+          "description": "Augmente le plafond et la régénération des points de combat, réduit le coût du farm et améliore le taux de drop d'équipement."
+        }
+      },
+      "info": "Tu peux <strong>réinitialiser</strong> l'arbre à tout moment contre de la poussière : tous tes points sont rendus et redistribuables. Pratique pour tester une nouvelle orientation."
     }
   }
 }
