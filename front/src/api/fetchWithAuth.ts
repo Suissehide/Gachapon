@@ -1,3 +1,4 @@
+import { currentLocale } from '../i18n/index.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
 import { AuthApi } from './auth.api.ts'
 
@@ -33,11 +34,30 @@ export const fetchWithAuth = async (
   input: RequestInfo,
   init?: RequestInit,
 ): Promise<Response> => {
-  const makeRequest = () =>
-    fetch(input, {
+  const makeRequest = () => {
+    // `currentLocale()` est lu ICI, à chaque appel de `makeRequest` (donc
+    // à chaque tentative, y compris le retry après refresh) — jamais mis en
+    // cache dans une variable de module : c'est le même piège que
+    // `dayjs.locale('fr')` figé dans main.tsx, une valeur localisée capturée
+    // une fois au chargement servirait la langue du premier onglet ouvert à
+    // toutes les requêtes suivantes, y compris dans un autre onglet resté
+    // sous un préfixe différent. Sans cet en-tête, le back résout la langue
+    // depuis l'Accept-Language du NAVIGATEUR (jamais envoyé jusqu'ici), pas
+    // celle du site — un francophone sur /en recevait donc du contenu de
+    // jeu (noms de cartes, quêtes, messages d'erreur...) en français malgré
+    // une interface anglaise, et inversement.
+    const headers = new Headers(init?.headers)
+    // Ne jamais écraser un Accept-Language que l'appelant aurait déjà posé
+    // explicitement — cette fonction complète, elle ne prime pas.
+    if (!headers.has('Accept-Language')) {
+      headers.set('Accept-Language', currentLocale())
+    }
+    return fetch(input, {
       ...init,
+      headers,
       credentials: 'include',
     })
+  }
 
   let response = await makeRequest()
 
