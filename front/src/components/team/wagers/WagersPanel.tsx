@@ -14,7 +14,9 @@
 // Aucun rafraîchissement n'est piloté ici : `useWagers` sonde toutes les dix
 // secondes tant qu'un duel est ACTIVE et `useWagersLive` invalide sur les
 // événements WebSocket (duels comme paris).
+import type { TFunction } from 'i18next'
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { TeamMember } from '../../../api/teams.api.ts'
 import type { BetSide, BetView, DuelView } from '../../../api/wagers.api.ts'
@@ -52,11 +54,12 @@ function isOpen(duel: DuelView): boolean {
 function duelLockReason(
   iAmBusy: boolean,
   availableOpponents: number,
+  t: TFunction<'wagers'>,
 ): string | null {
   if (iAmBusy) {
-    return 'UN DUEL À LA FOIS'
+    return t('wagersPanel.oneDuelAtATime')
   }
-  return availableOpponents === 0 ? 'AUCUN COÉQUIPIER LIBRE' : null
+  return availableOpponents === 0 ? t('wagersPanel.noFreeTeammate') : null
 }
 
 export function WagersPanel({
@@ -66,6 +69,7 @@ export function WagersPanel({
   teamId: string
   members: TeamMember[]
 }) {
+  const { t } = useTranslation('wagers')
   const { data, isLoading, isError, error } = useWagers(teamId)
   useWagersLive(teamId)
   const [proposeOpen, setProposeOpen] = useState(false)
@@ -87,7 +91,9 @@ export function WagersPanel({
   if (isLoading) {
     return (
       <ArcadeCard>
-        <p className="text-center text-text-light">Chargement des duels…</p>
+        <p className="text-center text-text-light">
+          {t('wagersPanel.loading')}
+        </p>
       </ArcadeCard>
     )
   }
@@ -95,9 +101,7 @@ export function WagersPanel({
     return (
       <ArcadeCard>
         <p className="text-center text-destructive">
-          {error instanceof Error
-            ? error.message
-            : "Impossible de charger les duels de l'équipe."}
+          {error instanceof Error ? error.message : t('wagersPanel.loadError')}
         </p>
       </ArcadeCard>
     )
@@ -115,7 +119,7 @@ export function WagersPanel({
   // membre libre à retrancher du décompte, c'est donc moi.
   const availableOpponents =
     members.filter((m) => !busy.has(m.userId)).length - 1
-  const lockReason = duelLockReason(mine !== null, availableOpponents)
+  const lockReason = duelLockReason(mine !== null, availableOpponents, t)
 
   // Un pari, contrairement à un duel, peut viser un coéquipier déjà engagé
   // dans un autre pari : le seul blocage visible côté client est l'absence de
@@ -141,7 +145,7 @@ export function WagersPanel({
         <BetCard
           bets={data.bets}
           canBet={canBet}
-          lockedReason="AUCUN COÉQUIPIER"
+          lockedReason={t('wagersPanel.noTeammateAtAll')}
           onBet={() => setBetOpen(true)}
           onJoin={(bet, side) => setJoining({ bet, side })}
         />

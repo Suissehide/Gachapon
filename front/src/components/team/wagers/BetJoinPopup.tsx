@@ -7,6 +7,7 @@
 // au règlement, alors que c'est le principe même d'un pot commun.
 import { Sparkles } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { BetSide, BetView } from '../../../api/wagers.api.ts'
 import { currentLocale } from '../../../i18n/index.ts'
@@ -41,6 +42,7 @@ export function BetJoinPopup({
   target: { bet: BetView; side: BetSide } | null
   onClose: () => void
 }) {
+  const { t } = useTranslation('wagers')
   const [stakeInput, setStakeInput] = useState('')
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const { minStake, maxStake } = economy.bet
@@ -82,16 +84,20 @@ export function BetJoinPopup({
         <PopupHeader>
           <PopupTitle
             icon={<Sparkles className="h-4 w-4" />}
-            subtitle={`${bet.target.username} sortira-t-il au moins ${rarityLabel} sur ses ${bet.pullWindow} prochains tirages ?`}
+            subtitle={t('betJoin.subtitle', {
+              target: bet.target.username,
+              rarity: rarityLabel,
+              pullWindow: bet.pullWindow,
+            })}
           >
-            {side === 'YES' ? 'Oui, il y arrivera' : 'Non, il échouera'}
+            {side === 'YES' ? t('betJoin.titleYes') : t('betJoin.titleNo')}
           </PopupTitle>
         </PopupHeader>
 
         <PopupBody className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-muted px-4 py-3">
             <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-text-light">
-              Cote actuelle de ce camp
+              {t('betJoin.currentOddsLabel')}
             </span>
             <span className="font-display text-xl font-extrabold tabular-nums text-text">
               ×{fmtMultiplier(odds)}
@@ -118,7 +124,7 @@ export function BetJoinPopup({
                 >
                   <div className="flex items-baseline justify-between gap-2">
                     <span className="font-mono text-[10px] font-bold tracking-[0.1em] text-text-light">
-                      {s === 'YES' ? 'OUI' : 'NON'}
+                      {s === 'YES' ? t('betCard.yes') : t('betCard.no')}
                     </span>
                     <span className="inline-flex items-center gap-1 font-mono text-[10px] text-text-light">
                       <Sparkles className="h-3 w-3 text-dust" />
@@ -127,7 +133,7 @@ export function BetJoinPopup({
                   </div>
                   {sideEntries.length === 0 ? (
                     <span className="font-mono text-[10px] text-text-light/60">
-                      personne
+                      {t('betJoin.nobody')}
                     </span>
                   ) : (
                     <ul className="flex flex-col gap-0.5">
@@ -153,36 +159,38 @@ export function BetJoinPopup({
 
           <div className="flex flex-col gap-1.5">
             <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-              Mise
+              {t('betPlace.stakeLabel')}
             </span>
             <Input
               type="number"
               value={stakeInput}
               onChange={(e) => setStakeInput(e.target.value)}
-              placeholder={`Entre ${minStake} et ${maxStake} poussière`}
+              placeholder={t('betPlace.stakeRangePlaceholder', {
+                min: minStake,
+                max: maxStake,
+              })}
             />
             {stakeValid && (
               <span className="inline-flex items-center gap-1.5 text-xs text-text-light">
                 <Sparkles className="h-3.5 w-3.5 text-dust" />
-                Gain à la cote actuelle : {fr(Math.round(stake * odds))}
+                {t('betJoin.gainAtCurrentOdds', {
+                  amount: fr(Math.round(stake * odds)),
+                })}
               </span>
             )}
           </div>
 
           <p className="text-sm text-text-light">
-            Cette cote n’est pas figée : chaque mise qui arrivera après la
-            tienne déplacera le partage du pot, dans un sens comme dans l’autre.
-            Elle ne peut pas descendre sous la cote calculée sur les vraies
-            chances de {bet.target.username} — c’est un plancher.
+            {t('betJoin.oddsNotFixed', { target: bet.target.username })}
           </p>
         </PopupBody>
 
         <PopupFooter>
           <Button variant="outline" onClick={onClose} disabled={isPending}>
-            Annuler
+            {t('common.cancel')}
           </Button>
           <Button onClick={submit} disabled={!stakeValid || isPending}>
-            {isPending ? 'Mise en cours…' : 'Miser'}
+            {isPending ? t('betJoin.staking') : t('betJoin.submit')}
           </Button>
         </PopupFooter>
       </PopupContent>

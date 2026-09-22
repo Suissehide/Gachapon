@@ -10,8 +10,8 @@
 // aucune de ces cartes n'est venue chez lui.
 import { Layers } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
-import { plural } from '../../../libs/utils.ts'
 import { useDuelTransfers } from '../../../queries/useWagers.ts'
 import {
   CardZoomOverlay,
@@ -39,6 +39,7 @@ export function DuelCardsPopup({
   title: string
   onClose: () => void
 }) {
+  const { t } = useTranslation('wagers')
   const { data, isLoading, isError } = useDuelTransfers(teamId, duelId)
   const transfers = data?.transfers ?? []
   const [zoomed, setZoomed] = useState<ZoomableCard | null>(null)
@@ -48,28 +49,27 @@ export function DuelCardsPopup({
       <PopupContent size="lg">
         <PopupHeader>
           <PopupTitle icon={<Layers className="h-4 w-4" />} subtitle={title}>
-            Cartes du duel
+            {t('duelCards.title')}
           </PopupTitle>
         </PopupHeader>
 
         <PopupBody>
           {isLoading ? (
             <p className="py-6 text-center text-sm text-text-light">
-              Chargement des cartes…
+              {t('duelCards.loading')}
             </p>
           ) : isError ? (
             <p className="py-6 text-center text-sm text-destructive">
-              Impossible de charger les cartes de ce duel.
+              {t('duelCards.loadError')}
             </p>
           ) : transfers.length === 0 ? (
             <p className="py-6 text-center text-sm text-text-light">
-              Aucune carte n’a changé de main sur ce duel.
+              {t('duelCards.empty')}
             </p>
           ) : (
             <>
               <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-foreground/45">
-                {transfers.length} carte{plural(transfers.length)} transférée
-                {plural(transfers.length)}
+                {t('transferredCardsLabel', { count: transfers.length })}
               </p>
               <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
                 {transfers.map((transfer) => (
@@ -95,7 +95,9 @@ export function DuelCardsPopup({
                         element: transfer.card.element,
                       })
                     }
-                    aria-label={`Agrandir ${transfer.card.name}`}
+                    aria-label={t('common.enlargeCard', {
+                      name: transfer.card.name,
+                    })}
                     className="relative aspect-[2/3] w-full rounded-[8px] hover:-translate-y-0.5 hover:bg-transparent"
                   >
                     <TcgCardFace

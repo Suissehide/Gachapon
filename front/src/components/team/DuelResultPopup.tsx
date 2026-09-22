@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { Handshake, Layers, Swords, Trophy } from 'lucide-react'
 import { useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import type {
   DuelHandView,
@@ -10,7 +11,7 @@ import type {
 } from '../../api/wagers.api.ts'
 import { currentLocale } from '../../i18n/index.ts'
 import { duelSides } from '../../libs/duel.ts'
-import { cn, formatNumber, plural } from '../../libs/utils.ts'
+import { cn, formatNumber } from '../../libs/utils.ts'
 import { useDuelHands } from '../../queries/useMyPendingDuels.ts'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
 import { CardZoomOverlay } from '../shared/tcg-card/CardZoomOverlay.tsx'
@@ -24,16 +25,12 @@ import {
   PopupTitle,
 } from '../ui/popup.tsx'
 
-function cardCountLabel(count: number): string {
-  return `${count} carte${plural(count)}`
-}
-
 type Outcome = 'WIN' | 'LOSS' | 'TIE'
 
-const TITLES: Record<Outcome, string> = {
-  WIN: 'Duel remporté !',
-  LOSS: 'Duel perdu',
-  TIE: 'Duel : égalité',
+const TITLE_KEYS: Record<Outcome, string> = {
+  WIN: 'duelResult.titleWin',
+  LOSS: 'duelResult.titleLoss',
+  TIE: 'duelResult.titleTie',
 }
 
 /** Le pseudo, détaché du corps de phrase pour se repérer d'un coup d'œil. */
@@ -69,33 +66,44 @@ function Verdict({
   themName: string
   transferredCount: number
 }) {
+  const { t } = useTranslation('wagers')
   const them = <Who name={themName} winner={outcome === 'LOSS'} />
+  const components = { opponent: them }
 
   if (outcome === 'TIE') {
-    return <>Vous finissez à égalité contre {them}. Chacun garde ses cartes.</>
+    return (
+      <Trans t={t} i18nKey="duelResult.verdictTie" components={components} />
+    )
   }
   if (outcome === 'WIN') {
     return transferredCount > 0 ? (
-      <>
-        Tu bats {them} et rafles {cardCountLabel(transferredCount)} de sa mise.
-      </>
+      <Trans
+        t={t}
+        i18nKey="verdictWinTransferred"
+        count={transferredCount}
+        components={components}
+      />
     ) : (
-      <>
-        Tu bats {them}, mais sa mise était vide : il ne possédait plus les
-        cartes qu'il avait tirées.
-      </>
+      <Trans
+        t={t}
+        i18nKey="duelResult.verdictWinEmpty"
+        components={components}
+      />
     )
   }
   return transferredCount > 0 ? (
-    <>
-      {them} l'emporte et repart avec {cardCountLabel(transferredCount)} de ta
-      mise.
-    </>
+    <Trans
+      t={t}
+      i18nKey="verdictLossTransferred"
+      count={transferredCount}
+      components={components}
+    />
   ) : (
-    <>
-      {them} l'emporte, mais ta mise était vide : tu ne possédais plus les
-      cartes que tu avais tirées.
-    </>
+    <Trans
+      t={t}
+      i18nKey="duelResult.verdictLossEmpty"
+      components={components}
+    />
   )
 }
 
@@ -203,6 +211,7 @@ function DuelResult({
   transferredCount: number
   onClose: () => void
 }) {
+  const { t } = useTranslation('wagers')
   const outcome: Outcome =
     winnerId === null ? 'TIE' : winnerId === me.id ? 'WIN' : 'LOSS'
   const iWon = outcome === 'WIN'
@@ -220,9 +229,9 @@ function DuelResult({
         <PopupHeader>
           <PopupTitle
             icon={<OutcomeIcon outcome={outcome} />}
-            subtitle="Duel de tirage terminé"
+            subtitle={t('duelResult.subtitle')}
           >
-            {TITLES[outcome]}
+            {t(TITLE_KEYS[outcome])}
           </PopupTitle>
         </PopupHeader>
         <PopupBody className="flex flex-col gap-4">
@@ -231,16 +240,16 @@ function DuelResult({
               name={me.username}
               score={myScore}
               highlight={iWon}
-              label="Toi"
+              label={t('duelResult.you')}
             />
             <div className="flex items-center font-mono text-sm text-text-light">
-              vs
+              {t('duelResult.vs')}
             </div>
             <ScoreSide
               name={them.username}
               score={theirScore}
               highlight={outcome === 'LOSS'}
-              label="Adversaire"
+              label={t('duelResult.opponentLabel')}
             />
           </div>
 
@@ -275,15 +284,20 @@ function DuelResult({
                 )}
               />
               <span className="text-sm text-text">
-                {iWon ? 'Gagné' : 'Perdu'} :{' '}
-                <strong>{cardCountLabel(transferredCount)}</strong>
+                {iWon ? t('duelResult.won') : t('duelResult.lost')} :{' '}
+                <Trans
+                  t={t}
+                  i18nKey="transferredCardCount"
+                  count={transferredCount}
+                  components={{ strong: <strong /> }}
+                />
               </span>
             </div>
           )}
         </PopupBody>
         <PopupFooter>
           <Button variant="outline" onClick={onClose}>
-            Fermer
+            {t('common.close')}
           </Button>
           {/*
             Vers l'équipe, pas vers la collection : c'est là que vit le duel,
@@ -293,7 +307,7 @@ function DuelResult({
           {teamId !== undefined && (
             <Button asChild onClick={onClose}>
               <Link to="/team/$id" params={{ id: teamId }}>
-                Voir le duel
+                {t('duelResult.viewDuel')}
               </Link>
             </Button>
           )}
@@ -350,6 +364,7 @@ function DuelHands({
   meId: string
   themId: string
 }) {
+  const { t } = useTranslation('wagers')
   const { data, isLoading, isError } = useDuelHands(teamId, duelId)
   const [zoomed, setZoomed] = useState<DuelPullView | null>(null)
 
@@ -359,7 +374,7 @@ function DuelHands({
   if (isLoading || !data) {
     return (
       <p className="font-mono text-[11px] uppercase tracking-wider text-text-light">
-        Chargement des tirages…
+        {t('duelResult.loadingHands')}
       </p>
     )
   }
@@ -369,8 +384,16 @@ function DuelHands({
 
   return (
     <div className="flex flex-col gap-3">
-      <HandRow label="Tes tirages" hand={sideOf(meId)} onZoom={setZoomed} />
-      <HandRow label="Les siens" hand={sideOf(themId)} onZoom={setZoomed} />
+      <HandRow
+        label={t('duelResult.myHand')}
+        hand={sideOf(meId)}
+        onZoom={setZoomed}
+      />
+      <HandRow
+        label={t('duelResult.theirHand')}
+        hand={sideOf(themId)}
+        onZoom={setZoomed}
+      />
       {/* La vue agrandie est partagée avec l'historique réglé des duels et le
           boss de raid : `shared/tcg-card/CardZoomOverlay`. Elle vivait ici en
           copie, et ses badges de rareté et de variante sont ceux de la
@@ -403,13 +426,14 @@ function HandRow({
   hand: DuelHandView
   onZoom: (pull: DuelPullView) => void
 }) {
+  const { t } = useTranslation('wagers')
   return (
     <div className="flex flex-col gap-1.5">
       <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
         {label}
       </span>
       {hand.pulls.length === 0 ? (
-        <p className="text-xs text-text-light">Aucun tirage compté.</p>
+        <p className="text-xs text-text-light">{t('duelResult.noPulls')}</p>
       ) : (
         // Défilement horizontal plutôt que retour à la ligne : la fenêtre est
         // étroite et une main peut compter une dizaine de cartes.
@@ -430,13 +454,15 @@ function PullCard({
   pull: DuelPullView
   onZoom: (pull: DuelPullView) => void
 }) {
+  const { t } = useTranslation('wagers')
+  const enlargeLabel = t('common.enlargeCard', { name: pull.name })
   return (
     <li className="w-28 shrink-0">
       <button
         type="button"
         onClick={() => onZoom(pull)}
-        title={`Agrandir ${pull.name}`}
-        aria-label={`Agrandir ${pull.name}`}
+        title={enlargeLabel}
+        aria-label={enlargeLabel}
         className="block w-full cursor-pointer rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
         <CardDisplay

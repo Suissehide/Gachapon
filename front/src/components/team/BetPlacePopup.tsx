@@ -1,5 +1,7 @@
+import type { TFunction } from 'i18next'
 import { Sparkles, Target } from 'lucide-react'
 import { useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import type { TeamMember } from '../../api/teams.api.ts'
 import type { CardRarity } from '../../constants/card.constant.ts'
@@ -53,6 +55,7 @@ function submitLabelFor({
   maxStake,
   quoteReady,
   noWinCause,
+  t,
 }: {
   isPending: boolean
   targetId: string
@@ -63,25 +66,26 @@ function submitLabelFor({
   maxStake: number
   quoteReady: boolean
   noWinCause: boolean
+  t: TFunction<'wagers'>
 }): string {
   if (isPending) {
-    return 'Pari en cours…'
+    return t('betPlace.submitPending')
   }
   if (targetId === '') {
-    return 'Choisis une cible'
+    return t('betPlace.submitChooseTarget')
   }
   if (stakeInput === '') {
-    return 'Entre une mise'
+    return t('betPlace.submitEnterStake')
   }
   if (!stakeValid) {
     return stake < minStake
-      ? `Mise minimum ${minStake} poussière`
-      : `Mise maximum ${maxStake} poussière`
+      ? t('betPlace.submitStakeTooLow', { min: minStake })
+      : t('betPlace.submitStakeTooHigh', { max: maxStake })
   }
   if (!quoteReady) {
-    return 'Calcul de la cote…'
+    return t('betPlace.calculatingOdds')
   }
-  return noWinCause ? 'Ce pari ne rapporterait rien' : 'Parier'
+  return noWinCause ? t('betPlace.submitNoWin') : t('betPlace.submit')
 }
 
 /**
@@ -102,6 +106,7 @@ function QuotePanel({
   multiplier: number
   potentialPayout: number | null
 }) {
+  const { t } = useTranslation('wagers')
   const locale = currentLocale()
   return (
     <div
@@ -115,29 +120,40 @@ function QuotePanel({
       {quoteReady ? (
         noWinCause ? (
           <span className="text-sm text-text">
-            Cote {fmtMultiplier(multiplier)} : le résultat est déjà (quasi)
-            certain sur cette fenêtre, ce pari ne rapporterait rien de plus que
-            la mise engagée.
+            {t('betPlace.noWinExplanation', {
+              multiplier: fmtMultiplier(multiplier),
+            })}
           </span>
         ) : (
           <>
             <span className="text-sm text-text">
-              Cote actuelle : <strong>×{fmtMultiplier(multiplier)}</strong>
+              <Trans
+                t={t}
+                i18nKey="betPlace.currentOdds"
+                values={{ multiplier: fmtMultiplier(multiplier) }}
+                components={{ strong: <strong /> }}
+              />
             </span>
             <span className="flex items-center gap-1.5 text-sm text-text">
               <Sparkles className="h-3.5 w-3.5 text-dust" />
-              Gain potentiel si le pari est gagné :{' '}
-              <strong>
-                {potentialPayout !== null
-                  ? formatNumber(potentialPayout, locale)
-                  : '—'}{' '}
-                poussière
-              </strong>
+              <Trans
+                t={t}
+                i18nKey="betPlace.potentialGain"
+                values={{
+                  payout:
+                    potentialPayout !== null
+                      ? formatNumber(potentialPayout, locale)
+                      : '—',
+                }}
+                components={{ strong: <strong /> }}
+              />
             </span>
           </>
         )
       ) : (
-        <span className="text-sm text-text-light">Calcul de la cote…</span>
+        <span className="text-sm text-text-light">
+          {t('betPlace.calculatingOdds')}
+        </span>
       )}
     </div>
   )
@@ -157,6 +173,7 @@ function QuotePanel({
  * peuvent produire ce court-circuit côté serveur (voir `bet.domain.ts`).
  */
 export function BetPlacePopup({ open, onOpenChange, teamId, members }: Props) {
+  const { t } = useTranslation('wagers')
   const locale = currentLocale()
   const [targetId, setTargetId] = useState('')
   const [minRarity, setMinRarity] = useState<CardRarity>('RARE')
@@ -227,6 +244,7 @@ export function BetPlacePopup({ open, onOpenChange, teamId, members }: Props) {
     maxStake,
     quoteReady,
     noWinCause,
+    t,
   })
 
   const canSubmit =
@@ -246,19 +264,19 @@ export function BetPlacePopup({ open, onOpenChange, teamId, members }: Props) {
         <PopupHeader>
           <PopupTitle
             icon={<Target className="h-4 w-4" />}
-            subtitle="Mise de la poussière sur le tirage d'un coéquipier"
+            subtitle={t('betPlace.subtitle')}
           >
-            Parier sur un coéquipier
+            {t('betPlace.title')}
           </PopupTitle>
         </PopupHeader>
         <PopupBody className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-              Cible
+              {t('betPlace.targetLabel')}
             </span>
             {options.length === 0 ? (
               <p className="text-sm text-text-light">
-                Aucun coéquipier disponible : tu es seul dans cette équipe.
+                {t('betPlace.noTeammates')}
               </p>
             ) : (
               <Select
@@ -266,7 +284,7 @@ export function BetPlacePopup({ open, onOpenChange, teamId, members }: Props) {
                 options={options}
                 value={targetId}
                 onValueChange={setTargetId}
-                placeholder="Choisis une cible"
+                placeholder={t('betPlace.chooseTarget')}
                 clearable={false}
               />
             )}
@@ -274,7 +292,7 @@ export function BetPlacePopup({ open, onOpenChange, teamId, members }: Props) {
 
           <div className="flex flex-col gap-1.5">
             <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-              Rareté visée
+              {t('betPlace.rarityLabel')}
             </span>
             <SegmentedControl
               // Chaque rareté porte SA couleur : c'est le seul repère qui
@@ -293,7 +311,7 @@ export function BetPlacePopup({ open, onOpenChange, teamId, members }: Props) {
 
           <div className="flex flex-col gap-1.5">
             <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-              Mise
+              {t('betPlace.stakeLabel')}
             </span>
             <Input
               type="number"
@@ -302,22 +320,29 @@ export function BetPlacePopup({ open, onOpenChange, teamId, members }: Props) {
               step={1}
               value={stakeInput}
               onChange={(e) => setStakeInput(e.target.value)}
-              placeholder={`Entre ${minStake} et ${maxStake} poussière`}
+              placeholder={t('betPlace.stakeRangePlaceholder', {
+                min: minStake,
+                max: maxStake,
+              })}
             />
             <span className="text-xs text-text-light">
-              Mise entre {formatNumber(minStake, locale)} et{' '}
-              {formatNumber(maxStake, locale)} poussière.
+              {t('betPlace.stakeRangeHint', {
+                min: formatNumber(minStake, locale),
+                max: formatNumber(maxStake, locale),
+              })}
             </span>
           </div>
 
           <p className="text-sm text-text-light">
-            La cote porte sur les {pullWindow} prochains tirages
-            {targetId !== '' ? ' de la cible' : ''} : au moins un tirage{' '}
-            {RARITY_LABEL_FR[minRarity] ?? minRarity} ou mieux dans cette
-            fenêtre te fait gagner. Tes coéquipiers pourront renchérir de ton
-            côté ou contre toi, ce qui déplacera la cote jusqu'au premier tirage
-            de la cible. La mise n'est remboursée, des deux côtés, que si la
-            cible n'a fait aucun tirage avant l'échéance.
+            {t(
+              targetId !== ''
+                ? 'betPlace.explanationWithTarget'
+                : 'betPlace.explanationGeneric',
+              {
+                pullWindow,
+                rarity: RARITY_LABEL_FR[minRarity] ?? minRarity,
+              },
+            )}
           </p>
 
           {targetId !== '' && (
@@ -331,7 +356,7 @@ export function BetPlacePopup({ open, onOpenChange, teamId, members }: Props) {
         </PopupBody>
         <PopupFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Annuler
+            {t('common.cancel')}
           </Button>
           <Button onClick={submit} disabled={!canSubmit} title={submitLabel}>
             <Target className="h-4 w-4" />

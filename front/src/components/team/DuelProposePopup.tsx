@@ -1,5 +1,6 @@
 import { Swords } from 'lucide-react'
 import { useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import type { TeamMember } from '../../api/teams.api.ts'
 import type { DuelView } from '../../api/wagers.api.ts'
@@ -37,6 +38,7 @@ export function DuelProposePopup({
   members,
   duels,
 }: Props) {
+  const { t } = useTranslation('wagers')
   const [opponentId, setOpponentId] = useState('')
   const { mutate: propose, isPending } = useProposeDuel(teamId)
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
@@ -69,10 +71,10 @@ export function DuelProposePopup({
   // Le libellé porte la raison, pas seulement l'info-bulle : sur écran
   // tactile il n'y a pas de survol pour révéler un `title`.
   const submitLabel = isPending
-    ? 'Envoi en cours…'
+    ? t('duelPropose.submitSending')
     : opponentId === ''
-      ? 'Choisis un adversaire'
-      : 'Envoyer le défi'
+      ? t('duelPropose.submitChooseOpponent')
+      : t('duelPropose.submit')
 
   return (
     <Popup open={open} onOpenChange={onOpenChange}>
@@ -80,20 +82,19 @@ export function DuelProposePopup({
         <PopupHeader>
           <PopupTitle
             icon={<Swords className="h-4 w-4" />}
-            subtitle="Mise tes prochains tirages contre un coéquipier"
+            subtitle={t('duelPropose.subtitle')}
           >
-            Défier un coéquipier
+            {t('duelPropose.title')}
           </PopupTitle>
         </PopupHeader>
         <PopupBody className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-              Adversaire
+              {t('duelPropose.opponentLabel')}
             </span>
             {options.length === 0 ? (
               <p className="text-sm text-text-light">
-                Aucun coéquipier disponible : ils sont tous déjà en duel, ou tu
-                es seul dans cette équipe.
+                {t('duelPropose.noTeammates')}
               </p>
             ) : (
               <Select
@@ -101,7 +102,7 @@ export function DuelProposePopup({
                 options={options}
                 value={opponentId}
                 onValueChange={setOpponentId}
-                placeholder="Choisis un adversaire"
+                placeholder={t('duelPropose.chooseOpponent')}
                 clearable={false}
               />
             )}
@@ -109,28 +110,21 @@ export function DuelProposePopup({
 
           <ul className="flex flex-col gap-2 rounded-xl border border-border bg-card/60 p-3 text-sm text-text-light">
             <li>
-              Vos <strong className="text-text">{pullCount}</strong> prochains
-              tirages comptent, chacun de votre côté.
+              <Trans
+                t={t}
+                i18nKey="duelPropose.ruleCounts"
+                values={{ pullCount }}
+                components={{ strong: <strong className="text-text" /> }}
+              />
             </li>
-            <li>
-              Le meilleur score l'emporte et rafle les cartes tirées par
-              l'autre. Le barème est celui du classement : plus la rareté est
-              haute, plus la carte vaut, et une brillante compte une fois et
-              demie.
-            </li>
-            <li>
-              Tant que le duel dure, les cartes comptées ne peuvent plus être
-              recyclées ni transformées en poussière.
-            </li>
-            <li>
-              En cas d'égalité, chacun garde ses cartes. Si l'un traîne, le duel
-              se règle à son échéance et les tirages manquants valent zéro.
-            </li>
+            <li>{t('duelPropose.ruleScoring')}</li>
+            <li>{t('duelPropose.ruleLocked')}</li>
+            <li>{t('duelPropose.ruleTie')}</li>
           </ul>
         </PopupBody>
         <PopupFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Annuler
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={submit}

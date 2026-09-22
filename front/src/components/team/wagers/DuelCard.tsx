@@ -19,6 +19,7 @@
 import { Link } from '@tanstack/react-router'
 import dayjs from 'dayjs'
 import { Sparkles, Swords } from 'lucide-react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import type { DuelView } from '../../../api/wagers.api.ts'
 import { currentLocale } from '../../../i18n/index.ts'
@@ -135,14 +136,20 @@ function LiveShell({
 }
 
 function VsRow({ duel, center }: { duel: DuelView; center: React.ReactNode }) {
+  const { t } = useTranslation('wagers')
   const { me, them } = duelSides(duel)
   return (
     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3.5">
-      <DuelFace name={me.username} caption="TOI" hue={MY_HUE} side="left" />
+      <DuelFace
+        name={me.username}
+        caption={t('duelCard.you')}
+        hue={MY_HUE}
+        side="left"
+      />
       {center}
       <DuelFace
         name={them.username}
-        caption="ADVERSAIRE"
+        caption={t('duelCard.opponent')}
         hue={THEIR_HUE}
         side="right"
       />
@@ -151,17 +158,20 @@ function VsRow({ duel, center }: { duel: DuelView; center: React.ReactNode }) {
 }
 
 function ActiveDuel({ duel }: { duel: DuelView }) {
+  const { t } = useTranslation('wagers')
   const { myScore, theirScore, myPulls, theirPulls } = duelSides(duel)
   const deadline = duel.deadlineAt
   const pill =
     deadline === null
-      ? 'RÈGLEMENT À L’ÉCHÉANCE'
+      ? t('duelCard.settleAtDeadline')
       : dayjs(deadline).isAfter(dayjs())
-        ? `RÈGLEMENT ${dayjs(deadline).fromNow().toUpperCase()}`
-        : 'RÈGLEMENT IMMINENT'
+        ? t('duelCard.settleIn', {
+            time: dayjs(deadline).fromNow().toUpperCase(),
+          })
+        : t('duelCard.settleImminent')
 
   return (
-    <LiveShell label="Duel en cours" pill={pill}>
+    <LiveShell label={t('duelCard.activeLabel')} pill={pill}>
       <VsRow
         duel={duel}
         center={
@@ -184,7 +194,7 @@ function ActiveDuel({ duel }: { duel: DuelView }) {
           align="left"
         />
         <span className="font-mono text-[9px] tracking-[0.14em] text-foreground/45">
-          TIRAGES RESTANTS
+          {t('duelCard.pullsRemainingLabel')}
         </span>
         <PullPips
           left={pullsLeft(theirPulls, duel.pullCount)}
@@ -197,7 +207,7 @@ function ActiveDuel({ duel }: { duel: DuelView }) {
         <Button variant="amber" size="action" asChild>
           <Link to="/play">
             <Sparkles className="h-4 w-4" />
-            Tirer pour marquer
+            {t('duelCard.pullToScore')}
           </Link>
         </Button>
       </div>
@@ -226,8 +236,12 @@ function ReceivedDuel({
   onDecline: (duelId: string) => void
   busy: boolean
 }) {
+  const { t } = useTranslation('wagers')
   return (
-    <LiveShell label="Défi reçu" pill={`${duel.pullCount} TIRAGES CHACUN`}>
+    <LiveShell
+      label={t('duelCard.receivedLabel')}
+      pill={t('pullsEachCount', { count: duel.pullCount })}
+    >
       <VsRow duel={duel} center={<Swords className="h-5 w-5 text-primary" />} />
       <div className="mt-3.5 flex justify-center gap-2">
         <Button
@@ -236,7 +250,7 @@ function ReceivedDuel({
           disabled={busy}
           onClick={() => onAccept(duel.id)}
         >
-          {busy ? 'Envoi en cours…' : 'Accepter'}
+          {busy ? t('duelCard.accepting') : t('duelCard.accept')}
         </Button>
         <Button
           variant="outline"
@@ -244,7 +258,7 @@ function ReceivedDuel({
           disabled={busy}
           onClick={() => onDecline(duel.id)}
         >
-          Refuser
+          {t('duelCard.decline')}
         </Button>
       </div>
     </LiveShell>
@@ -260,14 +274,20 @@ function SentDuel({
   onCancel: (duelId: string) => void
   busy: boolean
 }) {
+  const { t } = useTranslation('wagers')
   return (
     <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border-[1.5px] border-dashed border-primary-light bg-[#fffdf9] px-4 py-3.5">
       <div className="min-w-0">
         <p className="truncate text-[13.5px] text-text">
-          Défi envoyé à <strong>{duel.opponent.username}</strong>
+          <Trans
+            t={t}
+            i18nKey="duelCard.challengeSentTo"
+            values={{ name: duel.opponent.username }}
+            components={{ strong: <strong /> }}
+          />
         </p>
         <p className="mt-0.5 font-mono text-[10px] tracking-[0.12em] text-foreground/45">
-          EN ATTENTE DE SA RÉPONSE
+          {t('duelCard.awaitingResponse')}
         </p>
       </div>
       {/* Teinte d'annulation posée en surcharge de la variante `mono`, comme
@@ -281,7 +301,7 @@ function SentDuel({
         onClick={() => onCancel(duel.id)}
         className="shrink-0 hover:border-red-300 hover:bg-red-50 hover:text-red-700"
       >
-        {busy ? 'ANNULATION…' : 'ANNULER'}
+        {busy ? t('duelCard.cancelling') : t('duelCard.cancel')}
       </Button>
     </div>
   )
@@ -289,10 +309,11 @@ function SentDuel({
 
 /** Les duels des autres, sous le bloc : lisibles, jamais actionnables. */
 function SpectatorDuels({ duels }: { duels: DuelView[] }) {
+  const { t } = useTranslation('wagers')
   return (
     <div className="mt-4">
       <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-foreground/45">
-        En cours dans l’équipe
+        {t('duelCard.inProgressInTeam')}
       </span>
       <ul className="mt-2 flex flex-col gap-1.5">
         {duels.map((duel) => (
@@ -309,8 +330,11 @@ function SpectatorDuels({ duels }: { duels: DuelView[] }) {
             </span>
             <span className="shrink-0 font-mono text-[10px] tracking-[0.1em] text-foreground/45">
               {duel.status === 'PENDING'
-                ? 'EN ATTENTE'
-                : `${duel.challengerPulls + duel.opponentPulls}/${duel.pullCount * 2} TIRAGES`}
+                ? t('duelCard.pending')
+                : t('duelCard.pullsProgress', {
+                    done: duel.challengerPulls + duel.opponentPulls,
+                    total: duel.pullCount * 2,
+                  })}
             </span>
           </li>
         ))}
@@ -343,17 +367,18 @@ export function DuelCard({
   onCancel: (duelId: string) => void
   inFlightDuelId: string | null
 }) {
+  const { t } = useTranslation('wagers')
   return (
     <WagerCard>
       <WagerCardHead
-        label="Duel de tirage"
-        title="Défis d’équipe"
-        note="Deux coéquipiers tirent le même nombre de fois. Le meilleur total de cartes l’emporte, et rafle la main du perdant."
+        label={t('duelCard.headLabel')}
+        title={t('duelCard.headTitle')}
+        note={t('duelCard.headNote')}
         action={
           canChallenge ? (
             <Button variant="amber" size="action" onClick={onChallenge}>
               <Swords className="h-4 w-4" />
-              Défier
+              {t('duelCard.challengeButton')}
             </Button>
           ) : (
             <LockedPill icon={Swords}>{lockedReason}</LockedPill>
@@ -362,10 +387,7 @@ export function DuelCard({
       />
 
       {mine === null ? (
-        <WagerEmpty icon={Swords}>
-          Aucun duel en cours. Défie un coéquipier et comparez vos tirages sur
-          une même fenêtre.
-        </WagerEmpty>
+        <WagerEmpty icon={Swords}>{t('duelCard.emptyBody')}</WagerEmpty>
       ) : mine.status === 'ACTIVE' ? (
         <ActiveDuel duel={mine} />
       ) : mine.myRole === 'OPPONENT' ? (

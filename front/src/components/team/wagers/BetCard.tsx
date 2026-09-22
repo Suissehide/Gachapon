@@ -11,6 +11,7 @@
 // La barre de progression n'est pas un contrôle : une fois la fenêtre
 // entamée, plus rien ne se pose sur ce marché.
 import { ChevronRight, Sparkles, Target } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import type { BetEntryView, BetSide, BetView } from '../../../api/wagers.api.ts'
 import { currentLocale } from '../../../i18n/index.ts'
@@ -44,6 +45,7 @@ function SideBlock({
   entries: BetEntryView[]
   onJoin: (() => void) | null
 }) {
+  const { t } = useTranslation('wagers')
   return (
     <div
       className={cn(
@@ -74,7 +76,7 @@ function SideBlock({
         </span>
         {mine ? (
           <span className="font-mono text-[9px] tracking-[0.12em] text-primary-dark">
-            TON CAMP
+            {t('betCard.yourSide')}
           </span>
         ) : onJoin !== null ? (
           <Button
@@ -84,7 +86,7 @@ function SideBlock({
             onClick={onJoin}
             className="px-2.5 py-1"
           >
-            RENCHÉRIR
+            {t('betCard.raiseButton')}
           </Button>
         ) : null}
       </div>
@@ -107,8 +109,7 @@ function SideBlock({
           ))}
           {entries.length > NAMES_SHOWN && (
             <li className="font-mono text-[9px] tracking-[0.1em] text-foreground/40">
-              +{entries.length - NAMES_SHOWN} autre
-              {entries.length - NAMES_SHOWN > 1 ? 's' : ''}
+              {t('otherBettorsCount', { count: entries.length - NAMES_SHOWN })}
             </li>
           )}
         </ul>
@@ -124,6 +125,7 @@ function BetTicket({
   bet: BetView
   onJoin: (bet: BetView, side: BetSide) => void
 }) {
+  const { t } = useTranslation('wagers')
   const rarityLabel = RARITY_LABEL_FR[bet.minRarity] ?? bet.minRarity
   const seenPct = Math.min(
     100,
@@ -147,14 +149,14 @@ function BetTicket({
         </span>
         {!bet.open && (
           <span className="shrink-0 rounded-full border border-foreground/10 bg-card px-2 py-0.5 font-mono text-[10px] font-bold text-foreground/45">
-            MISES CLOSES
+            {t('betCard.closed')}
           </span>
         )}
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-2">
         <SideBlock
-          label="OUI"
+          label={t('betCard.yes')}
           pool={bet.poolYes}
           odds={bet.oddsYes}
           mine={bet.mySide === 'YES'}
@@ -163,7 +165,7 @@ function BetTicket({
           onJoin={canJoin ? () => onJoin(bet, 'YES') : null}
         />
         <SideBlock
-          label="NON"
+          label={t('betCard.no')}
           pool={bet.poolNo}
           odds={bet.oddsNo}
           mine={bet.mySide === 'NO'}
@@ -175,14 +177,17 @@ function BetTicket({
 
       {bet.mySide !== null && (
         <p className="mt-2 font-mono text-[10px] tracking-[0.06em] text-foreground/45">
-          Ta mise {fr(bet.myStake)} · gain si{' '}
-          {bet.mySide === 'YES' ? 'oui' : 'non'}{' '}
-          {fr(
-            Math.round(
-              bet.myStake * (bet.mySide === 'YES' ? bet.oddsYes : bet.oddsNo),
+          {t('betCard.yourStakeLine', {
+            stake: fr(bet.myStake),
+            side:
+              bet.mySide === 'YES' ? t('betCard.sideYes') : t('betCard.sideNo'),
+            payout: fr(
+              Math.round(
+                bet.myStake * (bet.mySide === 'YES' ? bet.oddsYes : bet.oddsNo),
+              ),
             ),
-          )}
-          {bet.open && ' — la cote bouge encore à chaque mise'}
+          })}
+          {bet.open && t('betCard.oddsStillMoving')}
         </p>
       )}
 
@@ -193,9 +198,12 @@ function BetTicket({
         />
       </div>
       <div className="mt-1.5 flex justify-between gap-3 font-mono text-[10px] tracking-[0.1em] text-foreground/45">
-        <span>FENÊTRE DE PARI</span>
+        <span>{t('betCard.windowLabel')}</span>
         <span>
-          {bet.pullsSeen} / {bet.pullWindow} TIRAGES VUS
+          {t('betCard.pullsSeenLabel', {
+            seen: bet.pullsSeen,
+            window: bet.pullWindow,
+          })}
         </span>
       </div>
     </li>
@@ -215,17 +223,18 @@ export function BetCard({
   onBet: () => void
   onJoin: (bet: BetView, side: BetSide) => void
 }) {
+  const { t } = useTranslation('wagers')
   return (
     <WagerCard>
       <WagerCardHead
-        label="Pari sur un tirage"
-        title="Paris entre coéquipiers"
-        note="Mise de la poussière sur la prochaine série de tirages d’un coéquipier. La cote suit la rareté visée."
+        label={t('betCard.headLabel')}
+        title={t('betCard.headTitle')}
+        note={t('betCard.headNote')}
         action={
           canBet ? (
             <Button variant="amber" size="action" onClick={onBet}>
               <Target className="h-4 w-4" />
-              Parier
+              {t('betCard.betButton')}
             </Button>
           ) : (
             <LockedPill icon={Target}>{lockedReason}</LockedPill>
@@ -234,10 +243,7 @@ export function BetCard({
       />
 
       {bets.length === 0 ? (
-        <WagerEmpty icon={Target}>
-          Aucun pari ouvert. Choisis un coéquipier, une rareté à atteindre, et
-          ta mise.
-        </WagerEmpty>
+        <WagerEmpty icon={Target}>{t('betCard.emptyBody')}</WagerEmpty>
       ) : (
         <ul className="mt-4 flex flex-col gap-2.5">
           {bets.map((bet) => (
