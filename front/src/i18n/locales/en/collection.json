@@ -65,5 +65,33 @@
     "setWish": "Set as wish",
     "ownedLabel": "Owned",
     "recycle": "Recycle"
+  },
+  "recycleModal": {
+    "title": "Recycle cards",
+    "variantHolographic": "🌈 Holographic",
+    "variantBrilliant": "✨ Brilliant",
+    "perCopy": "per copy",
+    "copiesAvailable_one": "copy",
+    "copiesAvailable_other": "copies",
+    "quantityLabel": "Quantity to recycle",
+    "all": "All ({{count}})",
+    "youWillGet": "You will get",
+    "dustBreakdown": "{{quantity}} × {{dustPerCard}} dust · multiplier bonus excluded",
+    "cancel": "Cancel",
+    "pending": "Recycling…",
+    "confirm_one": "Recycle {{count}} card",
+    "confirm_other": "Recycle {{count}} cards"
+  },
+  "recycleAllModal": {
+    "title": "Recycle everything",
+    "intro": "Recycle every duplicate (normal variant) up to the chosen rarity in one go. One copy of each card is kept, brilliants and holographics are left untouched.",
+    "thresholdLabel": "Up to rarity",
+    "youWillGet": "You will get",
+    "duplicatesBreakdown_one": "{{count}} duplicate recycled · multiplier bonus excluded",
+    "duplicatesBreakdown_other": "{{count}} duplicates recycled · multiplier bonus excluded",
+    "cancel": "Cancel",
+    "pending": "Recycling…",
+    "confirm_one": "Recycle {{count}} duplicate",
+    "confirm_other": "Recycle {{count}} duplicates"
   }
 }

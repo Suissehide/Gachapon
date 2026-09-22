@@ -1,11 +1,12 @@
 import { RefreshCw, Sparkles } from 'lucide-react'
 import { type ReactNode, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type {
   BulkRecycleMaxRarity,
   UserCard,
 } from '../../api/collection.api.ts'
-import { currentLocale } from '../../i18n/index.ts'
+import i18n, { currentLocale } from '../../i18n/index.ts'
 import { RARITY_COLOR_VAR } from '../../libs/rarity.ts'
 import { formatNumber } from '../../libs/utils.ts'
 import { useRecycleAll } from '../../queries/useCollection.ts'
@@ -24,7 +25,7 @@ import {
   PopupHeader,
   PopupTitle,
 } from '../ui/popup.tsx'
-import { RARITY_LABELS, RARITY_ORDER } from './CollectionCard.tsx'
+import { RARITY_ORDER } from './CollectionCard.tsx'
 import { RarityDot } from './CollectionFilters.tsx'
 
 interface RecycleAllModalProps {
@@ -39,7 +40,10 @@ const THRESHOLD_OPTIONS: {
   icon: ReactNode
 }[] = (['COMMON', 'UNCOMMON', 'RARE', 'EPIC'] as const).map((r) => ({
   value: r,
-  label: RARITY_LABELS[r],
+  // Ces options qualifient une RARETÉ (« Jusqu'à la rareté ») : accord au
+  // féminin, `common:rarity.*` — pas `common:cardRarity.*` (masculin), qui
+  // qualifie une carte.
+  label: i18n.t(`common:rarity.${r.toLowerCase()}`),
   icon: <RarityDot color={RARITY_COLOR_VAR[r]} />,
 }))
 
@@ -48,6 +52,7 @@ export function RecycleAllModal({
   onOpenChange,
   userCards,
 }: RecycleAllModalProps) {
+  const { t } = useTranslation('collection')
   const locale = currentLocale()
   const [maxRarity, setMaxRarity] = useState<BulkRecycleMaxRarity>('COMMON')
   const { mutate: recycleAll, isPending } = useRecycleAll()
@@ -82,19 +87,19 @@ export function RecycleAllModal({
       <PopupContent>
         <PopupHeader>
           <PopupTitle icon={<RefreshCw className="h-4 w-4" />}>
-            Tout recycler
+            {t('collection:recycleAllModal.title')}
           </PopupTitle>
         </PopupHeader>
 
         <PopupBody className="space-y-5">
           <p className="text-sm text-text-light">
-            Recycle d'un coup tous les doublons (variante normale) jusqu'à la
-            rareté choisie. Un exemplaire de chaque carte est conservé, les
-            brillantes et holographiques ne sont pas touchées.
+            {t('collection:recycleAllModal.intro')}
           </p>
 
           <div className="space-y-2">
-            <Label className="text-xs text-text-light">Jusqu'à la rareté</Label>
+            <Label className="text-xs text-text-light">
+              {t('collection:recycleAllModal.thresholdLabel')}
+            </Label>
             <Select
               id="recycle-max-rarity"
               options={THRESHOLD_OPTIONS}
@@ -106,15 +111,16 @@ export function RecycleAllModal({
 
           <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-center">
             <p className="text-[11px] uppercase tracking-widest text-text-light/60 mb-1">
-              Tu obtiendras
+              {t('collection:recycleAllModal.youWillGet')}
             </p>
             <p className="text-3xl font-black text-primary tabular-nums">
               {formatNumber(preview.dust, locale)}
               <Sparkles className="ml-1.5 inline h-6 w-6 text-primary" />
             </p>
             <p className="mt-1 text-[11px] text-text-light/50">
-              {preview.copies} doublon{preview.copies > 1 ? 's' : ''} recyclé
-              {preview.copies > 1 ? 's' : ''} · hors bonus multiplicateur
+              {t('collection:recycleAllModal.duplicatesBreakdown', {
+                count: preview.copies,
+              })}
             </p>
           </div>
         </PopupBody>
@@ -125,7 +131,7 @@ export function RecycleAllModal({
             variant="secondary"
             onClick={() => onOpenChange(false)}
           >
-            Annuler
+            {t('collection:recycleAllModal.cancel')}
           </Button>
           <Button
             type="button"
@@ -134,8 +140,10 @@ export function RecycleAllModal({
           >
             <RefreshCw className="h-3.5 w-3.5" />
             {isPending
-              ? 'Recyclage…'
-              : `Recycler ${preview.copies} doublon${preview.copies > 1 ? 's' : ''}`}
+              ? t('collection:recycleAllModal.pending')
+              : t('collection:recycleAllModal.confirm', {
+                  count: preview.copies,
+                })}
           </Button>
         </PopupFooter>
       </PopupContent>

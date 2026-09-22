@@ -65,5 +65,33 @@
     "setWish": "Définir comme vœu",
     "ownedLabel": "Possédées",
     "recycle": "Recycler"
+  },
+  "recycleModal": {
+    "title": "Recycler des cartes",
+    "variantHolographic": "🌈 Holographique",
+    "variantBrilliant": "✨ Brillante",
+    "perCopy": "par copie",
+    "copiesAvailable_one": "exemplaire",
+    "copiesAvailable_other": "exemplaires",
+    "quantityLabel": "Quantité à recycler",
+    "all": "Tout ({{count}})",
+    "youWillGet": "Tu obtiendras",
+    "dustBreakdown": "{{quantity}} × {{dustPerCard}} poussière · hors bonus multiplicateur",
+    "cancel": "Annuler",
+    "pending": "Recyclage…",
+    "confirm_one": "Recycler {{count}} carte",
+    "confirm_other": "Recycler {{count}} cartes"
+  },
+  "recycleAllModal": {
+    "title": "Tout recycler",
+    "intro": "Recycle d'un coup tous les doublons (variante normale) jusqu'à la rareté choisie. Un exemplaire de chaque carte est conservé, les brillantes et holographiques ne sont pas touchées.",
+    "thresholdLabel": "Jusqu'à la rareté",
+    "youWillGet": "Tu obtiendras",
+    "duplicatesBreakdown_one": "{{count}} doublon recyclé · hors bonus multiplicateur",
+    "duplicatesBreakdown_other": "{{count}} doublons recyclés · hors bonus multiplicateur",
+    "cancel": "Annuler",
+    "pending": "Recyclage…",
+    "confirm_one": "Recycler {{count}} doublon",
+    "confirm_other": "Recycler {{count}} doublons"
   }
 }

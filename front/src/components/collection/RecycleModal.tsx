@@ -1,5 +1,6 @@
 import { Minus, Plus, RefreshCw, Sparkles } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { Card, CardVariant } from '../../api/collection.api.ts'
 import { currentLocale } from '../../i18n/index.ts'
@@ -37,6 +38,7 @@ export function RecycleModal({
   card,
   variant,
 }: RecycleModalProps) {
+  const { t } = useTranslation('collection')
   const [quantity, setQuantity] = useState(1)
   const { mutate: recycle, isPending } = useRecycle()
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
@@ -74,7 +76,7 @@ export function RecycleModal({
       <PopupContent>
         <PopupHeader>
           <PopupTitle icon={<RefreshCw className="h-4 w-4" />}>
-            Recycler des cartes
+            {t('collection:recycleModal.title')}
           </PopupTitle>
         </PopupHeader>
 
@@ -98,15 +100,17 @@ export function RecycleModal({
               {variant !== 'NORMAL' && (
                 <p className="mt-0.5 text-xs font-semibold">
                   {variant === 'HOLOGRAPHIC'
-                    ? '🌈 Holographique'
-                    : '✨ Brillante'}
+                    ? t('collection:recycleModal.variantHolographic')
+                    : t('collection:recycleModal.variantBrilliant')}
                 </p>
               )}
               <p className="mt-1 flex items-center gap-1 text-xs text-text-light">
-                {dustPerCard} <Sparkles className="h-3 w-3 text-primary" /> par
-                copie ·{' '}
+                {dustPerCard} <Sparkles className="h-3 w-3 text-primary" />{' '}
+                {t('collection:recycleModal.perCopy')} ·{' '}
                 <span className="font-semibold text-text">{maxRecyclable}</span>{' '}
-                exemplaire{maxRecyclable > 1 ? 's' : ''}
+                {t('collection:recycleModal.copiesAvailable', {
+                  count: maxRecyclable,
+                })}
               </p>
             </div>
           </div>
@@ -114,7 +118,7 @@ export function RecycleModal({
           {/* Quantity stepper */}
           <div className="space-y-2">
             <Label className="text-xs text-text-light">
-              Quantité à recycler
+              {t('collection:recycleModal.quantityLabel')}
             </Label>
             <div className="flex items-center gap-2">
               <Button
@@ -151,7 +155,7 @@ export function RecycleModal({
                 disabled={quantity === maxRecyclable}
                 className="ml-1"
               >
-                Tout ({maxRecyclable})
+                {t('collection:recycleModal.all', { count: maxRecyclable })}
               </Button>
             </div>
           </div>
@@ -159,14 +163,17 @@ export function RecycleModal({
           {/* Dust preview */}
           <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-center">
             <p className="text-[11px] uppercase tracking-widest text-text-light/60 mb-1">
-              Tu obtiendras
+              {t('collection:recycleModal.youWillGet')}
             </p>
             <p className="text-3xl font-black text-primary tabular-nums">
               {formatNumber(dustTotal, locale)}
               <Sparkles className="ml-1.5 inline h-6 w-6 text-primary" />
             </p>
             <p className="mt-1 text-[11px] text-text-light/50">
-              {quantity} × {dustPerCard} poussière · hors bonus multiplicateur
+              {t('collection:recycleModal.dustBreakdown', {
+                quantity,
+                dustPerCard,
+              })}
             </p>
           </div>
         </PopupBody>
@@ -177,13 +184,13 @@ export function RecycleModal({
             variant="secondary"
             onClick={() => onOpenChange(false)}
           >
-            Annuler
+            {t('collection:recycleModal.cancel')}
           </Button>
           <Button type="button" onClick={handleRecycle} disabled={isPending}>
             <RefreshCw className="h-3.5 w-3.5" />
             {isPending
-              ? 'Recyclage…'
-              : `Recycler ${quantity} carte${quantity > 1 ? 's' : ''}`}
+              ? t('collection:recycleModal.pending')
+              : t('collection:recycleModal.confirm', { count: quantity })}
           </Button>
         </PopupFooter>
       </PopupContent>
