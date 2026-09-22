@@ -1,4 +1,5 @@
 import { Award, Check, Lock, Sparkles, Star, Ticket } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import {
   type AchievementWithProgress,
@@ -15,6 +16,7 @@ interface Props {
 const fmt = (n: number) => formatNumber(n, currentLocale())
 
 export function AchievementCard({ achievement }: Props) {
+  const { t } = useTranslation('achievements')
   const pct = Math.min(
     100,
     Math.round(
@@ -78,7 +80,9 @@ export function AchievementCard({ achievement }: Props) {
             }}
           >
             {done && <Check className="h-3 w-3" />}
-            {done ? 'DÉBLOQUÉ' : 'À DÉBLOQUER'}
+            {done
+              ? t('achievements:card.unlocked')
+              : t('achievements:card.locked')}
           </div>
         </div>
 
@@ -134,7 +138,7 @@ export function AchievementCard({ achievement }: Props) {
             className="font-mono text-[10px] uppercase tracking-[0.14em]"
             style={{ color: 'rgba(27,23,38,.45)' }}
           >
-            RÉCOMPENSE
+            {t('achievements:card.reward')}
           </span>
           <div className="flex items-center gap-3.5">
             {reward.tokens > 0 && (
@@ -165,7 +169,9 @@ export function AchievementCard({ achievement }: Props) {
               className="basis-full font-mono text-[11px] font-bold uppercase tracking-[0.06em]"
               style={{ color: RARITY_HEX[reward.cardRarity] ?? '#1b1726' }}
             >
-              + Carte {RARITY_FR[reward.cardRarity] ?? reward.cardRarity}
+              {t('achievements:card.rewardCard', {
+                rarity: RARITY_FR[reward.cardRarity] ?? reward.cardRarity,
+              })}
             </div>
           )}
         </div>

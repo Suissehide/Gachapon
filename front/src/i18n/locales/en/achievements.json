@@ -15,5 +15,46 @@
       "loadAchievements": "Error loading the achievements",
       "loadFamilies": "Error loading the families"
     }
+  },
+  "breadcrumbCurrent": "Achievements",
+  "title": "Achievement gallery",
+  "unlockedLabel": "UNLOCKED · {{pct}}%",
+  "filter": {
+    "label": "Filter",
+    "all": "All ({{count}})",
+    "unlocked": "Unlocked ({{count}})",
+    "locked": "To unlock ({{count}})"
+  },
+  "grid": {
+    "unlockedCount": "{{unlocked}} / {{total}} UNLOCKED"
+  },
+  "unlockToast": {
+    "title": "Achievement unlocked",
+    "reward": "Reward",
+    "rewardCard": "+ {{rarity}} card"
+  },
+  "card": {
+    "unlocked": "UNLOCKED",
+    "locked": "TO UNLOCK",
+    "reward": "REWARD",
+    "rewardCard": "+ {{rarity}} card"
+  },
+  "hiddenCard": {
+    "label": "Hidden achievement",
+    "description": "Unlock to reveal the description and rewards."
+  },
+  "empty": {
+    "noAchievements": {
+      "title": "No achievement available",
+      "subtitle": "Come back later"
+    },
+    "noneUnlocked": {
+      "title": "No achievement unlocked yet",
+      "subtitle": "Keep playing"
+    },
+    "allUnlocked": {
+      "title": "All achievements unlocked",
+      "subtitle": "Well done!"
+    }
   }
 }

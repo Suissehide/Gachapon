@@ -15,5 +15,46 @@
       "loadAchievements": "Erreur lors de la récupération des succès",
       "loadFamilies": "Erreur lors de la récupération des familles"
     }
+  },
+  "breadcrumbCurrent": "Succès",
+  "title": "Galerie des succès",
+  "unlockedLabel": "DÉBLOQUÉS · {{pct}}%",
+  "filter": {
+    "label": "Filtrer",
+    "all": "Tous ({{count}})",
+    "unlocked": "Réussis ({{count}})",
+    "locked": "À débloquer ({{count}})"
+  },
+  "grid": {
+    "unlockedCount": "{{unlocked}} / {{total}} DÉBLOQUÉS"
+  },
+  "unlockToast": {
+    "title": "Succès débloqué",
+    "reward": "Récompense",
+    "rewardCard": "+ carte {{rarity}}"
+  },
+  "card": {
+    "unlocked": "DÉBLOQUÉ",
+    "locked": "À DÉBLOQUER",
+    "reward": "RÉCOMPENSE",
+    "rewardCard": "+ Carte {{rarity}}"
+  },
+  "hiddenCard": {
+    "label": "Succès caché",
+    "description": "Débloque pour révéler la description et les récompenses."
+  },
+  "empty": {
+    "noAchievements": {
+      "title": "Aucun succès disponible",
+      "subtitle": "Reviens plus tard"
+    },
+    "noneUnlocked": {
+      "title": "Aucun succès réussi pour le moment",
+      "subtitle": "Continue de jouer"
+    },
+    "allUnlocked": {
+      "title": "Tous les succès sont débloqués",
+      "subtitle": "Bravo !"
+    }
   }
 }

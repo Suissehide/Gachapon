@@ -10,6 +10,7 @@ import {
   Zap,
 } from 'lucide-react'
 import type { ComponentType, SVGProps } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import {
   type AchievementWithProgress,
@@ -65,6 +66,7 @@ function getVisual(family: string) {
 }
 
 export function AchievementGrid({ achievements }: Props) {
+  const { t } = useTranslation('achievements')
   const grouped = new Map<string, AchievementWithProgress[]>()
   for (const a of achievements) {
     const key = a.family ?? HIDDEN_FAMILY
@@ -126,7 +128,7 @@ export function AchievementGrid({ achievements }: Props) {
                 className="font-mono text-[11px] uppercase tracking-[0.15em]"
                 style={{ color: 'rgba(27,23,38,.5)' }}
               >
-                {unlocked} / {total} DÉBLOQUÉS
+                {t('achievements:grid.unlockedCount', { unlocked, total })}
               </span>
             </div>
 

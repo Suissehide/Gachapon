@@ -1,6 +1,8 @@
 import { Lock } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export function HiddenAchievementCard() {
+  const { t } = useTranslation('achievements')
   return (
     <div
       className="flex flex-col rounded-2xl border border-dashed p-[18px]"
@@ -32,7 +34,7 @@ export function HiddenAchievementCard() {
             className="mt-1 font-mono text-[9.5px] uppercase tracking-[0.14em]"
             style={{ color: 'rgba(27,23,38,.45)' }}
           >
-            Succès caché
+            {t('achievements:hiddenCard.label')}
           </div>
         </div>
 
@@ -48,7 +50,7 @@ export function HiddenAchievementCard() {
         className="mt-3.5 text-[13px] leading-[1.45] [min-height:38px]"
         style={{ color: 'rgba(27,23,38,.45)' }}
       >
-        Débloque pour révéler la description et les récompenses.
+        {t('achievements:hiddenCard.description')}
       </p>
     </div>
   )

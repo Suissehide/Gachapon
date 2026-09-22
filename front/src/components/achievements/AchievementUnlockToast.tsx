@@ -1,5 +1,6 @@
 import { Award, Sparkles, Star, Ticket, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import {
   RARITY_FR,
@@ -11,6 +12,7 @@ const DISPLAY_MS = 5000
 const EXIT_MS = 350
 
 export function AchievementUnlockToast() {
+  const { t } = useTranslation(['achievements', 'common'])
   const current = useAchievementUnlockStore((s) => s.queue[0])
   const popQueue = useAchievementUnlockStore((s) => s.dismiss)
 
@@ -84,7 +86,7 @@ export function AchievementUnlockToast() {
       <button
         type="button"
         onClick={startExit}
-        aria-label="Fermer"
+        aria-label={t('common:a11y.close')}
         className="group pointer-events-auto relative w-full max-w-md cursor-pointer border-0 bg-transparent p-0 text-left"
         style={{
           animation:
@@ -124,7 +126,7 @@ export function AchievementUnlockToast() {
             </div>
             <div className="min-w-0 flex-1">
               <div className="font-mono text-[10px] font-bold uppercase tracking-[0.3em] text-amber-50/80">
-                Succès débloqué
+                {t('achievements:unlockToast.title')}
               </div>
               <div className="mt-1 font-display text-xl font-black leading-tight text-white drop-shadow">
                 {pending.name}
@@ -135,7 +137,7 @@ export function AchievementUnlockToast() {
           {reward && (
             <div className="relative mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/25 pt-3">
               <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-amber-50/70">
-                Récompense
+                {t('achievements:unlockToast.reward')}
               </span>
               {reward.tokens > 0 && (
                 <span className="flex items-center gap-1 font-display text-base font-extrabold tabular-nums text-white">
@@ -160,7 +162,9 @@ export function AchievementUnlockToast() {
               )}
               {reward.cardRarity && (
                 <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-100">
-                  + carte {RARITY_FR[reward.cardRarity] ?? reward.cardRarity}
+                  {t('achievements:unlockToast.rewardCard', {
+                    rarity: RARITY_FR[reward.cardRarity] ?? reward.cardRarity,
+                  })}
                 </span>
               )}
             </div>
