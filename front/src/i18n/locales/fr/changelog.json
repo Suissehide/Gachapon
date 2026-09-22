@@ -1,0 +1,41 @@
+{
+  "releases": {
+    "v3_2": {
+      "title": "Chaque mode garde son équipe",
+      "date": "Septembre 2026",
+      "summary": "Une équipe pour la tour de Braise, une autre pour celle de Prisme, une troisième pour la campagne — chacune t’attend là où tu l’as laissée. Et les monstres des tours ont enfin un visage.",
+      "entries": {
+        "e1": "La campagne, chacune des quatre tours et le raid ont désormais leur propre équipe. Tu montes une composition contre le feu, tu passes à la tour de Prisme, tu reviens : ta composition anti-feu est toujours là. Plus rien à recomposer à chaque aller-retour. Tant que tu n’as pas touché à un écran, il joue ton équipe de campagne — un nouveau venu n’a donc qu’une équipe à faire, et elle sert partout. Dès que tu modifies celle d’une tour, cette tour devient indépendante et la campagne ne la fait plus bouger ; le bouton « Revenir à l’équipe de campagne », dans l’éditeur, défait ce choix quand tu veux. La liste des tours affiche les trois cartes que chacune emmène, et ton équipe actuelle a été reprise telle quelle : tu ne repars pas de zéro.",
+        "e2": "Les monstres des tours ont enfin un visage. Les 120 ennemis des quarante étages s’affichaient avec une image manquante et s’appelaient tous « Ennemi 1 », en préparation comme en combat. Chaque tour puise maintenant dans les familles de son élément — élémentaires, minotaures, wyvernes et kobolds pour Braise, basilics pour Monolithe — sans jamais répéter deux fois le même sprite dans un étage. Le contre-pick reste donc lisible : une tour, un élément à contrer.",
+        "e3": "Le classement de puissance se lit sur ton équipe de campagne. Avec six équipes possibles, il fallait en désigner une : c’est celle-là qui te représente. Si tu ne soignes que tes équipes de tour, pense à garder une campagne à jour."
+      }
+    },
+    "v3_1": {
+      "title": "Rejouer sans y passer la soirée",
+      "date": "Septembre 2026",
+      "summary": "Un étage déjà battu se relance cinq fois d’un clic, l’équipement se lit d’un coup d’œil, le vœu porte plusieurs cartes — et la courbe de niveau redevient une courbe.",
+      "entries": {
+        "e1": "Le combat multiple remplace « Balayer » : un niveau de campagne déjà terminé ne propose plus qu’un bouton, avec ses segments ×1 et ×5 qui affichent chacun leur coût en énergie — le prix montré est celui qui sera débité. Les tours y ont droit à leur tour : un étage franchi se rejoue en série, chaque passage garantit une pièce, et le tarif est le même qu’en campagne.",
+        "e2": "Le vœu porte désormais plusieurs cartes — deux emplacements au départ, jusqu’à cinq avec la compétence « Collectionneur » — et le délai de sept jours entre deux achats disparaît. En échange, le prix redevient le vrai frein : les remises de boutique ne s’appliquent plus au vœu, et elles passent de 25 à 18 %. Les points investis dans l’ancien « Négociant » te sont rendus.",
+        "e3": "L’écran de récompenses encaisse enfin les gros butins : les pièces défilent sur une rangée, les cartes sur une autre, toutes les fiches à la même hauteur, et « Continuer » reste à portée de pouce. La carte gagnée s’affiche nue, avec la même pastille « Nouveau » qu’au tirage.",
+        "e4": "L’équipement se lit sans ouvrir trois écrans : chaque ligne du sélecteur annonce son set, la fiche montre l’avancement du set sur cette carte-là, les tuiles portent la rareté par leur dégradé et affichent « n / 7 équipées » plus l’apport total en stats. La fenêtre d’un emplacement s’ouvre directement sur la pièce portée, les bonus parlent en ATQ et VIT au lieu de ATK et SPD, et les valeurs de stat sont des nombres entiers.",
+        "e5": "Le set « Précision » s’appelle désormais « Affût », et il s’active à trois pièces au lieu de quatre. Son ancien nom promettait de la justesse alors qu’il donne du taux de critique, et il était déjà celui d’un passif de combat. Surtout, à quatre pièces le build critique complet était impossible : Fureur et lui réclamaient huit emplacements pour sept. Fureur (4) et Affût (3) tiennent maintenant pile sur la même carte — dégâts critiques et taux de critique enfin ensemble. Le bonus, lui, ne change pas, pas plus que les noms de tes pièces.",
+        "e6": "Gros coup de règle sur l’équilibrage. La courbe de niveau joueur est multipliée par cinq et l’XP de premier passage divisée par trois : monter au niveau 30 ne tient plus dans une journée. L’arbre de compétences coûte maintenant 109 points — exactement ce qu’un niveau 100 possède — donc plus aucun nœud n’est un sacrifice obligé ; la branche Collection devient enfin désirable (recyclage +30 %, et elle s’ouvre désormais sur ses meilleurs nœuds), les nœuds de butin de Combat redescendent d’un tiers, et le bonus de butin ne gonfle plus la chance de carte, seulement celle d’équipement. « Opulence » ne double plus le plafond d’achat de packs d’énergie : elle le porte à cinq par jour au lieu de six. Enfin, la vitesse ne se tire plus qu’en valeur plate : les pièces qui portaient du % VIT ont été retirées au profit d’une autre sous-stat.",
+        "e7": "Avec la compétence « Opulence », la boutique annonçait « Limite atteinte » dès trois packs d’énergie alors que la compétence en autorisait davantage. Côté campagne, la carte gagnée manquait à l’appel en fin de combat et le résultat d’un balayage n’affichait pas les mêmes fiches qu’une victoire. La fiche de pièce ne s’écrase plus dans les récompenses de tour, la grille d’équipement ne se réordonne plus quand tu améliores une pièce, et deux nœuds de l’arbre ne se chevauchent plus."
+      }
+    },
+    "v3_0": {
+      "title": "Les équipes prennent vie",
+      "date": "Septembre 2026",
+      "summary": "Un boss à abattre en groupe chaque semaine, des duels et des paris entre coéquipiers, une progression d’équipe à faire monter — et un annuaire pour trouver les tiens.",
+      "entries": {
+        "e1": "Le raid d’équipe : chaque semaine, un boss élémentaire se dresse devant ton équipe — Ignis le Brasier, Nérée la Marée, Sylva la Ronce ou Gorm le Roc — et la rotation change de boss d’une semaine à l’autre. Tout le monde tape sur la même barre de points de vie, deux attaques par jour et par membre, et l’équipe décroche un lot à 25, 50, 75 et 100 % de la barre. La page d’équipe suit les dégâts en direct et montre qui a contribué combien.",
+        "e2": "Les duels de tirage : défie un coéquipier sur vos cinq prochains tirages, chacun engage des cartes, et le meilleur score rafle la mise. Les cartes engagées sont verrouillées le temps du duel — impossible de les recycler en douce. Tu as 24 h pour accepter, 48 h pour tirer.",
+        "e3": "Les paris : ouvre un marché sur les dix prochains tirages d’un coéquipier — « est-ce qu’il sortira au moins un rare ? » — et mise ta poussière. Les autres renchérissent du camp qu’ils veulent et la cote bouge à chaque mise, calculée sur les vraies chances de la table de tirage. Avant de choisir ton camp, tu vois qui a misé de l’autre côté, et combien.",
+        "e4": "La progression d’équipe : tes dégâts de raid, tes duels gagnés, tes paris gagnés et tes tirages rapportent des points chaque semaine, et leur somme fait monter l’équipe de niveau. Chaque niveau donne un point que le chef investit dans l’un des quatre bonus — régénération de jetons, attaques de raid, XP de campagne, coût de reforge — répartis sur 32 rangs, les quatre ouverts dès le premier point.",
+        "e5": "Le recrutement : un annuaire des équipes qui cherchent du monde s’ouvre depuis « Mes équipes ». Tu peux candidater à cinq équipes à la fois, suivre tes candidatures et les annuler ; côté chef, une file d’attente affiche le niveau de chaque candidat, et la cloche prévient des deux côtés. Une candidature expire au bout de sept jours, et un refus t’écarte de cette équipe une semaine.",
+        "e6": "Les deux écrans d’équipe sont refaits : la liste avec ses emblèmes colorés et ses emplacements libres, la fiche en deux colonnes avec le raid, les duels et la table des contributions. Le grade d’officier devient enfin attribuable par le chef, et l’étiquette « Recrue » ne tient plus qu’un jour au lieu d’une semaine."
+      }
+    }
+  }
+}

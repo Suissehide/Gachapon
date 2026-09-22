@@ -1,0 +1,41 @@
+{
+  "releases": {
+    "v3_2": {
+      "title": "Each mode keeps its own team",
+      "date": "September 2026",
+      "summary": "One team for the Ember Tower, another for the Prism Tower, a third for the campaign — each one is waiting right where you left it. And tower monsters finally have a face.",
+      "entries": {
+        "e1": "The campaign, each of the four towers, and the raid now have their own team. You build a fire-countering lineup, switch to the Prism Tower, come back: your anti-fire lineup is still there. Nothing to rebuild on every round trip. As long as you haven't touched a screen, it plays your campaign team — so a newcomer only needs to build one team, and it works everywhere. As soon as you edit a tower's team, that tower becomes independent and the campaign stops moving it for you; the \"Back to campaign team\" button, in the editor, undoes that choice whenever you want. The tower list shows the three cards each one brings along, and your current team was carried over as-is: you're not starting from scratch.",
+        "e2": "Tower monsters finally have a face. The 120 enemies across the forty floors showed a missing image and were all named \"Enemy 1\", both in preparation and in battle. Each tower now draws from the families of its own element — elementals, minotaurs, wyverns and kobolds for Ember, basilisks for Monolith — never repeating the same sprite twice on one floor. The counter-pick stays readable: one tower, one element to counter.",
+        "e3": "The power leaderboard is read from your campaign team. With six possible teams, one had to be picked to represent you — this is the one. If you only take care of your tower teams, remember to keep a campaign team up to date."
+      }
+    },
+    "v3_1": {
+      "title": "Replaying without losing your evening",
+      "date": "September 2026",
+      "summary": "An already-cleared stage relaunches five times in one click, equipment reads at a glance, the wishlist now holds several cards — and the level curve becomes a curve again.",
+      "entries": {
+        "e1": "Multi-battle replaces \"Sweep\": an already-cleared campaign level now offers a single button, with ×1 and ×5 segments each showing their energy cost — the price shown is the one that gets charged. Towers get the same treatment: a cleared floor replays in a row, every run guarantees a piece of equipment, and the price is the same as in the campaign.",
+        "e2": "The wishlist now holds several cards — two slots to start, up to five with the \"Collector\" skill — and the seven-day delay between two purchases is gone. In exchange, price becomes the real brake again: shop discounts no longer apply to wishes, and they drop from 25 to 18%. Points invested in the old \"Merchant\" node are refunded.",
+        "e3": "The rewards screen finally handles big loot properly: equipment scrolls along one row, cards along another, every card at the same height, and \"Continue\" stays within thumb's reach. The card you won is shown bare, with the same \"New\" badge as at the pull.",
+        "e4": "Equipment now reads without opening three screens: each line of the selector announces its set, the card sheet shows that card's set progress, tiles carry their rarity through their gradient and show \"n / 7 equipped\" plus the total stat contribution. A slot's window now opens directly on the piece it's wearing, bonuses speak in ATQ and VIT instead of ATK and SPD, and stat values are whole numbers.",
+        "e5": "The \"Precision\" set is now called \"Vigilance\", and it activates at three pieces instead of four. Its old name promised accuracy when it actually grants crit rate, and that name was already taken by a combat passive. More importantly, the full crit build was impossible at four pieces: Wrath and it together demanded eight slots for seven. Wrath (4) and Vigilance (3) now fit exactly on the same card — crit damage and crit rate finally together. The bonus itself doesn't change, and neither do the names of your pieces.",
+        "e6": "A big balancing pass. The player level curve is multiplied by five and first-clear XP divided by three: reaching level 30 no longer fits in a single day. The skill tree now costs 109 points — exactly what a level 100 player has — so no node is a forced sacrifice anymore; the Collection branch finally becomes worth taking (recycling +30%, and it now opens on its best nodes), Combat's loot nodes come down by a third, and the loot bonus no longer inflates card odds, only equipment odds. \"Opulence\" no longer doubles the energy pack purchase cap: it now raises it to five per day instead of six. Lastly, speed can no longer be rolled as a percentage: pieces that carried % VIT were removed in favor of another substat.",
+        "e7": "With the \"Opulence\" skill, the shop announced \"Limit reached\" after just three energy packs even though the skill allowed more. On the campaign side, the card you won was missing at the end of battle, and a sweep's result didn't show the same cards as a win. The equipment card no longer gets squashed in tower rewards, the equipment grid no longer reorders itself when you upgrade a piece, and two nodes in the skill tree no longer overlap."
+      }
+    },
+    "v3_0": {
+      "title": "Teams come to life",
+      "date": "September 2026",
+      "summary": "A boss to bring down as a group every week, duels and bets between teammates, a team progression to level up — and a directory to find your people.",
+      "entries": {
+        "e1": "The team raid: every week, an elemental boss rises before your team — Ignis the Blaze, Nérée the Tide, Sylva the Bramble or Gorm the Rock — and the rotation swaps bosses from one week to the next. Everyone hits the same health bar, two attacks per day and per member, and the team unlocks a reward at 25, 50, 75 and 100% of the bar. The team page tracks damage live and shows who contributed how much.",
+        "e2": "Pull duels: challenge a teammate on your next five pulls, each of you stakes cards, and the best score takes the pot. Staked cards are locked for the duration of the duel — no sneaking off to recycle them. You have 24 hours to accept, 48 hours to pull.",
+        "e3": "Bets: open a market on a teammate's next ten pulls — \"will they pull at least one Rare?\" — and stake your dust. Others raise on whichever side they want, and the odds move with every bet, computed from the pull table's real chances. Before you pick your side, you can see who staked on the other one, and how much.",
+        "e4": "Team progression: your raid damage, your duel wins, your bet wins and your pulls earn points every week, and their sum levels the team up. Every level grants a point the leader invests into one of four bonuses — token regeneration, raid attacks, campaign XP, equipment upgrade cost — spread across 32 ranks, all four open from the very first point.",
+        "e5": "Recruitment: a directory of teams looking for members opens from \"My teams\". You can apply to five teams at once, track your applications and cancel them; on the leader's side, a queue shows each applicant's level, and the bell notifies both sides. An application expires after seven days, and a decline keeps you away from that team for a week.",
+        "e6": "Both team screens are redone: the list with its colored emblems and open slots, the sheet in two columns with the raid, duels, and the contribution table. The officer rank finally becomes assignable by the leader, and the \"Recruit\" tag now only lasts a day instead of a week."
+      }
+    }
+  }
+}
