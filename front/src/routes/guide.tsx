@@ -765,34 +765,31 @@ function GuidePage() {
             <Section
               id="combat-points"
               icon={BatteryCharging}
-              title="Points de combat"
+              title={t('sectionLabels.combat-points')}
             >
               <p>
-                Les{' '}
-                <strong className="text-foreground">points de combat</strong>{' '}
-                (l'« énergie ») sont à la campagne ce que les jetons sont aux
-                tirages. Ils se régénèrent passivement jusqu'à un plafond,
-                affiché dans la topbar.
+                <Trans
+                  t={t}
+                  i18nKey="sections.combat-points.intro"
+                  components={{
+                    strong: <strong className="text-foreground" />,
+                  }}
+                />
               </p>
               <ul className="space-y-1.5">
                 <li>
-                  • Chaque combat et chaque farm en consomme. Sans énergie, le
-                  bouton indique{' '}
-                  <strong className="text-foreground">
-                    « Énergie insuffisante »
-                  </strong>
-                  .
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.combat-points.insufficientBullet"
+                    components={{
+                      strong: <strong className="text-foreground" />,
+                    }}
+                  />
                 </li>
-                <li>
-                  • Des compétences accélèrent leur régénération, augmentent le
-                  plafond, et réduisent le coût du farm.
-                </li>
+                <li>• {t('sections.combat-points.skillsBullet')}</li>
               </ul>
-              <TipBox>
-                Dépense ton énergie avant qu'elle n'atteigne le plafond :
-                au-delà, les points régénérés sont perdus, exactement comme les
-                jetons.
-              </TipBox>
+              <TipBox>{t('sections.combat-points.tip')}</TipBox>
             </Section>
 
             {/* Améliorer ses cartes */}

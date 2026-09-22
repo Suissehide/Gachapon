@@ -159,6 +159,12 @@
       "turnBasedBullet": "Battles are <strong>turn-based</strong>: your cards use their stats (PV, ATQ, DEF, VIT), passives, and equipment.",
       "firstClearParagraph": "The <strong>first clear</strong> of a stage gives guaranteed rewards (gold, dust, XP, and sometimes a guaranteed piece of equipment or card). Replaying an already-cleared stage gives repeatable rewards, with a chance to drop equipment and cards.",
       "info": "<strong>Farm ×3</strong> (sweep) automatically replays an already-cleared stage several times at once, for energy — great for stacking up gold and dust without replaying every battle."
+    },
+    "combat-points": {
+      "intro": "<strong>Combat points</strong> (\"energy\") are to the campaign what tokens are to pulls. They regenerate passively up to a cap, shown in the topbar.",
+      "insufficientBullet": "Every battle and every farm run uses some. With no energy left, the button reads <strong>\"Not enough energy\"</strong>.",
+      "skillsBullet": "Some skills speed up their regeneration, raise the cap, and reduce the farm cost.",
+      "tip": "Spend your energy before it hits the cap: beyond that, regenerated points are lost, just like tokens."
     }
   }
 }

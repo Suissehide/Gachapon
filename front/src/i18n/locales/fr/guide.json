@@ -159,6 +159,12 @@
       "turnBasedBullet": "Le combat est <strong>au tour par tour</strong> : tes cartes utilisent leurs stats (PV, ATQ, DEF, VIT), leurs passifs et leur équipement.",
       "firstClearParagraph": "Le <strong>premier passage</strong> d'une étape offre des récompenses garanties (or, poussière, XP, et parfois un équipement ou une carte garantis). Rejouer une étape déjà nettoyée rapporte des récompenses répétables, avec des chances de drop d'équipement et de cartes.",
       "info": "<strong>Farm ×3</strong> (balayage) rejoue automatiquement une étape déjà nettoyée plusieurs fois d'un coup, contre de l'énergie — idéal pour accumuler or et poussière sans rejouer chaque combat."
+    },
+    "combat-points": {
+      "intro": "Les <strong>points de combat</strong> (l'« énergie ») sont à la campagne ce que les jetons sont aux tirages. Ils se régénèrent passivement jusqu'à un plafond, affiché dans la topbar.",
+      "insufficientBullet": "Chaque combat et chaque farm en consomme. Sans énergie, le bouton indique <strong>« Énergie insuffisante »</strong>.",
+      "skillsBullet": "Des compétences accélèrent leur régénération, augmentent le plafond, et réduisent le coût du farm.",
+      "tip": "Dépense ton énergie avant qu'elle n'atteigne le plafond : au-delà, les points régénérés sont perdus, exactement comme les jetons."
     }
   }
 }
