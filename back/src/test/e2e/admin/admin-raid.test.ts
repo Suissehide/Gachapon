@@ -1,6 +1,15 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
+import { RAID_TIERS } from '../../../../prisma/seed/raid'
 import { buildTestApp } from '../../helpers/build-test-app'
+
+// Palier 50 % de référence pris sur RAID_TIERS (prisma/seed/raid.ts), pas
+// recopié : une copie locale divergente romprait silencieusement la
+// suite si le barème de jetons du seed bougeait sans qu'on y pense ici.
+const TIER_50 = RAID_TIERS.find((t) => t.pct === 50)
+if (!TIER_50) {
+  throw new Error('RAID_TIERS ne contient plus de palier 50 %')
+}
 
 describe('admin raid routes', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
@@ -52,7 +61,9 @@ describe('admin raid routes', () => {
       where: { pct_level: { pct: 50, level: 0 } },
     })
     if (!existing) {
-      const reward = await prisma.reward.create({ data: { tokens: 5, gold: 400, dust: 100 } })
+      const reward = await prisma.reward.create({
+        data: { tokens: TIER_50.tokens, gold: TIER_50.gold, dust: TIER_50.dust },
+      })
       await prisma.raidTier.create({ data: { pct: 50, rewardId: reward.id } })
     }
   })
@@ -109,7 +120,12 @@ describe('admin raid routes', () => {
       payload: { gold: 450, cardRarity: 'RARE' },
     })
     expect(patch.statusCode).toBe(200)
-    expect(patch.json()).toMatchObject({ pct: 50, gold: 450, cardRarity: 'RARE', tokens: 5 })
+    expect(patch.json()).toMatchObject({
+      pct: 50,
+      gold: 450,
+      cardRarity: 'RARE',
+      tokens: TIER_50.tokens,
+    })
   })
 
   it('PATCH /admin/raid/tiers/50 purge les paliers dérivés (niveau > 0) sans supprimer leurs Reward, régénérés à la nouvelle valeur au prochain franchissement', async () => {

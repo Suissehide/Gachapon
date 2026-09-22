@@ -1,6 +1,8 @@
 import { describe, expect, it } from '@jest/globals'
 
+import { RAID_TIERS } from '../../../../prisma/seed/raid'
 import type { LogEntry } from '../../../main/domain/combat/battle-simulator.domain'
+import { DEFAULTS } from '../../../main/infra/config/config.service'
 import {
   attacksRemaining,
   crossedTiers,
@@ -247,39 +249,42 @@ describe('raid-rules — lots par niveau', () => {
 })
 
 /**
- * L'INVARIANT ÉCONOMIQUE du raid, rendu exécutable. Les PV du boss croissent
- * de `raid.levelHpBonusPct` % composés par niveau, les lots de
- * `raid.levelRewardPct` % de leur base — donc la récompense par point de
- * dégât doit décroître STRICTEMENT à chaque cran. Sans quoi monter en
- * difficulté deviendrait un farm plus rentable, exactement le contraire du
- * but de la mécanique.
+ * L'INVARIANT ÉCONOMIQUE du raid, rendu exécutable — et lu depuis les
+ * SOURCES RÉELLES (`DEFAULTS` et `RAID_TIERS`), jamais depuis des constantes
+ * recopiées ici. Recopier serait exactement la faiblesse que ce test existe
+ * pour combler, déplacée d'un étage : un changement de
+ * `DEFAULTS['raid.levelRewardPct']`, `DEFAULTS['raid.levelHpBonusPct']` ou
+ * `RAID_TIERS` continuerait d'éprouver d'anciens littéraux et ne
+ * signalerait rien — précisément le scénario qui a produit cette tâche.
+ * Même patron que `energy-pack-pricing.test.ts`.
+ *
+ * Les PV du boss croissent de `raid.levelHpBonusPct` % composés par niveau,
+ * les lots de `raid.levelRewardPct` % de leur base — donc la récompense par
+ * point de dégât doit décroître STRICTEMENT à chaque cran. Sans quoi monter
+ * en difficulté deviendrait un farm plus rentable, exactement le contraire
+ * du but de la mécanique.
  *
  * Ce test a été écrit après coup : le barème additif précédent (+2 jetons par
  * niveau sur une base de 5) violait l'invariant du niveau 1 au niveau 8, et
  * rien ne l'a signalé.
  */
 describe('raid-rules — invariant : la récompense par point de dégât décroît', () => {
-  const HP_BONUS_PCT = 10
-  const REWARD_BONUS_PCT = 5
-  // Barème de référence, celui du seed (prisma/seed/raid.ts).
-  const TIERS = [
-    { tokens: 3, gold: 200, dust: 50 },
-    { tokens: 5, gold: 400, dust: 100 },
-    { tokens: 8, gold: 600, dust: 150 },
-    { tokens: 13, gold: 1000, dust: 300 },
-  ]
+  const HP_BONUS_PCT = DEFAULTS['raid.levelHpBonusPct']
+  const REWARD_BONUS_PCT = DEFAULTS['raid.levelRewardPct']
+  const BASE_HP_PER_MEMBER = DEFAULTS['raid.baseHpPerMember']
+  const MIN_MEMBERS = DEFAULTS['raid.minMembers']
 
   it.each(['tokens', 'gold', 'dust'] as const)(
     'la ressource %s rapporte strictement moins par PV à chaque niveau',
     (field) => {
       const ratios = Array.from({ length: 11 }, (_, level) => {
-        const total = TIERS.reduce(
+        const total = RAID_TIERS.reduce(
           (sum, tier) =>
             sum + raidTierRewardAtLevel(tier, level, REWARD_BONUS_PCT)[field],
           0,
         )
-        const hp = raidMaxHp(162000, 10, {
-          minMembers: 10,
+        const hp = raidMaxHp(BASE_HP_PER_MEMBER, MIN_MEMBERS, {
+          minMembers: MIN_MEMBERS,
           levelBonusPct: HP_BONUS_PCT,
           level,
         })

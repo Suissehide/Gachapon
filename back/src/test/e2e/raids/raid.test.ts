@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
+import { RAID_TIERS } from '../../../../prisma/seed/raid'
 import {
   raidElementForWeek,
   raidWeekKey,
@@ -25,13 +26,6 @@ const WEAK_BOSS_SPEC = {
   appearance: 'monsters/bosses/BOSS-010',
   mitigationScale: 1,
 }
-
-const TIERS = [
-  { pct: 25, tokens: 5, gold: 200, dust: 50 },
-  { pct: 50, tokens: 10, gold: 400, dust: 100 },
-  { pct: 75, tokens: 15, gold: 600, dust: 150 },
-  { pct: 100, tokens: 25, gold: 1000, dust: 300, cardRarity: 'EPIC' as const },
-]
 
 // PV par membre énormes : aucune attaque de test ne franchit un palier par
 // accident. Les paliers sont testés en forçant `hp` directement en base.
@@ -92,7 +86,13 @@ describe('routes de raid', () => {
       create: { element, name: 'Boss de test', spec: { ...WEAK_BOSS_SPEC, element } },
       update: { name: 'Boss de test', spec: { ...WEAK_BOSS_SPEC, element } },
     })
-    for (const t of TIERS) {
+    // Paliers de référence pris sur RAID_TIERS (prisma/seed/raid.ts), pas
+    // recopiés : cette suite ne teste pas leur valeur (juste `damage > 0`),
+    // et une copie locale divergente réintroduirait la course entre suites
+    // sur les lignes `RaidTier` de niveau 0, partagées par toute la base —
+    // le premier `beforeAll` à s'exécuter gagne, et un littéral différent
+    // du seed aurait fait passer un barème périmé aux suites suivantes.
+    for (const t of RAID_TIERS) {
       const existing = await prisma.raidTier.findUnique({
         where: { pct_level: { pct: t.pct, level: 0 } },
       })

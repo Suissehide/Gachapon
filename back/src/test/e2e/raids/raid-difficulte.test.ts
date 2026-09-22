@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
+import { RAID_TIERS } from '../../../../prisma/seed/raid'
 import {
   raidElementForWeek,
   raidWeekKey,
@@ -109,12 +110,14 @@ describe('raid — difficulté progressive', () => {
     await configService.set('raid.levelHpBonusPct', 10)
     await configService.set('raid.levelRewardPct', 5)
 
-    for (const t of [
-      { pct: 25, tokens: 3, gold: 200, dust: 50 },
-      { pct: 50, tokens: 5, gold: 400, dust: 100 },
-      { pct: 75, tokens: 8, gold: 600, dust: 150 },
-      { pct: 100, tokens: 13, gold: 1000, dust: 300 },
-    ]) {
+    // Paliers de référence pris sur RAID_TIERS (prisma/seed/raid.ts), pas
+    // recopiés : une copie locale divergente réintroduirait la course entre
+    // suites sur les lignes `RaidTier` de niveau 0 (partagées par toute la
+    // base, remplies par le premier `beforeAll` à s'exécuter). Les
+    // assertions de « lots majorés » ci-dessous, elles, restent des valeurs
+    // calculées à la main pour CE barème — si `RAID_TIERS` change, elles
+    // doivent casser et être recalculées, c'est voulu.
+    for (const t of RAID_TIERS) {
       const existing = await prisma.raidTier.findUnique({
         where: { pct_level: { pct: t.pct, level: 0 } },
       })
