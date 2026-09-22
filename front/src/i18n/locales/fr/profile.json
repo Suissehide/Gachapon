@@ -5,5 +5,19 @@
     "deleteErrorTitle": "Erreur lors de la suppression",
     "usernameChangeFallbackTitle": "Erreur",
     "usernameChangeFallbackMessage": "Changement de pseudo impossible."
+  },
+  "apiTitles": {
+    "usernameTakenTitle": "Pseudo indisponible",
+    "operations": {
+      "loadProfile": "Erreur lors de la récupération du profil",
+      "loadApiKeys": "Erreur lors de la récupération des clés API",
+      "createApiKey": "Erreur lors de la création de la clé API",
+      "deleteApiKey": "Erreur lors de la suppression de la clé API",
+      "loadFeaturedCards": "Erreur lors de la récupération des cartes vedettes",
+      "loadProgress": "Erreur lors de la récupération de la progression",
+      "saveFeaturedCards": "Erreur lors de l'enregistrement des cartes vedettes",
+      "changeUsername": "Erreur lors du changement de pseudo",
+      "changeLocale": "Erreur lors du changement de langue"
+    }
   }
 }

@@ -8,7 +8,11 @@ import type {
   UserProfile,
 } from '../constants/profile.constant.ts'
 import { PROFILE_ROUTES } from '../constants/profile.constant.ts'
-import { handleHttpError } from '../libs/httpErrorHandler.ts'
+import i18n from '../i18n/index.ts'
+import {
+  handleHttpError,
+  handleHttpErrorFromServer,
+} from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
 export type {
@@ -26,7 +30,11 @@ export const ProfileApi = {
       `${apiUrl}${PROFILE_ROUTES.profile(username)}`,
     )
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la récupération du profil')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('profile:apiTitles.operations.loadProfile'),
+      )
     }
     return res.json()
   },
@@ -34,7 +42,11 @@ export const ProfileApi = {
   getApiKeys: async (): Promise<ApiKey[]> => {
     const res = await fetchWithAuth(`${apiUrl}${PROFILE_ROUTES.apiKeys}`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la récupération des clés API')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('profile:apiTitles.operations.loadApiKeys'),
+      )
     }
     return res.json()
   },
@@ -46,7 +58,11 @@ export const ProfileApi = {
       body: JSON.stringify({ name }),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la création de la clé API')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('profile:apiTitles.operations.createApiKey'),
+      )
     }
     return res.json()
   },
@@ -56,7 +72,11 @@ export const ProfileApi = {
       method: 'DELETE',
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la suppression de la clé API')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('profile:apiTitles.operations.deleteApiKey'),
+      )
     }
   },
 
@@ -70,7 +90,7 @@ export const ProfileApi = {
       handleHttpError(
         res,
         {},
-        'Erreur lors de la récupération des cartes vedettes',
+        i18n.t('profile:apiTitles.operations.loadFeaturedCards'),
       )
     }
     return res.json()
@@ -86,7 +106,7 @@ export const ProfileApi = {
       handleHttpError(
         res,
         {},
-        'Erreur lors de la récupération de la progression',
+        i18n.t('profile:apiTitles.operations.loadProgress'),
       )
     }
     return res.json()
@@ -107,7 +127,7 @@ export const ProfileApi = {
       handleHttpError(
         res,
         {},
-        "Erreur lors de l'enregistrement des cartes vedettes",
+        i18n.t('profile:apiTitles.operations.saveFeaturedCards'),
       )
     }
     return res.json()
@@ -120,15 +140,12 @@ export const ProfileApi = {
       body: JSON.stringify({ username }),
     })
     if (!res.ok) {
-      handleHttpError(
+      // 409 : `user.usernameTaken` du catalogue back, dont la copie
+      // française qui vivait ici était le mot pour mot.
+      await handleHttpErrorFromServer(
         res,
-        {
-          409: {
-            title: 'Pseudo indisponible',
-            message: 'Ce pseudo est déjà pris.',
-          },
-        },
-        'Erreur lors du changement de pseudo',
+        { 409: i18n.t('profile:apiTitles.usernameTakenTitle') },
+        i18n.t('profile:apiTitles.operations.changeUsername'),
       )
     }
     return res.json()
@@ -141,7 +158,11 @@ export const ProfileApi = {
       body: JSON.stringify({ locale }),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors du changement de langue')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('profile:apiTitles.operations.changeLocale'),
+      )
     }
     return res.json()
   },

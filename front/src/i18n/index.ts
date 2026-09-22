@@ -15,6 +15,8 @@ import profileEn from './locales/en/profile.json'
 import rewardsEn from './locales/en/rewards.json'
 import shopEn from './locales/en/shop.json'
 import skillsEn from './locales/en/skills.json'
+import statsEn from './locales/en/stats.json'
+import streakEn from './locales/en/streak.json'
 import teamEn from './locales/en/team.json'
 import teamPerksEn from './locales/en/teamPerks.json'
 import wagersEn from './locales/en/wagers.json'
@@ -33,6 +35,8 @@ import profileFr from './locales/fr/profile.json'
 import rewardsFr from './locales/fr/rewards.json'
 import shopFr from './locales/fr/shop.json'
 import skillsFr from './locales/fr/skills.json'
+import statsFr from './locales/fr/stats.json'
+import streakFr from './locales/fr/streak.json'
 import teamFr from './locales/fr/team.json'
 import teamPerksFr from './locales/fr/teamPerks.json'
 import wagersFr from './locales/fr/wagers.json'
@@ -159,6 +163,8 @@ void i18next.use(initReactI18next).init({
       wishlist: wishlistFr,
       profile: profileFr,
       rewards: rewardsFr,
+      stats: statsFr,
+      streak: streakFr,
     },
     en: {
       common: commonEn,
@@ -179,6 +185,8 @@ void i18next.use(initReactI18next).init({
       wishlist: wishlistEn,
       profile: profileEn,
       rewards: rewardsEn,
+      stats: statsEn,
+      streak: streakEn,
     },
   },
   lng: localeFromPath(window.location.pathname),
@@ -202,6 +210,8 @@ void i18next.use(initReactI18next).init({
     'wishlist',
     'profile',
     'rewards',
+    'stats',
+    'streak',
   ],
   interpolation: {
     // React échappe déjà le rendu — un double échappement casserait les

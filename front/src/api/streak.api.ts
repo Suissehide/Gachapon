@@ -4,6 +4,7 @@ import type {
   StreakSummary,
 } from '../constants/streak.constant.ts'
 import { STREAK_ROUTES } from '../constants/streak.constant.ts'
+import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
@@ -16,7 +17,7 @@ export const StreakApi = {
       handleHttpError(
         res,
         {},
-        'Erreur lors de la récupération du résumé streak',
+        i18n.t('streak:apiTitles.operations.loadSummary'),
       )
     }
     return res.json()

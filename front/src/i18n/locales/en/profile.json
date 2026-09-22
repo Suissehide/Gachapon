@@ -5,5 +5,19 @@
     "deleteErrorTitle": "Error deleting",
     "usernameChangeFallbackTitle": "Error",
     "usernameChangeFallbackMessage": "Could not change the username."
+  },
+  "apiTitles": {
+    "usernameTakenTitle": "Username unavailable",
+    "operations": {
+      "loadProfile": "Error loading the profile",
+      "loadApiKeys": "Error loading the API keys",
+      "createApiKey": "Error creating the API key",
+      "deleteApiKey": "Error deleting the API key",
+      "loadFeaturedCards": "Error loading the featured cards",
+      "loadProgress": "Error loading the progress",
+      "saveFeaturedCards": "Error saving the featured cards",
+      "changeUsername": "Error changing the username",
+      "changeLocale": "Error changing the language"
+    }
   }
 }
