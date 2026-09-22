@@ -5,6 +5,7 @@ import aboutEn from './locales/en/about.json'
 import achievementsEn from './locales/en/achievements.json'
 import adminEn from './locales/en/admin.json'
 import authEn from './locales/en/auth.json'
+import changelogEn from './locales/en/changelog.json'
 import collectionEn from './locales/en/collection.json'
 import combatEn from './locales/en/combat.json'
 import commonEn from './locales/en/common.json'
@@ -33,6 +34,7 @@ import aboutFr from './locales/fr/about.json'
 import achievementsFr from './locales/fr/achievements.json'
 import adminFr from './locales/fr/admin.json'
 import authFr from './locales/fr/auth.json'
+import changelogFr from './locales/fr/changelog.json'
 import collectionFr from './locales/fr/collection.json'
 import combatFr from './locales/fr/combat.json'
 import commonFr from './locales/fr/common.json'
@@ -189,6 +191,7 @@ void i18next.use(initReactI18next).init({
       leaderboard: leaderboardFr,
       home: homeFr,
       guide: guideFr,
+      changelog: changelogFr,
     },
     en: {
       about: aboutEn,
@@ -219,6 +222,7 @@ void i18next.use(initReactI18next).init({
       leaderboard: leaderboardEn,
       home: homeEn,
       guide: guideEn,
+      changelog: changelogEn,
     },
   },
   lng: localeFromPath(window.location.pathname),
@@ -252,6 +256,7 @@ void i18next.use(initReactI18next).init({
     'leaderboard',
     'home',
     'guide',
+    'changelog',
   ],
   interpolation: {
     // React échappe déjà le rendu — un double échappement casserait les
