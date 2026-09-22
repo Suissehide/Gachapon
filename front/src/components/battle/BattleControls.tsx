@@ -1,4 +1,5 @@
 import { FastForward, Pause, Play, RotateCcw, SkipForward } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '../ui/button.tsx'
 import { SegmentedControl } from '../ui/segmentedControl.tsx'
@@ -33,6 +34,7 @@ export function BattleControls({
   onTogglePause,
   isDone,
 }: Props) {
+  const { t } = useTranslation('combat')
   return (
     <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
       <Button
@@ -43,15 +45,15 @@ export function BattleControls({
       >
         {isDone ? (
           <>
-            <Play className="h-4 w-4" /> Terminé
+            <Play className="h-4 w-4" /> {t('combat:controls.done')}
           </>
         ) : isPaused ? (
           <>
-            <Play className="h-4 w-4" /> Reprendre
+            <Play className="h-4 w-4" /> {t('combat:controls.resume')}
           </>
         ) : (
           <>
-            <Pause className="h-4 w-4" /> Pause
+            <Pause className="h-4 w-4" /> {t('combat:controls.pause')}
           </>
         )}
       </Button>
@@ -69,11 +71,11 @@ export function BattleControls({
         disabled={isDone}
         size="default"
       >
-        <SkipForward className="h-4 w-4" /> Passer
+        <SkipForward className="h-4 w-4" /> {t('combat:controls.skip')}
       </Button>
 
       <Button type="button" variant="outline" onClick={onReplay} size="default">
-        <RotateCcw className="h-4 w-4" /> Rejouer
+        <RotateCcw className="h-4 w-4" /> {t('combat:battle.replay')}
       </Button>
     </div>
   )

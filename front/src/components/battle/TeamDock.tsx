@@ -1,5 +1,6 @@
 import { Settings, Shield, Swords } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { TeamUnit } from '../../api/combat.api.ts'
 import { currentLocale } from '../../i18n/index.ts'
@@ -26,6 +27,7 @@ export function TeamDock({
   onEdit: () => void
   modeLabel: string
 }) {
+  const { t } = useTranslation('combat')
   const total = team.reduce((acc, u) => acc + computePower(u.stats), 0)
 
   // Le bandeau est `fixed` : il ne pousse rien, donc il recouvre la fin du
@@ -76,7 +78,7 @@ export function TeamDock({
                 <b className="tabular-nums text-[13px] text-amber-400">
                   {fmt(total)}
                 </b>
-                <span>Puissance</span>
+                <span>{t('combat:teamDock.power')}</span>
               </div>
             </div>
           </div>
@@ -84,7 +86,7 @@ export function TeamDock({
           <div className="mx-auto hidden gap-2 md:flex">
             {team.length === 0 ? (
               <span className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-white/60">
-                Aucune carte
+                {t('combat:teamDock.noCards')}
               </span>
             ) : (
               team.map((u) => (
@@ -105,7 +107,7 @@ export function TeamDock({
               className="gap-2 bg-white text-[#1b1726] hover:bg-white/90 hover:text-[#1b1726] border-white/0"
             >
               <Settings className="h-4 w-4" />
-              Modifier
+              {t('combat:battlePrep.edit')}
             </Button>
           </div>
         </div>

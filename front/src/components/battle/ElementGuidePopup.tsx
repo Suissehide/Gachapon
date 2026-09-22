@@ -1,5 +1,6 @@
 import { Crosshair, Sparkles, Swords } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import {
   type CardElement,
@@ -81,6 +82,7 @@ function ElementChip({
 }
 
 function ElementWheel() {
+  const { t } = useTranslation('combat')
   return (
     <div className="relative mx-auto aspect-square w-full max-w-[288px]">
       {/* Trois pièges de rendu, trois parades :
@@ -100,7 +102,7 @@ function ElementWheel() {
         style={{ color: 'color-mix(in srgb, var(--text) 55%, var(--card))' }}
         aria-hidden
       >
-        <title>Roue élémentaire</title>
+        <title>{t('combat:elementGuide.wheelSvgTitle')}</title>
         <defs>
           <marker
             id="element-wheel-arrow"
@@ -207,6 +209,7 @@ export function ElementGuidePopup({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
+  const { t } = useTranslation('combat')
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const adv = economy.combat.elementAdvantageMult
   const dis = economy.combat.elementDisadvantageMult
@@ -220,22 +223,20 @@ export function ElementGuidePopup({
         <PopupHeader>
           <PopupTitle
             icon={<Swords className="h-4 w-4" />}
-            subtitle="Roue des avantages et priorité de ciblage"
+            subtitle={t('combat:elementGuide.subtitle')}
           >
-            Éléments
+            {t('combat:elementGuide.title')}
           </PopupTitle>
         </PopupHeader>
 
         <PopupBody className="flex flex-col gap-4 overflow-y-auto">
           <Section
             icon={<Sparkles className="h-3 w-3 text-amber-600" />}
-            title="Roue élémentaire"
+            title={t('combat:elementGuide.wheelTitle')}
           >
             <ElementWheel />
             <p className="m-0 text-center text-[13px] leading-relaxed text-text-light">
-              Chaque élément domine celui que la flèche désigne : le feu brûle
-              la nature, la nature fissure la terre, la terre absorbe l'eau,
-              l'eau éteint le feu.
+              {t('combat:elementGuide.wheelDescription')}
             </p>
 
             <div className="mt-4 flex items-center justify-center gap-4 rounded-xl border border-border bg-background px-4 py-3">
@@ -245,70 +246,62 @@ export function ElementGuidePopup({
               </span>
               <ElementChip element="DARK" size="sm" />
               <p className="m-0 max-w-[180px] text-[12px] leading-snug text-text-light">
-                Hors cycle : lumière et ténèbres se dominent mutuellement.
+                {t('combat:elementGuide.lightDarkDescription')}
               </p>
             </div>
           </Section>
 
           <Section
             icon={<Swords className="h-3 w-3 text-amber-600" />}
-            title="Dégâts"
+            title={t('combat:elementGuide.damageTitle')}
           >
             <div className="flex gap-2">
               <MultPill
-                label="Avantage"
+                label={t('combat:elementGuide.advantage')}
                 value={`×${fmtMult(adv)}`}
                 tone="#10b981"
               />
-              <MultPill label="Neutre" value="×1" tone="#8b8492" />
               <MultPill
-                label="Désavantage"
+                label={t('combat:elementGuide.neutral')}
+                value="×1"
+                tone="#8b8492"
+              />
+              <MultPill
+                label={t('combat:elementGuide.disadvantage')}
                 value={`×${fmtMult(dis)}`}
                 tone="#e11d48"
               />
             </div>
             <p className="m-0 mt-2.5 text-[13px] leading-relaxed text-text-light">
-              Le multiplicateur s'applique à chaque coup, selon l'élément de
-              l'attaquant face à celui de sa cible. Une unité sans élément reste
-              toujours neutre, dans les deux sens.
+              {t('combat:elementGuide.damageDescription')}
             </p>
           </Section>
 
           <Section
             icon={<Crosshair className="h-3 w-3 text-amber-600" />}
-            title="Priorité de ciblage"
+            title={t('combat:elementGuide.targetingTitle')}
           >
             <ul className="m-0 flex list-none flex-col gap-2 p-0 text-[13px] leading-relaxed text-text-light">
               <li className="flex gap-2">
                 <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
                 <span>
-                  Une unité attaque{' '}
-                  <strong className="text-text">en priorité</strong> un ennemi
-                  qu'elle domine. S'il y en a plusieurs, la cible est tirée au
-                  hasard parmi eux.
+                  <Trans
+                    i18nKey="combat:elementGuide.targetingRule1"
+                    components={{ strong: <strong className="text-text" /> }}
+                  />
                 </span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
-                <span>
-                  Si aucun ennemi n'est dominé, la cible est tirée au hasard
-                  parmi tous les survivants.
-                </span>
+                <span>{t('combat:elementGuide.targetingRule2')}</span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
-                <span>
-                  Les attaques de zone touchent toute l'équipe adverse : la
-                  priorité ne s'applique pas, mais le multiplicateur si.
-                </span>
+                <span>{t('combat:elementGuide.targetingRule3')}</span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
-                <span>
-                  Les éléments ennemis sont affichés avant le combat : compose
-                  ton équipe pour les contrer, et évite d'offrir des cibles
-                  faciles.
-                </span>
+                <span>{t('combat:elementGuide.targetingRule4')}</span>
               </li>
             </ul>
           </Section>
@@ -316,7 +309,7 @@ export function ElementGuidePopup({
 
         <PopupFooter>
           <Button size="sm" onClick={() => onOpenChange(false)}>
-            Compris
+            {t('combat:elementGuide.understood')}
           </Button>
         </PopupFooter>
       </PopupContent>

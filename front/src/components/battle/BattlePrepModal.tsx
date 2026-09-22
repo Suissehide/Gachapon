@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 import { Settings, Sparkles, Swords, Zap } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { TeamUnit } from '../../api/combat.api.ts'
 import type { CardElement } from '../../constants/card.constant.ts'
@@ -77,12 +78,12 @@ export function BattlePrepModal({
   onEditTeam: () => void
   onClose: () => void
 }) {
+  const { t } = useTranslation('combat')
   const totalPower = team.reduce((acc, u) => acc + computePower(u.stats), 0)
   const ratio = recommendedPower === 0 ? 1 : totalPower / recommendedPower
   const tone: 'good' | 'ok' | 'low' =
     ratio >= 1.05 ? 'good' : ratio >= 0.9 ? 'ok' : 'low'
-  const verdictLabel =
-    tone === 'good' ? 'Avantage' : tone === 'ok' ? 'Équilibré' : 'Risqué'
+  const verdictLabel = t(`combat:battlePrep.verdict.${tone}`)
 
   return (
     <>
@@ -97,7 +98,9 @@ export function BattlePrepModal({
           <div className="rounded-2xl border border-[rgba(27,23,38,0.06)] bg-white p-4">
             <div className="mb-3 flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
               <Swords className="h-3 w-3 text-amber-600" />
-              Adversaires · {isBoss ? 'Boss 1v3' : '1v3'}
+              {isBoss
+                ? t('combat:battlePrep.enemiesBoss')
+                : t('combat:battlePrep.enemiesNormal')}
             </div>
             <div
               className={`flex flex-wrap justify-center gap-2.5 ${
@@ -129,13 +132,13 @@ export function BattlePrepModal({
               >
                 <Zap className="h-4 w-4 text-violet-500" />
                 <span className="font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-text-light/60">
-                  Coût
+                  {t('combat:battlePrep.energyCostLabel')}
                 </span>
                 <b className="font-display text-xl font-extrabold text-text">
                   {energyCost}
                 </b>
                 <span className="ml-auto font-mono text-[11px] text-text-light/50">
-                  énergie {currentPC}
+                  {t('combat:battlePrep.energyBalance', { currentPC })}
                 </span>
               </div>
             )}
@@ -153,7 +156,7 @@ export function BattlePrepModal({
         <div>
           <div className="mb-3 flex items-center justify-between">
             <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/60">
-              Ton équipe
+              {t('combat:battlePrep.yourTeam')}
             </span>
             <Button
               variant="outline"
@@ -165,13 +168,13 @@ export function BattlePrepModal({
               className="gap-1"
             >
               <Settings className="h-3 w-3" />
-              Modifier
+              {t('combat:battlePrep.edit')}
             </Button>
           </div>
           <div className="flex flex-wrap gap-2.5">
             {team.length === 0 ? (
               <p className="text-sm text-text-light">
-                Aucune carte. Configure ton équipe avant de combattre.
+                {t('combat:battlePrep.noCards')}
               </p>
             ) : (
               team.map((u) => (
@@ -189,7 +192,7 @@ export function BattlePrepModal({
 
       <PopupFooter className="justify-stretch gap-3">
         <Button variant="outline" size="lg" onClick={onClose}>
-          Retour
+          {t('combat:battle.defeat.back')}
         </Button>
         {extraActions}
         {onFight && (
@@ -235,15 +238,16 @@ export function MultiRunActions({
   pending?: boolean
   onRun: (runs: number) => void
 }) {
+  const { t } = useTranslation('combat')
   // Un niveau terminé ne se rejoue QUE par ici : si aucun passage n'est
   // payable, ce bloc est la seule action de la fenêtre et doit dire POURQUOI,
   // comme le bouton « Combattre » le fait sur un niveau non terminé. Sans ce
   // motif, la fenêtre n'était qu'une rangée de segments gris.
   const reason = hasTeam
     ? currentPC < sweepCost
-      ? 'Énergie insuffisante'
+      ? t('combat:battlePrep.reason.energyInsufficient')
       : null
-    : 'Équipe requise'
+    : t('combat:battlePrep.reason.teamRequired')
 
   if (reason) {
     return (
@@ -260,8 +264,10 @@ export function MultiRunActions({
           les segments ambrés portent seuls l'affordance. */}
       <span className="flex shrink-0 items-center gap-1.5 bg-white pl-4 pr-3.5 font-display text-sm font-bold text-text">
         <Swords className="mr-0.5 h-4 w-4 text-primary" />
-        Combat
-        <span className="hidden sm:inline">multiple</span>
+        {t('combat:battlePrep.combat')}
+        <span className="hidden sm:inline">
+          {t('combat:battlePrep.multiple')}
+        </span>
       </span>
       {MULTI_RUNS.map((runs) => (
         <Button
@@ -353,6 +359,7 @@ function PowerVerdict({
   label: string
   ratio: number
 }) {
+  const { t } = useTranslation('combat')
   const bg = tone === 'good' ? '#f0fdf4' : tone === 'ok' ? '#fffbeb' : '#fef2f2'
   const border =
     tone === 'good' ? '#bbf7d0' : tone === 'ok' ? '#fde68a' : '#fecaca'
@@ -395,11 +402,11 @@ function PowerVerdict({
         />
       </div>
       <div className="flex justify-between font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-text-light/60">
-        <span>Ta puissance</span>
+        <span>{t('combat:battlePrep.yourPower')}</span>
         <span className="font-bold" style={{ color: mineColor }}>
           {label}
         </span>
-        <span>Recommandé</span>
+        <span>{t('combat:battlePrep.recommended')}</span>
       </div>
     </div>
   )

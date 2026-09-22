@@ -1,3 +1,5 @@
+import i18n from '../../i18n/index.ts'
+
 type FloatKind = 'damage' | 'heal' | 'dodge'
 type ElementVariant = 'advantage' | 'disadvantage' | 'neutral'
 
@@ -63,10 +65,10 @@ function resolveMarker(variant: ElementVariant): string {
 
 function resolveTitle(variant: ElementVariant): string | undefined {
   if (variant === 'advantage') {
-    return 'Avantage élémentaire'
+    return i18n.t('combat:floatingNumber.elementAdvantage')
   }
   if (variant === 'disadvantage') {
-    return 'Désavantage élémentaire'
+    return i18n.t('combat:floatingNumber.elementDisadvantage')
   }
   return undefined
 }

@@ -24,5 +24,121 @@
       "loadTeams": "Error loading the teams",
       "simulate": "Error simulating the battle"
     }
+  },
+  "elementGuide": {
+    "title": "Elements",
+    "subtitle": "Advantage wheel and targeting priority",
+    "wheelTitle": "Element wheel",
+    "wheelSvgTitle": "Element wheel",
+    "wheelDescription": "Each element dominates the one the arrow points to: fire burns nature, nature cracks earth, earth absorbs water, water douses fire.",
+    "lightDarkDescription": "Outside the cycle: light and dark dominate each other.",
+    "damageTitle": "Damage",
+    "advantage": "Advantage",
+    "neutral": "Neutral",
+    "disadvantage": "Disadvantage",
+    "damageDescription": "The multiplier applies to every hit, based on the attacker's element against the target's. A unit with no element always stays neutral, both ways.",
+    "targetingTitle": "Targeting priority",
+    "targetingRule1": "A unit attacks a dominated enemy <strong>first</strong>. If there are several, the target is picked at random among them.",
+    "targetingRule2": "If no enemy is dominated, the target is picked at random among all survivors.",
+    "targetingRule3": "Area attacks hit the whole enemy team: priority doesn't apply, but the multiplier still does.",
+    "targetingRule4": "Enemy elements are shown before the battle: build your team to counter them, and avoid offering easy targets.",
+    "understood": "Got it"
+  },
+  "campaign": {
+    "chapterTitles": {
+      "1": "Plains",
+      "2": "Whispering Forest",
+      "3": "Ashes",
+      "4": "Ocean",
+      "5": "Crystals",
+      "6": "Volcano",
+      "7": "Tundra",
+      "8": "Abyss",
+      "9": "Rift"
+    },
+    "chapterFallback": "Chapter {{n}}"
+  },
+  "battle": {
+    "actionCounter": "Action {{count}}",
+    "loading": "Loading…",
+    "inProgress": "Battle in progress…",
+    "clashing": "The forces clash.",
+    "backToCampaign": "Back to the campaign",
+    "result": {
+      "victory": "Victory",
+      "draw": "Draw",
+      "defeat": "Defeat"
+    },
+    "reviewResult": "Review the result",
+    "noTeam": {
+      "title": "No team deployed",
+      "description": "Before you fight, pick up to 3 cards on the Combat page. If you don't have any cards yet, do a few pulls on the Play page first.",
+      "configureTeam": "Set up my team",
+      "doAPull": "Do a pull",
+      "backToCampaign": "Back to the campaign"
+    },
+    "victoryTitle": "Victory!",
+    "stageSubtitle": "Level {{label}} · {{chapter}}",
+    "firstClear": "First clear",
+    "rewards": {
+      "gold": "Coins",
+      "dust": "Dust"
+    },
+    "replay": "Replay",
+    "nextFloor": "Next floor",
+    "notEnoughCombatPoints": "Not enough combat points",
+    "defeat": {
+      "timeoutDescription": "Neither team gained the upper hand before the battle limit. Strengthen your lineup to win faster — the energy was still spent.",
+      "lossDescription": "Your team couldn't hold the line. Improve your lineup or level up your cards before heading back to the front.",
+      "reviewTeam": "Review my team",
+      "reviewTeamHint": "Pick a better lineup",
+      "upgradeCards": "Level up your cards",
+      "upgradeCardsHint": "Improve your cards' level",
+      "back": "Back",
+      "retry": "Retry"
+    },
+    "levelLabel": "Level {{level}}"
+  },
+  "farmResult": {
+    "title": "Farm complete",
+    "runs_one": "× {{count}} battle",
+    "runs_other": "× {{count}} battles",
+    "continue": "Continue"
+  },
+  "battlePrep": {
+    "verdict": {
+      "good": "Advantage",
+      "ok": "Balanced",
+      "low": "Risky"
+    },
+    "enemiesBoss": "Opponents · Boss 1v3",
+    "enemiesNormal": "Opponents · 1v3",
+    "energyCostLabel": "Cost",
+    "energyBalance": "energy {{currentPC}}",
+    "yourTeam": "Your team",
+    "edit": "Edit",
+    "noCards": "No cards. Set up your team before fighting.",
+    "reason": {
+      "energyInsufficient": "Not enough energy",
+      "teamRequired": "Team required"
+    },
+    "combat": "Battle",
+    "multiple": "multiple",
+    "yourPower": "Your power",
+    "recommended": "Recommended"
+  },
+  "floatingNumber": {
+    "elementAdvantage": "Elemental advantage",
+    "elementDisadvantage": "Elemental disadvantage"
+  },
+  "teamDock": {
+    "power": "Power",
+    "noCards": "No cards"
+  },
+  "controls": {
+    "done": "Done",
+    "resume": "Resume",
+    "pause": "Pause",
+    "skip": "Skip"
   }
 }

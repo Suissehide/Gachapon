@@ -24,5 +24,121 @@
       "loadTeams": "Erreur lors du chargement des équipes",
       "simulate": "Erreur lors de la simulation de combat"
     }
+  },
+  "elementGuide": {
+    "title": "Éléments",
+    "subtitle": "Roue des avantages et priorité de ciblage",
+    "wheelTitle": "Roue élémentaire",
+    "wheelSvgTitle": "Roue élémentaire",
+    "wheelDescription": "Chaque élément domine celui que la flèche désigne : le feu brûle la nature, la nature fissure la terre, la terre absorbe l'eau, l'eau éteint le feu.",
+    "lightDarkDescription": "Hors cycle : lumière et ténèbres se dominent mutuellement.",
+    "damageTitle": "Dégâts",
+    "advantage": "Avantage",
+    "neutral": "Neutre",
+    "disadvantage": "Désavantage",
+    "damageDescription": "Le multiplicateur s'applique à chaque coup, selon l'élément de l'attaquant face à celui de sa cible. Une unité sans élément reste toujours neutre, dans les deux sens.",
+    "targetingTitle": "Priorité de ciblage",
+    "targetingRule1": "Une unité attaque <strong>en priorité</strong> un ennemi qu'elle domine. S'il y en a plusieurs, la cible est tirée au hasard parmi eux.",
+    "targetingRule2": "Si aucun ennemi n'est dominé, la cible est tirée au hasard parmi tous les survivants.",
+    "targetingRule3": "Les attaques de zone touchent toute l'équipe adverse : la priorité ne s'applique pas, mais le multiplicateur si.",
+    "targetingRule4": "Les éléments ennemis sont affichés avant le combat : compose ton équipe pour les contrer, et évite d'offrir des cibles faciles.",
+    "understood": "Compris"
+  },
+  "campaign": {
+    "chapterTitles": {
+      "1": "Plaines",
+      "2": "Forêt des Murmures",
+      "3": "Cendres",
+      "4": "Océan",
+      "5": "Cristaux",
+      "6": "Volcan",
+      "7": "Toundra",
+      "8": "Abysses",
+      "9": "Faille"
+    },
+    "chapterFallback": "Chapitre {{n}}"
+  },
+  "battle": {
+    "actionCounter": "Action {{count}}",
+    "loading": "Chargement…",
+    "inProgress": "Combat en cours…",
+    "clashing": "Les forces s'affrontent.",
+    "backToCampaign": "Retour à la campagne",
+    "result": {
+      "victory": "Victoire",
+      "draw": "Match nul",
+      "defeat": "Défaite"
+    },
+    "reviewResult": "Revoir le résultat",
+    "noTeam": {
+      "title": "Aucune équipe déployée",
+      "description": "Avant de combattre, sélectionne jusqu'à 3 cartes dans la page Combat. Si tu n'as pas encore de cartes, fais d'abord quelques tirages sur la page Jouer.",
+      "configureTeam": "Configurer mon équipe",
+      "doAPull": "Faire un tirage",
+      "backToCampaign": "Retour campagne"
+    },
+    "victoryTitle": "Victoire !",
+    "stageSubtitle": "Niveau {{label}} · {{chapter}}",
+    "firstClear": "Premier passage",
+    "rewards": {
+      "gold": "Pièces",
+      "dust": "Poussière"
+    },
+    "replay": "Rejouer",
+    "nextFloor": "Etage suivant",
+    "notEnoughCombatPoints": "Plus assez de points de combat",
+    "defeat": {
+      "timeoutDescription": "Aucune équipe n'a pris l'avantage avant la limite de combat. Renforce ta composition pour l'emporter plus vite — l'énergie a quand même été dépensée.",
+      "lossDescription": "Ton équipe n'a pas tenu le choc. Améliore ta composition ou monte tes cartes avant de retourner au front.",
+      "reviewTeam": "Revoir mon équipe",
+      "reviewTeamHint": "Choisis une meilleure composition",
+      "upgradeCards": "Monter tes cartes",
+      "upgradeCardsHint": "Améliore le niveau de tes cartes",
+      "back": "Retour",
+      "retry": "Réessayer"
+    },
+    "levelLabel": "Niveau {{level}}"
+  },
+  "farmResult": {
+    "title": "Farm terminé",
+    "runs_one": "× {{count}} combat",
+    "runs_other": "× {{count}} combats",
+    "continue": "Continuer"
+  },
+  "battlePrep": {
+    "verdict": {
+      "good": "Avantage",
+      "ok": "Équilibré",
+      "low": "Risqué"
+    },
+    "enemiesBoss": "Adversaires · Boss 1v3",
+    "enemiesNormal": "Adversaires · 1v3",
+    "energyCostLabel": "Coût",
+    "energyBalance": "énergie {{currentPC}}",
+    "yourTeam": "Ton équipe",
+    "edit": "Modifier",
+    "noCards": "Aucune carte. Configure ton équipe avant de combattre.",
+    "reason": {
+      "energyInsufficient": "Énergie insuffisante",
+      "teamRequired": "Équipe requise"
+    },
+    "combat": "Combat",
+    "multiple": "multiple",
+    "yourPower": "Ta puissance",
+    "recommended": "Recommandé"
+  },
+  "floatingNumber": {
+    "elementAdvantage": "Avantage élémentaire",
+    "elementDisadvantage": "Désavantage élémentaire"
+  },
+  "teamDock": {
+    "power": "Puissance",
+    "noCards": "Aucune carte"
+  },
+  "controls": {
+    "done": "Terminé",
+    "resume": "Reprendre",
+    "pause": "Pause",
+    "skip": "Passer"
   }
 }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { BattleLogEntry, SimulatorUnit } from '../../api/combat.api'
 import { BattleControls } from './BattleControls'
@@ -114,6 +115,7 @@ export function BattleScene({
   onComplete,
   onRoundChange,
 }: Props) {
+  const { t } = useTranslation('combat')
   const initialUnits = useMemo<SceneUnit[]>(() => {
     const mapSide = (units: SimulatorUnit[], side: 'A' | 'B'): SceneUnit[] =>
       units.map((u) => ({
@@ -428,7 +430,7 @@ export function BattleScene({
           {renderRow(teamAUnits, false)}
           <div className="flex items-center justify-end gap-2 font-mono text-[11px] font-bold uppercase tracking-widest text-text-light/70">
             <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-            Ton équipe
+            {t('combat:battlePrep.yourTeam')}
           </div>
         </div>
       </div>

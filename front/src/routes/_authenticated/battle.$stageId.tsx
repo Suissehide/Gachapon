@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { Dialog } from 'radix-ui'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { BattleResult } from '../../api/campaign.api.ts'
 import { BattleScene } from '../../components/battle/BattleScene.tsx'
@@ -36,7 +37,7 @@ import { PageShell } from '../../components/shared/PageShell.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import { Popup, PopupContent } from '../../components/ui/popup.tsx'
 import { CAMPAIGN_TEAM_KEY } from '../../constants/combatTeam.constant.ts'
-import { currentLocale } from '../../i18n/index.ts'
+import i18n, { currentLocale } from '../../i18n/index.ts'
 import { isApiError } from '../../libs/httpErrorHandler.ts'
 import { formatNumber } from '../../libs/utils.ts'
 import { useAttackStage, useCampaign } from '../../queries/useCampaign.ts'
@@ -51,20 +52,17 @@ import { useLevelUpStore } from '../../stores/levelUp.store.ts'
 import { computeLevel, xpForLevel } from '../../utils/level.ts'
 import { levelUpReward } from '../../utils/levelRewards.ts'
 
-// Chapter titles — kept in sync with campaign.tsx's CHAPTER_META. Extracting
-// to a shared module would be nicer but the list is short enough that a
-// duplicate is cheaper than the extra indirection.
-const CHAPTER_TITLES = [
-  'Plaines',
-  'Forêt des Murmures',
-  'Cendres',
-  'Océan',
-  'Cristaux',
-  'Volcan',
-  'Toundra',
-]
+// Chapter titles — read from the shared `combat:campaign.chapterTitles.<n>`
+// keys, also consumed by campaign.tsx's chapterMeta(). A single i18n source
+// keeps both screens' chapter lists in sync (they had drifted apart before:
+// this file's old local copy stopped at chapter 7 while the campaign already
+// had 9).
 function chapterTitle(n: number): string {
-  return CHAPTER_TITLES[n - 1] ?? `Chapitre ${n}`
+  const key = `combat:campaign.chapterTitles.${n}`
+  const translated = i18n.t(key)
+  return translated === key
+    ? i18n.t('combat:campaign.chapterFallback', { n })
+    : translated
 }
 
 export const Route = createFileRoute('/_authenticated/battle/$stageId')({
@@ -72,6 +70,7 @@ export const Route = createFileRoute('/_authenticated/battle/$stageId')({
 })
 
 function BattlePage() {
+  const { t } = useTranslation(['combat', 'errors'])
   const { stageId } = Route.useParams()
   const team = useCombatTeam(CAMPAIGN_TEAM_KEY)
   const campaign = useCampaign()
@@ -186,18 +185,18 @@ function BattlePage() {
           className="inline-flex items-center gap-1.5 font-display text-base font-bold text-text-light/60 transition-colors hover:text-text"
         >
           <ArrowLeft className="h-4 w-4" />
-          Campagne
+          {t('combat:teamLabel.campaign')}
         </Link>
         {result && (
           <div className="inline-flex items-center rounded-full border border-amber-300 bg-amber-50 px-4 py-1.5 font-mono text-[12px] font-bold uppercase tracking-widest text-amber-700">
-            Action {round.current}
+            {t('combat:battle.actionCounter', { count: round.current })}
           </div>
         )}
       </div>
 
       {team.isLoading && (
         <ArcadeCard className="text-center">
-          <p className="text-text-light">Chargement…</p>
+          <p className="text-text-light">{t('combat:battle.loading')}</p>
         </ArcadeCard>
       )}
 
@@ -205,9 +204,11 @@ function BattlePage() {
 
       {teamReady && attack.isFetching && !result && (
         <ArcadeCard className="py-12 text-center">
-          <p className="font-display text-lg text-text">Combat en cours…</p>
+          <p className="font-display text-lg text-text">
+            {t('combat:battle.inProgress')}
+          </p>
           <p className="mt-1 text-sm text-text-light">
-            Les forces s'affrontent.
+            {t('combat:battle.clashing')}
           </p>
         </ArcadeCard>
       )}
@@ -235,10 +236,14 @@ function BattlePage() {
         }}
       >
         <PopupContent size="default" className="p-8 text-center">
-          <Dialog.Title className="sr-only">Erreur</Dialog.Title>
+          <Dialog.Title className="sr-only">
+            {t('errors:generic.fallbackTitle')}
+          </Dialog.Title>
           <AlertTriangle className="mx-auto mb-3 h-10 w-10 text-rose-500" />
           <p className="font-display text-lg font-bold text-rose-500">
-            {isApiError(attack.error) ? attack.error.title : 'Erreur'}
+            {isApiError(attack.error)
+              ? attack.error.title
+              : t('errors:generic.fallbackTitle')}
           </p>
           <p className="mt-1.5 text-sm text-text-light">
             {isApiError(attack.error)
@@ -246,7 +251,7 @@ function BattlePage() {
               : String(attack.error)}
           </p>
           <Button onClick={handleBackToCampaign} className="mt-5">
-            Retour à la campagne
+            {t('combat:battle.backToCampaign')}
           </Button>
         </PopupContent>
       </Popup>
@@ -293,6 +298,7 @@ function BattleResultOverlay({
   onBack: () => void
   onNextFloor: () => void
 }) {
+  const { t } = useTranslation('combat')
   // The dock is only a fallback for a *dismissed* result: it needs the popup to
   // have opened at least once (resultSeen), so it never flashes during the
   // fight or in the gap before the popup slides in.
@@ -311,7 +317,11 @@ function BattleResultOverlay({
           className="border-0 bg-[#fbf8f3] p-0 shadow-[0_30px_80px_-12px_rgba(0,0,0,0.4)]"
         >
           <Dialog.Title className="sr-only">
-            {result.won ? 'Victoire' : isTimeout ? 'Match nul' : 'Défaite'}
+            {result.won
+              ? t('combat:battle.result.victory')
+              : isTimeout
+                ? t('combat:battle.result.draw')
+                : t('combat:battle.result.defeat')}
           </Dialog.Title>
           {result.won ? (
             <VictoryPanel
@@ -363,6 +373,7 @@ function ResultDock({
   onReview: () => void
   onBack: () => void
 }) {
+  const { t } = useTranslation('combat')
   return (
     <div
       className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-4 pt-3"
@@ -380,7 +391,11 @@ function ResultDock({
             <Skull className="h-5 w-5 text-rose-400" />
           )}
           <div className="font-display text-base font-extrabold text-white">
-            {won ? 'Victoire' : timeout ? 'Match nul' : 'Défaite'}
+            {won
+              ? t('combat:battle.result.victory')
+              : timeout
+                ? t('combat:battle.result.draw')
+                : t('combat:battle.result.defeat')}
           </div>
         </div>
 
@@ -391,10 +406,12 @@ function ResultDock({
             className="gap-2 border-white/0 bg-white text-[#1b1726] hover:bg-white/90 hover:text-[#1b1726]"
           >
             <Eye className="h-4 w-4" />
-            <span className="hidden sm:inline">Revoir le résultat</span>
+            <span className="hidden sm:inline">
+              {t('combat:battle.reviewResult')}
+            </span>
           </Button>
           <Button onClick={onBack} className="gap-2">
-            Campagne
+            {t('combat:teamLabel.campaign')}
             <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
@@ -404,29 +421,30 @@ function ResultDock({
 }
 
 function NoTeamNotice() {
+  const { t } = useTranslation('combat')
   return (
     <ArcadeCard className="text-center">
       <Swords className="mx-auto mb-2 h-10 w-10 text-text-light/40" />
       <p className="font-display text-lg font-bold text-text">
-        Aucune équipe déployée
+        {t('combat:battle.noTeam.title')}
       </p>
       <p className="mt-2 text-sm text-text-light">
-        Avant de combattre, sélectionne jusqu'à 3 cartes dans la page Combat. Si
-        tu n'as pas encore de cartes, fais d'abord quelques tirages sur la page
-        Jouer.
+        {t('combat:battle.noTeam.description')}
       </p>
       <div className="mt-4 flex flex-wrap justify-center gap-2">
         <Link to="/campaign" search={{ editor: true }}>
           <Button>
             <Swords className="mr-2 h-4 w-4" />
-            Configurer mon équipe
+            {t('combat:battle.noTeam.configureTeam')}
           </Button>
         </Link>
         <Link to="/play">
-          <Button variant="outline">Faire un tirage</Button>
+          <Button variant="outline">{t('combat:battle.noTeam.doAPull')}</Button>
         </Link>
         <Link to="/campaign">
-          <Button variant="outline">Retour campagne</Button>
+          <Button variant="outline">
+            {t('combat:battle.noTeam.backToCampaign')}
+          </Button>
         </Link>
       </div>
     </ArcadeCard>
@@ -446,6 +464,7 @@ function VictoryPanel({
   onReplay: () => void
   onNextFloor: () => void
 }) {
+  const { t } = useTranslation('combat')
   const rewards = result.rewards
   return (
     <ResultPanel halo>
@@ -454,16 +473,19 @@ function VictoryPanel({
         icon={<Trophy className="h-8 w-8" />}
       />
       <h2 className="mt-4 font-display text-3xl font-bold text-text">
-        Victoire !
+        {t('combat:battle.victoryTitle')}
       </h2>
       {stageInfo && (
         <p className="mt-1 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-text-light/70">
-          Niveau {stageInfo.label} · {stageInfo.chapterTitle}
+          {t('combat:battle.stageSubtitle', {
+            label: stageInfo.label,
+            chapter: stageInfo.chapterTitle,
+          })}
         </p>
       )}
       {rewards?.isFirstClear && (
         <p className="mt-1 font-mono text-xs font-bold uppercase tracking-widest text-amber-600">
-          Premier passage
+          {t('combat:battle.firstClear')}
         </p>
       )}
 
@@ -471,13 +493,13 @@ function VictoryPanel({
         <div className="mt-6 grid w-full grid-cols-2 gap-2.5">
           <RewardTile
             icon={<Coins className="h-5 w-5" />}
-            label="Pièces"
+            label={t('combat:battle.rewards.gold')}
             value={rewards.gold}
             tone="#f59e0b"
           />
           <RewardTile
             icon={<Sparkles className="h-5 w-5" />}
-            label="Poussière"
+            label={t('combat:battle.rewards.dust')}
             value={rewards.dust}
             tone="#38bdf8"
           />
@@ -505,16 +527,16 @@ function VictoryPanel({
           className="gap-2"
         >
           <RotateCcw className="h-4 w-4" />
-          Rejouer
+          {t('combat:battle.replay')}
         </Button>
         <Button onClick={onNextFloor} className="gap-2">
-          Etage suivant
+          {t('combat:battle.nextFloor')}
           <ArrowRight className="h-4 w-4" />
         </Button>
       </div>
       {!canReplay && (
         <p className="mt-2 font-mono text-[11px] font-bold uppercase tracking-widest text-text-light/70">
-          Plus assez de points de combat
+          {t('combat:battle.notEnoughCombatPoints')}
         </p>
       )}
     </ResultPanel>
@@ -534,6 +556,7 @@ function DefeatPanel({
   onReplay: () => void
   onBack: () => void
 }) {
+  const { t } = useTranslation('combat')
   return (
     <ResultPanel>
       <ResultBadge
@@ -547,12 +570,14 @@ function DefeatPanel({
         }
       />
       <h2 className="mt-4 font-display text-3xl font-bold text-text">
-        {timeout ? 'Match nul' : 'Défaite'}
+        {timeout
+          ? t('combat:battle.result.draw')
+          : t('combat:battle.result.defeat')}
       </h2>
       <p className="mt-2 max-w-sm text-sm text-text-light">
         {timeout
-          ? "Aucune équipe n'a pris l'avantage avant la limite de combat. Renforce ta composition pour l'emporter plus vite — l'énergie a quand même été dépensée."
-          : "Ton équipe n'a pas tenu le choc. Améliore ta composition ou monte tes cartes avant de retourner au front."}
+          ? t('combat:battle.defeat.timeoutDescription')
+          : t('combat:battle.defeat.lossDescription')}
       </p>
 
       <div className="mt-6 flex w-full flex-col gap-2.5">
@@ -566,10 +591,10 @@ function DefeatPanel({
             </span>
             <span className="flex flex-col items-start gap-0.5">
               <span className="font-display text-sm font-bold">
-                Revoir mon équipe
+                {t('combat:battle.defeat.reviewTeam')}
               </span>
               <span className="text-xs text-text-light">
-                Choisis une meilleure composition
+                {t('combat:battle.defeat.reviewTeamHint')}
               </span>
             </span>
             <ChevronRight className="ml-auto h-5 w-5 shrink-0 text-text-light/40" />
@@ -585,10 +610,10 @@ function DefeatPanel({
             </span>
             <span className="flex flex-col items-start gap-0.5">
               <span className="font-display text-sm font-bold">
-                Monter tes cartes
+                {t('combat:battle.defeat.upgradeCards')}
               </span>
               <span className="text-xs text-text-light">
-                Améliore le niveau de tes cartes
+                {t('combat:battle.defeat.upgradeCardsHint')}
               </span>
             </span>
             <ChevronRight className="ml-auto h-5 w-5 shrink-0 text-text-light/40" />
@@ -598,11 +623,11 @@ function DefeatPanel({
 
       <div className="mt-6 flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-center">
         <Button variant="outline" onClick={onBack}>
-          Retour
+          {t('combat:battle.defeat.back')}
         </Button>
         <Button onClick={onReplay} disabled={!canReplay} className="gap-2">
           <RotateCcw className="h-4 w-4" />
-          Réessayer
+          {t('combat:battle.defeat.retry')}
           <span className="ml-1 inline-flex items-center gap-0.5 rounded-full bg-black/15 px-2 py-0.5 font-mono text-[12px] font-bold tabular-nums">
             <Zap className="h-3 w-3" />
             {battleCost}
@@ -611,7 +636,7 @@ function DefeatPanel({
       </div>
       {!canReplay && (
         <p className="mt-2 font-mono text-[11px] font-bold uppercase tracking-widest text-text-light/70">
-          Plus assez de points de combat
+          {t('combat:battle.notEnoughCombatPoints')}
         </p>
       )}
     </ResultPanel>
@@ -628,6 +653,7 @@ function XpBar({
     levelBefore: number
   }
 }) {
+  const { t } = useTranslation('combat')
   const locale = currentLocale()
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const xpBefore = rewards.xpBefore
@@ -648,7 +674,7 @@ function XpBar({
   return (
     <div className="mt-4 w-full rounded-2xl border border-border bg-white p-3">
       <div className="mb-1.5 flex items-baseline justify-between font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-text-light/70">
-        <span>Niveau {level}</span>
+        <span>{t('combat:battle.levelLabel', { level })}</span>
         <span className="tabular-nums">
           {formatNumber(xpAfter, locale)} / {formatNumber(xpAtLevelEnd, locale)}{' '}
           XP

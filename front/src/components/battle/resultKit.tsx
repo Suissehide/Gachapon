@@ -1,6 +1,7 @@
 import { ArrowRight, Coins, Sparkles, Star, Zap } from 'lucide-react'
 import { Dialog } from 'radix-ui'
 import { Children, isValidElement, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { CardDrop } from '../../api/campaign.api.ts'
 import type { EquipmentDrop } from '../../api/equipment.api.ts'
@@ -130,13 +131,14 @@ export function CardDropReward({
   drop: CardDrop
   className?: string
 }) {
+  const { t } = useTranslation('machine')
   return (
     <div className={cn('flex flex-col items-center justify-center', className)}>
       <div className="relative aspect-[2/3] w-full max-w-[190px]">
         {!drop.wasDuplicate && (
           <span className="pointer-events-none absolute top-2 right-2 z-20 flex items-center gap-1 rounded-full bg-emerald-500/95 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-emerald-600/40">
             <Star className="h-3 w-3" strokeWidth={2.5} />
-            Nouveau
+            {t('machine:newMasculine')}
           </span>
         )}
         <TcgCardFace
@@ -243,6 +245,7 @@ export function FarmResultPopup({
   cardDrops?: CardDrop[]
   onClose: () => void
 }) {
+  const { t } = useTranslation('combat')
   return (
     <Popup
       open
@@ -256,29 +259,31 @@ export function FarmResultPopup({
         size="lg"
         className="border-0 bg-[#fbf8f3] p-0 shadow-[0_30px_80px_-12px_rgba(0,0,0,0.4)]"
       >
-        <Dialog.Title className="sr-only">Farm terminé</Dialog.Title>
+        <Dialog.Title className="sr-only">
+          {t('combat:farmResult.title')}
+        </Dialog.Title>
         <ResultPanel halo>
           <ResultBadge
             className={RESULT_BADGE_WIN}
             icon={<Zap className="h-8 w-8" />}
           />
           <h2 className="mt-4 font-display text-3xl font-bold text-text">
-            Farm terminé
+            {t('combat:farmResult.title')}
           </h2>
           <p className="mt-1 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-text-light/70">
-            × {runs} combats
+            {t('combat:farmResult.runs', { count: runs })}
           </p>
 
           <div className="mt-6 grid w-full grid-cols-3 gap-2.5">
             <RewardTile
               icon={<Coins className="h-5 w-5" />}
-              label="Pièces"
+              label={t('combat:battle.rewards.gold')}
               value={totalGold}
               tone="#f59e0b"
             />
             <RewardTile
               icon={<Sparkles className="h-5 w-5" />}
-              label="Poussière"
+              label={t('combat:battle.rewards.dust')}
               value={totalDust}
               tone="#38bdf8"
             />
@@ -310,7 +315,7 @@ export function FarmResultPopup({
 
           <div className="mt-6 flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-center">
             <Button onClick={onClose} className="gap-2">
-              Continuer
+              {t('combat:farmResult.continue')}
               <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
