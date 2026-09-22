@@ -1,0 +1,9 @@
+{
+  "apiTitles": {
+    "operations": {
+      "loadCollectors": "Erreur lors de la récupération du classement Collectionneurs",
+      "loadTeams": "Erreur lors de la récupération du classement Équipes",
+      "loadCombat": "Erreur lors de la récupération du classement Combats"
+    }
+  }
+}

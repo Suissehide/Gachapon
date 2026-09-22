@@ -68,5 +68,23 @@
     "ENERGY_PACK_CAP_one": "+{{value}} purchase / day",
     "ENERGY_PACK_CAP_other": "+{{value}} purchases / day",
     "WISHLIST_PULL_CHANCE": "+{{value}}%"
+  },
+  "apiTitles": {
+    "operations": {
+      "loadTree": "Error loading the skill tree",
+      "saveSkills": "Error saving the skills",
+      "reset": "Error during the reset",
+      "adminLoadTree": "Error loading the tree",
+      "adminLoadConfig": "Error loading the config",
+      "adminUpdateConfig": "Error updating the config",
+      "adminCreateBranch": "Error creating the branch",
+      "adminUpdateBranch": "Error updating the branch",
+      "adminDeleteBranch": "Error deleting the branch",
+      "adminCreateNode": "Error creating the node",
+      "adminUpdateNode": "Error updating the node",
+      "adminDeleteNode": "Error deleting the node",
+      "adminCreateLink": "Error creating the link",
+      "adminDeleteLink": "Error deleting the link"
+    }
   }
 }

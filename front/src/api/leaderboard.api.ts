@@ -6,6 +6,7 @@ import type {
   TeamEntry,
 } from '../constants/leaderboard.constant.ts'
 import { LEADERBOARD_ROUTES } from '../constants/leaderboard.constant.ts'
+import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
@@ -23,16 +24,16 @@ export const LeaderboardApi = {
   getCollectors: () =>
     getJson<LeaderboardResponse<CollectorEntry>>(
       LEADERBOARD_ROUTES.collectors,
-      'Erreur lors de la récupération du classement Collectionneurs',
+      i18n.t('leaderboard:apiTitles.operations.loadCollectors'),
     ),
   getTeams: () =>
     getJson<LeaderboardResponse<TeamEntry>>(
       LEADERBOARD_ROUTES.teams,
-      'Erreur lors de la récupération du classement Équipes',
+      i18n.t('leaderboard:apiTitles.operations.loadTeams'),
     ),
   getCombat: () =>
     getJson<LeaderboardResponse<CombatEntry>>(
       LEADERBOARD_ROUTES.combat,
-      'Erreur lors de la récupération du classement Combats',
+      i18n.t('leaderboard:apiTitles.operations.loadCombat'),
     ),
 }

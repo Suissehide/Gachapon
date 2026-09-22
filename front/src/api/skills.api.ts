@@ -1,4 +1,5 @@
 import { apiUrl } from '../constants/config.constant.ts'
+import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
@@ -76,11 +77,7 @@ export const SkillsApi = {
   getState: async (): Promise<SkillTreeState> => {
     const res = await fetchWithAuth(`${apiUrl}/skills`)
     if (!res.ok) {
-      handleHttpError(
-        res,
-        {},
-        "Erreur lors du chargement de l'arbre de compétences",
-      )
+      handleHttpError(res, {}, i18n.t('skills:apiTitles.operations.loadTree'))
     }
     return res.json()
   },
@@ -92,7 +89,7 @@ export const SkillsApi = {
       method: 'POST',
     })
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors de l'investissement")
+      handleHttpError(res, {}, i18n.t('skills:toasts.investErrorTitle'))
     }
     return res.json()
   },
@@ -106,11 +103,7 @@ export const SkillsApi = {
       body: JSON.stringify({ allocations }),
     })
     if (!res.ok) {
-      handleHttpError(
-        res,
-        {},
-        "Erreur lors de l'enregistrement des compétences",
-      )
+      handleHttpError(res, {}, i18n.t('skills:apiTitles.operations.saveSkills'))
     }
     return res.json()
   },
@@ -120,7 +113,7 @@ export const SkillsApi = {
       method: 'POST',
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors du reset')
+      handleHttpError(res, {}, i18n.t('skills:apiTitles.operations.reset'))
     }
     return res.json()
   },
@@ -129,7 +122,11 @@ export const SkillsApi = {
   adminGetTree: async (): Promise<SkillBranch[]> => {
     const res = await fetchWithAuth(`${apiUrl}/admin/skills/tree`)
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors du chargement de l'arbre")
+      handleHttpError(
+        res,
+        {},
+        i18n.t('skills:apiTitles.operations.adminLoadTree'),
+      )
     }
     return res.json()
   },
@@ -137,7 +134,11 @@ export const SkillsApi = {
   adminGetConfig: async (): Promise<SkillConfig> => {
     const res = await fetchWithAuth(`${apiUrl}/admin/skills/config`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors du chargement de la config')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('skills:apiTitles.operations.adminLoadConfig'),
+      )
     }
     return res.json()
   },
@@ -151,7 +152,11 @@ export const SkillsApi = {
       body: JSON.stringify(data),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la mise à jour de la config')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('skills:apiTitles.operations.adminUpdateConfig'),
+      )
     }
     return res.json()
   },
@@ -165,7 +170,11 @@ export const SkillsApi = {
       body: JSON.stringify(data),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la création de la branche')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('skills:apiTitles.operations.adminCreateBranch'),
+      )
     }
     return res.json()
   },
@@ -180,7 +189,11 @@ export const SkillsApi = {
       body: JSON.stringify(data),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la mise à jour de la branche')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('skills:apiTitles.operations.adminUpdateBranch'),
+      )
     }
     return res.json()
   },
@@ -190,7 +203,11 @@ export const SkillsApi = {
       method: 'DELETE',
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la suppression de la branche')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('skills:apiTitles.operations.adminDeleteBranch'),
+      )
     }
   },
 
@@ -201,7 +218,11 @@ export const SkillsApi = {
       body: JSON.stringify(data),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la création du nœud')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('skills:apiTitles.operations.adminCreateNode'),
+      )
     }
     return res.json()
   },
@@ -216,7 +237,11 @@ export const SkillsApi = {
       body: JSON.stringify(data),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la mise à jour du nœud')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('skills:apiTitles.operations.adminUpdateNode'),
+      )
     }
     return res.json()
   },
@@ -226,7 +251,11 @@ export const SkillsApi = {
       method: 'DELETE',
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la suppression du nœud')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('skills:apiTitles.operations.adminDeleteNode'),
+      )
     }
   },
 
@@ -237,7 +266,11 @@ export const SkillsApi = {
       body: JSON.stringify(data),
     })
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la création de la connexion')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('skills:apiTitles.operations.adminCreateLink'),
+      )
     }
     return res.json()
   },
@@ -253,7 +286,11 @@ export const SkillsApi = {
       },
     )
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la suppression de la connexion')
+      handleHttpError(
+        res,
+        {},
+        i18n.t('skills:apiTitles.operations.adminDeleteLink'),
+      )
     }
   },
 }

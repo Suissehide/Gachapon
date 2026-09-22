@@ -68,5 +68,23 @@
     "ENERGY_PACK_CAP_one": "+{{value}} achat / jour",
     "ENERGY_PACK_CAP_other": "+{{value}} achats / jour",
     "WISHLIST_PULL_CHANCE": "+{{value}} %"
+  },
+  "apiTitles": {
+    "operations": {
+      "loadTree": "Erreur lors du chargement de l'arbre de compétences",
+      "saveSkills": "Erreur lors de l'enregistrement des compétences",
+      "reset": "Erreur lors du reset",
+      "adminLoadTree": "Erreur lors du chargement de l'arbre",
+      "adminLoadConfig": "Erreur lors du chargement de la config",
+      "adminUpdateConfig": "Erreur lors de la mise à jour de la config",
+      "adminCreateBranch": "Erreur lors de la création de la branche",
+      "adminUpdateBranch": "Erreur lors de la mise à jour de la branche",
+      "adminDeleteBranch": "Erreur lors de la suppression de la branche",
+      "adminCreateNode": "Erreur lors de la création du nœud",
+      "adminUpdateNode": "Erreur lors de la mise à jour du nœud",
+      "adminDeleteNode": "Erreur lors de la suppression du nœud",
+      "adminCreateLink": "Erreur lors de la création de la connexion",
+      "adminDeleteLink": "Erreur lors de la suppression de la connexion"
+    }
   }
 }

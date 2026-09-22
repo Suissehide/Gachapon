@@ -4,6 +4,7 @@ import type {
   DailyShopResponse,
 } from '../constants/daily-shop.constant.ts'
 import { DAILY_SHOP_ROUTES } from '../constants/daily-shop.constant.ts'
+import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
@@ -14,7 +15,7 @@ export const DailyShopApi = {
       handleHttpError(
         res,
         {},
-        'Erreur lors de la récupération de la boutique du jour',
+        i18n.t('shop:apiTitles.operations.loadDailyShop'),
       )
     }
     return res.json()
@@ -28,7 +29,7 @@ export const DailyShopApi = {
       },
     )
     if (!res.ok) {
-      handleHttpError(res, {}, "Erreur lors de l'achat")
+      handleHttpError(res, {}, i18n.t('shop:apiTitles.operations.purchase'))
     }
     return res.json()
   },

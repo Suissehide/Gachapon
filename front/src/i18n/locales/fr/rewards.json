@@ -1,5 +1,12 @@
 {
   "toasts": {
     "claimErrorTitle": "Erreur lors de la réclamation"
+  },
+  "apiTitles": {
+    "operations": {
+      "loadRewards": "Erreur lors de la récupération des récompenses",
+      "claimReward": "Erreur lors de la réclamation de la récompense",
+      "claimAllRewards": "Erreur lors de la réclamation de toutes les récompenses"
+    }
   }
 }

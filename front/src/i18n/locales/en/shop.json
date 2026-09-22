@@ -9,5 +9,16 @@
   "currency": {
     "DUST": "Dust",
     "GOLD": "Gold"
+  },
+  "apiTitles": {
+    "boostConflictTitle": "Incompatible boost",
+    "dailyLimitTitle": "Limit reached",
+    "energyDailyCapMessage": "Daily energy purchase limit reached",
+    "operations": {
+      "loadItems": "Error loading the items",
+      "purchase": "Error during the purchase",
+      "loadMachines": "Error loading the machines",
+      "loadDailyShop": "Error loading the daily shop"
+    }
   }
 }

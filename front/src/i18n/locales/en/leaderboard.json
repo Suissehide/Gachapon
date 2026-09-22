@@ -1,0 +1,9 @@
+{
+  "apiTitles": {
+    "operations": {
+      "loadCollectors": "Error loading the Collectors leaderboard",
+      "loadTeams": "Error loading the Teams leaderboard",
+      "loadCombat": "Error loading the Combat leaderboard"
+    }
+  }
+}

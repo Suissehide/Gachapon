@@ -1,4 +1,5 @@
 import { apiUrl } from '../constants/config.constant.ts'
+import i18n from '../i18n/index.ts'
 import { handleHttpError } from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
@@ -42,7 +43,7 @@ export const QuestsApi = {
   get: async (): Promise<QuestsResponse> => {
     const res = await fetchWithAuth(`${apiUrl}/quests`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la récupération des quêtes')
+      handleHttpError(res, {}, i18n.t('quests:apiTitles.operations.loadQuests'))
     }
     return res.json()
   },

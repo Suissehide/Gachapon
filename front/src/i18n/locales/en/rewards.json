@@ -1,5 +1,12 @@
 {
   "toasts": {
     "claimErrorTitle": "Error claiming"
+  },
+  "apiTitles": {
+    "operations": {
+      "loadRewards": "Error loading the rewards",
+      "claimReward": "Error claiming the reward",
+      "claimAllRewards": "Error claiming all the rewards"
+    }
   }
 }

@@ -1,7 +1,11 @@
 import { apiUrl } from '../constants/config.constant.ts'
 import type { PurchaseResult, ShopItem } from '../constants/shop.constant.ts'
 import { SHOP_ROUTES } from '../constants/shop.constant.ts'
-import { handleHttpError } from '../libs/httpErrorHandler.ts'
+import i18n from '../i18n/index.ts'
+import {
+  handleHttpError,
+  handleHttpErrorFromServer,
+} from '../libs/httpErrorHandler.ts'
 import { fetchWithAuth } from './fetchWithAuth.ts'
 
 export type { ShopItem, PurchaseResult }
@@ -13,7 +17,7 @@ export const ShopApi = {
   }> => {
     const res = await fetchWithAuth(`${apiUrl}${SHOP_ROUTES.items}`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la récupération des articles')
+      handleHttpError(res, {}, i18n.t('shop:apiTitles.operations.loadItems'))
     }
     return res.json()
   },
@@ -23,19 +27,19 @@ export const ShopApi = {
       method: 'POST',
     })
     if (!res.ok) {
-      handleHttpError(
+      // 409 : `shop.boostRarityConflict` du catalogue back, seule source de
+      // ce statut. 429 : partagé avec le limiteur de débit GLOBAL, dont le
+      // message est anglais — le front garde le sien.
+      await handleHttpErrorFromServer(
         res,
         {
-          409: {
-            title: 'Boost incompatible',
-            message: 'Un boost différent est déjà actif sur cette rareté',
-          },
+          409: i18n.t('shop:apiTitles.boostConflictTitle'),
           429: {
-            title: 'Limite atteinte',
-            message: "Limite quotidienne d'achats d'énergie atteinte",
+            title: i18n.t('shop:apiTitles.dailyLimitTitle'),
+            message: i18n.t('shop:apiTitles.energyDailyCapMessage'),
           },
         },
-        "Erreur lors de l'achat",
+        i18n.t('shop:apiTitles.operations.purchase'),
       )
     }
     return res.json()
@@ -44,7 +48,7 @@ export const ShopApi = {
   getOwnedMachines: async (): Promise<{ machineIds: string[] }> => {
     const res = await fetchWithAuth(`${apiUrl}/shop/machines`)
     if (!res.ok) {
-      handleHttpError(res, {}, 'Erreur lors de la récupération des machines')
+      handleHttpError(res, {}, i18n.t('shop:apiTitles.operations.loadMachines'))
     }
     return res.json()
   },

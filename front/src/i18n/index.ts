@@ -11,9 +11,11 @@ import equipmentEn from './locales/en/equipment.json'
 import errorsEn from './locales/en/errors.json'
 import gachaEn from './locales/en/gacha.json'
 import layoutEn from './locales/en/layout.json'
+import leaderboardEn from './locales/en/leaderboard.json'
 import notificationsEn from './locales/en/notifications.json'
 import passivesEn from './locales/en/passives.json'
 import profileEn from './locales/en/profile.json'
+import questsEn from './locales/en/quests.json'
 import rewardsEn from './locales/en/rewards.json'
 import shopEn from './locales/en/shop.json'
 import skillsEn from './locales/en/skills.json'
@@ -33,9 +35,11 @@ import equipmentFr from './locales/fr/equipment.json'
 import errorsFr from './locales/fr/errors.json'
 import gachaFr from './locales/fr/gacha.json'
 import layoutFr from './locales/fr/layout.json'
+import leaderboardFr from './locales/fr/leaderboard.json'
 import notificationsFr from './locales/fr/notifications.json'
 import passivesFr from './locales/fr/passives.json'
 import profileFr from './locales/fr/profile.json'
+import questsFr from './locales/fr/quests.json'
 import rewardsFr from './locales/fr/rewards.json'
 import shopFr from './locales/fr/shop.json'
 import skillsFr from './locales/fr/skills.json'
@@ -171,6 +175,8 @@ void i18next.use(initReactI18next).init({
       streak: streakFr,
       equipment: equipmentFr,
       gacha: gachaFr,
+      quests: questsFr,
+      leaderboard: leaderboardFr,
     },
     en: {
       common: commonEn,
@@ -195,6 +201,8 @@ void i18next.use(initReactI18next).init({
       streak: streakEn,
       equipment: equipmentEn,
       gacha: gachaEn,
+      quests: questsEn,
+      leaderboard: leaderboardEn,
     },
   },
   lng: localeFromPath(window.location.pathname),
@@ -222,6 +230,8 @@ void i18next.use(initReactI18next).init({
     'streak',
     'equipment',
     'gacha',
+    'quests',
+    'leaderboard',
   ],
   interpolation: {
     // React échappe déjà le rendu — un double échappement casserait les

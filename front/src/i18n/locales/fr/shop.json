@@ -9,5 +9,16 @@
   "currency": {
     "DUST": "Poussière",
     "GOLD": "Or"
+  },
+  "apiTitles": {
+    "boostConflictTitle": "Boost incompatible",
+    "dailyLimitTitle": "Limite atteinte",
+    "energyDailyCapMessage": "Limite quotidienne d'achats d'énergie atteinte",
+    "operations": {
+      "loadItems": "Erreur lors de la récupération des articles",
+      "purchase": "Erreur lors de l'achat",
+      "loadMachines": "Erreur lors de la récupération des machines",
+      "loadDailyShop": "Erreur lors de la récupération de la boutique du jour"
+    }
   }
 }

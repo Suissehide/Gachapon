@@ -9,5 +9,11 @@
     "streak": "Fidélité",
     "machines": "Machines",
     "hidden": "Succès cachés"
+  },
+  "apiTitles": {
+    "operations": {
+      "loadAchievements": "Erreur lors de la récupération des succès",
+      "loadFamilies": "Erreur lors de la récupération des familles"
+    }
   }
 }

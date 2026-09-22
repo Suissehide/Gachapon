@@ -9,5 +9,11 @@
     "streak": "Loyalty",
     "machines": "Machines",
     "hidden": "Hidden achievements"
+  },
+  "apiTitles": {
+    "operations": {
+      "loadAchievements": "Error loading the achievements",
+      "loadFamilies": "Error loading the families"
+    }
   }
 }
