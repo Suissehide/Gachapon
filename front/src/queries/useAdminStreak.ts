@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 
 import type {
   CreateMilestoneInput,
@@ -34,12 +35,13 @@ export function useAdminStreak() {
 export function useAdminPatchStreakDefault() {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('admin')
   return useMutation({
     mutationFn: (data: RewardPatch) => AdminStreakApi.patchDefault(data),
     onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la mise à jour',
+        title: t('toasts.streak.updateDefaultErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -50,13 +52,14 @@ export function useAdminPatchStreakDefault() {
 export function useAdminCreateMilestone() {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('admin')
   return useMutation({
     mutationFn: (data: CreateMilestoneInput) =>
       AdminStreakApi.createMilestone(data),
     onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la création du palier',
+        title: t('toasts.streak.createMilestoneErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -67,13 +70,14 @@ export function useAdminCreateMilestone() {
 export function useAdminPatchMilestone() {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('admin')
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: RewardPatch }) =>
       AdminStreakApi.patchMilestone(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la mise à jour du palier',
+        title: t('toasts.streak.updateMilestoneErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -84,12 +88,13 @@ export function useAdminPatchMilestone() {
 export function useAdminDeleteMilestone() {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('admin')
   return useMutation({
     mutationFn: (id: string) => AdminStreakApi.deleteMilestone(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la suppression du palier',
+        title: t('toasts.streak.deleteMilestoneErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })

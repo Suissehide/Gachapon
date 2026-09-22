@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 
 import {
   AdminRaidApi,
@@ -23,6 +24,7 @@ export function useAdminRaidTiers() {
 export function useAdminPatchRaidBoss() {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('admin')
   return useMutation({
     mutationFn: ({
       element,
@@ -34,14 +36,14 @@ export function useAdminPatchRaidBoss() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: BOSSES_KEY })
       toast({
-        title: 'Boss mis à jour',
+        title: t('toasts.raid.bossUpdatedTitle'),
         message: '',
         severity: TOAST_SEVERITY.SUCCESS,
       })
     },
     onError: (e: Error) =>
       toast({
-        title: 'Échec',
+        title: t('toasts.raid.failureTitle'),
         message: e.message,
         severity: TOAST_SEVERITY.ERROR,
       }),
@@ -51,20 +53,21 @@ export function useAdminPatchRaidBoss() {
 export function useAdminPatchRaidTier() {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('admin')
   return useMutation({
     mutationFn: ({ pct, data }: { pct: number; data: RaidTierPatch }) =>
       AdminRaidApi.patchTier(pct, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: TIERS_KEY })
       toast({
-        title: 'Palier mis à jour',
+        title: t('toasts.raid.tierUpdatedTitle'),
         message: '',
         severity: TOAST_SEVERITY.SUCCESS,
       })
     },
     onError: (e: Error) =>
       toast({
-        title: 'Échec',
+        title: t('toasts.raid.failureTitle'),
         message: e.message,
         severity: TOAST_SEVERITY.ERROR,
       }),

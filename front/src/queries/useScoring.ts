@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 
 import type { ScoringConfig } from '../api/admin-scoring.api.ts'
 import { AdminScoringApi } from '../api/admin-scoring.api.ts'
@@ -26,6 +27,7 @@ export const useScoringConfig = () => {
 export const useUpdateScoringConfig = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('admin')
   return useMutation({
     mutationFn: (data: ScoringConfig) => AdminScoringApi.updateConfig(data),
     onSuccess: () => {
@@ -35,7 +37,7 @@ export const useUpdateScoringConfig = () => {
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la mise à jour du scoring',
+        title: t('toasts.scoring.updateErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })

@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 
 import {
   AdminRewardsApi,
@@ -10,19 +11,20 @@ import { useToast } from '../hooks/useToast.ts'
 export function useAdminBulkReward() {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('admin')
   return useMutation({
     mutationFn: (body: BulkRewardBody) => AdminRewardsApi.sendBulk(body),
     onSuccess: ({ count }) => {
       qc.invalidateQueries({ queryKey: ['admin', 'users'] })
       toast({
-        title: 'Récompenses envoyées',
-        message: `${count} joueur${count > 1 ? 's' : ''} récompensé${count > 1 ? 's' : ''}`,
+        title: t('toasts.bulkReward.sentTitle'),
+        message: t('toasts.bulkReward.sentMessage', { count }),
         severity: TOAST_SEVERITY.SUCCESS,
       })
     },
     onError: (error) => {
       toast({
-        title: "Erreur lors de l'envoi",
+        title: t('toasts.bulkReward.sendErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })

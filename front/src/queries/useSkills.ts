@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 
 import { SkillsApi } from '../api/skills.api.ts'
 import { TOAST_SEVERITY } from '../constants/ui.constant.ts'
@@ -24,6 +25,7 @@ export const useSkillTree = () => {
 export const useInvestSkill = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('skills')
   return useMutation({
     mutationFn: (nodeId: string) => SkillsApi.invest(nodeId),
     onSuccess: () => {
@@ -32,7 +34,7 @@ export const useInvestSkill = () => {
     },
     onError: (error) => {
       toast({
-        title: "Erreur lors de l'investissement",
+        title: t('toasts.investErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -43,6 +45,7 @@ export const useInvestSkill = () => {
 export const useInvestBatch = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('skills')
   return useMutation({
     mutationFn: (allocations: { nodeId: string; levels: number }[]) =>
       SkillsApi.investBatch(allocations),
@@ -57,7 +60,7 @@ export const useInvestBatch = () => {
     },
     onError: (error) => {
       toast({
-        title: "Erreur lors de l'enregistrement",
+        title: t('toasts.saveErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -68,6 +71,7 @@ export const useInvestBatch = () => {
 export const useResetSkills = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('skills')
   return useMutation({
     mutationFn: SkillsApi.reset,
     onSuccess: () => {
@@ -77,7 +81,7 @@ export const useResetSkills = () => {
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la réinitialisation',
+        title: t('toasts.resetErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -118,6 +122,7 @@ export const useAdminSkillConfig = () => {
 export const useAdminUpdateConfig = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('skills')
   return useMutation({
     mutationFn: SkillsApi.adminUpdateConfig,
     onSuccess: () => {
@@ -126,7 +131,7 @@ export const useAdminUpdateConfig = () => {
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la mise à jour',
+        title: t('toasts.updateErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -137,6 +142,7 @@ export const useAdminUpdateConfig = () => {
 export const useAdminCreateBranch = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('skills')
   return useMutation({
     mutationFn: SkillsApi.adminCreateBranch,
     onSuccess: () => {
@@ -145,7 +151,7 @@ export const useAdminCreateBranch = () => {
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la création',
+        title: t('toasts.createErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -156,6 +162,7 @@ export const useAdminCreateBranch = () => {
 export const useAdminDeleteBranch = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('skills')
   return useMutation({
     mutationFn: SkillsApi.adminDeleteBranch,
     onSuccess: () => {
@@ -164,7 +171,7 @@ export const useAdminDeleteBranch = () => {
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la suppression',
+        title: t('toasts.deleteErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -175,6 +182,7 @@ export const useAdminDeleteBranch = () => {
 export const useAdminUpdateBranch = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('skills')
   return useMutation({
     mutationFn: ({
       id,
@@ -189,7 +197,7 @@ export const useAdminUpdateBranch = () => {
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la mise à jour',
+        title: t('toasts.updateErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -200,6 +208,7 @@ export const useAdminUpdateBranch = () => {
 export const useAdminCreateNode = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('skills')
   return useMutation({
     mutationFn: SkillsApi.adminCreateNode,
     onSuccess: () => {
@@ -208,7 +217,7 @@ export const useAdminCreateNode = () => {
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la création',
+        title: t('toasts.createErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -219,6 +228,7 @@ export const useAdminCreateNode = () => {
 export const useAdminUpdateNode = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('skills')
   return useMutation({
     mutationFn: ({
       id,
@@ -233,7 +243,7 @@ export const useAdminUpdateNode = () => {
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la mise à jour',
+        title: t('toasts.updateErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -244,6 +254,7 @@ export const useAdminUpdateNode = () => {
 export const useAdminDeleteNode = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('skills')
   return useMutation({
     mutationFn: SkillsApi.adminDeleteNode,
     onSuccess: () => {
@@ -252,7 +263,7 @@ export const useAdminDeleteNode = () => {
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la suppression',
+        title: t('toasts.deleteErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -263,6 +274,7 @@ export const useAdminDeleteNode = () => {
 export const useAdminCreateEdge = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('skills')
   return useMutation({
     mutationFn: SkillsApi.adminCreateEdge,
     onSuccess: () => {
@@ -271,7 +283,7 @@ export const useAdminCreateEdge = () => {
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la création',
+        title: t('toasts.createErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -282,6 +294,7 @@ export const useAdminCreateEdge = () => {
 export const useAdminDeleteEdge = () => {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('skills')
   return useMutation({
     mutationFn: ({
       fromNodeId,
@@ -296,7 +309,7 @@ export const useAdminDeleteEdge = () => {
     },
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la suppression',
+        title: t('toasts.deleteErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })

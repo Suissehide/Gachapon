@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 
 import { AdminCardsApi } from '../api/admin-cards.api.ts'
 import type { CardElement } from '../constants/card.constant.ts'
@@ -26,6 +27,7 @@ export function useAdminSets() {
 export function useAdminCreateSet() {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('admin')
   return useMutation({
     mutationFn: (data: {
       nameFr: string
@@ -37,7 +39,7 @@ export function useAdminCreateSet() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'sets'] }),
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la création du set',
+        title: t('toasts.cards.createSetErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -48,6 +50,7 @@ export function useAdminCreateSet() {
 export function useAdminUpdateSet() {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('admin')
   return useMutation({
     mutationFn: ({
       id,
@@ -63,7 +66,7 @@ export function useAdminUpdateSet() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'sets'] }),
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la mise à jour du set',
+        title: t('toasts.cards.updateSetErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -74,12 +77,13 @@ export function useAdminUpdateSet() {
 export function useAdminDeleteSet() {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('admin')
   return useMutation({
     mutationFn: (id: string) => AdminCardsApi.deleteSet(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'sets'] }),
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la suppression du set',
+        title: t('toasts.cards.deleteSetErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -109,12 +113,13 @@ export function useAdminCards(
 export function useAdminCreateCard() {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('admin')
   return useMutation({
     mutationFn: (formData: FormData) => AdminCardsApi.createCard(formData),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'cards'] }),
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la création de la carte',
+        title: t('toasts.cards.createCardErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -125,6 +130,7 @@ export function useAdminCreateCard() {
 export function useAdminUpdateCard() {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('admin')
   return useMutation({
     mutationFn: ({
       id,
@@ -146,7 +152,7 @@ export function useAdminUpdateCard() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'cards'] }),
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la mise à jour de la carte',
+        title: t('toasts.cards.updateCardErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -157,12 +163,13 @@ export function useAdminUpdateCard() {
 export function useAdminDeleteCard() {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('admin')
   return useMutation({
     mutationFn: (id: string) => AdminCardsApi.deleteCard(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'cards'] }),
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la suppression de la carte',
+        title: t('toasts.cards.deleteCardErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -173,13 +180,14 @@ export function useAdminDeleteCard() {
 export function useAdminUpdateCardImage() {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('admin')
   return useMutation({
     mutationFn: ({ id, file }: { id: string; file: File }) =>
       AdminCardsApi.updateCardImage(id, file),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'cards'] }),
     onError: (error) => {
       toast({
-        title: "Erreur lors de la mise à jour de l'image",
+        title: t('toasts.cards.updateImageErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })

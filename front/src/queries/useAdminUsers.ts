@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 
 import {
   AdminUsersApi,
@@ -51,13 +52,14 @@ export function useAdminUser(id: string) {
 export function useAdminUpdateTokens() {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('admin')
   return useMutation({
     mutationFn: ({ id, amount }: { id: string; amount: number }) =>
       AdminUsersApi.updateTokens(id, amount),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'users'] }),
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la mise à jour des tokens',
+        title: t('toasts.users.updateTokensErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -68,13 +70,14 @@ export function useAdminUpdateTokens() {
 export function useAdminUpdateDust() {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('admin')
   return useMutation({
     mutationFn: ({ id, amount }: { id: string; amount: number }) =>
       AdminUsersApi.updateDust(id, amount),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'users'] }),
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la mise à jour de la poussière',
+        title: t('toasts.users.updateDustErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -85,13 +88,14 @@ export function useAdminUpdateDust() {
 export function useAdminUpdateRole() {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('admin')
   return useMutation({
     mutationFn: ({ id, role }: { id: string; role: 'USER' | 'SUPER_ADMIN' }) =>
       AdminUsersApi.updateRole(id, role),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'users'] }),
     onError: (error) => {
       toast({
-        title: 'Erreur lors de la mise à jour du rôle',
+        title: t('toasts.users.updateRoleErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })
@@ -102,13 +106,14 @@ export function useAdminUpdateRole() {
 export function useAdminSuspendUser() {
   const qc = useQueryClient()
   const { toast } = useToast()
+  const { t } = useTranslation('admin')
   return useMutation({
     mutationFn: ({ id, suspended }: { id: string; suspended: boolean }) =>
       AdminUsersApi.suspendUser(id, suspended),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'users'] }),
     onError: (error) => {
       toast({
-        title: "Erreur lors de la suspension de l'utilisateur",
+        title: t('toasts.users.suspendErrorTitle'),
         message: error.message,
         severity: TOAST_SEVERITY.ERROR,
       })

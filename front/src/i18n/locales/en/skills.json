@@ -1,4 +1,12 @@
 {
+  "toasts": {
+    "investErrorTitle": "Error investing",
+    "saveErrorTitle": "Error saving",
+    "resetErrorTitle": "Error resetting",
+    "createErrorTitle": "Error creating",
+    "updateErrorTitle": "Error updating",
+    "deleteErrorTitle": "Error deleting"
+  },
   "effectDescriptions": {
     "REGEN": "Reduces token regeneration time",
     "LUCK": "Multiplies the odds of pulling a Rare card or better",

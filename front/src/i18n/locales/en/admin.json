@@ -3,5 +3,47 @@
     "NONE": "None",
     "USER": "User",
     "ADMIN": "Administrator"
+  },
+  "toasts": {
+    "bulkReward": {
+      "sentTitle": "Rewards sent",
+      "sentMessage_one": "{{count}} player rewarded",
+      "sentMessage_other": "{{count}} players rewarded",
+      "sendErrorTitle": "Error sending"
+    },
+    "cards": {
+      "createSetErrorTitle": "Error creating the set",
+      "updateSetErrorTitle": "Error updating the set",
+      "deleteSetErrorTitle": "Error deleting the set",
+      "createCardErrorTitle": "Error creating the card",
+      "updateCardErrorTitle": "Error updating the card",
+      "deleteCardErrorTitle": "Error deleting the card",
+      "updateImageErrorTitle": "Error updating the image"
+    },
+    "raid": {
+      "bossUpdatedTitle": "Boss updated",
+      "tierUpdatedTitle": "Tier updated",
+      "failureTitle": "Failed"
+    },
+    "shop": {
+      "createItemErrorTitle": "Error creating the item",
+      "updateItemErrorTitle": "Error updating the item",
+      "deleteItemErrorTitle": "Error deleting the item"
+    },
+    "streak": {
+      "updateDefaultErrorTitle": "Error updating",
+      "createMilestoneErrorTitle": "Error creating the milestone",
+      "updateMilestoneErrorTitle": "Error updating the milestone",
+      "deleteMilestoneErrorTitle": "Error deleting the milestone"
+    },
+    "users": {
+      "updateTokensErrorTitle": "Error updating tokens",
+      "updateDustErrorTitle": "Error updating dust",
+      "updateRoleErrorTitle": "Error updating the role",
+      "suspendErrorTitle": "Error suspending the user"
+    },
+    "scoring": {
+      "updateErrorTitle": "Error updating scoring"
+    }
   }
 }
