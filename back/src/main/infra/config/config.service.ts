@@ -172,6 +172,21 @@ export const DEFAULTS: Record<ConfigKey, number> = {
   'raid.attacksPerDay': 2,
   'raid.timeoutTurns': 10,
   'raid.baseHpPerMember': 162000,
+  // Effectif MINIMUM facturé dans les PV du boss, même pour une équipe plus
+  // petite : sans lui, monter une équipe à un joueur donnait un boss à sa
+  // taille et les quatre paliers toutes les semaines.
+  'raid.minMembers': 10,
+  // Points de pourcentage de PV ajoutés PAR NIVEAU, composés. Le niveau monte
+  // d'un cran par victoire et redescend d'un cran par semaine sans victoire :
+  // le système s'arrête tout seul là où l'équipe ne suit plus, d'où l'absence
+  // de plafond. À 10, une équipe assidue plafonne vers le niveau 2 (niveau 6
+  // avec le bonus d'équipe `raid` au rang 2).
+  'raid.levelHpBonusPct': 10,
+  // Bonus de lot par niveau, en POINTS DE POURCENTAGE de la base de chaque
+  // palier. DOIT rester strictement sous `raid.levelHpBonusPct` : au-dessus,
+  // les lots croissent plus vite que les PV et monter en difficulté devient
+  // un farm plus rentable. L'invariant est gardé par un test unitaire.
+  'raid.levelRewardPct': 5,
   // Duel de tirage : chaque joueur engage ses `pullCount` prochains tirages,
   // a `acceptHours` pour accepter et `deadlineHours` pour les faire.
   'duel.pullCount': 5,

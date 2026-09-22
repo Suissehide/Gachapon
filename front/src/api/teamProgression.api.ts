@@ -95,6 +95,7 @@ export type TeamRaidHistoryEntry = {
   bossName: string
   bossElement: TowerElement
   maxHp: number
+  level: number
   damage: number
   pct: number
   killedAt: string | null

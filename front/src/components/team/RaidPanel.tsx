@@ -21,12 +21,17 @@ import {
   Sparkles,
   Swords,
   Ticket,
+  TrendingUp,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import type { RaidTierView, RaidView } from '../../api/raid.api.ts'
 import { RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { cn } from '../../libs/utils.ts'
+import {
+  DEFAULT_ECONOMY,
+  useEconomyConfig,
+} from '../../queries/useEconomyConfig.ts'
 import { useRaid, useRaidLive } from '../../queries/useRaid.ts'
 import { ArcadeCard } from '../shared/ArcadeCard.tsx'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
@@ -196,6 +201,7 @@ function BossPowerBadge({
 export function RaidPanel({ teamId }: { teamId: string }) {
   const { data: raid, isLoading, isError } = useRaid(teamId)
   useRaidLive(teamId)
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   // Declare avant toute sortie anticipee : les hooks doivent s'executer dans
   // le meme ordre a chaque rendu.
   const [inspecting, setInspecting] = useState(false)
@@ -250,9 +256,21 @@ export function RaidPanel({ teamId }: { teamId: string }) {
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div className="min-w-0">
           <SectionLabel>Raid d'équipe</SectionLabel>
-          <PanelTitle size="lg" className="mt-1.5">
-            {raid.boss.name}
-          </PanelTitle>
+          <div className="mt-1.5 flex flex-wrap items-center gap-2.5">
+            <PanelTitle size="lg">{raid.boss.name}</PanelTitle>
+            {raid.level > 0 && (
+              // Même grammaire de pastille que le minuteur ci-contre
+              // (`.tm-chip--amber`), déclinée en encre neutre pour ne pas
+              // entrer en concurrence avec le bouton d'attaque.
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-foreground/5 px-2.5 py-1 font-mono text-[10px] font-bold tracking-[0.1em] text-text-light"
+                title="Le boss se renforce à chaque victoire de l'équipe, et les lots avec lui."
+              >
+                <TrendingUp className="h-3.5 w-3.5" />
+                NIV. {raid.level}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -322,6 +340,13 @@ export function RaidPanel({ teamId }: { teamId: string }) {
               />
             ))}
           </div>
+
+          <p className="mt-3 text-[11.5px] leading-relaxed text-text-light">
+            Le boss est calibré pour {economy.raid.minMembers} membres. Chaque
+            victoire de l'équipe lui ajoute {economy.raid.levelHpBonusPct} % de
+            points de vie et majore les lots ; une semaine sans victoire le fait
+            redescendre d'un cran.
+          </p>
         </div>
       </div>
 

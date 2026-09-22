@@ -37,6 +37,11 @@ function HistoryRow({ raid }: { raid: TeamRaidHistoryEntry }) {
       <div className="min-w-0">
         <span className="block truncate font-display text-[12.5px] font-bold text-text">
           {raid.bossName}
+          {raid.level > 0 && (
+            <span className="ml-1.5 font-mono text-[10px] font-bold text-text-light">
+              niv. {raid.level}
+            </span>
+          )}
         </span>
         <div className="mt-[5px] h-1.5 overflow-hidden rounded-[3px] bg-foreground/8">
           <div

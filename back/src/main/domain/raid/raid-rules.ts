@@ -54,11 +54,88 @@ export function raidElementForWeek(weekKey: string): TowerElement {
   return RAID_ROTATION[idx] as TowerElement
 }
 
+export type RaidHpParams = {
+  /** Effectif MINIMUM facturé, même si l'équipe est plus petite. */
+  minMembers: number
+  /** Points de pourcentage de PV ajoutés par niveau, composés (10 = 10 %). */
+  levelBonusPct: number
+  level: number
+}
+
+/**
+ * PV du boss, figés à la création du raid. Le plancher d'effectif empêche
+ * l'équipe montée à un joueur d'affronter un boss à sa taille ; le niveau
+ * compose par-dessus, sans plafond (voir `nextRaidLevel`).
+ */
 export function raidMaxHp(
   baseHpPerMember: number,
   memberCount: number,
+  { minMembers, levelBonusPct, level }: RaidHpParams,
 ): number {
-  return Math.max(1, Math.round(baseHpPerMember * Math.max(1, memberCount)))
+  const members = Math.max(minMembers, memberCount)
+  const levelMult = (1 + levelBonusPct / 100) ** Math.max(0, level)
+  return Math.max(1, Math.round(baseHpPerMember * members * levelMult))
+}
+
+/**
+ * Niveau du raid qu'on s'apprête à créer, dérivé du DERNIER raid joué par
+ * l'équipe — quelle que soit son ancienneté. Une victoire monte d'un cran,
+ * une semaine sans victoire fait redescendre d'un cran.
+ *
+ * Les semaines entièrement sautées comptent chacune comme un échec. Sans
+ * cette clause, il suffirait de ne pas ouvrir la page de raid pour figer son
+ * niveau : le raid est créé paresseusement (raid.domain#ensureRaid), donc
+ * une équipe qui ne regarde pas n'enregistre aucun échec.
+ *
+ * Aucun plafond : le niveau ne monte que sur une victoire, il s'arrête donc
+ * de lui-même là où l'équipe ne suit plus.
+ */
+export function nextRaidLevel(
+  last: { weekKey: string; level: number; killedAt: Date | null } | null,
+  weekKey: string,
+): number {
+  if (!last) {
+    return 0
+  }
+  const skipped = Math.max(
+    0,
+    raidWeekIndex(weekKey) - raidWeekIndex(last.weekKey) - 1,
+  )
+  return Math.max(0, last.level + (last.killedAt ? 1 : -1) - skipped)
+}
+
+export type RaidRewardAmounts = {
+  tokens: number
+  gold: number
+  dust: number
+}
+
+/**
+ * Lot d'un palier à un niveau donné : un pourcentage de la base de CE palier,
+ * par niveau. Proportionnel et non additif, c'est ce qui fait tenir
+ * l'invariant économique du raid — un montant plat partagé par des paliers
+ * aux bases très différentes faisait croître les petits paliers de 40 % par
+ * cran, bien au-dessus des 10 % des PV, et rendait la montée en difficulté
+ * PLUS rentable par point d'effort au lieu de moins.
+ *
+ * `bonusPct` doit rester strictement sous `raid.levelHpBonusPct`, sans quoi
+ * l'invariant se casse dès le premier cran. Gardé par le test
+ * « la récompense par point de dégât décroît » (test/unit/raid/raid-rules.test.ts).
+ *
+ * `xp` et `cardRarity` ne sont pas touchés : l'XP de raid vaut 0 et la
+ * rareté n'a pas d'échelle continue.
+ */
+export function raidTierRewardAtLevel(
+  base: RaidRewardAmounts,
+  level: number,
+  bonusPct: number,
+): RaidRewardAmounts {
+  const mult = 1 + (Math.max(0, level) * bonusPct) / 100
+  return {
+    tokens: Math.round(base.tokens * mult),
+    gold: Math.round(base.gold * mult),
+    dust: Math.round(base.dust * mult),
+  }
 }
 
 /**

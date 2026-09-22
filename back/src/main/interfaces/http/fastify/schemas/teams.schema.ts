@@ -241,6 +241,7 @@ export const teamRaidHistoryResponseSchema = z.object({
       // à la frontière plutôt que laissée en chaîne libre.
       bossElement: towerElementSchema,
       maxHp: z.number().int(),
+      level: z.number().int(),
       damage: z.number().int(),
       pct: z.number().int(),
       killedAt: z.string().nullable(),

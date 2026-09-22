@@ -35,8 +35,13 @@ export interface IRaidRepository {
       spec?: Prisma.InputJsonValue
     },
   ): Promise<LocalizedRaidBoss>
-  /** Paliers triés par pct croissant. */
-  listTiers(): Promise<RaidTierWithReward[]>
+  /** Paliers d'un niveau donné (défaut 0), triés par pct croissant. */
+  listTiers(level?: number): Promise<RaidTierWithReward[]>
+  /** Paliers du niveau, créés à la demande depuis le niveau 0. Hors transaction. */
+  ensureTiersForLevel(
+    level: number,
+    bonusPct: number,
+  ): Promise<RaidTierWithReward[]>
   findTierByPct(pct: number): Promise<RaidTierWithReward | null>
   updateTierReward(
     pct: number,
@@ -50,6 +55,7 @@ export interface IRaidRepository {
     bossId: string
     maxHp: number
     memberCountAtStart: number
+    level: number
   }): Promise<TeamRaidWithBoss>
   /** Dégâts cumulés et nombre d'attaques par joueur, triés par dégâts décroissants. */
   listContributions(raidId: string): Promise<RaidContributionRow[]>
@@ -77,4 +83,6 @@ export interface IRaidRepository {
   ): Promise<TeamRaidWithBoss[]>
   /** Raids de l'équipe dont le boss est tombé (`killedAt` renseigné). */
   countKills(teamId: string): Promise<number>
+  /** Dernier raid strictement antérieur à `weekKey`, référence du niveau. */
+  findLastRaidBefore(teamId: string, weekKey: string): Promise<TeamRaid | null>
 }

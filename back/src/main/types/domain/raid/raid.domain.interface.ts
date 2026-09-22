@@ -47,6 +47,8 @@ export type RaidView = {
   hp: number
   damageDone: number
   memberCountAtStart: number
+  /** Niveau de difficulté de l'équipe, figé à la création du raid. */
+  level: number
   killedAt: string | null
   tiers: RaidTierView[]
   me: {
@@ -73,6 +75,8 @@ export type RaidHistoryEntry = {
   bossName: string
   bossElement: TowerElement
   maxHp: number
+  /** Niveau de difficulté de cette semaine-là. */
+  level: number
   damage: number
   /** Entier 0..100, plancher : un boss encore debout n'affiche jamais 100. */
   pct: number

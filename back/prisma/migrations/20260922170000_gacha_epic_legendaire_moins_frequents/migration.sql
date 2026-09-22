@@ -1,0 +1,22 @@
+-- Barème `dropWeight` par rareté : EPIC 8 -> 4 et LEGENDARY 2 -> 1. Les poids
+-- COMMON (85), UNCOMMON (38) et RARE (16) sont inchangés — RARE ne remonte que
+-- mécaniquement, de 5,17 % à 5,21 %, parce que la masse totale des poids baisse.
+--
+-- Sur le catalogue des 18 familles (602 cartes) :
+--   EPIC       1,406 % -> 0,709 %
+--   LEGENDARY  0,163 % -> 0,082 %  (une légendaire tous les ~1216 tirages
+--                                   au lieu de ~613)
+--
+-- Le `pityThreshold` (300) n'est pas touché : le plancher « un EPIC+ garanti
+-- tous les 300 tirages » reste le même.
+--
+-- Le déploiement ne lance jamais le seed et `import-cards.mjs` n'impose son
+-- barème qu'aux cartes qu'il CRÉE : sans cette migration, les 602 cartes déjà
+-- en base garderaient les anciens poids sur staging et en prod.
+--
+-- L'affectation est faite PAR RARETÉ, sans filtrer sur l'ancienne valeur : le
+-- barème est imposé par rareté (cf. `DROP_WEIGHT_BY_RARITY`), et les taux
+-- annoncés au joueur sont calculés depuis le catalogue vivant — une carte
+-- restée à un poids isolé les fausserait.
+UPDATE "Card" SET "dropWeight" = 4 WHERE rarity = 'EPIC';
+UPDATE "Card" SET "dropWeight" = 1 WHERE rarity = 'LEGENDARY';

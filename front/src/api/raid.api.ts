@@ -39,6 +39,9 @@ export type RaidView = {
   hp: number
   damageDone: number
   memberCountAtStart: number
+  /** Niveau de difficulté de l'équipe — croisé champ à champ avec
+      `raidViewResponseSchema` côté back. */
+  level: number
   killedAt: string | null
   tiers: RaidTierView[]
   me: {

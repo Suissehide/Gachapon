@@ -30,8 +30,8 @@ const POOL = [
   { rarity: 'COMMON', cards: 157, weight: 85, dust: DEFAULTS.dustCommon },
   { rarity: 'UNCOMMON', cards: 67, weight: 38, dust: DEFAULTS.dustUncommon },
   { rarity: 'RARE', cards: 57, weight: 16, dust: DEFAULTS.dustRare },
-  { rarity: 'EPIC', cards: 31, weight: 8, dust: DEFAULTS.dustEpic },
-  { rarity: 'LEGENDARY', cards: 17, weight: 2, dust: DEFAULTS.dustLegendary },
+  { rarity: 'EPIC', cards: 31, weight: 4, dust: DEFAULTS.dustEpic },
+  { rarity: 'LEGENDARY', cards: 17, weight: 1, dust: DEFAULTS.dustLegendary },
 ] as const
 const TOTAL_CARDS = POOL.reduce((s, p) => s + p.cards, 0)
 const LEGENDARY_CARDS = POOL[4].cards
