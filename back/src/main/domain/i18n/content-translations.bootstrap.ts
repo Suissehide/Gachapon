@@ -46,6 +46,71 @@ export function findByNameFr<T extends { nameFr: string }>(
 }
 
 /**
+ * Extrait le CODE porté par une clé d'image de carte : `HUM-001` pour
+ * `staging/cards/humans/HUM-001.png` comme pour `cards/humans/HUM-001.png`.
+ *
+ * Volontairement indépendante du préfixe : `IMAGE_PREFIX` change avec
+ * `NODE_ENV` (`cards/humans` en prod, `staging/cards/humans` ailleurs) et
+ * une base peut porter des lignes écrites sous l'autre préfixe. Seule la
+ * fin du chemin — `<code>.<ext>` — est stable.
+ */
+export function imageCodeOf(imageUrl: string | null): string | null {
+  if (imageUrl === null || imageUrl === '') {
+    return null
+  }
+  const file = imageUrl.slice(imageUrl.lastIndexOf('/') + 1)
+  const dot = file.lastIndexOf('.')
+  const code = dot === -1 ? file : file.slice(0, dot)
+  return code === '' ? null : code
+}
+
+/**
+ * Indexe des cartes par le code de leur clé d'image.
+ *
+ * C'est le rapprochement de `Card`, et il NE PASSE PAS par `id` : le `id`
+ * d'une définition (`HUM-001`) est un code d'image, pas une clé primaire.
+ * `Card.id` vaut `@default(uuid())` et le seed (`prisma/seed/cards.ts`)
+ * comme `POST /admin/cards` laissent Prisma le générer — un `where: { id:
+ * { in: CARDS.map(c => c.id) } }` ne sélectionne donc RIEN en base réelle.
+ * Le code de la carte n'existe, en base, que dans `imageUrl`, où les deux
+ * chemins d'écriture le posent par construction (`<préfixe>/<code>.png`).
+ *
+ * `nameFr` était l'autre candidat (c'est le rapprochement des quatre
+ * entités sans clé). Écarté ici : c'est précisément la colonne que ce
+ * backfill traduit, donc la plus susceptible d'être éditée par un
+ * administrateur — et une carte renommée en français perdrait sa
+ * traduction anglaise. La clé d'image, elle, ne bouge pas avec le texte.
+ *
+ * Comme `findByNameFr`, on ignore plutôt que de risquer la mauvaise ligne
+ * quand deux cartes partagent le même code.
+ */
+export function indexByImageCode<T extends { imageUrl: string | null }>(
+  rows: T[],
+  onAmbiguous: (message: string) => void,
+): Map<string, T> {
+  const byCode = new Map<string, T>()
+  const ambiguous = new Set<string>()
+  for (const row of rows) {
+    const code = imageCodeOf(row.imageUrl)
+    if (code === null) {
+      continue
+    }
+    if (byCode.has(code)) {
+      ambiguous.add(code)
+      continue
+    }
+    byCode.set(code, row)
+  }
+  for (const code of ambiguous) {
+    byCode.delete(code)
+    onAmbiguous(
+      `[i18n bootstrap] card: plusieurs lignes portent le code d'image "${code}", ignoré (clé ambiguë)`,
+    )
+  }
+  return byCode
+}
+
+/**
  * Pose les traductions connues sur une base déjà peuplée. Update-only et
  * idempotent : ne réécrit que les colonnes qu'aucun administrateur n'a
  * touchées, jamais celles saisies à la main en production.
@@ -73,10 +138,12 @@ export function findByNameFr<T extends { nameFr: string }>(
  *
  * D'où le choix : lire la ligne, comparer en TypeScript à la traduction
  * cible, et n'écrire (et ne compter) que si la cible diffère RÉELLEMENT de
- * la valeur actuelle. Prisma ne sait pas comparer deux colonnes du même
- * modèle dans un `where` typé sans SQL brut ; cette approche est plus
- * verbeuse mais reste explicite et types tout du long. Voir
- * `#applyIfEligible`.
+ * la valeur actuelle. Un `where` qui filtrerait sur « nameEn = nameFr »
+ * serait pourtant exprimable (Prisma sait référencer un champ du même
+ * modèle : `{ nameEn: { equals: prisma.card.fields.nameFr } }`, c'est ce
+ * que fait `admin-translations.repository.ts`) — mais il ne dirait rien de
+ * la CIBLE, et c'est la comparaison à la cible qui protège l'idempotence.
+ * Voir `#applyIfEligible`.
  */
 export class ContentTranslationsBootstrap {
   readonly #orm: PostgresORMInterface
@@ -157,18 +224,25 @@ export class ContentTranslationsBootstrap {
   }
 
   // ---------------------------------------------------------------------
-  // Card — clé stable : id (ex. 'HUM-001', fixé par le seed).
+  // Card — clé stable : le code porté par `imageUrl` (`…/HUM-001.png`).
+  // PAS `id` : c'est un uuid généré, voir `indexByImageCode`.
   // ---------------------------------------------------------------------
   async #backfillCards(): Promise<number> {
     const rows = await this.#orm.prisma.card.findMany({
-      where: { id: { in: CARDS.map((c) => c.id) } },
-      select: { id: true, nameFr: true, nameEn: true },
+      // `endsWith` et non `in` sur la clé complète : le préfixe de stockage
+      // dépend de `NODE_ENV`, le suffixe `/<code>.png` non.
+      where: {
+        OR: CARDS.map((c) => ({ imageUrl: { endsWith: `/${c.id}.png` } })),
+      },
+      select: { id: true, imageUrl: true, nameFr: true, nameEn: true },
     })
-    const byId = new Map(rows.map((r) => [r.id, r]))
+    const byCode = indexByImageCode(rows, (message) =>
+      this.#logger.warn(message),
+    )
 
     let updated = 0
     for (const def of CARDS) {
-      const row = byId.get(def.id)
+      const row = byCode.get(def.id)
       if (!row) {
         continue
       }

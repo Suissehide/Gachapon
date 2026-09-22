@@ -2,7 +2,11 @@ import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 
 import { ACHIEVEMENT_DEFINITIONS } from '../../main/domain/content/achievements.definitions'
 import { campaignStageLabel } from '../../main/domain/content/campaign.definitions'
-import { CARDS, HUMAN_CARD_SET } from '../../main/domain/content/cards.definitions'
+import {
+  CARDS,
+  HUMAN_CARD_SET,
+  IMAGE_PREFIX,
+} from '../../main/domain/content/cards.definitions'
 import { RAID_BOSS_NAME, RAID_BOSS_NAME_EN } from '../../main/domain/content/raid.definitions'
 import { runWithLocale } from '../../main/infra/i18n/locale-context'
 import { buildTestApp } from '../helpers/build-test-app'
@@ -25,9 +29,9 @@ import { buildTestApp } from '../helpers/build-test-app'
  * fichier : aucun autre test e2e n'affirme quoi que ce soit sur du texte
  * `label`/`name` de `CampaignStage`/`Achievement` — seules leurs valeurs
  * numériques/gameplay sont contrôlées — donc une réécriture par ce bootstrap
- * ne peut pas faire échouer un autre test. Les clés utilisées ici (ids de
- * carte, `chapter` de campagne) sont par ailleurs choisies pour ne
- * correspondre à aucune fixture existante (voir commentaires).
+ * ne peut pas faire échouer un autre test. Les clés utilisées ici (codes
+ * d'image de carte, `chapter` de campagne) sont par ailleurs choisies pour
+ * ne correspondre à aucune fixture existante (voir commentaires).
  */
 describe('backfill des traductions au démarrage', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
@@ -41,11 +45,20 @@ describe('backfill des traductions au démarrage', () => {
   })
 
   // -----------------------------------------------------------------------
-  // Card — clé stable : id (HUM-001..038, fixés par le seed). Aucun autre
-  // fichier e2e ne crée de Card avec un id 'HUM-0xx' (vérifié par recherche
-  // avant d'écrire ce test) : pas de risque d'interférence.
+  // Card — clé stable : le code porté par `imageUrl`, PAS `id`.
+  //
+  // Ces tests créent leurs cartes EXACTEMENT comme le fait
+  // `prisma/seed/cards.ts` : aucun `id` imposé (Prisma génère un uuid) et
+  // `imageUrl` construite avec le MÊME `IMAGE_PREFIX` que le seed. C'est le
+  // point de la correction : une version antérieure de ce fichier créait ses
+  // cartes avec `id: 'HUM-001'`, fabriquant ainsi la précondition qu'aucune
+  // base réelle n'a jamais — le backfill rapprochait par `id` et passait au
+  // vert en ne sélectionnant, en production, aucune ligne.
+  //
+  // Aucun autre fichier e2e ne crée de Card portant une clé d'image
+  // `…/HUM-0xx.png` (vérifié par recherche) : pas de risque d'interférence.
   // -----------------------------------------------------------------------
-  describe('Card (clé : id)', () => {
+  describe("Card (clé : code d'image)", () => {
     let cardSetId: string
 
     beforeAll(async () => {
@@ -56,85 +69,72 @@ describe('backfill des traductions au démarrage', () => {
       cardSetId = set.id
     })
 
-    it("backfille quand l'anglais est la recopie du français faite par la migration", async () => {
-      const { postgresOrm, contentTranslationsBootstrap } = app.iocContainer
-      const def = CARDS.find((c) => c.id === 'HUM-001')
-      if (!def) throw new Error('HUM-001 introuvable dans CARDS')
-
-      // État post-migration réel : nameEn = nameFr (recopie), pas ''.
-      await postgresOrm.prisma.card.upsert({
-        where: { id: 'HUM-001' },
-        create: {
-          id: 'HUM-001',
+    /**
+     * Crée une carte par le chemin réel du seed : pas de `id`, `imageUrl`
+     * dérivée du code de la définition. Renvoie l'uuid généré — le test
+     * s'en sert pour relire la ligne, et sa différence avec le code prouve
+     * qu'aucune précondition n'a été fabriquée.
+     */
+    const createLikeSeed = async (code: string, nameEn: string) => {
+      const { postgresOrm } = app.iocContainer
+      const def = CARDS.find((c) => c.id === code)
+      if (!def) throw new Error(`${code} introuvable dans CARDS`)
+      const row = await postgresOrm.prisma.card.create({
+        data: {
           setId: cardSetId,
           nameFr: def.nameFr,
-          nameEn: def.nameFr,
+          nameEn,
+          imageUrl: `${IMAGE_PREFIX}/${def.id}.png`,
           rarity: def.rarity,
         },
-        update: { nameFr: def.nameFr, nameEn: def.nameFr },
       })
+      // Le seed ne fixe aucun id : la ligne ne porte PAS le code.
+      expect(row.id).not.toBe(code)
+      return { def, id: row.id }
+    }
+
+    it("backfille quand l'anglais est la recopie du français faite par la migration", async () => {
+      const { postgresOrm, contentTranslationsBootstrap } = app.iocContainer
+      // État post-migration réel : nameEn = nameFr (recopie), pas ''.
+      const humanCard = CARDS.find((c) => c.id === 'HUM-001')
+      if (!humanCard) throw new Error('HUM-001 introuvable dans CARDS')
+      const { def, id } = await createLikeSeed('HUM-001', humanCard.nameFr)
 
       const result = await contentTranslationsBootstrap.bootstrap()
       expect(result.updated).toBeGreaterThan(0)
 
       const card = await runWithLocale('EN', () =>
-        postgresOrm.prisma.card.findUniqueOrThrow({ where: { id: 'HUM-001' } }),
+        postgresOrm.prisma.card.findUniqueOrThrow({ where: { id } }),
       )
       expect(card.name).toBe(def.nameEn)
       // Preuve que ce n'est pas un hasard de repli : la colonne EN elle-même
       // a bien été écrite, pas seulement le champ calculé au moment de la
       // lecture.
-      const raw = await postgresOrm.prisma.card.findUniqueOrThrow({ where: { id: 'HUM-001' } })
+      const raw = await postgresOrm.prisma.card.findUniqueOrThrow({ where: { id } })
       expect(raw.nameEn).toBe(def.nameEn)
     })
 
     it("backfille aussi quand l'anglais est une chaîne vide", async () => {
       const { postgresOrm, contentTranslationsBootstrap } = app.iocContainer
-      const def = CARDS.find((c) => c.id === 'HUM-002')
-      if (!def) throw new Error('HUM-002 introuvable dans CARDS')
-
-      await postgresOrm.prisma.card.upsert({
-        where: { id: 'HUM-002' },
-        create: {
-          id: 'HUM-002',
-          setId: cardSetId,
-          nameFr: def.nameFr,
-          nameEn: '',
-          rarity: def.rarity,
-        },
-        update: { nameFr: def.nameFr, nameEn: '' },
-      })
+      const { def, id } = await createLikeSeed('HUM-002', '')
 
       await contentTranslationsBootstrap.bootstrap()
 
       const card = await runWithLocale('EN', () =>
-        postgresOrm.prisma.card.findUniqueOrThrow({ where: { id: 'HUM-002' } }),
+        postgresOrm.prisma.card.findUniqueOrThrow({ where: { id } }),
       )
       expect(card.name).toBe(def.nameEn)
     })
 
     it('ne touche jamais une traduction saisie à la main', async () => {
       const { postgresOrm, contentTranslationsBootstrap } = app.iocContainer
-      const def = CARDS.find((c) => c.id === 'HUM-003')
-      if (!def) throw new Error('HUM-003 introuvable dans CARDS')
-
       const handWritten = 'Ma traduction perso (test bootstrap)'
-      await postgresOrm.prisma.card.upsert({
-        where: { id: 'HUM-003' },
-        create: {
-          id: 'HUM-003',
-          setId: cardSetId,
-          nameFr: def.nameFr,
-          nameEn: handWritten,
-          rarity: def.rarity,
-        },
-        update: { nameFr: def.nameFr, nameEn: handWritten },
-      })
+      const { id } = await createLikeSeed('HUM-003', handWritten)
 
       await contentTranslationsBootstrap.bootstrap()
 
       const card = await runWithLocale('EN', () =>
-        postgresOrm.prisma.card.findUniqueOrThrow({ where: { id: 'HUM-003' } }),
+        postgresOrm.prisma.card.findUniqueOrThrow({ where: { id } }),
       )
       expect(card.name).toBe(handWritten)
     })
@@ -150,16 +150,18 @@ describe('backfill des traductions au démarrage', () => {
 
     it('ignore une carte absente des définitions (créée en prod) et laisse le repli faire son travail', async () => {
       const { postgresOrm, contentTranslationsBootstrap } = app.iocContainer
-      const id = `UNKNOWN-BOOTSTRAP-${Date.now()}`
-      await postgresOrm.prisma.card.create({
+      // Clé d'image telle que la fabrique `POST /admin/cards` : `cards/<slug>`,
+      // sans code de définition.
+      const created = await postgresOrm.prisma.card.create({
         data: {
-          id,
           setId: cardSetId,
           nameFr: 'Carte créée en production',
           nameEn: '',
+          imageUrl: `cards/carte-creee-en-production-${Date.now()}.png`,
           rarity: 'COMMON',
         },
       })
+      const id = created.id
 
       await expect(contentTranslationsBootstrap.bootstrap()).resolves.toBeDefined()
 
