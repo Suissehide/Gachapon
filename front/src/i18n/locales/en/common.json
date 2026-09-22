@@ -1,1 +1,61 @@
-{}
+{
+  "rarity": {
+    "common": "Common",
+    "uncommon": "Uncommon",
+    "rare": "Rare",
+    "epic": "Epic",
+    "legendary": "Legendary"
+  },
+  "cardRarity": {
+    "common": "Common",
+    "uncommon": "Uncommon",
+    "rare": "Rare",
+    "epic": "Epic",
+    "legendary": "Legendary"
+  },
+  "elements": {
+    "fire": "Fire",
+    "water": "Water",
+    "nature": "Nature",
+    "earth": "Earth",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "currency": {
+    "tokens": { "singular": "token", "plural": "tokens" },
+    "dust": { "singular": "dust", "plural": "dust" },
+    "xp": { "singular": "XP", "plural": "XP" },
+    "gold": { "singular": "gold", "plural": "gold" }
+  },
+  "multiSelect": {
+    "searchPlaceholder": "Search..."
+  },
+  "selectMulti": {
+    "all": "All",
+    "clearFilter": "Clear filter",
+    "selectedCount_one": "{{count}} selected",
+    "selectedCount_other": "{{count}} selected"
+  },
+  "colorPicker": {
+    "openAriaLabel": "Open the color picker"
+  },
+  "filePicker": {
+    "previewAlt": "Preview",
+    "dropLabel": "Drop or",
+    "browseLabel": "browse"
+  },
+  "passwordField": {
+    "hide": "Hide password",
+    "show": "Show password"
+  },
+  "pageHeader": {
+    "breadcrumbAriaLabel": "Breadcrumb"
+  },
+  "cardZoom": {
+    "closeAriaLabel": "Close"
+  },
+  "variant": {
+    "brilliant": "Brilliant",
+    "holographic": "Holographic"
+  }
+}

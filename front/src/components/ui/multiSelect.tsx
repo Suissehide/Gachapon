@@ -1,6 +1,7 @@
 import { Check, ChevronDown } from 'lucide-react'
 import { Popover } from 'radix-ui'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 type Option = { value: string; label: string }
 
@@ -19,6 +20,7 @@ export function MultiSelect({
   placeholder,
   maxSelected,
 }: MultiSelectProps) {
+  const { t } = useTranslation('common')
   const [searchTerm, setSearchTerm] = useState('')
 
   const toggle = (val: string) => {
@@ -67,7 +69,7 @@ export function MultiSelect({
           <div className="p-2">
             <input
               type="text"
-              placeholder="Rechercher..."
+              placeholder={t('multiSelect.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full rounded border border-border px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary"

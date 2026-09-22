@@ -1,1 +1,61 @@
-{}
+{
+  "rarity": {
+    "common": "Commune",
+    "uncommon": "Peu commune",
+    "rare": "Rare",
+    "epic": "Épique",
+    "legendary": "Légendaire"
+  },
+  "cardRarity": {
+    "common": "Commun",
+    "uncommon": "Peu commun",
+    "rare": "Rare",
+    "epic": "Épique",
+    "legendary": "Légendaire"
+  },
+  "elements": {
+    "fire": "Feu",
+    "water": "Eau",
+    "nature": "Nature",
+    "earth": "Terre",
+    "light": "Lumière",
+    "dark": "Ténèbres"
+  },
+  "currency": {
+    "tokens": { "singular": "jeton", "plural": "jetons" },
+    "dust": { "singular": "poussière", "plural": "poussière" },
+    "xp": { "singular": "XP", "plural": "XP" },
+    "gold": { "singular": "or", "plural": "or" }
+  },
+  "multiSelect": {
+    "searchPlaceholder": "Rechercher..."
+  },
+  "selectMulti": {
+    "all": "Tous",
+    "clearFilter": "Effacer le filtre",
+    "selectedCount_one": "{{count}} sélectionné",
+    "selectedCount_other": "{{count}} sélectionnés"
+  },
+  "colorPicker": {
+    "openAriaLabel": "Ouvrir le sélecteur de couleur"
+  },
+  "filePicker": {
+    "previewAlt": "Aperçu",
+    "dropLabel": "Déposer ou",
+    "browseLabel": "parcourir"
+  },
+  "passwordField": {
+    "hide": "Cacher le mot de passe",
+    "show": "Afficher le mot de passe"
+  },
+  "pageHeader": {
+    "breadcrumbAriaLabel": "Fil d'Ariane"
+  },
+  "cardZoom": {
+    "closeAriaLabel": "Fermer"
+  },
+  "variant": {
+    "brilliant": "Brillante",
+    "holographic": "Holographique"
+  }
+}

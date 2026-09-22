@@ -4,6 +4,7 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { Eye, EyeOff, ImageIcon, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '../components/ui/button.tsx'
 import { DatePicker } from '../components/ui/datePicker.tsx'
@@ -69,6 +70,7 @@ const TextField = ({ label, type, disabled, className }: InputFieldProps) => {
 }
 
 const PasswordField = ({ label, disabled, className }: FieldComponentProps) => {
+  const { t } = useTranslation('common')
   const field = useFieldContext<string>()
   const value = field.state.value ?? ''
   const [showPassword, setShowPassword] = useState(false)
@@ -91,7 +93,7 @@ const PasswordField = ({ label, disabled, className }: FieldComponentProps) => {
           onClick={() => setShowPassword(!showPassword)}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-text-light hover:text-text transition-colors"
           aria-label={
-            showPassword ? 'Cacher le mot de passe' : 'Afficher le mot de passe'
+            showPassword ? t('passwordField.hide') : t('passwordField.show')
           }
         >
           {showPassword ? (
@@ -238,6 +240,7 @@ function TextAreaField({ label, className }: FieldComponentProps) {
 }
 
 function ColorPickerField({ label, className }: FieldComponentProps) {
+  const { t } = useTranslation('common')
   const [open, setOpen] = useState(false)
   const field = useFieldContext<string>()
   const value = field.state.value ?? '#000000'
@@ -280,7 +283,7 @@ function ColorPickerField({ label, className }: FieldComponentProps) {
             className="flex-shrink-0 w-9 h-9 rounded border border-border cursor-pointer rounded-tr-none rounded-br-none"
             style={{ backgroundColor: value }}
             onClick={() => setOpen(true)}
-            aria-label="Ouvrir le sélecteur de couleur"
+            aria-label={t('colorPicker.openAriaLabel')}
           />
 
           <Input
@@ -361,6 +364,7 @@ function FileField({
   className,
   accept = 'image/jpeg,image/png,image/webp',
 }: FileFieldProps) {
+  const { t } = useTranslation('common')
   const field = useFieldContext<File | null>()
   const file = field.state.value ?? null
   const [preview, setPreview] = useState<string | null>(null)
@@ -400,7 +404,7 @@ function FileField({
         <div className="group relative rounded-md border border-border overflow-hidden bg-black/20">
           <img
             src={preview}
-            alt="Aperçu"
+            alt={t('filePicker.previewAlt')}
             className="w-full object-contain max-h-40"
           />
           <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/40">
@@ -438,7 +442,10 @@ function FileField({
           <ImageIcon className="h-6 w-6 text-text-light/40" />
           <div className="text-center">
             <p className="text-xs font-medium text-text-light">
-              Déposer ou <span className="text-primary">parcourir</span>
+              {t('filePicker.dropLabel')}{' '}
+              <span className="text-primary">
+                {t('filePicker.browseLabel')}
+              </span>
             </p>
             <p className="mt-0.5 text-[10px] text-text-light/50">
               JPEG · PNG · WEBP

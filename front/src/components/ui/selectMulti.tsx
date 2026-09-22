@@ -1,6 +1,7 @@
 import { Check, ChevronDown, X } from 'lucide-react'
 import { Popover } from 'radix-ui'
 import type React from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { cn } from '../../libs/utils.ts'
 
@@ -25,7 +26,7 @@ export function SelectMulti({
   options,
   value,
   onChange,
-  placeholder = 'Tous',
+  placeholder,
   className,
   disabled,
 }: {
@@ -38,6 +39,8 @@ export function SelectMulti({
   className?: string
   disabled?: boolean
 }) {
+  const { t } = useTranslation('common')
+  const effectivePlaceholder = placeholder ?? t('selectMulti.all')
   const selected = options.filter((o) => value.includes(o.value))
   const only = selected.length === 1 ? selected[0] : null
 
@@ -67,10 +70,10 @@ export function SelectMulti({
             >
               {only?.icon}
               {selected.length === 0
-                ? placeholder
+                ? effectivePlaceholder
                 : only
                   ? only.label
-                  : `${selected.length} sélectionnés`}
+                  : t('selectMulti.selectedCount', { count: selected.length })}
             </span>
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-text-light" />
           </button>
@@ -108,7 +111,7 @@ export function SelectMulti({
       {value.length > 0 && (
         <button
           type="button"
-          aria-label="Effacer le filtre"
+          aria-label={t('selectMulti.clearFilter')}
           onClick={() => onChange([])}
           className="absolute right-8 top-1/2 -translate-y-1/2 text-text-light transition-colors hover:text-text"
         >
