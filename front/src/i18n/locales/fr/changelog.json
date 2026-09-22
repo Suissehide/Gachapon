@@ -62,6 +62,41 @@
         "e5": "Ton inventaire d’équipement se trie et se filtre : par rareté, niveau, emplacement, set ou stat principale. Tu peux sélectionner plusieurs pièces d’un coup pour les vendre — avec une confirmation si un légendaire traîne dans le lot.",
         "e6": "Le butin de campagne suit enfin ta progression : les communes dominent aux premiers étages puis s’éteignent complètement en fin de campagne, pendant que les hautes raretés montent. Un premier passage garantit une pièce sur presque tous les étages, et les boss gardent une longueur d’avance."
       }
+    },
+    "v1_9": {
+      "title": "Le combat s’étoffe",
+      "date": "Août – Septembre 2026",
+      "summary": "Coups critiques, pénétration d’armure, vol de vie — et des passifs qui réagissent vraiment à ce qui se passe sous tes yeux.",
+      "entries": {
+        "e1": "Quatre stats de combat font leur entrée : taux critique, dégâts critiques, pénétration d’armure et vol de vie. Elles ne viennent que de l’équipement — c’est lui qui décide du style de ta carte.",
+        "e2": "Les passifs ne se contentent plus d’un bonus fixe : ils réagissent au déroulé du combat. Vigueur annule un coup fatal, Fortification empile à chaque coup encaissé, Vampirisme double son soin sous la moitié des points de vie, et Hâte comme Exaltation se déclenchent en cours de route.",
+        "e3": "Les combats vont deux fois plus vite. Les cartes encaissent moins et frappent plus fort : fini les échanges interminables où personne ne tombait.",
+        "e4": "Les soins s’affichent dans le déroulé du combat — le vol de vie et les passifs de régénération se voyaient sur les points de vie, mais pas dans le journal."
+      }
+    },
+    "v1_7": {
+      "title": "Neuf chapitres et palier 7",
+      "date": "Août 2026",
+      "summary": "La campagne s’étend jusqu’au chapitre 9, tes cartes montent un palier de plus, et les boss reprennent leur rôle de vrai test de fin de chapitre.",
+      "entries": {
+        "e1": "Quatre nouveaux chapitres : Volcan, Toundra, Abysses et Faille. La campagne compte désormais 9 chapitres et 90 étages.",
+        "e2": "Palier d’ascension 7 débloqué : tes cartes peuvent grimper jusqu’au niveau 70.",
+        "e3": "Difficulté revue en profondeur : la montée en puissance des ennemis est désormais continue d’un bout à l’autre de la campagne, et le boss redevient le vrai pic de chaque chapitre — le vrai check de ta build.",
+        "e4": "De nouveaux succès marquent les jalons des chapitres 5, 7 et 9, alignés sur le plafond de niveau 70."
+      }
+    },
+    "v1_6": {
+      "title": "Éléments & tirage",
+      "date": "Juillet – Août 2026",
+      "summary": "Tes cartes ont un élément, tes adversaires aussi — et le tirage se vit en grand.",
+      "entries": {
+        "e1": "Éléments : chaque carte et chaque monstre appartient à un élément. Le feu brûle la nature, la nature fissure la terre, la terre absorbe l’eau, l’eau éteint le feu — et lumière et ténèbres se répondent. Attaquer avec l’avantage fait mal ; l’encaisser fait moins mal.",
+        "e2": "Ciblage élémentaire : au combat, chaque unité frappe en priorité l’adversaire qu’elle domine. Les éléments ennemis sont affichés avant de lancer l’assaut — à toi de composer ton équipe en conséquence.",
+        "e3": "Campagne recalibrée pour tenir compte des éléments, et pastilles d’élément visibles sur les portraits comme sur l’aperçu des adversaires.",
+        "e4": "Tirage repensé : la capsule vibre en crescendo puis explose, la machine s’anime, le son suit. Le tirage x10 se dépile carte par carte, avec un bouton Passer si tu es pressé.",
+        "e5": "Un tutoriel en six étapes t’accueille sur la page de tirage, et ton énergie se remplit à bloc à chaque montée de niveau.",
+        "e6": "Boutique rééquilibrée (packs de jetons, recharges, boutique du jour), stockage de jetons de base porté à 10, et affichage des ressources uniformisé partout."
+      }
     }
   }
 }

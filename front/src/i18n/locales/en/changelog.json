@@ -62,6 +62,41 @@
         "e5": "Your equipment inventory now sorts and filters: by rarity, level, slot, set or main stat. You can select several pieces at once to sell them — with a confirmation if a Legendary is hiding in the batch.",
         "e6": "Campaign loot finally follows your progress: Commons dominate the early floors then fade out completely by the end of the campaign, while high rarities climb. A first clear guarantees a piece of equipment on almost every floor, and bosses keep a head start."
       }
+    },
+    "v1_9": {
+      "title": "Combat gets deeper",
+      "date": "August – September 2026",
+      "summary": "Critical hits, armor penetration, lifesteal — and passives that truly react to what's happening in front of you.",
+      "entries": {
+        "e1": "Four combat stats make their entrance: crit rate, crit damage, armor penetration and lifesteal. They only come from equipment — it's what decides your card's playstyle.",
+        "e2": "Passives no longer settle for a fixed bonus: they react to how the battle unfolds. Vigor cancels a fatal hit, Fortification stacks with every hit taken, Vampirism doubles its healing below half HP, and both Haste and Exaltation trigger partway through the fight.",
+        "e3": "Battles are twice as fast. Cards take less damage and hit harder: no more endless exchanges where nobody went down.",
+        "e4": "Healing now shows up in the battle log — lifesteal and regeneration passives were visible on health bars, but not in the log."
+      }
+    },
+    "v1_7": {
+      "title": "Nine chapters and palier 7",
+      "date": "August 2026",
+      "summary": "The campaign now stretches to chapter 9, your cards climb one palier further, and bosses go back to being a real end-of-chapter test.",
+      "entries": {
+        "e1": "Four new chapters: Volcano, Tundra, Abyss and Rift. The campaign now counts 9 chapters and 90 stages.",
+        "e2": "Palier 7 unlocked: your cards can now climb up to level 70.",
+        "e3": "Difficulty overhauled: enemy power now scales continuously from one end of the campaign to the other, and the boss goes back to being the real peak of each chapter — the true check on your build.",
+        "e4": "New achievements mark the milestones of chapters 5, 7 and 9, aligned with the level 70 cap."
+      }
+    },
+    "v1_6": {
+      "title": "Elements & pulling",
+      "date": "July – August 2026",
+      "summary": "Your cards have an element, so do your opponents — and pulling becomes a real show.",
+      "entries": {
+        "e1": "Elements: every card and every monster belongs to an element. Fire burns nature, nature cracks earth, earth absorbs water, water douses fire — and light and dark answer each other. Attacking with the advantage hits hard; taking it hits less hard.",
+        "e2": "Elemental targeting: in battle, each unit prioritizes the opponent it dominates. Enemy elements are shown before you launch the assault — build your team accordingly.",
+        "e3": "Campaign recalibrated to account for elements, with element badges visible on portraits as well as on the opponent preview.",
+        "e4": "Pulling reimagined: the capsule vibrates in a crescendo then bursts open, the machine animates, the sound follows along. The x10 pull unstacks card by card, with a Skip button if you're in a hurry.",
+        "e5": "A six-step tutorial greets you on the pull page, and your energy fills up completely every time you level up.",
+        "e6": "Shop rebalanced (token packs, refills, daily shop), base token storage raised to 10, and resource display made consistent everywhere."
+      }
     }
   }
 }
