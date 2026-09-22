@@ -140,18 +140,51 @@ const REGEX_PRECEDING_KEYWORDS = new Set([
 /**
  * Heuristique « un `/` peut-il ouvrir un littéral regex ici ? », basée sur le
  * dernier caractère significatif déjà émis dans `out`. Pas un vrai lexer JS
- * (qui suivrait le type du token précédent, pas juste son dernier caractère)
- * mais suffisant pour les deux familles de cas qui comptent :
+ * (qui suivrait le type du token précédent, pas juste son dernier caractère,
+ * et qui saurait qu'un mot-clé après un `.` est un nom de propriété) mais
+ * suffisant pour les deux familles de cas qui comptent :
  *   - après un opérateur/une ponctuation ouvrante (`(`, `{`, `,`, `=`, `!`,
  *     `&&`, début de fichier…) → un `/` est presque toujours un regex ;
  *   - après un identifiant, un nombre, `)` ou `]` → c'est presque toujours
  *     une division, SAUF si l'identifiant est un mot-clé de
  *     `REGEX_PRECEDING_KEYWORDS` (`return /foo/`, `case /foo/:`).
- * Faux négatif accepté : `if (x) /foo/.test(y)` (regex juste après `)`,
- * syntaxiquement valide mais jamais écrit ainsi en pratique) sera traité
- * comme une division — sans conséquence : voir `tryConsumeRegex`, le pire
- * cas est de ne pas reconnaître un vrai regex, jamais de sur-consommer du
- * code.
+ *
+ * Deux limites connues, de directions opposées — la seconde a été trouvée en
+ * revue (Round 2) et corrige une garantie précédemment fausse dans ce
+ * commentaire ; ne pas la réintroduire sans la revérifier comme un test :
+ *
+ * 1. Faux négatif, sans conséquence connue : `if (x) /foo/.test(y)` (regex
+ *    juste après `)`, syntaxiquement valide mais jamais écrit ainsi en
+ *    pratique) est traité comme une division. `canStartRegex` renvoie
+ *    `false`, `tryConsumeRegex` n'est pas appelé, le `/` est simplement
+ *    recopié comme caractère normal — aucun texte n'est perdu ni mal
+ *    interprété plus loin sur la ligne.
+ *
+ * 2. Faux positif, avec conséquence réelle : un mot de
+ *    `REGEX_PRECEDING_KEYWORDS` (`in`, `of`…) utilisé comme **nom de
+ *    propriété après un point** (`data.in`, `obj.of`) n'est pas distingué du
+ *    même mot employé comme opérateur JS — `canStartRegex` ne regarde que le
+ *    mot, jamais le caractère avant lui. Si une vraie division suit sur
+ *    cette ligne ET qu'un commentaire `//` la suit à son tour, `tryConsumeRegex`
+ *    peut refermer le « regex » sur le premier `/` de ce commentaire (il ne
+ *    sait pas non plus ce qu'est un commentaire) : l'état retombe en `code`
+ *    au lieu de `lineComment` pour le reste de la ligne, qui est alors
+ *    scannée comme du texte normal — un vrai commentaire peut se faire
+ *    signaler à tort. Fixture qui reproduit, vérifiée :
+ *    `const rate = data.in / total // commentaire francais avec votre mot cache`
+ *    → `exit=1`, `avec` et `votre` signalés dans le commentaire.
+ *    Direction du risque : toujours un faux positif (un vrai commentaire
+ *    scanné comme du code), jamais un faux négatif — `tryConsumeRegex` ne
+ *    blanchit ni ne supprime jamais de texte, il ne fait que recopier
+ *    verbatim ou abandonner (voir sa propre doc) ; ce chemin ne peut donc
+ *    pas faire disparaître du français réellement en dur, seulement faire
+ *    crier le script sur du texte qui n'en était pas. Garantie qui tient
+ *    réellement, à la place de l'ancienne affirmation erronée « jamais de
+ *    sur-consommer du code » : `tryConsumeRegex` ne franchit jamais un saut
+ *    de ligne (il rend `null` dès qu'il en rencontre un), donc aucune
+ *    mauvaise classification ne peut se propager au-delà de la ligne où elle
+ *    démarre — mais À L'INTÉRIEUR d'une même ligne, comme ce cas le montre,
+ *    elle peut bel et bien désynchroniser la détection de commentaire.
  */
 function canStartRegex(out) {
   let j = out.length - 1
