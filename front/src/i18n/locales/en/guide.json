@@ -181,6 +181,12 @@
         "description": "Every card has 3 slots — <weaponPill>Weapon</weaponPill> <armorPill>Armor</armorPill> <accessoryPill>Accessory</accessoryPill>. Pieces drop in battle (and from bosses), have a rarity, and add stat bonuses. Equip or remove them from the <strong>Equipment</strong> page."
       },
       "tip": "After a defeat, two reflexes: rethink your team composition, or level up your cards before heading back to the front."
+    },
+    "quetes": {
+      "intro": "<strong>Quests</strong> give you concrete goals rewarded with tokens, dust, gold, and XP. They progress automatically as you play.",
+      "typesBullet": "<strong1>Weekly</strong1> quests reset every Monday; <strong2>One-shot</strong2> quests are done just once.",
+      "claimBullet": "A completed quest switches to \"Claimed\" once you click <strong>Claim</strong>.",
+      "perfectWeekBullet": "Completing every weekly quest unlocks the <strong>Perfect Week</strong> bonus."
     }
   }
 }

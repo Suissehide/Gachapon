@@ -181,6 +181,12 @@
         "description": "Chaque carte dispose de 3 emplacements — <weaponPill>Arme</weaponPill> <armorPill>Armure</armorPill> <accessoryPill>Accessoire</accessoryPill>. Les pièces tombent en combat (et sur les boss), ont une rareté, et ajoutent des bonus de stats. Équipe-les ou retire-les depuis la page <strong>Équipement</strong>."
       },
       "tip": "Après une défaite, deux réflexes : revoir la composition de ton équipe, ou monter le niveau de tes cartes avant de retourner au front."
+    },
+    "quetes": {
+      "intro": "Les <strong>quêtes</strong> te donnent des objectifs concrets récompensés en jetons, poussière, or et XP. Elles progressent automatiquement au fil de tes actions.",
+      "typesBullet": "Les <strong1>Hebdomadaires</strong1> se renouvellent chaque lundi ; les <strong2>One-shot</strong2> ne se font qu'une seule fois.",
+      "claimBullet": "Une quête terminée passe « Récupéré » une fois que tu as cliqué sur <strong>Réclamer</strong>.",
+      "perfectWeekBullet": "Compléter toutes les hebdomadaires débloque le bonus <strong>Semaine parfaite</strong>."
     }
   }
 }

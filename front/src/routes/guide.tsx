@@ -854,29 +854,51 @@ function GuidePage() {
             </Section>
 
             {/* Quêtes */}
-            <Section id="quetes" icon={ListChecks} title="Quêtes">
+            <Section
+              id="quetes"
+              icon={ListChecks}
+              title={t('sectionLabels.quetes')}
+            >
               <p>
-                Les <strong className="text-foreground">quêtes</strong> te
-                donnent des objectifs concrets récompensés en jetons, poussière,
-                or et XP. Elles progressent automatiquement au fil de tes
-                actions.
+                <Trans
+                  t={t}
+                  i18nKey="sections.quetes.intro"
+                  components={{
+                    strong: <strong className="text-foreground" />,
+                  }}
+                />
               </p>
               <ul className="space-y-1.5">
                 <li>
-                  • Les{' '}
-                  <strong className="text-foreground">Hebdomadaires</strong> se
-                  renouvellent chaque lundi ; les{' '}
-                  <strong className="text-foreground">One-shot</strong> ne se
-                  font qu'une seule fois.
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.quetes.typesBullet"
+                    components={{
+                      strong1: <strong className="text-foreground" />,
+                      strong2: <strong className="text-foreground" />,
+                    }}
+                  />
                 </li>
                 <li>
-                  • Une quête terminée passe « Récupéré » une fois que tu as
-                  cliqué sur{' '}
-                  <strong className="text-foreground">Réclamer</strong>.
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.quetes.claimBullet"
+                    components={{
+                      strong: <strong className="text-foreground" />,
+                    }}
+                  />
                 </li>
                 <li>
-                  • Compléter toutes les hebdomadaires débloque le bonus{' '}
-                  <strong className="text-foreground">Semaine parfaite</strong>.
+                  •{' '}
+                  <Trans
+                    t={t}
+                    i18nKey="sections.quetes.perfectWeekBullet"
+                    components={{
+                      strong: <strong className="text-foreground" />,
+                    }}
+                  />
                 </li>
               </ul>
             </Section>
