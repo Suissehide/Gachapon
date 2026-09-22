@@ -28,7 +28,10 @@ import { useEffect, useState } from 'react'
 import type { RaidTierView, RaidView } from '../../api/raid.api.ts'
 import { RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { cn } from '../../libs/utils.ts'
-import { useEconomyConfig } from '../../queries/useEconomyConfig.ts'
+import {
+  DEFAULT_ECONOMY,
+  useEconomyConfig,
+} from '../../queries/useEconomyConfig.ts'
 import { useRaid, useRaidLive } from '../../queries/useRaid.ts'
 import { ArcadeCard } from '../shared/ArcadeCard.tsx'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
@@ -198,7 +201,7 @@ function BossPowerBadge({
 export function RaidPanel({ teamId }: { teamId: string }) {
   const { data: raid, isLoading, isError } = useRaid(teamId)
   useRaidLive(teamId)
-  const { data: economy } = useEconomyConfig()
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   // Declare avant toute sortie anticipee : les hooks doivent s'executer dans
   // le meme ordre a chaque rendu.
   const [inspecting, setInspecting] = useState(false)
@@ -339,10 +342,10 @@ export function RaidPanel({ teamId }: { teamId: string }) {
           </div>
 
           <p className="mt-3 text-[11.5px] leading-relaxed text-text-light">
-            Le boss est calibré pour {economy?.raid.minMembers ?? 10} membres.
-            Chaque victoire de l'équipe lui ajoute{' '}
-            {economy?.raid.levelHpBonusPct ?? 10} % de points de vie et majore
-            les lots ; une semaine sans victoire le fait redescendre d'un cran.
+            Le boss est calibré pour {economy.raid.minMembers} membres. Chaque
+            victoire de l'équipe lui ajoute {economy.raid.levelHpBonusPct} % de
+            points de vie et majore les lots ; une semaine sans victoire le fait
+            redescendre d'un cran.
           </p>
         </div>
       </div>
