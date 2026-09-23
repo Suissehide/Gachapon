@@ -277,22 +277,22 @@ function TeamPanel({
             </div>
             <div className="grid grid-cols-4 gap-2 text-xs">
               <NumInput
-                label={t('combatDebug.hpLabel')}
+                label={t('common:stats.hp')}
                 value={unit.hp}
                 onChange={(v) => updateUnit(i, { hp: v })}
               />
               <NumInput
-                label={t('combatDebug.atkLabel')}
+                label={t('common:stats.atk')}
                 value={unit.atk}
                 onChange={(v) => updateUnit(i, { atk: v })}
               />
               <NumInput
-                label={t('combatDebug.defLabel')}
+                label={t('common:stats.def')}
                 value={unit.def}
                 onChange={(v) => updateUnit(i, { def: v })}
               />
               <NumInput
-                label={t('combatDebug.spdLabel')}
+                label={t('common:stats.spd')}
                 value={unit.spd}
                 onChange={(v) => updateUnit(i, { spd: v })}
               />

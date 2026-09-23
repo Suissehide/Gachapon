@@ -175,16 +175,16 @@ function EditCardForm({
 
       <div className="grid grid-cols-2 gap-3">
         <form.AppField name="baseHp">
-          {(f) => <f.Number label="HP" />}
+          {(f) => <f.Number label={t('common:stats.hp')} />}
         </form.AppField>
         <form.AppField name="baseAtk">
-          {(f) => <f.Number label="ATK" />}
+          {(f) => <f.Number label={t('common:stats.atk')} />}
         </form.AppField>
         <form.AppField name="baseDef">
-          {(f) => <f.Number label="DEF" />}
+          {(f) => <f.Number label={t('common:stats.def')} />}
         </form.AppField>
         <form.AppField name="baseSpd">
-          {(f) => <f.Number label="SPD" />}
+          {(f) => <f.Number label={t('common:stats.spd')} />}
         </form.AppField>
       </div>
 
