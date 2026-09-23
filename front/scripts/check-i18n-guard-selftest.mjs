@@ -4,8 +4,10 @@
 // POURQUOI CE QUATRIÈME SCRIPT. Les trois autres garde-fous regardent le
 // dépôt ; celui-ci regarde LES GARDE-FOUS. La tâche 12 a dû assouplir
 // `check-i18n-hardcoded.mjs` pour faire taire 52 faux positifs (masques
-// structurels : arguments de `t()`, `i18nKey`, attributs non affichés ;
-// exceptions scopées : `SECTION_IDS` du guide, blocs `code` de discord.tsx).
+// structurels : arguments de `t()`, `i18nKey`, `id`/`htmlFor` ; exceptions
+// scopées : `SECTION_IDS` du guide, blocs `code` de discord.tsx). Il fige
+// aussi, symétriquement, ce qui a été REFUSÉ comme assouplissement —
+// `className` et `data-*`, voir `unmasked-attributes.tsx`.
 // Un assouplissement non gardé dérive : le chantier a déjà vu quatre fois un
 // filet perdre sa morsure sans que rien ne crie. Ce script fige, par
 // exécution, ce que le garde-fou DOIT continuer à voir et ce qu'il DOIT
@@ -57,8 +59,14 @@ const EXPECTATIONS = [
   },
   {
     file: 'not-displayed.tsx',
-    why: "Les cinq positions masquées par la tâche 12 : `id`, `className`, `data-*`, `htmlFor`, l'argument littéral de `t()`, l'attribut `i18nKey`, et un commentaire à l'intérieur d'une interpolation `${…}`.",
+    why: "Les quatre positions masquées : `id`, `htmlFor`, l'argument littéral de `t()`, l'attribut `i18nKey`, plus un commentaire à l'intérieur d'une interpolation `${…}`.",
     hardcodedLines: [],
+    keysLines: null,
+  },
+  {
+    file: 'unmasked-attributes.tsx',
+    why: "`className` et `data-*` ne sont PAS masqués : la revue les a retirés parce qu'aucun faux positif observé ne les méritait. Cette fixture fige le retrait — les réintroduire « au cas où » la fait tomber.",
+    hardcodedLines: [22, 23, 24],
     keysLines: null,
   },
   {

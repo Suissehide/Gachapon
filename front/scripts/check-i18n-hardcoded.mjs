@@ -330,30 +330,72 @@ const STRUCTURAL_MASKS = [
       'check-i18n-keys.mjs, qui résout précisément cette forme (`i18nKey="…"`).',
   },
   {
-    name: "valeurs d'attributs JSX qui ne s'affichent jamais",
+    name: "valeurs d'attributs JSX qui ne peuvent contenir qu'un identifiant",
+    // DEUX attributs, et deux seulement. La liste a été réduite en revue de la
+    // tâche 12, et le critère de cette réduction vaut pour toute demande
+    // d'ajout future :
+    //
+    //   **une exception à un garde-fou se mérite par un faux positif OBSERVÉ,
+    //   elle ne s'accorde jamais par précaution.**
+    //
+    // `className` et `data-*` avaient été ajoutés ici par prudence. Ils ne
+    // corrigeaient AUCUN faux positif constaté : ils achetaient zéro silence
+    // utile et vendaient un angle mort permanent, sur un attribut dont rien ne
+    // garantit qu'il ne portera jamais de texte (`className`) et sur une
+    // famille ouverte par construction (`data-*`). Retirés. Le scan reste vert
+    // sans eux — leur retrait ne coûte donc littéralement rien.
+    //
+    // Ce qui reste :
+    //   `id`      — faux positif réel et mesuré (`id="campagne"`,
+    //               `id="cartes"` dans routes/guide.tsx) ;
+    //   `htmlFor` — par symétrie stricte avec `id` : la valeur d'un `htmlFor`
+    //               EST un `id`, elle ne peut rien être d'autre.
+    //
     // Forme chaîne littérale uniquement (`id="x"`), pas la forme expression
     // (`id={x}`) : une expression peut contenir n'importe quoi, y compris du
     // texte, et la masquer ouvrirait un trou bien plus large que le faux
     // positif qu'on corrige.
+    //
     // Ne SONT PAS dans cette liste, et ne doivent jamais y entrer, les
     // attributs dont la valeur EST du texte lu par un humain ou un lecteur
     // d'écran : `title`, `placeholder`, `alt`, `aria-label`, `label`,
     // `aria-description`, `value` d'une <option>. Une fixture les repasse à
-    // chaque modification de ce script (voir le rapport de la tâche 12).
-    pattern:
-      /\b(?:id|htmlFor|className|data-[a-z][a-z0-9-]*)\s*=\s*(?:"[^"\n]*"|'[^'\n]*')/g,
+    // chaque modification de ce script (`i18n-fixtures/displayed-text.tsx`),
+    // et une autre fige le fait que `className` et `data-*` restent scannés
+    // (`i18n-fixtures/unmasked-attributes.tsx`).
+    pattern: /\b(?:id|htmlFor)\s*=\s*(?:"[^"\n]*"|'[^'\n]*')/g,
     provenBy:
       'src/routes/guide.tsx — 2 occurrences avant correction (`id="campagne"`, ' +
       '`id="cartes"`) : des identifiants d\'ancre `#<id>`, stables et ' +
       'indépendants de la langue par décision explicite du fichier.',
     blindSpotCoveredBy:
-      "Personne — c'est un angle mort net. Il est étroit : `className` et " +
-      '`data-*` ne portent pas de copie dans ce dépôt, et un `id` qui en ' +
-      "porterait serait un bug d'un autre ordre. `htmlFor` et `id` sont les " +
-      'deux attributs de cette liste qui pourraient un jour recevoir un mot ' +
-      'français ; ils ne seraient toujours pas affichés.',
+      "Personne — c'est un angle mort net, et le seul des trois masques qui " +
+      "n'est rattrapé par aucun autre garde-fou. Il est aussi étroit qu'il " +
+      "peut l'être : deux attributs dont la valeur est, par définition, un " +
+      'identifiant. Du français qui y atterrirait ne serait de toute façon ' +
+      'pas affiché.',
   },
 ]
+
+/**
+ * CE QUE LA PREUVE HISTORIQUE COUVRE, ET CE QU'ELLE NE COUVRE PAS.
+ *
+ * La méthode de non-régression de ce script est de le rejouer sur un commit
+ * ancien (`git archive ee033b97 front/src` puis scan) et de vérifier qu'il y
+ * voit toujours ce qu'il y voyait : 5977 → 5945 occurrences à l'ajout des
+ * masques ci-dessus, les 32 écarts étant tous identifiés un par un.
+ *
+ * Cette preuve est PARTIELLE, et il faut le savoir avant de s'y fier :
+ * à `ee033b97`, `routes/guide.tsx` n'était pas encore extrait — il ne
+ * contenait donc **ni appel `t()` ni attribut `i18nKey`**. Le rejeu historique
+ * n'exerce, de fait, que le masque `id=`. Les deux autres ne sont prouvés que
+ * sur l'arbre COURANT (18 occurrences masquées au total, toutes relues à la
+ * main) et par les fixtures de `check-i18n-guard-selftest.mjs`.
+ *
+ * Conséquence pratique : un rejeu historique vert ne dispense pas de relancer
+ * l'auto-test. Les deux mesurent des choses différentes, et `check:i18n`
+ * enchaîne les deux pour cette raison.
+ */
 
 /**
  * ---------------------------------------------------------------------------
