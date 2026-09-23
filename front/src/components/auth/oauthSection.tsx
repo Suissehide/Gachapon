@@ -1,4 +1,5 @@
 import { useNavigate } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 
 import DiscordIcon from '../../assets/icons/discord.svg?react'
 import GoogleIcon from '../../assets/icons/google.svg?react'
@@ -8,11 +9,12 @@ import { useAuthDialogStore } from '../../stores/authDialog.store'
 import { Button } from '../ui/button.tsx'
 
 export function OAuthDivider() {
+  const { t } = useTranslation('auth')
   return (
     <div className="flex items-center gap-3 my-5">
       <div className="flex-1 h-px bg-border" />
       <span className="text-xs text-text-light font-medium">
-        ou continuer avec
+        {t('oauth.divider')}
       </span>
       <div className="flex-1 h-px bg-border" />
     </div>
@@ -20,7 +22,7 @@ export function OAuthDivider() {
 }
 
 export function OAuthButtons({ action }: { action: 'login' | 'register' }) {
-  const prefix = action === 'login' ? 'Continuer' : "S'inscrire"
+  const { t } = useTranslation('auth')
   const navigate = useNavigate()
   const fetchMe = useAuthStore((s) => s.fetchMe)
   const setDialogOpen = useAuthDialogStore((s) => s.setOpen)
@@ -60,7 +62,9 @@ export function OAuthButtons({ action }: { action: 'login' | 'register' }) {
         className="rounded-xl px-4 h-auto py-2.5 gap-2.5 bg-white text-gray-900 border border-gray-200 hover:bg-gray-50"
       >
         <GoogleIcon />
-        {`${prefix} avec Google`}
+        {action === 'login'
+          ? t('oauth.loginGoogle')
+          : t('oauth.registerGoogle')}
       </Button>
       <Button
         type="button"
@@ -69,7 +73,9 @@ export function OAuthButtons({ action }: { action: 'login' | 'register' }) {
         className="rounded-xl px-4 h-auto py-2.5 gap-2.5 bg-[#5865F2] text-white hover:bg-[#4752C4]"
       >
         <DiscordIcon />
-        {`${prefix} avec Discord`}
+        {action === 'login'
+          ? t('oauth.loginDiscord')
+          : t('oauth.registerDiscord')}
       </Button>
     </div>
   )

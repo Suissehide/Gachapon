@@ -1,6 +1,7 @@
 import { X } from 'lucide-react'
 import { Dialog } from 'radix-ui'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { Button } from '../ui/button.tsx'
 import { LoginForm } from './loginForm.tsx'
@@ -17,6 +18,7 @@ export function AuthDialog({
   onOpenChange: (open: boolean) => void
   defaultTab?: AuthTab
 }) {
+  const { t } = useTranslation('auth')
   const [tab, setTab] = useState<AuthTab>(defaultTab)
 
   useEffect(() => {
@@ -46,29 +48,33 @@ export function AuthDialog({
               Gachapon
             </p>
             <Dialog.Title className="text-xl font-black text-foreground">
-              {tab === 'login' ? 'Bon retour' : 'Créer un compte'}
+              {tab === 'login'
+                ? t('dialog.loginTitle')
+                : t('dialog.registerTitle')}
             </Dialog.Title>
             <Dialog.Description className="text-sm text-text-light mt-1">
               {tab === 'login'
-                ? 'Connecte-toi pour reprendre ta collection.'
-                : 'Rejoins des milliers de collectionneurs.'}
+                ? t('dialog.loginDescription')
+                : t('dialog.registerDescription')}
             </Dialog.Description>
 
             {/* Tabs */}
             <div className="flex border-b border-border mt-5">
-              {(['login', 'register'] as AuthTab[]).map((t) => (
+              {(['login', 'register'] as AuthTab[]).map((tabOption) => (
                 <button
-                  key={t}
+                  key={tabOption}
                   type="button"
-                  onClick={() => setTab(t)}
+                  onClick={() => setTab(tabOption)}
                   className={`flex-1 pb-3 text-sm font-semibold transition-colors relative ${
-                    tab === t
+                    tab === tabOption
                       ? 'text-foreground'
                       : 'text-text-light hover:text-text'
                   }`}
                 >
-                  {t === 'login' ? 'Se connecter' : "S'inscrire"}
-                  {tab === t && (
+                  {tabOption === 'login'
+                    ? t('dialog.loginTab')
+                    : t('dialog.registerTab')}
+                  {tab === tabOption && (
                     <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
                   )}
                 </button>

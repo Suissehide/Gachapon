@@ -1,4 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 
 import { EmailNotVerifiedError } from '../../api/auth.api.ts'
 import { useAppForm } from '../../hooks/formConfig.tsx'
@@ -14,6 +15,7 @@ export function LoginForm({
   onSuccess: () => void
   onClose?: () => void
 }) {
+  const { t } = useTranslation('auth')
   const navigate = useNavigate()
   const { loginMutation, isPending, error } = useLogin()
   const fetchMe = useAuthStore((state) => state.fetchMe)
@@ -55,11 +57,13 @@ export function LoginForm({
       className="flex flex-col gap-3"
     >
       <form.AppField name="email">
-        {(field) => <field.Input type="email" label="Email" />}
+        {(field) => (
+          <field.Input type="email" label={t('loginForm.emailLabel')} />
+        )}
       </form.AppField>
 
       <form.AppField name="password">
-        {(field) => <field.Password label="Mot de passe" />}
+        {(field) => <field.Password label={t('loginForm.passwordLabel')} />}
       </form.AppField>
 
       <div className="text-right -mt-1">
@@ -75,7 +79,7 @@ export function LoginForm({
             }
           }}
         >
-          Mot de passe oublié ?
+          {t('loginForm.forgotPasswordLink')}
         </Link>
       </div>
 
@@ -86,7 +90,7 @@ export function LoginForm({
       )}
 
       <Button type="submit" className="w-full mt-1" disabled={isPending}>
-        {isPending ? 'Connexion...' : 'Se connecter'}
+        {isPending ? t('loginForm.submitPending') : t('loginForm.submit')}
       </Button>
 
       <OAuthDivider />
