@@ -33,6 +33,31 @@ import { buildTestApp } from '../helpers/build-test-app'
  * d'image de carte, `chapter` de campagne) sont par ailleurs choisies pour
  * ne correspondre à aucune fixture existante (voir commentaires).
  */
+// Chapitre hors de toute plage réelle (CHAPTER_COUNT = 9), réservé aux lignes
+// sondes de cette suite et supprimé à la fin.
+const PROBE_CHAPTER = 777
+
+// Charges utiles minimales mais VALIDES pour les colonnes JSON de
+// `CampaignStage`. Voir le commentaire du bloc CampaignStage plus bas : la
+// forme compte, parce que `GET /campaign` lit toute la table.
+const PROBE_ENEMY_TEAM = [
+  {
+    baseHp: 10,
+    baseAtk: 1,
+    baseDef: 0,
+    baseSpd: 50,
+    level: 1,
+    palier: 1,
+    attackPattern: 'BASIC',
+    mitigationScale: 1,
+  },
+]
+
+const PROBE_LOOT_TABLE = {
+  firstClear: { gold: 1, dust: 1, xp: 1 },
+  farm: { gold: 1, dust: 1, xp: 1 },
+}
+
 describe('backfill des traductions au démarrage', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
 
@@ -41,6 +66,12 @@ describe('backfill des traductions au démarrage', () => {
   })
 
   afterAll(async () => {
+    // Les lignes sondes sont retirées : bien formées, elles ne cassent plus
+    // rien, mais elles resteraient visibles dans `GET /campaign` de toutes les
+    // suites suivantes — un chapitre 777 fantôme dans la campagne de chacun.
+    await app.iocContainer.postgresOrm.prisma.campaignStage.deleteMany({
+      where: { chapter: PROBE_CHAPTER },
+    })
     await app.close()
   })
 
@@ -292,6 +323,18 @@ describe('backfill des traductions au démarrage', () => {
     })
   })
 
+  // `enemyTeam` et `lootTable` doivent être **bien formés**, pas seulement
+  // présents : `GET /campaign` lit TOUTES les étapes de la table, quel que
+  // soit leur chapitre, et les fait passer par `enemyTeamSchema.parse()` et
+  // `extractRewardPreview()`. Des `{}` — ce qu'écrivaient ces sondes — y
+  // levaient une ZodError « expected array, received object » et un
+  // « malformed lootTable », qui sortaient en HTTP 500 dans les suites de
+  // campagne selon l'ordre de passage de Jest.
+  //
+  // L'isolation par `chapter: 777` raisonnait sur les identifiants : aucune
+  // autre suite n'emploie ce numéro. Mais l'isolation utile porte sur **qui
+  // lit la table**, et la campagne la lit en entier.
+
   // -----------------------------------------------------------------------
   // CampaignStage — clé stable : [chapter, index], mais PAS de liste de
   // définitions bilingues séparée : la cible est calculée depuis les
@@ -310,17 +353,17 @@ describe('backfill des traductions au démarrage', () => {
   describe('CampaignStage (clé : [chapter, index], cible calculée par ligne)', () => {
     it('calcule la cible à partir de chapter/index quand la colonne anglaise est vide', async () => {
       const { postgresOrm, contentTranslationsBootstrap } = app.iocContainer
-      const target = campaignStageLabel(777, 3)
+      const target = campaignStageLabel(PROBE_CHAPTER, 3)
 
       await postgresOrm.prisma.campaignStage.upsert({
-        where: { chapter_index: { chapter: 777, index: 3 } },
+        where: { chapter_index: { chapter: PROBE_CHAPTER, index: 3 } },
         create: {
-          chapter: 777,
+          chapter: PROBE_CHAPTER,
           index: 3,
           labelFr: target,
           labelEn: '',
-          enemyTeam: {},
-          lootTable: {},
+          enemyTeam: PROBE_ENEMY_TEAM,
+          lootTable: PROBE_LOOT_TABLE,
           order: 0,
         },
         update: { labelFr: target, labelEn: '' },
@@ -329,24 +372,24 @@ describe('backfill des traductions au démarrage', () => {
       await contentTranslationsBootstrap.bootstrap()
 
       const row = await postgresOrm.prisma.campaignStage.findUniqueOrThrow({
-        where: { chapter_index: { chapter: 777, index: 3 } },
+        where: { chapter_index: { chapter: PROBE_CHAPTER, index: 3 } },
       })
       expect(row.labelEn).toBe(target)
     })
 
     it("une ligne déjà correcte (FR = EN par construction) n'est jamais réécrite, y compris à répétition", async () => {
       const { postgresOrm, contentTranslationsBootstrap } = app.iocContainer
-      const target = campaignStageLabel(777, 10) // '777-10 Boss'
+      const target = campaignStageLabel(PROBE_CHAPTER, 10) // '777-10 Boss'
 
       await postgresOrm.prisma.campaignStage.upsert({
-        where: { chapter_index: { chapter: 777, index: 10 } },
+        where: { chapter_index: { chapter: PROBE_CHAPTER, index: 10 } },
         create: {
-          chapter: 777,
+          chapter: PROBE_CHAPTER,
           index: 10,
           labelFr: target,
           labelEn: target,
-          enemyTeam: {},
-          lootTable: {},
+          enemyTeam: PROBE_ENEMY_TEAM,
+          lootTable: PROBE_LOOT_TABLE,
           order: 0,
         },
         update: { labelFr: target, labelEn: target },
@@ -361,7 +404,7 @@ describe('backfill des traductions au démarrage', () => {
       expect(second.updated).toBe(0)
 
       const row = await postgresOrm.prisma.campaignStage.findUniqueOrThrow({
-        where: { chapter_index: { chapter: 777, index: 10 } },
+        where: { chapter_index: { chapter: PROBE_CHAPTER, index: 10 } },
       })
       expect(row.labelEn).toBe(target)
     })
