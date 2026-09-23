@@ -35,6 +35,7 @@ import type {
   AdminMilestone,
   StreakReward,
 } from '../../constants/streak.constant.ts'
+import { currentLocale } from '../../i18n/index.ts'
 import { RARITY_BADGE_VARIANT } from '../../libs/rarity.ts'
 import {
   useAdminCreateMilestone,
@@ -78,6 +79,18 @@ function draftToPayload(draft: RewardDraft): RewardPatch {
     xp: Number(draft.xp) || 0,
     cardRarity: draft.cardRarity,
   }
+}
+
+/**
+ * Le glossaire `common:rarity.*` est capitalisé (utilisé partout ailleurs en
+ * tête de libellé : filtres, options de select). En milieu de phrase
+ * française (« Carte {{rarity}} »), ça donne « Carte Épique » — faute
+ * typographique. L'anglais n'a pas le problème : « {{rarity}} card » place
+ * déjà la rareté en tête. Ne touche donc QUE le rendu français, et ne
+ * modifie pas le glossaire partagé (casserait sa capitalisation ailleurs).
+ */
+function lowerFirst(value: string): string {
+  return value.length > 0 ? value[0].toLowerCase() + value.slice(1) : value
 }
 
 const rarityIcon = (rarity: CardRarity) => {
@@ -432,6 +445,10 @@ function MilestoneRewardSummary({ milestone }: { milestone: AdminMilestone }) {
   const { t } = useTranslation('admin')
   const items: React.ReactNode[] = []
   if (milestone.cardRarity) {
+    // Clé dynamique (common:rarity.<rareté>) : vérifiée à la main, les 5
+    // clés existent en fr/en (common.json) — check-i18n-keys.mjs ne voit
+    // pas les clés construites dynamiquement.
+    const rarityLabel = t(`common:rarity.${milestone.cardRarity.toLowerCase()}`)
     items.push(
       <Badge
         key="card"
@@ -440,10 +457,8 @@ function MilestoneRewardSummary({ milestone }: { milestone: AdminMilestone }) {
       >
         {rarityIcon(milestone.cardRarity)}
         {t('streak.milestones.cardLabel', {
-          // Clé dynamique (common:rarity.<rareté>) : vérifiée à la main, les
-          // 5 clés existent en fr/en (common.json) — check-i18n-keys.mjs ne
-          // voit pas les clés construites dynamiquement.
-          rarity: t(`common:rarity.${milestone.cardRarity.toLowerCase()}`),
+          rarity:
+            currentLocale() === 'fr' ? lowerFirst(rarityLabel) : rarityLabel,
         })}
       </Badge>,
     )
