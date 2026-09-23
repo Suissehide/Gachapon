@@ -171,5 +171,11 @@
     "statsVariants": "· Variantes :",
     "recycleAll": "Tout recycler",
     "noMatch": "Aucune carte ne correspond à ces filtres."
+  },
+  "userPage": {
+    "notFound": "Joueur introuvable.",
+    "title": "Collection de {{username}}",
+    "cardsCount_one": "{{owned}} / {{count}} carte",
+    "cardsCount_other": "{{owned}} / {{count}} cartes"
   }
 }

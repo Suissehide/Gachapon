@@ -171,5 +171,11 @@
     "statsVariants": "· Variants:",
     "recycleAll": "Recycle everything",
     "noMatch": "No card matches these filters."
+  },
+  "userPage": {
+    "notFound": "Player not found.",
+    "title": "{{username}}'s collection",
+    "cardsCount_one": "{{owned}} / {{count}} card",
+    "cardsCount_other": "{{owned}} / {{count}} cards"
   }
 }

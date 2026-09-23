@@ -101,5 +101,8 @@
   "gold": {
     "amount": "{{amount}} gold",
     "amountPlus": "+{{amount}} gold"
+  },
+  "devReveal": {
+    "title": "Reveal preview (dev) — click a card to play the burst"
   }
 }

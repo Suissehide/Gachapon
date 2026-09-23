@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { ArrowLeft } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { CardVariant } from '../../../api/collection.api.ts'
 import {
@@ -42,6 +43,7 @@ export const Route = createFileRoute(
 })
 
 function UserCollectionPage() {
+  const { t } = useTranslation('collection')
   const { username } = Route.useParams()
   const { data: profile, isLoading: profileLoading } = useUserProfile(username)
 
@@ -174,7 +176,7 @@ function UserCollectionPage() {
   if (!profile) {
     return (
       <div className="flex min-h-[calc(100vh-var(--topbar-h))] items-center justify-center">
-        <p className="text-text-light">Joueur introuvable.</p>
+        <p className="text-text-light">{t('collection:userPage.notFound')}</p>
       </div>
     )
   }
@@ -189,12 +191,15 @@ function UserCollectionPage() {
             to: '/profile/$username',
             params: { username },
           },
-          { label: 'Collection' },
+          { label: t('collection:page.breadcrumbCollection') },
         ]}
-        title={`Collection de ${username}`}
+        title={t('collection:userPage.title', { username })}
         subtitle={
           <span className="font-mono">
-            {ownedCount} / {totalCount} carte{totalCount > 1 ? 's' : ''}
+            {t('collection:userPage.cardsCount', {
+              count: totalCount,
+              owned: ownedCount,
+            })}
           </span>
         }
         right={
@@ -204,7 +209,7 @@ function UserCollectionPage() {
             className="inline-flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-text-light/70 hover:text-text"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            Profil
+            {t('collection:page.breadcrumbProfile')}
           </Link>
         }
       />
@@ -229,7 +234,7 @@ function UserCollectionPage() {
       {sections.length === 0 ? (
         <ArcadeCard>
           <p className="py-14 text-center font-mono text-sm tracking-[0.04em] text-text-light/60">
-            Aucune carte ne correspond à ces filtres.
+            {t('collection:page.noMatch')}
           </p>
         </ArcadeCard>
       ) : (

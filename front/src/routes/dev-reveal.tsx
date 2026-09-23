@@ -2,6 +2,7 @@
 // when the reveal tuning is done. Public route so no auth/backend is needed.
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { RevealGrid } from '../components/machine/reveal/RevealGrid.tsx'
 import type { PullBatchEntry } from '../queries/useGacha.ts'
@@ -49,6 +50,7 @@ function mix10(): PullBatchEntry[] {
 }
 
 function DevReveal() {
+  const { t } = useTranslation('common')
   const [preview, setPreview] = useState<{
     results: PullBatchEntry[]
     seq: number
@@ -68,7 +70,7 @@ function DevReveal() {
       }}
     >
       <h1 style={{ fontSize: 20, fontWeight: 800, marginBottom: 16 }}>
-        Reveal preview (dev) — clique une carte pour jouer le burst
+        {t('common:devReveal.title')}
       </h1>
       <div style={{ display: 'grid', gap: 10 }}>
         {RARITIES.map((r) => (
