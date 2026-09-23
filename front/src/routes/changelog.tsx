@@ -1,5 +1,5 @@
 // changelog-sync: dernier commit intégré au changelog. Mis à jour par la commande /changelog.
-// last-synced-commit: f86bba614378019d4c0fce4fa098091b7ede28de
+// last-synced-commit: cc36e4de9536e882a1351170d70442c896dc5c02
 import { createFileRoute } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
@@ -41,6 +41,17 @@ const TYPE_META: Record<ChangeType, { className: string }> = {
  * les deux fichiers de locale, jamais ce fichier.
  */
 const RELEASES: ChangelogRelease[] = [
+  {
+    version: '3.3',
+    entries: [
+      { type: 'new' },
+      { type: 'improved' },
+      { type: 'improved' },
+      { type: 'improved' },
+      { type: 'new' },
+      { type: 'fixed' },
+    ],
+  },
   {
     version: '3.2',
     entries: [{ type: 'new' }, { type: 'fixed' }, { type: 'improved' }],

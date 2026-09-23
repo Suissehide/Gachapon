@@ -319,7 +319,11 @@
     "viewBossCardAriaLabel": "Voir la carte du boss {{bossName}} en grand",
     "bossDefeatedOverlay": "Vaincu",
     "tierInProgress": " · EN COURS",
-    "tierRewardCard": "Carte {{rarity}}"
+    "tierRewardCard": "Carte {{rarity}}",
+    "levelBadge": "NIV. {{level}}",
+    "levelBadgeTitle": "Le boss se renforce à chaque victoire de l'équipe, et les lots avec lui.",
+    "calibration_one": "Le boss est calibré pour {{count}} membre. Chaque victoire de l'équipe lui ajoute {{bonusPct}} % de points de vie et majore les lots ; une semaine sans victoire le fait redescendre d'un cran.",
+    "calibration_other": "Le boss est calibré pour {{count}} membres. Chaque victoire de l'équipe lui ajoute {{bonusPct}} % de points de vie et majore les lots ; une semaine sans victoire le fait redescendre d'un cran."
   },
   "hpBar": {
     "remainingOfMax": "{{remaining}} / {{max}} PV"
@@ -328,7 +332,8 @@
     "title": "Raids passés",
     "loading": "Chargement de l'historique…",
     "empty": "Aucun raid dans l'historique.",
-    "weekLabel": "S{{week}}"
+    "weekLabel": "S{{week}}",
+    "levelSuffix": "niv. {{level}}"
   },
   "perks": {
     "sectionLabel": "Bonus d'équipe",

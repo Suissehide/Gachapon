@@ -44,7 +44,9 @@ export async function seedRaid(tx: Tx): Promise<void> {
       labelFr: raidTierLabelFr(t.pct),
       labelEn: raidTierLabelEn(t.pct),
     }
-    const existing = await tx.raidTier.findUnique({ where: { pct: t.pct } })
+    const existing = await tx.raidTier.findUnique({
+      where: { pct_level: { pct: t.pct, level: 0 } },
+    })
     if (existing) {
       await tx.reward.update({
         where: { id: existing.rewardId },

@@ -22,6 +22,7 @@ import {
   Sparkles,
   Swords,
   Ticket,
+  TrendingUp,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -30,6 +31,10 @@ import type { RaidTierView, RaidView } from '../../api/raid.api.ts'
 import { currentLocale } from '../../i18n/index.ts'
 import { RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { cn, formatNumber } from '../../libs/utils.ts'
+import {
+  DEFAULT_ECONOMY,
+  useEconomyConfig,
+} from '../../queries/useEconomyConfig.ts'
 import { useRaid, useRaidLive } from '../../queries/useRaid.ts'
 import { ArcadeCard } from '../shared/ArcadeCard.tsx'
 import { CardDisplay } from '../shared/tcg-card/CardDisplay.tsx'
@@ -208,6 +213,7 @@ export function RaidPanel({ teamId }: { teamId: string }) {
   const { t } = useTranslation('team')
   const { data: raid, isLoading, isError } = useRaid(teamId)
   useRaidLive(teamId)
+  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   // Declare avant toute sortie anticipee : les hooks doivent s'executer dans
   // le meme ordre a chaque rendu.
   const [inspecting, setInspecting] = useState(false)
@@ -265,9 +271,21 @@ export function RaidPanel({ teamId }: { teamId: string }) {
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div className="min-w-0">
           <SectionLabel>{t('raidPanel.sectionLabel')}</SectionLabel>
-          <PanelTitle size="lg" className="mt-1.5">
-            {raid.boss.name}
-          </PanelTitle>
+          <div className="mt-1.5 flex flex-wrap items-center gap-2.5">
+            <PanelTitle size="lg">{raid.boss.name}</PanelTitle>
+            {raid.level > 0 && (
+              // Même grammaire de pastille que le minuteur ci-contre
+              // (`.tm-chip--amber`), déclinée en encre neutre pour ne pas
+              // entrer en concurrence avec le bouton d'attaque.
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-foreground/5 px-2.5 py-1 font-mono text-[10px] font-bold tracking-[0.1em] text-text-light"
+                title={t('raidPanel.levelBadgeTitle')}
+              >
+                <TrendingUp className="h-3.5 w-3.5" />
+                {t('raidPanel.levelBadge', { level: raid.level })}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -339,6 +357,13 @@ export function RaidPanel({ teamId }: { teamId: string }) {
               />
             ))}
           </div>
+
+          <p className="mt-3 text-[11.5px] leading-relaxed text-text-light">
+            {t('raidPanel.calibration', {
+              count: economy.raid.minMembers,
+              bonusPct: economy.raid.levelHpBonusPct,
+            })}
+          </p>
         </div>
       </div>
 

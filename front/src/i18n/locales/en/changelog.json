@@ -10,6 +10,19 @@
     "fixed": "Fixed"
   },
   "releases": {
+    "v3_3": {
+      "title": "The team boss moves up a notch",
+      "date": "September 2026",
+      "summary": "The raid boss gets stronger every time you bring it down, rare pulls have to be earned, and equipment sells without leaving the card sheet.",
+      "entries": {
+        "e1": "The raid boss becomes a ladder instead of a routine. It's now calibrated for ten members at the very least: building a one-player team to walk away with all four tiers is over — you need people, and active ones. Every week you bring it down, it comes back with 10% more health, and its rewards grow with it; every week without a kill, it drops back a level. Your team therefore finds the difficulty that fits it on its own, and that difficulty climbs as you gain levels and equipment. The level is shown next to the boss's name and in the history of past raids.",
+        "e2": "Epics and legendaries are twice as rare. They dropped too often for what they're worth: their pull weight is halved. Pity, on the other hand, doesn't move — the safety net that guarantees you an epic after a long unlucky streak stays exactly where it was.",
+        "e3": "The economy tightens where it was leaking. Energy packs cost three times more: buying energy should stay a stopgap, never a way around farming. Wishes are repriced, with a cost that depends on the rarity you're aiming for. And raid rewards follow the same logic: a little more at every difficulty level, but always less than the extra effort it takes.",
+        "e4": "PvE difficulty has been recalibrated on real player profiles. Every tower floor is now cut for the level and the equipment you can reasonably have at that point, instead of a single curve applied from bottom to top. The campaign, for its part, finally takes your equipment into account: a chapter no longer collapses because you show up with seven pieces equipped.",
+        "e5": "Selling a piece of equipment no longer means hunting for it. The button sits right on its sheet, and the list groups your pieces by set — the four Wrath pieces together, the three Vigilance pieces together — so you can see at a glance what you're missing to complete a bonus.",
+        "e6": "Three everyday snags. On mobile, the menu is no longer cut off and overly tall windows scroll instead of getting truncated. The wish button, on a card's sheet, now lets you remove a wish and not just add one. And an already-cleared tower floor replays at the sweep price, not at the price of a full battle."
+      }
+    },
     "v3_2": {
       "title": "Each mode keeps its own team",
       "date": "September 2026",

@@ -319,7 +319,11 @@
     "viewBossCardAriaLabel": "View the boss card {{bossName}} full-size",
     "bossDefeatedOverlay": "Defeated",
     "tierInProgress": " · IN PROGRESS",
-    "tierRewardCard": "{{rarity}} card"
+    "tierRewardCard": "{{rarity}} card",
+    "levelBadge": "LVL. {{level}}",
+    "levelBadgeTitle": "The boss gets stronger every time the team brings it down, and so do the rewards.",
+    "calibration_one": "The boss is calibrated for {{count}} member. Every team victory adds {{bonusPct}}% health to it and raises the rewards; a week without a kill brings it back down a level.",
+    "calibration_other": "The boss is calibrated for {{count}} members. Every team victory adds {{bonusPct}}% health to it and raises the rewards; a week without a kill brings it back down a level."
   },
   "hpBar": {
     "remainingOfMax": "{{remaining}} / {{max}} HP"
@@ -328,7 +332,8 @@
     "title": "Past raids",
     "loading": "Loading history…",
     "empty": "No raid in the history yet.",
-    "weekLabel": "W{{week}}"
+    "weekLabel": "W{{week}}",
+    "levelSuffix": "lvl. {{level}}"
   },
   "perks": {
     "sectionLabel": "Team bonuses",

@@ -469,13 +469,13 @@ export const CARDS = [
     element: 'FIRE',
     passiveKey: null,
   }, // Assassin
-  // EPIC — dropWeight 8 chacune
+  // EPIC — dropWeight 4 chacune
   {
     id: 'HUM-035',
     nameFr: 'Archimage Cael',
     nameEn: 'Archmage Cael',
     rarity: 'EPIC',
-    dropWeight: 8,
+    dropWeight: 4,
     baseHp: 254,
     baseAtk: 83,
     baseDef: 11,
@@ -488,7 +488,7 @@ export const CARDS = [
     nameFr: 'Garnier',
     nameEn: 'Garnier',
     rarity: 'EPIC',
-    dropWeight: 8,
+    dropWeight: 4,
     baseHp: 408,
     baseAtk: 47,
     baseDef: 22,
@@ -496,13 +496,13 @@ export const CARDS = [
     element: 'NATURE',
     passiveKey: 'AEGIS',
   }, // Tank
-  // LEGENDARY — dropWeight 2 chacune
+  // LEGENDARY — dropWeight 1 chacune
   {
     id: 'HUM-037',
     nameFr: 'Roi Aldric',
     nameEn: 'King Aldric',
     rarity: 'LEGENDARY',
-    dropWeight: 2,
+    dropWeight: 1,
     baseHp: 597,
     baseAtk: 96,
     baseDef: 30,
@@ -515,7 +515,7 @@ export const CARDS = [
     nameFr: 'Reine Isaure',
     nameEn: 'Queen Isaure',
     rarity: 'LEGENDARY',
-    dropWeight: 2,
+    dropWeight: 1,
     baseHp: 584,
     baseAtk: 102,
     baseDef: 27,

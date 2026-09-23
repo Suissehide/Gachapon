@@ -1,14 +1,18 @@
 import { describe, expect, it } from '@jest/globals'
 
 import type { LogEntry } from '../../../main/domain/combat/battle-simulator.domain'
+import { RAID_TIERS } from '../../../main/domain/content/raid.definitions'
+import { DEFAULTS } from '../../../main/infra/config/config.service'
 import {
   attacksRemaining,
   crossedTiers,
   damageDealtToBoss,
+  nextRaidLevel,
   RAID_EPOCH_WEEK_KEY,
   raidElementForWeek,
   raidMaxHp,
   raidPct,
+  raidTierRewardAtLevel,
   raidWeekEndsAt,
   raidWeekIndex,
   raidWeekKey,
@@ -71,10 +75,25 @@ describe('raid-rules — rotation', () => {
 })
 
 describe('raid-rules — PV', () => {
-  it('PV = base × membres, plancher à 1 membre', () => {
-    expect(raidMaxHp(20000, 5)).toBe(100000)
-    expect(raidMaxHp(20000, 1)).toBe(20000)
-    expect(raidMaxHp(20000, 0)).toBe(20000)
+  const base = { minMembers: 10, levelBonusPct: 10, level: 0 }
+
+  it('facture au moins `minMembers`, même pour une équipe solo', () => {
+    expect(raidMaxHp(20000, 1, base)).toBe(200000)
+    expect(raidMaxHp(20000, 0, base)).toBe(200000)
+  })
+
+  it('au-delà du plancher, les PV suivent l’effectif réel', () => {
+    expect(raidMaxHp(20000, 14, base)).toBe(280000)
+  })
+
+  it('chaque niveau compose le bonus de PV', () => {
+    expect(raidMaxHp(20000, 10, { ...base, level: 1 })).toBe(220000)
+    expect(raidMaxHp(20000, 10, { ...base, level: 3 })).toBe(266200)
+  })
+
+  it('arrondit à l’entier', () => {
+    // 162000 × 10 × 1,1^5 = 2 609 026,2
+    expect(raidMaxHp(162000, 10, { ...base, level: 5 })).toBe(2609026)
   })
 })
 
@@ -171,4 +190,110 @@ describe('raid-rules — pourcentage de barre', () => {
   it('valeur exacte de la maquette : 8 600 dégâts sur 20 000 PV font 43 %', () => {
     expect(raidPct(8600, 20_000)).toBe(43)
   })
+})
+
+describe('raid-rules — niveau de difficulté', () => {
+  const killed = new Date('2026-09-18T12:00:00.000Z')
+
+  it('une équipe sans passé part au niveau 0', () => {
+    expect(nextRaidLevel(null, '2026-09-21')).toBe(0)
+  })
+
+  it('une victoire la semaine dernière monte d’un cran', () => {
+    expect(
+      nextRaidLevel({ weekKey: '2026-09-14', level: 2, killedAt: killed }, '2026-09-21'),
+    ).toBe(3)
+  })
+
+  it('une semaine jouée sans victoire fait redescendre d’un cran', () => {
+    expect(
+      nextRaidLevel({ weekKey: '2026-09-14', level: 2, killedAt: null }, '2026-09-21'),
+    ).toBe(1)
+  })
+
+  it('ne descend jamais sous 0', () => {
+    expect(
+      nextRaidLevel({ weekKey: '2026-09-14', level: 0, killedAt: null }, '2026-09-21'),
+    ).toBe(0)
+  })
+
+  it('chaque semaine entièrement sautée coûte un cran de plus', () => {
+    // Victoire au niveau 3 la semaine du 31 août, puis deux semaines sans
+    // aucun raid : +1 pour la victoire, −2 pour les semaines sautées.
+    expect(
+      nextRaidLevel({ weekKey: '2026-08-31', level: 3, killedAt: killed }, '2026-09-21'),
+    ).toBe(2)
+  })
+})
+
+describe('raid-rules — lots par niveau', () => {
+  const base = { tokens: 13, gold: 1000, dust: 300 }
+
+  it('le niveau 0 laisse le lot de base intact', () => {
+    expect(raidTierRewardAtLevel(base, 0, 5)).toEqual(base)
+  })
+
+  it('le bonus est un pourcentage de la base du palier', () => {
+    expect(raidTierRewardAtLevel(base, 2, 5)).toEqual({
+      tokens: 14,
+      gold: 1100,
+      dust: 330,
+    })
+  })
+
+  it('un petit palier monte proportionnellement, pas par bonds', () => {
+    // Base 3 jetons : +5 % par cran ne fait franchir l'entier qu'au niveau 4.
+    expect(raidTierRewardAtLevel({ tokens: 3, gold: 200, dust: 50 }, 1, 5).tokens).toBe(3)
+    expect(raidTierRewardAtLevel({ tokens: 3, gold: 200, dust: 50 }, 4, 5).tokens).toBe(4)
+  })
+})
+
+/**
+ * L'INVARIANT ÉCONOMIQUE du raid, rendu exécutable — et lu depuis les
+ * SOURCES RÉELLES (`DEFAULTS` et `RAID_TIERS`), jamais depuis des constantes
+ * recopiées ici. Recopier serait exactement la faiblesse que ce test existe
+ * pour combler, déplacée d'un étage : un changement de
+ * `DEFAULTS['raid.levelRewardPct']`, `DEFAULTS['raid.levelHpBonusPct']` ou
+ * `RAID_TIERS` continuerait d'éprouver d'anciens littéraux et ne
+ * signalerait rien — précisément le scénario qui a produit cette tâche.
+ * Même patron que `energy-pack-pricing.test.ts`.
+ *
+ * Les PV du boss croissent de `raid.levelHpBonusPct` % composés par niveau,
+ * les lots de `raid.levelRewardPct` % de leur base — donc la récompense par
+ * point de dégât doit décroître STRICTEMENT à chaque cran. Sans quoi monter
+ * en difficulté deviendrait un farm plus rentable, exactement le contraire
+ * du but de la mécanique.
+ *
+ * Ce test a été écrit après coup : le barème additif précédent (+2 jetons par
+ * niveau sur une base de 5) violait l'invariant du niveau 1 au niveau 8, et
+ * rien ne l'a signalé.
+ */
+describe('raid-rules — invariant : la récompense par point de dégât décroît', () => {
+  const HP_BONUS_PCT = DEFAULTS['raid.levelHpBonusPct']
+  const REWARD_BONUS_PCT = DEFAULTS['raid.levelRewardPct']
+  const BASE_HP_PER_MEMBER = DEFAULTS['raid.baseHpPerMember']
+  const MIN_MEMBERS = DEFAULTS['raid.minMembers']
+
+  it.each(['tokens', 'gold', 'dust'] as const)(
+    'la ressource %s rapporte strictement moins par PV à chaque niveau',
+    (field) => {
+      const ratios = Array.from({ length: 11 }, (_, level) => {
+        const total = RAID_TIERS.reduce(
+          (sum, tier) =>
+            sum + raidTierRewardAtLevel(tier, level, REWARD_BONUS_PCT)[field],
+          0,
+        )
+        const hp = raidMaxHp(BASE_HP_PER_MEMBER, MIN_MEMBERS, {
+          minMembers: MIN_MEMBERS,
+          levelBonusPct: HP_BONUS_PCT,
+          level,
+        })
+        return total / hp
+      })
+
+      for (let level = 1; level < ratios.length; level++) {
+        expect(ratios[level]).toBeLessThan(ratios[level - 1] as number)
+      }
+    },
+  )
 })

@@ -44,6 +44,7 @@ export const raidViewResponseSchema = z.object({
   hp: z.number().int(),
   damageDone: z.number().int(),
   memberCountAtStart: z.number().int(),
+  level: z.number().int(),
   killedAt: z.string().nullable(),
   tiers: z.array(raidTierViewSchema),
   me: z.object({

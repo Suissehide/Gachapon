@@ -58,7 +58,14 @@ const DRY_RUN = process.env.DRY_RUN === '1' || process.env.DRY_RUN === 'true'
 
 // dropWeight imposé par rareté (spec rééquilibrage 2026-07-20) : le champ
 // dropWeight de cards-data.json (généré depuis l'Excel) est volontairement ignoré.
-const DROP_WEIGHT_BY_RARITY = { COMMON: 85, UNCOMMON: 38, RARE: 16, EPIC: 8, LEGENDARY: 2 }
+//
+// EPIC et LEGENDARY divisés par deux le 2026-09-22 : sur le catalogue des 18
+// familles, EPIC passe de 1,41 % à 0,71 % et LEGENDARY de 0,163 % à 0,082 %
+// (une légendaire tous les ~1216 tirages au lieu de ~613). Les poids COMMON,
+// UNCOMMON et RARE sont inchangés — RARE ne remonte que mécaniquement, de
+// 5,17 % à 5,21 %. Ce barème ne s'applique qu'aux cartes CRÉÉES par l'import ;
+// les cartes déjà en base sont reprises par migration de données.
+const DROP_WEIGHT_BY_RARITY = { COMMON: 85, UNCOMMON: 38, RARE: 16, EPIC: 4, LEGENDARY: 1 }
 
 if (!API_KEY) {
   console.error('✗ API_KEY manquant. Usage : API_KEY=xxxx node scripts/import-cards/import-cards.mjs')

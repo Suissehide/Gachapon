@@ -48,6 +48,7 @@ import {
   attacksRemaining,
   crossedTiers,
   damageDealtToBoss,
+  nextRaidLevel,
   RAID_BOSS_SIM_HP,
   raidElementForWeek,
   raidMaxHp,
@@ -144,7 +145,14 @@ export class RaidDomain implements IRaidDomain {
     now: Date = new Date(),
   ): Promise<RaidAttackResult> {
     const team = await this.#requireMembership(teamId, userId)
-    const raidId = (await this.#ensureRaid(team, now)).id
+    // `ensured` et pas `raid` : la transaction ci-dessous déclare déjà un
+    // `raid`, la ligne rechargée sous verrou. Deux noms distincts pour deux
+    // lectures distinctes.
+    const ensured = await this.#ensureRaid(team, now)
+    const raidId = ensured.id
+    // AVANT la transaction : une création de `Reward` dedans lèverait un
+    // P2002 non rattrapé par `retryOnSerialization` (qui ne voit que P2034).
+    await this.#tiersFor(ensured.level)
 
     // Config lue AVANT la transaction (pas d'I/O async étranger dans un tx
     // Serializable) — même motif que tower.domain#fight.
@@ -267,6 +275,7 @@ export class RaidDomain implements IRaidDomain {
           })
 
           const tiers = await tx.raidTier.findMany({
+            where: { level: raid.level },
             include: { reward: true },
             orderBy: { pct: 'asc' },
           })
@@ -387,6 +396,7 @@ export class RaidDomain implements IRaidDomain {
       bossName: raid.boss.name,
       bossElement: raid.boss.element as TowerElement,
       maxHp: raid.maxHp,
+      level: raid.level,
       damage: raid.maxHp - raid.hp,
       pct: raidPct(raid.maxHp - raid.hp, raid.maxHp),
       killedAt: raid.killedAt ? raid.killedAt.toISOString() : null,
@@ -487,15 +497,41 @@ export class RaidDomain implements IRaidDomain {
       )
       throw Boom.serverUnavailable(errorMessage('raid.unavailable'))
     }
-    const cfg = await this.#configService.getMany('raid.baseHpPerMember')
+    const [cfg, last] = await Promise.all([
+      this.#configService.getMany(
+        'raid.baseHpPerMember',
+        'raid.minMembers',
+        'raid.levelHpBonusPct',
+      ),
+      this.#raidRepository.findLastRaidBefore(team.id, weekKey),
+    ])
     const memberCount = team.members.length
+    const level = nextRaidLevel(last, weekKey)
     return this.#raidRepository.upsertRaid({
       teamId: team.id,
       weekKey,
       bossId: boss.id,
-      maxHp: raidMaxHp(cfg['raid.baseHpPerMember'], memberCount),
+      level,
+      maxHp: raidMaxHp(cfg['raid.baseHpPerMember'], memberCount, {
+        minMembers: cfg['raid.minMembers'],
+        levelBonusPct: cfg['raid.levelHpBonusPct'],
+        level,
+      }),
       memberCountAtStart: memberCount,
     })
+  }
+
+  /**
+   * Paliers applicables à un raid de niveau `level`, créés au besoin. Appelée
+   * aussi bien à l'affichage qu'à l'attaque : sans cela, un joueur verrait
+   * des lots calculés à la volée et en recevrait d'autres, persistés.
+   */
+  async #tiersFor(level: number): Promise<RaidTierWithReward[]> {
+    const cfg = await this.#configService.getMany('raid.levelRewardPct')
+    return this.#raidRepository.ensureTiersForLevel(
+      level,
+      cfg['raid.levelRewardPct'],
+    )
   }
 
   async #contributions(
@@ -533,7 +569,7 @@ export class RaidDomain implements IRaidDomain {
     // confondues.
     const [tiers, contributions, cfg, usedToday, raidBonus] = await Promise.all(
       [
-        this.#raidRepository.listTiers(),
+        this.#tiersFor(raid.level),
         this.#contributions(raid.id, team),
         this.#configService.getMany('raid.attacksPerDay'),
         this.#raidRepository.countUserAttacksSince(userId, utcDayStart(now)),
@@ -565,6 +601,7 @@ export class RaidDomain implements IRaidDomain {
       hp: raid.hp,
       damageDone,
       memberCountAtStart: raid.memberCountAtStart,
+      level: raid.level,
       killedAt: raid.killedAt ? raid.killedAt.toISOString() : null,
       tiers: tiers.map((t) => tierView(t, reached.has(t.pct))),
       me: {

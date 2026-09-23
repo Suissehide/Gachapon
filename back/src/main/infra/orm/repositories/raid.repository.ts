@@ -1,4 +1,13 @@
-import type { CardElement, Prisma } from '../../../../generated/client'
+import type {
+  CardElement,
+  Prisma,
+  TeamRaid,
+} from '../../../../generated/client'
+import {
+  raidTierLabelEn,
+  raidTierLabelFr,
+} from '../../../domain/content/raid.definitions'
+import { raidTierRewardAtLevel } from '../../../domain/raid/raid-rules'
 import type { IocContainer } from '../../../types/application/ioc'
 import type { LocalizedRaidBoss } from '../../../types/infra/orm/localized'
 import type {
@@ -36,16 +45,66 @@ export class RaidRepository implements IRaidRepository {
     return this.#prisma.raidBoss.update({ where: { element }, data })
   }
 
-  listTiers(): Promise<RaidTierWithReward[]> {
+  listTiers(level = 0): Promise<RaidTierWithReward[]> {
     return this.#prisma.raidTier.findMany({
+      where: { level },
       include: { reward: true },
       orderBy: { pct: 'asc' },
     })
   }
 
+  /**
+   * Paliers du niveau `level`, créés à la demande depuis le niveau 0 (la
+   * ligne de référence, seule éditée en admin). Partagés par toutes les
+   * équipes : quatre lignes par niveau, pas par raid.
+   *
+   * À n'appeler QUE hors transaction. Une création de `Reward` dans la
+   * transaction Serializable de l'attaque produirait un `P2002` quand deux
+   * coéquipiers attaquent en même temps, et `retryOnSerialization` ne
+   * rattrape que `P2034`. Ici, `skipDuplicates` absorbe la course — la
+   * collision oppose deux ÉQUIPES atteignant le niveau N pour la première
+   * fois en même temps (les lignes sont partagées par toutes les équipes,
+   * pas propres à un raid), et coûte jusqu'à 4 lignes `Reward` orphelines
+   * par équipe perdante, sans conséquence : `missing.length === 0`
+   * court-circuite tous les appels suivants sur ce niveau.
+   */
+  async ensureTiersForLevel(
+    level: number,
+    bonusPct: number,
+  ): Promise<RaidTierWithReward[]> {
+    if (level <= 0) {
+      return this.listTiers(0)
+    }
+    const [base, existing] = await Promise.all([
+      this.listTiers(0),
+      this.listTiers(level),
+    ])
+    const missing = base.filter((b) => !existing.some((e) => e.pct === b.pct))
+    if (missing.length === 0) {
+      return existing
+    }
+    for (const tier of missing) {
+      const amounts = raidTierRewardAtLevel(tier.reward, level, bonusPct)
+      const reward = await this.#prisma.reward.create({
+        data: {
+          ...amounts,
+          xp: tier.reward.xp,
+          cardRarity: tier.reward.cardRarity,
+          labelFr: `${raidTierLabelFr(tier.pct)} (niv. ${level})`,
+          labelEn: `${raidTierLabelEn(tier.pct)} (level ${level})`,
+        },
+      })
+      await this.#prisma.raidTier.createMany({
+        data: [{ pct: tier.pct, level, rewardId: reward.id }],
+        skipDuplicates: true,
+      })
+    }
+    return this.listTiers(level)
+  }
+
   findTierByPct(pct: number): Promise<RaidTierWithReward | null> {
     return this.#prisma.raidTier.findUnique({
-      where: { pct },
+      where: { pct_level: { pct, level: 0 } },
       include: { reward: true },
     })
   }
@@ -55,11 +114,18 @@ export class RaidRepository implements IRaidRepository {
     data: RaidTierRewardPatch,
   ): Promise<RaidTierWithReward> {
     const tier = await this.#prisma.raidTier.findUniqueOrThrow({
-      where: { pct },
+      where: { pct_level: { pct, level: 0 } },
     })
     await this.#prisma.reward.update({ where: { id: tier.rewardId }, data })
+    // Les niveaux > 0 sont dérivés du niveau 0 : ils sont désormais périmés.
+    // On supprime les LIGNES de palier, jamais les `Reward` — ceux-là sont
+    // pointés par des `UserReward` déjà distribués, et un lot distribué est
+    // de l'historique. Les niveaux se régénèrent au prochain franchissement.
+    await this.#prisma.raidTier.deleteMany({
+      where: { pct, level: { gt: 0 } },
+    })
     return this.#prisma.raidTier.findUniqueOrThrow({
-      where: { pct },
+      where: { pct_level: { pct, level: 0 } },
       include: { reward: true },
     })
   }
@@ -77,6 +143,7 @@ export class RaidRepository implements IRaidRepository {
     bossId: string
     maxHp: number
     memberCountAtStart: number
+    level: number
   }): Promise<TeamRaidWithBoss> {
     return this.#prisma.teamRaid.upsert({
       where: { teamId_weekKey: { teamId: data.teamId, weekKey: data.weekKey } },
@@ -156,6 +223,22 @@ export class RaidRepository implements IRaidRepository {
   countKills(teamId: string): Promise<number> {
     return this.#prisma.teamRaid.count({
       where: { teamId, killedAt: { not: null } },
+    })
+  }
+
+  /**
+   * Dernier raid STRICTEMENT antérieur à `weekKey`, quelle que soit son
+   * ancienneté — c'est la référence de `nextRaidLevel`. Même remarque que
+   * `listPastRaids` : la clé de semaine est une date ISO, donc l'ordre
+   * lexicographique EST l'ordre chronologique.
+   */
+  findLastRaidBefore(
+    teamId: string,
+    weekKey: string,
+  ): Promise<TeamRaid | null> {
+    return this.#prisma.teamRaid.findFirst({
+      where: { teamId, weekKey: { lt: weekKey } },
+      orderBy: { weekKey: 'desc' },
     })
   }
 }
