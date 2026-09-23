@@ -16,33 +16,40 @@
     prerender-seo.mjs s'en sert comme chaîne à remplacer quand la variable
     d'environnement SITE_ORIGIN surcharge l'origine (staging). Les deux doivent
     rester identiques, sinon la surcharge ne remplace plus rien.
+
+    DEUX RÈGLES POUR CE GABARIT :
+      - aucune balise d'IDENTITÉ (canonical, og:url). Une page prérendue reçoit
+        la sienne, insérée par prerender-seo.mjs ; le fallback, lui, est servi
+        pour des URLs variables (routes applicatives) et déclarerait sinon une
+        identité qui ment — un canonical vers `/`, qui répond désormais en 302.
+      - tout le texte et les métadonnées de langue sont dans la LANGUE PAR
+        DÉFAUT (l'anglais, cohérent avec `lang="en"` ci-dessus). Les 14 pages
+        prérendues les réécrivent par arbre ; le fallback les garde telles
+        quelles, et du français sous `lang="en"` serait faux pour lui.
   -->
   <head>
     <meta charset="UTF-8" />
     <link href="/src/assets/favicon.ico" rel="icon" type="image/svg+xml" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Gachapon</title>
-    <meta name="description" content="Gachapon est un jeu de cartes à collectionner en ligne inspiré des capsules japonaises. Tire des capsules, découvre des cartes rares et construis ta collection." />
+    <meta name="description" content="Gachapon is an online trading card game inspired by Japanese capsule machines. Pull capsules, discover rare cards, and build your collection." />
     <meta name="theme-color" content="#0c0a09" />
-    <link rel="canonical" href="https://playgachapon.com/" />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Gachapon" />
     <meta property="og:title" content="Gachapon" />
-    <meta property="og:description" content="Gachapon est un jeu de cartes à collectionner en ligne inspiré des capsules japonaises. Tire des capsules, découvre des cartes rares et construis ta collection." />
-    <meta property="og:url" content="https://playgachapon.com/" />
-    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:description" content="Gachapon is an online trading card game inspired by Japanese capsule machines. Pull capsules, discover rare cards, and build your collection." />
     <meta property="og:image" content="https://playgachapon.com/og-image.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Gachapon — le jeu de cartes à collectionner inspiré des capsules japonaises" />
+    <meta property="og:image:alt" content="Gachapon — the trading card game inspired by Japanese capsule machines" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Gachapon" />
-    <meta name="twitter:description" content="Gachapon est un jeu de cartes à collectionner en ligne inspiré des capsules japonaises. Tire des capsules, découvre des cartes rares et construis ta collection." />
+    <meta name="twitter:description" content="Gachapon is an online trading card game inspired by Japanese capsule machines. Pull capsules, discover rare cards, and build your collection." />
     <meta name="twitter:image" content="https://playgachapon.com/og-image.png" />
 
     <!-- Structured data — lisible par Google sans exécution du JS de l'app -->
@@ -65,8 +72,8 @@
           "@id": "https://playgachapon.com/#website",
           "url": "https://playgachapon.com/",
           "name": "Gachapon",
-          "description": "Jeu de cartes à collectionner en ligne inspiré des capsules japonaises.",
-          "inLanguage": "fr-FR",
+          "description": "Online trading card game inspired by Japanese capsule machines.",
+          "inLanguage": "en-US",
           "publisher": { "@id": "https://playgachapon.com/#organization" }
         },
         {
@@ -75,8 +82,8 @@
           "url": "https://playgachapon.com/",
           "applicationCategory": "Game",
           "operatingSystem": "Web",
-          "inLanguage": "fr-FR",
-          "genre": ["Jeu de cartes", "Collection", "Gacha"],
+          "inLanguage": "en-US",
+          "genre": ["Card game", "Collecting", "Gacha"],
           "publisher": { "@id": "https://playgachapon.com/#organization" },
           "offers": {
             "@type": "Offer",

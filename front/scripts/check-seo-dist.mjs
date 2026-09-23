@@ -15,11 +15,14 @@
 // CE QU'IL VÉRIFIE
 //   1. les 14 fichiers attendus existent (7 routes x 2 langues) ;
 //   2. `dist/index.html` est resté le fallback SPA : ni #seo-static, ni
-//      canonical de route, #root vide ;
+//      canonical de route, #root vide, et AUCUNE balise d'identité (canonical,
+//      og:url) — le gabarit les a perdues, un fallback servi pour des URLs
+//      variables ne peut pas en déclarer ;
 //   3. par fichier : <html lang>, un et un seul canonical, égal à
 //      ORIGIN + /<langue><route> ;
 //   4. par fichier : exactement 3 alternates (fr, en, x-default), x-default
-//      égal au href annoncé pour la langue par défaut ;
+//      égal au href annoncé pour la langue par défaut — ET pointant bien sur
+//      la langue par défaut, pas seulement sur « une » des deux ;
 //   5. RÉCIPROCITÉ : le href que /fr/X annonce pour `en` est exactement le
 //      canonical écrit dans le fichier /en/X, et inversement ;
 //   6. title / description / og:* / twitter:* / og:locale / JSON-LD
@@ -227,6 +230,14 @@ function checkOneFile(html, route, locale) {
   check(
     byLang.get('x-default') === byLang.get(DEFAULT_SEO_LOCALE),
     `${at} : x-default "${byLang.get('x-default')}" ≠ hreflang="${DEFAULT_SEO_LOCALE}" "${byLang.get(DEFAULT_SEO_LOCALE)}"`,
+  )
+  // Redondant en apparence avec la ligne ci-dessus — il ne l'est pas : si les
+  // DEUX basculaient sur l'autre langue, l'égalité tiendrait encore. Cette
+  // ligne ancre la valeur attendue, l'autre ancre la cohérence interne.
+  check(
+    byLang.get('x-default') ===
+      `${ORIGIN}${localizedPath(DEFAULT_SEO_LOCALE, route.path)}`,
+    `${at} : x-default "${byLang.get('x-default')}" ne désigne pas la langue par défaut (${DEFAULT_SEO_LOCALE})`,
   )
   check(
     byLang.get(locale) === expectedUrl,
@@ -436,6 +447,19 @@ async function main() {
       )
     }
   }
+  // Ni canonical ni og:url DU TOUT, pas seulement « pas ceux d'une route » :
+  // le fallback est servi pour des URLs variables (routes applicatives), donc
+  // toute identité qu'il déclarerait serait fausse pour la plupart d'entre
+  // elles. `/` en particulier répond désormais en 302.
+  for (const [label, re] of [
+    ['canonical', /<link\s+rel="canonical"/g],
+    ['og:url', /<meta\s+property="og:url"/g],
+  ]) {
+    check(
+      attr(fallback, re).length === 0,
+      `dist/index.html : balise ${label} présente — le fallback ne déclare aucune identité`,
+    )
+  }
 
   // 9. l'ancien domaine
   const strays = []
@@ -472,6 +496,15 @@ async function main() {
     sitemap.includes('xmlns:xhtml="http://www.w3.org/1999/xhtml"'),
     'sitemap.xml : espace de noms xhtml absent — les <xhtml:link> seraient invalides',
   )
+  const totalAlternates = [
+    ...sitemap.matchAll(/<xhtml:link rel="alternate"/g),
+  ].length
+  const expectedAlternates = expectedUrls * (SEO_LOCALES.length + 1)
+  check(
+    totalAlternates === expectedAlternates,
+    `sitemap.xml : ${totalAlternates} <xhtml:link> au total, ${expectedAlternates} attendus — un sitemap qui liste les deux langues SANS alternates dit à Google « contenu dupliqué »`,
+  )
+
   const seenLocs = new Set()
   for (const block of urlBlocks) {
     const locMatch = block.match(/<loc>([^<]*)<\/loc>/)
