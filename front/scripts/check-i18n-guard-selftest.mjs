@@ -7,7 +7,9 @@
 // structurels : arguments de `t()`, `i18nKey`, `id`/`htmlFor` ; exceptions
 // scopées : `SECTION_IDS` du guide, blocs `code` de discord.tsx). Il fige
 // aussi, symétriquement, ce qui a été REFUSÉ comme assouplissement —
-// `className` et `data-*`, voir `unmasked-attributes.tsx`.
+// `className` et `data-*`, voir `unmasked-attributes.tsx` — et le VOCABULAIRE
+// du détecteur lui-même, voir `detector-vocabulary.tsx`.
+//
 // Un assouplissement non gardé dérive : le chantier a déjà vu quatre fois un
 // filet perdre sa morsure sans que rien ne crie. Ce script fige, par
 // exécution, ce que le garde-fou DOIT continuer à voir et ce qu'il DOIT
@@ -22,14 +24,35 @@
 // Usage :
 //   node scripts/check-i18n-guard-selftest.mjs
 //
-// CE QUE CE SCRIPT NE PROUVE PAS. Il vérifie des LIGNES signalées, pas des
-// occurrences : une ligne attendue qui passerait de quatre violations à une
-// resterait verte. Il ne couvre que les cas que la tâche 12 a rencontrés —
-// une fixture est une capture, pas une spécification. Et il ne dit rien du
-// rappel du détecteur sur du français inconnu : cette limite-là est mesurée
-// et documentée dans `check-i18n-hardcoded.mjs`, elle n'est pas testable ici.
+// ---------------------------------------------------------------------------
+// CE QUE CE SCRIPT COMPTE — et pourquoi ce n'est plus des lignes.
+//
+// La première version comparait des ENSEMBLES DE LIGNES signalées. La revue
+// du round 2 a montré que ce grain laissait passer l'affaiblissement le plus
+// probable de tous : **retirer un mot de `FRENCH_WORDS`**, le geste exact que
+// fera le prochain qui rencontre un faux positif. Chaque ligne des fixtures
+// portant plusieurs mots français, en retirer un ne faisait pas changer la
+// ligne de camp — l'auto-test restait vert, et le scan du dépôt aussi.
+//
+// Deux corrections, complémentaires :
+//   1. les attentes sont désormais en **nombre d'occurrences PAR LIGNE**
+//      (`{ 15: 4, 16: 1, … }`), pas en présence/absence ;
+//   2. `detector-vocabulary.tsx` donne à CHAQUE entrée des deux détecteurs sa
+//      propre ligne, qui ne porte rien d'autre — une ligne, une occurrence.
+//      Ce fichier est comparé INVENTAIRE CONTRE INVENTAIRE avec le script :
+//      un mot retiré, un mot ajouté sans sa ligne, un caractère accentué
+//      supprimé de la classe, tout écart est signalé.
+//
+// CE QUE CE SCRIPT NE PROUVE TOUJOURS PAS. Il ne couvre que les cas que la
+// tâche 12 a rencontrés — une fixture est une capture, pas une spécification.
+// Et il ne dit rien du rappel du détecteur sur du français inconnu : cette
+// limite-là est mesurée et documentée dans `check-i18n-hardcoded.mjs`, elle
+// n'est pas testable ici. Enfin, il suppose qu'on ne modifie pas une fixture
+// pour faire taire un écart : c'est une règle de conduite, pas une garantie
+// mécanique — elle est écrite en tête de chaque fixture.
 
 import { execFile } from 'node:child_process'
+import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
@@ -38,53 +61,55 @@ const execFileAsync = promisify(execFile)
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const FIXTURES = path.join(__dirname, 'i18n-fixtures')
+const HARDCODED = 'check-i18n-hardcoded.mjs'
+const KEYS = 'check-i18n-keys.mjs'
 
 /**
  * Attentes, fixture par fixture.
  *
- * `hardcodedLines` : l'ensemble EXACT des numéros de ligne que
- * `check-i18n-hardcoded.mjs` doit signaler. Un ensemble vide signifie « ce
- * fichier doit sortir vert ». Les fixtures portent un « NE PAS REFORMATER »
- * en en-tête : ces numéros sont leur contrat.
+ * `hardcoded` : pour chaque ligne signalée par `check-i18n-hardcoded.mjs`, le
+ * nombre EXACT d'occurrences attendues. Un objet vide signifie « ce fichier
+ * doit sortir vert ». Les fixtures portent un « NE PAS REFORMATER » en
+ * en-tête : ces numéros et ces comptes sont leur contrat.
  *
- * `keysLines` : idem pour `check-i18n-keys.mjs`, quand la fixture sert à
- * montrer le partage des rôles entre les deux scripts. `null` = non vérifié.
+ * `keys` : idem pour `check-i18n-keys.mjs`, quand la fixture sert à montrer
+ * le partage des rôles entre les deux scripts. `null` = non vérifié.
  */
 const EXPECTATIONS = [
   {
     file: 'displayed-text.tsx',
     why: "Du texte réellement affiché — attributs lus par l'humain ou le lecteur d'écran (title, placeholder, aria-label, alt, label), texte JSX brut, apostrophe française, et un `//` dans le TEXTE d'un template (qui n'est pas un commentaire).",
-    hardcodedLines: [15, 16, 17, 18, 19, 21, 22, 23],
-    keysLines: null,
+    hardcoded: { 15: 4, 16: 1, 17: 3, 18: 3, 19: 2, 21: 2, 22: 1, 23: 4 },
+    keys: null,
   },
   {
     file: 'not-displayed.tsx',
     why: "Les quatre positions masquées : `id`, `htmlFor`, l'argument littéral de `t()`, l'attribut `i18nKey`, plus un commentaire à l'intérieur d'une interpolation `${…}`.",
-    hardcodedLines: [],
-    keysLines: null,
-  },
-  {
-    file: 'unmasked-attributes.tsx',
-    why: "`className` et `data-*` ne sont PAS masqués : la revue les a retirés parce qu'aucun faux positif observé ne les méritait. Cette fixture fige le retrait — les réintroduire « au cas où » la fait tomber.",
-    hardcodedLines: [22, 23, 24],
-    keysLines: null,
+    hardcoded: {},
+    keys: null,
   },
   {
     file: 'scoped-exceptions.tsx',
     why: 'Les deux exceptions `files` (SECTION_IDS du guide, prop `code` de discord.tsx) reproduites HORS de leur fichier : elles doivent redevenir des violations, sinon le `files` ne sert à rien.',
-    hardcodedLines: [11, 17, 18],
-    keysLines: null,
+    hardcoded: { 11: 2, 17: 6, 18: 4 },
+    keys: null,
   },
   {
     file: 'french-as-key.tsx',
     why: "L'angle mort assumé du masque `t('…')` : invisible pour le garde-fou du français, signalé par celui des clés.",
-    hardcodedLines: [],
-    keysLines: [15],
+    hardcoded: {},
+    keys: { 15: 2 },
+  },
+  {
+    file: 'unmasked-attributes.tsx',
+    why: "`className` et `data-*` ne sont PAS masqués : la revue les a retirés parce qu'aucun faux positif observé ne les méritait. La ligne `data-id=` tient en plus l'ancrage du masque `id`, qui accrochait après un tiret.",
+    hardcoded: { 27: 4, 28: 3, 29: 2, 30: 4 },
+    keys: null,
   },
 ]
 
-/** Lance un garde-fou sur un chemin et rend les numéros de ligne signalés. */
-async function flaggedLines(script, target) {
+/** Lance un garde-fou sur un chemin et rend `Map<ligne, nombre d'occurrences>`. */
+async function occurrencesByLine(script, target) {
   const scriptPath = path.join(__dirname, script)
   let stdout = ''
   let stderr = ''
@@ -105,18 +130,120 @@ async function flaggedLines(script, target) {
       `${script} n'a produit aucun résumé — plantage ?\n${output}`,
     )
   }
-  const lines = new Set()
+  const counts = new Map()
   const re = /(?:^|\s)(?:\S*i18n-fixtures[/\\])?[^\s:]+\.tsx:(\d+):\d+:/gm
   let m = re.exec(output)
   while (m !== null) {
-    lines.add(Number(m[1]))
+    const line = Number(m[1])
+    counts.set(line, (counts.get(line) ?? 0) + 1)
     m = re.exec(output)
   }
-  return [...lines].sort((a, b) => a - b)
+  return counts
 }
 
-function same(a, b) {
-  return a.length === b.length && a.every((v, i) => v === b[i])
+/**
+ * Compare une `Map<ligne, compte>` obtenue à l'objet attendu, et rend la
+ * liste lisible des écarts (ligne manquante, ligne en trop, compte différent).
+ */
+function diffCounts(actual, expected) {
+  const gaps = []
+  const lines = new Set([
+    ...actual.keys(),
+    ...Object.keys(expected).map(Number),
+  ])
+  for (const line of [...lines].sort((a, b) => a - b)) {
+    const got = actual.get(line) ?? 0
+    const want = expected[line] ?? 0
+    if (got !== want) {
+      gaps.push(`ligne ${line} : attendu ${want} occurrence(s), obtenu ${got}`)
+    }
+  }
+  return gaps
+}
+
+/**
+ * Inventaire des deux détecteurs, lu dans la SOURCE de
+ * `check-i18n-hardcoded.mjs`. Lecture de texte assumée : c'est le seul moyen
+ * de comparer inventaire contre inventaire sans dupliquer la liste ici — une
+ * copie divergerait au premier ajout, exactement ce que `deliberate-identical`
+ * évite côté back.
+ */
+async function detectorInventory() {
+  const source = await fs.readFile(path.join(__dirname, HARDCODED), 'utf8')
+  const accentMatch = source.match(/const ACCENT_RE = \/\[([^\]]+)\]\/g/)
+  if (accentMatch === null) {
+    throw new Error('ACCENT_RE introuvable dans check-i18n-hardcoded.mjs')
+  }
+  const wordsBlock = source.match(/const FRENCH_WORDS = \[\n([\s\S]*?)\n\]\n/)
+  if (wordsBlock === null) {
+    throw new Error('FRENCH_WORDS introuvable dans check-i18n-hardcoded.mjs')
+  }
+  const words = [...wordsBlock[1].matchAll(/^\s*'([^']+)',/gm)].map((m) => m[1])
+  return { accents: [...accentMatch[1]], words }
+}
+
+/** Les jetons `<p>x</p>` de la fixture de vocabulaire, avec leur ligne. */
+async function vocabularyTokens() {
+  const file = path.join(FIXTURES, 'detector-vocabulary.tsx')
+  const lines = (await fs.readFile(file, 'utf8')).split('\n')
+  const tokens = []
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(/^\s*<p>(.+)<\/p>\s*$/)
+    if (m !== null) {
+      tokens.push({ line: i + 1, token: m[1] })
+    }
+  }
+  return tokens
+}
+
+function setDiff(a, b) {
+  return [...a].filter((v) => !b.includes(v))
+}
+
+/**
+ * Le contrôle du vocabulaire : inventaire identique au script, et une
+ * occurrence exactement par ligne.
+ */
+async function checkVocabulary(failures) {
+  const { accents, words } = await detectorInventory()
+  const tokens = await vocabularyTokens()
+  const covered = tokens.map((t) => t.token)
+  const expectedTokens = [...words, ...accents]
+
+  const missing = setDiff(expectedTokens, covered)
+  const extra = setDiff(covered, expectedTokens)
+  if (missing.length > 0) {
+    failures.push(
+      `detector-vocabulary.tsx — ${missing.length} entrée(s) du détecteur sans ligne de fixture : ${missing.join(', ')}\n      Ajouter une ligne \`<p>…</p>\` par entrée ajoutée au détecteur.`,
+    )
+  }
+  if (extra.length > 0) {
+    failures.push(
+      `detector-vocabulary.tsx — ${extra.length} ligne(s) de fixture sans entrée dans le détecteur : ${extra.join(', ')}\n      Une entrée a été RETIRÉE de FRENCH_WORDS ou d'ACCENT_RE. C'est l'affaiblissement que cette fixture existe pour attraper : le justifier, ou le défaire.`,
+    )
+  }
+
+  const counts = await occurrencesByLine(
+    HARDCODED,
+    path.join(FIXTURES, 'detector-vocabulary.tsx'),
+  )
+  const expected = {}
+  for (const { line } of tokens) {
+    expected[line] = 1
+  }
+  const gaps = diffCounts(counts, expected)
+  if (gaps.length > 0) {
+    const named = gaps.map((g) => {
+      const n = Number(g.match(/ligne (\d+)/)?.[1])
+      const t = tokens.find((x) => x.line === n)
+      return t === undefined ? g : `${g} — jeton « ${t.token} »`
+    })
+    failures.push(
+      `detector-vocabulary.tsx — ${gaps.length} écart(s) de comptage :\n      ${named.join('\n      ')}\n      Une ligne à 0 signifie que le détecteur ne reconnaît plus ce jeton.`,
+    )
+  }
+
+  return { words: words.length, accents: accents.length }
 }
 
 async function main() {
@@ -125,26 +252,26 @@ async function main() {
   for (const expectation of EXPECTATIONS) {
     const target = path.join(FIXTURES, expectation.file)
 
-    const hardcoded = await flaggedLines('check-i18n-hardcoded.mjs', target)
-    const expectedHardcoded = [...expectation.hardcodedLines].sort(
-      (a, b) => a - b,
-    )
-    if (!same(hardcoded, expectedHardcoded)) {
+    const hardcoded = await occurrencesByLine(HARDCODED, target)
+    const hardcodedGaps = diffCounts(hardcoded, expectation.hardcoded)
+    if (hardcodedGaps.length > 0) {
       failures.push(
-        `${expectation.file} — check-i18n-hardcoded : attendu lignes [${expectedHardcoded.join(', ')}], obtenu [${hardcoded.join(', ')}]\n      ${expectation.why}`,
+        `${expectation.file} — ${HARDCODED} :\n      ${hardcodedGaps.join('\n      ')}\n      ${expectation.why}`,
       )
     }
 
-    if (expectation.keysLines !== null) {
-      const keys = await flaggedLines('check-i18n-keys.mjs', target)
-      const expectedKeys = [...expectation.keysLines].sort((a, b) => a - b)
-      if (!same(keys, expectedKeys)) {
+    if (expectation.keys !== null) {
+      const keys = await occurrencesByLine(KEYS, target)
+      const keysGaps = diffCounts(keys, expectation.keys)
+      if (keysGaps.length > 0) {
         failures.push(
-          `${expectation.file} — check-i18n-keys : attendu lignes [${expectedKeys.join(', ')}], obtenu [${keys.join(', ')}]\n      ${expectation.why}`,
+          `${expectation.file} — ${KEYS} :\n      ${keysGaps.join('\n      ')}\n      ${expectation.why}`,
         )
       }
     }
   }
+
+  const vocabulary = await checkVocabulary(failures)
 
   if (failures.length > 0) {
     console.error(`[check-i18n-guard-selftest] ${failures.length} écart(s) :\n`)
@@ -161,7 +288,8 @@ async function main() {
   }
 
   console.log(
-    `[check-i18n-guard-selftest] OK — ${EXPECTATIONS.length} fixture(s) conformes.`,
+    `[check-i18n-guard-selftest] OK — ${EXPECTATIONS.length + 1} fixture(s) conformes ; ` +
+      `vocabulaire du détecteur couvert entrée par entrée (${vocabulary.words} mot(s), ${vocabulary.accents} caractère(s) accentué(s)).`,
   )
 }
 

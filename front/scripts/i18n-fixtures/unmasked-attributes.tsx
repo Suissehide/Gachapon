@@ -12,6 +12,11 @@
 // réintroduit « au cas où », l'auto-test tombe et l'oblige à produire le faux
 // positif qui le mériterait.
 //
+// La ligne `data-id=` est là pour une raison précise (revue, round 2) : le
+// masque `id` n'était ancré que par un `\b`, qui accroche après un tiret — un
+// `data-id="…"` était donc masqué alors que le script affirmait le contraire.
+// L'ancrage est corrigé ; cette ligne tient l'affirmation.
+//
 // Voir l'en-tête de `displayed-text.tsx` pour le statut de ces fixtures.
 //
 // NE PAS REFORMATER.
@@ -22,6 +27,7 @@ export function UnmaskedAttributes() {
       className="flex des cartes pour vous"
       data-section="une valeur avec des mots"
       data-testid="aucune carte disponible"
+      data-id="aucune carte disponible pour vous"
     />
   )
 }

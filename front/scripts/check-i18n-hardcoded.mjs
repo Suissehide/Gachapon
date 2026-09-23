@@ -308,8 +308,14 @@ const STRUCTURAL_MASKS = [
     // On ne masque QUE jusqu'au guillemet fermant du PREMIER argument : un
     // `t('ns:clé', { defaultValue: 'Du français' })` reste scanné sur sa
     // seconde moitié.
+    // ANCRAGE (revue, round 2) : `i18n.t(` est nommé explicitement, mais un
+    // `quelqueChose.t('…')` quelconque ne doit PAS être masqué — d'où le
+    // `(?<![.\w$])` sur les deux formes nues. Sans lui, `\bt\(` accrochait
+    // après n'importe quel point. Aucune occurrence dans ce dépôt
+    // (`grep -rnoE '\b[A-Za-z_$][A-Za-z0-9_$]*\.t\(' src` ne rend que
+    // `i18n.t(`, 667 fois), mais un masque doit tenir ce qu'il annonce.
     pattern:
-      /(?:\bi18n\.t|\bt|\bt[A-Z][A-Za-z0-9_]*)\(\s*(?:'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`[^`$\\\n]*`)/g,
+      /(?:\bi18n\.t|(?<![.\w$])t|(?<![.\w$])t[A-Z][A-Za-z0-9_]*)\(\s*(?:'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`[^`$\\\n]*`)/g,
     provenBy:
       'src/routes/guide.tsx — 7 occurrences avant correction, toutes du type ' +
       "`{t('sections.cartes.tip')}` ou `title={t('sectionLabels.campagne')}` : " +
@@ -317,7 +323,15 @@ const STRUCTURAL_MASKS = [
     blindSpotCoveredBy:
       "check-i18n-keys.mjs — un `t('Aucune carte disponible')` (du français " +
       "passé comme clé) n'existe pas dans les JSON et y est signalé « clé " +
-      'introuvable ». Vérifié par fixture, voir le rapport de la tâche 12.',
+      'introuvable ». Vérifié par fixture, voir le rapport de la tâche 12. ' +
+      "**À UNE CONDITION**, mesurée par la revue du round 2 et qui n'était pas " +
+      'écrite ici : ce rattrapage suppose que le fichier contienne un ' +
+      '`useTranslation` (ou un `import i18n`) que check-i18n-keys.mjs puisse ' +
+      "associer à l'appel. Sans contexte résoluble, il ne signale rien : il " +
+      "compte l'appel dans « non résolu(s) faute de contexte » (ses angles " +
+      'morts n°4/5) et passe. Ce compteur est à **0 sur 401 fichiers** ' +
+      "aujourd'hui — la condition est donc tenue partout — mais il faut le " +
+      "surveiller : s'il dérive, ce masque cesse d'être couvert d'autant.",
   },
   {
     name: 'clé de traduction, attribut i18nKey de <Trans>',
@@ -363,7 +377,26 @@ const STRUCTURAL_MASKS = [
     // chaque modification de ce script (`i18n-fixtures/displayed-text.tsx`),
     // et une autre fige le fait que `className` et `data-*` restent scannés
     // (`i18n-fixtures/unmasked-attributes.tsx`).
-    pattern: /\b(?:id|htmlFor)\s*=\s*(?:"[^"\n]*"|'[^'\n]*')/g,
+    // DEUX ANCRAGES, tous deux ajoutés par la revue du round 2 sur des
+    // sur-portées mesurées :
+    //
+    //   `(?<![-\w$])` — sans lui, `\bid` accrochait APRÈS un tiret : un
+    //   `data-id="Aucune carte disponible pour vous"` était masqué, alors
+    //   que le script affirme juste au-dessus que `data-*` ne l'est pas.
+    //   Reproduit : 4 occurrences vues par l'ancien script, 0 par celui-ci.
+    //   Portée réelle nulle dans ce dépôt (`grep -rloE '[a-zA-Z]+-id\s*=\s*"'
+    //   src` → aucun fichier), mais une affirmation non tenue par un test est
+    //   exactement ce que ce chantier a payé quatre fois. Une ligne
+    //   `data-id=` de `unmasked-attributes.tsx` la tient désormais.
+    //
+    //   `=` SANS espaces autour — sans cela, le masque attrapait aussi une
+    //   affectation JS `const id = 'une phrase française'`, qui n'est pas une
+    //   valeur d'attribut JSX. Biome n'insère jamais d'espace autour du `=`
+    //   d'un attribut JSX : exiger `id="…"` collé sépare les deux cas sans
+    //   avoir à parser du JSX. Le risque résiduel va dans le bon sens — un
+    //   `id = "x"` écrit à la main resterait signalé (faux positif), jamais
+    //   silencieux.
+    pattern: /(?<![-\w$])(?:id|htmlFor)=(?:"[^"\n]*"|'[^'\n]*')/g,
     provenBy:
       'src/routes/guide.tsx — 2 occurrences avant correction (`id="campagne"`, ' +
       '`id="cartes"`) : des identifiants d\'ancre `#<id>`, stables et ' +
