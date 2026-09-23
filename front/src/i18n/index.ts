@@ -160,13 +160,24 @@ export function localeFromUserPreference(
 /**
  * L'ORDRE DE PRIORITÉ des sources de langue pour une URL sans préfixe :
  * `?lang=` d'abord (un lien partagé doit toujours gagner), puis la préférence
- * mémorisée, puis la langue du navigateur, l'anglais en dernier recours.
+ * mémorisée, puis le cookie qui la double, puis la langue du navigateur,
+ * l'anglais en dernier recours.
+ *
+ * LE COOKIE EST UN REPLI, PAS UNE SUBSTITUTION : `localStorage` est la source
+ * que le site écrit en premier et qui survit le mieux ; le cookie n'a été posé
+ * que pour être lisible par nginx. Les deux ne peuvent différer que si
+ * l'égalité qui les lie se rompt — et la navigation privée la rompt : certains
+ * navigateurs y font LEVER `localStorage` alors que le cookie reste lisible.
+ * Sans ce repli, nginx honorerait la préférence sur `/` et le front ne la
+ * verrait plus ailleurs : deux couches décidant la même chose à partir de
+ * sources différentes, c'est-à-dire le défaut que ce chantier a corrigé trois
+ * fois.
  *
  * Fonction PURE, et ici plutôt que dans `main.tsx` : c'est la règle que
  * `deploy/conf/nginx.conf` doit reproduire à l'identique (voir ses quatre
  * cartes), donc la seule qu'on ait besoin d'exécuter à part pour comparer les
- * deux couches cas par cas. `main.tsx` garde la lecture de l'environnement —
- * URL, localStorage, navigator —, qui n'est pas testable de la même façon.
+ * deux couches cas par cas. `readPreferredLocale` ci-dessous lui apporte
+ * l'environnement.
  *
  * `browserLanguage` est tronquée à deux lettres ici et nulle part ailleurs :
  * `navigator.language` vaut « en-US », pas « en ».
@@ -174,13 +185,76 @@ export function localeFromUserPreference(
 export function resolvePreferredLocale(
   langParam: string | null | undefined,
   storedPreference: string | null | undefined,
+  cookiePreference: string | null | undefined,
   browserLanguage: string | null | undefined,
 ): Locale {
   return (
     localeFromUserPreference(langParam) ??
     localeFromUserPreference(storedPreference) ??
+    localeFromUserPreference(cookiePreference) ??
     localeFromUserPreference(browserLanguage?.slice(0, 2)) ??
     DEFAULT_LOCALE
+  )
+}
+
+/**
+ * Préférence mémorisée, ou `null`.
+ *
+ * `try` OBLIGATOIRE et pas décoratif : en navigation privée, plusieurs
+ * navigateurs ne rendent pas une valeur vide, ils LÈVENT sur l'accès. Sans
+ * cette protection, le repli sur le cookie juste en dessous ne serait jamais
+ * atteint — dans le cas précis qui l'a fait écrire.
+ */
+export function readStoredLocale(): string | null {
+  try {
+    return window.localStorage.getItem(LOCALE_STORAGE_KEY)
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Valeur brute du cookie de langue, ou `undefined`.
+ *
+ * Volontairement SANS `decodeURIComponent` : nginx lit
+ * `$cookie_gachapon_locale` tel quel, et décoder ici ferait diverger les deux
+ * lectures sur un cookie bricolé à la main. Les codes de langue n'ont de toute
+ * façon rien à encoder. Premier cookie du nom retenu, comme nginx.
+ *
+ * `try` par précaution : l'accès à `document.cookie` lève dans une iframe
+ * bacs-à-sable sans `allow-same-origin`.
+ */
+export function readLocaleCookie(): string | undefined {
+  try {
+    for (const part of document.cookie.split(';')) {
+      const separator = part.indexOf('=')
+      if (
+        separator !== -1 &&
+        part.slice(0, separator).trim() === LOCALE_COOKIE_NAME
+      ) {
+        return part.slice(separator + 1)
+      }
+    }
+  } catch {
+    // Cookies inaccessibles — on continue avec les repères suivants.
+  }
+  return undefined
+}
+
+/**
+ * Langue de destination pour une URL sans préfixe (`/`, `/shop`…), lue depuis
+ * l'environnement du navigateur.
+ *
+ * Ici et non dans `main.tsx` pour que la lecture soit exécutable à part, elle
+ * aussi : le cas « `localStorage` lève, le cookie répond » ne se prouve qu'en
+ * appelant cette fonction, jamais en appelant `resolvePreferredLocale` seule.
+ */
+export function readPreferredLocale(): Locale {
+  return resolvePreferredLocale(
+    new URLSearchParams(window.location.search).get('lang'),
+    readStoredLocale(),
+    readLocaleCookie(),
+    window.navigator.language,
   )
 }
 

@@ -11,12 +11,11 @@ import { I18nextProvider } from 'react-i18next'
 import i18n, {
   firstPathSegment,
   isSupportedLocale,
-  LOCALE_STORAGE_KEY,
-  type Locale,
   localeFromPath,
   localeFromUserPreference,
   persistLocaleCookie,
-  resolvePreferredLocale,
+  readPreferredLocale,
+  readStoredLocale,
 } from './i18n/index.ts'
 import { routeTree } from './routeTree.gen.ts'
 
@@ -100,49 +99,20 @@ declare module '@tanstack/react-router' {
  * préférence.
  */
 function mirrorStoredLocaleToCookie(): void {
-  try {
-    // `localeFromUserPreference` et non `isSupportedLocale` : une préférence
-    // mémorisée avant ce lot peut porter n'importe quelle casse, et le cookie
-    // doit partir canonique — nginx la tolère, mais rien ne gagne à propager
-    // un « FR » dans un support de plus.
-    const stored = localeFromUserPreference(
-      window.localStorage.getItem(LOCALE_STORAGE_KEY),
-    )
-    if (stored) {
-      persistLocaleCookie(stored)
-    }
-  } catch {
-    // localStorage indisponible (navigation privée, quota…) — sans
-    // préférence à recopier, il n'y a rien à faire.
+  // `localeFromUserPreference` et non `isSupportedLocale` : une préférence
+  // mémorisée avant ce lot peut porter n'importe quelle casse, et le cookie
+  // doit partir canonique — nginx la tolère, mais rien ne gagne à propager
+  // un « FR » dans un support de plus.
+  //
+  // `readStoredLocale` porte le `try` (localStorage lève en navigation
+  // privée) : sans préférence à recopier, il n'y a rien à faire.
+  const stored = localeFromUserPreference(readStoredLocale())
+  if (stored) {
+    persistLocaleCookie(stored)
   }
 }
 
 mirrorStoredLocaleToCookie()
-
-/**
- * Résout la langue de destination pour une URL sans préfixe (`/`, `/shop`…),
- * en LISANT l'environnement du navigateur ; l'ordre de priorité lui-même vit
- * dans `resolvePreferredLocale` (src/i18n/index.ts), avec la règle que
- * `deploy/conf/nginx.conf` doit reproduire.
- *
- * Seule la lecture de `localStorage` demande un `try` : c'est le seul des
- * trois accès qui lève en navigation privée ou quota plein.
- */
-function resolveRedirectLocale(): Locale {
-  let stored: string | null = null
-  try {
-    stored = window.localStorage.getItem(LOCALE_STORAGE_KEY)
-  } catch {
-    // localStorage indisponible (navigation privée, quota…) — on continue
-    // avec les repères suivants.
-  }
-
-  return resolvePreferredLocale(
-    new URLSearchParams(window.location.search).get('lang'),
-    stored,
-    window.navigator.language,
-  )
-}
 
 /**
  * Un segment qui "ressemble" à un code de langue BCP 47 simplifié : deux
@@ -221,7 +191,7 @@ if (isSupportedLocale(pathLocaleSegment)) {
   // une entrée d'historique parasite — le bouton « précédent » ramènerait
   // l'utilisateur sur la redirection elle-même plutôt que sur la page
   // d'avant.
-  const target = resolveRedirectLocale()
+  const target = readPreferredLocale()
   const rest = redirectRest(pathname, pathLocaleSegment)
   window.location.replace(
     `/${target}${rest}${window.location.search}${window.location.hash}`,
