@@ -44,10 +44,17 @@ export function LocaleSwitcher({ className }: { className?: string }) {
           variant="ghost"
           size="sm"
           // `size="sm"` apporte `px-3`, trop large pour un contrôle qui doit
-          // s'effacer : le fond du survol colle ainsi au contenu. `cn` place
-          // `px-0` avant `className` pour qu'un appelant puisse encore le
-          // reprendre à la main.
-          className={cn('px-0', className)}
+          // s'effacer : le fond du survol colle ainsi au contenu.
+          //
+          // `text-text-light hover:text-text` aligne le déclencheur sur les
+          // liens de navigation voisins, qui portent exactement ce couple —
+          // il se fondait mal en pleine encre à côté d'eux. Cela écrase au
+          // passage le `hover:text-primary` de la variante `ghost` : le
+          // contrôle se comporte comme un lien du menu, pas comme un bouton.
+          //
+          // `cn` place ces classes avant `className` pour qu'un appelant
+          // puisse encore les reprendre à la main.
+          className={cn('px-0 text-text-light hover:text-text', className)}
           title={t('layout:localeSwitcher.menuTitle')}
           aria-label={t('layout:localeSwitcher.menuTitle')}
         >
