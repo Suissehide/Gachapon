@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Plus, ShoppingBag } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { AdminPageHeader } from '../../components/admin/shared/AdminPageHeader.tsx'
 import { CreateShopItemSheet } from '../../components/admin/shop/CreateShopItemSheet'
@@ -22,6 +23,7 @@ export const Route = createFileRoute('/_admin/admin/shop')({
 })
 
 function AdminShop() {
+  const { t } = useTranslation('admin')
   const { data, isLoading } = useAdminShopItems()
   const updateItem = useAdminUpdateShopItem()
   const deleteItem = useAdminDeleteShopItem()
@@ -35,13 +37,13 @@ function AdminShop() {
     <div className="flex h-screen flex-col p-8">
       <AdminPageHeader
         icon={ShoppingBag}
-        kicker="Contenu"
-        title="Boutique"
-        subtitle="Gestion des articles disponibles à l'achat"
+        kicker={t('common.kicker.content')}
+        title={t('shop.pageTitle')}
+        subtitle={t('shop.pageSubtitle')}
         actions={
           <Button size="sm" onClick={() => setShowCreate(true)}>
             <Plus className="h-4 w-4" />
-            Nouvel item
+            {t('shop.newItemButton')}
           </Button>
         }
       />
@@ -49,7 +51,7 @@ function AdminShop() {
       <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-border bg-card">
         {isLoading ? (
           <div className="flex h-full items-center justify-center text-text-light">
-            Chargement…
+            {t('shop.loading')}
           </div>
         ) : (
           <ReactTable

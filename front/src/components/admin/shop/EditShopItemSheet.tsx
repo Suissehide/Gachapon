@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 import {
   CURRENCY_OPTIONS,
   ITEM_TYPE_OPTIONS,
@@ -61,6 +63,7 @@ function EditShopItemForm({
   onSave: (data: EditShopItemPayload) => void
   onDelete: () => void
 }) {
+  const { t } = useTranslation('admin')
   const form = useAppForm({
     defaultValues: {
       nameFr: item.nameFr,
@@ -87,33 +90,53 @@ function EditShopItemForm({
     >
       <form.AppField name="isActive">
         {(field) => (
-          <field.Toggle label="Statut" options={['Actif', 'Inactif']} />
+          <field.Toggle
+            label={t('shop.editSheet.statusLabel')}
+            options={[
+              t('shop.editSheet.statusActive'),
+              t('shop.editSheet.statusInactive'),
+            ]}
+          />
         )}
       </form.AppField>
       <form.AppField name="nameFr">
-        {(field) => <field.Input label="Nom (français)" />}
+        {(field) => <field.Input label={t('shop.editSheet.nameFrLabel')} />}
       </form.AppField>
       <form.AppField name="nameEn">
-        {(field) => <field.Input label="Nom (anglais)" />}
+        {(field) => <field.Input label={t('shop.editSheet.nameEnLabel')} />}
       </form.AppField>
       <form.AppField name="descriptionFr">
-        {(field) => <field.Input label="Description (français)" />}
+        {(field) => (
+          <field.Input label={t('shop.editSheet.descriptionFrLabel')} />
+        )}
       </form.AppField>
       <form.AppField name="descriptionEn">
-        {(field) => <field.Input label="Description (anglais)" />}
+        {(field) => (
+          <field.Input label={t('shop.editSheet.descriptionEnLabel')} />
+        )}
       </form.AppField>
       <form.AppField name="type">
-        {(field) => <field.Select label="Type" options={ITEM_TYPE_OPTIONS} />}
+        {(field) => (
+          <field.Select
+            label={t('shop.editSheet.typeLabel')}
+            options={ITEM_TYPE_OPTIONS}
+          />
+        )}
       </form.AppField>
       <form.AppField name="cost">
-        {(field) => <field.Number label="Coût" />}
+        {(field) => <field.Number label={t('shop.editSheet.costLabel')} />}
       </form.AppField>
       <form.AppField name="currency">
-        {(field) => <field.Select label="Monnaie" options={CURRENCY_OPTIONS} />}
+        {(field) => (
+          <field.Select
+            label={t('shop.editSheet.currencyLabel')}
+            options={CURRENCY_OPTIONS}
+          />
+        )}
       </form.AppField>
       <div className="flex gap-2 pt-2">
         <Button type="submit" className="flex-1">
-          Sauvegarder
+          {t('shop.editSheet.save')}
         </Button>
         <Button
           type="button"
@@ -121,7 +144,7 @@ function EditShopItemForm({
           className="border border-destructive/30 text-destructive hover:text-destructive"
           onClick={onDelete}
         >
-          Supprimer
+          {t('shop.editSheet.delete')}
         </Button>
       </div>
     </form>

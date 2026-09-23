@@ -314,5 +314,49 @@
       "title": "Configuration globale",
       "resetCostLabel": "Coût reset (poussière / point)"
     }
+  },
+  "shop": {
+    "pageTitle": "Boutique",
+    "pageSubtitle": "Gestion des articles disponibles à l'achat",
+    "newItemButton": "Nouvel item",
+    "loading": "Chargement…",
+    "columns": {
+      "name": "Nom",
+      "type": "Type",
+      "cost": "Coût",
+      "active": "Actif",
+      "statusActive": "Actif",
+      "statusInactive": "Inactif"
+    },
+    "createSheet": {
+      "title": "Créer un item",
+      "nameFrLabel": "Nom (français)",
+      "nameEnLabel": "Nom (anglais)",
+      "descriptionFrLabel": "Description (français)",
+      "descriptionEnLabel": "Description (anglais)",
+      "typeLabel": "Type",
+      "costLabel": "Coût",
+      "currencyLabel": "Monnaie",
+      "valueJsonLabel": "Valeur JSON (ex: {\"tokens\":3})",
+      "statusLabel": "Statut",
+      "statusActive": "Actif",
+      "statusInactive": "Inactif",
+      "invalidJson": "JSON invalide — vérifiez la syntaxe",
+      "submit": "Créer"
+    },
+    "editSheet": {
+      "statusLabel": "Statut",
+      "statusActive": "Actif",
+      "statusInactive": "Inactif",
+      "nameFrLabel": "Nom (français)",
+      "nameEnLabel": "Nom (anglais)",
+      "descriptionFrLabel": "Description (français)",
+      "descriptionEnLabel": "Description (anglais)",
+      "typeLabel": "Type",
+      "costLabel": "Coût",
+      "currencyLabel": "Monnaie",
+      "save": "Sauvegarder",
+      "delete": "Supprimer"
+    }
   }
 }

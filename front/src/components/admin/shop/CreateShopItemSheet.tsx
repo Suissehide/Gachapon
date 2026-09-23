@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import {
   CURRENCY_OPTIONS,
@@ -31,11 +32,12 @@ export function CreateShopItemSheet({
   onOpenChange,
   onCreate,
 }: CreateShopItemSheetProps) {
+  const { t } = useTranslation('admin')
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>Créer un item</SheetTitle>
+          <SheetTitle>{t('shop.createSheet.title')}</SheetTitle>
         </SheetHeader>
         <div className="mt-6 px-6">
           <CreateShopItemForm onCreate={onCreate} />
@@ -51,6 +53,7 @@ function CreateShopItemForm({
   onCreate: (item: CreateShopItemPayload) => void
 }) {
   const [jsonError, setJsonError] = useState('')
+  const { t } = useTranslation('admin')
 
   const form = useAppForm({
     defaultValues: {
@@ -69,7 +72,7 @@ function CreateShopItemForm({
       try {
         parsed = JSON.parse(value.value)
       } catch {
-        setJsonError('JSON invalide — vérifiez la syntaxe')
+        setJsonError(t('shop.createSheet.invalidJson'))
         return
       }
       setJsonError('')
@@ -86,37 +89,59 @@ function CreateShopItemForm({
       className="space-y-3"
     >
       <form.AppField name="nameFr">
-        {(field) => <field.Input label="Nom (français)" />}
+        {(field) => <field.Input label={t('shop.createSheet.nameFrLabel')} />}
       </form.AppField>
       <form.AppField name="nameEn">
-        {(field) => <field.Input label="Nom (anglais)" />}
+        {(field) => <field.Input label={t('shop.createSheet.nameEnLabel')} />}
       </form.AppField>
       <form.AppField name="descriptionFr">
-        {(field) => <field.Input label="Description (français)" />}
+        {(field) => (
+          <field.Input label={t('shop.createSheet.descriptionFrLabel')} />
+        )}
       </form.AppField>
       <form.AppField name="descriptionEn">
-        {(field) => <field.Input label="Description (anglais)" />}
+        {(field) => (
+          <field.Input label={t('shop.createSheet.descriptionEnLabel')} />
+        )}
       </form.AppField>
       <form.AppField name="type">
-        {(field) => <field.Select label="Type" options={ITEM_TYPE_OPTIONS} />}
+        {(field) => (
+          <field.Select
+            label={t('shop.createSheet.typeLabel')}
+            options={ITEM_TYPE_OPTIONS}
+          />
+        )}
       </form.AppField>
       <form.AppField name="cost">
-        {(field) => <field.Number label="Coût" />}
+        {(field) => <field.Number label={t('shop.createSheet.costLabel')} />}
       </form.AppField>
       <form.AppField name="currency">
-        {(field) => <field.Select label="Monnaie" options={CURRENCY_OPTIONS} />}
+        {(field) => (
+          <field.Select
+            label={t('shop.createSheet.currencyLabel')}
+            options={CURRENCY_OPTIONS}
+          />
+        )}
       </form.AppField>
       <form.AppField name="value">
-        {(field) => <field.TextArea label='Valeur JSON (ex: {"tokens":3})' />}
+        {(field) => (
+          <field.TextArea label={t('shop.createSheet.valueJsonLabel')} />
+        )}
       </form.AppField>
       <form.AppField name="isActive">
         {(field) => (
-          <field.Toggle label="Statut" options={['Actif', 'Inactif']} />
+          <field.Toggle
+            label={t('shop.createSheet.statusLabel')}
+            options={[
+              t('shop.createSheet.statusActive'),
+              t('shop.createSheet.statusInactive'),
+            ]}
+          />
         )}
       </form.AppField>
       {jsonError && <p className="text-xs text-destructive">{jsonError}</p>}
       <Button type="submit" className="w-full">
-        Créer
+        {t('shop.createSheet.submit')}
       </Button>
     </form>
   )

@@ -314,5 +314,49 @@
       "title": "Global configuration",
       "resetCostLabel": "Reset cost (dust / point)"
     }
+  },
+  "shop": {
+    "pageTitle": "Shop",
+    "pageSubtitle": "Manage items available for purchase",
+    "newItemButton": "New item",
+    "loading": "Loading…",
+    "columns": {
+      "name": "Name",
+      "type": "Type",
+      "cost": "Cost",
+      "active": "Active",
+      "statusActive": "Active",
+      "statusInactive": "Inactive"
+    },
+    "createSheet": {
+      "title": "Create an item",
+      "nameFrLabel": "Name (French)",
+      "nameEnLabel": "Name (English)",
+      "descriptionFrLabel": "Description (French)",
+      "descriptionEnLabel": "Description (English)",
+      "typeLabel": "Type",
+      "costLabel": "Cost",
+      "currencyLabel": "Currency",
+      "valueJsonLabel": "JSON value (e.g. {\"tokens\":3})",
+      "statusLabel": "Status",
+      "statusActive": "Active",
+      "statusInactive": "Inactive",
+      "invalidJson": "Invalid JSON — check the syntax",
+      "submit": "Create"
+    },
+    "editSheet": {
+      "statusLabel": "Status",
+      "statusActive": "Active",
+      "statusInactive": "Inactive",
+      "nameFrLabel": "Name (French)",
+      "nameEnLabel": "Name (English)",
+      "descriptionFrLabel": "Description (French)",
+      "descriptionEnLabel": "Description (English)",
+      "typeLabel": "Type",
+      "costLabel": "Cost",
+      "currencyLabel": "Currency",
+      "save": "Save",
+      "delete": "Delete"
+    }
   }
 }
