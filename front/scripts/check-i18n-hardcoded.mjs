@@ -268,7 +268,9 @@ const FRENCH_WORDS = [
  */
 
 function buildWordRegex() {
-  const alternatives = FRENCH_WORDS.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  const alternatives = FRENCH_WORDS.map((w) =>
+    w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+  )
   return new RegExp(`\\b(?:${alternatives.join('|')})\\b`, 'gi')
 }
 
@@ -306,11 +308,12 @@ const STRUCTURAL_MASKS = [
     // On ne masque QUE jusqu'au guillemet fermant du PREMIER argument : un
     // `t('ns:clé', { defaultValue: 'Du français' })` reste scanné sur sa
     // seconde moitié.
-    pattern: /(?:\bi18n\.t|\bt|\bt[A-Z][A-Za-z0-9_]*)\(\s*(?:'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`[^`$\\\n]*`)/g,
+    pattern:
+      /(?:\bi18n\.t|\bt|\bt[A-Z][A-Za-z0-9_]*)\(\s*(?:'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`[^`$\\\n]*`)/g,
     provenBy:
-      "src/routes/guide.tsx — 10 occurrences avant correction, toutes du type " +
+      'src/routes/guide.tsx — 10 occurrences avant correction, toutes du type ' +
       "`{t('sections.cartes.tip')}` ou `title={t('sectionLabels.campagne')}` : " +
-      "« cartes » et « campagne » y sont des SEGMENTS DE CLÉ, jamais affichés.",
+      '« cartes » et « campagne » y sont des SEGMENTS DE CLÉ, jamais affichés.',
     blindSpotCoveredBy:
       "check-i18n-keys.mjs — un `t('Aucune carte disponible')` (du français " +
       "passé comme clé) n'existe pas dans les JSON et y est signalé « clé " +
@@ -318,7 +321,8 @@ const STRUCTURAL_MASKS = [
   },
   {
     name: 'clé de traduction, attribut i18nKey de <Trans>',
-    pattern: /\bi18nKey\s*=\s*(?:"[^"\n]*"|'[^'\n]*'|\{\s*(?:'[^'\n]*'|"[^"\n]*")\s*\})/g,
+    pattern:
+      /\bi18nKey\s*=\s*(?:"[^"\n]*"|'[^'\n]*'|\{\s*(?:'[^'\n]*'|"[^"\n]*")\s*\})/g,
     provenBy:
       'src/routes/guide.tsx — 8 occurrences avant correction, du type ' +
       '`i18nKey="sections.campagne.intro"`.',
@@ -336,10 +340,11 @@ const STRUCTURAL_MASKS = [
     // d'écran : `title`, `placeholder`, `alt`, `aria-label`, `label`,
     // `aria-description`, `value` d'une <option>. Une fixture les repasse à
     // chaque modification de ce script (voir le rapport de la tâche 12).
-    pattern: /\b(?:id|htmlFor|className|data-[a-z][a-z0-9-]*)\s*=\s*(?:"[^"\n]*"|'[^'\n]*')/g,
+    pattern:
+      /\b(?:id|htmlFor|className|data-[a-z][a-z0-9-]*)\s*=\s*(?:"[^"\n]*"|'[^'\n]*')/g,
     provenBy:
       'src/routes/guide.tsx — 2 occurrences avant correction (`id="campagne"`, ' +
-      "`id=\"cartes\"`) : des identifiants d'ancre `#<id>`, stables et " +
+      '`id="cartes"`) : des identifiants d\'ancre `#<id>`, stables et ' +
       'indépendants de la langue par décision explicite du fichier.',
     blindSpotCoveredBy:
       "Personne — c'est un angle mort net. Il est étroit : `className` et " +
@@ -381,7 +386,7 @@ const EXCEPTIONS = [
     pattern: /const SECTION_IDS = \[[\s\S]*?\] as const/g,
     reason:
       "Liste des identifiants d'ancre du guide (`#campagne`, `#cartes`…). Ce " +
-      'sont des fragments d\'URL, pas des libellés : le fichier le dit lui-même ' +
+      "sont des fragments d'URL, pas des libellés : le fichier le dit lui-même " +
       '(« Les ids sont stables : ils pilotent les ancres `#<id>` et sont ' +
       'indépendants de la langue. Les libellés viennent de ' +
       '`guide:sectionLabels.<id>` »). Les traduire casserait les liens ' +
@@ -394,7 +399,7 @@ const EXCEPTIONS = [
       "Blocs de code d'exemple du bot Discord (prop `code` de `<CodeBlock>`, " +
       'utilisée nulle part ailleurs dans le dépôt — vérifié). Ce sont des ' +
       'sources JavaScript que le lecteur copie-colle pour faire tourner SON ' +
-      'bot : les `.setDescription(\'Tire une capsule Gachapon\')`, les ' +
+      "bot : les `.setDescription('Tire une capsule Gachapon')`, les " +
       "`editReply('❌ Erreur lors du tirage.')` et les commentaires `// …` " +
       "qu'ils contiennent sont la copie du BOT, pas celle du site — le bot " +
       'Gachapon est francophone, et traduire ces exemples ferait livrer au ' +
@@ -1029,7 +1034,10 @@ async function main() {
     let fileHasViolation = false
 
     for (let i = 0; i < strippedLines.length; i++) {
-      const violations = scanLine(originalLines[i] ?? '', strippedLines[i] ?? '')
+      const violations = scanLine(
+        originalLines[i] ?? '',
+        strippedLines[i] ?? '',
+      )
       for (const v of violations) {
         if (!fileHasViolation) {
           fileHasViolation = true

@@ -63,7 +63,7 @@ const EXPECTATIONS = [
   },
   {
     file: 'scoped-exceptions.tsx',
-    why: "Les deux exceptions `files` (SECTION_IDS du guide, prop `code` de discord.tsx) reproduites HORS de leur fichier : elles doivent redevenir des violations, sinon le `files` ne sert à rien.",
+    why: 'Les deux exceptions `files` (SECTION_IDS du guide, prop `code` de discord.tsx) reproduites HORS de leur fichier : elles doivent redevenir des violations, sinon le `files` ne sert à rien.',
     hardcodedLines: [11, 17, 18],
     keysLines: null,
   },
@@ -93,7 +93,9 @@ async function flaggedLines(script, target) {
   }
   const output = `${stdout}\n${stderr}`
   if (!output.includes('[check-i18n-')) {
-    throw new Error(`${script} n'a produit aucun résumé — plantage ?\n${output}`)
+    throw new Error(
+      `${script} n'a produit aucun résumé — plantage ?\n${output}`,
+    )
   }
   const lines = new Set()
   const re = /(?:^|\s)(?:\S*i18n-fixtures[/\\])?[^\s:]+\.tsx:(\d+):\d+:/gm
@@ -116,7 +118,9 @@ async function main() {
     const target = path.join(FIXTURES, expectation.file)
 
     const hardcoded = await flaggedLines('check-i18n-hardcoded.mjs', target)
-    const expectedHardcoded = [...expectation.hardcodedLines].sort((a, b) => a - b)
+    const expectedHardcoded = [...expectation.hardcodedLines].sort(
+      (a, b) => a - b,
+    )
     if (!same(hardcoded, expectedHardcoded)) {
       failures.push(
         `${expectation.file} — check-i18n-hardcoded : attendu lignes [${expectedHardcoded.join(', ')}], obtenu [${hardcoded.join(', ')}]\n      ${expectation.why}`,
