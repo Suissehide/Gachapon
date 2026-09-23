@@ -74,11 +74,12 @@ const CHAPTER_HUES = [35, 150, 320, 200, 280, 12, 195, 235, 355]
 
 function chapterMeta(n: number): { title: string; hue: number } {
   const key = `combat:campaign.chapterTitles.${n}`
-  const translated = i18n.t(key)
-  const title =
-    translated === key
-      ? i18n.t('combat:campaign.chapterFallback', { n })
-      : translated
+  // `i18n.t(key) === key` est un garde-fou inatteignable : une clé manquante
+  // revient SANS le préfixe de namespace, jamais telle qu'écrite ici.
+  // `i18n.exists()` comprend le préfixe et teste la vraie présence.
+  const title = i18n.exists(key)
+    ? i18n.t(key)
+    : i18n.t('combat:campaign.chapterFallback', { n })
   return { title, hue: CHAPTER_HUES[n - 1] ?? (n * 47) % 360 }
 }
 

@@ -59,10 +59,12 @@ import { levelUpReward } from '../../utils/levelRewards.ts'
 // had 9).
 function chapterTitle(n: number): string {
   const key = `combat:campaign.chapterTitles.${n}`
-  const translated = i18n.t(key)
-  return translated === key
-    ? i18n.t('combat:campaign.chapterFallback', { n })
-    : translated
+  // `i18n.t(key) === key` est un garde-fou inatteignable : une clé manquante
+  // revient SANS le préfixe de namespace, jamais telle qu'écrite ici.
+  // `i18n.exists()` comprend le préfixe et teste la vraie présence.
+  return i18n.exists(key)
+    ? i18n.t(key)
+    : i18n.t('combat:campaign.chapterFallback', { n })
 }
 
 export const Route = createFileRoute('/_authenticated/battle/$stageId')({
