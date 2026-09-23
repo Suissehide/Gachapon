@@ -259,11 +259,11 @@ describe('Bonus équipe `raid` — attaques par jour', () => {
       headers: { cookie: player.cookies },
     })
     expect(bonusRes.statusCode).toBe(200)
-    // `used` compte les attaques du JOUEUR sur la journée, tous raids
-    // confondus (pas par équipe) — la première attaque, sur teamNoBonusId,
-    // compte déjà : deux attaques consommées au moment de celle-ci.
+    // `used` compte les attaques du joueur SUR CE RAID : celle portée plus
+    // haut sur teamNoBonusId ne mord pas sur le quota de cette équipe-ci,
+    // dont c'est la première.
     expect(bonusRes.json().attacksRemainingToday).toBe(
-      attacksRemaining(2, baseAttacksPerDay + raidPct),
+      attacksRemaining(1, baseAttacksPerDay + raidPct),
     )
   })
 })

@@ -59,14 +59,22 @@ export interface IRaidRepository {
   }): Promise<TeamRaidWithBoss>
   /** Dégâts cumulés et nombre d'attaques par joueur, triés par dégâts décroissants. */
   listContributions(raidId: string): Promise<RaidContributionRow[]>
-  /** Attaques du joueur depuis `since`, TOUS raids confondus (quota global). */
-  countUserAttacksSince(userId: string, since: Date): Promise<number>
+  /**
+   * Attaques du joueur SUR CE RAID depuis `since`. Le quota est donc par
+   * équipe et par jour, comme les PV du boss, calibrés par membre.
+   */
+  countUserAttacksSince(
+    raidId: string,
+    userId: string,
+    since: Date,
+  ): Promise<number>
   /**
    * Même compte que `countUserAttacksSince`, mais pour plusieurs joueurs en
    * UNE requête : la liste des membres d'une équipe en ferait sinon une par
    * ligne. Les joueurs sans attaque sont absents de la Map (donc `0`).
    */
   countAttacksByUsersSince(
+    raidId: string,
     userIds: string[],
     since: Date,
   ): Promise<Map<string, number>>

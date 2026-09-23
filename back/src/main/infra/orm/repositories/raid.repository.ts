@@ -169,13 +169,18 @@ export class RaidRepository implements IRaidRepository {
     }))
   }
 
-  countUserAttacksSince(userId: string, since: Date): Promise<number> {
+  countUserAttacksSince(
+    raidId: string,
+    userId: string,
+    since: Date,
+  ): Promise<number> {
     return this.#prisma.raidAttack.count({
-      where: { userId, createdAt: { gte: since } },
+      where: { raidId, userId, createdAt: { gte: since } },
     })
   }
 
   async countAttacksByUsersSince(
+    raidId: string,
     userIds: string[],
     since: Date,
   ): Promise<Map<string, number>> {
@@ -184,7 +189,7 @@ export class RaidRepository implements IRaidRepository {
     }
     const rows = await this.#prisma.raidAttack.groupBy({
       by: ['userId'],
-      where: { userId: { in: userIds }, createdAt: { gte: since } },
+      where: { raidId, userId: { in: userIds }, createdAt: { gte: since } },
       _count: { _all: true },
     })
     return new Map(rows.map((r) => [r.userId, r._count._all]))

@@ -161,7 +161,11 @@ export class RaidDomain implements IRaidDomain {
     // quota mord sur les PV du boss de CETTE équipe, calibrés par membre.
     // Le scoper au joueur laisserait un rang acheté dans une équipe A
     // apporter des attaques en plus sur le boss d'une équipe B qui n'a
-    // jamais investi un point.
+    // jamais investi un point. Même raison pour `used`, compté sur le raid
+    // et non sur le joueur : les PV supposent que chaque membre dispose de
+    // ses attaques, et les lots de palier se gagnent déjà DANS une équipe
+    // (clé `raid.id` plus bas). Un joueur de trois équipes a donc trois
+    // quotas, bornés par MAX_TEAMS_PER_USER.
     const [cfg, raidBonus] = await Promise.all([
       this.#configService.getMany(
         'combat.elementAdvantageMult',
@@ -202,7 +206,11 @@ export class RaidDomain implements IRaidDomain {
           }
 
           const used = await tx.raidAttack.count({
-            where: { userId, createdAt: { gte: utcDayStart(now) } },
+            where: {
+              raidId: raid.id,
+              userId,
+              createdAt: { gte: utcDayStart(now) },
+            },
           })
           if (used >= perDay) {
             throw Boom.tooManyRequests(errorMessage('raid.noAttacksLeftToday'))
@@ -416,9 +424,9 @@ export class RaidDomain implements IRaidDomain {
    * changement de règle. Elle ne renvoie que les membres qui ont attaqué —
    * l'appelant complète à 0 ceux qui manquent, il a la liste des membres.
    *
-   * Le quota est GLOBAL au joueur (`countAttacksByUsersSince` ne filtre pas
-   * par raid), exactement comme au site d'attaque : un joueur dans trois
-   * équipes ne dispose pas de trois quotas.
+   * Le quota est compté SUR LE RAID de cette équipe, exactement comme au
+   * site d'attaque : sans raid ouvert cette semaine, personne n'a encore
+   * consommé quoi que ce soit ici.
    */
   async memberRaidStats(
     team: TeamWithMembers,
@@ -430,10 +438,13 @@ export class RaidDomain implements IRaidDomain {
       raid ? this.#contributions(raid.id, team) : Promise.resolve([]),
       this.#configService.getMany('raid.attacksPerDay'),
       this.#teamProgressionDomain.raidAttacksBonusForTeam(team.id),
-      this.#raidRepository.countAttacksByUsersSince(
-        memberIds,
-        utcDayStart(now),
-      ),
+      raid
+        ? this.#raidRepository.countAttacksByUsersSince(
+            raid.id,
+            memberIds,
+            utcDayStart(now),
+          )
+        : Promise.resolve(new Map<string, number>()),
     ])
     const attacksPerDay = cfg['raid.attacksPerDay'] + raidBonus
     const byUserId = new Map(contributions.map((c) => [c.user.id, c]))
@@ -566,13 +577,17 @@ export class RaidDomain implements IRaidDomain {
     // `raidAttacksBonusForTeam(team.id)`, PAS `effectsForUser(userId)` — même
     // raison qu'au site d'attaque : ce quota appartient à l'équipe dont le
     // boss est affiché, pas au meilleur rang du joueur toutes équipes
-    // confondues.
+    // confondues. Idem pour `usedToday`, compté sur CE raid.
     const [tiers, contributions, cfg, usedToday, raidBonus] = await Promise.all(
       [
         this.#tiersFor(raid.level),
         this.#contributions(raid.id, team),
         this.#configService.getMany('raid.attacksPerDay'),
-        this.#raidRepository.countUserAttacksSince(userId, utcDayStart(now)),
+        this.#raidRepository.countUserAttacksSince(
+          raid.id,
+          userId,
+          utcDayStart(now),
+        ),
         this.#teamProgressionDomain.raidAttacksBonusForTeam(team.id),
       ],
     )

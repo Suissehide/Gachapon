@@ -937,7 +937,6 @@ model RaidAttack {
   createdAt   DateTime @default(now())
 
   @@index([raidId, userId])
-  @@index([userId, createdAt])
 }
 
 /// Palier de récompense (25/50/75/100 %), calqué sur StreakMilestone.

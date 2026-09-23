@@ -332,7 +332,7 @@ describe('routes de raid', () => {
     expect(res.json().teamA[0].variant).toBe('NORMAL')
   })
 
-  it('POST attack : la 3e attaque du jour est refusée (429), quota partagé entre équipes', async () => {
+  it('POST attack : la 3e attaque du jour est refusée (429), quota par équipe', async () => {
     const second = await app.inject({
       method: 'POST',
       url: `/teams/${teamId}/raid/attack`,
@@ -348,7 +348,10 @@ describe('routes de raid', () => {
     })
     expect(third.statusCode).toBe(429)
 
-    // Une seconde équipe ne rouvre pas le quota.
+    // Le quota est compté SUR LE RAID attaqué : le boss d'une autre équipe
+    // a le sien, intact. Les PV du boss sont calibrés par membre en
+    // supposant que chaque membre dispose de ses attaques ; un quota commun
+    // aux équipes priverait la seconde de la contribution de ce joueur.
     const team2 = await app.inject({
       method: 'POST',
       url: '/teams',
@@ -361,7 +364,17 @@ describe('routes de raid', () => {
       url: `/teams/${team2Id}/raid/attack`,
       headers: { cookie: cookiesA },
     })
-    expect(other.statusCode).toBe(429)
+    expect(other.statusCode).toBe(200)
+    expect(other.json().attacksRemainingToday).toBe(1)
+
+    // …et la vue du raid épuisé continue d'afficher 0, elle aussi comptée
+    // par raid et non par joueur.
+    const view = await app.inject({
+      method: 'GET',
+      url: `/teams/${teamId}/raid`,
+      headers: { cookie: cookiesA },
+    })
+    expect(view.json().me.attacksRemainingToday).toBe(0)
   })
 
   it('POST attack : franchir les paliers récompense tous les participants, sans doublon, puis bloque (409)', async () => {
