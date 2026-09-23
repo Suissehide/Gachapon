@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 import { type Locale, SUPPORTED_LOCALES } from '../../i18n/index.ts'
 import { useLocale } from '../../i18n/useLocale.ts'
+import { cn } from '../../libs/utils.ts'
 import { Button } from '../ui/button.tsx'
 import {
   DropdownMenuCustomContent,
@@ -42,7 +43,11 @@ export function LocaleSwitcher({ className }: { className?: string }) {
         <Button
           variant="ghost"
           size="sm"
-          className={className}
+          // `size="sm"` apporte `px-3`, trop large pour un contrôle qui doit
+          // s'effacer : le fond du survol colle ainsi au contenu. `cn` place
+          // `px-0` avant `className` pour qu'un appelant puisse encore le
+          // reprendre à la main.
+          className={cn('px-0', className)}
           title={t('layout:localeSwitcher.menuTitle')}
           aria-label={t('layout:localeSwitcher.menuTitle')}
         >
