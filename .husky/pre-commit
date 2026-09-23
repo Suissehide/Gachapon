@@ -3,7 +3,21 @@
 # when back/ changes, plus the i18n guards when the front UI changes.
 # E2E tests need Postgres — they stay in CI / `npm run validate`.
 
+# Deux listes, et la différence est LOAD-BEARING.
+#
+# `staged` exclut les suppressions (`--diff-filter=ACMR`) : c'est correct pour
+# Biome, qui lint fichier par fichier et ne peut rien faire d'un chemin
+# supprimé.
+#
+# `staged_all` les inclut, et c'est ce qu'il faut aux garde-fous i18n, qui
+# balaient TOUT l'arbre. Supprimer un namespace ou un écran est justement le
+# cas où ils doivent tourner. Reproduit avant correction :
+#   git rm front/src/i18n/locales/en/streak.json && git commit
+#     → commit ACCEPTÉ, aucun garde-fou lancé
+#   npm run check:i18n
+#     → [check-i18n-parity] 1 problème, 35 clés cassées
 staged=$(git diff --cached --name-only --diff-filter=ACMR)
+staged_all=$(git diff --cached --name-only)
 
 back_ts=$(echo "$staged" | grep -E '^back/src/main/.*\.ts$' | sed 's|^back/||')
 if echo "$staged" | grep -q '^back/'; then
@@ -30,7 +44,13 @@ fi
 # l'interface. Coût mesuré : ~0,8 s. Les faire tomber, c'est livrer une clé
 # brute à l'écran : `fallbackLng: false` + `parseMissingKeyHandler: (k) => k`
 # n'affichent ni erreur ni avertissement.
-front_i18n=$(echo "$staged" | grep -E '^front/(src/|scripts/(check-i18n|i18n-fixtures/))')
+#
+# Limite connue et assumée, héritée du bloc Biome ci-dessus : ces scripts
+# lisent l'ARBRE DE TRAVAIL, pas l'index. Un `git add -p` partiel peut donc
+# faire passer un commit dont le contenu réellement commité échouerait. Lire
+# depuis l'index demanderait un `git stash` à l'intérieur d'un hook — remède
+# pire que le mal sur un dépôt où plusieurs sessions travaillent en parallèle.
+front_i18n=$(echo "$staged_all" | grep -E '^front/(src/|scripts/(check-i18n|i18n-fixtures/))')
 if [ -n "$front_i18n" ]; then
   echo "pre-commit(front): garde-fous i18n"
   (cd front && npm run --silent check:i18n) || exit 1
