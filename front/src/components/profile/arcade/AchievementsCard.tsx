@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { Award, ChevronRight, HelpCircle, Lock } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import type { AchievementWithProgress } from '../../../constants/achievements.constant'
 import { useAchievements } from '../../../queries/useAchievements'
@@ -86,15 +87,16 @@ function HighlightRow({
 }
 
 function EmptyHint() {
+  const { t } = useTranslation('profile')
   return (
     <div className="flex items-center gap-3 rounded-xl border border-dashed border-border bg-card/30 px-4 py-6">
       <HelpCircle className="h-5 w-5 text-text-light/40" />
       <div>
         <div className="font-display text-sm font-bold text-text-light">
-          Aucun succès pour l'instant
+          {t('achievementsCard.emptyTitle')}
         </div>
         <div className="font-mono text-[10px] uppercase tracking-wider text-text-light/60">
-          Joue pour débloquer tes premiers
+          {t('achievementsCard.emptyHint')}
         </div>
       </div>
     </div>
@@ -102,6 +104,7 @@ function EmptyHint() {
 }
 
 export function AchievementsCard() {
+  const { t } = useTranslation('profile')
   const { data, isLoading } = useAchievements()
 
   const achievements = data ?? []
@@ -116,12 +119,14 @@ export function AchievementsCard() {
         className="group -m-2 mb-3 flex items-baseline justify-between rounded-xl p-2 transition-colors hover:bg-muted/30"
       >
         <CardTitle className="text-sm uppercase tracking-wider">
-          Succès
+          {t('achievementsCard.title')}
         </CardTitle>
         <div className="flex items-center gap-2">
           <span className="font-mono text-[11px] text-text-light">
             {unlocked} / {total}{' '}
-            <span className="hidden sm:inline">DÉBLOQUÉS</span>
+            <span className="hidden sm:inline">
+              {t('achievementsCard.unlockedLabel')}
+            </span>
           </span>
           <ChevronRight
             size={16}

@@ -1,9 +1,12 @@
+import { useTranslation } from 'react-i18next'
+
 import type { SetProgression } from '../../../api/profile.api'
 import { Card, CardTitle } from '../../ui/card'
 
 type Props = { sets: SetProgression[] }
 
 export function SetsProgressionCard({ sets }: Props) {
+  const { t } = useTranslation('profile')
   const totalOwned = sets.reduce((acc, s) => acc + s.owned, 0)
   const totalCards = sets.reduce((acc, s) => acc + s.total, 0)
 
@@ -11,10 +14,14 @@ export function SetsProgressionCard({ sets }: Props) {
     <Card className="p-6">
       <div className="flex items-baseline justify-between mb-5">
         <CardTitle className="text-sm uppercase tracking-wider">
-          Progression par extension
+          {t('setsProgressionCard.title')}
         </CardTitle>
         <span className="font-mono text-[11px] text-text-light">
-          {sets.length} SETS · {totalOwned} / {totalCards}
+          {t('setsProgressionCard.summary', {
+            count: sets.length,
+            owned: totalOwned,
+            total: totalCards,
+          })}
         </span>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
@@ -39,7 +46,10 @@ export function SetsProgressionCard({ sets }: Props) {
                   {s.name}
                 </div>
                 <div className="font-mono text-[10px] uppercase tracking-wider text-text-light">
-                  {s.owned} / {s.total} CARTES
+                  {t('setsProgressionCard.ownedOfTotal', {
+                    owned: s.owned,
+                    total: s.total,
+                  })}
                 </div>
               </div>
               <div

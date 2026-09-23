@@ -19,5 +19,78 @@
       "changeUsername": "Erreur lors du changement de pseudo",
       "changeLocale": "Erreur lors du changement de langue"
     }
+  },
+  "statGrid": {
+    "pulls": "Tirages",
+    "uniqueCards": "Cartes uniques",
+    "legendaries": "Légendaires",
+    "legendariesHint": "première en attente",
+    "dustGenerated": "Poussière générée"
+  },
+  "featuredCardsEditor": {
+    "title": "Cartes vedettes",
+    "subtitle_one": "{{count}} / 5 sélectionnée · clique pour ajouter / retirer",
+    "subtitle_other": "{{count}} / 5 sélectionnées · clique pour ajouter / retirer",
+    "cancelButton": "Annuler",
+    "saveButtonPending": "Enregistrement…",
+    "saveButton": "Enregistrer"
+  },
+  "achievementsCard": {
+    "title": "Succès",
+    "unlockedLabel": "DÉBLOQUÉS",
+    "emptyTitle": "Aucun succès pour l'instant",
+    "emptyHint": "Joue pour débloquer tes premiers"
+  },
+  "questsCard": {
+    "title": "Quêtes",
+    "weeklyLabel": "HEBDO",
+    "emptyTitle": "Aucune quête en cours",
+    "emptyHint": "Reviens lundi pour de nouvelles quêtes"
+  },
+  "arcadeHero": {
+    "levelMaxBadge": "NIV. MAX · MEMBRE {{year}}",
+    "levelBadge": "NIV. {{level}} · MEMBRE {{year}}",
+    "saveNameButton": "Enregistrer",
+    "cancelNameButton": "Annuler",
+    "editNameButton": "Changer le pseudo",
+    "featuredCardsTitle": "Cartes vedettes",
+    "featuredCardsCountLabel": "TOP {{count}} · PAR RARETÉ",
+    "editButton": "Éditer"
+  },
+  "streakCard": {
+    "bestLabel": "Record"
+  },
+  "featuredCardsFan": {
+    "emptyHint": "Aucune carte encore — fais ton premier tirage."
+  },
+  "collectionCTA": {
+    "myCollectionLabel": "Ma collection",
+    "otherCollectionLabel": "Collection de {{username}}",
+    "cardsCount_one": "{{count}} carte",
+    "cardsCount_other": "{{count}} cartes",
+    "setsCount_one": "{{count}} set",
+    "setsCount_other": "{{count}} sets",
+    "viewMyCollectionButton": "Voir ma collection",
+    "exploreButton": "Explorer"
+  },
+  "xpCard": {
+    "title": "Expérience",
+    "levelMaxBadge": "LV. {{level}} · MAX",
+    "levelBadge": "LV. {{level}}",
+    "maxProgress": "00 / MAX"
+  },
+  "setsProgressionCard": {
+    "title": "Progression par extension",
+    "summary": "{{count}} SETS · {{owned}} / {{total}}",
+    "ownedOfTotal": "{{owned}} / {{total}} CARTES"
+  },
+  "arcadeTopbar": {
+    "testLevelUpButton": "Test Lvl Up",
+    "adminButton": "Admin",
+    "settingsButton": "Paramètres"
+  },
+  "arcadeProfile": {
+    "notFoundTitle": "Joueur introuvable",
+    "notFoundDescription": "{{username}} n'existe pas."
   }
 }

@@ -1,5 +1,6 @@
 import { ChevronRight, Flame, Trophy } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { UserProfile } from '../../../api/profile.api'
 import { StreakSummaryModal } from '../../streak/StreakSummaryModal'
@@ -13,6 +14,7 @@ type Props = {
 }
 
 export function StreakCard({ profile, lastLoginAt, isOwnProfile }: Props) {
+  const { t } = useTranslation(['profile', 'streak'])
   const [open, setOpen] = useState(false)
   const days = weekDays()
   const todayActive = isLoggedInToday(lastLoginAt ?? null)
@@ -21,7 +23,7 @@ export function StreakCard({ profile, lastLoginAt, isOwnProfile }: Props) {
     <>
       <div className="flex items-baseline justify-between mb-4">
         <CardTitle className="text-sm uppercase tracking-wider">
-          Streak de connexion
+          {t('streak:modal.title')}
         </CardTitle>
         {isOwnProfile && <ChevronRight size={16} className="text-text-light" />}
       </div>
@@ -38,7 +40,7 @@ export function StreakCard({ profile, lastLoginAt, isOwnProfile }: Props) {
             </span>
           </div>
           <div className="font-mono text-[10px] uppercase tracking-wider text-text-light">
-            Jour
+            {t('streak:hero.streakDaysLabel', { count: profile.streakDays })}
           </div>
         </div>
         <div>
@@ -49,7 +51,7 @@ export function StreakCard({ profile, lastLoginAt, isOwnProfile }: Props) {
             </span>
           </div>
           <div className="font-mono text-[10px] uppercase tracking-wider text-text-light">
-            Record
+            {t('profile:streakCard.bestLabel')}
           </div>
         </div>
       </div>

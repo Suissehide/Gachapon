@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { FeaturedCard } from '../../../api/profile.api'
 import { CardDisplay } from '../../shared/tcg-card/CardDisplay'
@@ -8,12 +9,13 @@ type Props = {
 }
 
 export function FeaturedCardsFan({ cards }: Props) {
+  const { t } = useTranslation('profile')
   const [hovered, setHovered] = useState<number | null>(null)
 
   if (cards.length === 0) {
     return (
       <div className="flex items-center justify-center p-8 rounded-2xl border border-dashed border-border text-text-light font-mono text-sm">
-        Aucune carte encore — fais ton premier tirage.
+        {t('featuredCardsFan.emptyHint')}
       </div>
     )
   }

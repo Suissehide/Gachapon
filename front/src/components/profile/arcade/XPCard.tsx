@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 import type { UserProfile } from '../../../api/profile.api'
 import { currentLocale } from '../../../i18n/index.ts'
 import { formatNumber } from '../../../libs/utils.ts'
@@ -11,6 +13,7 @@ import { Card, CardTitle } from '../../ui/card'
 type Props = { profile: UserProfile }
 
 export function XPCard({ profile }: Props) {
+  const { t } = useTranslation('profile')
   const locale = currentLocale()
   const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
   const isMax = profile.level >= economy.xp.levelCap
@@ -24,7 +27,7 @@ export function XPCard({ profile }: Props) {
     <Card className="p-6">
       <div className="flex items-baseline justify-between mb-4">
         <CardTitle className="text-sm uppercase tracking-wider">
-          Expérience
+          {t('xpCard.title')}
         </CardTitle>
         <span
           className="font-mono text-[11px] font-bold uppercase"
@@ -32,7 +35,9 @@ export function XPCard({ profile }: Props) {
             color: isMax ? 'var(--primary)' : 'var(--text-light)',
           }}
         >
-          {isMax ? `LV. ${profile.level} · MAX` : `LV. ${profile.level}`}
+          {isMax
+            ? t('xpCard.levelMaxBadge', { level: profile.level })
+            : t('xpCard.levelBadge', { level: profile.level })}
         </span>
       </div>
       <div className="relative h-[22px] rounded-full bg-muted overflow-hidden">
@@ -59,7 +64,7 @@ export function XPCard({ profile }: Props) {
       </div>
       <div className="font-mono text-[11px] mt-3 text-text-light">
         {isMax
-          ? '00 / MAX'
+          ? t('xpCard.maxProgress')
           : `${formatNumber(xpInLevel, locale)} / ${formatNumber(xpNeeded, locale)}`}
       </div>
     </Card>

@@ -19,5 +19,78 @@
       "changeUsername": "Error changing the username",
       "changeLocale": "Error changing the language"
     }
+  },
+  "statGrid": {
+    "pulls": "Pulls",
+    "uniqueCards": "Unique cards",
+    "legendaries": "Legendaries",
+    "legendariesHint": "first one pending",
+    "dustGenerated": "Dust generated"
+  },
+  "featuredCardsEditor": {
+    "title": "Featured cards",
+    "subtitle_one": "{{count}} / 5 selected · click to add / remove",
+    "subtitle_other": "{{count}} / 5 selected · click to add / remove",
+    "cancelButton": "Cancel",
+    "saveButtonPending": "Saving…",
+    "saveButton": "Save"
+  },
+  "achievementsCard": {
+    "title": "Achievements",
+    "unlockedLabel": "UNLOCKED",
+    "emptyTitle": "No achievements yet",
+    "emptyHint": "Play to unlock your first ones"
+  },
+  "questsCard": {
+    "title": "Quests",
+    "weeklyLabel": "WEEKLY",
+    "emptyTitle": "No quests in progress",
+    "emptyHint": "Come back Monday for new quests"
+  },
+  "arcadeHero": {
+    "levelMaxBadge": "LVL. MAX · MEMBER SINCE {{year}}",
+    "levelBadge": "LVL. {{level}} · MEMBER SINCE {{year}}",
+    "saveNameButton": "Save",
+    "cancelNameButton": "Cancel",
+    "editNameButton": "Change username",
+    "featuredCardsTitle": "Featured cards",
+    "featuredCardsCountLabel": "TOP {{count}} · BY RARITY",
+    "editButton": "Edit"
+  },
+  "streakCard": {
+    "bestLabel": "Best"
+  },
+  "featuredCardsFan": {
+    "emptyHint": "No cards yet — make your first pull."
+  },
+  "collectionCTA": {
+    "myCollectionLabel": "My collection",
+    "otherCollectionLabel": "{{username}}'s collection",
+    "cardsCount_one": "{{count}} card",
+    "cardsCount_other": "{{count}} cards",
+    "setsCount_one": "{{count}} set",
+    "setsCount_other": "{{count}} sets",
+    "viewMyCollectionButton": "View my collection",
+    "exploreButton": "Explore"
+  },
+  "xpCard": {
+    "title": "Experience",
+    "levelMaxBadge": "LV. {{level}} · MAX",
+    "levelBadge": "LV. {{level}}",
+    "maxProgress": "00 / MAX"
+  },
+  "setsProgressionCard": {
+    "title": "Progress by set",
+    "summary": "{{count}} SETS · {{owned}} / {{total}}",
+    "ownedOfTotal": "{{owned}} / {{total}} CARDS"
+  },
+  "arcadeTopbar": {
+    "testLevelUpButton": "Test Lvl Up",
+    "adminButton": "Admin",
+    "settingsButton": "Settings"
+  },
+  "arcadeProfile": {
+    "notFoundTitle": "Player not found",
+    "notFoundDescription": "{{username}} doesn't exist."
   }
 }
