@@ -43,6 +43,10 @@ FROM nginx:alpine AS app
 WORKDIR /usr/share/nginx/html
 RUN rm /etc/nginx/conf.d/default.conf
 COPY --from=app-build /usr/src/app/nginx.conf /etc/nginx/conf.d/default.conf
+# Fragment genere par scripts/prerender-seo.mjs pendant `npm run build` : les
+# 301 des anciennes URLs publiques, derivees de SEO_ROUTES. Depose hors de la
+# racine web (dist-nginx/ et non dist/), et inclus par joker depuis nginx.conf.
+COPY --from=app-build /usr/src/app/dist-nginx/ /etc/nginx/snippets/
 COPY --from=app-build /usr/src/app/dist/ /usr/share/nginx/html/
 
 ENV NODE_ENV production
