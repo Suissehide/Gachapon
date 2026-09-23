@@ -1,4 +1,81 @@
 {
+  "common": {
+    "editTooltip": "Edit",
+    "deleteTooltip": "Delete",
+    "kicker": {
+      "content": "Content",
+      "system": "System",
+      "economy": "Economy",
+      "overview": "Overview",
+      "community": "Community",
+      "players": "Players"
+    }
+  },
+  "cards": {
+    "pageTitle": "Cards & Sets",
+    "pageSubtitle": "Manage cards and their sets",
+    "newCardButton": "New card",
+    "viewSets": "Sets",
+    "viewAll": "All",
+    "searchPlaceholder": "Search a card…",
+    "rarityFilter": "Rarity",
+    "elementFilter": "Element",
+    "setFilter": "Set",
+    "noElementFilter": "No element",
+    "selectSetPrompt": "Select a set to see its cards",
+    "loading": "Loading…",
+    "columns": {
+      "name": "Name",
+      "rarity": "Rarity",
+      "element": "Element",
+      "weight": "Weight",
+      "set": "Set"
+    },
+    "createSheet": {
+      "title": "Add a card",
+      "nameFrLabel": "Name (French)",
+      "nameEnLabel": "Name (English)",
+      "setLabel": "Set",
+      "rarityLabel": "Rarity",
+      "elementLabel": "Element",
+      "elementPlaceholder": "None",
+      "dropWeightLabel": "Drop weight",
+      "passiveKeyLabel": "Passive (key, optional)",
+      "uploadOption": "Upload",
+      "libraryOption": "Library",
+      "changeImage": "Change image",
+      "pickFromLibrary": "Pick from the library",
+      "previewAlt": "Preview of the selected card",
+      "submit": "Create"
+    },
+    "editSheet": {
+      "imageLabel": "Image",
+      "previewAlt": "Preview",
+      "noImage": "No image",
+      "cancel": "Cancel",
+      "save": "Save",
+      "delete": "Delete"
+    },
+    "setSheet": {
+      "createTitle": "New set",
+      "nameFrLabel": "Name (French)",
+      "nameEnLabel": "Name (English)",
+      "descriptionFrCreateLabel": "Description (French, optional)",
+      "descriptionEnCreateLabel": "Description (English, optional)",
+      "descriptionFrEditLabel": "Description (French)",
+      "descriptionEnEditLabel": "Description (English)",
+      "statusLabel": "Status",
+      "statusActive": "Active",
+      "statusInactive": "Inactive",
+      "submitCreate": "Create",
+      "submitSave": "Save"
+    },
+    "sidebar": {
+      "searchPlaceholder": "Search…",
+      "toggleActiveTooltip": "Toggle active",
+      "newSet": "+ New set"
+    }
+  },
   "role": {
     "NONE": "None",
     "USER": "User",

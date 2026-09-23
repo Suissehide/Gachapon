@@ -1,5 +1,6 @@
 import { Pencil, Power, Search, Trash2 } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { AdminCardSet } from '../../../queries/useAdminCards'
 import {
@@ -18,6 +19,7 @@ interface SetSidebarProps {
 }
 
 export function SetSidebar({ selectedSetId, onSelect }: SetSidebarProps) {
+  const { t } = useTranslation('admin')
   const { data } = useAdminSets()
   const updateSet = useAdminUpdateSet()
   const deleteSet = useAdminDeleteSet()
@@ -36,7 +38,7 @@ export function SetSidebar({ selectedSetId, onSelect }: SetSidebarProps) {
         <div className="relative">
           <Search className="pointer-events-none absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-text-light/50" />
           <Input
-            placeholder="Rechercher…"
+            placeholder={t('cards.sidebar.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="h-7 pl-6 text-xs"
@@ -82,7 +84,9 @@ export function SetSidebar({ selectedSetId, onSelect }: SetSidebarProps) {
                       : 'bg-border text-text-light'
                   }`}
                 >
-                  {set.isActive ? 'Actif' : 'Inactif'}
+                  {set.isActive
+                    ? t('cards.setSheet.statusActive')
+                    : t('cards.setSheet.statusInactive')}
                 </span>
               </div>
             </div>
@@ -94,7 +98,7 @@ export function SetSidebar({ selectedSetId, onSelect }: SetSidebarProps) {
                   e.stopPropagation()
                   updateSet.mutate({ id: set.id, isActive: !set.isActive })
                 }}
-                title="Toggle actif"
+                title={t('cards.sidebar.toggleActiveTooltip')}
               >
                 <Power className="h-3 w-3" />
               </Button>
@@ -105,7 +109,7 @@ export function SetSidebar({ selectedSetId, onSelect }: SetSidebarProps) {
                   e.stopPropagation()
                   setEditSet(set)
                 }}
-                title="Modifier"
+                title={t('common.editTooltip')}
               >
                 <Pencil className="h-3 w-3" />
               </Button>
@@ -117,7 +121,7 @@ export function SetSidebar({ selectedSetId, onSelect }: SetSidebarProps) {
                   e.stopPropagation()
                   deleteSet.mutate(set.id)
                 }}
-                title="Supprimer"
+                title={t('common.deleteTooltip')}
               >
                 <Trash2 className="h-3 w-3" />
               </Button>
@@ -133,7 +137,7 @@ export function SetSidebar({ selectedSetId, onSelect }: SetSidebarProps) {
           className="w-full justify-start text-xs"
           onClick={() => setShowCreate(true)}
         >
-          + Nouveau set
+          {t('cards.sidebar.newSet')}
         </Button>
       </div>
 

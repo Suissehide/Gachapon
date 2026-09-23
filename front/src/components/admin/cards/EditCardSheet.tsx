@@ -1,5 +1,6 @@
 import { Images, X } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { CardElement } from '../../../constants/card.constant'
 import { RARITY_OPTIONS } from '../../../constants/card.constant'
@@ -96,6 +97,7 @@ function EditCardForm({
   const [pickedImageUrl, setPickedImageUrl] = useState<string | null>(null)
   const [imageRemoved, setImageRemoved] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const { t } = useTranslation('admin')
 
   const form = useAppForm({
     defaultValues: {
@@ -145,25 +147,30 @@ function EditCardForm({
       className="space-y-3"
     >
       <form.AppField name="nameFr">
-        {(f) => <f.Input label="Nom (français)" />}
+        {(f) => <f.Input label={t('cards.createSheet.nameFrLabel')} />}
       </form.AppField>
       <form.AppField name="nameEn">
-        {(f) => <f.Input label="Nom (anglais)" />}
+        {(f) => <f.Input label={t('cards.createSheet.nameEnLabel')} />}
       </form.AppField>
       <form.AppField name="rarity">
-        {(f) => <f.Select label="Rareté" options={RARITY_OPTIONS} />}
+        {(f) => (
+          <f.Select
+            label={t('cards.createSheet.rarityLabel')}
+            options={RARITY_OPTIONS}
+          />
+        )}
       </form.AppField>
       <form.AppField name="element">
         {(f) => (
           <f.Select
-            label="Élément"
+            label={t('cards.createSheet.elementLabel')}
             options={ELEMENT_SELECT_OPTIONS}
-            placeholder="Aucun"
+            placeholder={t('cards.createSheet.elementPlaceholder')}
           />
         )}
       </form.AppField>
       <form.AppField name="dropWeight">
-        {(f) => <f.Number label="Poids de drop" />}
+        {(f) => <f.Number label={t('cards.createSheet.dropWeightLabel')} />}
       </form.AppField>
 
       <div className="grid grid-cols-2 gap-3">
@@ -182,18 +189,20 @@ function EditCardForm({
       </div>
 
       <form.AppField name="passiveKey">
-        {(f) => <f.Input label="Passif (clé, optionnel)" />}
+        {(f) => <f.Input label={t('cards.createSheet.passiveKeyLabel')} />}
       </form.AppField>
 
       {/* Image section */}
       <div className="space-y-2">
-        <p className="text-sm font-medium text-text-light">Image</p>
+        <p className="text-sm font-medium text-text-light">
+          {t('cards.editSheet.imageLabel')}
+        </p>
 
         {previewUrl ? (
           <div className="group relative overflow-hidden rounded-md border border-border">
             <img
               src={previewUrl}
-              alt="Aperçu"
+              alt={t('cards.editSheet.previewAlt')}
               className="h-32 w-full object-contain bg-surface"
             />
             <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/40">
@@ -214,13 +223,13 @@ function EditCardForm({
           </div>
         ) : imageRemoved ? (
           <div className="flex items-center justify-between rounded-md border border-dashed border-border px-3 py-2 text-xs text-text-light">
-            <span>Aucune image</span>
+            <span>{t('cards.editSheet.noImage')}</span>
             <button
               type="button"
               onClick={() => setImageRemoved(false)}
               className="cursor-pointer text-primary hover:underline"
             >
-              Annuler
+              {t('cards.editSheet.cancel')}
             </button>
           </div>
         ) : null}
@@ -234,8 +243,8 @@ function EditCardForm({
             }
           }}
           options={[
-            { value: 'upload', label: 'Upload' },
-            { value: 'pick', label: 'Bibliothèque' },
+            { value: 'upload', label: t('cards.createSheet.uploadOption') },
+            { value: 'pick', label: t('cards.createSheet.libraryOption') },
           ]}
           stretch
         />
@@ -253,8 +262,8 @@ function EditCardForm({
           >
             <Images className="h-4 w-4" />
             {pickedImageUrl
-              ? "Changer l'image"
-              : 'Choisir depuis la bibliothèque'}
+              ? t('cards.createSheet.changeImage')
+              : t('cards.createSheet.pickFromLibrary')}
           </Button>
         )}
       </div>
@@ -271,7 +280,7 @@ function EditCardForm({
 
       <div className="flex gap-2 pt-2">
         <Button type="submit" className="flex-1">
-          Sauvegarder
+          {t('cards.editSheet.save')}
         </Button>
         <Button
           type="button"
@@ -279,7 +288,7 @@ function EditCardForm({
           className="border border-destructive/30 text-destructive hover:text-destructive"
           onClick={onDelete}
         >
-          Supprimer
+          {t('cards.editSheet.delete')}
         </Button>
       </div>
     </form>

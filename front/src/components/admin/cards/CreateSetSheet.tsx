@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 import { useAppForm } from '../../../hooks/formConfig'
 import { useAdminCreateSet } from '../../../queries/useAdminCards'
 import { Button } from '../../ui/button'
@@ -11,6 +13,7 @@ export function CreateSetSheet({
   onOpenChange: (o: boolean) => void
 }) {
   const createSet = useAdminCreateSet()
+  const { t } = useTranslation('admin')
 
   const form = useAppForm({
     defaultValues: {
@@ -35,7 +38,7 @@ export function CreateSetSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>Nouveau set</SheetTitle>
+          <SheetTitle>{t('cards.setSheet.createTitle')}</SheetTitle>
         </SheetHeader>
         <div className="mt-6 px-6">
           <form
@@ -46,19 +49,23 @@ export function CreateSetSheet({
             className="space-y-3"
           >
             <form.AppField name="nameFr">
-              {(f) => <f.Input label="Nom (français)" />}
+              {(f) => <f.Input label={t('cards.setSheet.nameFrLabel')} />}
             </form.AppField>
             <form.AppField name="nameEn">
-              {(f) => <f.Input label="Nom (anglais)" />}
+              {(f) => <f.Input label={t('cards.setSheet.nameEnLabel')} />}
             </form.AppField>
             <form.AppField name="descriptionFr">
-              {(f) => <f.Input label="Description (français, optionnelle)" />}
+              {(f) => (
+                <f.Input label={t('cards.setSheet.descriptionFrCreateLabel')} />
+              )}
             </form.AppField>
             <form.AppField name="descriptionEn">
-              {(f) => <f.Input label="Description (anglais, optionnelle)" />}
+              {(f) => (
+                <f.Input label={t('cards.setSheet.descriptionEnCreateLabel')} />
+              )}
             </form.AppField>
             <Button type="submit" className="w-full">
-              Créer
+              {t('cards.setSheet.submitCreate')}
             </Button>
           </form>
         </div>

@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { Pencil, Trash2 } from 'lucide-react'
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import notFoundImg from '../../../assets/data/not-found.png'
 import { RARITY_BADGE_VARIANT } from '../../../libs/rarity.ts'
@@ -14,6 +15,7 @@ export function useCardColumns(
   onEdit: (card: AdminCard) => void,
   onDelete: (id: string) => void,
 ) {
+  const { t } = useTranslation('admin')
   const totalWeight = useMemo(
     () => data.reduce((sum, c) => sum + c.dropWeight, 0),
     [data],
@@ -35,12 +37,12 @@ export function useCardColumns(
       },
       {
         accessorKey: 'name',
-        header: 'Nom',
+        header: t('cards.columns.name'),
         meta: { grow: true },
       },
       {
         accessorKey: 'rarity',
-        header: 'Rareté',
+        header: t('cards.columns.rarity'),
         size: 110,
         cell: ({ row }) => (
           <Badge
@@ -53,13 +55,13 @@ export function useCardColumns(
       },
       {
         accessorKey: 'element',
-        header: 'Élément',
+        header: t('cards.columns.element'),
         size: 110,
         cell: ({ row }) => <ElementTag element={row.original.element} />,
       },
       {
         accessorKey: 'dropWeight',
-        header: 'Poids',
+        header: t('cards.columns.weight'),
         size: 130,
         cell: ({ row }) => {
           const pct =
@@ -95,7 +97,7 @@ export function useCardColumns(
                 e.stopPropagation()
                 onEdit(row.original)
               }}
-              title="Modifier"
+              title={t('common.editTooltip')}
             >
               <Pencil className="h-3.5 w-3.5" />
             </Button>
@@ -107,7 +109,7 @@ export function useCardColumns(
                 e.stopPropagation()
                 onDelete(row.original.id)
               }}
-              title="Supprimer"
+              title={t('common.deleteTooltip')}
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
@@ -115,6 +117,6 @@ export function useCardColumns(
         ),
       },
     ],
-    [totalWeight, onEdit, onDelete],
+    [totalWeight, onEdit, onDelete, t],
   )
 }

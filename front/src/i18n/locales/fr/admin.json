@@ -1,4 +1,81 @@
 {
+  "common": {
+    "editTooltip": "Modifier",
+    "deleteTooltip": "Supprimer",
+    "kicker": {
+      "content": "Contenu",
+      "system": "Système",
+      "economy": "Économie",
+      "overview": "Vue d'ensemble",
+      "community": "Communauté",
+      "players": "Joueurs"
+    }
+  },
+  "cards": {
+    "pageTitle": "Cartes & Sets",
+    "pageSubtitle": "Gestion des cartes et de leurs sets",
+    "newCardButton": "Nouvelle carte",
+    "viewSets": "Sets",
+    "viewAll": "Toutes",
+    "searchPlaceholder": "Rechercher une carte…",
+    "rarityFilter": "Rareté",
+    "elementFilter": "Élément",
+    "setFilter": "Set",
+    "noElementFilter": "Sans élément",
+    "selectSetPrompt": "Sélectionne un set pour voir ses cartes",
+    "loading": "Chargement…",
+    "columns": {
+      "name": "Nom",
+      "rarity": "Rareté",
+      "element": "Élément",
+      "weight": "Poids",
+      "set": "Set"
+    },
+    "createSheet": {
+      "title": "Ajouter une carte",
+      "nameFrLabel": "Nom (français)",
+      "nameEnLabel": "Nom (anglais)",
+      "setLabel": "Set",
+      "rarityLabel": "Rareté",
+      "elementLabel": "Élément",
+      "elementPlaceholder": "Aucun",
+      "dropWeightLabel": "Poids de drop",
+      "passiveKeyLabel": "Passif (clé, optionnel)",
+      "uploadOption": "Upload",
+      "libraryOption": "Bibliothèque",
+      "changeImage": "Changer l'image",
+      "pickFromLibrary": "Choisir depuis la bibliothèque",
+      "previewAlt": "Aperçu de la carte sélectionnée",
+      "submit": "Créer"
+    },
+    "editSheet": {
+      "imageLabel": "Image",
+      "previewAlt": "Aperçu",
+      "noImage": "Aucune image",
+      "cancel": "Annuler",
+      "save": "Sauvegarder",
+      "delete": "Supprimer"
+    },
+    "setSheet": {
+      "createTitle": "Nouveau set",
+      "nameFrLabel": "Nom (français)",
+      "nameEnLabel": "Nom (anglais)",
+      "descriptionFrCreateLabel": "Description (français, optionnelle)",
+      "descriptionEnCreateLabel": "Description (anglais, optionnelle)",
+      "descriptionFrEditLabel": "Description (français)",
+      "descriptionEnEditLabel": "Description (anglais)",
+      "statusLabel": "Statut",
+      "statusActive": "Actif",
+      "statusInactive": "Inactif",
+      "submitCreate": "Créer",
+      "submitSave": "Sauvegarder"
+    },
+    "sidebar": {
+      "searchPlaceholder": "Rechercher…",
+      "toggleActiveTooltip": "Toggle actif",
+      "newSet": "+ Nouveau set"
+    }
+  },
   "role": {
     "NONE": "Aucun",
     "USER": "Utilisateur",

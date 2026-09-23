@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 import { useAppForm } from '../../../hooks/formConfig'
 import type { AdminCardSet } from '../../../queries/useAdminCards'
 import { useAdminUpdateSet } from '../../../queries/useAdminCards'
@@ -12,6 +14,7 @@ function EditSetForm({
   onClose: () => void
 }) {
   const updateSet = useAdminUpdateSet()
+  const { t } = useTranslation('admin')
 
   const form = useAppForm({
     defaultValues: {
@@ -43,22 +46,30 @@ function EditSetForm({
       className="space-y-3"
     >
       <form.AppField name="isActive">
-        {(f) => <f.Toggle label="Statut" options={['Actif', 'Inactif']} />}
+        {(f) => (
+          <f.Toggle
+            label={t('cards.setSheet.statusLabel')}
+            options={[
+              t('cards.setSheet.statusActive'),
+              t('cards.setSheet.statusInactive'),
+            ]}
+          />
+        )}
       </form.AppField>
       <form.AppField name="nameFr">
-        {(f) => <f.Input label="Nom (français)" />}
+        {(f) => <f.Input label={t('cards.setSheet.nameFrLabel')} />}
       </form.AppField>
       <form.AppField name="nameEn">
-        {(f) => <f.Input label="Nom (anglais)" />}
+        {(f) => <f.Input label={t('cards.setSheet.nameEnLabel')} />}
       </form.AppField>
       <form.AppField name="descriptionFr">
-        {(f) => <f.Input label="Description (français)" />}
+        {(f) => <f.Input label={t('cards.setSheet.descriptionFrEditLabel')} />}
       </form.AppField>
       <form.AppField name="descriptionEn">
-        {(f) => <f.Input label="Description (anglais)" />}
+        {(f) => <f.Input label={t('cards.setSheet.descriptionEnEditLabel')} />}
       </form.AppField>
       <Button type="submit" className="w-full">
-        Sauvegarder
+        {t('cards.setSheet.submitSave')}
       </Button>
     </form>
   )

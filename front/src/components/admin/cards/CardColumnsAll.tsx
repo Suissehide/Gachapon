@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { Pencil, Trash2 } from 'lucide-react'
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import notFoundImg from '../../../assets/data/not-found.png'
 import { RARITY_BADGE_VARIANT } from '../../../libs/rarity.ts'
@@ -13,6 +14,7 @@ export function useCardColumnsAll(
   onEdit: (card: AdminCard) => void,
   onDelete: (id: string) => void,
 ) {
+  const { t } = useTranslation('admin')
   return useMemo<ColumnDef<AdminCard>[]>(
     () => [
       {
@@ -29,18 +31,18 @@ export function useCardColumnsAll(
       },
       {
         accessorKey: 'name',
-        header: 'Nom',
+        header: t('cards.columns.name'),
         meta: { grow: true },
       },
       {
         id: 'set',
-        header: 'Set',
+        header: t('cards.columns.set'),
         size: 140,
         accessorFn: (row) => row.set.name,
       },
       {
         accessorKey: 'rarity',
-        header: 'Rareté',
+        header: t('cards.columns.rarity'),
         size: 110,
         cell: ({ row }) => (
           <Badge
@@ -53,13 +55,13 @@ export function useCardColumnsAll(
       },
       {
         accessorKey: 'element',
-        header: 'Élément',
+        header: t('cards.columns.element'),
         size: 110,
         cell: ({ row }) => <ElementTag element={row.original.element} />,
       },
       {
         accessorKey: 'dropWeight',
-        header: 'Poids',
+        header: t('cards.columns.weight'),
         size: 80,
         cell: ({ row }) => (
           <span className="text-sm font-semibold text-primary">
@@ -80,7 +82,7 @@ export function useCardColumnsAll(
                 e.stopPropagation()
                 onEdit(row.original)
               }}
-              title="Modifier"
+              title={t('common.editTooltip')}
             >
               <Pencil className="h-3.5 w-3.5" />
             </Button>
@@ -92,7 +94,7 @@ export function useCardColumnsAll(
                 e.stopPropagation()
                 onDelete(row.original.id)
               }}
-              title="Supprimer"
+              title={t('common.deleteTooltip')}
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
@@ -100,6 +102,6 @@ export function useCardColumnsAll(
         ),
       },
     ],
-    [onEdit, onDelete],
+    [onEdit, onDelete, t],
   )
 }

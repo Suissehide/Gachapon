@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import type { ColumnDef } from '@tanstack/react-table'
 import { LayoutGrid, List, Package, Plus, Search, X } from 'lucide-react'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { useCardColumns } from '../../components/admin/cards/CardColumns'
 import { useCardColumnsAll } from '../../components/admin/cards/CardColumnsAll'
@@ -21,6 +22,7 @@ import {
   ELEMENT_ORDER,
   RARITY_OPTIONS,
 } from '../../constants/card.constant'
+import i18n from '../../i18n/index.ts'
 import {
   type AdminCard,
   useAdminCards,
@@ -44,10 +46,11 @@ const ELEMENT_FILTERS = [
     label: ELEMENT_LABELS[el],
     icon: <ElementDot element={el} />,
   })),
-  { id: NO_ELEMENT, label: 'Sans élément' },
+  { id: NO_ELEMENT, label: i18n.t('admin:cards.noElementFilter') },
 ]
 
 function AdminCards() {
+  const { t } = useTranslation('admin')
   const [view, setView] = useState<'sets' | 'all'>('sets')
   const [selectedSetId, setSelectedSetId] = useState<string | null>(null)
   const [showCreate, setShowCreate] = useState(false)
@@ -123,9 +126,9 @@ function AdminCards() {
     <div className="flex h-screen flex-col p-8">
       <AdminPageHeader
         icon={Package}
-        kicker="Contenu"
-        title="Cartes & Sets"
-        subtitle="Gestion des cartes et de leurs sets"
+        kicker={t('common.kicker.content')}
+        title={t('cards.pageTitle')}
+        subtitle={t('cards.pageSubtitle')}
         actions={
           <>
             <SegmentedControl
@@ -134,19 +137,19 @@ function AdminCards() {
               options={[
                 {
                   value: 'sets',
-                  label: 'Sets',
+                  label: t('cards.viewSets'),
                   icon: <LayoutGrid className="h-3.5 w-3.5" />,
                 },
                 {
                   value: 'all',
-                  label: 'Toutes',
+                  label: t('cards.viewAll'),
                   icon: <List className="h-3.5 w-3.5" />,
                 },
               ]}
             />
             <Button size="sm" onClick={() => setShowCreate(true)}>
               <Plus className="h-4 w-4" />
-              Nouvelle carte
+              {t('cards.newCardButton')}
             </Button>
           </>
         }
@@ -159,7 +162,7 @@ function AdminCards() {
         <div className="relative">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-light/50" />
           <Input
-            placeholder="Rechercher une carte…"
+            placeholder={t('cards.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="h-8 w-52 pl-8 pr-7 text-sm"
@@ -175,7 +178,7 @@ function AdminCards() {
           )}
         </div>
         <DropdownFilter
-          label="Rareté"
+          label={t('cards.rarityFilter')}
           filters={RARITY_OPTIONS.map((r) => ({
             id: r.value,
             label: r.label,
@@ -189,7 +192,7 @@ function AdminCards() {
           onClear={() => setSelectedRarities([])}
         />
         <DropdownFilter
-          label="Élément"
+          label={t('cards.elementFilter')}
           filters={ELEMENT_FILTERS.map((e) => ({
             ...e,
             checked: selectedElements.includes(e.id),
@@ -203,7 +206,7 @@ function AdminCards() {
         />
         {view === 'all' && (
           <DropdownFilter
-            label="Set"
+            label={t('cards.setFilter')}
             filters={sets.map((s) => ({
               id: s.id,
               label: s.name,
@@ -282,11 +285,12 @@ const CardTableArea = memo(function CardTableArea({
   columns: ColumnDef<AdminCard, unknown>[]
   cards: AdminCard[]
 }) {
+  const { t } = useTranslation('admin')
   if (view === 'sets' && !selectedSetId) {
     return (
       <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-border bg-card">
         <div className="flex h-full items-center justify-center text-sm text-text-light">
-          Sélectionne un set pour voir ses cartes
+          {t('cards.selectSetPrompt')}
         </div>
       </div>
     )
@@ -295,7 +299,7 @@ const CardTableArea = memo(function CardTableArea({
     return (
       <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-border bg-card">
         <div className="flex h-full items-center justify-center text-sm text-text-light">
-          Chargement…
+          {t('cards.loading')}
         </div>
       </div>
     )
