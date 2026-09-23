@@ -10,10 +10,11 @@
     "postbuild": "node scripts/prerender-seo.mjs",
     "lint": "biome lint src",
     "preview": "vite preview",
-    "check:i18n": "npm run check:i18n:parity && npm run check:i18n:keys && npm run check:i18n:hardcoded",
+    "check:i18n": "npm run check:i18n:parity && npm run check:i18n:keys && npm run check:i18n:hardcoded && npm run check:i18n:selftest",
     "check:i18n:parity": "node scripts/check-i18n-parity.mjs",
     "check:i18n:hardcoded": "node scripts/check-i18n-hardcoded.mjs",
-    "check:i18n:keys": "node scripts/check-i18n-keys.mjs"
+    "check:i18n:keys": "node scripts/check-i18n-keys.mjs",
+    "check:i18n:selftest": "node scripts/check-i18n-guard-selftest.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

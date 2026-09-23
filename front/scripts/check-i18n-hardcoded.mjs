@@ -21,9 +21,19 @@
 //   node scripts/check-i18n-hardcoded.mjs                 # tout src/
 //   node scripts/check-i18n-hardcoded.mjs src/components/shop
 //   node scripts/check-i18n-hardcoded.mjs "src/routes/**"  # motif glob simple
+//   node scripts/check-i18n-hardcoded.mjs src/routes src/components/shop
 //
-// L'argument, s'il est fourni, est résolu depuis la racine de `front/` (pas
-// depuis le cwd) : le script peut donc être lancé depuis n'importe où.
+// Les arguments, s'ils sont fournis, sont résolus depuis la racine de
+// `front/` (pas depuis le cwd) : le script peut donc être lancé depuis
+// n'importe où.
+//
+// PLUSIEURS CHEMINS (corrigé, tâche 12). Jusqu'ici ce script ne lisait que
+// `process.argv[2]` et IGNORAIT SILENCIEUSEMENT les suivants : un
+// `node scripts/check-i18n-hardcoded.mjs src/a src/b` scannait `src/a` seul
+// et annonçait « OK » pour les deux. Ce piège a produit de fausses mesures
+// sur ce chantier — une tâche a cru avoir vérifié deux répertoires. Le
+// script balaie désormais l'UNION DÉDUPLIQUÉE de tous les chemins donnés,
+// comme `check-i18n-keys.mjs` le fait déjà.
 
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
@@ -265,10 +275,95 @@ function buildWordRegex() {
 const WORD_RE = buildWordRegex()
 
 /**
- * Exceptions explicites : chaînes connues qui déclencheraient un des
- * détecteurs ci-dessus sans être du français à traduire. Masquées (remplacées
- * par des espaces de même longueur) avant la détection, entrée par entrée —
- * pas un motif générique qui viderait le garde-fou de son sens.
+ * ---------------------------------------------------------------------------
+ * MASQUES STRUCTURELS — ce qui n'est PAS du texte affiché (tâche 12)
+ * ---------------------------------------------------------------------------
+ *
+ * Appliqués à la source ENTIÈRE (après `stripComments`), en remplaçant chaque
+ * correspondance par des espaces de même longueur, les sauts de ligne
+ * préservés — le numéro de ligne et la colonne des occurrences restantes ne
+ * bougent donc pas.
+ *
+ * Ce sont des RÈGLES, pas des exceptions : elles décrivent des positions
+ * syntaxiques dans lesquelles une chaîne ne peut pas être du texte d'écran.
+ * Chacune a été ajoutée contre un faux positif RÉEL, cité avec son fichier et
+ * sa ligne d'avant-correction.
+ *
+ * ┌─ CE QUE CES MASQUES COÛTENT ─────────────────────────────────────────────┐
+ * │ Ils créent par construction des angles morts : du français placé dans    │
+ * │ une de ces positions ne sera plus signalé PAR CE SCRIPT. Pour chacun,    │
+ * │ l'entrée dit qui d'autre le rattrape. Ne pas en ajouter sans répondre à  │
+ * │ cette question-là.                                                       │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ */
+const STRUCTURAL_MASKS = [
+  {
+    name: 'clé de traduction, argument littéral de t()',
+    // `t('…')`, `i18n.t('…')`, et l'alias `tShop('…')` (aucun cas dans ce
+    // dépôt aujourd'hui, mais check-i18n-keys.mjs le résout déjà : les deux
+    // scripts doivent reconnaître le même parc d'appels, sinon l'un couvre un
+    // angle mort que l'autre n'a pas).
+    // On ne masque QUE jusqu'au guillemet fermant du PREMIER argument : un
+    // `t('ns:clé', { defaultValue: 'Du français' })` reste scanné sur sa
+    // seconde moitié.
+    pattern: /(?:\bi18n\.t|\bt|\bt[A-Z][A-Za-z0-9_]*)\(\s*(?:'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`[^`$\\\n]*`)/g,
+    provenBy:
+      "src/routes/guide.tsx — 10 occurrences avant correction, toutes du type " +
+      "`{t('sections.cartes.tip')}` ou `title={t('sectionLabels.campagne')}` : " +
+      "« cartes » et « campagne » y sont des SEGMENTS DE CLÉ, jamais affichés.",
+    blindSpotCoveredBy:
+      "check-i18n-keys.mjs — un `t('Aucune carte disponible')` (du français " +
+      "passé comme clé) n'existe pas dans les JSON et y est signalé « clé " +
+      'introuvable ». Vérifié par fixture, voir le rapport de la tâche 12.',
+  },
+  {
+    name: 'clé de traduction, attribut i18nKey de <Trans>',
+    pattern: /\bi18nKey\s*=\s*(?:"[^"\n]*"|'[^'\n]*'|\{\s*(?:'[^'\n]*'|"[^"\n]*")\s*\})/g,
+    provenBy:
+      'src/routes/guide.tsx — 8 occurrences avant correction, du type ' +
+      '`i18nKey="sections.campagne.intro"`.',
+    blindSpotCoveredBy:
+      'check-i18n-keys.mjs, qui résout précisément cette forme (`i18nKey="…"`).',
+  },
+  {
+    name: "valeurs d'attributs JSX qui ne s'affichent jamais",
+    // Forme chaîne littérale uniquement (`id="x"`), pas la forme expression
+    // (`id={x}`) : une expression peut contenir n'importe quoi, y compris du
+    // texte, et la masquer ouvrirait un trou bien plus large que le faux
+    // positif qu'on corrige.
+    // Ne SONT PAS dans cette liste, et ne doivent jamais y entrer, les
+    // attributs dont la valeur EST du texte lu par un humain ou un lecteur
+    // d'écran : `title`, `placeholder`, `alt`, `aria-label`, `label`,
+    // `aria-description`, `value` d'une <option>. Une fixture les repasse à
+    // chaque modification de ce script (voir le rapport de la tâche 12).
+    pattern: /\b(?:id|htmlFor|className|data-[a-z][a-z0-9-]*)\s*=\s*(?:"[^"\n]*"|'[^'\n]*')/g,
+    provenBy:
+      'src/routes/guide.tsx — 2 occurrences avant correction (`id="campagne"`, ' +
+      "`id=\"cartes\"`) : des identifiants d'ancre `#<id>`, stables et " +
+      'indépendants de la langue par décision explicite du fichier.',
+    blindSpotCoveredBy:
+      "Personne — c'est un angle mort net. Il est étroit : `className` et " +
+      '`data-*` ne portent pas de copie dans ce dépôt, et un `id` qui en ' +
+      "porterait serait un bug d'un autre ordre. `htmlFor` et `id` sont les " +
+      'deux attributs de cette liste qui pourraient un jour recevoir un mot ' +
+      'français ; ils ne seraient toujours pas affichés.',
+  },
+]
+
+/**
+ * ---------------------------------------------------------------------------
+ * EXCEPTIONS EXPLICITES — du texte affiché qu'on garde en français
+ * ---------------------------------------------------------------------------
+ *
+ * Chaînes qui déclencheraient un des détecteurs ci-dessus sans devoir être
+ * traduites. Masquées de la même façon que les masques structurels (source
+ * entière, espaces de même longueur, sauts de ligne préservés).
+ *
+ * `files` (facultatif) restreint l'exception aux chemins cités, relatifs à
+ * `front/` — sans lui, l'exception vaut pour tout le dépôt. **Préférer
+ * toujours la forme scopée** : une exception globale est une passoire
+ * permanente, une exception scopée ne peut pas se propager à un fichier
+ * qu'on n'a pas relu.
  *
  * Chaque entrée doit être justifiée par un cas réel constaté dans ce dépôt,
  * pas par prudence générique.
@@ -280,6 +375,32 @@ const EXCEPTIONS = [
       'Pile de police CSS générique (RevealGrid.tsx, dev-reveal.tsx, _globals.css) : ' +
       '"sans" y est un token isolé par un tiret, donc \\bsans\\b s\'y déclenche ' +
       "sans qu'il s'agisse de français.",
+  },
+  {
+    files: ['src/routes/guide.tsx'],
+    pattern: /const SECTION_IDS = \[[\s\S]*?\] as const/g,
+    reason:
+      "Liste des identifiants d'ancre du guide (`#campagne`, `#cartes`…). Ce " +
+      'sont des fragments d\'URL, pas des libellés : le fichier le dit lui-même ' +
+      '(« Les ids sont stables : ils pilotent les ancres `#<id>` et sont ' +
+      'indépendants de la langue. Les libellés viennent de ' +
+      '`guide:sectionLabels.<id>` »). Les traduire casserait les liens ' +
+      'existants vers le guide. 2 occurrences avant correction.',
+  },
+  {
+    files: ['src/routes/discord.tsx'],
+    pattern: /\bcode=(?:\{`[\s\S]*?`\}|"[^"\n]*"|'[^'\n]*')/g,
+    reason:
+      "Blocs de code d'exemple du bot Discord (prop `code` de `<CodeBlock>`, " +
+      'utilisée nulle part ailleurs dans le dépôt — vérifié). Ce sont des ' +
+      'sources JavaScript que le lecteur copie-colle pour faire tourner SON ' +
+      'bot : les `.setDescription(\'Tire une capsule Gachapon\')`, les ' +
+      "`editReply('❌ Erreur lors du tirage.')` et les commentaires `// …` " +
+      "qu'ils contiennent sont la copie du BOT, pas celle du site — le bot " +
+      'Gachapon est francophone, et traduire ces exemples ferait livrer au ' +
+      "lecteur un bot dont les réponses ne correspondent plus à ce qu'il lit. " +
+      '26 occurrences avant correction. **La prose autour reste scannée** : ' +
+      "seule la valeur de l'attribut `code` est masquée, pas le fichier.",
   },
 ]
 
@@ -446,15 +567,54 @@ function tryConsumeRegex(source, start) {
  *     serait signalé comme français en dur) plutôt qu'un faux négatif ; ce
  *     dépôt est formaté par Biome, qui insère systématiquement un espace
  *     avant `//`, donc ce cas ne devrait pas se produire dans du code réel.
- *   - **template literals** : le contenu entre backticks est traité comme
- *     opaque, donc un commentaire à l'intérieur d'une expression `${...}`
- *     imbriquée n'est pas retiré. Un cas EXISTE dans ce dépôt —
- *     `components/shared/tcg-card/TcgCardFace.tsx:354`, 4 occurrences
- *     signalées à tort. Faux positif assumé, pas un faux négatif.
+ *   - **template literals** : le TEXTE entre backticks est recopié tel quel
+ *     (c'est du contenu affichable, on veut pouvoir le détecter), mais le
+ *     contenu d'une INTERPOLATION `${…}` est, lui, du vrai code — et depuis
+ *     la tâche 12 il repasse en état `code`, donc les commentaires qui s'y
+ *     trouvent sont retirés comme partout ailleurs. Voir « LES COMMENTAIRES
+ *     DANS UNE INTERPOLATION » plus bas.
  * Le troisième angle mort initial (`//` à l'intérieur d'un littéral regex,
  * `/^\/\//`) est traité via `canStartRegex`/`tryConsumeRegex` ci-dessus —
  * heuristique basée sur le dernier token, pas un vrai lexer JS, dont les
  * limites sont documentées sur `canStartRegex`.
+ *
+ * ---
+ *
+ * LES COMMENTAIRES DANS UNE INTERPOLATION (corrigé, tâche 12). Le cas réel,
+ * et le seul du dépôt : `components/shared/tcg-card/TcgCardFace.tsx:354`,
+ *
+ *     className={`absolute … ${
+ *       // Sur une vignette compacte (52 px dans le bandeau d'équipe), un
+ *       // retrait de 12 px mange le quart de la largeur : on serre le coin.
+ *       compact ? '…' : '…'
+ *     }`}
+ *
+ * L'ancien tokenizer traitait tout l'intérieur des backticks comme opaque :
+ * ces deux lignes de commentaire étaient scannées comme du texte affiché et
+ * produisaient **4 occurrences** (« Sur », « une », « dans », un accent),
+ * toutes fausses. Elles étaient documentées juste au-dessus comme un faux
+ * positif assumé ; elles ne le sont plus.
+ *
+ * La correction : une pile de contextes. `${` dans un `template` empile le
+ * contexte et repasse en `code` (avec sa propre profondeur d'accolades) ;
+ * le `}` qui referme l'interpolation dépile et rend l'état `template`. Les
+ * templates imbriqués dans une interpolation fonctionnent par récurrence de
+ * la même pile.
+ *
+ * CE QUE CETTE CORRECTION NE FAIT PAS, et c'est volontaire : un `//` dans le
+ * TEXTE d'un template (hors `${…}`) n'est toujours PAS traité comme un
+ * commentaire — parce qu'il n'en est pas un. C'est ce qui garde le garde-fou
+ * mordant sur `routes/discord.tsx`, dont les blocs de code d'exemple sont
+ * des templates dont les `// …` sont du texte AFFICHÉ à l'écran (ils sont
+ * couverts, eux, par une exception déclarée, pas par le tokenizer).
+ *
+ * Direction du risque, mesurée : le comptage d'accolades de l'état `code`
+ * peut être désynchronisé par une accolade NUE dans du texte JSX brut
+ * (`<p>}</p>`). Un `}` en trop est ignoré quand la profondeur est déjà à 0
+ * et qu'aucune interpolation n'est ouverte ; un `{` en trop ferait rater la
+ * fin d'une interpolation, donc scannerait du code comme du texte — un faux
+ * POSITIF bruyant, jamais un faux négatif silencieux. Aucun cas dans ce
+ * dépôt (401 fichiers, scan complet après correction).
  *
  * ---
  *
@@ -501,6 +661,12 @@ function tryConsumeRegex(source, start) {
 function stripComments(source) {
   let out = ''
   let state = 'code'
+  // Pile des contextes imbriqués `template` / `${…}`. Chaque entrée mémorise
+  // l'état ET la profondeur d'accolades à restaurer en sortant du niveau
+  // courant. Voir la doc ci-dessus (« LES COMMENTAIRES DANS UNE
+  // INTERPOLATION »).
+  const stack = []
+  let braceDepth = 0
   let i = 0
   const n = source.length
 
@@ -537,6 +703,25 @@ function stripComments(source) {
           continue
         }
       }
+      if (c === '{') {
+        braceDepth += 1
+        out += c
+        i += 1
+        continue
+      }
+      if (c === '}') {
+        const top = stack[stack.length - 1]
+        if (braceDepth === 0 && top !== undefined && top.state === 'template') {
+          stack.pop()
+          state = 'template'
+          braceDepth = top.braceDepth
+        } else if (braceDepth > 0) {
+          braceDepth -= 1
+        }
+        out += c
+        i += 1
+        continue
+      }
       if (c === "'") {
         state = 'singleQuote'
         out += c
@@ -550,7 +735,9 @@ function stripComments(source) {
         continue
       }
       if (c === '`') {
+        stack.push({ state: 'code', braceDepth })
         state = 'template'
+        braceDepth = 0
         out += c
         i += 1
         continue
@@ -583,10 +770,39 @@ function stripComments(source) {
       continue
     }
 
-    // singleQuote / doubleQuote / template : on recopie tel quel (c'est le
-    // texte qu'on veut pouvoir détecter), en sautant correctement les
-    // échappements pour ne pas fermer la chaîne trop tôt sur un `\'` etc.
-    const closing = state === 'singleQuote' ? "'" : state === 'doubleQuote' ? '"' : '`'
+    if (state === 'template') {
+      // `${` ouvre une EXPRESSION JS : on repasse en état `code`, donc les
+      // commentaires qui s'y trouvent sont retirés comme partout ailleurs.
+      if (c === '$' && c2 === '{') {
+        stack.push({ state: 'template', braceDepth })
+        state = 'code'
+        braceDepth = 0
+        out += '${'
+        i += 2
+        continue
+      }
+      if (c === '\\') {
+        out += c + c2
+        i += 2
+        continue
+      }
+      if (c === '`') {
+        const top = stack.pop()
+        state = top === undefined ? 'code' : top.state
+        braceDepth = top === undefined ? 0 : top.braceDepth
+        out += c
+        i += 1
+        continue
+      }
+      out += c
+      i += 1
+      continue
+    }
+
+    // singleQuote / doubleQuote : on recopie tel quel (c'est le texte qu'on
+    // veut pouvoir détecter), en sautant correctement les échappements pour ne
+    // pas fermer la chaîne trop tôt sur un `\'` etc.
+    const closing = state === 'singleQuote' ? "'" : '"'
 
     // RESYNCHRONISATION EN FIN DE LIGNE. Une chaîne `'…'` ou `"…"` de JS ne
     // peut PAS contenir un saut de ligne nu : en rencontrer un prouve que ce
@@ -596,8 +812,8 @@ function stripComments(source) {
     // entrer le tokenizer en `singleQuote` pour tout le RESTE DU FICHIER.
     // Même raisonnement que `tryConsumeRegex`, qui rend `null` sur un `\n`
     // pour la même raison. Les backticks, eux, franchissent légitimement les
-    // lignes : l'état `template` n'est pas concerné.
-    if (c === '\n' && state !== 'template') {
+    // lignes : l'état `template` n'est pas concerné (il est traité plus haut).
+    if (c === '\n') {
       state = 'code'
       out += '\n'
       i += 1
@@ -622,14 +838,40 @@ function stripComments(source) {
   return out
 }
 
-function applyExceptions(line) {
-  let masked = line
-  for (const { pattern } of EXCEPTIONS) {
+/**
+ * Remplace une correspondance par du vide de MÊME GÉOMÉTRIE : chaque
+ * caractère devient une espace, sauf les sauts de ligne, conservés tels
+ * quels. Une correspondance multi-lignes (un bloc `code={`…`}`, la liste
+ * `SECTION_IDS`) ne décale donc ni les numéros de ligne ni les colonnes des
+ * occurrences qui restent à signaler ailleurs dans le fichier.
+ */
+function blank(match) {
+  return match.replace(/[^\n]/g, ' ')
+}
+
+/**
+ * Applique, sur la source ENTIÈRE déjà débarrassée de ses commentaires, les
+ * masques structurels puis les exceptions applicables à `relPath` (chemin
+ * relatif à `front/`, séparateurs `/`).
+ *
+ * Retourne la source masquée, à nombre de lignes et de colonnes identique.
+ */
+function applyMasks(source, relPath) {
+  let masked = source
+
+  for (const { pattern } of STRUCTURAL_MASKS) {
     // Un `RegExp` global partagé accumule un `lastIndex` — on le régénère à
-    // chaque appel pour rester sans état entre les lignes.
-    const re = new RegExp(pattern.source, pattern.flags)
-    masked = masked.replace(re, (m) => ' '.repeat(m.length))
+    // chaque appel pour rester sans état entre les fichiers.
+    masked = masked.replace(new RegExp(pattern.source, pattern.flags), blank)
   }
+
+  for (const { pattern, files } of EXCEPTIONS) {
+    if (files !== undefined && !files.includes(relPath)) {
+      continue
+    }
+    masked = masked.replace(new RegExp(pattern.source, pattern.flags), blank)
+  }
+
   return masked
 }
 
@@ -757,8 +999,20 @@ async function resolveTargets(arg) {
 }
 
 async function main() {
-  const arg = process.argv[2]
-  const targets = (await resolveTargets(arg)).filter(
+  const args = process.argv.slice(2)
+  const collected = new Set()
+  if (args.length === 0) {
+    for (const f of await resolveTargets(undefined)) {
+      collected.add(f)
+    }
+  } else {
+    for (const arg of args) {
+      for (const f of await resolveTargets(arg)) {
+        collected.add(f)
+      }
+    }
+  }
+  const targets = [...collected].filter(
     (f) => !isUnder(f, LOCALES_DIR) && path.basename(f) !== 'routeTree.gen.ts',
   )
 
@@ -766,22 +1020,21 @@ async function main() {
   let filesWithViolations = 0
 
   for (const file of targets.sort()) {
+    const rel = path.relative(FRONT_ROOT, file).split(path.sep).join('/')
     const source = await fs.readFile(file, 'utf8')
-    const stripped = stripComments(source)
+    const stripped = applyMasks(stripComments(source), rel)
     const originalLines = source.split('\n')
     const strippedLines = stripped.split('\n')
 
     let fileHasViolation = false
 
     for (let i = 0; i < strippedLines.length; i++) {
-      const maskedLine = applyExceptions(strippedLines[i])
-      const violations = scanLine(originalLines[i] ?? '', maskedLine)
+      const violations = scanLine(originalLines[i] ?? '', strippedLines[i] ?? '')
       for (const v of violations) {
         if (!fileHasViolation) {
           fileHasViolation = true
         }
         violationCount++
-        const rel = path.relative(FRONT_ROOT, file)
         console.error(
           `${rel}:${i + 1}:${v.column}: ${v.kind === 'accent' ? 'caractère accentué' : `mot français "${v.match}"`} — ${v.context}`,
         )
