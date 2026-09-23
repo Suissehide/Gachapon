@@ -160,7 +160,7 @@ export const SEO_ROUTES = [
             { fr: 'Raretés & variantes', en: 'Rarities & variants' },
             { fr: 'Système de pitié', en: 'Pity system' },
             { fr: 'Doublons & poussière', en: 'Duplicates & dust' },
-            { fr: 'Boutique du jour & Vœu', en: 'Daily shop & wishlist' },
+            { fr: 'Boutique du jour & Vœu', en: 'Daily shop & Wishes' },
             { fr: 'Niveaux & XP', en: 'Levels & XP' },
             { fr: 'Arbre de compétences', en: 'Skill tree' },
             { fr: 'Campagne & combats', en: 'Campaign & battles' },
