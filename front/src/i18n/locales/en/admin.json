@@ -472,5 +472,49 @@
       "cancel": "Cancel",
       "cardLabel": "{{rarity}} card"
     }
+  },
+  "translations": {
+    "pageTitle": "Missing translations",
+    "pageSubtitle": "Content missing a language, or whose English text is only a copy of the French — the read-time fallback makes it invisible to players without anyone noticing.",
+    "loading": "Loading…",
+    "emptyTitle": "No missing translation",
+    "emptyBody": "Across the twelve monitored models, no pair has an empty language or English copied from French. Deliberate identities (bare first names, cognates, bilingual templates) are not counted.",
+    "kindOptions": {
+      "all": "All defects",
+      "empty": "Empty language",
+      "identical": "Identical FR/EN"
+    },
+    "entityAllOption": "All ({{count}})",
+    "entityOption": "{{label}} ({{count}})",
+    "entities": {
+      "quest": "Quest",
+      "cardSet": "Card set",
+      "card": "Card",
+      "equipment": "Equipment",
+      "shopItem": "Shop item",
+      "achievement": "Achievement",
+      "skillBranch": "Skill branch",
+      "skillNode": "Skill node",
+      "campaignStage": "Campaign stage",
+      "towerFloor": "Tower floor",
+      "raidBoss": "Raid boss",
+      "reward": "Reward"
+    },
+    "fields": {
+      "name": "Name",
+      "description": "Description",
+      "label": "Label"
+    },
+    "defectIdentical": "English = French",
+    "defectMissingFr": "French missing",
+    "defectMissingEn": "English missing",
+    "columns": {
+      "entity": "Entity",
+      "id": "Identifier",
+      "field": "Field",
+      "defect": "Defect",
+      "availableValue": "Available value"
+    },
+    "emptyValue": "(empty)"
   }
 }

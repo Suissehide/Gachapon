@@ -1,10 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router'
+import type { TFunction } from 'i18next'
 import { CheckCircle2, Languages } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { AdminPageHeader } from '../../components/admin/shared/AdminPageHeader.tsx'
 import { Badge } from '../../components/ui/badge.tsx'
 import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
+import i18n from '../../i18n/index.ts'
 import type { MissingTranslationEntry } from '../../queries/useAdminTranslations.ts'
 import { useAdminMissingTranslations } from '../../queries/useAdminTranslations.ts'
 
@@ -24,57 +27,53 @@ const ALL = 'ALL'
  * API. Les mélanger dans une seule liste noierait les seconds : d'où le
  * filtre, et `empty` par défaut n'aurait pas de sens non plus — on ouvre sur
  * tout, mais chaque ligne dit de quel défaut il s'agit.
+ *
+ * Module scope : `i18n.t` (voir CLAUDE.md, pas de hook hors composant), sûr
+ * ici car un changement de langue recharge toute la page.
  */
 const KIND_OPTIONS = [
-  { value: ALL, label: 'Tous les défauts' },
-  { value: 'empty', label: 'Langue vide' },
-  { value: 'identical', label: 'Identique FR/EN' },
+  { value: ALL, label: i18n.t('admin:translations.kindOptions.all') },
+  { value: 'empty', label: i18n.t('admin:translations.kindOptions.empty') },
+  {
+    value: 'identical',
+    label: i18n.t('admin:translations.kindOptions.identical'),
+  },
 ]
 
 /**
  * Les douze modèles traduits balayés par le back (voir
- * `localized.extension.ts` / `admin-translations.repository.ts`), en
- * français pour l'affichage. Une entité qui n'existe pas dans la réponse ne
- * sort pas du tout dans le filtre — construit dynamiquement plus bas.
+ * `localized.extension.ts` / `admin-translations.repository.ts`) résolus
+ * dynamiquement via `admin:translations.entities.<entity>` — clé construite,
+ * vérifiée à la main : les douze existent en fr/en (voir le rapport de
+ * tâche). Une entité qui n'a pas de clé retombe sur son nom brut, comme
+ * avant cette tâche (avec `ENTITY_LABELS[entity] ?? entity`), et une entité
+ * absente de la réponse ne sort pas du tout dans le filtre.
  */
-const ENTITY_LABELS: Record<string, string> = {
-  quest: 'Quête',
-  cardSet: 'Set de cartes',
-  card: 'Carte',
-  equipment: 'Équipement',
-  shopItem: 'Article boutique',
-  achievement: 'Succès',
-  skillBranch: 'Branche de compétences',
-  skillNode: 'Nœud de compétence',
-  campaignStage: 'Étage de campagne',
-  towerFloor: 'Étage de tour',
-  raidBoss: 'Boss de raid',
-  reward: 'Récompense',
+function entityLabel(t: TFunction<'admin'>, entity: string): string {
+  const key = `translations.entities.${entity}`
+  return i18n.exists(`admin:${key}`) ? t(key) : entity
 }
 
-const FIELD_LABELS: Record<string, string> = {
-  name: 'Nom',
-  description: 'Description',
-  label: 'Libellé',
-}
-
-function entityLabel(entity: string): string {
-  return ENTITY_LABELS[entity] ?? entity
-}
-
-function fieldLabel(field: string): string {
-  return FIELD_LABELS[field] ?? field
+/** Même mécanisme que `entityLabel`, pour les trois champs surveillés. */
+function fieldLabel(t: TFunction<'admin'>, field: string): string {
+  const key = `translations.fields.${field}`
+  return i18n.exists(`admin:${key}`) ? t(key) : field
 }
 
 function rowKey(entry: MissingTranslationEntry): string {
   return `${entry.entity}-${entry.id}-${entry.field}`
 }
 
-function defectLabel(entry: MissingTranslationEntry): string {
+function defectLabel(
+  t: TFunction<'admin'>,
+  entry: MissingTranslationEntry,
+): string {
   if (entry.kind === 'identical') {
-    return 'Anglais = français'
+    return t('translations.defectIdentical')
   }
-  return entry.missingLocale === 'FR' ? 'Français manquant' : 'Anglais manquant'
+  return entry.missingLocale === 'FR'
+    ? t('translations.defectMissingFr')
+    : t('translations.defectMissingEn')
 }
 
 function defectVariant(
@@ -87,6 +86,7 @@ function defectVariant(
 }
 
 function AdminTranslations() {
+  const { t } = useTranslation('admin')
   const { data, isLoading } = useAdminMissingTranslations()
   const [entityFilter, setEntityFilter] = useState<string>(ALL)
   const [kindFilter, setKindFilter] = useState<string>(ALL)
@@ -99,16 +99,22 @@ function AdminTranslations() {
 
   const entityOptions = useMemo(() => {
     const present = Array.from(new Set(entries.map((e) => e.entity))).sort(
-      (a, b) => entityLabel(a).localeCompare(entityLabel(b), 'fr'),
+      (a, b) => entityLabel(t, a).localeCompare(entityLabel(t, b), 'fr'),
     )
     return [
-      { value: ALL, label: `Toutes (${entries.length})` },
+      {
+        value: ALL,
+        label: t('translations.entityAllOption', { count: entries.length }),
+      },
       ...present.map((entity) => ({
         value: entity,
-        label: `${entityLabel(entity)} (${entries.filter((e) => e.entity === entity).length})`,
+        label: t('translations.entityOption', {
+          label: entityLabel(t, entity),
+          count: entries.filter((e) => e.entity === entity).length,
+        }),
       })),
     ]
-  }, [entries])
+  }, [entries, t])
 
   // Changer de défaut peut faire disparaître l'entité sélectionnée : on
   // retombe sur « toutes » plutôt que d'afficher un tableau vide sans
@@ -125,25 +131,23 @@ function AdminTranslations() {
     <div className="flex h-screen flex-col p-8">
       <AdminPageHeader
         icon={Languages}
-        kicker="Contenu"
-        title="Traductions manquantes"
-        subtitle="Contenu dont une langue manque, ou dont l'anglais n'est que la recopie du français — le repli de lecture le rend invisible côté joueur sans que personne ne le sache."
+        kicker={t('common.kicker.content')}
+        title={t('translations.pageTitle')}
+        subtitle={t('translations.pageSubtitle')}
       />
 
       {isLoading ? (
         <div className="flex h-full items-center justify-center text-text-light">
-          Chargement…
+          {t('translations.loading')}
         </div>
       ) : allEntries.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-border bg-card text-center">
           <CheckCircle2 className="h-10 w-10 text-success" />
           <p className="text-base font-semibold text-text">
-            Aucune traduction manquante
+            {t('translations.emptyTitle')}
           </p>
           <p className="max-w-sm text-sm text-text-light">
-            Sur les douze modèles surveillés, aucune paire n'a de langue vide ni
-            d'anglais recopié du français. Les identités volontaires (prénoms
-            nus, cognats, gabarits bilingues) ne sont pas comptées.
+            {t('translations.emptyBody')}
           </p>
         </div>
       ) : (
@@ -154,10 +158,13 @@ function AdminTranslations() {
               onChange={setKindFilter}
               options={KIND_OPTIONS.map((o) => ({
                 ...o,
-                label:
-                  o.value === ALL
-                    ? `${o.label} (${allEntries.length})`
-                    : `${o.label} (${allEntries.filter((e) => e.kind === o.value).length})`,
+                label: t('translations.entityOption', {
+                  label: o.label,
+                  count:
+                    o.value === ALL
+                      ? allEntries.length
+                      : allEntries.filter((e) => e.kind === o.value).length,
+                }),
               }))}
               wrap
             />
@@ -178,11 +185,19 @@ function AdminTranslations() {
             <table className="w-full border-collapse text-left text-sm">
               <thead className="sticky top-0 bg-card">
                 <tr className="border-b border-border text-xs font-semibold uppercase tracking-wide text-text-light">
-                  <th className="px-4 py-3">Entité</th>
-                  <th className="px-4 py-3">Identifiant</th>
-                  <th className="px-4 py-3">Champ</th>
-                  <th className="px-4 py-3">Défaut</th>
-                  <th className="px-4 py-3">Valeur disponible</th>
+                  <th className="px-4 py-3">
+                    {t('translations.columns.entity')}
+                  </th>
+                  <th className="px-4 py-3">{t('translations.columns.id')}</th>
+                  <th className="px-4 py-3">
+                    {t('translations.columns.field')}
+                  </th>
+                  <th className="px-4 py-3">
+                    {t('translations.columns.defect')}
+                  </th>
+                  <th className="px-4 py-3">
+                    {t('translations.columns.availableValue')}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -193,7 +208,7 @@ function AdminTranslations() {
                   >
                     <td className="px-4 py-3">
                       <Badge variant="primary">
-                        {entityLabel(entry.entity)}
+                        {entityLabel(t, entry.entity)}
                       </Badge>
                     </td>
                     <td
@@ -203,11 +218,11 @@ function AdminTranslations() {
                       {entry.id}
                     </td>
                     <td className="px-4 py-3 text-text">
-                      {fieldLabel(entry.field)}
+                      {fieldLabel(t, entry.field)}
                     </td>
                     <td className="px-4 py-3">
                       <Badge variant={defectVariant(entry)}>
-                        {defectLabel(entry)}
+                        {defectLabel(t, entry)}
                       </Badge>
                     </td>
                     <td
@@ -216,7 +231,7 @@ function AdminTranslations() {
                     >
                       {entry.value || (
                         <span className="italic text-text-light/60">
-                          (vide)
+                          {t('translations.emptyValue')}
                         </span>
                       )}
                     </td>

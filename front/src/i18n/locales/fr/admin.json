@@ -472,5 +472,49 @@
       "cancel": "Annuler",
       "cardLabel": "Carte {{rarity}}"
     }
+  },
+  "translations": {
+    "pageTitle": "Traductions manquantes",
+    "pageSubtitle": "Contenu dont une langue manque, ou dont l'anglais n'est que la recopie du français — le repli de lecture le rend invisible côté joueur sans que personne ne le sache.",
+    "loading": "Chargement…",
+    "emptyTitle": "Aucune traduction manquante",
+    "emptyBody": "Sur les douze modèles surveillés, aucune paire n'a de langue vide ni d'anglais recopié du français. Les identités volontaires (prénoms nus, cognats, gabarits bilingues) ne sont pas comptées.",
+    "kindOptions": {
+      "all": "Tous les défauts",
+      "empty": "Langue vide",
+      "identical": "Identique FR/EN"
+    },
+    "entityAllOption": "Toutes ({{count}})",
+    "entityOption": "{{label}} ({{count}})",
+    "entities": {
+      "quest": "Quête",
+      "cardSet": "Set de cartes",
+      "card": "Carte",
+      "equipment": "Équipement",
+      "shopItem": "Article boutique",
+      "achievement": "Succès",
+      "skillBranch": "Branche de compétences",
+      "skillNode": "Nœud de compétence",
+      "campaignStage": "Étage de campagne",
+      "towerFloor": "Étage de tour",
+      "raidBoss": "Boss de raid",
+      "reward": "Récompense"
+    },
+    "fields": {
+      "name": "Nom",
+      "description": "Description",
+      "label": "Libellé"
+    },
+    "defectIdentical": "Anglais = français",
+    "defectMissingFr": "Français manquant",
+    "defectMissingEn": "Anglais manquant",
+    "columns": {
+      "entity": "Entité",
+      "id": "Identifiant",
+      "field": "Champ",
+      "defect": "Défaut",
+      "availableValue": "Valeur disponible"
+    },
+    "emptyValue": "(vide)"
   }
 }
