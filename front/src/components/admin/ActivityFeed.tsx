@@ -72,7 +72,7 @@ const EVENT_META: Record<
         t={t}
         i18nKey="activityFeed.events.PULL_LEGENDARY"
         values={{
-          name: e.user?.username,
+          name: e.user?.username ?? t('activityFeed.fallbackPlayer'),
           cardName: String(
             e.payload?.cardName ?? t('activityFeed.fallbackLegendaryCard'),
           ),
@@ -89,7 +89,7 @@ const EVENT_META: Record<
         t={t}
         i18nKey="activityFeed.events.PULL_EPIC"
         values={{
-          name: e.user?.username,
+          name: e.user?.username ?? t('activityFeed.fallbackPlayer'),
           cardName: String(
             e.payload?.cardName ?? t('activityFeed.fallbackEpicCard'),
           ),
