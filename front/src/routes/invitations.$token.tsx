@@ -129,8 +129,14 @@ function InvitationPage() {
             {error && !wrongAccount && (
               <>
                 <XCircle className="mx-auto mb-4 h-12 w-12 text-destructive" />
+                {/* Le titre porte le message du serveur (déjà résolu par
+                    Accept-Language, catalogue back `team.invitationNotFound` /
+                    `team.invitationExpired`) plutôt qu'une seconde traduction
+                    front — voir revue tâche 11b, round 1, point 1. La
+                    description reste un texte propre au front : le serveur ne
+                    fournit qu'une phrase, pas les deux niveaux de cet écran. */}
                 <h1 className="mb-2 text-2xl font-black text-text">
-                  {t('invitations.notFound.title')}
+                  {error.message}
                 </h1>
                 <p className="text-text-light">
                   {t('invitations.notFound.description')}
