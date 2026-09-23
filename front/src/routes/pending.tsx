@@ -6,6 +6,7 @@ import {
 } from '@tanstack/react-router'
 import { Clock, Mail } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
 import { Button } from '../components/ui/button.tsx'
@@ -19,7 +20,9 @@ export const Route = createFileRoute('/pending')({
   }),
   beforeLoad: ({ search }) => {
     // email reason is accessible without auth (user is not yet logged in)
-    if (search.reason === 'email') return
+    if (search.reason === 'email') {
+      return
+    }
     if (!useAuthStore.getState().isAuthenticated) {
       throw redirect({ to: '/' })
     }
@@ -28,6 +31,7 @@ export const Route = createFileRoute('/pending')({
 })
 
 function Pending() {
+  const { t } = useTranslation('auth')
   const logout = useAuthStore((s) => s.logout)
   const fetchMe = useAuthStore((s) => s.fetchMe)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -40,18 +44,22 @@ function Pending() {
   const [resendSuccess, setResendSuccess] = useState(false)
 
   useEffect(() => {
-    if (cooldown <= 0) return
-    const t = setInterval(() => setCooldown((c) => c - 1), 1000)
-    return () => clearInterval(t)
+    if (cooldown <= 0) {
+      return
+    }
+    const timer = setInterval(() => setCooldown((c) => c - 1), 1000)
+    return () => clearInterval(timer)
   }, [cooldown])
 
   // Polling : détecte la vérification email dans un autre onglet
   useEffect(() => {
-    if (!isEmailReason) return
-    const t = setInterval(async () => {
+    if (!isEmailReason) {
+      return
+    }
+    const timer = setInterval(async () => {
       await fetchMe()
     }, 4000)
-    return () => clearInterval(t)
+    return () => clearInterval(timer)
   }, [isEmailReason, fetchMe])
 
   useEffect(() => {
@@ -61,7 +69,9 @@ function Pending() {
   }, [isAuthenticated, navigate])
 
   const handleResend = () => {
-    if (!email) return
+    if (!email) {
+      return
+    }
     resend(email, {
       onSuccess: () => {
         setResendSuccess(true)
@@ -101,18 +111,23 @@ function Pending() {
         {isEmailReason ? (
           <>
             <h1 className="w-full text-2xl font-black mb-3 text-foreground">
-              Confirme ton adresse
+              {t('pending.emailReason.title')}
             </h1>
             <p className="mb-2 text-sm leading-relaxed text-text-light">
-              Un lien de confirmation a été envoyé à{' '}
-              {email && <strong className="text-text">{email}</strong>}. Clique
-              dessus pour activer ton compte.
+              <Trans
+                t={t}
+                i18nKey="pending.emailReason.description"
+                values={{ email: email ?? '' }}
+                components={{ Strong: <strong className="text-text" /> }}
+              />
             </p>
             <p className="mb-6 text-xs text-text-light">
-              Le lien est valable 24 heures. Vérifie aussi tes spams.
+              {t('pending.emailReason.expiryHint')}
             </p>
             {resendSuccess && (
-              <p className="mb-4 text-xs text-green-400">Email renvoyé !</p>
+              <p className="mb-4 text-xs text-green-400">
+                {t('pending.emailReason.resendSuccess')}
+              </p>
             )}
             <div className="flex flex-col gap-2">
               <Button
@@ -123,21 +138,22 @@ function Pending() {
                 className="w-fit"
               >
                 {cooldown > 0
-                  ? `Renvoyer (${cooldown}s)`
+                  ? t('pending.emailReason.resendButtonCooldown', {
+                      seconds: cooldown,
+                    })
                   : isResending
-                    ? 'Envoi…'
-                    : "Renvoyer l'email"}
+                    ? t('pending.emailReason.resendButtonSending')
+                    : t('pending.emailReason.resendButton')}
               </Button>
             </div>
           </>
         ) : (
           <>
             <h1 className="w-full text-2xl font-black mb-3 text-foreground">
-              Compte en attente
+              {t('pending.accountReason.title')}
             </h1>
             <p className="mb-8 text-sm leading-relaxed text-text-light">
-              Votre compte a été créé mais n'a pas encore été activé. Veuillez
-              contacter un administrateur pour obtenir l'accès au reste du site.
+              {t('pending.accountReason.description')}
             </p>
             <Button
               type="button"
@@ -145,7 +161,7 @@ function Pending() {
               onClick={() => void logout()}
               className="w-fit"
             >
-              Se déconnecter
+              {t('pending.accountReason.logoutButton')}
             </Button>
           </>
         )}
