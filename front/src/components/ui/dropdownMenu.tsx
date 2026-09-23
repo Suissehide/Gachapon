@@ -78,8 +78,15 @@ const DropdownMenuCustomRadioItem = React.forwardRef<
     )}
     {...props}
   >
+    {/* `ItemIndicator` ne rend son contenu que pour l'option sélectionnée du
+        groupe. Sans lui, la pastille s'affichait sur TOUTES les options et le
+        choix courant devenait invisible — la primitive ne remplissait donc pas
+        son office. Elle n'avait jamais servi, ce qui explique que personne ne
+        l'ait vu. */}
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
-      <Dot className="h-4 w-4 fill-current" />
+      <DropdownMenu.ItemIndicator>
+        <Dot className="h-4 w-4 fill-current" />
+      </DropdownMenu.ItemIndicator>
     </span>
     {children}
   </DropdownMenu.RadioItem>

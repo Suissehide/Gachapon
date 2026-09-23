@@ -450,6 +450,19 @@ const STRUCTURAL_MASKS = [
  */
 const EXCEPTIONS = [
   {
+    files: ['src/components/shared/LocaleSwitcher.tsx'],
+    pattern: /const LOCALE_ENDONYMS: Record<Locale, string> = \{[\s\S]*?\}/g,
+    reason:
+      "Noms des langues dans leur propre langue (« Français », « English ») — " +
+      'des endonymes, pas des libellés traduisibles. Les faire passer par les ' +
+      'fichiers de locale rendrait le menu illisible à celui qui en a le plus ' +
+      "besoin : un anglophone arrivé par erreur sur la version française y " +
+      'lirait « Anglais » au lieu de « English ». La convention du Web est ' +
+      "l'endonyme, précisément pour cette raison. 1 occurrence avant " +
+      "l'exception (« Français » ; « English » n'a ni accent ni mot du " +
+      'lexique, il passait déjà).',
+  },
+  {
     pattern: /sans-serif/gi,
     reason:
       'Pile de police CSS générique (RevealGrid.tsx, dev-reveal.tsx, _globals.css) : ' +

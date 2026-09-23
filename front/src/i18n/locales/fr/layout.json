@@ -73,5 +73,8 @@
     "tokensTitle": "Jetons — {{current}}/{{max}}",
     "energyTitle": "Énergie — {{current}}/{{max}}",
     "nextInSuffix": " · prochain dans {{timer}}"
+  },
+  "localeSwitcher": {
+    "menuTitle": "Changer de langue"
   }
 }

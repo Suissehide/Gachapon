@@ -73,5 +73,8 @@
     "tokensTitle": "Tokens — {{current}}/{{max}}",
     "energyTitle": "Energy — {{current}}/{{max}}",
     "nextInSuffix": " · next in {{timer}}"
+  },
+  "localeSwitcher": {
+    "menuTitle": "Change language"
   }
 }
