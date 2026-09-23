@@ -7,6 +7,7 @@ import {
 } from '../../../main/domain/raid/raid-rules'
 import { buildTestApp } from '../../helpers/build-test-app'
 import { setCombatTeam } from '../../helpers/combat-team-fixture'
+import { overrideConfig } from '../../helpers/config-overrides'
 
 /**
  * Boss volontairement inoffensif et sans défense : le joueur ne meurt
@@ -33,6 +34,7 @@ const HUGE_HP_PER_MEMBER = 100_000_000
 
 describe('routes de raid', () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>
+  let restoreConfig: () => Promise<void>
   let prisma: any
   let cookiesA: string
   let cookiesB: string
@@ -71,14 +73,20 @@ describe('routes de raid', () => {
     const { postgresOrm, configService } = (app as any).iocContainer
     prisma = postgresOrm.prisma
 
-    await configService.set('raid.baseHpPerMember', HUGE_HP_PER_MEMBER)
-    await configService.set('raid.attacksPerDay', 2)
-
     // Cette suite couvre le raid nominal, pas la difficulté progressive
     // (raid-difficulte.test.ts s'en charge) : plancher et bonus neutralisés
     // pour que `maxHp` reste `HUGE_HP_PER_MEMBER × effectif`.
-    await configService.set('raid.minMembers', 1)
-    await configService.set('raid.levelHpBonusPct', 0)
+    //
+    // `GlobalConfig` est partagée par tout le run : ces quatre clés sont
+    // rendues dans l'`afterAll`, faute de quoi `economy-config.e2e.test.ts`
+    // tombe ou passe selon l'ordre de Jest — qui dépend de la taille des
+    // fichiers, donc bascule dès qu'une suite grossit.
+    restoreConfig = await overrideConfig(configService, {
+      'raid.baseHpPerMember': HUGE_HP_PER_MEMBER,
+      'raid.attacksPerDay': 2,
+      'raid.minMembers': 1,
+      'raid.levelHpBonusPct': 0,
+    })
 
     const element = raidElementForWeek(raidWeekKey(new Date()))
     await prisma.raidBoss.upsert({
@@ -160,6 +168,7 @@ describe('routes de raid', () => {
   })
 
   afterAll(async () => {
+    await restoreConfig()
     await app.close()
   })
 
