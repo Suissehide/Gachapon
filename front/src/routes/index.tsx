@@ -6,9 +6,9 @@ import { useTranslation } from 'react-i18next'
 import { FAQ_ITEMS } from '../../scripts/faq-items.mjs'
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
 import { SeoHead } from '../components/shared/SeoHead.tsx'
-import { currentLocale } from '../i18n/index.ts'
 import { Button } from '../components/ui/button.tsx'
 import { Card } from '../components/ui/card.tsx'
+import { currentLocale } from '../i18n/index.ts'
 import { useAuthDialogStore } from '../stores/authDialog.store'
 
 export const Route = createFileRoute('/')({
