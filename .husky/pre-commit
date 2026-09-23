@@ -1,6 +1,7 @@
 #!/bin/sh
 # Lightweight pre-commit: Biome on staged files only, plus back unit tests
-# when back/ changes. E2E tests need Postgres — they stay in CI / `npm run validate`.
+# when back/ changes, plus the i18n guards when the front UI changes.
+# E2E tests need Postgres — they stay in CI / `npm run validate`.
 
 staged=$(git diff --cached --name-only --diff-filter=ACMR)
 
@@ -19,4 +20,18 @@ if [ -n "$front_ts" ]; then
   echo "pre-commit(front): biome (fichiers stagés)"
   # shellcheck disable=SC2086
   (cd front && npx biome lint $front_ts) || exit 1
+fi
+
+# Garde-fous i18n (parité fr/en, existence des clés, français en dur, auto-test
+# des garde-fous eux-mêmes). Contrairement à Biome ci-dessus, ces quatre scripts
+# balaient TOUT `front/src/` : ils ne savent pas travailler par fichier, et une
+# clé supprimée d'un JSON casse un appel situé dans un fichier non stagé. Le
+# déclencheur, lui, reste étroit — rien ne tourne si le commit ne touche pas à
+# l'interface. Coût mesuré : ~0,8 s. Les faire tomber, c'est livrer une clé
+# brute à l'écran : `fallbackLng: false` + `parseMissingKeyHandler: (k) => k`
+# n'affichent ni erreur ni avertissement.
+front_i18n=$(echo "$staged" | grep -E '^front/(src/|scripts/(check-i18n|i18n-fixtures/))')
+if [ -n "$front_i18n" ]; then
+  echo "pre-commit(front): garde-fous i18n"
+  (cd front && npm run --silent check:i18n) || exit 1
 fi
