@@ -49,6 +49,15 @@ export const EFFECT_OPTIONS = EFFECT_TYPES.map((t) => ({ value: t, label: t }))
 // pour v = 0), pluriel au-delà — i18next choisit `_one` pour v = 0 ou 1 en
 // français (catégorie CLDR "one" = i ∈ {0,1}) et seulement pour v = 1 en
 // anglais, ce qui correspond à ce comportement dans les deux langues.
+//
+// Les quatre clés plurielles de ce bloc (TOKEN_VAULT, PITY_BOOST,
+// WISHLIST_SLOTS, ENERGY_PACK_CAP) passent DEUX options pour une seule
+// valeur, et c'est voulu : `count` choisit la forme grammaticale
+// (`_one`/`_other`), `value` alimente le `{{value}}` du texte. `count` seul
+// affichait « +{{value}} jetons » à l'écran — i18next n'interpole jamais
+// `{{value}}` depuis `count`. Garde-fou : `check-i18n-keys.mjs` compare
+// désormais les `{{var}}` de la valeur traduite aux clés de l'objet
+// d'options du site d'appel.
 export const EFFECT_FORMATTERS: Record<string, (v: number) => string> = {
   REGEN: (v) => i18n.t('skills:formatters.REGEN', { value: v }),
   LUCK: (v) =>
@@ -59,7 +68,8 @@ export const EFFECT_FORMATTERS: Record<string, (v: number) => string> = {
       }),
     }),
   DUST_HARVEST: (v) => i18n.t('skills:formatters.DUST_HARVEST', { value: v }),
-  TOKEN_VAULT: (v) => i18n.t('skills:formatters.TOKEN_VAULT', { count: v }),
+  TOKEN_VAULT: (v) =>
+    i18n.t('skills:formatters.TOKEN_VAULT', { count: v, value: v }),
   FREE_PULL_CHANCE: (v) =>
     i18n.t('skills:formatters.FREE_PULL_CHANCE', { value: v }),
   MULTI_TOKEN_CHANCE: (v) =>
@@ -68,12 +78,13 @@ export const EFFECT_FORMATTERS: Record<string, (v: number) => string> = {
     i18n.t('skills:formatters.GOLDEN_BALL_CHANCE', { value: v }),
   SHOP_DISCOUNT: (v) => i18n.t('skills:formatters.SHOP_DISCOUNT', { value: v }),
   PULL_XP_BONUS: (v) => i18n.t('skills:formatters.PULL_XP_BONUS', { value: v }),
-  PITY_BOOST: (v) => i18n.t('skills:formatters.PITY_BOOST', { count: v }),
+  PITY_BOOST: (v) =>
+    i18n.t('skills:formatters.PITY_BOOST', { count: v, value: v }),
   VARIANT_LUCK: (v) => i18n.t('skills:formatters.VARIANT_LUCK', { value: v }),
   DAILY_SHOP_SLOT: (v) =>
     i18n.t('skills:formatters.DAILY_SHOP_SLOT', { value: v }),
   WISHLIST_SLOTS: (v) =>
-    i18n.t('skills:formatters.WISHLIST_SLOTS', { count: v }),
+    i18n.t('skills:formatters.WISHLIST_SLOTS', { count: v, value: v }),
   PC_VAULT: (v) => i18n.t('skills:formatters.PC_VAULT', { value: v }),
   PC_REGEN: (v) => i18n.t('skills:formatters.PC_REGEN', { value: v }),
   SWEEP_COST: (v) => i18n.t('skills:formatters.SWEEP_COST', { value: v }),
@@ -93,7 +104,7 @@ export const EFFECT_FORMATTERS: Record<string, (v: number) => string> = {
   TOKEN_OVERFLOW_DUST: (v) =>
     i18n.t('skills:formatters.TOKEN_OVERFLOW_DUST', { value: v }),
   ENERGY_PACK_CAP: (v) =>
-    i18n.t('skills:formatters.ENERGY_PACK_CAP', { count: v }),
+    i18n.t('skills:formatters.ENERGY_PACK_CAP', { count: v, value: v }),
   WISHLIST_PULL_CHANCE: (v) =>
     i18n.t('skills:formatters.WISHLIST_PULL_CHANCE', { value: v }),
 }
