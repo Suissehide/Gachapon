@@ -46,6 +46,7 @@ import {
   CAMPAIGN_TEAM_KEY,
   CAMPAIGN_TEAM_LABEL,
 } from '../../constants/combatTeam.constant.ts'
+import { useLevelUpCelebration } from '../../hooks/useLevelUpCelebration.ts'
 import i18n, { currentLocale } from '../../i18n/index.ts'
 import { formatPct } from '../../libs/utils.ts'
 import { useCampaign, useSweepStage } from '../../queries/useCampaign.ts'
@@ -109,6 +110,7 @@ function CampaignPage() {
   const team = useCombatTeam(CAMPAIGN_TEAM_KEY)
   const points = useCombatPoints()
   const sweep = useSweepStage()
+  const celebrateLevelUp = useLevelUpCelebration()
 
   const [activeChapter, setActiveChapter] = useState<number | null>(null)
   const [prep, setPrep] = useState<CampaignStage | null>(null)
@@ -200,6 +202,9 @@ function CampaignPage() {
         onSuccess: (result) => {
           setSweepResult(result)
           setPrep(null)
+          // Pas d'animation à attendre : la fenêtre de balayage s'ouvre avec
+          // la réponse, la célébration de niveau peut partir tout de suite.
+          celebrateLevelUp({ ...result, xp: result.totalXp })
         },
       },
     )

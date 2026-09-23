@@ -122,6 +122,11 @@ export interface TowerSweepResult {
   totalGold: number
   totalDust: number
   totalXp: number
+  // État du joueur AVANT que l'XP du balayage ne soit créditée — de quoi
+  // laisser le front détecter la montée de niveau et jouer la célébration,
+  // exactement comme `TowerBattleRewards` le permet au combat unique.
+  xpBefore: number
+  levelBefore: number
   equipmentDrops: TowerEquipmentDrop[]
 }
 
@@ -635,7 +640,7 @@ export class TowerDomain {
           const totalGold = bonused.gold * runs
           const totalDust = farm.dust * runs
           const totalXp = bonused.xp * runs
-          await this.#applyRewards(
+          const { xpBefore, levelBefore } = await this.#applyRewards(
             tx,
             userId,
             totalGold,
@@ -648,7 +653,15 @@ export class TowerDomain {
             effects,
           )
 
-          return { runs, totalGold, totalDust, totalXp, equipmentDrops }
+          return {
+            runs,
+            totalGold,
+            totalDust,
+            totalXp,
+            xpBefore,
+            levelBefore,
+            equipmentDrops,
+          }
         },
         { isolationLevel: 'Serializable' },
       )

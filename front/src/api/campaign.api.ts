@@ -87,6 +87,10 @@ export type SweepResult = {
   totalGold: number
   totalDust: number
   totalXp: number
+  // État du joueur avant que l'XP du balayage ne soit créditée, pour détecter
+  // la montée de niveau (cf. useLevelUpCelebration).
+  xpBefore: number
+  levelBefore: number
   equipmentDrops: EquipmentDrop[]
   cardDrops: CardDrop[]
 }

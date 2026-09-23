@@ -12,7 +12,7 @@ import {
   Trophy,
 } from 'lucide-react'
 import { Dialog } from 'radix-ui'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { TeamUnit } from '../../api/combat.api.ts'
@@ -48,6 +48,7 @@ import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
 import type { CardElement } from '../../constants/card.constant.ts'
 import { ELEMENT_LABELS } from '../../constants/card.constant.ts'
 import { towerTeamKey } from '../../constants/combatTeam.constant.ts'
+import { useLevelUpCelebration } from '../../hooks/useLevelUpCelebration.ts'
 import i18n from '../../i18n/index.ts'
 import { RARITY_COLOR_VAR, RARITY_LABEL_FR } from '../../libs/rarity.ts'
 import { useCombatPoints } from '../../queries/useCombatPoints.ts'
@@ -77,6 +78,7 @@ function TowerFloorsPage() {
   const team = useCombatTeam(teamKey)
   const battle = useTowerBattle()
   const sweep = useTowerSweep()
+  const celebrateLevelUp = useLevelUpCelebration()
 
   const [editorOpen, setEditorOpen] = useState(false)
   const [result, setResult] = useState<TowerBattleResult | null>(null)
@@ -115,8 +117,29 @@ function TowerFloorsPage() {
 
   const handleSweep = (floor: number, runs: number) => {
     setPrep(null)
-    sweep.mutate({ element, floor, runs }, { onSuccess: setSweepResult })
+    sweep.mutate(
+      { element, floor, runs },
+      {
+        onSuccess: (res) => {
+          setSweepResult(res)
+          // Pas d'animation à attendre ici : la fenêtre de balayage s'ouvre
+          // avec la réponse, la célébration peut donc partir tout de suite.
+          celebrateLevelUp({ ...res, xp: res.totalXp })
+        },
+      },
+    )
   }
+
+  // Célébration de montée de niveau une fois l'animation finie et la fenêtre
+  // de résultat ouverte — même temporalité que la campagne, pour que
+  // LevelUpOverlay (z-[200]) passe par-dessus la fenêtre et non par-dessus la
+  // scène de combat.
+  useEffect(() => {
+    if (!(sceneDone && result?.won && result.rewards)) {
+      return
+    }
+    celebrateLevelUp(result.rewards)
+  }, [sceneDone, result, celebrateLevelUp])
 
   const closeResult = () => {
     setResult(null)

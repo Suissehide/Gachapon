@@ -37,6 +37,7 @@ import { PageShell } from '../../components/shared/PageShell.tsx'
 import { Button } from '../../components/ui/button.tsx'
 import { Popup, PopupContent } from '../../components/ui/popup.tsx'
 import { CAMPAIGN_TEAM_KEY } from '../../constants/combatTeam.constant.ts'
+import { useLevelUpCelebration } from '../../hooks/useLevelUpCelebration.ts'
 import i18n, { currentLocale } from '../../i18n/index.ts'
 import { isApiError } from '../../libs/httpErrorHandler.ts'
 import { formatNumber } from '../../libs/utils.ts'
@@ -48,9 +49,7 @@ import {
   useEconomyConfig,
 } from '../../queries/useEconomyConfig.ts'
 import { useAuthStore } from '../../stores/auth.store.ts'
-import { useLevelUpStore } from '../../stores/levelUp.store.ts'
-import { computeLevel, xpForLevel } from '../../utils/level.ts'
-import { levelUpReward } from '../../utils/levelRewards.ts'
+import { xpForLevel } from '../../utils/level.ts'
 
 // Chapter titles — read from the shared `combat:campaign.chapterTitles.<n>`
 // keys, also consumed by campaign.tsx's chapterMeta(). A single i18n source
@@ -102,8 +101,7 @@ function BattlePage() {
   const attack = useAttackStage(stageId, teamReady)
   const result = attack.data ?? null
 
-  const triggerLevelUp = useLevelUpStore((s) => s.triggerLevelUp)
-  const { data: economy = DEFAULT_ECONOMY } = useEconomyConfig()
+  const celebrateLevelUp = useLevelUpCelebration()
 
   // Find the stage's label + chapter title from the campaign snapshot so the
   // victory subtitle can read "NIVEAU 2-4 · FORÊT DES MURMURES".
@@ -140,10 +138,10 @@ function BattlePage() {
   }, [showResult])
 
   // Fire the player level-up celebration once the victory panel is shown. The
-  // combat XP can push the player over a level threshold; unlike the gacha
-  // flow, nothing else triggers it, so we detect it here from the battle
-  // rewards (xpBefore/levelBefore) and let LevelUpOverlay (z-[200]) render on
-  // top of the victory popup.
+  // combat XP can push the player over a level threshold; nothing else
+  // triggers it, so we detect it here from the battle rewards
+  // (xpBefore/levelBefore) and let LevelUpOverlay (z-[200]) render on top of
+  // the victory popup.
   useEffect(() => {
     if (!showResult) {
       return
@@ -152,12 +150,8 @@ function BattlePage() {
     if (!(result?.won && rewards)) {
       return
     }
-    const oldLevel = rewards.levelBefore
-    const newLevel = computeLevel(rewards.xpBefore + rewards.xp, economy.xp)
-    if (newLevel > oldLevel) {
-      triggerLevelUp(newLevel, levelUpReward(oldLevel, newLevel, economy.xp))
-    }
-  }, [showResult, result, economy, triggerLevelUp])
+    celebrateLevelUp(rewards)
+  }, [showResult, result, celebrateLevelUp])
 
   const handleReplay = () => {
     setShowResult(false)

@@ -505,6 +505,11 @@ describe('Campaign routes', () => {
   })
 
   it('POST /sweep — 3 runs of farm rewards', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+    const before = await postgresOrm.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { xp: true, level: true },
+    })
     const res = await app.inject({
       method: 'POST',
       url: `/campaign/stages/${stage1Id}/sweep`,
@@ -517,11 +522,18 @@ describe('Campaign routes', () => {
       totalGold: number
       totalDust: number
       totalXp: number
+      xpBefore: number
+      levelBefore: number
     }
     expect(body.runs).toBe(3)
     expect(body.totalGold).toBe(60)
     expect(body.totalDust).toBe(9)
     expect(body.totalXp).toBe(9)
+    // L'état d'AVANT gain voyage avec la réponse : sans lui le front ne peut
+    // pas savoir que le balayage a fait passer un niveau, et la célébration
+    // ne se jouait qu'au tirage de cartes.
+    expect(body.xpBefore).toBe(before.xp)
+    expect(body.levelBefore).toBe(before.level)
   })
 
   it('POST /sweep on stage 2 — never drops a tower-slot equipment (G1)', async () => {

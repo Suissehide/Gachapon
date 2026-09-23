@@ -125,6 +125,8 @@ export const sweepResponseSchema = z.object({
   totalGold: z.number().int(),
   totalDust: z.number().int(),
   totalXp: z.number().int(),
+  xpBefore: z.number().int(),
+  levelBefore: z.number().int(),
   equipmentDrops: z.array(equipmentDropSchema),
   cardDrops: z.array(cardDropSchema),
 })

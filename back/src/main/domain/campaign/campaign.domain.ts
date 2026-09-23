@@ -669,6 +669,11 @@ export class CampaignDomain {
     totalGold: number
     totalDust: number
     totalXp: number
+    // État du joueur AVANT que l'XP du balayage ne soit créditée — de quoi
+    // laisser le front détecter la montée de niveau et jouer la célébration,
+    // comme `BattleRewards` le permet au combat unique.
+    xpBefore: number
+    levelBefore: number
     equipmentDrops: EquipmentDropPayload[]
     cardDrops: CardDropPayload[]
   }> {
@@ -936,6 +941,8 @@ export class CampaignDomain {
             totalGold,
             totalDust,
             totalXp,
+            xpBefore: userBefore?.xp ?? 0,
+            levelBefore: oldLevel,
             equipmentDrops,
             cardDrops,
           }

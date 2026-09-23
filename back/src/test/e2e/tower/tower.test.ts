@@ -711,6 +711,11 @@ describe('routes de tour', () => {
   })
 
   it('POST /tower/FIRE/1/sweep — 3 passages de farm, 3 pièces garanties', async () => {
+    const { postgresOrm } = (app as any).iocContainer
+    const before = await postgresOrm.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { xp: true, level: true },
+    })
     const res = await app.inject({
       method: 'POST',
       url: '/tower/FIRE/1/sweep',
@@ -723,6 +728,8 @@ describe('routes de tour', () => {
       totalGold: number
       totalDust: number
       totalXp: number
+      xpBefore: number
+      levelBefore: number
       equipmentDrops: {
         userEquipmentId: string
         rarity: string
@@ -736,6 +743,11 @@ describe('routes de tour', () => {
     expect(body.totalGold).toBe(60)
     expect(body.totalDust).toBe(15)
     expect(body.totalXp).toBe(9)
+    // L'état d'AVANT gain voyage avec la réponse : sans lui le front ne peut
+    // pas savoir que le balayage a fait passer un niveau, et la célébration
+    // ne se jouait qu'au tirage de cartes.
+    expect(body.xpBefore).toBe(before.xp)
+    expect(body.levelBefore).toBe(before.level)
     // La tour garantit UNE pièce par passage — pas un tirage à chance comme
     // la campagne : autant de pièces que de passages, jamais moins.
     expect(body.equipmentDrops).toHaveLength(3)
