@@ -1,9 +1,11 @@
 // Types de faq-items.mjs.
 
+import type { Localized } from './seo-routes.d.mts'
+
 export type FaqItem = {
-  q: string
+  q: Localized
   /** Texte brut, sans balises. */
-  a: string
+  a: Localized
 }
 
 export declare const FAQ_ITEMS: FaqItem[]

@@ -1,11 +1,21 @@
 <!doctype html>
 <html lang="en">
   <!--
-    lang par défaut : posé en dur ici pour l'instant très court avant que
+    Ce fichier est DEUX choses :
+      - le gabarit des 14 pages prérendues par scripts/prerender-seo.mjs, qui
+        en réécrit le `lang`, le titre, la description, le canonical, les
+        `hreflang`, og:locale et le JSON-LD par arbre (dist/fr, dist/en) ;
+      - une fois le build passé, le fallback SPA que nginx sert pour toute
+        route non prérendue.
+    Dans ce second rôle, `lang="en"` tient l'instant très court avant que
     src/main.tsx ne prenne la main et l'écrase avec la locale résolue depuis
     l'URL (document.documentElement.lang = locale). "en" et non "fr" parce que
-    c'est la langue servie par défaut (voir CLAUDE.md / spec bilingue) ; le
-    prerender SEO du lot 3 écrira un lang correct par arbre dist/fr, dist/en.
+    c'est la langue servie par défaut (voir CLAUDE.md / spec bilingue).
+
+    Le domaine écrit ici est celui de SITE_ORIGIN dans scripts/seo-routes.mjs :
+    prerender-seo.mjs s'en sert comme chaîne à remplacer quand la variable
+    d'environnement SITE_ORIGIN surcharge l'origine (staging). Les deux doivent
+    rester identiques, sinon la surcharge ne remplace plus rien.
   -->
   <head>
     <meta charset="UTF-8" />
@@ -14,16 +24,16 @@
     <title>Gachapon</title>
     <meta name="description" content="Gachapon est un jeu de cartes à collectionner en ligne inspiré des capsules japonaises. Tire des capsules, découvre des cartes rares et construis ta collection." />
     <meta name="theme-color" content="#0c0a09" />
-    <link rel="canonical" href="https://gachapon.qwetle.fr/" />
+    <link rel="canonical" href="https://playgachapon.com/" />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Gachapon" />
     <meta property="og:title" content="Gachapon" />
     <meta property="og:description" content="Gachapon est un jeu de cartes à collectionner en ligne inspiré des capsules japonaises. Tire des capsules, découvre des cartes rares et construis ta collection." />
-    <meta property="og:url" content="https://gachapon.qwetle.fr/" />
+    <meta property="og:url" content="https://playgachapon.com/" />
     <meta property="og:locale" content="fr_FR" />
-    <meta property="og:image" content="https://gachapon.qwetle.fr/og-image.png" />
+    <meta property="og:image" content="https://playgachapon.com/og-image.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -33,7 +43,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Gachapon" />
     <meta name="twitter:description" content="Gachapon est un jeu de cartes à collectionner en ligne inspiré des capsules japonaises. Tire des capsules, découvre des cartes rares et construis ta collection." />
-    <meta name="twitter:image" content="https://gachapon.qwetle.fr/og-image.png" />
+    <meta name="twitter:image" content="https://playgachapon.com/og-image.png" />
 
     <!-- Structured data — lisible par Google sans exécution du JS de l'app -->
     <script type="application/ld+json">
@@ -42,32 +52,32 @@
       "@graph": [
         {
           "@type": "Organization",
-          "@id": "https://gachapon.qwetle.fr/#organization",
+          "@id": "https://playgachapon.com/#organization",
           "name": "Gachapon",
-          "url": "https://gachapon.qwetle.fr/",
-          "logo": "https://gachapon.qwetle.fr/og-image.png",
+          "url": "https://playgachapon.com/",
+          "logo": "https://playgachapon.com/og-image.png",
           "sameAs": [
             "https://discord.gg/gachapon"
           ]
         },
         {
           "@type": "WebSite",
-          "@id": "https://gachapon.qwetle.fr/#website",
-          "url": "https://gachapon.qwetle.fr/",
+          "@id": "https://playgachapon.com/#website",
+          "url": "https://playgachapon.com/",
           "name": "Gachapon",
           "description": "Jeu de cartes à collectionner en ligne inspiré des capsules japonaises.",
           "inLanguage": "fr-FR",
-          "publisher": { "@id": "https://gachapon.qwetle.fr/#organization" }
+          "publisher": { "@id": "https://playgachapon.com/#organization" }
         },
         {
           "@type": "VideoGame",
           "name": "Gachapon",
-          "url": "https://gachapon.qwetle.fr/",
+          "url": "https://playgachapon.com/",
           "applicationCategory": "Game",
           "operatingSystem": "Web",
           "inLanguage": "fr-FR",
           "genre": ["Jeu de cartes", "Collection", "Gacha"],
-          "publisher": { "@id": "https://gachapon.qwetle.fr/#organization" },
+          "publisher": { "@id": "https://playgachapon.com/#organization" },
           "offers": {
             "@type": "Offer",
             "price": "0",
@@ -78,7 +88,7 @@
     }
     </script>
 
-    <script defer src="https://umami.qwetle.fr/script.js" data-website-id="b78a77d2-2dcc-4000-9cc1-1d04b0ffdd30" data-domains="gachapon.qwetle.fr"></script>
+    <script defer src="https://umami.qwetle.fr/script.js" data-website-id="b78a77d2-2dcc-4000-9cc1-1d04b0ffdd30" data-domains="playgachapon.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Figtree:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
