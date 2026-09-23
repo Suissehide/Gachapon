@@ -611,5 +611,94 @@
       "title": "Cartes jamais tirées",
       "empty": "Toutes les cartes ont été tirées au moins une fois."
     }
+  },
+  "health": {
+    "pageTitle": "Santé système",
+    "lastCheck": "Dernière vérification : {{time}} — rafraîchi toutes les 15 s",
+    "checking": "Vérification en cours…",
+    "statusOk": "Opérationnel",
+    "statusDegraded": "Dégradé",
+    "statusDown": "Hors service",
+    "services": {
+      "postgres": "PostgreSQL",
+      "redis": "Redis",
+      "storage": "MinIO (stockage)"
+    },
+    "pingLatency": "latence du ping",
+    "websocket": "WebSocket",
+    "activeConnections": "connexions actives",
+    "uptime": "Uptime",
+    "sinceLastRestart": "depuis le dernier redémarrage",
+    "nodeMemory": "Mémoire Node",
+    "heapUsedRss": "heap utilisé — RSS {{rss}}",
+    "uptimeDays": "{{d}}j {{h}}h {{m}}min",
+    "uptimeHours": "{{h}}h {{m}}min",
+    "uptimeMinutes": "{{m}}min",
+    "mbUnit": "{{value}} Mo"
+  },
+  "combatDebug": {
+    "pageTitle": "Combat — Debug Battle",
+    "pageSubtitle": "Simule un combat libre pour tester le balancing.",
+    "teamALabel": "Équipe A",
+    "teamBLabel": "Équipe B",
+    "seedLabel": "Seed",
+    "timeoutLabel": "Timeout (turns)",
+    "simulating": "Simulation…",
+    "run": "Lancer",
+    "errorPrefix": "Erreur : {{message}}",
+    "addUnit": "Ajouter",
+    "removeUnit": "Supprimer",
+    "hpLabel": "PV",
+    "atkLabel": "ATQ",
+    "defLabel": "DEF",
+    "spdLabel": "VIT",
+    "patternLabel": "Pattern",
+    "passiveLabel": "Passive",
+    "passiveNone": "(none)",
+    "tierLabel": "Palier",
+    "emptyTeam": "Aucune unité — ajoute-en au moins une.",
+    "result": {
+      "teamAWins": "Équipe A gagne",
+      "teamBWins": "Équipe B gagne",
+      "timeout": "Timeout",
+      "actionsCount": "{{count}} actions",
+      "animationTab": "Animation",
+      "logTab": "Log JSON"
+    },
+    "defaultUnitName": "Joueur {{n}}"
+  },
+  "config": {
+    "pageTitle": "Configuration",
+    "pageSubtitle": "Paramètres globaux de l'économie du jeu",
+    "loading": "Chargement…",
+    "save": "Sauvegarder",
+    "groups": {
+      "tokens": "Tokens",
+      "gacha": "Gacha",
+      "dustPerDuplicate": "Poussière par doublon"
+    },
+    "fields": {
+      "tokenRegenMinutes": "Régénération (minutes)",
+      "tokenMaxStock": "Stock maximum",
+      "pityThreshold": "Seuil de pitié"
+    }
+  },
+  "scoring": {
+    "pageTitle": "Scoring — Configuration",
+    "pageSubtitle": "Points attribués par rareté et multiplicateurs de variante",
+    "loading": "Chargement…",
+    "save": "Sauvegarder",
+    "saving": "Sauvegarde…",
+    "rarityPointsTitle": "Points par rareté",
+    "variantMultipliersTitle": "Multiplicateurs de variante",
+    "fields": {
+      "commonPoints": "⬜ Commun",
+      "uncommonPoints": "🟩 Peu commun",
+      "rarePoints": "🔷 Rare",
+      "epicPoints": "🟣 Épique",
+      "legendaryPoints": "🌟 Légendaire",
+      "brilliantMultiplier": "☀️ Multiplicateur Brillant",
+      "holographicMultiplier": "🌊 Multiplicateur Holographique"
+    }
   }
 }

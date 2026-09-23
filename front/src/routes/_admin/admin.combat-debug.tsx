@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Plus, Swords, Trash2 } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type {
   AttackPattern,
@@ -12,6 +13,7 @@ import { AdminPageHeader } from '../../components/admin/shared/AdminPageHeader.t
 import { BattleScene } from '../../components/battle/BattleScene'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
+import i18n from '../../i18n/index.ts'
 import { useDebugBattle } from '../../queries/useDebugBattle'
 
 export const Route = createFileRoute('/_admin/admin/combat-debug')({
@@ -54,7 +56,7 @@ const PASSIVE_KEYS = [
 const DEFAULT_TEAM_A: SimulatorUnit[] = [
   {
     id: 'A0',
-    name: 'Joueur 1',
+    name: i18n.t('admin:combatDebug.defaultUnitName', { n: 1 }),
     hp: 200,
     atk: 20,
     def: 10,
@@ -65,7 +67,7 @@ const DEFAULT_TEAM_A: SimulatorUnit[] = [
   },
   {
     id: 'A1',
-    name: 'Joueur 2',
+    name: i18n.t('admin:combatDebug.defaultUnitName', { n: 2 }),
     hp: 200,
     atk: 20,
     def: 10,
@@ -76,7 +78,7 @@ const DEFAULT_TEAM_A: SimulatorUnit[] = [
   },
   {
     id: 'A2',
-    name: 'Joueur 3',
+    name: i18n.t('admin:combatDebug.defaultUnitName', { n: 3 }),
     hp: 200,
     atk: 20,
     def: 10,
@@ -102,6 +104,7 @@ const DEFAULT_TEAM_B: SimulatorUnit[] = [
 ]
 
 function DebugBattlePage() {
+  const { t } = useTranslation('admin')
   const [teamA, setTeamA] = useState<SimulatorUnit[]>(DEFAULT_TEAM_A)
   const [teamB, setTeamB] = useState<SimulatorUnit[]>(DEFAULT_TEAM_B)
   const [seed, setSeed] = useState('debug-seed')
@@ -124,20 +127,20 @@ function DebugBattlePage() {
     <div className="p-6 max-w-7xl mx-auto">
       <AdminPageHeader
         icon={Swords}
-        kicker="Système"
-        title="Combat — Debug Battle"
-        subtitle="Simule un combat libre pour tester le balancing."
+        kicker={t('common.kicker.system')}
+        title={t('combatDebug.pageTitle')}
+        subtitle={t('combatDebug.pageSubtitle')}
       />
 
       <div className="grid md:grid-cols-2 gap-4 mb-4">
         <TeamPanel
-          label="Équipe A"
+          label={t('combatDebug.teamALabel')}
           team={teamA}
           onChange={setTeamA}
           idPrefix="A"
         />
         <TeamPanel
-          label="Équipe B"
+          label={t('combatDebug.teamBLabel')}
           team={teamB}
           onChange={setTeamB}
           idPrefix="B"
@@ -150,7 +153,7 @@ function DebugBattlePage() {
             className="block text-xs text-text-light/70 mb-1"
             htmlFor="seed"
           >
-            Seed
+            {t('combatDebug.seedLabel')}
           </label>
           <Input
             id="seed"
@@ -164,7 +167,7 @@ function DebugBattlePage() {
             className="block text-xs text-text-light/70 mb-1"
             htmlFor="timeout"
           >
-            Timeout (turns)
+            {t('combatDebug.timeoutLabel')}
           </label>
           <Input
             id="timeout"
@@ -176,13 +179,15 @@ function DebugBattlePage() {
         </div>
         <Button onClick={onRun} disabled={debugBattle.isPending}>
           <Swords className="mr-2 h-4 w-4" />
-          {debugBattle.isPending ? 'Simulation…' : 'Lancer'}
+          {debugBattle.isPending
+            ? t('combatDebug.simulating')
+            : t('combatDebug.run')}
         </Button>
       </div>
 
       {debugBattle.isError && (
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-destructive">
-          Erreur : {String(debugBattle.error)}
+          {t('combatDebug.errorPrefix', { message: String(debugBattle.error) })}
         </div>
       )}
 
@@ -209,6 +214,7 @@ function TeamPanel({
   onChange: (t: SimulatorUnit[]) => void
   idPrefix: string
 }) {
+  const { t } = useTranslation('admin')
   const addUnit = () => {
     if (team.length >= 3) {
       return
@@ -245,7 +251,7 @@ function TeamPanel({
           onClick={addUnit}
           disabled={team.length >= 3}
         >
-          <Plus className="mr-1 h-3 w-3" /> Ajouter
+          <Plus className="mr-1 h-3 w-3" /> {t('combatDebug.addUnit')}
         </Button>
       </div>
       <div className="space-y-3">
@@ -264,29 +270,29 @@ function TeamPanel({
                 type="button"
                 onClick={() => removeUnit(i)}
                 className="text-destructive hover:text-destructive/80"
-                aria-label="Supprimer"
+                aria-label={t('combatDebug.removeUnit')}
               >
                 <Trash2 className="h-4 w-4" />
               </button>
             </div>
             <div className="grid grid-cols-4 gap-2 text-xs">
               <NumInput
-                label="PV"
+                label={t('combatDebug.hpLabel')}
                 value={unit.hp}
                 onChange={(v) => updateUnit(i, { hp: v })}
               />
               <NumInput
-                label="ATQ"
+                label={t('combatDebug.atkLabel')}
                 value={unit.atk}
                 onChange={(v) => updateUnit(i, { atk: v })}
               />
               <NumInput
-                label="DEF"
+                label={t('combatDebug.defLabel')}
                 value={unit.def}
                 onChange={(v) => updateUnit(i, { def: v })}
               />
               <NumInput
-                label="VIT"
+                label={t('combatDebug.spdLabel')}
                 value={unit.spd}
                 onChange={(v) => updateUnit(i, { spd: v })}
               />
@@ -297,7 +303,7 @@ function TeamPanel({
                   className="text-text-light/60"
                   htmlFor={`pattern-${unit.id}`}
                 >
-                  Pattern
+                  {t('combatDebug.patternLabel')}
                 </label>
                 <select
                   id={`pattern-${unit.id}`}
@@ -321,7 +327,7 @@ function TeamPanel({
                   className="text-text-light/60"
                   htmlFor={`passive-${unit.id}`}
                 >
-                  Passive
+                  {t('combatDebug.passiveLabel')}
                 </label>
                 <select
                   id={`passive-${unit.id}`}
@@ -331,7 +337,7 @@ function TeamPanel({
                   }
                   className="w-full rounded border border-border bg-background px-2 py-1"
                 >
-                  <option value="">(none)</option>
+                  <option value="">{t('combatDebug.passiveNone')}</option>
                   {PASSIVE_KEYS.map((k) => (
                     <option key={k} value={k}>
                       {k}
@@ -340,7 +346,7 @@ function TeamPanel({
                 </select>
               </div>
               <NumInput
-                label="Palier"
+                label={t('combatDebug.tierLabel')}
                 value={unit.palier}
                 onChange={(v) =>
                   updateUnit(i, { palier: Math.max(1, Math.min(6, v)) })
@@ -351,7 +357,7 @@ function TeamPanel({
         ))}
         {team.length === 0 && (
           <div className="text-xs text-text-light/60 italic">
-            Aucune unité — ajoute-en au moins une.
+            {t('combatDebug.emptyTeam')}
           </div>
         )}
       </div>
@@ -392,12 +398,13 @@ function ResultPanel({
   view: 'scene' | 'log'
   onViewChange: (v: 'scene' | 'log') => void
 }) {
+  const { t } = useTranslation('admin')
   const wonLabel =
     result.won === 'A'
-      ? 'Équipe A gagne'
+      ? t('combatDebug.result.teamAWins')
       : result.won === 'B'
-        ? 'Équipe B gagne'
-        : 'Timeout'
+        ? t('combatDebug.result.teamBWins')
+        : t('combatDebug.result.timeout')
   const wonColor =
     result.won === 'A' || result.won === 'B'
       ? 'text-success'
@@ -409,7 +416,7 @@ function ResultPanel({
         <h2 className={`font-bold ${wonColor}`}>{wonLabel}</h2>
         <div className="flex items-center gap-2">
           <span className="text-xs text-text-light/60">
-            {result.turns} actions
+            {t('combatDebug.result.actionsCount', { count: result.turns })}
           </span>
           <div className="flex rounded-full border border-border bg-background/40 p-0.5">
             <button
@@ -421,7 +428,7 @@ function ResultPanel({
                   : 'text-text-light hover:text-text'
               }`}
             >
-              Animation
+              {t('combatDebug.result.animationTab')}
             </button>
             <button
               type="button"
@@ -432,7 +439,7 @@ function ResultPanel({
                   : 'text-text-light hover:text-text'
               }`}
             >
-              Log JSON
+              {t('combatDebug.result.logTab')}
             </button>
           </div>
         </div>

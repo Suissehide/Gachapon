@@ -1,6 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
+import type { TFunction } from 'i18next'
 import { Trophy } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { AdminPageHeader } from '../../components/admin/shared/AdminPageHeader.tsx'
 import { Button } from '../../components/ui/button'
@@ -16,23 +18,40 @@ export const Route = createFileRoute('/_admin/admin/scoring')({
   component: AdminScoringPage,
 })
 
-const RARITY_FIELDS: { key: keyof ScoringConfig; label: string }[] = [
-  { key: 'commonPoints', label: '⬜ Commun' },
-  { key: 'uncommonPoints', label: '🟩 Peu commun' },
-  { key: 'rarePoints', label: '🔷 Rare' },
-  { key: 'epicPoints', label: '🟣 Épique' },
-  { key: 'legendaryPoints', label: '🌟 Légendaire' },
-]
+function buildRarityFields(
+  t: TFunction<'admin'>,
+): { key: keyof ScoringConfig; label: string }[] {
+  return [
+    { key: 'commonPoints', label: t('scoring.fields.commonPoints') },
+    { key: 'uncommonPoints', label: t('scoring.fields.uncommonPoints') },
+    { key: 'rarePoints', label: t('scoring.fields.rarePoints') },
+    { key: 'epicPoints', label: t('scoring.fields.epicPoints') },
+    { key: 'legendaryPoints', label: t('scoring.fields.legendaryPoints') },
+  ]
+}
 
-const MULTIPLIER_FIELDS: { key: keyof ScoringConfig; label: string }[] = [
-  { key: 'brilliantMultiplier', label: '☀️ Multiplicateur Brillant' },
-  { key: 'holographicMultiplier', label: '🌊 Multiplicateur Holographique' },
-]
+function buildMultiplierFields(
+  t: TFunction<'admin'>,
+): { key: keyof ScoringConfig; label: string }[] {
+  return [
+    {
+      key: 'brilliantMultiplier',
+      label: t('scoring.fields.brilliantMultiplier'),
+    },
+    {
+      key: 'holographicMultiplier',
+      label: t('scoring.fields.holographicMultiplier'),
+    },
+  ]
+}
 
 function AdminScoringPage() {
+  const { t } = useTranslation('admin')
   const { data, isLoading } = useScoringConfig()
   const update = useUpdateScoringConfig()
   const [draft, setDraft] = useState<ScoringConfig | null>(null)
+  const rarityFields = useMemo(() => buildRarityFields(t), [t])
+  const multiplierFields = useMemo(() => buildMultiplierFields(t), [t])
 
   useEffect(() => {
     if (data && !draft) {
@@ -43,7 +62,7 @@ function AdminScoringPage() {
   if (isLoading || !draft) {
     return (
       <div className="flex h-64 items-center justify-center text-text-light">
-        Chargement…
+        {t('scoring.loading')}
       </div>
     )
   }
@@ -56,12 +75,12 @@ function AdminScoringPage() {
     <div className="p-8">
       <AdminPageHeader
         icon={Trophy}
-        kicker="Économie"
-        title="Scoring — Configuration"
-        subtitle="Points attribués par rareté et multiplicateurs de variante"
+        kicker={t('common.kicker.economy')}
+        title={t('scoring.pageTitle')}
+        subtitle={t('scoring.pageSubtitle')}
         actions={
           <Button onClick={handleSave} disabled={update.isPending}>
-            {update.isPending ? 'Sauvegarde…' : 'Sauvegarder'}
+            {update.isPending ? t('scoring.saving') : t('scoring.save')}
           </Button>
         }
       />
@@ -69,10 +88,10 @@ function AdminScoringPage() {
       <div className="max-w-md space-y-6">
         <div className="rounded-xl border border-border bg-card p-5">
           <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-text-light">
-            Points par rareté
+            {t('scoring.rarityPointsTitle')}
           </p>
           <div className="space-y-3">
-            {RARITY_FIELDS.map(({ key, label }) => (
+            {rarityFields.map(({ key, label }) => (
               <div
                 key={key}
                 className="flex items-center justify-between gap-4"
@@ -99,10 +118,10 @@ function AdminScoringPage() {
 
         <div className="rounded-xl border border-border bg-card p-5">
           <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-text-light">
-            Multiplicateurs de variante
+            {t('scoring.variantMultipliersTitle')}
           </p>
           <div className="space-y-3">
-            {MULTIPLIER_FIELDS.map(({ key, label }) => (
+            {multiplierFields.map(({ key, label }) => (
               <div
                 key={key}
                 className="flex items-center justify-between gap-4"

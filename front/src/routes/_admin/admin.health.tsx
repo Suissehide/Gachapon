@@ -1,6 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import dayjs from 'dayjs'
+import type { TFunction } from 'i18next'
 import { Activity, Database, HardDrive, Radio, Server } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { AdminPageHeader } from '../../components/admin/shared/AdminPageHeader'
 import { Badge, type BadgeVariant } from '../../components/ui/badge.tsx'
@@ -11,50 +13,75 @@ export const Route = createFileRoute('/_admin/admin/health')({
   component: AdminHealth,
 })
 
-const STATUS_META: Record<
+function buildStatusMeta(
+  t: TFunction<'admin'>,
+): Record<
   'ok' | 'degraded' | 'down',
   { variant: BadgeVariant; label: string }
-> = {
-  ok: { variant: 'success', label: 'Opérationnel' },
-  degraded: { variant: 'warning', label: 'Dégradé' },
-  down: { variant: 'danger', label: 'Hors service' },
+> {
+  return {
+    ok: { variant: 'success', label: t('health.statusOk') },
+    degraded: { variant: 'warning', label: t('health.statusDegraded') },
+    down: { variant: 'danger', label: t('health.statusDown') },
+  }
 }
 
-const SERVICES = [
-  { key: 'postgres' as const, label: 'PostgreSQL', icon: Database },
-  { key: 'redis' as const, label: 'Redis', icon: Server },
-  { key: 'storage' as const, label: 'MinIO (stockage)', icon: HardDrive },
-]
+function buildServices(t: TFunction<'admin'>) {
+  return [
+    {
+      key: 'postgres' as const,
+      label: t('health.services.postgres'),
+      icon: Database,
+    },
+    { key: 'redis' as const, label: t('health.services.redis'), icon: Server },
+    {
+      key: 'storage' as const,
+      label: t('health.services.storage'),
+      icon: HardDrive,
+    },
+  ]
+}
 
-const formatUptime = (seconds: number) => {
+const formatUptime = (t: TFunction<'admin'>, seconds: number) => {
   const d = Math.floor(seconds / 86400)
   const h = Math.floor((seconds % 86400) / 3600)
   const m = Math.floor((seconds % 3600) / 60)
-  return d > 0 ? `${d}j ${h}h ${m}min` : h > 0 ? `${h}h ${m}min` : `${m}min`
+  if (d > 0) {
+    return t('health.uptimeDays', { d, h, m })
+  }
+  return h > 0
+    ? t('health.uptimeHours', { h, m })
+    : t('health.uptimeMinutes', { m })
 }
 
-const formatMb = (bytes: number) => `${Math.round(bytes / 1024 / 1024)} Mo`
+const formatMb = (t: TFunction<'admin'>, bytes: number) =>
+  t('health.mbUnit', { value: Math.round(bytes / 1024 / 1024) })
 
 function AdminHealth() {
+  const { t } = useTranslation('admin')
   const { data, isLoading, dataUpdatedAt } = useAdminHealth()
+  const statusMeta = buildStatusMeta(t)
+  const services = buildServices(t)
 
   return (
     <div className="min-h-full p-8">
       <AdminPageHeader
         icon={Activity}
-        kicker="Système"
-        title="Santé système"
+        kicker={t('common.kicker.system')}
+        title={t('health.pageTitle')}
         subtitle={
           dataUpdatedAt
-            ? `Dernière vérification : ${dayjs(dataUpdatedAt).format('LT')} — rafraîchi toutes les 15 s`
-            : 'Vérification en cours…'
+            ? t('health.lastCheck', {
+                time: dayjs(dataUpdatedAt).format('LT'),
+              })
+            : t('health.checking')
         }
       />
 
       <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-3">
-        {SERVICES.map(({ key, label, icon: Icon }) => {
+        {services.map(({ key, label, icon: Icon }) => {
           const svc = data?.services[key]
-          const meta = svc ? STATUS_META[svc.status] : null
+          const meta = svc ? statusMeta[svc.status] : null
           return (
             <Card key={key}>
               <CardContent className="p-5">
@@ -74,7 +101,9 @@ function AdminHealth() {
                 <p className="text-2xl font-black text-text">
                   {svc ? `${svc.latencyMs} ms` : '—'}
                 </p>
-                <p className="text-xs text-text-light">latence du ping</p>
+                <p className="text-xs text-text-light">
+                  {t('health.pingLatency')}
+                </p>
               </CardContent>
             </Card>
           )
@@ -86,34 +115,43 @@ function AdminHealth() {
           <CardContent className="p-5">
             <div className="mb-2 flex items-center gap-2">
               <Radio className="h-4 w-4 text-text-light" />
-              <p className="text-sm font-bold text-text">WebSocket</p>
+              <p className="text-sm font-bold text-text">
+                {t('health.websocket')}
+              </p>
             </div>
             <p className="text-2xl font-black text-text">
               {data?.ws.connections ?? '—'}
             </p>
-            <p className="text-xs text-text-light">connexions actives</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-5">
-            <p className="mb-2 text-sm font-bold text-text">Uptime</p>
-            <p className="text-2xl font-black text-text">
-              {data ? formatUptime(data.process.uptimeSeconds) : '—'}
-            </p>
             <p className="text-xs text-text-light">
-              depuis le dernier redémarrage
+              {t('health.activeConnections')}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-5">
-            <p className="mb-2 text-sm font-bold text-text">Mémoire Node</p>
+            <p className="mb-2 text-sm font-bold text-text">
+              {t('health.uptime')}
+            </p>
             <p className="text-2xl font-black text-text">
-              {data ? formatMb(data.process.memory.heapUsed) : '—'}
+              {data ? formatUptime(t, data.process.uptimeSeconds) : '—'}
             </p>
             <p className="text-xs text-text-light">
-              heap utilisé — RSS{' '}
-              {data ? formatMb(data.process.memory.rss) : '—'}
+              {t('health.sinceLastRestart')}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-5">
+            <p className="mb-2 text-sm font-bold text-text">
+              {t('health.nodeMemory')}
+            </p>
+            <p className="text-2xl font-black text-text">
+              {data ? formatMb(t, data.process.memory.heapUsed) : '—'}
+            </p>
+            <p className="text-xs text-text-light">
+              {t('health.heapUsedRss', {
+                rss: data ? formatMb(t, data.process.memory.rss) : '—',
+              })}
             </p>
           </CardContent>
         </Card>

@@ -611,5 +611,94 @@
       "title": "Never pulled cards",
       "empty": "Every card has been pulled at least once."
     }
+  },
+  "health": {
+    "pageTitle": "System health",
+    "lastCheck": "Last check: {{time}} — refreshes every 15s",
+    "checking": "Checking…",
+    "statusOk": "Operational",
+    "statusDegraded": "Degraded",
+    "statusDown": "Down",
+    "services": {
+      "postgres": "PostgreSQL",
+      "redis": "Redis",
+      "storage": "MinIO (storage)"
+    },
+    "pingLatency": "ping latency",
+    "websocket": "WebSocket",
+    "activeConnections": "active connections",
+    "uptime": "Uptime",
+    "sinceLastRestart": "since the last restart",
+    "nodeMemory": "Node memory",
+    "heapUsedRss": "heap used — RSS {{rss}}",
+    "uptimeDays": "{{d}}d {{h}}h {{m}}min",
+    "uptimeHours": "{{h}}h {{m}}min",
+    "uptimeMinutes": "{{m}}min",
+    "mbUnit": "{{value}} MB"
+  },
+  "combatDebug": {
+    "pageTitle": "Combat — Debug Battle",
+    "pageSubtitle": "Simulates a free battle to test balancing.",
+    "teamALabel": "Team A",
+    "teamBLabel": "Team B",
+    "seedLabel": "Seed",
+    "timeoutLabel": "Timeout (turns)",
+    "simulating": "Simulating…",
+    "run": "Run",
+    "errorPrefix": "Error: {{message}}",
+    "addUnit": "Add",
+    "removeUnit": "Remove",
+    "hpLabel": "HP",
+    "atkLabel": "ATK",
+    "defLabel": "DEF",
+    "spdLabel": "SPD",
+    "patternLabel": "Pattern",
+    "passiveLabel": "Passive",
+    "passiveNone": "(none)",
+    "tierLabel": "Tier",
+    "emptyTeam": "No unit — add at least one.",
+    "result": {
+      "teamAWins": "Team A wins",
+      "teamBWins": "Team B wins",
+      "timeout": "Timeout",
+      "actionsCount": "{{count}} actions",
+      "animationTab": "Animation",
+      "logTab": "Log JSON"
+    },
+    "defaultUnitName": "Player {{n}}"
+  },
+  "config": {
+    "pageTitle": "Configuration",
+    "pageSubtitle": "Global settings for the game economy",
+    "loading": "Loading…",
+    "save": "Save",
+    "groups": {
+      "tokens": "Tokens",
+      "gacha": "Gacha",
+      "dustPerDuplicate": "Dust per duplicate"
+    },
+    "fields": {
+      "tokenRegenMinutes": "Regeneration (minutes)",
+      "tokenMaxStock": "Max stock",
+      "pityThreshold": "Pity threshold"
+    }
+  },
+  "scoring": {
+    "pageTitle": "Scoring — Configuration",
+    "pageSubtitle": "Points awarded per rarity and variant multipliers",
+    "loading": "Loading…",
+    "save": "Save",
+    "saving": "Saving…",
+    "rarityPointsTitle": "Points per rarity",
+    "variantMultipliersTitle": "Variant multipliers",
+    "fields": {
+      "commonPoints": "⬜ Common",
+      "uncommonPoints": "🟩 Uncommon",
+      "rarePoints": "🔷 Rare",
+      "epicPoints": "🟣 Epic",
+      "legendaryPoints": "🌟 Legendary",
+      "brilliantMultiplier": "☀️ Brilliant multiplier",
+      "holographicMultiplier": "🌊 Holographic multiplier"
+    }
   }
 }
