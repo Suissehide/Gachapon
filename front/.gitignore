@@ -10,6 +10,8 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+# Fragment nginx genere par scripts/prerender-seo.mjs (301 des anciennes URLs).
+dist-nginx
 *.local
 
 
