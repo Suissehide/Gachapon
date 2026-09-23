@@ -411,5 +411,33 @@
       "filterUsed": "Utilisées",
       "filterOrphan": "Orphelines"
     }
+  },
+  "raid": {
+    "pageTitle": "Raid d'équipe",
+    "pageSubtitle": "Boss par élément et lots des paliers 25/50/75/100 %.",
+    "tabBosses": "Boss",
+    "tabTiers": "Paliers",
+    "loading": "Chargement…",
+    "requiredValue": "Valeur requise",
+    "boss": {
+      "nameFrLabel": "Nom (français)",
+      "nameEnLabel": "Nom (anglais)",
+      "appearanceLabel": "Image (clé MinIO, ex. monsters/bosses/BOSS-010)",
+      "baseAtkLabel": "ATK de base",
+      "baseDefLabel": "DEF de base",
+      "baseSpdLabel": "VIT de base",
+      "mitigationScaleLabel": "Échelle de mitigation (facteur combiné à la DEF pour réduire les dégâts subis, ex. 12 sur les boss seedés)",
+      "attackPatternLabel": "Pattern d'attaque",
+      "passiveKeyLabel": "Passif (clé, vide = aucun)",
+      "save": "Enregistrer"
+    },
+    "tier": {
+      "tokensLabel": "Jetons",
+      "goldLabel": "Or",
+      "dustLabel": "Poussière",
+      "xpLabel": "XP",
+      "guaranteedCardLabel": "Carte garantie",
+      "save": "Enregistrer"
+    }
   }
 }

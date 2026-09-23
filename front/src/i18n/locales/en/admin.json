@@ -411,5 +411,33 @@
       "filterUsed": "Used",
       "filterOrphan": "Orphaned"
     }
+  },
+  "raid": {
+    "pageTitle": "Team raid",
+    "pageSubtitle": "Boss per element and rewards for the 25/50/75/100% tiers.",
+    "tabBosses": "Bosses",
+    "tabTiers": "Tiers",
+    "loading": "Loading…",
+    "requiredValue": "Value required",
+    "boss": {
+      "nameFrLabel": "Name (French)",
+      "nameEnLabel": "Name (English)",
+      "appearanceLabel": "Image (MinIO key, e.g. monsters/bosses/BOSS-010)",
+      "baseAtkLabel": "Base ATK",
+      "baseDefLabel": "Base DEF",
+      "baseSpdLabel": "Base SPD",
+      "mitigationScaleLabel": "Mitigation scale (factor combined with DEF to reduce damage taken, e.g. 12 on seeded bosses)",
+      "attackPatternLabel": "Attack pattern",
+      "passiveKeyLabel": "Passive (key, empty = none)",
+      "save": "Save"
+    },
+    "tier": {
+      "tokensLabel": "Tokens",
+      "goldLabel": "Gold",
+      "dustLabel": "Dust",
+      "xpLabel": "XP",
+      "guaranteedCardLabel": "Guaranteed card",
+      "save": "Save"
+    }
   }
 }

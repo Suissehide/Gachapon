@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Skull } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { AdminRaidBoss, AdminRaidTier } from '../../api/admin-raid.api.ts'
 import { AdminPageHeader } from '../../components/admin/shared/AdminPageHeader.tsx'
@@ -24,21 +25,22 @@ export const Route = createFileRoute('/_admin/admin/raid')({
 type Tab = 'bosses' | 'tiers'
 
 function AdminRaidPage() {
+  const { t } = useTranslation('admin')
   const [tab, setTab] = useState<Tab>('bosses')
   return (
     <div className="p-8">
       <AdminPageHeader
         icon={Skull}
-        kicker="Communauté"
-        title="Raid d'équipe"
-        subtitle="Boss par élément et lots des paliers 25/50/75/100 %."
+        kicker={t('common.kicker.community')}
+        title={t('raid.pageTitle')}
+        subtitle={t('raid.pageSubtitle')}
       />
       <SegmentedControl<Tab>
         value={tab}
         onChange={setTab}
         options={[
-          { value: 'bosses', label: 'Boss' },
-          { value: 'tiers', label: 'Paliers' },
+          { value: 'bosses', label: t('raid.tabBosses') },
+          { value: 'tiers', label: t('raid.tabTiers') },
         ]}
       />
       <div className="mt-6">
@@ -49,9 +51,10 @@ function AdminRaidPage() {
 }
 
 function BossesTab() {
+  const { t } = useTranslation('admin')
   const { data, isLoading } = useAdminRaidBosses()
   if (isLoading || !data) {
-    return <p className="text-text-light">Chargement…</p>
+    return <p className="text-text-light">{t('raid.loading')}</p>
   }
   return (
     <div className="grid gap-4 lg:grid-cols-2">
@@ -63,6 +66,7 @@ function BossesTab() {
 }
 
 function BossForm({ boss }: { boss: AdminRaidBoss }) {
+  const { t } = useTranslation('admin')
   const patch = useAdminPatchRaidBoss()
   const form = useAppForm({
     defaultValues: {
@@ -84,16 +88,16 @@ function BossForm({ boss }: { boss: AdminRaidBoss }) {
       onSubmit: ({ value }) => {
         const fields: Record<string, string> = {}
         if (value.baseAtk === undefined) {
-          fields.baseAtk = 'Valeur requise'
+          fields.baseAtk = t('raid.requiredValue')
         }
         if (value.baseDef === undefined) {
-          fields.baseDef = 'Valeur requise'
+          fields.baseDef = t('raid.requiredValue')
         }
         if (value.baseSpd === undefined) {
-          fields.baseSpd = 'Valeur requise'
+          fields.baseSpd = t('raid.requiredValue')
         }
         if (value.mitigationScale === undefined) {
-          fields.mitigationScale = 'Valeur requise'
+          fields.mitigationScale = t('raid.requiredValue')
         }
         if (Object.keys(fields).length > 0) {
           return { fields, form: Object.values(fields)[0] }
@@ -136,34 +140,30 @@ function BossForm({ boss }: { boss: AdminRaidBoss }) {
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <form.AppField name="nameFr">
-          {(f) => <f.Input label="Nom (français)" />}
+          {(f) => <f.Input label={t('raid.boss.nameFrLabel')} />}
         </form.AppField>
         <form.AppField name="nameEn">
-          {(f) => <f.Input label="Nom (anglais)" />}
+          {(f) => <f.Input label={t('raid.boss.nameEnLabel')} />}
         </form.AppField>
         <form.AppField name="appearance">
-          {(f) => (
-            <f.Input label="Image (clé MinIO, ex. monsters/bosses/BOSS-010)" />
-          )}
+          {(f) => <f.Input label={t('raid.boss.appearanceLabel')} />}
         </form.AppField>
         <form.AppField name="baseAtk">
-          {(f) => <f.Number label="ATK de base" />}
+          {(f) => <f.Number label={t('raid.boss.baseAtkLabel')} />}
         </form.AppField>
         <form.AppField name="baseDef">
-          {(f) => <f.Number label="DEF de base" />}
+          {(f) => <f.Number label={t('raid.boss.baseDefLabel')} />}
         </form.AppField>
         <form.AppField name="baseSpd">
-          {(f) => <f.Number label="VIT de base" />}
+          {(f) => <f.Number label={t('raid.boss.baseSpdLabel')} />}
         </form.AppField>
         <form.AppField name="mitigationScale">
-          {(f) => (
-            <f.Number label="Échelle de mitigation (facteur combiné à la DEF pour réduire les dégâts subis, ex. 12 sur les boss seedés)" />
-          )}
+          {(f) => <f.Number label={t('raid.boss.mitigationScaleLabel')} />}
         </form.AppField>
         <form.AppField name="attackPattern">
           {(f) => (
             <f.Select
-              label="Pattern d'attaque"
+              label={t('raid.boss.attackPatternLabel')}
               options={[
                 'BASIC',
                 'AOE_3',
@@ -175,12 +175,12 @@ function BossForm({ boss }: { boss: AdminRaidBoss }) {
           )}
         </form.AppField>
         <form.AppField name="passiveKey">
-          {(f) => <f.Input label="Passif (clé, vide = aucun)" />}
+          {(f) => <f.Input label={t('raid.boss.passiveKeyLabel')} />}
         </form.AppField>
       </div>
       <div className="mt-4 flex justify-end">
         <form.AppForm>
-          <form.SubmitButton>Enregistrer</form.SubmitButton>
+          <form.SubmitButton>{t('raid.boss.save')}</form.SubmitButton>
         </form.AppForm>
       </div>
     </form>
@@ -188,9 +188,10 @@ function BossForm({ boss }: { boss: AdminRaidBoss }) {
 }
 
 function TiersTab() {
+  const { t } = useTranslation('admin')
   const { data, isLoading } = useAdminRaidTiers()
   if (isLoading || !data) {
-    return <p className="text-text-light">Chargement…</p>
+    return <p className="text-text-light">{t('raid.loading')}</p>
   }
   return (
     <div className="grid gap-4 lg:grid-cols-2">
@@ -202,6 +203,7 @@ function TiersTab() {
 }
 
 function TierForm({ tier }: { tier: AdminRaidTier }) {
+  const { t } = useTranslation('admin')
   const patch = useAdminPatchRaidTier()
   const form = useAppForm({
     defaultValues: {
@@ -217,16 +219,16 @@ function TierForm({ tier }: { tier: AdminRaidTier }) {
       onSubmit: ({ value }) => {
         const fields: Record<string, string> = {}
         if (value.tokens === undefined) {
-          fields.tokens = 'Valeur requise'
+          fields.tokens = t('raid.requiredValue')
         }
         if (value.gold === undefined) {
-          fields.gold = 'Valeur requise'
+          fields.gold = t('raid.requiredValue')
         }
         if (value.dust === undefined) {
-          fields.dust = 'Valeur requise'
+          fields.dust = t('raid.requiredValue')
         }
         if (value.xp === undefined) {
-          fields.xp = 'Valeur requise'
+          fields.xp = t('raid.requiredValue')
         }
         if (Object.keys(fields).length > 0) {
           return { fields, form: Object.values(fields)[0] }
@@ -261,21 +263,21 @@ function TierForm({ tier }: { tier: AdminRaidTier }) {
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <form.AppField name="tokens">
-          {(f) => <f.Number label="Jetons" />}
+          {(f) => <f.Number label={t('raid.tier.tokensLabel')} />}
         </form.AppField>
         <form.AppField name="gold">
-          {(f) => <f.Number label="Or" />}
+          {(f) => <f.Number label={t('raid.tier.goldLabel')} />}
         </form.AppField>
         <form.AppField name="dust">
-          {(f) => <f.Number label="Poussière" />}
+          {(f) => <f.Number label={t('raid.tier.dustLabel')} />}
         </form.AppField>
         <form.AppField name="xp">
-          {(f) => <f.Number label="XP" />}
+          {(f) => <f.Number label={t('raid.tier.xpLabel')} />}
         </form.AppField>
         <form.AppField name="cardRarity">
           {(f) => (
             <f.Select
-              label="Carte garantie"
+              label={t('raid.tier.guaranteedCardLabel')}
               clearable
               options={RARITY_OPTIONS}
             />
@@ -284,7 +286,7 @@ function TierForm({ tier }: { tier: AdminRaidTier }) {
       </div>
       <div className="mt-4 flex justify-end">
         <form.AppForm>
-          <form.SubmitButton>Enregistrer</form.SubmitButton>
+          <form.SubmitButton>{t('raid.tier.save')}</form.SubmitButton>
         </form.AppForm>
       </div>
     </form>
