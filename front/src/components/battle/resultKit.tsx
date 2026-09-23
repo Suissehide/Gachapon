@@ -138,7 +138,7 @@ export function CardDropReward({
         {!drop.wasDuplicate && (
           <span className="pointer-events-none absolute top-2 right-2 z-20 flex items-center gap-1 rounded-full bg-emerald-500/95 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-emerald-600/40">
             <Star className="h-3 w-3" strokeWidth={2.5} />
-            {t('machine:newMasculine')}
+            {t('machine:badges.newMasculine')}
           </span>
         )}
         <TcgCardFace

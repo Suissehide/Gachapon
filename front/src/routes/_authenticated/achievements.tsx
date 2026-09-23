@@ -189,7 +189,7 @@ function AchievementsPage() {
               className="font-mono text-[11px] font-bold uppercase tracking-[0.22em]"
               style={{ color: 'rgba(27,23,38,.5)' }}
             >
-              {t('collection:breadcrumbProfile')}
+              {t('collection:page.breadcrumbProfile')}
             </Link>
             <span
               className="font-mono text-[11px] font-bold uppercase tracking-[0.22em]"

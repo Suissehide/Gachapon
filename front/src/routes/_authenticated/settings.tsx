@@ -66,7 +66,7 @@ function Settings() {
         breadcrumbs={[
           { label: 'Gachapon', to: '/play' },
           {
-            label: t('collection:breadcrumbProfile'),
+            label: t('collection:page.breadcrumbProfile'),
             to: '/profile/$username',
             params: { username: user?.username ?? '' },
           },
