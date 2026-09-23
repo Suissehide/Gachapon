@@ -358,5 +358,58 @@
       "save": "Save",
       "delete": "Delete"
     }
+  },
+  "media": {
+    "pageTitle": "Media",
+    "pageSubtitle": "Image library — upload, organize, and clean up orphaned files",
+    "dropzone": {
+      "instructionsBefore": "Drag and drop images here, or",
+      "browse": "browse",
+      "constraints": "JPEG, PNG, WEBP — 5 MB max per file",
+      "uploading": "Uploading…"
+    },
+    "filters": {
+      "all": "All ({{count}})",
+      "used": "Used ({{count}})",
+      "orphan": "Orphaned ({{count}})"
+    },
+    "selectedCount_one": "{{count}} selected",
+    "selectedCount_other": "{{count}} selected",
+    "confirmDelete": "Confirm deletion",
+    "cancel": "Cancel",
+    "deleteWithCount": "Delete ({{count}})",
+    "deleteErrorFallback": "Error deleting",
+    "loading": "Loading…",
+    "loadErrorTitle": "Unable to load media",
+    "loadErrorHint": "The storage service might be unreachable.",
+    "emptyAll": "No image. Drag files into the zone above to get started.",
+    "emptyFiltered": "No image for this filter.",
+    "detailSheetTitle": "Media detail",
+    "detail": {
+      "renameDuplicateError": "This name is already in use",
+      "renameErrorToastTitle": "Error",
+      "renameErrorFallback": "Error renaming",
+      "openImageTooltip": "Open the image",
+      "statusOrphan": "Orphaned",
+      "statusUsed": "Used",
+      "fileSectionTitle": "File",
+      "renameTooltip": "Rename",
+      "sizeUnit": "{{size}} KB",
+      "associatedCardTitle": "Associated card",
+      "createCardFromMedia": "Create a card from this media",
+      "urlCopied": "URL copied!",
+      "copyUrl": "Copy the URL",
+      "deleting": "Deleting…",
+      "confirmDelete": "Confirm deletion",
+      "cancel": "Cancel",
+      "deleteMedia": "Delete this media",
+      "usedMediaNotDeletable": "Media in use — cannot be deleted"
+    },
+    "picker": {
+      "title": "Choose an image",
+      "filterAll": "All",
+      "filterUsed": "Used",
+      "filterOrphan": "Orphaned"
+    }
   }
 }

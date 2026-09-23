@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Images, Upload } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { CreateCardSheet } from '../../components/admin/cards/CreateCardSheet'
 import { MediaDetailPanel } from '../../components/admin/media/MediaDetailPanel'
@@ -30,6 +31,7 @@ export const Route = createFileRoute('/_admin/admin/media')({
 type Filter = 'all' | 'used' | 'orphan'
 
 function AdminMediaPage() {
+  const { t } = useTranslation('admin')
   const { data: items = [], isLoading, isError } = useAdminMedia()
   const uploadMutation = useUploadMedia()
   const deleteMutation = useDeleteMedia()
@@ -119,7 +121,7 @@ function AdminMediaPage() {
       }
     } catch (err) {
       setErrorMessage(
-        err instanceof Error ? err.message : 'Erreur lors de la suppression',
+        err instanceof Error ? err.message : t('media.deleteErrorFallback'),
       )
       setConfirmBulk(false)
     }
@@ -134,7 +136,7 @@ function AdminMediaPage() {
       }
     } catch (err) {
       setErrorMessage(
-        err instanceof Error ? err.message : 'Erreur lors de la suppression',
+        err instanceof Error ? err.message : t('media.deleteErrorFallback'),
       )
     }
   }
@@ -143,9 +145,9 @@ function AdminMediaPage() {
     <div className="p-8">
       <AdminPageHeader
         icon={Images}
-        kicker="Contenu"
-        title="Médias"
-        subtitle="Bibliothèque d'images — upload, organisation et nettoyage des orphelines"
+        kicker={t('common.kicker.content')}
+        title={t('media.pageTitle')}
+        subtitle={t('media.pageSubtitle')}
       />
 
       {/* Zone upload */}
@@ -164,17 +166,17 @@ function AdminMediaPage() {
       >
         <Upload className="mx-auto mb-2 h-6 w-6 text-text-light" />
         <p className="text-sm text-text-light">
-          Glisser-déposer des images ici, ou{' '}
+          {t('media.dropzone.instructionsBefore')}{' '}
           <button
             type="button"
             className="cursor-pointer text-primary underline"
             onClick={() => fileInputRef.current?.click()}
           >
-            parcourir
+            {t('media.dropzone.browse')}
           </button>
         </p>
         <p className="mt-1 text-xs text-text-light/60">
-          JPEG, PNG, WEBP — 5 MB max par fichier
+          {t('media.dropzone.constraints')}
         </p>
         <input
           ref={fileInputRef}
@@ -185,7 +187,9 @@ function AdminMediaPage() {
           onChange={(e) => handleFiles(Array.from(e.target.files ?? []))}
         />
         {uploadMutation.isPending && (
-          <p className="mt-2 text-xs text-primary">Upload en cours…</p>
+          <p className="mt-2 text-xs text-primary">
+            {t('media.dropzone.uploading')}
+          </p>
         )}
         {uploadMutation.data?.errors?.map((err) => (
           <p key={err.filename} className="mt-1 text-xs text-destructive">
@@ -200,16 +204,25 @@ function AdminMediaPage() {
           value={filter}
           onChange={setFilter}
           options={[
-            { value: 'all', label: `Toutes (${counts.all})` },
-            { value: 'used', label: `Utilisées (${counts.used})` },
-            { value: 'orphan', label: `Orphelines (${counts.orphan})` },
+            {
+              value: 'all',
+              label: t('media.filters.all', { count: counts.all }),
+            },
+            {
+              value: 'used',
+              label: t('media.filters.used', { count: counts.used }),
+            },
+            {
+              value: 'orphan',
+              label: t('media.filters.orphan', { count: counts.orphan }),
+            },
           ]}
         />
 
         {selected.size > 0 && (
           <div className="ml-auto flex items-center gap-3">
             <span className="text-sm text-text-light">
-              {selected.size} sélectionnée{selected.size > 1 ? 's' : ''}
+              {t('media.selectedCount', { count: selected.size })}
             </span>
             {confirmBulk ? (
               <>
@@ -219,14 +232,14 @@ function AdminMediaPage() {
                   onClick={handleBulkDelete}
                   disabled={deleteMutation.isPending}
                 >
-                  Confirmer la suppression
+                  {t('media.confirmDelete')}
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setConfirmBulk(false)}
                 >
-                  Annuler
+                  {t('media.cancel')}
                 </Button>
               </>
             ) : (
@@ -235,7 +248,7 @@ function AdminMediaPage() {
                 size="sm"
                 onClick={handleBulkDelete}
               >
-                Supprimer ({selected.size})
+                {t('media.deleteWithCount', { count: selected.size })}
               </Button>
             )}
           </div>
@@ -248,24 +261,22 @@ function AdminMediaPage() {
       {/* Grille + panneau */}
       {isLoading ? (
         <div className="flex h-64 items-center justify-center text-text-light">
-          Chargement…
+          {t('media.loading')}
         </div>
       ) : isError ? (
         <div className="flex h-64 flex-col items-center justify-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 text-center">
           <p className="text-sm font-medium text-destructive">
-            Impossible de charger les médias
+            {t('media.loadErrorTitle')}
           </p>
-          <p className="text-xs text-text-light">
-            Le service de stockage est peut-être inaccessible.
-          </p>
+          <p className="text-xs text-text-light">{t('media.loadErrorHint')}</p>
         </div>
       ) : (
         <>
           {filtered.length === 0 ? (
             <div className="flex h-48 items-center justify-center text-sm text-text-light">
               {items.length === 0
-                ? 'Aucune image. Glissez des fichiers dans la zone ci-dessus pour commencer.'
-                : 'Aucune image pour ce filtre.'}
+                ? t('media.emptyAll')
+                : t('media.emptyFiltered')}
             </div>
           ) : (
             <MediaGallery
@@ -288,7 +299,7 @@ function AdminMediaPage() {
           >
             <SheetContent>
               <SheetHeader>
-                <SheetTitle>Détail du média</SheetTitle>
+                <SheetTitle>{t('media.detailSheetTitle')}</SheetTitle>
               </SheetHeader>
               {activeItem && (
                 <div className="mt-4 overflow-y-auto px-6 pb-6">

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { type MediaItem, useAdminMedia } from '../../../queries/useAdminMedia'
 import {
@@ -24,6 +25,7 @@ export function MediaPickerModal({
   onOpenChange,
   onPick,
 }: MediaPickerModalProps) {
+  const { t } = useTranslation('admin')
   const { data: items = [], isLoading } = useAdminMedia()
   const [filter, setFilter] = useState<Filter>('all')
 
@@ -46,7 +48,7 @@ export function MediaPickerModal({
     <Popup open={open} onOpenChange={onOpenChange}>
       <PopupContent size="xl">
         <PopupHeader>
-          <PopupTitle>Choisir une image</PopupTitle>
+          <PopupTitle>{t('media.picker.title')}</PopupTitle>
         </PopupHeader>
 
         <PopupBody>
@@ -55,16 +57,16 @@ export function MediaPickerModal({
               value={filter}
               onChange={setFilter}
               options={[
-                { value: 'all', label: 'Toutes' },
-                { value: 'used', label: 'Utilisées' },
-                { value: 'orphan', label: 'Orphelines' },
+                { value: 'all', label: t('media.picker.filterAll') },
+                { value: 'used', label: t('media.picker.filterUsed') },
+                { value: 'orphan', label: t('media.picker.filterOrphan') },
               ]}
               stretch
             />
 
             {isLoading ? (
               <div className="flex flex-1 items-center justify-center text-text-light">
-                Chargement…
+                {t('media.loading')}
               </div>
             ) : (
               <div className="flex-1 overflow-y-auto">

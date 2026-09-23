@@ -358,5 +358,58 @@
       "save": "Sauvegarder",
       "delete": "Supprimer"
     }
+  },
+  "media": {
+    "pageTitle": "Médias",
+    "pageSubtitle": "Bibliothèque d'images — upload, organisation et nettoyage des orphelines",
+    "dropzone": {
+      "instructionsBefore": "Glisser-déposer des images ici, ou",
+      "browse": "parcourir",
+      "constraints": "JPEG, PNG, WEBP — 5 MB max par fichier",
+      "uploading": "Upload en cours…"
+    },
+    "filters": {
+      "all": "Toutes ({{count}})",
+      "used": "Utilisées ({{count}})",
+      "orphan": "Orphelines ({{count}})"
+    },
+    "selectedCount_one": "{{count}} sélectionnée",
+    "selectedCount_other": "{{count}} sélectionnées",
+    "confirmDelete": "Confirmer la suppression",
+    "cancel": "Annuler",
+    "deleteWithCount": "Supprimer ({{count}})",
+    "deleteErrorFallback": "Erreur lors de la suppression",
+    "loading": "Chargement…",
+    "loadErrorTitle": "Impossible de charger les médias",
+    "loadErrorHint": "Le service de stockage est peut-être inaccessible.",
+    "emptyAll": "Aucune image. Glissez des fichiers dans la zone ci-dessus pour commencer.",
+    "emptyFiltered": "Aucune image pour ce filtre.",
+    "detailSheetTitle": "Détail du média",
+    "detail": {
+      "renameDuplicateError": "Ce nom est déjà utilisé",
+      "renameErrorToastTitle": "Erreur",
+      "renameErrorFallback": "Erreur lors du renommage",
+      "openImageTooltip": "Ouvrir l'image",
+      "statusOrphan": "Orpheline",
+      "statusUsed": "Utilisée",
+      "fileSectionTitle": "Fichier",
+      "renameTooltip": "Renommer",
+      "sizeUnit": "{{size}} Ko",
+      "associatedCardTitle": "Carte associée",
+      "createCardFromMedia": "Créer une carte depuis ce média",
+      "urlCopied": "URL copiée !",
+      "copyUrl": "Copier l'URL",
+      "deleting": "Suppression…",
+      "confirmDelete": "Confirmer la suppression",
+      "cancel": "Annuler",
+      "deleteMedia": "Supprimer ce média",
+      "usedMediaNotDeletable": "Média utilisé — non supprimable"
+    },
+    "picker": {
+      "title": "Choisir une image",
+      "filterAll": "Toutes",
+      "filterUsed": "Utilisées",
+      "filterOrphan": "Orphelines"
+    }
   }
 }

@@ -10,6 +10,7 @@ import {
   X,
 } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { useToast } from '../../../hooks/useToast'
 import { isApiError } from '../../../libs/httpErrorHandler'
@@ -44,6 +45,7 @@ export function MediaDetailPanel({
   onRename,
   isRenaming,
 }: MediaDetailPanelProps) {
+  const { t } = useTranslation('admin')
   const [copied, setCopied] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
@@ -79,13 +81,15 @@ export function MediaDetailPanel({
       setRenameError(null)
     } catch (err) {
       if (isApiError(err) && err.status === 409) {
-        setRenameError('Ce nom est déjà utilisé')
+        setRenameError(t('media.detail.renameDuplicateError'))
       } else {
         setIsEditing(false)
         toast({
-          title: 'Erreur',
+          title: t('media.detail.renameErrorToastTitle'),
           message:
-            err instanceof Error ? err.message : 'Erreur lors du renommage',
+            err instanceof Error
+              ? err.message
+              : t('media.detail.renameErrorFallback'),
           severity: 'error',
         })
       }
@@ -135,7 +139,7 @@ export function MediaDetailPanel({
           target="_blank"
           rel="noreferrer"
           className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-md bg-black/50 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
-          title="Ouvrir l'image"
+          title={t('media.detail.openImageTooltip')}
         >
           <ExternalLink className="h-3 w-3" />
         </a>
@@ -146,7 +150,9 @@ export function MediaDetailPanel({
               : 'bg-success/80 text-white'
           }`}
         >
-          {item.orphan ? 'Orpheline' : 'Utilisée'}
+          {item.orphan
+            ? t('media.detail.statusOrphan')
+            : t('media.detail.statusUsed')}
         </div>
       </div>
 
@@ -155,7 +161,7 @@ export function MediaDetailPanel({
         <div className="mb-2 flex items-center gap-1.5">
           <FileImage className="h-3 w-3 text-text-light" />
           <span className="text-[10px] font-semibold uppercase tracking-widest text-text-light">
-            Fichier
+            {t('media.detail.fileSectionTitle')}
           </span>
         </div>
         {isEditing ? (
@@ -212,7 +218,7 @@ export function MediaDetailPanel({
               type="button"
               onClick={handleStartEdit}
               className="shrink-0 text-text-light opacity-0 transition-opacity hover:text-text group-hover:opacity-100"
-              title="Renommer"
+              title={t('media.detail.renameTooltip')}
             >
               <Pencil className="h-3 w-3" />
             </button>
@@ -225,7 +231,7 @@ export function MediaDetailPanel({
           {item.key}
         </p>
         <div className="mt-2 flex items-center gap-3 text-[11px] text-text-light">
-          <span>{sizeKb} Ko</span>
+          <span>{t('media.detail.sizeUnit', { size: sizeKb })}</span>
           <span className="h-1 w-1 rounded-full bg-border" />
           <span>{date}</span>
         </div>
@@ -235,7 +241,7 @@ export function MediaDetailPanel({
       {!item.orphan && item.card && (
         <Card className="p-3 shadow-none">
           <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-text-light">
-            Carte associée
+            {t('media.detail.associatedCardTitle')}
           </p>
           <p
             className={`text-sm font-semibold ${RARITY_COLORS[item.card.rarity] ?? 'text-text'}`}
@@ -263,7 +269,7 @@ export function MediaDetailPanel({
             className="w-full gap-2 border-secondary/40 text-secondary hover:border-secondary/60 hover:text-secondary"
           >
             <Plus className="h-3.5 w-3.5" />
-            Créer une carte depuis ce média
+            {t('media.detail.createCardFromMedia')}
           </Button>
         )}
 
@@ -278,7 +284,7 @@ export function MediaDetailPanel({
           ) : (
             <Copy className="h-3.5 w-3.5" />
           )}
-          {copied ? 'URL copiée !' : "Copier l'URL"}
+          {copied ? t('media.detail.urlCopied') : t('media.detail.copyUrl')}
         </Button>
 
         <div className="mt-1 border-t border-border pt-2">
@@ -291,14 +297,16 @@ export function MediaDetailPanel({
                 onClick={handleDelete}
                 disabled={isDeleting}
               >
-                {isDeleting ? 'Suppression…' : 'Confirmer la suppression'}
+                {isDeleting
+                  ? t('media.detail.deleting')
+                  : t('media.detail.confirmDelete')}
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setConfirmDelete(false)}
               >
-                Annuler
+                {t('media.detail.cancel')}
               </Button>
             </div>
           ) : (
@@ -315,8 +323,8 @@ export function MediaDetailPanel({
             >
               <Trash2 className="h-3.5 w-3.5" />
               {item.orphan
-                ? 'Supprimer ce média'
-                : 'Média utilisé — non supprimable'}
+                ? t('media.detail.deleteMedia')
+                : t('media.detail.usedMediaNotDeletable')}
             </Button>
           )}
         </div>
