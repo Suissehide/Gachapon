@@ -143,7 +143,9 @@
       "output": [
         "dist/coverage/all/**"
       ],
-      "dependencies": [],
+      "dependencies": [
+        "prisma:generate"
+      ],
       "env": {
         "CI": {
           "external": true
