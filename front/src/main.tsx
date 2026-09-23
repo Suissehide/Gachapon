@@ -163,9 +163,12 @@ if (isSupportedLocale(pathLocaleSegment)) {
         <I18nextProvider i18n={i18n}>
           <HelmetProvider>
             <QueryClientProvider client={queryClient}>
+              {/* Même locale que `dayjs.locale(locale)` plus haut : figée à
+                  'fr', les sélecteurs MUI X affichaient mois et jours en
+                  français sur le site anglais. */}
               <LocalizationProvider
                 dateAdapter={AdapterDayjs}
-                adapterLocale="fr"
+                adapterLocale={locale}
               >
                 <RouterProvider router={router} />
               </LocalizationProvider>

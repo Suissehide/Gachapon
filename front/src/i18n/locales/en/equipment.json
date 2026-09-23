@@ -86,7 +86,7 @@
     "rule": "Counting happens <perCard>card by card</perCard>: two pieces of a set on the same card count, split across two cards they don't. Each card has <slots>7 slots</slots>, enough to wear two sets at once — a 4 and a 3, or a 4 and a 2. Wearing more pieces than the set asks for brings <nothing>nothing extra</nothing>.",
     "groupTitle_one": "{{count}}-piece sets",
     "groupTitle_other": "{{count}}-piece sets",
-    "piecesBadge": "{{count}} PC"
+    "piecesBadge": "{{count}} PCS"
   },
   "actions": {
     "cancel": "Cancel"
