@@ -15,6 +15,7 @@ import i18n, {
   LOCALE_STORAGE_KEY,
   type Locale,
   localeFromPath,
+  persistLocaleCookie,
 } from './i18n/index.ts'
 import { routeTree } from './routeTree.gen.ts'
 
@@ -79,6 +80,37 @@ declare module '@tanstack/react-router' {
     router: typeof router
   }
 }
+
+/**
+ * Recopie la préférence de `localStorage` dans le cookie que nginx lit pour
+ * rediriger `/` (voir `persistLocaleCookie`).
+ *
+ * Existe pour les visiteurs D'AVANT le lot 3 : ils ont une préférence en
+ * `localStorage` mais aucun cookie, et n'en auraient un qu'au prochain
+ * changement de langue explicite — c'est-à-dire jamais, puisqu'ils ont déjà
+ * la langue qu'ils veulent. Sans ce miroir, la correction n'atteindrait que
+ * les nouveaux visiteurs.
+ *
+ * Inconditionnel et au démarrage : appelé aussi depuis une URL préfixée, car
+ * c'est le SEUL moment où ce code tourne pour ces visiteurs (sur `/`, nginx
+ * redirige avant que React ne démarre). Ne fait rien si la préférence est
+ * absente ou illisible — écrire le cookie depuis l'URL courante à la place
+ * transformerait une simple visite d'un lien `/en` en changement de
+ * préférence.
+ */
+function mirrorStoredLocaleToCookie(): void {
+  try {
+    const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY)
+    if (stored && isSupportedLocale(stored)) {
+      persistLocaleCookie(stored)
+    }
+  } catch {
+    // localStorage indisponible (navigation privée, quota…) — sans
+    // préférence à recopier, il n'y a rien à faire.
+  }
+}
+
+mirrorStoredLocaleToCookie()
 
 /**
  * Résout la langue de destination pour une URL sans préfixe (`/`, `/shop`…).

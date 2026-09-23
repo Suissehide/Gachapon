@@ -3,7 +3,12 @@ import { useCallback } from 'react'
 import type { ApiLocale } from '../api/profile.api.ts'
 import { useUpdateLocaleMutation } from '../queries/useProfile.ts'
 import { useAuthStore } from '../stores/auth.store.ts'
-import { LOCALE_STORAGE_KEY, type Locale, localeFromPath } from './index.ts'
+import {
+  LOCALE_STORAGE_KEY,
+  type Locale,
+  localeFromPath,
+  persistLocaleCookie,
+} from './index.ts'
 
 export type UseLocaleResult = {
   locale: Locale
@@ -39,6 +44,13 @@ export function useLocale(): UseLocaleResult {
         // localStorage indisponible (navigation privée, quota…) — la
         // navigation dure ci-dessous fonctionne de toute façon.
       }
+
+      // Le même choix, sous une forme que nginx sait lire : c'est lui qui
+      // redirige `/` depuis le lot 3, avant que ce code ne s'exécute. Les deux
+      // écritures sont volontairement côte à côte — `localStorage` reste la
+      // source que lit `resolveRedirectLocale()`, le cookie n'existe que pour
+      // le serveur.
+      persistLocaleCookie(locale)
 
       const navigateHard = () => {
         const segments = window.location.pathname.split('/')

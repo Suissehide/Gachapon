@@ -79,6 +79,45 @@ export const DEFAULT_LOCALE: Locale = 'en'
 /** Clé localStorage pour la préférence de langue mémorisée (spec §5.4). */
 export const LOCALE_STORAGE_KEY = 'gachapon:locale'
 
+/**
+ * Cookie qui DOUBLE `LOCALE_STORAGE_KEY`, à la seule fin d'être lisible par
+ * nginx (`$cookie_gachapon_locale`).
+ *
+ * Pourquoi un second support pour la même préférence : depuis le lot 3, `/`
+ * part en 302 côté serveur avant que React ne démarre, donc `localStorage` —
+ * que seul le navigateur peut lire — n'est plus consulté sur cette URL. Sans
+ * ce cookie, un visiteur ayant choisi le français dans un navigateur
+ * anglophone retomberait sur `/en` à chaque fois qu'il tape le domaine nu, et
+ * sa préférence ne serait JAMAIS réappliquée : une fois sur `/en`, `main.tsx`
+ * prend la branche « préfixe reconnu » et monte l'application sans relire la
+ * préférence.
+ *
+ * Le nom n'a ni `:` ni `-` : nginx expose les cookies en
+ * `$cookie_<nom en minuscules, tirets remplacés par des soulignés>`, et un `:`
+ * n'y a pas de traduction. `LOCALE_STORAGE_KEY` garde la sienne — la renommer
+ * perdrait la préférence de tous les visiteurs existants.
+ */
+export const LOCALE_COOKIE_NAME = 'gachapon_locale'
+
+/** Un an : la préférence de langue n'a aucune raison d'expirer plus tôt. */
+const LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365
+
+/**
+ * Écrit le cookie de langue. Point unique de cette construction — les
+ * attributs doivent rester identiques partout, sinon un second cookie de même
+ * nom mais de `Path` différent s'ajoute au premier et nginx lit le mauvais.
+ *
+ * `SameSite=Lax` et non `Strict` : la redirection de `/` doit voir le cookie
+ * même quand le visiteur arrive depuis un lien externe. `Secure` seulement en
+ * HTTPS, pour que le cookie fonctionne aussi sur le serveur de développement
+ * en clair.
+ */
+export function persistLocaleCookie(locale: Locale): void {
+  const secure = window.location.protocol === 'https:' ? '; Secure' : ''
+  // biome-ignore lint/suspicious/noDocumentCookie: la Cookie Store API que la règle recommande n'est pas servie par Safari ; `cookieStore.set` y est `undefined` et la préférence de langue serait perdue en silence sur tout un navigateur. `document.cookie` est ici le choix portable, et l'écriture est centralisée dans cette seule fonction — ce que la règle cherche à obtenir.
+  document.cookie = `${LOCALE_COOKIE_NAME}=${locale}; Path=/; Max-Age=${LOCALE_COOKIE_MAX_AGE}; SameSite=Lax${secure}`
+}
+
 export function isSupportedLocale(value: string | undefined): value is Locale {
   return (
     value !== undefined &&
