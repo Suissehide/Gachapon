@@ -1,13 +1,44 @@
 #!/usr/bin/env node
-// Garde-fou d'existence des clés de traduction — lot 2, tâche 10b.
+// Garde-fou des clés de traduction — lot 2, tâche 10b, étendu par la revue
+// finale de branche (contrôle n°3 ci-dessous).
 //
-// Vérifie que chaque appel LITTÉRAL de traduction dans `front/src/` résout
-// vers une clé qui existe réellement, dans les deux langues, en chargeant
-// les vrais fichiers JSON de `src/i18n/locales/{fr,en}/` dans une instance
-// i18next et en interrogeant `i18n.exists()` — jamais une réimplémentation
-// maison de la résolution de clé.
+// TROIS CONTRÔLES, tous sur les mêmes ressources chargées pour de vrai :
 //
-// Pourquoi un troisième garde-fou : `check-i18n-parity.mjs` compare fr/ et
+//   1. EXISTENCE — chaque appel LITTÉRAL de traduction dans `front/src/`
+//      résout vers une clé qui existe réellement, dans les deux langues, en
+//      chargeant les vrais fichiers JSON de `src/i18n/locales/{fr,en}/` dans
+//      une instance i18next et en interrogeant `i18n.exists()` — jamais une
+//      réimplémentation maison de la résolution de clé.
+//   2. FORME DES RESSOURCES — valeur vide, `_one` orphelin : voir
+//      `checkResourceDefects` plus bas.
+//   3. INTERPOLATION — chaque `{{var}}` de la valeur traduite a bien une
+//      option du même nom à son site d'appel. Voir le paragraphe suivant.
+//
+// POURQUOI LE CONTRÔLE n°3 (revue finale de branche, 2026-09-22). Quatre
+// nœuds de l'arbre de compétences affichaient « +{{value}} jetons » en clair
+// sur /skills, pour tout le monde, dans les deux langues : le site d'appel
+// passait `{ count: v }` à une clé qui interpole `{{value}}`. AUCUN des
+// quatre garde-fous ne pouvait l'attraper, et c'était structurel —
+// `check-i18n-parity.mjs` compare fr et en, qui étaient d'accord sur
+// l'erreur ; ce script-ci ne testait que l'EXISTENCE, et son `count: 1`
+// (angle mort n°6) résolvait justement le pluriel sans jamais toucher à
+// l'interpolation ; `check-i18n-hardcoded.mjs` ne voyait aucun français ; et
+// `t()` accepte n'importe quel objet d'options sans que TypeScript s'en
+// émeuve. Le contrôle n°3 compare donc, pour chaque appel littéral, le jeu
+// des `{{var}}` de la VALEUR traduite (toutes formes plurielles réunies) au
+// jeu des clés de l'objet d'options LU AU SITE D'APPEL.
+//
+// Le sens de la comparaison est asymétrique, volontairement : une VARIABLE
+// sans option est un défaut (le placeholder s'affiche tel quel), une OPTION
+// sans variable n'en est pas un — `count` pilote la forme plurielle sans
+// apparaître forcément dans le texte, et un reliquat de relecture ne
+// s'affiche pas à l'écran. Les options inutilisées sont comptées, jamais
+// signalées : voir `I18NEXT_RESERVED_OPTIONS` et `extraOptionCount`.
+//
+// La fixture `scripts/i18n-fixtures/interpolation-options.tsx` fige cette
+// morsure, dans les deux sens (`check-i18n-guard-selftest.mjs`).
+//
+// Pourquoi un garde-fou de plus : `check-i18n-parity.mjs` compare fr/ et
 // en/ ENTRE EUX (deux fichiers peuvent être en parité parfaite sans
 // contenir une seule clé que le code appelle) ; `check-i18n-hardcoded.mjs`
 // cherche du français resté en dur (une clé inexistante n'en est pas) ; le
@@ -189,6 +220,40 @@
 //    parité parfaite). `checkResourceDefects` (plus bas) le vérifie
 //    directement sur les ressources JSON, indépendamment des appels au code
 //    — voir ce nom dans le fichier pour le détail.
+//
+// 7. LES OPTIONS PASSÉES AUTREMENT QU'EN OBJET LITTÉRAL — `t('clé', opts)`,
+//    `t('clé', { ...base })`, `t('clé', { [k]: v })`, `t('clé', { replace:
+//    … })`. Le contrôle n°3 ne lit que les clés de PREMIER NIVEAU d'un objet
+//    écrit sur place ; dès qu'une partie lui échappe, le site entier est
+//    déclaré illisible et sorti du filet plutôt que vérifié à moitié (un jeu
+//    de clés incomplet produirait de FAUSSES alertes, le pire résultat pour
+//    un garde-fou). Ces sites sont comptés à l'exécution
+//    (`interpolationOpaqueCount`, affiché dans le résumé).
+//    MESURÉ sur ce dépôt à l'écriture de ce contrôle : 0 site sur 2724
+//    appels littéraux — le dépôt n'écrit, aujourd'hui, que des objets
+//    littéraux. Si ce compteur décolle, la couverture du contrôle n°3 baisse
+//    d'autant, sans que rien d'autre ne le dise.
+//    À noter aussi : ce script lit le NOM des options, jamais leur VALEUR.
+//    `t('clé', { value: undefined })` passe pour vert alors qu'i18next
+//    affichera une chaîne vide à la place du placeholder — un symptôme plus
+//    discret que la clé brute, et hors de portée d'une lecture syntaxique.
+//
+// 8. LES `<Trans>` DONT LES VALEURS VIENNENT D'AILLEURS — `<Trans
+//    {...props} />`, `values={unObjetVenuDePlusHaut}`. Même traitement qu'au
+//    point 7 : illisible, donc hors filet, et compté avec lui. Les options
+//    d'un `<Trans>` sont lues dans sa balise OUVRANTE (`values={{…}}`,
+//    `tOptions={{…}}`, présence de `count=`/`context=`) — plus, pour une
+//    balise non auto-fermante, les `{{nom}}` de ses ENFANTS, que
+//    react-i18next interpole aussi. MESURÉ : sur ce dépôt, les 24 `<Trans>`
+//    sont tous auto-fermants et passent tous par `values={{…}}` littéral —
+//    0 site illisible. Le support des enfants est écrit par précaution, pas
+//    en réponse à un cas observé.
+//
+//    AMPLEUR DU CONTRÔLE n°3, mesurée à son écriture : sur 2724 appels
+//    littéraux, 341 portent au moins une `{{var}}` — ce sont les SEULS où ce
+//    contrôle peut mordre (317 appels à clé interpolée + 24 `<Trans>`), les
+//    2383 autres traversent sans rien à comparer. Ces chiffres sont
+//    réaffichés à chaque exécution : une dérive forte est un signal.
 //
 // Seuls `.ts`/`.tsx` sont balayés (comme check-i18n-hardcoded.mjs) —
 // `src/i18n/locales/**/*.json` n'est jamais scanné pour des APPELS (il est
@@ -397,6 +462,130 @@ function checkResourceDefects(resources) {
 }
 
 // ---------------------------------------------------------------------------
+// Variables d'interpolation : les `{{var}}` de la valeur traduite contre les
+// clés de l'objet d'options du site d'appel (voir le CONTRÔLE n°3 en tête de
+// fichier)
+// ---------------------------------------------------------------------------
+
+/**
+ * Suffixes de forme grammaticale qu'i18next ajoute à une clé de base : les
+ * six catégories CLDR, en cardinal (`clé_other`) comme en ordinal
+ * (`clé_ordinal_other`). Sert à retrouver TOUTES les variantes d'une clé
+ * appelée sous son nom nu — leurs `{{var}}` sont RÉUNIS, puisque n'importe
+ * laquelle peut être choisie à l'exécution selon la valeur de `count` (une
+ * variable manquante dans la seule forme `_other` est un défaut aussi réel
+ * qu'une manquante partout).
+ */
+const PLURAL_CATEGORIES = ['zero', 'one', 'two', 'few', 'many', 'other']
+const VARIANT_SUFFIX_RE = new RegExp(
+  `^(?:ordinal_)?(?:${PLURAL_CATEGORIES.join('|')})$`,
+)
+
+/**
+ * Le cas INVERSE, traité explicitement : une OPTION sans `{{var}}`
+ * correspondante n'est pas un défaut. `count` et `context` en sont la raison
+ * d'être — ils pilotent la RÉSOLUTION de la clé (forme plurielle, variante
+ * de contexte) et n'apparaissent pas forcément dans le texte : `t('clé', {
+ * count })` sur « +1 jeton / +3 jetons » est parfaitement correct. Ils
+ * restent par ailleurs interpolables (`{{count}}` marche), donc ils sont
+ * conservés dans le jeu de clés comparé aux variables : une option réservée
+ * peut SATISFAIRE une variable, jamais en EXIGER une.
+ *
+ * Plus généralement, ce script ne signale JAMAIS une option inutilisée, même
+ * hors de cette liste : un reliquat de relecture ne s'affiche pas à l'écran.
+ * Il les compte seulement (`extraOptionCount` dans le résumé) pour que la
+ * dérive reste visible.
+ */
+const I18NEXT_RESERVED_OPTIONS = new Set([
+  'count',
+  'ordinal',
+  'context',
+  'ns',
+  'lng',
+  'lngs',
+  'fallbackLng',
+  'defaultValue',
+  'returnObjects',
+  'returnDetails',
+  'joinArrays',
+  'postProcess',
+  'interpolation',
+  'formatParams',
+  'keySeparator',
+  'nsSeparator',
+  'skipInterpolation',
+  't',
+])
+
+const INTERPOLATION_RE = /\{\{([^{}]*)\}\}/g
+
+/**
+ * Les noms de variables interpolés dans une valeur traduite. `{{- var}}`
+ * (non échappé) et `{{var, format}}` (formateur i18next) sont ramenés au
+ * seul NOM ; `{{objet.champ}}` à sa RACINE, qui est ce que l'appelant doit
+ * fournir en option. Aucun cas des deux dernières formes sur ce dépôt à
+ * l'écriture de ce contrôle — traitées par précaution, comme les tolérances
+ * de formatage plus bas.
+ */
+function interpolationVars(value) {
+  const vars = new Set()
+  INTERPOLATION_RE.lastIndex = 0
+  let m
+  while ((m = INTERPOLATION_RE.exec(value))) {
+    const name = m[1].split(',')[0].replace(/^-/, '').trim()
+    if (name !== '') {
+      vars.add(name.split('.')[0])
+    }
+  }
+  return vars
+}
+
+/**
+ * Toutes les valeurs d'une clé dans une langue : la clé elle-même PLUS ses
+ * variantes de forme (`_one`, `_other`, `_ordinal_few`…). Le namespace est
+ * lu dans le préfixe de la clé quand elle en porte un, sinon cherché parmi
+ * les candidats DANS L'ORDRE — la même règle que `i18n.exists()` avec un
+ * tableau de namespaces, pour que ce contrôle regarde exactement l'entrée
+ * que le contrôle d'existence a validée.
+ *
+ * Renvoie `null` quand aucun candidat ne contient la clé : l'appelant compte
+ * alors le site comme NON VÉRIFIÉ (`interpolationUnresolvedCount`), jamais
+ * comme vert.
+ */
+function lookupValues(flatResources, locale, key, nsCandidates) {
+  let nsFromKey = null
+  let keyPath = key
+  const sep = key.indexOf(':')
+  if (sep !== -1) {
+    nsFromKey = key.slice(0, sep)
+    keyPath = key.slice(sep + 1)
+  }
+  const candidates = nsFromKey === null ? nsCandidates : [nsFromKey]
+  for (const candidate of candidates) {
+    const flat = flatResources[locale][candidate]
+    if (flat === undefined) {
+      continue
+    }
+    const values = []
+    if (typeof flat[keyPath] === 'string') {
+      values.push(flat[keyPath])
+    }
+    for (const [flatKey, value] of Object.entries(flat)) {
+      if (!flatKey.startsWith(`${keyPath}_`)) {
+        continue
+      }
+      if (VARIANT_SUFFIX_RE.test(flatKey.slice(keyPath.length + 1))) {
+        values.push(value)
+      }
+    }
+    if (values.length > 0) {
+      return values
+    }
+  }
+  return null
+}
+
+// ---------------------------------------------------------------------------
 // Lecture de littéraux de chaîne JS (guillemets simples/doubles, templates)
 // ---------------------------------------------------------------------------
 
@@ -529,6 +718,224 @@ function readBracedExpression(source, pos) {
     i += 1
   }
   return null
+}
+
+/**
+ * Clés de PREMIER NIVEAU d'un objet littéral, `text` étant son CONTENU (sans
+ * les accolades extérieures). Renvoie `{ keys, dynamic }` — `dynamic: true`
+ * dès qu'une partie de l'objet échappe à la lecture littérale : `...spread`
+ * (les vraies clés viennent d'ailleurs), clé calculée `[expr]`, ou l'option
+ * `replace` d'i18next, qui DÉPLACE la source des variables hors de l'objet
+ * de premier niveau. Un objet dynamique rend le site entier non vérifié,
+ * jamais vérifié à moitié : un jeu de clés incomplet produirait de fausses
+ * alertes, le pire résultat possible pour un garde-fou.
+ */
+function parseObjectLiteralKeys(text) {
+  const keys = new Set()
+  const segments = []
+  let current = ''
+  let depth = 0
+  let i = 0
+  while (i < text.length) {
+    const c = text[i]
+    if (c === "'" || c === '"' || c === '`') {
+      const lit = readStringLiteral(text, i)
+      if (lit === null) {
+        return { keys, dynamic: true }
+      }
+      current += text.slice(i, lit.end)
+      i = lit.end
+      continue
+    }
+    if (c === '{' || c === '[' || c === '(') {
+      depth += 1
+      current += c
+      i += 1
+      continue
+    }
+    if (c === '}' || c === ']' || c === ')') {
+      depth -= 1
+      current += c
+      i += 1
+      continue
+    }
+    if (c === ',' && depth === 0) {
+      segments.push(current)
+      current = ''
+      i += 1
+      continue
+    }
+    current += c
+    i += 1
+  }
+  segments.push(current)
+
+  for (const segment of segments) {
+    const trimmed = segment.trim()
+    if (trimmed === '') {
+      continue
+    }
+    if (trimmed.startsWith('...') || trimmed.startsWith('[')) {
+      return { keys, dynamic: true }
+    }
+    const named = trimmed.match(/^([A-Za-z_$][\w$]*)\s*:/)
+    const quoted =
+      trimmed.match(/^'([^']*)'\s*:/) ?? trimmed.match(/^"([^"]*)"\s*:/)
+    const shorthand = trimmed.match(/^([A-Za-z_$][\w$]*)$/)
+    const name = named?.[1] ?? quoted?.[1] ?? shorthand?.[1] ?? null
+    if (name === null || name === 'replace') {
+      return { keys, dynamic: true }
+    }
+    keys.add(name)
+  }
+  return { keys, dynamic: false }
+}
+
+/**
+ * Depuis le `<` de `<Trans`, lit la balise OUVRANTE entière jusqu'à son `>`,
+ * en ignorant les `>` qui vivent dans une expression JSX imbriquée
+ * (`components={{ strong: <strong className="x" /> }}` en contient deux) ou
+ * dans une chaîne. Renvoie `null` si la balise n'est pas refermée.
+ */
+function readJsxOpeningTag(source, startPos) {
+  let i = startPos
+  let depth = 0
+  let text = ''
+  while (i < source.length) {
+    const c = source[i]
+    if (c === "'" || c === '"' || c === '`') {
+      const lit = readStringLiteral(source, i)
+      if (lit === null) {
+        return null
+      }
+      text += source.slice(i, lit.end)
+      i = lit.end
+      continue
+    }
+    if (c === '{') {
+      depth += 1
+      text += c
+      i += 1
+      continue
+    }
+    if (c === '}') {
+      depth -= 1
+      text += c
+      i += 1
+      continue
+    }
+    if (c === '>' && depth === 0) {
+      return { text: `${text}>`, end: i + 1 }
+    }
+    text += c
+    i += 1
+  }
+  return null
+}
+
+/** Aucune option lisible — l'appel n'en passe pas du tout. */
+const NO_OPTIONS = { present: false, dynamic: false, keys: new Set() }
+/** Options illisibles — le site est hors du filet (angle mort n°7). */
+const OPAQUE_OPTIONS = { present: true, dynamic: true, keys: new Set() }
+
+/**
+ * L'objet d'options d'un appel `t('clé', { … })`, lu depuis la position qui
+ * suit immédiatement le littéral de clé. Trois issues : pas d'options du
+ * tout, options illisibles (variable, appel de fonction, spread — angle
+ * mort n°7), ou le jeu de clés lu.
+ */
+function readCallOptions(source, afterKeyPos) {
+  let i = skipWhitespace(source, afterKeyPos)
+  if (source[i] !== ',') {
+    return NO_OPTIONS
+  }
+  i = skipWhitespace(source, i + 1)
+  if (source[i] === ')') {
+    return NO_OPTIONS
+  }
+  if (source[i] !== '{') {
+    return OPAQUE_OPTIONS
+  }
+  const braced = readBracedExpression(source, i + 1)
+  if (braced === null) {
+    return OPAQUE_OPTIONS
+  }
+  const parsed = parseObjectLiteralKeys(braced.text)
+  return { present: true, dynamic: parsed.dynamic, keys: parsed.keys }
+}
+
+/**
+ * Les options d'un `<Trans>` : la prop `values={{ … }}` (la source normale
+ * des variables), `tOptions={{ … }}`, et la présence de `count=`/`context=`
+ * (qui résolvent la forme de la clé et peuvent aussi être interpolées). Si
+ * la balise porte un spread JSX (`<Trans {...props} />`) ou une `values`
+ * qui n'est pas un objet littéral, le site devient illisible (angle mort
+ * n°8).
+ *
+ * Cas supplémentaire couvert par précaution (0 occurrence sur ce dépôt, où
+ * les 24 `<Trans>` sont tous auto-fermants) : une balise NON auto-fermante,
+ * dont react-i18next lit aussi les valeurs interpolées dans les ENFANTS
+ * (`<Trans …>Bonjour {{nom}}</Trans>`) — ces noms sont ajoutés au jeu de
+ * clés, faute de quoi ce contrôle crierait à tort.
+ */
+function readTransOptions(source, transStart) {
+  if (transStart === -1) {
+    return OPAQUE_OPTIONS
+  }
+  const tag = readJsxOpeningTag(source, transStart)
+  if (tag === null || /\{\s*\.\.\./.test(tag.text)) {
+    return OPAQUE_OPTIONS
+  }
+  const keys = new Set()
+  let dynamic = false
+  for (const prop of ['count', 'context']) {
+    if (new RegExp(`\\b${prop}\\s*=`).test(tag.text)) {
+      keys.add(prop)
+    }
+  }
+  for (const prop of ['values', 'tOptions']) {
+    const at = tag.text.search(new RegExp(`\\b${prop}\\s*=`))
+    if (at === -1) {
+      continue
+    }
+    const braceAt = tag.text.indexOf('{', at)
+    if (braceAt === -1) {
+      dynamic = true
+      continue
+    }
+    const outer = readBracedExpression(tag.text, braceAt + 1)
+    if (outer === null) {
+      dynamic = true
+      continue
+    }
+    const inner = outer.text.trim()
+    if (!inner.startsWith('{') || !inner.endsWith('}')) {
+      // `values={objetVenuDailleurs}` — jamais lu.
+      dynamic = true
+      continue
+    }
+    const parsed = parseObjectLiteralKeys(inner.slice(1, -1))
+    if (parsed.dynamic) {
+      dynamic = true
+    }
+    for (const key of parsed.keys) {
+      keys.add(key)
+    }
+  }
+  if (!tag.text.trimEnd().endsWith('/>')) {
+    const close = source.indexOf('</Trans>', tag.end)
+    const nested = source.indexOf('<Trans', tag.end)
+    if (close === -1 || (nested !== -1 && nested < close)) {
+      dynamic = true
+    } else {
+      for (const m of source
+        .slice(tag.end, close)
+        .matchAll(/\{\{\s*([A-Za-z_$][\w$]*)/g)) {
+        keys.add(m[1])
+      }
+    }
+  }
+  return { present: true, dynamic, keys }
 }
 
 // ---------------------------------------------------------------------------
@@ -878,12 +1285,16 @@ function resolveVar(bindingsByVar, varName, pos) {
 
 /**
  * Balaie un fichier (déjà nettoyé de ses commentaires) et renvoie :
- *   - `literals` : `{ pos, key, ns, kind }[]` — `ns` est `null` si `key`
+ *   - `literals` : `{ pos, key, ns, kind, options }[]` — `ns` est `null` si `key`
  *     porte déjà un préfixe `ns:` (auquel cas i18next l'utilisera de toute
  *     façon en priorité, voir plus bas), sinon la liste de namespaces
  *     candidats à passer en option `ns` de `i18n.exists()`. `kind` est soit
  *     `'i18n.t'`, soit `'Trans i18nKey'`, soit l'identifiant réel appelé —
  *     `'t'` la plupart du temps, ou un alias (`'tShop'`) le cas échéant.
+ *     `options` est `{ present, dynamic, keys }` — le jeu de clés de l'objet
+ *     d'options du site d'appel (ou de la balise `<Trans>`), comparé plus
+ *     bas aux `{{var}}` de la valeur traduite. Voir `readCallOptions` /
+ *     `readTransOptions`.
  *   - `dynamicCount` : nombre d'appels dont le premier argument n'est pas un
  *     littéral entièrement statique (angle mort n°1).
  *   - `unresolvedCount` : nombre d'appels dont la clé EST littérale mais dont
@@ -949,7 +1360,13 @@ function scanFile(source) {
     if (!isI18n && calledVar !== 't') {
       aliasCallCount += 1
     }
-    literals.push({ pos: m.index, key, ns, kind })
+    literals.push({
+      pos: m.index,
+      key,
+      ns,
+      kind,
+      options: readCallOptions(source, lit.end),
+    })
   }
 
   I18NKEY_RE.lastIndex = 0
@@ -982,13 +1399,17 @@ function scanFile(source) {
       continue
     }
     const key = lit.raw
+    // Balise `<Trans>` englobante : elle porte À LA FOIS le namespace
+    // implicite (angle mort n°4) et les options d'interpolation (`values=`,
+    // `count=` — voir `readTransOptions`).
+    const transStart = source.lastIndexOf('<Trans', m.index)
+    const options = readTransOptions(source, transStart)
     let ns
     if (key.includes(':')) {
       ns = null
     } else {
       // Résolution du namespace implicite via la balise <Trans> englobante
       // — heuristique de fenêtre de texte, voir angle mort n°4.
-      const transStart = source.lastIndexOf('<Trans', m.index)
       let resolved = null
       if (transStart !== -1) {
         const window = source.slice(transStart, m.index)
@@ -1014,7 +1435,7 @@ function scanFile(source) {
       }
       ns = resolved
     }
-    literals.push({ pos: m.index, key, ns, kind: 'Trans i18nKey' })
+    literals.push({ pos: m.index, key, ns, kind: 'Trans i18nKey', options })
   }
 
   literals.sort((a, b) => a.pos - b.pos)
@@ -1130,6 +1551,16 @@ async function main() {
   const resources = await loadResources()
   const resourceProblems = checkResourceDefects(resources)
   const i18n = await buildI18nInstance(resources)
+  // Aplaties une fois pour toutes : `lookupValues` y relit la VALEUR de
+  // chaque clé (et de ses variantes plurielles) pour en extraire les
+  // `{{var}}` — `i18n.exists()` ne rend que l'existence, jamais le texte.
+  const flatResources = {}
+  for (const locale of LOCALES) {
+    flatResources[locale] = {}
+    for (const ns of NAMESPACES) {
+      flatResources[locale][ns] = flattenStrings(resources[locale][ns], '', {})
+    }
+  }
 
   const problems = [...resourceProblems]
   const dynamicLines = []
@@ -1138,6 +1569,11 @@ async function main() {
   let dynamicCount = 0
   let unresolvedCount = 0
   let aliasCallCount = 0
+  let interpolationCheckedCount = 0
+  let interpolationWithVarsCount = 0
+  let interpolationOpaqueCount = 0
+  let interpolationUnresolvedCount = 0
+  let extraOptionCount = 0
 
   for (const file of targets.sort()) {
     const source = await fs.readFile(file, 'utf8')
@@ -1171,6 +1607,14 @@ async function main() {
     for (const entry of literals) {
       literalCount += 1
       const { line, column } = offsetToLineCol(lineOffsets, entry.pos)
+      // Variables interpolées sans option correspondante, réunies sur les
+      // deux langues : `{{var}} → {langues}`. Une seule ligne de défaut par
+      // site d'appel, quel que soit le nombre de langues touchées.
+      const missingByVar = new Map()
+      const usedOptions = new Set()
+      let checkedInterpolation = false
+      let unresolvedInterpolation = false
+      let hasVars = false
       for (const locale of LOCALES) {
         const exists = i18n.exists(entry.key, {
           lng: locale,
@@ -1181,12 +1625,75 @@ async function main() {
           problems.push(
             `${rel}:${line}:${column}: clé "${entry.key}" introuvable (${locale}) — appel ${entry.kind}`,
           )
+          continue
         }
+        if (entry.options.dynamic) {
+          continue
+        }
+        const values = lookupValues(
+          flatResources,
+          locale,
+          entry.key,
+          entry.ns ?? [DEFAULT_NS],
+        )
+        if (values === null) {
+          // La clé existe pour i18next mais ce script ne retrouve pas son
+          // texte (namespace hors liste, forme inattendue) : non vérifié,
+          // jamais déclaré vert.
+          unresolvedInterpolation = true
+          continue
+        }
+        checkedInterpolation = true
+        for (const value of values) {
+          if (interpolationVars(value).size > 0) {
+            hasVars = true
+          }
+          for (const name of interpolationVars(value)) {
+            if (entry.options.keys.has(name)) {
+              usedOptions.add(name)
+              continue
+            }
+            if (!missingByVar.has(name)) {
+              missingByVar.set(name, new Set())
+            }
+            missingByVar.get(name).add(locale)
+          }
+        }
+      }
+
+      if (entry.options.dynamic) {
+        interpolationOpaqueCount += 1
+      } else if (checkedInterpolation) {
+        interpolationCheckedCount += 1
+        if (hasVars) {
+          interpolationWithVarsCount += 1
+        }
+        for (const key of entry.options.keys) {
+          if (!usedOptions.has(key) && !I18NEXT_RESERVED_OPTIONS.has(key)) {
+            extraOptionCount += 1
+          }
+        }
+      } else if (unresolvedInterpolation) {
+        interpolationUnresolvedCount += 1
+      }
+
+      if (missingByVar.size > 0) {
+        const detail = [...missingByVar.entries()]
+          .map(([name, locales]) => `{{${name}}} (${[...locales].join(', ')})`)
+          .join(', ')
+        const passed =
+          entry.options.keys.size === 0
+            ? 'aucune'
+            : [...entry.options.keys].join(', ')
+        problems.push(
+          `${rel}:${line}:${column}: clé "${entry.key}" interpole ${detail} sans option correspondante au site d'appel (options passées : ${passed}) — le placeholder s'affichera tel quel — appel ${entry.kind}`,
+        )
       }
     }
   }
 
-  const summary = `${literalCount} appel(s) littéral(aux) vérifié(s), dont ${aliasCallCount} via un alias de useTranslation ; ${dynamicCount} appel(s) dynamique(s) ignoré(s) (angle mort n°1) ; ${unresolvedCount} non résolu(s) faute de contexte (angles morts n°4/5) ; sur ${targets.length} fichier(s) scanné(s).`
+  const summary = `${literalCount} appel(s) littéral(aux) vérifié(s), dont ${aliasCallCount} via un alias de useTranslation ; ${dynamicCount} appel(s) dynamique(s) ignoré(s) (angle mort n°1) ; ${unresolvedCount} non résolu(s) faute de contexte (angles morts n°4/5) ; sur ${targets.length} fichier(s) scanné(s).
+[check-i18n-keys] interpolation : ${interpolationCheckedCount} site(s) comparé(s) option par option — dont ${interpolationWithVarsCount} portant au moins une {{var}}, les seuls où ce contrôle peut mordre —, ${interpolationOpaqueCount} aux options illisibles (angles morts n°7/8), ${interpolationUnresolvedCount} dont la valeur n'a pas été retrouvée ; ${extraOptionCount} option(s) sans {{var}} correspondante (jamais un défaut — voir I18NEXT_RESERVED_OPTIONS).`
 
   if (verbose && (dynamicLines.length > 0 || unresolvedLines.length > 0)) {
     console.error(`[check-i18n-keys] --verbose — appels ignorés en détail :\n`)

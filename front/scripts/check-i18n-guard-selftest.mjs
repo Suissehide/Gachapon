@@ -73,7 +73,9 @@ const KEYS = 'check-i18n-keys.mjs'
  * en-tête : ces numéros et ces comptes sont leur contrat.
  *
  * `keys` : idem pour `check-i18n-keys.mjs`, quand la fixture sert à montrer
- * le partage des rôles entre les deux scripts. `null` = non vérifié.
+ * le partage des rôles entre les deux scripts (`french-as-key.tsx`) ou à
+ * figer un contrôle qui n'appartient qu'à lui (`interpolation-options.tsx`).
+ * `null` = non vérifié.
  */
 const EXPECTATIONS = [
   {
@@ -99,6 +101,12 @@ const EXPECTATIONS = [
     why: "L'angle mort assumé du masque `t('…')` : invisible pour le garde-fou du français, signalé par celui des clés.",
     hardcoded: {},
     keys: { 15: 2 },
+  },
+  {
+    file: 'interpolation-options.tsx',
+    why: "Les {{var}} de la valeur traduite contre les clés de l'objet d'options du site d'appel — le trou de la revue finale : quatre nœuds de /skills affichaient « +{{value}} jetons » en clair parce que l'appel passait `{ count }` sans `value`. Les quatre lignes signalées sont les quatre formes du défaut (t, i18n.t, aucune option, <Trans>) ; les lignes muettes tiennent le revers, dont l'option en trop (`leftover`), qui ne DOIT pas sortir.",
+    hardcoded: {},
+    keys: { 34: 1, 35: 1, 36: 1, 37: 1 },
   },
   {
     file: 'unmasked-attributes.tsx',
