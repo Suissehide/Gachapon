@@ -156,7 +156,7 @@
       "intro": "The <strong>Campaign</strong> is the battle loop. You progress through themed <strong2>chapters</strong2> — Plains, Whispering Forest, Ashes, Ocean, Crystals, Volcano, Tundra, Abyss, Rift — each split into increasingly difficult <strong3>stages</strong3>.",
       "teamBullet": "Every stage is played with your <strong>battle team</strong> (up to 3 cards). Some stages are <strong2>Boss</strong2> fights (1v3).",
       "prepBullet": "The <strong>Preparation</strong> screen shows the opponents, rewards, energy cost, and a power verdict: <advantagePill>Advantage</advantagePill> <evenPill>Even</evenPill> <riskyPill>Risky</riskyPill>.",
-      "turnBasedBullet": "Battles are <strong>turn-based</strong>: your cards use their stats (PV, ATQ, DEF, VIT), passives, and equipment.",
+      "turnBasedBullet": "Battles are <strong>turn-based</strong>: your cards use their stats (HP, ATK, DEF, SPD), passives, and equipment.",
       "firstClearParagraph": "The <strong>first clear</strong> of a stage gives guaranteed rewards (gold, dust, XP, and sometimes a guaranteed piece of equipment or card). Replaying an already-cleared stage gives repeatable rewards, with a chance to drop equipment and cards.",
       "info": "<strong>Farm ×3</strong> (sweep) automatically replays an already-cleared stage several times at once, for energy — great for stacking up gold and dust without replaying every battle."
     },
@@ -170,11 +170,11 @@
       "intro": "To hold up against advanced stages, your cards need to grow stronger. Three levers combine, all managed from a card's detail sheet.",
       "level": {
         "title": "Level",
-        "description": "Raise a card's <strong>level</strong> with gold and dust: its stats (PV, ATQ, DEF, VIT) increase with every level, up to its palier's cap."
+        "description": "Raise a card's <strong>level</strong> with gold and dust: its stats (HP, ATK, DEF, SPD) increase with every level, up to its tier's cap."
       },
       "ascension": {
-        "title": "Palier & ascension",
-        "description": "Once a card is at the top of its <strong1>palier</strong1>, <strong2>ascending it</strong2> consumes a <strong3>duplicate</strong3> to move to the next palier and raise its level cap. Its <strong4>passive</strong4> also grows stronger with each palier, up to a point — beyond that, it stays fixed and only the stats keep improving. Once the max palier is reached, progression continues through <strong5>equipment</strong5>."
+        "title": "Tier & ascension",
+        "description": "Once a card is at the top of its <strong1>tier</strong1>, <strong2>ascending it</strong2> consumes a <strong3>duplicate</strong3> to move to the next tier and raise its level cap. Its <strong4>passive</strong4> also grows stronger with each tier, up to a point — beyond that, it stays fixed and only the stats keep improving. Once the max tier is reached, progression continues through <strong5>equipment</strong5>."
       },
       "equipment": {
         "title": "Equipment",

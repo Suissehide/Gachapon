@@ -182,6 +182,10 @@
     "elementAdvantage": "Avantage élémentaire",
     "elementDisadvantage": "Désavantage élémentaire"
   },
+  "unitPortrait": {
+    "setFallbackAlly": "Combat",
+    "setFallbackEnemy": "Adversaire"
+  },
   "teamDock": {
     "power": "Puissance",
     "noCards": "Aucune carte"

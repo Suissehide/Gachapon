@@ -1,4 +1,5 @@
 import { Skull } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import type { CardElement } from '../../constants/card.constant'
 import { currentLocale } from '../../i18n/index.ts'
@@ -27,6 +28,7 @@ type Props = {
 const PLACEHOLDER_RARITY = 'COMMON' as const
 
 export function UnitPortrait({ unit, isActing, isTargeted, enlarged }: Props) {
+  const { t } = useTranslation('combat')
   const locale = currentLocale()
   const hpPct = Math.max(0, (unit.currentHp / unit.maxHp) * 100)
   const isDead = !unit.alive
@@ -56,6 +58,15 @@ export function UnitPortrait({ unit, isActing, isTargeted, enlarged }: Props) {
     ? 'ring-4 ring-amber-400/60 shadow-[0_14px_30px_-12px_rgba(245,158,11,0.55)]'
     : ''
 
+  // Le back ne renseigne `setName` que pour les alliés (`u.card.set?.name`
+  // dans `sim-units.ts`) : côté ennemi, ce repli est le cas NOMINAL, affiché
+  // sur chaque portrait de chaque combat — pas un cas limite. Deux appels
+  // littéraux plutôt qu'un `t(cond ? … : …)` : une clé construite
+  // dynamiquement sort du filet de `check-i18n-keys.mjs` (angle mort n°1).
+  const setFallback = isAlly
+    ? t('unitPortrait.setFallbackAlly')
+    : t('unitPortrait.setFallbackEnemy')
+
   return (
     <div
       className={`relative flex flex-col items-center gap-2 transition-transform ${animClass} ${
@@ -73,7 +84,7 @@ export function UnitPortrait({ unit, isActing, isTargeted, enlarged }: Props) {
           <CardDisplay
             rarity={unit.rarity ?? PLACEHOLDER_RARITY}
             name={unit.name ?? unit.id}
-            setName={unit.setName ?? (isAlly ? 'Combat' : 'Adversaire')}
+            setName={unit.setName ?? setFallback}
             imageUrl={unit.imageUrl ?? null}
             variant={unit.variant ?? 'NORMAL'}
             isOwned
