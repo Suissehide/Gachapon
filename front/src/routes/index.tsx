@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { FAQ_ITEMS } from '../../scripts/faq-items.mjs'
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
 import { SeoHead } from '../components/shared/SeoHead.tsx'
+import { currentLocale } from '../i18n/index.ts'
 import { Button } from '../components/ui/button.tsx'
 import { Card } from '../components/ui/card.tsx'
 import { useAuthDialogStore } from '../stores/authDialog.store'
@@ -167,6 +168,17 @@ const FLOATING_BALLS: Array<{
 function LandingPage() {
   const { t } = useTranslation('home')
   const { openLogin, openRegister } = useAuthDialogStore()
+
+  // Aplatie une fois par rendu : `FAQ_ITEMS` porte les deux langues (une seule
+  // copie, partagée avec scripts/prerender-seo.mjs, pour que le HTML statique
+  // et la page rendue ne puissent pas diverger). `currentLocale()` est relue à
+  // chaque rendu plutôt que capturée au niveau module — convention de
+  // src/i18n/index.ts.
+  const locale = currentLocale()
+  const faqItems = FAQ_ITEMS.map((item) => ({
+    q: item.q[locale],
+    a: item.a[locale],
+  }))
 
   return (
     <div className="relative flex flex-col min-h-screen bg-background text-foreground overflow-x-hidden">
@@ -560,7 +572,7 @@ function LandingPage() {
           </h2>
 
           <div className="divide-y divide-border/40 border-y border-border/40">
-            {FAQ_ITEMS.map((item) => (
+            {faqItems.map((item) => (
               <details
                 key={item.q}
                 className="group py-5 [&_summary::-webkit-details-marker]:hidden"
@@ -586,7 +598,7 @@ function LandingPage() {
               __html: JSON.stringify({
                 '@context': 'https://schema.org',
                 '@type': 'FAQPage',
-                mainEntity: FAQ_ITEMS.map((item) => ({
+                mainEntity: faqItems.map((item) => ({
                   '@type': 'Question',
                   name: item.q,
                   acceptedAnswer: { '@type': 'Answer', text: item.a },
