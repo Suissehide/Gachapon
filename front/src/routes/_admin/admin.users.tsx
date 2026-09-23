@@ -1,8 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
 import type { ColumnDef } from '@tanstack/react-table'
 import dayjs from 'dayjs'
+import type { TFunction } from 'i18next'
 import { Download, Gift, Users } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { AdminUsersFilters } from '../../api/admin-users.api.ts'
 import { AdminUsersApi } from '../../api/admin-users.api.ts'
@@ -20,6 +22,7 @@ import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label.tsx'
 import { SegmentedControl } from '../../components/ui/segmentedControl.tsx'
 import { apiUrl } from '../../constants/config.constant.ts'
+import i18n from '../../i18n/index.ts'
 import type { AdminUser } from '../../queries/useAdminUsers'
 import {
   useAdminSuspendUser,
@@ -37,9 +40,12 @@ export const Route = createFileRoute('/_admin/admin/users')({
 type StatusFilter = 'all' | 'active' | 'suspended'
 
 const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
-  { value: 'all', label: 'Tous' },
-  { value: 'active', label: 'Actifs' },
-  { value: 'suspended', label: 'Suspendus' },
+  { value: 'all', label: i18n.t('admin:users.statusOptions.all') },
+  { value: 'active', label: i18n.t('admin:users.statusOptions.active') },
+  {
+    value: 'suspended',
+    label: i18n.t('admin:users.statusOptions.suspended'),
+  },
 ]
 
 const STATUS_API_MAP: Record<
@@ -51,14 +57,22 @@ const STATUS_API_MAP: Record<
   suspended: 'suspended',
 }
 
-function buildColumns(): ColumnDef<AdminUser>[] {
+function buildColumns(t: TFunction<'admin'>): ColumnDef<AdminUser>[] {
   return [
     selectionColumn<AdminUser>(),
-    { accessorKey: 'username', header: 'Username', meta: { grow: true } },
-    { accessorKey: 'email', header: 'Email', meta: { grow: true } },
+    {
+      accessorKey: 'username',
+      header: t('users.columns.username'),
+      meta: { grow: true },
+    },
+    {
+      accessorKey: 'email',
+      header: t('users.columns.email'),
+      meta: { grow: true },
+    },
     {
       accessorKey: 'role',
-      header: 'Rôle',
+      header: t('users.columns.role'),
       size: 120,
       cell: ({ row }) => (
         <Badge
@@ -69,25 +83,27 @@ function buildColumns(): ColumnDef<AdminUser>[] {
         </Badge>
       ),
     },
-    { accessorKey: 'tokens', header: 'Tokens', size: 80 },
-    { accessorKey: 'dust', header: 'Poussière', size: 80 },
-    { accessorKey: 'level', header: 'Niveau', size: 70 },
+    { accessorKey: 'tokens', header: t('users.columns.tokens'), size: 80 },
+    { accessorKey: 'dust', header: t('users.columns.dust'), size: 80 },
+    { accessorKey: 'level', header: t('users.columns.level'), size: 70 },
     {
       accessorKey: 'suspended',
-      header: 'Statut',
+      header: t('users.columns.status'),
       size: 100,
       cell: ({ row }) => (
         <Badge
           variant={row.original.suspended ? 'danger' : 'success'}
           size="sm"
         >
-          {row.original.suspended ? 'Suspendu' : 'Actif'}
+          {row.original.suspended
+            ? t('users.columns.statusSuspended')
+            : t('users.columns.statusActive')}
         </Badge>
       ),
     },
     {
       accessorKey: 'lastLoginAt',
-      header: 'Dernière connexion',
+      header: t('users.columns.lastLogin'),
       size: 150,
       cell: ({ row }) => {
         const val = row.original.lastLoginAt
@@ -101,12 +117,12 @@ function buildColumns(): ColumnDef<AdminUser>[] {
   ]
 }
 
-function rewardLabel(ids: string[]): string {
-  const n = ids.length
-  return `${n} joueur${n > 1 ? 's' : ''} sélectionné${n > 1 ? 's' : ''}`
+function rewardLabel(t: TFunction<'admin'>, ids: string[]): string {
+  return t('users.selectedCount', { count: ids.length })
 }
 
 function AdminUsers() {
+  const { t } = useTranslation('admin')
   const [page, setPage] = useState(1)
   const [filters, setFilters] = useState<AdminUsersFilters>({})
   const [statusTab, setStatusTab] = useState<StatusFilter>('all')
@@ -131,7 +147,7 @@ function AdminUsers() {
   const updateRole = useAdminUpdateRole()
   const suspend = useAdminSuspendUser()
 
-  const columns = useMemo(buildColumns, [])
+  const columns = useMemo(() => buildColumns(t), [t])
 
   function updateFilter<K extends keyof AdminUsersFilters>(
     key: K,
@@ -146,20 +162,20 @@ function AdminUsers() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'joueurs.csv'
+    a.download = t('users.exportFilename')
     a.click()
     URL.revokeObjectURL(url)
   }
 
   const openRewardAll = () => {
     setRewardTarget('ALL')
-    setRewardTargetLabel('TOUS les joueurs actifs')
+    setRewardTargetLabel(t('users.allActivePlayersLabel'))
     setRewardPopupOpen(true)
   }
 
   const openRewardSelected = () => {
     setRewardTarget(selectedIds)
-    setRewardTargetLabel(rewardLabel(selectedIds))
+    setRewardTargetLabel(rewardLabel(t, selectedIds))
     setRewardPopupOpen(true)
   }
 
@@ -167,17 +183,17 @@ function AdminUsers() {
     <div className="flex h-screen flex-col p-8">
       <AdminPageHeader
         icon={Users}
-        kicker="Joueurs"
-        title="Gestion des joueurs"
+        kicker={t('common.kicker.players')}
+        title={t('users.pageTitle')}
         actions={
           <>
             <Button variant="outline" size="sm" onClick={handleExport}>
               <Download className="mr-1.5 h-4 w-4" />
-              Exporter CSV
+              {t('users.exportButton')}
             </Button>
             <Button size="sm" onClick={openRewardAll}>
               <Gift className="mr-1.5 h-4 w-4" />
-              Envoyer une récompense
+              {t('users.sendRewardButton')}
             </Button>
           </>
         }
@@ -188,7 +204,7 @@ function AdminUsers() {
         <div className="min-w-[200px] flex-1">
           <Input
             type="text"
-            placeholder="Rechercher par username ou email…"
+            placeholder={t('users.searchPlaceholder')}
             value={filters.search ?? ''}
             onChange={(e) =>
               updateFilter('search', e.target.value || undefined)
@@ -206,7 +222,9 @@ function AdminUsers() {
         />
 
         <div className="flex flex-col gap-1">
-          <Label className="text-xs text-text-light">Inscription du</Label>
+          <Label className="text-xs text-text-light">
+            {t('users.filters.registeredFromLabel')}
+          </Label>
           <DatePicker
             value={filters.createdFrom ? dayjs(filters.createdFrom) : null}
             onChange={(d) =>
@@ -215,7 +233,9 @@ function AdminUsers() {
           />
         </div>
         <div className="flex flex-col gap-1">
-          <Label className="text-xs text-text-light">au</Label>
+          <Label className="text-xs text-text-light">
+            {t('users.filters.toLabel')}
+          </Label>
           <DatePicker
             value={filters.createdTo ? dayjs(filters.createdTo) : null}
             onChange={(d) =>
@@ -225,7 +245,9 @@ function AdminUsers() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <Label className="text-xs text-text-light">Dernière co. du</Label>
+          <Label className="text-xs text-text-light">
+            {t('users.filters.lastLoginFromLabel')}
+          </Label>
           <DatePicker
             value={filters.lastLoginFrom ? dayjs(filters.lastLoginFrom) : null}
             onChange={(d) =>
@@ -234,7 +256,9 @@ function AdminUsers() {
           />
         </div>
         <div className="flex flex-col gap-1">
-          <Label className="text-xs text-text-light">au</Label>
+          <Label className="text-xs text-text-light">
+            {t('users.filters.toLabel')}
+          </Label>
           <DatePicker
             value={filters.lastLoginTo ? dayjs(filters.lastLoginTo) : null}
             onChange={(d) =>
@@ -244,11 +268,13 @@ function AdminUsers() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <Label className="text-xs text-text-light">Niveau min</Label>
+          <Label className="text-xs text-text-light">
+            {t('users.filters.levelMinLabel')}
+          </Label>
           <Input
             type="number"
             className="w-20"
-            placeholder="Min"
+            placeholder={t('users.filters.levelMinPlaceholder')}
             value={filters.levelMin ?? ''}
             onChange={(e) =>
               updateFilter(
@@ -259,11 +285,13 @@ function AdminUsers() {
           />
         </div>
         <div className="flex flex-col gap-1">
-          <Label className="text-xs text-text-light">Max</Label>
+          <Label className="text-xs text-text-light">
+            {t('users.filters.levelMaxLabel')}
+          </Label>
           <Input
             type="number"
             className="w-20"
-            placeholder="Max"
+            placeholder={t('users.filters.levelMaxPlaceholder')}
             value={filters.levelMax ?? ''}
             onChange={(e) =>
               updateFilter(
@@ -279,11 +307,11 @@ function AdminUsers() {
       {selectedIds.length > 0 && (
         <div className="mb-3 flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-4 py-2">
           <span className="text-sm font-medium text-text">
-            {rewardLabel(selectedIds)}
+            {rewardLabel(t, selectedIds)}
           </span>
           <Button size="sm" onClick={openRewardSelected}>
             <Gift className="mr-1.5 h-4 w-4" />
-            Envoyer une récompense
+            {t('users.sendRewardButton')}
           </Button>
         </div>
       )}
@@ -295,8 +323,8 @@ function AdminUsers() {
           data={data?.users ?? []}
           isLoading={isLoading}
           emptyIcon={Users}
-          emptyTitle="Aucun joueur trouvé"
-          emptyDescription="Modifie tes filtres ou ta recherche."
+          emptyTitle={t('users.emptyTitle')}
+          emptyDescription={t('users.emptyDescription')}
           filterId="admin-users"
           onSelectionChange={setSelectedIds}
         />
@@ -378,6 +406,7 @@ function AdminUserDetail({
   onUpdateRole,
   onSuspend,
 }: DetailProps) {
+  const { t } = useTranslation('admin')
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-3 gap-3 text-center">
@@ -385,32 +414,38 @@ function AdminUserDetail({
           <p className="text-xl font-bold text-text">
             {detail.stats.pullsTotal}
           </p>
-          <p className="text-xs text-text-light">Pulls</p>
+          <p className="text-xs text-text-light">
+            {t('users.detail.statPulls')}
+          </p>
         </div>
         <div className="rounded-lg bg-surface p-3">
           <p className="text-xl font-bold text-text">
             {detail.stats.cardsOwned}
           </p>
-          <p className="text-xs text-text-light">Cartes</p>
+          <p className="text-xs text-text-light">
+            {t('users.detail.statCards')}
+          </p>
         </div>
         <div className="rounded-lg bg-surface p-3">
           <p className="text-xl font-bold text-text">
             {detail.stats.dustGenerated}
           </p>
-          <p className="text-xs text-text-light">Poussière gagnée</p>
+          <p className="text-xs text-text-light">
+            {t('users.detail.statDustGained')}
+          </p>
         </div>
       </div>
 
       <div className="space-y-2">
         <p className="text-xs font-semibold uppercase tracking-widest text-text-light">
-          Attribuer tokens
+          {t('users.detail.grantTokensTitle')}
         </p>
         <div className="flex gap-2">
           <Input
             type="number"
             value={tokenAmount}
             onChange={(e) => onTokenAmountChange(e.target.value)}
-            placeholder="Quantité"
+            placeholder={t('users.detail.amountPlaceholder')}
           />
           <Button
             size="sm"
@@ -419,21 +454,21 @@ function AdminUserDetail({
               onTokenAmountChange('')
             }}
           >
-            Attribuer
+            {t('users.detail.grantButton')}
           </Button>
         </div>
       </div>
 
       <div className="space-y-2">
         <p className="text-xs font-semibold uppercase tracking-widest text-text-light">
-          Attribuer poussière
+          {t('users.detail.grantDustTitle')}
         </p>
         <div className="flex gap-2">
           <Input
             type="number"
             value={dustAmount}
             onChange={(e) => onDustAmountChange(e.target.value)}
-            placeholder="Quantité"
+            placeholder={t('users.detail.amountPlaceholder')}
           />
           <Button
             size="sm"
@@ -442,7 +477,7 @@ function AdminUserDetail({
               onDustAmountChange('')
             }}
           >
-            Attribuer
+            {t('users.detail.grantButton')}
           </Button>
         </div>
       </div>
@@ -455,8 +490,8 @@ function AdminUserDetail({
           onClick={onUpdateRole}
         >
           {selected.role === 'SUPER_ADMIN'
-            ? 'Révoquer admin'
-            : 'Promouvoir admin'}
+            ? t('users.detail.revokeAdmin')
+            : t('users.detail.promoteAdmin')}
         </Button>
         <Button
           size="sm"
@@ -464,7 +499,9 @@ function AdminUserDetail({
           className={`flex-1 border ${selected.suspended ? 'border-success/30 text-success' : 'border-destructive/30 text-destructive'}`}
           onClick={onSuspend}
         >
-          {selected.suspended ? 'Réactiver' : 'Suspendre'}
+          {selected.suspended
+            ? t('users.detail.reactivate')
+            : t('users.detail.suspend')}
         </Button>
       </div>
 
@@ -474,7 +511,7 @@ function AdminUserDetail({
         rel="noreferrer"
         className="block w-full rounded-lg border border-border bg-surface px-3 py-2 text-center text-sm text-text-light transition-colors hover:text-text"
       >
-        Collection →
+        {t('users.detail.collectionLink')}
       </a>
     </div>
   )

@@ -190,5 +190,73 @@
       "loadUser": "Error loading the user",
       "updateSuspension": "Error updating the suspension"
     }
+  },
+  "users": {
+    "pageTitle": "Manage players",
+    "exportButton": "Export CSV",
+    "sendRewardButton": "Send a reward",
+    "searchPlaceholder": "Search by username or email…",
+    "statusOptions": {
+      "all": "All",
+      "active": "Active",
+      "suspended": "Suspended"
+    },
+    "filters": {
+      "registeredFromLabel": "Registered from",
+      "toLabel": "to",
+      "lastLoginFromLabel": "Last login from",
+      "levelMinLabel": "Min level",
+      "levelMinPlaceholder": "Min",
+      "levelMaxLabel": "Max",
+      "levelMaxPlaceholder": "Max"
+    },
+    "columns": {
+      "username": "Username",
+      "email": "Email",
+      "role": "Role",
+      "tokens": "Tokens",
+      "dust": "Dust",
+      "level": "Level",
+      "status": "Status",
+      "lastLogin": "Last login",
+      "statusSuspended": "Suspended",
+      "statusActive": "Active"
+    },
+    "selectedCount_one": "{{count}} player selected",
+    "selectedCount_other": "{{count}} players selected",
+    "allActivePlayersLabel": "ALL active players",
+    "emptyTitle": "No player found",
+    "emptyDescription": "Adjust your filters or your search.",
+    "detail": {
+      "statPulls": "Pulls",
+      "statCards": "Cards",
+      "statDustGained": "Dust gained",
+      "grantTokensTitle": "Grant tokens",
+      "grantDustTitle": "Grant dust",
+      "amountPlaceholder": "Amount",
+      "grantButton": "Grant",
+      "revokeAdmin": "Revoke admin",
+      "promoteAdmin": "Promote to admin",
+      "reactivate": "Reactivate",
+      "suspend": "Suspend",
+      "collectionLink": "Collection →"
+    },
+    "bulkReward": {
+      "noRarityOption": "— None —",
+      "emptyToastTitle": "Empty reward",
+      "emptyToastMessage": "The reward must contain at least one resource",
+      "tokensLabel": "Tokens",
+      "dustLabel": "Dust",
+      "xpLabel": "XP",
+      "goldLabel": "Gold",
+      "rarityLabel": "Card (rarity)",
+      "labelFrField": "Message (French, optional)",
+      "labelEnField": "Message (English, optional)",
+      "confirmAllLabel": "I confirm sending to <strong>all players</strong>",
+      "cancel": "Cancel",
+      "sending": "Sending…",
+      "send": "Send"
+    },
+    "exportFilename": "players.csv"
   }
 }

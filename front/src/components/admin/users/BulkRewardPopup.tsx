@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import type { BulkRewardBody } from '../../../api/admin-rewards.api.ts'
 import { TOAST_SEVERITY } from '../../../constants/ui.constant.ts'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
 import { useToast } from '../../../hooks/useToast.ts'
+import i18n from '../../../i18n/index.ts'
 import { RARITY_LABEL_FR } from '../../../libs/rarity.ts'
 import { useAdminBulkReward } from '../../../queries/useAdminBulkReward.ts'
 import { Badge } from '../../ui/badge.tsx'
@@ -23,7 +25,7 @@ import {
 const NO_RARITY = 'NONE'
 
 const RARITY_OPTIONS = [
-  { value: NO_RARITY, label: '— Aucune —' },
+  { value: NO_RARITY, label: i18n.t('admin:users.bulkReward.noRarityOption') },
   ...Object.entries(RARITY_LABEL_FR).map(([value, label]) => ({
     value,
     label,
@@ -88,6 +90,7 @@ export function BulkRewardPopup({
   const [confirmed, setConfirmed] = useState(false)
   const bulkReward = useAdminBulkReward()
   const { toast } = useToast()
+  const { t } = useTranslation('admin')
   const isAll = target === 'ALL'
 
   const form = useAppForm({
@@ -103,8 +106,8 @@ export function BulkRewardPopup({
     onSubmit: ({ value }) => {
       if (isRewardEmpty(value)) {
         toast({
-          title: 'Récompense vide',
-          message: 'La récompense doit contenir au moins une ressource',
+          title: t('users.bulkReward.emptyToastTitle'),
+          message: t('users.bulkReward.emptyToastMessage'),
           severity: TOAST_SEVERITY.ERROR,
         })
         return
@@ -140,7 +143,7 @@ export function BulkRewardPopup({
     <Popup open={open} onOpenChange={handleOpenChange}>
       <PopupContent size="lg">
         <PopupHeader>
-          <PopupTitle>Envoyer une récompense</PopupTitle>
+          <PopupTitle>{t('users.sendRewardButton')}</PopupTitle>
         </PopupHeader>
 
         <form
@@ -156,30 +159,45 @@ export function BulkRewardPopup({
 
             <div className="grid grid-cols-2 gap-3">
               <form.AppField name="tokens">
-                {(field) => <field.Number label="Tokens" />}
+                {(field) => (
+                  <field.Number label={t('users.bulkReward.tokensLabel')} />
+                )}
               </form.AppField>
               <form.AppField name="dust">
-                {(field) => <field.Number label="Poussière" />}
+                {(field) => (
+                  <field.Number label={t('users.bulkReward.dustLabel')} />
+                )}
               </form.AppField>
               <form.AppField name="xp">
-                {(field) => <field.Number label="XP" />}
+                {(field) => (
+                  <field.Number label={t('users.bulkReward.xpLabel')} />
+                )}
               </form.AppField>
               <form.AppField name="gold">
-                {(field) => <field.Number label="Or" />}
+                {(field) => (
+                  <field.Number label={t('users.bulkReward.goldLabel')} />
+                )}
               </form.AppField>
             </div>
 
             <form.AppField name="cardRarity">
               {(field) => (
-                <field.Select label="Carte (rareté)" options={RARITY_OPTIONS} />
+                <field.Select
+                  label={t('users.bulkReward.rarityLabel')}
+                  options={RARITY_OPTIONS}
+                />
               )}
             </form.AppField>
 
             <form.AppField name="labelFr">
-              {(field) => <field.Input label="Message (français, optionnel)" />}
+              {(field) => (
+                <field.Input label={t('users.bulkReward.labelFrField')} />
+              )}
             </form.AppField>
             <form.AppField name="labelEn">
-              {(field) => <field.Input label="Message (anglais, optionnel)" />}
+              {(field) => (
+                <field.Input label={t('users.bulkReward.labelEnField')} />
+              )}
             </form.AppField>
 
             {isAll && (
@@ -194,7 +212,11 @@ export function BulkRewardPopup({
                   htmlFor="bulk-confirm"
                   className="cursor-pointer text-sm leading-snug"
                 >
-                  Je confirme l'envoi à <strong>tous les joueurs</strong>
+                  <Trans
+                    t={t}
+                    i18nKey="users.bulkReward.confirmAllLabel"
+                    components={{ strong: <strong /> }}
+                  />
                 </Label>
               </div>
             )}
@@ -202,13 +224,15 @@ export function BulkRewardPopup({
 
           <PopupFooter>
             <Button type="button" variant="ghost" onClick={onClose}>
-              Annuler
+              {t('users.bulkReward.cancel')}
             </Button>
             <Button
               type="submit"
               disabled={bulkReward.isPending || (isAll && !confirmed)}
             >
-              {bulkReward.isPending ? 'Envoi…' : 'Envoyer'}
+              {bulkReward.isPending
+                ? t('users.bulkReward.sending')
+                : t('users.bulkReward.send')}
             </Button>
           </PopupFooter>
         </form>

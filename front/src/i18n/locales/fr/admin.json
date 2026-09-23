@@ -190,5 +190,73 @@
       "loadUser": "Erreur lors de la récupération de l'utilisateur",
       "updateSuspension": "Erreur lors de la mise à jour de la suspension"
     }
+  },
+  "users": {
+    "pageTitle": "Gestion des joueurs",
+    "exportButton": "Exporter CSV",
+    "sendRewardButton": "Envoyer une récompense",
+    "searchPlaceholder": "Rechercher par username ou email…",
+    "statusOptions": {
+      "all": "Tous",
+      "active": "Actifs",
+      "suspended": "Suspendus"
+    },
+    "filters": {
+      "registeredFromLabel": "Inscription du",
+      "toLabel": "au",
+      "lastLoginFromLabel": "Dernière co. du",
+      "levelMinLabel": "Niveau min",
+      "levelMinPlaceholder": "Min",
+      "levelMaxLabel": "Max",
+      "levelMaxPlaceholder": "Max"
+    },
+    "columns": {
+      "username": "Username",
+      "email": "Email",
+      "role": "Rôle",
+      "tokens": "Tokens",
+      "dust": "Poussière",
+      "level": "Niveau",
+      "status": "Statut",
+      "lastLogin": "Dernière connexion",
+      "statusSuspended": "Suspendu",
+      "statusActive": "Actif"
+    },
+    "selectedCount_one": "{{count}} joueur sélectionné",
+    "selectedCount_other": "{{count}} joueurs sélectionnés",
+    "allActivePlayersLabel": "TOUS les joueurs actifs",
+    "emptyTitle": "Aucun joueur trouvé",
+    "emptyDescription": "Modifie tes filtres ou ta recherche.",
+    "detail": {
+      "statPulls": "Pulls",
+      "statCards": "Cartes",
+      "statDustGained": "Poussière gagnée",
+      "grantTokensTitle": "Attribuer tokens",
+      "grantDustTitle": "Attribuer poussière",
+      "amountPlaceholder": "Quantité",
+      "grantButton": "Attribuer",
+      "revokeAdmin": "Révoquer admin",
+      "promoteAdmin": "Promouvoir admin",
+      "reactivate": "Réactiver",
+      "suspend": "Suspendre",
+      "collectionLink": "Collection →"
+    },
+    "bulkReward": {
+      "noRarityOption": "— Aucune —",
+      "emptyToastTitle": "Récompense vide",
+      "emptyToastMessage": "La récompense doit contenir au moins une ressource",
+      "tokensLabel": "Tokens",
+      "dustLabel": "Poussière",
+      "xpLabel": "XP",
+      "goldLabel": "Or",
+      "rarityLabel": "Carte (rareté)",
+      "labelFrField": "Message (français, optionnel)",
+      "labelEnField": "Message (anglais, optionnel)",
+      "confirmAllLabel": "Je confirme l'envoi à <strong>tous les joueurs</strong>",
+      "cancel": "Annuler",
+      "sending": "Envoi…",
+      "send": "Envoyer"
+    },
+    "exportFilename": "joueurs.csv"
   }
 }
