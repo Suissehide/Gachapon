@@ -258,5 +258,61 @@
       "send": "Envoyer"
     },
     "exportFilename": "joueurs.csv"
+  },
+  "skills": {
+    "loading": "Chargement…",
+    "toolbar": {
+      "kicker": "Économie",
+      "title": "Compétences",
+      "helpButton": "Aide",
+      "configButton": "Config",
+      "createNodeButton": "Créer un nœud"
+    },
+    "help": {
+      "title": "Utilisation du graphe",
+      "navigateTitle": "Naviguer",
+      "navigateBody": "Scroll pour zoomer. Cliquer-glisser sur le fond pour déplacer la vue.",
+      "moveNodeTitle": "Déplacer un nœud",
+      "moveNodeBody": "Glisser un nœud sur le canvas pour le repositionner. La position est sauvegardée automatiquement.",
+      "createConnectionTitle": "Créer une connexion",
+      "createConnectionBody": "Survoler un nœud pour faire apparaître ses ports (ronds sur les côtés). Glisser depuis le port droit <strong>source</strong> vers le port gauche <strong>cible</strong> d'un autre nœud. Pas de limite de connexions par nœud.",
+      "deleteConnectionTitle": "Supprimer une connexion",
+      "deleteConnectionBody": "Double-cliquer sur une connexion pour la supprimer.",
+      "editNodeTitle": "Éditer un nœud",
+      "editNodeBody": "Cliquer sur un nœud pour ouvrir ce panneau et modifier ses valeurs par niveau.",
+      "createNodeTitle": "Créer un nœud",
+      "createNodeBody": "Utiliser le bouton <strong>Créer un nœud</strong> dans la toolbar. Le nœud apparaît en (0, 0) — glisse-le pour le positionner.",
+      "structureTitle": "Structure",
+      "structureBody": "Les nœuds sans parent sont connectés automatiquement au nœud central. Les connexions entre nœuds définissent les prérequis pour les joueurs."
+    },
+    "editSheet": {
+      "deletePopupTitle": "Supprimer le noeud",
+      "deleteConfirmBody": "Supprimer le noeud <strong>{{name}}</strong> ? Les points investis par les joueurs seront remboursés.",
+      "cancel": "Annuler",
+      "delete": "Supprimer",
+      "nameFrLabel": "Nom (français)",
+      "nameEnLabel": "Nom (anglais)",
+      "descriptionFrLabel": "Description (français)",
+      "descriptionEnLabel": "Description (anglais)",
+      "iconLabel": "Icône Lucide",
+      "effectLabel": "Effet",
+      "maxLevelLabel": "Nombre de niveaux",
+      "levelValuesTitle": "Valeurs par niveau",
+      "levelFieldLabel": "Niveau {{level}}",
+      "updating": "Mise à jour…",
+      "update": "Mettre à jour",
+      "branchLabel": "Branche :"
+    },
+    "createSheet": {
+      "branchLabel": "Branche",
+      "maxLevelLabel": "Niveaux max",
+      "hint": "Le nœud sera créé en (0, 0). Glisse-le ensuite sur le canvas pour le positionner.",
+      "creating": "Création…",
+      "submit": "Créer"
+    },
+    "configSheet": {
+      "title": "Configuration globale",
+      "resetCostLabel": "Coût reset (poussière / point)"
+    }
   }
 }

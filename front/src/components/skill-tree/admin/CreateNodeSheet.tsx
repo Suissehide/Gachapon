@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 import type { SkillBranch } from '../../../api/skills.api.ts'
 import {
   EFFECT_DESCRIPTIONS,
@@ -15,6 +17,7 @@ export function CreateNodeSheet({
   branches: SkillBranch[]
   onClose: () => void
 }) {
+  const { t } = useTranslation('admin')
   const createNode = useAdminCreateNode()
 
   const branchOptions = branches.map((b) => ({ value: b.id, label: b.name }))
@@ -53,7 +56,7 @@ export function CreateNodeSheet({
   return (
     <>
       <SheetHeader>
-        <SheetTitle>Créer un nœud</SheetTitle>
+        <SheetTitle>{t('skills.toolbar.createNodeButton')}</SheetTitle>
       </SheetHeader>
 
       <form
@@ -65,25 +68,39 @@ export function CreateNodeSheet({
       >
         <div className="flex-1 space-y-3 overflow-y-auto p-4">
           <form.AppField name="branchId">
-            {(f) => <f.Select label="Branche" options={branchOptions} />}
+            {(f) => (
+              <f.Select
+                label={t('skills.createSheet.branchLabel')}
+                options={branchOptions}
+              />
+            )}
           </form.AppField>
           <form.AppField name="nameFr">
-            {(f) => <f.Input label="Nom (français)" />}
+            {(f) => <f.Input label={t('skills.editSheet.nameFrLabel')} />}
           </form.AppField>
           <form.AppField name="nameEn">
-            {(f) => <f.Input label="Nom (anglais)" />}
+            {(f) => <f.Input label={t('skills.editSheet.nameEnLabel')} />}
           </form.AppField>
           <form.AppField name="descriptionFr">
-            {(f) => <f.Input label="Description (français)" />}
+            {(f) => (
+              <f.Input label={t('skills.editSheet.descriptionFrLabel')} />
+            )}
           </form.AppField>
           <form.AppField name="descriptionEn">
-            {(f) => <f.Input label="Description (anglais)" />}
+            {(f) => (
+              <f.Input label={t('skills.editSheet.descriptionEnLabel')} />
+            )}
           </form.AppField>
           <form.AppField name="icon">
-            {(f) => <f.Input label="Icône Lucide" />}
+            {(f) => <f.Input label={t('skills.editSheet.iconLabel')} />}
           </form.AppField>
           <form.AppField name="effectType">
-            {(f) => <f.Select label="Effet" options={EFFECT_OPTIONS} />}
+            {(f) => (
+              <f.Select
+                label={t('skills.editSheet.effectLabel')}
+                options={EFFECT_OPTIONS}
+              />
+            )}
           </form.AppField>
           <form.Subscribe selector={(s) => s.values.effectType}>
             {(effectType) => (
@@ -93,11 +110,10 @@ export function CreateNodeSheet({
             )}
           </form.Subscribe>
           <form.AppField name="maxLevel">
-            {(f) => <f.Number label="Niveaux max" />}
+            {(f) => <f.Number label={t('skills.createSheet.maxLevelLabel')} />}
           </form.AppField>
           <p className="text-xs text-text-light">
-            Le nœud sera créé en (0, 0). Glisse-le ensuite sur le canvas pour le
-            positionner.
+            {t('skills.createSheet.hint')}
           </p>
         </div>
 
@@ -113,12 +129,14 @@ export function CreateNodeSheet({
           >
             {(disabled) => (
               <Button type="submit" disabled={disabled}>
-                {createNode.isPending ? 'Création…' : 'Créer'}
+                {createNode.isPending
+                  ? t('skills.createSheet.creating')
+                  : t('skills.createSheet.submit')}
               </Button>
             )}
           </form.Subscribe>
           <Button type="button" variant="outline" onClick={onClose}>
-            Annuler
+            {t('skills.editSheet.cancel')}
           </Button>
         </div>
       </form>

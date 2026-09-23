@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 import type { SkillConfig } from '../../../api/skills.api.ts'
 import { useAppForm } from '../../../hooks/formConfig.tsx'
 import { useAdminUpdateConfig } from '../../../queries/useSkills.ts'
@@ -11,6 +13,7 @@ export function ConfigSheet({
   config: SkillConfig
   onClose: () => void
 }) {
+  const { t } = useTranslation('admin')
   const updateConfig = useAdminUpdateConfig()
 
   const form = useAppForm({
@@ -26,7 +29,7 @@ export function ConfigSheet({
   return (
     <>
       <SheetHeader>
-        <SheetTitle>Configuration globale</SheetTitle>
+        <SheetTitle>{t('skills.configSheet.title')}</SheetTitle>
       </SheetHeader>
 
       <form
@@ -38,17 +41,19 @@ export function ConfigSheet({
       >
         <div className="flex-1 space-y-4 overflow-y-auto p-4">
           <form.AppField name="resetCostPerPoint">
-            {(f) => <f.Number label="Coût reset (poussière / point)" />}
+            {(f) => <f.Number label={t('skills.configSheet.resetCostLabel')} />}
           </form.AppField>
         </div>
 
         <div className="w-full border-t border-border" />
         <div className="flex shrink-0 justify-end gap-4 px-4 py-4">
           <Button type="submit" disabled={updateConfig.isPending}>
-            {updateConfig.isPending ? 'Mise à jour…' : 'Mettre à jour'}
+            {updateConfig.isPending
+              ? t('skills.editSheet.updating')
+              : t('skills.editSheet.update')}
           </Button>
           <Button type="button" variant="outline" onClick={onClose}>
-            Annuler
+            {t('skills.editSheet.cancel')}
           </Button>
         </div>
       </form>

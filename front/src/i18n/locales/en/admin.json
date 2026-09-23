@@ -258,5 +258,61 @@
       "send": "Send"
     },
     "exportFilename": "players.csv"
+  },
+  "skills": {
+    "loading": "Loading…",
+    "toolbar": {
+      "kicker": "Economy",
+      "title": "Skills",
+      "helpButton": "Help",
+      "configButton": "Config",
+      "createNodeButton": "Create a node"
+    },
+    "help": {
+      "title": "Using the graph",
+      "navigateTitle": "Navigate",
+      "navigateBody": "Scroll to zoom. Click and drag the background to move the view.",
+      "moveNodeTitle": "Move a node",
+      "moveNodeBody": "Drag a node on the canvas to reposition it. The position is saved automatically.",
+      "createConnectionTitle": "Create a connection",
+      "createConnectionBody": "Hover a node to reveal its ports (circles on the sides). Drag from the right <strong>source</strong> port to the left <strong>target</strong> port of another node. No limit on connections per node.",
+      "deleteConnectionTitle": "Delete a connection",
+      "deleteConnectionBody": "Double-click a connection to delete it.",
+      "editNodeTitle": "Edit a node",
+      "editNodeBody": "Click a node to open this panel and edit its per-level values.",
+      "createNodeTitle": "Create a node",
+      "createNodeBody": "Use the <strong>Create a node</strong> button in the toolbar. The node appears at (0, 0) — drag it to position it.",
+      "structureTitle": "Structure",
+      "structureBody": "Nodes with no parent are connected automatically to the central node. Connections between nodes define the prerequisites for players."
+    },
+    "editSheet": {
+      "deletePopupTitle": "Delete the node",
+      "deleteConfirmBody": "Delete the node <strong>{{name}}</strong>? Points invested by players will be refunded.",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "nameFrLabel": "Name (French)",
+      "nameEnLabel": "Name (English)",
+      "descriptionFrLabel": "Description (French)",
+      "descriptionEnLabel": "Description (English)",
+      "iconLabel": "Lucide icon",
+      "effectLabel": "Effect",
+      "maxLevelLabel": "Number of levels",
+      "levelValuesTitle": "Values per level",
+      "levelFieldLabel": "Level {{level}}",
+      "updating": "Updating…",
+      "update": "Update",
+      "branchLabel": "Branch:"
+    },
+    "createSheet": {
+      "branchLabel": "Branch",
+      "maxLevelLabel": "Max levels",
+      "hint": "The node will be created at (0, 0). Drag it onto the canvas afterwards to position it.",
+      "creating": "Creating…",
+      "submit": "Create"
+    },
+    "configSheet": {
+      "title": "Global configuration",
+      "resetCostLabel": "Reset cost (dust / point)"
+    }
   }
 }

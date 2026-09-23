@@ -14,6 +14,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { AdminSkillTreeCanvas } from '../../components/skill-tree/admin/AdminSkillTreeCanvas.tsx'
 import { ConfigSheet } from '../../components/skill-tree/admin/ConfigSheet.tsx'
@@ -38,6 +39,7 @@ export const Route = createFileRoute('/_admin/admin/skills')({
 type SheetMode = 'edit' | 'create' | 'config' | 'help' | null
 
 function AdminSkillsPage() {
+  const { t } = useTranslation('admin')
   const { data: branches, isLoading } = useAdminSkillTree()
   const { data: config } = useAdminSkillConfig()
 
@@ -47,7 +49,7 @@ function AdminSkillsPage() {
   if (isLoading || !branches) {
     return (
       <div className="flex h-64 items-center justify-center text-text-light">
-        Chargement…
+        {t('skills.loading')}
       </div>
     )
   }
@@ -73,10 +75,12 @@ function AdminSkillsPage() {
             <Zap className="h-3.5 w-3.5 text-primary" />
           </div>
           <span className="text-xs font-black uppercase tracking-widest text-primary">
-            Économie
+            {t('skills.toolbar.kicker')}
           </span>
           <span className="text-text-light/40">·</span>
-          <span className="text-sm font-semibold text-text">Compétences</span>
+          <span className="text-sm font-semibold text-text">
+            {t('skills.toolbar.title')}
+          </span>
         </div>
         <div className="ml-auto flex gap-2">
           <Button
@@ -85,7 +89,7 @@ function AdminSkillsPage() {
             onClick={() => setSheetMode('help')}
           >
             <HelpCircle size={13} />
-            Aide
+            {t('skills.toolbar.helpButton')}
           </Button>
           <Button
             variant="outline"
@@ -93,11 +97,11 @@ function AdminSkillsPage() {
             onClick={() => setSheetMode('config')}
           >
             <Settings size={13} />
-            Config
+            {t('skills.toolbar.configButton')}
           </Button>
           <Button size="sm" onClick={() => setSheetMode('create')}>
             <Plus size={13} />
-            Créer un nœud
+            {t('skills.toolbar.createNodeButton')}
           </Button>
         </div>
       </div>
@@ -152,41 +156,45 @@ function AdminSkillsPage() {
 // ─── Help ──────────────────────────────────────────────────────────────────────
 
 function HelpSheetContent() {
+  const { t } = useTranslation('admin')
+  const strong = <strong className="text-text" />
   return (
     <>
       <SheetHeader>
-        <SheetTitle>Utilisation du graphe</SheetTitle>
+        <SheetTitle>{t('skills.help.title')}</SheetTitle>
       </SheetHeader>
       <div className="flex-1 overflow-y-auto space-y-4 p-4 text-sm text-text-light">
-        <HelpItem icon={MousePointer2} title="Naviguer">
-          Scroll pour zoomer. Cliquer-glisser sur le fond pour déplacer la vue.
+        <HelpItem icon={MousePointer2} title={t('skills.help.navigateTitle')}>
+          {t('skills.help.navigateBody')}
         </HelpItem>
-        <HelpItem icon={GripVertical} title="Déplacer un nœud">
-          Glisser un nœud sur le canvas pour le repositionner. La position est
-          sauvegardée automatiquement.
+        <HelpItem icon={GripVertical} title={t('skills.help.moveNodeTitle')}>
+          {t('skills.help.moveNodeBody')}
         </HelpItem>
-        <HelpItem icon={Link2} title="Créer une connexion">
-          Survoler un nœud pour faire apparaître ses ports (ronds sur les
-          côtés). Glisser depuis le port droit{' '}
-          <strong className="text-text">source</strong> vers le port gauche{' '}
-          <strong className="text-text">cible</strong> d'un autre nœud. Pas de
-          limite de connexions par nœud.
+        <HelpItem icon={Link2} title={t('skills.help.createConnectionTitle')}>
+          <Trans
+            t={t}
+            i18nKey="skills.help.createConnectionBody"
+            components={{ strong }}
+          />
         </HelpItem>
-        <HelpItem icon={Scissors} title="Supprimer une connexion">
-          Double-cliquer sur une connexion pour la supprimer.
+        <HelpItem
+          icon={Scissors}
+          title={t('skills.help.deleteConnectionTitle')}
+        >
+          {t('skills.help.deleteConnectionBody')}
         </HelpItem>
-        <HelpItem icon={Pencil} title="Éditer un nœud">
-          Cliquer sur un nœud pour ouvrir ce panneau et modifier ses valeurs par
-          niveau.
+        <HelpItem icon={Pencil} title={t('skills.help.editNodeTitle')}>
+          {t('skills.help.editNodeBody')}
         </HelpItem>
-        <HelpItem icon={PlusCircle} title="Créer un nœud">
-          Utiliser le bouton{' '}
-          <strong className="text-text">Créer un nœud</strong> dans la toolbar.
-          Le nœud apparaît en (0, 0) — glisse-le pour le positionner.
+        <HelpItem icon={PlusCircle} title={t('skills.help.createNodeTitle')}>
+          <Trans
+            t={t}
+            i18nKey="skills.help.createNodeBody"
+            components={{ strong }}
+          />
         </HelpItem>
-        <HelpItem icon={GitBranch} title="Structure">
-          Les nœuds sans parent sont connectés automatiquement au nœud central.
-          Les connexions entre nœuds définissent les prérequis pour les joueurs.
+        <HelpItem icon={GitBranch} title={t('skills.help.structureTitle')}>
+          {t('skills.help.structureBody')}
         </HelpItem>
       </div>
     </>

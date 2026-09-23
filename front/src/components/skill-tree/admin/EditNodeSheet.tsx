@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
+import { Trans, useTranslation } from 'react-i18next'
 
 import type { SkillBranch, SkillNode } from '../../../api/skills.api.ts'
 import {
@@ -39,21 +40,26 @@ function DeleteNodePopup({
   onOpenChange: (open: boolean) => void
   onConfirm: () => void
 }) {
+  const { t } = useTranslation('admin')
   return createPortal(
     <Popup open={open} onOpenChange={onOpenChange}>
       <PopupContent>
         <PopupHeader>
-          <PopupTitle>Supprimer le noeud</PopupTitle>
+          <PopupTitle>{t('skills.editSheet.deletePopupTitle')}</PopupTitle>
         </PopupHeader>
         <PopupBody>
           <p className="text-sm text-text-light">
-            Supprimer le noeud <strong>{node.name}</strong> ? Les points
-            investis par les joueurs seront remboursés.
+            <Trans
+              t={t}
+              i18nKey="skills.editSheet.deleteConfirmBody"
+              values={{ name: node.name }}
+              components={{ strong: <strong /> }}
+            />
           </p>
         </PopupBody>
         <PopupFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Annuler
+            {t('skills.editSheet.cancel')}
           </Button>
           <Button
             variant="destructive"
@@ -62,7 +68,7 @@ function DeleteNodePopup({
               onOpenChange(false)
             }}
           >
-            Supprimer
+            {t('skills.editSheet.delete')}
           </Button>
         </PopupFooter>
       </PopupContent>
@@ -89,6 +95,7 @@ function NodeForm({
   }) => void
   isPending: boolean
 }) {
+  const { t } = useTranslation('admin')
   const form = useAppForm({
     defaultValues: {
       nameFr: node.nameFr,
@@ -118,22 +125,27 @@ function NodeForm({
     >
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
         <form.AppField name="nameFr">
-          {(f) => <f.Input label="Nom (français)" />}
+          {(f) => <f.Input label={t('skills.editSheet.nameFrLabel')} />}
         </form.AppField>
         <form.AppField name="nameEn">
-          {(f) => <f.Input label="Nom (anglais)" />}
+          {(f) => <f.Input label={t('skills.editSheet.nameEnLabel')} />}
         </form.AppField>
         <form.AppField name="descriptionFr">
-          {(f) => <f.Input label="Description (français)" />}
+          {(f) => <f.Input label={t('skills.editSheet.descriptionFrLabel')} />}
         </form.AppField>
         <form.AppField name="descriptionEn">
-          {(f) => <f.Input label="Description (anglais)" />}
+          {(f) => <f.Input label={t('skills.editSheet.descriptionEnLabel')} />}
         </form.AppField>
         <form.AppField name="icon">
-          {(f) => <f.Input label="Icône Lucide" />}
+          {(f) => <f.Input label={t('skills.editSheet.iconLabel')} />}
         </form.AppField>
         <form.AppField name="effectType">
-          {(f) => <f.Select label="Effet" options={EFFECT_OPTIONS} />}
+          {(f) => (
+            <f.Select
+              label={t('skills.editSheet.effectLabel')}
+              options={EFFECT_OPTIONS}
+            />
+          )}
         </form.AppField>
         <form.Subscribe selector={(s) => s.values.effectType}>
           {(effectType) => (
@@ -143,14 +155,14 @@ function NodeForm({
           )}
         </form.Subscribe>
         <form.AppField name="maxLevel">
-          {(f) => <f.Number label="Nombre de niveaux" />}
+          {(f) => <f.Number label={t('skills.editSheet.maxLevelLabel')} />}
         </form.AppField>
 
         <form.Subscribe selector={(s) => s.values.maxLevel}>
           {(maxLevel) => (
             <>
               <p className="pt-2 text-xs font-semibold uppercase text-text-light">
-                Valeurs par niveau
+                {t('skills.editSheet.levelValuesTitle')}
               </p>
               {Array.from({ length: maxLevel }, (_, i) => i + 1).map(
                 (level) => (
@@ -158,7 +170,11 @@ function NodeForm({
                     key={`level-${level}`}
                     name={`levels[${level - 1}].effect`}
                   >
-                    {(f) => <f.Number label={`Niveau ${level}`} />}
+                    {(f) => (
+                      <f.Number
+                        label={t('skills.editSheet.levelFieldLabel', { level })}
+                      />
+                    )}
                   </form.AppField>
                 ),
               )}
@@ -170,7 +186,9 @@ function NodeForm({
       <div className="w-full border-t border-border" />
       <div className="flex shrink-0 justify-end gap-4 px-4 py-4">
         <Button type="submit" disabled={isPending}>
-          {isPending ? 'Mise à jour…' : 'Mettre à jour'}
+          {isPending
+            ? t('skills.editSheet.updating')
+            : t('skills.editSheet.update')}
         </Button>
       </div>
     </form>
@@ -178,6 +196,7 @@ function NodeForm({
 }
 
 export function EditNodeSheet({ node, branch, onClose }: Props) {
+  const { t } = useTranslation('admin')
   const updateNode = useAdminUpdateNode()
   const deleteNode = useAdminDeleteNode()
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -189,7 +208,8 @@ export function EditNodeSheet({ node, branch, onClose }: Props) {
       </SheetHeader>
 
       <p className="px-4 pt-2 text-xs text-text-light">
-        Branche : <span className="text-text">{branch.name}</span>
+        {t('skills.editSheet.branchLabel')}{' '}
+        <span className="text-text">{branch.name}</span>
       </p>
 
       <NodeForm
@@ -227,10 +247,10 @@ export function EditNodeSheet({ node, branch, onClose }: Props) {
           variant="destructive"
           onClick={() => setDeleteOpen(true)}
         >
-          Supprimer
+          {t('skills.editSheet.delete')}
         </Button>
         <Button type="button" variant="outline" onClick={onClose}>
-          Annuler
+          {t('skills.editSheet.cancel')}
         </Button>
       </div>
 
