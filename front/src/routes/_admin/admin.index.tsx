@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import type { TFunction } from 'i18next'
 import {
   BarChart2,
   Crown,
@@ -8,6 +9,8 @@ import {
   UserPlus,
   Users,
 } from 'lucide-react'
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { AdminStatsApi } from '../../api/admin-stats.api.ts'
 import { ActivityFeed } from '../../components/admin/ActivityFeed'
@@ -27,78 +30,89 @@ export const Route = createFileRoute('/_admin/admin/')({
   component: AdminDashboard,
 })
 
-const KPI_META = [
-  {
-    key: 'totalUsers' as const,
-    label: 'Utilisateurs',
-    icon: Users,
-    color: 'text-accent',
-    bg: 'bg-accent/10',
-    sub: 'comptes enregistrés',
-  },
-  {
-    key: 'pullsToday' as const,
-    label: "Pulls aujourd'hui",
-    icon: Ticket,
-    color: 'text-primary',
-    bg: 'bg-primary/10',
-    sub: 'tirages du jour',
-  },
-  {
-    key: 'dustGenerated' as const,
-    label: 'Poussière générée',
-    icon: Sparkles,
-    color: 'text-secondary',
-    bg: 'bg-secondary/10',
-    sub: 'total cumulé',
-  },
-  {
-    key: 'legendaryCount' as const,
-    label: 'Légendaires',
-    icon: Crown,
-    color: 'text-primary',
-    bg: 'bg-primary/10',
-    sub: 'cartes tirées',
-  },
-  {
-    key: 'signups30d' as const,
-    label: 'Inscriptions (30j)',
-    icon: UserPlus,
-    color: 'text-success',
-    bg: 'bg-success/10',
-    sub: (kpis: DashboardKpis) =>
-      `7 derniers jours : ${formatNumber(kpis.signups7d, currentLocale())}`,
-  },
-  {
-    key: 'activeUsers7d' as const,
-    label: 'Actifs (7j)',
-    icon: Users,
-    color: 'text-info',
-    bg: 'bg-info/10',
-    sub: (kpis: DashboardKpis) =>
-      `30 j : ${formatNumber(kpis.activeUsers30d, currentLocale())}`,
-  },
-  {
-    key: 'dustSpent' as const,
-    label: 'Poussière dépensée',
-    icon: Sparkles,
-    color: 'text-warning',
-    bg: 'bg-warning/10',
-    sub: 'boutique',
-  },
-  {
-    key: 'totalPulls' as const,
-    label: 'Pulls (total)',
-    icon: Ticket,
-    color: 'text-primary',
-    bg: 'bg-primary/10',
-    sub: 'tous les temps',
-  },
-]
+function buildKpiMeta(
+  t: TFunction<'admin'>,
+  locale: ReturnType<typeof currentLocale>,
+) {
+  return [
+    {
+      key: 'totalUsers' as const,
+      label: t('index.kpi.totalUsers.label'),
+      icon: Users,
+      color: 'text-accent',
+      bg: 'bg-accent/10',
+      sub: t('index.kpi.totalUsers.sub'),
+    },
+    {
+      key: 'pullsToday' as const,
+      label: t('index.kpi.pullsToday.label'),
+      icon: Ticket,
+      color: 'text-primary',
+      bg: 'bg-primary/10',
+      sub: t('index.kpi.pullsToday.sub'),
+    },
+    {
+      key: 'dustGenerated' as const,
+      label: t('index.kpi.dustGenerated.label'),
+      icon: Sparkles,
+      color: 'text-secondary',
+      bg: 'bg-secondary/10',
+      sub: t('index.kpi.dustGenerated.sub'),
+    },
+    {
+      key: 'legendaryCount' as const,
+      label: t('index.kpi.legendaryCount.label'),
+      icon: Crown,
+      color: 'text-primary',
+      bg: 'bg-primary/10',
+      sub: t('index.kpi.legendaryCount.sub'),
+    },
+    {
+      key: 'signups30d' as const,
+      label: t('index.kpi.signups30d.label'),
+      icon: UserPlus,
+      color: 'text-success',
+      bg: 'bg-success/10',
+      sub: (kpis: DashboardKpis) =>
+        t('index.kpi.signups30d.sub', {
+          value: formatNumber(kpis.signups7d, locale),
+        }),
+    },
+    {
+      key: 'activeUsers7d' as const,
+      label: t('index.kpi.activeUsers7d.label'),
+      icon: Users,
+      color: 'text-info',
+      bg: 'bg-info/10',
+      sub: (kpis: DashboardKpis) =>
+        t('index.kpi.activeUsers7d.sub', {
+          value: formatNumber(kpis.activeUsers30d, locale),
+        }),
+    },
+    {
+      key: 'dustSpent' as const,
+      label: t('index.kpi.dustSpent.label'),
+      icon: Sparkles,
+      color: 'text-warning',
+      bg: 'bg-warning/10',
+      sub: t('index.kpi.dustSpent.sub'),
+    },
+    {
+      key: 'totalPulls' as const,
+      label: t('index.kpi.totalPulls.label'),
+      icon: Ticket,
+      color: 'text-primary',
+      bg: 'bg-primary/10',
+      sub: t('index.kpi.totalPulls.sub'),
+    },
+  ]
+}
 
 function AdminDashboard() {
+  const { t } = useTranslation('admin')
   const locale = currentLocale()
   const { data, isLoading } = useAdminDashboard()
+  const kpiMeta = useMemo(() => buildKpiMeta(t, locale), [t, locale])
 
   return (
     <div className="relative min-h-full p-8">
@@ -111,14 +125,14 @@ function AdminDashboard() {
       <div className="relative">
         <AdminPageHeader
           icon={TrendingUp}
-          kicker="Vue d'ensemble"
-          title="Dashboard"
-          subtitle="Activité et indicateurs clés de la plateforme"
+          kicker={t('common.kicker.overview')}
+          title={t('index.pageTitle')}
+          subtitle={t('index.pageSubtitle')}
           actions={
             <Button variant="outline" size="sm" asChild>
               <Link to="/admin/stats">
                 <BarChart2 className="h-4 w-4" />
-                Stats détaillées
+                {t('index.statsButton')}
               </Link>
             </Button>
           }
@@ -126,7 +140,7 @@ function AdminDashboard() {
 
         {/* KPI Cards — 4 colonnes sur 2 rangées */}
         <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {KPI_META.map(({ key, label, icon: Icon, color, bg, sub }) => (
+          {kpiMeta.map(({ key, label, icon: Icon, color, bg, sub }) => (
             <Card key={key} className="overflow-hidden">
               <CardContent className="p-0">
                 <div className="mb-2 flex items-center gap-2">
@@ -185,9 +199,9 @@ function AdminDashboard() {
             ) : (
               <PullsChart
                 data={data.signupsSeries}
-                title="Inscriptions / jour"
+                title={t('index.signupsChartTitle')}
                 color="var(--success)"
-                unit="inscriptions"
+                unit={t('index.signupsUnit')}
               />
             )}
           </div>

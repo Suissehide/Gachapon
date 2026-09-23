@@ -516,5 +516,74 @@
       "availableValue": "Available value"
     },
     "emptyValue": "(empty)"
+  },
+  "index": {
+    "pageTitle": "Dashboard",
+    "pageSubtitle": "Activity and key metrics for the platform",
+    "statsButton": "Detailed stats",
+    "signupsChartTitle": "Signups / day",
+    "signupsUnit": "signups",
+    "kpi": {
+      "totalUsers": {
+        "label": "Users",
+        "sub": "registered accounts"
+      },
+      "pullsToday": {
+        "label": "Pulls today",
+        "sub": "today's draws"
+      },
+      "dustGenerated": {
+        "label": "Dust generated",
+        "sub": "cumulative total"
+      },
+      "legendaryCount": {
+        "label": "Legendaries",
+        "sub": "cards pulled"
+      },
+      "signups30d": {
+        "label": "Signups (30d)",
+        "sub": "last 7 days: {{value}}"
+      },
+      "activeUsers7d": {
+        "label": "Active (7d)",
+        "sub": "30d: {{value}}"
+      },
+      "dustSpent": {
+        "label": "Dust spent",
+        "sub": "shop"
+      },
+      "totalPulls": {
+        "label": "Pulls (total)",
+        "sub": "all time"
+      }
+    }
+  },
+  "pullsChart": {
+    "defaultTitle": "Pulls / day",
+    "defaultUnit": "pulls",
+    "last30Days": "Last 30 days",
+    "totalLabel": "total"
+  },
+  "activityFeed": {
+    "title": "Recent activity",
+    "empty": "No activity yet",
+    "loadMore": "Load more",
+    "fallbackPlayer": "A player",
+    "fallbackAccount": "An account",
+    "fallbackPlayerLower": "a player",
+    "fallbackLegendaryCard": "a legendary",
+    "fallbackEpicCard": "an epic",
+    "unknownCount": "?",
+    "events": {
+      "USER_SIGNUP": "<username>{{name}}</username> signed up",
+      "PULL_LEGENDARY": "<username>{{name}}</username> pulled {{cardName}}",
+      "PULL_EPIC": "<username>{{name}}</username> pulled {{cardName}}",
+      "SHOP_PURCHASE": "<username>{{name}}</username> made a shop purchase",
+      "USER_SUSPENDED": "<username>{{name}}</username> was suspended",
+      "USER_UNSUSPENDED": "<username>{{name}}</username> was reactivated",
+      "ADMIN_GRANT": "Admin grant for <username>{{name}}</username>",
+      "BULK_REWARD": "Reward sent to {{count}} players",
+      "LEVEL_UP": "<username>{{name}}</username> reaches level {{level}}"
+    }
   }
 }

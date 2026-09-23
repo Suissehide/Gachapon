@@ -1,4 +1,5 @@
 import { Minus, TrendingDown, TrendingUp } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   Bar,
   BarChart,
@@ -27,12 +28,7 @@ type TooltipContentProps = {
   unit?: string
 }
 
-function ChartTooltip({
-  active,
-  payload,
-  label,
-  unit = 'pulls',
-}: TooltipContentProps) {
+function ChartTooltip({ active, payload, label, unit }: TooltipContentProps) {
   if (!active || !payload?.length) {
     return null
   }
@@ -50,10 +46,13 @@ function ChartTooltip({
 
 export function PullsChart({
   data,
-  title = 'Pulls / jour',
+  title,
   color = 'var(--primary)',
-  unit = 'pulls',
+  unit,
 }: PullsChartProps) {
+  const { t } = useTranslation('admin')
+  const resolvedTitle = title ?? t('pullsChart.defaultTitle')
+  const resolvedUnit = unit ?? t('pullsChart.defaultUnit')
   const locale = currentLocale()
   const total = data.reduce((s, d) => s + d.count, 0)
 
@@ -70,9 +69,11 @@ export function PullsChart({
           </div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-text-light">
-              {title}
+              {resolvedTitle}
             </p>
-            <p className="text-[10px] text-text-light/60">30 derniers jours</p>
+            <p className="text-[10px] text-text-light/60">
+              {t('pullsChart.last30Days')}
+            </p>
           </div>
         </div>
 
@@ -81,7 +82,9 @@ export function PullsChart({
             <p className="text-xl font-black text-text">
               {formatNumber(total, locale)}
             </p>
-            <p className="text-[10px] text-text-light">total</p>
+            <p className="text-[10px] text-text-light">
+              {t('pullsChart.totalLabel')}
+            </p>
           </div>
           {trend !== null && (
             <div
@@ -132,7 +135,10 @@ export function PullsChart({
               tick={{ fontSize: 10, fill: 'var(--text-light)' }}
               width={30}
             />
-            <Tooltip cursor={false} content={<ChartTooltip unit={unit} />} />
+            <Tooltip
+              cursor={false}
+              content={<ChartTooltip unit={resolvedUnit} />}
+            />
             <Bar
               dataKey="count"
               fill={color}

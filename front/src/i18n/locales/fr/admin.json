@@ -516,5 +516,74 @@
       "availableValue": "Valeur disponible"
     },
     "emptyValue": "(vide)"
+  },
+  "index": {
+    "pageTitle": "Dashboard",
+    "pageSubtitle": "Activité et indicateurs clés de la plateforme",
+    "statsButton": "Stats détaillées",
+    "signupsChartTitle": "Inscriptions / jour",
+    "signupsUnit": "inscriptions",
+    "kpi": {
+      "totalUsers": {
+        "label": "Utilisateurs",
+        "sub": "comptes enregistrés"
+      },
+      "pullsToday": {
+        "label": "Pulls aujourd'hui",
+        "sub": "tirages du jour"
+      },
+      "dustGenerated": {
+        "label": "Poussière générée",
+        "sub": "total cumulé"
+      },
+      "legendaryCount": {
+        "label": "Légendaires",
+        "sub": "cartes tirées"
+      },
+      "signups30d": {
+        "label": "Inscriptions (30j)",
+        "sub": "7 derniers jours : {{value}}"
+      },
+      "activeUsers7d": {
+        "label": "Actifs (7j)",
+        "sub": "30 j : {{value}}"
+      },
+      "dustSpent": {
+        "label": "Poussière dépensée",
+        "sub": "boutique"
+      },
+      "totalPulls": {
+        "label": "Pulls (total)",
+        "sub": "tous les temps"
+      }
+    }
+  },
+  "pullsChart": {
+    "defaultTitle": "Pulls / jour",
+    "defaultUnit": "pulls",
+    "last30Days": "30 derniers jours",
+    "totalLabel": "total"
+  },
+  "activityFeed": {
+    "title": "Activité récente",
+    "empty": "Aucune activité pour le moment",
+    "loadMore": "Charger plus",
+    "fallbackPlayer": "Un joueur",
+    "fallbackAccount": "Un compte",
+    "fallbackPlayerLower": "un joueur",
+    "fallbackLegendaryCard": "une légendaire",
+    "fallbackEpicCard": "une épique",
+    "unknownCount": "?",
+    "events": {
+      "USER_SIGNUP": "<username>{{name}}</username> s'est inscrit",
+      "PULL_LEGENDARY": "<username>{{name}}</username> a tiré {{cardName}}",
+      "PULL_EPIC": "<username>{{name}}</username> a tiré {{cardName}}",
+      "SHOP_PURCHASE": "<username>{{name}}</username> a fait un achat boutique",
+      "USER_SUSPENDED": "<username>{{name}}</username> a été suspendu",
+      "USER_UNSUSPENDED": "<username>{{name}}</username> a été réactivé",
+      "ADMIN_GRANT": "Grant admin pour <username>{{name}}</username>",
+      "BULK_REWARD": "Récompense envoyée à {{count}} joueurs",
+      "LEVEL_UP": "<username>{{name}}</username> passe niveau {{level}}"
+    }
   }
 }
