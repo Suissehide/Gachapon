@@ -31,7 +31,13 @@
 //      le `heading` de la bonne langue, et tous ses liens internes portent le
 //      préfixe de langue du fichier ;
 //   8. aucun texte de l'AUTRE langue dans un fichier (titre, lead, heading) ;
-//   9. l'ancien domaine n'apparaît nulle part dans dist/ ;
+//   9. l'ancien domaine n'apparaît nulle part dans dist/ — en tant qu'HÔTE,
+//      pas en tant que sous-chaîne : `staging.gachapon.qwetle.fr` est une
+//      origine légitime, et le confondre avec l'ancien domaine faisait échouer
+//      tout build de staging ;
+//  9bis. le détecteur de l'invariant 9 est lui-même testé, par un tableau de
+//      cas exécuté à chaque build (un filet trop large se manifeste comme une
+//      violation, pas comme un bug — on corrige alors le site, pas le filet) ;
 //  10. sitemap : 14 <url>, chaque loc = un canonical existant, chaque url
 //      portant ses 3 alternates ; robots.txt pointant sur ORIGIN ;
 //  11. le fragment nginx couvre chaque route non racine, dans les deux
@@ -88,6 +94,66 @@ const I18N_INDEX = path.join(FRONT_ROOT, 'src', 'i18n', 'index.ts')
 
 const ORIGIN = (process.env.SITE_ORIGIN ?? DEFAULT_ORIGIN).replace(/\/+$/, '')
 const LEGACY_HOST = 'gachapon.qwetle.fr'
+
+/**
+ * Cherche l'ancien domaine EN TANT QU'HÔTE, pas en tant que sous-chaîne.
+ *
+ * Les deux bornes sont le fond du sujet. `[^A-Za-z0-9.-]` à gauche exclut le
+ * point qui précède dans un sous-domaine : `staging.gachapon.qwetle.fr` n'est
+ * PAS l'ancien domaine, c'est un hôte distinct qui se trouve vivre sous le
+ * même parent — et c'est l'origine du staging. La borne droite ferme la
+ * symétrique (`gachapon.qwetle.fr.autre-chose.com`).
+ *
+ * Volontairement textuel et non `new URL(...).host` : ce qu'on cherche traîne
+ * aussi hors des URL (le `data-domains` d'Umami est un hôte nu), et balayer
+ * un fichier entier n'offre rien à parser.
+ */
+const LEGACY_HOST_RE = new RegExp(
+  `(^|[^A-Za-z0-9.-])(${LEGACY_HOST.replace(/\./g, '\\.')})(?![A-Za-z0-9.-])`,
+)
+
+/** Le premier extrait fautif (avec son contexte), ou `null`. */
+function legacyHostOccurrence(content) {
+  const m = content.match(LEGACY_HOST_RE)
+  if (m === null) {
+    return null
+  }
+  const start = Math.max(0, m.index - 12)
+  return content.slice(start, m.index + m[0].length + 12).replace(/\s+/g, ' ')
+}
+
+/**
+ * 9bis. AUTO-TEST DU DÉTECTEUR — il tourne à chaque build, quelques regex.
+ *
+ * POURQUOI : l'invariant 9 est le seul qui cherche une chaîne INTERDITE. Un
+ * détecteur trop large ne se signale pas comme un bug, il se signale comme
+ * une violation — on va alors corriger le site, pas le filet. C'est
+ * exactement ce qui est arrivé : staging vit sur `staging.gachapon.qwetle.fr`,
+ * un sous-domaine de l'ancien domaine, et la recherche par sous-chaîne
+ * déclarait fautif CHAQUE fichier portant légitimement SITE_ORIGIN.
+ */
+const LEGACY_DETECTOR_CASES = [
+  // [contenu, doit être signalé, pourquoi]
+  ['<link href="https://gachapon.qwetle.fr/guide" />', true, 'URL absolue'],
+  ['data-domains="gachapon.qwetle.fr"', true, 'hôte nu entre guillemets'],
+  ['https://gachapon.qwetle.fr', true, 'hôte en fin de chaîne'],
+  ['//gachapon.qwetle.fr/x', true, 'URL sans protocole'],
+  ['https://staging.gachapon.qwetle.fr/fr/guide', false, 'sous-domaine staging'],
+  ['https://preprod.gachapon.qwetle.fr', false, 'autre sous-domaine'],
+  ['https://playgachapon.com/guide', false, 'nouveau domaine'],
+  ['https://umami.qwetle.fr/script.js', false, 'autre hôte du même parent'],
+]
+
+function checkLegacyHostDetector() {
+  for (const [content, shouldFlag, why] of LEGACY_DETECTOR_CASES) {
+    const found = legacyHostOccurrence(content) !== null
+    check(
+      found === shouldFlag,
+      `détecteur d'ancien domaine (${why}) : "${content}" ${found ? 'signalé' : 'ignoré'}, ` +
+        `attendu ${shouldFlag ? 'signalé' : 'ignoré'}`,
+    )
+  }
+}
 
 const problems = []
 let checks = 0
@@ -390,6 +456,7 @@ async function main() {
   // Si les deux listes de langues divergent, ils partiraient en vrille (accès
   // à une locale inexistante) au lieu de nommer la vraie cause.
   await checkLocalesMatchI18n()
+  checkLegacyHostDetector()
   if (problems.length > 0) {
     bail()
   }
@@ -470,8 +537,9 @@ async function main() {
         await walk(full)
       } else if (/\.(html|xml|txt|json|webmanifest)$/.test(entry.name)) {
         const content = await fs.readFile(full, 'utf8')
-        if (content.includes(LEGACY_HOST)) {
-          strays.push(path.relative(FRONT_ROOT, full))
+        const hit = legacyHostOccurrence(content)
+        if (hit !== null) {
+          strays.push(`${path.relative(FRONT_ROOT, full)} ("${hit}")`)
         }
       }
     }
