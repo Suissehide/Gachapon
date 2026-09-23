@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 
 import type { SetProgression, UserProfile } from '../../../api/profile.api'
 import { Button } from '../../ui/button'
@@ -16,6 +17,7 @@ export function CollectionCTA({
   username,
   isOwnProfile,
 }: Props) {
+  const { t } = useTranslation('profile')
   const exploredSets = sets.filter((s) => s.owned > 0).length
 
   return (
@@ -28,10 +30,14 @@ export function CollectionCTA({
     >
       <div>
         <div className="font-mono text-[11px] uppercase tracking-wider text-text-light">
-          {isOwnProfile ? 'Ma collection' : `Collection de ${username}`}
+          {isOwnProfile
+            ? t('collectionCTA.myCollectionLabel')
+            : t('collectionCTA.otherCollectionLabel', { username })}
         </div>
         <div className="font-display text-[36px] font-extrabold mt-1 text-text">
-          {profile.stats.ownedCards} cartes · {exploredSets} sets
+          {t('collectionCTA.cardsCount', { count: profile.stats.ownedCards })}
+          {' · '}
+          {t('collectionCTA.setsCount', { count: exploredSets })}
         </div>
       </div>
       <Button asChild variant="gradient" size="lg">
@@ -39,7 +45,9 @@ export function CollectionCTA({
           to={isOwnProfile ? '/collection' : '/profile/$username/collection'}
           params={isOwnProfile ? undefined : ({ username } as any)}
         >
-          {isOwnProfile ? 'Voir ma collection' : 'Explorer'}
+          {isOwnProfile
+            ? t('collectionCTA.viewMyCollectionButton')
+            : t('collectionCTA.exploreButton')}
         </Link>
       </Button>
     </div>

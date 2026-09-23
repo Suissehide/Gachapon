@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 import {
   useUserFeaturedCards,
   useUserProfile,
@@ -18,6 +20,7 @@ import { XPCard } from './XPCard'
 type Props = { username: string }
 
 export function ArcadeProfile({ username }: Props) {
+  const { t } = useTranslation('profile')
   const { data: profile, isLoading, isError } = useUserProfile(username)
   const featured = useUserFeaturedCards(username)
   const progression = useUserSetsProgression(username)
@@ -38,10 +41,10 @@ export function ArcadeProfile({ username }: Props) {
       <div className="min-h-[calc(100vh-var(--topbar-h))] flex items-center justify-center">
         <div className="text-center">
           <p className="font-display text-2xl font-extrabold">
-            Joueur introuvable
+            {t('arcadeProfile.notFoundTitle')}
           </p>
           <p className="font-mono text-sm text-text-light mt-2">
-            {username} n'existe pas.
+            {t('arcadeProfile.notFoundDescription', { username })}
           </p>
         </div>
       </div>

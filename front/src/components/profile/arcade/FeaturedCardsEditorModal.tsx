@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { useUserCollection } from '../../../queries/useCollection'
 import { useSetFeaturedCardsMutation } from '../../../queries/useProfile'
@@ -44,6 +45,7 @@ export function FeaturedCardsEditorModal({
   onClose,
   onSaved,
 }: Props) {
+  const { t } = useTranslation('profile')
   const userId = useAuthStore((s) => s.user?.id)
   const { data: collection } = useUserCollection(userId)
   const mutation = useSetFeaturedCardsMutation()
@@ -91,9 +93,11 @@ export function FeaturedCardsEditorModal({
       <PopupContent size="xl">
         <PopupHeader>
           <PopupTitle
-            subtitle={`${selected.length} / 5 sélectionnées · clique pour ajouter / retirer`}
+            subtitle={t('featuredCardsEditor.subtitle', {
+              count: selected.length,
+            })}
           >
-            Cartes vedettes
+            {t('featuredCardsEditor.title')}
           </PopupTitle>
         </PopupHeader>
         <PopupBody className="max-h-[60vh] overflow-auto">
@@ -135,14 +139,16 @@ export function FeaturedCardsEditorModal({
         </PopupBody>
         <PopupFooter>
           <Button variant="outline" onClick={onClose}>
-            Annuler
+            {t('featuredCardsEditor.cancelButton')}
           </Button>
           <Button
             variant="gradient"
             onClick={save}
             disabled={mutation.isPending}
           >
-            {mutation.isPending ? 'Enregistrement…' : 'Enregistrer'}
+            {mutation.isPending
+              ? t('featuredCardsEditor.saveButtonPending')
+              : t('featuredCardsEditor.saveButton')}
           </Button>
         </PopupFooter>
       </PopupContent>

@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { LayoutDashboard, Settings, Sparkles } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import { useLevelUpStore } from '../../../stores/levelUp.store'
 import { Button } from '../../ui/button'
@@ -14,11 +15,12 @@ const baseChip =
   'font-mono text-[11px] font-bold uppercase tracking-[0.25em] transition-colors'
 
 export function ArcadeTopbar({ isOwnProfile, isAdmin, currentLevel }: Props) {
+  const { t } = useTranslation(['profile', 'common', 'collection'])
   const triggerLevelUp = useLevelUpStore((s) => s.triggerLevelUp)
   return (
     <div className="flex items-center justify-between">
       <nav
-        aria-label="Fil d'Ariane"
+        aria-label={t('common:pageHeader.breadcrumbAriaLabel')}
         className="flex flex-wrap items-center gap-x-1.5 gap-y-1"
       >
         <Link
@@ -31,7 +33,7 @@ export function ArcadeTopbar({ isOwnProfile, isAdmin, currentLevel }: Props) {
           /
         </span>
         <span className={`${baseChip} text-text-light`} aria-current="page">
-          Profil
+          {t('collection:page.breadcrumbProfile')}
         </span>
       </nav>
       {isOwnProfile && (
@@ -43,21 +45,21 @@ export function ArcadeTopbar({ isOwnProfile, isAdmin, currentLevel }: Props) {
               onClick={() => triggerLevelUp(currentLevel + 1)}
             >
               <Sparkles size={14} />
-              Test Lvl Up
+              {t('profile:arcadeTopbar.testLevelUpButton')}
             </Button>
           )}
           {isAdmin && (
             <Button asChild variant="pill" size="pill">
               <Link to="/admin">
                 <LayoutDashboard size={14} />
-                Admin
+                {t('profile:arcadeTopbar.adminButton')}
               </Link>
             </Button>
           )}
           <Button asChild variant="pill" size="pill">
             <Link to="/settings">
               <Settings size={14} />
-              Paramètres
+              {t('profile:arcadeTopbar.settingsButton')}
             </Link>
           </Button>
         </div>

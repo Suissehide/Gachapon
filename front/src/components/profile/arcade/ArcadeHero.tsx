@@ -1,5 +1,6 @@
 import { Check, Pencil, X } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { FeaturedCard, UserProfile } from '../../../api/profile.api'
 import {
@@ -23,6 +24,7 @@ type Props = {
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,30}$/
 
 export function ArcadeHero({ profile, featuredCards, isOwnProfile }: Props) {
+  const { t } = useTranslation('profile')
   const [editorOpen, setEditorOpen] = useState(false)
   const [editingName, setEditingName] = useState(false)
   const [nameDraft, setNameDraft] = useState(profile.username)
@@ -62,8 +64,11 @@ export function ArcadeHero({ profile, featuredCards, isOwnProfile }: Props) {
           <div className="min-w-0">
             <div className="font-mono text-[11px] uppercase tracking-[.2em] text-primary-light">
               {isMax
-                ? `NIV. MAX · MEMBRE ${joinedYear}`
-                : `NIV. ${profile.level} · MEMBRE ${joinedYear}`}
+                ? t('arcadeHero.levelMaxBadge', { year: joinedYear })
+                : t('arcadeHero.levelBadge', {
+                    level: profile.level,
+                    year: joinedYear,
+                  })}
             </div>
             {editingName ? (
               <div className="flex items-center gap-2 mt-1">
@@ -87,7 +92,7 @@ export function ArcadeHero({ profile, featuredCards, isOwnProfile }: Props) {
                   size="icon-sm"
                   onClick={submitName}
                   disabled={!canSaveName || updateUsername.isPending}
-                  title="Enregistrer"
+                  title={t('arcadeHero.saveNameButton')}
                 >
                   <Check className="h-4 w-4" />
                 </Button>
@@ -96,7 +101,7 @@ export function ArcadeHero({ profile, featuredCards, isOwnProfile }: Props) {
                   variant="ghost"
                   size="icon-sm"
                   onClick={cancelEditName}
-                  title="Annuler"
+                  title={t('arcadeHero.cancelNameButton')}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -113,7 +118,7 @@ export function ArcadeHero({ profile, featuredCards, isOwnProfile }: Props) {
                     size="icon-sm"
                     onClick={startEditName}
                     className="text-text-light"
-                    title="Changer le pseudo"
+                    title={t('arcadeHero.editNameButton')}
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -127,11 +132,13 @@ export function ArcadeHero({ profile, featuredCards, isOwnProfile }: Props) {
         <div className="relative min-w-0">
           <div className="flex items-baseline justify-between mb-4 gap-2">
             <CardTitle className="text-sm uppercase tracking-wider">
-              Cartes vedettes
+              {t('arcadeHero.featuredCardsTitle')}
             </CardTitle>
             <div className="flex items-center gap-3">
               <span className="font-mono text-[11px] text-text-light hidden md:inline">
-                TOP {featuredCards.length} · PAR RARETÉ
+                {t('arcadeHero.featuredCardsCountLabel', {
+                  count: featuredCards.length,
+                })}
               </span>
               {isOwnProfile && (
                 <Button
@@ -140,7 +147,7 @@ export function ArcadeHero({ profile, featuredCards, isOwnProfile }: Props) {
                   onClick={() => setEditorOpen(true)}
                 >
                   <Pencil size={12} />
-                  Éditer
+                  {t('arcadeHero.editButton')}
                 </Button>
               )}
             </div>
