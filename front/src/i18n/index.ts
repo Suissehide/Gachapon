@@ -126,6 +126,65 @@ export function isSupportedLocale(value: string | undefined): value is Locale {
 }
 
 /**
+ * Normalise puis valide une préférence de langue SAISIE — le paramètre
+ * `?lang=`, le cookie `gachapon_locale`, la valeur mémorisée dans
+ * localStorage. Rend `undefined` si ce n'est pas une langue servie.
+ *
+ * POURQUOI LA MISE EN MINUSCULES. `deploy/conf/nginx.conf` compare ces mêmes
+ * sources avec `~*`, donc sans égard à la casse : `?lang=FR` y vaut français.
+ * Sans cette normalisation, `isSupportedLocale('FR')` est faux et le front
+ * retombe sur la source suivante — les deux couches désignent alors des
+ * langues différentes pour une même requête. Vérifié : `?lang=FR` + cookie
+ * `en` donnait `/fr` côté nginx et « en » côté front.
+ *
+ * Le choix est d'aligner sur LE PLUS PERMISSIF : quelqu'un qui écrit
+ * `?lang=FR` veut du français, et le lui refuser ne rend service à personne.
+ *
+ * Volontairement PAS de `trim()` : nginx n'en fait pas non plus
+ * (`~*^fr$`), donc l'ajouter ici recréerait une divergence sur `?lang=%20fr`.
+ *
+ * NE PAS L'UTILISER POUR LE SEGMENT DE CHEMIN. `/FR/guide` doit continuer à
+ * n'être PAS reconnu : les `location` de nginx sont sensibles à la casse, les
+ * routes de TanStack aussi, et rendre le préfixe insensible ferait diverger le
+ * routage lui-même — on réglerait un désaccord en en créant un plus gros.
+ * `localeFromPath` et `main.tsx` (branche du préfixe) appellent
+ * `isSupportedLocale` directement, et doivent continuer.
+ */
+export function localeFromUserPreference(
+  value: string | null | undefined,
+): Locale | undefined {
+  const normalized = value?.toLowerCase()
+  return isSupportedLocale(normalized) ? normalized : undefined
+}
+
+/**
+ * L'ORDRE DE PRIORITÉ des sources de langue pour une URL sans préfixe :
+ * `?lang=` d'abord (un lien partagé doit toujours gagner), puis la préférence
+ * mémorisée, puis la langue du navigateur, l'anglais en dernier recours.
+ *
+ * Fonction PURE, et ici plutôt que dans `main.tsx` : c'est la règle que
+ * `deploy/conf/nginx.conf` doit reproduire à l'identique (voir ses quatre
+ * cartes), donc la seule qu'on ait besoin d'exécuter à part pour comparer les
+ * deux couches cas par cas. `main.tsx` garde la lecture de l'environnement —
+ * URL, localStorage, navigator —, qui n'est pas testable de la même façon.
+ *
+ * `browserLanguage` est tronquée à deux lettres ici et nulle part ailleurs :
+ * `navigator.language` vaut « en-US », pas « en ».
+ */
+export function resolvePreferredLocale(
+  langParam: string | null | undefined,
+  storedPreference: string | null | undefined,
+  browserLanguage: string | null | undefined,
+): Locale {
+  return (
+    localeFromUserPreference(langParam) ??
+    localeFromUserPreference(storedPreference) ??
+    localeFromUserPreference(browserLanguage?.slice(0, 2)) ??
+    DEFAULT_LOCALE
+  )
+}
+
+/**
  * Premier segment d'un chemin (`/fr/shop` → `fr`, `/` → `''`). Point unique
  * de cette extraction : `localeFromPath` ci-dessous, `main.tsx` (pour décider
  * s'il faut rediriger) et `useLocale.ts` en dépendent tous — ne pas

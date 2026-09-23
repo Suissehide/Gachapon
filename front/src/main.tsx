@@ -9,13 +9,14 @@ import { HelmetProvider } from 'react-helmet-async'
 import { I18nextProvider } from 'react-i18next'
 
 import i18n, {
-  DEFAULT_LOCALE,
   firstPathSegment,
   isSupportedLocale,
   LOCALE_STORAGE_KEY,
   type Locale,
   localeFromPath,
+  localeFromUserPreference,
   persistLocaleCookie,
+  resolvePreferredLocale,
 } from './i18n/index.ts'
 import { routeTree } from './routeTree.gen.ts'
 
@@ -100,8 +101,14 @@ declare module '@tanstack/react-router' {
  */
 function mirrorStoredLocaleToCookie(): void {
   try {
-    const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY)
-    if (stored && isSupportedLocale(stored)) {
+    // `localeFromUserPreference` et non `isSupportedLocale` : une préférence
+    // mémorisée avant ce lot peut porter n'importe quelle casse, et le cookie
+    // doit partir canonique — nginx la tolère, mais rien ne gagne à propager
+    // un « FR » dans un support de plus.
+    const stored = localeFromUserPreference(
+      window.localStorage.getItem(LOCALE_STORAGE_KEY),
+    )
+    if (stored) {
       persistLocaleCookie(stored)
     }
   } catch {
@@ -113,32 +120,28 @@ function mirrorStoredLocaleToCookie(): void {
 mirrorStoredLocaleToCookie()
 
 /**
- * Résout la langue de destination pour une URL sans préfixe (`/`, `/shop`…).
- * Ordre : `?lang=` s'il est présent et valide, sinon la préférence mémorisée
- * dans localStorage, sinon la langue du navigateur, sinon l'anglais.
+ * Résout la langue de destination pour une URL sans préfixe (`/`, `/shop`…),
+ * en LISANT l'environnement du navigateur ; l'ordre de priorité lui-même vit
+ * dans `resolvePreferredLocale` (src/i18n/index.ts), avec la règle que
+ * `deploy/conf/nginx.conf` doit reproduire.
+ *
+ * Seule la lecture de `localStorage` demande un `try` : c'est le seul des
+ * trois accès qui lève en navigation privée ou quota plein.
  */
 function resolveRedirectLocale(): Locale {
-  const langParam = new URLSearchParams(window.location.search).get('lang')
-  if (langParam && isSupportedLocale(langParam)) {
-    return langParam
-  }
-
+  let stored: string | null = null
   try {
-    const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY)
-    if (stored && isSupportedLocale(stored)) {
-      return stored
-    }
+    stored = window.localStorage.getItem(LOCALE_STORAGE_KEY)
   } catch {
     // localStorage indisponible (navigation privée, quota…) — on continue
     // avec les repères suivants.
   }
 
-  const browserLocale = window.navigator.language?.slice(0, 2).toLowerCase()
-  if (browserLocale && isSupportedLocale(browserLocale)) {
-    return browserLocale
-  }
-
-  return DEFAULT_LOCALE
+  return resolvePreferredLocale(
+    new URLSearchParams(window.location.search).get('lang'),
+    stored,
+    window.navigator.language,
+  )
 }
 
 /**
