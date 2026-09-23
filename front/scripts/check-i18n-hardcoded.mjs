@@ -311,7 +311,7 @@ const STRUCTURAL_MASKS = [
     pattern:
       /(?:\bi18n\.t|\bt|\bt[A-Z][A-Za-z0-9_]*)\(\s*(?:'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`[^`$\\\n]*`)/g,
     provenBy:
-      'src/routes/guide.tsx — 10 occurrences avant correction, toutes du type ' +
+      'src/routes/guide.tsx — 7 occurrences avant correction, toutes du type ' +
       "`{t('sections.cartes.tip')}` ou `title={t('sectionLabels.campagne')}` : " +
       '« cartes » et « campagne » y sont des SEGMENTS DE CLÉ, jamais affichés.',
     blindSpotCoveredBy:
@@ -324,7 +324,7 @@ const STRUCTURAL_MASKS = [
     pattern:
       /\bi18nKey\s*=\s*(?:"[^"\n]*"|'[^'\n]*'|\{\s*(?:'[^'\n]*'|"[^"\n]*")\s*\})/g,
     provenBy:
-      'src/routes/guide.tsx — 8 occurrences avant correction, du type ' +
+      'src/routes/guide.tsx — 9 occurrences avant correction, du type ' +
       '`i18nKey="sections.campagne.intro"`.',
     blindSpotCoveredBy:
       'check-i18n-keys.mjs, qui résout précisément cette forme (`i18nKey="…"`).',
