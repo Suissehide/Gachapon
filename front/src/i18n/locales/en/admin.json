@@ -585,5 +585,31 @@
       "BULK_REWARD": "Reward sent to {{count}} players",
       "LEVEL_UP": "<username>{{name}}</username> reaches level {{level}}"
     }
+  },
+  "stats": {
+    "loading": "Loading…",
+    "pageTitle": "Statistics",
+    "pageSubtitle": "Global metrics and rarity distribution",
+    "activeUsers": {
+      "title": "Active players",
+      "sevenDays": "7 days",
+      "thirtyDays": "30 days",
+      "percentOfPlayers": "{{pct}}% of players"
+    },
+    "rarityDrift": {
+      "title": "Drop rate drift — actual vs theoretical",
+      "theoretical": "theo.",
+      "real": "actual",
+      "empty": "No pull recorded"
+    },
+    "skillDistribution": {
+      "title": "Skill distribution",
+      "empty": "No skill invested",
+      "levelLabel": "Lvl.{{level}}"
+    },
+    "neverPulledCards": {
+      "title": "Never pulled cards",
+      "empty": "Every card has been pulled at least once."
+    }
   }
 }

@@ -585,5 +585,31 @@
       "BULK_REWARD": "Récompense envoyée à {{count}} joueurs",
       "LEVEL_UP": "<username>{{name}}</username> passe niveau {{level}}"
     }
+  },
+  "stats": {
+    "loading": "Chargement…",
+    "pageTitle": "Statistiques",
+    "pageSubtitle": "Métriques globales et distribution des raretés",
+    "activeUsers": {
+      "title": "Joueurs actifs",
+      "sevenDays": "7 jours",
+      "thirtyDays": "30 jours",
+      "percentOfPlayers": "{{pct}}% des joueurs"
+    },
+    "rarityDrift": {
+      "title": "Dérive drop rates — réel vs théorique",
+      "theoretical": "théo.",
+      "real": "réel",
+      "empty": "Aucun pull enregistré"
+    },
+    "skillDistribution": {
+      "title": "Distribution des compétences",
+      "empty": "Aucune compétence investie",
+      "levelLabel": "Niv.{{level}}"
+    },
+    "neverPulledCards": {
+      "title": "Cartes jamais tirées",
+      "empty": "Toutes les cartes ont été tirées au moins une fois."
+    }
   }
 }
