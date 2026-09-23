@@ -582,8 +582,9 @@
       "USER_SUSPENDED": "<username>{{name}}</username> was suspended",
       "USER_UNSUSPENDED": "<username>{{name}}</username> was reactivated",
       "ADMIN_GRANT": "Admin grant for <username>{{name}}</username>",
-      "BULK_REWARD": "Reward sent to {{count}} players",
-      "LEVEL_UP": "<username>{{name}}</username> reaches level {{level}}"
+      "LEVEL_UP": "<username>{{name}}</username> reaches level {{level}}",
+      "BULK_REWARD_one": "Reward sent to {{count}} player",
+      "BULK_REWARD_other": "Reward sent to {{count}} players"
     }
   },
   "stats": {
@@ -661,9 +662,10 @@
       "teamAWins": "Team A wins",
       "teamBWins": "Team B wins",
       "timeout": "Timeout",
-      "actionsCount": "{{count}} actions",
       "animationTab": "Animation",
-      "logTab": "Log JSON"
+      "logTab": "Log JSON",
+      "actionsCount_one": "{{count}} action",
+      "actionsCount_other": "{{count}} actions"
     },
     "defaultUnitName": "Player {{n}}"
   },
