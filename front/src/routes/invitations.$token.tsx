@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Check, Loader2, ShieldAlert, Users, X, XCircle } from 'lucide-react'
+import { Trans, useTranslation } from 'react-i18next'
 
 import { LandingNavbar } from '../components/custom/LandingNavbar.tsx'
 import { Navbar } from '../components/custom/Navbar.tsx'
@@ -18,6 +19,7 @@ export const Route = createFileRoute('/invitations/$token')({
 })
 
 function InvitationPage() {
+  const { t } = useTranslation('auth')
   const { token } = Route.useParams()
   const navigate = useNavigate()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -74,12 +76,14 @@ function InvitationPage() {
           <div className="w-full max-w-md text-center">
             <Users className="mx-auto mb-4 h-12 w-12 text-primary" />
             <h1 className="mb-2 text-2xl font-black text-text">
-              Invitation à une équipe
+              {t('invitations.unauthenticated.title')}
             </h1>
             <p className="mb-6 text-text-light">
-              Connecte-toi pour voir et accepter cette invitation.
+              {t('invitations.unauthenticated.description')}
             </p>
-            <Button onClick={openLogin}>Se connecter</Button>
+            <Button onClick={openLogin}>
+              {t('invitations.unauthenticated.loginButton')}
+            </Button>
           </div>
         </div>
       </div>
@@ -101,7 +105,9 @@ function InvitationPage() {
             {(isLoading || isLoadingAuth) && (
               <>
                 <Loader2 className="mx-auto mb-4 h-10 w-10 animate-spin text-primary" />
-                <p className="text-text-light">Chargement de l'invitation…</p>
+                <p className="text-text-light">
+                  {t('invitations.loadingLabel')}
+                </p>
               </>
             )}
 
@@ -109,13 +115,14 @@ function InvitationPage() {
               <>
                 <ShieldAlert className="mx-auto mb-4 h-12 w-12 text-primary" />
                 <h1 className="mb-2 text-2xl font-black text-text">
-                  Ce n'est pas ton invitation
+                  {t('invitations.wrongAccount.title')}
                 </h1>
                 <p className="mb-6 text-text-light">
-                  Ce lien ne concerne pas le compte connecté. Connecte-toi avec
-                  le bon compte pour rejoindre l'équipe.
+                  {t('invitations.wrongAccount.description')}
                 </p>
-                <Button onClick={handleSwitchAccount}>Changer de compte</Button>
+                <Button onClick={handleSwitchAccount}>
+                  {t('invitations.wrongAccount.switchAccountButton')}
+                </Button>
               </>
             )}
 
@@ -123,10 +130,10 @@ function InvitationPage() {
               <>
                 <XCircle className="mx-auto mb-4 h-12 w-12 text-destructive" />
                 <h1 className="mb-2 text-2xl font-black text-text">
-                  Invitation introuvable
+                  {t('invitations.notFound.title')}
                 </h1>
                 <p className="text-text-light">
-                  Ce lien n'est plus valide ou a expiré.
+                  {t('invitations.notFound.description')}
                 </p>
               </>
             )}
@@ -135,17 +142,17 @@ function InvitationPage() {
               <>
                 <XCircle className="mx-auto mb-4 h-12 w-12 text-destructive" />
                 <h1 className="mb-2 text-2xl font-black text-text">
-                  Invitation indisponible
+                  {t('invitations.unavailable.title')}
                 </h1>
                 <p className="text-text-light">
                   {invitation.status === 'ACCEPTED' &&
-                    'Cette invitation a déjà été acceptée.'}
+                    t('invitations.unavailable.accepted')}
                   {invitation.status === 'DECLINED' &&
-                    'Cette invitation a été refusée.'}
+                    t('invitations.unavailable.declined')}
                   {invitation.status === 'CANCELLED' &&
-                    'Cette invitation a été annulée.'}
+                    t('invitations.unavailable.cancelled')}
                   {invitation.status === 'EXPIRED' &&
-                    'Cette invitation a expiré.'}
+                    t('invitations.unavailable.expired')}
                 </p>
               </>
             )}
@@ -157,18 +164,19 @@ function InvitationPage() {
                 </div>
                 <p className="mb-1 text-sm text-text-light">
                   {invitation.invitedBy ? (
-                    <>
-                      <strong className="text-text">
-                        {invitation.invitedBy.username}
-                      </strong>{' '}
-                      t'invite à rejoindre
-                    </>
+                    <Trans
+                      t={t}
+                      i18nKey="invitations.pending.invitedByLead"
+                      values={{ username: invitation.invitedBy.username }}
+                      components={{ Strong: <strong className="text-text" /> }}
+                    />
                   ) : (
-                    'Tu es invité(e) à rejoindre'
+                    t('invitations.pending.noInviterLead')
                   )}
                 </p>
                 <h1 className="mb-6 text-2xl font-black text-text">
-                  {invitation.team?.name ?? 'une équipe'}
+                  {invitation.team?.name ??
+                    t('invitations.pending.teamFallbackName')}
                 </h1>
                 <div className="flex items-center justify-center gap-3">
                   <Button
@@ -177,7 +185,7 @@ function InvitationPage() {
                     disabled={accept.isPending || decline.isPending}
                   >
                     <X className="h-4 w-4" />
-                    Refuser
+                    {t('invitations.pending.declineButton')}
                   </Button>
                   <Button
                     onClick={handleAccept}
@@ -188,7 +196,7 @@ function InvitationPage() {
                     ) : (
                       <Check className="h-4 w-4" />
                     )}
-                    Rejoindre l'équipe
+                    {t('invitations.pending.joinButton')}
                   </Button>
                 </div>
               </div>
