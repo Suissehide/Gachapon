@@ -18,8 +18,10 @@
 //
 // Usage :
 //   node scripts/check-i18n-keys.mjs                       # tout src/
-//   node scripts/check-i18n-keys.mjs src/components/shop
+//   node scripts/check-i18n-keys.mjs src/components/team
 //   node scripts/check-i18n-keys.mjs src/routes/guide.tsx src/components/team
+//   node scripts/check-i18n-keys.mjs --verbose              # + détail des
+//                                                            # appels ignorés
 //
 // Contrairement à check-i18n-hardcoded.mjs, qui n'accepte qu'UN SEUL chemin
 // et ignore silencieusement les arguments suivants (piège constaté sur ce
@@ -29,6 +31,29 @@
 // check-i18n-hardcoded.mjs. Pas de motif glob ici (pas nécessaire pour
 // satisfaire la consigne — plusieurs chemins littéraux suffisent) : seuls
 // des fichiers ou répertoires réels sont acceptés.
+//
+// Au-delà des trois formes citées plus haut (`t(...)`, `i18n.t(...)`,
+// `i18nKey="..."`), ce script détecte et RÉSOUT aussi (pas seulement
+// signale) l'alias de `useTranslation` — `const { t: tShop } =
+// useTranslation('shop')` puis `tShop('cle')` — l'idiome standard de
+// react-i18next dès qu'un composant a besoin de deux `t` distincts. Aucun
+// cas sur ce dépôt à l'écriture de ce script (249 `const { t }`, 0 alias),
+// mais c'est prévu : un appel `tShop(...)` est résolu exactement comme un
+// `t(...)` ordinaire, contre le namespace de SON PROPRE `useTranslation`
+// (voir `resolveVar`/`bindingsByVar` dans `scanFile`), et compté à part
+// (`aliasCallCount`, affiché dans le résumé) pour rester visible même s'il
+// devait un jour dominer le parc. Deux tolérances de formatage à faible
+// coût, elles aussi couvertes : `i18nKey = "…"` avec des espaces autour du
+// `=`, et `t\n('…')` avec un saut de ligne avant la parenthèse — aucun cas
+// non plus sur ce dépôt (Biome ne laisserait pas passer un fichier formaté
+// avec l'un ou l'autre), traités par précaution plutôt que documentés comme
+// angle mort puisque le coût était marginal.
+//
+// Ce script vérifie aussi, sur les ressources JSON elles-mêmes (indépendamment
+// de tout appel dans le code), deux défauts qui produisent le même symptôme
+// qu'une clé manquante — une clé brute affichée à l'écran — voir
+// `checkResourceDefects` plus bas : une VALEUR VIDE, et un `_one` sans
+// `_other` correspondant.
 //
 // ---------------------------------------------------------------------------
 // Ce que ce script NE VOIT PAS (à lire avant de faire confiance à un "vert") :
@@ -71,41 +96,73 @@
 //    ce script cherche `\bt=\{(\w+)\}` ou `\bns=(["'])…\1` dans le texte
 //    entre le `<Trans` le plus proche AVANT et le `i18nKey=` lui-même,
 //    plutôt que d'analyser l'arbre JSX. Sur ce dépôt, à l'écriture de ce
-//    script, cette heuristique couvre 77 des 78 `i18nKey` sans encombre
-//    (l'identifiant lié est toujours littéralement `t`) ; les 2 restants ont
-//    déjà un préfixe `ns:` explicite et n'ont pas besoin de cette
-//    résolution. Un futur `<Trans>` qui passerait `t` sous un autre nom, ou
+//    script : 78 `i18nKey` littéraux (+ 1 dynamique, compté dans l'angle
+//    mort n°1), dont 70 sans préfixe `ns:` — résolus via cette heuristique de
+//    fenêtre, `t={t}` trouvé dans les 70 cas — et 8 portant déjà un préfixe
+//    `ns:` explicite, qui n'ont pas besoin de cette résolution (certains ont
+//    quand même un `t={t}` à proximité, sans effet : le préfixe l'emporte
+//    toujours). Un futur `<Trans>` qui passerait `t` sous un autre nom, ou
 //    dont la prop `t=`/`ns=` serait hors de la fenêtre balayée, échapperait
 //    silencieusement à la résolution (bascule alors en dernier recours sur
 //    le `t` en portée à la position du `i18nKey`, voir point 5).
 //
-// 5. LA PORTÉE DE `useTranslation()` EST SUIVIE LINÉAIREMENT, PAS PAR VRAIE
-//    ANALYSE DE PORTÉE JS. Pour un appel `t('cléSansNamespace')`, ce script
-//    associe le namespace par défaut du `useTranslation(...)` **textuellement
-//    le plus proche AVANT** dans le même fichier — pas celui de la fonction
-//    qui englobe réellement l'appel. Ça fonctionne correctement tant que les
-//    composants d'un même fichier ne s'imbriquent pas et que chacun appelle
-//    `useTranslation` avant son propre JSX (le cas de ce dépôt : par ex.
-//    `components/battle/resultKit.tsx` définit deux fonctions séquentielles,
-//    chacune avec son propre `const { t } = useTranslation(...)` sur un
-//    namespace différent — la portée n'y est jamais chevauchante).
+// 5. L'ATTRIBUTION DE NAMESPACE POUR UNE CLÉ NUE EST UNE DEVINETTE, PAS UNE
+//    PREUVE — à traiter comme telle, y compris par le lecteur de ce fichier.
+//    Pour un appel `t('cléSansNamespace')`, ce script associe le namespace
+//    du `useTranslation(...)` **textuellement le plus proche AVANT** dans le
+//    même fichier (`nsInScopeAt`), avec un repli `fileWideFallbackNs` quand
+//    aucun ne précède ou que le namespace change en cours de fichier : SI
+//    tous les `useTranslation(...)` du fichier s'accordent sur le même
+//    namespace, ce namespace est utilisé partout dans le fichier. Aucune de
+//    ces deux règles n'est une preuve d'unicité — ni l'une ni l'autre ne sait
+//    que `t` peut être reçu en PARAMÈTRE depuis un autre fichier (aucune
+//    analyse de flux de données inter-fichiers ici, comme au point 2), et
+//    même la portée linéaire, quand le repli fichier-entier est désactivé,
+//    continue de DEVINER (le `useTranslation` le plus proche avant, pas
+//    forcément le bon) plutôt que de renoncer. Fabriqué et vérifié par la
+//    revue : deux composants d'un même fichier sur deux namespaces
+//    différents, partageant une fonction utilitaire — le repli fichier-entier
+//    se désactive bien (namespaces divergents), mais la portée linéaire
+//    attribue quand même la fonction partagée au `useTranslation` textuellement
+//    le plus proche, qui n'est pas forcément celui du composant qui l'appelle
+//    réellement à l'exécution. Une clé qui n'existe que dans le namespace
+//    RÉEL (ex. `gacha`) mais que ce script vérifie contre le namespace
+//    DEVINÉ (ex. `common`) sort verte si elle y existe AUSSI, silencieusement
+//    fausse si le namespace deviné ne la contient pas non plus — un cas que
+//    ce script ne peut pas distinguer d'un vrai succès.
 //
-//    Cas réel et fréquent que la règle "le plus proche AVANT" rate seule :
-//    une fonction utilitaire déclarée AVANT le composant dans le fichier
-//    (donc avant tout `useTranslation()` au sens textuel) mais qui reçoit
-//    `t` en PARAMÈTRE depuis ce composant — `medalAriaLabel(t, rank)` avant
-//    `MedalRank` dans `components/leaderboard/MedalRank.tsx`, ou les
-//    fonctions de libellé de `BetPlacePopup.tsx`, `RaidPanel.tsx`,
-//    `SettledHistory.tsx`… (9 fichiers, 37 appels mesurés à l'écriture de ce
-//    script). Ce script ne suit PAS le passage de `t` en paramètre (il
-//    faudrait une vraie analyse de flux de données) : à la place, il
-//    applique un repli sûr, `fileWideFallbackNs` — SI tous les
-//    `useTranslation(...)` d'un fichier s'accordent sur le même namespace,
-//    n'importe quel `t(...)` de ce fichier y est forcément lié, où qu'il
-//    soit dans le texte. Dès que deux `useTranslation()` d'un même fichier
-//    divergent (le cas de `resultKit.tsx` ci-dessus), ce repli est désactivé
-//    plutôt que de deviner. Un appel qui échapperait aux deux (portée
-//    linéaire ET repli fichier entier) tomberait dans le compteur "non
+//    Cas réel où cette devinette s'applique, sur ce dépôt : une fonction
+//    utilitaire déclarée AVANT le composant dans le fichier (donc avant tout
+//    `useTranslation()` au sens textuel) mais recevant `t` en PARAMÈTRE
+//    depuis ce composant — `medalAriaLabel(t, rank)` avant `MedalRank` dans
+//    `components/leaderboard/MedalRank.tsx`, ou les fonctions de libellé de
+//    `BetPlacePopup.tsx`, `RaidPanel.tsx`, `SettledHistory.tsx`… (9 fichiers).
+//    Dans ces 9 fichiers, `fileWideFallbackNs` s'applique proprement car
+//    chacun n'a qu'un seul namespace — l'attribution y est correcte, mais
+//    PAR CHANCE structurelle (un seul candidat existe dans le fichier), pas
+//    parce que le script a prouvé quoi que ce soit sur la provenance réelle
+//    de `t`.
+//
+//    AMPLEUR MESURÉE sur ce dépôt, à l'écriture de ce script : sur les 2072
+//    appels littéraux vérifiés, 862 (41,6 %) portent une clé NUE dont le
+//    namespace est deviné plutôt que lu dans le texte de la clé elle-même.
+//    Parmi ces 862 : 830 clés n'existent QUE dans un seul namespace parmi
+//    les 32 — une mauvaise attribution y échouerait bruyamment (rouge), pas
+//    silencieusement, puisque la clé ne se trouverait nulle part sous le
+//    mauvais namespace deviné. Les 32 restantes existent dans PLUSIEURS
+//    namespaces à la fois — c'est SEULEMENT sur ce sous-ensemble (1,5 % du
+//    parc total) qu'une mauvaise attribution pourrait passer inaperçue, et
+//    encore faut-il que la devinette se trompe réellement (aucun cas connu
+//    et confirmé sur ce dépôt aujourd'hui — le cas ci-dessus est fabriqué
+//    pour la démonstration, pas observé dans le code réel). C'est cette
+//    double condition — mauvaise attribution ET clé dupliquée entre
+//    namespaces — qui rend le risque résiduel supportable sans le rendre
+//    nul : ce script ne peut pas le fermer sans une vraie analyse de flux de
+//    données inter-fichiers, hors de portée ici (point 2).
+//
+//    Un appel qui échapperait aux deux règles (portée linéaire ET repli
+//    fichier entier — aucun `useTranslation` nulle part avant lui dans un
+//    fichier aux namespaces divergents) tombe dans le compteur "non
 //    résolu(s) faute de contexte" — ni un succès, ni un échec, juste
 //    invisible pour ce garde-fou. Mesuré à 0 sur ce dépôt une fois le repli
 //    en place.
@@ -123,10 +180,29 @@
 //    variable) — sans importance ici, seule l'EXISTENCE de la clé nous
 //    intéresse, jamais le choix de forme grammaticale.
 //
+//    Piège INVERSE, distinct de celui-ci et vérifié séparément (pas par
+//    `i18n.exists()`, qui ne peut pas le voir) : un `_one` SANS `_other`
+//    correspondant. `exists(clé, { count: 1 })` répond `true` (la forme
+//    `_one` existe), mais `count !== 1` cherche `_other`, ne le trouve pas,
+//    et affiche la clé brute — un trou que `check-i18n-parity.mjs` ne voit
+//    pas non plus (le même trou présent à l'identique en fr et en est en
+//    parité parfaite). `checkResourceDefects` (plus bas) le vérifie
+//    directement sur les ressources JSON, indépendamment des appels au code
+//    — voir ce nom dans le fichier pour le détail.
+//
 // Seuls `.ts`/`.tsx` sont balayés (comme check-i18n-hardcoded.mjs) —
 // `src/i18n/locales/**/*.json` n'est jamais scanné pour des APPELS (il est
 // lui-même la SOURCE contre laquelle on résout) et `routeTree.gen.ts`
 // (généré) est exclu.
+//
+// Dernier détail mineur, sans conséquence connue : la recherche de `t(`/
+// `i18n.t(`/`i18nKey=` porte sur le texte nettoyé des COMMENTAIRES, mais pas
+// des CHAÎNES — leur contenu doit rester lisible pour y trouver du texte
+// JSX, des URLs, etc. (même choix que check-i18n-hardcoded.mjs). Un `t(...)`
+// cité littéralement à l'intérieur d'une chaîne (de la documentation
+// utilisateur qui montre un exemple de code, par ex.) serait donc traité
+// comme un vrai appel. Ça échoue dans le bon sens — une fausse alerte, pas
+// un vrai défaut passé sous silence — et le dépôt n'en contient aucun cas.
 //
 // `front/scripts/` est hors du périmètre de Biome (voir biome.json) : style
 // tenu à la main, guillemets simples, pas de point-virgule, comme les deux
@@ -222,8 +298,7 @@ async function loadResources() {
   return resources
 }
 
-async function buildI18nInstance() {
-  const resources = await loadResources()
+async function buildI18nInstance(resources) {
   const instance = i18next.createInstance()
   await instance.init({
     resources,
@@ -233,11 +308,92 @@ async function buildI18nInstance() {
     // Repris de src/i18n/index.ts : aucun repli silencieux entre langues —
     // une clé manquante en fr ne doit jamais être déclarée "trouvée" parce
     // qu'elle existe en en (ou l'inverse). Chaque langue est vérifiée pour
-    // de vrai, indépendamment (voir checkKey ci-dessous).
+    // de vrai, indépendamment (voir la boucle `for (const locale of LOCALES)`
+    // dans `main`).
     fallbackLng: false,
     parseMissingKeyHandler: (key) => key,
+    // `returnEmptyString` (défaut `true` chez i18next, mis à `false` dans
+    // src/i18n/index.ts) n'est PAS repris ici, volontairement : cette option
+    // gouverne ce que `t()` RENVOIE pour une clé de valeur vide, pas ce que
+    // `i18n.exists()` répond — et c'est `exists()`, pas `t()`, que ce script
+    // appelle. Vérifié empiriquement avant l'écriture de ce script :
+    // `exists()` répond `true` pour une clé de valeur vide quelle que soit
+    // la valeur de `returnEmptyString`. La reprendre ne changerait donc rien
+    // ici ; c'est pour ça qu'elle est absente de ce bloc, pas par oubli.
+    // La valeur vide elle-même reste un vrai défaut : voir
+    // `checkResourceDefects` plus bas, qui la traite indépendamment de
+    // `exists()`.
   })
   return instance
+}
+
+/** Aplatit un objet JSON de traductions en `{ "a.b.c": "valeur" }` — ne
+ * garde que les feuilles chaîne (une valeur non textuelle est un défaut de
+ * forme déjà couvert par check-i18n-parity.mjs, pas le sujet ici). */
+function flattenStrings(obj, prefix, out) {
+  for (const [key, value] of Object.entries(obj)) {
+    const keyPath = prefix ? `${prefix}.${key}` : key
+    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+      flattenStrings(value, keyPath, out)
+      continue
+    }
+    if (typeof value === 'string') {
+      out[keyPath] = value
+    }
+  }
+  return out
+}
+
+/**
+ * Vérifie les fichiers de ressources EUX-MÊMES, indépendamment de tout appel
+ * dans le code, pour deux défauts qui produisent exactement le symptôme que
+ * ce script existe pour empêcher — une clé brute affichée à l'écran — sans
+ * qu'aucune clé ne soit pourtant "absente" au sens où `i18n.exists()`
+ * l'entend :
+ *
+ *   - VALEUR VIDE : `i18n.exists()` répond `true` (la clé existe belle et
+ *     bien), mais avec `returnEmptyString: false` — le réglage réel de
+ *     src/i18n/index.ts, vérifié empiriquement ci-dessus — `t()` rend la clé
+ *     BRUTE pour une valeur vide, exactement comme pour une clé manquante.
+ *   - `_one` SANS `_other` correspondant : `i18n.exists(clé, { count: 1 })`
+ *     répond `true` (voir angle mort n°6), mais dès que `count !== 1`,
+ *     i18next cherche `_other`, ne le trouve pas, et affiche la clé brute.
+ *     `check-i18n-parity.mjs` ne le voit pas non plus : un `_one` orphelin
+ *     PRÉSENT À L'IDENTIQUE dans les deux langues est en parité parfaite —
+ *     rien n'y signale un trou pluriel, seulement une différence entre fr et
+ *     en.
+ *
+ * Toujours vérifié sur la TOTALITÉ des ressources, jamais restreint par les
+ * arguments de chemin de ce script (qui ne scopent que les fichiers SOURCE
+ * balayés pour des appels, pas les ressources elles-mêmes) — même logique
+ * que check-i18n-parity.mjs, qui ne prend d'ailleurs aucun argument pour
+ * cette raison précise.
+ *
+ * Aucun cas des deux sur ce dépôt à l'écriture de ce script.
+ */
+function checkResourceDefects(resources) {
+  const problems = []
+  for (const locale of LOCALES) {
+    for (const ns of NAMESPACES) {
+      const flat = flattenStrings(resources[locale][ns], '', {})
+      for (const [key, value] of Object.entries(flat)) {
+        if (value.trim().length === 0) {
+          problems.push(
+            `src/i18n/locales/${locale}/${ns}.json: valeur vide pour la clé "${ns}:${key}"`,
+          )
+        }
+        if (key.endsWith('_one')) {
+          const otherKey = `${key.slice(0, -'_one'.length)}_other`
+          if (!(otherKey in flat)) {
+            problems.push(
+              `src/i18n/locales/${locale}/${ns}.json: "${ns}:${key}" est plurielle sans "${ns}:${otherKey}" — count !== 1 affichera la clé brute`,
+            )
+          }
+        }
+      }
+    }
+  }
+  return problems
 }
 
 // ---------------------------------------------------------------------------
@@ -573,7 +729,14 @@ function stripComments(source) {
 // fichier) et extraction des appels littéraux
 // ---------------------------------------------------------------------------
 
-const USE_TRANSLATION_RE = /const\s*\{\s*t\s*(?:,\s*i18n\s*)?\}\s*=\s*useTranslation\(([^)]*)\)/g
+// Groupe 1 : alias éventuel (`const { t: tShop } = useTranslation(...)`),
+// `undefined` si l'identifiant est le `t` par défaut. Groupe 2 : argument
+// textuel de `useTranslation(...)`. Aucun cas d'alias sur ce dépôt à
+// l'écriture de ce script (249 `const { t }`, 0 alias) — mais c'est
+// l'idiome standard de react-i18next dès qu'un composant a besoin de deux
+// `t` distincts, donc détecté dès maintenant plutôt qu'après coup.
+const USE_TRANSLATION_RE =
+  /const\s*\{\s*t(?:\s*:\s*(\w+))?\s*(?:,\s*i18n\s*)?\}\s*=\s*useTranslation\(([^)]*)\)/g
 
 /**
  * Interprète l'argument textuel d'un `useTranslation(...)` en liste de
@@ -608,11 +771,12 @@ function parseNsArg(argText) {
 }
 
 /**
- * `bindings` : liste ordonnée `{ pos, ns }` (une entrée par `useTranslation`
- * du fichier, dans l'ordre du texte). Renvoie le namespace en vigueur pour
- * un appel à la position `pos` — celui du dernier `useTranslation` rencontré
- * AVANT cette position (portée suivie linéairement, voir angle mort n°5),
- * ou `null` si aucun (ou si son argument était lui-même dynamique).
+ * `bindings` : liste ordonnée `{ pos, ns }` (déjà filtrée sur UN SEUL
+ * identifiant — voir `bindingsByVar` dans `scanFile`), dans l'ordre du
+ * texte. Renvoie le namespace en vigueur pour un appel à la position `pos`
+ * — celui du dernier `useTranslation` de CET identifiant rencontré AVANT
+ * cette position (portée suivie linéairement, voir angle mort n°5), ou
+ * `null` si aucun (ou si son argument était lui-même dynamique).
  */
 function nsInScopeAt(bindings, pos) {
   let candidate = null
@@ -625,32 +789,54 @@ function nsInScopeAt(bindings, pos) {
   return candidate
 }
 
+/**
+ * Une entrée par `useTranslation(...)` du fichier, avec l'identifiant réel
+ * auquel `t` est lié — `'t'` par défaut, ou l'alias capturé par
+ * `USE_TRANSLATION_RE` (`const { t: tShop } = useTranslation('shop')` →
+ * `varName: 'tShop'`).
+ */
 function collectTBindings(source) {
   const bindings = []
   USE_TRANSLATION_RE.lastIndex = 0
   let m
   while ((m = USE_TRANSLATION_RE.exec(source))) {
-    bindings.push({ pos: m.index, ns: parseNsArg(m[1]) })
+    bindings.push({ pos: m.index, ns: parseNsArg(m[2]), varName: m[1] ?? 't' })
   }
   return bindings
+}
+
+/** Regroupe `bindings` par identifiant (`'t'`, `'tShop'`, …), ordre conservé. */
+function groupBindingsByVar(bindings) {
+  const byVar = new Map()
+  for (const b of bindings) {
+    if (!byVar.has(b.varName)) {
+      byVar.set(b.varName, [])
+    }
+    byVar.get(b.varName).push(b)
+  }
+  return byVar
 }
 
 /**
  * Repli pour les fonctions utilitaires déclarées AVANT le composant dans le
  * même fichier (donc avant tout `useTranslation()` au sens purement textuel
  * de `nsInScopeAt`) mais qui reçoivent `t` en PARAMÈTRE depuis ce composant
- * — un cas réel et fréquent sur ce dépôt (`medalAriaLabel(t, ...)` avant
- * `MedalRank`, dans `components/leaderboard/MedalRank.tsx`, par ex.). Sans
- * pouvoir suivre ce passage de paramètre (il faudrait une vraie analyse de
- * flux de données), ce script se rabat sur une règle sûre : SI tous les
- * `useTranslation(...)` du fichier s'accordent sur le MÊME namespace (ou le
- * même jeu de namespaces), alors n'importe quel `t(...)` du fichier, où
- * qu'il soit texuellement, est forcément lié à ce namespace — il n'y a
- * qu'un seul candidat possible. Dès que deux `useTranslation()` du fichier
+ * — un cas réel sur ce dépôt (`medalAriaLabel(t, ...)` avant `MedalRank`,
+ * dans `components/leaderboard/MedalRank.tsx`, par ex.). Sans pouvoir suivre
+ * ce passage de paramètre (il faudrait une vraie analyse de flux de
+ * données), ce script se rabat sur une heuristique, PAS une preuve : SI tous
+ * les `useTranslation(...)` du fichier s'accordent sur le MÊME namespace (ou
+ * le même jeu de namespaces), ce namespace est utilisé pour tout `t(...)` du
+ * fichier — ce n'est vrai QUE si aucune fonction de ce fichier ne reçoit par
+ * ailleurs un `t` lié à un AUTRE namespace depuis un fichier tiers, ce que ce
+ * script ne peut pas savoir. Dès que deux `useTranslation()` du fichier
  * divergent (ex. `components/battle/resultKit.tsx`, où deux fonctions
- * successives lient `t` à 'machine' puis à 'combat'), le repli est désactivé
- * (renvoie `null`) plutôt que de deviner — mieux vaut un appel non vérifié
- * qu'une clé déclarée manquante à tort contre le mauvais namespace.
+ * successives lient `t` à 'machine' puis à 'combat'), ce repli renvoie
+ * `null` — mais `nsInScopeAt`, appelé avant lui par l'appelant, continue
+ * dans ce cas de deviner par portée linéaire (le `useTranslation` textuellement
+ * le plus proche avant), pas de renoncer : voir l'angle mort n°5 en tête de
+ * fichier pour la mesure du risque résiduel (862 clés nues concernées, dont
+ * 32 pourraient masquer une mauvaise attribution).
  */
 function fileWideFallbackNs(bindings) {
   if (bindings.length === 0) {
@@ -669,36 +855,77 @@ function fileWideFallbackNs(bindings) {
   return first
 }
 
-const CALL_RE = /\bi18n\.t\(|\bt\(/g
-const I18NKEY_RE = /i18nKey=/g
+// `i18nKey` : espaces tolérés autour du `=` (JSX l'autorise, même si Biome
+// ne le laisse jamais passer un fichier formaté — mieux vaut le couvrir, le
+// coût est nul). `t\s*\(`/alias : espace ou saut de ligne tolérés entre
+// l'identifiant et la parenthèse ouvrante, pour la même raison (voir aussi
+// la construction de CALL_RE plus bas, qui applique la même tolérance aux
+// alias détectés).
+const I18NKEY_RE = /i18nKey\s*=\s*/g
+
+/**
+ * Résout, pour un identifiant `varName` donné (`'t'`, ou un alias comme
+ * `'tShop'`), le namespace en vigueur à la position `pos` : portée linéaire
+ * d'abord (`nsInScopeAt`, sur les seules liaisons de CET identifiant), puis
+ * repli fichier-entier (`fileWideFallbackNs`, sur les mêmes liaisons
+ * filtrées). Renvoie `null` si l'identifiant n'a aucune liaison connue dans
+ * le fichier, ou si les deux règles échouent.
+ */
+function resolveVar(bindingsByVar, varName, pos) {
+  const list = bindingsByVar.get(varName) ?? []
+  return nsInScopeAt(list, pos) ?? fileWideFallbackNs(list)
+}
 
 /**
  * Balaie un fichier (déjà nettoyé de ses commentaires) et renvoie :
  *   - `literals` : `{ pos, key, ns, kind }[]` — `ns` est `null` si `key`
  *     porte déjà un préfixe `ns:` (auquel cas i18next l'utilisera de toute
  *     façon en priorité, voir plus bas), sinon la liste de namespaces
- *     candidats à passer en option `ns` de `i18n.exists()`.
+ *     candidats à passer en option `ns` de `i18n.exists()`. `kind` est soit
+ *     `'i18n.t'`, soit `'Trans i18nKey'`, soit l'identifiant réel appelé —
+ *     `'t'` la plupart du temps, ou un alias (`'tShop'`) le cas échéant.
  *   - `dynamicCount` : nombre d'appels dont le premier argument n'est pas un
  *     littéral entièrement statique (angle mort n°1).
  *   - `unresolvedCount` : nombre d'appels dont la clé EST littérale mais dont
  *     le namespace par défaut n'a pas pu être déterminé (angles morts n°4/5)
  *     — ni un succès, ni un échec : simplement pas vérifiés.
+ *   - `aliasCallCount` : parmi `literals`, combien ont été résolus via un
+ *     alias de `useTranslation` (`kind` ni `'t'`, ni `'i18n.t'`, ni
+ *     `'Trans i18nKey'`) — juste pour la visibilité en sortie, voir
+ *     `--verbose` et le compteur global dans `main`.
+ *   - `dynamicEntries`/`unresolvedEntries` : `{ pos, kind }[]` — le détail
+ *     positionnel derrière `dynamicCount`/`unresolvedCount`, pour `--verbose`
+ *     uniquement (sans lui, `main` ne s'en sert pas, juste les compteurs).
  */
 function scanFile(source) {
   const bindings = collectTBindings(source)
-  const fallbackNs = fileWideFallbackNs(bindings)
+  const bindingsByVar = groupBindingsByVar(bindings)
+  // 't' est toujours un identifiant candidat, même si aucun useTranslation()
+  // ne le lie dans ce fichier précis (t reçu en paramètre — voir angle mort
+  // n°5) : sans lui, un simple `t('ns:clé')` déjà préfixé ne serait même
+  // plus repéré du tout.
+  const varNames = new Set(['t', ...bindingsByVar.keys()])
+  const callAlternatives = [...varNames].sort((a, b) => b.length - a.length)
+  const callRe = new RegExp(`\\bi18n\\.t\\s*\\(|\\b(?:${callAlternatives.join('|')})\\s*\\(`, 'g')
+
   const literals = []
   let dynamicCount = 0
   let unresolvedCount = 0
+  let aliasCallCount = 0
+  const dynamicEntries = []
+  const unresolvedEntries = []
 
-  CALL_RE.lastIndex = 0
+  callRe.lastIndex = 0
   let m
-  while ((m = CALL_RE.exec(source))) {
+  while ((m = callRe.exec(source))) {
     const isI18n = m[0].startsWith('i18n')
-    const argStart = skipWhitespace(source, CALL_RE.lastIndex)
+    // Identifiant réellement appelé (`t`, `tShop`…) — vide pour i18n.t.
+    const calledVar = isI18n ? null : m[0].slice(0, m[0].lastIndexOf('(')).trim()
+    const argStart = skipWhitespace(source, callRe.lastIndex)
     const lit = readStringLiteral(source, argStart)
     if (lit === null || lit.dynamic) {
       dynamicCount += 1
+      dynamicEntries.push({ pos: m.index, kind: isI18n ? 'i18n.t' : calledVar })
       continue
     }
     const key = lit.raw
@@ -710,14 +937,19 @@ function scanFile(source) {
       // useTranslation local) : sans préfixe, elle résout contre defaultNS.
       ns = [DEFAULT_NS]
     } else {
-      const scoped = nsInScopeAt(bindings, m.index) ?? fallbackNs
+      const scoped = resolveVar(bindingsByVar, calledVar, m.index)
       if (scoped === null) {
         unresolvedCount += 1
+        unresolvedEntries.push({ pos: m.index, kind: calledVar })
         continue
       }
       ns = scoped
     }
-    literals.push({ pos: m.index, key, ns, kind: isI18n ? 'i18n.t' : 't' })
+    const kind = isI18n ? 'i18n.t' : calledVar
+    if (!isI18n && calledVar !== 't') {
+      aliasCallCount += 1
+    }
+    literals.push({ pos: m.index, key, ns, kind })
   }
 
   I18NKEY_RE.lastIndex = 0
@@ -729,6 +961,7 @@ function scanFile(source) {
       const braced = readBracedExpression(source, afterPos + 1)
       if (braced === null) {
         dynamicCount += 1
+        dynamicEntries.push({ pos: m.index, kind: 'Trans i18nKey' })
         continue
       }
       const trimmedInner = braced.text.trim()
@@ -736,6 +969,7 @@ function scanFile(source) {
       if (innerLit === null || innerLit.end !== trimmedInner.length) {
         // Pas un littéral seul (ex. `i18nKey={cond ? 'a' : 'b'}`) — dynamique.
         dynamicCount += 1
+        dynamicEntries.push({ pos: m.index, kind: 'Trans i18nKey' })
         continue
       }
       lit = innerLit
@@ -744,6 +978,7 @@ function scanFile(source) {
     }
     if (lit === null || lit.dynamic) {
       dynamicCount += 1
+      dynamicEntries.push({ pos: m.index, kind: 'Trans i18nKey' })
       continue
     }
     const key = lit.raw
@@ -759,7 +994,7 @@ function scanFile(source) {
         const window = source.slice(transStart, m.index)
         const tPropMatch = window.match(/\bt=\{(\w+)\}/)
         if (tPropMatch) {
-          resolved = nsInScopeAt(bindings, transStart)
+          resolved = resolveVar(bindingsByVar, tPropMatch[1], transStart)
         } else {
           const nsPropMatch = window.match(/\bns=(["'])([^"']+)\1/)
           if (nsPropMatch) {
@@ -768,12 +1003,13 @@ function scanFile(source) {
         }
       }
       if (resolved === null) {
-        // Dernier recours : le `t` en portée à l'endroit du i18nKey lui-même,
-        // puis le repli fichier entier (voir fileWideFallbackNs).
-        resolved = nsInScopeAt(bindings, m.index) ?? fallbackNs
+        // Dernier recours : le `t` par défaut en portée à l'endroit du
+        // i18nKey lui-même (portée linéaire + repli fichier entier).
+        resolved = resolveVar(bindingsByVar, 't', m.index)
       }
       if (resolved === null) {
         unresolvedCount += 1
+        unresolvedEntries.push({ pos: m.index, kind: 'Trans i18nKey' })
         continue
       }
       ns = resolved
@@ -782,7 +1018,9 @@ function scanFile(source) {
   }
 
   literals.sort((a, b) => a.pos - b.pos)
-  return { literals, dynamicCount, unresolvedCount }
+  dynamicEntries.sort((a, b) => a.pos - b.pos)
+  unresolvedEntries.sort((a, b) => a.pos - b.pos)
+  return { literals, dynamicCount, unresolvedCount, aliasCallCount, dynamicEntries, unresolvedEntries }
 }
 
 // ---------------------------------------------------------------------------
@@ -869,33 +1107,70 @@ async function resolveTargets(args) {
 // main
 // ---------------------------------------------------------------------------
 
+/**
+ * `--verbose` (n'importe où dans les arguments) : liste, en plus des clés
+ * introuvables, CHAQUE appel dynamique et CHAQUE appel non résolu avec son
+ * `fichier:ligne`. Sans lui, un fichier où RIEN n'a pu être vérifié (tout
+ * dynamique, ou tout non résolu) sort quand même `OK` — le compteur global
+ * le montre, mais rien ne dit LEQUEL des deux ni OÙ. Retiré des arguments
+ * avant de les passer à `resolveTargets` (ce n'est pas un chemin).
+ */
+function parseArgs(argv) {
+  const verbose = argv.includes('--verbose')
+  const paths = argv.filter((a) => a !== '--verbose')
+  return { verbose, paths }
+}
+
 async function main() {
-  const args = process.argv.slice(2)
-  const targets = (await resolveTargets(args)).filter(
+  const { verbose, paths } = parseArgs(process.argv.slice(2))
+  const targets = (await resolveTargets(paths)).filter(
     (f) => path.basename(f) !== 'routeTree.gen.ts',
   )
 
-  const i18n = await buildI18nInstance()
+  const resources = await loadResources()
+  const resourceProblems = checkResourceDefects(resources)
+  const i18n = await buildI18nInstance(resources)
 
-  const problems = []
+  const problems = [...resourceProblems]
+  const dynamicLines = []
+  const unresolvedLines = []
   let literalCount = 0
   let dynamicCount = 0
   let unresolvedCount = 0
+  let aliasCallCount = 0
 
   for (const file of targets.sort()) {
     const source = await fs.readFile(file, 'utf8')
     const stripped = stripComments(source)
     const lineOffsets = buildLineOffsets(stripped)
-    const { literals, dynamicCount: fileDynamic, unresolvedCount: fileUnresolved } =
-      scanFile(stripped)
+    const rel = path.relative(FRONT_ROOT, file)
+    const {
+      literals,
+      dynamicCount: fileDynamic,
+      unresolvedCount: fileUnresolved,
+      aliasCallCount: fileAliasCalls,
+      dynamicEntries,
+      unresolvedEntries,
+    } = scanFile(stripped)
 
     dynamicCount += fileDynamic
     unresolvedCount += fileUnresolved
+    aliasCallCount += fileAliasCalls
+
+    if (verbose) {
+      for (const entry of dynamicEntries) {
+        const { line } = offsetToLineCol(lineOffsets, entry.pos)
+        dynamicLines.push(`${rel}:${line}: appel ${entry.kind} — argument non littéral`)
+      }
+      for (const entry of unresolvedEntries) {
+        const { line } = offsetToLineCol(lineOffsets, entry.pos)
+        unresolvedLines.push(`${rel}:${line}: appel ${entry.kind} — namespace non résolu`)
+      }
+    }
 
     for (const entry of literals) {
       literalCount += 1
       const { line, column } = offsetToLineCol(lineOffsets, entry.pos)
-      const rel = path.relative(FRONT_ROOT, file)
       for (const locale of LOCALES) {
         const exists = i18n.exists(entry.key, {
           lng: locale,
@@ -911,21 +1186,30 @@ async function main() {
     }
   }
 
+  const summary = `${literalCount} appel(s) littéral(aux) vérifié(s), dont ${aliasCallCount} via un alias de useTranslation ; ${dynamicCount} appel(s) dynamique(s) ignoré(s) (angle mort n°1) ; ${unresolvedCount} non résolu(s) faute de contexte (angles morts n°4/5) ; sur ${targets.length} fichier(s) scanné(s).`
+
+  if (verbose && (dynamicLines.length > 0 || unresolvedLines.length > 0)) {
+    console.error(`[check-i18n-keys] --verbose — appels ignorés en détail :\n`)
+    for (const line of dynamicLines) {
+      console.error(`  - [dynamique] ${line}`)
+    }
+    for (const line of unresolvedLines) {
+      console.error(`  - [non résolu] ${line}`)
+    }
+    console.error('')
+  }
+
   if (problems.length > 0) {
-    console.error(`[check-i18n-keys] ${problems.length} clé(s) introuvable(s) :\n`)
+    console.error(`[check-i18n-keys] ${problems.length} défaut(s) :\n`)
     for (const problem of problems) {
       console.error(`  - ${problem}`)
     }
-    console.error(
-      `\n[check-i18n-keys] ${literalCount} appel(s) littéral(aux) vérifié(s), ${dynamicCount} appel(s) dynamique(s) ignoré(s) (angle mort n°1), ${unresolvedCount} non résolu(s) faute de contexte (angles morts n°4/5), sur ${targets.length} fichier(s) scanné(s).`,
-    )
+    console.error(`\n[check-i18n-keys] ${summary}`)
     process.exitCode = 1
     return
   }
 
-  console.log(
-    `[check-i18n-keys] OK — ${literalCount} appel(s) littéral(aux) vérifié(s) (fr + en), ${dynamicCount} appel(s) dynamique(s) ignoré(s) (angle mort n°1), ${unresolvedCount} non résolu(s) faute de contexte (angles morts n°4/5), sur ${targets.length} fichier(s) scanné(s).`,
-  )
+  console.log(`[check-i18n-keys] OK (fr + en) — ${summary}`)
 }
 
 main().catch((err) => {
