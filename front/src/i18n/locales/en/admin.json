@@ -439,5 +439,38 @@
       "guaranteedCardLabel": "Guaranteed card",
       "save": "Save"
     }
+  },
+  "streak": {
+    "pageTitle": "Streak — Rewards",
+    "pageSubtitle": "Daily rewards and special login milestones",
+    "loading": "Loading…",
+    "reward": {
+      "tokensLabel": "Tokens",
+      "dustLabel": "Dust",
+      "xpLabel": "XP",
+      "cardRarityLabel": "Card rarity"
+    },
+    "defaultReward": {
+      "title": "Default daily reward",
+      "save": "Save"
+    },
+    "milestones": {
+      "title": "Special milestones",
+      "newButton": "New milestone",
+      "deleteConfirm": "Delete the day {{day}} milestone?",
+      "columns": {
+        "day": "Day",
+        "dayCell": "Day {{day}}",
+        "reward": "Reward"
+      },
+      "createTitle": "New milestone",
+      "editTitle": "Milestone — Day {{day}}",
+      "dayFieldLabel": "Day",
+      "dayPlaceholder": "e.g. 7",
+      "submitCreate": "Create",
+      "submitSave": "Save",
+      "cancel": "Cancel",
+      "cardLabel": "{{rarity}} card"
+    }
   }
 }

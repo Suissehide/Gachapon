@@ -12,6 +12,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { RewardPatch } from '../../api/admin-streak.api.ts'
 import { AdminPageHeader } from '../../components/admin/shared/AdminPageHeader.tsx'
@@ -97,22 +98,23 @@ function RewardEditor({
   draft: RewardDraft
   onChange: (next: RewardDraft) => void
 }) {
+  const { t } = useTranslation('admin')
   return (
     <div className="space-y-3">
       <NumberField
-        label="Jetons"
+        label={t('streak.reward.tokensLabel')}
         icon={<Ticket className="h-3.5 w-3.5 text-primary" />}
         value={draft.tokens}
         onChange={(tokens) => onChange({ ...draft, tokens })}
       />
       <NumberField
-        label="Poussière"
+        label={t('streak.reward.dustLabel')}
         icon={<Sparkles className="h-3.5 w-3.5 text-info" />}
         value={draft.dust}
         onChange={(dust) => onChange({ ...draft, dust })}
       />
       <NumberField
-        label="XP"
+        label={t('streak.reward.xpLabel')}
         icon={<Star className="h-3.5 w-3.5 text-success" />}
         value={draft.xp}
         onChange={(xp) => onChange({ ...draft, xp })}
@@ -161,11 +163,12 @@ function RarityField({
   value: CardRarity | null
   onChange: (next: CardRarity | null) => void
 }) {
+  const { t } = useTranslation('admin')
   return (
     <div className="space-y-1.5">
       <Label className="flex items-center gap-1.5">
         <RectangleVertical className="h-3.5 w-3.5 text-primary" />
-        Rareté de la carte
+        {t('streak.reward.cardRarityLabel')}
       </Label>
       <div className="flex flex-wrap gap-1">
         {RARITY_OPTIONS.map((opt) => {
@@ -195,6 +198,7 @@ function RarityField({
 
 // ── Page ──────────────────────────────────────────────────────────────────
 function AdminStreakPage() {
+  const { t } = useTranslation('admin')
   const { data, isLoading } = useAdminStreak()
   const patchDefault = useAdminPatchStreakDefault()
   const createMilestone = useAdminCreateMilestone()
@@ -249,17 +253,17 @@ function AdminStreakPage() {
     () => [
       {
         accessorKey: 'day',
-        header: 'Jour',
+        header: t('streak.milestones.columns.day'),
         size: 80,
         cell: ({ row }) => (
           <span className="tabular-nums text-text">
-            Jour {row.original.day}
+            {t('streak.milestones.columns.dayCell', { day: row.original.day })}
           </span>
         ),
       },
       {
         id: 'reward',
-        header: 'Récompense',
+        header: t('streak.milestones.columns.reward'),
         cell: ({ row }) => <MilestoneRewardSummary milestone={row.original} />,
       },
       {
@@ -277,7 +281,7 @@ function AdminStreakPage() {
                 setDraft({ ...emptyDraft(m), day: String(m.day) })
                 setDrawer({ type: 'edit', milestone: m })
               }}
-              title="Modifier"
+              title={t('common.editTooltip')}
             >
               <Pencil className="h-3.5 w-3.5" />
             </Button>
@@ -287,12 +291,16 @@ function AdminStreakPage() {
               onClick={(e) => {
                 e.stopPropagation()
                 if (
-                  confirm(`Supprimer le jalon du jour ${row.original.day} ?`)
+                  confirm(
+                    t('streak.milestones.deleteConfirm', {
+                      day: row.original.day,
+                    }),
+                  )
                 ) {
                   deleteMilestone.mutate(row.original.id)
                 }
               }}
-              title="Supprimer"
+              title={t('common.deleteTooltip')}
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
@@ -300,13 +308,13 @@ function AdminStreakPage() {
         ),
       },
     ],
-    [deleteMilestone],
+    [deleteMilestone, t],
   )
 
   if (isLoading || !data) {
     return (
       <div className="flex h-64 items-center justify-center text-text-light">
-        Chargement…
+        {t('streak.loading')}
       </div>
     )
   }
@@ -315,16 +323,16 @@ function AdminStreakPage() {
     <div className="flex h-full flex-col gap-6 p-8">
       <AdminPageHeader
         icon={Flame}
-        kicker="Économie"
-        title="Streak — Récompenses"
-        subtitle="Récompenses quotidiennes et jalons spéciaux de connexion"
+        kicker={t('common.kicker.economy')}
+        title={t('streak.pageTitle')}
+        subtitle={t('streak.pageSubtitle')}
       />
 
       {/* Default daily reward */}
       <section className="w-full">
         <div className="w-full flex items-center gap-4 mb-4">
           <h3 className="text-md font-semibold text-text-light">
-            Récompense quotidienne par défaut
+            {t('streak.defaultReward.title')}
           </h3>
           <div className="flex-1 border-b border-border" />
         </div>
@@ -336,7 +344,7 @@ function AdminStreakPage() {
               onClick={() => patchDefault.mutate(draftToPayload(defaultDraft))}
               disabled={patchDefault.isPending}
             >
-              Sauvegarder
+              {t('streak.defaultReward.save')}
             </Button>
           </div>
         </div>
@@ -346,12 +354,12 @@ function AdminStreakPage() {
       <div className="min-h-0 flex-1 overflow-hidden">
         <div className="flex items-center justify-between gap-4 border-b border-border/40 mb-4">
           <h3 className="text-md font-semibold text-text-light">
-            Jalons spéciaux
+            {t('streak.milestones.title')}
           </h3>
           <div className="flex-1 border-b border-border" />
           <Button size="default" onClick={openCreate}>
             <Plus className="h-3.5 w-3.5" />
-            Nouveau jalon
+            {t('streak.milestones.newButton')}
           </Button>
         </div>
 
@@ -372,14 +380,16 @@ function AdminStreakPage() {
           <SheetHeader>
             <SheetTitle>
               {drawer?.type === 'create'
-                ? 'Nouveau jalon'
-                : `Jalon — Jour ${drawer?.type === 'edit' ? drawer.milestone.day : ''}`}
+                ? t('streak.milestones.createTitle')
+                : t('streak.milestones.editTitle', {
+                    day: drawer?.type === 'edit' ? drawer.milestone.day : '',
+                  })}
             </SheetTitle>
           </SheetHeader>
           <div className="space-y-4 px-6 py-5">
             {drawer?.type === 'create' && (
               <div className="space-y-1.5">
-                <Label>Jour</Label>
+                <Label>{t('streak.milestones.dayFieldLabel')}</Label>
                 <Input
                   type="number"
                   min={1}
@@ -387,7 +397,7 @@ function AdminStreakPage() {
                   onChange={(e) =>
                     setDraft((d) => ({ ...d, day: e.target.value }))
                   }
-                  placeholder="ex: 7"
+                  placeholder={t('streak.milestones.dayPlaceholder')}
                 />
               </div>
             )}
@@ -401,10 +411,12 @@ function AdminStreakPage() {
                 onClick={handleSaveDrawer}
                 disabled={createMilestone.isPending || patchMilestone.isPending}
               >
-                {drawer?.type === 'create' ? 'Créer' : 'Sauvegarder'}
+                {drawer?.type === 'create'
+                  ? t('streak.milestones.submitCreate')
+                  : t('streak.milestones.submitSave')}
               </Button>
               <Button variant="outline" onClick={closeDrawer}>
-                Annuler
+                {t('streak.milestones.cancel')}
               </Button>
             </div>
           </div>
@@ -417,6 +429,7 @@ function AdminStreakPage() {
 // Compact, multi-type summary for the milestone table — mirrors how the user
 // modal collapses several reward types into a single row of badges.
 function MilestoneRewardSummary({ milestone }: { milestone: AdminMilestone }) {
+  const { t } = useTranslation('admin')
   const items: React.ReactNode[] = []
   if (milestone.cardRarity) {
     items.push(
@@ -426,7 +439,12 @@ function MilestoneRewardSummary({ milestone }: { milestone: AdminMilestone }) {
         size="sm"
       >
         {rarityIcon(milestone.cardRarity)}
-        Carte {milestone.cardRarity.toLowerCase()}
+        {t('streak.milestones.cardLabel', {
+          // Clé dynamique (common:rarity.<rareté>) : vérifiée à la main, les
+          // 5 clés existent en fr/en (common.json) — check-i18n-keys.mjs ne
+          // voit pas les clés construites dynamiquement.
+          rarity: t(`common:rarity.${milestone.cardRarity.toLowerCase()}`),
+        })}
       </Badge>,
     )
   }

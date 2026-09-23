@@ -439,5 +439,38 @@
       "guaranteedCardLabel": "Carte garantie",
       "save": "Enregistrer"
     }
+  },
+  "streak": {
+    "pageTitle": "Streak — Récompenses",
+    "pageSubtitle": "Récompenses quotidiennes et jalons spéciaux de connexion",
+    "loading": "Chargement…",
+    "reward": {
+      "tokensLabel": "Jetons",
+      "dustLabel": "Poussière",
+      "xpLabel": "XP",
+      "cardRarityLabel": "Rareté de la carte"
+    },
+    "defaultReward": {
+      "title": "Récompense quotidienne par défaut",
+      "save": "Sauvegarder"
+    },
+    "milestones": {
+      "title": "Jalons spéciaux",
+      "newButton": "Nouveau jalon",
+      "deleteConfirm": "Supprimer le jalon du jour {{day}} ?",
+      "columns": {
+        "day": "Jour",
+        "dayCell": "Jour {{day}}",
+        "reward": "Récompense"
+      },
+      "createTitle": "Nouveau jalon",
+      "editTitle": "Jalon — Jour {{day}}",
+      "dayFieldLabel": "Jour",
+      "dayPlaceholder": "ex: 7",
+      "submitCreate": "Créer",
+      "submitSave": "Sauvegarder",
+      "cancel": "Annuler",
+      "cardLabel": "Carte {{rarity}}"
+    }
   }
 }
